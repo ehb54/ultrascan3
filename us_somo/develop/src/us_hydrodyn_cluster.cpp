@@ -95,6 +95,11 @@ US_Hydrodyn_Cluster::US_Hydrodyn_Cluster(
       &&
       !batch_window->cb_compute_iq_avg->isChecked();
    
+   if ( selected_files.size()
+        && selected_files[0].contains( QRegExp( "bead_model$" ) ) ) {
+      cluster_additional_methods_modes[ "inputfile_pat_addendum" ][ "best" ] = false;
+   }
+
    QString unsupported;
 
    if ( batch_window->cb_somo->isChecked() )
@@ -3337,8 +3342,10 @@ void US_Hydrodyn_Cluster::create_additional_methods_pkg( QString base_dir,
                   if ( (int)j % jobs == i )
                   {
                      QString use_filename = selected_files[ j ];
-                     if ( cluster_additional_methods_modes[ "inputfile_pat_addendum" ].count( methods[ m ] ) )
-                     {
+                     if (
+                         cluster_additional_methods_modes[ "inputfile_pat_addendum" ].count( methods[ m ] )
+                         && cluster_additional_methods_modes[ "inputfile_pat_addendum" ][ methods[ m ] ]
+                         ) {
                         use_filename = QFileInfo( selected_files[ j ] ).baseName() + "_pat" + "." + QFileInfo( selected_files[ j ] ).completeSuffix();
                      }
 
@@ -4665,7 +4672,7 @@ bool US_Hydrodyn_Cluster::additional_processing(
                   if ( batch_window->screen_bead_model( file )
                        && ((US_Hydrodyn *)us_hydrodyn)->model_vector.size() ) {
                      mw = ((US_Hydrodyn *)us_hydrodyn)->model_vector[ 0 ].mw;
-                     editor_msg( "red", QString( us_tr( "Bead model %1 mw %2" ) ).arg(file).arg(mw) );
+                     editor_msg( "darkblue", QString( us_tr( "Bead model %1 mw %2" ) ).arg(file).arg(mw) );
                   }
                   // PAT
                   # warning might need PAT
@@ -4685,11 +4692,25 @@ bool US_Hydrodyn_Cluster::additional_processing(
                      // }
                   }
                   */
-                  out += "bestmsrollxyz\n";
+                  // create xyzr file
+                  QString xyzr_file = ((US_Hydrodyn*)us_hydrodyn)->somo_tmp_dir + QDir::separator() + QFileInfo( file ).baseName() + ".xyzr";
+                  qDebug() << "xyzr " << xyzr_file;
+                  (( US_Hydrodyn * ) us_hydrodyn)->write_bead_xyzr( xyzr_file, ((US_Hydrodyn *)us_hydrodyn)->bead_models[0] );
+                  source_files << xyzr_file;
+                  out += "InputFileNoRead " + QFileInfo( xyzr_file ).fileName() + "\n";
+                  out += "bestmsrxyzr true\n";
                }
                editor_msg( "red", "Error: bead models are experimental! (might needs PAT)" );
                // result = batch_window->screen_bead_model( file );
             }
+            // if (  (*cluster_additional_methods_options_selected).count( method ) &&
+            //       (*cluster_additional_methods_options_selected)[ method ].count( "bestmsrfinenessangle" ) ) {
+            //    out += QString( "bestmsrfinenessangle   %1\n" ).arg( (*cluster_additional_methods_options_selected)[ method ][ "bestmsrfinenessangle" ] );
+            // }               
+            // if (  (*cluster_additional_methods_options_selected).count( method ) &&
+            //       (*cluster_additional_methods_options_selected)[ method ].count( "bestmsrminfinenessangle" ) ) {
+            //    out += QString( "bestminmsrfinenessangle   %1\n" ).arg( (*cluster_additional_methods_options_selected)[ method ][ "bestmsrminfinenessangle" ] );
+            // }               
             if (  (*cluster_additional_methods_options_selected).count( method ) &&
                   (*cluster_additional_methods_options_selected)[ method ].count( "bestrcoalautominmax" ) &&
                   (*cluster_additional_methods_options_selected)[ method ][ "bestrcoalautominmax" ] == "true" 

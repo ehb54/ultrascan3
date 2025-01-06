@@ -25,6 +25,25 @@ model_vector_as_loaded
 #define LBD  "--------------------------------------------------------------------------------\n"
 #define LBE  "================================================================================\n"
 
+void US_Hydrodyn::info_bead_model( const QString & msg, const vector < PDB_atom > & b_model ) {
+   TSO
+      << LBE
+      << "US_Hydrodyn::info_bead_model()" << Qt::endl
+      << msg << Qt::endl
+      ;
+   for ( auto const & bead : b_model ) {
+      TSO
+         << LBD
+         << "  bead x, y, z                : " << bead.bead_coordinate.axis[0] << "  " << bead.bead_coordinate.axis[1] << " " <<  bead.bead_coordinate.axis[2] << Qt::endl
+         << "  bead bead_computed_radius   : " << bead.bead_computed_radius << Qt::endl
+         << "  bead bead_mw                : " << bead.bead_mw << Qt::endl
+         << "  bead bead_color             : " << bead.bead_color << Qt::endl
+         << "  bead serial                 : " << bead.serial << Qt::endl
+         << "  bead bead_asa               : " << bead.bead_asa << Qt::endl
+         ;
+   }
+}
+
 void US_Hydrodyn::info_bead_models_mw( const QString & msg, const vector < vector < PDB_atom > > & b_models ) {
    int models = (int) bead_models.size();
    TSO
@@ -37,7 +56,7 @@ void US_Hydrodyn::info_bead_models_mw( const QString & msg, const vector < vecto
       info_bead_models_mw( msg + QString( "model %1" ).arg( i ), b_models[ i ] );
    }
 }
-   
+
 void US_Hydrodyn::info_bead_models_mw( const QString & msg, const vector < PDB_atom > & b_model ) {
    int beads = (int) b_model.size();
    TSO
