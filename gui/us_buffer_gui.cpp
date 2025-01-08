@@ -41,10 +41,10 @@ US_BufferGuiSelect::US_BufferGuiSelect( int *invID, int *select_db_disk,
 
    QLabel* bn_select     = us_banner( tr( "Select a buffer to use" ) );
    QLabel* lb_search     = us_label( tr( "Search:" ) );
-   QLabel* lb_density    = us_label( tr( "Density (20" ) + DEGC
+   lb_density            = us_label( tr( "Density (20" ) + DEGC
                                    + tr( ", g/cm<sup>3</sup>):" ) );
    QLabel* lb_ph         = us_label( tr( "pH:" ) );
-   QLabel* lb_viscosity  = us_label( tr( "Viscosity (20" ) + DEGC
+   lb_viscosity          = us_label( tr( "Viscosity (20" ) + DEGC
                                    + tr( ", cP):" ) );
    QLabel* lb_compressib = us_label( tr( "Compressibility:" ) );
 
@@ -56,6 +56,19 @@ US_BufferGuiSelect::US_BufferGuiSelect( int *invID, int *select_db_disk,
 
    lw_buffer_list        = us_listwidget();
    lw_buffer_comps       = us_listwidget();
+
+   QLabel* lb_temperature = us_label( tr( "Temperature:" ) );
+   lb_temperature->setAlignment(Qt::AlignLeft);
+   sl_temp = new QSlider(Qt::Horizontal);
+   sl_temp->setMinimum(1);
+   sl_temp->setMaximum(50);
+   sl_temp->setSingleStep(1);
+   sl_temp->setValue(20);
+   QPushButton* pb_temp20C = us_pushbutton( tr ( "Reset Temperature" ) );
+   QHBoxLayout* lo_temp = new QHBoxLayout();
+   lo_temp->addWidget(lb_temperature);
+   lo_temp->addWidget(sl_temp);
+   lo_temp->addWidget(pb_temp20C);
 
    pb_accept->setEnabled( false );
    pb_delete->setEnabled( false );
@@ -81,6 +94,7 @@ US_BufferGuiSelect::US_BufferGuiSelect( int *invID, int *select_db_disk,
    main->addWidget( pb_help,         row++, 4, 1, 1 );
    main->addWidget( lw_buffer_comps, row,   3, 4, 2 );
    row += 5;
+   main->addLayout( lo_temp,         row++, 0, 1, 5 );
    main->addWidget( lb_density,      row,   0, 1, 2 );
    main->addWidget( le_density,      row,   2, 1, 1 );
    main->addWidget( lb_ph,           row,   3, 1, 1 );
@@ -106,6 +120,10 @@ US_BufferGuiSelect::US_BufferGuiSelect( int *invID, int *select_db_disk,
             this,           SLOT  ( spectrum() ) );
    connect( pb_delete,      SIGNAL( clicked()       ),
             this,           SLOT  ( delete_buffer() ) );
+   connect( pb_temp20C,     SIGNAL( clicked() ),
+            this,           SLOT( set_temp20() ) );
+   connect( sl_temp,        SIGNAL( valueChanged( int ) ),
+            this,           SLOT( calc_visc_dent_temp() ) );
 
    US_BufferComponent::getAllFromHD( component_list );
 
@@ -147,6 +165,7 @@ DbgLv(0) << "MwDa: dbg_level" << dbg_level;
    pb_accept->setEnabled ( true );
    pb_delete->setEnabled ( true );
    pb_info  ->setEnabled ( true );
+   set_temp20();
 }
 
 // Select the buffer for the currently selected list item
@@ -243,6 +262,7 @@ DbgLv(1) << "BufS-rddb-bfid   comp0 nm,rng,un,id" << buffer->component[0].name
 // Accept the currently selected buffer
 void US_BufferGuiSelect::accept_buffer( void )
 {
+   set_temp20();
    emit bufferAccepted();
 }
 
@@ -796,11 +816,13 @@ void US_BufferGuiSelect::connect_error( const QString& error )
 // Accept a selected buffer for return to the caller
 void US_BufferGuiSelect::accept( void )
 {
+   set_temp20();
 }
 
 // Reject the selected buffer and return to caller with no change
 void US_BufferGuiSelect::reject( void )
 {
+   set_temp20();
    emit selectionCanceled();
 }
 
@@ -816,8 +838,42 @@ void US_BufferGuiSelect::reset()
    pb_accept      ->setEnabled( false );
    pb_delete      ->setEnabled( false );
    pb_info        ->setEnabled( false );
+   set_temp20();
 }
 
+// Modify Viscosity and Density of Buffer for Temperature
+void US_BufferGuiSelect::calc_visc_dent_temp()
+{
+   double temp = sl_temp->value();
+   lb_density->setText(tr( "Density (%1%2, g/cm<sup>3</sup>):" ).arg(temp).arg(DEGC));
+   lb_viscosity->setText(tr( "Viscosity (%1%2, cP):" ).arg(temp).arg(DEGC));
+   qApp->processEvents();
+   if (le_density->text().isEmpty()) return;
+   if (le_viscosity->text().isEmpty()) return;
+   double density_tb, viscosity_tb;
+   if (temp == 20) {
+      density_tb = buffer->density;
+      viscosity_tb = buffer->viscosity;
+   } else {
+      US_Math2::SolutionData sol;
+      sol.manual = false;
+      sol.viscosity = buffer->viscosity;
+      sol.density = buffer->density;
+      sol.vbar20 = 0.5;
+      sol.vbar = 0.5;
+      US_Math2::data_correction(temp, sol);
+      density_tb = sol.density_tb;
+      viscosity_tb = sol.viscosity_tb;
+   }
+   le_density->setText( QString::number( density_tb ) );
+   le_viscosity->setText( QString::number( viscosity_tb ) );
+   qApp->processEvents();
+}
+
+void US_BufferGuiSelect::set_temp20()
+{
+   sl_temp->setValue(20);
+}
 
 // New Buffer panel
 US_BufferGuiNew::US_BufferGuiNew( int *invID, int *select_db_disk,
