@@ -3752,16 +3752,17 @@ DbgLv(1) << "RDa: allData size" << allData.size();
      }
    else
      {
-       qDebug() << " In retrieve_xpn_raw_auto(): Combined optics! cellchans.count(), CellChNumber_map[ runType ].toInt(); ntriple, TripleNumber_map[ runType ].toInt() -- "
+       qDebug() << " In retrieve_xpn_raw_auto(): Combined optics! cellchans.count(), CellChNumber_map[ runType ].toInt(); ntriple, TripleNumber_map[ runType ].toInt(), runtype -- "
 		<< cellchans.count() << ", " <<  CellChNumber_map[ runType ].toInt() << "; "
-		<< ntriple << ", " <<  TripleNumber_map[ runType ].toInt();
+		<< ntriple << ", " <<  TripleNumber_map[ runType ].toInt() << runType;
        if ( cellchans.count() == CellChNumber_map[ runType ].toInt() && ntriple == TripleNumber_map[ runType ].toInt() )    
 	 {
-
+	   qDebug() << "opsys_auto, opsys_auto.count(): " << opsys_auto << opsys_auto.count();
+	   
 	   //ALEXEY: here - either check that
 	   // 1. xpn_data->countOf( "ascn_rows" ) != 0 && xpn_data->countOf( "iscn_rows" ) != 0 OR opsys_auto.count() > 1
 	   // 2. all triples for ALL optics systems are populated
-	   if ( opsys_auto.count() > 1 )
+	   if ( opsys_auto.count() > 1 ) //All optics processed
 	     {
 	       	       
 	       //stop timer
@@ -3780,6 +3781,46 @@ DbgLv(1) << "RDa: allData size" << allData.size();
 		   //update hereafter
 		   connect(timer_data_reload, SIGNAL(timeout()), this, SLOT( reloadData_auto( ) ));
 		   timer_data_reload->start(10000);     // 10 sec
+		 }
+	     }
+	   else //not all optics processed & Exp Completed
+	     {
+	       bool oconn = true;
+	       if ( CheckExpComplete_auto( RunID_to_retrieve, oconn ) == 5 ) //Run Completed
+		 {
+		   //stop timer
+		   timer_all_data_avail->stop();
+		   disconnect(timer_all_data_avail, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
+
+		   if ( !timer_check_sysdata->isActive()  ) // Check if sys_data Timer is stopped
+		     {
+		       in_reload_all_data   = false;
+		       
+		       QString optics_failed = (runType == "Absorbance" ) ? "Interference" : "Absorbance";
+		       
+		       //Inform user that run completed but one of the optics failed
+		       QMessageBox::critical( this,
+					      tr( "Optima Optics Failed:" ),
+					      tr( "Data collection for %1 optics type failed. \n\n"
+						  "The program will proceed to the 3. IMPORT stage where "
+						  "collected data (%2) can be saved into DB.")
+					      . arg( optics_failed)
+					      . arg( runType ) );
+		       
+		       //proceed to IMPORT
+		       bool tmstampOK = true;
+		       export_auc_auto( tmstampOK );
+		       qDebug() << "[Optics FAILED]tmstampOK? " << tmstampOK;
+		       
+		       // updateautoflow_record_atLiveUpdate(); // We need to include info on the failed optics here!!!
+
+		       // reset_auto();
+	   
+		       // in_reload_all_data   = false;  
+	   
+		       // emit experiment_complete_auto( details_at_live_update  ); 
+		       return;
+		     }
 		 }
 	     }
 	 }
