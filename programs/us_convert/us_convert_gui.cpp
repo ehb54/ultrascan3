@@ -1479,8 +1479,10 @@ void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_liv
 
   //Here, redefine bach to non-combined if opticsFailedType exists!!!
   if ( !opticsFailedType.isEmpty() )
-    runType_combined_IP_RI = false;
-
+    {
+      runTypes_map. clear();
+      runType_combined_IP_RI = false;
+    }
   // //************************ TEMP - Reverse after test ************************************** //
   // runTypes_map.insert("IP", 1);
   // runTypes_map.insert("RI", 1);
