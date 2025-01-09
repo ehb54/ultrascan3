@@ -1438,6 +1438,7 @@ void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_liv
   AProfileGUID      = details_at_live_update[ "aprofileguid" ];
   expType           = details_at_live_update[ "expType" ];
   dataSource        = details_at_live_update[ "dataSource" ];
+  opticsFailedType  = details_at_live_update[ "opticsFailedType" ];
   
   // //After AProfileGUID, read details from analysis profile
   // read_aprofile_data_from_aprofile();
@@ -1445,6 +1446,7 @@ void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_liv
   qDebug() << "Exp_label: " << Exp_label;
   qDebug() << "ExpType: "   << expType;
   qDebug() << "dataSource: " << dataSource;
+  qDebug() << "opticsFailedType: " << opticsFailedType;
   
   // qDebug() << "Filename: " << details_at_live_update[ "filename" ];
   // qDebug() << "Filename_INT: " << details_at_live_update[ "filename" ].toInt();
@@ -1474,6 +1476,9 @@ void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_liv
       runType_combined_IP_RI = true;
     }
   qDebug() << "runType_combined_IP_RI: " << runType_combined_IP_RI;
+
+  //Here, redefine bach to non-combined if opticsFailedType exists!!!
+  // runType_combined_IP_RI = false;
 
   // //************************ TEMP - Reverse after test ************************************** //
   // runTypes_map.insert("IP", 1);
@@ -6916,6 +6921,7 @@ QMap< QString, QString> US_ConvertGui::read_autoflow_record( int autoflowID  )
 
 	   protocol_details[ "expType" ]        = db->value( 26 ).toString();
 	   protocol_details[ "dataSource" ]     = db->value( 27 ).toString();
+	   protocol_details[ "opticsFailedType" ]    = db->value( 28 ).toString();
 	   	   
 	 }
      }

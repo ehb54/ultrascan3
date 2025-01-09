@@ -247,6 +247,7 @@ US_XpnDataViewer::US_XpnDataViewer(QString auto_mode) : US_Widgets()
    auto_mode_bool     = true;
    experimentAborted  = false;
    experimentAborted_remotely  = false;
+   opticsFailed       = false;
    inExport           = false;
    combinedOptics     = false;
    autoflowStatusID   = 0;
@@ -838,6 +839,7 @@ US_XpnDataViewer::US_XpnDataViewer() : US_Widgets()
    auto_mode_bool = false;
    experimentAborted  = false;
    experimentAborted_remotely  = false;
+   opticsFailed       = false;
    autoflowStatusID   = 0;
    
    navgrec      = 10;
@@ -2028,7 +2030,7 @@ void US_XpnDataViewer::updateautoflow_record_atLiveUpdate( void )
 
        db->query( qry );
 
-       details_at_live_update[ "correctRadii" ] = QString("NO"); //currentDir;
+       details_at_live_update[ "correctRadii" ] = QString("NO"); 
      }
 
    //ALEXEY: if run was aborted manually from the Optima panel, set expAborted to 'YES'
@@ -2056,6 +2058,20 @@ void US_XpnDataViewer::updateautoflow_record_atLiveUpdate( void )
        db->query( qry );
        
        details_at_live_update[ "statusID" ] = QString::number( autoflowStatusID );
+     }
+
+   //If one of the optics type failed:
+   if ( opticsFailed )
+     {
+       qry.clear();
+       qry << "update_autoflow_at_live_update_optics_types_failed"
+	   << opticsFailed_type
+	   << RunID_to_retrieve
+	   << OptimaName;
+       
+       db->query( qry );
+       
+       details_at_live_update[ "opticsFailedType" ] = opticsFailed_type;
      }
 
    /***/
@@ -2747,6 +2763,8 @@ void US_XpnDataViewer::check_for_data( QMap < QString, QString > & protocol_deta
   
   xpn_data->setEtimOffZero(); //ALEXEY: intialize etimoff to zero for the first time
 
+  opticsFailed       = false;
+  opticsFailed_type  = "";
   experimentAborted  = false;
   counter_mins = 0;
   ElapsedTimeOffset = 0;
@@ -3811,14 +3829,17 @@ DbgLv(1) << "RDa: allData size" << allData.size();
 		       bool tmstampOK = true;
 		       export_auc_auto( tmstampOK );
 		       qDebug() << "[Optics FAILED]tmstampOK? " << tmstampOK;
-		       
-		       // updateautoflow_record_atLiveUpdate(); // We need to include info on the failed optics here!!!
 
-		       // reset_auto();
+		       opticsFailed     = true;
+		       opticsFailed_type = (runType == "RI" ) ? "IP" : "RI";
+		       
+		       updateautoflow_record_atLiveUpdate(); // We need to include info on the failed optics here!!!
+
+		       reset_auto();
 	   
-		       // in_reload_all_data   = false;  
+		       in_reload_all_data   = false;  
 	   
-		       // emit experiment_complete_auto( details_at_live_update  ); 
+		       emit experiment_complete_auto( details_at_live_update  ); 
 		       return;
 		     }
 		 }

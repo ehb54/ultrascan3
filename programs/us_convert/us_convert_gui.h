@@ -317,6 +317,7 @@ class US_ConvertGui : public US_Widgets
       bool dataSavedOtherwise;
       QString expType;
       QString dataSource;
+      QString opticsFailedType;
       
       void getExpInfo_auto ( void );
       void getLabInstrumentOperatorInfo_auto   ( void );
