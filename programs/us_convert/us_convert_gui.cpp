@@ -1478,7 +1478,8 @@ void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_liv
   qDebug() << "runType_combined_IP_RI: " << runType_combined_IP_RI;
 
   //Here, redefine bach to non-combined if opticsFailedType exists!!!
-  // runType_combined_IP_RI = false;
+  if ( !opticsFailedType.isEmpty() )
+    runType_combined_IP_RI = false;
 
   // //************************ TEMP - Reverse after test ************************************** //
   // runTypes_map.insert("IP", 1);
