@@ -3796,8 +3796,8 @@ DbgLv(1) << "RDa: allData size" << allData.size();
 		     {
 		       in_reload_all_data   = false;
 		       
-		       QString optics_failed = (runType == "Absorbance" ) ? "Interference" : "Absorbance";
-		       
+		       QString optics_failed    = (runType == "RI" ) ? "Interference" : "Absorbance";
+		       QString optics_processed = (runType == "RI" ) ? "Absorbance" : "Interference";
 		       //Inform user that run completed but one of the optics failed
 		       QMessageBox::critical( this,
 					      tr( "Optima Optics Failed:" ),
@@ -3805,7 +3805,7 @@ DbgLv(1) << "RDa: allData size" << allData.size();
 						  "The program will proceed to the 3. IMPORT stage where "
 						  "collected data (%2) can be saved into DB.")
 					      . arg( optics_failed)
-					      . arg( runType ) );
+					      . arg( optics_processed ) );
 		       
 		       //proceed to IMPORT
 		       bool tmstampOK = true;
