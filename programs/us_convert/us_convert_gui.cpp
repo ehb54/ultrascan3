@@ -7515,7 +7515,7 @@ DbgLv(1) << "Writing to database";
 					 msg_save_complete );
 	       
 	       //ALEXY: need to delete autoflow record here
-	       //TEMPDEL delete_autoflow_record();
+	       delete_autoflow_record();
 	       resetAll_auto();
 	       //emit saving_complete_back_to_exp( ProtocolName_auto );
 	       emit saving_complete_back_to_initAutoflow( );
@@ -7553,7 +7553,7 @@ DbgLv(1) << "Writing to database";
 						 msg_save_complete );
 						 		       
 		       //ALEXY: need to delete autoflow record here
-		       //TEMPDEL delete_autoflow_record();
+		       delete_autoflow_record();
 		       resetAll_auto();
 		       //emit saving_complete_back_to_exp( ProtocolName_auto );
 		       emit saving_complete_back_to_initAutoflow();
