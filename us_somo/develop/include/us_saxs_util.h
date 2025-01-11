@@ -1172,6 +1172,18 @@ class US_EXTERN US_Saxs_Util
 
       bool run_best();
       QStringList best_output_column( QString fname );
+      bool run_best_csv(
+                        const QString & inputbase
+                        ,const QStringList & outfiles
+                        ,const QStringList & csvfiles
+                        ,const QStringList & triangles
+                        ,const vector < double > & one_over_triangles
+                        );
+                        
+      bool run_best_csv(
+                        map < QString, QString >           & parameters,
+                        map < QString, QString >           & results
+                        );
 
       void write_bead_model(QString, vector <PDB_atom> *, QString extra_text = "" );
 
