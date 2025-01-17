@@ -316,6 +316,7 @@ class US_ConvertGui : public US_Widgets
       bool    protDev_bool;
       bool dataSavedOtherwise;
       QString expType;
+      QString dataSource;
       
       void getExpInfo_auto ( void );
       void getLabInstrumentOperatorInfo_auto   ( void );

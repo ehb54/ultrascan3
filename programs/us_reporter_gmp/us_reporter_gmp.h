@@ -78,6 +78,8 @@ class US_ReporterGMP : public US_Widgets
         US_AnaProfile::AnaProfPCSA cAPp;    //!< PCSA analysis profile
         QStringList chndescs;               //!< Channel descriptions
         QStringList chndescs_alt;           //!< Alternative channel descriptions
+        QList<int> analysis_runs;           //!< Analysis runs  
+        QList<int> report_runs;             //!< Report runs
         QMap<QString, QMap<QString, US_ReportGMP>> ch_reports; //!< Channel reports
         QMap<QString, QMap<QString, US_ReportGMP>> ch_reports_internal; //!< Internal channel reports
         QMap<QString, QList<double>> ch_wvls; //!< Channel wavelengths
@@ -259,7 +261,9 @@ class US_ReporterGMP : public US_Widgets
         QString analysisIDs;                 //!< Analysis IDs
         QString autoflowStatusID;            //!< Autoflow status ID
         QString optimaName;                  //!< Optima name
-
+        QString dataSource;
+        bool    simulatedData;
+  
         QString current_date;                //!< Current date
 
         QString duration_str;                //!< Duration string
@@ -566,6 +570,7 @@ class US_ReporterGMP : public US_Widgets
         bool modelGuidExistsForStage_ind(QString, QString, QString); //!< Check if model GUID exists for stage (individual)
         void process_combined_plots(QString); //!< Process combined plots
         void process_combined_plots_individual(QString, QString); //!< Process combined plots (individual)
+        QMap< QString, QStringList > find_sim_ranges( QString, QString );
 
         QMap<QString, QString> read_autoflowGMPReportEsign_record(QString); //!< Read autoflow GMP report electronic signature record
         void get_assigned_oper_revs(QJsonDocument, QStringList&); //!< Get assigned operator revisions

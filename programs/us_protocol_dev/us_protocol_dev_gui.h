@@ -204,7 +204,9 @@ class US_InitDialogueGui : public US_WidgetsDialog
          * \param run_data The run data to clean up.
          */
         void do_run_data_cleanup( QMap< QString, QString > run_data );
-
+  
+        void do_create_autoflowStatus_for_failedRun( QMap< QString, QString > );
+  
         /**
          * \brief Reads the basic parameters of the profile automatically.
          * \param xml_reader The XML stream reader.

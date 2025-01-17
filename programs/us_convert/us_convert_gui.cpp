@@ -175,7 +175,9 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
 
    // Change Run ID
    QLabel* lb_runID2   = us_label(    tr( "Run ID:" ) );
+
    le_runID2           = new US_LineEdit_RE( "", 1, true );
+   le_runID2  ->setMaxChars(250);
    //le_runID2 ->setMinimumWidth( 225 );
 
    // Directory
@@ -1435,13 +1437,15 @@ void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_liv
 
   AProfileGUID      = details_at_live_update[ "aprofileguid" ];
   expType           = details_at_live_update[ "expType" ];
-
+  dataSource        = details_at_live_update[ "dataSource" ];
+  
   // //After AProfileGUID, read details from analysis profile
   // read_aprofile_data_from_aprofile();
 
   qDebug() << "Exp_label: " << Exp_label;
   qDebug() << "ExpType: "   << expType;
-
+  qDebug() << "dataSource: " << dataSource;
+  
   // qDebug() << "Filename: " << details_at_live_update[ "filename" ];
   // qDebug() << "Filename_INT: " << details_at_live_update[ "filename" ].toInt();
   
@@ -1513,7 +1517,7 @@ void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_liv
   /* ----------------------------------------------------------------------------------------------------------------------------*/
   //ALEXEY: if there is no radii_correction data found, return for commercial, and present dialog for academic:
   //if ( correctRadii == "NO" )
-  if ( details_at_live_update[ "correctRadii" ] == "NO" )
+  if ( details_at_live_update[ "correctRadii" ] == "NO" && dataSource == "INSTRUMENT" )
     {
       if ( !usmode ) // us_comproject
 	{
@@ -1625,11 +1629,11 @@ void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_liv
      getLabInstrumentOperatorInfo_auto();
 
      //Auto-process reference scans
-     if ( dataType == "IP" )
+     if ( dataType == "IP" || dataSource == "dataDiskAUC:Absorbance" )
        auto_ref_scan = false;
 
      //TEMPORARY !!!!
-     if ( dataType == "RI" && expType != "ABDE" )
+     if ( dataType == "RI" && expType != "ABDE" && dataSource != "dataDiskAUC:Absorbance" )
        {
      	 // double low_ref  = 5.87 - 0.005;
      	 // double high_ref = 5.87 + 0.005;
@@ -1774,10 +1778,10 @@ void US_ConvertGui::process_optics()
      getLabInstrumentOperatorInfo_auto();
 
      //Auto-process reference scans
-     if ( dataType == "IP" )
+     if ( dataType == "IP" || dataSource == "dataDiskAUC:Absorbance" )
        auto_ref_scan = false;
      
-     if ( dataType == "RI" && expType != "ABDE" )
+     if ( dataType == "RI" && expType != "ABDE" && dataSource != "dataDiskAUC:Absorbance")
        {
 	 // double low_ref  = 5.87 - 0.005;
 	 // double high_ref = 5.87 + 0.005;
@@ -2202,6 +2206,10 @@ DbgLv(1) << "CGui:iA: CURRENT DIR_1: " << importDir;
    runType       = QString( fname ).section( ".", -5, -5 );
    runID         = QString( fname ).section( ".",  0, -6 );
 
+   //For DataFromDisk, we need to append runID with something like "-dataDiskRun-{autoflowID_passed}"
+   if ( dataSource.contains("Disk") && us_convert_auto_mode )
+     runID += QString("-dataDiskRun-") + QString::number( autoflowID_passed );
+   
    if ( runType_combined_IP_RI )
      {
        runID += QString("-") + QString( type_to_process );
@@ -5512,7 +5520,21 @@ void US_ConvertGui::PseudoCalcAvg( void )
 
    if ( referenceDefined ) return;  // Average calculation has already been done
 
-   if ( isMwl )
+   bool is_mwl_data = false;
+   int temp_wvl = -1;
+   for ( int ii = 0; ii < outData.size(); ii++) {
+      int wvl = qRound(outData.at(ii)->scanData.first().wavelength);
+      if ( temp_wvl == -1) {
+         temp_wvl = wvl;
+         continue;
+      }
+      if ( temp_wvl != wvl) {
+         is_mwl_data = true;
+         break;
+      }
+   }
+
+   if ( is_mwl_data )
    {  // Do calculations for each wavelength, if MWL
          PseudoCalcAvgMWL();
          return;
@@ -6058,12 +6080,13 @@ void US_ConvertGui::cancel_reference( void )
    int wvoff    = 0;
    int rscans   = ExpData.RI_nscans;
 
+   int nwl_rip = ExpData.RIwvlns.size();
    // Do the inverse operation and retrieve raw intensity data
    for ( int ii = 0; ii < outData.size(); ii++ )
    {
        US_DataIO::RawData* currentData = outData[ ii ];
 
-       if ( isMwl )
+       if ( nwl_rip > 1 )
        {  // For MWL, profile is offset by wavelength
          int iwavl    = out_triples[ ii ].section( " / ", 2, 2 ).toInt();
          wvoff        = ExpData.RIwvlns.indexOf( iwavl );
@@ -6079,7 +6102,7 @@ void US_ConvertGui::cancel_reference( void )
                                          .arg( out_triples[ ii ] ) );
             int kwavl    = 99999;
 
-            for ( int jj = 0; jj < ExpData.RI_nwvlns; jj++ )
+            for ( int jj = 0; jj < ExpData.RIwvlns.size(); jj++ )
             {  // Find index of nearest wavelength
                int jwavl    = qAbs( ExpData.RIwvlns[ jj ] - iwavl );
 
@@ -6892,6 +6915,7 @@ QMap< QString, QString> US_ConvertGui::read_autoflow_record( int autoflowID  )
 	   protocol_details[ "aprofileguid" ]   = db->value( 18 ).toString();
 
 	   protocol_details[ "expType" ]        = db->value( 26 ).toString();
+	   protocol_details[ "dataSource" ]     = db->value( 27 ).toString();
 	   	   
 	 }
      }
@@ -7636,7 +7660,7 @@ void US_ConvertGui::record_import_status( bool auto_ref, QString runtype )
   
   qry.clear();
   
-  if ( runtype == "RI")
+  if ( runtype == "RI" || runtype == "RA" )
     {
       QString refScan = auto_ref ? QString("automated") : QString("manual");
 	
@@ -7797,16 +7821,20 @@ void US_ConvertGui::update_autoflow_record_atLimsImport( void )
 
    //now, make a record in the autoflowIntensity table, return ID
    int autoflowIntensityID = 0;
+   qDebug() << "[in update_autoflow_record_atLimsImport()] intensityJsonRI -- " << intensityJsonRI;
    if ( ! intensityJsonRI.isEmpty() )
      {
        qry.clear();
        qry << "new_autoflow_intensity_record"
 	   << QString::number( autoflowID_passed )
 	   << intensityJsonRI;
-       
-       autoflowIntensityID = db->functionQuery( qry );
 
-       if ( !autoflowIntensityID )
+       qDebug() << "qry new_autoflow_intensity_record -- " << qry;
+              
+       autoflowIntensityID = db->functionQuery( qry );
+       qDebug() << "[after qry] autoflowIntensityID -- " << autoflowIntensityID;
+
+       if ( !autoflowIntensityID || autoflowIntensityID == 0 || autoflowIntensityID < 1 )
 	 {
 	   QMessageBox::warning( this, tr( "AutoflowIntensity Record Problem" ),
 				 tr( "autoflowIntensity: There was a problem with creating a record in autoflowIntensity table \n" ) + db->lastError() );
@@ -7832,12 +7860,18 @@ void US_ConvertGui::update_autoflow_record_atLimsImport( void )
    
    //finally, update autoflow record
    qry.clear();
+   // qry << "update_autoflow_at_lims_import"
+   //     << runID_numeric
+   //     << filename_toDB
+   //     << OptimaName
+   //     << QString::number( autoflowIntensityID )
+   //     << QString::number( autoflowStatusID );
+
    qry << "update_autoflow_at_lims_import"
-       << runID_numeric
        << filename_toDB
-       << OptimaName
        << QString::number( autoflowIntensityID )
-       << QString::number( autoflowStatusID );
+       << QString::number( autoflowStatusID )
+       << QString::number( autoflowID_passed );
 
    qDebug() << "Query for update_autoflow_at_lims_import -- " << qry;
    //db->query( qry );
@@ -7870,9 +7904,11 @@ void US_ConvertGui::delete_autoflow_record( void )
      }
 
    QStringList qry;
-   qry << "delete_autoflow_record"
-       << runID_numeric
-       << OptimaName;
+   // qry << "delete_autoflow_record"
+   //     << runID_numeric
+   //     << OptimaName;
+   qry  << "delete_autoflow_record_by_id" 
+	<< QString::number( autoflowID_passed );
 
    //db->query( qry );
 
@@ -7960,6 +7996,8 @@ int US_ConvertGui::saveUS3Disk( void )
    status = ExpData.saveToDisk( out_tripinfo, runType, runID, dirname,
                                 speedsteps );
 
+   qDebug() << "saveDisk: xml status -- " << status;
+   
    // How many files should have been written?
    int fileCount = out_tripinfo.size();
 DbgLv(1) << "SV:   fileCount" << fileCount;
@@ -8014,7 +8052,7 @@ DbgLv(1) << "SV:   fileCount" << fileCount;
       if ( referenceDefined )
       {
          status = ExpData.saveRIDisk( runID, dirname );
-DbgLv(1) << "SV:   saveRIDisk status" << status;
+	 qDebug() << "SV:   saveRIDisk status" << status;
 
          if ( status == US_Convert::CANTOPEN )
          {
@@ -8051,6 +8089,7 @@ DbgLv(1) << "SV:   NO saveRIDisk : refDef" << referenceDefined;
    }
 else
 DbgLv(1) << "SV:   NO saveRIDisk : runType" << runType;
+
 
    // Insure that we have a TimeState record locally for this run
    le_status->setText( tr( "Writing Time State to disk..." ) );
@@ -8223,7 +8262,7 @@ DbgLv(1) << "DBSv:     tripleGUID       "
    
    qDebug() << "AFTER checkDiskData(): ExpData.invID = " << ExpData.invID;
    
-DbgLv(1) << "Status from SaveUs3DB" << status;
+   qDebug() << "Status from SaveUs3DB" << status;
    // Save a flag for need to repeat the disk write later
    bool repeat_disk = ( status == US_DB2::NO_RAWDATA );
 
@@ -8290,13 +8329,13 @@ DbgLv(1) << "DBSv:  (2)dset tripleID    " << out_tripinfo[0].tripleID;
  qDebug() << "BEFORE saveUS3Disk(): ExpData.invID = " << ExpData.invID;
  
    status = saveUS3Disk();
-DbgLv(1) << "DBSv: Status after saveUS3Disk()" << status;
+   qDebug() << "DBSv: Status after saveUS3Disk()" << status;
 
- qDebug() << "AFTER saveUS3Disk(): ExpData.invID = " << ExpData.invID;
+   qDebug() << "AFTER saveUS3Disk(): ExpData.invID = " << ExpData.invID;
  
    if ( status != US_Convert::OK )
      {
-       qDebug() << "Status : " << status;
+       qDebug() << "Status : " << status;                  //HERE it prematurely quits!!! Cannot write timestamp to DISK
        return;
      }
 DbgLv(1) << "DBSv:  local files saved";
@@ -9475,43 +9514,40 @@ void US_ConvertGui::PseudoCalcAvgMWL( void )
    int ref_size = refData->xvalues.size();
    int ccx      = tripListx;
    int tripx    = out_chandatx[ ccx ];
-   nlambda      = mwl_data.lambdas( exp_lambdas, tripListx );
    ExpData.RI_nscans = refData->scanData.size();
-//   ExpData.RI_nwvlns = all_wavelength_tripx.size();
 DbgLv(1) << "PseCalcAvgMWL: ccx tripx nlambda" << ccx << tripx << nlambda;
 
-   QMap<int, int> wvl_to_tripx;
-   for ( int wvx = 0; wvx < nlambda; wvx++ ) {
-      refData  = outData[ tripx ];
-      int wvl = refData->scanData.at(0).wavelength;
-      wvl_to_tripx[wvl] = tripx;
-      tripx++;
-   }
+   QVector<int> unified_lambdas;
+   QVector<int> unified_lambdas_tripx;
+   int counter = 0;
+   QVector<int> argsort;
+
    for ( int ii = 0; ii < outData.size(); ii++) {
-      // to make sure to take account half-wavelength lambda, each multiplies to 10
-      //      int wvl = qRound(outData.at(ii)->scanData.at(0).wavelength * 10);
-      int wvl = outData.at(ii)->scanData.at(0).wavelength;
-      if (wvl_to_tripx.contains(wvl)) {
+      int wvl = qRound( outData.at(ii)->scanData.first().wavelength );
+      if (unified_lambdas.contains(wvl)) {
          continue;
       }
-      wvl_to_tripx[wvl] = ii;
+      unified_lambdas << wvl;
+      unified_lambdas_tripx << ii;
+      argsort << counter++;
 DbgLv(1) << "PseCalcAvgMWL: added_lambda tripx " << wvl << ii;
    }
-   ExpData.RI_nwvlns = wvl_to_tripx.size();
-DbgLv(1) << "PseCalcAvgMWL: tripx nlambda_i nlambda_f" << tripx << nlambda << wvl_to_tripx.size();
+   ExpData.RI_nwvlns = unified_lambdas.size();
+DbgLv(1) << "PseCalcAvgMWL: tripx nlambda_i nlambda_f" << tripx << nlambda << unified_lambdas.size();
 
+   std::sort( argsort.begin(), argsort.end(), [&unified_lambdas] (int a, int b) {
+                       return  unified_lambdas.at(a) < unified_lambdas.at(b); } );
    // Loop to calculate reference data for each wavelength,
    //  then apply it to all triples with that same wavelength.
-   foreach ( int iwavl, wvl_to_tripx.keys())
+   for ( int ii = 0; ii < argsort.size(); ii++)
    {
-      tripx        = wvl_to_tripx.value(iwavl);
+      int iwavl    = unified_lambdas.at(argsort.at(ii));
+      tripx        = unified_lambdas_tripx.at(argsort.at(ii));
       refData      = outData[ tripx ];
-      ref_size     = refData->xvalues.size();
-      int nscan    = refData->scanData.size();
       ri_prof.clear();
 
       // Get the reference profile for the current wavelength
-      for ( int ss = 0; ss < nscan; ss++ )
+      for ( int ss = 0; ss < ExpData.RI_nscans; ss++ )
       {
          US_DataIO::Scan* scan = &refData->scanData[ ss ];
 
@@ -9785,7 +9821,7 @@ DbgLv(1) << "CGui:IOD:   cSS nspeed" << speedsteps.size();
       int tf_scan      = speedsteps[ 0 ].time_first;
       int accel1       = (int)qRound( rate );
       int rspeed       = speedsteps[ 0 ].rotorspeed;
-      int tf_aend      = ( rspeed + accel1 - 1 ) / accel1;
+      int tf_aend      = ( rspeed + accel1 - 1 ) / ( accel1 == 0 ? 1 : accel1 );
 
       QString wmsg = tr( "The SpeedStep computed/used is likely bad:<br/>"
                          "The acceleration implied is %1 rpm/sec.<br/>"

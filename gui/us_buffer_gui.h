@@ -61,6 +61,8 @@ class US_BufferGuiSelect: public US_Widgets
 
       int           dbg_level;
 
+      QLabel*       lb_density;
+      QLabel*       lb_viscosity;
       QLineEdit*    le_search;
       QLineEdit*    le_density;
       QLineEdit*    le_viscosity;
@@ -77,6 +79,8 @@ class US_BufferGuiSelect: public US_Widgets
       QListWidget*  lw_buffer_list;
       QListWidget*  lw_buffer_comps;
       QListWidget*  lw_cosed_comps;
+
+      QSlider*      sl_temp;
 
       US_Help       showHelp;
 
@@ -122,6 +126,8 @@ class US_BufferGuiSelect: public US_Widgets
       void connect_error	( const QString& );
       bool buffer_path     ( QString& );
       void reset           ( void );
+      void set_temp20      ( void );
+      void calc_visc_dent_temp ( void );
 
       void help( void ) { showHelp.show_help( "buffer_select.html" ); };
 

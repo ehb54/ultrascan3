@@ -122,6 +122,15 @@ DbgLv(1) << "MAIN:  CALL check_runname()";
 DbgLv(1) << "MAIN:  CALL reset()";
 //reset();
    resize( 500, 450 );
+
+   // //test
+   // US_AnaProfile profile1;
+   // US_AnaProfile profile2;
+
+   // if ( profile1 == profile2 )
+   //   qDebug() << "ana profs EQUAL";
+   // else
+   //   qDebug() << "ana profs NOT EQUAL";
 }
 
 
@@ -543,6 +552,7 @@ DbgLv(1) << "APG: ipro:     chx nchn dae" << chx << nchn
    //////////////
 
    kchn            = currProf.pchans.count();
+   qDebug() <<  "In inherit 1: pchans -- " << currProf.pchans;
 
    if ( kchn > nchn )
    {  // Drop any Profile channel values left over from previous
@@ -557,6 +567,8 @@ DbgLv(1) << "APG: ipro:     chx nchn dae" << chx << nchn
          currProf.lv_tolers.removeLast();
          currProf.data_ends.removeLast();
 
+	 qDebug() << "In inherit 1: ii, nchn, kchn " << ii << nchn << kchn;
+	 
 	 //abde
 	 currProf.ld_dens_0s.removeLast();
 	 currProf.gm_vbars.removeLast(); 
@@ -564,16 +576,21 @@ DbgLv(1) << "APG: ipro:     chx nchn dae" << chx << nchn
 	 currProf.ref_channels.removeLast();
 	 currProf.ref_use_channels.removeLast();
 
+	 qDebug() << "In inherit 2: ii, nchn, kchn " << ii << nchn << kchn;
+
 	 currProf.analysis_run .removeLast();
 	 currProf.report_run   .removeLast();
 	 currProf.wvl_edit     .removeLast();
 	 currProf.wvl_not_run  .removeLast();
 
+	 qDebug() << "In inherit 3: ii, nchn, kchn " << ii << nchn << kchn;
+	 
 	 currProf.scan_excl_begin .removeLast();
 	 currProf.scan_excl_end   .removeLast();
 
+	 qDebug() << "In inherit 4: ii, nchn, kchn " << ii << nchn << kchn;
 	 currProf.replicates   .removeLast();
-	 
+	 qDebug() << "In inherit 5: ii, nchn, kchn " << ii << nchn << kchn;
 	 //currProf.ch_wvls.removeLast();  //ALEXEY: needed?
       }
    }

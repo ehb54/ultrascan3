@@ -2342,33 +2342,11 @@ void US_Plot3D::dump_contents()
             }
             myFile.flush();}
          else {
-            for ( int ii = 0; ii < ncols; ii++ )
-            {  // copy data to work 2D vector and get new z-max
-               if ((ii&63)==1) DbgLv(2) << "P3D:  rp: row" << ii;
-               wddat[ ii ] = new double [ nrows ];
-
-               for ( int jj = 0; jj < nrows; jj++ )
-               {
-                  double zval       = zdata[ ii ][ jj ];
-                  wddat[ ii ][ jj ] = zval;
-                  zdmx              = qMax( zdmx, zval );
-               }
-            }
-
-            // scale back data to have same z-max as before
-            zfac           = ( zdmx < 1e-20 ) ? zmax : ( zmax / zdmx );
-
-            for ( int ii = 0; ii < ncols; ii++ )
-               for ( int jj = 0; jj < nrows; jj++ )
-               {
-                  wddat[ ii ][ jj ] *= zfac;
-                  tdata[ ii ][ jj ].z *= zfac;
-               }
             out << xatitle << ", " << yatitle << ", " << zatitle;
             out << Qt::endl;
-            for ( int ii = 0; ii < ncols; ii++){
-               for ( int jj = 0; jj < nrows; jj++){
-                  out << QString::number(wdata[ii][jj].x) << ", " << QString::number(wdata[ii][jj].y) << ", " << QString::number(wdata[ii][jj].z) << Qt::endl;
+            for ( int ii = 0; ii < tdata.size(); ii++){
+               for ( int jj = 0; jj < tdata.first().size(); jj++){
+                  out << QString::number(tdata[ii][jj].x) << ", " << QString::number(tdata[ii][jj].y) << ", " << QString::number(tdata[ii][jj].z) << Qt::endl;
                }
             }
             myFile.flush();

@@ -1016,9 +1016,13 @@ DbgLv(1) << "EGRo: inP: calib_entr" << cal_entr;
    //setCbCurrentText( cb_optima,   optima_name );    // <-- NOT ENOUGH, no connection check
 
    //operator
+   qDebug() << "init Labs: operID + name -- "
+	    << QString::number( rpRotor->operID ) + ": " + rpRotor->opername;
+   
    setCbCurrentText( cb_operator, QString::number( rpRotor->operID ) + ": "
                                 + rpRotor->opername );
 
+   qDebug() << "init Labs: operator text: " << cb_operator->currentText();
 
    setCbCurrentText( cb_exptype,  rpRotor->exptype );
 
@@ -1026,6 +1030,12 @@ DbgLv(1) << "EGRo: inP: calib_entr" << cal_entr;
    DbgLv(1) << "EGRo: inP:  rotID" << rpRotor->rotID << "rotor" << rpRotor->rotor
 	    << "cb_rotor text" << cb_rotor->currentText();
    DbgLv(1) << "EGRo: inP:   calID" << rpRotor->calID << "calib" << rpRotor->calibration;
+
+   //import Data Disk
+   rpRotor->importData  = ck_disksource->isChecked();
+   le_dataDiskPath ->setText( rpRotor->importDataDisk );
+   rpRotor->importData_absorbance_t = ck_absorbance_t->isChecked();
+   
 
    //Show current oper(s) & rev(s)
    te_opers_to_assign -> setText( rpRotor->operListAssign );
@@ -1076,8 +1086,21 @@ DbgLv(1) << "EGRo: inP: calib_entr" << cal_entr;
        lb_smes_to_assign -> hide();
        te_smes_to_assign -> hide();
        pb_remove_sme     -> hide();
-            
+
+       //show Operator Info:
+       lb_operator -> setVisible(true);
+       cb_operator -> setVisible(true);
+
+       //Hide data disk upload
+       pb_importDisk   -> hide();
+       le_dataDiskPath -> hide();
+       ck_disksource   -> hide();
+       ck_absorbance_t -> hide();
+       rpRotor->importData = false;
+       rpRotor->importData_absorbance_t = false;
+       rpRotor->importDataDisk = "";
      }
+
 
    expType_old = cb_exptype ->currentText();
 
@@ -1209,6 +1232,20 @@ void US_ExperGuiRotor::addOpertoList( void )
 				.arg( c_oper ) );
       return;
     }
+
+  //also, check if to-be-added operator is in other role(s) already [rev, appr]
+  QString e_revList  = te_revs_to_assign->toPlainText();
+  QString e_apprList = te_apprs_to_assign->toPlainText();
+  if ( e_revList. contains( c_oper ) || e_apprList. contains( c_oper ) )
+    {
+      QMessageBox::information( this, tr( "Cannot add Operator" ),
+				tr( "<font color='red'><b>ATTENTION:</b> </font> Selected operator: <br><br>"
+				    "<font ><b>%1</b><br><br>"
+				    "is already set as REVIEWER or APPROVER.<br>"
+				    "Please choose other operator.")
+				.arg( c_oper ) );
+      return;
+    }
   
   te_opers_to_assign->append( c_oper );
 }
@@ -1240,6 +1277,19 @@ void US_ExperGuiRotor::addRevtoList( void )
 				tr( "<font color='red'><b>ATTENTION:</b> </font> Selected reviewer: <br><br>"
 				    "<font ><b>%1</b><br><br>"
 				    "is already in the list of reviewers.<br>"
+				    "Please choose other reviewer.")
+				.arg( c_rev ) );
+      return;
+    }
+
+  //also, check if to-be-added reviewer is an operator already
+  QString e_operList = te_opers_to_assign->toPlainText();
+  if ( e_operList. contains( c_rev ) )
+    {
+      QMessageBox::information( this, tr( "Cannot add Reviewer" ),
+				tr( "<font color='red'><b>ATTENTION:</b> </font> Selected reviewer: <br><br>"
+				    "<font ><b>%1</b><br><br>"
+				    "is already set as an OPERATOR.<br>"
 				    "Please choose other reviewer.")
 				.arg( c_rev ) );
       return;
@@ -1284,6 +1334,20 @@ void US_ExperGuiRotor::addApprtoList( void )
 				.arg( c_appr) );
       return;
     }
+
+  //also, check if to-be-added approver is an operator already
+  QString e_operList = te_opers_to_assign->toPlainText();
+  if ( e_operList. contains( c_appr ) )
+    {
+      QMessageBox::information( this, tr( "Cannot add Approver" ),
+				tr( "<font color='red'><b>ATTENTION:</b> </font> Selected approver: <br><br>"
+				    "<font ><b>%1</b><br><br>"
+				    "is already set as an OPERATOR.<br>"
+				    "Please choose other approver.")
+				.arg( c_appr ) );
+      return;
+    }
+  
   
   te_apprs_to_assign->append( c_appr );
 
@@ -1412,7 +1476,40 @@ void US_ExperGuiRotor::savePanel()
    QString lab          = cb_lab   ->currentText();
    QString rot          = cb_rotor ->currentText();
    QString cal          = cb_calibr->currentText();
-   QString oper         = cb_operator->currentText();
+
+   //And save info on selected assigned oper(s) & rev(s)
+   QString oper_list = te_opers_to_assign->toPlainText();
+   QString rev_list  = te_revs_to_assign->toPlainText();
+   QString appr_list = te_apprs_to_assign->toPlainText();
+   QString sme_list  = te_smes_to_assign->toPlainText();
+   
+   rpRotor->operListAssign = oper_list;
+   rpRotor->revListAssign  = rev_list;
+   rpRotor->apprListAssign = appr_list;
+   rpRotor->smeListAssign  = sme_list;
+
+   qDebug() << "Lists of o,r,a: "
+	    << oper_list << rev_list << appr_list;
+   
+   //QString oper         = cb_operator->currentText();
+   QString oper;
+   if ( mainw->usmode )
+     oper = cb_operator->currentText();
+   else
+     {
+       QString oper_t       = oper_list.split("\n")[0];
+       qDebug() << "oper_t: " << oper_t;
+       if ( !oper_t.isEmpty() && oper_t.contains(".") )
+	 {
+	   QString oper_t_id    = oper_t.split(".")[0].simplified();
+	   QString oper_t_name  = oper_t.split(".")[1].simplified();
+	   QString oper_t_lname = oper_t_name.split(",")[0].simplified();
+	   QString oper_t_fname = oper_t_name.split(",")[1].simplified();
+	   
+	   oper = oper_t_id + ": " + oper_t_fname + " " + oper_t_lname;
+	 }
+     }
+   
    QString exptype      = cb_exptype ->currentText();
    QString instr        = cb_optima ->currentText();
 
@@ -1433,6 +1530,12 @@ qDebug() << "NAME OF THE ROTOR IN SAVE: rot, rpRotor->rotor: " << rot << ", "  <
 
    rpRotor->exptype     = exptype;
 
+   //dataDisk
+   rpRotor->importDataDisk            = importDataPath;
+   rpRotor->importData                = ck_disksource->isChecked();
+   rpRotor->importData_absorbance_t   = ck_absorbance_t->isChecked();
+
+   
 qDebug() << "OPERATORID / INSTRUMENT / ExpType in SAVE: "
          <<  rpRotor->operID  << ", " << rpRotor->opername << " / "
          <<  rpRotor->instID  << ", " << rpRotor->instrname  << " / "
@@ -1471,17 +1574,6 @@ DbgLv(1) << "EGRo:  svP:  calndx" << ii << "calGUID" << rpRotor->calGUID;
    }
 
    qDebug() << "Rotor Save panel Done: " ;
-
-   //And save info on selected assigned oper(s) & rev(s)
-   QString oper_list = te_opers_to_assign->toPlainText();
-   QString rev_list  = te_revs_to_assign->toPlainText();
-   QString appr_list = te_apprs_to_assign->toPlainText();
-   QString sme_list  = te_smes_to_assign->toPlainText();
-   
-   rpRotor->operListAssign = oper_list;
-   rpRotor->revListAssign  = rev_list;
-   rpRotor->apprListAssign = appr_list;
-   rpRotor->smeListAssign  = sme_list;
 
 
    //if ABDE expType -- translate to 8. AProfie
@@ -2051,7 +2143,19 @@ DbgLv(1) << "EGCe:inP:   ii" << ii << "kused" << kused << "is_used" << is_used;
 
 DbgLv(1) << "EGCe:inP: kused" << kused << "nused" << nused;
    nused               = kused;
+
+
+   // //TEST
+   // if ( rpRotor->importData )
+   //   init_cells_data_import();
 }
+
+// void US_ExperGuiCells::init_cells_data_import()
+// {
+//   qDebug() << "Init cells for dataDisk!";
+
+  
+// }
 
 // Save Cells panel controls when about to leave the panel
 void US_ExperGuiCells::savePanel()
@@ -2342,6 +2446,9 @@ DbgLv(1) << "EGSo:inP: call rbS";
    for ( int ii = 0; ii < nchant; ii++ )
    {
       QString channel     = srchans[ ii ];
+      qDebug() << "INIT SOLS, channel, ra_data_type -- "
+      	       << channel << rpRotor->importData_absorbance_t;
+
       QString solution    = unspec;
 
       int srx             = suchans.indexOf( channel );
@@ -3741,9 +3848,20 @@ DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
    //                       connected );
 
    if ( mainw->automode )
-     subm_enab         = ( have_run    &&  have_proj  &&  proto_ena  &&
-                           mainw->connection_status &&                // ALEXEY: use top-level connection boolean!
-                           !currProto->exp_label.isEmpty() );         // ALEXEY: and label is present
+     {
+       subm_enab         = ( have_run    &&  have_proj  &&  proto_ena  &&
+			     mainw->connection_status &&                // ALEXEY: use top-level connection boolean!
+			     !currProto->exp_label.isEmpty() );         // ALEXEY: and label is present
+
+       //add cond. for data from disk:
+       if ( rpRotor->importData && rpRotor->importDataDisk.isEmpty() )
+	 {
+	   qDebug() << "Data Disk ? " << rpRotor->importData;
+	   qDebug() << "Data Disk Path -- " << rpRotor->importDataDisk;
+	   qDebug() << "Data Disk: Absorbance ? " << rpRotor->importData_absorbance_t;
+	   subm_enab = false;
+	 }
+     }
    else
      subm_enab         = ( have_run    &&  have_proj  &&  proto_ena  &&
                            mainw->connection_status );               // ALEXEY: use top-level connection boolean!
@@ -3785,6 +3903,15 @@ DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
 	       pb_saverp->show();
 	     }
 	 }
+
+       //connect to different slot if disk data:
+       if ( rpRotor->importData && !rpRotor->importDataDisk.isEmpty() )
+	 {
+	   pb_submit -> disconnect();
+	   connect( pb_submit,    SIGNAL( clicked()          ),
+		    this,         SLOT  ( submitExperiment_confirm_dataDisk() ) );
+       
+	 }
      }
    else
      {
@@ -3799,6 +3926,32 @@ DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
        pb_submit  ->setEnabled( have_run && rps_differ );
      }
 
+   //[DataFromDisk] Check that channels & ranges correspond to those is protocol:
+   if ( rpRotor->importData && !rpRotor->importDataDisk.isEmpty() )
+     {
+       qDebug() << "Submit::init: DataDISK ";
+       QStringList msg_to_user;
+       if ( !protocolToDataDisk( msg_to_user ) )
+       	 {
+       	   pb_submit->setEnabled( false );
+       	   pb_saverp->setEnabled( false );
+
+       	   //msg_to_user.removeDuplicates();
+
+	   QMessageBox::critical( this,
+       				  tr( "ATTENTION: Protocol Incorrectly Set" ),
+       				  msg_to_user.join("\n") +
+       				  tr("\n\nProtocol does not correspond to the uploaded data! "
+				     "\nIt appears the protocol was modified from it's original state\n"
+				     "corresponding to the uploaded from disk data. \n"
+				     "Please re-upload data using 2. Lab/Rotor tab and do not modify "
+				     "Cells, Optics, and Ranges settings!\n\n"
+       				     "Saving protocol and run submission are not possible "
+       				     "until this problem is resolved."));
+	 }
+     }
+   
+   
    //[ABDE] Here, check for existence of valid extinction profiles for analytes (and optionally buffers) in the MWL-channels 
    //If not, inform user, disable "Submit"/"Save Protocol" buttons
    if ( mainw->us_abde_mode )
@@ -3888,7 +4041,131 @@ DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
    //qDebug() << "Upload::initPanel(): oprof -- " << oprof;
    // qDebug() << "Upload::initPanel(): ncells_interference, nchannels_uvvis -- "
    // 	    << ncells_interference << ", " << nchannels_uvvis;
-   
+   qDebug() << "Data Disk ? " << rpRotor->importData;
+   qDebug() << "Data Disk Path -- " << rpRotor->importDataDisk;
+   qDebug() << "Data Disk: Absorbance ? " << rpRotor->importData_absorbance_t;
+   QString dataSourceType = ( !rpRotor->importData_absorbance_t ) ? "dataDiskAUC" : "dataDiskAUC:Absorbance";
+   qDebug() << "dataSourceType -- " << dataSourceType;
+}
+
+bool US_ExperGuiUpload::protocolToDataDisk( QStringList& msg_to_user )
+{
+  bool all_matches = true;
+  msg_to_user. clear();
+
+  //Cells, Optics  & Ranges
+  QMap < QString, QStringList > runTypes_from_dataDisk, chann_ranges_from_dataDisk;
+  mainw->get_importDisk_data( "runTypes", runTypes_from_dataDisk );
+  mainw->get_importDisk_data( "ranges", chann_ranges_from_dataDisk );
+  QStringList chann_numbers_from_dataDisk  = runTypes_from_dataDisk.keys();
+
+  QStringList channames_from_dataDisk;
+  for ( int i=0; i<chann_ranges_from_dataDisk.keys().size(); ++i )
+    {
+      QString channame_c = chann_ranges_from_dataDisk.keys()[i];
+      if ( !chann_ranges_from_dataDisk[ channame_c ]. isEmpty()  )
+	channames_from_dataDisk << channame_c;
+    }
+  
+  //Cells
+  if ( chann_numbers_from_dataDisk.size() != rpCells->used.size() )
+    {
+      msg_to_user << "[Uploaded Data <-> Protocol] Numbers of Cells are mismatched!";
+      return false;
+    }
+  for ( int ii = 0; ii < rpCells->used.size(); ii++ )
+    {
+      if ( !chann_numbers_from_dataDisk.contains( QString::number( rpCells->used[ ii ].cell ) ) )
+	{
+	  msg_to_user << "[Uploaded Data <-> Protocol] Cells are mismatched!";
+	  return false;
+	}
+    }
+
+  //Optics
+  qDebug() << "chann_numbers_from_dataDisk, rpOptic->chopts.size() -- "
+	   << chann_numbers_from_dataDisk << rpOptic->chopts.size();
+  int chopts_num = ( !rpRotor-> importData_absorbance_t) ?
+    chann_numbers_from_dataDisk.size()*2 : chann_numbers_from_dataDisk.size();
+  if ( chopts_num != rpOptic->chopts.size() )
+    {
+      msg_to_user << "[Uploaded Data <-> Protocol] Numbers of Optics cahnnels are mismatched!";
+      return false;
+    }
+  for ( int ii = 0; ii < rpOptic->chopts.size(); ii++ )
+    {
+      QString ch_num = rpOptic->chopts[ii].channel. split(" / ")[0]. trimmed();
+      if ( !chann_numbers_from_dataDisk.contains( ch_num ) )
+	{
+	  msg_to_user << "[Uploaded Data <-> Protocol] Optics channels are mismatched!";
+	  return false;
+	}
+
+      QStringList r_types;
+      if ( !rpOptic->chopts[ii].scan1 . isEmpty() )
+	r_types << "RI";
+      if ( !rpOptic->chopts[ii].scan2 . isEmpty() )
+	r_types << "IP";
+
+      QStringList r_types_fromDisk = runTypes_from_dataDisk[ ch_num ];
+      qSort( r_types );
+      qSort( r_types_fromDisk );
+      qDebug() << "DataDisk OptSys for chann: " << ch_num << r_types_fromDisk;
+      qDebug() << "Protocol OptSys for chann: " << ch_num << r_types;
+      if ( r_types != r_types_fromDisk )
+	{
+	  msg_to_user << "[Uploaded Data <-> Protocol] Optics Types for channels " + ch_num + " are mismatched!";
+	  return false;
+	}
+      
+    }
+
+  //Ranges
+  qDebug() << "channames_from_dataDisk, rpRange->nranges -- "
+	   << channames_from_dataDisk << rpRange->nranges;
+  if ( channames_from_dataDisk.size() != rpRange->nranges )
+    {
+      msg_to_user << "[Uploaded Data <-> Protocol] Numbers of Range channels are mismatched!";
+      return false;
+    }
+  
+  for ( int ii = 0; ii < rpRange->nranges; ii++ )
+    {
+      QString channel     = rpRange->chrngs[ ii ].channel;
+      QString chan_red    = channel.split(",")[0].replace(" / ","").trimmed();
+
+      if ( !channames_from_dataDisk.contains( chan_red ) )
+	{
+	  msg_to_user << "[Uploaded Data <-> Protocol] Range channels are mismatched!";
+	  return false;
+	}
+
+      QList<double> all_wvls = rpRange->chrngs[ ii ].wvlens;
+      int nwavl              = all_wvls.count();
+
+      //#wvls match
+      if ( nwavl != chann_ranges_from_dataDisk[ chan_red ].size() )
+	{
+	  msg_to_user << "[Uploaded Data <-> Protocol] Wvls# for Range channel " +  chan_red + " are mismatched!";
+	  return false;
+	}
+
+      //exact match
+      QStringList all_wvls_list;
+      for ( const auto& c_wvl : all_wvls )
+	all_wvls_list << QString::number( c_wvl);
+
+      qDebug() << "DataDisk Wvl for chann: " << chan_red << chann_ranges_from_dataDisk[ chan_red ];
+      qDebug() << "Protocol Wvl for chann: " << chan_red << all_wvls_list;
+
+      if ( all_wvls_list != chann_ranges_from_dataDisk[ chan_red ] )
+	{
+	  msg_to_user << "[Uploaded Data <-> Protocol] Wvls for channel " +  chan_red + " are mismatched!";
+	  return false;
+	}
+    }
+  
+  return all_matches;
 }
 
 bool US_ExperGuiUpload::samplesReferencesWvlsMatch( QStringList& msg_to_user )

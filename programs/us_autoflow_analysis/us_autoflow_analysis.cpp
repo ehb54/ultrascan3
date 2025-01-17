@@ -1182,10 +1182,11 @@ void US_Analysis_auto::update_autoflow_record_atAnalysis( void )
      }
 
    QStringList qry;
+   // qry << "update_autoflow_at_analysis"
+   //     << protocol_details_at_analysis[ "runID" ]
+   //     << protocol_details_at_analysis[ "OptimaName" ];
    qry << "update_autoflow_at_analysis"
-       << protocol_details_at_analysis[ "runID" ]
-       << protocol_details_at_analysis[ "OptimaName" ];
-       
+       << QString::number( autoflowID_passed );
 
    //db->query( qry );
 
@@ -2137,7 +2138,7 @@ void US_Analysis_auto::simulateModel( )
   QString svalu = US_Settings::debug_value( "SetSpeedLowA" );
   int lo_ss_acc = svalu.isEmpty() ? 250 : svalu.toInt();
   int rspeed    = simparams.speed_step[ 0 ].rotorspeed;
-  int tf_aend   = ( rspeed + accel1 - 1 ) / accel1;
+  int tf_aend   = ( rspeed + accel1 - 1 ) / ( accel1 == 0 ? 1 : accel1 );
   
   qDebug() << "SimMdl: ssck: rspeed accel1 lo_ss_acc"
 	   << rspeed << accel1 << lo_ss_acc << "tf_aend tf_scan"
@@ -2685,7 +2686,7 @@ void US_Analysis_auto::show_overlay( QString triple_stage )
   
   dbg_level  = US_Settings::us_debug();
 
-  adv_vals[ "simpoints"  ] = "500";
+  adv_vals[ "simpoints"  ] = "200";
   adv_vals[ "bandvolume" ] = "0.015";
   adv_vals[ "parameter"  ] = "0";
   adv_vals[ "modelnbr"   ] = "0";

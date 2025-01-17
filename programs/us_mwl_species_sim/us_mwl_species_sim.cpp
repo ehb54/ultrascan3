@@ -420,7 +420,7 @@ void US_MwlSpeciesSim::set_parameters( void )
    double tim_val      = 0.0;
    double w2t_val      = 0.0;
    double aspeed       = 0.0;
-   double rpm_inc      = rspeed / qCeil( rspeed / accel );
+   double rpm_inc      = rspeed / qCeil( rspeed / ( accel == 0.0 ? 1.0 : accel ) );
 
    while ( aspeed < rspeed )
    {  // Walk time and omega2t through acceleration zone
@@ -672,7 +672,7 @@ void US_MwlSpeciesSim::init_simparams( void )
 
    simparams.speed_step << sp;
 
-   simparams.simpoints         = 500;    // Initialized number of radial grid points
+   simparams.simpoints         = 200;    // Initialized number of radial grid points
    simparams.radial_resolution = 0.001;  // Increment in radial experimental grid
    simparams.meshType          = US_SimulationParameters::ASTFEM;// Used for solver option
    simparams.gridType          = US_SimulationParameters::MOVING;// Used for grid option

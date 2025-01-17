@@ -15,6 +15,10 @@
 #include "qwt_plot.h"
 #include "qwt_plot_curve.h"
 #include "qwt_series_data.h"
+
+#include <qwt_plot_spectrogram.h>
+#include <qwt_raster_data.h>
+#include <qwt_matrix_raster_data.h>
 #include "us_extern.h"
 
 //! \brief General GUI utilities for UltraScan

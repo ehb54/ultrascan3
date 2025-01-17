@@ -279,6 +279,7 @@ class US_XpnDataViewer : public US_Widgets
      
      bool           in_reload_data_init;
      bool           in_reload_all_data;
+     bool           in_reload_all_data_set_gui;
      bool           in_reload_check_sysdata;
      bool           in_reload_end_processes;
      bool           in_reload_end_process_all_data_avail;
@@ -357,7 +358,7 @@ class US_XpnDataViewer : public US_Widgets
      void   end_process_all_data_avail ( void );
      
      void   reloadData_auto     ( void );
-     int    CheckExpComplete_auto( QString & );
+  int    CheckExpComplete_auto( QString &, bool & );
      void   update_autoflow_runId_timeStarted( void );
      int    read_timeElapsed_offset( void );
      void   delete_autoflow_record( void );
@@ -377,7 +378,7 @@ class US_XpnDataViewer : public US_Widgets
      void   runDetails     ( void );
      
      void   export_auc     ( void );
-     void   export_auc_auto( void );
+     void   export_auc_auto( bool& );
 
      void   changeRadius   ( void );
      void   changeCellCh   ( void );

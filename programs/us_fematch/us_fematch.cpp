@@ -397,7 +397,7 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    ti_noise.count = 0;
    ri_noise.count = 0;
 
-   adv_vals[ "simpoints"  ] = "500";
+   adv_vals[ "simpoints"  ] = "200";
    adv_vals[ "bandvolume" ] = "0.015";
    adv_vals[ "parameter"  ] = "0";
    adv_vals[ "modelnbr"   ] = "0";
@@ -2205,7 +2205,7 @@ DbgLv(1) << "SimMdl:  accel-calc:  t1 t2 w2t t_acc speed rate"
    QString svalu = US_Settings::debug_value( "SetSpeedLowA" );
    int lo_ss_acc = svalu.isEmpty() ? 250 : svalu.toInt();
    int rspeed    = simparams.speed_step[ 0 ].rotorspeed;
-   int tf_aend   = ( rspeed + accel1 - 1 ) / accel1;
+   int tf_aend   = ( rspeed + accel1 - 1 ) / ( accel1 == 0 ? 1 : accel1 );
 DbgLv(1) << "SimMdl: ssck: rspeed accel1 lo_ss_acc"
  << rspeed << accel1 << lo_ss_acc << "tf_aend tf_scan"
  << tf_aend << tf_scan;

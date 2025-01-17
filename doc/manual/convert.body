@@ -13,7 +13,7 @@
     channels us_convert would convert that into three binary AUC
     files, which can then be uploaded to an UltraScan III database
     and prepared for analysis. The AUC file format is described <a
-    href='http://wiki.bcf2.uthscsa.edu/ultrascan3/wiki/Us3Formats'>here</a>.
+    href='http://wiki.aucsolutions.com/ultrascan3/wiki/Us3Formats'>here</a>.
     </p>
 
     <p class='center'><img src="images/convert.png" 

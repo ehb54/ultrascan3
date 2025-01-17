@@ -113,6 +113,37 @@ int US_XpnData::checkExpStatus( QString runid )
    return sqry.value( 0 ).toInt();
 }
 
+// Check Experiment status [for autoflow]
+int US_XpnData::checkExpStatus_auto( QString runid, bool& o_conn )
+{
+
+  qDebug() << "in [checkExpStatus_auto]: Init o_conn status: " << o_conn;
+   
+  if ( ! dbxpn.open() )
+    {
+      o_conn = false;
+      qDebug() << "XPN: checkExpStatus_auto: !dbxpn.open() !!! runid, o_conn -- "
+	       << runid << o_conn;
+     
+      return false;
+    }
+    
+   QString tabname( "ExperimentRun" );
+   QSqlQuery  sqry;
+   QString schname( "AUC_schema" );
+   QString sqtab   = schname + "." + tabname;
+   QString qrytab  = "\"" + schname + "\".\"" + tabname + "\"";
+  
+   QString qrytext = "SELECT \"RunStatus\" from " + qrytab
+                        + " WHERE \"RunId\"=" + runid + ";";
+   sqry            = dbxpn.exec( qrytext );
+   sqry.next();
+
+   qDebug() << "INSIDE CheckExpSTATUS: status: " <<  sqry.value( 0 ).toInt();
+   return sqry.value( 0 ).toInt();
+}
+
+
 void US_XpnData::setEtimOffZero( void )
 {
    //etimoff  = 0;
@@ -600,6 +631,112 @@ DbgLv(1) << "XpDa:i_d: arows frows irows wrows srows crows"
    return status;
 }
 
+// Import XPN data from a selected database server [for autoflow]
+bool US_XpnData::import_data_auto( const int runId, const int scanMask, bool& o_conn )
+{
+   bool status   = true;
+   ntscan        = 0;
+   ntsrow        = 0;
+
+   qDebug() << "in [import_data_auto]: Init o_Conn status: " << o_conn;
+   
+   if ( ! dbxpn.open() )
+   {
+     o_conn = false;
+     qDebug() << "XPN: import_data_auto: !dbxpn.open() !!! runId, scanMask, o_conn -- "
+	      << runId << scanMask << o_conn;
+     return false;
+   }
+
+   tAsdata.clear();     // Clear table value vectors
+   tFsdata.clear();
+   tIsdata.clear();
+   tWsdata.clear();
+   tSydata.clear();
+   tCrprof.clear();
+   bool ascnf    = scanMask & 1;
+   bool fscnf    = scanMask & 2;
+   bool iscnf    = scanMask & 4;
+   bool wscnf    = scanMask & 8;
+
+   arows         = 0;
+   frows         = 0;
+   irows         = 0;
+   wrows         = 0;
+
+   //booleans for diff. types
+   bool srows_bool = true;
+   bool arows_bool = true;
+   bool frows_bool = true;
+   bool irows_bool = true;
+   bool wrows_bool = true;
+   bool crows_bool = true;
+   
+   // Scan and build data for System Status Data
+   QElapsedTimer timer_srows;
+   timer_srows.start();
+   int srows     = scan_xpndata_auto( runId, 'S', srows_bool, timer_srows );
+   qDebug() << "[TIME] of scan_xpndata_auto( runId, 'S', srows_bool ) " << int( timer_srows.elapsed() / 1000 ) << " sec"; 
+   
+   if ( ascnf )
+   {  // Scan and build data for Absorbance Scan Data
+     QElapsedTimer timer_arows;
+     timer_arows.start();
+     arows      = scan_xpndata_auto( runId, 'A', arows_bool, timer_arows );
+     qDebug() << "[TIME] of scan_xpndata_auto( runId, 'A', arows_bool ) " << int( timer_arows.elapsed() / 1000 ) << " sec"; 
+   }
+
+   if ( fscnf )
+   {  // Scan and build data for Fluorescence Scan Data
+     QElapsedTimer timer_frows;
+     timer_frows.start();
+     frows      = scan_xpndata_auto( runId, 'F', frows_bool, timer_frows );
+     qDebug() << "[TIME] of scan_xpndata_auto( runId, 'F', frows_bool ) " << int( timer_frows.elapsed() / 1000 ) << " sec"; 
+   }
+
+   if ( iscnf )
+   {  // Scan and build data for Interference Scan Data
+     QElapsedTimer timer_irows;
+     timer_irows.start();
+     irows      = scan_xpndata_auto( runId, 'I', irows_bool, timer_irows );
+     qDebug() << "[TIME] of scan_xpndata_auto( runId, 'I', irows_bool ) " << int( timer_irows.elapsed() / 1000 ) << " sec"; 
+   }
+
+   if ( wscnf )
+   {  // Scan and build data for Wavelength Scan Data
+     QElapsedTimer timer_wrows;
+     timer_wrows.start();
+     wrows      = scan_xpndata_auto( runId, 'W', wrows_bool, timer_wrows );
+     qDebug() << "[TIME] of scan_xpndata_auto( runId, 'W', wrows_bool ) " << int( timer_wrows.elapsed() / 1000 ) << " sec"; 
+   }
+
+   // Scan and build data for Centrifuge Run Profile
+   QElapsedTimer timer_crows;
+   timer_crows.start();
+   int crows     = scan_xpndata_auto( runId, 'C', crows_bool, timer_crows );
+   qDebug() << "[TIME] of scan_xpndata_auto( runId, 'C', crows_bool ) " << int( timer_crows.elapsed() / 1000 ) << " sec"; 
+   
+   
+   qDebug() << "XpDa:i_d: arows frows irows wrows srows crows"
+	    << arows << frows << irows << wrows << srows << crows;
+
+   qDebug() << "XpDa:i_d: [BOOLS] arows_bool frows_bool irows_bool wrows_bool srows_bool crows_bool"
+	    << arows_bool << frows_bool << irows_bool << wrows_bool << srows_bool << crows_bool;
+
+   ntsrow        = arows + frows + irows + wrows;
+   qDebug() << "in [import_data_auto]:ntsrow = " << ntsrow;
+
+   if ( !arows_bool || !frows_bool || !irows_bool || !wrows_bool || !srows_bool || !crows_bool)
+     {
+       o_conn = false;
+       qDebug() << "No connection in one of scan_xpndata_auto()...";
+       return false;
+     }
+
+   return status;
+}
+
+
 // Re-import XPN data from a selected database server
 bool US_XpnData::reimport_data( const int runId, const int scanMask )
 {
@@ -607,8 +744,8 @@ bool US_XpnData::reimport_data( const int runId, const int scanMask )
 
    if ( ! dbxpn.open() )
    {
-     qDebug() << "XPN: reimport_data: !dbxpn.open() !!! runID, scanMask -- "
-	      << runID << scanMask;
+     qDebug() << "XPN: reimport_data: !dbxpn.open() !!! runId, scanMask -- "
+	      << runId << scanMask;
      return false;
    }
 
@@ -669,6 +806,81 @@ DbgLv(1) << "XpDa: rei_dat: arows frows irows wrows"
    return status;
 }
 
+
+// Re-import XPN data from a selected database server [for autoflow]
+bool US_XpnData::reimport_data_auto( const int runId, const int scanMask, bool& o_conn )
+{
+   bool status   = false;
+
+   qDebug() << "in [reimport_data_auto]: Init o_Conn status: " << o_conn;
+   
+   if ( ! dbxpn.open() )
+   {
+     o_conn = false;
+     qDebug() << "XPN: reimport_data_auto: !dbxpn.open() !!! runId, scanMask, o_conn -- "
+	      << runId << scanMask << o_conn;
+     
+     return false;
+   }
+
+   int oarows    = tAsdata.count();     // Get old row counts
+   int ofrows    = tFsdata.count();
+   int oirows    = tIsdata.count();
+   int owrows    = tWsdata.count();
+   if ( oarows > 1  &&  tAsdata[ 0 ].radPath != tAsdata[ 1 ].radPath )
+      oarows       /= 2;
+   if ( ofrows > 0  &&  tFsdata[ 0 ].radPath != tFsdata[ 1 ].radPath )
+      ofrows       /= 2;
+   if ( owrows > 0  &&  tWsdata[ 0 ].radPath != tWsdata[ 1 ].radPath )
+      owrows       /= 2;
+   bool ascnf    = scanMask & 1;
+   bool fscnf    = scanMask & 2;
+   bool iscnf    = scanMask & 4;
+   bool wscnf    = scanMask & 8;
+
+   int arows     = 0;
+   int frows     = 0;
+   int irows     = 0;
+   int wrows     = 0;
+
+   if ( ascnf )
+   {  // Scan and update data for Absorbance Scan Data
+      arows      = update_xpndata( runId, 'A' );
+      status     = ( status  ||  arows > oarows );
+DbgLv(1) << "XpDa: rei_dat: arows oarows status" << arows << oarows << status;
+ qDebug() << "XpDa: rei_dat: arows oarows status" << arows << oarows << status; 
+   }
+
+   if ( fscnf )
+   {  // Scan and update data for Fluorescence Scan Data
+      frows      = update_xpndata( runId, 'F' );
+      status     = ( status  ||  frows > ofrows );
+   }
+
+   if ( iscnf )
+   {  // Scan and update data for Interference Scan Data
+      irows      = update_xpndata( runId, 'I' );
+      status     = ( status  ||  irows > oirows );
+   }
+
+   if ( wscnf )
+   {  // Scan and update data for Wavelength Scan Data
+      wrows      = update_xpndata( runId, 'W' );
+      status     = ( status  ||  wrows > owrows );
+   }
+
+DbgLv(1) << "XpDa: rei_dat: arows frows irows wrows"
+   << arows << frows << irows << wrows << "status" << status;
+ qDebug() << "XpDa: rei_dat: arows frows irows wrows"
+   << arows << frows << irows << wrows << "status" << status;
+//*DEBUG*
+//status=true;
+//*DEBUG*
+
+   return status;
+}
+
+
 // Query and save data for a [AIFW]ScanData or [SC] table
 int US_XpnData::scan_xpndata( const int runId, const QChar scantype )
 {
@@ -700,9 +912,10 @@ int US_XpnData::scan_xpndata( const int runId, const QChar scantype )
    sqry.next();
    count           = sqry.value( 0 ).toInt();
 DbgLv(1) << "XpDa:s_x: sRunId" << sRunId << "count" << count;
+ 
    if ( count < 1 )
    {
-      return count;
+     return count;
    }
 
    emit status_text( tr( " Scanning %1 rows of %2 table..." )
@@ -993,6 +1206,410 @@ DbgLv(1) << "XpDa:scn:  nn=" << nn << " Vals nn-5 to nn-1 --";
 
    return rows;
 }
+
+
+// Query and save data for a [AIFW]ScanData or [SC] table: [for autoflow framework]
+int US_XpnData::scan_xpndata_auto( const int runId, const QChar scantype, bool& o_conn, QElapsedTimer elapse_t )
+{
+   QSqlQuery  sqry;
+   QSqlRecord qrec;
+   QString schname( "AUC_schema" );
+   QString tabname( "AbsorbanceScanData" );
+   tabname         = ( scantype == 'F' ) ? "FluorescenceScanData" : tabname;
+   tabname         = ( scantype == 'I' ) ? "InterferenceScanData" : tabname;
+   tabname         = ( scantype == 'W' ) ? "WavelengthScanData"   : tabname;
+   tabname         = ( scantype == 'S' ) ? "SystemStatusData"     : tabname;
+   tabname         = ( scantype == 'C' ) ? "CentrifugeRunProfile" : tabname;
+   QString sqtab   = schname + "." + tabname;
+   QString qrytab  = "\"" + schname + "\".\"" + tabname + "\"";
+   QString sRunId  = QString::number( runId );
+   QStringList cnames;
+   QList< int > cxs;
+
+   int count       = 0;
+   int rows        = 0;
+
+   // Get count of rows matching runId
+   QString qrytext = "SELECT count(*) from " + qrytab
+                   + " WHERE \"RunId\"=" + sRunId + ";";
+   if ( scantype == 'C' )
+      qrytext         = "SELECT count(*) from " + qrytab + ";";
+
+   qDebug() << "in [scan_xpndata_auto()]: scantype, qrytext -- "
+	    << scantype << qrytext;
+   
+   qDebug() << "[TIME 1] of scan_xpndata_auto(): " << int( elapse_t.elapsed() / 1000 ) << " sec";
+   
+   sqry            = dbxpn.exec( qrytext );
+   qDebug() << "sqry.isActive() ? " << sqry.isActive();
+
+   qDebug() << "[TIME 2] of scan_xpndata_auto(): " << int( elapse_t.elapsed() / 1000 ) << " sec";
+   
+   bool scan_xpndata_query_success = sqry.next();
+
+   qDebug() << "[TIME 3] of scan_xpndata_auto(): " << int( elapse_t.elapsed() / 1000 ) << " sec";
+   
+   count           = sqry.value( 0 ).toInt();
+DbgLv(1) << "XpDa:s_x: sRunId" << sRunId << "count" << count;
+   qDebug() << "XpDa:s_x: sRunId" << sRunId << "scan_xpndata_query_success, count: " << scan_xpndata_query_success << count;
+   
+   qDebug() << "[TIME 4] of scan_xpndata_auto(): " << int( elapse_t.elapsed() / 1000 ) << " sec";
+   
+   if( !scan_xpndata_query_success || !sqry.isActive() )
+     {
+       qDebug() << "in [scan_xpndata()], scan_xpndata_query_success, NO CONNECTION? "
+		<< scan_xpndata_query_success << !scan_xpndata_query_success;
+       qDebug() << "count = 0 ? " << count;
+       o_conn = false;
+
+       return count;
+     }
+   
+   if ( count < 1 )
+   {
+     qDebug() << "in [scan_xpndata()], count < 1...";
+     return count;
+   }
+
+   emit status_text( tr( " Scanning %1 rows of %2 table..." )
+                     .arg( count ).arg( tabname ) );
+
+   qDebug() << "[TIME 5] of scan_xpndata_auto(): " << int( elapse_t.elapsed() / 1000 ) << " sec";
+
+   // Get columns and determine indecies of fields
+   qrytext         = "SELECT * from " + qrytab
+                     + " WHERE \"RunId\"=" + sRunId
+                     + " ORDER BY \"DataId\" ;";
+   if ( scantype == 'C' )
+      qrytext         = "SELECT * from " + qrytab + ";";
+
+   int cols        = column_indexes( tabname, cnames, cxs );
+DbgLv(1) << "XpDa:s_x:  cols" << cols << "cnames" << cnames[0] << "..."
+ << cnames[cols-1] << "tabname" << tabname;
+
+ qDebug() << "XpDa:s_x:  cols" << cols << "cnames" << cnames[0] << "..."
+ << cnames[cols-1] << "tabname" << tabname;
+
+   sqry            = dbxpn.exec( qrytext );
+
+   qDebug() << "[TIME 6] of scan_xpndata_auto(): " << int( elapse_t.elapsed() / 1000 ) << " sec";
+
+   int isctyp    = ( scantype == 'A' ) ? 1 : 0;
+   isctyp        = ( scantype == 'F' ) ? 2 : isctyp;
+   isctyp        = ( scantype == 'I' ) ? 3 : isctyp;
+   isctyp        = ( scantype == 'W' ) ? 4 : isctyp;
+   isctyp        = ( scantype == 'S' ) ? 5 : isctyp;
+   isctyp        = ( scantype == 'C' ) ? 6 : isctyp;
+DbgLv(1) << "XpDa:s_x:  isctyp scantype" << isctyp << scantype
+ << "qrytext" << qrytext;
+
+ qDebug() << "XpDa:s_x:  isctyp scantype" << isctyp << scantype
+ << "qrytext" << qrytext;
+ 
+   // Loop to read data and store in internal array
+
+   while ( sqry.next() )
+   {
+      rows++;
+      emit status_text( tr( "Of %1 ScanData(%2) rows, queried row %3" )
+                        .arg( count ).arg( scantype ).arg( rows ) );
+
+      switch ( isctyp )
+      {
+         case 1:
+         {
+            update_ATable( sqry, cxs );
+//*DEBUG*
+if(rows<21 || (rows+21)>count) {
+int ldx=tAsdata.count()-1;
+tbAsData asdrow = tAsdata[ldx];
+DbgLv(1) << "XpDa:scn:    row" << rows << "run" << asdrow.runId
+ << "dat" << asdrow.dataId << "count" << asdrow.count;
+DbgLv(1) << "XpDa:scn:     rads0 rads1 vals0 vals1"
+ << asdrow.rads[0] << asdrow.rads[1] << asdrow.vals[0] << asdrow.vals[1];
+DbgLv(1) << "XpDa:scn:      etim scn temp speed omg estr"
+ << asdrow.exptime << asdrow.scanSeqN << asdrow.tempera << asdrow.speed
+ << asdrow.omgSqT << asdrow.expstart.toString();
+}
+//*DEBUG*
+
+            break;
+         }
+         case 2:
+         {
+            update_FTable( sqry, cxs );
+//*DEBUG*
+if(rows<9 || (rows+9)>count) {
+int ldx=tFsdata.count()-1;
+tbFsData fsdrow = tFsdata[ldx];
+DbgLv(1) << "XpDa:scn:    row" << rows << "run" << fsdrow.runId
+ << "dat" << fsdrow.dataId;
+DbgLv(1) << "XpDa:scn:       cnames" << cnames;
+}
+//*DEBUG*
+            break;
+         }
+         case 3:
+         {
+            update_ITable( sqry, cxs );
+//*DEBUG*
+if(rows<9 || (rows+9)>count) {
+int ldx=tIsdata.count()-1;
+tbIsData isdrow = tIsdata[ldx];
+DbgLv(1) << "XpDa:scn:    row" << rows << "run" << isdrow.runId
+ << "dat" << isdrow.dataId;
+DbgLv(1) << "XpDa:scn:     rads0 rads1 vals0 vals1"
+ << isdrow.rads[0] << isdrow.rads[1] << isdrow.vals[0] << isdrow.vals[1];
+}
+//*DEBUG*
+            break;
+         }
+         case 4:
+         {
+            update_WTable( sqry, cxs );
+//*DEBUG*
+if(rows<9 || (rows+9)>count) {
+int ldx=tWsdata.count()-1;
+tbWsData wsdrow = tWsdata[ldx];
+DbgLv(1) << "XpDa:scn:    row" << rows << "run dat count" << wsdrow.runId
+ << wsdrow.dataId << wsdrow.count;
+}
+//*DEBUG*
+            break;
+         }
+         case 5:
+         {
+            tbSyData sydrow;
+
+            sydrow.dataId    = sqry.value( cxs[  0 ] ).toInt();
+            sydrow.runId     = sqry.value( cxs[  1 ] ).toInt();
+            sydrow.expstart  = sqry.value( cxs[  2 ] ).toDateTime();
+            sydrow.exptime   = sqry.value( cxs[  3 ] ).toInt();
+            sydrow.tempera   = sqry.value( cxs[  4 ] ).toDouble();
+            sydrow.speed     = sqry.value( cxs[  5 ] ).toDouble();
+            sydrow.omgSqT    = sqry.value( cxs[  6 ] ).toDouble();
+            sydrow.stageNum  = sqry.value( cxs[  7 ] ).toInt();
+
+            tSydata << sydrow;
+
+	    qDebug() << "[TIME 7 'S'] of scan_xpndata_auto(): " << int( elapse_t.elapsed() / 1000 ) << " sec";
+//*DEBUG*
+if(rows<21 || (rows+21)>count) {
+DbgLv(1) << "XpDa:scn:    row" << rows << "run dat" << sydrow.runId << sydrow.dataId
+ << "time" << sydrow.exptime << "temp" << sydrow.tempera << "speed" << sydrow.speed
+ << "omg2t" << sydrow.omgSqT;
+
+ qDebug() << "XpDa:scn:    row" << rows << "run dat" << sydrow.runId << sydrow.dataId
+ << "time" << sydrow.exptime << "temp" << sydrow.tempera << "speed" << sydrow.speed
+ << "omg2t" << sydrow.omgSqT;
+ 
+ }
+//*DEBUG*
+            break;
+         }
+         case 6:
+         {
+            tbCrProf crprow;
+
+            crprow.frunId    = sqry.value( cxs[  0 ] ).toInt();
+            crprow.tempera   = sqry.value( cxs[  1 ] ).toDouble();
+            crprow.sbrake    = sqry.value( cxs[  2 ] ).toInt();
+            crprow.brrate    = sqry.value( cxs[  3 ] ).toDouble();
+            crprow.holdte    = sqry.value( cxs[  4 ] ).toInt();
+            crprow.holdsp    = sqry.value( cxs[  5 ] ).toInt();
+            crprow.sette     = sqry.value( cxs[  6 ] ).toInt();
+            crprow.sstintv   = sqry.value( cxs[  7 ] ).toDouble();
+            crprow.stages    = sqry.value( cxs[  8 ] ).toString();
+            crprow.stgrpm    = sqry.value( cxs[  9 ] ).toDouble();
+            crprow.stgstart  = sqry.value( cxs[ 10 ] ).toDouble();
+            crprow.stgdurat  = sqry.value( cxs[ 11 ] ).toDouble();
+            crprow.stgaccel  = sqry.value( cxs[ 12 ] ).toDouble();
+            crprow.paramids  = sqry.value( cxs[ 13 ] ).toString();
+
+            tCrprof << crprow;
+
+	    qDebug() << "[TIME 7 'C'] of scan_xpndata_auto(): " << int( elapse_t.elapsed() / 1000 ) << " sec";
+//*DEBUG*
+if(rows<21 || (rows+21)>count) {
+DbgLv(1) << "XpDa:scn:    row" << rows << "fugeRunId" << crprow.frunId
+ << "ssInterval" << crprow.sstintv;
+ qDebug() << "XpDa:scn:    row" << rows << "fugeRunId" << crprow.frunId
+ << "ssInterval" << crprow.sstintv;
+ 
+}
+//*DEBUG*
+            break;
+         }
+      }
+   }
+
+   if ( scantype == 'C' )
+   {  // Show mapping of RunId to ExperimentId to FugeRunProfileId
+      QList< int >  rExpIds;  // ExperimentRun experiment Ids
+      QList< int >  rRunIds;  // ExperimentRun run Ids
+      QList< int >  dExpIds;  // ExperimentDefinition experiment Ids
+      QList< int >  dFugIds;  // ExperimentDefinition fugeProfile Ids
+DbgLv(1) << "XpDa:scn:    tCrprof count" << tCrprof.count();
+
+      int iRunId      = sRunId.toInt();
+      tabname         = "ExperimentRun";
+      sqtab           = schname + "." + tabname;
+      qrytab          = "\"" + schname + "\".\"" + tabname + "\"";
+      qrytext         = "SELECT * from " + qrytab + ";";
+
+      qDebug() << "[TIME 8 'C'] of scan_xpndata_auto(): " << int( elapse_t.elapsed() / 1000 ) << " sec";
+      
+      sqry            = dbxpn.exec( qrytext );
+
+      qDebug() << "[TIME 9 'C'] of scan_xpndata_auto(): " << int( elapse_t.elapsed() / 1000 ) << " sec";
+      
+      qrec            = dbxpn.record( qrytab );
+
+      qDebug() << "[TIME 10 'C'] of scan_xpndata_auto(): " << int( elapse_t.elapsed() / 1000 ) << " sec";
+      
+      // Get indexes to ExperimentId and RunId
+      cols            = column_indexes( tabname, cnames, cxs );
+      int jexpid      = cnames.indexOf( "ExperimentId" );
+      int jrunid      = cnames.indexOf( "RunId" );
+      while ( sqry.next() )
+      {  // Build a list of ExperimentRun expIds and runIds
+         int rExpId      = sqry.value( jexpid ).toInt();
+         int rRunId      = sqry.value( jrunid ).toInt();
+         rExpIds << rExpId;
+         rRunIds << rRunId;
+      }
+
+      qDebug() << "[TIME 11 'C'] of scan_xpndata_auto(): " << int( elapse_t.elapsed() / 1000 ) << " sec";
+     
+      tabname         = "ExperimentDefinition";
+      sqtab           = schname + "." + tabname;
+      qrytab          = "\"" + schname + "\".\"" + tabname + "\"";
+      qrytext         = "SELECT * from " + qrytab + ";";
+
+      qDebug() << "[TIME 12 'C'] of scan_xpndata_auto(): " << int( elapse_t.elapsed() / 1000 ) << " sec";
+      
+      sqry            = dbxpn.exec( qrytext );
+
+      qDebug() << "[TIME 13 'C'] of scan_xpndata_auto(): " << int( elapse_t.elapsed() / 1000 ) << " sec";
+      
+      qrec            = dbxpn.record( qrytab );
+
+      qDebug() << "[TIME 14 'C'] of scan_xpndata_auto(): " << int( elapse_t.elapsed() / 1000 ) << " sec";
+      
+      cols            = column_indexes( tabname, cnames, cxs );
+      // Get indexes to ExperimentId and FugeRunProfileId
+      jexpid          = cnames.indexOf( "ExperimentId" );
+      int jfruid      = cnames.indexOf( "FugeRunProfileId" );
+      int jexpnm      = cnames.indexOf( "Name" );
+//DbgLv(1) << "XpDa:scn:    jexpid jfruid" << jexpid << jfruid;
+      while ( sqry.next() )
+      {  // Build a list of ExperimentDefinition expIds and fugeIds
+         int dExpId      = sqry.value( jexpid ).toInt();
+         int dFugId      = sqry.value( jfruid ).toInt();
+         dExpIds << dExpId;
+         dFugIds << dFugId;
+DbgLv(1) << "XpDa:scn:  dExpId" << dExpId << "dFugId" << dFugId
+ << "Name" << sqry.value(jexpnm).toString();
+      }
+
+      qDebug() << "[TIME 15 'C'] of scan_xpndata_auto(): " << int( elapse_t.elapsed() / 1000 ) << " sec";
+      
+//DbgLv(1) << "XpDa:scn: dExpIds" << dExpIds;
+//DbgLv(1) << "XpDa:scn: dFugIds" << dFugIds;
+      // Map experimentId to runId, then fugeId to experimentId
+      int rrndx       = rRunIds.indexOf( iRunId );
+DbgLv(1) << "XpDa:scn:  iRunId" << iRunId << "rrndx" << rrndx;
+      int iExpId      = rExpIds[ rrndx ];
+      int dendx       = dExpIds.indexOf( iExpId );
+DbgLv(1) << "XpDa:scn:  iExpId" << iExpId << "dendx" << dendx;
+      int iFugId      = ( dendx >= 0 ) ? dFugIds[ dendx ] : iExpId;
+      sstintv         = 0.0;
+      double sstintl  = 1000.0;
+DbgLv(1) << "XpDa:scn:    RunId" << iRunId << "ExperimentId" << iExpId
+ << "FugeRunProfileId" << iFugId; 
+
+      for ( int ii = 0; ii < tCrprof.count(); ii++ )
+      {  // Look for matching fuge Id in CentrifugeRunProfile values
+         sstintl          = tCrprof[ ii ].sstintv;
+
+         if ( tCrprof[ ii ].frunId == iFugId )
+         {  // Match found:  save corresponding SystemStatusInterval
+            sstintv          = sstintl;
+            break;
+         }
+      }
+
+      sstintv         = ( sstintv > 0.0 ) ? sstintv : sstintl;
+DbgLv(1) << "XpDa:scn:    FugId" << iFugId << "sstInterval" << sstintv;
+   }
+
+   if ( scantype == 'S' )
+   {  // Determine experiment time offset (time at last rms=0 point)
+      int ntssda        = tSydata.count();
+      fnzstx            = 0;
+
+      qDebug() << "[TIME 8 'S'] of scan_xpndata_auto(): " << int( elapse_t.elapsed() / 1000 ) << " sec";
+      
+      for ( int ii = 0; ii < ntssda; ii++ )
+      {  // Find the index to the first non-zero speed
+         int irSpeed       = (int)qRound( tSydata[ ii ].speed );
+         if ( irSpeed > 0 )
+         {
+            fnzstx            = ii;
+            break;
+         }
+      }
+
+      // First non-zero-speed time index
+      fnzstx            = ( fnzstx > 0 ) ? fnzstx : 1;                        //ALEXEY: if tSydata.count() == 1 (so only tSydata[0] exists), AND fnzstx was 0, THEN
+                                                                              //        fnzstx = ( fnzstx > 0 ) ? fnzstx : 1; will lead to fnzstx = 1 !!!
+                                                                              //        THEN   int etime1        = tSydata[ 1 ].exptime; WILL CRASH  
+      int t2tx          = fnzstx + 1;
+      // Experiment time offset (== negative of first time + interval)
+      //int etime1        = tSydata[ fnzstx ].exptime;
+
+      //ALEXEY: check additionally if tSydata[fnzstx] exists!!! 
+      int etime1 = 0;
+      if ( fnzstx < tSydata.count() )
+      {
+	etime1          = tSydata[ fnzstx ].exptime;
+      }
+      ////////////////
+      
+      int timeintv      = sstintv;
+      if ( t2tx < tSydata.count() )
+      {
+         timeintv          = tSydata[ t2tx ].exptime - etime1;
+      }
+      timeintv          = qMax( timeintv, 1 );
+      etimoff           = timeintv - etime1;
+//*DEBUG*
+DbgLv(1) << "XpDa:scn: fnzstx" << fnzstx << "etimoff" << etimoff
+ << "  etime1 timeintv" << etime1 << timeintv << sstintv;
+int nn=qMin(tSydata.count(),fnzstx+3);
+DbgLv(1) << "XpDa:scn:  nn=" << nn << " Vals nn-5 to nn-1 --";
+//if(nn>4) {
+// DbgLv(1) << "XpDa:scn: times:"
+//  << tSydata[nn-5].exptime
+//  << tSydata[nn-4].exptime
+//  << tSydata[nn-3].exptime
+//  << tSydata[nn-2].exptime
+//  << tSydata[nn-1].exptime;
+// DbgLv(1) << "XpDa:scn: speeds:"
+//  << tSydata[nn-5].speed
+//  << tSydata[nn-4].speed
+//  << tSydata[nn-3].speed
+//  << tSydata[nn-2].speed
+//  << tSydata[nn-1].speed; }
+//*DEBUG*
+
+ qDebug() << "[TIME 9 'S'] of scan_xpndata_auto(): " << int( elapse_t.elapsed() / 1000 ) << " sec";
+   }
+
+   return rows;
+}
+
+
 
 // Query and update data for a [AIFW]ScanData table
 int US_XpnData::update_xpndata( const int runId, const QChar scantype )
@@ -2152,6 +2769,393 @@ DbgLv(1) << "expA: TMST files written.";
 
    return nfiles;
 }
+
+// [AUTO, GMP] Export RawData to openAUC (.auc) and TMST (.tmst) files
+int US_XpnData::export_auc_auto( QVector< US_DataIO::RawData >& allData, bool& tmstampOK )
+{
+   int nfiles        = 0;
+#if 0
+   if ( ! is_raw )
+      return nfiles;
+#endif
+
+   int ss_reso        = 100;
+   // If debug_text so directs, change set_speed_resolution
+   QStringList dbgtxt = US_Settings::debug_text();
+   for ( int ii = 0; ii < dbgtxt.count(); ii++ )
+   {  // If debug text modifies ss_reso, apply it
+      if ( dbgtxt[ ii ].startsWith( "SetSpeedReso" ) )
+         ss_reso       = QString( dbgtxt[ ii ] ).section( "=", 1, 1 ).toInt();
+   }
+   int ntrips        = allData.count();
+   QString ftype     = QString( allData[ 0 ].type[ 0 ] ) +
+                       QString( allData[ 0 ].type[ 1 ] );
+   QString fbase     = runID + "." + ftype + ".";
+   QString cur_dir   = US_Settings::importDir() + "/" + runID + "/";
+DbgLv(1) << "expA: ntrips ftype fbase" << ntrips << ftype << fbase
+ << "cur_dir" << cur_dir;
+   QDir dir;
+   if ( ! dir.exists( cur_dir ) )
+   {
+      if ( dir.mkpath( cur_dir ) )
+      {
+         qDebug() << "Create directory " << cur_dir;
+      }
+      else
+      {
+         qDebug() << "*ERROR* Unable to create directory " << cur_dir;
+      }
+   }
+
+   // Output AUC files and find first dataset with maximum scans
+   int mxscans       = 0;
+   int iiuse         = 0;
+DbgLv(1) << "expA: ktrips" << triples.count() << "ktnodes" << trnodes.count();
+   if ( trnodes.count() == 0  &&  ntrips > 0 )
+   {
+      for ( int ii = 0; ii < ntrips; ii++ )
+      {
+         QString tripl = triples[ ii ];
+         QString tnode = tripl.replace( " / ", "." );
+         trnodes << tnode;
+      }
+DbgLv(1) << "expA: ntrips" << ntrips << "ktnodes" << trnodes.count();
+   }
+
+   for ( int ii = 0; ii < ntrips; ii++ )
+   {  // Create a file for each triple
+      US_DataIO::RawData* rdata = &allData[ ii ];
+#if 0
+      QString trnode    = QString::number( rdata->cell ) + "." +
+                          QString( rdata->channel ) + "." +
+                          QString().sprintf( "%03d",
+                                qRound( rdata->scanData[ 0 ].wavelength ) );
+#endif
+      QString trnode    = trnodes[ ii ];
+//DbgLv(1) << "expA: ii" << ii << "triples[ii]" << triples[ii]
+// << "trnodes[ii]" << trnodes[ii] << "trnode" << trnode;
+DbgLv(1) << "expA: ii" << ii << "trnodes[ii]" << trnodes[ii] << "trnode" << trnode;
+      QString fname     = fbase + trnode + ".auc";
+      QString fpath     = cur_dir + fname;
+
+      US_DataIO::writeRawData( fpath, *rdata );
+
+      nfiles++;
+
+      // Find index to first dataset with maximum scans
+      int kscans        = rdata->scanCount();
+
+      if ( kscans > mxscans )
+      {
+         mxscans           = kscans;
+         iiuse             = ii;
+      }
+DbgLv(1) << "expA:   nf" << nfiles << "fname" << fname
+ << "kscans" << kscans << "mxscans" << mxscans << "iiuse" << iiuse;
+   }
+
+   // Create a speed step vector
+   QVector< US_SimulationParameters::SpeedProfile > speedsteps;
+   US_DataIO::RawData* udata = &allData[ iiuse ];
+
+   US_SimulationParameters::computeSpeedSteps( &udata->scanData, speedsteps );
+
+   // Output time state files
+
+   QStringList fkeys;
+   QStringList ffmts;
+   fkeys << "Time"        << "RawSpeed" << "SetSpeed" << "Omega2T"
+         << "Temperature" << "Step"     << "Scan";
+   ffmts << "I4"          << "F4"       << "I4"       << "F4"
+         << "F4"          << "I2"       << "I2";
+
+   US_TimeState tsobj;
+
+   QString tspath    = cur_dir + runID + ".time_state.tmst";
+   int ntimes        = udata->scanCount();
+   int ntssda        = tSydata.count();
+   double e_utime    = udata->scanData[ ntimes - 1 ].seconds;
+   double e_stime    = ntssda > 0 ? tSydata[ ntssda - 1 ].exptime : 0.0;
+DbgLv(1) << "expA:   ntimes ntssda" << ntimes << ntssda
+ << "e_utime e_stime" << e_utime << e_stime;
+
+   // If last scan time beyond last sysstat time, reload System Status
+   if ( e_utime > e_stime )
+   {
+      int idRun         = tSydata[ 0 ].runId;
+      tSydata.clear();
+      scan_xpndata( idRun, 'S' );
+      ntssda            = tSydata.count();
+      e_stime           = ntssda > 0 ? tSydata[ ntssda - 1 ].exptime : 0.0;
+DbgLv(1) << "expA:    UPDATED ntssda" << ntssda << "e_stime" << e_stime << "idRun" << idRun;
+   }
+//*DEBUG*
+QVector< double > xv_scn;
+QVector< double > yv_scn;
+QVector< double > xv_tms;
+QVector< double > yv_tms;
+double utime1=udata->scanData[0].seconds;
+double uomgt1=udata->scanData[0].omega2t;
+double utime2=udata->scanData[ntimes-1].seconds;
+double uomgt2=udata->scanData[ntimes-1].omega2t;
+double avgrpm=0.0;
+for (int jj=0; jj<ntimes; jj++)
+{
+ avgrpm += udata->scanData[jj].rpm;
+ xv_scn << udata->scanData[jj].seconds;
+ yv_scn << udata->scanData[jj].omega2t;
+}
+avgrpm /= (double)ntimes;
+double delta_t = utime2 - utime1;
+double delta_o = uomgt2 - uomgt1;
+double cdelt_o = sq( avgrpm * M_PI / 30. ) * delta_t;
+DbgLv(1) << "expA:DLT:SCN: time1 time2" << utime1 << utime2;
+DbgLv(1) << "expA:DLT:SCN: omgt1 omgt2" << uomgt1 << uomgt2;
+DbgLv(1) << "expA:DLT:SCN: delta-t delta-o" << delta_t << delta_o;
+DbgLv(1) << "expA:DLT:SCN: avgrpm cdelt-o" << avgrpm << cdelt_o;
+int jutime1=(int)utime1;
+int jutime2=(int)utime2;
+int jt1=0;
+int jt2=0;
+for ( int jj = 0; jj<ntssda; jj++ )
+{
+ int jtime=tSydata[jj].exptime+etimoff;
+ if ( jtime < jutime1 ) continue;
+ if ( jtime >= jutime2 )
+ {
+  jt2 = jj;
+  break;
+ }
+ else if ( jt1 == 0 )
+ {
+  jt1 = jj;
+ }
+}
+double stime1=tSydata[jt1].exptime+etimoff;
+double stime2=tSydata[jt2].exptime+etimoff;
+double somgt1=tSydata[jt1].omgSqT;
+double somgt2=tSydata[jt2].omgSqT;
+avgrpm=0.0;
+for (int jj=jt1; jj<=jt2; jj++)
+{
+ avgrpm += tSydata[jj].speed;
+ xv_tms << tSydata[jj].exptime+etimoff;
+ yv_tms << tSydata[jj].omgSqT;
+}
+avgrpm /= (double)(jt2-jt1+1);
+delta_t = stime2 - stime1;
+delta_o = somgt2 - somgt1;
+cdelt_o = sq( avgrpm * M_PI / 30. ) * delta_t;
+DbgLv(1) << "expA:DLT:TMS: time1 time2" << stime1 << stime2;
+DbgLv(1) << "expA:DLT:TMS: omgt1 omgt2" << somgt1 << somgt2;
+DbgLv(1) << "expA:DLT:TMS: delta-t delta-o" << delta_t << delta_o;
+DbgLv(1) << "expA:DLT:TMS: avgrpm cdelt-o" << avgrpm << cdelt_o;
+double* xa_scn = xv_scn.data();
+double* ya_scn = yv_scn.data();
+double* xa_tms = xv_tms.data();
+double* ya_tms = yv_tms.data();
+double slope_s, slope_t, icept_s, icept_t;
+double sigma_s, sigma_t, corre_s, corre_t;
+int nscnp = xv_scn.count();
+int ntmsp = xv_tms.count();
+US_Math2::linefit( &xa_scn, &ya_scn, &slope_s, &icept_s, &sigma_s, &corre_s, nscnp );
+US_Math2::linefit( &xa_tms, &ya_tms, &slope_t, &icept_t, &sigma_t, &corre_t, ntmsp );
+DbgLv(1) << "expA:DLT:SCN: npoint" << nscnp << "x1,y1,x2,y2" << xa_scn[0] << ya_scn[0] << xa_scn[nscnp-1] << ya_scn[nscnp-1];
+DbgLv(1) << "expA:DLT:TMS: npoint" << ntmsp << "x1,y1,x2,y2" << xa_tms[0] << ya_tms[0] << xa_tms[ntmsp-1] << ya_tms[ntmsp-1];
+DbgLv(1) << "expA:DLT:SCN:  slope" << slope_s << "intercept" << icept_s;
+DbgLv(1) << "expA:DLT:TMS:  slope" << slope_t << "intercept" << icept_t;
+DbgLv(1) << "expA:DLT:SCN:   stddev" << sigma_s << "correlation" << corre_s;
+DbgLv(1) << "expA:DLT:TMS:   stddev" << sigma_t << "correlation" << corre_t;
+US_Math2::linefit( &ya_scn, &xa_scn, &slope_s, &icept_s, &sigma_s, &corre_s, nscnp );
+US_Math2::linefit( &ya_tms, &xa_tms, &slope_t, &icept_t, &sigma_t, &corre_t, ntmsp );
+DbgLv(1) << "expA:DLT:SCN: npoint" << nscnp << "x1,y1,x2,y2" << ya_scn[0] << xa_scn[0] << ya_scn[nscnp-1] << xa_scn[nscnp-1];
+DbgLv(1) << "expA:DLT:TMS: npoint" << ntmsp << "x1,y1,x2,y2" << ya_tms[0] << xa_tms[0] << ya_tms[ntmsp-1] << xa_tms[ntmsp-1];
+DbgLv(1) << "expA:DLT:SCN:  slope" << slope_s << "intercept" << icept_s;
+DbgLv(1) << "expA:DLT:TMS:  slope" << slope_t << "intercept" << icept_t;
+DbgLv(1) << "expA:DLT:SCN:   stddev" << sigma_s << "correlation" << corre_s;
+DbgLv(1) << "expA:DLT:TMS:   stddev" << sigma_t << "correlation" << corre_t;
+//*DEBUG*
+
+   tsobj.open_write_data( tspath );      // Initialize TMST creation
+
+   tsobj.set_keys( fkeys, ffmts );       // Define keys and formats
+
+   if ( ntssda < ntimes )
+   {
+DbgLv(1) << "expA: ntimes" << ntimes << "tspath" << tspath;
+      for ( int ii = 0;  ii < ntimes; ii++ )
+      {  // Create a record for each scan
+         US_DataIO::Scan* uscan = &udata->scanData[ ii ];
+         int scannbr       = ii + 1;           // Scan number
+         double rawSpeed   = uscan->rpm;
+         double tempera    = uscan->temperature;
+         double omega2t    = uscan->omega2t;
+         double time       = uscan->seconds;
+         double setSpeed   = qRound( rawSpeed / (double)ss_reso ) * (double)ss_reso;
+
+         // Find the speed step (stage) to which this scan belongs
+         int jstage        = 0;
+         double ssDiff     = 1e+99;
+
+         for( int jj = 0; jj < speedsteps.count(); jj++ )
+         {
+            double ssSpeed    = speedsteps[ jj ].set_speed;
+            double jjDiff     = qAbs( ssSpeed - setSpeed );
+
+            if ( jjDiff < ssDiff )
+            {
+               ssDiff            = jjDiff;
+               jstage            = jj;
+            }
+         }
+
+         int istagen       = jstage + 1;
+         setSpeed          = speedsteps[ jstage ].set_speed;
+         int isSpeed       = (int)qRound( setSpeed );
+DbgLv(1) << "expA:   ii" << ii << "scan" << scannbr << "stage" << istagen
+ << "speed" << rawSpeed << isSpeed << "time" << time;
+
+         // Set values for this scan
+         tsobj.set_value( fkeys[ 0 ], time     );      // Time in seconds
+         tsobj.set_value( fkeys[ 1 ], rawSpeed );      // Raw speed
+         tsobj.set_value( fkeys[ 2 ], isSpeed  );      // Set (stage) speed
+         tsobj.set_value( fkeys[ 3 ], omega2t  );      // Omega-Squared-T
+         tsobj.set_value( fkeys[ 4 ], tempera  );      // Temperature
+         tsobj.set_value( fkeys[ 5 ], istagen  );      // Stage (speed step)
+         tsobj.set_value( fkeys[ 6 ], scannbr  );      // Scan
+
+         // Write the scan record
+         tsobj.flush_record();
+      }
+   }
+   else
+   {  // Build TMST from System Status Data table values
+      int ftx           = 1;
+      int stgoff        = 0;
+
+      for ( int ii = 0; ii < ntssda; ii++ )
+      {  // Find the index to the first non-zero speed
+         int irSpeed       = (int)qRound( tSydata[ ii ].speed );
+         if ( irSpeed > 0 )
+         {
+            ftx               = ii;
+            stgoff            = 1 - tSydata[ ii ].stageNum;
+            int jj            = ntssda - 1;
+            while ( tSydata[ jj ].speed < irSpeed  &&  jj > 1 )
+            {
+               jj--;
+            }
+            ntssda            = jj + 1;
+            break;
+         }
+      }
+
+      ftx               = ( ftx > 0 ) ? ( ftx - 1 ) : 0;
+      etimoff           = -tSydata[ ftx ].exptime;   // Experiment time offset
+DbgLv(1) << "expA: ftx" << ftx << "etimoff" << etimoff << "ntssda" << ntssda;
+      QList< int > sctimes;
+
+      for ( int ii = 0; ii < ntimes; ii++ )
+      {  // Build a list of scan times
+         US_DataIO::Scan* uscan = &udata->scanData[ ii ];
+         int time          = (int)qRound( uscan->seconds );
+         sctimes << time;
+DbgLv(1) << "expA:  ii" << ii << "sctime" << time;
+      }
+
+      ntimes            = ntssda;
+      int ietime        = (int)qRound( e_utime ) + 60;
+      int time_n        = -1;                       // Initial values
+      double speed_n    = 0.0;
+      double omg2t_n    = 0.0;
+      double tempe_n    = tSydata[ ftx ].tempera;
+      double omg2t_sm   = 0.0;
+  
+      for ( int ii = ftx; ii < ntimes; ii++ )
+      {  // Create a record for each system status row
+         int time_p        = time_n;                // Previous values
+         double speed_p    = speed_n;
+         double omg2t_p    = omg2t_n;
+         double tempe_p    = tempe_n;
+         int time_e        = tSydata[ ii ].exptime;
+         time_n            = time_e + etimoff;
+         speed_n           = tSydata[ ii ].speed;
+         omg2t_n           = tSydata[ ii ].omgSqT;
+         tempe_n           = tSydata[ ii ].tempera;
+         int stage         = tSydata[ ii ].stageNum + stgoff;
+         if ( time_e > ietime  ||
+              ( ( speed_n < 100 ) && ( ii > ( ftx + 10 ) ) ) )
+         {  // Time well beyond last scan or speed dropping back down to zero
+DbgLv(1) << "expA:   ii" << ii << "ftx" << ftx << "stage" << stage << "time_n" << time_n
+ << "speed_n" << speed_n << "omg2t_n" << omg2t_n << "*BREAK*";
+
+            if ( ii == ftx )
+	      {
+		tmstampOK = false;
+		qDebug() << "tmstateOK ? " << tmstampOK;
+	      }
+            break;
+         }
+         int timeinc       = time_n - time_p;       // Increments
+         double trange     = timeinc > 0 ? ( 1.0 / (double)timeinc ) : 1.0;
+         double speed_i    = ( speed_n - speed_p ) * trange;
+         double omg2t_i    = ( omg2t_n - omg2t_p ) * trange;
+         double tempe_i    = ( tempe_n - tempe_p ) * trange;
+         int time_c        = time_p;                // Initial 1-sec values
+         double rawSpeed   = speed_p;
+         double omega2t    = omg2t_p;
+         double tempera    = tempe_p;
+DbgLv(1) << "expA:   ii" << ii << "stage" << stage << "time_n" << time_n
+ << "speed_n" << speed_n << "omg2t_n" << omg2t_n;
+
+         for ( int jj = 0; jj < timeinc; jj++ )
+         {  // Expand values for each second in present range
+            time_c++;                                // Bump to next second
+            rawSpeed         += speed_i;
+            omega2t          += omg2t_i;
+            tempera          += tempe_i;
+
+            omg2t_sm         += sq( rawSpeed * M_PI / 30.0 );
+            int isSpeed       = (int)qRound( rawSpeed / (double)ss_reso ) * ss_reso;
+
+            // Set scan number to matching-time scan or 0
+            int scannbr       = sctimes.indexOf( time_c );
+//DbgLv(1) << "expA:                 scan" << scannbr;
+            scannbr           = ( scannbr >= 0 ) ? ( scannbr + 1 ) : 0;
+ 
+DbgLv(1) << "expA:      jj" << jj << "scan" << scannbr
+ << "time_c" << time_c << "speed" << rawSpeed << isSpeed
+ << "omg2t(rec)" << omega2t << "omg2t(sum)" << omg2t_sm;
+            omega2t           = omg2t_sm;
+
+            // Set values for this time
+            tsobj.set_value( fkeys[ 0 ], time_c   );  // Time in seconds
+            tsobj.set_value( fkeys[ 1 ], rawSpeed );  // Raw speed
+            tsobj.set_value( fkeys[ 2 ], isSpeed  );  // Set (stage) speed
+            tsobj.set_value( fkeys[ 3 ], omega2t  );  // Omega-Squared-T
+            tsobj.set_value( fkeys[ 4 ], tempera  );  // Temperature
+            tsobj.set_value( fkeys[ 5 ], stage    );  // Stage (speed step)
+            tsobj.set_value( fkeys[ 6 ], scannbr  );  // Scan
+
+            // Write the scan record
+            tsobj.flush_record();
+         }  // END: loop thru seconds in status data interval
+      }  // END: table data loop
+   }  // END: have System Status Data
+
+   // Complete write of TMST file and defining XML
+   if ( tsobj.close_write_data() == 0 )
+   {
+      tsobj.write_defs( 0.0, "Optima" );
+      nfiles        += 2;
+DbgLv(1) << "expA: TMST files written.";
+   }
+
+   return nfiles;
+}
+
+
+
 
 // Return a count of a specified type
 int US_XpnData::countOf( QString key )

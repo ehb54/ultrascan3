@@ -230,6 +230,7 @@ US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
    connect( this, SIGNAL( pass_used_instruments( QStringList & ) ), epanExp, SLOT( pass_used_instruments( QStringList &)  ) );
    
    connect( epanExp, SIGNAL( switch_to_live_update( QMap < QString, QString > &) ), this, SLOT( switch_to_live_update( QMap < QString, QString > & )  ) );
+   connect( epanExp, SIGNAL( switch_to_import( QMap < QString, QString > &) ), this, SLOT( switch_to_post_processing( QMap < QString, QString > & )  ) );
    connect( this   , SIGNAL( pass_to_live_update( QMap < QString, QString > &) ),   epanObserv, SLOT( process_protocol_details( QMap < QString, QString > & )  ) );
    connect( epanExp, SIGNAL( to_autoflow_records( ) ), this, SLOT( to_autoflow_records( ) ) );
    connect( epanExp, SIGNAL( switch_to_initAutoflow( ) ), this, SLOT( close_all( )  ) );
@@ -479,6 +480,7 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    connect( this, SIGNAL( pass_used_instruments( QStringList & ) ), epanExp, SLOT( pass_used_instruments( QStringList &)  ) );
    
    connect( epanExp, SIGNAL( switch_to_live_update( QMap < QString, QString > &) ), this, SLOT( switch_to_live_update( QMap < QString, QString > & )  ) );
+   connect( epanExp, SIGNAL( switch_to_import( QMap < QString, QString > &) ), this, SLOT( switch_to_post_processing( QMap < QString, QString > & )  ) );
    connect( this   , SIGNAL( pass_to_live_update( QMap < QString, QString > &) ),   epanObserv, SLOT( process_protocol_details( QMap < QString, QString > & )  ) );
    connect( epanExp, SIGNAL( to_autoflow_records( ) ), this, SLOT( to_autoflow_records( ) ) );
    connect( epanExp, SIGNAL( switch_to_initAutoflow( ) ), this, SLOT( close_all( )  ) );
@@ -1709,6 +1711,8 @@ void US_InitDialogueGui::initRecordsDialogue( void )
   QString failedID     = protocol_details[ "failedID" ];
 
   QString expType      = protocol_details[ "expType" ];
+  QString instName     = protocol_details[ "OptimaName" ];
+  QString dataSource   = protocol_details[ "dataSource" ];
     
   QDir directory( currDir );
   
@@ -1745,7 +1749,8 @@ void US_InitDialogueGui::initRecordsDialogue( void )
 		       + tr("<br>")
 		       + tr("<b>Reason:&emsp;</b> ") + failed_details[ "failedMsg" ] );
 		      		       
-      msgBox_f.setInformativeText( tr("<font color='red'><b>ATTENTION:</b></font> If you choose to Procceed, all existing data for this run will be deleted from DB, ")
+      msgBox_f.setInformativeText( tr("<font color='red'><b>ATTENTION:</b></font> If you choose to Procceed, ")
+				   + tr("all existing data for this run will be deleted from DB, ")
 				   + tr("and the processing flow will reinitialize. ")
 				   + tr("<br><br><font color='red'><b>This action is not reversible. Proceed?</b></font>"));
       
@@ -1786,6 +1791,9 @@ void US_InitDialogueGui::initRecordsDialogue( void )
 	  do_run_tables_cleanup( protocol_details );
 
 	  do_run_data_cleanup( protocol_details );
+
+	  //Create fresh autoflowStatus record with the submitter person info & timestamp: 
+	  do_create_autoflowStatus_for_failedRun( protocol_details );
 	  
 	  //Switch to 2. LIVE_UPDATE:
 	  emit switch_to_live_update_init( protocol_details );
@@ -1811,16 +1819,22 @@ void US_InitDialogueGui::initRecordsDialogue( void )
       if ( stage == "EDITING" )
 	{
 	  //do something
-	  //switch_to_post_processing( currDir, ProtName, invID_passed, correctRadii );
-	  
-	  if ( currDir.isEmpty() || !directory.exists() )
+	  if ( currDir.isEmpty() || !directory.exists()  )
 	    {
-	      //switch_to_live_update( protocol_details );
-	      emit switch_to_live_update_init( protocol_details );
+	      if ( instName. contains("Optima") && dataSource == "INSTRUMENT" )
+		emit switch_to_live_update_init( protocol_details );
+	      else // disk Data
+		{
+		  QMessageBox::warning( this, tr( "Data Absent on Disk!" ),
+					tr( "No data associated with this run is found on the disk! \n" ) );
+		  initAutoflowPanel();
+		  //emit to_initAutoflow();
+		  return;
+		}
 	    }
 	  else
 	    {
-	      //switch_to_post_processing( protocol_details );
+	      qDebug() << "DataDisk, proceeding...";
 	      emit switch_to_post_processing_init( protocol_details );
 	    }
 	  
@@ -1985,6 +1999,88 @@ void US_InitDialogueGui::do_run_tables_cleanup( QMap < QString, QString > run_de
     }
   
 }
+
+//Create fresh autofowStatus record: failed run re-init
+void US_InitDialogueGui::do_create_autoflowStatus_for_failedRun( QMap < QString, QString > run_details )
+{
+  // Check DB connection
+  US_Passwd pw;
+  QString masterpw = pw.getPasswd();
+  US_DB2* db = new US_DB2( masterpw );
+  
+  if ( db->lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "Connection Problem: Failed Run Cleanup" ),
+			    tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
+      return;
+    }
+
+  QStringList qry;
+
+  //first, get current user (submitter) info
+  qry.clear();
+  qry <<  QString( "get_user_info" );
+  db -> query( qry );
+  db -> next();
+  int     u_ID    = db->value( 0 ).toInt();
+  QString u_fname = db->value( 1 ).toString();
+  QString u_lname = db->value( 2 ).toString();
+  QString u_email = db->value( 4 ).toString();
+  int     u_level = db->value( 5 ).toInt();
+
+  //autoflowStatus record
+  QString createGMPRun_Json;
+  createGMPRun_Json. clear();
+  createGMPRun_Json += "{ \"Person\": ";
+  
+  createGMPRun_Json += "[{";
+  createGMPRun_Json += "\"ID\":\""     + QString::number( u_ID )     + "\",";
+  createGMPRun_Json += "\"fname\":\""  + u_fname                     + "\",";
+  createGMPRun_Json += "\"lname\":\""  + u_lname                     + "\",";
+  createGMPRun_Json += "\"email\":\""  + u_email                     + "\",";
+  createGMPRun_Json += "\"level\":\""  + QString::number( u_level )  + "\"";
+  createGMPRun_Json += "}],";
+  
+  //createGMPRun_Json += "\"Comment\": \""   + gmp_submitter_map[ "Comment:" ]   + "\"";
+  QString resubComm = tr("Resubmitting Failed GMP Run");
+  createGMPRun_Json += "\"Comment\": \""   + resubComm   + "\"";
+  
+  createGMPRun_Json += "}";
+  
+  qry. clear();
+  qry << "new_autoflowStatusGMPCreate_record"
+      << run_details[ "autoflowID" ]
+      << createGMPRun_Json;
+  
+  qDebug() << "[FAILED run init]: new_autoflowStatusGMPCreate_record qry -- " << qry;
+  
+  int autoflowStatusID = 0;
+  autoflowStatusID = db->functionQuery( qry );
+  
+  if ( !autoflowStatusID )
+    {
+      QMessageBox::warning( this, tr( "AutoflowStatus Record Problem" ),
+			    tr( "autoflowStatus (FAILED GMP run re-INIT): "
+				"There was a problem with creating a record in autoflowStatus table \n" ) + db->lastError() );
+      
+      return;
+    }
+  qDebug() << "in do_create_autoflowStatus_for_failedRun: createGMPRun_Json -- " << createGMPRun_Json;
+  
+  run_details[ "statusID" ] = QString::number( autoflowStatusID );
+  
+  /************** finally, update autoflow record with StatusID: ****************/
+  qry. clear();
+  qry <<  "update_autoflow_with_statusID"
+      <<  run_details[ "autoflowID" ]
+      <<  QString::number( autoflowStatusID );
+  
+  qDebug() << "[FAILED run init]: update_autoflow_with_statusID qry -- " << qry;
+  db->query( qry );
+
+}
+
+
 
 //Read channel-to-ref_wvl info from AProfile
 bool US_InitDialogueGui::readAProfileBasicParms_auto( QXmlStreamReader& xmli )
@@ -2390,7 +2486,12 @@ int US_InitDialogueGui::list_all_autoflow_records( QList< QStringList >& autoflo
       qDebug() << "1. IN list_all_autoflow_records(), autoflowentry -- " << autoflowentry;
 	
       if ( time_started.toString().isEmpty() )
-	autoflowentry << QString( tr( "NOT STARTED" ) );
+	{
+	  if ( optimaname. contains("Optima") ) 
+	    autoflowentry << QString( tr( "NOT STARTED" ) );
+	  else
+	    autoflowentry << QString( tr( "N/A" ) );
+	}
       else
 	{
 	  if ( status == "LIVE_UPDATE" )
@@ -2647,6 +2748,7 @@ QMap< QString, QString> US_InitDialogueGui::read_autoflow_record( int autoflowID
 	   protocol_details[ "gmpReviewID" ]   = db->value( 25 ).toString();
 
 	   protocol_details[ "expType" ]       = db->value( 26 ).toString();
+	   protocol_details[ "dataSource" ]    = db->value( 27 ).toString();
 	 }
      }
    else
@@ -2805,6 +2907,9 @@ US_ExperGui::US_ExperGui( QWidget* topw )
    connect( sdiag, SIGNAL( to_live_update( QMap < QString, QString > & ) ),
 	    this,  SLOT( to_live_update( QMap < QString, QString > & ) ) );
 
+   connect( sdiag, SIGNAL( to_import( QMap < QString, QString > & ) ),
+	    this,  SLOT( to_import( QMap < QString, QString > & ) ) );
+
    connect( this, SIGNAL( reset_experiment( QString & ) ), sdiag, SLOT( us_exp_clear( QString & ) ) );
    
    connect( sdiag, SIGNAL( exp_cleared( ) ), this, SLOT( exp_cleared( ) ) );
@@ -2876,6 +2981,12 @@ void US_ExperGui::to_initAutoflow( void )
 void US_ExperGui::to_live_update( QMap < QString, QString > & protocol_details)
 {
   emit switch_to_live_update( protocol_details );
+}
+
+//When run is submitted with Data from Disk.. 
+void US_ExperGui::to_import( QMap < QString, QString > & protocol_details )
+{
+  emit switch_to_import( protocol_details );
 }
 
 //When US_Experiment is closed

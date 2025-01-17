@@ -1147,6 +1147,7 @@ void US_DDistr_Combine::plot_distr_auto( DistrDesc ddesc, QString distrID, QMap<
   QString ranges_p;
   
   qDebug() << "c_ranges, begin -- " <<  c_parms[ "Ranges" ];
+  qDebug() << "c_parms.keys() -- " << c_parms.keys();
   
   QMap<QString, QString >::iterator jj;
   for ( jj = c_parms.begin(); jj != c_parms.end(); ++jj )
@@ -1159,6 +1160,16 @@ void US_DDistr_Combine::plot_distr_auto( DistrDesc ddesc, QString distrID, QMap<
 	xmax_p = jj.value().toDouble();
       else if ( jj.key().contains( "Ranges" ) )
 	ranges_p = jj.value();
+      else if ( jj.key().contains( "s_ranges" ) )
+	{
+	  xmin_p = jj.value().split(",")[0].toDouble();
+	  xmax_p = jj.value().split(",")[1].toDouble();
+	}
+      else if ( jj.key().contains( "k_ranges" ) )
+	{
+	  xmin_p = jj.value().split(",")[0].toDouble();
+	  xmax_p = jj.value().split(",")[1].toDouble();
+	}
     }
 
   qDebug() << "In plot_distr_auto(): sigma_p, xmin_p, xmax_p, ranges_p -- "
