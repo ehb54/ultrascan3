@@ -101,6 +101,8 @@ class US_2dsa : public US_AnalysisBase2
         QString temp_Id_name();
 
     private:
+        US_Math_BF::Band_Forming_Gradient* bfg;//! \brief BandFormingGradient to be used
+        
         QGridLayout* progressLayout; //!< Layout for progress display.
 
         US_Editor* te_results; //!< Text editor for results.

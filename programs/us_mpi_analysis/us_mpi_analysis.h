@@ -172,6 +172,16 @@ class US_MPI_Analysis : public QObject
         QDateTime startTime;                //!< Start time
 
         QList< DATASET* > data_sets;        //!< List of datasets
+        QList< US_Math_BF::Band_Forming_Gradient> data_sets_bfgs; //!< List of band forming gradients
+        QList< US_Math_BF::Band_Forming_Gradient* > bfgs; //!< List of pointers to band forming gradients
+        QList< US_LammAstfvm::CosedData *>          data_sets_csDs; //!< List of pointers to CosedData
+        QList< US_LammAstfvm::CosedData *>          csDs; //!< List of pointers to CosedData
+        QList<QList<US_CosedComponent>*>            data_sets_cosed_components; //!< List of pointers to lists of cosedimenting components
+        US_Math_BF::Band_Forming_Gradient* bandFormingGradient; //!< pointer to current bfg
+        QList<QList<US_CosedComponent>>             cosedcomponents; //!< List of list of cosedimenting components
+        QList<QMap<QString, US_DataIO::RawData>*>   data_sets_cosed_comp_datas; //!< List of Maps to Cosed_compdatas
+        QList<bool>                                 data_sets_codiff_needed; //!< List of bools if codiff needed
+        QList<bool>                                 data_sets_cosed_needed; //!< List of bools if cosedimenting is needed
 
         //! \class MPI_Job
         //! \brief Class representing an MPI job.
@@ -197,6 +207,8 @@ class US_MPI_Analysis : public QObject
                 double bottom_value; //!< Bottom value
                 int dataset_offset; //!< Dataset offset
                 int dataset_count;  //!< Dataset count
+                int     bfg_offset; //!< Bfg offset
+                int     csd_offset; //!< csd offset
 
                 //! \brief Constructor for MPI_Job
                 MPI_Job()
@@ -209,6 +221,7 @@ class US_MPI_Analysis : public QObject
                     bottom_value = 0.0;
                     dataset_offset = 0;
                     dataset_count = 1;
+                    bfg_offset     = -1;
                 }
         };
 
@@ -367,6 +380,7 @@ class US_MPI_Analysis : public QObject
         void     init_solutes  ( void );
         void     fill_queue    ( void );
         void     limitBucket   ( Bucket& );
+        void     calculate_cosed( void );
 
         // Master
         void     _2dsa_master      ( void );
@@ -404,7 +418,7 @@ class US_MPI_Analysis : public QObject
         // Worker
         void     _2dsa_worker      ( void );
 
-        void     calc_residuals     ( int, int, SIMULATION& );
+        void     calc_residuals     ( int, int, SIMULATION&, int = -1 );
 
         // GA Master
         void ga_master       ( void );

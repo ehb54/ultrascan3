@@ -86,6 +86,7 @@ US_Plot::US_Plot( QwtPlot*& parent_plot, const QString& title,
 
    QToolButton* btnCSV = new QToolButton( toolBar );
    btnCSV->setText( "CSV" );
+
    btnCSV->setIcon( US_Images::getIcon( US_Images::TABLE ) );
    btnCSV->setToolButtonStyle( Qt::ToolButtonTextUnderIcon );
    btnCSV->setFont( buttonFont );
@@ -300,6 +301,23 @@ void US_Plot::zoom( bool on )
 }
 
 void US_Plot::csv( void )
+{
+    QDir dir;
+    QString reportDir = US_Settings::reportDir();
+    if ( ! dir.exists( reportDir ) ) dir.mkpath( reportDir );
+
+    QString fileName = QFileDialog::getSaveFileName( plot,
+                                                     tr( "Export File Name" ), reportDir,
+                                                     tr( "SVG Documents (*.svgz)" ) );
+
+    if ( ! fileName.isEmpty() )
+    {
+        if ( fileName.right( 5 ) != ".svgz" ) fileName += ".svgz";
+
+        US_GuiUtil::save_csv( fileName, plot );
+    }
+}
+
 {
    QDir dir;
    QString reportDir = US_Settings::reportDir();

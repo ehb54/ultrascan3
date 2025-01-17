@@ -45,7 +45,7 @@ class US_2dsaProcess : public QObject
       //! \brief Create a 2DSA processor object
       //! \param dsets     Pointer to input experiment data
       //! \param parent    Pointer to parent object
-      US_2dsaProcess( QList< SS_DATASET* >&, QObject* = 0 );
+      US_2dsaProcess( QList< SS_DATASET* >&, QObject* = nullptr );
 
       //! \brief Start the fit calculations
       //! \param sll     s lower limit
@@ -150,6 +150,14 @@ private:
       US_Noise                   ri_noise;   // radially-invariant noise
       
       US_SimulationParameters*   simparms;   // simulation parameters
+
+
+      QList<US_CosedComponent> cosed_components; // cosedimenting component
+      US_Math_BF::Band_Forming_Gradient* bfg; // band forming Gradient
+      US_LammAstfvm::CosedData* csD; // cosedimenting component simulation
+      QMap<QString, US_DataIO::RawData> cosed_comp_data; // cosedimentation component simulation data from csD
+      bool codiff_needed; // switch for band forming gradient simulation
+      bool cosed_needed; // switch for cosedimending component simulation
 
       QObject*   parentw;      // parent object
 
