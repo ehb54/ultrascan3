@@ -565,6 +565,33 @@ DbgLv(1) << "AnaC: edata" << edata;
       }
    }
 
+   // Check buoyancy
+   double vbar = dsets[0]->vbar20;
+   double buoy = 1.0 - vbar * DENS_20W;
+   if (buoy == 0) {
+      QMessageBox::critical( this, tr( "Zero Buoyancy Implied" ),
+                            tr( "The current vbar20 value (%1) implies a zero buoyancy\n"
+                               "value (%2). Please adjust the vbar20!" ).
+                            arg( vbar ).arg( buoy ).arg( 1 / vbar) );
+      return;
+   } else if ( buoy > 0 && ct_lolimits->value() < 0) {
+      QMessageBox::critical( this, tr( "Positive Buoyancy Implied" ),
+                            tr( "The current vbar20 value (%1) implies a positive buoyancy\n"
+                               "value (%2), while the selected sedimentation values are negative.\n\n"
+                               "Please adjust the sedimentation range or "
+                               "increase the vbar20 to (%3 mL/g) or higher." ).
+                            arg( vbar ).arg( buoy ).arg( 1 / vbar) );
+      return;
+   } else if ( buoy < 0 && ct_lolimits->value() > 0) {
+      QMessageBox::critical( this, tr( "Negative Buoyancy Implied" ),
+                            tr( "The current vbar20 value (%1) implies a negative buoyancy\n"
+                               "value (%2), while the selected sedimentation values are postive.\n\n"
+                               "Please adjust the sedimentation range or "
+                               "reduce the vbar20 to (%3 mL/g) or less." ).
+                            arg( vbar ).arg( buoy ).arg( 1 / vbar) );
+      return;
+   }
+
    // Insure that max RPM and S-value imply a reasonable grid size
    double       s_max = ct_uplimits->value() * 1e-13;
    QString      smsg;
