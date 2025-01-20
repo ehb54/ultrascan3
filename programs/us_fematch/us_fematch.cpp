@@ -1872,15 +1872,15 @@ void US_FeMatch::adjust_model()
    sd.manual       = solution.manual;
 DbgLv(1) << "Fem:Adj:  avgT" << avgTemp << "scorr dcorr" << scorrec << dcorrec;
 
-//    if ( cnstvb  &&  mc_vbar != sd.vbar20  &&  mc_vbar != 0.0 )
-//    {  // Use vbar from the model component, instead of from the solution
-//       sd.vbar20    = mc_vbar;
-//       sd.vbar      = US_Math2::adjust_vbar20( sd.vbar20, avgTemp );
-//       US_Math2::data_correction( avgTemp, sd );
-//       scorrec      = sd.s20w_correction;
-//       dcorrec      = sd.D20w_correction;
-// DbgLv(1) << "Fem:Adj:   cnstvb" << cnstvb << "  scorr dcorr" << scorrec << dcorrec;
-//    }
+   if ( cnstvb  &&  mc_vbar != sd.vbar20  &&  mc_vbar != 0.0 )
+   {  // Use vbar from the model component, instead of from the solution
+      sd.vbar20    = mc_vbar;
+      sd.vbar      = US_Math2::adjust_vbar20( sd.vbar20, avgTemp );
+      US_Math2::data_correction( avgTemp, sd );
+      scorrec      = sd.s20w_correction;
+      dcorrec      = sd.D20w_correction;
+DbgLv(1) << "Fem:Adj:   cnstvb" << cnstvb << "  scorr dcorr" << scorrec << dcorrec;
+   }
 DbgLv(1) << "Fem:Adj:  avgT" << avgTemp << "vb20 vb" << sd.vbar20 << sd.vbar;
 
    // Convert to experiment space: adjust s,D based on solution,temperature
