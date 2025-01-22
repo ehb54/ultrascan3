@@ -164,7 +164,6 @@ bool US_RotorGui::load_rotor(QString& load_init, double& coeff1, double& coeff2)
 
    for( auto& lab : labList )
    {
-      qDebug() << "labID:" << lab.ID << "name:" << lab.name;
       if ( disk_controls->db() )
       {
          // Find out what rotors we have
@@ -186,7 +185,6 @@ bool US_RotorGui::load_rotor(QString& load_init, double& coeff1, double& coeff2)
          {
             QString rotorID   = db.value( 0 ).toString();
             QString rotorDesc = db.value( 1 ).toString();
-            qDebug() << "rotorID:" << rotorID << "rotorDesc:" << rotorDesc << "labID:" << lab.ID;
             rotorList << ( rotorID + ":" + rotorDesc + ":" + QString::number( lab.ID ) );
          }
 
@@ -206,27 +204,22 @@ bool US_RotorGui::load_rotor(QString& load_init, double& coeff1, double& coeff2)
 
          for (auto & rotor : rotors)
          {
-            qDebug() << "rotorID:" << rotor.ID << "name:" << rotor.name << "labID:" << lab.ID;
             rotorList << ( QString::number( rotor.ID ) + ":" + rotor.name + ":" + QString::number( rotor.labID ) );
          }
       }
    }
    // If we have a rotor to load, then we need to find it
-   qDebug() << "load_init:" << load_init << load_init.isEmpty();
    if ( ! load_init.isEmpty() )
    {
       // Find the rotor
       for (auto & rotor : rotorList)
       {
-         qDebug() << "rotor:" << rotor;
          QStringList parts = rotor.split( ":" );
          if ( parts.contains( load_init ) )
          {
             int rotorID = parts[ 0 ].toInt();
             US_Rotor::Status status = readRotor( disk_controls->db( ), rotorID );
-            qDebug() << "status:" << status;
             bool cal_status = readCalibrationProfiles( rotorID );
-            qDebug() << "cal_status:" << cal_status;
             coeff1 = currentCalibration.coeff1;
             coeff2 = currentCalibration.coeff2;
             return true;
