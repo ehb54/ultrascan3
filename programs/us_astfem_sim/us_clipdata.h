@@ -4,6 +4,7 @@
 
 #include "us_widgets_dialog.h"
 #include "us_help.h"
+#include "us_window_message.h"
 
 //! \brief A window for specifing the data range for a simulation
 class US_ClipData : public US_WidgetsDialog
@@ -18,7 +19,7 @@ class US_ClipData : public US_WidgetsDialog
       //! \param p      - Parent widget, normally not specified
       //! \param f      - Window flags, normally not specified
 		US_ClipData( double&, double&, double, double, 
-            QWidget* = 0, Qt::WindowFlags = 0 );
+            QWidget* = 0, Qt::WindowFlags = Qt::WindowFlags() );
 
    private:
       double&     conc;

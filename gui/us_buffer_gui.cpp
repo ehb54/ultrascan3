@@ -130,6 +130,49 @@ US_BufferGuiSelect::US_BufferGuiSelect( int *invID, int *select_db_disk,
    init_buffer();
 }
 
+bool US_BufferGuiSelect::load_buffer(const QString& load_init, US_Buffer& buffer) {
+   bool loaded = false;
+
+   if (QFile::exists(load_init))
+   {  // Argument is a file path
+      if (buffer.readFromDisk(load_init))
+      {
+         loaded = true;
+         this->buffer = &buffer;
+         return loaded;
+      }
+   }
+   else {
+      // get all buffers from the chosen source
+      query();
+   }
+   for (int i = 0; i < descriptions.size(); i++ ) {
+      qDebug() << "BufS:  load_buffer:  i" << i << "desc" << descriptions[i] << "GUID" << GUIDs[i] << "bufferID" << bufferIDs[i];
+      if (bufferIDs[i] == load_init || GUIDs[i] == load_init ) {
+         // found the matching buffer, let's load it
+         if ( from_db ) {
+            read_from_db(bufferIDs[i]);
+            buffer = *(this->buffer);
+         } else {
+            buffer.readFromDisk(filenames[i]);
+            buffer.component.clear();
+
+            for (const auto& index : buffer.componentIDs)
+            {
+               buffer.component << component_list[ index ];
+            }
+         }
+         // check if buffer is properly loaded
+         if ( buffer.description == descriptions[i] ) {
+            loaded = true;
+            this->buffer = &buffer;
+            return true;
+         }
+      }
+   }
+   return loaded;
+}
+
 void US_BufferGuiSelect::select_buffer()
 {
    if ( lw_buffer_list->currentRow() < 0 )
@@ -1996,8 +2039,8 @@ DbgLv(1) << "setB:synchc   synch complete:  components:"
 
 // Main Buffer window with panels
 US_BufferGui::US_BufferGui( bool signal_wanted, const US_Buffer& buf,
-      int select_db_disk) : US_WidgetsDialog( 0, 0 ),
-      signal( signal_wanted ), buffer( buf )
+      int select_db_disk )
+   : US_WidgetsDialog( 0, 0 ), signal( signal_wanted ), buffer( buf )
 {
    personID    = US_Settings::us_inv_ID();
    buffer      = buf;
@@ -2046,6 +2089,18 @@ US_BufferGui::US_BufferGui( bool signal_wanted, const US_Buffer& buf,
    connect( settingsTab, SIGNAL( investigator_changed( int  ) ),
             this,        SLOT (  update_personID(      int  ) ) );
    
+}
+
+bool US_BufferGui::load_buffer( const QString& load_init, US_Buffer& bufferIn ) {
+   bool loaded = false;
+   loaded = selectTab->load_buffer(load_init, bufferIn);
+   if ( bufferIn.description != orig_buffer.description ) {
+      // we selected our buffer, let's return it
+      valueChanged      ( buffer.density, buffer.viscosity );
+      US_WidgetsDialog::accept();
+      return loaded;
+   }
+   return loaded;
 }
 
 // React to a change in panel

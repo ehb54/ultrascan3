@@ -18,7 +18,13 @@ class US_GUI_EXTERN US_ModelGui : public US_WidgetsDialog
 
    public:
       //! \param current_model - Location of model structure for editing
-      US_ModelGui( US_Model& );
+      US_ModelGui( US_Model& current_model );
+
+
+      //! \brief Load a model from the filesystem or database
+      //! \param load_init - The model ID to load from the filesystem or database
+      //! \param modelIn - The model reference to be updated with the loaded model
+      bool    load_model     ( const QString &load_init, US_Model& modelIn );
 
       //! The optical type of sensor in the experiment
       enum optics_t { ABSORBANCE, INTERFERENCE, FLUORESCENCE };
@@ -36,6 +42,8 @@ class US_GUI_EXTERN US_ModelGui : public US_WidgetsDialog
 
       bool      newFile;
       bool      model_saved;
+
+      QString   load_init;
 
       US_Model  model;
       US_Model  working_model;
@@ -78,6 +86,7 @@ class US_GUI_EXTERN US_ModelGui : public US_WidgetsDialog
       bool    ignore_changes ( void );
       void    show_model_desc( void );
       void    connect_error  ( const QString& );
+
 
    private slots:
       void manage_components ( void );

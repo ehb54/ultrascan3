@@ -28,84 +28,89 @@ class US_Astfem_Sim : public US_Widgets
    Q_OBJECT
 
    public:
-      //! \param p - Parent widget, normally not specified
-      //! \param f - Window flags, normally not specified
-      US_Astfem_Sim( QWidget* = 0, Qt::WindowFlags = 0 );
+      //! \param p Parent widget, normally not specified
+      //! \param f Window flags, normally not specified
+      US_Astfem_Sim( QWidget* p = nullptr, Qt::WindowFlags f = Qt::WindowFlags() );
 
-      // Write a timestate file based on auc data
-      int  writetimestate( const QString&,  US_DataIO::RawData& );
+      //! Initialize the us_astfem_sim with command line arguments
+      //! \param flags Command line arguments
+      //! \returns int: 0 on success no gui needed, 1 on success but gui needed, -1 on error
+      int init_from_args( const QMap<QString, QString>& flags );
+
+      //! Write a timestate file based on auc data
+      //! \attention Not implemented
+      //! \param dir Location to save timestate to
+      //! \param data Data used to construct the timestate from
+      //! \return status code
+      int  writetimestate( const QString& dir,  US_DataIO::RawData& data);
 
     signals:
        void new_time         ( double );
 
    private:
-      bool           stopFlag;
-      bool           movieFlag;
-      bool           save_movie;
-      bool           time_correctionFlag;
-      double         total_conc;
-      double         meniscus_ar;
-      double         times_comp;
-      int            icomponent;
-      int            ncomponent;
-      int            curve_count;
-      int            image_count;
-      int            dbg_level;
-      QString        imagedir;
-      QString        imageName;
+      bool           stopFlag;            //!< Flag to stop the simulation
+      bool           movieFlag;           //!< Flag to show a movie during simulation
+      bool           save_movie;          //!< Flag to save the generated frames
+      bool           time_correctionFlag; //!< Flag to apply time correction - Currently not implemented/connected
+      double         total_conc;          //!< Sum of all components concentration
+      double         meniscus_ar;         //!< Meniscus position at rest in cm
+      double         times_comp;          //!< Current time of the simulation
+      int            icomponent;          //!< Index of the component, which is currently simulated
+      int            ncomponent;          //!< Number of components
+      int            curve_count;         //!< Number of currently simulated scans
+      int            image_count;         //!< Current number of saved movie frames
+      int            dbg_level;           //!< Debug level
+      QString        imagedir;            //!< Path to the image dir
+      QString        imageName;           //!< Full path template for movie frames ({imagedir}/frame{image_count}.png)
+      QString        tmst_tfpath;         //!< Path to the timestate of the simulation in a temporary location
 
-      QString        tmst_tfpath;
-      QString        currentDir;
+      QCheckBox*     ck_movie;            //!< Pointer to QCheckbox for movie display
+      QCheckBox*     ck_savemovie;        //!< Pointer to QCheckbox for saving movie frames
+      QCheckBox*     ck_timeCorr;         //!< Pointer to QCheckbox for applying time correction
+      QPushButton*   pb_saveSim;          //!< Pointer to "Save Simulation" button
+      QPushButton*   pb_buffer;           //!< Pointer to "Define Buffer" button
+      QPushButton*   pb_simParms;         //!< Pointer to "Simulation Parameters" button
+      QPushButton*   pb_rotor;            //!< Pointer to "Select Rotor" button
+      QPushButton*   pb_changeModel;      //!< Pointer to "Model Control" button
+      QPushButton*   pb_start;            //!< Pointer to "Start Simulation" button
+      QPushButton*   pb_stop;             //!< Pointer to "Stop Simulation" button
 
-      QCheckBox*     ck_movie;
-      QCheckBox*     ck_savemovie;
-      QCheckBox*     ck_timeCorr;
+      QTextEdit*     te_status;           //!< Pointer to status text box
 
-      QPushButton*   pb_saveExp;
-      QPushButton*   pb_saveSim;
-      QPushButton*   pb_buffer;
-      QPushButton*   pb_simParms;
-      QPushButton*   pb_rotor;
-      QPushButton*   pb_changeModel;
-      QPushButton*   pb_start;
-      QPushButton*   pb_stop;
+      QLabel*        lb_component;        //!< Pointer to "Component" label
+      QLabel*        lb_progress;         //!< Pointer to "Progress" label
 
-      QTextEdit*     te_status;
+      QLCDNumber*    lcd_time;            //!< Pointer to time lcd
+      QLCDNumber*    lcd_speed;           //!< Pointer to speed lcd
+      QLCDNumber*    lcd_component;       //!< Pointer to component lcd
+      QProgressBar*  progress;            //!< Pointer to progress bar
 
-      QLabel*        lb_component;
-      QLabel*        lb_progress;
+      QwtPlot*       moviePlot;           //!< Pointer to upper plot QwtWidget
+      QwtPlot*       scanPlot;            //!< Pointer to lower plot QwtWidget
 
-      QLCDNumber*    lcd_time;
-      QLCDNumber*    lcd_speed;
-      QLCDNumber*    lcd_component;
-      QProgressBar*  progress;
+      US_Plot*       plot1;               //!< Pointer to upper plot
+      US_Plot*       plot2;               //!< Pointer to lower plot
 
-      QwtPlot*       moviePlot;
-      QwtPlot*       scanPlot;
+      US_Help        showhelp;            //!< Help button
 
-      US_Plot*       plot1;
-      US_Plot*       plot2;
+      QString        progress_text;       //!< Current progress text
+      int            progress_value;      //!< Current progress value
+      int            progress_maximum;    //!< Progress maximum value
 
-      US_Help        showhelp;
+      US_Astfem_RSA*          astfem;     //!< Pointer to the astfem simulation engine
+      US_LammAstfvm*          astfvm;     //!< Pointer to the astfvm simulation engine
+      US_Model                system;     //!< Model object
+      US_Buffer               buffer;     //!< Buffer object
 
-      QString        progress_text;
-      int            progress_value;
-      int            progress_maximum;
-
-      US_Astfem_RSA*          astfem;
-      US_LammAstfvm*          astfvm;
-      US_Model                system;
-      US_Buffer               buffer;
-
-      US_SimulationParameters          simparams;
-      US_AstfemMath::AstFemParameters  af_params;
-      QVector<US_DataIO::RawData>      sim_datas;
-      US_DataIO::RawData               sim_data_all;
+      US_SimulationParameters          simparams; //!< Simulation parameters
+      US_AstfemMath::AstFemParameters  af_params; //!< Fixed grid simulation parameters used for exporting
+      QVector<US_DataIO::RawData>      sim_datas; //!< Vector of simulated data for each speedstep
+      US_DataIO::RawData               sim_data_all; //!< Overall simulated data
 
       void   init_simparams ( void );
       void   adjust_limits  ( double );
       double stretch        ( double*, double );
-      void   save_xla       ( const QString&, US_DataIO::RawData, int );
+      void   save_xla       ( const QString&, US_DataIO::RawData, int, bool supress_dialog = false );
       void   save_ultrascan ( const QString& );
       void   finish         ( void );
       void   ri_noise       ( void );
@@ -121,6 +126,7 @@ class US_Astfem_Sim : public US_Widgets
       void dump_mfem_initial( US_Model::MfemInitial& );
       void dump_ss          ( US_SimulationParameters::SpeedProfile& );
       void dump_mfem_scan   ( US_DataIO::Scan& );
+      bool save_simulation ( QString odir, bool supress_dialog = false );
 
    private slots:
 

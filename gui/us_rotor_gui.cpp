@@ -65,8 +65,9 @@ US_RotorGui::US_RotorGui(
      bool                              signal_wanted,
      int                               select_db_disk,
      const US_Rotor::Rotor&            rotorIn,
-     const US_Rotor::RotorCalibration& calibrationIn) 
-: US_WidgetsDialog( 0, 0 ), 
+     const US_Rotor::RotorCalibration& calibrationIn
+     )
+: US_WidgetsDialog( nullptr, Qt::WindowFlags() ),
   currentRotor( rotorIn ), 
   currentCalibration( calibrationIn ), 
   signal( signal_wanted )
@@ -105,6 +106,134 @@ US_RotorGui::US_RotorGui(
    }
 
    reset();
+}
+
+bool US_RotorGui::load_rotor(QString& load_init, double& coeff1, double& coeff2)
+{
+   bool ok;
+   // check if the load_init are just two coefficients
+   if ( load_init.split( ":" ).size() == 2 )
+   {
+      // split load_init and convert both parts to double and return
+      QStringList parts = load_init.split( ":" );
+      coeff1 = parts[0].toDouble(  );
+      coeff2 = parts[1].toDouble(  );
+      return true;
+   }
+   QVector < US_Rotor::Lab > labList;
+   QVector < QString > rotorList;
+   labList.clear();
+   rotorList.clear();
+   if ( disk_controls->db() )
+   {
+      // Find out what labs we have
+      US_Passwd pw;
+      QString masterPW = pw.getPasswd();
+      US_DB2 db( masterPW );
+
+      if ( db.lastErrno() != US_DB2::OK )
+      {
+         connect_error( db.lastError() );
+         return( false );
+      }
+
+      // Get information about all the labs
+      if ( US_Rotor::readLabsDB( labList, &db ) == US_Rotor::NOT_FOUND )
+      {
+         QMessageBox::warning( this, tr( "Database Problem" ),
+            tr( "Could not read lab information \n" ) );
+
+         return false;
+      }
+
+   }
+
+   else
+   {
+      // Get information about all the labs
+      if ( US_Rotor::readLabsDisk( labList ) == US_Rotor::NOT_FOUND )
+      {
+         QMessageBox::warning( this, tr( "Disk Problem" ),
+            tr( "Could not read lab information \n" ) );
+
+         return false;
+      }
+
+   }
+
+
+   for( auto& lab : labList )
+   {
+      qDebug() << "labID:" << lab.ID << "name:" << lab.name;
+      if ( disk_controls->db() )
+      {
+         // Find out what rotors we have
+         US_Passwd pw;
+         QString masterPW = pw.getPasswd();
+         US_DB2 db( masterPW );
+
+         if ( db.lastErrno() != US_DB2::OK )
+         {
+            connect_error( db.lastError() );
+            return( false );
+         }
+
+         QStringList q( "get_rotor_names" );
+         q << QString::number( lab.ID );     // find rotors from this lab
+         db.query( q );
+
+         while ( db.next() )
+         {
+            QString rotorID   = db.value( 0 ).toString();
+            QString rotorDesc = db.value( 1 ).toString();
+            qDebug() << "rotorID:" << rotorID << "rotorDesc:" << rotorDesc << "labID:" << lab.ID;
+            rotorList << ( rotorID + ":" + rotorDesc + ":" + QString::number( lab.ID ) );
+         }
+
+      }
+
+      else
+      {
+         // Get information about all the rotors in this lab
+         QVector< US_Rotor::Rotor > rotors;
+
+         if ( US_Rotor::readRotorsFromDisk( rotors, labID ) == US_Rotor::NOT_FOUND )
+         {
+            QMessageBox::warning( this, tr( "Disk Problem" ),
+               tr( "Could not read rotor information \n" ) );
+            return( false );
+         }
+
+         for (auto & rotor : rotors)
+         {
+            qDebug() << "rotorID:" << rotor.ID << "name:" << rotor.name << "labID:" << lab.ID;
+            rotorList << ( QString::number( rotor.ID ) + ":" + rotor.name + ":" + QString::number( rotor.labID ) );
+         }
+      }
+   }
+   // If we have a rotor to load, then we need to find it
+   qDebug() << "load_init:" << load_init << load_init.isEmpty();
+   if ( ! load_init.isEmpty() )
+   {
+      // Find the rotor
+      for (auto & rotor : rotorList)
+      {
+         qDebug() << "rotor:" << rotor;
+         QStringList parts = rotor.split( ":" );
+         if ( parts.contains( load_init ) )
+         {
+            int rotorID = parts[ 0 ].toInt();
+            US_Rotor::Status status = readRotor( disk_controls->db( ), rotorID );
+            qDebug() << "status:" << status;
+            bool cal_status = readCalibrationProfiles( rotorID );
+            qDebug() << "cal_status:" << cal_status;
+            coeff1 = currentCalibration.coeff1;
+            coeff2 = currentCalibration.coeff2;
+            return true;
+         }
+      }
+   }
+   return false;
 }
 
 void US_RotorGui::setupGui( int select_db_disk )
