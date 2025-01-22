@@ -1438,6 +1438,7 @@ void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_liv
   AProfileGUID      = details_at_live_update[ "aprofileguid" ];
   expType           = details_at_live_update[ "expType" ];
   dataSource        = details_at_live_update[ "dataSource" ];
+  opticsFailedType  = details_at_live_update[ "opticsFailedType" ];
   
   // //After AProfileGUID, read details from analysis profile
   // read_aprofile_data_from_aprofile();
@@ -1445,6 +1446,7 @@ void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_liv
   qDebug() << "Exp_label: " << Exp_label;
   qDebug() << "ExpType: "   << expType;
   qDebug() << "dataSource: " << dataSource;
+  qDebug() << "opticsFailedType: " << opticsFailedType;
   
   // qDebug() << "Filename: " << details_at_live_update[ "filename" ];
   // qDebug() << "Filename_INT: " << details_at_live_update[ "filename" ].toInt();
@@ -1475,6 +1477,12 @@ void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_liv
     }
   qDebug() << "runType_combined_IP_RI: " << runType_combined_IP_RI;
 
+  //Here, redefine bach to non-combined if opticsFailedType exists!!!
+  if ( !opticsFailedType.isEmpty() )
+    {
+      runTypes_map. clear();
+      runType_combined_IP_RI = false;
+    }
   // //************************ TEMP - Reverse after test ************************************** //
   // runTypes_map.insert("IP", 1);
   // runTypes_map.insert("RI", 1);
@@ -6916,6 +6924,7 @@ QMap< QString, QString> US_ConvertGui::read_autoflow_record( int autoflowID  )
 
 	   protocol_details[ "expType" ]        = db->value( 26 ).toString();
 	   protocol_details[ "dataSource" ]     = db->value( 27 ).toString();
+	   protocol_details[ "opticsFailedType" ]    = db->value( 28 ).toString();
 	   	   
 	 }
      }
@@ -7476,6 +7485,11 @@ DbgLv(1) << "Writing to database";
        record_import_status( auto_ref_scan, runType );
      }
    
+//Define mesage string if opticsFailedType
+   QString msg_optics_failed = ( !opticsFailedType.isEmpty() ) ?
+     QString("\n\nNOTE: Data type %1 were not saved due to failed instrument optics!").arg(opticsFailedType) : "";
+   QString msg_save_complete = "The save of all data and reports is complete. ";
+   msg_save_complete += msg_optics_failed;
    
 // x  x  x  x  x x  x  x  x  x x  x  x  x  x x  x  x  x  x x  x  x  x  x x  x  x  x  x 
    if ( us_convert_auto_mode )   // if us_comproject OR us_comproject_academic
@@ -7495,9 +7509,10 @@ DbgLv(1) << "Writing to database";
 	     }
 	   else
 	     {
+	       qDebug() << "R&D program used!! ";
 	       QMessageBox::information( this,
-				     tr( "Save is Complete" ),
-				     tr( "The save of all data and reports is complete." ) );
+					 tr( "Save is Complete" ),
+					 msg_save_complete );
 	       
 	       //ALEXY: need to delete autoflow record here
 	       delete_autoflow_record();
@@ -7531,10 +7546,12 @@ DbgLv(1) << "Writing to database";
 
 		   if ( !protDev_bool ) // no GMP && no ProtDev()!!!!!!!!!!!!!
 		     {
+		       qDebug() << "GMP program used for non-GMP runs!! ";
+		       
 		       QMessageBox::information( this,
 						 tr( "Save is Complete" ),
-						 tr( "The save of all data and reports is complete." ) );
-		       
+						 msg_save_complete );
+						 		       
 		       //ALEXY: need to delete autoflow record here
 		       delete_autoflow_record();
 		       resetAll_auto();
@@ -7545,6 +7562,8 @@ DbgLv(1) << "Writing to database";
 		   else    // no GMP BUT  ProtDev(), so proceed!!!!!!!!!!!!!
 		     {
 		       update_autoflow_record_atLimsImport();
+
+		       qDebug() << "GMP program used for ProtDev runs!! ";
 		       
 		       QMessageBox::information( this,
 						 tr( "Save is Complete" ),
@@ -7576,6 +7595,25 @@ DbgLv(1) << "Writing to database";
 		     }
 		   else
 		     {
+		       qDebug() << "GMP program used for GMP runs!! ";
+		       //HERE, IF opticsFailedType(s), we need to STOP, SAVE, DELETE record & quit!
+		       if ( !opticsFailedType.isEmpty() )
+			 {
+			   msg_save_complete +=
+			     "\nBecause of this, the run will be aborted and not processed further within GMP framework...";
+			   
+			   QMessageBox::information( this,
+						     tr( "Save is Complete" ),
+						     msg_save_complete );
+						 		       
+			   //ALEXY: need to delete autoflow record here
+			   delete_autoflow_record();
+			   resetAll_auto();
+			   //emit saving_complete_back_to_exp( ProtocolName_auto );
+			   emit saving_complete_back_to_initAutoflow();
+			   return;
+			 }
+		       ///////////////////////////////////////////////////////////////////////////
 		       
 		       update_autoflow_record_atLimsImport();
 		       
