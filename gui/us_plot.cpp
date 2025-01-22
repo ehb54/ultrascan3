@@ -302,23 +302,6 @@ void US_Plot::zoom( bool on )
 
 void US_Plot::csv( void )
 {
-    QDir dir;
-    QString reportDir = US_Settings::reportDir();
-    if ( ! dir.exists( reportDir ) ) dir.mkpath( reportDir );
-
-    QString fileName = QFileDialog::getSaveFileName( plot,
-                                                     tr( "Export File Name" ), reportDir,
-                                                     tr( "SVG Documents (*.svgz)" ) );
-
-    if ( ! fileName.isEmpty() )
-    {
-        if ( fileName.right( 5 ) != ".svgz" ) fileName += ".svgz";
-
-        US_GuiUtil::save_csv( fileName, plot );
-    }
-}
-
-{
    QDir dir;
    QString reportDir = US_Settings::reportDir();
    if ( ! dir.exists( reportDir ) ) dir.mkpath( reportDir );
