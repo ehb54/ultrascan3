@@ -93,7 +93,7 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    le_z_param = us_lineedit( Attr_to_long(z_param), -1, true);
 
    QPushButton *pb_preset = us_pushbutton( "Grid Setup" );
-   connect ( pb_preset, &QPushButton::clicked, this, &US_Grid_Editor::set_XYZ);
+   connect ( pb_preset, &QPushButton::clicked, this, &US_Grid_Editor::set_grid_axis);
 
    // Experimental Space
 
@@ -106,6 +106,7 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    QLabel *lb_viscosity = us_label( tr( "Viscosity" ) );
    lb_viscosity->setAlignment( Qt::AlignCenter );
    QLineEdit* le_viscosity = us_lineedit( QString::number( viscosity ) );
+   le_viscosity->setValidator(d_validator);
 
    QPushButton *pb_load_run = us_pushbutton( "Load From Run ID" );
    connect ( pb_load_run, &QPushButton::clicked, this, &US_Grid_Editor::load_runId);
@@ -304,7 +305,7 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    reset();
 }
 
-void US_Grid_Editor::set_XYZ()
+void US_Grid_Editor::set_grid_axis()
 {
    int state = grid_preset->exec();
    if ( state == QDialog::Accepted ) {
@@ -2976,6 +2977,11 @@ void US_Grid_Preset::select_y_axis( int index )
    set_z_axis();
 }
 
+void US_Grid_Preset::select_z_axis(int index)
+{
+   z_param = z_axis->itemData(index, Qt::UserRole ).toInt();
+}
+
 void US_Grid_Preset::apply()
 {
    accept();
@@ -2989,22 +2995,22 @@ void US_Grid_Preset::cancel()
 // Select coordinate flag for the fixed attribute
 void US_Grid_Preset::set_z_axis( )
 {
-   int attr = -1;
-   if ( z_axis->count() > 0 ) {
-      attr = z_axis->currentData( Qt::UserRole ).toInt();
-   }
+   z_axis->disconnect();
    z_axis->clear();
    for (int ii = ATTR_S; ii <= ATTR_F; ii++) {
       if ( ii == x_param || ii == y_param ) continue;
 
       z_axis->addItem( Attr_to_long( ii ), ii );
    }
-   int index = z_axis->findData(attr, Qt::UserRole);
+   int index = z_axis->findData(z_param, Qt::UserRole);
    if ( index == -1 ) {
       z_axis->setCurrentIndex( 0 );
+      z_param = z_axis->itemData(0, Qt::UserRole ).toInt();
    } else {
       z_axis->setCurrentIndex( index );
    }
+   connect( z_axis, QOverload<int>::of( &QComboBox::currentIndexChanged ),
+            this,   &US_Grid_Preset::select_z_axis );
 }
 
 QString Attr_to_long(int attr)
