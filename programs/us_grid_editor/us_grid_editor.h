@@ -82,6 +82,9 @@ private:
    int y_param;             //!< y parameter
    int z_param;             //!< y parameter
 
+   //! \brief Setup the fixed attribute combo box.
+   void set_z_axis();
+
 private slots:
    //! \brief Slot to select x-axis attribute.
    //! \param index Index of the selected x-axis attribute.
@@ -91,9 +94,11 @@ private slots:
    //! \param index Index of the selected y-axis attribute.
    void select_y_axis(int index);
 
-   //! \brief Slot to select fixed attribute.
-   //! \param text Text of the selected fixed attribute.
-   void select_fixed(int index);
+   //! \brief Slot to apply the setup.
+   void apply();
+
+   //! \brief Slot to cancel the setup.
+   void cancel();
 };
 
 //! \class US_Grid_Editor

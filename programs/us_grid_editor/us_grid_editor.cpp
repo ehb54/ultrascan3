@@ -2852,6 +2852,11 @@ US_Grid_Preset::US_Grid_Preset(QWidget * parent) : US_WidgetsDialog(parent)
    setPalette( US_GuiSettings::frameColor() );
    setFixedSize(500, 250);
 
+   QLabel *lb_x_axis = us_label("X Axis");
+   lb_x_axis->setAlignment(Qt::AlignCenter);
+   QLabel *lb_y_axis = us_label("Y Axis");
+   lb_y_axis->setAlignment(Qt::AlignCenter);
+
    QGridLayout* x_s     = us_radiobutton( Attr_to_long( ATTR_S ), rb_x_s, true );
    QGridLayout* x_ff0   = us_radiobutton( Attr_to_long( ATTR_K ), rb_x_ff0, false );
    QGridLayout* x_mw    = us_radiobutton( Attr_to_long( ATTR_W ), rb_x_mw, true );
@@ -2873,7 +2878,6 @@ US_Grid_Preset::US_Grid_Preset(QWidget * parent) : US_WidgetsDialog(parent)
    x_axis->addButton( rb_x_vbar, ATTR_V );
    x_axis->addButton( rb_x_D,    ATTR_D );
    x_axis->addButton( rb_x_f,    ATTR_F );
-   connect( x_axis, &QButtonGroup::idReleased, this, &US_Grid_Preset::select_x_axis );
 
    y_axis = new QButtonGroup( this );
    y_axis->addButton( rb_y_s,    ATTR_S );
@@ -2882,43 +2886,40 @@ US_Grid_Preset::US_Grid_Preset(QWidget * parent) : US_WidgetsDialog(parent)
    y_axis->addButton( rb_y_vbar, ATTR_V );
    y_axis->addButton( rb_y_D,    ATTR_D );
    y_axis->addButton( rb_y_f,    ATTR_F );
-   connect( y_axis, &QButtonGroup::idReleased, this, &US_Grid_Preset::select_y_axis );
 
    QLabel *lb_fixed      = us_label( tr( "Fixed Attribute" ) );
    lb_fixed->setAlignment(Qt::AlignCenter);
 
    z_axis = us_comboBox();
-   z_axis->addItem( Attr_to_long( ATTR_S ), ATTR_S );   // ATTR_V
-   z_axis->addItem( Attr_to_long( ATTR_K ), ATTR_K );   // ATTR_K
-   z_axis->addItem( Attr_to_long( ATTR_W ), ATTR_W );   // ATTR_W
-   z_axis->addItem( Attr_to_long( ATTR_V ), ATTR_V );   // ATTR_S
-   z_axis->addItem( Attr_to_long( ATTR_D ), ATTR_D );   // ATTR_D
-   z_axis->addItem( Attr_to_long( ATTR_F ), ATTR_F );   // ATTR_F
-   z_axis->setEnabled( true );
-   z_axis->setCurrentIndex( 0 );
-   connect( z_axis, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &US_Grid_Preset::select_fixed);
 
    QPushButton *pb_apply = us_pushbutton( "Apply" );
    QPushButton *pb_cancel = us_pushbutton( "Cancel" );
+
+   QFrame *hline1 = new QFrame();
+   hline1->setFrameShape(QFrame::HLine);
+   hline1->setFrameShadow(QFrame::Sunken);
 
    QGridLayout* layout = new QGridLayout();
    layout->setMargin(2);
    layout->setSpacing(3);
    int row = 0;
-   layout->addLayout( x_s,                   row,   0, 1, 2 );
-   layout->addLayout( y_s,                   row++, 2, 1, 2 );
-   layout->addLayout( x_ff0,                 row,   0, 1, 2 );
-   layout->addLayout( y_ff0,                 row++, 2, 1, 2 );
-   layout->addLayout( x_mw,                  row,   0, 1, 2 );
-   layout->addLayout( y_mw,                  row++, 2, 1, 2 );
-   layout->addLayout( x_vbar,                row,   0, 1, 2 );
-   layout->addLayout( y_vbar,                row++, 2, 1, 2 );
-   layout->addLayout( x_D,                   row,   0, 1, 2 );
-   layout->addLayout( y_D,                   row++, 2, 1, 2 );
-   layout->addLayout( x_f,                   row,   0, 1, 2 );
-   layout->addLayout( y_f,                   row++, 2, 1, 2 );
-   layout->addWidget( lb_fixed,              row,   0, 1, 2 );
-   layout->addWidget( z_axis,                row++, 2, 1, 2 );
+   layout->addWidget( lb_x_axis,  row,   0, 1, 2 );
+   layout->addWidget( lb_y_axis,  row++, 2, 1, 2 );
+   layout->addLayout( x_s,        row,   0, 1, 2 );
+   layout->addLayout( y_s,        row++, 2, 1, 2 );
+   layout->addLayout( x_ff0,      row,   0, 1, 2 );
+   layout->addLayout( y_ff0,      row++, 2, 1, 2 );
+   layout->addLayout( x_mw,       row,   0, 1, 2 );
+   layout->addLayout( y_mw,       row++, 2, 1, 2 );
+   layout->addLayout( x_vbar,     row,   0, 1, 2 );
+   layout->addLayout( y_vbar,     row++, 2, 1, 2 );
+   layout->addLayout( x_D,        row,   0, 1, 2 );
+   layout->addLayout( y_D,        row++, 2, 1, 2 );
+   layout->addLayout( x_f,        row,   0, 1, 2 );
+   layout->addLayout( y_f,        row++, 2, 1, 2 );
+   layout->addWidget( hline1,     row++, 0, 1, 4 );
+   layout->addWidget( lb_fixed,   row,   0, 1, 2 );
+   layout->addWidget( z_axis,     row++, 2, 1, 2 );
 
    QSpacerItem *spacer = new QSpacerItem(0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding);
    layout->addItem( spacer,                 row++,  0, 1, 4 );
@@ -2938,27 +2939,12 @@ US_Grid_Preset::US_Grid_Preset(QWidget * parent) : US_WidgetsDialog(parent)
    x_axis->button(y_param)->setDisabled(true);
    z_axis->setCurrentIndex(z_axis->findData(z_param, Qt::UserRole));
 
+   set_z_axis();
 
-   // select_x_axis( plot_x );
-   // select_y_axis( plot_y );
-   // select_fixed ( cb_fixed->currentText() );
-
-   // rb_x_s   ->setEnabled( true );
-   // rb_x_ff0 ->setEnabled( false );
-   // rb_x_mw  ->setEnabled( true );
-   // rb_x_vbar->setEnabled( true );
-   // rb_x_D   ->setEnabled( true );
-   // rb_x_f   ->setEnabled( true );
-   // rb_y_s   ->setEnabled( false );
-   // rb_y_ff0 ->setEnabled( true );
-   // rb_y_mw  ->setEnabled( true );
-   // rb_y_vbar->setEnabled( true );
-   // rb_y_D   ->setEnabled( true );
-   // rb_y_f   ->setEnabled( true );
-   // rb_x_s   ->setChecked( true );
-   // rb_y_ff0 ->setChecked( true );
-
-
+   connect( x_axis,    &QButtonGroup::idReleased, this, &US_Grid_Preset::select_x_axis );
+   connect( y_axis,    &QButtonGroup::idReleased, this, &US_Grid_Preset::select_y_axis );
+   connect( pb_apply,  &QPushButton::clicked,     this, &US_Grid_Preset::apply );
+   connect( pb_cancel, &QPushButton::clicked,     this, &US_Grid_Preset::cancel );
 }
 
 void US_Grid_Preset::parameters(int *x, int *y, int *z)
@@ -2971,182 +2957,55 @@ void US_Grid_Preset::parameters(int *x, int *y, int *z)
 // Select coordinate for horizontal axis
 void US_Grid_Preset::select_x_axis( int index )
 {
-   // Axis types                   s    f/f0      mw   vbar     D     f
-   // const double  xvmns[] = {       1.0,   1.0,   2e+4,  0.60, 1e-8, 1e-8 };
-   // const double  xvmxs[] = {      10.0,   4.0,   1e+5,  0.80, 1e-7, 1e-7 };
-   // const double  xmins[] = { -500000.0,   1.0,    0.0,  0.01, 1e-9, 1e-9 };
-   // const double  xmaxs[] = {  500000.0,  50.0,  1e+10,  3.00, 3e-5, 1e-5 };
-   // const double  xincs[] = {      0.01,  0.01, 5000.0,  0.01, 1e-9, 1e-9 };
-   // const QString xtitls[] = { tr( "s (x 1e13)" ),
-   //                           tr( "f/f0-value" ),
-   //                           tr( "mw-value" ),
-   //                           tr( "vbar-value" ),
-   //                           tr( "D-value" ),
-   //                           tr( "f-value" ) };
-   // if ( x_axis->checkedId() == -1 ) {
-   //    x_axis->button(index)->setChecked(true);
-   //    x_param = index;
-   //    y_axis->button(x_param)->setDisabled(true);
-   // } else if ( ){
-
-   // }
-
-
-
-   // lb_xRes->setText( xtitls[ plot_x ] + tr( " Resolution:" ) );
-   // lb_xMin->setText( xtitls[ plot_x ] + tr( " Minimum:" ) );
-   // lb_xMax->setText( xtitls[ plot_x ] + tr( " Maximum:" ) );
-   // ct_xMin->disconnect();
-   // ct_xMax->disconnect();
-   // xMin   = xvmns[ plot_x ];
-   // xMax   = xvmxs[ plot_x ];
-   // ct_xMin->setRange     ( xmins[ plot_x ], xmaxs[ plot_x ] );
-   // ct_xMin->setSingleStep( xincs[ plot_x ] );
-   // ct_xMax->setRange     ( xmins[ plot_x ], xmaxs[ plot_x ] );
-   // ct_xMax->setSingleStep( xincs[ plot_x ] );
-   // ct_xMin->setValue( xMin );
-   // ct_xMax->setValue( xMax );
-
-   // connect( ct_xMin, SIGNAL( valueChanged( double ) ),
-   //         this,    SLOT  ( update_xMin ( double ) ) );
-   // connect( ct_xMax, SIGNAL( valueChanged( double ) ),
-   //         this,    SLOT  ( update_xMax ( double ) ) );
-
-   // rb_y_s   ->setEnabled( plot_x != ATTR_S );
-   // rb_y_ff0 ->setEnabled( plot_x != ATTR_K );
-   // rb_y_mw  ->setEnabled( plot_x != ATTR_W );
-   // rb_y_vbar->setEnabled( plot_x != ATTR_V );
-   // rb_y_D   ->setEnabled( plot_x != ATTR_D );
-   // rb_y_f   ->setEnabled( plot_x != ATTR_F );
-   // rb_x_s   ->setEnabled( plot_y != ATTR_S );
-   // rb_x_ff0 ->setEnabled( plot_y != ATTR_K );
-   // rb_x_mw  ->setEnabled( plot_y != ATTR_W );
-   // rb_x_vbar->setEnabled( plot_y != ATTR_V );
-   // rb_x_D   ->setEnabled( plot_y != ATTR_D );
-   // rb_x_f   ->setEnabled( plot_y != ATTR_F );
-
-   // cb_fixed->disconnect();
-   // cb_fixed->clear();
-   // if ( plot_x != ATTR_V  &&  plot_y != ATTR_V )
-   //    cb_fixed->addItem( tr( "Partial Specific Volume" ) );
-   // if ( plot_x != ATTR_K  &&  plot_y != ATTR_K )
-   //    cb_fixed->addItem( tr( "Frictional Ratio" ) );
-   // if ( plot_x != ATTR_W  &&  plot_y != ATTR_W )
-   //    cb_fixed->addItem( tr( "Molecular Weight" ) );
-   // if ( plot_x != ATTR_S  &&  plot_y != ATTR_S )
-   //    cb_fixed->addItem( tr( "Sedimentation Coefficient" ) );
-   // if ( plot_x != ATTR_D  &&  plot_y != ATTR_D )
-   //    cb_fixed->addItem( tr( "Diffusion Coefficient" ) );
-   // if ( plot_x != ATTR_F  &&  plot_y != ATTR_F )
-   //    cb_fixed->addItem( tr( "Frictional Coefficient" ) );
-   // cb_fixed->setCurrentIndex( 0 );
-   // select_fixed( cb_fixed->currentText() );
-   // connect( cb_fixed, SIGNAL( activated   ( const QString& ) ),
-   //         this,     SLOT  ( select_fixed( const QString& ) ) );
-
-   // validate_ff0();
-
-   // update_plot();
+   for (int ii = ATTR_S; ii <= ATTR_F; ii++) {
+      y_axis->button( ii )->setEnabled(true);
+   }
+   x_param = index;
+   y_axis->button(x_param)->setDisabled(true);
+   set_z_axis();
 }
 
 // select coordinate for vertical axis
-void US_Grid_Preset::select_y_axis( int ival )
+void US_Grid_Preset::select_y_axis( int index )
 {
-   // Axis types                   s    f/f0      mw   vbar     D     f
-   // const double  yvmns[] = {       1.0,   1.0,   2e+4,  0.60, 1e-8, 1e-8 };
-   // const double  yvmxs[] = {      10.0,   4.0,   1e+6,  0.80, 1e-7, 1e-7 };
-   // const double  ymins[] = { -500000.0,   1.0,    0.0,  0.01, 1e-9, 1e-9 };
-   // const double  ymaxs[] = {  500000.0,  50.0,  1e+10,  3.00, 3e-5, 1e-5 };
-   // const double  yincs[] = {      0.01,  0.01, 5000.0,  0.01, 1e-9, 1e-9 };
-   // const QString ytitls[] = { tr( "s (x 1e13)" ),
-   //                           tr( "f/f0-value" ),
-   //                           tr( "mw-value" ),
-   //                           tr( "vbar-value" ),
-   //                           tr( "D-value" ),
-   //                           tr( "f-value" ) };
-   // plot_y = ival;
+   for (int ii = ATTR_S; ii <= ATTR_F; ii++) {
+      x_axis->button( ii )->setEnabled(true);
+   }
+   y_param = index;
+   x_axis->button(y_param)->setDisabled(true);
+   set_z_axis();
+}
 
-   // lb_yRes->setText( ytitls[ plot_y ] + tr( " Resolution:" ) );
-   // lb_yMin->setText( ytitls[ plot_y ] + tr( " Minimum:" ) );
-   // lb_yMax->setText( ytitls[ plot_y ] + tr( " Maximum:" ) );
-   // ct_yMin->disconnect();
-   // ct_yMax->disconnect();
-   // yMin   = yvmns[ plot_y ];
-   // yMax   = yvmxs[ plot_y ];
-   // ct_yMin->setRange     ( ymins[ plot_y ], ymaxs[ plot_y ] );
-   // ct_yMin->setSingleStep( yincs[ plot_y ] );
-   // ct_yMax->setRange     ( ymins[ plot_y ], ymaxs[ plot_y ] );
-   // ct_yMax->setSingleStep( yincs[ plot_y ] );
-   // ct_yMin->setValue( yMin );
-   // ct_yMax->setValue( yMax );
+void US_Grid_Preset::apply()
+{
+   accept();
+}
 
-   // connect( ct_yMin, SIGNAL( valueChanged( double ) ),
-   //         this,    SLOT  ( update_yMin ( double ) ) );
-   // connect( ct_yMax, SIGNAL( valueChanged( double ) ),
-   //         this,    SLOT  ( update_yMax ( double ) ) );
-
-   // rb_x_s   ->setEnabled( plot_y != ATTR_S );
-   // rb_x_ff0 ->setEnabled( plot_y != ATTR_K );
-   // rb_x_mw  ->setEnabled( plot_y != ATTR_W );
-   // rb_x_vbar->setEnabled( plot_y != ATTR_V );
-   // rb_x_D   ->setEnabled( plot_y != ATTR_D );
-   // rb_x_f   ->setEnabled( plot_y != ATTR_F );
-   // rb_y_s   ->setEnabled( plot_x != ATTR_S );
-   // rb_y_ff0 ->setEnabled( plot_x != ATTR_K );
-   // rb_y_mw  ->setEnabled( plot_x != ATTR_W );
-   // rb_y_vbar->setEnabled( plot_x != ATTR_V );
-   // rb_y_D   ->setEnabled( plot_x != ATTR_D );
-   // rb_y_f   ->setEnabled( plot_x != ATTR_F );
-
-   // cb_fixed->disconnect();
-   // cb_fixed->clear();
-   // if ( plot_x != ATTR_V  &&  plot_y != ATTR_V )
-   //    cb_fixed->addItem( tr( "Partial Specific Volume" ) );
-   // if ( plot_x != ATTR_K  &&  plot_y != ATTR_K )
-   //    cb_fixed->addItem( tr( "Frictional Ratio" ) );
-   // if ( plot_x != ATTR_W  &&  plot_y != ATTR_W )
-   //    cb_fixed->addItem( tr( "Molecular Weight" ) );
-   // if ( plot_x != ATTR_S  &&  plot_y != ATTR_S )
-   //    cb_fixed->addItem( tr( "Sedimentation Coefficient" ) );
-   // if ( plot_x != ATTR_D  &&  plot_y != ATTR_D )
-   //    cb_fixed->addItem( tr( "Diffusion Coefficient" ) );
-   // if ( plot_x != ATTR_F  &&  plot_y != ATTR_F )
-   //    cb_fixed->addItem( tr( "Frictional Coefficient" ) );
-   // cb_fixed->setCurrentIndex( 0 );
-   // select_fixed( cb_fixed->currentText() );
-   // connect( cb_fixed, SIGNAL( activated   ( const QString& ) ),
-   //         this,     SLOT  ( select_fixed( const QString& ) ) );
-
-   // validate_ff0();
-
-   // update_plot();
+void US_Grid_Preset::cancel()
+{
+   reject();
 }
 
 // Select coordinate flag for the fixed attribute
-void US_Grid_Preset::select_fixed( int index )
+void US_Grid_Preset::set_z_axis( )
 {
-   // // Axis types                   s    f/f0      mw   vbar     D     f
-   // const double  zmins[] = { -500000.0,   1.0,    0.0,  0.01, 1e+6, 1e+6 };
-   // const double  zmaxs[] = {  500000.0,  50.0,  1e+10,  3.00, 1e+8, 1e+6 };
-   // const double  zincs[] = {      0.01,  0.01, 5000.0, 0.001, 1e+5, 1e+5 };
-   // //const double  zvals[] = {     5.00,   2.0,   1e+5,  0.72, 1e+7, 1e+7 };
+   int attr = -1;
+   if ( z_axis->count() > 0 ) {
+      attr = z_axis->currentData( Qt::UserRole ).toInt();
+   }
+   z_axis->clear();
+   for (int ii = ATTR_S; ii <= ATTR_F; ii++) {
+      if ( ii == x_param || ii == y_param ) continue;
 
-   // plot_z   = fixstr.contains( tr( "Partial S" ) ) ? ATTR_V : 0;
-   // plot_z   = fixstr.contains( tr( "nal Ratio" ) ) ? ATTR_K : plot_z;
-   // plot_z   = fixstr.contains( tr( "ar Weight" ) ) ? ATTR_W : plot_z;
-   // plot_z   = fixstr.contains( tr( "Sedimenta" ) ) ? ATTR_S : plot_z;
-   // plot_z   = fixstr.contains( tr( "Diffusion" ) ) ? ATTR_D : plot_z;
-   // plot_z   = fixstr.contains( tr( "nal Coeff" ) ) ? ATTR_F : plot_z;
-   // qDebug() << "SelFix: " << fixstr << "plot_z" << plot_z;
-
-   // ct_zVal->setRange     ( zmins[ plot_z ], zmaxs[ plot_z ] );
-   // ct_zVal->setSingleStep( zincs[ plot_z ] );
-   // //ct_zVal->setValue( zvals[ plot_z ] );
-   // lb_zVal->setText( fixstr );
-
-   // validate_ff0();
+      z_axis->addItem( Attr_to_long( ii ), ii );
+   }
+   int index = z_axis->findData(attr, Qt::UserRole);
+   if ( index == -1 ) {
+      z_axis->setCurrentIndex( 0 );
+   } else {
+      z_axis->setCurrentIndex( index );
+   }
 }
-
 
 QString Attr_to_long(int attr)
 {
