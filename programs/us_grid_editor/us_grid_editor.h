@@ -18,6 +18,7 @@
 #include "us_settings.h"
 #include "us_util.h"
 #include "us_widgets.h"
+#include "us_widgets_dialog.h"
 #include "us_investigator.h"
 
 #include "qwt_plot_zoomer.h"
@@ -27,6 +28,12 @@
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug()
 #endif
+
+enum attr_type { ATTR_S, ATTR_K, ATTR_W, ATTR_V, ATTR_D, ATTR_F };
+
+QString Attr_to_long(int);  //!< returns the long name of the attr_type
+
+QString Attr_to_short(int); //!< returns the short name of the attr_type
 
 //! \struct gridpoint
 //! \brief Structure representing a grid point with various attributes.
@@ -42,6 +49,53 @@ struct gridpoint
     int index;      //!< Index of the grid point.
 };
 
+
+class US_Grid_Preset : public US_WidgetsDialog
+{
+   Q_OBJECT
+public:
+   US_Grid_Preset(QWidget *);
+
+   //! \brief A method to obtain the grid parameters.
+   //! \param x Index of the selected x-axis attribute.
+   //! \param y Index of the selected y-axis attribute.
+   //! \param z Index of the selected z-axis attribute.
+   void parameters (int* x, int* y, int* z);
+
+private:
+   QRadioButton *rb_x_s;    //!< X-axis radio button for s.
+   QRadioButton *rb_x_mw;   //!< X-axis radio button for mw.
+   QRadioButton *rb_x_ff0;  //!< X-axis radio button for ff0.
+   QRadioButton *rb_x_D;    //!< X-axis radio button for D.
+   QRadioButton *rb_x_f;    //!< X-axis radio button for f.
+   QRadioButton *rb_x_vbar; //!< X-axis radio button for vbar.
+   QRadioButton *rb_y_s;    //!< Y-axis radio button for s.
+   QRadioButton *rb_y_mw;   //!< Y-axis radio button for mw.
+   QRadioButton *rb_y_ff0;  //!< Y-axis radio button for ff0.
+   QRadioButton *rb_y_D;    //!< Y-axis radio button for D.
+   QRadioButton *rb_y_f;    //!< Y-axis radio button for f.
+   QRadioButton *rb_y_vbar; //!< Y-axis radio button for vbar.
+   QButtonGroup* x_axis;    //!< X-axis button group.
+   QButtonGroup* y_axis;    //!< Y-axis button group.
+   QComboBox    *z_axis;    //!< Y-axis combo box for fixed attribute.
+   int x_param;             //!< x parameter
+   int y_param;             //!< y parameter
+   int z_param;             //!< y parameter
+
+private slots:
+   //! \brief Slot to select x-axis attribute.
+   //! \param index Index of the selected x-axis attribute.
+   void select_x_axis(int index);
+
+   //! \brief Slot to select y-axis attribute.
+   //! \param index Index of the selected y-axis attribute.
+   void select_y_axis(int index);
+
+   //! \brief Slot to select fixed attribute.
+   //! \param text Text of the selected fixed attribute.
+   void select_fixed(int index);
+};
+
 //! \class US_Grid_Editor
 //! \brief Class to handle the grid editor GUI and functionality.
 class US_Grid_Editor : public US_Widgets
@@ -55,35 +109,39 @@ class US_Grid_Editor : public US_Widgets
     private:
         //! \enum attr_type
         //! \brief Enumeration for attribute types.
-        enum attr_type { ATTR_S, ATTR_K, ATTR_W, ATTR_V, ATTR_D, ATTR_F };
+        // enum attr_type { ATTR_S, ATTR_K, ATTR_W, ATTR_V, ATTR_D, ATTR_F };
 
         int grid_index;       //!< Number of total partial grids.
         int partialGrid;      //!< Currently active partial grid.
         int subGrids;         //!< Number of subgrids.
 
-        QLabel *lb_info1;     //!< Information label 1.
-        QLabel *lb_info2;     //!< Information label 2.
-        QLabel *lb_xaxis;     //!< X-axis label.
-        QLabel *lb_yaxis;     //!< Y-axis label.
-        QLabel *lb_fixed;     //!< Fixed attribute label.
-        QLabel *lb_xRes;      //!< X resolution label.
-        QLabel *lb_yRes;      //!< Y resolution label.
-        QLabel *lb_xMin;      //!< X minimum value label.
-        QLabel *lb_xMax;      //!< X maximum value label.
-        QLabel *lb_yMin;      //!< Y minimum value label.
-        QLabel *lb_yMax;      //!< Y maximum value label.
-        QLabel *lb_zVal;      //!< Z value label.
-        QLabel *lb_density;   //!< Density label.
-        QLabel *lb_viscosity; //!< Viscosity label.
-        QLabel *lb_partialGrid; //!< Partial grid label.
-        QLabel *lb_subGrid;   //!< Subgrid label.
-
-        QLineEdit *le_density; //!< Density line edit.
-        QLineEdit *le_viscosity; //!< Viscosity line edit.
         QLineEdit *le_investigator; //!< Investigator line edit.
-        QLineEdit *le_counts; //!< Counts line edit.
 
-        QComboBox *cb_fixed; //!< Combo box for fixed attribute.
+        QLabel    *lb_x_param;  //!< X-axis parameter.
+        QLabel    *lb_y_param;  //!< Y-axis parameter.
+        QLabel    *lb_z_param;  //!< Z-axis parameter.
+        QLineEdit *le_x_param;  //!< X-axis parameter name.
+        QLineEdit *le_y_param;  //!< Y-axis parameter name.
+        QLineEdit *le_z_param;  //!< Z-axis parameter name.
+
+        QLineEdit *le_dens;   //!< Density line edit.
+        QLineEdit *le_visc; //!< Viscosity line edit.
+
+        QLabel    *lb_x_ax;   //!< X-axis label.
+        QLineEdit *le_x_min;  //!< X-axis min value.
+        QLineEdit *le_x_max;  //!< X-axis max value.
+        QLineEdit *le_x_res;  //!< X-axis resolution.
+
+        QLabel    *lb_y_ax;   //!< X-axis label.
+        QLineEdit *le_y_min;  //!< Y-axis min value.
+        QLineEdit *le_y_max;  //!< Y-axis max value.
+        QLineEdit *le_y_res;  //!< Y-axis resolution.
+
+        QLabel    *lb_z_ax;   //!< Z-axis label.
+        QLineEdit *le_z_val;  //!< Z-axis value.
+
+        QLineEdit *le_subgrids; //!< Number of subgrids.
+        QLineEdit *le_allgrids; //!< Number of all subgrids.
 
         US_Help showHelp; //!< Help widget.
         QList<gridpoint> current_grid; //!< List of current grid points.
@@ -92,51 +150,24 @@ class US_Grid_Editor : public US_Widgets
         gridpoint maxgridpoint; //!< Maximum grid point.
         gridpoint mingridpoint; //!< Minimum grid point.
 
-        QwtCounter *ct_xRes; //!< X resolution counter.
-        QwtCounter *ct_yRes; //!< Y resolution counter.
-        QwtCounter *ct_yMin; //!< Y minimum value counter.
-        QwtCounter *ct_yMax; //!< Y maximum value counter.
-        QwtCounter *ct_xMin; //!< X minimum value counter.
-        QwtCounter *ct_xMax; //!< X maximum value counter.
-        QwtCounter *ct_zVal; //!< Z value counter.
-        QwtCounter *ct_partialGrid; //!< Partial grid counter.
-        QwtCounter *ct_subGrids; //!< Subgrids counter.
 
-        QwtPlot *data_plot1; //!< Data plot.
+        QwtPlot *data_plot; //!< Data plot.
         QwtLinearColorMap *colormap; //!< Color map for the plot.
         US_PlotPicker *pick1; //!< Plot picker 1.
         US_PlotPicker *pick2; //!< Plot picker 2.
         US_Disk_DB_Controls* dkdb_cntrls; //!< Disk DB controls.
 
-        QPushButton *pb_add_partialGrid; //!< Button to add partial grid.
-        QPushButton *pb_delete_partialGrid; //!< Button to delete partial grid.
-        QPushButton *pb_help; //!< Help button.
-        QPushButton *pb_close; //!< Close button.
-        QPushButton *pb_save; //!< Save button.
-        QPushButton *pb_reset; //!< Reset button.
-        QPushButton *pb_investigator; //!< Investigator button.
+        QPushButton *pb_add_update; //!< Button to add partial grid.
+        QPushButton *pb_delete; //!< Button to delete partial grid.
 
-        QCheckBox *ck_show_final_grid; //!< Checkbox to show final grid.
-        QCheckBox *ck_show_sub_grid; //!< Checkbox to show sub grid.
-
-        QRadioButton *rb_x_s; //!< X-axis radio button for s.
-        QRadioButton *rb_x_mw; //!< X-axis radio button for mw.
-        QRadioButton *rb_x_ff0; //!< X-axis radio button for ff0.
-        QRadioButton *rb_x_D; //!< X-axis radio button for D.
-        QRadioButton *rb_x_f; //!< X-axis radio button for f.
-        QRadioButton *rb_x_vbar; //!< X-axis radio button for vbar.
-        QRadioButton *rb_y_s; //!< Y-axis radio button for s.
-        QRadioButton *rb_y_mw; //!< Y-axis radio button for mw.
-        QRadioButton *rb_y_ff0; //!< Y-axis radio button for ff0.
-        QRadioButton *rb_y_D; //!< Y-axis radio button for D.
-        QRadioButton *rb_y_f; //!< Y-axis radio button for f.
-        QRadioButton *rb_y_vbar; //!< Y-axis radio button for vbar.
         QRadioButton *rb_plot1; //!< Plot radio button 1.
         QRadioButton *rb_plot2; //!< Plot radio button 2.
 
-        QButtonGroup *bg_x_axis; //!< Button group for x-axis.
-        QButtonGroup *bg_y_axis; //!< Button group for y-axis.
         QButtonGroup *toggle_plot; //!< Button group for toggling plot.
+
+        US_Grid_Preset *grid_preset; //!< A dialog to set the grid preset
+
+        QListWidget *lw_grids;
 
         double xMin; //!< X minimum value.
         double xMax; //!< X maximum value.
@@ -150,6 +181,9 @@ class US_Grid_Editor : public US_Widgets
         double vbar; //!< Partial specific volume.
         double ff0; //!< Frictional ratio.
 
+        int x_param; //!< Plot x-axis attribute (0-5 for s, f/f0, mw, vbar, D, f).
+        int y_param; //!< Plot y-axis attribute (0-5 for s, f/f0, mw, vbar, D, f).
+        int z_param; //!< Plot z-axis attribute (0-5 for s, f/f0, mw, vbar, D, f).
         int dbg_level; //!< Debug level.
         int plot_x; //!< Plot x-axis attribute (0-5 for s, f/f0, mw, vbar, D, f).
         int plot_y; //!< Plot y-axis attribute (0-5 for s, f/f0, mw, vbar, D, f).
@@ -157,6 +191,10 @@ class US_Grid_Editor : public US_Widgets
         int selected_plot; //!< Selected plot.
 
     private slots:
+
+        void set_XYZ();
+
+        void load_runId();
         //! \brief Slot to update x resolution.
         //! \param value New x resolution value.
         void update_xRes(double value);
@@ -204,17 +242,17 @@ class US_Grid_Editor : public US_Widgets
         //! \brief Slot to update the plot.
         void update_plot(void);
 
-        //! \brief Slot to select x-axis attribute.
-        //! \param index Index of the selected x-axis attribute.
-        void select_x_axis(int index);
+        // //! \brief Slot to select x-axis attribute.
+        // //! \param index Index of the selected x-axis attribute.
+        // void select_x_axis(int index);
 
-        //! \brief Slot to select y-axis attribute.
-        //! \param index Index of the selected y-axis attribute.
-        void select_y_axis(int index);
+        // //! \brief Slot to select y-axis attribute.
+        // //! \param index Index of the selected y-axis attribute.
+        // // void select_y_axis(int index);
 
-        //! \brief Slot to select fixed attribute.
-        //! \param text Text of the selected fixed attribute.
-        void select_fixed(const QString& text);
+        // //! \brief Slot to select fixed attribute.
+        // //! \param text Text of the selected fixed attribute.
+        // void select_fixed(const QString& text);
 
         //! \brief Slot to select plot.
         //! \param index Index of the selected plot.

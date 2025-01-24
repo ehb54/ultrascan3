@@ -36,10 +36,12 @@ int main( int argc, char* argv[] )
 US_Grid_Editor::US_Grid_Editor() : US_Widgets()
 {
    // set up the GUI
-   QString str;
-
    setWindowTitle( tr( "UltraScan 2DSA Grid Initialization Editor" ) );
    setPalette( US_GuiSettings::frameColor() );
+
+   // validators
+   QDoubleValidator *d_validator = new QDoubleValidator(this);
+   QIntValidator    *i_validator = new QIntValidator(this);
 
    // primary layouts
    QHBoxLayout* main  = new QHBoxLayout( this );
@@ -47,7 +49,7 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    QGridLayout* left  = new QGridLayout();
    main->setSpacing        ( 2 );
    main->setContentsMargins( 2, 2, 2, 2 );
-   left->setSpacing        ( 1 );
+   left->setSpacing        ( 2 );
    left->setContentsMargins( 0, 0, 0, 0 );
    right->setSpacing        ( 0 );
    right->setContentsMargins( 0, 1, 0, 1 );
@@ -55,14 +57,12 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    density   = DENS_20W;
    vbar      = TYPICAL_VBAR;
 
-   int s_row = 0;
    dbg_level = US_Settings::us_debug();
 
-   // series of rows: most of them label on left, counter/box on right
-   lb_info1      = us_banner( tr( "Grid Editor Controls" ) );
+   QLabel *lb_preset = us_banner( tr( "Grid Preset" ) );
 
    QPushButton* pb_investigator = us_pushbutton( tr( "Select Investigator" ) );
-   connect( pb_investigator, SIGNAL( clicked() ), SLOT( sel_investigator() ) );
+   connect( pb_investigator, &QPushButton::clicked, this, &US_Grid_Editor::sel_investigator );
 
    if ( US_Settings::us_inv_level() < 1 )
       pb_investigator->setEnabled( false );
@@ -71,290 +71,228 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    QString number  = ( id > 0 ) ?
       QString::number( US_Settings::us_inv_ID() ) + ": "
       : "";
-   le_investigator = us_lineedit( number + US_Settings::us_inv_name(),
-                                  1, true );
+   le_investigator = us_lineedit( number + US_Settings::us_inv_name(), 1, true );
 
-   dkdb_cntrls   = new US_Disk_DB_Controls(
-         US_Settings::default_data_location() );
-   connect( dkdb_cntrls, SIGNAL( changed( bool ) ),
-            this,   SLOT( update_disk_db( bool ) ) );
+   dkdb_cntrls   = new US_Disk_DB_Controls( US_Settings::default_data_location() );
+   connect( dkdb_cntrls, &US_Disk_DB_Controls::changed, this, &US_Grid_Editor::update_disk_db );
 
-   lb_xaxis      = us_label( tr( "Adjust X-Axis as:" ) );
-   lb_xaxis->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
+   grid_preset = new US_Grid_Preset(this);
+   grid_preset->parameters(&x_param, &y_param, &z_param);
 
-   lb_yaxis      = us_label( tr( "Adjust Y-Axis as:" ) );
-   lb_yaxis->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
+   QLabel *lb_x_param = us_label( tr( "X-Axis" ) );
+   lb_x_param->setAlignment( Qt::AlignCenter );
 
-   QGridLayout* x_s     = us_radiobutton( tr( "Sedimentation Coeff." ),
-                                          rb_x_s,    true );
-   QGridLayout* x_ff0   = us_radiobutton( tr( "Frictional Ratio" ),
-                                          rb_x_ff0,  false );
-   QGridLayout* x_mw    = us_radiobutton( tr( "Molecular Weight" ),
-                                          rb_x_mw,   true );
-   QGridLayout* x_vbar  = us_radiobutton( tr( "Partial Specific Volume" ),
-                                          rb_x_vbar, true );
-   QGridLayout* x_D     = us_radiobutton( tr( "Diffusion Coefficient" ),
-                                          rb_x_D,    true );
-   QGridLayout* x_f     = us_radiobutton( tr( "Frictional Coefficient" ),
-                                          rb_x_f,    true );
-   QGridLayout* y_s     = us_radiobutton( tr( "Sedimentation Coeff." ),
-                                          rb_y_s,    false );
-   QGridLayout* y_ff0   = us_radiobutton( tr( "Frictional Ratio" ),
-                                          rb_y_ff0,  true );
-   QGridLayout* y_mw    = us_radiobutton( tr( "Molecular Weight" ),
-                                          rb_y_mw,   true );
-   QGridLayout* y_vbar  = us_radiobutton( tr( "Partial Specific Volume" ),
-                                          rb_y_vbar, true );
-   QGridLayout* y_D     = us_radiobutton( tr( "Diffusion Coefficient" ),
-                                          rb_y_D,    true );
-   QGridLayout* y_f     = us_radiobutton( tr( "Frictional Coefficient" ),
-                                          rb_y_f,    true );
+   QLabel *lb_y_param = us_label( tr( "Y-Axis" ) );
+   lb_y_param->setAlignment( Qt::AlignCenter );
 
-   QGridLayout* toggle1 = us_radiobutton( tr( "X-Axis View" ),
-                                          rb_plot1, true );
-   QGridLayout* toggle2 = us_radiobutton( tr( "Molecular Weight View" ),
-                                          rb_plot2, true );
+   QLabel *lb_z_param = us_label( tr( "Fixed Attribute" ) );
+   lb_z_param->setAlignment( Qt::AlignCenter );
 
-   QButtonGroup* x_axis = new QButtonGroup( this );
-   x_axis->addButton( rb_x_s,    ATTR_S );
-   x_axis->addButton( rb_x_ff0,  ATTR_K );
-   x_axis->addButton( rb_x_mw,   ATTR_W );
-   x_axis->addButton( rb_x_vbar, ATTR_V );
-   x_axis->addButton( rb_x_D,    ATTR_D );
-   x_axis->addButton( rb_x_f,    ATTR_F );
-   connect( x_axis, SIGNAL( buttonReleased( int ) ),
-                    SLOT  ( select_x_axis ( int ) ) );
+   le_x_param = us_lineedit( Attr_to_long(x_param), -1, true);
+   le_y_param = us_lineedit( Attr_to_long(y_param), -1, true);
+   le_z_param = us_lineedit( Attr_to_long(z_param), -1, true);
 
-   QButtonGroup* y_axis = new QButtonGroup( this );
-   y_axis->addButton( rb_y_s,    ATTR_S );
-   y_axis->addButton( rb_y_ff0,  ATTR_K );
-   y_axis->addButton( rb_y_mw,   ATTR_W );
-   y_axis->addButton( rb_y_vbar, ATTR_V );
-   y_axis->addButton( rb_y_D,    ATTR_D );
-   y_axis->addButton( rb_y_f,    ATTR_F );
-   connect( y_axis, SIGNAL( buttonReleased( int ) ),
-                    SLOT  ( select_y_axis ( int ) ) );
+   QPushButton *pb_preset = us_pushbutton( "Grid Setup" );
+   connect ( pb_preset, &QPushButton::clicked, this, &US_Grid_Editor::set_XYZ);
+
+   // Experimental Space
+
+   QLabel *lb_experm = us_banner( tr( "Experimental Space" ) );
+   QLabel *lb_density = us_label( tr( "Density" ) );
+   lb_density->setAlignment( Qt::AlignCenter );
+   QLineEdit* le_density = us_lineedit( QString::number( density ) );
+   le_density->setValidator(d_validator);
+
+   QLabel *lb_viscosity = us_label( tr( "Viscosity" ) );
+   lb_viscosity->setAlignment( Qt::AlignCenter );
+   QLineEdit* le_viscosity = us_lineedit( QString::number( viscosity ) );
+
+   QPushButton *pb_load_run = us_pushbutton( "Load From Run ID" );
+   connect ( pb_load_run, &QPushButton::clicked, this, &US_Grid_Editor::load_runId);
+
+   // 20,w grid control
+   QLabel *lb_20w_ctrl = us_banner( tr( "20,w Grid Control" ) );
+
+   QGridLayout* toggle1 = us_radiobutton( tr( "X-Axis View" ), rb_plot1, true );
+   QGridLayout* toggle2 = us_radiobutton( tr( "Molecular Weight View" ), rb_plot2, true );
 
    QButtonGroup* toggle_plot = new QButtonGroup( this );
    toggle_plot->addButton( rb_plot1, 0 );
    toggle_plot->addButton( rb_plot2, 1 );
    rb_plot1   ->setChecked( true );
-   connect( toggle_plot, SIGNAL( buttonReleased( int ) ),
-                         SLOT  ( select_plot   ( int ) ) );
+   connect( toggle_plot, &QButtonGroup::idReleased, this, &US_Grid_Editor::select_plot );
 
-   lb_fixed      = us_label( tr( "Fixed Attribute:" ) );
-   cb_fixed      = us_comboBox();
-   cb_fixed->addItem( tr( "Partial Specific Volume" ) );
-   cb_fixed->addItem( tr( "Frictional Ratio" ) );
-   cb_fixed->addItem( tr( "Molecular Weight" ) );
-   cb_fixed->addItem( tr( "Sedimentation Coefficient" ) );
-   cb_fixed->addItem( tr( "Diffusion Coefficient" ) );
-   cb_fixed->addItem( tr( "Frictional Coefficient" ) );
-   cb_fixed->setEnabled( true );
-   cb_fixed->setCurrentIndex( 0 );
-   connect( cb_fixed, SIGNAL( activated   ( const QString& ) ),
-            this,     SLOT  ( select_fixed( const QString& ) ) );
+   QLabel *lb_grid_list = us_label(" Grid List ");
+   lb_grid_list->setAlignment( Qt::AlignCenter );
 
-   lb_xRes      = us_label( tr( "X Resolution:" ) );
-   lb_xRes->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
+   lw_grids = us_listwidget();
 
-   ct_xRes      = us_counter( 3, 1.0, 1000.0, 60.0 );
-   ct_xRes->setSingleStep( 1 );
-   connect( ct_xRes,  SIGNAL( valueChanged( double ) ),
-            this,     SLOT  ( update_xRes ( double ) ) );
+   QPushButton* pb_make_new = us_pushbutton( "Make New Grid" );
+   pb_delete = us_pushbutton( "Delete Grid" );
 
-   lb_yRes      = us_label( tr( "f/f0 Resolution:" ) );
-   lb_yRes->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
+   QFrame *hline1 = new QFrame();
+   hline1->setFrameShape(QFrame::HLine);
+   hline1->setFrameShadow(QFrame::Sunken);
 
-   ct_yRes      = us_counter( 3, 1.0, 1000.0, 60.0 );
-   ct_yRes->setSingleStep( 1 );
-   connect( ct_yRes,  SIGNAL( valueChanged( double ) ),
-            this,     SLOT  ( update_yRes ( double ) ) );
+   QLabel *lb_min = us_label( "Minimum" );
+   lb_min->setAlignment( Qt::AlignCenter );
+   QLabel *lb_max = us_label( "Maximum" );
+   lb_max->setAlignment( Qt::AlignCenter );
+   QLabel *lb_res = us_label( "Resolution" );
+   lb_res->setAlignment( Qt::AlignCenter );
 
-   lb_xMin     = us_label( tr( "s (x 1e13) Minimum:" ) );
-   lb_xMin->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
+   lb_x_ax = us_label( Attr_to_short( x_param ));
+   lb_x_ax->setAlignment( Qt::AlignCenter );
+   lb_y_ax = us_label( Attr_to_short( y_param ));
+   lb_y_ax->setAlignment( Qt::AlignCenter );
 
-   ct_xMin     = us_counter( 3, -500000.0, 500000.0, 0.1 );
-   ct_xMin->setSingleStep( 1 );
-   connect( ct_xMin, SIGNAL( valueChanged( double ) ),
-            this,    SLOT  ( update_xMin ( double ) ) );
+   le_x_min = us_lineedit();
+   le_x_max = us_lineedit();
+   le_x_res = us_lineedit();
 
-   lb_xMax     = us_label( tr( "s (x 1e13) Maximum:" ) );
-   lb_xMax->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
+   le_y_min = us_lineedit();
+   le_y_max = us_lineedit();
+   le_y_res = us_lineedit();
 
-   ct_xMax     = us_counter( 3, -500000.0, 500000.0, 0.1 );
-   ct_xMax->setSingleStep( 1 );
-   connect( ct_xMax, SIGNAL( valueChanged( double ) ),
-            this,    SLOT  ( update_xMax ( double ) ) );
+   QFrame *hline2 = new QFrame();
+   hline2->setFrameShape(QFrame::HLine);
+   hline2->setFrameShadow(QFrame::Sunken);
 
-   lb_yMin     = us_label( tr( "f/f0 Minimum:" ) );
-   lb_yMin->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
+   lb_z_ax = us_label( Attr_to_short( z_param ));
+   lb_z_ax->setAlignment( Qt::AlignCenter );
+   le_z_val = us_lineedit();
 
-   ct_yMin     = us_counter( 3, 1.0, 50.0, 0.1 );
-   ct_yMin->setSingleStep( 1 );
-   connect( ct_yMin, SIGNAL( valueChanged( double ) ),
-            this,    SLOT(   update_yMin ( double ) ) );
+   QPushButton* pb_validate = us_pushbutton( "Validate" );
 
-   lb_yMax     = us_label( tr( "f/f0 Maximum:" ) );
-   lb_yMax->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
+   QLabel *lb_subgrids = us_label( "# Subgrids" );
+   lb_subgrids->setAlignment( Qt::AlignCenter );
+   le_subgrids = us_lineedit();
 
-   ct_yMax     = us_counter( 3, 1.0, 50.0, 0.1 );
-   ct_yMax->setSingleStep( 1 );
-   connect( ct_yMax, SIGNAL( valueChanged( double ) ),
-         this,       SLOT(   update_yMax ( double ) ) );
+   QLabel *lb_allgrids = us_label( "# Grid Points" );
+   lb_allgrids->setAlignment( Qt::AlignCenter );
+   le_allgrids = us_lineedit();
 
-   lb_zVal     = us_label( tr( "Partial Specific Volume:" ) );
-   lb_zVal->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
+   pb_add_update = us_pushbutton( "Add/Update" );
 
-   ct_zVal     = us_counter( 3, 0.01, 3.0, 0.001 );
-   ct_zVal->setSingleStep ( 1 );
-   ct_zVal->setValue( 0.72 );
-   connect( ct_zVal, SIGNAL( valueChanged( double ) ),
-         this,       SLOT(   update_zVal ( double ) ) );
-
-   lb_density     = us_label( tr( "Density:" ) );
-   lb_density->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
-   str.setNum( density );
-   QLineEdit* le_density = us_lineedit( str.setNum( density ));
-   connect( le_density, SIGNAL( textChanged   ( const QString& ) ),
-            this,       SLOT  ( update_density( const QString& ) ) );
-
-   lb_viscosity     = us_label( tr( "Viscosity:" ) );
-   lb_viscosity->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
-   str.setNum( viscosity );
-   QLineEdit* le_viscosity = us_lineedit( str.setNum( viscosity ));
-   connect( le_viscosity, SIGNAL( textChanged     ( const QString& ) ),
-            this,         SLOT  ( update_viscosity( const QString& ) ) );
-
-   pb_add_partialGrid       = us_pushbutton( tr( "Add this Grid" ) );
-   pb_add_partialGrid->setEnabled( true );
-   connect( pb_add_partialGrid,    SIGNAL( clicked()         ),
-            this,                  SLOT  ( add_partialGrid() ) );
-
-   QGridLayout *showgrid = us_checkbox( tr("Show Final Grid"),
-                                        ck_show_final_grid, false );
-   connect( ck_show_final_grid, SIGNAL( clicked        ( bool ) ),
-            this,               SLOT  ( show_final_grid( bool ) ) );
-   ck_show_final_grid->setEnabled( false );
-
-   pb_delete_partialGrid       = us_pushbutton( tr( "Delete Partial Grid" ) );
-   pb_delete_partialGrid->setEnabled( false );
-   connect( pb_delete_partialGrid, SIGNAL( clicked()            ),
-            this,                  SLOT  ( delete_partialGrid() ) );
-
-   QGridLayout *showsubgrid = us_checkbox( tr("Show Subgrids"), ck_show_sub_grid, false );
-   connect( ck_show_sub_grid, SIGNAL( clicked(bool) ),
-   this,    SLOT( show_sub_grid(bool) ) );
-   ck_show_sub_grid->setEnabled( false );
-
-   lb_partialGrid     = us_label( tr( "Highlight Partial Grid #:" ) );
-   lb_partialGrid->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
-
-   ct_partialGrid     = us_counter( 3, 0, 1000, 0.0 );
-   ct_partialGrid->setSingleStep( 1 );
-   ct_partialGrid->setEnabled( false );
-   connect( ct_partialGrid, SIGNAL( valueChanged( double ) ),
-            this,        SLOT( update_partialGrid( double ) ) );
-
-   lb_subGrid     = us_label( tr( "Number of Subgrids:" ) );
-   lb_subGrid->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
-
-   ct_subGrids     = us_counter( 3, 1, 500, 13.0 );
-   ct_subGrids->setSingleStep( 1 );
-   ct_subGrids->setEnabled( false );
-   connect( ct_subGrids, SIGNAL( valueChanged( double ) ),
-            this,        SLOT( update_subGrids( double ) ) );
-
-   QLabel* lb_counts = us_label( tr( "Number of Grid Points:" ) );
-   le_counts     = us_lineedit( tr( "0 total, 0 per subgrid" ), 0, true );
-
-   pb_reset      = us_pushbutton( tr( "Reset" ) );
+   QPushButton* pb_reset = us_pushbutton( tr( "Reset" ) );
    pb_reset->setEnabled( true );
-   connect( pb_reset,   SIGNAL( clicked() ),
-            this,       SLOT( reset() ) );
+   connect( pb_reset, &QPushButton::clicked, this, &US_Grid_Editor::reset );
 
-   pb_save       = us_pushbutton( tr( "Save" ) );
+   QPushButton* pb_save = us_pushbutton( tr( "Save" ) );
    pb_save->setEnabled( false );
-   connect( pb_save,    SIGNAL( clicked() ),
-            this,       SLOT(   save() ) );
+   connect( pb_save, &QPushButton::clicked, this, &US_Grid_Editor::save );
 
-   pb_help       = us_pushbutton( tr( "Help" ) );
+   QPushButton* pb_help = us_pushbutton( tr( "Help" ) );
    pb_help->setEnabled( true );
-   connect( pb_help,    SIGNAL( clicked() ),
-            this,       SLOT(   help() ) );
+   connect( pb_help, &QPushButton::clicked, this, &US_Grid_Editor::help );
 
-   pb_close      = us_pushbutton( tr( "Close" ) );
+   QPushButton* pb_close      = us_pushbutton( tr( "Close" ) );
    pb_close->setEnabled( true );
-   connect( pb_close,   SIGNAL( clicked() ),
-            this,       SLOT( close() ) );
+   connect( pb_close, &QPushButton::clicked, this, &US_Grid_Editor::close );
 
    // set up plot component window on right side
 
-   QBoxLayout* plot1 = new US_Plot( data_plot1,
+   QBoxLayout* plot1 = new US_Plot( data_plot,
       tr( "Grid Layout" ),
       tr( "Sedimentation Coefficient (s20,W)"),
       tr( "Frictional Ratio f/f0" ) );
-   data_plot1->setAutoDelete( true );
-   data_plot1->setMinimumSize( 640, 480 );
-   data_plot1->enableAxis( QwtPlot::xBottom, true );
-   data_plot1->enableAxis( QwtPlot::yLeft,   true );
-   data_plot1->setAxisScale( QwtPlot::xBottom, 1.0, 40.0 );
-   data_plot1->setAxisScale( QwtPlot::yLeft,   1.0,  4.0 );
+   data_plot->setAutoDelete( true );
+   data_plot->setMinimumSize( 640, 480 );
+   data_plot->enableAxis( QwtPlot::xBottom, true );
+   data_plot->enableAxis( QwtPlot::yLeft,   true );
+   data_plot->setAxisScale( QwtPlot::xBottom, 1.0, 40.0 );
+   data_plot->setAxisScale( QwtPlot::yLeft,   1.0,  4.0 );
 
-   left->addWidget( lb_info1,              s_row++, 0, 1, 4 );
-   left->addWidget( pb_investigator,       s_row,   0, 1, 2 );
-   left->addWidget( le_investigator,       s_row++, 2, 1, 2 );
-   left->addLayout( dkdb_cntrls,           s_row++, 0, 1, 4 );
-   left->addWidget( lb_xaxis,              s_row,   0, 1, 2 );
-   left->addWidget( lb_yaxis,              s_row++, 2, 1, 2 );
-   left->addLayout( x_s,                   s_row,   0, 1, 2 );
-   left->addLayout( y_s,                   s_row++, 2, 1, 2 );
-   left->addLayout( x_ff0,                 s_row,   0, 1, 2 );
-   left->addLayout( y_ff0,                 s_row++, 2, 1, 2 );
-   left->addLayout( x_mw,                  s_row,   0, 1, 2 );
-   left->addLayout( y_mw,                  s_row++, 2, 1, 2 );
-   left->addLayout( x_vbar,                s_row,   0, 1, 2 );
-   left->addLayout( y_vbar,                s_row++, 2, 1, 2 );
-   left->addLayout( x_D,                   s_row,   0, 1, 2 );
-   left->addLayout( y_D,                   s_row++, 2, 1, 2 );
-   left->addLayout( x_f,                   s_row,   0, 1, 2 );
-   left->addLayout( y_f,                   s_row++, 2, 1, 2 );
-   left->addWidget( lb_fixed,              s_row,   0, 1, 2 );
-   left->addWidget( cb_fixed,              s_row++, 2, 1, 2 );
-   left->addLayout( toggle1,               s_row,   0, 1, 2 );
-   left->addLayout( toggle2,               s_row++, 2, 1, 2 );
-   left->addWidget( lb_xRes,               s_row,   0, 1, 2 );
-   left->addWidget( ct_xRes,               s_row++, 2, 1, 2 );
-   left->addWidget( lb_yRes,               s_row,   0, 1, 2 );
-   left->addWidget( ct_yRes,               s_row++, 2, 1, 2 );
-   left->addWidget( lb_xMin,               s_row,   0, 1, 2 );
-   left->addWidget( ct_xMin,               s_row++, 2, 1, 2 );
-   left->addWidget( lb_xMax,               s_row,   0, 1, 2 );
-   left->addWidget( ct_xMax,               s_row++, 2, 1, 2 );
-   left->addWidget( lb_yMin,               s_row,   0, 1, 2 );
-   left->addWidget( ct_yMin,               s_row++, 2, 1, 2 );
-   left->addWidget( lb_yMax,               s_row,   0, 1, 2 );
-   left->addWidget( ct_yMax,               s_row++, 2, 1, 2 );
-   left->addWidget( lb_zVal,               s_row,   0, 1, 2 );
-   left->addWidget( ct_zVal,               s_row++, 2, 1, 2 );
-   left->addWidget( lb_density,            s_row,   0, 1, 1 );
-   left->addWidget( le_density,            s_row,   1, 1, 1 );
-   left->addWidget( lb_viscosity,          s_row,   2, 1, 1 );
-   left->addWidget( le_viscosity,          s_row++, 3, 1, 1 );
-   left->addWidget( pb_add_partialGrid,    s_row,   0, 1, 2 );
-   left->addLayout( showgrid,              s_row++, 2, 1, 2 );
-   left->addWidget( pb_delete_partialGrid, s_row,   0, 1, 2 );
-   left->addLayout( showsubgrid,           s_row++, 2, 1, 2 );
-   left->addWidget( lb_partialGrid,        s_row,   0, 1, 2 );
-   left->addWidget( ct_partialGrid,        s_row++, 2, 1, 2 );
-   left->addWidget( lb_subGrid,            s_row,   0, 1, 2 );
-   left->addWidget( ct_subGrids,           s_row++, 2, 1, 2 );
-   left->addWidget( lb_counts,             s_row,   0, 1, 2 );
-   left->addWidget( le_counts,             s_row++, 2, 1, 2 );
-   left->addWidget( pb_reset,              s_row,   0, 1, 1 );
-   left->addWidget( pb_save,               s_row,   1, 1, 1 );
-   left->addWidget( pb_help,               s_row,   2, 1, 1 );
-   left->addWidget( pb_close,              s_row++, 3, 1, 1 );
+   int row = 0;
+   left->addWidget( lb_preset,            row++, 0, 1, 4 );
+
+   left->addWidget( pb_investigator,      row,   0, 1, 2 );
+   left->addWidget( le_investigator,      row++, 2, 1, 2 );
+
+   left->addLayout( dkdb_cntrls,          row++, 0, 1, 4 );
+
+   left->addWidget( lb_x_param,           row,   0, 1, 2 );
+   left->addWidget( le_x_param,           row++, 2, 1, 2 );
+
+   left->addWidget( lb_y_param,           row,   0, 1, 2 );
+   left->addWidget( le_y_param,           row++, 2, 1, 2 );
+
+   left->addWidget( lb_z_param,           row,   0, 1, 2 );
+   left->addWidget( le_z_param,           row++, 2, 1, 2 );
+
+   left->addWidget( pb_preset,            row++, 1, 1, 2 );
+
+   left->addWidget( lb_experm,            row++, 0, 1, 4 );
+
+   left->addWidget( lb_density,           row,   0, 1, 1 );
+   left->addWidget( le_density,           row,   1, 1, 1 );
+   left->addWidget( lb_viscosity,         row,   2, 1, 1 );
+   left->addWidget( le_viscosity,         row++, 3, 1, 1 );
+
+   left->addWidget( pb_load_run,          row++, 1, 1, 2 );
+
+   left->addWidget( lb_20w_ctrl,          row++, 0, 1, 4 );
+
+   left->addLayout( toggle1,              row,   0, 1, 2 );
+   left->addLayout( toggle2,              row++, 2, 1, 2 );
+
+   left->addWidget( lb_grid_list,         row++, 0, 1, 4 );
+
+   left->addWidget( lw_grids,             row,   0, 5, 4 );
+   row += 5;
+
+   left->addWidget( pb_delete,            row,   0, 1, 2 );
+   left->addWidget( pb_make_new,          row++, 2, 1, 2 );
+
+   left->addWidget( hline1,               row++, 0, 1, 4 );
+
+   left->addWidget( lb_min,               row,   1, 1, 1 );
+   left->addWidget( lb_max,               row,   2, 1, 1 );
+   left->addWidget( lb_res,               row++, 3, 1, 1 );
+
+   left->addWidget( lb_x_ax,              row,   0, 1, 1 );
+   left->addWidget( le_x_min,             row,   1, 1, 1 );
+   left->addWidget( le_x_max,             row,   2, 1, 1 );
+   left->addWidget( le_x_res,             row++, 3, 1, 1 );
+
+   left->addWidget( lb_y_ax,              row,   0, 1, 1 );
+   left->addWidget( le_y_min,             row,   1, 1, 1 );
+   left->addWidget( le_y_max,             row,   2, 1, 1 );
+   left->addWidget( le_y_res,             row++, 3, 1, 1 );
+
+   left->addWidget( hline2,               row++, 0, 1, 4 );
+
+   left->addWidget( lb_z_ax,              row,   0, 1, 1 );
+   left->addWidget( le_z_val,             row,   1, 1, 1 );
+   left->addWidget( pb_validate,          row++, 2, 1, 2 );
+
+   left->addWidget( lb_subgrids,          row,   0, 1, 1 );
+   left->addWidget( le_subgrids,          row,   1, 1, 1 );
+   left->addWidget( pb_add_update,        row++, 2, 1, 2 );
+
+
+
+   left->addWidget( lb_allgrids,          row,   0, 1, 1 );
+   left->addWidget( le_allgrids,          row++, 1, 1, 3 );
+
+   QSpacerItem *spacer = new QSpacerItem(0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding);
+   left->addItem(spacer, row++, 0, 1, 4);
+
+   left->addWidget( pb_reset,             row,   0, 1, 1 );
+   left->addWidget( pb_save,              row,   1, 1, 1 );
+   left->addWidget( pb_help,              row,   2, 1, 1 );
+   left->addWidget( pb_close,             row++, 3, 1, 1 );
+   // left->setRowStretch(row, 1);
+
+
+
+   for (int ii = 0; ii < 4; ii++) {
+      left->setColumnStretch(ii, 1);
+   }
+   // for (int ii = 0; ii < left->rowCount(); ii++) {
+   //    left->setRowStretch(ii, 0);
+   // }
+
 
    right->addLayout( plot1 );
 
@@ -366,11 +304,24 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    reset();
 }
 
+void US_Grid_Editor::set_XYZ()
+{
+   int state = grid_preset->exec();
+   if ( state == QDialog::Accepted ) {
+      grid_preset->parameters(&x_param, &y_param, &z_param);
+   }
+}
+
+void US_Grid_Editor::load_runId()
+{
+
+}
+
 // reset the GUI
 void US_Grid_Editor::reset( void )
 {
-   dataPlotClear( data_plot1 );
-   pick1 = new US_PlotPicker( data_plot1 );
+   dataPlotClear( data_plot );
+   pick1 = new US_PlotPicker( data_plot );
 
    xRes          = 60.0;
    yRes          = 60.0;
@@ -393,53 +344,53 @@ qDebug() << "reset yRes" << yRes;
    subGrids      = 13;
    final_grid.clear();
 
-qDebug() << "1)set yRes" << yRes;
-   ct_xRes->setRange     ( 1.0, 1000.0 );
-   ct_xRes->setSingleStep( 1.0 );
-qDebug() << "2)set yRes" << yRes;
-   ct_xRes->setValue( xRes );
-qDebug() << "3)set yRes" << yRes;
-   ct_yRes->setRange     ( 1.0, 1000.0 );
-   ct_yRes->setSingleStep( 1.0 );
-qDebug() << "set yRes" << yRes;
-   ct_yRes->setValue( yRes );
-   ct_partialGrid    ->setEnabled( false );
-   ct_subGrids       ->setEnabled( false );
-   ct_partialGrid    ->setRange( 0, 0);
-   ct_partialGrid    ->setSingleStep( 0 );
-   ct_partialGrid    ->setValue( 0 );
-   ck_show_final_grid->setEnabled( false );
-   ck_show_final_grid->setChecked( false );
-   ck_show_sub_grid  ->setEnabled( false );
-   ck_show_sub_grid  ->setChecked( false );
-   ct_xRes  ->setEnabled( true );
-   ct_yRes  ->setEnabled( true );
-   ct_xMin  ->setEnabled( true );
-   ct_yMin  ->setEnabled( true );
-   ct_xMax  ->setEnabled( true );
-   ct_yMax  ->setEnabled( true );
-   ct_zVal  ->setEnabled( true );
-   rb_x_s   ->setEnabled( true );
-   rb_x_ff0 ->setEnabled( false );
-   rb_x_mw  ->setEnabled( true );
-   rb_x_vbar->setEnabled( true );
-   rb_x_D   ->setEnabled( true );
-   rb_x_f   ->setEnabled( true );
-   rb_y_s   ->setEnabled( false );
-   rb_y_ff0 ->setEnabled( true );
-   rb_y_mw  ->setEnabled( true );
-   rb_y_vbar->setEnabled( true );
-   rb_y_D   ->setEnabled( true );
-   rb_y_f   ->setEnabled( true );
-   rb_x_s   ->setChecked( true );
-   rb_y_ff0 ->setChecked( true );
-   pb_add_partialGrid   ->setEnabled( true );
-   pb_save              ->setEnabled( false );
-   pb_delete_partialGrid->setEnabled( false );
+// qDebug() << "1)set yRes" << yRes;
+//    ct_xRes->setRange     ( 1.0, 1000.0 );
+//    ct_xRes->setSingleStep( 1.0 );
+// qDebug() << "2)set yRes" << yRes;
+//    ct_xRes->setValue( xRes );
+// qDebug() << "3)set yRes" << yRes;
+//    ct_yRes->setRange     ( 1.0, 1000.0 );
+//    ct_yRes->setSingleStep( 1.0 );
+// qDebug() << "set yRes" << yRes;
+//    ct_yRes->setValue( yRes );
+//    ct_partialGrid    ->setEnabled( false );
+//    ct_subGrids       ->setEnabled( false );
+//    ct_partialGrid    ->setRange( 0, 0);
+//    ct_partialGrid    ->setSingleStep( 0 );
+//    ct_partialGrid    ->setValue( 0 );
+//    ck_show_final_grid->setEnabled( false );
+//    ck_show_final_grid->setChecked( false );
+//    ck_show_sub_grid  ->setEnabled( false );
+//    ck_show_sub_grid  ->setChecked( false );
+//    ct_xRes  ->setEnabled( true );
+//    ct_yRes  ->setEnabled( true );
+//    ct_xMin  ->setEnabled( true );
+//    ct_yMin  ->setEnabled( true );
+//    ct_xMax  ->setEnabled( true );
+//    ct_yMax  ->setEnabled( true );
+//    ct_zVal  ->setEnabled( true );
+   // rb_x_s   ->setEnabled( true );
+   // rb_x_ff0 ->setEnabled( false );
+   // rb_x_mw  ->setEnabled( true );
+   // rb_x_vbar->setEnabled( true );
+   // rb_x_D   ->setEnabled( true );
+   // rb_x_f   ->setEnabled( true );
+   // rb_y_s   ->setEnabled( false );
+   // rb_y_ff0 ->setEnabled( true );
+   // rb_y_mw  ->setEnabled( true );
+   // rb_y_vbar->setEnabled( true );
+   // rb_y_D   ->setEnabled( true );
+   // rb_y_f   ->setEnabled( true );
+   // rb_x_s   ->setChecked( true );
+   // rb_y_ff0 ->setChecked( true );
+   // pb_add_partialGrid   ->setEnabled( true );
+   // pb_save              ->setEnabled( false );
+   // pb_delete_partialGrid->setEnabled( false );
 
-   select_x_axis( plot_x );
-   select_y_axis( plot_y );
-   select_fixed ( cb_fixed->currentText() );
+   // select_x_axis( plot_x );
+   // select_y_axis( plot_y );
+   // select_fixed ( cb_fixed->currentText() );
 
    select_plot  ( selected_plot );
    update_plot  ();
@@ -625,11 +576,11 @@ void US_Grid_Editor::update_yRes( double dval )
 void US_Grid_Editor::update_xMin( double dval )
 {
    xMin    = dval;
-   ct_xMax->disconnect();
-   ct_xMax->setMinimum( xMin );
+   // ct_xMax->disconnect();
+   // ct_xMax->setMinimum( xMin );
 
-   connect( ct_xMax, SIGNAL( valueChanged( double ) ),
-            this,    SLOT  ( update_xMax ( double ) ) );
+   // connect( ct_xMax, SIGNAL( valueChanged( double ) ),
+   //          this,    SLOT  ( update_xMax ( double ) ) );
 
    validate_ff0();
 
@@ -640,11 +591,11 @@ void US_Grid_Editor::update_xMin( double dval )
 void US_Grid_Editor::update_xMax( double dval )
 {
    xMax    = dval;
-   ct_xMin->disconnect();
-   ct_xMin->setMaximum( xMax );
+   // ct_xMin->disconnect();
+   // ct_xMin->setMaximum( xMax );
 
-   connect( ct_xMin, SIGNAL( valueChanged( double ) ),
-            this,    SLOT  ( update_xMin ( double ) ) );
+   // connect( ct_xMin, SIGNAL( valueChanged( double ) ),
+   //          this,    SLOT  ( update_xMin ( double ) ) );
 
    validate_ff0();
 
@@ -656,11 +607,11 @@ void US_Grid_Editor::update_yMin( double dval )
 {
    yMin    = dval;
 qDebug() << "update_yMin" << yMin;
-   ct_yMax->disconnect();
-   ct_yMax->setMinimum( yMin );
+   // ct_yMax->disconnect();
+   // ct_yMax->setMinimum( yMin );
 
-   connect( ct_yMax, SIGNAL( valueChanged( double ) ),
-            this,    SLOT  ( update_yMax ( double ) ) );
+   // connect( ct_yMax, SIGNAL( valueChanged( double ) ),
+   //          this,    SLOT  ( update_yMax ( double ) ) );
 
    validate_ff0();
 
@@ -672,11 +623,11 @@ void US_Grid_Editor::update_yMax( double dval )
 {
    yMax    = dval;
 qDebug() << "update_yMax" << yMax;
-   ct_yMin->disconnect();
-   ct_yMin->setMaximum( yMax );
+   // ct_yMin->disconnect();
+   // ct_yMin->setMaximum( yMax );
 
-   connect( ct_yMin, SIGNAL( valueChanged( double ) ),
-            this,    SLOT  ( update_yMin ( double ) ) );
+   // connect( ct_yMin, SIGNAL( valueChanged( double ) ),
+   //          this,    SLOT  ( update_yMin ( double ) ) );
 
    validate_ff0();
 
@@ -707,10 +658,10 @@ void US_Grid_Editor::update_subGrids( double dval )
 {
    int ntotg       = final_grid.size();
    subGrids        = (int)dval;
-   ct_partialGrid->setRange     ( 1, subGrids );
-   ct_partialGrid->setSingleStep( 1 );
-   le_counts->setText( tr( "%1 total, %2 per subgrid" )
-         .arg( ntotg ).arg( ntotg / subGrids ) );
+   // ct_partialGrid->setRange     ( 1, subGrids );
+   // ct_partialGrid->setSingleStep( 1 );
+   // le_counts->setText( tr( "%1 total, %2 per subgrid" )
+   //       .arg( ntotg ).arg( ntotg / subGrids ) );
    update_plot();
 }
 
@@ -795,9 +746,9 @@ qDebug() << "  up0)yRes" << yRes;
    if ( selected_plot == 1 )
       xatitle         = tr( "Molecular Weight" );
 
-   dataPlotClear( data_plot1 );
-   data_plot1->setAxisTitle( QwtPlot::xBottom, xatitle );
-   data_plot1->setAxisTitle( QwtPlot::yLeft,   yatitle );
+   dataPlotClear( data_plot );
+   data_plot->setAxisTitle( QwtPlot::xBottom, xatitle );
+   data_plot->setAxisTitle( QwtPlot::yLeft,   yatitle );
 
    //print_minmax();
    int gridsize;
@@ -813,8 +764,9 @@ qDebug() << "  up0)yRes" << yRes;
    xData2.clear();
    yData2.clear();
 
-   if ( ck_show_final_grid->isChecked()  &&
-        !ck_show_sub_grid->isChecked())
+   // if ( ck_show_final_grid->isChecked()  &&
+   //      !ck_show_sub_grid->isChecked())
+      if (true)
    {
       gridsize = final_grid.size();
 
@@ -840,7 +792,7 @@ qDebug() << "  up0)yRes" << yRes;
       sym1->setPen  ( QColor( Qt::red ) );
       sym1->setSize ( 3 );
 
-      c1 = us_curve( data_plot1, "highlighted Grid points" );
+      c1 = us_curve( data_plot, "highlighted Grid points" );
       c1->setSymbol ( sym1 );
       c1->setStyle  ( QwtPlotCurve::NoCurve );
       c1->setSamples( xData1.data(), yData1.data(), xData1.size() );
@@ -852,14 +804,15 @@ qDebug() << "  up0)yRes" << yRes;
       sym2->setPen  ( QColor( Qt::yellow ) );
       sym2->setSize ( 3 );
 
-      c2 = us_curve( data_plot1, "Other Grid points" );
+      c2 = us_curve( data_plot, "Other Grid points" );
       c2->setSymbol ( sym2 );
       c2->setStyle  ( QwtPlotCurve::NoCurve );
       c2->setSamples( xData2.data(), yData2.data(), xData2.size() );
    }
 
-   else if ( ck_show_final_grid->isChecked()  &&
-             ck_show_sub_grid->isChecked())
+   // else if ( ck_show_final_grid->isChecked()  &&
+   //           ck_show_sub_grid->isChecked())
+      else if (0)
    {
       gridsize    = final_grid.size();
       int counter = 1;
@@ -891,7 +844,7 @@ qDebug() << "  up0)yRes" << yRes;
       sym1->setPen  ( QColor( Qt::red ) );
       sym1->setSize( 3 );
 
-      c1 = us_curve( data_plot1, "highlighted Grid points" );
+      c1 = us_curve( data_plot, "highlighted Grid points" );
       c1->setSymbol ( sym1 );
       c1->setStyle  ( QwtPlotCurve::NoCurve );
       c1->setSamples( xData1.data(), yData1.data(), xData1.size() );
@@ -903,7 +856,7 @@ qDebug() << "  up0)yRes" << yRes;
       sym2->setPen  ( QColor( Qt::yellow ) );
       sym2->setSize( 3 );
 
-      c2 = us_curve( data_plot1, "Other Grid points" );
+      c2 = us_curve( data_plot, "Other Grid points" );
       c2->setSymbol ( sym2 );
       c2->setStyle  ( QwtPlotCurve::NoCurve );
       c2->setSamples( xData2.data(), yData2.data(), xData2.size() );
@@ -929,16 +882,16 @@ qDebug() << "  updplt: gridsize" << gridsize;
       sym1->setPen  ( QColor( Qt::yellow ) );
       sym1->setSize( 3 );
 
-      c1 = us_curve( data_plot1, "Grid points 1" );
+      c1 = us_curve( data_plot, "Grid points 1" );
       c1->setSymbol ( sym1 );
       c1->setStyle  ( QwtPlotCurve::NoCurve );
       c1->setSamples( xData1.data(), yData1.data(), gridsize );
    }
 
 qDebug() << "  up9)yRes" << yRes;
-   data_plot1->setAxisAutoScale( QwtPlot::xBottom );
-   data_plot1->setAxisAutoScale( QwtPlot::yLeft );
-   data_plot1->replot();
+   data_plot->setAxisAutoScale( QwtPlot::xBottom );
+   data_plot->setAxisAutoScale( QwtPlot::yLeft );
+   data_plot->replot();
 }
 
 // Calculate all grid points for the selected setting
@@ -966,13 +919,13 @@ qDebug() << "  cg1)yRes" << yRes;
    mingridpoint.f    =  9.9e99;
 
 qDebug() << "  cg2)yRes" << yRes;
-   xRes              = ct_xRes->value();
-   xMin              = ct_xMin->value();
-   xMax              = ct_xMax->value();
-   yRes              = ct_yRes->value();
-   yMin              = ct_yMin->value();
-   yMax              = ct_yMax->value();
-   zVal              = ct_zVal->value();
+   // xRes              = ct_xRes->value();
+   // xMin              = ct_xMin->value();
+   // xMax              = ct_xMax->value();
+   // yRes              = ct_yRes->value();
+   // yMin              = ct_yMin->value();
+   // yMax              = ct_yMax->value();
+   // zVal              = ct_zVal->value();
    vbar              = zVal;
 qDebug() << "  cg3)yRes" << yRes;
    double xinc       = ( xMax - xMin ) / ( xRes - 1.0 );
@@ -2006,24 +1959,24 @@ void US_Grid_Editor::add_partialGrid( void )
       current_grid[i].index = grid_index;
       final_grid.push_back(current_grid[i]);
    }
-   pb_save->setEnabled( true );
-   ck_show_final_grid->setEnabled( true );
-   pb_delete_partialGrid->setEnabled( true );
-   ct_partialGrid->setEnabled( true );
+   // pb_save->setEnabled( true );
+   // ck_show_final_grid->setEnabled( true );
+   // pb_delete_partialGrid->setEnabled( true );
+   // ct_partialGrid->setEnabled( true );
 
    int ntotg       = final_grid.size();
    int minsubg     = ntotg / MAXSSZ;
    int maxsubg     = ntotg / MINSSZ + 1;
    subGrids        = ntotg / DEFSSZ + 1;
-   ct_subGrids->disconnect   ();
-   ct_subGrids->setRange     ( minsubg, maxsubg );
-   ct_subGrids->setSingleStep( 1 );
-   ct_subGrids->setValue     ( subGrids );
-   connect( ct_subGrids, SIGNAL( valueChanged   ( double ) ),
-            this,        SLOT  ( update_subGrids( double ) ) );
+   // ct_subGrids->disconnect   ();
+   // ct_subGrids->setRange     ( minsubg, maxsubg );
+   // ct_subGrids->setSingleStep( 1 );
+   // ct_subGrids->setValue     ( subGrids );
+   // connect( ct_subGrids, SIGNAL( valueChanged   ( double ) ),
+   //          this,        SLOT  ( update_subGrids( double ) ) );
 
-   le_counts->setText( tr( "%1 total, %2 per subgrid" )
-         .arg( ntotg ).arg( ntotg / subGrids ) );
+   // le_counts->setText( tr( "%1 total, %2 per subgrid" )
+   //       .arg( ntotg ).arg( ntotg / subGrids ) );
 
 }
 
@@ -2046,17 +1999,17 @@ void US_Grid_Editor::delete_partialGrid( void )
       }
    }
    grid_index--;
-   ct_partialGrid->setRange     ( 1, grid_index );
-   ct_partialGrid->setSingleStep( 1 );
-   if (grid_index == 0)
-   {
-      ck_show_final_grid->setChecked (false);
-      ck_show_final_grid->setEnabled (false);
-      ct_partialGrid->setRange      ( 0, 0 );
-      ct_partialGrid->setSingleStep ( 1 );
-      ct_partialGrid->setEnabled( false );
-      show_final_grid( false );
-   }
+   // ct_partialGrid->setRange     ( 1, grid_index );
+   // ct_partialGrid->setSingleStep( 1 );
+   // if (grid_index == 0)
+   // {
+   //    ck_show_final_grid->setChecked (false);
+   //    ck_show_final_grid->setEnabled (false);
+   //    ct_partialGrid->setRange      ( 0, 0 );
+   //    ct_partialGrid->setSingleStep ( 1 );
+   //    ct_partialGrid->setEnabled( false );
+   //    show_final_grid( false );
+   // }
    update_plot();
 }
 
@@ -2106,198 +2059,198 @@ void US_Grid_Editor::select_plot( int ival )
    update_plot();
 }
 
-// Select coordinate for horizontal axis
-void US_Grid_Editor::select_x_axis( int ival )
-{
-   // Axis types                   s    f/f0      mw   vbar     D     f
-   const double  xvmns[] = {       1.0,   1.0,   2e+4,  0.60, 1e-8, 1e-8 };
-   const double  xvmxs[] = {      10.0,   4.0,   1e+5,  0.80, 1e-7, 1e-7 };
-   const double  xmins[] = { -500000.0,   1.0,    0.0,  0.01, 1e-9, 1e-9 };
-   const double  xmaxs[] = {  500000.0,  50.0,  1e+10,  3.00, 3e-5, 1e-5 };
-   const double  xincs[] = {      0.01,  0.01, 5000.0,  0.01, 1e-9, 1e-9 };
-   const QString xtitls[] = { tr( "s (x 1e13)" ),
-                              tr( "f/f0-value" ),
-                              tr( "mw-value" ),
-                              tr( "vbar-value" ),
-                              tr( "D-value" ),
-                              tr( "f-value" ) };
-   plot_x = ival;
+// // Select coordinate for horizontal axis
+// void US_Grid_Editor::select_x_axis( int ival )
+// {
+//    // Axis types                   s    f/f0      mw   vbar     D     f
+//    const double  xvmns[] = {       1.0,   1.0,   2e+4,  0.60, 1e-8, 1e-8 };
+//    const double  xvmxs[] = {      10.0,   4.0,   1e+5,  0.80, 1e-7, 1e-7 };
+//    const double  xmins[] = { -500000.0,   1.0,    0.0,  0.01, 1e-9, 1e-9 };
+//    const double  xmaxs[] = {  500000.0,  50.0,  1e+10,  3.00, 3e-5, 1e-5 };
+//    const double  xincs[] = {      0.01,  0.01, 5000.0,  0.01, 1e-9, 1e-9 };
+//    const QString xtitls[] = { tr( "s (x 1e13)" ),
+//                               tr( "f/f0-value" ),
+//                               tr( "mw-value" ),
+//                               tr( "vbar-value" ),
+//                               tr( "D-value" ),
+//                               tr( "f-value" ) };
+//    plot_x = ival;
 
-   lb_xRes->setText( xtitls[ plot_x ] + tr( " Resolution:" ) );
-   lb_xMin->setText( xtitls[ plot_x ] + tr( " Minimum:" ) );
-   lb_xMax->setText( xtitls[ plot_x ] + tr( " Maximum:" ) );
-   ct_xMin->disconnect();
-   ct_xMax->disconnect();
-   xMin   = xvmns[ plot_x ];
-   xMax   = xvmxs[ plot_x ];
-   ct_xMin->setRange     ( xmins[ plot_x ], xmaxs[ plot_x ] );
-   ct_xMin->setSingleStep( xincs[ plot_x ] );
-   ct_xMax->setRange     ( xmins[ plot_x ], xmaxs[ plot_x ] );
-   ct_xMax->setSingleStep( xincs[ plot_x ] );
-   ct_xMin->setValue( xMin );
-   ct_xMax->setValue( xMax );
+//    lb_xRes->setText( xtitls[ plot_x ] + tr( " Resolution:" ) );
+//    lb_xMin->setText( xtitls[ plot_x ] + tr( " Minimum:" ) );
+//    lb_xMax->setText( xtitls[ plot_x ] + tr( " Maximum:" ) );
+//    ct_xMin->disconnect();
+//    ct_xMax->disconnect();
+//    xMin   = xvmns[ plot_x ];
+//    xMax   = xvmxs[ plot_x ];
+//    ct_xMin->setRange     ( xmins[ plot_x ], xmaxs[ plot_x ] );
+//    ct_xMin->setSingleStep( xincs[ plot_x ] );
+//    ct_xMax->setRange     ( xmins[ plot_x ], xmaxs[ plot_x ] );
+//    ct_xMax->setSingleStep( xincs[ plot_x ] );
+//    ct_xMin->setValue( xMin );
+//    ct_xMax->setValue( xMax );
 
-   connect( ct_xMin, SIGNAL( valueChanged( double ) ),
-            this,    SLOT  ( update_xMin ( double ) ) );
-   connect( ct_xMax, SIGNAL( valueChanged( double ) ),
-            this,    SLOT  ( update_xMax ( double ) ) );
+//    connect( ct_xMin, SIGNAL( valueChanged( double ) ),
+//             this,    SLOT  ( update_xMin ( double ) ) );
+//    connect( ct_xMax, SIGNAL( valueChanged( double ) ),
+//             this,    SLOT  ( update_xMax ( double ) ) );
 
-   rb_y_s   ->setEnabled( plot_x != ATTR_S );
-   rb_y_ff0 ->setEnabled( plot_x != ATTR_K );
-   rb_y_mw  ->setEnabled( plot_x != ATTR_W );
-   rb_y_vbar->setEnabled( plot_x != ATTR_V );
-   rb_y_D   ->setEnabled( plot_x != ATTR_D );
-   rb_y_f   ->setEnabled( plot_x != ATTR_F );
-   rb_x_s   ->setEnabled( plot_y != ATTR_S );
-   rb_x_ff0 ->setEnabled( plot_y != ATTR_K );
-   rb_x_mw  ->setEnabled( plot_y != ATTR_W );
-   rb_x_vbar->setEnabled( plot_y != ATTR_V );
-   rb_x_D   ->setEnabled( plot_y != ATTR_D );
-   rb_x_f   ->setEnabled( plot_y != ATTR_F );
+//    rb_y_s   ->setEnabled( plot_x != ATTR_S );
+//    rb_y_ff0 ->setEnabled( plot_x != ATTR_K );
+//    rb_y_mw  ->setEnabled( plot_x != ATTR_W );
+//    rb_y_vbar->setEnabled( plot_x != ATTR_V );
+//    rb_y_D   ->setEnabled( plot_x != ATTR_D );
+//    rb_y_f   ->setEnabled( plot_x != ATTR_F );
+//    rb_x_s   ->setEnabled( plot_y != ATTR_S );
+//    rb_x_ff0 ->setEnabled( plot_y != ATTR_K );
+//    rb_x_mw  ->setEnabled( plot_y != ATTR_W );
+//    rb_x_vbar->setEnabled( plot_y != ATTR_V );
+//    rb_x_D   ->setEnabled( plot_y != ATTR_D );
+//    rb_x_f   ->setEnabled( plot_y != ATTR_F );
 
-   cb_fixed->disconnect();
-   cb_fixed->clear();
-   if ( plot_x != ATTR_V  &&  plot_y != ATTR_V )
-      cb_fixed->addItem( tr( "Partial Specific Volume" ) );
-   if ( plot_x != ATTR_K  &&  plot_y != ATTR_K )
-      cb_fixed->addItem( tr( "Frictional Ratio" ) );
-   if ( plot_x != ATTR_W  &&  plot_y != ATTR_W )
-      cb_fixed->addItem( tr( "Molecular Weight" ) );
-   if ( plot_x != ATTR_S  &&  plot_y != ATTR_S )
-      cb_fixed->addItem( tr( "Sedimentation Coefficient" ) );
-   if ( plot_x != ATTR_D  &&  plot_y != ATTR_D )
-      cb_fixed->addItem( tr( "Diffusion Coefficient" ) );
-   if ( plot_x != ATTR_F  &&  plot_y != ATTR_F )
-      cb_fixed->addItem( tr( "Frictional Coefficient" ) );
-   cb_fixed->setCurrentIndex( 0 );
-   select_fixed( cb_fixed->currentText() );
-   connect( cb_fixed, SIGNAL( activated   ( const QString& ) ),
-            this,     SLOT  ( select_fixed( const QString& ) ) );
+//    cb_fixed->disconnect();
+//    cb_fixed->clear();
+//    if ( plot_x != ATTR_V  &&  plot_y != ATTR_V )
+//       cb_fixed->addItem( tr( "Partial Specific Volume" ) );
+//    if ( plot_x != ATTR_K  &&  plot_y != ATTR_K )
+//       cb_fixed->addItem( tr( "Frictional Ratio" ) );
+//    if ( plot_x != ATTR_W  &&  plot_y != ATTR_W )
+//       cb_fixed->addItem( tr( "Molecular Weight" ) );
+//    if ( plot_x != ATTR_S  &&  plot_y != ATTR_S )
+//       cb_fixed->addItem( tr( "Sedimentation Coefficient" ) );
+//    if ( plot_x != ATTR_D  &&  plot_y != ATTR_D )
+//       cb_fixed->addItem( tr( "Diffusion Coefficient" ) );
+//    if ( plot_x != ATTR_F  &&  plot_y != ATTR_F )
+//       cb_fixed->addItem( tr( "Frictional Coefficient" ) );
+//    cb_fixed->setCurrentIndex( 0 );
+//    select_fixed( cb_fixed->currentText() );
+//    connect( cb_fixed, SIGNAL( activated   ( const QString& ) ),
+//             this,     SLOT  ( select_fixed( const QString& ) ) );
 
-   validate_ff0();
+//    validate_ff0();
 
-   update_plot();
-}
+//    update_plot();
+// }
 
-// select coordinate for vertical axis
-void US_Grid_Editor::select_y_axis( int ival )
-{
-   // Axis types                   s    f/f0      mw   vbar     D     f
-   const double  yvmns[] = {       1.0,   1.0,   2e+4,  0.60, 1e-8, 1e-8 };
-   const double  yvmxs[] = {      10.0,   4.0,   1e+6,  0.80, 1e-7, 1e-7 };
-   const double  ymins[] = { -500000.0,   1.0,    0.0,  0.01, 1e-9, 1e-9 };
-   const double  ymaxs[] = {  500000.0,  50.0,  1e+10,  3.00, 3e-5, 1e-5 };
-   const double  yincs[] = {      0.01,  0.01, 5000.0,  0.01, 1e-9, 1e-9 };
-   const QString ytitls[] = { tr( "s (x 1e13)" ),
-                              tr( "f/f0-value" ),
-                              tr( "mw-value" ),
-                              tr( "vbar-value" ),
-                              tr( "D-value" ),
-                              tr( "f-value" ) };
-   plot_y = ival;
+// // select coordinate for vertical axis
+// void US_Grid_Editor::select_y_axis( int ival )
+// {
+//    // Axis types                   s    f/f0      mw   vbar     D     f
+//    const double  yvmns[] = {       1.0,   1.0,   2e+4,  0.60, 1e-8, 1e-8 };
+//    const double  yvmxs[] = {      10.0,   4.0,   1e+6,  0.80, 1e-7, 1e-7 };
+//    const double  ymins[] = { -500000.0,   1.0,    0.0,  0.01, 1e-9, 1e-9 };
+//    const double  ymaxs[] = {  500000.0,  50.0,  1e+10,  3.00, 3e-5, 1e-5 };
+//    const double  yincs[] = {      0.01,  0.01, 5000.0,  0.01, 1e-9, 1e-9 };
+//    const QString ytitls[] = { tr( "s (x 1e13)" ),
+//                               tr( "f/f0-value" ),
+//                               tr( "mw-value" ),
+//                               tr( "vbar-value" ),
+//                               tr( "D-value" ),
+//                               tr( "f-value" ) };
+//    plot_y = ival;
 
-   lb_yRes->setText( ytitls[ plot_y ] + tr( " Resolution:" ) );
-   lb_yMin->setText( ytitls[ plot_y ] + tr( " Minimum:" ) );
-   lb_yMax->setText( ytitls[ plot_y ] + tr( " Maximum:" ) );
-   ct_yMin->disconnect();
-   ct_yMax->disconnect();
-   yMin   = yvmns[ plot_y ];
-   yMax   = yvmxs[ plot_y ];
-   ct_yMin->setRange     ( ymins[ plot_y ], ymaxs[ plot_y ] );
-   ct_yMin->setSingleStep( yincs[ plot_y ] );
-   ct_yMax->setRange     ( ymins[ plot_y ], ymaxs[ plot_y ] );
-   ct_yMax->setSingleStep( yincs[ plot_y ] );
-   ct_yMin->setValue( yMin );
-   ct_yMax->setValue( yMax );
+//    lb_yRes->setText( ytitls[ plot_y ] + tr( " Resolution:" ) );
+//    lb_yMin->setText( ytitls[ plot_y ] + tr( " Minimum:" ) );
+//    lb_yMax->setText( ytitls[ plot_y ] + tr( " Maximum:" ) );
+//    ct_yMin->disconnect();
+//    ct_yMax->disconnect();
+//    yMin   = yvmns[ plot_y ];
+//    yMax   = yvmxs[ plot_y ];
+//    ct_yMin->setRange     ( ymins[ plot_y ], ymaxs[ plot_y ] );
+//    ct_yMin->setSingleStep( yincs[ plot_y ] );
+//    ct_yMax->setRange     ( ymins[ plot_y ], ymaxs[ plot_y ] );
+//    ct_yMax->setSingleStep( yincs[ plot_y ] );
+//    ct_yMin->setValue( yMin );
+//    ct_yMax->setValue( yMax );
 
-   connect( ct_yMin, SIGNAL( valueChanged( double ) ),
-            this,    SLOT  ( update_yMin ( double ) ) );
-   connect( ct_yMax, SIGNAL( valueChanged( double ) ),
-            this,    SLOT  ( update_yMax ( double ) ) );
+//    connect( ct_yMin, SIGNAL( valueChanged( double ) ),
+//             this,    SLOT  ( update_yMin ( double ) ) );
+//    connect( ct_yMax, SIGNAL( valueChanged( double ) ),
+//             this,    SLOT  ( update_yMax ( double ) ) );
 
-   rb_x_s   ->setEnabled( plot_y != ATTR_S );
-   rb_x_ff0 ->setEnabled( plot_y != ATTR_K );
-   rb_x_mw  ->setEnabled( plot_y != ATTR_W );
-   rb_x_vbar->setEnabled( plot_y != ATTR_V );
-   rb_x_D   ->setEnabled( plot_y != ATTR_D );
-   rb_x_f   ->setEnabled( plot_y != ATTR_F );
-   rb_y_s   ->setEnabled( plot_x != ATTR_S );
-   rb_y_ff0 ->setEnabled( plot_x != ATTR_K );
-   rb_y_mw  ->setEnabled( plot_x != ATTR_W );
-   rb_y_vbar->setEnabled( plot_x != ATTR_V );
-   rb_y_D   ->setEnabled( plot_x != ATTR_D );
-   rb_y_f   ->setEnabled( plot_x != ATTR_F );
+//    rb_x_s   ->setEnabled( plot_y != ATTR_S );
+//    rb_x_ff0 ->setEnabled( plot_y != ATTR_K );
+//    rb_x_mw  ->setEnabled( plot_y != ATTR_W );
+//    rb_x_vbar->setEnabled( plot_y != ATTR_V );
+//    rb_x_D   ->setEnabled( plot_y != ATTR_D );
+//    rb_x_f   ->setEnabled( plot_y != ATTR_F );
+//    rb_y_s   ->setEnabled( plot_x != ATTR_S );
+//    rb_y_ff0 ->setEnabled( plot_x != ATTR_K );
+//    rb_y_mw  ->setEnabled( plot_x != ATTR_W );
+//    rb_y_vbar->setEnabled( plot_x != ATTR_V );
+//    rb_y_D   ->setEnabled( plot_x != ATTR_D );
+//    rb_y_f   ->setEnabled( plot_x != ATTR_F );
 
-   cb_fixed->disconnect();
-   cb_fixed->clear();
-   if ( plot_x != ATTR_V  &&  plot_y != ATTR_V )
-      cb_fixed->addItem( tr( "Partial Specific Volume" ) );
-   if ( plot_x != ATTR_K  &&  plot_y != ATTR_K )
-      cb_fixed->addItem( tr( "Frictional Ratio" ) );
-   if ( plot_x != ATTR_W  &&  plot_y != ATTR_W )
-      cb_fixed->addItem( tr( "Molecular Weight" ) );
-   if ( plot_x != ATTR_S  &&  plot_y != ATTR_S )
-      cb_fixed->addItem( tr( "Sedimentation Coefficient" ) );
-   if ( plot_x != ATTR_D  &&  plot_y != ATTR_D )
-      cb_fixed->addItem( tr( "Diffusion Coefficient" ) );
-   if ( plot_x != ATTR_F  &&  plot_y != ATTR_F )
-      cb_fixed->addItem( tr( "Frictional Coefficient" ) );
-   cb_fixed->setCurrentIndex( 0 );
-   select_fixed( cb_fixed->currentText() );
-   connect( cb_fixed, SIGNAL( activated   ( const QString& ) ),
-            this,     SLOT  ( select_fixed( const QString& ) ) );
+//    cb_fixed->disconnect();
+//    cb_fixed->clear();
+//    if ( plot_x != ATTR_V  &&  plot_y != ATTR_V )
+//       cb_fixed->addItem( tr( "Partial Specific Volume" ) );
+//    if ( plot_x != ATTR_K  &&  plot_y != ATTR_K )
+//       cb_fixed->addItem( tr( "Frictional Ratio" ) );
+//    if ( plot_x != ATTR_W  &&  plot_y != ATTR_W )
+//       cb_fixed->addItem( tr( "Molecular Weight" ) );
+//    if ( plot_x != ATTR_S  &&  plot_y != ATTR_S )
+//       cb_fixed->addItem( tr( "Sedimentation Coefficient" ) );
+//    if ( plot_x != ATTR_D  &&  plot_y != ATTR_D )
+//       cb_fixed->addItem( tr( "Diffusion Coefficient" ) );
+//    if ( plot_x != ATTR_F  &&  plot_y != ATTR_F )
+//       cb_fixed->addItem( tr( "Frictional Coefficient" ) );
+//    cb_fixed->setCurrentIndex( 0 );
+//    select_fixed( cb_fixed->currentText() );
+//    connect( cb_fixed, SIGNAL( activated   ( const QString& ) ),
+//             this,     SLOT  ( select_fixed( const QString& ) ) );
 
-   validate_ff0();
+//    validate_ff0();
 
-   update_plot();
-}
+//    update_plot();
+// }
 
-// Select coordinate flag for the fixed attribute
-void US_Grid_Editor::select_fixed( const QString& fixstr )
-{
-   // Axis types                   s    f/f0      mw   vbar     D     f
-   const double  zmins[] = { -500000.0,   1.0,    0.0,  0.01, 1e+6, 1e+6 };
-   const double  zmaxs[] = {  500000.0,  50.0,  1e+10,  3.00, 1e+8, 1e+6 };
-   const double  zincs[] = {      0.01,  0.01, 5000.0, 0.001, 1e+5, 1e+5 };
-   //const double  zvals[] = {     5.00,   2.0,   1e+5,  0.72, 1e+7, 1e+7 };
+// // Select coordinate flag for the fixed attribute
+// void US_Grid_Editor::select_fixed( const QString& fixstr )
+// {
+//    // Axis types                   s    f/f0      mw   vbar     D     f
+//    const double  zmins[] = { -500000.0,   1.0,    0.0,  0.01, 1e+6, 1e+6 };
+//    const double  zmaxs[] = {  500000.0,  50.0,  1e+10,  3.00, 1e+8, 1e+6 };
+//    const double  zincs[] = {      0.01,  0.01, 5000.0, 0.001, 1e+5, 1e+5 };
+//    //const double  zvals[] = {     5.00,   2.0,   1e+5,  0.72, 1e+7, 1e+7 };
 
-   plot_z   = fixstr.contains( tr( "Partial S" ) ) ? ATTR_V : 0;
-   plot_z   = fixstr.contains( tr( "nal Ratio" ) ) ? ATTR_K : plot_z;
-   plot_z   = fixstr.contains( tr( "ar Weight" ) ) ? ATTR_W : plot_z;
-   plot_z   = fixstr.contains( tr( "Sedimenta" ) ) ? ATTR_S : plot_z;
-   plot_z   = fixstr.contains( tr( "Diffusion" ) ) ? ATTR_D : plot_z;
-   plot_z   = fixstr.contains( tr( "nal Coeff" ) ) ? ATTR_F : plot_z;
-qDebug() << "SelFix: " << fixstr << "plot_z" << plot_z;
+//    plot_z   = fixstr.contains( tr( "Partial S" ) ) ? ATTR_V : 0;
+//    plot_z   = fixstr.contains( tr( "nal Ratio" ) ) ? ATTR_K : plot_z;
+//    plot_z   = fixstr.contains( tr( "ar Weight" ) ) ? ATTR_W : plot_z;
+//    plot_z   = fixstr.contains( tr( "Sedimenta" ) ) ? ATTR_S : plot_z;
+//    plot_z   = fixstr.contains( tr( "Diffusion" ) ) ? ATTR_D : plot_z;
+//    plot_z   = fixstr.contains( tr( "nal Coeff" ) ) ? ATTR_F : plot_z;
+// qDebug() << "SelFix: " << fixstr << "plot_z" << plot_z;
 
-   ct_zVal->setRange     ( zmins[ plot_z ], zmaxs[ plot_z ] );
-   ct_zVal->setSingleStep( zincs[ plot_z ] );
-   //ct_zVal->setValue( zvals[ plot_z ] );
-   lb_zVal->setText( fixstr );
+//    ct_zVal->setRange     ( zmins[ plot_z ], zmaxs[ plot_z ] );
+//    ct_zVal->setSingleStep( zincs[ plot_z ] );
+//    //ct_zVal->setValue( zvals[ plot_z ] );
+//    lb_zVal->setText( fixstr );
 
-   validate_ff0();
-}
+//    validate_ff0();
+// }
 
 // activated when the "Show Final Grid" Checkbox is set
 void US_Grid_Editor::show_final_grid( bool flag )
 {
-   if (flag)
-   {
-      ct_partialGrid       ->setRange     ( 1, grid_index );
-      ct_partialGrid       ->setSingleStep( 1 );
-      ct_partialGrid       ->setEnabled( true );
-      pb_delete_partialGrid->setEnabled( true );
-      pb_add_partialGrid   ->setEnabled( false );
-      ck_show_sub_grid     ->setEnabled( true );
-      ct_subGrids          ->setEnabled( false );
-   }
-   else
-   {
-      ct_partialGrid       ->setEnabled( false );
-      pb_delete_partialGrid->setEnabled( false );
-      pb_add_partialGrid   ->setEnabled( true );
-      ck_show_sub_grid     ->setEnabled( false );
-      ct_subGrids          ->setEnabled( false );
-   }
+   // if (flag)
+   // {
+   //    ct_partialGrid       ->setRange     ( 1, grid_index );
+   //    ct_partialGrid       ->setSingleStep( 1 );
+   //    ct_partialGrid       ->setEnabled( true );
+   //    pb_delete_partialGrid->setEnabled( true );
+   //    pb_add_partialGrid   ->setEnabled( false );
+   //    ck_show_sub_grid     ->setEnabled( true );
+   //    ct_subGrids          ->setEnabled( false );
+   // }
+   // else
+   // {
+   //    ct_partialGrid       ->setEnabled( false );
+   //    pb_delete_partialGrid->setEnabled( false );
+   //    pb_add_partialGrid   ->setEnabled( true );
+   //    ck_show_sub_grid     ->setEnabled( false );
+   //    ct_subGrids          ->setEnabled( false );
+   // }
 
    update_plot();
 }
@@ -2312,23 +2265,23 @@ void US_Grid_Editor::show_sub_grid( bool flag )
       int maxsubg     = ntotg / MINSSZ + 1;
       subGrids        = ntotg / DEFSSZ + 1;
 DbgLv(1) << "finalsize" << ntotg << "maxsubg" << maxsubg;
-      lb_partialGrid       ->setText   ( tr( "Highlight Subgrid #:" ) );
-      ct_subGrids          ->setEnabled   ( true );
-      ct_subGrids          ->setRange     ( minsubg, maxsubg );
-      ct_subGrids          ->setSingleStep( 1 );
-      ct_subGrids          ->setValue     ( subGrids );
-      pb_delete_partialGrid->setEnabled   ( false );
-      le_counts->setText( tr( "%1 total, %2 per subgrid" )
-            .arg( ntotg ).arg( ntotg / subGrids ) );
+      // lb_partialGrid       ->setText   ( tr( "Highlight Subgrid #:" ) );
+      // ct_subGrids          ->setEnabled   ( true );
+      // ct_subGrids          ->setRange     ( minsubg, maxsubg );
+      // ct_subGrids          ->setSingleStep( 1 );
+      // ct_subGrids          ->setValue     ( subGrids );
+      // pb_delete_partialGrid->setEnabled   ( false );
+      // le_counts->setText( tr( "%1 total, %2 per subgrid" )
+      //       .arg( ntotg ).arg( ntotg / subGrids ) );
    }
    else
    {
-      lb_partialGrid       ->setText   ( tr( "Highlight Partial Grid #:" ) );
-      ct_subGrids          ->setEnabled   ( false );
-      ct_partialGrid       ->setRange     ( 1, grid_index );
-      ct_partialGrid       ->setSingleStep( 1 );
-      ct_partialGrid       ->setValue     ( 1 );
-      pb_delete_partialGrid->setEnabled   ( true );
+      // lb_partialGrid       ->setText   ( tr( "Highlight Partial Grid #:" ) );
+      // ct_subGrids          ->setEnabled   ( false );
+      // ct_partialGrid       ->setRange     ( 1, grid_index );
+      // ct_partialGrid       ->setSingleStep( 1 );
+      // ct_partialGrid       ->setValue     ( 1 );
+      // pb_delete_partialGrid->setEnabled   ( true );
    }
 
    update_plot();
@@ -2673,12 +2626,12 @@ bool US_Grid_Editor::validate_ff0()
 
    struct gridpoint zpoint;
    struct gridpoint tmp_point;
-   xMin           = ct_xMin->value();
-   xMax           = ct_xMax->value();
-   yMin           = ct_yMin->value();
-   yMax           = ct_yMax->value();
-qDebug() << "valFF0: xMin xMax yMin yMax" << xMin << xMax << yMin << yMax;
-   zVal           = ct_zVal->value();
+//    xMin           = ct_xMin->value();
+//    xMax           = ct_xMax->value();
+//    yMin           = ct_yMin->value();
+//    yMax           = ct_yMax->value();
+// qDebug() << "valFF0: xMin xMax yMin yMax" << xMin << xMax << yMin << yMax;
+//    zVal           = ct_zVal->value();
    clear_grid( zpoint );
    set_grid_value( zpoint,    plot_z, zVal );
    // Get f/f0 for xMin,yMin
@@ -2719,8 +2672,8 @@ qDebug() << "valFF0:      xMax yMax ff0   " << xMax << yMax << ffx2y2;
 
       if ( plot_x == ATTR_W  ||  plot_x == ATTR_F )
       {  // Adjust the X range (if MW or f)
-         ct_xMin->disconnect();
-         ct_xMax->disconnect();
+         // ct_xMin->disconnect();
+         // ct_xMax->disconnect();
          tmp_point      = zpoint;
          set_grid_value( tmp_point, ATTR_K, 1.0  );
 
@@ -2733,15 +2686,15 @@ qDebug() << "valFF0:      xMax yMax ff0   " << xMax << yMax << ffx2y2;
             if ( ffx1y1 < ffx2y1 )
             {  // Increasing X means increasing f/f0, so set lower limit
 qDebug() << "valFF0:  (1xMin)xVal" << xVal;
-               ct_xMin->setMinimum( xVal );
-               ct_xMax->setMinimum( xVal );
+               // ct_xMin->setMinimum( xVal );
+               // ct_xMax->setMinimum( xVal );
             }
 
             else
             {  // Increasing X means decreasing f/f0, so set upper limit
 qDebug() << "valFF0:  (2xMin)xVal" << xVal;
-               ct_xMin->setMaximum( xVal );
-               ct_xMax->setMaximum( xVal );
+               // ct_xMin->setMaximum( xVal );
+               // ct_xMax->setMaximum( xVal );
             }
          }
 
@@ -2754,28 +2707,28 @@ qDebug() << "valFF0:  (2xMin)xVal" << xVal;
             if ( ffx1y1 < ffx2y1 )
             {  // Increasing X means increasing f/f0, so set lower limit
 qDebug() << "valFF0:  (3xMin)xVal" << xVal;
-               ct_xMin->setMinimum( xVal );
-               ct_xMax->setMinimum( xVal );
+               // ct_xMin->setMinimum( xVal );
+               // ct_xMax->setMinimum( xVal );
             }
 
             else
             {  // Increasing X means decreasing f/f0, so set upper limit
 qDebug() << "valFF0:  (4xMin)xVal" << xVal;
-               ct_xMin->setMaximum( xVal );
-               ct_xMax->setMaximum( xVal );
+               // ct_xMin->setMaximum( xVal );
+               // ct_xMax->setMaximum( xVal );
             }
          }
 
-         connect( ct_xMin, SIGNAL( valueChanged( double ) ),
-                  this,    SLOT  ( update_xMin ( double ) ) );
-         connect( ct_xMax, SIGNAL( valueChanged( double ) ),
-                  this,    SLOT  ( update_xMax ( double ) ) );
+         // connect( ct_xMin, SIGNAL( valueChanged( double ) ),
+         //          this,    SLOT  ( update_xMin ( double ) ) );
+         // connect( ct_xMax, SIGNAL( valueChanged( double ) ),
+         //          this,    SLOT  ( update_xMax ( double ) ) );
       }
 
       if ( plot_y == ATTR_W  ||  plot_y == ATTR_F )
       {  // Adjust the Y range (if MW or f)
-         ct_yMin->disconnect();
-         ct_yMax->disconnect();
+         // ct_yMin->disconnect();
+         // ct_yMax->disconnect();
          tmp_point      = zpoint;
          set_grid_value( tmp_point, ATTR_K, 1.0  );
 
@@ -2788,15 +2741,15 @@ qDebug() << "valFF0:  (4xMin)xVal" << xVal;
             if ( ffx1y1 < ffx1y2 )
             {  // Increasing Y means increasing f/f0, so set lower limit
 qDebug() << "valFF0:  (5yMin)yVal" << yVal;
-               ct_yMin->setMinimum( yVal );
-               ct_yMax->setMinimum( yVal );
+               // ct_yMin->setMinimum( yVal );
+               // ct_yMax->setMinimum( yVal );
             }
 
             else
             {  // Increasing Y means decreasing f/f0, so set upper limit
 qDebug() << "valFF0:  (6yMax)yVal" << yVal;
-               ct_yMin->setMaximum( yVal );
-               ct_yMax->setMaximum( yVal );
+               // ct_yMin->setMaximum( yVal );
+               // ct_yMax->setMaximum( yVal );
             }
          }
 
@@ -2809,29 +2762,29 @@ qDebug() << "valFF0:  (6yMax)yVal" << yVal;
             if ( ffx1y1 < ffx1y2 )
             {  // Increasing Y means increasing f/f0, so set lower limit
 qDebug() << "valFF0:  (7yMin)yVal" << yVal;
-               ct_yMin->setMinimum( yVal );
-               ct_yMax->setMinimum( yVal );
+               // ct_yMin->setMinimum( yVal );
+               // ct_yMax->setMinimum( yVal );
             }
 
             else
             {  // Increasing Y means decreasing f/f0, so set upper limit
 qDebug() << "valFF0:  (8yMax)yVal" << yVal;
-               ct_yMin->setMaximum( yVal );
-               ct_yMax->setMaximum( yVal );
+               // ct_yMin->setMaximum( yVal );
+               // ct_yMax->setMaximum( yVal );
             }
          }
 
-         connect( ct_yMin, SIGNAL( valueChanged( double ) ),
-                  this,    SLOT  ( update_yMin ( double ) ) );
-         connect( ct_yMax, SIGNAL( valueChanged( double ) ),
-                  this,    SLOT  ( update_yMax ( double ) ) );
+         // connect( ct_yMin, SIGNAL( valueChanged( double ) ),
+         //          this,    SLOT  ( update_yMin ( double ) ) );
+         // connect( ct_yMax, SIGNAL( valueChanged( double ) ),
+         //          this,    SLOT  ( update_yMax ( double ) ) );
       }
    }
 
-   xMin           = ct_xMin->value();
-   xMax           = ct_xMax->value();
-   yMin           = ct_yMin->value();
-   yMax           = ct_yMax->value();
+   // xMin           = ct_xMin->value();
+   // xMax           = ct_xMax->value();
+   // yMin           = ct_yMin->value();
+   // yMax           = ct_yMax->value();
 qDebug() << "valFF0: (out)xMin xMax yMin yMax" << xMin << xMax << yMin << yMax;
 
    return is_ok;
@@ -2890,5 +2843,344 @@ bool US_Grid_Editor::complete_comp( struct gridpoint& gpoint )
    }
 
    return is_ok;
+}
+
+
+US_Grid_Preset::US_Grid_Preset(QWidget * parent) : US_WidgetsDialog(parent)
+{
+   setWindowTitle( tr( "Grid Setup" ) );
+   setPalette( US_GuiSettings::frameColor() );
+   setFixedSize(500, 250);
+
+   QGridLayout* x_s     = us_radiobutton( Attr_to_long( ATTR_S ), rb_x_s, true );
+   QGridLayout* x_ff0   = us_radiobutton( Attr_to_long( ATTR_K ), rb_x_ff0, false );
+   QGridLayout* x_mw    = us_radiobutton( Attr_to_long( ATTR_W ), rb_x_mw, true );
+   QGridLayout* x_vbar  = us_radiobutton( Attr_to_long( ATTR_V ), rb_x_vbar, true );
+   QGridLayout* x_D     = us_radiobutton( Attr_to_long( ATTR_D ), rb_x_D, true );
+   QGridLayout* x_f     = us_radiobutton( Attr_to_long( ATTR_F ), rb_x_f, true );
+
+   QGridLayout* y_s     = us_radiobutton( Attr_to_long( ATTR_S ), rb_y_s, false );
+   QGridLayout* y_ff0   = us_radiobutton( Attr_to_long( ATTR_K ), rb_y_ff0, true );
+   QGridLayout* y_mw    = us_radiobutton( Attr_to_long( ATTR_W ), rb_y_mw, true );
+   QGridLayout* y_vbar  = us_radiobutton( Attr_to_long( ATTR_V ), rb_y_vbar, true );
+   QGridLayout* y_D     = us_radiobutton( Attr_to_long( ATTR_D ), rb_y_D, true );
+   QGridLayout* y_f     = us_radiobutton( Attr_to_long( ATTR_F ), rb_y_f, true );
+
+   x_axis = new QButtonGroup( this );
+   x_axis->addButton( rb_x_s,    ATTR_S );
+   x_axis->addButton( rb_x_ff0,  ATTR_K );
+   x_axis->addButton( rb_x_mw,   ATTR_W );
+   x_axis->addButton( rb_x_vbar, ATTR_V );
+   x_axis->addButton( rb_x_D,    ATTR_D );
+   x_axis->addButton( rb_x_f,    ATTR_F );
+   connect( x_axis, &QButtonGroup::idReleased, this, &US_Grid_Preset::select_x_axis );
+
+   y_axis = new QButtonGroup( this );
+   y_axis->addButton( rb_y_s,    ATTR_S );
+   y_axis->addButton( rb_y_ff0,  ATTR_K );
+   y_axis->addButton( rb_y_mw,   ATTR_W );
+   y_axis->addButton( rb_y_vbar, ATTR_V );
+   y_axis->addButton( rb_y_D,    ATTR_D );
+   y_axis->addButton( rb_y_f,    ATTR_F );
+   connect( y_axis, &QButtonGroup::idReleased, this, &US_Grid_Preset::select_y_axis );
+
+   QLabel *lb_fixed      = us_label( tr( "Fixed Attribute" ) );
+   lb_fixed->setAlignment(Qt::AlignCenter);
+
+   z_axis = us_comboBox();
+   z_axis->addItem( Attr_to_long( ATTR_S ), ATTR_S );   // ATTR_V
+   z_axis->addItem( Attr_to_long( ATTR_K ), ATTR_K );   // ATTR_K
+   z_axis->addItem( Attr_to_long( ATTR_W ), ATTR_W );   // ATTR_W
+   z_axis->addItem( Attr_to_long( ATTR_V ), ATTR_V );   // ATTR_S
+   z_axis->addItem( Attr_to_long( ATTR_D ), ATTR_D );   // ATTR_D
+   z_axis->addItem( Attr_to_long( ATTR_F ), ATTR_F );   // ATTR_F
+   z_axis->setEnabled( true );
+   z_axis->setCurrentIndex( 0 );
+   connect( z_axis, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &US_Grid_Preset::select_fixed);
+
+   QPushButton *pb_apply = us_pushbutton( "Apply" );
+   QPushButton *pb_cancel = us_pushbutton( "Cancel" );
+
+   QGridLayout* layout = new QGridLayout();
+   layout->setMargin(2);
+   layout->setSpacing(3);
+   int row = 0;
+   layout->addLayout( x_s,                   row,   0, 1, 2 );
+   layout->addLayout( y_s,                   row++, 2, 1, 2 );
+   layout->addLayout( x_ff0,                 row,   0, 1, 2 );
+   layout->addLayout( y_ff0,                 row++, 2, 1, 2 );
+   layout->addLayout( x_mw,                  row,   0, 1, 2 );
+   layout->addLayout( y_mw,                  row++, 2, 1, 2 );
+   layout->addLayout( x_vbar,                row,   0, 1, 2 );
+   layout->addLayout( y_vbar,                row++, 2, 1, 2 );
+   layout->addLayout( x_D,                   row,   0, 1, 2 );
+   layout->addLayout( y_D,                   row++, 2, 1, 2 );
+   layout->addLayout( x_f,                   row,   0, 1, 2 );
+   layout->addLayout( y_f,                   row++, 2, 1, 2 );
+   layout->addWidget( lb_fixed,              row,   0, 1, 2 );
+   layout->addWidget( z_axis,                row++, 2, 1, 2 );
+
+   QSpacerItem *spacer = new QSpacerItem(0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding);
+   layout->addItem( spacer,                 row++,  0, 1, 4 );
+
+   layout->addWidget( pb_apply,              row,   2, 1, 1 );
+   layout->addWidget( pb_cancel,             row++, 3, 1, 1 );
+
+   setLayout(layout);
+
+   x_param        = ATTR_S; // plot s
+   y_param        = ATTR_K; // plot f/f0
+   z_param        = ATTR_V; // fixed vbar
+   x_axis->button(x_param)->setChecked(true);
+   y_axis->button(x_param)->setDisabled(true);
+
+   y_axis->button(y_param)->setChecked(true);
+   x_axis->button(y_param)->setDisabled(true);
+   z_axis->setCurrentIndex(z_axis->findData(z_param, Qt::UserRole));
+
+
+   // select_x_axis( plot_x );
+   // select_y_axis( plot_y );
+   // select_fixed ( cb_fixed->currentText() );
+
+   // rb_x_s   ->setEnabled( true );
+   // rb_x_ff0 ->setEnabled( false );
+   // rb_x_mw  ->setEnabled( true );
+   // rb_x_vbar->setEnabled( true );
+   // rb_x_D   ->setEnabled( true );
+   // rb_x_f   ->setEnabled( true );
+   // rb_y_s   ->setEnabled( false );
+   // rb_y_ff0 ->setEnabled( true );
+   // rb_y_mw  ->setEnabled( true );
+   // rb_y_vbar->setEnabled( true );
+   // rb_y_D   ->setEnabled( true );
+   // rb_y_f   ->setEnabled( true );
+   // rb_x_s   ->setChecked( true );
+   // rb_y_ff0 ->setChecked( true );
+
+
+}
+
+void US_Grid_Preset::parameters(int *x, int *y, int *z)
+{
+   (*x) = x_param;
+   (*y) = y_param;
+   (*z) = z_param;
+}
+
+// Select coordinate for horizontal axis
+void US_Grid_Preset::select_x_axis( int index )
+{
+   // Axis types                   s    f/f0      mw   vbar     D     f
+   // const double  xvmns[] = {       1.0,   1.0,   2e+4,  0.60, 1e-8, 1e-8 };
+   // const double  xvmxs[] = {      10.0,   4.0,   1e+5,  0.80, 1e-7, 1e-7 };
+   // const double  xmins[] = { -500000.0,   1.0,    0.0,  0.01, 1e-9, 1e-9 };
+   // const double  xmaxs[] = {  500000.0,  50.0,  1e+10,  3.00, 3e-5, 1e-5 };
+   // const double  xincs[] = {      0.01,  0.01, 5000.0,  0.01, 1e-9, 1e-9 };
+   // const QString xtitls[] = { tr( "s (x 1e13)" ),
+   //                           tr( "f/f0-value" ),
+   //                           tr( "mw-value" ),
+   //                           tr( "vbar-value" ),
+   //                           tr( "D-value" ),
+   //                           tr( "f-value" ) };
+   // if ( x_axis->checkedId() == -1 ) {
+   //    x_axis->button(index)->setChecked(true);
+   //    x_param = index;
+   //    y_axis->button(x_param)->setDisabled(true);
+   // } else if ( ){
+
+   // }
+
+
+
+   // lb_xRes->setText( xtitls[ plot_x ] + tr( " Resolution:" ) );
+   // lb_xMin->setText( xtitls[ plot_x ] + tr( " Minimum:" ) );
+   // lb_xMax->setText( xtitls[ plot_x ] + tr( " Maximum:" ) );
+   // ct_xMin->disconnect();
+   // ct_xMax->disconnect();
+   // xMin   = xvmns[ plot_x ];
+   // xMax   = xvmxs[ plot_x ];
+   // ct_xMin->setRange     ( xmins[ plot_x ], xmaxs[ plot_x ] );
+   // ct_xMin->setSingleStep( xincs[ plot_x ] );
+   // ct_xMax->setRange     ( xmins[ plot_x ], xmaxs[ plot_x ] );
+   // ct_xMax->setSingleStep( xincs[ plot_x ] );
+   // ct_xMin->setValue( xMin );
+   // ct_xMax->setValue( xMax );
+
+   // connect( ct_xMin, SIGNAL( valueChanged( double ) ),
+   //         this,    SLOT  ( update_xMin ( double ) ) );
+   // connect( ct_xMax, SIGNAL( valueChanged( double ) ),
+   //         this,    SLOT  ( update_xMax ( double ) ) );
+
+   // rb_y_s   ->setEnabled( plot_x != ATTR_S );
+   // rb_y_ff0 ->setEnabled( plot_x != ATTR_K );
+   // rb_y_mw  ->setEnabled( plot_x != ATTR_W );
+   // rb_y_vbar->setEnabled( plot_x != ATTR_V );
+   // rb_y_D   ->setEnabled( plot_x != ATTR_D );
+   // rb_y_f   ->setEnabled( plot_x != ATTR_F );
+   // rb_x_s   ->setEnabled( plot_y != ATTR_S );
+   // rb_x_ff0 ->setEnabled( plot_y != ATTR_K );
+   // rb_x_mw  ->setEnabled( plot_y != ATTR_W );
+   // rb_x_vbar->setEnabled( plot_y != ATTR_V );
+   // rb_x_D   ->setEnabled( plot_y != ATTR_D );
+   // rb_x_f   ->setEnabled( plot_y != ATTR_F );
+
+   // cb_fixed->disconnect();
+   // cb_fixed->clear();
+   // if ( plot_x != ATTR_V  &&  plot_y != ATTR_V )
+   //    cb_fixed->addItem( tr( "Partial Specific Volume" ) );
+   // if ( plot_x != ATTR_K  &&  plot_y != ATTR_K )
+   //    cb_fixed->addItem( tr( "Frictional Ratio" ) );
+   // if ( plot_x != ATTR_W  &&  plot_y != ATTR_W )
+   //    cb_fixed->addItem( tr( "Molecular Weight" ) );
+   // if ( plot_x != ATTR_S  &&  plot_y != ATTR_S )
+   //    cb_fixed->addItem( tr( "Sedimentation Coefficient" ) );
+   // if ( plot_x != ATTR_D  &&  plot_y != ATTR_D )
+   //    cb_fixed->addItem( tr( "Diffusion Coefficient" ) );
+   // if ( plot_x != ATTR_F  &&  plot_y != ATTR_F )
+   //    cb_fixed->addItem( tr( "Frictional Coefficient" ) );
+   // cb_fixed->setCurrentIndex( 0 );
+   // select_fixed( cb_fixed->currentText() );
+   // connect( cb_fixed, SIGNAL( activated   ( const QString& ) ),
+   //         this,     SLOT  ( select_fixed( const QString& ) ) );
+
+   // validate_ff0();
+
+   // update_plot();
+}
+
+// select coordinate for vertical axis
+void US_Grid_Preset::select_y_axis( int ival )
+{
+   // Axis types                   s    f/f0      mw   vbar     D     f
+   // const double  yvmns[] = {       1.0,   1.0,   2e+4,  0.60, 1e-8, 1e-8 };
+   // const double  yvmxs[] = {      10.0,   4.0,   1e+6,  0.80, 1e-7, 1e-7 };
+   // const double  ymins[] = { -500000.0,   1.0,    0.0,  0.01, 1e-9, 1e-9 };
+   // const double  ymaxs[] = {  500000.0,  50.0,  1e+10,  3.00, 3e-5, 1e-5 };
+   // const double  yincs[] = {      0.01,  0.01, 5000.0,  0.01, 1e-9, 1e-9 };
+   // const QString ytitls[] = { tr( "s (x 1e13)" ),
+   //                           tr( "f/f0-value" ),
+   //                           tr( "mw-value" ),
+   //                           tr( "vbar-value" ),
+   //                           tr( "D-value" ),
+   //                           tr( "f-value" ) };
+   // plot_y = ival;
+
+   // lb_yRes->setText( ytitls[ plot_y ] + tr( " Resolution:" ) );
+   // lb_yMin->setText( ytitls[ plot_y ] + tr( " Minimum:" ) );
+   // lb_yMax->setText( ytitls[ plot_y ] + tr( " Maximum:" ) );
+   // ct_yMin->disconnect();
+   // ct_yMax->disconnect();
+   // yMin   = yvmns[ plot_y ];
+   // yMax   = yvmxs[ plot_y ];
+   // ct_yMin->setRange     ( ymins[ plot_y ], ymaxs[ plot_y ] );
+   // ct_yMin->setSingleStep( yincs[ plot_y ] );
+   // ct_yMax->setRange     ( ymins[ plot_y ], ymaxs[ plot_y ] );
+   // ct_yMax->setSingleStep( yincs[ plot_y ] );
+   // ct_yMin->setValue( yMin );
+   // ct_yMax->setValue( yMax );
+
+   // connect( ct_yMin, SIGNAL( valueChanged( double ) ),
+   //         this,    SLOT  ( update_yMin ( double ) ) );
+   // connect( ct_yMax, SIGNAL( valueChanged( double ) ),
+   //         this,    SLOT  ( update_yMax ( double ) ) );
+
+   // rb_x_s   ->setEnabled( plot_y != ATTR_S );
+   // rb_x_ff0 ->setEnabled( plot_y != ATTR_K );
+   // rb_x_mw  ->setEnabled( plot_y != ATTR_W );
+   // rb_x_vbar->setEnabled( plot_y != ATTR_V );
+   // rb_x_D   ->setEnabled( plot_y != ATTR_D );
+   // rb_x_f   ->setEnabled( plot_y != ATTR_F );
+   // rb_y_s   ->setEnabled( plot_x != ATTR_S );
+   // rb_y_ff0 ->setEnabled( plot_x != ATTR_K );
+   // rb_y_mw  ->setEnabled( plot_x != ATTR_W );
+   // rb_y_vbar->setEnabled( plot_x != ATTR_V );
+   // rb_y_D   ->setEnabled( plot_x != ATTR_D );
+   // rb_y_f   ->setEnabled( plot_x != ATTR_F );
+
+   // cb_fixed->disconnect();
+   // cb_fixed->clear();
+   // if ( plot_x != ATTR_V  &&  plot_y != ATTR_V )
+   //    cb_fixed->addItem( tr( "Partial Specific Volume" ) );
+   // if ( plot_x != ATTR_K  &&  plot_y != ATTR_K )
+   //    cb_fixed->addItem( tr( "Frictional Ratio" ) );
+   // if ( plot_x != ATTR_W  &&  plot_y != ATTR_W )
+   //    cb_fixed->addItem( tr( "Molecular Weight" ) );
+   // if ( plot_x != ATTR_S  &&  plot_y != ATTR_S )
+   //    cb_fixed->addItem( tr( "Sedimentation Coefficient" ) );
+   // if ( plot_x != ATTR_D  &&  plot_y != ATTR_D )
+   //    cb_fixed->addItem( tr( "Diffusion Coefficient" ) );
+   // if ( plot_x != ATTR_F  &&  plot_y != ATTR_F )
+   //    cb_fixed->addItem( tr( "Frictional Coefficient" ) );
+   // cb_fixed->setCurrentIndex( 0 );
+   // select_fixed( cb_fixed->currentText() );
+   // connect( cb_fixed, SIGNAL( activated   ( const QString& ) ),
+   //         this,     SLOT  ( select_fixed( const QString& ) ) );
+
+   // validate_ff0();
+
+   // update_plot();
+}
+
+// Select coordinate flag for the fixed attribute
+void US_Grid_Preset::select_fixed( int index )
+{
+   // // Axis types                   s    f/f0      mw   vbar     D     f
+   // const double  zmins[] = { -500000.0,   1.0,    0.0,  0.01, 1e+6, 1e+6 };
+   // const double  zmaxs[] = {  500000.0,  50.0,  1e+10,  3.00, 1e+8, 1e+6 };
+   // const double  zincs[] = {      0.01,  0.01, 5000.0, 0.001, 1e+5, 1e+5 };
+   // //const double  zvals[] = {     5.00,   2.0,   1e+5,  0.72, 1e+7, 1e+7 };
+
+   // plot_z   = fixstr.contains( tr( "Partial S" ) ) ? ATTR_V : 0;
+   // plot_z   = fixstr.contains( tr( "nal Ratio" ) ) ? ATTR_K : plot_z;
+   // plot_z   = fixstr.contains( tr( "ar Weight" ) ) ? ATTR_W : plot_z;
+   // plot_z   = fixstr.contains( tr( "Sedimenta" ) ) ? ATTR_S : plot_z;
+   // plot_z   = fixstr.contains( tr( "Diffusion" ) ) ? ATTR_D : plot_z;
+   // plot_z   = fixstr.contains( tr( "nal Coeff" ) ) ? ATTR_F : plot_z;
+   // qDebug() << "SelFix: " << fixstr << "plot_z" << plot_z;
+
+   // ct_zVal->setRange     ( zmins[ plot_z ], zmaxs[ plot_z ] );
+   // ct_zVal->setSingleStep( zincs[ plot_z ] );
+   // //ct_zVal->setValue( zvals[ plot_z ] );
+   // lb_zVal->setText( fixstr );
+
+   // validate_ff0();
+}
+
+
+QString Attr_to_long(int attr)
+{
+   if ( attr == ATTR_S )
+      return QString("Sedimentation Coefficient");
+   else if ( attr == ATTR_K )
+      return QString("Frictional Ratio");
+   else if ( attr == ATTR_W )
+      return QString("Molecular Weight");
+   else if ( attr == ATTR_V )
+      return QString("Partial Specific Volume");
+   else if ( attr == ATTR_D )
+      return QString("Diffusion Coefficient");
+    else if ( attr == ATTR_F )
+      return QString("Frictional Coefficient");
+   else
+      return QString("");
+}
+
+QString Attr_to_short(int attr)
+{
+   if ( attr == ATTR_S )
+      return QString("s (x 1e13)");
+   else if ( attr == ATTR_K )
+      return QString("f/f0-value");
+   else if ( attr == ATTR_W )
+      return QString("mw-value");
+   else if ( attr == ATTR_V )
+      return QString("vbar-value");
+   else if ( attr == ATTR_D )
+      return QString("D-value");
+   else if ( attr == ATTR_F )
+      return QString("f-value");
+   else
+      return QString("");
 }
 
