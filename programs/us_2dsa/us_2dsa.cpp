@@ -1028,20 +1028,7 @@ void US_2dsa::open_fitcntl()
    double avTemp   = edata->average_temperature();
    double vbar20   = US_Math2::calcCommonVbar( solution_rec, 20.0   );
    double vbartb   = US_Math2::calcCommonVbar( solution_rec, avTemp );
-   // double buoy     = 1.0 - vbar20 * DENS_20W;
 
-   // if ( buoy <= 0.0 )
-   // {
-   //    QMessageBox::critical( this, tr( "Negative Buoyancy Implied" ),
-   //    tr( "The current vbar20 value (%1) implies a buoyancy\n"
-   //        "value (%2) that is non-positive.\n\n"
-   //        "2DSA cannot proceed with this value. Click on the\n"
-   //        "<Solution> button and change the vbar20 value.\n"
-   //        "Note that the Solution may be accepted without being saved.\n"
-   //        "Include negative values in the sedimentation coefficient\n"
-   //        "range to represent floating data." ).arg( vbar20 ).arg( buoy ) );
-   //    return;
-   // }
    US_Math2::SolutionData sd;
    sd.density      = density;
    sd.viscosity    = viscosity;
