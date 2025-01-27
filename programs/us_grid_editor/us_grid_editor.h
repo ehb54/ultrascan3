@@ -35,6 +35,29 @@ QString Attr_to_long(int);  //!< returns the long name of the attr_type
 
 QString Attr_to_short(int); //!< returns the short name of the attr_type
 
+
+class GridPoint
+{
+public:
+   GridPoint( int ) {};
+   int index;
+   QVector<double> s;        //!< Sedimentation coefficient (at 20w).
+   QVector<double> D;        //!< Diffusion coefficient (at 20w).
+   QVector<double> vbar;     //!< Partial specific volume (at 20w).
+   QVector<double> mw;       //!< Molecular weight (at 20w).
+   QVector<double> f;        //!< Frictional coefficient (at 20w).
+   QVector<double> ff0;      //!< Standard frictional coefficient (at 20w).
+   QVector<double> f0;       //!< Index of the grid point (at 20w).
+
+   QVector<double> _s;       //!< Sedimentation coefficient.
+   QVector<double> _D;       //!< Diffusion coefficient.
+   QVector<double> _vbar;    //!< Partial specific volume.
+   QVector<double> _mw;      //!< Molecular weight.
+   QVector<double> _f;       //!< Frictional coefficient.
+   QVector<double> _ff0;     //!< Standard frictional coefficient.
+   QVector<double> _f0;      //!< Index of the grid point.
+};
+
 //! \struct gridpoint
 //! \brief Structure representing a grid point with various attributes.
 struct gridpoint
@@ -133,7 +156,8 @@ private:
    QLineEdit *le_z_param;  //!< Z-axis parameter name.
 
    QLineEdit *le_dens;   //!< Density line edit.
-   QLineEdit *le_visc; //!< Viscosity line edit.
+   QLineEdit *le_visc;   //!< Viscosity line edit.
+   QLineEdit *le_temp;   //!< Temperature line edit.
 
    QLabel    *lb_x_ax;   //!< X-axis label.
    QLineEdit *le_x_min;  //!< X-axis min value.
@@ -158,11 +182,9 @@ private:
    gridpoint maxgridpoint; //!< Maximum grid point.
    gridpoint mingridpoint; //!< Minimum grid point.
 
-
    QwtPlot *data_plot; //!< Data plot.
    QwtLinearColorMap *colormap; //!< Color map for the plot.
-   US_PlotPicker *pick1; //!< Plot picker 1.
-   US_PlotPicker *pick2; //!< Plot picker 2.
+   US_PlotPicker *picker; //!< Plot picker 1.
    US_Disk_DB_Controls* dkdb_cntrls; //!< Disk DB controls.
 
    QPushButton *pb_add_update; //!< Button to add partial grid.
@@ -177,32 +199,21 @@ private:
 
    QListWidget *lw_grids;
 
-   double xMin; //!< X minimum value.
-   double xMax; //!< X maximum value.
-   double yMin; //!< Y minimum value.
-   double yMax; //!< Y maximum value.
-   double xRes; //!< X resolution.
-   double yRes; //!< Y resolution.
-   double zVal; //!< Z value.
-   double viscosity; //!< Viscosity value.
-   double density; //!< Density value.
-   double vbar; //!< Partial specific volume.
-   double ff0; //!< Frictional ratio.
-
    int x_param; //!< Plot x-axis attribute (0-5 for s, f/f0, mw, vbar, D, f).
    int y_param; //!< Plot y-axis attribute (0-5 for s, f/f0, mw, vbar, D, f).
    int z_param; //!< Plot z-axis attribute (0-5 for s, f/f0, mw, vbar, D, f).
-   int dbg_level; //!< Debug level.
-   int plot_x; //!< Plot x-axis attribute (0-5 for s, f/f0, mw, vbar, D, f).
-   int plot_y; //!< Plot y-axis attribute (0-5 for s, f/f0, mw, vbar, D, f).
-   int plot_z; //!< Plot z-axis attribute (0-5 for s, f/f0, mw, vbar, D, f).
+   int dbg_level;
    int selected_plot; //!< Selected plot.
+
+   bool validate( gridpoint& );
 
 private slots:
    //! \brief Slot to setup the grid axises.
    void set_grid_axis();
 
-   void load_runId();
+   //! \brief Validate grid point
+   void call_validate();
+
    //! \brief Slot to update x resolution.
    //! \param value New x resolution value.
    void update_xRes(double value);
@@ -239,28 +250,12 @@ private slots:
    //! \param value New subgrids value.
    void update_subGrids(double value);
 
-   //! \brief Slot to update density.
+   //! \brief Slot to update density, viscosity, and temperature of the buffer.
    //! \param text New density value.
-   void update_density(const QString& text);
-
-   //! \brief Slot to update viscosity.
-   //! \param text New viscosity value.
-   void update_viscosity(const QString& text);
+   void update_exp_data( );
 
    //! \brief Slot to update the plot.
    void update_plot(void);
-
-   // //! \brief Slot to select x-axis attribute.
-   // //! \param index Index of the selected x-axis attribute.
-   // void select_x_axis(int index);
-
-   // //! \brief Slot to select y-axis attribute.
-   // //! \param index Index of the selected y-axis attribute.
-   // // void select_y_axis(int index);
-
-   // //! \brief Slot to select fixed attribute.
-   // //! \param text Text of the selected fixed attribute.
-   // void select_fixed(const QString& text);
 
    //! \brief Slot to select plot.
    //! \param index Index of the selected plot.

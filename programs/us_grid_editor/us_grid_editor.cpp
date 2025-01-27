@@ -53,9 +53,6 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    left->setContentsMargins( 0, 0, 0, 0 );
    right->setSpacing        ( 0 );
    right->setContentsMargins( 0, 1, 0, 1 );
-   viscosity = VISC_20W;
-   density   = DENS_20W;
-   vbar      = TYPICAL_VBAR;
 
    dbg_level = US_Settings::us_debug();
 
@@ -92,24 +89,28 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    le_y_param = us_lineedit( Attr_to_long(y_param), -1, true);
    le_z_param = us_lineedit( Attr_to_long(z_param), -1, true);
 
-   QPushButton *pb_preset = us_pushbutton( "Grid Setup" );
+   QPushButton *pb_preset = us_pushbutton( "Setup Griding" );
    connect ( pb_preset, &QPushButton::clicked, this, &US_Grid_Editor::set_grid_axis);
 
    // Experimental Space
 
    QLabel *lb_experm = us_banner( tr( "Experimental Space" ) );
-   QLabel *lb_density = us_label( tr( "Density" ) );
-   lb_density->setAlignment( Qt::AlignCenter );
-   QLineEdit* le_density = us_lineedit( QString::number( density ) );
-   le_density->setValidator(d_validator);
+   QLabel *lb_dens = us_label( tr( "Density (20C)" ) );
+   lb_dens->setAlignment( Qt::AlignCenter );
+   le_dens = us_lineedit( QString::number( DENS_20W ) );
+   le_dens->setValidator(d_validator);
 
-   QLabel *lb_viscosity = us_label( tr( "Viscosity" ) );
-   lb_viscosity->setAlignment( Qt::AlignCenter );
-   QLineEdit* le_viscosity = us_lineedit( QString::number( viscosity ) );
-   le_viscosity->setValidator(d_validator);
+   QLabel *lb_visc = us_label( tr( "Viscosity (20C)" ) );
+   lb_visc->setAlignment( Qt::AlignCenter );
+   le_visc = us_lineedit( QString::number( VISC_20W ) );
+   le_visc->setValidator(d_validator);
 
-   QPushButton *pb_load_run = us_pushbutton( "Load From Run ID" );
-   connect ( pb_load_run, &QPushButton::clicked, this, &US_Grid_Editor::load_runId);
+   QLabel *lb_temp = us_label( tr( "Temperature" ) );
+   lb_temp->setAlignment( Qt::AlignCenter );
+   le_temp = us_lineedit( QString::number( 20 ) );
+   le_temp->setValidator(d_validator);
+
+   QPushButton* pb_set_exp_data = us_pushbutton("Update");
 
    // 20,w grid control
    QLabel *lb_20w_ctrl = us_banner( tr( "20,w Grid Control" ) );
@@ -128,7 +129,7 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
 
    lw_grids = us_listwidget();
 
-   QPushButton* pb_make_new = us_pushbutton( "Make New Grid" );
+   QPushButton* pb_make_new = us_pushbutton( "New Grid" );
    pb_delete = us_pushbutton( "Delete Grid" );
 
    QFrame *hline1 = new QFrame();
@@ -148,12 +149,18 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    lb_y_ax->setAlignment( Qt::AlignCenter );
 
    le_x_min = us_lineedit();
+   le_x_min->setValidator(d_validator);
    le_x_max = us_lineedit();
+   le_x_max->setValidator(d_validator);
    le_x_res = us_lineedit();
+   le_x_res->setValidator(i_validator);
 
    le_y_min = us_lineedit();
+   le_y_min->setValidator(d_validator);
    le_y_max = us_lineedit();
+   le_y_max->setValidator(d_validator);
    le_y_res = us_lineedit();
+   le_y_res->setValidator(i_validator);
 
    QFrame *hline2 = new QFrame();
    hline2->setFrameShape(QFrame::HLine);
@@ -162,16 +169,19 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    lb_z_ax = us_label( Attr_to_short( z_param ));
    lb_z_ax->setAlignment( Qt::AlignCenter );
    le_z_val = us_lineedit();
+   le_z_val->setValidator(d_validator);
 
    QPushButton* pb_validate = us_pushbutton( "Validate" );
+   connect( pb_validate, &QPushButton::clicked, this, &US_Grid_Editor::call_validate );
 
    QLabel *lb_subgrids = us_label( "# Subgrids" );
    lb_subgrids->setAlignment( Qt::AlignCenter );
    le_subgrids = us_lineedit();
+   le_subgrids->setValidator(i_validator);
 
    QLabel *lb_allgrids = us_label( "# Grid Points" );
    lb_allgrids->setAlignment( Qt::AlignCenter );
-   le_allgrids = us_lineedit();
+   le_allgrids = us_lineedit("", -1, true);
 
    pb_add_update = us_pushbutton( "Add/Update" );
 
@@ -194,9 +204,9 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    // set up plot component window on right side
 
    QBoxLayout* plot1 = new US_Plot( data_plot,
-      tr( "Grid Layout" ),
-      tr( "Sedimentation Coefficient (s20,W)"),
-      tr( "Frictional Ratio f/f0" ) );
+                                   tr( "Grid Layout" ),
+                                   tr( "Sedimentation Coefficient (s20,W)"),
+                                   tr( "Frictional Ratio f/f0" ) );
    data_plot->setAutoDelete( true );
    data_plot->setMinimumSize( 640, 480 );
    data_plot->enableAxis( QwtPlot::xBottom, true );
@@ -225,12 +235,14 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
 
    left->addWidget( lb_experm,            row++, 0, 1, 4 );
 
-   left->addWidget( lb_density,           row,   0, 1, 1 );
-   left->addWidget( le_density,           row,   1, 1, 1 );
-   left->addWidget( lb_viscosity,         row,   2, 1, 1 );
-   left->addWidget( le_viscosity,         row++, 3, 1, 1 );
+   left->addWidget( lb_dens,              row,   0, 1, 1 );
+   left->addWidget( le_dens,              row,   1, 1, 1 );
+   left->addWidget( lb_visc,              row,   2, 1, 1 );
+   left->addWidget( le_visc,              row++, 3, 1, 1 );
 
-   left->addWidget( pb_load_run,          row++, 1, 1, 2 );
+   left->addWidget( lb_temp,              row,   0, 1, 1 );
+   left->addWidget( le_temp,              row,   1, 1, 1 );
+   left->addWidget( pb_set_exp_data,      row++, 2, 1, 2 );
 
    left->addWidget( lb_20w_ctrl,          row++, 0, 1, 4 );
 
@@ -271,8 +283,6 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    left->addWidget( le_subgrids,          row,   1, 1, 1 );
    left->addWidget( pb_add_update,        row++, 2, 1, 2 );
 
-
-
    left->addWidget( lb_allgrids,          row,   0, 1, 1 );
    left->addWidget( le_allgrids,          row++, 1, 1, 3 );
 
@@ -283,17 +293,10 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    left->addWidget( pb_save,              row,   1, 1, 1 );
    left->addWidget( pb_help,              row,   2, 1, 1 );
    left->addWidget( pb_close,             row++, 3, 1, 1 );
-   // left->setRowStretch(row, 1);
-
-
 
    for (int ii = 0; ii < 4; ii++) {
       left->setColumnStretch(ii, 1);
    }
-   // for (int ii = 0; ii < left->rowCount(); ii++) {
-   //    left->setRowStretch(ii, 0);
-   // }
-
 
    right->addLayout( plot1 );
 
@@ -310,11 +313,47 @@ void US_Grid_Editor::set_grid_axis()
    int state = grid_preset->exec();
    if ( state == QDialog::Accepted ) {
       grid_preset->parameters(&x_param, &y_param, &z_param);
+      le_x_param->setText( Attr_to_long(x_param) );
+      le_y_param->setText( Attr_to_long(y_param) );
+      le_z_param->setText( Attr_to_long(z_param) );
+      lb_x_ax->setText( Attr_to_short( x_param ));
+      lb_y_ax->setText( Attr_to_short( y_param ));
+      lb_z_ax->setText( Attr_to_short( z_param ));
+      le_x_min->clear();
+      le_x_max->clear();
+      le_y_min->clear();
+      le_y_max->clear();
+      le_z_val->clear();
+      if ( z_param == -1 ) {
+         lb_z_ax->hide();
+         le_z_val->hide();
+      } else {
+         lb_z_ax->show();
+         le_z_val->show();
+      }
    }
 }
 
-void US_Grid_Editor::load_runId()
+void US_Grid_Editor::call_validate()
 {
+   gridpoint grid_point;
+   if ( validate(grid_point)) {
+      qDebug() << "";
+   }
+
+}
+
+bool US_Grid_Editor::validate( gridpoint& grid_point)
+{
+   double x_min = le_x_min->text().toDouble();
+   double x_max = le_x_min->text().toDouble();
+   double y_min = le_y_min->text().toDouble();
+   double y_max = le_y_min->text().toDouble();
+   double z_val = -1;
+   if ( z_param != -1 ) {
+      z_val = le_z_val->text().toDouble();
+   }
+
 
 }
 
@@ -322,79 +361,32 @@ void US_Grid_Editor::load_runId()
 void US_Grid_Editor::reset( void )
 {
    dataPlotClear( data_plot );
-   pick1 = new US_PlotPicker( data_plot );
+   picker = new US_PlotPicker( data_plot );
 
-   xRes          = 60.0;
-   yRes          = 60.0;
-qDebug() << "reset yRes" << yRes;
-   yMin          = 1.0;
-   yMax          = 4.0;
-   xMin          = 1.0;
-   xMax          = 10.0;
-   zVal          = 0.72;
-   vbar          = 0.72;
-   ff0           = 1.0;
-   plot_x        = ATTR_S; // plot s
-   plot_y        = ATTR_K; // plot f/f0
-   plot_z        = ATTR_V; // fixed vbar
-   selected_plot = 0;
-   viscosity     = VISC_20W;
-   density       = DENS_20W;
+   x_param = ATTR_S; // plot s
+   y_param = ATTR_K; // plot f/f0
+   z_param = ATTR_V; // fixed vbar
+   // selected_plot = 0;
    grid_index    = 0;
    partialGrid   = 0;
    subGrids      = 13;
    final_grid.clear();
 
-// qDebug() << "1)set yRes" << yRes;
-//    ct_xRes->setRange     ( 1.0, 1000.0 );
-//    ct_xRes->setSingleStep( 1.0 );
-// qDebug() << "2)set yRes" << yRes;
-//    ct_xRes->setValue( xRes );
-// qDebug() << "3)set yRes" << yRes;
-//    ct_yRes->setRange     ( 1.0, 1000.0 );
-//    ct_yRes->setSingleStep( 1.0 );
-// qDebug() << "set yRes" << yRes;
-//    ct_yRes->setValue( yRes );
-//    ct_partialGrid    ->setEnabled( false );
-//    ct_subGrids       ->setEnabled( false );
-//    ct_partialGrid    ->setRange( 0, 0);
-//    ct_partialGrid    ->setSingleStep( 0 );
-//    ct_partialGrid    ->setValue( 0 );
-//    ck_show_final_grid->setEnabled( false );
-//    ck_show_final_grid->setChecked( false );
-//    ck_show_sub_grid  ->setEnabled( false );
-//    ck_show_sub_grid  ->setChecked( false );
-//    ct_xRes  ->setEnabled( true );
-//    ct_yRes  ->setEnabled( true );
-//    ct_xMin  ->setEnabled( true );
-//    ct_yMin  ->setEnabled( true );
-//    ct_xMax  ->setEnabled( true );
-//    ct_yMax  ->setEnabled( true );
-//    ct_zVal  ->setEnabled( true );
-   // rb_x_s   ->setEnabled( true );
-   // rb_x_ff0 ->setEnabled( false );
-   // rb_x_mw  ->setEnabled( true );
-   // rb_x_vbar->setEnabled( true );
-   // rb_x_D   ->setEnabled( true );
-   // rb_x_f   ->setEnabled( true );
-   // rb_y_s   ->setEnabled( false );
-   // rb_y_ff0 ->setEnabled( true );
-   // rb_y_mw  ->setEnabled( true );
-   // rb_y_vbar->setEnabled( true );
-   // rb_y_D   ->setEnabled( true );
-   // rb_y_f   ->setEnabled( true );
-   // rb_x_s   ->setChecked( true );
-   // rb_y_ff0 ->setChecked( true );
-   // pb_add_partialGrid   ->setEnabled( true );
-   // pb_save              ->setEnabled( false );
-   // pb_delete_partialGrid->setEnabled( false );
-
-   // select_x_axis( plot_x );
-   // select_y_axis( plot_y );
-   // select_fixed ( cb_fixed->currentText() );
-
-   select_plot  ( selected_plot );
-   update_plot  ();
+   le_x_param->setText( Attr_to_long(x_param) );
+   le_y_param->setText( Attr_to_long(y_param) );
+   le_z_param->setText( Attr_to_long(z_param) );
+   lb_x_ax->setText( Attr_to_short( x_param ));
+   lb_y_ax->setText( Attr_to_short( y_param ));
+   lb_z_ax->setText( Attr_to_short( z_param ));
+   le_x_min->clear();
+   le_x_max->clear();
+   le_x_res->setText(QString::number(64));
+   le_y_min->clear();
+   le_y_max->clear();
+   le_y_res->setText(QString::number(64));
+   le_z_val->clear();
+   lb_z_ax->show();
+   le_z_val->show();
 }
 
 // save the grid data
@@ -434,16 +426,16 @@ void US_Grid_Editor::save( void )
       sc.vbar20   = final_grid[ ii ].vbar;
       sc.mw       = final_grid[ ii ].mw;
 
-      double xval = grid_value( final_grid[ ii ], plot_x );
-      double yval = grid_value( final_grid[ ii ], plot_y );
-      double zval = grid_value( final_grid[ ii ], plot_z );
+      double xval = grid_value( final_grid[ ii ], x_param );
+      double yval = grid_value( final_grid[ ii ], y_param );
+      double zval = grid_value( final_grid[ ii ], z_param );
       int indexx  = xvals.indexOf( xval ) + 1;
       int indexy  = yvals.indexOf( yval ) + 1;
       int indexz  = zvals.indexOf( zval ) + 1;
       if ( indexx < 1 )  { indexx = xvals.size() + 1; xvals << xval; }
       if ( indexy < 1 )  { indexy = yvals.size() + 1; yvals << yval; }
       if ( indexz < 1 )  { indexz = zvals.size() + 1; zvals << zval; }
-      sc.name     = QString().sprintf( "X%3.3dY%3.3dZ%2.2d",
+      sc.name     = QString::asprintf( "X%3.3dY%3.3dZ%2.2d",
                                        indexx, indexy, indexz );
       sc.signal_concentration = gridinc * (double)indexsg;
       if ( (++indexsg) > subGrids )  indexsg = 1;
@@ -559,92 +551,92 @@ void US_Grid_Editor::save( void )
 // update raster x resolution
 void US_Grid_Editor::update_xRes( double dval )
 {
-qDebug() << "ux1)yRes" << yRes;
-   xRes  = dval;
-qDebug() << "ux2)yRes" << yRes;
-   update_plot();
-qDebug() << "ux3)yRes" << yRes;
+// qDebug() << "ux1)yRes" << yRes;
+//    xRes  = dval;
+// qDebug() << "ux2)yRes" << yRes;
+//    update_plot();
+// qDebug() << "ux3)yRes" << yRes;
 }
 
 // update raster y resolution
 void US_Grid_Editor::update_yRes( double dval )
 {
-   yRes  = dval;
-   update_plot();
+   // yRes  = dval;
+   // update_plot();
 }
 
 // update plot limit x min
 void US_Grid_Editor::update_xMin( double dval )
 {
-   xMin    = dval;
-   // ct_xMax->disconnect();
-   // ct_xMax->setMinimum( xMin );
+   // xMin    = dval;
+   // // ct_xMax->disconnect();
+   // // ct_xMax->setMinimum( xMin );
 
-   // connect( ct_xMax, SIGNAL( valueChanged( double ) ),
-   //          this,    SLOT  ( update_xMax ( double ) ) );
+   // // connect( ct_xMax, SIGNAL( valueChanged( double ) ),
+   // //          this,    SLOT  ( update_xMax ( double ) ) );
 
-   validate_ff0();
+   // validate_ff0();
 
-   update_plot();
+   // update_plot();
 }
 
 // update plot limit x max
 void US_Grid_Editor::update_xMax( double dval )
 {
-   xMax    = dval;
-   // ct_xMin->disconnect();
-   // ct_xMin->setMaximum( xMax );
+   // xMax    = dval;
+   // // ct_xMin->disconnect();
+   // // ct_xMin->setMaximum( xMax );
 
-   // connect( ct_xMin, SIGNAL( valueChanged( double ) ),
-   //          this,    SLOT  ( update_xMin ( double ) ) );
+   // // connect( ct_xMin, SIGNAL( valueChanged( double ) ),
+   // //          this,    SLOT  ( update_xMin ( double ) ) );
 
-   validate_ff0();
+   // validate_ff0();
 
-   update_plot();
+   // update_plot();
 }
 
 // update plot limit y min
 void US_Grid_Editor::update_yMin( double dval )
 {
-   yMin    = dval;
-qDebug() << "update_yMin" << yMin;
-   // ct_yMax->disconnect();
-   // ct_yMax->setMinimum( yMin );
+//    yMin    = dval;
+// qDebug() << "update_yMin" << yMin;
+//    // ct_yMax->disconnect();
+//    // ct_yMax->setMinimum( yMin );
 
-   // connect( ct_yMax, SIGNAL( valueChanged( double ) ),
-   //          this,    SLOT  ( update_yMax ( double ) ) );
+//    // connect( ct_yMax, SIGNAL( valueChanged( double ) ),
+//    //          this,    SLOT  ( update_yMax ( double ) ) );
 
-   validate_ff0();
+//    validate_ff0();
 
-   update_plot();
+//    update_plot();
 }
 
 // update plot limit y max
 void US_Grid_Editor::update_yMax( double dval )
 {
-   yMax    = dval;
-qDebug() << "update_yMax" << yMax;
-   // ct_yMin->disconnect();
-   // ct_yMin->setMaximum( yMax );
+//    yMax    = dval;
+// qDebug() << "update_yMax" << yMax;
+//    // ct_yMin->disconnect();
+//    // ct_yMin->setMaximum( yMax );
 
-   // connect( ct_yMin, SIGNAL( valueChanged( double ) ),
-   //          this,    SLOT  ( update_yMin ( double ) ) );
+//    // connect( ct_yMin, SIGNAL( valueChanged( double ) ),
+//    //          this,    SLOT  ( update_yMin ( double ) ) );
 
-   validate_ff0();
+//    validate_ff0();
 
-   update_plot();
+//    update_plot();
 }
 
 // update plot limit z-value (f/f0 or vbar)
 void US_Grid_Editor::update_zVal( double dval )
 {
-   zVal    = dval;
-   vbar    = ( plot_y == ATTR_V ) ? zVal : vbar;
-   ff0     = ( plot_y == ATTR_K ) ? zVal : ff0;
+   // zVal    = dval;
+   // vbar    = ( y_param == ATTR_V ) ? zVal : vbar;
+   // ff0     = ( y_param == ATTR_K ) ? zVal : ff0;
 
-   validate_ff0();
+   // validate_ff0();
 
-   update_plot();
+   // update_plot();
 }
 
 // Select a partialGrid from all subgrids in the final grid for highlighting
@@ -667,25 +659,9 @@ void US_Grid_Editor::update_subGrids( double dval )
 }
 
 // update density
-void US_Grid_Editor::update_density( const QString & str )
+void US_Grid_Editor::update_exp_data( )
 {
-   // Skip updating if not likely done entering
-   if ( str.toDouble() == 0.0 )   return;
 
-   // Update density value and re-plot
-   density = str.toDouble();
-   update_plot();
-}
-
-// update viscosity
-void US_Grid_Editor::update_viscosity( const QString & str )
-{
-   // Skip updating if not likely done entering
-   if ( str.toDouble() == 0.0 )   return;
-
-   // Update viscosity value and re-plot
-   viscosity = str.toDouble();
-   update_plot();
 }
 
 // update plot
@@ -694,55 +670,8 @@ void US_Grid_Editor::update_plot( void )
 qDebug() << "update_plot:  call calc_gridpoints()";
    calc_gridpoints();
 
-   QString xatitle = tr( "Sedimentation Coefficient" );
-   QString yatitle = tr( "Frictional Ratio" );
-qDebug() << "  up0)yRes" << yRes;
-
-   switch ( plot_x )
-   {
-      default:
-      case ATTR_S:
-         xatitle         = tr( "Sedimentation Coefficient" );
-         break;
-      case ATTR_K:
-         xatitle         = tr( "Frictional Ratio" );
-         break;
-      case ATTR_W:
-         xatitle         = tr( "Molecular Weight" );
-         break;
-      case ATTR_V:
-         xatitle         = tr( "Partial Specific Volume" );
-         break;
-      case ATTR_D:
-         xatitle         = tr( "Diffusion Coefficient" );
-         break;
-      case ATTR_F:
-         xatitle         = tr( "Frictional Coefficient" );
-         break;
-   }
-
-   switch ( plot_y )
-   {
-      case ATTR_S:
-         yatitle         = tr( "Sedimentation Coefficient" );
-         break;
-      default:
-      case ATTR_K:
-         yatitle         = tr( "Frictional Ratio" );
-         break;
-      case ATTR_W:
-         yatitle         = tr( "Molecular Weight" );
-         break;
-      case ATTR_V:
-         yatitle         = tr( "Partial Specific Volume" );
-         break;
-      case ATTR_D:
-         yatitle         = tr( "Diffusion Coefficient" );
-         break;
-      case ATTR_F:
-         yatitle         = tr( "Frictional Coefficient" );
-         break;
-   }
+   QString xatitle = Attr_to_long( x_param );
+   QString yatitle = Attr_to_long( y_param );
 
    if ( selected_plot == 1 )
       xatitle         = tr( "Molecular Weight" );
@@ -758,7 +687,7 @@ qDebug() << "  up0)yRes" << yRes;
    QVector <double> xData2;
    QVector <double> yData2;
 
-   int iplt_x = ( selected_plot == 0 ) ? plot_x : ATTR_W;
+   int iplt_x = ( selected_plot == 0 ) ? x_param : ATTR_W;
 
    xData1.clear();
    yData1.clear();
@@ -776,13 +705,13 @@ qDebug() << "  up0)yRes" << yRes;
          if ( final_grid[ ii ].index == partialGrid )
          {
             xData1 << grid_value( final_grid[ ii ], iplt_x );
-            yData1 << grid_value( final_grid[ ii ], plot_y );
+            yData1 << grid_value( final_grid[ ii ], y_param );
          }
 
          else
          {
             xData2 << grid_value( final_grid[ ii ], iplt_x );
-            yData2 << grid_value( final_grid[ ii ], plot_y );
+            yData2 << grid_value( final_grid[ ii ], y_param );
          }
       }
 
@@ -823,13 +752,13 @@ qDebug() << "  up0)yRes" << yRes;
          if ( counter == partialGrid )
          {
             xData1 << grid_value( final_grid[ ii ], iplt_x );
-            yData1 << grid_value( final_grid[ ii ], plot_y );
+            yData1 << grid_value( final_grid[ ii ], y_param );
          }
 
          else
          {
             xData2 << grid_value( final_grid[ ii ], iplt_x );
-            yData2 << grid_value( final_grid[ ii ], plot_y );
+            yData2 << grid_value( final_grid[ ii ], y_param );
          }
 
          counter++;
@@ -873,7 +802,7 @@ qDebug() << "  updplt: gridsize" << gridsize;
       for ( int ii = 0; ii < gridsize; ii++ )
       {
          xData1[ ii ] = grid_value( current_grid[ ii ], iplt_x );
-         yData1[ ii ] = grid_value( current_grid[ ii ], plot_y );
+         yData1[ ii ] = grid_value( current_grid[ ii ], y_param );
       }
 
       QwtPlotCurve *c1;
@@ -889,7 +818,6 @@ qDebug() << "  updplt: gridsize" << gridsize;
       c1->setSamples( xData1.data(), yData1.data(), gridsize );
    }
 
-qDebug() << "  up9)yRes" << yRes;
    data_plot->setAxisAutoScale( QwtPlot::xBottom );
    data_plot->setAxisAutoScale( QwtPlot::yLeft );
    data_plot->replot();
@@ -899,9 +827,8 @@ qDebug() << "  up9)yRes" << yRes;
 void US_Grid_Editor::calc_gridpoints( void )
 {
    struct gridpoint tmp_point;
-qDebug() << "calc_g: px py pz" << plot_x << plot_y << plot_z;
+qDebug() << "calc_g: px py pz" << x_param << y_param << z_param;
 
-qDebug() << "  cg1)yRes" << yRes;
    current_grid.clear();
    //bool flag = true;
    maxgridpoint.s    = -9.9e99;
@@ -919,16 +846,14 @@ qDebug() << "  cg1)yRes" << yRes;
    mingridpoint.f0   =  9.9e99;
    mingridpoint.f    =  9.9e99;
 
-qDebug() << "  cg2)yRes" << yRes;
-   // xRes              = ct_xRes->value();
-   // xMin              = ct_xMin->value();
-   // xMax              = ct_xMax->value();
-   // yRes              = ct_yRes->value();
-   // yMin              = ct_yMin->value();
-   // yMax              = ct_yMax->value();
-   // zVal              = ct_zVal->value();
-   vbar              = zVal;
-qDebug() << "  cg3)yRes" << yRes;
+   int    xRes = le_x_res->text().toInt();
+   double xMin = le_x_min->text().toDouble();
+   double xMax = le_x_max->text().toDouble();
+   int    yRes = le_y_res->text().toInt();
+   double yMin = le_y_min->text().toDouble();
+   double yMax = le_y_max->text().toDouble();
+   double zVal = le_z_val->text().toDouble();
+
    double xinc       = ( xMax - xMin ) / ( xRes - 1.0 );
    double yinc       = ( yMax - yMin ) / ( yRes - 1.0 );
    double xval       = xMin;
@@ -942,7 +867,7 @@ qDebug() << "calc_g: zVal nx ny" << zVal << nxvals << nyvals
  << "xMin xMax xinc" << xMin << xMax << xinc
  << "yMin yMax yinc" << yMin << yMax << yinc;
 
-   switch( plot_z )
+   switch( z_param )
    {
       case ATTR_S:
          tmp_point.s       = zVal;
@@ -964,13 +889,13 @@ qDebug() << "calc_g: zVal nx ny" << zVal << nxvals << nyvals
          break;
    }
 qDebug() << "  cg4)yRes" << yRes;
-   if ( plot_x != ATTR_V  &&  plot_y != ATTR_V  &&  plot_z != ATTR_V )
+   if ( x_param != ATTR_V  &&  y_param != ATTR_V  &&  z_param != ATTR_V )
    {
 qDebug() << "calc_g:  CG2";
       calc_gridpoints_2();
    }
                                                        ///////////////
-   else if ( plot_x == ATTR_S  &&  plot_y == ATTR_K )  // s and f_f0
+   else if ( x_param == ATTR_S  &&  y_param == ATTR_K )  // s and f_f0
    {                                                   ///////////////
       for ( int ii = 0; ii < nxvals; ii++ )
       {
@@ -995,7 +920,7 @@ qDebug() << "calc_g:  CG2";
 qDebug() << "  cg5)yRes" << yRes;
    }
                                                        ///////////////
-   else if ( plot_x == ATTR_S  &&  plot_y == ATTR_W )  // s and mw   
+   else if ( x_param == ATTR_S  &&  y_param == ATTR_W )  // s and mw
    {                                                   ///////////////
       int lstiek = -1;
       int lstjek = -1;
@@ -1033,7 +958,7 @@ qDebug() << "  (n)ff0" << current_grid[nxvals*nyvals-1].ff0;
 qDebug() << "   lstiek lstjek" << lstiek << lstjek << "nxy" << nxvals << nyvals;
    }
                                                        ///////////////
-   else if ( plot_x == ATTR_S  &&  plot_y == ATTR_V )  // s and vbar   
+   else if ( x_param == ATTR_S  &&  y_param == ATTR_V )  // s and vbar
    {                                                   ///////////////
       for ( int ii = 0; ii < nxvals; ii++ )
       {
@@ -1046,13 +971,13 @@ qDebug() << "   lstiek lstjek" << lstiek << lstjek << "nxy" << nxvals << nyvals;
             tmp_point.vbar    = yval;
             yval             += yinc;
 
-            if ( plot_z == ATTR_K )
+            if ( z_param == ATTR_K )
                comp_ok           = set_comp_skv( tmp_point );
-            else if ( plot_z == ATTR_W )
+            else if ( z_param == ATTR_W )
                comp_ok           = set_comp_swv( tmp_point );
-            else if ( plot_z == ATTR_D )
+            else if ( z_param == ATTR_D )
                comp_ok           = set_comp_svd( tmp_point );
-            else if ( plot_z == ATTR_F )
+            else if ( z_param == ATTR_F )
                comp_ok           = set_comp_svf( tmp_point );
 
             if ( comp_ok )
@@ -1069,7 +994,7 @@ qDebug() << "   lstiek lstjek" << lstiek << lstjek << "nxy" << nxvals << nyvals;
       }
    }
                                                        ///////////////
-   else if ( plot_x == ATTR_S  &&  plot_y == ATTR_D )  // s and D
+   else if ( x_param == ATTR_S  &&  y_param == ATTR_D )  // s and D
    {                                                   ///////////////
       for ( int ii = 0; ii < nxvals; ii++ )
       {
@@ -1096,7 +1021,7 @@ qDebug() << "   lstiek lstjek" << lstiek << lstjek << "nxy" << nxvals << nyvals;
       }
    }
                                                        ///////////////
-   else if ( plot_x == ATTR_S  &&  plot_y == ATTR_W )  // s and f
+   else if ( x_param == ATTR_S  &&  y_param == ATTR_W )  // s and f
    {                                                   ///////////////
       for ( int ii = 0; ii < nxvals; ii++ )
       {
@@ -1123,7 +1048,7 @@ qDebug() << "   lstiek lstjek" << lstiek << lstjek << "nxy" << nxvals << nyvals;
       }
    }
                                                        ///////////////
-   else if ( plot_x == ATTR_K  &&  plot_y == ATTR_S )  // ff0 and s
+   else if ( x_param == ATTR_K  &&  y_param == ATTR_S )  // ff0 and s
    {                                                   ///////////////
       for ( int ii = 0; ii < nxvals; ii++ )
       {
@@ -1147,7 +1072,7 @@ qDebug() << "   lstiek lstjek" << lstiek << lstjek << "nxy" << nxvals << nyvals;
       }
    }
                                                        ///////////////
-   else if ( plot_x == ATTR_K  &&  plot_y == ATTR_W )  // ff0 and mw
+   else if ( x_param == ATTR_K  &&  y_param == ATTR_W )  // ff0 and mw
    {                                                   ///////////////
       for ( int ii = 0; ii < nxvals; ii++ )
       {
@@ -1171,7 +1096,7 @@ qDebug() << "   lstiek lstjek" << lstiek << lstjek << "nxy" << nxvals << nyvals;
       }
    }
                                                        ///////////////
-   else if ( plot_x == ATTR_K  &&  plot_y == ATTR_V )  // ff0 and vbar
+   else if ( x_param == ATTR_K  &&  y_param == ATTR_V )  // ff0 and vbar
    {                                                   ///////////////
       for ( int ii = 0; ii < nxvals; ii++ )
       {
@@ -1184,13 +1109,13 @@ qDebug() << "   lstiek lstjek" << lstiek << lstjek << "nxy" << nxvals << nyvals;
             tmp_point.vbar    = yval;
             yval             += yinc;
 
-            if ( plot_z == ATTR_S )
+            if ( z_param == ATTR_S )
                comp_ok           = set_comp_skv( tmp_point );
-            else if ( plot_z == ATTR_W )
+            else if ( z_param == ATTR_W )
                comp_ok           = set_comp_kwv( tmp_point );
-            else if ( plot_z == ATTR_D )
+            else if ( z_param == ATTR_D )
                comp_ok           = set_comp_kvd( tmp_point );
-            else if ( plot_z == ATTR_F )
+            else if ( z_param == ATTR_F )
                comp_ok           = set_comp_kvf( tmp_point );
 
             if ( comp_ok )
@@ -1204,7 +1129,7 @@ qDebug() << "   lstiek lstjek" << lstiek << lstjek << "nxy" << nxvals << nyvals;
       }
    }
                                                        ///////////////
-   else if ( plot_x == ATTR_K  &&  plot_y == ATTR_D )  // ff0 and D
+   else if ( x_param == ATTR_K  &&  y_param == ATTR_D )  // ff0 and D
    {                                                   ///////////////
       for ( int ii = 0; ii < nxvals; ii++ )
       {
@@ -1228,7 +1153,7 @@ qDebug() << "   lstiek lstjek" << lstiek << lstjek << "nxy" << nxvals << nyvals;
       }
    }
                                                        ///////////////
-   else if ( plot_x == ATTR_K  &&  plot_y == ATTR_F )  // ff0 and f
+   else if ( x_param == ATTR_K  &&  y_param == ATTR_F )  // ff0 and f
    {                                                   ///////////////
       for ( int ii = 0; ii < nxvals; ii++ )
       {
@@ -1252,7 +1177,7 @@ qDebug() << "   lstiek lstjek" << lstiek << lstjek << "nxy" << nxvals << nyvals;
       }
    }
                                                        ///////////////
-   else if ( plot_x == ATTR_W  &&  plot_y == ATTR_S )  // mw and s
+   else if ( x_param == ATTR_W  &&  y_param == ATTR_S )  // mw and s
    {                                                   ///////////////
       for ( int ii = 0; ii < nxvals; ii++ )
       {
@@ -1279,7 +1204,7 @@ qDebug() << "   lstiek lstjek" << lstiek << lstjek << "nxy" << nxvals << nyvals;
       }
    }
                                                        ///////////////
-   else if ( plot_x == ATTR_W  &&  plot_y == ATTR_K )  // mw and f/f0   
+   else if ( x_param == ATTR_W  &&  y_param == ATTR_K )  // mw and f/f0
    {                                                   ///////////////
       for ( int ii = 0; ii < nxvals; ii++ )
       {
@@ -1303,7 +1228,7 @@ qDebug() << "   lstiek lstjek" << lstiek << lstjek << "nxy" << nxvals << nyvals;
       }
    }
                                                        ///////////////
-   else if ( plot_x == ATTR_W  &&  plot_y == ATTR_V )  // mw and vbar
+   else if ( x_param == ATTR_W  &&  y_param == ATTR_V )  // mw and vbar
    {                                                   ///////////////
       for ( int ii = 0; ii < nxvals; ii++ )
       {
@@ -1316,13 +1241,13 @@ qDebug() << "   lstiek lstjek" << lstiek << lstjek << "nxy" << nxvals << nyvals;
             tmp_point.vbar    = yval;
             yval             += yinc;
 
-            if ( plot_z == ATTR_S )
+            if ( z_param == ATTR_S )
                comp_ok           = set_comp_swv( tmp_point );
-            else if ( plot_z == ATTR_K )
+            else if ( z_param == ATTR_K )
                comp_ok           = set_comp_kwv( tmp_point );
-            else if ( plot_z == ATTR_D )
+            else if ( z_param == ATTR_D )
                comp_ok           = set_comp_wvd( tmp_point );
-            else if ( plot_z == ATTR_F )
+            else if ( z_param == ATTR_F )
                comp_ok           = set_comp_wvf( tmp_point );
 
             if ( comp_ok )
@@ -1339,7 +1264,7 @@ qDebug() << "   lstiek lstjek" << lstiek << lstjek << "nxy" << nxvals << nyvals;
       }
    }
                                                        ///////////////
-   else if ( plot_x == ATTR_W  &&  plot_y == ATTR_D )  // mw and D
+   else if ( x_param == ATTR_W  &&  y_param == ATTR_D )  // mw and D
    {                                                   ///////////////
       for ( int ii = 0; ii < nxvals; ii++ )
       {
@@ -1366,7 +1291,7 @@ qDebug() << "   lstiek lstjek" << lstiek << lstjek << "nxy" << nxvals << nyvals;
       }
    }
                                                        ///////////////
-   else if ( plot_x == ATTR_W  &&  plot_y == ATTR_F )  // mw and f
+   else if ( x_param == ATTR_W  &&  y_param == ATTR_F )  // mw and f
    {                                                   ///////////////
       for ( int ii = 0; ii < nxvals; ii++ )
       {
@@ -1393,7 +1318,7 @@ qDebug() << "   lstiek lstjek" << lstiek << lstjek << "nxy" << nxvals << nyvals;
       }
    }
                                                        ///////////////
-   else if ( plot_x == ATTR_V  &&  plot_y == ATTR_S )  // vbar and s
+   else if ( x_param == ATTR_V  &&  y_param == ATTR_S )  // vbar and s
    {                                                   ///////////////
       for ( int ii = 0; ii < nxvals; ii++ )
       {
@@ -1406,13 +1331,13 @@ qDebug() << "   lstiek lstjek" << lstiek << lstjek << "nxy" << nxvals << nyvals;
             tmp_point.s       = yval;
             yval             += yinc;
 
-            if ( plot_z == ATTR_K )
+            if ( z_param == ATTR_K )
                comp_ok           = set_comp_skv( tmp_point );
-            else if ( plot_z == ATTR_W )
+            else if ( z_param == ATTR_W )
                comp_ok           = set_comp_swv( tmp_point );
-            else if ( plot_z == ATTR_D )
+            else if ( z_param == ATTR_D )
                comp_ok           = set_comp_svd( tmp_point );
-            else if ( plot_z == ATTR_F )
+            else if ( z_param == ATTR_F )
                comp_ok           = set_comp_svf( tmp_point );
 
             if ( comp_ok )
@@ -1429,7 +1354,7 @@ qDebug() << "   lstiek lstjek" << lstiek << lstjek << "nxy" << nxvals << nyvals;
       }
    }
                                                        ///////////////
-   else if ( plot_x == ATTR_V  &&  plot_y == ATTR_K )  // vbar and ff0
+   else if ( x_param == ATTR_V  &&  y_param == ATTR_K )  // vbar and ff0
    {                                                   ///////////////
       for ( int ii = 0; ii < nxvals; ii++ )
       {
@@ -1442,13 +1367,13 @@ qDebug() << "   lstiek lstjek" << lstiek << lstjek << "nxy" << nxvals << nyvals;
             tmp_point.ff0     = yval;
             yval             += yinc;
 
-            if ( plot_z == ATTR_S )
+            if ( z_param == ATTR_S )
                comp_ok           = set_comp_skv( tmp_point );
-            else if ( plot_z == ATTR_W )
+            else if ( z_param == ATTR_W )
                comp_ok           = set_comp_kwv( tmp_point );
-            else if ( plot_z == ATTR_D )
+            else if ( z_param == ATTR_D )
                comp_ok           = set_comp_kvd( tmp_point );
-            else if ( plot_z == ATTR_F )
+            else if ( z_param == ATTR_F )
                comp_ok           = set_comp_kvf( tmp_point );
 
             if ( comp_ok )
@@ -1462,7 +1387,7 @@ qDebug() << "   lstiek lstjek" << lstiek << lstjek << "nxy" << nxvals << nyvals;
       }
    }
                                                        ///////////////
-   else if ( plot_x == ATTR_V  &&  plot_y == ATTR_W )  // vbar and mw
+   else if ( x_param == ATTR_V  &&  y_param == ATTR_W )  // vbar and mw
    {                                                   ///////////////
       for ( int ii = 0; ii < nxvals; ii++ )
       {
@@ -1475,13 +1400,13 @@ qDebug() << "   lstiek lstjek" << lstiek << lstjek << "nxy" << nxvals << nyvals;
             tmp_point.mw      = yval;
             yval             += yinc;
 
-            if ( plot_z == ATTR_S )
+            if ( z_param == ATTR_S )
                comp_ok           = set_comp_swv( tmp_point );
-            else if ( plot_z == ATTR_K )
+            else if ( z_param == ATTR_K )
                comp_ok           = set_comp_kwv( tmp_point );
-            else if ( plot_z == ATTR_D )
+            else if ( z_param == ATTR_D )
                comp_ok           = set_comp_wvd( tmp_point );
-            else if ( plot_z == ATTR_F )
+            else if ( z_param == ATTR_F )
                comp_ok           = set_comp_wvf( tmp_point );
 
             if ( comp_ok )
@@ -1498,7 +1423,7 @@ qDebug() << "   lstiek lstjek" << lstiek << lstjek << "nxy" << nxvals << nyvals;
       }
    }
                                                        ///////////////
-   else if ( plot_x == ATTR_V  &&  plot_y == ATTR_D )  // vbar and D
+   else if ( x_param == ATTR_V  &&  y_param == ATTR_D )  // vbar and D
    {                                                   ///////////////
       for ( int ii = 0; ii < nxvals; ii++ )
       {
@@ -1511,13 +1436,13 @@ qDebug() << "   lstiek lstjek" << lstiek << lstjek << "nxy" << nxvals << nyvals;
             tmp_point.D       = yval;
             yval             += yinc;
 
-            if ( plot_z == ATTR_S )
+            if ( z_param == ATTR_S )
                comp_ok           = set_comp_svd( tmp_point );
-            else if ( plot_z == ATTR_K )
+            else if ( z_param == ATTR_K )
                comp_ok           = set_comp_kvd( tmp_point );
-            else if ( plot_z == ATTR_W )
+            else if ( z_param == ATTR_W )
                comp_ok           = set_comp_wvd( tmp_point );
-            else if ( plot_z == ATTR_F )
+            else if ( z_param == ATTR_F )
                comp_ok           = set_comp_vdf( tmp_point );
 
             if ( comp_ok )
@@ -1534,7 +1459,7 @@ qDebug() << "   lstiek lstjek" << lstiek << lstjek << "nxy" << nxvals << nyvals;
       }
    }
                                                        ///////////////
-   else if ( plot_x == ATTR_V  &&  plot_y == ATTR_F )  // vbar and f
+   else if ( x_param == ATTR_V  &&  y_param == ATTR_F )  // vbar and f
    {                                                   ///////////////
       for ( int ii = 0; ii < nxvals; ii++ )
       {
@@ -1547,13 +1472,13 @@ qDebug() << "   lstiek lstjek" << lstiek << lstjek << "nxy" << nxvals << nyvals;
             tmp_point.f       = yval;
             yval             += yinc;
 
-            if ( plot_z == ATTR_S )
+            if ( z_param == ATTR_S )
                comp_ok           = set_comp_svf( tmp_point );
-            else if ( plot_z == ATTR_K )
+            else if ( z_param == ATTR_K )
                comp_ok           = set_comp_kvf( tmp_point );
-            else if ( plot_z == ATTR_W )
+            else if ( z_param == ATTR_W )
                comp_ok           = set_comp_wvf( tmp_point );
-            else if ( plot_z == ATTR_D )
+            else if ( z_param == ATTR_D )
                comp_ok           = set_comp_vdf( tmp_point );
 
             if ( comp_ok )
@@ -1570,7 +1495,7 @@ qDebug() << "   lstiek lstjek" << lstiek << lstjek << "nxy" << nxvals << nyvals;
       }
    }
                                                        ///////////////
-   else if ( plot_x == ATTR_D  &&  plot_y == ATTR_S )  // D and s
+   else if ( x_param == ATTR_D  &&  y_param == ATTR_S )  // D and s
    {                                                   ///////////////
       for ( int ii = 0; ii < nxvals; ii++ )
       {
@@ -1597,7 +1522,7 @@ qDebug() << "   lstiek lstjek" << lstiek << lstjek << "nxy" << nxvals << nyvals;
       }
    }
                                                        ///////////////
-   else if ( plot_x == ATTR_D  &&  plot_y == ATTR_K )  // D and ff0
+   else if ( x_param == ATTR_D  &&  y_param == ATTR_K )  // D and ff0
    {                                                   ///////////////
       for ( int ii = 0; ii < nxvals; ii++ )
       {
@@ -1621,7 +1546,7 @@ qDebug() << "   lstiek lstjek" << lstiek << lstjek << "nxy" << nxvals << nyvals;
       }
    }
                                                        ///////////////
-   else if ( plot_x == ATTR_D  &&  plot_y == ATTR_W )  // D and mw
+   else if ( x_param == ATTR_D  &&  y_param == ATTR_W )  // D and mw
    {                                                   ///////////////
       for ( int ii = 0; ii < nxvals; ii++ )
       {
@@ -1648,7 +1573,7 @@ qDebug() << "   lstiek lstjek" << lstiek << lstjek << "nxy" << nxvals << nyvals;
       }
    }
                                                        ///////////////
-   else if ( plot_x == ATTR_D  &&  plot_y == ATTR_V )  // D and vbar
+   else if ( x_param == ATTR_D  &&  y_param == ATTR_V )  // D and vbar
    {                                                   ///////////////
       for ( int ii = 0; ii < nxvals; ii++ )
       {
@@ -1661,13 +1586,13 @@ qDebug() << "   lstiek lstjek" << lstiek << lstjek << "nxy" << nxvals << nyvals;
             tmp_point.vbar    = yval;
             yval             += yinc;
 
-            if ( plot_z == ATTR_S )
+            if ( z_param == ATTR_S )
                comp_ok           = set_comp_svd( tmp_point );
-            else if ( plot_z == ATTR_K )
+            else if ( z_param == ATTR_K )
                comp_ok           = set_comp_kvd( tmp_point );
-            else if ( plot_z == ATTR_W )
+            else if ( z_param == ATTR_W )
                comp_ok           = set_comp_wvd( tmp_point );
-            else if ( plot_z == ATTR_F )
+            else if ( z_param == ATTR_F )
                comp_ok           = set_comp_vdf( tmp_point );
 
             if ( comp_ok )
@@ -1684,7 +1609,7 @@ qDebug() << "   lstiek lstjek" << lstiek << lstjek << "nxy" << nxvals << nyvals;
       }
    }
                                                        ///////////////
-   else if ( plot_x == ATTR_D  &&  plot_y == ATTR_F )  // D and f
+   else if ( x_param == ATTR_D  &&  y_param == ATTR_F )  // D and f
    {                                                   ///////////////
       for ( int ii = 0; ii < nxvals; ii++ )
       {
@@ -1711,7 +1636,7 @@ qDebug() << "   lstiek lstjek" << lstiek << lstjek << "nxy" << nxvals << nyvals;
       }
    }
                                                        ///////////////
-   else if ( plot_x == ATTR_F  &&  plot_y == ATTR_S )  // f and s
+   else if ( x_param == ATTR_F  &&  y_param == ATTR_S )  // f and s
    {                                                   ///////////////
       for ( int ii = 0; ii < nxvals; ii++ )
       {
@@ -1738,7 +1663,7 @@ qDebug() << "   lstiek lstjek" << lstiek << lstjek << "nxy" << nxvals << nyvals;
       }
    }
                                                        ///////////////
-   else if ( plot_x == ATTR_F  &&  plot_y == ATTR_K )  // f and ff0
+   else if ( x_param == ATTR_F  &&  y_param == ATTR_K )  // f and ff0
    {                                                   ///////////////
       for ( int ii = 0; ii < nxvals; ii++ )
       {
@@ -1762,7 +1687,7 @@ qDebug() << "   lstiek lstjek" << lstiek << lstjek << "nxy" << nxvals << nyvals;
       }
    }
                                                        ///////////////
-   else if ( plot_x == ATTR_F  &&  plot_y == ATTR_W )  // f and mw
+   else if ( x_param == ATTR_F  &&  y_param == ATTR_W )  // f and mw
    {                                                   ///////////////
       for ( int ii = 0; ii < nxvals; ii++ )
       {
@@ -1789,7 +1714,7 @@ qDebug() << "   lstiek lstjek" << lstiek << lstjek << "nxy" << nxvals << nyvals;
       }
    }
                                                        ///////////////
-   else if ( plot_x == ATTR_F  &&  plot_y == ATTR_V )  // f and vbar
+   else if ( x_param == ATTR_F  &&  y_param == ATTR_V )  // f and vbar
    {                                                   ///////////////
       for ( int ii = 0; ii < nxvals; ii++ )
       {
@@ -1802,13 +1727,13 @@ qDebug() << "   lstiek lstjek" << lstiek << lstjek << "nxy" << nxvals << nyvals;
             tmp_point.vbar    = yval;
             yval             += yinc;
 
-            if ( plot_z == ATTR_S )
+            if ( z_param == ATTR_S )
                comp_ok           = set_comp_svf( tmp_point );
-            else if ( plot_z == ATTR_K )
+            else if ( z_param == ATTR_K )
                comp_ok           = set_comp_kvf( tmp_point );
-            else if ( plot_z == ATTR_W )
+            else if ( z_param == ATTR_W )
                comp_ok           = set_comp_wvf( tmp_point );
-            else if ( plot_z == ATTR_D )
+            else if ( z_param == ATTR_D )
                comp_ok           = set_comp_vdf( tmp_point );
 
             if ( comp_ok )
@@ -1825,7 +1750,7 @@ qDebug() << "   lstiek lstjek" << lstiek << lstjek << "nxy" << nxvals << nyvals;
       }
    }
                                                        ///////////////
-   else if ( plot_x == ATTR_F  &&  plot_y == ATTR_D )  // f and D
+   else if ( x_param == ATTR_F  &&  y_param == ATTR_D )  // f and D
    {                                                   ///////////////
       for ( int ii = 0; ii < nxvals; ii++ )
       {
@@ -1858,7 +1783,7 @@ qDebug() << "calc_g:  xval yval" << xval << yval
    {
       QString wmsg;
 
-      if ( plot_x != ATTR_V  &&  plot_y != ATTR_V  &&  plot_z != ATTR_V )
+      if ( x_param != ATTR_V  &&  y_param != ATTR_V  &&  z_param != ATTR_V )
       {
          wmsg = tr( "Presently, one of the axes or the fixed attribute "
                     "must be Partial Specific Volume (vbar). Please "
@@ -1924,7 +1849,7 @@ void US_Grid_Editor::calc_gridpoints_2( void )
    int    nxvals     = (int)xRes;
    int    nyvals     = (int)yRes;
 
-   switch( plot_z )
+   switch( z_param )
    {
       case ATTR_S:
          tmp_point.s       = zVal;
@@ -2075,19 +2000,19 @@ void US_Grid_Editor::select_plot( int ival )
 //                               tr( "vbar-value" ),
 //                               tr( "D-value" ),
 //                               tr( "f-value" ) };
-//    plot_x = ival;
+//    x_param = ival;
 
-//    lb_xRes->setText( xtitls[ plot_x ] + tr( " Resolution:" ) );
-//    lb_xMin->setText( xtitls[ plot_x ] + tr( " Minimum:" ) );
-//    lb_xMax->setText( xtitls[ plot_x ] + tr( " Maximum:" ) );
+//    lb_xRes->setText( xtitls[ x_param ] + tr( " Resolution:" ) );
+//    lb_xMin->setText( xtitls[ x_param ] + tr( " Minimum:" ) );
+//    lb_xMax->setText( xtitls[ x_param ] + tr( " Maximum:" ) );
 //    ct_xMin->disconnect();
 //    ct_xMax->disconnect();
-//    xMin   = xvmns[ plot_x ];
-//    xMax   = xvmxs[ plot_x ];
-//    ct_xMin->setRange     ( xmins[ plot_x ], xmaxs[ plot_x ] );
-//    ct_xMin->setSingleStep( xincs[ plot_x ] );
-//    ct_xMax->setRange     ( xmins[ plot_x ], xmaxs[ plot_x ] );
-//    ct_xMax->setSingleStep( xincs[ plot_x ] );
+//    xMin   = xvmns[ x_param ];
+//    xMax   = xvmxs[ x_param ];
+//    ct_xMin->setRange     ( xmins[ x_param ], xmaxs[ x_param ] );
+//    ct_xMin->setSingleStep( xincs[ x_param ] );
+//    ct_xMax->setRange     ( xmins[ x_param ], xmaxs[ x_param ] );
+//    ct_xMax->setSingleStep( xincs[ x_param ] );
 //    ct_xMin->setValue( xMin );
 //    ct_xMax->setValue( xMax );
 
@@ -2096,32 +2021,32 @@ void US_Grid_Editor::select_plot( int ival )
 //    connect( ct_xMax, SIGNAL( valueChanged( double ) ),
 //             this,    SLOT  ( update_xMax ( double ) ) );
 
-//    rb_y_s   ->setEnabled( plot_x != ATTR_S );
-//    rb_y_ff0 ->setEnabled( plot_x != ATTR_K );
-//    rb_y_mw  ->setEnabled( plot_x != ATTR_W );
-//    rb_y_vbar->setEnabled( plot_x != ATTR_V );
-//    rb_y_D   ->setEnabled( plot_x != ATTR_D );
-//    rb_y_f   ->setEnabled( plot_x != ATTR_F );
-//    rb_x_s   ->setEnabled( plot_y != ATTR_S );
-//    rb_x_ff0 ->setEnabled( plot_y != ATTR_K );
-//    rb_x_mw  ->setEnabled( plot_y != ATTR_W );
-//    rb_x_vbar->setEnabled( plot_y != ATTR_V );
-//    rb_x_D   ->setEnabled( plot_y != ATTR_D );
-//    rb_x_f   ->setEnabled( plot_y != ATTR_F );
+//    rb_y_s   ->setEnabled( x_param != ATTR_S );
+//    rb_y_ff0 ->setEnabled( x_param != ATTR_K );
+//    rb_y_mw  ->setEnabled( x_param != ATTR_W );
+//    rb_y_vbar->setEnabled( x_param != ATTR_V );
+//    rb_y_D   ->setEnabled( x_param != ATTR_D );
+//    rb_y_f   ->setEnabled( x_param != ATTR_F );
+//    rb_x_s   ->setEnabled( y_param != ATTR_S );
+//    rb_x_ff0 ->setEnabled( y_param != ATTR_K );
+//    rb_x_mw  ->setEnabled( y_param != ATTR_W );
+//    rb_x_vbar->setEnabled( y_param != ATTR_V );
+//    rb_x_D   ->setEnabled( y_param != ATTR_D );
+//    rb_x_f   ->setEnabled( y_param != ATTR_F );
 
 //    cb_fixed->disconnect();
 //    cb_fixed->clear();
-//    if ( plot_x != ATTR_V  &&  plot_y != ATTR_V )
+//    if ( x_param != ATTR_V  &&  y_param != ATTR_V )
 //       cb_fixed->addItem( tr( "Partial Specific Volume" ) );
-//    if ( plot_x != ATTR_K  &&  plot_y != ATTR_K )
+//    if ( x_param != ATTR_K  &&  y_param != ATTR_K )
 //       cb_fixed->addItem( tr( "Frictional Ratio" ) );
-//    if ( plot_x != ATTR_W  &&  plot_y != ATTR_W )
+//    if ( x_param != ATTR_W  &&  y_param != ATTR_W )
 //       cb_fixed->addItem( tr( "Molecular Weight" ) );
-//    if ( plot_x != ATTR_S  &&  plot_y != ATTR_S )
+//    if ( x_param != ATTR_S  &&  y_param != ATTR_S )
 //       cb_fixed->addItem( tr( "Sedimentation Coefficient" ) );
-//    if ( plot_x != ATTR_D  &&  plot_y != ATTR_D )
+//    if ( x_param != ATTR_D  &&  y_param != ATTR_D )
 //       cb_fixed->addItem( tr( "Diffusion Coefficient" ) );
-//    if ( plot_x != ATTR_F  &&  plot_y != ATTR_F )
+//    if ( x_param != ATTR_F  &&  y_param != ATTR_F )
 //       cb_fixed->addItem( tr( "Frictional Coefficient" ) );
 //    cb_fixed->setCurrentIndex( 0 );
 //    select_fixed( cb_fixed->currentText() );
@@ -2148,19 +2073,19 @@ void US_Grid_Editor::select_plot( int ival )
 //                               tr( "vbar-value" ),
 //                               tr( "D-value" ),
 //                               tr( "f-value" ) };
-//    plot_y = ival;
+//    y_param = ival;
 
-//    lb_yRes->setText( ytitls[ plot_y ] + tr( " Resolution:" ) );
-//    lb_yMin->setText( ytitls[ plot_y ] + tr( " Minimum:" ) );
-//    lb_yMax->setText( ytitls[ plot_y ] + tr( " Maximum:" ) );
+//    lb_yRes->setText( ytitls[ y_param ] + tr( " Resolution:" ) );
+//    lb_yMin->setText( ytitls[ y_param ] + tr( " Minimum:" ) );
+//    lb_yMax->setText( ytitls[ y_param ] + tr( " Maximum:" ) );
 //    ct_yMin->disconnect();
 //    ct_yMax->disconnect();
-//    yMin   = yvmns[ plot_y ];
-//    yMax   = yvmxs[ plot_y ];
-//    ct_yMin->setRange     ( ymins[ plot_y ], ymaxs[ plot_y ] );
-//    ct_yMin->setSingleStep( yincs[ plot_y ] );
-//    ct_yMax->setRange     ( ymins[ plot_y ], ymaxs[ plot_y ] );
-//    ct_yMax->setSingleStep( yincs[ plot_y ] );
+//    yMin   = yvmns[ y_param ];
+//    yMax   = yvmxs[ y_param ];
+//    ct_yMin->setRange     ( ymins[ y_param ], ymaxs[ y_param ] );
+//    ct_yMin->setSingleStep( yincs[ y_param ] );
+//    ct_yMax->setRange     ( ymins[ y_param ], ymaxs[ y_param ] );
+//    ct_yMax->setSingleStep( yincs[ y_param ] );
 //    ct_yMin->setValue( yMin );
 //    ct_yMax->setValue( yMax );
 
@@ -2169,32 +2094,32 @@ void US_Grid_Editor::select_plot( int ival )
 //    connect( ct_yMax, SIGNAL( valueChanged( double ) ),
 //             this,    SLOT  ( update_yMax ( double ) ) );
 
-//    rb_x_s   ->setEnabled( plot_y != ATTR_S );
-//    rb_x_ff0 ->setEnabled( plot_y != ATTR_K );
-//    rb_x_mw  ->setEnabled( plot_y != ATTR_W );
-//    rb_x_vbar->setEnabled( plot_y != ATTR_V );
-//    rb_x_D   ->setEnabled( plot_y != ATTR_D );
-//    rb_x_f   ->setEnabled( plot_y != ATTR_F );
-//    rb_y_s   ->setEnabled( plot_x != ATTR_S );
-//    rb_y_ff0 ->setEnabled( plot_x != ATTR_K );
-//    rb_y_mw  ->setEnabled( plot_x != ATTR_W );
-//    rb_y_vbar->setEnabled( plot_x != ATTR_V );
-//    rb_y_D   ->setEnabled( plot_x != ATTR_D );
-//    rb_y_f   ->setEnabled( plot_x != ATTR_F );
+//    rb_x_s   ->setEnabled( y_param != ATTR_S );
+//    rb_x_ff0 ->setEnabled( y_param != ATTR_K );
+//    rb_x_mw  ->setEnabled( y_param != ATTR_W );
+//    rb_x_vbar->setEnabled( y_param != ATTR_V );
+//    rb_x_D   ->setEnabled( y_param != ATTR_D );
+//    rb_x_f   ->setEnabled( y_param != ATTR_F );
+//    rb_y_s   ->setEnabled( x_param != ATTR_S );
+//    rb_y_ff0 ->setEnabled( x_param != ATTR_K );
+//    rb_y_mw  ->setEnabled( x_param != ATTR_W );
+//    rb_y_vbar->setEnabled( x_param != ATTR_V );
+//    rb_y_D   ->setEnabled( x_param != ATTR_D );
+//    rb_y_f   ->setEnabled( x_param != ATTR_F );
 
 //    cb_fixed->disconnect();
 //    cb_fixed->clear();
-//    if ( plot_x != ATTR_V  &&  plot_y != ATTR_V )
+//    if ( x_param != ATTR_V  &&  y_param != ATTR_V )
 //       cb_fixed->addItem( tr( "Partial Specific Volume" ) );
-//    if ( plot_x != ATTR_K  &&  plot_y != ATTR_K )
+//    if ( x_param != ATTR_K  &&  y_param != ATTR_K )
 //       cb_fixed->addItem( tr( "Frictional Ratio" ) );
-//    if ( plot_x != ATTR_W  &&  plot_y != ATTR_W )
+//    if ( x_param != ATTR_W  &&  y_param != ATTR_W )
 //       cb_fixed->addItem( tr( "Molecular Weight" ) );
-//    if ( plot_x != ATTR_S  &&  plot_y != ATTR_S )
+//    if ( x_param != ATTR_S  &&  y_param != ATTR_S )
 //       cb_fixed->addItem( tr( "Sedimentation Coefficient" ) );
-//    if ( plot_x != ATTR_D  &&  plot_y != ATTR_D )
+//    if ( x_param != ATTR_D  &&  y_param != ATTR_D )
 //       cb_fixed->addItem( tr( "Diffusion Coefficient" ) );
-//    if ( plot_x != ATTR_F  &&  plot_y != ATTR_F )
+//    if ( x_param != ATTR_F  &&  y_param != ATTR_F )
 //       cb_fixed->addItem( tr( "Frictional Coefficient" ) );
 //    cb_fixed->setCurrentIndex( 0 );
 //    select_fixed( cb_fixed->currentText() );
@@ -2215,17 +2140,17 @@ void US_Grid_Editor::select_plot( int ival )
 //    const double  zincs[] = {      0.01,  0.01, 5000.0, 0.001, 1e+5, 1e+5 };
 //    //const double  zvals[] = {     5.00,   2.0,   1e+5,  0.72, 1e+7, 1e+7 };
 
-//    plot_z   = fixstr.contains( tr( "Partial S" ) ) ? ATTR_V : 0;
-//    plot_z   = fixstr.contains( tr( "nal Ratio" ) ) ? ATTR_K : plot_z;
-//    plot_z   = fixstr.contains( tr( "ar Weight" ) ) ? ATTR_W : plot_z;
-//    plot_z   = fixstr.contains( tr( "Sedimenta" ) ) ? ATTR_S : plot_z;
-//    plot_z   = fixstr.contains( tr( "Diffusion" ) ) ? ATTR_D : plot_z;
-//    plot_z   = fixstr.contains( tr( "nal Coeff" ) ) ? ATTR_F : plot_z;
-// qDebug() << "SelFix: " << fixstr << "plot_z" << plot_z;
+//    z_param   = fixstr.contains( tr( "Partial S" ) ) ? ATTR_V : 0;
+//    z_param   = fixstr.contains( tr( "nal Ratio" ) ) ? ATTR_K : z_param;
+//    z_param   = fixstr.contains( tr( "ar Weight" ) ) ? ATTR_W : z_param;
+//    z_param   = fixstr.contains( tr( "Sedimenta" ) ) ? ATTR_S : z_param;
+//    z_param   = fixstr.contains( tr( "Diffusion" ) ) ? ATTR_D : z_param;
+//    z_param   = fixstr.contains( tr( "nal Coeff" ) ) ? ATTR_F : z_param;
+// qDebug() << "SelFix: " << fixstr << "z_param" << z_param;
 
-//    ct_zVal->setRange     ( zmins[ plot_z ], zmaxs[ plot_z ] );
-//    ct_zVal->setSingleStep( zincs[ plot_z ] );
-//    //ct_zVal->setValue( zvals[ plot_z ] );
+//    ct_zVal->setRange     ( zmins[ z_param ], zmaxs[ z_param ] );
+//    ct_zVal->setSingleStep( zincs[ z_param ] );
+//    //ct_zVal->setValue( zvals[ z_param ] );
 //    lb_zVal->setText( fixstr );
 
 //    validate_ff0();
@@ -2327,7 +2252,7 @@ double US_Grid_Editor::grid_value( struct gridpoint& gpoint, int atype )
 bool US_Grid_Editor::set_comp_skw( struct gridpoint& gpoint )
 {
    double vbar   = gpoint.vbar;
-   double buoy   = 1.0 - vbar * density;
+   double buoy   = 1.0 - vbar * DENS_20W;
    bool   is_ok  = check_grid_point( buoy, gpoint );
 
    return is_ok;
@@ -2337,11 +2262,11 @@ bool US_Grid_Editor::set_comp_skw( struct gridpoint& gpoint )
 bool US_Grid_Editor::set_comp_skv( struct gridpoint& gpoint )
 {
    double vbar   = gpoint.vbar;
-   double buoy   = 1.0 - vbar * density;
+   double buoy   = 1.0 - vbar * DENS_20W;
    double sval   = gpoint.s * 1.0e-13;
 
    gpoint.D      = R_GC * K20 / ( AVOGADRO * 18 * M_PI
-                   * pow( ( viscosity * 0.01 * gpoint.ff0 ), (3.0/2.0) )
+                   * pow( ( VISC_20W * 0.01 * gpoint.ff0 ), (3.0/2.0) )
                    * pow( ( sval * vbar / ( 2.0 * buoy ) ), 0.5 ) );
 
    bool   is_ok  = check_grid_point( buoy, gpoint );
@@ -2360,7 +2285,7 @@ bool US_Grid_Editor::set_comp_skv( struct gridpoint& gpoint )
 bool US_Grid_Editor::set_comp_skd( struct gridpoint& gpoint )
 {
    double vbar   = gpoint.vbar;
-   double buoy   = 1.0 - vbar * density;
+   double buoy   = 1.0 - vbar * DENS_20W;
    bool   is_ok  = check_grid_point( buoy, gpoint );
 
    return is_ok;
@@ -2369,7 +2294,7 @@ bool US_Grid_Editor::set_comp_skd( struct gridpoint& gpoint )
 bool US_Grid_Editor::set_comp_skf( struct gridpoint& gpoint )
 {
    double vbar   = gpoint.vbar;
-   double buoy   = 1.0 - vbar * density;
+   double buoy   = 1.0 - vbar * DENS_20W;
    bool   is_ok  = check_grid_point( buoy, gpoint );
 
    return is_ok;
@@ -2378,7 +2303,7 @@ bool US_Grid_Editor::set_comp_skf( struct gridpoint& gpoint )
 bool US_Grid_Editor::set_comp_swv( struct gridpoint& gpoint )
 {
    double vbar   = gpoint.vbar;
-   double buoy   = 1.0 - vbar * density;
+   double buoy   = 1.0 - vbar * DENS_20W;
    double sval   = gpoint.s * 1.0e-13;
    double ssgn   = ( gpoint.s < 0.0 ) ? -1.0 : 1.0;
    gpoint.D      = ssgn * sval * R_GC * K20 / ( buoy * gpoint.mw );
@@ -2399,7 +2324,7 @@ bool US_Grid_Editor::set_comp_swv( struct gridpoint& gpoint )
 bool US_Grid_Editor::set_comp_swd( struct gridpoint& gpoint )
 {
    double vbar   = gpoint.vbar;
-   double buoy   = 1.0 - vbar * density;
+   double buoy   = 1.0 - vbar * DENS_20W;
    bool   is_ok  = check_grid_point( buoy, gpoint );
 qDebug() << "comp_swd buoy" << buoy;
 
@@ -2409,7 +2334,7 @@ qDebug() << "comp_swd buoy" << buoy;
 bool US_Grid_Editor::set_comp_swf( struct gridpoint& gpoint )
 {
    double vbar   = gpoint.vbar;
-   double buoy   = 1.0 - vbar * density;
+   double buoy   = 1.0 - vbar * DENS_20W;
 qDebug() << "comp_swf buoy" << buoy;
    bool   is_ok  = check_grid_point( buoy, gpoint );
 
@@ -2419,7 +2344,7 @@ qDebug() << "comp_swf buoy" << buoy;
 bool US_Grid_Editor::set_comp_svd( struct gridpoint& gpoint )
 {
    double vbar   = gpoint.vbar;
-   double buoy   = 1.0 - vbar * density;
+   double buoy   = 1.0 - vbar * DENS_20W;
    double ssgn   = ( gpoint.s < 0.0 ) ? -1.0 : 1.0;
    double sval   = gpoint.s * 1.0e-13;
    gpoint.f      = R_GC * K20 / ( AVOGADRO * gpoint.D );
@@ -2436,7 +2361,7 @@ bool US_Grid_Editor::set_comp_svd( struct gridpoint& gpoint )
 bool US_Grid_Editor::set_comp_svf( struct gridpoint& gpoint )
 {
    double vbar   = gpoint.vbar;
-   double buoy   = 1.0 - vbar * density;
+   double buoy   = 1.0 - vbar * DENS_20W;
    double ssgn   = ( gpoint.s < 0.0 ) ? -1.0 : 1.0;
    double sval   = gpoint.s * 1.0e-13;
    gpoint.D      = R_GC * K20 / ( AVOGADRO * gpoint.f );
@@ -2454,7 +2379,7 @@ bool US_Grid_Editor::set_comp_svf( struct gridpoint& gpoint )
 bool US_Grid_Editor::set_comp_sdf( struct gridpoint& gpoint )
 {
    double vbar   = gpoint.vbar;
-   double buoy   = 1.0 - vbar * density;
+   double buoy   = 1.0 - vbar * DENS_20W;
 qDebug() << "comp_sdf buoy" << buoy;
    bool   is_ok  = check_grid_point( buoy, gpoint );
    gpoint.ff0    = qRound( gpoint.ff0 * 1.0e+5 ) * 1.0e-5;
@@ -2465,9 +2390,9 @@ qDebug() << "comp_sdf buoy" << buoy;
 bool US_Grid_Editor::set_comp_kwv( struct gridpoint& gpoint )
 {
    double vbar   = gpoint.vbar;
-   double buoy   = 1.0 - vbar * density;
+   double buoy   = 1.0 - vbar * DENS_20W;
    double vbrat  = vbar / AVOGADRO;
-   double viscf  = viscosity * 0.01;
+   double viscf  = VISC_20W * 0.01;
 
    gpoint.f0     = viscf * pow( ( 162.0 * gpoint.mw * MPISQ * vbrat ), THIRD );
    gpoint.f      = gpoint.ff0 * gpoint.f0;
@@ -2481,7 +2406,7 @@ bool US_Grid_Editor::set_comp_kwv( struct gridpoint& gpoint )
 bool US_Grid_Editor::set_comp_kwd( struct gridpoint& gpoint )
 {
    double vbar   = gpoint.vbar;
-   double buoy   = 1.0 - vbar * density;
+   double buoy   = 1.0 - vbar * DENS_20W;
 qDebug() << "comp_kwd buoy" << buoy;
    bool   is_ok  = check_grid_point( buoy, gpoint );
 
@@ -2491,7 +2416,7 @@ qDebug() << "comp_kwd buoy" << buoy;
 bool US_Grid_Editor::set_comp_kwf( struct gridpoint& gpoint )
 {
    double vbar   = gpoint.vbar;
-   double buoy   = 1.0 - vbar * density;
+   double buoy   = 1.0 - vbar * DENS_20W;
 qDebug() << "comp_kwf buoy" << buoy;
    bool   is_ok  = check_grid_point( buoy, gpoint );
 
@@ -2501,7 +2426,7 @@ qDebug() << "comp_kwf buoy" << buoy;
 bool US_Grid_Editor::set_comp_kvd( struct gridpoint& gpoint )
 {
    double vbar   = gpoint.vbar;
-   double buoy   = 1.0 - vbar * density;
+   double buoy   = 1.0 - vbar * DENS_20W;
 qDebug() << "comp_kvd buoy" << buoy;
    gpoint.f      = R_GC * K20 / ( AVOGADRO * gpoint.D );
    gpoint.f0     = gpoint.f / qMax( 1.0, gpoint.ff0 );
@@ -2519,7 +2444,7 @@ qDebug() << "comp_kvd buoy" << buoy;
 bool US_Grid_Editor::set_comp_kvf( struct gridpoint& gpoint )
 {
    double vbar   = gpoint.vbar;
-   double buoy   = 1.0 - vbar * density;
+   double buoy   = 1.0 - vbar * DENS_20W;
 qDebug() << "comp_kvf buoy" << buoy;
    gpoint.f0     = gpoint.f / qMax( 1.0, gpoint.ff0 );
    gpoint.D      = R_GC * K20 / ( AVOGADRO * gpoint.f );
@@ -2536,7 +2461,7 @@ qDebug() << "comp_kvf buoy" << buoy;
 bool US_Grid_Editor::set_comp_kdf( struct gridpoint& gpoint )
 {
    double vbar   = gpoint.vbar;
-   double buoy   = 1.0 - vbar * density;
+   double buoy   = 1.0 - vbar * DENS_20W;
 qDebug() << "comp_kdf buoy" << buoy;
    bool   is_ok  = check_grid_point( buoy, gpoint );
 
@@ -2546,7 +2471,7 @@ qDebug() << "comp_kdf buoy" << buoy;
 bool US_Grid_Editor::set_comp_wvd( struct gridpoint& gpoint )
 {
    double vbar   = gpoint.vbar;
-   double buoy   = 1.0 - vbar * density;
+   double buoy   = 1.0 - vbar * DENS_20W;
 qDebug() << "comp_wvd buoy" << buoy;
    double volume = vbar * gpoint.mw / AVOGADRO;
    double sphere = pow( volume * VOL_FAC, THIRD );
@@ -2563,7 +2488,7 @@ qDebug() << "comp_wvd buoy" << buoy;
 bool US_Grid_Editor::set_comp_wvf( struct gridpoint& gpoint )
 {
    double vbar   = gpoint.vbar;
-   double buoy   = 1.0 - vbar * density;
+   double buoy   = 1.0 - vbar * DENS_20W;
 qDebug() << "comp_wvf buoy" << buoy;
    double volume = vbar * gpoint.mw / AVOGADRO;
    double sphere = pow( volume * VOL_FAC, THIRD );
@@ -2580,7 +2505,7 @@ qDebug() << "comp_wvf buoy" << buoy;
 bool US_Grid_Editor::set_comp_wdf( struct gridpoint& gpoint )
 {
    double vbar   = gpoint.vbar;
-   double buoy   = 1.0 - vbar * density;
+   double buoy   = 1.0 - vbar * DENS_20W;
 qDebug() << "comp_wdf buoy" << buoy;
    gpoint.ff0    = qRound( gpoint.ff0 * 1.0e+5 ) * 1.0e-5;
    bool   is_ok  = check_grid_point( buoy, gpoint );
@@ -2591,7 +2516,7 @@ qDebug() << "comp_wdf buoy" << buoy;
 bool US_Grid_Editor::set_comp_vdf( struct gridpoint& gpoint )
 {
    double vbar   = gpoint.vbar;
-   double buoy   = 1.0 - vbar * density;
+   double buoy   = 1.0 - vbar * DENS_20W;
 qDebug() << "comp_vdf buoy" << buoy;
    gpoint.ff0    = qRound( gpoint.ff0 * 1.0e+5 ) * 1.0e-5;
    bool   is_ok  = check_grid_point( buoy, gpoint );
@@ -2620,43 +2545,43 @@ bool US_Grid_Editor::validate_ff0()
 {
    bool is_ok     = true;
 
-   if ( plot_x == ATTR_K  ||  plot_y == ATTR_K  ||  plot_z == ATTR_K )
+   if ( x_param == ATTR_K  ||  y_param == ATTR_K  ||  z_param == ATTR_K )
    {  // If one of the attributes is f/f0, no need for checking
       return is_ok;
    }
 
    struct gridpoint zpoint;
    struct gridpoint tmp_point;
-//    xMin           = ct_xMin->value();
-//    xMax           = ct_xMax->value();
-//    yMin           = ct_yMin->value();
-//    yMax           = ct_yMax->value();
-// qDebug() << "valFF0: xMin xMax yMin yMax" << xMin << xMax << yMin << yMax;
-//    zVal           = ct_zVal->value();
+   double xMin = le_x_min->text().toDouble();
+   double xMax = le_x_max->text().toDouble();
+   double yMin = le_y_min->text().toDouble();
+   double yMax = le_y_max->text().toDouble();
+   double zVal = le_z_val->text().toDouble();
+qDebug() << "valFF0: xMin xMax yMin yMax" << xMin << xMax << yMin << yMax;
    clear_grid( zpoint );
-   set_grid_value( zpoint,    plot_z, zVal );
+   set_grid_value( zpoint,    z_param, zVal );
    // Get f/f0 for xMin,yMin
    tmp_point      = zpoint;
-   set_grid_value( tmp_point, plot_x, xMin );
-   set_grid_value( tmp_point, plot_y, yMin );
+   set_grid_value( tmp_point, x_param, xMin );
+   set_grid_value( tmp_point, y_param, yMin );
    complete_comp ( tmp_point );
    double ffx1y1  = tmp_point.ff0;
    // Get f/f0 for xMin,yMax
    tmp_point      = zpoint;
-   set_grid_value( tmp_point, plot_x, xMin );
-   set_grid_value( tmp_point, plot_y, yMax );
+   set_grid_value( tmp_point, x_param, xMin );
+   set_grid_value( tmp_point, y_param, yMax );
    complete_comp ( tmp_point );
    double ffx1y2  = tmp_point.ff0;
    // Get f/f0 for xMax,yMin
    tmp_point      = zpoint;
-   set_grid_value( tmp_point, plot_x, xMax );
-   set_grid_value( tmp_point, plot_y, yMin );
+   set_grid_value( tmp_point, x_param, xMax );
+   set_grid_value( tmp_point, y_param, yMin );
    complete_comp ( tmp_point );
    double ffx2y1  = tmp_point.ff0;
    // Get f/f0 for xMax,yMax
    tmp_point      = zpoint;
-   set_grid_value( tmp_point, plot_x, xMax );
-   set_grid_value( tmp_point, plot_y, yMax );
+   set_grid_value( tmp_point, x_param, xMax );
+   set_grid_value( tmp_point, y_param, yMax );
    complete_comp ( tmp_point );
    double ffx2y2  = tmp_point.ff0;
    // Get overall minimum f/f0
@@ -2671,7 +2596,7 @@ qDebug() << "valFF0:      xMax yMax ff0   " << xMax << yMax << ffx2y2;
    if ( ff0min < 1.0 )
    {  // Ranges include values that set f/f0 less than 1:  must adjust ranges
 
-      if ( plot_x == ATTR_W  ||  plot_x == ATTR_F )
+      if ( x_param == ATTR_W  ||  x_param == ATTR_F )
       {  // Adjust the X range (if MW or f)
          // ct_xMin->disconnect();
          // ct_xMax->disconnect();
@@ -2680,9 +2605,9 @@ qDebug() << "valFF0:      xMax yMax ff0   " << xMax << yMax << ffx2y2;
 
          if ( ffx1y1 < ffx1y2 )
          {  // Increasing Y means increasing f/f0, so get X for k=1,ymin
-            set_grid_value( tmp_point, plot_y, yMin );
+            set_grid_value( tmp_point, y_param, yMin );
             complete_comp ( tmp_point );
-            double xVal    = grid_value( tmp_point, plot_x );
+            double xVal    = grid_value( tmp_point, x_param );
 
             if ( ffx1y1 < ffx2y1 )
             {  // Increasing X means increasing f/f0, so set lower limit
@@ -2701,9 +2626,9 @@ qDebug() << "valFF0:  (2xMin)xVal" << xVal;
 
          else
          {  // Increasing Y means decreasing f/f0, so get X for k=1,ymax
-            set_grid_value( tmp_point, plot_y, yMax );
+            set_grid_value( tmp_point, y_param, yMax );
             complete_comp ( tmp_point );
-            double xVal    = grid_value( tmp_point, plot_x );
+            double xVal    = grid_value( tmp_point, x_param );
 
             if ( ffx1y1 < ffx2y1 )
             {  // Increasing X means increasing f/f0, so set lower limit
@@ -2726,7 +2651,7 @@ qDebug() << "valFF0:  (4xMin)xVal" << xVal;
          //          this,    SLOT  ( update_xMax ( double ) ) );
       }
 
-      if ( plot_y == ATTR_W  ||  plot_y == ATTR_F )
+      if ( y_param == ATTR_W  ||  y_param == ATTR_F )
       {  // Adjust the Y range (if MW or f)
          // ct_yMin->disconnect();
          // ct_yMax->disconnect();
@@ -2735,9 +2660,9 @@ qDebug() << "valFF0:  (4xMin)xVal" << xVal;
 
          if ( ffx1y1 < ffx2y1 )
          {  // Increasing X means increasing f/f0, so get Y for k=1,xmin
-            set_grid_value( tmp_point, plot_x, xMin );
+            set_grid_value( tmp_point, x_param, xMin );
             complete_comp ( tmp_point );
-            double yVal    = grid_value( tmp_point, plot_y );
+            double yVal    = grid_value( tmp_point, y_param );
 
             if ( ffx1y1 < ffx1y2 )
             {  // Increasing Y means increasing f/f0, so set lower limit
@@ -2756,9 +2681,9 @@ qDebug() << "valFF0:  (6yMax)yVal" << yVal;
 
          else
          {  // Increasing X means decreasing f/f0, so get y for k=1,xmax
-            set_grid_value( tmp_point, plot_x, xMax );
+            set_grid_value( tmp_point, x_param, xMax );
             complete_comp ( tmp_point );
-            double yVal    = grid_value( tmp_point, plot_y );
+            double yVal    = grid_value( tmp_point, y_param );
 
             if ( ffx1y1 < ffx1y2 )
             {  // Increasing Y means increasing f/f0, so set lower limit
@@ -2894,7 +2819,13 @@ US_Grid_Preset::US_Grid_Preset(QWidget * parent) : US_WidgetsDialog(parent)
    z_axis = us_comboBox();
 
    QPushButton *pb_apply = us_pushbutton( "Apply" );
+   QFont font = pb_apply->font();
+   font.setBold(true);
+   pb_apply->setFont(font);
+   pb_apply->setIcon(this->style()->standardIcon(QStyle::SP_DialogApplyButton));
    QPushButton *pb_cancel = us_pushbutton( "Cancel" );
+   pb_cancel->setIcon(this->style()->standardIcon(QStyle::SP_DialogCancelButton));
+   pb_cancel->setFont(font);
 
    QFrame *hline1 = new QFrame();
    hline1->setFrameShape(QFrame::HLine);
@@ -2997,18 +2928,24 @@ void US_Grid_Preset::set_z_axis( )
 {
    z_axis->disconnect();
    z_axis->clear();
-   for (int ii = ATTR_S; ii <= ATTR_F; ii++) {
-      if ( ii == x_param || ii == y_param ) continue;
-
-      z_axis->addItem( Attr_to_long( ii ), ii );
-   }
-   int index = z_axis->findData(z_param, Qt::UserRole);
-   if ( index == -1 ) {
-      z_axis->setCurrentIndex( 0 );
-      z_param = z_axis->itemData(0, Qt::UserRole ).toInt();
+   bool has_vbar = (x_param == ATTR_V || y_param == ATTR_V);
+   if ( has_vbar ) {
+      for (int ii = ATTR_S; ii <= ATTR_F; ii++) {
+         if ( ii == x_param || ii == y_param ) continue;
+         z_axis->addItem( Attr_to_long( ii ), ii );
+      }
+      int index = z_axis->findData(z_param, Qt::UserRole);
+      if ( index == -1 ) {
+         z_axis->setCurrentIndex( 0 );
+         z_param = z_axis->itemData(0, Qt::UserRole ).toInt();
+      } else {
+         z_axis->setCurrentIndex( index );
+      }
    } else {
-      z_axis->setCurrentIndex( index );
+      z_param = ATTR_V;
+      z_axis->addItem( Attr_to_long( ATTR_V ), ATTR_V );
    }
+
    connect( z_axis, QOverload<int>::of( &QComboBox::currentIndexChanged ),
             this,   &US_Grid_Preset::select_z_axis );
 }
