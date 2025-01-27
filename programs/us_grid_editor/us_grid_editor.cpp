@@ -40,8 +40,11 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    setPalette( US_GuiSettings::frameColor() );
 
    // validators
-   QDoubleValidator *d_validator = new QDoubleValidator(this);
-   QIntValidator    *i_validator = new QIntValidator(this);
+   QDoubleValidator *d_valid_1 = new QDoubleValidator(this);
+   QDoubleValidator *d_valid_2 = new QDoubleValidator(this);
+   d_valid_2->setBottom(0.0001);
+   QIntValidator    *i_valid = new QIntValidator(this);
+   i_valid->setBottom(1);
 
    // primary layouts
    QHBoxLayout* main  = new QHBoxLayout( this );
@@ -95,20 +98,20 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    // Experimental Space
 
    QLabel *lb_experm = us_banner( tr( "Experimental Space" ) );
-   QLabel *lb_dens = us_label( tr( "Density (20C)" ) );
+   QLabel *lb_dens = us_label( tr( "ρ at 20°C [g/mL]" ) );
    lb_dens->setAlignment( Qt::AlignCenter );
    le_dens = us_lineedit( QString::number( DENS_20W ) );
-   le_dens->setValidator(d_validator);
+   le_dens->setValidator(d_valid_1);
 
-   QLabel *lb_visc = us_label( tr( "Viscosity (20C)" ) );
+   QLabel *lb_visc = us_label( tr( "η at 20°C [cP]" ) );
    lb_visc->setAlignment( Qt::AlignCenter );
    le_visc = us_lineedit( QString::number( VISC_20W ) );
-   le_visc->setValidator(d_validator);
+   le_visc->setValidator(d_valid_2);
 
-   QLabel *lb_temp = us_label( tr( "Temperature" ) );
+   QLabel *lb_temp = us_label( tr( "T [°C]" ) );
    lb_temp->setAlignment( Qt::AlignCenter );
    le_temp = us_lineedit( QString::number( 20 ) );
-   le_temp->setValidator(d_validator);
+   le_temp->setValidator(d_valid_2);
 
    QPushButton* pb_set_exp_data = us_pushbutton("Update");
 
@@ -149,18 +152,18 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    lb_y_ax->setAlignment( Qt::AlignCenter );
 
    le_x_min = us_lineedit();
-   le_x_min->setValidator(d_validator);
+   le_x_min->setValidator(d_valid_1);
    le_x_max = us_lineedit();
-   le_x_max->setValidator(d_validator);
+   le_x_max->setValidator(d_valid_1);
    le_x_res = us_lineedit();
-   le_x_res->setValidator(i_validator);
+   le_x_res->setValidator(i_valid);
 
    le_y_min = us_lineedit();
-   le_y_min->setValidator(d_validator);
+   le_y_min->setValidator(d_valid_1);
    le_y_max = us_lineedit();
-   le_y_max->setValidator(d_validator);
+   le_y_max->setValidator(d_valid_1);
    le_y_res = us_lineedit();
-   le_y_res->setValidator(i_validator);
+   le_y_res->setValidator(i_valid);
 
    QFrame *hline2 = new QFrame();
    hline2->setFrameShape(QFrame::HLine);
@@ -169,7 +172,7 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    lb_z_ax = us_label( Attr_to_short( z_param ));
    lb_z_ax->setAlignment( Qt::AlignCenter );
    le_z_val = us_lineedit();
-   le_z_val->setValidator(d_validator);
+   le_z_val->setValidator(d_valid_1);
 
    QPushButton* pb_validate = us_pushbutton( "Validate" );
    connect( pb_validate, &QPushButton::clicked, this, &US_Grid_Editor::call_validate );
@@ -177,7 +180,7 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    QLabel *lb_subgrids = us_label( "# Subgrids" );
    lb_subgrids->setAlignment( Qt::AlignCenter );
    le_subgrids = us_lineedit();
-   le_subgrids->setValidator(i_validator);
+   le_subgrids->setValidator(i_valid);
 
    QLabel *lb_allgrids = us_label( "# Grid Points" );
    lb_allgrids->setAlignment( Qt::AlignCenter );
