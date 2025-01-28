@@ -3107,10 +3107,16 @@ void GridPoint::calculate_20w()
          D[ii] = ( R_GC * K20 ) / ( AVOGADRO * f.at(ii));
          mw[ii] = s.at(ii) * AVOGADRO * f.at(ii) / buoyancy;
       }
-   } else if ( contains( ATTR_V, ATTR_K, ATTR_W ) ) // ?????
+   } else if ( contains( ATTR_V, ATTR_K, ATTR_W ) )
    {
       for ( int ii = 0; ii < 3; ii++ ) {
-
+         double buoyancy = 1 - vbar.at(ii) * DENS_20W;
+         D[ii] = ( R_GC * K20 ) / ( 3 * VISC_20W ) *
+                 qPow( 6 * mw.at(ii) * vbar.at(ii), -1.0 / 3.0 ) *
+                 qPow( AVOGADRO * M_PI * ff0.at(ii), -2.0 / 3.0 );
+         s[ii] = mw.at(ii) * D.at(ii) * buoyancy / ( R_GC * K20 );
+         f[ii] = ( R_GC * K20 ) / ( AVOGADRO * D.at(ii) );
+         f0[ii] = f.at(ii) / ff0[ii];
       }
    } else if ( contains( ATTR_V, ATTR_K, ATTR_D ) )
    {
