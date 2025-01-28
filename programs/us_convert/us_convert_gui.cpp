@@ -2368,13 +2368,16 @@ void US_ConvertGui::check_scans()
    bool same = true;
    for (int ii = 0; ii < allData.size(); ii++ ) {
       int ns = allData[ii].scanCount();
+      // In most cases, df is zero. However, occasionally it becomes 1,
+      // and the following code removes it from end of the code.
+      int df = ns - nsmin;
       int cell = allData[ii].cell;
       char channel = allData[ii].channel;
       double lambda = allData[ii].scanData.first().wavelength;
       ccws_list << tr("%1 / %2 / %3 : number of scans = %4").arg(cell).arg(channel).arg(lambda).arg(ns);
-      if ( ns != nsmin ) {
+      if ( df > 0 ) {
          same = false;
-         allData[ii].scanData.remove( ns - nsmin, nsmin );
+         allData[ii].scanData.remove( ns - df, df );
       }
    }
    if ( ! same ) {
@@ -9598,6 +9601,11 @@ DbgLv(1) << "rsL: PlCurr RTN";
 // Do pseudo-absorbance calculation and apply for MultiWaveLength case
 void US_ConvertGui::PseudoCalcAvgMWL( void )
 {
+   for (int ii = 0; ii < outData.size(); ii++ ) {
+      DbgLv(1) << "PseudoCalcAvgMWL: CCW: " << outData.at(ii)->cell << " / " <<
+                  outData.at(ii)->channel << " / " << outData[ii]->scanData.first().wavelength <<
+                  " : nscans : " << outData[ii]->scanCount();
+   }
    QVector< double >  ri_prof;      // RI profile for a single wavelength
    ExpData.RIProfile.clear();       // Composite RI profile
    ExpData.RIwvlns  .clear();       // RI profile wavelengths
