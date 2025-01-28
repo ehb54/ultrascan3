@@ -327,7 +327,7 @@ class US_ConvertGui : public US_Widgets
 
   QString correct_description( QString&, QString, QString );
 
-      
+      void check_scans     ( void );
       void setTripleInfo   ( void );
       void checkTemperature( void );
       int  findTripleIndex ( void );
