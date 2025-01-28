@@ -39,15 +39,26 @@ QString Attr_to_short(int); //!< returns the short name of the attr_type
 class GridPoint
 {
 public:
-   GridPoint( int ) {};
-   int index;
-   QVector<double> s;        //!< Sedimentation coefficient (at 20w).
-   QVector<double> D;        //!< Diffusion coefficient (at 20w).
-   QVector<double> vbar;     //!< Partial specific volume (at 20w).
-   QVector<double> mw;       //!< Molecular weight (at 20w).
-   QVector<double> f;        //!< Frictional coefficient (at 20w).
-   QVector<double> ff0;      //!< Standard frictional coefficient (at 20w).
-   QVector<double> f0;       //!< Index of the grid point (at 20w).
+   GridPoint( int );
+
+   bool set_param(const QVector<double>&, attr_type);
+
+   void set_dens_visc_t (double, double, double);
+
+
+private:
+   int index;                //!< Index of the grid point.
+   bool dvt_set;             //!< true if set_dens_visc_t is already called.
+   double density;
+   double viscosity;
+   double temperature;
+   QVector<double> s;        //!< Sedimentation coefficient (at 20w) [value, min, max].
+   QVector<double> D;        //!< Diffusion coefficient (at 20w) [value, min, max].
+   QVector<double> vbar;     //!< Partial specific volume (at 20w) [value, min, max].
+   QVector<double> mw;       //!< Molecular weight (at 20w) [value, min, max].
+   QVector<double> f;        //!< Frictional coefficient (at 20w) [value, min, max].
+   QVector<double> ff0;      //!< Standard frictional coefficient (at 20w) [value, min, max].
+   QVector<double> f0;       //!< Reference frictional coefficient (at 20w) [value, min, max].
 
    QVector<double> _s;       //!< Sedimentation coefficient.
    QVector<double> _D;       //!< Diffusion coefficient.
@@ -55,7 +66,14 @@ public:
    QVector<double> _mw;      //!< Molecular weight.
    QVector<double> _f;       //!< Frictional coefficient.
    QVector<double> _ff0;     //!< Standard frictional coefficient.
-   QVector<double> _f0;      //!< Index of the grid point.
+   QVector<double> _f0;      //!< Reference frictional coefficient.
+
+   QSet<attr_type> ptypes;
+
+   void calculate_20w();
+   void calculate_real();
+   bool contains(attr_type, attr_type, attr_type);
+
 };
 
 //! \struct gridpoint

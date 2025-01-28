@@ -40,9 +40,7 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    setPalette( US_GuiSettings::frameColor() );
 
    // validators
-   QDoubleValidator *d_valid_1 = new QDoubleValidator(this);
-   QDoubleValidator *d_valid_2 = new QDoubleValidator(this);
-   d_valid_2->setBottom(0.0001);
+   QDoubleValidator *d_valid = new QDoubleValidator(this);
    QIntValidator    *i_valid = new QIntValidator(this);
    i_valid->setBottom(1);
 
@@ -101,17 +99,17 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    QLabel *lb_dens = us_label( tr( "ρ at 20°C [g/mL]" ) );
    lb_dens->setAlignment( Qt::AlignCenter );
    le_dens = us_lineedit( QString::number( DENS_20W ) );
-   le_dens->setValidator(d_valid_1);
+   le_dens->setValidator(d_valid);
 
    QLabel *lb_visc = us_label( tr( "η at 20°C [cP]" ) );
    lb_visc->setAlignment( Qt::AlignCenter );
    le_visc = us_lineedit( QString::number( VISC_20W ) );
-   le_visc->setValidator(d_valid_2);
+   le_visc->setValidator(d_valid);
 
    QLabel *lb_temp = us_label( tr( "T [°C]" ) );
    lb_temp->setAlignment( Qt::AlignCenter );
    le_temp = us_lineedit( QString::number( 20 ) );
-   le_temp->setValidator(d_valid_2);
+   le_temp->setValidator(d_valid);
 
    QPushButton* pb_set_exp_data = us_pushbutton("Update");
 
@@ -152,16 +150,16 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    lb_y_ax->setAlignment( Qt::AlignCenter );
 
    le_x_min = us_lineedit();
-   le_x_min->setValidator(d_valid_1);
+   le_x_min->setValidator(d_valid);
    le_x_max = us_lineedit();
-   le_x_max->setValidator(d_valid_1);
+   le_x_max->setValidator(d_valid);
    le_x_res = us_lineedit();
    le_x_res->setValidator(i_valid);
 
    le_y_min = us_lineedit();
-   le_y_min->setValidator(d_valid_1);
+   le_y_min->setValidator(d_valid);
    le_y_max = us_lineedit();
-   le_y_max->setValidator(d_valid_1);
+   le_y_max->setValidator(d_valid);
    le_y_res = us_lineedit();
    le_y_res->setValidator(i_valid);
 
@@ -172,7 +170,7 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    lb_z_ax = us_label( Attr_to_short( z_param ));
    lb_z_ax->setAlignment( Qt::AlignCenter );
    le_z_val = us_lineedit();
-   le_z_val->setValidator(d_valid_1);
+   le_z_val->setValidator(d_valid);
 
    QPushButton* pb_validate = us_pushbutton( "Validate" );
    connect( pb_validate, &QPushButton::clicked, this, &US_Grid_Editor::call_validate );
@@ -2974,18 +2972,201 @@ QString Attr_to_long(int attr)
 QString Attr_to_short(int attr)
 {
    if ( attr == ATTR_S )
-      return QString("s (x 1e13)");
+      return QString("s [ Svedbergs (S) ]");
    else if ( attr == ATTR_K )
-      return QString("f/f0-value");
+      return QString("f / f0");
    else if ( attr == ATTR_W )
-      return QString("mw-value");
+      return QString("M [ g / mol ]");
    else if ( attr == ATTR_V )
-      return QString("vbar-value");
+      return QString("vbar [ mL / g ]");
    else if ( attr == ATTR_D )
-      return QString("D-value");
+      // return QString("D [cm2 s−1]  (\(m^{2}/s\)");
+      return QString("<p>D [ cm<sup>2</sup> s<sup>-1</sup> ]</p>");
    else if ( attr == ATTR_F )
-      return QString("f-value");
+      return QString("f [ g / s ]");
    else
       return QString("");
 }
 
+
+GridPoint::GridPoint(int id)
+{
+   index = id;
+   dvt_set = false;
+   s.fill(0, 3);
+   D.fill(0, 3);
+   vbar.fill(0, 3);
+   mw.fill(0, 3);
+   f.fill(0, 3);
+   f0.fill(0, 3);
+   ff0.fill(0, 3);
+
+   _s.fill(0, 3);
+   _D.fill(0, 3);
+   _vbar.fill(0, 3);
+   _mw.fill(0, 3);
+   _f.fill(0, 3);
+   _f0.fill(0, 3);
+   _ff0.fill(0, 3);
+}
+
+bool GridPoint::set_param(const QVector<double> & param, attr_type ptype)
+{
+   if ( param.size() != 3 ) {
+      return false;
+   }
+   if ( ! ptypes.contains( ptype ) && ptypes.size() == 3 ) {
+      return false;
+   }
+
+   switch( ptype )
+   {
+   case ATTR_S:
+      for ( int ii = 0; ii < 3; ii++ ) {
+         s[ii] = param.at(ii) * 1.0e-13;
+      }
+      break;
+   case ATTR_K:
+      ff0     = param;
+      break;
+   case ATTR_W:
+      mw      = param;
+      break;
+   case ATTR_V:
+      vbar    = param;
+      break;
+   case ATTR_D:
+      D       = param;
+      break;
+   case ATTR_F:
+      f       = param;
+      break;
+   }
+
+   if ( ! ptypes.contains( ptype ) ) {
+      ptypes.insert( ptype );
+   }
+
+   if ( ptypes.size() == 3 ) {
+      calculate_20w();
+      if ( dvt_set ) {
+         calculate_real();
+      }
+   }
+   return true;
+}
+
+void GridPoint::set_dens_visc_t(double dens, double visc, double T)
+{
+   density = dens;
+   viscosity = visc;
+   temperature = T;
+   dvt_set = true;
+
+   if ( ptypes.size() == 3 ) {
+      calculate_real();
+   }
+}
+
+void GridPoint::calculate_20w()
+{
+   if ( contains( ATTR_V, ATTR_S, ATTR_K ) )
+   {
+      for ( int ii = 0; ii < 3; ii++ ) {
+         double buoyancy = 1 - vbar.at(ii) * DENS_20W;
+         f0[ii] = 9 * VISC_20W * 0.01 * M_PI * qSqrt( 2 * vbar.at(ii) * s.at(ii) * VISC_20W * 0.01 / buoyancy );
+         f[ii] = ff0.at(ii) * f0.at(ii);
+         D[ii] = ( R_GC * K20 ) / ( AVOGADRO * f.at(ii));
+         mw[ii] = s.at(ii) * AVOGADRO * f.at(ii) / buoyancy;
+      }
+   } else if ( contains( ATTR_V, ATTR_S, ATTR_W ) )
+   {
+      for ( int ii = 0; ii < 3; ii++ ) {
+         double buoyancy = 1 - vbar.at(ii) * DENS_20W;
+         f0[ii] = 9 * VISC_20W * 0.01 * M_PI * qSqrt( 2 * vbar.at(ii) * s.at(ii) * VISC_20W * 0.01 / buoyancy );
+         f[ii] = ( mw.at(ii) * buoyancy ) / ( s.at(ii) * AVOGADRO );
+         ff0[ii] = f.at(ii) / f0.at(ii);
+         D[ii] = ( R_GC * K20 ) / ( AVOGADRO * f.at(ii));
+      }
+
+   } else if ( contains( ATTR_V, ATTR_S, ATTR_D ) )
+   {
+      for ( int ii = 0; ii < 3; ii++ ) {
+         double buoyancy = 1 - vbar.at(ii) * DENS_20W;
+         f0[ii] = 9 * VISC_20W * 0.01 * M_PI * qSqrt( 2 * vbar.at(ii) * s.at(ii) * VISC_20W * 0.01 / buoyancy );
+         f[ii] = ( R_GC * K20 ) / ( AVOGADRO * D.at(ii) );
+         ff0[ii] = f.at(ii) / f0.at(ii);
+         mw[ii] = s.at(ii) * AVOGADRO * f.at(ii) / buoyancy;
+      }
+   } else if ( contains( ATTR_V, ATTR_S, ATTR_F ) )
+   {
+      for ( int ii = 0; ii < 3; ii++ ) {
+         double buoyancy = 1 - vbar.at(ii) * DENS_20W;
+         f0[ii] = 9 * VISC_20W * 0.01 * M_PI * qSqrt( 2 * vbar.at(ii) * s.at(ii) * VISC_20W * 0.01 / buoyancy );
+         ff0[ii] = f.at(ii) / f0.at(ii);
+         D[ii] = ( R_GC * K20 ) / ( AVOGADRO * f.at(ii));
+         mw[ii] = s.at(ii) * AVOGADRO * f.at(ii) / buoyancy;
+      }
+   } else if ( contains( ATTR_V, ATTR_K, ATTR_W ) ) // ?????
+   {
+      for ( int ii = 0; ii < 3; ii++ ) {
+
+      }
+   } else if ( contains( ATTR_V, ATTR_K, ATTR_D ) )
+   {
+      for ( int ii = 0; ii < 3; ii++ ) {
+         double buoyancy = 1 - vbar.at(ii) * DENS_20W;
+         f[ii] = ( R_GC * K20 ) / ( AVOGADRO * D.at(ii) );
+         f0[ii] = f.at(ii) / ff0[ii];
+         s[ii] = qPow( f0.at(ii) / ( 9 * VISC_20W * 0.01 * M_PI ), 2 ) * buoyancy / ( 2 * VISC_20W * 0.01 * vbar.at(ii));
+         mw[ii] = s.at(ii) * AVOGADRO * f.at(ii) / buoyancy;
+      }
+   } else if ( contains( ATTR_V, ATTR_K, ATTR_F ) )
+   {
+      for ( int ii = 0; ii < 3; ii++ ) {
+         double buoyancy = 1 - vbar.at(ii) * DENS_20W;
+         D[ii] = ( R_GC * K20 ) / ( AVOGADRO * f.at(ii));
+         f0[ii] = f.at(ii) / ff0[ii];
+         s[ii] = qPow( f0.at(ii) / ( 9 * VISC_20W * 0.01 * M_PI ), 2 ) * buoyancy / ( 2 * VISC_20W * 0.01 * vbar.at(ii));
+         mw[ii] = s.at(ii) * AVOGADRO * f.at(ii) / buoyancy;
+      }
+   } else if ( contains( ATTR_V, ATTR_W, ATTR_D ) )
+   {
+      for ( int ii = 0; ii < 3; ii++ ) {
+         double buoyancy = 1 - vbar.at(ii) * DENS_20W;
+         f[ii] = ( R_GC * K20 ) / ( AVOGADRO * D.at(ii) );
+         s[ii] = mw.at(ii) * D.at(ii) * buoyancy / ( R_GC * K20 );
+         f0[ii] = 9 * VISC_20W * 0.01 * M_PI * qSqrt( 2 * vbar.at(ii) * s.at(ii) * VISC_20W * 0.01 / buoyancy );
+         ff0[ii] = f.at(ii) / f0.at(ii);
+      }
+   } else if ( contains( ATTR_V, ATTR_W, ATTR_F ) )
+   {
+      for ( int ii = 0; ii < 3; ii++ ) {
+         double buoyancy = 1 - vbar.at(ii) * DENS_20W;
+         D[ii] = ( R_GC * K20 ) / ( AVOGADRO * f.at(ii));
+         s[ii] = mw.at(ii) * D.at(ii) * buoyancy / ( R_GC * K20 );
+         f0[ii] = 9 * VISC_20W * 0.01 * M_PI * qSqrt( 2 * vbar.at(ii) * s.at(ii) * VISC_20W * 0.01 / buoyancy );
+         ff0[ii] = f.at(ii) / f0.at(ii);
+      }
+   } else if ( contains( ATTR_V, ATTR_D, ATTR_F ) )
+   {
+      for ( int ii = 0; ii < 3; ii++ ) {
+
+      }
+   }
+
+
+
+
+
+}
+
+void GridPoint::calculate_real()
+{
+
+}
+
+bool GridPoint::contains(attr_type p1, attr_type p2, attr_type p3)
+{
+   return ptypes.contains(p1) && ptypes.contains(p2) && ptypes.contains(p3);
+}
