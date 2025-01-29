@@ -2895,6 +2895,13 @@ void US_Grid_Preset::select_x_axis( int index )
    }
    x_param = index;
    y_axis->button(x_param)->setDisabled(true);
+
+   if ( x_param == ATTR_D ) {
+      y_axis->button(ATTR_F)->setDisabled(true);
+   } else if ( x_param == ATTR_F ) {
+      y_axis->button(ATTR_D)->setDisabled(true);
+   }
+
    set_z_axis();
 }
 
@@ -2906,6 +2913,13 @@ void US_Grid_Preset::select_y_axis( int index )
    }
    y_param = index;
    x_axis->button(y_param)->setDisabled(true);
+
+   if ( y_param == ATTR_D ) {
+      x_axis->button(ATTR_F)->setDisabled(true);
+   } else if ( y_param == ATTR_F ) {
+      x_axis->button(ATTR_D)->setDisabled(true);
+   }
+
    set_z_axis();
 }
 
