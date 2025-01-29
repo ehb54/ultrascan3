@@ -1601,6 +1601,7 @@ void US_InitDialogueGui::initRecordsDialogue( void )
   pdiag_autoflow = new US_SelectItem( autoflowdata, hdrs, pdtitle, &prx, autoflow_btn, -3 );
 
   connect( pdiag_autoflow, SIGNAL( accept_autoflow_deletion() ), this, SLOT( update_autoflow_data() ));
+  connect( pdiag_autoflow, SIGNAL( accept_refresh_states() ),    this, SLOT( refresh_optima_states() ));
   pdiag_autoflow->setParent(this, Qt::Widget);
 
   offset = 20;
@@ -2283,7 +2284,10 @@ void US_InitDialogueGui::do_run_data_cleanup( QMap < QString, QString > run_deta
   /** End Iterate over fileNameList ****************************************************************/
 }
 
-
+void US_InitDialogueGui::refresh_optima_states( void )
+{
+  initAutoflowPanel();
+}
 
 //Re-evaluate autoflow records & occupied instruments & if Define Another Exp. should be enabled....
 void US_InitDialogueGui::update_autoflow_data( void )
