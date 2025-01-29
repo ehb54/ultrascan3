@@ -124,6 +124,7 @@ class US_InitDialogueGui : public US_WidgetsDialog
     
     void read_optima_machines( US_DB2* = 0 ); 
     QList< QMap<QString, QString> > instruments;
+    QMap<QString, QString> selectCurrentOptima( QString );
 
     void do_run_tables_cleanup( QMap< QString, QString > );
     void do_run_data_cleanup( QMap< QString, QString > );

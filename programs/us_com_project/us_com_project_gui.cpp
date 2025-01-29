@@ -2448,7 +2448,7 @@ int US_InitDialogueGui::list_all_autoflow_records( QList< QStringList >& autoflo
   if ( dbP->next() )
     user_id = dbP->value( 0 ).toInt();
     
-  //now look at autpflow runs
+  //now look at autoflow runs
   qry.clear();
   qry << "get_autoflow_desc";
   dbP->query( qry );
@@ -2461,6 +2461,7 @@ int US_InitDialogueGui::list_all_autoflow_records( QList< QStringList >& autoflo
       QStringList autoflowentry;
       QString id                 = dbP->value( 0 ).toString();
       QString runname            = dbP->value( 5 ).toString();
+      QString runID              = dbP->value( 7 ).toString();
       QString status             = dbP->value( 8 ).toString();
       QString optimaname         = dbP->value( 10 ).toString();
       
@@ -2494,10 +2495,35 @@ int US_InitDialogueGui::list_all_autoflow_records( QList< QStringList >& autoflo
 	  else
 	    autoflowentry << QString( tr( "N/A" ) );
 	}
-      else
+      else  //Experiment was started on Optima (at least we know that...)
 	{
 	  if ( status == "LIVE_UPDATE" )
-	    autoflowentry << QString( tr( "RUNNING" ) );
+	    {
+	      //check Optima status first:
+	      int exp_status = 0;
+	      QMap<QString, QString> currentInstrument = selectCurrentOptima( optimaname );
+	      US_XpnData* xpn_data = new US_XpnData();
+	      if ( xpn_data->connect_data( currentInstrument[ "optimaHost" ],
+					   currentInstrument[ "optimaPort" ].toInt(),
+					   currentInstrument[ "optimaDBname" ],
+					   currentInstrument[ "optimaDBusername" ],
+					   currentInstrument[ "optimaDBpassw" ] ) )
+		{
+		  exp_status =  xpn_data->checkExpStatus( runID );
+		  qDebug() << "Exp status for runID " << runID << ": " << exp_status; 
+		}
+	      else
+		qDebug() << "CANNOT open Postgres DB!!!!";
+	      xpn_data->close();
+	      delete xpn_data;
+
+	      if ( exp_status == 0 ) 
+		autoflowentry << QString( tr( "NORUNINFO" ) );
+	      else if ( exp_status == 2 ) 
+		autoflowentry << QString( tr( "RUNNING" ) );
+	      else if ( exp_status == 5 )
+		autoflowentry << QString( tr( "COMPLETED" ) );
+	    }
 	  if ( status == "EDITING" || status == "EDIT_DATA" || status == "ANALYSIS" || status == "REPORT" )
 	    autoflowentry << QString( tr( "COMPLETED" ) );
 	    //autoflowentry << time_started.toString();
@@ -2558,6 +2584,22 @@ int US_InitDialogueGui::list_all_autoflow_records( QList< QStringList >& autoflo
     }
 
   return nrecs;
+}
+
+
+//get Optima connection info
+QMap<QString, QString> US_InitDialogueGui::selectCurrentOptima( QString optimaname )
+{
+  QMap< QString, QString > currentInstrument;
+  //Intruments Must be read before!!! (read_optima_machines) 
+  for ( int ii = 0; ii < instruments.size(); ii++ )
+    {
+      QString name = instruments[ii][ "name" ].trimmed();
+      if ( name == optimaname )
+	currentInstrument = instruments[ii];
+    }
+
+  return currentInstrument;
 }
 
 
