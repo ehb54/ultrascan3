@@ -1882,6 +1882,9 @@ DbgLv(1) << "CGui:IMP: initout success" << success;
 
    if ( ! success ) return;
 
+   // check number scans
+   check_scans();
+
    setTripleInfo();
 
    checkTemperature();          // Check to see if temperature varied too much
@@ -2098,6 +2101,9 @@ DbgLv(1) << "CGui:iM: mwlsetup";
    qApp->processEvents();
    QApplication::restoreOverrideCursor();
 DbgLv(1) << "CGui:iM:  DONE";
+
+   // check number scans
+   check_scans();
 }
 
 // Import simulation data in AUC form
@@ -2206,7 +2212,6 @@ DbgLv(1) << "CGui:iA: CURRENT DIR_1: " << importDir;
    if ( runType_combined_IP_RI )
      runTypes_map[ type_to_process ] = 0;
 
-   
    qApp->processEvents();
    QApplication::restoreOverrideCursor();
 
@@ -2305,6 +2310,9 @@ DbgLv(1) << "rTS: NON_EXIST:" << tmst_fnamei;
    }
      
    pb_showTmst->setEnabled( ! tmst_fnamei.isEmpty() );
+
+   // check number scans
+   check_scans();
 }
 
 
@@ -2347,6 +2355,57 @@ QString US_ConvertGui::correct_description( QString & description, QString cell,
     }
   
   return desc_corrected;
+}
+
+void US_ConvertGui::check_scans()
+{
+   int nsmin = 99999;
+   for (int ii = 0; ii < allData.size(); ii++ ) {
+      nsmin = qMin(allData[ii].scanCount(), nsmin);
+   }
+
+   QStringList ccws_list;
+   bool same = true;
+   for (int ii = 0; ii < allData.size(); ii++ ) {
+      int ns = allData[ii].scanCount();
+      // In most cases, df is zero. However, occasionally it becomes 1,
+      // and the following code removes it from end of the code.
+      int df = ns - nsmin;
+      int cell = allData[ii].cell;
+      char channel = allData[ii].channel;
+      double lambda = allData[ii].scanData.first().wavelength;
+      ccws_list << tr("%1 / %2 / %3 : number of scans = %4").arg(cell).arg(channel).arg(lambda).arg(ns);
+      if ( df > 0 ) {
+         same = false;
+         allData[ii].scanData.remove( ns - df, df );
+      }
+   }
+   if ( ! same ) {
+      US_WidgetsDialog *error_wgt = new US_WidgetsDialog(this);
+      error_wgt->setWindowTitle("Warning !!!");
+      error_wgt->setPalette(US_GuiSettings::frameColor());
+      QPlainTextEdit *msg = new QPlainTextEdit();
+      msg->setStyleSheet("QPlainTextEdit { background-color: white; }");
+      msg->setReadOnly(true);
+      msg->appendPlainText("Please note:\nThe number of scans per triple differs for some triples:\n");
+      foreach (QString line, ccws_list) {
+         msg->appendPlainText(line);
+      }
+      msg->appendPlainText(tr( "\nAmong other reasons, this can occur when the run has been "
+                               "aborted in the middle of data acquisition. The number of scans "
+                               "for all triples has been set to %1, triples with additional "
+                               "scans will be truncated to %1 scans.").arg(nsmin));
+      QPushButton *pb_ok = us_pushbutton("&OK");
+      pb_ok->setIcon(this->style()->standardIcon(QStyle::SP_DialogOkButton));
+      QGridLayout* lyt = new QGridLayout();
+      lyt->addWidget(msg,   0, 0, 5, 5);
+      lyt->addWidget(pb_ok,    5, 2, 1, 1);
+      lyt->setMargin(2);
+      error_wgt->setLayout(lyt);
+      error_wgt->setMinimumSize(500, 500);
+      connect(pb_ok, &QPushButton::clicked, error_wgt, &US_WidgetsDialog::accept);
+      error_wgt->exec();
+   }
 }
   
 // Enable the common dialog controls when there is data
@@ -9542,6 +9601,11 @@ DbgLv(1) << "rsL: PlCurr RTN";
 // Do pseudo-absorbance calculation and apply for MultiWaveLength case
 void US_ConvertGui::PseudoCalcAvgMWL( void )
 {
+   for (int ii = 0; ii < outData.size(); ii++ ) {
+      DbgLv(1) << "PseudoCalcAvgMWL: CCW: " << outData.at(ii)->cell << " / " <<
+                  outData.at(ii)->channel << " / " << outData[ii]->scanData.first().wavelength <<
+                  " : nscans : " << outData[ii]->scanCount();
+   }
    QVector< double >  ri_prof;      // RI profile for a single wavelength
    ExpData.RIProfile.clear();       // Composite RI profile
    ExpData.RIwvlns  .clear();       // RI profile wavelengths
