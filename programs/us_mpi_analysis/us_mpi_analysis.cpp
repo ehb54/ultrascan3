@@ -2840,6 +2840,7 @@ void US_MPI_Analysis::calculate_cosed() {
                            cosed_comp.visc_coeff[5] * pow(cosed_comp.conc, 4);
       }
    }
+   DbgLv(0) << "rank: " << my_rank << " cosed_calc base_density" << base_density << "base_viscosity" << base_viscosity;
    // make sure the selected model is adjusted for the selected temperature
    // and buffer conditions:
    US_Math2::SolutionData sol_data{};
@@ -2897,6 +2898,7 @@ void US_MPI_Analysis::calculate_cosed() {
       DbgLv(1) << "CosedData: cosed_model comp" << csD->model.components.size() << "cosed_comp_data"
                << cosed_comp_data.size() << "sa_data.scanCount()" << csD->sa_data.scanCount();
    }
+   DbgLv(0) << "rank: " << my_rank << " calculate_cosed codiff_needed" << codiff_needed << "cosed_needed" << cosed_needed;
    if (!cosed_comp_data.isEmpty()){
       csD->sa_data= cosed_comp_data.first();
    }
@@ -2934,7 +2936,7 @@ void US_MPI_Analysis::calculate_cosed() {
          bandFormingGradient->calculate_gradient( data_sets[0]->simparams,&auc_data );
       }
 
-      DbgLv(1) << "bfg calc calculate_cosed";
+      DbgLv(0) << "rank: " << my_rank << " bfg calc calculate_cosed";
    }
    data_sets_codiff_needed << codiff_needed;
    data_sets_cosed_needed << cosed_needed;
