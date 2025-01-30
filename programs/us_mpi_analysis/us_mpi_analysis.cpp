@@ -2904,12 +2904,16 @@ void US_MPI_Analysis::calculate_cosed() {
    }
    if ( codiff_needed ){
       bool recalc = true;
+      DbgLv(0) << "rank: " << my_rank << " codiff calc calculate_cosed bfgs " << bfgs.size() <<
+          "bandFormingGradient" << bandFormingGradient;
       if ( !bfgs.isEmpty() && bfgs.first() != nullptr &&
             (bandFormingGradient == nullptr && bandFormingGradient->is_empty)){
          delete bandFormingGradient;
          bandFormingGradient = bfgs.first();
       }
       if ( bandFormingGradient != nullptr ){
+         DbgLv(0) << "rank: " << my_rank << " codiff calc calculate_cosed bfgs " << bfgs.size() <<
+     "bandFormingGradient" << bandFormingGradient << " is_suitable";
          // check if the band forming gradient is already calculated and fits the requirements
          if ( bandFormingGradient->is_suitable( data_sets[0]->simparams.meniscus,
                                                 data_sets[0]->simparams.bottom,
@@ -2926,6 +2930,8 @@ void US_MPI_Analysis::calculate_cosed() {
          }
       }
       if ( recalc ){
+         DbgLv(0) << "rank: " << my_rank << " codiff calc calculate_cosed bfgs " << bfgs.size() <<
+     "bandFormingGradient" << bandFormingGradient << " recalc";
          bandFormingGradient = new US_Math_BF::Band_Forming_Gradient( data_sets[0]->simparams.meniscus,
                                                                       data_sets[0]->simparams.bottom,
                                                                       data_sets[0]->simparams.band_volume,
@@ -2933,7 +2939,7 @@ void US_MPI_Analysis::calculate_cosed() {
                                                                       data_sets[0]->simparams.cp_pathlen,
                                                                       data_sets[0]->simparams.cp_angle );
          bandFormingGradient->get_eigenvalues( );
-         bandFormingGradient->calculate_gradient( data_sets[0]->simparams,&auc_data );
+         bandFormingGradient->calculate_gradient( data_sets[0]->simparams, &auc_data );
       }
 
       DbgLv(0) << "rank: " << my_rank << " bfg calc calculate_cosed";
