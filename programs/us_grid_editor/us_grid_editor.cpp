@@ -173,7 +173,7 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    le_z_val->setValidator(d_valid);
 
    QPushButton* pb_validate = us_pushbutton( "Validate" );
-   connect( pb_validate, &QPushButton::clicked, this, &US_Grid_Editor::call_validate );
+   connect( pb_validate, &QPushButton::clicked, this, &US_Grid_Editor::validate );
 
    QLabel *lb_subgrids = us_label( "# Subgrids" );
    lb_subgrids->setAlignment( Qt::AlignCenter );
@@ -335,16 +335,7 @@ void US_Grid_Editor::set_grid_axis()
    }
 }
 
-void US_Grid_Editor::call_validate()
-{
-   gridpoint grid_point;
-   if ( validate(grid_point)) {
-      qDebug() << "";
-   }
-
-}
-
-bool US_Grid_Editor::validate( gridpoint& grid_point)
+void US_Grid_Editor::validate( )
 {
    double x_min = le_x_min->text().toDouble();
    double x_max = le_x_min->text().toDouble();
@@ -393,160 +384,160 @@ void US_Grid_Editor::reset( void )
 // save the grid data
 void US_Grid_Editor::save( void )
 {
-   US_Model model;
-   US_Model::SimulationComponent sc;
-   QString modelPath, modelGuid;
-   US_Model::model_path( modelPath );
-   QDateTime now_time = QDateTime::currentDateTime ();
-   QList< double > xvals;
-   QList< double > yvals;
-   QList< double > zvals;
-   double          gridinc = 1.0 / (double)subGrids;
-   int             indexsg = 1;
-   bool flag;
-   modelGuid         = US_Util::new_guid();
-   model.analysis    = US_Model::CUSTOMGRID;
-   model.description = now_time.toString( "yyyyMMdd-hhmm")
-      + "-CustomGrid" + ".model";
-   model.subGrids    = subGrids;
-   model.modelGUID   = modelGuid;
-   model.global      = US_Model::NONE;
-   double vbmin      = 1e99;
-   double vbmax      = -1e99;
-   double ffmin      = 1e99;
-   double ffmax      = -1e99;
-   sc.signal_concentration = 1.0;
+   // US_Model model;
+   // US_Model::SimulationComponent sc;
+   // QString modelPath, modelGuid;
+   // US_Model::model_path( modelPath );
+   // QDateTime now_time = QDateTime::currentDateTime ();
+   // QList< double > xvals;
+   // QList< double > yvals;
+   // QList< double > zvals;
+   // double          gridinc = 1.0 / (double)subGrids;
+   // int             indexsg = 1;
+   // bool flag;
+   // modelGuid         = US_Util::new_guid();
+   // model.analysis    = US_Model::CUSTOMGRID;
+   // model.description = now_time.toString( "yyyyMMdd-hhmm")
+   //    + "-CustomGrid" + ".model";
+   // model.subGrids    = subGrids;
+   // model.modelGUID   = modelGuid;
+   // model.global      = US_Model::NONE;
+   // double vbmin      = 1e99;
+   // double vbmax      = -1e99;
+   // double ffmin      = 1e99;
+   // double ffmax      = -1e99;
+   // sc.signal_concentration = 1.0;
 
-   for ( int ii = 0; ii < final_grid.size(); ii++ )
-   {
-      flag        = true;
-      sc.s        = final_grid[ ii ].s * 1.0e-13;
-      sc.D        = final_grid[ ii ].D;
-      sc.f        = final_grid[ ii ].f;
-      sc.f_f0     = final_grid[ ii ].ff0;
-      sc.vbar20   = final_grid[ ii ].vbar;
-      sc.mw       = final_grid[ ii ].mw;
+   // for ( int ii = 0; ii < final_grid.size(); ii++ )
+   // {
+   //    flag        = true;
+   //    sc.s        = final_grid[ ii ].s * 1.0e-13;
+   //    sc.D        = final_grid[ ii ].D;
+   //    sc.f        = final_grid[ ii ].f;
+   //    sc.f_f0     = final_grid[ ii ].ff0;
+   //    sc.vbar20   = final_grid[ ii ].vbar;
+   //    sc.mw       = final_grid[ ii ].mw;
 
-      double xval = grid_value( final_grid[ ii ], x_param );
-      double yval = grid_value( final_grid[ ii ], y_param );
-      double zval = grid_value( final_grid[ ii ], z_param );
-      int indexx  = xvals.indexOf( xval ) + 1;
-      int indexy  = yvals.indexOf( yval ) + 1;
-      int indexz  = zvals.indexOf( zval ) + 1;
-      if ( indexx < 1 )  { indexx = xvals.size() + 1; xvals << xval; }
-      if ( indexy < 1 )  { indexy = yvals.size() + 1; yvals << yval; }
-      if ( indexz < 1 )  { indexz = zvals.size() + 1; zvals << zval; }
-      sc.name     = QString::asprintf( "X%3.3dY%3.3dZ%2.2d",
-                                       indexx, indexy, indexz );
-      sc.signal_concentration = gridinc * (double)indexsg;
-      if ( (++indexsg) > subGrids )  indexsg = 1;
+   //    double xval = grid_value( final_grid[ ii ], x_param );
+   //    double yval = grid_value( final_grid[ ii ], y_param );
+   //    double zval = grid_value( final_grid[ ii ], z_param );
+   //    int indexx  = xvals.indexOf( xval ) + 1;
+   //    int indexy  = yvals.indexOf( yval ) + 1;
+   //    int indexz  = zvals.indexOf( zval ) + 1;
+   //    if ( indexx < 1 )  { indexx = xvals.size() + 1; xvals << xval; }
+   //    if ( indexy < 1 )  { indexy = yvals.size() + 1; yvals << yval; }
+   //    if ( indexz < 1 )  { indexz = zvals.size() + 1; zvals << zval; }
+   //    sc.name     = QString::asprintf( "X%3.3dY%3.3dZ%2.2d",
+   //                                     indexx, indexy, indexz );
+   //    sc.signal_concentration = gridinc * (double)indexsg;
+   //    if ( (++indexsg) > subGrids )  indexsg = 1;
 
-      for ( int jj = 0; jj < model.components.size(); jj++ )
-      {
-         vbmin     = qMin( vbmin, sc.vbar20 );  // Accumulate vbar,f/f0 extents
-         vbmax     = qMax( vbmax, sc.vbar20 );
-         ffmin     = qMin( ffmin, sc.f_f0   );
-         ffmax     = qMax( ffmax, sc.f_f0   );
+   //    for ( int jj = 0; jj < model.components.size(); jj++ )
+   //    {
+   //       vbmin     = qMin( vbmin, sc.vbar20 );  // Accumulate vbar,f/f0 extents
+   //       vbmax     = qMax( vbmax, sc.vbar20 );
+   //       ffmin     = qMin( ffmin, sc.f_f0   );
+   //       ffmax     = qMax( ffmax, sc.f_f0   );
 
-         if ( sc.s      == model.components[ jj ].s     &&
-              sc.f_f0   == model.components[ jj ].f_f0  &&
-              sc.mw     == model.components[ jj ].mw    &&
-              sc.vbar20 == model.components[ jj ].vbar20 )
-         {
-            flag = false;
-            break; // don't add a component that is already in the model
-         }
-      }
+   //       if ( sc.s      == model.components[ jj ].s     &&
+   //            sc.f_f0   == model.components[ jj ].f_f0  &&
+   //            sc.mw     == model.components[ jj ].mw    &&
+   //            sc.vbar20 == model.components[ jj ].vbar20 )
+   //       {
+   //          flag = false;
+   //          break; // don't add a component that is already in the model
+   //       }
+   //    }
 
-      if ( flag ) model.components.push_back(sc);
-   }
+   //    if ( flag ) model.components.push_back(sc);
+   // }
 
-   // Open a dialog that reports and allows modification of description
-   QMessageBox mbox;
-   QString msg1    = tr( "A grid model has been created. "
-                         "It's description is:<br/><b>" )
-      + model.description + "</b>.<br/><br/>"
-      + tr( "Click:<br/><br/>" )
-      + tr( "  <b>OK</b>     to output the model as is;<br/>"
-            "  <b>Edit</b>   to append custom text to the name;<br/>"
-            "  <b>Cancel</b> to abort model creation.<br/>" );
+   // // Open a dialog that reports and allows modification of description
+   // QMessageBox mbox;
+   // QString msg1    = tr( "A grid model has been created. "
+   //                       "It's description is:<br/><b>" )
+   //    + model.description + "</b>.<br/><br/>"
+   //    + tr( "Click:<br/><br/>" )
+   //    + tr( "  <b>OK</b>     to output the model as is;<br/>"
+   //          "  <b>Edit</b>   to append custom text to the name;<br/>"
+   //          "  <b>Cancel</b> to abort model creation.<br/>" );
 
-   mbox.setWindowTitle( tr( "Save Grid Model" ) );
-   mbox.setText       ( msg1 );
-   QPushButton *pb_ok   = mbox.addButton( tr( "OK" ),
-         QMessageBox::YesRole );
-   QPushButton *pb_edit = mbox.addButton( tr( "Edit" ) ,
-         QMessageBox::AcceptRole );
-   QPushButton *pb_canc = mbox.addButton( tr( "Cancel" ),
-         QMessageBox::RejectRole );
-   mbox.setEscapeButton ( pb_canc );
-   mbox.setDefaultButton( pb_ok   );
+   // mbox.setWindowTitle( tr( "Save Grid Model" ) );
+   // mbox.setText       ( msg1 );
+   // QPushButton *pb_ok   = mbox.addButton( tr( "OK" ),
+   //       QMessageBox::YesRole );
+   // QPushButton *pb_edit = mbox.addButton( tr( "Edit" ) ,
+   //       QMessageBox::AcceptRole );
+   // QPushButton *pb_canc = mbox.addButton( tr( "Cancel" ),
+   //       QMessageBox::RejectRole );
+   // mbox.setEscapeButton ( pb_canc );
+   // mbox.setDefaultButton( pb_ok   );
 
-   mbox.exec();
+   // mbox.exec();
 
-   if ( mbox.clickedButton() == pb_canc )  return;
+   // if ( mbox.clickedButton() == pb_canc )  return;
 
-   if ( mbox.clickedButton() == pb_edit )
-   {  // Open another dialog to get a modified runID
-      bool    ok;
-      QString newtext = "";
-      int     jj      = model.description.indexOf( ".model" );
-      if ( jj > 0 ) model.description = model.description.left( jj );
-      QString msg2    = tr( "The default run ID for the grid model<br/>"
-                            "is <b>" ) + model.description + "</b>.<br/><br/>"
-         + tr( "You may append additional text to the model description.<br/>"
-               "Use alphanumeric characters, underscores, or hyphens<br/>"
-               "(no spaces). Enter 1 to 40 characters." );
-      newtext = QInputDialog::getText( this,
-            tr( "Modify Model Name" ),
-            msg2,
-            QLineEdit::Normal,
-            newtext,
-            &ok );
+   // if ( mbox.clickedButton() == pb_edit )
+   // {  // Open another dialog to get a modified runID
+   //    bool    ok;
+   //    QString newtext = "";
+   //    int     jj      = model.description.indexOf( ".model" );
+   //    if ( jj > 0 ) model.description = model.description.left( jj );
+   //    QString msg2    = tr( "The default run ID for the grid model<br/>"
+   //                          "is <b>" ) + model.description + "</b>.<br/><br/>"
+   //       + tr( "You may append additional text to the model description.<br/>"
+   //             "Use alphanumeric characters, underscores, or hyphens<br/>"
+   //             "(no spaces). Enter 1 to 40 characters." );
+   //    newtext = QInputDialog::getText( this,
+   //          tr( "Modify Model Name" ),
+   //          msg2,
+   //          QLineEdit::Normal,
+   //          newtext,
+   //          &ok );
 
-      if ( !ok )  return;
+   //    if ( !ok )  return;
 
-      newtext.remove( QRegExp( "[^\\w\\d_-]" ) );
+   //    newtext.remove( QRegExp( "[^\\w\\d_-]" ) );
 
-      int     slen    = newtext.length();
-      if ( slen > 40 ) newtext = newtext.left( 40 );
-      // add string containing
-      model.description = model.description + "-" + newtext + ".model";
-   }
+   //    int     slen    = newtext.length();
+   //    if ( slen > 40 ) newtext = newtext.left( 40 );
+   //    // add string containing
+   //    model.description = model.description + "-" + newtext + ".model";
+   // }
 
-   // Output the combined grid model
-   int code;
-   if ( dkdb_cntrls->db() )
-   {
-      US_Passwd pw;
-      US_DB2 db( pw.getPasswd() );
-      code = model.write( &db );
-   }
-   else
-   {
-      bool newFile;
-      QString fnamo = US_Model::get_filename( modelPath, modelGuid, newFile );
-      code = model.write( fnamo );
-   }
+   // // Output the combined grid model
+   // int code;
+   // if ( dkdb_cntrls->db() )
+   // {
+   //    US_Passwd pw;
+   //    US_DB2 db( pw.getPasswd() );
+   //    code = model.write( &db );
+   // }
+   // else
+   // {
+   //    bool newFile;
+   //    QString fnamo = US_Model::get_filename( modelPath, modelGuid, newFile );
+   //    code = model.write( fnamo );
+   // }
 
-   QString mtitle = tr( "Grid Model Saving..." );
+   // QString mtitle = tr( "Grid Model Saving..." );
 
-   if ( code == US_DB2::OK )
-   {
-      QString destination = dkdb_cntrls->db() ?
-                            tr ( "local disk and database." ) :
-                            tr ( "local disk." );
-      QMessageBox::information( this, mtitle,
-         tr( "The file \"" ) +  model.description
-         + tr( "\"\n  was successfully saved to " ) + destination );
-   }
-   else
-   {
-      QMessageBox::warning( this, mtitle,
-         tr( "Writing the model file  \"") +  model.description
-         + tr( "\"\n  resulted in error code " )
-         + QString::number( code ) + " ." );
-   }
+   // if ( code == US_DB2::OK )
+   // {
+   //    QString destination = dkdb_cntrls->db() ?
+   //                          tr ( "local disk and database." ) :
+   //                          tr ( "local disk." );
+   //    QMessageBox::information( this, mtitle,
+   //       tr( "The file \"" ) +  model.description
+   //       + tr( "\"\n  was successfully saved to " ) + destination );
+   // }
+   // else
+   // {
+   //    QMessageBox::warning( this, mtitle,
+   //       tr( "Writing the model file  \"") +  model.description
+   //       + tr( "\"\n  resulted in error code " )
+   //       + QString::number( code ) + " ." );
+   // }
 }
 
 // update raster x resolution
@@ -669,7 +660,6 @@ void US_Grid_Editor::update_exp_data( )
 void US_Grid_Editor::update_plot( void )
 {
 qDebug() << "update_plot:  call calc_gridpoints()";
-   calc_gridpoints();
 
    QString xatitle = Attr_to_long( x_param );
    QString yatitle = Attr_to_long( y_param );
@@ -701,20 +691,20 @@ qDebug() << "update_plot:  call calc_gridpoints()";
    {
       gridsize = final_grid.size();
 
-      for ( int ii = 0; ii < gridsize; ii++ )
-      {
-         if ( final_grid[ ii ].index == partialGrid )
-         {
-            xData1 << grid_value( final_grid[ ii ], iplt_x );
-            yData1 << grid_value( final_grid[ ii ], y_param );
-         }
+      // for ( int ii = 0; ii < gridsize; ii++ )
+      // {
+      //    if ( final_grid[ ii ].index == partialGrid )
+      //    {
+      //       xData1 << grid_value( final_grid[ ii ], iplt_x );
+      //       yData1 << grid_value( final_grid[ ii ], y_param );
+      //    }
 
-         else
-         {
-            xData2 << grid_value( final_grid[ ii ], iplt_x );
-            yData2 << grid_value( final_grid[ ii ], y_param );
-         }
-      }
+      //    else
+      //    {
+      //       xData2 << grid_value( final_grid[ ii ], iplt_x );
+      //       yData2 << grid_value( final_grid[ ii ], y_param );
+      //    }
+      // }
 
       QwtPlotCurve *c1;
       QwtSymbol*   sym1 = new QwtSymbol;
@@ -748,25 +738,25 @@ qDebug() << "update_plot:  call calc_gridpoints()";
       gridsize    = final_grid.size();
       int counter = 1;
 
-      for ( int ii = 0; ii < gridsize; ii++ )
-      {
-         if ( counter == partialGrid )
-         {
-            xData1 << grid_value( final_grid[ ii ], iplt_x );
-            yData1 << grid_value( final_grid[ ii ], y_param );
-         }
+      // for ( int ii = 0; ii < gridsize; ii++ )
+      // {
+      //    if ( counter == partialGrid )
+      //    {
+      //       xData1 << grid_value( final_grid[ ii ], iplt_x );
+      //       yData1 << grid_value( final_grid[ ii ], y_param );
+      //    }
 
-         else
-         {
-            xData2 << grid_value( final_grid[ ii ], iplt_x );
-            yData2 << grid_value( final_grid[ ii ], y_param );
-         }
+      //    else
+      //    {
+      //       xData2 << grid_value( final_grid[ ii ], iplt_x );
+      //       yData2 << grid_value( final_grid[ ii ], y_param );
+      //    }
 
-         counter++;
+      //    counter++;
 
-         if ( counter > subGrids )
-            counter = 1;
-      }
+      //    if ( counter > subGrids )
+      //       counter = 1;
+      // }
 
       QwtPlotCurve *c1;
       QwtSymbol*   sym1 = new QwtSymbol;
@@ -795,16 +785,16 @@ qDebug() << "update_plot:  call calc_gridpoints()";
 
    else
    {  // Set up current grid plot
-      gridsize    = current_grid.size();
+      // gridsize    = current_grid.size();
 qDebug() << "  updplt: gridsize" << gridsize;
       xData1.resize( gridsize );
       yData1.resize( gridsize );
 
-      for ( int ii = 0; ii < gridsize; ii++ )
-      {
-         xData1[ ii ] = grid_value( current_grid[ ii ], iplt_x );
-         yData1[ ii ] = grid_value( current_grid[ ii ], y_param );
-      }
+      // for ( int ii = 0; ii < gridsize; ii++ )
+      // {
+      //    xData1[ ii ] = grid_value( current_grid[ ii ], iplt_x );
+      //    yData1[ ii ] = grid_value( current_grid[ ii ], y_param );
+      // }
 
       QwtPlotCurve *c1;
       QwtSymbol*   sym1 = new QwtSymbol;
@@ -824,1107 +814,24 @@ qDebug() << "  updplt: gridsize" << gridsize;
    data_plot->replot();
 }
 
-// Calculate all grid points for the selected setting
-void US_Grid_Editor::calc_gridpoints( void )
-{
-   struct gridpoint tmp_point;
-qDebug() << "calc_g: px py pz" << x_param << y_param << z_param;
-
-   current_grid.clear();
-   //bool flag = true;
-   maxgridpoint.s    = -9.9e99;
-   maxgridpoint.D    =  0.0;
-   maxgridpoint.vbar =  0.0;
-   maxgridpoint.mw   =  0.0;
-   maxgridpoint.ff0  =  0.0;
-   maxgridpoint.f0   =  0.0;
-   maxgridpoint.f    =  0.0;
-   mingridpoint.s    =  9.9e99;
-   mingridpoint.D    =  9.9e99;
-   mingridpoint.vbar =  9.9e99;
-   mingridpoint.mw   =  9.9e99;
-   mingridpoint.ff0  =  9.9e99;
-   mingridpoint.f0   =  9.9e99;
-   mingridpoint.f    =  9.9e99;
-
-   int    xRes = le_x_res->text().toInt();
-   double xMin = le_x_min->text().toDouble();
-   double xMax = le_x_max->text().toDouble();
-   int    yRes = le_y_res->text().toInt();
-   double yMin = le_y_min->text().toDouble();
-   double yMax = le_y_max->text().toDouble();
-   double zVal = le_z_val->text().toDouble();
-
-   double xinc       = ( xMax - xMin ) / ( xRes - 1.0 );
-   double yinc       = ( yMax - yMin ) / ( yRes - 1.0 );
-   double xval       = xMin;
-   double yval       = yMin;
-   int    nxvals     = (int)xRes;
-   int    nyvals     = (int)yRes;
-   int    nerr_w     = 0;
-   int    nerr_k     = 0;
-   bool   comp_ok    = true;
-qDebug() << "calc_g: zVal nx ny" << zVal << nxvals << nyvals
- << "xMin xMax xinc" << xMin << xMax << xinc
- << "yMin yMax yinc" << yMin << yMax << yinc;
-
-   switch( z_param )
-   {
-      case ATTR_S:
-         tmp_point.s       = zVal;
-         break;
-      case ATTR_K:
-         tmp_point.ff0     = zVal;
-         break;
-      case ATTR_W:
-         tmp_point.mw      = zVal;
-         break;
-      case ATTR_V:
-         tmp_point.vbar    = zVal;
-         break;
-      case ATTR_D:
-         tmp_point.D       = zVal;
-         break;
-      case ATTR_F:
-         tmp_point.f       = zVal;
-         break;
-   }
-qDebug() << "  cg4)yRes" << yRes;
-   if ( x_param != ATTR_V  &&  y_param != ATTR_V  &&  z_param != ATTR_V )
-   {
-qDebug() << "calc_g:  CG2";
-      calc_gridpoints_2();
-   }
-                                                       ///////////////
-   else if ( x_param == ATTR_S  &&  y_param == ATTR_K )  // s and f_f0
-   {                                                   ///////////////
-      for ( int ii = 0; ii < nxvals; ii++ )
-      {
-         tmp_point.s       = xval;
-         xval             += xinc;
-         yval              = yMin;
-
-         for ( int jj = 0; jj < nyvals; jj++ )
-         {
-            tmp_point.ff0     = yval;
-            yval             += yinc;
-
-            if ( set_comp_skv( tmp_point ) )
-            {
-               current_grid << tmp_point;
-               set_minmax( tmp_point );
-            }
-            else
-               nerr_w++;
-         }
-      }
-qDebug() << "  cg5)yRes" << yRes;
-   }
-                                                       ///////////////
-   else if ( x_param == ATTR_S  &&  y_param == ATTR_W )  // s and mw
-   {                                                   ///////////////
-      int lstiek = -1;
-      int lstjek = -1;
-      for ( int ii = 0; ii < nxvals; ii++ )
-      {
-         tmp_point.s       = xval;
-         xval             += xinc;
-         yval              = yMin;
-
-         for ( int jj = 0; jj < nyvals; jj++ )
-         {
-            tmp_point.mw      = yval;
-            yval             += yinc;
-
-            if ( set_comp_swv( tmp_point ) )
-            {
-               current_grid << tmp_point;
-               set_minmax( tmp_point );
-            }
-            else
-               nerr_w++;
-
-            if ( tmp_point.ff0 < 1.0 )
-            {
-               nerr_k++;
-               lstiek          = ii;
-               lstjek          = jj;
-qDebug() << "    ii jj" << ii << jj << "s w k" << tmp_point.s << tmp_point.mw
- << tmp_point.ff0;
-            }
-         }
-      }
-qDebug() << "  (0)ff0" << current_grid[0].ff0;
-qDebug() << "  (n)ff0" << current_grid[nxvals*nyvals-1].ff0;
-qDebug() << "   lstiek lstjek" << lstiek << lstjek << "nxy" << nxvals << nyvals;
-   }
-                                                       ///////////////
-   else if ( x_param == ATTR_S  &&  y_param == ATTR_V )  // s and vbar
-   {                                                   ///////////////
-      for ( int ii = 0; ii < nxvals; ii++ )
-      {
-         tmp_point.s       = xval;
-         xval             += xinc;
-         yval              = yMin;
-
-         for ( int jj = 0; jj < nyvals; jj++ )
-         {
-            tmp_point.vbar    = yval;
-            yval             += yinc;
-
-            if ( z_param == ATTR_K )
-               comp_ok           = set_comp_skv( tmp_point );
-            else if ( z_param == ATTR_W )
-               comp_ok           = set_comp_swv( tmp_point );
-            else if ( z_param == ATTR_D )
-               comp_ok           = set_comp_svd( tmp_point );
-            else if ( z_param == ATTR_F )
-               comp_ok           = set_comp_svf( tmp_point );
-
-            if ( comp_ok )
-            {
-               current_grid << tmp_point;
-               set_minmax( tmp_point );
-            }
-            else
-               nerr_w++;
-
-            if ( tmp_point.ff0 < 1.0 )
-               nerr_k++;
-         }
-      }
-   }
-                                                       ///////////////
-   else if ( x_param == ATTR_S  &&  y_param == ATTR_D )  // s and D
-   {                                                   ///////////////
-      for ( int ii = 0; ii < nxvals; ii++ )
-      {
-         tmp_point.s       = xval;
-         xval             += xinc;
-         yval              = yMin;
-
-         for ( int jj = 0; jj < nyvals; jj++ )
-         {
-            tmp_point.D       = yval;
-            yval             += yinc;
-
-            if ( set_comp_svd( tmp_point ) )
-            {
-               current_grid << tmp_point;
-               set_minmax( tmp_point );
-            }
-            else
-               nerr_w++;
-
-            if ( tmp_point.ff0 < 1.0 )
-               nerr_k++;
-         }
-      }
-   }
-                                                       ///////////////
-   else if ( x_param == ATTR_S  &&  y_param == ATTR_W )  // s and f
-   {                                                   ///////////////
-      for ( int ii = 0; ii < nxvals; ii++ )
-      {
-         tmp_point.s       = xval;
-         xval             += xinc;
-         yval              = yMin;
-
-         for ( int jj = 0; jj < nyvals; jj++ )
-         {
-            tmp_point.f       = yval;
-            yval             += yinc;
-
-            if ( set_comp_swv( tmp_point ) )
-            {
-               current_grid << tmp_point;
-               set_minmax( tmp_point );
-            }
-            else
-               nerr_w++;
-
-            if ( tmp_point.ff0 < 1.0 )
-               nerr_k++;
-         }
-      }
-   }
-                                                       ///////////////
-   else if ( x_param == ATTR_K  &&  y_param == ATTR_S )  // ff0 and s
-   {                                                   ///////////////
-      for ( int ii = 0; ii < nxvals; ii++ )
-      {
-         tmp_point.ff0     = xval;
-         xval             += xinc;
-         yval              = yMin;
-
-         for ( int jj = 0; jj < nyvals; jj++ )
-         {
-            tmp_point.s       = yval;
-            yval             += yinc;
-
-            if ( set_comp_skv( tmp_point ) )
-            {
-               current_grid << tmp_point;
-               set_minmax( tmp_point );
-            }
-            else
-               nerr_w++;
-         }
-      }
-   }
-                                                       ///////////////
-   else if ( x_param == ATTR_K  &&  y_param == ATTR_W )  // ff0 and mw
-   {                                                   ///////////////
-      for ( int ii = 0; ii < nxvals; ii++ )
-      {
-         tmp_point.ff0     = xval;
-         xval             += xinc;
-         yval              = yMin;
-
-         for ( int jj = 0; jj < nyvals; jj++ )
-         {
-            tmp_point.mw      = yval;
-            yval             += yinc;
-
-            if ( set_comp_kwv( tmp_point ) )
-            {
-               current_grid << tmp_point;
-               set_minmax( tmp_point );
-            }
-            else
-               nerr_w++;
-         }
-      }
-   }
-                                                       ///////////////
-   else if ( x_param == ATTR_K  &&  y_param == ATTR_V )  // ff0 and vbar
-   {                                                   ///////////////
-      for ( int ii = 0; ii < nxvals; ii++ )
-      {
-         tmp_point.ff0     = xval;
-         xval             += xinc;
-         yval              = yMin;
-
-         for ( int jj = 0; jj < nyvals; jj++ )
-         {
-            tmp_point.vbar    = yval;
-            yval             += yinc;
-
-            if ( z_param == ATTR_S )
-               comp_ok           = set_comp_skv( tmp_point );
-            else if ( z_param == ATTR_W )
-               comp_ok           = set_comp_kwv( tmp_point );
-            else if ( z_param == ATTR_D )
-               comp_ok           = set_comp_kvd( tmp_point );
-            else if ( z_param == ATTR_F )
-               comp_ok           = set_comp_kvf( tmp_point );
-
-            if ( comp_ok )
-            {
-               current_grid << tmp_point;
-               set_minmax( tmp_point );
-            }
-            else
-               nerr_w++;
-         }
-      }
-   }
-                                                       ///////////////
-   else if ( x_param == ATTR_K  &&  y_param == ATTR_D )  // ff0 and D
-   {                                                   ///////////////
-      for ( int ii = 0; ii < nxvals; ii++ )
-      {
-         tmp_point.ff0     = xval;
-         xval             += xinc;
-         yval              = yMin;
-
-         for ( int jj = 0; jj < nyvals; jj++ )
-         {
-            tmp_point.D       = yval;
-            yval             += yinc;
-
-            if ( set_comp_kvd( tmp_point ) )
-            {
-               current_grid << tmp_point;
-               set_minmax( tmp_point );
-            }
-            else
-               nerr_w++;
-         }
-      }
-   }
-                                                       ///////////////
-   else if ( x_param == ATTR_K  &&  y_param == ATTR_F )  // ff0 and f
-   {                                                   ///////////////
-      for ( int ii = 0; ii < nxvals; ii++ )
-      {
-         tmp_point.ff0     = xval;
-         xval             += xinc;
-         yval              = yMin;
-
-         for ( int jj = 0; jj < nyvals; jj++ )
-         {
-            tmp_point.f       = yval;
-            yval             += yinc;
-
-            if ( set_comp_kvf( tmp_point ) )
-            {
-               current_grid << tmp_point;
-               set_minmax( tmp_point );
-            }
-            else
-               nerr_w++;
-         }
-      }
-   }
-                                                       ///////////////
-   else if ( x_param == ATTR_W  &&  y_param == ATTR_S )  // mw and s
-   {                                                   ///////////////
-      for ( int ii = 0; ii < nxvals; ii++ )
-      {
-         tmp_point.mw      = xval;
-         xval             += xinc;
-         yval              = yMin;
-
-         for ( int jj = 0; jj < nyvals; jj++ )
-         {
-            tmp_point.s       = yval;
-            yval             += yinc;
-
-            if ( set_comp_swv( tmp_point ) )
-            {
-               current_grid << tmp_point;
-               set_minmax( tmp_point );
-            }
-            else
-               nerr_w++;
-
-            if ( tmp_point.ff0 < 1.0 )
-               nerr_k++;
-         }
-      }
-   }
-                                                       ///////////////
-   else if ( x_param == ATTR_W  &&  y_param == ATTR_K )  // mw and f/f0
-   {                                                   ///////////////
-      for ( int ii = 0; ii < nxvals; ii++ )
-      {
-         tmp_point.mw      = xval;
-         xval             += xinc;
-         yval              = yMin;
-
-         for ( int jj = 0; jj < nyvals; jj++ )
-         {
-            tmp_point.ff0     = yval;
-            yval             += yinc;
-
-            if ( set_comp_kwv( tmp_point ) )
-            {
-               current_grid << tmp_point;
-               set_minmax( tmp_point );
-            }
-            else
-               nerr_w++;
-         }
-      }
-   }
-                                                       ///////////////
-   else if ( x_param == ATTR_W  &&  y_param == ATTR_V )  // mw and vbar
-   {                                                   ///////////////
-      for ( int ii = 0; ii < nxvals; ii++ )
-      {
-         tmp_point.mw      = xval;
-         xval             += xinc;
-         yval              = yMin;
-
-         for ( int jj = 0; jj < nyvals; jj++ )
-         {
-            tmp_point.vbar    = yval;
-            yval             += yinc;
-
-            if ( z_param == ATTR_S )
-               comp_ok           = set_comp_swv( tmp_point );
-            else if ( z_param == ATTR_K )
-               comp_ok           = set_comp_kwv( tmp_point );
-            else if ( z_param == ATTR_D )
-               comp_ok           = set_comp_wvd( tmp_point );
-            else if ( z_param == ATTR_F )
-               comp_ok           = set_comp_wvf( tmp_point );
-
-            if ( comp_ok )
-            {
-               current_grid << tmp_point;
-               set_minmax( tmp_point );
-            }
-            else
-               nerr_w++;
-
-            if ( tmp_point.ff0 < 1.0 )
-               nerr_k++;
-         }
-      }
-   }
-                                                       ///////////////
-   else if ( x_param == ATTR_W  &&  y_param == ATTR_D )  // mw and D
-   {                                                   ///////////////
-      for ( int ii = 0; ii < nxvals; ii++ )
-      {
-         tmp_point.mw      = xval;
-         xval             += xinc;
-         yval              = yMin;
-
-         for ( int jj = 0; jj < nyvals; jj++ )
-         {
-            tmp_point.D       = yval;
-            yval             += yinc;
-
-            if ( set_comp_wvd( tmp_point ) )
-            {
-               current_grid << tmp_point;
-               set_minmax( tmp_point );
-            }
-            else
-               nerr_w++;
-
-            if ( tmp_point.ff0 < 1.0 )
-               nerr_k++;
-         }
-      }
-   }
-                                                       ///////////////
-   else if ( x_param == ATTR_W  &&  y_param == ATTR_F )  // mw and f
-   {                                                   ///////////////
-      for ( int ii = 0; ii < nxvals; ii++ )
-      {
-         tmp_point.mw      = xval;
-         xval             += xinc;
-         yval              = yMin;
-
-         for ( int jj = 0; jj < nyvals; jj++ )
-         {
-            tmp_point.f       = yval;
-            yval             += yinc;
-
-            if ( set_comp_wvf( tmp_point ) )
-            {
-               current_grid << tmp_point;
-               set_minmax( tmp_point );
-            }
-            else
-               nerr_w++;
-
-            if ( tmp_point.ff0 < 1.0 )
-               nerr_k++;
-         }
-      }
-   }
-                                                       ///////////////
-   else if ( x_param == ATTR_V  &&  y_param == ATTR_S )  // vbar and s
-   {                                                   ///////////////
-      for ( int ii = 0; ii < nxvals; ii++ )
-      {
-         tmp_point.vbar    = xval;
-         xval             += xinc;
-         yval              = yMin;
-
-         for ( int jj = 0; jj < nyvals; jj++ )
-         {
-            tmp_point.s       = yval;
-            yval             += yinc;
-
-            if ( z_param == ATTR_K )
-               comp_ok           = set_comp_skv( tmp_point );
-            else if ( z_param == ATTR_W )
-               comp_ok           = set_comp_swv( tmp_point );
-            else if ( z_param == ATTR_D )
-               comp_ok           = set_comp_svd( tmp_point );
-            else if ( z_param == ATTR_F )
-               comp_ok           = set_comp_svf( tmp_point );
-
-            if ( comp_ok )
-            {
-               current_grid << tmp_point;
-               set_minmax( tmp_point );
-            }
-            else
-               nerr_w++;
-
-            if ( tmp_point.ff0 < 1.0 )
-               nerr_k++;
-         }
-      }
-   }
-                                                       ///////////////
-   else if ( x_param == ATTR_V  &&  y_param == ATTR_K )  // vbar and ff0
-   {                                                   ///////////////
-      for ( int ii = 0; ii < nxvals; ii++ )
-      {
-         tmp_point.vbar    = xval;
-         xval             += xinc;
-         yval              = yMin;
-
-         for ( int jj = 0; jj < nyvals; jj++ )
-         {
-            tmp_point.ff0     = yval;
-            yval             += yinc;
-
-            if ( z_param == ATTR_S )
-               comp_ok           = set_comp_skv( tmp_point );
-            else if ( z_param == ATTR_W )
-               comp_ok           = set_comp_kwv( tmp_point );
-            else if ( z_param == ATTR_D )
-               comp_ok           = set_comp_kvd( tmp_point );
-            else if ( z_param == ATTR_F )
-               comp_ok           = set_comp_kvf( tmp_point );
-
-            if ( comp_ok )
-            {
-               current_grid << tmp_point;
-               set_minmax( tmp_point );
-            }
-            else
-               nerr_w++;
-         }
-      }
-   }
-                                                       ///////////////
-   else if ( x_param == ATTR_V  &&  y_param == ATTR_W )  // vbar and mw
-   {                                                   ///////////////
-      for ( int ii = 0; ii < nxvals; ii++ )
-      {
-         tmp_point.vbar    = xval;
-         xval             += xinc;
-         yval              = yMin;
-
-         for ( int jj = 0; jj < nyvals; jj++ )
-         {
-            tmp_point.mw      = yval;
-            yval             += yinc;
-
-            if ( z_param == ATTR_S )
-               comp_ok           = set_comp_swv( tmp_point );
-            else if ( z_param == ATTR_K )
-               comp_ok           = set_comp_kwv( tmp_point );
-            else if ( z_param == ATTR_D )
-               comp_ok           = set_comp_wvd( tmp_point );
-            else if ( z_param == ATTR_F )
-               comp_ok           = set_comp_wvf( tmp_point );
-
-            if ( comp_ok )
-            {
-               current_grid << tmp_point;
-               set_minmax( tmp_point );
-            }
-            else
-               nerr_w++;
-
-            if ( tmp_point.ff0 < 1.0 )
-               nerr_k++;
-         }
-      }
-   }
-                                                       ///////////////
-   else if ( x_param == ATTR_V  &&  y_param == ATTR_D )  // vbar and D
-   {                                                   ///////////////
-      for ( int ii = 0; ii < nxvals; ii++ )
-      {
-         tmp_point.vbar    = xval;
-         xval             += xinc;
-         yval              = yMin;
-
-         for ( int jj = 0; jj < nyvals; jj++ )
-         {
-            tmp_point.D       = yval;
-            yval             += yinc;
-
-            if ( z_param == ATTR_S )
-               comp_ok           = set_comp_svd( tmp_point );
-            else if ( z_param == ATTR_K )
-               comp_ok           = set_comp_kvd( tmp_point );
-            else if ( z_param == ATTR_W )
-               comp_ok           = set_comp_wvd( tmp_point );
-            else if ( z_param == ATTR_F )
-               comp_ok           = set_comp_vdf( tmp_point );
-
-            if ( comp_ok )
-            {
-               current_grid << tmp_point;
-               set_minmax( tmp_point );
-            }
-            else
-               nerr_w++;
-
-            if ( tmp_point.ff0 < 1.0 )
-               nerr_k++;
-         }
-      }
-   }
-                                                       ///////////////
-   else if ( x_param == ATTR_V  &&  y_param == ATTR_F )  // vbar and f
-   {                                                   ///////////////
-      for ( int ii = 0; ii < nxvals; ii++ )
-      {
-         tmp_point.vbar    = xval;
-         xval             += xinc;
-         yval              = yMin;
-
-         for ( int jj = 0; jj < nyvals; jj++ )
-         {
-            tmp_point.f       = yval;
-            yval             += yinc;
-
-            if ( z_param == ATTR_S )
-               comp_ok           = set_comp_svf( tmp_point );
-            else if ( z_param == ATTR_K )
-               comp_ok           = set_comp_kvf( tmp_point );
-            else if ( z_param == ATTR_W )
-               comp_ok           = set_comp_wvf( tmp_point );
-            else if ( z_param == ATTR_D )
-               comp_ok           = set_comp_vdf( tmp_point );
-
-            if ( comp_ok )
-            {
-               current_grid << tmp_point;
-               set_minmax( tmp_point );
-            }
-            else
-               nerr_w++;
-
-            if ( tmp_point.ff0 < 1.0 )
-               nerr_k++;
-         }
-      }
-   }
-                                                       ///////////////
-   else if ( x_param == ATTR_D  &&  y_param == ATTR_S )  // D and s
-   {                                                   ///////////////
-      for ( int ii = 0; ii < nxvals; ii++ )
-      {
-         tmp_point.D       = xval;
-         xval             += xinc;
-         yval              = yMin;
-
-         for ( int jj = 0; jj < nyvals; jj++ )
-         {
-            tmp_point.s       = yval;
-            yval             += yinc;
-
-            if ( set_comp_svd( tmp_point ) )
-            {
-               current_grid << tmp_point;
-               set_minmax( tmp_point );
-            }
-            else
-               nerr_w++;
-
-            if ( tmp_point.ff0 < 1.0 )
-               nerr_k++;
-         }
-      }
-   }
-                                                       ///////////////
-   else if ( x_param == ATTR_D  &&  y_param == ATTR_K )  // D and ff0
-   {                                                   ///////////////
-      for ( int ii = 0; ii < nxvals; ii++ )
-      {
-         tmp_point.D       = xval;
-         xval             += xinc;
-         yval              = yMin;
-
-         for ( int jj = 0; jj < nyvals; jj++ )
-         {
-            tmp_point.ff0     = yval;
-            yval             += yinc;
-
-            if ( set_comp_kvd( tmp_point ) )
-            {
-               current_grid << tmp_point;
-               set_minmax( tmp_point );
-            }
-            else
-               nerr_w++;
-         }
-      }
-   }
-                                                       ///////////////
-   else if ( x_param == ATTR_D  &&  y_param == ATTR_W )  // D and mw
-   {                                                   ///////////////
-      for ( int ii = 0; ii < nxvals; ii++ )
-      {
-         tmp_point.D       = xval;
-         xval             += xinc;
-         yval              = yMin;
-
-         for ( int jj = 0; jj < nyvals; jj++ )
-         {
-            tmp_point.mw      = yval;
-            yval             += yinc;
-
-            if ( set_comp_wvd( tmp_point ) )
-            {
-               current_grid << tmp_point;
-               set_minmax( tmp_point );
-            }
-            else
-               nerr_w++;
-
-            if ( tmp_point.ff0 < 1.0 )
-               nerr_k++;
-         }
-      }
-   }
-                                                       ///////////////
-   else if ( x_param == ATTR_D  &&  y_param == ATTR_V )  // D and vbar
-   {                                                   ///////////////
-      for ( int ii = 0; ii < nxvals; ii++ )
-      {
-         tmp_point.D       = xval;
-         xval             += xinc;
-         yval              = yMin;
-
-         for ( int jj = 0; jj < nyvals; jj++ )
-         {
-            tmp_point.vbar    = yval;
-            yval             += yinc;
-
-            if ( z_param == ATTR_S )
-               comp_ok           = set_comp_svd( tmp_point );
-            else if ( z_param == ATTR_K )
-               comp_ok           = set_comp_kvd( tmp_point );
-            else if ( z_param == ATTR_W )
-               comp_ok           = set_comp_wvd( tmp_point );
-            else if ( z_param == ATTR_F )
-               comp_ok           = set_comp_vdf( tmp_point );
-
-            if ( comp_ok )
-            {
-               current_grid << tmp_point;
-               set_minmax( tmp_point );
-            }
-            else
-               nerr_w++;
-
-            if ( tmp_point.ff0 < 1.0 )
-               nerr_k++;
-         }
-      }
-   }
-                                                       ///////////////
-   else if ( x_param == ATTR_D  &&  y_param == ATTR_F )  // D and f
-   {                                                   ///////////////
-      for ( int ii = 0; ii < nxvals; ii++ )
-      {
-         tmp_point.D       = xval;
-         xval             += xinc;
-         yval              = yMin;
-
-         for ( int jj = 0; jj < nyvals; jj++ )
-         {
-            tmp_point.f       = yval;
-            yval             += yinc;
-
-            if ( set_comp_vdf( tmp_point ) )
-            {
-               current_grid << tmp_point;
-               set_minmax( tmp_point );
-            }
-            else
-               nerr_w++;
-
-            if ( tmp_point.ff0 < 1.0 )
-               nerr_k++;
-         }
-      }
-   }
-                                                       ///////////////
-   else if ( x_param == ATTR_F  &&  y_param == ATTR_S )  // f and s
-   {                                                   ///////////////
-      for ( int ii = 0; ii < nxvals; ii++ )
-      {
-         tmp_point.f       = xval;
-         xval             += xinc;
-         yval              = yMin;
-
-         for ( int jj = 0; jj < nyvals; jj++ )
-         {
-            tmp_point.s       = yval;
-            yval             += yinc;
-
-            if ( set_comp_svf( tmp_point ) )
-            {
-               current_grid << tmp_point;
-               set_minmax( tmp_point );
-            }
-            else
-               nerr_w++;
-
-            if ( tmp_point.ff0 < 1.0 )
-               nerr_k++;
-         }
-      }
-   }
-                                                       ///////////////
-   else if ( x_param == ATTR_F  &&  y_param == ATTR_K )  // f and ff0
-   {                                                   ///////////////
-      for ( int ii = 0; ii < nxvals; ii++ )
-      {
-         tmp_point.f       = xval;
-         xval             += xinc;
-         yval              = yMin;
-
-         for ( int jj = 0; jj < nyvals; jj++ )
-         {
-            tmp_point.ff0     = yval;
-            yval             += yinc;
-
-            if ( set_comp_kvf( tmp_point ) )
-            {
-               current_grid << tmp_point;
-               set_minmax( tmp_point );
-            }
-            else
-               nerr_w++;
-         }
-      }
-   }
-                                                       ///////////////
-   else if ( x_param == ATTR_F  &&  y_param == ATTR_W )  // f and mw
-   {                                                   ///////////////
-      for ( int ii = 0; ii < nxvals; ii++ )
-      {
-         tmp_point.f       = xval;
-         xval             += xinc;
-         yval              = yMin;
-
-         for ( int jj = 0; jj < nyvals; jj++ )
-         {
-            tmp_point.mw      = yval;
-            yval             += yinc;
-
-            if ( set_comp_wvf( tmp_point ) )
-            {
-               current_grid << tmp_point;
-               set_minmax( tmp_point );
-            }
-            else
-               nerr_w++;
-
-            if ( tmp_point.ff0 < 1.0 )
-               nerr_k++;
-         }
-      }
-   }
-                                                       ///////////////
-   else if ( x_param == ATTR_F  &&  y_param == ATTR_V )  // f and vbar
-   {                                                   ///////////////
-      for ( int ii = 0; ii < nxvals; ii++ )
-      {
-         tmp_point.f       = xval;
-         xval             += xinc;
-         yval              = yMin;
-
-         for ( int jj = 0; jj < nyvals; jj++ )
-         {
-            tmp_point.vbar    = yval;
-            yval             += yinc;
-
-            if ( z_param == ATTR_S )
-               comp_ok           = set_comp_svf( tmp_point );
-            else if ( z_param == ATTR_K )
-               comp_ok           = set_comp_kvf( tmp_point );
-            else if ( z_param == ATTR_W )
-               comp_ok           = set_comp_wvf( tmp_point );
-            else if ( z_param == ATTR_D )
-               comp_ok           = set_comp_vdf( tmp_point );
-
-            if ( comp_ok )
-            {
-               current_grid << tmp_point;
-               set_minmax( tmp_point );
-            }
-            else
-               nerr_w++;
-
-            if ( tmp_point.ff0 < 1.0 )
-               nerr_k++;
-         }
-      }
-   }
-                                                       ///////////////
-   else if ( x_param == ATTR_F  &&  y_param == ATTR_D )  // f and D
-   {                                                   ///////////////
-      for ( int ii = 0; ii < nxvals; ii++ )
-      {
-         tmp_point.f       = xval;
-         xval             += xinc;
-         yval              = yMin;
-
-         for ( int jj = 0; jj < nyvals; jj++ )
-         {
-            tmp_point.D       = yval;
-            yval             += yinc;
-
-            if ( set_comp_vdf( tmp_point ) )
-            {
-               current_grid << tmp_point;
-               set_minmax( tmp_point );
-            }
-            else
-               nerr_w++;
-
-            if ( tmp_point.ff0 < 1.0 )
-               nerr_k++;
-         }
-      }
-   }
-qDebug() << "calc_g:  xval yval" << xval << yval
- << "gsize" << current_grid.size();
-
-   if ( nerr_w > 0  ||  nerr_k > 0  ||  current_grid.size() == 0 )
-   {
-      QString wmsg;
-
-      if ( x_param != ATTR_V  &&  y_param != ATTR_V  &&  z_param != ATTR_V )
-      {
-         wmsg = tr( "Presently, one of the axes or the fixed attribute "
-                    "must be Partial Specific Volume (vbar). Please "
-                    "select the Axis types and Fixed attribute so that "
-                    "one of them is Partial Specific Volume." );
-      }
-
-      else if ( nerr_w > 0 )
-      {
-         wmsg = tr( "You have selected a nonsensical parameter setting. "
-                    "The product of the sedimentation coefficient, s, "
-                    "and the buoyancy term, (1 - vbar * Density), "
-                    "must be positive. Please examine your settings for "
-                    "the sedimentation coefficient range, the density, "
-                    "and the partial specific volume before proceeding." );
-      }
-
-      else if ( nerr_k > 0 )
-      {
-         wmsg = tr( "You have selected a set of parameter settings that "
-                    "result in f/f0 value(s) less than 1. "
-                    "Please adjust the fixed value or ranges so that "
-                    "the frictional ratio is at least 1." );
-      }
-
-      else
-      {
-         wmsg = tr( "Grid size is zero" );
-      }
-
-      QMessageBox::warning( this,
-         tr( "Invalid Attributes/Parameters" ),
-         wmsg );
-   }
-}
-
-// Calculate all grid points for the selected setting (vbar unspecified)
-void US_Grid_Editor::calc_gridpoints_2( void )
-{
-   current_grid.clear();
-#if 0    // Currently, we simply do not handle cases with no vbar given
-   //bool flag = true;
-   maxgridpoint.s    = -9.9e99;
-   maxgridpoint.D    =  0.0;
-   maxgridpoint.vbar =  0.0;
-   maxgridpoint.mw   =  0.0;
-   maxgridpoint.ff0  =  0.0;
-   maxgridpoint.f0   =  0.0;
-   maxgridpoint.f    =  0.0;
-   mingridpoint.s    =  9.9e99;
-   mingridpoint.D    =  9.9e99;
-   mingridpoint.vbar =  9.9e99;
-   mingridpoint.mw   =  9.9e99;
-   mingridpoint.ff0  =  9.9e99;
-   mingridpoint.f0   =  9.9e99;
-   mingridpoint.f    =  9.9e99;
-   struct gridpoint tmp_point;
-   double zVal       = ct_zVal->value();
-   double xinc       = ( xMax - xMin ) / ( xRes - 1.0 );
-   double yinc       = ( yMax - yMin ) / ( yRes - 1.0 );
-   double xval       = xMin;
-   double yval       = yMin;
-   int    nxvals     = (int)xRes;
-   int    nyvals     = (int)yRes;
-
-   switch( z_param )
-   {
-      case ATTR_S:
-         tmp_point.s       = zVal;
-         break;
-      case ATTR_K:
-         tmp_point.ff0     = zVal;
-         break;
-      case ATTR_W:
-         tmp_point.mw      = zVal;
-         break;
-      case ATTR_V:
-         tmp_point.vbar    = zVal;
-         break;
-      case ATTR_D:
-         tmp_point.D       = zVal;
-         break;
-      case ATTR_F:
-         tmp_point.f       = zVal;
-         break;
-   }
-#endif
-
-   return;
-}
-
-// add current grid to the list of grids
-void US_Grid_Editor::add_partialGrid( void )
-{
-   grid_index++;
-   for (int i=0; i<current_grid.size(); i++)
-   {
-      //check for overlaps first...
-      current_grid[i].index = grid_index;
-      final_grid.push_back(current_grid[i]);
-   }
-   // pb_save->setEnabled( true );
-   // ck_show_final_grid->setEnabled( true );
-   // pb_delete_partialGrid->setEnabled( true );
-   // ct_partialGrid->setEnabled( true );
-
-   int ntotg       = final_grid.size();
-   int minsubg     = ntotg / MAXSSZ;
-   int maxsubg     = ntotg / MINSSZ + 1;
-   subGrids        = ntotg / DEFSSZ + 1;
-   // ct_subGrids->disconnect   ();
-   // ct_subGrids->setRange     ( minsubg, maxsubg );
-   // ct_subGrids->setSingleStep( 1 );
-   // ct_subGrids->setValue     ( subGrids );
-   // connect( ct_subGrids, SIGNAL( valueChanged   ( double ) ),
-   //          this,        SLOT  ( update_subGrids( double ) ) );
-
-   // le_counts->setText( tr( "%1 total, %2 per subgrid" )
-   //       .arg( ntotg ).arg( ntotg / subGrids ) );
-
-}
-
 // delete current grid
 void US_Grid_Editor::delete_partialGrid( void )
 {
-   for (int i=final_grid.size() - 1; i>=0; i--)
-   {
-      if (final_grid[i].index == partialGrid)
-      {
-         final_grid.removeAt(i);
-      }
-   }
-   // renumber index positions
-   for (int i=0; i<final_grid.size(); i++)
-   {
-      if (final_grid[i].index > partialGrid)
-      {
-         final_grid[i].index--;
-      }
-   }
+   // for (int i=final_grid.size() - 1; i>=0; i--)
+   // {
+   //    if (final_grid[i].index == partialGrid)
+   //    {
+   //       final_grid.removeAt(i);
+   //    }
+   // }
+   // // renumber index positions
+   // for (int i=0; i<final_grid.size(); i++)
+   // {
+   //    if (final_grid[i].index > partialGrid)
+   //    {
+   //       final_grid[i].index--;
+   //    }
+   // }
    grid_index--;
    // ct_partialGrid->setRange     ( 1, grid_index );
    // ct_partialGrid->setSingleStep( 1 );
@@ -1940,276 +847,10 @@ void US_Grid_Editor::delete_partialGrid( void )
    update_plot();
 }
 
-// find the minimum and maximum in a grid
-void US_Grid_Editor::set_minmax( const struct gridpoint & tmp_point)
-{
-   mingridpoint.s    = qMin( mingridpoint.s,    tmp_point.s );
-   mingridpoint.D    = qMin( mingridpoint.D,    tmp_point.D );
-   mingridpoint.vbar = qMin( mingridpoint.vbar, tmp_point.vbar );
-   mingridpoint.mw   = qMin( mingridpoint.mw,   tmp_point.mw );
-   mingridpoint.ff0  = qMin( mingridpoint.ff0,  tmp_point.ff0 );
-   mingridpoint.f0   = qMin( mingridpoint.f0,   tmp_point.f0 );
-   mingridpoint.f    = qMin( mingridpoint.f,    tmp_point.f );
-   maxgridpoint.s    = qMax( maxgridpoint.s,    tmp_point.s );
-   maxgridpoint.D    = qMax( maxgridpoint.D,    tmp_point.D );
-   maxgridpoint.vbar = qMax( maxgridpoint.vbar, tmp_point.vbar );
-   maxgridpoint.mw   = qMax( maxgridpoint.mw,   tmp_point.mw );
-   maxgridpoint.ff0  = qMax( maxgridpoint.ff0,  tmp_point.ff0 );
-   maxgridpoint.f0   = qMax( maxgridpoint.f0,   tmp_point.f0 );
-   maxgridpoint.f    = qMax( maxgridpoint.f,    tmp_point.f );
-}
-
-// find the minimum and maximum in a grid
-void US_Grid_Editor::print_minmax( void )
-{
-   DbgLv(1) << "min s:"       << mingridpoint.s
-            << "\nmin D:"     << mingridpoint.D
-            << "\nmin vbar:"  << mingridpoint.vbar
-            << "\nmin MW:"    << mingridpoint.mw
-            << "\nmin f/f0:"  << mingridpoint.ff0
-            << "\nmin f0:"    << mingridpoint.f0
-            << "\nmin f:"     << mingridpoint.f
-            << "\nmax s:"     << maxgridpoint.s
-            << "\nmax D:"     << maxgridpoint.D
-            << "\nmax vbar:"  << maxgridpoint.vbar
-            << "\nmax mw:"    << maxgridpoint.mw
-            << "\nmax f/f0:"  << maxgridpoint.ff0
-            << "\nmax f0:"    << maxgridpoint.f0
-            << "\nmax f:"     << maxgridpoint.f << "\n";
-}
-
 // Select plot1 (X-axis view) or plot2 (Molecular Weight view)
 void US_Grid_Editor::select_plot( int ival )
 {
    selected_plot   = ival;
-
-   update_plot();
-}
-
-// // Select coordinate for horizontal axis
-// void US_Grid_Editor::select_x_axis( int ival )
-// {
-//    // Axis types                   s    f/f0      mw   vbar     D     f
-//    const double  xvmns[] = {       1.0,   1.0,   2e+4,  0.60, 1e-8, 1e-8 };
-//    const double  xvmxs[] = {      10.0,   4.0,   1e+5,  0.80, 1e-7, 1e-7 };
-//    const double  xmins[] = { -500000.0,   1.0,    0.0,  0.01, 1e-9, 1e-9 };
-//    const double  xmaxs[] = {  500000.0,  50.0,  1e+10,  3.00, 3e-5, 1e-5 };
-//    const double  xincs[] = {      0.01,  0.01, 5000.0,  0.01, 1e-9, 1e-9 };
-//    const QString xtitls[] = { tr( "s (x 1e13)" ),
-//                               tr( "f/f0-value" ),
-//                               tr( "mw-value" ),
-//                               tr( "vbar-value" ),
-//                               tr( "D-value" ),
-//                               tr( "f-value" ) };
-//    x_param = ival;
-
-//    lb_xRes->setText( xtitls[ x_param ] + tr( " Resolution:" ) );
-//    lb_xMin->setText( xtitls[ x_param ] + tr( " Minimum:" ) );
-//    lb_xMax->setText( xtitls[ x_param ] + tr( " Maximum:" ) );
-//    ct_xMin->disconnect();
-//    ct_xMax->disconnect();
-//    xMin   = xvmns[ x_param ];
-//    xMax   = xvmxs[ x_param ];
-//    ct_xMin->setRange     ( xmins[ x_param ], xmaxs[ x_param ] );
-//    ct_xMin->setSingleStep( xincs[ x_param ] );
-//    ct_xMax->setRange     ( xmins[ x_param ], xmaxs[ x_param ] );
-//    ct_xMax->setSingleStep( xincs[ x_param ] );
-//    ct_xMin->setValue( xMin );
-//    ct_xMax->setValue( xMax );
-
-//    connect( ct_xMin, SIGNAL( valueChanged( double ) ),
-//             this,    SLOT  ( update_xMin ( double ) ) );
-//    connect( ct_xMax, SIGNAL( valueChanged( double ) ),
-//             this,    SLOT  ( update_xMax ( double ) ) );
-
-//    rb_y_s   ->setEnabled( x_param != ATTR_S );
-//    rb_y_ff0 ->setEnabled( x_param != ATTR_K );
-//    rb_y_mw  ->setEnabled( x_param != ATTR_W );
-//    rb_y_vbar->setEnabled( x_param != ATTR_V );
-//    rb_y_D   ->setEnabled( x_param != ATTR_D );
-//    rb_y_f   ->setEnabled( x_param != ATTR_F );
-//    rb_x_s   ->setEnabled( y_param != ATTR_S );
-//    rb_x_ff0 ->setEnabled( y_param != ATTR_K );
-//    rb_x_mw  ->setEnabled( y_param != ATTR_W );
-//    rb_x_vbar->setEnabled( y_param != ATTR_V );
-//    rb_x_D   ->setEnabled( y_param != ATTR_D );
-//    rb_x_f   ->setEnabled( y_param != ATTR_F );
-
-//    cb_fixed->disconnect();
-//    cb_fixed->clear();
-//    if ( x_param != ATTR_V  &&  y_param != ATTR_V )
-//       cb_fixed->addItem( tr( "Partial Specific Volume" ) );
-//    if ( x_param != ATTR_K  &&  y_param != ATTR_K )
-//       cb_fixed->addItem( tr( "Frictional Ratio" ) );
-//    if ( x_param != ATTR_W  &&  y_param != ATTR_W )
-//       cb_fixed->addItem( tr( "Molecular Weight" ) );
-//    if ( x_param != ATTR_S  &&  y_param != ATTR_S )
-//       cb_fixed->addItem( tr( "Sedimentation Coefficient" ) );
-//    if ( x_param != ATTR_D  &&  y_param != ATTR_D )
-//       cb_fixed->addItem( tr( "Diffusion Coefficient" ) );
-//    if ( x_param != ATTR_F  &&  y_param != ATTR_F )
-//       cb_fixed->addItem( tr( "Frictional Coefficient" ) );
-//    cb_fixed->setCurrentIndex( 0 );
-//    select_fixed( cb_fixed->currentText() );
-//    connect( cb_fixed, SIGNAL( activated   ( const QString& ) ),
-//             this,     SLOT  ( select_fixed( const QString& ) ) );
-
-//    validate_ff0();
-
-//    update_plot();
-// }
-
-// // select coordinate for vertical axis
-// void US_Grid_Editor::select_y_axis( int ival )
-// {
-//    // Axis types                   s    f/f0      mw   vbar     D     f
-//    const double  yvmns[] = {       1.0,   1.0,   2e+4,  0.60, 1e-8, 1e-8 };
-//    const double  yvmxs[] = {      10.0,   4.0,   1e+6,  0.80, 1e-7, 1e-7 };
-//    const double  ymins[] = { -500000.0,   1.0,    0.0,  0.01, 1e-9, 1e-9 };
-//    const double  ymaxs[] = {  500000.0,  50.0,  1e+10,  3.00, 3e-5, 1e-5 };
-//    const double  yincs[] = {      0.01,  0.01, 5000.0,  0.01, 1e-9, 1e-9 };
-//    const QString ytitls[] = { tr( "s (x 1e13)" ),
-//                               tr( "f/f0-value" ),
-//                               tr( "mw-value" ),
-//                               tr( "vbar-value" ),
-//                               tr( "D-value" ),
-//                               tr( "f-value" ) };
-//    y_param = ival;
-
-//    lb_yRes->setText( ytitls[ y_param ] + tr( " Resolution:" ) );
-//    lb_yMin->setText( ytitls[ y_param ] + tr( " Minimum:" ) );
-//    lb_yMax->setText( ytitls[ y_param ] + tr( " Maximum:" ) );
-//    ct_yMin->disconnect();
-//    ct_yMax->disconnect();
-//    yMin   = yvmns[ y_param ];
-//    yMax   = yvmxs[ y_param ];
-//    ct_yMin->setRange     ( ymins[ y_param ], ymaxs[ y_param ] );
-//    ct_yMin->setSingleStep( yincs[ y_param ] );
-//    ct_yMax->setRange     ( ymins[ y_param ], ymaxs[ y_param ] );
-//    ct_yMax->setSingleStep( yincs[ y_param ] );
-//    ct_yMin->setValue( yMin );
-//    ct_yMax->setValue( yMax );
-
-//    connect( ct_yMin, SIGNAL( valueChanged( double ) ),
-//             this,    SLOT  ( update_yMin ( double ) ) );
-//    connect( ct_yMax, SIGNAL( valueChanged( double ) ),
-//             this,    SLOT  ( update_yMax ( double ) ) );
-
-//    rb_x_s   ->setEnabled( y_param != ATTR_S );
-//    rb_x_ff0 ->setEnabled( y_param != ATTR_K );
-//    rb_x_mw  ->setEnabled( y_param != ATTR_W );
-//    rb_x_vbar->setEnabled( y_param != ATTR_V );
-//    rb_x_D   ->setEnabled( y_param != ATTR_D );
-//    rb_x_f   ->setEnabled( y_param != ATTR_F );
-//    rb_y_s   ->setEnabled( x_param != ATTR_S );
-//    rb_y_ff0 ->setEnabled( x_param != ATTR_K );
-//    rb_y_mw  ->setEnabled( x_param != ATTR_W );
-//    rb_y_vbar->setEnabled( x_param != ATTR_V );
-//    rb_y_D   ->setEnabled( x_param != ATTR_D );
-//    rb_y_f   ->setEnabled( x_param != ATTR_F );
-
-//    cb_fixed->disconnect();
-//    cb_fixed->clear();
-//    if ( x_param != ATTR_V  &&  y_param != ATTR_V )
-//       cb_fixed->addItem( tr( "Partial Specific Volume" ) );
-//    if ( x_param != ATTR_K  &&  y_param != ATTR_K )
-//       cb_fixed->addItem( tr( "Frictional Ratio" ) );
-//    if ( x_param != ATTR_W  &&  y_param != ATTR_W )
-//       cb_fixed->addItem( tr( "Molecular Weight" ) );
-//    if ( x_param != ATTR_S  &&  y_param != ATTR_S )
-//       cb_fixed->addItem( tr( "Sedimentation Coefficient" ) );
-//    if ( x_param != ATTR_D  &&  y_param != ATTR_D )
-//       cb_fixed->addItem( tr( "Diffusion Coefficient" ) );
-//    if ( x_param != ATTR_F  &&  y_param != ATTR_F )
-//       cb_fixed->addItem( tr( "Frictional Coefficient" ) );
-//    cb_fixed->setCurrentIndex( 0 );
-//    select_fixed( cb_fixed->currentText() );
-//    connect( cb_fixed, SIGNAL( activated   ( const QString& ) ),
-//             this,     SLOT  ( select_fixed( const QString& ) ) );
-
-//    validate_ff0();
-
-//    update_plot();
-// }
-
-// // Select coordinate flag for the fixed attribute
-// void US_Grid_Editor::select_fixed( const QString& fixstr )
-// {
-//    // Axis types                   s    f/f0      mw   vbar     D     f
-//    const double  zmins[] = { -500000.0,   1.0,    0.0,  0.01, 1e+6, 1e+6 };
-//    const double  zmaxs[] = {  500000.0,  50.0,  1e+10,  3.00, 1e+8, 1e+6 };
-//    const double  zincs[] = {      0.01,  0.01, 5000.0, 0.001, 1e+5, 1e+5 };
-//    //const double  zvals[] = {     5.00,   2.0,   1e+5,  0.72, 1e+7, 1e+7 };
-
-//    z_param   = fixstr.contains( tr( "Partial S" ) ) ? ATTR_V : 0;
-//    z_param   = fixstr.contains( tr( "nal Ratio" ) ) ? ATTR_K : z_param;
-//    z_param   = fixstr.contains( tr( "ar Weight" ) ) ? ATTR_W : z_param;
-//    z_param   = fixstr.contains( tr( "Sedimenta" ) ) ? ATTR_S : z_param;
-//    z_param   = fixstr.contains( tr( "Diffusion" ) ) ? ATTR_D : z_param;
-//    z_param   = fixstr.contains( tr( "nal Coeff" ) ) ? ATTR_F : z_param;
-// qDebug() << "SelFix: " << fixstr << "z_param" << z_param;
-
-//    ct_zVal->setRange     ( zmins[ z_param ], zmaxs[ z_param ] );
-//    ct_zVal->setSingleStep( zincs[ z_param ] );
-//    //ct_zVal->setValue( zvals[ z_param ] );
-//    lb_zVal->setText( fixstr );
-
-//    validate_ff0();
-// }
-
-// activated when the "Show Final Grid" Checkbox is set
-void US_Grid_Editor::show_final_grid( bool flag )
-{
-   // if (flag)
-   // {
-   //    ct_partialGrid       ->setRange     ( 1, grid_index );
-   //    ct_partialGrid       ->setSingleStep( 1 );
-   //    ct_partialGrid       ->setEnabled( true );
-   //    pb_delete_partialGrid->setEnabled( true );
-   //    pb_add_partialGrid   ->setEnabled( false );
-   //    ck_show_sub_grid     ->setEnabled( true );
-   //    ct_subGrids          ->setEnabled( false );
-   // }
-   // else
-   // {
-   //    ct_partialGrid       ->setEnabled( false );
-   //    pb_delete_partialGrid->setEnabled( false );
-   //    pb_add_partialGrid   ->setEnabled( true );
-   //    ck_show_sub_grid     ->setEnabled( false );
-   //    ct_subGrids          ->setEnabled( false );
-   // }
-
-   update_plot();
-}
-
-// activated when the "Show Subgrids" Checkbox is set
-void US_Grid_Editor::show_sub_grid( bool flag )
-{
-   if ( flag )
-   {
-      int ntotg       = final_grid.size();
-      int minsubg     = ntotg / MAXSSZ;
-      int maxsubg     = ntotg / MINSSZ + 1;
-      subGrids        = ntotg / DEFSSZ + 1;
-DbgLv(1) << "finalsize" << ntotg << "maxsubg" << maxsubg;
-      // lb_partialGrid       ->setText   ( tr( "Highlight Subgrid #:" ) );
-      // ct_subGrids          ->setEnabled   ( true );
-      // ct_subGrids          ->setRange     ( minsubg, maxsubg );
-      // ct_subGrids          ->setSingleStep( 1 );
-      // ct_subGrids          ->setValue     ( subGrids );
-      // pb_delete_partialGrid->setEnabled   ( false );
-      // le_counts->setText( tr( "%1 total, %2 per subgrid" )
-      //       .arg( ntotg ).arg( ntotg / subGrids ) );
-   }
-   else
-   {
-      // lb_partialGrid       ->setText   ( tr( "Highlight Partial Grid #:" ) );
-      // ct_subGrids          ->setEnabled   ( false );
-      // ct_partialGrid       ->setRange     ( 1, grid_index );
-      // ct_partialGrid       ->setSingleStep( 1 );
-      // ct_partialGrid       ->setValue     ( 1 );
-      // pb_delete_partialGrid->setEnabled   ( true );
-   }
 
    update_plot();
 }
@@ -2236,540 +877,205 @@ void US_Grid_Editor::sel_investigator( void )
    le_investigator->setText( inv_text );
 }
 
-// Get a grid value of the selected type
-double US_Grid_Editor::grid_value( struct gridpoint& gpoint, int atype )
-{
-   double gvalue = ( atype == ATTR_S ) ? gpoint.s    : 0.0;
-   gvalue        = ( atype == ATTR_K ) ? gpoint.ff0  : gvalue;
-   gvalue        = ( atype == ATTR_W ) ? gpoint.mw   : gvalue;
-   gvalue        = ( atype == ATTR_V ) ? gpoint.vbar : gvalue;
-   gvalue        = ( atype == ATTR_D ) ? gpoint.D    : gvalue;
-   gvalue        = ( atype == ATTR_F ) ? gpoint.f    : gvalue;
-
-   return gvalue;
-}
-
-// Complete component given s+k+w (s, ff0, mw)
-bool US_Grid_Editor::set_comp_skw( struct gridpoint& gpoint )
-{
-   double vbar   = gpoint.vbar;
-   double buoy   = 1.0 - vbar * DENS_20W;
-   bool   is_ok  = check_grid_point( buoy, gpoint );
-
-   return is_ok;
-}
-
-// Complete component given s+k+v (s, ff0, vbar)
-bool US_Grid_Editor::set_comp_skv( struct gridpoint& gpoint )
-{
-   double vbar   = gpoint.vbar;
-   double buoy   = 1.0 - vbar * DENS_20W;
-   double sval   = gpoint.s * 1.0e-13;
-
-   gpoint.D      = R_GC * K20 / ( AVOGADRO * 18 * M_PI
-                   * pow( ( VISC_20W * 0.01 * gpoint.ff0 ), (3.0/2.0) )
-                   * pow( ( sval * vbar / ( 2.0 * buoy ) ), 0.5 ) );
-
-   bool   is_ok  = check_grid_point( buoy, gpoint );
-
-   if ( is_ok )
-   {
-      gpoint.mw     = sval * R_GC * K20 / ( gpoint.D * buoy );
-      gpoint.f      = R_GC * K20 / ( AVOGADRO * gpoint.D );
-      gpoint.f0     = gpoint.f / gpoint.ff0;
-   }
-
-   return is_ok;
-}
-
-// Complete component given s+k+d (s, ff0, D)
-bool US_Grid_Editor::set_comp_skd( struct gridpoint& gpoint )
-{
-   double vbar   = gpoint.vbar;
-   double buoy   = 1.0 - vbar * DENS_20W;
-   bool   is_ok  = check_grid_point( buoy, gpoint );
-
-   return is_ok;
-}
-// Complete component given s+k+f (s, ff0, f)
-bool US_Grid_Editor::set_comp_skf( struct gridpoint& gpoint )
-{
-   double vbar   = gpoint.vbar;
-   double buoy   = 1.0 - vbar * DENS_20W;
-   bool   is_ok  = check_grid_point( buoy, gpoint );
-
-   return is_ok;
-}
-// Complete component given s+w+v (s, mw, vbar)
-bool US_Grid_Editor::set_comp_swv( struct gridpoint& gpoint )
-{
-   double vbar   = gpoint.vbar;
-   double buoy   = 1.0 - vbar * DENS_20W;
-   double sval   = gpoint.s * 1.0e-13;
-   double ssgn   = ( gpoint.s < 0.0 ) ? -1.0 : 1.0;
-   gpoint.D      = ssgn * sval * R_GC * K20 / ( buoy * gpoint.mw );
-   gpoint.f      = ssgn * gpoint.mw * buoy / ( sval * AVOGADRO );
-   double volume = vbar * gpoint.mw / AVOGADRO;
-   double sphere = pow( volume * VOL_FAC, THIRD );
-   gpoint.f0     = sphere * SPH_FAC;
-   gpoint.f0     = ( gpoint.f0 == 0.0 ) ? 1.0 : gpoint.f0;
-   gpoint.ff0    = gpoint.f / gpoint.f0;
-   gpoint.ff0    = qRound( gpoint.ff0 * 1.0e+5 ) * 1.0e-5;
-   bool   is_ok  = check_grid_point( buoy, gpoint );
-//qDebug() << "comp_swv s w v k" << gpoint.s << gpoint.mw << gpoint.vbar
-// << gpoint.ff0;
-
-   return is_ok;
-}
-// Complete component given s+w+d (s, mw, D)
-bool US_Grid_Editor::set_comp_swd( struct gridpoint& gpoint )
-{
-   double vbar   = gpoint.vbar;
-   double buoy   = 1.0 - vbar * DENS_20W;
-   bool   is_ok  = check_grid_point( buoy, gpoint );
-qDebug() << "comp_swd buoy" << buoy;
-
-   return is_ok;
-}
-// Complete component given s+w+f (s, mw, f)
-bool US_Grid_Editor::set_comp_swf( struct gridpoint& gpoint )
-{
-   double vbar   = gpoint.vbar;
-   double buoy   = 1.0 - vbar * DENS_20W;
-qDebug() << "comp_swf buoy" << buoy;
-   bool   is_ok  = check_grid_point( buoy, gpoint );
-
-   return is_ok;
-}
-// Complete component given s+v+d (s, vbar, D)
-bool US_Grid_Editor::set_comp_svd( struct gridpoint& gpoint )
-{
-   double vbar   = gpoint.vbar;
-   double buoy   = 1.0 - vbar * DENS_20W;
-   double ssgn   = ( gpoint.s < 0.0 ) ? -1.0 : 1.0;
-   double sval   = gpoint.s * 1.0e-13;
-   gpoint.f      = R_GC * K20 / ( AVOGADRO * gpoint.D );
-   gpoint.mw     = ssgn * sval * R_GC * K20 / ( gpoint.D * buoy );
-   double volume = vbar * gpoint.mw / AVOGADRO;
-   double sphere = pow( volume * VOL_FAC, THIRD );
-   gpoint.ff0    = gpoint.f / ( sphere * SPH_FAC );
-   gpoint.f0     = gpoint.f / qMax( 1.0, gpoint.ff0 );
-   bool   is_ok  = check_grid_point( buoy, gpoint );
-
-   return is_ok;
-}
-// Complete component given s+v+f (s, vbar, f)
-bool US_Grid_Editor::set_comp_svf( struct gridpoint& gpoint )
-{
-   double vbar   = gpoint.vbar;
-   double buoy   = 1.0 - vbar * DENS_20W;
-   double ssgn   = ( gpoint.s < 0.0 ) ? -1.0 : 1.0;
-   double sval   = gpoint.s * 1.0e-13;
-   gpoint.D      = R_GC * K20 / ( AVOGADRO * gpoint.f );
-   gpoint.mw     = ssgn * sval * R_GC * K20 / ( gpoint.D * buoy );
-   double volume = vbar * gpoint.mw / AVOGADRO;
-   double sphere = pow( volume * VOL_FAC, THIRD );
-   gpoint.ff0    = gpoint.f / ( sphere * SPH_FAC );
-   gpoint.ff0    = qRound( gpoint.ff0 * 1.0e+5 ) * 1.0e-5;
-   gpoint.f0     = gpoint.f / qMax( 1.0, gpoint.ff0 );
-   bool   is_ok  = check_grid_point( buoy, gpoint );
-
-   return is_ok;
-}
-// Complete component given s+d+f (s, D, f)
-bool US_Grid_Editor::set_comp_sdf( struct gridpoint& gpoint )
-{
-   double vbar   = gpoint.vbar;
-   double buoy   = 1.0 - vbar * DENS_20W;
-qDebug() << "comp_sdf buoy" << buoy;
-   bool   is_ok  = check_grid_point( buoy, gpoint );
-   gpoint.ff0    = qRound( gpoint.ff0 * 1.0e+5 ) * 1.0e-5;
-
-   return is_ok;
-}
-// Complete component given k+w+v (ff0, mw, vbar)
-bool US_Grid_Editor::set_comp_kwv( struct gridpoint& gpoint )
-{
-   double vbar   = gpoint.vbar;
-   double buoy   = 1.0 - vbar * DENS_20W;
-   double vbrat  = vbar / AVOGADRO;
-   double viscf  = VISC_20W * 0.01;
-
-   gpoint.f0     = viscf * pow( ( 162.0 * gpoint.mw * MPISQ * vbrat ), THIRD );
-   gpoint.f      = gpoint.ff0 * gpoint.f0;
-   gpoint.s      = 1.0e13 * gpoint.mw * buoy / ( AVOGADRO * gpoint.f );
-   gpoint.D      = R_GC * K20 / ( AVOGADRO * gpoint.f );
-   bool   is_ok  = check_grid_point( buoy, gpoint );
-
-   return is_ok;
-}
-// Complete component given k+w+d (ff0, mw, D)
-bool US_Grid_Editor::set_comp_kwd( struct gridpoint& gpoint )
-{
-   double vbar   = gpoint.vbar;
-   double buoy   = 1.0 - vbar * DENS_20W;
-qDebug() << "comp_kwd buoy" << buoy;
-   bool   is_ok  = check_grid_point( buoy, gpoint );
-
-   return is_ok;
-}
-// Complete component given k+w+f (ff0, mw, f)
-bool US_Grid_Editor::set_comp_kwf( struct gridpoint& gpoint )
-{
-   double vbar   = gpoint.vbar;
-   double buoy   = 1.0 - vbar * DENS_20W;
-qDebug() << "comp_kwf buoy" << buoy;
-   bool   is_ok  = check_grid_point( buoy, gpoint );
-
-   return is_ok;
-}
-// Complete component given k+v+d (ff0, vbar, D)
-bool US_Grid_Editor::set_comp_kvd( struct gridpoint& gpoint )
-{
-   double vbar   = gpoint.vbar;
-   double buoy   = 1.0 - vbar * DENS_20W;
-qDebug() << "comp_kvd buoy" << buoy;
-   gpoint.f      = R_GC * K20 / ( AVOGADRO * gpoint.D );
-   gpoint.f0     = gpoint.f / qMax( 1.0, gpoint.ff0 );
-   double sphere = gpoint.f0 / ( 0.06 * M_PI * VISC_20W );
-   double volume = ( 4.0 / 3.0 ) * M_PI * pow( sphere, 3.0 );
-   gpoint.mw     = volume * AVOGADRO / vbar;
-   double sval   = gpoint.mw * buoy / ( AVOGADRO * gpoint.f );
-   gpoint.s      = sval * 1.0e+13;
-   gpoint.ff0    = ( gpoint.f0 != 0.0 ) ? gpoint.f / gpoint.f0 : 1.0;
-   bool   is_ok  = check_grid_point( buoy, gpoint );
-
-   return is_ok;
-}
-// Complete component given k+v+f (ff0, vbar, f)
-bool US_Grid_Editor::set_comp_kvf( struct gridpoint& gpoint )
-{
-   double vbar   = gpoint.vbar;
-   double buoy   = 1.0 - vbar * DENS_20W;
-qDebug() << "comp_kvf buoy" << buoy;
-   gpoint.f0     = gpoint.f / qMax( 1.0, gpoint.ff0 );
-   gpoint.D      = R_GC * K20 / ( AVOGADRO * gpoint.f );
-   double sphere = gpoint.f0 / ( 0.06 * M_PI * VISC_20W );
-   double volume = ( 4.0 / 3.0 ) * M_PI * pow( sphere, 3.0 );
-   gpoint.mw     = volume * AVOGADRO / vbar;
-   double sval   = gpoint.mw * buoy / ( AVOGADRO * gpoint.f );
-   gpoint.s      = sval * 1.0e+13;
-   bool   is_ok  = check_grid_point( buoy, gpoint );
-
-   return is_ok;
-}
-// Complete component given k+d+f (ff0, D, f)
-bool US_Grid_Editor::set_comp_kdf( struct gridpoint& gpoint )
-{
-   double vbar   = gpoint.vbar;
-   double buoy   = 1.0 - vbar * DENS_20W;
-qDebug() << "comp_kdf buoy" << buoy;
-   bool   is_ok  = check_grid_point( buoy, gpoint );
-
-   return is_ok;
-}
-// Complete component given w+v+d (mw, vbar, D)
-bool US_Grid_Editor::set_comp_wvd( struct gridpoint& gpoint )
-{
-   double vbar   = gpoint.vbar;
-   double buoy   = 1.0 - vbar * DENS_20W;
-qDebug() << "comp_wvd buoy" << buoy;
-   double volume = vbar * gpoint.mw / AVOGADRO;
-   double sphere = pow( volume * VOL_FAC, THIRD );
-   gpoint.f0     = sphere * SPH_FAC;
-   double sval   = gpoint.D * buoy * gpoint.mw / ( R_GC * K20 );
-   gpoint.f      = gpoint.mw * buoy / ( sval * AVOGADRO );
-   gpoint.ff0    = ( gpoint.f0 != 0.0 ) ? gpoint.f / gpoint.f0 : 1.0;
-   gpoint.s      = sval * 1.0e+13;
-   bool   is_ok  = check_grid_point( buoy, gpoint );
-
-   return is_ok;
-}
-// Complete component given w+v+f (mw, vbar, f)
-bool US_Grid_Editor::set_comp_wvf( struct gridpoint& gpoint )
-{
-   double vbar   = gpoint.vbar;
-   double buoy   = 1.0 - vbar * DENS_20W;
-qDebug() << "comp_wvf buoy" << buoy;
-   double volume = vbar * gpoint.mw / AVOGADRO;
-   double sphere = pow( volume * VOL_FAC, THIRD );
-   gpoint.f0     = sphere * SPH_FAC;
-   gpoint.ff0    = ( gpoint.f0 != 0.0 ) ? gpoint.f / gpoint.f0 : 1.0;
-   double sval   = gpoint.mw * buoy / ( AVOGADRO * gpoint.f );
-   gpoint.D      = sval * R_GC * K20 / ( buoy * gpoint.mw );
-   gpoint.s      = sval * 1.0e+13;
-   bool   is_ok  = check_grid_point( buoy, gpoint );
-
-   return is_ok;
-}
-// Complete component given w+d+f (mw, D, f)
-bool US_Grid_Editor::set_comp_wdf( struct gridpoint& gpoint )
-{
-   double vbar   = gpoint.vbar;
-   double buoy   = 1.0 - vbar * DENS_20W;
-qDebug() << "comp_wdf buoy" << buoy;
-   gpoint.ff0    = qRound( gpoint.ff0 * 1.0e+5 ) * 1.0e-5;
-   bool   is_ok  = check_grid_point( buoy, gpoint );
-
-   return is_ok;
-}
-// Complete component given v+d+f (vbar, D, f)
-bool US_Grid_Editor::set_comp_vdf( struct gridpoint& gpoint )
-{
-   double vbar   = gpoint.vbar;
-   double buoy   = 1.0 - vbar * DENS_20W;
-qDebug() << "comp_vdf buoy" << buoy;
-   gpoint.ff0    = qRound( gpoint.ff0 * 1.0e+5 ) * 1.0e-5;
-   bool   is_ok  = check_grid_point( buoy, gpoint );
-
-   return is_ok;
-}
-
-// Check the validity of a grid point
-bool US_Grid_Editor::check_grid_point( double buoy, struct gridpoint& gpoint )
-{
-   bool is_ok = true;
-
-   if ( buoy == 0.0  ||  gpoint.vbar == 0.0  ||
-        ( gpoint.s < 0  &&  buoy > 0.0 )  ||
-        ( gpoint.s > 0  &&  buoy < 0.0 ) )
-   {  // If point is nonsensical, flag it and mark molecular weight negative
-      gpoint.mw  = -1.0;
-      is_ok      = false;
-   }
-
-   return is_ok;
-}
-
 // Adjust value/ranges so that f/f0 is not less than 1
 bool US_Grid_Editor::validate_ff0()
 {
-   bool is_ok     = true;
+//    bool is_ok     = true;
 
-   if ( x_param == ATTR_K  ||  y_param == ATTR_K  ||  z_param == ATTR_K )
-   {  // If one of the attributes is f/f0, no need for checking
-      return is_ok;
-   }
+//    if ( x_param == ATTR_K  ||  y_param == ATTR_K  ||  z_param == ATTR_K )
+//    {  // If one of the attributes is f/f0, no need for checking
+//       return is_ok;
+//    }
 
-   struct gridpoint zpoint;
-   struct gridpoint tmp_point;
-   double xMin = le_x_min->text().toDouble();
-   double xMax = le_x_max->text().toDouble();
-   double yMin = le_y_min->text().toDouble();
-   double yMax = le_y_max->text().toDouble();
-   double zVal = le_z_val->text().toDouble();
-qDebug() << "valFF0: xMin xMax yMin yMax" << xMin << xMax << yMin << yMax;
-   clear_grid( zpoint );
-   set_grid_value( zpoint,    z_param, zVal );
-   // Get f/f0 for xMin,yMin
-   tmp_point      = zpoint;
-   set_grid_value( tmp_point, x_param, xMin );
-   set_grid_value( tmp_point, y_param, yMin );
-   complete_comp ( tmp_point );
-   double ffx1y1  = tmp_point.ff0;
-   // Get f/f0 for xMin,yMax
-   tmp_point      = zpoint;
-   set_grid_value( tmp_point, x_param, xMin );
-   set_grid_value( tmp_point, y_param, yMax );
-   complete_comp ( tmp_point );
-   double ffx1y2  = tmp_point.ff0;
-   // Get f/f0 for xMax,yMin
-   tmp_point      = zpoint;
-   set_grid_value( tmp_point, x_param, xMax );
-   set_grid_value( tmp_point, y_param, yMin );
-   complete_comp ( tmp_point );
-   double ffx2y1  = tmp_point.ff0;
-   // Get f/f0 for xMax,yMax
-   tmp_point      = zpoint;
-   set_grid_value( tmp_point, x_param, xMax );
-   set_grid_value( tmp_point, y_param, yMax );
-   complete_comp ( tmp_point );
-   double ffx2y2  = tmp_point.ff0;
-   // Get overall minimum f/f0
-   double ff0min  = qMin( ffx1y1, ffx1y2 );
-   ff0min         = qMin( ff0min, ffx2y1 );
-   ff0min         = qMin( ff0min, ffx2y2 );
-qDebug() << "valFF0: zVal xMin yMin ff0" << zVal << xMin << yMin << ffx1y1;
-qDebug() << "valFF0:      xMin yMax ff0   " << xMin << yMax << ffx1y2;
-qDebug() << "valFF0:      xMax yMin ff0   " << xMax << yMin << ffx2y1;
-qDebug() << "valFF0:      xMax yMax ff0   " << xMax << yMax << ffx2y2;
+//    double xMin = le_x_min->text().toDouble();
+//    double xMax = le_x_max->text().toDouble();
+//    double yMin = le_y_min->text().toDouble();
+//    double yMax = le_y_max->text().toDouble();
+//    double zVal = le_z_val->text().toDouble();
+// qDebug() << "valFF0: xMin xMax yMin yMax" << xMin << xMax << yMin << yMax;
+//    clear_grid( zpoint );
+//    set_grid_value( zpoint,    z_param, zVal );
+//    // Get f/f0 for xMin,yMin
+//    tmp_point      = zpoint;
+//    set_grid_value( tmp_point, x_param, xMin );
+//    set_grid_value( tmp_point, y_param, yMin );
+//    complete_comp ( tmp_point );
+//    double ffx1y1  = tmp_point.ff0;
+//    // Get f/f0 for xMin,yMax
+//    tmp_point      = zpoint;
+//    set_grid_value( tmp_point, x_param, xMin );
+//    set_grid_value( tmp_point, y_param, yMax );
+//    complete_comp ( tmp_point );
+//    double ffx1y2  = tmp_point.ff0;
+//    // Get f/f0 for xMax,yMin
+//    tmp_point      = zpoint;
+//    set_grid_value( tmp_point, x_param, xMax );
+//    set_grid_value( tmp_point, y_param, yMin );
+//    complete_comp ( tmp_point );
+//    double ffx2y1  = tmp_point.ff0;
+//    // Get f/f0 for xMax,yMax
+//    tmp_point      = zpoint;
+//    set_grid_value( tmp_point, x_param, xMax );
+//    set_grid_value( tmp_point, y_param, yMax );
+//    complete_comp ( tmp_point );
+//    double ffx2y2  = tmp_point.ff0;
+//    // Get overall minimum f/f0
+//    double ff0min  = qMin( ffx1y1, ffx1y2 );
+//    ff0min         = qMin( ff0min, ffx2y1 );
+//    ff0min         = qMin( ff0min, ffx2y2 );
+// qDebug() << "valFF0: zVal xMin yMin ff0" << zVal << xMin << yMin << ffx1y1;
+// qDebug() << "valFF0:      xMin yMax ff0   " << xMin << yMax << ffx1y2;
+// qDebug() << "valFF0:      xMax yMin ff0   " << xMax << yMin << ffx2y1;
+// qDebug() << "valFF0:      xMax yMax ff0   " << xMax << yMax << ffx2y2;
 
-   if ( ff0min < 1.0 )
-   {  // Ranges include values that set f/f0 less than 1:  must adjust ranges
+//    if ( ff0min < 1.0 )
+//    {  // Ranges include values that set f/f0 less than 1:  must adjust ranges
 
-      if ( x_param == ATTR_W  ||  x_param == ATTR_F )
-      {  // Adjust the X range (if MW or f)
-         // ct_xMin->disconnect();
-         // ct_xMax->disconnect();
-         tmp_point      = zpoint;
-         set_grid_value( tmp_point, ATTR_K, 1.0  );
+//       if ( x_param == ATTR_W  ||  x_param == ATTR_F )
+//       {  // Adjust the X range (if MW or f)
+//          // ct_xMin->disconnect();
+//          // ct_xMax->disconnect();
+//          tmp_point      = zpoint;
+//          set_grid_value( tmp_point, ATTR_K, 1.0  );
 
-         if ( ffx1y1 < ffx1y2 )
-         {  // Increasing Y means increasing f/f0, so get X for k=1,ymin
-            set_grid_value( tmp_point, y_param, yMin );
-            complete_comp ( tmp_point );
-            double xVal    = grid_value( tmp_point, x_param );
+//          if ( ffx1y1 < ffx1y2 )
+//          {  // Increasing Y means increasing f/f0, so get X for k=1,ymin
+//             set_grid_value( tmp_point, y_param, yMin );
+//             complete_comp ( tmp_point );
+//             double xVal    = grid_value( tmp_point, x_param );
 
-            if ( ffx1y1 < ffx2y1 )
-            {  // Increasing X means increasing f/f0, so set lower limit
-qDebug() << "valFF0:  (1xMin)xVal" << xVal;
-               // ct_xMin->setMinimum( xVal );
-               // ct_xMax->setMinimum( xVal );
-            }
+//             if ( ffx1y1 < ffx2y1 )
+//             {  // Increasing X means increasing f/f0, so set lower limit
+// qDebug() << "valFF0:  (1xMin)xVal" << xVal;
+//                // ct_xMin->setMinimum( xVal );
+//                // ct_xMax->setMinimum( xVal );
+//             }
 
-            else
-            {  // Increasing X means decreasing f/f0, so set upper limit
-qDebug() << "valFF0:  (2xMin)xVal" << xVal;
-               // ct_xMin->setMaximum( xVal );
-               // ct_xMax->setMaximum( xVal );
-            }
-         }
+//             else
+//             {  // Increasing X means decreasing f/f0, so set upper limit
+// qDebug() << "valFF0:  (2xMin)xVal" << xVal;
+//                // ct_xMin->setMaximum( xVal );
+//                // ct_xMax->setMaximum( xVal );
+//             }
+//          }
 
-         else
-         {  // Increasing Y means decreasing f/f0, so get X for k=1,ymax
-            set_grid_value( tmp_point, y_param, yMax );
-            complete_comp ( tmp_point );
-            double xVal    = grid_value( tmp_point, x_param );
+//          else
+//          {  // Increasing Y means decreasing f/f0, so get X for k=1,ymax
+//             set_grid_value( tmp_point, y_param, yMax );
+//             complete_comp ( tmp_point );
+//             double xVal    = grid_value( tmp_point, x_param );
 
-            if ( ffx1y1 < ffx2y1 )
-            {  // Increasing X means increasing f/f0, so set lower limit
-qDebug() << "valFF0:  (3xMin)xVal" << xVal;
-               // ct_xMin->setMinimum( xVal );
-               // ct_xMax->setMinimum( xVal );
-            }
+//             if ( ffx1y1 < ffx2y1 )
+//             {  // Increasing X means increasing f/f0, so set lower limit
+// qDebug() << "valFF0:  (3xMin)xVal" << xVal;
+//                // ct_xMin->setMinimum( xVal );
+//                // ct_xMax->setMinimum( xVal );
+//             }
 
-            else
-            {  // Increasing X means decreasing f/f0, so set upper limit
-qDebug() << "valFF0:  (4xMin)xVal" << xVal;
-               // ct_xMin->setMaximum( xVal );
-               // ct_xMax->setMaximum( xVal );
-            }
-         }
+//             else
+//             {  // Increasing X means decreasing f/f0, so set upper limit
+// qDebug() << "valFF0:  (4xMin)xVal" << xVal;
+//                // ct_xMin->setMaximum( xVal );
+//                // ct_xMax->setMaximum( xVal );
+//             }
+//          }
 
-         // connect( ct_xMin, SIGNAL( valueChanged( double ) ),
-         //          this,    SLOT  ( update_xMin ( double ) ) );
-         // connect( ct_xMax, SIGNAL( valueChanged( double ) ),
-         //          this,    SLOT  ( update_xMax ( double ) ) );
-      }
+//          // connect( ct_xMin, SIGNAL( valueChanged( double ) ),
+//          //          this,    SLOT  ( update_xMin ( double ) ) );
+//          // connect( ct_xMax, SIGNAL( valueChanged( double ) ),
+//          //          this,    SLOT  ( update_xMax ( double ) ) );
+//       }
 
-      if ( y_param == ATTR_W  ||  y_param == ATTR_F )
-      {  // Adjust the Y range (if MW or f)
-         // ct_yMin->disconnect();
-         // ct_yMax->disconnect();
-         tmp_point      = zpoint;
-         set_grid_value( tmp_point, ATTR_K, 1.0  );
+//       if ( y_param == ATTR_W  ||  y_param == ATTR_F )
+//       {  // Adjust the Y range (if MW or f)
+//          // ct_yMin->disconnect();
+//          // ct_yMax->disconnect();
+//          tmp_point      = zpoint;
+//          set_grid_value( tmp_point, ATTR_K, 1.0  );
 
-         if ( ffx1y1 < ffx2y1 )
-         {  // Increasing X means increasing f/f0, so get Y for k=1,xmin
-            set_grid_value( tmp_point, x_param, xMin );
-            complete_comp ( tmp_point );
-            double yVal    = grid_value( tmp_point, y_param );
+//          if ( ffx1y1 < ffx2y1 )
+//          {  // Increasing X means increasing f/f0, so get Y for k=1,xmin
+//             set_grid_value( tmp_point, x_param, xMin );
+//             complete_comp ( tmp_point );
+//             double yVal    = grid_value( tmp_point, y_param );
 
-            if ( ffx1y1 < ffx1y2 )
-            {  // Increasing Y means increasing f/f0, so set lower limit
-qDebug() << "valFF0:  (5yMin)yVal" << yVal;
-               // ct_yMin->setMinimum( yVal );
-               // ct_yMax->setMinimum( yVal );
-            }
+//             if ( ffx1y1 < ffx1y2 )
+//             {  // Increasing Y means increasing f/f0, so set lower limit
+// qDebug() << "valFF0:  (5yMin)yVal" << yVal;
+//                // ct_yMin->setMinimum( yVal );
+//                // ct_yMax->setMinimum( yVal );
+//             }
 
-            else
-            {  // Increasing Y means decreasing f/f0, so set upper limit
-qDebug() << "valFF0:  (6yMax)yVal" << yVal;
-               // ct_yMin->setMaximum( yVal );
-               // ct_yMax->setMaximum( yVal );
-            }
-         }
+//             else
+//             {  // Increasing Y means decreasing f/f0, so set upper limit
+// qDebug() << "valFF0:  (6yMax)yVal" << yVal;
+//                // ct_yMin->setMaximum( yVal );
+//                // ct_yMax->setMaximum( yVal );
+//             }
+//          }
 
-         else
-         {  // Increasing X means decreasing f/f0, so get y for k=1,xmax
-            set_grid_value( tmp_point, x_param, xMax );
-            complete_comp ( tmp_point );
-            double yVal    = grid_value( tmp_point, y_param );
+//          else
+//          {  // Increasing X means decreasing f/f0, so get y for k=1,xmax
+//             set_grid_value( tmp_point, x_param, xMax );
+//             complete_comp ( tmp_point );
+//             double yVal    = grid_value( tmp_point, y_param );
 
-            if ( ffx1y1 < ffx1y2 )
-            {  // Increasing Y means increasing f/f0, so set lower limit
-qDebug() << "valFF0:  (7yMin)yVal" << yVal;
-               // ct_yMin->setMinimum( yVal );
-               // ct_yMax->setMinimum( yVal );
-            }
+//             if ( ffx1y1 < ffx1y2 )
+//             {  // Increasing Y means increasing f/f0, so set lower limit
+// qDebug() << "valFF0:  (7yMin)yVal" << yVal;
+//                // ct_yMin->setMinimum( yVal );
+//                // ct_yMax->setMinimum( yVal );
+//             }
 
-            else
-            {  // Increasing Y means decreasing f/f0, so set upper limit
-qDebug() << "valFF0:  (8yMax)yVal" << yVal;
-               // ct_yMin->setMaximum( yVal );
-               // ct_yMax->setMaximum( yVal );
-            }
-         }
+//             else
+//             {  // Increasing Y means decreasing f/f0, so set upper limit
+// qDebug() << "valFF0:  (8yMax)yVal" << yVal;
+//                // ct_yMin->setMaximum( yVal );
+//                // ct_yMax->setMaximum( yVal );
+//             }
+//          }
 
-         // connect( ct_yMin, SIGNAL( valueChanged( double ) ),
-         //          this,    SLOT  ( update_yMin ( double ) ) );
-         // connect( ct_yMax, SIGNAL( valueChanged( double ) ),
-         //          this,    SLOT  ( update_yMax ( double ) ) );
-      }
-   }
+//          // connect( ct_yMin, SIGNAL( valueChanged( double ) ),
+//          //          this,    SLOT  ( update_yMin ( double ) ) );
+//          // connect( ct_yMax, SIGNAL( valueChanged( double ) ),
+//          //          this,    SLOT  ( update_yMax ( double ) ) );
+//       }
+//    }
 
-   // xMin           = ct_xMin->value();
-   // xMax           = ct_xMax->value();
-   // yMin           = ct_yMin->value();
-   // yMax           = ct_yMax->value();
-qDebug() << "valFF0: (out)xMin xMax yMin yMax" << xMin << xMax << yMin << yMax;
+//    // xMin           = ct_xMin->value();
+//    // xMax           = ct_xMax->value();
+//    // yMin           = ct_yMin->value();
+//    // yMax           = ct_yMax->value();
+// qDebug() << "valFF0: (out)xMin xMax yMin yMax" << xMin << xMax << yMin << yMax;
 
-   return is_ok;
-}
-
-// Clear a gridpoint structure
-void US_Grid_Editor::clear_grid( struct gridpoint& gpoint )
-{
-   gpoint.s      = 0.0;
-   gpoint.ff0    = 0.0;
-   gpoint.mw     = 0.0;
-   gpoint.vbar   = 0.0;
-   gpoint.D      = 0.0;
-   gpoint.f      = 0.0;
-}
-
-// Set a gridpoint value of the selected type
-void US_Grid_Editor::set_grid_value( struct gridpoint& gpoint, int atype,
-                                     double gvalue )
-{
-   if      ( atype == ATTR_S )
-      gpoint.s      = gvalue;
-   else if ( atype == ATTR_K )
-      gpoint.ff0    = gvalue;
-   else if ( atype == ATTR_W )
-      gpoint.mw     = gvalue;
-   else if ( atype == ATTR_V )
-      gpoint.vbar   = gvalue;
-   else if ( atype == ATTR_D )
-      gpoint.D      = gvalue;
-   else if ( atype == ATTR_F )
-      gpoint.f      = gvalue;
+//    return is_ok;
+return false;
 }
 
 // Complete component where 3 attributes are given
 bool US_Grid_Editor::complete_comp( struct gridpoint& gpoint )
 {
-   US_Model::SimulationComponent sc;
-   sc.s          = gpoint.s * 1.0e-13;
-   sc.f_f0       = gpoint.ff0;
-   sc.mw         = gpoint.mw;
-   sc.vbar20     = gpoint.vbar;
-   sc.D          = gpoint.D;
-   sc.f          = gpoint.f;
+   // US_Model::SimulationComponent sc;
+   // sc.s          = gpoint.s * 1.0e-13;
+   // sc.f_f0       = gpoint.ff0;
+   // sc.mw         = gpoint.mw;
+   // sc.vbar20     = gpoint.vbar;
+   // sc.D          = gpoint.D;
+   // sc.f          = gpoint.f;
 
-   bool is_ok    = US_Model::calc_coefficients( sc );
+   // bool is_ok    = US_Model::calc_coefficients( sc );
 
-   if ( is_ok )
-   {
-      gpoint.s      = sc.s * 1.0e+13;
-      gpoint.ff0    = sc.f_f0;
-      gpoint.mw     = sc.mw;
-      gpoint.vbar   = sc.vbar20;
-      gpoint.D      = sc.D;
-      gpoint.f      = sc.f;
-   }
+   // if ( is_ok )
+   // {
+   //    gpoint.s      = sc.s * 1.0e+13;
+   //    gpoint.ff0    = sc.f_f0;
+   //    gpoint.mw     = sc.mw;
+   //    gpoint.vbar   = sc.vbar20;
+   //    gpoint.D      = sc.D;
+   //    gpoint.f      = sc.f;
+   // }
 
-   return is_ok;
+   return false;
 }
 
 

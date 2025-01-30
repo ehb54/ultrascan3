@@ -77,20 +77,6 @@ private:
 
 };
 
-//! \struct gridpoint
-//! \brief Structure representing a grid point with various attributes.
-struct gridpoint
-{
-   double s;       //!< Sedimentation coefficient.
-   double D;       //!< Diffusion coefficient.
-   double vbar;    //!< Partial specific volume.
-   double mw;      //!< Molecular weight.
-   double f;       //!< Frictional coefficient.
-   double ff0;     //!< Frictional ratio.
-   double f0;      //!< Standard frictional coefficient.
-   int index;      //!< Index of the grid point.
-};
-
 class US_Grid_Preset : public US_WidgetsDialog
 {
    Q_OBJECT
@@ -195,11 +181,7 @@ private:
    QLineEdit *le_allgrids; //!< Number of all subgrids.
 
    US_Help showHelp; //!< Help widget.
-   QList<gridpoint> current_grid; //!< List of current grid points.
-   QList<gridpoint> final_grid; //!< List of final grid points.
-
-   gridpoint maxgridpoint; //!< Maximum grid point.
-   gridpoint mingridpoint; //!< Minimum grid point.
+   QHash<int, QVector<GridPoint>> final_grid;
 
    QwtPlot *data_plot; //!< Data plot.
    QwtLinearColorMap *colormap; //!< Color map for the plot.
@@ -224,14 +206,12 @@ private:
    int dbg_level;
    int selected_plot; //!< Selected plot.
 
-   bool validate( gridpoint& );
-
 private slots:
    //! \brief Slot to setup the grid axises.
    void set_grid_axis();
 
    //! \brief Validate grid point
-   void call_validate();
+   void validate();
 
    //! \brief Slot to update x resolution.
    //! \param value New x resolution value.
@@ -295,23 +275,13 @@ private slots:
    //! \brief Slot to display help information.
    void help(void) { showHelp.show_help("grid_editor.html"); };
 
-   //! \brief Slot to calculate grid points.
-   void calc_gridpoints(void);
-
-   //! \brief Slot to calculate grid points with a different method.
-   void calc_gridpoints_2(void);
-
-   //! \brief Slot to set minimum and maximum grid points.
-   //! \param gp Grid point to be set as min/max.
-   void set_minmax(const struct gridpoint& gp);
-
    //! \brief Slot to show the final grid.
    //! \param checked Whether the final grid should be shown.
-   void show_final_grid(bool checked);
+   // void show_final_grid(bool checked);
 
    //! \brief Slot to show the sub grid.
    //! \param checked Whether the sub grid should be shown.
-   void show_sub_grid(bool checked);
+   // void show_sub_grid(bool checked);
 
    //! \brief Slot to update disk database settings.
    //! \param checked Whether disk database should be updated.
@@ -320,120 +290,117 @@ private slots:
    //! \brief Slot to select investigator.
    void sel_investigator(void);
 
-   //! \brief Slot to print minimum and maximum grid points.
-   void print_minmax(void);
-
    //! \brief Function to get the value of a grid point for a given attribute.
    //! \param gp Grid point.
    //! \param attr Attribute index.
    //! \return Value of the grid point for the given attribute.
-   double grid_value(struct gridpoint& gp, int attr);
+   // double grid_value(struct gridpoint& gp, int attr);
 
    //! \brief Function to set component s, k, w.
    //! \param gp Grid point.
    //! \return Whether the component was successfully set.
-   bool set_comp_skw(struct gridpoint& gp);
+   // bool set_comp_skw(struct gridpoint& gp);
 
    //! \brief Function to set component s, k, v.
    //! \param gp Grid point.
    //! \return Whether the component was successfully set.
-   bool set_comp_skv(struct gridpoint& gp);
+   // bool set_comp_skv(struct gridpoint& gp);
 
    //! \brief Function to set component s, k, d.
    //! \param gp Grid point.
    //! \return Whether the component was successfully set.
-   bool set_comp_skd(struct gridpoint& gp);
+   // bool set_comp_skd(struct gridpoint& gp);
 
    //! \brief Function to set component s, k, f.
    //! \param gp Grid point.
    //! \return Whether the component was successfully set.
-   bool set_comp_skf(struct gridpoint& gp);
+   // bool set_comp_skf(struct gridpoint& gp);
 
    //! \brief Function to set component s, w, v.
    //! \param gp Grid point.
    //! \return Whether the component was successfully set.
-   bool set_comp_swv(struct gridpoint& gp);
+   // bool set_comp_swv(struct gridpoint& gp);
 
    //! \brief Function to set component s, w, d.
    //! \param gp Grid point.
    //! \return Whether the component was successfully set.
-   bool set_comp_swd(struct gridpoint& gp);
+   // bool set_comp_swd(struct gridpoint& gp);
 
    //! \brief Function to set component s, w, f.
    //! \param gp Grid point.
    //! \return Whether the component was successfully set.
-   bool set_comp_swf(struct gridpoint& gp);
+   // bool set_comp_swf(struct gridpoint& gp);
 
    //! \brief Function to set component s, v, d.
    //! \param gp Grid point.
    //! \return Whether the component was successfully set.
-   bool set_comp_svd(struct gridpoint& gp);
+   // bool set_comp_svd(struct gridpoint& gp);
 
    //! \brief Function to set component s, v, f.
    //! \param gp Grid point.
    //! \return Whether the component was successfully set.
-   bool set_comp_svf(struct gridpoint& gp);
+   // bool set_comp_svf(struct gridpoint& gp);
 
    //! \brief Function to set component s, d, f.
    //! \param gp Grid point.
    //! \return Whether the component was successfully set.
-   bool set_comp_sdf(struct gridpoint& gp);
+   // bool set_comp_sdf(struct gridpoint& gp);
 
    //! \brief Function to set component k, w, v.
    //! \param gp Grid point.
    //! \return Whether the component was successfully set.
-   bool set_comp_kwv(struct gridpoint& gp);
+   // bool set_comp_kwv(struct gridpoint& gp);
 
    //! \brief Function to set component k, w, d.
    //! \param gp Grid point.
    //! \return Whether the component was successfully set.
-   bool set_comp_kwd(struct gridpoint& gp);
+   // bool set_comp_kwd(struct gridpoint& gp);
 
    //! \brief Function to set component k, w, f.
    //! \param gp Grid point.
    //! \return Whether the component was successfully set.
-   bool set_comp_kwf(struct gridpoint& gp);
+   // bool set_comp_kwf(struct gridpoint& gp);
 
    //! \brief Function to set component k, v, d.
    //! \param gp Grid point.
    //! \return Whether the component was successfully set.
-   bool set_comp_kvd(struct gridpoint& gp);
+   // bool set_comp_kvd(struct gridpoint& gp);
 
    //! \brief Function to set component k, v, f.
    //! \param gp Grid point.
    //! \return Whether the component was successfully set.
-   bool set_comp_kvf(struct gridpoint& gp);
+   // bool set_comp_kvf(struct gridpoint& gp);
 
    //! \brief Function to set component k, d, f.
    //! \param gp Grid point.
    //! \return Whether the component was successfully set.
-   bool set_comp_kdf(struct gridpoint& gp);
+   // bool set_comp_kdf(struct gridpoint& gp);
 
    //! \brief Function to set component w, v, d.
    //! \param gp Grid point.
    //! \return Whether the component was successfully set.
-   bool set_comp_wvd(struct gridpoint& gp);
+   // bool set_comp_wvd(struct gridpoint& gp);
 
    //! \brief Function to set component w, v, f.
    //! \param gp Grid point.
    //! \return Whether the component was successfully set.
-   bool set_comp_wvf(struct gridpoint& gp);
+   // bool set_comp_wvf(struct gridpoint& gp);
 
    //! \brief Function to set component w, d, f.
    //! \param gp Grid point.
    //! \return Whether the component was successfully set.
-   bool set_comp_wdf(struct gridpoint& gp);
+   // bool set_comp_wdf(struct gridpoint& gp);
 
    //! \brief Function to set component v, d, f.
    //! \param gp Grid point.
    //! \return Whether the component was successfully set.
-   bool set_comp_vdf(struct gridpoint& gp);
+   // bool set_comp_vdf(struct gridpoint& gp);
 
    //! \brief Function to check a grid point's validity.
    //! \param value Value to be checked.
    //! \param gp Grid point.
    //! \return Whether the grid point is valid.
-   bool check_grid_point(double value, struct gridpoint& gp);
+   // bool check_grid_point(double value, struct gridpoint& gp);
 
    //! \brief Function to validate frictional ratio.
    //! \return Whether the frictional ratio is valid.
@@ -441,13 +408,13 @@ private slots:
 
    //! \brief Function to clear a grid point's attributes.
    //! \param gp Grid point to be cleared.
-   void clear_grid(struct gridpoint& gp);
+   // void clear_grid(struct gridpoint& gp);
 
    //! \brief Function to set a grid point's attribute value.
    //! \param gp Grid point.
    //! \param attr Attribute index.
    //! \param value Value to be set.
-   void set_grid_value(struct gridpoint& gp, const int attr, const double value);
+   // void set_grid_value(struct gridpoint& gp, const int attr, const double value);
 
    //! \brief Function to complete a grid point's component values.
    //! \param gp Grid point.
