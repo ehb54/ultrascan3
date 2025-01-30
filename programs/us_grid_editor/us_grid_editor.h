@@ -49,6 +49,7 @@ public:
 private:
    int index;                //!< Index of the grid point.
    bool dvt_set;             //!< true if set_dens_visc_t is already called.
+   bool ready;               //!< true if 20w parameters are well set
    double density;
    double viscosity;
    double temperature;
@@ -62,11 +63,11 @@ private:
 
    QVector<double> _s;       //!< Sedimentation coefficient.
    QVector<double> _D;       //!< Diffusion coefficient.
-   QVector<double> _vbar;    //!< Partial specific volume.
-   QVector<double> _mw;      //!< Molecular weight.
-   QVector<double> _f;       //!< Frictional coefficient.
-   QVector<double> _ff0;     //!< Standard frictional coefficient.
-   QVector<double> _f0;      //!< Reference frictional coefficient.
+   // QVector<double> _vbar;    //!< Partial specific volume.
+   // QVector<double> _mw;      //!< Molecular weight.
+   // QVector<double> _f;       //!< Frictional coefficient.
+   // QVector<double> _ff0;     //!< Standard frictional coefficient.
+   // QVector<double> _f0;      //!< Reference frictional coefficient.
 
    QSet<attr_type> ptypes;
 

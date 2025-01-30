@@ -96,12 +96,12 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    // Experimental Space
 
    QLabel *lb_experm = us_banner( tr( "Experimental Space" ) );
-   QLabel *lb_dens = us_label( tr( "ρ at 20°C [g/mL]" ) );
+   QLabel *lb_dens = us_label( tr( "ρ [g/mL]" ) );
    lb_dens->setAlignment( Qt::AlignCenter );
    le_dens = us_lineedit( QString::number( DENS_20W ) );
    le_dens->setValidator(d_valid);
 
-   QLabel *lb_visc = us_label( tr( "η at 20°C [cP]" ) );
+   QLabel *lb_visc = us_label( tr( "η [cP]" ) );
    lb_visc->setAlignment( Qt::AlignCenter );
    le_visc = us_lineedit( QString::number( VISC_20W ) );
    le_visc->setValidator(d_valid);
@@ -2944,9 +2944,12 @@ void US_Grid_Preset::set_z_axis( )
    z_axis->disconnect();
    z_axis->clear();
    bool has_vbar = (x_param == ATTR_V || y_param == ATTR_V);
+   bool is_DF = x_param == ATTR_F || x_param == ATTR_D ||
+                y_param == ATTR_F || y_param == ATTR_D;
    if ( has_vbar ) {
       for (int ii = ATTR_S; ii <= ATTR_F; ii++) {
          if ( ii == x_param || ii == y_param ) continue;
+         if ( is_DF && ( ii == ATTR_F || ii == ATTR_D ) ) continue;
          z_axis->addItem( Attr_to_long( ii ), ii );
       }
       int index = z_axis->findData(z_param, Qt::UserRole);
@@ -2986,7 +2989,7 @@ QString Attr_to_long(int attr)
 QString Attr_to_short(int attr)
 {
    if ( attr == ATTR_S )
-      return QString("s [ Svedbergs (S) ]");
+      return QString("s [ Sv ]");
    else if ( attr == ATTR_K )
       return QString("f / f0");
    else if ( attr == ATTR_W )
@@ -3017,11 +3020,11 @@ GridPoint::GridPoint(int id)
 
    _s.fill(0, 3);
    _D.fill(0, 3);
-   _vbar.fill(0, 3);
-   _mw.fill(0, 3);
-   _f.fill(0, 3);
-   _f0.fill(0, 3);
-   _ff0.fill(0, 3);
+   // _vbar.fill(0, 3);
+   // _mw.fill(0, 3);
+   // _f.fill(0, 3);
+   // _f0.fill(0, 3);
+   // _ff0.fill(0, 3);
 }
 
 bool GridPoint::set_param(const QVector<double> & param, attr_type ptype)
@@ -3084,6 +3087,8 @@ void GridPoint::set_dens_visc_t(double dens, double visc, double T)
 
 void GridPoint::calculate_20w()
 {
+   ready = true;
+
    if ( contains( ATTR_V, ATTR_S, ATTR_K ) )
    {
       for ( int ii = 0; ii < 3; ii++ ) {
@@ -3168,22 +3173,29 @@ void GridPoint::calculate_20w()
          f0[ii] = 9 * VISC_20W * 0.01 * M_PI * qSqrt( 2 * vbar.at(ii) * s.at(ii) * VISC_20W * 0.01 / buoyancy );
          ff0[ii] = f.at(ii) / f0.at(ii);
       }
-   } else if ( contains( ATTR_V, ATTR_D, ATTR_F ) )
+   } else
    {
-      for ( int ii = 0; ii < 3; ii++ ) {
-
-      }
+      ready = false;
    }
-
-
-
-
-
 }
 
 void GridPoint::calculate_real()
 {
+   if ( ! dvt_set ) return;
+   if ( ! ready )   return;
 
+   for (int ii = 0; ii < 3; ii++) {
+      US_Math2::SolutionData sol;
+      sol.manual = false;
+      sol.vbar = vbar.at(ii);
+      sol.vbar20 = vbar.at(ii);
+      sol.density = density;
+      sol.viscosity = viscosity;
+      US_Math2::data_correction(temperature, sol);
+
+      _s[ii] = s.at(ii) / sol.s20w_correction;
+      _D[ii] = D.at(ii) / sol.D20w_correction;
+   }
 }
 
 bool GridPoint::contains(attr_type p1, attr_type p2, attr_type p3)
