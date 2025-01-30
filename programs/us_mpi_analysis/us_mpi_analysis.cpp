@@ -1070,7 +1070,9 @@ if (my_rank==0||true) DbgLv(0) << "ckGrSz: ssp count"
    mgroup_count = qMax( 1, mgroup_count );
    gcores_count = proc_count / mgroup_count;
    DbgLv(0) << "my_rank: " << my_rank << " mgroup_count" << mgroup_count << " gcores_count" << gcores_count;
+   MPI_Barrier( MPI_COMM_WORLD ); // Sync everybody up
    calculate_cosed();
+   MPI_Barrier( MPI_COMM_WORLD ); // Sync everybody up
    DbgLv(0) << "my_rank: " << my_rank << " calculate_cosed done";
    if ( mgroup_count < 2 )
       start();                  // Start standard job
