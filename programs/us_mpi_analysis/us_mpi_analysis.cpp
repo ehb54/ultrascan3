@@ -76,7 +76,7 @@ US_MPI_Analysis::US_MPI_Analysis( int nargs, QStringList& cmdargs ) : QObject()
    MPI_Comm_size( MPI_COMM_WORLD, &proc_count );
    MPI_Comm_rank( MPI_COMM_WORLD, &my_rank );
 
-   dbg_level    = 0;
+   dbg_level    = 2;
    dbg_timing   = false;
    maxrss       = 0L;
    minimize_opt = 2;
@@ -825,7 +825,7 @@ DbgLv(0) << "rank" << my_rank << ": ee" << ee << "tmst_file" << ds->tmst_file
             // that Astfem_Rsa's adjust_limits() function arrives at a
             // post-stretch bottom value equal to what is in the EditedData
             ds->simparams.bottom_position += ( edata->bottom - bottom_clc );
-if ( my_rank == 0 )
+if ( my_rank == 0 || true)
  DbgLv(0) << "rank" << my_rank << ": ee" << ee << "bottom_pos" << bottom_pos
   << "speed" << speed << "bottom_clc bottom_ds" << bottom_clc << edata->bottom
   << "adj.bottom_pos" << ds->simparams.bottom_position;
@@ -835,7 +835,7 @@ if ( my_rank == 0 )
    }  // END: datasets loop to upload timestate
 //DbgLv(0) << "rank" << my_rank << ": simSpeed :TM:" << ELAPSED_SECS;
 //   }
-if ( my_rank == 0 )
+if ( my_rank == 0 || true )
  DbgLv(0) << "rank" << my_rank << ": redo_ss" << redo_ss;
 
    if ( redo_ss )
@@ -865,7 +865,7 @@ if ( my_rank == 0 ) {
       if ( dbgtxt[ ii ].startsWith( "SetSpeedLowA=" ) )
       {
          lo_ss_acc        = QString( dbgtxt[ ii ] ).section( "=", 1, 1 ).toInt();
-         if ( my_rank == 0 ){
+         if ( my_rank == 0 || true){
             DbgLv(1) << "DSM: SetSpeedLowA:    SetSpeedLowA" << lo_ss_acc;
          }
       }
@@ -881,7 +881,7 @@ if ( my_rank == 0 ) {
       int rspeed    = dset->simparams.speed_step[ 0 ].rotorspeed;
       int tf_aend   = ( rspeed + accel1 - 1 ) / ( accel1 == 0 ? 1 : accel1 );
       int accel2    = dset->simparams.sim_speed_prof[ 0 ].acceleration;
-      if ( my_rank == 0 ){
+      if ( my_rank == 0 || true){
          DbgLv(1) << "DSM: ssck: rspeed accel1 tf_aend tf_scan"
                  << rspeed << accel1 << tf_aend << tf_scan
                  << "accel2" << accel2 << "lo_ss_acc" << lo_ss_acc;
@@ -893,7 +893,7 @@ if ( my_rank == 0 ) {
                   " accel end: " << tf_aend << "s. First scan: " << tf_scan << "s.";
       }
    }
-
+   DbgLv(0) << "rank: " << my_rank << "  Dataset check complete.";
    double  s_max = parameters[ "s_max" ].toDouble() * 1.0e-13;
    double  x_max = parameters[ "x_max" ].toDouble() * 1.0e-13;
    s_max         = ( s_max == 0.0 ) ? x_max : s_max;
@@ -1001,7 +1001,7 @@ if ( my_rank == 0 ) {
             set_comp_attrib( mcomp, yval, attr_y );
             set_comp_attrib( mcomp, zval, attr_z );
             US_Model::calc_coefficients( mcomp );
-if (my_rank==0) DbgLv(0) << "ckGrSz:  buck" << jj << "xv yv zv"
+if (my_rank==0||true) DbgLv(0) << "ckGrSz:  buck" << jj << "xv yv zv"
  << xval << yval << zval << "mc s k w v d f"
  << mcomp.s << mcomp.f_f0 << mcomp.mw << mcomp.vbar20 << mcomp.D << mcomp.f;
             s_max         = qMax( s_max, mcomp.s );
@@ -1011,13 +1011,13 @@ if (my_rank==0) DbgLv(0) << "ckGrSz:  buck" << jj << "xv yv zv"
    }
 
    s_max         = ( s_max == 0.0 ) ? 10e-13 : s_max;
-if (my_rank==0) DbgLv(0) << "ckGrSz: s_max" << s_max << "attr_x,y,z"
+if (my_rank==0||true) DbgLv(0) << "ckGrSz: s_max" << s_max << "attr_x,y,z"
  << attr_x << attr_y << attr_z;
 
    bool g_too_big  = false;
    if ( data_sets[ 0 ]->simparams.sim_speed_prof.count() < 2 )
         g_too_big  = US_SolveSim::checkGridSize( data_sets, s_max, smsg );
-if (my_rank==0) DbgLv(0) << "ckGrSz: ssp count"
+if (my_rank==0||true) DbgLv(0) << "ckGrSz: ssp count"
  << data_sets[0]->simparams.sim_speed_prof.count() << "g_too_big" << g_too_big;
    if ( g_too_big )
    {
@@ -1069,7 +1069,9 @@ if (my_rank==0) DbgLv(0) << "ckGrSz: ssp count"
 
    mgroup_count = qMax( 1, mgroup_count );
    gcores_count = proc_count / mgroup_count;
+   DbgLv(0) << "my_rank: " << my_rank << " mgroup_count" << mgroup_count << " gcores_count" << gcores_count;
    calculate_cosed();
+   DbgLv(0) << "my_rank: " << my_rank << " calculate_cosed done";
    if ( mgroup_count < 2 )
       start();                  // Start standard job
    
@@ -2721,6 +2723,7 @@ DbgLv(1) << "wrMo: stype" << stype << QString().sprintf("0%o",stype)
 }
 
 void US_MPI_Analysis::calculate_cosed() {
+   DbgLv(0) << "rank: " << my_rank << " calculate_cosed";
    if (data_sets.isEmpty() || data_sets[0]->solution_rec.buffer.cosed_component.isEmpty() ||
    data_sets[0]->simparams.meshType != US_SimulationParameters::ASTFVM){
       return;
