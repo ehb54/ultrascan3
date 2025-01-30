@@ -2905,15 +2905,15 @@ void US_MPI_Analysis::calculate_cosed() {
    if ( codiff_needed ){
       bool recalc = true;
       DbgLv(0) << "rank: " << my_rank << " codiff calc calculate_cosed bfgs " << bfgs.size() <<
-          "bandFormingGradient" << bandFormingGradient;
+          "bandFormingGradient" << bandFormingGradient << nullptr;
       if ( !bfgs.isEmpty() && bfgs.first() != nullptr &&
-            (bandFormingGradient == nullptr && bandFormingGradient->is_empty)){
+            (bandFormingGradient == nullptr || bandFormingGradient->is_empty)){
          delete bandFormingGradient;
          bandFormingGradient = bfgs.first();
       }
       if ( bandFormingGradient != nullptr ){
          DbgLv(0) << "rank: " << my_rank << " codiff calc calculate_cosed bfgs " << bfgs.size() <<
-     "bandFormingGradient" << bandFormingGradient << " is_suitable";
+     "bandFormingGradient" << bandFormingGradient << " isnt nullptr";
          // check if the band forming gradient is already calculated and fits the requirements
          if ( bandFormingGradient->is_suitable( data_sets[0]->simparams.meniscus,
                                                 data_sets[0]->simparams.bottom,
@@ -2922,6 +2922,7 @@ void US_MPI_Analysis::calculate_cosed() {
                                                 data_sets[0]->simparams.cp_angle,
                                                 data_sets[0]->solution_rec.buffer.cosed_component,
                                                 (int)data_sets[0]->run_data.scanData.last().seconds) ){
+
             recalc = false;
          }
          if ( recalc ){
@@ -2938,11 +2939,17 @@ void US_MPI_Analysis::calculate_cosed() {
                                                                       data_sets[0]->solution_rec.buffer.cosed_component,
                                                                       data_sets[0]->simparams.cp_pathlen,
                                                                       data_sets[0]->simparams.cp_angle );
+         DbgLv(0) << "rank: " << my_rank << " codiff calc calculate_cosed bfgs " << bfgs.size() <<
+     "bandFormingGradient" << bandFormingGradient << " recalc init";
          bandFormingGradient->get_eigenvalues( );
+         DbgLv(0) << "rank: " << my_rank << " codiff calc calculate_cosed bfgs " << bfgs.size() <<
+     "bandFormingGradient" << bandFormingGradient << " recalc eigenvalues";
          bandFormingGradient->calculate_gradient( data_sets[0]->simparams, &auc_data );
+         DbgLv(0) << "rank: " << my_rank << " codiff calc calculate_cosed bfgs " << bfgs.size() <<
+     "bandFormingGradient" << bandFormingGradient << " recalc gradient";
       }
 
-      DbgLv(0) << "rank: " << my_rank << " bfg calc calculate_cosed";
+      DbgLv(0) << "rank: " << my_rank << " bfg calc calculate_cosed" << bandFormingGradient;
    }
    data_sets_codiff_needed << codiff_needed;
    data_sets_cosed_needed << cosed_needed;
