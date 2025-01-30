@@ -2723,7 +2723,7 @@ DbgLv(1) << "wrMo: stype" << stype << QString().sprintf("0%o",stype)
 }
 
 void US_MPI_Analysis::calculate_cosed() {
-   DbgLv(0) << "rank: " << my_rank << " calculate_cosed";
+   DbgLv(0) << "rank: " << my_rank << " calculate_cosed band forming gradient " << bandFormingGradient;
    if (data_sets.isEmpty() || data_sets[0]->solution_rec.buffer.cosed_component.isEmpty() ||
    data_sets[0]->simparams.meshType != US_SimulationParameters::ASTFVM){
       return;
