@@ -29,7 +29,7 @@
 #define DbgLv(a) if(dbg_level>=a)qDebug()
 #endif
 
-enum attr_type { ATTR_S, ATTR_K, ATTR_W, ATTR_V, ATTR_D, ATTR_F };
+enum attr_type { ATTR_S, ATTR_K, ATTR_M, ATTR_V, ATTR_D, ATTR_F };
 
 QString Attr_to_long(int);  //!< returns the long name of the attr_type
 
@@ -215,65 +215,65 @@ private slots:
 
    //! \brief Slot to update x resolution.
    //! \param value New x resolution value.
-   void update_xRes(double value);
+   // void update_xRes(double value);
 
-   //! \brief Slot to update y resolution.
-   //! \param value New y resolution value.
-   void update_yRes(double value);
+   // //! \brief Slot to update y resolution.
+   // //! \param value New y resolution value.
+   // void update_yRes(double value);
 
-   //! \brief Slot to update x minimum value.
-   //! \param value New x minimum value.
-   void update_xMin(double value);
+   // //! \brief Slot to update x minimum value.
+   // //! \param value New x minimum value.
+   // void update_xMin(double value);
 
-   //! \brief Slot to update x maximum value.
-   //! \param value New x maximum value.
-   void update_xMax(double value);
+   // //! \brief Slot to update x maximum value.
+   // //! \param value New x maximum value.
+   // void update_xMax(double value);
 
-   //! \brief Slot to update y minimum value.
-   //! \param value New y minimum value.
-   void update_yMin(double value);
+   // //! \brief Slot to update y minimum value.
+   // //! \param value New y minimum value.
+   // void update_yMin(double value);
 
-   //! \brief Slot to update y maximum value.
-   //! \param value New y maximum value.
-   void update_yMax(double value);
+   // //! \brief Slot to update y maximum value.
+   // //! \param value New y maximum value.
+   // void update_yMax(double value);
 
-   //! \brief Slot to update z value.
-   //! \param value New z value.
-   void update_zVal(double value);
+   // //! \brief Slot to update z value.
+   // //! \param value New z value.
+   // void update_zVal(double value);
 
-   //! \brief Slot to update partial grid.
-   //! \param value New partial grid value.
-   void update_partialGrid(double value);
+   // //! \brief Slot to update partial grid.
+   // //! \param value New partial grid value.
+   // void update_partialGrid(double value);
 
-   //! \brief Slot to update subgrids.
-   //! \param value New subgrids value.
-   void update_subGrids(double value);
+   // //! \brief Slot to update subgrids.
+   // //! \param value New subgrids value.
+   // void update_subGrids(double value);
 
-   //! \brief Slot to update density, viscosity, and temperature of the buffer.
-   //! \param text New density value.
-   void update_exp_data( );
+   // //! \brief Slot to update density, viscosity, and temperature of the buffer.
+   // //! \param text New density value.
+   // void update_exp_data( );
 
-   //! \brief Slot to update the plot.
-   void update_plot(void);
+   // //! \brief Slot to update the plot.
+   // void update_plot(void);
 
-   //! \brief Slot to select plot.
-   //! \param index Index of the selected plot.
-   void select_plot(int index);
+   // //! \brief Slot to select plot.
+   // //! \param index Index of the selected plot.
+   // void select_plot(int index);
 
-   //! \brief Slot to delete a partial grid.
-   void delete_partialGrid(void);
+   // //! \brief Slot to delete a partial grid.
+   // void delete_partialGrid(void);
 
-   //! \brief Slot to add a partial grid.
-   void add_partialGrid(void);
+   // //! \brief Slot to add a partial grid.
+   // void add_partialGrid(void);
 
-   //! \brief Slot to save the grid data.
-   void save(void);
+   // //! \brief Slot to save the grid data.
+   // void save(void);
 
-   //! \brief Slot to reset the grid editor.
+   // //! \brief Slot to reset the grid editor.
    void reset(void);
 
-   //! \brief Slot to display help information.
-   void help(void) { showHelp.show_help("grid_editor.html"); };
+   // //! \brief Slot to display help information.
+   // void help(void) { showHelp.show_help("grid_editor.html"); };
 
    //! \brief Slot to show the final grid.
    //! \param checked Whether the final grid should be shown.
@@ -285,10 +285,10 @@ private slots:
 
    //! \brief Slot to update disk database settings.
    //! \param checked Whether disk database should be updated.
-   void update_disk_db(bool checked);
+   // void update_disk_db(bool checked);
 
    //! \brief Slot to select investigator.
-   void sel_investigator(void);
+   // void sel_investigator(void);
 
    //! \brief Function to get the value of a grid point for a given attribute.
    //! \param gp Grid point.
@@ -404,7 +404,7 @@ private slots:
 
    //! \brief Function to validate frictional ratio.
    //! \return Whether the frictional ratio is valid.
-   bool validate_ff0(void);
+   // bool validate_ff0(void);
 
    //! \brief Function to clear a grid point's attributes.
    //! \param gp Grid point to be cleared.
@@ -419,7 +419,7 @@ private slots:
    //! \brief Function to complete a grid point's component values.
    //! \param gp Grid point.
    //! \return Whether the component values are successfully completed.
-   bool complete_comp(struct gridpoint& gp);
+   // bool complete_comp(struct gridpoint& gp);
 };
 
 #endif

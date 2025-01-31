@@ -10,13 +10,9 @@
 #define setSymbol(a)       setSymbol(*a)
 #endif
 
+const double VISC_20WP = VISC_20W * 0.01;
+const double RGK20   = R_GC * K20;
 const double MPISQ   = M_PI * M_PI;
-const double THIRD   = 1.0 / 3.0;
-const double VOL_FAC = 0.75 / M_PI;
-const double SPH_FAC = 0.06 * M_PI * VISC_20W;
-const int    MINSSZ  = 10;
-const int    MAXSSZ  = 800;
-const int    DEFSSZ  = 100;
 
 // main program
 int main( int argc, char* argv[] )
@@ -60,7 +56,7 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    QLabel *lb_preset = us_banner( tr( "Grid Preset" ) );
 
    QPushButton* pb_investigator = us_pushbutton( tr( "Select Investigator" ) );
-   connect( pb_investigator, &QPushButton::clicked, this, &US_Grid_Editor::sel_investigator );
+   // connect( pb_investigator, &QPushButton::clicked, this, &US_Grid_Editor::sel_investigator );
 
    if ( US_Settings::us_inv_level() < 1 )
       pb_investigator->setEnabled( false );
@@ -72,7 +68,7 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    le_investigator = us_lineedit( number + US_Settings::us_inv_name(), 1, true );
 
    dkdb_cntrls   = new US_Disk_DB_Controls( US_Settings::default_data_location() );
-   connect( dkdb_cntrls, &US_Disk_DB_Controls::changed, this, &US_Grid_Editor::update_disk_db );
+   // connect( dkdb_cntrls, &US_Disk_DB_Controls::changed, this, &US_Grid_Editor::update_disk_db );
 
    grid_preset = new US_Grid_Preset(this);
    grid_preset->parameters(&x_param, &y_param, &z_param);
@@ -123,7 +119,7 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    toggle_plot->addButton( rb_plot1, 0 );
    toggle_plot->addButton( rb_plot2, 1 );
    rb_plot1   ->setChecked( true );
-   connect( toggle_plot, &QButtonGroup::idReleased, this, &US_Grid_Editor::select_plot );
+   // connect( toggle_plot, &QButtonGroup::idReleased, this, &US_Grid_Editor::select_plot );
 
    QLabel *lb_grid_list = us_label(" Grid List ");
    lb_grid_list->setAlignment( Qt::AlignCenter );
@@ -188,15 +184,15 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
 
    QPushButton* pb_reset = us_pushbutton( tr( "Reset" ) );
    pb_reset->setEnabled( true );
-   connect( pb_reset, &QPushButton::clicked, this, &US_Grid_Editor::reset );
+   // connect( pb_reset, &QPushButton::clicked, this, &US_Grid_Editor::reset );
 
    QPushButton* pb_save = us_pushbutton( tr( "Save" ) );
    pb_save->setEnabled( false );
-   connect( pb_save, &QPushButton::clicked, this, &US_Grid_Editor::save );
+   // connect( pb_save, &QPushButton::clicked, this, &US_Grid_Editor::save );
 
    QPushButton* pb_help = us_pushbutton( tr( "Help" ) );
    pb_help->setEnabled( true );
-   connect( pb_help, &QPushButton::clicked, this, &US_Grid_Editor::help );
+   // connect( pb_help, &QPushButton::clicked, this, &US_Grid_Editor::help );
 
    QPushButton* pb_close      = us_pushbutton( tr( "Close" ) );
    pb_close->setEnabled( true );
@@ -382,8 +378,8 @@ void US_Grid_Editor::reset( void )
 }
 
 // save the grid data
-void US_Grid_Editor::save( void )
-{
+// void US_Grid_Editor::save( void )
+// {
    // US_Model model;
    // US_Model::SimulationComponent sc;
    // QString modelPath, modelGuid;
@@ -538,545 +534,545 @@ void US_Grid_Editor::save( void )
    //       + tr( "\"\n  resulted in error code " )
    //       + QString::number( code ) + " ." );
    // }
-}
+// }
 
 // update raster x resolution
-void US_Grid_Editor::update_xRes( double dval )
-{
-// qDebug() << "ux1)yRes" << yRes;
-//    xRes  = dval;
-// qDebug() << "ux2)yRes" << yRes;
+// void US_Grid_Editor::update_xRes( double dval )
+// {
+// // qDebug() << "ux1)yRes" << yRes;
+// //    xRes  = dval;
+// // qDebug() << "ux2)yRes" << yRes;
+// //    update_plot();
+// // qDebug() << "ux3)yRes" << yRes;
+// }
+
+// // update raster y resolution
+// void US_Grid_Editor::update_yRes( double dval )
+// {
+//    // yRes  = dval;
+//    // update_plot();
+// }
+
+// // update plot limit x min
+// void US_Grid_Editor::update_xMin( double dval )
+// {
+//    // xMin    = dval;
+//    // // ct_xMax->disconnect();
+//    // // ct_xMax->setMinimum( xMin );
+
+//    // // connect( ct_xMax, SIGNAL( valueChanged( double ) ),
+//    // //          this,    SLOT  ( update_xMax ( double ) ) );
+
+//    // validate_ff0();
+
+//    // update_plot();
+// }
+
+// // update plot limit x max
+// void US_Grid_Editor::update_xMax( double dval )
+// {
+//    // xMax    = dval;
+//    // // ct_xMin->disconnect();
+//    // // ct_xMin->setMaximum( xMax );
+
+//    // // connect( ct_xMin, SIGNAL( valueChanged( double ) ),
+//    // //          this,    SLOT  ( update_xMin ( double ) ) );
+
+//    // validate_ff0();
+
+//    // update_plot();
+// }
+
+// // update plot limit y min
+// void US_Grid_Editor::update_yMin( double dval )
+// {
+// //    yMin    = dval;
+// // qDebug() << "update_yMin" << yMin;
+// //    // ct_yMax->disconnect();
+// //    // ct_yMax->setMinimum( yMin );
+
+// //    // connect( ct_yMax, SIGNAL( valueChanged( double ) ),
+// //    //          this,    SLOT  ( update_yMax ( double ) ) );
+
+// //    validate_ff0();
+
+// //    update_plot();
+// }
+
+// // update plot limit y max
+// void US_Grid_Editor::update_yMax( double dval )
+// {
+// //    yMax    = dval;
+// // qDebug() << "update_yMax" << yMax;
+// //    // ct_yMin->disconnect();
+// //    // ct_yMin->setMaximum( yMax );
+
+// //    // connect( ct_yMin, SIGNAL( valueChanged( double ) ),
+// //    //          this,    SLOT  ( update_yMin ( double ) ) );
+
+// //    validate_ff0();
+
+// //    update_plot();
+// }
+
+// // update plot limit z-value (f/f0 or vbar)
+// void US_Grid_Editor::update_zVal( double dval )
+// {
+//    // zVal    = dval;
+//    // vbar    = ( y_param == ATTR_V ) ? zVal : vbar;
+//    // ff0     = ( y_param == ATTR_K ) ? zVal : ff0;
+
+//    // validate_ff0();
+
+//    // update_plot();
+// }
+
+// // Select a partialGrid from all subgrids in the final grid for highlighting
+// void US_Grid_Editor::update_partialGrid( double dval )
+// {
+//    partialGrid = (int) dval;
 //    update_plot();
-// qDebug() << "ux3)yRes" << yRes;
-}
+// }
 
-// update raster y resolution
-void US_Grid_Editor::update_yRes( double dval )
-{
-   // yRes  = dval;
-   // update_plot();
-}
-
-// update plot limit x min
-void US_Grid_Editor::update_xMin( double dval )
-{
-   // xMin    = dval;
-   // // ct_xMax->disconnect();
-   // // ct_xMax->setMinimum( xMin );
-
-   // // connect( ct_xMax, SIGNAL( valueChanged( double ) ),
-   // //          this,    SLOT  ( update_xMax ( double ) ) );
-
-   // validate_ff0();
-
-   // update_plot();
-}
-
-// update plot limit x max
-void US_Grid_Editor::update_xMax( double dval )
-{
-   // xMax    = dval;
-   // // ct_xMin->disconnect();
-   // // ct_xMin->setMaximum( xMax );
-
-   // // connect( ct_xMin, SIGNAL( valueChanged( double ) ),
-   // //          this,    SLOT  ( update_xMin ( double ) ) );
-
-   // validate_ff0();
-
-   // update_plot();
-}
-
-// update plot limit y min
-void US_Grid_Editor::update_yMin( double dval )
-{
-//    yMin    = dval;
-// qDebug() << "update_yMin" << yMin;
-//    // ct_yMax->disconnect();
-//    // ct_yMax->setMinimum( yMin );
-
-//    // connect( ct_yMax, SIGNAL( valueChanged( double ) ),
-//    //          this,    SLOT  ( update_yMax ( double ) ) );
-
-//    validate_ff0();
-
+// // Select a subgrid from the final grid for highlighting:
+// void US_Grid_Editor::update_subGrids( double dval )
+// {
+//    int ntotg       = final_grid.size();
+//    subGrids        = (int)dval;
+//    // ct_partialGrid->setRange     ( 1, subGrids );
+//    // ct_partialGrid->setSingleStep( 1 );
+//    // le_counts->setText( tr( "%1 total, %2 per subgrid" )
+//    //       .arg( ntotg ).arg( ntotg / subGrids ) );
 //    update_plot();
-}
+// }
 
-// update plot limit y max
-void US_Grid_Editor::update_yMax( double dval )
-{
-//    yMax    = dval;
-// qDebug() << "update_yMax" << yMax;
-//    // ct_yMin->disconnect();
-//    // ct_yMin->setMaximum( yMax );
+// // update density
+// void US_Grid_Editor::update_exp_data( )
+// {
 
-//    // connect( ct_yMin, SIGNAL( valueChanged( double ) ),
-//    //          this,    SLOT  ( update_yMin ( double ) ) );
+// }
 
-//    validate_ff0();
+// // update plot
+// void US_Grid_Editor::update_plot( void )
+// {
+// qDebug() << "update_plot:  call calc_gridpoints()";
 
-//    update_plot();
-}
+//    QString xatitle = Attr_to_long( x_param );
+//    QString yatitle = Attr_to_long( y_param );
 
-// update plot limit z-value (f/f0 or vbar)
-void US_Grid_Editor::update_zVal( double dval )
-{
-   // zVal    = dval;
-   // vbar    = ( y_param == ATTR_V ) ? zVal : vbar;
-   // ff0     = ( y_param == ATTR_K ) ? zVal : ff0;
+//    if ( selected_plot == 1 )
+//       xatitle         = tr( "Molecular Weight" );
 
-   // validate_ff0();
+//    dataPlotClear( data_plot );
+//    data_plot->setAxisTitle( QwtPlot::xBottom, xatitle );
+//    data_plot->setAxisTitle( QwtPlot::yLeft,   yatitle );
 
-   // update_plot();
-}
+//    //print_minmax();
+//    int gridsize;
+//    QVector <double> xData1;
+//    QVector <double> yData1;
+//    QVector <double> xData2;
+//    QVector <double> yData2;
 
-// Select a partialGrid from all subgrids in the final grid for highlighting
-void US_Grid_Editor::update_partialGrid( double dval )
-{
-   partialGrid = (int) dval;
-   update_plot();
-}
+//    int iplt_x = ( selected_plot == 0 ) ? x_param : ATTR_W;
 
-// Select a subgrid from the final grid for highlighting:
-void US_Grid_Editor::update_subGrids( double dval )
-{
-   int ntotg       = final_grid.size();
-   subGrids        = (int)dval;
-   // ct_partialGrid->setRange     ( 1, subGrids );
-   // ct_partialGrid->setSingleStep( 1 );
-   // le_counts->setText( tr( "%1 total, %2 per subgrid" )
-   //       .arg( ntotg ).arg( ntotg / subGrids ) );
-   update_plot();
-}
+//    xData1.clear();
+//    yData1.clear();
+//    xData2.clear();
+//    yData2.clear();
 
-// update density
-void US_Grid_Editor::update_exp_data( )
-{
+//    // if ( ck_show_final_grid->isChecked()  &&
+//    //      !ck_show_sub_grid->isChecked())
+//       if (true)
+//    {
+//       gridsize = final_grid.size();
 
-}
+//       // for ( int ii = 0; ii < gridsize; ii++ )
+//       // {
+//       //    if ( final_grid[ ii ].index == partialGrid )
+//       //    {
+//       //       xData1 << grid_value( final_grid[ ii ], iplt_x );
+//       //       yData1 << grid_value( final_grid[ ii ], y_param );
+//       //    }
 
-// update plot
-void US_Grid_Editor::update_plot( void )
-{
-qDebug() << "update_plot:  call calc_gridpoints()";
+//       //    else
+//       //    {
+//       //       xData2 << grid_value( final_grid[ ii ], iplt_x );
+//       //       yData2 << grid_value( final_grid[ ii ], y_param );
+//       //    }
+//       // }
 
-   QString xatitle = Attr_to_long( x_param );
-   QString yatitle = Attr_to_long( y_param );
+//       QwtPlotCurve *c1;
+//       QwtSymbol*   sym1 = new QwtSymbol;
+//       sym1->setStyle( QwtSymbol::Ellipse );
+//       sym1->setBrush( QColor( Qt::red ) );
+//       sym1->setPen  ( QColor( Qt::red ) );
+//       sym1->setSize ( 3 );
 
-   if ( selected_plot == 1 )
-      xatitle         = tr( "Molecular Weight" );
+//       c1 = us_curve( data_plot, "highlighted Grid points" );
+//       c1->setSymbol ( sym1 );
+//       c1->setStyle  ( QwtPlotCurve::NoCurve );
+//       c1->setSamples( xData1.data(), yData1.data(), xData1.size() );
 
-   dataPlotClear( data_plot );
-   data_plot->setAxisTitle( QwtPlot::xBottom, xatitle );
-   data_plot->setAxisTitle( QwtPlot::yLeft,   yatitle );
+//       QwtPlotCurve *c2;
+//       QwtSymbol*   sym2 = new QwtSymbol;
+//       sym2->setStyle( QwtSymbol::Ellipse );
+//       sym2->setBrush( QColor( Qt::yellow ) );
+//       sym2->setPen  ( QColor( Qt::yellow ) );
+//       sym2->setSize ( 3 );
 
-   //print_minmax();
-   int gridsize;
-   QVector <double> xData1;
-   QVector <double> yData1;
-   QVector <double> xData2;
-   QVector <double> yData2;
-
-   int iplt_x = ( selected_plot == 0 ) ? x_param : ATTR_W;
-
-   xData1.clear();
-   yData1.clear();
-   xData2.clear();
-   yData2.clear();
-
-   // if ( ck_show_final_grid->isChecked()  &&
-   //      !ck_show_sub_grid->isChecked())
-      if (true)
-   {
-      gridsize = final_grid.size();
-
-      // for ( int ii = 0; ii < gridsize; ii++ )
-      // {
-      //    if ( final_grid[ ii ].index == partialGrid )
-      //    {
-      //       xData1 << grid_value( final_grid[ ii ], iplt_x );
-      //       yData1 << grid_value( final_grid[ ii ], y_param );
-      //    }
-
-      //    else
-      //    {
-      //       xData2 << grid_value( final_grid[ ii ], iplt_x );
-      //       yData2 << grid_value( final_grid[ ii ], y_param );
-      //    }
-      // }
-
-      QwtPlotCurve *c1;
-      QwtSymbol*   sym1 = new QwtSymbol;
-      sym1->setStyle( QwtSymbol::Ellipse );
-      sym1->setBrush( QColor( Qt::red ) );
-      sym1->setPen  ( QColor( Qt::red ) );
-      sym1->setSize ( 3 );
-
-      c1 = us_curve( data_plot, "highlighted Grid points" );
-      c1->setSymbol ( sym1 );
-      c1->setStyle  ( QwtPlotCurve::NoCurve );
-      c1->setSamples( xData1.data(), yData1.data(), xData1.size() );
-
-      QwtPlotCurve *c2;
-      QwtSymbol*   sym2 = new QwtSymbol;
-      sym2->setStyle( QwtSymbol::Ellipse );
-      sym2->setBrush( QColor( Qt::yellow ) );
-      sym2->setPen  ( QColor( Qt::yellow ) );
-      sym2->setSize ( 3 );
-
-      c2 = us_curve( data_plot, "Other Grid points" );
-      c2->setSymbol ( sym2 );
-      c2->setStyle  ( QwtPlotCurve::NoCurve );
-      c2->setSamples( xData2.data(), yData2.data(), xData2.size() );
-   }
-
-   // else if ( ck_show_final_grid->isChecked()  &&
-   //           ck_show_sub_grid->isChecked())
-      else if (0)
-   {
-      gridsize    = final_grid.size();
-      int counter = 1;
-
-      // for ( int ii = 0; ii < gridsize; ii++ )
-      // {
-      //    if ( counter == partialGrid )
-      //    {
-      //       xData1 << grid_value( final_grid[ ii ], iplt_x );
-      //       yData1 << grid_value( final_grid[ ii ], y_param );
-      //    }
-
-      //    else
-      //    {
-      //       xData2 << grid_value( final_grid[ ii ], iplt_x );
-      //       yData2 << grid_value( final_grid[ ii ], y_param );
-      //    }
-
-      //    counter++;
-
-      //    if ( counter > subGrids )
-      //       counter = 1;
-      // }
-
-      QwtPlotCurve *c1;
-      QwtSymbol*   sym1 = new QwtSymbol;
-      sym1->setStyle( QwtSymbol::Ellipse );
-      sym1->setBrush( QColor( Qt::red ) );
-      sym1->setPen  ( QColor( Qt::red ) );
-      sym1->setSize( 3 );
-
-      c1 = us_curve( data_plot, "highlighted Grid points" );
-      c1->setSymbol ( sym1 );
-      c1->setStyle  ( QwtPlotCurve::NoCurve );
-      c1->setSamples( xData1.data(), yData1.data(), xData1.size() );
-
-      QwtPlotCurve *c2;
-      QwtSymbol*   sym2 = new QwtSymbol;
-      sym2->setStyle( QwtSymbol::Ellipse );
-      sym2->setBrush( QColor( Qt::yellow ) );
-      sym2->setPen  ( QColor( Qt::yellow ) );
-      sym2->setSize( 3 );
-
-      c2 = us_curve( data_plot, "Other Grid points" );
-      c2->setSymbol ( sym2 );
-      c2->setStyle  ( QwtPlotCurve::NoCurve );
-      c2->setSamples( xData2.data(), yData2.data(), xData2.size() );
-   }
-
-   else
-   {  // Set up current grid plot
-      // gridsize    = current_grid.size();
-qDebug() << "  updplt: gridsize" << gridsize;
-      xData1.resize( gridsize );
-      yData1.resize( gridsize );
-
-      // for ( int ii = 0; ii < gridsize; ii++ )
-      // {
-      //    xData1[ ii ] = grid_value( current_grid[ ii ], iplt_x );
-      //    yData1[ ii ] = grid_value( current_grid[ ii ], y_param );
-      // }
-
-      QwtPlotCurve *c1;
-      QwtSymbol*   sym1 = new QwtSymbol;
-      sym1->setStyle( QwtSymbol::Ellipse );
-      sym1->setBrush( QColor( Qt::yellow ) );
-      sym1->setPen  ( QColor( Qt::yellow ) );
-      sym1->setSize( 3 );
-
-      c1 = us_curve( data_plot, "Grid points 1" );
-      c1->setSymbol ( sym1 );
-      c1->setStyle  ( QwtPlotCurve::NoCurve );
-      c1->setSamples( xData1.data(), yData1.data(), gridsize );
-   }
-
-   data_plot->setAxisAutoScale( QwtPlot::xBottom );
-   data_plot->setAxisAutoScale( QwtPlot::yLeft );
-   data_plot->replot();
-}
-
-// delete current grid
-void US_Grid_Editor::delete_partialGrid( void )
-{
-   // for (int i=final_grid.size() - 1; i>=0; i--)
-   // {
-   //    if (final_grid[i].index == partialGrid)
-   //    {
-   //       final_grid.removeAt(i);
-   //    }
-   // }
-   // // renumber index positions
-   // for (int i=0; i<final_grid.size(); i++)
-   // {
-   //    if (final_grid[i].index > partialGrid)
-   //    {
-   //       final_grid[i].index--;
-   //    }
-   // }
-   grid_index--;
-   // ct_partialGrid->setRange     ( 1, grid_index );
-   // ct_partialGrid->setSingleStep( 1 );
-   // if (grid_index == 0)
-   // {
-   //    ck_show_final_grid->setChecked (false);
-   //    ck_show_final_grid->setEnabled (false);
-   //    ct_partialGrid->setRange      ( 0, 0 );
-   //    ct_partialGrid->setSingleStep ( 1 );
-   //    ct_partialGrid->setEnabled( false );
-   //    show_final_grid( false );
-   // }
-   update_plot();
-}
-
-// Select plot1 (X-axis view) or plot2 (Molecular Weight view)
-void US_Grid_Editor::select_plot( int ival )
-{
-   selected_plot   = ival;
-
-   update_plot();
-}
-
-// Reset Disk_DB control whenever data source is changed in any dialog
-void US_Grid_Editor::update_disk_db( bool isDB )
-{
-   isDB ? dkdb_cntrls->set_db() : dkdb_cntrls->set_disk();
-}
-
-// Select DB investigator
-void US_Grid_Editor::sel_investigator( void )
-{
-   int investigator = US_Settings::us_inv_ID();
-
-   US_Investigator* dialog = new US_Investigator( true, investigator );
-   dialog->exec();
-
-   investigator = US_Settings::us_inv_ID();
-
-   QString inv_text = QString::number( investigator ) + ": "
-                      +  US_Settings::us_inv_name();
-
-   le_investigator->setText( inv_text );
-}
-
-// Adjust value/ranges so that f/f0 is not less than 1
-bool US_Grid_Editor::validate_ff0()
-{
-//    bool is_ok     = true;
-
-//    if ( x_param == ATTR_K  ||  y_param == ATTR_K  ||  z_param == ATTR_K )
-//    {  // If one of the attributes is f/f0, no need for checking
-//       return is_ok;
+//       c2 = us_curve( data_plot, "Other Grid points" );
+//       c2->setSymbol ( sym2 );
+//       c2->setStyle  ( QwtPlotCurve::NoCurve );
+//       c2->setSamples( xData2.data(), yData2.data(), xData2.size() );
 //    }
 
-//    double xMin = le_x_min->text().toDouble();
-//    double xMax = le_x_max->text().toDouble();
-//    double yMin = le_y_min->text().toDouble();
-//    double yMax = le_y_max->text().toDouble();
-//    double zVal = le_z_val->text().toDouble();
-// qDebug() << "valFF0: xMin xMax yMin yMax" << xMin << xMax << yMin << yMax;
-//    clear_grid( zpoint );
-//    set_grid_value( zpoint,    z_param, zVal );
-//    // Get f/f0 for xMin,yMin
-//    tmp_point      = zpoint;
-//    set_grid_value( tmp_point, x_param, xMin );
-//    set_grid_value( tmp_point, y_param, yMin );
-//    complete_comp ( tmp_point );
-//    double ffx1y1  = tmp_point.ff0;
-//    // Get f/f0 for xMin,yMax
-//    tmp_point      = zpoint;
-//    set_grid_value( tmp_point, x_param, xMin );
-//    set_grid_value( tmp_point, y_param, yMax );
-//    complete_comp ( tmp_point );
-//    double ffx1y2  = tmp_point.ff0;
-//    // Get f/f0 for xMax,yMin
-//    tmp_point      = zpoint;
-//    set_grid_value( tmp_point, x_param, xMax );
-//    set_grid_value( tmp_point, y_param, yMin );
-//    complete_comp ( tmp_point );
-//    double ffx2y1  = tmp_point.ff0;
-//    // Get f/f0 for xMax,yMax
-//    tmp_point      = zpoint;
-//    set_grid_value( tmp_point, x_param, xMax );
-//    set_grid_value( tmp_point, y_param, yMax );
-//    complete_comp ( tmp_point );
-//    double ffx2y2  = tmp_point.ff0;
-//    // Get overall minimum f/f0
-//    double ff0min  = qMin( ffx1y1, ffx1y2 );
-//    ff0min         = qMin( ff0min, ffx2y1 );
-//    ff0min         = qMin( ff0min, ffx2y2 );
-// qDebug() << "valFF0: zVal xMin yMin ff0" << zVal << xMin << yMin << ffx1y1;
-// qDebug() << "valFF0:      xMin yMax ff0   " << xMin << yMax << ffx1y2;
-// qDebug() << "valFF0:      xMax yMin ff0   " << xMax << yMin << ffx2y1;
-// qDebug() << "valFF0:      xMax yMax ff0   " << xMax << yMax << ffx2y2;
+//    // else if ( ck_show_final_grid->isChecked()  &&
+//    //           ck_show_sub_grid->isChecked())
+//       else if (0)
+//    {
+//       gridsize    = final_grid.size();
+//       int counter = 1;
 
-//    if ( ff0min < 1.0 )
-//    {  // Ranges include values that set f/f0 less than 1:  must adjust ranges
+//       // for ( int ii = 0; ii < gridsize; ii++ )
+//       // {
+//       //    if ( counter == partialGrid )
+//       //    {
+//       //       xData1 << grid_value( final_grid[ ii ], iplt_x );
+//       //       yData1 << grid_value( final_grid[ ii ], y_param );
+//       //    }
 
-//       if ( x_param == ATTR_W  ||  x_param == ATTR_F )
-//       {  // Adjust the X range (if MW or f)
-//          // ct_xMin->disconnect();
-//          // ct_xMax->disconnect();
-//          tmp_point      = zpoint;
-//          set_grid_value( tmp_point, ATTR_K, 1.0  );
+//       //    else
+//       //    {
+//       //       xData2 << grid_value( final_grid[ ii ], iplt_x );
+//       //       yData2 << grid_value( final_grid[ ii ], y_param );
+//       //    }
 
-//          if ( ffx1y1 < ffx1y2 )
-//          {  // Increasing Y means increasing f/f0, so get X for k=1,ymin
-//             set_grid_value( tmp_point, y_param, yMin );
-//             complete_comp ( tmp_point );
-//             double xVal    = grid_value( tmp_point, x_param );
+//       //    counter++;
 
-//             if ( ffx1y1 < ffx2y1 )
-//             {  // Increasing X means increasing f/f0, so set lower limit
-// qDebug() << "valFF0:  (1xMin)xVal" << xVal;
-//                // ct_xMin->setMinimum( xVal );
-//                // ct_xMax->setMinimum( xVal );
-//             }
+//       //    if ( counter > subGrids )
+//       //       counter = 1;
+//       // }
 
-//             else
-//             {  // Increasing X means decreasing f/f0, so set upper limit
-// qDebug() << "valFF0:  (2xMin)xVal" << xVal;
-//                // ct_xMin->setMaximum( xVal );
-//                // ct_xMax->setMaximum( xVal );
-//             }
-//          }
+//       QwtPlotCurve *c1;
+//       QwtSymbol*   sym1 = new QwtSymbol;
+//       sym1->setStyle( QwtSymbol::Ellipse );
+//       sym1->setBrush( QColor( Qt::red ) );
+//       sym1->setPen  ( QColor( Qt::red ) );
+//       sym1->setSize( 3 );
 
-//          else
-//          {  // Increasing Y means decreasing f/f0, so get X for k=1,ymax
-//             set_grid_value( tmp_point, y_param, yMax );
-//             complete_comp ( tmp_point );
-//             double xVal    = grid_value( tmp_point, x_param );
+//       c1 = us_curve( data_plot, "highlighted Grid points" );
+//       c1->setSymbol ( sym1 );
+//       c1->setStyle  ( QwtPlotCurve::NoCurve );
+//       c1->setSamples( xData1.data(), yData1.data(), xData1.size() );
 
-//             if ( ffx1y1 < ffx2y1 )
-//             {  // Increasing X means increasing f/f0, so set lower limit
-// qDebug() << "valFF0:  (3xMin)xVal" << xVal;
-//                // ct_xMin->setMinimum( xVal );
-//                // ct_xMax->setMinimum( xVal );
-//             }
+//       QwtPlotCurve *c2;
+//       QwtSymbol*   sym2 = new QwtSymbol;
+//       sym2->setStyle( QwtSymbol::Ellipse );
+//       sym2->setBrush( QColor( Qt::yellow ) );
+//       sym2->setPen  ( QColor( Qt::yellow ) );
+//       sym2->setSize( 3 );
 
-//             else
-//             {  // Increasing X means decreasing f/f0, so set upper limit
-// qDebug() << "valFF0:  (4xMin)xVal" << xVal;
-//                // ct_xMin->setMaximum( xVal );
-//                // ct_xMax->setMaximum( xVal );
-//             }
-//          }
-
-//          // connect( ct_xMin, SIGNAL( valueChanged( double ) ),
-//          //          this,    SLOT  ( update_xMin ( double ) ) );
-//          // connect( ct_xMax, SIGNAL( valueChanged( double ) ),
-//          //          this,    SLOT  ( update_xMax ( double ) ) );
-//       }
-
-//       if ( y_param == ATTR_W  ||  y_param == ATTR_F )
-//       {  // Adjust the Y range (if MW or f)
-//          // ct_yMin->disconnect();
-//          // ct_yMax->disconnect();
-//          tmp_point      = zpoint;
-//          set_grid_value( tmp_point, ATTR_K, 1.0  );
-
-//          if ( ffx1y1 < ffx2y1 )
-//          {  // Increasing X means increasing f/f0, so get Y for k=1,xmin
-//             set_grid_value( tmp_point, x_param, xMin );
-//             complete_comp ( tmp_point );
-//             double yVal    = grid_value( tmp_point, y_param );
-
-//             if ( ffx1y1 < ffx1y2 )
-//             {  // Increasing Y means increasing f/f0, so set lower limit
-// qDebug() << "valFF0:  (5yMin)yVal" << yVal;
-//                // ct_yMin->setMinimum( yVal );
-//                // ct_yMax->setMinimum( yVal );
-//             }
-
-//             else
-//             {  // Increasing Y means decreasing f/f0, so set upper limit
-// qDebug() << "valFF0:  (6yMax)yVal" << yVal;
-//                // ct_yMin->setMaximum( yVal );
-//                // ct_yMax->setMaximum( yVal );
-//             }
-//          }
-
-//          else
-//          {  // Increasing X means decreasing f/f0, so get y for k=1,xmax
-//             set_grid_value( tmp_point, x_param, xMax );
-//             complete_comp ( tmp_point );
-//             double yVal    = grid_value( tmp_point, y_param );
-
-//             if ( ffx1y1 < ffx1y2 )
-//             {  // Increasing Y means increasing f/f0, so set lower limit
-// qDebug() << "valFF0:  (7yMin)yVal" << yVal;
-//                // ct_yMin->setMinimum( yVal );
-//                // ct_yMax->setMinimum( yVal );
-//             }
-
-//             else
-//             {  // Increasing Y means decreasing f/f0, so set upper limit
-// qDebug() << "valFF0:  (8yMax)yVal" << yVal;
-//                // ct_yMin->setMaximum( yVal );
-//                // ct_yMax->setMaximum( yVal );
-//             }
-//          }
-
-//          // connect( ct_yMin, SIGNAL( valueChanged( double ) ),
-//          //          this,    SLOT  ( update_yMin ( double ) ) );
-//          // connect( ct_yMax, SIGNAL( valueChanged( double ) ),
-//          //          this,    SLOT  ( update_yMax ( double ) ) );
-//       }
+//       c2 = us_curve( data_plot, "Other Grid points" );
+//       c2->setSymbol ( sym2 );
+//       c2->setStyle  ( QwtPlotCurve::NoCurve );
+//       c2->setSamples( xData2.data(), yData2.data(), xData2.size() );
 //    }
 
-//    // xMin           = ct_xMin->value();
-//    // xMax           = ct_xMax->value();
-//    // yMin           = ct_yMin->value();
-//    // yMax           = ct_yMax->value();
-// qDebug() << "valFF0: (out)xMin xMax yMin yMax" << xMin << xMax << yMin << yMax;
+//    else
+//    {  // Set up current grid plot
+//       // gridsize    = current_grid.size();
+// qDebug() << "  updplt: gridsize" << gridsize;
+//       xData1.resize( gridsize );
+//       yData1.resize( gridsize );
 
-//    return is_ok;
-return false;
-}
+//       // for ( int ii = 0; ii < gridsize; ii++ )
+//       // {
+//       //    xData1[ ii ] = grid_value( current_grid[ ii ], iplt_x );
+//       //    yData1[ ii ] = grid_value( current_grid[ ii ], y_param );
+//       // }
 
-// Complete component where 3 attributes are given
-bool US_Grid_Editor::complete_comp( struct gridpoint& gpoint )
-{
-   // US_Model::SimulationComponent sc;
-   // sc.s          = gpoint.s * 1.0e-13;
-   // sc.f_f0       = gpoint.ff0;
-   // sc.mw         = gpoint.mw;
-   // sc.vbar20     = gpoint.vbar;
-   // sc.D          = gpoint.D;
-   // sc.f          = gpoint.f;
+//       QwtPlotCurve *c1;
+//       QwtSymbol*   sym1 = new QwtSymbol;
+//       sym1->setStyle( QwtSymbol::Ellipse );
+//       sym1->setBrush( QColor( Qt::yellow ) );
+//       sym1->setPen  ( QColor( Qt::yellow ) );
+//       sym1->setSize( 3 );
 
-   // bool is_ok    = US_Model::calc_coefficients( sc );
+//       c1 = us_curve( data_plot, "Grid points 1" );
+//       c1->setSymbol ( sym1 );
+//       c1->setStyle  ( QwtPlotCurve::NoCurve );
+//       c1->setSamples( xData1.data(), yData1.data(), gridsize );
+//    }
 
-   // if ( is_ok )
-   // {
-   //    gpoint.s      = sc.s * 1.0e+13;
-   //    gpoint.ff0    = sc.f_f0;
-   //    gpoint.mw     = sc.mw;
-   //    gpoint.vbar   = sc.vbar20;
-   //    gpoint.D      = sc.D;
-   //    gpoint.f      = sc.f;
-   // }
+//    data_plot->setAxisAutoScale( QwtPlot::xBottom );
+//    data_plot->setAxisAutoScale( QwtPlot::yLeft );
+//    data_plot->replot();
+// }
 
-   return false;
-}
+// // delete current grid
+// void US_Grid_Editor::delete_partialGrid( void )
+// {
+//    // for (int i=final_grid.size() - 1; i>=0; i--)
+//    // {
+//    //    if (final_grid[i].index == partialGrid)
+//    //    {
+//    //       final_grid.removeAt(i);
+//    //    }
+//    // }
+//    // // renumber index positions
+//    // for (int i=0; i<final_grid.size(); i++)
+//    // {
+//    //    if (final_grid[i].index > partialGrid)
+//    //    {
+//    //       final_grid[i].index--;
+//    //    }
+//    // }
+//    grid_index--;
+//    // ct_partialGrid->setRange     ( 1, grid_index );
+//    // ct_partialGrid->setSingleStep( 1 );
+//    // if (grid_index == 0)
+//    // {
+//    //    ck_show_final_grid->setChecked (false);
+//    //    ck_show_final_grid->setEnabled (false);
+//    //    ct_partialGrid->setRange      ( 0, 0 );
+//    //    ct_partialGrid->setSingleStep ( 1 );
+//    //    ct_partialGrid->setEnabled( false );
+//    //    show_final_grid( false );
+//    // }
+//    update_plot();
+// }
+
+// // Select plot1 (X-axis view) or plot2 (Molecular Weight view)
+// void US_Grid_Editor::select_plot( int ival )
+// {
+//    selected_plot   = ival;
+
+//    update_plot();
+// }
+
+// // Reset Disk_DB control whenever data source is changed in any dialog
+// void US_Grid_Editor::update_disk_db( bool isDB )
+// {
+//    isDB ? dkdb_cntrls->set_db() : dkdb_cntrls->set_disk();
+// }
+
+// // Select DB investigator
+// void US_Grid_Editor::sel_investigator( void )
+// {
+//    int investigator = US_Settings::us_inv_ID();
+
+//    US_Investigator* dialog = new US_Investigator( true, investigator );
+//    dialog->exec();
+
+//    investigator = US_Settings::us_inv_ID();
+
+//    QString inv_text = QString::number( investigator ) + ": "
+//                       +  US_Settings::us_inv_name();
+
+//    le_investigator->setText( inv_text );
+// }
+
+// // Adjust value/ranges so that f/f0 is not less than 1
+// bool US_Grid_Editor::validate_ff0()
+// {
+// //    bool is_ok     = true;
+
+// //    if ( x_param == ATTR_K  ||  y_param == ATTR_K  ||  z_param == ATTR_K )
+// //    {  // If one of the attributes is f/f0, no need for checking
+// //       return is_ok;
+// //    }
+
+// //    double xMin = le_x_min->text().toDouble();
+// //    double xMax = le_x_max->text().toDouble();
+// //    double yMin = le_y_min->text().toDouble();
+// //    double yMax = le_y_max->text().toDouble();
+// //    double zVal = le_z_val->text().toDouble();
+// // qDebug() << "valFF0: xMin xMax yMin yMax" << xMin << xMax << yMin << yMax;
+// //    clear_grid( zpoint );
+// //    set_grid_value( zpoint,    z_param, zVal );
+// //    // Get f/f0 for xMin,yMin
+// //    tmp_point      = zpoint;
+// //    set_grid_value( tmp_point, x_param, xMin );
+// //    set_grid_value( tmp_point, y_param, yMin );
+// //    complete_comp ( tmp_point );
+// //    double ffx1y1  = tmp_point.ff0;
+// //    // Get f/f0 for xMin,yMax
+// //    tmp_point      = zpoint;
+// //    set_grid_value( tmp_point, x_param, xMin );
+// //    set_grid_value( tmp_point, y_param, yMax );
+// //    complete_comp ( tmp_point );
+// //    double ffx1y2  = tmp_point.ff0;
+// //    // Get f/f0 for xMax,yMin
+// //    tmp_point      = zpoint;
+// //    set_grid_value( tmp_point, x_param, xMax );
+// //    set_grid_value( tmp_point, y_param, yMin );
+// //    complete_comp ( tmp_point );
+// //    double ffx2y1  = tmp_point.ff0;
+// //    // Get f/f0 for xMax,yMax
+// //    tmp_point      = zpoint;
+// //    set_grid_value( tmp_point, x_param, xMax );
+// //    set_grid_value( tmp_point, y_param, yMax );
+// //    complete_comp ( tmp_point );
+// //    double ffx2y2  = tmp_point.ff0;
+// //    // Get overall minimum f/f0
+// //    double ff0min  = qMin( ffx1y1, ffx1y2 );
+// //    ff0min         = qMin( ff0min, ffx2y1 );
+// //    ff0min         = qMin( ff0min, ffx2y2 );
+// // qDebug() << "valFF0: zVal xMin yMin ff0" << zVal << xMin << yMin << ffx1y1;
+// // qDebug() << "valFF0:      xMin yMax ff0   " << xMin << yMax << ffx1y2;
+// // qDebug() << "valFF0:      xMax yMin ff0   " << xMax << yMin << ffx2y1;
+// // qDebug() << "valFF0:      xMax yMax ff0   " << xMax << yMax << ffx2y2;
+
+// //    if ( ff0min < 1.0 )
+// //    {  // Ranges include values that set f/f0 less than 1:  must adjust ranges
+
+// //       if ( x_param == ATTR_W  ||  x_param == ATTR_F )
+// //       {  // Adjust the X range (if MW or f)
+// //          // ct_xMin->disconnect();
+// //          // ct_xMax->disconnect();
+// //          tmp_point      = zpoint;
+// //          set_grid_value( tmp_point, ATTR_K, 1.0  );
+
+// //          if ( ffx1y1 < ffx1y2 )
+// //          {  // Increasing Y means increasing f/f0, so get X for k=1,ymin
+// //             set_grid_value( tmp_point, y_param, yMin );
+// //             complete_comp ( tmp_point );
+// //             double xVal    = grid_value( tmp_point, x_param );
+
+// //             if ( ffx1y1 < ffx2y1 )
+// //             {  // Increasing X means increasing f/f0, so set lower limit
+// // qDebug() << "valFF0:  (1xMin)xVal" << xVal;
+// //                // ct_xMin->setMinimum( xVal );
+// //                // ct_xMax->setMinimum( xVal );
+// //             }
+
+// //             else
+// //             {  // Increasing X means decreasing f/f0, so set upper limit
+// // qDebug() << "valFF0:  (2xMin)xVal" << xVal;
+// //                // ct_xMin->setMaximum( xVal );
+// //                // ct_xMax->setMaximum( xVal );
+// //             }
+// //          }
+
+// //          else
+// //          {  // Increasing Y means decreasing f/f0, so get X for k=1,ymax
+// //             set_grid_value( tmp_point, y_param, yMax );
+// //             complete_comp ( tmp_point );
+// //             double xVal    = grid_value( tmp_point, x_param );
+
+// //             if ( ffx1y1 < ffx2y1 )
+// //             {  // Increasing X means increasing f/f0, so set lower limit
+// // qDebug() << "valFF0:  (3xMin)xVal" << xVal;
+// //                // ct_xMin->setMinimum( xVal );
+// //                // ct_xMax->setMinimum( xVal );
+// //             }
+
+// //             else
+// //             {  // Increasing X means decreasing f/f0, so set upper limit
+// // qDebug() << "valFF0:  (4xMin)xVal" << xVal;
+// //                // ct_xMin->setMaximum( xVal );
+// //                // ct_xMax->setMaximum( xVal );
+// //             }
+// //          }
+
+// //          // connect( ct_xMin, SIGNAL( valueChanged( double ) ),
+// //          //          this,    SLOT  ( update_xMin ( double ) ) );
+// //          // connect( ct_xMax, SIGNAL( valueChanged( double ) ),
+// //          //          this,    SLOT  ( update_xMax ( double ) ) );
+// //       }
+
+// //       if ( y_param == ATTR_W  ||  y_param == ATTR_F )
+// //       {  // Adjust the Y range (if MW or f)
+// //          // ct_yMin->disconnect();
+// //          // ct_yMax->disconnect();
+// //          tmp_point      = zpoint;
+// //          set_grid_value( tmp_point, ATTR_K, 1.0  );
+
+// //          if ( ffx1y1 < ffx2y1 )
+// //          {  // Increasing X means increasing f/f0, so get Y for k=1,xmin
+// //             set_grid_value( tmp_point, x_param, xMin );
+// //             complete_comp ( tmp_point );
+// //             double yVal    = grid_value( tmp_point, y_param );
+
+// //             if ( ffx1y1 < ffx1y2 )
+// //             {  // Increasing Y means increasing f/f0, so set lower limit
+// // qDebug() << "valFF0:  (5yMin)yVal" << yVal;
+// //                // ct_yMin->setMinimum( yVal );
+// //                // ct_yMax->setMinimum( yVal );
+// //             }
+
+// //             else
+// //             {  // Increasing Y means decreasing f/f0, so set upper limit
+// // qDebug() << "valFF0:  (6yMax)yVal" << yVal;
+// //                // ct_yMin->setMaximum( yVal );
+// //                // ct_yMax->setMaximum( yVal );
+// //             }
+// //          }
+
+// //          else
+// //          {  // Increasing X means decreasing f/f0, so get y for k=1,xmax
+// //             set_grid_value( tmp_point, x_param, xMax );
+// //             complete_comp ( tmp_point );
+// //             double yVal    = grid_value( tmp_point, y_param );
+
+// //             if ( ffx1y1 < ffx1y2 )
+// //             {  // Increasing Y means increasing f/f0, so set lower limit
+// // qDebug() << "valFF0:  (7yMin)yVal" << yVal;
+// //                // ct_yMin->setMinimum( yVal );
+// //                // ct_yMax->setMinimum( yVal );
+// //             }
+
+// //             else
+// //             {  // Increasing Y means decreasing f/f0, so set upper limit
+// // qDebug() << "valFF0:  (8yMax)yVal" << yVal;
+// //                // ct_yMin->setMaximum( yVal );
+// //                // ct_yMax->setMaximum( yVal );
+// //             }
+// //          }
+
+// //          // connect( ct_yMin, SIGNAL( valueChanged( double ) ),
+// //          //          this,    SLOT  ( update_yMin ( double ) ) );
+// //          // connect( ct_yMax, SIGNAL( valueChanged( double ) ),
+// //          //          this,    SLOT  ( update_yMax ( double ) ) );
+// //       }
+// //    }
+
+// //    // xMin           = ct_xMin->value();
+// //    // xMax           = ct_xMax->value();
+// //    // yMin           = ct_yMin->value();
+// //    // yMax           = ct_yMax->value();
+// // qDebug() << "valFF0: (out)xMin xMax yMin yMax" << xMin << xMax << yMin << yMax;
+
+// //    return is_ok;
+// return false;
+// }
+
+// // Complete component where 3 attributes are given
+// bool US_Grid_Editor::complete_comp( struct gridpoint& gpoint )
+// {
+//    // US_Model::SimulationComponent sc;
+//    // sc.s          = gpoint.s * 1.0e-13;
+//    // sc.f_f0       = gpoint.ff0;
+//    // sc.mw         = gpoint.mw;
+//    // sc.vbar20     = gpoint.vbar;
+//    // sc.D          = gpoint.D;
+//    // sc.f          = gpoint.f;
+
+//    // bool is_ok    = US_Model::calc_coefficients( sc );
+
+//    // if ( is_ok )
+//    // {
+//    //    gpoint.s      = sc.s * 1.0e+13;
+//    //    gpoint.ff0    = sc.f_f0;
+//    //    gpoint.mw     = sc.mw;
+//    //    gpoint.vbar   = sc.vbar20;
+//    //    gpoint.D      = sc.D;
+//    //    gpoint.f      = sc.f;
+//    // }
+
+//    return false;
+// }
 
 
 US_Grid_Preset::US_Grid_Preset(QWidget * parent) : US_WidgetsDialog(parent)
@@ -1092,14 +1088,14 @@ US_Grid_Preset::US_Grid_Preset(QWidget * parent) : US_WidgetsDialog(parent)
 
    QGridLayout* x_s     = us_radiobutton( Attr_to_long( ATTR_S ), rb_x_s, true );
    QGridLayout* x_ff0   = us_radiobutton( Attr_to_long( ATTR_K ), rb_x_ff0, false );
-   QGridLayout* x_mw    = us_radiobutton( Attr_to_long( ATTR_W ), rb_x_mw, true );
+   QGridLayout* x_mw    = us_radiobutton( Attr_to_long( ATTR_M ), rb_x_mw, true );
    QGridLayout* x_vbar  = us_radiobutton( Attr_to_long( ATTR_V ), rb_x_vbar, true );
    QGridLayout* x_D     = us_radiobutton( Attr_to_long( ATTR_D ), rb_x_D, true );
    QGridLayout* x_f     = us_radiobutton( Attr_to_long( ATTR_F ), rb_x_f, true );
 
    QGridLayout* y_s     = us_radiobutton( Attr_to_long( ATTR_S ), rb_y_s, false );
    QGridLayout* y_ff0   = us_radiobutton( Attr_to_long( ATTR_K ), rb_y_ff0, true );
-   QGridLayout* y_mw    = us_radiobutton( Attr_to_long( ATTR_W ), rb_y_mw, true );
+   QGridLayout* y_mw    = us_radiobutton( Attr_to_long( ATTR_M ), rb_y_mw, true );
    QGridLayout* y_vbar  = us_radiobutton( Attr_to_long( ATTR_V ), rb_y_vbar, true );
    QGridLayout* y_D     = us_radiobutton( Attr_to_long( ATTR_D ), rb_y_D, true );
    QGridLayout* y_f     = us_radiobutton( Attr_to_long( ATTR_F ), rb_y_f, true );
@@ -1107,7 +1103,7 @@ US_Grid_Preset::US_Grid_Preset(QWidget * parent) : US_WidgetsDialog(parent)
    x_axis = new QButtonGroup( this );
    x_axis->addButton( rb_x_s,    ATTR_S );
    x_axis->addButton( rb_x_ff0,  ATTR_K );
-   x_axis->addButton( rb_x_mw,   ATTR_W );
+   x_axis->addButton( rb_x_mw,   ATTR_M );
    x_axis->addButton( rb_x_vbar, ATTR_V );
    x_axis->addButton( rb_x_D,    ATTR_D );
    x_axis->addButton( rb_x_f,    ATTR_F );
@@ -1115,7 +1111,7 @@ US_Grid_Preset::US_Grid_Preset(QWidget * parent) : US_WidgetsDialog(parent)
    y_axis = new QButtonGroup( this );
    y_axis->addButton( rb_y_s,    ATTR_S );
    y_axis->addButton( rb_y_ff0,  ATTR_K );
-   y_axis->addButton( rb_y_mw,   ATTR_W );
+   y_axis->addButton( rb_y_mw,   ATTR_M );
    y_axis->addButton( rb_y_vbar, ATTR_V );
    y_axis->addButton( rb_y_D,    ATTR_D );
    y_axis->addButton( rb_y_f,    ATTR_F );
@@ -1280,7 +1276,7 @@ QString Attr_to_long(int attr)
       return QString("Sedimentation Coefficient");
    else if ( attr == ATTR_K )
       return QString("Frictional Ratio");
-   else if ( attr == ATTR_W )
+   else if ( attr == ATTR_M )
       return QString("Molecular Weight");
    else if ( attr == ATTR_V )
       return QString("Partial Specific Volume");
@@ -1298,7 +1294,7 @@ QString Attr_to_short(int attr)
       return QString("s [ Sv ]");
    else if ( attr == ATTR_K )
       return QString("f / f0");
-   else if ( attr == ATTR_W )
+   else if ( attr == ATTR_M )
       return QString("M [ g / mol ]");
    else if ( attr == ATTR_V )
       return QString("vbar [ mL / g ]");
@@ -1352,7 +1348,7 @@ bool GridPoint::set_param(const QVector<double> & param, attr_type ptype)
    case ATTR_K:
       ff0     = param;
       break;
-   case ATTR_W:
+   case ATTR_M:
       mw      = param;
       break;
    case ATTR_V:
@@ -1394,94 +1390,156 @@ void GridPoint::set_dens_visc_t(double dens, double visc, double T)
 void GridPoint::calculate_20w()
 {
    ready = true;
+   // S, K, M, V, D, F, F0
 
-   if ( contains( ATTR_V, ATTR_S, ATTR_K ) )
+   if ( contains( ATTR_V, ATTR_S, ATTR_K ) )         // 1: M, D, F, F0
    {
       for ( int ii = 0; ii < 3; ii++ ) {
-         double buoyancy = 1 - vbar.at(ii) * DENS_20W;
-         f0[ii] = 9 * VISC_20W * 0.01 * M_PI * qSqrt( 2 * vbar.at(ii) * s.at(ii) * VISC_20W * 0.01 / buoyancy );
+         double buoy = 1 - vbar.at(ii) * DENS_20W;
+         f0[ii] = 9 * VISC_20WP * M_PI * qSqrt( 2 * vbar.at(ii) * s.at(ii) * VISC_20WP / buoy );
          f[ii] = ff0.at(ii) * f0.at(ii);
-         D[ii] = ( R_GC * K20 ) / ( AVOGADRO * f.at(ii));
-         mw[ii] = s.at(ii) * AVOGADRO * f.at(ii) / buoyancy;
+         D[ii] = RGK20 / ( AVOGADRO * f.at(ii) );
+         mw[ii] = s.at(ii) * AVOGADRO * f.at(ii) / buoy;
       }
-   } else if ( contains( ATTR_V, ATTR_S, ATTR_W ) )
+   } else if ( contains( ATTR_V, ATTR_S, ATTR_M ) )  // 2: K, D, F, F0
    {
       for ( int ii = 0; ii < 3; ii++ ) {
-         double buoyancy = 1 - vbar.at(ii) * DENS_20W;
-         f0[ii] = 9 * VISC_20W * 0.01 * M_PI * qSqrt( 2 * vbar.at(ii) * s.at(ii) * VISC_20W * 0.01 / buoyancy );
-         f[ii] = ( mw.at(ii) * buoyancy ) / ( s.at(ii) * AVOGADRO );
+         double buoy = 1 - vbar.at(ii) * DENS_20W;
+         f0[ii] = 9 * VISC_20WP * M_PI * qSqrt( 2 * vbar.at(ii) * s.at(ii) * VISC_20WP / buoy );
+         f[ii] = mw.at(ii) * buoy / ( AVOGADRO * s.at(ii) );
+         D[ii] = RGK20 / ( AVOGADRO * f.at(ii) );
          ff0[ii] = f.at(ii) / f0.at(ii);
-         D[ii] = ( R_GC * K20 ) / ( AVOGADRO * f.at(ii));
       }
-
-   } else if ( contains( ATTR_V, ATTR_S, ATTR_D ) )
+   } else if ( contains( ATTR_V, ATTR_S, ATTR_D ) )  // 3: K, M, F, F0
    {
       for ( int ii = 0; ii < 3; ii++ ) {
-         double buoyancy = 1 - vbar.at(ii) * DENS_20W;
-         f0[ii] = 9 * VISC_20W * 0.01 * M_PI * qSqrt( 2 * vbar.at(ii) * s.at(ii) * VISC_20W * 0.01 / buoyancy );
-         f[ii] = ( R_GC * K20 ) / ( AVOGADRO * D.at(ii) );
+         double buoy = 1 - vbar.at(ii) * DENS_20W;
+         f0[ii] = 9 * VISC_20WP * M_PI * qSqrt( 2 * vbar.at(ii) * s.at(ii) * VISC_20WP / buoy );
+         f[ii] = RGK20 / ( AVOGADRO * D.at(ii) );
          ff0[ii] = f.at(ii) / f0.at(ii);
-         mw[ii] = s.at(ii) * AVOGADRO * f.at(ii) / buoyancy;
+         mw[ii] = s.at(ii) * AVOGADRO * f.at(ii) / buoy;
       }
-   } else if ( contains( ATTR_V, ATTR_S, ATTR_F ) )
+   } else if ( contains( ATTR_V, ATTR_S, ATTR_F ) )  // 4: K, M, D, F0
    {
       for ( int ii = 0; ii < 3; ii++ ) {
-         double buoyancy = 1 - vbar.at(ii) * DENS_20W;
-         f0[ii] = 9 * VISC_20W * 0.01 * M_PI * qSqrt( 2 * vbar.at(ii) * s.at(ii) * VISC_20W * 0.01 / buoyancy );
+         double buoy = 1 - vbar.at(ii) * DENS_20W;
+         f0[ii] = 9 * VISC_20WP * M_PI * qSqrt( 2 * vbar.at(ii) * s.at(ii) * VISC_20WP / buoy );
          ff0[ii] = f.at(ii) / f0.at(ii);
-         D[ii] = ( R_GC * K20 ) / ( AVOGADRO * f.at(ii));
-         mw[ii] = s.at(ii) * AVOGADRO * f.at(ii) / buoyancy;
+         D[ii] = RGK20 / ( AVOGADRO * f.at(ii) );
+         mw[ii] = s.at(ii) * AVOGADRO * f.at(ii) / buoy;
       }
-   } else if ( contains( ATTR_V, ATTR_K, ATTR_W ) )
+   } else if ( contains( ATTR_V, ATTR_K, ATTR_M ) )  // 5: S, D, F, F0
    {
       for ( int ii = 0; ii < 3; ii++ ) {
-         double buoyancy = 1 - vbar.at(ii) * DENS_20W;
-         D[ii] = ( R_GC * K20 ) / ( 3 * VISC_20W ) *
+         double buoy = 1 - vbar.at(ii) * DENS_20W;
+         D[ii] = RGK20 / ( 3 * VISC_20WP ) *
                  qPow( 6 * mw.at(ii) * vbar.at(ii), -1.0 / 3.0 ) *
                  qPow( AVOGADRO * M_PI * ff0.at(ii), -2.0 / 3.0 );
-         s[ii] = mw.at(ii) * D.at(ii) * buoyancy / ( R_GC * K20 );
-         f[ii] = ( R_GC * K20 ) / ( AVOGADRO * D.at(ii) );
-         f0[ii] = f.at(ii) / ff0[ii];
+         s[ii] = mw.at(ii) * D.at(ii) * buoy / RGK20;
+         f[ii] = RGK20 / ( AVOGADRO * D.at(ii) );
+         f0[ii] = f.at(ii) / ff0.at(ii);
       }
-   } else if ( contains( ATTR_V, ATTR_K, ATTR_D ) )
+   } else if ( contains( ATTR_V, ATTR_K, ATTR_D ) )  // 6: S, M, F, F0
    {
       for ( int ii = 0; ii < 3; ii++ ) {
-         double buoyancy = 1 - vbar.at(ii) * DENS_20W;
-         f[ii] = ( R_GC * K20 ) / ( AVOGADRO * D.at(ii) );
-         f0[ii] = f.at(ii) / ff0[ii];
-         s[ii] = qPow( f0.at(ii) / ( 9 * VISC_20W * 0.01 * M_PI ), 2 ) * buoyancy / ( 2 * VISC_20W * 0.01 * vbar.at(ii));
-         mw[ii] = s.at(ii) * AVOGADRO * f.at(ii) / buoyancy;
+         double buoy = 1 - vbar.at(ii) * DENS_20W;
+         f[ii] = RGK20 / ( AVOGADRO * D.at(ii) );
+         f0[ii] = f.at(ii) / ff0.at(ii);
+         s[ii] = qPow( f0.at(ii) / ( 9 * VISC_20WP * M_PI ), 2 ) * buoy / ( 2 * VISC_20WP * vbar.at(ii) );
+         mw[ii] = s.at(ii) * AVOGADRO * f.at(ii) / buoy;
       }
-   } else if ( contains( ATTR_V, ATTR_K, ATTR_F ) )
+   } else if ( contains( ATTR_V, ATTR_K, ATTR_F ) )  // 7: S, M, D, F0
    {
       for ( int ii = 0; ii < 3; ii++ ) {
-         double buoyancy = 1 - vbar.at(ii) * DENS_20W;
-         D[ii] = ( R_GC * K20 ) / ( AVOGADRO * f.at(ii));
-         f0[ii] = f.at(ii) / ff0[ii];
-         s[ii] = qPow( f0.at(ii) / ( 9 * VISC_20W * 0.01 * M_PI ), 2 ) * buoyancy / ( 2 * VISC_20W * 0.01 * vbar.at(ii));
-         mw[ii] = s.at(ii) * AVOGADRO * f.at(ii) / buoyancy;
+         double buoy = 1 - vbar.at(ii) * DENS_20W;
+         D[ii] = RGK20 / ( AVOGADRO * f.at(ii) );
+         f0[ii] = f.at(ii) / ff0.at(ii);
+         s[ii] = qPow( f0.at(ii) / ( 9 * VISC_20WP * M_PI ), 2 ) * buoy / ( 2 * VISC_20WP * vbar.at(ii) );
+         mw[ii] = s.at(ii) * AVOGADRO * f.at(ii) / buoy;
       }
-   } else if ( contains( ATTR_V, ATTR_W, ATTR_D ) )
+   } else if ( contains( ATTR_V, ATTR_M, ATTR_D ) )  // 8: S, K, F, F0
    {
       for ( int ii = 0; ii < 3; ii++ ) {
-         double buoyancy = 1 - vbar.at(ii) * DENS_20W;
-         f[ii] = ( R_GC * K20 ) / ( AVOGADRO * D.at(ii) );
-         s[ii] = mw.at(ii) * D.at(ii) * buoyancy / ( R_GC * K20 );
-         f0[ii] = 9 * VISC_20W * 0.01 * M_PI * qSqrt( 2 * vbar.at(ii) * s.at(ii) * VISC_20W * 0.01 / buoyancy );
+         double buoy = 1 - vbar.at(ii) * DENS_20W;
+         f[ii] = RGK20 / ( AVOGADRO * D.at(ii) );
+         s[ii] = mw.at(ii) * D.at(ii) * buoy / RGK20;
+         f0[ii] = 9 * VISC_20WP * M_PI * qSqrt( 2 * vbar.at(ii) * s.at(ii) * VISC_20WP / buoy );
          ff0[ii] = f.at(ii) / f0.at(ii);
       }
-   } else if ( contains( ATTR_V, ATTR_W, ATTR_F ) )
+   } else if ( contains( ATTR_V, ATTR_M, ATTR_F ) )  // 9: S, K, D, F0
    {
       for ( int ii = 0; ii < 3; ii++ ) {
-         double buoyancy = 1 - vbar.at(ii) * DENS_20W;
-         D[ii] = ( R_GC * K20 ) / ( AVOGADRO * f.at(ii));
-         s[ii] = mw.at(ii) * D.at(ii) * buoyancy / ( R_GC * K20 );
-         f0[ii] = 9 * VISC_20W * 0.01 * M_PI * qSqrt( 2 * vbar.at(ii) * s.at(ii) * VISC_20W * 0.01 / buoyancy );
+         double buoy = 1 - vbar.at(ii) * DENS_20W;
+         D[ii] = RGK20 / ( AVOGADRO * f.at(ii) );
+         s[ii] = mw.at(ii) * D.at(ii) * buoy / RGK20;
+         f0[ii] = 9 * VISC_20WP * M_PI * qSqrt( 2 * vbar.at(ii) * s.at(ii) * VISC_20WP / buoy );
          ff0[ii] = f.at(ii) / f0.at(ii);
       }
-   } else
+   } else if ( contains( ATTR_S, ATTR_K, ATTR_M ) )  // 10: V, D, F, F0 ?????
    {
-      ready = false;
+      for ( int ii = 0; ii < 3; ii++ ) {
+      }
+   } else if ( contains( ATTR_S, ATTR_K, ATTR_D ) )  // 11: M, V, F, F0
+   {
+      for ( int ii = 0; ii < 3; ii++ ) {
+         f0[ii] = RGK20 / ( AVOGADRO * ff0.at(ii) * D.at(ii) );
+         f[ii] = f0.at(ii) * ff0.at(ii);
+         double f02 = qPow( f0.at(ii), 2 );
+         double vis3 = qPow( VISC_20WP, 3 );
+         vbar[ii] = f02 / ( 162 * s.at(ii) * MPISQ *  vis3 + f02 * DENS_20W );
+         double buoy = 1 - vbar.at(ii) * DENS_20W;
+         mw[ii] = s.at(ii) * AVOGADRO * f.at(ii) / buoy;
+      }
+   } else if ( contains( ATTR_S, ATTR_K, ATTR_F ) )  // 12: M, V, D, F0
+   {
+      for ( int ii = 0; ii < 3; ii++ ) {
+         D[ii] = RGK20 / ( AVOGADRO * f.at(ii) );
+         f0[ii] = f.at(ii) / ff0.at(ii);
+         double f02 = qPow( f0.at(ii), 2 );
+         double vis3 = qPow( VISC_20WP, 3 );
+         vbar[ii] = f02 / ( 162 * s.at(ii) * MPISQ *  vis3 + f02 * DENS_20W );
+         double buoy = 1 - vbar.at(ii) * DENS_20W;
+         mw[ii] = s.at(ii) * AVOGADRO * f.at(ii) / buoy;
+      }
+
+   } else if ( contains( ATTR_S, ATTR_M, ATTR_D ) )  // 13: K, V, F, F0
+   {
+      for ( int ii = 0; ii < 3; ii++ ) {
+         vbar[ii] = ( 1 - ( s.at(ii) * RGK20 ) / ( mw.at(ii) * D.at(ii) ) ) / DENS_20W;
+         f[ii] = RGK20 / ( AVOGADRO * D.at(ii) );
+         double buoy = 1 - vbar.at(ii) * DENS_20W;
+         f0[ii] = 9 * VISC_20WP * M_PI * qSqrt( 2 * vbar.at(ii) * s.at(ii) * VISC_20WP / buoy );
+         ff0[ii] = f.at(ii) / f0.at(ii);
+      }
+   } else if ( contains( ATTR_S, ATTR_M, ATTR_F ) )  // 14: K, V, D, F0
+   {
+      for ( int ii = 0; ii < 3; ii++ ) {
+         vbar[ii] = ( 1 - s.at(ii) * AVOGADRO * f.at(ii) / mw.at(ii) ) / DENS_20W;
+         double buoy = 1 - vbar.at(ii) * DENS_20W;
+         f0[ii] = 9 * VISC_20WP * M_PI * qSqrt( 2 * vbar.at(ii) * s.at(ii) * VISC_20WP / buoy );
+         ff0[ii] = f.at(ii) / f0.at(ii);
+         D[ii] = RGK20 / ( AVOGADRO * f.at(ii) );
+      }
+   } else if ( contains( ATTR_K, ATTR_M, ATTR_D ) )  // 15: S, V, F, F0
+   {
+      for ( int ii = 0; ii < 3; ii++ ) {
+         f[ii] = RGK20 / ( AVOGADRO * D.at(ii) );
+         f0[ii] = f.at(ii) / ff0.at(ii);
+         vbar[ii] = qPow( RGK20 / ( 3 * VISC_20WP * D.at(ii)), 3 ) /
+                    ( 6 * mw.at(ii) * qPow(AVOGADRO * K20 * M_PI, 2 ) );
+         double buoy = 1 - vbar.at(ii) * DENS_20W;
+         s[ii] = mw.at(ii) * buoy / ( AVOGADRO * f.at(ii) );
+      }
+   } else if ( contains( ATTR_K, ATTR_M, ATTR_F ) )  // 16: S, V, D, F0
+   {
+      for ( int ii = 0; ii < 3; ii++ ) {
+         D[ii] = RGK20 / ( AVOGADRO * f.at(ii) );
+         f0[ii] = f.at(ii) / ff0.at(ii);
+         vbar[ii] = qPow( RGK20 / ( 3 * VISC_20WP * D.at(ii) ), 3 ) /
+                    ( 6 * mw.at(ii) * qPow(AVOGADRO * K20 * M_PI, 2 ) );
+         double buoy = 1 - vbar.at(ii) * DENS_20W;
+         s[ii] = mw.at(ii) * buoy / ( AVOGADRO * f.at(ii) );
+      }
    }
 }
 
