@@ -63,11 +63,6 @@ private:
 
    QVector<double> _s;       //!< Sedimentation coefficient.
    QVector<double> _D;       //!< Diffusion coefficient.
-   // QVector<double> _vbar;    //!< Partial specific volume.
-   // QVector<double> _mw;      //!< Molecular weight.
-   // QVector<double> _f;       //!< Frictional coefficient.
-   // QVector<double> _ff0;     //!< Standard frictional coefficient.
-   // QVector<double> _f0;      //!< Reference frictional coefficient.
 
    QSet<attr_type> ptypes;
 
@@ -191,10 +186,10 @@ private:
    QPushButton *pb_add_update; //!< Button to add partial grid.
    QPushButton *pb_delete; //!< Button to delete partial grid.
 
-   QRadioButton *rb_plot1; //!< Plot radio button 1.
-   QRadioButton *rb_plot2; //!< Plot radio button 2.
+   // QRadioButton *rb_plot1; //!< Plot radio button 1.
+   // QRadioButton *rb_plot2; //!< Plot radio button 2.
 
-   QButtonGroup *toggle_plot; //!< Button group for toggling plot.
+   // QButtonGroup *toggle_plot; //!< Button group for toggling plot.
 
    US_Grid_Preset *grid_preset; //!< A dialog to set the grid preset
 
@@ -206,6 +201,9 @@ private:
    int dbg_level;
    int selected_plot; //!< Selected plot.
 
+   void rm_plot_items(void);
+   void plot_item(void);
+
 private slots:
    //! \brief Slot to setup the grid axises.
    void set_grid_axis();
@@ -213,33 +211,21 @@ private slots:
    //! \brief Validate grid point
    void validate();
 
-   //! \brief Slot to update x resolution.
-   //! \param value New x resolution value.
-   // void update_xRes(double value);
+   //! \brief Slot to update x minimum value.
+   //! \param value New x minimum value.
+   void update_xMin(void);
 
-   // //! \brief Slot to update y resolution.
-   // //! \param value New y resolution value.
-   // void update_yRes(double value);
+   //! \brief Slot to update x maximum value.
+   //! \param value New x maximum value.
+   void update_xMax(void);
 
-   // //! \brief Slot to update x minimum value.
-   // //! \param value New x minimum value.
-   // void update_xMin(double value);
+   //! \brief Slot to update y minimum value.
+   //! \param value New y minimum value.
+   void update_yMin(void);
 
-   // //! \brief Slot to update x maximum value.
-   // //! \param value New x maximum value.
-   // void update_xMax(double value);
-
-   // //! \brief Slot to update y minimum value.
-   // //! \param value New y minimum value.
-   // void update_yMin(double value);
-
-   // //! \brief Slot to update y maximum value.
-   // //! \param value New y maximum value.
-   // void update_yMax(double value);
-
-   // //! \brief Slot to update z value.
-   // //! \param value New z value.
-   // void update_zVal(double value);
+   //! \brief Slot to update y maximum value.
+   //! \param value New y maximum value.
+   void update_yMax(void);
 
    // //! \brief Slot to update partial grid.
    // //! \param value New partial grid value.
@@ -285,10 +271,10 @@ private slots:
 
    //! \brief Slot to update disk database settings.
    //! \param checked Whether disk database should be updated.
-   // void update_disk_db(bool checked);
+   void update_disk_db(bool checked);
 
    //! \brief Slot to select investigator.
-   // void sel_investigator(void);
+   void sel_investigator(void);
 
    //! \brief Function to get the value of a grid point for a given attribute.
    //! \param gp Grid point.

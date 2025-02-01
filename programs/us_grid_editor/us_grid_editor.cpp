@@ -3,12 +3,7 @@
 #include <QApplication>
 #include "us_grid_editor.h"
 #include "us_gui_util.h"
-#if QT_VERSION < 0x050000
-#define setSamples(a,b,c)  setData(a,b,c)
-#define setMinimum(a)      setMinValue(a)
-#define setMaximum(a)      setMaxValue(a)
-#define setSymbol(a)       setSymbol(*a)
-#endif
+#include <qwt_plot_shapeitem.h>
 
 const double VISC_20WP = VISC_20W * 0.01;
 const double RGK20   = R_GC * K20;
@@ -56,7 +51,7 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    QLabel *lb_preset = us_banner( tr( "Grid Preset" ) );
 
    QPushButton* pb_investigator = us_pushbutton( tr( "Select Investigator" ) );
-   // connect( pb_investigator, &QPushButton::clicked, this, &US_Grid_Editor::sel_investigator );
+   connect( pb_investigator, &QPushButton::clicked, this, &US_Grid_Editor::sel_investigator );
 
    if ( US_Settings::us_inv_level() < 1 )
       pb_investigator->setEnabled( false );
@@ -68,7 +63,7 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    le_investigator = us_lineedit( number + US_Settings::us_inv_name(), 1, true );
 
    dkdb_cntrls   = new US_Disk_DB_Controls( US_Settings::default_data_location() );
-   // connect( dkdb_cntrls, &US_Disk_DB_Controls::changed, this, &US_Grid_Editor::update_disk_db );
+   connect( dkdb_cntrls, &US_Disk_DB_Controls::changed, this, &US_Grid_Editor::update_disk_db );
 
    grid_preset = new US_Grid_Preset(this);
    grid_preset->parameters(&x_param, &y_param, &z_param);
@@ -112,13 +107,13 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    // 20,w grid control
    QLabel *lb_20w_ctrl = us_banner( tr( "20,w Grid Control" ) );
 
-   QGridLayout* toggle1 = us_radiobutton( tr( "X-Axis View" ), rb_plot1, true );
-   QGridLayout* toggle2 = us_radiobutton( tr( "Molecular Weight View" ), rb_plot2, true );
+   // QGridLayout* toggle1 = us_radiobutton( tr( "X-Axis View" ), rb_plot1, true );
+   // QGridLayout* toggle2 = us_radiobutton( tr( "Molecular Weight View" ), rb_plot2, true );
 
-   QButtonGroup* toggle_plot = new QButtonGroup( this );
-   toggle_plot->addButton( rb_plot1, 0 );
-   toggle_plot->addButton( rb_plot2, 1 );
-   rb_plot1   ->setChecked( true );
+   // QButtonGroup* toggle_plot = new QButtonGroup( this );
+   // toggle_plot->addButton( rb_plot1, 0 );
+   // toggle_plot->addButton( rb_plot2, 1 );
+   // rb_plot1   ->setChecked( true );
    // connect( toggle_plot, &QButtonGroup::idReleased, this, &US_Grid_Editor::select_plot );
 
    QLabel *lb_grid_list = us_label(" Grid List ");
@@ -159,6 +154,11 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    le_y_res = us_lineedit();
    le_y_res->setValidator(i_valid);
 
+   connect(le_x_min, &QLineEdit::editingFinished, this, &US_Grid_Editor::update_xMin);
+   connect(le_x_max, &QLineEdit::editingFinished, this, &US_Grid_Editor::update_xMax);
+   connect(le_y_min, &QLineEdit::editingFinished, this, &US_Grid_Editor::update_yMin);
+   connect(le_y_max, &QLineEdit::editingFinished, this, &US_Grid_Editor::update_yMax);
+
    QFrame *hline2 = new QFrame();
    hline2->setFrameShape(QFrame::HLine);
    hline2->setFrameShadow(QFrame::Sunken);
@@ -184,7 +184,7 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
 
    QPushButton* pb_reset = us_pushbutton( tr( "Reset" ) );
    pb_reset->setEnabled( true );
-   // connect( pb_reset, &QPushButton::clicked, this, &US_Grid_Editor::reset );
+   connect( pb_reset, &QPushButton::clicked, this, &US_Grid_Editor::reset );
 
    QPushButton* pb_save = us_pushbutton( tr( "Save" ) );
    pb_save->setEnabled( false );
@@ -200,16 +200,17 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
 
    // set up plot component window on right side
 
-   QBoxLayout* plot1 = new US_Plot( data_plot,
-                                   tr( "Grid Layout" ),
-                                   tr( "Sedimentation Coefficient (s20,W)"),
-                                   tr( "Frictional Ratio f/f0" ) );
+   QBoxLayout* plot_lyt = new US_Plot( data_plot,
+                                      tr( "Grid Layout" ),
+                                      tr( "Sedimentation Coefficient (s20,W)"),
+                                      tr( "Frictional Ratio f/f0" ) );
    data_plot->setAutoDelete( true );
    data_plot->setMinimumSize( 640, 480 );
    data_plot->enableAxis( QwtPlot::xBottom, true );
    data_plot->enableAxis( QwtPlot::yLeft,   true );
    data_plot->setAxisScale( QwtPlot::xBottom, 1.0, 40.0 );
    data_plot->setAxisScale( QwtPlot::yLeft,   1.0,  4.0 );
+   data_plot->setCanvasBackground(QBrush(Qt::black));
 
    int row = 0;
    left->addWidget( lb_preset,            row++, 0, 1, 4 );
@@ -243,8 +244,8 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
 
    left->addWidget( lb_20w_ctrl,          row++, 0, 1, 4 );
 
-   left->addLayout( toggle1,              row,   0, 1, 2 );
-   left->addLayout( toggle2,              row++, 2, 1, 2 );
+   // left->addLayout( toggle1,              row,   0, 1, 2 );
+   // left->addLayout( toggle2,              row++, 2, 1, 2 );
 
    left->addWidget( lb_grid_list,         row++, 0, 1, 4 );
 
@@ -295,7 +296,7 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
       left->setColumnStretch(ii, 1);
    }
 
-   right->addLayout( plot1 );
+   right->addLayout( plot_lyt );
 
    main->addLayout( left );
    main->addLayout( right );
@@ -303,6 +304,92 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    main->setStretchFactor( right, 6 );
 
    reset();
+}
+
+void US_Grid_Editor::rm_plot_items()
+{
+   const auto items = data_plot->itemList();
+   for (QwtPlotItem *item : items) {
+      if (item ) {
+         QString txt = item->title().text();
+         if ( txt.startsWith("TMP_H") || txt.startsWith("TMP_V") || txt.startsWith("TMP_R") ) {
+            item->detach();
+            delete item;
+         }
+      }
+   }
+}
+
+void US_Grid_Editor::plot_item()
+{
+   rm_plot_items();
+   // double plt_x1 = data_plot->axisScaleDiv(QwtPlot::xBottom).lowerBound();
+   // double plt_x2 = data_plot->axisScaleDiv(QwtPlot::xBottom).upperBound();
+   // double plt_y1 = data_plot->axisScaleDiv(QwtPlot::yLeft).lowerBound();
+   // double plt_y2 = data_plot->axisScaleDiv(QwtPlot::yLeft).upperBound();
+   bool is_xMin = ! le_x_min->text().isEmpty();
+   bool is_xMax = ! le_x_max->text().isEmpty();
+   bool is_yMin = ! le_y_min->text().isEmpty();
+   bool is_yMax = ! le_y_max->text().isEmpty();
+   double x1 = le_x_min->text().toDouble();
+   double x2 = le_x_max->text().toDouble();
+   double y1 = le_y_min->text().toDouble();
+   double y2 = le_y_max->text().toDouble();
+
+   QPainterPath path;
+   QString title;
+   if (is_xMin && is_xMax && is_yMin && is_yMax) {
+      QRectF rect(x1, y1, x2 - x1, y2 - y1);
+      path.addRect(rect);
+      title = "TMP_R";
+   } else if (is_xMin && !is_xMax && !is_yMin && !is_yMax) {
+      y1 = -1000 * qAbs(x1);
+      y2 =  1000 * qAbs(x1);
+      path.moveTo(x1, y1);
+      path.lineTo(x1, y2);
+      title = "TMP_V1";
+   } else if (!is_xMin && is_xMax && !is_yMin && !is_yMax) {
+      y1 = -1000 * qAbs(x2);
+      y2 =  1000 * qAbs(x2);
+      path.moveTo(x2, y1);
+      path.lineTo(x2, y2);
+      title = "TMP_V2";
+   } else if (!is_xMin && !is_xMax && is_yMin && !is_yMax) {
+      x1 = -1000 * qAbs(y1);
+      x2 =  1000 * qAbs(y1);
+      path.moveTo(x1, y1);
+      path.lineTo(x2, y1);
+      title = "TMP_H1";
+   } else if (!is_xMin && !is_xMax && !is_yMin && is_yMax) {
+      x1 = -1000 * qAbs(y2);
+      x2 =  1000 * qAbs(y2);
+      path.moveTo(x1, y2);
+      path.lineTo(x2, y2);
+      title = "TMP_H2";
+   } else if (is_xMin && is_xMax && !is_yMin && !is_yMax) {
+      y1 = -1000 * qAbs(x1);
+      y2 =  1000 * qAbs(x1);
+      QRectF rect(x1, y1, x2 - x1, y2 - y1);
+      path.addRect(rect);
+      title = "TMP_VV";
+   }  else if (!is_xMin && !is_xMax && is_yMin && is_yMax) {
+      x1 = -1000 * qAbs(y1);
+      x2 =  1000 * qAbs(y1);
+      QRectF rect(x1, y1, x2 - x1, y2 - y1);
+      path.addRect(rect);
+      title = "TMP_HH";
+   }
+
+   // Create and configure the shape item
+   QwtPlotShapeItem *shapeItem = new QwtPlotShapeItem();
+   shapeItem->setTitle(title);
+   shapeItem->setShape(path);
+   shapeItem->setBrush(QBrush(QColor(255,255,51, 128))); // Transparent red fill
+   shapeItem->setPen(QPen(QColor(255,255,51), 2)); // Black border
+
+   // Attach to plot
+   shapeItem->attach(data_plot);
+   data_plot->replot();
 }
 
 void US_Grid_Editor::set_grid_axis()
@@ -536,96 +623,29 @@ void US_Grid_Editor::reset( void )
    // }
 // }
 
-// update raster x resolution
-// void US_Grid_Editor::update_xRes( double dval )
-// {
-// // qDebug() << "ux1)yRes" << yRes;
-// //    xRes  = dval;
-// // qDebug() << "ux2)yRes" << yRes;
-// //    update_plot();
-// // qDebug() << "ux3)yRes" << yRes;
-// }
+// update plot limit x min
+void US_Grid_Editor::update_xMin( )
+{
+   plot_item();
+}
 
-// // update raster y resolution
-// void US_Grid_Editor::update_yRes( double dval )
-// {
-//    // yRes  = dval;
-//    // update_plot();
-// }
+// update plot limit x max
+void US_Grid_Editor::update_xMax( )
+{
+   plot_item();
+}
 
-// // update plot limit x min
-// void US_Grid_Editor::update_xMin( double dval )
-// {
-//    // xMin    = dval;
-//    // // ct_xMax->disconnect();
-//    // // ct_xMax->setMinimum( xMin );
+// update plot limit y min
+void US_Grid_Editor::update_yMin( )
+{
+   plot_item();
+}
 
-//    // // connect( ct_xMax, SIGNAL( valueChanged( double ) ),
-//    // //          this,    SLOT  ( update_xMax ( double ) ) );
-
-//    // validate_ff0();
-
-//    // update_plot();
-// }
-
-// // update plot limit x max
-// void US_Grid_Editor::update_xMax( double dval )
-// {
-//    // xMax    = dval;
-//    // // ct_xMin->disconnect();
-//    // // ct_xMin->setMaximum( xMax );
-
-//    // // connect( ct_xMin, SIGNAL( valueChanged( double ) ),
-//    // //          this,    SLOT  ( update_xMin ( double ) ) );
-
-//    // validate_ff0();
-
-//    // update_plot();
-// }
-
-// // update plot limit y min
-// void US_Grid_Editor::update_yMin( double dval )
-// {
-// //    yMin    = dval;
-// // qDebug() << "update_yMin" << yMin;
-// //    // ct_yMax->disconnect();
-// //    // ct_yMax->setMinimum( yMin );
-
-// //    // connect( ct_yMax, SIGNAL( valueChanged( double ) ),
-// //    //          this,    SLOT  ( update_yMax ( double ) ) );
-
-// //    validate_ff0();
-
-// //    update_plot();
-// }
-
-// // update plot limit y max
-// void US_Grid_Editor::update_yMax( double dval )
-// {
-// //    yMax    = dval;
-// // qDebug() << "update_yMax" << yMax;
-// //    // ct_yMin->disconnect();
-// //    // ct_yMin->setMaximum( yMax );
-
-// //    // connect( ct_yMin, SIGNAL( valueChanged( double ) ),
-// //    //          this,    SLOT  ( update_yMin ( double ) ) );
-
-// //    validate_ff0();
-
-// //    update_plot();
-// }
-
-// // update plot limit z-value (f/f0 or vbar)
-// void US_Grid_Editor::update_zVal( double dval )
-// {
-//    // zVal    = dval;
-//    // vbar    = ( y_param == ATTR_V ) ? zVal : vbar;
-//    // ff0     = ( y_param == ATTR_K ) ? zVal : ff0;
-
-//    // validate_ff0();
-
-//    // update_plot();
-// }
+// update plot limit y max
+void US_Grid_Editor::update_yMax( )
+{
+   plot_item();
+}
 
 // // Select a partialGrid from all subgrids in the final grid for highlighting
 // void US_Grid_Editor::update_partialGrid( double dval )
@@ -851,27 +871,27 @@ void US_Grid_Editor::reset( void )
 //    update_plot();
 // }
 
-// // Reset Disk_DB control whenever data source is changed in any dialog
-// void US_Grid_Editor::update_disk_db( bool isDB )
-// {
-//    isDB ? dkdb_cntrls->set_db() : dkdb_cntrls->set_disk();
-// }
+// Reset Disk_DB control whenever data source is changed in any dialog
+void US_Grid_Editor::update_disk_db( bool isDB )
+{
+   isDB ? dkdb_cntrls->set_db() : dkdb_cntrls->set_disk();
+}
 
-// // Select DB investigator
-// void US_Grid_Editor::sel_investigator( void )
-// {
-//    int investigator = US_Settings::us_inv_ID();
+// Select DB investigator
+void US_Grid_Editor::sel_investigator( void )
+{
+   int investigator = US_Settings::us_inv_ID();
 
-//    US_Investigator* dialog = new US_Investigator( true, investigator );
-//    dialog->exec();
+   US_Investigator* dialog = new US_Investigator( true, investigator );
+   dialog->exec();
 
-//    investigator = US_Settings::us_inv_ID();
+   investigator = US_Settings::us_inv_ID();
 
-//    QString inv_text = QString::number( investigator ) + ": "
-//                       +  US_Settings::us_inv_name();
+   QString inv_text = QString::number( investigator ) + ": "
+                      +  US_Settings::us_inv_name();
 
-//    le_investigator->setText( inv_text );
-// }
+   le_investigator->setText( inv_text );
+}
 
 // // Adjust value/ranges so that f/f0 is not less than 1
 // bool US_Grid_Editor::validate_ff0()
@@ -1322,11 +1342,6 @@ GridPoint::GridPoint(int id)
 
    _s.fill(0, 3);
    _D.fill(0, 3);
-   // _vbar.fill(0, 3);
-   // _mw.fill(0, 3);
-   // _f.fill(0, 3);
-   // _f0.fill(0, 3);
-   // _ff0.fill(0, 3);
 }
 
 bool GridPoint::set_param(const QVector<double> & param, attr_type ptype)
