@@ -1320,70 +1320,85 @@ QString Attr_to_short(int attr)
 }
 
 
-GridPoint::GridPoint(int id)
+GridPoint::GridPoint()
 {
-   index = id;
    dvt_set = false;
-   s.fill(0, 3);
-   D.fill(0, 3);
-   vbar.fill(0, 3);
-   mw.fill(0, 3);
-   f.fill(0, 3);
-   f0.fill(0, 3);
-   ff0.fill(0, 3);
-
-   _s.fill(0, 3);
-   _D.fill(0, 3);
 }
 
-bool GridPoint::set_param(const QVector<double> & param, attr_type ptype)
+bool GridPoint::set_param(const QVector<double>& values,
+                          const QVector<attr_type>& types)
 {
-   if ( param.size() != 3 ) {
+   if ( values.size() != 3 || types.size() != 3 ) {
       return false;
    }
-   if ( ! ptypes.contains( ptype ) && ptypes.size() == 3 ) {
+   ptypes.clear();
+
+   for ( int ii =0; ii < 3; ii++ ) {
+      ptypes.insert( types.at(ii) );
+      if ( types.at(ii) == ATTR_S ) {
+         S = values.at(ii);
+         if ( S == 0 ) {
+            error = "Sedimentation value is zero. Please correct it!";
+            return false;
+         }
+      } else if ( types.at(ii) == ATTR_K ) {
+         FF0 = values.at(ii);
+         if ( FF0 < 1 ) {
+            error = "Frictional ratio is less than one. Please correct it!";
+            return false;
+         }
+      } else if ( types.at(ii) == ATTR_M ) {
+         MW = values.at(ii);
+         if ( MW < 1 ) {
+            error = "Molecular weight is less than one. Please correct it!";
+            return false;
+         }
+      } else if ( types.at(ii) == ATTR_V ) {
+         VBAR = values.at(ii);
+         if ( VBAR <= 0 ) {
+            error = "Partial specific volume is less than or equal to zero. Please correct it!";
+            return false;
+         }
+      } else if ( types.at(ii) == ATTR_D ) {
+         D = values.at(ii);
+         if ( D <= 0 ) {
+            error = "Diffusion coefficient is less than or equal to zero. Please correct it!";
+            return false;
+         }
+      } else if ( types.at(ii) == ATTR_F ) {
+         F = values.at(ii);
+         if ( F <= 0 ) {
+            error = "Frictional coefficient is less than or equal to zero. Please correct it!";
+            return false;
+         }
+      } else {
+         return false;
+      }
+   }
+   if ( ! calculate_20w() ) {
       return false;
    }
-
-   switch( ptype )
-   {
-   case ATTR_S:
-      for ( int ii = 0; ii < 3; ii++ ) {
-         s[ii] = param.at(ii) * 1.0e-13;
-      }
-      break;
-   case ATTR_K:
-      ff0     = param;
-      break;
-   case ATTR_M:
-      mw      = param;
-      break;
-   case ATTR_V:
-      vbar    = param;
-      break;
-   case ATTR_D:
-      D       = param;
-      break;
-   case ATTR_F:
-      f       = param;
-      break;
-   }
-
-   if ( ! ptypes.contains( ptype ) ) {
-      ptypes.insert( ptype );
-   }
-
-   if ( ptypes.size() == 3 ) {
-      calculate_20w();
-      if ( dvt_set ) {
-         calculate_real();
-      }
+   if ( dvt_set ) {
+      calculate_real();
    }
    return true;
 }
 
-void GridPoint::set_dens_visc_t(double dens, double visc, double T)
+bool GridPoint::set_dens_visc_t(double dens, double visc, double T)
 {
+   error.clear();
+   if ( dens < 0.001 ) {
+      error = "Buffer density is less than 0.001. Please correct it!";
+      return false;
+   }
+   if ( visc < 0.001 ) {
+      error = "Buffer viscosity is less than 0.001. Please correct it!";
+      return false;
+   }
+   if ( T < 1 ) {
+      error = "Buffer temperature is less than one. Please correct it!";
+      return false;
+   }
    density = dens;
    viscosity = visc;
    temperature = T;
@@ -1392,181 +1407,175 @@ void GridPoint::set_dens_visc_t(double dens, double visc, double T)
    if ( ptypes.size() == 3 ) {
       calculate_real();
    }
+   return true;
 }
 
-void GridPoint::calculate_20w()
+bool GridPoint::calculate_20w()
 {
-   ready = true;
+   error.clear();
    // S, K, M, V, D, F, F0
 
    if ( contains( ATTR_V, ATTR_S, ATTR_K ) )         // 1: M, D, F, F0
    {
-      for ( int ii = 0; ii < 3; ii++ ) {
-         double buoy = 1 - vbar.at(ii) * DENS_20W;
-         f0[ii] = 9 * VISC_20WP * M_PI * qSqrt( 2 * vbar.at(ii) * s.at(ii) * VISC_20WP / buoy );
-         f[ii] = ff0.at(ii) * f0.at(ii);
-         D[ii] = RGK20 / ( AVOGADRO * f.at(ii) );
-         mw[ii] = s.at(ii) * AVOGADRO * f.at(ii) / buoy;
-      }
+      if ( ! check_s_vbar()) return false;
+
+      double buoy = 1 - VBAR * DENS_20W;
+      F0 = 9 * VISC_20WP * M_PI * qSqrt( 2 * VBAR * S * VISC_20WP / buoy );
+      F = FF0 * F0;
+      D = RGK20 / ( AVOGADRO * F );
+      MW = S * AVOGADRO * F / buoy;
    } else if ( contains( ATTR_V, ATTR_S, ATTR_M ) )  // 2: K, D, F, F0
    {
-      for ( int ii = 0; ii < 3; ii++ ) {
-         double buoy = 1 - vbar.at(ii) * DENS_20W;
-         f0[ii] = 9 * VISC_20WP * M_PI * qSqrt( 2 * vbar.at(ii) * s.at(ii) * VISC_20WP / buoy );
-         f[ii] = mw.at(ii) * buoy / ( AVOGADRO * s.at(ii) );
-         D[ii] = RGK20 / ( AVOGADRO * f.at(ii) );
-         ff0[ii] = f.at(ii) / f0.at(ii);
-      }
+      if ( ! check_s_vbar()) return false;
+
+      double buoy = 1 - VBAR * DENS_20W;
+      F0 = 9 * VISC_20WP * M_PI * qSqrt( 2 * VBAR * S * VISC_20WP / buoy );
+      F = MW * buoy / ( AVOGADRO * S );
+      D = RGK20 / ( AVOGADRO * F );
+      FF0 = F / F0;
    } else if ( contains( ATTR_V, ATTR_S, ATTR_D ) )  // 3: K, M, F, F0
    {
-      for ( int ii = 0; ii < 3; ii++ ) {
-         double buoy = 1 - vbar.at(ii) * DENS_20W;
-         f0[ii] = 9 * VISC_20WP * M_PI * qSqrt( 2 * vbar.at(ii) * s.at(ii) * VISC_20WP / buoy );
-         f[ii] = RGK20 / ( AVOGADRO * D.at(ii) );
-         ff0[ii] = f.at(ii) / f0.at(ii);
-         mw[ii] = s.at(ii) * AVOGADRO * f.at(ii) / buoy;
-      }
+      if ( ! check_s_vbar()) return false;
+
+      double buoy = 1 - VBAR * DENS_20W;
+      F0 = 9 * VISC_20WP * M_PI * qSqrt( 2 * VBAR * S * VISC_20WP / buoy );
+      F = RGK20 / ( AVOGADRO * D );
+      FF0 = F / F0;
+      MW = S * AVOGADRO * F / buoy;
    } else if ( contains( ATTR_V, ATTR_S, ATTR_F ) )  // 4: K, M, D, F0
    {
-      for ( int ii = 0; ii < 3; ii++ ) {
-         double buoy = 1 - vbar.at(ii) * DENS_20W;
-         f0[ii] = 9 * VISC_20WP * M_PI * qSqrt( 2 * vbar.at(ii) * s.at(ii) * VISC_20WP / buoy );
-         ff0[ii] = f.at(ii) / f0.at(ii);
-         D[ii] = RGK20 / ( AVOGADRO * f.at(ii) );
-         mw[ii] = s.at(ii) * AVOGADRO * f.at(ii) / buoy;
-      }
+      if ( ! check_s_vbar()) return false;
+
+      double buoy = 1 - VBAR * DENS_20W;
+      F0 = 9 * VISC_20WP * M_PI * qSqrt( 2 * VBAR * S * VISC_20WP / buoy );
+      FF0 = F / F0;
+      D = RGK20 / ( AVOGADRO * F );
+      MW = S * AVOGADRO * F / buoy;
    } else if ( contains( ATTR_V, ATTR_K, ATTR_M ) )  // 5: S, D, F, F0
    {
-      for ( int ii = 0; ii < 3; ii++ ) {
-         double buoy = 1 - vbar.at(ii) * DENS_20W;
-         D[ii] = RGK20 / ( 3 * VISC_20WP ) *
-                 qPow( 6 * mw.at(ii) * vbar.at(ii), -1.0 / 3.0 ) *
-                 qPow( AVOGADRO * M_PI * ff0.at(ii), -2.0 / 3.0 );
-         s[ii] = mw.at(ii) * D.at(ii) * buoy / RGK20;
-         f[ii] = RGK20 / ( AVOGADRO * D.at(ii) );
-         f0[ii] = f.at(ii) / ff0.at(ii);
-      }
+      double buoy = 1 - VBAR * DENS_20W;
+      D = RGK20 / ( 3 * VISC_20WP ) *
+              qPow( 6 * MW * VBAR, -1.0 / 3.0 ) *
+              qPow( AVOGADRO * M_PI * FF0, -2.0 / 3.0 );
+      S = MW * D * buoy / RGK20;
+      F = RGK20 / ( AVOGADRO * D );
+      F0 = F / FF0;
    } else if ( contains( ATTR_V, ATTR_K, ATTR_D ) )  // 6: S, M, F, F0
    {
-      for ( int ii = 0; ii < 3; ii++ ) {
-         double buoy = 1 - vbar.at(ii) * DENS_20W;
-         f[ii] = RGK20 / ( AVOGADRO * D.at(ii) );
-         f0[ii] = f.at(ii) / ff0.at(ii);
-         s[ii] = qPow( f0.at(ii) / ( 9 * VISC_20WP * M_PI ), 2 ) * buoy / ( 2 * VISC_20WP * vbar.at(ii) );
-         mw[ii] = s.at(ii) * AVOGADRO * f.at(ii) / buoy;
-      }
+      double buoy = 1 - VBAR * DENS_20W;
+      F = RGK20 / ( AVOGADRO * D );
+      F0 = F / FF0;
+      S = qPow( F0 / ( 9 * VISC_20WP * M_PI ), 2 ) * buoy / ( 2 * VISC_20WP * VBAR );
+      MW = S * AVOGADRO * F / buoy;
    } else if ( contains( ATTR_V, ATTR_K, ATTR_F ) )  // 7: S, M, D, F0
    {
-      for ( int ii = 0; ii < 3; ii++ ) {
-         double buoy = 1 - vbar.at(ii) * DENS_20W;
-         D[ii] = RGK20 / ( AVOGADRO * f.at(ii) );
-         f0[ii] = f.at(ii) / ff0.at(ii);
-         s[ii] = qPow( f0.at(ii) / ( 9 * VISC_20WP * M_PI ), 2 ) * buoy / ( 2 * VISC_20WP * vbar.at(ii) );
-         mw[ii] = s.at(ii) * AVOGADRO * f.at(ii) / buoy;
-      }
+      double buoy = 1 - VBAR * DENS_20W;
+      D = RGK20 / ( AVOGADRO * F );
+      F0 = F / FF0;
+      S = qPow( F0 / ( 9 * VISC_20WP * M_PI ), 2 ) * buoy / ( 2 * VISC_20WP * VBAR );
+      MW = S * AVOGADRO * F / buoy;
    } else if ( contains( ATTR_V, ATTR_M, ATTR_D ) )  // 8: S, K, F, F0
    {
-      for ( int ii = 0; ii < 3; ii++ ) {
-         double buoy = 1 - vbar.at(ii) * DENS_20W;
-         f[ii] = RGK20 / ( AVOGADRO * D.at(ii) );
-         s[ii] = mw.at(ii) * D.at(ii) * buoy / RGK20;
-         f0[ii] = 9 * VISC_20WP * M_PI * qSqrt( 2 * vbar.at(ii) * s.at(ii) * VISC_20WP / buoy );
-         ff0[ii] = f.at(ii) / f0.at(ii);
-      }
+      double buoy = 1 - VBAR * DENS_20W;
+      F = RGK20 / ( AVOGADRO * D );
+      S = MW * D * buoy / RGK20;
+      F0 = 9 * VISC_20WP * M_PI * qSqrt( 2 * VBAR * S * VISC_20WP / buoy );
+      FF0 = F / F0;
    } else if ( contains( ATTR_V, ATTR_M, ATTR_F ) )  // 9: S, K, D, F0
    {
-      for ( int ii = 0; ii < 3; ii++ ) {
-         double buoy = 1 - vbar.at(ii) * DENS_20W;
-         D[ii] = RGK20 / ( AVOGADRO * f.at(ii) );
-         s[ii] = mw.at(ii) * D.at(ii) * buoy / RGK20;
-         f0[ii] = 9 * VISC_20WP * M_PI * qSqrt( 2 * vbar.at(ii) * s.at(ii) * VISC_20WP / buoy );
-         ff0[ii] = f.at(ii) / f0.at(ii);
-      }
+      double buoy = 1 - VBAR * DENS_20W;
+      D = RGK20 / ( AVOGADRO * F );
+      S = MW * D * buoy / RGK20;
+      F0 = 9 * VISC_20WP * M_PI * qSqrt( 2 * VBAR * S * VISC_20WP / buoy );
+      FF0 = F / F0;
    } else if ( contains( ATTR_S, ATTR_K, ATTR_M ) )  // 10: V, D, F, F0 ?????
    {
-      for ( int ii = 0; ii < 3; ii++ ) {
-      }
    } else if ( contains( ATTR_S, ATTR_K, ATTR_D ) )  // 11: M, V, F, F0
    {
-      for ( int ii = 0; ii < 3; ii++ ) {
-         f0[ii] = RGK20 / ( AVOGADRO * ff0.at(ii) * D.at(ii) );
-         f[ii] = f0.at(ii) * ff0.at(ii);
-         double f02 = qPow( f0.at(ii), 2 );
-         double vis3 = qPow( VISC_20WP, 3 );
-         vbar[ii] = f02 / ( 162 * s.at(ii) * MPISQ *  vis3 + f02 * DENS_20W );
-         double buoy = 1 - vbar.at(ii) * DENS_20W;
-         mw[ii] = s.at(ii) * AVOGADRO * f.at(ii) / buoy;
-      }
+      F0 = RGK20 / ( AVOGADRO * FF0 * D );
+      F = F0 * FF0;
+      double f02 = qPow( F0, 2 );
+      double vis3 = qPow( VISC_20WP, 3 );
+      VBAR = f02 / ( 162 * S * MPISQ *  vis3 + f02 * DENS_20W );
+      double buoy = 1 - VBAR * DENS_20W;
+      MW = S * AVOGADRO * F / buoy;
    } else if ( contains( ATTR_S, ATTR_K, ATTR_F ) )  // 12: M, V, D, F0
    {
-      for ( int ii = 0; ii < 3; ii++ ) {
-         D[ii] = RGK20 / ( AVOGADRO * f.at(ii) );
-         f0[ii] = f.at(ii) / ff0.at(ii);
-         double f02 = qPow( f0.at(ii), 2 );
-         double vis3 = qPow( VISC_20WP, 3 );
-         vbar[ii] = f02 / ( 162 * s.at(ii) * MPISQ *  vis3 + f02 * DENS_20W );
-         double buoy = 1 - vbar.at(ii) * DENS_20W;
-         mw[ii] = s.at(ii) * AVOGADRO * f.at(ii) / buoy;
-      }
-
-   } else if ( contains( ATTR_S, ATTR_M, ATTR_D ) )  // 13: K, V, F, F0
+      D = RGK20 / ( AVOGADRO * F );
+      F0 = F / FF0;
+      double f02 = qPow( F0, 2 );
+      double vis3 = qPow( VISC_20WP, 3 );
+      VBAR = f02 / ( 162 * S * MPISQ *  vis3 + f02 * DENS_20W );
+      double buoy = 1 - VBAR * DENS_20W;
+      MW = S * AVOGADRO * F / buoy;
+   }
+   else if ( contains( ATTR_S, ATTR_M, ATTR_D ) )  // 13: K, V, F, F0
    {
-      for ( int ii = 0; ii < 3; ii++ ) {
-         vbar[ii] = ( 1 - ( s.at(ii) * RGK20 ) / ( mw.at(ii) * D.at(ii) ) ) / DENS_20W;
-         f[ii] = RGK20 / ( AVOGADRO * D.at(ii) );
-         double buoy = 1 - vbar.at(ii) * DENS_20W;
-         f0[ii] = 9 * VISC_20WP * M_PI * qSqrt( 2 * vbar.at(ii) * s.at(ii) * VISC_20WP / buoy );
-         ff0[ii] = f.at(ii) / f0.at(ii);
-      }
+      VBAR = ( 1 - ( S * RGK20 ) / ( MW * D ) ) / DENS_20W;
+      F = RGK20 / ( AVOGADRO * D );
+      double buoy = 1 - VBAR * DENS_20W;
+      F0 = 9 * VISC_20WP * M_PI * qSqrt( 2 * VBAR * S * VISC_20WP / buoy );
+      FF0 = F / F0;
    } else if ( contains( ATTR_S, ATTR_M, ATTR_F ) )  // 14: K, V, D, F0
    {
-      for ( int ii = 0; ii < 3; ii++ ) {
-         vbar[ii] = ( 1 - s.at(ii) * AVOGADRO * f.at(ii) / mw.at(ii) ) / DENS_20W;
-         double buoy = 1 - vbar.at(ii) * DENS_20W;
-         f0[ii] = 9 * VISC_20WP * M_PI * qSqrt( 2 * vbar.at(ii) * s.at(ii) * VISC_20WP / buoy );
-         ff0[ii] = f.at(ii) / f0.at(ii);
-         D[ii] = RGK20 / ( AVOGADRO * f.at(ii) );
-      }
+      VBAR = ( 1 - S * AVOGADRO * F / MW ) / DENS_20W;
+      double buoy = 1 - VBAR * DENS_20W;
+      F0 = 9 * VISC_20WP * M_PI * qSqrt( 2 * VBAR * S * VISC_20WP / buoy );
+      FF0 = F / F0;
+      D = RGK20 / ( AVOGADRO * F );
    } else if ( contains( ATTR_K, ATTR_M, ATTR_D ) )  // 15: S, V, F, F0
    {
-      for ( int ii = 0; ii < 3; ii++ ) {
-         f[ii] = RGK20 / ( AVOGADRO * D.at(ii) );
-         f0[ii] = f.at(ii) / ff0.at(ii);
-         vbar[ii] = qPow( RGK20 / ( 3 * VISC_20WP * D.at(ii)), 3 ) /
-                    ( 6 * mw.at(ii) * qPow(AVOGADRO * K20 * M_PI, 2 ) );
-         double buoy = 1 - vbar.at(ii) * DENS_20W;
-         s[ii] = mw.at(ii) * buoy / ( AVOGADRO * f.at(ii) );
-      }
+      F = RGK20 / ( AVOGADRO * D );
+      F0 = F / FF0;
+      VBAR = qPow( RGK20 / ( 3 * VISC_20WP * D), 3 ) /
+                 ( 6 * MW * qPow(AVOGADRO * K20 * M_PI, 2 ) );
+      double buoy = 1 - VBAR * DENS_20W;
+      S = MW * buoy / ( AVOGADRO * F );
    } else if ( contains( ATTR_K, ATTR_M, ATTR_F ) )  // 16: S, V, D, F0
    {
-      for ( int ii = 0; ii < 3; ii++ ) {
-         D[ii] = RGK20 / ( AVOGADRO * f.at(ii) );
-         f0[ii] = f.at(ii) / ff0.at(ii);
-         vbar[ii] = qPow( RGK20 / ( 3 * VISC_20WP * D.at(ii) ), 3 ) /
-                    ( 6 * mw.at(ii) * qPow(AVOGADRO * K20 * M_PI, 2 ) );
-         double buoy = 1 - vbar.at(ii) * DENS_20W;
-         s[ii] = mw.at(ii) * buoy / ( AVOGADRO * f.at(ii) );
-      }
+      D = RGK20 / ( AVOGADRO * F );
+      F0 = F / FF0;
+      VBAR = qPow( RGK20 / ( 3 * VISC_20WP * D ), 3 ) /
+                 ( 6 * MW * qPow(AVOGADRO * K20 * M_PI, 2 ) );
+      double buoy = 1 - VBAR * DENS_20W;
+      S = MW * buoy / ( AVOGADRO * F );
    }
+
+   return true;
 }
 
 void GridPoint::calculate_real()
 {
    if ( ! dvt_set ) return;
-   if ( ! ready )   return;
+   if ( ptypes.isEmpty() ) return;
 
    for (int ii = 0; ii < 3; ii++) {
       US_Math2::SolutionData sol;
       sol.manual = false;
-      sol.vbar = vbar.at(ii);
-      sol.vbar20 = vbar.at(ii);
+      sol.vbar = VBAR;
+      sol.vbar20 = VBAR;
       sol.density = density;
       sol.viscosity = viscosity;
       US_Math2::data_correction(temperature, sol);
-
-      _s[ii] = s.at(ii) / sol.s20w_correction;
-      _D[ii] = D.at(ii) / sol.D20w_correction;
+      S_real = S / sol.s20w_correction;
+      D_real = D / sol.D20w_correction;
    }
+}
+
+bool GridPoint::check_s_vbar()
+{
+   double buoy = 1 - VBAR * DENS_20W;
+   if ( buoy == 0 ) {
+      error = "Buoyancy is zero. Correct the vbar value.";
+      return false;
+   }
+   if ( ( buoy > 0 && S < 0 ) || ( buoy < 0 && S > 0 ) ) {
+      error  = "Sedimentation and buoyancy should have the same sign!\n";
+      error += QObject::tr("Sedimentation = %1\n").arg(buoy);
+      error += QObject::tr("Buoyancy = 1 - %1 x vbar = %2\n").arg(DENS_20W, buoy);
+      return false;
+   }
+   return true;
 }
 
 bool GridPoint::contains(attr_type p1, attr_type p2, attr_type p3)

@@ -41,35 +41,35 @@ QString Attr_to_short(int); //!< returns the short name of the attr_type
 class GridPoint
 {
 public:
-   GridPoint( int );
+   GridPoint();
 
-   bool set_param(const QVector<double>&, attr_type);
+   bool set_param( const QVector<double>&, const QVector<attr_type>& );
 
-   void set_dens_visc_t (double, double, double);
+   bool set_dens_visc_t (double, double, double);
+
+   QString error_string();
 
 
 private:
-   int index;                //!< Index of the grid point.
    bool dvt_set;             //!< true if set_dens_visc_t is already called.
-   bool ready;               //!< true if 20w parameters are well set
    double density;
    double viscosity;
    double temperature;
-   QVector<double> s;        //!< Sedimentation coefficient (at 20w) [value, min, max].
-   QVector<double> D;        //!< Diffusion coefficient (at 20w) [value, min, max].
-   QVector<double> vbar;     //!< Partial specific volume (at 20w) [value, min, max].
-   QVector<double> mw;       //!< Molecular weight (at 20w) [value, min, max].
-   QVector<double> f;        //!< Frictional coefficient (at 20w) [value, min, max].
-   QVector<double> ff0;      //!< Standard frictional coefficient (at 20w) [value, min, max].
-   QVector<double> f0;       //!< Reference frictional coefficient (at 20w) [value, min, max].
-
-   QVector<double> _s;       //!< Sedimentation coefficient.
-   QVector<double> _D;       //!< Diffusion coefficient.
-
+   double S;        //!< Sedimentation coefficient (at 20w) [value, min, max].
+   double D;        //!< Diffusion coefficient (at 20w) [value, min, max].
+   double VBAR;     //!< Partial specific volume (at 20w) [value, min, max].
+   double MW;       //!< Molecular weight (at 20w) [value, min, max].
+   double F;        //!< Frictional coefficient (at 20w) [value, min, max].
+   double FF0;      //!< Standard frictional coefficient (at 20w) [value, min, max].
+   double F0;       //!< Reference frictional coefficient (at 20w) [value, min, max].
+   double S_real;       //!< Sedimentation coefficient.
+   double D_real;       //!< Diffusion coefficient.
+   QString error;
    QSet<attr_type> ptypes;
 
-   void calculate_20w();
+   bool calculate_20w();
    void calculate_real();
+   bool check_s_vbar();
    bool contains(attr_type, attr_type, attr_type);
 
 };
