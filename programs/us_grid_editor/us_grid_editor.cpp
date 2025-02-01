@@ -335,49 +335,41 @@ void US_Grid_Editor::plot_item()
    double x2 = le_x_max->text().toDouble();
    double y1 = le_y_min->text().toDouble();
    double y2 = le_y_max->text().toDouble();
+   if (! is_xMin ) x1 = -1e6;
+   if (! is_xMax ) x2 = +1e6;
+   if (! is_yMin ) y1 = -1e6;
+   if (! is_yMax ) y2 = +1e6;
 
    QPainterPath path;
    QString title;
-   if (is_xMin && is_xMax && is_yMin && is_yMax) {
-      QRectF rect(x1, y1, x2 - x1, y2 - y1);
-      path.addRect(rect);
-      title = "TMP_R";
-   } else if (is_xMin && !is_xMax && !is_yMin && !is_yMax) {
-      y1 = -1000 * qAbs(x1);
-      y2 =  1000 * qAbs(x1);
+   if (is_xMin && !is_xMax && !is_yMin && !is_yMax) {
+      // y1 = -1000 * qAbs(x1);
+      // y2 =  1000 * qAbs(x1);
       path.moveTo(x1, y1);
       path.lineTo(x1, y2);
       title = "TMP_V1";
    } else if (!is_xMin && is_xMax && !is_yMin && !is_yMax) {
-      y1 = -1000 * qAbs(x2);
-      y2 =  1000 * qAbs(x2);
+      // y1 = -1000 * qAbs(x2);
+      // y2 =  1000 * qAbs(x2);
       path.moveTo(x2, y1);
       path.lineTo(x2, y2);
       title = "TMP_V2";
    } else if (!is_xMin && !is_xMax && is_yMin && !is_yMax) {
-      x1 = -1000 * qAbs(y1);
-      x2 =  1000 * qAbs(y1);
+      // x1 = -1000 * qAbs(y1);
+      // x2 =  1000 * qAbs(y1);
       path.moveTo(x1, y1);
       path.lineTo(x2, y1);
       title = "TMP_H1";
    } else if (!is_xMin && !is_xMax && !is_yMin && is_yMax) {
-      x1 = -1000 * qAbs(y2);
-      x2 =  1000 * qAbs(y2);
+      // x1 = -1000 * qAbs(y2);
+      // x2 =  1000 * qAbs(y2);
       path.moveTo(x1, y2);
       path.lineTo(x2, y2);
       title = "TMP_H2";
-   } else if (is_xMin && is_xMax && !is_yMin && !is_yMax) {
-      y1 = -1000 * qAbs(x1);
-      y2 =  1000 * qAbs(x1);
+   } else {
       QRectF rect(x1, y1, x2 - x1, y2 - y1);
       path.addRect(rect);
-      title = "TMP_VV";
-   }  else if (!is_xMin && !is_xMax && is_yMin && is_yMax) {
-      x1 = -1000 * qAbs(y1);
-      x2 =  1000 * qAbs(y1);
-      QRectF rect(x1, y1, x2 - x1, y2 - y1);
-      path.addRect(rect);
-      title = "TMP_HH";
+      title = "TMP_R";
    }
 
    // Create and configure the shape item
@@ -1315,7 +1307,7 @@ QString Attr_to_short(int attr)
    else if ( attr == ATTR_K )
       return QString("f / f0");
    else if ( attr == ATTR_M )
-      return QString("M [ g / mol ]");
+      return QString("MW [ kDa ]");
    else if ( attr == ATTR_V )
       return QString("vbar [ mL / g ]");
    else if ( attr == ATTR_D )

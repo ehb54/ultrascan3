@@ -29,6 +29,8 @@
 #define DbgLv(a) if(dbg_level>=a)qDebug()
 #endif
 
+//! \enum attr_type
+//! \brief Enumeration for attribute types.
 enum attr_type { ATTR_S, ATTR_K, ATTR_M, ATTR_V, ATTR_D, ATTR_F };
 
 QString Attr_to_long(int);  //!< returns the long name of the attr_type
@@ -138,13 +140,13 @@ public:
    US_Grid_Editor();
 
 private:
-   //! \enum attr_type
-   //! \brief Enumeration for attribute types.
-   // enum attr_type { ATTR_S, ATTR_K, ATTR_W, ATTR_V, ATTR_D, ATTR_F };
-
    int grid_index;       //!< Number of total partial grids.
    int partialGrid;      //!< Currently active partial grid.
    int subGrids;         //!< Number of subgrids.
+   double px_min;
+   double px_max;
+   double py_min;
+   double py_max;
 
    QLineEdit *le_investigator; //!< Investigator line edit.
 
