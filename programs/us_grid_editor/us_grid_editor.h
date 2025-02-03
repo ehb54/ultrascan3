@@ -31,11 +31,15 @@
 
 //! \enum attr_type
 //! \brief Enumeration for attribute types.
-enum attr_type { ATTR_S, ATTR_K, ATTR_M, ATTR_V, ATTR_D, ATTR_F };
+enum attr_type { ATTR_S, ATTR_K, ATTR_M, ATTR_V, ATTR_D, ATTR_F, ATTR_SR, ATTR_DR };
 
 QString Attr_to_long(int);  //!< returns the long name of the attr_type
 
+QString Attr_to_title(int);  //!< returns the long name of the attr_type
+
 QString Attr_to_short(int); //!< returns the short name of the attr_type
+
+QString Attr_to_char(int); //!< returns the short name of the attr_type
 
 
 class GridPoint
@@ -43,12 +47,13 @@ class GridPoint
 public:
    GridPoint();
 
-   bool set_param( const QVector<double>&, const QVector<attr_type>& );
+   bool set_param( const QVector<double>&, const QVector<int>& );
 
    bool set_dens_visc_t (double, double, double);
 
-   QString error_string();
+   bool value_by_name(const QString&, double&);
 
+   QString error_string();
 
 private:
    bool dvt_set;             //!< true if set_dens_visc_t is already called.
@@ -65,12 +70,12 @@ private:
    double S_real;       //!< Sedimentation coefficient.
    double D_real;       //!< Diffusion coefficient.
    QString error;
-   QSet<attr_type> ptypes;
+   QSet<int> ptypes;
 
    bool calculate_20w();
    void calculate_real();
    bool check_s_vbar();
-   bool contains(attr_type, attr_type, attr_type);
+   bool contains(int, int, int);
 
 };
 
@@ -140,13 +145,17 @@ public:
    US_Grid_Editor();
 
 private:
-   int grid_index;       //!< Number of total partial grids.
-   int partialGrid;      //!< Currently active partial grid.
-   int subGrids;         //!< Number of subgrids.
-   double px_min;
-   double px_max;
-   double py_min;
-   double py_max;
+   enum grid_state {G_DISPLAY, G_ADD, G_UPDATE};
+
+   // int grid_index;       //!< Number of total partial grids.
+   // int partialGrid;      //!< Currently active partial grid.
+   // int subGrids;         //!< Number of subgrids.
+   bool plot_flag;
+   int gstate;
+   QDoubleValidator *dValid;
+   QIntValidator    *iValid;
+
+   QWidget* wg_add_update;
 
    QLineEdit *le_investigator; //!< Investigator line edit.
 
@@ -177,57 +186,75 @@ private:
    QLineEdit *le_subgrids; //!< Number of subgrids.
    QLineEdit *le_allgrids; //!< Number of all subgrids.
 
-   US_Help showHelp; //!< Help widget.
-   QHash<int, QVector<GridPoint>> final_grid;
+   QButtonGroup* x_axis;    //!< X-axis button group.
+   QButtonGroup* y_axis;    //!< Y-axis button group.
 
    QwtPlot *data_plot; //!< Data plot.
-   QwtLinearColorMap *colormap; //!< Color map for the plot.
-   US_PlotPicker *picker; //!< Plot picker 1.
+
    US_Disk_DB_Controls* dkdb_cntrls; //!< Disk DB controls.
 
    QPushButton *pb_add_update; //!< Button to add partial grid.
-   QPushButton *pb_delete; //!< Button to delete partial grid.
-
-   // QRadioButton *rb_plot1; //!< Plot radio button 1.
-   // QRadioButton *rb_plot2; //!< Plot radio button 2.
-
-   // QButtonGroup *toggle_plot; //!< Button group for toggling plot.
 
    US_Grid_Preset *grid_preset; //!< A dialog to set the grid preset
 
    QListWidget *lw_grids;
 
+   US_Help showHelp; //!< Help widget.
+   QList<QVector<QVector<GridPoint>>> final_grid_points;
+
    int x_param; //!< Plot x-axis attribute (0-5 for s, f/f0, mw, vbar, D, f).
    int y_param; //!< Plot y-axis attribute (0-5 for s, f/f0, mw, vbar, D, f).
    int z_param; //!< Plot z-axis attribute (0-5 for s, f/f0, mw, vbar, D, f).
+   double x_min;
+   double x_max;
+   double y_min;
+   double y_max;
+   double z_val;
    int dbg_level;
    int selected_plot; //!< Selected plot.
 
-   void rm_plot_items(void);
-   void plot_item(void);
+   void rm_tmp_items(void);
+   void rm_all_items(void);
+   void plot_tmp(void);
+   //! \brief Validate grid point
+   bool validate_num(const QString);
+   bool validate(void);
+   bool overlap(void);
+   void linspace(double, double, int, QVector<double>&);
+   void unit_corr(double&, int);
+   void fill_list();
+   double value4plot(int, int, int, int);
 
 private slots:
    //! \brief Slot to setup the grid axises.
-   void set_grid_axis();
+   void set_grid_axis(void);
 
-   //! \brief Validate grid point
-   void validate();
+   void add_update(void);
 
    //! \brief Slot to update x minimum value.
-   //! \param value New x minimum value.
    void update_xMin(void);
 
    //! \brief Slot to update x maximum value.
-   //! \param value New x maximum value.
    void update_xMax(void);
 
    //! \brief Slot to update y minimum value.
-   //! \param value New y minimum value.
    void update_yMin(void);
 
    //! \brief Slot to update y maximum value.
-   //! \param value New y maximum value.
    void update_yMax(void);
+
+   //! \brief Slot to update z value.
+   void update_zVal(void);
+
+   void highlight(int);
+
+   void new_grid_clicked(void);
+   void update_grid_clicked(void);
+   void delete_grid_clicked(void);
+
+   void select_x_axis(int);
+   void select_y_axis(int);
+
 
    // //! \brief Slot to update partial grid.
    // //! \param value New partial grid value.
@@ -241,8 +268,8 @@ private slots:
    // //! \param text New density value.
    // void update_exp_data( );
 
-   // //! \brief Slot to update the plot.
-   // void update_plot(void);
+   //! \brief Slot to update the plot.
+   void plot_all(void);
 
    // //! \brief Slot to select plot.
    // //! \param index Index of the selected plot.
