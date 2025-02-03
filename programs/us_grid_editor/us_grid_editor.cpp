@@ -364,6 +364,17 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    QLabel* lb_y_plot = us_label("Y-Axis");
    lb_y_plot->setAlignment(Qt::AlignCenter);
 
+   QLabel* lb_p_size = us_label("Point Size");
+   lb_p_size->setAlignment(Qt::AlignCenter);
+   ct_size = us_counter(2, 1, 50, 3);
+   ct_size->setSingleStep(1);
+   QLineEdit* le_sz = ct_size->findChild<QLineEdit*>();
+   if (le_sz) {
+      le_sz->setAlignment(Qt::AlignCenter);
+   }
+
+   connect(ct_size, &QwtCounter::valueChanged, this, &US_Grid_Editor::update_symsize);
+
    QGridLayout* lyt_r = new QGridLayout();
    lyt_r->setMargin(0);
    lyt_r->addWidget(lb_x_plot,  0, 0, 1, 1);
@@ -385,6 +396,13 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    lyt_r->addLayout(lyt_y_f,    1, 6, 1, 1);
    lyt_r->addLayout(lyt_y_sr,   1, 7, 1, 1);
    lyt_r->addLayout(lyt_y_Dr,   1, 8, 1, 1);
+
+   lyt_r->addWidget(lb_p_size,  2, 0, 1, 1);
+   lyt_r->addWidget(ct_size,    2, 3, 1, 3);
+
+   for ( int ii = 0; ii < lyt_r->columnCount(); ii++ ) {
+      lyt_r->setColumnStretch(ii, 1);
+   }
 
    right->addLayout( plot_lyt );
    right->addWidget( lb_plt_cntrl );
@@ -716,10 +734,9 @@ bool US_Grid_Editor::overlap()
       item[0][0].value_by_name(Attr_to_char( y_param), y1 );
       item[0][nc - 1].value_by_name(Attr_to_char( x_param ), x2 );
       item[nr - 1][0].value_by_name(Attr_to_char( y_param ), y2 );
-      if ( ( x_min >= x1 && x_min <= x2 ) || ( x_max >= x1 && x_max <= x2 ) ) {
-         return true;
-      }
-      if ( ( y_min >= y1 && y_min <= y2 ) || ( y_max >= y1 && y_max <= y2 ) ) {
+      bool flag_x = ( x_min >= x1 && x_min <= x2 ) || ( x_max >= x1 && x_max <= x2 );
+      bool flag_y = ( y_min >= y1 && y_min <= y2 ) || ( y_max >= y1 && y_max <= y2 );
+      if ( flag_x && flag_y ) {
          return true;
       }
    }
@@ -755,20 +772,20 @@ void US_Grid_Editor::fill_list()
    int crow = lw_grids->currentRow();
    lw_grids->clear();
    int n_grids = final_grid_points.size();
-   QString title = "%1: %2 - %3 , %4: %5 - %6";
+   QString title = "%1) %2 = %3 - %4 , %5 = %6 - %7";
    for (int ii = 0; ii < n_grids; ii++) {
       QVector<QVector<GridPoint>> item = final_grid_points.at(ii);
       int nr = item.size();
       int nc = item.first().size();
-      double x1, x2, y1, y2;
-      item[0][0].value_by_name(Attr_to_char( x_param ), x1 );
-      item[0][0].value_by_name(Attr_to_char( y_param), y1 );
-      item[0][nc - 1].value_by_name(Attr_to_char( x_param ), x2 );
-      item[nr - 1][0].value_by_name(Attr_to_char( y_param ), y2 );
-
-      // QString t = title.arg(Attr_to_char(x_param)).arg(x1, x2).
-      //             arg(Attr_to_char(y_param)).arg(y1, y2);
-      lw_grids->addItem(tr("Grid-%1").arg(ii + 1));
+      double x1 = value4plot(ii, 0, 0,      x_param);
+      double x2 = value4plot(ii, 0, nc - 1, x_param);
+      double y1 = value4plot(ii, 0, 0,      y_param);
+      double y2 = value4plot(ii, nr - 1, 0, y_param);
+      QString tt = title.arg(ii + 1).arg(Attr_to_char(x_param)).
+                   arg(x1, 0, 'f', 1).arg(x2, 0, 'f', 1).
+                   arg(Attr_to_char(y_param)).
+                   arg(y1, 0, 'f', 1).arg(y2, 0, 'f', 1);
+      lw_grids->addItem(tt);
    }
    if ( crow == -1 ) crow = 0;
    lw_grids->setCurrentRow( crow );
@@ -1012,7 +1029,30 @@ void US_Grid_Editor::update_zVal()
 
 void US_Grid_Editor::highlight(int id)
 {
-
+   QString title = tr("GRID_%1").arg(id);
+   auto items = data_plot->itemList(QwtPlotItem::Rtti_PlotCurve);
+   for (int ii = 0; ii < items.size(); ii++) {
+      QwtPlotCurve* curve = dynamic_cast<QwtPlotCurve*>(items.at(ii));
+      if (curve) {
+         const QwtSymbol* symbol = curve->symbol();
+         if (symbol) {
+            QPen pen = symbol->pen();
+            QwtSymbol* new_symbol = new QwtSymbol();
+            new_symbol->setStyle(symbol->style());
+            new_symbol->setSize(symbol->size());
+            if ( curve->title() == title ) {
+               pen.setColor(Qt::red);
+               new_symbol->setBrush(Qt::red);
+            } else {
+               pen.setColor(Qt::yellow);
+               new_symbol->setBrush(Qt::yellow);
+            }
+            new_symbol->setPen(pen);
+            curve->setSymbol(new_symbol);
+         }
+      }
+   }
+   data_plot->replot();
 }
 
 void US_Grid_Editor::new_grid_clicked()
@@ -1081,6 +1121,27 @@ void US_Grid_Editor::select_y_axis(int index)
    wg_add_update->setDisabled(true);
 }
 
+void US_Grid_Editor::update_symsize(double)
+{
+   int ssize = ct_size->value();
+   auto items = data_plot->itemList(QwtPlotItem::Rtti_PlotCurve);
+   for (int ii = 0; ii < items.size(); ii++) {
+      QwtPlotCurve* curve = dynamic_cast<QwtPlotCurve*>(items.at(ii));
+      if (curve) {
+         const QwtSymbol* symbol = curve->symbol();
+         if (symbol) {
+            QwtSymbol* new_symbol = new QwtSymbol();
+            new_symbol->setStyle(symbol->style());
+            new_symbol->setBrush(symbol->brush());
+            new_symbol->setPen(symbol->pen());
+            new_symbol->setSize(ssize, ssize);
+            curve->setSymbol(new_symbol);
+         }
+      }
+   }
+   data_plot->replot();
+}
+
 void US_Grid_Editor::plot_all()
 {
    rm_all_items();
@@ -1099,102 +1160,39 @@ void US_Grid_Editor::plot_all()
    double px2 = -1e99;
    double py1 =  1e99;
    double py2 = -1e99;
-
-   double C = 0.5;
-   double x  = 0;
-   double y  = 0;
-   double dx = 0;
-   double dy = 0;
    int pxid = x_axis->checkedId();
    int pyid = y_axis->checkedId();
+   int ssize = ct_size->value();
    for ( int nn = 0; nn < final_grid_points.size(); nn++ ) {
       QVector<QVector<GridPoint>> gps = final_grid_points.at(nn);
-      QVector<QVector<double>> x_arr;
-      QVector<QVector<double>> y_arr;
-
-      int nrows = gps.size();
-      int ncols = gps.first().size();
-      for ( int ii = 0; ii < nrows; ii++ ) {
-         QVector<double> row_x;
-         QVector<double> row_y;
-         for (int jj = 0; jj < ncols; jj++) {
-            x = value4plot(nn, ii, jj, pxid);
-            y = value4plot(nn, ii, jj, pyid);
+      QVector<double> xarr;
+      QVector<double> yarr;
+      for ( int ii = 0; ii < gps.size(); ii++ ) {
+         for (int jj = 0; jj < gps.at(ii).size(); jj++) {
+            double x = value4plot(nn, ii, jj, pxid);
+            double y = value4plot(nn, ii, jj, pyid);
 
             px1 = qMin(px1, x);
             px2 = qMax(px2, x);
             py1 = qMin(py1, y);
             py2 = qMax(py2, y);
 
-            row_x << x;
-            row_y << y;
-         }
-         x_arr << row_x;
-         y_arr << row_y;
-      }
-
-      for ( int ii = 0; ii < nrows; ii++ ) {
-         for (int jj = 0; jj < ncols; jj++) {
-            x = x_arr.at(ii).at(jj);
-            y = y_arr.at(ii).at(jj);
-
-            if ( ii > 0 && ii < ( nrows - 1 ) && jj > 0 && jj < ( ncols - 1 )) {
-               double dx1 = qAbs( x - x_arr.at(ii).at(jj - 1) ) * 0.5 * C;
-               double dx2 = qAbs( x_arr.at(ii).at(jj + 1) - x ) * 0.5 * C;
-               double dy1 = qAbs( y - y_arr.at(ii - 1).at(jj) ) * 0.5 * C;
-               double dy2 = qAbs( y_arr.at(ii + 1).at(jj) - y ) * 0.5 * C;
-               x -= dx1;
-               y -= dy1;
-               dx = dx1 + dx2;
-               dy = dy1 + dy2;
-            } else {
-               if ( ii == 0 ) {
-                  dy = qAbs( y_arr.at(ii + 1).at(jj) - y ) * 0.5 * C;
-                  y -= dy;
-                  dy *= 2;
-               } else if ( ii == nrows - 1 ) {
-                  dy = qAbs( y - y_arr.at(ii - 1).at(jj) ) * 0.5 * C;
-                  y -= dy;
-                  dy *= 2;
-               } else {
-                  double dy1 = qAbs( y - y_arr.at(ii - 1).at(jj) ) * 0.5 * C;
-                  double dy2 = qAbs( y_arr.at(ii + 1).at(jj) - y ) * 0.5 * C;
-                  y -= dy1;
-                  dy = dy1 + dy2;
-               }
-               if ( jj == 0 ) {
-                  dx = qAbs( x_arr.at(ii).at(jj + 1) - x) * 0.5 * C;
-                  x -= dx;
-                  dx *= 2;
-               } else if ( jj == ncols - 1 ) {
-                  dx = qAbs( x - x_arr.at(ii).at(jj - 1) ) * 0.5 * C;
-                  x -= dx;
-                  dx *= 2;
-               } else {
-                  double dx1 = qAbs( x - x_arr.at(ii).at(jj - 1) ) * 0.5 * C;
-                  double dx2 = qAbs( x_arr.at(ii).at(jj + 1) - x ) * 0.5 * C;
-                  x -= dx1;
-                  dx = dx1 + dx2;
-               }
-            }
-
-            QString title = tr("GP_%1_r%2-c%3").arg(nn, ii, jj);
-            QPainterPath path;
-            QRectF rect(x, y, dx, dy);
-            path.addRect(rect);
-
-            QwtPlotShapeItem *item = new QwtPlotShapeItem();
-            item->setTitle(title);
-            item->setShape(path);
-            item->setBrush(QBrush(QColor(255,255,51, 225)));
-            item->setPen(QPen(QColor(255,255,51), 0));
-            item->attach(data_plot);
+            xarr << x;
+            yarr << y;
          }
       }
+      QString title = tr("GRID_%1").arg(nn);
+      QwtPlotCurve* curve = us_curve(data_plot, title);
+
+      QwtSymbol* symbol = new QwtSymbol(QwtSymbol::Ellipse, QBrush(Qt::yellow),
+                                        QPen(Qt::yellow), QSize(ssize, ssize));
+      curve->setSymbol(symbol);
+      curve->setStyle(QwtPlotCurve::NoCurve);
+      curve->setSamples(xarr.data(), yarr.data(), xarr.size());
    }
 
-   dx = (px2 - px1) * 0.1;
-   dy = (py2 - py1) * 0.1;
+   double dx = (px2 - px1) * 0.1;
+   double dy = (py2 - py1) * 0.1;
    px1 -= dx;
    px2 += dx;
    py1 -= dy;
@@ -1203,6 +1201,8 @@ void US_Grid_Editor::plot_all()
    data_plot->setAxisScale( QwtPlot::yLeft  , py1, py2);
    data_plot->replot();
 }
+
+
 
 // // Select a partialGrid from all subgrids in the final grid for highlighting
 // void US_Grid_Editor::update_partialGrid( double dval )

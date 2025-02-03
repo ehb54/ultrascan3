@@ -197,6 +197,8 @@ private:
 
    QListWidget *lw_grids;
 
+   QwtCounter* ct_size;
+
    US_Help showHelp; //!< Help widget.
    QList<QVector<QVector<GridPoint>>> final_grid_points;
 
@@ -252,6 +254,8 @@ private slots:
 
    void select_x_axis(int);
    void select_y_axis(int);
+
+   void update_symsize(double);
 
 
    // //! \brief Slot to update partial grid.
