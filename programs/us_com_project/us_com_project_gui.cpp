@@ -1713,6 +1713,7 @@ void US_InitDialogueGui::initRecordsDialogue( void )
   QString expType      = protocol_details[ "expType" ];
   QString instName     = protocol_details[ "OptimaName" ];
   QString dataSource   = protocol_details[ "dataSource" ];
+  QString opticsFailedType = protocol_details[ "opticsFailedType"];
     
   QDir directory( currDir );
   
@@ -1730,6 +1731,7 @@ void US_InitDialogueGui::initRecordsDialogue( void )
 	   << protocol_details[ "failedID" ].toInt();
 
   qDebug() << "ExpType: " << expType;
+  qDebug() << "opticsFailedType: " << opticsFailedType;
 
 
   //Re-attachment to FAILED GMP run
@@ -2749,6 +2751,7 @@ QMap< QString, QString> US_InitDialogueGui::read_autoflow_record( int autoflowID
 
 	   protocol_details[ "expType" ]       = db->value( 26 ).toString();
 	   protocol_details[ "dataSource" ]    = db->value( 27 ).toString();
+	   protocol_details[ "opticsFailedType" ]    = db->value( 28 ).toString();
 	 }
      }
    else

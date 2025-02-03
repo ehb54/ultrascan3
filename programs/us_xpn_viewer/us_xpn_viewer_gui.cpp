@@ -247,6 +247,7 @@ US_XpnDataViewer::US_XpnDataViewer(QString auto_mode) : US_Widgets()
    auto_mode_bool     = true;
    experimentAborted  = false;
    experimentAborted_remotely  = false;
+   opticsFailed       = false;
    inExport           = false;
    combinedOptics     = false;
    autoflowStatusID   = 0;
@@ -838,6 +839,7 @@ US_XpnDataViewer::US_XpnDataViewer() : US_Widgets()
    auto_mode_bool = false;
    experimentAborted  = false;
    experimentAborted_remotely  = false;
+   opticsFailed       = false;
    autoflowStatusID   = 0;
    
    navgrec      = 10;
@@ -2028,7 +2030,7 @@ void US_XpnDataViewer::updateautoflow_record_atLiveUpdate( void )
 
        db->query( qry );
 
-       details_at_live_update[ "correctRadii" ] = QString("NO"); //currentDir;
+       details_at_live_update[ "correctRadii" ] = QString("NO"); 
      }
 
    //ALEXEY: if run was aborted manually from the Optima panel, set expAborted to 'YES'
@@ -2054,8 +2056,23 @@ void US_XpnDataViewer::updateautoflow_record_atLiveUpdate( void )
 	   << OptimaName;
        
        db->query( qry );
-       
+
+       details_at_live_update[ "expAborted" ] = QString("YES");
        details_at_live_update[ "statusID" ] = QString::number( autoflowStatusID );
+     }
+
+   //If one of the optics type failed:
+   if ( opticsFailed )
+     {
+       qry.clear();
+       qry << "update_autoflow_at_live_update_optics_types_failed"
+	   << opticsFailed_type
+	   << RunID_to_retrieve
+	   << OptimaName;
+       
+       db->query( qry );
+       
+       details_at_live_update[ "opticsFailedType" ] = opticsFailed_type;
      }
 
    /***/
@@ -2188,7 +2205,20 @@ void US_XpnDataViewer::stop_optima( void )
       // Do we need to do anything ??
       // IF status "0", it will switch to IMPORT and will ask what to do with data
       // IF status "0" && no data collected yet - what then ? Needs testing...
-      // **************  if ( link->tot_scans.toInt() == 0 ) ??? 
+      // **************  if ( link->tot_scans.toInt() == 0 ) ???
+
+      // if ( combinedOptics )
+      // 	{
+      // 	  if ( opsys_auto.count() < 2 ) //combo-run && just 1 ootics collected (so far)
+      // 	    {
+      // 	      QString optics_failed    = (runType == "RI" ) ? "Interference" : "Absorbance";
+      // 	      QString optics_processed = (runType == "RI" ) ? "Absorbance" : "Interference";
+	      
+      // 	      opticsFailed     = true;
+      // 	      opticsFailed_type = (runType == "RI" ) ? "IP" : "RI";
+      // 	    }
+      // 	}
+      
       
       //Now, create OR update (if exists due to clicking "Skip Stage") autoflowStatus record: 
       /* We can (or even should) do it here - NOT at the time of switching to 3. IMPORT,    */
@@ -2747,6 +2777,8 @@ void US_XpnDataViewer::check_for_data( QMap < QString, QString > & protocol_deta
   
   xpn_data->setEtimOffZero(); //ALEXEY: intialize etimoff to zero for the first time
 
+  opticsFailed       = false;
+  opticsFailed_type  = "";
   experimentAborted  = false;
   counter_mins = 0;
   ElapsedTimeOffset = 0;
@@ -3687,6 +3719,26 @@ DbgLv(1) << "RDa: allData size" << allData.size();
        
        timer_all_data_avail->stop();
        disconnect(timer_all_data_avail, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
+
+       //For combined Optics type && opticsFailed!
+       qDebug() << "[ABORTION IN EARLY STAGE...] : combinedOptics,  opsys_auto.count(), opsys_auto -- "
+		<< combinedOptics << opsys_auto.count() << opsys_auto;
+       if ( combinedOptics && opsys_auto.count() < 2 )
+	 {
+	   QString optics_failed    = (runType == "RI" ) ? "Interference" : "Absorbance";
+	   QString optics_processed = (runType == "RI" ) ? "Absorbance" : "Interference";
+	   //Inform user that run completed but one of the optics failed
+	   QMessageBox::critical( this,
+				  tr( "Optima Optics Failed | Not Initiated:" ),
+				  tr( "Data collection for %1 optics type failed / not initiated. \n\n"
+				      "The program will proceed to the 3. IMPORT stage where "
+				      "collected data (%2) can be saved into DB.")
+				  . arg( optics_failed)
+				  . arg( optics_processed ) );
+
+	   opticsFailed     = true;
+	   opticsFailed_type = (runType == "RI" ) ? "IP" : "RI";
+	 }
        
        if ( !timer_check_sysdata->isActive()  ) // Check if sys_data Timer is stopped
 	 {
@@ -3714,6 +3766,7 @@ DbgLv(1) << "RDa: allData size" << allData.size();
 	       return;
 	     }
 
+  
 	   updateautoflow_record_atLiveUpdate();
 
 	   reset_auto();
@@ -3752,16 +3805,17 @@ DbgLv(1) << "RDa: allData size" << allData.size();
      }
    else
      {
-       qDebug() << " In retrieve_xpn_raw_auto(): Combined optics! cellchans.count(), CellChNumber_map[ runType ].toInt(); ntriple, TripleNumber_map[ runType ].toInt() -- "
+       qDebug() << " In retrieve_xpn_raw_auto(): Combined optics! cellchans.count(), CellChNumber_map[ runType ].toInt(); ntriple, TripleNumber_map[ runType ].toInt(), runtype -- "
 		<< cellchans.count() << ", " <<  CellChNumber_map[ runType ].toInt() << "; "
-		<< ntriple << ", " <<  TripleNumber_map[ runType ].toInt();
+		<< ntriple << ", " <<  TripleNumber_map[ runType ].toInt() << runType;
        if ( cellchans.count() == CellChNumber_map[ runType ].toInt() && ntriple == TripleNumber_map[ runType ].toInt() )    
 	 {
-
+	   qDebug() << "opsys_auto, opsys_auto.count(): " << opsys_auto << opsys_auto.count();
+	   
 	   //ALEXEY: here - either check that
 	   // 1. xpn_data->countOf( "ascn_rows" ) != 0 && xpn_data->countOf( "iscn_rows" ) != 0 OR opsys_auto.count() > 1
 	   // 2. all triples for ALL optics systems are populated
-	   if ( opsys_auto.count() > 1 )
+	   if ( opsys_auto.count() > 1 ) //All optics processed
 	     {
 	       	       
 	       //stop timer
@@ -3780,6 +3834,50 @@ DbgLv(1) << "RDa: allData size" << allData.size();
 		   //update hereafter
 		   connect(timer_data_reload, SIGNAL(timeout()), this, SLOT( reloadData_auto( ) ));
 		   timer_data_reload->start(10000);     // 10 sec
+		 }
+	     }
+	   else //not all optics processed & Exp Completed
+	     {
+	       bool oconn = true;
+	       int expStat = CheckExpComplete_auto( RunID_to_retrieve, oconn );
+	       if ( expStat == 5 || expStat == 0 ) //Run Completed, or Aborted (SHOULD BE '3' as per documentaiton but never implemented...)
+		 {
+		   //stop timer
+		   timer_all_data_avail->stop();
+		   disconnect(timer_all_data_avail, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
+
+		   if ( !timer_check_sysdata->isActive()  ) // Check if sys_data Timer is stopped
+		     {
+		       in_reload_all_data   = false;
+		       
+		       QString optics_failed    = (runType == "RI" ) ? "Interference" : "Absorbance";
+		       QString optics_processed = (runType == "RI" ) ? "Absorbance" : "Interference";
+		       //Inform user that run completed but one of the optics failed
+		       QMessageBox::critical( this,
+					      tr( "Optima Optics Failed:" ),
+					      tr( "Data collection for %1 optics type failed. \n\n"
+						  "The program will proceed to the 3. IMPORT stage where "
+						  "collected data (%2) can be saved into DB.")
+					      . arg( optics_failed)
+					      . arg( optics_processed ) );
+		       
+		       //proceed to IMPORT
+		       bool tmstampOK = true;
+		       export_auc_auto( tmstampOK );
+		       qDebug() << "[Optics FAILED]tmstampOK? " << tmstampOK;
+
+		       opticsFailed     = true;
+		       opticsFailed_type = (runType == "RI" ) ? "IP" : "RI";
+		       
+		       updateautoflow_record_atLiveUpdate(); // We need to include info on the failed optics here!!!
+
+		       reset_auto();
+	   
+		       in_reload_all_data   = false;  
+	   
+		       emit experiment_complete_auto( details_at_live_update  ); 
+		       return;
+		     }
 		 }
 	     }
 	 }
