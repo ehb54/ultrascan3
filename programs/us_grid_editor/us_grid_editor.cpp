@@ -169,7 +169,6 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    connect(le_x_max, &QLineEdit::editingFinished, this, &US_Grid_Editor::update_xMax);
    connect(le_y_min, &QLineEdit::editingFinished, this, &US_Grid_Editor::update_yMin);
    connect(le_y_max, &QLineEdit::editingFinished, this, &US_Grid_Editor::update_yMax);
-   connect(le_z_val, &QLineEdit::editingFinished, this, &US_Grid_Editor::update_zVal);
 
    QPushButton* pb_validate = us_pushbutton( "Add " );
    connect( pb_validate, &QPushButton::clicked, this, &US_Grid_Editor::add_update );
@@ -527,7 +526,7 @@ void US_Grid_Editor::plot_tmp()
    shapeItem->setPen(QPen(QColor(255,255,255), 2));
    shapeItem->attach(data_plot);
 
-   if ( ! final_grid_points.isEmpty() ) {
+   if ( ! grid_points.isEmpty() ) {
       px1 = qMin(px1, data_plot->axisScaleDiv(QwtPlot::xBottom).lowerBound());
       px2 = qMax(px2, data_plot->axisScaleDiv(QwtPlot::xBottom).upperBound());
       py1 = qMin(py1, data_plot->axisScaleDiv(QwtPlot::yLeft).lowerBound());
@@ -606,13 +605,17 @@ void US_Grid_Editor::add_update()
    double temp = le_temp->text().toDouble();
    bool dvt_set = validate_num("dens") && validate_num("visc") && validate_num("temp");
 
-   int x_res = le_x_res->text().toInt();
-   int y_res = le_y_res->text().toInt();
+   QHash<QString, double> xyz;
+   get_xyz(xyz);
+
+   int x_res    = xyz.value("xRes");
+   int y_res    = xyz.value("yRes");
+   double z_val = xyz.value("zVal");
    QVector<double> xpoints;
-   linspace(x_min, x_max, x_res, xpoints);
+   linspace(xyz.value("xMin"), xyz.value("xMax"), x_res, xpoints);
 
    QVector<double> ypoints;
-   linspace(y_min, y_max, y_res, ypoints);
+   linspace(xyz.value("yMin"), xyz.value("yMax"), y_res, ypoints);
 
    if ( overlap(xpoints.first(), xpoints.last(),
                ypoints.first(), ypoints.last()) ) {
@@ -638,10 +641,13 @@ void US_Grid_Editor::add_update()
       }
    }
 
-   final_grid_points << gps;
-   QVector<int> gsize;
-   gsize << x_res << y_res;
-   final_grid_size << gsize;
+   grid_points << gps;
+   QVector<double> ginfo;
+   ginfo << xyz.value("xMinU") << xyz.value("xMaxU") << xyz.value("xRes")
+         << xyz.value("yMinU") << xyz.value("yMaxU") << xyz.value("yRes")
+         << xyz.value("zValU");
+   grid_info << ginfo;
+   clear_xyz();
    plot_all();
    fill_list();
 }
@@ -694,23 +700,20 @@ bool US_Grid_Editor::validate( )
    {
       error_msg = tr("%1 \n\nResolution value is zero!").arg(lb_y_ax->text());
    }
-   // double x_min = le_x_min->text().toDouble();
-   // double x_max = le_x_max->text().toDouble();
-   // double y_min = le_y_min->text().toDouble();
-   // double y_max = le_y_max->text().toDouble();
-   // double z_val = le_z_val->text().toDouble();
-   // //
+
+   QHash<QString, double> xyz;
+   get_xyz(xyz);
 
    GridPoint gp;
    QVector<int> types;
    types << x_param << y_param << z_param;
    QVector<double> vals;
-   vals << x_min << y_min << z_val;
+   vals << xyz.value("xMin") << xyz.value("yMin") << xyz.value("zVal");
    if ( ! gp.set_param(vals, types) ) {
       error_msg = gp.error_string();
    } else {
       vals.clear();
-      vals << x_max << y_max << z_val;
+      vals << xyz.value("xMax") << xyz.value("yMax") << xyz.value("zVal");
       if ( ! gp.set_param(vals, types) ) {
          error_msg = gp.error_string();
       }
@@ -727,8 +730,8 @@ bool US_Grid_Editor::validate( )
 
 bool US_Grid_Editor::overlap(double xMin, double xMax, double yMin, double yMax)
 {
-   for (int ii= 0; ii < final_grid_points.size(); ii++) {
-      QVector<GridPoint> item = final_grid_points.at(ii);
+   for (int ii= 0; ii < grid_points.size(); ii++) {
+      QVector<GridPoint> item = grid_points.at(ii);
       double x1, x2, y1, y2;
       int sz = item.size();
       item[0].value_by_name(Attr_to_char( x_param ), x1 );
@@ -770,33 +773,39 @@ void US_Grid_Editor::unit_corr(double& val, int type)
 void US_Grid_Editor::fill_list()
 {
    lw_grids->disconnect();
-   int crow = lw_grids->currentRow();
+
+   int row = lw_grids->currentRow();
    lw_grids->clear();
-   int n_grids = final_grid_points.size();
-   QString title = "%1) %2 = %3 - %4 , %5 = %6 - %7";
+   int n_grids = grid_points.size();
+   QString title = "%1) %2 = %3 - %4 ; %5 = %6 - %7 ; %8 = %9";
+
    for (int ii = 0; ii < n_grids; ii++) {
-      QVector<GridPoint> item = final_grid_points.at(ii);
-      int N = item.size() - 1;
-      double x1 = value4plot(ii, 0, x_param);
-      double x2 = value4plot(ii, N, x_param);
-      double y1 = value4plot(ii, 0, y_param);
-      double y2 = value4plot(ii, N, y_param);
-      QString tt = title.arg(ii + 1).arg(Attr_to_char(x_param)).
-                   arg(x1, 0, 'f', 2).arg(x2, 0, 'f', 2).
-                   arg(Attr_to_char(y_param)).
-                   arg(y1, 0, 'f', 2).arg(y2, 0, 'f', 2);
-      lw_grids->addItem(tt);
+      QVector<double> ginfo = grid_info.at(ii);
+      double x1 = ginfo.at(0);
+      double x2 = ginfo.at(1);
+      double y1 = ginfo.at(3);
+      double y2 = ginfo.at(4);
+      double z  = ginfo.at(6);
+
+      QString str = title.arg(ii + 1).
+                    arg(Attr_to_char(x_param)).arg(x1, 0, 'f', 2).arg(x2, 0, 'f', 2).
+                    arg(Attr_to_char(y_param)).arg(y1, 0, 'f', 2).arg(y2, 0, 'f', 2).
+                    arg(Attr_to_char(z_param)).arg(z,  0, 'f', 2);
+      lw_grids->addItem(str);
    }
-   if ( crow == -1 ) crow = 0;
-   lw_grids->setCurrentRow( crow );
+
+   if ( row == -1 ) row = 0;
+   lw_grids->setCurrentRow( row );
+
    connect(lw_grids, &QListWidget::currentRowChanged, this, &US_Grid_Editor::highlight);
-   highlight(crow);
+   lw_grids->setMouseTracking(true);
+   highlight(row);
 }
 
 double US_Grid_Editor::value4plot(int ii, int jj, int pid)
 {
    double val = 0;
-   final_grid_points[ii][jj].value_by_name( Attr_to_char( pid ), val);
+   grid_points[ii][jj].value_by_name( Attr_to_char( pid ), val);
    if ( pid == ATTR_S || pid == ATTR_SR ) {
       val *= 1e13;
    } else if ( pid == ATTR_M ) {
@@ -805,19 +814,62 @@ double US_Grid_Editor::value4plot(int ii, int jj, int pid)
    return val;
 }
 
+void US_Grid_Editor::clear_xyz()
+{
+   le_x_min->clear();
+   le_x_max->clear();
+   le_y_min->clear();
+   le_y_max->clear();
+   le_z_val->clear();
+   wg_add_update->setDisabled(true);
+}
+
+void US_Grid_Editor::get_xyz(QHash<QString, double> & vals)
+{
+   vals.clear();
+   double x_min = le_x_min->text().toDouble();
+   double x_max = le_x_max->text().toDouble();
+   int    x_res = le_x_res->text().toDouble();
+   double y_min = le_y_min->text().toDouble();
+   double y_max = le_y_max->text().toDouble();
+   int    y_res = le_y_res->text().toDouble();
+   double z_val = le_z_val->text().toDouble();
+
+   vals.insert("xRes", x_res);
+   vals.insert("yRes", y_res);
+
+   vals.insert("xMinU", x_min);
+   vals.insert("xMaxU", x_max);
+   vals.insert("yMinU", y_min);
+   vals.insert("yMaxU", y_max);
+   vals.insert("zValU", z_val);
+
+   unit_corr(x_min, x_param);
+   unit_corr(x_max, x_param);
+   unit_corr(y_min, y_param);
+   unit_corr(y_max, y_param);
+   unit_corr(z_val, z_param);
+
+   vals.insert("xMin", x_min);
+   vals.insert("xMax", x_max);
+   vals.insert("yMin", y_min);
+   vals.insert("yMax", y_max);
+   vals.insert("zVal", z_val);
+}
+
 // reset the GUI
 void US_Grid_Editor::reset( void )
 {
    rm_all_items();
    lw_grids->disconnect();
    lw_grids->clear();
-   final_grid_points.clear();
-   final_grid_size.clear();
+   grid_points.clear();
+   grid_info.clear();
 
    x_param = ATTR_S; // plot s
    y_param = ATTR_K; // plot f/f0
    z_param = ATTR_V; // fixed vbar
-   gstate = G_ADD;
+   // gstate = G_ADD;
 
    le_x_param->setText( Attr_to_long(x_param) );
    le_y_param->setText( Attr_to_long(y_param) );
@@ -825,9 +877,13 @@ void US_Grid_Editor::reset( void )
    lb_x_ax->setText( Attr_to_short( x_param ));
    lb_y_ax->setText( Attr_to_short( y_param ));
    lb_z_ax->setText( Attr_to_short( z_param ));
+
+   x_axis->button(x_param)->setChecked(true);
+   y_axis->button(y_param)->setChecked(true);
+   plot_all();
    le_x_res->setText(QString::number(64));
    le_y_res->setText(QString::number(64));
-   wg_add_update->setDisabled(true);
+   clear_xyz();
 }
 
 // save the grid data
@@ -857,7 +913,7 @@ void US_Grid_Editor::reset( void )
    // double ffmax      = -1e99;
    // sc.signal_concentration = 1.0;
 
-   // for ( int ii = 0; ii < final_grid.size(); ii++ )
+   // for ( int ii = 0; ii < final_grid.size(); ii++ ) D_20W_to_R
    // {
    //    flag        = true;
    //    sc.s        = final_grid[ ii ].s * 1.0e-13;
@@ -992,44 +1048,30 @@ void US_Grid_Editor::reset( void )
 // update plot limit x min
 void US_Grid_Editor::update_xMin( )
 {
-   x_min = le_x_min->text().toDouble();
-   unit_corr(x_min, x_param);
    plot_tmp();
 }
 
 // update plot limit x max
 void US_Grid_Editor::update_xMax( )
 {
-   x_max = le_x_max->text().toDouble();
-   unit_corr(x_max, x_param);
    plot_tmp();
 }
 
 // update plot limit y min
 void US_Grid_Editor::update_yMin( )
 {
-   y_min = le_y_min->text().toDouble();
-   unit_corr(y_min, y_param);
    plot_tmp();
 }
 
 // update plot limit y max
 void US_Grid_Editor::update_yMax( )
 {
-   y_max = le_y_max->text().toDouble();
-   unit_corr(y_max, y_param);
    plot_tmp();
 }
 
-void US_Grid_Editor::update_zVal()
-{
-   z_val = le_z_val->text().toDouble();
-   unit_corr(z_val, z_param);
-}
-
-
 void US_Grid_Editor::highlight(int id)
 {
+   rm_tmp_items();
    QString title = tr("GRID_%1").arg(id);
    auto items = data_plot->itemList(QwtPlotItem::Rtti_PlotCurve);
    for (int ii = 0; ii < items.size(); ii++) {
@@ -1054,22 +1096,30 @@ void US_Grid_Editor::highlight(int id)
       }
    }
    data_plot->replot();
+   clear_xyz();
+   if ( id != -1 ) {
+      QVector<double> ginfo = grid_info.at(id);
+      le_x_min->setText(QString::number(ginfo.at(0)));
+      le_x_max->setText(QString::number(ginfo.at(1)));
+      le_x_res->setText(QString::number(ginfo.at(2)));
+      le_y_min->setText(QString::number(ginfo.at(3)));
+      le_y_max->setText(QString::number(ginfo.at(4)));
+      le_y_res->setText(QString::number(ginfo.at(5)));
+      le_z_val->setText(QString::number(ginfo.at(6)));
+   }
 }
 
 void US_Grid_Editor::new_grid_clicked()
 {
 
-   le_x_min->clear();
-   le_x_max->clear();
-   le_y_min->clear();
-   le_y_max->clear();
-   le_z_val->clear();
+   clear_xyz();
    plot_flag = false;
    x_axis->button(x_param)->setChecked(true);
    y_axis->button(y_param)->setChecked(true);
    plot_flag = true;
-   wg_add_update->setEnabled(true);
    plot_all();
+   highlight(-1);
+   wg_add_update->setEnabled(true);
 }
 
 void US_Grid_Editor::update_grid_clicked()
@@ -1098,7 +1148,11 @@ void US_Grid_Editor::select_x_axis(int index)
    } else if ( index == ATTR_DR ) {
       y_axis->button(ATTR_D)->setDisabled(true);
    }
-   if ( plot_flag ) plot_all();
+   if ( plot_flag ) {
+      plot_all();
+      int row = lw_grids->currentRow();
+      highlight(row);
+   }
    wg_add_update->setDisabled(true);
 }
 
@@ -1118,7 +1172,11 @@ void US_Grid_Editor::select_y_axis(int index)
    } else if ( index == ATTR_DR ) {
       x_axis->button(ATTR_D)->setDisabled(true);
    }
-   if ( plot_flag ) plot_all();
+   if ( plot_flag ) {
+      plot_all();
+      int row = lw_grids->currentRow();
+      highlight(row);
+   }
    wg_add_update->setDisabled(true);
 }
 
@@ -1155,7 +1213,7 @@ void US_Grid_Editor::plot_all()
    data_plot->setAxisScale( QwtPlot::yLeft  , 1, 10);
    data_plot->replot();
 
-   if ( final_grid_points.isEmpty() ) return;
+   if ( grid_points.isEmpty() ) return;
 
    double px1 =  1e99;
    double px2 = -1e99;
@@ -1164,8 +1222,8 @@ void US_Grid_Editor::plot_all()
    int pxid = x_axis->checkedId();
    int pyid = y_axis->checkedId();
    int ssize = ct_size->value();
-   for ( int nn = 0; nn < final_grid_points.size(); nn++ ) {
-      QVector<GridPoint> gps = final_grid_points.at(nn);
+   for ( int nn = 0; nn < grid_points.size(); nn++ ) {
+      QVector<GridPoint> gps = grid_points.at(nn);
       QVector<double> xarr;
       QVector<double> yarr;
       for ( int ii = 0; ii < gps.size(); ii++ ) {

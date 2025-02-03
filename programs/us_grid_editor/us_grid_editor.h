@@ -145,13 +145,13 @@ public:
    US_Grid_Editor();
 
 private:
-   enum grid_state {G_DISPLAY, G_ADD, G_UPDATE};
+   // enum grid_state {G_DISPLAY, G_ADD, G_UPDATE};
 
    // int grid_index;       //!< Number of total partial grids.
    // int partialGrid;      //!< Currently active partial grid.
    // int subGrids;         //!< Number of subgrids.
    bool plot_flag;
-   int gstate;
+   // int gstate;
    QDoubleValidator *dValid;
    QIntValidator    *iValid;
 
@@ -200,17 +200,17 @@ private:
    QwtCounter* ct_size;
 
    US_Help showHelp; //!< Help widget.
-   QList<QVector<GridPoint>> final_grid_points;
-   QList<QVector<int>> final_grid_size;
+   QList<QVector<GridPoint>> grid_points;
+   QList<QVector<double>> grid_info;
 
    int x_param; //!< Plot x-axis attribute (0-5 for s, f/f0, mw, vbar, D, f).
    int y_param; //!< Plot y-axis attribute (0-5 for s, f/f0, mw, vbar, D, f).
    int z_param; //!< Plot z-axis attribute (0-5 for s, f/f0, mw, vbar, D, f).
-   double x_min;
-   double x_max;
-   double y_min;
-   double y_max;
-   double z_val;
+   // double x_min;
+   // double x_max;
+   // double y_min;
+   // double y_max;
+   // double z_val;
    int dbg_level;
    int selected_plot; //!< Selected plot.
 
@@ -225,6 +225,8 @@ private:
    void unit_corr(double&, int);
    void fill_list();
    double value4plot(int, int, int);
+   void clear_xyz(void);
+   void get_xyz(QHash<QString, double>&);
 
 private slots:
    //! \brief Slot to setup the grid axises.
@@ -243,9 +245,6 @@ private slots:
 
    //! \brief Slot to update y maximum value.
    void update_yMax(void);
-
-   //! \brief Slot to update z value.
-   void update_zVal(void);
 
    void highlight(int);
 
