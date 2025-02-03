@@ -172,7 +172,6 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    connect(le_z_val, &QLineEdit::editingFinished, this, &US_Grid_Editor::update_zVal);
 
    QPushButton* pb_validate = us_pushbutton( "Add " );
-   pb_validate->setCheckable(true);
    connect( pb_validate, &QPushButton::clicked, this, &US_Grid_Editor::add_update );
 
    wg_add_update = new QWidget();
@@ -1188,7 +1187,7 @@ void US_Grid_Editor::plot_all()
             item->setTitle(title);
             item->setShape(path);
             item->setBrush(QBrush(QColor(255,255,51, 225)));
-            item->setPen(QPen(QColor(255,255,51), 2));
+            item->setPen(QPen(QColor(255,255,51), 0));
             item->attach(data_plot);
          }
       }

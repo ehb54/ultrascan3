@@ -193,8 +193,6 @@ private:
 
    US_Disk_DB_Controls* dkdb_cntrls; //!< Disk DB controls.
 
-   QPushButton *pb_add_update; //!< Button to add partial grid.
-
    US_Grid_Preset *grid_preset; //!< A dialog to set the grid preset
 
    QListWidget *lw_grids;
