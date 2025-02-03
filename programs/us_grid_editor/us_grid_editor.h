@@ -200,7 +200,8 @@ private:
    QwtCounter* ct_size;
 
    US_Help showHelp; //!< Help widget.
-   QList<QVector<QVector<GridPoint>>> final_grid_points;
+   QList<QVector<GridPoint>> final_grid_points;
+   QList<QVector<int>> final_grid_size;
 
    int x_param; //!< Plot x-axis attribute (0-5 for s, f/f0, mw, vbar, D, f).
    int y_param; //!< Plot y-axis attribute (0-5 for s, f/f0, mw, vbar, D, f).
@@ -219,11 +220,11 @@ private:
    //! \brief Validate grid point
    bool validate_num(const QString);
    bool validate(void);
-   bool overlap(void);
+   bool overlap(double, double, double, double);
    void linspace(double, double, int, QVector<double>&);
    void unit_corr(double&, int);
    void fill_list();
-   double value4plot(int, int, int, int);
+   double value4plot(int, int, int);
 
 private slots:
    //! \brief Slot to setup the grid axises.

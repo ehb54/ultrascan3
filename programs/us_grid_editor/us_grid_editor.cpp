@@ -366,7 +366,7 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
 
    QLabel* lb_p_size = us_label("Point Size");
    lb_p_size->setAlignment(Qt::AlignCenter);
-   ct_size = us_counter(2, 1, 50, 3);
+   ct_size = us_counter(2, 1, 50, 2);
    ct_size->setSingleStep(1);
    QLineEdit* le_sz = ct_size->findChild<QLineEdit*>();
    if (le_sz) {
@@ -601,30 +601,30 @@ void US_Grid_Editor::add_update()
 {
    if ( ! validate() ) return;
 
-   if ( overlap() ) {
-      QMessageBox::critical(this, "Error!", "Current grid points overlap with the previous points.");
-      return;
-   }
-
    double dens = le_dens->text().toDouble();
    double visc = le_visc->text().toDouble();
    double temp = le_temp->text().toDouble();
    bool dvt_set = validate_num("dens") && validate_num("visc") && validate_num("temp");
 
-   int    x_res = le_x_res->text().toInt();
-   int    y_res = le_y_res->text().toInt();
+   int x_res = le_x_res->text().toInt();
+   int y_res = le_y_res->text().toInt();
    QVector<double> xpoints;
    linspace(x_min, x_max, x_res, xpoints);
 
    QVector<double> ypoints;
    linspace(y_min, y_max, y_res, ypoints);
 
+   if ( overlap(xpoints.first(), xpoints.last(),
+               ypoints.first(), ypoints.last()) ) {
+      QMessageBox::critical(this, "Error!", "Grid points overlap!");
+      return;
+   }
+
    QVector<int> types;
    types << x_param << y_param << z_param;
    QVector<double> vals;
-   QVector<QVector<GridPoint>> gp_rows;
+   QVector<GridPoint> gps;
    for ( int jj = 0; jj < y_res; jj++ ) {
-      QVector<GridPoint> row;
       for ( int ii = 0; ii < x_res; ii++ ) {
          vals.clear();
          vals << xpoints.at(ii) << ypoints.at(jj) << z_val;
@@ -633,13 +633,15 @@ void US_Grid_Editor::add_update()
             gp.set_dens_visc_t(dens, visc, temp);
          }
          if ( gp.set_param(vals, types) ) {
-            row << gp;
+            gps << gp;
          }
       }
-      gp_rows << row;
    }
 
-   final_grid_points << gp_rows;
+   final_grid_points << gps;
+   QVector<int> gsize;
+   gsize << x_res << y_res;
+   final_grid_size << gsize;
    plot_all();
    fill_list();
 }
@@ -723,20 +725,19 @@ bool US_Grid_Editor::validate( )
 
 }
 
-bool US_Grid_Editor::overlap()
+bool US_Grid_Editor::overlap(double xMin, double xMax, double yMin, double yMax)
 {
    for (int ii= 0; ii < final_grid_points.size(); ii++) {
-      QVector<QVector<GridPoint>> item = final_grid_points.at(ii);
-      int nr = item.size();
-      int nc = item.first().size();
+      QVector<GridPoint> item = final_grid_points.at(ii);
       double x1, x2, y1, y2;
-      item[0][0].value_by_name(Attr_to_char( x_param ), x1 );
-      item[0][0].value_by_name(Attr_to_char( y_param), y1 );
-      item[0][nc - 1].value_by_name(Attr_to_char( x_param ), x2 );
-      item[nr - 1][0].value_by_name(Attr_to_char( y_param ), y2 );
-      bool flag_x = ( x_min >= x1 && x_min <= x2 ) || ( x_max >= x1 && x_max <= x2 );
-      bool flag_y = ( y_min >= y1 && y_min <= y2 ) || ( y_max >= y1 && y_max <= y2 );
-      if ( flag_x && flag_y ) {
+      int sz = item.size();
+      item[0].value_by_name(Attr_to_char( x_param ), x1 );
+      item[0].value_by_name(Attr_to_char( y_param), y1 );
+      item[sz - 1].value_by_name(Attr_to_char( x_param ), x2 );
+      item[sz - 1].value_by_name(Attr_to_char( y_param ), y2 );
+      bool x_ovrlp = ! ( xMin > x2 || xMax < x1 );
+      bool y_ovrlp = ! ( yMin > y2 || yMax < y1 );
+      if ( x_ovrlp && y_ovrlp ) {
          return true;
       }
    }
@@ -774,17 +775,16 @@ void US_Grid_Editor::fill_list()
    int n_grids = final_grid_points.size();
    QString title = "%1) %2 = %3 - %4 , %5 = %6 - %7";
    for (int ii = 0; ii < n_grids; ii++) {
-      QVector<QVector<GridPoint>> item = final_grid_points.at(ii);
-      int nr = item.size();
-      int nc = item.first().size();
-      double x1 = value4plot(ii, 0, 0,      x_param);
-      double x2 = value4plot(ii, 0, nc - 1, x_param);
-      double y1 = value4plot(ii, 0, 0,      y_param);
-      double y2 = value4plot(ii, nr - 1, 0, y_param);
+      QVector<GridPoint> item = final_grid_points.at(ii);
+      int N = item.size() - 1;
+      double x1 = value4plot(ii, 0, x_param);
+      double x2 = value4plot(ii, N, x_param);
+      double y1 = value4plot(ii, 0, y_param);
+      double y2 = value4plot(ii, N, y_param);
       QString tt = title.arg(ii + 1).arg(Attr_to_char(x_param)).
-                   arg(x1, 0, 'f', 1).arg(x2, 0, 'f', 1).
+                   arg(x1, 0, 'f', 2).arg(x2, 0, 'f', 2).
                    arg(Attr_to_char(y_param)).
-                   arg(y1, 0, 'f', 1).arg(y2, 0, 'f', 1);
+                   arg(y1, 0, 'f', 2).arg(y2, 0, 'f', 2);
       lw_grids->addItem(tt);
    }
    if ( crow == -1 ) crow = 0;
@@ -793,10 +793,10 @@ void US_Grid_Editor::fill_list()
    highlight(crow);
 }
 
-double US_Grid_Editor::value4plot(int ii, int jj, int kk, int pid)
+double US_Grid_Editor::value4plot(int ii, int jj, int pid)
 {
    double val = 0;
-   final_grid_points[ii][jj][kk].value_by_name( Attr_to_char( pid ), val);
+   final_grid_points[ii][jj].value_by_name( Attr_to_char( pid ), val);
    if ( pid == ATTR_S || pid == ATTR_SR ) {
       val *= 1e13;
    } else if ( pid == ATTR_M ) {
@@ -812,6 +812,7 @@ void US_Grid_Editor::reset( void )
    lw_grids->disconnect();
    lw_grids->clear();
    final_grid_points.clear();
+   final_grid_size.clear();
 
    x_param = ATTR_S; // plot s
    y_param = ATTR_K; // plot f/f0
@@ -1164,22 +1165,20 @@ void US_Grid_Editor::plot_all()
    int pyid = y_axis->checkedId();
    int ssize = ct_size->value();
    for ( int nn = 0; nn < final_grid_points.size(); nn++ ) {
-      QVector<QVector<GridPoint>> gps = final_grid_points.at(nn);
+      QVector<GridPoint> gps = final_grid_points.at(nn);
       QVector<double> xarr;
       QVector<double> yarr;
       for ( int ii = 0; ii < gps.size(); ii++ ) {
-         for (int jj = 0; jj < gps.at(ii).size(); jj++) {
-            double x = value4plot(nn, ii, jj, pxid);
-            double y = value4plot(nn, ii, jj, pyid);
+         double x = value4plot(nn, ii, pxid);
+         double y = value4plot(nn, ii, pyid);
 
-            px1 = qMin(px1, x);
-            px2 = qMax(px2, x);
-            py1 = qMin(py1, y);
-            py2 = qMax(py2, y);
+         px1 = qMin(px1, x);
+         px2 = qMax(px2, x);
+         py1 = qMin(py1, y);
+         py2 = qMax(py2, y);
 
-            xarr << x;
-            yarr << y;
-         }
+         xarr << x;
+         yarr << y;
       }
       QString title = tr("GRID_%1").arg(nn);
       QwtPlotCurve* curve = us_curve(data_plot, title);
