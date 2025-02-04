@@ -1116,6 +1116,8 @@ void US_Grid_Editor::new_grid_clicked()
    plot_flag = false;
    x_axis->button(x_param)->setChecked(true);
    y_axis->button(y_param)->setChecked(true);
+   select_x_axis(x_param);
+   select_y_axis(y_param);
    plot_flag = true;
    plot_all();
    highlight(-1);
