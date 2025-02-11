@@ -5,10 +5,6 @@
 #include "us_gui_util.h"
 #include <qwt_plot_shapeitem.h>
 
-const double VISC_20WP = VISC_20W * 0.01;
-const double RGK20   = R_GC * K20;
-const double MPISQ   = M_PI * M_PI;
-
 // main program
 int main( int argc, char* argv[] )
 {
@@ -372,7 +368,7 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
       le_sz->setAlignment(Qt::AlignCenter);
    }
 
-   connect(ct_size, &QwtCounter::valueChanged, this, &US_Grid_Editor::update_symsize);
+   connect(ct_size, &QwtCounter::valueChanged, this, &US_Grid_Editor::update_symbsize);
 
    QGridLayout* lyt_r = new QGridLayout();
    lyt_r->setMargin(0);
@@ -1182,7 +1178,7 @@ void US_Grid_Editor::select_y_axis(int index)
    wg_add_update->setDisabled(true);
 }
 
-void US_Grid_Editor::update_symsize(double)
+void US_Grid_Editor::update_symbsize(double)
 {
    int ssize = ct_size->value();
    auto items = data_plot->itemList(QwtPlotItem::Rtti_PlotCurve);
@@ -2036,131 +2032,150 @@ bool GridPoint::calculate_20w()
 {
    error.clear();
    // S, K, M, V, D, F, F0
+   const double RT   = R_GC * K20;
+   const double PI   = M_PI;
+   const double DENS = DENS_20W;
+   const double VISC = VISC_20W * 0.01;
+   const double NA   = AVOGADRO;
 
    if ( contains( ATTR_V, ATTR_S, ATTR_K ) )         // 1: M, D, F, F0
    {
       if ( ! check_s_vbar()) return false;
 
-      double buoy = 1 - VBAR * DENS_20W;
-      F0 = 9 * VISC_20WP * M_PI * qSqrt( 2 * VBAR * S * VISC_20WP / buoy );
+      double BUOY = 1 - VBAR * DENS;
+      F0 = 9 * VISC * PI * qSqrt( 2 * VBAR * VISC * S * FF0 / BUOY );
       F = FF0 * F0;
-      D = RGK20 / ( AVOGADRO * F );
-      MW = S * AVOGADRO * F / buoy;
+      D = RT / ( NA * F );
+      MW = S * NA * F / BUOY;
    } else if ( contains( ATTR_V, ATTR_S, ATTR_M ) )  // 2: K, D, F, F0
    {
       if ( ! check_s_vbar()) return false;
 
-      double buoy = 1 - VBAR * DENS_20W;
-      F0 = 9 * VISC_20WP * M_PI * qSqrt( 2 * VBAR * S * VISC_20WP / buoy );
-      F = MW * buoy / ( AVOGADRO * S );
-      D = RGK20 / ( AVOGADRO * F );
-      FF0 = F / F0;
+      double BUOY = 1 - VBAR * DENS;
+      F = MW * BUOY / ( S * NA );
+      D = RT / ( NA * F );
+      FF0 = BUOY / ( 3 * VISC * S ) *
+            qPow( MW / ( NA * PI ), 2.0 / 3.0 ) *
+            qPow(1.0 / ( 6 * VBAR ), 1.0 / 3.0);
+      F0 = F / FF0;
    } else if ( contains( ATTR_V, ATTR_S, ATTR_D ) )  // 3: K, M, F, F0
    {
       if ( ! check_s_vbar()) return false;
 
-      double buoy = 1 - VBAR * DENS_20W;
-      F0 = 9 * VISC_20WP * M_PI * qSqrt( 2 * VBAR * S * VISC_20WP / buoy );
-      F = RGK20 / ( AVOGADRO * D );
-      FF0 = F / F0;
-      MW = S * AVOGADRO * F / buoy;
+      double BUOY = 1 - VBAR * DENS;
+      MW = S * RT * ( D * BUOY );
+      F = RT / ( NA * D );
+      FF0 = BUOY / ( 3 * VISC * S ) *
+            qPow( MW / ( NA * PI ), 2.0 / 3.0 ) *
+            qPow(1.0 / ( 6 * VBAR ), 1.0 / 3.0);
+      F0 = F / FF0;
    } else if ( contains( ATTR_V, ATTR_S, ATTR_F ) )  // 4: K, M, D, F0
    {
       if ( ! check_s_vbar()) return false;
 
-      double buoy = 1 - VBAR * DENS_20W;
-      F0 = 9 * VISC_20WP * M_PI * qSqrt( 2 * VBAR * S * VISC_20WP / buoy );
-      FF0 = F / F0;
-      D = RGK20 / ( AVOGADRO * F );
-      MW = S * AVOGADRO * F / buoy;
+      double BUOY = 1 - VBAR * DENS;
+      D = RT / ( NA * F );
+      MW = S * RT * ( D * BUOY );
+      FF0 = BUOY / ( 3 * VISC * S ) *
+            qPow( MW / ( NA * PI ), 2.0 / 3.0 ) *
+            qPow(1.0 / ( 6 * VBAR ), 1.0 / 3.0);
+      F0 = F / FF0;
    } else if ( contains( ATTR_V, ATTR_K, ATTR_M ) )  // 5: S, D, F, F0
    {
-      double buoy = 1 - VBAR * DENS_20W;
-      D = RGK20 / ( 3 * VISC_20WP ) *
-              qPow( 6 * MW * VBAR, -1.0 / 3.0 ) *
-              qPow( AVOGADRO * M_PI * FF0, -2.0 / 3.0 );
-      S = MW * D * buoy / RGK20;
-      F = RGK20 / ( AVOGADRO * D );
+      double BUOY = 1 - VBAR * DENS;
+      D = RT / ( 3 * VISC * FF0 ) *
+          qPow( 6 * MW * VBAR, -1.0 / 3.0 ) *
+          qPow( NA * PI, -2.0 / 3.0 );
+      F = RT / ( NA * D );
       F0 = F / FF0;
+      S = MW * D * BUOY / RT;
    } else if ( contains( ATTR_V, ATTR_K, ATTR_D ) )  // 6: S, M, F, F0
    {
-      double buoy = 1 - VBAR * DENS_20W;
-      F = RGK20 / ( AVOGADRO * D );
+      double BUOY = 1 - VBAR * DENS;
+      F = RT / ( NA * D );
       F0 = F / FF0;
-      S = qPow( F0 / ( 9 * VISC_20WP * M_PI ), 2 ) * buoy / ( 2 * VISC_20WP * VBAR );
-      MW = S * AVOGADRO * F / buoy;
+      S = qPow( F0 / ( 9 * VISC * PI ), 2 ) * BUOY / ( 2 * VISC * VBAR * FF0 );
+      MW = S * NA * F / BUOY;
    } else if ( contains( ATTR_V, ATTR_K, ATTR_F ) )  // 7: S, M, D, F0
    {
-      double buoy = 1 - VBAR * DENS_20W;
-      D = RGK20 / ( AVOGADRO * F );
+      double BUOY = 1 - VBAR * DENS;
+      D = RT / ( NA * F );
       F0 = F / FF0;
-      S = qPow( F0 / ( 9 * VISC_20WP * M_PI ), 2 ) * buoy / ( 2 * VISC_20WP * VBAR );
-      MW = S * AVOGADRO * F / buoy;
+      S = qPow( F0 / ( 9 * VISC * PI ), 2 ) * BUOY / ( 2 * VISC * VBAR * FF0 );
+      MW = S * NA * F / BUOY;
    } else if ( contains( ATTR_V, ATTR_M, ATTR_D ) )  // 8: S, K, F, F0
    {
-      double buoy = 1 - VBAR * DENS_20W;
-      F = RGK20 / ( AVOGADRO * D );
-      S = MW * D * buoy / RGK20;
-      F0 = 9 * VISC_20WP * M_PI * qSqrt( 2 * VBAR * S * VISC_20WP / buoy );
-      FF0 = F / F0;
+      double BUOY = 1 - VBAR * DENS;
+      F = RT / ( NA * D );
+      S = MW * D * BUOY / RT;
+      FF0 = BUOY / ( 3 * VISC * S ) *
+            qPow( MW / ( NA * PI ), 2.0 / 3.0 ) *
+            qPow(1.0 / ( 6 * VBAR ), 1.0 / 3.0);
+      F0 = F / FF0;
    } else if ( contains( ATTR_V, ATTR_M, ATTR_F ) )  // 9: S, K, D, F0
    {
-      double buoy = 1 - VBAR * DENS_20W;
-      D = RGK20 / ( AVOGADRO * F );
-      S = MW * D * buoy / RGK20;
-      F0 = 9 * VISC_20WP * M_PI * qSqrt( 2 * VBAR * S * VISC_20WP / buoy );
-      FF0 = F / F0;
+      double BUOY = 1 - VBAR * DENS;
+      D = RT / ( NA * F );
+      S = MW * D * BUOY / RT;
+      FF0 = BUOY / ( 3 * VISC * S ) *
+            qPow( MW / ( NA * PI ), 2.0 / 3.0 ) *
+            qPow(1.0 / ( 6 * VBAR ), 1.0 / 3.0);
+      F0 = F / FF0;
    } else if ( contains( ATTR_S, ATTR_K, ATTR_M ) )  // 10: V, D, F, F0 ?????
    {
    } else if ( contains( ATTR_S, ATTR_K, ATTR_D ) )  // 11: M, V, F, F0
    {
-      F0 = RGK20 / ( AVOGADRO * FF0 * D );
-      F = F0 * FF0;
-      double f02 = qPow( F0, 2 );
-      double vis3 = qPow( VISC_20WP, 3 );
-      VBAR = f02 / ( 162 * S * MPISQ *  vis3 + f02 * DENS_20W );
-      double buoy = 1 - VBAR * DENS_20W;
-      MW = S * AVOGADRO * F / buoy;
-   } else if ( contains( ATTR_S, ATTR_K, ATTR_F ) )  // 12: M, V, D, F0
-   {
-      D = RGK20 / ( AVOGADRO * F );
+      F = RT / ( NA * F );
       F0 = F / FF0;
       double f02 = qPow( F0, 2 );
-      double vis3 = qPow( VISC_20WP, 3 );
-      VBAR = f02 / ( 162 * S * MPISQ *  vis3 + f02 * DENS_20W );
-      double buoy = 1 - VBAR * DENS_20W;
-      MW = S * AVOGADRO * F / buoy;
+      double vp2 = qPow( 9 * PI * VISC, 2 );
+      VBAR = f02 / ( 2 * S * VISC * FF0 * vp2 + f02 * DENS );
+      double BUOY = 1 - VBAR * DENS;
+      MW = S * NA * F / BUOY;
+   } else if ( contains( ATTR_S, ATTR_K, ATTR_F ) )  // 12: M, V, D, F0
+   {
+      D = RT / ( NA * F );
+      F0 = F / FF0;
+      double f02 = qPow( F0, 2 );
+      double vp2 = qPow( 9 * PI * VISC, 2 );
+      VBAR = f02 / ( 2.0 * S * VISC * FF0 * vp2 + f02 * DENS );
+      double BUOY = 1 - VBAR * DENS;
+      MW = S * NA * F / BUOY;
    }
    else if ( contains( ATTR_S, ATTR_M, ATTR_D ) )  // 13: K, V, F, F0
    {
-      VBAR = ( 1 - ( S * RGK20 ) / ( MW * D ) ) / DENS_20W;
-      F = RGK20 / ( AVOGADRO * D );
-      double buoy = 1 - VBAR * DENS_20W;
-      F0 = 9 * VISC_20WP * M_PI * qSqrt( 2 * VBAR * S * VISC_20WP / buoy );
-      FF0 = F / F0;
+      VBAR = ( 1 - S * RT / ( MW * D ) ) / DENS;
+      F = RT / ( NA * D );
+      double BUOY = 1 - VBAR * DENS;
+      FF0 = BUOY / ( 3.0 * VISC * S ) *
+            qPow( MW / ( NA * PI ), 2.0 / 3.0 ) *
+            qPow(1.0 / ( 6.0 * VBAR ), 1.0 / 3.0);
+      F0 = F / FF0;
    } else if ( contains( ATTR_S, ATTR_M, ATTR_F ) )  // 14: K, V, D, F0
    {
-      VBAR = ( 1 - S * AVOGADRO * F / MW ) / DENS_20W;
-      double buoy = 1 - VBAR * DENS_20W;
-      F0 = 9 * VISC_20WP * M_PI * qSqrt( 2 * VBAR * S * VISC_20WP / buoy );
-      FF0 = F / F0;
-      D = RGK20 / ( AVOGADRO * F );
+      VBAR = ( 1 - S * NA * F / MW ) / DENS;
+      D = RT / ( NA * F );
+      double BUOY = 1 - VBAR * DENS;
+      FF0 = BUOY / ( 3 * VISC * S ) *
+            qPow( MW / ( NA * PI ), 2.0 / 3.0 ) *
+            qPow(1.0 / ( 6 * VBAR ), 1.0 / 3.0);
+      F0 = F / FF0;
    } else if ( contains( ATTR_K, ATTR_M, ATTR_D ) )  // 15: S, V, F, F0
    {
-      F = RGK20 / ( AVOGADRO * D );
+      F = RT / ( NA * D );
       F0 = F / FF0;
-      VBAR = qPow( RGK20 / ( 3 * VISC_20WP * D), 3 ) /
-                 ( 6 * MW * qPow(AVOGADRO * K20 * M_PI, 2 ) );
-      double buoy = 1 - VBAR * DENS_20W;
-      S = MW * buoy / ( AVOGADRO * F );
+      VBAR = qPow( RT / ( 3.0 * VISC * D * FF0), 3 ) /
+             ( 6 * MW * qPow( NA * PI, 2 ) );
+      double BUOY = 1 - VBAR * DENS;
+      S = MW * BUOY / ( NA * F );
    } else if ( contains( ATTR_K, ATTR_M, ATTR_F ) )  // 16: S, V, D, F0
    {
-      D = RGK20 / ( AVOGADRO * F );
+      D = RT / ( NA * F );
       F0 = F / FF0;
-      VBAR = qPow( RGK20 / ( 3 * VISC_20WP * D ), 3 ) /
-                 ( 6 * MW * qPow(AVOGADRO * K20 * M_PI, 2 ) );
-      double buoy = 1 - VBAR * DENS_20W;
-      S = MW * buoy / ( AVOGADRO * F );
+      VBAR = qPow( RT / ( 3.0 * VISC * D * FF0), 3 ) /
+             ( 6 * MW * qPow( NA * PI, 2 ) );
+      double BUOY = 1 - VBAR * DENS;
+      S = MW * BUOY / ( NA * F );
    }
 
    return true;

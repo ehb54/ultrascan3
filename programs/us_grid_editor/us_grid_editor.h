@@ -255,7 +255,7 @@ private slots:
    void select_x_axis(int);
    void select_y_axis(int);
 
-   void update_symsize(double);
+   void update_symbsize(double);
 
 
    // //! \brief Slot to update partial grid.
