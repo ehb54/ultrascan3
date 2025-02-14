@@ -2189,7 +2189,12 @@ DbgLv(0) << "wrMo: model descr" << model.description;
          component.s       = solute->s;
          component.f_f0    = solute->k;
          component.name    = QString().sprintf( "SC%04d", ii + 1 );
-         component.vbar20  = (attr_z == ATTR_V) ? vbar20 : solute->v;
+         // component.vbar20  = (attr_z == ATTR_V) ? vbar20 : solute->v;
+         if ( stype == 0) {
+            component.vbar20  = vbar20;
+         } else {
+            component.vbar20  = solute->v;
+         }
          component.signal_concentration = solute->c;
 
          US_Model::calc_coefficients( component );
