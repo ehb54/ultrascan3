@@ -811,31 +811,6 @@ DbgLv(1) << "first_last_data for the step" << sp->time_first << sp->time_last
 
       // make sure the selected model is adjusted for the selected temperature
       // and buffer conditions:
-      US_Math2::SolutionData sol_data;
-      sol_data.density   = buffer.density;
-      sol_data.viscosity = buffer.viscosity;
-      // sol_data.vbar20    = 0.72; //The assumption here is that vbar does not change with
-      // sol_data.vbar      = 0.72; //temp, so vbar correction will cancel in s correction
-      // weight average vbar20
-      QVector<double> vbar20s;
-      QVector<double> mws;
-      double mw_tot = 0;
-      for ( int ii = 0; ii < system.components.size(); ii++) {
-         vbar20s << system.components.at(ii).vbar20;
-         mws << system.components.at(ii).mw;
-         mw_tot += system.components.at(ii).mw;
-      }
-      double vbar20_avg = 0;
-      for ( int ii = 0; ii < vbar20s.size(); ii++) {
-         vbar20_avg += vbar20s.at(ii) * (mws.at(ii) / mw_tot);
-      }
-      sol_data.vbar20    = vbar20_avg;
-      // adjust vbar20 to temperature
-      sol_data.vbar      = US_Math2::adjust_vbar20(sol_data.vbar20, simparams.temperature);
-DbgLv(1) << "\nSIM: weight-avg vbar20: " << sol_data.vbar20 << " , vbar(" << simparams.temperature << "): " << sol_data.vbar;
-      sol_data.manual    = buffer.manual;
-      US_Math2::data_correction( simparams.temperature, sol_data );
-
       // make a copy of the original system to correct s and D for visc and dens.
       // save original model unmodified, pass the density/viscosity corrected data
       // to astfem_rsa for simulating experimental space:
@@ -843,6 +818,16 @@ DbgLv(1) << "\nSIM: weight-avg vbar20: " << sol_data.vbar20 << " , vbar(" << sim
       US_Model system_corrected = system;
       for ( int jc = 0; jc < system_corrected.components.size(); jc++ )
       {
+         US_Math2::SolutionData sol_data;
+         sol_data.density   = buffer.density;
+         sol_data.viscosity = buffer.viscosity;
+         sol_data.manual    = buffer.manual;
+         double temp = simparams.temperature;
+         sol_data.vbar20 = system_corrected.components.at(jc).vbar20;
+         sol_data.vbar   = US_Math2::adjust_vbar20(sol_data.vbar20, temp);
+
+         US_Math2::data_correction( simparams.temperature, sol_data );
+
          system_corrected.components[ jc ].s /= sol_data.s20w_correction;
          system_corrected.components[ jc ].D /= sol_data.D20w_correction;
       }
