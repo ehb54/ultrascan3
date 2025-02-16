@@ -65,6 +65,7 @@ QString US_Saxs_Util::run_json( QString & json )
 	 << "ssbond"
          << "interpolate"
          << "nnls"
+         << "bestcsv"
 	;
       
       int count = 0;
@@ -151,6 +152,14 @@ QString US_Saxs_Util::run_json( QString & json )
 	 }
      }
    
+   if ( parameters.count( "bestcsv" ) )
+     {
+       if ( !run_best_csv( parameters, results ) )
+	 {
+            results[ "errors" ] = " bestcsv failed: " + results[ "errors" ];
+            //return US_Json::compose( results );
+	 }
+     }
    
    // if ( us_log )
    // {
@@ -181,6 +190,72 @@ enum sd_factors : int {
                        ,ONE_OVER_SD_SQ = 1
                        ,ONE            = 2
 };
+
+bool US_Saxs_Util::run_best_csv(
+                                map < QString, QString >           & parameters,
+                                map < QString, QString >           & results
+                                ) {
+   {
+      QStringList required;
+
+      required
+         << "files"
+         << "triangles"
+         << "name"
+         ;
+
+      for ( auto const & req : required ) {
+         if ( !parameters.count( req ) ) {
+            results[ "errors" ] = req + " not specified";
+            return false;
+         }
+      }
+   }
+
+   QString contents;
+   QString errors;
+
+   TSO << parameters[ "files" ] << "\n";
+   TSO << parameters[ "triangles" ] << "\n";
+
+   QStringList files = parameters[ "files" ].replace( "\"", "" ).split( "," );
+   QStringList triangles = parameters[ "triangles" ].split( "," );;
+
+   if ( files.size() != triangles.size() ) {
+      results[ "errors" ] = QString( "files count (%1) != triangles count (%2)" ).arg( files.size() ).arg( triangles.size() );
+      return false;
+   }
+
+   vector < double > one_over_triangles;
+
+   for ( auto const & tri : triangles ) {
+      if ( !tri.toDouble() ) {
+         results[ "errors" ] = QString( "triangle evaluates to zero! (%1)" ).arg( tri );
+         return false;
+      }
+      one_over_triangles.push_back( 1e0 / tri.toDouble() );
+   }
+
+   for ( auto const & f : files ) {
+      if ( !QFile::exists( f ) ) {
+         results[ "errors" ] = QString( "file '%1' does not exist" ).arg( f );
+         return false;
+      }
+   }
+
+   if ( !run_best_csv( parameters[ "name" ]
+                       ,files
+                       ,files
+                       ,triangles
+                       ,one_over_triangles ) ) {
+      results[ "errors" ] = errormsg;
+      return false;
+   }
+   
+   results[ "errors" ] = "bestcsv not yet implemented\n";
+   return false;
+}
+
 
 bool US_Saxs_Util::run_nnls(
                             map < QString, QString >           & parameters,

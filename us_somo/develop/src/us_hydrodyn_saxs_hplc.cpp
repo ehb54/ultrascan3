@@ -2857,11 +2857,13 @@ void US_Hydrodyn_Saxs_Hplc::set_conc_file( QString file )
       lbl_conc_file->setText( file );
    }
       
+   disable_all();
    update_csv_conc();
    if ( conc_widget )
    {
       conc_window->refresh( csv_conc );
    }
+
    plot_ref->detachItems( QwtPlotItem::Rtti_PlotCurve ); plot_ref->detachItems( QwtPlotItem::Rtti_PlotMarker );;
 
    if ( f_qs.count( lbl_conc_file->text() ) )
@@ -2877,11 +2879,15 @@ void US_Hydrodyn_Saxs_Hplc::set_conc_file( QString file )
       curve->attach( plot_ref );
       plot_dist->setAxisScale( QwtPlot::xBottom, f_qs[ lbl_conc_file->text() ][ 0 ], f_qs[ lbl_conc_file->text() ].back() );
       
-      if ( !suppress_replot )
-      {
-         plot_ref->replot();
+#warning something is odd here, why plot_ref below & plot_dist setaxisscale?, and the below section causes 100% cpu
+      /*
+        if ( !suppress_replot )
+        {
+        plot_ref->replot();
+        }
+      */
       }
-   }
+
    update_enables();
 }
 
@@ -3336,7 +3342,6 @@ bool US_Hydrodyn_Saxs_Hplc::save_files_csv( QStringList files )
 
 bool US_Hydrodyn_Saxs_Hplc::save_files( QStringList files )
 {
-
    bool errors = false;
    bool overwrite_all = false;
    bool cancel        = false;
@@ -3543,6 +3548,7 @@ bool US_Hydrodyn_Saxs_Hplc::save_file( QString file, bool &cancel, bool &overwri
    }
 
    f.close();
+
    editor_msg( "black", QString( us_tr( "%1 written as %2" ) )
                .arg( file )
                .arg( use_filename ) );
