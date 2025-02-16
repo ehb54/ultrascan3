@@ -29,29 +29,35 @@
 #define DbgLv(a) if(dbg_level>=a)qDebug()
 #endif
 
-//! \enum attr_type
+//! \class Attribute Class
 //! \brief Enumeration for attribute types.
-enum attr_type { ATTR_S, ATTR_K, ATTR_M, ATTR_V, ATTR_D, ATTR_F, ATTR_SR, ATTR_DR };
+class Attribute : public QObject
+{
+   Q_OBJECT
+public:
+   enum Type { ATTR_S, ATTR_K, ATTR_M, ATTR_V, ATTR_D, ATTR_F, ATTR_F0, ATTR_SR, ATTR_DR };
 
-QString Attr_to_long(int);  //!< returns the long name of the attr_type
-
-QString Attr_to_title(int);  //!< returns the long name of the attr_type
-
-QString Attr_to_short(int); //!< returns the short name of the attr_type
-
-QString Attr_to_char(int); //!< returns the short name of the attr_type
-
+   static QString long_desc  ( Type );
+   static QString short_desc ( Type );
+   static QString title      ( Type );
+   static QString symbol     ( Type );
+   static Type    from_int   ( int  );
+};
 
 class GridPoint
 {
 public:
    GridPoint();
 
-   bool set_param( const QVector<double>&, const QVector<int>& );
+   bool set_param( const QVector<double>&, const QVector<Attribute::Type>& );
 
    bool set_dens_visc_t (double, double, double);
 
-   bool value_by_name(const QString&, double&);
+   double value( Attribute::Type ) const;
+
+   double x_value() const;
+   double y_value() const;
+   double z_value() const;
 
    QString error_string();
 
@@ -70,12 +76,15 @@ private:
    double S_real;       //!< Sedimentation coefficient.
    double D_real;       //!< Diffusion coefficient.
    QString error;
-   QSet<int> ptypes;
+   QSet<Attribute::Type> ptypes;
+   Attribute::Type x_param;
+   Attribute::Type y_param;
+   Attribute::Type z_param;
 
    bool calculate_20w();
    void calculate_real();
    bool check_s_vbar();
-   bool contains(int, int, int);
+   bool contains(Attribute::Type, Attribute::Type, Attribute::Type);
 
 };
 
@@ -89,7 +98,7 @@ public:
    //! \param x Index of the selected x-axis attribute.
    //! \param y Index of the selected y-axis attribute.
    //! \param z Index of the selected z-axis attribute.
-   void parameters (int* x, int* y, int* z);
+   void parameters (Attribute::Type& x, Attribute::Type& y, Attribute::Type& z);
 
 private:
    QRadioButton *rb_x_s;    //!< X-axis radio button for s.
@@ -107,9 +116,9 @@ private:
    QButtonGroup* x_axis;    //!< X-axis button group.
    QButtonGroup* y_axis;    //!< Y-axis button group.
    QComboBox    *z_axis;    //!< Y-axis combo box for fixed attribute.
-   int x_param;             //!< x parameter
-   int y_param;             //!< y parameter
-   int z_param;             //!< y parameter
+   Attribute::Type x_param;             //!< x parameter
+   Attribute::Type y_param;             //!< y parameter
+   Attribute::Type z_param;             //!< y parameter
 
    //! \brief Setup the fixed attribute combo box.
    void set_z_axis();
@@ -145,17 +154,9 @@ public:
    US_Grid_Editor();
 
 private:
-   // enum grid_state {G_DISPLAY, G_ADD, G_UPDATE};
-
-   // int grid_index;       //!< Number of total partial grids.
-   // int partialGrid;      //!< Currently active partial grid.
-   // int subGrids;         //!< Number of subgrids.
    bool plot_flag;
-   // int gstate;
    QDoubleValidator *dValid;
    QIntValidator    *iValid;
-
-   QWidget* wg_add_update;
 
    QLineEdit *le_investigator; //!< Investigator line edit.
 
@@ -183,8 +184,10 @@ private:
    QLabel    *lb_z_ax;   //!< Z-axis label.
    QLineEdit *le_z_val;  //!< Z-axis value.
 
-   QLineEdit *le_subgrids; //!< Number of subgrids.
-   QLineEdit *le_allgrids; //!< Number of all subgrids.
+   QLineEdit *le_npoints; //!< Number of all subgrids.
+   QLineEdit *le_npoints_curr;
+   QLineEdit *le_npoints_last;
+   QPushButton* pb_validate;
 
    QButtonGroup* x_axis;    //!< X-axis button group.
    QButtonGroup* y_axis;    //!< Y-axis button group.
@@ -198,35 +201,42 @@ private:
    QListWidget *lw_grids;
 
    QwtCounter* ct_size;
+   QwtCounter* ct_subgrid;
+   QwtCounter* ct_nsubgrids;
+
+   QList<QwtPlotCurve*> all_curves;
+   QwtPlotCurve* subgrid_curve;
+   QColor color_base;
+   QColor color_highlight;
+   QColor color_subgrid;
 
    US_Help showHelp; //!< Help widget.
    QList<QVector<GridPoint>> grid_points;
    QList<QVector<double>> grid_info;
+   QVector<GridPoint> sorted_points;
+   QList<QVector<int>> final_subgrids;
 
-   int x_param; //!< Plot x-axis attribute (0-5 for s, f/f0, mw, vbar, D, f).
-   int y_param; //!< Plot y-axis attribute (0-5 for s, f/f0, mw, vbar, D, f).
-   int z_param; //!< Plot z-axis attribute (0-5 for s, f/f0, mw, vbar, D, f).
-   // double x_min;
-   // double x_max;
-   // double y_min;
-   // double y_max;
-   // double z_val;
+   Attribute::Type x_param;
+   Attribute::Type y_param;
+   Attribute::Type z_param;
    int dbg_level;
-   int selected_plot; //!< Selected plot.
 
    void rm_tmp_items(void);
-   void rm_all_items(void);
+   void rm_subgrid_curve(void);
+   void rm_all_curves(void);
+   void rm_curve(int);
    void plot_tmp(void);
-   //! \brief Validate grid point
    bool validate_num(const QString);
    bool validate(void);
    bool overlap(double, double, double, double);
    void linspace(double, double, int, QVector<double>&);
-   void unit_corr(double&, int);
+   double correct_unit(double, Attribute::Type, bool);
    void fill_list();
-   double value4plot(int, int, int);
+   double value4plot(GridPoint&, Attribute::Type);
    void clear_xyz(void);
    void get_xyz(QHash<QString, double>&);
+   void sort_points();
+   void enable_add_edit(bool);
 
 private slots:
    //! \brief Slot to setup the grid axises.
@@ -257,31 +267,11 @@ private slots:
 
    void update_symbsize(double);
 
-
-   // //! \brief Slot to update partial grid.
-   // //! \param value New partial grid value.
-   // void update_partialGrid(double value);
-
-   // //! \brief Slot to update subgrids.
-   // //! \param value New subgrids value.
-   // void update_subGrids(double value);
-
-   // //! \brief Slot to update density, viscosity, and temperature of the buffer.
-   // //! \param text New density value.
-   // void update_exp_data( );
+   void update_subgrid(double);
+   void plot_subgrid(double);
 
    //! \brief Slot to update the plot.
-   void plot_all(void);
-
-   // //! \brief Slot to select plot.
-   // //! \param index Index of the selected plot.
-   // void select_plot(int index);
-
-   // //! \brief Slot to delete a partial grid.
-   // void delete_partialGrid(void);
-
-   // //! \brief Slot to add a partial grid.
-   // void add_partialGrid(void);
+   void plot_points(void);
 
    // //! \brief Slot to save the grid data.
    // void save(void);
@@ -292,14 +282,6 @@ private slots:
    // //! \brief Slot to display help information.
    // void help(void) { showHelp.show_help("grid_editor.html"); };
 
-   //! \brief Slot to show the final grid.
-   //! \param checked Whether the final grid should be shown.
-   // void show_final_grid(bool checked);
-
-   //! \brief Slot to show the sub grid.
-   //! \param checked Whether the sub grid should be shown.
-   // void show_sub_grid(bool checked);
-
    //! \brief Slot to update disk database settings.
    //! \param checked Whether disk database should be updated.
    void update_disk_db(bool checked);
@@ -307,136 +289,6 @@ private slots:
    //! \brief Slot to select investigator.
    void sel_investigator(void);
 
-   //! \brief Function to get the value of a grid point for a given attribute.
-   //! \param gp Grid point.
-   //! \param attr Attribute index.
-   //! \return Value of the grid point for the given attribute.
-   // double grid_value(struct gridpoint& gp, int attr);
-
-   //! \brief Function to set component s, k, w.
-   //! \param gp Grid point.
-   //! \return Whether the component was successfully set.
-   // bool set_comp_skw(struct gridpoint& gp);
-
-   //! \brief Function to set component s, k, v.
-   //! \param gp Grid point.
-   //! \return Whether the component was successfully set.
-   // bool set_comp_skv(struct gridpoint& gp);
-
-   //! \brief Function to set component s, k, d.
-   //! \param gp Grid point.
-   //! \return Whether the component was successfully set.
-   // bool set_comp_skd(struct gridpoint& gp);
-
-   //! \brief Function to set component s, k, f.
-   //! \param gp Grid point.
-   //! \return Whether the component was successfully set.
-   // bool set_comp_skf(struct gridpoint& gp);
-
-   //! \brief Function to set component s, w, v.
-   //! \param gp Grid point.
-   //! \return Whether the component was successfully set.
-   // bool set_comp_swv(struct gridpoint& gp);
-
-   //! \brief Function to set component s, w, d.
-   //! \param gp Grid point.
-   //! \return Whether the component was successfully set.
-   // bool set_comp_swd(struct gridpoint& gp);
-
-   //! \brief Function to set component s, w, f.
-   //! \param gp Grid point.
-   //! \return Whether the component was successfully set.
-   // bool set_comp_swf(struct gridpoint& gp);
-
-   //! \brief Function to set component s, v, d.
-   //! \param gp Grid point.
-   //! \return Whether the component was successfully set.
-   // bool set_comp_svd(struct gridpoint& gp);
-
-   //! \brief Function to set component s, v, f.
-   //! \param gp Grid point.
-   //! \return Whether the component was successfully set.
-   // bool set_comp_svf(struct gridpoint& gp);
-
-   //! \brief Function to set component s, d, f.
-   //! \param gp Grid point.
-   //! \return Whether the component was successfully set.
-   // bool set_comp_sdf(struct gridpoint& gp);
-
-   //! \brief Function to set component k, w, v.
-   //! \param gp Grid point.
-   //! \return Whether the component was successfully set.
-   // bool set_comp_kwv(struct gridpoint& gp);
-
-   //! \brief Function to set component k, w, d.
-   //! \param gp Grid point.
-   //! \return Whether the component was successfully set.
-   // bool set_comp_kwd(struct gridpoint& gp);
-
-   //! \brief Function to set component k, w, f.
-   //! \param gp Grid point.
-   //! \return Whether the component was successfully set.
-   // bool set_comp_kwf(struct gridpoint& gp);
-
-   //! \brief Function to set component k, v, d.
-   //! \param gp Grid point.
-   //! \return Whether the component was successfully set.
-   // bool set_comp_kvd(struct gridpoint& gp);
-
-   //! \brief Function to set component k, v, f.
-   //! \param gp Grid point.
-   //! \return Whether the component was successfully set.
-   // bool set_comp_kvf(struct gridpoint& gp);
-
-   //! \brief Function to set component k, d, f.
-   //! \param gp Grid point.
-   //! \return Whether the component was successfully set.
-   // bool set_comp_kdf(struct gridpoint& gp);
-
-   //! \brief Function to set component w, v, d.
-   //! \param gp Grid point.
-   //! \return Whether the component was successfully set.
-   // bool set_comp_wvd(struct gridpoint& gp);
-
-   //! \brief Function to set component w, v, f.
-   //! \param gp Grid point.
-   //! \return Whether the component was successfully set.
-   // bool set_comp_wvf(struct gridpoint& gp);
-
-   //! \brief Function to set component w, d, f.
-   //! \param gp Grid point.
-   //! \return Whether the component was successfully set.
-   // bool set_comp_wdf(struct gridpoint& gp);
-
-   //! \brief Function to set component v, d, f.
-   //! \param gp Grid point.
-   //! \return Whether the component was successfully set.
-   // bool set_comp_vdf(struct gridpoint& gp);
-
-   //! \brief Function to check a grid point's validity.
-   //! \param value Value to be checked.
-   //! \param gp Grid point.
-   //! \return Whether the grid point is valid.
-   // bool check_grid_point(double value, struct gridpoint& gp);
-
-   //! \brief Function to validate frictional ratio.
-   //! \return Whether the frictional ratio is valid.
-   // bool validate_ff0(void);
-
-   //! \brief Function to clear a grid point's attributes.
-   //! \param gp Grid point to be cleared.
-   // void clear_grid(struct gridpoint& gp);
-
-   //! \brief Function to set a grid point's attribute value.
-   //! \param gp Grid point.
-   //! \param attr Attribute index.
-   //! \param value Value to be set.
-   // void set_grid_value(struct gridpoint& gp, const int attr, const double value);
-
-   //! \brief Function to complete a grid point's component values.
-   //! \param gp Grid point.
-   //! \return Whether the component values are successfully completed.
-   // bool complete_comp(struct gridpoint& gp);
 };
 
 #endif

@@ -62,7 +62,7 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    connect( dkdb_cntrls, &US_Disk_DB_Controls::changed, this, &US_Grid_Editor::update_disk_db );
 
    grid_preset = new US_Grid_Preset(this);
-   grid_preset->parameters(&x_param, &y_param, &z_param);
+   grid_preset->parameters(x_param, y_param, z_param);
 
    QLabel *lb_x_param = us_label( tr( "X-Axis" ) );
    lb_x_param->setAlignment( Qt::AlignCenter );
@@ -73,9 +73,9 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    QLabel *lb_z_param = us_label( tr( "Fixed Attribute" ) );
    lb_z_param->setAlignment( Qt::AlignCenter );
 
-   le_x_param = us_lineedit( Attr_to_long(x_param), -1, true);
-   le_y_param = us_lineedit( Attr_to_long(y_param), -1, true);
-   le_z_param = us_lineedit( Attr_to_long(z_param), -1, true);
+   le_x_param = us_lineedit( Attribute::long_desc(x_param), -1, true);
+   le_y_param = us_lineedit( Attribute::long_desc(y_param), -1, true);
+   le_z_param = us_lineedit( Attribute::long_desc(z_param), -1, true);
 
    QPushButton *pb_preset = us_pushbutton( "Setup Griding" );
    connect ( pb_preset, &QPushButton::clicked, this, &US_Grid_Editor::set_grid_axis);
@@ -133,9 +133,9 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    QLabel *lb_res = us_label( "Resolution" );
    lb_res->setAlignment( Qt::AlignCenter );
 
-   lb_x_ax = us_label( Attr_to_short( x_param ));
+   lb_x_ax = us_label( Attribute::short_desc( x_param ));
    lb_x_ax->setAlignment( Qt::AlignCenter );
-   lb_y_ax = us_label( Attr_to_short( y_param ));
+   lb_y_ax = us_label( Attribute::short_desc( y_param ));
    lb_y_ax->setAlignment( Qt::AlignCenter );
 
    le_x_min = us_lineedit();
@@ -156,7 +156,7 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    hline2->setFrameShape(QFrame::HLine);
    hline2->setFrameShadow(QFrame::Sunken);
 
-   lb_z_ax = us_label( Attr_to_short( z_param ));
+   lb_z_ax = us_label( Attribute::short_desc( z_param ));
    lb_z_ax->setAlignment( Qt::AlignCenter );
    le_z_val = us_lineedit();
    le_z_val->setValidator(dValid);
@@ -166,47 +166,46 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    connect(le_y_min, &QLineEdit::editingFinished, this, &US_Grid_Editor::update_yMin);
    connect(le_y_max, &QLineEdit::editingFinished, this, &US_Grid_Editor::update_yMax);
 
-   QPushButton* pb_validate = us_pushbutton( "Add " );
+   pb_validate = us_pushbutton( "Add " );
    connect( pb_validate, &QPushButton::clicked, this, &US_Grid_Editor::add_update );
 
-   wg_add_update = new QWidget();
-   QGridLayout *lyt_2 = new QGridLayout();
-   int row = 0;
-   lyt_2->setSpacing        ( 2 );
-   lyt_2->setContentsMargins( 0, 0, 0, 0 );
-   lyt_2->addWidget( hline1,               row++, 0, 1, 4 );
+   QLabel *lb_nsubgrids = us_label( "Number of Subgrids" );
+   lb_nsubgrids->setAlignment( Qt::AlignCenter );
 
-   lyt_2->addWidget( lb_min,               row,   1, 1, 1 );
-   lyt_2->addWidget( lb_max,               row,   2, 1, 1 );
-   lyt_2->addWidget( lb_res,               row++, 3, 1, 1 );
+   ct_nsubgrids = us_counter(2, 1, 1000, 30);
+   ct_nsubgrids->setSingleStep(1);
+   QLineEdit* le_nsg = ct_nsubgrids->findChild<QLineEdit*>();
+   if (le_nsg) {
+      le_nsg->setAlignment(Qt::AlignCenter);
+   }
 
-   lyt_2->addWidget( lb_x_ax,              row,   0, 1, 1 );
-   lyt_2->addWidget( le_x_min,             row,   1, 1, 1 );
-   lyt_2->addWidget( le_x_max,             row,   2, 1, 1 );
-   lyt_2->addWidget( le_x_res,             row++, 3, 1, 1 );
+   QLabel *lb_subgrid = us_label( "Highlight Subgrid" );
+   lb_subgrid->setAlignment( Qt::AlignCenter );
 
-   lyt_2->addWidget( lb_y_ax,              row,   0, 1, 1 );
-   lyt_2->addWidget( le_y_min,             row,   1, 1, 1 );
-   lyt_2->addWidget( le_y_max,             row,   2, 1, 1 );
-   lyt_2->addWidget( le_y_res,             row++, 3, 1, 1 );
+   ct_subgrid = us_counter(2, 1, ct_nsubgrids->value(), 1);
+   ct_subgrid->setSingleStep(1);
+   QLineEdit* le_sg = ct_subgrid->findChild<QLineEdit*>();
+   if (le_sg) {
+      le_sg->setAlignment(Qt::AlignCenter);
+   }
 
-   lyt_2->addWidget( hline2,               row++, 0, 1, 4 );
+   connect(ct_subgrid,   &QwtCounter::valueChanged, this, &US_Grid_Editor::plot_subgrid);
+   connect(ct_nsubgrids, &QwtCounter::valueChanged, this, &US_Grid_Editor::update_subgrid);
 
-   lyt_2->addWidget( lb_z_ax,              row,   0, 1, 1 );
-   lyt_2->addWidget( le_z_val,             row,   1, 1, 1 );
-   lyt_2->addWidget( pb_validate,          row++, 2, 1, 2 );
+   QLabel *lb_npoints = us_label( "Total Number of Points" );
+   lb_npoints->setAlignment( Qt::AlignCenter );
+   le_npoints = us_lineedit("", -1, true);
+   le_npoints->setAlignment( Qt::AlignCenter );
 
-   wg_add_update->setLayout(lyt_2);
+   QLabel *lb_npoints_curr = us_label( "Current Subgrid's Number of Points" );
+   lb_npoints_curr->setAlignment( Qt::AlignCenter );
+   le_npoints_curr = us_lineedit("", -1, true);
+   le_npoints_curr->setAlignment( Qt::AlignCenter );
 
-
-   QLabel *lb_subgrids = us_label( "# Subgrids" );
-   lb_subgrids->setAlignment( Qt::AlignCenter );
-   le_subgrids = us_lineedit();
-   le_subgrids->setValidator(iValid);
-
-   QLabel *lb_allgrids = us_label( "# Grid Points" );
-   lb_allgrids->setAlignment( Qt::AlignCenter );
-   le_allgrids = us_lineedit("", -1, true);
+   QLabel *lb_npoints_last = us_label( "Last Subgrid's Number of Points" );
+   lb_npoints_last->setAlignment( Qt::AlignCenter );
+   le_npoints_last = us_lineedit("", -1, true);
+   le_npoints_last->setAlignment( Qt::AlignCenter );
 
    QPushButton* pb_reset = us_pushbutton( tr( "Reset" ) );
    pb_reset->setEnabled( true );
@@ -224,7 +223,7 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    pb_close->setEnabled( true );
    connect( pb_close, &QPushButton::clicked, this, &US_Grid_Editor::close );
 
-   row = 0;
+   int row = 0;
    left->addWidget( lb_preset,            row++, 0, 1, 4 );
 
    left->addWidget( pb_investigator,      row,   0, 1, 2 );
@@ -263,12 +262,42 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
 
    left->addLayout(lyt_1,                 row++, 0, 1, 4 );
 
-   left->addWidget(wg_add_update,         row++, 0, 1, 4 );
+   left->addWidget( hline1,               row++, 0, 1, 4 );
 
-   left->addWidget( lb_subgrids,          row,   0, 1, 1 );
-   left->addWidget( le_subgrids,          row,   1, 1, 1 );
-   left->addWidget( lb_allgrids,          row,   2, 1, 1 );
-   left->addWidget( le_allgrids,          row++, 3, 1, 1 );
+   left->addWidget( lb_min,               row,   1, 1, 1 );
+   left->addWidget( lb_max,               row,   2, 1, 1 );
+   left->addWidget( lb_res,               row++, 3, 1, 1 );
+
+   left->addWidget( lb_x_ax,              row,   0, 1, 1 );
+   left->addWidget( le_x_min,             row,   1, 1, 1 );
+   left->addWidget( le_x_max,             row,   2, 1, 1 );
+   left->addWidget( le_x_res,             row++, 3, 1, 1 );
+
+   left->addWidget( lb_y_ax,              row,   0, 1, 1 );
+   left->addWidget( le_y_min,             row,   1, 1, 1 );
+   left->addWidget( le_y_max,             row,   2, 1, 1 );
+   left->addWidget( le_y_res,             row++, 3, 1, 1 );
+
+   left->addWidget( hline2,               row++, 0, 1, 4 );
+
+   left->addWidget( lb_z_ax,              row,   0, 1, 1 );
+   left->addWidget( le_z_val,             row,   1, 1, 1 );
+   left->addWidget( pb_validate,          row++, 2, 1, 2 );
+
+   left->addWidget( lb_subgrid,           row,   0, 1, 2 );
+   left->addWidget( ct_subgrid,           row++, 2, 1, 2 );
+
+   left->addWidget( lb_nsubgrids,         row,   0, 1, 2 );
+   left->addWidget( ct_nsubgrids,         row++, 2, 1, 2 );
+
+   left->addWidget( lb_npoints,           row,   0, 1, 3 );
+   left->addWidget( le_npoints,           row++, 3, 1, 1 );
+
+   left->addWidget( lb_npoints_curr,      row,   0, 1, 3 );
+   left->addWidget( le_npoints_curr,      row++, 3, 1, 1 );
+
+   left->addWidget( lb_npoints_last,      row,   0, 1, 3 );
+   left->addWidget( le_npoints_last,      row++, 3, 1, 1 );
 
    QSpacerItem *spacer = new QSpacerItem(0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding);
    left->addItem(spacer, row++, 0, 1, 4);
@@ -283,7 +312,6 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    }
 
    // set up plot component window on right side
-
    QBoxLayout* plot_lyt = new US_Plot( data_plot,
                                       tr( "Grid Layout" ),
                                       tr( "" ),
@@ -292,7 +320,13 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    data_plot->setMinimumSize( 640, 480 );
    data_plot->enableAxis( QwtPlot::xBottom, true );
    data_plot->enableAxis( QwtPlot::yLeft,   true );
-   data_plot->setCanvasBackground(QBrush(Qt::black));
+   // data_plot->setCanvasBackground(QBrush(Qt::black));
+   data_plot->setCanvasBackground(QBrush(QColor(32, 32, 32)));
+
+   color_base      = QColor(0,47,167);
+   color_highlight = QColor(255,69,0);
+   color_subgrid   = QColor(173,255,47);
+   subgrid_curve = us_curve(data_plot, "SUBGRID");
 
    QRadioButton *rb_x_s;
    QRadioButton *rb_x_mw;
@@ -312,43 +346,43 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    QRadioButton *rb_y_sr;
    QRadioButton *rb_y_Dr;
 
-   QGridLayout* lyt_x_s     = us_radiobutton( Attr_to_char( ATTR_S ),  rb_x_s,    false );
-   QGridLayout* lyt_x_ff0   = us_radiobutton( Attr_to_char( ATTR_K ),  rb_x_ff0,  false );
-   QGridLayout* lyt_x_mw    = us_radiobutton( Attr_to_char( ATTR_M ),  rb_x_mw,   false );
-   QGridLayout* lyt_x_vbar  = us_radiobutton( Attr_to_char( ATTR_V ),  rb_x_vbar, false );
-   QGridLayout* lyt_x_D     = us_radiobutton( Attr_to_char( ATTR_D ),  rb_x_D,    false );
-   QGridLayout* lyt_x_f     = us_radiobutton( Attr_to_char( ATTR_F ),  rb_x_f,    false );
-   QGridLayout* lyt_x_sr    = us_radiobutton( Attr_to_char( ATTR_SR ), rb_x_sr,   false );
-   QGridLayout* lyt_x_Dr    = us_radiobutton( Attr_to_char( ATTR_DR ), rb_x_Dr,   false );
+   QGridLayout* lyt_x_s     = us_radiobutton( Attribute::symbol( Attribute::ATTR_S ),  rb_x_s,    false );
+   QGridLayout* lyt_x_ff0   = us_radiobutton( Attribute::symbol( Attribute::ATTR_K ),  rb_x_ff0,  false );
+   QGridLayout* lyt_x_mw    = us_radiobutton( Attribute::symbol( Attribute::ATTR_M ),  rb_x_mw,   false );
+   QGridLayout* lyt_x_vbar  = us_radiobutton( Attribute::symbol( Attribute::ATTR_V ),  rb_x_vbar, false );
+   QGridLayout* lyt_x_D     = us_radiobutton( Attribute::symbol( Attribute::ATTR_D ),  rb_x_D,    false );
+   QGridLayout* lyt_x_f     = us_radiobutton( Attribute::symbol( Attribute::ATTR_F ),  rb_x_f,    false );
+   QGridLayout* lyt_x_sr    = us_radiobutton( Attribute::symbol( Attribute::ATTR_SR ), rb_x_sr,   false );
+   QGridLayout* lyt_x_Dr    = us_radiobutton( Attribute::symbol( Attribute::ATTR_DR ), rb_x_Dr,   false );
 
-   QGridLayout* lyt_y_s     = us_radiobutton( Attr_to_char( ATTR_S ),  rb_y_s,    false );
-   QGridLayout* lyt_y_ff0   = us_radiobutton( Attr_to_char( ATTR_K ),  rb_y_ff0,  false );
-   QGridLayout* lyt_y_mw    = us_radiobutton( Attr_to_char( ATTR_M ),  rb_y_mw,   false );
-   QGridLayout* lyt_y_vbar  = us_radiobutton( Attr_to_char( ATTR_V ),  rb_y_vbar, false );
-   QGridLayout* lyt_y_D     = us_radiobutton( Attr_to_char( ATTR_D ),  rb_y_D,    false );
-   QGridLayout* lyt_y_f     = us_radiobutton( Attr_to_char( ATTR_F ),  rb_y_f,    false );
-   QGridLayout* lyt_y_sr    = us_radiobutton( Attr_to_char( ATTR_SR ), rb_y_sr,   false );
-   QGridLayout* lyt_y_Dr    = us_radiobutton( Attr_to_char( ATTR_DR ), rb_y_Dr,   false );
+   QGridLayout* lyt_y_s     = us_radiobutton( Attribute::symbol( Attribute::ATTR_S ),  rb_y_s,    false );
+   QGridLayout* lyt_y_ff0   = us_radiobutton( Attribute::symbol( Attribute::ATTR_K ),  rb_y_ff0,  false );
+   QGridLayout* lyt_y_mw    = us_radiobutton( Attribute::symbol( Attribute::ATTR_M ),  rb_y_mw,   false );
+   QGridLayout* lyt_y_vbar  = us_radiobutton( Attribute::symbol( Attribute::ATTR_V ),  rb_y_vbar, false );
+   QGridLayout* lyt_y_D     = us_radiobutton( Attribute::symbol( Attribute::ATTR_D ),  rb_y_D,    false );
+   QGridLayout* lyt_y_f     = us_radiobutton( Attribute::symbol( Attribute::ATTR_F ),  rb_y_f,    false );
+   QGridLayout* lyt_y_sr    = us_radiobutton( Attribute::symbol( Attribute::ATTR_SR ), rb_y_sr,   false );
+   QGridLayout* lyt_y_Dr    = us_radiobutton( Attribute::symbol( Attribute::ATTR_DR ), rb_y_Dr,   false );
 
    x_axis = new QButtonGroup( this );
-   x_axis->addButton( rb_x_s,    ATTR_S );
-   x_axis->addButton( rb_x_ff0,  ATTR_K );
-   x_axis->addButton( rb_x_mw,   ATTR_M );
-   x_axis->addButton( rb_x_vbar, ATTR_V );
-   x_axis->addButton( rb_x_D,    ATTR_D );
-   x_axis->addButton( rb_x_f,    ATTR_F );
-   x_axis->addButton( rb_x_sr,   ATTR_SR );
-   x_axis->addButton( rb_x_Dr,   ATTR_DR );
+   x_axis->addButton( rb_x_s,    Attribute::ATTR_S );
+   x_axis->addButton( rb_x_ff0,  Attribute::ATTR_K );
+   x_axis->addButton( rb_x_mw,   Attribute::ATTR_M );
+   x_axis->addButton( rb_x_vbar, Attribute::ATTR_V );
+   x_axis->addButton( rb_x_D,    Attribute::ATTR_D );
+   x_axis->addButton( rb_x_f,    Attribute::ATTR_F );
+   x_axis->addButton( rb_x_sr,   Attribute::ATTR_SR );
+   x_axis->addButton( rb_x_Dr,   Attribute::ATTR_DR );
 
    y_axis = new QButtonGroup( this );
-   y_axis->addButton( rb_y_s,    ATTR_S );
-   y_axis->addButton( rb_y_ff0,  ATTR_K );
-   y_axis->addButton( rb_y_mw,   ATTR_M );
-   y_axis->addButton( rb_y_vbar, ATTR_V );
-   y_axis->addButton( rb_y_D,    ATTR_D );
-   y_axis->addButton( rb_y_f,    ATTR_F );
-   y_axis->addButton( rb_y_sr,   ATTR_SR );
-   y_axis->addButton( rb_y_Dr,   ATTR_DR );
+   y_axis->addButton( rb_y_s,    Attribute::ATTR_S );
+   y_axis->addButton( rb_y_ff0,  Attribute::ATTR_K );
+   y_axis->addButton( rb_y_mw,   Attribute::ATTR_M );
+   y_axis->addButton( rb_y_vbar, Attribute::ATTR_V );
+   y_axis->addButton( rb_y_D,    Attribute::ATTR_D );
+   y_axis->addButton( rb_y_f,    Attribute::ATTR_F );
+   y_axis->addButton( rb_y_sr,   Attribute::ATTR_SR );
+   y_axis->addButton( rb_y_Dr,   Attribute::ATTR_DR );
 
    connect( x_axis, &QButtonGroup::idReleased, this, &US_Grid_Editor::select_x_axis );
    connect( y_axis, &QButtonGroup::idReleased, this, &US_Grid_Editor::select_y_axis );
@@ -426,17 +460,49 @@ void US_Grid_Editor::rm_tmp_items()
          }
       }
    }
+   data_plot->replot();
 }
 
-void US_Grid_Editor::rm_all_items()
+void US_Grid_Editor::rm_subgrid_curve()
 {
-   const auto items = data_plot->itemList();
-   for (QwtPlotItem *item : items) {
-      if (item ) {
-         item->detach();
-         delete item;
-      }
+   subgrid_curve->setTitle("SUBGRID");
+   subgrid_curve->setSamples(QVector<QPointF>());
+   data_plot->replot();
+   // const auto items = data_plot->itemList();
+   // for (QwtPlotItem *item : items) {
+   //    if (item ) {
+   //       QString txt = item->title().text();
+   //       if ( txt.startsWith("SUBGRID_") ) {
+   //          item->detach();
+   //          delete item;
+   //       }
+   //    }
+   // }
+}
+
+void US_Grid_Editor::rm_all_curves()
+{
+   for ( int ii = 0; ii < all_curves.size(); ii++ ) {
+      all_curves[ii]->detach();
+      delete all_curves[ii];
    }
+   all_curves.clear();
+   data_plot->replot();
+   // const auto items = data_plot->itemList();
+   // for (QwtPlotItem *item : items) {
+   //    if (item ) {
+   //       item->detach();
+   //       delete item;
+   //    }
+   // }
+}
+
+void US_Grid_Editor::rm_curve(int id)
+{
+   all_curves[id]->detach();
+   delete all_curves[id];
+   all_curves.removeAt(id);
+   data_plot->replot();
 }
 
 void US_Grid_Editor::plot_tmp()
@@ -577,13 +643,13 @@ void US_Grid_Editor::set_grid_axis()
 {
    int state = grid_preset->exec();
    if ( state == QDialog::Accepted ) {
-      grid_preset->parameters(&x_param, &y_param, &z_param);
-      le_x_param->setText( Attr_to_long(x_param) );
-      le_y_param->setText( Attr_to_long(y_param) );
-      le_z_param->setText( Attr_to_long(z_param) );
-      lb_x_ax->setText( Attr_to_short( x_param ));
-      lb_y_ax->setText( Attr_to_short( y_param ));
-      lb_z_ax->setText( Attr_to_short( z_param ));
+      grid_preset->parameters(x_param, y_param, z_param);
+      le_x_param->setText( Attribute::long_desc(x_param) );
+      le_y_param->setText( Attribute::long_desc(y_param) );
+      le_z_param->setText( Attribute::long_desc(z_param) );
+      lb_x_ax->setText( Attribute::short_desc( x_param ));
+      lb_y_ax->setText( Attribute::short_desc( y_param ));
+      lb_z_ax->setText( Attribute::short_desc( z_param ));
       le_x_min->clear();
       le_x_max->clear();
       le_y_min->clear();
@@ -619,7 +685,7 @@ void US_Grid_Editor::add_update()
       return;
    }
 
-   QVector<int> types;
+   QVector<Attribute::Type> types;
    types << x_param << y_param << z_param;
    QVector<double> vals;
    QVector<GridPoint> gps;
@@ -643,9 +709,12 @@ void US_Grid_Editor::add_update()
          << xyz.value("yMinU") << xyz.value("yMaxU") << xyz.value("yRes")
          << xyz.value("zValU");
    grid_info << ginfo;
+   sort_points();
    clear_xyz();
-   plot_all();
+   plot_points();
    fill_list();
+   update_subgrid(ct_nsubgrids->value());
+   le_npoints->setText(tr("%1").arg(sorted_points.size()));
 }
 
 bool US_Grid_Editor::validate( )
@@ -701,7 +770,7 @@ bool US_Grid_Editor::validate( )
    get_xyz(xyz);
 
    GridPoint gp;
-   QVector<int> types;
+   QVector<Attribute::Type> types;
    types << x_param << y_param << z_param;
    QVector<double> vals;
    vals << xyz.value("xMin") << xyz.value("yMin") << xyz.value("zVal");
@@ -728,12 +797,11 @@ bool US_Grid_Editor::overlap(double xMin, double xMax, double yMin, double yMax)
 {
    for (int ii= 0; ii < grid_points.size(); ii++) {
       QVector<GridPoint> item = grid_points.at(ii);
-      double x1, x2, y1, y2;
       int sz = item.size();
-      item[0].value_by_name(Attr_to_char( x_param ), x1 );
-      item[0].value_by_name(Attr_to_char( y_param), y1 );
-      item[sz - 1].value_by_name(Attr_to_char( x_param ), x2 );
-      item[sz - 1].value_by_name(Attr_to_char( y_param ), y2 );
+      double x1 = item[0].value( x_param );
+      double y1 = item[0].value( y_param );
+      double x2 = item[sz - 1].value( x_param );
+      double y2 = item[sz - 1].value( y_param );
       bool x_ovrlp = ! ( xMin > x2 || xMax < x1 );
       bool y_ovrlp = ! ( yMin > y2 || yMax < y1 );
       if ( x_ovrlp && y_ovrlp ) {
@@ -756,14 +824,15 @@ void US_Grid_Editor::linspace(double x1, double x2, int np, QVector<double> &vec
    }
 }
 
-void US_Grid_Editor::unit_corr(double& val, int type)
+double US_Grid_Editor::correct_unit(double val, Attribute::Type type, bool h_flag)
 {
-   if ( type == ATTR_S ) {
-      val = val * 1e-13;
+   double output = val;
+   if ( type == Attribute::ATTR_S ) {
+      output = h_flag ? val * 1e13 : val * 1e-13;
+   } else if ( type == Attribute::ATTR_M ) {
+      output = h_flag ? val / 1000 : val * 1000;
    }
-   if ( type == ATTR_M ) {
-      val = val * 1000;
-   }
+   return output;
 }
 
 void US_Grid_Editor::fill_list()
@@ -784,9 +853,9 @@ void US_Grid_Editor::fill_list()
       double z  = ginfo.at(6);
 
       QString str = title.arg(ii + 1).
-                    arg(Attr_to_char(x_param)).arg(x1, 0, 'f', 2).arg(x2, 0, 'f', 2).
-                    arg(Attr_to_char(y_param)).arg(y1, 0, 'f', 2).arg(y2, 0, 'f', 2).
-                    arg(Attr_to_char(z_param)).arg(z,  0, 'f', 2);
+                    arg(Attribute::symbol(x_param)).arg(x1, 0, 'f', 2).arg(x2, 0, 'f', 2).
+                    arg(Attribute::symbol(y_param)).arg(y1, 0, 'f', 2).arg(y2, 0, 'f', 2).
+                    arg(Attribute::symbol(z_param)).arg(z,  0, 'f', 2);
       lw_grids->addItem(str);
    }
 
@@ -798,15 +867,10 @@ void US_Grid_Editor::fill_list()
    highlight(row);
 }
 
-double US_Grid_Editor::value4plot(int ii, int jj, int pid)
+double US_Grid_Editor::value4plot(GridPoint& grid, Attribute::Type type)
 {
-   double val = 0;
-   grid_points[ii][jj].value_by_name( Attr_to_char( pid ), val);
-   if ( pid == ATTR_S || pid == ATTR_SR ) {
-      val *= 1e13;
-   } else if ( pid == ATTR_M ) {
-      val /= 1000.0;
-   }
+   double val = grid.value( type );
+   val = correct_unit(val, type, true);
    return val;
 }
 
@@ -817,7 +881,7 @@ void US_Grid_Editor::clear_xyz()
    le_y_min->clear();
    le_y_max->clear();
    le_z_val->clear();
-   wg_add_update->setDisabled(true);
+   enable_add_edit(false);
 }
 
 void US_Grid_Editor::get_xyz(QHash<QString, double> & vals)
@@ -840,11 +904,11 @@ void US_Grid_Editor::get_xyz(QHash<QString, double> & vals)
    vals.insert("yMaxU", y_max);
    vals.insert("zValU", z_val);
 
-   unit_corr(x_min, x_param);
-   unit_corr(x_max, x_param);
-   unit_corr(y_min, y_param);
-   unit_corr(y_max, y_param);
-   unit_corr(z_val, z_param);
+   x_min = correct_unit(x_min, x_param, false);
+   x_max = correct_unit(x_max, x_param, false);
+   y_min = correct_unit(y_min, y_param, false);
+   y_max = correct_unit(y_max, y_param, false);
+   z_val = correct_unit(z_val, z_param, false);
 
    vals.insert("xMin", x_min);
    vals.insert("xMax", x_max);
@@ -853,30 +917,69 @@ void US_Grid_Editor::get_xyz(QHash<QString, double> & vals)
    vals.insert("zVal", z_val);
 }
 
+void US_Grid_Editor::sort_points()
+{
+   sorted_points.clear();
+   for ( int ii = 0; ii < grid_points.size(); ii++ ) {
+      sorted_points << grid_points.at(ii);
+   }
+
+   std::stable_sort(sorted_points.begin(), sorted_points.end(),
+                    [](const GridPoint &g1, const GridPoint &g2) {
+                       double g1y = g1.y_value();
+                       double g2y = g2.y_value();
+                       return g1y < g2y;
+                    });
+
+   std::stable_sort(sorted_points.begin(), sorted_points.end(),
+                    [](const GridPoint &g1, const GridPoint &g2) {
+                       double g1x = g1.x_value();
+                       double g2x = g2.x_value();
+                       return g1x < g2x;
+                    });
+}
+
+void US_Grid_Editor::enable_add_edit(bool state)
+{
+   le_x_min->setEnabled(state);
+   le_x_max->setEnabled(state);
+   le_x_res->setEnabled(state);
+   le_y_min->setEnabled(state);
+   le_y_max->setEnabled(state);
+   le_y_res->setEnabled(state);
+   le_z_val->setEnabled(state);
+   pb_validate->setEnabled(state);
+}
+
 // reset the GUI
 void US_Grid_Editor::reset( void )
 {
-   rm_all_items();
+   rm_tmp_items();
+   rm_subgrid_curve();
+   rm_all_curves();
+
    lw_grids->disconnect();
    lw_grids->clear();
    grid_points.clear();
    grid_info.clear();
+   sorted_points.clear();
+   final_subgrids.clear();
 
-   x_param = ATTR_S; // plot s
-   y_param = ATTR_K; // plot f/f0
-   z_param = ATTR_V; // fixed vbar
+   x_param = Attribute::ATTR_S; // plot s
+   y_param = Attribute::ATTR_K; // plot f/f0
+   z_param = Attribute::ATTR_V; // fixed vbar
    // gstate = G_ADD;
 
-   le_x_param->setText( Attr_to_long(x_param) );
-   le_y_param->setText( Attr_to_long(y_param) );
-   le_z_param->setText( Attr_to_long(z_param) );
-   lb_x_ax->setText( Attr_to_short( x_param ));
-   lb_y_ax->setText( Attr_to_short( y_param ));
-   lb_z_ax->setText( Attr_to_short( z_param ));
+   le_x_param->setText( Attribute::long_desc( x_param) );
+   le_y_param->setText( Attribute::long_desc( y_param) );
+   le_z_param->setText( Attribute::long_desc( z_param) );
+   lb_x_ax->setText( Attribute::short_desc( x_param ));
+   lb_y_ax->setText( Attribute::short_desc( y_param ));
+   lb_z_ax->setText( Attribute::short_desc( z_param ));
 
    x_axis->button(x_param)->setChecked(true);
    y_axis->button(y_param)->setChecked(true);
-   plot_all();
+   plot_points();
    le_x_res->setText(QString::number(64));
    le_y_res->setText(QString::number(64));
    clear_xyz();
@@ -1068,32 +1171,22 @@ void US_Grid_Editor::update_yMax( )
 void US_Grid_Editor::highlight(int id)
 {
    rm_tmp_items();
-   QString title = tr("GRID_%1").arg(id);
-   auto items = data_plot->itemList(QwtPlotItem::Rtti_PlotCurve);
-   for (int ii = 0; ii < items.size(); ii++) {
-      QwtPlotCurve* curve = dynamic_cast<QwtPlotCurve*>(items.at(ii));
-      if (curve) {
-         const QwtSymbol* symbol = curve->symbol();
-         if (symbol) {
-            QPen pen = symbol->pen();
-            QwtSymbol* new_symbol = new QwtSymbol();
-            new_symbol->setStyle(symbol->style());
-            new_symbol->setSize(symbol->size());
-            if ( curve->title() == title ) {
-               pen.setColor(Qt::red);
-               new_symbol->setBrush(Qt::red);
-            } else {
-               pen.setColor(Qt::yellow);
-               new_symbol->setBrush(Qt::yellow);
-            }
-            new_symbol->setPen(pen);
-            curve->setSymbol(new_symbol);
-         }
-      }
-   }
-   data_plot->replot();
    clear_xyz();
+   for ( int ii = 0; ii < all_curves.size(); ii++ ) {
+      QSize size = all_curves[ii]->symbol()->size();
+      QPen pen = all_curves[ii]->symbol()->pen();
+      pen.setBrush(color_base);
+      QwtSymbol *symbol = new QwtSymbol(QwtSymbol::Ellipse, QBrush(color_base), pen, size);
+      all_curves[ii]->setSymbol(symbol);
+   }
+
    if ( id != -1 ) {
+      QSize size = all_curves[id]->symbol()->size();
+      QPen pen = all_curves[id]->symbol()->pen();
+      pen.setBrush(color_highlight);
+      QwtSymbol *symbol = new QwtSymbol(QwtSymbol::Ellipse, QBrush(color_highlight), pen, size);
+      all_curves[id]->setSymbol(symbol);
+
       QVector<double> ginfo = grid_info.at(id);
       le_x_min->setText(QString::number(ginfo.at(0)));
       le_x_max->setText(QString::number(ginfo.at(1)));
@@ -1103,6 +1196,7 @@ void US_Grid_Editor::highlight(int id)
       le_y_res->setText(QString::number(ginfo.at(5)));
       le_z_val->setText(QString::number(ginfo.at(6)));
    }
+   plot_subgrid(ct_subgrid->value());
 }
 
 void US_Grid_Editor::new_grid_clicked()
@@ -1115,9 +1209,9 @@ void US_Grid_Editor::new_grid_clicked()
    select_x_axis(x_param);
    select_y_axis(y_param);
    plot_flag = true;
-   plot_all();
+   plot_points();
    highlight(-1);
-   wg_add_update->setEnabled(true);
+   enable_add_edit(true);
 }
 
 void US_Grid_Editor::update_grid_clicked()
@@ -1132,81 +1226,174 @@ void US_Grid_Editor::delete_grid_clicked()
 
 void US_Grid_Editor::select_x_axis(int index)
 {
-   for (int ii = ATTR_S; ii <= ATTR_DR; ii++) {
-      y_axis->button( ii )->setEnabled(true);
+   QVector<Attribute::Type> tlist;
+   tlist << Attribute::ATTR_S << Attribute::ATTR_K
+      << Attribute::ATTR_M << Attribute::ATTR_V
+      << Attribute::ATTR_D << Attribute::ATTR_F
+      << Attribute::ATTR_SR << Attribute::ATTR_DR;
+   foreach (Attribute::Type type, tlist) {
+      y_axis->button( type )->setEnabled(true);
    }
+
    y_axis->button(index)->setDisabled(true);
 
-   if ( index == ATTR_S ) {
-      y_axis->button(ATTR_SR)->setDisabled(true);
-   } else if ( index == ATTR_D ) {
-      y_axis->button(ATTR_DR)->setDisabled(true);
-   } else if ( index == ATTR_SR ) {
-      y_axis->button(ATTR_S)->setDisabled(true);
-   } else if ( index == ATTR_DR ) {
-      y_axis->button(ATTR_D)->setDisabled(true);
+   if ( index == Attribute::ATTR_S ) {
+      y_axis->button(Attribute::ATTR_SR)->setDisabled(true);
+   } else if ( index == Attribute::ATTR_D ) {
+      y_axis->button(Attribute::ATTR_DR)->setDisabled(true);
+   } else if ( index == Attribute::ATTR_SR ) {
+      y_axis->button(Attribute::ATTR_S)->setDisabled(true);
+   } else if ( index == Attribute::ATTR_DR ) {
+      y_axis->button(Attribute::ATTR_D)->setDisabled(true);
    }
    if ( plot_flag ) {
-      plot_all();
+      plot_points();
       int row = lw_grids->currentRow();
       highlight(row);
    }
-   wg_add_update->setDisabled(true);
+   enable_add_edit(false);
 }
 
 void US_Grid_Editor::select_y_axis(int index)
 {
-   for (int ii = ATTR_S; ii <= ATTR_DR; ii++) {
-      x_axis->button( ii )->setEnabled(true);
+   QVector<Attribute::Type> tlist;
+   tlist << Attribute::ATTR_S << Attribute::ATTR_K
+      << Attribute::ATTR_M << Attribute::ATTR_V
+      << Attribute::ATTR_D << Attribute::ATTR_F
+      << Attribute::ATTR_SR << Attribute::ATTR_DR;
+   foreach (Attribute::Type type, tlist) {
+      x_axis->button( type )->setEnabled(true);
    }
+
    x_axis->button(index)->setDisabled(true);
 
-   if ( index == ATTR_S ) {
-      x_axis->button(ATTR_SR)->setDisabled(true);
-   } else if ( index == ATTR_D ) {
-      x_axis->button(ATTR_DR)->setDisabled(true);
-   } else if ( index == ATTR_SR ) {
-      x_axis->button(ATTR_S)->setDisabled(true);
-   } else if ( index == ATTR_DR ) {
-      x_axis->button(ATTR_D)->setDisabled(true);
+   if ( index == Attribute::ATTR_S ) {
+      x_axis->button(Attribute::ATTR_SR)->setDisabled(true);
+   } else if ( index == Attribute::ATTR_D ) {
+      x_axis->button(Attribute::ATTR_DR)->setDisabled(true);
+   } else if ( index == Attribute::ATTR_SR ) {
+      x_axis->button(Attribute::ATTR_S)->setDisabled(true);
+   } else if ( index == Attribute::ATTR_DR ) {
+      x_axis->button(Attribute::ATTR_D)->setDisabled(true);
    }
    if ( plot_flag ) {
-      plot_all();
+      plot_points();
       int row = lw_grids->currentRow();
       highlight(row);
    }
-   wg_add_update->setDisabled(true);
+   enable_add_edit(false);
 }
 
 void US_Grid_Editor::update_symbsize(double)
 {
-   int ssize = ct_size->value();
-   auto items = data_plot->itemList(QwtPlotItem::Rtti_PlotCurve);
-   for (int ii = 0; ii < items.size(); ii++) {
-      QwtPlotCurve* curve = dynamic_cast<QwtPlotCurve*>(items.at(ii));
-      if (curve) {
-         const QwtSymbol* symbol = curve->symbol();
-         if (symbol) {
-            QwtSymbol* new_symbol = new QwtSymbol();
-            new_symbol->setStyle(symbol->style());
-            new_symbol->setBrush(symbol->brush());
-            new_symbol->setPen(symbol->pen());
-            new_symbol->setSize(ssize, ssize);
-            curve->setSymbol(new_symbol);
-         }
-      }
+   int ss = ct_size->value();
+   for ( int ii = 0; ii < all_curves.size(); ii++ ) {
+      const QwtSymbol* symbol = all_curves[ii]->symbol();
+      QwtSymbol* new_symbol = new QwtSymbol();
+      new_symbol->setStyle(symbol->style());
+      new_symbol->setBrush(symbol->brush());
+      new_symbol->setPen(symbol->pen());
+      new_symbol->setSize(ss, ss);
+      all_curves[ii]->setSymbol(new_symbol);
    }
+   ss++;
+   const QwtSymbol* symbol = subgrid_curve->symbol();
+   QwtSymbol* new_symbol = new QwtSymbol();
+   new_symbol->setStyle(symbol->style());
+   new_symbol->setBrush(symbol->brush());
+   new_symbol->setPen(symbol->pen());
+   new_symbol->setSize(ss, ss);
+   subgrid_curve->setSymbol(new_symbol);
+
    data_plot->replot();
 }
 
-void US_Grid_Editor::plot_all()
+void US_Grid_Editor::update_subgrid(double num)
 {
-   rm_all_items();
-   int xid = x_axis->checkedId();
-   int yid = y_axis->checkedId();
+   ct_subgrid->disconnect();
+   ct_nsubgrids->disconnect();
 
-   data_plot->setAxisTitle( QwtPlot::xBottom, Attr_to_title(xid) );
-   data_plot->setAxisTitle( QwtPlot::yLeft,   Attr_to_title(yid) );
+   final_subgrids.clear();
+   int nsubgrids = num;
+   int npoints = sorted_points.size();
+   if ( npoints > 0 && npoints < nsubgrids ) {
+      nsubgrids = npoints;
+   }
+   ct_nsubgrids->setValue(nsubgrids);
+
+   int sbg;
+   if ( static_cast<int> (ct_subgrid->value()) > nsubgrids ) {
+      sbg = nsubgrids;
+   } else {
+      sbg = ct_subgrid->value();
+   }
+   ct_subgrid->setMaximum(nsubgrids);
+   ct_subgrid->setValue(sbg);
+
+   connect(ct_subgrid,   &QwtCounter::valueChanged, this, &US_Grid_Editor::plot_subgrid);
+   connect(ct_nsubgrids, &QwtCounter::valueChanged, this, &US_Grid_Editor::update_subgrid);
+
+   if ( npoints == 0 ) return;
+
+   for ( int ii = 0; ii < nsubgrids; ii++ ) {
+      QVector<int> arr;
+      for ( int jj = ii; jj < npoints; jj += nsubgrids )
+      {
+         arr << jj;
+      }
+      final_subgrids << arr;
+   }
+   plot_subgrid(sbg);
+   le_npoints_last->setText(tr("%1").arg(final_subgrids.last().size()));
+}
+
+void US_Grid_Editor::plot_subgrid(double subgrid_id)
+{
+   subgrid_id--;
+   bool flag = final_subgrids.isEmpty() || subgrid_id >= final_subgrids.size();
+   if ( flag ) {
+      data_plot->replot();
+      return;
+   }
+   rm_subgrid_curve();
+
+   QVector<int> grid_id = final_subgrids.at(subgrid_id);
+   int np = grid_id.size();
+   Attribute::Type pxid = Attribute::from_int( x_axis->checkedId() );
+   Attribute::Type pyid = Attribute::from_int( y_axis->checkedId() );
+   QVector<double> xarr;
+   QVector<double> yarr;
+   for ( int ii = 0; ii < np; ii++ ) {
+      GridPoint gp = sorted_points.at(grid_id.at(ii));
+      double x = value4plot(gp, pxid);
+      double y = value4plot(gp, pyid);
+      xarr << x;
+      yarr << y;
+   }
+   int ss = ct_size->value() + 1;
+   QwtSymbol *symbol = new QwtSymbol(QwtSymbol::Ellipse,
+                                     QBrush(color_subgrid),
+                                     QPen(color_subgrid, 2), QSize(ss, ss));
+   QString title = tr("SUBGRID_%1").arg(subgrid_id);
+   subgrid_curve->setTitle(title);
+   subgrid_curve->setSymbol(symbol);
+   subgrid_curve->setSamples(xarr.data(), yarr.data(), np);
+   subgrid_curve->setZ(1);
+   subgrid_curve->setStyle(QwtPlotCurve::NoCurve);
+   data_plot->replot();
+
+   le_npoints_curr->setText(tr("%1").arg(np));
+}
+
+void US_Grid_Editor::plot_points()
+{
+   rm_all_curves();
+
+   Attribute::Type pxid = Attribute::from_int( x_axis->checkedId() );
+   Attribute::Type pyid = Attribute::from_int( y_axis->checkedId() );
+
+   data_plot->setAxisTitle( QwtPlot::xBottom, Attribute::title( pxid ) );
+   data_plot->setAxisTitle( QwtPlot::yLeft,   Attribute::title( pyid ) );
    data_plot->setAxisScale( QwtPlot::xBottom, 1, 10);
    data_plot->setAxisScale( QwtPlot::yLeft  , 1, 10);
    data_plot->replot();
@@ -1217,16 +1404,15 @@ void US_Grid_Editor::plot_all()
    double px2 = -1e99;
    double py1 =  1e99;
    double py2 = -1e99;
-   int pxid = x_axis->checkedId();
-   int pyid = y_axis->checkedId();
-   int ssize = ct_size->value();
+   int ss = ct_size->value();
    for ( int nn = 0; nn < grid_points.size(); nn++ ) {
       QVector<GridPoint> gps = grid_points.at(nn);
       QVector<double> xarr;
       QVector<double> yarr;
       for ( int ii = 0; ii < gps.size(); ii++ ) {
-         double x = value4plot(nn, ii, pxid);
-         double y = value4plot(nn, ii, pyid);
+         GridPoint gp = gps.at(ii);
+         double x = value4plot(gp, pxid);
+         double y = value4plot(gp, pyid);
 
          px1 = qMin(px1, x);
          px2 = qMax(px2, x);
@@ -1236,14 +1422,16 @@ void US_Grid_Editor::plot_all()
          xarr << x;
          yarr << y;
       }
+      QwtSymbol *symbol = new QwtSymbol(QwtSymbol::Ellipse,
+                                        QBrush(color_base),
+                                        QPen(color_base, 2), QSize(ss, ss));
       QString title = tr("GRID_%1").arg(nn);
       QwtPlotCurve* curve = us_curve(data_plot, title);
-
-      QwtSymbol* symbol = new QwtSymbol(QwtSymbol::Ellipse, QBrush(Qt::yellow),
-                                        QPen(Qt::yellow), QSize(ssize, ssize));
       curve->setSymbol(symbol);
       curve->setStyle(QwtPlotCurve::NoCurve);
       curve->setSamples(xarr.data(), yarr.data(), xarr.size());
+      curve->setZ(0);
+      all_curves << curve;
    }
 
    double dx = (px2 - px1) * 0.1;
@@ -1256,232 +1444,6 @@ void US_Grid_Editor::plot_all()
    data_plot->setAxisScale( QwtPlot::yLeft  , py1, py2);
    data_plot->replot();
 }
-
-
-
-// // Select a partialGrid from all subgrids in the final grid for highlighting
-// void US_Grid_Editor::update_partialGrid( double dval )
-// {
-//    partialGrid = (int) dval;
-//    update_plot();
-// }
-
-// // Select a subgrid from the final grid for highlighting:
-// void US_Grid_Editor::update_subGrids( double dval )
-// {
-//    int ntotg       = final_grid.size();
-//    subGrids        = (int)dval;
-//    // ct_partialGrid->setRange     ( 1, subGrids );
-//    // ct_partialGrid->setSingleStep( 1 );
-//    // le_counts->setText( tr( "%1 total, %2 per subgrid" )
-//    //       .arg( ntotg ).arg( ntotg / subGrids ) );
-//    update_plot();
-// }
-
-// // update density
-// void US_Grid_Editor::update_exp_data( )
-// {
-
-// }
-
-// // update plot
-// void US_Grid_Editor::update_plot( void )
-// {
-// qDebug() << "update_plot:  call calc_gridpoints()";
-
-//    QString xatitle = Attr_to_long( x_param );
-//    QString yatitle = Attr_to_long( y_param );
-
-//    if ( selected_plot == 1 )
-//       xatitle         = tr( "Molecular Weight" );
-
-//    dataPlotClear( data_plot );
-//    data_plot->setAxisTitle( QwtPlot::xBottom, xatitle );
-//    data_plot->setAxisTitle( QwtPlot::yLeft,   yatitle );
-
-//    //print_minmax();
-//    int gridsize;
-//    QVector <double> xData1;
-//    QVector <double> yData1;
-//    QVector <double> xData2;
-//    QVector <double> yData2;
-
-//    int iplt_x = ( selected_plot == 0 ) ? x_param : ATTR_W;
-
-//    xData1.clear();
-//    yData1.clear();
-//    xData2.clear();
-//    yData2.clear();
-
-//    // if ( ck_show_final_grid->isChecked()  &&
-//    //      !ck_show_sub_grid->isChecked())
-//       if (true)
-//    {
-//       gridsize = final_grid.size();
-
-//       // for ( int ii = 0; ii < gridsize; ii++ )
-//       // {
-//       //    if ( final_grid[ ii ].index == partialGrid )
-//       //    {
-//       //       xData1 << grid_value( final_grid[ ii ], iplt_x );
-//       //       yData1 << grid_value( final_grid[ ii ], y_param );
-//       //    }
-
-//       //    else
-//       //    {
-//       //       xData2 << grid_value( final_grid[ ii ], iplt_x );
-//       //       yData2 << grid_value( final_grid[ ii ], y_param );
-//       //    }
-//       // }
-
-//       QwtPlotCurve *c1;
-//       QwtSymbol*   sym1 = new QwtSymbol;
-//       sym1->setStyle( QwtSymbol::Ellipse );
-//       sym1->setBrush( QColor( Qt::red ) );
-//       sym1->setPen  ( QColor( Qt::red ) );
-//       sym1->setSize ( 3 );
-
-//       c1 = us_curve( data_plot, "highlighted Grid points" );
-//       c1->setSymbol ( sym1 );
-//       c1->setStyle  ( QwtPlotCurve::NoCurve );
-//       c1->setSamples( xData1.data(), yData1.data(), xData1.size() );
-
-//       QwtPlotCurve *c2;
-//       QwtSymbol*   sym2 = new QwtSymbol;
-//       sym2->setStyle( QwtSymbol::Ellipse );
-//       sym2->setBrush( QColor( Qt::yellow ) );
-//       sym2->setPen  ( QColor( Qt::yellow ) );
-//       sym2->setSize ( 3 );
-
-//       c2 = us_curve( data_plot, "Other Grid points" );
-//       c2->setSymbol ( sym2 );
-//       c2->setStyle  ( QwtPlotCurve::NoCurve );
-//       c2->setSamples( xData2.data(), yData2.data(), xData2.size() );
-//    }
-
-//    // else if ( ck_show_final_grid->isChecked()  &&
-//    //           ck_show_sub_grid->isChecked())
-//       else if (0)
-//    {
-//       gridsize    = final_grid.size();
-//       int counter = 1;
-
-//       // for ( int ii = 0; ii < gridsize; ii++ )
-//       // {
-//       //    if ( counter == partialGrid )
-//       //    {
-//       //       xData1 << grid_value( final_grid[ ii ], iplt_x );
-//       //       yData1 << grid_value( final_grid[ ii ], y_param );
-//       //    }
-
-//       //    else
-//       //    {
-//       //       xData2 << grid_value( final_grid[ ii ], iplt_x );
-//       //       yData2 << grid_value( final_grid[ ii ], y_param );
-//       //    }
-
-//       //    counter++;
-
-//       //    if ( counter > subGrids )
-//       //       counter = 1;
-//       // }
-
-//       QwtPlotCurve *c1;
-//       QwtSymbol*   sym1 = new QwtSymbol;
-//       sym1->setStyle( QwtSymbol::Ellipse );
-//       sym1->setBrush( QColor( Qt::red ) );
-//       sym1->setPen  ( QColor( Qt::red ) );
-//       sym1->setSize( 3 );
-
-//       c1 = us_curve( data_plot, "highlighted Grid points" );
-//       c1->setSymbol ( sym1 );
-//       c1->setStyle  ( QwtPlotCurve::NoCurve );
-//       c1->setSamples( xData1.data(), yData1.data(), xData1.size() );
-
-//       QwtPlotCurve *c2;
-//       QwtSymbol*   sym2 = new QwtSymbol;
-//       sym2->setStyle( QwtSymbol::Ellipse );
-//       sym2->setBrush( QColor( Qt::yellow ) );
-//       sym2->setPen  ( QColor( Qt::yellow ) );
-//       sym2->setSize( 3 );
-
-//       c2 = us_curve( data_plot, "Other Grid points" );
-//       c2->setSymbol ( sym2 );
-//       c2->setStyle  ( QwtPlotCurve::NoCurve );
-//       c2->setSamples( xData2.data(), yData2.data(), xData2.size() );
-//    }
-
-//    else
-//    {  // Set up current grid plot
-//       // gridsize    = current_grid.size();
-// qDebug() << "  updplt: gridsize" << gridsize;
-//       xData1.resize( gridsize );
-//       yData1.resize( gridsize );
-
-//       // for ( int ii = 0; ii < gridsize; ii++ )
-//       // {
-//       //    xData1[ ii ] = grid_value( current_grid[ ii ], iplt_x );
-//       //    yData1[ ii ] = grid_value( current_grid[ ii ], y_param );
-//       // }
-
-//       QwtPlotCurve *c1;
-//       QwtSymbol*   sym1 = new QwtSymbol;
-//       sym1->setStyle( QwtSymbol::Ellipse );
-//       sym1->setBrush( QColor( Qt::yellow ) );
-//       sym1->setPen  ( QColor( Qt::yellow ) );
-//       sym1->setSize( 3 );
-
-//       c1 = us_curve( data_plot, "Grid points 1" );
-//       c1->setSymbol ( sym1 );
-//       c1->setStyle  ( QwtPlotCurve::NoCurve );
-//       c1->setSamples( xData1.data(), yData1.data(), gridsize );
-//    }
-
-//    data_plot->setAxisAutoScale( QwtPlot::xBottom );
-//    data_plot->setAxisAutoScale( QwtPlot::yLeft );
-//    data_plot->replot();
-// }
-
-// // delete current grid
-// void US_Grid_Editor::delete_partialGrid( void )
-// {
-//    // for (int i=final_grid.size() - 1; i>=0; i--)
-//    // {
-//    //    if (final_grid[i].index == partialGrid)
-//    //    {
-//    //       final_grid.removeAt(i);
-//    //    }
-//    // }
-//    // // renumber index positions
-//    // for (int i=0; i<final_grid.size(); i++)
-//    // {
-//    //    if (final_grid[i].index > partialGrid)
-//    //    {
-//    //       final_grid[i].index--;
-//    //    }
-//    // }
-//    grid_index--;
-//    // ct_partialGrid->setRange     ( 1, grid_index );
-//    // ct_partialGrid->setSingleStep( 1 );
-//    // if (grid_index == 0)
-//    // {
-//    //    ck_show_final_grid->setChecked (false);
-//    //    ck_show_final_grid->setEnabled (false);
-//    //    ct_partialGrid->setRange      ( 0, 0 );
-//    //    ct_partialGrid->setSingleStep ( 1 );
-//    //    ct_partialGrid->setEnabled( false );
-//    //    show_final_grid( false );
-//    // }
-//    update_plot();
-// }
-
-// // Select plot1 (X-axis view) or plot2 (Molecular Weight view)
-// void US_Grid_Editor::select_plot( int ival )
-// {
-//    selected_plot   = ival;
-
-//    update_plot();
-// }
 
 // Reset Disk_DB control whenever data source is changed in any dialog
 void US_Grid_Editor::update_disk_db( bool isDB )
@@ -1505,208 +1467,6 @@ void US_Grid_Editor::sel_investigator( void )
    le_investigator->setText( inv_text );
 }
 
-// // Adjust value/ranges so that f/f0 is not less than 1
-// bool US_Grid_Editor::validate_ff0()
-// {
-// //    bool is_ok     = true;
-
-// //    if ( x_param == ATTR_K  ||  y_param == ATTR_K  ||  z_param == ATTR_K )
-// //    {  // If one of the attributes is f/f0, no need for checking
-// //       return is_ok;
-// //    }
-
-// //    double xMin = le_x_min->text().toDouble();
-// //    double xMax = le_x_max->text().toDouble();
-// //    double yMin = le_y_min->text().toDouble();
-// //    double yMax = le_y_max->text().toDouble();
-// //    double zVal = le_z_val->text().toDouble();
-// // qDebug() << "valFF0: xMin xMax yMin yMax" << xMin << xMax << yMin << yMax;
-// //    clear_grid( zpoint );
-// //    set_grid_value( zpoint,    z_param, zVal );
-// //    // Get f/f0 for xMin,yMin
-// //    tmp_point      = zpoint;
-// //    set_grid_value( tmp_point, x_param, xMin );
-// //    set_grid_value( tmp_point, y_param, yMin );
-// //    complete_comp ( tmp_point );
-// //    double ffx1y1  = tmp_point.ff0;
-// //    // Get f/f0 for xMin,yMax
-// //    tmp_point      = zpoint;
-// //    set_grid_value( tmp_point, x_param, xMin );
-// //    set_grid_value( tmp_point, y_param, yMax );
-// //    complete_comp ( tmp_point );
-// //    double ffx1y2  = tmp_point.ff0;
-// //    // Get f/f0 for xMax,yMin
-// //    tmp_point      = zpoint;
-// //    set_grid_value( tmp_point, x_param, xMax );
-// //    set_grid_value( tmp_point, y_param, yMin );
-// //    complete_comp ( tmp_point );
-// //    double ffx2y1  = tmp_point.ff0;
-// //    // Get f/f0 for xMax,yMax
-// //    tmp_point      = zpoint;
-// //    set_grid_value( tmp_point, x_param, xMax );
-// //    set_grid_value( tmp_point, y_param, yMax );
-// //    complete_comp ( tmp_point );
-// //    double ffx2y2  = tmp_point.ff0;
-// //    // Get overall minimum f/f0
-// //    double ff0min  = qMin( ffx1y1, ffx1y2 );
-// //    ff0min         = qMin( ff0min, ffx2y1 );
-// //    ff0min         = qMin( ff0min, ffx2y2 );
-// // qDebug() << "valFF0: zVal xMin yMin ff0" << zVal << xMin << yMin << ffx1y1;
-// // qDebug() << "valFF0:      xMin yMax ff0   " << xMin << yMax << ffx1y2;
-// // qDebug() << "valFF0:      xMax yMin ff0   " << xMax << yMin << ffx2y1;
-// // qDebug() << "valFF0:      xMax yMax ff0   " << xMax << yMax << ffx2y2;
-
-// //    if ( ff0min < 1.0 )
-// //    {  // Ranges include values that set f/f0 less than 1:  must adjust ranges
-
-// //       if ( x_param == ATTR_W  ||  x_param == ATTR_F )
-// //       {  // Adjust the X range (if MW or f)
-// //          // ct_xMin->disconnect();
-// //          // ct_xMax->disconnect();
-// //          tmp_point      = zpoint;
-// //          set_grid_value( tmp_point, ATTR_K, 1.0  );
-
-// //          if ( ffx1y1 < ffx1y2 )
-// //          {  // Increasing Y means increasing f/f0, so get X for k=1,ymin
-// //             set_grid_value( tmp_point, y_param, yMin );
-// //             complete_comp ( tmp_point );
-// //             double xVal    = grid_value( tmp_point, x_param );
-
-// //             if ( ffx1y1 < ffx2y1 )
-// //             {  // Increasing X means increasing f/f0, so set lower limit
-// // qDebug() << "valFF0:  (1xMin)xVal" << xVal;
-// //                // ct_xMin->setMinimum( xVal );
-// //                // ct_xMax->setMinimum( xVal );
-// //             }
-
-// //             else
-// //             {  // Increasing X means decreasing f/f0, so set upper limit
-// // qDebug() << "valFF0:  (2xMin)xVal" << xVal;
-// //                // ct_xMin->setMaximum( xVal );
-// //                // ct_xMax->setMaximum( xVal );
-// //             }
-// //          }
-
-// //          else
-// //          {  // Increasing Y means decreasing f/f0, so get X for k=1,ymax
-// //             set_grid_value( tmp_point, y_param, yMax );
-// //             complete_comp ( tmp_point );
-// //             double xVal    = grid_value( tmp_point, x_param );
-
-// //             if ( ffx1y1 < ffx2y1 )
-// //             {  // Increasing X means increasing f/f0, so set lower limit
-// // qDebug() << "valFF0:  (3xMin)xVal" << xVal;
-// //                // ct_xMin->setMinimum( xVal );
-// //                // ct_xMax->setMinimum( xVal );
-// //             }
-
-// //             else
-// //             {  // Increasing X means decreasing f/f0, so set upper limit
-// // qDebug() << "valFF0:  (4xMin)xVal" << xVal;
-// //                // ct_xMin->setMaximum( xVal );
-// //                // ct_xMax->setMaximum( xVal );
-// //             }
-// //          }
-
-// //          // connect( ct_xMin, SIGNAL( valueChanged( double ) ),
-// //          //          this,    SLOT  ( update_xMin ( double ) ) );
-// //          // connect( ct_xMax, SIGNAL( valueChanged( double ) ),
-// //          //          this,    SLOT  ( update_xMax ( double ) ) );
-// //       }
-
-// //       if ( y_param == ATTR_W  ||  y_param == ATTR_F )
-// //       {  // Adjust the Y range (if MW or f)
-// //          // ct_yMin->disconnect();
-// //          // ct_yMax->disconnect();
-// //          tmp_point      = zpoint;
-// //          set_grid_value( tmp_point, ATTR_K, 1.0  );
-
-// //          if ( ffx1y1 < ffx2y1 )
-// //          {  // Increasing X means increasing f/f0, so get Y for k=1,xmin
-// //             set_grid_value( tmp_point, x_param, xMin );
-// //             complete_comp ( tmp_point );
-// //             double yVal    = grid_value( tmp_point, y_param );
-
-// //             if ( ffx1y1 < ffx1y2 )
-// //             {  // Increasing Y means increasing f/f0, so set lower limit
-// // qDebug() << "valFF0:  (5yMin)yVal" << yVal;
-// //                // ct_yMin->setMinimum( yVal );
-// //                // ct_yMax->setMinimum( yVal );
-// //             }
-
-// //             else
-// //             {  // Increasing Y means decreasing f/f0, so set upper limit
-// // qDebug() << "valFF0:  (6yMax)yVal" << yVal;
-// //                // ct_yMin->setMaximum( yVal );
-// //                // ct_yMax->setMaximum( yVal );
-// //             }
-// //          }
-
-// //          else
-// //          {  // Increasing X means decreasing f/f0, so get y for k=1,xmax
-// //             set_grid_value( tmp_point, x_param, xMax );
-// //             complete_comp ( tmp_point );
-// //             double yVal    = grid_value( tmp_point, y_param );
-
-// //             if ( ffx1y1 < ffx1y2 )
-// //             {  // Increasing Y means increasing f/f0, so set lower limit
-// // qDebug() << "valFF0:  (7yMin)yVal" << yVal;
-// //                // ct_yMin->setMinimum( yVal );
-// //                // ct_yMax->setMinimum( yVal );
-// //             }
-
-// //             else
-// //             {  // Increasing Y means decreasing f/f0, so set upper limit
-// // qDebug() << "valFF0:  (8yMax)yVal" << yVal;
-// //                // ct_yMin->setMaximum( yVal );
-// //                // ct_yMax->setMaximum( yVal );
-// //             }
-// //          }
-
-// //          // connect( ct_yMin, SIGNAL( valueChanged( double ) ),
-// //          //          this,    SLOT  ( update_yMin ( double ) ) );
-// //          // connect( ct_yMax, SIGNAL( valueChanged( double ) ),
-// //          //          this,    SLOT  ( update_yMax ( double ) ) );
-// //       }
-// //    }
-
-// //    // xMin           = ct_xMin->value();
-// //    // xMax           = ct_xMax->value();
-// //    // yMin           = ct_yMin->value();
-// //    // yMax           = ct_yMax->value();
-// // qDebug() << "valFF0: (out)xMin xMax yMin yMax" << xMin << xMax << yMin << yMax;
-
-// //    return is_ok;
-// return false;
-// }
-
-// // Complete component where 3 attributes are given
-// bool US_Grid_Editor::complete_comp( struct gridpoint& gpoint )
-// {
-//    // US_Model::SimulationComponent sc;
-//    // sc.s          = gpoint.s * 1.0e-13;
-//    // sc.f_f0       = gpoint.ff0;
-//    // sc.mw         = gpoint.mw;
-//    // sc.vbar20     = gpoint.vbar;
-//    // sc.D          = gpoint.D;
-//    // sc.f          = gpoint.f;
-
-//    // bool is_ok    = US_Model::calc_coefficients( sc );
-
-//    // if ( is_ok )
-//    // {
-//    //    gpoint.s      = sc.s * 1.0e+13;
-//    //    gpoint.ff0    = sc.f_f0;
-//    //    gpoint.mw     = sc.mw;
-//    //    gpoint.vbar   = sc.vbar20;
-//    //    gpoint.D      = sc.D;
-//    //    gpoint.f      = sc.f;
-//    // }
-
-//    return false;
-// }
-
-
 US_Grid_Preset::US_Grid_Preset(QWidget * parent) : US_WidgetsDialog(parent)
 {
    setWindowTitle( tr( "Grid Setup" ) );
@@ -1718,35 +1478,35 @@ US_Grid_Preset::US_Grid_Preset(QWidget * parent) : US_WidgetsDialog(parent)
    QLabel *lb_y_axis = us_label("Y Axis");
    lb_y_axis->setAlignment(Qt::AlignCenter);
 
-   QGridLayout* x_s     = us_radiobutton( Attr_to_long( ATTR_S ), rb_x_s, true );
-   QGridLayout* x_ff0   = us_radiobutton( Attr_to_long( ATTR_K ), rb_x_ff0, false );
-   QGridLayout* x_mw    = us_radiobutton( Attr_to_long( ATTR_M ), rb_x_mw, true );
-   QGridLayout* x_vbar  = us_radiobutton( Attr_to_long( ATTR_V ), rb_x_vbar, true );
-   QGridLayout* x_D     = us_radiobutton( Attr_to_long( ATTR_D ), rb_x_D, true );
-   QGridLayout* x_f     = us_radiobutton( Attr_to_long( ATTR_F ), rb_x_f, true );
+   QGridLayout* x_s     = us_radiobutton( Attribute::long_desc( Attribute::ATTR_S ), rb_x_s, true );
+   QGridLayout* x_ff0   = us_radiobutton( Attribute::long_desc( Attribute::ATTR_K ), rb_x_ff0, false );
+   QGridLayout* x_mw    = us_radiobutton( Attribute::long_desc( Attribute::ATTR_M ), rb_x_mw, true );
+   QGridLayout* x_vbar  = us_radiobutton( Attribute::long_desc( Attribute::ATTR_V ), rb_x_vbar, true );
+   QGridLayout* x_D     = us_radiobutton( Attribute::long_desc( Attribute::ATTR_D ), rb_x_D, true );
+   QGridLayout* x_f     = us_radiobutton( Attribute::long_desc( Attribute::ATTR_F ), rb_x_f, true );
 
-   QGridLayout* y_s     = us_radiobutton( Attr_to_long( ATTR_S ), rb_y_s, false );
-   QGridLayout* y_ff0   = us_radiobutton( Attr_to_long( ATTR_K ), rb_y_ff0, true );
-   QGridLayout* y_mw    = us_radiobutton( Attr_to_long( ATTR_M ), rb_y_mw, true );
-   QGridLayout* y_vbar  = us_radiobutton( Attr_to_long( ATTR_V ), rb_y_vbar, true );
-   QGridLayout* y_D     = us_radiobutton( Attr_to_long( ATTR_D ), rb_y_D, true );
-   QGridLayout* y_f     = us_radiobutton( Attr_to_long( ATTR_F ), rb_y_f, true );
+   QGridLayout* y_s     = us_radiobutton( Attribute::long_desc( Attribute::ATTR_S ), rb_y_s, false );
+   QGridLayout* y_ff0   = us_radiobutton( Attribute::long_desc( Attribute::ATTR_K ), rb_y_ff0, true );
+   QGridLayout* y_mw    = us_radiobutton( Attribute::long_desc( Attribute::ATTR_M ), rb_y_mw, true );
+   QGridLayout* y_vbar  = us_radiobutton( Attribute::long_desc( Attribute::ATTR_V ), rb_y_vbar, true );
+   QGridLayout* y_D     = us_radiobutton( Attribute::long_desc( Attribute::ATTR_D ), rb_y_D, true );
+   QGridLayout* y_f     = us_radiobutton( Attribute::long_desc( Attribute::ATTR_F ), rb_y_f, true );
 
    x_axis = new QButtonGroup( this );
-   x_axis->addButton( rb_x_s,    ATTR_S );
-   x_axis->addButton( rb_x_ff0,  ATTR_K );
-   x_axis->addButton( rb_x_mw,   ATTR_M );
-   x_axis->addButton( rb_x_vbar, ATTR_V );
-   x_axis->addButton( rb_x_D,    ATTR_D );
-   x_axis->addButton( rb_x_f,    ATTR_F );
+   x_axis->addButton( rb_x_s,    Attribute::ATTR_S );
+   x_axis->addButton( rb_x_ff0,  Attribute::ATTR_K );
+   x_axis->addButton( rb_x_mw,   Attribute::ATTR_M );
+   x_axis->addButton( rb_x_vbar, Attribute::ATTR_V );
+   x_axis->addButton( rb_x_D,    Attribute::ATTR_D );
+   x_axis->addButton( rb_x_f,    Attribute::ATTR_F );
 
    y_axis = new QButtonGroup( this );
-   y_axis->addButton( rb_y_s,    ATTR_S );
-   y_axis->addButton( rb_y_ff0,  ATTR_K );
-   y_axis->addButton( rb_y_mw,   ATTR_M );
-   y_axis->addButton( rb_y_vbar, ATTR_V );
-   y_axis->addButton( rb_y_D,    ATTR_D );
-   y_axis->addButton( rb_y_f,    ATTR_F );
+   y_axis->addButton( rb_y_s,    Attribute::ATTR_S );
+   y_axis->addButton( rb_y_ff0,  Attribute::ATTR_K );
+   y_axis->addButton( rb_y_mw,   Attribute::ATTR_M );
+   y_axis->addButton( rb_y_vbar, Attribute::ATTR_V );
+   y_axis->addButton( rb_y_D,    Attribute::ATTR_D );
+   y_axis->addButton( rb_y_f,    Attribute::ATTR_F );
 
    QLabel *lb_fixed      = us_label( tr( "Fixed Attribute" ) );
    lb_fixed->setAlignment(Qt::AlignCenter);
@@ -1796,9 +1556,9 @@ US_Grid_Preset::US_Grid_Preset(QWidget * parent) : US_WidgetsDialog(parent)
 
    setLayout(layout);
 
-   x_param        = ATTR_S; // plot s
-   y_param        = ATTR_K; // plot f/f0
-   z_param        = ATTR_V; // fixed vbar
+   x_param        = Attribute::ATTR_S; // plot s
+   y_param        = Attribute::ATTR_K; // plot f/f0
+   z_param        = Attribute::ATTR_V; // fixed vbar
    x_axis->button(x_param)->setChecked(true);
    y_axis->button(x_param)->setDisabled(true);
 
@@ -1814,44 +1574,52 @@ US_Grid_Preset::US_Grid_Preset(QWidget * parent) : US_WidgetsDialog(parent)
    connect( pb_cancel, &QPushButton::clicked,     this, &US_Grid_Preset::cancel );
 }
 
-void US_Grid_Preset::parameters(int *x, int *y, int *z)
+void US_Grid_Preset::parameters(Attribute::Type& x, Attribute::Type& y, Attribute::Type& z)
 {
-   (*x) = x_param;
-   (*y) = y_param;
-   (*z) = z_param;
+   x = x_param;
+   y = y_param;
+   z = z_param;
 }
 
-// Select coordinate for horizontal axis
 void US_Grid_Preset::select_x_axis( int index )
 {
-   for (int ii = ATTR_S; ii <= ATTR_F; ii++) {
-      y_axis->button( ii )->setEnabled(true);
+   QVector<Attribute::Type> tlist;
+   tlist << Attribute::ATTR_S << Attribute::ATTR_K
+         << Attribute::ATTR_M << Attribute::ATTR_V
+         << Attribute::ATTR_D << Attribute::ATTR_F;
+   foreach (Attribute::Type type, tlist) {
+      y_axis->button( type )->setEnabled(true);
    }
-   x_param = index;
+
+   x_param = Attribute::from_int( index );
    y_axis->button(x_param)->setDisabled(true);
 
-   if ( x_param == ATTR_D ) {
-      y_axis->button(ATTR_F)->setDisabled(true);
-   } else if ( x_param == ATTR_F ) {
-      y_axis->button(ATTR_D)->setDisabled(true);
+   if ( x_param == Attribute::ATTR_D ) {
+      y_axis->button(Attribute::ATTR_F)->setDisabled(true);
+   } else if ( x_param == Attribute::ATTR_F ) {
+      y_axis->button(Attribute::ATTR_D)->setDisabled(true);
    }
 
    set_z_axis();
 }
 
-// select coordinate for vertical axis
 void US_Grid_Preset::select_y_axis( int index )
 {
-   for (int ii = ATTR_S; ii <= ATTR_F; ii++) {
-      x_axis->button( ii )->setEnabled(true);
+   QVector<Attribute::Type> tlist;
+   tlist << Attribute::ATTR_S << Attribute::ATTR_K
+         << Attribute::ATTR_M << Attribute::ATTR_V
+         << Attribute::ATTR_D << Attribute::ATTR_F;
+   foreach (Attribute::Type type, tlist) {
+      x_axis->button( type )->setEnabled(true);
    }
-   y_param = index;
+
+   y_param = Attribute::from_int( index );
    x_axis->button(y_param)->setDisabled(true);
 
-   if ( y_param == ATTR_D ) {
-      x_axis->button(ATTR_F)->setDisabled(true);
-   } else if ( y_param == ATTR_F ) {
-      x_axis->button(ATTR_D)->setDisabled(true);
+   if ( y_param == Attribute::ATTR_D ) {
+      x_axis->button(Attribute::ATTR_F)->setDisabled(true);
+   } else if ( y_param == Attribute::ATTR_F ) {
+      x_axis->button(Attribute::ATTR_D)->setDisabled(true);
    }
 
    set_z_axis();
@@ -1859,7 +1627,8 @@ void US_Grid_Preset::select_y_axis( int index )
 
 void US_Grid_Preset::select_z_axis(int index)
 {
-   z_param = z_axis->itemData(index, Qt::UserRole ).toInt();
+   int id = z_axis->itemData(index, Qt::UserRole ).toInt();
+   z_param = Attribute::from_int( id );
 }
 
 void US_Grid_Preset::apply()
@@ -1872,30 +1641,35 @@ void US_Grid_Preset::cancel()
    reject();
 }
 
-// Select coordinate flag for the fixed attribute
 void US_Grid_Preset::set_z_axis( )
 {
    z_axis->disconnect();
    z_axis->clear();
-   bool has_vbar = (x_param == ATTR_V || y_param == ATTR_V);
-   bool is_DF = x_param == ATTR_F || x_param == ATTR_D ||
-                y_param == ATTR_F || y_param == ATTR_D;
+   bool has_vbar = (x_param == Attribute::ATTR_V || y_param == Attribute::ATTR_V);
+   bool is_DF = x_param == Attribute::ATTR_F || x_param == Attribute::ATTR_D ||
+                y_param == Attribute::ATTR_F || y_param == Attribute::ATTR_D;
+   QVector<Attribute::Type> tlist;
+   tlist << Attribute::ATTR_S << Attribute::ATTR_K
+         << Attribute::ATTR_M << Attribute::ATTR_V
+         << Attribute::ATTR_D << Attribute::ATTR_F;
    if ( has_vbar ) {
-      for (int ii = ATTR_S; ii <= ATTR_F; ii++) {
-         if ( ii == x_param || ii == y_param ) continue;
-         if ( is_DF && ( ii == ATTR_F || ii == ATTR_D ) ) continue;
-         z_axis->addItem( Attr_to_long( ii ), ii );
+      foreach (Attribute::Type type, tlist) {
+         if ( type == x_param || type == y_param ) continue;
+         if ( is_DF && ( type == Attribute::ATTR_F || type == Attribute::ATTR_D ) ) continue;
+         z_axis->addItem( Attribute::long_desc( type ), type );
       }
+
       int index = z_axis->findData(z_param, Qt::UserRole);
       if ( index == -1 ) {
          z_axis->setCurrentIndex( 0 );
-         z_param = z_axis->itemData(0, Qt::UserRole ).toInt();
+         int id = z_axis->itemData(0, Qt::UserRole ).toInt();
+         z_param = Attribute::from_int( id );
       } else {
          z_axis->setCurrentIndex( index );
       }
    } else {
-      z_param = ATTR_V;
-      z_axis->addItem( Attr_to_long( ATTR_V ), ATTR_V );
+      z_param = Attribute::ATTR_V;
+      z_axis->addItem( Attribute::long_desc( Attribute::ATTR_V ), Attribute::ATTR_V );
    }
 
    connect( z_axis, QOverload<int>::of( &QComboBox::currentIndexChanged ),
@@ -1910,7 +1684,7 @@ GridPoint::GridPoint()
 }
 
 bool GridPoint::set_param(const QVector<double>& values,
-                          const QVector<int>& types)
+                          const QVector<Attribute::Type>& types)
 {
    if ( values.size() != 3 || types.size() != 3 ) {
       error = "Three parameters are needed to set the grid point.";
@@ -1918,39 +1692,44 @@ bool GridPoint::set_param(const QVector<double>& values,
    }
    ptypes.clear();
 
-   for ( int ii =0; ii < 3; ii++ ) {
+   for ( int ii = 0; ii < 3; ii++ ) {
       ptypes.insert( types.at(ii) );
-      if ( types.at(ii) == ATTR_S ) {
+
+      if      ( ii == 0 ) x_param = types.at(ii);
+      else if ( ii == 1 ) y_param = types.at(ii);
+      else if ( ii == 2 ) z_param = types.at(ii);
+
+      if ( types.at(ii) == Attribute::ATTR_S ) {
          S = values.at(ii);
          if ( S == 0 ) {
             error = "Sedimentation value is zero. Please correct it!";
             return false;
          }
-      } else if ( types.at(ii) == ATTR_K ) {
+      } else if ( types.at(ii) == Attribute::ATTR_K ) {
          FF0 = values.at(ii);
          if ( FF0 < 1 ) {
             error = "Frictional ratio is less than one. Please correct it!";
             return false;
          }
-      } else if ( types.at(ii) == ATTR_M ) {
+      } else if ( types.at(ii) == Attribute::ATTR_M ) {
          MW = values.at(ii);
          if ( MW < 1 ) {
             error = "Molecular weight is less than one. Please correct it!";
             return false;
          }
-      } else if ( types.at(ii) == ATTR_V ) {
+      } else if ( types.at(ii) == Attribute::ATTR_V ) {
          VBAR = values.at(ii);
          if ( VBAR <= 0 ) {
             error = "Partial specific volume is less than or equal to zero. Please correct it!";
             return false;
          }
-      } else if ( types.at(ii) == ATTR_D ) {
+      } else if ( types.at(ii) == Attribute::ATTR_D ) {
          D = values.at(ii);
          if ( D <= 0 ) {
             error = "Diffusion coefficient is less than or equal to zero. Please correct it!";
             return false;
          }
-      } else if ( types.at(ii) == ATTR_F ) {
+      } else if ( types.at(ii) == Attribute::ATTR_F ) {
          F = values.at(ii);
          if ( F <= 0 ) {
             error = "Frictional coefficient is less than or equal to zero. Please correct it!";
@@ -2001,31 +1780,34 @@ QString GridPoint::error_string()
    return error;
 }
 
-bool GridPoint::value_by_name(const QString &vname, double &val)
+double GridPoint::value( Attribute::Type type ) const
 {
-   bool ok = true;
-   if (vname.compare("S", Qt::CaseInsensitive) == 0) {
-      val = S;
-   } else if (vname.compare("D", Qt::CaseInsensitive) == 0) {
-      val = D;
-   } else if (vname.compare("VBAR", Qt::CaseInsensitive) == 0) {
-      val = VBAR;
-   } else if (vname.compare("MW", Qt::CaseInsensitive) == 0) {
-      val = MW;
-   } else if (vname.compare("F", Qt::CaseInsensitive) == 0) {
-      val = F;
-   } else if (vname.compare("F/F0", Qt::CaseInsensitive) == 0) {
-      val = FF0;
-   } else if (vname.compare("F0", Qt::CaseInsensitive) == 0) {
-      val = F0;
-   } else if (vname.compare("S*", Qt::CaseInsensitive) == 0) {
-      val = S_real;
-   } else if (vname.compare("D*", Qt::CaseInsensitive) == 0) {
-      val = D_real;
-   } else {
-      ok = false;
-   }
-   return ok;
+   double val = 0;
+   if      ( type == Attribute::ATTR_S )  val = S;
+   else if ( type == Attribute::ATTR_D )  val = D;
+   else if ( type == Attribute::ATTR_V )  val = VBAR;
+   else if ( type == Attribute::ATTR_M )  val = MW;
+   else if ( type == Attribute::ATTR_F )  val = F;
+   else if ( type == Attribute::ATTR_K )  val = FF0;
+   else if ( type == Attribute::ATTR_F0 ) val = F0;
+   else if ( type == Attribute::ATTR_SR ) val = S_real;
+   else if ( type == Attribute::ATTR_DR ) val = D_real;
+   return val;
+}
+
+double GridPoint::x_value () const
+{
+   return value(x_param);
+}
+
+double GridPoint::y_value () const
+{
+   return value(y_param);
+}
+
+double GridPoint::z_value () const
+{
+   return value(z_param);
 }
 
 bool GridPoint::calculate_20w()
@@ -2038,7 +1820,7 @@ bool GridPoint::calculate_20w()
    const double VISC = VISC_20W * 0.01;
    const double NA   = AVOGADRO;
 
-   if ( contains( ATTR_V, ATTR_S, ATTR_K ) )         // 1: M, D, F, F0
+   if ( contains( Attribute::ATTR_V, Attribute::ATTR_S, Attribute::ATTR_K ) )         // 1: M, D, F, F0
    {
       if ( ! check_s_vbar()) return false;
 
@@ -2047,7 +1829,7 @@ bool GridPoint::calculate_20w()
       F = FF0 * F0;
       D = RT / ( NA * F );
       MW = S * NA * F / BUOY;
-   } else if ( contains( ATTR_V, ATTR_S, ATTR_M ) )  // 2: K, D, F, F0
+   } else if ( contains( Attribute::ATTR_V, Attribute::ATTR_S, Attribute::ATTR_M ) )  // 2: K, D, F, F0
    {
       if ( ! check_s_vbar()) return false;
 
@@ -2058,7 +1840,7 @@ bool GridPoint::calculate_20w()
             qPow( MW / ( NA * PI ), 2.0 / 3.0 ) *
             qPow(1.0 / ( 6 * VBAR ), 1.0 / 3.0);
       F0 = F / FF0;
-   } else if ( contains( ATTR_V, ATTR_S, ATTR_D ) )  // 3: K, M, F, F0
+   } else if ( contains( Attribute::ATTR_V, Attribute::ATTR_S, Attribute::ATTR_D ) )  // 3: K, M, F, F0
    {
       if ( ! check_s_vbar()) return false;
 
@@ -2069,7 +1851,7 @@ bool GridPoint::calculate_20w()
             qPow( MW / ( NA * PI ), 2.0 / 3.0 ) *
             qPow(1.0 / ( 6 * VBAR ), 1.0 / 3.0);
       F0 = F / FF0;
-   } else if ( contains( ATTR_V, ATTR_S, ATTR_F ) )  // 4: K, M, D, F0
+   } else if ( contains( Attribute::ATTR_V, Attribute::ATTR_S, Attribute::ATTR_F ) )  // 4: K, M, D, F0
    {
       if ( ! check_s_vbar()) return false;
 
@@ -2080,7 +1862,7 @@ bool GridPoint::calculate_20w()
             qPow( MW / ( NA * PI ), 2.0 / 3.0 ) *
             qPow(1.0 / ( 6 * VBAR ), 1.0 / 3.0);
       F0 = F / FF0;
-   } else if ( contains( ATTR_V, ATTR_K, ATTR_M ) )  // 5: S, D, F, F0
+   } else if ( contains( Attribute::ATTR_V, Attribute::ATTR_K, Attribute::ATTR_M ) )  // 5: S, D, F, F0
    {
       double BUOY = 1 - VBAR * DENS;
       D = RT / ( 3 * VISC * FF0 ) *
@@ -2089,21 +1871,21 @@ bool GridPoint::calculate_20w()
       F = RT / ( NA * D );
       F0 = F / FF0;
       S = MW * D * BUOY / RT;
-   } else if ( contains( ATTR_V, ATTR_K, ATTR_D ) )  // 6: S, M, F, F0
+   } else if ( contains( Attribute::ATTR_V, Attribute::ATTR_K, Attribute::ATTR_D ) )  // 6: S, M, F, F0
    {
       double BUOY = 1 - VBAR * DENS;
       F = RT / ( NA * D );
       F0 = F / FF0;
       S = qPow( F0 / ( 9 * VISC * PI ), 2 ) * BUOY / ( 2 * VISC * VBAR * FF0 );
       MW = S * NA * F / BUOY;
-   } else if ( contains( ATTR_V, ATTR_K, ATTR_F ) )  // 7: S, M, D, F0
+   } else if ( contains( Attribute::ATTR_V, Attribute::ATTR_K, Attribute::ATTR_F ) )  // 7: S, M, D, F0
    {
       double BUOY = 1 - VBAR * DENS;
       D = RT / ( NA * F );
       F0 = F / FF0;
       S = qPow( F0 / ( 9 * VISC * PI ), 2 ) * BUOY / ( 2 * VISC * VBAR * FF0 );
       MW = S * NA * F / BUOY;
-   } else if ( contains( ATTR_V, ATTR_M, ATTR_D ) )  // 8: S, K, F, F0
+   } else if ( contains( Attribute::ATTR_V, Attribute::ATTR_M, Attribute::ATTR_D ) )  // 8: S, K, F, F0
    {
       double BUOY = 1 - VBAR * DENS;
       F = RT / ( NA * D );
@@ -2112,7 +1894,7 @@ bool GridPoint::calculate_20w()
             qPow( MW / ( NA * PI ), 2.0 / 3.0 ) *
             qPow(1.0 / ( 6 * VBAR ), 1.0 / 3.0);
       F0 = F / FF0;
-   } else if ( contains( ATTR_V, ATTR_M, ATTR_F ) )  // 9: S, K, D, F0
+   } else if ( contains( Attribute::ATTR_V, Attribute::ATTR_M, Attribute::ATTR_F ) )  // 9: S, K, D, F0
    {
       double BUOY = 1 - VBAR * DENS;
       D = RT / ( NA * F );
@@ -2121,9 +1903,9 @@ bool GridPoint::calculate_20w()
             qPow( MW / ( NA * PI ), 2.0 / 3.0 ) *
             qPow(1.0 / ( 6 * VBAR ), 1.0 / 3.0);
       F0 = F / FF0;
-   } else if ( contains( ATTR_S, ATTR_K, ATTR_M ) )  // 10: V, D, F, F0 ?????
+   } else if ( contains( Attribute::ATTR_S, Attribute::ATTR_K, Attribute::ATTR_M ) )  // 10: V, D, F, F0 ?????
    {
-   } else if ( contains( ATTR_S, ATTR_K, ATTR_D ) )  // 11: M, V, F, F0
+   } else if ( contains( Attribute::ATTR_S, Attribute::ATTR_K, Attribute::ATTR_D ) )  // 11: M, V, F, F0
    {
       F = RT / ( NA * F );
       F0 = F / FF0;
@@ -2132,7 +1914,7 @@ bool GridPoint::calculate_20w()
       VBAR = f02 / ( 2 * S * VISC * FF0 * vp2 + f02 * DENS );
       double BUOY = 1 - VBAR * DENS;
       MW = S * NA * F / BUOY;
-   } else if ( contains( ATTR_S, ATTR_K, ATTR_F ) )  // 12: M, V, D, F0
+   } else if ( contains( Attribute::ATTR_S, Attribute::ATTR_K, Attribute::ATTR_F ) )  // 12: M, V, D, F0
    {
       D = RT / ( NA * F );
       F0 = F / FF0;
@@ -2142,7 +1924,7 @@ bool GridPoint::calculate_20w()
       double BUOY = 1 - VBAR * DENS;
       MW = S * NA * F / BUOY;
    }
-   else if ( contains( ATTR_S, ATTR_M, ATTR_D ) )  // 13: K, V, F, F0
+   else if ( contains( Attribute::ATTR_S, Attribute::ATTR_M, Attribute::ATTR_D ) )  // 13: K, V, F, F0
    {
       VBAR = ( 1 - S * RT / ( MW * D ) ) / DENS;
       F = RT / ( NA * D );
@@ -2151,7 +1933,7 @@ bool GridPoint::calculate_20w()
             qPow( MW / ( NA * PI ), 2.0 / 3.0 ) *
             qPow(1.0 / ( 6.0 * VBAR ), 1.0 / 3.0);
       F0 = F / FF0;
-   } else if ( contains( ATTR_S, ATTR_M, ATTR_F ) )  // 14: K, V, D, F0
+   } else if ( contains( Attribute::ATTR_S, Attribute::ATTR_M, Attribute::ATTR_F ) )  // 14: K, V, D, F0
    {
       VBAR = ( 1 - S * NA * F / MW ) / DENS;
       D = RT / ( NA * F );
@@ -2160,7 +1942,7 @@ bool GridPoint::calculate_20w()
             qPow( MW / ( NA * PI ), 2.0 / 3.0 ) *
             qPow(1.0 / ( 6 * VBAR ), 1.0 / 3.0);
       F0 = F / FF0;
-   } else if ( contains( ATTR_K, ATTR_M, ATTR_D ) )  // 15: S, V, F, F0
+   } else if ( contains( Attribute::ATTR_K, Attribute::ATTR_M, Attribute::ATTR_D ) )  // 15: S, V, F, F0
    {
       F = RT / ( NA * D );
       F0 = F / FF0;
@@ -2168,7 +1950,7 @@ bool GridPoint::calculate_20w()
              ( 6 * MW * qPow( NA * PI, 2 ) );
       double BUOY = 1 - VBAR * DENS;
       S = MW * BUOY / ( NA * F );
-   } else if ( contains( ATTR_K, ATTR_M, ATTR_F ) )  // 16: S, V, D, F0
+   } else if ( contains( Attribute::ATTR_K, Attribute::ATTR_M, Attribute::ATTR_F ) )  // 16: S, V, D, F0
    {
       D = RT / ( NA * F );
       F0 = F / FF0;
@@ -2215,99 +1997,82 @@ bool GridPoint::check_s_vbar()
    return true;
 }
 
-bool GridPoint::contains(int p1, int p2, int p3)
+bool GridPoint::contains(Attribute::Type p1, Attribute::Type p2, Attribute::Type p3)
 {
    return ptypes.contains(p1) && ptypes.contains(p2) && ptypes.contains(p3);
 }
 
-QString Attr_to_long(int attr)
+QString Attribute::long_desc(Type t)
 {
-   if ( attr == ATTR_S )
-      return QString("Sedimentation Coefficient");
-   else if ( attr == ATTR_K )
-      return QString("Frictional Ratio");
-   else if ( attr == ATTR_M )
-      return QString("Molecular Weight");
-   else if ( attr == ATTR_V )
-      return QString("Partial Specific Volume");
-   else if ( attr == ATTR_D )
-      return QString("Diffusion Coefficient");
-   else if ( attr == ATTR_F )
-      return QString("Frictional Coefficient");
-   else if ( attr == ATTR_SR )
-      return QString("Sedimentation Coefficient (Real)");
-   else if ( attr == ATTR_DR )
-      return QString("Diffusion Coefficient (Real)");
-   else
-      return QString("");
+   QString str;
+   if      ( t == Attribute::ATTR_S )  str = "Sedimentation Coefficient";
+   else if ( t == Attribute::ATTR_K )  str = "Frictional Ratio";
+   else if ( t == Attribute::ATTR_M )  str = "Molecular Weight";
+   else if ( t == Attribute::ATTR_V )  str = "Partial Specific Volume";
+   else if ( t == Attribute::ATTR_D )  str = "Diffusion Coefficient";
+   else if ( t == Attribute::ATTR_F )  str = "Frictional Coefficient";
+   else if ( t == Attribute::ATTR_F0 ) str = "Frictional Coefficient (f0)";
+   else if ( t == Attribute::ATTR_SR ) str = "Sedimentation Coefficient (Real)";
+   else if ( t == Attribute::ATTR_DR ) str = "Diffusion Coefficient (Real)";
+   return str;
 }
 
-QString Attr_to_title(int attr)
+QString Attribute::short_desc(Type t)
 {
-   if ( attr == ATTR_S )
-      return QString("Sedimentation Coefficient (20,W) [ Sv ]");
-   else if ( attr == ATTR_K )
-      return QString("Frictional Ratio");
-   else if ( attr == ATTR_M )
-      return QString("Molecular Weight [ kDa ]");
-   else if ( attr == ATTR_V )
-      return QString("Partial Specific Volume [ mL / g ]");
-   else if ( attr == ATTR_D )
-      return QString("<p>Diffusion Coefficient (20,W) [ cm<sup>2</sup> s<sup>-1</sup> ]</p>");
-   else if ( attr == ATTR_F )
-      return QString("Frictional Coefficient [ g / s ]");
-   else if ( attr == ATTR_SR )
-      return QString("Sedimentation Coefficient (T,Buffer) [ Sv ]");
-   else if ( attr == ATTR_DR )
-      return QString("<p>Diffusion Coefficient (T,Buffer) [ cm<sup>2</sup> s<sup>-1</sup> ]</p>");
-   else
-      return QString("");
+   QString str;
+   if      ( t == Attribute::ATTR_S )  str = "s [ Sv ]";
+   else if ( t == Attribute::ATTR_K )  str = "f / f0";
+   else if ( t == Attribute::ATTR_M )  str = "MW [ kDa ]";
+   else if ( t == Attribute::ATTR_V )  str = "vbar [ mL / g ]";
+   else if ( t == Attribute::ATTR_D )  str = "<p>D [ cm<sup>2</sup> s<sup>-1</sup> ]</p>";
+   else if ( t == Attribute::ATTR_F )  str = "f [ g / s ]";
+   else if ( t == Attribute::ATTR_F0 ) str = "f0 [ g / s ]";
+   else if ( t == Attribute::ATTR_SR ) str = "s* [ Sv ]";
+   else if ( t == Attribute::ATTR_DR ) str = "<p>D* [ cm<sup>2</sup> s<sup>-1</sup> ]</p>";
+   return str;
 }
 
-QString Attr_to_short(int attr)
+QString Attribute::title(Type t)
 {
-   if ( attr == ATTR_S )
-      return QString("s [ Sv ]");
-   else if ( attr == ATTR_K )
-      return QString("f / f0");
-   else if ( attr == ATTR_M )
-      return QString("MW [ kDa ]");
-   else if ( attr == ATTR_V )
-      return QString("vbar [ mL / g ]");
-   else if ( attr == ATTR_D )
-      // return QString("D [cm2 s−1]  (\(m^{2}/s\)");
-      return QString("<p>D [ cm<sup>2</sup> s<sup>-1</sup> ]</p>");
-   else if ( attr == ATTR_F )
-      return QString("f [ g / s ]");
-   else if ( attr == ATTR_SR )
-      return QString("s* [ Sv ]");
-   else if ( attr == ATTR_DR )
-      return QString("<p>D* [ cm<sup>2</sup> s<sup>-1</sup> ]</p>");
-   else
-      return QString("");
+   QString str;
+   if      ( t == Attribute::ATTR_S )  str = "Sedimentation Coefficient (20,W) [ Sv ]";
+   else if ( t == Attribute::ATTR_K )  str = "Frictional Ratio";
+   else if ( t == Attribute::ATTR_M )  str = "Molecular Weight [ kDa ]";
+   else if ( t == Attribute::ATTR_V )  str = "Partial Specific Volume [ mL / g ]";
+   else if ( t == Attribute::ATTR_D )  str = "<p>Diffusion Coefficient (20,W) [ cm<sup>2</sup> s<sup>-1</sup> ]</p>";
+   else if ( t == Attribute::ATTR_F )  str = "Frictional Coefficient [ g / s ]";
+   else if ( t == Attribute::ATTR_F0 ) str = "Frictional Coefficient (f0) [ g / s ]";
+   else if ( t == Attribute::ATTR_SR ) str = "Sedimentation Coefficient (T,Buffer) [ Sv ]";
+   else if ( t == Attribute::ATTR_DR ) str = "<p>Diffusion Coefficient (T,Buffer) [ cm<sup>2</sup> s<sup>-1</sup> ]</p>";
+   return str;
 }
 
-QString Attr_to_char(int attr)
+QString Attribute::symbol(Type t)
 {
-   if ( attr == ATTR_S )
-      return QString("s");
-   else if ( attr == ATTR_K )
-      return QString("f/f0");
-   else if ( attr == ATTR_M )
-      return QString("MW");
-   else if ( attr == ATTR_V )
-      return QString("vbar");
-   else if ( attr == ATTR_D )
-      return QString("D");
-   else if ( attr == ATTR_F )
-      return QString("f");
-   else if ( attr == ATTR_SR )
-      return QString("s*");
-   else if ( attr == ATTR_DR )
-      return QString("D*");
-   else
-      return QString("");
+   QString str;
+   if      ( t == Attribute::ATTR_S )  str = "s";
+   else if ( t == Attribute::ATTR_K )  str = "f/f0";
+   else if ( t == Attribute::ATTR_M )  str = "MW";
+   else if ( t == Attribute::ATTR_V )  str = "vbar";
+   else if ( t == Attribute::ATTR_D )  str = "D";
+   else if ( t == Attribute::ATTR_F )  str = "f";
+   else if ( t == Attribute::ATTR_F0 ) str = "f0";
+   else if ( t == Attribute::ATTR_SR ) str = "s*";
+   else if ( t == Attribute::ATTR_DR ) str = "D*";
+   return str;
 }
 
-
-
+Attribute::Type Attribute::from_int(int id )
+{
+   Attribute::Type t;
+   if      ( id == Attribute::ATTR_S )  t = Attribute::ATTR_S;
+   else if ( id == Attribute::ATTR_K )  t = Attribute::ATTR_K;
+   else if ( id == Attribute::ATTR_M )  t = Attribute::ATTR_M;
+   else if ( id == Attribute::ATTR_V )  t = Attribute::ATTR_V;
+   else if ( id == Attribute::ATTR_D )  t = Attribute::ATTR_D;
+   else if ( id == Attribute::ATTR_F )  t = Attribute::ATTR_F;
+   else if ( id == Attribute::ATTR_F0 ) t = Attribute::ATTR_F0;
+   else if ( id == Attribute::ATTR_SR ) t = Attribute::ATTR_SR;
+   else t = Attribute::ATTR_DR;
+   return t;
+}
