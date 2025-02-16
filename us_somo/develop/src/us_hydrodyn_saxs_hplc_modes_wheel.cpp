@@ -787,6 +787,7 @@ void US_Hydrodyn_Saxs_Hplc::wheel_cancel( bool from_wheel_save )
 
    case MODE_BROADEN :
       broaden_done( false );
+      return;
       break;
 
    default : us_qdebug( "wheel cancel called in invalid mode" ); break;

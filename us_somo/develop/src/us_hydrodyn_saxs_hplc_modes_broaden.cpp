@@ -90,6 +90,15 @@ void US_Hydrodyn_Saxs_Hplc::broaden_done( bool save ) {
    }
    set_selected( broaden_org_selected );
    mode_select( MODE_NORMAL );
+
+   wheel_enables( false );
+   pb_wheel_save         ->setEnabled( false );
+   pb_wheel_cancel       ->setEnabled( false );
+
+   running               = false;
+
+   disable_all();
+   update_enables();
 }
 
 void US_Hydrodyn_Saxs_Hplc::broaden_enables() {
