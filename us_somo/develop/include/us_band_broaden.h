@@ -8,11 +8,11 @@
 #include <unordered_map>
 #include <functional>
 #include <QString>
+#include <cfloat>
 
 using namespace std;
 
 // #define BROADEN_TESTING
-
 
 class US_Band_Broaden {
  public:
@@ -25,11 +25,6 @@ class US_Band_Broaden {
    static QString kernel_type_name( const enum kernel_type & ktype );
 
    US_Band_Broaden();
-
-   vector < double > convolve(
-                              const vector < double > & f
-                              ,const vector < double > & g 
-                              );
 
    vector < double > broaden(
                              const vector < double > & f
@@ -56,6 +51,12 @@ class US_Band_Broaden {
    unordered_map < double, vector < double > > K1;
    unordered_map < double, double > K1_sum_inverse;
    
+   vector < double > convolve(
+                              const vector < double > & f
+                              ,const vector < double > & g
+                              ,const enum kernel_type & ktype
+                              );
+
    bool build_kernel(
                      const double & tau
                      ,const enum kernel_type & type = US_Band_Broaden::BAND_BROADEN_KERNEL_EXPONENTIAL
@@ -63,6 +64,8 @@ class US_Band_Broaden {
                      ,const double & time_end   = 100
                      ,const double & time_delta = 0.05
                      );
+
+   size_t peak( const vector < double > & f );
 
 };
 

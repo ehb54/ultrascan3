@@ -111,9 +111,11 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    stopFlag = false;
 
 #if defined( BROADEN_TEST ) && defined( BROADEN_TESTING )
-   US_Band_Broaden ubb;
-   ubb.test();
-   exit( -1 );
+   {
+      US_Band_Broaden ubb;
+      ubb.test();
+   }
+   //   exit( -1 );
 #endif
 
 #if defined( AVG_TEST )
