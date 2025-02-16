@@ -204,7 +204,7 @@ private:
    QwtCounter* ct_subgrid;
    QwtCounter* ct_nsubgrids;
 
-   QList<QwtPlotCurve*> all_curves;
+   QList<QwtPlotCurve*> point_curves;
    QwtPlotCurve* subgrid_curve;
    QColor color_base;
    QColor color_highlight;
@@ -223,12 +223,11 @@ private:
 
    void rm_tmp_items(void);
    void rm_subgrid_curve(void);
-   void rm_all_curves(void);
-   void rm_curve(int);
+   void rm_point_curves(void);
    void plot_tmp(void);
    bool validate_num(const QString);
    bool validate(void);
-   bool overlap(double, double, double, double);
+   bool check_overlap(double, double, double, double, int);
    void linspace(double, double, int, QVector<double>&);
    double correct_unit(double, Attribute::Type, bool);
    void fill_list();
@@ -236,7 +235,7 @@ private:
    void clear_xyz(void);
    void get_xyz(QHash<QString, double>&);
    void sort_points();
-   void enable_add_edit(bool);
+   void enable_ctrl(bool);
 
 private slots:
    //! \brief Slot to setup the grid axises.

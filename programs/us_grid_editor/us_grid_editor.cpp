@@ -166,7 +166,7 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    connect(le_y_min, &QLineEdit::editingFinished, this, &US_Grid_Editor::update_yMin);
    connect(le_y_max, &QLineEdit::editingFinished, this, &US_Grid_Editor::update_yMax);
 
-   pb_validate = us_pushbutton( "Add " );
+   pb_validate = us_pushbutton( "Add / Update " );
    connect( pb_validate, &QPushButton::clicked, this, &US_Grid_Editor::add_update );
 
    QLabel *lb_nsubgrids = us_label( "Number of Subgrids" );
@@ -460,49 +460,21 @@ void US_Grid_Editor::rm_tmp_items()
          }
       }
    }
-   data_plot->replot();
 }
 
 void US_Grid_Editor::rm_subgrid_curve()
 {
    subgrid_curve->setTitle("SUBGRID");
    subgrid_curve->setSamples(QVector<QPointF>());
-   data_plot->replot();
-   // const auto items = data_plot->itemList();
-   // for (QwtPlotItem *item : items) {
-   //    if (item ) {
-   //       QString txt = item->title().text();
-   //       if ( txt.startsWith("SUBGRID_") ) {
-   //          item->detach();
-   //          delete item;
-   //       }
-   //    }
-   // }
 }
 
-void US_Grid_Editor::rm_all_curves()
+void US_Grid_Editor::rm_point_curves()
 {
-   for ( int ii = 0; ii < all_curves.size(); ii++ ) {
-      all_curves[ii]->detach();
-      delete all_curves[ii];
+   for ( int ii = 0; ii < point_curves.size(); ii++ ) {
+      point_curves[ii]->detach();
+      delete point_curves[ii];
    }
-   all_curves.clear();
-   data_plot->replot();
-   // const auto items = data_plot->itemList();
-   // for (QwtPlotItem *item : items) {
-   //    if (item ) {
-   //       item->detach();
-   //       delete item;
-   //    }
-   // }
-}
-
-void US_Grid_Editor::rm_curve(int id)
-{
-   all_curves[id]->detach();
-   delete all_curves[id];
-   all_curves.removeAt(id);
-   data_plot->replot();
+   point_curves.clear();
 }
 
 void US_Grid_Editor::plot_tmp()
@@ -660,6 +632,16 @@ void US_Grid_Editor::set_grid_axis()
 
 void US_Grid_Editor::add_update()
 {
+   int excl;
+   if ( pb_validate->text().compare("Add") == 0 ) {
+      excl = -1;
+   } else if ( pb_validate->text().compare("Update") == 0 ) {
+      excl = lw_grids->currentRow();
+      if ( excl == -1 ) return;
+   } else {
+      return;
+   }
+
    if ( ! validate() ) return;
 
    double dens = le_dens->text().toDouble();
@@ -679,8 +661,9 @@ void US_Grid_Editor::add_update()
    QVector<double> ypoints;
    linspace(xyz.value("yMin"), xyz.value("yMax"), y_res, ypoints);
 
-   if ( overlap(xpoints.first(), xpoints.last(),
-               ypoints.first(), ypoints.last()) ) {
+
+   if ( check_overlap(xpoints.first(), xpoints.last(),
+                     ypoints.first(), ypoints.last(), excl ) ) {
       QMessageBox::critical(this, "Error!", "Grid points overlap!");
       return;
    }
@@ -703,17 +686,22 @@ void US_Grid_Editor::add_update()
       }
    }
 
-   grid_points << gps;
    QVector<double> ginfo;
    ginfo << xyz.value("xMinU") << xyz.value("xMaxU") << xyz.value("xRes")
          << xyz.value("yMinU") << xyz.value("yMaxU") << xyz.value("yRes")
          << xyz.value("zValU");
-   grid_info << ginfo;
-   sort_points();
-   clear_xyz();
-   plot_points();
+   if ( excl == -1 ) {
+      grid_points << gps;
+      grid_info << ginfo;
+   } else {
+      grid_points.replace(excl, gps);
+      grid_info.replace(excl, ginfo);
+   }
    fill_list();
+   sort_points();
+   plot_points();
    update_subgrid(ct_nsubgrids->value());
+   highlight(lw_grids->currentRow());
    le_npoints->setText(tr("%1").arg(sorted_points.size()));
 }
 
@@ -793,9 +781,11 @@ bool US_Grid_Editor::validate( )
 
 }
 
-bool US_Grid_Editor::overlap(double xMin, double xMax, double yMin, double yMax)
+bool US_Grid_Editor::check_overlap(double xMin, double xMax,
+                                   double yMin, double yMax, int excl)
 {
    for (int ii= 0; ii < grid_points.size(); ii++) {
+      if ( ii == excl ) continue;
       QVector<GridPoint> item = grid_points.at(ii);
       int sz = item.size();
       double x1 = item[0].value( x_param );
@@ -859,12 +849,9 @@ void US_Grid_Editor::fill_list()
       lw_grids->addItem(str);
    }
 
-   if ( row == -1 ) row = 0;
+   if ( row == -1 || row >= lw_grids->count() ) row = 0;
    lw_grids->setCurrentRow( row );
-
    connect(lw_grids, &QListWidget::currentRowChanged, this, &US_Grid_Editor::highlight);
-   lw_grids->setMouseTracking(true);
-   highlight(row);
 }
 
 double US_Grid_Editor::value4plot(GridPoint& grid, Attribute::Type type)
@@ -881,7 +868,8 @@ void US_Grid_Editor::clear_xyz()
    le_y_min->clear();
    le_y_max->clear();
    le_z_val->clear();
-   enable_add_edit(false);
+   pb_validate->setText("Add / Update");
+   enable_ctrl(false);
 }
 
 void US_Grid_Editor::get_xyz(QHash<QString, double> & vals)
@@ -939,7 +927,7 @@ void US_Grid_Editor::sort_points()
                     });
 }
 
-void US_Grid_Editor::enable_add_edit(bool state)
+void US_Grid_Editor::enable_ctrl(bool state)
 {
    le_x_min->setEnabled(state);
    le_x_max->setEnabled(state);
@@ -954,10 +942,6 @@ void US_Grid_Editor::enable_add_edit(bool state)
 // reset the GUI
 void US_Grid_Editor::reset( void )
 {
-   rm_tmp_items();
-   rm_subgrid_curve();
-   rm_all_curves();
-
    lw_grids->disconnect();
    lw_grids->clear();
    grid_points.clear();
@@ -968,7 +952,6 @@ void US_Grid_Editor::reset( void )
    x_param = Attribute::ATTR_S; // plot s
    y_param = Attribute::ATTR_K; // plot f/f0
    z_param = Attribute::ATTR_V; // fixed vbar
-   // gstate = G_ADD;
 
    le_x_param->setText( Attribute::long_desc( x_param) );
    le_y_param->setText( Attribute::long_desc( y_param) );
@@ -979,10 +962,12 @@ void US_Grid_Editor::reset( void )
 
    x_axis->button(x_param)->setChecked(true);
    y_axis->button(y_param)->setChecked(true);
-   plot_points();
    le_x_res->setText(QString::number(64));
    le_y_res->setText(QString::number(64));
    clear_xyz();
+
+   plot_points();
+   highlight(-1);
 }
 
 // save the grid data
@@ -1170,22 +1155,21 @@ void US_Grid_Editor::update_yMax( )
 
 void US_Grid_Editor::highlight(int id)
 {
-   rm_tmp_items();
    clear_xyz();
-   for ( int ii = 0; ii < all_curves.size(); ii++ ) {
-      QSize size = all_curves[ii]->symbol()->size();
-      QPen pen = all_curves[ii]->symbol()->pen();
+   for ( int ii = 0; ii < point_curves.size(); ii++ ) {
+      QSize size = point_curves[ii]->symbol()->size();
+      QPen pen = point_curves[ii]->symbol()->pen();
       pen.setBrush(color_base);
       QwtSymbol *symbol = new QwtSymbol(QwtSymbol::Ellipse, QBrush(color_base), pen, size);
-      all_curves[ii]->setSymbol(symbol);
+      point_curves[ii]->setSymbol(symbol);
    }
 
    if ( id != -1 ) {
-      QSize size = all_curves[id]->symbol()->size();
-      QPen pen = all_curves[id]->symbol()->pen();
+      QSize size = point_curves[id]->symbol()->size();
+      QPen pen = point_curves[id]->symbol()->pen();
       pen.setBrush(color_highlight);
       QwtSymbol *symbol = new QwtSymbol(QwtSymbol::Ellipse, QBrush(color_highlight), pen, size);
-      all_curves[id]->setSymbol(symbol);
+      point_curves[id]->setSymbol(symbol);
 
       QVector<double> ginfo = grid_info.at(id);
       le_x_min->setText(QString::number(ginfo.at(0)));
@@ -1201,8 +1185,6 @@ void US_Grid_Editor::highlight(int id)
 
 void US_Grid_Editor::new_grid_clicked()
 {
-
-   clear_xyz();
    plot_flag = false;
    x_axis->button(x_param)->setChecked(true);
    y_axis->button(y_param)->setChecked(true);
@@ -1211,17 +1193,46 @@ void US_Grid_Editor::new_grid_clicked()
    plot_flag = true;
    plot_points();
    highlight(-1);
-   enable_add_edit(true);
+   enable_ctrl(true);
+   pb_validate->setText("Add");
 }
 
 void US_Grid_Editor::update_grid_clicked()
 {
-
+   plot_flag = false;
+   x_axis->button(x_param)->setChecked(true);
+   y_axis->button(y_param)->setChecked(true);
+   select_x_axis(x_param);
+   select_y_axis(y_param);
+   plot_flag = true;
+   plot_points();
+   int row = lw_grids->currentRow();
+   highlight(row);
+   if ( row >= 0) {
+      enable_ctrl(true);
+      pb_validate->setText("Update");
+      plot_tmp();
+   }
 }
 
 void US_Grid_Editor::delete_grid_clicked()
 {
+   int row = lw_grids->currentRow();
+   if ( row == -1 ) return;
+   int yes = QMessageBox::question(this, "Warning!",
+                                   "The grid containing the following data will be deleted.\n\n"
+                                      + lw_grids->currentItem()->text() +
+                                      "\n\nPress \"Yes\" to confirm.");
+   if ( yes == QMessageBox::No ) return;
 
+   grid_points.removeAt(row);
+   grid_info.removeAt(row);
+   fill_list();
+   sort_points();
+   update_subgrid(ct_nsubgrids->value());
+
+   plot_points();
+   highlight(lw_grids->currentRow());
 }
 
 void US_Grid_Editor::select_x_axis(int index)
@@ -1251,7 +1262,7 @@ void US_Grid_Editor::select_x_axis(int index)
       int row = lw_grids->currentRow();
       highlight(row);
    }
-   enable_add_edit(false);
+   enable_ctrl(false);
 }
 
 void US_Grid_Editor::select_y_axis(int index)
@@ -1281,20 +1292,20 @@ void US_Grid_Editor::select_y_axis(int index)
       int row = lw_grids->currentRow();
       highlight(row);
    }
-   enable_add_edit(false);
+   enable_ctrl(false);
 }
 
 void US_Grid_Editor::update_symbsize(double)
 {
    int ss = ct_size->value();
-   for ( int ii = 0; ii < all_curves.size(); ii++ ) {
-      const QwtSymbol* symbol = all_curves[ii]->symbol();
+   for ( int ii = 0; ii < point_curves.size(); ii++ ) {
+      const QwtSymbol* symbol = point_curves[ii]->symbol();
       QwtSymbol* new_symbol = new QwtSymbol();
       new_symbol->setStyle(symbol->style());
       new_symbol->setBrush(symbol->brush());
       new_symbol->setPen(symbol->pen());
       new_symbol->setSize(ss, ss);
-      all_curves[ii]->setSymbol(new_symbol);
+      point_curves[ii]->setSymbol(new_symbol);
    }
    ss++;
    const QwtSymbol* symbol = subgrid_curve->symbol();
@@ -1333,30 +1344,33 @@ void US_Grid_Editor::update_subgrid(double num)
    connect(ct_subgrid,   &QwtCounter::valueChanged, this, &US_Grid_Editor::plot_subgrid);
    connect(ct_nsubgrids, &QwtCounter::valueChanged, this, &US_Grid_Editor::update_subgrid);
 
-   if ( npoints == 0 ) return;
-
-   for ( int ii = 0; ii < nsubgrids; ii++ ) {
-      QVector<int> arr;
-      for ( int jj = ii; jj < npoints; jj += nsubgrids )
-      {
-         arr << jj;
+   if ( npoints > 0 ) {
+      for ( int ii = 0; ii < nsubgrids; ii++ ) {
+         QVector<int> arr;
+         for ( int jj = ii; jj < npoints; jj += nsubgrids )
+         {
+            arr << jj;
+         }
+         final_subgrids << arr;
       }
-      final_subgrids << arr;
    }
-   plot_subgrid(sbg);
-   le_npoints_last->setText(tr("%1").arg(final_subgrids.last().size()));
+   plot_subgrid(ct_subgrid->value());
 }
 
 void US_Grid_Editor::plot_subgrid(double subgrid_id)
 {
-   subgrid_id--;
-   bool flag = final_subgrids.isEmpty() || subgrid_id >= final_subgrids.size();
-   if ( flag ) {
+   rm_subgrid_curve();
+   le_npoints->setText("0");
+   le_npoints_curr->clear();
+   le_npoints_last->clear();
+   if ( final_subgrids.isEmpty() ) {
       data_plot->replot();
       return;
    }
-   rm_subgrid_curve();
 
+   subgrid_id--;
+   int np_all = sorted_points.size();
+   int np_last = final_subgrids.last().size();
    QVector<int> grid_id = final_subgrids.at(subgrid_id);
    int np = grid_id.size();
    Attribute::Type pxid = Attribute::from_int( x_axis->checkedId() );
@@ -1382,12 +1396,16 @@ void US_Grid_Editor::plot_subgrid(double subgrid_id)
    subgrid_curve->setStyle(QwtPlotCurve::NoCurve);
    data_plot->replot();
 
+   le_npoints->setText(tr("%1").arg(np_all));
    le_npoints_curr->setText(tr("%1").arg(np));
+   le_npoints_last->setText(tr("%1").arg(np_last));
 }
 
 void US_Grid_Editor::plot_points()
 {
-   rm_all_curves();
+   rm_tmp_items();
+   rm_point_curves();
+
 
    Attribute::Type pxid = Attribute::from_int( x_axis->checkedId() );
    Attribute::Type pyid = Attribute::from_int( y_axis->checkedId() );
@@ -1431,7 +1449,7 @@ void US_Grid_Editor::plot_points()
       curve->setStyle(QwtPlotCurve::NoCurve);
       curve->setSamples(xarr.data(), yarr.data(), xarr.size());
       curve->setZ(0);
-      all_curves << curve;
+      point_curves << curve;
    }
 
    double dx = (px2 - px1) * 0.1;
