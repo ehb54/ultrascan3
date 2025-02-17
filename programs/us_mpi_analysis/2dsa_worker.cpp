@@ -276,11 +276,9 @@ DbgLv(1) << "newD:" << my_rank << "  length index" << job_length << index
 
          default:
             repeat_loop = false;
-            qDebug() << "++ Worker" << my_rank << ": Unknown command" << job.command;
             break;
       }  // switch
    }  // repeat_loop
-   qDebug() << "++ Worker" << my_rank << ": Exiting";
    MPI_Barrier( MPI_COMM_WORLD );
    MPI_Finalize();
 }
