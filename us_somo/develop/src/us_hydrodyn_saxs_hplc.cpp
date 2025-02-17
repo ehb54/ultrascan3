@@ -6010,6 +6010,10 @@ void US_Hydrodyn_Saxs_Hplc::regex_load()
 }
 
 void US_Hydrodyn_Saxs_Hplc::rename_from_context( const QPoint & pos ) {
+#if defined(Q_OS_MACOS )
+# warning rename disabled for OSX, bug with calling QInputDialog in slot
+   return;
+#endif
    QListWidgetItem * lwi = lb_created_files->itemAt( pos );
    if ( lwi ) {
       return rename_created( lwi, pos );
