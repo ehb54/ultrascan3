@@ -2,28 +2,10 @@
 #ifndef US_GRID_EDITOR_H
 #define US_GRID_EDITOR_H
 
-#include "us_constants.h"
-#include "us_editor.h"
 #include "us_extern.h"
-#include "us_gui_settings.h"
 #include "us_help.h"
-#include "us_license.h"
-#include "us_license_t.h"
-#include "us_math2.h"
-#include "us_matrix.h"
-#include "us_model_loader.h"
-#include "us_passwd.h"
-#include "us_plot.h"
-#include "us_select_edits.h"
-#include "us_settings.h"
-#include "us_util.h"
 #include "us_widgets.h"
 #include "us_widgets_dialog.h"
-#include "us_investigator.h"
-
-#include "qwt_plot_zoomer.h"
-#include "qwt_plot_panner.h"
-#include "qwt_color_map.h"
 
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug()
@@ -34,7 +16,9 @@
 class Attribute : public QObject
 {
    Q_OBJECT
+
 public:
+   //! Enum representing different attribute types used in the system.
    enum Type { ATTR_S, ATTR_K, ATTR_M, ATTR_V, ATTR_D, ATTR_F, ATTR_F0, ATTR_SR, ATTR_DR };
 
    static QString long_desc  ( Type );
@@ -44,6 +28,8 @@ public:
    static Type    from_int   ( int  );
 };
 
+//! \class GridPoint Class
+//! \brief Enumeration for attribute types.
 class GridPoint
 {
 public:
@@ -62,24 +48,24 @@ public:
    QString error_string();
 
 private:
-   bool dvt_set;             //!< true if set_dens_visc_t is already called.
-   double density;
-   double viscosity;
-   double temperature;
-   double S;        //!< Sedimentation coefficient (at 20w) [value, min, max].
-   double D;        //!< Diffusion coefficient (at 20w) [value, min, max].
-   double VBAR;     //!< Partial specific volume (at 20w) [value, min, max].
-   double MW;       //!< Molecular weight (at 20w) [value, min, max].
-   double F;        //!< Frictional coefficient (at 20w) [value, min, max].
-   double FF0;      //!< Standard frictional coefficient (at 20w) [value, min, max].
-   double F0;       //!< Reference frictional coefficient (at 20w) [value, min, max].
-   double S_real;       //!< Sedimentation coefficient.
-   double D_real;       //!< Diffusion coefficient.
-   QString error;
-   QSet<Attribute::Type> ptypes;
-   Attribute::Type x_param;
-   Attribute::Type y_param;
-   Attribute::Type z_param;
+   bool   dvt_set;                 //!< true if density, viscosity, and temperature are already set.
+   double density;                 //!< Density of buffer (at 20W).
+   double viscosity;               //!< viscosity of buffer (at 20W).
+   double temperature;             //!< temperature of buffer.
+   double S;                       //!< Sedimentation coefficient (at 20W).
+   double D;                       //!< Diffusion coefficient (at 20W).
+   double VBAR;                    //!< Partial specific volume (at 20W).
+   double MW;                      //!< Molecular weight (at 20W).
+   double F;                       //!< Frictional coefficient (at 20W).
+   double FF0;                     //!< Standard frictional coefficient (at 20W).
+   double F0;                      //!< Reference frictional coefficient (at 20W).
+   double S_real;                  //!< Apparent Sedimentation coefficient.
+   double D_real;                  //!< Apparent Diffusion coefficient.
+   QString error;                  //!< Error string
+   QSet<Attribute::Type> ptypes;   //!< Container of x_param, y_param, z_param
+   Attribute::Type x_param;        //!< x axis parameter
+   Attribute::Type y_param;        //!< y axis parameter
+   Attribute::Type z_param;        //!< z axis parameter
 
    bool calculate_20w();
    void calculate_real();

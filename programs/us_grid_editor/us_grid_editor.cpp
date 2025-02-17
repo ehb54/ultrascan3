@@ -1,9 +1,18 @@
 //! \file us_ga_init.cpp
 
 #include <QApplication>
-#include "us_grid_editor.h"
-#include "us_gui_util.h"
 #include <qwt_plot_shapeitem.h>
+#include "us_grid_editor.h"
+#include "us_util.h"
+#include "us_settings.h"
+#include "us_investigator.h"
+#include "us_model_loader.h"
+#include "us_passwd.h"
+#include "us_plot.h"
+#include "us_math2.h"
+#include "us_constants.h"
+#include "us_license.h"
+#include "us_license_t.h"
 
 // main program
 int main( int argc, char* argv[] )
@@ -1947,8 +1956,19 @@ bool GridPoint::calculate_20w()
             qPow( MW / ( NA * PI ), 2.0 / 3.0 ) *
             qPow(1.0 / ( 6 * VBAR ), 1.0 / 3.0);
       F0 = F / FF0;
-   } else if ( contains( Attribute::ATTR_S, Attribute::ATTR_K, Attribute::ATTR_M ) )  // 10: V, D, F, F0 ?????
+   } else if ( contains( Attribute::ATTR_S, Attribute::ATTR_K, Attribute::ATTR_M ) )  // 10: V, D, F, F0 (qube root of VBAR)
    {
+      double A = 6 * qPow( 3 * VISC * S * FF0, 3 ) * qPow( NA * PI / MW, 2 );
+      double Q = A / DENS;
+      double Z = qSqrt( ( 27 * qPow( Q, 2 ) * 4 * qPow( Q, 3 ) ) / 108 );
+      double X = qPow( 0.5*Q + Z, 1.0 / 3.0 ) + qPow( 0.5*Q - Z, 1.0 / 3.0 );
+      VBAR = qPow( X, 3 ) / A;
+
+      if ( ! check_s_vbar()) return false;
+      double BUOY = 1 - VBAR * DENS;
+      F0 = 9 * VISC * PI * qSqrt( 2 * VBAR * VISC * S * FF0 / BUOY );
+      F = FF0 * F0;
+      D = RT / ( NA * F );
    } else if ( contains( Attribute::ATTR_S, Attribute::ATTR_K, Attribute::ATTR_D ) )  // 11: M, V, F, F0
    {
       F = RT / ( NA * F );
