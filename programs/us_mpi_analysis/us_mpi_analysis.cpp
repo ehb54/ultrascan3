@@ -1485,7 +1485,7 @@ else
 if ( do_dbg ) DbgLv(1) << "w:" << my_rank << ":nsoli" << nsoli << "nsolz" << nsolz;
 if ( do_dbg ) simu_values.dbg_level = qMax( simu_values.dbg_level, 1 );
 //*DEBUG*
-   US_Math_BF::Band_Forming_Gradient* bfg = (bfg_offset!=-1 && data_sets_bfgs.size()>bfg_offset)?&data_sets_bfgs[bfg_offset]: nullptr;
+   US_Math_BF::Band_Forming_Gradient* bfg = (bfg_offset!=-1)?&data_sets_bfgs[bfg_offset]: nullptr;
    DbgLv(1) << "TEST" << bfg_offset << ((bfg_offset!=-1)?&data_sets_bfgs[bfg_offset]: nullptr) << bfg;
    if (data_sets_bfgs.length() == 1){bfg = bandFormingGradient;}
    DbgLv(1) << "TEST" << bfg_offset << ((bfg_offset!=-1)?&data_sets_bfgs[bfg_offset]: nullptr) << bfg;
