@@ -480,8 +480,9 @@ DbgLv(1) << "SimPar:MAIN:SetP:   sset" << jd << "time1 time2" << time1 << time2
 
       while ( c_speed < s_speed )
       {  // Walk through acceleration zone building omega2t sum
+         w2tsum        += sq( ( 2 * c_speed + accel ) * 0.5 * M_PI / 30.0 );
          c_speed       += accel;
-         w2tsum        += sq( c_speed * M_PI / 30.0 );
+         // w2tsum        += sq( c_speed * M_PI / 30.0 );
          c_time        += 1.0;
 DbgLv(1) << "SimPar:MAIN:SetP:   accel speed w2t time" << c_speed << w2tsum << c_time;
       }
