@@ -282,6 +282,7 @@ DbgLv(1) << "newD:" << my_rank << "  length index" << job_length << index
    }  // repeat_loop
    qDebug() << "++ Worker" << my_rank << ": Exiting";
    MPI_Barrier( MPI_COMM_WORLD );
+   qDebug() << "++ Worker" << my_rank << ": Finalizing";
    MPI_Finalize();
 }
 
