@@ -827,11 +827,13 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       mQLineEdit                       * le_broaden_tau_start;
       mQLineEdit                       * le_broaden_tau;
       mQLineEdit                       * le_broaden_tau_end;
+      mQLineEdit                       * le_broaden_tau_delta;
 
       QLabel                           * lbl_broaden_deltat;
       mQLineEdit                       * le_broaden_deltat_start;
       mQLineEdit                       * le_broaden_deltat;
       mQLineEdit                       * le_broaden_deltat_end;
+      mQLineEdit                       * le_broaden_deltat_delta;
 
       QLabel                           * lbl_broaden_kernel_end;
       mQLineEdit                       * le_broaden_kernel_end;
@@ -839,6 +841,11 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       QLabel                           * lbl_broaden_kernel_deltat;
       mQLineEdit                       * le_broaden_kernel_deltat;
       
+      QLabel                           * lbl_broaden_fit_range;
+      mQLineEdit                       * le_broaden_fit_range_start;
+      mQLineEdit                       * le_broaden_fit_range_end;
+
+      QCheckBox                        * cb_broaden_repeak;
       QComboBox                        * cb_broaden_kernel_type;
 
       QPushButton                      * pb_broaden_fit;
@@ -855,6 +862,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void                               broaden_plot( bool replot = true );
       void                               broaden_clear_plot();
       void                               broaden_compute_one();
+      double                             broaden_compute_loss();
                                                        
  private slots:
 
@@ -872,6 +880,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void                               broaden_tau_end_text( const QString & );
       void                               broaden_tau_end_focus( bool );
 
+      void                               broaden_tau_delta_text( const QString & );
+      void                               broaden_tau_delta_focus( bool );
+
       void                               broaden_deltat_start_text( const QString & );
       void                               broaden_deltat_start_focus( bool );
 
@@ -881,11 +892,22 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void                               broaden_deltat_end_text( const QString & );
       void                               broaden_deltat_end_focus( bool );
 
+      void                               broaden_deltat_delta_text( const QString & );
+      void                               broaden_deltat_delta_focus( bool );
+
       void                               broaden_kernel_end_text( const QString & );
       void                               broaden_kernel_end_focus( bool );
 
       void                               broaden_kernel_deltat_text( const QString & );
       void                               broaden_kernel_deltat_focus( bool );
+
+      void                               broaden_fit_range_start_text( const QString & );
+      void                               broaden_fit_range_start_focus( bool );
+
+      void                               broaden_fit_range_end_text( const QString & );
+      void                               broaden_fit_range_end_focus( bool );
+
+      void                               broaden_repeak_set();
 
       void                               broaden_kernel_type_index();
       
@@ -1247,7 +1269,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void                         conc_avg( QStringList files );
       void                         bin( QStringList files );
       void                         smooth( QStringList files );
-      void                         repeak( QStringList files );
+      void                         repeak( QStringList files, bool quiet = false, QString conc_file = "" );
+      QString                      last_repeak_name;
       void                         create_i_of_t( QStringList files );
       bool                         create_i_of_q( QStringList files,
                                                   double t_min = -1e99,

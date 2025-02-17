@@ -1026,12 +1026,15 @@ void US_Hydrodyn_Saxs_Hplc::repeak()
    repeak( files );
 }
 
-void US_Hydrodyn_Saxs_Hplc::repeak( QStringList files )
+void US_Hydrodyn_Saxs_Hplc::repeak( QStringList files, bool quiet, QString use_conc )
 {
 
    QString peak_target = files.front();
 
-   QString use_conc = select_conc_file( "Repeak" );
+   if ( use_conc.isEmpty() ) {
+      use_conc = select_conc_file( "Repeak" );
+   }
+
    if ( use_conc.isEmpty() )
    {
       update_enables();
@@ -1120,37 +1123,39 @@ void US_Hydrodyn_Saxs_Hplc::repeak( QStringList files )
          wo_errors_count++;
       }
 
-      if ( any_without_errors )
-      {
-         switch ( QMessageBox::question(this, 
-                                        windowTitle() + us_tr( ": repeak" ),
-                                        // QString( us_tr( "The target has SDs but %1 of %2 file%3 to repeak do not have SDs at every point\n"
-                                        //              "What would you like to do?\n" ) )
-                                        // .arg( wo_errors_count ).arg( files.size() - 1 ).arg( files.size() > 2 ? "s" : "" ),
-                                        QString( us_tr( "The repeak target:\n\t%1\nhas SDs, but the concentration file:\n\t%2\nto repeak does not have SDs at every point.\n\n"
-                                                     "What would you like to do?\n" ) )
-                                        .arg( peak_target ).arg( use_conc ),
-                                        us_tr( "&Ignore SDs" ), 
-                                        us_tr( "Match target SD % pointwise" ),
-                                        us_tr( "Set S.D.'s to 5 %" ), 
-                                        0, // Stop == button 0
-                                        0 // Escape == button 0
-                                        ) )
-         {
-         case 0 : // ignore SDs
-            any_without_errors = false;
-            break;
-         case 1 : // keep avg_sd_mult
+      if ( any_without_errors ) {
+         if ( quiet ) {
+#warning is this the correct choice for autorunning
             match_sd = true;
-            break;
-         case 2 : // set to 5%
-            avg_sd_mult = 0.05;
-            break;
-         }  
+         } else {
+            switch ( QMessageBox::question(this, 
+                                           windowTitle() + us_tr( ": repeak" ),
+                                           // QString( us_tr( "The target has SDs but %1 of %2 file%3 to repeak do not have SDs at every point\n"
+                                           //              "What would you like to do?\n" ) )
+                                           // .arg( wo_errors_count ).arg( files.size() - 1 ).arg( files.size() > 2 ? "s" : "" ),
+                                           QString( us_tr( "The repeak target:\n\t%1\nhas SDs, but the concentration file:\n\t%2\nto repeak does not have SDs at every point.\n\n"
+                                                           "What would you like to do?\n" ) )
+                                           .arg( peak_target ).arg( use_conc ),
+                                           us_tr( "&Ignore SDs" ), 
+                                           us_tr( "Match target SD % pointwise" ),
+                                           us_tr( "Set S.D.'s to 5 %" ), 
+                                           0, // Stop == button 0
+                                           0 // Escape == button 0
+                                           ) )
+            {
+            case 0 : // ignore SDs
+               any_without_errors = false;
+               break;
+            case 1 : // keep avg_sd_mult
+               match_sd = true;
+               break;
+            case 2 : // set to 5%
+               avg_sd_mult = 0.05;
+               break;
+            }
+         }
       }       
    }
-
-   QString last_repeak_name;
 
    for ( unsigned int i = 0; i < ( unsigned int ) files.size(); i++ )
    {
@@ -1258,27 +1263,29 @@ void US_Hydrodyn_Saxs_Hplc::repeak( QStringList files )
       editor_msg( "gray", QString( "Created %1\n" ).arg( repeak_name ) );
    }
 
-   lb_files->clearSelection();
-   for ( int i = 0; i < (int)lb_files->count(); i++ )
-   {
-      if ( select_files.count( lb_files->item( i )->text() ) )
+   if ( !quiet ) {
+      lb_files->clearSelection();
+      for ( int i = 0; i < (int)lb_files->count(); i++ )
       {
-         lb_files->item( i)->setSelected( true );
+         if ( select_files.count( lb_files->item( i )->text() ) )
+         {
+            lb_files->item( i)->setSelected( true );
+         }
       }
-   }
 
-   rescale();
-   if ( QMessageBox::Yes == QMessageBox::question(
-                                                  this,
-                                                  windowTitle() + us_tr( ": repeak : set concentration file" ),
-                                                  us_tr("Would you like to *set* the repeaked concentration file?" ),
-                                                  QMessageBox::Yes, 
-                                                  QMessageBox::No | QMessageBox::Default
-                                                  ) )
-   {
-      return set_conc_file( last_repeak_name );
+      rescale();
+      if ( QMessageBox::Yes == QMessageBox::question(
+                                                     this,
+                                                     windowTitle() + us_tr( ": repeak : set concentration file" ),
+                                                     us_tr("Would you like to *set* the repeaked concentration file?" ),
+                                                     QMessageBox::Yes, 
+                                                     QMessageBox::No | QMessageBox::Default
+                                                     ) )
+      {
+         return set_conc_file( last_repeak_name );
+      }
+      update_enables();
    }
-   update_enables();
 }
 
 void US_Hydrodyn_Saxs_Hplc::crop_common()
