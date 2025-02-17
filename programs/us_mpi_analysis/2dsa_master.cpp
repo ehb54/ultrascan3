@@ -8,9 +8,11 @@
 
 void US_MPI_Analysis::_2dsa_master( void )
 {
-   init_solutes();
+   qDebug() << "2DSA Master: Starting 2DSA Master";
+  init_solutes();
+   qDebug() << "2DSA Master: inited solutes";
    fill_queue();
-
+   qDebug() << "2DSA Master: queue filled";
    work_rss.resize( gcores_count );
 
    current_dataset     = 0;
@@ -45,7 +47,7 @@ void US_MPI_Analysis::_2dsa_master( void )
       menibott_count      = bottom_points;
       meniscus_points     = 1;
    }
-
+   qDebug() << "2DSA Master starting loop";
    while ( true )
    {
       int worker;

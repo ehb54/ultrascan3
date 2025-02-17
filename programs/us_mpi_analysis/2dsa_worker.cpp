@@ -6,6 +6,7 @@
 
 void US_MPI_Analysis::_2dsa_worker( void )
 {
+  qDebug() << "2DSA Worker: Starting 2DSA Worker " << my_rank;
    bool repeat_loop = true;
    MPI_Job     job;
    MPI_Status  status;
