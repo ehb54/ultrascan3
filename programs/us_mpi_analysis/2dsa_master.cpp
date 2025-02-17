@@ -1068,7 +1068,7 @@ void US_MPI_Analysis::submit( Sa_Job& job, int worker )
              edata.scanData.last().seconds < bfg->dens_bfg_data.scanData.last().seconds){
             // recalculation needed
             bfg_offset = i;
-            DbgLv(2) << "bfg found in position " << i;
+            DbgLv(0) << "bfg found in position " << i;
             break;
          }
       }
@@ -1084,9 +1084,9 @@ void US_MPI_Analysis::submit( Sa_Job& job, int worker )
          bfg->calculate_gradient(simulationParameters, &edata);
          data_sets_bfgs << *bfg;
          bfg_offset = data_sets_bfgs.length() -1;
-         DbgLv(2) << "bfg calculated and stored in position " << bfg_offset;
+         DbgLv(0) << "bfg calculated and stored in position " << bfg_offset;
       }
-      DbgLv(1) << "bfg calculated and stored in position " << bfg_offset;
+      DbgLv(0) << "bfg calculated and stored in position " << bfg_offset;
    }
    job.mpi_job.command        = MPI_Job::PROCESS;
    job.mpi_job.length         = job.solutes.size();
