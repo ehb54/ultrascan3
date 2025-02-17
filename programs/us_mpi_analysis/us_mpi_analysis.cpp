@@ -2064,9 +2064,7 @@ DbgLv(1) << "2dsa master shutdown : master maxrss" << maxrss;
 DbgLv(0) << "2dsa master shutdown : worker" << i << " upd. maxrss" << maxrss
  << "  wkrss" << work_rss[ i ];
    }
-   DbgLv(0) << "2dsa master shutdown : final maxrss" << maxrss;
    MPI_Barrier( MPI_COMM_WORLD );
-   DbgLv(0) << "2dsa master shutdown : after barrier";
    MPI_Finalize();
 }
 
