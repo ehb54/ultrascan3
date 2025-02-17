@@ -10,7 +10,7 @@ void US_MPI_Analysis::_2dsa_master( void )
 {
    init_solutes();
    fill_queue();
-
+   bool shutdown = false;
    work_rss.resize( gcores_count );
 
    current_dataset     = 0;
@@ -45,7 +45,7 @@ void US_MPI_Analysis::_2dsa_master( void )
       menibott_count      = bottom_points;
       meniscus_points     = 1;
    }
-   bool shutdown = false;
+
    while ( true )
    {
       int worker;
@@ -308,7 +308,7 @@ DbgLv(1) << " master loop-BOT:      wkst1 wkstn" << worker_status[1]
          }
 
          shutdown_all();  // All done
-         shtudown = true;
+         shutdown = true;
          break;           // Break out of main loop.
       }
       if ( shutdown ) return;
