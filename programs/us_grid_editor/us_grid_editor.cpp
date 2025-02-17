@@ -81,24 +81,28 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    connect ( pb_preset, &QPushButton::clicked, this, &US_Grid_Editor::set_grid_axis);
 
    // Experimental Space
-
    QLabel *lb_experm = us_banner( tr( "Experimental Space" ) );
    QLabel *lb_dens = us_label( tr( "ρ [g/mL]" ) );
    lb_dens->setAlignment( Qt::AlignCenter );
-   le_dens = us_lineedit( QString::number( DENS_20W ) );
+   le_dens = us_lineedit();
    le_dens->setValidator(dValid);
 
    QLabel *lb_visc = us_label( tr( "η [cP]" ) );
    lb_visc->setAlignment( Qt::AlignCenter );
-   le_visc = us_lineedit( QString::number( VISC_20W ) );
+   le_visc = us_lineedit();
    le_visc->setValidator(dValid);
 
    QLabel *lb_temp = us_label( tr( "T [°C]" ) );
    lb_temp->setAlignment( Qt::AlignCenter );
-   le_temp = us_lineedit( QString::number( 20 ) );
+   le_temp = us_lineedit();
    le_temp->setValidator(dValid);
 
-   QPushButton* pb_set_exp_data = us_pushbutton("Update");
+   pb_update_dvt = us_pushbutton("Update");
+
+   connect(le_dens, &QLineEdit::editingFinished, this, &US_Grid_Editor::new_dens_visc_temp);
+   connect(le_visc, &QLineEdit::editingFinished, this, &US_Grid_Editor::new_dens_visc_temp);
+   connect(le_temp, &QLineEdit::editingFinished, this, &US_Grid_Editor::new_dens_visc_temp);
+   connect(pb_update_dvt, &QPushButton::clicked, this, &US_Grid_Editor::update_dens_visc_temp);
 
    // 20,w grid control
    QLabel *lb_20w_ctrl = us_banner( tr( "20,W Grid Control" ) );
@@ -251,7 +255,7 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
 
    left->addWidget( lb_temp,              row,   0, 1, 1 );
    left->addWidget( le_temp,              row,   1, 1, 1 );
-   left->addWidget( pb_set_exp_data,      row++, 2, 1, 2 );
+   left->addWidget( pb_update_dvt,        row++, 2, 1, 2 );
 
    left->addWidget( lb_20w_ctrl,          row++, 0, 1, 4 );
 
@@ -615,6 +619,7 @@ void US_Grid_Editor::set_grid_axis()
 {
    int state = grid_preset->exec();
    if ( state == QDialog::Accepted ) {
+      reset();
       grid_preset->parameters(x_param, y_param, z_param);
       le_x_param->setText( Attribute::long_desc(x_param) );
       le_y_param->setText( Attribute::long_desc(y_param) );
@@ -622,11 +627,6 @@ void US_Grid_Editor::set_grid_axis()
       lb_x_ax->setText( Attribute::short_desc( x_param ));
       lb_y_ax->setText( Attribute::short_desc( y_param ));
       lb_z_ax->setText( Attribute::short_desc( z_param ));
-      le_x_min->clear();
-      le_x_max->clear();
-      le_y_min->clear();
-      le_y_max->clear();
-      le_z_val->clear();
    }
 }
 
@@ -644,11 +644,6 @@ void US_Grid_Editor::add_update()
 
    if ( ! validate() ) return;
 
-   double dens = le_dens->text().toDouble();
-   double visc = le_visc->text().toDouble();
-   double temp = le_temp->text().toDouble();
-   bool dvt_set = validate_num("dens") && validate_num("visc") && validate_num("temp");
-
    QHash<QString, double> xyz;
    get_xyz(xyz);
 
@@ -661,12 +656,13 @@ void US_Grid_Editor::add_update()
    QVector<double> ypoints;
    linspace(xyz.value("yMin"), xyz.value("yMax"), y_res, ypoints);
 
-
    if ( check_overlap(xpoints.first(), xpoints.last(),
                      ypoints.first(), ypoints.last(), excl ) ) {
       QMessageBox::critical(this, "Error!", "Grid points overlap!");
       return;
    }
+
+   check_dens_visc_temp();
 
    QVector<Attribute::Type> types;
    types << x_param << y_param << z_param;
@@ -677,9 +673,7 @@ void US_Grid_Editor::add_update()
          vals.clear();
          vals << xpoints.at(ii) << ypoints.at(jj) << z_val;
          GridPoint gp;
-         if ( dvt_set ) {
-            gp.set_dens_visc_t(dens, visc, temp);
-         }
+         gp.set_dens_visc_temp(buff_dens, buff_visc, buff_temp);
          if ( gp.set_param(vals, types) ) {
             gps << gp;
          }
@@ -819,7 +813,11 @@ double US_Grid_Editor::correct_unit(double val, Attribute::Type type, bool h_fla
    double output = val;
    if ( type == Attribute::ATTR_S ) {
       output = h_flag ? val * 1e13 : val * 1e-13;
-   } else if ( type == Attribute::ATTR_M ) {
+   }
+   else if ( type == Attribute::ATTR_SR ) {
+      output = h_flag ? val * 1e13 : val * 1e-13;
+   }
+   else if ( type == Attribute::ATTR_M ) {
       output = h_flag ? val / 1000 : val * 1000;
    }
    return output;
@@ -939,6 +937,37 @@ void US_Grid_Editor::enable_ctrl(bool state)
    pb_validate->setEnabled(state);
 }
 
+void US_Grid_Editor::check_dens_visc_temp()
+{
+   buff_dens = validate_num("dens") ? le_dens->text().toDouble() : DENS_20W;
+   buff_visc = validate_num("visc") ? le_visc->text().toDouble() : VISC_20W;
+   buff_temp = validate_num("temp") ? le_temp->text().toDouble() : 20;
+
+   if ( buff_dens < 0.001 ) {
+      QMessageBox::warning(this, "Warning!", "The entered buffer density is below 0.001, "
+                                             "so it has been reset to the density of water at 20°C.");
+      buff_dens = DENS_20W;
+   }
+   if ( buff_visc < 0.001 ) {
+      QMessageBox::warning(this, "Warning!", "The entered buffer viscosity is below 0.001, "
+                                             "so it has been reset to the viscosity of water at 20°C.");
+      buff_visc = VISC_20W;
+   }
+   if ( buff_temp < 0  ) {
+      QMessageBox::warning(this, "Warning!", "The entered buffer temperature is negative, "
+                                             "so it has been reset to 20°C.");
+      buff_temp = 20;
+   }
+
+   le_dens->setText( QString::number( buff_dens ) );
+   le_visc->setText( QString::number( buff_visc ) );
+   le_temp->setText( QString::number( buff_temp ) );
+
+   QString qs = "QPushButton { background-color: %1 }";
+   QColor color = US_GuiSettings::pushbColor().color(QPalette::Active, QPalette::Button);
+   pb_update_dvt->setStyleSheet(qs.arg(color.name()));
+}
+
 // reset the GUI
 void US_Grid_Editor::reset( void )
 {
@@ -966,8 +995,13 @@ void US_Grid_Editor::reset( void )
    le_y_res->setText(QString::number(64));
    clear_xyz();
 
-   plot_points();
-   highlight(-1);
+   buff_dens = DENS_20W;
+   buff_visc = VISC_20W;
+   buff_temp = 20;
+   le_dens->setText( QString::number( buff_dens ) );
+   le_visc->setText( QString::number( buff_visc ) );
+   le_temp->setText( QString::number( buff_temp ) );
+   update_dens_visc_temp();
 }
 
 // save the grid data
@@ -1401,11 +1435,33 @@ void US_Grid_Editor::plot_subgrid(double subgrid_id)
    le_npoints_last->setText(tr("%1").arg(np_last));
 }
 
+void US_Grid_Editor::new_dens_visc_temp()
+{
+   pb_update_dvt->setStyleSheet("QPushButton { background-color: yellow }");
+}
+
+void US_Grid_Editor::update_dens_visc_temp()
+{
+   check_dens_visc_temp();
+
+   for ( int ii = 0; ii < grid_points.size(); ii++ ) {
+      for ( int jj = 0; jj < grid_points.at(ii).size(); jj++ ) {
+         grid_points[ii][jj].set_dens_visc_temp(buff_dens, buff_visc, buff_temp);
+      }
+   }
+
+   for ( int ii = 0; ii < sorted_points.size(); ii++ ) {
+      sorted_points[ii].set_dens_visc_temp(buff_dens, buff_visc, buff_temp);
+   }
+
+   plot_points();
+   highlight(lw_grids->currentRow());
+}
+
 void US_Grid_Editor::plot_points()
 {
    rm_tmp_items();
    rm_point_curves();
-
 
    Attribute::Type pxid = Attribute::from_int( x_axis->checkedId() );
    Attribute::Type pyid = Attribute::from_int( y_axis->checkedId() );
@@ -1767,30 +1823,15 @@ bool GridPoint::set_param(const QVector<double>& values,
    return true;
 }
 
-bool GridPoint::set_dens_visc_t(double dens, double visc, double T)
+void GridPoint::set_dens_visc_temp(double dens, double visc, double T)
 {
-   error.clear();
-   if ( dens < 0.001 ) {
-      error = "Buffer density is less than 0.001. Please correct it!";
-      return false;
-   }
-   if ( visc < 0.001 ) {
-      error = "Buffer viscosity is less than 0.001. Please correct it!";
-      return false;
-   }
-   if ( T < 1 ) {
-      error = "Buffer temperature is less than one. Please correct it!";
-      return false;
-   }
    density = dens;
    viscosity = visc;
    temperature = T;
    dvt_set = true;
-
    if ( ptypes.size() == 3 ) {
       calculate_real();
    }
-   return true;
 }
 
 QString GridPoint::error_string()
@@ -1986,17 +2027,35 @@ void GridPoint::calculate_real()
    if ( ! dvt_set ) return;
    if ( ptypes.isEmpty() ) return;
 
-   for (int ii = 0; ii < 3; ii++) {
-      US_Math2::SolutionData sol;
-      sol.manual = false;
-      sol.vbar = VBAR;
-      sol.vbar20 = VBAR;
-      sol.density = density;
-      sol.viscosity = viscosity;
-      US_Math2::data_correction(temperature, sol);
-      S_real = S / sol.s20w_correction;
-      D_real = D / sol.D20w_correction;
-   }
+   US_Math2::SolutionData sd;
+   sd.manual = false;
+   sd.vbar = VBAR;
+   sd.vbar20 = VBAR;
+   sd.density = density;
+   sd.viscosity = viscosity;
+   US_Math2::data_correction(temperature, sd);
+   S_real = S / sd.s20w_correction;
+   D_real = D / sd.D20w_correction;
+
+   if ( false )
+   qDebug() << "Solution Data:"
+            << QObject::tr("T=%1")        .arg( temperature )
+            << QObject::tr("dens_20W=%1") .arg( DENS_20W )
+            << QObject::tr("dens_TW=%1")  .arg( sd.density_wt )
+            << QObject::tr("visc_20W=%1") .arg( VISC_20W )
+            << QObject::tr("visc_TW=%1")  .arg( sd.viscosity_wt )
+            << QObject::tr("vbar20=%1")   .arg( sd.vbar20 )
+            << QObject::tr("vbarT=%1")    .arg( sd.vbar )
+            << QObject::tr("dens_20B=%1") .arg( sd.density )
+            << QObject::tr("dens_TB =%1") .arg( sd.density_tb )
+            << QObject::tr("visc_20B=%1") .arg( sd.viscosity )
+            << QObject::tr("visc_TB=%1")  .arg( sd.viscosity_tb )
+            << QObject::tr("s=%1")        .arg( S )
+            << QObject::tr("s_corr=%1")   .arg( sd.s20w_correction )
+            << QObject::tr("s*=%1")       .arg( S_real )
+            << QObject::tr("D=%1")        .arg( D )
+            << QObject::tr("D_corr=%1")   .arg( sd.D20w_correction )
+            << QObject::tr("D*=%1")       .arg( D_real );
 }
 
 bool GridPoint::check_s_vbar()

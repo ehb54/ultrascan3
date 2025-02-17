@@ -51,7 +51,7 @@ public:
 
    bool set_param( const QVector<double>&, const QVector<Attribute::Type>& );
 
-   bool set_dens_visc_t (double, double, double);
+   void set_dens_visc_temp (double, double, double);
 
    double value( Attribute::Type ) const;
 
@@ -155,6 +155,10 @@ public:
 
 private:
    bool plot_flag;
+   double buff_dens;
+   double buff_visc;
+   double buff_temp;
+
    QDoubleValidator *dValid;
    QIntValidator    *iValid;
 
@@ -209,6 +213,7 @@ private:
    QColor color_base;
    QColor color_highlight;
    QColor color_subgrid;
+   QPushButton* pb_update_dvt;
 
    US_Help showHelp; //!< Help widget.
    QList<QVector<GridPoint>> grid_points;
@@ -236,6 +241,7 @@ private:
    void get_xyz(QHash<QString, double>&);
    void sort_points();
    void enable_ctrl(bool);
+   void check_dens_visc_temp(void);
 
 private slots:
    //! \brief Slot to setup the grid axises.
@@ -268,6 +274,9 @@ private slots:
 
    void update_subgrid(double);
    void plot_subgrid(double);
+
+   void new_dens_visc_temp(void);
+   void update_dens_visc_temp(void);
 
    //! \brief Slot to update the plot.
    void plot_points(void);
