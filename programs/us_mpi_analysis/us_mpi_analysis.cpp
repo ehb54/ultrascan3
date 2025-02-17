@@ -1130,7 +1130,7 @@ void US_MPI_Analysis::start( void )
    }
 
    int exit_status = 0;
-
+   MPI_Barrier( MPI_COMM_WORLD );
    // Pack results
    if ( my_rank == 0 )
    {
@@ -1205,7 +1205,7 @@ void US_MPI_Analysis::start( void )
                   << "MB,  total run seconds " << cputime;
       }
    }
-
+   MPI_Barrier( MPI_COMM_WORLD );
    MPI_Finalize();
    exit( exit_status );
 }
