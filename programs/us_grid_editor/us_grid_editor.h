@@ -214,6 +214,7 @@ private:
    QColor color_highlight;
    QColor color_subgrid;
    QPushButton* pb_update_dvt;
+   QPushButton* pb_save;
 
    US_Help showHelp; //!< Help widget.
    QList<QVector<GridPoint>> grid_points;
@@ -281,8 +282,8 @@ private slots:
    //! \brief Slot to update the plot.
    void plot_points(void);
 
-   // //! \brief Slot to save the grid data.
-   // void save(void);
+   //! \brief Slot to save the grid data.
+   void save(void);
 
    // //! \brief Slot to reset the grid editor.
    void reset(void);

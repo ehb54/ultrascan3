@@ -215,9 +215,9 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    pb_reset->setEnabled( true );
    connect( pb_reset, &QPushButton::clicked, this, &US_Grid_Editor::reset );
 
-   QPushButton* pb_save = us_pushbutton( tr( "Save" ) );
+   pb_save = us_pushbutton( tr( "Save" ) );
    pb_save->setEnabled( false );
-   // connect( pb_save, &QPushButton::clicked, this, &US_Grid_Editor::save );
+   connect( pb_save, &QPushButton::clicked, this, &US_Grid_Editor::save );
 
    QPushButton* pb_help = us_pushbutton( tr( "Help" ) );
    pb_help->setEnabled( true );
@@ -1005,163 +1005,144 @@ void US_Grid_Editor::reset( void )
 }
 
 // save the grid data
-// void US_Grid_Editor::save( void )
-// {
-   // US_Model model;
-   // US_Model::SimulationComponent sc;
-   // QString modelPath, modelGuid;
-   // US_Model::model_path( modelPath );
-   // QDateTime now_time = QDateTime::currentDateTime ();
-   // QList< double > xvals;
-   // QList< double > yvals;
-   // QList< double > zvals;
-   // double          gridinc = 1.0 / (double)subGrids;
-   // int             indexsg = 1;
-   // bool flag;
-   // modelGuid         = US_Util::new_guid();
-   // model.analysis    = US_Model::CUSTOMGRID;
-   // model.description = now_time.toString( "yyyyMMdd-hhmm")
-   //    + "-CustomGrid" + ".model";
-   // model.subGrids    = subGrids;
-   // model.modelGUID   = modelGuid;
-   // model.global      = US_Model::NONE;
-   // double vbmin      = 1e99;
-   // double vbmax      = -1e99;
-   // double ffmin      = 1e99;
-   // double ffmax      = -1e99;
-   // sc.signal_concentration = 1.0;
+void US_Grid_Editor::save( void )
+{
+   if ( final_subgrids.first().size() > 150 ) {
+      QMessageBox::warning(this, "Warning!", "There are too many components in each subgrid. "
+                                             "Threshold is 150 components.\n"
+                                             "Please increase the number of subgrids, then try again.");
+      return;
+   }
 
-   // for ( int ii = 0; ii < final_grid.size(); ii++ ) D_20W_to_R
-   // {
-   //    flag        = true;
-   //    sc.s        = final_grid[ ii ].s * 1.0e-13;
-   //    sc.D        = final_grid[ ii ].D;
-   //    sc.f        = final_grid[ ii ].f;
-   //    sc.f_f0     = final_grid[ ii ].ff0;
-   //    sc.vbar20   = final_grid[ ii ].vbar;
-   //    sc.mw       = final_grid[ ii ].mw;
+   US_Model model;
+   QString modelPath;
+   US_Model::model_path( modelPath );
+   QDateTime now_time = QDateTime::currentDateTime ();
+   QString modelGuid = US_Util::new_guid();
+   model.analysis    = US_Model::CUSTOMGRID;
+   model.description = now_time.toString( "yyyyMMdd-hhmm")
+                       + "-CustomGrid" + ".model";
+   model.subGrids    = final_subgrids.size();
+   model.modelGUID   = modelGuid;
+   model.global      = US_Model::NONE;
 
-   //    double xval = grid_value( final_grid[ ii ], x_param );
-   //    double yval = grid_value( final_grid[ ii ], y_param );
-   //    double zval = grid_value( final_grid[ ii ], z_param );
-   //    int indexx  = xvals.indexOf( xval ) + 1;
-   //    int indexy  = yvals.indexOf( yval ) + 1;
-   //    int indexz  = zvals.indexOf( zval ) + 1;
-   //    if ( indexx < 1 )  { indexx = xvals.size() + 1; xvals << xval; }
-   //    if ( indexy < 1 )  { indexy = yvals.size() + 1; yvals << yval; }
-   //    if ( indexz < 1 )  { indexz = zvals.size() + 1; zvals << zval; }
-   //    sc.name     = QString::asprintf( "X%3.3dY%3.3dZ%2.2d",
-   //                                     indexx, indexy, indexz );
-   //    sc.signal_concentration = gridinc * (double)indexsg;
-   //    if ( (++indexsg) > subGrids )  indexsg = 1;
+   QVector<int> bad_ids;
+   for ( int ii = 0; ii < sorted_points.size(); ii++ )
+   {
+      GridPoint gp = sorted_points.at(ii);
+      US_Model::SimulationComponent sc;
+      sc.vbar20 = gp.value(Attribute::ATTR_V);
+      sc.s      = gp.value(Attribute::ATTR_S);
+      sc.D      = gp.value(Attribute::ATTR_D);
+      sc.f_f0   = 0.0;
+      sc.f      = 0.0;
+      sc.mw     = 0.0;
+      if (! US_Model::calc_coefficients(sc) ) {
+         bad_ids.append(ii);
+         continue;
+      }
+      int ss = ( ii % model.subGrids ) + 1;
+      int pp = ( ii / model.subGrids ) + 1;
+      sc.name     = QString::asprintf( "S%03d_P%03d", ss, pp );
+      model.components << sc;
+   }
 
-   //    for ( int jj = 0; jj < model.components.size(); jj++ )
-   //    {
-   //       vbmin     = qMin( vbmin, sc.vbar20 );  // Accumulate vbar,f/f0 extents
-   //       vbmax     = qMax( vbmax, sc.vbar20 );
-   //       ffmin     = qMin( ffmin, sc.f_f0   );
-   //       ffmax     = qMax( ffmax, sc.f_f0   );
+   if ( !bad_ids.isEmpty() ) qDebug() << "Save Model: Failed Components: " << bad_ids;
 
-   //       if ( sc.s      == model.components[ jj ].s     &&
-   //            sc.f_f0   == model.components[ jj ].f_f0  &&
-   //            sc.mw     == model.components[ jj ].mw    &&
-   //            sc.vbar20 == model.components[ jj ].vbar20 )
-   //       {
-   //          flag = false;
-   //          break; // don't add a component that is already in the model
-   //       }
-   //    }
+   // Open a dialog that reports and allows modification of description
+   QMessageBox mbox;
+   QString msg1 = tr("A grid model has been created. "
+                     "It's description is:<br/>"
+                     "<b>%1</b>.<br/><br/>"
+                     "Click:<br/><br/>"
+                     "<b>OK</b> to output the model as is;<br/>"
+                     "<b>Edit</b> to append custom text to the name;<br/>"
+                     "<b>Cancel</b> to abort model creation.<br/>").arg(model.description);
 
-   //    if ( flag ) model.components.push_back(sc);
-   // }
+   mbox.setWindowTitle( tr( "Save Grid Model" ) );
+   mbox.setText       ( msg1 );
+   QPushButton *pb_ok   = mbox.addButton( tr( "OK" ),
+         QMessageBox::YesRole );
+   QPushButton *pb_edit = mbox.addButton( tr( "Edit" ) ,
+         QMessageBox::AcceptRole );
+   QPushButton *pb_canc = mbox.addButton( tr( "Cancel" ),
+         QMessageBox::RejectRole );
+   mbox.setEscapeButton ( pb_canc );
+   mbox.setDefaultButton( pb_ok   );
 
-   // // Open a dialog that reports and allows modification of description
-   // QMessageBox mbox;
-   // QString msg1    = tr( "A grid model has been created. "
-   //                       "It's description is:<br/><b>" )
-   //    + model.description + "</b>.<br/><br/>"
-   //    + tr( "Click:<br/><br/>" )
-   //    + tr( "  <b>OK</b>     to output the model as is;<br/>"
-   //          "  <b>Edit</b>   to append custom text to the name;<br/>"
-   //          "  <b>Cancel</b> to abort model creation.<br/>" );
+   mbox.exec();
 
-   // mbox.setWindowTitle( tr( "Save Grid Model" ) );
-   // mbox.setText       ( msg1 );
-   // QPushButton *pb_ok   = mbox.addButton( tr( "OK" ),
-   //       QMessageBox::YesRole );
-   // QPushButton *pb_edit = mbox.addButton( tr( "Edit" ) ,
-   //       QMessageBox::AcceptRole );
-   // QPushButton *pb_canc = mbox.addButton( tr( "Cancel" ),
-   //       QMessageBox::RejectRole );
-   // mbox.setEscapeButton ( pb_canc );
-   // mbox.setDefaultButton( pb_ok   );
+   if ( mbox.clickedButton() == pb_canc )  return;
 
-   // mbox.exec();
+   if ( mbox.clickedButton() == pb_edit )
+   {  // Open another dialog to get a modified runID
+      bool    ok;
+      QString newtext = "";
+      int     jj      = model.description.indexOf( ".model" );
+      if ( jj > 0 ) model.description = model.description.left( jj );
+      QString msg2    = tr("The default run ID for the grid model"
+                           "<br/> is <b>%1</b>.<br/><br/>"
+                           "You may append additional text to the model description.<br/>"
+                           "Use alphanumeric characters, underscores, or hyphens<br/>"
+                           "(no spaces). Enter 1 to 40 characters.").arg(model.description);
 
-   // if ( mbox.clickedButton() == pb_canc )  return;
+      newtext = QInputDialog::getText( this,
+                                      tr( "Modify Model Name" ),
+                                      msg2,
+                                      QLineEdit::Normal,
+                                      newtext,
+                                      &ok );
 
-   // if ( mbox.clickedButton() == pb_edit )
-   // {  // Open another dialog to get a modified runID
-   //    bool    ok;
-   //    QString newtext = "";
-   //    int     jj      = model.description.indexOf( ".model" );
-   //    if ( jj > 0 ) model.description = model.description.left( jj );
-   //    QString msg2    = tr( "The default run ID for the grid model<br/>"
-   //                          "is <b>" ) + model.description + "</b>.<br/><br/>"
-   //       + tr( "You may append additional text to the model description.<br/>"
-   //             "Use alphanumeric characters, underscores, or hyphens<br/>"
-   //             "(no spaces). Enter 1 to 40 characters." );
-   //    newtext = QInputDialog::getText( this,
-   //          tr( "Modify Model Name" ),
-   //          msg2,
-   //          QLineEdit::Normal,
-   //          newtext,
-   //          &ok );
+      if ( !ok )  return;
 
-   //    if ( !ok )  return;
+      newtext.remove( QRegExp( "[^\\w\\d_-]" ) );
 
-   //    newtext.remove( QRegExp( "[^\\w\\d_-]" ) );
+      int     slen    = newtext.length();
+      if ( slen > 40 ) newtext = newtext.left( 40 );
+      // add string containing
+      model.description = model.description + "-" + newtext + ".model";
+   }
 
-   //    int     slen    = newtext.length();
-   //    if ( slen > 40 ) newtext = newtext.left( 40 );
-   //    // add string containing
-   //    model.description = model.description + "-" + newtext + ".model";
-   // }
+   // Output the combined grid model
+   int code = US_DB2::NOT_CONNECTED;
+   QString db_error;
+   if ( dkdb_cntrls->db() )
+   {
+      US_Passwd pw;
+      US_DB2 db( pw.getPasswd() );
+      if ( db.isConnected() ) {
+         code = model.write( &db );
+         db_error = db.lastError();
+      } else {
+         db_error = db.lastError();
+      }
+   }
+   else
+   {
+      bool newFile;
+      QString fnamo = US_Model::get_filename( modelPath, modelGuid, newFile );
+      code = model.write( fnamo );
+   }
 
-   // // Output the combined grid model
-   // int code;
-   // if ( dkdb_cntrls->db() )
-   // {
-   //    US_Passwd pw;
-   //    US_DB2 db( pw.getPasswd() );
-   //    code = model.write( &db );
-   // }
-   // else
-   // {
-   //    bool newFile;
-   //    QString fnamo = US_Model::get_filename( modelPath, modelGuid, newFile );
-   //    code = model.write( fnamo );
-   // }
+   QString mtitle = tr( "Grid Model Saving..." );
 
-   // QString mtitle = tr( "Grid Model Saving..." );
-
-   // if ( code == US_DB2::OK )
-   // {
-   //    QString destination = dkdb_cntrls->db() ?
-   //                          tr ( "local disk and database." ) :
-   //                          tr ( "local disk." );
-   //    QMessageBox::information( this, mtitle,
-   //       tr( "The file \"" ) +  model.description
-   //       + tr( "\"\n  was successfully saved to " ) + destination );
-   // }
-   // else
-   // {
-   //    QMessageBox::warning( this, mtitle,
-   //       tr( "Writing the model file  \"") +  model.description
-   //       + tr( "\"\n  resulted in error code " )
-   //       + QString::number( code ) + " ." );
-   // }
-// }
+   if ( code == US_DB2::OK )
+   {
+      QString destination = dkdb_cntrls->db() ?
+                            tr ( "local disk and database." ) :
+                            tr ( "local disk." );
+      QMessageBox::information( this, mtitle,
+                               tr("The file <br/><b>%1</b><br/>"
+                                  "was successfully saved to %2" ).
+                               arg(model.description, destination));
+   }
+   else
+   {
+      QMessageBox::warning( this, mtitle,
+                           tr("Writing the model file <br/><b>%1</b><br/>"
+                              "resulted in the following error:<br/><br/>%2").arg(model.description, db_error));
+   }
+}
 
 // update plot limit x min
 void US_Grid_Editor::update_xMin( )
@@ -1472,7 +1453,11 @@ void US_Grid_Editor::plot_points()
    data_plot->setAxisScale( QwtPlot::yLeft  , 1, 10);
    data_plot->replot();
 
-   if ( grid_points.isEmpty() ) return;
+   if ( grid_points.isEmpty() ) {
+      pb_save->setDisabled(true);
+      return;
+   }
+   pb_save->setEnabled(true);
 
    double px1 =  1e99;
    double px2 = -1e99;
