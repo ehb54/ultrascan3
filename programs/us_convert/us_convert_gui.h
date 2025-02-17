@@ -317,6 +317,7 @@ class US_ConvertGui : public US_Widgets
       bool dataSavedOtherwise;
       QString expType;
       QString dataSource;
+      QString opticsFailedType;
       
       void getExpInfo_auto ( void );
       void getLabInstrumentOperatorInfo_auto   ( void );
@@ -326,7 +327,7 @@ class US_ConvertGui : public US_Widgets
 
   QString correct_description( QString&, QString, QString );
 
-      
+      void check_scans     ( void );
       void setTripleInfo   ( void );
       void checkTemperature( void );
       int  findTripleIndex ( void );
