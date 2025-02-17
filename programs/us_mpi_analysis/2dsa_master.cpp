@@ -311,7 +311,6 @@ DbgLv(1) << " master loop-BOT:      wkst1 wkstn" << worker_status[1]
          shutdown = true;
          break;           // Break out of main loop.
       }
-      qDebug() << "Master:  Loop bottom" << shutdown;
       if ( shutdown ) return;
       // Wait for worker to send a message
       int        sizes[ 4 ];
