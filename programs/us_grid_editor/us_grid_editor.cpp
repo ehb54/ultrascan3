@@ -71,8 +71,9 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    dkdb_cntrls   = new US_Disk_DB_Controls( US_Settings::default_data_location() );
    connect( dkdb_cntrls, &US_Disk_DB_Controls::changed, this, &US_Grid_Editor::update_disk_db );
 
-   grid_preset = new US_Grid_Preset(this);
-   grid_preset->parameters(x_param, y_param, z_param);
+   x_param = Attribute::ATTR_S;
+   y_param = Attribute::ATTR_K;
+   z_param = Attribute::ATTR_V;
 
    QLabel *lb_x_param = us_label( tr( "X-Axis" ) );
    lb_x_param->setAlignment( Qt::AlignCenter );
@@ -627,6 +628,7 @@ bool US_Grid_Editor::validate_num(const QString label)
 
 void US_Grid_Editor::set_grid_axis()
 {
+   US_Grid_Preset *grid_preset = new US_Grid_Preset(this, x_param, y_param, z_param);
    int state = grid_preset->exec();
    if ( state == QDialog::Accepted ) {
       reset();
@@ -1550,7 +1552,8 @@ void US_Grid_Editor::sel_investigator( void )
    le_investigator->setText( inv_text );
 }
 
-US_Grid_Preset::US_Grid_Preset(QWidget * parent) : US_WidgetsDialog(parent)
+US_Grid_Preset::US_Grid_Preset(QWidget * parent, Attribute::Type x,
+                               Attribute::Type y, Attribute::Type z) : US_WidgetsDialog(parent)
 {
    setWindowTitle( tr( "Grid Setup" ) );
    setPalette( US_GuiSettings::frameColor() );
@@ -1633,17 +1636,14 @@ US_Grid_Preset::US_Grid_Preset(QWidget * parent) : US_WidgetsDialog(parent)
 
    setLayout(layout);
 
-   x_param        = Attribute::ATTR_S; // plot s
-   y_param        = Attribute::ATTR_K; // plot f/f0
-   z_param        = Attribute::ATTR_V; // fixed vbar
+   x_param = x;
+   y_param = y;
+   z_param = z;
    x_axis->button(x_param)->setChecked(true);
-   y_axis->button(x_param)->setDisabled(true);
-
    y_axis->button(y_param)->setChecked(true);
-   x_axis->button(y_param)->setDisabled(true);
+   select_x_axis( x_param );
+   select_y_axis( y_param );
    z_axis->setCurrentIndex(z_axis->findData(z_param, Qt::UserRole));
-
-   set_z_axis();
 
    connect( x_axis,    &QButtonGroup::idReleased, this, &US_Grid_Preset::select_x_axis );
    connect( y_axis,    &QButtonGroup::idReleased, this, &US_Grid_Preset::select_y_axis );
@@ -1670,13 +1670,6 @@ void US_Grid_Preset::select_x_axis( int index )
 
    x_param = Attribute::from_int( index );
    y_axis->button(x_param)->setDisabled(true);
-
-   // if ( x_param == Attribute::ATTR_D ) {
-   //    y_axis->button(Attribute::ATTR_F)->setDisabled(true);
-   // } else if ( x_param == Attribute::ATTR_F ) {
-   //    y_axis->button(Attribute::ATTR_D)->setDisabled(true);
-   // }
-
    set_z_axis();
 }
 
@@ -1692,13 +1685,6 @@ void US_Grid_Preset::select_y_axis( int index )
 
    y_param = Attribute::from_int( index );
    x_axis->button(y_param)->setDisabled(true);
-
-   // if ( y_param == Attribute::ATTR_D ) {
-   //    x_axis->button(Attribute::ATTR_F)->setDisabled(true);
-   // } else if ( y_param == Attribute::ATTR_F ) {
-   //    x_axis->button(Attribute::ATTR_D)->setDisabled(true);
-   // }
-
    set_z_axis();
 }
 

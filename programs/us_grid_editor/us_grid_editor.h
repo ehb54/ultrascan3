@@ -78,7 +78,7 @@ class US_Grid_Preset : public US_WidgetsDialog
 {
    Q_OBJECT
 public:
-   US_Grid_Preset(QWidget *);
+   US_Grid_Preset(QWidget *, Attribute::Type, Attribute::Type, Attribute::Type);
 
    //! \brief A method to obtain the grid parameters.
    //! \param x Index of the selected x-axis attribute.
@@ -183,8 +183,6 @@ private:
    QwtPlot *data_plot; //!< Data plot.
 
    US_Disk_DB_Controls* dkdb_cntrls; //!< Disk DB controls.
-
-   US_Grid_Preset *grid_preset; //!< A dialog to set the grid preset
 
    QListWidget *lw_grids;
 
