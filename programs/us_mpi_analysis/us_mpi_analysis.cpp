@@ -1082,6 +1082,8 @@ if (my_rank==0) DbgLv(0) << "ckGrSz: ssp count"
 
    else
       pmasters_start();         // Start parallel-masters job (mc_iters)
+   MPI_Barrier( MPI_COMM_WORLD );
+   MPI_Finalize();
 }
 
 // Main function  (single master group)
@@ -1205,8 +1207,6 @@ void US_MPI_Analysis::start( void )
                   << "MB,  total run seconds " << cputime;
       }
    }
-   MPI_Barrier( MPI_COMM_WORLD );
-   MPI_Finalize();
    exit( exit_status );
 }
 
