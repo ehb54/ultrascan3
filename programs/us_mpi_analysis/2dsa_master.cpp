@@ -1050,7 +1050,7 @@ void US_MPI_Analysis::submit( Sa_Job& job, int worker )
 {
    int bfg_offset = -1;
    int csd_offset = -1;
-   if (!data_sets[current_dataset]->solution_rec.buffer.cosed_component.isEmpty()) {
+   if (!data_sets[current_dataset]->solution_rec.buffer.cosed_component.isEmpty() && data_sets[current_dataset]->simparams.meshType == US_SimulationParameters::ASTFVM) {
       US_SimulationParameters simulationParameters = data_sets[current_dataset]->simparams;
       US_DataIO::RawData edata = data_sets[current_dataset]->run_data.convert_to_raw_data();
       US_SolveSim::DataSet* dataSet = data_sets[current_dataset];
@@ -1080,11 +1080,13 @@ void US_MPI_Analysis::submit( Sa_Job& job, int worker )
                   dataSet->solution_rec.buffer.cosed_component,
                   simulationParameters.cp_pathlen,
                   simulationParameters.cp_angle);
-         bfg->get_eigenvalues();
-         bfg->calculate_gradient(simulationParameters, &edata);
-         data_sets_bfgs << *bfg;
-         bfg_offset = data_sets_bfgs.length() -1;
-         DbgLv(0) << "bfg calculated and stored in position " << bfg_offset;
+         if ( !bfg-> upper_comps.isEmpty() ) {
+            bfg->get_eigenvalues();
+            bfg->calculate_gradient(simulationParameters, &edata);
+            data_sets_bfgs << *bfg;
+            bfg_offset = data_sets_bfgs.length() -1;
+            DbgLv(0) << "bfg calculated and stored in position " << bfg_offset;
+         }
       }
       DbgLv(0) << "bfg calculated and stored in position " << bfg_offset;
    }
