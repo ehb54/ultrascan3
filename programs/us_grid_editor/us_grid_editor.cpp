@@ -1,6 +1,7 @@
 //! \file us_ga_init.cpp
 
 #include <QApplication>
+#include <math.h>
 #include <qwt_plot_shapeitem.h>
 #include "us_grid_editor.h"
 #include "us_util.h"
@@ -179,8 +180,8 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    connect(le_y_min, &QLineEdit::editingFinished, this, &US_Grid_Editor::update_yMin);
    connect(le_y_max, &QLineEdit::editingFinished, this, &US_Grid_Editor::update_yMax);
 
-   pb_validate = us_pushbutton( "Add / Update " );
-   connect( pb_validate, &QPushButton::clicked, this, &US_Grid_Editor::add_update );
+   pb_add_update = us_pushbutton( "Add / Update " );
+   connect( pb_add_update, &QPushButton::clicked, this, &US_Grid_Editor::add_update );
 
    QLabel *lb_nsubgrids = us_label( "Number of Subgrids" );
    lb_nsubgrids->setAlignment( Qt::AlignCenter );
@@ -295,7 +296,7 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
 
    left->addWidget( lb_z_ax,              row,   0, 1, 1 );
    left->addWidget( le_z_val,             row,   1, 1, 1 );
-   left->addWidget( pb_validate,          row++, 2, 1, 2 );
+   left->addWidget( pb_add_update,          row++, 2, 1, 2 );
 
    left->addWidget( lb_subgrid,           row,   0, 1, 2 );
    left->addWidget( ct_subgrid,           row++, 2, 1, 2 );
@@ -642,9 +643,9 @@ void US_Grid_Editor::set_grid_axis()
 void US_Grid_Editor::add_update()
 {
    int excl;
-   if ( pb_validate->text().compare("Add") == 0 ) {
+   if ( pb_add_update->text().compare("Add") == 0 ) {
       excl = -1;
-   } else if ( pb_validate->text().compare("Update") == 0 ) {
+   } else if ( pb_add_update->text().compare("Update") == 0 ) {
       excl = lw_grids->currentRow();
       if ( excl == -1 ) return;
    } else {
@@ -671,12 +672,12 @@ void US_Grid_Editor::add_update()
       return;
    }
 
-   check_dens_visc_temp();
-
    QVector<Attribute::Type> types;
    types << x_param << y_param << z_param;
    QVector<double> vals;
    QVector<GridPoint> gps;
+   bool flag = true;
+   QString error;
    for ( int jj = 0; jj < y_res; jj++ ) {
       for ( int ii = 0; ii < x_res; ii++ ) {
          vals.clear();
@@ -685,8 +686,18 @@ void US_Grid_Editor::add_update()
          gp.set_dens_visc_temp(buff_dens, buff_visc, buff_temp);
          if ( gp.set_param(vals, types) ) {
             gps << gp;
+         } else {
+            flag = false;
+            error = gp.error_string();
+            break;
          }
       }
+      if ( ! flag ) break;
+   }
+
+   if ( ! flag ) {
+      QMessageBox::warning(this, "Error!", error);
+      return;
    }
 
    QVector<double> ginfo;
@@ -757,10 +768,13 @@ bool US_Grid_Editor::validate( )
       error_msg = tr("%1 \n\nResolution value is zero!").arg(lb_y_ax->text());
    }
 
+   check_dens_visc_temp();
+
    QHash<QString, double> xyz;
    get_xyz(xyz);
 
    GridPoint gp;
+   gp.set_dens_visc_temp(buff_dens, buff_visc, buff_temp);
    QVector<Attribute::Type> types;
    types << x_param << y_param << z_param;
    QVector<double> vals;
@@ -875,7 +889,7 @@ void US_Grid_Editor::clear_xyz()
    le_y_min->clear();
    le_y_max->clear();
    le_z_val->clear();
-   pb_validate->setText("Add / Update");
+   pb_add_update->setText("Add / Update");
    enable_ctrl(false);
 }
 
@@ -943,7 +957,7 @@ void US_Grid_Editor::enable_ctrl(bool state)
    le_y_max->setEnabled(state);
    le_y_res->setEnabled(state);
    le_z_val->setEnabled(state);
-   pb_validate->setEnabled(state);
+   pb_add_update->setEnabled(state);
 }
 
 void US_Grid_Editor::check_dens_visc_temp()
@@ -1218,7 +1232,7 @@ void US_Grid_Editor::new_grid_clicked()
    plot_points();
    highlight(-1);
    enable_ctrl(true);
-   pb_validate->setText("Add");
+   pb_add_update->setText("Add");
 }
 
 void US_Grid_Editor::update_grid_clicked()
@@ -1234,7 +1248,7 @@ void US_Grid_Editor::update_grid_clicked()
    highlight(row);
    if ( row >= 0) {
       enable_ctrl(true);
-      pb_validate->setText("Update");
+      pb_add_update->setText("Update");
       plot_tmp();
    }
 }
@@ -1502,8 +1516,9 @@ void US_Grid_Editor::plot_points()
       point_curves << curve;
    }
 
-   double dx = (px2 - px1) * 0.1;
-   double dy = (py2 - py1) * 0.1;
+   double dx, dy;
+   px2 - px1 == 0 ? dx = 0.01 : dx = (px2 - px1) * 0.1;
+   py2 - py1 == 0 ? dy = 0.01 : dy = (py2 - py1) * 0.1;
    px1 -= dx;
    px2 += dx;
    py1 -= dy;
@@ -1709,39 +1724,69 @@ void US_Grid_Preset::cancel()
    reject();
 }
 
+// void US_Grid_Preset::set_z_axis( )
+// {
+//    z_axis->disconnect();
+//    z_axis->clear();
+//    bool has_vbar = (x_param == Attribute::ATTR_V || y_param == Attribute::ATTR_V);
+//    bool is_DF = x_param == Attribute::ATTR_F || x_param == Attribute::ATTR_D ||
+//                 y_param == Attribute::ATTR_F || y_param == Attribute::ATTR_D;
+//    QVector<Attribute::Type> tlist;
+//    tlist << Attribute::ATTR_S << Attribute::ATTR_K
+//          << Attribute::ATTR_M << Attribute::ATTR_V
+//          << Attribute::ATTR_D << Attribute::ATTR_F;
+//    if ( has_vbar ) {
+//       foreach (Attribute::Type type, tlist) {
+//          if ( type == x_param || type == y_param ) continue;
+//          if ( is_DF && ( type == Attribute::ATTR_F || type == Attribute::ATTR_D ) ) continue;
+//          z_axis->addItem( Attribute::long_desc( type ), type );
+//       }
+
+//       int index = z_axis->findData(z_param, Qt::UserRole);
+//       if ( index == -1 ) {
+//          z_axis->setCurrentIndex( 0 );
+//          int id = z_axis->itemData(0, Qt::UserRole ).toInt();
+//          z_param = Attribute::from_int( id );
+//       } else {
+//          z_axis->setCurrentIndex( index );
+//       }
+//    } else {
+//       z_param = Attribute::ATTR_V;
+//       z_axis->addItem( Attribute::long_desc( Attribute::ATTR_V ), Attribute::ATTR_V );
+//    }
+
+//    connect( z_axis, QOverload<int>::of( &QComboBox::currentIndexChanged ),
+//             this,   &US_Grid_Preset::select_z_axis );
+// }
+
 void US_Grid_Preset::set_z_axis( )
 {
    z_axis->disconnect();
    z_axis->clear();
-   bool has_vbar = (x_param == Attribute::ATTR_V || y_param == Attribute::ATTR_V);
-   bool is_DF = x_param == Attribute::ATTR_F || x_param == Attribute::ATTR_D ||
+   bool DF_set = x_param == Attribute::ATTR_F || x_param == Attribute::ATTR_D ||
                 y_param == Attribute::ATTR_F || y_param == Attribute::ATTR_D;
    QVector<Attribute::Type> tlist;
    tlist << Attribute::ATTR_S << Attribute::ATTR_K
          << Attribute::ATTR_M << Attribute::ATTR_V
          << Attribute::ATTR_D << Attribute::ATTR_F;
-   if ( has_vbar ) {
-      foreach (Attribute::Type type, tlist) {
-         if ( type == x_param || type == y_param ) continue;
-         if ( is_DF && ( type == Attribute::ATTR_F || type == Attribute::ATTR_D ) ) continue;
-         z_axis->addItem( Attribute::long_desc( type ), type );
-      }
 
-      int index = z_axis->findData(z_param, Qt::UserRole);
-      if ( index == -1 ) {
-         z_axis->setCurrentIndex( 0 );
-         int id = z_axis->itemData(0, Qt::UserRole ).toInt();
-         z_param = Attribute::from_int( id );
-      } else {
-         z_axis->setCurrentIndex( index );
-      }
+   foreach (Attribute::Type type, tlist) {
+      if ( type == x_param || type == y_param ) continue;
+      if ( DF_set && ( type == Attribute::ATTR_F || type == Attribute::ATTR_D ) ) continue;
+      z_axis->addItem( Attribute::long_desc( type ), type );
+   }
+
+   int index = z_axis->findData(z_param, Qt::UserRole);
+   if ( index == -1 ) {
+      z_axis->setCurrentIndex( 0 );
+      int id = z_axis->itemData(0, Qt::UserRole ).toInt();
+      z_param = Attribute::from_int( id );
    } else {
-      z_param = Attribute::ATTR_V;
-      z_axis->addItem( Attribute::long_desc( Attribute::ATTR_V ), Attribute::ATTR_V );
+      z_axis->setCurrentIndex( index );
    }
 
    connect( z_axis, QOverload<int>::of( &QComboBox::currentIndexChanged ),
-            this,   &US_Grid_Preset::select_z_axis );
+           this,   &US_Grid_Preset::select_z_axis );
 }
 
 GridPoint::GridPoint()
@@ -1960,18 +2005,23 @@ bool GridPoint::calculate_20w()
    {
       double A = 6 * qPow( 3 * VISC * S * FF0, 3 ) * qPow( NA * PI / MW, 2 );
       double Q = A / DENS;
-      double Z = qSqrt( ( 27 * qPow( Q, 2 ) * 4 * qPow( Q, 3 ) ) / 108 );
-      double X = qPow( 0.5*Q + Z, 1.0 / 3.0 ) + qPow( 0.5*Q - Z, 1.0 / 3.0 );
-      VBAR = qPow( X, 3 ) / A;
+      // double Z = qSqrt( ( 27 * qPow( Q, 2 ) * 4 * qPow( Q, 3 ) ) / 108 );
+      // double X = qPow( 0.5*Q + Z, 1.0 / 3.0 ) + qPow( 0.5*Q - Z, 1.0 / 3.0 );
+      // VBAR = qPow( X, 3 ) / A;
+
+      double Z = std::sqrt( ( 27 * std::pow( Q, 2 ) * 4 * std::pow( Q, 3 ) ) / 108 );
+      double X = std::cbrt( 0.5 * Q + Z ) + std::cbrt( 0.5 * Q - Z );
+      VBAR = std::pow( X, 3 ) / A;
 
       if ( ! check_s_vbar()) return false;
       double BUOY = 1 - VBAR * DENS;
       F0 = 9 * VISC * PI * qSqrt( 2 * VBAR * VISC * S * FF0 / BUOY );
       F = FF0 * F0;
       D = RT / ( NA * F );
+      MW = S * NA * F / BUOY;
    } else if ( contains( Attribute::ATTR_S, Attribute::ATTR_K, Attribute::ATTR_D ) )  // 11: M, V, F, F0
    {
-      F = RT / ( NA * F );
+      F = RT / ( NA * D );
       F0 = F / FF0;
       double f02 = qPow( F0, 2 );
       double vp2 = qPow( 9 * PI * VISC, 2 );
@@ -2071,9 +2121,10 @@ bool GridPoint::check_s_vbar()
       return false;
    }
    if ( ( buoy > 0 && S < 0 ) || ( buoy < 0 && S > 0 ) ) {
-      error  = "Sedimentation and buoyancy should have the same sign!\n";
-      error += QObject::tr("Sedimentation = %1\n").arg(buoy);
-      error += QObject::tr("Buoyancy = 1 - %1 x vbar = %2\n").arg(DENS_20W, buoy);
+      error  = "Sedimentation and buoyancy should have the same sign!\n\n";
+      error += QObject::tr("Sedimentation = %1\n").arg(S);
+      error += QObject::tr("Buoyancy = 1 - Density(20°C water) x PSV\n").arg(DENS_20W, buoy);
+      error += QObject::tr("Buoyancy = 1 - %1 x %2 = %3\n").arg(DENS_20W).arg(VBAR).arg(buoy);
       return false;
    }
    return true;

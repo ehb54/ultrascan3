@@ -177,7 +177,7 @@ private:
    QLineEdit *le_npoints; //!< Number of all subgrids.
    QLineEdit *le_npoints_curr;
    QLineEdit *le_npoints_last;
-   QPushButton* pb_validate;
+   QPushButton* pb_add_update;
 
    QButtonGroup* x_axis;    //!< X-axis button group.
    QButtonGroup* y_axis;    //!< Y-axis button group.
