@@ -6,7 +6,6 @@
 
 void US_MPI_Analysis::_2dsa_worker( void )
 {
-  qDebug() << "2DSA Worker: Starting 2DSA Worker " << my_rank;
    bool repeat_loop = true;
    MPI_Job     job;
    MPI_Status  status;
@@ -24,7 +23,7 @@ void US_MPI_Analysis::_2dsa_worker( void )
                 MPI_Job::READY,
                 my_communicator ); // let master know we are ready
 //if(my_rank==1)
-DbgLv(0) << "w:" << my_rank << ": ready sent";
+DbgLv(1) << "w:" << my_rank << ": ready sent";
 
       // Blocking -- Wait for instructions
       MPI_Recv( &job, // get masters' response
@@ -35,7 +34,7 @@ DbgLv(0) << "w:" << my_rank << ": ready sent";
                 my_communicator,
                 &status );        // status not used
 //if(my_rank==1)
-DbgLv(0) << "w:" << my_rank << ": job_recvd  length" << job.length
+DbgLv(1) << "w:" << my_rank << ": job_recvd  length" << job.length
  << "command" << job.command;
 
       meniscus_value     = job.meniscus_value;
@@ -46,7 +45,7 @@ DbgLv(0) << "w:" << my_rank << ": job_recvd  length" << job.length
       int job_length     = job.length;
       int noisflag       = ( parameters[ "tinoise_option" ].toInt() > 0 ?  1 : 0 )
                          + ( parameters[ "rinoise_option" ].toInt() > 0 ?  2 : 0 );
-DbgLv(0) << "w:" << my_rank << ": offs cnt" << offset << dataset_count;
+DbgLv(1) << "w:" << my_rank << ": offs cnt" << offset << dataset_count;
 
       data_sets[ offset ]->run_data.meniscus  = meniscus_value;
       data_sets[ offset ]->run_data.bottom    = bottom_value;
@@ -65,7 +64,7 @@ DbgLv(0) << "w:" << my_rank << ": offs cnt" << offset << dataset_count;
 
 //DbgLv(1) << "w:" << my_rank << ": sols size" << job.length;
 //if(my_rank==1)
-DbgLv(0) << "w:" << my_rank << ": sols size" << job.length;
+DbgLv(1) << "w:" << my_rank << ": sols size" << job.length;
                simulation_values.solutes.resize( job.length );
 
                MPI_Recv( simulation_values.solutes.data(), // Get solutes
@@ -83,19 +82,19 @@ DbgLv(0) << "w:" << my_rank << ": sols size" << job.length;
 {
  int nn = simulation_values.solutes.size() - 1;
  int mm = nn/2;
- DbgLv(0) << "w:" << my_rank << ": offs dscnt" << offset << dataset_count
+ DbgLv(1) << "w:" << my_rank << ": offs dscnt" << offset << dataset_count
   << "vbar s20wc cpbott dabott"
   << data_sets[offset]->vbar20
   << data_sets[offset]->s20w_correction
   << data_sets[offset]->centerpiece_bottom
   << data_sets[offset]->run_data.bottom;
- DbgLv(0) << "w:" << my_rank << ": sol0 solm soln"
+ DbgLv(1) << "w:" << my_rank << ": sol0 solm soln"
   << simulation_values.solutes[0].s << simulation_values.solutes[0].k
   << simulation_values.solutes[mm].s << simulation_values.solutes[mm].k
   << simulation_values.solutes[nn].s << simulation_values.solutes[nn].k;
 }
 //*DEBUG*
-               qDebug() << "w:" << my_rank << ": 2DSA Worker: calculating residuals bfg_offset" << bfg_offset;
+
                calc_residuals( offset, dataset_count, simulation_values, bfg_offset );
 
                // Tell master we are sending back results
@@ -104,11 +103,11 @@ DbgLv(0) << "w:" << my_rank << ": sols size" << job.length;
                                  simulation_values.ri_noise.size(),
                                  (int)max_rss() };
 
-DbgLv(0) << "w:" << my_rank << ":   result sols size" << size[0]
+DbgLv(1) << "w:" << my_rank << ":   result sols size" << size[0]
  << "max_rss" << size[ 3 ];
 //*DEBUG*
 if(dbg_level==0 && my_rank==1) {
-DbgLv(0) << "w:" << my_rank << ":   result sols size" << size[0]
+DbgLv(1) << "w:" << my_rank << ":   result sols size" << size[0]
  << "nsscan" << simulation_values.sim_data.scanCount();
 }
 //*DEBUG*

@@ -8,11 +8,9 @@
 
 void US_MPI_Analysis::_2dsa_master( void )
 {
-   qDebug() << "2DSA Master: Starting 2DSA Master";
-  init_solutes();
-   qDebug() << "2DSA Master: inited solutes";
+   init_solutes();
    fill_queue();
-   qDebug() << "2DSA Master: queue filled";
+
    work_rss.resize( gcores_count );
 
    current_dataset     = 0;
@@ -47,7 +45,7 @@ void US_MPI_Analysis::_2dsa_master( void )
       menibott_count      = bottom_points;
       meniscus_points     = 1;
    }
-   qDebug() << "2DSA Master starting loop";
+
    while ( true )
    {
       int worker;
@@ -1068,7 +1066,7 @@ void US_MPI_Analysis::submit( Sa_Job& job, int worker )
              edata.scanData.last().seconds < bfg->dens_bfg_data.scanData.last().seconds){
             // recalculation needed
             bfg_offset = i;
-            DbgLv(0) << "bfg found in position " << i;
+            DbgLv(2) << "bfg found in position " << i;
             break;
          }
       }
@@ -1085,10 +1083,10 @@ void US_MPI_Analysis::submit( Sa_Job& job, int worker )
             bfg->calculate_gradient(simulationParameters, &edata);
             data_sets_bfgs << *bfg;
             bfg_offset = data_sets_bfgs.length() -1;
-            DbgLv(0) << "bfg calculated and stored in position " << bfg_offset;
+            DbgLv(2) << "bfg calculated and stored in position " << bfg_offset;
          }
       }
-      DbgLv(0) << "bfg calculated and stored in position " << bfg_offset;
+      DbgLv(1) << "bfg calculated and stored in position " << bfg_offset;
    }
    job.mpi_job.command        = MPI_Job::PROCESS;
    job.mpi_job.length         = job.solutes.size();
