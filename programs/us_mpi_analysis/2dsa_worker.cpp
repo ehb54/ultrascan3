@@ -279,5 +279,7 @@ DbgLv(1) << "newD:" << my_rank << "  length index" << job_length << index
             break;
       }  // switch
    }  // repeat_loop
+   MPI_Barrier( MPI_COMM_WORLD );
+   MPI_Finalize();
 }
 
