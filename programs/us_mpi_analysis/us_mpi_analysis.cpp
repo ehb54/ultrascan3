@@ -2061,9 +2061,11 @@ DbgLv(1) << "2dsa master shutdown : master maxrss" << maxrss;
          my_communicator );
 
       maxrss += work_rss[ i ];
-DbgLv(1) << "2dsa master shutdown : worker" << i << " upd. maxrss" << maxrss
+DbgLv(0) << "2dsa master shutdown : worker" << i << " upd. maxrss" << maxrss
  << "  wkrss" << work_rss[ i ];
    }
+   MPI_Barrier( MPI_COMM_WORLD );
+   MPI_Finalize();
 }
 
 // Write model output at the end of an iteration
