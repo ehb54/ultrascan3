@@ -1130,7 +1130,7 @@ void US_MPI_Analysis::start( void )
       else
           pcsa_worker();
    }
-
+   qDebug() << "US_MPI_Analysis::start()  my_rank" << my_rank;
    int exit_status = 0;
    //MPI_Barrier( MPI_COMM_WORLD );
    // Pack results
