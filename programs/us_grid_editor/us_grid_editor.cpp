@@ -1566,14 +1566,12 @@ US_Grid_Preset::US_Grid_Preset(QWidget * parent) : US_WidgetsDialog(parent)
    QGridLayout* x_mw    = us_radiobutton( Attribute::long_desc( Attribute::ATTR_M ), rb_x_mw, true );
    QGridLayout* x_vbar  = us_radiobutton( Attribute::long_desc( Attribute::ATTR_V ), rb_x_vbar, true );
    QGridLayout* x_D     = us_radiobutton( Attribute::long_desc( Attribute::ATTR_D ), rb_x_D, true );
-   QGridLayout* x_f     = us_radiobutton( Attribute::long_desc( Attribute::ATTR_F ), rb_x_f, true );
 
    QGridLayout* y_s     = us_radiobutton( Attribute::long_desc( Attribute::ATTR_S ), rb_y_s, false );
    QGridLayout* y_ff0   = us_radiobutton( Attribute::long_desc( Attribute::ATTR_K ), rb_y_ff0, true );
    QGridLayout* y_mw    = us_radiobutton( Attribute::long_desc( Attribute::ATTR_M ), rb_y_mw, true );
    QGridLayout* y_vbar  = us_radiobutton( Attribute::long_desc( Attribute::ATTR_V ), rb_y_vbar, true );
    QGridLayout* y_D     = us_radiobutton( Attribute::long_desc( Attribute::ATTR_D ), rb_y_D, true );
-   QGridLayout* y_f     = us_radiobutton( Attribute::long_desc( Attribute::ATTR_F ), rb_y_f, true );
 
    x_axis = new QButtonGroup( this );
    x_axis->addButton( rb_x_s,    Attribute::ATTR_S );
@@ -1581,7 +1579,6 @@ US_Grid_Preset::US_Grid_Preset(QWidget * parent) : US_WidgetsDialog(parent)
    x_axis->addButton( rb_x_mw,   Attribute::ATTR_M );
    x_axis->addButton( rb_x_vbar, Attribute::ATTR_V );
    x_axis->addButton( rb_x_D,    Attribute::ATTR_D );
-   x_axis->addButton( rb_x_f,    Attribute::ATTR_F );
 
    y_axis = new QButtonGroup( this );
    y_axis->addButton( rb_y_s,    Attribute::ATTR_S );
@@ -1589,7 +1586,6 @@ US_Grid_Preset::US_Grid_Preset(QWidget * parent) : US_WidgetsDialog(parent)
    y_axis->addButton( rb_y_mw,   Attribute::ATTR_M );
    y_axis->addButton( rb_y_vbar, Attribute::ATTR_V );
    y_axis->addButton( rb_y_D,    Attribute::ATTR_D );
-   y_axis->addButton( rb_y_f,    Attribute::ATTR_F );
 
    QLabel *lb_fixed      = us_label( tr( "Fixed Attribute" ) );
    lb_fixed->setAlignment(Qt::AlignCenter);
@@ -1625,8 +1621,6 @@ US_Grid_Preset::US_Grid_Preset(QWidget * parent) : US_WidgetsDialog(parent)
    layout->addLayout( y_vbar,     row++, 2, 1, 2 );
    layout->addLayout( x_D,        row,   0, 1, 2 );
    layout->addLayout( y_D,        row++, 2, 1, 2 );
-   layout->addLayout( x_f,        row,   0, 1, 2 );
-   layout->addLayout( y_f,        row++, 2, 1, 2 );
    layout->addWidget( hline1,     row++, 0, 1, 4 );
    layout->addWidget( lb_fixed,   row,   0, 1, 2 );
    layout->addWidget( z_axis,     row++, 2, 1, 2 );
@@ -1669,7 +1663,7 @@ void US_Grid_Preset::select_x_axis( int index )
    QVector<Attribute::Type> tlist;
    tlist << Attribute::ATTR_S << Attribute::ATTR_K
          << Attribute::ATTR_M << Attribute::ATTR_V
-         << Attribute::ATTR_D << Attribute::ATTR_F;
+         << Attribute::ATTR_D;
    foreach (Attribute::Type type, tlist) {
       y_axis->button( type )->setEnabled(true);
    }
@@ -1677,11 +1671,11 @@ void US_Grid_Preset::select_x_axis( int index )
    x_param = Attribute::from_int( index );
    y_axis->button(x_param)->setDisabled(true);
 
-   if ( x_param == Attribute::ATTR_D ) {
-      y_axis->button(Attribute::ATTR_F)->setDisabled(true);
-   } else if ( x_param == Attribute::ATTR_F ) {
-      y_axis->button(Attribute::ATTR_D)->setDisabled(true);
-   }
+   // if ( x_param == Attribute::ATTR_D ) {
+   //    y_axis->button(Attribute::ATTR_F)->setDisabled(true);
+   // } else if ( x_param == Attribute::ATTR_F ) {
+   //    y_axis->button(Attribute::ATTR_D)->setDisabled(true);
+   // }
 
    set_z_axis();
 }
@@ -1691,7 +1685,7 @@ void US_Grid_Preset::select_y_axis( int index )
    QVector<Attribute::Type> tlist;
    tlist << Attribute::ATTR_S << Attribute::ATTR_K
          << Attribute::ATTR_M << Attribute::ATTR_V
-         << Attribute::ATTR_D << Attribute::ATTR_F;
+         << Attribute::ATTR_D;
    foreach (Attribute::Type type, tlist) {
       x_axis->button( type )->setEnabled(true);
    }
@@ -1699,11 +1693,11 @@ void US_Grid_Preset::select_y_axis( int index )
    y_param = Attribute::from_int( index );
    x_axis->button(y_param)->setDisabled(true);
 
-   if ( y_param == Attribute::ATTR_D ) {
-      x_axis->button(Attribute::ATTR_F)->setDisabled(true);
-   } else if ( y_param == Attribute::ATTR_F ) {
-      x_axis->button(Attribute::ATTR_D)->setDisabled(true);
-   }
+   // if ( y_param == Attribute::ATTR_D ) {
+   //    x_axis->button(Attribute::ATTR_F)->setDisabled(true);
+   // } else if ( y_param == Attribute::ATTR_F ) {
+   //    x_axis->button(Attribute::ATTR_D)->setDisabled(true);
+   // }
 
    set_z_axis();
 }
@@ -1724,55 +1718,28 @@ void US_Grid_Preset::cancel()
    reject();
 }
 
-// void US_Grid_Preset::set_z_axis( )
-// {
-//    z_axis->disconnect();
-//    z_axis->clear();
-//    bool has_vbar = (x_param == Attribute::ATTR_V || y_param == Attribute::ATTR_V);
-//    bool is_DF = x_param == Attribute::ATTR_F || x_param == Attribute::ATTR_D ||
-//                 y_param == Attribute::ATTR_F || y_param == Attribute::ATTR_D;
-//    QVector<Attribute::Type> tlist;
-//    tlist << Attribute::ATTR_S << Attribute::ATTR_K
-//          << Attribute::ATTR_M << Attribute::ATTR_V
-//          << Attribute::ATTR_D << Attribute::ATTR_F;
-//    if ( has_vbar ) {
-//       foreach (Attribute::Type type, tlist) {
-//          if ( type == x_param || type == y_param ) continue;
-//          if ( is_DF && ( type == Attribute::ATTR_F || type == Attribute::ATTR_D ) ) continue;
-//          z_axis->addItem( Attribute::long_desc( type ), type );
-//       }
-
-//       int index = z_axis->findData(z_param, Qt::UserRole);
-//       if ( index == -1 ) {
-//          z_axis->setCurrentIndex( 0 );
-//          int id = z_axis->itemData(0, Qt::UserRole ).toInt();
-//          z_param = Attribute::from_int( id );
-//       } else {
-//          z_axis->setCurrentIndex( index );
-//       }
-//    } else {
-//       z_param = Attribute::ATTR_V;
-//       z_axis->addItem( Attribute::long_desc( Attribute::ATTR_V ), Attribute::ATTR_V );
-//    }
-
-//    connect( z_axis, QOverload<int>::of( &QComboBox::currentIndexChanged ),
-//             this,   &US_Grid_Preset::select_z_axis );
-// }
-
 void US_Grid_Preset::set_z_axis( )
 {
    z_axis->disconnect();
    z_axis->clear();
-   bool DF_set = x_param == Attribute::ATTR_F || x_param == Attribute::ATTR_D ||
-                y_param == Attribute::ATTR_F || y_param == Attribute::ATTR_D;
+
    QVector<Attribute::Type> tlist;
    tlist << Attribute::ATTR_S << Attribute::ATTR_K
          << Attribute::ATTR_M << Attribute::ATTR_V
-         << Attribute::ATTR_D << Attribute::ATTR_F;
+         << Attribute::ATTR_D;
+
+   QSet<Attribute::Type> skm;
+   skm.insert(Attribute::ATTR_S);
+   skm.insert(Attribute::ATTR_K);
+   skm.insert(Attribute::ATTR_M);
 
    foreach (Attribute::Type type, tlist) {
       if ( type == x_param || type == y_param ) continue;
-      if ( DF_set && ( type == Attribute::ATTR_F || type == Attribute::ATTR_D ) ) continue;
+      QSet<Attribute::Type> xyz;
+      xyz.insert(x_param);
+      xyz.insert(y_param);
+      xyz.insert(type);
+      if ( xyz.contains(skm )) continue;
       z_axis->addItem( Attribute::long_desc( type ), type );
    }
 

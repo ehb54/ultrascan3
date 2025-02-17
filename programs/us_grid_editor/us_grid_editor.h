@@ -91,13 +91,11 @@ private:
    QRadioButton *rb_x_mw;   //!< X-axis radio button for mw.
    QRadioButton *rb_x_ff0;  //!< X-axis radio button for ff0.
    QRadioButton *rb_x_D;    //!< X-axis radio button for D.
-   QRadioButton *rb_x_f;    //!< X-axis radio button for f.
    QRadioButton *rb_x_vbar; //!< X-axis radio button for vbar.
    QRadioButton *rb_y_s;    //!< Y-axis radio button for s.
    QRadioButton *rb_y_mw;   //!< Y-axis radio button for mw.
    QRadioButton *rb_y_ff0;  //!< Y-axis radio button for ff0.
    QRadioButton *rb_y_D;    //!< Y-axis radio button for D.
-   QRadioButton *rb_y_f;    //!< Y-axis radio button for f.
    QRadioButton *rb_y_vbar; //!< Y-axis radio button for vbar.
    QButtonGroup* x_axis;    //!< X-axis button group.
    QButtonGroup* y_axis;    //!< Y-axis button group.
