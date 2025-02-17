@@ -1207,8 +1207,6 @@ void US_MPI_Analysis::start( void )
                   << "MB,  total run seconds " << cputime;
       }
    }
-   MPI_Barrier( MPI_COMM_WORLD );
-   MPI_Finalize();
    exit( exit_status );
 }
 
