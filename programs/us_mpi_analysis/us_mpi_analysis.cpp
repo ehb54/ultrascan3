@@ -1462,7 +1462,8 @@ void US_MPI_Analysis::calc_residuals( int         offset,
                                       int bfg_offset)
 {
    count_calc_residuals++;
-bool do_dbg=( dbg_level > 0 && ( group_rank < 2 || group_rank == (proc_count/2) ) );
+   qDebug() << "w:" << my_rank << " calc_residuals: offset" << offset << "dataset_count" << dataset_count << "bfg_offset" << bfg_offset;
+bool do_dbg=( dbg_level > 0 && ( group_rank < 2 || group_rank == (proc_count/2) || true) );
 if ( do_dbg )
  DbgLv(1) << "w:" << my_rank << ": CALC_RES : count" << count_calc_residuals
   << "offs dsknt" << offset << dataset_count;
@@ -1484,18 +1485,19 @@ else
 if ( do_dbg ) DbgLv(1) << "w:" << my_rank << ":nsoli" << nsoli << "nsolz" << nsolz;
 if ( do_dbg ) simu_values.dbg_level = qMax( simu_values.dbg_level, 1 );
 //*DEBUG*
-   US_Math_BF::Band_Forming_Gradient* bfg = (bfg_offset!=-1)?&data_sets_bfgs[bfg_offset]: nullptr;
+   US_Math_BF::Band_Forming_Gradient* bfg = (bfg_offset!=-1 && data_sets_bfgs.size()>bfg_offset)?&data_sets_bfgs[bfg_offset]: nullptr;
    DbgLv(1) << "TEST" << bfg_offset << ((bfg_offset!=-1)?&data_sets_bfgs[bfg_offset]: nullptr) << bfg;
    if (data_sets_bfgs.length() == 1){bfg = bandFormingGradient;}
    DbgLv(1) << "TEST" << bfg_offset << ((bfg_offset!=-1)?&data_sets_bfgs[bfg_offset]: nullptr) << bfg;
    if ( bfg != nullptr && my_rank > 2 ){ // copy the gradient for faster lookups
       bfg = new US_Math_BF::Band_Forming_Gradient(*bfg);
    }
+   qDebug() << "w:" << my_rank << " calc_residuals: offset" << offset << "dataset_count" << dataset_count << "bfg_offset" << bfg_offset << "bfg" << bfg;
    solvesim.calc_residuals( offset, dataset_count, simu_values, false, nullptr, nullptr, nullptr, bfg);
 
 //*DEBUG*
 simu_values.dbg_level=dbglvsv;
-bool hicee = false;
+bool hicee = true;
 for (int jj=0;jj<simu_values.solutes.size();jj++ )
  if ( simu_values.solutes[jj].c > 1.0 ) hicee = true;
 

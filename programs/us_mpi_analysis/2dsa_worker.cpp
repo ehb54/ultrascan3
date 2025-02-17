@@ -95,7 +95,7 @@ DbgLv(0) << "w:" << my_rank << ": sols size" << job.length;
   << simulation_values.solutes[nn].s << simulation_values.solutes[nn].k;
 }
 //*DEBUG*
-
+               qDebug() << "w:" << my_rank << ": 2DSA Worker: calculating residuals bfg_offset" << bfg_offset;
                calc_residuals( offset, dataset_count, simulation_values, bfg_offset );
 
                // Tell master we are sending back results
