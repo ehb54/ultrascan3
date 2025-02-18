@@ -18,42 +18,81 @@ class Attribute : public QObject
    Q_OBJECT
 
 public:
+
    //! Enum representing different attribute types used in the system.
    enum Type { ATTR_S, ATTR_K, ATTR_M, ATTR_V, ATTR_D, ATTR_F, ATTR_F0, ATTR_SR, ATTR_DR };
 
+   //! \brief A static method to return the long-version description of the input Type.
    static QString long_desc  ( Type );
+
+    //! \brief A static method to return the short-version description of the input Type.
    static QString short_desc ( Type );
+
+   //! \brief A static method to return the title of the input Type.
    static QString title      ( Type );
+
+   //! \brief A static method to return the symbol of the input Type.
    static QString symbol     ( Type );
+
+   //! \brief A static method to return Type of the input integer.
    static Type    from_int   ( int  );
 };
+
 
 //! \class GridPoint Class
 //! \brief Enumeration for attribute types.
 class GridPoint
 {
+
 public:
+
+   //! \brief Default constructor for GridPoint.
    GridPoint();
 
-   bool set_param( const QVector<double>&, const QVector<Attribute::Type>& );
+   //! \brief A method to set x, y, and z parameters and their types.
+   //! \param values Array of x, y, z values.
+   //! \param types  Array of x, y, z Attribute::Type.
+   bool set_param( const QVector<double>& values, const QVector<Attribute::Type>& types);
 
-   void set_dens_visc_temp (double, double, double);
+   //! \brief A method to set density, viscosity, and temperature of the buffer.
+   //! \param density.
+   //! \param viscosity.
+   //! \param temperature
+   void set_dens_visc_temp (double density, double viscosity, double T);
 
+   //! \brief A method to get the value of a parameter.
+   //! \param Attribute::Type.
    double value( Attribute::Type ) const;
 
-   void set_id_row_col(int, int, int);
+   //! \brief A method to set the Id, row, and column where the grid point is placed.
+   //! \param id.
+   //! \param row.
+   //! \param column
+   void set_id_row_col(int id, int row, int column);
 
-   int get_row() const;
-   int get_col() const;
+   //! \brief A method to get the grid point id.
    int get_id() const;
 
+   //! \brief A method to get the grid point row.
+   int get_row() const;
+
+   //! \brief A method to get the grid point column.
+   int get_col() const;
+
+   //! \brief A method to get the value of x parameter.
    double x_value() const;
+
+   //! \brief A method to get the value of y parameter.
    double y_value() const;
+
+   //! \brief A method to get the value of z parameter.
    double z_value() const;
 
+   //! \brief A method to return the error message.
    QString error_string();
 
 private:
+
    bool   dvt_set;                 //!< true if density, viscosity, and temperature are already set.
    double density;                 //!< Density of buffer (at 20W).
    double viscosity;               //!< viscosity of buffer (at 20W).
@@ -67,28 +106,40 @@ private:
    double F0;                      //!< Reference frictional coefficient (at 20W).
    double S_real;                  //!< Apparent Sedimentation coefficient.
    double D_real;                  //!< Apparent Diffusion coefficient.
-   int row;
-   int col;
-   int id;
+   int row;                        //!< grid point id
+   int col;                        //!< grid point row
+   int id;                         //!< grid point column
    QString error;                  //!< Error string
    QSet<Attribute::Type> ptypes;   //!< Container of x_param, y_param, z_param
    Attribute::Type x_param;        //!< x axis parameter
    Attribute::Type y_param;        //!< y axis parameter
    Attribute::Type z_param;        //!< z axis parameter
 
+   //! \brief Calculate all parameters from s, D, Vbar
    void all_from_sdv();
-   bool calculate_20w();
-   void calculate_real();
-   bool check_s_vbar();
-   bool contains(Attribute::Type, Attribute::Type, Attribute::Type);
 
+   //! \brief Calculate 20W standard parameters
+   //! \return False if the calculation fails.
+   bool calculate_20w();
+
+   //! \brief Calculate s and D apparent from s20w and D20w and buffer condition.
+   void calculate_real();
+
+   //! \brief Check if vbar is correctly set.
+   //! \return False if vbar is not correct.
+   bool check_s_vbar();
+
+   //! \brief Check if ptypes contains a, b, c.
+   bool contains(Attribute::Type a, Attribute::Type b, Attribute::Type c);
 
 };
 
 class US_Grid_Preset : public US_WidgetsDialog
 {
    Q_OBJECT
+
 public:
+
    US_Grid_Preset(QWidget *, Attribute::Type, Attribute::Type, Attribute::Type);
 
    //! \brief A method to obtain the grid parameters.
@@ -98,6 +149,7 @@ public:
    void parameters (Attribute::Type& x, Attribute::Type& y, Attribute::Type& z);
 
 private:
+
    QRadioButton *rb_x_s;    //!< X-axis radio button for s.
    QRadioButton *rb_x_mw;   //!< X-axis radio button for mw.
    QRadioButton *rb_x_ff0;  //!< X-axis radio button for ff0.
@@ -119,6 +171,7 @@ private:
    void set_z_axis();
 
 private slots:
+
    //! \brief Slot to select x-axis attribute.
    //! \param index Index of the selected x-axis attribute.
    void select_x_axis(int index);
@@ -138,6 +191,7 @@ private slots:
    void cancel();
 };
 
+
 //! \class US_Grid_Editor
 //! \brief Class to handle the grid editor GUI and functionality.
 class US_Grid_Editor : public US_Widgets
@@ -149,101 +203,127 @@ public:
    US_Grid_Editor();
 
 private:
-   bool plot_flag;
-   double buff_dens;
-   double buff_visc;
-   double buff_temp;
-   int grow;
-   int gcol;
-   int gid;
 
-   QDoubleValidator *dValid;
-   QIntValidator    *iValid;
+   bool   plot_flag;                       //!< plotting flag
+   double buff_dens;                       //!< buffer density
+   double buff_visc;                       //!< buffer viscosity
+   double buff_temp;                       //!< buffer temperature
+   int    gid;                             //!< grip point id counter
+   Attribute::Type x_param;                //!< x parameter type
+   Attribute::Type y_param;                //!< y parameter type
+   Attribute::Type z_param;                //!< z parameter type
 
-   QLineEdit *le_investigator; //!< Investigator line edit.
+   QDoubleValidator *dValid;               //!< floating-point numbers validator
+   QIntValidator    *iValid;               //!< integer numbers validator
 
-   QLabel    *lb_x_param;  //!< X-axis parameter.
-   QLabel    *lb_y_param;  //!< Y-axis parameter.
-   QLabel    *lb_z_param;  //!< Z-axis parameter.
-   QLineEdit *le_x_param;  //!< X-axis parameter name.
-   QLineEdit *le_y_param;  //!< Y-axis parameter name.
-   QLineEdit *le_z_param;  //!< Z-axis parameter name.
+   QLabel    *lb_x_param;                  //!< X-axis parameter label.
+   QLabel    *lb_y_param;                  //!< Y-axis parameter label.
+   QLabel    *lb_z_param;                  //!< Z-axis parameter label.
+   QLabel    *lb_x_ax;                     //!< X-axis plotting label.
+   QLabel    *lb_y_ax;                     //!< X-axis plotting label.
+   QLabel    *lb_z_ax;                     //!< Z-axis plotting label.
 
-   QLineEdit *le_dens;   //!< Density line edit.
-   QLineEdit *le_visc;   //!< Viscosity line edit.
-   QLineEdit *le_temp;   //!< Temperature line edit.
+   QLineEdit *le_investigator;             //!< Investigator line edit.
+   QLineEdit *le_x_param;                  //!< X-axis parameter input.
+   QLineEdit *le_y_param;                  //!< Y-axis parameter input.
+   QLineEdit *le_z_param;                  //!< Z-axis parameter input.
+   QLineEdit *le_dens;                     //!< buffer density input.
+   QLineEdit *le_visc;                     //!< buffer viscosity input.
+   QLineEdit *le_temp;                     //!< buffer temperature input.
+   QLineEdit *le_x_min;                    //!< X-axis min value input.
+   QLineEdit *le_x_max;                    //!< X-axis max value input.
+   QLineEdit *le_x_res;                    //!< X-axis resolution input.
+   QLineEdit *le_y_min;                    //!< Y-axis min value input.
+   QLineEdit *le_y_max;                    //!< Y-axis max value input.
+   QLineEdit *le_y_res;                    //!< Y-axis resolution input.
+   QLineEdit *le_z_val;                    //!< Z-axis value input.
+   QLineEdit *le_npoints;                  //!< number of all grid points.
+   QLineEdit *le_npoints_curr;             //!< number of points of the current subgrid
+   QLineEdit *le_npoints_last;             //!< number of points of the last subgrid
 
-   QLabel    *lb_x_ax;   //!< X-axis label.
-   QLineEdit *le_x_min;  //!< X-axis min value.
-   QLineEdit *le_x_max;  //!< X-axis max value.
-   QLineEdit *le_x_res;  //!< X-axis resolution.
+   QPushButton* pb_add_update;             //!< add / update push button
+   QPushButton* pb_update_dvt;             //!< push button to update the buffer condition
+   QPushButton* pb_save;                   //!< push button to save the model
 
-   QLabel    *lb_y_ax;   //!< X-axis label.
-   QLineEdit *le_y_min;  //!< Y-axis min value.
-   QLineEdit *le_y_max;  //!< Y-axis max value.
-   QLineEdit *le_y_res;  //!< Y-axis resolution.
+   QwtCounter* ct_size;                    //!< to set the plot symbol size
+   QwtCounter* ct_subgrid;                 //!< to set what subgrid to be plotted
+   QwtCounter* ct_nsubgrids;               // to set the number of subgrids
 
-   QLabel    *lb_z_ax;   //!< Z-axis label.
-   QLineEdit *le_z_val;  //!< Z-axis value.
+   QButtonGroup* x_axis;                   //!< X-axis button group.
+   QButtonGroup* y_axis;                   //!< Y-axis button group.
 
-   QLineEdit *le_npoints; //!< Number of all subgrids.
-   QLineEdit *le_npoints_curr;
-   QLineEdit *le_npoints_last;
-   QPushButton* pb_add_update;
+   QListWidget *lw_grids;                  //!< list of all grids
 
-   QButtonGroup* x_axis;    //!< X-axis button group.
-   QButtonGroup* y_axis;    //!< Y-axis button group.
+   QwtPlot *data_plot;                     //!< data plot.
 
-   QwtPlot *data_plot; //!< Data plot.
+   QColor color_base;                      //!< background color
+   QColor color_highlight;                 //!< grid color
+   QColor color_subgrid;                   //!< subgrid color
 
-   US_Disk_DB_Controls* dkdb_cntrls; //!< Disk DB controls.
+   US_Help showHelp;                       //!< Help widget.
 
-   QListWidget *lw_grids;
+   QwtPlotCurve* subgrid_curve;            //!< subgrid curve
+   QList<QwtPlotCurve*> point_curves;      //!< all grid points curves
+   QList<QVector<GridPoint>> grid_points;  //!< array of all grids
+   QList<QVector<double>> grid_info;       //!< array of all grid information
+   QVector<GridPoint> sorted_points;       //!< sorted grid points
+   QList<QVector<int>> final_subgrids;     //!< subgrid indexes
 
-   QwtCounter* ct_size;
-   QwtCounter* ct_subgrid;
-   QwtCounter* ct_nsubgrids;
+   US_Disk_DB_Controls* dkdb_cntrls;       //!< Disk DB controls.
 
-   QList<QwtPlotCurve*> point_curves;
-   QwtPlotCurve* subgrid_curve;
-   QColor color_base;
-   QColor color_highlight;
-   QColor color_subgrid;
-   QPushButton* pb_update_dvt;
-   QPushButton* pb_save;
-
-   US_Help showHelp; //!< Help widget.
-   QList<QVector<GridPoint>> grid_points;
-   QList<QVector<double>> grid_info;
-   QVector<GridPoint> sorted_points;
-   QList<QVector<int>> final_subgrids;
-
-   Attribute::Type x_param;
-   Attribute::Type y_param;
-   Attribute::Type z_param;
-   int dbg_level;
-
+   //! \brief Clear set region from the data plot.
    void rm_tmp_items(void);
+
+   //! \brief Clear subgrid points from the data plot.
    void rm_subgrid_curve(void);
+
+   //! \brief Clear all grid points from the data plot.
    void rm_point_curves(void);
+
+   //! \brief Plot set region.
    void plot_tmp(void);
+
+   //! \brief Validate input numbers.
    bool validate_num(const QString);
+
+   //! \brief Validate grid before adding or updating.
    bool validate(void);
+
+   //! \brief Check if the set region overlaps with others.
    bool check_overlap(double, double, double, double, int);
+
+   //! \brief Generate evenly spaced numbers over a specified interval.
    void linspace(double, double, int, double&, QVector<double>&);
+
+   //! \brief Correct the unit of the parameter.
    double correct_unit(double, Attribute::Type, bool);
+
+   //! \brief Fill list of grids.
    void fill_list();
+
+   //! \brief Return the parameter value to plot.
    double value4plot(GridPoint&, Attribute::Type);
+
+   //! \brief Clear input widgets.
    void clear_xyz(void);
+
+   //! \brief Get input values
    void get_xyz(QHash<QString, double>&);
+
+   //! \brief Sort grid points
    void sort_points();
+
+   //! \brief Enable input widgets.
    void enable_ctrl(bool);
+
+   //! \brief Validate the buffer condition
    void check_dens_visc_temp(void);
 
 private slots:
    //! \brief Slot to setup the grid axises.
    void set_grid_axis(void);
 
+   //! \brief Slot to add or update a grid.
    void add_update(void);
 
    //! \brief Slot to update x minimum value.
@@ -258,30 +338,46 @@ private slots:
    //! \brief Slot to update y maximum value.
    void update_yMax(void);
 
+   //! \brief Slot to plot the selected grid.
    void highlight(int);
 
+   //! \brief Slot to setup input widgets for a new grid.
    void new_grid_clicked(void);
+
+   //! \brief Slot to setup input widgets to update a grid.
    void update_grid_clicked(void);
+
+   //! \brief Slot to delete the selected grid.
    void delete_grid_clicked(void);
 
+   //! \brief Slot to select X-axis type to plot.
    void select_x_axis(int);
+
+   //! \brief Slot to select Y-axis type to plot.
    void select_y_axis(int);
 
+   //! \brief Slot to update the symbol size.
    void update_symbsize(double);
 
-   void update_subgrid(double);
+   //! \brief Slot to update the number of subgrids.
+   void update_nsubgrid(double);
+
+   //! \brief Slot to plot the subgrid.
    void plot_subgrid(double);
 
+   //! \brief Slot a new buffer condition
    void new_dens_visc_temp(void);
+
+   //! \brief Slot to update the buffer condition
    void update_dens_visc_temp(void);
 
-   //! \brief Slot to update the plot.
+   //! \brief Slot to plot all grid points.
    void plot_points(void);
 
-   //! \brief Slot to save the grid data.
+   //! \brief Slot to save the model.
    void save(void);
 
-   // //! \brief Slot to reset the grid editor.
+   //! \brief Slot to reset the grid editor.
    void reset(void);
 
    // //! \brief Slot to display help information.

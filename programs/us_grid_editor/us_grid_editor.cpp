@@ -52,8 +52,6 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    right->setSpacing( 0 );
    right->setContentsMargins( 0, 0, 0, 0 );
 
-   dbg_level = US_Settings::us_debug();
-
    QLabel *lb_preset = us_banner( tr( "Grid Preset" ) );
 
    QPushButton* pb_investigator = us_pushbutton( tr( "Select Investigator" ) );
@@ -205,7 +203,7 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    }
 
    connect(ct_subgrid,   &QwtCounter::valueChanged, this, &US_Grid_Editor::plot_subgrid);
-   connect(ct_nsubgrids, &QwtCounter::valueChanged, this, &US_Grid_Editor::update_subgrid);
+   connect(ct_nsubgrids, &QwtCounter::valueChanged, this, &US_Grid_Editor::update_nsubgrid);
 
    QLabel *lb_npoints = us_label( "Total Number of Points" );
    lb_npoints->setAlignment( Qt::AlignCenter );
@@ -721,7 +719,7 @@ void US_Grid_Editor::add_update()
    fill_list();
    sort_points();
    plot_points();
-   update_subgrid(ct_nsubgrids->value());
+   update_nsubgrid(ct_nsubgrids->value());
    highlight(lw_grids->currentRow());
    le_npoints->setText(tr("%1").arg(sorted_points.size()));
 }
@@ -1006,8 +1004,6 @@ void US_Grid_Editor::check_dens_visc_temp()
 // reset the GUI
 void US_Grid_Editor::reset( void )
 {
-   grow = 0;
-   gcol = 0;
    gid  = 0;
    lw_grids->disconnect();
    lw_grids->clear();
@@ -1283,7 +1279,7 @@ void US_Grid_Editor::delete_grid_clicked()
    grid_info.removeAt(row);
    fill_list();
    sort_points();
-   update_subgrid(ct_nsubgrids->value());
+   update_nsubgrid(ct_nsubgrids->value());
 
    plot_points();
    highlight(lw_grids->currentRow());
@@ -1353,7 +1349,7 @@ void US_Grid_Editor::update_symbsize(double)
    data_plot->replot();
 }
 
-void US_Grid_Editor::update_subgrid(double num)
+void US_Grid_Editor::update_nsubgrid(double num)
 {
    ct_subgrid->disconnect();
    ct_nsubgrids->disconnect();
@@ -1376,7 +1372,7 @@ void US_Grid_Editor::update_subgrid(double num)
    ct_subgrid->setValue(sbg);
 
    connect(ct_subgrid,   &QwtCounter::valueChanged, this, &US_Grid_Editor::plot_subgrid);
-   connect(ct_nsubgrids, &QwtCounter::valueChanged, this, &US_Grid_Editor::update_subgrid);
+   connect(ct_nsubgrids, &QwtCounter::valueChanged, this, &US_Grid_Editor::update_nsubgrid);
 
    if ( npoints > 0 ) {
       for ( int ii = 0; ii < nsubgrids; ii++ ) {
