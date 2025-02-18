@@ -1275,9 +1275,10 @@ void US_Grid_Editor::delete_grid_clicked()
    int row = lw_grids->currentRow();
    if ( row == -1 ) return;
    int yes = QMessageBox::question(this, "Warning!",
-                                   "The grid containing the following data will be deleted.\n\n"
-                                      + lw_grids->currentItem()->text() +
-                                      "\n\nPress \"Yes\" to confirm.");
+                                   tr("The grid containing the following "
+                                      "data will be deleted.<br/><br/><b>%1</b><br/><br/>"
+                                      "Press <b>\"Yes\"</b> to confirm.").
+                                   arg(lw_grids->currentItem()->text()));
    if ( yes == QMessageBox::No ) return;
 
    grid_points.removeAt(row);
@@ -1300,18 +1301,8 @@ void US_Grid_Editor::select_x_axis(int index)
    foreach (Attribute::Type type, tlist) {
       y_axis->button( type )->setEnabled(true);
    }
-
    y_axis->button(index)->setDisabled(true);
 
-   if ( index == Attribute::ATTR_S ) {
-      y_axis->button(Attribute::ATTR_SR)->setDisabled(true);
-   } else if ( index == Attribute::ATTR_D ) {
-      y_axis->button(Attribute::ATTR_DR)->setDisabled(true);
-   } else if ( index == Attribute::ATTR_SR ) {
-      y_axis->button(Attribute::ATTR_S)->setDisabled(true);
-   } else if ( index == Attribute::ATTR_DR ) {
-      y_axis->button(Attribute::ATTR_D)->setDisabled(true);
-   }
    if ( plot_flag ) {
       plot_points();
       int row = lw_grids->currentRow();
@@ -1330,18 +1321,8 @@ void US_Grid_Editor::select_y_axis(int index)
    foreach (Attribute::Type type, tlist) {
       x_axis->button( type )->setEnabled(true);
    }
-
    x_axis->button(index)->setDisabled(true);
 
-   if ( index == Attribute::ATTR_S ) {
-      x_axis->button(Attribute::ATTR_SR)->setDisabled(true);
-   } else if ( index == Attribute::ATTR_D ) {
-      x_axis->button(Attribute::ATTR_DR)->setDisabled(true);
-   } else if ( index == Attribute::ATTR_SR ) {
-      x_axis->button(Attribute::ATTR_S)->setDisabled(true);
-   } else if ( index == Attribute::ATTR_DR ) {
-      x_axis->button(Attribute::ATTR_D)->setDisabled(true);
-   }
    if ( plot_flag ) {
       plot_points();
       int row = lw_grids->currentRow();
