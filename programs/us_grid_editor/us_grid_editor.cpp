@@ -45,12 +45,12 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    QHBoxLayout* main  = new QHBoxLayout( this );
    QVBoxLayout* right = new QVBoxLayout();
    QGridLayout* left  = new QGridLayout();
-   main->setSpacing        ( 2 );
+   main->setSpacing( 2 );
    main->setContentsMargins( 2, 2, 2, 2 );
-   left->setSpacing        ( 2 );
+   left->setSpacing( 2 );
    left->setContentsMargins( 0, 0, 0, 0 );
-   right->setSpacing        ( 0 );
-   right->setContentsMargins( 0, 1, 0, 1 );
+   right->setSpacing( 0 );
+   right->setContentsMargins( 0, 0, 0, 0 );
 
    dbg_level = US_Settings::us_debug();
 
@@ -347,7 +347,7 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    QRadioButton *rb_x_mw;
    QRadioButton *rb_x_ff0;
    QRadioButton *rb_x_D;
-   QRadioButton *rb_x_f;
+   // QRadioButton *rb_x_f;
    QRadioButton *rb_x_vbar;
    QRadioButton *rb_x_sr;
    QRadioButton *rb_x_Dr;
@@ -356,7 +356,7 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    QRadioButton *rb_y_mw;
    QRadioButton *rb_y_ff0;
    QRadioButton *rb_y_D;
-   QRadioButton *rb_y_f;
+   // QRadioButton *rb_y_f;
    QRadioButton *rb_y_vbar;
    QRadioButton *rb_y_sr;
    QRadioButton *rb_y_Dr;
@@ -366,7 +366,7 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    QGridLayout* lyt_x_mw    = us_radiobutton( Attribute::symbol( Attribute::ATTR_M ),  rb_x_mw,   false );
    QGridLayout* lyt_x_vbar  = us_radiobutton( Attribute::symbol( Attribute::ATTR_V ),  rb_x_vbar, false );
    QGridLayout* lyt_x_D     = us_radiobutton( Attribute::symbol( Attribute::ATTR_D ),  rb_x_D,    false );
-   QGridLayout* lyt_x_f     = us_radiobutton( Attribute::symbol( Attribute::ATTR_F ),  rb_x_f,    false );
+   // QGridLayout* lyt_x_f     = us_radiobutton( Attribute::symbol( Attribute::ATTR_F ),  rb_x_f,    false );
    QGridLayout* lyt_x_sr    = us_radiobutton( Attribute::symbol( Attribute::ATTR_SR ), rb_x_sr,   false );
    QGridLayout* lyt_x_Dr    = us_radiobutton( Attribute::symbol( Attribute::ATTR_DR ), rb_x_Dr,   false );
 
@@ -375,7 +375,7 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    QGridLayout* lyt_y_mw    = us_radiobutton( Attribute::symbol( Attribute::ATTR_M ),  rb_y_mw,   false );
    QGridLayout* lyt_y_vbar  = us_radiobutton( Attribute::symbol( Attribute::ATTR_V ),  rb_y_vbar, false );
    QGridLayout* lyt_y_D     = us_radiobutton( Attribute::symbol( Attribute::ATTR_D ),  rb_y_D,    false );
-   QGridLayout* lyt_y_f     = us_radiobutton( Attribute::symbol( Attribute::ATTR_F ),  rb_y_f,    false );
+   // QGridLayout* lyt_y_f     = us_radiobutton( Attribute::symbol( Attribute::ATTR_F ),  rb_y_f,    false );
    QGridLayout* lyt_y_sr    = us_radiobutton( Attribute::symbol( Attribute::ATTR_SR ), rb_y_sr,   false );
    QGridLayout* lyt_y_Dr    = us_radiobutton( Attribute::symbol( Attribute::ATTR_DR ), rb_y_Dr,   false );
 
@@ -385,7 +385,7 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    x_axis->addButton( rb_x_mw,   Attribute::ATTR_M );
    x_axis->addButton( rb_x_vbar, Attribute::ATTR_V );
    x_axis->addButton( rb_x_D,    Attribute::ATTR_D );
-   x_axis->addButton( rb_x_f,    Attribute::ATTR_F );
+   // x_axis->addButton( rb_x_f,    Attribute::ATTR_F );
    x_axis->addButton( rb_x_sr,   Attribute::ATTR_SR );
    x_axis->addButton( rb_x_Dr,   Attribute::ATTR_DR );
 
@@ -395,7 +395,7 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    y_axis->addButton( rb_y_mw,   Attribute::ATTR_M );
    y_axis->addButton( rb_y_vbar, Attribute::ATTR_V );
    y_axis->addButton( rb_y_D,    Attribute::ATTR_D );
-   y_axis->addButton( rb_y_f,    Attribute::ATTR_F );
+   // y_axis->addButton( rb_y_f,    Attribute::ATTR_F );
    y_axis->addButton( rb_y_sr,   Attribute::ATTR_SR );
    y_axis->addButton( rb_y_Dr,   Attribute::ATTR_DR );
 
@@ -421,28 +421,31 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
 
    QGridLayout* lyt_r = new QGridLayout();
    lyt_r->setMargin(0);
-   lyt_r->addWidget(lb_x_plot,  0, 0, 1, 1);
-   lyt_r->addLayout(lyt_x_s,    0, 1, 1, 1);
-   lyt_r->addLayout(lyt_x_ff0,  0, 2, 1, 1);
-   lyt_r->addLayout(lyt_x_mw,   0, 3, 1, 1);
-   lyt_r->addLayout(lyt_x_vbar, 0, 4, 1, 1);
-   lyt_r->addLayout(lyt_x_D,    0, 5, 1, 1);
-   lyt_r->addLayout(lyt_x_f,    0, 6, 1, 1);
-   lyt_r->addLayout(lyt_x_sr,   0, 7, 1, 1);
-   lyt_r->addLayout(lyt_x_Dr,   0, 8, 1, 1);
-
-   lyt_r->addWidget(lb_y_plot,  1, 0, 1, 1);
-   lyt_r->addLayout(lyt_y_s,    1, 1, 1, 1);
-   lyt_r->addLayout(lyt_y_ff0,  1, 2, 1, 1);
-   lyt_r->addLayout(lyt_y_mw,   1, 3, 1, 1);
-   lyt_r->addLayout(lyt_y_vbar, 1, 4, 1, 1);
-   lyt_r->addLayout(lyt_y_D,    1, 5, 1, 1);
-   lyt_r->addLayout(lyt_y_f,    1, 6, 1, 1);
-   lyt_r->addLayout(lyt_y_sr,   1, 7, 1, 1);
-   lyt_r->addLayout(lyt_y_Dr,   1, 8, 1, 1);
-
-   lyt_r->addWidget(lb_p_size,  2, 0, 1, 1);
-   lyt_r->addWidget(ct_size,    2, 3, 1, 3);
+   int rr = 0;
+   int cc = 0;
+   lyt_r->addWidget(lb_x_plot,   rr, cc++, 1, 1);
+   lyt_r->addLayout(lyt_x_s,     rr, cc++, 1, 1);
+   lyt_r->addLayout(lyt_x_ff0,   rr, cc++, 1, 1);
+   lyt_r->addLayout(lyt_x_mw,    rr, cc++, 1, 1);
+   lyt_r->addLayout(lyt_x_vbar,  rr, cc++, 1, 1);
+   lyt_r->addLayout(lyt_x_D,     rr, cc++, 1, 1);
+   // lyt_r->addLayout(lyt_x_f,     rr, cc++, 1, 1);
+   lyt_r->addLayout(lyt_x_sr,    rr, cc++, 1, 1);
+   lyt_r->addLayout(lyt_x_Dr,    rr, cc++, 1, 1);
+   rr++;
+   cc = 0;
+   lyt_r->addWidget(lb_y_plot,   rr, cc++, 1, 1);
+   lyt_r->addLayout(lyt_y_s,     rr, cc++, 1, 1);
+   lyt_r->addLayout(lyt_y_ff0,   rr, cc++, 1, 1);
+   lyt_r->addLayout(lyt_y_mw,    rr, cc++, 1, 1);
+   lyt_r->addLayout(lyt_y_vbar,  rr, cc++, 1, 1);
+   lyt_r->addLayout(lyt_y_D,     rr, cc++, 1, 1);
+   // lyt_r->addLayout(lyt_y_f,     rr, cc++, 1, 1);
+   lyt_r->addLayout(lyt_y_sr,    rr, cc++, 1, 1);
+   lyt_r->addLayout(lyt_y_Dr,    rr, cc++, 1, 1);
+   rr++;
+   lyt_r->addWidget(lb_p_size,   rr, 0, 1, 1);
+   lyt_r->addWidget(ct_size,     rr, 3, 1, 2);
 
    for ( int ii = 0; ii < lyt_r->columnCount(); ii++ ) {
       lyt_r->setColumnStretch(ii, 1);
@@ -663,10 +666,12 @@ void US_Grid_Editor::add_update()
    int y_res    = xyz.value("yRes");
    double z_val = xyz.value("zVal");
    QVector<double> xpoints;
-   linspace(xyz.value("xMin"), xyz.value("xMax"), x_res, xpoints);
+   double dx;
+   linspace(xyz.value("xMin"), xyz.value("xMax"), x_res, dx, xpoints);
 
    QVector<double> ypoints;
-   linspace(xyz.value("yMin"), xyz.value("yMax"), y_res, ypoints);
+   double dy;
+   linspace(xyz.value("yMin"), xyz.value("yMax"), y_res, dy, ypoints);
 
    if ( check_overlap(xpoints.first(), xpoints.last(),
                      ypoints.first(), ypoints.last(), excl ) ) {
@@ -679,13 +684,14 @@ void US_Grid_Editor::add_update()
    QVector<GridPoint> gps;
    bool flag = true;
    QString error;
-   for ( int jj = 0; jj < y_res; jj++ ) {
-      for ( int ii = 0; ii < x_res; ii++ ) {
+   for ( int ii = 0; ii < x_res; ii++ ) {
+      for ( int jj = 0; jj < y_res; jj++ ) {
          QVector<double> vals;
          vals << xpoints.at(ii) << ypoints.at(jj) << z_val;
          GridPoint gp;
          gp.set_dens_visc_temp(buff_dens, buff_visc, buff_temp);
          if ( gp.set_param(vals, types) ) {
+            gp.set_id_row_col(gid, jj, ii);
             gps << gp;
          } else {
             flag = false;
@@ -700,6 +706,8 @@ void US_Grid_Editor::add_update()
       QMessageBox::warning(this, "Error!", error);
       return;
    }
+
+   gid++;
 
    QVector<double> ginfo;
    ginfo << xyz.value("xMinU") << xyz.value("xMaxU") << xyz.value("xRes")
@@ -819,16 +827,18 @@ bool US_Grid_Editor::check_overlap(double xMin, double xMax,
    return false;
 }
 
-void US_Grid_Editor::linspace(double x1, double x2, int np, QVector<double> &vec)
+void US_Grid_Editor::linspace(double x1, double x2, int np,
+                              double& dx, QVector<double> &vec)
 {
-   double dx = (x2 - x1) / static_cast<double>(np);
+   dx = (x2 - x1) / static_cast<double>(np);
    vec.clear();
    double x0 = x1 + 0.5 * dx;
+   vec.resize(np);
    for (int ii = 0; ii < np; ii++) {
       if (ii != 0) {
          x0 += dx;
       }
-      vec << x0;
+      vec[ii] = x0;
    }
 }
 
@@ -933,19 +943,22 @@ void US_Grid_Editor::sort_points()
    for ( int ii = 0; ii < grid_points.size(); ii++ ) {
       sorted_points << grid_points.at(ii);
    }
-
    std::stable_sort(sorted_points.begin(), sorted_points.end(),
                     [](const GridPoint &g1, const GridPoint &g2) {
-                       double g1y = g1.y_value();
-                       double g2y = g2.y_value();
-                       return g1y < g2y;
+                       bool result = g1.y_value() < g2.y_value();
+                       if ( g1.get_id() == g2.get_id() ) {
+                          if ( g1.get_col() != g2.get_col() ) result = false;
+                       }
+                       return result;
                     });
 
    std::stable_sort(sorted_points.begin(), sorted_points.end(),
                     [](const GridPoint &g1, const GridPoint &g2) {
-                       double g1x = g1.x_value();
-                       double g2x = g2.x_value();
-                       return g1x < g2x;
+                       bool result = g1.x_value() < g2.x_value();
+                       if ( g1.get_id() == g2.get_id() ) {
+                          if ( g1.get_row() != g2.get_row() ) result = false;
+                       }
+                       return result;
                     });
 }
 
@@ -995,6 +1008,9 @@ void US_Grid_Editor::check_dens_visc_temp()
 // reset the GUI
 void US_Grid_Editor::reset( void )
 {
+   grow = 0;
+   gcol = 0;
+   gid  = 0;
    lw_grids->disconnect();
    lw_grids->clear();
    grid_points.clear();
@@ -1279,7 +1295,7 @@ void US_Grid_Editor::select_x_axis(int index)
    QVector<Attribute::Type> tlist;
    tlist << Attribute::ATTR_S << Attribute::ATTR_K
       << Attribute::ATTR_M << Attribute::ATTR_V
-      << Attribute::ATTR_D << Attribute::ATTR_F
+      << Attribute::ATTR_D //<< Attribute::ATTR_F
       << Attribute::ATTR_SR << Attribute::ATTR_DR;
    foreach (Attribute::Type type, tlist) {
       y_axis->button( type )->setEnabled(true);
@@ -1309,7 +1325,7 @@ void US_Grid_Editor::select_y_axis(int index)
    QVector<Attribute::Type> tlist;
    tlist << Attribute::ATTR_S << Attribute::ATTR_K
       << Attribute::ATTR_M << Attribute::ATTR_V
-      << Attribute::ATTR_D << Attribute::ATTR_F
+      << Attribute::ATTR_D //<< Attribute::ATTR_F
       << Attribute::ATTR_SR << Attribute::ATTR_DR;
    foreach (Attribute::Type type, tlist) {
       x_axis->button( type )->setEnabled(true);
@@ -1843,6 +1859,28 @@ double GridPoint::value( Attribute::Type type ) const
    else if ( type == Attribute::ATTR_SR ) val = S_real;
    else if ( type == Attribute::ATTR_DR ) val = D_real;
    return val;
+}
+
+void GridPoint::set_id_row_col(int i, int r, int c)
+{
+   id  = i;
+   row = r;
+   col = c;
+}
+
+int GridPoint::get_row() const
+{
+   return row;
+}
+
+int GridPoint::get_col() const
+{
+   return col;
+}
+
+int GridPoint::get_id() const
+{
+   return id;
 }
 
 double GridPoint::x_value () const

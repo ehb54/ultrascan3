@@ -41,6 +41,12 @@ public:
 
    double value( Attribute::Type ) const;
 
+   void set_id_row_col(int, int, int);
+
+   int get_row() const;
+   int get_col() const;
+   int get_id() const;
+
    double x_value() const;
    double y_value() const;
    double z_value() const;
@@ -61,6 +67,9 @@ private:
    double F0;                      //!< Reference frictional coefficient (at 20W).
    double S_real;                  //!< Apparent Sedimentation coefficient.
    double D_real;                  //!< Apparent Diffusion coefficient.
+   int row;
+   int col;
+   int id;
    QString error;                  //!< Error string
    QSet<Attribute::Type> ptypes;   //!< Container of x_param, y_param, z_param
    Attribute::Type x_param;        //!< x axis parameter
@@ -144,6 +153,9 @@ private:
    double buff_dens;
    double buff_visc;
    double buff_temp;
+   int grow;
+   int gcol;
+   int gid;
 
    QDoubleValidator *dValid;
    QIntValidator    *iValid;
@@ -218,7 +230,7 @@ private:
    bool validate_num(const QString);
    bool validate(void);
    bool check_overlap(double, double, double, double, int);
-   void linspace(double, double, int, QVector<double>&);
+   void linspace(double, double, int, double&, QVector<double>&);
    double correct_unit(double, Attribute::Type, bool);
    void fill_list();
    double value4plot(GridPoint&, Attribute::Type);
