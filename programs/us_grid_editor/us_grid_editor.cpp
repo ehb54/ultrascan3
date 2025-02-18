@@ -297,7 +297,7 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
 
    left->addWidget( lb_z_ax,              row,   0, 1, 1 );
    left->addWidget( le_z_val,             row,   1, 1, 1 );
-   left->addWidget( pb_add_update,          row++, 2, 1, 2 );
+   left->addWidget( pb_add_update,        row++, 2, 1, 2 );
 
    left->addWidget( lb_subgrid,           row,   0, 1, 2 );
    left->addWidget( ct_subgrid,           row++, 2, 1, 2 );
@@ -572,8 +572,6 @@ void US_Grid_Editor::plot_tmp()
    QwtPlotShapeItem *shapeItem = new QwtPlotShapeItem();
    shapeItem->setTitle(title);
    shapeItem->setShape(path);
-   // shapeItem->setBrush(QBrush(QColor(255,255,51, 128)));
-   // shapeItem->setPen(QPen(QColor(255,255,51), 2));
    shapeItem->setBrush(QBrush(QColor(255,255,255, 128)));
    shapeItem->setPen(QPen(QColor(255,255,255), 2));
    shapeItem->attach(data_plot);
@@ -675,7 +673,7 @@ void US_Grid_Editor::add_update()
 
    if ( check_overlap(xpoints.first(), xpoints.last(),
                      ypoints.first(), ypoints.last(), excl ) ) {
-      QMessageBox::critical(this, "Error!", "Grid points overlap!");
+      QMessageBox::critical(this, "Error!", "Grid Points Overlap!");
       return;
    }
 
@@ -1049,7 +1047,7 @@ void US_Grid_Editor::save( void )
 {
    if ( final_subgrids.first().size() > 150 ) {
       QMessageBox::warning(this, "Warning!", "There are too many components in each subgrid. "
-                                             "Threshold is 150 components.\n"
+                                             "Threshold is <b>150<b/> components.<br/>"
                                              "Please increase the number of subgrids, then try again.");
       return;
    }
@@ -2031,10 +2029,10 @@ bool GridPoint::check_s_vbar()
       return false;
    }
    if ( ( buoy > 0 && S < 0 ) || ( buoy < 0 && S > 0 ) ) {
-      error  = "Sedimentation and buoyancy should have the same sign!\n\n";
-      error += QObject::tr("Sedimentation = %1\n").arg(S);
-      error += QObject::tr("Buoyancy = 1 - Density(20°C water) x PSV\n").arg(DENS_20W, buoy);
-      error += QObject::tr("Buoyancy = 1 - %1 x %2 = %3\n").arg(DENS_20W).arg(VBAR).arg(buoy);
+      error  = "Sedimentation and buoyancy should have the same sign!<br/><br/>";
+      error += QObject::tr("<b>Sedimentation = %1<b/><br/>").arg(S);
+      error += QObject::tr("<b>Buoyancy = 1 - Density(20°C water) x PSV<b/><br/>");
+      error += QObject::tr("<b>Buoyancy = 1 - %1 x %2 = %3<b/><br/>").arg(DENS_20W).arg(VBAR).arg(buoy);
       return false;
    }
    return true;
