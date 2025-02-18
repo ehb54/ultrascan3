@@ -676,13 +676,12 @@ void US_Grid_Editor::add_update()
 
    QVector<Attribute::Type> types;
    types << x_param << y_param << z_param;
-   QVector<double> vals;
    QVector<GridPoint> gps;
    bool flag = true;
    QString error;
    for ( int jj = 0; jj < y_res; jj++ ) {
       for ( int ii = 0; ii < x_res; ii++ ) {
-         vals.clear();
+         QVector<double> vals;
          vals << xpoints.at(ii) << ypoints.at(jj) << z_val;
          GridPoint gp;
          gp.set_dens_visc_temp(buff_dens, buff_visc, buff_temp);
@@ -1861,6 +1860,25 @@ double GridPoint::z_value () const
    return value(z_param);
 }
 
+void GridPoint::all_from_sdv()
+{
+   US_Model::SimulationComponent sc;
+   sc.vbar20 = VBAR;
+   sc.s      = S;
+   sc.D      = D;
+   sc.f_f0   = 0.0;
+   sc.f      = 0.0;
+   sc.mw     = 0.0;
+   US_Model::calc_coefficients(sc);
+   S     = sc.s;
+   D     = sc.D;
+   VBAR  = sc.vbar20;
+   MW    = sc.mw;
+   F     = sc.f;
+   FF0   = sc.f_f0;
+   F0    = F / FF0;
+}
+
 bool GridPoint::calculate_20w()
 {
    error.clear();
@@ -1874,62 +1892,45 @@ bool GridPoint::calculate_20w()
    if ( contains( Attribute::ATTR_V, Attribute::ATTR_S, Attribute::ATTR_K ) )         // 1: M, D, F, F0
    {
       if ( ! check_s_vbar()) return false;
-
       double BUOY = 1 - VBAR * DENS;
-      F0 = 9 * VISC * PI * qSqrt( 2 * VBAR * VISC * S * FF0 / BUOY );
+      F0 = 9 * VISC * PI * std::sqrt( 2 * VBAR * VISC * S * FF0 / BUOY );
       F = FF0 * F0;
       D = RT / ( NA * F );
-      MW = S * NA * F / BUOY;
+      all_from_sdv();
    } else if ( contains( Attribute::ATTR_V, Attribute::ATTR_S, Attribute::ATTR_M ) )  // 2: K, D, F, F0
    {
       if ( ! check_s_vbar()) return false;
-
       double BUOY = 1 - VBAR * DENS;
       F = MW * BUOY / ( S * NA );
       D = RT / ( NA * F );
-      FF0 = BUOY / ( 3 * VISC * S ) *
-            qPow( MW / ( NA * PI ), 2.0 / 3.0 ) *
-            qPow(1.0 / ( 6 * VBAR ), 1.0 / 3.0);
-      F0 = F / FF0;
+      all_from_sdv();
    } else if ( contains( Attribute::ATTR_V, Attribute::ATTR_S, Attribute::ATTR_D ) )  // 3: K, M, F, F0
    {
       if ( ! check_s_vbar()) return false;
-
-      double BUOY = 1 - VBAR * DENS;
-      MW = S * RT * ( D * BUOY );
-      F = RT / ( NA * D );
-      FF0 = BUOY / ( 3 * VISC * S ) *
-            qPow( MW / ( NA * PI ), 2.0 / 3.0 ) *
-            qPow(1.0 / ( 6 * VBAR ), 1.0 / 3.0);
-      F0 = F / FF0;
+      all_from_sdv();
    } else if ( contains( Attribute::ATTR_V, Attribute::ATTR_K, Attribute::ATTR_M ) )  // 4: S, D, F, F0
    {
       double BUOY = 1 - VBAR * DENS;
-      D = RT / ( 3 * VISC * FF0 ) *
-          qPow( 6 * MW * VBAR, -1.0 / 3.0 ) *
-          qPow( NA * PI, -2.0 / 3.0 );
-      F = RT / ( NA * D );
-      F0 = F / FF0;
+      D = RT / ( 3 * VISC * FF0 ) /
+          std::cbrt( 6 * MW * VBAR ) /
+          std::pow( std::cbrt ( NA * PI ), 2 );
       S = MW * D * BUOY / RT;
+      all_from_sdv();
    } else if ( contains( Attribute::ATTR_V, Attribute::ATTR_K, Attribute::ATTR_D ) )  // 5: S, M, F, F0
    {
       double BUOY = 1 - VBAR * DENS;
       F = RT / ( NA * D );
       F0 = F / FF0;
-      S = qPow( F0 / ( 9 * VISC * PI ), 2 ) * BUOY / ( 2 * VISC * VBAR * FF0 );
-      MW = S * NA * F / BUOY;
+      S = std::pow( F0 / ( 9 * VISC * PI ), 2 ) * BUOY / ( 2 * VISC * VBAR * FF0 );
+      all_from_sdv();
    } else if ( contains( Attribute::ATTR_V, Attribute::ATTR_M, Attribute::ATTR_D ) )  // 6: S, K, F, F0
    {
       double BUOY = 1 - VBAR * DENS;
-      F = RT / ( NA * D );
       S = MW * D * BUOY / RT;
-      FF0 = BUOY / ( 3 * VISC * S ) *
-            qPow( MW / ( NA * PI ), 2.0 / 3.0 ) *
-            qPow(1.0 / ( 6 * VBAR ), 1.0 / 3.0);
-      F0 = F / FF0;
+      all_from_sdv();
    } else if ( contains( Attribute::ATTR_S, Attribute::ATTR_K, Attribute::ATTR_M ) )  // 7: V, D, F, F0 (qube root of VBAR)
    {
-      double A = 6 * qPow( 3 * VISC * S * FF0, 3 ) * qPow( NA * PI / MW, 2 );
+      double A = 6 * std::pow( 3 * VISC * S * FF0, 3 ) * std::pow( NA * PI / MW, 2 );
       double Q = A / DENS;
       double Z = std::sqrt( ( 27 * std::pow( Q, 2 ) * 4 * std::pow( Q, 3 ) ) / 108 );
       double X = std::cbrt( 0.5 * Q + Z ) + std::cbrt( 0.5 * Q - Z );
@@ -1937,36 +1938,29 @@ bool GridPoint::calculate_20w()
 
       if ( ! check_s_vbar()) return false;
       double BUOY = 1 - VBAR * DENS;
-      F0 = 9 * VISC * PI * qSqrt( 2 * VBAR * VISC * S * FF0 / BUOY );
+      F0 = 9 * VISC * PI * std::sqrt( 2 * VBAR * VISC * S * FF0 / BUOY );
       F = FF0 * F0;
       D = RT / ( NA * F );
-      MW = S * NA * F / BUOY;
+      all_from_sdv();
    } else if ( contains( Attribute::ATTR_S, Attribute::ATTR_K, Attribute::ATTR_D ) )  // 8: M, V, F, F0
    {
       F = RT / ( NA * D );
       F0 = F / FF0;
-      double f02 = qPow( F0, 2 );
-      double vp2 = qPow( 9 * PI * VISC, 2 );
-      VBAR = f02 / ( 2 * S * VISC * FF0 * vp2 + f02 * DENS );
-      double BUOY = 1 - VBAR * DENS;
-      MW = S * NA * F / BUOY;
+      double f02 = std::pow( F0, 2 );
+      double vp2 = std::pow( 9 * PI * VISC, 2 );
+      VBAR = f02 / ( 2 * VISC * S * FF0 * vp2 + f02 * DENS );
+      all_from_sdv();
    } else if ( contains( Attribute::ATTR_S, Attribute::ATTR_M, Attribute::ATTR_D ) )  // 9: K, V, F, F0
    {
       VBAR = ( 1 - S * RT / ( MW * D ) ) / DENS;
-      F = RT / ( NA * D );
-      double BUOY = 1 - VBAR * DENS;
-      FF0 = BUOY / ( 3.0 * VISC * S ) *
-            qPow( MW / ( NA * PI ), 2.0 / 3.0 ) *
-            qPow(1.0 / ( 6.0 * VBAR ), 1.0 / 3.0);
-      F0 = F / FF0;
+      all_from_sdv();
    } else if ( contains( Attribute::ATTR_K, Attribute::ATTR_M, Attribute::ATTR_D ) )  // 10: S, V, F, F0
    {
-      F = RT / ( NA * D );
-      F0 = F / FF0;
-      VBAR = qPow( RT / ( 3.0 * VISC * D * FF0), 3 ) /
-             ( 6 * MW * qPow( NA * PI, 2 ) );
+      VBAR = std::pow( RT / ( 3.0 * VISC * D * FF0), 3 ) /
+             ( 6 * MW * std::pow( NA * PI, 2 ) );
       double BUOY = 1 - VBAR * DENS;
-      S = MW * BUOY / ( NA * F );
+      S = D * MW * BUOY / RT;
+      all_from_sdv();
    }
    else return false;
 

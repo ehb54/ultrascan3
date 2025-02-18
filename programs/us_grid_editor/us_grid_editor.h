@@ -67,10 +67,12 @@ private:
    Attribute::Type y_param;        //!< y axis parameter
    Attribute::Type z_param;        //!< z axis parameter
 
+   void all_from_sdv();
    bool calculate_20w();
    void calculate_real();
    bool check_s_vbar();
    bool contains(Attribute::Type, Attribute::Type, Attribute::Type);
+
 
 };
 
