@@ -1533,9 +1533,10 @@ void US_Grid_Editor::plot_points()
       point_curves << curve;
    }
 
-   double dx, dy;
-   px2 - px1 == 0 ? dx = 0.01 : dx = (px2 - px1) * 0.1;
-   py2 - py1 == 0 ? dy = 0.01 : dy = (py2 - py1) * 0.1;
+   double dx = px2 - px1;
+   double dy = py2 - py1;
+   dx == 0 ? dx = 0.01 : dx *= 0.1;
+   dy == 0 ? dy = 0.01 : dy *= 0.1;
    px1 -= dx;
    px2 += dx;
    py1 -= dy;
