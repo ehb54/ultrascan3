@@ -4,10 +4,18 @@
 
 #define TSO QTextStream(stdout)
 
-static double discrete_area_under_curve( const vector < double > & v ) {
+static double discrete_area_under_curve( const vector < double > & x, const vector < double > & y ) {
    double area = 0;
-   for ( auto const & x : v ) {
-      area += x;
+   size_t x_size = x.size();
+   size_t y_size = y.size();
+
+   size_t min_size = x_size;
+   if ( min_size > y_size ) {
+      min_size = y_size;
+   }
+
+   for ( size_t i = 1; i < min_size; ++i ) {
+      area += 0.5 * ( y[ i - 1 ] + y[ i ] ) / ( x[ i ] - x[ i - 1 ] );
    }
    return area;
 }
@@ -420,8 +428,8 @@ void US_Hydrodyn_Saxs_Hplc::broaden_compute_one() {
       lbl_broaden_msg  ->setText(
                                  lbl_broaden_msg->text() +
                                  QString( " Discrete area under conc. curve %1, under broadened %2" )
-                                 .arg( discrete_area_under_curve( f_qs[ broaden_names[ 0 ] ] ) )
-                                 .arg( discrete_area_under_curve( f_qs[ broaden_names[ 2 ] ] ) )
+                                 .arg( discrete_area_under_curve( f_qs[ broaden_names[ 0 ] ] , f_Is[ broaden_names[ 0 ] ] ) )
+                                 .arg( discrete_area_under_curve( f_qs[ broaden_names[ 2 ] ] , f_Is[ broaden_names[ 2 ] ] ) )
                                  );
    }
 }
