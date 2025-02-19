@@ -695,9 +695,9 @@ class US_EXTERN US_Saxs_Util
                                  );
 
       bool linear_interpolate( 
-                              vector < double >       &x1,
-                              vector < double >       &y1, 
-                              vector < double >       &x2,
+                              const vector < double >       &x1,
+                              const vector < double >       &y1, 
+                              const vector < double >       &x2,
                               vector < double >       &y2
                               );
 
