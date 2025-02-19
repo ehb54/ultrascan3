@@ -1,13 +1,27 @@
 #include "../include/us3_defines.h"
 #include "../include/us_hydrodyn.h"
 #include "../include/us_hydrodyn_saxs_hplc.h"
-#include "../include/us_band_broaden.h"
 
 #define TSO QTextStream(stdout)
 
-static US_Band_Broaden ubb;
+static double discrete_area_under_curve( const vector < double > & v ) {
+   double area = 0;
+   for ( auto const & x : v ) {
+      area += x;
+   }
+   return area;
+}
 
-static bool broaden_ref_has_errors;
+static US_Band_Broaden ubb;
+static void tso_vector_info( QString msg, const vector < double > & v ) {
+   TSO <<
+      QString( "%1 : size %2 range [%3:%4]\n" )
+      .arg( msg )
+      .arg( v.size() )
+      .arg( v.front() )
+      .arg( v.back() )
+      ;
+}
 
 void US_Hydrodyn_Saxs_Hplc::broaden() {
    TSO << "US_Hydrodyn_Saxs_Hplc::broaden() start\n";
@@ -299,6 +313,31 @@ void US_Hydrodyn_Saxs_Hplc::broaden_kernel_type_index() {
    broaden_compute_one();
 }
 
+bool US_Hydrodyn_Saxs_Hplc::broaden_compute_one_no_ui(
+                                                      double tau
+                                                      ,double kernel_size
+                                                      ,double kernel_delta_t
+                                                      ,US_Band_Broaden::kernel_type ktype
+                                                      ,const vector < double > & I
+                                                      ,vector < double > & broadened
+                                                      ) {
+#warning need to better support changing kernel type etc in US_Band_Broaden, currently only caching on Tau, so clearing it all for now
+   ubb.clear();
+   broadened = ubb.broaden(
+                           I
+                           ,tau
+                           ,ktype
+                           ,0
+                           ,kernel_size
+                           ,kernel_delta_t
+                           );
+   if ( !broadened.size() ) {
+      lbl_broaden_msg->setText( QString( "Error: %1" ).arg( ubb.errormsg ) );
+      return false;
+   }
+   return true;
+}
+
 void US_Hydrodyn_Saxs_Hplc::broaden_compute_one() {
    TSO << "US_Hydrodyn_Saxs_Hplc::broaden_compute_one() start\n";
 
@@ -364,10 +403,27 @@ void US_Hydrodyn_Saxs_Hplc::broaden_compute_one() {
    }
 
    set_selected( broaden_names );
-   
-   // compute RMSD or Chi2
 
-   // plot broadened plot
+   double fit = broaden_compute_loss();
+   if ( fit != DBL_MAX ) {
+      lbl_broaden_msg  ->setText(
+                                 lbl_broaden_msg->text()
+                                 + QString( "  Last fit %1 : %2" )
+                                 .arg( broaden_ref_has_errors ? "nChi^2" : "RMSD" )
+                                 .arg( fit )
+                                 );
+   } else {
+      lbl_broaden_msg  ->setText( lbl_broaden_msg->text() + "  Could not compute fit" );
+   }
+
+   if ( broaden_names.size() > 2 ) {
+      lbl_broaden_msg  ->setText(
+                                 lbl_broaden_msg->text() +
+                                 QString( " Discrete area under conc. curve %1, under broadened %2" )
+                                 .arg( discrete_area_under_curve( f_qs[ broaden_names[ 0 ] ] ) )
+                                 .arg( discrete_area_under_curve( f_qs[ broaden_names[ 2 ] ] ) )
+                                 );
+   }
 }
 
 void US_Hydrodyn_Saxs_Hplc::broaden_fit() {
@@ -400,22 +456,113 @@ void US_Hydrodyn_Saxs_Hplc::broaden_fit() {
       return;
    }
 
+   vector < double > ref_t;
+   vector < double > ref_I;
+   vector < double > ref_errors;
+
+   // crop only ref, conc is full and will be interpolated to ref
+   vector < double > & org_ref_t = f_qs[ broaden_names[ 1 ] ];
+   vector < double > & org_ref_I = f_Is[ broaden_names[ 1 ] ];
+
+   size_t org_ref_t_size = org_ref_t.size();
+
+   if ( broaden_ref_has_errors ) {
+      vector < double > & org_ref_errors = f_errors[ broaden_names[ 1 ] ];
+      for ( size_t i = 0; i < org_ref_t_size; ++i ) {
+         if ( org_ref_t[ i ] >= fit_range_start
+              && org_ref_t[ i ] <= fit_range_end ) {
+            ref_t.push_back( org_ref_t[ i ] );
+            ref_I.push_back( org_ref_I[ i ] );
+            ref_errors.push_back( org_ref_errors[ i ] );
+         }
+      }
+   } else {
+      for ( size_t i = 0; i < org_ref_t_size; ++i ) {
+         if ( org_ref_t[ i ] >= fit_range_start
+              && org_ref_t[ i ] <= fit_range_end ) {
+            ref_t.push_back( org_ref_t[ i ] );
+            ref_I.push_back( org_ref_I[ i ] );
+         }
+      }
+   }      
+
    double best_tau    = tau_start;
    double best_deltat = deltat_start;
    double best_loss   = DBL_MAX;
 
    QString summary = "tau,deltat,loss\n";
 
-   for ( double tau = tau_start; tau <= tau_end; tau += tau_delta ) {
-      for ( double deltat = deltat_start; deltat <= deltat_end; deltat += deltat_delta ) {
-         le_broaden_tau   ->setText( QString( "%1" ).arg( tau ) ); // , 0, 'f', 6 ) );
-         le_broaden_deltat->setText( QString( "%1" ).arg( deltat ) ); // , 0, 'f', 6 ) );
-         broaden_compute_one();
-         double this_loss = broaden_compute_loss();
+   double kernel_size                 = le_broaden_kernel_end->text().toDouble();
+   double kernel_delta_t              = le_broaden_kernel_deltat->text().toDouble();
+   US_Band_Broaden::kernel_type ktype = (US_Band_Broaden::kernel_type) cb_broaden_kernel_type->currentIndex();
+
+   vector < double > org_conc_t = f_qs[ broaden_names[ 0 ] ];
+   vector < double > org_conc_I = f_Is[ broaden_names[ 0 ] ];
+   vector < double > conc_I; // broadened
+
+   size_t total_pts =
+      ( 1 + ( ( tau_end - tau_start ) / tau_delta ) ) *
+      ( 1 + ( ( deltat_end - deltat_start ) / deltat_delta ) )
+      ;
+
+   size_t pt       = 0;
+
+   progress->reset();
+   progress->setMaximum( total_pts );
+
+   for ( double tau = tau_start; tau <= tau_end + 1e-10; tau += tau_delta ) {
+      progress->setValue( pt );
+      qApp->processEvents();
+      for ( double deltat = deltat_start; deltat <= deltat_end + 1e-10; deltat += deltat_delta ) {
+         // le_broaden_tau   ->setText( QString( "%1" ).arg( tau ) ); // , 0, 'f', 6 ) );
+         // le_broaden_deltat->setText( QString( "%1" ).arg( deltat ) ); // , 0, 'f', 6 ) );
+         TSO << QString( "fit progress %1 of %2 %3% tau %4 deltat %5\n" )
+            .arg( pt )
+            .arg( total_pts )
+            .arg( 100 * pt / total_pts )
+            .arg( tau )
+            .arg( deltat )
+            ;
+         pt += 1;
+
+         if ( !broaden_compute_one_no_ui(
+                                         tau
+                                         ,kernel_size
+                                         ,kernel_delta_t
+                                         ,ktype
+                                         ,org_conc_I
+                                         ,conc_I
+                                         ) ) {
+            editor_msg( "red", "Error: broadening failure" );
+            running = false;
+            broaden_enables();
+            progress->reset();
+            return;
+         }
+
+         vector < double > conc_t = f_qs[ broaden_names[ 0 ] ];
+         for ( auto & t : conc_t ) {
+            t += deltat;
+         }
+
+         // US_Vector::printvector2( "conc_t, conc_I", conc_t, conc_I );
+         // US_Vector::printvector2( "ref_t, ref_I", ref_t, ref_I );
+
+         tso_vector_info( "conc_t", conc_t );
+         tso_vector_info( "ref_t", ref_t );
+
+         double this_loss = broaden_compute_loss_no_ui(
+                                                       conc_t
+                                                       ,conc_I
+                                                       ,ref_t
+                                                       ,ref_I
+                                                       ,ref_errors
+                                                       );
          if ( this_loss == DBL_MAX ) {
             editor_msg( "red", "unable to compute loss, stopping fit" );
             running = false;
             broaden_enables();
+            progress->reset();
             return;
          }
 
@@ -443,15 +590,49 @@ void US_Hydrodyn_Saxs_Hplc::broaden_fit() {
                               );
 
    broaden_compute_one();
-
-   lbl_broaden_msg  ->setText(
-                              QString( "Last fit %1 : %2" )
-                               .arg( broaden_ref_has_errors ? "nChi^2" : "RMSD" )
-                               .arg( best_loss )
-                              );
-
    running = false;
    broaden_enables();
+   progress->reset();
+}
+
+double US_Hydrodyn_Saxs_Hplc::broaden_compute_loss_no_ui(
+                                                         const vector < double > & conc_t
+                                                         ,const vector < double > & conc_I
+                                                         ,const vector < double > & ref_t
+                                                         ,const vector < double > & ref_I
+                                                         ,const vector < double > & ref_errors
+                                                         ) {
+   static US_Saxs_Util usu;
+
+   size_t ref_t_size  = ref_t.size();
+
+   vector < double > new_conc_I;
+
+   tso_vector_info( "in loss conc_t", conc_t );
+   tso_vector_info( "in loss conc_I", conc_I );
+   tso_vector_info( "in loss ref_t", ref_t );
+
+   if ( !usu.linear_interpolate( conc_t, conc_I, ref_t, new_conc_I ) ) {
+      editor_msg( "red", QString( "Error while fitting: interpolation error: %1\n" ).arg( usu.errormsg ) );
+      US_Vector::printvector2( "conc_t, conc_I", conc_t, conc_I );
+      US_Vector::printvector2( "ref_t, ref_I", ref_t, ref_I );
+      return DBL_MAX;
+   }
+
+   if ( broaden_ref_has_errors ) {
+      double chi2;
+      if ( usu.calc_mychi2( new_conc_I
+                            ,ref_I
+                            ,ref_errors
+                            ,chi2 ) ) {
+         return chi2 / ref_t_size;
+      } else {
+         editor_msg( "red", QString( "Error while fitting: error computing chi^2" ) );
+         return DBL_MAX;
+      }
+   }
+
+   return usu.calc_rmsd( new_conc_I, ref_I );
 }
 
 double US_Hydrodyn_Saxs_Hplc::broaden_compute_loss() {

@@ -34,6 +34,8 @@
 #include "us_util.h"
 #include "us_plot_util.h"
 
+#include "../include/us_band_broaden.h"
+
 //standard C and C++ defs:
 
 #include <map>
@@ -859,10 +861,26 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       QStringList                        broaden_names;
       set < QString >                    broaden_created;
                                                              
+      bool                               broaden_ref_has_errors;
       void                               broaden_plot( bool replot = true );
       void                               broaden_clear_plot();
       void                               broaden_compute_one();
+      bool                               broaden_compute_one_no_ui(
+                                                                   double tau
+                                                                   ,double kernel_size
+                                                                   ,double kernel_delta_t
+                                                                   ,US_Band_Broaden::kernel_type ktype
+                                                                   ,const vector < double > & I
+                                                                   ,vector < double > & broadened
+                                                                   );
       double                             broaden_compute_loss();
+      double                             broaden_compute_loss_no_ui(
+                                                                    const vector < double > & conc_t
+                                                                    ,const vector < double > & conc_I
+                                                                    ,const vector < double > & ref_t
+                                                                    ,const vector < double > & ref_I
+                                                                    ,const vector < double > & ref_errors
+                                                                    );
                                                        
  private slots:
 
