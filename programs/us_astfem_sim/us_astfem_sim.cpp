@@ -82,6 +82,9 @@ int main( int argc, char* argv[] )
    auto ignore_db_option = QCommandLineOption("no-db",
       "Ignore any database preferences and only use locally available data");
    parser.addOption(ignore_db_option);
+   auto errors_option = QCommandLineOption("errors-cl",
+      "Force errors to console and don't open any sort of gui");
+   parser.addOption(errors_option);
 
    QMap<QString, QString> args;
    int cli_parsing_result = -1; //!< -1 not finished, 0 headless, 1 gui needed, 2 error
@@ -171,6 +174,11 @@ int main( int argc, char* argv[] )
    {
       args["start"] = "true";
    }
+   // parse errors
+   if ( parser.isSet( errors_option ) )
+   {
+      args["errors-cl"] = "true";
+   }
    // parse save
    if ( parser.isSet( save_option ) && !parser.value( save_option ).isEmpty() )
    {
@@ -197,7 +205,7 @@ int main( int argc, char* argv[] )
       US_Settings::set_default_data_location( default_data_location );
    }
    // Only show GUI if needed
-   if ( init_status != 0 ) {
+   if ( init_status != 0 && !args.contains( "errors-cl" )) {
       w.show();
       return QApplication::exec();
    }
@@ -385,6 +393,7 @@ int US_Astfem_Sim::init_from_args( const QMap<QString, QString>& flags ) {
    bool loaded_buffer = false;
    bool loaded_simparams = false;
    bool loaded_rotor = false;
+   bool errors_to_cl = flags.contains("errors-cl");
    // load model
    if ( flags.contains("model") && flags["model"].length() > 0 ) {
       US_Model temp_model = US_Model();
@@ -393,6 +402,12 @@ int US_Astfem_Sim::init_from_args( const QMap<QString, QString>& flags ) {
       bool success = dialog->load_model( model_id, temp_model );
       dialog->close();
       if ( !success ) {
+         if ( errors_to_cl )
+         {
+            // print error message to command line and exit
+            qDebug() << "Error loading model " << model_id;
+            exit( 2 );
+         }
          gui_needed = true;
          error_occured = true;
       }
@@ -409,6 +424,12 @@ int US_Astfem_Sim::init_from_args( const QMap<QString, QString>& flags ) {
       bool success = dialog->load_buffer( load_id, buffer );
       dialog->close();
       if ( !success ) {
+         if ( errors_to_cl )
+         {
+            // print error message to command line and exit
+            qDebug() << "Error loading buffer " << load_id;
+            exit( 2 );
+         }
          gui_needed = true;
          error_occured = true;
       }
@@ -425,6 +446,12 @@ int US_Astfem_Sim::init_from_args( const QMap<QString, QString>& flags ) {
       bool success = dialog->load_params( load_id, simparams );
       dialog->close();
       if ( !success ) {
+         if ( errors_to_cl )
+         {
+            // print error message to command line and exit
+            qDebug() << "Error loading simparams " << load_id;
+            exit( 2 );
+         }
          gui_needed = true;
          error_occured = true;
       }
@@ -450,7 +477,6 @@ int US_Astfem_Sim::init_from_args( const QMap<QString, QString>& flags ) {
       double coeff1 = 0.0;
       double coeff2 = 0.0;
       bool status = rotorInfo->load_rotor( rotor_id, coeff1, coeff2 );
-      qDebug() << "coeff1" << coeff1 << "coeff2" << coeff2 << "status" << status;
       rotorInfo->close();
       if ( status )
       {
@@ -459,6 +485,12 @@ int US_Astfem_Sim::init_from_args( const QMap<QString, QString>& flags ) {
          loaded_rotor = true;
       }
       else {
+         if ( errors_to_cl )
+         {
+            // print error message to command line and exit
+            qDebug() << "Error loading rotor " << rotor_id;
+            exit( 2 );
+         }
          gui_needed = true;
          error_occured = true;
       }
@@ -498,6 +530,59 @@ int US_Astfem_Sim::init_from_args( const QMap<QString, QString>& flags ) {
             {
                save_simulation( save_path, true );
             }
+   // check save directory
+   if ( flags.contains("save") && flags["save"].length() > 0 )
+   {
+      // check if path is accessible and writable
+      QString save_path = flags["save"];
+      QDir dir( save_path );
+      if ( !dir.exists() ) {
+         // path does not exist
+         if ( errors_to_cl )
+         {
+            // print error message to command line and exit
+            qDebug() << "Error save path doesn't exist " << save_path;
+            exit( 2 );
+         }
+         error_occured = true;
+         gui_needed = true;
+      }
+      // check if writeable
+      QFile file(dir.filePath( "tmp.txt" ) );
+      if ( !file.open(QIODevice::WriteOnly ) )
+      {
+         if ( errors_to_cl )
+         {
+            // print error message to command line and exit
+            qDebug() << "Error save path isn't writeable " << save_path;
+            exit( 2 );
+         }
+         // path is not writeable
+         error_occured = true;
+         gui_needed = true;
+      }
+      else
+      {
+         file.close();
+         if ( file.exists() )
+         {
+            file.remove();
+         }
+      }
+   }
+
+
+   if ( !error_occured && loaded_model && loaded_buffer && loaded_simparams && loaded_rotor  )
+   {
+      // no error yet
+      if ( flags.contains("start") ) {
+         // start simulation
+         start_simulation();
+         if ( flags.contains( "save" ) && flags["save"].length() > 0 )
+         {
+            // check if path is accessible and writable
+            QString save_path = flags["save"];
+            save_simulation( save_path, true );
          }
       }
    }
