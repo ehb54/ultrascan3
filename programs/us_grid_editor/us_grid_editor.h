@@ -6,6 +6,7 @@
 #include "us_help.h"
 #include "us_widgets.h"
 #include "us_widgets_dialog.h"
+#include "us_buffer_gui.h"
 
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug()
@@ -150,22 +151,22 @@ public:
 
 private:
 
-   QRadioButton *rb_x_s;    //!< X-axis radio button for s.
-   QRadioButton *rb_x_mw;   //!< X-axis radio button for mw.
-   QRadioButton *rb_x_ff0;  //!< X-axis radio button for ff0.
-   QRadioButton *rb_x_D;    //!< X-axis radio button for D.
-   QRadioButton *rb_x_vbar; //!< X-axis radio button for vbar.
-   QRadioButton *rb_y_s;    //!< Y-axis radio button for s.
-   QRadioButton *rb_y_mw;   //!< Y-axis radio button for mw.
-   QRadioButton *rb_y_ff0;  //!< Y-axis radio button for ff0.
-   QRadioButton *rb_y_D;    //!< Y-axis radio button for D.
-   QRadioButton *rb_y_vbar; //!< Y-axis radio button for vbar.
-   QButtonGroup* x_axis;    //!< X-axis button group.
-   QButtonGroup* y_axis;    //!< Y-axis button group.
-   QComboBox    *z_axis;    //!< Y-axis combo box for fixed attribute.
-   Attribute::Type x_param;             //!< x parameter
-   Attribute::Type y_param;             //!< y parameter
-   Attribute::Type z_param;             //!< y parameter
+   QRadioButton    *rb_x_s;        //!< X-axis radio button for s.
+   QRadioButton    *rb_x_mw;       //!< X-axis radio button for mw.
+   QRadioButton    *rb_x_ff0;      //!< X-axis radio button for ff0.
+   QRadioButton    *rb_x_D;        //!< X-axis radio button for D.
+   QRadioButton    *rb_x_vbar;     //!< X-axis radio button for vbar.
+   QRadioButton    *rb_y_s;        //!< Y-axis radio button for s.
+   QRadioButton    *rb_y_mw;       //!< Y-axis radio button for mw.
+   QRadioButton    *rb_y_ff0;      //!< Y-axis radio button for ff0.
+   QRadioButton    *rb_y_D;        //!< Y-axis radio button for D.
+   QRadioButton    *rb_y_vbar;     //!< Y-axis radio button for vbar.
+   QButtonGroup    *x_axis;        //!< X-axis button group.
+   QButtonGroup    *y_axis;        //!< Y-axis button group.
+   QComboBox       *z_axis;        //!< Y-axis combo box for fixed attribute.
+   Attribute::Type  x_param;       //!< x parameter
+   Attribute::Type  y_param;       //!< y parameter
+   Attribute::Type  z_param;       //!< y parameter
 
    //! \brief Setup the fixed attribute combo box.
    void set_z_axis();
@@ -204,72 +205,74 @@ public:
 
 private:
 
-   bool   plot_flag;                       //!< plotting flag
-   double buff_dens;                       //!< buffer density
-   double buff_visc;                       //!< buffer viscosity
-   double buff_temp;                       //!< buffer temperature
-   int    gid;                             //!< grip point id counter
-   Attribute::Type x_param;                //!< x parameter type
-   Attribute::Type y_param;                //!< y parameter type
-   Attribute::Type z_param;                //!< z parameter type
+   bool              plot_flag;            //!< plotting flag
+   double            buff_dens;            //!< buffer density
+   double            buff_visc;            //!< buffer viscosity
+   double            buff_temp;            //!< buffer temperature
+   int               gid;                  //!< grip point id counter
+   Attribute::Type   x_param;              //!< x parameter type
+   Attribute::Type   y_param;              //!< y parameter type
+   Attribute::Type   z_param;              //!< z parameter type
 
    QDoubleValidator *dValid;               //!< floating-point numbers validator
    QIntValidator    *iValid;               //!< integer numbers validator
 
-   QLabel    *lb_x_param;                  //!< X-axis parameter label.
-   QLabel    *lb_y_param;                  //!< Y-axis parameter label.
-   QLabel    *lb_z_param;                  //!< Z-axis parameter label.
-   QLabel    *lb_x_ax;                     //!< X-axis plotting label.
-   QLabel    *lb_y_ax;                     //!< X-axis plotting label.
-   QLabel    *lb_z_ax;                     //!< Z-axis plotting label.
+   QLabel           *lb_x_param;           //!< X-axis parameter label.
+   QLabel           *lb_y_param;           //!< Y-axis parameter label.
+   QLabel           *lb_z_param;           //!< Z-axis parameter label.
+   QLabel           *lb_x_ax;              //!< X-axis plotting label.
+   QLabel           *lb_y_ax;              //!< X-axis plotting label.
+   QLabel           *lb_z_ax;              //!< Z-axis plotting label.
 
-   QLineEdit *le_investigator;             //!< Investigator line edit.
-   QLineEdit *le_x_param;                  //!< X-axis parameter input.
-   QLineEdit *le_y_param;                  //!< Y-axis parameter input.
-   QLineEdit *le_z_param;                  //!< Z-axis parameter input.
-   QLineEdit *le_dens;                     //!< buffer density input.
-   QLineEdit *le_visc;                     //!< buffer viscosity input.
-   QLineEdit *le_temp;                     //!< buffer temperature input.
-   QLineEdit *le_x_min;                    //!< X-axis min value input.
-   QLineEdit *le_x_max;                    //!< X-axis max value input.
-   QLineEdit *le_x_res;                    //!< X-axis resolution input.
-   QLineEdit *le_y_min;                    //!< Y-axis min value input.
-   QLineEdit *le_y_max;                    //!< Y-axis max value input.
-   QLineEdit *le_y_res;                    //!< Y-axis resolution input.
-   QLineEdit *le_z_val;                    //!< Z-axis value input.
-   QLineEdit *le_npoints;                  //!< number of all grid points.
-   QLineEdit *le_npoints_curr;             //!< number of points of the current subgrid
-   QLineEdit *le_npoints_last;             //!< number of points of the last subgrid
+   QLineEdit        *le_investigator;      //!< Investigator line edit.
+   QLineEdit        *le_x_param;           //!< X-axis parameter input.
+   QLineEdit        *le_y_param;           //!< Y-axis parameter input.
+   QLineEdit        *le_z_param;           //!< Z-axis parameter input.
+   QLineEdit        *le_dens;              //!< buffer density input.
+   QLineEdit        *le_visc;              //!< buffer viscosity input.
+   QLineEdit        *le_temp;              //!< buffer temperature input.
+   QLineEdit        *le_x_min;             //!< X-axis min value input.
+   QLineEdit        *le_x_max;             //!< X-axis max value input.
+   QLineEdit        *le_x_res;             //!< X-axis resolution input.
+   QLineEdit        *le_y_min;             //!< Y-axis min value input.
+   QLineEdit        *le_y_max;             //!< Y-axis max value input.
+   QLineEdit        *le_y_res;             //!< Y-axis resolution input.
+   QLineEdit        *le_z_val;             //!< Z-axis value input.
+   QLineEdit        *le_npoints;           //!< number of all grid points.
+   QLineEdit        *le_npoints_curr;      //!< number of points of the current subgrid
+   QLineEdit        *le_npoints_last;      //!< number of points of the last subgrid
 
-   QPushButton* pb_add_update;             //!< add / update push button
-   QPushButton* pb_update_dvt;             //!< push button to update the buffer condition
-   QPushButton* pb_save;                   //!< push button to save the model
+   QPushButton      *pb_add_update;        //!< add / update push button
+   QPushButton      *pb_lu_buffer;         //!< push button to update the buffer condition
+   QPushButton      *pb_save;              //!< push button to save the model
 
-   QwtCounter* ct_size;                    //!< to set the plot symbol size
-   QwtCounter* ct_subgrid;                 //!< to set what subgrid to be plotted
-   QwtCounter* ct_nsubgrids;               // to set the number of subgrids
+   QwtCounter       *ct_size;              //!< to set the plot symbol size
+   QwtCounter       *ct_subgrid;           //!< to set what subgrid to be plotted
+   QwtCounter       *ct_nsubgrids;         // to set the number of subgrids
 
-   QButtonGroup* x_axis;                   //!< X-axis button group.
-   QButtonGroup* y_axis;                   //!< Y-axis button group.
+   QButtonGroup     *x_axis;               //!< X-axis button group.
+   QButtonGroup     *y_axis;               //!< Y-axis button group.
 
-   QListWidget *lw_grids;                  //!< list of all grids
+   QListWidget      *lw_grids;             //!< list of all grids
 
-   QwtPlot *data_plot;                     //!< data plot.
+   QwtPlot          *data_plot;            //!< data plot.
 
-   QColor color_base;                      //!< background color
-   QColor color_highlight;                 //!< grid color
-   QColor color_subgrid;                   //!< subgrid color
+   QColor           color_base;            //!< background color
+   QColor           color_highlight;       //!< grid color
+   QColor           color_subgrid;         //!< subgrid color
 
-   US_Help showHelp;                       //!< Help widget.
+   US_Help          showHelp;              //!< Help widget.
 
-   QwtPlotCurve* subgrid_curve;            //!< subgrid curve
-   QList<QwtPlotCurve*> point_curves;      //!< all grid points curves
-   QList<QVector<GridPoint>> grid_points;  //!< array of all grids
-   QList<QVector<double>> grid_info;       //!< array of all grid information
-   QVector<GridPoint> sorted_points;       //!< sorted grid points
-   QList<QVector<int>> final_subgrids;     //!< subgrid indexes
+   QwtPlotCurve*             subgrid_curve;   //!< subgrid curve
+   QList<QwtPlotCurve*>      point_curves;    //!< all grid points curves
+   QList<QVector<GridPoint>> grid_points;     //!< array of all grids
+   QList<QVector<double>>    grid_info;       //!< array of all grid information
+   QVector<GridPoint>        sorted_points;   //!< sorted grid points
+   QList<QVector<int>>       final_subgrids;  //!< subgrid indexes
 
-   US_Disk_DB_Controls* dkdb_cntrls;       //!< Disk DB controls.
+   US_Disk_DB_Controls*      dkdb_cntrls;     //!< Disk DB controls.
+
+   // US_BufferGui*             buffer_gui;      //!< Dialog to select a buffer
 
    //! \brief Clear set region from the data plot.
    void rm_tmp_items(void);
@@ -369,7 +372,7 @@ private slots:
    void new_dens_visc_temp(void);
 
    //! \brief Slot to update the buffer condition
-   void update_dens_visc_temp(void);
+   void load_update_buffer(void);
 
    //! \brief Slot to plot all grid points.
    void plot_points(void);

@@ -106,12 +106,12 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    le_temp = us_lineedit();
    le_temp->setValidator(dValid);
 
-   pb_update_dvt = us_pushbutton("Update");
+   pb_lu_buffer = us_pushbutton("Load Buffer");
 
    connect(le_dens, &QLineEdit::editingFinished, this, &US_Grid_Editor::new_dens_visc_temp);
    connect(le_visc, &QLineEdit::editingFinished, this, &US_Grid_Editor::new_dens_visc_temp);
    connect(le_temp, &QLineEdit::editingFinished, this, &US_Grid_Editor::new_dens_visc_temp);
-   connect(pb_update_dvt, &QPushButton::clicked, this, &US_Grid_Editor::update_dens_visc_temp);
+   connect(pb_lu_buffer, &QPushButton::clicked, this, &US_Grid_Editor::load_update_buffer);
 
    // 20,w grid control
    QLabel *lb_20w_ctrl = us_banner( tr( "20,W Grid Control" ) );
@@ -264,16 +264,17 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
 
    left->addWidget( lb_temp,              row,   0, 1, 1 );
    left->addWidget( le_temp,              row,   1, 1, 1 );
-   left->addWidget( pb_update_dvt,        row++, 2, 1, 2 );
+   left->addWidget( pb_lu_buffer,         row++, 2, 1, 2 );
 
    left->addWidget( lb_20w_ctrl,          row++, 0, 1, 4 );
 
    left->addWidget( lb_grid_list,         row++, 0, 1, 4 );
 
-   left->addWidget( lw_grids,             row,   0, 5, 4 );
-   row += 5;
+   left->addWidget( lw_grids,             row,   0, 8, 4 );
+   left->setRowStretch(row, 1);
+   row += 8;
 
-   left->addLayout(lyt_1,                 row++, 0, 1, 4 );
+   left->addLayout( lyt_1,                row++, 0, 1, 4 );
 
    left->addWidget( hline1,               row++, 0, 1, 4 );
 
@@ -995,10 +996,6 @@ void US_Grid_Editor::check_dens_visc_temp()
    le_dens->setText( QString::number( buff_dens ) );
    le_visc->setText( QString::number( buff_visc ) );
    le_temp->setText( QString::number( buff_temp ) );
-
-   QString qs = "QPushButton { background-color: %1 }";
-   QColor color = US_GuiSettings::pushbColor().color(QPalette::Active, QPalette::Button);
-   pb_update_dvt->setStyleSheet(qs.arg(color.name()));
 }
 
 // reset the GUI
@@ -1035,7 +1032,9 @@ void US_Grid_Editor::reset( void )
    le_dens->setText( QString::number( buff_dens ) );
    le_visc->setText( QString::number( buff_visc ) );
    le_temp->setText( QString::number( buff_temp ) );
-   update_dens_visc_temp();
+
+   plot_points();
+   highlight(lw_grids->currentRow());
 }
 
 // save the grid data
@@ -1433,11 +1432,34 @@ void US_Grid_Editor::plot_subgrid(double subgrid_id)
 
 void US_Grid_Editor::new_dens_visc_temp()
 {
-   pb_update_dvt->setStyleSheet("QPushButton { background-color: yellow }");
+   pb_lu_buffer->setText("Update Buffer");
+   pb_lu_buffer->setStyleSheet("QPushButton { background-color: yellow }");
 }
 
-void US_Grid_Editor::update_dens_visc_temp()
+void US_Grid_Editor::load_update_buffer()
 {
+   if ( pb_lu_buffer->text().startsWith("Load Buffer")) {
+      int state;
+      if ( dkdb_cntrls->db() ) {
+         state = US_Disk_DB_Controls::DB;
+      } else {
+         state = US_Disk_DB_Controls::Disk;
+      }
+      US_BufferGui* buffer_gui = new US_BufferGui(true, US_Buffer(), state);
+
+      connect(buffer_gui, &US_BufferGui::BufferDataChanged, this, [&](double dens, double visc) {
+         le_dens->setText(QString::number(dens));
+         le_visc->setText(QString::number(visc));
+      });
+
+      buffer_gui->exec();
+   }
+
+   QString qs = "QPushButton { background-color: %1 }";
+   QColor color = US_GuiSettings::pushbColor().color(QPalette::Active, QPalette::Button);
+   pb_lu_buffer->setStyleSheet(qs.arg(color.name()));
+   pb_lu_buffer->setText("Load Buffer");
+
    check_dens_visc_temp();
 
    for ( int ii = 0; ii < grid_points.size(); ii++ ) {
