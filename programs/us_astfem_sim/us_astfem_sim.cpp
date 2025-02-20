@@ -510,26 +510,6 @@ int US_Astfem_Sim::init_from_args( const QMap<QString, QString>& flags ) {
       ck_timeCorr->setChecked( true );
       time_correctionFlag = true;
    }
-   if ( !error_occured && loaded_model && loaded_buffer && loaded_simparams && loaded_rotor  )
-   {
-      // no error yet
-      if ( flags.contains("start") ) {
-         // start simulation
-         start_simulation();
-         if ( flags.contains( "save" ) && flags["save"].length() > 0 )
-         {
-            // check if path is accessible and writable
-            QString save_path = flags["save"];
-            QDir dir( save_path );
-            if ( !dir.exists() ) {
-               // path does not exist
-               error_occured = true;
-               gui_needed = true;
-            }
-            else
-            {
-               save_simulation( save_path, true );
-            }
    // check save directory
    if ( flags.contains("save") && flags["save"].length() > 0 )
    {
