@@ -81,7 +81,7 @@ US_ModelGui::US_ModelGui( US_Model& current_model )
    pb_save  ->setEnabled( false );
    pb_delete->setEnabled( false );
 
-
+   
    // Pushbuttons
    QBoxLayout* buttonbox   = new QHBoxLayout;
    QPushButton* pb_help    = us_pushbutton( tr( "Help") );
@@ -169,7 +169,170 @@ US_ModelGui::US_ModelGui( US_Model& current_model )
    check_db();
    resize( 500, 600 );
 }
-
+
+bool US_ModelGui::load_model( const QString& load_init, US_Model& modelIn )
+{
+   bool result = false;
+   bool loaded = false;
+   if (!load_init.isEmpty()) {
+      if (QFile::exists(load_init) && QFileInfo(load_init).isReadable())
+      {  // Argument is a file path
+         qDebug() << "Loading model from file path: " << load_init;
+         modelIn.load(load_init);
+         modelIn.debug(  );
+         ModelDesc desc;
+         desc.description = modelIn.description;
+         desc.filename = load_init;
+         desc.DB_id = "-1";
+         desc.modelGUID = modelIn.modelGUID;
+         desc.editGUID = modelIn.editGUID;
+         
+         working_model = modelIn;
+         model_descriptions << desc;
+         loaded = true;
+         result = true;
+      }
+      else {
+         // Try to load as GUID/ID from disk or DB
+         // Try disk first
+            QString path;
+            if ( ! US_Model::model_path( path ) )
+            {
+               QMessageBox::information( this,
+                  tr( "Model Path Error" ),
+                  tr( "The model path is not set." ) );
+               return false;
+            }
+
+            qDebug() << "LsMdl: path" << path;
+            // get all models
+            QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
+
+            if ( ! dkdb_cntrls->db() ) {
+               QDir f( path );
+               QStringList filter( "M*.xml" );
+               QStringList f_names = f.entryList( filter, QDir::Files, QDir::Name );
+
+               QXmlStreamAttributes a;
+
+               for (const auto & f_name : f_names)
+               {
+                  // load model from file
+                  QFile m_file( path + "/" + f_name );
+
+                  if ( ! m_file.open( QIODevice::ReadOnly | QIODevice::Text) )
+                     continue;
+
+                  QXmlStreamReader xml( &m_file );
+
+                  while ( ! xml.atEnd() )
+                  {
+                     xml.readNext();
+
+                     if ( xml.isStartElement() )
+                     {
+                        if ( xml.name() == "model" )
+                        {
+                           ModelDesc md;
+                           a                = xml.attributes();
+                           md.description = a.value( "description" ).toString();
+                           md.modelGUID   = a.value( "modelGUID"   ).toString();
+                           md.editGUID    = a.value( "editGUID"    ).toString();
+                           md.filename    = path + "/" + f_name;
+                           md.DB_id       = -1;
+                           model_descriptions << md;
+                           break;
+                        }
+                     }
+                  }
+
+                  m_file.close();
+               }
+            }
+            else  // DB Access
+            {
+               if ( investigator < 0 )
+               {
+                  QMessageBox::information( this,
+                     tr( "Investigator not set" ),
+                     tr( "Please select an investigator first." ) );
+                  return false;
+               }
+
+               US_Passwd pw;
+               US_DB2    db( pw.getPasswd() );
+
+               if ( db.lastErrno() != US_DB2::OK )
+               {
+                  connect_error( db.lastError() );
+                  return false;
+               }
+
+               QStringList q;
+               q << "get_model_desc" << QString::number( investigator );
+
+               db.query( q );
+
+               while ( db.next() )
+               {
+                  ModelDesc md;
+
+                  md.DB_id       = db.value( 0 ).toString();
+                  md.modelGUID   = db.value( 1 ).toString();
+                  md.description = db.value( 2 ).toString();
+                  md.editGUID    = db.value( 5 ).toString();
+                  md.filename.clear();
+
+                  model_descriptions << md;
+               }
+            }
+            // Check if we have a matching model
+            for (auto & model_description : model_descriptions)
+            {
+               if (model_description.modelGUID == load_init || model_description.DB_id == load_init)
+               {
+                  if ( dkdb_cntrls->db() )
+                  {  // Load from database
+                     US_Passwd pw;
+                     US_DB2    db( pw.getPasswd() );
+
+                     if ( db.lastErrno() != US_DB2::OK )
+                     {
+                        connect_error( db.lastError() );
+                        return false;
+                     }
+
+                     QString modelID = model_description.DB_id;
+                     modelID_global = modelID;
+                     modelIn.load( modelID, &db );
+                     result = true;
+                     loaded = true;
+                  }
+
+                  else
+                  {  // Load from local disk
+                     QString filename  = model_description.filename;
+
+                     if ( filename.isEmpty() )
+                        return false;
+                     modelIn.load( filename );
+                     result = true;
+                     loaded = true;
+                  }
+               }
+            }
+            QApplication::restoreOverrideCursor();
+            QApplication::restoreOverrideCursor();
+         }
+      if ( loaded && result ) {
+         working_model = modelIn;
+         return true;
+      }
+      return false;
+   }
+   return false;
+}
+
 void US_ModelGui::new_model( void )
 {
    if ( ! ignore_changes() ) return;
@@ -207,7 +370,7 @@ void US_ModelGui::new_model( void )
       }
    }
 }
-
+
 void US_ModelGui::show_model_desc( void )
 {
    lw_models->clear();
@@ -290,7 +453,7 @@ void US_ModelGui::edit_description( void )
       }
    }
 }
-
+
 void US_ModelGui::select_model( QListWidgetItem* item )
 {
 qDebug() << "SelMdl: IN";
@@ -529,7 +692,7 @@ bool US_ModelGui::status_query( const QStringList& q )
 
    return database_ok( db );
 }
-
+
 void US_ModelGui::check_db( void )
 {
    if ( dkdb_cntrls->db() )
@@ -584,7 +747,7 @@ void US_ModelGui::get_person( void )
 
    le_investigator->setText( number + US_Settings::us_inv_name() );
 }
-
+
 void US_ModelGui::manage_components( void )
 {
    int index = lw_models->currentRow();
@@ -671,7 +834,7 @@ void US_ModelGui::update_assoc( void )
    model       = working_model;
    model_saved = false;
 }
-
+
 void US_ModelGui::accept_model( void )
 {
    if ( ! ignore_changes() )
@@ -784,7 +947,7 @@ qDebug() << "MdlSv:  fn" << fn;
 
    model_saved = true;
 }
-
+
 bool US_ModelGui::verify_model( void )
 {
    if ( model.components.size() == 0 )
@@ -853,7 +1016,7 @@ qDebug() << "UpdDDb: db" << db;
    qApp->processEvents();
 }
 
-
+
 void US_ModelGui::list_models( void )
 {
 qDebug() << "LsMdl: IN";
@@ -910,7 +1073,7 @@ qDebug() << "LsMdl: path" << path;
             m_file.close();
          }
       }
-
+
       else  // DB Access
       {
          if ( investigator < 0 )

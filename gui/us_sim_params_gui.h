@@ -15,13 +15,16 @@ class US_GUI_EXTERN US_SimParamsGui : public US_WidgetsDialog
 	Q_OBJECT
 	public:
       //! \param params Location for simulation parameters to be updated
-		US_SimParamsGui( US_SimulationParameters& );
+      //! \param load_file File to load simulation parameters from
+		US_SimParamsGui( US_SimulationParameters& params );
+
+      bool load_params( const QString& load_init, US_SimulationParameters& params );
 
    signals:
       void complete( void );
 
    private:
-
+      QString       load_init;
       US_SimulationParameters& simparams;
       US_SimulationParameters  simparams_backup;
       
