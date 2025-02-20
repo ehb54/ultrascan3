@@ -116,6 +116,8 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    // 20,w grid control
    QLabel *lb_20w_ctrl = us_banner( tr( "20,W Grid Control" ) );
 
+   QPushButton* pb_load_model = us_pushbutton("Load Model");
+
    QLabel *lb_grid_list = us_label(" Grid List ");
    lb_grid_list->setAlignment( Qt::AlignCenter );
 
@@ -268,11 +270,11 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
 
    left->addWidget( lb_20w_ctrl,          row++, 0, 1, 4 );
 
-   left->addWidget( lb_grid_list,         row++, 0, 1, 4 );
+   left->addWidget( lb_grid_list,         row,   0, 1, 2 );
+   left->addWidget( pb_load_model,        row++, 2, 1, 2 );
 
-   left->addWidget( lw_grids,             row,   0, 8, 4 );
-   left->setRowStretch(row, 1);
-   row += 8;
+   left->addWidget( lw_grids,             row,   0, 1, 4 );
+   left->setRowStretch( row++, 1 );
 
    left->addLayout( lyt_1,                row++, 0, 1, 4 );
 
