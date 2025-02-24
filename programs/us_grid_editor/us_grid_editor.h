@@ -15,6 +15,7 @@
 
 #define GridInfo US_Model::CustomGridMetadata::GridInfo
 #define CompInfo US_Model::CustomGridMetadata::CompInfo
+const double S_TRSHL = 1e-15;
 
 //! \class Attribute Class
 //! \brief Enumeration for attribute types.

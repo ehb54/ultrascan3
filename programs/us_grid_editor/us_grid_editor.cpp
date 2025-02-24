@@ -970,8 +970,12 @@ void US_Grid_Editor::add_update()
    QVector<Attribute::Type> types;
    types << x_param << y_param << z_param;
    QVector<GridPoint> gps;
-   bool flag = true;
-   QString error;
+   QStringList wrong_list;
+   QStringList error_list;
+   QString wrong_item("%1 : %2, %3 : %4, %5 : %6");
+   QString xs = Attribute::symbol(x_param);
+   QString ys = Attribute::symbol(y_param);
+   QString zs = Attribute::symbol(z_param);
    for ( int ii = 0; ii < ginfo.xRes; ii++ ) {
       for ( int jj = 0; jj < ginfo.yRes; jj++ ) {
          QVector<double> vals;
@@ -982,16 +986,41 @@ void US_Grid_Editor::add_update()
             gp.set_row_col(jj, ii);
             gps << gp;
          } else {
-            flag = false;
-            error = gp.error_string();
-            break;
+            double x = vals.at(0);
+            double y = vals.at(1);
+            double z = vals.at(2);
+            wrong_list << wrong_item.arg(xs).arg(x).arg(ys).arg(y).arg(zs).arg(z);
+            error_list << gp.error_string();
          }
       }
-      if ( ! flag ) break;
    }
 
-   if ( ! flag ) {
-      QMessageBox::warning(this, "Error!", error);
+   if ( ! wrong_list.isEmpty() ) {
+      QTextEdit* txt = us_textedit();
+      txt->setReadOnly(true);
+      QString line("%1 - %2 :\n %3 \n\n");
+      txt->append("The following grid points are excluded from the grid.\n\n");
+      for ( int ii = 0; ii < wrong_list.size(); ii++ ) {
+         txt->append( line.arg( ii + 1 )
+                        .arg( wrong_list.at(ii) )
+                        .arg( error_list.at(ii) ) );
+      }
+      QPushButton *pb_ok = us_pushbutton("OK");
+      QVBoxLayout *lyt = new QVBoxLayout();
+      lyt->addWidget(txt);
+      lyt->addWidget(pb_ok, 0, Qt::AlignCenter);
+      lyt->setMargin(1);
+
+      US_WidgetsDialog *dialog = new US_WidgetsDialog(this);
+      dialog->setWindowTitle( tr( "Excluded Points" ) );
+      dialog->setPalette( US_GuiSettings::frameColor() );
+      dialog->setLayout(lyt);
+      dialog->setMinimumSize(500, 500);
+      connect(pb_ok, &QPushButton::clicked, dialog, &QDialog::close);
+      dialog->exec();
+   }
+
+   if ( gps.isEmpty() ) {
       return;
    }
 
@@ -2072,18 +2101,15 @@ bool GridPoint::calculate_20w()
       F0 = 9 * VISC * PI * std::sqrt( 2 * VBAR * VISC * S * FF0 / BUOY );
       F = FF0 * F0;
       D = RT / ( NA * F );
-      calc_coefficients();
    } else if ( contains( Attribute::ATTR_V, Attribute::ATTR_S, Attribute::ATTR_M ) )  // 2: K, D, F, F0
    {
       if ( ! check_s_vbar()) return false;
       double BUOY = 1 - VBAR * DENS;
       F = MW * BUOY / ( S * NA );
       D = RT / ( NA * F );
-      calc_coefficients();
    } else if ( contains( Attribute::ATTR_V, Attribute::ATTR_S, Attribute::ATTR_D ) )  // 3: K, M, F, F0
    {
       if ( ! check_s_vbar()) return false;
-      calc_coefficients();
    } else if ( contains( Attribute::ATTR_V, Attribute::ATTR_K, Attribute::ATTR_M ) )  // 4: S, D, F, F0
    {
       double BUOY = 1 - VBAR * DENS;
@@ -2091,19 +2117,16 @@ bool GridPoint::calculate_20w()
           std::cbrt( 6 * MW * VBAR ) /
           std::pow( std::cbrt ( NA * PI ), 2 );
       S = MW * D * BUOY / RT;
-      calc_coefficients();
    } else if ( contains( Attribute::ATTR_V, Attribute::ATTR_K, Attribute::ATTR_D ) )  // 5: S, M, F, F0
    {
       double BUOY = 1 - VBAR * DENS;
       F = RT / ( NA * D );
       F0 = F / FF0;
       S = std::pow( F0 / ( 9 * VISC * PI ), 2 ) * BUOY / ( 2 * VISC * VBAR * FF0 );
-      calc_coefficients();
    } else if ( contains( Attribute::ATTR_V, Attribute::ATTR_M, Attribute::ATTR_D ) )  // 6: S, K, F, F0
    {
       double BUOY = 1 - VBAR * DENS;
       S = MW * D * BUOY / RT;
-      calc_coefficients();
    } else if ( contains( Attribute::ATTR_S, Attribute::ATTR_K, Attribute::ATTR_M ) )  // 7: V, D, F, F0 (qube root of VBAR)
    {
       double A = 6 * std::pow( 3 * VISC * S * FF0, 3 ) * std::pow( NA * PI / MW, 2 );
@@ -2117,7 +2140,6 @@ bool GridPoint::calculate_20w()
       F0 = 9 * VISC * PI * std::sqrt( 2 * VBAR * VISC * S * FF0 / BUOY );
       F = FF0 * F0;
       D = RT / ( NA * F );
-      calc_coefficients();
    } else if ( contains( Attribute::ATTR_S, Attribute::ATTR_K, Attribute::ATTR_D ) )  // 8: M, V, F, F0
    {
       F = RT / ( NA * D );
@@ -2125,22 +2147,19 @@ bool GridPoint::calculate_20w()
       double f02 = std::pow( F0, 2 );
       double vp2 = std::pow( 9 * PI * VISC, 2 );
       VBAR = f02 / ( 2 * VISC * S * FF0 * vp2 + f02 * DENS );
-      calc_coefficients();
    } else if ( contains( Attribute::ATTR_S, Attribute::ATTR_M, Attribute::ATTR_D ) )  // 9: K, V, F, F0
    {
       VBAR = ( 1 - S * RT / ( MW * D ) ) / DENS;
-      calc_coefficients();
    } else if ( contains( Attribute::ATTR_K, Attribute::ATTR_M, Attribute::ATTR_D ) )  // 10: S, V, F, F0
    {
       VBAR = std::pow( RT / ( 3.0 * VISC * D * FF0), 3 ) /
              ( 6 * MW * std::pow( NA * PI, 2 ) );
       double BUOY = 1 - VBAR * DENS;
       S = D * MW * BUOY / RT;
-      calc_coefficients();
    }
    else return false;
-
-   return true;
+   calc_coefficients();
+   return check_s_vbar();
 }
 
 void GridPoint::calculate_real()
@@ -2191,6 +2210,11 @@ bool GridPoint::check_s_vbar()
       error += QObject::tr("<b>Sedimentation = %1<b/><br/>").arg(S);
       error += QObject::tr("<b>Buoyancy = 1 - Density(20°C water) x PSV<b/><br/>");
       error += QObject::tr("<b>Buoyancy = 1 - %1 x %2 = %3<b/><br/>").arg(DENS_20W).arg(VBAR).arg(buoy);
+      return false;
+   }
+   if ( std::abs(S) < S_TRSHL ) {
+      error = QObject::tr("s = %1 [Sv]. s values less than %2 [Sv] are not allowed!")
+                 .arg(S * 1e13).arg(S_TRSHL * 1e13);
       return false;
    }
    return true;
