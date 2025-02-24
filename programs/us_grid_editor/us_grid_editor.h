@@ -247,8 +247,10 @@ private:
    QLineEdit        *le_x_param;           //!< X-axis parameter input.
    QLineEdit        *le_y_param;           //!< Y-axis parameter input.
    QLineEdit        *le_z_param;           //!< Z-axis parameter input.
-   QLineEdit        *le_dens;              //!< buffer density input.
-   QLineEdit        *le_visc;              //!< buffer viscosity input.
+   QLineEdit        *le_dens_20;           //!< buffer density input at 20.
+   QLineEdit        *le_visc_20;           //!< buffer viscosity input at 20.
+   QLineEdit        *le_dens_T;            //!< buffer density at T.
+   QLineEdit        *le_visc_T;            //!< buffer viscosity at T.
    QLineEdit        *le_temp;              //!< buffer temperature input.
    QLineEdit        *le_x_min;             //!< X-axis min value input.
    QLineEdit        *le_x_max;             //!< X-axis max value input.

@@ -97,15 +97,25 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
 
    le_buffer = us_lineedit("", -1, true);
 
-   QLabel *lb_dens = us_label( tr( "ρ [g/mL]" ) );
-   lb_dens->setAlignment( Qt::AlignCenter );
-   le_dens = us_lineedit();
-   le_dens->setValidator(dValid);
+   QLabel *lb_dens_T = us_label( tr( "ρ(T) [g/mL]" ) );
+   lb_dens_T->setAlignment( Qt::AlignCenter );
+   le_dens_T = us_lineedit("", -1, true);
+   le_dens_T->setValidator(dValid);
 
-   QLabel *lb_visc = us_label( tr( "η [cP]" ) );
-   lb_visc->setAlignment( Qt::AlignCenter );
-   le_visc = us_lineedit();
-   le_visc->setValidator(dValid);
+   QLabel *lb_visc_T = us_label( tr( "η(T) [cP]" ) );
+   lb_visc_T->setAlignment( Qt::AlignCenter );
+   le_visc_T = us_lineedit("", -1, true);
+   le_visc_T->setValidator(dValid);
+
+   QLabel *lb_dens_20 = us_label( tr( "ρ(20°) [g/mL]" ) );
+   lb_dens_20->setAlignment( Qt::AlignCenter );
+   le_dens_20 = us_lineedit();
+   le_dens_20->setValidator(dValid);
+
+   QLabel *lb_visc_20 = us_label( tr( "η(20°) [cP]" ) );
+   lb_visc_20->setAlignment( Qt::AlignCenter );
+   le_visc_20 = us_lineedit();
+   le_visc_20->setValidator(dValid);
 
    QLabel *lb_temp = us_label( tr( "T [°C]" ) );
    lb_temp->setAlignment( Qt::AlignCenter );
@@ -114,8 +124,8 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
 
    pb_lu_buffer = us_pushbutton("Load Buffer");
 
-   connect(le_dens, &QLineEdit::editingFinished, this, &US_Grid_Editor::new_dens_visc_temp);
-   connect(le_visc, &QLineEdit::editingFinished, this, &US_Grid_Editor::new_dens_visc_temp);
+   connect(le_dens_20, &QLineEdit::editingFinished, this, &US_Grid_Editor::new_dens_visc_temp);
+   connect(le_visc_20, &QLineEdit::editingFinished, this, &US_Grid_Editor::new_dens_visc_temp);
    connect(le_temp, &QLineEdit::editingFinished, this, &US_Grid_Editor::new_dens_visc_temp);
    connect(pb_lu_buffer, &QPushButton::clicked, this, &US_Grid_Editor::set_buffer);
 
@@ -266,17 +276,22 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
 
    left->addWidget( lb_experm,            row++, 0, 1, 4 );
 
-   left->addWidget( lb_buffer,            row,   0, 1, 1 );
-   left->addWidget( le_buffer,            row++, 1, 1, 3 );
-
-   left->addWidget( lb_dens,              row,   0, 1, 1 );
-   left->addWidget( le_dens,              row,   1, 1, 1 );
-   left->addWidget( lb_visc,              row,   2, 1, 1 );
-   left->addWidget( le_visc,              row++, 3, 1, 1 );
-
    left->addWidget( lb_temp,              row,   0, 1, 1 );
    left->addWidget( le_temp,              row,   1, 1, 1 );
    left->addWidget( pb_lu_buffer,         row++, 2, 1, 2 );
+
+   left->addWidget( lb_buffer,            row,   0, 1, 1 );
+   left->addWidget( le_buffer,            row++, 1, 1, 3 );
+
+   left->addWidget( lb_dens_20,           row,   0, 1, 1 );
+   left->addWidget( le_dens_20,           row,   1, 1, 1 );
+   left->addWidget( lb_visc_20,           row,   2, 1, 1 );
+   left->addWidget( le_visc_20,           row++, 3, 1, 1 );
+
+   left->addWidget( lb_dens_T,            row,   0, 1, 1 );
+   left->addWidget( le_dens_T,            row,   1, 1, 1 );
+   left->addWidget( lb_visc_T,            row,   2, 1, 1 );
+   left->addWidget( le_visc_T,            row++, 3, 1, 1 );
 
    left->addWidget( lb_20w_ctrl,          row++, 0, 1, 4 );
 
@@ -500,8 +515,10 @@ void US_Grid_Editor::reset()
    buff_visc = VISC_20W;
    buff_temp = 20;
    buffer_type = ST_WATER;
-   le_dens->setText( QString::number( buff_dens ) );
-   le_visc->setText( QString::number( buff_visc ) );
+   le_dens_20->setText( QString::number( buff_dens ) );
+   le_visc_20->setText( QString::number( buff_visc ) );
+   le_dens_T->setText( QString::number( buff_dens ) );
+   le_visc_T->setText( QString::number( buff_visc ) );
    le_temp->setText( QString::number( buff_temp ) );
    le_buffer->setText( "Water" );
 
@@ -1144,10 +1161,10 @@ bool US_Grid_Editor::validate_input(const QString label)
       value = le_z_val->text();
       return dValid->validate(value, pos) == QValidator::Acceptable;
    } else if ( label == "dens" ) {
-      value = le_dens->text();
+      value = le_dens_20->text();
       return dValid->validate(value, pos) == QValidator::Acceptable;
    } else if ( label == "visc" ) {
-      value = le_visc->text();
+      value = le_visc_20->text();
       return dValid->validate(value, pos) == QValidator::Acceptable;
    } else if ( label == "temp" ) {
       value = le_temp->text();
@@ -1300,8 +1317,8 @@ void US_Grid_Editor::sort_by_row(QVector<GridPoint> &vec)
 
 void US_Grid_Editor::check_dens_visc_temp()
 {
-   buff_dens = validate_input("dens") ? le_dens->text().toDouble() : DENS_20W;
-   buff_visc = validate_input("visc") ? le_visc->text().toDouble() : VISC_20W;
+   buff_dens = validate_input("dens") ? le_dens_20->text().toDouble() : DENS_20W;
+   buff_visc = validate_input("visc") ? le_visc_20->text().toDouble() : VISC_20W;
    buff_temp = validate_input("temp") ? le_temp->text().toDouble() : 20;
 
    if ( buff_dens < 0.001 ) {
@@ -1329,8 +1346,8 @@ void US_Grid_Editor::check_dens_visc_temp()
       }
    }
 
-   le_dens->setText( QString::number( buff_dens ) );
-   le_visc->setText( QString::number( buff_visc ) );
+   le_dens_20->setText( QString::number( buff_dens ) );
+   le_visc_20->setText( QString::number( buff_visc ) );
    le_temp->setText( QString::number( buff_temp ) );
 }
 
@@ -1406,8 +1423,8 @@ void US_Grid_Editor::set_buffer()
       US_BufferGui* buffer_gui = new US_BufferGui(true, US_Buffer(), state);
 
       connect(buffer_gui, &US_BufferGui::valueChanged, this, [&](US_Buffer buffer) {
-         le_dens->setText(QString::number( buffer.density ));
-         le_visc->setText(QString::number( buffer.viscosity ));
+         le_dens_20->setText(QString::number( buffer.density ));
+         le_visc_20->setText(QString::number( buffer.viscosity ));
          le_buffer->setText( buffer.description );
          buffer_type = USER_BUFFER;
       });
@@ -1430,6 +1447,21 @@ void US_Grid_Editor::set_buffer()
 
    for ( int ii = 0; ii < sorted_points.size(); ii++ ) {
       sorted_points[ii].set_dens_visc_temp(buff_dens, buff_visc, buff_temp);
+   }
+
+   US_Math2::SolutionData sd;
+   sd.manual = false;
+   sd.vbar = 0.72;
+   sd.vbar20 = 0.72;
+   sd.density = buff_dens;
+   sd.viscosity = buff_visc;
+   US_Math2::data_correction(buff_temp, sd);
+   if ( buff_temp == 20 ) {
+      le_dens_T->setText(QString::number(buff_dens));
+      le_visc_T->setText(QString::number(buff_visc));
+   } else {
+      le_dens_T->setText(QString::number(sd.density_tb));
+      le_visc_T->setText(QString::number(sd.viscosity_tb));
    }
 
    plot_points();
