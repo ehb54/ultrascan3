@@ -1239,7 +1239,8 @@ void US_Extinction::save(void)
    if(f.open(QIODevice::WriteOnly | QIODevice::Text))
    {
       QTextStream ts(&f);
-      ts << tr("\"Wavelength\"\t\"Extinction\"\n");
+      qDebug() << le_associate->text();
+      ts << "\"Wavelength\"" << "\t\"" << le_associate->text() << "\"\n";
       for(int i = 0; i < lambda.size(); i++)
       {
          ts << lambda[i] << "\t";
