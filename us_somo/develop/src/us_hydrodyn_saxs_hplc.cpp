@@ -1020,7 +1020,8 @@ void US_Hydrodyn_Saxs_Hplc::clear_files( QStringList files, bool quiet )
    }
 
    disable_updates = false;
-   plot_files();
+   // ok, quiet is impling save zoom state...
+   plot_files( quiet );
    // if ( !lb_files->count() &&
    //      plot_dist_zoomer )
    // {

@@ -2830,7 +2830,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    connect(pb_broaden, SIGNAL(clicked()), SLOT(broaden()));
    pb_broaden->setEnabled( false );
    
-   lbl_broaden_msg = new QLabel( "Some fit message" , this );
+   lbl_broaden_msg = new QLabel( "" , this );
    lbl_broaden_msg->setAlignment(Qt::AlignCenter | Qt::AlignVCenter);
    lbl_broaden_msg->setPalette( PALET_NORMAL );
    AUTFBACK( lbl_broaden_msg );
@@ -2961,13 +2961,13 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    le_broaden_kernel_deltat->setToolTip( us_tr( UNICODE_DELTA_QS + "t for the grid points of the convolution kernel, default should be ok<br>Changing the value will require changing the " + UNICODE_TAU_QS + " to achieve the same resulting curve" ) );
 
    cb_broaden_repeak = new QCheckBox(this);
-   cb_broaden_repeak->setText(us_tr("Auto. repeak "));
+   cb_broaden_repeak->setText(us_tr("Match area"));
    cb_broaden_repeak->setChecked( true );
    cb_broaden_repeak->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
    cb_broaden_repeak->setPalette( PALET_NORMAL );
    AUTFBACK( cb_broaden_repeak );
    connect( cb_broaden_repeak, SIGNAL( clicked() ), SLOT( broaden_repeak_set() ) );
-   cb_broaden_repeak->setToolTip( us_tr( "Check to automatically repeak" ) );
+   cb_broaden_repeak->setToolTip( us_tr( "Check to show the broadened curve with matching area in the fit range" ) );
 
    lbl_broaden_fit_range = new QLabel( us_tr( "Fitting t range: " ) );
    lbl_broaden_fit_range->setAlignment(Qt::AlignRight|Qt::AlignVCenter);

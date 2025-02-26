@@ -845,7 +845,7 @@ void US_Hydrodyn_Saxs_Hplc::set_eb()
 }
 
 
-void US_Hydrodyn_Saxs_Hplc::plot_files()
+void US_Hydrodyn_Saxs_Hplc::plot_files( bool save_zoom_state ) 
 {
    // qDebug() << "plot files";
    plot_dist->detachItems( QwtPlotItem::Rtti_PlotCurve ); plot_dist->detachItems( QwtPlotItem::Rtti_PlotMarker );;
@@ -957,12 +957,16 @@ void US_Hydrodyn_Saxs_Hplc::plot_files()
 
    // enable zooming
 
-   if ( any_selected ) {
+   if ( any_selected && !save_zoom_state ) {
+      qDebug() << "Plot files, save_zoom_state not active\n";
+
       plot_dist->setAxisScale( QwtPlot::xBottom, minx, maxx );
       plot_dist->setAxisScale( QwtPlot::yLeft  , miny * 0.9e0 , maxy * 1.1e0 );
       plot_dist_zoomer->setZoomBase();
       plot_errors->setAxisScale( QwtPlot::xBottom, minx, maxx );
       plot_errors_zoomer->setZoomBase();
+   } else {
+      qDebug() << "Plot files, save_zoom_state active\n";
    }
    
 #if defined( DEBUG_RESCALE )
