@@ -2757,15 +2757,15 @@ double US_Hydrodyn_Saxs_Hplc::tot_intensity( QString &file, double q_min, double
    return tot_i;
 }
 
-bool US_Hydrodyn_Saxs_Hplc::set_selected( const QStringList & to_select_qsl, bool do_replot ) {
+bool US_Hydrodyn_Saxs_Hplc::set_selected( const QStringList & to_select_qsl, bool do_replot, bool save_zoom_state ) {
    set < QString > to_select;
    for ( auto name : to_select_qsl ) {
       to_select.insert( name );
    }
-   return set_selected( to_select, do_replot );
+   return set_selected( to_select, do_replot, save_zoom_state );
 }
 
-bool US_Hydrodyn_Saxs_Hplc::set_selected( const set < QString > & to_select, bool do_replot ) {
+bool US_Hydrodyn_Saxs_Hplc::set_selected( const set < QString > & to_select, bool do_replot, bool save_zoom_state ) {
    disable_updates = true;
    lb_files->clearSelection();
    set < QString > missing = to_select;
@@ -2779,7 +2779,7 @@ bool US_Hydrodyn_Saxs_Hplc::set_selected( const set < QString > & to_select, boo
 
    disable_updates = false;
    if ( do_replot ) {
-      plot_files();
+      plot_files( save_zoom_state );
    }
    return missing.size() == 0;
 }

@@ -1243,7 +1243,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 
       bool load_file( QString file, bool load_conc = false );
 
-      void plot_files();
+      void plot_files( bool save_zoom_state = false );
+
       bool plot_file( QString file,
                       double &minx,
                       double &maxx,
@@ -1541,8 +1542,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       double                       scale_applied_q_max;
 
       set < QString >              scale_last_created;
-      bool                         set_selected        ( const QStringList &, bool do_replot = true );
-      bool                         set_selected        ( const set < QString > &, bool do_replot = true );
+      bool                         set_selected        ( const QStringList &, bool do_replot = true, bool save_zoom_state = false );
+      bool                         set_selected        ( const set < QString > &, bool do_replot = true, bool save_zoom_state = false );
       bool                         set_created_selected( const set < QString > &, bool do_replot = true );
 
       map < QString, vector <double > > scale_q;

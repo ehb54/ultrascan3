@@ -4,8 +4,39 @@
 
 #define TSO QTextStream(stdout)
 
+static double broaden_scale;
+
 static double discrete_area_under_curve( const vector < double > & x, const vector < double > & y ) {
    double area = 0;
+   size_t x_size = x.size();
+   size_t y_size = y.size();
+
+   size_t min_size = x_size;
+   if ( min_size > y_size ) {
+      min_size = y_size;
+   }
+
+   for ( size_t i = 1; i < min_size; ++i ) {
+      area += 0.5 * ( y[ i - 1 ] + y[ i ] ) / ( x[ i ] - x[ i - 1 ] );
+   }
+   return area;
+}
+
+static double discrete_area_under_curve( const vector < double > & org_x, const vector < double > & org_y, double start_x, double end_x ) {
+   double area = 0;
+
+   vector < double > x;
+   vector < double > y;
+
+   size_t org_x_size = org_x.size();
+
+   for ( size_t i = 0; i < org_x_size; ++i ) {
+      if ( org_x[ i ] >= start_x && org_x[ i ] <= end_x ) {
+         x.push_back( org_x[ i ] );
+         y.push_back( org_y[ i ] );
+      }
+   }
+
    size_t x_size = x.size();
    size_t y_size = y.size();
 
@@ -185,6 +216,12 @@ void US_Hydrodyn_Saxs_Hplc::broaden_enables() {
    pb_broaden_reset             -> setEnabled( true );
    pb_wheel_cancel              -> setEnabled( true );
    pb_wheel_save                -> setEnabled( true );
+
+   cb_eb                        -> setEnabled( true );
+   cb_dots                      -> setEnabled( true );
+   pb_color_rotate              -> setEnabled( true );
+   pb_line_width                -> setEnabled( true );
+   pb_legend                    -> setEnabled( true );
 }
 
 void US_Hydrodyn_Saxs_Hplc::broaden_plot( bool /* replot */ ) {
@@ -400,18 +437,6 @@ void US_Hydrodyn_Saxs_Hplc::broaden_compute_one() {
    broaden_names << last_created_file;
    conc_files.insert( last_created_file );
 
-   if ( cb_broaden_repeak->isChecked() ) {
-      QStringList files;
-      files << broaden_names[ 1 ];
-      QString broadened_not_repeaked = broaden_names.takeLast();
-      repeak( files, true, broadened_not_repeaked );
-      broaden_names << last_repeak_name;
-      set < QString > to_remove = { broadened_not_repeaked };
-      remove_files( to_remove );
-   }
-
-   set_selected( broaden_names );
-
    double fit = broaden_compute_loss();
    if ( fit != DBL_MAX ) {
       lbl_broaden_msg  ->setText(
@@ -420,16 +445,42 @@ void US_Hydrodyn_Saxs_Hplc::broaden_compute_one() {
                                  .arg( broaden_ref_has_errors ? "nChi^2" : "RMSD" )
                                  .arg( fit )
                                  );
+
+      if ( cb_broaden_repeak->isChecked() ) {
+         QStringList files;
+         files << broaden_names[ 1 ];
+         QString broadened_not_repeaked = broaden_names.takeLast();
+         for ( auto & I : f_Is[ broadened_not_repeaked ] ) {
+            I *= broaden_scale;
+         }
+         add_plot(
+                  QString( "%1_ab_%2" ).arg( broadened_not_repeaked ).arg( broaden_scale )
+                  ,f_qs[ broadened_not_repeaked ]
+                  ,f_Is[ broadened_not_repeaked ]
+                  ,true
+                  ,false
+                  );
+         
+         broaden_names << last_created_file;
+         set < QString > to_remove = { broadened_not_repeaked };
+         remove_files( to_remove );
+      }
    } else {
       lbl_broaden_msg  ->setText( lbl_broaden_msg->text() + "  Could not compute fit" );
    }
 
+   set_selected( broaden_names, true, true );
+   
+   double fit_range_start = le_broaden_fit_range_start->text().toDouble();
+   double fit_range_end   = le_broaden_fit_range_end  ->text().toDouble();
+
    if ( broaden_names.size() > 2 ) {
       lbl_broaden_msg  ->setText(
                                  lbl_broaden_msg->text() +
-                                 QString( " Discrete area under conc. curve %1, under broadened %2" )
-                                 .arg( discrete_area_under_curve( f_qs[ broaden_names[ 0 ] ] , f_Is[ broaden_names[ 0 ] ] ) )
-                                 .arg( discrete_area_under_curve( f_qs[ broaden_names[ 2 ] ] , f_Is[ broaden_names[ 2 ] ] ) )
+                                 QString( "\nDiscrete areas target %1, conc. %2, broadened %3" )
+                                 .arg( discrete_area_under_curve( f_qs[ broaden_names[ 1 ] ] , f_Is[ broaden_names[ 1 ] ], fit_range_start, fit_range_end ) )
+                                 .arg( discrete_area_under_curve( f_qs[ broaden_names[ 0 ] ] , f_Is[ broaden_names[ 0 ] ], fit_range_start, fit_range_end ) )
+                                 .arg( discrete_area_under_curve( f_qs[ broaden_names[ 2 ] ] , f_Is[ broaden_names[ 2 ] ], fit_range_start, fit_range_end ) )
                                  );
    }
 }
@@ -440,6 +491,9 @@ void US_Hydrodyn_Saxs_Hplc::broaden_fit() {
    running = true;
 
    disable_all();
+
+   // QStringList repeak_target;
+   // repeak_target << broaden_names[ 1 ];
 
    double tau_start       = le_broaden_tau_start      ->text().toDouble();
    double tau_end         = le_broaden_tau_end        ->text().toDouble();
@@ -548,6 +602,7 @@ void US_Hydrodyn_Saxs_Hplc::broaden_fit() {
             return;
          }
 
+
          vector < double > conc_t = f_qs[ broaden_names[ 0 ] ];
          for ( auto & t : conc_t ) {
             t += deltat;
@@ -580,6 +635,13 @@ void US_Hydrodyn_Saxs_Hplc::broaden_fit() {
             best_loss   = this_loss;
             best_tau    = tau;
             best_deltat = deltat;
+            editor_msg( "darkblue"
+                        ,QString( "best loss so far tau %1 deltat %2 loss %3\n" )
+                        .arg( tau )
+                        .arg( deltat )
+                        .arg( best_loss )
+                        );
+            qApp->processEvents();
          }
       }
    }
@@ -593,10 +655,12 @@ void US_Hydrodyn_Saxs_Hplc::broaden_fit() {
    le_broaden_deltat->setText( QString( "%1" ).arg( best_deltat ) ); // , 0, 'f', 6 ) );
    lbl_broaden_msg  ->setText(
                               QString( "Last fit %1 : %2" )
-                               .arg( broaden_ref_has_errors ? "nChi^2" : "RMSD" )
-                               .arg( best_loss )
+                              .arg( broaden_ref_has_errors ? "nChi^2" : "RMSD" )
+                              .arg( best_loss )
                               );
 
+   qApp->processEvents();
+   
    broaden_compute_one();
    running = false;
    broaden_enables();
@@ -626,6 +690,28 @@ double US_Hydrodyn_Saxs_Hplc::broaden_compute_loss_no_ui(
       US_Vector::printvector2( "ref_t, ref_I", ref_t, ref_I );
       return DBL_MAX;
    }
+
+   // scale area
+
+   double area_ref  = discrete_area_under_curve( ref_t, ref_I );
+   double area_conc = discrete_area_under_curve( ref_t, new_conc_I );
+
+   if ( area_conc <= 0 ) {
+      editor_msg( "red", QString( "Error: area under broadened curve restricted to fitting range is not positive" ) );
+      return DBL_MAX;
+   }
+  
+   broaden_scale = area_ref / area_conc;
+   for ( auto & I : new_conc_I ) {
+      I *= broaden_scale;
+   }
+
+   TSO << QString( "area_ref %1 area_conc %2 scale %3 area_new_conc %4\n" )
+      .arg( area_ref )
+      .arg( area_conc )
+      .arg( broaden_scale )
+      .arg( discrete_area_under_curve( ref_t, new_conc_I ) )
+      ;
 
    if ( broaden_ref_has_errors ) {
       double chi2;
@@ -707,6 +793,21 @@ double US_Hydrodyn_Saxs_Hplc::broaden_compute_loss() {
    if ( !usu.linear_interpolate( conc_t, conc_I, ref_t, new_conc_I ) ) {
       editor_msg( "red", QString( "Error while fitting: interpolation error: %1\n" ).arg( usu.errormsg ) );
       return DBL_MAX;
+   }
+
+   // scale area
+
+   double area_ref  = discrete_area_under_curve( ref_t, ref_I );
+   double area_conc = discrete_area_under_curve( ref_t, new_conc_I );
+
+   if ( area_conc <= 0 ) {
+      editor_msg( "red", QString( "Error: area under broadened curve restricted to fitting range is not positive" ) );
+      return DBL_MAX;
+   }
+  
+   broaden_scale = area_ref / area_conc;
+   for ( auto & I : new_conc_I ) {
+      I *= broaden_scale;
    }
 
    if ( broaden_ref_has_errors ) {
