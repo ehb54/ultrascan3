@@ -532,7 +532,7 @@ void US_Grid_Editor::rm_tmp_items()
    for (QwtPlotItem *item : items) {
       if (item ) {
          QString txt = item->title().text();
-         if ( txt.startsWith("TMP_H") || txt.startsWith("TMP_V") || txt.startsWith("TMP_R") ) {
+         if ( txt.startsWith("TMP_R") ) {
             item->detach();
             delete item;
          }
@@ -558,93 +558,124 @@ void US_Grid_Editor::rm_point_curves()
 void US_Grid_Editor::plot_tmp()
 {
    rm_tmp_items();
-   bool is_xMin = validate_input("x_min");
-   bool is_xMax = validate_input("x_max");
-   bool is_yMin = validate_input("y_min");
-   bool is_yMax = validate_input("y_max");
+   bool xMin_set = validate_input( "x_min" );
+   bool xMax_set = validate_input( "x_max" );
+   bool yMin_set = validate_input( "y_min" );
+   bool yMax_set = validate_input( "y_max" );
+   bool grid_set = ! grid_points.isEmpty();
 
    double x1 = le_x_min->text().toDouble();
    double x2 = le_x_max->text().toDouble();
    double y1 = le_y_min->text().toDouble();
    double y2 = le_y_max->text().toDouble();
+   double px1 = data_plot->axisScaleDiv( QwtPlot::xBottom ).lowerBound();
+   double px2 = data_plot->axisScaleDiv( QwtPlot::xBottom ).upperBound();
+   double py1 = data_plot->axisScaleDiv( QwtPlot::yLeft ).lowerBound();
+   double py2 = data_plot->axisScaleDiv( QwtPlot::yLeft ).upperBound();
 
-   if (! is_xMin ) x1 = -1e6;
-   if (! is_xMax ) x2 = +1e6;
-   if (! is_yMin ) y1 = -1e6;
-   if (! is_yMax ) y2 = +1e6;
+   if ( grid_set )
+   {
+      GridInfo ginfo = grid_info.first();
+      px1 = correct_unit( ginfo.xMin, Attribute::from_symbol( ginfo.xType ), true );
+      px2 = correct_unit( ginfo.xMax, Attribute::from_symbol( ginfo.xType ), true );
+      py1 = correct_unit( ginfo.yMin, Attribute::from_symbol( ginfo.yType ), true );
+      py2 = correct_unit( ginfo.yMax, Attribute::from_symbol( ginfo.yType ), true );
+      for ( int ii = 0; ii < grid_info.size(); ii++ ) {
+         GridInfo ginfo = grid_info.at(ii);
+         px1 = qMin( px1, correct_unit( ginfo.xMin, Attribute::from_symbol( ginfo.xType ), true) );
+         px2 = qMax( px2, correct_unit( ginfo.xMax, Attribute::from_symbol( ginfo.xType ), true) );
+         py1 = qMin( py1, correct_unit( ginfo.yMin, Attribute::from_symbol( ginfo.yType ), true) );
+         py2 = qMax( py2, correct_unit( ginfo.yMax, Attribute::from_symbol( ginfo.yType ), true) );
+      }
 
-   double px1 = data_plot->axisScaleDiv(QwtPlot::xBottom).lowerBound();
-   double px2 = data_plot->axisScaleDiv(QwtPlot::xBottom).upperBound();
-   double py1 = data_plot->axisScaleDiv(QwtPlot::yLeft).lowerBound();
-   double py2 = data_plot->axisScaleDiv(QwtPlot::yLeft).upperBound();
-   if ( x1 != -1e6 && x2 != 1e6 ) {
-      double dx = qAbs(x2 - x1) * 0.1;
-      px1 = x1 - dx;
-      px2 = x2 + dx;
-   } else if ( x1 != -1e6 && x2 == 1e6 ) {
-      double dx = qAbs(x1) * 0.1;
-      px1 = x1 - dx;
-      px2 = x1 + dx;
-   } else if ( x1 == -1e6 && x2 != 1e6 ) {
-      double dx = qAbs(x2) * 0.1;
-      px1 = x2 - dx;
-      px2 = x2 + dx;
+      if ( xMin_set && xMax_set ) {
+         px1 = qMin( qMin( x1, x2 ), px1 );
+         px2 = qMax( qMax( x1, x2 ), px2 );
+      } else if ( xMin_set && ! xMax_set ) {
+         x2  = x1;
+         px1 = qMin( x1, px1 );
+         px2 = qMax( x1, px2 );
+      } else if ( ! xMin_set && xMax_set ) {
+         x1  = x2;
+         px1 = qMin( x2, px1 );
+         px2 = qMax( x2, px2 );
+      } else {
+         x1 = px1 - qAbs( px1 ) * 100;
+         x2 = px2 + qAbs( px2 ) * 100;
+      }
+
+      if ( yMin_set && yMax_set ) {
+         py1 = qMin( qMin( y1, y2 ), py1 );
+         py2 = qMax( qMax( y1, y2 ), py2 );
+      } else if ( yMin_set && ! yMax_set ) {
+         y2  = y1;
+         py1 = qMin( y1, py1 );
+         py2 = qMax( y1, py2 );
+      } else if ( ! yMin_set && yMax_set ) {
+         y1  = y2;
+         py1 = qMin( y2, py1 );
+         py2 = qMax( y2, py2 );
+      } else {
+         y1 = py1 - qAbs( py1 ) * 100;
+         y2 = py2 + qAbs( py2 ) * 100;
+      }
    }
+   else
+   {
+      if ( xMin_set && xMax_set ) {
+         px1 = qMin( x1, x2 );
+         px2 = qMax( x1, x2 );
+      } else if ( xMin_set && ! xMax_set ) {
+         x2  = x1;
+         px1 = x1;
+         px2 = x1;
+      } else if ( ! xMin_set && xMax_set ) {
+         x1  = x2;
+         px1 = x2;
+         px2 = x2;
+      } else {
+         x1 = px1 - qAbs( px1 ) * 100;
+         x2 = px2 + qAbs( px2 ) * 100;
+      }
 
-   if ( y1 != -1e6 && y2 != 1e6 ) {
-      double dy = qAbs(y2 - y1) * 0.1;
-      py1 = y1 - dy;
-      py2 = y2 + dy;
-   } else if ( y1 != -1e6 && y2 == 1e6 ) {
-      double dy = qAbs(y1) * 0.1;
-      py1 = y1 - dy;
-      py2 = y1 + dy;
-   } else if ( y1 == -1e6 && y2 != 1e6 ) {
-      double dy = qAbs(y2) * 0.1;
-      py1 = y2 - dy;
-      py2 = y2 + dy;
+      if ( yMin_set && yMax_set ) {
+         py1 = qMin( y1, y2 );
+         py2 = qMax( y1, y2 );
+      } else if ( yMin_set && ! yMax_set ) {
+         y2  = y1;
+         py1 = y1;
+         py2 = y1;
+      } else if ( ! yMin_set && yMax_set ) {
+         y1  = y2;
+         py1 = y2;
+         py2 = y2;
+      } else {
+         y1 = py1 - qAbs( py1 ) * 100;
+         y2 = py2 + qAbs( py2 ) * 100;
+      }
    }
 
    QPainterPath path;
-   QString title;
-   if (is_xMin && !is_xMax && !is_yMin && !is_yMax) {
-      path.moveTo(x1, y1);
-      path.lineTo(x1, y2);
-      title = "TMP_V1";
-   } else if (!is_xMin && is_xMax && !is_yMin && !is_yMax) {
-      path.moveTo(x2, y1);
-      path.lineTo(x2, y2);
-      title = "TMP_V2";
-   } else if (!is_xMin && !is_xMax && is_yMin && !is_yMax) {
-      path.moveTo(x1, y1);
-      path.lineTo(x2, y1);
-      title = "TMP_H1";
-   } else if (!is_xMin && !is_xMax && !is_yMin && is_yMax) {
-      path.moveTo(x1, y2);
-      path.lineTo(x2, y2);
-      title = "TMP_H2";
-   } else {
-      QRectF rect(x1, y1, x2 - x1, y2 - y1);
-      path.addRect(rect);
-      title = "TMP_R";
-   }
-
+   QRectF rect( x1, y1, x2 - x1, y2 - y1 );
+   path.addRect( rect );
    QwtPlotShapeItem *shapeItem = new QwtPlotShapeItem();
-   shapeItem->setTitle(title);
-   shapeItem->setShape(path);
-   shapeItem->setBrush(QBrush(QColor(255,255,255, 128)));
-   shapeItem->setPen(QPen(QColor(255,255,255), 2));
-   shapeItem->attach(data_plot);
+   shapeItem->setTitle( "TMP_R" );
+   shapeItem->setShape( path );
+   shapeItem->setBrush( QBrush( QColor( 255,255,255, 128 ) ) );
+   shapeItem->setPen( QPen( QColor( 255,255,255 ), 2 ) );
+   shapeItem->attach( data_plot );
 
-   if ( ! grid_points.isEmpty() ) {
-      px1 = qMin(px1, data_plot->axisScaleDiv(QwtPlot::xBottom).lowerBound());
-      px2 = qMax(px2, data_plot->axisScaleDiv(QwtPlot::xBottom).upperBound());
-      py1 = qMin(py1, data_plot->axisScaleDiv(QwtPlot::yLeft).lowerBound());
-      py2 = qMax(py2, data_plot->axisScaleDiv(QwtPlot::yLeft).upperBound());
-   }
+   double dx = px2 - px1;
+   double dy = py2 - py1;
+   dx = dx == 0 ? 0.1 : dx * 0.1;
+   dy = dy == 0 ? 0.1 : dy * 0.1;
+   px1 -= dx;
+   px2 += dx;
+   py1 -= dy;
+   py2 += dy;
 
-   data_plot->setAxisScale( QwtPlot::xBottom, px1, px2);
-   data_plot->setAxisScale( QwtPlot::yLeft  , py1, py2);
+   data_plot->setAxisScale( QwtPlot::xBottom, px1, px2 );
+   data_plot->setAxisScale( QwtPlot::yLeft  , py1, py2 );
    data_plot->replot();
 }
 
