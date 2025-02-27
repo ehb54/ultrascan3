@@ -38,6 +38,7 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
 
    // validators
    dValid = new QDoubleValidator(this);
+   dValid->setLocale(QLocale::C);
    iValid = new QIntValidator(this);
    iValid->setBottom(1);
 
