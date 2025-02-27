@@ -2240,8 +2240,8 @@ bool GridPoint::check_s_vbar()
    }
    if ( ( buoy > 0 && S < 0 ) || ( buoy < 0 && S > 0 ) ) {
       error  = "Sedimentation and buoyancy should have the same sign!<br/><br/>";
-      error += QObject::tr("<b>Sedimentation = %1<b/><br/>").arg(S);
-      error += QObject::tr("<b>Buoyancy = 1 - Density(20°C water) x PSV<b/><br/>");
+      error += QObject::tr("<b>Sedimentation = %1<b/> [Sv] <br/>").arg(S * 1e+13);
+      error += QObject::tr("<b>Buoyancy = 1 - Density(20°C water) x vbar<b/><br/>");
       error += QObject::tr("<b>Buoyancy = 1 - %1 x %2 = %3<b/><br/>").arg(DENS_20W).arg(VBAR).arg(buoy);
       return false;
    }
