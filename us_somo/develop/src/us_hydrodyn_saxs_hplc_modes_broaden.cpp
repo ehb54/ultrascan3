@@ -17,12 +17,12 @@ static double discrete_area_under_curve( const vector < double > & x, const vect
    }
 
    for ( size_t i = 1; i < min_size; ++i ) {
-      area += 0.5 * ( y[ i - 1 ] + y[ i ] ) / ( x[ i ] - x[ i - 1 ] );
+      area += 0.5 * ( y[ i - 1 ] + y[ i ] ) * ( x[ i ] - x[ i - 1 ] );
    }
    return area;
 }
 
-static double discrete_area_under_curve( const vector < double > & org_x, const vector < double > & org_y, double start_x, double end_x ) {
+static double discrete_area_under_curve( const vector < double > & org_x, const vector < double > & org_y, double start_x, double end_x, QString msg = "" ) {
    double area = 0;
 
    vector < double > x;
@@ -46,8 +46,9 @@ static double discrete_area_under_curve( const vector < double > & org_x, const 
    }
 
    for ( size_t i = 1; i < min_size; ++i ) {
-      area += 0.5 * ( y[ i - 1 ] + y[ i ] ) / ( x[ i ] - x[ i - 1 ] );
+      area += 0.5 * ( y[ i - 1 ] + y[ i ] ) * ( x[ i ] - x[ i - 1 ] );
    }
+   // US_Vector::printvector2( QString( "%1: area %2, x, y" ).arg( msg ).arg( area ), x, y );
    return area;
 }
 
@@ -478,9 +479,9 @@ void US_Hydrodyn_Saxs_Hplc::broaden_compute_one() {
       lbl_broaden_msg  ->setText(
                                  lbl_broaden_msg->text() +
                                  QString( "\nDiscrete areas target %1, conc. %2, broadened %3" )
-                                 .arg( discrete_area_under_curve( f_qs[ broaden_names[ 1 ] ] , f_Is[ broaden_names[ 1 ] ], fit_range_start, fit_range_end ) )
-                                 .arg( discrete_area_under_curve( f_qs[ broaden_names[ 0 ] ] , f_Is[ broaden_names[ 0 ] ], fit_range_start, fit_range_end ) )
-                                 .arg( discrete_area_under_curve( f_qs[ broaden_names[ 2 ] ] , f_Is[ broaden_names[ 2 ] ], fit_range_start, fit_range_end ) )
+                                 .arg( discrete_area_under_curve( f_qs[ broaden_names[ 1 ] ] , f_Is[ broaden_names[ 1 ] ], fit_range_start, fit_range_end, "target" ) )
+                                 .arg( discrete_area_under_curve( f_qs[ broaden_names[ 0 ] ] , f_Is[ broaden_names[ 0 ] ], fit_range_start, fit_range_end, "conc") )
+                                 .arg( discrete_area_under_curve( f_qs[ broaden_names[ 2 ] ] , f_Is[ broaden_names[ 2 ] ], fit_range_start, fit_range_end, "broadened" ) )
                                  );
    }
 }
