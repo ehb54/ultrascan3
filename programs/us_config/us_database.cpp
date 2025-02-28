@@ -84,14 +84,16 @@ US_Database::US_Database( QWidget* w, Qt::WindowFlags flags )
 
   le_description = us_lineedit( "", 0 );
   details->addWidget( le_description, row++, 1 );
-
+  connect(le_description, SIGNAL( editingFinished()   ),this,
+    SLOT(values_updated()));
   // Row 2
   QLabel* user = us_label( "User Name:" );
   details->addWidget( user, row, 0 );
 
   le_username = us_lineedit( "", 0 );
   details->addWidget( le_username, row++, 1 );
-
+  connect(le_username, SIGNAL( editingFinished()   ),this,
+      SLOT(values_updated()));
   // Row 3
   QLabel* password = us_label( "DB Password:" );
   details->addWidget( password, row, 0 );
@@ -99,21 +101,24 @@ US_Database::US_Database( QWidget* w, Qt::WindowFlags flags )
   le_password = us_lineedit( "", 0 );
   le_password->setEchoMode( QLineEdit::Password );
   details->addWidget( le_password, row++, 1 );
-
+  connect(le_password, SIGNAL( editingFinished()   ),this,
+      SLOT(values_updated()));
   // Row 4
   QLabel* DBname = us_label( "Database Name:" );
   details->addWidget( DBname, row, 0 );
 
   le_dbname = us_lineedit( "", 0 );
   details->addWidget( le_dbname, row++, 1 );
-
+  connect(le_dbname, SIGNAL( editingFinished()   ),this,
+      SLOT(values_updated()));
   // Row 5
   QLabel* host = us_label( "Host Address:" );
   details->addWidget( host, row, 0 );
 
   le_host = us_lineedit( "", 0 );
   details->addWidget( le_host, row++, 1 );
-
+  connect(le_host, SIGNAL( editingFinished()   ),this,
+      SLOT(values_updated()));
   // Row 6
   QLabel* investigator = us_label( "Investigator Email:" );
   details->addWidget( investigator, row, 0 );
@@ -125,34 +130,39 @@ US_Database::US_Database( QWidget* w, Qt::WindowFlags flags )
   le_investigator_email->setMinimumWidth( fm.maxWidth() * 10 );
 
   details->addWidget( le_investigator_email, row++, 1 );
-
+  connect(le_investigator_email, SIGNAL( editingFinished()   ),this,
+      SLOT(values_updated()));
   // Row 7
   QLabel* investigator_pw = us_label( "Investigator Password:" );
   details->addWidget( investigator_pw, row, 0 );
 
   le_investigator_pw = us_lineedit( "", 0 );
   le_investigator_pw->setEchoMode( QLineEdit::Password );
-  details->addWidget( le_investigator_pw, row++, 1 );
-
+  details->addWidget( le_investigator_pw, row, 1 );
+  connect(le_investigator_pw, SIGNAL( editingFinished()   ),this,
+      SLOT(values_updated()));
   topbox->addLayout( details );
 
   //Pushbuttons
   row = 0;
+  int col = 0;
   QGridLayout* buttons = new QGridLayout();
-
+  pb_paste = us_pushbutton( tr( "Paste" ) );
+  connect( pb_paste, SIGNAL( clicked() ), this, SLOT( paste_db() ) );
+  buttons->addWidget( pb_paste, row, col++ );
   pb_save = us_pushbutton( tr( "Save Entry" ) );
   pb_save->setEnabled( false );
   connect( pb_save, SIGNAL( clicked() ), this, SLOT( check_add() ) );
-  buttons->addWidget( pb_save, row, 0 );
+  buttons->addWidget( pb_save, row, col++ );
 
   pb_delete = us_pushbutton( tr( "Delete Current Entry" ) );
   pb_delete->setEnabled( false );
   connect( pb_delete, SIGNAL( clicked() ), this, SLOT( deleteDB() ) );
-  buttons->addWidget( pb_delete, row++, 1 );
+  buttons->addWidget( pb_delete, row++, col++ );
 
   pb_testConnect = us_pushbutton( tr( "Test Database Connectivity" ) );
   connect( pb_testConnect, SIGNAL( clicked() ), this, SLOT( test_connect() ) );
-  buttons->addWidget( pb_testConnect, row++, 0, 1, 2 );
+  buttons->addWidget( pb_testConnect, row, 0, 1, col );
 
   QHBoxLayout* std_buttons = new QHBoxLayout;
 
@@ -305,60 +315,74 @@ void US_Database::update_inv( void )
    US_Settings::set_us_inv_level( level );
 }
 
+QString US_Database::validate_value( QLineEdit* line_edit, const QString& property)
+{
+  QString value = line_edit->text().trimmed();
+  if ( value.isEmpty() )
+  {
+    // create a red border
+    line_edit->setStyleSheet( "border: 2px solid red" );
+    return tr( qUtf8Printable( "Please enter a " + property + ".") );
+  }
+  if ( value != line_edit->text() )
+  {
+    line_edit->setText( value );
+  }
+  // reset the style sheet of the button
+  line_edit->setStyleSheet("");
+  return "";
+}
+
 void US_Database::check_add()
 {
+  QStringList problems;
   // Check that all fields have at least something
-  if ( le_description->text().isEmpty() )
+  QString status = validate_value( le_description, "description" );
+  if ( ! status.isEmpty() )
   {
+    problems << status;
+  }
+  status = validate_value( le_username, "username" );
+  if ( ! status.isEmpty() )
+  {
+    problems << status;
+  }
+  status = validate_value( le_password, "password" );
+  if ( ! status.isEmpty() )
+  {
+    problems << status;
+  }
+  status = validate_value( le_dbname, "database name" );
+  if ( ! status.isEmpty() )
+  {
+    problems << status;
+  }
+  status = validate_value( le_host, "host address" );
+  if ( ! status.isEmpty() )
+  {
+    problems << status;
+  }
+  status = validate_value( le_investigator_email, "investigator email" );
+  if ( ! status.isEmpty() )
+  {
+    problems << status;
+  }
+  status = validate_value( le_investigator_pw, "investigator password" );
+  if ( ! status.isEmpty() )
+  {
+    problems << status;
+  }
+  if ( ! problems.isEmpty() )
+  {
+    QString text = "Please correct the following problems before saving:\n";
+    text += problems.join( "\n" );
     QMessageBox::information( this,
         tr( "Attention" ),
-        tr( "Please enter a Description before saving..." ) );
+        tr( qUtf8Printable( text ) ));
     return;
   }
 
-  if ( le_username->text().isEmpty() )
-  {
-    QMessageBox::information( this,
-        tr( "Attention" ),
-        tr( "Please enter a User Name before saving..." ) );
-    return;
-  }
-
-  if ( le_password->text().isEmpty() )
-  {
-    QMessageBox::information( this,
-        tr( "Attention" ),
-        tr( "Please enter a Password before saving..." ) );
-    return;
-  }
-
-  if ( le_dbname->text().isEmpty() )
-  {
-    QMessageBox::information( this,
-        tr( "Attention" ),
-        tr( "Please enter a Database Name before saving..."));
-    return;
-  }
-
-  if ( le_host->text().isEmpty() )
-  {
-    QMessageBox::information( this,
-        tr( "Attention" ),
-        tr( "Please enter a Host Address (possibly  'localhost') "
-            "before saving..." ) );
-    return;
-  }
-
-  if ( le_investigator_email->text().isEmpty() )
-  {
-    QMessageBox::information( this,
-        tr( "Attention" ),
-        tr( "Please enter an investigator email address "
-            "before saving..." ) );
-    return;
-  }
-
-  if ( le_investigator_pw->text().isEmpty() )
+  if ( uuid.isEmpty() )
   {
     QMessageBox::information( this,
         tr( "Attention" ),
@@ -465,7 +489,43 @@ void US_Database::update_lw( const QString& current )
   }
 }
 
-void US_Database::reset( void )
+bool US_Database::parse_database_url( const QString& database_url)
+{
+  if ( database_url.isEmpty() || !database_url.startsWith( "mysql://" ))
+  {
+    return false;
+  }
+  // regular expression for "mysql://{$username}:{$password}@{$host}/{$dbname}|{$_SESSION['email']}"
+  QRegularExpression rx;
+  rx.setPattern( "mysql:\\/\\/([^:]+):([^@]*)@([^\\/]+)\\/(\\w+)\\|([\\w@.\\-\\+]+)" );
+  QRegularExpressionMatch match = rx.match( database_url );
+  if ( !match.hasMatch() )
+  {
+    return false;
+  }
+  QString username = match.captured( 1 ).trimmed();
+  QString password = match.captured( 2 ).trimmed();
+  QString host     = match.captured( 3 ).trimmed();
+  QString dbname   = match.captured( 4 ).trimmed();
+  QString email    = match.captured( 5 ).trimmed();
+  if ( le_description->text().trimmed().isEmpty() && !host.isEmpty() && !dbname.isEmpty() )
+  {
+    le_description->setText( host + " - " + dbname );
+  }
+  if ( le_password->text().trimmed().isEmpty() && !password.isEmpty() )
+  {
+    le_password->setText( password );
+  }
+  le_username->setText( username );
+  le_dbname  ->setText( dbname );
+  le_host    ->setText( host );
+  le_investigator_email->setText( email );
+  // validate input fields
+  values_updated();
+  return true;
+}
+
+void US_Database::reset( )
 {
   QStringList DB = US_Settings::defaultDB();
   QString     defaultDB;
@@ -575,7 +635,35 @@ void US_Database::deleteDB( void )
           "The database has not been removed." ) );
 }
 
-bool US_Database::test_connect( void )
+void US_Database::paste_db( )
+{
+  // Get the clipboard
+  QClipboard* clipboard = QApplication::clipboard();
+  QString     text      = clipboard->text();
+  bool ok = parse_database_url( text );
+  if ( !ok )
+  {
+    QMessageBox::warning( this,
+        tr( "Database Problem" ),
+        tr( qUtf8Printable( "The database URL could not be parsed.\n"
+                            "Database URL: " + text ) ));
+  }
+}
+
+void US_Database::values_updated() const
+{
+  QStringList problems;
+  problems << validate_value( le_description, "description" );
+  problems << validate_value( le_username, "database username" );
+  problems << validate_value( le_password, "database password" );
+  problems << validate_value( le_dbname, "database name" );
+  problems << validate_value( le_host, "database host address" );
+  problems << validate_value( le_investigator_email, "investigator email" );
+  problems << validate_value( le_investigator_pw, "investigator password" );
+  qDebug() << "USCFG: values_updated: status" << problems.join( "\n" );
+}
+
+bool US_Database::test_connect( )
 {
    if ( le_host              ->text().isEmpty() ||
         le_dbname            ->text().isEmpty() ||

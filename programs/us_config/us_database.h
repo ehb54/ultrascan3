@@ -27,7 +27,7 @@ class US_Database : public US_Widgets
     QPushButton* pb_save;
     QPushButton* pb_reset; 
     QPushButton* pb_testConnect;
-    
+    QPushButton* pb_paste;
     QLineEdit*   le_description;
     QLineEdit*   le_username; 
     QLineEdit*   le_password;
@@ -39,6 +39,8 @@ class US_Database : public US_Widgets
     QListWidget* lw_entries;
 
     void update_lw( const QString& = 0 );
+    bool parse_database_url( const QString& );
+    static QString validate_value( QLineEdit*, const QString&);
     
   private slots:
     void help        ( void );
@@ -50,5 +52,7 @@ class US_Database : public US_Widgets
     void deleteDB    ( void );
     bool test_connect( void );
     void update_inv  ( void );
+    void paste_db      ( );
+    void values_updated( ) const;
 };
 #endif
