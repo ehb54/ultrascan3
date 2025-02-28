@@ -825,11 +825,17 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 
       QLabel                           * lbl_broaden_msg;
 
-      QLabel                           * lbl_broaden_tau;
-      mQLineEdit                       * le_broaden_tau_start;
-      mQLineEdit                       * le_broaden_tau;
-      mQLineEdit                       * le_broaden_tau_end;
-      mQLineEdit                       * le_broaden_tau_delta;
+      QLabel                           * lbl_broaden_tau_e;
+      mQLineEdit                       * le_broaden_tau_e_start;
+      mQLineEdit                       * le_broaden_tau_e;
+      mQLineEdit                       * le_broaden_tau_e_end;
+      mQLineEdit                       * le_broaden_tau_e_delta;
+
+      QLabel                           * lbl_broaden_tau_g;
+      mQLineEdit                       * le_broaden_tau_g_start;
+      mQLineEdit                       * le_broaden_tau_g;
+      mQLineEdit                       * le_broaden_tau_g_end;
+      mQLineEdit                       * le_broaden_tau_g_delta;
 
       QLabel                           * lbl_broaden_deltat;
       mQLineEdit                       * le_broaden_deltat_start;
@@ -866,10 +872,10 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void                               broaden_clear_plot();
       void                               broaden_compute_one();
       bool                               broaden_compute_one_no_ui(
-                                                                   double tau
+                                                                   double tau_e
+                                                                   ,double tau_g
                                                                    ,double kernel_size
                                                                    ,double kernel_delta_t
-                                                                   ,US_Band_Broaden::kernel_type ktype
                                                                    ,const vector < double > & I
                                                                    ,vector < double > & broadened
                                                                    );
@@ -889,17 +895,29 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void                               broaden_minimize();
       void                               broaden_reset();
 
-      void                               broaden_tau_start_text( const QString & );
-      void                               broaden_tau_start_focus( bool );
+      void                               broaden_tau_e_start_text( const QString & );
+      void                               broaden_tau_e_start_focus( bool );
 
-      void                               broaden_tau_text( const QString & );
-      void                               broaden_tau_focus( bool );
+      void                               broaden_tau_e_text( const QString & );
+      void                               broaden_tau_e_focus( bool );
 
-      void                               broaden_tau_end_text( const QString & );
-      void                               broaden_tau_end_focus( bool );
+      void                               broaden_tau_e_end_text( const QString & );
+      void                               broaden_tau_e_end_focus( bool );
 
-      void                               broaden_tau_delta_text( const QString & );
-      void                               broaden_tau_delta_focus( bool );
+      void                               broaden_tau_e_delta_text( const QString & );
+      void                               broaden_tau_e_delta_focus( bool );
+
+      void                               broaden_tau_g_start_text( const QString & );
+      void                               broaden_tau_g_start_focus( bool );
+
+      void                               broaden_tau_g_text( const QString & );
+      void                               broaden_tau_g_focus( bool );
+
+      void                               broaden_tau_g_end_text( const QString & );
+      void                               broaden_tau_g_end_focus( bool );
+
+      void                               broaden_tau_g_delta_text( const QString & );
+      void                               broaden_tau_g_delta_focus( bool );
 
       void                               broaden_deltat_start_text( const QString & );
       void                               broaden_deltat_start_focus( bool );
