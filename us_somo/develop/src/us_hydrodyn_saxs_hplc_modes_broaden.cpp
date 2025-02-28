@@ -463,6 +463,7 @@ void US_Hydrodyn_Saxs_Hplc::broaden_compute_one() {
                   );
          
          broaden_names << last_created_file;
+         conc_files.insert( last_created_file );
          set < QString > to_remove = { broadened_not_repeaked };
          remove_files( to_remove );
       }
