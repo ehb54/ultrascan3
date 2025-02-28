@@ -1522,6 +1522,7 @@ void US_Hydrodyn_Saxs_Hplc::avg( QStringList files, QString suffix )
    unsigned int min_q_len = 0;
 
    bool all_nonzero_errors = true;
+   bool is_time = false;
 
    for ( int i = 0; i < (int)files.size(); i++ )
    {
@@ -1540,6 +1541,7 @@ void US_Hydrodyn_Saxs_Hplc::avg( QStringList files, QString suffix )
       if ( first )
       {
          first = false;
+         is_time = f_is_time.count( this_file ) && f_is_time[ this_file ] ? true : false;
          min_q_len = t_qs[ this_file ].size();
       } else {
          if ( min_q_len > t_qs[ this_file ].size() )
@@ -1832,7 +1834,7 @@ void US_Hydrodyn_Saxs_Hplc::avg( QStringList files, QString suffix )
    f_qs        [ avg_name ] = avg_qs;
    f_Is        [ avg_name ] = avg_Is;
    f_errors    [ avg_name ] = avg_sd;
-   f_is_time   [ avg_name ] = false;
+   f_is_time   [ avg_name ] = is_time;
    f_conc      [ avg_name ] = avg_conc;
    f_psv       [ avg_name ] = avg_psv;
    f_I0se      [ avg_name ] = avg_I0se;

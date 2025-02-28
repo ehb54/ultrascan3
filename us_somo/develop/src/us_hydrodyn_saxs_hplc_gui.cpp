@@ -4175,6 +4175,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
 
    always_hide_widgets.insert( {
          pb_broaden_minimize
+         ,pb_broaden_reset
       } );
 
    mode_setup_widgets();
@@ -4861,7 +4862,8 @@ void US_Hydrodyn_Saxs_Hplc::update_enables()
    // pb_conc_avg           ->setEnabled( all_selected_have_nonzero_conc() && files_compatible && !files_are_time );
    pb_normalize          ->setEnabled( all_selected_have_nonzero_conc() && files_compatible && !files_are_time );
    pb_add                ->setEnabled( files_selected_count > 1 && files_compatible );
-   pb_avg                ->setEnabled( files_selected_count > 1 && files_compatible && !files_are_time );
+#warning do we want to allow averaging of I(t)s in general?
+   pb_avg                ->setEnabled( files_selected_count > 1 && files_compatible ); // && !files_are_time );
    pb_bin                ->setEnabled( files_selected_count && files_compatible /* && !files_are_time */ );
    pb_smooth             ->setEnabled( files_selected_count );
    pb_svd                ->setEnabled( files_selected_count > 1 && files_compatible ); // && !files_are_time );
