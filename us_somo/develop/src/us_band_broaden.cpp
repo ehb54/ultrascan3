@@ -190,6 +190,21 @@ bool US_Band_Broaden::build_kernel(
 
 vector < double > US_Band_Broaden::broaden(
                                            const vector < double > & f
+                                           ,const double & tau_e
+                                           ,const double & tau_g
+                                           ,const double & time_start
+                                           ,const double & time_end
+                                           ,const double & time_delta
+                                           ) {
+   vector < double > result = broaden( f, tau_e, BAND_BROADEN_KERNEL_EXPONENTIAL, time_start, time_end, time_delta );
+   if ( !result.size() ) {
+      return result;
+   }
+   return broaden( result, tau_g, BAND_BROADEN_KERNEL_GAUSSIAN, time_start, time_end, time_delta );
+}
+
+vector < double > US_Band_Broaden::broaden(
+                                           const vector < double > & f
                                            ,const double           & tau
                                            ,const enum kernel_type & ktype
                                            ,const double           & time_start
@@ -205,6 +220,14 @@ vector < double > US_Band_Broaden::broaden(
       .arg( time_end )
       .arg( time_delta )
       ;
+
+   if ( tau == 0 ) {
+      return f;
+   }
+ 
+   if ( tau < 0 ) {
+      return {};
+   }
 
 #warning not so sure we want to cache at this point, disabled until production & will need to test
 

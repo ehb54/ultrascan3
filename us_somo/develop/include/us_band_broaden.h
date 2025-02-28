@@ -26,6 +26,17 @@ class US_Band_Broaden {
 
    US_Band_Broaden();
 
+   // broaden with both exponential & gaussian kernels
+   vector < double > broaden(
+                             const vector < double > & f
+                             ,const double & tau_e
+                             ,const double & tau_g
+                             ,const double & time_start = 0
+                             ,const double & time_end   = 100
+                             ,const double & time_delta = 0.1
+                             );
+
+   // broaden with a defined kernel
    vector < double > broaden(
                              const vector < double > & f
                              ,const double           & tau
@@ -34,7 +45,6 @@ class US_Band_Broaden {
                              ,const double & time_end   = 100
                              ,const double & time_delta = 0.1
                              );
-   
 
    void clear();
 
