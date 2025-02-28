@@ -8,10 +8,14 @@
 #include "us_db2.h"
 #include "us_local_server.h"
 
+#ifndef DbgLv
+#define DbgLv(a) if(dbg_level>=a)qDebug() //!< debug-level-conditioned qDebug()
+#endif
 
 US_Database::US_Database( QWidget* w, Qt::WindowFlags flags )
   : US_Widgets( true, w, flags )
 {
+  dbg_level = US_Settings::us_debug();
   uuid.clear();
 
   // Frame layout
@@ -63,10 +67,13 @@ US_Database::US_Database( QWidget* w, Qt::WindowFlags flags )
 
   // Populate db_list
   QStringList DB = US_Settings::defaultDB();
- qDebug() << "USCFG: defDBl" << DB;
+  qDebug() << "USCFG: defDBl" << DB;
   QString     defaultDB;
-  if ( DB.size() > 0 ) defaultDB = US_Settings::defaultDB().at( 0 );
-//qDebug() << "USCFG: defDBd" << defaultDB;
+  if ( !DB.isEmpty() )
+  {
+    defaultDB = US_Settings::defaultDB().at( 0 );
+  }
+  DbgLv( 1 ) << "USCFG: defDBd" << defaultDB;
   update_lw( defaultDB );
 
   connect( lw_entries, SIGNAL( itemDoubleClicked( QListWidgetItem* ) ),
@@ -180,10 +187,14 @@ US_Database::US_Database( QWidget* w, Qt::WindowFlags flags )
 
   topbox->addLayout( buttons );
   topbox->addLayout( std_buttons );
+  if ( !lw_entries->selectedItems().isEmpty() )
+  {
+    select_db( lw_entries->selectedItems().at( 0 ) );
+  }
 }
 
 // Query autoflow for # records
-int US_Database::get_autoflow_records( void )
+int US_Database::get_autoflow_records( )
 {
    // Check DB connection
    US_Passwd pw;
@@ -213,7 +224,7 @@ void US_Database::select_db( QListWidgetItem* entry )
 
   // Delete trailing (default) if that is present
   QString item = entry->text().remove( " (default)" );
-//qDebug() << "USCFG: seldb: item" << item;
+  DbgLv( 1 ) << "USCFG: seldb: item" << item;
 
   // Get the master PW
   US_Passwd pw;
@@ -221,12 +232,12 @@ void US_Database::select_db( QListWidgetItem* entry )
   QString email     = dblist.at( 0 ).at( 6 );
   if ( email.isEmpty() )
   {
-    for ( int jj = 0; jj < dblist.size(); jj++ )
+    for (const auto & jj : std::as_const(dblist))
     {
-      if ( ! dblist.at( jj ).at( 6 ).isEmpty() )
+      if ( ! jj.at( 6 ).isEmpty() )
       {
-        email = dblist.at( jj ).at( 6 );
-//qDebug() << "USCFG: seldb: jj email" << jj << email;
+        email = jj.at( 6 );
+        DbgLv( 1 ) << "USCFG: seldb: jj email" << jj << email;
         break;
       }
     }
@@ -239,12 +250,12 @@ void US_Database::select_db( QListWidgetItem* entry )
     {
       if ( dblist.at( i ).at( 6 ).isEmpty() )
       {
-//        dblist.at( i ).replace( 6, email );
+        //dblist.at( i ).replace( 6, email );
         QStringList db = dblist.at( i );
         db.replace( 6, email );
         dblist.replace( i, db );
       }
-//qDebug() << "USCFG: def upd  i" << i;
+      DbgLv( 1 ) << "USCFG: def upd  i" << i;
       le_description       ->setText( item );
       le_username          ->setText( dblist.at( i ).at( 1 ) );
       le_dbname            ->setText( dblist.at( i ).at( 2 ) );
@@ -262,7 +273,7 @@ void US_Database::select_db( QListWidgetItem* entry )
       iv        = dblist.at( i ).at( 8 );
       pw_string = US_Crypto::decrypt( cipher, master_pw, iv );
       le_investigator_pw->setText( pw_string );
-
+      values_updated();
       uuid = dblist.at( i ).at( 9 );
 //qDebug() << "USCFG: dbl 0,6,9"
 // << dblist.at(i).at(0) << dblist.at(i).at(6) << dblist.at(i).at(9);
@@ -284,7 +295,7 @@ void US_Database::select_db( QListWidgetItem* entry )
   }
 }
 
-void US_Database::update_inv( void )
+void US_Database::update_inv( )
 {
    US_Passwd   pw;
    US_DB2      db( pw.getPasswd() );
@@ -384,16 +395,10 @@ void US_Database::check_add()
 
   if ( uuid.isEmpty() )
   {
-    QMessageBox::information( this,
-        tr( "Attention" ),
-        tr( "Please enter an investigator password "
-            "before saving..." ) );
-    return;
-  }
-
-  if ( uuid.isEmpty() )
-  {
-    if ( ! test_connect() ) return;
+    if ( !test_connect() )
+    {
+      return;
+    }
   }
 
   // Get the master PW
@@ -453,7 +458,10 @@ void US_Database::check_add()
   US_Settings::set_databases( dblist );
   update_lw( le_description->text() );
 
-  if ( lw_entries->count() == 1 ) save_default();
+  if ( lw_entries->count() == 1 )
+  {
+    save_default();
+  }
 
   pb_save  ->setEnabled( true );
   pb_delete->setEnabled( true );
@@ -469,23 +477,31 @@ void US_Database::update_lw( const QString& current )
 //qDebug() << "USCFG: UpdLw: defaultDB" << defaultDB;
 //qDebug() << "USCFG: UpdLw:  current" << current;
 
-  if ( defaultDB.size() > 0 ) defaultDBname = defaultDB.at( 0 );
-//qDebug() << "USCFG: UpdLw:  defaultDBname" << defaultDBname;
-
-  for ( int i = 0; i < dblist.size(); i++ )
+  if ( !defaultDB.empty() )
   {
-    QString desc    = dblist.at( i ).at( 0 );
+    defaultDBname = defaultDB.at( 0 );
+  }
+  //qDebug() << "USCFG: UpdLw:  defaultDBname" << defaultDBname;
+
+  for (const auto & i : std::as_const(dblist))
+  {
+    const QString& desc    = i.at( 0 );
     QString display = desc;
 //qDebug() << "USCFG: UpdLw:   i desc email" << i << desc << dblist.at(i).at(6);
 
-    if ( desc == defaultDBname ) display.append( " (default)" );
-//qDebug() << "USCFG: UpdLw:      display" << display;
+    if ( desc == defaultDBname )
+    {
+      display.append( " (default)" );
+    }
+    //qDebug() << "USCFG: UpdLw:      display" << display;
 
     QListWidgetItem* widget = new QListWidgetItem( display );
     lw_entries->addItem( widget );
 
     if ( desc == current )
+    {
       lw_entries->setCurrentItem( widget, QItemSelectionModel::Select );
+    }
   }
 }
 
@@ -497,7 +513,7 @@ bool US_Database::parse_database_url( const QString& database_url)
   }
   // regular expression for "mysql://{$username}:{$password}@{$host}/{$dbname}|{$_SESSION['email']}"
   QRegularExpression rx;
-  rx.setPattern( "mysql:\\/\\/([^:]+):([^@]*)@([^\\/]+)\\/(\\w+)\\|([\\w@.\\-\\+]+)" );
+  rx.setPattern( R"(mysql:\/\/([^:]+):([^@]*)@([^\/]+)\/(\w+)\|([\w@.\-\+]+))" );
   QRegularExpressionMatch match = rx.match( database_url );
   if ( !match.hasMatch() )
   {
@@ -529,7 +545,10 @@ void US_Database::reset( )
 {
   QStringList DB = US_Settings::defaultDB();
   QString     defaultDB;
-  if ( DB.size() > 0 ) defaultDB = US_Settings::defaultDB().at( 0 );
+  if ( !DB.isEmpty() )
+  {
+    defaultDB = US_Settings::defaultDB().at( 0 );
+  }
   update_lw( defaultDB );
 
   le_description       ->setText("");
@@ -545,26 +564,26 @@ void US_Database::reset( )
   pb_delete     ->setEnabled( false );
 }
 
-void US_Database::help( void )
+void US_Database::help( )
 {
   US_Help* showhelp = new US_Help(this);
   showhelp->show_help( "database_config.html" );
 }
 
-void US_Database::save_default( void )
+void US_Database::save_default( )
 {
-  for ( int i = 0; i < dblist.size(); i++ )
+  for (const auto & i : std::as_const(dblist))
   {
-    QString desc = dblist.at( i ).at( 0 );
-//qDebug() << "USCFG: svDef: desc" << desc;
+    const QString& desc = i.at( 0 );
+    DbgLv( 1 ) << "USCFG: svDef: desc" << desc;
 
     // Look for the current description
     if ( desc == le_description->text() )
     {
-//qDebug() << "USCFG: svDef:  desc MATCH i" << i;
-      if ( dblist.at( i ).at( 9 ) == "" )
+      DbgLv( 1 ) << "USCFG: svDef:  desc MATCH i" << i;
+      if ( i.at( 9 ) == "" )
       {
-//qDebug() << "USCFG: svDef:  e9(uuid)==NULL" << i;
+         DbgLv( 1 ) << "USCFG: svDef:  e9(uuid)==NULL" << i;
          QMessageBox::information( this,
              tr( "Default Database Problem" ),
              tr( "The current database information has not been tested "
@@ -572,12 +591,12 @@ void US_Database::save_default( void )
                   "The default database has not been updated.") );
          return;
       }
-if(dblist.at(i).at(6).isEmpty())
-//qDebug() << "USCFG: svDef:  e6(email)==NULL" << i;
+      if(i.at(6).isEmpty())
+      {
+         DbgLv( 1 ) << "USCFG: svDef:  e6(email)==NULL" << i;
+      }
 
-      QString null = "";
-
-      US_Settings::set_defaultDB( dblist.at( i ) );
+      US_Settings::set_defaultDB( i );
       update_inv();
       reset();
 
@@ -594,11 +613,11 @@ if(dblist.at(i).at(6).isEmpty())
           "The default database has not been updated." ) );
 }
 
-void US_Database::deleteDB( void )
+void US_Database::deleteDB( )
 {
   QString item = le_description->text();
 
-  // Go through list and delete the one matching description
+  // Go through the list and delete the one matching description
   for ( int i = 0; i < dblist.size(); i++ )
   {
     QString desc = dblist.at( i ).at( 0 );
@@ -614,10 +633,14 @@ void US_Database::deleteDB( void )
 
       if ( defaultDB.at( 0 ) == item )
       {
-        if ( dblist.size() > 0 )
+        if ( !dblist.isEmpty() )
+        {
           US_Settings::set_defaultDB( dblist.at( 0 ) );
+        }
         else
+        {
           US_Settings::set_defaultDB( QStringList() );
+        }
       }
 
       reset();
@@ -701,10 +724,10 @@ bool US_Database::test_connect( )
       // Make sure the uuid is updated in the dblist structure
       for ( int i = 0; i < dblist.size(); i++ )
       {
-         QString desc = dblist.at( i ).at( 0 );
+         QString desc = dblist.at( i ).at( 0 ).trimmed();
 
          // Look for the current description
-         if ( desc == le_description->text() )
+         if ( desc == le_description->text().trimmed() )
          {
             QStringList list = dblist.at( i );
             list.replace( 9, uuid );
