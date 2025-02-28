@@ -328,7 +328,11 @@ void US_Database::update_inv( )
 
 QString US_Database::validate_value( QLineEdit* line_edit, const QString& property)
 {
-  QString value = line_edit->text().trimmed();
+  QString value = line_edit->text();
+  if ( !property.contains("password") )
+  {
+    value = value.trimmed();
+  }
   if ( value.isEmpty() )
   {
     // create a red border
