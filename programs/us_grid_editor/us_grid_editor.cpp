@@ -37,9 +37,9 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    setPalette( US_GuiSettings::frameColor() );
 
    // validators
-   dValid = new QDoubleValidator(this);
+   QDoubleValidator *dValid = new QDoubleValidator(this);
    dValid->setLocale(QLocale::C);
-   iValid = new QIntValidator(this);
+   QIntValidator    *iValid = new QIntValidator(this);
    iValid->setBottom(1);
 
    // primary layouts
@@ -558,20 +558,18 @@ void US_Grid_Editor::rm_point_curves()
 void US_Grid_Editor::plot_tmp()
 {
    rm_tmp_items();
-   bool xMin_set = validate_input( "x_min" );
-   bool xMax_set = validate_input( "x_max" );
-   bool yMin_set = validate_input( "y_min" );
-   bool yMax_set = validate_input( "y_max" );
-   bool grid_set = ! grid_points.isEmpty();
 
-   double x1 = le_x_min->text().toDouble();
-   double x2 = le_x_max->text().toDouble();
-   double y1 = le_y_min->text().toDouble();
-   double y2 = le_y_max->text().toDouble();
+   double x1, x2, y1, y2;
+   bool   xMin_set = validate_double( le_x_min->text(), x1 );
+   bool   xMax_set = validate_double( le_x_max->text(), x2 );
+   bool   yMin_set = validate_double( le_y_min->text(), y1 );
+   bool   yMax_set = validate_double( le_y_max->text(), y2 );
+   bool   grid_set = ! grid_points.isEmpty();
    double px1 = data_plot->axisScaleDiv( QwtPlot::xBottom ).lowerBound();
    double px2 = data_plot->axisScaleDiv( QwtPlot::xBottom ).upperBound();
    double py1 = data_plot->axisScaleDiv( QwtPlot::yLeft ).lowerBound();
    double py2 = data_plot->axisScaleDiv( QwtPlot::yLeft ).upperBound();
+
 
    if ( grid_set )
    {
@@ -1045,28 +1043,23 @@ void US_Grid_Editor::add_update()
    }
 
    if ( ! wrong_list.isEmpty() ) {
-      QTextEdit* txt = us_textedit();
-      txt->setReadOnly(true);
       QString line("%1 - %2 :\n %3 \n\n");
-      txt->append("The following grid points are excluded from the grid.\n\n");
+      QMessageBox msg_box;
+      msg_box.setIcon( QMessageBox::Warning );
+      msg_box.setWindowTitle( "Warning" );
+      msg_box.setText( "The following grid points are excluded." );
+      QTextEdit *text = new QTextEdit( &msg_box );
       for ( int ii = 0; ii < wrong_list.size(); ii++ ) {
-         txt->append( line.arg( ii + 1 )
-                        .arg( wrong_list.at(ii) )
-                        .arg( error_list.at(ii) ) );
+         text->append( line.arg( ii + 1 )
+                         .arg( wrong_list.at(ii), error_list.at(ii) ) );
       }
-      QPushButton *pb_ok = us_pushbutton("OK");
-      QVBoxLayout *lyt = new QVBoxLayout();
-      lyt->addWidget(txt);
-      lyt->addWidget(pb_ok, 0, Qt::AlignCenter);
-      lyt->setMargin(1);
-
-      US_WidgetsDialog *dialog = new US_WidgetsDialog(this);
-      dialog->setWindowTitle( tr( "Excluded Points" ) );
-      dialog->setPalette( US_GuiSettings::frameColor() );
-      dialog->setLayout(lyt);
-      dialog->setMinimumSize(500, 500);
-      connect(pb_ok, &QPushButton::clicked, dialog, &QDialog::close);
-      dialog->exec();
+      text->setReadOnly( true );
+      text->setMinimumSize( 500, 500 );
+      QGridLayout *layout = qobject_cast<QGridLayout *>( msg_box.layout() );
+      if (layout) {
+         layout->addWidget( text, layout->rowCount(), 0, 1, layout->columnCount() );
+      }
+      msg_box.exec();
    }
 
    if ( gps.isEmpty() ) {
@@ -1138,15 +1131,38 @@ bool US_Grid_Editor::check_overlap(double xMin, double xMax,
    return false;
 }
 
-void US_Grid_Editor::get_xyz(GridInfo& ginfo)
+bool US_Grid_Editor::get_xyz(GridInfo& ginfo, QString& error)
 {
-   double x_min = le_x_min->text().toDouble();
-   double x_max = le_x_max->text().toDouble();
-   int    x_res = le_x_res->text().toDouble();
-   double y_min = le_y_min->text().toDouble();
-   double y_max = le_y_max->text().toDouble();
-   int    y_res = le_y_res->text().toDouble();
-   double z_val = le_z_val->text().toDouble();
+   error.clear();
+
+   double x_min = 0;
+   double x_max = 0;
+   double y_min = 0;
+   double y_max = 0;
+   double z_val = 0;
+   int    x_res = 0;
+   int    y_res = 0;
+   QString x_min_t = le_x_min->text();
+   QString x_max_t = le_x_max->text();
+   QString x_res_t = le_x_res->text();
+   QString y_min_t = le_y_min->text();
+   QString y_max_t = le_y_max->text();
+   QString y_res_t = le_y_res->text();
+   QString z_val_t = le_z_val->text();
+
+   error += validate_double( x_min_t, x_min ) ? "" : tr("%1: Minimum value is not set.\n").arg(lb_x_ax->text());
+   error += validate_double( x_max_t, x_max ) ? "" : tr("%1: Maximum value is not set.\n").arg(lb_x_ax->text());
+   error += validate_int   ( x_res_t, x_res ) ? "" : tr("%1: Resolusion value is not set.\n").arg(lb_x_ax->text());
+   error += validate_double( y_min_t, y_min ) ? "" : tr("%1: Minimum value is not set.\n").arg(lb_y_ax->text());
+   error += validate_double( y_max_t, y_max ) ? "" : tr("%1: Maximum value is not set.\n").arg(lb_y_ax->text());
+   error += validate_int   ( y_res_t, y_res ) ? "" : tr("%1: Resolusion value is not set.\n").arg(lb_y_ax->text());
+   error += validate_double( z_val_t, z_val ) ? "" : tr("%1: Value is not set!").arg(lb_z_ax->text());
+   if ( ! error.isEmpty() ) return false;
+
+   if ( x_res == 0 || y_res == 0 ) {
+      error = "Resolution value cannot be zero.";
+      return false;
+   }
 
    x_min = correct_unit(x_min, x_param, false);
    x_max = correct_unit(x_max, x_param, false);
@@ -1165,99 +1181,45 @@ void US_Grid_Editor::get_xyz(GridInfo& ginfo)
    ginfo.xRes = x_res;
    ginfo.yRes = y_res;
    ginfo.zVal = z_val;
+   return true;
 }
 
-bool US_Grid_Editor::validate_input(const QString label)
+bool US_Grid_Editor::validate_double(const QString str, double& val)
 {
-   QString value;
-   int pos = 0;
-   if ( label == "x_min" ) {
-      value = le_x_min->text();
-      return dValid->validate(value, pos) == QValidator::Acceptable;
-   } else if ( label == "x_max" ) {
-      value = le_x_max->text();
-      return dValid->validate(value, pos) == QValidator::Acceptable;
-   } else if ( label == "x_res" ) {
-      value = le_x_res->text();
-      return iValid->validate(value, pos) == QValidator::Acceptable;
-   } else if ( label == "y_min" ) {
-      value = le_y_min->text();
-      return dValid->validate(value, pos) == QValidator::Acceptable;
-   } else if ( label == "y_max" ) {
-      value = le_y_max->text();
-      return dValid->validate(value, pos) == QValidator::Acceptable;
-   } else if ( label == "y_res" ) {
-      value = le_y_res->text();
-      return iValid->validate(value, pos) == QValidator::Acceptable;
-   } else if ( label == "z_val" ) {
-      value = le_z_val->text();
-      return dValid->validate(value, pos) == QValidator::Acceptable;
-   } else if ( label == "dens" ) {
-      value = le_dens_20->text();
-      return dValid->validate(value, pos) == QValidator::Acceptable;
-   } else if ( label == "visc" ) {
-      value = le_visc_20->text();
-      return dValid->validate(value, pos) == QValidator::Acceptable;
-   } else if ( label == "temp" ) {
-      value = le_temp->text();
-      return dValid->validate(value, pos) == QValidator::Acceptable;
-   } else {
-      return false;
-   }
+   bool ok;
+   double d = str.toDouble(&ok);
+   if ( ok ) val = d;
+   return ok;
+}
+
+bool US_Grid_Editor::validate_int(const QString str, int& val)
+{
+   bool ok;
+   int i = str.toInt(&ok);
+   if ( ok ) val = i;
+   return ok;
 }
 
 bool US_Grid_Editor::validate_xyz( GridInfo& ginfo )
 {
-   QString error_msg;
-   if ( ! validate_input("x_min") )
-   {
-      error_msg = tr("%1 \n\nMinimum value is not set!").arg(lb_x_ax->text());
-
-   } else if ( ! validate_input("x_max") )
-   {
-      error_msg = tr("%1 \n\nMaximum value is not set!").arg(lb_x_ax->text());
-
-   } else if ( ! validate_input("x_res") )
-   {
-      error_msg = tr("%1 \n\nResolusion value is not set!").arg(lb_x_ax->text());
-
-   } else if ( ! validate_input("y_min") )
-   {
-      error_msg = tr("%1 \n\nMinimum value is not set!").arg(lb_y_ax->text());
-
-   } else if ( ! validate_input("y_max") )
-   {
-      error_msg = tr("%1 \n\nMaximum value is not set!").arg(lb_y_ax->text());
-
-   } else if ( ! validate_input("y_res") )
-   {
-      error_msg = tr("%1 \n\nResolusion value is not set!").arg(lb_y_ax->text());
-
-   } else if ( ! validate_input("z_val") )
-   {
-      error_msg = tr("%1 \n\nValue is not set!").arg(lb_z_ax->text());
-
-   } else if ( le_x_max->text().toDouble() <= le_x_min->text().toDouble() )
-   {
-      error_msg = tr("%1 \n\nMaximum value is less than or equal to the Minimum value!").
-                  arg(lb_x_ax->text());
-
-   } else if ( le_y_max->text().toDouble() <= le_y_min->text().toDouble() )
-   {
-      error_msg = tr("%1 \n\nMaximum value is less than or equal to the Minimum value!").
-                  arg(lb_y_ax->text());
-   } else if ( le_x_res->text().toInt() == 0 )
-   {
-      error_msg = tr("%1 \n\nResolution value is zero!").arg(lb_x_ax->text());
-
-   } else if ( le_y_res->text().toInt() == 0 )
-   {
-      error_msg = tr("%1 \n\nResolution value is zero!").arg(lb_y_ax->text());
-   }
-
+   QString error;
    check_dens_visc_temp();
-
-   get_xyz(ginfo);
+   if ( ! get_xyz( ginfo, error ) ) {
+      QMessageBox msg_box;
+      msg_box.setIcon( QMessageBox::Critical );
+      msg_box.setWindowTitle( "Error" );
+      msg_box.setText( "Invalid parameter settings detected." );
+      QTextEdit *text = new QTextEdit( &msg_box );
+      text->setPlainText( error );
+      text->setReadOnly( true );
+      text->setMinimumSize( 300, 150 );
+      QGridLayout *layout = qobject_cast<QGridLayout *>( msg_box.layout() );
+      if (layout) {
+         layout->addWidget( text, layout->rowCount(), 0, 1, layout->columnCount() );
+      }
+      msg_box.exec();
+      return false;
+   }
 
    GridPoint gp;
    gp.set_dens_visc_temp(buff_dens, buff_visc, buff_temp);
@@ -1266,17 +1228,17 @@ bool US_Grid_Editor::validate_xyz( GridInfo& ginfo )
    QVector<double> vals;
    vals << ginfo.xMin << ginfo.yMin << ginfo.zVal;
    if ( ! gp.set_param(vals, types) ) {
-      error_msg = gp.error_string();
+      error = gp.error_string();
    } else {
       vals.clear();
       vals << ginfo.xMax << ginfo.yMax << ginfo.zVal;
       if ( ! gp.set_param(vals, types) ) {
-         error_msg = gp.error_string();
+         error = gp.error_string();
       }
    }
 
-   if ( ! error_msg.isEmpty() ) {
-      QMessageBox::warning(this, "Error!", error_msg);
+   if ( ! error.isEmpty() ) {
+      QMessageBox::critical(this, "Error", error);
       return false;
    }
 
@@ -1349,9 +1311,12 @@ void US_Grid_Editor::sort_by_row(QVector<GridPoint> &vec)
 
 void US_Grid_Editor::check_dens_visc_temp()
 {
-   buff_dens = validate_input("dens") ? le_dens_20->text().toDouble() : DENS_20W;
-   buff_visc = validate_input("visc") ? le_visc_20->text().toDouble() : VISC_20W;
-   buff_temp = validate_input("temp") ? le_temp->text().toDouble() : 20;
+   buff_dens = DENS_20W;
+   buff_visc = VISC_20W;
+   buff_temp = 20;
+   validate_double( le_dens_20->text(), buff_dens );
+   validate_double( le_visc_20->text(), buff_visc );
+   validate_double( le_temp->text(), buff_temp );
 
    if ( buff_dens < 0.001 ) {
       QMessageBox::warning(this, "Warning!", "The entered buffer density is below 0.001, "
@@ -1399,24 +1364,61 @@ void US_Grid_Editor::check_grid_id()
    }
 }
 
+bool US_Grid_Editor::check_minmax(const QString &type)
+{
+   double min = 0;
+   double max = 0;
+   bool   min_set = false;
+   bool   max_set = false;
+   if ( type == "X" ) {
+      min_set = validate_double( le_x_min->text(), min );
+      max_set = validate_double( le_x_max->text(), max );
+   } else {
+      min_set = validate_double( le_y_min->text(), min );
+      max_set = validate_double( le_y_max->text(), max );
+   }
+   if ( min_set && max_set ) {
+      if ( max > min ) return true;
+      else             return false;
+   } else {
+      return true;
+   }
+}
+
 void US_Grid_Editor::new_xMin( )
 {
-   plot_tmp();
+   if ( check_minmax("X") ) {
+      plot_tmp();
+   } else {
+      le_x_min->clear();
+   }
 }
 
 void US_Grid_Editor::new_xMax( )
 {
-   plot_tmp();
+   if ( check_minmax("X") ) {
+      plot_tmp();
+   } else {
+      le_x_max->clear();
+   }
 }
 
 void US_Grid_Editor::new_yMin( )
 {
-   plot_tmp();
+   if ( check_minmax("Y") ) {
+      plot_tmp();
+   } else {
+      le_y_min->clear();
+   }
 }
 
 void US_Grid_Editor::new_yMax( )
 {
-   plot_tmp();
+   if ( check_minmax("Y") ) {
+      plot_tmp();
+   } else {
+      le_y_max->clear();
+   }
 }
 
 void US_Grid_Editor::set_symbol_size(double)

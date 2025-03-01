@@ -232,9 +232,6 @@ private:
    Attribute::Type   y_param;              //!< y parameter type
    Attribute::Type   z_param;              //!< z parameter type
 
-   QDoubleValidator *dValid;               //!< floating-point numbers validator
-   QIntValidator    *iValid;               //!< integer numbers validator
-
    QLabel           *lb_x_param;           //!< X-axis parameter label.
    QLabel           *lb_y_param;           //!< Y-axis parameter label.
    QLabel           *lb_z_param;           //!< Z-axis parameter label.
@@ -306,8 +303,11 @@ private:
    //! \brief Plot set region.
    void plot_tmp(void);
 
-   //! \brief Validate input numbers.
-   bool validate_input(const QString);
+   //! \brief Validate a string is double.
+   bool validate_double(const QString, double&);
+
+   //! \brief Validate a string is integer.
+   bool validate_int(const QString, int&);
 
    //! \brief Validate grid before adding or updating.
    bool validate_xyz(GridInfo&);
@@ -331,7 +331,10 @@ private:
    void clear_xyz(void);
 
    //! \brief Get input values
-   void get_xyz(GridInfo&);
+   bool get_xyz(GridInfo&, QString&);
+
+   //! \brief Check minimum and maximum values
+   bool check_minmax(const QString&);
 
    //! \brief Sort grid points
    void sort_points();
