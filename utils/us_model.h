@@ -61,7 +61,7 @@ class US_UTIL_EXTERN US_Model
             int row;
             int column;
          };
-
+         bool xLogarithmic;
          QList <GridInfo> grids;
          QList <CompInfo> components;
       };

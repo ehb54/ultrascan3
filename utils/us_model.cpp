@@ -1023,7 +1023,7 @@ void US_Model::get_associations( QXmlStreamReader& xml, Association& as )
    }
 }
 
-void US_Model::get_metadata(QXmlStreamReader &xml)
+void US_Model::get_metadata( QXmlStreamReader &xml )
 {
    QXmlStreamAttributes a = xml.attributes();
    QString type = a.value("type").toString();
@@ -1036,10 +1036,12 @@ void US_Model::get_metadata(QXmlStreamReader &xml)
                 << "yType" << "yMin" << "yMax" << "yRes"
                 << "zType" << "zVal" << "id";
       bool ok;
-      int ngrids = a.value( "ngrids" ).toInt(&ok);
+      int ngrids = a.value( "ngrids" ).toInt( &ok );
+      int xl = a.value( "xLogarithmic" ).toInt();
       if ( ok )
       {
-         ginfo_list.reserve(ngrids);
+         customGridData.xLogarithmic = xl == 1 ? true: false;
+         ginfo_list.reserve( ngrids );
          bool flag = true;
          int counter = 0;
          while ( true )
@@ -1056,32 +1058,32 @@ void US_Model::get_metadata(QXmlStreamReader &xml)
                {
                   CustomGridMetadata::GridInfo ginfo;
                   a = xml.attributes();
-                  foreach (QString atr, attr_list)
+                  foreach ( QString atr, attr_list )
                   {
-                     flag = flag && a.hasAttribute(atr);
+                     flag = flag && a.hasAttribute( atr );
                   }
                   if ( ! flag ) break;
 
-                  int id = a.value("id").toInt();
+                  int id = a.value( "id" ).toInt();
                   if ( id >= ngrids )
                   {
                      flag = false;
                      break;
                   }
-                  ginfo.xType = a.value("xType").toString();
-                  ginfo.xMin  = a.value("xMin").toDouble();
-                  ginfo.xMax  = a.value("xMax").toDouble();
-                  ginfo.xRes  = a.value("xRes").toInt();
+                  ginfo.xType = a.value( "xType" ).toString();
+                  ginfo.xMin  = a.value( "xMin"  ).toDouble();
+                  ginfo.xMax  = a.value( "xMax"  ).toDouble();
+                  ginfo.xRes  = a.value( "xRes"  ).toInt();
 
-                  ginfo.yType = a.value("yType").toString();
-                  ginfo.yMin  = a.value("yMin").toDouble();
-                  ginfo.yMax  = a.value("yMax").toDouble();
-                  ginfo.yRes  = a.value("yRes").toInt();
+                  ginfo.yType = a.value( "yType" ).toString();
+                  ginfo.yMin  = a.value( "yMin"  ).toDouble();
+                  ginfo.yMax  = a.value( "yMax"  ).toDouble();
+                  ginfo.yRes  = a.value( "yRes"  ).toInt();
 
-                  ginfo.zType = a.value("zType").toString();
-                  ginfo.zVal  = a.value("zVal").toDouble();
+                  ginfo.zType = a.value( "zType" ).toString();
+                  ginfo.zVal  = a.value( "zVal"  ).toDouble();
 
-                  ginfo_list.insert(id, ginfo);
+                  ginfo_list.insert( id, ginfo );
                   counter++;
                   if ( counter == ngrids ) break;
                }
@@ -1299,6 +1301,8 @@ void US_Model::write_stream( QXmlStreamWriter& xml )
       xml.writeStartElement( "metadata" );
       xml.writeAttribute( "type", "CUSTOMGRID" );
       xml.writeAttribute( "ngrids", QString::number(ngrids) );
+      int xl = customGridData.xLogarithmic ? 1 : 0;
+      xml.writeAttribute( "xLogarithmic", QString::number(xl) );
       for ( int ii = 0; ii < ngrids; ii++ )
       {
          CustomGridMetadata::GridInfo ginfo = customGridData.grids.at(ii);
