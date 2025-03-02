@@ -382,6 +382,9 @@ private slots:
    //! \brief Slot to update y maximum value.
    void new_yMax( void );
 
+   //! \brief Slot to update z value.
+   void new_zVal( void );
+
    //! \brief Slot a new buffer condition
    void new_dens_visc_temp( void );
 

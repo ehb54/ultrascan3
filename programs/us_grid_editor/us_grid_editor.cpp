@@ -175,16 +175,12 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    lb_y_ax->setAlignment( Qt::AlignCenter );
 
    le_x_min = us_lineedit();
-   le_x_min->setValidator( dValid );
    le_x_max = us_lineedit();
-   le_x_max->setValidator( dValid );
    le_x_res = us_lineedit();
    le_x_res->setValidator( iValid );
 
    le_y_min = us_lineedit();
-   le_y_min->setValidator( dValid );
    le_y_max = us_lineedit();
-   le_y_max->setValidator( dValid );
    le_y_res = us_lineedit();
    le_y_res->setValidator( iValid );
 
@@ -195,12 +191,12 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    lb_z_ax = us_label( Attribute::short_desc( z_param ) );
    lb_z_ax->setAlignment( Qt::AlignCenter );
    le_z_val = us_lineedit();
-   le_z_val->setValidator( dValid );
 
    connect( le_x_min, &QLineEdit::editingFinished, this, &US_Grid_Editor::new_xMin );
    connect( le_x_max, &QLineEdit::editingFinished, this, &US_Grid_Editor::new_xMax );
    connect( le_y_min, &QLineEdit::editingFinished, this, &US_Grid_Editor::new_yMin );
    connect( le_y_max, &QLineEdit::editingFinished, this, &US_Grid_Editor::new_yMax );
+   connect( le_z_val, &QLineEdit::editingFinished, this, &US_Grid_Editor::new_zVal );
 
    pb_add_update = us_pushbutton( "Add / Update " );
    connect( pb_add_update, &QPushButton::clicked, this, &US_Grid_Editor::add_update );
@@ -573,6 +569,11 @@ void US_Grid_Editor::plot_tmp()
    double py1 = data_plot->axisScaleDiv( QwtPlot::yLeft ).lowerBound();
    double py2 = data_plot->axisScaleDiv( QwtPlot::yLeft ).upperBound();
 
+   bool ok = xMin_set || xMax_set || yMin_set || yMax_set;
+   if ( ! ok ) {
+      data_plot->replot();
+      return;
+   }
 
    if ( grid_set )
    {
@@ -1382,54 +1383,66 @@ bool US_Grid_Editor::check_minmax( const QString &type )
    double max = 0;
    bool   min_set = false;
    bool   max_set = false;
-   if ( type == "X" ) {
+   if ( type.startsWith( "X_" ) ) {
       min_set = validate_double( le_x_min->text(), min );
       max_set = validate_double( le_x_max->text(), max );
-   } else {
+   } else if ( type.startsWith( "Y_" ) ) {
       min_set = validate_double( le_y_min->text(), min );
       max_set = validate_double( le_y_max->text(), max );
    }
+   else {
+      return false;
+   }
+
    if ( min_set && max_set ) {
       if ( max > min ) return true;
       else             return false;
-   } else {
+   } else if ( type.endsWith( "_MIN" ) && min_set ) {
       return true;
+   } else if ( type.endsWith( "_MAX" ) && max_set ) {
+      return true;
+   } else {
+      return false;
    }
 }
 
 void US_Grid_Editor::new_xMin()
 {
-   if ( check_minmax( "X" ) ) {
-      plot_tmp();
-   } else {
+   if ( ! check_minmax( "X_MIN" ) ) {
       le_x_min->clear();
    }
+   plot_tmp();
 }
 
 void US_Grid_Editor::new_xMax()
 {
-   if ( check_minmax( "X" ) ) {
-      plot_tmp();
-   } else {
+   if ( ! check_minmax( "X_MAX" ) ) {
       le_x_max->clear();
    }
+   plot_tmp();
 }
 
 void US_Grid_Editor::new_yMin()
 {
-   if ( check_minmax( "Y" ) ) {
-      plot_tmp();
-   } else {
+   if ( ! check_minmax( "Y_MIN" ) ) {
       le_y_min->clear();
    }
+   plot_tmp();
 }
 
 void US_Grid_Editor::new_yMax()
 {
-   if ( check_minmax( "Y" ) ) {
-      plot_tmp();
-   } else {
+   if ( ! check_minmax( "Y_MAX" ) ) {
       le_y_max->clear();
+   }
+   plot_tmp();
+}
+
+void US_Grid_Editor::new_zVal()
+{
+   double val;
+   if ( ! validate_double( le_z_val->text(), val ) ) {
+      le_z_val->clear();
    }
 }
 
