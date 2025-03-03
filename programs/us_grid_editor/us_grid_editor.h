@@ -8,6 +8,7 @@
 #include "us_widgets_dialog.h"
 #include "us_buffer_gui.h"
 #include "us_model.h"
+#include "qwt_scale_engine.h"
 
 #ifndef DbgLv
 #define DbgLv( a ) if( dbg_level>=a )qDebug( void )
@@ -318,7 +319,11 @@ private:
    bool check_overlap( double, double, double, double, int );
 
    //! \brief Generate evenly spaced numbers over a specified interval.
-   void linspace( double, double, int, double&, QVector<double>& );
+   bool gen_points( double, double, int, bool, QVector<double>& );
+
+   //! \brief Generate evenly spaced numbers over a specified interval.
+   bool gen_grid_points( const QVector<double>&, const QVector<double>&,
+                        double, QVector<GridPoint>& );
 
    //! \brief Correct the unit of the parameter.
    double correct_unit( double, Attribute::Type, bool );
@@ -402,6 +407,9 @@ private slots:
 
    //! \brief Slot to add or update a grid.
    void add_update( void );
+
+   //! \brief Slot to set x axis logarithmic.
+   void set_xlog( void );
 
    //! \brief Slot to select X-axis type to plot.
    void select_x_axis( int );

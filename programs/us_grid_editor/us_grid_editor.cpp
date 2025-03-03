@@ -135,6 +135,7 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
 
    chkb_log = new QCheckBox();
    QGridLayout* lyt_log = us_checkbox( "X-Axis Logarithmic", chkb_log );
+   connect( chkb_log, &QCheckBox::stateChanged, this, &US_Grid_Editor::set_xlog );
 
    QPushButton* pb_load_model = us_pushbutton( "Load Model" );
    connect( pb_load_model, &QPushButton::clicked, this, &US_Grid_Editor::load );
@@ -743,6 +744,7 @@ void US_Grid_Editor::plot_points()
    px2 += dx;
    py1 -= dy;
    py2 += dy;
+
    data_plot->setAxisScale( QwtPlot::xBottom, px1, px2 );
    data_plot->setAxisScale( QwtPlot::yLeft  , py1, py2 );
    data_plot->replot();
@@ -1013,13 +1015,12 @@ void US_Grid_Editor::add_update()
    GridInfo ginfo;
    if ( ! validate_xyz( ginfo ) ) return;
 
+   bool isLog = chkb_log->isChecked();
    QVector<double> xpoints;
-   double dx;
-   linspace( ginfo.xMin, ginfo.xMax, ginfo.xRes, dx, xpoints );
-
    QVector<double> ypoints;
-   double dy;
-   linspace( ginfo.yMin, ginfo.yMax, ginfo.yRes, dy, ypoints );
+   bool ok = gen_points( ginfo.xMin, ginfo.xMax, ginfo.xRes, isLog, xpoints );
+   ok = ok && gen_points( ginfo.yMin, ginfo.yMax, ginfo.yRes, false, ypoints );
+   if ( ! ok ) return;
 
    if ( check_overlap( xpoints.first(), xpoints.last(),
                      ypoints.first(), ypoints.last(), excl ) ) {
@@ -1027,24 +1028,112 @@ void US_Grid_Editor::add_update()
       return;
    }
 
+   QVector<GridPoint> gpoints;
+   if ( ! gen_grid_points( xpoints, ypoints, ginfo.zVal, gpoints ) ) {
+      return;
+   }
+
+   if ( excl == -1 ) {
+      grid_points << gpoints;
+      grid_info << ginfo;
+   } else {
+      grid_points.replace( excl, gpoints );
+      grid_info.replace( excl, ginfo );
+   }
+   check_grid_id();
+   fill_list();
+   sort_points();
+   plot_points();
+   set_nsubgrids( ct_nsubgrids->value() );
+   highlight( lw_grids->currentRow() );
+}
+
+void US_Grid_Editor::set_xlog()
+{
+   if ( grid_info.isEmpty() ) return;
+   bool isLog = chkb_log->isChecked();
+   QList<QVector<GridPoint>> new_grid_points;
+
+   for ( int ii = 0; ii < grid_info.size(); ii++ ) {
+      GridInfo ginfo = grid_info.at( ii );
+      QVector<double> xpoints;
+      QVector<double> ypoints;
+      gen_points( ginfo.xMin, ginfo.xMax, ginfo.xRes, isLog, xpoints );
+      gen_points( ginfo.yMin, ginfo.yMax, ginfo.yRes, false, ypoints );
+      QVector<GridPoint> gpoints;
+      if ( ! gen_grid_points( xpoints, ypoints, ginfo.zVal, gpoints ) ) {
+         return;
+      }
+      new_grid_points << gpoints;
+   }
+
+   grid_points.clear();
+   grid_points << new_grid_points;
+   check_grid_id();
+   fill_list();
+   sort_points();
+   plot_points();
+   set_nsubgrids( ct_nsubgrids->value() );
+   highlight( lw_grids->currentRow() );
+}
+
+bool US_Grid_Editor::gen_points( double x1, double x2, int np,
+                           bool isLog, QVector<double>& result )
+{
+   if ( x2 <= x1 ) return false;
+   if ( isLog && ( x1 * x2 < 0 ) ) return false;
+   result.resize( np );
+   double dx;
+   double sign = 1;
+   if ( isLog ) {
+      if ( x1 < 0 || x2 < 0 ) {
+         sign = -1;
+      }
+      if ( x1 == 0 ) {
+         x1 = 1e-20;
+      }
+      if ( x2 == 0 ) {
+         x2 = 1e-20;
+      }
+      x1 = std::log10( x1 * sign );
+      x2 = std::log10( x2 * sign );
+   }
+   dx = ( x2 - x1 ) / static_cast<double>( np );
+   double val = x1 + 0.5 * dx;
+   for ( int ii = 0; ii < np; ii++ ) {
+      if ( ii != 0 ) {
+         val += dx;
+      }
+      if ( isLog ) {
+         result[ii] = sign * std::pow( 10, val );
+      } else {
+         result[ii] = val;
+      }
+   }
+   return true;
+}
+
+bool US_Grid_Editor::gen_grid_points( const QVector<double>& x, const QVector<double>& y,
+                                     double z, QVector<GridPoint>& gpoints )
+{
    QVector<Attribute::Type> types;
    types << x_param << y_param << z_param;
-   QVector<GridPoint> gps;
+   gpoints.clear();
    QStringList wrong_list;
    QStringList error_list;
    QString wrong_item( "%1 : %2, %3 : %4, %5 : %6" );
    QString xs = Attribute::symbol( x_param );
    QString ys = Attribute::symbol( y_param );
    QString zs = Attribute::symbol( z_param );
-   for ( int ii = 0; ii < ginfo.xRes; ii++ ) {
-      for ( int jj = 0; jj < ginfo.yRes; jj++ ) {
+   for ( int ii = 0; ii < x.size(); ii++ ) {
+      for ( int jj = 0; jj < y.size(); jj++ ) {
          QVector<double> vals;
-         vals << xpoints.at( ii ) << ypoints.at( jj ) << ginfo.zVal;
+         vals << x.at( ii ) << y.at( jj ) << z;
          GridPoint gp;
          gp.set_dens_visc_temp( buff_dens, buff_visc, buff_temp );
          if ( gp.set_param( vals, types ) ) {
             gp.set_row_col( jj, ii );
-            gps << gp;
+            gpoints << gp;
          } else {
             double x = vals.at( 0 );
             double y = vals.at( 1 );
@@ -1075,37 +1164,10 @@ void US_Grid_Editor::add_update()
       msg_box.exec();
    }
 
-   if ( gps.isEmpty() ) {
-      return;
-   }
-
-   if ( excl == -1 ) {
-      grid_points << gps;
-      grid_info << ginfo;
+   if ( gpoints.isEmpty() ) {
+      return false;
    } else {
-      grid_points.replace( excl, gps );
-      grid_info.replace( excl, ginfo );
-   }
-   check_grid_id();
-   fill_list();
-   sort_points();
-   plot_points();
-   set_nsubgrids( ct_nsubgrids->value() );
-   highlight( lw_grids->currentRow() );
-}
-
-void US_Grid_Editor::linspace( double x1, double x2, int np,
-                              double& dx, QVector<double> &vec )
-{
-   dx = ( x2 - x1 ) / static_cast<double>( np );
-   vec.clear();
-   double x0 = x1 + 0.5 * dx;
-   vec.resize( np );
-   for ( int ii = 0; ii < np; ii++ ) {
-      if ( ii != 0 ) {
-         x0 += dx;
-      }
-      vec[ii] = x0;
+      return true;
    }
 }
 
@@ -1617,6 +1679,10 @@ void US_Grid_Editor::load()
    lb_x_ax->setText( Attribute::short_desc( x_param ) );
    lb_y_ax->setText( Attribute::short_desc( y_param ) );
    lb_z_ax->setText( Attribute::short_desc( z_param ) );
+
+   chkb_log->disconnect();
+   chkb_log->setChecked( model.customGridData.xLogarithmic );
+   connect( chkb_log, &QCheckBox::stateChanged, this, &US_Grid_Editor::set_xlog );
 
    for ( int ii = 0; ii < grid_info.size(); ii++ ) {
       QVector<GridPoint> gpvec;
