@@ -36,6 +36,7 @@ class US_BufferGuiSelect: public US_Widgets
       //! \param select_db_disk Indicates whether the default search
       //!    is on the local disk or in the DB
       //! \param tmp_buffer     Pointer for in/out buffer
+      //! \param load_id        The buffer ID to load from the filesystem or database
 
       US_BufferGuiSelect( int*, int*, US_Buffer* );
 
@@ -48,6 +49,8 @@ class US_BufferGuiSelect: public US_Widgets
       int*          db_or_disk;
       bool          from_db;
 
+      bool load_buffer( const QString& load_init, US_Buffer& buffer );
+
    signals:
       //! Currently selected buffer is accepted by User
       void bufferAccepted( void );
@@ -56,7 +59,7 @@ class US_BufferGuiSelect: public US_Widgets
    private:
 
       int           dbg_level;
-
+      QString       load_init;
       QLabel*       lb_density;
       QLabel*       lb_viscosity;
       QLineEdit*    le_search;
@@ -121,6 +124,7 @@ class US_BufferGuiSelect: public US_Widgets
       void reset           ( void );
       void set_temp20      ( void );
       void calc_visc_dent_temp ( void );
+
 
       void help( void ) { showHelp.show_help( "buffer_select.html" ); };
 
@@ -341,9 +345,12 @@ class US_GUI_EXTERN US_BufferGui : public US_WidgetsDialog
       //! \param buf    The default buffer
       //! \param select_db_disk An indicator of whether to search the disk
       //!               or DB for the default buffer
+      //! \param load_id The ID of the buffer to load from the disk or DB
       US_BufferGui( bool             = false, 
                   const US_Buffer& = US_Buffer(), 
                   int              = US_Disk_DB_Controls::Default );
+
+      bool load_buffer( const QString& load_init, US_Buffer& buffer );
    signals:
       //! Return the main values
       //! \param density of the buffer
@@ -374,6 +381,7 @@ class US_GUI_EXTERN US_BufferGui : public US_WidgetsDialog
       bool          bufferCurrent;
       bool          manualUpdate;
       bool          view_shared;
+      QString       load_init;
 
       QTabWidget*           tabWidget;
       US_BufferGuiSelect*   selectTab;

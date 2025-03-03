@@ -14,6 +14,7 @@
 #include "us_editor_gui.h"
 #include "us_investigator.h"
 #include "us_abstractrotor_gui.h"
+#include "us_simparms.h"
 
 /*! \class US_RotorGui
    This class provides an interface to the Rotor tables of USLIMS and
@@ -61,6 +62,8 @@ class US_GUI_EXTERN US_RotorGui : public US_WidgetsDialog
                    bool = false, 
                    int  = US_Disk_DB_Controls::Default );
 
+      bool load_rotor( QString& load_init, double& coeff1, double& coeff2);
+
       US_Rotor::Status            rotorStatus;            //!< Most recent rotor status
       US_Rotor::Status            calibrationStatus;      //!< Most recent calibration status
       US_Rotor::Rotor             currentRotor;           //!< Current rotor structure
@@ -86,6 +89,7 @@ class US_GUI_EXTERN US_RotorGui : public US_WidgetsDialog
    private:
       int                labID;
       US_Help            showHelp;
+      QString            load_data;
 
       QPushButton*       pb_help;
       QPushButton*       pb_reset;
