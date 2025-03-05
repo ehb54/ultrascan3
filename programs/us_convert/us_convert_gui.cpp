@@ -158,6 +158,7 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    static QChar clambda( 955 );   // Lambda character
 
    lb_mwlctrl   = us_banner  ( tr( "Multi-Wavelength Lambda Controls" ) );
+   lb_mwlctrl->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
    lb_lambstrt  = us_label   ( tr( "%1 Start:"    ).arg( clambda ) );
    lb_lambstop  = us_label   ( tr( "%1 End:"      ).arg( clambda ) );
    lb_lambplot  = us_label   ( tr( "Plot %1:"     ).arg( clambda ) );
@@ -172,7 +173,8 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    mwl_connect( true );
 
    QLabel* lb_runinfo  = us_banner(   tr( "Run Information" ) );
-
+   lb_runinfo->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
+   
    // Change Run ID
    QLabel* lb_runID2   = us_label(    tr( "Run ID:" ) );
 
@@ -194,6 +196,7 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
 
    lb_triple           = us_banner(
                             tr( "Cell / Channel / Wavelength" ) );
+   lb_triple->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
    lw_triple           = us_listwidget();
    // QLabel* lb_ccwinfo  = us_label(
    //                          tr( "Enter Associated Triple (c/c/w) Info:" ) );
@@ -345,8 +348,14 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    todo->addWidget( lb_todoinfo,     row++, 0, 1, 4 );
    todo->addWidget( lw_todoinfo,     row++, 0, 1, 4 );
 
+   
+
    //ALEXEY hide todo layout
    settings ->addLayout( todo,       row++, 0, 1, 4 );
+
+   int ihgt        = lb_todoinfo->height();
+   QSpacerItem* spacer2 = new QSpacerItem( 10, 100*ihgt, QSizePolicy::Expanding);
+   settings->addItem( spacer2,  row++,  0, 1, 4 );
    
    settings ->addWidget( lb_status,       row,     0, 1,  1 );
    settings ->addWidget( le_status,       row++,   1, 1,  3 );
@@ -462,8 +471,8 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
        cb_centerpiece->hide();
 
        //ALEXEY hide todo layout
-       //lb_todoinfo->hide();
-       //lw_todoinfo->hide();
+       lb_todoinfo->hide();
+       lw_todoinfo->hide();
 
        pb_reset->hide();
        pb_close->hide();
