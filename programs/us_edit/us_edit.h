@@ -389,6 +389,7 @@ class US_Edit : public US_Widgets
       static bool bool_flag( const QString );
       
       void update_autoflow_record_atEditData( US_DB2*, QString& );
+      void update_autoflow_record_atEditData_abde( US_DB2* );
       int  create_autoflowAnalysis_record( US_DB2*, QString&,  QString& );
       void create_autoflowAnalysisStages_record( US_DB2*, int ); 
       QString compose_json( bool );
@@ -556,6 +557,7 @@ class US_Edit : public US_Widgets
  signals:
       void data_loaded( void );
       void edit_complete_auto( QMap< QString, QString> & );
+      void edit_complete_auto_abde( QMap< QString, QString> & );
       void back_to_initAutoflow( void );
 
       void pass_edit_params( QMap< QString, QStringList> & );

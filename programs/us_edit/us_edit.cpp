@@ -8986,12 +8986,16 @@ void US_Edit::write_auto( void )
        //this->close();
        qApp->processEvents();
 
+       //Just update status of autoflow record (to 'REPORT')
+       update_autoflow_record_atEditData_abde( dbP );
+       
        QMessageBox::information( this,
 				 tr( "Saving of Edit Profiles is Complete." ),
 				 tr( "[ABDE]Edit profiles were saved successfully. \n\n"
 				     "The program will switch to Reporting stage." ) );
 
        //emit to REPORT? <----------------
+       emit edit_complete_auto_abde( details_at_editing_local  );   
        return;
      }
   /////////////////////////////////////////////////////////////////////
@@ -9510,6 +9514,27 @@ QString US_Edit::compose_json( bool fm_stage )
   json += QString("]}");
   
   return json;
+}
+
+// Set Autoflow record to REPORT (for ABDE)
+void US_Edit::update_autoflow_record_atEditData_abde( US_DB2* db )
+{
+  QStringList qry;
+
+  //using existing proc for switch from analysis stage...
+  qry << "update_autoflow_at_analysis"
+      << QString::number( autoflowID_passed );
+
+  int status = db->statusQuery( qry );
+   
+  if ( status == US_DB2::NO_AUTOFLOW_RECORD )
+    {
+      QMessageBox::warning( this,
+			    tr( "Autoflow Record Not Updated" ),
+			    tr( "No autoflow record\n"
+				"associated with this experiment." ) );
+      return;
+    }
 }
 
 // Set Autoflow record to ANALSYIS && set analysises ID(s)
