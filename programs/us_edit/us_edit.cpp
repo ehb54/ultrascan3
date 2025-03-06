@@ -738,7 +738,7 @@ pb_plateau->setVisible(false);
 
 // AUTO: Constructor for manual processing 
 US_Edit::US_Edit( QVector< US_DataIO::RawData > allData, QStringList  triples,
-		  QString  workingDir, int currenChtInd, int plotind ) : US_Widgets()
+		  QString  workingDir, int currenChtInd, int plotind, QString exptype ) : US_Widgets()
 {
  
    check        = US_Images::getIcon( US_Images::CHECK );
@@ -916,6 +916,7 @@ lambdas << "250" << "350" << "450" << "550" << "580" << "583" << "650";
    pb_excludeRange = us_pushbutton( tr( "Exclude Scan Range" ), false );
    pb_exclusion    = us_pushbutton( tr( "Exclusion Profile" ),  false );
    pb_edit1       = us_pushbutton( tr( "Edit Single Scan" ), false );
+   pb_removeAllbutLast = us_pushbutton( tr( "Remove All but Last" ), true );
    pb_include     = us_pushbutton( tr( "Include All" ), false );
 
 
@@ -1014,6 +1015,8 @@ pb_plateau->setVisible(false);
                              SLOT  ( new_triple         ( int ) ) );
    connect( pb_exclusion,    SIGNAL( clicked() ), SLOT( exclusion()     ) );
    connect( pb_edit1,        SIGNAL( clicked() ), SLOT( edit_scan()     ) );
+   connect( pb_removeAllbutLast,        SIGNAL( clicked() ), SLOT( exclude_all_but_last()     ) );
+   
    connect( pb_include,      SIGNAL( clicked() ), SLOT( include()       ) );
    connect( pb_meniscus,     SIGNAL( clicked() ), SLOT( set_meniscus()  ) );
    connect( pb_airGap,       SIGNAL( clicked() ), SLOT( set_airGap()    ) );
@@ -1080,6 +1083,8 @@ pb_plateau->setVisible(false);
    specs->addWidget( pb_excludeRange, s_row,   0, 1, 3 );
    specs->addWidget( pb_exclusion,    s_row++, 3, 1, 3 );
    specs->addWidget( pb_edit1,        s_row,   0, 1, 3 );
+   specs->addWidget( pb_removeAllbutLast, s_row,   0, 1, 3 );
+   
    specs->addWidget( pb_include,      s_row++, 3, 1, 3 );
    specs->addWidget( lb_edit,         s_row++, 0, 1, 6 );
    specs->addWidget( lb_edtrsp,       s_row,   0, 1, 3 );
@@ -1161,16 +1166,19 @@ pb_plateau->setVisible(false);
    lb_gaps        ->hide();
    ct_gaps        ->hide();
    pb_nextChan    ->hide();
-   
-   lb_scan        ->hide();
-   lb_from        ->hide();
-   lb_to          ->hide();
-   ct_from        ->hide();
-   ct_to          ->hide();
-   pb_excludeRange->hide();
-   pb_exclusion   ->hide();
-   pb_edit1       ->hide();
-   pb_include     ->hide();
+
+   if ( exptype != "ABDE" )
+     {
+       lb_scan        ->hide();
+       lb_from        ->hide();
+       lb_to          ->hide();
+       ct_from        ->hide();
+       ct_to          ->hide();
+       pb_excludeRange->hide();
+       pb_exclusion   ->hide();
+       pb_edit1       ->hide();
+       pb_include     ->hide();
+     }
 
    // pb_meniscus    ->hide();
    // pb_dataRange   ->hide();
@@ -2126,8 +2134,8 @@ void US_Edit::load_auto( QMap < QString, QString > & details_at_editing )
   dataSource          = details_at_editing[ "dataSource" ];
   simulated_data      = false;
   
-  qDebug() << "autoflowID_passed, dataSource, ProtocolName_auto: "
-	   << autoflowID_passed << dataSource << ProtocolName_auto;
+  qDebug() << "autoflowID_passed, dataSource, ProtocolName_auto, autoflow_expType : "
+	   << autoflowID_passed << dataSource << ProtocolName_auto << autoflow_expType;
   
   // Deal with different filenames if any.... //////////////////////////
   filename_runID_passed = details_at_editing[ "filename" ];
@@ -2189,6 +2197,7 @@ void US_Edit::process_optics_auto( )
 {
   all_loaded = false;
   editProfile.clear();
+  editProfile_includes. clear();
   editProfile_scans_excl.clear();
   automatic_meniscus.clear();
   manual_edit_comments. clear();
@@ -3141,7 +3150,10 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
      new_triple_auto( 0 );                  //ALEXEY <--- here does NOT applies the gap removal
 
    if ( autoflow_expType == "ABDE" )
-     pb_write->setEnabled( false );
+     {
+       pb_write    ->setEnabled( false );
+       pb_spikes   ->setEnabled( false );
+     }
    else
      pb_write->setEnabled( true );
    pb_emanual->setEnabled( true );
@@ -7006,6 +7018,20 @@ void US_Edit::reset_excludes( void )
    replot();
 }
 
+
+//Exclude all but last scan
+void US_Edit::exclude_all_but_last( void )
+{
+  int scanStart = 0;
+  int scanEnd   = data.scanData.size() - 1;
+  
+  for ( int i = scanEnd; i >= scanStart; i-- )
+    includes.removeAt( i - 1 );
+  
+  replot();
+  reset_excludes();
+}
+
 // Set excludes as indicated in counters
 void US_Edit::exclude_range( void )
 {
@@ -7311,7 +7337,7 @@ void US_Edit::remove_spikes_auto( void )
    qDebug() << cb_triple->currentText()  << ", " << editProfile[ cb_triple->currentText() ];
       
    pb_spikes->setEnabled( false );
-   pb_write ->setEnabled( true );
+   //pb_write ->setEnabled( true );
 
    //replot();  //ALEXEY - do we need to replot here ?
 
@@ -7873,6 +7899,10 @@ DbgLv(1) << " 2)gap_fringe" << gap_fringe << "idax" << idax;
        includes.removeLast();
      }
 
+   //Also, for "ABDE", remove from includes all by manuall editing
+   if ( autoflow_expType == "ABDE" && edited_triples_abde[ cb_triple->currentText() ] )
+     includes = editProfile_includes[ cb_triple->currentText() ];
+
    qDebug() << "Includes size after remove: " << includes.size();
    //for ( int i = 0; i < includes.size(); ++i  )
    //  qDebug() << "Includes after remove: " << includes[ i ];
@@ -7894,8 +7924,13 @@ DbgLv(1) << "EDT:NewTr: DONE";
      if ( autoflow_expType == "ABDE" )
        {
 	 setUnsetSaveBttn_abde();
-	 if( !edited_triples_abde[ cb_triple->currentText() ] )  
-	   return;
+	 if( !edited_triples_abde[ cb_triple->currentText() ] )
+	   {
+	     pb_spikes-> setEnabled( false );
+	     return;
+	   }
+	 else
+	   pb_spikes-> setEnabled( true );
        }
      
      qDebug() << "NEW_TRIPLE_AUTO: all_loaded: " << all_loaded;
@@ -8498,7 +8533,7 @@ void US_Edit::manual_edit_auto( void )
   int plotInd = plotndx;
   qDebug() << "IN manual_edit_auto( void ), plotInd -- " << plotInd;
   
-  sdiag = new US_Edit( allData, triples, workingDir, currChIndex, plotInd );
+  sdiag = new US_Edit( allData, triples, workingDir, currChIndex, plotInd, autoflow_expType );
   /** The following will block parent windows from closing BUT not from continuing timer execution ***/
   sdiag->setWindowFlags( Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint);
   sdiag->setWindowModality(Qt::ApplicationModal);
@@ -8507,12 +8542,26 @@ void US_Edit::manual_edit_auto( void )
   connect( sdiag, SIGNAL( pass_edit_params( QMap< QString, QStringList> & ) ),
 	   this,  SLOT( update_triple_edit_params (  QMap < QString, QStringList > &) ) );
 
+  connect( sdiag, SIGNAL( pass_edit_params_includes( QMap< QString, QList<int> > & ) ),
+	   this,  SLOT( update_triple_edit_params_includes (  QMap< QString, QList<int> > &) ) );
+  
+
   sdiag->show();
 }
 
+// Update triple's EXCLUDED edit params with those obtained manually..
+void US_Edit::update_triple_edit_params_includes (  QMap < QString, QList<int> > &  edit_params_includes )
+{
+  QString t_name = edit_params_includes.keys()[0];
+  editProfile_includes[ t_name ] = edit_params_includes[ t_name ];
+
+  us_edit_auto_mode = true;
+
+  qDebug() << "In PASSING values manually: us_edit_auto_mode AFTER -- " << t_name << us_edit_auto_mode;
+}
 
 // Update triple's edit params with those obtained manually..
-void US_Edit:: update_triple_edit_params (  QMap < QString, QStringList > &  edit_params )
+void US_Edit::update_triple_edit_params (  QMap < QString, QStringList > &  edit_params )
 {
   QString t_name = edit_params.keys()[0];
   editProfile[ t_name ] = edit_params[ t_name ];
@@ -8921,6 +8970,34 @@ void US_Edit::write_auto( void )
      }
    ////////////////////////////////////////////////////////////////////
 
+
+   /** IF ABDE type, STOP HERE:  *************************************************************/
+   //le_status->setText( tr( "Saving COMPLETE " ) );
+   //qApp->processEvents();
+   /**
+      --- update autoflowStatus,
+      --- switch to REPORT
+   ***/
+
+   if ( autoflow_expType == "ABDE" )
+     {
+       qDebug() << "EDIT STOPS HERE for ABDE!!!";
+       reset();
+       //this->close();
+       qApp->processEvents();
+
+       QMessageBox::information( this,
+				 tr( "Saving of Edit Profiles is Complete." ),
+				 tr( "[ABDE]Edit profiles were saved successfully. \n\n"
+				     "The program will switch to Reporting stage." ) );
+
+       //emit to REPORT? <----------------
+       return;
+     }
+  /////////////////////////////////////////////////////////////////////
+   
+
+   
    // Now, remove duplicates from channels array, fill QMap keeping track on if reference wavelength set for each channel (if MWL) 
    channels_all       .removeDuplicates();
    triples_all_optics .removeDuplicates(); //Absence of this caused incorrect analyses list: need to test!!!
@@ -9582,6 +9659,10 @@ void US_Edit::write_triple_auto( int trx )
    plateau       = editProfile[ triple_name ][3].toDouble();
    baseline      = editProfile[ triple_name ][4].toDouble();
 
+   //also, for ABDE, deal with includes / excludes : includes = ...
+   if ( autoflow_expType == "ABDE" ) 
+     includes      = editProfile_includes[ triple_name ];
+   
    if ( dataType == "IP" )
      {
        airGap_left      = editProfile[ triple_name ][7].toDouble();
@@ -11258,6 +11339,10 @@ void US_Edit::write_mwl_auto( int trx )
    range_right   = editProfile[ triple_name ][2].toDouble();
    plateau       = editProfile[ triple_name ][3].toDouble();
    baseline      = editProfile[ triple_name ][4].toDouble();
+
+   //also, for ABDE, deal with includes / excludes : includes = ...
+   if ( autoflow_expType == "ABDE" ) 
+     includes      = editProfile_includes[ triple_name ];
    
    if ( editProfile[ triple_name ].count() > 6 )
      {
@@ -11751,13 +11836,28 @@ DbgLv(1) << "EDT:WrXml:  waveln" << waveln;
 	    xml.writeAttribute   ( "scan", QString::number( ii ) );
 	    xml.writeEndElement  ();
 	  }
+
 	//end of the scan set
        	for ( int ii = data.scanData.size() - scanExcl_end_ind; ii < data.scanData.size(); ii++ )
 	  {
 	    xml.writeStartElement( "exclude" );
 	    xml.writeAttribute   ( "scan", QString::number( ii ) );
 	    xml.writeEndElement  ();
-	  }	
+	  }
+
+
+	//Also, for ABDE, exclude what was excluded manually for each triple 
+	for ( int ii = 0; ii < data.scanData.size(); ii++ )
+	  {
+	    if ( ! includes.contains( ii ) && 
+		 ii > scanExcl_begin_ind   &&
+		 ii < data.scanData.size() - scanExcl_end_ind )
+	      {
+		xml.writeStartElement( "exclude" );
+		xml.writeAttribute   ( "scan", QString::number( ii ) );
+		xml.writeEndElement  ();
+	      }
+	  }
 	
 	xml.writeEndElement  ();  // excludes
      }
@@ -12975,6 +13075,7 @@ void US_Edit::pass_values( void )
   QString triple_name = cb_triple->itemText( cb_triple->currentIndex() );
   
   QMap< QString, QStringList > editProfile_triple;
+  QMap< QString, QList<int> >  editProfile_triple_includes;
   QStringList triple_params;
   triple_params <<  QString::number(meniscus)
 		<<  QString::number(range_left)
@@ -12990,10 +13091,13 @@ void US_Edit::pass_values( void )
 		    <<  QString::number(airGap_right);
     }
   
-  editProfile_triple[ triple_name ] = triple_params;
-
+  editProfile_triple[ triple_name ]          = triple_params;
+  editProfile_triple_includes[ triple_name ] = includes; 
+  
   qDebug() << "In PASSING values manually: triple_name, parms -- " << triple_name << editProfile_triple[ triple_name ];
-
+  qDebug() << "In PASSING values manually: includes -- " << triple_name << editProfile_triple_includes;
+  qDebug() << "In PASSING values manually: us_edit_auto_mode BEFORE -- " << triple_name << us_edit_auto_mode;
+  
   int status = QMessageBox::information( this,
 					 tr( "New Edit Parameters" ),
 					 tr( "This will overwrite current edit parameters. "
@@ -13002,7 +13106,8 @@ void US_Edit::pass_values( void )
 					 0, 0, 1 );
   
   if ( status != 0 ) return;
-  
+
+  emit pass_edit_params_includes( editProfile_triple_includes );
   emit pass_edit_params( editProfile_triple );
   close();
 }

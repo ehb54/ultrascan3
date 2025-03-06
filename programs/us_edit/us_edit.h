@@ -27,7 +27,7 @@ class US_Edit : public US_Widgets
 	 US_Edit(QString auto_mode);
 
 	 US_Edit( QVector< US_DataIO::RawData > allData, QStringList  triples,
-		  QString  workingDir, int currChInd, int plotind );
+		  QString  workingDir, int currChInd, int plotind, QString exptype );
 
 	 //void us_mode_passed  ( void );
 	 //bool usmode;
@@ -98,6 +98,7 @@ class US_Edit : public US_Widgets
 
       QStringList        triple_info;
       QMap< QString, QStringList> editProfile;
+      QMap< QString, QList<int>> editProfile_includes;
       QMap< QString, QStringList> editProfile_scans_excl;
       QMap< QString, bool> automatic_meniscus;
       QMap< QString, QString> manual_edit_comments;
@@ -213,6 +214,7 @@ class US_Edit : public US_Widgets
       QPushButton*       pb_exclusion;
       QPushButton*       pb_include;
       QPushButton*       pb_edit1;
+      QPushButton*       pb_removeAllbutLast;
       QPushButton*       pb_meniscus;
       QPushButton*       pb_airGap;
       QPushButton*       pb_dataRange;
@@ -429,6 +431,7 @@ class US_Edit : public US_Widgets
       void focus             ( int, int );
       
       void exclude_range     ( void );
+      void exclude_all_but_last( void );
       void exclusion         ( void );
       void update_excludes   ( QList< int > );
       void finish_excludes   ( QList< int > );
@@ -545,6 +548,7 @@ class US_Edit : public US_Widgets
       void pass_values       ( void );
 
       void update_triple_edit_params (  QMap < QString, QStringList > & );
+      void update_triple_edit_params_includes (  QMap< QString, QList<int> >  & );
       
       void help              ( void )
       { showHelp.show_help( "manual/us_edit.html" ); };
@@ -555,6 +559,7 @@ class US_Edit : public US_Widgets
       void back_to_initAutoflow( void );
 
       void pass_edit_params( QMap< QString, QStringList> & );
+      void pass_edit_params_includes( QMap< QString, QList<int> > & );
       
       void process_next_optics( void );
 };
