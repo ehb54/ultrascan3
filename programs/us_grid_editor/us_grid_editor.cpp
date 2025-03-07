@@ -745,6 +745,18 @@ void US_Grid_Editor::plot_points()
    py1 -= dy;
    py2 += dy;
 
+   if ( grid_points.size() == 1 && pxid == z_param ) {
+      double mid = 0.5 * ( px1 + px2 );
+      double dd = qAbs(mid) * 0.01;
+      px1 = mid - dd;
+      px2 = mid + dd;
+   } else if ( grid_points.size() == 1 && pyid == z_param ) {
+      double mid = 0.5 * ( py1 + py2 );
+      double dd = qAbs(mid) * 0.01;
+      py1 = mid - dd;
+      py2 = mid + dd;
+   }
+
    data_plot->setAxisScale( QwtPlot::xBottom, px1, px2 );
    data_plot->setAxisScale( QwtPlot::yLeft  , py1, py2 );
    data_plot->replot();
