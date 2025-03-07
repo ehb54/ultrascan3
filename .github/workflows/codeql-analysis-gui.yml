@@ -17,18 +17,17 @@ on:
      - master
      - aaron-dev-test
      - lukas/**
-    paths:
-     - utils/**
-     - gui/**
+    paths-ignore:
+      - programs/us_mpi_analysis/**
+
   pull_request:
     # The branches below must be a subset of the branches above
     branches: 
      - master
      - aaron-dev-test
      - lukas/*
-    paths:
-       - utils/**
-       - gui/**
+    paths-ignore:
+      - programs/us_mpi_analysis/**
   schedule:
     - cron: '20 18 * * 1'
 
