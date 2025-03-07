@@ -223,7 +223,7 @@ US_Astfem_Sim::US_Astfem_Sim( QWidget* p, Qt::WindowFlags f )
    setWindowTitle( "UltraScan3 Simulation Module" );
    setPalette( US_GuiSettings::frameColor() );
    init_simparams();
-   //meniscus_ar                 = 5.8 + simparams.bottom_position - 7.2;
+   meniscus_ar                 = 5.8 + simparams.bottom_position - 7.2;
    stopFlag            = false;
    movieFlag           = false;
    save_movie          = false;
