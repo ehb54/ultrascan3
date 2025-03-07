@@ -131,7 +131,7 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    connect( pb_lu_buffer, &QPushButton::clicked,       this, &US_Grid_Editor::set_buffer );
 
    // 20,w grid control
-   QLabel *lb_20w_ctrl = us_banner( tr( "20,W Grid Control" ) );
+   QLabel *lb_20w_ctrl = us_banner( tr( "20,W Partial Grid Control" ) );
 
    chkb_log = new QCheckBox();
    QGridLayout* lyt_log = us_checkbox( "X-Axis Logarithmic", chkb_log );
@@ -140,18 +140,18 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    QPushButton* pb_load_model = us_pushbutton( "Load Model" );
    connect( pb_load_model, &QPushButton::clicked, this, &US_Grid_Editor::load );
 
-   QLabel *lb_grid_list = us_label( "Grid List" );
+   QLabel *lb_grid_list = us_label( "Partial Grid List" );
    lb_grid_list->setAlignment( Qt::AlignCenter );
 
    lw_grids = us_listwidget();
 
-   QPushButton* pb_new = us_pushbutton( "New Grid" );
+   QPushButton* pb_new = us_pushbutton( "New" );
    connect( pb_new, &QPushButton::clicked, this, &US_Grid_Editor::new_grid_clicked );
 
-   QPushButton* pb_delete = us_pushbutton( "Delete Grid" );
+   QPushButton* pb_delete = us_pushbutton( "Delete" );
    connect( pb_delete, &QPushButton::clicked, this, &US_Grid_Editor::delete_grid_clicked );
 
-   QPushButton* pb_update = us_pushbutton( "Update Grid" );
+   QPushButton* pb_update = us_pushbutton( "Update" );
    connect( pb_update, &QPushButton::clicked, this, &US_Grid_Editor::update_grid_clicked );
 
    QHBoxLayout* lyt_1 = new QHBoxLayout();
