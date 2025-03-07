@@ -40,7 +40,7 @@ authors:
     orcid: 'https://orcid.org/0000-0002-4249-012X'
 repository-code: 'https://github.com/ehb54/ultrascan3'
 url: 'https://ultrascan.aucsolutions.com'
-repository: 'https://github.com/ehb54'
+repository: 'https://github.com/ehb54/ultrascan3_all'
 abstract: >-
   UltraScan-III (US3) is a free and open source,
   multi-platform software suite designed to provide
