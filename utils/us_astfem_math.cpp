@@ -32,7 +32,7 @@ DbgLv(1) << "AMATH: wrts: Unable to open" << tmst_fpath;
       return 0;
    }
 
-DbgLv(1)<< "AMATH:wrts: number of speeds=" << nspeed
+DbgLv(0)<< "AMATH:wrts: number of speeds=" << nspeed
  << "Time state file path=" << tmst_fpath;
 simparams.debug();
    timestate.set_key( "Time",        "I4" );
@@ -65,7 +65,7 @@ simparams.debug();
    }
    US_SimulationParameters::SpeedProfile* sp;
    US_SimulationParameters::SpeedProfile* sp_prev;
-DbgLv(1) << "AMATH:wrts: writetimestate : no of scans" << nscans;
+DbgLv(0) << "AMATH:wrts: writetimestate : no of scans" << nscans;
    QList< int > scantimes;
    QList< double > scantemps;
 
@@ -73,10 +73,10 @@ DbgLv(1) << "AMATH:wrts: writetimestate : no of scans" << nscans;
    {  // Accumulate the times and temperatures at scans
       scantimes << sim_data.scanData[ ii ].seconds;
       scantemps << sim_data.scanData[ ii ].temperature;
-DbgLv(1) << "AMATH:wrts:scantimes" << scantimes[ii] << sim_data.scanData[ii].omega2t
+DbgLv(0) << "AMATH:wrts:scantimes" << scantimes[ii] << sim_data.scanData[ii].omega2t
  << ii << sim_data.scanData[ii].rpm;
    }
-//DbgLv(1) << " writetimestate : no of scans" << nscans;
+DbgLv(0) << " writetimestate : no of scans" << nscans << simparams.sim;
 
    if ( simparams.sim == false )
    {  // Handle 1st acceleration zone for real data (compute acceleration rate)
@@ -88,7 +88,7 @@ DbgLv(1) << "AMATH:wrts:scantimes" << scantimes[ii] << sim_data.scanData[ii].ome
       low_acceleration( simparams.speed_step, low_accel, rate );
       t_acc       = (int)qRound( (double)( simparams.speed_step[ 0 ].rotorspeed )
                                            / rate );
-DbgLv(1)<< "AMATH:wrts: computed rate:" << rate;
+DbgLv(0)<< "AMATH:wrts: computed rate:" << rate;
    }
    else
    {  // Handle 1st acceleration zone for simulation (astfem_sim) data
@@ -97,7 +97,7 @@ DbgLv(1)<< "AMATH:wrts: computed rate:" << rate;
       t_acc      = (int)qRound( (double)sp->rotorspeed
                               / (double)sp->acceleration );
       rate       = (double)sp->rotorspeed / (double)t_acc;
-DbgLv(1)<< "AMATH:wrts: rate is given by user : t_acc from timestate" << t_acc << rate;
+DbgLv(0)<< "AMATH:wrts: rate is given by user : t_acc from timestate" << t_acc << rate;
    }
 
    int d1     = 0;
@@ -167,7 +167,7 @@ DbgLv(1)<< "AMATH:wrts: rate is given by user : t_acc from timestate" << t_acc <
          temperature = ( scanx < 0 ) ? temperature : scantemps[ scanx ];
 //if(scan_nbr>0)
 if((scan_nbr>0)||(ii<(d1+2))||((ii>(tacc-2))&&(ii<(tacc+2)))||((ii+3)>d2))
- DbgLv(1) << "AMATH:wrts: ii(time)" << ii << "scanx scan_nbr" << scanx << scan_nbr
+ DbgLv(0) << "AMATH:wrts: ii(time)" << ii << "scanx scan_nbr" << scanx << scan_nbr
   << "rpm" << rpm << "omega2t" << omega2t;
 
          timestate.set_value( "Time",        itime       );
