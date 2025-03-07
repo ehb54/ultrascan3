@@ -12,7 +12,6 @@ type: software
 authors:
   - given-names: Borries
     family-names: Demeler
-    name-particle: Borries
     email: demeler@gmail.com
     affiliation: University of Montana
     orcid: 'https://orcid.org/0000-0002-2414-9518'
