@@ -40,7 +40,9 @@ class US_Edit : public US_Widgets
 
       private:
 	 US_Edit*              sdiag;
-	 
+         QWidget* upperWidget;
+         QWidget* leftWidget;
+         QWidget* rightWidget;	 
 
       enum { MENISCUS, AIRGAP, RANGE, PLATEAU, BASELINE, FINISHED } step;
 
@@ -404,7 +406,10 @@ class US_Edit : public US_Widgets
       bool isSet_edit_info_for_channel( QString, QString );
       void set_data_over_lamda();
       void xaxis_wavl_wgts_on( bool );
-      
+
+  //protected:
+  //  void resizeEvent(QResizeEvent *event) override;
+				     
    private slots:         
       void load              ( void );
       void load_auto         ( QMap < QString, QString > & );
@@ -547,9 +552,11 @@ class US_Edit : public US_Widgets
       void reset_outData     ( void );
       void close_edit        ( void );
       void pass_values       ( void );
+      void close_manual_edit ( void );
 
       void update_triple_edit_params (  QMap < QString, QStringList > & );
       void update_triple_edit_params_includes (  QMap< QString, QList<int> >  & );
+      void restore_view( void );
       
       void help              ( void )
       { showHelp.show_help( "manual/us_edit.html" ); };
@@ -562,6 +569,7 @@ class US_Edit : public US_Widgets
 
       void pass_edit_params( QMap< QString, QStringList> & );
       void pass_edit_params_includes( QMap< QString, QList<int> > & );
+      void restore_main_view( void );
       
       void process_next_optics( void );
 };

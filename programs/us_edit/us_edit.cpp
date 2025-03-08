@@ -83,17 +83,30 @@ DbgLv(1) << " 0)gap_fringe" << gap_fringe;
    top->setContentsMargins ( 2, 2, 2, 2 );
 
    // Put the Run Info across the entire window
-   QHBoxLayout* runInfo = new QHBoxLayout();
+   upperWidget         = new QWidget();
+   QHBoxLayout* runInfo = new QHBoxLayout( upperWidget );
    QLabel* lb_info = us_label( tr( "Run Info:" ), -1 );
    runInfo->addWidget( lb_info );
 
    le_info = us_lineedit( "", 1, true );
    runInfo->addWidget( le_info );
 
-   top->addLayout( runInfo );
-
+   //top->addLayout( runInfo );
+   top -> addWidget( upperWidget ); 
+   
    QHBoxLayout* main = new QHBoxLayout();
-   QVBoxLayout* left = new QVBoxLayout;
+
+   leftWidget         = new QWidget();
+   QVBoxLayout* left           = new QVBoxLayout(leftWidget);
+   rightWidget        = new QWidget();
+   QVBoxLayout* rightLayout    = new QVBoxLayout(rightWidget);
+
+   left        ->setSpacing        ( 0 );
+   left        ->setContentsMargins( 0, 1, 0, 1 );
+   rightLayout ->setSpacing        ( 0 );
+   rightLayout ->setContentsMargins( 0, 1, 0, 1 );
+   
+   //QVBoxLayout* left = new QVBoxLayout;
 
    // Start of Grid Layout
    QGridLayout* specs = new QGridLayout;
@@ -596,10 +609,15 @@ pb_plateau->setVisible(false);
    left->addLayout( statInfo );
 
    
-   main->addLayout( left );
-   main->addLayout( plot );
-   main->setStretchFactor( left, 2 );
-   main->setStretchFactor( plot, 3 );
+   // main->addLayout( left );
+   // main->addLayout( plot );
+   // main->setStretchFactor( left, 2 );
+   // main->setStretchFactor( plot, 3 );
+   
+   rightLayout  ->addLayout( plot );
+   main         ->addWidget( leftWidget, 2 );
+   main         ->addWidget( rightWidget, 3 );
+   
    top ->addLayout( main );
    
    reset();
@@ -730,6 +748,16 @@ pb_plateau->setVisible(false);
    // details[ "runID" ]        = QString("1693");
    // details[ "OptimaName" ]   = QString("Optima 2");  
    // details[ "expType" ]      = QString("ABDE");  
+
+   // details[ "invID_passed" ] = QString("165");
+   // details[ "filename" ]     = QString("AAV_GMP_test_030325-run2366-dataDiskRun-1515");
+   // details[ "protocolName" ] = QString("GMP-test-ABDE-fromDisk");
+   // details[ "statusID" ]     = QString("588");
+   // details[ "autoflowID" ]   = QString("1515");
+   // details[ "runID" ]        = QString("");
+   // details[ "OptimaName" ]   = QString("");  
+   // details[ "expType" ]      = QString("ABDE");
+   // details[ "dataSource" ]   = QString("dataDiskAUC");
    
    // load_auto( details );
   
@@ -1146,7 +1174,7 @@ pb_plateau->setVisible(false);
    QPushButton* pb_cancel  = us_pushbutton( tr( "Cancel" ) );
    pb_pass    = us_pushbutton( tr( "Accept Changes for a Channel" ), false );
    
-   connect( pb_cancel, SIGNAL( clicked() ), SLOT( close()  ) );
+   connect( pb_cancel, SIGNAL( clicked() ), SLOT( close_manual_edit()  ) );
    connect( pb_pass,   SIGNAL( clicked()    ),
 	    this,      SLOT  ( pass_values() ) );
    
@@ -8528,15 +8556,23 @@ QMap< QString, QString> US_Edit::read_autoflow_record( int autoflowID  )
 // Call manuall editor
 void US_Edit::manual_edit_auto( void )
 {
+  //hide parent layouts
+  upperWidget -> hide();
+  leftWidget  -> hide();
+  rightWidget -> hide();
+  
   int currChIndex = cb_triple->currentIndex();
   //int plotInd = index_data();
   int plotInd = plotndx;
   qDebug() << "IN manual_edit_auto( void ), plotInd -- " << plotInd;
   
   sdiag = new US_Edit( allData, triples, workingDir, currChIndex, plotInd, autoflow_expType );
-  /** The following will block parent windows from closing BUT not from continuing timer execution ***/
-  sdiag->setWindowFlags( Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint);
-  sdiag->setWindowModality(Qt::ApplicationModal);
+  sdiag->setParent(this, Qt::Widget);
+  sdiag->setFrameShape( QFrame::Box);
+  sdiag->setLineWidth(2);
+  
+  // sdiag->setWindowFlags( Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint);
+  // sdiag->setWindowModality(Qt::ApplicationModal);
   /***************************************************************************************************/
 
   connect( sdiag, SIGNAL( pass_edit_params( QMap< QString, QStringList> & ) ),
@@ -8544,14 +8580,39 @@ void US_Edit::manual_edit_auto( void )
 
   connect( sdiag, SIGNAL( pass_edit_params_includes( QMap< QString, QList<int> > & ) ),
 	   this,  SLOT( update_triple_edit_params_includes (  QMap< QString, QList<int> > &) ) );
-  
 
+  connect( sdiag, SIGNAL( restore_main_view( ) ), this, SLOT( restore_view( ) ) );
+  
   sdiag->show();
+
+  int offset = 20;
+  sdiag->move(2*offset, 2*offset);
+  int newWidth  = this->width() - 3*offset;
+  int newHeight = this->height() - 4*offset;
+  sdiag->setMaximumSize( newWidth, newHeight );
+  sdiag->adjustSize();
+  sdiag->resize( QSize(newWidth, newHeight ));
+  sdiag->update();
+  sdiag->update();
+}
+
+//restore all widgets
+void US_Edit::restore_view( void )
+{
+  //show parent layouts
+  upperWidget -> show();
+  leftWidget  -> show();
+  rightWidget -> show();
 }
 
 // Update triple's EXCLUDED edit params with those obtained manually..
 void US_Edit::update_triple_edit_params_includes (  QMap < QString, QList<int> > &  edit_params_includes )
 {
+  //show parent layouts
+  upperWidget -> show();
+  leftWidget  -> show();
+  rightWidget -> show();
+  
   QString t_name = edit_params_includes.keys()[0];
   editProfile_includes[ t_name ] = edit_params_includes[ t_name ];
 
@@ -13134,6 +13195,14 @@ void US_Edit::pass_values( void )
 
   emit pass_edit_params_includes( editProfile_triple_includes );
   emit pass_edit_params( editProfile_triple );
+  
+  close();
+}
+
+//
+void US_Edit::close_manual_edit( void ) 
+{
+  emit restore_main_view();
   close();
 }
 
