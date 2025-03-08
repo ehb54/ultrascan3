@@ -5547,12 +5547,14 @@ void US_ReporterGMP::process_combined_plots_individual ( QString triplesname_p, 
 		  //put ranges into c_parms:
 		  c_parms[ "Ranges" ] = ranges.join(",");
 
-		  qDebug() << "s-type: sim_ranges.keys(), sim_ranges[\"s_ranges\"] -- "
-			   << sim_ranges.keys()
-			   << sim_ranges["s_ranges"];
 		  if ( sim_ranges. contains("s_ranges") )
-		    c_parms[ "s_ranges" ] = sim_ranges["s_ranges"].join(",");
-		  	    
+		    {
+		      c_parms[ "s_ranges" ] = sim_ranges["s_ranges"].join(",");
+		      
+		      qDebug() << "s-type: sim_ranges.keys(), sim_ranges[\"s_ranges\"] -- "
+			       << sim_ranges.keys()
+			       << sim_ranges["s_ranges"];
+		    }
 		  
 		  //qDebug() << "over models: c_params -- " << c_params;
 		  
@@ -5651,7 +5653,7 @@ QMap< QString, QStringList > US_ReporterGMP::find_sim_ranges( QString chann_desc
       for (int i=0; i<cAP2.parms.size(); ++i )
 	{
 	  QString channame = cAP2.parms[i].channel;
-	  qDebug() << "channame -- " << channame;
+	  qDebug() << "[2DSA]channame -- " << channame;
 	  
 	  if ( channame. contains( chann_desc ) )
 	    {
@@ -5669,7 +5671,9 @@ QMap< QString, QStringList > US_ReporterGMP::find_sim_ranges( QString chann_desc
       for (int i=0; i<cAPp.parms.size(); ++i )
 	{
 	  QString channame = cAPp.parms[i].channel;
-	  if ( channame == chann_desc )
+	  qDebug() << "[PCSA]channame -- " << channame;
+	  
+	  if ( channame. contains( chann_desc ) )
 	    {
 	      sim_ranges[ "s_ranges" ] << QString::number( cAPp.parms[i].x_min )
 				       << QString::number( cAPp.parms[i].x_max );
