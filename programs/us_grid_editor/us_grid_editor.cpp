@@ -670,8 +670,8 @@ void US_Grid_Editor::plot_tmp()
 
    double dx = px2 - px1;
    double dy = py2 - py1;
-   dx = dx == 0 ? 0.1 : dx * 0.1;
-   dy = dy == 0 ? 0.1 : dy * 0.1;
+   dx = dx == 0 ? 0.05 : dx * 0.05;
+   dy = dy == 0 ? 0.05 : dy * 0.05;
    px1 -= dx;
    px2 += dx;
    py1 -= dy;
@@ -736,25 +736,24 @@ void US_Grid_Editor::plot_points()
       point_curves << curve;
    }
 
-   double dx = px2 - px1;
-   double dy = py2 - py1;
-   dx == 0 ? dx = 0.01 : dx *= 0.1;
-   dy == 0 ? dy = 0.01 : dy *= 0.1;
+   double fac = 0.05;
+   double dx = ( px2 - px1 ) * fac;
+   double dy = ( py2 - py1 ) * fac;
    px1 -= dx;
    px2 += dx;
    py1 -= dy;
    py2 += dy;
-
-   if ( grid_points.size() == 1 && pxid == z_param ) {
+   if ( pxid == z_param ) {
       double mid = 0.5 * ( px1 + px2 );
-      double dd = qAbs(mid) * 0.1;
-      px1 = mid - dd;
-      px2 = mid + dd;
-   } else if ( grid_points.size() == 1 && pyid == z_param ) {
+      double dd = mid * fac;
+      px1 = qMin( px1, mid - dd );
+      px2 = qMax( px2, mid + dd );
+   }
+   if ( pyid == z_param ) {
       double mid = 0.5 * ( py1 + py2 );
-      double dd = qAbs(mid) * 0.1;
-      py1 = mid - dd;
-      py2 = mid + dd;
+      double dd = mid * fac;
+      py1 = qMin( py1, mid - dd );
+      py2 = qMax( py2, mid + dd );
    }
 
    data_plot->setAxisScale( QwtPlot::xBottom, px1, px2 );
