@@ -747,12 +747,12 @@ void US_Grid_Editor::plot_points()
 
    if ( grid_points.size() == 1 && pxid == z_param ) {
       double mid = 0.5 * ( px1 + px2 );
-      double dd = qAbs(mid) * 0.01;
+      double dd = qAbs(mid) * 0.1;
       px1 = mid - dd;
       px2 = mid + dd;
    } else if ( grid_points.size() == 1 && pyid == z_param ) {
       double mid = 0.5 * ( py1 + py2 );
-      double dd = qAbs(mid) * 0.01;
+      double dd = qAbs(mid) * 0.1;
       py1 = mid - dd;
       py2 = mid + dd;
    }
@@ -827,10 +827,10 @@ void US_Grid_Editor::plot_subgrid( double subgrid_id )
       xarr << x;
       yarr << y;
    }
-   int ss = ct_size->value() + 1;
+   int ss = ct_size->value() + 2;
    QwtSymbol *symbol = new QwtSymbol( QwtSymbol::Ellipse,
-                                     QBrush( color_subgrid ),
-                                     QPen( color_subgrid, 2 ), QSize( ss, ss ) );
+                                      QBrush( color_subgrid ),
+                                      QPen( color_subgrid, 2 ), QSize( ss, ss ) );
    QString title = tr( "SUBGRID_%1" ).arg( subgrid_id );
    subgrid_curve->setTitle( title );
    subgrid_curve->setSymbol( symbol );
