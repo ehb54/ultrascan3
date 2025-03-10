@@ -1339,7 +1339,7 @@ void US_Grid_Editor::fill_list()
    int row = lw_grids->currentRow();
    lw_grids->clear();
    int n_grids = grid_points.size();
-   QString title = "%1 ) %2 = %3 - %4 ; %5 = %6 - %7 ; %8 = %9";
+   QString title = "%1 ) %2 = %3 to %4 ; %5 = %6 to %7 ; %8 = %9";
 
    for ( int ii = 0; ii < n_grids; ii++ ) {
       GridInfo ginfo = grid_info.at( ii );
@@ -1609,16 +1609,21 @@ void US_Grid_Editor::setup_grid()
 {
    if ( ! grid_points.isEmpty() ) {
       int yes = QMessageBox::question( this, "Warning!",
-                                      tr( "Grid list is not empty and it will "
-                                         "be deleted by changing the grid setting.<br/>"
-                                         "To proceed with grid setting, press <b>\"Yes\"</b> button." ) );
+                                      tr( "Partial grid list is not empty and by changing the grid setting, it "
+                                          "will be deleted.<br/>"
+                                          "Would you like to proceed with the grid setup?" ) );
       if ( yes == QMessageBox::No ) return;
    }
 
    US_Grid_Preset *grid_preset = new US_Grid_Preset( this, x_param, y_param, z_param );
    if ( grid_preset->exec() != QDialog::Accepted ) return;
 
-   grid_preset->parameters( x_param, y_param, z_param );
+   Attribute::Type xp, yp, zp;
+   grid_preset->parameters( xp, yp, zp );
+   if ( xp == x_param && yp == y_param && zp == z_param ) return;
+   x_param = xp;
+   y_param = yp;
+   z_param = zp;
    le_x_param->setText( Attribute::long_desc( x_param ) );
    le_y_param->setText( Attribute::long_desc( y_param ) );
    le_z_param->setText( Attribute::long_desc( z_param ) );
