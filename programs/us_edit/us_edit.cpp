@@ -779,7 +779,7 @@ pb_plateau->setVisible(false);
    // details[ "expType" ]      = QString("ABDE");
    // details[ "dataSource" ]   = QString("dataDiskAUC");
    
-   //load_auto( details );
+   // load_auto( details );
   
 }
 
@@ -1816,6 +1816,9 @@ void US_Edit::reset( void )
    le_plateau  ->setText( "" );
    le_baseline ->setText( "" );
 
+   le_bll_slope     ->setText( "" );
+   le_bll_intercept ->setText( "" );
+
    lb_gaps->setText( tr( "Threshold for Scan Gaps" ) );
    ct_gaps->setValue( 50.0 );
 
@@ -1983,6 +1986,9 @@ void US_Edit::reset_triple( void )
    le_dataEnd  ->setText( "" );
    le_plateau  ->setText( "" );
    le_baseline ->setText( "" );
+
+   le_bll_slope     ->setText( "" );
+   le_bll_intercept ->setText( "" );
 
    if ( dataType == "IP" )
       ct_gaps->setValue( 0.4 );
@@ -7945,8 +7951,7 @@ void US_Edit::new_triple_auto( int index )
     pb_nextChan->setEnabled( false );
   else
     pb_nextChan->setEnabled( true );
-    
-  
+      
   
    double gap_val  = ct_gaps->value();
 DbgLv(1) << "EDT:NewTr: tripindex" << triple_index << "chgs" << changes_made << "gap_val" << gap_val;
@@ -8265,7 +8270,8 @@ DbgLv(1) << "EDT:NewTr: DONE";
      baseline_od   = editProfile[ cb_triple->currentText() ][5].toDouble();
 
      //[ABDE]linear-baseline-correction
-     if ( autoflow_expType == "ABDE" && edited_triples_abde[ cb_triple->currentText() ] )
+     //if ( autoflow_expType == "ABDE" && edited_triples_abde[ cb_triple->currentText() ] )
+     if ( autoflow_expType == "ABDE" )
        {
 	 bl_corr_slope      = editProfile_blc[ cb_triple->currentText() ][0].toDouble();
 	 bl_corr_yintercept = editProfile_blc[ cb_triple->currentText() ][1].toDouble();
