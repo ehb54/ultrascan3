@@ -44,7 +44,7 @@ class US_Edit : public US_Widgets
          QWidget* leftWidget;
          QWidget* rightWidget;	 
 
-      enum { MENISCUS, AIRGAP, RANGE, PLATEAU, BASELINE, FINISHED } step;
+      enum { MENISCUS, AIRGAP, RANGE, PLATEAU, BASELINE, BASELINE_LINEAR_CORR, FINISHED } step;
 
       class Edits
       {
@@ -86,7 +86,13 @@ class US_Edit : public US_Widgets
       double             range_left;
       double             range_right;
       double             baseline;
-
+      double             bl_corr_left_x;
+      double             bl_corr_right_x;
+      double             bl_corr_left_y;
+      double             bl_corr_right_y;
+      double             bl_corr_slope;
+      double             bl_corr_yintercept; 
+  
       int                scanExcl_begin_ind;
       int                scanExcl_end_ind;
 
@@ -100,6 +106,7 @@ class US_Edit : public US_Widgets
 
       QStringList        triple_info;
       QMap< QString, QStringList> editProfile;
+      QMap< QString, QStringList> editProfile_blc;
       QMap< QString, QList<int>> editProfile_includes;
       QMap< QString, QStringList> editProfile_scans_excl;
       QMap< QString, bool> automatic_meniscus;
@@ -196,7 +203,10 @@ class US_Edit : public US_Widgets
       QLabel*            lb_dataEnd;
       QLabel*            lb_meniscus;
       QLabel*            lb_airGap;
-
+      QLabel*            lb_baseline_correct;
+      QLabel*            lb_bll_slope;
+      QLabel*            lb_bll_intercept;
+  
       QLineEdit*         le_status;
       QLineEdit*         le_investigator;
       QLineEdit*         le_info;
@@ -208,7 +218,9 @@ class US_Edit : public US_Widgets
       QLineEdit*         le_plateau;
       QLineEdit*         le_baseline;
       QLineEdit*         le_edtrsp;
-                        
+      QLineEdit*         le_bll_slope;
+      QLineEdit*         le_bll_intercept;
+       
       QPushButton*       pb_details;
       QPushButton*       pb_report;
       QPushButton*       pb_exclude;
@@ -226,6 +238,7 @@ class US_Edit : public US_Widgets
       QPushButton*       pb_spikes;
       QPushButton*       pb_invert;
       QPushButton*       pb_write;
+      QPushButton*       pb_baseline_correct;
 
       QPushButton*       pb_pass;
       QPushButton*       pb_emanual;
@@ -361,6 +374,7 @@ class US_Edit : public US_Widgets
       void plot_current      ( void );
       void plot_all          ( void );
       void plot_range        ( void );
+      void plot_range_and_blc( void );
       void plot_last         ( void );
       void plot_current      ( int  );
       void plot_scan         ( void );
@@ -454,6 +468,7 @@ class US_Edit : public US_Widgets
       void set_airGap        ( void );
       void set_dataRange     ( void );
       void set_plateau       ( void );
+      void set_linear_baseline_corr( void );
       void mouse             ( const QwtDoublePoint& );
 
       void noise             ( void );
@@ -556,6 +571,7 @@ class US_Edit : public US_Widgets
 
       void update_triple_edit_params (  QMap < QString, QStringList > & );
       void update_triple_edit_params_includes (  QMap< QString, QList<int> >  & );
+      void update_triple_edit_params_blc (  QMap < QString, QStringList > & ); 
       void restore_view( void );
       
       void help              ( void )
@@ -569,6 +585,7 @@ class US_Edit : public US_Widgets
 
       void pass_edit_params( QMap< QString, QStringList> & );
       void pass_edit_params_includes( QMap< QString, QList<int> > & );
+      void pass_edit_params_blc( QMap< QString, QStringList> & );
       void restore_main_view( void );
       
       void process_next_optics( void );

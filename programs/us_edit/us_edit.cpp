@@ -331,6 +331,19 @@ pb_plateau->setVisible(false);
    lo_writemwl    = us_checkbox  ( tr( "Save to all Wavelengths" ),
                                    ck_writemwl, true );
 
+   // [ABDE]Base Line controls 
+   lb_baseline_correct = us_banner( tr( "Linear Baseline Correction" ) );
+   lb_bll_slope        = us_label(      tr( "Slope:" ), -1 );
+   le_bll_slope        = us_lineedit( "", 1, true );
+   lb_bll_intercept    = us_label(      tr( "Y-intercept:" ), -1 );
+   le_bll_intercept    = us_lineedit( "", 1, true );
+   lb_baseline_correct -> setVisible( false );
+   lb_bll_slope        -> setVisible( false );
+   lb_bll_intercept    -> setVisible( false );
+   le_bll_slope        -> setVisible( false );
+   le_bll_intercept    -> setVisible( false );
+      
+
    connect( pb_excludeRange, SIGNAL( clicked() ), SLOT( exclude_range() ) );
    connect( pb_details,      SIGNAL( clicked() ), SLOT( details()       ) );
    connect( pb_report,       SIGNAL( clicked() ), SLOT( view_report()   ) );
@@ -465,6 +478,13 @@ pb_plateau->setVisible(false);
    //OD limits
    specs->addWidget( lb_odlim,        s_row,   0, 1, 3 );
    specs->addWidget( ct_odlim,        s_row++, 3, 1, 3 );
+
+   //[ABDE] Linear baseline-correction
+   specs->addWidget( lb_baseline_correct,     s_row++, 0, 1, 6 );
+   specs->addWidget( lb_bll_slope,            s_row,   0, 1, 3 );
+   specs->addWidget( le_bll_slope,            s_row++, 3, 1, 3 );
+   specs->addWidget( lb_bll_intercept,        s_row,   0, 1, 3 );
+   specs->addWidget( le_bll_intercept,        s_row++, 3, 1, 3 );
 
    //Noise/Undo/Save
    specs->addWidget( pb_spikes,       s_row++, 0, 1, 6 );
@@ -759,7 +779,7 @@ pb_plateau->setVisible(false);
    // details[ "expType" ]      = QString("ABDE");
    // details[ "dataSource" ]   = QString("dataDiskAUC");
    
-   // load_auto( details );
+   //load_auto( details );
   
 }
 
@@ -1033,6 +1053,17 @@ pb_plateau->setVisible(false);
    lo_writemwl    = us_checkbox  ( tr( "Save to all Wavelengths" ),
                                    ck_writemwl, true );
 
+
+   // Base Line controls 
+   QLabel* lb_baseline_correct = us_banner( tr( "Linear Baseline Correction" ) );
+   pb_baseline_correct         = us_pushbutton( tr( "Correct Baseline" ), false );
+   QLabel* lb_bll_slope        = us_label(      tr( "Slope:" ), -1 );
+   le_bll_slope                = us_lineedit( "", 0, true );
+   QLabel* lb_bll_intercept    = us_label(      tr( "Y-intercept:" ), -1 );
+   le_bll_intercept            = us_lineedit( "", 0, true );
+   connect( pb_baseline_correct, SIGNAL( clicked() ), SLOT( set_linear_baseline_corr()  ) );
+   
+
    connect( pb_excludeRange, SIGNAL( clicked() ), SLOT( exclude_range() ) );
    connect( pb_details,      SIGNAL( clicked() ), SLOT( details()       ) );
    connect( pb_report,       SIGNAL( clicked() ), SLOT( view_report()   ) );
@@ -1156,6 +1187,15 @@ pb_plateau->setVisible(false);
    specs->addWidget( pb_write,        s_row++, 3, 1, 3 );
    specs->addLayout( lo_writemwl,     s_row++, 3, 1, 3 );
 
+
+   //Linear Baseline Correction
+   specs->addWidget( lb_baseline_correct,  s_row++, 0, 1, 6 );
+   specs->addWidget( pb_baseline_correct,  s_row,   0, 1, 3 );
+   specs->addWidget( lb_bll_slope ,        s_row,   3, 1, 1 );
+   specs->addWidget( le_bll_slope ,        s_row++, 4, 1, 2 );
+   specs->addWidget( lb_bll_intercept ,    s_row,   3, 1, 1 );
+   specs->addWidget( le_bll_intercept ,    s_row++, 4, 1, 2 );
+
    // Button rows
    QBoxLayout*  buttons   = new QHBoxLayout;
    // QPushButton* pb_reset  = us_pushbutton( tr( "Reset" ) );
@@ -1206,6 +1246,13 @@ pb_plateau->setVisible(false);
        pb_exclusion   ->hide();
        pb_edit1       ->hide();
        pb_include     ->hide();
+
+       lb_baseline_correct ->hide();
+       pb_baseline_correct ->hide();
+       lb_bll_slope        ->hide();
+       le_bll_slope        ->hide();
+       lb_bll_intercept    ->hide();
+       le_bll_intercept    ->hide();
      }
 
    // pb_meniscus    ->hide();
@@ -1227,9 +1274,7 @@ pb_plateau->setVisible(false);
    // pb_accept      ->hide();
    
    //---------------------
-   
-
-   
+      
 
    // Plot layout on right side of window
    plot = new US_Plot( data_plot, 
@@ -1744,6 +1789,12 @@ void US_Edit::reset( void )
    airGap_right  = 9.0;
    range_left    = 0.0;
    range_right   = 9.0;
+   bl_corr_left_x  = 0.0;
+   bl_corr_right_x = 9.0;
+   bl_corr_left_y  = 0.0;
+   bl_corr_right_y = 0.0;
+   bl_corr_yintercept = 0.0;
+   bl_corr_slope  = 0.0;
    plateau       = 0.0;
    baseline      = 0.0;
    baseline_od   = 0.0;
@@ -1912,6 +1963,12 @@ void US_Edit::reset_triple( void )
    airGap_right  = 9.0;
    range_left    = 0.0;
    range_right   = 9.0;
+   bl_corr_left_x  = 0.0;
+   bl_corr_right_x = 9.0;
+   bl_corr_left_y  = 0.0;
+   bl_corr_right_y = 0.0;
+   bl_corr_yintercept = 0.0;
+   bl_corr_slope  = 0.0;
    plateau       = 0.0;
    baseline      = 0.0;
    bottom        = 0.0;
@@ -2216,6 +2273,13 @@ void US_Edit::load_auto( QMap < QString, QString > & details_at_editing )
 
       lb_odlim    -> hide();
       ct_odlim    -> hide();
+
+      //linear baseline correction
+      lb_baseline_correct -> setVisible( true );
+      lb_bll_slope        -> setVisible( true );
+      lb_bll_intercept    -> setVisible( true );
+      le_bll_slope        -> setVisible( true );
+      le_bll_intercept    -> setVisible( true );
     }
   
 }
@@ -2226,6 +2290,7 @@ void US_Edit::process_optics_auto( )
   all_loaded = false;
   editProfile.clear();
   editProfile_includes. clear();
+  editProfile_blc. clear();
   editProfile_scans_excl.clear();
   automatic_meniscus.clear();
   manual_edit_comments. clear();
@@ -5738,7 +5803,11 @@ DbgLv(1) << "AGap:  plot_range()";
 
          break;
 
+
+	 
       case RANGE:
+	qDebug() << "range_left, range_right -- "
+		 << range_left <<  range_right; 
          if ( range_left == 0.0 )
          {
             if ( v_line != NULL )
@@ -5848,6 +5917,7 @@ DbgLv(1) << "AGap:  plot_range()";
             pb_dataEnd  ->setEnabled( true );
             pb_noise    ->setEnabled( true );
             pb_spikes   ->setEnabled( true );
+	    pb_baseline_correct ->setEnabled( true );
 
             if ( ! expIsEquil )
             {  // non-Equilibrium
@@ -6023,8 +6093,38 @@ DbgLv(1) << "BL: AA : baseline bl" << baseline << bl;
          next_step();
          break;
 
-      default:
-         break;
+       case BASELINE_LINEAR_CORR:
+	 qDebug() << "bl_corr_left, bl_corr_right {xx,yy} -- "
+		  << bl_corr_left_x << bl_corr_right_x
+		  << bl_corr_left_y << bl_corr_right_y;
+	 if ( bl_corr_left_x == 0.0 )
+	   {
+	     bl_corr_left_x  = radius_indexed( p.x() );
+	     bl_corr_left_y  = p.y();
+	     break;
+	   }
+	 else
+	   {
+	     bl_corr_right_x = radius_indexed( p.x() );
+	     bl_corr_right_y = p.y();
+	   }
+	 
+	 {
+	   bl_corr_slope = (bl_corr_right_y - bl_corr_left_y) / ( bl_corr_right_x - bl_corr_left_x);
+	   double x_intercept = bl_corr_left_x - bl_corr_left_y / bl_corr_slope;
+	   bl_corr_yintercept = bl_corr_left_y - bl_corr_slope*bl_corr_left_x;
+
+	   //replot with baseline corrections
+	   plot_range_and_blc();
+	   
+	   //update gui fields
+	   le_bll_slope     ->setText( QString::number( bl_corr_slope, 'f', 8 ) );
+	   le_bll_intercept ->setText( QString::number( bl_corr_yintercept, 'f', 8 ) );
+	 }
+	 break;
+	 
+   default:
+     break;
    }
 }
 
@@ -6145,6 +6245,10 @@ void US_Edit::set_meniscus( void )
    le_dataEnd  ->setText( "" );
    le_plateau  ->setText( "" );
    le_baseline ->setText( "" );
+
+   le_bll_slope->setText( "" );
+   le_bll_intercept->setText( "" );
+   pb_baseline_correct ->setEnabled( false );
    
    meniscus      = 0.0;
    meniscus_left = 0.0;
@@ -6152,6 +6256,12 @@ void US_Edit::set_meniscus( void )
    airGap_right  = 9.0;
    range_left    = 0.0;
    range_right   = 9.0;
+   bl_corr_left_x  = 0.0;
+   bl_corr_right_x = 9.0;
+   bl_corr_left_y  = 0.0;
+   bl_corr_right_y = 0.0;
+   bl_corr_yintercept = 0.0;
+   bl_corr_slope  = 0.0;
    plateau       = 0.0;
    baseline      = 0.0;
    
@@ -6199,6 +6309,12 @@ void US_Edit::set_airGap( void )
    airGap_right  = 9.0;
    range_left    = 0.0;
    range_right   = 9.0;
+   bl_corr_left_x  = 0.0;
+   bl_corr_right_x = 9.0;
+   bl_corr_left_y  = 0.0;
+   bl_corr_right_y = 0.0;
+   bl_corr_yintercept = 0.0;
+   bl_corr_slope  = 0.0;
    plateau       = 0.0;
    baseline      = 0.0;
    
@@ -6219,6 +6335,26 @@ void US_Edit::set_airGap( void )
    plot_all();
 }
 
+//Set linera baseline correction
+void US_Edit::set_linear_baseline_corr( void )
+{
+  le_bll_slope     ->setText( "" );
+  le_bll_intercept ->setText( "" );
+
+  bl_corr_left_x  = 0.0;
+  bl_corr_right_x = 9.0;
+  bl_corr_left_y  = 0.0;
+  bl_corr_right_y = 0.0;
+  
+  step        = BASELINE_LINEAR_CORR;
+
+  if ( ! expIsEquil )
+    plot_all();
+
+  else
+    plot_scan();
+}
+
 // Set up for a data range pick
 void US_Edit::set_dataRange( void )
 {
@@ -6226,9 +6362,18 @@ void US_Edit::set_dataRange( void )
    le_dataEnd  ->setText( "" );
    le_plateau  ->setText( "" );
    le_baseline ->setText( "" );
+   le_bll_slope->setText( "" );
+   le_bll_intercept->setText( "" );
+   pb_baseline_correct->setEnabled( false );
    
    range_left    = 0.0;
    range_right   = 9.0;
+   bl_corr_left_x  = 0.0;
+   bl_corr_right_x = 9.0;
+   bl_corr_left_y  = 0.0;
+   bl_corr_right_y = 0.0;
+   bl_corr_yintercept = 0.0;
+   bl_corr_slope  = 0.0;
    plateau       = 0.0;
    baseline      = 0.0;
    
@@ -6388,6 +6533,147 @@ DbgLv(2) << " PlAll:      i" << i << "pen_plot" << pen_plot;
    // Reset colors
    focus( (int)ct_from->value(), (int)ct_to->value() );
    data_plot->replot();
+}
+
+// Plot curves with linear baseline corrections
+void US_Edit::plot_range_and_blc( void )
+{
+  if ( plot->btnZoom->isChecked() )
+      plot->btnZoom->setChecked( false );
+
+  QList< QColor > mcolors;
+   int nmcols  = plot->map_colors( mcolors );
+DbgLv(1) << " PlRng:  nmcols" << nmcols;
+   QPen pen_plot( US_GuiSettings::plotCurve() );
+   if ( nmcols == 1 )
+      pen_plot    = QPen( mcolors[ 0 ] );
+   data_plot->detachItems( QwtPlotItem::Rtti_PlotCurve );
+
+   int rsize   = data.pointCount();
+   QVector< double > rvec( rsize );
+   QVector< double > vvec( rsize );
+   double* r   = rvec.data();
+   double* v   = vvec.data();
+   double maxR = -1.0e99;
+   double minR =  1.0e99;
+   double maxV = -1.0e99;
+   double minV =  1.0e99;
+   int indext  = cb_triple->currentIndex();
+
+   if ( isMwl )
+   {
+     //if ( !us_edit_auto_mode )
+     //{
+     int ccx     = indext;
+     int wvx     = cb_lplot->currentIndex();
+     indext      = ccx * nwaveln + wvx;
+DbgLv(1) << "plot_range(): ccx wvx indext" << ccx << wvx << indext;
+	 //}
+   }
+
+   // For each scan
+   for ( int i = 0; i < data.scanData.size(); i++ )
+   {
+      if ( ! includes.contains( i ) ) continue;
+      
+      US_DataIO::Scan*  s = &data.scanData[ i ];
+      
+      int indexLeft  = data.xindex( range_left );
+      int indexRight = data.xindex( range_right );
+      double menp    = 0.0;
+
+      if ( expIsEquil )
+      {
+         double rngl  = range_left;
+         double rngr  = range_right;
+         int tScan    = i + 1;
+         int jsd      = sd_offs[ indext ];
+         int ksd      = jsd + sd_knts[ indext ];
+
+         for ( int jj = jsd; jj < ksd; jj++ )
+         {
+            int sScan  = sData[ jj ].first_scan;
+            int eScan  = sData[ jj ].scan_count + sScan - 1;
+
+            if ( tScan < sScan  ||  tScan > eScan )
+               continue;
+
+            rngl       = sData[ jj ].dataLeft;
+            rngr       = sData[ jj ].dataRight;
+            menp       = sData[ jj ].meniscus;
+            break;
+         }
+
+         indexLeft  = data.xindex( rngl );
+         indexRight = data.xindex( rngr );
+
+         int inxm   = data.xindex( menp );
+
+         if ( inxm < 1 )
+            return;
+
+         r[ 0 ]     = data.xvalues[ inxm          ];
+         v[ 0 ]     = s  ->rvalues[ indexLeft     ];
+         r[ 2 ]     = data.xvalues[ inxm + 2      ];
+         v[ 2 ]     = s  ->rvalues[ indexLeft + 4 ];
+         r[ 1 ]     = r[ 0 ];
+         v[ 1 ]     = v[ 2 ];
+         r[ 3 ]     = r[ 2 ];
+         v[ 3 ]     = v[ 0 ];
+         r[ 4 ]     = r[ 0 ];
+         v[ 4 ]     = v[ 0 ];
+
+         QwtPlotCurve* c = us_curve( data_plot, tr( "Meniscus at" ) + 
+                  QString::number( tScan ) );
+         c->setBrush( QBrush( Qt::cyan ) );
+         c->setPen(   QPen(   Qt::cyan ) );
+         c->setSamples( r, v, 5 );
+         minR       = qMin( minR, r[ 0 ] );
+         minV       = qMin( minV, v[ 0 ] );
+      }
+      
+      int     count  = 0;
+      
+      for ( int j = indexLeft; j <= indexRight; j++ )
+      {
+         r[ count ] = data.xvalues[ j ];
+         //v[ count ] = s  ->rvalues[ j ] * invert;
+	 v[ count ] = s  ->rvalues[ j ] * invert - ( r[ count ]*bl_corr_slope + bl_corr_yintercept); 
+	 
+         maxR       = qMax( maxR, r[ count ] );
+         minR       = qMin( minR, r[ count ] );
+         maxV       = qMax( maxV, v[ count ] );
+         minV       = qMin( minV, v[ count ] );
+
+         count++;
+      }
+
+      QString title = tr( "Raw Data at " )
+         + QString::number( s->seconds ) + tr( " seconds" )
+         + " #" + QString::number( i );
+
+      QwtPlotCurve* c = us_curve( data_plot, title );
+      if ( nmcols > 1 )
+      {
+         pen_plot        = QPen( mcolors[ i % nmcols ] );
+DbgLv(2) << " PlRng:      i" << i << "pen_plot" << pen_plot;
+      }
+      c->setPen    ( pen_plot );
+      c->setSamples( r, v, count );
+   }
+
+   // Reset the scan curves within the new limits
+   double padR = ( maxR - minR ) / 30.0;
+   double padV = ( maxV - minV ) / 30.0;
+
+   data_plot->setAxisScale( QwtPlot::yLeft  , minV - padV, maxV + padV );
+   data_plot->setAxisScale( QwtPlot::xBottom, minR - padR, maxR + padR );
+
+   // Reset colors
+   focus( (int)ct_from->value(), (int)ct_to->value() );
+   data_plot->replot();
+   
+
 }
 
 // Plot curves within the picked range
@@ -7978,6 +8264,16 @@ DbgLv(1) << "EDT:NewTr: DONE";
      baseline      = editProfile[ cb_triple->currentText() ][4].toDouble();
      baseline_od   = editProfile[ cb_triple->currentText() ][5].toDouble();
 
+     //[ABDE]linear-baseline-correction
+     if ( autoflow_expType == "ABDE" && edited_triples_abde[ cb_triple->currentText() ] )
+       {
+	 bl_corr_slope      = editProfile_blc[ cb_triple->currentText() ][0].toDouble();
+	 bl_corr_yintercept = editProfile_blc[ cb_triple->currentText() ][1].toDouble();
+
+	 le_bll_slope       ->setText( QString::number( bl_corr_slope,      'f', 3 ) );
+	 le_bll_intercept   ->setText( QString::number( bl_corr_yintercept, 'f', 3 ) );
+       }
+     
      le_meniscus ->setText( QString::number( meniscus,   'f', 3 ) );
      le_dataStart->setText( QString::number( range_left, 'f', 3 ) );
      le_dataEnd  ->setText( QString::number( range_right, 'f', 3 ) );
@@ -8043,7 +8339,11 @@ DbgLv(1) << "EDT:NewTr: DONE";
 
      qDebug() << "NEW_TRIPLE_AUTO: 5";
      
-     plot_range();
+     //plot_range();
+     if ( autoflow_expType == "ABDE")
+       plot_range_and_blc( );
+     else
+       plot_range();
    }
  
 }
@@ -8581,6 +8881,9 @@ void US_Edit::manual_edit_auto( void )
   connect( sdiag, SIGNAL( pass_edit_params_includes( QMap< QString, QList<int> > & ) ),
 	   this,  SLOT( update_triple_edit_params_includes (  QMap< QString, QList<int> > &) ) );
 
+  connect( sdiag, SIGNAL( pass_edit_params_blc( QMap< QString, QStringList> & ) ),
+	   this,  SLOT( update_triple_edit_params_blc (  QMap < QString, QStringList > &) ) );
+
   connect( sdiag, SIGNAL( restore_main_view( ) ), this, SLOT( restore_view( ) ) );
   
   sdiag->show();
@@ -8599,15 +8902,27 @@ void US_Edit::manual_edit_auto( void )
 //restore all widgets
 void US_Edit::restore_view( void )
 {
+  pick     ->disconnect();
+  
   //show parent layouts
   upperWidget -> show();
   leftWidget  -> show();
   rightWidget -> show();
 }
 
+// Update triple's Linear-baseline-correction edit params with those obtained manually..
+void US_Edit::update_triple_edit_params_blc (  QMap < QString, QStringList > &  edit_params_blc )
+{
+  QString t_name = edit_params_blc.keys()[0];
+  editProfile_blc[ t_name ] = edit_params_blc[ t_name ];
+}
+
+
 // Update triple's EXCLUDED edit params with those obtained manually..
 void US_Edit::update_triple_edit_params_includes (  QMap < QString, QList<int> > &  edit_params_includes )
 {
+  pick     ->disconnect();
+  
   //show parent layouts
   upperWidget -> show();
   leftWidget  -> show();
@@ -13162,7 +13477,9 @@ void US_Edit::pass_values( void )
   
   QMap< QString, QStringList > editProfile_triple;
   QMap< QString, QList<int> >  editProfile_triple_includes;
-  QStringList triple_params;
+  QMap< QString, QStringList > editProfile_triple_blc;
+  
+  QStringList triple_params, triple_params_blc;
   triple_params <<  QString::number(meniscus)
 		<<  QString::number(range_left)
 		<<  QString::number(range_right)
@@ -13171,6 +13488,10 @@ void US_Edit::pass_values( void )
 		<<  QString::number(baseline_od)
 		<<  QString("spike_false");
 
+  //Linear-baseline-correction
+  triple_params_blc << QString::number(bl_corr_slope)
+		    << QString::number(bl_corr_yintercept);
+
   if ( dataType == "IP" )
     {
       triple_params <<  QString::number(airGap_left)
@@ -13178,10 +13499,12 @@ void US_Edit::pass_values( void )
     }
   
   editProfile_triple[ triple_name ]          = triple_params;
-  editProfile_triple_includes[ triple_name ] = includes; 
+  editProfile_triple_includes[ triple_name ] = includes;
+  editProfile_triple_blc[ triple_name ]      = triple_params_blc;
   
   qDebug() << "In PASSING values manually: triple_name, parms -- " << triple_name << editProfile_triple[ triple_name ];
-  qDebug() << "In PASSING values manually: includes -- " << triple_name << editProfile_triple_includes;
+  qDebug() << "In PASSING values manually: includes -- " << triple_name << editProfile_triple_includes[ triple_name ];
+  qDebug() << "In PASSING values manually: linear-baseline-corr -- " << triple_name << editProfile_triple_blc[ triple_name ];
   qDebug() << "In PASSING values manually: us_edit_auto_mode BEFORE -- " << triple_name << us_edit_auto_mode;
   
   int status = QMessageBox::information( this,
@@ -13194,8 +13517,9 @@ void US_Edit::pass_values( void )
   if ( status != 0 ) return;
 
   emit pass_edit_params_includes( editProfile_triple_includes );
+  emit pass_edit_params_blc( editProfile_triple_blc );
   emit pass_edit_params( editProfile_triple );
-  
+    
   close();
 }
 
