@@ -42,8 +42,6 @@
 #define _PLATEAU_OFFSET_ 0.1
 
 
-
-
 // Alt. Constructor
 US_Edit::US_Edit( QString auto_mode ) : US_Widgets()
 {
@@ -3259,6 +3257,9 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
    pb_undo ->setEnabled( false ); 
 
    le_status->setText( tr( "Edit controls set" ) );
+
+   if ( us_edit_auto_mode )
+     pick-> disconnect();
 
 }
 
@@ -7694,10 +7695,16 @@ void US_Edit::remove_spikes_auto( void )
 	   le_baseline->setText( str.sprintf( "%.3f (%.3e)", baseline, baseline_od ) );   
 	 }
 
-       plot_range();
+       if ( autoflow_expType == "ABDE" )
+	 plot_range_and_blc();
+       else
+	 plot_range();
      }
 
    pb_undo -> setEnabled( true );
+
+   if (us_edit_auto_mode )
+     pick->disconnect();
 
    qDebug() << "pb_spikes->icon() IS NULL ? " << pb_spikes->icon().isNull();
 }
@@ -7768,8 +7775,11 @@ void US_Edit::undo_auto( void )
 	   QString str;
 	   le_baseline->setText( str.sprintf( "%.3f (%.3e)", baseline, baseline_od ) );   
 	 }
-       
-       plot_range();
+
+       if ( autoflow_expType == "ABDE" )
+	 plot_range_and_blc();
+       else
+	 plot_range();
      }
    
    /*      
@@ -7815,6 +7825,10 @@ void US_Edit::undo_auto( void )
 
    pb_undo->setEnabled( false );
    pb_spikes->setEnabled( true );
+
+   if (us_edit_auto_mode )
+     pick-> disconnect();
+       
 }
 
 
@@ -8236,7 +8250,13 @@ DbgLv(1) << "EDT:NewTr: DONE";
 //qDebug() << "Triple: " << triple << ", cb_triple_text: " << cb_triple->currentText();
 //qDebug() << editProfile[ triple ] << ", " <<  editProfile[ cb_triple->currentText() ];
 
- 
+ qDebug() << "EDT:NewTr:all_loaded -- " << all_loaded; 
+
+ //disconnect pick for main[AUTO] mode
+ qDebug() << "[BEGIN]us_edit_auto_mode - " << us_edit_auto_mode;
+ if ( us_edit_auto_mode )
+   pick -> disconnect();
+
  
  if ( all_loaded ) 
    {
@@ -8351,6 +8371,11 @@ DbgLv(1) << "EDT:NewTr: DONE";
      else
        plot_range();
    }
+
+ //disconnect pick for main[AUTO] mode
+ qDebug() << "[END]us_edit_auto_mode - " << us_edit_auto_mode;
+ if ( us_edit_auto_mode )
+   pick -> disconnect();
  
 }
 
@@ -9364,10 +9389,7 @@ void US_Edit::write_auto( void )
    if ( autoflow_expType == "ABDE" )
      {
        qDebug() << "EDIT STOPS HERE for ABDE!!!";
-       reset();
-       //this->close();
-       qApp->processEvents();
-
+       
        //Just update status of autoflow record (to 'REPORT')
        update_autoflow_record_atEditData_abde( dbP );
        
@@ -9375,7 +9397,9 @@ void US_Edit::write_auto( void )
 				 tr( "Saving of Edit Profiles is Complete." ),
 				 tr( "[ABDE]Edit profiles were saved successfully. \n\n"
 				     "The program will switch to Reporting stage." ) );
-
+       reset();
+       //this->close();
+       qApp->processEvents();
        //emit to REPORT? <----------------
        emit edit_complete_auto_abde( details_at_editing_local  );   
        return;
@@ -10067,8 +10091,12 @@ void US_Edit::write_triple_auto( int trx )
    baseline      = editProfile[ triple_name ][4].toDouble();
 
    //also, for ABDE, deal with includes / excludes : includes = ...
-   if ( autoflow_expType == "ABDE" ) 
-     includes      = editProfile_includes[ triple_name ];
+   if ( autoflow_expType == "ABDE" )
+     {
+       includes           = editProfile_includes[ triple_name ];
+       bl_corr_slope      = editProfile_blc[ triple_name ][0].toDouble();
+       bl_corr_yintercept = editProfile_blc[ triple_name ][1].toDouble();
+     }
    
    if ( dataType == "IP" )
      {
@@ -11715,9 +11743,13 @@ void US_Edit::write_mwl_auto( int trx )
 
   index_data_auto( trx );
 
+  qDebug() << "[in WRITE-MWL-auto 1]";
+  
   edata          = outData[ data_index ];
   data           = *edata;
   
+  qDebug() << "[in WRITE-MWL-auto 2]";
+
   is_spike_auto = false;
 
   QString saved_info = le_info->text();
@@ -11748,8 +11780,12 @@ void US_Edit::write_mwl_auto( int trx )
    baseline      = editProfile[ triple_name ][4].toDouble();
 
    //also, for ABDE, deal with includes / excludes : includes = ...
-   if ( autoflow_expType == "ABDE" ) 
-     includes      = editProfile_includes[ triple_name ];
+   if ( autoflow_expType == "ABDE" )
+     {
+       includes           = editProfile_includes[ triple_name ];
+       bl_corr_slope      = editProfile_blc[ triple_name ][0].toDouble();
+       bl_corr_yintercept = editProfile_blc[ triple_name ][1].toDouble();
+     }
    
    if ( editProfile[ triple_name ].count() > 6 )
      {
@@ -12359,6 +12395,17 @@ DbgLv(1) << "EDT:WrXml:  waveln" << waveln;
       xml.writeAttribute   ( "value",
          QString::number( odlimit,  'f', 8 ) );
       xml.writeEndElement  ();
+
+      //[ABDE] linear-baseline-correction
+      if ( autoflow_expType == "ABDE" )
+	{
+	  xml.writeStartElement( "linear_baseline_correction" );
+	  xml.writeAttribute   ( "slope",
+				 QString::number( bl_corr_slope,  'f', 8 ) );
+	  xml.writeAttribute   ( "y_intercept",
+				 QString::number( bl_corr_yintercept, 'f', 8 ) );
+	  xml.writeEndElement  ();
+	}
    }
 
    else
