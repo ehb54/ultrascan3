@@ -18,14 +18,17 @@ void US_Plot_Zoom::save() {
       stack.clear();
       currentIndex = 0;
    }
+   // QTextStream( stdout ) << info( "in save after work" );
 }
 
 void US_Plot_Zoom::restore( bool replot ) {
    qDebug() << "US_Plot_Zoom::restore()";
 
    if ( zoomer && stack.size() ) {
+      // QTextStream( stdout ) << info( QString( "in restore, will restore stack to index %1" ).arg( currentIndex ) );
       zoomer->setZoomStack( stack, currentIndex );
       if ( replot ) {
+         // qDebug() << "US_Plot_Zoom::restore() replot";
          plot->replot();
       }
    }
@@ -42,6 +45,7 @@ QString US_Plot_Zoom::info( const QString & msg ) {
       << "========================================"
       << "US_Plot_Zoom::info( " + msg + " )"
       << "----------------------------------------"
+      <<  QString( "Current Index: %1" ).arg( currentIndex ) 
       ;
    
    if ( zoomer ) {
