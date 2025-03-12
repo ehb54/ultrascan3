@@ -1,8 +1,74 @@
 #include "../include/us3_defines.h"
 #include "../include/us_hydrodyn.h"
 #include "../include/us_hydrodyn_saxs_hplc.h"
+#include "../include/us_lm.h"
 
 #define TSO QTextStream(stdout)
+
+static US_Hydrodyn_Saxs_Hplc *uhsh;
+static double bblm_kernel_size;
+static double bblm_kernel_delta_t;
+static vector < double > bblm_org_conc_t;
+static vector < double > bblm_org_conc_I;
+static vector < double > bblm_ref_t;
+static vector < double > bblm_ref_I;
+static vector < double > bblm_ref_errors;
+static vector < double > bblm_init_params;
+
+static double bb_lm_fit( double /* ignored */, const double *par ) {
+   // qDebug() << "bb_lm_fit 0";
+
+   double tau_e  = par[0];
+   double tau_g  = par[1];
+   double deltat = par[2];
+
+   if ( tau_e < 0 ) {
+      return DBL_MAX;
+   }
+   if ( tau_g < 0 ) {
+      return DBL_MAX;
+   }
+   
+   vector < double > bblm_conc_I;
+
+   // qDebug() << "bb_lm_fit 1";
+
+   if ( !uhsh->broaden_compute_one_no_ui(
+                                         tau_e
+                                         ,tau_g
+                                         ,bblm_kernel_size
+                                         ,bblm_kernel_delta_t
+                                         ,bblm_org_conc_I
+                                         ,bblm_conc_I
+                                         ) ) {
+      qDebug() << "band_broaden_fit() fit error";
+      return DBL_MAX;
+   }
+   
+   // qDebug() << "bb_lm_fit 2";
+
+   vector < double > bblm_conc_t = bblm_org_conc_t;
+   for ( auto & t : bblm_conc_t ) {
+      t += deltat;
+   }
+
+   // US_Vector::printvector2( "bb_lm_fit after += deltat: bblm_org_conc_t, bblm_conc_t:", bblm_org_conc_t, bblm_conc_t );
+
+   // US_Vector::printvector3( "bblm org conc t, I, conc I", bblm_org_conc_t, bblm_org_conc_I, bblm_conc_I );
+   // qDebug() << "bb_lm_fit 3";
+   // US_Vector::printvector3( "bblm ref t, I, errors", bblm_ref_t, bblm_ref_I, bblm_ref_errors );
+
+   double loss = uhsh->broaden_compute_loss_no_ui(
+                                                  bblm_conc_t
+                                                  ,bblm_conc_I
+                                                  ,bblm_ref_t
+                                                  ,bblm_ref_I
+                                                  ,bblm_ref_errors
+                                                  );
+   qDebug() << "bb_lm_fit 4";
+   return loss;
+}
+   
 
 static double broaden_scale;
 
@@ -581,8 +647,104 @@ void US_Hydrodyn_Saxs_Hplc::broaden_compute_one() {
    }
 }
 
+void US_Hydrodyn_Saxs_Hplc::broaden_lm_fit() {
+   TSO << "US_Hydrodyn_Saxs_Hplc::broaden_lm_fit() start\n";
+
+   running = true;
+
+   disable_all();
+
+   uhsh = (US_Hydrodyn_Saxs_Hplc *)this;
+
+   bblm_init_params.resize(3);
+   bblm_init_params[ 0 ]  = le_broaden_tau_e         ->text().toDouble();
+   bblm_init_params[ 1 ]  = le_broaden_tau_g         ->text().toDouble();
+   bblm_init_params[ 2 ]  = le_broaden_deltat        ->text().toDouble();
+   
+   bblm_kernel_size       = le_broaden_kernel_end    ->text().toDouble();
+   bblm_kernel_delta_t    = le_broaden_kernel_deltat ->text().toDouble();
+
+   double fit_range_start = le_broaden_fit_range_start->text().toDouble();
+   double fit_range_end   = le_broaden_fit_range_end  ->text().toDouble();
+
+   bblm_ref_t             .clear();
+   bblm_ref_I             .clear();
+   bblm_ref_errors        .clear();
+
+   // crop only ref, conc is full and will be interpolated to ref
+   vector < double > & org_ref_t = f_qs[ broaden_names[ 1 ] ];
+   vector < double > & org_ref_I = f_Is[ broaden_names[ 1 ] ];
+
+   bblm_org_conc_t = f_qs[ broaden_names[ 0 ] ];
+   bblm_org_conc_I = f_Is[ broaden_names[ 0 ] ];
+
+   size_t org_ref_t_size = org_ref_t.size();
+
+   if ( broaden_ref_has_errors ) {
+      vector < double > & org_ref_errors = f_errors[ broaden_names[ 1 ] ];
+      for ( size_t i = 0; i < org_ref_t_size; ++i ) {
+         if ( org_ref_t[ i ] >= fit_range_start
+              && org_ref_t[ i ] <= fit_range_end ) {
+            bblm_ref_t.push_back( org_ref_t[ i ] );
+            bblm_ref_I.push_back( org_ref_I[ i ] );
+            bblm_ref_errors.push_back( org_ref_errors[ i ] );
+         }
+      }
+   } else {
+      for ( size_t i = 0; i < org_ref_t_size; ++i ) {
+         if ( org_ref_t[ i ] >= fit_range_start
+              && org_ref_t[ i ] <= fit_range_end ) {
+            bblm_ref_t.push_back( org_ref_t[ i ] );
+            bblm_ref_I.push_back( org_ref_I[ i ] );
+         }
+      }
+   }      
+
+   LM::lm_control_struct control = LM::lm_control_double;
+   control.printflags = 3; // 3; // monitor status (+1) and parameters (+2)
+   control.epsilon    = 1e-5;
+   control.stepbound  = 1;
+   control.maxcall    = 100;
+
+   LM::lm_status_struct status;
+   vector < double > t = { 0 };
+   vector < double > y = { 1 };
+
+   LM::lmcurve_fit_rmsd( ( int )      bblm_init_params.size(),
+                         ( double * ) &( bblm_init_params[ 0 ] ),
+                         ( int )      1,
+                         ( double * ) &( t[ 0 ] ),
+                         ( double * ) &( y[ 0 ] ),
+                         bb_lm_fit,
+                         (const LM::lm_control_struct *)&control,
+                         &status );
+   
+   US_Vector::printvector( "bblm_init_param after lmcurve_fit_rmsd", bblm_init_params );
+
+   double loss = bb_lm_fit( 0, &( bblm_init_params[ 0 ] ) );
+
+   qDebug() 
+      << " result: " << loss
+      ;
+
+   qDebug() 
+      << " broaden_compute_one() call"
+      ;
+   broaden_compute_one();
+   qDebug() 
+      << " broaden_compute_one() ok"
+      ;
+
+   running = false;
+   broaden_enables();
+   progress->reset();
+   
+}
+
 void US_Hydrodyn_Saxs_Hplc::broaden_fit() {
    TSO << "US_Hydrodyn_Saxs_Hplc::broaden_fit() start\n";
+
+   // return broaden_lm_fit();
 
    running = true;
 
@@ -832,7 +994,6 @@ double US_Hydrodyn_Saxs_Hplc::broaden_compute_loss_no_ui(
    for ( auto & I : new_conc_I ) {
       I *= broaden_scale;
    }
-
    TSO << QString( "area_ref %1 area_conc %2 scale %3 area_new_conc %4\n" )
       .arg( area_ref )
       .arg( area_conc )
@@ -840,18 +1001,25 @@ double US_Hydrodyn_Saxs_Hplc::broaden_compute_loss_no_ui(
       .arg( discrete_area_under_curve( ref_t, new_conc_I ) )
       ;
 
+   // US_Vector::printvector3( "new conc I, ref_i, ref_errors", new_conc_I, ref_I, ref_errors );
+   
    if ( broaden_ref_has_errors ) {
+      // TSO << "broaden_compute_loss_no_ui() - has errors, compute chi2\n";
       double chi2;
       if ( usu.calc_mychi2( new_conc_I
                             ,ref_I
                             ,ref_errors
                             ,chi2 ) ) {
+         // TSO << "broaden_compute_loss_no_ui() - has errors, compute chi2 ok\n";
          return chi2 / ref_t_size;
       } else {
+         // TSO << "broaden_compute_loss_no_ui() - has errors, compute chi2 NOT ok\n";
          editor_msg( "red", QString( "Error while fitting: error computing chi^2" ) );
          return DBL_MAX;
       }
    }
+
+   // TSO << "broaden_compute_loss_no_ui() - no errors, compute RMSD\n";
 
    return usu.calc_rmsd( new_conc_I, ref_I );
 }

@@ -358,7 +358,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 
       QPushButton   *pb_load_conc;
       QPushButton   *pb_conc_file;
-      QLabel        *lbl_conc_file;
+      QLineEdit     *lbl_conc_file;
 
       QPushButton   *pb_detector;
 
@@ -871,6 +871,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void                               broaden_plot( bool replot = true );
       void                               broaden_clear_plot();
       void                               broaden_compute_one();
+      double                             broaden_compute_loss();
+ public:
       bool                               broaden_compute_one_no_ui(
                                                                    double tau_e
                                                                    ,double tau_g
@@ -879,7 +881,6 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
                                                                    ,const vector < double > & I
                                                                    ,vector < double > & broadened
                                                                    );
-      double                             broaden_compute_loss();
       double                             broaden_compute_loss_no_ui(
                                                                     const vector < double > & conc_t
                                                                     ,const vector < double > & conc_I
@@ -887,11 +888,13 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
                                                                     ,const vector < double > & ref_I
                                                                     ,const vector < double > & ref_errors
                                                                     );
+ private:
                                                        
  private slots:
 
       void                               broaden();
       void                               broaden_fit();
+      void                               broaden_lm_fit();
       void                               broaden_minimize();
       void                               broaden_reset();
 

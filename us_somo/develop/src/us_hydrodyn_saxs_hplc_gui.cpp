@@ -417,12 +417,16 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    pb_conc_file->setPalette( PALET_PUSHB );
    connect(pb_conc_file, SIGNAL(clicked()), SLOT(set_conc_file()));
 
-   lbl_conc_file = new QLabel("", this );
+   lbl_conc_file = new QLineEdit( "", this );
    lbl_conc_file->setMinimumHeight(minHeight1);
    lbl_conc_file->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_conc_file->setPalette( PALET_NORMAL );
    AUTFBACK( lbl_conc_file );
    lbl_conc_file->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   // Set a maximum width for the QLabel
+   // lbl_conc_file->setMaximumWidth(200);
+   lbl_conc_file->setReadOnly( true );
+   lbl_conc_file->setPlaceholderText( us_tr( "No concentration file set" ) );
 
    pb_detector = new QPushButton(us_tr("Detector"), this);
    pb_detector->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
@@ -3587,18 +3591,36 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
       pbmode_crop_widgets.push_back( pb_crop_right );
    }
 
-   QBoxLayout * l_pbmode_conc = new QHBoxLayout();
+   QBoxLayout * l_pbmode_conc = new QVBoxLayout();
    {
       l_pbmode_conc->setContentsMargins( 0, 0, 0, 0 );
       l_pbmode_conc->setSpacing( 0 );
 
-      l_pbmode_conc->addWidget( pb_repeak );
-      l_pbmode_conc->addWidget( pb_conc_file );
-      l_pbmode_conc->addWidget( lbl_conc_file );
-      l_pbmode_conc->addWidget( pb_timeshift );
-      l_pbmode_conc->addWidget( pb_timescale );
-      l_pbmode_conc->addWidget( pb_broaden );
-      
+      {
+         QBoxLayout * l_pbmode_conc_1 = new QHBoxLayout();
+
+         l_pbmode_conc_1->setContentsMargins( 0, 0, 0, 0 );
+         l_pbmode_conc_1->setSpacing( 0 );
+
+         l_pbmode_conc_1->addWidget( pb_repeak );
+         l_pbmode_conc_1->addWidget( pb_conc_file );
+         l_pbmode_conc_1->addWidget( pb_timeshift );
+         l_pbmode_conc_1->addWidget( pb_timescale );
+         l_pbmode_conc_1->addWidget( pb_broaden );
+
+         l_pbmode_conc->addLayout( l_pbmode_conc_1 );
+      }
+      {
+         QBoxLayout * l_pbmode_conc_2 = new QHBoxLayout();
+
+         l_pbmode_conc_2->setContentsMargins( 0, 0, 0, 0 );
+         l_pbmode_conc_2->setSpacing( 0 );
+
+         l_pbmode_conc_2->addWidget( lbl_conc_file );
+
+         l_pbmode_conc->addLayout( l_pbmode_conc_2 );
+      }
+
       pbmode_conc_widgets.push_back( pb_repeak );
       pbmode_conc_widgets.push_back( pb_conc_file );
       pbmode_conc_widgets.push_back( lbl_conc_file );
