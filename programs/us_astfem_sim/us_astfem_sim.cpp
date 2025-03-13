@@ -873,14 +873,14 @@ DbgLv(1) << "SimPar:MAIN:SetP: accel-end:  time omega2t" << c_time << w2tsum;
          c_time        += 1.0;
          w2tsum        += w2tinc;
       }
-DbgLv(1) << "SimPar:MAIN:SetP: 1st scan:   time omega2t" << c_time << w2tsum;
+      DbgLv(1) << "SimPar:MAIN:SetP: 1st scan:   time omega2t" << c_time << w2tsum << "w2tinc" << w2tinc;
 
       sp->time_first = time1;
       sp->w2t_first  = w2tsum;
       w2tinc         = timeinc * sq( c_speed * M_PI / 30.0 );
       c_time         = time1 - timeinc;
       w2tsum         = w2tsum - w2tinc;
-
+      DbgLv( 1 ) << "SimPar:MAIN:SetP: c_time w2tsum w2tinc timeinc" << c_time << w2tsum << w2tinc << timeinc << "time1" << time1 ;
       US_DataIO::Scan scandata;
       scandata.temperature = simparams.temperature;
       scandata.rpm         = c_speed;
@@ -897,6 +897,7 @@ DbgLv(1) << "SimPar:MAIN:SetP: 1st scan:   time omega2t" << c_time << w2tsum;
          int itime         = (int)qRound( c_time );
          scandata.seconds  = (double)itime;
          scandata.omega2t  = w2tsum;
+         DbgLv( 2 ) << "SimPar:MAIN:SetP: js time omega2t " << js << scandata.seconds << scandata.omega2t;
          sim_data_all.scanData << scandata;
       }
       sp->time_last  = time2;
