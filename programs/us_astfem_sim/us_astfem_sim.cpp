@@ -779,7 +779,7 @@ DbgLv(1) << "SimPar:MAIN:simp: nspeed" << simparams.speed_step.count()
 void US_Astfem_Sim::set_parameters( void )
 {
    meniscus_ar   = simparams.meniscus; // Meniscus at rest
-
+   simparams.sim = true;
    pb_start  ->setEnabled( true );
 DbgLv(1) << "SimPar:MAIN:SetP:  nspeed" << simparams.speed_step.count()
  << "speed0" << simparams.speed_step[0].rotorspeed << "meniscus_ar" << meniscus_ar;
