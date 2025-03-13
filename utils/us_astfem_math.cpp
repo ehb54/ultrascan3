@@ -227,7 +227,7 @@ bool US_AstfemMath::low_acceleration(
       const double min_accel, double& rate )
 {
    int dbg_level     = US_Settings::us_debug();
-   const double tfac = ( 4.0 / 3.0 );
+   const double tfac = ( 3.0 / 2.0 );
    double t2         = speedsteps[ 0 ].time_first;
    double w2t        = speedsteps[ 0 ].w2t_first;
    double om1t       = speedsteps[ 0 ].rotorspeed * M_PI / 30.0;
@@ -240,23 +240,26 @@ bool US_AstfemMath::low_acceleration(
    //   "t2"   , the time in seconds for the first scan;
    //   "w2t"  , the omega^2_t integral for the first scan time;
    //   "w2"   , the omega^2 value for the constant zone speed;
-   //   "tfac" , a factor (==(4/3)==1.333333) derived from the following.
+   //   "tfac" , a factor (==(3/2)==1.5) derived from the following.
+   //   "acc"  , the acceleration rate in radians/s^2
+   //   "rpm"  , the target/set speed in rpm
    // The acceleration zone begins at t0=0.0.
    // It ends at time "t1".
    // The time between t1 and t2 is at constant speed.
    // The time between 0 and t1 is at changing speeds averaging (rpm/2).
    // For I1 and I2, the omega^2t integrals at t1 and t2,
-   //        ( I2 - I1 ) = ( t2 - t1 ) * w2       (equ.1)
-   //        I1 = ( (rpm/2) * PI / 30 )^2 * t1    (equ.2)
-   //        I1 = ( ( rpm * PI / 30 )^2 / 4 ) * t1
-   //        w2 = ( rpm * PI / 30 )^2
-   //        I1 = ( w2 / 4 ) * t1
-   //        I2 = w2t
+   //                    ( I2 - I1 ) = ( t2 - t1 ) * w2       (equ.1)
+   //                             I1 = acc^2 * t1^3 / 3       (equ.2)
+   //                            rpm = acc * t1 * 30 / PI
+   //                             I1 = ( rpm * PI / 30 )^2 * t1 / 3
+   //                             w2 = ( rpm * PI / 30 )^2
+   //                             I1 = ( w2 / 3 ) * t1
+   //                             I2 = w2t
    // Substituting into equ.1, we get:
-   //        ( w2t - ( ( w2 / 4 ) * t1 ) ) = ( t2 - t1 ) * w2
-   //        t1 * ( w2 - ( w2 / 4 ) )      = t2 * w2 - w2t
-   //        t1 * ( 3 / 4 ) * w2           = t2 * w2 - w2t
-   //        t1  = ( 4 / 3 ) * ( t2 - ( w2t / w2 ) )
+   //  ( w2t - ( ( w2 / 3 ) * t1 ) ) = ( t2 - t1 ) * w2
+   //  t1 * ( w2 - ( w2 / 3 ) )      = t2 * w2 - w2t
+   //  t1 * ( 2 / 3 ) * w2           = t2 * w2 - w2t
+   //                            t1  = ( 3 / 2 ) * ( t2 - ( w2t / w2 ) )
    // =====================================================================
 
    double t1      = tfac * ( t2 - t1w );
