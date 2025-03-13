@@ -1076,7 +1076,7 @@ int US_Convert::adjustSpeedstep( QVector< US_DataIO::RawData >& allData,
 
    // Re-check that there is a problem with low acceleration.
    //  [ See comments for US_AstfemMath::low_acceleration() ]
-   const double tfac = ( 4.0 / 3.0 );
+   const double tfac = ( 3.0 / 2.0 );
    double t2         = speedsteps[ 0 ].time_first;
    double w2t        = speedsteps[ 0 ].w2t_first;
    double om1t       = speedsteps[ 0 ].rotorspeed * M_PI / 30.0;
@@ -1106,8 +1106,8 @@ qDebug() << "CVT:Adj: t_acc rate" << t_acc << rate;
    //  omega^2t offset is based on the value at the new zone start.
    double azdur      = (double)qRound( speedsteps[ 0 ].rotorspeed / 400.0 );
    double t_offs     = t1 - azdur;
-   double azwrate    = sq( speedsteps[ 0 ].rotorspeed * 0.5 * M_PI / 30.0 );
-   double w_offs     = w2t - ( w2 * ( t2 - t1 ) ) - ( azwrate * azdur );
+   double azwrate    = sq( speedsteps[ 0 ].rotorspeed * M_PI / 30.0 * azdur );
+   double w_offs     = w2t - ( w2 * ( t2 - t1 ) ) - ( w2 * azdur );
 qDebug() << "CVT:Adj: azdur azwrate" << azdur << azwrate << "t_offs w_offs"
  << t_offs << w_offs;
 
