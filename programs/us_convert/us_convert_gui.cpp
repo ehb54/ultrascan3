@@ -1438,6 +1438,7 @@ void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_liv
   AProfileGUID      = details_at_live_update[ "aprofileguid" ];
   expType           = details_at_live_update[ "expType" ];
   dataSource        = details_at_live_update[ "dataSource" ];
+  opticsFailedType  = details_at_live_update[ "opticsFailedType" ];
   
   // //After AProfileGUID, read details from analysis profile
   // read_aprofile_data_from_aprofile();
@@ -1445,6 +1446,7 @@ void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_liv
   qDebug() << "Exp_label: " << Exp_label;
   qDebug() << "ExpType: "   << expType;
   qDebug() << "dataSource: " << dataSource;
+  qDebug() << "opticsFailedType: " << opticsFailedType;
   
   // qDebug() << "Filename: " << details_at_live_update[ "filename" ];
   // qDebug() << "Filename_INT: " << details_at_live_update[ "filename" ].toInt();
@@ -1475,6 +1477,12 @@ void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_liv
     }
   qDebug() << "runType_combined_IP_RI: " << runType_combined_IP_RI;
 
+  //Here, redefine bach to non-combined if opticsFailedType exists!!!
+  if ( !opticsFailedType.isEmpty() )
+    {
+      runTypes_map. clear();
+      runType_combined_IP_RI = false;
+    }
   // //************************ TEMP - Reverse after test ************************************** //
   // runTypes_map.insert("IP", 1);
   // runTypes_map.insert("RI", 1);
@@ -1874,6 +1882,9 @@ DbgLv(1) << "CGui:IMP: initout success" << success;
 
    if ( ! success ) return;
 
+   // check number scans
+   check_scans();
+
    setTripleInfo();
 
    checkTemperature();          // Check to see if temperature varied too much
@@ -2090,6 +2101,9 @@ DbgLv(1) << "CGui:iM: mwlsetup";
    qApp->processEvents();
    QApplication::restoreOverrideCursor();
 DbgLv(1) << "CGui:iM:  DONE";
+
+   // check number scans
+   check_scans();
 }
 
 // Import simulation data in AUC form
@@ -2198,7 +2212,6 @@ DbgLv(1) << "CGui:iA: CURRENT DIR_1: " << importDir;
    if ( runType_combined_IP_RI )
      runTypes_map[ type_to_process ] = 0;
 
-   
    qApp->processEvents();
    QApplication::restoreOverrideCursor();
 
@@ -2297,6 +2310,9 @@ DbgLv(1) << "rTS: NON_EXIST:" << tmst_fnamei;
    }
      
    pb_showTmst->setEnabled( ! tmst_fnamei.isEmpty() );
+
+   // check number scans
+   check_scans();
 }
 
 
@@ -2339,6 +2355,57 @@ QString US_ConvertGui::correct_description( QString & description, QString cell,
     }
   
   return desc_corrected;
+}
+
+void US_ConvertGui::check_scans()
+{
+   int nsmin = 99999;
+   for (int ii = 0; ii < allData.size(); ii++ ) {
+      nsmin = qMin(allData[ii].scanCount(), nsmin);
+   }
+
+   QStringList ccws_list;
+   bool same = true;
+   for (int ii = 0; ii < allData.size(); ii++ ) {
+      int ns = allData[ii].scanCount();
+      // In most cases, df is zero. However, occasionally it becomes 1,
+      // and the following code removes it from end of the code.
+      int df = ns - nsmin;
+      int cell = allData[ii].cell;
+      char channel = allData[ii].channel;
+      double lambda = allData[ii].scanData.first().wavelength;
+      ccws_list << tr("%1 / %2 / %3 : number of scans = %4").arg(cell).arg(channel).arg(lambda).arg(ns);
+      if ( df > 0 ) {
+         same = false;
+         allData[ii].scanData.remove( ns - df, df );
+      }
+   }
+   if ( ! same ) {
+      US_WidgetsDialog *error_wgt = new US_WidgetsDialog(this);
+      error_wgt->setWindowTitle("Warning !!!");
+      error_wgt->setPalette(US_GuiSettings::frameColor());
+      QPlainTextEdit *msg = new QPlainTextEdit();
+      msg->setStyleSheet("QPlainTextEdit { background-color: white; }");
+      msg->setReadOnly(true);
+      msg->appendPlainText("Please note:\nThe number of scans per triple differs for some triples:\n");
+      foreach (QString line, ccws_list) {
+         msg->appendPlainText(line);
+      }
+      msg->appendPlainText(tr( "\nAmong other reasons, this can occur when the run has been "
+                               "aborted in the middle of data acquisition. The number of scans "
+                               "for all triples has been set to %1, triples with additional "
+                               "scans will be truncated to %1 scans.").arg(nsmin));
+      QPushButton *pb_ok = us_pushbutton("&OK");
+      pb_ok->setIcon(this->style()->standardIcon(QStyle::SP_DialogOkButton));
+      QGridLayout* lyt = new QGridLayout();
+      lyt->addWidget(msg,   0, 0, 5, 5);
+      lyt->addWidget(pb_ok,    5, 2, 1, 1);
+      lyt->setMargin(2);
+      error_wgt->setLayout(lyt);
+      error_wgt->setMinimumSize(500, 500);
+      connect(pb_ok, &QPushButton::clicked, error_wgt, &US_WidgetsDialog::accept);
+      error_wgt->exec();
+   }
 }
   
 // Enable the common dialog controls when there is data
@@ -6916,6 +6983,7 @@ QMap< QString, QString> US_ConvertGui::read_autoflow_record( int autoflowID  )
 
 	   protocol_details[ "expType" ]        = db->value( 26 ).toString();
 	   protocol_details[ "dataSource" ]     = db->value( 27 ).toString();
+	   protocol_details[ "opticsFailedType" ]    = db->value( 28 ).toString();
 	   	   
 	 }
      }
@@ -7476,6 +7544,11 @@ DbgLv(1) << "Writing to database";
        record_import_status( auto_ref_scan, runType );
      }
    
+//Define mesage string if opticsFailedType
+   QString msg_optics_failed = ( !opticsFailedType.isEmpty() ) ?
+     QString("\n\nNOTE: Data type %1 were not saved due to failed instrument optics!").arg(opticsFailedType) : "";
+   QString msg_save_complete = "The save of all data and reports is complete. ";
+   msg_save_complete += msg_optics_failed;
    
 // x  x  x  x  x x  x  x  x  x x  x  x  x  x x  x  x  x  x x  x  x  x  x x  x  x  x  x 
    if ( us_convert_auto_mode )   // if us_comproject OR us_comproject_academic
@@ -7495,9 +7568,10 @@ DbgLv(1) << "Writing to database";
 	     }
 	   else
 	     {
+	       qDebug() << "R&D program used!! ";
 	       QMessageBox::information( this,
-				     tr( "Save is Complete" ),
-				     tr( "The save of all data and reports is complete." ) );
+					 tr( "Save is Complete" ),
+					 msg_save_complete );
 	       
 	       //ALEXY: need to delete autoflow record here
 	       delete_autoflow_record();
@@ -7531,10 +7605,12 @@ DbgLv(1) << "Writing to database";
 
 		   if ( !protDev_bool ) // no GMP && no ProtDev()!!!!!!!!!!!!!
 		     {
+		       qDebug() << "GMP program used for non-GMP runs!! ";
+		       
 		       QMessageBox::information( this,
 						 tr( "Save is Complete" ),
-						 tr( "The save of all data and reports is complete." ) );
-		       
+						 msg_save_complete );
+						 		       
 		       //ALEXY: need to delete autoflow record here
 		       delete_autoflow_record();
 		       resetAll_auto();
@@ -7545,6 +7621,8 @@ DbgLv(1) << "Writing to database";
 		   else    // no GMP BUT  ProtDev(), so proceed!!!!!!!!!!!!!
 		     {
 		       update_autoflow_record_atLimsImport();
+
+		       qDebug() << "GMP program used for ProtDev runs!! ";
 		       
 		       QMessageBox::information( this,
 						 tr( "Save is Complete" ),
@@ -7576,6 +7654,25 @@ DbgLv(1) << "Writing to database";
 		     }
 		   else
 		     {
+		       qDebug() << "GMP program used for GMP runs!! ";
+		       //HERE, IF opticsFailedType(s), we need to STOP, SAVE, DELETE record & quit!
+		       if ( !opticsFailedType.isEmpty() )
+			 {
+			   msg_save_complete +=
+			     "\nBecause of this, the run will be aborted and not processed further within GMP framework...";
+			   
+			   QMessageBox::information( this,
+						     tr( "Save is Complete" ),
+						     msg_save_complete );
+						 		       
+			   //ALEXY: need to delete autoflow record here
+			   delete_autoflow_record();
+			   resetAll_auto();
+			   //emit saving_complete_back_to_exp( ProtocolName_auto );
+			   emit saving_complete_back_to_initAutoflow();
+			   return;
+			 }
+		       ///////////////////////////////////////////////////////////////////////////
 		       
 		       update_autoflow_record_atLimsImport();
 		       
@@ -9504,6 +9601,11 @@ DbgLv(1) << "rsL: PlCurr RTN";
 // Do pseudo-absorbance calculation and apply for MultiWaveLength case
 void US_ConvertGui::PseudoCalcAvgMWL( void )
 {
+   for (int ii = 0; ii < outData.size(); ii++ ) {
+      DbgLv(1) << "PseudoCalcAvgMWL: CCW: " << outData.at(ii)->cell << " / " <<
+                  outData.at(ii)->channel << " / " << outData[ii]->scanData.first().wavelength <<
+                  " : nscans : " << outData[ii]->scanCount();
+   }
    QVector< double >  ri_prof;      // RI profile for a single wavelength
    ExpData.RIProfile.clear();       // Composite RI profile
    ExpData.RIwvlns  .clear();       // RI profile wavelengths

@@ -528,20 +528,50 @@ DbgLv(1) << "AnaC: edata scans, baserss" << edata->scanData.size() << baserss;
 DbgLv(1) << "AnaC: edata" << edata;
    }
 
-   // Make sure that ranges are reasonable
-   if ( ( ct_uplimits->value() - ct_lolimits->value() ) < 0.0  ||
-        ( ct_uplimitk->value() - ct_lolimitk->value() ) < 0.0 )
-   {
-      QString msg = 
-         tr( "The \"s\" or \"f/f0\" ranges are inconsistent.\n"
-             "Please re-check the limits and correct them\n"
-             "before again clicking \"Start Fit\"." );
+   if ( grtype == US_2dsaProcess::UGRID ) {
 
-      if ( ck_varvbar->isChecked() )
-         msg = msg.replace( "f/f0", "vbar" );
+      // Make sure that ranges are reasonable
+      if ( ( ct_uplimits->value() - ct_lolimits->value() ) < 0.0  ||
+          ( ct_uplimitk->value() - ct_lolimitk->value() ) < 0.0 )
+      {
+         QString msg =
+            tr( "The \"s\" or \"f/f0\" ranges are inconsistent.\n"
+               "Please re-check the limits and correct them\n"
+               "before again clicking \"Start Fit\"." );
 
-      QMessageBox::critical( this, tr( "Limits Inconsistent!" ), msg );
-      return;
+         if ( ck_varvbar->isChecked() )
+            msg = msg.replace( "f/f0", "vbar" );
+
+         QMessageBox::critical( this, tr( "Limits Inconsistent!" ), msg );
+         return;
+      }
+
+      // Check buoyancy
+      double vbar = dsets[0]->vbar20;
+      double buoy = 1.0 - vbar * DENS_20W;
+      if (buoy == 0) {
+         QMessageBox::critical( this, tr( "Zero Buoyancy Implied" ),
+                               tr( "The current vbar20 value (%1) implies a zero buoyancy\n"
+                                  "value (%2). Please adjust the vbar20!" ).
+                               arg( vbar ).arg( buoy ).arg( 1 / vbar) );
+         return;
+      } else if ( buoy > 0 && ct_lolimits->value() < 0) {
+         QMessageBox::critical( this, tr( "Positive Buoyancy Implied" ),
+                               tr( "The current vbar20 value (%1) implies a positive buoyancy\n"
+                                  "value (%2), while the selected sedimentation values are negative.\n\n"
+                                  "Please adjust the sedimentation range or "
+                                  "increase the vbar20 to (%3 mL/g) or higher." ).
+                               arg( vbar ).arg( buoy ).arg( 1 / vbar) );
+         return;
+      } else if ( buoy < 0 && ct_lolimits->value() > 0) {
+         QMessageBox::critical( this, tr( "Negative Buoyancy Implied" ),
+                               tr( "The current vbar20 value (%1) implies a negative buoyancy\n"
+                                  "value (%2), while the selected sedimentation values are postive.\n\n"
+                                  "Please adjust the sedimentation range or "
+                                  "reduce the vbar20 to (%3 mL/g) or less." ).
+                               arg( vbar ).arg( buoy ).arg( 1 / vbar) );
+         return;
+      }
    }
 
    // Make sure that any fit-meniscus is reasonable

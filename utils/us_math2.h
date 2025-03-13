@@ -172,14 +172,16 @@ class US_UTIL_EXTERN US_Math2
       //! \param vbar The unadjusted vbar value
       //! \param degC The temperature used for the adjustment
       static double adjust_vbar20( double vbar, double degC )
-      { return vbar + 4.25e-4 * ( degC - 20.0 ); }
+      // { return vbar + 4.25e-4 * ( degC - 20.0 ); }
+      { return vbar; }
 
       //! The inverse of adjust_vbar20.  Returns vbar20.
       
       //! \param vbar The vbar value at the specified temperature
       //! \param degC The temperature of the sample associated with vbar
       static double adjust_vbar( double vbar, double degC )
-      { return vbar + 4.25e-4 * ( 20.0 - degC ); }
+      // { return vbar + 4.25e-4 * ( 20.0 - degC ); }
+      { return vbar; }
 
       //! \brief Correct buffer data for temperature
       //! \param t  Temperature of solution

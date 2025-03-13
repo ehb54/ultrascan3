@@ -23,6 +23,7 @@ US_SelectItem::US_SelectItem( QList< QStringList >& items,
    autoflow_button     = false;
    autoflow_gmp_report = false;
    set_unset_failed_button_autoflow = false;
+   refresh_state_autoflow = false;
    autoflow_dev        = false;
    autoflow_da         = false;
    selxP               = aselxP;
@@ -51,6 +52,7 @@ US_SelectItem::US_SelectItem( QList< QStringList >& items,
    autoflow_da       = false;
    autoflow_gmp_report = false;
    set_unset_failed_button_autoflow = false;
+   refresh_state_autoflow = false;
    autoflow_dev     = false;
    
    
@@ -63,6 +65,7 @@ US_SelectItem::US_SelectItem( QList< QStringList >& items,
 	   autoflow_button = true;
 	   deleted_button_autoflow  = true;
 	   set_unset_failed_button_autoflow = true;
+	   refresh_state_autoflow = true;
 	 }
        if ( add_label == "AUTOFLOW_DEV" )
 	 {
@@ -78,6 +81,7 @@ US_SelectItem::US_SelectItem( QList< QStringList >& items,
 	   autoflow_button = true;
 	   deleted_button_autoflow  = true;
 	   autoflow_da     = true;
+	   refresh_state_autoflow = true;
 	 }
        if( add_label == "AUTOFLOW_GMP_REPORT")
 	 {
@@ -245,18 +249,22 @@ void US_SelectItem::build_layout( const QString titl )
    QPushButton* pb_delete_autoflow = us_pushbutton( tr( "Delete Record" ) );
 
    QPushButton* pb_mark_unmark_failed_autoflow = us_pushbutton( tr( "Mark/Unmark Run as Failed" ) );
+
+   QPushButton* pb_refresh_state_autoflow      = us_pushbutton( tr( "Refresh Optima Run States" ) );
    
    buttons->addWidget( pb_cancel );
    buttons->addWidget( pb_delete );
    buttons->addWidget( pb_delete_autoflow );
    buttons->addWidget( pb_accept );
    buttons->addWidget( pb_mark_unmark_failed_autoflow );
+   buttons->addWidget( pb_refresh_state_autoflow );
 
    connect( pb_cancel, SIGNAL( clicked() ), SLOT( cancelled() ) );
    connect( pb_accept, SIGNAL( clicked() ), SLOT( accepted() ) );
    connect( pb_delete, SIGNAL( clicked() ), SLOT( deleted() ) );
    connect( pb_delete_autoflow, SIGNAL( clicked() ), SLOT( deleted_autoflow() ) );
    connect( pb_mark_unmark_failed_autoflow, SIGNAL( clicked() ), SLOT( set_unset_failed_autoflow() ) );
+   connect( pb_refresh_state_autoflow, SIGNAL( clicked() ), SLOT( do_refresh_state_autoflow() ) );
 
    if ( !deleted_button )
      pb_delete->hide();
@@ -267,6 +275,8 @@ void US_SelectItem::build_layout( const QString titl )
    if ( !set_unset_failed_button_autoflow )
      pb_mark_unmark_failed_autoflow->hide();
 
+   if ( !refresh_state_autoflow )
+     pb_refresh_state_autoflow -> hide();
    
    main->addLayout( buttons );
    resize( 700, 250 );
@@ -748,6 +758,10 @@ bool US_SelectItem::check_protocol_for_autoflow( QString pID, QString pName )
 }
 
 
+void US_SelectItem::do_refresh_state_autoflow()
+{
+  emit accept_refresh_states();        // Signal to pass to us_comproject to update Run List
+}
 
 
 void US_SelectItem::set_unset_failed_autoflow()

@@ -197,11 +197,11 @@ bool US_Model::calc_coefficients( SimulationComponent& component )
    // Unless custom grid is used, we set the vbar to the reciprocal of the positive s-value vbar.
 
    buoyancyb      = 1.0 - ( vbar * DENS_20W );
+
    if ( ( s < 0.0  &&  buoyancyb > 0.0 )  ||
-        ( s > 0.0  &&  buoyancyb < 0.0 ) )
+       ( s > 0.0  &&  buoyancyb < 0.0 ) )
    {
-      buoyancyb      = 1.0 - ( DENS_20W / vbar );
-      vbar           = 1.0 / vbar;
+      return false;
    }
 
    // Start with already calculated s if possible
