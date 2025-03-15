@@ -1805,6 +1805,8 @@ void US_Edit::reset( void )
    xaxis_radius  = true;
    lsel_range    = true;
 
+   qDebug() << "reset 1a";
+
    le_info     ->setText( "" );
    le_meniscus ->setText( "" );
    le_airGap   ->setText( "" );
@@ -1814,8 +1816,12 @@ void US_Edit::reset( void )
    le_plateau  ->setText( "" );
    le_baseline ->setText( "" );
 
-   le_bll_slope     ->setText( "" );
-   le_bll_intercept ->setText( "" );
+   if ( us_edit_auto_mode || us_edit_auto_mode_manual )
+     {
+       le_bll_slope     ->setText( "" );
+       le_bll_intercept ->setText( "" );
+     }
+   qDebug() << "reset 1b";
 
    lb_gaps->setText( tr( "Threshold for Scan Gaps" ) );
    ct_gaps->setValue( 50.0 );
@@ -1985,9 +1991,12 @@ void US_Edit::reset_triple( void )
    le_plateau  ->setText( "" );
    le_baseline ->setText( "" );
 
-   le_bll_slope     ->setText( "" );
-   le_bll_intercept ->setText( "" );
-
+   if ( us_edit_auto_mode || us_edit_auto_mode_manual )
+     {
+       le_bll_slope     ->setText( "" );
+       le_bll_intercept ->setText( "" );
+     }
+   
    if ( dataType == "IP" )
       ct_gaps->setValue( 0.4 );
    else
@@ -5924,7 +5933,9 @@ DbgLv(1) << "AGap:  plot_range()";
             pb_dataEnd  ->setEnabled( true );
             pb_noise    ->setEnabled( true );
             pb_spikes   ->setEnabled( true );
-	    pb_baseline_correct ->setEnabled( true );
+
+	    if ( us_edit_auto_mode || us_edit_auto_mode_manual )
+	      pb_baseline_correct ->setEnabled( true );
 
             if ( ! expIsEquil )
             {  // non-Equilibrium
@@ -6108,6 +6119,9 @@ DbgLv(1) << "BL: AA : baseline bl" << baseline << bl;
 	   {
 	     bl_corr_left_x  = radius_indexed( p.x() );
 	     bl_corr_left_y  = p.y();
+
+	     //
+	     
 	     break;
 	   }
 	 else
@@ -6253,9 +6267,12 @@ void US_Edit::set_meniscus( void )
    le_plateau  ->setText( "" );
    le_baseline ->setText( "" );
 
-   le_bll_slope->setText( "" );
-   le_bll_intercept->setText( "" );
-   pb_baseline_correct ->setEnabled( false );
+   if ( us_edit_auto_mode || us_edit_auto_mode_manual )
+     {
+       le_bll_slope->setText( "" );
+       le_bll_intercept->setText( "" );
+       pb_baseline_correct ->setEnabled( false );
+     }
    
    meniscus      = 0.0;
    meniscus_left = 0.0;
