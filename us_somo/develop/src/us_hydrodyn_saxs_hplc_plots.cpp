@@ -960,7 +960,7 @@ void US_Hydrodyn_Saxs_Hplc::plot_files( bool save_zoom_state )
    // enable zooming
 
    if ( any_selected && !save_zoom_state ) {
-      qDebug() << "Plot files, save_zoom_state not active\n";
+      // qDebug() << "Plot files, save_zoom_state not active\n";
 
       plot_dist->setAxisScale( QwtPlot::xBottom, minx, maxx );
       plot_dist->setAxisScale( QwtPlot::yLeft  , miny * 0.9e0 , maxy * 1.1e0 );

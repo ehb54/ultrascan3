@@ -24,7 +24,7 @@ class US_Band_Broaden {
    
    static QString kernel_type_name( const enum kernel_type & ktype );
 
-   US_Band_Broaden();
+   US_Band_Broaden( bool debug = false );
 
    // broaden with both exponential & gaussian kernels
    vector < double > broaden(
@@ -57,6 +57,8 @@ class US_Band_Broaden {
 #endif
 
  private:
+
+   bool debug;
 
    unordered_map < double, vector < double > > K1;
    unordered_map < double, double > K1_sum_inverse;

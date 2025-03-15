@@ -13,6 +13,8 @@
 #define UNICODE_LAMBDA_QS QString( "%1" ).arg( UNICODE_LAMBDA )
 #define UNICODE_TAU u8"\u03C4"
 #define UNICODE_TAU_QS QString( "%1" ).arg( UNICODE_TAU )
+#define UNICODE_SIGMA u8"\u03C3"
+#define UNICODE_SIGMA_QS QString( "%1" ).arg( UNICODE_SIGMA )
 #define UNICODE_DELTA u8"\u0394"
 #define UNICODE_DELTA_QS QString( "%1" ).arg( UNICODE_DELTA )
 #define UNICODE_EPSILON u8"\u03B5"
@@ -36,6 +38,8 @@
 #define UNICODE_LAMBDA_QS QString( "%1" ).arg( UNICODE_LAMBDA )
 #define UNICODE_TAU "Tau"
 #define UNICODE_TAU_QS QString( "%1" ).arg( UNICODE_TAU )
+#define UNICODE_SIGMA "Sigma"
+#define UNICODE_SIGMA_QS QString( "%1" ).arg( UNICODE_SIGMA )
 #define UNICODE_DELTA "Delta"
 #define UNICODE_DELTA_QS QString( "%1" ).arg( UNICODE_DELTA )
 #define UNICODE_EPSILON "Epsilon"

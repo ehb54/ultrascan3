@@ -32,17 +32,19 @@ vector < double > US_Band_Broaden::convolve(
    const size_t peak_full_out = peak( full_out );
    const size_t nfull_out     = full_out.size();
 
-   TSO << QString(
-                  "f size %1, peak %2\n"
-                  "g size %3\n"
-                  "full conv size %4, peak %5\n"
-                  )
-      .arg( nf )
-      .arg( peak_f )
-      .arg( ng )
-      .arg( nfull_out )
-      .arg( peak_full_out )
-      ;
+   if ( debug ) {
+      TSO << QString(
+                     "f size %1, peak %2\n"
+                     "g size %3\n"
+                     "full conv size %4, peak %5\n"
+                     )
+         .arg( nf )
+         .arg( peak_f )
+         .arg( ng )
+         .arg( nfull_out )
+         .arg( peak_full_out )
+         ;
+   }
 
    vector < double > out( nf );
    // old way
@@ -83,7 +85,9 @@ vector < double > US_Band_Broaden::convolve(
       break;
    }      
    
-   TSO << QString( "offset %1, ng/2 %2\n" ).arg( offset ).arg( ng / 2 );
+   if ( debug ) {
+      TSO << QString( "offset %1, ng/2 %2\n" ).arg( offset ).arg( ng / 2 );
+   }
 
    for ( size_t i = 0; i < nf; ++i ) {
       out[ i ] = full_out[ i + offset ];
@@ -115,11 +119,13 @@ bool US_Band_Broaden::build_kernel(
                                    ,const double & time_delta
                                    ) {
 
-   TSO <<
-      QString( "US_Band_Broaden::build_kernel( %1, %2 )\n" )
-      .arg( tau )
-      .arg( kernel_type_name( type ) )
-      ;
+   if ( debug ) {
+      TSO <<
+         QString( "US_Band_Broaden::build_kernel( %1, %2 )\n" )
+         .arg( tau )
+         .arg( kernel_type_name( type ) )
+         ;
+   }
 
    if ( time_delta <= 0 ) {
       errormsg = QString( "US_Band_Broaden::build_kernel() non positive time_delta (%1)!" ).arg( time_delta );
@@ -183,7 +189,9 @@ bool US_Band_Broaden::build_kernel(
    // US_Vector::printvector2( QString( "%1 kernel t, v" ).arg( kernel_type_name( type ) ), time, K1[ tau ] );
 
    double K1_sum_after_norm = accumulate( K1[ tau ].begin(), K1[ tau ].end(), 0.0 );
-   TSO << QString( "US_Band_Broaden::build_kernel() K1 sum after norm %1\n" ).arg( K1_sum_after_norm );
+   if ( debug ) {
+      TSO << QString( "US_Band_Broaden::build_kernel() K1 sum after norm %1\n" ).arg( K1_sum_after_norm );
+   }
 
    return true;
 }
@@ -211,15 +219,17 @@ vector < double > US_Band_Broaden::broaden(
                                            ,const double           & time_end
                                            ,const double           & time_delta
                                            ) {
-   TSO <<
-      QString( "US_Band_Broaden::broaden( vector size(%1), %2, %3, %4, %5, %6 )\n" )
-      .arg( f.size() )
-      .arg( tau )
-      .arg( kernel_type_name( ktype ) )
-      .arg( time_start )
-      .arg( time_end )
-      .arg( time_delta )
-      ;
+   if ( debug ) {
+      TSO <<
+         QString( "US_Band_Broaden::broaden( vector size(%1), %2, %3, %4, %5, %6 )\n" )
+         .arg( f.size() )
+         .arg( tau )
+         .arg( kernel_type_name( ktype ) )
+         .arg( time_start )
+         .arg( time_end )
+         .arg( time_delta )
+         ;
+   }
 
    if ( tau == 0 ) {
       return f;
@@ -244,15 +254,21 @@ vector < double > US_Band_Broaden::broaden(
    return result;
 }
 
-US_Band_Broaden::US_Band_Broaden() {
+US_Band_Broaden::US_Band_Broaden( bool debug ) {
    // constructor
-   TSO << "US_Band_Broaden::US_Band_Broaden()\n";
+   this->debug = debug;
+
+   if ( debug ) {
+      TSO << "US_Band_Broaden::US_Band_Broaden()\n";
+   }
 
    clear();
 }
 
 void US_Band_Broaden::clear() {
-   TSO << "US_Band_Broaden::clear()\n";
+   if ( debug ) {
+      TSO << "US_Band_Broaden::clear()\n";
+   }
 
    K1            .clear();
    K1_sum_inverse.clear();
@@ -279,12 +295,14 @@ QString US_Band_Broaden::kernel_type_name( const enum kernel_type & ktype ) {
 
 void US_Band_Broaden::test( double tau, double kernel_time_end, double kernel_time_delta, kernel_type ktype ) {
 
-   TSO <<
-      QString( "US_Band_Broaden::test( %1, %2, %3 )\n" )
-      .arg( tau )
-      .arg( kernel_time_end )
-      .arg( kernel_time_delta )
-      ;
+   if ( debug ) {
+      TSO <<
+         QString( "US_Band_Broaden::test( %1, %2, %3 )\n" )
+         .arg( tau )
+         .arg( kernel_time_end )
+         .arg( kernel_time_delta )
+         ;
+   }
 
    build_kernel( tau
                  ,ktype
@@ -319,7 +337,9 @@ void US_Band_Broaden::test( double tau, double kernel_time_end, double kernel_ti
          TSO << errormsg;
          exit( -1 );
       }
-      TSO << "Created:\n" << fname << "\n";
+      if ( debug ) {
+         TSO << "Created:\n" << fname << "\n";
+      }
    }
 
    if ( 1 ) {

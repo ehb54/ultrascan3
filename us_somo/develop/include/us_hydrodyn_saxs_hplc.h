@@ -825,17 +825,20 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 
       QLabel                           * lbl_broaden_msg;
 
-      QLabel                           * lbl_broaden_tau_e;
-      mQLineEdit                       * le_broaden_tau_e_start;
-      mQLineEdit                       * le_broaden_tau_e;
-      mQLineEdit                       * le_broaden_tau_e_end;
-      mQLineEdit                       * le_broaden_tau_e_delta;
+      QLabel                           * lbl_broaden_tau;
+      mQLineEdit                       * le_broaden_tau_start;
+      mQLineEdit                       * le_broaden_tau;
+      mQLineEdit                       * le_broaden_tau_end;
+      mQLineEdit                       * le_broaden_tau_delta;
 
-      QLabel                           * lbl_broaden_tau_g;
-      mQLineEdit                       * le_broaden_tau_g_start;
-      mQLineEdit                       * le_broaden_tau_g;
-      mQLineEdit                       * le_broaden_tau_g_end;
-      mQLineEdit                       * le_broaden_tau_g_delta;
+      QLabel                           * lbl_broaden_sigma;
+      mQLineEdit                       * le_broaden_sigma_start;
+      mQLineEdit                       * le_broaden_sigma;
+      mQLineEdit                       * le_broaden_sigma_end;
+      mQLineEdit                       * le_broaden_sigma_delta;
+
+      QLabel                           * lbl_broaden_baseline;
+      mQLineEdit                       * le_broaden_baseline;
 
       QLabel                           * lbl_broaden_deltat;
       mQLineEdit                       * le_broaden_deltat_start;
@@ -874,8 +877,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       double                             broaden_compute_loss();
  public:
       bool                               broaden_compute_one_no_ui(
-                                                                   double tau_e
-                                                                   ,double tau_g
+                                                                   double tau
+                                                                   ,double sigma
                                                                    ,double kernel_size
                                                                    ,double kernel_delta_t
                                                                    ,const vector < double > & I
@@ -898,29 +901,32 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void                               broaden_minimize();
       void                               broaden_reset();
 
-      void                               broaden_tau_e_start_text( const QString & );
-      void                               broaden_tau_e_start_focus( bool );
+      void                               broaden_tau_start_text( const QString & );
+      void                               broaden_tau_start_focus( bool );
 
-      void                               broaden_tau_e_text( const QString & );
-      void                               broaden_tau_e_focus( bool );
+      void                               broaden_tau_text( const QString & );
+      void                               broaden_tau_focus( bool );
 
-      void                               broaden_tau_e_end_text( const QString & );
-      void                               broaden_tau_e_end_focus( bool );
+      void                               broaden_tau_end_text( const QString & );
+      void                               broaden_tau_end_focus( bool );
 
-      void                               broaden_tau_e_delta_text( const QString & );
-      void                               broaden_tau_e_delta_focus( bool );
+      void                               broaden_tau_delta_text( const QString & );
+      void                               broaden_tau_delta_focus( bool );
 
-      void                               broaden_tau_g_start_text( const QString & );
-      void                               broaden_tau_g_start_focus( bool );
+      void                               broaden_sigma_start_text( const QString & );
+      void                               broaden_sigma_start_focus( bool );
 
-      void                               broaden_tau_g_text( const QString & );
-      void                               broaden_tau_g_focus( bool );
+      void                               broaden_sigma_text( const QString & );
+      void                               broaden_sigma_focus( bool );
 
-      void                               broaden_tau_g_end_text( const QString & );
-      void                               broaden_tau_g_end_focus( bool );
+      void                               broaden_sigma_end_text( const QString & );
+      void                               broaden_sigma_end_focus( bool );
 
-      void                               broaden_tau_g_delta_text( const QString & );
-      void                               broaden_tau_g_delta_focus( bool );
+      void                               broaden_sigma_delta_text( const QString & );
+      void                               broaden_sigma_delta_focus( bool );
+
+      void                               broaden_baseline_text( const QString & );
+      void                               broaden_baseline_focus( bool );
 
       void                               broaden_deltat_start_text( const QString & );
       void                               broaden_deltat_start_focus( bool );
@@ -993,10 +999,13 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 
       bool          order_ascending;
 
+ public:
       void          editor_msg( QString color, QString msg );
       void          editor_msg_qc( QColor qcolor, QString msg );
-
       bool          running;
+
+ private:
+
 
       US_Hydrodyn_Saxs *saxs_window;
       bool             *saxs_widget;
