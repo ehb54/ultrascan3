@@ -442,7 +442,7 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
 
    connect( ct_size, &QwtCounter::valueChanged, this, &US_Grid_Editor::set_symbol_size );
 
-   QPushButton* pb_default_plot = us_pushbutton( "Default Plot" );
+   pb_default_plot = us_pushbutton( "Plot" );
    connect( pb_default_plot, &QPushButton::clicked, this, &US_Grid_Editor::default_plot_ctrl );
 
    QGridLayout* lyt_r = new QGridLayout();
@@ -508,6 +508,9 @@ void US_Grid_Editor::reset()
    lb_x_ax->setText( Attribute::short_desc( x_param ) );
    lb_y_ax->setText( Attribute::short_desc( y_param ) );
    lb_z_ax->setText( Attribute::short_desc( z_param ) );
+   QString s = tr( "plot ( %1 ) over ( %2 )" ).
+               arg( Attribute::symbol( y_param), Attribute::symbol( x_param ) );
+   pb_default_plot->setText( s );
 
    le_x_res->setText( QString::number( 64 ) );
    le_y_res->setText( QString::number( 64 ) );
@@ -1622,6 +1625,9 @@ void US_Grid_Editor::setup_grid()
    lb_x_ax->setText( Attribute::short_desc( x_param ) );
    lb_y_ax->setText( Attribute::short_desc( y_param ) );
    lb_z_ax->setText( Attribute::short_desc( z_param ) );
+   QString s = tr( "plot ( %1 ) over ( %2 )" ).
+               arg( Attribute::symbol( y_param), Attribute::symbol( x_param ) );
+   pb_default_plot->setText( s );
 
    lw_grids->disconnect();
    lw_grids->clear();

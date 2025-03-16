@@ -264,6 +264,7 @@ private:
    QPushButton*     pb_add_update;        //!< add / update push button.
    QPushButton*     pb_lu_buffer;         //!< push button to update the buffer condition.
    QPushButton*     pb_save;              //!< push button to save the model.
+   QPushButton*     pb_default_plot;      //!< plot grid points where x and y axis match x and y types.
 
    QwtCounter*      ct_size;              //!< to set plot symbol size.
    QwtCounter*      ct_subgrid;           //!< to set what subgrid to be plotted.
