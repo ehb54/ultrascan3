@@ -1367,31 +1367,23 @@ void US_Grid_Editor::sort_points()
    for ( int ii = 0; ii < grid_points.size(); ii++ ) {
       sorted_points << grid_points.at( ii );
    }
-   sort_by_col( sorted_points );
-   sort_by_row( sorted_points );
+   sort_col_val( sorted_points );
+   sort_row_idx( sorted_points );
 }
 
-void US_Grid_Editor::sort_by_col( QVector<GridPoint> &vec )
+void US_Grid_Editor::sort_col_val( QVector<GridPoint> &vec )
 {
    std::stable_sort( vec.begin(), vec.end(),
                     []( const GridPoint &g1, const GridPoint &g2 ) {
-                       bool result = g1.y_value() < g2.y_value();
-                       if ( g1.get_id() == g2.get_id() ) {
-                          if ( g1.get_col() != g2.get_col() ) result = false;
-                       }
-                       return result;
+                       return g1.x_value() < g2.x_value();
                     } );
 }
 
-void US_Grid_Editor::sort_by_row( QVector<GridPoint> &vec )
+void US_Grid_Editor::sort_row_idx( QVector<GridPoint> &vec )
 {
    std::stable_sort( vec.begin(), vec.end(),
                     []( const GridPoint &g1, const GridPoint &g2 ) {
-                       bool result = g1.x_value() < g2.x_value();
-                       if ( g1.get_id() == g2.get_id() ) {
-                          if ( g1.get_row() != g2.get_row() ) result = false;
-                       }
-                       return result;
+                       return g1.get_row() < g2.get_row();
                     } );
 }
 
@@ -1720,8 +1712,8 @@ void US_Grid_Editor::load()
    }
 
    for ( int ii = 0; ii < grid_points.size(); ii++ ) {
-      sort_by_col( grid_points[ii] );
-      sort_by_row( grid_points[ii] );
+      sort_col_val( grid_points[ii] );
+      sort_row_idx( grid_points[ii] );
    }
    int nsubgrids = model.subGrids;
    check_grid_id();

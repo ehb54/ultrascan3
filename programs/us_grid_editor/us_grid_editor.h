@@ -347,10 +347,10 @@ private:
    void sort_points( void );
 
    //! \brief Sort grid points.
-   void sort_by_col( QVector<GridPoint>& );
+   void sort_col_val( QVector<GridPoint>& );
 
    //! \brief Sort grid points.
-   void sort_by_row( QVector<GridPoint>& );
+   void sort_row_idx( QVector<GridPoint>& );
 
    //! \brief Enable input widgets.
    void enable_ctrl( bool );
