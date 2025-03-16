@@ -29,6 +29,11 @@ class US_Edit : public US_Widgets
 	 US_Edit( QVector< US_DataIO::RawData > allData, QStringList  triples,
 		  QString  workingDir, int currChInd, int plotind, QString exptype );
 
+         US_Edit( QVector< US_DataIO::RawData > allData, QStringList  triples,
+		  QString  workingDir, int currChInd, int plotind, QString exptype,
+		  QStringList editParms, QList<int> editParms_includes );
+
+
 	 //void us_mode_passed  ( void );
 	 //bool usmode;
 
@@ -39,7 +44,8 @@ class US_Edit : public US_Widgets
 	  
 
       private:
-	 US_Edit*              sdiag;
+	 US_Edit*       sdiag;
+         US_Edit*       sdiag_bll;
          QWidget* upperWidget;
          QWidget* leftWidget;
          QWidget* rightWidget;	 
@@ -106,7 +112,7 @@ class US_Edit : public US_Widgets
 
       QStringList        triple_info;
       QMap< QString, QStringList> editProfile;
-      QMap< QString, QStringList> editProfile_blc;
+      QMap< QString, QMap <QString, QStringList>> editProfile_blc;
       QMap< QString, QList<int>> editProfile_includes;
       QMap< QString, QStringList> editProfile_scans_excl;
       QMap< QString, bool> automatic_meniscus;
@@ -239,6 +245,7 @@ class US_Edit : public US_Widgets
       QPushButton*       pb_invert;
       QPushButton*       pb_write;
       QPushButton*       pb_baseline_correct;
+      QPushButton*       pb_bll_modify;
 
       QPushButton*       pb_pass;
       QPushButton*       pb_emanual;
@@ -490,6 +497,7 @@ class US_Edit : public US_Widgets
       void setUnsetSaveBttn_abde( void );
   
       void manual_edit_auto  ( void );
+      void correct_bll_for_triple_auto( void );
       void write_auto        ( void );
       void write_triple_auto ( int );
       void write_mwl_auto    ( int );
@@ -568,11 +576,14 @@ class US_Edit : public US_Widgets
       void close_edit        ( void );
       void pass_values       ( void );
       void close_manual_edit ( void );
-
+      void pass_values_bll       ( void );
+      
       void update_triple_edit_params (  QMap < QString, QStringList > & );
       void update_triple_edit_params_includes (  QMap< QString, QList<int> >  & );
-      void update_triple_edit_params_blc (  QMap < QString, QStringList > & ); 
+      void update_triple_edit_params_blc (  QMap < QString, QStringList > & );
+      void update_triple_edit_params_blc_modified (  QMap < QString, QStringList > & );
       void restore_view( void );
+      void set_current_bll_abde( QString, QString );
       
       void help              ( void )
       { showHelp.show_help( "manual/us_edit.html" ); };

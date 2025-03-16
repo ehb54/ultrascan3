@@ -331,17 +331,18 @@ pb_plateau->setVisible(false);
 
    // [ABDE]Base Line controls 
    lb_baseline_correct = us_banner( tr( "Linear Baseline Correction" ) );
+   pb_bll_modify       = us_pushbutton( tr( "Modify Baseline Correction for Selected Triple" ), false );
    lb_bll_slope        = us_label(      tr( "Slope:" ), -1 );
    le_bll_slope        = us_lineedit( "", 1, true );
    lb_bll_intercept    = us_label(      tr( "Y-intercept:" ), -1 );
    le_bll_intercept    = us_lineedit( "", 1, true );
+   pb_bll_modify       -> setVisible( false );
    lb_baseline_correct -> setVisible( false );
    lb_bll_slope        -> setVisible( false );
    lb_bll_intercept    -> setVisible( false );
    le_bll_slope        -> setVisible( false );
    le_bll_intercept    -> setVisible( false );
-      
-
+         
    connect( pb_excludeRange, SIGNAL( clicked() ), SLOT( exclude_range() ) );
    connect( pb_details,      SIGNAL( clicked() ), SLOT( details()       ) );
    connect( pb_report,       SIGNAL( clicked() ), SLOT( view_report()   ) );
@@ -376,6 +377,7 @@ pb_plateau->setVisible(false);
    connect( pb_float,        SIGNAL( clicked() ), SLOT( floating()  ) );
    connect( pb_write,        SIGNAL( clicked() ), SLOT( write_auto()  ) );
    connect( pb_emanual,      SIGNAL( clicked() ), SLOT( manual_edit_auto()  ) );
+   connect( pb_bll_modify,   SIGNAL( clicked() ), SLOT( correct_bll_for_triple_auto() ) );
 
    connect ( this, SIGNAL( process_next_optics () ), SLOT ( process_optics_auto () )  );
    
@@ -479,6 +481,7 @@ pb_plateau->setVisible(false);
 
    //[ABDE] Linear baseline-correction
    specs->addWidget( lb_baseline_correct,     s_row++, 0, 1, 6 );
+   specs->addWidget( pb_bll_modify,           s_row++, 0, 1, 6 );
    specs->addWidget( lb_bll_slope,            s_row,   0, 1, 3 );
    specs->addWidget( le_bll_slope,            s_row++, 3, 1, 3 );
    specs->addWidget( lb_bll_intercept,        s_row,   0, 1, 3 );
@@ -1325,6 +1328,596 @@ pb_plateau->setVisible(false);
    qDebug() << "US_Edit manual setup 7";
    show_mwl_controls( false );
    qDebug() << "US_Edit manual setup 8";
+}
+
+
+// AUTO-[ABDE]: Constructor for modifying linear baseline correction
+US_Edit::US_Edit( QVector< US_DataIO::RawData > allData, QStringList  triples,
+		  QString  workingDir, int currenChtInd, int plotind, QString exptype,
+		  QStringList editParams, QList<int> editParams_includes ) : US_Widgets()
+{
+ 
+   check        = US_Images::getIcon( US_Images::CHECK );
+   invert       = 1.0;
+   all_edits    = false;
+   men_1click   = US_Settings::debug_match( "men2click" ) ? false : true;
+   total_speeds = 0;
+   total_edits  = 0;
+   v_line       = NULL;
+   dbg_level    = US_Settings::us_debug();
+   dbP          = NULL;
+   chlamb       = QChar( 955 );
+   gap_thresh   = 50.0;
+   gap_fringe   = 0.4;
+   bottom       = 0.0;
+DbgLv(1) << " 0)gap_fringe" << gap_fringe;
+
+   us_edit_auto_mode = false;
+   us_edit_auto_mode_manual = true;
+   all_loaded = false;
+   is_spike_auto = false;
+ 
+//usmode = false;
+ 
+   setWindowTitle( tr( "Edit UltraScan Data Manually" ) );
+   setPalette( US_GuiSettings::frameColor() );
+
+   QVBoxLayout* top = new QVBoxLayout( this );
+   top->setSpacing         ( 2 );
+   top->setContentsMargins ( 2, 2, 2, 2 );
+
+   // Put the Run Info across the entire window
+   QHBoxLayout* runInfo = new QHBoxLayout();
+   QLabel* lb_info = us_label( tr( "Run Info:" ), -1 );
+   runInfo->addWidget( lb_info );
+
+   le_info = us_lineedit( "", 1, true );
+   runInfo->addWidget( le_info );
+
+   top->addLayout( runInfo );
+
+   QHBoxLayout* main = new QHBoxLayout();
+   QVBoxLayout* left = new QVBoxLayout;
+
+   // Start of Grid Layout
+   QGridLayout* specs = new QGridLayout;
+
+   // Investigator
+   QPushButton* pb_investigator = us_pushbutton( tr( "Select Investigator" ) );
+
+   if ( US_Settings::us_inv_level() < 3 )
+      pb_investigator->setEnabled( false );
+
+   int     id      = US_Settings::us_inv_ID();
+   QString number  = ( id > 0 ) ? 
+      QString::number( US_Settings::us_inv_ID() ) + ": " 
+      : "";
+   le_investigator = us_lineedit( number + US_Settings::us_inv_name(),
+                                  1, true );
+
+   // Disk/DB control
+   disk_controls   = new US_Disk_DB_Controls;
+
+   // Load
+   QPushButton*
+      pb_load      = us_pushbutton( tr( "Load Data" ) );
+   pb_details      = us_pushbutton( tr( "Run Details" ), false );
+      pb_report    = us_pushbutton( tr( "View Report" ), false );
+
+   // Triple and Speed Step
+   lb_triple       = us_label( tr( "Cell / Channel / Wavelength" ), -1 );
+   cb_triple       = us_comboBox();
+   lb_rpms         = us_label( tr( "Speed Step (RPM) of triple" ), -1 );
+   cb_rpms         = us_comboBox();
+   lb_rpms->setVisible( false );
+   cb_rpms->setVisible( false );
+
+   // Scan Gaps
+   QFont font( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() - 1 );
+   lb_gaps         = us_label( tr( "Threshold for Scan Gaps" ), -1 );
+   ct_gaps         = us_counter( 1, 10.0, 100.0 );
+   ct_gaps->setSingleStep ( 10.0 );
+   ct_gaps->setValue( 50.0 );
+
+   // MWL Control
+   QFontMetrics fmet( font );
+   int fwid = fmet.maxWidth();
+   int rhgt = ct_gaps->height();
+   int lwid = fwid * 4;
+   int swid = lwid + fwid;
+   lb_mwlctl       = us_banner( tr( "Wavelength Controls" ) );
+   QButtonGroup* r_group = new QButtonGroup( this );
+   QButtonGroup* x_group = new QButtonGroup( this );
+   lo_lrange       = us_radiobutton( tr( "Lambda Range" ),       rb_lrange,
+                                     true  );
+   lo_custom       = us_radiobutton( tr( "Custom Lambda List" ), rb_custom,
+                                     false );
+   rb_lrange->setFont( font );
+   rb_custom->setFont( font );
+   r_group->addButton( rb_lrange, 0 );
+   r_group->addButton( rb_custom, 1 );
+   lb_ldelta       = us_label( tr( "%1 Index Increment:" ).arg( chlamb ), -1 );
+   ct_ldelta       = us_counter( 1, 1, 100, 1 );
+   ct_ldelta->setFont( font );
+   ct_ldelta->setSingleStep( 1 );
+   ct_ldelta->setMinimumWidth( lwid );
+   ct_ldelta->resize( rhgt, swid );
+   lb_lstart       = us_label( tr( "%1 Start:" ).arg( chlamb ), -1 );
+   lb_lend         = us_label( tr( "%1 End:"   ).arg( chlamb ), -1 );
+   lb_lplot        = us_label( tr( "Plot (W nm):" ), -1 );
+
+   int     nlmbd   = 224;
+   int     lmbdlo  = 251;
+   int     lmbdhi  = 650;
+   int     lmbddl  = 1;
+   QString lrsmry  = tr( "%1 raw: %2 %3 to %4" )
+      .arg( nlmbd ).arg( chlamb ).arg( lmbdlo ).arg( lmbdhi );
+   le_ltrng  = us_lineedit( lrsmry, -1, true );
+   QString lxsmry = tr( "%1 MWL exports: %2 %3 to %4, raw index increment %5" )
+      .arg( nlmbd ).arg( chlamb ).arg( lmbdlo ).arg( lmbdhi ).arg( lmbddl );
+   le_lxrng       = us_lineedit( lxsmry, -1, true );
+   cb_lplot       = us_comboBox();
+   cb_lstart      = us_comboBox();
+   cb_lend        = us_comboBox();
+
+   cb_lplot ->setFont( font );
+   cb_lstart->setFont( font );
+   cb_lend  ->setFont( font );
+
+   pb_custom      = us_pushbutton(  tr( "Custom Lambdas" ),      false, -1 );
+   pb_incall      = us_pushbutton(  tr( "Include All Lambdas" ), true,  -1 );
+   pb_larrow      = us_pushbutton(  tr( "previous" ), true, -2 );
+   pb_rarrow      = us_pushbutton(  tr( "next"     ), true, -2 );
+   pb_larrow->setIcon( US_Images::getIcon( US_Images::ARROW_LEFT ) );
+   pb_rarrow->setIcon( US_Images::getIcon( US_Images::ARROW_RIGHT ) );
+
+   lo_radius      = us_radiobutton( tr( "x axis Radius" ),     rb_radius,
+                                    true  );
+   lo_waveln      = us_radiobutton( tr( "x axis Wavelength" ), rb_waveln,
+                                    false );
+   rb_radius->setFont( font );
+   rb_waveln->setFont( font );
+   x_group->addButton( rb_radius, 0 );
+   x_group->addButton( rb_waveln, 1 );
+
+   QStringList lambdas;
+lambdas << "250" << "350" << "450" << "550" << "580" << "583" << "650";
+   cb_lplot ->addItems( lambdas );
+   cb_lstart->addItems( lambdas );
+   cb_lend  ->addItems( lambdas );
+
+   cb_lplot ->setCurrentIndex( 2 );
+   cb_lstart->setCurrentIndex( 0 );
+   cb_lend  ->setCurrentIndex( 6 );
+
+   connect_mwl_ctrls( true );
+
+   // Scan Controls
+   QLabel* lb_scan = us_banner( tr( "Scan Controls" ) );
+   
+   // Scans
+   QLabel* lb_from = us_label(  tr( "Scan Focus from:" ), -1 );
+   lb_from->setAlignment( Qt::AlignVCenter | Qt::AlignRight );
+
+   ct_from        = us_counter( 3, 0.0, 0.0 ); // Update range upon load
+   ct_from->setSingleStep( 1 );
+
+   QLabel* lb_to  = us_label( tr( "to:" ), -1 );
+   lb_to->setAlignment( Qt::AlignVCenter | Qt::AlignRight );
+
+   ct_to          = us_counter( 3, 0.0, 0.0 ); // Update range upon load
+   ct_to->setSingleStep( 1 );
+   
+   // Exclude and Include pushbuttons
+   pb_excludeRange = us_pushbutton( tr( "Exclude Scan Range" ), false );
+   pb_exclusion    = us_pushbutton( tr( "Exclusion Profile" ),  false );
+   pb_edit1       = us_pushbutton( tr( "Edit Single Scan" ), false );
+   pb_removeAllbutLast = us_pushbutton( tr( "Remove All but Last" ), true );
+   pb_include     = us_pushbutton( tr( "Include All" ), false );
+
+
+
+   // Edit controls 
+   QLabel* lb_edit = us_banner( tr( "Edit Controls" ) );
+
+   // Edit Triple:Speed display (Equilibrium only)
+   lb_edtrsp      = us_label( tr( "Edit Triple:Speed :" ), -1, true );
+   le_edtrsp      = us_lineedit( "" );
+   lb_edtrsp->setVisible(  false );
+   le_edtrsp->setVisible(  false );
+
+   // Meniscus
+   pb_meniscus    = us_pushbutton( tr( "Specify Meniscus" ), false );
+   le_meniscus    = us_lineedit( "", 1 );
+   lb_meniscus    = us_label(      tr( "Meniscus:" ), -1 );
+
+   // Air Gap (hidden by default)
+   pb_airGap = us_pushbutton( tr( "Specify Air Gap" ), false );
+   lb_airGap = us_label(      tr( "Air Gap:" ), -1 );
+   le_airGap = us_lineedit( "", 1, true );
+   pb_airGap->setVisible( false );
+   lb_airGap->setHidden( true );
+   le_airGap->setHidden( true );
+
+   
+   // // Air Gap (hidden by default)
+   // pb_airGap = us_pushbutton( tr( "Specify Air Gap" ), false );
+   // le_airGap = us_lineedit( "", 1, true );
+   // pb_airGap->setHidden( true );
+   // le_airGap->setHidden( true );
+
+   // Data range
+   pb_dataRange   = us_pushbutton( tr( "Specify Data Range" ), false );
+   le_dataRange   = us_lineedit( "", 1, true );
+pb_dataRange->setVisible(false);
+le_dataRange->setVisible(false);
+   // Plateau
+   pb_plateau     = us_pushbutton( tr( "Specify Plateau" ), false );
+pb_plateau->setVisible(false);
+   le_plateau     = us_lineedit( "", 1, true );
+   // Baseline
+   lb_baseline    = us_label(      tr( "Baseline:" ), -1 );
+   le_baseline    = us_lineedit( "", 1, true );
+
+//*NEW STUFF
+//QLabel* 
+   lb_dataStart   = us_label(      tr( "Data Start:" ), -1 );
+//QLineEdit* 
+   le_dataStart   = us_lineedit( "", 1, true );
+//QPushButton* 
+   //pb_dataEnd     = us_pushbutton( tr( "Specify Range/End:" ), false );
+   pb_dataEnd     = us_pushbutton( tr( "Specify Top/Bottom:" ), false );
+//QLineEdit* 
+   le_dataEnd     = us_lineedit( "", 1, false );
+//QLabel* 
+   lb_plateau     = us_label(      tr( "Plateau:" ), -1 );
+//QPushButton* 
+   pb_nextChan    = us_pushbutton( tr( "Next Triple" ), false );
+//*NEW STUFF
+   // OD Limit
+   lb_odlim       = us_label( tr( "OD Limit:" ), -1 );
+   odlimit        = 1.8;
+   ct_odlim       = us_counter( 3, 0.1, 50000.0, odlimit );
+   ct_odlim ->setFont( font );
+   ct_odlim ->setSingleStep( 0.01 );
+   ct_odlim ->setMinimumWidth( lwid );
+   ct_odlim ->resize( rhgt, swid );
+
+   // Noise, Residuals, Invert, Spikes, Prior, Undo
+   pb_noise       = us_pushbutton( tr( "Determine RI Noise" ),        false );
+   pb_residuals   = us_pushbutton( tr( "Subtract Noise" ),            false );
+   pb_invert      = us_pushbutton( tr( "Invert Sign" ),               false );
+   pb_spikes      = us_pushbutton( tr( "Remove Spikes" ),             false );
+   pb_priorEdits  = us_pushbutton( tr( "Apply Prior Edits" ),         false );
+   pb_undo        = us_pushbutton( tr( "Undo Noise and Spikes" ),     false );
+
+   // Review, Next Triple, Float, Save, Save-all
+   pb_reviewep    = us_pushbutton( tr( "Review Edit Profile" ),       false );
+   pb_nexteqtr    = us_pushbutton( tr( "Next Eq. Triple" ),           false );
+   pb_reviewep->setVisible( false );
+   pb_nexteqtr->setVisible( false );
+   pb_float       = us_pushbutton( tr( "Mark Data as Floating" ),     false );
+   pb_write       = us_pushbutton( tr( "Save Current Edit Profile" ), false );
+   lo_writemwl    = us_checkbox  ( tr( "Save to all Wavelengths" ),
+                                   ck_writemwl, true );
+
+
+   // Base Line controls 
+   QLabel* lb_baseline_correct = us_banner( tr( "Linear Baseline Correction" ) );
+   pb_baseline_correct         = us_pushbutton( tr( "Correct Baseline" ), true );
+   QLabel* lb_bll_slope        = us_label(      tr( "Slope:" ), -1 );
+   le_bll_slope                = us_lineedit( "", 0, true );
+   QLabel* lb_bll_intercept    = us_label(      tr( "Y-intercept:" ), -1 );
+   le_bll_intercept            = us_lineedit( "", 0, true );
+   connect( pb_baseline_correct, SIGNAL( clicked() ), SLOT( set_linear_baseline_corr()  ) );
+   
+
+   connect( pb_excludeRange, SIGNAL( clicked() ), SLOT( exclude_range() ) );
+   connect( pb_details,      SIGNAL( clicked() ), SLOT( details()       ) );
+   connect( pb_report,       SIGNAL( clicked() ), SLOT( view_report()   ) );
+   connect( pb_investigator, SIGNAL( clicked() ),
+                             SLOT  ( sel_investigator()         ) );
+   connect( pb_load,         SIGNAL( clicked() ), SLOT( load()  ) );
+   connect( cb_triple,       SIGNAL( currentIndexChanged( int ) ), 
+                             SLOT  ( new_triple         ( int ) ) );
+   connect( pb_exclusion,    SIGNAL( clicked() ), SLOT( exclusion()     ) );
+   connect( pb_edit1,        SIGNAL( clicked() ), SLOT( edit_scan()     ) );
+   connect( pb_removeAllbutLast,        SIGNAL( clicked() ), SLOT( exclude_all_but_last()     ) );
+   
+   connect( pb_include,      SIGNAL( clicked() ), SLOT( include()       ) );
+   connect( pb_meniscus,     SIGNAL( clicked() ), SLOT( set_meniscus()  ) );
+   connect( pb_airGap,       SIGNAL( clicked() ), SLOT( set_airGap()    ) );
+//   connect( pb_dataRange,    SIGNAL( clicked() ), SLOT( set_dataRange() ) );
+//   connect( pb_plateau,      SIGNAL( clicked() ), SLOT( set_plateau()   ) );
+   connect( pb_dataEnd,      SIGNAL( clicked() ), SLOT( set_dataRange() ) );
+   connect( ct_odlim,        SIGNAL( valueChanged   ( double ) ),
+                             SLOT  ( od_radius_limit( double ) ) );
+   connect( pb_noise,        SIGNAL( clicked() ), SLOT( noise() ) );
+   connect( pb_residuals,    SIGNAL( clicked() ),
+                             SLOT  ( subtract_residuals() ) );
+   connect( pb_invert,       SIGNAL( clicked() ), SLOT( invert_values() ) );
+   connect( pb_spikes,       SIGNAL( clicked() ), SLOT( remove_spikes() ) );
+   connect( pb_priorEdits,   SIGNAL( clicked() ), SLOT( apply_prior()   ) );
+   connect( pb_undo,         SIGNAL( clicked() ), SLOT( undo()      ) );
+   connect( pb_reviewep,     SIGNAL( clicked() ), SLOT( review_edits()  ) );
+   connect( pb_nexteqtr,     SIGNAL( clicked() ), SLOT( next_triple()   ) );
+   connect( pb_nextChan,     SIGNAL( clicked() ), SLOT( next_triple()   ) );
+   connect( pb_float,        SIGNAL( clicked() ), SLOT( floating()  ) );
+   connect( pb_write,        SIGNAL( clicked() ), SLOT( write()     ) );
+
+   // Lay out specs widgets and layouts
+   int s_row = 0;
+   specs->addWidget( pb_investigator, s_row,   0, 1, 2 );
+   specs->addWidget( le_investigator, s_row++, 2, 1, 4 );
+   //specs->addLayout( disk_controls,   s_row++, 0, 1, 6 );
+   specs->addWidget( pb_load,         s_row,   0, 1, 2 );
+   specs->addWidget( pb_details,      s_row,   2, 1, 2 );
+   specs->addWidget( pb_report,       s_row++, 4, 1, 2 );
+   specs->addWidget( lb_triple,       s_row,   0, 1, 3 );
+//   specs->addWidget( cb_triple,       s_row++, 3, 1, 3 );
+//*NEW STUFF
+   specs->addWidget( cb_triple,       s_row,   3, 1, 2 );
+   specs->addWidget( pb_nextChan,     s_row++, 5, 1, 1 );
+//*NEW STUFF
+   specs->addWidget( lb_rpms,         s_row,   0, 1, 3 );
+   specs->addWidget( cb_rpms,         s_row++, 3, 1, 3 );
+   specs->addWidget( lb_gaps,         s_row,   0, 1, 3 );
+   specs->addWidget( ct_gaps,         s_row++, 3, 1, 3 );
+   specs->addWidget( le_lxrng,        s_row++, 0, 1, 6 );
+   specs->addWidget( lb_mwlctl,       s_row++, 0, 1, 6 );
+   specs->addLayout( lo_lrange,       s_row,   0, 1, 3 );
+   specs->addLayout( lo_custom,       s_row++, 3, 1, 3 );
+   specs->addWidget( lb_ldelta,       s_row,   0, 1, 2 );
+   specs->addWidget( ct_ldelta,       s_row,   2, 1, 1 );
+   specs->addWidget( le_ltrng,        s_row++, 3, 1, 3 );
+   specs->addWidget( lb_lstart,       s_row,   0, 1, 2 );
+   specs->addWidget( cb_lstart,       s_row,   2, 1, 1 );
+   specs->addWidget( lb_lend,         s_row,   3, 1, 2 );
+   specs->addWidget( cb_lend,         s_row++, 5, 1, 1 );
+   specs->addWidget( pb_custom,       s_row,   0, 1, 3 );
+   specs->addWidget( pb_incall,       s_row++, 3, 1, 3 );
+   specs->addLayout( lo_radius,       s_row,   0, 1, 3 );
+   specs->addLayout( lo_waveln,       s_row++, 3, 1, 3 );
+   specs->addWidget( lb_lplot,        s_row,   0, 1, 2 );
+   specs->addWidget( cb_lplot,        s_row,   2, 1, 1 );
+   specs->addWidget( pb_larrow,       s_row,   3, 1, 2 );
+   specs->addWidget( pb_rarrow,       s_row++, 5, 1, 1 );
+   specs->addWidget( lb_scan,         s_row++, 0, 1, 6 );
+   specs->addWidget( lb_from,         s_row,   0, 1, 3 );
+   specs->addWidget( ct_from,         s_row++, 3, 1, 3 );
+   specs->addWidget( lb_to,           s_row,   0, 1, 3 );
+   specs->addWidget( ct_to,           s_row++, 3, 1, 3 );
+   specs->addWidget( pb_excludeRange, s_row,   0, 1, 3 );
+   specs->addWidget( pb_exclusion,    s_row++, 3, 1, 3 );
+   specs->addWidget( pb_edit1,        s_row,   0, 1, 3 );
+   specs->addWidget( pb_removeAllbutLast, s_row,   0, 1, 3 );
+   
+   specs->addWidget( pb_include,      s_row++, 3, 1, 3 );
+   specs->addWidget( lb_edit,         s_row++, 0, 1, 6 );
+   specs->addWidget( lb_edtrsp,       s_row,   0, 1, 3 );
+   specs->addWidget( le_edtrsp,       s_row++, 3, 1, 3 );
+//   specs->addWidget( pb_meniscus,     s_row,   0, 1, 3 );
+//   specs->addWidget( le_meniscus,     s_row++, 3, 1, 3 );
+   specs->addWidget( lb_meniscus,     s_row,   0, 1, 1 );
+   specs->addWidget( le_meniscus,     s_row,   1, 1, 2 );
+   specs->addWidget( pb_meniscus,     s_row++, 3, 1, 3 );
+   specs->addWidget( pb_airGap,       s_row,   0, 1, 3 );
+   specs->addWidget( le_airGap,       s_row++, 3, 1, 3 );
+//   specs->addWidget( pb_dataRange,    s_row,   0, 1, 3 );
+//   specs->addWidget( le_dataRange,    s_row++, 3, 1, 3 );
+//   specs->addWidget( pb_plateau,      s_row,   0, 1, 3 );
+//   specs->addWidget( le_plateau,      s_row++, 3, 1, 3 );
+//   specs->addWidget( lb_baseline,     s_row,   0, 1, 3 );
+//   specs->addWidget( le_baseline,     s_row++, 3, 1, 3 );
+//*NEW STUFF
+   specs->addWidget( lb_dataStart,    s_row,   0, 1, 1 );
+   specs->addWidget( le_dataStart,    s_row,   1, 1, 2 );
+   specs->addWidget( pb_dataEnd,      s_row,   3, 1, 2 );
+   specs->addWidget( le_dataEnd,      s_row++, 5, 1, 1 );
+   specs->addWidget( lb_baseline,     s_row,   0, 1, 1 );
+   specs->addWidget( le_baseline,     s_row,   1, 1, 3 );
+   specs->addWidget( lb_plateau,      s_row,   4, 1, 1 );
+   specs->addWidget( le_plateau,      s_row++, 5, 1, 1 );
+//*NEW STUFF
+//   specs->addWidget( lb_odlim,        s_row,   0, 1, 3 );
+//   specs->addWidget( ct_odlim,        s_row++, 3, 1, 3 );
+   specs->addWidget( lb_odlim,        s_row,   0, 1, 3 );
+   specs->addWidget( ct_odlim,        s_row++, 3, 1, 3 );
+   specs->addWidget( pb_noise,        s_row,   0, 1, 3 );
+   specs->addWidget( pb_residuals,    s_row++, 3, 1, 3 );
+   specs->addWidget( pb_invert,       s_row,   0, 1, 3 );
+   specs->addWidget( pb_spikes,       s_row++, 3, 1, 3 );
+   specs->addWidget( pb_priorEdits,   s_row,   0, 1, 3 );
+   specs->addWidget( pb_undo,         s_row++, 3, 1, 3 );
+   specs->addWidget( pb_reviewep,     s_row,   0, 1, 3 );
+   specs->addWidget( pb_nexteqtr,     s_row++, 3, 1, 3 );
+   specs->addWidget( pb_float,        s_row,   0, 1, 3 );
+   specs->addWidget( pb_write,        s_row++, 3, 1, 3 );
+   specs->addLayout( lo_writemwl,     s_row++, 3, 1, 3 );
+
+
+   //Linear Baseline Correction
+   specs->addWidget( lb_baseline_correct,  s_row++, 0, 1, 6 );
+   specs->addWidget( pb_baseline_correct,  s_row,   0, 1, 3 );
+   specs->addWidget( lb_bll_slope ,        s_row,   3, 1, 1 );
+   specs->addWidget( le_bll_slope ,        s_row++, 4, 1, 2 );
+   specs->addWidget( lb_bll_intercept ,    s_row,   3, 1, 1 );
+   specs->addWidget( le_bll_intercept ,    s_row++, 4, 1, 2 );
+
+   // Button rows
+   QBoxLayout*  buttons   = new QHBoxLayout;
+   // QPushButton* pb_reset  = us_pushbutton( tr( "Reset" ) );
+   // QPushButton* pb_help   = us_pushbutton( tr( "Help" ) );
+   // QPushButton* pb_accept = us_pushbutton( tr( "Close" ) );
+
+   // connect( pb_reset,  SIGNAL( clicked() ), SLOT( reset() ) );
+   // connect( pb_help,   SIGNAL( clicked() ), SLOT( help()  ) );
+   // connect( pb_accept, SIGNAL( clicked()    ),
+   //          this,      SLOT  ( close_edit() ) );
+
+   // buttons->addWidget( pb_reset );
+   // buttons->addWidget( pb_help );
+   // buttons->addWidget( pb_accept );
+
+   QPushButton* pb_cancel  = us_pushbutton( tr( "Cancel" ) );
+   pb_pass    = us_pushbutton( tr( "Accept New Baseline Corrections" ), false );
+   
+   connect( pb_cancel, SIGNAL( clicked() ), SLOT( close_manual_edit()  ) );
+   connect( pb_pass,   SIGNAL( clicked()    ),
+	    this,      SLOT  ( pass_values_bll() ) );
+   
+   buttons->addWidget( pb_cancel );
+   buttons->addWidget( pb_pass );
+
+
+   // -- Hide && || disable some buttons ----
+   
+   cb_triple      -> setEnabled( false );
+   pb_investigator->hide();
+   le_investigator->hide();
+   pb_load        ->hide(); 
+   pb_details     ->hide();
+   pb_report      ->hide();
+   lb_gaps        ->hide();
+   ct_gaps        ->hide();
+   pb_nextChan    ->hide();
+   
+   lb_scan        ->hide();
+   lb_from        ->hide();
+   lb_to          ->hide();
+   ct_from        ->hide();
+   ct_to          ->hide();
+   pb_excludeRange->hide();
+   pb_exclusion   ->hide();
+   pb_edit1       ->hide();
+   pb_include     ->hide();
+   pb_removeAllbutLast ->hide();
+
+   lb_edit        ->hide();
+   lb_meniscus    ->hide();
+   le_meniscus    ->hide();
+   pb_meniscus    ->hide();
+   lb_dataStart   ->hide();
+   le_dataStart   ->hide();
+   pb_dataEnd     ->hide();
+   le_dataEnd     ->hide();
+   le_dataRange   ->hide();
+   lb_plateau     ->hide();
+   le_plateau     ->hide();
+   lb_odlim       ->hide();
+   ct_odlim       ->hide();
+   
+   lb_baseline    ->hide();
+   le_baseline    ->hide();
+   le_edtrsp      ->hide();
+   le_ltrng       ->hide();
+  
+//*NEW STUFF
+
+   if ( exptype != "ABDE" )
+     {
+       lb_baseline_correct ->hide();
+       pb_baseline_correct ->hide();
+       lb_bll_slope        ->hide();
+       le_bll_slope        ->hide();
+       lb_bll_intercept    ->hide();
+       le_bll_intercept    ->hide();
+     }
+
+   // pb_meniscus    ->hide();
+   // pb_dataRange   ->hide();
+   // pb_airGap      ->hide();  
+
+   pb_noise       ->hide();
+   pb_residuals   ->hide();
+   pb_invert      ->hide();
+   pb_priorEdits  ->hide();
+   pb_float       ->hide();
+
+   pb_spikes      ->hide();
+   pb_undo        ->hide();
+   pb_write       ->hide();
+   
+   // pb_reset       ->hide();
+   // pb_help        ->hide();
+   // pb_accept      ->hide();
+
+   //---------------------
+      
+
+   // Plot layout on right side of window
+   plot = new US_Plot( data_plot, 
+         tr( "Absorbance Data" ),
+         tr( "Radius (in cm)" ), tr( "Absorbance" ),
+         true, "", "rainbow" );
+   
+   data_plot->setMinimumSize( 600, 400 );
+
+   data_plot->enableAxis( QwtPlot::xBottom, true );
+   data_plot->enableAxis( QwtPlot::yLeft  , true );
+
+   pick = new US_PlotPicker( data_plot );
+   // Set rubber band to display for Control+Left Mouse Button
+   pick->setRubberBand  ( QwtPicker::VLineRubberBand );
+   pick->setMousePattern( QwtEventPattern::MouseSelect1,
+                          Qt::LeftButton, Qt::ControlModifier );
+
+   left->addLayout( specs );
+   left->addStretch();
+   left->addLayout( buttons );
+
+   main->addLayout( left );
+   main->addLayout( plot );
+   main->setStretchFactor( left, 2 );
+   main->setStretchFactor( plot, 3 );
+   top ->addLayout( main );
+
+   qDebug() << "US_Edit manual setup 1";
+   
+   reset();
+
+   qDebug() << "US_Edit manual setup 2";
+
+   //Load already selected data
+   this->allData    = allData;
+   this->triples    = triples;
+   this->workingDir = workingDir;
+
+   qDebug() << "US_Edit manual setup 3";
+   load_manual_auto();
+   qDebug() << "US_Edit manual setup 4";
+
+   //pre-select channel passed from main window:
+   cb_triple->setCurrentIndex( currenChtInd );
+   qDebug() << "US_Edit manual setup 5";
+   new_triple( currenChtInd );
+   qDebug() << "US_Edit manual setup 6";
+   cb_lplot ->setCurrentIndex( plotind );
+   qDebug() << "US_Edit manual setup 7";
+   show_mwl_controls( false );
+   qDebug() << "US_Edit manual setup 8";
+
+   //Preload editParams
+   meniscus      = editParams[0].toDouble();
+   range_left    = editParams[1].toDouble();
+   range_right   = editParams[2].toDouble();
+   plateau       = editParams[3].toDouble();
+   baseline      = editParams[4].toDouble();
+   baseline_od   = editParams[5].toDouble();
+
+   includes      = editParams_includes;
+   bl_corr_slope      = 0.0;
+   bl_corr_yintercept = 0.0;
+  
+   //replot
+   plot_range_and_blc();
+   pb_baseline_correct -> setEnabled( true );
+   qApp->processEvents();
+
+   step = BASELINE_LINEAR_CORR;
+
+   //extra hide
+   le_plateau     ->hide();
 }
 
 
@@ -2289,6 +2882,7 @@ void US_Edit::load_auto( QMap < QString, QString > & details_at_editing )
 
       //linear baseline correction
       lb_baseline_correct -> setVisible( true );
+      pb_bll_modify       -> setVisible( true );
       lb_bll_slope        -> setVisible( true );
       lb_bll_intercept    -> setVisible( true );
       le_bll_slope        -> setVisible( true );
@@ -6137,6 +6731,10 @@ DbgLv(1) << "BL: AA : baseline bl" << baseline << bl;
 
 	   //replot with baseline corrections
 	   plot_range_and_blc();
+
+	   //enable accept 
+	   if ( us_edit_auto_mode_manual )
+	     pb_pass->setEnabled( true );
 	   
 	   //update gui fields
 	   le_bll_slope     ->setText( QString::number( bl_corr_slope, 'f', 8 ) );
@@ -7946,8 +8544,11 @@ void US_Edit::new_triple_auto( int index )
   QString triple_name = cb_triple->itemText( triple_index );
   //qDebug() << "#triples, #wavelns_i -- " << cb_triple->count() << wavelns_i.size();
   //qDebug() << "#wavelns in triple   -- " << triple_name << wavelns_i[ triple_index ].size();
-  
 
+  qDebug() << "Triple_name, cb_triple->currentText() -- "
+	   << triple_name
+	   << cb_triple->currentText();
+  
   // Remove Spike: Icon/Enable
   if ( editProfile[ cb_triple->currentText() ].count() > 6 )
     {
@@ -8274,6 +8875,9 @@ DbgLv(1) << "EDT:NewTr: DONE";
  if ( us_edit_auto_mode )
    pick -> disconnect();
 
+ QString wvl_value = ( isMwl ? swavl : cb_triple->currentText().split("/")[2].trimmed() );
+ qDebug() << "wvl_value -- " << wvl_value;
+
  
  if ( all_loaded ) 
    {
@@ -8282,11 +8886,15 @@ DbgLv(1) << "EDT:NewTr: DONE";
 	 setUnsetSaveBttn_abde();
 	 if( !edited_triples_abde[ cb_triple->currentText() ] )
 	   {
-	     pb_spikes-> setEnabled( false );
+	     pb_spikes     -> setEnabled( false );
+	     pb_bll_modify -> setEnabled( false );
 	     return;
 	   }
 	 else
-	   pb_spikes-> setEnabled( true );
+	   {
+	     pb_spikes-> setEnabled( true );
+	     pb_bll_modify -> setEnabled( true );
+	   }
        }
      
      qDebug() << "NEW_TRIPLE_AUTO: all_loaded: " << all_loaded;
@@ -8310,8 +8918,11 @@ DbgLv(1) << "EDT:NewTr: DONE";
      //if ( autoflow_expType == "ABDE" && edited_triples_abde[ cb_triple->currentText() ] )
      if ( autoflow_expType == "ABDE" )
        {
-	 bl_corr_slope      = editProfile_blc[ cb_triple->currentText() ][0].toDouble();
-	 bl_corr_yintercept = editProfile_blc[ cb_triple->currentText() ][1].toDouble();
+	 // QString wvl_value = ( isMwl ? swavl : cb_triple->currentText().split("/")[2].trimmed() );
+	 // qDebug() << "wvl_value -- " << wvl_value;
+	 
+	 bl_corr_slope      = editProfile_blc[ cb_triple->currentText() ][ wvl_value ][0].toDouble();
+	 bl_corr_yintercept = editProfile_blc[ cb_triple->currentText() ][ wvl_value ][1].toDouble();
 
 	 le_bll_slope       ->setText( QString::number( bl_corr_slope,      'f', 3 ) );
 	 le_bll_intercept   ->setText( QString::number( bl_corr_yintercept, 'f', 3 ) );
@@ -8394,6 +9005,21 @@ DbgLv(1) << "EDT:NewTr: DONE";
  if ( us_edit_auto_mode )
    pick -> disconnect();
  
+}
+
+//[ABDE-MWL] before changing wvl, set current baseline
+void US_Edit::set_current_bll_abde( QString chann, QString swave )
+{
+  if ( !isMwl || !edited_triples_abde[ chann ] )
+    return;
+
+  bl_corr_slope      = editProfile_blc[ chann ][swave][0].toDouble();
+  bl_corr_yintercept = editProfile_blc[ chann ][swave][1].toDouble();
+  
+  le_bll_slope       ->setText( QString::number( bl_corr_slope,      'f', 3 ) );
+  le_bll_intercept   ->setText( QString::number( bl_corr_yintercept, 'f', 3 ) );
+
+  qApp->processEvents();
 }
 
 // Select a new triple
@@ -8901,6 +9527,49 @@ QMap< QString, QString> US_Edit::read_autoflow_record( int autoflowID  )
    return protocol_details;
 }
 
+//modify linear baseline correction for selected triple
+void US_Edit::correct_bll_for_triple_auto( void )
+{
+  //hide parent layouts
+  upperWidget -> hide();
+  leftWidget  -> hide();
+  rightWidget -> hide();
+
+  int currChIndex = cb_triple->currentIndex();
+  //int plotInd = index_data();
+  int plotInd = plotndx;
+  qDebug() << "IN correct_bll_for_triple_auto( void ), plotInd -- " << plotInd;
+
+  QStringList editParams          = editProfile[ cb_triple->currentText() ];
+  QList<int>  editParams_includes = editProfile_includes[ cb_triple->currentText() ];
+  
+  sdiag_bll = new US_Edit( allData, triples, workingDir, currChIndex, plotInd, autoflow_expType,
+		       editParams, editParams_includes );
+  sdiag_bll->setParent(this, Qt::Widget);
+  sdiag_bll->setFrameShape( QFrame::Box);
+  sdiag_bll->setLineWidth(2);
+
+  //add slots
+   connect( sdiag_bll, SIGNAL( pass_edit_params_blc( QMap< QString, QStringList> & ) ),
+	   this,  SLOT( update_triple_edit_params_blc_modified (  QMap < QString, QStringList > &) ) );
+  
+  connect( sdiag_bll, SIGNAL( restore_main_view( ) ), this, SLOT( restore_view( ) ) );
+
+  sdiag_bll->show();
+
+  int offset = 20;
+  sdiag_bll->move(2*offset, 2*offset);
+  int newWidth  = this->width() - 3*offset;
+  int newHeight = this->height() - 4*offset;
+  sdiag_bll->setMaximumSize( newWidth, newHeight );
+  sdiag_bll->adjustSize();
+  sdiag_bll->resize( QSize(newWidth, newHeight ));
+  sdiag_bll->update();
+  sdiag_bll->update();
+  
+}
+
+
 // Call manuall editor
 void US_Edit::manual_edit_auto( void )
 {
@@ -8958,11 +9627,58 @@ void US_Edit::restore_view( void )
   rightWidget -> show();
 }
 
+// [Modify-per-triple]Update triple's Linear-baseline-correction edit params with those obtained manually...
+void US_Edit::update_triple_edit_params_blc_modified(  QMap < QString, QStringList > &  edit_params_blc )
+{
+  pick     ->disconnect();
+  //show parent layouts
+  upperWidget -> show();
+  leftWidget  -> show();
+  rightWidget -> show();
+
+  us_edit_auto_mode = true;
+  
+  QString t_name = edit_params_blc.keys()[0];
+  QString w_c;
+  
+  if ( isMwl )
+    {
+      w_c = cb_lplot->currentText();
+      qDebug() << "[MWL:Modify-per-triple]Setting baseline coor for Wvl --  " << w_c;
+      editProfile_blc[ t_name ][ w_c ] = edit_params_blc[ t_name ];
+    }
+  else
+    {
+      w_c = t_name.split("/")[2].trimmed();
+      qDebug() << "[Singe WL:Modify-per-triple]Setting baseline coor for Wvl --  " << w_c;
+      editProfile_blc[ t_name ][ w_c ] = edit_params_blc[ t_name ];
+    }
+
+  //replot
+  new_triple_auto( 0 ); 
+}
+
 // Update triple's Linear-baseline-correction edit params with those obtained manually..
 void US_Edit::update_triple_edit_params_blc (  QMap < QString, QStringList > &  edit_params_blc )
 {
   QString t_name = edit_params_blc.keys()[0];
-  editProfile_blc[ t_name ] = edit_params_blc[ t_name ];
+
+  //Populate same baseline params. for all wvl in a channel
+  if ( isMwl )
+    {
+      for (int i = 0; i < cb_lplot->count(); i++)
+	{
+	  QString w_c = cb_lplot->itemText(i);
+	  qDebug() << "[MWL]Setting baseline coor for Wvl --  " << w_c;
+	  editProfile_blc[ t_name ][ w_c ] = edit_params_blc[ t_name ];
+	}
+    }
+  else
+    {
+      QString w_c = t_name.split("/")[2].trimmed();
+      qDebug() << "[Singe WL]Setting baseline coor for Wvl --  " << w_c;
+      editProfile_blc[ t_name ][ w_c ] = edit_params_blc[ t_name ];
+    }
 }
 
 
@@ -10107,14 +10823,25 @@ void US_Edit::write_triple_auto( int trx )
    plateau       = editProfile[ triple_name ][3].toDouble();
    baseline      = editProfile[ triple_name ][4].toDouble();
 
+
    //also, for ABDE, deal with includes / excludes : includes = ...
    if ( autoflow_expType == "ABDE" )
      {
        includes           = editProfile_includes[ triple_name ];
-       bl_corr_slope      = editProfile_blc[ triple_name ][0].toDouble();
-       bl_corr_yintercept = editProfile_blc[ triple_name ][1].toDouble();
+
+       QString wvl_c;
+       if ( isMwl )
+	 {
+	   int wvx = cb_lplot ->currentIndex();
+	   wvl_c   = expc_wvlns[ wvx ];
+	 }
+       else
+	 wvl_c = triple_name.split("/")[2].trimmed();
+       
+       bl_corr_slope      = editProfile_blc[ triple_name ][ wvl_c ][0].toDouble();
+       bl_corr_yintercept = editProfile_blc[ triple_name ][ wvl_c ][1].toDouble();
      }
-   
+  
    if ( dataType == "IP" )
      {
        airGap_left      = editProfile[ triple_name ][7].toDouble();
@@ -10147,6 +10874,9 @@ void US_Edit::write_triple_auto( int trx )
       odax           = index_data_auto( wvx );
    }
 
+
+   
+   
    // Do we need this ??
    /*
    if ( expIsEquil )
@@ -11216,12 +11946,6 @@ void US_Edit::show_mwl_controls( bool show )
 {
   if ( !us_edit_auto_mode  )
     {
-      if ( !us_edit_auto_mode_manual )
-	{
-	  lb_gaps    ->setVisible( !show );
-	  ct_gaps    ->setVisible( !show );
-	}
-      
       le_lxrng   ->setVisible( show );
       lb_mwlctl  ->setVisible( show );
       lb_ldelta  ->setVisible( show );
@@ -11248,6 +11972,12 @@ void US_Edit::show_mwl_controls( bool show )
       lo_waveln  ->itemAtPosition( 0, 1 )->widget()->setVisible( show );
       lo_writemwl->itemAtPosition( 0, 0 )->widget()->setVisible( show );
       lo_writemwl->itemAtPosition( 0, 1 )->widget()->setVisible( show );
+
+      if ( !us_edit_auto_mode_manual )
+	{
+	  lb_gaps    ->setVisible( !show );
+	  ct_gaps    ->setVisible( !show );
+	}
 
     }
   
@@ -11580,7 +12310,16 @@ DbgLv(1) << "lambda_plot_value  value" << value << plotrec;
    if ( us_edit_auto_mode )
      {
        plot_mwl();
-       plot_range();
+       if ( autoflow_expType == "ABDE")
+	 {
+	   //This must be before plotting: set current baseline parms
+	   set_current_bll_abde( cb_triple->currentText(), swavl );
+	   //then replot
+	   plot_range_and_blc( );
+	   
+	 }
+       else
+	 plot_range();
        return;
      }
    ////////
@@ -11796,13 +12535,13 @@ void US_Edit::write_mwl_auto( int trx )
    plateau       = editProfile[ triple_name ][3].toDouble();
    baseline      = editProfile[ triple_name ][4].toDouble();
 
-   //also, for ABDE, deal with includes / excludes : includes = ...
-   if ( autoflow_expType == "ABDE" )
-     {
-       includes           = editProfile_includes[ triple_name ];
-       bl_corr_slope      = editProfile_blc[ triple_name ][0].toDouble();
-       bl_corr_yintercept = editProfile_blc[ triple_name ][1].toDouble();
-     }
+   // //also, for ABDE, deal with includes / excludes : includes = ...
+   // if ( autoflow_expType == "ABDE" )
+   //   {
+   //     includes           = editProfile_includes[ triple_name ];
+   //     bl_corr_slope      = editProfile_blc[ triple_name ][0].toDouble();
+   //     bl_corr_yintercept = editProfile_blc[ triple_name ][1].toDouble();
+   //   }
    
    if ( editProfile[ triple_name ].count() > 6 )
      {
@@ -11928,6 +12667,16 @@ void US_Edit::write_mwl_auto( int trx )
       qDebug()  << "EDT:WrMwl:  wvx triple" << wvx << triple << "filename" << filename
 		<< ", trx " << trx << ", wvx " << wvx; // << ", odax " << odax;
 
+
+      //also, for ABDE, deal with includes / excludes && BAseline correction: includes = ...
+      if ( autoflow_expType == "ABDE" )
+        {
+          includes           = editProfile_includes[ triple_name ];
+          bl_corr_slope      = editProfile_blc[ triple_name ][ swavl ][0].toDouble();
+          bl_corr_yintercept = editProfile_blc[ triple_name ][ swavl ][1].toDouble();
+        }
+
+      
       QString editGUID = editGUIDs[ idax ];
 
       if ( editGUID.isEmpty() )
@@ -13536,6 +14285,32 @@ QString US_Edit::scan_info_auto( int trx )
    ss += indent( 4 ) + "</table>\n";
    
    return ss;
+}
+
+//[ABDE] Close Baseline Corrections
+void US_Edit::pass_values_bll( void )
+{
+  QString triple_name = cb_triple->itemText( cb_triple->currentIndex() );
+  QMap< QString, QStringList > editProfile_triple_blc;
+  QStringList triple_params_blc;
+
+  //Linear-baseline-correction
+  triple_params_blc << QString::number(bl_corr_slope)
+		    << QString::number(bl_corr_yintercept);
+
+  editProfile_triple_blc[ triple_name ]      = triple_params_blc;
+
+  int status = QMessageBox::information( this,
+					 tr( "New Baseline Correction Parameters" ),
+					 tr( "This will overwrite current Baseline Correction parameters. "
+					     "Do you want to proceed? " ),
+					 tr( "&OK" ), tr( "&Cancel" ),
+					 0, 0, 1 );
+  
+  if ( status != 0 ) return;
+
+   emit pass_edit_params_blc( editProfile_triple_blc );
+   close();
 }
 
 // Close edit after review of saved edits
