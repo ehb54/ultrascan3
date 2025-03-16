@@ -340,16 +340,17 @@ void US_Hydrodyn_Saxs_Hplc::broaden_done( bool save ) {
             t += deltat;
          }
    
-         add_plot( fname, ts, broadened, true, false );
-         broaden_names << last_created_file;
-         conc_files.insert( last_created_file );
-         f_header[ last_created_file ] = QString( " Broadening target %1" ).arg( broaden_names[ 1 ] );
-         f_errors.erase( last_created_file );
+         // original grid, only need interpolated to target
+         // add_plot( fname, ts, broadened, true, false );
+         // broaden_names << last_created_file;
+         // conc_files.insert( last_created_file );
+         // f_header[ last_created_file ] = QString( " Broadening target %1" ).arg( broaden_names[ 1 ] );
+         // f_errors.erase( last_created_file );
+         // vector < double > I = f_Is[ last_created_file ];
+
+         vector < double > I = broadened;
 
          // & interpolated
-
-         vector < double > I = f_Is[ last_created_file ];
-         QString name        = last_created_file + "_interp_scaled";
       
          // pad for interpolation
 
@@ -363,6 +364,12 @@ void US_Hydrodyn_Saxs_Hplc::broaden_done( bool save ) {
          if ( !usu->linear_interpolate( ts, I, f_qs[ broaden_names[ 1 ] ], I_interp ) ) {
             editor_msg( "red", QString( "Error while fitting: interpolation error: %1\n" ).arg( usu->errormsg ) );
          } else {
+            add_plot( fname, f_qs[ broaden_names[ 1 ] ], I_interp, true, false );
+            broaden_names << last_created_file;
+            conc_files.insert( last_created_file );
+            f_header[ last_created_file ] = QString( " Broadening target %1" ).arg( broaden_names[ 1 ] );
+            f_errors.erase( last_created_file );
+
             // scale area
 
             double fit_range_start = le_broaden_fit_range_start->text().toDouble();
@@ -382,6 +389,9 @@ void US_Hydrodyn_Saxs_Hplc::broaden_done( bool save ) {
                editor_msg( "red", QString( "Error: area under broadened curve restricted to fitting range is not positive" ) );
             } else {
                broaden_scale = area_ref / area_conc;
+
+               QString name = last_created_file + "_scaled";
+
                for ( auto & I : I_interp ) {
                   I *= broaden_scale;
                }
@@ -863,11 +873,7 @@ void US_Hydrodyn_Saxs_Hplc::broaden_lm_fit() {
    bblm_org_conc_t.push_back( bblm_org_conc_t.back() + BBLM_INTERP_PAD );
    bblm_org_conc_I.push_back( 0 );
 
-   US_Vector::printvector2( "padded bblm org", bblm_org_conc_t,  bblm_org_conc_I );
-
-   running = false;
-   broaden_enables();
-   progress->reset();
+   // US_Vector::printvector2( "padded bblm org", bblm_org_conc_t,  bblm_org_conc_I );
 
    size_t org_ref_t_size = org_ref_t.size();
 
@@ -927,10 +933,6 @@ void US_Hydrodyn_Saxs_Hplc::broaden_lm_fit() {
 
    US_Vector::printvector2( "t, y", t, y );
 
-   // random restarts
-
-   #define RANDOM_RESTARTS 10
-
    srand(time(0));
 
    vector < vector < double > > init_params =
@@ -949,8 +951,13 @@ void US_Hydrodyn_Saxs_Hplc::broaden_lm_fit() {
          ,{ 1, 0, 1 }
          ,{ 0, 1, 1 }
          ,{ 1, 1, 1 }
-         ,{ (double) ( rand() / RAND_MAX ), (double) ( rand() / RAND_MAX ), (double) ( rand() / RAND_MAX ) }
       };
+
+   #define RANDOM_RESTARTS 5
+
+   for ( size_t i = 0; i < RANDOM_RESTARTS; ++i ) {
+      init_params.push_back( { (double) ( rand() / RAND_MAX ), (double) ( rand() / RAND_MAX ), (double) ( rand() / RAND_MAX ) } );
+   }
 
    progress->setMaximum( init_params.size() );
 
@@ -963,7 +970,7 @@ void US_Hydrodyn_Saxs_Hplc::broaden_lm_fit() {
       progress->setValue( pos++ );
       qApp->processEvents();
       
-      US_Vector::printvector( "lmcurve_fit_rmsd init", this_params );
+      // US_Vector::printvector( "lmcurve_fit_rmsd init", this_params );
 
       LM::lmcurve_fit_rmsd( ( int )      this_params.size(),
                             ( double * ) &( this_params[ 0 ] ),
@@ -974,7 +981,7 @@ void US_Hydrodyn_Saxs_Hplc::broaden_lm_fit() {
                             (const LM::lm_control_struct *)&control,
                             &status );
 
-      US_Vector::printvector( QString( "lmcurve_fit_rmsd fnorm %1" ).arg( status.fnorm ), this_params );
+      // US_Vector::printvector( QString( "lmcurve_fit_rmsd fnorm %1" ).arg( status.fnorm ), this_params );
 
       if ( best_fit > status.fnorm ) {
          best_fit    = status.fnorm;

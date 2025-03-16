@@ -8721,6 +8721,9 @@ void US_Hydrodyn_Saxs_Hplc::gauss_as_curves()
                    compute_gaussian( f_qs[ wheel_file ], tmp_g ),
                    true,
                    false );
+         if ( conc_files.count( wheel_file ) ) {
+            conc_files.insert( last_created_file );
+         }
       }
       if ( ( unsigned int ) gaussians.size() / gaussian_type_size > 1 )
       {
@@ -8729,6 +8732,9 @@ void US_Hydrodyn_Saxs_Hplc::gauss_as_curves()
                    compute_gaussian_sum( f_qs[ wheel_file ], gaussians ),
                    true,
                    false );
+         if ( conc_files.count( wheel_file ) ) {
+            conc_files.insert( last_created_file );
+         }
       }
    } else {
       // ggaussian mode
