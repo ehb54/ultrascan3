@@ -101,7 +101,8 @@ class US_Astfem_Sim : public US_Widgets
       US_LammAstfvm*          astfvm;     //!< Pointer to the astfvm simulation engine
       US_Model                system;     //!< Model object
       US_Buffer               buffer;     //!< Buffer object
-
+      US_Rotor::Rotor         rotor;      //!< Rotor object
+      US_Rotor::RotorCalibration rotor_calibration; //!< Rotor calibration object
       US_SimulationParameters          simparams; //!< Simulation parameters
       US_AstfemMath::AstFemParameters  af_params; //!< Fixed grid simulation parameters used for exporting
       QVector<US_DataIO::RawData>      sim_datas; //!< Vector of simulated data for each speedstep
