@@ -1,19 +1,7 @@
 //! \file us_ga_init.cpp
 
 #include <QApplication>
-#include <math.h>
-#include <qwt_plot_shapeitem.h>
 #include "us_grid_editor.h"
-#include "us_util.h"
-#include "us_settings.h"
-#include "us_investigator.h"
-#include "us_model_loader.h"
-#include "us_passwd.h"
-#include "us_plot.h"
-#include "us_math2.h"
-#include "us_constants.h"
-#include "us_license.h"
-#include "us_license_t.h"
 
 // main program
 int main( int argc, char* argv[] )
@@ -2348,25 +2336,24 @@ void GridPoint::calculate_real()
    S_real = S / sd.s20w_correction;
    D_real = D / sd.D20w_correction;
 
-   if ( false )
-   qDebug() << "Solution Data:"
-            << QObject::tr( "T=%1" )        .arg( temperature )
-            << QObject::tr( "dens_20W=%1" ) .arg( DENS_20W )
-            << QObject::tr( "dens_TW=%1" )  .arg( sd.density_wt )
-            << QObject::tr( "visc_20W=%1" ) .arg( VISC_20W )
-            << QObject::tr( "visc_TW=%1" )  .arg( sd.viscosity_wt )
-            << QObject::tr( "vbar20=%1" )   .arg( sd.vbar20 )
-            << QObject::tr( "vbarT=%1" )    .arg( sd.vbar )
-            << QObject::tr( "dens_20B=%1" ) .arg( sd.density )
-            << QObject::tr( "dens_TB =%1" ) .arg( sd.density_tb )
-            << QObject::tr( "visc_20B=%1" ) .arg( sd.viscosity )
-            << QObject::tr( "visc_TB=%1" )  .arg( sd.viscosity_tb )
-            << QObject::tr( "s=%1" )        .arg( S )
-            << QObject::tr( "s_corr=%1" )   .arg( sd.s20w_correction )
-            << QObject::tr( "s*=%1" )       .arg( S_real )
-            << QObject::tr( "D=%1" )        .arg( D )
-            << QObject::tr( "D_corr=%1" )   .arg( sd.D20w_correction )
-            << QObject::tr( "D*=%1" )       .arg( D_real );
+   DbgLv( 2 ) << "Solution Data:"
+            << QObject::tr( "T=%1"        ).arg( temperature        )
+            << QObject::tr( "dens_20W=%1" ).arg( DENS_20W           )
+            << QObject::tr( "dens_TW=%1"  ).arg( sd.density_wt      )
+            << QObject::tr( "visc_20W=%1" ).arg( VISC_20W           )
+            << QObject::tr( "visc_TW=%1"  ).arg( sd.viscosity_wt    )
+            << QObject::tr( "vbar20=%1"   ).arg( sd.vbar20          )
+            << QObject::tr( "vbarT=%1"    ).arg( sd.vbar            )
+            << QObject::tr( "dens_20B=%1" ).arg( sd.density         )
+            << QObject::tr( "dens_TB =%1" ).arg( sd.density_tb      )
+            << QObject::tr( "visc_20B=%1" ).arg( sd.viscosity       )
+            << QObject::tr( "visc_TB=%1"  ).arg( sd.viscosity_tb    )
+            << QObject::tr( "s=%1"        ).arg( S                  )
+            << QObject::tr( "s_corr=%1"   ).arg( sd.s20w_correction )
+            << QObject::tr( "s*=%1"       ).arg( S_real             )
+            << QObject::tr( "D=%1"        ).arg( D                  )
+            << QObject::tr( "D_corr=%1"   ).arg( sd.D20w_correction )
+            << QObject::tr( "D*=%1"       ).arg( D_real             );
 }
 
 bool GridPoint::check_s_vbar()
@@ -2399,12 +2386,12 @@ bool GridPoint::contains( Attribute::Type p1, Attribute::Type p2, Attribute::Typ
 QString Attribute::long_desc( Type t )
 {
    QString str;
-   if      ( t == Attribute::ATTR_S )  str = "Sedimentation Coefficient";
-   else if ( t == Attribute::ATTR_K )  str = "Frictional Ratio";
-   else if ( t == Attribute::ATTR_M )  str = "Molecular Weight";
-   else if ( t == Attribute::ATTR_V )  str = "Partial Specific Volume";
-   else if ( t == Attribute::ATTR_D )  str = "Diffusion Coefficient";
-   else if ( t == Attribute::ATTR_F )  str = "Frictional Coefficient";
+   if      ( t == Attribute::ATTR_S  ) str = "Sedimentation Coefficient";
+   else if ( t == Attribute::ATTR_K  ) str = "Frictional Ratio";
+   else if ( t == Attribute::ATTR_M  ) str = "Molecular Weight";
+   else if ( t == Attribute::ATTR_V  ) str = "Partial Specific Volume";
+   else if ( t == Attribute::ATTR_D  ) str = "Diffusion Coefficient";
+   else if ( t == Attribute::ATTR_F  ) str = "Frictional Coefficient";
    else if ( t == Attribute::ATTR_F0 ) str = "Frictional Coefficient ( f0 )";
    else if ( t == Attribute::ATTR_SR ) str = "Sedimentation Coefficient ( Real )";
    else if ( t == Attribute::ATTR_DR ) str = "Diffusion Coefficient ( Real )";
@@ -2414,12 +2401,12 @@ QString Attribute::long_desc( Type t )
 QString Attribute::short_desc( Type t )
 {
    QString str;
-   if      ( t == Attribute::ATTR_S )  str = "s [ Sv ]";
-   else if ( t == Attribute::ATTR_K )  str = "f / f0";
-   else if ( t == Attribute::ATTR_M )  str = "MW [ kDa ]";
-   else if ( t == Attribute::ATTR_V )  str = "vbar [ mL / g ]";
-   else if ( t == Attribute::ATTR_D )  str = "<p>D [ cm<sup>2</sup> s<sup>-1</sup> ]</p>";
-   else if ( t == Attribute::ATTR_F )  str = "f [ g / s ]";
+   if      ( t == Attribute::ATTR_S  ) str = "s [ Sv ]";
+   else if ( t == Attribute::ATTR_K  ) str = "f / f0";
+   else if ( t == Attribute::ATTR_M  ) str = "MW [ kDa ]";
+   else if ( t == Attribute::ATTR_V  ) str = "vbar [ mL / g ]";
+   else if ( t == Attribute::ATTR_D  ) str = "<p>D [ cm<sup>2</sup> s<sup>-1</sup> ]</p>";
+   else if ( t == Attribute::ATTR_F  ) str = "f [ g / s ]";
    else if ( t == Attribute::ATTR_F0 ) str = "f0 [ g / s ]";
    else if ( t == Attribute::ATTR_SR ) str = "s* [ Sv ]";
    else if ( t == Attribute::ATTR_DR ) str = "<p>D* [ cm<sup>2</sup> s<sup>-1</sup> ]</p>";
@@ -2429,12 +2416,12 @@ QString Attribute::short_desc( Type t )
 QString Attribute::title( Type t )
 {
    QString str;
-   if      ( t == Attribute::ATTR_S )  str = "Sedimentation Coefficient ( 20,W ) [ Sv ]";
-   else if ( t == Attribute::ATTR_K )  str = "Frictional Ratio";
-   else if ( t == Attribute::ATTR_M )  str = "Molecular Weight [ kDa ]";
-   else if ( t == Attribute::ATTR_V )  str = "Partial Specific Volume [ mL / g ]";
-   else if ( t == Attribute::ATTR_D )  str = "<p>Diffusion Coefficient ( 20,W ) [ cm<sup>2</sup> s<sup>-1</sup> ]</p>";
-   else if ( t == Attribute::ATTR_F )  str = "Frictional Coefficient [ g / s ]";
+   if      ( t == Attribute::ATTR_S  ) str = "Sedimentation Coefficient ( 20,W ) [ Sv ]";
+   else if ( t == Attribute::ATTR_K  ) str = "Frictional Ratio";
+   else if ( t == Attribute::ATTR_M  ) str = "Molecular Weight [ kDa ]";
+   else if ( t == Attribute::ATTR_V  ) str = "Partial Specific Volume [ mL / g ]";
+   else if ( t == Attribute::ATTR_D  ) str = "<p>Diffusion Coefficient ( 20,W ) [ cm<sup>2</sup> s<sup>-1</sup> ]</p>";
+   else if ( t == Attribute::ATTR_F  ) str = "Frictional Coefficient [ g / s ]";
    else if ( t == Attribute::ATTR_F0 ) str = "Frictional Coefficient ( f0 ) [ g / s ]";
    else if ( t == Attribute::ATTR_SR ) str = "Sedimentation Coefficient ( T,Buffer ) [ Sv ]";
    else if ( t == Attribute::ATTR_DR ) str = "<p>Diffusion Coefficient ( T,Buffer ) [ cm<sup>2</sup> s<sup>-1</sup> ]</p>";
@@ -2444,44 +2431,44 @@ QString Attribute::title( Type t )
 QString Attribute::symbol( Type t )
 {
    QString str;
-   if      ( t == Attribute::ATTR_S )  str = "s";
-   else if ( t == Attribute::ATTR_K )  str = "f/f0";
-   else if ( t == Attribute::ATTR_M )  str = "MW";
-   else if ( t == Attribute::ATTR_V )  str = "vbar";
-   else if ( t == Attribute::ATTR_D )  str = "D";
-   else if ( t == Attribute::ATTR_F )  str = "f";
-   else if ( t == Attribute::ATTR_F0 )  str = "f0";
-   else if ( t == Attribute::ATTR_SR )  str = "s*";
-   else if ( t == Attribute::ATTR_DR )  str = "D*";
+   if      ( t == Attribute::ATTR_S  ) str = "s";
+   else if ( t == Attribute::ATTR_K  ) str = "f/f0";
+   else if ( t == Attribute::ATTR_M  ) str = "MW";
+   else if ( t == Attribute::ATTR_V  ) str = "vbar";
+   else if ( t == Attribute::ATTR_D  ) str = "D";
+   else if ( t == Attribute::ATTR_F  ) str = "f";
+   else if ( t == Attribute::ATTR_F0 ) str = "f0";
+   else if ( t == Attribute::ATTR_SR ) str = "s*";
+   else if ( t == Attribute::ATTR_DR ) str = "D*";
    return str;
 }
 
 Attribute::Type Attribute::from_symbol( const QString & symbol )
 {
    Attribute::Type t = ATTR_NONE;
-   if      ( symbol == "s"  )  t = Attribute::ATTR_S;
-   else if ( symbol == "f/f0" )  t = Attribute::ATTR_K;
-   else if ( symbol == "MW" )  t = Attribute::ATTR_M;
-   else if ( symbol == "vbar" )  t = Attribute::ATTR_V;
-   else if ( symbol == "D"  )  t = Attribute::ATTR_D;
-   else if ( symbol == "f"  )  t = Attribute::ATTR_F;
-   else if ( symbol == "f0" )  t = Attribute::ATTR_F0;
-   else if ( symbol == "s*" )  t = Attribute::ATTR_SR;
-   else if ( symbol == "D*" )  t = Attribute::ATTR_DR;
+   if      ( symbol == "s"    ) t = Attribute::ATTR_S;
+   else if ( symbol == "f/f0" ) t = Attribute::ATTR_K;
+   else if ( symbol == "MW"   ) t = Attribute::ATTR_M;
+   else if ( symbol == "vbar" ) t = Attribute::ATTR_V;
+   else if ( symbol == "D"    ) t = Attribute::ATTR_D;
+   else if ( symbol == "f"    ) t = Attribute::ATTR_F;
+   else if ( symbol == "f0"   ) t = Attribute::ATTR_F0;
+   else if ( symbol == "s*"   ) t = Attribute::ATTR_SR;
+   else if ( symbol == "D*"   ) t = Attribute::ATTR_DR;
    return t;
 }
 
 Attribute::Type Attribute::from_int( int id )
 {
    Attribute::Type t = ATTR_NONE;
-   if      ( id == Attribute::ATTR_S )  t = Attribute::ATTR_S;
-   else if ( id == Attribute::ATTR_K )  t = Attribute::ATTR_K;
-   else if ( id == Attribute::ATTR_M )  t = Attribute::ATTR_M;
-   else if ( id == Attribute::ATTR_V )  t = Attribute::ATTR_V;
-   else if ( id == Attribute::ATTR_D )  t = Attribute::ATTR_D;
-   else if ( id == Attribute::ATTR_F )  t = Attribute::ATTR_F;
-   else if ( id == Attribute::ATTR_F0 )  t = Attribute::ATTR_F0;
-   else if ( id == Attribute::ATTR_SR )  t = Attribute::ATTR_SR;
-   else if ( id == Attribute::ATTR_DR )  t = Attribute::ATTR_DR;
+   if      ( id == Attribute::ATTR_S  ) t = Attribute::ATTR_S;
+   else if ( id == Attribute::ATTR_K  ) t = Attribute::ATTR_K;
+   else if ( id == Attribute::ATTR_M  ) t = Attribute::ATTR_M;
+   else if ( id == Attribute::ATTR_V  ) t = Attribute::ATTR_V;
+   else if ( id == Attribute::ATTR_D  ) t = Attribute::ATTR_D;
+   else if ( id == Attribute::ATTR_F  ) t = Attribute::ATTR_F;
+   else if ( id == Attribute::ATTR_F0 ) t = Attribute::ATTR_F0;
+   else if ( id == Attribute::ATTR_SR ) t = Attribute::ATTR_SR;
+   else if ( id == Attribute::ATTR_DR ) t = Attribute::ATTR_DR;
    return t;
 }

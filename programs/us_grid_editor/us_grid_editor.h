@@ -8,15 +8,25 @@
 #include "us_widgets_dialog.h"
 #include "us_buffer_gui.h"
 #include "us_model.h"
+#include "us_util.h"
+#include "us_investigator.h"
+#include "us_model_loader.h"
+#include "us_passwd.h"
+#include "us_plot.h"
+#include "us_math2.h"
+#include "us_constants.h"
+#include "us_license.h"
+#include "us_license_t.h"
+#include "us_settings.h"
+#include <math.h>
 #include "qwt_scale_engine.h"
+#include <qwt_plot_shapeitem.h>
 
-#ifndef DbgLv
-#define DbgLv( a ) if( dbg_level>=a )qDebug( void )
-#endif
 
+const double S_TRSHL   = 1e-15;
+#define DbgLv( a ) if( US_Settings::us_debug() >= a ) qDebug()
 #define GridInfo US_Model::CustomGridMetadata::GridInfo
 #define CompInfo US_Model::CustomGridMetadata::CompInfo
-const double S_TRSHL = 1e-15;
 
 //! \class Attribute Class
 //! \brief Enumeration for attribute types.
