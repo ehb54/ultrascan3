@@ -88,7 +88,7 @@ DbgLv(1) << "AMATH:wrts:scantimes" << scantimes[ii] << sim_data.scanData[ii].ome
       low_acceleration( simparams.speed_step, low_accel, rate );
       t_acc       = (int)qRound( (double)( simparams.speed_step[ 0 ].rotorspeed )
                                            / rate );
-DbgLv(1)<< "AMATH:wrts: computed rate:" << rate;
+DbgLv(0)<< "AMATH:wrts: computed rate:" << rate;
    }
    else
    {  // Handle 1st acceleration zone for simulation (astfem_sim) data
@@ -96,9 +96,8 @@ DbgLv(1)<< "AMATH:wrts: computed rate:" << rate;
       // Use specified acceleration rate
       t_acc      = (int)qCeil( (double)sp->rotorspeed
                               / (double)sp->acceleration );
-      rate       = (double)sp->rotorspeed / (double)t_acc;
-DbgLv(1)<< "AMATH:wrts: rate is given by user : t_acc from timestate" << t_acc << rate;
       rate       = (double)sp->acceleration;
+DbgLv(0)<< "AMATH:wrts: rate is given by user : t_acc from timestate" << t_acc << rate;
    }
 
    int d1     = 0;
@@ -264,7 +263,7 @@ bool US_AstfemMath::low_acceleration(
    // =====================================================================
 
    double t1      = tfac * ( t2 - t1w );
-DbgLv(1) << "AMATH:loac: om1t w2 w2t" << om1t << w2 << w2t
+DbgLv(0) << "AMATH:loac: om1t w2 w2t" << om1t << w2 << w2t
  << "t1w" << t1w << "tfac" << tfac;
 
    if ( t1 >= t2 )
@@ -274,7 +273,7 @@ DbgLv(1) << "AMATH:loac: om1t w2 w2t" << om1t << w2 << w2t
 
    int t_acc      = (int)qRound( t1 );
    rate           = (double)( speedsteps[ 0 ].rotorspeed ) / (double)t_acc;
-DbgLv(1) << "AMATH:loac:t1 t2" << t1 << t2 << "t_acc rate" << t_acc << rate;
+DbgLv(0) << "AMATH:loac:t1 t2" << t1 << t2 << "t_acc rate" << t_acc << rate;
 
    return ( rate < min_accel );
 }
