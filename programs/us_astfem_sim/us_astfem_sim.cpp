@@ -867,7 +867,7 @@ DbgLv(1) << "SimPar:MAIN:SetP:   sset" << jd << "time1 time2" << time1 << time2
 
       while ( c_speed < s_speed )
       {  // Walk through acceleration zone building omega2t sum
-         w2tsum        += sq( ( 2 * c_speed + accel ) * 0.5 * M_PI / 30.0 );
+         w2tsum         = sq( accel * M_PI / 30.0 * c_time ) * c_time;
          c_speed       += accel;
          c_time        += 1.0;
 DbgLv(1) << "SimPar:MAIN:SetP:   accel speed w2t time" << c_speed << w2tsum << c_time;
@@ -876,6 +876,8 @@ DbgLv(1) << "SimPar:MAIN:SetP: accel-end:  time omega2t" << c_time << w2tsum;
 
       c_speed        = s_speed;
       double w2tinc  = sq( c_speed * M_PI / 30.0 );
+      // reset the w2tsum value at the end of the acceleration for the constant speed iteration
+      w2tsum         = w2tinc * c_speed / accel + w2tinc * ( c_time - c_speed / accel );
       while ( c_time < time1 )
       {  // Walk up to the first scan time, accumulating omega2t sum
          c_time        += 1.0;
@@ -883,7 +885,7 @@ DbgLv(1) << "SimPar:MAIN:SetP: accel-end:  time omega2t" << c_time << w2tsum;
       }
       DbgLv(1) << "SimPar:MAIN:SetP: 1st scan:   time omega2t" << c_time << w2tsum << "w2tinc" << w2tinc;
 
-      sp->time_first = time1;
+      sp->time_first = static_cast<int>(time1);
       sp->w2t_first  = w2tsum;
       w2tinc         = timeinc * sq( c_speed * M_PI / 30.0 );
       c_time         = time1 - timeinc;
