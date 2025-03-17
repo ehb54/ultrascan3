@@ -94,10 +94,11 @@ DbgLv(1)<< "AMATH:wrts: computed rate:" << rate;
    {  // Handle 1st acceleration zone for simulation (astfem_sim) data
       sp         = &simparams.speed_step[ 0 ];
       // Use specified acceleration rate
-      t_acc      = (int)qRound( (double)sp->rotorspeed
+      t_acc      = (int)qCeil( (double)sp->rotorspeed
                               / (double)sp->acceleration );
       rate       = (double)sp->rotorspeed / (double)t_acc;
 DbgLv(1)<< "AMATH:wrts: rate is given by user : t_acc from timestate" << t_acc << rate;
+      rate       = (double)sp->acceleration;
    }
 
    int d1     = 0;
