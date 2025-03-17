@@ -1107,7 +1107,7 @@ qDebug() << "CVT:Adj: t_acc rate" << t_acc << rate;
    double azdur      = (double)qRound( speedsteps[ 0 ].rotorspeed / 400.0 );
    double t_offs     = t1 - azdur;
    double azwrate    = sq( speedsteps[ 0 ].rotorspeed * M_PI / 30.0 * azdur );
-   double w_offs     = w2t - ( w2 * ( t2 - t1 ) ) - ( w2 * azdur );
+   double w_offs     = w2t - ( w2 * ( t2 - t1 ) ) - ( w2 * azdur ) / 3;
 qDebug() << "CVT:Adj: azdur azwrate" << azdur << azwrate << "t_offs w_offs"
  << t_offs << w_offs;
 
