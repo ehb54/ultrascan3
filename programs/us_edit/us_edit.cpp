@@ -53,6 +53,7 @@ US_Edit::US_Edit( QString auto_mode ) : US_Widgets()
    total_speeds = 0;
    total_edits  = 0;
    v_line       = NULL;
+   line_to_mouse = NULL;
    dbg_level    = US_Settings::us_debug();
    dbP          = NULL;
    chlamb       = QChar( 955 );
@@ -64,6 +65,7 @@ DbgLv(1) << " 0)gap_fringe" << gap_fringe;
 
   us_edit_auto_mode = true;
   us_edit_auto_mode_manual = false;
+  us_edit_auto_mode_manual_bll = false;
   all_loaded = false;
   is_spike_auto = false;
 
@@ -797,6 +799,7 @@ US_Edit::US_Edit( QVector< US_DataIO::RawData > allData, QStringList  triples,
    total_speeds = 0;
    total_edits  = 0;
    v_line       = NULL;
+   line_to_mouse = NULL;
    dbg_level    = US_Settings::us_debug();
    dbP          = NULL;
    chlamb       = QChar( 955 );
@@ -807,6 +810,7 @@ DbgLv(1) << " 0)gap_fringe" << gap_fringe;
 
    us_edit_auto_mode = false;
    us_edit_auto_mode_manual = true;
+   us_edit_auto_mode_manual_bll = false;
    all_loaded = false;
    is_spike_auto = false;
  
@@ -1344,6 +1348,7 @@ US_Edit::US_Edit( QVector< US_DataIO::RawData > allData, QStringList  triples,
    total_speeds = 0;
    total_edits  = 0;
    v_line       = NULL;
+   line_to_mouse = NULL;
    dbg_level    = US_Settings::us_debug();
    dbP          = NULL;
    chlamb       = QChar( 955 );
@@ -1353,7 +1358,8 @@ US_Edit::US_Edit( QVector< US_DataIO::RawData > allData, QStringList  triples,
 DbgLv(1) << " 0)gap_fringe" << gap_fringe;
 
    us_edit_auto_mode = false;
-   us_edit_auto_mode_manual = true;
+   us_edit_auto_mode_manual = false;
+   us_edit_auto_mode_manual_bll = true;
    all_loaded = false;
    is_spike_auto = false;
  
@@ -1931,6 +1937,7 @@ US_Edit::US_Edit() : US_Widgets()
    total_speeds = 0;
    total_edits  = 0;
    v_line       = NULL;
+   line_to_mouse = NULL;
    dbg_level    = US_Settings::us_debug();
    dbP          = NULL;
    chlamb       = QChar( 955 );
@@ -1941,6 +1948,7 @@ DbgLv(1) << " 0)gap_fringe" << gap_fringe;
 
    us_edit_auto_mode = false;
    us_edit_auto_mode_manual = false;
+   us_edit_auto_mode_manual_bll = false;
    all_loaded = false;
    is_spike_auto = false;
  
@@ -2409,7 +2417,7 @@ void US_Edit::reset( void )
    le_plateau  ->setText( "" );
    le_baseline ->setText( "" );
 
-   if ( us_edit_auto_mode || us_edit_auto_mode_manual )
+   if ( us_edit_auto_mode || us_edit_auto_mode_manual || us_edit_auto_mode_manual_bll )
      {
        le_bll_slope     ->setText( "" );
        le_bll_intercept ->setText( "" );
@@ -2436,6 +2444,7 @@ void US_Edit::reset( void )
    data_plot->detachItems( QwtPlotItem::Rtti_PlotCurve );
    data_plot->detachItems( QwtPlotItem::Rtti_PlotMarker );
    v_line = NULL;
+   line_to_mouse = NULL;
    pick     ->disconnect();
 
    qDebug() << "reset 3";
@@ -2584,7 +2593,7 @@ void US_Edit::reset_triple( void )
    le_plateau  ->setText( "" );
    le_baseline ->setText( "" );
 
-   if ( us_edit_auto_mode || us_edit_auto_mode_manual )
+   if ( us_edit_auto_mode || us_edit_auto_mode_manual || us_edit_auto_mode_manual_bll )
      {
        le_bll_slope     ->setText( "" );
        le_bll_intercept ->setText( "" );
@@ -6528,7 +6537,7 @@ DbgLv(1) << "AGap:  plot_range()";
             pb_noise    ->setEnabled( true );
             pb_spikes   ->setEnabled( true );
 
-	    if ( us_edit_auto_mode || us_edit_auto_mode_manual )
+	    if ( us_edit_auto_mode || us_edit_auto_mode_manual || us_edit_auto_mode_manual_bll )
 	      pb_baseline_correct ->setEnabled( true );
 
             if ( ! expIsEquil )
@@ -6587,7 +6596,7 @@ DbgLv(1) << "AGap:  plot_range()";
                      pb_report  ->setEnabled( true );
                      pb_write   ->setEnabled( true );
 
-		     if ( us_edit_auto_mode_manual )
+		     if ( us_edit_auto_mode_manual || us_edit_auto_mode_manual_bll )
 		       pb_pass->setEnabled( true );
 
 		     ck_writemwl->setEnabled( true );
@@ -6619,7 +6628,7 @@ DbgLv(1) << "AGap:  plot_range()";
                all_edits = true;
                pb_write   ->setEnabled( true );
 
-	       if ( us_edit_auto_mode_manual )
+	       if ( us_edit_auto_mode_manual || us_edit_auto_mode_manual_bll )
 		 pb_pass->setEnabled( true );
 	       
                ck_writemwl->setEnabled( true );
@@ -6651,7 +6660,7 @@ DbgLv(1) << "AGap:  plot_range()";
          pb_report  ->setEnabled( true );
          pb_write   ->setEnabled( true );
 
-	 if ( us_edit_auto_mode_manual )
+	 if ( us_edit_auto_mode_manual || us_edit_auto_mode_manual_bll )
 	   pb_pass->setEnabled( true );
 	 
          ck_writemwl->setEnabled( isMwl );
@@ -6697,7 +6706,7 @@ DbgLv(1) << "BL: AA : baseline bl" << baseline << bl;
          pb_report     ->setEnabled( true );
          pb_write      ->setEnabled( true );
 
-	 if ( us_edit_auto_mode_manual )
+	 if ( us_edit_auto_mode_manual || us_edit_auto_mode_manual_bll )
 	   pb_pass->setEnabled( true );
 	 
          ck_writemwl   ->setEnabled( isMwl );
@@ -6714,14 +6723,36 @@ DbgLv(1) << "BL: AA : baseline bl" << baseline << bl;
 	     bl_corr_left_x  = radius_indexed( p.x() );
 	     bl_corr_left_y  = p.y();
 
-	     //
+	     qDebug() << "[FIRST]bl_corr_left, bl_corr_right {xx,yy} -- "
+		      << bl_corr_left_x << bl_corr_right_x
+		      << bl_corr_left_y << bl_corr_right_y;
+
+	     fixedPoint = QPointF(p.x(),p.y());
+	     qDebug() << "fixedPoint -- "
+		      <<  fixedPoint.x()
+		      <<  fixedPoint.y();
+	   
+	     pick->setStateMachine(new QwtPickerTrackerMachine());
+	     connect(pick, SIGNAL(moved(const QPointF&)), this, SLOT(onMouseMoved(const QPointF&)));
 	     
 	     break;
 	   }
 	 else
 	   {
+	     disconnect(pick, SIGNAL(moved(const QPointF&)), 0, 0); 
+	     if ( line_to_mouse != NULL )
+	       {
+		 line_to_mouse->detach();
+		 delete line_to_mouse;
+		 line_to_mouse = NULL;
+	       }
+	     
 	     bl_corr_right_x = radius_indexed( p.x() );
 	     bl_corr_right_y = p.y();
+
+	     qDebug() << "[SECOND]bl_corr_left, bl_corr_right {xx,yy} -- "
+		      << bl_corr_left_x << bl_corr_right_x
+		      << bl_corr_left_y << bl_corr_right_y;
 	   }
 	 
 	 {
@@ -6733,7 +6764,7 @@ DbgLv(1) << "BL: AA : baseline bl" << baseline << bl;
 	   plot_range_and_blc();
 
 	   //enable accept 
-	   if ( us_edit_auto_mode_manual )
+	   if ( us_edit_auto_mode_manual || us_edit_auto_mode_manual_bll )
 	     pb_pass->setEnabled( true );
 	   
 	   //update gui fields
@@ -6745,6 +6776,35 @@ DbgLv(1) << "BL: AA : baseline bl" << baseline << bl;
    default:
      break;
    }
+}
+
+void US_Edit::onMouseMoved(const QPointF& mousePos)
+{
+  // Remove the left line
+  if ( line_to_mouse != NULL )
+    {
+      line_to_mouse->detach();
+      delete line_to_mouse;
+      line_to_mouse = NULL;
+    }
+  
+  #if QT_VERSION < 0x050000
+   QwtScaleDiv* y_axis = data_plot->axisScaleDiv( QwtPlot::yLeft );
+#else
+   QwtScaleDiv* y_axis = (QwtScaleDiv*)&data_plot->axisScaleDiv( QwtPlot::yLeft );
+#endif
+
+   QVector<double> x, y;
+   x.push_back(fixedPoint.x());
+   y.push_back(fixedPoint.y());
+   x.push_back(mousePos.x());
+   y.push_back(mousePos.y());
+   line_to_mouse = us_curve( data_plot, "Line-to-Mouse" );
+   line_to_mouse->setSamples(x, y);
+   QPen pen = QPen( QBrush( Qt::red ), 2.0 );
+   line_to_mouse->setPen( pen );
+   data_plot->replot();
+
 }
 
 // Draw a vertical pick line
@@ -6865,7 +6925,7 @@ void US_Edit::set_meniscus( void )
    le_plateau  ->setText( "" );
    le_baseline ->setText( "" );
 
-   if ( us_edit_auto_mode || us_edit_auto_mode_manual )
+   if ( us_edit_auto_mode || us_edit_auto_mode_manual || us_edit_auto_mode_manual_bll )
      {
        le_bll_slope->setText( "" );
        le_bll_intercept->setText( "" );
@@ -8664,11 +8724,14 @@ DbgLv(1) << "EDT:NewTr:  nwavelo" << nwavelo;
 
    QString otdt   = dataType;
 
-   //ALEXEY: if MVL plot triple for the reference wvl identified from the AProfile  
-   if ( isMwl )
-     data_index   = mwl_data.data_index( iwavl_edit_ref[ triple_index ], triple_index );
-   else
-     index_data_auto( triple_index );
+   //ALEXEY: if MVL plot triple for the reference wvl identified from the AProfile
+   // if ( autoflow_expType != "ABDE" )
+   //   {
+       if ( isMwl )
+	 data_index   = mwl_data.data_index( iwavl_edit_ref[ triple_index ], triple_index );
+       else
+	 index_data_auto( triple_index );
+       //  }
    ////////////////////////////////////////////////////////////////////////////////
    
    edata          = outData[ data_index ];
@@ -9550,8 +9613,11 @@ void US_Edit::correct_bll_for_triple_auto( void )
   sdiag_bll->setLineWidth(2);
 
   //add slots
-   connect( sdiag_bll, SIGNAL( pass_edit_params_blc( QMap< QString, QStringList> & ) ),
+  connect( sdiag_bll, SIGNAL( pass_edit_params_blc( QMap< QString, QStringList> & ) ),
 	   this,  SLOT( update_triple_edit_params_blc_modified (  QMap < QString, QStringList > &) ) );
+
+  //connect( sdiag_bll, SIGNAL( pass_edit_params_blc_plot( int ) ),
+  //	   this,  SLOT( update_triple_edit_params_blc_modified_plot ( int ) ) );
   
   connect( sdiag_bll, SIGNAL( restore_main_view( ) ), this, SLOT( restore_view( ) ) );
 
@@ -9657,6 +9723,13 @@ void US_Edit::update_triple_edit_params_blc_modified(  QMap < QString, QStringLi
   //replot
   new_triple_auto( 0 ); 
 }
+
+// void US_Edit::update_triple_edit_params_blc_modified_plot( int currInd )
+// {
+//   //replot
+//   new_triple_auto( currInd ); 
+// }
+
 
 // Update triple's Linear-baseline-correction edit params with those obtained manually..
 void US_Edit::update_triple_edit_params_blc (  QMap < QString, QStringList > &  edit_params_blc )
@@ -11973,7 +12046,7 @@ void US_Edit::show_mwl_controls( bool show )
       lo_writemwl->itemAtPosition( 0, 0 )->widget()->setVisible( show );
       lo_writemwl->itemAtPosition( 0, 1 )->widget()->setVisible( show );
 
-      if ( !us_edit_auto_mode_manual )
+      if ( !us_edit_auto_mode_manual || !us_edit_auto_mode_manual_bll )
 	{
 	  lb_gaps    ->setVisible( !show );
 	  ct_gaps    ->setVisible( !show );
@@ -14310,6 +14383,7 @@ void US_Edit::pass_values_bll( void )
   if ( status != 0 ) return;
 
    emit pass_edit_params_blc( editProfile_triple_blc );
+   //emit pass_edit_params_blc_plot( cb_triple->currentIndex() );
    close();
 }
 

@@ -15,7 +15,6 @@
 //#include "us_license_t.h"
 //#include "us_license.h"
 
-
 class US_Edit : public US_Widgets
 {
    Q_OBJECT
@@ -39,6 +38,7 @@ class US_Edit : public US_Widgets
 
 	 bool us_edit_auto_mode;
 	 bool us_edit_auto_mode_manual;
+         bool us_edit_auto_mode_manual_bll;
 	 bool all_loaded;
 	 bool is_spike_auto;
 	  
@@ -50,6 +50,8 @@ class US_Edit : public US_Widgets
          QWidget* leftWidget;
          QWidget* rightWidget;	 
 
+         QPointF fixedPoint;
+         
       enum { MENISCUS, AIRGAP, RANGE, PLATEAU, BASELINE, BASELINE_LINEAR_CORR, FINISHED } step;
 
       class Edits
@@ -193,6 +195,7 @@ class US_Edit : public US_Widgets
       QwtPlotCurve*      raw_curve;
       QwtPlotCurve*      fit_curve;
       QwtPlotCurve*      v_line;
+      QwtPlotCurve*      line_to_mouse;
       QwtPlotCurve*      minimum_curve;
       QwtPlotGrid*       grid;
       QwtPlotMarker*     marker;
@@ -428,14 +431,12 @@ class US_Edit : public US_Widgets
       void set_data_over_lamda();
       void xaxis_wavl_wgts_on( bool );
 
-  //protected:
-  //  void resizeEvent(QResizeEvent *event) override;
-				     
    private slots:         
       void load              ( void );
       void load_auto         ( QMap < QString, QString > & );
       void load_manual_auto  ( void );
-      
+      void onMouseMoved(const QPointF& mousePos);
+  
       void process_optics_auto ( void );
       
       QMap< QString, QString> read_autoflow_record( int );
@@ -582,6 +583,7 @@ class US_Edit : public US_Widgets
       void update_triple_edit_params_includes (  QMap< QString, QList<int> >  & );
       void update_triple_edit_params_blc (  QMap < QString, QStringList > & );
       void update_triple_edit_params_blc_modified (  QMap < QString, QStringList > & );
+  //void update_triple_edit_params_blc_modified_plot ( int  );
       void restore_view( void );
       void set_current_bll_abde( QString, QString );
       
@@ -597,9 +599,11 @@ class US_Edit : public US_Widgets
       void pass_edit_params( QMap< QString, QStringList> & );
       void pass_edit_params_includes( QMap< QString, QList<int> > & );
       void pass_edit_params_blc( QMap< QString, QStringList> & );
+  //void pass_edit_params_blc_plot( int );
       void restore_main_view( void );
       
       void process_next_optics( void );
 };
 #endif
 
+ 
