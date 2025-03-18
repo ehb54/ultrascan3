@@ -1,0 +1,267 @@
+[% INCLUDE header.us3 title = 'UltraScan III Protocol Development' %]
+
+<h2><i>UltraScan</i> Protocol Development:</h2>
+
+<p>Allows for analysis profile optimization by re-attaching GMP runs at the <strong>'LIMS Import'</strong> stage with a modified <strong>'Aprofile'</strong></p>
+
+<h3>Manage Optima Runs:</h3>
+
+<p class="center">
+    <img src="images/gmp/protocol_development/Protocol_Development_01.png" alt="Manage Optima Runs"/>
+</p>
+
+<h3>Select Completed Autoflow Run:</h3>
+
+<p>Provides a list of completed GMP runs in the database, as well as the current reporting stage (Report generation or collection of e-signatures).</p>
+
+<p class="center">
+    <img src="images/gmp/protocol_development/Protocol_Development_02.png" alt="Select Completed Autoflow Run"/>
+</p>
+
+<p>A GMP run can be loaded from the database by highlighting it and clicking the <strong>'Select Item'</strong> button. This opens a modified <strong>'Data Acquisition Routine'</strong>, where the user can assign a new protocol name. However, the run name and experimental parameters cannot be changed, as the run is being reimported for editing and analysis.</p>
+
+<p>Sections 1-9 can be accessed in any order using the navigation bar at the top of the window or sequentially using the <strong>Previous Panel</strong> and <strong>Next Panel</strong> buttons at the bottom of the window.</p>
+
+<h3>1: General:</h3>
+
+<p>The protocol name is the only information that can be changed, since the source GMP run (Run Name, Label, Run Temperature and Temperature-Equilibration Delay) remains unchanged.</p>
+
+<p class="center">
+    <img src="images/gmp/protocol_development/Protocol_Development_03.png" alt="General settings"/>
+</p>
+
+<p class="center">
+    <img src="images/gmp/protocol_development/Protocol_Development_04.png" alt="General settings continued"/>
+</p>
+
+<h3>2: Lab/Rotor:</h3>
+
+<p>The user cannot change the laboratory, rotor, rotor calibration profile, instrument, and experiment types. The roles of Operator, Reviewer, Approver, and Subject Matter Expert (SME) can be re-assigned from the drop-down menus. See here for more information: <a href="gmp.html">UltraScan GMP Help</a></p>
+
+<h3>3: Speeds:</h3>
+
+<p>None of the run parameters in this window can be modified.</p>
+
+<p class="center">
+    <img src="images/gmp/protocol_development/Protocol_Development_05.png" alt="Speeds settings"/>
+</p>
+
+<h3>4: Cells:</h3>
+
+<p>None of the run parameters in this window can be modified.</p>
+
+<p class="center">
+    <img src="images/gmp/protocol_development/Protocol_Development_06.png" alt="Cells settings"/>
+</p>
+
+<h3>5: Solutions:</h3>
+
+<p>None of the run parameters in this window can be modified.</p>
+
+<p class="center">
+    <img src="images/gmp/protocol_development/Protocol_Development_07.png" alt="Solutions settings"/>
+</p>
+
+<h3>5b: Solution Details</h3>
+
+<p class="center">
+    <img src="images/gmp/protocol_development/Protocol_Development_08.png" alt="Solution Details"/>
+</p>
+
+<h3>6: Optics:</h3>
+
+<p>None of the run parameters in this window can be modified.</p>
+
+<p class="center">
+    <img src="images/gmp/protocol_development/Protocol_Development_09.png" alt="Optics settings"/>
+</p>
+
+<h3>7: Ranges:</h3>
+
+<p>None of the run parameters in this window can be modified.</p>
+
+<p class="center">
+    <img src="images/gmp/protocol_development/Protocol_Development_10.png" alt="Ranges settings"/>
+</p>
+
+<h3>7a: View Ranges</h3>
+
+<p class="center">
+    <img src="images/gmp/protocol_development/Protocol_Development_11.png" alt="View Ranges"/>
+</p>
+
+<h3>8: AProfile (Analysis Profile):</h3>
+
+<p>Define edit profiles, analysis parameters and report settings for the experiment.</p>
+
+<h4>1: General:</h4>
+
+<p class="center">
+    <img src="images/gmp/protocol_development/Protocol_Development_12.png" alt="Analysis Profile - General"/>
+</p>
+
+<p>Define numerical values for 'Loading Ratio', the '± %Tolerance', 'Loading Volume (μL)', the '± %Tolerance', and 'Data End (cm)'. The user can then select checkboxes to specify whether the analysis should be 'Run', and included in the 'Run Report'.</p>
+
+<p class="center">
+    <img src="images/gmp/protocol_development/Protocol_Development_13.png" alt="Report General Settings"/>
+</p>
+
+<p>The <strong>Report General Settings</strong> windows allow the user to select/deselect which of the protocol settings (Sections 1-8) will be presented in the report. The {down arrow} button can be used to collapse or expand each subsection.</p>
+
+<p class="center">
+    <img src="images/gmp/protocol_development/Protocol_Development_14.png" alt="Scan Exclusion Editor"/>
+</p>
+
+<p>The <strong>Scan Exclusion Editor</strong> allows the user to numerically define the number scans to be removed from the beginning and end of each channel, either by typing the value or using the arrows. The <strong>Apply to All</strong> button applies the values for the first channel to all channels.</p>
+
+<p class="center">
+    <img src="images/gmp/protocol_development/Protocol_Development_15.png" alt="Report Button"/>
+</p>
+
+<p>The <strong>Report</strong> button summons the channel-specific report settings window. The user defines the 'Total Concentration', the '± %Tolerance', 'RMSD (upper limit)', the '± %Tolerance', and the wavelength to extract these metrics from. The user then lists the expected 'Experiment Duration', the '± %Tolerance', and 'Minimum Intensity' at the selected wavelength from the xenon flash lamp that is deemed acceptable. In the 'Report Profile (Mask) Settings' the user can select the following: 'Total Concentration', 'Minimum Intensity', 'RMSD (upper limit)', 'Integration Results', 'Experiment Duration' and relevant plots (as well as the pseudo-3D plots for each parameter and analysis type) they wish to be included in the report.</p>
+
+<p class="center">
+    <img src="images/gmp/protocol_development/Protocol_Development_16.png" alt="Global Parameters"/>
+</p>
+
+<p><strong>Global Parameters for Combined Plots</strong> allows the user to define the plot minimum, plot maximum and Gaussian sigma for each plot type.</p>
+
+<h4>2: 2DSA</h4>
+
+<p class="center">
+    <img src="images/gmp/protocol_development/Protocol_Development_17.png" alt="2DSA settings"/>
+</p>
+
+<p>The user can define the 2-dimensional spectrum analysis (2DSA) controls for each channel. The grid size is defined by the minimum and maximum values for the sedimentation coefficient (<em>s</em>) and frictional ratio (<em>f/f0</em>), while the grid resolution is defined by the number of points for each of the parameters. A 2DSA <strong>Custom Grid</strong> (CG) can also be used if the user requires higher resolution in certain regions of the data, and only needs lower resolution in other regions. The user can also select to vary the partial specific volume or 'Vbar' parameter and hold the frictional ratio constant at a specified value. The <strong>Apply to All</strong> button can be used to apply these settings to all of the channels.</p>
+
+<p>The '2DSA Job Flow' panel allows the user to control which analysis steps are performed, including:</p>
+
+<ul>
+    <li>2DSA</li>
+    <li>2DSA with meniscus fit (FM), with a user-defined number of grid points, range (cm), and number of refinement iterations. The user can also choose to fit <strong>only the bottom of the channel</strong> or <strong>both the meniscus and the bottom.</strong></li>
+    <li>FITMEN meniscus processing, with the option to 'Auto-pick' the meniscus position</li>
+    <li>2DSA with iterative refinement (IT), with a user-defined number of iterations</li>
+    <li>2DSA with Monte Carlo iterations (MC), with a user-defined number of Monte Carlo iterations.</li>
+</ul>
+
+<h4>3: PCSA</h4>
+
+<p class="center">
+    <img src="images/gmp/protocol_development/Protocol_Development_18.png" alt="PCSA settings"/>
+</p>
+
+<p>The user can select the option to not include the parametrically-constrained spectrum analysis (PCSA) in the submitted jobs. If the box is left unchecked, the user can define the PCSA controls for each channel.</p>
+
+<p>The desired curve type is selected from the drop-down menu, and the user defines parameters for the x, y, and z axes.</p>
+
+<ul>
+    <li>The x and y axes are defined by minimum and maximum values</li>
+    <li>The z axis is assigned a value and a variation count</li>
+    <li>Numerical values are then assigned for the grid fit iterations and curve resolution points</li>
+</ul>
+
+<p>Optional settings include:</p>
+
+<ul>
+    <li>Time- and radially-invariant noise fitting</li>
+    <li>Tikhonov regularization, with either an auto-picked or manually-selected alpha</li>
+    <li>Number of Monte Carlo iterations.</li>
+</ul>
+
+<p>The 'Apply to All' button can be used to apply these parameters and settings to all of the channels.</p>
+
+<h3>9: Submit: Submit the protocol development run for processing</h3>
+
+<p class="center">
+    <img src="images/gmp/protocol_development/Protocol_Development_19.png" alt="Submit screen"/>
+</p>
+
+<h3>9a: View Experiment Details:</h3>
+
+<p>Summary of the information defined in sections 1-8.</p>
+
+<p class="center">
+    <img src="images/gmp/protocol_development/Protocol_Development_20.png" alt="Experiment Details"/>
+</p>
+
+<h3>9b: Submit the Run:</h3>
+
+<p>A new protocol name and GMP e-signer roles must be assigned before the 'Submit the Run' button becomes active and allows for submission. Submission prompts the following window:</p>
+
+<p class="center">
+    <img src="images/gmp/protocol_development/Protocol_Development_21.png" alt="Submit confirmation"/>
+</p>
+
+<p>The 'OK' button prompts the 'GMP Run Submitter Form', allowing the user to add a comment and prompting them for their master password for authentication.</p>
+
+<p class="center">
+    <img src="images/gmp/protocol_development/Protocol_Development_22.png" alt="GMP Run Submitter Form"/>
+</p>
+
+<p>The 'OK' button brings up the 'Run Reinitialization' window, which informs the user that 'Proceed' will delete existing edit profiles, models, and noises, and reinitialize at the EDIT stage.</p>
+
+<p class="center">
+    <img src="images/gmp/protocol_development/Protocol_Development_23.png" alt="Run Reinitialization"/>
+</p>
+
+<p>The program moves to the 'IMPORT' stage, which displays the last scan of each triple from the intensity data. The user is prompted with the <strong>Reference Scans: Automated Processing</strong> message:</p>
+
+<p class="center">
+    <img src="images/gmp/protocol_development/Protocol_Development_24.png" alt="Reference Scans"/>
+</p>
+
+<p>Clicking <strong>OK</strong> displays the converted absorbance data following the automated reference scan processing. If the user is not satisfied with the automated reference scans processing, the <strong>Undo Reference Scans</strong> button allows for them to be defined manually using the <strong>Define Reference Scans</strong> button. <strong>Drop Selected Triples</strong> can be used to drop unwanted triples.</p>
+
+<p class="center">
+    <img src="images/gmp/protocol_development/Protocol_Development_25.png" alt="Absorbance data"/>
+</p>
+
+<p>The <strong>Save</strong> button prompts the <strong>GMP Run IMPORT Form</strong>, allowing the user to add a comment and prompting them for their master password for authentication.</p>
+
+<p class="center">
+    <img src="images/gmp/protocol_development/Protocol_Development_26.png" alt="GMP Run IMPORT Form"/>
+</p>
+
+<p>Once the data has been saved, the user is notified that the program is proceeding to the editing stage:</p>
+
+<p class="center">
+    <img src="images/gmp/protocol_development/Protocol_Development_27.png" alt="Proceeding to edit stage"/>
+</p>
+
+<p>The editing window presents the user with the data edited in accordance with 'Data End' value and 'Excluded Scan Ranges' defined in the <strong>Aprofile</strong>. The 'Meniscus' position and 'Data Start' value are defined through automated processing. If the user is not satisfied with the automated processing, the <strong>Edit Currently Selected Profile Manually</strong> button allows for the 'Meniscus' position and 'Data End' values to be defined manually. <strong>Remove Spikes</strong> removes some sharp, irregular intensity spikes from data. Each cell/channel/wavelength triple can be cycled through using the <strong>Previous Triple</strong> and <strong>Next Triple</strong> buttons.</p>
+
+<p class="center">
+    <img src="images/gmp/protocol_development/Protocol_Development_28.png" alt="Editing window"/>
+</p>
+
+<p>The <strong>Save Edit Profiles</strong> button prompts the <strong>GMP Run EDIT Form</strong>, allowing the user to add a comment and prompting them for their master password for authentication.</p>
+
+<p class="center">
+    <img src="images/gmp/protocol_development/Protocol_Development_29.png" alt="GMP Run EDIT Form"/>
+</p>
+
+<p>Once the edited profiles have been saved, the user is notified that the program is proceeding to the analysis stage:</p>
+
+<p class="center">
+    <img src="images/gmp/protocol_development/Protocol_Development_30.png" alt="Proceeding to analysis stage"/>
+</p>
+
+<p>The analysis window displays the current status of the submitted jobs producing the models specified in the <strong>Aprofile</strong>. <strong>Cancel</strong> can be used to stop ongoing jobs. <strong>View Fit</strong> simulates completed model overlays and displays them. The <strong>Expand All Triples</strong> and <strong>Collapse All Triples</strong> buttons control all triples, while the {down arrow} button can be used to collapse or expand each individual triple.</p>
+
+<p class="center">
+    <img src="images/gmp/protocol_development/Protocol_Development_31.png" alt="Analysis window"/>
+</p>
+
+<p>Once the analysis stage is complete, the models are simulated and the report is built. Which prompts the <strong>Report Generation Complete</strong> message box.</p>
+
+<p class="center">
+    <img src="images/gmp/protocol_development/Protocol_Development_32.png" alt="Report Generation Complete"/>
+</p>
+
+<p>The <strong>View Report</strong> button opens the PDF file to be viewed:</p>
+
+<p class="center">
+    <img src="images/gmp/protocol_development/Protocol_Development_33.png" alt="PDF Report"/>
+</p>
+
+[% INCLUDE footer.us3 %]

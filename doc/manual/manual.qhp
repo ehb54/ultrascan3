@@ -10,15 +10,26 @@
         <filterAttribute>UltraScan</filterAttribute>
         <filterAttribute>III</filterAttribute>
         <toc>
-            <section title="UltraScan III User's Manual"     ref="index.html">
-                <section title="Quick Index"                 ref="index.html#quick"/>
-                <section title="Editing Sedimentation Data"  ref="index.html#edit"/>
-                <section title="Velocity Data Analysis"      ref="index.html#veloc"/>
-                <section title="Equilibrium Data Analysis"   ref="index.html#equil"/>
+            <section title="UltraScan III User's Manual"        ref="index.html">
+                <section title="Quick Index"                    ref="index.html#quick"/>
+                <section title="Editing Sedimentation Data"     ref="index.html#edit"/>
+                <section title="Velocity Data Analysis"         ref="index.html#veloc"/>
+                <section title="Equilibrium Data Analysis"      ref="index.html#equil"/>
                 <section title="Nonlinear Least Squares Analysis"  ref="index.html#least2"/>
-                <section title="Monte Carlo Analysis"        ref="index.html#monte"/>
-                <section title="Utilities"                   ref="index.html#utils"/>
-                <section title="Simulation Programs"         ref="index.html#simulation"/>
+                <section title="Monte Carlo Analysis"           ref="index.html#monte"/>
+                <section title="Utilities"                      ref="index.html#utils"/>
+                <section title="Simulation Programs"            ref="index.html#simulation"/>
+                <section title="GMP"                            ref="index.html#gmp">
+                    <section title="GMP Role"                   ref="gmp.html"/>
+                    <section title="Data Acquisition"       ref="gmp_data_acquisition.html">
+                        <section title="GMP Define Another Experiment" ref="gmp_data_acquisition_experiment.html"/>
+                        <section title="GMP Data Acquisition" ref="gmp_data_acquisition_gmp.html"/>
+                    </section>
+                    <section title="GMP Protocol Development"   ref="gmp_protocol.html"/>
+                    <section title="GMP Report Generator and Viewer" ref="gmp_report.html"/>
+                    <section title="GMP Signature Assignment"   ref="gmp_signature.html"/>
+                    <section title="GMP Audit Trail"            ref="gmp_audit.html"/>
+                </section>
                 <section title="UltraScan Database Frontend" ref="index.html#database"/>
                 <section title="Additional Information"      ref="index.html#additional"/>
             </section>
@@ -50,7 +61,8 @@
             <keyword id="f3" name="fds-fileman"      ref="us_fds_filemanager.html"/>
             <keyword id="g1" name="ga-initialize"    ref="ga_initialize.html"/>
             <keyword id="g2" name="global-model"     ref="combine_models.html"/>
-            <keyword id="g3" name="gradient"         ref="colorgradient.html"/>
+            <keyword id="g3" name="gmp"              ref="gmp.html"/>
+            <keyword id="g4" name="gradient"         ref="colorgradient.html"/>
             <keyword id="i1" name="investigator"     ref="us_investigator.html"/>
             <keyword id="l1" name="license"          ref="register.html"/>
             <keyword id="l2" name="load-colormap"    ref="load_colormap.html"/>
@@ -440,6 +452,14 @@
             <file>us_buffer_spect.img.html</file>
             <file>vhw_combine-selrun.img.html</file>
             <file>vhw_enh_groups.img.html</file>
+
+            <file>*.html</file>
+            <file>images/gmp/*.png</file>
+            <file>images/gmp/data_acquisition/*.png</file>
+            <file>images/gmp/data_acquisition/experiment/*.png</file>
+            <file>images/gmp/data_acquisition/gmp/*.png</file>
+            <file>images/gmp/protocol_development/*.png</file>
+
         </files>
     </filterSection>
 </QtHelpProject> 
