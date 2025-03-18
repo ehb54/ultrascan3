@@ -14,9 +14,11 @@ static vector < double > bblm_ref_t;
 static vector < double > bblm_ref_I;
 static vector < double > bblm_ref_errors_mult;
 static vector < double > bblm_init_params;
+static vector < double > bblm_fixed_params;
 static size_t bblm_size;
 static double bblm_scale;
 static bool   bblm_ref_has_errors;
+static vector < bool >   bblm_fit_param;
 
 static unordered_map < double,
                        unordered_map < double,
@@ -28,9 +30,12 @@ static double bblm_fit( double t, const double *par ) {
    // qDebug() << "bblm_fit 0";
    static US_Saxs_Util usu;
 
-   double tau    = par[0];
-   double sigma  = par[1];
-   double deltat = par[2];
+   size_t pos       = 0;
+   size_t pos_fixed = 0;
+   double tau       = bblm_fit_param[ 0 ] ? par[pos++] : bblm_fixed_params[ pos_fixed++ ];
+   double sigma     = bblm_fit_param[ 1 ] ? par[pos++] : bblm_fixed_params[ pos_fixed++ ];
+   double deltat    = bblm_fit_param[ 2 ] ? par[pos++] : bblm_fixed_params[ pos_fixed++ ];
+   double baseline  = bblm_fit_param[ 3 ] ? par[pos++] : bblm_fixed_params[ pos_fixed++ ];
 
    if ( tau < 0 ) {
       return DBL_MAX;
@@ -55,7 +60,7 @@ static double bblm_fit( double t, const double *par ) {
          return DBL_MAX;
       }
 
-      return bblm_broadened_conc_I_cache[ tau ][ sigma ][ deltat ][ (size_t) t ];
+      return bblm_broadened_conc_I_cache[ tau ][ sigma ][ deltat ][ (size_t) t ] + baseline * bblm_scale;
    }
 
    if ( !uhsh->broaden_compute_one_no_ui(
@@ -123,7 +128,7 @@ static double bblm_fit( double t, const double *par ) {
       return DBL_MAX;
    }
 
-   return new_conc_I[ (size_t) t ];
+   return new_conc_I[ (size_t) t ] + baseline * bblm_scale;
 }
    
 
@@ -374,6 +379,7 @@ void US_Hydrodyn_Saxs_Hplc::broaden_done( bool save ) {
 
             double fit_range_start = le_broaden_fit_range_start->text().toDouble();
             double fit_range_end   = le_broaden_fit_range_end  ->text().toDouble();
+            double baseline        = le_broaden_baseline       ->text().toDouble();
 
             vector < double > conc_t = ts;
             vector < double > conc_I = I;
@@ -394,6 +400,7 @@ void US_Hydrodyn_Saxs_Hplc::broaden_done( bool save ) {
 
                for ( auto & I : I_interp ) {
                   I *= broaden_scale;
+                  I += baseline;
                }
 
                add_plot( name, f_qs[ broaden_names[ 1 ] ], I_interp, true, false );
@@ -422,19 +429,24 @@ void US_Hydrodyn_Saxs_Hplc::broaden_done( bool save ) {
 void US_Hydrodyn_Saxs_Hplc::broaden_enables() {
    TSO << "US_Hydrodyn_Saxs_Hplc::broaden_enables() start\n";
 
+   cb_broaden_tau               -> setEnabled( true );
    le_broaden_tau_start         -> setEnabled( true );
    le_broaden_tau               -> setEnabled( true );
    le_broaden_tau_end           -> setEnabled( true );
    le_broaden_tau_delta         -> setEnabled( true );
+   cb_broaden_sigma             -> setEnabled( true );
    le_broaden_sigma_start       -> setEnabled( true );
    le_broaden_sigma             -> setEnabled( true );
    le_broaden_sigma_end         -> setEnabled( true );
    le_broaden_sigma_delta       -> setEnabled( true );
-   le_broaden_baseline          -> setEnabled( false );
+   cb_broaden_deltat            -> setEnabled( true );
    le_broaden_deltat_start      -> setEnabled( true );
    le_broaden_deltat            -> setEnabled( true );
    le_broaden_deltat_end        -> setEnabled( true );
    le_broaden_deltat_delta      -> setEnabled( true );
+   cb_broaden_baseline          -> setEnabled( false );
+   le_broaden_baseline          -> setEnabled( false );
+   le_broaden_baseline          -> setText( "0" );
    le_broaden_kernel_end        -> setEnabled( true );
    le_broaden_kernel_deltat     -> setEnabled( true );
    cb_broaden_repeak            -> setEnabled( true );
@@ -443,9 +455,22 @@ void US_Hydrodyn_Saxs_Hplc::broaden_enables() {
    cb_broaden_kernel_type       -> setEnabled( true );
    pb_broaden_minimize          -> setEnabled( true );
    pb_broaden_reset             -> setEnabled( true );
+
+   {
+      double fit_range_start = le_broaden_fit_range_start->text().toDouble();
+      double fit_range_end   = le_broaden_fit_range_end  ->text().toDouble();
+      pb_broaden_fit               -> setEnabled(
+                                                 ( cb_broaden_tau->isChecked()
+                                                   || cb_broaden_sigma->isChecked()
+                                                   || cb_broaden_deltat->isChecked()
+                                                   || cb_broaden_baseline->isChecked()
+                                                   ) &&
+                                                 fit_range_start < fit_range_end
+                                                 );
+   }
+
    pb_wheel_cancel              -> setEnabled( true );
    pb_wheel_save                -> setEnabled( broaden_names.size() == 3 );
-   pb_broaden_fit               -> setEnabled( true );
 
    // for grid fit
    // {
@@ -508,6 +533,27 @@ void US_Hydrodyn_Saxs_Hplc::broaden_minimize() {
 
 void US_Hydrodyn_Saxs_Hplc::broaden_reset() {
    TSO << "US_Hydrodyn_Saxs_Hplc::broaden_reset() start\n";
+
+   cb_broaden_tau      ->setChecked( true );
+   le_broaden_tau      ->setText( "0" );
+
+   cb_broaden_sigma    ->setChecked( true );
+   le_broaden_sigma    ->setText( "0" );
+
+   cb_broaden_deltat   ->setChecked( true );
+   le_broaden_deltat   ->setText( "0" );
+
+   cb_broaden_baseline ->setChecked( false );
+   le_broaden_baseline ->setText( "0" );
+
+   broaden_compute_one();
+
+   broaden_enables();
+}
+
+void US_Hydrodyn_Saxs_Hplc::set_broaden_tau() {
+   TSO << "US_Hydrodyn_Saxs_Hplc::set_broaden_tau() start\n";
+   broaden_enables();
 }
 
 void US_Hydrodyn_Saxs_Hplc::broaden_tau_start_text( const QString & ) {
@@ -546,6 +592,11 @@ void US_Hydrodyn_Saxs_Hplc::broaden_tau_delta_text( const QString & ) {
 
 void US_Hydrodyn_Saxs_Hplc::broaden_tau_delta_focus( bool ) {
    TSO << "US_Hydrodyn_Saxs_Hplc::broaden_tau_delta_focus() start\n";
+   broaden_enables();
+}
+
+void US_Hydrodyn_Saxs_Hplc::set_broaden_sigma() {
+   TSO << "US_Hydrodyn_Saxs_Hplc::set_broaden_sigma() start\n";
    broaden_enables();
 }
 
@@ -588,16 +639,9 @@ void US_Hydrodyn_Saxs_Hplc::broaden_sigma_delta_focus( bool ) {
    broaden_enables();
 }
 
-void US_Hydrodyn_Saxs_Hplc::broaden_baseline_text( const QString & ) {
-   TSO << "US_Hydrodyn_Saxs_Hplc::broaden_baseline_text() start\n";
-}
-
-void US_Hydrodyn_Saxs_Hplc::broaden_baseline_focus( bool hasFocus ) {
-   TSO << "US_Hydrodyn_Saxs_Hplc::broaden_baseline_focus() start\n";
+void US_Hydrodyn_Saxs_Hplc::set_broaden_deltat() {
+   TSO << "US_Hydrodyn_Saxs_Hplc::set_broaden_deltat() start\n";
    broaden_enables();
-   if ( !hasFocus ) {
-      broaden_compute_one();
-   }
 }
 
 void US_Hydrodyn_Saxs_Hplc::broaden_deltat_start_text( const QString & ) {
@@ -637,6 +681,23 @@ void US_Hydrodyn_Saxs_Hplc::broaden_deltat_delta_text( const QString & ) {
 void US_Hydrodyn_Saxs_Hplc::broaden_deltat_delta_focus( bool ) {
    TSO << "US_Hydrodyn_Saxs_Hplc::broaden_deltat_delta_focus() start\n";
    broaden_enables();
+}
+
+void US_Hydrodyn_Saxs_Hplc::set_broaden_baseline() {
+   TSO << "US_Hydrodyn_Saxs_Hplc::set_broaden_baseline() start\n";
+   broaden_enables();
+}
+
+void US_Hydrodyn_Saxs_Hplc::broaden_baseline_text( const QString & ) {
+   TSO << "US_Hydrodyn_Saxs_Hplc::broaden_baseline_text() start\n";
+}
+
+void US_Hydrodyn_Saxs_Hplc::broaden_baseline_focus( bool hasFocus ) {
+   TSO << "US_Hydrodyn_Saxs_Hplc::broaden_baseline_focus() start\n";
+   broaden_enables();
+   if ( !hasFocus ) {
+      broaden_compute_one();
+   }
 }
 
 void US_Hydrodyn_Saxs_Hplc::broaden_kernel_end_text( const QString & ) {
@@ -792,9 +853,11 @@ void US_Hydrodyn_Saxs_Hplc::broaden_compute_one() {
       if ( cb_broaden_repeak->isChecked() ) {
          QStringList files;
          files << broaden_names[ 1 ];
+         double baseline = le_broaden_baseline       ->text().toDouble();
          QString broadened_not_repeaked = broaden_names.takeLast();
          for ( auto & I : f_Is[ broadened_not_repeaked ] ) {
             I *= broaden_scale;
+            I += baseline;
          }
          add_plot(
                   QString( "%1_ab_%2" ).arg( broadened_not_repeaked ).arg( broaden_scale )
@@ -834,6 +897,8 @@ void US_Hydrodyn_Saxs_Hplc::broaden_compute_one() {
 void US_Hydrodyn_Saxs_Hplc::broaden_lm_fit() {
    TSO << "US_Hydrodyn_Saxs_Hplc::broaden_lm_fit() start\n";
 
+   editor_msg( "darkblue", us_tr( "Broaden fit starting\n" ) );
+
    running = true;
 
    disable_all();
@@ -842,11 +907,40 @@ void US_Hydrodyn_Saxs_Hplc::broaden_lm_fit() {
 
    bblm_broadened_conc_I_cache.clear();
 
-   bblm_init_params.resize(3);
-   bblm_init_params[ 0 ]  = le_broaden_tau           ->text().toDouble();
-   bblm_init_params[ 1 ]  = le_broaden_sigma         ->text().toDouble();
-   bblm_init_params[ 2 ]  = le_broaden_deltat        ->text().toDouble();
+   bblm_init_params.clear();
+   bblm_fixed_params.clear();
+
+   vector < bool > fit_param( 4, false );
+   bblm_fit_param = fit_param;
    
+   if ( cb_broaden_tau->isChecked() ) {
+      bblm_init_params.push_back( le_broaden_tau->text().toDouble() );
+      bblm_fit_param[ 0 ] = true;
+   } else {
+      bblm_fixed_params.push_back( le_broaden_tau->text().toDouble() );
+   }
+
+   if ( cb_broaden_sigma->isChecked() ) {
+      bblm_init_params.push_back( le_broaden_sigma->text().toDouble() );
+      bblm_fit_param[ 1 ] = true;
+   } else {
+      bblm_fixed_params.push_back( le_broaden_sigma->text().toDouble() );
+   }
+
+   if ( cb_broaden_deltat->isChecked() ) {
+      bblm_init_params.push_back( le_broaden_deltat->text().toDouble() );
+      bblm_fit_param[ 2 ] = true;
+   } else {
+      bblm_fixed_params.push_back( le_broaden_deltat->text().toDouble() );
+   }
+
+   if ( cb_broaden_baseline->isChecked() ) {
+      bblm_init_params.push_back( le_broaden_baseline->text().toDouble() );
+      bblm_fit_param[ 3 ] = true;
+   } else {
+      bblm_fixed_params.push_back( le_broaden_baseline->text().toDouble() );
+   }
+      
    bblm_kernel_size       = le_broaden_kernel_end    ->text().toDouble();
    bblm_kernel_delta_t    = le_broaden_kernel_deltat ->text().toDouble();
 
@@ -897,7 +991,6 @@ void US_Hydrodyn_Saxs_Hplc::broaden_lm_fit() {
       }
    }      
 
-
    double area_ref  = discrete_area_under_curve( bblm_ref_t, bblm_ref_I, fit_range_start, fit_range_end );
    double area_conc = discrete_area_under_curve( bblm_org_conc_t, bblm_org_conc_I, fit_range_start, fit_range_end );
    if ( area_conc <= 0 ) {
@@ -931,61 +1024,129 @@ void US_Hydrodyn_Saxs_Hplc::broaden_lm_fit() {
    vector < double > t( bblm_ref_I.size() );
    iota( t.begin(), t.end(), 0 );
 
-   US_Vector::printvector2( "t, y", t, y );
+   // US_Vector::printvector2( "t, y", t, y );
 
    srand(time(0));
 
-   vector < vector < double > > init_params =
-      {
-         bblm_init_params
-         ,{ bblm_init_params[ 0 ], 0, 0 }
-         ,{ 0, bblm_init_params[ 1 ], 0 }
-         ,{ 0, 0, bblm_init_params[ 2 ] }
-         ,{ 0, 0, 0 }
-         ,{ 0, 0, 0 }
-         ,{ 0, 0, 0 }
-         ,{ 1, 0, 0 }
-         ,{ 0, 1, 0 }
-         ,{ 0, 0, 1 }
-         ,{ 1, 1, 0 }
-         ,{ 1, 0, 1 }
-         ,{ 0, 1, 1 }
-         ,{ 1, 1, 1 }
-      };
-
-   #define RANDOM_RESTARTS 5
-
-   for ( size_t i = 0; i < RANDOM_RESTARTS; ++i ) {
-      init_params.push_back( { (double) ( rand() / RAND_MAX ), (double) ( rand() / RAND_MAX ), (double) ( rand() / RAND_MAX ) } );
+   size_t params_size = bblm_init_params.size();
+   
+   if ( !params_size ) {
+      editor_msg( "red", us_tr( "Error: no parameters to fit\n" ) );
+      running = false;
+      broaden_enables();
+      progress->reset();
+      return;
    }
 
-   progress->setMaximum( init_params.size() );
+   vector < vector < double > > init_params;
 
+   {
+      // generate init_params
+
+      size_t permuts = (size_t) pow( 2, (int)params_size );
+
+      for ( size_t i = 0; i < permuts; ++i ) {
+         vector < double > this_init( params_size );
+         for ( size_t j = 0; j < params_size; ++j ) {
+            this_init[ j ] = i & ( 1 << j ) ? 1 : 0;
+         }
+         init_params.push_back( this_init );
+      }
+
+      init_params.push_back( bblm_init_params );
+      
+      for ( size_t j = 0; j < params_size; ++j ) {
+         vector < double > this_init( params_size, 0 );
+         this_init[ j ] = bblm_init_params[ j ];
+         init_params.push_back( this_init );
+      }
+   }         
+      
+   #define RANDOM_RESTARTS 10
+
+   for ( size_t i = 0; i < RANDOM_RESTARTS; ++i ) {
+      vector < double > this_init( params_size );
+      for ( size_t j = 0; j < params_size; ++j ) {
+         this_init[ j ] = (double) ( rand() / (double) RAND_MAX );
+      }
+      init_params.push_back( this_init );
+      auto rv = rand();
+      US_Vector::printvector( QString( "randoms rand() %1 RAND_MAX %2 rand()/RAND_MAX %3 " ).arg( rv ).arg( RAND_MAX ).arg( rv / (double) RAND_MAX ), this_init );
+   }
+
+   #define REFITS 5
+
+   progress->setMaximum( init_params.size() + REFITS );
    size_t pos = 0;
 
    vector < double > best_params = init_params[ 0 ];
    double best_fit = DBL_MAX;
 
-   for ( auto this_params : init_params ) {
-      progress->setValue( pos++ );
-      qApp->processEvents();
+   {
+      set < vector < double > > already_run;
+
+      for ( auto this_params : init_params ) {
+         progress->setValue( pos++ );
+         qApp->processEvents();
       
-      // US_Vector::printvector( "lmcurve_fit_rmsd init", this_params );
+         US_Vector::printvector( "--> lmcurve_fit_rmsd init", this_params );
 
-      LM::lmcurve_fit_rmsd( ( int )      this_params.size(),
-                            ( double * ) &( this_params[ 0 ] ),
-                            ( int )      t.size(),
-                            ( double * ) &( t[ 0 ] ),
-                            ( double * ) &( y[ 0 ] ),
-                            bblm_fit,
-                            (const LM::lm_control_struct *)&control,
-                            &status );
+         if ( already_run.count( this_params ) ) {
+            TSO << "already run, skipping\n";
+            continue;
+         }
+            
+         already_run.insert( this_params );
 
-      // US_Vector::printvector( QString( "lmcurve_fit_rmsd fnorm %1" ).arg( status.fnorm ), this_params );
+         LM::lmcurve_fit_rmsd( ( int )      this_params.size(),
+                               ( double * ) &( this_params[ 0 ] ),
+                               ( int )      t.size(),
+                               ( double * ) &( t[ 0 ] ),
+                               ( double * ) &( y[ 0 ] ),
+                               bblm_fit,
+                               (const LM::lm_control_struct *)&control,
+                               &status );
 
-      if ( best_fit > status.fnorm ) {
-         best_fit    = status.fnorm;
-         best_params = this_params;
+         // US_Vector::printvector( QString( "lmcurve_fit_rmsd fnorm %1" ).arg( status.fnorm ), this_params );
+
+         if ( best_fit > status.fnorm ) {
+            best_fit    = status.fnorm;
+            best_params = this_params;
+         }
+      }
+
+      // rerun from final best fit
+
+      for ( size_t i = 0; i < REFITS; ++i ) {
+         progress->setValue( pos++ );
+         qApp->processEvents();
+      
+         vector < double > this_params = best_params;
+
+         if ( already_run.count( this_params ) ) {
+            TSO << "already run, skipping\n";
+            continue;
+         }
+
+         already_run.insert( this_params );
+
+         US_Vector::printvector( QString( "--> refinement %1 of %2 lmcurve_fit_rmsd final refinement" ).arg( i+1 ).arg( REFITS ), this_params );
+
+         LM::lmcurve_fit_rmsd( ( int )      this_params.size(),
+                               ( double * ) &( this_params[ 0 ] ),
+                               ( int )      t.size(),
+                               ( double * ) &( t[ 0 ] ),
+                               ( double * ) &( y[ 0 ] ),
+                               bblm_fit,
+                               (const LM::lm_control_struct *)&control,
+                               &status );
+
+         // US_Vector::printvector( QString( "lmcurve_fit_rmsd fnorm %1" ).arg( status.fnorm ), this_params );
+
+         if ( best_fit > status.fnorm ) {
+            best_fit    = status.fnorm;
+            best_params = this_params;
+         }
       }
    }
 
@@ -995,9 +1156,25 @@ void US_Hydrodyn_Saxs_Hplc::broaden_lm_fit() {
 
    US_Vector::printvector( "bblm_init_param after lmcurve_fit_rmsd", bblm_init_params );
 
-   le_broaden_tau           ->setText( QString( "%1" ).arg( best_params[ 0 ], 0, 'g', 6 ) );
-   le_broaden_sigma         ->setText( QString( "%1" ).arg( best_params[ 1 ], 0, 'g', 6 ) );
-   le_broaden_deltat        ->setText( QString( "%1" ).arg( best_params[ 2 ], 0, 'g', 6 ) );
+   {
+      size_t pos = 0;
+
+      if ( cb_broaden_tau->isChecked() ) {
+         le_broaden_tau     ->setText( QString( "%1" ).arg( best_params[ pos++ ], 0, 'g', 6 ) );
+      }
+
+      if ( cb_broaden_sigma->isChecked() ) {
+         le_broaden_sigma   ->setText( QString( "%1" ).arg( best_params[ pos++ ], 0, 'g', 6 ) );
+      }
+
+      if ( cb_broaden_deltat->isChecked() ) {
+         le_broaden_deltat  ->setText( QString( "%1" ).arg( best_params[ pos++ ], 0, 'g', 6 ) );
+      }
+
+      if ( cb_broaden_baseline->isChecked() ) {
+         le_broaden_baseline->setText( QString( "%1" ).arg( best_params[ pos++ ], 0, 'g', 6 ) );
+      }
+   }
 
    // double loss = bblm_fit( 0, &( bblm_init_params[ 0 ] ) );
 
@@ -1016,6 +1193,7 @@ void US_Hydrodyn_Saxs_Hplc::broaden_lm_fit() {
    running = false;
    broaden_enables();
    progress->reset();
+   editor_msg( "darkblue", us_tr( "Broaden fit finished\n" ) );
 }
 
 void US_Hydrodyn_Saxs_Hplc::broaden_fit() {
