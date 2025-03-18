@@ -47,35 +47,4 @@ title = 'UltraScan III GMP' %]
 
 <p class="center"><img src="images/gmp/gmp.png" alt="GMP Outline"/></p>
 
-<ul>
-    <li>
-        <b><a href="gmp_data_acquisition.html">Data Acquisition Routine</a></b>
-        <ul>
-            <li>
-                <a href="gmp_data_acquisition_experiment.html">Define Another Experiment</a>
-            </li>
-            <li>
-                <a href="gmp_data_acquisition_gmp.html">GMP Data Acquisition</a>
-            </li>
-        </ul>
-    </li>
-
-    <li>
-        <b><a href="gmp_protocol_development.html">Protocol Development</a></b>
-    </li>
-
-    <li>
-        <b><a href="gmp_report_generator.html">GMP Report Generator and Viewer</a></b>
-    </li>
-
-    <li>
-        <b><a href="gmp_esignature.html">e-Signature Assignment</a></b>
-    </li>
-
-    <li>
-        <b><a href="gmp_audit_trail.html">Audit Trail</a></b>
-    </li>
-
-</ul>
-
 [% INCLUDE "footer.us3" %]
