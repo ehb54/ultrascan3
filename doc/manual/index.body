@@ -7,7 +7,6 @@
 <ul>
   <li> <a href="#edit">Editing Sedimentation Data</a> </li>
   <li> <a href="#veloc">Velocity Data Analysis</a> </li>
-  <li> <a href="#equil">Equilibrium Data Analysis</a> </li>
   <li> <a href="#global">Global Fit</a> </li>
   <li> <a href="#utils">Utilities</a> </li>
   <li> <a href="#simulation">Simulation Programs</a> </li>
@@ -45,16 +44,8 @@
   </li>
 
   <li>
-    <b><a name="equil" id="equil">Equilibrium Data Analysis</a>:</b>
-    <ul>
-      <li> <a href="global_equil.html">Global Fit</a> </li>
-    </ul>
-  </li>
-
-  <li>
     <b><a name="global" id="global">Global Fit</a></b>
     <ul>
-      <li> <a href="global_equil.html">Global Equilibrium Fit</a> </li>
       <li> <a href="combine_models.html">Create Global Model</a> </li>
     </ul>
   </li>
@@ -103,9 +94,9 @@
         </ul>
       </li>
       <li> <a href="gmp_protocol_development.html">GMP Protocol Development</a> </li>
-      <li> <a href="gmp_report.html">GMP Report Generator and Viewer</a> </li>
+      <li> <a href="gmp_report_generator.html">GMP Report Generator and Viewer</a> </li>
       <li> <a href="gmp_signature.html">GMP Signature Assignment</a> </li>
-      <li> <a href="gmp_audit.html">GMP Audit Trail</a> </li>
+      <li> <a href="gmp_audit_trail.html">GMP Audit Trail</a> </li>
     </ul>
   </li>
 

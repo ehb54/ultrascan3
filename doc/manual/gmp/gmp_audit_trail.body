@@ -1,0 +1,23 @@
+[% INCLUDE header.us3 title = 'UltraScan III GMP Audit Trail' %]
+
+<h2><i>UltraScan</i> Audit Trail:</h2>
+
+<p>Logs all user interactions and electronic signatures for a GMP report PDF file.</p>
+
+<p class="center">
+    <img src="images/gmp/audit_trail/gmp_audit_trail_01.png" alt="GMP Audit Trail Interface"/>
+</p>
+
+<p>A GMP run can be loaded from the database by highlighting it and clicking the <strong>'Select Item'</strong> button. The user is then presented with the following interface:</p>
+
+<p class="center">
+    <img src="images/gmp/audit_trail/gmp_audit_trail_02.png" alt="Audit Trail Details"/>
+</p>
+
+<p><strong>'e-Sign STATUS'</strong> section records the user ID, name, role, date, time, comments, and signing status for the GMP run.</p>
+
+<p><strong>'User INPUTS'</strong> section logs all user interactions at various stages of the GMP run to ensure traceability. Each entry includes the user ID, date, time, and associated comments.</p>
+
+<p><strong>'View .PDF of the Audit Trail of the Currently Loaded GMP Run'</strong> loads the audit trail PDF file containing a record of all user interactions and e-signatures associated with the GMP run. This PDF file is a summary of the 'e-Sign STATUS' and 'User INPUTS' sections.</p>
+
+[% INCLUDE footer.us3 %]

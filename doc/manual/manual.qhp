@@ -10,28 +10,83 @@
         <filterAttribute>UltraScan</filterAttribute>
         <filterAttribute>III</filterAttribute>
         <toc>
-            <section title="UltraScan III User's Manual"        ref="index.html">
-                <section title="Quick Index"                    ref="index.html#quick"/>
-                <section title="Editing Sedimentation Data"     ref="index.html#edit"/>
-                <section title="Velocity Data Analysis"         ref="index.html#veloc"/>
-                <section title="Equilibrium Data Analysis"      ref="index.html#equil"/>
-                <section title="Nonlinear Least Squares Analysis"  ref="index.html#least2"/>
-                <section title="Monte Carlo Analysis"           ref="index.html#monte"/>
-                <section title="Utilities"                      ref="index.html#utils"/>
-                <section title="Simulation Programs"            ref="index.html#simulation"/>
-                <section title="GMP"                            ref="index.html#gmp">
-                    <section title="GMP Role"                   ref="gmp.html"/>
-                    <section title="Data Acquisition"       ref="gmp_data_acquisition.html">
+            <section title="UltraScan III User's Manual" ref="index.html">
+                <section title="Quick Index" ref="index.html#quick"/>
+                <section title="Editing Sedimentation Data" ref="index.html#edit">
+                    <section title="Editing Data" ref="us_edit.html"/>
+                    <section title="UltraScan III Configuration" ref="config.html"/>
+                </section>
+                <section title="Velocity Data Analysis" ref="index.html#veloc">
+                    <section title="Enhanced van Holde - Weischet" ref="vhw_enhanced.html"/>
+                    <section title="Custom 2-D Grid Editor" ref="grid_editor.html"/>
+                    <section title="2-D Spectrum Analysis" ref="2dsa.html"/>
+                    <section title="Parametrically Constrained Spectrum Analysis" ref="pcsa.html"/>
+                    <section title="Initialize Genetic Algorithm" ref="ga_initialize.html"/>
+                    <section title="Second Moment" ref="second_moment.html"/>
+                    <section title="Time Derivative" ref="time_derivative.html"/>
+                    <section title="Finite Element Model Viewer" ref="fe_match.html"/>
+                    <section title="Finite Element Model Statistics" ref="us_modelmetrics.html"/>
+                    <section title="Combine Pseudo-3D Distributions" ref="pseudo3d_combine.html"/>
+                </section>
+                <section title="Global Fit" ref="index.html#global">
+                    <section title="Create Global Model" ref="combine_models.html"/>
+                </section>
+                <section title="Utilities" ref="index.html#utils">
+                    <section title="Import Experimental Data" ref="convert.html"/>
+                    <section title="Export Experimental Data" ref="export_legacy.html"/>
+                    <section title="Create Experiment" ref="experiment_general.html"/>
+                    <section title="Fluorescence Data File Manager" ref="us_fds_filemanager.html"/>
+                    <section title="Fit Meniscus" ref="fit_meniscus.html"/>
+                    <section title="Color Gradient Generator" ref="colorgradient.html"/>
+                    <section title="Report Generator" ref="reporter.html"/>
+                    <section title="Rotor Calibration" ref="rotor.html"/>
+                    <section title="License Manager and Registration" ref="register.html"/>
+                    <section title="Combine Distribution Plots (vHW)" ref="vhw_combine.html"/>
+                    <section title="Combine Discrete Distributions" ref="ddist_combine.html"/>
+                    <section title="Create Global Model" ref="combine_models.html"/>
+                    <section title="Multi-Wavelength Raw Viewer" ref="mwlr_viewer.html"/>
+                    <section title="CFA Raw Viewer and Converter" ref="cfa_viewer.html"/>
+                    <section title="Density Matching" ref="dens_match.html"/>
+                </section>
+                <section title="Simulation Programs" ref="index.html#simulation">
+                    <section title="Finite Element Simulation (ASTFEM)" ref="astfem_sim.html"/>
+                    <section title="Estimate Equilibrium Times" ref="us_equiltime.html"/>
+                    <section title="Self-Association Equilibrium" ref="sassoc.html"/>
+                    <section title="Model s, D and f from MW for 4 basic shapes" ref="predict1.html"/>
+                    <section title="Predict f and axial ratios for 4 basic shapes" ref="predict2.html"/>
+                    <section title="SOMO Bead Modeling" ref="somo.html"/>
+                </section>
+                <section title="GMP" ref="index.html#gmp">
+                    <section title="GMP Roles" ref="gmp.html"/>
+                    <section title="Data Acquisition" ref="gmp_data_acquisition.html">
                         <section title="GMP Define Another Experiment" ref="gmp_data_acquisition_experiment.html"/>
                         <section title="GMP Data Acquisition" ref="gmp_data_acquisition_gmp.html"/>
                     </section>
-                    <section title="GMP Protocol Development"   ref="gmp_protocol.html"/>
-                    <section title="GMP Report Generator and Viewer" ref="gmp_report.html"/>
-                    <section title="GMP Signature Assignment"   ref="gmp_signature.html"/>
-                    <section title="GMP Audit Trail"            ref="gmp_audit.html"/>
+                    <section title="GMP Protocol Development" ref="gmp_protocol_development.html"/>
+                    <section title="GMP Report Generator and Viewer" ref="gmp_report_generator.html"/>
+                    <section title="GMP Signature Assignment" ref="gmp_signature.html"/>
+                    <section title="GMP Audit Trail" ref="gmp_audit_trail.html"/>
                 </section>
-                <section title="UltraScan Database Frontend" ref="index.html#database"/>
-                <section title="Additional Information"      ref="index.html#additional"/>
+                <section title="Database Frontend" ref="index.html#database">
+                    <section title="Manage Investigator Data" ref="us_investigator.html"/>
+                    <section title="Manage Buffer Data" ref="buffer_select.html"/>
+                    <section title="Manage Analytes" ref="analytes.html"/>
+                    <section title="Manage Models" ref="model_editor.html"/>
+                    <section title="Manage Data" ref="manage_data.html"/>
+                    <section title="Manage Solutions" ref="us_solution.html"/>
+                    <section title="Manage Projects" ref="us_project.html"/>
+                    <section title="Manage Rotors" ref="rotor.html"/>
+                </section>
+                <section title="Common Dialogs" ref="index.html#dialogs">
+                    <section title="Load Experiment Data" ref="data_loader.html"/>
+                    <section title="Load Model" ref="load_model_distrib.html"/>
+                    <section title="Load Noise" ref="load_noise.html"/>
+                    <section title="Load Color Map" ref="load_colormap.html"/>
+                    <section title="Define a Color" ref="uscol.html"/>
+                </section>
+                <section title="Additional Information" ref="index.html#additional">
+                    <section title="SOMO Bead and SAXS/SANS Modeling" ref="somo.html"/>
+                </section>
             </section>
         </toc>
         <!-- The keyword id attribute appears to be needed, although the
@@ -97,368 +152,16 @@
             <file>index.html</file>
             <file>images/ultrascan3.png</file>
 
-            <file>config.html</file>
-            <file>images/config.png</file>
-            <file>images/config1.png</file>
-            <file>config2.html</file>
-            <file>images/config2.png</file>
-            
-            <file>convert.html</file>
-            <file>convert-experiment.html</file>
-            <file>convert-seltrip.html</file>
-            <file>images/convert.png</file>
-            <file>images/convert-RIdata.png</file>
-            <file>images/convert-subset.png</file>
-            <file>images/convert-tolerance.png</file>
-            <file>images/convert-exclude.png</file>
-            <file>images/convert-experiment.png</file>
-            <file>images/convert-seltrip.png</file>
-            <file>images/convert-mwl.png</file>
-
-            <file>uscol.html</file>
-            <file>images/color-1.png</file>
-            <file>uscolor2.html</file>
-            <file>images/color-2.png</file>
-            
-            <file>usfont.html</file>
-            <file>images/usfont-1.png</file>
-            <file>usfont2.html</file>
-            <file>images/usfont-2.png</file>
-            
-            <file>database_config.html</file>
-            <file>images/database.png</file>
-           
-            <file>optima_host_config.html</file>
-            <file>images/optima_host_config.png</file>
-            <file>images/optima_config_new.png</file>
-            <file>images/optima_config_edit.png</file>
-           
-            <file>us_edit.html</file>
-            <file>us_edit_mwl.html</file>
-            <file>images/us_edit.png</file>
-            <file>images/us_edit_mwl.png</file>
-
-            <file>advanced_config.html</file>
-            <file>images/advanced_config.png</file>
-            
-            <file>master_pw.html</file>
-            <file>images/master-pw.png</file>
-
-            <file>colorgradient.html</file>
-            <file>images/colorgrad.png</file>
-
-            <file>us_investigator.html</file>
-            <file>images/us_investigator.png</file>
-            <file>images/us_investigator-2.png</file>
-
-            <file>buffer_select.html</file>
-            <file>buffer_new.html</file>
-            <file>buffer_edit.html</file>
-            <file>buffer_settings.html</file>
-            <file>images/buffer_select.png</file>
-            <file>images/buffer_new.png</file>
-            <file>images/buffer_edit.png</file>
-            <file>images/buffer_settings.png</file>
-            <file>images/buffer_info.png</file>
-            <file>images/us_buffer_spect.png</file>
-
-            <file>experiment_general.html</file>
-            <file>experiment_rotor.html</file>
-            <file>experiment_speeds.html</file>
-            <file>experiment_cells.html</file>
-            <file>experiment_solutions.html</file>
-            <file>experiment_photomult.html</file>
-            <file>experiment_upload.html</file>
-            <file>images/experiment_general.png</file>
-            <file>images/experiment_rotor.png</file>
-            <file>images/experiment_speeds.png</file>
-            <file>images/experiment_cells.png</file>
-            <file>images/experiment_solutions.png</file>
-            <file>images/experiment_photomult.png</file>
-            <file>images/experiment_upload.png</file>
-
-            <file>us_solution.html</file>
-            <file>images/us_solution1.png</file>
-            <file>images/us_solution2.png</file>
-            <file>images/us_solution3.png</file>
-
-            <file>us_project.html</file>
-            <file>images/us_project1.png</file>
-            <file>images/us_project2.png</file>
-            <file>images/us_project3.png</file>
-
-            <file>pseudo3d_combine.html</file>
-            <file>pseudo3d_comb_rmv.html</file>
-            <file>images/pseudo3d_combine.png</file>
-            <file>images/pseudo3d_comb_rmv.png</file>
-
-            <file>ga_initialize.html</file>
-            <file>images/ga_initialize.png</file>
-
-            <file>vhw_enhanced.html</file>
-            <file>images/vhw_enhanced.png</file>
-            <file>images/vhw_enh_groups.png</file>
-
-            <file>vhw_distrib_plot.html</file>
-            <file>images/vhw_distribution.png</file>
-            <file>images/vhw_histogram.png</file>
-
-            <file>load_model_distrib.html</file>
-            <file>load_model_dis-MID.html</file>
-            <file>images/load_model_distrib.png</file>
-            <file>images/load_model_dis-MID.png</file>
-
-            <file>load_noise.html</file>
-            <file>load_noise_details.html</file>
-            <file>images/load_noise.png</file>
-            <file>images/load_noise_details.png</file>
-
-            <file>fe_match.html</file>
-            <file>fe_match_adv.html</file>
-            <file>fe_match_simulate.html</file>
-            <file>fe_match_controls.html</file>
-            <file>images/fe_match.png</file>
-            <file>images/fe_match_adv.png</file>
-            <file>images/fe_match_sim1.png</file>
-            <file>images/fe_match_sim2.png</file>
-            <file>images/fe_match_sim3_1b.png</file>
-            <file>images/fe_match_sim3_1p.png</file>
-            <file>images/fe_match_sim3_2b.png</file>
-            <file>images/fe_match_sim3_2p.png</file>
-            <file>images/fe_match_sim3_3b.png</file>
-            <file>images/fe_match_sim3_4b.png</file>
-            <file>images/fe_match_sim3_5b.png</file>
-            <file>images/fe_match_sim3_5p.png</file>
-            <file>images/fe_match_sim3_6b.png</file>
-            <file>images/fe_match_sim3_7b.png</file>
-            <file>images/fe_match_sim3_8b.png</file>
-            <file>images/fe_match_sim4.png</file>
-            <file>images/fe_match_sim5.png</file>
-            <file>images/fe_match_sim6.png</file>
-            <file>images/fe_match_sim7.png</file>
-            <file>images/fe_match_3dplot.png</file>
-            <file>images/fe_match_resplot.png</file>
-
-            <file>us_modelmetrics.html</file>
-            <file>images/us_modelmetrics-0.png</file>
-
-            <file>register.html</file>
-            <file>images/register.png</file>
-
-            <file>rotor.html</file>
-            <file>images/rotor.png</file>
-            <file>images/rotor-add.png</file>
-            <file>images/rotor-save-calibration.png</file>
-
-            <file>manage_data.html</file>
-            <file>manage_data_thelp.html</file>
-            <file>manage_data_cmenu.html</file>
-            <file>images/manage_data.png</file>
-            <file>images/manage_data_pasw.png</file>
-            <file>images/manage_data_exp.png</file>
-            <file>images/manage_data_bshow.png</file>
-            <file>images/manage_data_bhide.png</file>
-            <file>images/manage_data_cmenu-1.png</file>
-            <file>images/manage_data_cmenu-2.png</file>
-            <file>images/manage_data_sync.png</file>
-            <file>images/manage_data_conf.png</file>
-            <file>images/manage_data_thelp-1.png</file>
-            <file>images/manage_data_thelp-2.png</file>
-
-            <file>analytes.html</file>
-            <file>images/analytes.png</file>
-            <file>images/analyte_details.png</file>
-            <file>images/sequence.png</file>
-
-            <file>astfem_sim.html</file>
-            <file>simparams.html</file>
-            <file>images/astfem_sim.png</file>
-            <file>images/simparams.png</file>
-
-            <file>grid_editor.html</file>
-            <file>images/grid_editor.png</file>
-            <file>images/grid_editor_mw_view.png</file>
-            <file>images/grid_editor_multi_grids.png</file>
-            <file>images/grid_editor_multi_grids_sed.png</file>
-            <file>images/grid_editor_subgrid1-good.png</file>
-            <file>images/grid_editor_subgrid1-bad.png</file>
-            <file>images/grid_editor_subgrid2-good.png</file>
-            <file>images/grid_editor_subgrid2-bad.png</file>
-            <file>images/grid_editor_subgrid3-good.png</file>
-            <file>images/grid_editor_subgrid3-bad.png</file>
-
-            <file>2dsa.html</file>
-            <file>2dsa_analys.html</file>
-            <file>2dsa_analvv.html</file>
-            <file>2dsa_advan.html</file>
-            <file>images/2dsa_main-o.png</file>
-            <file>images/2dsa_main-c.png</file>
-            <file>images/2dsa_analys.png</file>
-            <file>images/2dsa_analvv.png</file>
-            <file>images/2dsa_advan.png</file>
-            <file>images/2dsa_3dplot.png</file>
-            <file>images/2dsa_resplot.png</file>
-
-            <file>pcsa.html</file>
-            <file>pcsa_analys.html</file>
-            <file>pcsa_mlines.html</file>
-            <file>pcsa_rpscan.html</file>
-            <file>images/pcsa_main-c.png</file>
-            <file>images/pcsa_analys-line.png</file>
-            <file>images/pcsa_analys-sigm.png</file>
-            <file>images/pcsa_mlines-line1.png</file>
-            <file>images/pcsa_mlines-line2.png</file>
-            <file>images/pcsa_mlines-sigm1.png</file>
-            <file>images/pcsa_mlines-sigm2.png</file>
-            <file>images/pcsa_3dplot.png</file>
-            <file>images/pcsa_resplot.png</file>
-            <file>images/pcsa_rpscan-auto.png</file>
-            <file>images/pcsa_rpscan-select.png</file>
-
-            <file>model_editor.html</file>
-            <file>associations.html</file>
-            <file>components.html</file>
-            <file>predict1.html</file>
-            <file>predict2.html</file>
-            <file>images/model_editor.png</file>
-            <file>images/associations.png</file>
-            <file>images/components.png</file>
-            <file>images/predict1.png</file>
-            <file>images/predict2-1.png</file>
-
-            <file>data_loader.html</file>
-            <file>images/data_loader.png</file>
-            <file>images/data_loader-trips.png</file>
-            <file>images/data_loader-edits.png</file>
-
-            <file>load_colormap.html</file>
-            <file>save_colormap.html</file>
-            <file>images/load_colormap.png</file>
-            <file>images/save_colormap.png</file>
-
-            <file>reporter.html</file>
-            <file>images/reporter.png</file>
-            <file>images/reporter-view.png</file>
-            <file>images/reporter-save.png</file>
-            <file>images/reporter-loadprof.png</file>
-            <file>images/reporter-saveprof.png</file>
-            <file>images/reporter-cmenu.png</file>
-            <file>images/reporter-details.png</file>
-            <file>images/reporter-viewitem.png</file>
-
-            <file>us_equiltime.html</file>
-            <file>images/us_equiltime.png</file>
-
-            <file>vhw_combine.html</file>
-            <file>images/vhw_combine.png</file>
-            <file>images/vhw_combine-envel.png</file>
-            <file>images/vhw_combine-combo.png</file>
-            <file>images/vhw_combine-selrun.png</file>
-
-            <file>ddist_combine.html</file>
-            <file>images/ddist_combine.png</file>
-            <file>images/ddist_combine-selrun.png</file>
-
-            <file>combine_models.html</file>
-            <file>images/combine_models.png</file>
-            <file>images/combine_models-save.png</file>
-            <file>images/combine_models-idedit.png</file>
-
-            <file>select_edits.html</file>
-            <file>images/select_edits.png</file>
-
-            <file>select_runs.html</file>
-            <file>images/select_runs.png</file>
-
-            <file>export_legacy.html</file>
-            <file>images/export_legacy.png</file>
-
-            <file>fit_meniscus.html</file>
-            <file>images/fit_meniscus.png</file>
-            <file>images/fit_men-load.png</file>
-            <file>images/fit_men-editupd.png</file>
-
-            <file>us_fds_filemanager.html</file>
-            <file>images/us_fds_filemanager-0.png</file>
-            <file>images/us_fds_filemanager-1.png</file>
-            <file>images/us_fds_filemanager-2.png</file>
-            <file>images/us_fds_filemanager-3.png</file>
-            <file>images/us_fds_filemanager-4.png</file>
-
-            <file>load_auc.html</file>
-            <file>images/load_auc.png</file>
-            <file>images/load_auc-trips.png</file>
-            <file>images/load_auc-search.png</file>
-
-            <file>second_moment.html</file>
-            <file>images/second_moment.png</file>
-
-            <file>time_derivative.html</file>
-            <file>images/time_derivative.png</file>
-
-            <file>mwlr_viewer.html</file>
-            <file>mwlr_view_pltctrl.html</file>
-            <file>mwlr_view_load.html</file>
-            <file>images/mwlr_viewer.png</file>
-            <file>images/mwlr_viewer_xwavl.png</file>
-            <file>images/mwlr_view_load.png</file>
-            <file>images/mwlr_view_pltctrl.png</file>
-            <file>images/mwlr_view_3dplot.png</file>
-
-            <file>cfa_viewer.html</file>
-            <file>images/cfa_view-main.png</file>
-            <file>images/cfa_view-statsraw.png</file>
-            <file>images/cfa_view-statsauc.png</file>
-            <file>images/cfa_view-loadraw.png</file>
-            <file>images/cfa_view-loadauc.png</file>
-
-            <file>dens_match.html</file>
-            <file>dens_match_mparam.html</file>
-            <file>dens_match_rmvmods.html</file>
-            <file>images/densmatch_main.png</file>
-            <file>images/densmatch_mpars_empty.png</file>
-            <file>images/densmatch_mpars_completed.png</file>
-            <file>images/densmatch_rmvmodels.png</file>
-
-            <file>2dsa_3dplot.img.html</file>
-            <file>2dsa_resplot.img.html</file>
-            <file>analyte_details.img.html</file>
-            <file>buffer_info.img.html</file>
-            <file>cfa_view-loadraw.img.html</file>
-            <file>cfa_view-loadauc.img.html</file>
-            <file>cfa_view-statsraw.img.html</file>
-            <file>cfa_view-statsauc.img.html</file>
-            <file>ddist_combine-selrun.img.html</file>
-            <file>fit_men-editupd.img.html</file>
-            <file>fit_men-load.img.html</file>
-            <file>grid_editor.img.html</file>
-            <file>grid_editor_multi_grids.img.html</file>
-            <file>grid_editor_multi_grids_sed.img.html</file>
-            <file>grid_editor_mw_view.img.html</file>
-            <file>mwlr_view_3dplot.img.html</file>
-            <file>pcsa_3dplot.img.html</file>
-            <file>pcsa_mlines-line1.img.html</file>
-            <file>pcsa_mlines-line2.img.html</file>
-            <file>pcsa_mlines-sigm1.img.html</file>
-            <file>pcsa_mlines-sigm2.img.html</file>
-            <file>pcsa_resplot.img.html</file>
-            <file>reporter-details.img.html</file>
-            <file>reporter-loadprof.img.html</file>
-            <file>reporter-save.img.html</file>
-            <file>reporter-saveprof.img.html</file>
-            <file>reporter-view.img.html</file>
-            <file>reporter-viewitem.img.html</file>
-            <file>sequence.img.html</file>
-            <file>us_buffer_spect.img.html</file>
-            <file>vhw_combine-selrun.img.html</file>
-            <file>vhw_enh_groups.img.html</file>
-
             <file>*.html</file>
+            <file>images/*.png</file>
             <file>images/gmp/*.png</file>
+            <file>images/gmp/audit_trail/*.png</file>
             <file>images/gmp/data_acquisition/*.png</file>
             <file>images/gmp/data_acquisition/experiment/*.png</file>
             <file>images/gmp/data_acquisition/gmp/*.png</file>
             <file>images/gmp/protocol_development/*.png</file>
+            <file>images/gmp/report_generator/*.png</file>
+            <file>images/gmp/signature/*.png</file>
 
         </files>
     </filterSection>

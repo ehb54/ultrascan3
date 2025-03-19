@@ -1,0 +1,51 @@
+[% INCLUDE header.us3 title = 'UltraScan III GMP e-Signatures' %]
+
+<h2><i>UltraScan</i> GMP e-Signatures:</h2>
+
+<p>Enables users with assigned roles to load and electronically sign GMP report PDF files.</p>
+
+<p class="center">
+    <img src="images/gmp/signature/gmp_signature_01.png" alt="GMP e-Signatures Interface"/>
+</p>
+
+<p class="center">
+    <img src="images/gmp/signature/gmp_signature_02.png" alt="GMP e-Signatures List"/>
+</p>
+
+<p>A GMP report PDF file can be loaded from the database by highlighting it a clicking the <strong>'Select Item'</strong> button. The user is presented with the following interface:</p>
+
+<p><strong>'Review Generated Report'</strong> opens the PDF file from the database, which includes the current e-signatures.</p>
+
+<p class="center">
+    <img src="images/gmp/signature/gmp_signature_03.png" alt="Review Generated Report Interface"/>
+</p>
+
+<p class="center">
+    <img src="images/gmp/signature/gmp_signature_04.png" alt="PDF Report with e-Signatures"/>
+</p>
+
+<p><strong>'View e-signatures'</strong> opens a PDF file containing only the current e-signatures</p>
+
+<p class="center">
+    <img src="images/gmp/signature/gmp_signature_05.png" alt="View e-signatures PDF"/>
+</p>
+
+<p><strong>'e-Sign Report'</strong> prompts the <strong>'GMP e-Signing Form'</strong>, allowing the user to add feedback in the form of a comment, and requiring their master password for authentication.</p>
+
+<p class="center">
+    <img src="images/gmp/signature/gmp_signature_06.png" alt="GMP e-Signing Form"/>
+</p>
+
+<p class="center">
+    <img src="images/gmp/signature/gmp_signature_07.png" alt="Authentication Prompt"/>
+</p>
+
+<p>Completing this form prompts the 'Successful e-Signing' notification.</p>
+
+<p>Returning to the GMP e-signature interface updates the e-signing status and prompts the next e-signer for electronic signature via email (email settings are configured by the System Administrator).</p>
+
+<p class="center">
+    <img src="images/gmp/signature/gmp_signature_08.png" alt="Updated e-Signing Status"/>
+</p>
+
+[% INCLUDE footer.us3 %]
