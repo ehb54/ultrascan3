@@ -4550,13 +4550,16 @@ US_ExperGuiSolutions::US_ExperGuiSolutions( QWidget* topw )
    QPushButton* pb_details  = us_pushbutton( tr( "View Solution Details" ) );
    QLabel* lb_hdr1          = us_banner( tr( "Cell / Channel" ) );
    QLabel* lb_hdr2          = us_banner( tr( "Solution" ) );
+   QLabel* lb_hdr3          = us_banner( tr( "Comment" ) );
 
    QGridLayout* banners = new QGridLayout();
    int row             = 1;
-   banners->addWidget( pb_manage,       row,   0, 1, 3 );
-   banners->addWidget( pb_details,      row++, 3, 1, 3 );
+   banners->addWidget( pb_manage,       row,   0, 1, 4 );
+   banners->addWidget( pb_details,      row++, 4, 1, 4 );
    banners->addWidget( lb_hdr1,         row,   0, 1, 2 );
-   banners->addWidget( lb_hdr2,         row++, 2, 1, 4 );
+   banners->addWidget( lb_hdr2,         row,   2, 1, 3 );
+   banners->addWidget( lb_hdr3,         row++, 5, 1, 3 );
+   //banners->addWidget( lb_hdr3,         row++, 6, 1, 2 );
 
    QGridLayout* genL   = new QGridLayout();
    genL->setSpacing        ( 2 );
@@ -4572,6 +4575,7 @@ DbgLv(1) << "EGSo:  nholes mxrow" << nholes << mxrow;
    QLabel*       cclabl;
    QComboBox*    cb_solu;
    QPushButton*  pb_comm;
+   QLineEdit*    le_comm;
 
    allSolutions();        // Read in all solution names and IDs
 
@@ -4591,6 +4595,7 @@ DbgLv(1) << "EGSo:  nholes mxrow" << nholes << mxrow;
       cclabl              = us_label( schan );
       cb_solu             = us_comboBox();
       pb_comm             = us_pushbutton( add_comm );
+      le_comm             = us_lineedit( "", 0, true );
 
       if ( schan != chn_none )
          srchans << schan;
@@ -4599,11 +4604,13 @@ DbgLv(1) << "EGSo:  nholes mxrow" << nholes << mxrow;
       cclabl ->setObjectName( strow + ": label" );
       cb_solu->setObjectName( strow + ": solution" );
       pb_comm->setObjectName( strow + ": addcomm" );
+      le_comm->setObjectName( strow + ": mancomm" );
 
       genL->addWidget( cclabl,  row,    0, 1, 2 );
       genL->addWidget( cb_solu, row,    2, 1, 3 );
-      genL->addWidget( pb_comm, row++,  5, 1, 1 );
-
+      genL->addWidget( pb_comm, row,    5, 1, 1 );
+      genL->addWidget( le_comm, row++,  6, 1, 2 );
+      
       cb_solu->addItems( sonames );
       
       connect( pb_comm, SIGNAL( clicked()           ),
@@ -4613,11 +4620,13 @@ DbgLv(1) << "EGSo:  nholes mxrow" << nholes << mxrow;
       cclabl ->setVisible( is_vis );
       cb_solu->setVisible( is_vis );
       pb_comm->setVisible( is_vis );
-
+      le_comm->setVisible( is_vis );
+      
       // Save pointers to row objects for later update
       cc_labls << cclabl;
       cc_solus << cb_solu;
       cc_comms << pb_comm;
+      cc_mancomms << le_comm;
    }
 
    connect( pb_manage,    SIGNAL( clicked()         ),
@@ -5286,6 +5295,9 @@ DbgLv(1) << "EGSo:addComm:  cclabl" << cclabl;
    }
  DbgLv(1) << "EGSo:addComm:  sufx" << sufx;
  DbgLv(1) << "EGSo:addComm:   chcomm" << chcomm;
+
+ //populate gui
+ cc_mancomms[ irow ] -> setText(  manual_comment[ row_comment ] );
 
 }
 
