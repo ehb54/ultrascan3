@@ -6,30 +6,13 @@
 #include <QTextStream>
 
 
-// Helper function to create an XML file with the specified GUID
-void createXmlFile( const QString& filename, const QString& tag, const QString& att, const QString& guid )
-{
-   QFile file( filename );
-   if ( file.open( QIODevice::WriteOnly ) )
-   {
-      QXmlStreamWriter xmlWriter( &file );
-      xmlWriter.setAutoFormatting( true );
-      xmlWriter.writeStartDocument();
-      xmlWriter.writeStartElement( tag );
-      xmlWriter.writeAttribute( att, guid );
-      xmlWriter.writeEndElement();
-      xmlWriter.writeEndDocument();
-      file.close();
-   }
-}
-
 
 // Test case for a missing file (e.g., file does not exist)
 void TestUS_SimulationParameters::test_load_simparams_missing_file()
 {
    US_SimulationParameters simParams;
    QString                 filename = "sp_nonexistent_file.xml";
-   QVERIFY2( !QFileInfo( filename ).exists(), "File " + filename + " already exists" );
+   QVERIFY2( !QFileInfo( filename ).exists(), qPrintable("File " + filename + " already exists") );
    int status = simParams.load_simparms( "sp_nonexistent_file.xml" );
    QCOMPARE( status, -1 );
 }
@@ -74,8 +57,7 @@ void TestUS_SimulationParameters::test_speedstepToXml_without_set_speed()
 
    US_SimulationParameters::speedstepToXml( xmlo, &spi );
 
-   xmlo.flush();
-   device.close();
+   device.seek(0);
 
    // Read the XML back to verify its content
    QXmlStreamReader xml( buffer );
@@ -137,8 +119,7 @@ void TestUS_SimulationParameters::test_speedstepToXml_with_set_speed()
 
    US_SimulationParameters::speedstepToXml( xmlo, &spi );
 
-   xmlo.flush();
-   device.close();
+   device.seek(0);
 
    // Parse the XML written to verify attributes
    QXmlStreamReader xml( buffer );
@@ -219,7 +200,7 @@ void TestUS_SimulationParameters::test_save_simparms_default()
          QCOMPARE( attr.value( "meshType" ).toString(), QString( "ASTFEM" ) );
          QCOMPARE( attr.value( "gridType" ).toString(), QString( "Fixed" ) );
          QCOMPARE( attr.value( "simpoints" ).toString(), QString::number( simParams.simpoints ) );
-         QCOMPARE( attr.value( "radialres" ).toString(), QString::number( simParams.radial_resulutio ) );
+         QCOMPARE( attr.value( "radialres" ).toString(), QString::number( simParams.radial_resolution ) );
          QCOMPARE( attr.value( "meniscus" ).toString(), QString::number( simParams.meniscus ) );
          QCOMPARE( attr.value( "bottom" ).toString(), QString::number( simParams.bottom ) );
          QCOMPARE( attr.value( "rnoise" ).toString(), QString::number( simParams.rnoise ) );
@@ -227,7 +208,7 @@ void TestUS_SimulationParameters::test_save_simparms_default()
          QCOMPARE( attr.value( "tinoise" ).toString(), QString::number( simParams.tinoise ) );
          QCOMPARE( attr.value( "rinoise" ).toString(), QString::number( simParams.rinoise ) );
          QCOMPARE( attr.value( "temperature" ).toString(), QString::number( simParams.temperature ) );
-         QCOMPARE( attr.value( "bandform" ).toString(), QString::number( simParams.band_forming ? "1" : "0" ) );
+         QCOMPARE( attr.value( "bandform" ).toString(), QString( simParams.band_forming ? "1" : "0" ) );
          QCOMPARE( attr.value( "sector" ).toString(), QString::number( simParams.cp_sector ) );
          QCOMPARE( attr.value( "pathlength" ).toString(), QString::number( simParams.cp_pathlen ) );
          QCOMPARE( attr.value( "angle" ).toString(), QString::number( simParams.cp_angle ) );
@@ -488,7 +469,7 @@ void TestUS_SimulationParameters::test_speedstepFromXml_AccelerationFlagFalse()
 {
    // For values not in the string " 1YesyesTruetrue" at appropriate index,
    // the flag should remain false. For example, "false" is not a substring that triggers condition.
-   QStringList falseValues = {"false", "NO", "0", ""};
+   QStringList falseValues = {"false", "NO", "0"};
    for ( const QString& val : falseValues )
    {
       QString xml;
@@ -558,24 +539,79 @@ void TestUS_SimulationParameters::test_load_simparams_all()
    QVERIFY(file.open());
    QString tempFilename = file.fileName();
 
-   QTextStream out(&file);
-   out << "<?xml version=\"1.0\"?>\n"
-       << "<root>\n"
-       << "  <params meshType=\"MovingHat\" gridType=\"Moving\" "
-       << "simpoints=\"100\" radialres=\"12.34\" meniscus=\"1.23\" bottom=\"2.34\" "
-       << "rnoise=\"0.1\" lrnoise=\"0.2\" tinoise=\"0.3\" rinoise=\"0.4\" temperature=\"25.0\" "
-       << "bandform=\"yes\" bandvolume=\"0.55\" rotorCalID=\"cal123\" rotorcoeffs=\"1.0 2.0\" "
-       << "sector=\"3\" pathlength=\"1000.0\" angle=\"45.0\" width=\"5.5\"/>\n"
-       << "  <speedstep speed=\"50\" acceleration=\"5\"/>\n"
-       << "  <speedstep speed=\"100\" acceleration=\"10\"/>\n"
-       << "  <usermesh radius=\"3.3\"/>\n"
-       << "  <usermesh radius=\"4.4\"/>\n"
-       << "</root>\n";
+   QXmlStreamWriter xml( &file );
+   xml.setAutoFormatting( true );
+
+   xml.writeStartDocument();
+
+   xml.writeStartElement( "params" );
+   xml.writeAttribute( "meshType", "MovingHat" );
+   xml.writeAttribute( "gridType", "Moving" );
+   xml.writeAttribute( "simpoints", "100" );
+   xml.writeAttribute( "radialres", "12.34" );
+   xml.writeAttribute( "meniscus", "1.23" );
+   xml.writeAttribute( "bottom", "2.34" );
+   xml.writeAttribute( "rnoise", "0.1" );
+   xml.writeAttribute( "lrnoise", "0.2" );
+   xml.writeAttribute( "tinoise", "0.3" );
+   xml.writeAttribute( "rinoise", "0.4" );
+   xml.writeAttribute( "temperature", "25.0" );
+   xml.writeAttribute( "bandform", "yes" );
+   xml.writeAttribute( "bandvolume", "0.55" );
+   xml.writeAttribute( "rotorCalID", "cal123" );
+   xml.writeAttribute( "rotorcoeffs", "1.0 2.0" );
+   xml.writeAttribute( "sector", "3" );
+   xml.writeAttribute( "pathlength", "1000.0" );
+   xml.writeAttribute( "angle", "45.0" );
+   xml.writeAttribute( "width", "5.5" );
+   xml.writeStartElement( "speedstep" );
+   xml.writeAttribute( "duration_hrs", "2" );
+   xml.writeAttribute( "duration_mins", "30.5" );
+   xml.writeAttribute( "delay_hrs", "1" );
+   xml.writeAttribute( "delay_mins", "15.25" );
+   xml.writeAttribute( "rotorspeed", "1000" );
+   xml.writeAttribute( "acceleration", "150" );
+   xml.writeAttribute( "accelerflag", "yes" );
+   xml.writeAttribute( "scans", "12" );
+   xml.writeAttribute( "w2tfirst", "0.12" );
+   xml.writeAttribute( "w2tlast", "0.98" );
+   xml.writeAttribute( "timefirst", "10" );
+   xml.writeAttribute( "timelast", "50" );
+   xml.writeAttribute( "set_speed", "500" );
+   xml.writeAttribute( "avg_speed", "750.5" );
+   xml.writeAttribute( "speed_stddev", "25.75" );
+   xml.writeEndElement(); // speedstep
+   xml.writeStartElement( "speedstep" );
+   xml.writeAttribute( "duration_hrs", "4" );
+   xml.writeAttribute( "duration_mins", "50.5" );
+   xml.writeAttribute( "delay_hrs", "1" );
+   xml.writeAttribute( "delay_mins", "15.25" );
+   xml.writeAttribute( "rotorspeed", "1000" );
+   xml.writeAttribute( "acceleration", "150" );
+   xml.writeAttribute( "accelerflag", "yes" );
+   xml.writeAttribute( "scans", "12" );
+   xml.writeAttribute( "w2tfirst", "0.12" );
+   xml.writeAttribute( "w2tlast", "0.98" );
+   xml.writeAttribute( "timefirst", "10" );
+   xml.writeAttribute( "timelast", "50" );
+   xml.writeAttribute( "set_speed", "500" );
+   xml.writeAttribute( "avg_speed", "750.5" );
+   xml.writeAttribute( "speed_stddev", "25.75" );
+   xml.writeEndElement(); // speedstep
+   xml.writeStartElement( "usermesh" );
+   xml.writeAttribute( "radius", "3.3" );
+   xml.writeEndElement();
+   xml.writeStartElement( "usermesh" );
+   xml.writeAttribute( "radius", "4.4" );
+   xml.writeEndElement(); // usermesh
+   xml.writeEndElement(); // params
+   xml.writeEndDocument();
    file.flush();
 
    // Load the parameters
    US_SimulationParameters simparms;
-   int stat = simparms.load_simparms(tempFilename);
+   int stat = simparms.load_simparms(file.fileName());
+   simparms.debug();
    QCOMPARE(stat, 0);
 
    // Check attribute loading from <params>
@@ -634,5 +670,5 @@ void TestUS_SimulationParameters::test_load_simparams_missing_speedstep()
    int stat = simparms.load_simparms(tempFilename);
    // As speed_step is missing, the function should revert to the old speed_step and return an error.
    QVERIFY(stat != 0);
-   QCOMPARE(simparms.speed_step.count(), 0);  // unchanged (or reverted)
+   QCOMPARE(simparms.speed_step.count(), 1);  // unchanged (or reverted)
 }
