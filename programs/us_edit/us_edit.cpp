@@ -1332,6 +1332,10 @@ pb_plateau->setVisible(false);
    qDebug() << "US_Edit manual setup 7";
    show_mwl_controls( false );
    qDebug() << "US_Edit manual setup 8";
+
+   //extra hides
+   lb_gaps        ->hide();
+   ct_gaps        ->hide();
 }
 
 
@@ -1924,6 +1928,8 @@ pb_plateau->setVisible(false);
 
    //extra hide
    le_plateau     ->hide();
+   lb_gaps        ->hide();
+   ct_gaps        ->hide();
 }
 
 
