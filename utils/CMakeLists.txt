@@ -2,6 +2,8 @@
 add_library(utils SHARED
         us_datafiles.cpp
         us_datafiles.h
+        us_simparms.cpp
+        us_simparms.h
         us_util.cpp
         us_util.h
         )
