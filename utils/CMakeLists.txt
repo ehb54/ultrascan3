@@ -17,10 +17,6 @@ target_link_libraries(utils Qt5::Core)
 # Specify include directories for utils
 target_include_directories(utils PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
-target_include_directories(utils PUBLIC /usr/include/mysql)
-
-target_link_libraries(utils /usr/lib64/mysql)
-
 
 
 
