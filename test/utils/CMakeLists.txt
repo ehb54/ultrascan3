@@ -2,7 +2,7 @@
 project(TestUSUtils)
 
 # Find Qt5 packages
-find_package(Qt5 REQUIRED COMPONENTS Core Test Xml)
+find_package(Qt5 REQUIRED COMPONENTS Core Network Sql Test Xml)
 
 # Include directories
 include_directories(${CMAKE_SOURCE_DIR}/utils
