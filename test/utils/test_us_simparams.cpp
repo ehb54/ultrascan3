@@ -499,7 +499,7 @@ void TestUS_SimulationParameters::test_speedstepFromXml_AccelerationFlagFalse()
       QXmlStreamReader reader( xml );
       QVERIFY( reader.readNextStartElement() );
 
-      SpeedProfile spo;
+      US_SimulationParameters::SpeedProfile spo;
       spo.acceleration_flag = true; // preset to true; expect function to set it to false if not found
       US_SimulationParameters::speedstepFromXml( reader, spo );
       // The flag should be false.
