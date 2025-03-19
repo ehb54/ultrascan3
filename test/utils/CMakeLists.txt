@@ -13,6 +13,7 @@ add_executable(test_us_utils
         test_us_utils_main.cpp
         test_us_datafiles.cpp
         test_us_util.cpp
+        test_us_simparams.cpp
         )
 
 # Link the utils library and Qt libraries to the test executable
