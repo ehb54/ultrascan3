@@ -10,7 +10,7 @@
 #define TEST_US_SimulationParameters_H
 
 #include <QtTest>
-#include "us_simparams.h"
+#include "us_simparms.h"
 
 /**
  * @class TestUS_SimulationParameters
