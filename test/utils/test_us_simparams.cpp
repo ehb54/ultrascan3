@@ -611,7 +611,6 @@ void TestUS_SimulationParameters::test_load_simparams_all()
    // Load the parameters
    US_SimulationParameters simparms;
    int stat = simparms.load_simparms(file.fileName());
-   simparms.debug();
    QCOMPARE(stat, 0);
 
    // Check attribute loading from <params>
