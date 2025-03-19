@@ -19,7 +19,7 @@ target_include_directories(utils PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 target_include_directories(utils PUBLIC /usr/include/mysql)
 
-target_link_libraries(utils PUBLIC /usr/lib64/mysql)
+target_link_libraries(utils /usr/lib64/mysql)
 
 
 
