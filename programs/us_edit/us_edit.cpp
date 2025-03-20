@@ -1240,6 +1240,9 @@ pb_plateau->setVisible(false);
    ct_gaps        ->hide();
    pb_nextChan    ->hide();
 
+   lb_baseline ->hide();
+   le_baseline ->hide();
+   
    if ( exptype != "ABDE" )
      {
        lb_scan        ->hide();
@@ -1927,6 +1930,8 @@ pb_plateau->setVisible(false);
    step = BASELINE_LINEAR_CORR;
 
    //extra hide
+   lb_baseline    ->hide();
+   le_baseline    ->hide();
    le_plateau     ->hide();
    lb_gaps        ->hide();
    ct_gaps        ->hide();
@@ -7023,7 +7028,7 @@ void US_Edit::set_airGap( void )
    plot_all();
 }
 
-//Set linera baseline correction
+//Set linear baseline correction
 void US_Edit::set_linear_baseline_corr( void )
 {
   le_bll_slope     ->setText( "" );
@@ -7037,7 +7042,13 @@ void US_Edit::set_linear_baseline_corr( void )
   step        = BASELINE_LINEAR_CORR;
 
   if ( ! expIsEquil )
-    plot_all();
+    {
+      if ( isMwl )
+	plot_mwl();
+      else
+	plot_range();
+	//plot_all();
+    }
 
   else
     plot_scan();
