@@ -3497,9 +3497,8 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
    connect( ct_odlim,  SIGNAL( valueChanged       ( double ) ),
             this,      SLOT  ( od_radius_limit    ( double ) ) );
 
+   qDebug() << "IS MWL? " << isMwl; 
    show_mwl_controls( isMwl );
-
-   
 
    /***************** TESTING ******************************************/
 
@@ -3540,13 +3539,19 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
    
    qDebug() << "DATA SIZE: " << outData.count();
 
-   if ( !isMwl )
-     {
-       lb_lplot ->setHidden( true );
-       cb_lplot ->setHidden( true );
-       pb_larrow->setHidden( true );
-       pb_rarrow->setHidden( true );
-     }
+   // if ( !isMwl )
+   //   {
+   //     qDebug() << "Not MWL? " << isMwl << "hiding mwl plot controls..."; 
+   //     lb_lplot ->setHidden( true );
+   //     cb_lplot ->setHidden( true );
+   //     pb_larrow->setHidden( true );
+   //     pb_rarrow->setHidden( true );
+   //   }
+
+   lb_lplot ->setHidden( !isMwl );
+   cb_lplot ->setHidden( !isMwl );
+   pb_larrow->setHidden( !isMwl );
+   pb_rarrow->setHidden( !isMwl );
 
 
    //ALEXEY: Resize && fill with zero iwavl_edit_ref vector:
@@ -3858,6 +3863,7 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
      all_loaded = true;
 
    qDebug() << "ALL_LOADED: " << all_loaded;
+   qDebug() << "isMWL ?" << isMwl;
 
    if ( isMwl )
      {
