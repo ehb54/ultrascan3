@@ -58,12 +58,12 @@
           
     <h3> Main Window (as it is upon open):</h3>
 
-    <img src="images/2dsa_main-o.png" alt="2DSA Main Window on open"/>
+    <p class="center"><img src="images/2dsa_main-o.png" alt="2DSA Main Window on open"/></p>
 
     <p> Once an analysis is complete, the main window will appear similar
     to this:</p>
 
-    <img src="images/2dsa_main-c.png" alt="2DSA Main Window, fit complete"/>
+    <p class="center"><img src="images/2dsa_main-c.png" alt="2DSA Main Window, fit complete"/></p>
           
     <h3> Functions:</h3>
 

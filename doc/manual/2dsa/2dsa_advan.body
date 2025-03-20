@@ -32,7 +32,7 @@
 
     <h3> 2DSA Advanced Controls window:</h3>
 
-    <img src="images/2dsa_advan.png" alt="2DSA Advanced Controls"/>
+    <p class="center"><img src="images/2dsa_advan.png" alt="2DSA Advanced Controls"/></p>
 
     <p> Functions in this dialog are explained elsewhere. Below are repeated
     just those related to Simulation Parameters and those in the general-use

@@ -4,7 +4,7 @@
 
     <h2> Model Information Dialog: </h2>
 
-    <img src="images/load_model_dis-MID.png" alt="Model Information Dialog"/>
+    <p class="center"><img src="images/load_model_dis-MID.png" alt="Model Information Dialog"/></p>
 
     <p> This dialog is displayed with a right-mouse-button click on the models
     list. If no model is selected, information displayed is for the model at

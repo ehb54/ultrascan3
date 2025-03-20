@@ -48,14 +48,14 @@
     scan readings vectors are synthetically produced, as illustrated by
     the plot below.</p>
 
-    <img src="images/fe_match_sim1.png" alt="Simulation Illustration"/>
+    <p class="center"><img src="images/fe_match_sim1.png" alt="Simulation Illustration"/></p>
     
     <p><b>Overlay Plot</b> Upon completion of simulation computations
     the plot of experimental data (in yellow and cyan) is overlayed
     in the main window lower plot with the simulation data (in red),
     as shown in the image below.</p>
 
-    <img src="images/fe_match_sim2.png" alt="Experiment/Sim Overlay"/>
+    <p class="center"><img src="images/fe_match_sim2.png" alt="Experiment/Sim Overlay"/></p>
     
     <p><b>Residuals/Distributions Plots</b> The upper main window
     plot is initially a plot of residuals (experimental minus
@@ -68,7 +68,7 @@
     <img src="images/fe_match_sim3_1b.png" alt="Residuals button"/>
     button produces the plot:</p>
 
-    <img src="images/fe_match_sim3_1p.png" alt="Residuals plot"/>
+    <p class="center"><img src="images/fe_match_sim3_1p.png" alt="Residuals plot"/></p>
 
     <p>Each of the next three buttons in the cycle,
     <img src="images/fe_match_sim3_2b.png" alt="Bar 1     button"/>
@@ -76,7 +76,7 @@
     <img src="images/fe_match_sim3_4b.png" alt="Bar 3     button"/>
     , produces a bar plot similar to the one below.</p>
 
-    <img src="images/fe_match_sim3_2p.png" alt="Bar 1     plot"/>
+    <p class="center"><img src="images/fe_match_sim3_2p.png" alt="Bar 1     plot"/></p>
 
     <p>The final four buttons,
     <img src="images/fe_match_sim3_5b.png" alt="2-D 1     button"/>
@@ -85,7 +85,7 @@
     <img src="images/fe_match_sim3_8b.png" alt="2-D 4     button"/>
     , produce 2-dimension distribution plots, as illustrated by:</p>
 
-    <img src="images/fe_match_sim3_5p.png" alt="2-D 1     plot"/>
+    <p class="center"><img src="images/fe_match_sim3_5p.png" alt="2-D 1     plot"/></p>
     
     <p><b>Residuals Bit Map</b> Experimental-Simulation residuals are
     plotted in another way in a bit map. This small window represents
@@ -94,14 +94,14 @@
     greater. A random distribution of colors throughout the bit map is
     indication of a good model fit.</p>
 
-    <img src="images/fe_match_sim4.png" alt="Residuals Bit Map"/>
+    <p class="center"><img src="images/fe_match_sim4.png" alt="Residuals Bit Map"/></p>
     
     <p><b>3-D Controls</b> A 3-dimensional view of model data is controlled
     by a dialog launched after simulation computations. This dialog may also
     be launched at any time via the main window <b>3D Plot</b> button. See
     <a href="fe_match_controls.html">Plot Controls Details</a>.</p>
 
-    <img src="images/fe_match_sim5.png" alt="3-D Plot Controls"/>
+    <p class="center"><img src="images/fe_match_sim5.png" alt="3-D Plot Controls"/></p>
     
     <p><b>Residual Plots</b> Another dialog launched at simulation completion
     is one that presents a more advanced set of data/residuals/noise plots.
@@ -109,18 +109,18 @@
     button. See
     <a href="fe_match_controls.html">Plot Controls Details</a>.</p>
 
-    <img src="images/fe_match_resplot.png" alt="Residual Plots"/>
+    <p class="center"><img src="images/fe_match_resplot.png" alt="Residual Plots"/></p>
     
     <p><b>Data Reports/Files</b> The "Save Data" button produces a
     set of report files. One of these is displayable via the
     "View Report" button, which produces a dialog that shows the contents
     of a report. A dialog sample follows.</p>
 
-    <img src="images/fe_match_sim6.png" alt="View Report"/>
+    <p class="center"><img src="images/fe_match_sim6.png" alt="View Report"/></p>
 
     <p>Below is the same sample scrolled down to the bottom, showing
     analysis settings and distribution information.</p>
 
-    <img src="images/fe_match_sim7.png" alt="Out Files"/>
+    <p class="center"><img src="images/fe_match_sim7.png" alt="Out Files"/></p>
 
 [% INCLUDE footer.us3 %]

@@ -4,15 +4,11 @@
 
 <p>Logs all user interactions and electronic signatures for a GMP report PDF file.</p>
 
-<p class="center">
-    <img src="images/gmp/audit_trail/gmp_audit_trail_01.png" alt="GMP Audit Trail Interface"/>
-</p>
+<p class="center"><img src="images/gmp/audit_trail/gmp_audit_trail_01.png" alt="GMP Audit Trail Interface"/></p>
 
 <p>A GMP run can be loaded from the database by highlighting it and clicking the <strong>'Select Item'</strong> button. The user is then presented with the following interface:</p>
 
-<p class="center">
-    <img src="images/gmp/audit_trail/gmp_audit_trail_02.png" alt="Audit Trail Details"/>
-</p>
+<p class="center"><img src="images/gmp/audit_trail/gmp_audit_trail_02.png" alt="Audit Trail Details"/></p>
 
 <p><strong>'e-Sign STATUS'</strong> section records the user ID, name, role, date, time, comments, and signing status for the GMP run.</p>
 

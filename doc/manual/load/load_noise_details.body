@@ -4,7 +4,7 @@
 
     <h2> Noise Vector Details Dialog: </h2>
 
-    <img src="images/load_noise_details.png" alt="Noise Details Dialog"/>
+    <p class="center"><img src="images/load_noise_details.png" alt="Noise Details Dialog"/></p>
 
     <p> This dialog is displayed with a "Details" click in the Noise Loader
     dialog. Detailed information is displayed for all eligible noise vectors.

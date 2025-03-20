@@ -10,7 +10,7 @@
 
     <h3> Sample Control Dialog:</h3>
 
-    <img src="images/2dsa_analvv.png" alt="2DSA Analysis Vary Vbar Control"/>
+    <p class="center"><img src="images/2dsa_analvv.png" alt="2DSA Analysis Vary Vbar Control"/></p>
 
     <h3> Functions Specific to Varying Vbar:</h3>
 

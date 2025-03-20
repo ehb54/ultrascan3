@@ -1,0 +1,61 @@
+[% INCLUDE header.us3/
+title = 'UltraScan III Self-association Simulator'
+%]
+
+<h2> <i>UltraScan</i> Self-association Simulator: </h2>
+
+<p> This module is used to simulate binding isotherms for reversibly
+    self-associating systems with up to three species (monomer, N-mer,
+    M-mer). The program is started from the Simulation menu
+    (Self-Association Equilibrium): </p>
+
+<p class="center"><img src="images/sassoc/sassoc_01.png" alt="Self-Association Menu"/></p>
+
+<h3> Main Window:</h3>
+
+<p class="center"><img src="images/sassoc/sassoc_02.png" alt="Self-Association Simulator"/></p>
+
+<h3> Functions:</h3>
+
+<ul>
+    <li>
+        <b>Association (1,2):</b> Enter an integral value to specify the
+        stoichiometry of the association (e.g., 2, 3, 4...)
+    </li>
+
+    <li>
+        <b>Equilibrium constants:</b> Enter the natural log of the association
+        constants for each reaction.
+    </li>
+
+    <li>
+        <b>Save Data to File:</b> Export the currently displayed association
+        profile to a csv file.
+    </li>
+
+    <li>
+        <b>Self-Association Profile for Simulation:</b> Binding isotherms for
+        Monomer, N-mer and M-mer.
+    </li>
+
+    <li>
+        <b>Species 1/2/3:</b> Percentage of species' concentration with respect
+        to the total concentration, requires mouse click on the canvas to be
+        activated.
+    </li>
+
+    <li>
+        <b>Total Concentration:</b> Total concentration of the reacting
+        molecule.
+    </li>
+
+    <li>
+        <b>Help</b> Display this and other documentation.
+    </li>
+
+    <li>
+        <b>Close</b> Close all windows and exit.
+    </li>
+</ul>
+
+[% INCLUDE footer.us3 %]

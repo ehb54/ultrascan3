@@ -141,7 +141,9 @@
             <keyword id="s3" name="select-edits"     ref="select_edits.html"/>
             <keyword id="s4" name="select-runs"      ref="select_runs.html"/>
             <keyword id="s5" name="select-triples"   ref="convert-seltrip.html"/>
-            <keyword id="s6" name="solution"         ref="us_solution.html"/>
+            <keyword id="s6" name="self-association" ref="sassoc.html"/>
+            <keyword id="s7" name="solution"         ref="us_solution.html"/>
+            <keyword id="s8" name="somo"             ref="somo.html"/>
             <keyword id="t1" name="time-derivative"  ref="time_derivative.html"/>
             <keyword id="v1" name="vhw-combine"      ref="vhw_combine.html"/>
             <keyword id="v2" name="vhw-distrib-plot" ref="vhw_distrib_plot.html"/>
@@ -162,6 +164,8 @@
             <file>images/gmp/protocol_development/*.png</file>
             <file>images/gmp/report_generator/*.png</file>
             <file>images/gmp/signature/*.png</file>
+            <file>images/sassoc/*.png</file>
+            <file>images/somo/*.png</file>
 
         </files>
     </filterSection>

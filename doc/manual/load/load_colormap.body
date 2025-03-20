@@ -7,7 +7,7 @@
     <p> Some <b><i>UltraScan III</i></b> applications load a color map from
     a file using a file dialog.</p>
 
-    <img src="images/load_colormap.png" alt="Load CMap File Dialog"/>
+    <p class="center"><img src="images/load_colormap.png" alt="Load CMap File Dialog"/></p>
 
     <p> The file to load is selected from the ./etc directory and is
     generally of a "cm_*.xml" form. It represents a color gradient in the

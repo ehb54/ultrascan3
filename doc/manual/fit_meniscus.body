@@ -15,7 +15,7 @@
 
     <h3> Main Window (after loading a meniscus fit set):</h3>
 
-    <img src="images/fit_meniscus.png" alt="Fit Meniscus"/>
+    <p class="center"><img src="images/fit_meniscus.png" alt="Fit Meniscus"/></p>
 
     <h3> Functions:</h3>
 

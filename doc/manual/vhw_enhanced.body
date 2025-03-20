@@ -12,8 +12,7 @@
     to heterogeneity in the sedimentation coefficient. This program uses a
     number of enhanced techniques for vHW analysis.</p>
 
-    <img src="images/vhw_enhanced.png" alt="van Holde - Weischet Main Window"/>
-
+    <p class="center"><img src="images/vhw_enhanced.png" alt="van Holde - Weischet Main Window"/></p>
     <ul>
         <li>
             <b>Load Experiment</b> Click on this button and, in the resulting

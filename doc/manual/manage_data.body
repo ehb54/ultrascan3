@@ -52,27 +52,27 @@
     <p> Initially you are presented with a small window to enter your
     database password.</p>
 
-    <img src="images/manage_data_pasw.png" alt="ManageData Password"/>
+    <p class="center"><img src="images/manage_data_pasw.png" alt="ManageData Password"/></p>
 
     <p> Then you will see the main window with a sample data tree that
     shows the kinds of states that data may be in (see tree help below).</p>
 
-    <img src="images/manage_data.png" alt="ManageData Main Window"/>
+    <p class="center"><img src="images/manage_data.png" alt="ManageData Main Window"/></p>
 
     <p> After clicking on the <b>Scan Data</b> button, the tree will be
     populated with your actual data.</p>
 
-    <img src="images/manage_data_exp.png" alt="ManageData Expanded Window"/>
+    <p class="center"><img src="images/manage_data_exp.png" alt="ManageData Expanded Window"/></p>
 
     <p> The tree may be expanded with buttons like these.</p>
 
-    <img src="images/manage_data_bshow.png" alt="ManageData Show Buttons"/>
+    <p class="center"><img src="images/manage_data_bshow.png" alt="ManageData Show Buttons"/></p>
 
     <p> It may be collapsed with the same buttons, relabelled as "Hide"
     or with some combination of the show/hide sets, depending on the current
     state of expansion.</p>
 
-    <img src="images/manage_data_bhide.png" alt="ManageData Hide Buttons"/>
+    <p class="center"><img src="images/manage_data_bhide.png" alt="ManageData Hide Buttons"/></p>
 
     <h3> Functions:</h3>
 

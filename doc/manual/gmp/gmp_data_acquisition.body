@@ -9,7 +9,7 @@ title = 'UltraScan III GMP Data Acquisition Routine'
 <h3> Manage Optima Runs: </h3>
 <p> Table listing experiments currently in the submitted, running or completed stages. </p>
 
-<p class="center"> <img style="width:600px;" src="images/gmp/data_acquisition/gmp_data_acquisition_01.png" alt="Manage Optima Runs"/></p>
+<p class="center"><img style="width:600px;" src="images/gmp/data_acquisition/gmp_data_acquisition_01.png" alt="Manage Optima Runs"/></p>
 
 <h3> Left Menu Bar: </h3>
 <ul>
@@ -63,7 +63,7 @@ title = 'UltraScan III GMP Data Acquisition Routine'
 <h3> Bottom Buttons: </h3>
 <ul>
     <li>
-        <b><a href="gmp_define_experiment.html">Define Another Experiment</a>:</b>
+        <b><a href="gmp_data_acquisition_experiment.html">Define Another Experiment</a>:</b>
     </li>
     <li>
         <b>Delete Record:</b>

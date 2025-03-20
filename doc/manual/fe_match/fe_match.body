@@ -53,7 +53,7 @@
           
     <h3> Main Window:</h3>
 
-    <img src="images/fe_match.png" alt="FE_Match Main Window"/>
+    <p class="center"><img src="images/fe_match.png" alt="FE_Match Main Window"/></p>
 
     <h3> Functions:</h3>
 

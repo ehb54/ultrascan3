@@ -9,7 +9,7 @@
 
     <h3> Main Window (after completing an export):</h3>
 
-    <img src="images/export_legacy.png" alt="Export Legacy"/>
+    <p class="center"><img src="images/export_legacy.png" alt="Export Legacy"/></p>
 
     <h3> Functions:</h3>
 

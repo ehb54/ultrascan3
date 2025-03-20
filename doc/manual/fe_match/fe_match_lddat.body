@@ -26,6 +26,6 @@
     in the example below that the list has been shortened by typing text
     into the Search box to filter run ID's examined.</p>
 
-    <img src="images/fe_match_lddat4.png" alt="File Open"/>
+    <p class="center"><img src="images/fe_match_lddat4.png" alt="File Open"/></p>
 
 [% INCLUDE footer.us3 %]
