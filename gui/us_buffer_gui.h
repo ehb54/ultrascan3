@@ -355,7 +355,7 @@ class US_GUI_EXTERN US_BufferGui : public US_WidgetsDialog
       //! Return the main values
       //! \param density of the buffer
       //! \param viscosity of the buffer
-      void valueChanged( double density, double viscosity );
+      void BufferDataChanged( double density, double viscosity );
 
       //! Return all values associated with the buffer
       //! \param buffer  Return the entire class.
