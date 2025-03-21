@@ -1993,7 +1993,12 @@ DbgLv(1) << "CGui:IOD:   cSS nspeed" << speedsteps.size();
       int tf_scan      = speedsteps[ 0 ].time_first;
       int accel1       = (int)qRound( rate );
       int rspeed       = speedsteps[ 0 ].rotorspeed;
-      int tf_aend      = ( rspeed + accel1 - 1 ) / accel1;
+      double  tf_aend   = static_cast<double>(tf_scan);
+      // prevent any division by zero
+      if (accel1 != 0)
+      {
+         tf_aend = static_cast<double>(rspeed) / static_cast<double>(accel1);
+      }
 
       QString wmsg = tr( "The SpeedStep computed/used is likely bad:<br/>"
                          "The acceleration implied is %1 rpm/sec.<br/>"
@@ -2002,7 +2007,7 @@ DbgLv(1) << "CGui:IOD:   cSS nspeed" << speedsteps.size();
                          "<b>You should rerun the experiment without<br/>"
                          "any interim constant speed, and then<br/>"
                          "you should reimport the data.</b>" )
-                     .arg( accel1 ).arg( tf_aend ).arg( tf_scan );
+                     .arg( accel1 ).arg( QString::number(tf_aend) ).arg( QString::number(tf_scan) );
 
       QMessageBox msgBox( this );
       msgBox.setWindowTitle( tr( "Bad TimeState Implied!" ) );
