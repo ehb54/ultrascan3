@@ -1100,10 +1100,11 @@ qDebug() << "CVT:Adj: t_acc rate" << t_acc << rate;
    }
 
    // Determine time and omega offsets. A "t0" value is initially time-zero,
-   //  the beginning of the first acceleration zone. Using an acceleration
-   //  of 400.0 rpm/second, a new zone start is determined and that becomes
-   //  the time offset to subtract from all AUC and speedstep times. The
-   //  omega^2t offset is based on the value at the new zone start.
+   // the beginning of the first acceleration zone. Using an acceleration
+   // of 400.0 rpm/second, a new zone start is determined and that becomes
+   // the time offset to subtract from all AUC and speedstep times. The
+   // omega^2t offset is based on the value at the new zone start. For more
+   // details about this calculation please refer to the pdf in ../../doc/calc_timestate_documentation.pdf
    double azdur      = (double)qRound( speedsteps[ 0 ].rotorspeed / 400.0 );
    double t_offs     = t1 - azdur;
    double azwrate    = sq( speedsteps[ 0 ].rotorspeed * M_PI / 30.0 * azdur );
