@@ -5,6 +5,7 @@
 // Include the headers for the test classes
 #include "test_us_util.h"
 #include "test_us_datafiles.h"
+#include "test_us_simparams.h"
 
 // Main function: entry point for the test application
 int main(int argc, char *argv[])
@@ -35,6 +36,17 @@ int main(int argc, char *argv[])
         // qExec returns the status of the test execution
         // Combine the status with the overall status using the bitwise OR operator
         status |= QTest::qExec(&testUSDatafiles, argc, argv);
+    }
+
+    // Run the tests for the TestUS_SimulationParameters class
+    {
+        // Create an instance of the TestUS_SimulationParameters class
+        TestUS_SimulationParameters test_SimulationParameters;
+
+        // Execute the tests in the TestUSDataFiles class
+        // qExec returns the status of the test execution
+        // Combine the status with the overall status using the bitwise OR operator
+        status |= QTest::qExec(&test_SimulationParameters, argc, argv);
     }
 
     // Return the overall status of all test executions

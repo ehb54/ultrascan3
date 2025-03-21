@@ -2,7 +2,7 @@
 project(TestUSUtils)
 
 # Find Qt5 packages
-find_package(Qt5 REQUIRED COMPONENTS Core Test Xml)
+find_package(Qt5 REQUIRED COMPONENTS Core Network Sql Test Xml)
 
 # Include directories
 include_directories(${CMAKE_SOURCE_DIR}/utils
@@ -13,6 +13,7 @@ add_executable(test_us_utils
         test_us_utils_main.cpp
         test_us_datafiles.cpp
         test_us_util.cpp
+        test_us_simparams.cpp
         )
 
 # Link the utils library and Qt libraries to the test executable
