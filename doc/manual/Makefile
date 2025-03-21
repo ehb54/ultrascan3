@@ -19,6 +19,7 @@ prepare_staging:
 	@find . -type d -name "$(STAGING_DIR)" -prune -o -type f -name "*.body" -print | xargs -I{} cp {} $(STAGING_DIR)/
 	@cp make-html.sh $(STAGING_DIR)/
 	@chmod +x $(STAGING_DIR)/make-html.sh
+	@./make-wraps.sh
 
 # Process all HTML files at once
 process_html: prepare_staging
