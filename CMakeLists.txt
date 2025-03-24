@@ -13,6 +13,8 @@ set(CMAKE_AUTOUIC ON)
 set(CMAKE_BUILD_TYPE Debug)
 set(CMAKE_CXX_FLAGS_DEBUG "-g")
 
+add_definitions(-DNO_DB)
+
 # Enable testing
 enable_testing()
 

@@ -1111,13 +1111,19 @@ DbgLv(1)<<"2dsa : timestate newly created.  timestateobject = "
    dset.simparams.speedstepsFromSSprof();
 
    // Do a quick test of the speed step implied by TimeState
-   int tf_scan   = dset.simparams.speed_step[ 0 ].time_first;
-   int accel1    = dset.simparams.speed_step[ 0 ].acceleration;
-   QString svalu = US_Settings::debug_value( "SetSpeedLowA" );
-   int lo_ss_acc = svalu.isEmpty() ? 250 : svalu.toInt();
-   int rspeed    = dset.simparams.speed_step[ 0 ].rotorspeed;
-   int tf_aend   = ( rspeed + accel1 - 1 ) / ( accel1 == 0 ? 1 : accel1 );
-   int accel2    = dset.simparams.sim_speed_prof[ 0 ].acceleration;
+   int     tf_scan   = dset.simparams.speed_step[ 0 ].time_first;
+   int     accel1    = dset.simparams.speed_step[ 0 ].acceleration;
+   QString svalu     = US_Settings::debug_value( "SetSpeedLowA" );
+   int     lo_ss_acc = svalu.isEmpty() ? 250 : svalu.toInt();
+   int     rspeed    = dset.simparams.speed_step[ 0 ].rotorspeed;
+   int     accel2    = dset.simparams.sim_speed_prof[ 0 ].acceleration;
+   double  tf_aend   = static_cast<double>(tf_scan);
+   // prevent any division by zero
+   if (accel1 != 0)
+   {
+      tf_aend = static_cast<double>(rspeed) / static_cast<double>(accel1);
+   }
+
 DbgLv(1)<<"2dsa : ssck: rspeed accel1 tf_aend tf_scan"
  << rspeed << accel1 << tf_aend << tf_scan
  << "accel2" << accel2 << "lo_ss_acc" << lo_ss_acc;
@@ -1131,7 +1137,7 @@ DbgLv(1)<<"2dsa : ssck: rspeed accel1 tf_aend tf_scan"
                          "<b>You should rerun the experiment without<br/>"
                          "any interim constant speed, and then<br/>"
                          "you should reimport the data.</b>" )
-                     .arg( accel1 ).arg( tf_aend ).arg( tf_scan );
+                     .arg( accel1 ).arg( QString::number(tf_aend) ).arg( QString::number(tf_scan) );
 
       QMessageBox msgBox( this );
       msgBox.setWindowTitle( tr( "Bad TimeState Implied!" ) );

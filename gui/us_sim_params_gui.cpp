@@ -11,7 +11,7 @@
 
 US_SimParamsGui::US_SimParamsGui(
       US_SimulationParameters& params )
-   : US_WidgetsDialog( 0, 0 ), simparams( params )
+   : US_WidgetsDialog( nullptr, Qt::WindowFlags() ), simparams( params )
 {
    setWindowTitle( "Set Simulation Parameters" );
    setPalette    ( US_GuiSettings::frameColor() );
@@ -432,6 +432,33 @@ US_SimParamsGui::US_SimParamsGui(
 
    main->addLayout( buttons, row++, 0, 1, 8 );
 }
+
+bool US_SimParamsGui::load_params( const QString& load_init, US_SimulationParameters& params ) {
+   bool loaded = false;
+
+   // Save rotor parameters as they are upon entry
+   QString sv_rcal   = params.rotorCalID;
+   double sv_rcoef1  = params.rotorcoeffs[ 0 ];
+   double sv_rcoef2  = params.rotorcoeffs[ 1 ];
+
+   if ( params.load_simparms( load_init ) == 0 )
+   {
+      // Override loaded rotor parameters with the settings at entry
+      params.rotorCalID       = sv_rcal;
+      params.rotorcoeffs[ 0 ] = sv_rcoef1;
+      params.rotorcoeffs[ 1 ] = sv_rcoef2;
+      loaded = true;
+      for ( int jj = 0; jj < params.speed_step.count(); jj++ )
+      {
+         US_SimulationParameters::SpeedProfile* ss   = &params.speed_step[ jj ];
+         ss->avg_speed  = (double)ss->rotorspeed;
+         ss->set_speed  = ss->rotorspeed;
+      }
+      simparams = params;
+   }
+   return loaded;
+}
+
 
 void US_SimParamsGui::accepted( void )
 {

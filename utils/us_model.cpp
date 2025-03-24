@@ -150,7 +150,7 @@ bool US_Model::update_coefficients()
 bool US_Model::calc_coefficients( SimulationComponent& component )
 {
    // For documentation for the derivation of the coefficient calculations 
-   // please see: calc_coefficient_documentation.pdf in this directory
+   // please see: ../doc/calc_model_coefficient_documentation.pdf
 
    bool   ok = true;
    double vbar;             // component vbar
@@ -198,6 +198,12 @@ bool US_Model::calc_coefficients( SimulationComponent& component )
 
    buoyancyb      = 1.0 - ( vbar * DENS_20W );
 
+   if ( ( s < 0.0  &&  buoyancyb > 0.0 )  ||
+       ( s > 0.0  &&  buoyancyb < 0.0 ) )
+   {
+      return false;
+   }
+
    // Start with already calculated s if possible
    if ( s != 0.0 )
    {
@@ -207,9 +213,9 @@ bool US_Model::calc_coefficients( SimulationComponent& component )
                                                  ///////////////
       if ( f_f0 != 0.0 )                         // s and f_f0
       {                                          ///////////////
-         // Please see calc_coefficient_documentation.pdf in this directory,
+         // Please see ../doc/calc_model_coefficient_documentation.pdf,
          // equation 14, with adjustments for units in poise.
-         double numer   = 0.02 * vbar * s * VISC_20W;
+         double numer   = 0.02 * vbar * s * VISC_20W * f_f0;
          f0             = 0.09 * VISC_20W * M_PI * sqrt( numer / buoyancyb );
          fv             = f_f0 * f0;
          D              = RT / ( AVOGADRO * fv );

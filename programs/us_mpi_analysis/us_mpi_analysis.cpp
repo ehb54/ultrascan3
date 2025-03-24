@@ -879,14 +879,22 @@ if ( my_rank == 0 ) {
       int tf_scan   = dset->simparams.speed_step[ 0 ].time_first;
       int accel1    = dset->simparams.speed_step[ 0 ].acceleration;
       int rspeed    = dset->simparams.speed_step[ 0 ].rotorspeed;
-      int tf_aend   = ( rspeed + accel1 - 1 ) / ( accel1 == 0 ? 1 : accel1 );
       int accel2    = dset->simparams.sim_speed_prof[ 0 ].acceleration;
+      double  tf_aend   = static_cast<double>(tf_scan);
+      // prevent any division by zero
+      if (accel1 != 0)
+      {
+         tf_aend = static_cast<double>(rspeed) / static_cast<double>(accel1);
+      }
       if ( my_rank == 0 ){
          DbgLv(1) << "DSM: ssck: rspeed accel1 tf_aend tf_scan"
                  << rspeed << accel1 << tf_aend << tf_scan
                  << "accel2" << accel2 << "lo_ss_acc" << lo_ss_acc;
       }
-      if ( accel1 < lo_ss_acc  ||  tf_aend > ( tf_scan - 3 ) )
+      // check if the acceleration rate is low or the first scan was taken before the acceleration ended
+      // Due to older, wrong timestate calculation there might be a case, in which the calculated end of acceleration
+      // can be up to 1 second later than expected, tf_scan + 1 accounts for this.
+      if ( accel1 < lo_ss_acc  ||  tf_aend > ( tf_scan + 1 ) )
       {
          DbgLv(0) << "rank: " << my_rank << "  Dataset " << ee << " Name: " << dset->run_data.runID <<
                   " likely bad Timestate. Implied acceleration: " << accel1 <<
@@ -2201,7 +2209,12 @@ DbgLv(0) << "wrMo: model descr" << model.description;
          component.s       = solute->s;
          component.f_f0    = solute->k;
          component.name    = QString().sprintf( "SC%04d", ii + 1 );
-         component.vbar20  = (attr_z == ATTR_V) ? vbar20 : solute->v;
+         // component.vbar20  = (attr_z == ATTR_V) ? vbar20 : solute->v;
+         if ( stype == 0) {
+            component.vbar20  = vbar20;
+         } else {
+            component.vbar20  = solute->v;
+         }
          component.signal_concentration = solute->c;
 
          US_Model::calc_coefficients( component );
