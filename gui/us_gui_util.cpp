@@ -149,8 +149,10 @@ int US_GuiUtil::save_csv( const QString& filename, const QwtPlot* plot )
          x_data.clear();
          QVector<QString> y_data;
          y_data.clear();
+
          x_data << QString("\"") + item->title().text() + " " + x_axis_title + QString("\"");
          y_data << QString("\"") + item->title().text() + " " + y_axis_title + QString("\"");
+
          const QwtSeriesData<QPointF>* data = item->data();
          for (size_t i = 0; i < data->size(); i++)
          {
@@ -166,6 +168,7 @@ int US_GuiUtil::save_csv( const QString& filename, const QwtPlot* plot )
          {
             max_length = y_data.size();
          }
+
          if ( data->size() > 0 || (x_data.size() > 1 && y_data.size() > 1) )
          { // Only add data if there is data to add
             export_data << x_data << y_data;
@@ -246,6 +249,7 @@ int US_GuiUtil::save_csv( const QString& filename, const QwtPlot* plot )
                vec << QString("");
             }
             i = vec;
+
          }
       }
       // dump everything into a file
@@ -272,6 +276,7 @@ int US_GuiUtil::save_csv( const QString& filename, const QwtPlot* plot )
    }
 
    else
+
    {  // Mark error: filename does not end with ".csv"
        status = 1;
    }

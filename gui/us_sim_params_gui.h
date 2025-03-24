@@ -47,6 +47,7 @@ class US_GUI_EXTERN US_SimParamsGui : public US_WidgetsDialog
       QwtCounter*   cnt_scans;
       QwtCounter*   cnt_selected_speed;
       QwtCounter*   cnt_lamella;
+      QwtCounter*   cnt_angle;
       QwtCounter*   cnt_meniscus;
       QwtCounter*   cnt_bottom;
       QwtCounter*   cnt_simpoints;
@@ -104,6 +105,8 @@ class US_GUI_EXTERN US_SimParamsGui : public US_WidgetsDialog
 
       void help                 ( void )
          { showhelp.show_help( "manual/simparams.html" ); };
+
+   void update_cell_angle(double angle);
 };
 #endif
 

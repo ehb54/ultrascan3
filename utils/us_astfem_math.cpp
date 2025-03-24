@@ -947,8 +947,8 @@ int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata,
 #ifdef NO_DB
                //MPI_Abort( MPI_COMM_WORLD, -1 );
 #endif
-               simscan--;
-	       break;
+                simscan--;
+                break;
             }
          }
 
@@ -1094,10 +1094,10 @@ int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata,
 
    // Interpolate all radial points from each scan in tmp_data onto expdata
 
-   if ( tmp_data.radius[ 0 ] > expdata.radius[ 0 ] )
+   if ( tmp_data.radius[ 0 ] > expdata.radius[ 0 ] && qAbs(tmp_data.radius[ 0 ] - expdata.radius[ 0 ]) > 1.0e-4)
    {
-      qDebug() << "Radius comparison: " << tmp_data.radius[ 0 ]
-               << " (simulated), " << expdata.radius[ 0 ]
+      qDebug() << "Radius comparison: " << QString::number(tmp_data.radius[ 0 ])
+               << " (simulated), " << QString::number(expdata.radius[ 0 ])
                << " (experimental)";
 
       qDebug() << "jj = " << 0 << ", simdata radius: "
@@ -1148,7 +1148,8 @@ DbgLv(1) << "jj ii sztrad szerad" << jj << ii << tdradsz << expdata.radius.size(
 #ifdef NO_DB
             //MPI_Abort( MPI_COMM_WORLD, -2 );
 #endif
-            exit( -2 );
+         jj--;
+         break;
          }
       }
 
