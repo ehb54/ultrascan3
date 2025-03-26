@@ -1067,7 +1067,7 @@ int US_LammAstfvm::solve_component(int compx) {
    const double original_dt = dt;
    // main loop for time
    for ( jt = 0, kt = 0; jt < ntc; jt++ ) {
-      DbgLv(1) << "---------------------------------------";
+      DbgLv(2) << "---------------------------------------";
       timer.restart();
       if (NonIdealCaseNo == 2){
           if (t0 > af_data.scan.last().time && !break_switch){
@@ -1116,7 +1116,7 @@ int US_LammAstfvm::solve_component(int compx) {
          ts = tmp;
       }
       N0u = N0 + N0 - 1;
-      DbgLv(1) << "LAsc: MainLoop Time jt=" << jt << "kt=" << kt << "t0=" << t0 << "t1=" << t1 << "ts=" << ts << "N0="
+      DbgLv(2) << "LAsc: MainLoop Time jt=" << jt << "kt=" << kt << "t0=" << t0 << "t1=" << t1 << "ts=" << ts << "N0="
                << N0 << "N0u=" << N0u;
       if ( dbg_level > 0 && ((jt / 10) * 10) == jt ) {
          u_ttl = IntQs(x0, u0, 0, -1, N0 - 2, 1);
@@ -1255,7 +1255,7 @@ int US_LammAstfvm::solve_component(int compx) {
 
       if ( stopFlag ) break;
       } else {
-         DbgLv(1) << "kt not updated";
+         DbgLv(2) << "kt not updated";
       }
 
       delete[] u1p0;
