@@ -289,9 +289,9 @@ if (my_rank==0) DbgLv(0) << "PF:   DC_model" << parameters[name] << name;
 
       else
          dbg_level  = 1;
-
+      dbg_level = qMax(1, dbg_level);
 //      US_Settings::set_us_debug( dbg_level );
-      int dbglv = ( my_rank < 2 || my_rank == 15 ) ? dbg_level : 0;
+      int dbglv = ( my_rank < 2 || my_rank == 15 ) ? qMax(1,dbg_level) : 1;
       US_Settings::set_us_debug( dbglv );
       dbg_timing = ( parameters.contains( "debug_timings" )
                  &&  parameters[ "debug_timings" ].toInt() != 0 );

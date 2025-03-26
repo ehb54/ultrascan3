@@ -9,7 +9,9 @@
 void US_MPI_Analysis::_2dsa_master( void )
 {
    init_solutes();
+   qDebug() << "w:" << my_rank << " Solutes initialized";
    fill_queue();
+   qDebug() << "w:" << my_rank << "Queue filled";
 
    work_rss.resize( gcores_count );
 
@@ -45,7 +47,7 @@ void US_MPI_Analysis::_2dsa_master( void )
       menibott_count      = bottom_points;
       meniscus_points     = 1;
    }
-
+   qDebug() << "w:" << my_rank << "Preparing start of queue";
    while ( true )
    {
       int worker;
@@ -360,7 +362,7 @@ void US_MPI_Analysis::init_solutes( void )
                                      2 : 0 );
    simulation_values.dbg_level   = dbg_level;
    simulation_values.dbg_timing  = dbg_timing;
-DbgLv(0) << "DEBUG_LEVEL" << simulation_values.dbg_level;
+DbgLv(0) << "w:" << my_rank << "DEBUG_LEVEL" << simulation_values.dbg_level;
 
    // Test to see if there is a custom grid model
    QString model_filename = data_sets[ 0 ]->model_file;
@@ -393,16 +395,16 @@ DbgLv(0) << "DEBUG_LEVEL" << simulation_values.dbg_level;
       int    nsstep   = (int)( s_pts );
       int    nkstep   = (int)( ff0_pts );
 
-DbgLv(0) << "InSol: nss nks" << s_pts << ff0_pts << nsstep << nkstep << "grid_reps" << grid_reps;
+DbgLv(0) << "w:" << my_rank << "InSol: nss nks" << s_pts << ff0_pts << nsstep << nkstep << "grid_reps" << grid_reps;
       US_Solute::init_solutes( s_min,   s_max,   nsstep,
                                ff0_min, ff0_max, nkstep,
                                grid_reps, cnstff0, orig_solutes );
-DbgLv(0) << "InSol:  s range" << s_min*1.e+13 << s_max*1.e+13 << "k range"
+DbgLv(0) << "w:" << my_rank << "InSol:  s range" << s_min*1.e+13 << s_max*1.e+13 << "k range"
  << ff0_min << ff0_max;
 int j0=orig_solutes.count()-1;
 int j1=orig_solutes[0].count()-1;
 int j2=orig_solutes[j0].count()-1;
-DbgLv(0) << "orig_solutes:"
+DbgLv(0) << "w:" << my_rank << "orig_solutes:"
  << orig_solutes[ 0][ 0].s*1.e+13 << orig_solutes[ 0][ 0].k << "  "
  << orig_solutes[ 0][j1].s*1.e+13 << orig_solutes[ 0][j1].k << "  "
  << orig_solutes[j0][ 0].s*1.e+13 << orig_solutes[j0][ 0].k << "  "
