@@ -76,7 +76,7 @@ US_MPI_Analysis::US_MPI_Analysis( int nargs, QStringList& cmdargs ) : QObject()
    MPI_Comm_size( MPI_COMM_WORLD, &proc_count );
    MPI_Comm_rank( MPI_COMM_WORLD, &my_rank );
    bandFormingGradient = nullptr;
-   dbg_level    = 0;
+   dbg_level    = 1;
    dbg_timing   = false;
    maxrss       = 0L;
    minimize_opt = 2;

@@ -288,7 +288,7 @@ if (my_rank==0) DbgLv(0) << "PF:   DC_model" << parameters[name] << name;
          dbg_level  = parameters[ "debug_level" ].toInt();
 
       else
-         dbg_level  = 0;
+         dbg_level  = 1;
 
 //      US_Settings::set_us_debug( dbg_level );
       int dbglv = ( my_rank < 2 || my_rank == 15 ) ? dbg_level : 0;
