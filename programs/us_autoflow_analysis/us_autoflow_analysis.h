@@ -250,7 +250,8 @@ class US_Analysis_auto : public US_Widgets
             int scanCount;                                           /**< Scan count. */
 
             QPoint rpd_pos;                                          /**< Residual plot position. */
-
+  
+            QLabel* lb_hdr1;
             QPushButton* pb_show_all;                                /**< Show all button. */
             QPushButton* pb_hide_all;                                /**< Hide all button. */
 
@@ -264,6 +265,8 @@ class US_Analysis_auto : public US_Widgets
             QString defaultDB;                                       /**< Default database. */
             int autoflowStatusID;                                    /**< Auto flow status ID. */
             int autoflowID_passed;                                   /**< Passed auto flow ID. */
+            QString autoflow_expType;
+            QString dataSource;
 
             QString FileName;                                        /**< File name. */
             QString FileName_parsed;                                 /**< Parsed file name. */

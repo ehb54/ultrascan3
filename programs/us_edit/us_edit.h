@@ -431,6 +431,10 @@ class US_Edit : public US_Widgets
       void set_data_over_lamda();
       void xaxis_wavl_wgts_on( bool );
 
+ // protected:
+ //    void resizeEvent(QResizeEvent *event) override;	
+						  
+
    private slots:         
       void load              ( void );
       void load_auto         ( QMap < QString, QString > & );
@@ -586,6 +590,9 @@ class US_Edit : public US_Widgets
   //void update_triple_edit_params_blc_modified_plot ( int  );
       void restore_view( void );
       void set_current_bll_abde( QString, QString );
+
+      // void resize_main( void );
+      // void trigger_resize(void);
       
       void help              ( void )
       { showHelp.show_help( "manual/us_edit.html" ); };
@@ -603,6 +610,7 @@ class US_Edit : public US_Widgets
       void restore_main_view( void );
       
       void process_next_optics( void );
+  //void man_data_loaded(void);
 };
 #endif
 

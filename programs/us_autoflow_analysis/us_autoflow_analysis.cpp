@@ -31,7 +31,8 @@ US_Analysis_auto::US_Analysis_auto() : US_Widgets()
   panel->setSpacing        ( 2 );
   panel->setContentsMargins( 2, 2, 2, 2 );
 
-  QLabel* lb_hdr1          = us_banner( tr( "Analysis Stages for All Triples" ) );
+  //QLabel* lb_hdr1          = us_banner( tr( "Analysis Stages for All Triples" ) );
+  lb_hdr1          = us_banner( tr( "Analysis Stages for All Triples" ) );
   panel->addWidget(lb_hdr1);
 
   QHBoxLayout* buttons     = new QHBoxLayout();
@@ -68,7 +69,7 @@ US_Analysis_auto::US_Analysis_auto() : US_Widgets()
   in_reload_end_process = false;
   all_processed = true;
   
-  // // // // // // ---- Testing ----
+  // // // // // ---- Testing ----
   // QMap < QString, QString > protocol_details;
 
 
@@ -78,20 +79,32 @@ US_Analysis_auto::US_Analysis_auto() : US_Widgets()
   // protocol_details[ "filename" ]     = QString("MartinR_RP12_EcoRI_Digest_Optima1_24823-v3-run1963");
   // protocol_details[ "analysisIDs"  ] = QString( "3657,3658");
 
-  // // //What's needed ////////////////////////////////////////////////////////
-  // AProfileGUID       = protocol_details[ "aprofileguid" ];
-  // ProtocolName_auto  = protocol_details[ "protocolName" ];
-  // invID              = protocol_details[ "invID_passed" ].toInt();
+  // //ABDE-MWL
+  // protocol_details[ "invID_passed" ] = QString("165");
+  // protocol_details[ "protocolName" ] = QString("GMP-test-ABDE-fromDisk");
+  // protocol_details[ "aprofileguid" ] = QString("6c376179-6eda-47e9-b699-3eef63c6fe6e");
+  // protocol_details[ "filename" ]     = QString("AAV_GMP_test_030325-run2366-dataDiskRun-1515");
+  // protocol_details[ "analysisIDs"  ] = QString("");
+  // protocol_details[ "expType" ]      = QString("ABDE");
+  // protocol_details[ "dataSource" ]   = QString("dataDiskAUC");
+  // protocol_details[ "statusID" ]     = QString("588");
+  // protocol_details[ "autoflowID" ]   = QString("1515");
 
-  // FileName           = protocol_details[ "filename" ];
-  
-  // analysisIDs        = protocol_details[ "analysisIDs" ];
-  // /////////////////////////////////////////////////////////////////////
-
+  // // // //What's needed ////////////////////////////////////////////////////////
+  // // AProfileGUID       = protocol_details[ "aprofileguid" ];
+  // // ProtocolName_auto  = protocol_details[ "protocolName" ];
+  // // invID              = protocol_details[ "invID_passed" ].toInt();
+  // // FileName           = protocol_details[ "filename" ];
+  // // analysisIDs        = protocol_details[ "analysisIDs" ];
+  // // autoflow_expType   = protocol_details[ "expType" ];
+  // // dataSource         = protocol_details[ "dataSource" ];
+  // // autoflowStatusID   = protocol_details[ "statusID" ].toInt();
+  // // autoflowID_passed  = protocol_details[ "autoflowID" ].toInt();
+  // // /////////////////////////////////////////////////////////////////////
   
   // initPanel( protocol_details );
 
-  // // -----------------
+  // -----------------
 
 }
 
@@ -127,10 +140,24 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
   sim_msg_pos_x      = protocol_details[ "sim_msg_pos_x" ].toInt();
   sim_msg_pos_y      = protocol_details[ "sim_msg_pos_y" ].toInt();
 
+  autoflow_expType   = protocol_details[ "expType" ];
+  dataSource         = protocol_details[ "dataSource" ];
+
+  //hide if ABDE, close message
+  if ( autoflow_expType == "ABDE")
+    {
+      qDebug() << "[ABDE] - ANALYSIS!";
+      emit close_analysissetup_msg();
+
+      lb_hdr1     ->hide();
+      pb_show_all ->hide();
+      pb_hide_all ->hide();
+      treeWidget  ->hide();
+    }
+  
+
   //Copy protocol details
   protocol_details_at_analysis = protocol_details;
-
-  QStringList analysisIDs_list = analysisIDs.split(",");
 
   US_Passwd pw;
   US_DB2    db( pw.getPasswd() );
@@ -156,7 +183,20 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
       qDebug() << "defaultDB -- " << defaultDB;
     }
 
+  // IF ABDE:
+  if ( autoflow_expType == "ABDE")
+    {
+      qDebug() << "[ABDE] - ANALYSIS!";
+      //Pre-process data (decomposition for MWL); build alt. GUI (to integrate and manually normalize);
+      
+      
+      return;
+    }
+  // END for ABDE
+  
+  
   //retrieve AutoflowAnalysis records, build autoflowAnalysis objects:
+  QStringList analysisIDs_list = analysisIDs.split(",");
   for( int i=0; i < analysisIDs_list.size(); ++i )
     {
       QMap <QString, QString> analysis_details;
@@ -3574,18 +3614,25 @@ bool US_Analysis_auto::check_fitmen_status( const QString& requestID, const QStr
 //reset Analysis GUI: stopping all update processes
 void US_Analysis_auto::reset_analysis_panel( )
 {
-  //Stop  timer if active
-  if ( timer_update -> isActive() ) 
+  if ( autoflow_expType != "ABDE" || autoflow_expType == "VELOCITY" )
     {
-      timer_update -> stop();
-      disconnect(timer_update, SIGNAL(timeout()), 0, 0);
-
-      qDebug() << "Stopping timer_update !!!!";
+      //Stop  timer if active
+      if ( timer_update -> isActive() ) 
+	{
+	  timer_update -> stop();
+	  disconnect(timer_update, SIGNAL(timeout()), 0, 0);
+	  
+	  qDebug() << "Stopping timer_update !!!!";
+	}
+      
+      //ALEXEY: now we should wait for completion of the last timer_update shot...
+      connect(timer_end_process, SIGNAL(timeout()), this, SLOT( end_process ( ) ));
+      timer_end_process->start(1000);     // 5 sec
     }
-
-  //ALEXEY: now we should wait for completion of the last timer_update shot...
-  connect(timer_end_process, SIGNAL(timeout()), this, SLOT( end_process ( ) ));
-  timer_end_process->start(1000);     // 5 sec
+  else
+    {
+      emit analysis_update_process_stopped();
+    }
 }
 
 //Periodically check for ended processes

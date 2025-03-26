@@ -62,6 +62,8 @@ US_Edit::US_Edit( QString auto_mode ) : US_Widgets()
    bottom       = 0.0;
 DbgLv(1) << " 0)gap_fringe" << gap_fringe;
 
+ sdiag     = NULL;
+ sdiag_bll = NULL;
 
   us_edit_auto_mode = true;
   us_edit_auto_mode_manual = false;
@@ -1339,6 +1341,8 @@ pb_plateau->setVisible(false);
    //extra hides
    lb_gaps        ->hide();
    ct_gaps        ->hide();
+
+   qDebug() << "US_Edit manual setup 9";
 }
 
 
@@ -2811,6 +2815,8 @@ void US_Edit::gap_check( void )
 // Load an AUC data set
 void US_Edit::load_auto( QMap < QString, QString > & details_at_editing )
 {
+  sdiag = NULL;
+  sdiag_bll = NULL;
   triples_all_optics.clear();
   channels_all.clear();
   isSet_ref_wvl.clear();
@@ -9666,6 +9672,12 @@ void US_Edit::manual_edit_auto( void )
   upperWidget -> hide();
   leftWidget  -> hide();
   rightWidget -> hide();
+
+  if ( sdiag != NULL )
+    {
+      delete sdiag;
+      sdiag = NULL;
+    }
   
   int currChIndex = cb_triple->currentIndex();
   //int plotInd = index_data();
@@ -9691,19 +9703,28 @@ void US_Edit::manual_edit_auto( void )
 	   this,  SLOT( update_triple_edit_params_blc (  QMap < QString, QStringList > &) ) );
 
   connect( sdiag, SIGNAL( restore_main_view( ) ), this, SLOT( restore_view( ) ) );
-  
-  sdiag->show();
+
+  //connect( sdiag, SIGNAL( man_data_loaded(  ) ), this, SLOT( resize_main ( ) ) );
 
   int offset = 20;
   sdiag->move(2*offset, 2*offset);
   int newWidth  = this->width() - 3*offset;
   int newHeight = this->height() - 4*offset;
-  sdiag->setMaximumSize( newWidth, newHeight );
-  sdiag->adjustSize();
+  //sdiag->setMinimumSize( newWidth, newHeight );
+  //sdiag->setMaximumSize( newWidth, newHeight );
+  //sdiag->adjustSize();
   sdiag->resize( QSize(newWidth, newHeight ));
   sdiag->update();
-  sdiag->update();
+ 
+  sdiag->show();
+  //sdiag->trigger_resize();
+  //resize_main ( );
 }
+
+// void US_Edit::trigger_resize()
+// {
+//   emit man_data_loaded();
+// }
 
 //restore all widgets
 void US_Edit::restore_view( void )
@@ -10219,18 +10240,22 @@ void US_Edit::write_auto( void )
      {
        qDebug() << "EDIT STOPS HERE for ABDE!!!";
        
-       //Just update status of autoflow record (to 'REPORT')
-       update_autoflow_record_atEditData_abde( dbP );
-       
+       //Just update status of autoflow record (to 'ANALYSIS' with no analysisIDs)
+       //update_autoflow_record_atEditData_abde( dbP );
+       QString AnalysisIDsstr = QString("NULL");
+       update_autoflow_record_atEditData( dbP, AnalysisIDsstr );
+
        QMessageBox::information( this,
 				 tr( "Saving of Edit Profiles is Complete." ),
 				 tr( "[ABDE]Edit profiles were saved successfully. \n\n"
-				     "The program will switch to Reporting stage." ) );
+				     "The program will switch to Analysis stage." ) );
        reset();
-       //this->close();
+       this->close();
        qApp->processEvents();
+       //emit to ANALYSIS? <----------------
+       emit edit_complete_auto( details_at_editing_local  );   
        //emit to REPORT? <----------------
-       emit edit_complete_auto_abde( details_at_editing_local  );   
+       //emit edit_complete_auto_abde( details_at_editing_local  );   
        return;
      }
   /////////////////////////////////////////////////////////////////////
@@ -14470,6 +14495,21 @@ void US_Edit::close_manual_edit( void )
 {
   emit restore_main_view();
   close();
+
+  // if ( sdiag != NULL )
+  //   {
+  //     delete sdiag;
+  //     sdiag = NULL;
+  //   }
+
+  // if ( sdiag_bll != NULL )
+  //   {
+  //     delete sdiag_bll;
+  //     sdiag_bll = NULL;
+  //   }
+
+  // sdiag = NULL;
+  // sdiag_bll = NULL;
 }
 
 
@@ -14507,3 +14547,49 @@ void US_Edit::close_edit( void )
 
    close();
 }
+
+// //resize event
+
+// void US_Edit::resizeEvent(QResizeEvent *event)
+// {
+//   qDebug() << "US_EDIT resizing1..."; 
+//   int offset = 20;
+//   int new_main_w = this->width() - 3*offset;
+//   int new_main_h = this->height() - 4*offset;
+//   qDebug() << "US_EDIT resizing2...";
+  
+//   if ( sdiag != NULL )
+//     {
+//       qDebug() << "Resizing sdiag...";
+//       //if (mainw->width() - offset > sdiag->width() || mainw->height() - 2*offset > sdiag->height()) {
+//       if ( new_main_w > sdiag->width() || new_main_h > sdiag->height()) {
+// 	int newWidth = qMax( new_main_w, sdiag->width());
+// 	int newHeight = qMax( new_main_h, sdiag->height());
+	
+// 	sdiag->setMaximumSize( newWidth, newHeight );
+// 	sdiag->resize( QSize(newWidth, newHeight) );
+// 	update();
+//       }
+      
+//       //if (mainw->width() < sdiag->width() || mainw->height() < sdiag->height()) {
+//       if ( new_main_w < sdiag->width() ||  new_main_h < sdiag->height() ) {
+// 	int newWidth = qMin( new_main_w, sdiag->width());
+// 	int newHeight = qMin( new_main_h, sdiag->height());
+	
+// 	sdiag->setMaximumSize( newWidth, newHeight );
+// 	sdiag->resize( QSize(newWidth, newHeight) );
+// 	update();
+//       }
+//     }
+  
+//   QWidget::resizeEvent(event);
+// }
+
+// void US_Edit::resize_main( void )
+// {
+//   // Trigger resize to update size of the Edit_Data
+//   int curr_h = this->height() + 1;
+//   int curr_w = this->width() + 1;
+
+//   this->resize( QSize(curr_w, curr_h) );
+// }
