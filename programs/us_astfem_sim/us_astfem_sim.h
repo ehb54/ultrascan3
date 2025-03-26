@@ -58,6 +58,7 @@ class US_Astfem_Sim : public US_Widgets
       int            icomponent;          //!< Index of the component, which is currently simulated
       int            ncomponent;          //!< Number of components
       int            curve_count;         //!< Number of currently simulated scans
+      int            total_scans;         //!< Number of total simulated scans
       int            image_count;         //!< Current number of saved movie frames
       int            dbg_level;           //!< Debug level
       QString        imagedir;            //!< Path to the image dir
@@ -82,6 +83,7 @@ class US_Astfem_Sim : public US_Widgets
 
       QLCDNumber*    lcd_time;            //!< Pointer to time lcd
       QLCDNumber*    lcd_speed;           //!< Pointer to speed lcd
+      QLCDNumber*    lcd_scan;            //!< Pointer to scan lcd
       QLCDNumber*    lcd_component;       //!< Pointer to component lcd
       QProgressBar*  progress;            //!< Pointer to progress bar
 

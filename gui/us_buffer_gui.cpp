@@ -1182,6 +1182,8 @@ US_BufferGuiNew::US_BufferGuiNew( int *invID, int *select_db_disk,
 
 void US_BufferGuiNew::cosed_flag(bool cosed_flag) {
    DbgLv(1) << "called cosed_flag";
+   qDebug() << "lb_density" << lb_density << "lb_viscos" << lb_viscos;
+   qDebug() << "lb_density" << lb_density->text() << "lb_viscos" << lb_viscos->text();
    // save buffer name/description in case entered
    QString buffer_name = le_descrip->text();
    // completely delete the old layout
@@ -1209,6 +1211,33 @@ void US_BufferGuiNew::cosed_flag(bool cosed_flag) {
       }
    }
    delete layout;
+   pb_accept                = us_pushbutton( tr( "Accept" ) );
+   pb_spectrum              = us_pushbutton( tr( "Enter Spectrum" ) );
+   lb_bselect          = us_label( tr( "Please enter the concentration of\n"
+                                    " (component) in mM:" ) );
+   lb_bselect_name = us_label(tr("Please enter the name of\n"
+                              " the new component:"));
+   lb_density  = us_label( tr( "Density (20" ) + DEGC
+                        + tr( ", g/cm<sup>3</sup>):" ) );
+   lb_viscos   = us_label( tr( "Viscosity (20" ) + DEGC
+                           + tr( ", cP):" ) );
+   sl_temp = new QSlider(Qt::Horizontal);
+   sl_temp->setMinimum(1);
+   sl_temp->setMaximum(50);
+   sl_temp->setSingleStep(1);
+   sl_temp->setValue(20);
+   le_descrip          = us_lineedit( "" );
+   le_concen           = us_lineedit( "" );
+   le_density          = us_lineedit( "" );
+   le_viscos           = us_lineedit( "" );
+   le_ph               = us_lineedit( "7.0000" );
+   le_compress         = us_lineedit( "0.0000e+0" );
+   le_cosed_name = us_lineedit("");
+   lw_allcomps         = us_listwidget();
+   lw_bufcomps         = us_listwidget();
+   lw_upper_cosedcomps = us_listwidget();
+   lw_lower_cosedcomps = us_listwidget();
+
    main = new QGridLayout(this);
    if (cosed_flag) {
       cosed = true;
@@ -1216,8 +1245,6 @@ void US_BufferGuiNew::cosed_flag(bool cosed_flag) {
       main->setContentsMargins(2, 2, 2, 2);
 
       QPushButton *pb_cancel = us_pushbutton(tr("Cancel"));
-      pb_accept = us_pushbutton(tr("Finish"));
-      pb_spectrum = us_pushbutton(tr("Enter Spectrum"));
       QPushButton *pb_new_upper = us_pushbutton(tr("New Component"));
       QPushButton *pb_new_lower = us_pushbutton(tr("New Component"));
 
@@ -1226,20 +1253,17 @@ void US_BufferGuiNew::cosed_flag(bool cosed_flag) {
       QLabel *bn_newbuf = us_banner(tr("Specify a new cosedimenting buffer"), -1);
       QLabel *lb_descrip = us_label(tr("Description:"));
       QLabel *bn_general = us_banner(tr("General"));
-      lb_bselect = us_label(tr("Please enter the concentration of\n"
+      lb_bselect->setText( tr("Please enter the concentration of\n"
                                "the new component in mM:"));
-      lb_bselect_name = us_label(tr("Please enter the name of\n"
+      lb_bselect_name->setText(tr("Please enter the name of\n"
                                     "the new component:"));
       QLabel *bn_upper_cosed_comps = us_banner(tr("Click on item to select, Double-click an item to remove"), -2);
       QLabel *bn_lower_cosed_comps = us_banner(tr("Click on item to select, Double-click an item to remove"), -2);
       QLabel *bn_upper_cosed = us_banner(tr("Overlaying cosedimenting Components"));
       QLabel *bn_lower_cosed = us_banner(tr("Cosedimenting Components"));
-      le_descrip = us_lineedit(buffer_name);
-      le_concen = us_lineedit("");
-      le_cosed_name = us_lineedit("");
-      lw_upper_cosedcomps = us_listwidget();
-      lw_lower_cosedcomps = us_listwidget();
-
+      le_descrip->setText( buffer_name );
+      le_concen->setText( "" );
+      le_cosed_name->setText( "" );
 
       QPalette upal = lb_bselect->palette();
       upal.setColor(QPalette::WindowText, Qt::red);
@@ -1315,8 +1339,6 @@ void US_BufferGuiNew::cosed_flag(bool cosed_flag) {
       lo_temp->addWidget(sl_temp);
       lo_temp->addWidget(pb_temp20C);
       QPushButton *pb_cancel = us_pushbutton(tr("Cancel"));
-      pb_accept = us_pushbutton(tr("Accept"));
-      pb_spectrum = us_pushbutton(tr("Enter Spectrum"));
       //QPushButton* pb_spectrum = us_pushbutton( tr( "Enter Spectrum" ) );
       QPushButton *pb_help = us_pushbutton(tr("Help"));
       QPushButton *pb_new_bcomp = us_pushbutton("Create new");
@@ -1325,28 +1347,23 @@ void US_BufferGuiNew::cosed_flag(bool cosed_flag) {
       QLabel *bn_newbuf = us_banner(tr("Specify a new buffer to add"), -1);
       QLabel *lb_descrip = us_label(tr("Description:"));
       QLabel *bn_general = us_banner(tr("General"));
-      lb_bselect = us_label(tr("Please enter the concentration of\n"
+      lb_bselect->setText(tr("Please enter the concentration of\n"
                                " (component) in mM:"));
-      lb_bselect_name = us_label(tr("Please enter the name of\n"
-                                    " the new component:"));
+      lb_bselect_name->setText(tr("Please enter the name of\n"
+                              " the new component:"));
       QLabel *bn_allcomps = us_banner(tr("Click on item to select"), -2);
       QLabel *bn_bufcomps = us_banner(tr("Double-click an item to remove"), -2);
-      QLabel *lb_density = us_label(tr("Density (20") + DEGC + tr(", g/cm<sup>3</sup>):"));
-      QLabel *lb_viscos = us_label(tr("Viscosity (20") + DEGC + tr(", cP):"));
+      lb_density->setText(tr("Density (20") + DEGC + tr(", g/cm<sup>3</sup>):"));
+      lb_viscos->setText(tr("Viscosity (20") + DEGC + tr(", cP):"));
       QLabel *lb_ph = us_label(tr("pH:"));
       QLabel *lb_compress = us_label(tr("Compressibility:"));
       QLabel *bn_buffer = us_banner(tr("Buffer Components"));
-      le_descrip = us_lineedit("desc");
-      le_concen = us_lineedit("c");
-      le_density = us_lineedit("d");
-      le_viscos = us_lineedit("v");
-      le_ph = us_lineedit("7.0000");
-      le_compress = us_lineedit("0.0000e+0");
-
-      lw_allcomps = us_listwidget();
-      lw_bufcomps = us_listwidget();
-      lw_upper_cosedcomps = us_listwidget();
-      lw_lower_cosedcomps = us_listwidget();
+      le_descrip->setText("desc");
+      le_concen->setText("c");
+      le_density->setText("d");
+      le_viscos->setText("v");
+      le_ph->setText("7.0000");
+      le_compress->setText("0.0000e+0");
 
 
       QPalette upal = lb_bselect->palette();
@@ -1419,7 +1436,8 @@ void US_BufferGuiNew::cosed_flag(bool cosed_flag) {
 
    connect(ck_cosed, SIGNAL(toggled(bool)), this, SLOT  (cosed_flag(bool)));
    }
-
+   qDebug() << "lb_density" << lb_density << "lb_viscos" << lb_viscos;
+   qDebug() << "lb_density" << lb_density->text() << "lb_viscos" << lb_viscos->text();
 }
 
 // Slot when the DB-local state is changed from US_BufferGuiSetting
@@ -2163,6 +2181,7 @@ void US_BufferGuiNew::recalc_viscosity( void )
 void US_BufferGuiNew::calc_visc_dent_temp()
 {
    double temp = sl_temp->value();
+   qDebug() << "Temp: " << temp << DEGC << lb_density;
    lb_density->setText(tr( "Density (%1%2, g/cm<sup>3</sup>):" ).arg(temp).arg(DEGC));
    lb_viscos->setText(tr( "Viscosity (%1%2, cP):" ).arg(temp).arg(DEGC));
    qApp->processEvents();
@@ -2346,31 +2365,35 @@ void US_BufferGuiNew::newAccepted()
             }
          }
          if (i.overlaying)
+         {
             upper_cosed[i.name] = i.clone();
+         }
          else
+         {
             lower_cosed[i.name] = i.clone();
-
+         }
       }
       QMap<QString, US_CosedComponent> base;
       if (lower_cosed.size() > 1){
-          foreach (QString key, lower_cosed.keys()){
-                  US_CosedComponent cosed_comp = lower_cosed.value(key);
-                  // construct excess buffer
-                  QList<US_CosedComponent> excess_buffer;
-                  for (US_CosedComponent& excess_comp : buffer->cosed_component){
-                      // append all cosed comps which are not overlaying and not the component itself
-                      if (cosed_comp.name != excess_comp.name && !excess_comp.overlaying){
-                          excess_buffer << excess_comp;
-                      }
-                  }
-                  DbgLv(1) << "Pre request cosed component properties: s " << QString::number(cosed_comp.s_coeff, 'f', 5)
-                           << ", D: " << QString::number(cosed_comp.d_coeff, 'f', 5);
-                  US_LowerCosedComponentRequester* coseddiag = new US_LowerCosedComponentRequester(excess_buffer,&cosed_comp);
-                  coseddiag -> exec();
-                  qApp->processEvents();
-                  lower_cosed[key] = cosed_comp;
-                  DbgLv(1) << "Set cosed component properties: s " << QString::number(cosed_comp.s_coeff, 'f', 5)
-                           << ", D: " << QString::number(cosed_comp.d_coeff, 'f', 5);
+         foreach (QString key, lower_cosed.keys())
+         {
+            US_CosedComponent cosed_comp = lower_cosed.value(key);
+            // construct excess buffer
+            QList<US_CosedComponent> excess_buffer;
+            for (US_CosedComponent& excess_comp : buffer->cosed_component){
+                // append all cosed comps which are not overlaying and not the component itself
+                if (cosed_comp.name != excess_comp.name && !excess_comp.overlaying){
+                    excess_buffer << excess_comp;
+                }
+            }
+            DbgLv(1) << "Pre request cosed component properties: s " << QString::number(cosed_comp.s_coeff, 'f', 5)
+                     << ", D: " << QString::number(cosed_comp.d_coeff, 'f', 5);
+            US_LowerCosedComponentRequester* coseddiag = new US_LowerCosedComponentRequester(excess_buffer,&cosed_comp);
+            coseddiag -> exec();
+            qApp->processEvents();
+            lower_cosed[key] = cosed_comp;
+            DbgLv(1) << "Set cosed component properties: s " << QString::number(cosed_comp.s_coeff, 'f', 5)
+                     << ", D: " << QString::number(cosed_comp.d_coeff, 'f', 5);
           }
       }
       else {
