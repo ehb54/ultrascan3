@@ -271,4 +271,43 @@
       <channel name="A" bottom="7.2" shape="band forming" pathlen="1.2" angle="2.478" width="0" />
       <channel name="B" bottom="7.2" shape="band forming" pathlen="1.2" angle="2.474" width="0" />
    </abstractCenterpiece>
+   <abstractCenterpiece
+           id="23"
+           guid="e6b6d27b-83cc-4d36-8ff7-92c59aa7b8e7"
+           name="ULETH 331359 14U0099"
+           materialName="Epon-Helmut"
+           channels="1"
+           shape="band forming"
+           maxRPM="60000"
+           angle="2.50"
+           width="0" >
+      <channel name="A" bottom="7.2" shape="band forming" pathlen="1.2" angle="2.5" width="0" />
+      <channel name="B" bottom="7.2" shape="band forming" pathlen="1.2" angle="2.5" width="0" />
+   </abstractCenterpiece>
+   <abstractCenterpiece
+           id="24"
+           guid="e6b6d27b-83cc-4d36-8ff7-92c59aa7b8e7"
+           name="ULETH 331359 15U0119"
+           materialName="Epon-Helmut"
+           channels="1"
+           shape="band forming"
+           maxRPM="60000"
+           angle="1.70"
+           width="0" >
+      <channel name="A" bottom="7.2" shape="band forming" pathlen="1.2" angle="2.515" width="0" />
+      <channel name="B" bottom="7.2" shape="band forming" pathlen="1.2" angle="2.4" width="0" />
+   </abstractCenterpiece>
+   <abstractCenterpiece
+           id="25"
+           guid="e6b6d27b-83cc-4d36-8ff7-92c59aa7b8e7"
+           name="ULETH 331359 15U0118"
+           materialName="Epon-Helmut"
+           channels="1"
+           shape="band forming"
+           maxRPM="60000"
+           angle="1.70"
+           width="0" >
+      <channel name="A" bottom="7.2" shape="band forming" pathlen="1.2" angle="2.5" width="0" />
+      <channel name="B" bottom="7.2" shape="band forming" pathlen="1.2" angle="2.5" width="0" />
+   </abstractCenterpiece>
 </abstractCenterpieces>
