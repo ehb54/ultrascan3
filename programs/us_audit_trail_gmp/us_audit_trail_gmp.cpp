@@ -60,7 +60,7 @@ US_auditTrailGMP::US_auditTrailGMP() : US_Widgets()
 
 void US_auditTrailGMP::printAPDF( void )
 {
-  QString subDirName = gmpRunName_passed + "_AudirTrail";
+  QString subDirName = gmpRunName_passed + "_AuditTrail";
   mkdir( US_Settings::reportDir(), subDirName );
   filePath_pdf = US_Settings::reportDir() + "/" + subDirName + "/" + subDirName + ".pdf";
   
