@@ -101,7 +101,9 @@ class US_AnalysisControl2D : public US_WidgetsDialog
       QwtCounter*   ct_nstepsk;
       QwtCounter*   ct_thrdcnt;
       QwtCounter*   ct_menisrng;
+      QwtCounter*   ct_angle_range;
       QwtCounter*   ct_menispts;
+      QwtCounter*   ct_angle_points;
       QwtCounter*   ct_repetloc;
       QwtCounter*   ct_scfactor;
       QwtCounter*   ct_scfact2;
@@ -121,6 +123,7 @@ class US_AnalysisControl2D : public US_WidgetsDialog
       QCheckBox*    ck_custgr;
       QCheckBox*    ck_menisc;
       QCheckBox*    ck_bottom;
+      QCheckBox*    ck_angle;
       QCheckBox*    ck_ranlgr;
       QCheckBox*    ck_soluco;
       QCheckBox*    ck_clipcs;

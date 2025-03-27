@@ -1554,12 +1554,16 @@ QString US_2dsa::fit_meniscus_data()
    int nmodels   = models.size();
    
    if ( nmodels < 2 )
+   {
       return mstr;
+   }
 
-    bool usemen  = ( QString( models[ 0 ].description )
+   bool usemen  = ( QString( models[ 0 ].description )
                      .indexOf( "MENISCUS=" ) > 0 );
     bool usebot  = ( QString( models[ 0 ].description )
                      .indexOf( "BOTTOM=" ) > 0 );
+   bool useangle = ( QString( models[ 0 ].description )
+                     .indexOf( "ANGLE=" ) > 0 );
 
    for ( int ii = 0; ii < nmodels; ii++ )
    {
@@ -1593,6 +1597,23 @@ DbgLv(1) << "fitmdat:  ii" << ii << "meni rmsd"
          mstr         += ( abott + " " + armsd + "\n" );
 DbgLv(1) << "fitbdat:  ii" << ii << "bott rmsd"
  << abott << armsd;
+      }
+      else if ( usemen && useangle )
+      {
+         QString ameni = mdesc.mid( mdesc.indexOf( "MENISCUS=" ) + 9 )
+                         .section( " ", 0, 0 );
+         QString aangle = mdesc.mid( mdesc.indexOf( "ANGLE=" ) + 7 )
+                         .section( " ", 0, 0 );
+         mstr         += ( ameni + " " + aangle + " " + armsd + "\n" );
+         DbgLv(1) << "fitmdat:  ii" << ii << "meni angle rmsd"
+          << ameni << aangle << armsd;
+      }
+      else if ( useangle )
+      {
+         QString aangle = mdesc.mid( mdesc.indexOf( "ANGLE=" ) + 7 )
+                         .section( " ", 0, 0 );
+         mstr         += ( aangle + " " + armsd + "\n" );
+         DbgLv(1) << "fitmdat:  ii" << ii << " angle rmsd" << aangle << armsd;
       }
    }
    

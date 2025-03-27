@@ -41,6 +41,7 @@ US_2dsaProcess::US_2dsaProcess( QList< SS_DATASET* >& dsets,
    itvaris  .clear();                 // iteration variances
    ical_sols.clear();                 // iteration final calculated solutes
    simparms = &dsets[ 0 ]->simparams; // pointer to simulation parameters
+   bsimparms = dsets[ 0 ]->simparams; // pointer to simulation parameters
    if ( bdata->bottom == simparms->bottom_position )
    {
       bdata->bottom    = 0.0;
@@ -51,6 +52,7 @@ US_2dsaProcess::US_2dsaProcess( QList< SS_DATASET* >& dsets,
    s_variance       = QString( "" );
    s_meniscus       = QString( "" );
    s_bottom         = QString( "" );
+   s_angle          = QString( "" );
    vari_curr        = 0.0;
    nscans           = bdata->scanCount();
    npoints          = bdata->pointCount();
@@ -135,10 +137,11 @@ DbgLv(1) << "2P:SF: sll sul nss" << slolim << suplim << nssteps
       wdata              = *bdata;
 
       if ( mmtype == 1 )
-      {  // if meniscus, use the start meniscus,bottom values
+      {  // if meniscus, use the start meniscus,bottom,angle values
          edata              = &wdata;
          double bmeniscus   = bdata->meniscus;
          double bbottom     = bdata->bottom;
+         double bangle      = bsimparms.cp_angle;
          if ( bbottom == 0.0 )
          {
             bbottom            = dsets[ 0 ]->simparams.bottom;
@@ -146,11 +149,13 @@ DbgLv(1) << "2P:SF: sll sul nss" << slolim << suplim << nssteps
          }
          edata->meniscus    = bmeniscus - menrange * 0.5;
          edata->bottom      = bbottom   - menrange * 0.5;
+         dsets[ 0 ]->simparams.cp_angle = bangle - angle_range * 0.5;
          dsets[ 0 ]->simparams.meniscus = edata->meniscus;
          dsets[ 0 ]->simparams.bottom   = edata->bottom;
 DbgLv(1) << "2P:SF: MENISC: mm_iter" << mm_iter
  << "bmeniscus bbottom" << bmeniscus << bbottom
- << "emeniscus ebottom" << edata->meniscus << edata->bottom;
+ << "emeniscus ebottom" << edata->meniscus << edata->bottom
+         << "bangle eangle" << bsimparms.cp_angle << dsets[ 0 ]->simparams.cp_angle;
 
 //         set_meniscus();
       }
@@ -477,7 +482,7 @@ DbgLv(1) << "2P:SF: orig_sols: "
             bfg->get_eigenvalues();
             bfg->calculate_gradient(*simparms,&auc_data);
          }
-         if (dbg_level > 1){
+         if (dbg_level > 1 && false){
                QString rawGUID = US_Util::uuid_unparse( (unsigned char*)auc_data.rawGUID );
                double *Visc;
                double *Dens;
@@ -567,7 +572,7 @@ DbgLv(1) << "2P:SF: orig_sols: "
                   visc_raw_out.close();
                }
          }
-         if (dbg_level > 1){
+         if (dbg_level > 1 && false){
             QString rawGUID = US_Util::uuid_unparse( (unsigned char*)auc_data.rawGUID );
             double *Visc;
             double *Dens;
@@ -679,10 +684,13 @@ void US_2dsaProcess::set_iters( int    mxiter, int    mciter, int    mniter,
    ff_omeni   = ( fit_type == 1 );
    ff_obott   = ( fit_type == 2 );
    ff_menbot  = ( fit_type == 3 );
+   ff_oangle  = ( fit_type == 4 );
+   ff_meniangle = ( fit_type == 5 );
    ff_meni    = ( ( fit_type & 1 ) != 0 );
    ff_bott    = ( ( fit_type & 2 ) != 0 );
-DbgLv(1) << "2PSI: fittyp" << fit_type << "ff_omeni obott menbot meni bott"
- << ff_omeni << ff_obott << ff_menbot << ff_meni << ff_bott;
+   ff_angle  =  ( ( fit_type & 4 ) != 0 );
+DbgLv(1) << "2PSI: fittyp" << fit_type << "ff_omeni obott menbot meni bott oangle meniangle"
+ << ff_omeni << ff_obott << ff_menbot << ff_meni << ff_bott << ff_oangle << ff_meniangle;
 
    int stype  = 0;            // Constant vbar, varying f/f0
    if ( jgrefine > 0 )
@@ -1130,13 +1138,14 @@ DbgLv(1) << "FIN_FIN: vari" << vari << "vari2" << vari2 << "rmsd2" << rmsd2
    s_variance         = QString::number( vari );
    s_meniscus         = QString::number( edata->meniscus );
    s_bottom           = QString::number( edata->bottom );
+   s_angle            = QString::number( simparms->cp_angle );
    vari_curr          = vari;
 #endif
 
 //DbgLv(1) << "FIN_FIN: vari riter miter menisc" << rscan0->delta_r
 //            << rscan0->rpm << rscan0->seconds << rscan0->plateau;
-DbgLv(1) << "FIN_FIN: vari riter miter menisc bott" << s_variance
-            << s_rfiter << s_mmiter << s_meniscus << s_bottom;
+DbgLv(1) << "FIN_FIN: vari riter miter menisc bott angle" << s_variance
+            << s_rfiter << s_mmiter << s_meniscus << s_bottom << s_angle;
 
    // determine elapsed time
    int ktimes  = ((int) timer.elapsed() + 500 ) / 1000;
@@ -1275,10 +1284,14 @@ DbgLv(1) << "FIN_FIN: neediter" << neediter << "  sdiffs" << sdiffs
                            ( ff_meni ? k_iter : 0 );
       int b_iter         = ff_menbot ? ( k_iter % mmiters ) :
                            ( ff_bott ? k_iter : 0 );
+      int a_iter         = ff_meniangle ? ( k_iter % mmiters ) :
+                           ( ff_angle ? k_iter : 0 );
       double bmeniscus   = bdata->meniscus;
       double bbottom     = bdata->bottom;
+      double bangle      = bsimparms.cp_angle;
       double emeniscus   = bmeniscus;
       double ebottom     = bbottom;
+      double eangle      = bangle;
       if ( ff_meni )
       {
          emeniscus          = ( bmeniscus - menrange * 0.5 ) +
@@ -1289,23 +1302,30 @@ DbgLv(1) << "FIN_FIN: neediter" << neediter << "  sdiffs" << sdiffs
          ebottom            = ( bbottom   - menrange * 0.5 ) +
                               ( (double)b_iter * mendelta );
       }
+      if ( ff_angle )
+      {
+         eangle             = ( bangle - angle_range * 0.5 ) +
+                              ( (double)a_iter * angle_delta);
+      }
       edata->meniscus    = emeniscus;
       edata->bottom      = ebottom;
       simparms->meniscus = emeniscus;
       simparms->bottom   = ebottom;
+      simparms->cp_angle = eangle;
       s_rfiter           = QString::number( r_iter + 1 );
       s_mmiter           = QString::number( mm_iter );
       s_variance         = QString::number( vari_curr );
       s_meniscus         = QString::number( edata->meniscus );
       s_bottom           = QString::number( edata->bottom );
+      s_angle            = QString::number( simparms->cp_angle );
 
-DbgLv(1) << "MENISC: k_iter m_iter b_iter" << k_iter << m_iter << b_iter
- << "meniscus bottom" << edata->meniscus << simparms->bottom
+DbgLv(1) << "MENISC: k_iter m_iter b_iter a_iter" << k_iter << m_iter << b_iter << a_iter
+ << "meniscus bottom angle" << edata->meniscus << simparms->bottom << simparms->cp_angle
  << "bbottom mtiters" << bbottom << mtiters;
 if(mtiters>50)
  DbgLv(1) << "MENISC: mtiters mmiters" << mtiters << mmiters
   << "ff_: omeni" << ff_omeni << "obott" << ff_obott
-  << "menbot" << ff_menbot << "meni" << ff_meni << "bott" << ff_bott;
+  << "menbot" << ff_menbot << "meni" << ff_meni << "bott" << ff_bott << "angle" << ff_angle << "meniangle" << ff_meniangle;
 
       emit process_complete( mmtype );  // signal that iteration is complete
 
@@ -1511,6 +1531,12 @@ if(mtiters>50)
           double sbottom = bdata->bottom - menrange * 0.5;
           edata->bottom = sbottom + (double) b_iter * mendelta;
       }
+      if ( ff_angle ) {
+         int a_iter = ff_meniangle ? (k_iter % mmiters) :
+                      (ff_angle ? k_iter : 0);
+         double sangle = bsimparms.cp_angle - angle_range * 0.5;
+         simparms->cp_angle = sangle + (double) a_iter * angle_delta;
+      }
      if (dens_grad)
          {
              simparms->meniscus = edata->meniscus;
@@ -1691,6 +1717,7 @@ if(mtiters>50)
    s_variance         = QString::number( vari_curr );
    s_meniscus         = QString::number( edata->meniscus );
    s_bottom           = QString::number( edata->bottom );
+   s_angle            = QString::number( simparms->cp_angle );
 
    emit process_complete( 9 );     // signal that all processing is complete
 }
@@ -1740,14 +1767,16 @@ DbgLv(1) << "2P:GV: variance" << s_variance << vari_curr << "iter" << s_mmiter;
    mp_val[ "variance"     ]    = s_variance;
    mp_val[ "meniscus"     ]    = s_meniscus;
    mp_val[ "bottom"       ]    = s_bottom;
+   mp_val[ "angle"        ]    = s_angle;
 DbgLv(1) << " GET_VAL: rfit mcit vari meni bott"
- << s_rfiter << s_mmiter << s_variance << s_meniscus << s_bottom;
+ << s_rfiter << s_mmiter << s_variance << s_meniscus << s_bottom << s_angle;
 
    all_ok      = s_rfiter  .isEmpty() ? false : all_ok;
    all_ok      = s_mmiter  .isEmpty() ? false : all_ok;
    all_ok      = s_variance.isEmpty() ? false : all_ok;
    all_ok      = s_meniscus.isEmpty() ? false : all_ok;
    all_ok      = s_bottom  .isEmpty() ? false : all_ok;
+   all_ok      = s_angle   .isEmpty() ? false : all_ok;
 
    return all_ok;
 }
@@ -2280,12 +2309,16 @@ void US_2dsaProcess::set_meniscus()
                         ( ff_meni ? k_iter : 0 );
    int b_iter         = ff_menbot ? ( k_iter % mmiters ) :
                         ( ff_bott ? k_iter : 0 );
-DbgLv(1) << "SET_MEN: k_iter m_iter b_iter" << k_iter << m_iter << b_iter;
+   int a_iter         = ff_meniangle ? ( k_iter % mmiters ) :
+                        ( ff_angle ? k_iter : 0 );
+DbgLv(1) << "SET_MEN: k_iter m_iter b_iter a_iter" << k_iter << m_iter << b_iter << a_iter;
    double bmeniscus   = bdata->meniscus;
    double bbottom     = bdata->bottom;
-DbgLv(1) << "SET_MEN: bmeniscus bbottom" << bmeniscus << bbottom;
+   double bangle      = bsimparms.cp_angle;
+DbgLv(1) << "SET_MEN: bmeniscus bbottom bangle" << bmeniscus << bbottom << bangle;
    double emeniscus   = bmeniscus;
    double ebottom     = bbottom;
+   double eangle      = bangle;
    if ( ff_meni )
    {
       emeniscus          = ( bmeniscus - menrange * 0.5 ) +
@@ -2296,13 +2329,19 @@ DbgLv(1) << "SET_MEN: bmeniscus bbottom" << bmeniscus << bbottom;
       ebottom            = ( bbottom   - menrange * 0.5 ) +
                            ( (double)b_iter * mendelta );
    }
+   if ( ff_angle )
+   {
+      eangle             = ( bangle    - angle_range * 0.5 ) +
+                           ( (double)a_iter * angle_delta );
+   }
    edata->meniscus    = emeniscus;
    edata->bottom      = ebottom;
-DbgLv(1) << "SET_MEN: emeniscus ebottom" << edata->meniscus << edata->bottom;
+   simparms->cp_angle = eangle;
+DbgLv(1) << "SET_MEN: emeniscus ebottom eangle" << edata->meniscus << edata->bottom << simparms->cp_angle;
    simparms->meniscus = edata->meniscus;
    simparms->bottom   = edata->bottom;
-DbgLv(1) << "SET_MEN: k_iter m_iter b_iter" << k_iter << m_iter << b_iter
- << "meniscus bottom" << edata->meniscus << simparms->bottom << "bbot" << bbottom;
+DbgLv(1) << "SET_MEN: k_iter m_iter b_iter a_iter" << k_iter << m_iter << b_iter << a_iter
+ << "meniscus bottom angle" << edata->meniscus << simparms->bottom << simparms->cp_angle << "bbot" << bbottom;
 
    // Re-queue all the original subgrid tasks
    if ( mm_iter > 0 )

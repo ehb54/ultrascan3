@@ -87,7 +87,9 @@ US_AnalysisControl2D::US_AnalysisControl2D( QList< SS_DATASET* >& dsets,
    QLabel* lb_gridreps     = us_label(  tr( "Grid Repetitions:" ) );
 //   QLabel* lb_menisrng     = us_label(  tr( "Meniscus Fit Range (cm):" ) );
    QLabel* lb_menisrng     = us_label(  tr( "Fit Range (cm):" ) );
+   QLabel* lb_angle_range  = us_label(  tr( "Angle Range (deg):" ) );
    QLabel* lb_menispts     = us_label(  tr( "Fit Grid Points:" ) );
+   QLabel* lb_angle_points = us_label(  tr( "Angle Grid Points:" ) );
    QLabel* lb_mciters      = us_label(  tr( "Monte Carlo Iterations:" ) );
    QLabel* lb_iters        = us_label(  tr( "Maximum Iterations:" ) );
    QLabel* lb_statinfo     = us_banner( tr( "Status Information:" ) );
@@ -153,9 +155,11 @@ DbgLv(1) << "idealThrCout" << nthr;
    QLayout*  lo_custgr  =
       us_checkbox( tr( "Custom Grid"             ), ck_custgr, false );
    QLayout*  lo_menisc  =
-      us_checkbox( tr( "Float Meniscus"          ), ck_menisc, false );
+      us_checkbox( tr( "Fit Meniscus"          ), ck_menisc, false );
    QLayout*  lo_bottom  =
-      us_checkbox( tr( "Float Bottom"            ), ck_bottom, false );
+      us_checkbox( tr( "Fit Bottom"            ), ck_bottom, false );
+   QLayout*  lo_angle  =
+      us_checkbox( tr( "Fit Angle"            ), ck_angle, false );
    QLayout*  lo_mcarlo  =
       us_checkbox( tr( "Monte Carlo Iterations"  ), ck_mcarlo, false );
 
@@ -171,9 +175,13 @@ DbgLv(1) << "idealThrCout" << nthr;
 
    ct_menisrng  = us_counter( 3, 0.01, 0.65, 0.03 );
    ct_menispts  = us_counter( 2,    3,   51,   11 );
+   ct_angle_range = us_counter( 3, 0.001, 1, 0.05 );
+   ct_angle_points  = us_counter( 2,    3,   51,   11 );
    ct_mciters   = us_counter( 3,    3, 2000,   20 );
    ct_menisrng ->setSingleStep( 0.001 );
    ct_menispts ->setSingleStep(    1 );
+   ct_angle_range ->setSingleStep( 0.001 );
+   ct_angle_points ->setSingleStep(     1 );
    ct_mciters  ->setSingleStep(    1 );
    ct_iters    ->setSingleStep(    1 );
    QLabel* lb_optspace1    = us_banner( "" );
@@ -219,7 +227,7 @@ DbgLv(1) << "idealThrCout" << nthr;
    controlsLayout->addWidget( lb_status,     row,   0, 1, 1 );
    controlsLayout->addWidget( b_progress,    row++, 1, 1, 3 );
    controlsLayout->addWidget( lb_optspace1,  row,   0, 1, 4 );
-   controlsLayout->setRowStretch( row, 2 );
+   controlsLayout->setRowStretch( row, 5 );
 
    row           = 0;
    optimizeLayout->addWidget( lb_optimiz,    row++, 0, 1, 4 );
@@ -231,6 +239,15 @@ DbgLv(1) << "idealThrCout" << nthr;
 //   optimizeLayout->addLayout( lo_menisc,     row++, 0, 1, 4 );
    optimizeLayout->addLayout( lo_menisc,     row,   0, 1, 2 );
    optimizeLayout->addLayout( lo_bottom,     row++, 2, 1, 2 );
+   optimizeLayout->addWidget( lb_menisrng,   row,   0, 1, 1 );
+   optimizeLayout->addWidget( ct_menisrng,   row++, 1, 1, 3 );
+   optimizeLayout->addWidget( lb_menispts,   row,   0, 1, 2 );
+   optimizeLayout->addWidget( ct_menispts,   row++, 2, 1, 2 );
+   optimizeLayout->addLayout( lo_angle,      row++,    0, 1, 4 );
+   optimizeLayout->addWidget( lb_angle_range,   row,   0, 1, 1 );
+   optimizeLayout->addWidget( ct_angle_range,   row++, 1, 1, 3 );
+   optimizeLayout->addWidget( lb_angle_points,   row,   0, 1, 2 );
+   optimizeLayout->addWidget( ct_angle_points,   row++, 2, 1, 2 );
 //   optimizeLayout->addWidget( lb_menisrng,   row,   0, 1, 2 );
 //   optimizeLayout->addWidget( ct_menisrng,   row++, 2, 1, 2 );
    optimizeLayout->addWidget( lb_menisrng,   row,   0, 1, 1 );
@@ -329,6 +346,8 @@ void US_AnalysisControl2D::optimize_options()
                             ck_bottom->isChecked() );
    ct_menispts->setEnabled( ck_menisc->isChecked() ||
                             ck_bottom->isChecked() );
+   ct_angle_range->setEnabled( ck_angle->isChecked() );
+   ct_angle_points->setEnabled( ck_angle->isChecked() );
 //   ck_bottom  ->setEnabled( ck_menisc->isChecked() );
    ct_mciters ->setEnabled( ck_mcarlo->isChecked() );
 
@@ -348,9 +367,18 @@ void US_AnalysisControl2D::optimize_options()
 // uncheck optimize options other than one just checked
 void US_AnalysisControl2D::uncheck_optimize( int ckflag )
 {
-   if ( ckflag >  3 ) ck_unifgr->setChecked( false );
-   if ( ckflag == 3 ) ck_menisc->setChecked( false );
-   if ( ckflag == 2 ) ck_mcarlo->setChecked( false );
+   if ( ckflag >  3 )
+   {
+      ck_unifgr->setChecked( false );
+   }
+   if ( ckflag == 3 )
+   {
+      ck_menisc->setChecked( false );
+   }
+   if ( ckflag == 2 )
+   {
+      ck_mcarlo->setChecked( false );
+   }
 }
 
 // handle uniform grid checked
@@ -664,6 +692,7 @@ DbgLv(1) << "AnaC:St:MEM (2)rssnow" << US_Memory::rss_now();
    int fittype   = 0;
    fittype      |= ( ck_menisc->isChecked() ? 1 : 0 );
    fittype      |= ( ck_bottom->isChecked() ? 2 : 0 );
+   fittype      |= ( ck_varvbar->isChecked() ? 4 : 0 );
    int mciter    = ck_mcarlo->isChecked() ?
                    (int)ct_mciters ->value() : 0;
    double vtoler = 1.0e-12;
@@ -1065,15 +1094,17 @@ if (dbg_level>0)
    QString s_vari  = rval_map[ "variance" ];
    QString s_meni  = rval_map[ "meniscus" ];
    QString s_bott  = rval_map[ "bottom" ];
+   QString s_angle = rval_map[ "angle" ];
    int    iternum  = s_inum.toInt();
    int    mmitnum  = s_mmit.toInt();
    double varinew  = s_vari.toDouble();
    double meniscus = s_meni.toDouble();
    double bottom   = s_bott.toDouble();
+   double angle    = s_angle.toDouble();
    double variold  = le_newvari  ->text().toDouble();
    double vimprov  = variold - varinew;
-DbgLv(1) << "AC:cp inum mmit vari meni bott"
- << iternum << mmitnum << varinew << meniscus << bottom;
+DbgLv(1) << "AC:cp inum mmit vari meni bott angle"
+ << iternum << mmitnum << varinew << meniscus << bottom << angle;
    le_oldvari  ->setText( QString::number( variold ) );
    le_newvari  ->setText( s_vari );
    le_improve  ->setText( QString::number( vimprov ) );
@@ -1087,9 +1118,9 @@ DbgLv(1) << "AC:cp inum mmit vari meni bott"
 
    else if ( ck_menisc->isChecked() )
    {  // Meniscus (or Meniscus,Bottom)
-      model->global      = US_Model::MENISCUS;
       if ( ck_bottom->isChecked() )
       {  // Meniscus,Bottom-fit
+         model->global = US_Model::MENIBOTT;
          model->description = QString( "MMITER=%1 VARI=%2 MENISCUS=%3 BOTTOM=%4" )
                               .arg( mmitnum ).arg( varinew ).arg( meniscus ).arg( bottom );
          le_iteration->setText( QString::number( iternum  ) + " , Model " +
@@ -1097,8 +1128,19 @@ DbgLv(1) << "AC:cp inum mmit vari meni bott"
                                 QString::number( meniscus ) + " , Bottom " +
                                 QString::number( bottom ) );
       }
+      else if ( ck_angle->isChecked() )
+      {  // Meniscus,Angle-fit
+         model->global = US_Model::MENIANGEL;
+         model->description = QString( "MMITER=%1 VARI=%2 MENISCUS=%3 ANGLE=%4" )
+                              .arg( mmitnum ).arg( varinew ).arg( meniscus ).arg( angle );
+         le_iteration->setText( QString::number( iternum  ) + " , Model " +
+                                QString::number( mmitnum  ) + " , Meniscus " +
+                                QString::number( meniscus ) + " , Angle " +
+                                QString::number( angle ) );
+      }
       else
       {  // Meniscus-fit
+         model->global      = US_Model::MENISCUS;
          model->description = QString( "MMITER=%1 VARI=%2 MENISCUS=%3" )
                               .arg( mmitnum ).arg( varinew ).arg( meniscus );
          le_iteration->setText( QString::number( iternum  ) + " , Model " +
@@ -1116,7 +1158,15 @@ DbgLv(1) << "AC:cp inum mmit vari meni bott"
                              QString::number( mmitnum  ) + " , Bottom " +
                              QString::number( bottom ) );
    }
-
+   else if ( ck_angle->isChecked() )
+   {  // Angle-fit (only)
+      model->global      = US_Model::ANGEL;
+      model->description = QString( "MMITER=%1 VARI=%2 ANGLE=%4" )
+                           .arg( mmitnum ).arg( varinew ).arg( angle );
+      le_iteration->setText( QString::number( iternum  ) + " , Model " +
+                             QString::number( mmitnum  ) + " , Angle " +
+                             QString::number( angle ) );
+   }
    else
    {  // Monte Carlo
       model->monteCarlo  = true;

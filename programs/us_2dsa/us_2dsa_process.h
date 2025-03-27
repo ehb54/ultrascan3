@@ -150,6 +150,7 @@ private:
       US_Noise                   ri_noise;   // radially-invariant noise
       
       US_SimulationParameters*   simparms;   // simulation parameters
+      US_SimulationParameters    bsimparms;  // base simulation parameteres
 
 
       QList<US_CosedComponent> cosed_components; // cosedimenting component
@@ -167,6 +168,7 @@ private:
       QString    s_variance;   // current process variance as text
       QString    s_meniscus;   // current process meniscus as text
       QString    s_bottom;     // current process bottom as text
+      QString    s_angle;      // current process angle as text
 
       int        dbg_level;    // debug level
       int        nthreads;     // number of worker threads
@@ -192,7 +194,7 @@ private:
       int        mm_iter;      // meniscus/MC iteration index
       int        ntisols;      // number total task input solutes
       int        ntcsols;      // number total task computed solutes
-      int        fit_type;     // fit type flag: 0-3 => none,meni,bott,menbot
+      int        fit_type;     // fit type flag: 0-3 => none,meni,bott,menbot,angle,meniangle
 
       bool       abort;        // flag used with stop_fit clicked
       bool       fnoionly;     // flag to use noise flag on final call only
@@ -202,6 +204,9 @@ private:
       bool       ff_menbot;    // fit flag: fit-meniscus+bottom
       bool       ff_meni;      // fit flag: fit-meniscus (omeni or menbot)
       bool       ff_bott;      // fit flag: fit-bottom (obott or menbot)
+      bool       ff_angle;     // fit flag: fit-angle
+      bool       ff_oangle;    // fit flag: only fit-angle
+      bool       ff_meniangle; // fit flag: fit-meniscus+angle
 
       double     slolim;       // s lower limit
       double     suplim;       // s upper limit
@@ -215,6 +220,8 @@ private:
       double     vari_curr;    // current variance
       double     menrange;     // meniscus range
       double     mendelta;     // meniscus delta per iteration
+      double     angle_range;  // angle range
+      double     angle_delta;  // angle delta per iteration
       double     cnstff0;      // constant f/f0 (or 0.0)
 
       QTime      timer;        // timer for elapsed time measure
