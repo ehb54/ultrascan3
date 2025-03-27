@@ -245,12 +245,14 @@ DbgLv(1) << "  edat0 sdat0 rdat0 tnoi0"
 
    // For multiple models (e.g., Fit-Meniscus) report on best
    int nmodels     = models.count();
-   bool fitMeni    = ( model.global == US_Model::MENISCUS );
+   bool fitMeni    = ( model.global == US_Model::MENISCUS || model.global == US_Model::BOTTOM ||
+   model.global == US_Model::MENIBOTT || model.global == US_Model::ANGEL || model.global == US_Model::MENIANGEL);
    if ( nmodels > 1  &&  fitMeni )
    {
       double b_rmsd   = 1.0e+99;
       double b_meni   = 0.0;
       double b_bott   = 0.0;
+      double b_angle  = 0.0;
 
       for ( int ii = 0; ii < nmodels; ii++ )
       {
@@ -267,12 +269,14 @@ DbgLv(2) << "FitMens Done:  ii desc" << ii << mdesc;
                             .section( " ", 0, 0 ).toDouble();
             b_bott        = mdesc.mid( mdesc.indexOf( "BOTTOM=" ) + 7 )
                             .section( " ", 0, 0 ).toDouble();
-DbgLv(1) << "FitMens Done:    b_ rmsd,meni,bott" << b_rmsd << b_meni << b_bott
+            b_angle        = mdesc.mid( mdesc.indexOf( "ANGLE=" ) + 7 )
+                            .section( " ", 0, 0 ).toDouble();
+DbgLv(1) << "FitMens Done:    b_ rmsd,meni,bott,angle" << b_rmsd << b_meni << b_bott << b_angle
  << "  ix" << (ii+1);
          }
       }
-DbgLv(1) << "FitMens Done: BEST rmsd,meniscus,bottom"
- << b_rmsd << b_meni << b_bott;
+DbgLv(1) << "FitMens Done: BEST rmsd,meniscus,bottom,angle"
+ << b_rmsd << b_meni << b_bott << b_angle;
 
    }
 }
@@ -575,11 +579,13 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
    bool    fitMeni      = ( model.global == US_Model::MENISCUS );
    bool    fitBott      = ( model.global == US_Model::BOTTOM );
    bool    fitMeBo      = ( model.global == US_Model::MENIBOTT );
+   bool    fitAngle     = ( model.global == US_Model::ANGEL );
+   bool    fitMeAngle   = ( model.global == US_Model::MENIANGEL );
    bool    montCar      = model.monteCarlo;
    QString analysisType = QString( cusGrid ? "2DSA-CG" : "2DSA" )
                         + QString( fitMeni ? "-FM" : "" )
-                        + QString( fitBott ? "-FB" : "" )
-                        + QString( fitMeBo ? "-FMB" : "" )
+                        + QString( (fitBott || fitAngle) ? "-FB" : "" )
+                        + QString( (fitMeBo || fitMeAngle) ? "-FMB" : "" )
                         + QString( refIter ? "-IT" : "" )
                         + QString( montCar ? "-MC" : "" );
    QString requestID    = "local";
@@ -599,6 +605,7 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
    int     nnoises  = nmodels * knois;           // number of noises to save
    double  meniscus = edata->meniscus;
    double  bottom   = edata->bottom;
+   double  angle    =
    double  dwavelen = edata->wavelength.toDouble();
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
 
@@ -680,6 +687,8 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
       QString mdesc     = model.description;    // description from processor
       double  variance  = mdesc.mid( mdesc.indexOf( "VARI=" ) + 5 )
                           .section( ' ', 0, 0 ).toDouble();
+      double  angle  = mdesc.mid( mdesc.indexOf( "ANGLE=" ) + 5 )
+                          .section( ' ', 0, 0 ).toDouble();
       // create the iteration part of model description:
       // e.g.,"i01" normally; "i03-m60190" for meniscus; "mc017" for monte carlo
       QString iterID    = "i01";
@@ -706,6 +715,24 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
                              .section( ' ', 0, 0 ).toDouble();
          iterID.sprintf( "i%02d-b%05d", iterNum, qRound( bottom * 10000 ) );
       }
+      else if ( fitMeAngle )
+      {
+         meniscus          = mdesc.mid( mdesc.indexOf( "MENISCUS=" ) + 9 )
+                             .section( ' ', 0, 0 ).toDouble();
+         bottom            = mdesc.mid( mdesc.indexOf( "ANGLE=" ) + 7 )
+                             .section( ' ', 0, 0 ).toDouble();
+         if ( bottom > 0.0 )
+            iterID.sprintf( "i%02d-m%05db%05d", iterNum, qRound( meniscus * 10000 ),
+                            qRound( bottom * 10000 ) );
+         else
+            iterID.sprintf( "i%02d-m%05d", iterNum, qRound( meniscus * 10000 ) );
+      }
+      else if ( fitAngle )
+      {
+         bottom            = mdesc.mid( mdesc.indexOf( "ANGLE=" ) + 7 )
+                             .section( ' ', 0, 0 ).toDouble();
+         iterID.sprintf( "i%02d-a%05d", iterNum, qRound( bottom * 10000 ) );
+      }
 
       // fill in actual model parameters needed for output
       model.description = descbase + iterID + ".model";
@@ -721,7 +748,7 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
       model.meniscus    = meniscus;
       model.bottom      = bottom;
       model.wavelength  = dwavelen;
-      model.dataDescrip = edata->description;
+      model.dataDescrip = edata->description + QString("Angle %1").arg(angle);
 
       for ( int cc = 0; cc < model.components.size(); cc++ )
          model.components[ cc ].name = QString().sprintf( "SC%04d", cc + 1 );
@@ -830,6 +857,8 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
    QString analybase = fitMeni ? "2DSA-FM" : ( montCar ? "2DSA-MC" : "2DSA" );
    analybase         = fitBott ? "2DSA-FB" : analybase;
    analybase         = fitMeBo ? "2DSA-FMB" : analybase;
+   analybase         = fitAngle ? "2DSA-FA" : analybase;
+   analybase         = fitMeAngle ? "2DSA-FMA" : analybase;
    QString analynode = "/" + analybase + ".";
    QString maDesc("");
     if ( model.description.startsWith( runID ) )
@@ -842,7 +871,7 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
    QString plot2File = filebase + "residuals.png";
    QString plot3File = filebase + "rbitmap.png";
    QString plot4File = filebase + "velocity_nc.svgz";
-   QString fitFile   = filebase + ( fitBott ?
+   QString fitFile   = filebase + ( (fitBott||fitAngle) ?
                                     "fitbot.dat" :
                                     "fitmen.dat" );
    QString fresFile  = respath  + QString( fitFile )
