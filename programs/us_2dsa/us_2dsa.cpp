@@ -1242,12 +1242,16 @@ QString US_2dsa::distrib_info()
       bool    fitMeni   = ( model.global == US_Model::MENISCUS );
       bool    fitBott   = ( model.global == US_Model::BOTTOM );
       bool    fitMeBo   = ( model.global == US_Model::MENIBOTT );
+      bool    fitAngle   = ( model.global == US_Model::ANGEL );
+      bool    fitMeAngle   = ( model.global == US_Model::MENIANGEL );
       bool    montCar   = model.monteCarlo;
 DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
       QString anType    = QString( cusGrid ? "2DSA-CG" : "2DSA" )
                         + QString( fitMeni ? "-FM" : "" )
                         + QString( fitBott ? "-FB" : "" )
                         + QString( fitMeBo ? "-FMB" : "" )
+                        + QString( fitBott ? "-FA" : "" )
+                        + QString( fitMeBo ? "-FMA" : "" )
                         + QString( refIter ? "-IT" : "" )
                         + QString( montCar ? "-MC" : "" );
       maDesc            = adate + "_" + anType + "_local_i01";
@@ -1412,7 +1416,8 @@ QString US_2dsa::iteration_info()
       return "";
 
    model            = models[ nmodels - 1 ];
-   bool    fitMeni  = ( model.global == US_Model::MENISCUS );
+   bool fitMeni    = ( model.global == US_Model::MENISCUS || model.global == US_Model::BOTTOM ||
+model.global == US_Model::MENIBOTT || model.global == US_Model::ANGEL || model.global == US_Model::MENIANGEL);
    bool    montCar  = model.monteCarlo;
    QString anType   = montCar ? "Monte Carlo" : "Fit Meniscus";
 
@@ -1450,15 +1455,25 @@ QString US_2dsa::iteration_info()
       + indent( 4 ) + "<table>\n";
 
    if ( montCar )
+   {
       mstr += table_row( tr( "Iteration" ),
                          tr( "Iteration ID" ),
                          tr( "RMSD" ) );
-
+   }
+   else if ( model.global == US_Model::ANGEL || model.global == US_Model::MENIANGEL )
+   {
+      mstr += table_row( tr( "Iteration" ),
+                         tr( "Meniscus" ),
+                         tr( "Angle" ),
+                         tr( "RMSD" ) );
+   }
    else
+   {
       mstr += table_row( tr( "Iteration" ),
                          tr( "Meniscus" ),
                          tr( "Bottom" ),
                          tr( "RMSD" ) );
+   }
 
    for ( int ii = 0; ii < nmodels; ii++ )
    {
@@ -1473,7 +1488,14 @@ QString US_2dsa::iteration_info()
          QString itID  = QString().sprintf( "i%04i", ii + 1 );
          mstr         += table_row( itnum, itID, armsd );
       }
-
+      else if ( model.global == US_Model::ANGEL || model.global == US_Model::MENIANGEL )
+      {
+         QString ameni = mdesc.mid( mdesc.indexOf( "MENISCUS=" ) + 9 )
+                .section( " ", 0, 0 );
+         QString abott = mdesc.mid( mdesc.indexOf( "ANGLE=" ) + 7 )
+                         .section( " ", 0, 0 );
+         mstr         += table_row( itnum, ameni, abott, armsd );
+      }
       else
       {
          QString ameni = mdesc.mid( mdesc.indexOf( "MENISCUS=" ) + 9 )
