@@ -2177,7 +2177,7 @@ DbgLv(1) << "main: newBufCanceled  bGUID" << buffer.GUID;
 // Exit and signal caller that changes and selected were accepted
 void US_BufferGui::bufferAccepted( void )
 {
-   valueChanged      ( buffer.density, buffer.viscosity );
+   emit BufferDataChanged ( buffer.density, buffer.viscosity );
    emit valueChanged ( buffer );
    emit valueBufferID( buffer.bufferID );
    accept();
