@@ -112,7 +112,6 @@ US_Math_BF::Band_Forming_Gradient::Band_Forming_Gradient(const double m, const d
          else if (!lower_cosed.contains(cosed_comp.name) && !upper_cosed.contains(cosed_comp.name)) {
             // the component is present with the same concentration in both the upper and lower part
             //base_comps << cosed_comp;
-            qDebug() << cosed_comp.name;
             base_density +=
                             cosed_comp.dens_coeff[1] * sqrt(fabs(cosed_comp.conc)) +
                             cosed_comp.dens_coeff[2] * cosed_comp.conc +
@@ -126,7 +125,6 @@ US_Math_BF::Band_Forming_Gradient::Band_Forming_Gradient(const double m, const d
                               cosed_comp.visc_coeff[4] * pow(cosed_comp.conc, 3) +
                               cosed_comp.visc_coeff[5] * pow(cosed_comp.conc, 4);
          }
-         qDebug() << "base_comps" << base_comps.count() << "base_visc" << base_viscosity << "base_dens" << base_density;
       }
    // normalize base density and viscosity
    base_density = base_density / base_comps.count();
@@ -135,7 +133,7 @@ US_Math_BF::Band_Forming_Gradient::Band_Forming_Gradient(const double m, const d
    foreach (US_CosedComponent i, upper_cosed) { upper_comps << i; }
    foreach (US_CosedComponent i, lower_cosed) { lower_comps << i; }
    DbgLv(1) << "Constructor BFG finished bc uc lc" << base_comps.count() << upper_comps.count() << lower_comps.count();
-   DbgLv(1) << "Constructor BFG finished bd bv" << base_density << base_viscosity;
+   DbgLv(1) << "Constructor BFG finished bd bv" << base_density << base_viscosity << cp_angle;
 
    is_empty = false;
 }
@@ -290,7 +288,7 @@ US_Math_BF::Band_Forming_Gradient::Band_Forming_Gradient(US_SimulationParameters
       foreach (US_CosedComponent i, upper_cosed) { upper_comps << i; }
       foreach (US_CosedComponent i, lower_cosed) { lower_comps << i; }
    DbgLv(1) << "Constructor BFG finished bc uc lc" << base_comps.count() << upper_comps.count() << lower_comps.count();
-   DbgLv(1) << "Constructor BFG finished bd bv" << base_density << base_viscosity;
+   DbgLv(1) << "Constructor BFG finished bd bv" << base_density << base_viscosity << cp_angle;
 
    is_empty = false;
    simparms = asparms;
@@ -1307,7 +1305,7 @@ bool US_Math_BF::Secant_Solver::solve_wrapper() {
       x0 = i_min + n * grid_res;
       x1 = i_min + (n + 1) * grid_res;
    } while (x1 < i_max);
-   DbgLv(1) << "found Solutions " << solutions.length() << "\n";
+   DbgLv(2) << "found Solutions " << solutions.length() << "\n";
    // sort solutions and clean them up, just in case
    std::sort(solutions.begin(),solutions.end());
    int length = solutions.count();
@@ -1319,7 +1317,7 @@ bool US_Math_BF::Secant_Solver::solve_wrapper() {
       }
       i++;
    }
-   DbgLv(1) << "found unqiue Solutions " << solutions.length() << "\n";
+   DbgLv(2) << "found unqiue Solutions " << solutions.length() << "\n";
    if (solutions.isEmpty()) {
       return false;
    }

@@ -925,9 +925,9 @@ int US_LammAstfvm::solve_component(int compx) {
       ntc = (int) (solut_t / dt) + 1;
    }
 
-   DbgLv(1) << "LAsc:  CX=" << comp_x << "  ntcc ntc nts ncs nicase" << ntcc << ntc << nts << ncs << NonIdealCaseNo;
-   DbgLv(1) << "LAsc:    tot_t dt sol_t" << total_t << dt << solut_t;
-   DbgLv(1) << "LAsc:     m b s w2" << param_m << param_b << param_s << param_s20w << param_D << param_D20w << param_w2;
+   DbgLv(2) << "LAsc:  CX=" << comp_x << "  ntcc ntc nts ncs nicase" << ntcc << ntc << nts << ncs << NonIdealCaseNo;
+   DbgLv(2) << "LAsc:    tot_t dt sol_t" << total_t << dt << solut_t;
+   DbgLv(2) << "LAsc:     m b s w2" << param_m << param_b << param_s << param_s20w << param_D << param_D20w << param_w2;
 
    conc0.resize(ncs);
    conc1.resize(ncs);
@@ -1118,10 +1118,10 @@ int US_LammAstfvm::solve_component(int compx) {
       N0u = N0 + N0 - 1;
       DbgLv(2) << "LAsc: MainLoop Time jt=" << jt << "kt=" << kt << "t0=" << t0 << "t1=" << t1 << "ts=" << ts << "N0="
                << N0 << "N0u=" << N0u;
-      if ( dbg_level > 0 && ((jt / 10) * 10) == jt ) {
+      if ( dbg_level > 1 && ((jt / 10) * 10) == jt ) {
          u_ttl = IntQs(x0, u0, 0, -1, N0 - 2, 1);
-         DbgLv(2) << "LAsc:    jt,kt,t0=" << jt << kt << t0 << " Nv=" << N0 << "u_ttl=" << u_ttl;
-         DbgLv(2) << "LAsc:  u0 0,1,2...,N" << u0[ 0 ] << u0[ 1 ] << u0[ 2 ] << u0[ N0u - 3 ] << u0[ N0u - 2 ]
+         DbgLv(3) << "LAsc:    jt,kt,t0=" << jt << kt << t0 << " Nv=" << N0 << "u_ttl=" << u_ttl;
+         DbgLv(3) << "LAsc:  u0 0,1,2...,N" << u0[ 0 ] << u0[ 1 ] << u0[ 2 ] << u0[ N0u - 3 ] << u0[ N0u - 2 ]
                   << u0[ N0u - 1 ];
          tso << QString("%1 %2 %3\n").arg(QString::number(t0,'f', 5), QString::number(N0), QString::number(u_ttl,'f', 5));
          for ( int j = 0; j < N0; j++ )
@@ -1279,7 +1279,7 @@ int US_LammAstfvm::solve_component(int compx) {
    if ( dbg_level > 0 )
       ftto.close();
 
-   if ( dbg_level > 0 ) {
+   if ( dbg_level > 1 ) {
       DbgLv(1) << "#####################################";
       DbgLv(1) << "component: " << model.components[ compx ].name;
       // calculate and print the integral of scan curves
@@ -1411,7 +1411,6 @@ void US_LammAstfvm::SetNonIdealCase_1(double sigma_k, double delta_k) {
 }
 
 void US_LammAstfvm::SetNonIdealCase_2() {
-   DbgLv(1) << "SetNonIdealCase_2";
    US_Model cosed_model = model;
    cosed_model.coSedSolute = -1;
    cosed_model.components.clear();
@@ -1423,10 +1422,6 @@ void US_LammAstfvm::SetNonIdealCase_2() {
    QMap<QString, US_CosedComponent> lower_cosed;
    QList<QString> base_comps;
    foreach (US_CosedComponent i, cosed_components) {
-      DbgLv(1) << "buff dens_coeff" << i.dens_coeff[ 0 ] << i.dens_coeff[ 1 ] << i.dens_coeff[ 2 ]
-               << i.dens_coeff[ 3 ] << i.dens_coeff[ 4 ] << i.dens_coeff[ 5 ];
-      DbgLv(1) << "buff visc_coeff" << i.visc_coeff[ 0 ] << i.visc_coeff[ 1 ] << i.visc_coeff[ 2 ]
-               << i.visc_coeff[ 3 ] << i.visc_coeff[ 4 ] << i.visc_coeff[ 5 ];
       if ( !i.overlaying && upper_cosed.contains(i.name)) {
          // the current component is in the lower part, but there is another component with the same name in the
          // overlaying section of the band forming gradient
@@ -1500,15 +1495,12 @@ void US_LammAstfvm::SetNonIdealCase_2() {
       } else if ( !cosed_comp.overlaying && lower_cosed.contains(cosed_comp.name)) {
          cosed_comp = lower_cosed.value(cosed_comp.name);
       } else {
-         DbgLv(1) << "nothing";
          continue;
       }
       if ( cosed_comp.s_coeff == 0.0 && cosed_comp.d_coeff == 0.0 ) {
-         DbgLv(1) << "not cosedimenting";
          continue;
       }
       if (cosed_comp.s_coeff == 0.0){
-         DbgLv(1) << "pure diffusive";
          codiff_needed = true;
          continue;
       }
@@ -1535,22 +1527,20 @@ void US_LammAstfvm::SetNonIdealCase_2() {
       cosed_model.components << tmp;
       cosed_model_tmp.components << tmp;
       cosed_model_tmp.update_coefficients();
-         DbgLv(1) << "NonIdeal2: calc saltdata";
       saltdata = new CosedData(cosed_model_tmp, simparams, auc_data, &cosed_components, base_density, base_viscosity);
       cosed_comp_data[ tmp.analyteGUID ] = saltdata->sa_data;
-      DbgLv(1) << "NonIdeal2: create saltdata";
       cosed_model.update_coefficients();
       saltdata->model = cosed_model;
       saltdata->cosed_comp_data = cosed_comp_data;
       saltdata->cosed_comp_data.detach();
-      DbgLv(1) << "CosedData: cosed_model comp" << saltdata->model.components.size() << "cosed_comp_data"
+      DbgLv(2) << "CosedData: cosed_model comp" << saltdata->model.components.size() << "cosed_comp_data"
                << cosed_comp_data.size() << "sa_data.scanCount()" << saltdata->sa_data.scanCount();
       DbgLv(2) << "NonIdeal2: initSalt  comp_x" << comp_x;
    }
-   DbgLv(1) << "NonIdeal2: prep saltdata" << cosed_needed << codiff_needed;
+   DbgLv(2) << "NonIdeal2: prep saltdata" << cosed_needed << codiff_needed;
    if (!cosed_comp_data.isEmpty()){
    saltdata->sa_data = cosed_comp_data.first();}
-   DbgLv(1) << "NonIdeal2: finished";
+   DbgLv(2) << "NonIdeal2: finished";
 }
 
 void US_LammAstfvm::save_xla(const QString &dirname, US_DataIO::RawData sim_data, int i1) {
@@ -2376,7 +2366,7 @@ int US_LammAstfvm::nonIdealCaseNo() {
 
       NonIdealCaseNo = 2;
    }
-   DbgLv(1) << "LammAstfvm: set nonidealcaseno:" << NonIdealCaseNo;
+   DbgLv(2) << "LammAstfvm: set nonidealcaseno:" << NonIdealCaseNo;
    return rc;
 }
 
@@ -2440,13 +2430,13 @@ void US_LammAstfvm::load_mfem_data(US_DataIO::RawData &edata, US_AstfemMath::Mfe
 
 //   int  nconc  = edata.x.size();         // concentrations count
    int nconc = edata.xvalues.size();   // concentrations count
-   DbgLv(1) << "Lamm:ldMFEM: nscan edata.scanCount() nconc edata.pointCount()" << nscan << edata.scanCount() << nconc
+   DbgLv(2) << "Lamm:ldMFEM: nscan edata.scanCount() nconc edata.pointCount()" << nscan << edata.scanCount() << nconc
             << edata.pointCount();
    fdata.id = edata.description;
    fdata.cell = edata.cell;
    fdata.scan.resize(nscan);         // mirror number of scans
    fdata.radius.resize(nconc);         // mirror number of radius values
-   DbgLv(1) << "RSA:f  r0 rn" << fdata.radius[ 0 ] << fdata.radius[ nconc - 1 ];
+   DbgLv(2) << "RSA:f  r0 rn" << fdata.radius[ 0 ] << fdata.radius[ nconc - 1 ];
 
    for ( int ii = 0; ii < nscan; ii++ ) {  // copy over all scans
       US_AstfemMath::MfemScan *fscan = &fdata.scan[ ii ];
@@ -2489,9 +2479,9 @@ fdata.radius[ jj ] = edata.radius( jj );
    fdata.radius = edata.xvalues;
    int nn = fdata.radius.size() - 1;
    int mm = nn / 2;
-   DbgLv(1) << "LdDa:  n r0 rm rn" << nn << fdata.radius[ 0 ] << fdata.radius[ mm ] << fdata.radius[ nn ];
-   DbgLv(1) << "RSA:f sc0 temp" << fdata.scan[ 0 ].temperature;
-   DbgLv(1) << "RSA:e sc0 temp" << edata.scanData[ 0 ].temperature;
+   DbgLv(2) << "LdDa:  n r0 rm rn" << nn << fdata.radius[ 0 ] << fdata.radius[ mm ] << fdata.radius[ nn ];
+   DbgLv(2) << "RSA:f sc0 temp" << fdata.scan[ 0 ].temperature;
+   DbgLv(2) << "RSA:e sc0 temp" << edata.scanData[ 0 ].temperature;
 }
 
 // store MfemData object used internally into caller's RawData object
@@ -2567,7 +2557,7 @@ void US_LammAstfvm::validate_bfg() {
        DbgLv(1) << "validated bfg recalculated";
     }
    DbgLv(1) << "validated bfg";
-    if (dbg_level > 0){
+    if (dbg_level > 1){
        QString rawGUID = US_Util::uuid_unparse( (unsigned char*)auc_data->rawGUID );
        double *Visc;
        double *Dens;
@@ -2618,7 +2608,7 @@ void US_LammAstfvm::validate_bfg() {
             visc_raw_out.close();
          }
     }
-   if (dbg_level > 0){
+   if (dbg_level > 1){
       QString rawGUID = US_Util::uuid_unparse( (unsigned char*)auc_data->rawGUID );
       double *Visc;
       double *Dens;
@@ -2719,7 +2709,7 @@ void US_LammAstfvm::validate_csd() {
     foreach(US_CosedComponent cosed_comp,  cosed_components) {
         // get the excess concentrations
         if (cosed_comp.s_coeff == 0.0){
-            DbgLv(1) << "pure diffusive";
+            DbgLv(2) << "pure diffusive";
             codiff_needed = true;
             continue;
         }
@@ -2751,7 +2741,7 @@ void US_LammAstfvm::validate_csd() {
         saltdata->model = cosed_model;
         saltdata->cosed_comp_data = cosed_comp_data;
         saltdata->cosed_comp_data.detach();
-        DbgLv(1) << "CosedData: cosed_model comp" << saltdata->model.components.size() << "cosed_comp_data"
+        DbgLv(2) << "CosedData: cosed_model comp" << saltdata->model.components.size() << "cosed_comp_data"
                  << cosed_comp_data.size() << "sa_data.scanCount()" << saltdata->sa_data.scanCount();
     }
     if (!cosed_comp_data.isEmpty()){
