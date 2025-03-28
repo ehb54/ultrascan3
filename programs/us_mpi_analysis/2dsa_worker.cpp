@@ -48,9 +48,9 @@ DbgLv(1) << "w:" << my_rank << ": job_recvd  length" << job.length
 DbgLv(1) << "w:" << my_rank << ": offs cnt" << offset << dataset_count;
 
       data_sets[ offset ]->run_data.meniscus  = meniscus_value;
-      data_sets[ offset ]->run_data.bottom    = bottom_value;
+      data_sets[ offset ]->simparams.cp_angle   = bottom_value;
       data_sets[ offset ]->simparams.meniscus = meniscus_value;
-      data_sets[ offset ]->simparams.bottom   = bottom_value;
+      //data_sets[ offset ]->simparams.bottom   = bottom_value;
 
       switch( job.command )
       {

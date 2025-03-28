@@ -362,7 +362,7 @@ DbgLv(0) << "FMB: fit_mb_select" << fit_mb_select
 
    if ( fit_menbot )
    {  // Meniscus-and-bottom fit iterations will be run
-      bottom_range    = meniscus_range;
+      bottom_range    = 0.1;
       bottom_points   = meniscus_points;
       menibott_count  = meniscus_points * bottom_points;
    }
@@ -503,7 +503,7 @@ if (my_rank==0) {
 
    // Use bottom from edited data if it is given
    US_SolveSim::DataSet*  ds    = data_sets[ 0 ];
-   double bottom_ds    = ds->run_data.bottom;
+   double bottom_ds    = ds->simparams.cp_angle;
    if ( bottom_ds == 0.0 )
    {
       double rpm          = ds->run_data.scanData[ 0 ].rpm;
