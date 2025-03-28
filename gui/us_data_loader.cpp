@@ -125,7 +125,10 @@ US_DataLoader::US_DataLoader(
    etype_filt = etype_filt.isEmpty() ? "velocity" : etype_filt.toLower();
 
    list_data();                // Populate an initial (runs) list
+   list_data();
 
+   accepted();
+   
    resize( 720, 500 );
 }
 
@@ -671,11 +674,6 @@ void US_DataLoader::update_person( int ID )
    list_data();
 }
 
-void US_DataLoader::list_data_auto( )
-{
-  
-}
-
 
 // List data choices (from db or disk)
 void US_DataLoader::list_data()
@@ -909,8 +907,17 @@ void US_DataLoader::selected()
 // Accept button:  set up to return data information
 void US_DataLoader::accepted()
 {
-   QList< QTreeWidgetItem* > selitems = tw_data->selectedItems();
-   QList< DataDesc >         ddescrs  = datamap.values();
+  if ( us_automode )
+    {
+      tw_data->setCurrentItem(
+			      tw_data->topLevelItem(0),   // item
+			      0,                          // column
+			      QItemSelectionModel::Select // command
+			      );
+    }
+    
+  QList< QTreeWidgetItem* > selitems = tw_data->selectedItems();
+  QList< DataDesc >         ddescrs  = datamap.values();
 
    if ( selitems.size() == 0 )
    {
@@ -1417,6 +1424,8 @@ qDebug() << "ScDB:TM:02: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
 	  if( runID == protocol_details["filename"])
 	    {
 	      datamap[ runID ] = ddesc;
+	      runID_sel = runID;
+	      sel_run   = true;
 	      break;
 	    }
 	}

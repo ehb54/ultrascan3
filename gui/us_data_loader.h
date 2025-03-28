@@ -121,7 +121,6 @@ class US_GUI_EXTERN US_DataLoader : public US_WidgetsDialog
       void pare_latest_mwl( void );
       void show_data_info ( QPoint );
       void list_data      ( void );
-      void list_data_auto      ( void );
       void get_person     ( void );
       void update_disk_db(  bool );
       void update_person  ( int  );

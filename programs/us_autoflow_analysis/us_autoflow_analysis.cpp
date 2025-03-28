@@ -149,7 +149,7 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
   if ( autoflow_expType == "ABDE")
     {
       qDebug() << "[ABDE] - ANALYSIS!";
-      emit close_analysissetup_msg();
+      //emit close_analysissetup_msg();
 
       lb_hdr1     ->hide();
       pb_show_all ->hide();
@@ -193,7 +193,8 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
 
       sdiag = new US_MwlSpeciesFit( protocol_details_at_analysis );
       sdiag -> show();
-      
+
+      emit close_analysissetup_msg();
       return;
     }
   // END for ABDE

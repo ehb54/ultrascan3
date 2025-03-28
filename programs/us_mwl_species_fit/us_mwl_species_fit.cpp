@@ -644,8 +644,12 @@ void US_MwlSpeciesFit::load( void )
    connect( dialog, SIGNAL( progress    ( const QString ) ), 
                     SLOT  ( set_progress( const QString ) ) );
 
-   if ( dialog->exec() != QDialog::Accepted ) return;
-
+   if ( dialog->exec() != QDialog::Accepted && !us_gmp_auto_mode )
+     {
+       qDebug() << "DataLoader dialog not accepted?";
+       return;
+     }
+   
    if ( disk_controls->db() )
       directory = tr( "(database)" );
 
