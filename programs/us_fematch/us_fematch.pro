@@ -1,6 +1,7 @@
 include( ../../gui.pri )
 
 QT           += xml svg opengl sql printsupport
+QT           += datavisualization
 
 TARGET        = us_fematch
 
@@ -18,7 +19,10 @@ HEADERS       = us_fematch.h          \
                 ../us_ddist_combine/us_ddist_combine.h \
                 ../us_ddist_combine/us_select_rundd.h  \
                 ../us_pseudo3d_combine/us_pseudo3d_combine.h \
-                ../us_pseudo3d_combine/us_remove_distros.h
+                ../us_pseudo3d_combine/us_remove_distros.h \
+                 ../us_mwl_species_fit/us_mwl_species_fit.h \
+                ../us_mwl_species_fit/us_mwl_sf_plot3d.h \
+                ../us_mwl_species_fit/us_load_run_noise.h
                 
                 
                 
@@ -39,7 +43,12 @@ SOURCES       = us_fematch_main.cpp     \
                 ../us_ddist_combine/us_ddist_combine.cpp \
                 ../us_ddist_combine/us_select_rundd.cpp  \
                 ../us_pseudo3d_combine/us_pseudo3d_combine.cpp \
-                ../us_pseudo3d_combine/us_remove_distros.cpp
+                ../us_pseudo3d_combine/us_remove_distros.cpp \
+                ../us_mwl_species_fit/us_mwl_species_fit.cpp \
+                ../us_mwl_species_fit/us_mwl_sf_plot3d.cpp \
+                ../us_mwl_species_fit/us_load_run_noise.cpp
+                
+                
                 
                 
                 

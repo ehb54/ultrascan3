@@ -1,6 +1,7 @@
 include( ../../gui.pri )
 
 QT           += xml svg opengl sql printsupport
+QT           += datavisualization 
 
 TARGET        = us_query_rmsd
 
@@ -21,6 +22,9 @@ HEADERS       =  us_query_rmsd.h \
                  ../us_pseudo3d_combine/us_pseudo3d_combine.h \
                  ../us_pseudo3d_combine/us_remove_distros.h   \
                  ../us_esigner_gmp/us_esigner_gmp.h \
+                 ../us_mwl_species_fit/us_mwl_species_fit.h \
+                 ../us_mwl_species_fit/us_mwl_sf_plot3d.h \
+                 ../us_mwl_species_fit/us_load_run_noise.h
 
 
 SOURCES       =  us_query_rmsd.cpp \
@@ -41,4 +45,8 @@ SOURCES       =  us_query_rmsd.cpp \
                  ../us_pseudo3d_combine/us_pseudo3d_combine.cpp \
                  ../us_pseudo3d_combine/us_remove_distros.cpp  \
                  ../us_esigner_gmp/us_esigner_gmp.cpp \
+                 ../us_mwl_species_fit/us_mwl_species_fit.cpp \
+                 ../us_mwl_species_fit/us_mwl_sf_plot3d.cpp \
+                 ../us_mwl_species_fit/us_load_run_noise.cpp
+                 
 

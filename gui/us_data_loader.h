@@ -32,6 +32,16 @@ class US_GUI_EXTERN US_DataLoader : public US_WidgetsDialog
                      QStringList&,
                      QString&,
                      QString = "" );
+      
+      US_DataLoader( bool, int,
+                     QVector< US_DataIO::RawData >&,
+                     QVector< US_DataIO::EditedData >&,
+                     QStringList&,
+                     QString&,
+		     QMap<QString,QString>&,
+                     QString = "");
+
+      bool us_automode;
  
    signals:
       //! \brief A signal to tell the parent when the disk/db selection
@@ -98,6 +108,7 @@ class US_GUI_EXTERN US_DataLoader : public US_WidgetsDialog
       QStringList&                      triples;
       QString&                          description;
       QString                           etype_filt;
+      QMap<QString, QString>            protocol_details;
 
    private slots:
       bool load_edit      ( void );
@@ -110,6 +121,7 @@ class US_GUI_EXTERN US_DataLoader : public US_WidgetsDialog
       void pare_latest_mwl( void );
       void show_data_info ( QPoint );
       void list_data      ( void );
+      void list_data_auto      ( void );
       void get_person     ( void );
       void update_disk_db(  bool );
       void update_person  ( int  );

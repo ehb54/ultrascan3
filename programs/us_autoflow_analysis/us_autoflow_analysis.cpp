@@ -11,6 +11,8 @@
 #include "us_solution_vals.h"
 #include "us_lamm_astfvm.h"
 #include "../us_fematch/us_thread_worker.h"
+#include "../us_mwl_species_fit/us_mwl_species_fit.h"
+
 
 #define MIN_NTC   25
 
@@ -188,7 +190,9 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
     {
       qDebug() << "[ABDE] - ANALYSIS!";
       //Pre-process data (decomposition for MWL); build alt. GUI (to integrate and manually normalize);
-      
+
+      sdiag = new US_MwlSpeciesFit( protocol_details_at_analysis );
+      sdiag -> show();
       
       return;
     }

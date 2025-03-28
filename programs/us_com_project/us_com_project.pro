@@ -7,6 +7,7 @@ QT           += xml
 QT           += network
 QT           += svg
 QT           += printsupport
+QT           += datavisualization
 
 HEADERS       = us_com_project_gui.h \
                 ../us_experiment/us_experiment_gui_optima.h  \
@@ -42,8 +43,10 @@ HEADERS       = us_com_project_gui.h \
                 ../us_ddist_combine/us_select_rundd.h  \
                 ../us_pseudo3d_combine/us_pseudo3d_combine.h \
                 ../us_pseudo3d_combine/us_remove_distros.h   \
-                ../us_esigner_gmp/us_esigner_gmp.h
-                
+                ../us_esigner_gmp/us_esigner_gmp.h  \
+                ../us_mwl_species_fit/us_mwl_species_fit.h \
+                ../us_mwl_species_fit/us_mwl_sf_plot3d.h \
+                ../us_mwl_species_fit/us_load_run_noise.h
                 
                 
 
@@ -86,7 +89,12 @@ SOURCES       = us_com_project_main.cpp \
                 ../us_ddist_combine/us_select_rundd.cpp  \
                 ../us_pseudo3d_combine/us_pseudo3d_combine.cpp \
                 ../us_pseudo3d_combine/us_remove_distros.cpp  \
-                ../us_esigner_gmp/us_esigner_gmp.cpp
+                ../us_esigner_gmp/us_esigner_gmp.cpp  \
+                ../us_mwl_species_fit/us_mwl_species_fit.cpp \
+                ../us_mwl_species_fit/us_mwl_sf_plot3d.cpp \
+                ../us_mwl_species_fit/us_load_run_noise.cpp
+                
+
                 
                 
                 

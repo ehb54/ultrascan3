@@ -4,6 +4,7 @@ TARGET        = us_autoflow_analysis
 QT           += xml
 QT           += sql
 QT           += svg opengl printsupport
+QT           += datavisualization
 
 HEADERS       = us_autoflow_analysis.h \
                 ../us_analysis_profile/us_analysis_profile.h  \
@@ -19,7 +20,11 @@ HEADERS       = us_autoflow_analysis.h \
                 ../us_ddist_combine/us_ddist_combine.h \
                 ../us_ddist_combine/us_select_rundd.h  \
                 ../us_pseudo3d_combine/us_pseudo3d_combine.h \
-                ../us_pseudo3d_combine/us_remove_distros.h
+                ../us_pseudo3d_combine/us_remove_distros.h \
+                ../us_mwl_species_fit/us_mwl_species_fit.h \
+                ../us_mwl_species_fit/us_mwl_sf_plot3d.h \
+                ../us_mwl_species_fit/us_load_run_noise.h
+                                
                 
 
 SOURCES       = us_autoflow_analysis_main.cpp       \
@@ -38,7 +43,13 @@ SOURCES       = us_autoflow_analysis_main.cpp       \
                 ../us_ddist_combine/us_ddist_combine.cpp \
                 ../us_ddist_combine/us_select_rundd.cpp \
                 ../us_pseudo3d_combine/us_pseudo3d_combine.cpp \
-                ../us_pseudo3d_combine/us_remove_distros.cpp
+                ../us_pseudo3d_combine/us_remove_distros.cpp  \
+                ../us_mwl_species_fit/us_mwl_species_fit.cpp \
+                ../us_mwl_species_fit/us_mwl_sf_plot3d.cpp \
+                ../us_mwl_species_fit/us_load_run_noise.cpp
+                
+                
+                
                 
                 
                 

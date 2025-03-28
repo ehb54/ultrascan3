@@ -5,6 +5,7 @@ QT           += xml
 QT           += sql
 QT           += svg opengl
 QT           += printsupport
+QT           += datavisualization
 
 HEADERS       = us_reporter_gmp.h \
                 ../us_analysis_profile/us_analysis_profile.h  \
@@ -20,7 +21,10 @@ HEADERS       = us_reporter_gmp.h \
                 ../us_fematch/us_dmga_mc_stats.h    \
                 ../us_fematch/us_thread_worker.h    \
                 ../us_pseudo3d_combine/us_pseudo3d_combine.h \
-                ../us_pseudo3d_combine/us_remove_distros.h
+                ../us_pseudo3d_combine/us_remove_distros.h \
+                ../us_mwl_species_fit/us_mwl_species_fit.h \
+                ../us_mwl_species_fit/us_mwl_sf_plot3d.h \
+                ../us_mwl_species_fit/us_load_run_noise.h
                 
                 
                 
@@ -41,7 +45,11 @@ SOURCES       = us_reporter_gmp_main.cpp       \
                 ../us_fematch/us_dmga_mc_stats.cpp    \
                 ../us_fematch/us_thread_worker.cpp    \
                 ../us_pseudo3d_combine/us_pseudo3d_combine.cpp \
-                ../us_pseudo3d_combine/us_remove_distros.cpp
+                ../us_pseudo3d_combine/us_remove_distros.cpp \
+                ../us_mwl_species_fit/us_mwl_species_fit.cpp \
+                ../us_mwl_species_fit/us_mwl_sf_plot3d.cpp \
+                ../us_mwl_species_fit/us_load_run_noise.cpp
+                
                 
                 
 

@@ -27,19 +27,101 @@
 #define dPlotClearAll(a) a->detachItems(QwtPlotItem::Rtti_PlotItem,true)
 #endif
 
-//! \brief Main program. Loads translators and starts
-//         the class US_Convert.
-int main( int argc, char* argv[] )
+US_MwlSpeciesFit::US_MwlSpeciesFit( QMap<QString, QString> & protocol_details) : US_AnalysisBase2()
 {
-   QApplication application( argc, argv );
+     setWindowTitle( tr( "MWL Species Fit Analysis" ) );
 
-   #include "main1.inc"
+   dbg_level   = US_Settings::us_debug();
+   te_results  = NULL;
+   nspecies    = 0;
+   jspec       = 0;
+   synData.clear();
+   have_p1.clear();
 
-   // License is OK.  Start up.
-   
-   US_MwlSpeciesFit w;
-   w.show();                   //!< \memberof QWidget
-   return application.exec();  //!< \memberof QApplication
+   us_gmp_auto_mode = true;
+   this->protocol_details = protocol_details;
+
+   // Add some buttons to Analysis section
+   pb_loadsfit = us_pushbutton( tr( "Load Species Fits" ) );
+   pb_sfitdata = us_pushbutton( tr( "Species Fit Data"  ) );
+   pb_prev     = us_pushbutton( tr( "Previous"  ) );
+   pb_next     = us_pushbutton( tr( "Next"  ) );
+   QLabel* lb_specpl = us_label( tr ( "Species to Plot:" ) );
+   pb_prev->setIcon( US_Images::getIcon( US_Images::ARROW_LEFT  ) );
+   pb_next->setIcon( US_Images::getIcon( US_Images::ARROW_RIGHT ) );
+   int row     = 3;
+   analysisLayout->addWidget( pb_loadsfit, row,   0, 1, 1 );
+   analysisLayout->addWidget( pb_sfitdata, row++, 1, 1, 1 );
+   analysisLayout->addWidget( lb_specpl,   row++, 0, 1, 2 );
+   analysisLayout->addWidget( pb_prev,     row,   0, 1, 1 );
+   analysisLayout->addWidget( pb_next,     row++, 1, 1, 1 );
+   pb_loadsfit->setEnabled( false );
+   pb_sfitdata->setEnabled( false );
+   pb_prev    ->setEnabled( false );
+   pb_next    ->setEnabled( false );
+
+   connect( pb_loadsfit, SIGNAL( clicked()     ),
+            this,        SLOT  ( loadSpecs() ) );
+   connect( pb_sfitdata, SIGNAL( clicked()     ),
+            this,        SLOT  ( specFitData() ) );
+   connect( pb_prev,  SIGNAL( clicked() ), SLOT( prev_plot() ) );
+   connect( pb_next,  SIGNAL( clicked() ), SLOT( next_plot() ) );
+   connect( pb_help,  SIGNAL( clicked() ), SLOT( help() ) );
+   connect( pb_view,  SIGNAL( clicked() ), SLOT( view() ) );
+   connect( pb_save,  SIGNAL( clicked() ), SLOT( save() ) );
+
+   // Destroy all parameter rows from AnalysisBase
+   int nrow   = parameterLayout->rowCount();
+   int ncol   = parameterLayout->columnCount();
+DbgLv(1) << "Parameter nrow" << nrow << "ncol" << ncol;
+   for ( int irow = nrow - 1; irow >= 0; irow-- )
+   {
+      for ( int icol = ncol - 1; icol >= 0; icol-- )
+      {
+         QLayoutItem* item = parameterLayout->itemAtPosition( irow, icol );
+         if ( item == NULL )  continue;
+DbgLv(1) << "  irow" << irow << "icol" << icol;
+//         parameterLayout->removeItem( item );
+//         delete item->widget();
+         item->widget()->setVisible( false );
+      }
+   }
+
+   // Destroy unneeded controls rows from AnalysisBase
+   nrow       = controlsLayout->rowCount();
+   ncol       = controlsLayout->columnCount();
+DbgLv(1) << "Controls nrow" << nrow << "ncol" << ncol;
+   for ( int irow = nrow - 1; irow > 2; irow-- )
+   {
+      for ( int icol = ncol - 1; icol >= 0; icol-- )
+      {
+         QLayoutItem* item = controlsLayout->itemAtPosition( irow, icol );
+         if ( item == NULL )  continue;
+DbgLv(1) << "  irow" << irow << "icol" << icol;
+//         controlsLayout->removeItem( item );
+//         delete item->widget();
+         item->widget()->setVisible( false );
+      }
+   }
+
+   QLabel* lb_fit_error = us_label("Root-Mean-Square Deviation:");
+   le_fit_error = us_lineedit("", -1, true);
+   pb_plot3d = us_pushbutton("Plot3D", false);
+   row       = controlsLayout->rowCount() + 1;
+   QHBoxLayout* sf_lyt = new QHBoxLayout();
+   sf_lyt->addWidget(lb_fit_error);
+   sf_lyt->addWidget(le_fit_error);
+   sf_lyt->addWidget(pb_plot3d);
+   controlsLayout->addLayout(sf_lyt, row, 0, 1, 2);
+   connect(pb_plot3d, SIGNAL(clicked()), this, SLOT(rmsd_3dplot()));
+
+   data_plot1->setTitle( tr( "Output Data Set" ) );
+   data_plot2->setTitle( tr( "Input Data Set" ) );
+   data_plot1->setMinimumSize( 600, 300 );
+   data_plot2->setMinimumSize( 600, 300 );
+
+   //load
+   load();
 }
 
 US_MwlSpeciesFit::US_MwlSpeciesFit() : US_AnalysisBase2()
@@ -52,6 +134,8 @@ US_MwlSpeciesFit::US_MwlSpeciesFit() : US_AnalysisBase2()
    jspec       = 0;
    synData.clear();
    have_p1.clear();
+
+   us_gmp_auto_mode = false;
 
    // Add some buttons to Analysis section
    pb_loadsfit = us_pushbutton( tr( "Load Species Fits" ) );
@@ -543,8 +627,18 @@ void US_MwlSpeciesFit::load( void )
    // US_DataLoader* dialog = new US_DataLoader(
    //       edlast, dbdisk, rawList, dataList, triples, description, etype_filt );
 
-   US_DataLoader* dialog = new US_DataLoader(
-	 edlast, dbdisk, rawList, dataList, triples, description, "none" );
+   // US_DataLoader* dialog = new US_DataLoader(
+   // 	 edlast, dbdisk, rawList, dataList, triples, description, "none" );
+   US_DataLoader* dialog;
+
+   if ( us_gmp_auto_mode )
+     {
+       dialog = new US_DataLoader( edlast, dbdisk, rawList, dataList, triples,
+				   description, protocol_details, "none" );
+     }
+   else
+     dialog = new US_DataLoader( edlast, dbdisk, rawList, dataList, triples, description, "none" );
+   
 
    connect( dialog, SIGNAL( changed( bool ) ), SLOT( update_disk_db( bool ) ) );
    connect( dialog, SIGNAL( progress    ( const QString ) ), 

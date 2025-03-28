@@ -21,6 +21,11 @@ class US_MwlSpeciesFit : public US_AnalysisBase2
         //! \brief Constructor for US_MwlSpeciesFit
         US_MwlSpeciesFit();
 
+        US_MwlSpeciesFit( QMap<QString, QString> &);
+
+        bool us_gmp_auto_mode;
+        QMap<QString, QString> protocol_details;
+
     private:
         int dbg_level;         //!< Debug level
         int nspecies;          //!< Number of species

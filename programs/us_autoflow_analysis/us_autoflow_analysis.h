@@ -7,6 +7,13 @@
 #include "us_passwd.h"
 #include "../us_fit_meniscus/us_fit_meniscus.h"
 #include "../us_fematch/us_fematch.h"
+#include "../us_mwl_species_fit/us_mwl_species_fit.h"
+#include "../us_mwl_species_fit/us_mwl_sf_plot3d.h"
+#include "../us_mwl_species_fit/us_load_run_noise.h"
+#include "us_analysis_base2.h"
+#include "us_images.h"
+#include "us_editor.h"
+#include "us_data_loader.h"
 
 /**
  * @class US_Analysis_auto
@@ -21,6 +28,8 @@ class US_Analysis_auto : public US_Widgets
          * @brief Constructor for the US_Analysis_auto class.
          */
         US_Analysis_auto();
+
+        US_MwlSpeciesFit* sdiag;
 
         QTreeWidget     *treeWidget;                             /**< Tree widget for displaying analysis data. */
         QMap<QString, QTreeWidgetItem *> topItem;                /**< Top-level items in the tree widget. */
