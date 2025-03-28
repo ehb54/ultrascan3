@@ -2459,9 +2459,26 @@ DbgLv(1) << "EGSo:inP: call rbS";
       cc_labls[ ii ]->setText( channel );
       setCbCurrentText( cc_solus[ ii ], solution );
 
+      //sols. comments:
+       QString protocol_comment("");
+       QString sdescr  = cc_solus[ ii ]->currentText();
+
+       qDebug() << "11: rpSolut->chsols.size(), ii: " << rpSolut->chsols.size() << ii;
+       
+       if ( rpSolut->chsols.size() > ii )
+	 protocol_comment += rpSolut->chsols[ ii ].ch_comment;
+       qDebug() << "22";
+
+       protocol_comment.replace(sdescr, "");
+       protocol_comment.remove( QRegExp("^[,\\s*]+") );
+      
+      cc_mancomms[ ii ] -> setText( protocol_comment.trimmed() );
+      //end sols. comments
+      
       cc_labls[ ii ]->setVisible( true );
       cc_solus[ ii ]->setVisible( true );
       cc_comms[ ii ]->setVisible( true );
+      cc_mancomms[ ii ] ->setVisible( true );
    }
 
    // Make remaining rows invisible
@@ -2471,6 +2488,7 @@ DbgLv(1) << "EGSo:inP: call rbS";
       cc_labls[ ii ]->setVisible( false );
       cc_solus[ ii ]->setVisible( false );
       cc_comms[ ii ]->setVisible( false );
+      cc_mancomms[ ii ] ->setVisible( false );
    }
 DbgLv(1) << "EGSo:inP: mxrow" << mxrow << "labls count" << cc_labls.count();
 
