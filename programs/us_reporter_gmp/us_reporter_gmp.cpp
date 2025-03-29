@@ -7378,11 +7378,18 @@ void  US_ReporterGMP::assemble_plots_html( QStringList PlotsFilenames, const QSt
       printer_t.setOutputFormat(QPrinter::PdfFormat);
       printer_t.setPaperSize(QPrinter::Letter);
       QSizeF pageSize = printer_t.pageRect().size();
-      qreal qprinters_width = pageSize.width()*0.8; //500 DEPENDS on QPrinter's constructor settings {QPrinter::PrinterResolution, 500; QPrinter::HighResolution, 9066}
-      qDebug() << "qprinters_width: " << qprinters_width; 
+      qreal qprinters_width = pageSize.width()*0.75; //500 DEPENDS on QPrinter's constructor settings {QPrinter::PrinterResolution, 500; QPrinter::HighResolution, 9066}
+      qreal qprinters_hight = pageSize.height()*0.6;
+      qDebug() << "qprinters_width, height [orig, scaled]: "
+	       << pageSize.width() << pageSize.height() << "; "
+	       << qprinters_width << qprinters_hight; 
       double i_scale_factor = double( qprinters_width / i_width ); 
       int scaled_i_width  = i_width  * i_scale_factor;
       int scaled_i_height = i_height * i_scale_factor;
+      
+      // int scaled_i_height     = double( qprinters_hight );
+      // double i_scale_factor_h = double( i_height / scaled_i_height ); 
+      // int scaled_i_width      = double( i_width * i_scale_factor_h );
 
       qDebug() << "Image scaled, " << filename << "scaled_width, scaledheight: " << scaled_i_width << scaled_i_height;
       

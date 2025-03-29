@@ -954,7 +954,14 @@ DbgLv(1) << "pDa:  titleY" << titleY;
    }
 DbgLv(1) << "pDa:  titleP" << titleP;
 DbgLv(1) << "pDa:  titleX" << titleX;
-   data_plot1->setTitle    ( titleP );
+
+   QwtText p_title( titleP );
+   p_title.setFont( QFont( US_Widgets::fixedFont().family(),
+			   US_GuiSettings::fontSize() + 1 ) );
+ 
+   //data_plot1->setTitle    ( titleP );
+   data_plot1->setTitle( p_title );
+   
    data_plot1->setAxisTitle( QwtPlot::xBottom, titleX );
    data_plot1->setAxisTitle( QwtPlot::yLeft,   titleY );
    double plxmin = 1e+30;
