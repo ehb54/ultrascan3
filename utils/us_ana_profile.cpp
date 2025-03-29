@@ -1192,7 +1192,8 @@ US_AnaProfile::AnaProfPCSA::ParmPCSA::ParmPCSA()
    creso_pts  = 200;
    noise_flag = 0;
    treg_flag  = 0;
-   mc_iters   = 1;
+   //mc_iters   = 1;
+   mc_iters   = 100;
    channel    = "1A";
    curv_type  = "All";
    x_type     = "s";
