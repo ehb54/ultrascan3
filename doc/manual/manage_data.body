@@ -148,22 +148,4 @@
 
     </ul>
 
-    <p> Although Manage Data attempts to provide a central application for
-    managing data sets, it is sometimes necessary to use applications designed
-    for creation and modification of specific types of data. These include:</p>
-    <ul>
-       <li>
-          <a href="us_convert.html">Convert Legacy Data</a> (us_convert)
-          for dealing with Raw and Experiment Data.
-       </li>
-       <li>
-          <a href="edit_velocity.html">Edit Data</a> (us_edit)
-          for dealing with Edited experiment Data.
-       </li>
-       <li>
-          <a href="model_editor.html">Model Editor</a> (us_model_gui)
-          for dealing with Model Data.
-       </li>
-    </ul>
-
 [% INCLUDE footer.us3 %]
