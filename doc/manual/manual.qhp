@@ -166,6 +166,7 @@
             <file>images/gmp/signature/*.png</file>
             <file>images/sassoc/*.png</file>
             <file>images/somo/*.png</file>
+            <file>images/us_convert/*.png</file>
 
         </files>
     </filterSection>
