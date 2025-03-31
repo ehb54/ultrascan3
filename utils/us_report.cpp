@@ -1176,7 +1176,14 @@ qDebug() << "rpt:svFD:  nfiles" << nfiles << "fpath0" << filepaths[0];
       filenames << QString( filepaths[ jj ] ).section( "/", -1, -1 );
 
    QString filename   = filenames[ 0 ];
-   QString newTriple  = filename.section( '.', -3, -3 );
+   QRegularExpression re(".(\\d[A-Z]\\d+).");
+   QRegularExpressionMatch match = re.match( filename );
+   if ( !match.hasMatch() )
+   {
+      qDebug() << "rpt:svFD:  filename" << filename << "not match";
+      return US_Report::MISC_ERROR;
+   }
+   QString newTriple = match.captured(1);
    newTriple          = US_Util::expanded_triple( newTriple, false );
 qDebug() << "rpt:svFD:  filename" << filename << "newTriple" << newTriple;
 
@@ -1265,6 +1272,14 @@ qDebug() << "rpt:svFD:  fnames filename" << filename << "ii" << ii;
 qDebug() << "rpt:svFD:    NEW to triple doc";
             US_Report::ReportDocument rdoc;
             QString newAnal    = filename.section( ".", -4, -4 );
+            if ( this->rTypes.appLabels[ newAnal ].isEmpty() )
+            {
+               newAnal = filename.section( ".", 0, 0 );
+               if ( this->rTypes.appLabels[ newAnal ].isEmpty() )
+               {
+                  newAnal    = filename.section( ".", -4, -4 );
+               }
+            }
             QString newSubanal = filename.section( ".", -2, -2 );
             QString newDoctype = filename.section( ".", -1, -1 );
             QString newLabel   = this->rTypes.appLabels[ newAnal    ] + ":" +
