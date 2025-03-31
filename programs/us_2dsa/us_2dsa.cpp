@@ -205,9 +205,11 @@ void US_2dsa::analysis_done( int updflag )
       le_rmsd->setText( QString::number( rmsd ) );
 DbgLv(1) << "Analysis Done VARI" << vari << "model,noise counts"
  << models.count() << (ti_noises.count()+ri_noises.count())
- << "menisc bott"
+      << mdesc
+ << "menisc bott angle"
  << mdesc.mid( mdesc.indexOf( "MENISCUS=" ) + 9 ).section( " ", 0, 0 )
- << mdesc.mid( mdesc.indexOf( "BOTTOM=" ) + 7 ).section( " ", 0, 0 );
+ << mdesc.mid( mdesc.indexOf( "BOTTOM=" ) + 7 ).section( " ", 0, 0 )
+       << mdesc.mid( mdesc.indexOf( "ANGLE=" ) + 6 ).section( " ", 0, 0 );
 
       qApp->processEvents();
       return;
@@ -269,7 +271,7 @@ DbgLv(2) << "FitMens Done:  ii desc" << ii << mdesc;
                             .section( " ", 0, 0 ).toDouble();
             b_bott        = mdesc.mid( mdesc.indexOf( "BOTTOM=" ) + 7 )
                             .section( " ", 0, 0 ).toDouble();
-            b_angle        = mdesc.mid( mdesc.indexOf( "ANGLE=" ) + 7 )
+            b_angle        = mdesc.mid( mdesc.indexOf( "ANGLE=" ) + 6 )
                             .section( " ", 0, 0 ).toDouble();
 DbgLv(1) << "FitMens Done:    b_ rmsd,meni,bott,angle" << b_rmsd << b_meni << b_bott << b_angle
  << "  ix" << (ii+1);
@@ -605,7 +607,7 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
    int     nnoises  = nmodels * knois;           // number of noises to save
    double  meniscus = edata->meniscus;
    double  bottom   = edata->bottom;
-   double  angle    =
+   double  angle    = dset.simparams.cp_angle;
    double  dwavelen = edata->wavelength.toDouble();
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
 
@@ -687,7 +689,7 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
       QString mdesc     = model.description;    // description from processor
       double  variance  = mdesc.mid( mdesc.indexOf( "VARI=" ) + 5 )
                           .section( ' ', 0, 0 ).toDouble();
-      double  angle  = mdesc.mid( mdesc.indexOf( "ANGLE=" ) + 5 )
+      angle  = mdesc.mid( mdesc.indexOf( "ANGLE=" ) + 6 )
                           .section( ' ', 0, 0 ).toDouble();
       // create the iteration part of model description:
       // e.g.,"i01" normally; "i03-m60190" for meniscus; "mc017" for monte carlo
@@ -719,17 +721,17 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
       {
          meniscus          = mdesc.mid( mdesc.indexOf( "MENISCUS=" ) + 9 )
                              .section( ' ', 0, 0 ).toDouble();
-         bottom            = mdesc.mid( mdesc.indexOf( "ANGLE=" ) + 7 )
+         bottom            = mdesc.mid( mdesc.indexOf( "ANGLE=" ) + 6 )
                              .section( ' ', 0, 0 ).toDouble();
          if ( bottom > 0.0 )
-            iterID.sprintf( "i%02d-m%05db%05d", iterNum, qRound( meniscus * 10000 ),
+            iterID.sprintf( "i%02d-m%05da%05d", iterNum, qRound( meniscus * 10000 ),
                             qRound( bottom * 10000 ) );
          else
             iterID.sprintf( "i%02d-m%05d", iterNum, qRound( meniscus * 10000 ) );
       }
       else if ( fitAngle )
       {
-         bottom            = mdesc.mid( mdesc.indexOf( "ANGLE=" ) + 7 )
+         bottom            = mdesc.mid( mdesc.indexOf( "ANGLE=" ) + 6 )
                              .section( ' ', 0, 0 ).toDouble();
          iterID.sprintf( "i%02d-a%05d", iterNum, qRound( bottom * 10000 ) );
       }
@@ -961,7 +963,7 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
    update_filelist( repfiles, plot4File );
 
    // Add fit files if fit-meniscus or fit-bottom
-   if ( fitMeni  ||  fitBott )
+   if ( fitMeni  ||  fitBott || fitAngle )
    {
       QString fitstr = fit_meniscus_data();
 
@@ -1492,7 +1494,7 @@ model.global == US_Model::MENIBOTT || model.global == US_Model::ANGEL || model.g
       {
          QString ameni = mdesc.mid( mdesc.indexOf( "MENISCUS=" ) + 9 )
                 .section( " ", 0, 0 );
-         QString abott = mdesc.mid( mdesc.indexOf( "ANGLE=" ) + 7 )
+         QString abott = mdesc.mid( mdesc.indexOf( "ANGLE=" ) + 6 )
                          .section( " ", 0, 0 );
          mstr         += table_row( itnum, ameni, abott, armsd );
       }
@@ -1653,7 +1655,7 @@ DbgLv(1) << "fitbdat:  ii" << ii << "bott rmsd"
       {
          QString ameni = mdesc.mid( mdesc.indexOf( "MENISCUS=" ) + 9 )
                          .section( " ", 0, 0 );
-         QString aangle = mdesc.mid( mdesc.indexOf( "ANGLE=" ) + 7 )
+         QString aangle = mdesc.mid( mdesc.indexOf( "ANGLE=" ) + 6 )
                          .section( " ", 0, 0 );
          mstr         += ( ameni + " " + aangle + " " + armsd + "\n" );
          DbgLv(1) << "fitmdat:  ii" << ii << "meni angle rmsd"
@@ -1661,7 +1663,7 @@ DbgLv(1) << "fitbdat:  ii" << ii << "bott rmsd"
       }
       else if ( useangle )
       {
-         QString aangle = mdesc.mid( mdesc.indexOf( "ANGLE=" ) + 7 )
+         QString aangle = mdesc.mid( mdesc.indexOf( "ANGLE=" ) + 6 )
                          .section( " ", 0, 0 );
          mstr         += ( aangle + " " + armsd + "\n" );
          DbgLv(1) << "fitmdat:  ii" << ii << " angle rmsd" << aangle << armsd;

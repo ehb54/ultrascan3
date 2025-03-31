@@ -159,6 +159,7 @@ class US_AnalysisControl2D : public US_WidgetsDialog
       void checkUniGrid (    bool );
       void checkCusGrid (    bool );
       void checkMeniscus(    bool );
+      void checkAngle   (    bool );
       void checkIterate (    bool );
       void checkLocalUni(    bool );
       void checkRandLoc (    bool );

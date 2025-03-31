@@ -68,9 +68,10 @@ class US_2dsaProcess : public QObject
       //! \param menrng  Meniscus range
       //! \param cff0    Constant f/f0 (or 0.0)
       //! \param jgref   Flag of refine/solute type
-      //! \param fittyp  Flag of fit: 0-3 -> none,meni,bott,menbot
+      //! \param fittyp  Flag of fit: 0-3 -> none,meni,bott,menbot,angle,meniangle
+      //! \param angle_range  Angle range
       void set_iters( int, int, int, double, double, double, int,
-                      int = 0 );
+                      int = 0, double = 0.0 );
 
       //! \brief Get results upon completion of all refinements
       //! \param da_sim  Calculated simulation data
@@ -97,6 +98,8 @@ class US_2dsaProcess : public QObject
       //! \param ncsol Number of last calculated solutes
       //! \returns     Number of estimated remaining steps
       int  estimate_steps( int  );
+
+      void calculate_cosedimenting_component();
 
       //! \brief Get message for last error
       //! \returns       Message about last error

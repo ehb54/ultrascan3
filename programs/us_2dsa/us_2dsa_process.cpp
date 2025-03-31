@@ -261,7 +261,7 @@ DbgLv(1) << "2P:SF: (1)maxrss" << maxrss << "jgrefine" << jgrefine;
                                0.0,
                                model.components[ jj ].vbar20,
                                model.components[ jj ].D );
-               DbgLv(1) << "ii" << ii << "soli" << soli.s << soli.k << soli.c << soli.v;
+               DbgLv(1) << "ii" << ii << "soli" << soli.s << soli.k << soli.c << soli.v << soli.d;
                solvec << soli;
             }
 
@@ -278,7 +278,7 @@ DbgLv(1) << "2P:SF: (1)maxrss" << maxrss << "jgrefine" << jgrefine;
                             0.0,
                             model.components[ ii ].vbar20,
                             model.components[ ii ].D );
-            DbgLv(1) << "ii" << ii << "soli" << soli.s << soli.k << soli.c;
+            DbgLv(1) << "ii" << ii << "soli" << soli.s << soli.k << soli.c << soli.v << soli.d;
             solvec << soli;
          }
 
@@ -314,6 +314,51 @@ DbgLv(1) << "2P:SF: orig_sols: "
    // Calculate Cosedimenting/Codiffusing stuff if needed
    if (dens_grad)
    {
+      calculate_cosedimenting_component();
+
+   }
+   emit message_update( pmessage_head() +
+                        tr( "Queueing depth-0 tasks \n of %1 subgrids\n using %2 threads ..." )
+                              .arg( nsubgrid ).arg( nthreads ), false );
+   // Queue all the depth-0 tasks
+   for ( int ktask = 0; ktask < nsubgrid; ktask++ )
+   {
+      WorkPacket2D wtask;
+      double llss = orig_sols[ ktask ][ 0 ].s;
+      double llsk = orig_sols[ ktask ][ 0 ].k;
+
+      queue_task( wtask, llss, llsk, ktask, jdpth, jnois, orig_sols[ ktask ] );
+
+      maxtsols       = qMax( maxtsols, wtask.isolutes.size() );
+   }
+
+   // Start the first threads. This will begin the first work units (subgrids).
+   // Thereafter, work units are started in new threads when previous
+   // threads signal that they have completed their work.
+
+   for ( int ii = 0; ii < nthreads; ii++ )
+   {
+      wthreads << 0;
+
+      WorkPacket2D wtask = job_queue.takeFirst();
+      submit_job( wtask, ii );
+
+//      memory_check();
+   }
+
+   max_rss();
+   kstask = nthreads;     // count of started tasks is initially thread count
+DbgLv(1) << "2P:SF:   kstask nthreads" << kstask << nthreads << job_queue.size();
+
+   emit message_update( pmessage_head() +
+      tr( "Starting computations of %1 subgrids\n using %2 threads ..." )
+      .arg( nsubgrid ).arg( nthreads ), false );
+
+   memory_check();
+}
+
+void US_2dsaProcess::calculate_cosedimenting_component()
+{
       emit message_update( pmessage_head() +
                            tr( "Calculating co-sedimenting components" ), false );
       cosed_components = dsets[0]->solution_rec.buffer.cosed_component;
@@ -626,50 +671,11 @@ DbgLv(1) << "2P:SF: orig_sols: "
       }
 
    }
-   emit message_update( pmessage_head() +
-                        tr( "Queueing depth-0 tasks \n of %1 subgrids\n using %2 threads ..." )
-                              .arg( nsubgrid ).arg( nthreads ), false );
-   // Queue all the depth-0 tasks
-   for ( int ktask = 0; ktask < nsubgrid; ktask++ )
-   {
-      WorkPacket2D wtask;
-      double llss = orig_sols[ ktask ][ 0 ].s;
-      double llsk = orig_sols[ ktask ][ 0 ].k;
-
-      queue_task( wtask, llss, llsk, ktask, jdpth, jnois, orig_sols[ ktask ] );
-
-      maxtsols       = qMax( maxtsols, wtask.isolutes.size() );
-   }
-
-   // Start the first threads. This will begin the first work units (subgrids).
-   // Thereafter, work units are started in new threads when previous
-   // threads signal that they have completed their work.
-
-   for ( int ii = 0; ii < nthreads; ii++ )
-   {
-      wthreads << 0;
-
-      WorkPacket2D wtask = job_queue.takeFirst();
-      submit_job( wtask, ii );
-
-//      memory_check();
-   }
-
-   max_rss();
-   kstask = nthreads;     // count of started tasks is initially thread count
-DbgLv(1) << "2P:SF:   kstask nthreads" << kstask << nthreads << job_queue.size();
-
-   emit message_update( pmessage_head() +
-      tr( "Starting computations of %1 subgrids\n using %2 threads ..." )
-      .arg( nsubgrid ).arg( nthreads ), false );
-
-   memory_check();
-}
 
 // Set iteration parameters
 void US_2dsaProcess::set_iters( int    mxiter, int    mciter, int    mniter,
                                 double vtoler, double menrng, double cff0,
-                                int    jgref,  int    fittyp )
+                                int    jgref,  int    fittyp, double angledelta )
 {
    maxiters   = mxiter;
    mmtype     = ( mciter > 1 ) ? 2 : ( ( mniter > 1 ) ? 1 : 0 );
@@ -677,7 +683,9 @@ void US_2dsaProcess::set_iters( int    mxiter, int    mciter, int    mniter,
    fit_type   = fittyp;
    varitol    = vtoler;
    menrange   = menrng;
+   angle_range = angledelta;
    mendelta   = menrange / (double)( mmiters - 1 );
+   angle_delta = angle_range / (double)( mmiters - 1 );
    cnstff0    = cff0;
    jgrefine   = jgref;
    ff_none    = ( fit_type == 0 );
@@ -1275,17 +1283,29 @@ DbgLv(1) << "FIN_FIN: neediter" << neediter << "  sdiffs" << sdiffs
    }
 
    // Done with refinement iterations:   check for meniscus or MC iteration
-   int mtiters        = ff_menbot ? ( mmiters * mmiters ) : mmiters;
+   int mtiters        = ff_menbot ? ( mmiters * mmiters ) : ff_meniangle ? ( mmiters * mmiters ): mmiters;
    int k_iter         = mm_iter;
    bool dens_grad = simparms->meshType == US_SimulationParameters::ASTFVM && !dsets[0]->solution_rec.buffer.cosed_component.isEmpty();
    if ( mmtype > 0  &&  ++mm_iter < mtiters )
    {  // doing meniscus or monte carlo and more to do
-      int m_iter         = ff_menbot ? ( k_iter / mmiters ) :
-                           ( ff_meni ? k_iter : 0 );
-      int b_iter         = ff_menbot ? ( k_iter % mmiters ) :
-                           ( ff_bott ? k_iter : 0 );
-      int a_iter         = ff_meniangle ? ( k_iter % mmiters ) :
-                           ( ff_angle ? k_iter : 0 );
+      int m_iter = 0; // no meniscus fitting
+      int b_iter = 0; // no bottom fitting
+      int a_iter = 0; // no angle fitting
+      if ( ff_omeni )
+         m_iter = k_iter; // only fitting meniscus
+      else if ( ff_meni )
+         m_iter = k_iter / mmiters; // fitting not only meniscus
+
+      if ( ff_obott )
+         b_iter = k_iter; // only fitting bottom
+      else if ( ff_bott )
+         b_iter = k_iter % mmiters; // fitting not only bottom
+
+      if ( ff_oangle )
+         a_iter = k_iter; // only fitting angle
+      else if ( ff_angle )
+         a_iter = k_iter % mmiters; // fitting not only angle
+
       double bmeniscus   = bdata->meniscus;
       double bbottom     = bdata->bottom;
       double bangle      = bsimparms.cp_angle;
@@ -1334,176 +1354,7 @@ if(mtiters>50)
          set_meniscus();
           if (dens_grad)
           {
-              emit message_update( pmessage_head() +
-                                   tr( "Calculating co-sedimenting components" ), false );
-              cosed_components = dsets[0]->solution_rec.buffer.cosed_component;
-              cosed_components.detach();
-              US_DataIO::RawData auc_data = dsets[0]->run_data.convert_to_raw_data();
-              US_Model cosed_model = model;
-              cosed_model.coSedSolute = -1;
-              cosed_model.components.clear();
-              US_Model cosed_model_tmp = model;
-              cosed_model_tmp.coSedSolute = -1;
-              double base_density = 0.0;
-              double base_viscosity = 0.0;
-              QMap<QString, US_CosedComponent> upper_cosed;
-              QMap<QString, US_CosedComponent> lower_cosed;
-              QList<QString> base_comps;
-              foreach (US_CosedComponent i,  cosed_components) {
-                  DbgLv(1) << "buff dens_coeff" << i.dens_coeff[ 0 ] << i.dens_coeff[ 1 ] << i.dens_coeff[ 2 ]
-                           << i.dens_coeff[ 3 ] << i.dens_coeff[ 4 ] << i.dens_coeff[ 5 ];
-                  DbgLv(1) << "buff visc_coeff" << i.visc_coeff[ 0 ] << i.visc_coeff[ 1 ] << i.visc_coeff[ 2 ]
-                           << i.visc_coeff[ 3 ] << i.visc_coeff[ 4 ] << i.visc_coeff[ 5 ];
-                  if ( !i.overlaying && upper_cosed.contains(i.name)) {
-                      // the current component is in the lower part, but there is another component with the same name in the
-                      // overlaying section of the band forming gradient
-                      US_CosedComponent j = upper_cosed[ i.name ];
-                      if ( j.conc > i.conc ) {
-                          // the concentration is higher in upper part, move it completely to the upper part and set the
-                          // concentration to the excess concentration
-                          j.conc = j.conc - i.conc;
-                          upper_cosed[ j.name ] = j;
-                          continue;
-                      } else if ( fabs(j.conc - i.conc) < GSL_ROOT5_DBL_EPSILON ) {
-                          // the concentration of both components is roughly equal, remove the component from the upper and lower part
-                          upper_cosed.remove(j.name);
-                          continue;
-                      } else {
-                          j.conc = i.conc - j.conc;
-                          lower_cosed[ j.name ] = j;
-                          upper_cosed.remove(j.name);
-                          continue;
-                      }
-                  }
-                  if ( i.overlaying && lower_cosed.contains(i.name)) {
-                      // the current component is in the lower part, but there is another component with the same name in the
-                      // overlaying section of the band forming gradient
-                      US_CosedComponent j = lower_cosed[ i.name ];
-                      if ( j.conc > i.conc ) {
-                          // the concentration is higher in lower part, move it completely to the lower part and set the
-                          // concentration to the excess concentration
-                          j.conc = j.conc - i.conc;
-                          lower_cosed[ j.name ] = j;
-                          continue;
-                      } else if ( fabs(j.conc - i.conc) < GSL_ROOT5_DBL_EPSILON ) {
-                          // the concentration of both components is roughly equal, remove the component from the upper and lower part
-                          lower_cosed.remove(j.name);
-                          continue;
-                      } else {
-                          j.conc = i.conc - j.conc;
-                          upper_cosed[ j.name ] = j;
-                          lower_cosed.remove(j.name);
-                          continue;
-                      }
-                  }
-                  if ( i.overlaying )
-                      upper_cosed[ i.name ] = i;
-                  else
-                      lower_cosed[ i.name ] = i;
-
-              }
-              // Determine the base of the buffer
-              foreach (US_CosedComponent cosed_comp, cosed_components) {
-                  if ( cosed_comp.overlaying ) { continue; } // overlaying components can't be part of the base of the buffer
-                  if ( lower_cosed.contains(cosed_comp.name) &&
-                       (fabs(lower_cosed[ cosed_comp.name ].conc - cosed_comp.conc) < GSL_ROOT5_DBL_EPSILON) &&
-                       cosed_comp.s_coeff == 0.0 && cosed_comp.d_coeff == 0.0 ) {
-                      // the concentration matches the original one entered. -> part of the buffer base
-                      base_comps << cosed_comp.GUID + cosed_comp.componentID;
-                      base_density += cosed_comp.dens_coeff[ 0 ];
-                      base_viscosity += cosed_comp.visc_coeff[ 0 ];
-                  }
-              }
-              // make sure the selected model is adjusted for the selected temperature
-              // and buffer conditions:
-              US_Math2::SolutionData sol_data{};
-              sol_data.density = base_density;
-              sol_data.viscosity = base_viscosity;
-              sol_data.manual = true;
-              foreach(US_CosedComponent cosed_comp,  cosed_components) {
-                  // get the excess concentrations
-                  if ( cosed_comp.overlaying && upper_cosed.contains(cosed_comp.name)) {
-                      cosed_comp = upper_cosed.value(cosed_comp.name);
-                  } else if ( !cosed_comp.overlaying && lower_cosed.contains(cosed_comp.name)) {
-                      cosed_comp = lower_cosed.value(cosed_comp.name);
-                  } else {
-                      DbgLv(1) << "nothing";
-                      continue;
-                  }
-                  if ( cosed_comp.s_coeff == 0.0 && cosed_comp.d_coeff == 0.0 ) {
-                      DbgLv(1) << "not cosedimenting";
-                      continue;
-                  }
-                  if (cosed_comp.s_coeff == 0.0){
-                      DbgLv(1) << "pure diffusive";
-                      codiff_needed = true;
-                      continue;
-                  }
-                  cosed_needed = true;
-                  cosed_model_tmp.components.clear();
-                  US_Model::SimulationComponent tmp = US_Model::SimulationComponent();
-                  tmp.name = cosed_comp.name;
-                  tmp.analyteGUID = cosed_comp.GUID;
-                  tmp.molar_concentration = cosed_comp.conc;
-                  tmp.signal_concentration = cosed_comp.conc;
-                  tmp.vbar20 = cosed_comp.vbar;
-                  if (cosed_comp_data.contains(tmp.analyteGUID)){
-                      continue;}
-                  sol_data.vbar20 = cosed_comp.vbar; //The assumption here is that vbar does not change with
-                  sol_data.vbar = cosed_comp.vbar; //temp, so vbar correction will cancel in s correction
-                  US_Math2::data_correction(simparms->temperature, sol_data);
-                  tmp.s = cosed_comp.s_coeff / sol_data.s20w_correction;
-                  tmp.D = cosed_comp.d_coeff / sol_data.D20w_correction;
-                  tmp.f_f0 = 0.0;
-                  tmp.analyte_type = 4;
-                  cosed_model.components << tmp;
-                  cosed_model_tmp.components << tmp;
-                  cosed_model_tmp.update_coefficients();
-                  emit message_update( pmessage_head() +
-                                       tr( "Calculating co-sedimenting component %1 ..." )
-                                               .arg( cosed_comp.name ), false );
-                  csD = new US_LammAstfvm::CosedData(cosed_model_tmp, *simparms, &auc_data, &cosed_components,
-                                                     base_density, base_viscosity);
-                  cosed_comp_data[ tmp.analyteGUID ] = csD->sa_data;
-                  DbgLv(2) << "NonIdeal2: create saltdata";
-                  cosed_model.update_coefficients();
-                  csD->model = cosed_model;
-                  csD->cosed_comp_data = cosed_comp_data;
-                  csD->cosed_comp_data.detach();
-                  DbgLv(1) << "CosedData: cosed_model comp" << csD->model.components.size() << "cosed_comp_data"
-                           << cosed_comp_data.size() << "sa_data.scanCount()" << csD->sa_data.scanCount();
-              }
-              if (!cosed_comp_data.isEmpty()){
-                  csD->sa_data= cosed_comp_data.first();}
-
-              if (codiff_needed){
-                  emit message_update( pmessage_head() +
-                                       tr( "Calculating co-diffusing components ..." )
-                          , false );
-                 bool recalc = true;
-                 if ( bfg != nullptr ){
-                    // check if the band forming gradient is already calculated and fits the requirements
-                    if (bfg->is_suitable(simparms->meniscus, simparms->bottom, simparms->band_volume,
-                                         simparms->cp_pathlen, simparms->cp_angle,
-                                         dsets[0]->solution_rec.buffer.cosed_component,
-                                         (int)edata->scanData.last().seconds)){
-                       recalc = false;
-                    }
-                    if ( recalc ){
-                       delete bfg;
-                       bfg = nullptr;
-                    }
-                 }
-                 if ( recalc ){
-                    bfg = new US_Math_BF::Band_Forming_Gradient(simparms->meniscus,simparms->bottom,
-                                                                simparms->band_volume,
-                                                                dsets[0]->solution_rec.buffer.cosed_component,
-                                                                simparms->cp_pathlen,simparms->cp_angle);
-                    bfg->get_eigenvalues();
-                    bfg->calculate_gradient(*simparms,&auc_data);
-                 }
-              }
-
+              calculate_cosedimenting_component();
           }
       }
 
@@ -1519,197 +1370,31 @@ if(mtiters>50)
 
    if ( mmtype == 1 )
    {
-      int m_iter         = ff_menbot ? ( k_iter / mmiters ) :
-                           ( ff_meni ? k_iter : 0 );
-      double smeniscus   = bdata->meniscus - menrange * 0.5;
-      edata->meniscus    = smeniscus + (double)m_iter * mendelta;
-      edata->bottom      = bdata->bottom;
-
-      if ( ff_bott ) {
-          int b_iter = ff_menbot ? (k_iter % mmiters) :
-                       (ff_bott ? k_iter : 0);
-          double sbottom = bdata->bottom - menrange * 0.5;
-          edata->bottom = sbottom + (double) b_iter * mendelta;
+      if ( ff_meni )
+      {
+         int m_iter = ff_omeni ? k_iter : k_iter / mmiters;
+         double smeniscus   = bdata->meniscus - menrange * 0.5;
+         edata->meniscus    = smeniscus + (double)m_iter * mendelta;
+         simparms->meniscus = smeniscus + (double)m_iter * mendelta;
       }
-      if ( ff_angle ) {
-         int a_iter = ff_meniangle ? (k_iter % mmiters) :
-                      (ff_angle ? k_iter : 0);
-         double sangle = bsimparms.cp_angle - angle_range * 0.5;
-         simparms->cp_angle = sangle + (double) a_iter * angle_delta;
+      if ( ff_bott )
+      {
+         int b_iter = ff_obott ? k_iter : k_iter / mmiters;
+         double sbottom   = bdata->bottom - menrange * 0.5;
+         edata->bottom    = sbottom + (double)b_iter * mendelta;
+         simparms->bottom = sbottom + (double)b_iter * mendelta;
+      }
+      if ( ff_angle )
+      {
+         int a_iter = ff_oangle ? k_iter : k_iter / mmiters;
+         double sangle   = bsimparms.cp_angle - angle_range * 0.5;
+         simparms->cp_angle = sangle + (double)a_iter * angle_delta;
       }
      if (dens_grad)
          {
-             simparms->meniscus = edata->meniscus;
-             simparms->bottom   = edata->bottom;
-              emit message_update( pmessage_head() +
-                                   tr( "Calculating co-sedimenting components" ), false );
-              cosed_components = dsets[0]->solution_rec.buffer.cosed_component;
-              cosed_components.detach();
-              US_DataIO::RawData auc_data = dsets[0]->run_data.convert_to_raw_data();
-              US_Model cosed_model = model;
-              cosed_model.coSedSolute = -1;
-              cosed_model.components.clear();
-              US_Model cosed_model_tmp = model;
-              cosed_model_tmp.coSedSolute = -1;
-              double base_density = 0.0;
-              double base_viscosity = 0.0;
-              QMap<QString, US_CosedComponent> upper_cosed;
-              QMap<QString, US_CosedComponent> lower_cosed;
-              QList<QString> base_comps;
-              foreach (US_CosedComponent i,  cosed_components) {
-                  DbgLv(1) << "buff dens_coeff" << i.dens_coeff[ 0 ] << i.dens_coeff[ 1 ] << i.dens_coeff[ 2 ]
-                           << i.dens_coeff[ 3 ] << i.dens_coeff[ 4 ] << i.dens_coeff[ 5 ];
-                  DbgLv(1) << "buff visc_coeff" << i.visc_coeff[ 0 ] << i.visc_coeff[ 1 ] << i.visc_coeff[ 2 ]
-                           << i.visc_coeff[ 3 ] << i.visc_coeff[ 4 ] << i.visc_coeff[ 5 ];
-                  if ( !i.overlaying && upper_cosed.contains(i.name)) {
-                      // the current component is in the lower part, but there is another component with the same name in the
-                      // overlaying section of the band forming gradient
-                      US_CosedComponent j = upper_cosed[ i.name ];
-                      if ( j.conc > i.conc ) {
-                          // the concentration is higher in upper part, move it completely to the upper part and set the
-                          // concentration to the excess concentration
-                          j.conc = j.conc - i.conc;
-                          upper_cosed[ j.name ] = j;
-                          continue;
-                      } else if ( fabs(j.conc - i.conc) < GSL_ROOT5_DBL_EPSILON ) {
-                          // the concentration of both components is roughly equal, remove the component from the upper and lower part
-                          upper_cosed.remove(j.name);
-                          continue;
-                      } else {
-                          j.conc = i.conc - j.conc;
-                          lower_cosed[ j.name ] = j;
-                          upper_cosed.remove(j.name);
-                          continue;
-                      }
-                  }
-                  if ( i.overlaying && lower_cosed.contains(i.name)) {
-                      // the current component is in the lower part, but there is another component with the same name in the
-                      // overlaying section of the band forming gradient
-                      US_CosedComponent j = lower_cosed[ i.name ];
-                      if ( j.conc > i.conc ) {
-                          // the concentration is higher in lower part, move it completely to the lower part and set the
-                          // concentration to the excess concentration
-                          j.conc = j.conc - i.conc;
-                          lower_cosed[ j.name ] = j;
-                          continue;
-                      } else if ( fabs(j.conc - i.conc) < GSL_ROOT5_DBL_EPSILON ) {
-                          // the concentration of both components is roughly equal, remove the component from the upper and lower part
-                          lower_cosed.remove(j.name);
-                          continue;
-                      } else {
-                          j.conc = i.conc - j.conc;
-                          upper_cosed[ j.name ] = j;
-                          lower_cosed.remove(j.name);
-                          continue;
-                      }
-                  }
-                  if ( i.overlaying )
-                      upper_cosed[ i.name ] = i;
-                  else
-                      lower_cosed[ i.name ] = i;
-
-              }
-              // Determine the base of the buffer
-              foreach (US_CosedComponent cosed_comp, cosed_components) {
-                  if ( cosed_comp.overlaying ) { continue; } // overlaying components can't be part of the base of the buffer
-                  if ( lower_cosed.contains(cosed_comp.name) &&
-                       (fabs(lower_cosed[ cosed_comp.name ].conc - cosed_comp.conc) < GSL_ROOT5_DBL_EPSILON) &&
-                       cosed_comp.s_coeff == 0.0 && cosed_comp.d_coeff == 0.0 ) {
-                      // the concentration matches the original one entered. -> part of the buffer base
-                      base_comps << cosed_comp.GUID + cosed_comp.componentID;
-                      base_density += cosed_comp.dens_coeff[ 0 ];
-                      base_viscosity += cosed_comp.visc_coeff[ 0 ];
-                  }
-              }
-              // make sure the selected model is adjusted for the selected temperature
-              // and buffer conditions:
-              US_Math2::SolutionData sol_data{};
-              sol_data.density = base_density;
-              sol_data.viscosity = base_viscosity;
-              sol_data.manual = true;
-              foreach(US_CosedComponent cosed_comp,  cosed_components) {
-                  // get the excess concentrations
-                  if ( cosed_comp.overlaying && upper_cosed.contains(cosed_comp.name)) {
-                      cosed_comp = upper_cosed.value(cosed_comp.name);
-                  } else if ( !cosed_comp.overlaying && lower_cosed.contains(cosed_comp.name)) {
-                      cosed_comp = lower_cosed.value(cosed_comp.name);
-                  } else {
-                      DbgLv(1) << "nothing";
-                      continue;
-                  }
-                  if ( cosed_comp.s_coeff == 0.0 && cosed_comp.d_coeff == 0.0 ) {
-                      DbgLv(1) << "not cosedimenting";
-                      continue;
-                  }
-                  if (cosed_comp.s_coeff == 0.0){
-                      DbgLv(1) << "pure diffusive";
-                      codiff_needed = true;
-                      continue;
-                  }
-                  cosed_needed = true;
-                  cosed_model_tmp.components.clear();
-                  US_Model::SimulationComponent tmp = US_Model::SimulationComponent();
-                  tmp.name = cosed_comp.name;
-                  tmp.analyteGUID = cosed_comp.GUID;
-                  tmp.molar_concentration = cosed_comp.conc;
-                  tmp.signal_concentration = cosed_comp.conc;
-                  tmp.vbar20 = cosed_comp.vbar;
-                  if (cosed_comp_data.contains(tmp.analyteGUID)){
-                      continue;}
-                  sol_data.vbar20 = cosed_comp.vbar; //The assumption here is that vbar does not change with
-                  sol_data.vbar = cosed_comp.vbar; //temp, so vbar correction will cancel in s correction
-                  US_Math2::data_correction(simparms->temperature, sol_data);
-                  tmp.s = cosed_comp.s_coeff / sol_data.s20w_correction;
-                  tmp.D = cosed_comp.d_coeff / sol_data.D20w_correction;
-                  tmp.f_f0 = 0.0;
-                  tmp.analyte_type = 4;
-                  cosed_model.components << tmp;
-                  cosed_model_tmp.components << tmp;
-                  cosed_model_tmp.update_coefficients();
-                  emit message_update( pmessage_head() +
-                                       tr( "Calculating co-sedimenting component %1 ..." )
-                                               .arg( cosed_comp.name ), false );
-                  csD = new US_LammAstfvm::CosedData(cosed_model_tmp, *simparms, &auc_data, &cosed_components,
-                                                     base_density, base_viscosity);
-                  cosed_comp_data[ tmp.analyteGUID ] = csD->sa_data;
-                  DbgLv(2) << "NonIdeal2: create saltdata";
-                  cosed_model.update_coefficients();
-                  csD->model = cosed_model;
-                  csD->cosed_comp_data = cosed_comp_data;
-                  csD->cosed_comp_data.detach();
-                  DbgLv(1) << "CosedData: cosed_model comp" << csD->model.components.size() << "cosed_comp_data"
-                           << cosed_comp_data.size() << "sa_data.scanCount()" << csD->sa_data.scanCount();
-              }
-              if (!cosed_comp_data.isEmpty()){
-                  csD->sa_data= cosed_comp_data.first();}
-
-              if (codiff_needed){
-                  emit message_update( pmessage_head() +
-                                       tr( "Calculating co-diffusing components ..." )
-                          , false );
-                 bool recalc = true;
-                 if ( bfg != nullptr ){
-                    // check if the band forming gradient is already calculated and fits the requirements
-                    if (bfg->is_suitable(simparms->meniscus, simparms->bottom, simparms->band_volume,
-                                         simparms->cp_pathlen, simparms->cp_angle,
-                                         dsets[0]->solution_rec.buffer.cosed_component,
-                                         (int)edata->scanData.last().seconds)){
-                       recalc = false;
-                    }
-                    if ( recalc ){
-                       delete bfg;
-                       bfg = nullptr;
-                    }
-                 }
-                 if ( recalc ){
-                    bfg = new US_Math_BF::Band_Forming_Gradient(simparms->meniscus,simparms->bottom,
-                                                                simparms->band_volume,
-                                                                dsets[0]->solution_rec.buffer.cosed_component,
-                                                                simparms->cp_pathlen,simparms->cp_angle);
-                    bfg->get_eigenvalues();
-                    bfg->calculate_gradient(*simparms,&auc_data);
-                 }
-              }
+            simparms->meniscus = edata->meniscus;
+            simparms->bottom   = edata->bottom;
+            calculate_cosedimenting_component();
 
          }
    }
@@ -2305,12 +1990,24 @@ void US_2dsaProcess::set_meniscus()
    // Give the working data set an appropriate meniscus value
 //   int k_iter         = mm_iter - 1;
    int k_iter         = mm_iter;
-   int m_iter         = ff_menbot ? ( k_iter / mmiters ) :
-                        ( ff_meni ? k_iter : 0 );
-   int b_iter         = ff_menbot ? ( k_iter % mmiters ) :
-                        ( ff_bott ? k_iter : 0 );
-   int a_iter         = ff_meniangle ? ( k_iter % mmiters ) :
-                        ( ff_angle ? k_iter : 0 );
+   int m_iter = 0; // no meniscus fitting
+   int b_iter = 0; // no bottom fitting
+   int a_iter = 0; // no angle fitting
+   if ( ff_omeni )
+      m_iter = k_iter; // only fitting meniscus
+   else if ( ff_meni )
+      m_iter = k_iter / mmiters; // fitting not only meniscus
+
+   if ( ff_obott )
+      b_iter = k_iter; // only fitting bottom
+   else if ( ff_bott )
+      b_iter = k_iter % mmiters; // fitting not only bottom
+
+   if ( ff_oangle )
+      a_iter = k_iter; // only fitting angle
+   else if ( ff_angle )
+      a_iter = k_iter % mmiters; // fitting not only angle
+
 DbgLv(1) << "SET_MEN: k_iter m_iter b_iter a_iter" << k_iter << m_iter << b_iter << a_iter;
    double bmeniscus   = bdata->meniscus;
    double bbottom     = bdata->bottom;

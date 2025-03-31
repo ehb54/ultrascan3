@@ -291,6 +291,8 @@ DbgLv(1) << "idealThrCout" << nthr;
             this,  SLOT( checkMeniscus( bool ) ) );
    connect( ck_bottom, SIGNAL( toggled( bool ) ),
             this,  SLOT( checkMeniscus( bool ) ) );
+   connect( ck_angle, SIGNAL( toggled( bool ) ),
+            this,  SLOT( checkAngle( bool ) ) );
    connect( ck_mcarlo, SIGNAL( toggled( bool ) ),
             this,  SLOT( checkMonteCar( bool ) ) );
    connect( ck_iters,  SIGNAL( toggled( bool ) ),
@@ -432,6 +434,15 @@ void US_AnalysisControl2D::checkCusGrid(  bool checked )
 
 // handle float meniscus position checkec
 void US_AnalysisControl2D::checkMeniscus( bool checked )
+{
+   if ( checked )
+      uncheck_optimize( 2 );
+
+   optimize_options();
+}
+
+// handle float angle position checkec
+void US_AnalysisControl2D::checkAngle( bool checked )
 {
    if ( checked )
       uncheck_optimize( 2 );
@@ -692,7 +703,7 @@ DbgLv(1) << "AnaC:St:MEM (2)rssnow" << US_Memory::rss_now();
    int fittype   = 0;
    fittype      |= ( ck_menisc->isChecked() ? 1 : 0 );
    fittype      |= ( ck_bottom->isChecked() ? 2 : 0 );
-   fittype      |= ( ck_varvbar->isChecked() ? 4 : 0 );
+   fittype      |= ( ck_angle->isChecked() ? 4 : 0 );
    int mciter    = ck_mcarlo->isChecked() ?
                    (int)ct_mciters ->value() : 0;
    double vtoler = 1.0e-12;
@@ -706,7 +717,7 @@ DbgLv(1) << "AnaC:St:MEM (2)rssnow" << US_Memory::rss_now();
 
    // Begin the fit
    processor->set_iters( mxiter, mciter, mniter, vtoler, menrng,
-                         cff0, ngrr, fittype );
+                         cff0, ngrr, fittype, ct_angle_range->value() );
 
    processor->start_fit( slo, sup, nss, klo, kup, nks,
          ngrr, nthr, noif );
