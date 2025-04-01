@@ -1526,6 +1526,14 @@ void US_Grid_Editor::set_symbol_size( double )
    data_plot->replot();
 }
 
+void US_Grid_Editor::buffer_selected( US_Buffer buffer )
+{
+   le_dens_20->setText( QString::number( buffer.density ) );
+   le_visc_20->setText( QString::number( buffer.viscosity ) );
+   le_buffer->setText( buffer.description );
+   buffer_type = USER_BUFFER;
+}
+
 void US_Grid_Editor::set_buffer()
 {
    if ( pb_lu_buffer->text().startsWith( "Load Buffer" ) ) {
@@ -1536,14 +1544,7 @@ void US_Grid_Editor::set_buffer()
          state = US_Disk_DB_Controls::Disk;
       }
       US_BufferGui* buffer_gui = new US_BufferGui( true, US_Buffer(), state );
-
-      connect( buffer_gui, &US_BufferGui::valueChanged, this, [&]( US_Buffer buffer ) {
-         le_dens_20->setText( QString::number( buffer.density ) );
-         le_visc_20->setText( QString::number( buffer.viscosity ) );
-         le_buffer->setText( buffer.description );
-         buffer_type = USER_BUFFER;
-      } );
-
+      connect( buffer_gui, SIGNAL( valueChanged( US_Buffer ) ), this, SLOT( buffer_selected( US_Buffer ) ) );
       buffer_gui->exec();
    }
 
