@@ -404,6 +404,9 @@ private slots:
    //! \brief Slot a new buffer condition
    void new_dens_visc_temp( void );
 
+   //! \brief Slot to receive the buffer
+   void buffer_selected( US_Buffer );
+
    //! \brief Slot to update the buffer condition
    void set_buffer( void );
 

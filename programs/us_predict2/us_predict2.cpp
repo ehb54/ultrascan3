@@ -637,7 +637,7 @@ void US_Predict2::get_buffer( void )
    }
 
    US_BufferGui* buffer_dialog = new US_BufferGui( true );
-   connect( buffer_dialog, SIGNAL( BufferDataChanged ( double, double ) ),
+   connect( buffer_dialog, SIGNAL( valueChanged ( double, double ) ),
                            SLOT  ( update_buffer( double, double ) ) );
    buffer_dialog->setWindowTitle( tr( "Buffer Calculation" ) );
    buffer_dialog->exec();
