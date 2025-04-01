@@ -512,8 +512,12 @@ void US_Pseudo3D_Combine::plot_data( void )
                   + "\n" + tsys->method;
 
    QwtText p_title( tstr );
+   // QFont font_c("Arial", 10);
    p_title.setFont( QFont( US_Widgets::fixedFont().family(),
-			   US_GuiSettings::fontSize() + 1 ) );
+    			   US_GuiSettings::fontSize() + 1 ) );
+   //p_title.setFont( font_c );
+   //QFontInfo info(font_c);
+   //qDebug() << "Font family: " <<  info.family();
    //data_plot->setTitle( tstr );
    data_plot->setTitle( p_title );
    
