@@ -1142,6 +1142,7 @@ int US_Model::load( const QString& id, US_DB2* db )
       QTextStream tsi( contents );
 
       result     = load_multi_model( tsi );
+      variance   = db->value( 3 ).toDouble();
    }
 
    return result;
