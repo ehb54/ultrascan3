@@ -644,10 +644,13 @@ void US_MwlSpeciesFit::load( void )
    connect( dialog, SIGNAL( progress    ( const QString ) ), 
                     SLOT  ( set_progress( const QString ) ) );
 
-   if ( dialog->exec() != QDialog::Accepted && !us_gmp_auto_mode )
+   if ( !us_gmp_auto_mode )
      {
-       qDebug() << "DataLoader dialog not accepted?";
-       return;
+       if ( dialog->exec() != QDialog::Accepted )
+	 {
+	   qDebug() << "DataLoader dialog not accepted?";
+	   return;
+	 }
      }
    
    if ( disk_controls->db() )
@@ -690,7 +693,14 @@ DbgLv(1) << "ldnois:  nscans" << nscans << "ntrips" << ntrips;
    qApp->processEvents();
 
    runID         = dataList[ 0 ].runID;
-   US_LoadRunNoise ldnois( this );
+
+   //US_LoadRunNoise ldnois( this );
+   US_LoadRunNoise* ldnois;
+   if ( us_gmp_auto_mode )
+     ldnois = new US_LoadRunNoise( protocol_details, this );
+   else
+     ldnois = new US_LoadRunNoise( this );
+   
    bool dbload   = disk_controls->db();
    int ntedit    = 0;
    te_desc->setHtml( tr( "<b>Loading and counting noises "
@@ -699,8 +709,9 @@ DbgLv(1) << "ldnois:  nscans" << nscans << "ntrips" << ntrips;
    qApp->processEvents();
 
 DbgLv(1) << "ldnois:  calling count_noise()";
-   int nrnois    = ldnois.count_noise( dbload, runID, NULL, NULL, &ntedit );
-DbgLv(1) << "ldnois  ntedit nrnois" << ntedit << nrnois;
+   //int nrnois    = ldnois.count_noise( dbload, runID, NULL, NULL, &ntedit );
+   int nrnois    = ldnois->count_noise( dbload, runID, NULL, NULL, &ntedit );
+ DbgLv(1) << "ldnois  ntedit nrnois" << ntedit << nrnois;
 
    // Do the "triples" list as cell/channel/wl-range and apply noises
    for ( int ii = 0; ii < ntrips; ii++ )
@@ -727,7 +738,8 @@ DbgLv(1) << "trip" << ii << "triple" << triple << "celchn" << celchn
       US_Noise ti_noise;
       US_Noise ri_noise;
       QString edGUID   = dataList[ ii ].editGUID;
-      int noisf        = ldnois.get_noises( edGUID, ti_noise, ri_noise );
+      //int noisf        = ldnois.get_noises( edGUID, ti_noise, ri_noise );
+      int noisf        = ldnois->get_noises( edGUID, ti_noise, ri_noise );
 DbgLv(1) << "  trip" << ii << "noise subtraction  noisf" << noisf
  << "tiC riC" << ti_noise.count << ri_noise.count
  << "tiK riK" << ti_noise.values.count() << ri_noise.values.count();
@@ -769,6 +781,40 @@ DbgLv(1) << "  trip" << ii << "noise subtraction  noisf" << noisf
 
    pb_loadsfit->setEnabled( true );
 
+}
+
+void US_MwlSpeciesFit::read_protocol()
+{
+  US_Passwd pw;
+  QString masterPW = pw.getPasswd();
+  US_DB2 db( masterPW );
+  
+  if ( db.lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "Connection Problem" ),
+			    tr( "Read protocol: Could not connect to database \n" ) + db.lastError() );
+      return;
+    }
+
+  QString ProtocolName_auto = protocol_details[ "protocolName" ];
+  int invID_p           = protocol_details[ "invID_passed" ].toInt();
+  currProto         = US_RunProtocol();
+  
+  QString xmlstr( "" );
+  US_ProtocolUtil::read_record_auto( ProtocolName_auto, invID_p,  &xmlstr, NULL, &db );
+  QXmlStreamReader xmli( xmlstr );
+  currProto. fromXml( xmli );
+  
+}
+
+// Load species vector files
+void US_MwlSpeciesFit::loadSpecs_auto()
+{
+  //read protocol's solution-> analyte (& if needed buffer)
+  read_protocol();
+    
+  //read analystes' & buffers' extinction profiles
+  
 }
 
 // Load species vector files

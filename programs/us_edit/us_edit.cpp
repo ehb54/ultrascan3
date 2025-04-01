@@ -8049,9 +8049,13 @@ void US_Edit::exclude_all_but_last( void )
 {
   int scanStart = 0;
   int scanEnd   = data.scanData.size() - 1;
+
+  qDebug() << "includes before: " << includes;
   
   for ( int i = scanEnd; i >= scanStart; i-- )
     includes.removeAt( i - 1 );
+
+  qDebug() << "includes after " << includes;
   
   replot();
   reset_excludes();
@@ -8945,7 +8949,8 @@ DbgLv(1) << " 2)gap_fringe" << gap_fringe << "idax" << idax;
    //Also, for "ABDE", remove from includes all by manuall editing
    if ( autoflow_expType == "ABDE" && edited_triples_abde[ cb_triple->currentText() ] )
      includes = editProfile_includes[ cb_triple->currentText() ];
-
+   
+   qDebug() << "Includes" << includes;
    qDebug() << "Includes size after remove: " << includes.size();
    //for ( int i = 0; i < includes.size(); ++i  )
    //  qDebug() << "Includes after remove: " << includes[ i ];
@@ -9094,6 +9099,7 @@ DbgLv(1) << "EDT:NewTr: DONE";
 
  //disconnect pick for main[AUTO] mode
  qDebug() << "[END]us_edit_auto_mode - " << us_edit_auto_mode;
+ qDebug() << "Includes: " << includes; 
  if ( us_edit_auto_mode )
    pick -> disconnect();
  
@@ -11123,7 +11129,6 @@ void US_Edit::write_triple_auto( int trx )
    
    save_report_auto( rtext, rptfpath, idEdit, trx );
 
-
    //Disconnect cb_triple if runType_combined_IP_RI == true;
    if ( runType_combined_IP_RI )
      cb_triple->disconnect();
@@ -12858,7 +12863,7 @@ DbgLv(1) << "EDT:WrMwl:  dax fname" << idax << filename << "wrstat" << wrstat;
       
    }  // END:  wavelength-in-cellchannel loop
 
-   // QApplication::restoreOverrideCursor();
+   QApplication::restoreOverrideCursor();
    // changes_made = false;
    // pb_report   ->setEnabled( false );
    // pb_write    ->setEnabled( false );
@@ -13180,7 +13185,7 @@ DbgLv(1) << "EDT:WrXml:  waveln" << waveln;
 	for ( int ii = 0; ii < data.scanData.size(); ii++ )
 	  {
 	    if ( ! includes.contains( ii ) && 
-		 ii > scanExcl_begin_ind   &&
+		 ii >= scanExcl_begin_ind   &&
 		 ii < data.scanData.size() - scanExcl_end_ind )
 	      {
 		xml.writeStartElement( "exclude" );

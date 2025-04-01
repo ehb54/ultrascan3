@@ -6,6 +6,8 @@
 #include "us_editor.h"
 #include "us_math2.h"
 #include "us_mwl_sf_plot3d.h"
+#include "us_run_protocol.h"
+#include "us_protocol_util.h"
 
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug()
@@ -25,6 +27,7 @@ class US_MwlSpeciesFit : public US_AnalysisBase2
 
         bool us_gmp_auto_mode;
         QMap<QString, QString> protocol_details;
+        US_RunProtocol currProto;           //!< Current run protocol
 
     private:
         int dbg_level;         //!< Debug level
@@ -89,7 +92,9 @@ class US_MwlSpeciesFit : public US_AnalysisBase2
 
         //! \brief Load species data
         void loadSpecs(void);
-
+        void loadSpecs_auto(void);
+        void read_protocol(void);
+  
         //! \brief Perform species fit data analysis
         void specFitData(void);
 

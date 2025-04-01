@@ -524,7 +524,8 @@ qDebug() << "LdEd:  ii" << ii << "ndxii" << indexes[ii] << "triple" << triple;
          }
 
          QString  recID    = QString::number( idRec );
-         QString  invID    = QString::number( US_Settings::us_inv_ID() );
+         //QString  invID    = QString::number( US_Settings::us_inv_ID() );
+	 QString  invID  = ( us_automode ) ? protocol_details["invID_passed"] : QString::number( US_Settings::us_inv_ID() );
          QString  aucfn    = ddesc.runID + "."
                              + filename.section( ".", -5, -3 )
                              + "." + clambda + ".auc";
@@ -650,6 +651,8 @@ void US_DataLoader::describe( )
                     + sep + dataGUID
                     + sep + aucID
                     + sep + aucGUID;
+
+   qDebug() << "finished desc. " ;
 }
 
 // Investigator button clicked:  get investigator from dialog
@@ -929,9 +932,9 @@ void US_DataLoader::accepted()
 
    if ( load_edit() )
    {
-      describe();
-      accept();        // Signal that selection was accepted
-      close();
+     describe();
+     accept();        // Signal that selection was accepted
+     close();
    }
 }
 
