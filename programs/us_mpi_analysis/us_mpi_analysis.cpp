@@ -2512,7 +2512,7 @@ DbgLv(0) << my_rank << ":      model2.load(" << cmfname << ")";
 DbgLv(0) << my_rank << ":       model2.description" << model2.description;
             QString runstring = "Run: " + QString::number( ii + 1 )
                                 + " " + tripleID;
-            model2.variance = variance_mc_combined( model2 );
+            model2.variance = rmsd_combined_mc_models( model2 );
             tsout << cmfname 
                   << ";meniscus_value=" << model2.meniscus
                   << ";MC_iteration="   << mc_iterations
@@ -2553,7 +2553,7 @@ DbgLv(0) << my_rank << ": All output files except the archive are now removed.";
    }
 }
 
-double US_MPI_Analysis::variance_mc_combined( US_Model& model )
+double US_MPI_Analysis::rmsd_combined_mc_models( US_Model& model )
 {
    DATASET *dset = data_sets[0];
    double avtemp  = dset->temperature;

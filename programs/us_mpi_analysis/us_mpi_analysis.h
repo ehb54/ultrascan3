@@ -400,7 +400,7 @@ class US_MPI_Analysis : public QObject
                                      QVector< int >& );
         void     update_outputs    ( bool = false );
         US_Model::AnalysisType model_type( const QString );
-        double   variance_mc_combined    ( US_Model& );
+        double   rmsd_combined_mc_models ( US_Model& );
 
         // Worker
         void     _2dsa_worker      ( void );
