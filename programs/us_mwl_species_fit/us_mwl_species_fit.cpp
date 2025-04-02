@@ -347,8 +347,13 @@ DbgLv(1) << "MSF: dc: ii" << ii << "NON_EXCLUDED";
       while (  jj < points  &&  escan->rvalues[ jj ] < lower_limit )
       {
          rr[ count ] = edata->xvalues[ jj ];
-         vv[ count ] = escan->rvalues[ jj ];
-         jj++;
+	 vv[ count ] = escan->rvalues[ jj ];
+
+	 if ( us_gmp_auto_mode )
+	   vv[ count ] -= ( rr[ count ]*edata->bl_corr_slope + edata->bl_corr_yintercept );
+	   
+	 
+	 jj++;
          count++;
       }
 
@@ -374,6 +379,10 @@ DbgLv(1) << "MSF: dc: ii" << ii << "NON_EXCLUDED";
       {
          rr[ count ] = edata->xvalues[ jj ];
          vv[ count ] = escan->rvalues[ jj ];
+
+	 if ( us_gmp_auto_mode )
+	   vv[ count ] -= ( rr[ count ]*edata->bl_corr_slope + edata->bl_corr_yintercept );
+	 
          jj++;
          count++;
       }
@@ -399,6 +408,10 @@ DbgLv(1) << "MSF: dc: ii" << ii << "NON_EXCLUDED";
       {
          rr[ count ] = edata->xvalues[ jj ];
          vv[ count ] = escan->rvalues[ jj ];
+
+	 if ( us_gmp_auto_mode )
+	   vv[ count ] -= ( rr[ count ]*edata->bl_corr_slope + edata->bl_corr_yintercept );
+	 
          jj++;
          count++;
       }
@@ -774,7 +787,7 @@ DbgLv(1) << "ldnois:  calling count_noise()";
                          triple.section( "/", 1, 1 ).simplified();
       QString waveln   = triple.section( "/", 2, 2 ).simplified();
       int ccx          = celchns.indexOf( celchn );
-DbgLv(1) << "trip" << ii << "triple" << triple << "celchn" << celchn
+DbgLv(0) << "trip" << ii << "triple" << triple << "celchn" << celchn
  << "waveln" << waveln << "ccx" << ccx;
       if ( ccx < 0 )
       {  // New cell/channel:  add to list and save first index
@@ -791,6 +804,7 @@ DbgLv(1) << "trip" << ii << "triple" << triple << "celchn" << celchn
       US_Noise ti_noise;
       US_Noise ri_noise;
       QString edGUID   = dataList[ ii ].editGUID;
+      qDebug() << "edGUID -- " << edGUID;
       //int noisf        = ldnois.get_noises( edGUID, ti_noise, ri_noise );
       int noisf        = ldnois->get_noises( edGUID, ti_noise, ri_noise );
 DbgLv(1) << "  trip" << ii << "noise subtraction  noisf" << noisf
@@ -1536,9 +1550,22 @@ DbgLv(1) << "sfd: sc" << ii << "js jr" << js << jr;
 
          for ( int kk = 0; kk < klambda; kk++, trx++ )
          {  // Store scan,radius reading for each wavelength in channel
-//            nnls_b[ kk ]   = rawList[ trx ].value( js, jr );
-            nnls_b[ kk ]   = dataList[ trx ].value( js, jr );
-         }
+	   // nnls_b[ kk ]   = rawList[ trx ].value( js, jr );
+	   nnls_b[ kk ]   = dataList[ trx ].value( js, jr );
+	   
+	   //for GMP auto-processing, make base-line correcitons
+	   if ( us_gmp_auto_mode )
+	     {
+	       // qDebug() << "[Triple DESC (Cell/Chann/Wvl/bll_slope/bll_yint.): ] "
+	       // 		<< dataList[ trx ].cell
+	       // 		<< dataList[ trx ].channel
+	       // 		<< dataList[ trx ].wavelength
+	       // 		<< dataList[ trx ].bl_corr_slope
+	       // 		<< dataList[ trx ].bl_corr_yintercept;
+	       nnls_b[ kk ]  -= ( dataList[ trx ].xvalues[ jr ]*dataList[ trx ].bl_corr_slope
+				  + dataList[ trx ].bl_corr_yintercept); 
+	     }
+	 }
 DbgLv(1) << "sfd: NNLS b:" << nnls_b[0] << nnls_b[klambda-1];
 
          QVector< double > sv_nnls_b = nnls_b;
