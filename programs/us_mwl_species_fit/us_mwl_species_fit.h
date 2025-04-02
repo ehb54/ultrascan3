@@ -28,6 +28,8 @@ class US_MwlSpeciesFit : public US_AnalysisBase2
         bool us_gmp_auto_mode;
         QMap<QString, QString> protocol_details;
         US_RunProtocol currProto;           //!< Current run protocol
+        QMap< QString, QMap< QString, QMap< double, double > > > extinction_profiles_per_channel;
+             //chann.    //type[protein, DNA]  //ext. profile 
 
     private:
         int dbg_level;         //!< Debug level
@@ -92,8 +94,10 @@ class US_MwlSpeciesFit : public US_AnalysisBase2
 
         //! \brief Load species data
         void loadSpecs(void);
-        void loadSpecs_auto(void);
-        void read_protocol(void);
+        void loadSpecs_auto( QMap< QString, QMap< double, double > > );
+        bool read_protocol(QStringList &);
+        bool validExtinctionProfile( QString, QList< double >,
+				     QList< double >, QStringList& );
   
         //! \brief Perform species fit data analysis
         void specFitData(void);

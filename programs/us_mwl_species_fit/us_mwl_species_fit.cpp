@@ -122,6 +122,59 @@ DbgLv(1) << "  irow" << irow << "icol" << icol;
 
    //load
    load();
+
+   //read protocol & check (once more) extinction profiles
+   QStringList msg_to_user;
+   if ( !read_protocol( msg_to_user ) )
+     {
+       msg_to_user.removeDuplicates();
+       QMessageBox::critical( this,
+			      tr( "ATTENTION: Invalid Extinction Profiles (ABDE)" ),
+			      msg_to_user.join("\n") +
+			      tr("\n\nPlease upload valid extinction profiles for above specified analytes "
+				 "and/or buffers using following UltraScan's programs: \n\"Database:Manage Analytes\""
+				 "\n\"Database:Manage Buffer Data\"\n\n"
+				 "ANALYSIS and REPORTING are not possible "
+				 "until this problem is resolved."));
+     }
+   else //continue
+     {
+       /*
+       //debug
+       QStringList ext_keys = extinction_profiles_per_channel.keys();
+       for ( int i=0; i< ext_keys.size(); ++ i )
+	 {
+	   qDebug() << "For channel: " << ext_keys[i] << ", there are profiles for: ";
+	   QMap< QString, QMap< double, double > > analytes_profs = extinction_profiles_per_channel[ ext_keys[i] ];
+	   QStringList analytes_profs_keys = analytes_profs.keys();
+	   for ( int j=0; j< analytes_profs_keys.size(); ++ j )
+	     {
+	       QMap< double, double > ext_prof_s = analytes_profs[ analytes_profs_keys[j] ];
+	       qDebug() << analytes_profs_keys[j] << "; it has " << ext_prof_s.keys().size() << "wvls..." ;
+ 	     }
+	 }
+       //end debug
+       */
+
+       //iterate over triples in lw_triples
+       qDebug() << "lw_triples->count() -- " << lw_triples->count();
+       for( int i=0; i< lw_triples->count(); ++i )
+	 {
+	   //new_triple( i );
+	   lw_triples->setCurrentRow( i );
+	   QString triple_text = lw_triples->item(i)->text();
+	   QStringList t_list = triple_text.split(" / ");
+	   triple_text = t_list[0] + " / " + t_list[1];
+	   qDebug() << "Processing chanel -- " << triple_text;
+
+	   //associate ext. profiles
+	   QMap< QString, QMap< double, double > > analytes_profs = extinction_profiles_per_channel[ triple_text ];
+
+	   loadSpecs_auto( analytes_profs );
+	   specFitData();	   
+	 }
+       
+     }
 }
 
 US_MwlSpeciesFit::US_MwlSpeciesFit() : US_AnalysisBase2()
@@ -783,8 +836,14 @@ DbgLv(1) << "  trip" << ii << "noise subtraction  noisf" << noisf
 
 }
 
-void US_MwlSpeciesFit::read_protocol()
+bool US_MwlSpeciesFit::read_protocol(QStringList& msg_to_user)
 {
+  bool all_profiles_exist = true;
+  msg_to_user. clear();
+
+  //clear QMap of extinciton profiles per channel
+  extinction_profiles_per_channel. clear();
+  
   US_Passwd pw;
   QString masterPW = pw.getPasswd();
   US_DB2 db( masterPW );
@@ -793,7 +852,7 @@ void US_MwlSpeciesFit::read_protocol()
     {
       QMessageBox::warning( this, tr( "Connection Problem" ),
 			    tr( "Read protocol: Could not connect to database \n" ) + db.lastError() );
-      return;
+      return false;
     }
 
   QString ProtocolName_auto = protocol_details[ "protocolName" ];
@@ -804,17 +863,286 @@ void US_MwlSpeciesFit::read_protocol()
   US_ProtocolUtil::read_record_auto( ProtocolName_auto, invID_p,  &xmlstr, NULL, &db );
   QXmlStreamReader xmli( xmlstr );
   currProto. fromXml( xmli );
+
+  //read extinction profiles per channel
+  for ( int ii = 0; ii < currProto.rpRange.nranges; ii++ )
+    {
+      QString channel   = currProto.rpRange.chrngs[ ii ].channel;
+      QString channel_s = channel.split(",")[0].trimmed();
+      QList< double > all_wvls = currProto.rpRange.chrngs[ ii ].wvlens;
+      int    nwavl      = all_wvls.count();
+      bool   buff_req   = currProto.rpRange.chrngs[ ii ].abde_buffer_spectrum;
+      bool   mwl_deconv = currProto.rpRange.chrngs[ ii ].abde_mwl_deconvolution;
+
+      if ( nwavl > 1 && mwl_deconv )
+	{
+	  QString sol_id = currProto.rpSolut.chsols[ii].sol_id;
+	  US_Solution*   solution = new US_Solution;
+	  int solutionID = sol_id.toInt();
+
+	  int status = US_DB2::OK;
+	  status = solution->readFromDB  ( solutionID, &db );
+	  // Error reporting
+	  if ( status == US_DB2::NO_BUFFER )
+	    {
+	      QMessageBox::information( this,
+					tr( "Attention" ),
+					tr( "The buffer this solution refers to was not found.\n"
+					    "Please restore and try again.\n" ) );
+	      return false;
+	    }
+	  
+	  else if ( status == US_DB2::NO_ANALYTE )
+	    {
+	      QMessageBox::information( this,
+					tr( "Attention" ),
+					tr( "One of the analytes this solution refers to was not found.\n"
+					    "Please restore and try again.\n" ) );
+	      return false;
+	    }
+	  
+	  else if ( status != US_DB2::OK )
+	    {
+	      QMessageBox::warning( this, tr( "Database Problem" ),
+				    tr( "Database returned the following error: \n" ) +  db.lastError() );
+	      return false;
+	    }
+	  //End of reading Solution:
+
+	  //Reading Analytes
+	  int num_analytes = solution->analyteInfo.size();
+	  for (int i=0; i < num_analytes; ++i )
+	    {
+	      US_Analyte analyte = solution->analyteInfo[ i ].analyte;
+	      QString a_name     = analyte.description;
+	      QString a_ID       = analyte.analyteID;
+	      QString a_GUID     = analyte.analyteGUID;
+
+	      qDebug() << "Solution "  << solution->solutionDesc
+		       << ", (GUID)Analyte " << "(" << a_GUID << ")" << a_name
+		       << ", (ID)Analyte " << "(" << a_ID << ")" << a_name;
+
+	      analyte.extinction.clear();
+	      analyte.load( true, a_GUID, &db );
+
+	      //QMap <double, double> extinction[ wavelength ] <=> value
+	      qDebug() << "[Analyte]Extinction Profile wvls: " 
+		       << analyte.extinction.keys();
+
+	      //Check if ext. profile: (1) exists; (2) in range of specs channel-wvls.
+	      QString a_desc = "ANALYTE: " + a_name;
+	      if ( !validExtinctionProfile( a_desc, all_wvls, analyte.extinction.keys(), msg_to_user ) )
+		all_profiles_exist = false;
+
+	      //fill in the QMap of ext. profiles
+	      extinction_profiles_per_channel[ channel_s ][ a_name ] = analyte.extinction;
+	    }
+	  //End of reading Analytes
+
+	  //Reading Buffers
+	  if ( buff_req ) //only if buffer spectrum required
+	    {
+	      US_Buffer buffer = solution->buffer;
+	      QString b_name   = buffer.description;
+	      QString b_ID     = buffer.bufferID;
+	      qDebug() << "Solution "  << solution->solutionDesc
+		       << ", (ID)Buffer " << "(" << b_ID << ")" << b_name;
+	      
+	      buffer.extinction.clear();
+	      buffer.readFromDB( &db, b_ID );
+	      
+	      //QMap <double, double> extinction[ wavelength ] <=> value
+	      qDebug() << "[Buffer]Extinction Profile wvls: " 
+		       << buffer.extinction.keys();
+
+	      //Check if ext. profile: (1) exists; (2) in range of specs channel-wvls.
+	      QString b_desc = "BUFFER: " + b_name;
+	      if ( !validExtinctionProfile( b_desc, all_wvls, buffer.extinction.keys(), msg_to_user ) )
+		all_profiles_exist = false;
+
+	      //fill in the QMap of ext. profiles
+	      extinction_profiles_per_channel[ channel_s ][ b_name ] = buffer.extinction;
+	    }
+	  //End of reading Buffers
+	}
+    }
+
+  return all_profiles_exist;
+ }
+
+//check (once more) if extinction profiles are valid
+bool US_MwlSpeciesFit::validExtinctionProfile( QString desc, QList< double > all_wvls,
+						QList< double > ext_prof, QStringList& msg_to_user )
+{
+  bool eprofile_ok;
+  QString msg;
+    
+  //ranges from protocol
+  int    nwavl_p    = all_wvls.count();
+  double lo_wavl_p  = all_wvls[ 0 ];
+  double hi_wavl_p  = all_wvls[ nwavl_p - 1 ];
+
+  //ranges in extinction profile
+  int    nwavl_e    = ext_prof.count();
+  if ( nwavl_e > 0 )
+    {
+      double lo_wavl_e  = ext_prof[ 0 ];
+      double hi_wavl_e  = ext_prof[ nwavl_e - 1 ];
+      
+      eprofile_ok = ( lo_wavl_e <= lo_wavl_p ) ? true : false;
+      eprofile_ok = ( hi_wavl_e >= hi_wavl_p ) ? true : false;
+
+      msg = "is out of range; ";
+    }
+  else //empty ext. profile
+    {
+      eprofile_ok = false;
+      msg = "does not exist; ";
+    }
+
+  //check existence of all wavelengths (for non-empty ext.prof.)
+  if ( nwavl_e > 0 )
+    {
+      QMap<double, bool> wvl_present;
+      for (int i=0; i<all_wvls.size(); ++i)
+	{
+	  double p_wvl = all_wvls[i];
+	  wvl_present[ p_wvl ] = false;
+	  for (int j=0; j<ext_prof.size(); j++)
+	    {
+	      double e_wvl = ext_prof[j];
+	      if ( p_wvl == e_wvl )
+		{
+		  wvl_present[ p_wvl ] = true;
+		  break;
+		}
+	    }
+	}
+      QMap < double, bool >::iterator ri;
+      for ( ri = wvl_present.begin(); ri != wvl_present.end(); ++ri )
+	{
+	  bool w_exists = ri.value();
+	  if ( !w_exists )
+	    {
+	      eprofile_ok = false;
+	      msg += "some wavelengths missing; ";
+	      break; 
+	    }
+	}
+    }
   
+  //messages
+  if ( !eprofile_ok )
+    msg_to_user << QString(tr("%1: Extinction profile %2"))
+      .arg( desc )
+      .arg( msg );
+  
+  return eprofile_ok;
 }
 
 // Load species vector files
-void US_MwlSpeciesFit::loadSpecs_auto()
+void US_MwlSpeciesFit::loadSpecs_auto( QMap< QString, QMap< double, double > > analytes_profs )
 {
-  //read protocol's solution-> analyte (& if needed buffer)
-  read_protocol();
-    
-  //read analystes' & buffers' extinction profiles
+  QStringList analytes_profs_keys = analytes_profs.keys();
+  int nspecies_tmp = analytes_profs_keys.size();
   
+  QStringList analytes_profs_keys_mod;
+  QRegExp rx( "[^A-Za-z0-9_-]" );
+  for ( int i=0; i< analytes_profs_keys.size(); ++i )
+    {
+      QString ana_desc = analytes_profs_keys[i];
+      analytes_profs_keys_mod << ana_desc.replace( rx,  "_" ) + ".txt";
+    }
+  
+  int minnw       = 999999;
+  int maxnw       = 0;
+  QVector< QVector< int > >     spwavls_tmp;
+  QVector< QVector< double > >  spconcs_tmp;
+  
+  for ( int j=0; j < nspecies_tmp; ++ j )
+    {
+      QMap< double, double > ext_prof_s = analytes_profs[ analytes_profs_keys[j] ];
+      qDebug() << analytes_profs_keys[j] << "; it has " << ext_prof_s.keys().size() << "wvls..." ;
+
+      QVector<double> xvals, yvals;
+      QMap < double, double >::iterator it;
+      for ( it = ext_prof_s.begin(); it != ext_prof_s.end(); ++it )
+	{
+	  xvals << it.key();
+	  yvals << it.value();
+	}
+
+      QVector< int >      spwvls;
+      QVector< double >   spcncs;
+      for (int jj = 0; jj < xvals.size(); jj++ ) {
+         int iwavl = static_cast<int> (xvals.at(jj));
+	 spwvls << iwavl;
+         spcncs << yvals.at(jj);
+      }
+
+      minnw           = qMin( minnw, spwvls.size() );
+      maxnw           = qMax( maxnw, spwvls.size() );
+
+      spwavls_tmp << spwvls;
+      spconcs_tmp << spcncs;
+    }
+
+  // checking for the base profile matched to triple wavelengths
+    QVector< int >     spwavls_chk;
+    QVector< double >  spconcs_chk;
+    QVector< int >     nwavls_chk;
+    int ccx = lw_triples->currentRow();
+    qDebug() << "in loadSpecs: lw_triples->currentRow() -- " << ccx;
+    QVector< int > curr_celchnwvl = celchn_wvl.at(ccx);
+    int nwls = curr_celchnwvl.size();
+    //QStringList bad_files;
+    for (int ii = 0; ii < nspecies_tmp; ii++){
+      //QString fname   = spfiles_tmp.at(ii);
+        for (int jj = 0; jj < nwls; jj++){
+            int wavl = curr_celchnwvl.at(jj);
+            int idx = spwavls_tmp.at(ii).indexOf(wavl);
+            // if (idx == -1){
+            //     bad_files << fname;
+            //     break;
+            // }
+            spwavls_chk << wavl;
+            spconcs_chk << spconcs_tmp.at(ii).at(idx);
+        }
+        nwavls_chk << nwls;
+    }
+
+    // if (bad_files.size() > 0){
+    //     QString fnames("\n");
+    //     for (int ii = 0; ii < bad_files.size(); ii++)
+    //         fnames = fnames.append(bad_files.at(ii) + tr("\n"));
+    //     QMessageBox::warning( this, tr("IO Error"),
+    //                           tr("The following file(s):\n") + fnames +
+    //                           tr("\ndo(es) not have the valid data over"
+    //                              " the range of %1 to %2 nm. ").
+    //                           arg(curr_celchnwvl.at(0)).arg(curr_celchnwvl.at(nwls - 1)) +
+    //                           tr("Please provide the proper spectral profiles."));
+    //     return;
+    // }
+
+    spfiles.clear();
+    spwavls.clear();
+    spconcs.clear();
+    nwavls.clear();
+    nspecies = nspecies_tmp;
+    spfiles << analytes_profs_keys_mod;
+    //spfiles << analytes_profs_keys;
+    spwavls << spwavls_chk;
+    spconcs << spconcs_chk;
+    nwavls << nwavls_chk;
+
+   // Initialize species data
+   int ktspec     = nspecies * celchns.count();
+   synData.fill( rawList[ 0 ], ktspec );
+   have_p1.fill( false,        ktspec );
+DbgLv(1) << "Species ktspec sD,hvp sizes" << ktspec << synData.size()
+ << have_p1.size();
+
+   pb_sfitdata->setEnabled( true );
 }
 
 // Load species vector files
@@ -979,9 +1307,10 @@ DbgLv(1) << "Species ktspec sD,hvp sizes" << ktspec << synData.size()
 // Create species-fit synthetic data
 void US_MwlSpeciesFit::specFitData()
 {
-QDateTime time0=QDateTime::currentDateTime();
+  QDateTime time0=QDateTime::currentDateTime();
    // Construct lambda array and various counts,indexes
    int ccx        = lw_triples->currentRow();
+   qDebug() << "Fitting... lw_triples->currentRow() -- " << lw_triples->currentRow();
    int tripx      = triple_index( ccx );
 DbgLv(1) << "sfd: ccx tripx" << ccx << tripx;
    US_DataIO::EditedData*  edata = &dataList[ tripx ];
@@ -1001,6 +1330,7 @@ DbgLv(1) << "sfd:  nscan kscan npoint" << nscan << kscan << npoint;
    klambda        = 0;
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
 
+   qDebug() << "Fitting...1"; 
    for ( int ii = trpxs; ii < trpxe; ii++ )
    {
       klambda++;
@@ -1010,7 +1340,7 @@ DbgLv(1) << "sfd:  klambda ii lmb" << klambda << ii << lambdas[klambda-1];
 DbgLv(1) << "sfd: klambda ccx trpxs trpxe" << klambda << ccx << trpxs << trpxe;
 
    lmbxe          = klambda;
-
+   qDebug() << "Fitting...2"; 
    // Construct the A matrix, species columns and wavelengths rows
    QVector< double > sv_nnls_a;
    QVector< double > nnls_a;
@@ -1090,7 +1420,8 @@ DbgLv(1) << "sfd:    nnls_a" << nnls_a[ka-klambda]
    << nnls_a[ka-3] << nnls_a[ka-2] << nnls_a[ka-1];
    }  // END:  loop through species
 QDateTime time1=QDateTime::currentDateTime();
-
+ 
+ qDebug() << "Fitting...3"; 
    // Create output data sets and build the basic grid of values
 
    QList< int >        inclscns;
@@ -1105,12 +1436,16 @@ DbgLv(1) << "sfd:    sv_nnls_a" << sv_nnls_a[ka-klambda]
    << sv_nnls_a[ka-klambda+1] << sv_nnls_a[ka-klambda+2] << sv_nnls_a[ka-klambda/2]
    << sv_nnls_a[ka-3] << sv_nnls_a[ka-2] << sv_nnls_a[ka-1];
 
+ qDebug() << "Fitting...4"; 
    for ( int ii = 0; ii < nspecies; ii++ )
    {  // Loop to create synthetic data
+
+     qDebug() << "spfiles, spfiles.size() == "
+	      << spfiles << spfiles.size();
       QString fname    = spfiles[ ii ];
       QString fbase    = fname.section( "/", -1, -1 );
       QString rawGUID  = US_Util::new_guid();
-DbgLv(1) << "sfd: sp" << ii << "fbase" << fbase;
+DbgLv(0) << "sfd: sp" << ii << "fbase" << fbase;
 
       synData[ kd ]    =  *rdata;
 
@@ -1121,10 +1456,10 @@ DbgLv(1) << "sfd: sp" << ii << "fbase" << fbase;
       if ( edata->dataType == "RI" )
          memcpy( synData[ kd ].type, "RA", 2 );
       double wavl      = (double)( ii + 1 );
-DbgLv(1) << "sfd:   desc" << synData[kd].description;
+DbgLv(0) << "sfd:   desc" << synData[kd].description;
       int jr           = radxs;
       int ks           = 0;
-DbgLv(1) << "sfd:   krpad kradp jr" << krpad << kradp << jr;
+DbgLv(0) << "sfd:   krpad kradp jr" << krpad << kradp << jr;
 
       // Store the radius values
       for ( int jj = krpad; jj < kradp; jj++, jr++ )
@@ -1132,13 +1467,13 @@ DbgLv(1) << "sfd:   krpad kradp jr" << krpad << kradp << jr;
 //         synData[ kd ].xvalues[ jj ]  = rdata->xvalues[ jr ];
          synData[ kd ].xvalues[ jj ]  = edata->xvalues[ jr ];
       }
-DbgLv(1) << "sfd:    jr" << jr << "synDsiz" << synData.size()
+DbgLv(0) << "sfd:    jr" << jr << "synDsiz" << synData.size()
  << "scnSiz" << synData[0].scanData.size() << "kscan" << kscan
  << "rScnSiz" << rdata->scanCount() << rdata->scanData.count();
 int kexcl=excludedScans.count();
-DbgLv(1) << "sfd:    nscan kscan exclknt" << nscan << kscan << kexcl;
+DbgLv(0) << "sfd:    nscan kscan exclknt" << nscan << kscan << kexcl;
 if(kexcl>4)
-DbgLv(1) << "sfd:    excls 0 1 m n" << excludedScans[0]
+DbgLv(0) << "sfd:    excls 0 1 m n" << excludedScans[0]
    << excludedScans[1] << excludedScans[kexcl/2] << excludedScans[kexcl-1];
 
       // Store radius values for pre-data/meniscus padding
@@ -1152,8 +1487,8 @@ DbgLv(1) << "sfd:    excls 0 1 m n" << excludedScans[0]
          synData[ kd ].xvalues[ jj ] = rad1v;
       }
 
-DbgLv(1) << "sfd: rad1 radinc" << rad1v << radinc;
-DbgLv(1) << "sfd:  xv 0 1 p n" 
+DbgLv(0) << "sfd: rad1 radinc" << rad1v << radinc;
+DbgLv(0) << "sfd:  xv 0 1 p n" 
  << synData[kd].xvalues[0] << synData[kd].xvalues[1]
  << synData[kd].xvalues[krpad] << synData[kd].xvalues[kradp-1];
       // Create the non-excluded scans, with initialized readings vectors
@@ -1161,7 +1496,7 @@ DbgLv(1) << "sfd:  xv 0 1 p n"
       {
          if ( excludedScans.contains( jj ) )  continue;
 
-DbgLv(1) << "sfd:     jj" << jj << "ks" << ks << "kd" << kd;
+DbgLv(0) << "sfd:     jj" << jj << "ks" << ks << "kd" << kd;
          synData[ kd ].scanData[ ks ] = edata->scanData[ jj ];
          synData[ kd ].scanData[ ks ].rvalues.fill( 0.0, kradp );
          synData[ kd ].scanData[ ks ].stddevs.fill( 0.0, kradp );
@@ -1175,7 +1510,7 @@ DbgLv(1) << "sfd:     jj" << jj << "ks" << ks << "kd" << kd;
       have_p1[ kd++ ] = true;
    }
 QDateTime time2=QDateTime::currentDateTime();
-
+ qDebug() << "Fitting...5"; 
    // Loop through triples in channel. Build B and compute X
 
    int narows     = klambda;
@@ -1330,7 +1665,9 @@ msg+=tr("\n time3-2: %1").arg(time2.msecsTo(time3))+" ms  (NNLS)";
 msg+=tr("\n time9-3: %1").arg(time3.msecsTo(time9))+" ms  (Write Synth.AUC)";
 msg+=tr("\n time9-0: %1").arg(time0.msecsTo(time9))+" ms  (All Fit Steps)";
 
-   QMessageBox::information( this, tr( "Species-Fit Files" ), msg );
+   if (!us_gmp_auto_mode )
+     QMessageBox::information( this, tr( "Species-Fit Files" ), msg );
+
    QApplication::restoreOverrideCursor();
    qApp->processEvents();
 
@@ -1361,7 +1698,7 @@ void US_MwlSpeciesFit::new_triple( const int ccx )
 
 int US_MwlSpeciesFit::triple_index( const int ccx )
 {
-   return ( ftndxs[ ccx ] + ltndxs[ ccx ] ) / 2;
+  return ( ftndxs[ ccx ] + ltndxs[ ccx ] ) / 2;
 }
 
 void US_MwlSpeciesFit::apply_noise( const int tripx,
