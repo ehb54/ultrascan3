@@ -24,7 +24,7 @@
 
 	<h3> Main Window Opening Screen:</h3>
 
-	<img src="images/grid_editor.png" alt="Grid Editor Main Window"/>
+	<p class="center"><img src="images/grid_editor.png" alt="Grid Editor Main Window"/></p>
 
 	<h3>Controls:</h3>
 

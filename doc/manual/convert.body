@@ -1,236 +1,150 @@
-[% INCLUDE header.us3
-   title = 'UltraScan III Convert Window'
+[% INCLUDE header.us3/
+title = 'UltraScan III Convert'
 %]
-    <h2> How to Convert Ultracentrifuge Raw Data to UltraScan III AUC Format </h2>
 
-    <p> With us_convert, you can import and convert experimental raw
-    data, acquired using an ultracentrifuge, into a set of files
-    written in the UltraScan III OpenAUC format. An AUC file is
-    a binary file that contains all the information from a single
-    dataset (cell/channel/wavelength combination, also called a
-    <i>triple</i>) imported and converted from the original raw data
-    format.  So if the raw experimental run contained data in three
-    channels us_convert would convert that into three binary AUC
-    files, which can then be uploaded to an UltraScan III database
-    and prepared for analysis. The AUC file format is described <a
-    href='http://wiki.aucsolutions.com/ultrascan3/wiki/Us3Formats'>here</a>.
-    </p>
+<h2> <i>UltraScan</i> Convert: </h2>
 
-    <p class='center'><img src="images/convert.png" 
-    alt="US_Convert Window"/></p>
+<p> Import and convert raw data into the UltraScan III OpenAUC format. </p>
 
-    <p> Using this window, you can convert raw data located on your local
-    disk, and then store the resulting AUC file(s) on your local disk
-    or in the current database. You can save the information on local
-    disk and then synchronize your data with the database later if you
-    prefer. You must be identified as the investigator (or data owner)
-    to delete or update a converted AUC file in the database.</p>
+<p class="center"><img src="images/us_convert/us_convert_01.png" alt="US Convert Main Window"/></p>
 
-    <p>The first step is to select either the Database or the Local Disk
-    radio button at the top of the window. This indicates your primary
-    data repository at the moment. Many buttons are affected by this---
-    loading and saving data, including support information like buffers and
-    projects, will look at these radio buttons to determine where to
-    perform their tasks. You may switch back and forth as you work,
-    for instance loading solutions from database and then saving them
-    to disk so that they will be available later when you are not connected
-    to the Internet.</p>
+<h3> STEP 1: Loading Data: </h3>
 
-    <h3>STEP 1: Loading Data</h3>
+<p> Data can be loaded into the window using one of the following: </p>
 
-    <p>To load data into the application, do one of the following:</p>
+<ul>
+    <li>
+        <b>Import Experimental Data:</b> Load raw data located on the local disk
 
-    <ul>
-      <li><b>Importing Experimental Data</b>. Click on the &quot;Import
-      Experimental Data&quot button; locate the raw data on your local disk,
-      and highlight the directory that contains the files. This procedure
-      is the same no matter which type of ultracentrifuge data was acquired.
-      Us_convert will convert the data and display it in the window.
-      The contents of the chosen directory determines whether the data type
-      is raw XLA/I/F ASCII data, MWL data, or simulated AUC data.</li>
+        <p class="center"><img src="images/us_convert/us_convert_02.png" alt="Import Experimental Data"/></p>
+    </li>
 
-      <li><b>Loading US3 Data</b>. You can load data that has already been
-      converted and stored in the UltraScan III OpenAUC format, either from disk
-      or database, by clicking on the &quot;Load US3 OpenAUC Run&quot; button.
-      This program will display the data so that you can edit it further or
-      synchronize data between disk and database.</li>
-    </ul>
+    <li>
+        <b>Load US3 OpenAUC Run:</b> Load data that has already been converted to
+        the UltraScanIII OpenAUC format. This allows for steps 3 and 5 to be
+        skipped as the information defined in these steps is populated based
+        upon the experiment submission.
 
-    <h3>STEP 2: Editing the run information</h3>
+        <p class="center"><img src="images/us_convert/us_convert_03.png" alt="Load US3 OpenAUC Run"/></p>
+    </li>
+</ul>
 
-    <p>Click on the &quot;Edit Run Information&quot; button to open a
-    <a href='convert-experiment.html'>Managing Experiment Information</a>
-    dialog.</p>
+<p> <b>SWL:</b> Single wavelength data is listed in the Cell/Channel/Wavelength (c/c/w) format. </p>
 
-    <p>You can view some of the details by clicking on the
-    &quot;Run Details&quot; button.</p>
+<p class="center"><img src="images/us_convert/us_convert_04.png" alt="Single Wavelength Data"/></p>
 
-    <h3>STEP 3: Verifying the RunID</h3>
+<p> <b>MWL:</b> Multi-wavelength data is listed in the Cell/Channel/Wavelength
+    range (# of wavelengths) format. The different wavelengths in the
+    dataset can be navigated through using the 'Plot λ' drop-down menu and
+    the 'Previous' and 'Next' buttons. </p>
 
-    <p>The runID must be a unique string of characters. Normally it is the 
-    directory name from which the raw data was loaded and converted, but if 
-    you re-import the data you will encounter a naming conflict in the database,
-    because another run by the same name already exists in the database.
-    To avoid this, go to the edit box labeled &quot;Run ID:&quot; and change
-    the name to a name that is unique in the database. You should make this
-    this name change first, since this edit box will be disabled in the next step.
-    </p>
+<p class="center"><img src="images/us_convert/us_convert_05.png" alt="Multi Wavelength Data"/></p>
 
-    <h3>STEP 4: Cell/Channel/Wavelength Triples</h3>
+<h3> STEP 2: Modify Run ID (Optional): </h3>
 
-    <p>The different cell/channel/wavelength (c/c/w) combinations will
-    appear in the listbox to the left. You may click on each of these to see
-    the data from that c/c/w. First, select the centerpiece that was used
-    from the drop-down list. Then create or select a solution for each c/c/w 
-    in the data. Click on the button labeled &quot;Manage Solution&quot;
-    to associate a solution for the currently selected c/c/w, by opening a 
-    <a href='us_solution.html'>Manage Solution Information</a> dialog.
-    You may wish to use the &quot;Apply to All&quot; button to copy solution
-    information from the currently-selected c/c/w to all the others.
-    You could then select exceptions and associate a different solution for
-    that c/c/w if you wish. Click on the &quot;Show Intensity Profile&quot;
-    button to see the intensity profile if you wish.</p>
+<p> If the run is being reimported, the Run ID must be made unique to avoid
+    deleting the existing imported data, associated edit profiles and models. </p>
 
-    <p>Note that for Multi-wavelength (MWL) data, the contents of the
-    left-side listbox is actually cell/channel entries, with wavelengths
-    represented as a range of wavelengths and with a count of wavelengths shown
-    in parentheses. The MWL special elements are detailed below.</p>
+<h3> STEP 3: Edit Run Information: </h3>
 
-    <h3>STEP 5: Handling Special Cases</h3>
+<p> Modify experiment information </p>
 
-    <p>Depending on the type of data being converted, additional processing 
-    may be required. In the following paragraphs we describe
-    how to process these types of data, followed by a snapshot.</p>
+<p class="center"><img src="images/us_convert/us_convert_06.png" alt="Edit Run Information"/></p>
 
-    <p><b>Radial Intensity Data (Beckman suffix &quot;RI&quot;).</b>
-    First, select the c/c/w that you wish to be defined as the
-    reference. Then click on the button labeled &quot;Define Reference
-    Scans&quot; and control-click the range you wish to use in the
-    plot. That is, hold the control button down on the keyboard while
-    clicking the left mouse button. Control-click on two points in the
-    radial range that corresponds to a clean, noise free region in which
-    the reference data can be found. This is typically the air region
-    above the meniscus, but it can also be a channel that contains air or
-    water.  The program will use the reference data to convert the radial
-    intensity data to pseudo absorbance data. Next, you can click on
-    &quot;Drop Current c/c/w&quot; for each of the reference channels you
-    don&rsquo;t need any more, or you can click on &quot;Undo Reference
-    Scans&quot; to undo the reference scan processing and do it again.</p>
+<p> In the 'Experiment Information' window, a label can be created for the run,
+    the '<b>Select Project</b>' button assigns the data to a pre-existing project,
+    the '<b>Experiment Type</b>' drop-down menu specifies the type of experiment
+    (Velocity, Equilibrium, Diffusion, Buoyancy, Calibration or Other),
+    the '<b>Instrument</b>' drop-down menu associates the data to a laboratory instrument,
+    and the '<b>Operator</b>' drop-down menu records the individual who conducted the experiment. </p>
 
-    <p class='center'><img src="images/convert-RIdata.png" 
-    alt="Converting RI data to pseudo-absorbance data"/></p>
+<p> <b>Select Lab/Rotor/Calibration:</b> Allows for the selection of the rotor
+    and associated rotor (stretch) calibration profile. </p>
 
-    <p><b>Multiple channels.</b> In cases where you used a 6 or 8
-    channel centerpiece, you will have multiple channels in a single
-    channel, which need to be separated into individual c/c/w triples.
-    You can define subset c/c/w combinations by clicking on the button
-    labeled &quot;Define Subsets&quot; and then control-click at the
-    radius that separates columns. Do not click at the the starting and
-    ending radius for the entire dataset---these are assumed. When you
-    are finished, click on the &quot;Process Subsets&quot; button and
-    the c/c/w combinations will be separated out. You will need to do
-    this for each of the original datasets in the data.</p>
+<p class="center"><img src="images/us_convert/us_convert_07.png" alt="Select Lab/Rotor/Calibration"/></p>
 
-    <p class='center'><img src="images/convert-subset.png" alt="Processing
-    Subsets in RA Data"/></p>
+<h3> STEP 4: Adjust Separation Tolerance (Optional): </h3>
 
-    <p><b>Wavelength Data.</b> In wavelength data the datasets are separated
-    by radius instead of wavelength, and so we have c/c/r combinations.
-    In order to separate the datasets into wavelength data, the tolerance
-    level between datasets has to be adjusted to a smaller number. Us_convert
-    chooses 0.1 cm as the separation tolerance for wavelength data, however
-    you might decide that you would like to use a different number. If so,
-    you can adjust the tolerance in the &quot;Dataset Separation Tolerance&quot;
-    box, above. As you change it the c/c/r combinations will adjust
-    dynamically.</p>
+<p> The separation tolerance (0-100) defines the threshold for distinguishing
+    closely-spaced features during analysis. A larger value merges similar features
+    to reduce noise sensitivity, while a smaller value improves resolution but increases
+    noise sensitivity. The default value of 5 is typically sufficient for most datasets. </p>
 
-    <p class='center'><img src="images/convert-tolerance.png" 
-    alt="Adjusting Tolerance Between Datasets"/></p>
+<h3> STEP 5: Modify Cell/Channel/Wavelength (c/c/w) Info </h3>
 
-    <p><b>MWL Data.</b> In multi-wavelength data, there are many triples.
-    But selection is generally done by chosing a cell/channel and then
-    adjusting the range of wavelengths within that channel.
-    Some of the additional GUI elements and their corresponding options for
-    MWL include the following.</p>
-    <ul>
-      <li><b>&lambda; Start:</b> For the currently selected cell/channel,
-      you may adjust the start of the wavelength range.</li>
+<p class="center"><img src="images/us_convert/us_convert_08.png" alt="Modify Cell/Channel/Wavelength Info"/></p>
 
-      <li><b>&lambda; End:</b> For the currently selected cell/channel,
-      you may adjust the end of the wavelength range.</li>
+<p> The 'Description' text box allows for notes to be assigned to each channel.
+    Next, the 'centrepiece' drop-down menu can be used to assign the
+    centrepiece to each channel. The 'Manage Solutions' button opens the
+    <a href="https://ultrascan3.aucsolutions.com/manual3/us_solution.html">'Solutions Management'</a>
+    window, where new or pre-existing solutions can be assigned to each
+    channel. 'Apply to All' assigns the centrepiece and solution information
+    of the currently channel to all channels. </p>
 
-      <li><b>Plot &lambda;:</b> You may select the wavelength for which to
-      plot AUC data. Alternatively, you may use the <b>previous</b> or
-      <b>next</b> button to change the wavelength by one in either direction.
-      </li>
+<p> <b>Dropping Data:</b> 'Drop Selected Data' removes all of the wavelengths for a
+    particular cell and channel. 'Drop All Channel 'A's removes all of the
+    listed A channels when an 'A' channel is selected in the list. 'Drop All
+    Channel 'B's removes all of the listed B channels when a 'B' channel is
+    selected in the list. 'Drop Selected Triples' opens the 'Triples
+    Selector for Deletes' window: </p>
 
-      <li>(left-arrow icon)<b>previous</b> Click on this button to select the
-      next lower wavelength in the cell/channel for display.</li>
+<p class="center"><img src="images/us_convert/us_convert_09.png" alt="Triples Selector for Deletes"/></p>
 
-      <li>(right-arrow icon)<b>next</b> Click on this button to select the
-      next higher wavelength in the cell/channel for display.</li>
+<p> Triples are highlighted on the 'Included Triples' list and added to the
+    'Excluded Triples' list using the 'Add ===>' button. Triples can be
+    removed from the 'Excluded Triples' list using the '<=== Remove'
+    button, and both lists can be set back to default using the 'Reset'
+    button. The excluded triples selection can be confirmed using the
+    'Accept' button. </p>
 
-    <p class='center'><img src="images/convert-mwl.png" 
-    alt="Convert MWL Data"/></p>
+<h3> STEP 6: Processing different data types and datasets </h3>
 
-    <h3>STEP 5: Dropping Triples</h3>
+<ul>
+    <li> <b>6a:</b> Radial intensity (RI) data </li>
+    <li> <b>6b:</b> 6- and 8- channel centrepieces </li>
+    <li> <b>6c:</b> Wavelength data </li>
+</ul>
 
-    <p>Click on the &quot;Drop Selected Triples&quot; button to open a
-    <a href='convert-seltrip.html'>Select Triples for Delete</a> dialog.
-    This may be used to exclude entire triples from further processing.
-    The action is particularly useful for MWL data, where some channels
-    may be really only used as reference scans, or some triples are in
-    wavelength ranges where there is insufficient light, excessive or too
-    little absorbance, or the channel may have leaked. After reference
-    scans are defined, all of the triples for these channels may be
-    dropped. Whether the data is MWL or not, intensity or not; it may be
-    useful to drop selected triples whose data is problematic. Dropping
-    useless triples is recommended since it will reduce the dataset size
-    and speed up downstream processing</p>
+<h4> 6a: Radial intensity (RI) data: </h4>
 
-    <h3>Other Notes</h3>
-    <h3>STEP 6: Saving Your Data</h3>
+<p> The 'Define Reference Scans' button displays the last scan for the
+    first wavelength of all channels: </p>
 
-    <p>Click on the &quot;Save&quot; button to save the data, either to
-    local disk or to the database. In some cases the save button will
-    be disabled. This means that you haven&rsquo;t completed all the
-    tasks above. Double-check each of those items and try again.
-    The &quot;Instructions (to do list)&quot; lists all actions still
-    in need of being done before the data can be saved. Review this list
-    to find out what actions still need to be performed. Only when this
-    list is empty will the &quot;Save&quot; button be enabled.</p>
+<p class="center"><img src="images/us_convert/us_convert_10.png" alt="Define Reference Scans"/></p>
 
-    <h3>Other Notes</h3>
+<p> CTRL-clicking the centre of the air-gap region above the meniscus
+    defines the reference scans and converts the intensity data for all
+    channels to pseudo-absorbance data: </p>
 
-    <p><b>Scan Controls.</b> The scan controls allow you to highlight
-    individual or groups of scans in a different color. This can be
-    useful for counting scans or identifying how many scans may be
-    baseline scans.  While you cannot exclude individual scans from
-    your data at this step, you can either remove selected scan files
-    before importing into UltraScan III (the order does not matter)
-    or you can mark selected scans or scan ranges for exclusion during
-    the editing process.</p>
+<p class="center"><img src="images/us_convert/us_convert_11.png" alt="Reference Scans Defined"/></p>
 
-    <p><b>Reset Button.</b> The reset button erases all data so that
-    you can start over. Use this button every time before you process
-    another dataset after having processed one already.</p>
+<h4> 6b: 6- and 8- channel centrepieces: </h4>
 
-    <p><b>Help Button.</b> Displays this help text.</p>
+<p> When a 6- or 8- channel centrepiece is used, there will be multiple channels
+    in a single measured channel that need to be separated into individual c/c/w triples.
+    The 'Define Subsets' button allows for these c/c/w triples to be defined by
+    CTRL-clicking at the radius that separates the channels. The starting
+    and ending radius for the entire dataset does not be specified as these
+    values are assumed. </p>
 
-    <p><b>Description Field.</b>You can change the description of this
-    run here. This is helpful especially for intensity data acquired on the XLA
-    where only one line is available for each cell, and both channels are described
-    by the same line in the Beckman data acquisition program. After importing both
-    channels from an intensity experiment into UltraScan III, you can assign 
-    a different description to each channel in this field.</p>
+<p class="center"><img src="images/us_convert/us_convert_12.png" alt="Define Subsets"/></p>
 
-    <p><b>Order of steps.</b> It is not generally necessary to perform
-    the steps in order. For instance, step two is where you connect your
-    newly-acquired data to your database profile, so if you are not
-    connected to the database you cannot complete this step. However,
-    sticking to the sequence in general may help you to remember to
-    do them all. For MWL data it is best to &quot;Define Reference
-    Scans&quot; early in the sequence, before any &quot;Drop Selected
-    Triples&quot; or other actions.</p>
+<p> The 'Process Subsets' button separates the c/c/w triples. </p>
+
+<p class="center"><img src="images/us_convert/us_convert_13.png" alt="Process Subsets"/></p>
+
+<h4> 6c: Wavelength Data: </h4>
+
+<p> Wavelength scan data is listed in the Cell/Channel/radial position (c/c/r) format. </p>
+
+<p class="center"><img src="images/us_convert/us_convert_14.png" alt="Wavelength Data"/></p>
+
+<h3> STEP 7: Saving the data </h3>
+
+<p> Finally, the data can be saved to the database or disk using the 'Save'
+    button. If the 'Save' button is unavailable, some of the tasks in the
+    'Instructions (to do list)' have not been completed. Completing these
+    tasks will activate the button to allow for saving. </p>
 
 [% INCLUDE footer.us3 %]

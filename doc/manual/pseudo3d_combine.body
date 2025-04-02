@@ -8,7 +8,7 @@
     form where the Z axis is simulated using colors in a color map. Data from
     different cells can be combined.</p>
 
-    <img src="images/pseudo3d_combine.png" alt="Pseudo-3D Combine Main Window"/>
+    <p class="center"><img src="images/pseudo3d_combine.png" alt="Pseudo-3D Combine Main Window"/></p>
 
     <ul>
             <li>

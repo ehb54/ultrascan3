@@ -35,3 +35,39 @@ a:active  { color : red;     }
 
 img       { border: none; }
 
+/* Qt Assistant specific overrides */
+p {
+  margin-top: 0.3em !important;
+  margin-bottom: 0.3em !important;
+}
+
+/* table styling with broad compatibility */
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1em 0;
+  font-family: "trebuchet ms", arial, helvetica, sans-serif;
+  border: 1px solid #ddd;
+}
+
+th, td {
+  padding: 0.75em;
+  text-align: left;
+  border: 1px solid #ddd;
+}
+
+th {
+  background-color: #f2f2f2;
+  font-weight: bold;
+  border-bottom: 2px solid #ccc;
+}
+
+/* Alternate styling for even rows (with class fallback for older browsers) */
+tr:nth-child(even), tr.even {
+  background-color: #f8f8f8;
+}
+
+/* Simple hover that works almost everywhere */
+tr:hover {
+  background-color: #f1f1f1;
+}

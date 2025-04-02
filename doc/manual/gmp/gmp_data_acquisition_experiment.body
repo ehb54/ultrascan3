@@ -1,0 +1,407 @@
+[% INCLUDE header.us3/
+title = 'UltraScan III GMP Data Acquisition Experiment'
+%]
+
+<h2><i>UltraScan</i> Define Another Experiment:</h2>
+
+<p>This module allows for the creation and submission of protocols and runs for experiments.
+    Sections can be accessed in any order using the navigation bar at the top of the window or
+    sequentially using the 'Previous Panel' and 'Next Panel' buttons at the bottom of the window.</p>
+
+<!-- Main Table of Contents -->
+<div>
+    <p><b>Experiment Sections:</b></p>
+    <ol>
+        <li><a href="#general">General</a></li>
+        <li><a href="#labrotor">Lab/Rotor</a></li>
+        <li><a href="#speeds">Speeds</a></li>
+        <li><a href="#cells">Cells</a></li>
+        <li><a href="#solutions">Solutions</a></li>
+        <li><a href="#optics">Optics</a></li>
+        <li><a href="#ranges">Ranges</a></li>
+        <li><a href="#aprofile">AProfile</a></li>
+        <li><a href="#submit">Submit</a></li>
+    </ol>
+</div>
+
+<!-- Section 1 -->
+<h3 id="general"><b>1. General</b></h3>
+<p>Assign a Run Name, Label, and Protocol Name, as well as the run temperature and temperature-equilibration delay length.</p>
+
+<p class="center"><img src="images/gmp/data_acquisition/experiment/gmp_data_acquisition_experiment_01.png" alt="General Panel"/></p>
+
+<div>
+    <p><b>In this section:</b></p>
+    <ol>
+        <li><a href="#select-investigator">1.1. Select Investigator</a></li>
+        <li><a href="#load-protocol">1.2. Load Protocol</a></li>
+        <li><a href="#select-project">1.3. Select Project</a></li>
+    </ol>
+</div>
+
+<h4 id="select-investigator"><b>1.1. Select Investigator</b></h4>
+
+<p class="center"><img src="images/gmp/data_acquisition/experiment/gmp_data_acquisition_experiment_02.png" alt="Select Investigator"/></p>
+
+<h4 id="load-protocol"><b>1.2. Load Protocol</b></h4>
+<p>Load in the parameters from a pre-existing protocol in the database</p>
+
+<p class="center"><img src="images/gmp/data_acquisition/experiment/gmp_data_acquisition_experiment_03.png" alt="Load Protocol"/></p>
+
+<h4 id="select-project"><b>1.3. Select Project</b></h4>
+<p>Assign the run to a user-created Project. Each section requires information on the goals, molecules being analyzed, and
+    experimental design.</p>
+
+<div>
+    <p><b>Project sections:</b></p>
+    <ol>
+        <li><a href="#project-general">1.3.1. Project General</a></li>
+        <li><a href="#project-goals">1.3.2. Goals</a></li>
+        <li><a href="#project-molecules">1.3.3. Molecules</a></li>
+        <li><a href="#project-purity">1.3.4. Purity</a></li>
+        <li><a href="#project-expense">1.3.5. Expense</a></li>
+        <li><a href="#project-buffer">1.3.6. Buffer Components</a></li>
+        <li><a href="#project-sample">1.3.7. Sample Handling</a></li>
+        <li><a href="#project-auc">1.3.8. AUC Questions</a></li>
+        <li><a href="#project-experiment">1.3.9. Experiment Design</a></li>
+        <li><a href="#project-notes">1.3.10. Notes</a></li>
+    </ol>
+</div>
+
+<h4 id="project-general"><b>1.3.1. Project General</b></h4>
+<p>Pre-exisiting projects can be selected from the database by highlighting and clicking the 'Accept' button. 'New Project'
+    creates a new project to be named in the 'Project Name' box. The time of last update and a unique global identifier are also
+    listed in the window.</p>
+
+<p class="center"><img src="images/gmp/data_acquisition/experiment/gmp_data_acquisition_experiment_04.png" alt="Project General"/></p>
+
+<h4 id="project-goals"><b>1.3.2. Goals</b></h4>
+
+<p class="center"><img src="images/gmp/data_acquisition/experiment/gmp_data_acquisition_experiment_05.png" alt="Project Goals"/></p>
+
+<h4 id="project-molecules"><b>1.3.3. Molecules</b></h4>
+
+<p class="center"><img src="images/gmp/data_acquisition/experiment/gmp_data_acquisition_experiment_06.png" alt="Project Molecules"/></p>
+
+<h4 id="project-purity"><b>1.3.4. Purity</b></h4>
+
+<p class="center"><img src="images/gmp/data_acquisition/experiment/gmp_data_acquisition_experiment_07.png" alt="Project Purity"/></p>
+
+<h4 id="project-expense"><b>1.3.5. Expense</b></h4>
+
+<p class="center"><img src="images/gmp/data_acquisition/experiment/gmp_data_acquisition_experiment_08.png" alt="Project Expense"/></p>
+
+<h4 id="project-buffer"><b>1.3.6. Buffer Components</b></h4>
+
+<p class="center"><img src="images/gmp/data_acquisition/experiment/gmp_data_acquisition_experiment_09.png" alt="Project Buffer Components"/></p>
+
+<h4 id="project-sample"><b>1.3.7. Sample Handling</b></h4>
+
+<p class="center"><img src="images/gmp/data_acquisition/experiment/gmp_data_acquisition_experiment_10.png" alt="Project Sample Handling"/></p>
+
+<h4 id="project-auc"><b>1.3.8. AUC Questions</b></h4>
+
+<p class="center"><img src="images/gmp/data_acquisition/experiment/gmp_data_acquisition_experiment_11.png" alt="Project AUC Questions"/></p>
+
+<h4 id="project-experiment"><b>1.3.9. Experiment Design</b></h4>
+
+<p class="center"><img src="images/gmp/data_acquisition/experiment/gmp_data_acquisition_experiment_12.png" alt="Project Experiment Design"/></p>
+
+<h4 id="project-notes"><b>1.3.10. Notes</b></h4>
+
+<p class="center"><img src="images/gmp/data_acquisition/experiment/gmp_data_acquisition_experiment_13.png" alt="Project Notes"/></p>
+
+<!-- Section 2 -->
+<h3 id="labrotor"><b>2. Lab/Rotor</b></h3>
+<p>Selection of the hardware and experiment type, along with the assignment of roles. The user selects
+    the laboratory, rotor, rotor calibration profile, instrument, and experiment type using the drop-down menus.
+    The roles of Operator, Reviewer, Approver, and Subject Matter Expert (SME) can then be assigned from the drop-down menus.</p>
+
+<p class="center"><img src="images/gmp/data_acquisition/experiment/gmp_data_acquisition_experiment_14.png" alt="Lab/Rotor"/></p>
+
+<div>
+    <p><b>In this section:</b></p>
+    <ol>
+        <li><a href="#advanced-lab">2.1. Advanced Lab/Rotor/Calibration</a></li>
+    </ol>
+</div>
+
+<h4 id="advanced-lab"><b>2.1. Advanced Lab/Rotor/Calibration</b></h4>
+<p>Management of rotors and associated rotor (stretch) calibration profiles.</p>
+
+<p class="center"><img src="images/gmp/data_acquisition/experiment/gmp_data_acquisition_experiment_15.png" alt="Advanced Lab/Rotor/Calibration"/></p>
+
+<p>The user can manage data from either the 'Database' or 'Local Disk' for the selected Laboratory.</p>
+
+<p>'Add new Rotor' prompts the user for basic information about the rotor, the serial number, and a name.</p>
+
+<p class="center"><img src="images/gmp/data_acquisition/experiment/gmp_data_acquisition_experiment_16.png" alt="Add New Rotor"/></p>
+
+<p>'Delete Rotor' erases the rotor from the selected Laboratory.</p>
+
+<p>Rotor calibration profiles, which define the rotor stretch as a function of speed can be generated and
+    associated with a rotor using the 'Rotor Calibration' utility in UltraScan. These profiles are managed through
+    the 'Rotor Management' window. 'Delete Selected Calibration' removes the selected rotor calibration profile.
+    'View Calibration Report' opens a file that lists the run used to generate the profile, the measured rotor
+    stretch values, and the fitted equation that defines the stretching values as a function of speed.</p>
+
+<p class="center"><img src="images/gmp/data_acquisition/experiment/gmp_data_acquisition_experiment_17.png" alt="Rotor Calibration Report"/></p>
+
+<!-- Section 3 -->
+<h3 id="speeds"><b>3. Speeds</b></h3>
+<p>Set run parameters including rotor speed, experiment duration, and scanning in interval for each optical system.</p>
+
+<p class="center"><img src="images/gmp/data_acquisition/experiment/gmp_data_acquisition_experiment_18.png" alt="Speeds"/></p>
+
+<p>Under '3: Specify speed steps', the number of speed profiles in the GMP module is restricted to 1.
+    The 'Rotor speed' in revolutions per minute (rpm) can be set by typing the numerical value, or by using the arrows.
+    The 'Acceleration' in revolutions per minute per second (rpm/sec) can also be set. The 'Active Scanning Time'
+    can be set in terms of days, hours and minutes, while the 'Stage Delay' can be set in terms of hours and minutes.
+    The sum of these values gives the 'Total Time (without equilibration)'. Under 'Scan Number Estimator', the
+    'Sum of all wavelengths (from all cells) to be scanned' gives the number of distinct wavelengths to be scanned.
+    The 'Total number of scans per wavelength per cell' is the number of scans for a single wavelength that will be
+    collected for a cell (which produces data for channels A and B).</p>
+
+<!-- Section 4 -->
+<h3 id="cells"><b>4. Cells</b></h3>
+<p>Assignment of centrepiece or counterbalance type, as well as window type for each cell.</p>
+
+<p class="center"><img src="images/gmp/data_acquisition/experiment/gmp_data_acquisition_experiment_19.png" alt="Cells"/></p>
+
+<p>Correct centerpiece selection is important as the cell bottom position defines the boundary conditions used
+    when fitting the data. Selecting 'empty counterbalance', 'Beckman counterbalance', 'Titanium counterbalance',
+    and 'Fluorescence 5-channel counterbalance' will prevent the instrument from collecting scans for the specified holes.
+    The 'Windows' selection (options are 'quartz' or 'sapphire') does not affect the parameters of the experiment.</p>
+
+<!-- Section 5 -->
+<h3 id="solutions"><b>5. Solutions</b></h3>
+<p>Define solutions comprised of analytes and buffers that will be measured in the experiment.</p>
+
+<p class="center"><img src="images/gmp/data_acquisition/experiment/gmp_data_acquisition_experiment_20.png" alt="Solutions"/></p>
+
+<p>Pre-defined solutions can be assigned to each channel. 'Add to comments' can be used to add notes
+    pertaining to the solution in each channel.</p>
+
+<div>
+    <p><b>In this section:</b></p>
+    <ol>
+        <li><a href="#manage-solutions">5.1. Manage Solutions</a></li>
+        <li><a href="#solution-details">5.2. Solution Details</a></li>
+    </ol>
+</div>
+
+<h4 id="manage-solutions"><b>5.1. Manage Solutions</b></h4>
+<p>Creation and management of solutions. Existing solution properties can be viewed in the 'Select Solution'
+    window by selecting the solution.</p>
+
+<p class="center"><img src="images/gmp/data_acquisition/experiment/gmp_data_acquisition_experiment_21.png" alt="Manage Solutions"/></p>
+
+<p>After selecting a solution, certain properties can be modified in the 'Edit Existing Solution' window.
+    The editable properties are 'Storage Temperature', 'Solutions Comments', and the settings within the 'Manage Spectrum' window.</p>
+
+<p class="center"><img src="images/gmp/data_acquisition/experiment/gmp_data_acquisition_experiment_22.png" alt="Edit Existing Solution"/></p>
+<p class="center"><img src="images/gmp/data_acquisition/experiment/gmp_data_acquisition_experiment_23.png" alt="Manage Spectrum"/></p>
+
+<p>A new solution can be added in the 'Enter New Solution' window. A 'Solution Name' and 'Solution Notes' can be added.
+    'Accept' will save the solution when all contents have been added.</p>
+
+<p class="center"><img src="images/gmp/data_acquisition/experiment/gmp_data_acquisition_experiment_24.png" alt="Enter New Solution"/></p>
+
+<p>'Add Analyte' opens the 'Analyte Management' window, where existing analytes can be selected, edited, or new analytes added.
+    'Accept' adds the selected analyte(s) to the solution. 'Remove analyte' removes the selected analyte(s) from the
+    'Current solution contents' pane.</p>
+
+<p class="center"><img src="images/gmp/data_acquisition/experiment/gmp_data_acquisition_experiment_25.png" alt="Analyte Management"/></p>
+
+<p>'Select Buffer' opens the 'Buffer Management' window, where existing buffers can be selected, edited, or new buffers added.
+    'Accept' assigns the selected buffer to the solution.</p>
+
+<p class="center"><img src="images/gmp/data_acquisition/experiment/gmp_data_acquisition_experiment_26.png" alt="Buffer Management"/></p>
+
+<p>The 'Settings' windows allows for investigator to be changed with the 'Select Investigator' window,
+    and the data source ('Database' or 'Local Disk') to be modified.</p>
+
+<p class="center"><img src="images/gmp/data_acquisition/experiment/gmp_data_acquisition_experiment_27.png" alt="Settings"/></p>
+
+<h4 id="solution-details"><b>5.2. Solution Details</b></h4>
+<p>Information on the analytes and buffer of the assigned solutions</p>
+
+<p class="center"><img src="images/gmp/data_acquisition/experiment/gmp_data_acquisition_experiment_28.png" alt="Solution Details"/></p>
+
+<!-- Section 6 -->
+<h3 id="optics"><b>6. Optics</b></h3>
+<p>Define which optical system(s) will be used to scan each cell.</p>
+
+<p class="center"><img src="images/gmp/data_acquisition/experiment/gmp_data_acquisition_experiment_29.png" alt="Optics"/></p>
+
+<p>The 'Optical System Scan Type' options are 'UV/visible' or 'Rayleigh Interference'. Note that the instrument
+    collects scans on a cell-by-cell basis, so the selections for a cell apply to both of its channels.</p>
+
+<!-- Section 7 -->
+<h3 id="ranges"><b>7. Ranges</b></h3>
+<p>Define the wavelength ranges for each cell to be scanned using UV/visible optics.</p>
+
+<p class="center"><img src="images/gmp/data_acquisition/experiment/gmp_data_acquisition_experiment_30.png" alt="Ranges"/></p>
+
+<p>When the wavelength ranges are defined for each cell, the 'Scan interval' for the UV/visible and Rayleigh Interference
+    optics appear highlighted in red if updated. This also changes the 'Number of scans per Triple (UV/vis)' and the
+    'Number of Scans per Cell (Interference)'. These changes are then reflected in the '3: Speeds' window.</p>
+
+<div>
+    <p><b>In this section:</b></p>
+    <ol>
+        <li><a href="#view-ranges">7.1. View Ranges</a></li>
+        <li><a href="#select-wavelengths">7.2. Select Wavelengths</a></li>
+    </ol>
+</div>
+
+<h4 id="view-ranges"><b>7.1. View Ranges</b></h4>
+<p>View the wavelength and radius ranges for each channel in a file</p>
+
+<p class="center"><img src="images/gmp/data_acquisition/experiment/gmp_data_acquisition_experiment_31.png" alt="View Ranges"/></p>
+
+<h4 id="select-wavelengths"><b>7.2. Select Wavelengths</b></h4>
+<p>Assign wavelengths to be scanned on a cell-by-cell basis</p>
+
+<p class="center"><img src="images/gmp/data_acquisition/experiment/gmp_data_acquisition_experiment_32.png" alt="Select Wavelengths"/></p>
+
+<p>'Use Selector' allows for wavelengths at a specified increment across a defined range to be presented for selection</p>
+
+<p class="center"><img src="images/gmp/data_acquisition/experiment/gmp_data_acquisition_experiment_33.png" alt="Use Selector 1"/></p>
+<p class="center"><img src="images/gmp/data_acquisition/experiment/gmp_data_acquisition_experiment_34.png" alt="Use Selector 2"/></p>
+
+<p>'Manually' uses the syntax listed below to define the wavelengths to be used</p>
+
+<p class="center"><img src="images/gmp/data_acquisition/experiment/gmp_data_acquisition_experiment_35.png" alt="Manually"/></p>
+
+<!-- Section 8 -->
+<h3 id="aprofile"><b>8. AProfile (Analysis Profile)</b></h3>
+<p>Define edit profiles, analysis parameters and report settings for the experiment.</p>
+
+<div>
+    <p><b>In this section:</b></p>
+    <ol>
+        <li><a href="#aprofile-general">8.1. General</a></li>
+        <li><a href="#aprofile-2dsa">8.2. 2DSA</a></li>
+        <li><a href="#aprofile-pcsa">8.3. PCSA</a></li>
+    </ol>
+</div>
+
+<h4 id="aprofile-general"><b>8.1. General</b></h4>
+
+<p class="center"><img src="images/gmp/data_acquisition/experiment/gmp_data_acquisition_experiment_36.png" alt="AProfile General"/></p>
+
+<p>Define numerical values for 'Loading Ratio', the '± %Tolerance', 'Loading Volume (μL)', the '± %Tolerance',
+    and 'Data End (cm)'. The user can then select checkboxes to specify whether the analysis should be 'Run',
+    and included in the 'Run Report'.</p>
+
+<p class="center"><img src="images/gmp/data_acquisition/experiment/gmp_data_acquisition_experiment_37.png" alt="Report General Settings"/></p>
+
+<p>The 'Report General Settings' windows allow the user to select/deselect which of the protocol settings
+    (Sections 1-8) will be presented in the report. The {down arrow} button can be used to collapse or expand each subsection.</p>
+
+<p class="center"><img src="images/gmp/data_acquisition/experiment/gmp_data_acquisition_experiment_38.png" alt="Scan Exclusion Editor"/></p>
+
+<p>The 'Scan Exclusion Editor' allows the user to numerically define the number scans to be removed from the beginning
+    and end of each channel, either by typing the value or using the arrows. The 'Apply to All' button applies the values
+    for the first channel to all channels.</p>
+
+<p class="center"><img src="images/gmp/data_acquisition/experiment/gmp_data_acquisition_experiment_39.png" alt="Report"/></p>
+
+<p>The 'Report' button summons the channel-specific report settings window. The user defines the 'Total Concentration',
+    the '± %Tolerance', 'RMSD (upper limit)', the '± %Tolerance', and the wavelength to extract these metrics from.
+    The user then lists the expected 'Experiment Duration', the '± %Tolerance', and 'Minimum Intensity' at the selected
+    wavelength from the xenon flash lamp that is deemed acceptable. In the 'Report Profile (Mask) Settings' the user can
+    select the following: 'Total Concentration', 'Minimum Intensity', 'RMSD (upper limit)', 'Integration Results',
+    'Experiment Duration' and relevant plots (as well as the pseudo-3D plots for each parameter and analysis type)
+    they wish to be included in the report.</p>
+
+<p class="center"><img src="images/gmp/data_acquisition/experiment/gmp_data_acquisition_experiment_40.png" alt="Global Parameters"/></p>
+
+<p>'Global Parameters for Combined Plots' allows the user to define the plot minimum, plot maximum and
+    Gaussian sigma for each plot type.</p>
+
+<h4 id="aprofile-2dsa"><b>8.2. 2DSA</b></h4>
+
+<p class="center"><img src="images/gmp/data_acquisition/experiment/gmp_data_acquisition_experiment_41.png" alt="2DSA"/></p>
+
+<p>The user can define the 2-dimensional spectrum analysis (2DSA) controls for each channel. The grid size is defined
+    by the minimum and maximum values for the sedimentation coefficient (<i>s</i>) and frictional ratio (<i>f/f0</i>),
+    while the grid resolution is defined by the number of points for each of the parameters. A 2DSA 'Custom Grid' (CG)
+    can also be used if the user requires higher resolution in certain regions of the data, and only needs lower resolution
+    in other regions. The user can also select to vary the partial specific volume or 'Vbar' parameter and hold the frictional
+    ratio constant at a specified value. The 'Apply to All' button can be used to apply these settings to all of the channels.</p>
+
+<p>The '2DSA Job Flow' panel allows the user to control which analysis steps are performed, including:</p>
+
+<ul>
+    <li>2DSA</li>
+    <li>2DSA with meniscus fit (FM), with a user-defined number of grid points, range (cm), and number of refinement iterations.
+        The user can also choose to fit <b>only the bottom of the channel</b> or <b>both the meniscus and the bottom.</b></li>
+    <li>FITMEN meniscus processing, with the option to 'Auto-pick' the meniscus position</li>
+    <li>2DSA with iterative refinement (IT), with a user-defined number of iterations</li>
+    <li>2DSA with Monte Carlo iterations (MC), with a user-defined number of Monte Carlo iterations.</li>
+</ul>
+
+<h4 id="aprofile-pcsa"><b>8.3. PCSA</b></h4>
+
+<p class="center"><img src="images/gmp/data_acquisition/experiment/gmp_data_acquisition_experiment_42.png" alt="PCSA"/></p>
+
+<p>The user can select the option to not include the parametrically-constrained spectrum analysis (PCSA) in the submitted jobs.
+    If the box is left unchecked, the user can define the PCSA controls for each channel.</p>
+
+<p>The desired curve type is selected from the drop-down menu, and the user defines parameters for the x, y, and z axes.</p>
+
+<ul>
+    <li>The x and y axes are defined by minimum and maximum values</li>
+    <li>The z axis is assigned a value and a variation count</li>
+    <li>Numerical values are then assigned for the grid fit iterations and curve resolution points</li>
+</ul>
+
+<p>Optional settings include:</p>
+
+<ul>
+    <li>Time- and radially-invariant noise fitting</li>
+    <li>Tikhonov regularization, with either an auto-picked or manually-selected alpha</li>
+    <li>Number of Monte Carlo iterations.</li>
+</ul>
+
+<p>The 'Apply to All' button can be used to apply these parameters and settings to all of the channels.</p>
+
+<!-- Section 9 -->
+<h3 id="submit"><b>9. Submit</b></h3>
+<p>Save a protocol to the database or submit a run to an instrument.</p>
+
+<p class="center"><img src="images/gmp/data_acquisition/experiment/gmp_data_acquisition_experiment_43.png" alt="Submit"/></p>
+
+<div>
+    <p><b>In this section:</b></p>
+    <ol>
+        <li><a href="#view-experiment">9.1. View Experiment Details</a></li>
+        <li><a href="#submit-run">9.2. Submit the Run/Save the Protocol</a></li>
+    </ol>
+</div>
+
+<h4 id="view-experiment"><b>9.1. View Experiment Details</b></h4>
+<p>Summary of the information defined in sections 1-8</p>
+
+<p class="center"><img src="images/gmp/data_acquisition/experiment/gmp_data_acquisition_experiment_44.png" alt="View Experiment Details"/></p>
+
+<h4 id="submit-run"><b>9.2. Submit the Run/Save the Protocol</b></h4>
+<p>If the 'Run Name' field in 1: General is left empty, the submission will be saved as a protocol instead of a run.
+    All sections (1-8) must be completed before the button in the top-right corner becomes active and allows for run
+    submission or protocol saving. Submission prompts the following window:</p>
+
+<p class="center"><img src="images/gmp/data_acquisition/experiment/gmp_data_acquisition_experiment_45.png" alt="Submission Confirmation"/></p>
+
+<p>The 'OK' button prompts the 'GMP Run Submitter Form', allowing the user to add a comment and prompting them
+    for their master password for authentication.</p>
+
+<p class="center"><img src="images/gmp/data_acquisition/experiment/gmp_data_acquisition_experiment_46.png" alt="GMP Run Submitter Form"/></p>
+
+<p class="center"><img src="images/gmp/data_acquisition/experiment/gmp_data_acquisition_experiment_47.png" alt="Live Update"/></p>
+
+<p>The 'OK' button brings up the 'Live Update' window which instructs the user to start the run from the instrument panel.
+    Alternatively, the user can press 'Return to Managing Optima Runs?' to return to the 'Manage Optima Runs' window.</p>
+
+[% INCLUDE footer.us3 %]

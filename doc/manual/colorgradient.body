@@ -16,7 +16,7 @@
     <table>
       <tr>
         <td>
-          <img src="images/colorgrad.png" alt="Color Gradient Window"/>
+          <p class="center"><img src="images/colorgrad.png" alt="Color Gradient Window"/></p>
         </td>
         <td>
           <ul>

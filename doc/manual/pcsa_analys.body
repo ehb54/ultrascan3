@@ -95,7 +95,7 @@
     the total models, since start and end points always have the same f/f0
     value.</p>
 
-    <img src="images/pcsa_analys-line.png" alt="PCSA Analysis Control"/>
+    <p class="center"><img src="images/pcsa_analys-line.png" alt="PCSA Analysis Control"/></p>
 
     <p> If one of the sigmoid types is specified, the specified number of
     variations is in both the par1 and par2 values of the sigmoid function <br/>
@@ -104,7 +104,7 @@
     / sqrt( 2.0 * par1 ) ) + 0.5
     . </p>
 
-    <img src="images/pcsa_analys-sigm.png" alt="PCSA Analysis Control"/>
+    <p class="center"><img src="images/pcsa_analys-sigm.png" alt="PCSA Analysis Control"/></p>
 
     <h3> Functions:</h3>
 

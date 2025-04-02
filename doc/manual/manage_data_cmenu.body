@@ -20,7 +20,7 @@
     regarded as the most reliable. A "details" display can help in making
     that determination.</p>
 
-    <img src="images/manage_data_cmenu-1.png" alt="Context Menu Samp-1"/>
+    <p class="center"><img src="images/manage_data_cmenu-1.png" alt="Context Menu Samp-1"/></p>
 
     <h3> Context menu processes:</h3>
 
@@ -58,17 +58,17 @@
     the context menu for a local-only record, only "upload to DB",
     "remove from local", and "show details" are enabled.</p>
 
-    <img src="images/manage_data_cmenu-2.png" alt="Context Menu Samp-2"/>
+    <p class="center"><img src="images/manage_data_cmenu-2.png" alt="Context Menu Samp-2"/></p>
 
     <p> The details window for a data record that is already in sync will show
     that the DB and local copies have the same "Content Checks" (MD5 hash
     and record size values).</p>
 
-    <img src="images/manage_data_sync.png" alt="Details - Sync"/>
+    <p class="center"><img src="images/manage_data_sync.png" alt="Details - Sync"/></p>
 
     <p> By contrast, the details window for a data record that exists on both
     media but is marked "Conflict" shows non-matching Content Checks.</p>
 
-    <img src="images/manage_data_conf.png" alt="Details - Conflict"/>
+    <p class="center"><img src="images/manage_data_conf.png" alt="Details - Conflict"/></p>
 
 [% INCLUDE footer.us3 %]

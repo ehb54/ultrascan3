@@ -1,0 +1,87 @@
+[% INCLUDE header.us3/
+title = 'UltraScan III GMP Data Acquisition Routine'
+%]
+
+<h2> <i>UltraScan</i> GMP Data Acquisition Routine: </h2>
+
+<p> Allows for the submission, viewing and management of ongoing AUC experiments. </p>
+
+<h3> Manage Optima Runs: </h3>
+<p> Table listing experiments currently in the submitted, running or completed stages. </p>
+
+<p class="center"><img style="width:600px;" src="images/gmp/data_acquisition/gmp_data_acquisition_01.png" alt="Manage Optima Runs"/></p>
+
+<h3> Left Menu Bar: </h3>
+<ul>
+    <li>
+        <b>Help:</b> Opens this UltraScanIII GMP help manual
+    </li>
+    <li>
+        <b>Exit:</b> Closes the UltraScanIII GMP module
+    </li>
+</ul>
+
+<h3> Run Table: </h3>
+<ul>
+    <li>
+        <b>ID:</b> Sequential run number in the Optima's database
+    </li>
+    <li>
+        <b>Run Name:</b> User-assigned name for the run
+    </li>
+    <li>
+        <b>Optima Name:</b> System name of the Optima the run was submitted to
+    </li>
+    <li>
+        <b>Created:</b> Date and time the run was submitted to the database of the form yyyy-mm-dd hh:mm UTC
+    </li>
+    <li>
+        <b>Optima Run Status:</b>
+        <ul>
+            <li>Not Started: Protocol has been submitted to the Optima and appears in the Method Scans menu</li>
+            <li>Running: The submitted run has been used to start an experiment on the Optima, and is currently active on the instrument</li>
+            <li>Completed: The experiment on the Optima is complete</li>
+        </ul>
+    </li>
+    <li>
+        <b>Stage:</b>
+        <ul>
+            <li>Live Update: Experiment data collection is in progress</li>
+            <li>LIMS Import: Experiment data collection is complete and the data can be imported into the database</li>
+            <li>Edit Data: Data has been imported into the database and can be edited</li>
+            <li>Analysis: Data has been edited, and is being analyzed according to the parameters defined in the GMP run submission</li>
+        </ul>
+    </li>
+    <li>
+        <b>GMP:</b> Whether the run was conducted in the GMP module (displays 'Yes') or the R&D module (displays 'No')
+    </li>
+    <li>
+        <b>Failed:</b> Whether the run was designated as failed (displays 'Yes') or not (displays 'No') using the <b>'Mark/Unmark Run as Failed'</b> button
+    </li>
+</ul>
+
+<h3> Bottom Buttons: </h3>
+<ul>
+    <li>
+        <b><a href="gmp_data_acquisition_experiment.html">Define Another Experiment</a>:</b>
+    </li>
+    <li>
+        <b>Delete Record:</b>
+        <p class="center"><img src="images/gmp/data_acquisition/gmp_data_acquisition_02.png" alt="Delete Record"/></p>
+            Removes the run from Manage Optima Runs window, meaning it can no longer be monitored from the <b>Data Acquisition Routine</b>.
+    </li>
+    <li>
+        <b>Select Optima Run to Follow:</b>
+        <p>Reattach to a run at the listed 'Stage'</p>
+        <ul>
+            <li>Options: Live Update, LIMS Import, Edit Data, and Analysis</li>
+        </ul>
+    </li>
+    <li>
+        <b>Mark/Unmark Run as Failed:</b>
+        <p class="center"><img src="images/gmp/data_acquisition/gmp_data_acquisition_03.png" alt="Mark Run as Failed"/></p>
+        Marks the run as 'Failed', which sets the 'Stage' back to LIMS Import for re-attachment from the 'Manage Optima Runs' window.
+    </li>
+</ul>
+
+[% INCLUDE footer.us3 %]

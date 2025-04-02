@@ -51,7 +51,7 @@
           
     <h3> Main Window:</h3>
 
-    <img src="images/astfem_sim.png" alt="Astfem_Sim Main Window"/>
+    <p class="center"><img src="images/astfem_sim.png" alt="Astfem_Sim Main Window"/></p>
 
     <h3> Dialog Items:</h3>
 

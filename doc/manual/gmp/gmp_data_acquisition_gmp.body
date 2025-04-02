@@ -1,0 +1,57 @@
+[% INCLUDE header.us3/
+title = 'UltraScan III GMP Data Acquisition'
+%]
+
+<h2> <i>UltraScan</i> GMP Data Acquisition: </h2>
+
+<p> Acquire, import, edit, and analyze data from the Optima AUC. </p>
+
+<p> After a run is initiated from the instrument, the user is presented with the 'Data Acquisition Window'. Which displays the current temperature, vacuum level, as well as the elapsed, running, and remaining time for the experiment. </p>
+
+<p class="center"><img src="images/gmp/data_acquisition/gmp/gmp_data_acquisition_gmp_01.png" alt="Data Acquisition Window"/></p>
+
+<p> Once the machine reaches the desired rotor speed and begins acquiring scans, <b>Optical System</b> allows for the user to select the intensity/interference data. Each cell/channel/wavelength triple can be viewed using the <b>Cell/Channel</b> and <b>Wavelength</b> drop down menus, which can be cycled through using the <b>Next</b> and <b>Previous</b> buttons. <b>Skip Stage</b> allows for the current stage to be skipped. While <b>STOP</b> allows for the run to be stopped, and prompts the <b>GMP e-signature window</b> for user authentication. </p>
+
+<p class="center"><img src="images/gmp/data_acquisition/gmp/gmp_data_acquisition_gmp_02.png" alt="Optical System Selection"/></p>
+
+<p> Once all of the scans defined in the experiment have been collected, the <b>Remaining Time</b> will be 00:00:00. </p>
+<p class="center"><img src="images/gmp/data_acquisition/gmp/gmp_data_acquisition_gmp_03.png" alt="Completed Scans"/></p>
+
+<p> Next, the program moves to the 'IMPORT' stage, which displays the last scan of each triple from the intensity data. The user is prompted with the <b>Reference Scans: Automated Processing</b> message: </p>
+
+<p class="center"><img src="images/gmp/data_acquisition/gmp/gmp_data_acquisition_gmp_04.png" alt="Import Stage"/></p>
+<p class="center"><img src="images/gmp/data_acquisition/gmp/gmp_data_acquisition_gmp_05.png" alt="Reference Scans Automated Processing"/></p>
+
+<p> Clicking <b>OK</b> displays the converted absorbance data following the automated reference scan processing. If the user is not satisfied with the automated reference scans processing, the <b>Undo Reference Scans</b> button allows for them to be defined manually using the <b>Define Reference Scans</b> button. <b>Drop Selected Triples</b> can be used to drop unwanted triples. </p>
+
+<p> The 'Save' button prompts the 'GMP Run IMPORT Form', allowing the user to add a comment and prompting them for their master password for authentication. </p>
+
+<p class="center"><img src="images/gmp/data_acquisition/gmp/gmp_data_acquisition_gmp_06.png" alt="GMP Run Import Form"/></p>
+
+<p> Once the data has been saved, the user is notified that the program is proceeding to the editing stage: </p>
+
+<p class="center"><img src="images/gmp/data_acquisition/gmp/gmp_data_acquisition_gmp_07.png" alt="Proceeding to Editing Stage"/></p>
+
+<p> The editing window presents the user with the data edited in accordance with 'Data End' value and 'Excluded Scan Ranges' defined in the <b>Aprofile</b>. The 'Meniscus' position and 'Data Start' value are defined through automated processing. If the user is not satisfied with the automated processing, the <b>Edit Currently Selected Profile Manually</b> button allows for the 'Meniscus' position and 'Data End' values to be defined manually. <b>Remove Spikes</b> removes some sharp, irregular intensity spikes from data. Each cell/channel/wavelength triple can be cycled through using the <b>Previous Triple</b> and <b>Next Triple</b> buttons. </p>
+<p class="center"><img src="images/gmp/data_acquisition/gmp/gmp_data_acquisition_gmp_08.png" alt="Editing Window"/></p>
+
+<p> The <b>Save Edit Profiles</b> button prompts the <b>GMP Run EDIT Form</b>, allowing the user to add a comment and prompting them for their master password for authentication. </p>
+<p class="center"><img src="images/gmp/data_acquisition/gmp/gmp_data_acquisition_gmp_09.png" alt="GMP Run Edit Form"/></p>
+
+<p> Once the edited profiles have been saved, the user is notified that the program is proceeding to the analysis stage: </p>
+
+<p class="center"><img src="images/gmp/data_acquisition/gmp/gmp_data_acquisition_gmp_10.png" alt="Proceeding to Analysis Stage"/></p>
+
+<p> The analysis window displays the current status of the submitted jobs producing the models specified in the <b>Aprofile</b>. <b>Cancel</b> can be used to stop ongoing jobs. <b>View Fit</b> simulates completed model overlays and displays them. The <b>Expand All Triples</b> and <b>Collapse All Triples</b> buttons control all triples, while the {down arrow} button can be used to collapse or expand each individual triple. </p>
+
+<p class="center"><img src="images/gmp/data_acquisition/gmp/gmp_data_acquisition_gmp_11.png" alt="Analysis Window"/></p>
+
+<p> Once the analysis stage is complete, the models are simulated and the report is built. Which prompts the <b>Report Generation Complete</b> message box. </p>
+
+<p class="center"><img src="images/gmp/data_acquisition/gmp/gmp_data_acquisition_gmp_12.png" alt="Report Generation Complete"/></p>
+
+<p> The <b>View Report</b> button opens the PDF file to be viewed: </p>
+
+<p class="center"><img src="images/gmp/data_acquisition/gmp/gmp_data_acquisition_gmp_13.png" alt="View Report"/></p>
+
+[% INCLUDE footer.us3 %]

@@ -16,7 +16,7 @@
     accurate results with this method, it is important that you use only a
     small scan range over which diffusion has not changed significantly.</p>
 
-    <img src="images/time_derivative.png" alt="Time Derivative Main Window"/>
+    <p class="center"><img src="images/time_derivative.png" alt="Time Derivative Main Window"/></p>
 
     <ul>
         <li>

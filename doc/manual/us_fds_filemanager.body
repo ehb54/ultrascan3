@@ -36,7 +36,7 @@
     suitable for a single data import action in UltraScan-III.
     </p>
 
-    <img src="images/us_fds_filemanager-0.png" alt="FDS File Manager Main Window"/>
+    <p class="center"><img src="images/us_fds_filemanager-0.png" alt="FDS File Manager Main Window"/></p>
 
     <p>The input to this module consists of fluorescence data only,
     scan files from other optical systems are ignored.  
@@ -58,7 +58,7 @@
           in the graph window:
           <p/>
 
-          <img src="images/us_fds_filemanager-1.png" alt="FDS File Manager Main Window"/>
+          <p class="center"><img src="images/us_fds_filemanager-1.png" alt="FDS File Manager Main Window"/></p>
 
           <p>
           Once loaded, the listboxes will be populated with all triples, speeds and 
@@ -66,7 +66,7 @@
           voltage, gain set or range:
           <p/>
 
-          <img src="images/us_fds_filemanager-2.png" alt="FDS File Manager Main Window"/>
+          <p class="center"><img src="images/us_fds_filemanager-2.png" alt="FDS File Manager Main Window"/></p>
 
           <p>
           <b>Tip:</b> If everal triples, speeds or gain settings are
@@ -88,7 +88,7 @@
           "Delete marked Scan(s)":
           <p/>
 
-          <img src="images/us_fds_filemanager-3.png" alt="FDS File Manager Main Window"/>
+          <p class="center"><img src="images/us_fds_filemanager-3.png" alt="FDS File Manager Main Window"/></p>
 
           <p>
 	  Additional convenience functions are available to quickly
@@ -104,7 +104,7 @@
 	  will save both:
           <p/>
 
-          <img src="images/us_fds_filemanager-4.png" alt="FDS File Manager Main Window"/>
+           <p class="center"><img src="images/us_fds_filemanager-4.png" alt="FDS File Manager Main Window"/></p>
        </li>
 
        <li>

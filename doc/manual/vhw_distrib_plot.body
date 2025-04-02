@@ -10,7 +10,7 @@
     around several sedimentation coefficient points indicates the presence of
     multiple species in the solution.</p>
 
-    <img src="images/vhw_distribution.png" alt="vHW Distribution Plot"/>
+<p class="center"><img src="images/vhw_distribution.png" alt="vHW Distribution Plot"/></p>
 
     <ul>
             <li>
@@ -48,7 +48,5 @@
               <b>Help:</b> Display detailed vHW Distribution/Histogram Plot help.
             </li>
     </ul>
-
-    <img src="images/vhw_histogram.png" alt="vHW Histogram Plot"/>
-
+<p class="center"><img src="images/vhw_histogram.png" alt="vHW Histogram Plot"/></p>
 [% INCLUDE footer.us3 %]

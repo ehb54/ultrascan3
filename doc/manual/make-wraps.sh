@@ -21,7 +21,8 @@ for IMG in ${IMGNAMES}; do
   # PNG image file to put a wrapper around
   PNGF=${IMG}.png
   # Wrapper file to create
-  HTMLF=${IMG}.img.html
+  HTMLF=".staging/${IMG}.img.html"
+  mkdir -p .staging
   
   echo "${PNGF}  WRAPPED TO:  ${HTMLF}"
   # Substitute image name in template and write to file

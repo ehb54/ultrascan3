@@ -65,7 +65,7 @@
     <p> The main MWLR_Viewer window is shown here in the state it appears
     after loading US3 MWL data.</p>
 
-    <img src="images/mwlr_viewer.png" alt="MWLR_Viewer Main Window"/>
+    <p class="center"><img src="images/mwlr_viewer.png" alt="MWLR_Viewer Main Window"/></p>
 
     <h3> Elements and Functions:</h3>
 
@@ -232,6 +232,6 @@
     checking the <b>X-axis Wavelength</b> box. With this checked, the main window
     would be similar to the following.</p>
 
-    <img src="images/mwlr_viewer_xwavl.png" alt="Viewer Main X=lambda Window"/>
+    <p class="center"><img src="images/mwlr_viewer_xwavl.png" alt="Viewer Main X=lambda Window"/></p>
 
 [% INCLUDE footer.us3 %]

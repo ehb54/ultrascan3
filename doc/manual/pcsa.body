@@ -69,7 +69,7 @@
     <p> The main PCSA window is shown here in the state it appears after
     the completion of a fit run.</p>
 
-    <img src="images/pcsa_main-c.png" alt="PCSA Main Window, fit complete"/>
+    <p class="center"><img src="images/pcsa_main-c.png" alt="PCSA Main Window, fit complete"/></p>
 
     <h3> The Curves: </h3>
 
@@ -77,13 +77,13 @@
     of the model lines may be displayed. The sample shown here is for a
     Straight Line type.</p>
 
-    <img src="images/pcsa_mlines-line1.png" alt="PCSA Lines as specified"/>
+    <p class="center"><img src="images/pcsa_mlines-line1.png" alt="PCSA Lines as specified"/></p>
 
     <p> After analysis, the display is modified to illustrate the best model,
     as well as color coding of some of the other better fits. The sample
     here is for an Increasing Sigmoid type.</p>
 
-    <img src="images/pcsa_mlines-sigm2.png" alt="PCSA Lines after analysis"/>
+    <p class="center"><img src="images/pcsa_mlines-sigm2.png" alt="PCSA Lines after analysis"/></p>
 
     <h3> Functions:</h3>
 

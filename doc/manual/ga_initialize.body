@@ -16,7 +16,7 @@
     single point. For a Monte Carlo distribution, buckets should contain
     multiple points and be constructed around clusters.</p>
 
-    <img src="images/ga_initialize.png" alt="GA_Initialize Main Window"/>
+    <p class="center"><img src="images/ga_initialize.png" alt="GA_Initialize Main Window"/></p>
 
     <ul>
        <li>

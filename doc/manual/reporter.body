@@ -19,7 +19,7 @@
 
     <h3> Main Window:</h3>
 
-    <img src="images/reporter.png" alt="Report Generator main window"/>
+    <p class="center"><img src="images/reporter.png" alt="Report Generator main window"/></p>
 
     <h3> Functions:</h3>
 
@@ -84,7 +84,7 @@
     <p> Right-mouse-button clicking on a data tree row displays a context
     menu that applies to the row item.</p>
 
-    <img src="images/reporter-cmenu.png" alt="Report Generator context menu"/>
+    <p class="center"><img src="images/reporter-cmenu.png" alt="Report Generator context menu"/></p>
 
     <ul>
        <li>

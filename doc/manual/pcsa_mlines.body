@@ -55,9 +55,9 @@
     <p> The plot dialog differs slightly based on whether the curve type is
     a line or a sigmoid. Below are images for sigmoids and straight line.</p>
 
-    <img src="images/pcsa_mlines-sigm2.png" alt="PCSA Sigmoid Plot"/>
+    <p class="center"><img src="images/pcsa_mlines-sigm2.png" alt="PCSA Sigmoid Plot"/></p>
     <p/>
-    <img src="images/pcsa_mlines-line2.png" alt="PCSA Straight-Line Plot"/>
+    <p class="center"><img src="images/pcsa_mlines-line2.png" alt="PCSA Straight-Line Plot"/></p>
 
     <h3> Functions:</h3>
 
