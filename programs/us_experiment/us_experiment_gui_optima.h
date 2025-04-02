@@ -573,6 +573,7 @@ class US_ExperGuiSolutions : public US_WidgetsDialog
       QVector< QLabel* >       cc_labls;        // Channel label pointers
       QVector< QComboBox* >    cc_solus;        // Solution choice pointers
       QVector< QPushButton* >  cc_comms;        // Comment pushbutton pointers
+      QVector< QLineEdit* >    cc_mancomms;     // Comment content pointers
       QStringList              sonames;         // Solution names (all)
       QStringList              srchans;         // Solution row channels
       QStringList              suchans;         // Solution used channels

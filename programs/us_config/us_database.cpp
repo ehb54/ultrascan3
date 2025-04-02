@@ -232,7 +232,7 @@ void US_Database::select_db( QListWidgetItem* entry )
   QString email     = dblist.at( 0 ).at( 6 );
   if ( email.isEmpty() )
   {
-    for (const auto & jj : std::as_const(dblist))
+    for (const auto & jj : dblist)
     {
       if ( ! jj.at( 6 ).isEmpty() )
       {
@@ -487,7 +487,7 @@ void US_Database::update_lw( const QString& current )
   }
   //qDebug() << "USCFG: UpdLw:  defaultDBname" << defaultDBname;
 
-  for (const auto & i : std::as_const(dblist))
+  for (const auto & i : dblist)
   {
     const QString& desc    = i.at( 0 );
     QString display = desc;
@@ -576,7 +576,7 @@ void US_Database::help( )
 
 void US_Database::save_default( )
 {
-  for (const auto & i : std::as_const(dblist))
+  for (const auto & i : dblist)
   {
     const QString& desc = i.at( 0 );
     DbgLv( 1 ) << "USCFG: svDef: desc" << desc;
