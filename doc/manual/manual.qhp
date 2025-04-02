@@ -117,7 +117,14 @@
             <keyword id="g1" name="ga-initialize"    ref="ga_initialize.html"/>
             <keyword id="g2" name="global-model"     ref="combine_models.html"/>
             <keyword id="g3" name="gmp"              ref="gmp.html"/>
-            <keyword id="g4" name="gradient"         ref="colorgradient.html"/>
+            <keyword id="g4" name="gmp-audit"        ref="gmp_audit_trail.html"/>
+            <keyword id="g5" name="gmp-data-acquisition"             ref="gmp_data_acquisition_gmp.html"/>
+            <keyword id="g6" name="gmp-data-acquisition-experiment"  ref="gmp_data_acquisition_experiment.html"/>
+            <keyword id="g7" name="gmp-data-acquisition-gmp"         ref="gmp_data_acquisition_gmp.html"/>
+            <keyword id="g8" name="gmp-protocol"     ref="gmp_protocol_development.html"/>
+            <keyword id="g9" name="gmp-report"       ref="gmp_report_generator.html"/>
+            <keyword id="g10" name="gmp-signature"    ref="gmp_signature.html"/>
+            <keyword id="g11" name="gradient"         ref="colorgradient.html"/>
             <keyword id="i1" name="investigator"     ref="us_investigator.html"/>
             <keyword id="l1" name="license"          ref="register.html"/>
             <keyword id="l2" name="load-colormap"    ref="load_colormap.html"/>
