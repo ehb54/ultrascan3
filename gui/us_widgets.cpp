@@ -7,7 +7,9 @@
 #include "us_settings.h"
 #include "us_images.h"
 #include "us_util.h"
-
+#ifndef DbgLv(a)
+#define DbgLv(a) if(0>=a)qDebug()
+#endif
 US_Widgets::US_Widgets( bool set_position, QWidget* w, Qt::WindowFlags f ) : QFrame( w, f )
 {
   QApplication::setStyle( QStyleFactory::create( US_GuiSettings::guiStyle() ) );
@@ -15,7 +17,7 @@ US_Widgets::US_Widgets( bool set_position, QWidget* w, Qt::WindowFlags f ) : QFr
   if ( ! g.isValid() )
   {
     // Do something for invalid global memory
-   qDebug( "us_win: invalid global memory" );
+   DbgLv(1) << "us_win: invalid global memory";
   }
 
 #ifndef Q_OS_WIN
@@ -468,7 +470,7 @@ QFont US_Widgets::fixedFont()
       finfo    = QFontInfo( tfont );
       fmatch   = finfo.exactMatch();
       ffixed   = finfo.fixedPitch();
-qDebug() << "fixf:   ii" << ii << "family" << family
+DbgLv(1) << "fixf:   ii" << ii << "family" << family
  << "fmatch" << fmatch << "ffixed" << ffixed;
       if ( fmatch  &&  ffixed )
       {
@@ -782,7 +784,7 @@ int US_Widgets::clean_etc_dir( bool report )
    int ncopyf   = copy_files.size();
    int nlinkf   = link_files.size();
    int nsdir    = dir_names .size();
-qDebug() << "niefs nwefs" << niefs << nwefs << "nkeep/copy/link/dirf"
+DbgLv(1) << "niefs nwefs" << niefs << nwefs << "nkeep/copy/link/dirf"
  << nkeepf << ncopyf << nlinkf << nsdir;
 
    // Examine each file in ie_files (e.g.,"*/ultrascan3/etc") and operate on it
@@ -797,23 +799,23 @@ qDebug() << "niefs nwefs" << niefs << nwefs << "nkeep/copy/link/dirf"
 
       if ( keep_files.contains( filename ) )
       {  // This file is to be kept in the install-etc directory
-         qDebug() << "KEEP " << filename;
+         DbgLv(1) << "KEEP " << filename;
       }
 
       else if ( copy_files.contains( filename ) )
       {  // This file is to be copied to the work-etc directory
-         qDebug() << "COPY " << filename;
+         DbgLv(1) << "COPY " << filename;
          if ( in_wetc )
          {  // But only copy if it is not already copied
             QString icksum = US_Util::md5sum_file( ietc_dname + filename );
             QString wcksum = US_Util::md5sum_file( wetc_dname + filename );
-            qDebug() << "   ietc cksum+size " << icksum;
-            qDebug() << "   wetc cksum+size " << wcksum;
+            DbgLv(1) << "   ietc cksum+size " << icksum;
+            DbgLv(1) << "   wetc cksum+size " << wcksum;
 
             if ( icksum != wcksum )
             {  // They do not match in cksum+size, so copy
                nfcopy++;
-               qDebug() << "       FILE COPY" << nfcopy;
+               DbgLv(1) << "       FILE COPY" << nfcopy;
                QFile( wetc_dname + filename ).remove();
 
                QFile( ietc_dname + filename ).copy(
@@ -822,9 +824,9 @@ qDebug() << "niefs nwefs" << niefs << nwefs << "nkeep/copy/link/dirf"
          }
          else
          {  // Not present in work-etc, so copy
-            qDebug() << "   not present in" << wetc_dname;
+            DbgLv(1) << "   not present in" << wetc_dname;
             nfcopy++;
-            qDebug() << "       FILE COPY" << nfcopy;
+            DbgLv(1) << "       FILE COPY" << nfcopy;
             QFile( ietc_dname + filename ).copy(
                    wetc_dname + filename );
          }
@@ -832,21 +834,21 @@ qDebug() << "niefs nwefs" << niefs << nwefs << "nkeep/copy/link/dirf"
 
       else if ( link_files.contains( filename ) )
       {  // This is a link, so copy the target file
-         qDebug() << "LINK " << filename;
+         DbgLv(1) << "LINK " << filename;
          QString sltarg = ie_files[ ii ].symLinkTarget();
-         qDebug() << "   ietc sltarg " << sltarg;
+         DbgLv(1) << "   ietc sltarg " << sltarg;
 
          if ( in_wetc )
          {  // But only copy if not already copied
             QString icksum = US_Util::md5sum_file( sltarg );
             QString wcksum = US_Util::md5sum_file( wetc_dname + filename );
-            qDebug() << "   ietc cksum+size " << icksum;
-            qDebug() << "   wetc cksum+size " << wcksum;
+            DbgLv(1) << "   ietc cksum+size " << icksum;
+            DbgLv(1) << "   wetc cksum+size " << wcksum;
 
             if ( icksum != wcksum )
             {  // They do not match in cksum+size, so copy
                nfcopy++;
-               qDebug() << "       FILE COPY" << nfcopy;
+               DbgLv(1) << "       FILE COPY" << nfcopy;
                QFile( wetc_dname + filename ).remove();        // Remove first
 
                QFile( sltarg ).copy( wetc_dname + filename );  // Then copy
@@ -854,31 +856,31 @@ qDebug() << "niefs nwefs" << niefs << nwefs << "nkeep/copy/link/dirf"
          }
          else
          {  // Not present in work-etc, so copy
-            qDebug() << "   not present in" << wetc_dname;
+            DbgLv(1) << "   not present in" << wetc_dname;
             nfcopy++;
-            qDebug() << "       FILE COPY" << nfcopy;
+            DbgLv(1) << "       FILE COPY" << nfcopy;
             QFile( sltarg ).copy( wetc_dname + filename );
          }
       }
 
       else if ( dir_names.contains( filename ) )
       {  // This is a directory, so ignore it
-         qDebug() << "SDIR " << filename;
+         DbgLv(1) << "SDIR " << filename;
       }
 
       else if ( filename.contains( "~" ) )
       {  // If name ends in tilde, delete it
-         qDebug() << "DELE " << filename;
+         DbgLv(1) << "DELE " << filename;
          nfdele++;
-         qDebug() << "       FILE DELE" << nfdele;
+         DbgLv(1) << "       FILE DELE" << nfdele;
          QFile( ietc_dname + filename ).remove();
       }
 
       else
       {  // File not in "belongs" list:  move it to work-etc
-         qDebug() << "MOVE " << filename;
+         DbgLv(1) << "MOVE " << filename;
          nfmove++;
-         qDebug() << "       FILE MOVE" << nfmove;
+         DbgLv(1) << "       FILE MOVE" << nfmove;
 
          if ( in_wetc )
          {  // First delete any version in work-etc

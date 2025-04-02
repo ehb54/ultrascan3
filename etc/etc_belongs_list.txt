@@ -5,6 +5,7 @@ bufferComponents.xml
 check.png
 cluster.config
 etc_belongs_list.txt
+FindQwt.cmake
 labs.xml
 logo_hsc.png
 nobandform.config

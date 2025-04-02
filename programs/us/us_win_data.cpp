@@ -4,6 +4,10 @@
     of a large C++ constructor.  It is a convenience namespace used only
     by \ref US_Win.
 */
+#include "QObject"
+#include "QString"
+
+
 namespace US_WinData
 {
   enum
@@ -75,7 +79,7 @@ namespace US_WinData
 
   }
   //! An array of processes
-  p[] =
+  inline p[] =
   {
     { P_CONFIG, 1, 0, "us_config",
       QObject::tr( "Loading Configuration" ),
@@ -447,16 +451,16 @@ namespace US_WinData
 
   }
   //! An array of help_data
-  h[] =
+  inline h[] =
   {
     { HELP,         PAGE,   QObject::tr( "Help..." ),
        "manual/index.html"                 },
     { HELP_REG,     PAGE,   QObject::tr( "Registration Information..." ),
        "register.html"                     },
     { HELP_HOME,    URL,    QObject::tr( "UltraScan Home Page..." ),
-       "http://www.ultrascan3.aucsolutions.com/" },
+       "https://www.ultrascan3.aucsolutions.com/" },
     { HELP_UPGRADE, URL,    QObject::tr( "Upgrade Page..." ),
-       "http://www.ultrascan3.aucsolutions.com/download.php" },
+       "https://www.ultrascan3.aucsolutions.com/download.php" },
     { HELP_LICENSE, PAGE,   QObject::tr( "License Information..." ),
        "register.html"                     },
     { HELP_ABOUT,   METHOD, QObject::tr( "About Ultrascan..." ),
