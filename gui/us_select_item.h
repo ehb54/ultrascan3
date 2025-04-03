@@ -68,6 +68,7 @@ class US_GUI_EXTERN US_SelectItem : public US_WidgetsDialog
       bool           autoflow_da;  // If called by non-GMP us_comproject (DA)
       bool           autoflow_gmp_report;
       bool           set_unset_failed_button_autoflow;
+      bool           refresh_state_autoflow;
       bool           autoflow_dev;
       
       Qt::SortOrder  sort_ord;    //!< Default sort order flag
@@ -86,6 +87,7 @@ class US_GUI_EXTERN US_SelectItem : public US_WidgetsDialog
       bool check_protocol_for_autoflow( QString, QString );
       void deleted_autoflow ( void );
       void set_unset_failed_autoflow ( void );
+      void do_refresh_state_autoflow( void );
       void show_autoflow_run_as_failed( void );
       void help           ( void )
       { showHelp.show_help( "select_item.html" ); };
@@ -93,5 +95,6 @@ class US_GUI_EXTERN US_SelectItem : public US_WidgetsDialog
    signals:
       void accept_deletion( void );
       void accept_autoflow_deletion( void );
+      void accept_refresh_states( void );
 };
 #endif

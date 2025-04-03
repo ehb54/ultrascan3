@@ -696,7 +696,7 @@ int US_SimulationParameters::load_simparms( QString fname )
    US_SimulationParameters::SpeedProfile sp;
 
    QFile xfile( fname );
-
+   auto old_speed_step = speed_step;
    if ( xfile.open( QIODevice::ReadOnly | QIODevice::Text ) )
    {
       QXmlStreamReader xml( &xfile );
@@ -806,6 +806,13 @@ int US_SimulationParameters::load_simparms( QString fname )
 
    else
    {
+      stat = -1;
+   }
+   // simulation parameters must contain at least the speed steps
+   if ( speed_step.isEmpty() )
+   {
+      // revert speed_step.clear() to ensure proper simparams at all time
+      speed_step = old_speed_step;
       stat = -1;
    }
 

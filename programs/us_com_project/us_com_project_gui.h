@@ -124,6 +124,7 @@ class US_InitDialogueGui : public US_WidgetsDialog
     
     void read_optima_machines( US_DB2* = 0 ); 
     QList< QMap<QString, QString> > instruments;
+    QMap<QString, QString> selectCurrentOptima( QString );
 
     void do_run_tables_cleanup( QMap< QString, QString > );
     void do_run_data_cleanup( QMap< QString, QString > );
@@ -135,6 +136,7 @@ class US_InitDialogueGui : public US_WidgetsDialog
       
   private slots:
      void update_autoflow_data( void );
+     void refresh_optima_states( void ); 
           
   signals:
      void define_new_experiment_init ( QStringList & );

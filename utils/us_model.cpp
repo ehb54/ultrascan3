@@ -150,7 +150,7 @@ bool US_Model::update_coefficients()
 bool US_Model::calc_coefficients( SimulationComponent& component )
 {
    // For documentation for the derivation of the coefficient calculations 
-   // please see: calc_coefficient_documentation.pdf in this directory
+   // please see: ../doc/calc_model_coefficient_documentation.pdf
 
    bool   ok = true;
    double vbar;             // component vbar
@@ -213,7 +213,7 @@ bool US_Model::calc_coefficients( SimulationComponent& component )
                                                  ///////////////
       if ( f_f0 != 0.0 )                         // s and f_f0
       {                                          ///////////////
-         // Please see calc_coefficient_documentation.pdf in this directory,
+         // Please see ../doc/calc_model_coefficient_documentation.pdf,
          // equation 14, with adjustments for units in poise.
          double numer   = 0.02 * vbar * s * VISC_20W * f_f0;
          f0             = 0.09 * VISC_20W * M_PI * sqrt( numer / buoyancyb );
@@ -654,6 +654,9 @@ int US_Model::load_stream( QXmlStreamReader& xml )
 
    components  .clear();
    associations.clear();
+   customGridData.components.clear();
+   customGridData.grids.clear();
+   static const QRegularExpression re(R"(g(\d+)_r(\d+)_c(\d+))");
 
    QXmlStreamAttributes a;
    bool read_next = true;
@@ -719,6 +722,26 @@ int US_Model::load_stream( QXmlStreamReader& xml )
             SimulationComponent sc;
             a = xml.attributes();
 
+            if ( a.hasAttribute( "grid" ) )
+            {
+               QRegularExpressionMatch match = re.match( a.value( "grid" ).toString() );
+               if (match.hasMatch())
+               {
+                  CustomGridMetadata::CompInfo cinfo;
+                  int id     = match.captured(1).toInt();
+                  int row    = match.captured(2).toInt();
+                  int column = match.captured(3).toInt();
+
+                  if ( id >= 0 && row >= 0 && column >= 0 )
+                  {
+                     cinfo.grid_id = id;
+                     cinfo.row     = row;
+                     cinfo.column  = column;
+                     customGridData.components << cinfo;
+                  }
+               }
+            }
+
             sc.analyteGUID  = a.value( "analyteGUID" ).toString();
 
             sc.name         = a.value( "name"       ).toString();
@@ -765,10 +788,32 @@ int US_Model::load_stream( QXmlStreamReader& xml )
 
             read_next = false; // Skip the next read
          }
+
+         else if ( xml.name() == "metadata" )
+         {
+            get_metadata( xml );
+         }
       }
    }
 
    if ( US_Settings::us_debug() > 2 ) debug();
+
+   bool cgmdata = ! customGridData.grids.isEmpty() &&
+                  ! customGridData.components.isEmpty() &&
+                  customGridData.components.size() == components.size();
+   if ( ! cgmdata ) {
+      customGridData.components.clear();
+      customGridData.grids.clear();
+   } else {
+      int maxg = customGridData.grids.size() - 1;
+      for ( int ii = 0; ii < customGridData.components.size(); ii++ ) {
+         if ( customGridData.components.at(ii).grid_id > maxg ) {
+            customGridData.components.clear();
+            customGridData.grids.clear();
+            break;
+         }
+      }
+   }
 
    return US_DB2::OK;
 }
@@ -978,6 +1023,86 @@ void US_Model::get_associations( QXmlStreamReader& xml, Association& as )
    }
 }
 
+void US_Model::get_metadata( QXmlStreamReader &xml )
+{
+   QXmlStreamAttributes a = xml.attributes();
+   QString type = a.value("type").toString();
+
+   if ( type.compare("CUSTOMGRID") == 0 )
+   {
+      QList<CustomGridMetadata::GridInfo> ginfo_list;
+      QStringList attr_list;
+      attr_list << "xType" << "xMin" << "xMax" << "xRes"
+                << "yType" << "yMin" << "yMax" << "yRes"
+                << "zType" << "zVal" << "id";
+      bool ok;
+      int ngrids = a.value( "ngrids" ).toInt( &ok );
+      int xl = a.value( "xLogarithmic" ).toInt();
+      if ( ok )
+      {
+         customGridData.xLogarithmic = xl == 1 ? true: false;
+         ginfo_list.reserve( ngrids );
+         bool flag = true;
+         int counter = 0;
+         while ( true )
+         {
+            xml.readNext();
+            if ( xml.atEnd() )
+            {
+               flag = false;
+               break;
+            }
+            if ( xml.isStartElement() )
+            {
+               if ( xml.name() == "grid" )
+               {
+                  CustomGridMetadata::GridInfo ginfo;
+                  a = xml.attributes();
+                  foreach ( QString atr, attr_list )
+                  {
+                     flag = flag && a.hasAttribute( atr );
+                  }
+                  if ( ! flag ) break;
+
+                  int id = a.value( "id" ).toInt();
+                  if ( id >= ngrids )
+                  {
+                     flag = false;
+                     break;
+                  }
+                  ginfo.xType = a.value( "xType" ).toString();
+                  ginfo.xMin  = a.value( "xMin"  ).toDouble();
+                  ginfo.xMax  = a.value( "xMax"  ).toDouble();
+                  ginfo.xRes  = a.value( "xRes"  ).toInt();
+
+                  ginfo.yType = a.value( "yType" ).toString();
+                  ginfo.yMin  = a.value( "yMin"  ).toDouble();
+                  ginfo.yMax  = a.value( "yMax"  ).toDouble();
+                  ginfo.yRes  = a.value( "yRes"  ).toInt();
+
+                  ginfo.zType = a.value( "zType" ).toString();
+                  ginfo.zVal  = a.value( "zVal"  ).toDouble();
+
+                  ginfo_list.insert( id, ginfo );
+                  counter++;
+                  if ( counter == ngrids ) break;
+               }
+               else
+               {
+                  flag = false;
+                  break;
+               }
+            }
+         }
+         if ( flag )
+         {
+            customGridData.grids.clear();
+            customGridData.grids << ginfo_list;
+         }
+      }
+   }
+}
+
 // Load a model from DB (by GUID)
 int US_Model::load_db( const QString& guid, US_DB2* db )
 {
@@ -1017,6 +1142,7 @@ int US_Model::load( const QString& id, US_DB2* db )
       QTextStream tsi( contents );
 
       result     = load_multi_model( tsi );
+      variance   = db->value( 3 ).toDouble();
    }
 
    return result;
@@ -1165,8 +1291,43 @@ void US_Model::write_stream( QXmlStreamWriter& xml )
       xml.writeAttribute   ( "dataDescrip", dataDescrip                     );
    }
 
+   // Write metadata
+
+   bool cgmdata = ! customGridData.grids.isEmpty() &&
+                  ! customGridData.components.isEmpty() &&
+                  customGridData.components.size() == components.size();
+   if ( cgmdata )
+   {
+      int ngrids = customGridData.grids.size();
+      xml.writeStartElement( "metadata" );
+      xml.writeAttribute( "type", "CUSTOMGRID" );
+      xml.writeAttribute( "ngrids", QString::number(ngrids) );
+      int xl = customGridData.xLogarithmic ? 1 : 0;
+      xml.writeAttribute( "xLogarithmic", QString::number(xl) );
+      for ( int ii = 0; ii < ngrids; ii++ )
+      {
+         CustomGridMetadata::GridInfo ginfo = customGridData.grids.at(ii);
+         xml.writeStartElement( "grid" );
+         xml.writeAttribute( "id",    QString::number( ii ) );
+         xml.writeAttribute( "xType", ginfo.xType );
+         xml.writeAttribute( "xMin",  QString::number( ginfo.xMin ) );
+         xml.writeAttribute( "xMax",  QString::number( ginfo.xMax ) );
+         xml.writeAttribute( "xRes",  QString::number( ginfo.xRes ) );
+
+         xml.writeAttribute( "yType", ginfo.yType );
+         xml.writeAttribute( "yMin",  QString::number( ginfo.yMin ) );
+         xml.writeAttribute( "yMax",  QString::number( ginfo.yMax ) );
+         xml.writeAttribute( "yRes",  QString::number( ginfo.yRes ) );
+
+         xml.writeAttribute( "zType", ginfo.zType );
+         xml.writeAttribute( "zVal",  QString::number( ginfo.zVal ) );
+         xml.writeEndElement();
+      }
+      xml.writeEndElement();
+   }
+
    // Write components
-   int  ncomps  = components.size();
+   int  ncomps   = components.size();
    bool notmany = ( ncomps < 400 );
 
    for ( int i = 0; i < ncomps; i++ )
@@ -1175,8 +1336,14 @@ void US_Model::write_stream( QXmlStreamWriter& xml )
       xml.writeStartElement( "analyte" );
 
       if ( !sc->analyteGUID.isEmpty() )
-         xml.writeAttribute( "analyteGUID", sc->analyteGUID            );
+         xml.writeAttribute( "analyteGUID", sc->analyteGUID         );
       xml.writeAttribute( "name",       sc->name                    );
+      if ( cgmdata )
+      {
+         CustomGridMetadata::CompInfo c = customGridData.components.at( i );
+         QString val = QString("g%1_r%2_c%3").arg(c.grid_id).arg(c.row).arg(c.column);
+         xml.writeAttribute( "grid", val );
+      }
       xml.writeAttribute( "mw",         QString::number( sc->mw   ) );
       xml.writeAttribute( "s",          QString::number( sc->s    ) );
       xml.writeAttribute( "D",          QString::number( sc->D    ) );
@@ -1645,6 +1812,9 @@ bool US_Model::subtype_match( const int subtype, const int stflag )
 // Output debug print model details
 void US_Model::debug( void )
 {
+   bool cgmdata = ! customGridData.grids.isEmpty() &&
+                  ! customGridData.components.isEmpty() &&
+                  customGridData.components.size() == components.size();
    qDebug() << "model dump";
    qDebug() << "desc" << description;
    qDebug() << "model guid" << modelGUID;
@@ -1663,11 +1833,33 @@ void US_Model::debug( void )
    qDebug() << "OpticsType" << (int)optics;
    qDebug() << "data description" << dataDescrip;
 
+   if ( cgmdata ) {
+      for ( int i = 0; i < customGridData.grids.size(); i++ )
+      {
+         qDebug() << "Metadata: grid=" << i
+                  << "xType=" << customGridData.grids.at(i).xType
+                  << "xMin=" << customGridData.grids.at(i).xMin
+                  << "xMax=" << customGridData.grids.at(i).xMax
+                  << "xRes=" << customGridData.grids.at(i).xRes
+                  << "yType=" << customGridData.grids.at(i).yType
+                  << "yMin=" << customGridData.grids.at(i).yMin
+                  << "yMax=" << customGridData.grids.at(i).yMax
+                  << "yRes=" << customGridData.grids.at(i).yRes
+                  << "zVal=" << customGridData.grids.at(i).zVal;
+      }
+   }
+
    for ( int i = 0; i < components.size(); i++ )
    {
       SimulationComponent* sc = &components[ i ];
       qDebug() << " component" << ( i + 1 );
       qDebug() << "  name" << sc->name;
+      if ( cgmdata )
+      {
+         qDebug() << "  grid info: id=" << customGridData.components.at(i).grid_id
+                  << "row=" << customGridData.components.at(i).row
+                  << "column=" << customGridData.components.at(i).column;
+      }
       qDebug() << "  vbar20" << sc->vbar20;
       qDebug() << "  mw" << sc->mw;
       qDebug() << "  s" << sc->s;
