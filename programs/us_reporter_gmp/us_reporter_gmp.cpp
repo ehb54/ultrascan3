@@ -1316,14 +1316,14 @@ QMap< QString, QString > US_ReporterGMP::parse_models_desc_json( QString modelDe
 		      //by modelID
 		      if ( array_key == "modelID" && array_key == model_property )
 			{
-			  if ( !modelDesc_shortened.contains( key_mod ) )  //Temporary, for PCSA (2 entries)
-			    {
+			  // if ( !modelDesc_shortened.contains( key_mod ) )  //Temporary, for PCSA (2 entries)
+			  //   {
 			      modelDesc_shortened[ key_mod ] = json_array[i].toObject().value(array_key).toString();
 			      qDebug() << "modelDescJson Map: -- model, property, value: "
 				       << key_mod
 				       << array_key
 				       << json_array[i].toObject().value(array_key).toString();
-			    }
+			    // }
 			}
 		      
 		      //by modelGUID
