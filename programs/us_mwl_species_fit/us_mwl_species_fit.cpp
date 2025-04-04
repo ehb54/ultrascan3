@@ -27,7 +27,7 @@
 #define dPlotClearAll(a) a->detachItems(QwtPlotItem::Rtti_PlotItem,true)
 #endif
 
-US_MwlSpeciesFit::US_MwlSpeciesFit( QMap<QString, QString> & protocol_details) : US_AnalysisBase2()
+US_MwlSpeciesFit::US_MwlSpeciesFit( QMap<QString, QString> & protocol_details_p ) : US_AnalysisBase2()
 {
      setWindowTitle( tr( "MWL Species Fit Analysis" ) );
 
@@ -39,7 +39,7 @@ US_MwlSpeciesFit::US_MwlSpeciesFit( QMap<QString, QString> & protocol_details) :
    have_p1.clear();
 
    us_gmp_auto_mode = true;
-   this->protocol_details = protocol_details;
+   this->protocol_details = protocol_details_p;
 
    // Add some buttons to Analysis section
    pb_loadsfit = us_pushbutton( tr( "Load Species Fits" ) );
@@ -171,7 +171,10 @@ DbgLv(1) << "  irow" << irow << "icol" << icol;
 	   QMap< QString, QMap< double, double > > analytes_profs = extinction_profiles_per_channel[ triple_text ];
 
 	   loadSpecs_auto( analytes_profs );
-	   specFitData();	   
+	   specFitData();
+
+	   //save ssf-dir name for future DB save
+	   protocol_details_p["ssf_dir_name"] = this->protocol_details["ssf_dir_name"];
 	 }
        
      }
@@ -1640,6 +1643,10 @@ DbgLv(1) << "sfd: cellch" << cellch << "basefn" << basefn;
                         "the following files were created:\n\n" )
                     .arg( dirSyn );
 
+   //remember dir name
+   if ( us_gmp_auto_mode )
+     protocol_details[ "ssf_dir_name" ] =  dirSyn;
+   
 DbgLv(1) << "sfd: (B)D0 cmn" << ms << mr << synData[0].value(ms,mr);
 DbgLv(1) << "sfd: (B)D1 cmn" << ms << mr << synData[1].value(ms,mr);
    kd               = ccx * nspecies;

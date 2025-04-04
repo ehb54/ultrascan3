@@ -10,10 +10,25 @@
 #include "../us_mwl_species_fit/us_mwl_species_fit.h"
 #include "../us_mwl_species_fit/us_mwl_sf_plot3d.h"
 #include "../us_mwl_species_fit/us_load_run_noise.h"
+#include "../us_convert/us_convert.h"
+#include "../us_convert/us_experiment.h"     
+#include "../us_convert/us_experiment_gui.h" 
+#include "../us_convert/us_convert_gui.h"    
+#include "../us_convert/us_convertio.h"      
+#include "../us_convert/us_get_run.h"        
+#include "../us_convert/us_intensity.h"      
+#include "../us_convert/us_selectbox.h"      
+//#include "../us_convert/us_select_triples.h"
+
 #include "us_analysis_base2.h"
 #include "us_images.h"
 #include "us_editor.h"
 #include "us_data_loader.h"
+#include "us_plot.h"
+#include "us_dataIO.h"
+#include "us_solution.h"
+#include "us_simparms.h"
+#include "us_mwl_data.h"
 
 /**
  * @class US_Analysis_auto
@@ -30,6 +45,7 @@ class US_Analysis_auto : public US_Widgets
         US_Analysis_auto();
 
         US_MwlSpeciesFit* sdiag;
+        US_ConvertGui*    sdiag_convert;
 
         QTreeWidget     *treeWidget;                             /**< Tree widget for displaying analysis data. */
         QMap<QString, QTreeWidgetItem *> topItem;                /**< Top-level items in the tree widget. */

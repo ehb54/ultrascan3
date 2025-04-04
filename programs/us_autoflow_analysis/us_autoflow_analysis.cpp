@@ -14,6 +14,7 @@
 #include "../us_mwl_species_fit/us_mwl_species_fit.h"
 
 
+
 #define MIN_NTC   25
 
 const QColor colorRed       ( 210, 0, 0 );
@@ -192,9 +193,17 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
       //Pre-process data (decomposition for MWL); build alt. GUI (to integrate and manually normalize);
 
       sdiag = new US_MwlSpeciesFit( protocol_details_at_analysis );
-      sdiag -> show();
+      //sdiag -> show();
 
+      qDebug() << "SSF-Dir: " << protocol_details_at_analysis["ssf_dir_name"];
+      
       emit close_analysissetup_msg();
+
+      //now save ssf-produced-data to DB
+      sdiag_convert = new US_ConvertGui("AUTO");
+      sdiag_convert->import_ssf_data_auto( protocol_details_at_analysis );
+      sdiag_convert -> show();
+      
       return;
     }
   // END for ABDE
@@ -316,9 +325,7 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
 	job5run = true;
       if ( json.contains("PCSA") )
 	job6run_pcsa = true;
-    
-      
-      
+          
       triple_name_width = fmet.width( triple_curr );
       //triple_name_width = fmet.horizontalAdvance( triple_curr );
       
