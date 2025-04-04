@@ -2524,6 +2524,7 @@ DbgLv(0) << my_rank << ":      model2.load(" << cmfname << ")";
 DbgLv(0) << my_rank << ":       model2.description" << model2.description;
             QString runstring = "Run: " + QString::number( ii + 1 )
                                 + " " + tripleID;
+            model2.variance = rmsd_combined_mc_models( model2 );
             tsout << cmfname 
                   << ";meniscus_value=" << model2.meniscus
                   << ";MC_iteration="   << mc_iterations
@@ -2562,6 +2563,65 @@ DbgLv(0) << my_rank << ": All output files except the archive are now removed.";
       QString file;
       // foreach( file, files ) odir.remove( file );
    }
+}
+
+double US_MPI_Analysis::rmsd_combined_mc_models( US_Model& model )
+{
+   DATASET *dset = data_sets[0];
+   double avtemp  = dset->temperature;
+
+   for ( int ii = 0; ii < model.components.size(); ii++ )
+   {
+      US_Model::SimulationComponent* component = &model.components[ ii ];
+
+      US_Math2::SolutionData  sd;
+      sd.viscosity   = dset->viscosity;
+      sd.density     = dset->density;
+      sd.manual      = dset->manual;
+      sd.vbar20      = model.components[ ii ].vbar20;
+      sd.vbar        = US_Math2::adjust_vbar20( sd.vbar20, avtemp );
+      US_Math2::data_correction( avtemp, sd );
+      double scorr   = sd.s20w_correction;
+      double dcorr   = sd.D20w_correction;
+      component->s  /= scorr;
+      component->D  /= dcorr;
+      if ( component->extinction > 0.0 )
+         component->molar_concentration = component->signal_concentration / component->extinction;
+   }
+
+   SIMPARAMS simparms = dset->simparams;
+   US_DataIO::RawData    sdata;
+   US_DataIO::EditedData edata = dset->run_data;
+   US_AstfemMath::initSimData( sdata, edata, 0.0 );
+   US_Astfem_RSA* astfem_rsa = new US_Astfem_RSA( model, simparms );
+   astfem_rsa->calculate( sdata );
+
+   QVector< double > ti_noise = simulation_values.ti_noise;
+   QVector< double > ri_noise = simulation_values.ri_noise;
+   int    nscans   = edata.scanCount();
+   int    npoints  = edata.pointCount();
+   double variance = 0.0;
+   bool   fit_ti   = ti_noise.size() > 0;
+   bool   fit_ri   = ri_noise.size() > 0;
+   int    kpts     = 0;
+DbgLv(1) << "Combined MC Model: nscans:" << nscans << "npoints:" << npoints
+         << "fit_ti:" << fit_ti << "fit_ri:" << fit_ri << "size ti_noise:" << ti_noise.size()
+         << "size ri_noise:" << ri_noise.size();
+   for ( int ii = 0; ii < nscans; ii++ )
+   {
+      double rin = fit_ri ? ri_noise.at( ii ) : 0.0;
+      for ( int jj = 0; jj < npoints; jj++ )
+      { // Calculate the residuals and the RMSD
+         double tin  = fit_ti ? ti_noise.at( jj ) : 0.0;
+         double diff = edata.value( ii, jj ) - sdata.value( ii, jj ) - rin - tin;
+         variance += sq( diff );
+         kpts++;
+      }
+   }
+
+   variance  /= static_cast<double>( kpts );
+   return variance;
+
 }
 
 // Return the model type flag for a given analysis type string
