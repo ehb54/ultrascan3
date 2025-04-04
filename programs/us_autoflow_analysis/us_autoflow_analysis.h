@@ -19,6 +19,8 @@
 #include "../us_convert/us_intensity.h"      
 #include "../us_convert/us_selectbox.h"      
 //#include "../us_convert/us_select_triples.h"
+#include "../us_abde/us_norm_profile.h"
+
 
 #include "us_analysis_base2.h"
 #include "us_images.h"
@@ -46,6 +48,7 @@ class US_Analysis_auto : public US_Widgets
 
         US_MwlSpeciesFit* sdiag;
         US_ConvertGui*    sdiag_convert;
+        US_Norm_Profile*  sdiag_norm_profile;
 
         QTreeWidget     *treeWidget;                             /**< Tree widget for displaying analysis data. */
         QMap<QString, QTreeWidgetItem *> topItem;                /**< Top-level items in the tree widget. */
@@ -716,6 +719,8 @@ class US_Analysis_auto : public US_Widgets
          * @param analysisData A map containing the analysis data.
          */
         void analysis_complete_auto( QMap <QString, QString> & );
+
+        void process_abde( QMap < QString, QString > & );
 };
 
 #endif

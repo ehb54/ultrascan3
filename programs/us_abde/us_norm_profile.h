@@ -23,6 +23,9 @@ class US_Norm_Profile : public US_Widgets
     public:
         //! \brief Constructor for the US_Norm_Profile class.
         explicit US_Norm_Profile();
+        US_Norm_Profile(QString);
+
+        bool us_auto_mode;
 
     signals:
         //! \brief Signal emitted when the widget is closed.
@@ -111,6 +114,8 @@ class US_Norm_Profile : public US_Widgets
     private slots:
         //! \brief Slot to load AUC data.
         void slt_loadAUC(void);
+        void slt_loadAUC_auto( QMap<QString,QString>& );
+        void load_data_auto( QMap<QString,QString>& );
 
         //! \brief Slot to add or remove an item.
         //! \param item The list widget item.

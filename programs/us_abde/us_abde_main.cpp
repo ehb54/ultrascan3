@@ -44,6 +44,24 @@ US_ABDE_MW::US_ABDE_MW() : US_Widgets()
     main_lyt->addWidget(hline);
     fitter = new US_Buoyancy("AUTO");
     normalizer = new US_Norm_Profile();
+
+    //TEST
+    // QMap<QString, QString> protocol_details;
+    // //ABDE-MWL
+    // protocol_details[ "invID_passed" ] = QString("165");
+    // protocol_details[ "protocolName" ] = QString("GMP-test-ABDE-fromDisk");
+    // protocol_details[ "aprofileguid" ] = QString("6c376179-6eda-47e9-b699-3eef63c6fe6e");
+    // protocol_details[ "filename" ]     = QString("AAV_GMP_test_030325-run2366-dataDiskRun-1515");
+    // protocol_details[ "analysisIDs"  ] = QString("");
+    // protocol_details[ "expType" ]      = QString("ABDE");
+    // protocol_details[ "dataSource" ]   = QString("dataDiskAUC");
+    // protocol_details[ "statusID" ]     = QString("588");
+    // protocol_details[ "autoflowID" ]   = QString("1515");
+    // normalizer = new US_Norm_Profile( protocol_details );
+    // normalizer = new US_Norm_Profile( "AUTO" );
+    //END TEST
+
+    
     main_lyt->addWidget(fitter);
     main_lyt->addWidget(normalizer);
     normalizer->setVisible(false);

@@ -33,7 +33,8 @@ HEADERS       =  us_query_rmsd.h \
                  ../us_convert/us_get_run.h \
                  ../us_convert/us_intensity.h \
                  ../us_convert/us_selectbox.h \
-                 ../us_convert/us_select_triples.h 
+                 ../us_convert/us_select_triples.h \
+                 ../us_abde/us_norm_profile.h
 
 
 SOURCES       =  us_query_rmsd.cpp \
@@ -65,6 +66,7 @@ SOURCES       =  us_query_rmsd.cpp \
                  ../us_convert/us_get_run.cpp \
                  ../us_convert/us_intensity.cpp \
                  ../us_convert/us_selectbox.cpp \
-                 ../us_convert/us_select_triples.cpp
+                 ../us_convert/us_select_triples.cpp \
+                 ../us_abde/us_norm_profile.cpp
                  
 

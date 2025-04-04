@@ -32,8 +32,9 @@ HEADERS       = us_autoflow_analysis.h \
                 ../us_convert/us_get_run.h \
                 ../us_convert/us_intensity.h \
                 ../us_convert/us_selectbox.h \
-                ../us_convert/us_select_triples.h 
-                                
+                ../us_convert/us_select_triples.h \
+                ../us_abde/us_norm_profile.h
+                                                
                 
 
 SOURCES       = us_autoflow_analysis_main.cpp       \
@@ -64,7 +65,9 @@ SOURCES       = us_autoflow_analysis_main.cpp       \
                 ../us_convert/us_get_run.cpp \
                 ../us_convert/us_intensity.cpp \
                 ../us_convert/us_selectbox.cpp \
-                ../us_convert/us_select_triples.cpp
+                ../us_convert/us_select_triples.cpp \
+                ../us_abde/us_norm_profile.cpp
+                
                 
                 
                 

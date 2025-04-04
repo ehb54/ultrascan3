@@ -1490,11 +1490,11 @@ void US_ConvertGui::import_ssf_data_auto( QMap < QString, QString > & details_at
   writeTimeStateDB();   // do we need timestate?
 
   //message? (will likely be shown in the parent AUTO-analysis widget)
-  QMessageBox::information( this,
-			    tr( "[ABDE-SSF]Save is Complete" ),
-			    tr( "The save of all data and reports is complete.\n\n"
-				"The program will switch to Reporting stage." ) );
-  //emit to_report();
+  // QMessageBox::information( this,
+  // 			    tr( "[ABDE-SSF]Save is Complete" ),
+  // 			    tr( "The save of all data and reports is complete.\n\n"
+  // 				"The program will switch to Reporting stage." ) );
+  // emit to_report();
   
 }
 

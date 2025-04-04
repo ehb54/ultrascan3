@@ -64,6 +64,13 @@ US_Analysis_auto::US_Analysis_auto() : US_Widgets()
   //QScroller *scroller = QScroller::scroller(treeWidget->viewport());
   //scroller->grabGesture(treeWidget, QScroller::MiddleMouseButtonGesture);
   treeWidget->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
+
+  //for (SSF-)ABDE
+  sdiag_norm_profile = new US_Norm_Profile("AUTO");
+  connect( this, SIGNAL( process_abde( QMap < QString, QString > & ) ),
+	   sdiag_norm_profile, SLOT( load_data_auto ( QMap < QString, QString > & )  ) );
+  panel->addWidget( sdiag_norm_profile );
+  sdiag_norm_profile->hide();
   
   setMinimumSize( 950, 450 );
   adjustSize();
@@ -157,6 +164,10 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
       pb_hide_all ->hide();
       treeWidget  ->hide();
     }
+  else
+    {
+      sdiag_norm_profile->hide();
+    }
   
 
   //Copy protocol details
@@ -193,7 +204,7 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
       //Pre-process data (decomposition for MWL); build alt. GUI (to integrate and manually normalize);
 
       sdiag = new US_MwlSpeciesFit( protocol_details_at_analysis );
-      //sdiag -> show();
+      //sdiag -> show(); //for debug
 
       qDebug() << "SSF-Dir: " << protocol_details_at_analysis["ssf_dir_name"];
       
@@ -202,8 +213,13 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
       //now save ssf-produced-data to DB
       sdiag_convert = new US_ConvertGui("AUTO");
       sdiag_convert->import_ssf_data_auto( protocol_details_at_analysis );
-      sdiag_convert -> show();
-      
+      //sdiag_convert -> show(); //for debug
+
+      //call abde normalizer
+      //sdiag_norm_profile = new US_Norm_Profile("AUTO");
+      emit process_abde( protocol_details_at_analysis );
+      sdiag_norm_profile->show();
+	
       return;
     }
   // END for ABDE
@@ -3651,6 +3667,7 @@ void US_Analysis_auto::reset_analysis_panel( )
     }
   else
     {
+      sdiag_norm_profile->hide();
       emit analysis_update_process_stopped();
     }
 }

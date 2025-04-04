@@ -46,7 +46,8 @@ HEADERS       = ../us_com_project/us_com_project_gui.h \
                 ../us_esigner_gmp/us_esigner_gmp.h \
                 ../us_mwl_species_fit/us_mwl_species_fit.h \
                 ../us_mwl_species_fit/us_mwl_sf_plot3d.h \
-                ../us_mwl_species_fit/us_load_run_noise.h             
+                ../us_mwl_species_fit/us_load_run_noise.h  \
+                ../us_abde/us_norm_profile.h
                 
 
 SOURCES       = us_com_project_academic_main.cpp \
@@ -91,7 +92,8 @@ SOURCES       = us_com_project_academic_main.cpp \
                 ../us_esigner_gmp/us_esigner_gmp.cpp \
                 ../us_mwl_species_fit/us_mwl_species_fit.cpp \
                 ../us_mwl_species_fit/us_mwl_sf_plot3d.cpp \
-                ../us_mwl_species_fit/us_load_run_noise.cpp
+                ../us_mwl_species_fit/us_load_run_noise.cpp \
+                ../us_abde/us_norm_profile.cpp 
                 
                 
                 

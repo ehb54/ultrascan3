@@ -5,8 +5,210 @@
 #include "us_load_auc.h"
 #include <QFileInfo>
 
+//Alt. constr.
+US_Norm_Profile::US_Norm_Profile( QString auto_mode ): US_Widgets()
+{
+    us_auto_mode = true;
+    //this->protocol_details = protocol_details_p;
+    
+    setWindowTitle("Buoyancy Equilibrium Data Analysis");
+    QPalette p = US_GuiSettings::frameColorDefault();
+    setPalette( p );
+
+    QLabel* lb_runinfo = us_label("Data Info");
+    le_runinfo = us_lineedit("", 0, true);
+    QHBoxLayout *runinfo_lyt = new QHBoxLayout();
+    runinfo_lyt->addWidget(lb_runinfo);
+    runinfo_lyt->addWidget(le_runinfo);
+
+    QPushButton* pb_investigator = us_pushbutton( tr( "Select Investigator" ) );
+//    connect( pb_investigator, SIGNAL( clicked() ), SLOT( sel_investigator() ) );
+//    specs->addWidget( pb_investigator, s_row, 0 );
+
+    if ( US_Settings::us_inv_level() < 1 )
+       pb_investigator->setEnabled( false );
+
+    
+    int id = US_Settings::us_inv_ID();
+    //int id = protocol_details[ "invID_passed" ].toInt();
+    QString number  = ( id > 0 ) ?
+                         QString::number( US_Settings::us_inv_ID() ) + ": "
+                              : "";
+    le_investigator = us_lineedit( number + US_Settings::us_inv_name(), -1, true );
+    le_investigator->setMinimumWidth(150);
+//    specs->addWidget( le_investigator, s_row++, 1, 1, 3 );
+    QHBoxLayout *inv_lyt = new QHBoxLayout();
+    inv_lyt->addWidget(pb_investigator);
+    inv_lyt->addWidget(le_investigator);
+
+    disk_controls = new US_Disk_DB_Controls;
+
+    pb_load = us_pushbutton("Load Data");
+    pb_reset = us_pushbutton("Reset Data");
+    pb_save = us_pushbutton("Save");
+    pb_close = us_pushbutton("Close");
+
+    QGridLayout* load_lyt = new QGridLayout();
+    load_lyt->addWidget(pb_load,   0, 0, 1, 1);
+    load_lyt->addWidget(pb_reset,  0, 1, 1, 1);
+    load_lyt->addWidget(pb_close,       1, 0, 1, 1);
+    load_lyt->addWidget(pb_save,        1, 1, 1, 1);
+
+    QLabel *lb_inpList = us_banner("List of File(s)");
+    lw_inpData = us_listwidget();
+
+    QLabel *lb_selList = us_banner("Selected File(s)");
+    lw_selData = us_listwidget();
+
+    pb_rmItem = us_pushbutton("Remove Item");
+    pb_cleanList = us_pushbutton("Clean List");
+
+    ckb_xrange = new QCheckBox();
+    QGridLayout *us_xrange = us_checkbox("Limit Radius",
+                                                ckb_xrange);
+    pb_pick_rp = us_pushbutton("Pick Two Points", false);
+
+    ckb_norm_max = new QCheckBox();
+    QGridLayout *us_norm_max = us_checkbox("Normalize by Maximum",
+                                         ckb_norm_max);
+    pb_pick_norm = us_pushbutton("Pick a Point");
+
+    QGridLayout *bottom_lyt = new QGridLayout();
+    bottom_lyt->addWidget(pb_rmItem,         0, 0, 1, 1);
+    bottom_lyt->addWidget(pb_cleanList,      0, 1, 1, 1);
+    bottom_lyt->addLayout(us_xrange,         1, 0, 1, 1);
+    bottom_lyt->addWidget(pb_pick_rp,        1, 1, 1, 1);
+    bottom_lyt->addLayout(us_norm_max,       2, 0, 1, 1);
+    bottom_lyt->addWidget(pb_pick_norm,      2, 1, 1, 1);
+
+    ckb_rawData = new QCheckBox();
+    QGridLayout *rawData_lyt = us_checkbox("Raw Data", ckb_rawData);
+    ckb_rawData->setChecked(true);
+
+    ckb_integral = new QCheckBox();
+    QGridLayout *integral_lyt = us_checkbox("Integral", ckb_integral);
+    ckb_integral->setChecked(true);
+
+    ckb_norm = new QCheckBox();
+    QGridLayout *norm_lyt = us_checkbox("Normalized", ckb_norm);
+    ckb_norm->setChecked(true);
+
+    ckb_legend = new QCheckBox();
+    QGridLayout *legend_lyt = us_checkbox("Legend", ckb_legend);
+    ckb_legend->setChecked(true);
+
+    QHBoxLayout *intg_lyt = new QHBoxLayout();
+    intg_lyt->addStretch(1);
+    intg_lyt->addLayout(rawData_lyt);
+    intg_lyt->addLayout(integral_lyt);
+    intg_lyt->addLayout(norm_lyt);
+    intg_lyt->addLayout(legend_lyt);
+    intg_lyt->addStretch(1);
+
+    usplot = new US_Plot( plot, tr( "" ),
+                           tr( "Radius (in cm)" ), tr( "Absorbance" ),
+                           true, "", "" );
+    plot->setMinimumSize( 700, 400 );
+    plot->enableAxis( QwtPlot::xBottom, true );
+    plot->enableAxis( QwtPlot::yLeft  , true );
+    plot->setCanvasBackground(QBrush(Qt::white));
+
+    QVBoxLayout* main_lyt = new QVBoxLayout();
+    QHBoxLayout* body_lyt = new QHBoxLayout();
+    QVBoxLayout* left_lyt = new QVBoxLayout();
+    QVBoxLayout* right_lyt = new QVBoxLayout();
+
+    left_lyt->addLayout(inv_lyt);
+    //left_lyt->addLayout(disk_controls);
+    left_lyt->addLayout(load_lyt);
+    left_lyt->addWidget(lb_inpList);
+    left_lyt->addWidget(lw_inpData);
+    left_lyt->addWidget(lb_selList);
+    left_lyt->addWidget(lw_selData);
+    left_lyt->addLayout(bottom_lyt);
+    left_lyt->addStretch(1);
+
+    right_lyt->addLayout(intg_lyt);
+    right_lyt->addLayout(usplot);
+
+    left_lyt->setMargin(1);
+    left_lyt->setSpacing(1);
+    right_lyt->setMargin(1);
+    right_lyt->setSpacing(1);
+
+    body_lyt->addLayout(left_lyt, 1);
+    body_lyt->addLayout(right_lyt, 3);
+    body_lyt->setMargin(1);
+    body_lyt->setSpacing(0);
+
+    main_lyt->addLayout(runinfo_lyt);
+    main_lyt->addLayout(body_lyt);
+    main_lyt->setMargin(0);
+    main_lyt->setSpacing(0);
+    this->setLayout(main_lyt);
+
+    picker = new US_PlotPicker(plot);
+    picker->setRubberBand  ( QwtPicker::VLineRubberBand );
+    picker->setMousePattern( QwtEventPattern::MouseSelect1,
+                              Qt::LeftButton, Qt::ControlModifier );
+    picker->setRubberBandPen(QPen(Qt::red));
+    picker->setTrackerPen(QPen(Qt::red));
+    plotData();
+    picker_state = XNONE;
+
+    connect(pb_load, SIGNAL(clicked()), this, SLOT(slt_loadAUC()));
+    connect(pb_close, SIGNAL(clicked()), this, SLOT(close()));
+    connect(pb_reset, SIGNAL(clicked()), this, SLOT(slt_reset()));
+    connect(pb_save, SIGNAL(clicked()), this, SLOT(slt_save()));
+    connect(lw_inpData, SIGNAL(itemDoubleClicked(QListWidgetItem *)),
+            this, SLOT(slt_addRmItem(QListWidgetItem *)));
+    connect(lw_inpData, SIGNAL(currentRowChanged(int)), this, SLOT(slt_inItemSel(int )));
+    connect(lw_selData, SIGNAL(currentRowChanged(int)), this, SLOT(slt_outItemSel(int )));
+    connect(pb_rmItem, SIGNAL(clicked()), this, SLOT(slt_rmItem()));
+    connect(pb_cleanList, SIGNAL(clicked()), this, SLOT(slt_cleanList()));
+
+    connect(pb_pick_rp, SIGNAL(clicked()), this, SLOT(slt_pickRange()));
+    connect(pb_pick_norm, SIGNAL(clicked()), this, SLOT(slt_pickPoint()));
+    connect(ckb_xrange, SIGNAL(stateChanged(int)), this, SLOT(slt_xrange(int)));
+    connect(ckb_legend, SIGNAL(stateChanged(int)), this, SLOT(slt_legend(int)));
+    connect(ckb_integral, SIGNAL(stateChanged(int)), this, SLOT(slt_integral(int)));
+    connect(ckb_norm, SIGNAL(stateChanged(int)), this, SLOT(slt_norm(int)));
+    connect(ckb_rawData, SIGNAL(stateChanged(int)), this, SLOT(slt_rawData(int)));
+    connect(ckb_norm_max, SIGNAL(stateChanged(int)), this, SLOT(slt_norm_by_max(int)));
+    connect(picker, SIGNAL(cMouseUp(const QwtDoublePoint&)),
+            this,   SLOT(slt_mouse(const QwtDoublePoint&)));
+    ckb_norm_max->setCheckState(Qt::Checked);
+
+    //hide 
+    pb_investigator ->hide();
+    le_investigator ->hide();
+    pb_load->hide();
+    pb_reset->hide();
+    pb_save->hide();
+    pb_close->hide();
+
+    // //TEST
+    // QMap<QString, QString> protocol_details;
+    // //ABDE-MWL
+    // protocol_details[ "invID_passed" ] = QString("165");
+    // protocol_details[ "protocolName" ] = QString("GMP-test-ABDE-fromDisk");
+    // protocol_details[ "aprofileguid" ] = QString("6c376179-6eda-47e9-b699-3eef63c6fe6e");
+    // protocol_details[ "filename" ]     = QString("AAV_GMP_test_030325-run2366-dataDiskRun-1515");
+    // protocol_details[ "analysisIDs"  ] = QString("");
+    // protocol_details[ "expType" ]      = QString("ABDE");
+    // protocol_details[ "dataSource" ]   = QString("dataDiskAUC");
+    // protocol_details[ "statusID" ]     = QString("588");
+    // protocol_details[ "autoflowID" ]   = QString("1515");
+
+    //load_data_auto( protocol_details );
+    //END TEST
+}
+
+
 US_Norm_Profile::US_Norm_Profile(): US_Widgets()
 {
+    us_auto_mode = false;
+    
     setWindowTitle("Buoyancy Equilibrium Data Analysis");
     QPalette p = US_GuiSettings::frameColorDefault();
     setPalette( p );
@@ -174,6 +376,8 @@ US_Norm_Profile::US_Norm_Profile(): US_Widgets()
     ckb_norm_max->setCheckState(Qt::Checked);
 }
 
+
+
 void US_Norm_Profile::slt_xrange(int state){
     QString qs = "QPushButton { background-color: %1 }";
     QColor color = US_GuiSettings::pushbColor().color(QPalette::Active, QPalette::Button);
@@ -233,6 +437,54 @@ void US_Norm_Profile::slt_cleanList(void){
     lw_selData->clear();
     selectData();
 }
+
+void US_Norm_Profile::load_data_auto( QMap<QString,QString> & protocol_details )
+{
+  slt_reset();
+  slt_loadAUC_auto( protocol_details );
+}
+
+void US_Norm_Profile::slt_loadAUC_auto( QMap<QString,QString> & protocol_details)
+{
+  QDir runDir( protocol_details["ssf_dir_name"] );
+  QStringList fileList = runDir.entryList(QStringList() << "*.auc", QDir::Files, QDir::Name);
+  QStringList fPath;
+  for (int i=0; i<fileList.size(); ++i )
+    fPath << protocol_details["ssf_dir_name"] + "/" + fileList[i];
+  
+  if (fPath.size() == 0)
+    return;
+
+  qDebug() << "fPath -- " << fPath;
+  
+  QStringList badFiles;
+  for (int i = 0; i < fPath.size(); i++){
+    if (filePaths.contains(fPath.at(i)))
+      continue;
+    US_DataIO::RawData rawData;
+    int state = US_DataIO::readRawData(fPath.at(i), rawData);
+    QFileInfo finfo = QFileInfo(fPath.at(i));
+    if (state != US_DataIO::OK){
+      badFiles << finfo.fileName();
+      continue;
+    }
+    
+    xvalues << rawData.xvalues;
+    QString fname = finfo.fileName();
+    fname.chop(4);
+    filenames << fname;
+    filePaths << fPath.at(i);
+    lw_inpData->addItem(fname);
+    yvalues << rawData.scanData.last().rvalues;
+  }
+  if (badFiles.size() != 0){
+    QMessageBox::warning(this, "Error!",
+			 "These files could not be loaded!\n" +
+			 badFiles.join("\n"));
+  }
+}
+
+
 
 void US_Norm_Profile::slt_loadAUC(){
 
