@@ -1462,7 +1462,7 @@ DbgLv(0) << "DSM:   ASIZE" << nnls_a.size() << "c_used[n]" << c_used[kc-1];
    }
 }
 
-
+
 // Calculate residuals (FE Modeling and NNLS)
 void US_MPI_Analysis::calc_residuals( int         offset,
                                       int         dataset_count,
@@ -2583,8 +2583,11 @@ double US_MPI_Analysis::rmsd_combined_mc_models( US_Model& model )
       US_Math2::data_correction( avtemp, sd );
       double scorr   = sd.s20w_correction;
       double dcorr   = sd.D20w_correction;
-      component->s  /= scorr;
-      component->D  /= dcorr;
+      if ( dset->simparams.meshType != US_SimulationParameters::ASTFVM)
+      {
+         component->s  /= scorr;
+         component->D  /= dcorr;
+      }
       if ( component->extinction > 0.0 )
          component->molar_concentration = component->signal_concentration / component->extinction;
    }
@@ -2593,9 +2596,20 @@ double US_MPI_Analysis::rmsd_combined_mc_models( US_Model& model )
    US_DataIO::RawData    sdata;
    US_DataIO::EditedData edata = dset->run_data;
    US_AstfemMath::initSimData( sdata, edata, 0.0 );
-   US_Astfem_RSA* astfem_rsa = new US_Astfem_RSA( model, simparms );
-   astfem_rsa->calculate( sdata );
-
+   if ( dset->simparams.meshType == US_SimulationParameters::ASTFVM)
+   {
+      US_LammAstfvm* astfvm = new US_LammAstfvm( model, simparms );
+      astfvm->set_buffer( dset->solution_rec.buffer );
+      US_DataIO::RawData auc_data = dset->run_data.convert_to_raw_data();
+      astfvm->bandFormingGradient->calculate_gradient(dset->simparams, &auc_data);
+      astfvm->calculate( sdata );
+   }
+   else
+   {
+      US_Astfem_RSA* astfem_rsa = new US_Astfem_RSA( model, simparms );
+      astfem_rsa->set_debug_flag(dbg_level);
+      astfem_rsa->calculate( sdata );
+   }
    QVector< double > ti_noise = simulation_values.ti_noise;
    QVector< double > ri_noise = simulation_values.ri_noise;
    int    nscans   = edata.scanCount();
