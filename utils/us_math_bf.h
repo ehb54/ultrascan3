@@ -139,7 +139,7 @@ class US_UTIL_EXTERN US_Math_BF  : public QObject {
                              const QList<US_CosedComponent>& n_cosed_component,
                              int n_maxTime);
 
-            QString readGradientDataFromDB(const QString& load_key, QString &dir, US_DB2 *db) const const;
+            QString readGradientDataFromDB(const QString& load_key, QString &dir, US_DB2 *db) const;
 
             Band_Forming_Gradient(const US_SimulationParameters& sim_params, US_DataIO::EditedData* editedData, US_Buffer* buffer);
 
