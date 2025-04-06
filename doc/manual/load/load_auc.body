@@ -94,13 +94,13 @@
     <p> You may, of course, expand some or all of the run entries in order to
     select specific triples of a run.</p>
 
-    <img src="images/load_auc-trips.png" alt="LoadAUC Triples"/>
+    <p class="center"><img src="images/load_auc-trips.png" alt="LoadAUC Triples"/></p>
 
     <p> As documented for the <b>Search</b> field above, typing characters
     in the Search box causes the list to be limited to entries that contain
     the characters entered, without regard to case.</p>
 
-    <img src="images/load_auc-search.png" alt="LoadAUC Search"/>
+    <p class="center"><img src="images/load_auc-search.png" alt="LoadAUC Search"/></p>
 
     <p> Note that any selections must all be from the same run. Only one run
     selection is allowed. That is, the selection must be either of a single run
