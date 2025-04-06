@@ -550,8 +550,8 @@ void US_2dsaProcess::calculate_cosedimenting_component()
                   QVector<QVector<double>> visc_data(auc_data.scanCount());
                   QVector<QVector<double>> conc_data(auc_data.scanCount());
 
-
-
+                  int scan = 2;
+                  int* scan_hint = &scan;
                   for (int i = 0; i < auc_data.scanCount(); i++){
                      double time = auc_data.scanData[i].seconds;
                      QVector<double> ViscVec(auc_data.pointCount());
@@ -566,7 +566,7 @@ void US_2dsaProcess::calculate_cosedimenting_component()
                         Visc[ j ] = bfg->base_viscosity;
                         Conc[ j ] = 0.0;
                      }
-                     bfg->interpolateCCodiff(auc_data.pointCount(), auc_data.xvalues.data(), time, Visc, Dens, Conc);
+                     bfg->interpolateCCodiff(auc_data.pointCount(), auc_data.xvalues.data(), time, Visc, Dens, Conc, scan_hint);
                      dens_data[i] = DensVec;
                      visc_data[i] = ViscVec;
                      conc_data[i] = ConcVec;
