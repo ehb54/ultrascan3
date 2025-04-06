@@ -2159,7 +2159,7 @@ void US_LammAstfvm::AdjustSD( const double t, const int      Nv, const double* x
          break;
 
       case 2: // co-sedimenting
-         //** salt-protein
+         {//** salt-protein
          #ifdef DEBUG
             timer.start();
          #endif
@@ -2250,6 +2250,7 @@ void US_LammAstfvm::AdjustSD( const double t, const int      Nv, const double* x
             kst2 += (int) timer.restart();
             DbgLv(3) << "AdjSD:  times 1 2" << kst1 << kst2;
          #endif
+         }
 
          break;
 
