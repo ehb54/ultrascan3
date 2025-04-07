@@ -873,7 +873,7 @@ US_Math_BF::Band_Forming_Gradient::interpolateCCodiff( const int N, const double
    const auto scanData = dens_bfg_data.scanData.constData();
    double t0 = scanData[ scn - 2 ].seconds; // times of 1st 2 salt scans
    double t1 = scanData[ scn - 1 ].seconds;// index to the next scan to use
-   while ((t1 >= t) && (scn > 1))
+   while ((t1 >= t) && (scn > 2))
    {
       // walk down salt scans until we are straddling the desired time value
       t0 = t1;
@@ -939,7 +939,7 @@ US_Math_BF::Band_Forming_Gradient::interpolateCCodiff( const int N, const double
    const auto scanData = dens_bfg_data.scanData.constData();
    double t0 = scanData[ scn - 2 ].seconds; // times of 1st 2 salt scans
    double t1 = scanData[ scn - 1 ].seconds;// index to the next scan to use
-   while ((t1 >= t) && (scn > 1))
+   while ((t1 >= t) && (scn > 2))
    {
       // walk up salt scans until we are straddling the desired time value
       t0 = t1;
