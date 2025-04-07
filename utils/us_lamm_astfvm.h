@@ -166,7 +166,6 @@ class US_UTIL_EXTERN US_LammAstfvm : public QObject
       //! \param flag    Flag for whether or not to operate in show-movie mode.
       void setMovieFlag( bool );
 
-      void save_xla( const QString& dirname, US_DataIO::RawData sim_data, int i1 );
    signals:
       //! \brief Signal calculation start and give maximum steps
       //! \param nsteps Number of expected total calculation progress steps
@@ -279,17 +278,17 @@ class US_UTIL_EXTERN US_LammAstfvm : public QObject
       void SetNonIdealCase_4( );
 
       // Lamm equation step for sedimentation difference - predict
-      void LammStepSedDiff_P( double, double, int, double*, double*, double* );
+      void LammStepSedDiff_P( double, double, int, const double*, const double*, double*, const int* scan_hint = nullptr ) const;
 
       // Lamm equation step for sedimentation difference - calculate
-      void LammStepSedDiff_C( double, double, int, double*, double*, 
-                              int, const double*, const double*, double* );
+      void LammStepSedDiff_C( double t, double dt_, int M0, const double *x0, const double *u0, int M1, const double *x1,
+                              const double *u1p, double *u1, const int* scan_hint = nullptr) const;
 
       // Project piecewise quadratic solution onto mesh
-      static void   ProjectQ(   int, double*, double*, int, double*, double* );
+      static void   ProjectQ(   int, const double*, const double*, int, const double*, double* );
 
       // Integrate piecewise quadratic function defined on mesh
-      static double IntQs(      double*, double*, int, double, int, double );
+      static double IntQs( const double*, const double*, int, double, int, double );
 
       // Perform quadratic interpolation to fill out radius,conc. vectors
       static void   quadInterpolate( const double*, const double*, int,
@@ -298,7 +297,7 @@ class US_UTIL_EXTERN US_LammAstfvm : public QObject
       static void   LocateStar( int, const double*, int, const double*, int*, double* );
 
       // Adjust s and D arrays
-      void   AdjustSD(   double, int, double*, const double*, double*, double* );
+      void   AdjustSD( const double, const int, const double*, const double*, double*, double*, const int* ) const;
 
       static void   fun_phi(    double, double* );
 

@@ -60,10 +60,10 @@ class US_UTIL_EXTERN US_Math_BF  : public QObject {
 
             //! \brief Finds the root in a given interval with the boundaries x1 and x2 within epsilon of the
             //! function func using the secant method
-            //! \param x1 The lower boundary of the interval
-            //! \param x2 The upper boundary of the interval
+            //! \param x0 The lower boundary of the interval
+            //! \param x1 The upper boundary of the interval
             //! \return A boolean if a root was found, which was appended to the solutions QVector
-            bool solve(double &x1, double &x2);
+            bool solve(double &x0, double &x1);
 
             //! \brief Finds all roots in a given interval [i_min, i_max] within epsilon for the function func using
             //! the secant method and a grid resolution of grid_res
@@ -118,12 +118,12 @@ class US_UTIL_EXTERN US_Math_BF  : public QObject {
             //! \brief Calculate the eigenvalues
             bool get_eigenvalues( );
 
-            void load_data(US_DataIO::RawData* dens, US_DataIO::RawData* visc, US_DataIO::RawData* conc);
+            void load_data( const US_DataIO::RawData* dens, const US_DataIO::RawData* visc, const US_DataIO::RawData* conc);
 
-            bool save_data(QString folder, QString key, US_DB2* db);
+            bool save_data(const QString& folder, const QString& key, US_DB2* db);
 
             //! \brief Check if the band forming gradient is suitable for the simulation
-            //! \param n_mensicus The double value representing the new meniscus
+            //! \param n_menisicus The double value representing the new meniscus
             //! \param n_bottom The double value representing the new bottom
             //! \param n_overlay_volume The double value representing the new overlay volume
             //! \param n_cp_pathlen The double value representing the new path length of the cell
@@ -131,17 +131,17 @@ class US_UTIL_EXTERN US_Math_BF  : public QObject {
             //! \param n_cosed_component The new cosedimenting components
             //! \param n_maxTime The maximum time for the simulation
             //! \return A boolean if the band forming gradient is suitable
-            bool is_suitable(double n_mensicus,
+            bool is_suitable(double n_menisicus,
                              double n_bottom,
                              double n_overlay_volume,
                              double n_cp_pathlen,
                              double n_cp_angle,
-                             QList<US_CosedComponent> n_cosed_component,
+                             const QList<US_CosedComponent>& n_cosed_component,
                              int n_maxTime);
 
-            QString readGradientDataFromDB(QString load_key, QString &dir, US_DB2 *db);
+            QString readGradientDataFromDB(const QString& load_key, QString &dir, US_DB2 *db) const;
 
-            Band_Forming_Gradient(US_SimulationParameters asparms, US_DataIO::EditedData* editedData, US_Buffer* buffer);
+            Band_Forming_Gradient(const US_SimulationParameters& sim_params, US_DataIO::EditedData* editedData, US_Buffer* buffer);
 
 
             //! \brief Given an Vector of eigenvalues the norm is calculated for a given internal radius meniscus and
@@ -157,14 +157,14 @@ class US_UTIL_EXTERN US_Math_BF  : public QObject {
 
             //! \brief Calculate the equilibrium concentration of a cosedimenting component
             //! \param cosed_comp The cosedimenting component to calculate for
-            double calc_eq_comp_conc(US_CosedComponent &cosed_comp) const;
+            double calc_eq_comp_conc( const US_CosedComponent &cosed_comp) const;
 
             //! \brief Calculate the concentration of a given cosedimenting component at a given radius and a given time
             //! \param x The double value representing the radial position
             //! \param t The double value representing the point of time
             //! \param temp The double value representing the current temperature
             //! \param cosed_comp The cosedimenting component to calculate for
-            double calc_comp_conc(const double &x, const double &t,const double &temp, US_CosedComponent &cosed_comp);
+            double calc_comp_conc(const double &x, const double &t,const double &temp, const US_CosedComponent &cosed_comp);
 
             //! \brief Calculate the density/viscosity of the band forming gradient at a given radius x and a given point
             //! at time t
@@ -174,15 +174,14 @@ class US_UTIL_EXTERN US_Math_BF  : public QObject {
             //! \param T The double value representing the experimental temperature
             //! \param Dens The pointer to the start of the Density array
             //! \param Visc The pointer to the start of the Viscosity array
-            //! \param Conc The pointer to the start of the Concentration array
             //! \return boolean flag for the success of the adjustment
-            bool calc_dens_visc(int N, const double* x, const double &t, double& T, double* Dens, double* Visc);
+            bool calc_dens_visc(int N, const double* x, const double &t, const double& T, double* Dens, double* Visc);
 
-            bool adjust_sd(const double &x, const double &t, double& s, double& d, double& T, double& vbar);
+            bool adjust_sd(const double &x, const double &t, double& s, double& d, const double& T, const double& vbar);
 
             bool calc_dens_visc(const double &x, const double &t, double& s, double& d, const double& T, double& conc);
 
-            bool calculate_gradient(US_SimulationParameters asparms, US_DataIO::RawData* editedData);
+            bool calculate_gradient(US_SimulationParameters sim_params, US_DataIO::RawData* editedData);
 
             //! \brief Calculate the density/viscosity of the band forming gradient at a given radius x and a given point
             //! at time t
