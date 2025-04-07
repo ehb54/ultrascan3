@@ -3,7 +3,6 @@
 //
 #include <cmath>
 #include <utility>
-#include <algorithm>  // for std::clamp
 
 #include "us_math_bf.h"
 #include "us_settings.h"
@@ -754,6 +753,14 @@ US_Math_BF::Band_Forming_Gradient::calculate_gradient(US_SimulationParameters si
                     (editedData->scanData[bfg_idx].seconds-editedData->scanData[bfg_idx-1].seconds);
          double c = editedData->scanData[bfg_idx].temperature - (m * editedData->scanData[bfg_idx].seconds);
          temp = m * runtime + c;
+         m = (editedData->scanData[bfg_idx].rpm-editedData->scanData[bfg_idx-1].rpm)/
+                    (editedData->scanData[bfg_idx].seconds-editedData->scanData[bfg_idx-1].seconds);
+         c = editedData->scanData[bfg_idx].rpm - (m * editedData->scanData[bfg_idx].seconds);
+         rpm = m * runtime + c;
+         m = (editedData->scanData[bfg_idx].omega2t-editedData->scanData[bfg_idx-1].omega2t)/
+            (editedData->scanData[bfg_idx].seconds-editedData->scanData[bfg_idx-1].seconds);
+         c = editedData->scanData[bfg_idx].omega2t - (m * editedData->scanData[bfg_idx].seconds);
+         omega2t = m * runtime + c;
       }
       dens_scan.rvalues.clear();
       dens_scan.rvalues.resize(Nx);
@@ -882,7 +889,7 @@ US_Math_BF::Band_Forming_Gradient::interpolateCCodiff( const int N, const double
       DbgLv(3) << "BFG:interpolate:      0 t 1" << t0 << t << t1 << "  N s" << scn;
    }
    DbgLv(2) << "BFG:interpolate:   t0 t t1" << t0 << t << t1 << "  Nt scn" << scn;
-   const double et1 = std::clamp((t - t0) / (t1 - t0), 0.0, 1.0);
+   const double et1 = qMin(qMax((t - t0) / (t1 - t0), 0.0), 1.0);
    const double et0 = 1.0 - et1;
 
    // interpolate between xs[k-1] and xs[k]
@@ -908,7 +915,7 @@ US_Math_BF::Band_Forming_Gradient::interpolateCCodiff( const int N, const double
       // linear interpolation
       m = k - 1;
       xs_m = radius[m];
-      const double xik = std::clamp((xj - xs_m) / (xs_k - xs_m), 0.0, 1.0);
+      const double xik = qMin(qMax((xj - xs_m) / (xs_k - xs_m), 0.0), 1.0);
       const double xim = 1.0 - xik;
       DbgLv(3) << "jf=" << jf << " k=" << k << " m=" << m << " xj=" << xj << " xs[k]" << dens_bfg_data.radius(k)
                << " Nx=" << Nx << " xik=" << xik << " xim=" << xim;
@@ -948,7 +955,7 @@ US_Math_BF::Band_Forming_Gradient::interpolateCCodiff( const int N, const double
       DbgLv(3) << "BFG:interpolate:      0 t 1" << t0 << t << t1 << "  N s" << scn;
    }
    DbgLv(2) << "BFG:interpolate:   t0 t t1" << t0 << t << t1 << "  Nt scn" << scn;
-   const double et1 = std::clamp((t - t0) / (t1 - t0), 0.0, 1.0);
+   const double et1 = qMin(qMax((t - t0) / (t1 - t0), 0.0), 1.0);
    const double et0 = 1.0 - et1;
 
    // interpolate between xs[k-1] and xs[k]
@@ -976,7 +983,7 @@ US_Math_BF::Band_Forming_Gradient::interpolateCCodiff( const int N, const double
       // linear interpolation
       m = k - 1;
       xs_m = radius[m];
-      const double xik = std::clamp((xj - xs_m) / (xs_k - xs_m), 0.0, 1.0);
+      const double xik = qMin(qMax((xj - xs_m) / (xs_k - xs_m), 0.0), 1.0);
       const double xim = 1.0 - xik;
       DbgLv(3) << "jf=" << jf << " k=" << k << " m=" << m << " xj=" << xj << " xs[k]" << dens_bfg_data.radius(k)
                << " Nx=" << Nx << " xik=" << xik << " xim=" << xim;

@@ -174,7 +174,6 @@ class US_UTIL_EXTERN US_Math_BF  : public QObject {
             //! \param T The double value representing the experimental temperature
             //! \param Dens The pointer to the start of the Density array
             //! \param Visc The pointer to the start of the Viscosity array
-            //! \param Conc The pointer to the start of the Concentration array
             //! \return boolean flag for the success of the adjustment
             bool calc_dens_visc(int N, const double* x, const double &t, const double& T, double* Dens, double* Visc);
 

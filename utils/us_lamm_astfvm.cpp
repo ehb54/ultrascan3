@@ -43,16 +43,11 @@ US_LammAstfvm::Mesh::Mesh( const double xl, const double xr, const int Nelem, co
          x[i] = xl + static_cast<double>(i) * dx;
       }
 
-      for ( i = 0; i < Ne; i += 2 )
+      for ( i = 0; i < Ne; i++ )
       {
-         Eid[i] = 1;
+         Eid[i] = (i%2==0)?1:4;
+         RefLev[i] = 0; // Set all refinement levels to zero
       }
-      for ( i = 1; i < Ne; i += 2 )
-      {
-         Eid[i] = 4;
-      }
-      // Set all refinement levels to zero
-      std::fill_n( RefLev, RefLev + Ne, 0 );
    }
 }
 
@@ -181,7 +176,10 @@ void US_LammAstfvm::Mesh::Unrefine( double alpha )
    {
       // set unref mark on each elem
       // Mark all elements as unmarked initially.
-      std::fill_n( Mark, Ne, 0 );
+      for ( i = 0; i < Ne; i++ )
+      {
+         Mark[ i ] = 0;
+      }
 
       int Ne1 = Ne;
 
@@ -1893,7 +1891,7 @@ void
       const double sw2 = Sv[j] * param_w2;
       double       tmp = exp( -std::abs( sw2 ) * dt_ * 0.5 );
       xg0[j]           = xg1[j] - dt_ * MeshSpeedFactor * sw2 * xg1[j] * tmp;
-      xg0[j]           = std::clamp( xg0[j], param_m, param_b );
+      xg0[j]           = qMin( qMax(xg0[j], param_m), param_b );
       xt[j]            = ( xg1[j] - xg0[j] ) / dt_;
    }
    DbgLv( 2 ) << "  xg0 0 1 M Nm N" << xg0[0] << xg0[1] << xg0[Ng / 2] << xg0[Ng - 2] << xg0[Ng - 1] << "Ng"
