@@ -565,8 +565,8 @@ radius( Nx - 2 )
    {
       // save a copy of the salt data set so that it may be plotted for QC
       QString saltDataPath = US_Settings::resultDir() + "/salt_data";
-
-      if ( QDir dir; dir.mkpath( saltDataPath ) )
+      QDir dir;
+      if ( dir.mkpath( saltDataPath ) )
       {
          saltDataPath = saltDataPath + "/salt_data.RA.1.S.260.auc";
          US_DataIO::writeRawData( saltDataPath, sa_data );
