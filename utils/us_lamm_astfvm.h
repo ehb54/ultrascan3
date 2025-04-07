@@ -33,7 +33,7 @@ class US_UTIL_EXTERN US_LammAstfvm : public QObject
             //! \param xr    Right X (radius) value
             //! \param Nelem Number of elements
             //! \param Opt   Mesh option (0 for uniform)
-            Mesh( double xl, double xr, int Nelem, int Opt);
+            Mesh( double, double, int, int );
 
             //! \brief Destroy mesh
             ~Mesh();
@@ -42,13 +42,13 @@ class US_UTIL_EXTERN US_LammAstfvm : public QObject
             //! \param s  Sedimentation coefficient
             //! \param D  Diffusion coefficient
             //! \param w2 Omega squared
-            void InitMesh( double s, double D, double w2);
+            void InitMesh( double, double, double );
 
             //! \brief Refine mesh
             //! \param u0     Current concentration array
             //! \param u1     Next concentration array
             //! \param ErrTol Error tolerance
-            void RefineMesh( const double* u0, const double* u1, double ErrTol);
+            void RefineMesh( double*, double*, double );
 
             int     Nv;       //!< Number of grids
             int     Ne;       //!< Number of elements
@@ -68,10 +68,10 @@ class US_UTIL_EXTERN US_LammAstfvm : public QObject
             int*    Mark;     // ref/unref marker
 
             // private functions
-            void        ComputeMeshDen_D3( const double*, const double* ) const;
+            void ComputeMeshDen_D3( const double*, const double* );
             static void Smoothing( int, double*, double, int );
-            void        Unrefine(  double );
-            void        Refine(    double );
+            void Unrefine(  double );
+            void Refine(    double );
       };
 
       //! \brief data for co-sedimenting
@@ -166,6 +166,7 @@ class US_UTIL_EXTERN US_LammAstfvm : public QObject
       //! \param flag    Flag for whether or not to operate in show-movie mode.
       void setMovieFlag( bool );
 
+      void save_xla( const QString& dirname, US_DataIO::RawData sim_data, int i1 );
    signals:
       //! \brief Signal calculation start and give maximum steps
       //! \param nsteps Number of expected total calculation progress steps
@@ -278,17 +279,17 @@ class US_UTIL_EXTERN US_LammAstfvm : public QObject
       void SetNonIdealCase_4( );
 
       // Lamm equation step for sedimentation difference - predict
-      void LammStepSedDiff_P( double, double, int, const double*, const double*, double*, const int* scan_hint = nullptr ) const;
+      void LammStepSedDiff_P( double, double, int, double*, double*, double* );
 
       // Lamm equation step for sedimentation difference - calculate
-      void LammStepSedDiff_C( double t, double dt_, int M0, const double *x0, const double *u0, int M1, const double *x1,
-                              const double *u1p, double *u1, const int* scan_hint = nullptr) const;
+      void LammStepSedDiff_C( double, double, int, double*, double*, 
+                              int, const double*, const double*, double* );
 
       // Project piecewise quadratic solution onto mesh
-      static void   ProjectQ(   int, const double*, const double*, int, const double*, double* );
+      static void   ProjectQ(   int, double*, double*, int, double*, double* );
 
       // Integrate piecewise quadratic function defined on mesh
-      static double IntQs( const double*, const double*, int, double, int, double );
+      static double IntQs(      double*, double*, int, double, int, double );
 
       // Perform quadratic interpolation to fill out radius,conc. vectors
       static void   quadInterpolate( const double*, const double*, int,
@@ -297,7 +298,7 @@ class US_UTIL_EXTERN US_LammAstfvm : public QObject
       static void   LocateStar( int, const double*, int, const double*, int*, double* );
 
       // Adjust s and D arrays
-      void   AdjustSD( const double, const int, const double*, const double*, double*, double*, const int* ) const;
+      void   AdjustSD(   double, int, double*, const double*, double*, double* );
 
       static void   fun_phi(    double, double* );
 
