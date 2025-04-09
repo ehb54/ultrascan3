@@ -216,7 +216,6 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
       //sdiag_convert -> show(); //for debug
 
       //call abde normalizer
-      //sdiag_norm_profile = new US_Norm_Profile("AUTO");
       emit process_abde( protocol_details_at_analysis );
       sdiag_norm_profile->show();
 	

@@ -1485,6 +1485,13 @@ void US_ConvertGui::import_ssf_data_auto( QMap < QString, QString > & details_at
   //And save to DB -- Will probably be a separate funciton with:
   // (1) check for if saved already?
   // (2) switch to Reporting stage
+  
+  if( isSaved_auto() )
+    {
+      qDebug() << "SSF Already saved!";
+      return;
+    }
+    
   saveUS3DB();          
   writeTimeStateDisk(); // do we need timestate?
   writeTimeStateDB();   // do we need timestate?
@@ -8402,6 +8409,7 @@ DbgLv(1) << "Unable to remove file" << rmvfiles[ ii ];
 // Save to Database
 void US_ConvertGui::saveUS3DB( void )
 {
+ 
    // Verify connectivity
    US_Passwd pw;
    QString masterPW = pw.getPasswd();
