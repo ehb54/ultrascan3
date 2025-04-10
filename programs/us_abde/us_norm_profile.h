@@ -86,6 +86,11 @@ class US_Norm_Profile : public US_Widgets
         QCheckBox *ckb_norm_max; //!< Normalize by Maximum.
         US_PlotPicker *picker; //!< Plot picker object.
 
+        QStringList channList;
+        QComboBox* cb_chann;
+        QPushButton *pb_next_chann;
+        QPushButton *pb_prev_chann;
+
         //! \brief Select data for the plot.
         void selectData(void);
 
@@ -116,6 +121,9 @@ class US_Norm_Profile : public US_Widgets
         void slt_loadAUC(void);
         void slt_loadAUC_auto( QMap<QString,QString>& );
         void load_data_auto( QMap<QString,QString>& );
+        void new_chann_auto   ( int  );
+        void next_chann_auto( void );
+        void prev_chann_auto( void );
 
         //! \brief Slot to add or remove an item.
         //! \param item The list widget item.

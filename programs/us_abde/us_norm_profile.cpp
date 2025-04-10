@@ -48,6 +48,24 @@ US_Norm_Profile::US_Norm_Profile( QString auto_mode ): US_Widgets()
     pb_save = us_pushbutton("Save");
     pb_close = us_pushbutton("Close");
 
+    //chanels, next
+    QLabel *lb_channList = us_banner("Channel Selection");
+    QLabel *lb_chann = us_label("Channel");
+    cb_chann      = us_comboBox();
+    pb_next_chann = us_pushbutton("Next Channel");
+    pb_prev_chann = us_pushbutton("Previous Channel");
+    connect( cb_chann,  SIGNAL( currentIndexChanged( int ) ), 
+	     SLOT  ( new_chann_auto         ( int ) ) );
+    connect( pb_next_chann,   SIGNAL( clicked() ),
+	     SLOT( next_chann_auto()   ) );
+    connect( pb_prev_chann,   SIGNAL( clicked() ),
+	     SLOT( prev_chann_auto()   ) );
+    QGridLayout* chann_lyt = new QGridLayout();
+    chann_lyt->addWidget(lb_chann,        0, 0, 1, 1);
+    chann_lyt->addWidget(cb_chann,        0, 1, 1, 1);
+    chann_lyt->addWidget(pb_prev_chann,   1, 0, 1, 1);
+    chann_lyt->addWidget(pb_next_chann,   1, 1, 1, 1);
+    
     QGridLayout* load_lyt = new QGridLayout();
     load_lyt->addWidget(pb_load,   0, 0, 1, 1);
     load_lyt->addWidget(pb_reset,  0, 1, 1, 1);
@@ -74,10 +92,10 @@ US_Norm_Profile::US_Norm_Profile( QString auto_mode ): US_Widgets()
     pb_pick_norm = us_pushbutton("Pick a Point");
 
     QGridLayout *bottom_lyt = new QGridLayout();
-    bottom_lyt->addWidget(pb_rmItem,         0, 0, 1, 1);
-    bottom_lyt->addWidget(pb_cleanList,      0, 1, 1, 1);
-    bottom_lyt->addLayout(us_xrange,         1, 0, 1, 1);
-    bottom_lyt->addWidget(pb_pick_rp,        1, 1, 1, 1);
+    //bottom_lyt->addWidget(pb_rmItem,         0, 0, 1, 1);
+    //bottom_lyt->addWidget(pb_cleanList,      0, 1, 1, 1);
+    //bottom_lyt->addLayout(us_xrange,         1, 0, 1, 1);
+    //bottom_lyt->addWidget(pb_pick_rp,        1, 1, 1, 1);
     bottom_lyt->addLayout(us_norm_max,       2, 0, 1, 1);
     bottom_lyt->addWidget(pb_pick_norm,      2, 1, 1, 1);
 
@@ -111,6 +129,7 @@ US_Norm_Profile::US_Norm_Profile( QString auto_mode ): US_Widgets()
     plot->setMinimumSize( 700, 400 );
     plot->enableAxis( QwtPlot::xBottom, true );
     plot->enableAxis( QwtPlot::yLeft  , true );
+    //plot->enableAxis( QwtPlot::yRight  , true );
     plot->setCanvasBackground(QBrush(Qt::white));
 
     QVBoxLayout* main_lyt = new QVBoxLayout();
@@ -120,6 +139,8 @@ US_Norm_Profile::US_Norm_Profile( QString auto_mode ): US_Widgets()
 
     left_lyt->addLayout(inv_lyt);
     //left_lyt->addLayout(disk_controls);
+    left_lyt->addWidget(lb_channList);
+    left_lyt->addLayout(chann_lyt);
     left_lyt->addLayout(load_lyt);
     left_lyt->addWidget(lb_inpList);
     left_lyt->addWidget(lw_inpData);
@@ -186,7 +207,15 @@ US_Norm_Profile::US_Norm_Profile( QString auto_mode ): US_Widgets()
     pb_reset->hide();
     pb_save->hide();
     pb_close->hide();
-
+    pb_rmItem->hide();
+    pb_cleanList->hide();
+    ckb_xrange->hide();
+    pb_pick_rp->hide();
+    lb_inpList->hide(); 
+    lw_inpData->hide(); 
+    lb_selList->hide(); 
+    lw_selData ->hide();
+    
     // //TEST
     // QMap<QString, QString> protocol_details;
     // //ABDE-MWL
@@ -199,9 +228,10 @@ US_Norm_Profile::US_Norm_Profile( QString auto_mode ): US_Widgets()
     // protocol_details[ "dataSource" ]   = QString("dataDiskAUC");
     // protocol_details[ "statusID" ]     = QString("588");
     // protocol_details[ "autoflowID" ]   = QString("1515");
+    // protocol_details["ssf_dir_name"]   = QString("/home/alexey/ultrascan/imports/SSF-AAV_GMP_test_030325-run2366-dataDiskRun-1515");
+    // load_data_auto( protocol_details );
+    // //END TEST
 
-    //load_data_auto( protocol_details );
-    //END TEST
 }
 
 
@@ -446,11 +476,17 @@ void US_Norm_Profile::load_data_auto( QMap<QString,QString> & protocol_details )
 
 void US_Norm_Profile::slt_loadAUC_auto( QMap<QString,QString> & protocol_details)
 {
+  channList. clear();
   QDir runDir( protocol_details["ssf_dir_name"] );
   QStringList fileList = runDir.entryList(QStringList() << "*.auc", QDir::Files, QDir::Name);
   QStringList fPath;
   for (int i=0; i<fileList.size(); ++i )
-    fPath << protocol_details["ssf_dir_name"] + "/" + fileList[i];
+    {
+      fPath << protocol_details["ssf_dir_name"] + "/" + fileList[i];
+
+      QStringList file_n_list = fileList[i].split(".");
+      channList << file_n_list[2] + file_n_list[3];
+    }
   
   if (fPath.size() == 0)
     return;
@@ -482,9 +518,53 @@ void US_Norm_Profile::slt_loadAUC_auto( QMap<QString,QString> & protocol_details
 			 "These files could not be loaded!\n" +
 			 badFiles.join("\n"));
   }
+
+  //Populate channels
+  channList. removeDuplicates();
+  cb_chann -> addItems( channList );
+  cb_chann->setCurrentIndex( 0 );
 }
 
+//[AUTO]go over channels
+void US_Norm_Profile::new_chann_auto( int index )
+{
+  slt_cleanList();
+  
+  QString channame = cb_chann->itemText( index );
+  qDebug() << "ChannName: " << channame;
 
+  for(int i=0; i<filenames.size(); ++i )
+    {
+      QStringList file_n_list = filenames[i].split(".");
+
+      qDebug() << "file_n_list -- " << file_n_list;
+      
+      if ( channame.contains( file_n_list[2] ) &&
+	   channame.contains( file_n_list[3] ) )
+	{
+	  qDebug() << " selecting file " << filenames[i];
+	  lw_selData->addItem( filenames[i] );
+	  selFilenames.append( filenames[i] );
+	  selectData();
+	}
+    }
+}
+
+//[AUTO] next channel button
+void US_Norm_Profile::next_chann_auto( void )
+{
+  int row = cb_chann->currentIndex() + 1;
+  if ( (row + 1 ) <= cb_chann->count() )
+    cb_chann->setCurrentIndex( row );
+}
+
+//[AUTO] prev channel button
+void US_Norm_Profile::prev_chann_auto( void )
+{
+  int row = cb_chann->currentIndex() - 1;
+  if ( row  >= 0 )
+    cb_chann->setCurrentIndex( row );
+}
 
 void US_Norm_Profile::slt_loadAUC(){
 
@@ -671,14 +751,18 @@ void US_Norm_Profile::plotData(void){
     plot->detachItems(QwtPlotItem::Rtti_PlotItem, false);
     plot->enableAxis(QwtPlot::yRight, false);
     plot->enableAxis(QwtPlot::yLeft, false);
-    grid = us_grid(plot);
-    QPen pen_mj = grid->majorPen();
-    QPen pen_mn = grid->majorPen();
-    pen_mj.setColor(Qt::black);
-    pen_mn.setColor(Qt::black);
-    grid->setMajorPen(pen_mj);
-    grid->setMinorPen(pen_mn);
 
+    if ( !us_auto_mode )
+      {
+	grid = us_grid(plot);
+	QPen pen_mj = grid->majorPen();
+	QPen pen_mn = grid->majorPen();
+	pen_mj.setColor(Qt::black);
+	pen_mn.setColor(Qt::black);
+	grid->setMajorPen(pen_mj);
+	grid->setMinorPen(pen_mn);
+      }
+    
     int tpncy = 255;
     QMap<QString, QColor> color;
     color["blue"]    = QColor(0  , 0  , 255, tpncy);
@@ -724,8 +808,18 @@ void US_Norm_Profile::plotData(void){
             yTitle.setText("Absorbance (normalized)");
         else
             yTitle.setText("Absorbance");
-        plot->setAxisTitle(QwtPlot::yLeft, yTitle);
-        plot->enableAxis(QwtPlot::yLeft, true);
+
+	if ( us_auto_mode )
+	  {
+	    plot->setAxisTitle(QwtPlot::yRight, yTitle);
+	    plot->enableAxis(QwtPlot::yRight, true);
+	  }
+	else
+	  {
+	    plot->setAxisTitle(QwtPlot::yLeft, yTitle);
+	    plot->enableAxis(QwtPlot::yLeft, true);
+	  }
+	
         for (int i = 0; i < nd; i++){
             int np = xvalues_sel.at(i).size();
             xp = xvalues_sel.at(i).data();
@@ -736,6 +830,10 @@ void US_Norm_Profile::plotData(void){
             else
                 yp = yvalues_sel.at(i).data();
             QwtPlotCurve* curve = us_curve(plot, legend);
+
+	    if ( us_auto_mode )
+	      curve->setYAxis(QwtPlot::yRight);
+	      
             curve->setPen(pen);
             curve->setSamples(xp, yp, np);
 
@@ -747,7 +845,11 @@ void US_Norm_Profile::plotData(void){
             }
         }
         double dy = (maxY - minY) * 0.05;
-        plot->setAxisScale( QwtPlot::yLeft, minY - dy, maxY + dy);
+	
+	if ( us_auto_mode )
+	  plot->setAxisScale( QwtPlot::yRight, minY - dy, maxY + dy);
+	else
+	  plot->setAxisScale( QwtPlot::yLeft, minY - dy, maxY + dy);
     }
 
     minY =  1e99;
@@ -761,15 +863,23 @@ void US_Norm_Profile::plotData(void){
         else
             yTitle.setText("Integral");
 
-        if (ckb_rawData->isChecked()){
-            plot->setAxisTitle(QwtPlot::yRight, yTitle);
-            plot->enableAxis(QwtPlot::yRight, true);
-        }
-        else {
-            plot->setAxisTitle(QwtPlot::yLeft, yTitle);
-            plot->enableAxis(QwtPlot::yLeft, true);
-        }
-
+	if ( us_auto_mode )
+	  {
+	    plot->setAxisTitle(QwtPlot::yLeft, yTitle);
+	    plot->enableAxis(QwtPlot::yLeft, true);
+	  }
+	else
+	  {
+	    if (ckb_rawData->isChecked()){
+	      plot->setAxisTitle(QwtPlot::yRight, yTitle);
+	      plot->enableAxis(QwtPlot::yRight, true);
+	    }
+	    else {
+	      plot->setAxisTitle(QwtPlot::yLeft, yTitle);
+	      plot->enableAxis(QwtPlot::yLeft, true);
+	    }
+	  }
+    
         for (int i = 0; i < nd; i++){
             int np = midxval_sel.at(i).size();
             xp = midxval_sel.at(i).data();
@@ -780,9 +890,16 @@ void US_Norm_Profile::plotData(void){
             else
                 yp = integral_sel.at(i).data();
             QwtPlotCurve* curve = us_curve(plot, legend);
-            if (ckb_rawData->isChecked())
-                curve->setYAxis(QwtPlot::yRight);
-            curve->setPen(pen);
+
+	    if ( us_auto_mode )
+	      curve->setYAxis(QwtPlot::yLeft);
+	    else
+	      {
+		if (ckb_rawData->isChecked())
+		  curve->setYAxis(QwtPlot::yRight);
+	      }
+	    
+	    curve->setPen(pen);
             curve->setSamples(xp, yp, np);
 
             for (int j = 0; j < np; j++){
@@ -794,12 +911,20 @@ void US_Norm_Profile::plotData(void){
         }
 
         double dy = (maxY - minY) * 0.05;
-        if (ckb_rawData->isChecked()){
-            plot->setAxisScale( QwtPlot::yRight, minY - dy, maxY + dy);
-        }
-        else {
-            plot->setAxisScale( QwtPlot::yLeft, minY - dy, maxY + dy);
-        }
+
+	if ( us_auto_mode ) 
+	  {
+	    plot->setAxisScale( QwtPlot::yLeft, minY - dy, maxY + dy);
+	  }
+	else
+	  {
+	    if (ckb_rawData->isChecked()){
+	      plot->setAxisScale( QwtPlot::yRight, minY - dy, maxY + dy);
+	    }
+	    else {
+	      plot->setAxisScale( QwtPlot::yLeft, minY - dy, maxY + dy);
+	    }
+	  }
     }
 
     if (ckb_legend->isChecked()) {
@@ -815,6 +940,7 @@ void US_Norm_Profile::plotData(void){
     plot->replot();
 }
 
+
 void US_Norm_Profile::slt_legend(int state) {
 
     if (state == Qt::Checked) {
@@ -826,6 +952,7 @@ void US_Norm_Profile::slt_legend(int state) {
     }
     plot->replot();
 }
+
 
 void US_Norm_Profile::slt_rawData(int) {
     plotData();
@@ -920,6 +1047,13 @@ void US_Norm_Profile::slt_reset(){
     x_min_picked = -1;
     x_max_picked = -1;
     ckb_xrange->setCheckState(Qt::Unchecked);
+
+    if ( us_auto_mode )
+      {
+	channList. clear();
+	cb_chann->clear();
+	//cb_chann->disconnect();
+      }
 
 }
 
