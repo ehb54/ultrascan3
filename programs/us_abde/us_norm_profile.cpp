@@ -229,6 +229,7 @@ US_Norm_Profile::US_Norm_Profile( QString auto_mode ): US_Widgets()
     // protocol_details[ "statusID" ]     = QString("588");
     // protocol_details[ "autoflowID" ]   = QString("1515");
     // protocol_details["ssf_dir_name"]   = QString("/home/alexey/ultrascan/imports/SSF-AAV_GMP_test_030325-run2366-dataDiskRun-1515");
+    // protocol_details[ "channels_to_radial_ranges" ] = QString("2A:6.2-6.5;2B:5.8-7;4A:6.1-6.5;4B:6.1-6.5");
     // load_data_auto( protocol_details );
     // //END TEST
 
@@ -471,6 +472,7 @@ void US_Norm_Profile::slt_cleanList(void){
 void US_Norm_Profile::load_data_auto( QMap<QString,QString> & protocol_details )
 {
   slt_reset();
+  channels_ranges = protocol_details[ "channels_to_radial_ranges" ];
   slt_loadAUC_auto( protocol_details );
 }
 
@@ -938,6 +940,79 @@ void US_Norm_Profile::plotData(void){
     double dx = (maxX - minX) * 0.05;
     plot->setAxisScale( QwtPlot::xBottom, minX - dx, maxX + dx);
     plot->replot();
+
+    //if [AUTO-ABDE] mode, add ranges
+    if ( us_auto_mode )
+      {
+	QStringList c_ranges;
+	QString channame = cb_chann->currentText();
+	//e.g. "2A:6.2-6.5;2B:5.8-7;4A:6.1-6.5;4B:6.1-6.5"
+	QString chann_ranges = channels_ranges;
+	QStringList chann_ranges_l = chann_ranges.split(";");
+	for (int i=0; i<chann_ranges_l.size(); ++i)
+	  {
+	    QString chann_ranges_c = chann_ranges_l[i];
+	    QStringList chann_ranges_c_l = chann_ranges_c.split(":");
+	    if ( chann_ranges_c_l[0] == channame )
+	      {
+		qDebug() << "channel " << channame << ", has range(s): "
+			 << chann_ranges_c_l[1];
+		qDebug() << "List -- " << chann_ranges_c_l[1].split(",");
+		c_ranges = chann_ranges_c_l[1].split(",");
+		break;
+	      }
+	  }
+
+	for (int i=0; i<c_ranges.size(); ++i )
+	 {
+	   double point1 = c_ranges[ i ].split("-")[0].toDouble();
+	   double point2 = c_ranges[ i ].split("-")[1].toDouble();
+	   
+	   QwtPlotCurve* v_line_peak1;
+	   double r1[ 2 ];
+	   r1[ 0 ] = point1;
+	   r1[ 1 ] = point1;
+	   
+	   QwtPlotCurve* v_line_peak2;
+	   double r2[ 2 ];
+	   r2[ 0 ] = point2;
+	   r2[ 1 ] = point2;
+	   
+#if QT_VERSION < 0x050000
+	   QwtScaleDiv* y_axis = plot->axisScaleDiv( QwtPlot::yLeft );
+#else
+	   QwtScaleDiv* y_axis = (QwtScaleDiv*)&(plot->axisScaleDiv( QwtPlot::yLeft ));
+#endif
+	   
+	   double padding = ( y_axis->upperBound() - y_axis->lowerBound() ) / 30.0;
+	   
+	   double v[ 2 ];
+	   v [ 0 ] = y_axis->upperBound() - padding;
+	   v [ 1 ] = y_axis->lowerBound();// + padding;
+	   
+	   QString vline_name1 = "Low "  + QString::number( i );
+	   QString vline_name2 = "High " + QString::number( i );
+
+	   int color_index = i;
+	   
+	   while ( color_index >= sz_clist )
+	     color_index -= sz_clist;
+	   
+	   QPen pen1 = QPen( QBrush( color_list[ color_index ] ), 2.0, Qt::DotLine );
+	   
+	   v_line_peak1 = us_curve( plot, vline_name1 );
+	   //v_line_peak1 = us_curve( plot, "" );
+	   v_line_peak1 ->setSamples( r1, v, 2 );
+	   
+	   v_line_peak2 = us_curve( plot, vline_name2 );
+	   //v_line_peak2 = us_curve( plot, "" );
+	   v_line_peak2 ->setSamples( r2, v, 2 );
+	   
+	   v_line_peak1->setPen( pen1 );
+	   v_line_peak2->setPen( pen1 );
+	 }
+	plot->replot();
+      }
 }
 
 
@@ -1053,6 +1128,7 @@ void US_Norm_Profile::slt_reset(){
 	channList. clear();
 	cb_chann->clear();
 	//cb_chann->disconnect();
+	channels_ranges.clear();
       }
 
 }

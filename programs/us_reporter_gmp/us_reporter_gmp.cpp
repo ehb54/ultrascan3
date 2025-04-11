@@ -5444,7 +5444,7 @@ void US_ReporterGMP::process_combined_plots_individual ( QString triplesname_p, 
   QList < QStringList > modelDescModifiedList = sdiag_combplot->load_auto( runIDs_single, aDescrs );
   QStringList modelDescModified     = modelDescModifiedList[ 0 ];
   QStringList modelDescModifiedGuid = modelDescModifiedList[ 1 ];
-  
+   
   qDebug() << "[IND] ComboPlots generation: modelDescModified -- "     << modelDescModified;
   qDebug() << "[IND] ComboPlots generation: modelDescModifiedGuid -- " << modelDescModifiedGuid;
 

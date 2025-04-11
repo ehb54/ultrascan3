@@ -175,8 +175,10 @@ DbgLv(1) << "  irow" << irow << "icol" << icol;
 
 	   //save ssf-dir name for future DB save
 	   protocol_details_p["ssf_dir_name"] = this->protocol_details["ssf_dir_name"];
+
+	   //pass ranges from reportItems
+	   protocol_details_p["channels_to_radial_ranges"] = this->protocol_details[ "channels_to_radial_ranges" ];
 	 }
-       
      }
 }
 
@@ -860,6 +862,9 @@ bool US_MwlSpeciesFit::read_protocol(QStringList& msg_to_user)
 
   //clear QMap of extinciton profiles per channel
   extinction_profiles_per_channel. clear();
+
+  // //clear QMap of channels to radial ranges
+  // channels_to_radial_ranges. clear();
   
   US_Passwd pw;
   QString masterPW = pw.getPasswd();
@@ -875,11 +880,64 @@ bool US_MwlSpeciesFit::read_protocol(QStringList& msg_to_user)
   QString ProtocolName_auto = protocol_details[ "protocolName" ];
   int invID_p           = protocol_details[ "invID_passed" ].toInt();
   currProto         = US_RunProtocol();
+  currAProf         = US_AnaProfile();
   
   QString xmlstr( "" );
   US_ProtocolUtil::read_record_auto( ProtocolName_auto, invID_p,  &xmlstr, NULL, &db );
   QXmlStreamReader xmli( xmlstr );
   currProto. fromXml( xmli );
+
+  //read AProfile to later pass ranges
+  sdiag_aprof = new US_AnalysisProfileGui;
+  sdiag_aprof->inherit_protocol( &currProto );
+  currAProf   = sdiag_aprof->currProf;
+  //Channel reports
+  ch_reports             = currAProf.ch_reports;
+  //Channel descriptions
+  chndescs               = currAProf.chndescs;
+  //Channel alt_descriptions
+  chndescs_alt           = currAProf.chndescs_alt;
+  //Channel wavelengths
+  ch_wvls                = currAProf.ch_wvls; 
+
+  //get reportItems info
+  QString channels_to_radial_ranges;
+  int nchna   = currAProf.pchans.count();
+  for ( int i = 0; i < nchna; i++ )
+    {
+      QString channel_desc_alt = chndescs_alt[ i ];
+      QString channel_desc     = chndescs[ i ];
+      //QString channame_short   = channel_desc_alt.section( ":", 0, 0 )[0];
+      QString channame_short   = channel_desc_alt.split(":")[0];
+      
+      QMap < QString, US_ReportGMP > chann_reports = ch_reports[ channel_desc_alt ];
+      QString wvl  = QString::number( ch_wvls[ channel_desc_alt ][0] );
+
+      qDebug() << "Channel, " << channel_desc_alt << ", qst wvl, " << wvl;
+      US_ReportGMP reportGMP = chann_reports[ wvl ];
+
+      //Identify which type-methods will be in Combined ptols
+      QString range_l_h;
+      int report_items_number = reportGMP.reportItems.size();
+      for ( int kk = 0; kk < report_items_number; ++kk )
+	{
+	  US_ReportGMP::ReportItem curr_item = reportGMP.reportItems[ kk ];
+	  int     combPlot       = curr_item.combined_plot;
+	  int     ind_combPlot   = curr_item.ind_combined_plot;
+
+	  if ( curr_item.type == "Radius" )
+	    {
+	      range_l_h += QString::number( curr_item.range_low ) + "-" + QString::number( curr_item.range_high ) + ",";
+	    }
+	}
+      range_l_h. chop(1);
+      channels_to_radial_ranges += channame_short + ":" + range_l_h + ";";
+      qDebug() << "For channel " << channame_short << ", ranges are: " << range_l_h;
+      //channels_to_radial_ranges[ channame_short ] = range_l_h;
+    }
+  channels_to_radial_ranges. chop(1);
+  qDebug() << "channels_to_radial_ranges -- " << channels_to_radial_ranges;
+  protocol_details[ "channels_to_radial_ranges" ] = channels_to_radial_ranges;
 
   //read extinction profiles per channel
   for ( int ii = 0; ii < currProto.rpRange.nranges; ii++ )

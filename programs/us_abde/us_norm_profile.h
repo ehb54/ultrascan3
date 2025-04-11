@@ -70,6 +70,7 @@ class US_Norm_Profile : public US_Widgets
         double x_min_picked = -1; //!< Minimum X value picked.
         double x_max_picked = -1; //!< Maximum X value picked.
         double x_norm = -1; //!< A radial point that normalization occurs based on
+        QString channels_ranges;
 
         QListWidget *lw_inpData; //!< List widget for input data.
         QListWidget *lw_selData; //!< List widget for selected data.

@@ -21,7 +21,8 @@ HEADERS       = us_xpn_viewer_gui.h    \
                 ../us_convert/us_get_run.h \
                 ../us_convert/us_intensity.h \
                 ../us_convert/us_selectbox.h \
-                ../us_convert/us_select_triples.h 
+                ../us_convert/us_select_triples.h \
+                ../us_analysis_profile/us_analysis_profile.h 
                 
 SOURCES       = us_xpn_viewer_main.cpp  \
                 us_xpn_viewer_gui.cpp  \
@@ -38,7 +39,10 @@ SOURCES       = us_xpn_viewer_main.cpp  \
                 ../us_convert/us_get_run.cpp \
                 ../us_convert/us_intensity.cpp \
                 ../us_convert/us_selectbox.cpp \
-                ../us_convert/us_select_triples.cpp
+                ../us_convert/us_select_triples.cpp \
+                ../us_analysis_profile/us_analysis_profile.cpp \
+                ../us_analysis_profile/us_anapro_utils.cpp
+                
                 
                 
                                 
