@@ -89,6 +89,8 @@ void US_Hydrodyn::view_file(const QString &filename, QString title)
 
 void US_Hydrodyn::closeEvent(QCloseEvent *e)
 {
+   QTextStream( stdout ) << "close messagebox\n";
+   
    QMessageBox mb(us_tr("UltraScan"), us_tr("Attention:\nAre you sure you want to exit?"),
                   QMessageBox::Information,
                   QMessageBox::Yes | QMessageBox::Default,
@@ -138,11 +140,15 @@ void US_Hydrodyn::printError(const QString &str)
          QMessageBox::warning(this, us_tr("UltraScan Warning"), us_tr("Please note:\n\n") +
                               us_tr(str), QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
       }
+   } else {
+      QTextStream( stdout ) << "Error: " << str << "\n";
    }
 }
 
 void US_Hydrodyn::closeAttnt(QProcess *proc, QString message)
 {
+   QTextStream( stdout ) << "close messagebox still running\n";
+
    switch( QMessageBox::information( this,
                                      us_tr("Attention!"),   message + us_tr(" is still running.\n"
                                                                       "Do you want to close it?"),
@@ -804,6 +810,8 @@ bool US_Hydrodyn::install_new_version()
 
       return false;
    }
+
+   QTextStream( stdout ) << "new version detected messagebox\n";
 
    switch( QMessageBox::warning( 
                                 0, 
