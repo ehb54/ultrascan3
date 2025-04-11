@@ -2793,7 +2793,7 @@ void US_Hydrodyn::sync_pdb_info( QString /* msg */ ) {
 
 int US_Hydrodyn::issue_non_coded( bool quiet ) {
    us_qdebug( "issue_non_coded()" );
-   if ( quiet || advanced_config.expert_mode ) {
+   if ( !guiFlag || quiet || advanced_config.expert_mode ) {
       us_qdebug( "issue_non_coded() returning quiet or expert" );
       switch ( pdb_parse.missing_residues ) {
       case 0 : // list & stop op
@@ -2920,7 +2920,7 @@ int US_Hydrodyn::issue_non_coded( bool quiet ) {
 int US_Hydrodyn::issue_missing_atom( bool quiet ) {
 
    us_qdebug( "issue_missing_atom()" );
-   if ( quiet || advanced_config.expert_mode ) {
+   if ( !guiFlag || quiet || advanced_config.expert_mode ) {
       us_qdebug( "issue_missing_atom() returning quiet or expert" );
       switch ( pdb_parse.missing_atoms ) {
       case 0 : // list & stop op
