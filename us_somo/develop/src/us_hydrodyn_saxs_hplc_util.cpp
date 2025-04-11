@@ -123,6 +123,9 @@ void US_Hydrodyn_Saxs_Hplc::add()
    } else {
       add_plot( name, f_qs[ files[ 0 ] ], sum, f_is_time.count( files[ 0 ] ) ? f_is_time[ files[ 0 ] ] : false, false );
    }
+   if ( conc_files.count( files[ 0 ] ) ) {
+      conc_files.insert( name );
+   }
    update_enables();
 }
 

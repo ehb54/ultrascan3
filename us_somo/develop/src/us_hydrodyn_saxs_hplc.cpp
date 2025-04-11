@@ -3471,7 +3471,7 @@ bool US_Hydrodyn_Saxs_Hplc::save_file( QString file, bool &cancel, bool &overwri
       //    .arg( f_solvent_e_dens.count( file ) ? QString( " Solvent e density: %1 [e A^-3]" ).arg( f_solvent_e_dens[ file ] ) : QString("") )
       //    .arg( f_header.count( file ) ? f_header[ file ] : QString( "" ) )
       //    ;
-      ts << QString( windowTitle() + us_tr( " %1data: %2%3%4%5%6%7%8%9%10%11%12%13%14%15%16%17%18%19%20%21%22%23%24%25%26\n" ) )
+      ts << QString( windowTitle() + us_tr( " %1data: %2%3%4%5%6%7%8%9%10%11%12%13%14%15%16%17%18%19%20%21%22%23%24%25\n" ) )
          .arg( ( f_is_time.count( file ) && f_is_time[ file ] ? "Frame " : "" ) )
          .arg( file )
          .arg( units )
@@ -3488,7 +3488,6 @@ bool US_Hydrodyn_Saxs_Hplc::save_file( QString file, bool &cancel, bool &overwri
          .arg( f_e_nucleon_ratio.count( file ) ? QString( " Electron/nucleon ratio Z/A: %1" ).arg( f_e_nucleon_ratio[ file ] ) : QString("") )
          .arg( f_nucleon_mass.count( file ) ? QString( " Nucleon mass: %1 [g]" ).arg( f_nucleon_mass[ file ] ) : QString("") )
          .arg( f_solvent_e_dens.count( file ) ? QString( " Solvent e density: %1 [e A^-3]" ).arg( f_solvent_e_dens[ file ] ) : QString("") )
-         .arg( f_header.count( file ) ? f_header[ file ] : QString( "" ) )
          // .arg( mals_angles.loaded_filename.isEmpty() ? QString("") : QString( " Angles loaded from:%1" ).arg( mals_angles.loaded_filename ) )
          .arg( f_ri_corr.count( file ) ? QString( " RI-Corr scatt. angle:%1"  ).arg( f_ri_corr[ file ] ) : QString( "" ) )
          .arg( f_ri_corrs.count( file ) ? QString( " RI-Corr scatt. angles:%1"  ).arg( f_ri_corrs[ file ] ) : QString( "" ) )
@@ -5512,7 +5511,7 @@ void US_Hydrodyn_Saxs_Hplc::view()
                //    .arg( f_header.count( file ) ? f_header[ file ] : QString( "" ) )
                //    ;
 
-               text += QString( windowTitle() + us_tr( " %1data: %2%3%4%5%6%7%8%9%10%11%12%13%14%15%16%17%18%19%20%21%22%23%24%25%26\n" ) )
+               text += QString( windowTitle() + us_tr( " %1data: %2%3%4%5%6%7%8%9%10%11%12%13%14%15%16%17%18%19%20%21%22%23%24%25\n" ) )
                   .arg( ( f_is_time.count( file ) && f_is_time[ file ] ? "Frame " : "" ) )
                   .arg( file )
                   .arg( units )
@@ -5529,7 +5528,6 @@ void US_Hydrodyn_Saxs_Hplc::view()
                   .arg( f_e_nucleon_ratio.count( file ) ? QString( " Electron/nucleon ratio Z/A: %1" ).arg( f_e_nucleon_ratio[ file ] ) : QString("") )
                   .arg( f_nucleon_mass.count( file ) ? QString( " Nucleon mass: %1 [g]" ).arg( f_nucleon_mass[ file ] ) : QString("") )
                   .arg( f_solvent_e_dens.count( file ) ? QString( " Solvent e density: %1 [e A^-3]" ).arg( f_solvent_e_dens[ file ] ) : QString("") )
-                  .arg( f_header.count( file ) ? f_header[ file ] : QString( "" ) )
                   // .arg( mals_angles.loaded_filename.isEmpty() ? QString("") : QString( " Angles loaded from:%1" ).arg( mals_angles.loaded_filename ) )
                   .arg( f_ri_corr.count( file ) ? QString( " RI-Corr scatt. angle:%1"  ).arg( f_ri_corr[ file ] ) : QString( "" ) )
                   .arg( f_ri_corrs.count( file ) ? QString( " RI-Corr scatt. angles:%1"  ).arg( f_ri_corrs[ file ] ) : QString( "" ) )
@@ -8723,6 +8721,9 @@ void US_Hydrodyn_Saxs_Hplc::gauss_as_curves()
                    compute_gaussian( f_qs[ wheel_file ], tmp_g ),
                    true,
                    false );
+         if ( conc_files.count( wheel_file ) ) {
+            conc_files.insert( last_created_file );
+         }
       }
       if ( ( unsigned int ) gaussians.size() / gaussian_type_size > 1 )
       {
@@ -8731,6 +8732,9 @@ void US_Hydrodyn_Saxs_Hplc::gauss_as_curves()
                    compute_gaussian_sum( f_qs[ wheel_file ], gaussians ),
                    true,
                    false );
+         if ( conc_files.count( wheel_file ) ) {
+            conc_files.insert( last_created_file );
+         }
       }
    } else {
       // ggaussian mode

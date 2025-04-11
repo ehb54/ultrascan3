@@ -358,7 +358,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 
       QPushButton   *pb_load_conc;
       QPushButton   *pb_conc_file;
-      QLabel        *lbl_conc_file;
+      QLineEdit     *lbl_conc_file;
 
       QPushButton   *pb_detector;
 
@@ -825,17 +825,30 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 
       QLabel                           * lbl_broaden_msg;
 
+      QCheckBox                        * cb_broaden_tau;
       QLabel                           * lbl_broaden_tau;
       mQLineEdit                       * le_broaden_tau_start;
       mQLineEdit                       * le_broaden_tau;
       mQLineEdit                       * le_broaden_tau_end;
       mQLineEdit                       * le_broaden_tau_delta;
 
+      QCheckBox                        * cb_broaden_sigma;
+      QLabel                           * lbl_broaden_sigma;
+      mQLineEdit                       * le_broaden_sigma_start;
+      mQLineEdit                       * le_broaden_sigma;
+      mQLineEdit                       * le_broaden_sigma_end;
+      mQLineEdit                       * le_broaden_sigma_delta;
+
+      QCheckBox                        * cb_broaden_deltat;
       QLabel                           * lbl_broaden_deltat;
       mQLineEdit                       * le_broaden_deltat_start;
       mQLineEdit                       * le_broaden_deltat;
       mQLineEdit                       * le_broaden_deltat_end;
       mQLineEdit                       * le_broaden_deltat_delta;
+
+      QCheckBox                        * cb_broaden_baseline;
+      QLabel                           * lbl_broaden_baseline;
+      mQLineEdit                       * le_broaden_baseline;
 
       QLabel                           * lbl_broaden_kernel_end;
       mQLineEdit                       * le_broaden_kernel_end;
@@ -865,15 +878,16 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void                               broaden_plot( bool replot = true );
       void                               broaden_clear_plot();
       void                               broaden_compute_one();
+      double                             broaden_compute_loss();
+ public:
       bool                               broaden_compute_one_no_ui(
                                                                    double tau
+                                                                   ,double sigma
                                                                    ,double kernel_size
                                                                    ,double kernel_delta_t
-                                                                   ,US_Band_Broaden::kernel_type ktype
                                                                    ,const vector < double > & I
                                                                    ,vector < double > & broadened
                                                                    );
-      double                             broaden_compute_loss();
       double                             broaden_compute_loss_no_ui(
                                                                     const vector < double > & conc_t
                                                                     ,const vector < double > & conc_I
@@ -881,13 +895,17 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
                                                                     ,const vector < double > & ref_I
                                                                     ,const vector < double > & ref_errors
                                                                     );
+ private:
                                                        
  private slots:
 
       void                               broaden();
       void                               broaden_fit();
+      void                               broaden_lm_fit();
       void                               broaden_minimize();
       void                               broaden_reset();
+
+      void                               set_broaden_tau();
 
       void                               broaden_tau_start_text( const QString & );
       void                               broaden_tau_start_focus( bool );
@@ -901,6 +919,22 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void                               broaden_tau_delta_text( const QString & );
       void                               broaden_tau_delta_focus( bool );
 
+      void                               set_broaden_sigma();
+
+      void                               broaden_sigma_start_text( const QString & );
+      void                               broaden_sigma_start_focus( bool );
+
+      void                               broaden_sigma_text( const QString & );
+      void                               broaden_sigma_focus( bool );
+
+      void                               broaden_sigma_end_text( const QString & );
+      void                               broaden_sigma_end_focus( bool );
+
+      void                               broaden_sigma_delta_text( const QString & );
+      void                               broaden_sigma_delta_focus( bool );
+
+      void                               set_broaden_deltat();
+
       void                               broaden_deltat_start_text( const QString & );
       void                               broaden_deltat_start_focus( bool );
 
@@ -912,6 +946,11 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 
       void                               broaden_deltat_delta_text( const QString & );
       void                               broaden_deltat_delta_focus( bool );
+
+      void                               set_broaden_baseline();
+
+      void                               broaden_baseline_text( const QString & );
+      void                               broaden_baseline_focus( bool );
 
       void                               broaden_kernel_end_text( const QString & );
       void                               broaden_kernel_end_focus( bool );
@@ -972,10 +1011,13 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 
       bool          order_ascending;
 
+ public:
       void          editor_msg( QString color, QString msg );
       void          editor_msg_qc( QColor qcolor, QString msg );
-
       bool          running;
+
+ private:
+
 
       US_Hydrodyn_Saxs *saxs_window;
       bool             *saxs_widget;

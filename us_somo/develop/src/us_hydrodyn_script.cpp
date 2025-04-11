@@ -30,6 +30,8 @@ void US_Hydrodyn::gui_script_error( int line, QString cmd, QString msg, bool doe
 void US_Hydrodyn::gui_script_run() {
    TSO << "US_Hydrodyn::gui_script_run()\n";
 
+   guiFlag = false;
+
    QString script;
    {
       QString error;
@@ -276,4 +278,5 @@ void US_Hydrodyn::gui_script_run() {
       }
    }
    gui_script_msg( scriptlinesc, "script", "finished" );
+   guiFlag = true;
 }

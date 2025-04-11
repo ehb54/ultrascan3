@@ -167,9 +167,13 @@ void US_Hydrodyn_Saxs_Hplc_Fit::restore()
    hplc_win->gaussians = gaussians_undo[ 0 ];
    if ( update_hplc )
    {
+      hplc_win->suppress_replot = true;
       hplc_win->gauss_init_markers();
       hplc_win->gauss_init_gaussians();
       hplc_win->update_gauss_pos();
+      hplc_win->suppress_replot = false;
+      hplc_win->plot_dist->replot();
+      hplc_win->plot_errors->replot();
    }
    update_enables();
 }
@@ -184,9 +188,13 @@ void US_Hydrodyn_Saxs_Hplc_Fit::undo()
    hplc_win->gaussians = gaussians_undo.back();
    if ( update_hplc )
    {
+      hplc_win->suppress_replot = true;
       hplc_win->gauss_init_markers();
       hplc_win->gauss_init_gaussians();
       hplc_win->update_gauss_pos();
+      hplc_win->suppress_replot = false;
+      hplc_win->plot_dist->replot();
+      hplc_win->plot_errors->replot();
    }
    update_enables();
 }
@@ -768,9 +776,13 @@ void US_Hydrodyn_Saxs_Hplc_Fit::update_common()
    if ( update_hplc && save_gaussians != hplc_win->gaussians )
    {
       gaussians_undo.push_back( hplc_win->gaussians );
+      hplc_win->suppress_replot = true;
       hplc_win->gauss_init_markers();
       hplc_win->gauss_init_gaussians();
       hplc_win->update_gauss_pos();
+      hplc_win->suppress_replot = false;
+      hplc_win->plot_dist->replot();
+      hplc_win->plot_errors->replot();
    }
    update_enables();
 }
@@ -1964,9 +1976,13 @@ bool US_Hydrodyn_Saxs_Hplc_Fit::max_free_peak_delta( vector < double > & par ) {
    hplc_win->gaussians = tmp_gaussians;
    if ( update_hplc )
    {
+      hplc_win->suppress_replot = true;
       hplc_win->gauss_init_markers();
       hplc_win->gauss_init_gaussians();
       hplc_win->update_gauss_pos();
+      hplc_win->suppress_replot = false;
+      hplc_win->plot_dist->replot();
+      hplc_win->plot_errors->replot();
    }
    return true;
 }      
@@ -2204,9 +2220,13 @@ void US_Hydrodyn_Saxs_Hplc_Fit::lm( bool max_free_peak_delta_run, double prev_rm
 
    if ( update_hplc )
    {
+      hplc_win->suppress_replot = true;
       hplc_win->gauss_init_markers();
       hplc_win->gauss_init_gaussians();
       hplc_win->update_gauss_pos();
+      hplc_win->suppress_replot = false;
+      hplc_win->plot_dist->replot();
+      hplc_win->plot_errors->replot();
    }
    update_enables();
 }
@@ -2273,9 +2293,13 @@ void US_Hydrodyn_Saxs_Hplc_Fit::gsm_sd()
 
    if ( update_hplc )
    {
+      hplc_win->suppress_replot = true;
       hplc_win->gauss_init_markers();
       hplc_win->gauss_init_gaussians();
       hplc_win->update_gauss_pos();
+      hplc_win->suppress_replot = false;
+      hplc_win->plot_dist->replot();
+      hplc_win->plot_errors->replot();
    }
    progress->reset();
    update_enables();
@@ -2343,9 +2367,13 @@ void US_Hydrodyn_Saxs_Hplc_Fit::gsm_ih()
 
    if ( update_hplc )
    {
+      hplc_win->suppress_replot = true;
       hplc_win->gauss_init_markers();
       hplc_win->gauss_init_gaussians();
       hplc_win->update_gauss_pos();
+      hplc_win->suppress_replot = false;
+      hplc_win->plot_dist->replot();
+      hplc_win->plot_errors->replot();
    }
    progress->reset();
    update_enables();
@@ -2413,9 +2441,13 @@ void US_Hydrodyn_Saxs_Hplc_Fit::gsm_cg()
 
    if ( update_hplc )
    {
+      hplc_win->suppress_replot = true;
       hplc_win->gauss_init_markers();
       hplc_win->gauss_init_gaussians();
       hplc_win->update_gauss_pos();
+      hplc_win->suppress_replot = false;
+      hplc_win->plot_dist->replot();
+      hplc_win->plot_errors->replot();
    }
    progress->reset();
    update_enables();
@@ -2478,9 +2510,13 @@ void US_Hydrodyn_Saxs_Hplc_Fit::ga()
 
    if ( update_hplc )
    {
+      hplc_win->suppress_replot = true;
       hplc_win->gauss_init_markers();
       hplc_win->gauss_init_gaussians();
       hplc_win->update_gauss_pos();
+      hplc_win->suppress_replot = false;
+      hplc_win->plot_dist->replot();
+      hplc_win->plot_errors->replot();
    }
    progress->reset();
    update_enables();
@@ -2632,9 +2668,13 @@ void US_Hydrodyn_Saxs_Hplc_Fit::grid()
 
    if ( update_hplc )
    {
+      hplc_win->suppress_replot = true;
       hplc_win->gauss_init_markers();
       hplc_win->gauss_init_gaussians();
       hplc_win->update_gauss_pos();
+      hplc_win->suppress_replot = false;
+      hplc_win->plot_dist->replot();
+      hplc_win->plot_errors->replot();
    }
    progress->reset();
    update_enables();
@@ -2779,9 +2819,13 @@ void US_Hydrodyn_Saxs_Hplc_Fit::ga()
 
    if ( update_hplc )
    {
+      hplc_win->suppress_replot = true;
       hplc_win->gauss_init_markers();
       hplc_win->gauss_init_gaussians();
       hplc_win->update_gauss_pos();
+      hplc_win->suppress_replot = false;
+      hplc_win->plot_dist->replot();
+      hplc_win->plot_errors->replot();
    }
    progress->reset();
    update_enables();

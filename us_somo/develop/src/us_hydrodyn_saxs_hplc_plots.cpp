@@ -392,9 +392,11 @@ void US_Hydrodyn_Saxs_Hplc::update_plot_errors( vector < double > &grid,
                                                             ) ) );
       }         
 
-      plot_errors->setAxisScale( QwtPlot::xBottom, x[ 0 ], x.back() );
-      plot_errors->setAxisScale( QwtPlot::yLeft  , -maxy * 1.2e0 , maxy * 1.2e0 );
-      plot_errors_zoomer->setZoomBase();
+      if ( !suppress_replot ) {
+         plot_errors->setAxisScale( QwtPlot::xBottom, x[ 0 ], x.back() );
+         plot_errors->setAxisScale( QwtPlot::yLeft  , -maxy * 1.2e0 , maxy * 1.2e0 );
+         plot_errors_zoomer->setZoomBase();
+      }
       
 #if defined( DEBUG_RESCALE )
       {
@@ -958,7 +960,7 @@ void US_Hydrodyn_Saxs_Hplc::plot_files( bool save_zoom_state )
    // enable zooming
 
    if ( any_selected && !save_zoom_state ) {
-      qDebug() << "Plot files, save_zoom_state not active\n";
+      // qDebug() << "Plot files, save_zoom_state not active\n";
 
       plot_dist->setAxisScale( QwtPlot::xBottom, minx, maxx );
       plot_dist->setAxisScale( QwtPlot::yLeft  , miny * 0.9e0 , maxy * 1.1e0 );
