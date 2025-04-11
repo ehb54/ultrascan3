@@ -269,6 +269,38 @@ void US_Hydrodyn::gui_script_run() {
             batch_window->overwrite_all = true;
          } else if ( opt1 == "load" ) {
             batch_window->load_somo();
+         } else if ( opt1 == "set" ) {
+            if ( ls.isEmpty() ) {
+               gui_script_error( i, cmd, "missing argument" );
+            }
+            QString opt2 = ls.front(); ls.pop_front();
+            if ( ls.isEmpty() ) {
+               gui_script_error( i, cmd, "missing argument" );
+            }
+            QString opt3 = ls.front(); ls.pop_front();
+            if ( opt2 == "residue" ) {
+               if ( opt3 == "stop" ) {
+                  batch_window->rb_residue_stop->setChecked( true );
+               } else if ( opt3 == "skip" ) {
+                  batch_window->rb_residue_skip->setChecked( true );
+               } else if ( opt3 == "auto" ) {
+                  batch_window->rb_residue_auto->setChecked( true );
+               } else {
+                  gui_script_error( i, cmd, "unknown option : " + opt1 + " " + opt2 + " " + opt3 );
+               }
+            } else if ( opt2 == "atom" ) {
+               if ( opt3 == "stop" ) {
+                  batch_window->rb_atom_stop->setChecked( true );
+               } else if ( opt3 == "skip" ) {
+                  batch_window->rb_atom_skip->setChecked( true );
+               } else if ( opt3 == "auto" ) {
+                  batch_window->rb_atom_auto->setChecked( true );
+               } else {
+                  gui_script_error( i, cmd, "unknown option : " + opt1 + " " + opt2 + " " + opt3 );
+               }
+            } else {
+               gui_script_error( i, cmd, "unknown option : " + opt1 + " " + opt2 );
+            }
          } else {
             gui_script_error( i, cmd, "unknown option : " + opt1 );
          }
