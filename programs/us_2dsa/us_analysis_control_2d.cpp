@@ -175,7 +175,7 @@ DbgLv(1) << "idealThrCout" << nthr;
 
    ct_menisrng  = us_counter( 3, 0.01, 0.65, 0.03 );
    ct_menispts  = us_counter( 2,    3,   51,   11 );
-   ct_angle_range = us_counter( 3, 0.001, 1, 0.05 );
+   ct_angle_range = us_counter( 3, 0.001, 1, 0.005 );
    ct_angle_points  = us_counter( 2,    3,   51,   11 );
    ct_mciters   = us_counter( 3,    3, 2000,   20 );
    ct_menisrng ->setSingleStep( 0.001 );

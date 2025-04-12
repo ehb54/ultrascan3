@@ -141,7 +141,7 @@ DbgLv(1) << "2P:SF: sll sul nss" << slolim << suplim << nssteps
          edata              = &wdata;
          double bmeniscus   = bdata->meniscus;
          double bbottom     = bdata->bottom;
-         double bangle      = bsimparms.cp_angle;
+         double bangle      = bsimparms.band_volume;
          if ( bbottom == 0.0 )
          {
             bbottom            = dsets[ 0 ]->simparams.bottom;
@@ -149,13 +149,13 @@ DbgLv(1) << "2P:SF: sll sul nss" << slolim << suplim << nssteps
          }
          edata->meniscus    = bmeniscus - menrange * 0.5;
          edata->bottom      = bbottom   - menrange * 0.5;
-         dsets[ 0 ]->simparams.cp_angle = bangle - angle_range * 0.5;
+         dsets[ 0 ]->simparams.band_volume = bangle - angle_range * 0.5;
          dsets[ 0 ]->simparams.meniscus = edata->meniscus;
          dsets[ 0 ]->simparams.bottom   = edata->bottom;
 DbgLv(1) << "2P:SF: MENISC: mm_iter" << mm_iter
  << "bmeniscus bbottom" << bmeniscus << bbottom
  << "emeniscus ebottom" << edata->meniscus << edata->bottom
-         << "bangle eangle" << bsimparms.cp_angle << dsets[ 0 ]->simparams.cp_angle;
+         << "bangle eangle" << bsimparms.band_volume << dsets[ 0 ]->simparams.band_volume;
 
 //         set_meniscus();
       }
@@ -1308,7 +1308,7 @@ DbgLv(1) << "FIN_FIN: neediter" << neediter << "  sdiffs" << sdiffs
 
       double bmeniscus   = bdata->meniscus;
       double bbottom     = bdata->bottom;
-      double bangle      = bsimparms.cp_angle;
+      double bangle      = bsimparms.band_volume;
       double emeniscus   = bmeniscus;
       double ebottom     = bbottom;
       double eangle      = bangle;
@@ -1331,16 +1331,16 @@ DbgLv(1) << "FIN_FIN: neediter" << neediter << "  sdiffs" << sdiffs
       edata->bottom      = ebottom;
       simparms->meniscus = emeniscus;
       simparms->bottom   = ebottom;
-      simparms->cp_angle = eangle;
+      simparms->band_volume = eangle;
       s_rfiter           = QString::number( r_iter + 1 );
       s_mmiter           = QString::number( mm_iter );
       s_variance         = QString::number( vari_curr );
       s_meniscus         = QString::number( edata->meniscus );
       s_bottom           = QString::number( edata->bottom );
-      s_angle            = QString::number( simparms->cp_angle );
+      s_angle            = QString::number( simparms->band_volume );
 
 DbgLv(1) << "MENISC: k_iter m_iter b_iter a_iter" << k_iter << m_iter << b_iter << a_iter
- << "meniscus bottom angle" << edata->meniscus << simparms->bottom << simparms->cp_angle
+ << "meniscus bottom angle" << edata->meniscus << simparms->bottom << simparms->band_volume
  << "bbottom mtiters" << bbottom << mtiters;
 if(mtiters>50)
  DbgLv(1) << "MENISC: mtiters mmiters" << mtiters << mmiters
@@ -1387,8 +1387,8 @@ if(mtiters>50)
       if ( ff_angle )
       {
          int a_iter = ff_oangle ? k_iter : k_iter / mmiters;
-         double sangle   = bsimparms.cp_angle - angle_range * 0.5;
-         simparms->cp_angle = sangle + (double)a_iter * angle_delta;
+         double sangle   = bsimparms.band_volume - angle_range * 0.5;
+         simparms->band_volume = sangle + (double)a_iter * angle_delta;
       }
      if (dens_grad)
          {
@@ -1402,7 +1402,7 @@ if(mtiters>50)
    s_variance         = QString::number( vari_curr );
    s_meniscus         = QString::number( edata->meniscus );
    s_bottom           = QString::number( edata->bottom );
-   s_angle            = QString::number( simparms->cp_angle );
+   s_angle            = QString::number( simparms->band_volume );
 
    emit process_complete( 9 );     // signal that all processing is complete
 }
@@ -2011,7 +2011,7 @@ void US_2dsaProcess::set_meniscus()
 DbgLv(1) << "SET_MEN: k_iter m_iter b_iter a_iter" << k_iter << m_iter << b_iter << a_iter;
    double bmeniscus   = bdata->meniscus;
    double bbottom     = bdata->bottom;
-   double bangle      = bsimparms.cp_angle;
+   double bangle      = bsimparms.band_volume;
 DbgLv(1) << "SET_MEN: bmeniscus bbottom bangle" << bmeniscus << bbottom << bangle;
    double emeniscus   = bmeniscus;
    double ebottom     = bbottom;
@@ -2033,12 +2033,12 @@ DbgLv(1) << "SET_MEN: bmeniscus bbottom bangle" << bmeniscus << bbottom << bangl
    }
    edata->meniscus    = emeniscus;
    edata->bottom      = ebottom;
-   simparms->cp_angle = eangle;
-DbgLv(1) << "SET_MEN: emeniscus ebottom eangle" << edata->meniscus << edata->bottom << simparms->cp_angle;
+   simparms->band_volume = eangle;
+DbgLv(1) << "SET_MEN: emeniscus ebottom eangle" << edata->meniscus << edata->bottom << simparms->band_volume;
    simparms->meniscus = edata->meniscus;
    simparms->bottom   = edata->bottom;
 DbgLv(1) << "SET_MEN: k_iter m_iter b_iter a_iter" << k_iter << m_iter << b_iter << a_iter
- << "meniscus bottom angle" << edata->meniscus << simparms->bottom << simparms->cp_angle << "bbot" << bbottom;
+ << "meniscus bottom angle" << edata->meniscus << simparms->bottom << simparms->band_volume << "bbot" << bbottom;
 
    // Re-queue all the original subgrid tasks
    if ( mm_iter > 0 )
