@@ -87,7 +87,7 @@ US_Hydrodyn_Saxs_Hplc_Fit::US_Hydrodyn_Saxs_Hplc_Fit(
    // update_enables();
 
 #warning settings always enabled as if conc file
-   if ( 1 && hplc_win->conc_files.count( hplc_win->wheel_file ) )
+   if ( 1 || hplc_win->conc_files.count( hplc_win->wheel_file ) )
    {
       cb_pct_center          ->setChecked( dist1_active );
       cb_pct_center_from_init->setChecked( true );
