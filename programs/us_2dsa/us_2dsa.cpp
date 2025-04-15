@@ -203,7 +203,7 @@ void US_2dsa::analysis_done( int updflag )
       double  rmsd  = sqrt( vari );
       le_vari->setText( QString::number( vari ) );
       le_rmsd->setText( QString::number( rmsd ) );
-DbgLv(1) << "Analysis Done VARI" << vari << "model,noise counts"
+DbgLv(0) << "Analysis Done VARI" << vari << "model,noise counts"
  << models.count() << (ti_noises.count()+ri_noises.count())
       << mdesc
  << "menisc bott angle"
@@ -837,7 +837,56 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
 
       if ( dbP != NULL )
       {  // If DB, load and store in the database
-         model.load( tname );
+         model.load( mname );
+
+         US_Model model2 = model;
+         qDebug() << "::::: nmodel=" << model.components.size() << " nmodel2=" << model2.components.size();
+         double avtemp  = dset.temperature;
+         for ( int ii = 0; ii < model2.components.size(); ii++ )
+         {
+            US_Model::SimulationComponent* component = &model2.components[ ii ];
+
+            US_Math2::SolutionData  sd;
+            sd.viscosity   = dset.viscosity;
+            sd.density     = dset.density;
+            sd.manual      = dset.manual;
+            sd.vbar20      = model2.components[ ii ].vbar20;
+            sd.vbar        = US_Math2::adjust_vbar20( sd.vbar20, avtemp );
+            US_Math2::data_correction( avtemp, sd );
+            double scorr   = sd.s20w_correction;
+            double dcorr   = sd.D20w_correction;
+            component->s  /= scorr;
+            component->D  /= dcorr;
+            if ( component->extinction > 0.0 )
+               component->molar_concentration = component->signal_concentration / component->extinction;
+         }
+
+         SIMPARAMS simparms = dset.simparams;
+         int drow = lw_triples->currentRow();
+         US_AstfemMath::initSimData( sdata, dataList[ drow ], 0.0 );
+         US_Astfem_RSA* astfem_rsa = new US_Astfem_RSA( model2, simparms );
+         astfem_rsa->calculate( sdata );
+
+         int kpts = 0;
+         double variance = 0.0;
+         bool sub_ri = ri_noise.values.size() > 0 ? true : false;
+         bool sub_ti = ti_noise.values.size() > 0 ? true : false;
+         qDebug() << "::::: sub_ri=" << sub_ri << " sub_ti=" << sub_ti;
+         for ( int ii = 0; ii < sdata.scanCount(); ii++ )
+         {
+            double rin = sub_ri ? ri_noise.values.at( ii ) : 0.0;
+            for ( int jj = 0; jj < sdata.pointCount(); jj++ )
+            { // Calculate the residuals and the RMSD
+               double tin  = sub_ti ? ti_noise.values.at( jj ) : 0.0;
+               double diff = edata->value( ii, jj ) - sdata.value( ii, jj ) - rin - tin;
+               variance += sq( diff );
+               kpts++;
+            }
+         }
+         variance  /= static_cast<double>( kpts );
+         le_vari->setText( QString::number( variance ) );
+         le_rmsd->setText( QString::number( sqrt( variance ) ) );
+         model.variance = variance;
          model.write( dbP );
       }
    }
