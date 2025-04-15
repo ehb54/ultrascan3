@@ -1197,9 +1197,9 @@ DbgLv(1) << "pDi:  ndispt" << ndispt << "ID" << distrID.left(20);
       data_curv->setPen  ( QPen( QBrush( ddesc.color ), 3.0, Qt::SolidLine ) );
       data_curv->setStyle( QwtPlotCurve::Lines );
 
-      if ( ind_distro )
-	ndispt    = envel_data_auto ( ddesc.xvals, ddesc.yvals, xenv, yenv, sigma_p, xmin_p, xmax_p );
-      else
+      // if ( ind_distro )
+      // 	ndispt    = envel_data_auto ( ddesc.xvals, ddesc.yvals, xenv, yenv, sigma_p, xmin_p, xmax_p );
+      // else
 	ndispt    = envel_data( ddesc.xvals, ddesc.yvals, xenv, yenv ); //test
       
       xx        = xenv.data();
