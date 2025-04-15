@@ -1152,9 +1152,9 @@ void US_DDistr_Combine::plot_distr_auto( DistrDesc ddesc, QString distrID, QMap<
       if ( jj.key().contains( "Gaussian" ) )
 	sigma_p = jj.value().toDouble();
       else if ( jj.key().contains( "Minimum" )  )
-	xmin_p = jj.value().toDouble();
+      	xmin_p = jj.value().toDouble();
       else if ( jj.key().contains( "Maximum" ) )
-	xmax_p = jj.value().toDouble();
+      	xmax_p = jj.value().toDouble();
       else if ( jj.key().contains( "Ranges" ) )
 	ranges_p = jj.value();
       else if ( jj.key().contains( "s_ranges" ) )
@@ -1190,8 +1190,9 @@ DbgLv(1) << "pDi:  ndispt" << ndispt << "ID" << distrID.left(20);
       data_curv->setPen  ( QPen( QBrush( ddesc.color ), 3.0, Qt::SolidLine ) );
       data_curv->setStyle( QwtPlotCurve::Lines );
 
-      ndispt    = envel_data_auto ( ddesc.xvals, ddesc.yvals, xenv, yenv, sigma_p, xmin_p, xmax_p );
-
+      //ndispt    = envel_data_auto ( ddesc.xvals, ddesc.yvals, xenv, yenv, sigma_p, xmin_p, xmax_p );
+      ndispt    = envel_data( ddesc.xvals, ddesc.yvals, xenv, yenv ); //test
+      
       xx        = xenv.data();
       yy        = yenv.data();
       for (int i=0; i<xenv.size(); i++)

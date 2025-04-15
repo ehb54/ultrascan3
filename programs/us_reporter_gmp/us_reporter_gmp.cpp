@@ -7383,14 +7383,11 @@ void  US_ReporterGMP::assemble_plots_html( QStringList PlotsFilenames, const QSt
       qDebug() << "qprinters_width, height [orig, scaled]: "
 	       << pageSize.width() << pageSize.height() << "; "
 	       << qprinters_width << qprinters_hight; 
-      double i_scale_factor = double( qprinters_width / i_width ); 
-      int scaled_i_width  = i_width  * i_scale_factor;
-      int scaled_i_height = i_height * i_scale_factor;
-      
-      // int scaled_i_height     = double( qprinters_hight );
-      // double i_scale_factor_h = double( i_height / scaled_i_height ); 
-      // int scaled_i_width      = double( i_width * i_scale_factor_h );
-
+      double i_scale_factor  = double( qprinters_width / i_width ); 
+      double scaled_i_width  = double( i_width  * i_scale_factor );
+      double scaled_i_height = double(i_height) * ( scaled_i_width / double(i_width ));
+      //int scaled_i_height = i_height * i_scale_factor;
+     
       qDebug() << "Image scaled, " << filename << "scaled_width, scaledheight: " << scaled_i_width << scaled_i_height;
       
       /* for Combined Plots 
@@ -7408,7 +7405,7 @@ void  US_ReporterGMP::assemble_plots_html( QStringList PlotsFilenames, const QSt
 
       if ( !plot_type.isEmpty() ) // For Combined plots, scale down .png 
        	//html_assembled  += "\"height=\"500 \"width=\"500";
-	html_assembled  += " \"height=\"" + QString::number( scaled_i_width ) + "\"width=\"" + QString::number( scaled_i_width);
+	html_assembled  += " \"height=\"" + QString::number( scaled_i_height ) + "\"width=\"" + QString::number( scaled_i_width);
       else
 	{
 	  html_assembled  += " \"height=\"" + QString::number( scaled_i_height ) + "\"width=\"" + QString::number( scaled_i_width);
