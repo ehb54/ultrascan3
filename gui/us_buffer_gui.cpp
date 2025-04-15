@@ -2096,7 +2096,7 @@ bool US_BufferGui::load_buffer( const QString& load_init, US_Buffer& bufferIn ) 
    loaded = selectTab->load_buffer(load_init, bufferIn);
    if ( bufferIn.description != orig_buffer.description ) {
       // we selected our buffer, let's return it
-      valueChanged      ( buffer.density, buffer.viscosity );
+      emit valueChanged      ( buffer.density, buffer.viscosity );
       US_WidgetsDialog::accept();
       return loaded;
    }
@@ -2177,7 +2177,7 @@ DbgLv(1) << "main: newBufCanceled  bGUID" << buffer.GUID;
 // Exit and signal caller that changes and selected were accepted
 void US_BufferGui::bufferAccepted( void )
 {
-   valueChanged      ( buffer.density, buffer.viscosity );
+   emit valueChanged ( buffer.density, buffer.viscosity );
    emit valueChanged ( buffer );
    emit valueBufferID( buffer.bufferID );
    accept();
