@@ -45,7 +45,7 @@ class US_2dsaProcess : public QObject
       //! \brief Create a 2DSA processor object
       //! \param dsets     Pointer to input experiment data
       //! \param parent    Pointer to parent object
-      US_2dsaProcess( QList< SS_DATASET* >&, QObject* = nullptr );
+      US_2dsaProcess( QList< SS_DATASET* >& dsets, QObject* parent = nullptr );
 
       //! \brief Start the fit calculations
       //! \param sll     s lower limit
@@ -57,8 +57,8 @@ class US_2dsaProcess : public QObject
       //! \param ngr     number of grid refinements
       //! \param nthr    number of threads
       //! \param noif    noise flag: 0-3 for none|ti|ri|both
-      void start_fit( double, double, int, double, double, int,
-                      int, int, int );
+      void start_fit( double sll, double sul, int nss, double kll, double kul, int nks,
+                      int ngr, int nthr, int noif);
 
       //! \brief Set up iteration-related parameters for a fit
       //! \param mxiter  Maximum refinement iterations
@@ -70,8 +70,8 @@ class US_2dsaProcess : public QObject
       //! \param jgref   Flag of refine/solute type
       //! \param fittyp  Flag of fit: 0-3 -> none,meni,bott,menbot,angle,meniangle
       //! \param angle_range  Angle range
-      void set_iters( int, int, int, double, double, double, int,
-                      int = 0, double = 0.0 );
+      void set_iters( int mxiter, int mciter, int mniter, double vtoler, double menrng, double cff0, int jgref,
+                      int fittyp = 0, double angle_range = 0.0 );
 
       //! \brief Get results upon completion of all refinements
       //! \param da_sim  Calculated simulation data
@@ -80,13 +80,13 @@ class US_2dsaProcess : public QObject
       //! \param da_tin  Time-invariant noise (or null)
       //! \param da_rin  Radially-invariant noise (or null)
       //! \returns       Success flag:  true if successful
-      bool get_results( US_DataIO::RawData*, US_DataIO::RawData*,
-                        US_Model*, US_Noise*, US_Noise* );
+      bool get_results( US_DataIO::RawData* da_sim, US_DataIO::RawData* da_res,
+                        US_Model* da_mdl, US_Noise* da_tin, US_Noise* da_rin );
 
       //! \brief Get results upon completion of all refinements
       //! \param mp_val  Calculated simulation data
       //! \returns       Success flag:  true if successful
-      bool get_values( QMap< QString, QString >& );
+      bool get_values( QMap< QString, QString >& mp_val );
 
       //! \brief Stop the current fit processing
       void stop_fit(       void );
@@ -97,7 +97,7 @@ class US_2dsaProcess : public QObject
       //! \brief Estimate progress steps after depth 0
       //! \param ncsol Number of last calculated solutes
       //! \returns     Number of estimated remaining steps
-      int  estimate_steps( int  );
+      int  estimate_steps( int ncsol );
 
       void calculate_cosedimenting_component();
 
