@@ -25,6 +25,9 @@ static unordered_map < double,
                                        unordered_map < double,
                                                        vector < double > > > > bblm_broadened_conc_I_cache;
 #define BBLM_INTERP_PAD 1e6
+#define BROADEN_LM_ENORM
+// #define BROADEN_NO_CHI2
+// #define BROADEN_NO_BASELINE
 
 static double bblm_fit( double t, const double *par ) {
    // qDebug() << "bblm_fit 0";
@@ -60,7 +63,15 @@ static double bblm_fit( double t, const double *par ) {
          return DBL_MAX;
       }
 
-      return bblm_broadened_conc_I_cache[ tau ][ sigma ][ deltat ][ (size_t) t ] + baseline * bblm_scale;
+      if ( bblm_ref_has_errors ) {
+         if ( (size_t) t >= bblm_ref_errors_mult.size() ) {
+            qDebug() << QString( "--> error, t value %1 outside of errors range" ).arg( t );
+            return DBL_MAX;
+         }
+         return bblm_broadened_conc_I_cache[ tau ][ sigma ][ deltat ][ (size_t) t ] + baseline * bblm_scale * bblm_ref_errors_mult[ t ];
+      } else {
+         return bblm_broadened_conc_I_cache[ tau ][ sigma ][ deltat ][ (size_t) t ] + baseline * bblm_scale;
+      }
    }
 
    if ( !uhsh->broaden_compute_one_no_ui(
@@ -128,9 +139,16 @@ static double bblm_fit( double t, const double *par ) {
       return DBL_MAX;
    }
 
-   return new_conc_I[ (size_t) t ] + baseline * bblm_scale;
+   if ( bblm_ref_has_errors ) {
+      if ( (size_t) t >= bblm_ref_errors_mult.size() ) {
+         qDebug() << QString( "--> error, t value %1 outside of errors range" ).arg( t );
+         return DBL_MAX;
+      }
+      return new_conc_I[ (size_t) t ] + baseline * bblm_scale * bblm_ref_errors_mult[ t ];
+   } else {
+      return new_conc_I[ (size_t) t ] + baseline * bblm_scale;
+   }
 }
-   
 
 static double broaden_scale;
 
@@ -264,6 +282,12 @@ void US_Hydrodyn_Saxs_Hplc::broaden() {
       && f_errors[ broaden_names[ 1 ] ].size() == f_qs[ broaden_names[ 1 ] ].size()
       && is_nonzero_vector( f_errors[ broaden_names[ 1 ] ] )
       ;
+
+#if defined( BROADEN_NO_CHI2 )
+#warning BROADEN_NO_CHI2 is defined, SDs not used
+   qDebug() << "BROADEN_NO_CHI2 is defined, SDs not used";
+   broaden_ref_has_errors = false;
+#endif
 
    set_selected( broaden_names );
 
@@ -444,9 +468,14 @@ void US_Hydrodyn_Saxs_Hplc::broaden_enables() {
    le_broaden_deltat            -> setEnabled( true );
    le_broaden_deltat_end        -> setEnabled( true );
    le_broaden_deltat_delta      -> setEnabled( true );
+#if defined( BROADEN_NO_BASELINE )
    cb_broaden_baseline          -> setEnabled( false );
    le_broaden_baseline          -> setEnabled( false );
    le_broaden_baseline          -> setText( "0" );
+#else 
+   cb_broaden_baseline          -> setEnabled( true );
+   le_broaden_baseline          -> setEnabled( true );
+#endif
    le_broaden_kernel_end        -> setEnabled( true );
    le_broaden_kernel_deltat     -> setEnabled( true );
    cb_broaden_repeak            -> setEnabled( true );
@@ -783,7 +812,7 @@ bool US_Hydrodyn_Saxs_Hplc::broaden_compute_one_no_ui(
    return true;
 }
 
-void US_Hydrodyn_Saxs_Hplc::broaden_compute_one() {
+void US_Hydrodyn_Saxs_Hplc::broaden_compute_one( bool details ) {
 
    TSO << "US_Hydrodyn_Saxs_Hplc::broaden_compute_one() start\n";
 
@@ -816,6 +845,21 @@ void US_Hydrodyn_Saxs_Hplc::broaden_compute_one() {
       lbl_broaden_msg->setText( QString( "Broadened vector size: %1" ).arg( broadened.size() ) );
    }      
 
+   // baseline offset
+   {
+      double baseline = le_broaden_baseline->text().toDouble();
+      for ( auto & I : broadened ) {
+         I += baseline;
+      }
+   }
+
+   // deltat offset
+   vector < double > ts = f_qs[ broaden_names[ 0 ] ];
+   double deltat = le_broaden_deltat->text().toDouble();
+   for ( auto & t : ts ) {
+      t += deltat;
+   }
+
    // setup plot curve
 
    QString fname =
@@ -828,12 +872,6 @@ void US_Hydrodyn_Saxs_Hplc::broaden_compute_one() {
       .arg( le_broaden_kernel_end->text() )
       .arg( le_broaden_kernel_deltat->text() )
       ;
-
-   vector < double > ts = f_qs[ broaden_names[ 0 ] ];
-   double deltat = le_broaden_deltat->text().toDouble();
-   for ( auto & t : ts ) {
-      t += deltat;
-   }
    
    add_plot( fname, ts, broadened, true, false );
    broaden_names << last_created_file;
@@ -892,16 +930,26 @@ void US_Hydrodyn_Saxs_Hplc::broaden_compute_one() {
                                  .arg( discrete_area_under_curve( f_qs[ broaden_names[ 2 ] ] , f_Is[ broaden_names[ 2 ] ], fit_range_start, fit_range_end, "broadened" ) )
                                  );
    }
+
+   if ( details ) {
+      editor_msg( "darkblue"
+                  ,QString( "Broaden - last fit:\n%1, %2, %3, %4, %5\n%6, %7, %8, %9, %10\n" )
+                  .arg( UNICODE_TAU )
+                  .arg( UNICODE_SIGMA )
+                  .arg( UNICODE_DELTA_QS + "t" )
+                  .arg( "baseline" )
+                  .arg( broaden_ref_has_errors ? "nChi^2" : "RMSD" )
+                  .arg( le_broaden_tau->text() )
+                  .arg( le_broaden_sigma->text() )
+                  .arg( le_broaden_deltat->text() )
+                  .arg( le_broaden_baseline->text() )
+                  .arg( fit )
+                  );
+   }
 }
 
-void US_Hydrodyn_Saxs_Hplc::broaden_lm_fit() {
+void US_Hydrodyn_Saxs_Hplc::broaden_lm_fit( bool final_refinement_only ) {
    TSO << "US_Hydrodyn_Saxs_Hplc::broaden_lm_fit() start\n";
-
-   editor_msg( "darkblue", us_tr( "Broaden fit starting\n" ) );
-
-   running = true;
-
-   disable_all();
 
    uhsh = (US_Hydrodyn_Saxs_Hplc *)this;
 
@@ -940,6 +988,10 @@ void US_Hydrodyn_Saxs_Hplc::broaden_lm_fit() {
    } else {
       bblm_fixed_params.push_back( le_broaden_baseline->text().toDouble() );
    }
+
+   // original loss
+   double original_loss = broaden_compute_loss();
+   TSO << QString( "broaden_fit original loss %1\n" ).arg( original_loss );
       
    bblm_kernel_size       = le_broaden_kernel_end    ->text().toDouble();
    bblm_kernel_delta_t    = le_broaden_kernel_deltat ->text().toDouble();
@@ -967,7 +1019,7 @@ void US_Hydrodyn_Saxs_Hplc::broaden_lm_fit() {
    bblm_org_conc_t.push_back( bblm_org_conc_t.back() + BBLM_INTERP_PAD );
    bblm_org_conc_I.push_back( 0 );
 
-   // US_Vector::printvector2( "padded bblm org", bblm_org_conc_t,  bblm_org_conc_I );
+   US_Vector::printvector2( "padded bblm org", bblm_org_conc_t,  bblm_org_conc_I, 8, 8 );
 
    size_t org_ref_t_size = org_ref_t.size();
 
@@ -995,9 +1047,6 @@ void US_Hydrodyn_Saxs_Hplc::broaden_lm_fit() {
    double area_conc = discrete_area_under_curve( bblm_org_conc_t, bblm_org_conc_I, fit_range_start, fit_range_end );
    if ( area_conc <= 0 ) {
       editor_msg( "red", "concentraton curve has negative or zero area in the fitting range fitting\n" );
-      running = false;
-      broaden_enables();
-      progress->reset();
       return;
    }
 
@@ -1032,9 +1081,6 @@ void US_Hydrodyn_Saxs_Hplc::broaden_lm_fit() {
    
    if ( !params_size ) {
       editor_msg( "red", us_tr( "Error: no parameters to fit\n" ) );
-      running = false;
-      broaden_enables();
-      progress->reset();
       return;
    }
 
@@ -1075,10 +1121,17 @@ void US_Hydrodyn_Saxs_Hplc::broaden_lm_fit() {
    }
 
    #define REFITS 5
-
+   size_t do_refits = REFITS;
+   
    progress->setMaximum( init_params.size() + REFITS );
    size_t pos = 0;
 
+   if ( final_refinement_only ) {
+      init_params.clear();
+      init_params.push_back( bblm_init_params );
+      do_refits = 0;
+   }
+      
    vector < double > best_params = init_params[ 0 ];
    double best_fit = DBL_MAX;
 
@@ -1098,16 +1151,26 @@ void US_Hydrodyn_Saxs_Hplc::broaden_lm_fit() {
             
          already_run.insert( this_params );
 
-         LM::lmcurve_fit_rmsd( ( int )      this_params.size(),
-                               ( double * ) &( this_params[ 0 ] ),
-                               ( int )      t.size(),
-                               ( double * ) &( t[ 0 ] ),
-                               ( double * ) &( y[ 0 ] ),
-                               bblm_fit,
-                               (const LM::lm_control_struct *)&control,
-                               &status );
+#if defined( BROADEN_LM_ENORM )
+#warning BROADEN_LM_ENORM  is defined, alternate norm for LM fitting
+         // LM ENORM version
+         LM::lmcurve_fit
+#else
+         // RMSD LM version (originally used)
+         LM::lmcurve_fit_rmsd
+#endif
+            (
+             ( int )      this_params.size(),
+             ( double * ) &( this_params[ 0 ] ),
+             ( int )      t.size(),
+             ( double * ) &( t[ 0 ] ),
+             ( double * ) &( y[ 0 ] ),
+             bblm_fit,
+             (const LM::lm_control_struct *)&control,
+             &status
+             );
 
-         // US_Vector::printvector( QString( "lmcurve_fit_rmsd fnorm %1" ).arg( status.fnorm ), this_params );
+         US_Vector::printvector( QString( "lmcurve_fit_rmsd fnorm %1" ).arg( status.fnorm ), this_params );
 
          if ( best_fit > status.fnorm ) {
             best_fit    = status.fnorm;
@@ -1117,7 +1180,7 @@ void US_Hydrodyn_Saxs_Hplc::broaden_lm_fit() {
 
       // rerun from final best fit
 
-      for ( size_t i = 0; i < REFITS; ++i ) {
+      for ( size_t i = 0; i < do_refits; ++i ) {
          progress->setValue( pos++ );
          qApp->processEvents();
       
@@ -1141,7 +1204,7 @@ void US_Hydrodyn_Saxs_Hplc::broaden_lm_fit() {
                                (const LM::lm_control_struct *)&control,
                                &status );
 
-         // US_Vector::printvector( QString( "lmcurve_fit_rmsd fnorm %1" ).arg( status.fnorm ), this_params );
+         US_Vector::printvector( QString( "lmcurve_fit_rmsd fnorm %1" ).arg( status.fnorm ), this_params );
 
          if ( best_fit > status.fnorm ) {
             best_fit    = status.fnorm;
@@ -1154,25 +1217,25 @@ void US_Hydrodyn_Saxs_Hplc::broaden_lm_fit() {
 
    bblm_broadened_conc_I_cache.clear();
 
-   US_Vector::printvector( "bblm_init_param after lmcurve_fit_rmsd", bblm_init_params );
+   US_Vector::printvector( QString( "*** BEST after lmcurve_fit_rmsd fnorm %1, best_params" ).arg( best_fit ), best_params );
 
    {
       size_t pos = 0;
 
       if ( cb_broaden_tau->isChecked() ) {
-         le_broaden_tau     ->setText( QString( "%1" ).arg( best_params[ pos++ ], 0, 'g', 6 ) );
+         le_broaden_tau     ->setText( QString( "%1" ).arg( best_params[ pos++ ], 0, 'g', 8 ) );
       }
 
       if ( cb_broaden_sigma->isChecked() ) {
-         le_broaden_sigma   ->setText( QString( "%1" ).arg( best_params[ pos++ ], 0, 'g', 6 ) );
+         le_broaden_sigma   ->setText( QString( "%1" ).arg( best_params[ pos++ ], 0, 'g', 8 ) );
       }
 
       if ( cb_broaden_deltat->isChecked() ) {
-         le_broaden_deltat  ->setText( QString( "%1" ).arg( best_params[ pos++ ], 0, 'g', 6 ) );
+         le_broaden_deltat  ->setText( QString( "%1" ).arg( best_params[ pos++ ], 0, 'g', 8 ) );
       }
 
       if ( cb_broaden_baseline->isChecked() ) {
-         le_broaden_baseline->setText( QString( "%1" ).arg( best_params[ pos++ ], 0, 'g', 6 ) );
+         le_broaden_baseline->setText( QString( "%1" ).arg( best_params[ pos++ ], 0, 'g', 8 ) );
       }
    }
 
@@ -1182,233 +1245,95 @@ void US_Hydrodyn_Saxs_Hplc::broaden_lm_fit() {
    //    << " result: " << loss
    //    ;
 
-   qDebug() 
-      << " broaden_compute_one() call"
-      ;
+   // final loss
    broaden_compute_one();
-   qDebug() 
-      << " broaden_compute_one() ok"
-      ;
+   double final_loss = broaden_compute_loss();
+   TSO << QString( "broaden_fit original loss %1 final loss %2\n" ).arg( original_loss ).arg( final_loss );
+   if ( final_loss > original_loss ) {
+      editor_msg( "darkred", "No improvement\n" );
+      TSO << "No improvement!!\n";
+      // reset to original params!
+      size_t pos = 0;
+
+      if ( cb_broaden_tau->isChecked() ) {
+         le_broaden_tau     ->setText( QString( "%1" ).arg( bblm_init_params[ pos++ ], 0, 'g', 8 ) );
+      }
+
+      if ( cb_broaden_sigma->isChecked() ) {
+         le_broaden_sigma   ->setText( QString( "%1" ).arg( bblm_init_params[ pos++ ], 0, 'g', 8 ) );
+      }
+
+      if ( cb_broaden_deltat->isChecked() ) {
+         le_broaden_deltat  ->setText( QString( "%1" ).arg( bblm_init_params[ pos++ ], 0, 'g', 8 ) );
+      }
+
+      if ( cb_broaden_baseline->isChecked() ) {
+         le_broaden_baseline->setText( QString( "%1" ).arg( bblm_init_params[ pos++ ], 0, 'g', 8 ) );
+      }
+   }
+
+   // scan individual params
+
+   if ( !final_refinement_only ) {
+      set < QCheckBox * > cb_active;
+      set < QCheckBox * > cb_all;
+
+      cb_all.insert( cb_broaden_tau );
+      if ( cb_broaden_tau->isChecked() ) {
+         cb_active.insert( cb_broaden_tau );
+      }
+
+      cb_all.insert( cb_broaden_sigma );
+      if ( cb_broaden_sigma->isChecked() ) {
+         cb_active.insert( cb_broaden_sigma );
+      }
+
+      cb_all.insert( cb_broaden_deltat );
+      if ( cb_broaden_deltat->isChecked() ) {
+         cb_active.insert( cb_broaden_deltat );
+      }
+
+      cb_all.insert( cb_broaden_baseline );
+      if ( cb_broaden_baseline->isChecked() ) {
+         cb_active.insert( cb_broaden_baseline );
+      }
+
+      if ( cb_active.size() > 1 ) {
+         for ( auto const cb : cb_active ) {
+            for ( auto const cb_off : cb_all ) {
+               cb_off->setChecked( cb_off == cb );
+            }
+            TSO << "single fit running\n";
+            broaden_lm_fit();
+         }
+         // restore checkboxes when done
+         for ( auto const cb : cb_active ) {
+            cb->setChecked( true );
+         }         
+      }
+   }
+   // & a final refinement
+   if ( !final_refinement_only ) {
+      broaden_lm_fit( true );
+   }
+}
+
+void US_Hydrodyn_Saxs_Hplc::broaden_fit() {
+   TSO << "US_Hydrodyn_Saxs_Hplc::broaden_fit() start\n";
+   editor_msg( "darkblue", us_tr( "Broaden fit starting\n" ) );
+
+   running = true;
+   disable_all();
+
+   broaden_lm_fit();
+
+   broaden_compute_one( true );
 
    running = false;
    broaden_enables();
    progress->reset();
    editor_msg( "darkblue", us_tr( "Broaden fit finished\n" ) );
-}
-
-void US_Hydrodyn_Saxs_Hplc::broaden_fit() {
-   TSO << "US_Hydrodyn_Saxs_Hplc::broaden_fit() start\n";
-
-   return broaden_lm_fit();
-
-   running = true;
-
-   disable_all();
-
-   // QStringList repeak_target;
-   // repeak_target << broaden_names[ 1 ];
-
-   double tau_start     = le_broaden_tau_start    ->text().toDouble();
-   double tau_end       = le_broaden_tau_end      ->text().toDouble();
-   double tau_delta     = le_broaden_tau_delta    ->text().toDouble();
-
-   double sigma_start     = le_broaden_sigma_start    ->text().toDouble();
-   double sigma_end       = le_broaden_sigma_end      ->text().toDouble();
-   double sigma_delta     = le_broaden_sigma_delta    ->text().toDouble();
-
-   double deltat_start    = le_broaden_deltat_start   ->text().toDouble();
-   double deltat_end      = le_broaden_deltat_end     ->text().toDouble();
-   double deltat_delta    = le_broaden_deltat_delta   ->text().toDouble();
-
-   double fit_range_start = le_broaden_fit_range_start->text().toDouble();
-   double fit_range_end   = le_broaden_fit_range_end  ->text().toDouble();
-
-
-   {
-      bool can_fit =
-         (
-          (
-           tau_delta > 0
-           && tau_end > tau_start
-           && tau_start >= 0
-           )
-          ||
-          (
-           sigma_delta > 0
-           && sigma_end > sigma_start
-           && sigma_start >= 0 
-           )
-          )
-         &&
-         (
-          deltat_end > deltat_start
-          && deltat_delta > 0
-          )
-         &&
-         fit_range_end > fit_range_start
-         ;
-
-      if ( !can_fit ) {
-         editor_msg( "red", "Incorrect fitting range\n" );
-         broaden_enables();
-         return;
-      }
-   }
-
-   vector < double > ref_t;
-   vector < double > ref_I;
-   vector < double > ref_errors;
-
-   // crop only ref, conc is full and will be interpolated to ref
-   vector < double > & org_ref_t = f_qs[ broaden_names[ 1 ] ];
-   vector < double > & org_ref_I = f_Is[ broaden_names[ 1 ] ];
-
-   size_t org_ref_t_size = org_ref_t.size();
-
-   if ( broaden_ref_has_errors ) {
-      vector < double > & org_ref_errors = f_errors[ broaden_names[ 1 ] ];
-      for ( size_t i = 0; i < org_ref_t_size; ++i ) {
-         if ( org_ref_t[ i ] >= fit_range_start
-              && org_ref_t[ i ] <= fit_range_end ) {
-            ref_t.push_back( org_ref_t[ i ] );
-            ref_I.push_back( org_ref_I[ i ] );
-            ref_errors.push_back( org_ref_errors[ i ] );
-         }
-      }
-   } else {
-      for ( size_t i = 0; i < org_ref_t_size; ++i ) {
-         if ( org_ref_t[ i ] >= fit_range_start
-              && org_ref_t[ i ] <= fit_range_end ) {
-            ref_t.push_back( org_ref_t[ i ] );
-            ref_I.push_back( org_ref_I[ i ] );
-         }
-      }
-   }      
-
-   double best_tau    = tau_start;
-   double best_sigma  = sigma_start;
-   double best_deltat = deltat_start;
-   double best_loss   = DBL_MAX;
-
-   QString summary = "tau,sigma,deltat,loss\n";
-
-   double kernel_size                 = le_broaden_kernel_end->text().toDouble();
-   double kernel_delta_t              = le_broaden_kernel_deltat->text().toDouble();
-
-   vector < double > org_conc_t = f_qs[ broaden_names[ 0 ] ];
-   vector < double > org_conc_I = f_Is[ broaden_names[ 0 ] ];
-   vector < double > conc_I; // broadened
-
-   size_t total_pts =
-      ( 1 + ( ( tau_end - tau_start ) / tau_delta ) ) *
-      ( 1 + ( ( sigma_end - sigma_start ) / sigma_delta ) ) *
-      ( 1 + ( ( deltat_end - deltat_start ) / deltat_delta ) )
-      ;
-
-   size_t pt       = 0;
-
-   progress->reset();
-   progress->setMaximum( total_pts );
-
-   for ( double tau = tau_start; tau <= tau_end + 1e-10; tau += tau_delta ) {
-      progress->setValue( pt );
-      for ( double sigma = sigma_start; sigma <= sigma_end + 1e-10; sigma += sigma_delta ) {
-         qApp->processEvents();
-         for ( double deltat = deltat_start; deltat <= deltat_end + 1e-10; deltat += deltat_delta ) {
-            // le_broaden_tau   ->setText( QString( "%1" ).arg( tau ) ); // , 0, 'f', 6 ) );
-            // le_broaden_deltat->setText( QString( "%1" ).arg( deltat ) ); // , 0, 'f', 6 ) );
-            TSO << QString( "fit progress %1 of %2 %3% tau %4 sigma %5 deltat %6\n" )
-               .arg( pt )
-               .arg( total_pts )
-               .arg( 100 * pt / total_pts )
-               .arg( tau )
-               .arg( sigma )
-               .arg( deltat )
-               ;
-            pt += 1;
-
-            if ( !broaden_compute_one_no_ui(
-                                            tau
-                                            ,sigma
-                                            ,kernel_size
-                                            ,kernel_delta_t
-                                            ,org_conc_I
-                                            ,conc_I
-                                            ) ) {
-               editor_msg( "red", "Error: broadening failure" );
-               running = false;
-               broaden_enables();
-               progress->reset();
-               return;
-            }
-
-
-            vector < double > conc_t = f_qs[ broaden_names[ 0 ] ];
-            for ( auto & t : conc_t ) {
-               t += deltat;
-            }
-
-            // US_Vector::printvector2( "conc_t, conc_I", conc_t, conc_I );
-            // US_Vector::printvector2( "ref_t, ref_I", ref_t, ref_I );
-
-            tso_vector_info( "conc_t", conc_t );
-            tso_vector_info( "ref_t", ref_t );
-
-            double this_loss = broaden_compute_loss_no_ui(
-                                                          conc_t
-                                                          ,conc_I
-                                                          ,ref_t
-                                                          ,ref_I
-                                                          ,ref_errors
-                                                          );
-            if ( this_loss == DBL_MAX ) {
-               editor_msg( "red", "unable to compute loss, stopping fit" );
-               running = false;
-               broaden_enables();
-               progress->reset();
-               return;
-            }
-
-            summary += QString( "%1,%2,%3,%4\n" ).arg( tau ).arg( sigma ).arg( deltat ).arg( this_loss );
-         
-            if ( best_loss > this_loss ) {
-               best_loss   = this_loss;
-               best_tau    = tau;
-               best_sigma  = sigma;
-               best_deltat = deltat;
-               editor_msg( "darkblue"
-                           ,QString( "best loss so far tau %1 sigma %2 deltat %3 loss %4\n" )
-                           .arg( tau )
-                           .arg( sigma )
-                           .arg( deltat )
-                           .arg( best_loss )
-                           );
-               qApp->processEvents();
-            }
-         }
-      }
-   }
-
-   // {
-   //    QString error;
-   //    US_File_Util::putcontents( "broaden_fit_summary.csv", summary, error );
-   // }
-
-   le_broaden_tau   ->setText( QString( "%1" ).arg( best_tau ) ); // , 0, 'f', 6 ) );
-   le_broaden_sigma ->setText( QString( "%1" ).arg( best_sigma ) ); // , 0, 'f', 6 ) );
-   le_broaden_deltat->setText( QString( "%1" ).arg( best_deltat ) ); // , 0, 'f', 6 ) );
-   lbl_broaden_msg  ->setText(
-                              QString( "Last fit %1 : %2" )
-                              .arg( broaden_ref_has_errors ? "nChi^2" : "RMSD" )
-                              .arg( best_loss )
-                              );
-
-   qApp->processEvents();
    
-   broaden_compute_one();
-   running = false;
-   broaden_enables();
-   progress->reset();
 }
 
 double US_Hydrodyn_Saxs_Hplc::broaden_compute_loss_no_ui(

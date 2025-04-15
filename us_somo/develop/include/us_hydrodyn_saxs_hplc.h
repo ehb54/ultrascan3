@@ -877,7 +877,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       bool                               broaden_ref_has_errors;
       void                               broaden_plot( bool replot = true );
       void                               broaden_clear_plot();
-      void                               broaden_compute_one();
+      void                               broaden_compute_one( bool details = false );
       double                             broaden_compute_loss();
  public:
       bool                               broaden_compute_one_no_ui(
@@ -901,7 +901,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 
       void                               broaden();
       void                               broaden_fit();
-      void                               broaden_lm_fit();
+      void                               broaden_lm_fit( bool final_refinement_only = false );
       void                               broaden_minimize();
       void                               broaden_reset();
 
