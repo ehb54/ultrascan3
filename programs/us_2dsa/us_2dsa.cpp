@@ -842,30 +842,55 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
          US_Model model2 = model;
          qDebug() << "::::: nmodel=" << model.components.size() << " nmodel2=" << model2.components.size();
          double avtemp  = dset.temperature;
-         for ( int ii = 0; ii < model2.components.size(); ii++ )
+         for (auto & ii : model2.components)
          {
-            US_Model::SimulationComponent* component = &model2.components[ ii ];
+            US_Model::SimulationComponent* component = &ii;
 
-            US_Math2::SolutionData  sd;
+            US_Math2::SolutionData  sd{};
             sd.viscosity   = dset.viscosity;
             sd.density     = dset.density;
             sd.manual      = dset.manual;
-            sd.vbar20      = model2.components[ ii ].vbar20;
+            sd.vbar20      = ii.vbar20;
             sd.vbar        = US_Math2::adjust_vbar20( sd.vbar20, avtemp );
             US_Math2::data_correction( avtemp, sd );
             double scorr   = sd.s20w_correction;
             double dcorr   = sd.D20w_correction;
-            component->s  /= scorr;
-            component->D  /= dcorr;
+            if (dset.simparams.meshType != US_SimulationParameters::ASTFVM)
+            {
+               component->s  /= scorr;
+               component->D  /= dcorr;
+            }
             if ( component->extinction > 0.0 )
+            {
                component->molar_concentration = component->signal_concentration / component->extinction;
+            }
          }
 
          SIMPARAMS simparms = dset.simparams;
          int drow = lw_triples->currentRow();
          US_AstfemMath::initSimData( sdata, dataList[ drow ], 0.0 );
-         US_Astfem_RSA* astfem_rsa = new US_Astfem_RSA( model2, simparms );
-         astfem_rsa->calculate( sdata );
+         if (dset.simparams.meshType == US_SimulationParameters::ASTFVM)
+         {
+            US_LammAstfvm* lamm = new US_LammAstfvm(model2, simparms);
+            delete bfg;
+            bfg = new US_Math_BF::Band_Forming_Gradient(simparms.meniscus,simparms.bottom,
+                                                        simparms.band_volume,
+                                                        dsets[0]->solution_rec.buffer.cosed_component,
+                                                        simparms.cp_pathlen,simparms.cp_angle);
+            bfg->get_eigenvalues();
+            bfg->calculate_gradient(simparms, &sdata);
+            lamm->set_buffer( dset.solution_rec.buffer, bfg, nullptr );
+            lamm->calculate(sdata);
+            delete lamm;
+         }
+         else
+         {
+            US_Astfem_RSA* astfem_rsa = new US_Astfem_RSA( model2, simparms );
+            astfem_rsa->set_debug_flag( dbg_level) ;
+            astfem_rsa->calculate( sdata );
+            delete astfem_rsa;
+         }
+
 
          int kpts = 0;
          double variance = 0.0;
