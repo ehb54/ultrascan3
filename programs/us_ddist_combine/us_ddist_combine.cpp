@@ -1142,6 +1142,8 @@ void US_DDistr_Combine::plot_distr_auto( DistrDesc ddesc, QString distrID, QMap<
   double xmin_p  = 1;
   double xmax_p  = 10;
   QString ranges_p;
+
+  bool ind_distro = false;
   
   qDebug() << "c_ranges, begin -- " <<  c_parms[ "Ranges" ];
   qDebug() << "c_parms.keys() -- " << c_parms.keys();
@@ -1156,16 +1158,21 @@ void US_DDistr_Combine::plot_distr_auto( DistrDesc ddesc, QString distrID, QMap<
       else if ( jj.key().contains( "Maximum" ) )
       	xmax_p = jj.value().toDouble();
       else if ( jj.key().contains( "Ranges" ) )
-	ranges_p = jj.value();
+	{
+	  ranges_p = jj.value();
+	  ind_distro = true;
+	}
       else if ( jj.key().contains( "s_ranges" ) )
 	{
 	  xmin_p = jj.value().split(",")[0].toDouble();
 	  xmax_p = jj.value().split(",")[1].toDouble();
+	  ind_distro = true;
 	}
       else if ( jj.key().contains( "k_ranges" ) )
 	{
 	  xmin_p = jj.value().split(",")[0].toDouble();
 	  xmax_p = jj.value().split(",")[1].toDouble();
+	  ind_distro = true;
 	}
     }
 
@@ -1190,8 +1197,10 @@ DbgLv(1) << "pDi:  ndispt" << ndispt << "ID" << distrID.left(20);
       data_curv->setPen  ( QPen( QBrush( ddesc.color ), 3.0, Qt::SolidLine ) );
       data_curv->setStyle( QwtPlotCurve::Lines );
 
-      //ndispt    = envel_data_auto ( ddesc.xvals, ddesc.yvals, xenv, yenv, sigma_p, xmin_p, xmax_p );
-      ndispt    = envel_data( ddesc.xvals, ddesc.yvals, xenv, yenv ); //test
+      if ( ind_distro )
+	ndispt    = envel_data_auto ( ddesc.xvals, ddesc.yvals, xenv, yenv, sigma_p, xmin_p, xmax_p );
+      else
+	ndispt    = envel_data( ddesc.xvals, ddesc.yvals, xenv, yenv ); //test
       
       xx        = xenv.data();
       yy        = yenv.data();
