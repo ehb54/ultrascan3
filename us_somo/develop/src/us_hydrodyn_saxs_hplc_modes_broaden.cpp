@@ -932,17 +932,34 @@ void US_Hydrodyn_Saxs_Hplc::broaden_compute_one( bool details ) {
    }
 
    if ( details ) {
+      QString q_val_str = "n/a";
+      {
+         QRegExp rx_q     ( "It_q(\\d+_\\d+)" );
+         if ( rx_q.indexIn( broaden_names[ 1 ] ) != -1 ) {
+            TSO << QString( "broaden_names[1] %1 rxcap ok %2\n" ).arg( broaden_names[1] ).arg( rx_q.cap( 1 ) );
+            q_val_str =  rx_q.cap( 1 ).replace( "_", "." );
+         } else {
+            TSO << QString( "broaden_names[1] %1 rxcap FAILED\n" ).arg( broaden_names[1] );
+         }
+      }
+
       editor_msg( "darkblue"
-                  ,QString( "Broaden - last fit:\n%1, %2, %3, %4, %5\n%6, %7, %8, %9, %10\n" )
+                  ,QString( "Broaden - last fit:\n%1, %2, %3, %4, %5, %6, %7, %8\n%9, %10, %11, %12, %13, %14, %15, %16\n" )
                   .arg( UNICODE_TAU )
                   .arg( UNICODE_SIGMA )
                   .arg( UNICODE_DELTA_QS + "t" )
                   .arg( "baseline" )
+                  .arg( "target area" )
+                  .arg( "broadened area" )
+                  .arg( "q" )
                   .arg( broaden_ref_has_errors ? "nChi^2" : "RMSD" )
                   .arg( le_broaden_tau->text() )
                   .arg( le_broaden_sigma->text() )
                   .arg( le_broaden_deltat->text() )
                   .arg( le_broaden_baseline->text() )
+                  .arg( broaden_names.size() > 2 ? QString( "%1" ).arg( discrete_area_under_curve( f_qs[ broaden_names[ 1 ] ] , f_Is[ broaden_names[ 1 ] ], fit_range_start, fit_range_end ) ) : "n/a" )
+                  .arg( broaden_names.size() > 2 ? QString( "%1" ).arg( discrete_area_under_curve( f_qs[ broaden_names[ 2 ] ] , f_Is[ broaden_names[ 2 ] ], fit_range_start, fit_range_end ) ) : "n/a" )
+                  .arg( q_val_str )
                   .arg( fit )
                   );
    }
@@ -1108,7 +1125,7 @@ void US_Hydrodyn_Saxs_Hplc::broaden_lm_fit( bool final_refinement_only ) {
       }
    }         
       
-   #define RANDOM_RESTARTS 10
+   #define RANDOM_RESTARTS 0
 
    for ( size_t i = 0; i < RANDOM_RESTARTS; ++i ) {
       vector < double > this_init( params_size );
@@ -1137,6 +1154,9 @@ void US_Hydrodyn_Saxs_Hplc::broaden_lm_fit( bool final_refinement_only ) {
 
    {
       set < vector < double > > already_run;
+      for ( auto this_params : init_params ) {
+         US_Vector::printvector( "init_params:", this_params );
+      }
 
       for ( auto this_params : init_params ) {
          progress->setValue( pos++ );
