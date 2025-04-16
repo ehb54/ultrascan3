@@ -121,7 +121,6 @@ void US_LegacyConverter::save_auc() {
    }
 
    if (exists) {
-      // QMessageBox::StandardButton state;
       int state = QMessageBox::question(this, "Warning!", "RunID already exists!\n"
                                                           "Do you want to overwrite it?");
       if (state == QMessageBox::No) return;
@@ -490,6 +489,7 @@ bool US_LegacyConverter::read_beckman_files(const QString& path, QString& status
    }
 
    if ( ! replicas.isEmpty() ) {
+      QString details;
       foreach (QString key, replicas) {
          QStringList ksp = key.split("-");
          int speed = ksp.at(0).toInt();
@@ -499,6 +499,7 @@ bool US_LegacyConverter::read_beckman_files(const QString& path, QString& status
          int nscans = all_data[idx].rdata.scanCount();
          int npoints = all_data[idx].rdata.pointCount();
          double n_replicas = all_data[idx].n_replicas;
+         details += tr("Speed: %1, Type: %2, Triple: %3, Number of Replicates: %4\n").arg(speed).arg(runtype, ccw).arg(n_replicas);
          for (int ss = 0; ss < nscans; ss++) {
             for (int pp = 0; pp < npoints; pp++)
             {
@@ -507,11 +508,19 @@ bool US_LegacyConverter::read_beckman_files(const QString& path, QString& status
             }
          }
       }
-      QMessageBox::warning(this, "Warning!", "Your experiment contains replicates. "
-                                             "Replicates will be averaged and saved "
-                                             "as a single scan. \nAveraging multiple scans "
-                                             "produces sub-optima velocity experiments and "
-                                             "replicates should not be used for analysis.");
+
+      QMessageBox msgBox(this);
+      msgBox.setIcon(QMessageBox::Warning);
+      msgBox.setWindowTitle("Warning");
+      msgBox.setText("Your experiment contains replicates. "
+                     "Replicates will be averaged and saved "
+                     "as a single scan. \nAveraging multiple scans "
+                     "produces sub-optima velocity experiments and "
+                     "replicates should not be used for analysis.");
+      msgBox.setInformativeText("Please check the details below.");
+      msgBox.setDetailedText(details);
+      msgBox.setStandardButtons(QMessageBox::Ok);
+      msgBox.exec();
    }
    return true;
 }
