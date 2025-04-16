@@ -406,7 +406,7 @@ bool US_LegacyConverter::read_beckman_files(const QString& path, QString& status
       log_1 += tr("Number of Beckman Data Objects : %1\n").arg(rawscan.count());
       qDebug().noquote() << log_1;
 
-      QString msg("RPM:%1, Run type: %2 (%3), Number of the processed files: %4");
+      QString msg("Speed : %1, Run type : %2 (%3), Number of the processed files: %4");
       te_info->append(msg.arg(speed).arg(data_types.value(runtype), runtype).arg(subd.count()));
       te_info->moveCursor(QTextCursor::End);
       qApp->processEvents();
