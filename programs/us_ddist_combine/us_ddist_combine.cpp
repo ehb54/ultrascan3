@@ -1204,8 +1204,13 @@ DbgLv(1) << "pDi:  ndispt" << ndispt << "ID" << distrID.left(20);
       
       if ( ind_distro )
       	ndispt    = envel_data_auto ( ddesc.xvals, ddesc.yvals, xenv, yenv, sigma_p, xmin_p, xmax_p );
-      else
-	ndispt    = envel_data( ddesc.xvals, ddesc.yvals, xenv, yenv ); //test
+      else //overall comb. plots
+	{
+	  if ( xmin_p == 0 && xmax_p == 0 )
+	    ndispt    = envel_data( ddesc.xvals, ddesc.yvals, xenv, yenv ); //test
+	  else
+	    ndispt    = envel_data_auto ( ddesc.xvals, ddesc.yvals, xenv, yenv, sigma_p, xmin_p, xmax_p );
+	}
       
       xx        = xenv.data();
       yy        = yenv.data();
