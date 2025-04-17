@@ -62,6 +62,7 @@ $branch         = "";
 $pullrequest    = "";
 $build          = false;
 $run            = false;
+$pull           = false;
 
 while( count( $u_argv ) && substr( $u_argv[ 0 ], 0, 1 ) == "-" ) {
     switch( $arg = $u_argv[ 0 ] ) {
@@ -207,6 +208,11 @@ if ( $build ) {
     echo "building ultrascan, this can take awhile\n";
     $cmd = "module swap $modulename && cd $uspath && qmake && make -j $nprocs && ./makeall.sh -j $nprocs";
     print run_cmd( $cmd );
+
+    if ( !file_exists( "$uspath/bin/assistant" ) ) {
+        $cmd = "module swap $modulename && cp \$QTDIR/bin/assistant $uspath/bin";
+        print run_cmd( $cmd );
+    }
     echo "building ultrascan complete\n";
 }
 
