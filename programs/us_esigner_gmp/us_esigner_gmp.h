@@ -101,6 +101,8 @@ class US_eSignaturesGMP : public US_Widgets
         QPushButton* pb_selRun_operRev_set; //!< Button to select run and set operators/reviewers.
         QPushButton* pb_set_operRev; //!< Button to set operators/reviewers.
 
+        US_Help showHelp;                    //!< Help display object
+
         QPushButton* pb_add_oper; //!< Button to add operator.
         QPushButton* pb_remove_oper; //!< Button to remove operator.
         QPushButton* pb_add_rev; //!< Button to add reviewer.
