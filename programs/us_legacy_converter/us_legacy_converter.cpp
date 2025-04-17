@@ -518,7 +518,7 @@ bool US_LegacyConverter::read_beckman_files(const QString& path, QString& status
       msgBox.setText("Your experiment contains replicates. "
                      "Replicates will be averaged and saved "
                      "as a single scan. \nAveraging multiple scans "
-                     "produces sub-optima velocity experiments and "
+                     "produces suboptimal velocity experiments and "
                      "replicates should not be used for analysis.");
       msgBox.setInformativeText("Please check the details below.");
       msgBox.setDetailedText(details);
