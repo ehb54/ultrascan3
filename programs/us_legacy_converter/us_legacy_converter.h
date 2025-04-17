@@ -27,7 +27,7 @@ class US_LegacyConverter : public US_Widgets
         public:
            US_DataIO::RawData     rdata;   //!< OpenAUC raw data
            US_Convert::TripleInfo triple;  //!< Triple Information
-           int n_replicas;                 //!< Number of scan replicas
+           int n_replicates;                 //!< Number of scan replicas
         };
         QMap< QString, QString > data_types;                               //!< Map of data types
         QHash< int, QHash< QString, QHash< QString, int > > > data_map;    //!< Map of data index (speed -> type -> CCW -> index)

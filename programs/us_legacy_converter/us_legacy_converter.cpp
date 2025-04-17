@@ -383,7 +383,7 @@ bool US_LegacyConverter::sort_files(const QStringList& flist, const QString& pat
 bool US_LegacyConverter::read_beckman_files(const QString& path, QString& status){
    QDir dir(path);
    QStringList subdirs = dir.entryList(QDir::Dirs | QDir::NoDotAndDotDot | QDir::NoSymLinks);
-   QStringList replicas;
+   QStringList replicates;
    foreach (QString path, subdirs) {
       QList<US_DataIO::BeckmanRawScan> rawscan;
       QString runtype;
@@ -420,7 +420,7 @@ bool US_LegacyConverter::read_beckman_files(const QString& path, QString& status
          DataCrate dc;
          dc.rdata = rdata;
          dc.triple = triple;
-         dc.n_replicas = 1;
+         dc.n_replicates = 1;
 
          bool replicated = false;
          if (data_map.contains(speed))
@@ -443,8 +443,11 @@ bool US_LegacyConverter::read_beckman_files(const QString& path, QString& status
                            all_data[idx].rdata.setValue(ss, pp, val1 + val2);
                         }
                      }
-                     all_data[idx].n_replicas++;
-                     replicas << tr("%1-%2-%3").arg(speed).arg(runtype, ccw);
+                     all_data[idx].n_replicates++;
+                     QString rr = tr("%1-%2-%3").arg(speed).arg(runtype, ccw);
+                     if (! replicates.contains(rr)) {
+                        replicates << rr;
+                     }
                   }
                }
                else
@@ -487,10 +490,10 @@ bool US_LegacyConverter::read_beckman_files(const QString& path, QString& status
       qDebug().noquote() << "------------------------------\n";
       status += "------------------------------\n";
    }
-
-   if ( ! replicas.isEmpty() ) {
+   replicates.sort();
+   if ( ! replicates.isEmpty() ) {
       QString details;
-      foreach (QString key, replicas) {
+      foreach (QString key, replicates) {
          QStringList ksp = key.split("-");
          int speed = ksp.at(0).toInt();
          QString runtype = ksp.at(1);
@@ -498,7 +501,7 @@ bool US_LegacyConverter::read_beckman_files(const QString& path, QString& status
          int idx = data_map.value(speed).value(runtype).value(ccw);
          int nscans = all_data[idx].rdata.scanCount();
          int npoints = all_data[idx].rdata.pointCount();
-         double n_replicas = all_data[idx].n_replicas;
+         double n_replicas = all_data[idx].n_replicates;
          details += tr("Speed: %1, Type: %2, Triple: %3, Number of Replicates: %4\n").arg(speed).arg(runtype, ccw).arg(n_replicas);
          for (int ss = 0; ss < nscans; ss++) {
             for (int pp = 0; pp < npoints; pp++)
