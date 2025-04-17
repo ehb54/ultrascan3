@@ -478,6 +478,9 @@ class US_eSignaturesGMP : public US_Widgets
         //! \return The role as a string.
         QString get_role_by_name(QString name);
 
+        void help ( void )
+        { showHelp.show_help( "manual/gmp_signature.html" ); };
+
     signals:
         //! \brief Signal emitted to accept reviewers.
         //! \param details The details map.
