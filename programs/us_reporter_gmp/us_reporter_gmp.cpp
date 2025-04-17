@@ -2742,14 +2742,15 @@ void US_ReporterGMP::build_perChanTree ( void )
 			{
 			  tripleReportMasksPlotList.clear();
 			  tripleReportMasksPlotList << "Experiment-Simulation Velocity Data (noise corrected) "
-						    << "Experiment-Simulation Residuals"
-						    << "Sedimentation Coefficient Distribution"
-						    << "Molecular Weight Distribution"
-						    << "Diffusion Coefficient Distribution"
-						    << "f/f0-vs-s 2D Model"
-						    << "f/f0-vs-MW 2D Model"
-						    << "D-vs-s 2D Model"
-						    << "D-vs-MW 2D Model";
+						    << "Experiment-Simulation Residuals";
+			  
+						    // << "Sedimentation Coefficient Distribution"
+						    // << "Molecular Weight Distribution"
+						    // << "Diffusion Coefficient Distribution"
+						    // << "f/f0-vs-s 2D Model"
+						    // << "f/f0-vs-MW 2D Model"
+						    // << "D-vs-s 2D Model"
+						    // << "D-vs-MW 2D Model";
 			  //<< "3D Model Plot";
 								  
 			  for ( int hh = 0; hh < tripleReportMasksPlotList.size(); ++hh )

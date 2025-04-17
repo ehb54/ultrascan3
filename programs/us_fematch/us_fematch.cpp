@@ -1347,12 +1347,12 @@ void US_FeMatch::distrib_type( )
       "s20,w distribution",
       "MW distribution",
       "D20,w distribution",
-      "f_f0 vs s20,w",
-      "f_f0 vs MW",
-      "vbar vs s20,w",
-      "vbar vs MW",
-      "D20,w vs s20,w",
-      "D20,w vs MW",
+      // "f_f0 vs s20,w",
+      // "f_f0 vs MW",
+      // "vbar vs s20,w",
+      // "vbar vs MW",
+      // "D20,w vs s20,w",
+      // "D20,w vs MW",
       "Residuals"
    };
    const int ndptyp = sizeof( dptyp ) / sizeof( dptyp[0] );
@@ -1376,17 +1376,20 @@ void US_FeMatch::distrib_type( )
       case 2:     // D20,w distribution
          distrib_plot_stick( itype );  // bar (1-d) plot
          break;
-      case 3:     // f_f0 vs s20,w
-      case 4:     // f_f0 vs MW
-      case 5:     // vbar vs s20,w
-      case 6:     // vbar vs MW
-      case 7:     // D20,w vs s20,w
-      case 8:     // D20,w vs MW
-         distrib_plot_2d(    itype );  // 2-d plot
-         break;
-      case 9:     // Residuals
-         distrib_plot_resids();        // residuals plot
-         break;
+      // case 3:     // f_f0 vs s20,w
+      // case 4:     // f_f0 vs MW
+      // case 5:     // vbar vs s20,w
+      // case 6:     // vbar vs MW
+      // case 7:     // D20,w vs s20,w
+      // case 8:     // D20,w vs MW
+      //    distrib_plot_2d(    itype );  // 2-d plot
+      //    break;
+      // case 9:     // Residuals
+      //    distrib_plot_resids();        // residuals plot
+      //    break;
+      case 3:     // Residuals
+	distrib_plot_resids();        // residuals plot
+	break;	 
    }
 }
 
@@ -3769,12 +3772,12 @@ int US_FeMatch::type_distrib( )
       "s20,w distribution",
       "MW distribution",
       "D20,w distribution",
-      "f_f0 vs s20,w",
-      "f_f0 vs MW",
-      "vbar vs s20,w",
-      "vbar vs MW",
-      "D20,w vs s20,w",
-      "D20,w vs MW",
+      // "f_f0 vs s20,w",
+      // "f_f0 vs MW",
+      // "vbar vs s20,w",
+      // "vbar vs MW",
+      // "D20,w vs s20,w",
+      // "D20,w vs MW",
       "Residuals"
    };
    const int ndptyp = sizeof( dptyp ) / sizeof( dptyp[0] );
