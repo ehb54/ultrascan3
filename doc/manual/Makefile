@@ -1,31 +1,48 @@
 # Build Qt Assistant files for UltraScan
 
-
 INSTALL_DIR = ../../bin
-BODY_Files  = $(wildcard *.body)
-HTML_Files  = $(BODY_Files:%.body=%.html)
-TARGETS     = $(INSTALL_DIR)/manual.qch $(INSTALL_DIR)/manual.qhc
+STAGING_DIR = .staging
+BODY_FILES  = $(shell find . -type d -name "$(STAGING_DIR)" -prune -o -type f -name "*.body" -print)
 
+# Main targets
+all: $(INSTALL_DIR)/manual.qch $(INSTALL_DIR)/manual.qhc
 
-# images/*.png is a little overkill.  We probably just want to grep
-# manual.qhp for .png files
+# Prepare staging directory with subdirectories
+prepare_staging:
+	@echo "Preparing staging directory..."
+	@rm -rf $(STAGING_DIR)
+	@mkdir -p $(STAGING_DIR)
+	@cp header.us3 footer.us3 mainstyle.css $(STAGING_DIR)/
+	@cp manual.qhp manual.qhcp $(STAGING_DIR)/
+	@cp -r images $(STAGING_DIR)/
+	@cp ultrascan3.txt $(STAGING_DIR)/ 2>/dev/null || true
+	@find . -type d -name "$(STAGING_DIR)" -prune -o -type f -name "*.body" -print | xargs -I{} cp {} $(STAGING_DIR)/
+	@cp make-html.sh $(STAGING_DIR)/
+	@chmod +x $(STAGING_DIR)/make-html.sh
+	@./make-wraps.sh
 
-OTHER_Files = ultrascan3.txt images/ultra.xpm $(wildcard images/*.png) $(wildcard *.img.html)
+# Process all HTML files at once
+process_html: prepare_staging
+	@echo "Processing HTML files..."
+	@cd $(STAGING_DIR) && \
+	for file in *.body; do \
+		basename=$${file%.body}; \
+		./make-html.sh $$basename "UltraScan Documentation" -f -q; \
+	done
 
-$(TARGETS): manual.qhp manual.qhcp $(HTML_Files) $(OTHER_Files)
-	@echo "Making Qt Assistant files"
-	qhelpgenerator manual.qhp -o manual.qch
-	qcollectiongenerator manual.qhcp -o manual.qhc
-	cp manual.qch manual.qhc $(INSTALL_DIR)
+# Generate and install Qt help files
+$(INSTALL_DIR)/manual.qch $(INSTALL_DIR)/manual.qhc: process_html
+	@echo "Generating Qt help files..."
+	@cd $(STAGING_DIR) && \
+	qhelpgenerator manual.qhp -o manual.qch && \
+	qhelpgenerator manual.qhcp -o manual.qhc
+	@echo "Installing Qt help files to $(INSTALL_DIR)..."
+	@mkdir -p $(INSTALL_DIR)
+	@cp $(STAGING_DIR)/manual.qch $(STAGING_DIR)/manual.qhc $(INSTALL_DIR)
 
-%.html: %.body header.us3 footer.us3
-	tpage $< > $@
-
-
+# Clean everything
 clean:
-	rm -f *.html manual.qch manual.qhc
-	rm -f $(TARGETS)
-	rm -f *~
+	rm -rf $(STAGING_DIR)
+	rm -f $(INSTALL_DIR)/manual.qch $(INSTALL_DIR)/manual.qhc
 
-
-.PHONY: clean
+.PHONY: all prepare_staging process_html clean

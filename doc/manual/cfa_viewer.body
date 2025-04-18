@@ -14,7 +14,7 @@
 
     <h3> Main Window:</h3>
     <p>
-    <img src="images/cfa_view-main.png" alt="CFA Viewer Main Window"/>
+    <p class="center"><img src="images/cfa_view-main.png" alt="CFA Viewer Main Window"/></p>
     </p>
 
     <h3> Dialog Items:</h3>

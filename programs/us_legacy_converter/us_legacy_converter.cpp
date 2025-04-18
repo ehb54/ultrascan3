@@ -78,15 +78,20 @@ US_LegacyConverter::US_LegacyConverter() : US_Widgets()
 
 void US_LegacyConverter::runid_updated() {
    QDir dir = QDir(le_dir->text());
-   QHashIterator<int, QHash<QString, QString>> it(output_types);
-   QString runid = le_runid->text();
+   QList<int> speed_list = data_map.keys();
+   QString basename = le_runid->text();
+   bool mspeed = speed_list.size() > 1;
    exists = false;
-   while (it.hasNext()) {
-      it.next();
-      bool br = false;
-      foreach (QString rt, it.value().values()) {
-         QString out_runid = runid + "-" + rt;
-         if (dir.exists(out_runid)) {
+   bool br = false;
+   foreach (int speed, speed_list) {
+      foreach (QString rtype, data_map.value(speed).keys()) {
+         QString path;
+         if ( mspeed ) {
+            path = tr("%1-%2-Speed%3").arg(basename, rtype).arg(speed);
+         } else {
+            path = tr("%1-%2").arg(basename, rtype);
+         }
+         if (dir.exists(path)) {
             exists = true;
             br = true;
             break;
@@ -116,7 +121,6 @@ void US_LegacyConverter::save_auc() {
    }
 
    if (exists) {
-      // QMessageBox::StandardButton state;
       int state = QMessageBox::question(this, "Warning!", "RunID already exists!\n"
                                                           "Do you want to overwrite it?");
       if (state == QMessageBox::No) return;
@@ -128,14 +132,16 @@ void US_LegacyConverter::save_auc() {
    QString basename = le_runid->text();
 
    QString msg;
-   QList<int> speedL = output_index.keys();
-   std::sort(speedL.begin(), speedL.end());
-   foreach (int speed, speedL) {
-      QStringList rtypeL = output_index.value(speed).keys();
-      rtypeL.sort();
-
-      foreach (QString rtype, rtypeL) {
-         QString runid = basename + "-" + output_types.value(speed).value(rtype);
+   QList<int> speed_list = data_map.keys();
+   bool mspeed = speed_list.size() > 1;
+   foreach (int speed, speed_list) {
+      foreach (QString rtype, data_map.value(speed).keys()) {
+         QString runid;
+         if ( mspeed ) {
+            runid = tr("%1-%2-Speed%3").arg(basename, rtype).arg(speed);
+         } else {
+            runid = tr("%1-%2").arg(basename, rtype);
+         }
          QString path = dir.absoluteFilePath(runid);
          subdir.setPath(path);
          if (subdir.exists()) {
@@ -146,10 +152,10 @@ void US_LegacyConverter::save_auc() {
          QVector< US_DataIO::RawData* > data;
          QList< US_Convert::TripleInfo > triples;
          QVector< US_Convert::Excludes > excludes;
-         QVector<int> indexL = output_index.value(speed).value(rtype);
-         foreach (int index, indexL) {
-            triples << all_triples.at(index);
-            data << &all_data[index];
+         foreach (QString ccw, data_map.value(speed).value(rtype).keys()) {
+            int idx = data_map.value(speed).value(rtype).value(ccw);
+            triples << all_data.at(idx).triple;
+            data << &all_data[idx].rdata;
             US_Convert::Excludes excl;
             excludes << excl;
          }
@@ -177,9 +183,7 @@ void US_LegacyConverter::reset(void) {
    le_runid->setStyleSheet("color: black;");
    te_info->clear();
    all_data.clear();
-   all_triples.clear();
-   output_index.clear();
-   output_types.clear();
+   data_map.clear();
    counter = 0;
    exists = false;
    pb_save->setDisabled(true);
@@ -262,17 +266,6 @@ void US_LegacyConverter::load() {
       pb_load->setEnabled(true);
       return;
    }
-   // multi speed run: rename output directories
-   QList<int> speed_list = output_types.keys();
-   if (speed_list.size() > 1) {
-      foreach (int speed, speed_list) {
-         foreach (QString rtype, output_types.value(speed).keys()) {
-            QString cval = output_types.value(speed).value(rtype);
-            QString nval = tr("%1-RPM%2").arg(cval).arg(speed);
-            output_types[speed][rtype] = nval;
-         }
-      }
-   }
 
    le_load->setText(tar_finfo.absoluteFilePath());
    le_runid->setText(runid);
@@ -297,7 +290,7 @@ void US_LegacyConverter::list_files(const QString& path, QStringList& flist) {
    }
 }
 
-bool US_LegacyConverter::sort_files(const QStringList& flist, const QString& tmpDir) {
+bool US_LegacyConverter::sort_files(const QStringList& flist, const QString& path) {
    QRegularExpression re;
    re.setPatternOptions(QRegularExpression::CaseInsensitiveOption);
    QRegularExpressionMatch match;
@@ -308,18 +301,18 @@ bool US_LegacyConverter::sort_files(const QStringList& flist, const QString& tmp
    //group3                 -c(\\d)  =  cell number
    //group4            -s(\\d{4,6})  =  scan number
    //group5      (?:-w(\\d{3})-r_)?  =  wavelength (optional: some files include it)
-   //group6  (ra|ri|ip|fi|wa|wi)\\d  =  run type
-   QString pattern = "^(.+)-s(\\d{4,6})-c(\\d)-s(\\d{4,6})(?:-w(\\d{3})-r_)?-n\\d[.](ra|ri|ip|fi|wa|wi)\\d$";
+   //group6                 -n(\\d)  =  scan repetition
+   //group7  (ra|ri|ip|fi|wa|wi)\\d  =  run type
+   QString pattern = "^(.+)-s(\\d{4,6})-c(\\d)-s(\\d{4,6})(?:-w(\\d{3})-r_)?-n(\\d)[.](ra|ri|ip|fi|wa|wi)\\d$";
    re.setPattern(pattern);
 
    QString runid;
-   QMap<QString, QVector<int>> stcw_scans; // speed-type-cell-wavelength -> scans
-   QMap<QString, QString> file_map;  // speed-type-cell-wavelength-scan -> filepath
+   QMap<QString, QVector<int>> scan_list; // speed-type-cell-wavelength-replica      -> scans
+   QMap<QString, QString> fpath_list;     // speed-type-cell-wavelength-replica-scan -> filepath
    QVector<int> speed_list;
 
    foreach (QString fpath, flist) {
-      QFileInfo finfo = QFileInfo(fpath);
-      QFile file(fpath);
+      QFileInfo finfo(fpath);
       QString fname = finfo.fileName();
       match = re.match(fname.toLower());
       if (match.hasMatch()) {
@@ -334,33 +327,38 @@ bool US_LegacyConverter::sort_files(const QStringList& flist, const QString& tmp
          int speed = match.captured(2).toInt();
          if (! speed_list.contains(speed)) {
             speed_list << speed;
+            std::sort(speed_list.begin(), speed_list.end());
          }
+         int speed_id = speed_list.indexOf(speed) + 1;
          QString cell = match.captured(3);
          int scan = match.captured(4).toInt();
          QString wavl = match.captured(5);
          if (wavl.isEmpty()) {
              wavl = "000";
          }
-         QString runtype = match.captured(6);
-         QString key1 = tr("%1-%2-%3-%4").arg(speed_list.indexOf(speed) + 1).arg(runtype, cell, wavl);
-         if (stcw_scans.contains(key1)) {
-            stcw_scans[key1] << scan;
+         QString replica = match.captured(6);
+         QString runtype = match.captured(7);
+         // speed-type-cell-wavelength-replica
+         QString key1 = tr("%1-%2-%3-%4-%5").arg(speed_id).arg(runtype, cell, wavl, replica);
+         if (scan_list.contains(key1)) {
+            scan_list[key1] << scan;
          } else {
             QVector<int> ss(1, scan);
-            stcw_scans.insert(key1, ss);
+            scan_list.insert(key1, ss);
          }
+         // speed-type-cell-wavelength-replica-scan
          QString key2 = tr("%1-%2").arg(key1).arg(scan);
-         if (file_map.contains(key2)) {
-            QMessageBox::warning(this, "Error!", tr("Redundancy In Scans!\%1").arg(fname));
+         if (fpath_list.contains(key2)) {
+            QMessageBox::warning(this, "Error!", tr("Some of scans are redundant!\n\n%1").arg(fname));
             return false;
          } else {
-            file_map.insert(key2, fpath);
+            fpath_list.insert(key2, fpath);
          }
       }
    }
-   QDir dir = QDir(tmpDir);
+   QDir dir = QDir(path);
    QDir subdir = QDir();
-   QMapIterator<QString, QVector<int>> it(stcw_scans);
+   QMapIterator<QString, QVector<int>> it(scan_list);
    bool state = true;
    while (it.hasNext()) {
       it.next();
@@ -369,13 +367,12 @@ bool US_LegacyConverter::sort_files(const QStringList& flist, const QString& tmp
       subdir.setPath(dir.absoluteFilePath(key1));
       QVector<int> scans = it.value();
       std::sort(scans.begin(), scans.end());
-      // QFileInfo finfo = QFileInfo();
       for (int ii = 0; ii < scans.size(); ii++) {
          QString key2 = tr("%1-%2").arg(key1).arg(scans.at(ii));
-         QString fpath1 = file_map.value(key2);
-         QString fname2 = tr("%1.%2").arg(ii + 1).arg(fpath1.right(3));
-         // finfo.setFile(subdir, fname2.rightJustified(9, '0'));
-         if (! QFile::copy(fpath1, subdir.absoluteFilePath(fname2.rightJustified(9, '0'))) ) {
+         QString fpath1 = fpath_list.value(key2);
+
+         QString fname2 = tr("%1").arg(ii + 1).rightJustified(6, '0') + fpath1.right(4);
+         if (! QFile::copy(fpath1, subdir.absoluteFilePath(fname2)) ) {
             state = false;
          }
       }
@@ -384,74 +381,150 @@ bool US_LegacyConverter::sort_files(const QStringList& flist, const QString& tmp
 }
 
 bool US_LegacyConverter::read_beckman_files(const QString& path, QString& status){
-   QDir tmpdir(path);
-   QStringList subdirs = tmpdir.entryList(QDir::Dirs | QDir::NoDotAndDotDot | QDir::NoSymLinks);
-   int NN = 0;
-   QStringList stccw;
+   QDir dir(path);
+   QStringList subdirs = dir.entryList(QDir::Dirs | QDir::NoDotAndDotDot | QDir::NoSymLinks);
+   QStringList replicates;
    foreach (QString path, subdirs) {
       QList<US_DataIO::BeckmanRawScan> rawscan;
       QString runtype;
-      US_Convert::readLegacyData(tmpdir.absoluteFilePath(path), rawscan, runtype);
+      US_Convert::readLegacyData(dir.absoluteFilePath(path), rawscan, runtype);
       if (rawscan.size() == 0) {
          continue;
       }
+      QVector< US_DataIO::RawData > rdata_list;
+      QList< US_Convert::TripleInfo > triple_list;
+      US_Convert::convertLegacyData(rawscan, rdata_list, triple_list, runtype, 0.5);
+
+      // speed-type-cell-wavelength-replica
       int speed = path.split('-').at(0).toInt();
-      QVector< US_DataIO::RawData  > rawdata;
-      QList< US_Convert::TripleInfo > triples;
-      US_Convert::convertLegacyData(rawscan, rawdata, triples, runtype, 0.5);
 
-      QDir subd = QDir(tmpdir.absoluteFilePath(path), "*", QDir::Name, QDir::Files);
-      status += tr("RPM : %1\n").arg(speed);
-      status += tr("Run Type : %1 (%2)\n").arg(data_types.value(runtype), runtype);
-      status += tr("Number of Parsed Files : %1\n").arg(subd.count());
-      status += tr("Number of Beckman Data Objects : %1\n").arg(rawscan.count());
+      QDir subd = QDir(dir.absoluteFilePath(path), "*", QDir::Name, QDir::Files);
+      QString log_1;
+      log_1 += tr("Speed : %1\n").arg(speed);
+      log_1 += tr("Run Type : %1 (%2)\n").arg(data_types.value(runtype), runtype);
+      log_1 += tr("Number of Parsed Files : %1\n").arg(subd.count());
+      log_1 += tr("Number of Beckman Data Objects : %1\n").arg(rawscan.count());
+      qDebug().noquote() << log_1;
 
-      QString msg("RPM:%1, Run type: %2 (%3), Number of the processed files: %4");
+      QString msg("Speed : %1, Run type : %2 (%3), Number of the processed files: %4");
       te_info->append(msg.arg(speed).arg(data_types.value(runtype), runtype).arg(subd.count()));
       te_info->moveCursor(QTextCursor::End);
       qApp->processEvents();
 
-      for (int ii = 0; ii < triples.size(); ii ++) {
-         QStringList ccw = triples.at(ii).tripleDesc.split('/');
-         // speed-runtype-cell-channel-lambda
-         QString key = tr("%1-%2-%3-%4-%5").arg(speed).arg(runtype, ccw.at(0).trimmed(),
-                                                ccw.at(1).trimmed(), ccw.at(2).trimmed());
-         if (stccw.contains(key)){
-            QMessageBox::warning(this, "Error!", "Triple Redundancy!");
-            qDebug().noquote() << status;
-            return false;
-         }
-         all_triples << triples.at(ii);
-         all_data << rawdata.at(ii);
-         if (output_index.contains(speed)) {
-            if(output_index.value(speed).contains(runtype)) {
-               output_index[speed][runtype] << NN;
-            } else {
-               QVector<int> vec;
-               vec << NN;
-               output_index[speed].insert(runtype, vec);
-               output_types[speed].insert(runtype, data_types.value(runtype));
+      for (int ii = 0; ii < triple_list.size(); ii ++) {
+         US_Convert::TripleInfo triple = triple_list.at(ii);
+         US_DataIO::RawData rdata = rdata_list.at(ii);
+         int nscans  = rdata.scanCount();
+         int npoints = rdata.pointCount();
+         QString ccw = triple.tripleDesc;
+         DataCrate dc;
+         dc.rdata = rdata;
+         dc.triple = triple;
+         dc.n_replicates = 1;
+
+         bool replicated = false;
+         if (data_map.contains(speed))
+         {
+            if (data_map.value(speed).contains(runtype))
+            {
+               if (data_map.value(speed).value(runtype).contains(ccw))
+               {
+                  replicated = true;
+                  int idx = data_map.value(speed).value(runtype).value(ccw);
+                  int ns = all_data[idx].rdata.scanCount();
+                  int np = all_data[idx].rdata.pointCount();
+                  if ( np == npoints && ns == nscans )
+                  {
+                     for (int ss = 0; ss < nscans; ss++) {
+                        for (int pp = 0; pp < npoints; pp++)
+                        {
+                           double val1 = all_data[idx].rdata.value(ss, pp);
+                           double val2 = rdata.value(ss, pp);
+                           all_data[idx].rdata.setValue(ss, pp, val1 + val2);
+                        }
+                     }
+                     all_data[idx].n_replicates++;
+                     QString rr = tr("%1-%2-%3").arg(speed).arg(runtype, ccw);
+                     if (! replicates.contains(rr)) {
+                        replicates << rr;
+                     }
+                  }
+               }
+               else
+               {
+                  all_data << dc;
+                  int idx = all_data.size() - 1;
+                  data_map[speed][runtype].insert(ccw, idx);
+               }
             }
-
-         } else {
-            QVector<int> vec;
-            vec << NN;
-            QHash<QString, QVector<int>> rt_ndx;
-            rt_ndx.insert(runtype, vec);
-            output_index.insert(speed, rt_ndx);
-
-            QHash<QString, QString> rt;
-            rt.insert(runtype, data_types.value(runtype));
-            output_types.insert(speed, rt);
+            else
+            {
+               all_data << dc;
+               int idx = all_data.size() - 1;
+               QHash< QString, int > m;
+               m.insert(ccw, idx);
+               data_map[speed].insert(runtype, m);
+            }
          }
-         NN++;
-         status += tr( "Triple: %1   # Scans: %2\n").arg(triples.at(ii).tripleDesc)
-                      .arg(rawdata.at(ii).scanData.count() );
+         else
+         {
+            all_data << dc;
+            int idx = all_data.size() - 1;
+
+            QHash< QString, int > m1;
+            m1.insert(ccw, idx);
+
+            QHash< QString, QHash< QString, int > > m2;
+            m2.insert(runtype, m1);
+
+            data_map.insert(speed, m2);
+         }
+         QString log_2 = tr( "Triple : %1 ; Number of Scans : %2\n").arg(ccw).arg(nscans);
+         qDebug().noquote() << log_2;
+         if ( ii == 0 && !replicated ) {
+            status += log_1 + log_2;
+         } else if ( !replicated ) {
+            status += log_2;
+         }
       }
+      qDebug().noquote() << "------------------------------\n";
       status += "------------------------------\n";
-      // qApp->processEvents();
    }
-   qDebug().noquote() << status;
+   replicates.sort();
+   if ( ! replicates.isEmpty() ) {
+      QString details;
+      foreach (QString key, replicates) {
+         QStringList ksp = key.split("-");
+         int speed = ksp.at(0).toInt();
+         QString runtype = ksp.at(1);
+         QString ccw = ksp.at(2);
+         int idx = data_map.value(speed).value(runtype).value(ccw);
+         int nscans = all_data[idx].rdata.scanCount();
+         int npoints = all_data[idx].rdata.pointCount();
+         double n_replicas = all_data[idx].n_replicates;
+         details += tr("Speed: %1, Type: %2, Triple: %3, Number of Replicates: %4\n").arg(speed).arg(runtype, ccw).arg(n_replicas);
+         for (int ss = 0; ss < nscans; ss++) {
+            for (int pp = 0; pp < npoints; pp++)
+            {
+               double val = all_data[idx].rdata.value(ss, pp);
+               all_data[idx].rdata.setValue(ss, pp, val / n_replicas);
+            }
+         }
+      }
+
+      QMessageBox msgBox(this);
+      msgBox.setIcon(QMessageBox::Warning);
+      msgBox.setWindowTitle("Warning");
+      msgBox.setText("Your experiment contains replicates. "
+                     "Replicates will be averaged and saved "
+                     "as a single scan. \nAveraging multiple scans "
+                     "produces suboptimal velocity experiments and "
+                     "replicates should not be used for analysis.");
+      msgBox.setInformativeText("Please check the details below.");
+      msgBox.setDetailedText(details);
+      msgBox.setStandardButtons(QMessageBox::Ok);
+      msgBox.exec();
+   }
    return true;
 }
 

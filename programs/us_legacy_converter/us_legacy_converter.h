@@ -11,7 +11,7 @@
 // #include "us_gzip.h"
 #include "../us_convert/us_convert.h"
 
-//! \brief Class for converting legacy data to a modern format
+//! \brief Class to converte Beckman legacy data to OpenAUC
 class US_LegacyConverter : public US_Widgets
 {
     Q_OBJECT
@@ -21,22 +21,28 @@ class US_LegacyConverter : public US_Widgets
         US_LegacyConverter();
 
     private:
-        QMap< QString, QString > data_types;                //!< Map of data types
-        QVector< US_DataIO::RawData > all_data;       //!< Map of all raw data
-        QVector< US_Convert::TripleInfo > all_triples; //!< Map of all triples
-        QHash< int, QHash< QString, QVector< int > > > output_index; // speed -> runType -> QVector(data index)
-        QHash< int, QHash< QString, QString > > output_types; // speed -> runType -> runType out
+        //! \brief Class to store triple information and data
+        class DataCrate
+        {
+        public:
+           US_DataIO::RawData     rdata;   //!< OpenAUC raw data
+           US_Convert::TripleInfo triple;  //!< Triple Information
+           int n_replicates;                 //!< Number of scan replicas
+        };
+        QMap< QString, QString > data_types;                               //!< Map of data types
+        QHash< int, QHash< QString, QHash< QString, int > > > data_map;    //!< Map of data index (speed -> type -> CCW -> index)
+        QVector< DataCrate > all_data;
 
-        QLabel *lb_runid;           //!< Label for run ID
-        QLineEdit *le_load;         //!< Line edit for load path
-        QTextEdit *te_info;         //!< Text edit for information display
-        QPushButton *pb_load;       //!< Button to load data
-        QPushButton *pb_save;       //!< Button to save data
-        US_LineEdit_RE *le_runid;   //!< Line edit for run ID with regular expression validation
-        QLineEdit *le_dir;          //!< Line edit for directory
-        US_Archive* archive;        //!< Archive object
-        int counter;                //!< counter to update test edit
-        bool exists;             //!< if it's true, runIDs are overwritten on disk
+        QLabel*         lb_runid;  //!< Label for run ID
+        QLineEdit*      le_load;   //!< Line edit for load path
+        QTextEdit*      te_info;   //!< Text edit for information display
+        QPushButton*    pb_load;   //!< Button to load data
+        QPushButton*    pb_save;   //!< Button to save data
+        US_LineEdit_RE* le_runid;  //!< Line edit for run ID with regular expression validation
+        QLineEdit*      le_dir;    //!< Line edit for directory
+        US_Archive*     archive;   //!< Archive object
+        int counter;               //!< counter to update test edit
+        bool exists;               //!< if it's true, runIDs are overwritten on disk
 
         //! \brief Resets the converter to its initial state
         void reset(void);
