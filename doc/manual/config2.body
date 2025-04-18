@@ -1,7 +1,7 @@
 [% INCLUDE header.us3
    title = 'UltraScan III File Selection'
 %]
-    <p> <img src="images/config2.png" alt="File Selection Dialog"/> </p>
+    <p class="center"><img src="images/config2.png" alt="File Selection Dialog"/></p>
     <!-- Qt's assistant does not like to display raw png files -->
 
 [% INCLUDE footer.us3 %]

@@ -5,7 +5,7 @@
 
     <h2> Registration / License Update Panel: </h2>
 
-    <img src="images/register.png" alt="Registration Dialog"/>
+    <p class="center"><img src="images/register.png" alt="Registration Dialog"/></p>
 
     <p> The registration control panel allows <b><i>UltraScan III</i></b>
     registration or update of a license. The contact fields should be filled

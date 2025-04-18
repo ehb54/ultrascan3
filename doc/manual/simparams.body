@@ -14,7 +14,7 @@
 
     <h3> Main Window:</h3>
 
-    <img src="images/simparams.png" alt="Simulation Parameters Window"/>
+    <p class="center"><img src="images/simparams.png" alt="Simulation Parameters Window"/></p>
 
     <h3> Dialog Items:</h3>
 

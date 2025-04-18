@@ -645,7 +645,7 @@ class US_ReporterGMP : public US_Widgets
          * @brief Display help.
          */
         void help(void)
-        { showHelp.show_help("reporter_gmp.html"); };
+        { showHelp.show_help("manual/gmp_report_generator.html"); };
 
         signals:
                 /**
