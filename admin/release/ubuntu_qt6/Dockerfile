@@ -3,7 +3,7 @@
 
 ### exposed ARGs override defaults with --build-arg <varname>=<value>
 
-ARG image=ubuntu:23.10
+ARG image=ubuntu:24.04
 ## ARGs are scoped FROM
 FROM $image
 
