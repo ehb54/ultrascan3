@@ -98,7 +98,8 @@ if [ $DOMAN -ne 0 ]; then
   pushd $d
   sdir=`pwd`
   echo "Making in $d"   >> $DIR/build.log
-  (cd $sdir;${MAKE} 2>&1)  >> $DIR/build.log
+  ## n.b. the make failes with parallel builds, require -j1
+  make -j1 2>&1  >> $DIR/build.log
   stat=$?
   if [ $stat -gt 0 ]; then
      echo "  ***ERROR*** building $d"
