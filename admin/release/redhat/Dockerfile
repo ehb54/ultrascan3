@@ -115,9 +115,17 @@ RUN cd /ultrascan3/us_somo/develop && env ULTRASCAN=/ultrascan3 ./revision.sh &&
 # install dependencies for building manual
 RUN dnf install -y doxygen texlive-*
 RUN dnf install -y perl-CPAN && cpan Template
+RUN dnf install -y graphviz
+## upgrade doxygen as the file is often not current in repo
+RUN cd $ULTRASCAN && doxygen -u
 
 # make ultrascan
+## faster qmake, make first
+RUN cd $ULTRASCAN && export PATH=$QTDIR/bin:$PATH && qmake && make -j$parallel_compile
 RUN cd $ULTRASCAN && export PATH=$QTDIR/bin:$PATH && ./makeall.sh -j$parallel_compile
+
+## old versions of makeall.sh fail to build manual as it is doing in parallel, make sure we build the manual
+RUN cd $ULTRASCAN/doc/manual && export PATH=$QTDIR/bin:$PATH && make -j1
 
 # make sure manual exists
 RUN cd $ULTRASCAN && ls -l bin/manual*
@@ -141,4 +149,4 @@ RUN cp $QTDIR/bin/assistant /ultrascan3/bin
 
 # make package
 ARG image
-RUN IMAGE=`echo $image | sed s/rockylinux/redhat/ | sed s/:/-/` && echo $IMAGE  && LD_LIBRARY_PATH=/ultrascan3/lib:$LD_LIBRARY_PATH /ultrascan3/admin/release/linux.pl $IMAGE && ls -1 us3-*.tar.xz > /lastpkgname
+RUN IMAGE=`echo $image | sed 's/rockylinux\/rockylinux/redhat/' | sed s/:/-/` && echo $IMAGE  && LD_LIBRARY_PATH=/ultrascan3/lib:$LD_LIBRARY_PATH /ultrascan3/admin/release/linux.pl $IMAGE && ls -1 us3-*.tar.xz > /lastpkgname

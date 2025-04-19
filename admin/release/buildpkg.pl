@@ -60,7 +60,7 @@ $from =~ s/:.*$//;
 $name = "us3-$image";
 $name =~ s/:/-/;
 $bimage = $image;
-$bimage =~ s/^redhat/rockylinux/;
+$bimage =~ s/^redhat/rockylinux\/rockylinux/;
 
 $cmd =
     "cd $from"
