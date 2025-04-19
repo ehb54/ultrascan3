@@ -16,18 +16,20 @@ my %supported =
      "ubuntu:18.04"  => "python"
      ,"ubuntu:20.04" => "python"
      ,"ubuntu:22.04" => "python3"
-     ,"redhat:8.7"   => "python3"
+     ,"redhat:8.10"   => "python3"
     );
 
 $snames = join( "\n", keys %supported );
 
-$notes = "usage: $0 cores name
+$notes = "usage: $0 cores name [branch]
 
 where cores is the number of cores to use for parallel compilation
 
-where name one of
+where name is one of
 
 $snames
+
+where branch is the ultrascan branch (default: master)
 
 what it does:
 
@@ -40,6 +42,7 @@ then, the package is extracted from the container.
 
 $cores = shift || die $notes;
 $image = shift || die $notes;
+$branch = shift || "master";
 
 # find a container manager
 
@@ -60,7 +63,7 @@ $bimage =~ s/^redhat/rockylinux/;
 
 $cmd =
     "cd $from"
-    . " && unbuffer $docker build -t $name --build-arg image=$bimage --build-arg apt_python_version=$supported{$image} --build-arg parallel_compile=$cores ."
+    . " && unbuffer $docker build -t $name --build-arg image=$bimage --build-arg apt_python_version=$supported{$image} --build-arg parallel_compile=$cores --build-arg ultrascan_branch=$branch ."
     . " && id=\$($docker create $name)"
     . " && $docker cp \$id:lastpkgname ../last.$name"
     . " && $docker cp \$id:`cat ../last.$name` .."
@@ -71,11 +74,10 @@ $cmd =
 $|=1;
 
 print "-"x80 . "\n";
-print "building release package for $bimage using $cores cores\n";
+print "building release package for $bimage using $cores cores and branch $branch\n";
 print "-"x80 . "\n";
 print "$cmd\n";
 print "-"x80 . "\n";
 print `$cmd\n`;
 print "-"x80 . "\n";
-
 
