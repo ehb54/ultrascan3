@@ -92,7 +92,8 @@ US_Hydrodyn_Saxs_Hplc_Fit::US_Hydrodyn_Saxs_Hplc_Fit(
       cb_pct_center          ->setChecked( dist1_active );
       cb_pct_center_from_init->setChecked( true );
       le_pct_center          ->setText   ( "2"  );
-      if ( gaussian_type != US_Hydrodyn_Saxs_Hplc::EMGGMG )
+      // try to expand to other types
+      if ( 0 && gaussian_type != US_Hydrodyn_Saxs_Hplc::EMGGMG )
       {
          cb_conc_test->hide();
          cb_fix_relative_centers->hide();
@@ -971,7 +972,12 @@ namespace HFIT
 
          if ( param_fixed[ i ] )
          {
-            center = fixed_params[ param_pos[ i ] ];
+            if ( comm_backref.count( i ) )
+            {
+               center = par[ comm_backref[ i ] ] + relative_center_map[ i ];
+            } else {
+               center = fixed_params[ param_pos[ i ] ];
+            }
          } else {
             center = par         [ param_pos[ i ] ];
             if ( center < param_min[ param_pos[ i ] ] ||
@@ -985,7 +991,12 @@ namespace HFIT
 
          if ( param_fixed[ i ] )
          {
-            width = fixed_params[ param_pos[ i ] ];
+            if ( comm_backref.count( i ) )
+            {
+               width = par[ comm_backref[ i ] ] * conc_ratios_map[ i ];
+            } else {
+               width = fixed_params[ param_pos[ i ] ];
+            }
          } else {
             width = par         [ param_pos[ i ] ];
             if ( width < param_min[ param_pos[ i ] ] ||
@@ -1035,7 +1046,12 @@ namespace HFIT
 
          if ( param_fixed[ i ] )
          {
-            center = fixed_params[ param_pos[ i ] ];
+            if ( comm_backref.count( i ) )
+            {
+               center = par[ comm_backref[ i ] ] + relative_center_map[ i ];
+            } else {
+               center = fixed_params[ param_pos[ i ] ];
+            }
          } else {
             center = par         [ param_pos[ i ] ];
             if ( center < param_min[ param_pos[ i ] ] ||
@@ -1049,7 +1065,12 @@ namespace HFIT
 
          if ( param_fixed[ i ] )
          {
-            width = fixed_params[ param_pos[ i ] ];
+            if ( comm_backref.count( i ) )
+            {
+               width = par[ comm_backref[ i ] ] * conc_ratios_map[ i ];
+            } else {
+               width = fixed_params[ param_pos[ i ] ];
+            }
          } else {
             width = par         [ param_pos[ i ] ];
             if ( width < param_min[ param_pos[ i ] ] ||
@@ -1161,7 +1182,12 @@ namespace HFIT
 
          if ( param_fixed[ i ] )
          {
-            center = fixed_params[ param_pos[ i ] ];
+            if ( comm_backref.count( i ) )
+            {
+               center = par[ comm_backref[ i ] ] + relative_center_map[ i ];
+            } else {
+               center = fixed_params[ param_pos[ i ] ];
+            }
          } else {
             center = par         [ param_pos[ i ] ];
             if ( center < param_min[ param_pos[ i ] ] ||
@@ -1175,7 +1201,12 @@ namespace HFIT
 
          if ( param_fixed[ i ] )
          {
-            width = fixed_params[ param_pos[ i ] ];
+            if ( comm_backref.count( i ) )
+            {
+               width = par[ comm_backref[ i ] ] * conc_ratios_map[ i ];
+            } else {
+               width = fixed_params[ param_pos[ i ] ];
+            }
          } else {
             width = par         [ param_pos[ i ] ];
             if ( width < param_min[ param_pos[ i ] ] ||
@@ -1504,13 +1535,14 @@ bool US_Hydrodyn_Saxs_Hplc_Fit::setup_run()
    HFIT::use_relative_center = false;
    HFIT::relative_center_map .clear( );
 
+   HFIT::conc_test   = cb_conc_test->isChecked();
+   HFIT::use_relative_center = cb_fix_relative_centers->isChecked();
+
    switch ( gaussian_type )
    {
    case US_Hydrodyn_Saxs_Hplc::EMGGMG :
       HFIT::compute_gaussian_f = &HFIT::compute_gaussian_f_EMGGMG;
       gsm_f = &gsm_f_EMGGMG;
-      HFIT::conc_test   = cb_conc_test->isChecked();
-      HFIT::use_relative_center = cb_fix_relative_centers->isChecked();
       break;
    case US_Hydrodyn_Saxs_Hplc::EMG :
       HFIT::compute_gaussian_f = &HFIT::compute_gaussian_f_EMG;
