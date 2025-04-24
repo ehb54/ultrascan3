@@ -115,7 +115,7 @@ RUN cd qt-everywhere-src-$qt_version && env MAKEFLAGS=-j$parallel_compile make
 RUN cd qt-everywhere-src-$qt_version && env MAKEFLAGS=-j$parallel_compile make -j$parellel_compile install
 RUN cd qt-everywhere-src-$qt_version && nohup make -j$parallel_compile 2>&1 > make.out
 RUN cd qt-everywhere-src-$qt_version && nohup make install -j1 2>&1 > makeinstall.out
-# RUN ls -l /qt-$qt_version/bin /qt-$qt_version/lib
+RUN rm -r qt-everywhere-src-$qt_version
 
 # install qwt
 RUN wget https://versaweb.dl.sourceforge.net/project/qwt/qwt/$qwt_version/qwt-$qwt_version.tar.bz2 && tar jxf qwt-$qwt_version.tar.bz2 && cd qwt-$qwt_version && /qt-$qt_version/bin/qmake && make -j$parallel_compile
