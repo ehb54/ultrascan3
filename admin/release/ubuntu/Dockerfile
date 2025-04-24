@@ -94,23 +94,25 @@ RUN apt-get install -y gperf bison flex
 RUN apt-get install -y llvm
 RUN which llvm-config 
 
+## if QtWeb needs to be built
 ## try to install python2 & put in path
-RUN wget https://repo.anaconda.com/archive/Anaconda2-2019.10-Linux-x86_64.sh
-RUN bash Anaconda2-2019.10-Linux-x86_64.sh -b -p /opt/anaconda2
+# RUN wget https://repo.anaconda.com/archive/Anaconda2-2019.10-Linux-x86_64.sh
+# RUN bash Anaconda2-2019.10-Linux-x86_64.sh -b -p /opt/anaconda2
 #RUN ls -l /opt/anaconda2/bin
-ENV PATH="/opt/anaconda2/bin:${PATH}"
+# ENV PATH="/opt/anaconda2/bin:${PATH}"
 
 RUN apt-get install -y nodejs
 RUN apt-get install -y libnss3-dev
 RUN apt-get install -y libxkbfile-dev
 
-RUN cd qt-everywhere-src-$qt_version && env MAKEFLAGS=-j$parallel_compile ./configure -prefix /qt-$qt_version -release -opensource -confirm-license -platform linux-g++-64 -nomake tests -nomake examples -xcb -xcb-xlib -D QT_SHAREDMEMORY -D QT_SYSTEMSEMAPHORE -no-icu
-COPY mathops.h /qt-everywhere-src-$qt_version/qtwebengine/src/3rdparty/chromium/third_party/ffmpeg/libavcodec/x86/mathops.h
-RUN sed -i '6i #include \<cstdint\>' /qt-everywhere-src-$qt_version/qtlocation/src/3rdparty/mapbox-gl-native/include/mbgl/util/geometry.hpp
-RUN sed -i '7i #include \<cstdint\>' /qt-everywhere-src-$qt_version/qtlocation/src/3rdparty/mapbox-gl-native/include/mbgl/util/string.hpp
-RUN sed -i '4i #include \<cstdint\>' /qt-everywhere-src-$qt_version/qtlocation/src/3rdparty/mapbox-gl-native/src/mbgl/gl/stencil_mode.hpp
+RUN cd qt-everywhere-src-$qt_version && env MAKEFLAGS=-j$parallel_compile ./configure -prefix /qt-$qt_version -release -opensource -confirm-license -platform linux-g++-64 -nomake tests -nomake examples -xcb -xcb-xlib -D QT_SHAREDMEMORY -D QT_SYSTEMSEMAPHORE -no-icu -skip webengine -skip location
+# qtweb engine requries these changes:
+# COPY mathops.h /qt-everywhere-src-$qt_version/qtwebengine/src/3rdparty/chromium/third_party/ffmpeg/libavcodec/x86/mathops.h
+# RUN sed -i '6i #include \<cstdint\>' /qt-everywhere-src-$qt_version/qtlocation/src/3rdparty/mapbox-gl-native/include/mbgl/util/geometry.hpp
+# RUN sed -i '7i #include \<cstdint\>' /qt-everywhere-src-$qt_version/qtlocation/src/3rdparty/mapbox-gl-native/include/mbgl/util/string.hpp
+# RUN sed -i '4i #include \<cstdint\>' /qt-everywhere-src-$qt_version/qtlocation/src/3rdparty/mapbox-gl-native/src/mbgl/gl/stencil_mode.hpp
 
-RUN cd qt-everywhere-src-$qt_version && env MAKEFLAGS=-j$parallel_compile make -k ; echo 0
+# RUN cd qt-everywhere-src-$qt_version && env MAKEFLAGS=-j$parallel_compile make -k ; echo 0
 RUN cd qt-everywhere-src-$qt_version && env MAKEFLAGS=-j$parallel_compile make
 RUN cd qt-everywhere-src-$qt_version && env MAKEFLAGS=-j$parallel_compile make -j$parellel_compile install
 RUN cd qt-everywhere-src-$qt_version && nohup make -j$parallel_compile 2>&1 > make.out
