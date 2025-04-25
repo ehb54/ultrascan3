@@ -16,6 +16,7 @@ my %supported =
      "ubuntu:18.04"  => "python"
      ,"ubuntu:20.04" => "python"
      ,"ubuntu:22.04" => "python3"
+     ,"ubuntu:24.04" => "python3"
      ,"redhat:8.10"   => "python3"
     );
 
@@ -59,7 +60,7 @@ $from =~ s/:.*$//;
 $name = "us3-$image";
 $name =~ s/:/-/;
 $bimage = $image;
-$bimage =~ s/^redhat/rockylinux/;
+$bimage =~ s/^redhat/rockylinux\/rockylinux/;
 
 $cmd =
     "cd $from"
