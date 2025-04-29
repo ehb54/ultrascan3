@@ -2127,6 +2127,8 @@ int US_eSignaturesGMP::list_all_autoflow_records( QList< QStringList >& autoflow
       
     }
   qDebug() << "in listallautolfow, autoflowdata -- " << autoflowdata;
+
+  delete db;
   return nrecs;
 }
 
@@ -2208,7 +2210,8 @@ QMap< QString, QString>  US_eSignaturesGMP::read_autoflow_record( int autoflowID
 
    qDebug() << "Instrument ID from protocol -- " << currProto.rpRotor. instID;
    run_info[ "OptimaID" ] = QString::number( currProto.rpRotor. instID );
-   
+
+   delete db;
    return run_info;
 }
 
@@ -2249,6 +2252,8 @@ QStringList US_eSignaturesGMP::read_operators( QString optima_id )
 	  instr_opers << QString::number(ID) + ". " + lname + ", " + fname;
 	}
     }
+
+  delete db;
 
   return instr_opers;
 }
@@ -2310,6 +2315,7 @@ QMap< QString, QString> US_eSignaturesGMP::read_autoflowGMPReportEsign_record( Q
       // //END TEST ------------------------
     }
 
+  delete db;
   return eSign_record;
 }
 
