@@ -95,12 +95,12 @@
 
     <p> You may, of course, select specific triples of a run.</p>
 
-    <img src="images/data_loader-trips.png" alt="DataLoader Triples"/>
+    <p class="center"><img src="images/data_loader-trips.png" alt="DataLoader Triples"/></p>
 
     <p> Similarly, in the case where Lastest Data Edit was not checked, you
     may select any edit of a triple.</p>
 
-    <img src="images/data_loader-edits.png" alt="DataLoader Edits"/>
+    <p class="center"><img src="images/data_loader-edits.png" alt="DataLoader Edits"/></p>
 
     <p> Note that multiple selections must all be from the same run. Only one
     selection is allowed for each triple.</p>

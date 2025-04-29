@@ -1,0 +1,37 @@
+[% INCLUDE header.us3/
+   title = 'UltraScan III Load Color Map'
+%]
+
+    <h2> <i>UltraScan</i> Load Color Map File: </h2>
+
+    <p> Some <b><i>UltraScan III</i></b> applications load a color map from
+    a file using a file dialog.</p>
+
+    <p class="center"><img src="images/load_colormap.png" alt="Load CMap File Dialog"/></p>
+
+    <p> The file to load is selected from the ./etc directory and is
+    generally of a "cm_*.xml" form. It represents a color gradient in the
+    form of a color map. If no file is selected, a default map is used.
+    Otherwise, a file as created by
+    <a href="colorgradient.html">US_ColorGradient</a> should be selected.</p>
+
+    <p> The file naming convention is as follows:
+        <ul>
+            <li>
+                <b>cm- :</b> a prefix signifying colormap.
+            </li>
+            <li>
+                <b>b- :</b> a single-character code for the start color with
+                values such as "b" for black, "w" for white, "y" for yellow,
+                "g" for gray.
+            </li>
+            <li>
+                <b>cyan-magenta-... :</b> a string of color-step end color names.
+            </li>
+            <li>
+                <b>.xml :</b> a required suffix signifying that the file is XML.
+            </li>
+        </ul>
+    </p>
+
+[% INCLUDE footer.us3 %]

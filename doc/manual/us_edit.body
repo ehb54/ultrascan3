@@ -4,7 +4,7 @@
 
 <h2> Edit UltraScan Data </h2>
 
-<p> <img src="images/us_edit.png" alt="Data Editor Window"/> </p>
+<p class="center"> <img src="images/us_edit.png" alt="Data Editor Window"/> </p>
 
 <p>All experimental data aquired with the analytical ultracentrifuge
 require pre-processing to create an <i>edit profile</i> which is

@@ -18,7 +18,7 @@
     <b>Load Raw MWL Data</b/> being clicked. A very similar dialog is
     shown when <b>Load US3 MWL Data</b/> is clicked.</p>
 
-    <img src="images/mwlr_view_load.png" alt="MWLR_Viewer Load Dialog"/>
+    <p class="center"><img src="images/mwlr_view_load.png" alt="MWLR_Viewer Load Dialog"/></p>
 
     <h3>Functions:</h3>
 
