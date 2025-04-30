@@ -8536,7 +8536,7 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
        mstr += indent( 2 ) + "<table>\n";
        mstr += table_row( tr( "Type:" ),
 			  tr( "Range:"),
-			  tr( "WAVG:" ),
+			  tr( "weight Avg.:" ),
 			  tr( "Integration from Model (target):" ),
 			  tr( "Fraction % from Model (target):" ),
 			  tr( "Tolerance, %:"),
