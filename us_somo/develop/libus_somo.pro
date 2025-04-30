@@ -412,6 +412,8 @@ SOURCES *= \
         src/us_hydrodyn_saxs_screen.cpp \
         src/us_hydrodyn_saxs_search.cpp \
         src/us_hydrodyn_saxs_buffer.cpp \
+        src/us_hydrodyn_saxs_buffer_gui.cpp \
+        src/us_hydrodyn_saxs_buffer_fit.cpp \
         src/us_hydrodyn_saxs_buffer_conc.cpp \
         src/us_hydrodyn_saxs_buffer_conc_load.cpp \
         src/us_hydrodyn_saxs_buffer_nth.cpp \
