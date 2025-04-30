@@ -71,6 +71,9 @@ class US_Norm_Profile : public US_Widgets
         double x_max_picked = -1; //!< Maximum X value picked.
         double x_norm = -1; //!< A radial point that normalization occurs based on
         QString channels_ranges;
+        QMap< QString, QMap < QString, QVector<QVector<double>> > > data_per_channel;
+        QMap< QString, double > data_per_channel_xnorm;
+        QMap< QString, int > data_per_channel_norm_cb;
 
         QListWidget *lw_inpData; //!< List widget for input data.
         QListWidget *lw_selData; //!< List widget for selected data.
@@ -94,6 +97,7 @@ class US_Norm_Profile : public US_Widgets
 
         //! \brief Select data for the plot.
         void selectData(void);
+        void selectData_auto(void);
 
         //! \brief Plot the selected data.
         void plotData(void);
@@ -149,6 +153,7 @@ class US_Norm_Profile : public US_Widgets
 
         //! \brief Slot to pick a normaling point on the plot.
         void slt_pickPoint(void);
+        //void slt_pickPoint_auto(void);
 
         //! \brief Slot to handle mouse events on the plot.
         //! \param point The point where the mouse event occurred.
@@ -169,7 +174,7 @@ class US_Norm_Profile : public US_Widgets
         //! \brief Slot to toggle the normalization.
         //! \param state The state of the normalization checkbox.
         void slt_norm(int state);
-
+       
         //! \brief Slot to toggle the raw data.
         //! \param state The state of the raw data checkbox.
         void slt_rawData(int state);

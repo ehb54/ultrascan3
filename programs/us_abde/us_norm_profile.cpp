@@ -190,6 +190,7 @@ US_Norm_Profile::US_Norm_Profile( QString auto_mode ): US_Widgets()
 
     connect(pb_pick_rp, SIGNAL(clicked()), this, SLOT(slt_pickRange()));
     connect(pb_pick_norm, SIGNAL(clicked()), this, SLOT(slt_pickPoint()));
+    //connect(pb_pick_norm, SIGNAL(clicked()), this, SLOT(slt_pickPoint_auto()));
     connect(ckb_xrange, SIGNAL(stateChanged(int)), this, SLOT(slt_xrange(int)));
     connect(ckb_legend, SIGNAL(stateChanged(int)), this, SLOT(slt_legend(int)));
     connect(ckb_integral, SIGNAL(stateChanged(int)), this, SLOT(slt_integral(int)));
@@ -472,6 +473,9 @@ void US_Norm_Profile::slt_cleanList(void){
 void US_Norm_Profile::load_data_auto( QMap<QString,QString> & protocol_details )
 {
   slt_reset();
+  data_per_channel. clear();
+  data_per_channel_xnorm . clear();
+  data_per_channel_norm_cb. clear();
   channels_ranges = protocol_details[ "channels_to_radial_ranges" ];
   slt_loadAUC_auto( protocol_details );
 }
@@ -521,6 +525,13 @@ void US_Norm_Profile::slt_loadAUC_auto( QMap<QString,QString> & protocol_details
 			 badFiles.join("\n"));
   }
 
+  //set x_norm to "-1" for each channel
+  for (int i=0; i<channList.size(); ++i )
+    {
+      data_per_channel_xnorm[channList[i]]   = -1;
+      data_per_channel_norm_cb[channList[i]] = Qt::Checked; //2
+    }
+  
   //Populate channels
   channList. removeDuplicates();
   cb_chann -> addItems( channList );
@@ -535,6 +546,8 @@ void US_Norm_Profile::new_chann_auto( int index )
   QString channame = cb_chann->itemText( index );
   qDebug() << "ChannName: " << channame;
 
+  ckb_norm_max->setChecked( data_per_channel_norm_cb[ channame ] );
+
   for(int i=0; i<filenames.size(); ++i )
     {
       QStringList file_n_list = filenames[i].split(".");
@@ -547,7 +560,8 @@ void US_Norm_Profile::new_chann_auto( int index )
 	  qDebug() << " selecting file " << filenames[i];
 	  lw_selData->addItem( filenames[i] );
 	  selFilenames.append( filenames[i] );
-	  selectData();
+	  //selectData();
+	  selectData_auto();
 	}
     }
 }
@@ -645,9 +659,22 @@ QMap<QString, QVector<double>> US_Norm_Profile::trapz(
     double sum = 0;
     double maxY = -1e99;
     bool flag_pnorm = false;
-    if (! ckb_norm_max->isChecked() && x_norm > 0) {
-        flag_pnorm = true;
-    }
+
+    QString channame;
+    
+    if ( us_auto_mode )
+      {
+	channame = cb_chann->currentText(); 
+	if (! ckb_norm_max->isChecked() && data_per_channel_xnorm[channame] > 0) {
+	  flag_pnorm = true;
+	}
+      }
+    else
+      {
+	if (! ckb_norm_max->isChecked() && x_norm > 0) {
+	  flag_pnorm = true;
+	}
+      }
 
     for (int i = 1; i < np; i++){
         dx = x[i] - x[i - 1];
@@ -658,20 +685,58 @@ QMap<QString, QVector<double>> US_Norm_Profile::trapz(
     }
 
     double normY = 1;
-    if (flag_pnorm && x_norm <= x[0]) {
-        normY = y[0];
-    } else if (flag_pnorm && x_norm >= x[np - 1]) {
-        normY = y[np - 1];
-    } else if (flag_pnorm && x_norm > x[0] && x_norm < x[np - 1]) {
-        for (int i = 1; i < np - 1; i++) {
-            if (x[i] >= x_norm) {
-                normY = y[i];
-                break;
-            }
-        }
-    } else {
-        normY = maxY;
-    }
+    if ( us_auto_mode )
+      {
+	if (flag_pnorm && data_per_channel_xnorm[channame] <= x[0])
+	  {
+	    normY = y[0];
+	  }
+	else if (flag_pnorm && data_per_channel_xnorm[channame] >= x[np - 1])
+	  {
+	    normY = y[np - 1];
+	  }
+	else if (flag_pnorm && data_per_channel_xnorm[channame] > x[0] && data_per_channel_xnorm[channame] < x[np - 1])
+	  {
+	    for (int i = 1; i < np - 1; i++)
+	      {
+		if (x[i] >= data_per_channel_xnorm[channame])
+		  {
+		    normY = y[i];
+		    break;
+		  }
+	      }
+	  }
+	else
+	  {
+	    normY = maxY;
+	  }
+      }
+    else
+      {
+	if (flag_pnorm && x_norm <= x[0])
+	  {
+	    normY = y[0];
+	  }
+	else if (flag_pnorm && x_norm >= x[np - 1])
+	  {
+	    normY = y[np - 1];
+	  }
+	else if (flag_pnorm && x_norm > x[0] && x_norm < x[np - 1])
+	  {
+	    for (int i = 1; i < np - 1; i++)
+	      {
+		if (x[i] >= x_norm)
+		  {
+		    normY = y[i];
+		    break;
+		  }
+	      }
+	  }
+	else
+	  {
+	    normY = maxY;
+	  }
+      }
 
     for (int i = 0; i < integral.size(); i++){
         integralN << integral.at(i) * 100 / sum;
@@ -749,11 +814,70 @@ void US_Norm_Profile::selectData(void){
     plotData();
 }
 
+void US_Norm_Profile::selectData_auto(void){
+    xvalues_sel.clear();
+    yvalues_sel.clear();
+    yvaluesN_sel.clear();
+    integral_sel.clear();
+    integralN_sel.clear();
+    midxval_sel.clear();
+    bool flag_limit = false;
+    if (ckb_xrange->isChecked() && x_min_picked != -1 && x_max_picked != -1) {
+        flag_limit = true;
+    }
+    QString channame = cb_chann->currentText();
+    //data_per_channel_xnorm[ channame ] = x_norm;
+    
+    QVector<int> inpIds;
+    for (int i = 0; i < lw_selData->count(); i++){
+        inpIds << filenames.indexOf(lw_selData->item(i)->text());
+	//get channame
+	qDebug() << "in selectData_auto(): filename -- "
+		 << lw_selData->item(i)->text();
+	qDebug() << "current chann -- "
+		 << channame;
+    }
+    for (int i = 0; i < inpIds.size(); i++){
+        int id = inpIds.at(i);
+        if (flag_limit){
+            QPair<int, int> pair= getXlimit(xvalues.at(id), x_min_picked, x_max_picked);
+            xvalues_sel << xvalues.at(id).mid(pair.first, pair.second);
+            yvalues_sel << yvalues.at(id).mid(pair.first, pair.second);
+        } else {
+            xvalues_sel << xvalues.at(id);
+            yvalues_sel << yvalues.at(id);
+        }
+
+        QMap<QString, QVector<double>> trapzOut;
+        trapzOut = trapz(xvalues_sel.last(), yvalues_sel.last());
+        midxval_sel << trapzOut["midxval"];
+        yvaluesN_sel << trapzOut["yvaluesN"];
+        integral_sel << trapzOut["integral"];
+        integralN_sel << trapzOut["integralN"];
+    }
+    //Add to qMap < channame, qMap < property, value> >;
+    data_per_channel[ channame ]["midxval"]    = midxval_sel;
+    data_per_channel[ channame ]["yvaluesN"]   = yvaluesN_sel;
+    data_per_channel[ channame ]["integral"]   = integral_sel;
+    data_per_channel[ channame ]["integralN"]  = integralN_sel;
+    
+    
+    plotData();
+}
+
+
 void US_Norm_Profile::plotData(void){
     plot->detachItems(QwtPlotItem::Rtti_PlotItem, false);
     plot->enableAxis(QwtPlot::yRight, false);
     plot->enableAxis(QwtPlot::yLeft, false);
 
+    QString channame;
+    if (us_auto_mode)
+      {
+	channame = cb_chann->currentText();
+	qDebug() << "in plotData(), channame -- " << channame;
+      }
+    
     if ( !us_auto_mode )
       {
 	grid = us_grid(plot);
@@ -828,9 +952,14 @@ void US_Norm_Profile::plotData(void){
             pen.setColor(color_list.at(i % sz_clist));
             QString legend = tr("(D)_") + selFilenames.at(i);
             if (norm)
-                yp = yvaluesN_sel.at(i).data();
-            else
-                yp = yvalues_sel.at(i).data();
+	      {
+		if ( us_auto_mode )
+		  yp = data_per_channel[ channame ]["yvaluesN"].at(i).data();
+		else
+		  yp = yvaluesN_sel.at(i).data();
+	      }
+	    else
+	      yp = yvalues_sel.at(i).data();
             QwtPlotCurve* curve = us_curve(plot, legend);
 
 	    if ( us_auto_mode )
@@ -883,14 +1012,35 @@ void US_Norm_Profile::plotData(void){
 	  }
     
         for (int i = 0; i < nd; i++){
-            int np = midxval_sel.at(i).size();
-            xp = midxval_sel.at(i).data();
-            pen.setColor(color_list.at(i % sz_clist));
+	  
+	    int np;
+	    if ( us_auto_mode )
+	      {
+		np = data_per_channel[ channame ]["midxval"].at(i).size();
+		xp = data_per_channel[ channame ]["midxval"].at(i).data();
+	      }
+	    else
+	      {
+		np = midxval_sel.at(i).size();
+		xp = midxval_sel.at(i).data();
+	      }
+	    
+	    pen.setColor(color_list.at(i % sz_clist));
             QString legend = tr("(I)_") + selFilenames.at(i);
             if (ckb_norm->isChecked())
-                yp = integralN_sel.at(i).data();
+	      {
+		if ( us_auto_mode )
+		  yp = data_per_channel[ channame ]["integralN"].at(i).data();
+		else
+		  yp = integralN_sel.at(i).data();
+	      }
             else
-                yp = integral_sel.at(i).data();
+	      {
+		if ( us_auto_mode )
+		  yp = data_per_channel[ channame ]["integral"].at(i).data();
+		else
+		  yp = integral_sel.at(i).data();
+	      }
             QwtPlotCurve* curve = us_curve(plot, legend);
 
 	    if ( us_auto_mode )
@@ -1057,10 +1207,25 @@ void US_Norm_Profile::slt_pickPoint() {
     if (selFilenames.size() == 0)  return;
     if (picker_state == XRANGE) return;
     pb_pick_norm->setStyleSheet("QPushButton { background-color: red }");
-    selectData();
+    if( us_auto_mode ) 
+      selectData_auto();
+    else
+      selectData();
     enableWidgets(false);
     picker_state = XNORM;
 }
+
+// void US_Norm_Profile::slt_pickPoint_auto() {
+//   qDebug() << "in slt_pickPoint_auto(): selFilenames -- "
+// 	   << selFilenames;
+//     if (selFilenames.size() == 0)  return;
+//     // if (picker_state == XRANGE) return;
+//     pb_pick_norm->setStyleSheet("QPushButton { background-color: red }");
+//     selectData();
+//     enableWidgets(false);
+//     picker_state = XNORM;
+// }
+
 
 void US_Norm_Profile::slt_mouse(const QwtDoublePoint& point){
     if (selFilenames.size() == 0) return;
@@ -1108,7 +1273,14 @@ void US_Norm_Profile::slt_mouse(const QwtDoublePoint& point){
         enableWidgets(true);
         pb_pick_norm->setStyleSheet(bkgc);
         picker_state = XNONE;
-        selectData();
+	if ( us_auto_mode )
+	  {
+	    QString channame = cb_chann->currentText();
+	    data_per_channel_xnorm[ channame ] = point.x();
+	    selectData_auto();
+	  }
+	else
+	  selectData();
     }
 }
 
@@ -1273,19 +1445,29 @@ void US_Norm_Profile::slt_outItemSel(int row)
     }
 }
 
-void US_Norm_Profile::slt_norm_by_max(int state) {
-    QString qs = "QPushButton { background-color: %1 }";
-    QColor color = US_GuiSettings::pushbColor().color(QPalette::Active, QPalette::Button);
-    if (state == Qt::Checked) {
-        pb_pick_norm->setStyleSheet(qs.arg(color.name()));
-        pb_pick_norm->setDisabled(true);
-    } else {
-        pb_pick_norm->setDisabled(false);
-        if (x_norm == -1) {
-            pb_pick_norm->setStyleSheet(qs.arg("yellow"));
-        } else {
-            pb_pick_norm->setStyleSheet(qs.arg(color.name()));
-        }
+void US_Norm_Profile::slt_norm_by_max(int state)
+{
+  if (us_auto_mode)
+    {
+      QString channame = cb_chann->currentText();
+      data_per_channel_norm_cb[ channame ] = state;
     }
+  
+  QString qs = "QPushButton { background-color: %1 }";
+  QColor color = US_GuiSettings::pushbColor().color(QPalette::Active, QPalette::Button);
+  if (state == Qt::Checked) {
+    pb_pick_norm->setStyleSheet(qs.arg(color.name()));
+    pb_pick_norm->setDisabled(true);
+  } else {
+    pb_pick_norm->setDisabled(false);
+    if (x_norm == -1) {
+      pb_pick_norm->setStyleSheet(qs.arg("yellow"));
+    } else {
+      pb_pick_norm->setStyleSheet(qs.arg(color.name()));
+    }
+  }
+  if ( us_auto_mode ) 
+    selectData_auto();
+  else
     selectData();
 }
