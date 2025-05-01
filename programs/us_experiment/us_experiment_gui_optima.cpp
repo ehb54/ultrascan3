@@ -271,7 +271,12 @@ QMap< QString, QString> US_ExperimentMain::get_all_solution_names()
 {
   
   return epanSolutions->get_solutions_public();
-}  
+}
+
+void US_ExperimentMain::get_new_solution_names()
+{
+  epanSolutions->get_new_solutions_public();
+}
 
 US_AnaProfile* US_ExperimentMain::get_aprofile( )
 {
@@ -2194,6 +2199,10 @@ QMap <QString, QStringList> US_ExperGuiRotor::build_protocol_for_data_import( QM
   qDebug() << "cpnames_t: " << cpnames_t;
 
   //Get solutions names & IDs
+
+  if ( mainw->solutions_change )
+    mainw->get_new_solution_names(); // in case Inv. changed
+
   QMap< QString, QString > solutions_t   = mainw->get_all_solution_names();
   qDebug() << "solutions_t [names]: "         << solutions_t.keys();
   qDebug() << "solutions_t [ID of the 1st]: " << solutions_t[solutions_t.keys()[0]];
@@ -4660,6 +4669,11 @@ DbgLv(1) << "EGSo:main: call initPanel()";
 QMap< QString, QString> US_ExperGuiSolutions::get_solutions_public()
 {
   return solu_ids;
+}
+
+void US_ExperGuiSolutions::get_new_solutions_public()
+{
+  allSolutions();
 }
 
 //Function to clear solution's comment when colution changed
