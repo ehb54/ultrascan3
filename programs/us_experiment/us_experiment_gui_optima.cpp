@@ -2205,6 +2205,18 @@ QMap <QString, QStringList> US_ExperGuiRotor::build_protocol_for_data_import( QM
 
   QMap< QString, QString > solutions_t   = mainw->get_all_solution_names();
   qDebug() << "solutions_t [names]: "         << solutions_t.keys();
+
+  if ( solutions_t.keys().size() == 0 )
+    {      
+      //inform user on absence of solutions
+      QMessageBox::critical( this, tr( "No Solutions in the DB!" ),
+			     tr( "No solutions found in the DB for the current investigator!\n"
+				 "Setup of the ABDE experiment is not possible without solutions..."
+				 "\n\nThe program will be closed." )  );
+      exit(1);
+      //return ;
+    }
+  
   qDebug() << "solutions_t [ID of the 1st]: " << solutions_t[solutions_t.keys()[0]];
    
   //[FROM  DATA IMPORTED:] Channels' list, channel-to-wavelength ranges 
