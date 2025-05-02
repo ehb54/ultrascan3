@@ -7587,10 +7587,8 @@ void US_Hydrodyn_Saxs_Hplc::gauss_add_gaussian( double *g, QColor color )
 void US_Hydrodyn_Saxs_Hplc::gauss_init_gaussians()
 {
    gauss_delete_gaussians();
-   plotted_gaussians.clear( );
-   plotted_gaussian_sum.clear( );
 
-   for ( unsigned int i = 0; i < ( unsigned int ) gaussians.size(); i += gaussian_type_size )
+   for ( unsigned  i = 0; i < ( unsigned int ) gaussians.size(); i += gaussian_type_size )
    {
       gauss_add_gaussian( &(gaussians[ i ]), Qt::green );
    }
@@ -7602,16 +7600,15 @@ void US_Hydrodyn_Saxs_Hplc::gauss_init_gaussians()
    }
 }
 
-void US_Hydrodyn_Saxs_Hplc::gauss_delete_gaussians()
-{
-   for ( unsigned int i = 0; i < ( unsigned int ) plotted_gaussians.size(); i++ )
-   {
+void US_Hydrodyn_Saxs_Hplc::gauss_delete_gaussians() {
+   for ( size_t i = 0; i < plotted_gaussians.size(); ++i ) {
       plotted_gaussians[ i ]->detach();
    }
-   for ( unsigned int i = 0; i < ( unsigned int ) plotted_gaussian_sum.size(); i++ )
-   {
+   for ( size_t i = 0; i < plotted_gaussian_sum.size(); ++i ) {
       plotted_gaussian_sum[ i ]->detach();
    }
+   plotted_gaussians.clear( );
+   plotted_gaussian_sum.clear( );
 }
 
 void US_Hydrodyn_Saxs_Hplc::gauss_pos_focus( bool hasFocus )
