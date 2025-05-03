@@ -8536,6 +8536,7 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
        mstr += indent( 2 ) + "<table>\n";
        mstr += table_row( tr( "Type:" ),
 			  tr( "Range:"),
+			  tr( "weight Avg.:" ),
 			  tr( "Integration from Model (target):" ),
 			  tr( "Fraction % from Model (target):" ),
 			  tr( "Tolerance, %:"),
@@ -8558,6 +8559,7 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
 	   
 	   //integrate over model_used
 	   double int_val_m = 0;
+	   double variable_val_within_range = 0;
 	   for ( int ii = 0; ii < ncomp; ii++ )
 	     {
 	       double conc = model_used.components[ ii ].signal_concentration;
@@ -8569,22 +8571,34 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
 	       if ( type == "s" )
 		 {
 		   if ( s_20 >= low*pow(10,-13) && s_20 <= high*pow(10,-13) )
-		     int_val_m += conc;
+		     {
+		       int_val_m += conc;
+		       variable_val_within_range += s_20*conc;
+		     }
 		 }
 	       else if ( type == "D" )
 		 {
 		   if ( D_20 >= low*pow(10,-7) && D_20 <= high*pow(10,-7) )
-		     int_val_m += conc;
+		     {
+		       int_val_m += conc;
+		       variable_val_within_range += D_20*conc;
+		     }
 		 }
 	       else if ( type == "f/f0")
 		 {
 		   if ( f_f0 >= low && f_f0 <= high )
-		     int_val_m += conc;
+		     {
+		       int_val_m += conc;
+		       variable_val_within_range += f_f0*conc;
+		     }
 		 }
 	       else if ( type == "MW")
 		 {
 		   if ( mw >= low*pow(10,3) && mw <= high*pow(10,3) )
-		     int_val_m += conc;
+		     {
+		       int_val_m += conc;
+		       variable_val_within_range += mw*conc;
+		     }
 		 }
 	     }
 	   
@@ -8593,6 +8607,8 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
 	   // 			       && frac_tot_m <= ( frac_tot_r * (1 + frac_tot_tol_r/100.0)  ) ) ? "YES" : "NO";
 
 	   QString tot_frac_passed = ( qAbs( frac_tot_m - frac_tot_r ) <= frac_tot_tol_r ) ? "YES" : "NO";
+
+	   double wav_variable_within_range = double( variable_val_within_range / int_val_m );
 	   
 	   if ( mdla.contains ( method ) )
 	     {
@@ -8615,6 +8631,7 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
 	       
 	       mstr += table_row( type,
 				  range,
+				  QString().sprintf( "%10.4e", wav_variable_within_range ),
 				  QString().sprintf( "%10.4e", int_val_m) + " (" + int_val_r + ")",
 				  QString().sprintf( "%5.2f%%", frac_tot_m ) + " (" + QString::number( frac_tot_r ) + "%)",
 				  QString::number( frac_tot_tol_r ),
