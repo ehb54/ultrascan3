@@ -59,7 +59,7 @@ US_ReportGMP::US_ReportGMP()
 
   //Pseudo3D mask parameters
   pseudo3d_mask             = true;
-  
+
   pseudo3d_2dsait_s_ff0     = true;
   pseudo3d_2dsait_s_d       = false; //true;
   pseudo3d_2dsait_mw_ff0    = false; //true;
