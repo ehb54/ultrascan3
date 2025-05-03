@@ -87,7 +87,7 @@ US_Norm_Profile::US_Norm_Profile( QString auto_mode ): US_Widgets()
     pb_pick_rp = us_pushbutton("Pick Two Points", false);
 
     ckb_norm_max = new QCheckBox();
-    QGridLayout *us_norm_max = us_checkbox("Normalize by Maximum",
+    QGridLayout *us_norm_max = us_checkbox(" Normalize\n by Maximum",
                                          ckb_norm_max);
     pb_pick_norm = us_pushbutton("Pick a Point");
 
@@ -98,6 +98,19 @@ US_Norm_Profile::US_Norm_Profile( QString auto_mode ): US_Widgets()
     //bottom_lyt->addWidget(pb_pick_rp,        1, 1, 1, 1);
     bottom_lyt->addLayout(us_norm_max,       2, 0, 1, 1);
     bottom_lyt->addWidget(pb_pick_norm,      2, 1, 1, 1);
+
+    //help && save btn
+    int ihgt        = pb_pick_norm->height();
+    QSpacerItem* spacer2 = new QSpacerItem( 10, 30*ihgt, QSizePolicy::Expanding);
+    bottom_lyt->addItem( spacer2,  3,  0, 1, 2 );
+
+    QPushButton* pb_help   = us_pushbutton( tr( "Help" ) );
+    pb_save_auto           = us_pushbutton( tr( "Save Profiles" ) );
+    connect( pb_save_auto,  SIGNAL( clicked() ), 
+	     this, SLOT  ( save_auto() ) );
+    
+    bottom_lyt->addWidget( pb_help,         4,   0, 1, 1 );
+    bottom_lyt->addWidget( pb_save_auto,    4,   1, 1, 1 );
 
     ckb_rawData = new QCheckBox();
     QGridLayout *rawData_lyt = us_checkbox("Raw Data", ckb_rawData);
@@ -531,6 +544,19 @@ void US_Norm_Profile::slt_loadAUC_auto( QMap<QString,QString> & protocol_details
       data_per_channel_xnorm[channList[i]]   = -1;
       data_per_channel_norm_cb[channList[i]] = Qt::Checked; //2
     }
+  // //TEST
+  // /* x_norm point for channel  "2A" ,  6.79865
+  //    x_norm point for channel  "4A" ,  6.84741
+  //    x_norm point for channel  "4B" ,  6.85515
+  // */
+  // data_per_channel_xnorm["2A"]   = 6.79865;
+  // data_per_channel_xnorm["4A"]   = 6.84741;
+  // data_per_channel_xnorm["4B"]   = 6.85515;
+  // data_per_channel_norm_cb["2A"] = Qt::Unchecked;
+  // data_per_channel_norm_cb["4A"] = Qt::Unchecked;
+  // data_per_channel_norm_cb["4B"] = Qt::Unchecked;
+  // //END TEST
+  
   
   //Populate channels
   channList. removeDuplicates();
@@ -1470,4 +1496,27 @@ void US_Norm_Profile::slt_norm_by_max(int state)
     selectData_auto();
   else
     selectData();
+}
+
+void US_Norm_Profile::save_auto( void )
+{
+  //construct JSON to be saved && passed
+  /***
+      {"2A":{"x_norm":"6.7987","percents":{"protein":"50%","DNA":"30%"}}}
+  ***/
+  
+  QString json_p = "{";
+  for ( int i=0; i< channList.size(); ++i )
+    {
+      QString channame = channList[ i ];
+      QString x_normal = QString::number(data_per_channel_xnorm[ channame ]);
+      qDebug() << "x_norm point for channel "
+	       <<  channame << ", "
+	       <<  x_normal;
+      json_p += "\"" + channame + "\":{\"x_norm\":\"" + x_normal + "\"},";
+    }
+  json_p.chop(1);
+  json_p += "}";
+
+  qDebug() << "JSON: " << json_p;
 }

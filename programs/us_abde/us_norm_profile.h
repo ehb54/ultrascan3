@@ -44,6 +44,7 @@ class US_Norm_Profile : public US_Widgets
         QPushButton* pb_reset; //!< Button to reset the profile.
         QPushButton* pb_close; //!< Button to close the widget.
         QPushButton* pb_save; //!< Button to save the profile.
+        QPushButton* pb_save_auto; 
 
         QLineEdit* le_investigator; //!< Line edit for investigator name.
         QLineEdit* le_runinfo; //!< Line edit for run information.
@@ -129,6 +130,7 @@ class US_Norm_Profile : public US_Widgets
         void new_chann_auto   ( int  );
         void next_chann_auto( void );
         void prev_chann_auto( void );
+        void save_auto( void );
 
         //! \brief Slot to add or remove an item.
         //! \param item The list widget item.
