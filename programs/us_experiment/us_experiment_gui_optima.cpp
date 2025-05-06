@@ -9738,9 +9738,40 @@ void US_ExperGuiUpload::add_autoflow_record_dataDisk( QMap< QString, QString> & 
        
        qDebug() << "update_autoflow_with_statusID qry -- " << qry;
        db->query( qry );
-     }
 
-   
+       /************** IF ABDE - add record to the new 'autoflowAnalysisABDE' table  ***/
+       /** IF protocol_details[ "expType" ] = "ABDE" **/
+       /** IF SWL or MWL **/
+       /************** IF ABDE - add record to the new 'autoflowAnalysisABDEStages' table *****/
+       /** status 'unknown' ****/
+       if ( protocol_details[ "expType" ] == "ABDE" )
+	 {
+	   // new autoflowAnalysisABDE record
+	   qry. clear();
+	   bool mwl_abde = false;
+	   for ( int ii = 0; ii < rpRange->nranges; ii++ )
+	     {
+	       if ( rpRange->chrngs[ii].wvlens.size() > 1 )
+		 {
+		   mwl_abde = true;
+		   break;
+		 }
+	     }
+	   QString etype_abde = mwl_abde ? "MWL" : "SWL";
+	   qry << "new_autoflowAnalysisABDE_record"
+	       << protocol_details[ "autoflowID" ]
+	       << etype_abde;
+       
+	   qDebug() << "new_autoflowAnalysisABDE_record qry -- " << qry;
+       	   int autoflowAnalysisABDE_ID = db->functionQuery( qry );
+	   qDebug() << "autoflowAnalysisABDE_ID: "  << autoflowAnalysisABDE_ID;
+
+	   // new autoflowAnalysisABDEStages record
+	   qry. clear();
+	   qry << "new_autoflowAnalyisABDEstages_record" << protocol_details[ "autoflowID" ];
+	   db->statusQuery( qry );
+	 }
+     }
 }
 
 // Standard autoflow record
@@ -10010,6 +10041,39 @@ void US_ExperGuiUpload::add_autoflow_record( QMap< QString, QString> & protocol_
        
        qDebug() << "update_autoflow_with_statusID qry -- " << qry;
        db->query( qry );
+
+       /************** IF ABDE - add record to the new 'autoflowAnalysisABDE' table  ***/
+       /** IF protocol_details[ "expType" ] = "ABDE" **/
+       /** IF SWL or MWL **/
+       /************** IF ABDE - add record to the new 'autoflowAnalysisABDEStages' table *****/
+       /** status 'unknown' ****/
+       if ( protocol_details[ "expType" ] == "ABDE" )
+	 {
+	   // new autoflowAnalysisABDE record
+	   qry. clear();
+	   bool mwl_abde = false;
+	   for ( int ii = 0; ii < rpRange->nranges; ii++ )
+	     {
+	       if ( rpRange->chrngs[ii].wvlens.size() > 1 )
+		 {
+		   mwl_abde = true;
+		   break;
+		 }
+	     }
+	   QString etype_abde = mwl_abde ? "MWL" : "SWL";
+	   qry << "new_autoflowAnalysisABDE_record"
+	       << protocol_details[ "autoflowID" ]
+	       << etype_abde;
+       
+	   qDebug() << "new_autoflowAnalysisABDE_record qry -- " << qry;
+       	   int autoflowAnalysisABDE_ID = db->functionQuery( qry );
+	   qDebug() << "autoflowAnalysisABDE_ID: "  << autoflowAnalysisABDE_ID;
+
+	   // new autoflowAnalysisABDEStages record
+	   qry. clear();
+	   qry << "new_autoflowAnalyisABDEstages_record" << protocol_details[ "autoflowID" ];
+	   db->statusQuery( qry );
+	 }
      }
 }
 
@@ -10290,8 +10354,40 @@ void US_ExperGuiUpload::add_autoflow_record_protDev( QMap< QString, QString> & p
        
        qDebug() << "update_autoflow_with_statusID qry -- " << qry;
        db->query( qry );
+
+       /************** IF ABDE - add record to the new 'autoflowAnalysisABDE' table  ***/
+       /** IF protocol_details[ "expType" ] = "ABDE" **/
+       /** IF SWL or MWL **/
+       /************** IF ABDE - add record to the new 'autoflowAnalysisABDEStages' table *****/
+       /** status 'unknown' ****/
+       if ( protocol_details[ "expType" ] == "ABDE" )
+	 {
+	   // new autoflowAnalysisABDE record
+	   qry. clear();
+	   bool mwl_abde = false;
+	   for ( int ii = 0; ii < rpRange->nranges; ii++ )
+	     {
+	       if ( rpRange->chrngs[ii].wvlens.size() > 1 )
+		 {
+		   mwl_abde = true;
+		   break;
+		 }
+	     }
+	   QString etype_abde = mwl_abde ? "MWL" : "SWL";
+	   qry << "new_autoflowAnalysisABDE_record"
+	       << protocol_details[ "autoflowID" ]
+	       << etype_abde;
+       
+	   qDebug() << "new_autoflowAnalysisABDE_record qry -- " << qry;
+       	   int autoflowAnalysisABDE_ID = db->functionQuery( qry );
+	   qDebug() << "autoflowAnalysisABDE_ID: "  << autoflowAnalysisABDE_ID;
+
+	   // new autoflowAnalysisABDEStages record
+	   qry. clear();
+	   qry << "new_autoflowAnalyisABDEstages_record" << protocol_details[ "autoflowID" ];
+	   db->statusQuery( qry );
+	 }
      }
-   
 }
 
 // // [OLD - when starting from 4. EDIT ] Add autoflow record for ProtocolDev
