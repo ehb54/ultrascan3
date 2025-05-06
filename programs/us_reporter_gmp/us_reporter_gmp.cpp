@@ -7380,7 +7380,7 @@ void  US_ReporterGMP::assemble_plots_html( QStringList PlotsFilenames, const QSt
       printer_t.setPaperSize(QPrinter::Letter);
       QSizeF pageSize = printer_t.pageRect().size();
       qreal qprinters_width = pageSize.width()*0.75; //500 DEPENDS on QPrinter's constructor settings {QPrinter::PrinterResolution, 500; QPrinter::HighResolution, 9066}
-      qreal qprinters_hight = pageSize.height()*0.6;
+      qreal qprinters_hight = pageSize.height()*0.55;
       qDebug() << "qprinters_width, height [orig, scaled]: "
 	       << pageSize.width() << pageSize.height() << "; "
 	       << qprinters_width << qprinters_hight; 
@@ -7405,8 +7405,15 @@ void  US_ReporterGMP::assemble_plots_html( QStringList PlotsFilenames, const QSt
        	+ "\" alt=\"" + label;
 
       if ( !plot_type.isEmpty() ) // For Combined plots, scale down .png 
-       	//html_assembled  += "\"height=\"500 \"width=\"500";
-	html_assembled  += " \"height=\"" + QString::number( scaled_i_height ) + "\"width=\"" + QString::number( scaled_i_width);
+       	{
+	  //reduce comb. plots somewhat
+	  double i_scale_factor_h   = double( qprinters_hight / scaled_i_height );
+	  double scaled_i_height_cp = double( scaled_i_height  * i_scale_factor_h );
+	  double scaled_i_width_cp  = double( scaled_i_width ) * ( scaled_i_height_cp / double( scaled_i_height ));
+	  
+	  //html_assembled  += " \"height=\"" + QString::number( scaled_i_height ) + "\"width=\"" + QString::number( scaled_i_width);
+	  html_assembled  += " \"height=\"" + QString::number( scaled_i_height_cp ) + "\"width=\"" + QString::number( scaled_i_width_cp );
+	}
       else
 	{
 	  html_assembled  += " \"height=\"" + QString::number( scaled_i_height ) + "\"width=\"" + QString::number( scaled_i_width);
