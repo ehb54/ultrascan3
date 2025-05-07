@@ -1259,10 +1259,13 @@ DbgLv(1) << "first_last_data for the step" << sp->time_first << sp->time_last
          sim_data_all.scanData[ js ].rvalues.fill( 0.0, kpoint );
 
       // Set the radius values in data sets
-//      int points          = qRound( ( simparams.bottom - simparams.meniscus ) /
-//                                  simparams.radial_resolution ) + 1;
-      int points          = qCeil( ( simparams.bottom - simparams.meniscus ) /
-                                   simparams.radial_resolution ) + 1;
+      int points          = qRound( ( simparams.bottom - simparams.meniscus ) /
+                                 simparams.radial_resolution ) + 1;
+      // int points          = qCeil( ( simparams.bottom - simparams.meniscus ) /
+      //                              simparams.radial_resolution ) + 1;
+      sim_data_all.xvalues.clear();
+      sim_data_all.xvalues.fill( 0.0, points );
+
       for ( int jd = 0; jd < nstep; jd++ )
       {  // Set radius values for current speed's dataset
          double stretch_fac  = stretch( simparams.rotorcoeffs,
@@ -1270,6 +1273,9 @@ DbgLv(1) << "first_last_data for the step" << sp->time_first << sp->time_last
          simparams.meniscus  = meniscus_ar + stretch_fac;
          simparams.bottom    = bottom_ar   + stretch_fac;
          double radval       = simparams.meniscus;
+         sim_datas[ jd ].xvalues.clear();
+         sim_datas[ jd ].xvalues.fill( 0.0, points );
+
          for ( int jp = 0; jp < points; jp++ )
          {
             sim_datas[ jd ].xvalues[ jp ] = radval;
