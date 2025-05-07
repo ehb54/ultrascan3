@@ -1291,7 +1291,6 @@ DbgLv(1) << "out:astfem_radial_ranges" << sim_datas[jd].xvalues[0] << sim_datas[
       // Set meniscus and bottom for (composite?) dataset to 1st speed range
       simparams.meniscus  = sim_data_all.xvalues[ 0 ];
       simparams.bottom    = sim_data_all.xvalues[ points - 1 ];
-      qDebug() <<
 
       // Compute the simulation dataset
       astfem->calculate( sim_data_all );
