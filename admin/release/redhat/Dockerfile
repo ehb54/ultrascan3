@@ -12,7 +12,7 @@ ARG ultrascan_branch=master
 
 ## qt defaults
 ARG qt_major_version=5.15
-ARG qt_version=5.15.8
+ARG qt_version=5.15.16
 ARG qwt_version=6.1.6
 ### N.B. qwt_version is hard coded in the local.pri.somo so we need to change this & in the codeql container & workflow/codeql-analysis.yml
 
@@ -96,6 +96,9 @@ RUN wget https://versaweb.dl.sourceforge.net/project/qwt/qwt/$qwt_version/qwt-$q
 ## BRANCH could be pulled to top
 ADD https://api.github.com/repos/ehb54/ultrascan3/git/refs/heads/$ultrascan_branch version.json
 RUN git clone https://github.com/ehb54/ultrascan3.git
+RUN cd $ULTRASCAN && git fetch --all
+RUN cd $ULTRASCAN && git checkout -B $ultrascan_branch
+RUN cd $ULTRASCAN && git reset --hard origin/$ultrascan_branch
 
 # setup initial local.pri's
 
@@ -112,9 +115,17 @@ RUN cd /ultrascan3/us_somo/develop && env ULTRASCAN=/ultrascan3 ./revision.sh &&
 # install dependencies for building manual
 RUN dnf install -y doxygen texlive-*
 RUN dnf install -y perl-CPAN && cpan Template
+RUN dnf install -y graphviz
+## upgrade doxygen as the file is often not current in repo
+RUN cd $ULTRASCAN && doxygen -u
 
 # make ultrascan
+## faster qmake, make first
+RUN cd $ULTRASCAN && export PATH=$QTDIR/bin:$PATH && qmake && make -j$parallel_compile
 RUN cd $ULTRASCAN && export PATH=$QTDIR/bin:$PATH && ./makeall.sh -j$parallel_compile
+
+## old versions of makeall.sh fail to build manual as it is doing in parallel, make sure we build the manual
+RUN cd $ULTRASCAN/doc/manual && export PATH=$QTDIR/bin:$PATH && make -j1
 
 # make sure manual exists
 RUN cd $ULTRASCAN && ls -l bin/manual*
@@ -138,4 +149,4 @@ RUN cp $QTDIR/bin/assistant /ultrascan3/bin
 
 # make package
 ARG image
-RUN IMAGE=`echo $image | sed s/rockylinux/redhat/ | sed s/:/-/` && echo $IMAGE  && LD_LIBRARY_PATH=/ultrascan3/lib:$LD_LIBRARY_PATH /ultrascan3/admin/release/linux.pl $IMAGE && ls -1 us3-*.tar.xz > /lastpkgname
+RUN IMAGE=`echo $image | sed 's/rockylinux\/rockylinux/redhat/' | sed s/:/-/` && echo $IMAGE  && LD_LIBRARY_PATH=/ultrascan3/lib:$LD_LIBRARY_PATH /ultrascan3/admin/release/linux.pl $IMAGE && ls -1 us3-*.tar.xz > /lastpkgname
