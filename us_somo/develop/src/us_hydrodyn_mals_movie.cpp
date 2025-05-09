@@ -516,7 +516,7 @@ void US_Hydrodyn_Mals_Movie::save_plot()
    {
       if ( mals_win->plot_ref->isVisible() )
       {
-         save_plot( mals_win->plot_dist, mals_win->plot_ref, mals_win->plot_errors, le_save->text() );
+         save_plot( mals_win->plot_dist, mals_win->plot_errors, mals_win->plot_ref, le_save->text() );
       } else {
          save_plot( mals_win->plot_dist, mals_win->plot_errors, le_save->text() );
       }
