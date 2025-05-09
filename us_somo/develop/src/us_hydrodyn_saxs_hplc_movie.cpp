@@ -595,16 +595,18 @@ void US_Hydrodyn_Saxs_Hplc_Movie::save_plot( QWidget *plot, QString tag )
 
 void US_Hydrodyn_Saxs_Hplc_Movie::join_maps( QPixmap & m1, QPixmap & m2 )
 {
-   int m1h = m1.height();
-   int m2h = m2.height();
+   int width = std::max(m1.width(), m2.width());
+   int height = m1.height() + m2.height();
 
-#if QT_VERSION < 0x040000
-   m1.resize( m1.width() > m2.width() ? m1.width() : m2.width(), m1h + m2h );
-#else
-   m1 = m1.copy( 0, 0, m1.width() > m2.width() ? m1.width() : m2.width(), m1h + m2h );
-#endif
-   QPainter paint( &m1 );
-   paint.drawPixmap( 0, m1h, m2 );
+   QPixmap combined(width, height);
+   combined.fill(Qt::transparent);  // Preserve transparency if needed
+
+   QPainter painter(&combined);
+   painter.drawPixmap(0, 0, m1);
+   painter.drawPixmap(0, m1.height(), m2);
+   painter.end();
+
+   m1 = combined;  // Update m1 to be the joined image
 }
 
 void US_Hydrodyn_Saxs_Hplc_Movie::save_plot( QWidget *plot, QWidget *plot2, QWidget *plot3, QString tag )
