@@ -75,7 +75,9 @@ class US_Norm_Profile : public US_Widgets
         QMap< QString, QMap < QString, QVector<QVector<double>> > > data_per_channel;
         QMap< QString, double > data_per_channel_xnorm;
         QMap< QString, int > data_per_channel_norm_cb;
-
+        QMap< QString, QMap < QString, double>> data_per_channel_ranges_percents;
+        QMap< QString, bool > data_per_channel_processed;
+ 
         QListWidget *lw_inpData; //!< List widget for input data.
         QListWidget *lw_selData; //!< List widget for selected data.
 
@@ -99,6 +101,7 @@ class US_Norm_Profile : public US_Widgets
         //! \brief Select data for the plot.
         void selectData(void);
         void selectData_auto(void);
+        void find_percent_from_range( QString, QString, QString, QVector<double>, QVector< double > );
 
         //! \brief Plot the selected data.
         void plotData(void);
@@ -131,6 +134,8 @@ class US_Norm_Profile : public US_Widgets
         void next_chann_auto( void );
         void prev_chann_auto( void );
         void save_auto( void );
+        bool areAllProcessed_auto( void );
+        bool areAllNormalized_auto( QString& );
 
         //! \brief Slot to add or remove an item.
         //! \param item The list widget item.

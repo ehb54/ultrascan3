@@ -101,13 +101,14 @@ US_Norm_Profile::US_Norm_Profile( QString auto_mode ): US_Widgets()
 
     //help && save btn
     int ihgt        = pb_pick_norm->height();
-    QSpacerItem* spacer2 = new QSpacerItem( 10, 30*ihgt, QSizePolicy::Expanding);
+    QSpacerItem* spacer2 = new QSpacerItem( 10,25*ihgt, QSizePolicy::Expanding);
     bottom_lyt->addItem( spacer2,  3,  0, 1, 2 );
 
     QPushButton* pb_help   = us_pushbutton( tr( "Help" ) );
     pb_save_auto           = us_pushbutton( tr( "Save Profiles" ) );
     connect( pb_save_auto,  SIGNAL( clicked() ), 
 	     this, SLOT  ( save_auto() ) );
+    pb_save_auto->setEnabled(false);
     
     bottom_lyt->addWidget( pb_help,         4,   0, 1, 1 );
     bottom_lyt->addWidget( pb_save_auto,    4,   1, 1, 1 );
@@ -230,9 +231,9 @@ US_Norm_Profile::US_Norm_Profile( QString auto_mode ): US_Widgets()
     lb_selList->hide(); 
     lw_selData ->hide();
     
-    // //TEST
+    //TEST
     // QMap<QString, QString> protocol_details;
-    // //ABDE-MWL
+    // //ABDE-MWL (CCH)
     // protocol_details[ "invID_passed" ] = QString("165");
     // protocol_details[ "protocolName" ] = QString("GMP-test-ABDE-fromDisk");
     // protocol_details[ "aprofileguid" ] = QString("6c376179-6eda-47e9-b699-3eef63c6fe6e");
@@ -244,6 +245,19 @@ US_Norm_Profile::US_Norm_Profile( QString auto_mode ): US_Widgets()
     // protocol_details[ "autoflowID" ]   = QString("1515");
     // protocol_details["ssf_dir_name"]   = QString("/home/alexey/ultrascan/imports/SSF-AAV_GMP_test_030325-run2366-dataDiskRun-1515");
     // protocol_details[ "channels_to_radial_ranges" ] = QString("2A:6.2-6.5;2B:5.8-7;4A:6.1-6.5;4B:6.1-6.5");
+
+    // //ABDE-MWL (CANADA-test)
+    // protocol_details[ "invID_passed" ] = QString("2");
+    // protocol_details[ "protocolName" ] = QString("GMP-test-ABDE-fromDisk");
+    // protocol_details[ "aprofileguid" ] = QString("37a4c516-cf7f-4470-9102-8a98805c2cae");
+    // protocol_details[ "filename" ]     = QString("AAV_GMP_test_030325-run2366-dataDiskRun-71");
+    // protocol_details[ "analysisIDs"  ] = QString("");
+    // protocol_details[ "expType" ]      = QString("ABDE");
+    // protocol_details[ "dataSource" ]   = QString("dataDiskAUC");
+    // protocol_details[ "statusID" ]     = QString("46");
+    // protocol_details[ "autoflowID" ]   = QString("71");
+    // protocol_details["ssf_dir_name"]   = QString("/home/alexey/ultrascan/imports/SSF-AAV_GMP_test_030325-run2366-dataDiskRun-71");
+    // protocol_details[ "channels_to_radial_ranges" ] = QString("2A:6.2-6.5,6.6-6.9;2B:5.8-7;4A:6.1-6.5,6.6-6.94;4B:6.25-6.55,6.65-7");
     // load_data_auto( protocol_details );
     // //END TEST
 
@@ -489,6 +503,8 @@ void US_Norm_Profile::load_data_auto( QMap<QString,QString> & protocol_details )
   data_per_channel. clear();
   data_per_channel_xnorm . clear();
   data_per_channel_norm_cb. clear();
+  data_per_channel_ranges_percents. clear();
+  data_per_channel_processed. clear();
   channels_ranges = protocol_details[ "channels_to_radial_ranges" ];
   slt_loadAUC_auto( protocol_details );
 }
@@ -543,6 +559,9 @@ void US_Norm_Profile::slt_loadAUC_auto( QMap<QString,QString> & protocol_details
     {
       data_per_channel_xnorm[channList[i]]   = -1;
       data_per_channel_norm_cb[channList[i]] = Qt::Checked; //2
+
+      //set all channels as unprocessed
+      data_per_channel_processed[ channList[i] ] = false;
     }
   // //TEST
   // /* x_norm point for channel  "2A" ,  6.79865
@@ -590,6 +609,45 @@ void US_Norm_Profile::new_chann_auto( int index )
 	  selectData_auto();
 	}
     }
+
+  //set channels as processed
+  data_per_channel_processed[ channame ] = true;
+  
+  //save btn
+  pb_save_auto->setEnabled( areAllProcessed_auto() );
+}
+
+bool US_Norm_Profile::areAllProcessed_auto( void )
+{
+  bool all_processed = true;
+  for (int i=0; i<channList.size(); ++i )
+    {
+      if ( !data_per_channel_processed[ channList[i] ])
+	{
+	  all_processed = false;
+	  break;
+	}
+    }
+
+  return all_processed;
+}
+
+bool US_Norm_Profile::areAllNormalized_auto( QString& msg )
+{
+  msg. clear();
+  bool all_processed = true;
+  for (int i=0; i<channList.size(); ++i )
+    {
+      if ( data_per_channel_xnorm[ channList[i] ] == -1 )
+	{
+	  msg += "WARNING: Distributions for some channel(s) are not normalized!";
+	  msg += "\n\nThis will result in the non-normalized distributions in the GMP Report...";
+	  all_processed = false;
+	  break;
+	}
+    }
+
+  return all_processed;
 }
 
 //[AUTO] next channel button
@@ -948,6 +1006,7 @@ void US_Norm_Profile::plotData(void){
     }
 
     const double *xp, *yp;
+    QVector<double> xp_intN_protein, yp_intN_protein;
 
     double minX =  1e99;
     double maxX = -1e99;
@@ -976,8 +1035,23 @@ void US_Norm_Profile::plotData(void){
             int np = xvalues_sel.at(i).size();
             xp = xvalues_sel.at(i).data();
             pen.setColor(color_list.at(i % sz_clist));
-            QString legend = tr("(D)_") + selFilenames.at(i);
-            if (norm)
+	    
+            //QString legend = tr("(D)_") + selFilenames.at(i);
+	    QString legend;
+	    if ( us_auto_mode )
+	      {
+		if ( selFilenames.at(i). contains(".002") )
+		  {
+		    legend = channame + "-protein";
+		    pen.setColor("red");
+		  }
+		else if ( selFilenames.at(i). contains(".001") )
+		  legend = channame + "-DNA";
+	      }
+	    else
+	      legend = tr("(D)_") + selFilenames.at(i);
+
+	    if (norm)
 	      {
 		if ( us_auto_mode )
 		  yp = data_per_channel[ channame ]["yvaluesN"].at(i).data();
@@ -989,8 +1063,11 @@ void US_Norm_Profile::plotData(void){
             QwtPlotCurve* curve = us_curve(plot, legend);
 
 	    if ( us_auto_mode )
-	      curve->setYAxis(QwtPlot::yRight);
-	      
+	      {
+		curve->setYAxis(QwtPlot::yRight);
+		curve->setItemAttribute( QwtPlotItem::Legend, false );
+	      }
+	    
             curve->setPen(pen);
             curve->setSamples(xp, yp, np);
 
@@ -1052,7 +1129,29 @@ void US_Norm_Profile::plotData(void){
 	      }
 	    
 	    pen.setColor(color_list.at(i % sz_clist));
-            QString legend = tr("(I)_") + selFilenames.at(i);
+
+	    QString legend;
+
+	    if ( us_auto_mode )
+	      {
+		if ( selFilenames.at(i). contains(".002") )
+		  {
+		    legend = channame + "-protein";
+		    pen.setColor("red");
+		    // xp_intN_protein = data_per_channel[ channame ]["midxval"].at(i).data();
+		    // yp_intN_protein = data_per_channel[ channame ]["integralN"].at(i).data();
+		    xp_intN_protein = data_per_channel[ channame ]["midxval"][i];
+		    yp_intN_protein = data_per_channel[ channame ]["integralN"][i];
+		    //qDebug() << "yp_intN_protein, size() " << yp_intN_protein << ", size: " << yp_intN_protein.size();
+		  }
+		else if ( selFilenames.at(i). contains(".001") )
+		  legend = channame + "-DNA";
+		else
+		  legend = channame;
+	      }
+	    else
+	      legend = tr("(I)_") + selFilenames.at(i);
+	    
             if (ckb_norm->isChecked())
 	      {
 		if ( us_auto_mode )
@@ -1105,18 +1204,6 @@ void US_Norm_Profile::plotData(void){
 	  }
     }
 
-    if (ckb_legend->isChecked()) {
-        QwtLegend* legend = new QwtLegend();
-        legend->setFrameStyle( QFrame::Box | QFrame::Sunken );
-        plot->insertLegend( legend, QwtPlot::BottomLegend   );
-    } else {
-        plot->insertLegend( NULL, QwtPlot::BottomLegend );
-    }
-
-    double dx = (maxX - minX) * 0.05;
-    plot->setAxisScale( QwtPlot::xBottom, minX - dx, maxX + dx);
-    plot->replot();
-
     //if [AUTO-ABDE] mode, add ranges
     if ( us_auto_mode )
       {
@@ -1141,8 +1228,15 @@ void US_Norm_Profile::plotData(void){
 
 	for (int i=0; i<c_ranges.size(); ++i )
 	 {
-	   double point1 = c_ranges[ i ].split("-")[0].toDouble();
-	   double point2 = c_ranges[ i ].split("-")[1].toDouble();
+	   QString point1_s = c_ranges[ i ].split("-")[0];
+	   QString point2_s = c_ranges[ i ].split("-")[1];
+	   double point1 = point1_s.toDouble();
+	   double point2 = point2_s.toDouble();
+
+	   // find intercection of point1 & 2 with the 'yp_intN_protein'
+	   // use xp_intN_protein as index
+	   // yp_intN_protein = data_per_channel[ channame ]["integralN"].at(i).data();
+	   find_percent_from_range( channame, point1_s, point2_s, xp_intN_protein, yp_intN_protein );
 	   
 	   QwtPlotCurve* v_line_peak1;
 	   double r1[ 2 ];
@@ -1153,7 +1247,8 @@ void US_Norm_Profile::plotData(void){
 	   double r2[ 2 ];
 	   r2[ 0 ] = point2;
 	   r2[ 1 ] = point2;
-	   
+
+	   	   
 #if QT_VERSION < 0x050000
 	   QwtScaleDiv* y_axis = plot->axisScaleDiv( QwtPlot::yLeft );
 #else
@@ -1186,11 +1281,54 @@ void US_Norm_Profile::plotData(void){
 	   
 	   v_line_peak1->setPen( pen1 );
 	   v_line_peak2->setPen( pen1 );
+
+	   v_line_peak1->setItemAttribute( QwtPlotItem::Legend, false );
+	   v_line_peak2->setItemAttribute( QwtPlotItem::Legend, false );
 	 }
 	plot->replot();
       }
+
+    if (ckb_legend->isChecked()) {
+      QwtLegend* legend = new QwtLegend();
+      legend->setFrameStyle( QFrame::Box | QFrame::Sunken );
+      plot->insertLegend( legend, QwtPlot::BottomLegend   );
+    } else {
+        plot->insertLegend( NULL, QwtPlot::BottomLegend );
+    }
+
+    double dx = (maxX - minX) * 0.05;
+    plot->setAxisScale( QwtPlot::xBottom, minX - dx, maxX + dx);
+    plot->replot();
 }
 
+void US_Norm_Profile::find_percent_from_range( QString channame, QString point1_s, QString point2_s,
+					       QVector< double> xp_intN_protein, QVector<double> yp_intN_protein )
+{
+  QString range = point1_s + "-" + point2_s;
+  double p1 = point1_s.toDouble();
+  double p2 = point2_s.toDouble();
+  int p1_ind=0, p2_ind=0;
+
+  qDebug() << "p1, p2 -- " << p1 << p2;
+  //qDebug() << "[in find_percent_from_range() ] xp_intN_protein, size() " << xp_intN_protein << ", size: " << xp_intN_protein.size();
+  for (int i=0; i<xp_intN_protein.size(); ++i )
+    {
+      if ( xp_intN_protein[i] <= p1 )
+	p1_ind = i;
+    }
+  
+  for (int i=0; i<xp_intN_protein.size(); ++i )
+    {
+      if ( xp_intN_protein[i] <= p2 )
+	p2_ind = i;
+    }
+  qDebug() << "p1_ind " << p1_ind << ", y-value: " << yp_intN_protein[p1_ind];
+  qDebug() << "p2_ind " << p2_ind << ", y-value: " << yp_intN_protein[p2_ind];
+  
+  data_per_channel_ranges_percents[ channame ][ range ] = double(yp_intN_protein[p2_ind] - yp_intN_protein[p1_ind]);
+  qDebug() << "channel " << channame << ", range " << range << ", percent: "
+    	   <<  double(yp_intN_protein[p2_ind] - yp_intN_protein[p1_ind]);
+}
 
 void US_Norm_Profile::slt_legend(int state) {
 
@@ -1500,9 +1638,44 @@ void US_Norm_Profile::slt_norm_by_max(int state)
 
 void US_Norm_Profile::save_auto( void )
 {
+  QString msg_u;
+  if (!areAllNormalized_auto( msg_u ))
+    {
+      qDebug() << "NOT all channels NORMALIZED!!!";
+      int status = QMessageBox::warning( this,
+					 tr( "Channel Normalization" ),
+					 msg_u,
+					 tr( "&Proceed" ), tr( "&Cancel" ),
+					 0, 0, 1 );
+
+      if ( status != 0 ) return;
+    }
   //construct JSON to be saved && passed
   /***
-      {"2A":{"x_norm":"6.7987","percents":{"protein":"50%","DNA":"30%"}}}
+      {
+        "2A":{
+               "x_norm":"6.79841",
+	       "percents": {
+	                      "6.2-6.5":"48.6361",
+			      "6.6-6.9":"39.3836"
+			   }
+	    },
+	"4A":{
+	       "x_norm":"6.8476",
+	       "percents":{
+	                      "6.1-6.5":"68.876",
+			      "6.6-6.94":"27.369"
+			   }
+	      },
+	 "4B":{
+	        "x_norm":"6.86425",
+		"percents":{
+		               "6.25-6.55":"89.7197",
+			       "6.65-7":"6.36435"
+			    }
+	      }
+       }
+      
   ***/
   
   QString json_p = "{";
@@ -1513,7 +1686,18 @@ void US_Norm_Profile::save_auto( void )
       qDebug() << "x_norm point for channel "
 	       <<  channame << ", "
 	       <<  x_normal;
-      json_p += "\"" + channame + "\":{\"x_norm\":\"" + x_normal + "\"},";
+      json_p += "\"" + channame + "\":{\"x_norm\":\"" + x_normal + "\",";
+
+      //now over ranges:percents
+      QMap < QString, double> ranges_percents = data_per_channel_ranges_percents[ channame ];
+      json_p += "\"percents\":{";
+      QMap < QString, double >::iterator rp;
+      for ( rp = ranges_percents.begin(); rp != ranges_percents.end(); ++rp )
+	{
+	  json_p += "\"" + rp.key() + "\":\"" + QString::number(rp.value()) + "\",";
+	}
+      json_p.chop(1);
+      json_p += "}},";
     }
   json_p.chop(1);
   json_p += "}";
