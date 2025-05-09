@@ -567,7 +567,7 @@ void US_Hydrodyn_Saxs_Hplc_Movie::save_plot()
    {
       if ( hplc_win->plot_ref->isVisible() )
       {
-         save_plot( hplc_win->plot_dist, hplc_win->plot_ref, hplc_win->plot_errors, le_save->text() );
+         save_plot( hplc_win->plot_dist, hplc_win->plot_errors, hplc_win->plot_ref, le_save->text() );
       } else {
          save_plot( hplc_win->plot_dist, hplc_win->plot_errors, le_save->text() );
       }
@@ -645,8 +645,19 @@ void US_Hydrodyn_Saxs_Hplc_Movie::save_plot( QPixmap & qPix, QString tag, int my
    paint.setPen( Qt::blue );
    paint.setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold) );
    // paint.drawText( 5, 5, hplc_win->lb_files->item( hplc_selected_files[ mypos ] )->text() );
-   paint.drawText( qPix.rect(), Qt::AlignBottom | Qt::AlignLeft, hplc_win->lb_files->item( hplc_selected_files[ mypos ] )->text() );
+
+   QString curvefname = hplc_win->lb_files->item( hplc_selected_files[ mypos ] )->text();
+   QString qvaluetag  = "";
+
+   static QRegExp rx_q     ( "It_q(\\d+_\\d+)" );
+   if ( rx_q.indexIn( curvefname ) != -1 ) {
+      qvaluetag = QString( "q: %1 " ).arg( rx_q.cap( 1 ).replace( "_", "." ).toDouble() );
+   }
+
+   paint.drawText( qPix.rect(), Qt::AlignBottom | Qt::AlignLeft, QString( "%1%2" ).arg( qvaluetag ).arg( curvefname ));
+
    QString frame = QString( "%1" ).arg( mypos + 1 );
+
    while( frame.length() < 5 )
    {
       frame = "0" + frame;
