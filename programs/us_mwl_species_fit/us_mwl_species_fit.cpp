@@ -167,17 +167,23 @@ DbgLv(1) << "  irow" << irow << "icol" << icol;
 	   triple_text = t_list[0] + " / " + t_list[1];
 	   qDebug() << "Processing chanel -- " << triple_text;
 
-	   //associate ext. profiles
-	   QMap< QString, QMap< double, double > > analytes_profs = extinction_profiles_per_channel[ triple_text ];
 
-	   loadSpecs_auto( analytes_profs );
-	   specFitData();
-
-	   //save ssf-dir name for future DB save
-	   protocol_details_p["ssf_dir_name"] = this->protocol_details["ssf_dir_name"];
-
+	   if ( this->protocol_details["abde_etype"] == "MWL" )
+	     {
+	       
+	       //associate ext. profiles
+	       QMap< QString, QMap< double, double > > analytes_profs = extinction_profiles_per_channel[ triple_text ];
+	       
+	       loadSpecs_auto( analytes_profs );
+	       specFitData();
+	       
+	       //save ssf-dir name for future DB save
+	       protocol_details_p["ssf_dir_name"] = this->protocol_details["ssf_dir_name"];
+	     }
+	   
 	   //pass ranges from reportItems
 	   protocol_details_p["channels_to_radial_ranges"] = this->protocol_details[ "channels_to_radial_ranges" ];
+	   protocol_details_p[ "directory_for_gmp" ] = this->protocol_details[ "directory_for_gmp" ];
 	 }
      }
 }
@@ -706,6 +712,10 @@ void US_MwlSpeciesFit::load( void )
      {
        dialog = new US_DataLoader( edlast, dbdisk, rawList, dataList, triples,
 				   description, protocol_details, "none" );
+
+       QString dir_gmp = description;
+       
+       protocol_details[ "directory_for_gmp" ] = US_Settings::resultDir() + "/" + dir_gmp.split(";")[1];
      }
    else
      dialog = new US_DataLoader( edlast, dbdisk, rawList, dataList, triples, description, "none" );
@@ -733,7 +743,7 @@ void US_MwlSpeciesFit::load( void )
       directory = directory.left( directory.lastIndexOf( "/" ) );
    }
 
-DbgLv(1) << "ldnois: done";
+ DbgLv(1) << "ldnois: done";
    int nscans  = dataList[ 0 ].scanCount();
    int ntrips  = dataList.count();
 DbgLv(1) << "ldnois:  nscans" << nscans << "ntrips" << ntrips;

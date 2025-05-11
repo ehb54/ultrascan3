@@ -506,18 +506,25 @@ void US_Norm_Profile::load_data_auto( QMap<QString,QString> & protocol_details )
   data_per_channel_ranges_percents. clear();
   data_per_channel_processed. clear();
   channels_ranges = protocol_details[ "channels_to_radial_ranges" ];
+  abde_etype = protocol_details["abde_etype"];
   slt_loadAUC_auto( protocol_details );
 }
 
 void US_Norm_Profile::slt_loadAUC_auto( QMap<QString,QString> & protocol_details)
 {
   channList. clear();
-  QDir runDir( protocol_details["ssf_dir_name"] );
+  QString dirName;
+  if ( abde_etype == "MWL" )
+    dirName = protocol_details["ssf_dir_name"];
+  else
+    dirName = protocol_details["directory_for_gmp"];
+  
+  QDir runDir( dirName );
   QStringList fileList = runDir.entryList(QStringList() << "*.auc", QDir::Files, QDir::Name);
   QStringList fPath;
   for (int i=0; i<fileList.size(); ++i )
     {
-      fPath << protocol_details["ssf_dir_name"] + "/" + fileList[i];
+      fPath << dirName + "/" + fileList[i];
 
       QStringList file_n_list = fileList[i].split(".");
       channList << file_n_list[2] + file_n_list[3];
@@ -923,14 +930,27 @@ void US_Norm_Profile::selectData_auto(void){
     }
     for (int i = 0; i < inpIds.size(); i++){
         int id = inpIds.at(i);
-        if (flag_limit){
-            QPair<int, int> pair= getXlimit(xvalues.at(id), x_min_picked, x_max_picked);
-            xvalues_sel << xvalues.at(id).mid(pair.first, pair.second);
-            yvalues_sel << yvalues.at(id).mid(pair.first, pair.second);
-        } else {
-            xvalues_sel << xvalues.at(id);
-            yvalues_sel << yvalues.at(id);
-        }
+	if ( abde_etype == "MWL" )
+	  {
+	    if (flag_limit){
+	      QPair<int, int> pair= getXlimit(xvalues.at(id), x_min_picked, x_max_picked);
+	      xvalues_sel << xvalues.at(id).mid(pair.first, pair.second);
+	      yvalues_sel << yvalues.at(id).mid(pair.first, pair.second);
+	    } else {
+	      xvalues_sel << xvalues.at(id);
+	      yvalues_sel << yvalues.at(id);
+	    }
+	  }
+	else //SWL
+	  {
+	    //set x_min_picked, x_max_picked to data ranges in eProfile
+	    x_min_picked = 6.03700000; //TEST: will be read from ePRofile PER Channel!!!
+	    x_max_picked = 7.08000000; //TEST: will be read from ePRofile
+	    QPair<int, int> pair= getXlimit(xvalues.at(id), x_min_picked, x_max_picked);
+	    xvalues_sel << xvalues.at(id).mid(pair.first, pair.second);
+	    yvalues_sel << yvalues.at(id).mid(pair.first, pair.second);
+	  }
+	  
 
         QMap<QString, QVector<double>> trapzOut;
         trapzOut = trapz(xvalues_sel.last(), yvalues_sel.last());
@@ -1703,4 +1723,6 @@ void US_Norm_Profile::save_auto( void )
   json_p += "}";
 
   qDebug() << "JSON: " << json_p;
+
+  
 }

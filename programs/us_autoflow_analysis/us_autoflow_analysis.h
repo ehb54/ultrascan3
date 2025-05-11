@@ -340,6 +340,7 @@ class US_Analysis_auto : public US_Widgets
              * @return A map of the investigator information.
              */
             QMap < QString, QString > get_investigator_info ( US_DB2*, const QString& );
+            QMap < QString, QString > get_abdeAnalysis_info ( US_DB2*, const QString& );
 
             /**
              * @brief Scans the database for analysis data.

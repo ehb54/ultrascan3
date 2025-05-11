@@ -72,6 +72,7 @@ class US_Norm_Profile : public US_Widgets
         double x_max_picked = -1; //!< Maximum X value picked.
         double x_norm = -1; //!< A radial point that normalization occurs based on
         QString channels_ranges;
+        QString abde_etype;
         QMap< QString, QMap < QString, QVector<QVector<double>> > > data_per_channel;
         QMap< QString, double > data_per_channel_xnorm;
         QMap< QString, int > data_per_channel_norm_cb;

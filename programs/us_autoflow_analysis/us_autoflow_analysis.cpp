@@ -201,18 +201,35 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
   if ( autoflow_expType == "ABDE")
     {
       qDebug() << "[ABDE] - ANALYSIS!";
-      //Pre-process data (decomposition for MWL); build alt. GUI (to integrate and manually normalize);
 
-      sdiag = new US_MwlSpeciesFit( protocol_details_at_analysis );
-      //sdiag -> show(); //for debug
+      //check if MWL or SWL
+      QMap<QString, QString> abde_analysis_details = get_abdeAnalysis_info( &db, QString::number(autoflowID_passed));
+      QString abde_etype = abde_analysis_details["etype"];
+      qDebug() << "ABDE_exp_type: " << abde_etype;
 
-      qDebug() << "SSF-Dir: " << protocol_details_at_analysis["ssf_dir_name"];
-     
-      //now save ssf-produced-data to DB
-      sdiag_convert = new US_ConvertGui("AUTO");
-      sdiag_convert->import_ssf_data_auto( protocol_details_at_analysis );
-      //sdiag_convert -> show(); //for debug
+      if ( abde_etype == "MWL" )
+	{
+	  protocol_details_at_analysis["abde_etype"] = "MWL";
+	  
+	  //Pre-process data (decomposition for MWL); build alt. GUI (to integrate and manually normalize);
+	  sdiag = new US_MwlSpeciesFit( protocol_details_at_analysis );
+	  //sdiag -> show(); //for debug
+	  
+	  qDebug() << "SSF-Dir: " << protocol_details_at_analysis["ssf_dir_name"];
+	  
+	  //now save ssf-produced-data to DB
+	  sdiag_convert = new US_ConvertGui("AUTO");
+	  sdiag_convert->import_ssf_data_auto( protocol_details_at_analysis );
+	  //sdiag_convert -> show(); //for debug
+	}
+      else if ( abde_etype == "SWL" )
+	{
+	  protocol_details_at_analysis["abde_etype"] = "SWL";
+	  sdiag = new US_MwlSpeciesFit( protocol_details_at_analysis );
 
+	  qDebug() << "Dir for GMP: " << protocol_details_at_analysis["directory_for_gmp"];
+	}
+      
       emit close_analysissetup_msg();
 
       //call abde normalizer
@@ -3954,6 +3971,27 @@ QMap< QString, QString> US_Analysis_auto::read_autoflowAnalysisHistory_record( U
 }
 
 
+QMap< QString, QString> US_Analysis_auto::get_abdeAnalysis_info( US_DB2* db, const QString& ID )
+{
+  QMap<QString, QString> abdeAnalysis_details;
+  
+  QStringList qry;
+  qry << "read_autoflowAnalysisABDE_record"
+      << ID;
+  
+  db->query( qry );
+
+  if ( db->lastErrno() == US_DB2::OK )    
+    {
+      while ( db->next() )
+	{
+	  abdeAnalysis_details["ID"]             = db->value( 0 ).toString();
+	  abdeAnalysis_details["etype"]          = db->value( 1 ).toString();
+	  abdeAnalysis_details["xnorm_percents"] = db->value( 2 ).toString();
+	}
+    }
+  return abdeAnalysis_details;
+}
 
 QMap< QString, QString> US_Analysis_auto::get_investigator_info( US_DB2* db, const QString& ID )
 {
