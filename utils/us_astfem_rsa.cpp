@@ -2727,8 +2727,15 @@ void US_Astfem_RSA::initialize_conc( int kk, US_AstfemMath::MfemInitial& CT0, bo
             // Calculate the spread of the lamella:
            for ( int j = 0; j < nval; j++ )
            {
-              base = ( CT0.radius[ j ] - af_params.current_meniscus ) / lamella_width;
-              CT0.concentration[ j ] += sc->signal_concentration * exp( -pow( base, 4.0 ) );
+              if ( CT0.radius[j] < af_params.current_meniscus +  lamella_width){
+                 CT0.concentration[ j ] += sc->signal_concentration;
+              }
+              else{
+                 // initial cons is over, everything else is 0
+                 break;
+              }
+              // base = ( CT0.radius[ j ] - af_params.current_meniscus ) / lamella_width;
+              // CT0.concentration[ j ] += sc->signal_concentration * exp( -pow( base, 4.0 ) );
 if (  j<2||j>(CT0.concentration.size()-3)||j==(CT0.concentration.size()/40))
  DbgLv(2) << "RSA:  j base conc" << j << base << CT0.concentration[j];
 if(mxct<CT0.concentration[j]) {mxct=CT0.concentration[j];}
