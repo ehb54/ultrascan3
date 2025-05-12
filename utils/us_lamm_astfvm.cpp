@@ -739,6 +739,9 @@ US_LammAstfvm::CosedData::CosedData()
 US_LammAstfvm::US_LammAstfvm( US_Model& rmodel, US_SimulationParameters& rsimparms, QObject* parent /*=0*/ ) : QObject(
    parent ), model( rmodel ), simparams( rsimparms )
 {
+   rpm_timestate.clear();
+   w2t_timestate.clear();
+   sim_speed_prof_idx_timestate.clear();
    comp_x          = 0; // initial model component index
    af_data         = US_AstfemMath::MfemData();
    cosed_needed    = false;
@@ -752,6 +755,8 @@ US_LammAstfvm::US_LammAstfvm( US_Model& rmodel, US_SimulationParameters& rsimpar
    param_m         = simparams.meniscus;
    param_b         = simparams.bottom;
    param_w2        = sq( speed * M_PI / 30.0 );
+   param_w2_t0 = param_w2;
+   param_w2_t0dt = param_w2;
    DbgLv( 2 ) << "LFvm: m b w2 stretch" << param_m << param_b << param_w2 << stretch;
    param_m -= stretch;
    param_b += stretch;
@@ -899,6 +904,34 @@ int US_LammAstfvm::calculate( US_DataIO::RawData& sim_data )
       //           myFile.close();
       //       }
    }
+   // construct timestate vectors
+   rpm_timestate.clear();
+   w2t_timestate.clear();
+   sim_speed_prof_idx_timestate.clear();
+   int timestate_size = simparams.sim_speed_prof.last().time_e_step;
+   rpm_timestate.reserve( timestate_size );
+   w2t_timestate.reserve( timestate_size );
+   sim_speed_prof_idx_timestate.reserve( timestate_size );
+   int tmst_pos = 0;
+   for (int j = 0; j < simparams.sim_speed_prof.size(); j++)
+   {
+      auto &sim_speed_prof = simparams.sim_speed_prof[j];
+      for (int i = 0; i < qMin(sim_speed_prof.rpm_timestate.size(), sim_speed_prof.w2t_timestate.size()); i++)
+      {
+         if (tmst_pos < timestate_size)
+         {
+            rpm_timestate.insert(tmst_pos, sim_speed_prof.rpm_timestate[i]);
+            w2t_timestate.insert(tmst_pos, sim_speed_prof.w2t_timestate[i]);
+            sim_speed_prof_idx_timestate.insert(tmst_pos, j);
+            tmst_pos++;
+         }
+         else
+         {
+            break;
+         }
+      }
+   }
+
    // update concentrations for each model component
    for ( int ii = 0; ii < model.components.size(); ii++ )
    {
@@ -1026,7 +1059,7 @@ int US_LammAstfvm::solve_component( int compx )
    else if ( NonIdealCaseNo == 2 ) // co-sedimenting
    {
       SetNonIdealCase_2();
-      mesh_refine_option = 0;
+      mesh_refine_option = 1;
 
       dt      = min( bandFormingGradient->dt, dt );
       solut_t = af_data.scan[nts - 1].time; // true total time
@@ -1198,6 +1231,10 @@ int US_LammAstfvm::solve_component( int compx )
          {
             break;
          }
+         else if ( true )
+         {
+            dt_scaling = 0.0;
+         }
          else if ( runtime > 5000 )
          {
             dt_scaling *= 1.05;
@@ -1247,6 +1284,37 @@ int US_LammAstfvm::solve_component( int compx )
          kt++;
          ts = tmp;
       }
+      // calculate the param_w2_t0 and param_w2_t0dt
+      bool found_t0 = false;
+      bool found_t0dt = false;
+      int sim_speed_prof_idx = 0;
+      // move through all the sim_speed_prof
+      int tmst_size = rpm_timestate.size();
+      int time_index_t0 = qMax(qMin(static_cast<int>(t0), tmst_size - 1), 0);
+      int time_index_t01 = qMin(time_index_t0 + 1, tmst_size - 1);
+      int time_index_t0dt = qMax(qMin(static_cast<int>(t0 + dt), tmst_size - 1), 0);
+      int time_index_t0dt1 = qMin(time_index_t0dt + 1, tmst_size - 1);
+
+      double rpm_prior = rpm_timestate[time_index_t0];
+      double rpm_after = rpm_timestate[time_index_t01];
+      // linear interpolation between for rpm_prior and rpm_after and time_index_t0 and time_index_t01 to t0
+      double a = qMin(qMax((t0 - (static_cast<double>(time_index_t0))),0.0),1.0);
+      double b = 1.0 - a;
+      const double rpm_t0 = rpm_prior * a + rpm_after * b;
+
+      rpm_prior = rpm_timestate[time_index_t0dt];
+      rpm_after = rpm_timestate[time_index_t0dt1];
+      // linear interpolation between for rpm_prior and rpm_after and time_index_t0 and time_index_t01 to t0
+      a = qMin(qMax((t0 + dt - (static_cast<double>(time_index_t0dt))),0.0),1.0);
+      b = 1.0 - a;
+      const double rpm_t0dt = rpm_prior * a + rpm_after * b;
+      param_w2_t0 = sq( rpm_t0 * M_PI / 30.0 );
+      param_w2_t0dt = sq( rpm_t0dt * M_PI / 30.0 );
+
+
+
+
+
       N0u = N0 + N0 - 1;
       DbgLv( 2 ) << "LAsc: MainLoop Time jt=" << jt << "kt=" << kt << "t0=" << t0 << "t1=" << t1 << "ts=" << ts << "N0="
                << N0 << "N0u=" << N0u;
@@ -1873,7 +1941,7 @@ void
    // determine xg0=(xls, xrs)
    for ( int j = 0; j < Ng; j++ )
    {
-      const double sw2 = Sv[j] * param_w2;
+      const double sw2 = Sv[j] * param_w2_t0dt;
       double       tmp = exp( -std::abs( sw2 ) * dt_ * 0.5 );
       xg0[j]           = xg1[j] - dt_ * MeshSpeedFactor * sw2 * xg1[j] * tmp;
       xg0[j]           = qMin( qMax(xg0[j], param_m), param_b );
@@ -1920,14 +1988,14 @@ void
 
       for ( int jm = 0; jm < 3; jm++ ) // at xl
       {
-         flux_p[jm][j] = ( xt[j] - Sv[j] * param_w2 * xg1[j] - Dv[j] / xg1[j] ) * phiL[jm] +
+         flux_p[jm][j] = ( xt[j] - Sv[j] * param_w2_t0dt * xg1[j] - Dv[j] / xg1[j] ) * phiL[jm] +
             Dv[j] * phiL[jm + 3] / h;
       }
       j++;
 
       for ( int jm = 0; jm < 3; jm++ ) // at xr
       {
-         flux_p[jm][j] = ( xt[j] - Sv[j] * param_w2 * xg1[j] - Dv[j] / xg1[j] ) * phiR[jm] +
+         flux_p[jm][j] = ( xt[j] - Sv[j] * param_w2_t0dt * xg1[j] - Dv[j] / xg1[j] ) * phiR[jm] +
             Dv[j] * phiR[jm + 3] / h;
       }
    }
@@ -1991,7 +2059,7 @@ void
       else
       {
          flux_u[j] =
-            -( Sv[j] * param_w2 * xg0[j] + Dv[j] / xg0[j] ) * ug0[j] + Dv[j] * uxs + xt[j] * ug0[j];
+            -( Sv[j] * param_w2_t0 * xg0[j] + Dv[j] / xg0[j] ) * ug0[j] + Dv[j] * uxs + xt[j] * ug0[j];
       }
    }
 
@@ -2237,9 +2305,21 @@ void US_LammAstfvm::AdjustSD( const double t, const int      Nv, const double* x
 
       case 3: // compressibility
          {
+            // get param_w2 for the current time
+            const int tmst_size = rpm_timestate.size();
+            const int time_index_t0 = qMax(qMin(static_cast<int>(t), tmst_size - 1), 0);
+            const int time_index_t01 = qMin(time_index_t0 + 1, tmst_size - 1);
+            const double rpm_prior = rpm_timestate[time_index_t0];
+            const double rpm_after = rpm_timestate[time_index_t01];
+            // linear interpolation between for rpm_prior and rpm_after and time_index_t0 and time_index_t01 to t0
+            const double at = qMin(qMax((t - (static_cast<double>(time_index_t0))),0.0),1.0);
+            const double bt = 1.0 - at;
+            const double rpm_t0 = rpm_prior * at + rpm_after * bt;
+
+
             constexpr double rho_w = DENS_20W;
             const double     phip  = vbar; // apparent specific volume
-            const double     factn = 0.5 * density * param_w2 * compressib;
+            const double     factn = 0.5 * density * sq(rpm_t0 * M_PI / 30.0) * compressib;
             const double     msq   = param_m * param_m;
             const double     sA    = 1.0 - vbar * rho_w;
 

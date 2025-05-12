@@ -249,6 +249,11 @@ class US_UTIL_EXTERN US_LammAstfvm : public QObject
       double  param_s;         // base s value (sedimentation coefficient)
       double  param_D;         // base D value (diffusion coefficient)
       double  param_w2;        // rpm-based omega-sq-t, w2=(rpm*pi/30)^2
+      double  param_w2_t0;      // rpm-based omega-sq-t at time t0, w2=(rpm(t0)*pi/30)^2
+      double  param_w2_t0dt;     // rpm-based omega-sq-t at time t0+dt, w2=(rpm(t0+dt)*pi/30)^2
+      QVector<double> rpm_timestate;
+      QVector<double> w2t_timestate;
+      QVector<int> sim_speed_prof_idx_timestate;
 
       double  err_tol;         // error tolerance for mesh refinement
 
