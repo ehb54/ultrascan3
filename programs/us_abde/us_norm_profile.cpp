@@ -499,6 +499,7 @@ void US_Norm_Profile::slt_cleanList(void){
 
 void US_Norm_Profile::load_data_auto( QMap<QString,QString> & protocol_details )
 {
+  prot_details = protocol_details;
   slt_reset();
   data_per_channel. clear();
   data_per_channel_xnorm . clear();
@@ -561,6 +562,18 @@ void US_Norm_Profile::slt_loadAUC_auto( QMap<QString,QString> & protocol_details
 			 badFiles.join("\n"));
   }
 
+  //clean chanlist
+  channList. removeDuplicates();
+
+  //read ePRofiles if non-MWL
+  qDebug() << "in ABDE_norm: reading eProfiles BC-- "
+	       << protocol_details[ "baseline_corrections" ];
+  if ( abde_etype == "SWL" || abde_etype != "MWL" )
+    {
+      qDebug() << "in ABDE_norm: reading eProfiles BC -- "
+	       << protocol_details[ "baseline_corrections" ];
+    }
+  
   //set x_norm to "-1" for each channel
   for (int i=0; i<channList.size(); ++i )
     {
@@ -585,7 +598,7 @@ void US_Norm_Profile::slt_loadAUC_auto( QMap<QString,QString> & protocol_details
   
   
   //Populate channels
-  channList. removeDuplicates();
+  //channList. removeDuplicates();
   cb_chann -> addItems( channList );
   cb_chann->setCurrentIndex( 0 );
 }
@@ -842,6 +855,7 @@ QMap<QString, QVector<double>> US_Norm_Profile::trapz(
 
 }
 
+
 QPair<int, int> US_Norm_Profile::getXlimit(QVector<double> xval_in,
                                            double xmin, double xmax){
     const double *xp = xval_in.data();
@@ -944,11 +958,38 @@ void US_Norm_Profile::selectData_auto(void){
 	else //SWL
 	  {
 	    //set x_min_picked, x_max_picked to data ranges in eProfile
-	    x_min_picked = 6.03700000; //TEST: will be read from ePRofile PER Channel!!!
-	    x_max_picked = 7.08000000; //TEST: will be read from ePRofile
+	    // x_min_picked = 6.03700000; //TEST: will be read from ePRofile PER Channel!!!
+	    // x_max_picked = 7.08000000; //TEST: will be read from ePRofile
+
+	    double bl_slope  = 0;
+	    double bl_interp = 0;
+	    QString chann_blc = prot_details[ "baseline_corrections" ];
+	    QStringList chann_blc_list = chann_blc.split(";");
+	    qDebug() << "chann_blc_list -- " << chann_blc_list;
+	    for (int bl=0; bl < chann_blc_list.size(); ++bl)
+	      {
+		QString chanblcinfo = chann_blc_list[bl];
+		QString triple_name = chanblcinfo.split(":")[0];
+		if ( triple_name.contains( channame ) )
+		  {
+		    QStringList edit_parms = chanblcinfo.split(":")[1].split(",");
+		    x_min_picked = edit_parms[0].toDouble();
+		    x_max_picked = edit_parms[1].toDouble();
+		    bl_slope     = edit_parms[2].toDouble();
+		    bl_interp    = edit_parms[3].toDouble();
+		  }
+	      }
+	    
 	    QPair<int, int> pair= getXlimit(xvalues.at(id), x_min_picked, x_max_picked);
 	    xvalues_sel << xvalues.at(id).mid(pair.first, pair.second);
-	    yvalues_sel << yvalues.at(id).mid(pair.first, pair.second);
+	    //yvalues_sel << yvalues.at(id).mid(pair.first, pair.second);
+	    
+	    //correct for base-lein first
+	    QVector<double> yval_corrected;
+	    for( int yv=0; yv<yvalues.at(id).size(); ++yv )
+	      yval_corrected.push_back( yvalues.at(id)[yv] - (xvalues.at(id)[yv]*bl_slope + bl_interp));
+	    
+	    yvalues_sel << yval_corrected.mid(pair.first, pair.second);
 	  }
 	  
 
@@ -1154,20 +1195,31 @@ void US_Norm_Profile::plotData(void){
 
 	    if ( us_auto_mode )
 	      {
-		if ( selFilenames.at(i). contains(".002") )
+		if (abde_etype == "MWL")
 		  {
-		    legend = channame + "-protein";
-		    pen.setColor("red");
-		    // xp_intN_protein = data_per_channel[ channame ]["midxval"].at(i).data();
-		    // yp_intN_protein = data_per_channel[ channame ]["integralN"].at(i).data();
+		    if ( selFilenames.at(i). contains("_002") ||
+			 selFilenames.at(i). contains("protein", Qt::CaseInsensitive) ||
+			 selFilenames.at(i). contains("prot", Qt::CaseInsensitive))
+		      {
+			legend = channame + "-protein";
+			pen.setColor("red");
+			
+			xp_intN_protein = data_per_channel[ channame ]["midxval"][i];
+			yp_intN_protein = data_per_channel[ channame ]["integralN"][i];
+			//qDebug() << "yp_intN_protein, size() " << yp_intN_protein << ", size: " << yp_intN_protein.size();
+		      }
+		    else if ( selFilenames.at(i). contains("_001") ||
+			      selFilenames.at(i). contains("dna", Qt::CaseInsensitive) )
+		      legend = channame + "-DNA";
+		    else
+		      legend = channame;
+		  }
+		else //SWL or other
+		  {
 		    xp_intN_protein = data_per_channel[ channame ]["midxval"][i];
 		    yp_intN_protein = data_per_channel[ channame ]["integralN"][i];
-		    //qDebug() << "yp_intN_protein, size() " << yp_intN_protein << ", size: " << yp_intN_protein.size();
+		    legend = channame;
 		  }
-		else if ( selFilenames.at(i). contains(".001") )
-		  legend = channame + "-DNA";
-		else
-		  legend = channame;
 	      }
 	    else
 	      legend = tr("(I)_") + selFilenames.at(i);
@@ -1659,7 +1711,7 @@ void US_Norm_Profile::slt_norm_by_max(int state)
 void US_Norm_Profile::save_auto( void )
 {
   QString msg_u;
-  if (!areAllNormalized_auto( msg_u ))
+  if (!areAllNormalized_auto( msg_u ) && abde_etype == "MWL" )
     {
       qDebug() << "NOT all channels NORMALIZED!!!";
       int status = QMessageBox::warning( this,

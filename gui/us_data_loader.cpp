@@ -149,7 +149,7 @@ US_DataLoader::US_DataLoader(
    editedData ( eData ),
    triples    ( trips ),
    description( desc ),
-   etype_filt ( tfilt )
+   etype_filt ( tfilt ) 
 {
    setAttribute  ( Qt::WA_DeleteOnClose );
    setWindowTitle( tr( "Load Edited Data" ) );
@@ -157,7 +157,7 @@ US_DataLoader::US_DataLoader(
    setMinimumSize( 320, 300 );
 
    us_automode = false;
-
+     
    // Main layout
    QVBoxLayout* main = new QVBoxLayout( this );
    main->setContentsMargins( 2, 2, 2, 2 );
@@ -269,7 +269,7 @@ bool US_DataLoader::load_edit( void )
    editedData.clear();
    rawData   .clear();
    triples   .clear();
-
+   
    QList< QTreeWidgetItem* > selections = tw_data->selectedItems();
 
    // Disallow selections from multiple RunIDs
@@ -479,6 +479,9 @@ qDebug() << "LdEd: selsz" << selections.size() << "dlabsz" << dlabels.size();
          return false;
       }
 
+      //to pass to gmp
+      QStringList edatafiles;
+      
       QStringList query;
       QString  prvfname = "";
       QString  efn      = "";
@@ -592,14 +595,17 @@ qDebug() << "LdEd: dnld_edt DONE";
 	 qDebug() << "In LOAD auc/edited data in fematch: uresdir, filename, afn, efn: " << uresdir << filename << afn <<  efn;
 	 qDebug() << "In LOAD auc/edited data in fematch: idRec(editID), idAUC(rawData): " << idRec << idAUC;
 
+	 edatafiles << efn;
+	 
 qDebug() << "LdEd: loadData uresdir filename" << uresdir << filename;
          US_DataIO::loadData( uresdir, filename, editedData, rawData );
 qDebug() << "LdEd: loadData DONE";
       }  // END: edits loop
 qDebug() << "LdEd:TM:11: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
 
- 
- 
+      qDebug() << "AFTER In LOAD auc/edited data: edtatafiles -- " << edatafiles;
+      QString passed_edatafiles = edatafiles.join(",");
+      
    }  // END: Load from DB
 
    QApplication::restoreOverrideCursor();

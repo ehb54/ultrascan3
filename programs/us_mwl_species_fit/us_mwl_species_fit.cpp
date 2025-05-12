@@ -123,6 +123,9 @@ DbgLv(1) << "  irow" << irow << "icol" << icol;
    //load
    load();
 
+   //pass edata BC
+   protocol_details_p[ "baseline_corrections" ] = this->protocol_details[ "baseline_corrections" ];
+     
    //read protocol & check (once more) extinction profiles
    QStringList msg_to_user;
    if ( !read_protocol( msg_to_user ) )
@@ -712,10 +715,30 @@ void US_MwlSpeciesFit::load( void )
      {
        dialog = new US_DataLoader( edlast, dbdisk, rawList, dataList, triples,
 				   description, protocol_details, "none" );
-
+              
        QString dir_gmp = description;
-       
+       qDebug() << "[AFTER data_load: description ]: -- " << description;
        protocol_details[ "directory_for_gmp" ] = US_Settings::resultDir() + "/" + dir_gmp.split(";")[1];
+       
+       //editedData: chann - to - baseline corr:
+       QString triples_bc;
+       for (int i=0; i<dataList.size(); ++i)
+	 {
+	   QString triple_name = dataList[i].cell + dataList[i].channel + dataList[i].wavelength;
+	   qDebug() << "channel " << triple_name
+		    << ", the baseline slope  "
+		    << dataList[i].bl_corr_slope << ", intercept " << dataList[i].bl_corr_yintercept
+		    << ", left "   << dataList[i].xvalues[0]
+		    << ", right "  << dataList[i].xvalues.last();
+	   triples_bc += triple_name + ":"
+	     + QString::number(dataList[i].xvalues[0]) + ","
+	     + QString::number(dataList[i].xvalues.last()) + ","
+	     + QString::number(dataList[i].bl_corr_slope) + ","
+	     + QString::number(dataList[i].bl_corr_yintercept) + ";";
+
+	 }
+       triples_bc.chop(1);
+       protocol_details[ "baseline_corrections" ] = triples_bc;
      }
    else
      dialog = new US_DataLoader( edlast, dbdisk, rawList, dataList, triples, description, "none" );
@@ -1721,8 +1744,18 @@ DbgLv(1) << "sfd: (B)D1 cmn" << ms << mr << synData[1].value(ms,mr);
 
    for ( int ii = 0; ii < nspecies; ii++, kd++ )
    {
-      QString str_wl  = QString().sprintf( ".%03i.auc", ii + 1 );
+     QString str_wl;
+      
+      if (us_gmp_auto_mode)
+	{
+	  QString solvent_name = spfiles[ ii ].section( "/", -1, -1 ).section( ".", 0, -2 );
+	  str_wl = "." + solvent_name +  QString().sprintf( "_%03i.auc", ii + 1 );
+	}
+      else
+	str_wl  = QString().sprintf( ".%03i.auc", ii + 1 );
+      
       QString fname   = QString( basefn ).replace( ".000.auc", str_wl );
+
       msg            += "   " + QString( fname ).section( "/", -1, -1 ) + "\n";
 
       US_DataIO::RawData*     rdata = &synData[ kd ];

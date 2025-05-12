@@ -78,6 +78,7 @@ class US_Norm_Profile : public US_Widgets
         QMap< QString, int > data_per_channel_norm_cb;
         QMap< QString, QMap < QString, double>> data_per_channel_ranges_percents;
         QMap< QString, bool > data_per_channel_processed;
+        QMap< QString, QString > prot_details;
  
         QListWidget *lw_inpData; //!< List widget for input data.
         QListWidget *lw_selData; //!< List widget for selected data.
