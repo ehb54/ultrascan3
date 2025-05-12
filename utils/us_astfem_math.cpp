@@ -157,9 +157,17 @@ DbgLv(0)<< "AMATH:wrts: rate is given by user : t_acc from timestate" << t_acc <
             rpm         = speed;
 
          int set_speed  = (int)qRound( rpm / (double)ss_reso ) * ss_reso;
+         if ( ii <= tacc )
+         {
+            double t = (double)( ii - d1 );
+            omega2t += sq( rate * M_PI / 30.0 ) * (sq(t)-t + 1.0/3.0);
+         }
+         else
+         {
+            double om1t = rpm * M_PI / 30.0;
+            omega2t    += sq( om1t );
+         }
 
-         double om1t = rpm * M_PI / 30.0;
-         omega2t    += sq( om1t );
 
          itime       = ii;
          int scanx   = scantimes.indexOf( itime );
