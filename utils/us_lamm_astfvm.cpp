@@ -1904,8 +1904,8 @@ void
    double*      xg1    = xg0 + Ng;
    double*      ug0    = xg1 + Ng;
    double*      ug1    = ug0 + Ng;
-   double*      Sv     = ug1 + Ng;
-   double*      Dv     = Sv + Ng;
+   double*      Sv     = ug1 + Ng; // Vector of adjusted Sedimentation Coefficients for each x_star point
+   double*      Dv     = Sv + Ng; // Vector of adjusted Diffusion Coefficients for each x_star point
    double*      flux_u = Dv + Ng;
    flux_p[0]           = flux_u + Ng;
    flux_p[1]           = flux_p[0] + Ng;

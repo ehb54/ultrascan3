@@ -286,6 +286,18 @@ class US_UTIL_EXTERN US_LammAstfvm : public QObject
       void LammStepSedDiff_P( double, double, int, const double*, const double*, double*, const int* scan_hint = nullptr ) const;
 
       // Lamm equation step for sedimentation difference - calculate
+      //! \brief  Correction step of solving Lamm equation (sedimentation-diffusion only) Given the solution (x0, u0)
+      //! at t, and estimate (x0, u_est) of the solution at t+dt, and mesh x1, to find solution (x1, u1) at time t+dt
+      //! \param t Time of the given solution
+      //! \param dt_ Time difference to target time
+      //! \param M0 Number of elements in x0
+      //! \param x0 List of radial positions at time t
+      //! \param u0 piecewise quadratic solution at t on mesh x0
+      //! \param M1 Number of elments in x1
+      //! \param x1 List of radial positions at time t + dt_
+      //! \param u1p piecewise quadratic estimated solution at t+dt on mesh x1
+      //! \param u1 piecewise quadratic solution at t+dt on mesh x1 (output)
+      //! \param scan_hint Scan hint for adjusting s and D in cosedimenting cases
       void LammStepSedDiff_C( double t, double dt_, int M0, const double *x0, const double *u0, int M1, const double *x1,
                               const double *u1p, double *u1, const int* scan_hint = nullptr) const;
 
