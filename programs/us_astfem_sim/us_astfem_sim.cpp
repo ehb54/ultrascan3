@@ -870,26 +870,24 @@ DbgLv(1) << "SimPar:MAIN:SetP:   sset" << jd << "time1 time2" << time1 << time2;
 DbgLv(1) << "SimPar:MAIN:SetP:   sset" << jd << "time1 time2" << time1 << time2
  << "timeinc" << timeinc << "scans" << sp->scans << " c,s speed" << c_speed << s_speed;
 
-      while ( c_speed < s_speed )
-      {  // Walk through acceleration zone building omega2t sum
-         w2tsum         = sq( accel * M_PI / 30.0 * c_time ) * c_time;
-         c_speed       += accel;
-         c_time        += 1.0;
-DbgLv(1) << "SimPar:MAIN:SetP:   accel speed w2t time" << c_speed << w2tsum << c_time;
-      }
 DbgLv(1) << "SimPar:MAIN:SetP: accel-end:  time omega2t" << c_time << w2tsum;
+      double w2tinc  = sq( s_speed * M_PI / 30.0 );
+      double accel_time = 0.0;
+      if ( sp->acceleration_flag && sp->acceleration != 0 )
+      {
+         accel_time = (s_speed - p_speed) / accel;
+         double angular_accel = accel * M_PI / 30.0;
 
-      c_speed        = s_speed;
-      double w2tinc  = sq( c_speed * M_PI / 30.0 );
-      // reset the w2tsum value at the end of the acceleration for the constant speed iteration
-      w2tsum         = w2tinc * c_speed / accel + w2tinc * ( c_time - c_speed / accel );
-      while ( c_time < time1 )
-      {  // Walk up to the first scan time, accumulating omega2t sum
-         c_time        += 1.0;
-         w2tsum        += w2tinc;
+         double angular_previous_speed = p_speed * M_PI / 30.0;
+         // add contribution of acceleration to w2tsum
+         w2tsum += sq( angular_accel * accel_time ) * accel_time +
+            angular_accel * angular_previous_speed * sq(accel_time) +
+               sq(angular_previous_speed) * accel_time;
       }
+      // add the contribution between end of acceleration and first scan
+      w2tsum += w2tinc * (time1-time0-accel_time);
       DbgLv(1) << "SimPar:MAIN:SetP: 1st scan:   time omega2t" << c_time << w2tsum << "w2tinc" << w2tinc;
-
+      c_speed = s_speed;
       sp->time_first = static_cast<int>(time1);
       sp->w2t_first  = w2tsum;
       w2tinc         = timeinc * sq( c_speed * M_PI / 30.0 );
@@ -1349,10 +1347,11 @@ DbgLv(1) << "out:astfem_radial_ranges" << sim_datas[jd].xvalues[0] << sim_datas[
          sim_data_all.scanData[ js ].rvalues.fill( 0.0, kpoint );
 
       // Set the radius values in data sets
-//      int points          = qRound( ( simparams.bottom - simparams.meniscus ) /
-//                                  simparams.radial_resolution ) + 1;
-      int points          = qCeil( ( simparams.bottom - simparams.meniscus ) /
-                                   simparams.radial_resolution ) + 1;
+      int points          = qRound( ( simparams.bottom - simparams.meniscus ) /
+                                  simparams.radial_resolution ) + 1;
+      //int points          = qCeil( ( simparams.bottom - simparams.meniscus ) /
+      //                             simparams.radial_resolution ) + 1;
+      sim_data_all.xvalues.resize( points );
       for ( int jd = 0; jd < nstep; jd++ )
       {  // Set radius values for current speed's dataset
          double stretch_fac  = stretch( simparams.rotorcoeffs,
