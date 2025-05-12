@@ -1126,13 +1126,15 @@ int US_LammAstfvm::solve_component( int compx )
       if ( simparams.band_forming )
       {
          // Calculate the width of the lamella
-         if ( r_value < conc_profile_endpoint && r_value > conc_profile_startpoint )
+         if ( r_value < (conc_profile_endpoint-conc_profile_startpoint)*0.5+conc_profile_startpoint && r_value > conc_profile_startpoint )
          {
             u0[kk] = r_value * sig_conc;
          }
          else
          {
-            u0[kk] = 0.0;
+            double lamella_width = conc_profile_endpoint - conc_profile_startpoint;
+            double exponent = (r_value - conc_profile_startpoint - 0.5 * lamella_width)/ lamella_width * 0.25;
+            u0[kk] = r_value * sig_conc * exp( -pow(exponent, 2.0));
          }
       }
       else
@@ -1395,6 +1397,9 @@ int US_LammAstfvm::solve_component( int compx )
       ktime5 += static_cast<int>(timer.restart());
       // see if the current scan is between calculated times; output scan if so
 
+      Q_EMIT new_time( t0 );
+      Q_EMIT current_speed( static_cast<int>(rpm_t0) );
+      qApp->processEvents();
       if ( ts >= t0 && ts <= t1 )
       {
          // interpolate concentrations quadratically in x; linearly in time
