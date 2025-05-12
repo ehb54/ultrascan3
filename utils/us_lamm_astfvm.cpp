@@ -1231,10 +1231,10 @@ int US_LammAstfvm::solve_component( int compx )
          {
             break;
          }
-         else if ( true )
-         {
-            dt_scaling = 0.0;
-         }
+         //else if ( true )
+         //{
+         //   dt_scaling = 0.0;
+         //}
          else if ( runtime > 5000 )
          {
             dt_scaling *= 1.05;
@@ -1289,11 +1289,11 @@ int US_LammAstfvm::solve_component( int compx )
       bool found_t0dt = false;
       int sim_speed_prof_idx = 0;
       // move through all the sim_speed_prof
-      int tmst_size = rpm_timestate.size();
-      int time_index_t0 = qMax(qMin(static_cast<int>(t0), tmst_size - 1), 0);
-      int time_index_t01 = qMin(time_index_t0 + 1, tmst_size - 1);
-      int time_index_t0dt = qMax(qMin(static_cast<int>(t0 + dt), tmst_size - 1), 0);
-      int time_index_t0dt1 = qMin(time_index_t0dt + 1, tmst_size - 1);
+      const int tmst_size = rpm_timestate.size();
+      const int time_index_t0 = qMax(qMin(static_cast<int>(t0), tmst_size - 1), 0);
+      const int time_index_t01 = qMin(time_index_t0 + 1, tmst_size - 1);
+      const int time_index_t0dt = qMax(qMin(static_cast<int>(t0 + dt), tmst_size - 1), 0);
+      const int time_index_t0dt1 = qMin(time_index_t0dt + 1, tmst_size - 1);
 
       double rpm_prior = rpm_timestate[time_index_t0];
       double rpm_after = rpm_timestate[time_index_t01];
