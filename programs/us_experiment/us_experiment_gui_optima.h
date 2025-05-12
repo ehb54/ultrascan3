@@ -972,6 +972,7 @@ class US_ExperGuiUpload : public US_WidgetsDialog
       bool    matchRefSampleWvls( QString, QString, QStringList&);
       bool    useReferenceNumbersSet( QStringList& );
       bool    extinctionProfilesExist( QStringList& );
+      bool    ifMixedABDE( QStringList& );
       bool    validExtinctionProfile( QString, QList< double >,
 				      QList< double >, QStringList& );
 

@@ -1758,6 +1758,7 @@ void US_Norm_Profile::save_auto( void )
       qDebug() << "x_norm point for channel "
 	       <<  channame << ", "
 	       <<  x_normal;
+      //x_normalization
       json_p += "\"" + channame + "\":{\"x_norm\":\"" + x_normal + "\",";
 
       //now over ranges:percents
@@ -1775,6 +1776,5 @@ void US_Norm_Profile::save_auto( void )
   json_p += "}";
 
   qDebug() << "JSON: " << json_p;
-
   
 }
