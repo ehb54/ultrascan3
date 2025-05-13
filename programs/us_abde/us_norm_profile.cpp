@@ -3,6 +3,7 @@
 #include "us_license.h"
 #include "us_norm_profile.h"
 #include "us_load_auc.h"
+#include "us_passwd.h"
 #include <QFileInfo>
 
 //Alt. constr.
@@ -1776,5 +1777,274 @@ void US_Norm_Profile::save_auto( void )
   json_p += "}";
 
   qDebug() << "JSON: " << json_p;
+
+  // Determine if we are using the database
+   US_DB2* dbP  = NULL;
+
+   if ( disk_controls->db() )
+   {
+      US_Passwd pw;
+      dbP            = new US_DB2( pw.getPasswd() );
+
+      if ( dbP->lastErrno() != US_DB2::OK )
+      {
+         QMessageBox::warning( this, tr( "Connection Problem" ),
+           tr( "Could not connect to database: \n" ) + dbP->lastError() );
+         return;
+      }
+   }
+
+   /*************************************************************************************************************/
+   // We need to  insert submission form dialog (with password...)
+   /*************************************************************************************************************/
+   QStringList qry1;
+   qry1 <<  QString( "get_user_info" );
+   dbP-> query( qry1 );
+   dbP-> next();
+   int u_ID        = dbP-> value( 0 ).toInt();
+   QString u_fname = dbP-> value( 1 ).toString();
+   QString u_lname = dbP-> value( 2 ).toString();
+   int u_lev       = dbP-> value( 5 ).toInt();
+   
+   QString user_submitter = u_lname + ", " + u_fname;
+   
+   US_Passwd   pw_at;
+   QMap < QString, QString > gmp_submitter_map  =
+     pw_at.getPasswd_auditTrail( "GMP Run ABDE Form", "Please fill out GMP run ABDE-Analysis form:", user_submitter );
+   
+   int gmp_submitter_map_size = gmp_submitter_map.keys().size();
+   qDebug() << "Submitter map: "
+	    << gmp_submitter_map.keys()  << gmp_submitter_map.keys().size() << gmp_submitter_map_size
+	    << gmp_submitter_map.keys().isEmpty() 
+	    << gmp_submitter_map[ "User:" ]
+	    << gmp_submitter_map[ "Comment:" ];
+   //<< gmp_submitter_map[ "Master Password:" ];
+   
+   if ( gmp_submitter_map_size == 0 ||  gmp_submitter_map.keys().isEmpty() )
+     {
+       //revert_autoflowAnalysisABDEstages_record( prot_details["autoflowID"] );
+       return;
+     }
+   else
+     {
+       //check if saving already initiated /////////////////////////////////////////////////
+       int status_analysis_abde_unique;
+       status_analysis_abde_unique = read_autoflowAnalyisABDEstages_record( prot_details["autoflowID"] );
+       
+       qDebug() << "status_analysis_abde_unique -- " << status_analysis_abde_unique;
+       
+       if ( !status_analysis_abde_unique )
+         {
+       
+           QMessageBox::information( this,
+       				tr( "The Program State Updated / Being Updated" ),
+       				tr( "The program advanced or is advancing to the next stage!\n\n"
+       				    "This happened because you or different user "
+       				    "has already saved ABDE analysis profiles into DB using different program "
+       				    "session, and the program is proceeding to the next stage. \n\n"
+       				    "The program will return to the autoflow runs dialog where "
+       				    "you can re-attach to the actual current stage of the run. "
+       				    "Please allow some time for the status to be updated.") );
+       
+       
+           //slt_reset(); //TEMP
+           //emit back_to_initAutoflow( ); //to implement
+           return;
+         }
+     }
+   /*************************************************************************************************************/
+
+   //NOW, save ABDE profiles
+   qry1.clear();
+   qry1 << "update_autoflowAnalysisABDE_record"
+	<< json_p
+	<< prot_details[ "autoflowID" ];
+
+   int status = dbP->statusQuery( qry1 );
+   
+   if ( status == US_DB2::NO_AUTOFLOW_RECORD )
+    {
+      QMessageBox::warning( this,
+			    tr( "AutoflowAnalysisABDE Record Not Updated" ),
+			    tr( "No AutoflowAnalysisABDE record\n"
+				"associated with this experiment." ) );
+      return;
+    }
+
+   //Also, update autoflowStatus's 'analysisABDE' && 'analysisABDEts' (new fields) with info from gmp_submitter_map:
+   record_AnalysisABDE_status( gmp_submitter_map );
+
+   //Now, update parent autoflow record with 'REPORT' stage
+   /*** 
+   update_autoflow_record_atAnalysisABDE();  //TEST (will turn ON!)
+   ****/
+
+   //Finally, switch to 6. REPORT -- need to communicate with parent autoflow_Analysis....
+
+   
+}
+
+void US_Norm_Profile::record_AnalysisABDE_status( QMap<QString,QString> gmp_form )
+{
+  // Check DB connection
+  US_Passwd pw;
+  QString masterpw = pw.getPasswd();
+  US_DB2* db = new US_DB2( masterpw );
   
+  if ( db->lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "Connection Problem" ),
+			    tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
+      return;
+    }
+  
+  QStringList qry;
+
+  //get user info
+  qry.clear();
+  qry <<  QString( "get_user_info" );
+  db->query( qry );
+  db->next();
+
+  int ID        = db->value( 0 ).toInt();
+  QString fname = db->value( 1 ).toString();
+  QString lname = db->value( 2 ).toString();
+  QString email = db->value( 4 ).toString();
+  int     level = db->value( 5 ).toInt();
+  
+  QString AnalysisABDE_Json;
+  AnalysisABDE_Json. clear();
+  AnalysisABDE_Json += "{ \"Person\": ";
+
+  AnalysisABDE_Json += "[{";
+  AnalysisABDE_Json += "\"ID\":\""     + QString::number( ID )     + "\",";
+  AnalysisABDE_Json += "\"fname\":\""  + fname                     + "\",";
+  AnalysisABDE_Json += "\"lname\":\""  + lname                     + "\",";
+  AnalysisABDE_Json += "\"email\":\""  + email                     + "\",";
+  AnalysisABDE_Json += "\"level\":\""  + QString::number( level )  + "\"";
+  AnalysisABDE_Json += "}],";
+  
+  AnalysisABDE_Json += "\"Comment\": \""   + gmp_form[ "Comment:" ]   + "\"";
+  
+  AnalysisABDE_Json += "}";
+  
+  //Record to autoflowStatus:
+  qry.clear();
+
+  int autoflowStatusID = prot_details[ "statusID" ].toInt();
+  
+  if ( autoflowStatusID )
+    {
+      //update
+      qry << "update_autoflowStatusAnalysisABDE_record"    // to implement: add 'analysisABDE' && 'analysisABDEts' to autoflowStatus!!!!!
+	  << QString::number( autoflowStatusID )
+	  << prot_details[ "autoflowID" ] 
+	  << AnalysisABDE_Json;
+      
+	  db->query( qry );
+	  delete db;
+    }
+  else
+    {
+      QMessageBox::warning( this, tr( "AutoflowStatus Record Problem" ),
+			    tr( "autoflowStatus (analysisABDE): There was a problem with identifying "
+				"a record in autoflowStatus table for a given run! \n" ) );
+
+      delete db;
+      return;
+    }
+
+}
+
+
+//Read autoflowABDEAnalysisStages record
+int US_Norm_Profile::read_autoflowAnalyisABDEstages_record( QString autoflowID  )
+{
+   int status = 0;
+  
+   // Check DB connection
+   US_Passwd pw;
+   QString masterpw = pw.getPasswd();
+   US_DB2* db = new US_DB2( masterpw );
+
+   if ( db->lastErrno() != US_DB2::OK )
+     {
+       QMessageBox::warning( this, tr( "Connection Problem" ),
+			     tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
+       delete db;
+       return status;
+     }
+
+
+   //qDebug() << "BEFORE query ";
+   QStringList qry;
+   qry << "autoflow_abde_analysis_status"
+       << autoflowID;
+   
+   status = db->statusQuery( qry );
+   //qDebug() << "AFTER query ";
+
+   delete db;
+   return status;
+}
+
+//Set autoflowABDEAnalysisStages record back to "unlnown"
+void US_Norm_Profile::revert_autoflowAnalysisABDEstages_record( QString autoflowID )
+{
+   // Check DB connection
+   US_Passwd pw;
+   QString masterpw = pw.getPasswd();
+   US_DB2* db = new US_DB2( masterpw );
+
+   if ( db->lastErrno() != US_DB2::OK )
+     {
+       QMessageBox::warning( this, tr( "Connection Problem" ),
+			     tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
+       delete db;
+       return;
+     }
+   
+   QStringList qry;
+   qry << "autoflow_abde_analysis_status_revert"
+       << autoflowID;
+
+   qDebug() << "[in revert_autoflowAnalysisABDEstages_record(), query] -- "
+	    << qry;
+   
+   db->query( qry );
+
+   delete db;
+}
+
+void US_Norm_Profile::update_autoflow_record_atAnalysisABDE( void )
+{
+   // Check DB connection
+   US_Passwd pw;
+   QString masterpw = pw.getPasswd();
+   US_DB2* db = new US_DB2( masterpw );
+
+   if ( db->lastErrno() != US_DB2::OK )
+     {
+       QMessageBox::warning( this, tr( "Connection Problem" ),
+			     tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
+       return;
+     }
+
+   QStringList qry;
+   qry << "update_autoflow_at_analysis"
+       << prot_details[ "autoflowID" ];
+
+   //db->query( qry );
+
+   int status = db->statusQuery( qry );
+   
+   if ( status == US_DB2::NO_AUTOFLOW_RECORD )
+     {
+       QMessageBox::warning( this,
+			     tr( "Autoflow Record Not Updated" ),
+			     tr( "No autoflow record\n"
+				 "associated with this experiment." ) );
+       return;
+     }
+
 }

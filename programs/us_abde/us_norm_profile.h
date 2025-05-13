@@ -138,6 +138,10 @@ class US_Norm_Profile : public US_Widgets
         void save_auto( void );
         bool areAllProcessed_auto( void );
         bool areAllNormalized_auto( QString& );
+        int  read_autoflowAnalyisABDEstages_record( QString );
+        void revert_autoflowAnalysisABDEstages_record( QString );
+        void record_AnalysisABDE_status( QMap<QString,QString> );
+        void update_autoflow_record_atAnalysisABDE( void );
 
         //! \brief Slot to add or remove an item.
         //! \param item The list widget item.
