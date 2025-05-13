@@ -343,7 +343,7 @@ void US_LammAstfvm::Mesh::RefineMesh(double *u0, double *u1, double ErrTol) {
 //DbgLv(3) << "RefMesh: beta alpha" << beta << alpha;
 
    ComputeMeshDen_D3(u0, u1);
-   Smoothing(Ne, MeshDen, 0.7, 4);
+   Smoothing(Ne, MeshDen, SmoothingWt, SmoothingCyl);
    Unrefine(alpha);
    Refine(beta);
 }
@@ -1047,7 +1047,7 @@ int US_LammAstfvm::solve_component( int compx )
    Mesh* msh = new Mesh( param_m, param_b, simparams.simpoints, 0 );
 
    msh->InitMesh( param_s20w, param_D20w, param_w2 );
-   int    mesh_refine_option = 0; // mesh refine option;
+   int    mesh_refine_option = 1; // mesh refine option;
    double dt_old             = dt;
    // make settings based on the non-ideal case type
    if ( NonIdealCaseNo == 1 ) // concentration-dependent
@@ -1126,15 +1126,13 @@ int US_LammAstfvm::solve_component( int compx )
       if ( simparams.band_forming )
       {
          // Calculate the width of the lamella
-         if ( r_value < (conc_profile_endpoint-conc_profile_startpoint)*0.5+conc_profile_startpoint && r_value > conc_profile_startpoint )
+         if ( r_value < conc_profile_endpoint && r_value > conc_profile_startpoint )
          {
             u0[kk] = r_value * sig_conc;
          }
          else
          {
-            double lamella_width = conc_profile_endpoint - conc_profile_startpoint;
-            double exponent = (r_value - conc_profile_startpoint - 0.5 * lamella_width)/ lamella_width * 0.25;
-            u0[kk] = r_value * sig_conc * exp( -pow(exponent, 2.0));
+            u0[kk] = 0.0;
          }
       }
       else
@@ -1936,6 +1934,10 @@ void
       xg1[j + 1]   = x1[j2] * 0.25 + x1[j2 + 1] * 0.75; // xr
       ug1[j]       = ( 3. * u1p[j] + 6. * u1p[j + 1] - u1p[j + 2] ) / 8.;
       ug1[j + 1]   = ( 3. * u1p[j + 2] + 6. * u1p[j + 1] - u1p[j] ) / 8.;
+      Sv[j] = 0.0;
+      Sv[j+1] = 0.0;
+      Dv[j] = 0.0;
+      Dv[j+1] = 0.0;
    }
    DbgLv( 2 ) << "pre_adjust  xg1 0 1 M Nm N" << xg1[0] << xg1[1] << xg1[Ng / 2] << xg1[Ng - 2] << xg1[Ng - 1];
    DbgLv( 2 ) << "pre_adjust  Sv 0 1 M Nm N" << Sv[0] << Sv[1] << Sv[Ng / 2] << Sv[Ng - 2] << Sv[Ng - 1];
@@ -2282,11 +2284,14 @@ void US_LammAstfvm::AdjustSD( const double t, const int      Nv, const double* x
             }
             kst1 += (int) timer.restart();
          #endif
+         const double sigmas = qFuzzyIsNull(model.components[comp_x].sigma)?0.0:model.components[comp_x].sigma;
+         const double deltas = qFuzzyIsNull(model.components[comp_x].delta)?0.0:model.components[comp_x].delta;
          for ( jj = 0; jj < Nv; jj++ )
          {
             const double curVisc = Visc[jj];
-            s_adj[jj]            = s20w_correction_stem / curVisc * ( 1.0 - vbar * Dens[jj] );
-            D_adj[jj]            = D20w_correction_stem / curVisc;
+            const double curConc = u[jj] / x[jj];
+            s_adj[jj]            = s20w_correction_stem / curVisc * ( 1.0 - vbar * Dens[jj] ) / ( 1.0 + sigmas * curConc );
+            D_adj[jj]            = D20w_correction_stem / curVisc / ( 1.0 + deltas * curConc );
          }
          #ifdef DEBUG
             if (dbg_level > 3){
@@ -2589,14 +2594,14 @@ int US_LammAstfvm::nonIdealCaseNo()
    if ( !cosed_components.isEmpty() )
    {
       // co-diffusing case
-      if ( NonIdealCaseNo != 0 )
+      if ( NonIdealCaseNo != 0 && NonIdealCaseNo != 1 )
       {
          rc = 2;
       }
 
       NonIdealCaseNo = 2;
    }
-   DbgLv( 2 ) << "LammAstfvm: set NonIdealCaseNo:" << NonIdealCaseNo;
+   DbgLv( 2 ) << "LammAstfvm: set NonIdealCaseNo:" << NonIdealCaseNo << rc;
    return rc;
 }
 
@@ -2789,13 +2794,13 @@ void US_LammAstfvm::validate_bfg()
    }
    // check meniscus, bottom, sim_values and components
    if ( cosed_components != bandFormingGradient->cosed_component ||
-      simparams.meniscus != bandFormingGradient->meniscus ||
-      simparams.bottom != bandFormingGradient->bottom ||
-      abs( simparams.band_volume - bandFormingGradient->overlay_volume ) > GSL_ROOT5_DBL_EPSILON ||
-      abs( simparams.cp_pathlen - bandFormingGradient->cp_pathlen ) > GSL_ROOT5_DBL_EPSILON ||
-      abs( simparams.cp_angle - bandFormingGradient->cp_angle ) > GSL_ROOT5_DBL_EPSILON ||
-      simparams.radial_resolution != bandFormingGradient->simparms.radial_resolution ||
-      simparams.temperature != bandFormingGradient->simparms.temperature ||
+      !qFuzzyCompare(simparams.meniscus, bandFormingGradient->meniscus) ||
+      !qFuzzyCompare( simparams.bottom, bandFormingGradient->bottom) ||
+      !qFuzzyCompare( simparams.band_volume , bandFormingGradient->overlay_volume ) ||
+      !qFuzzyCompare( simparams.cp_pathlen, bandFormingGradient->cp_pathlen )  ||
+      !qFuzzyCompare( simparams.cp_angle, bandFormingGradient->cp_angle ) ||
+      !qFuzzyCompare( simparams.radial_resolution, bandFormingGradient->simparms.radial_resolution) ||
+      !qFuzzyCompare( simparams.temperature, bandFormingGradient->simparms.temperature ) ||
       auc_data->scanData.last().seconds > bandFormingGradient->dens_bfg_data.scanData.last().seconds )
    {
       // recalculation needed
