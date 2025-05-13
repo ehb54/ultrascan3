@@ -699,6 +699,9 @@ class US_Analysis_auto : public US_Widgets
          */
         void plotres( void );
 
+        void proceed_abde_to_report( QMap< QString, QString > & );
+        void back_to_initAutoflow( void );
+
     signals:
         /**
          * @brief Signal emitted when the analysis update process is stopped.

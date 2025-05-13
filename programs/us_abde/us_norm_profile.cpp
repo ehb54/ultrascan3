@@ -1848,7 +1848,7 @@ void US_Norm_Profile::save_auto( void )
        
        
            //slt_reset(); //TEMP
-           //emit back_to_initAutoflow( ); //to implement
+           emit back_to_runManager();
            return;
          }
      }
@@ -1875,12 +1875,10 @@ void US_Norm_Profile::save_auto( void )
    record_AnalysisABDE_status( gmp_submitter_map );
 
    //Now, update parent autoflow record with 'REPORT' stage
-   /*** 
    update_autoflow_record_atAnalysisABDE();  //TEST (will turn ON!)
-   ****/
-
+   
    //Finally, switch to 6. REPORT -- need to communicate with parent autoflow_Analysis....
-
+   emit abde_to_report( prot_details );
    
 }
 

@@ -30,6 +30,8 @@ class US_Norm_Profile : public US_Widgets
     signals:
         //! \brief Signal emitted when the widget is closed.
         void widgetClosed();
+        void abde_to_report( QMap<QString,QString>&);
+        void back_to_runManager();
 
     protected:
         //! \brief Override of the close event to emit widgetClosed signal.

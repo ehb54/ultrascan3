@@ -13,8 +13,6 @@
 #include "../us_fematch/us_thread_worker.h"
 #include "../us_mwl_species_fit/us_mwl_species_fit.h"
 
-
-
 #define MIN_NTC   25
 
 const QColor colorRed       ( 210, 0, 0 );
@@ -69,6 +67,10 @@ US_Analysis_auto::US_Analysis_auto() : US_Widgets()
   sdiag_norm_profile = new US_Norm_Profile("AUTO");
   connect( this, SIGNAL( process_abde( QMap < QString, QString > & ) ),
 	   sdiag_norm_profile, SLOT( load_data_auto ( QMap < QString, QString > & )  ) );
+  connect( sdiag_norm_profile, SIGNAL( abde_to_report( QMap < QString, QString > &) ),
+	   this, SLOT( proceed_abde_to_report( QMap < QString, QString > &) ) );
+  connect( sdiag_norm_profile, SIGNAL( back_to_runManager( ) ),
+	   this, SLOT( back_to_initAutoflow() ));
   panel->addWidget( sdiag_norm_profile );
   sdiag_norm_profile->hide();
   
@@ -235,7 +237,7 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
       //call abde normalizer
       emit process_abde( protocol_details_at_analysis );
       sdiag_norm_profile->show();
-	
+      
       return;
     }
   // END for ABDE
@@ -6516,4 +6518,14 @@ DbgLv(1) << "NIE: db_upd" << db_upd << "nlnois" << nlnois
  << "nieDescs-size" << nieDescs.size() << "nieIDs-size" << nieIDs.size();
 
    return;
+}
+
+void US_Analysis_auto::proceed_abde_to_report( QMap< QString, QString > & protocol_details_at_analysis )
+{
+  emit analysis_complete_auto( protocol_details_at_analysis );  
+}
+
+void US_Analysis_auto::back_to_initAutoflow( void )
+{
+  emit analysis_back_to_initAutoflow( );
 }
