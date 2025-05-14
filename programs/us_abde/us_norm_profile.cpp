@@ -518,7 +518,7 @@ void US_Norm_Profile::slt_loadAUC_auto( QMap<QString,QString> & protocol_details
   QString dirName;
   if ( abde_etype == "MWL" )
     dirName = protocol_details["ssf_dir_name"];
-  else
+  else //SWL
     dirName = protocol_details["directory_for_gmp"];
   
   QDir runDir( dirName );
@@ -1778,6 +1778,31 @@ void US_Norm_Profile::save_auto( void )
 
   qDebug() << "JSON: " << json_p;
 
+  //Determine filename (MWL or SWL)
+  QString filename_p;
+  if ( abde_etype == "MWL" )
+    filename_p = prot_details["ssf_dir_name"];
+  else //SWL
+    filename_p = prot_details["directory_for_gmp"];
+
+  QStringList filename_p_list = filename_p.split("/");
+  if ( !filename_p_list.isEmpty() )
+    filename_p = filename_p_list.takeLast();
+  qDebug() << "Passed filename_p -- " << filename_p; 
+
+  //JSON filename_bcl (_blc for SWL only...)
+  QString filename_blc_p = "{";
+  filename_blc_p += "\"filename\":\"" + filename_p + "\"";
+  if ( abde_etype == "SWL" )
+    {
+      //For SWL, pass baseline_corrections
+      QString bl_corrs = prot_details[ "baseline_corrections" ];
+      filename_blc_p += ",\"blcorrs\":\"" + bl_corrs + "\"";
+    }
+  filename_blc_p += "}";
+  qDebug() << "filename_blc_p JSON -- " << filename_blc_p;
+  
+
   // Determine if we are using the database
    US_DB2* dbP  = NULL;
 
@@ -1858,6 +1883,7 @@ void US_Norm_Profile::save_auto( void )
    qry1.clear();
    qry1 << "update_autoflowAnalysisABDE_record"
 	<< json_p
+        << filename_blc_p
 	<< prot_details[ "autoflowID" ];
 
    int status = dbP->statusQuery( qry1 );
