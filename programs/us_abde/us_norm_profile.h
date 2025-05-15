@@ -26,6 +26,7 @@ class US_Norm_Profile : public US_Widgets
         US_Norm_Profile(QString);
 
         bool us_auto_mode;
+        bool us_auto_mode_report;
 
     signals:
         //! \brief Signal emitted when the widget is closed.
@@ -146,6 +147,12 @@ class US_Norm_Profile : public US_Widgets
         void revert_autoflowAnalysisABDEstages_record( QString );
         void record_AnalysisABDE_status( QMap<QString,QString> );
         void update_autoflow_record_atAnalysisABDE( void );
+        QMap <QString, QString> read_autoflowAnalysisABDE_record( QString );
+        void parse_abde_analysis_jsons( QString,
+					QMap <QString, QString>&,
+					QMap <QString, double>&,
+					QMap< QString, int >&,
+					QMap< QString, QMap < QString, double>>& );
 
         //! \brief Slot to add or remove an item.
         //! \param item The list widget item.

@@ -10,6 +10,7 @@
 US_Norm_Profile::US_Norm_Profile( QString auto_mode ): US_Widgets()
 {
     us_auto_mode = true;
+    us_auto_mode_report = false;
     //this->protocol_details = protocol_details_p;
     
     setWindowTitle("Buoyancy Equilibrium Data Analysis");
@@ -232,20 +233,8 @@ US_Norm_Profile::US_Norm_Profile( QString auto_mode ): US_Widgets()
     lb_selList->hide(); 
     lw_selData ->hide();
     
-    //TEST
-    //QMap<QString, QString> protocol_details;
-    // //ABDE-MWL (CCH)
-    // protocol_details[ "invID_passed" ] = QString("165");
-    // protocol_details[ "protocolName" ] = QString("GMP-test-ABDE-fromDisk");
-    // protocol_details[ "aprofileguid" ] = QString("6c376179-6eda-47e9-b699-3eef63c6fe6e");
-    // protocol_details[ "filename" ]     = QString("AAV_GMP_test_030325-run2366-dataDiskRun-1515");
-    // protocol_details[ "analysisIDs"  ] = QString("");
-    // protocol_details[ "expType" ]      = QString("ABDE");
-    // protocol_details[ "dataSource" ]   = QString("dataDiskAUC");
-    // protocol_details[ "statusID" ]     = QString("588");
-    // protocol_details[ "autoflowID" ]   = QString("1515");
-    // protocol_details["ssf_dir_name"]   = QString("/home/alexey/ultrascan/imports/SSF-AAV_GMP_test_030325-run2366-dataDiskRun-1515");
-    // protocol_details[ "channels_to_radial_ranges" ] = QString("2A:6.2-6.5;2B:5.8-7;4A:6.1-6.5;4B:6.1-6.5");
+    //TEST: SWL, MWL
+    // QMap<QString, QString> protocol_details;
 
     // //ABDE-MWL (CANADA-test)
     // protocol_details[ "invID_passed" ] = QString("2");
@@ -255,14 +244,16 @@ US_Norm_Profile::US_Norm_Profile( QString auto_mode ): US_Widgets()
     // protocol_details[ "analysisIDs"  ] = QString("");
     // protocol_details[ "expType" ]      = QString("ABDE");
     // protocol_details[ "dataSource" ]   = QString("dataDiskAUC");
-    // protocol_details["abde_etype"]     = QString("MWL");
     // protocol_details[ "statusID" ]     = QString("46");
     // protocol_details[ "autoflowID" ]   = QString("71");
-    // protocol_details["ssf_dir_name"]   = QString("/home/alexey/ultrascan/imports/SSF-AAV_GMP_test_030325-run2366-dataDiskRun-71");
-    // protocol_details["directory_for_gmp"] = QString("");
-    // protocol_details[ "baseline_corrections" ] = QString("");
-    // protocol_details["filename_abde"]  = QString("SSF-AAV_GMP_test_030325-run2366-dataDiskRun-71");
-    // protocol_details[ "channels_to_radial_ranges" ] = QString("2A:6.2-6.5,6.6-6.9;2B:5.8-7;4A:6.1-6.5,6.6-6.94;4B:6.25-6.55,6.65-7");
+    // //protocol_details["ssf_dir_name"]   = QString("/home/alexey/ultrascan/imports/SSF-AAV_GMP_test_030325-run2366-dataDiskRun-71");
+    // /** When for REPORT: These next fields will be read from autoflowAnalysisABDE record: 
+    // 	protocol_details["abde_etype"]     = QString("MWL");
+    // 	protocol_details["directory_for_gmp"] = QString("");
+    // 	protocol_details[ "baseline_corrections" ] = QString("");
+    // 	protocol_details["filename_abde"]  = QString("SSF-AAV_GMP_test_030325-run2366-dataDiskRun-71");
+    // 	protocol_details[ "channels_to_radial_ranges" ] = QString("2A:6.2-6.5,6.6-6.9;2B:5.8-7;4A:6.1-6.5,6.6-6.94;4B:6.25-6.55,6.65-7");
+    // 	protocol_details[ "x_normalizations" ] = QString("");
     // /** plus info on x_norm form DB's JSON -- for MWL only**/
 
     // //ABDE-SWL (CANADA-test)
@@ -273,17 +264,20 @@ US_Norm_Profile::US_Norm_Profile( QString auto_mode ): US_Widgets()
     // protocol_details[ "analysisIDs"  ] = QString("");
     // protocol_details[ "expType" ]      = QString("ABDE");
     // protocol_details[ "dataSource" ]   = QString("dataDiskAUC");
-    // protocol_details["abde_etype"]     = QString("SWL");
     // protocol_details[ "statusID" ]     = QString("47");
     // protocol_details[ "autoflowID" ]   = QString("72");
-    // protocol_details["ssf_dir_name"]   = QString("");
-    // protocol_details["directory_for_gmp"] = QString("/home/alexey/ultrascan/results/McCue_AAVCsCl_25JAN25-run2255-dataDiskRun-72");
-    // protocol_details[ "baseline_corrections" ] = QString("2A230:6.037,7.08,0.0175125,-0.034958");
-    // protocol_details["filename_abde"]  = QString("McCue_AAVCsCl_25JAN25-run2255-dataDiskRun-72");
-    // protocol_details[ "channels_to_radial_ranges" ] = QString("2A:6.2-6.5,6.6-6.9");
+    // //protocol_details["ssf_dir_name"]   = QString("");
+    // /** When for REPORT: These next fields will be read from autoflowAnalysisABDE record: 
+    // 	protocol_details["abde_etype"]     = QString("SWL");
+    // 	protocol_details["directory_for_gmp"] = QString("/home/alexey/ultrascan/results/McCue_AAVCsCl_25JAN25-run2255-dataDiskRun-72");
+    // 	protocol_details[ "baseline_corrections" ] = QString("2A230:6.037,7.08,0.0175125,-0.034958");
+    // 	protocol_details["filename_abde"]  = QString("McCue_AAVCsCl_25JAN25-run2255-dataDiskRun-72");
+    // 	protocol_details[ "channels_to_radial_ranges" ] = QString("2A:6.2-6.5,6.6-6.9");
+    // 	protocol_details[ "x_normalizations" ] = QString("");
+    // /** plus info on x_norm form DB's JSON -- for MWL only**/
     
-    // load_data_auto_report( protocol_details ); //<-- for REPORT
-    //load_data_auto( protocol_details );          //<-- for ANALYSIS
+    // load_data_auto_report( protocol_details );     //<-- for REPORT
+    //load_data_auto( protocol_details );             //<-- for ANALYSIS
     //END TEST
 }
 
@@ -291,6 +285,7 @@ US_Norm_Profile::US_Norm_Profile( QString auto_mode ): US_Widgets()
 US_Norm_Profile::US_Norm_Profile(): US_Widgets()
 {
     us_auto_mode = false;
+    us_auto_mode_report = false;
     
     setWindowTitle("Buoyancy Equilibrium Data Analysis");
     QPalette p = US_GuiSettings::frameColorDefault();
@@ -538,13 +533,43 @@ void US_Norm_Profile::load_data_auto( QMap<QString,QString> & protocol_details )
 //for use in GMP REPORT
 void US_Norm_Profile::load_data_auto_report( QMap<QString,QString> & protocol_details )
 {
-  prot_details = protocol_details;
+  us_auto_mode_report = true;
+  
+  //Clean
   slt_reset();
   data_per_channel. clear();
   data_per_channel_xnorm . clear();
   data_per_channel_norm_cb. clear();
   data_per_channel_ranges_percents. clear();
   data_per_channel_processed. clear();
+  
+  //First, read autoflowAnalysisABDE record
+  QMap<QString, QString> abde_analysis_parms =
+    read_autoflowAnalysisABDE_record( protocol_details["autoflowID"] );
+
+  qDebug() << "ABDE analysis PARMS: -- "
+	   << abde_analysis_parms["ID"]
+	   << abde_analysis_parms["etype"]
+	   << abde_analysis_parms[ "xnorms_percents" ]
+	   << abde_analysis_parms[ "filename_blc" ];
+
+  //parse respective JSONs
+  parse_abde_analysis_jsons( abde_analysis_parms[ "xnorms_percents" ],
+			     protocol_details,
+			     data_per_channel_xnorm,
+			     data_per_channel_norm_cb,
+			     data_per_channel_ranges_percents );
+
+  parse_abde_analysis_jsons( abde_analysis_parms[ "filename_blc" ],
+			     protocol_details,
+			     data_per_channel_xnorm,
+			     data_per_channel_norm_cb,
+			     data_per_channel_ranges_percents );
+  
+  //set some fields
+  protocol_details["abde_etype"]     = abde_analysis_parms["etype"];
+  prot_details = protocol_details;
+
   channels_ranges = protocol_details[ "channels_to_radial_ranges" ];
   abde_etype = protocol_details["abde_etype"];
   slt_loadAUC_auto_report( protocol_details );
@@ -600,31 +625,43 @@ void US_Norm_Profile::slt_loadAUC_auto_report(QMap<QString,QString> & protocol_d
   qDebug() << "filePaths -- " << filePaths;
   qDebug() << "channList -- " << channList;
 
-  //Read x_norm vals, and ranges
-  //set x_norm to "-1" for each channel
+  // //set x_norm to "-1" for each channel
+  // for (int i=0; i<channList.size(); ++i )
+  //   {
+  //     data_per_channel_xnorm[channList[i]]   = -1;
+  //     data_per_channel_norm_cb[channList[i]] = Qt::Checked; //2
+
+  //     //set all channels as unprocessed
+  //     data_per_channel_processed[ channList[i] ] = false;
+  //   }
+  // // //TEST
+  // // /* x_norm point for channel  "2A" ,  6.79865
+  // //    x_norm point for channel  "4A" ,  6.84741
+  // //    x_norm point for channel  "4B" ,  6.85515
+  // // */
+  // if ( abde_etype == "MWL" )
+  //   {
+  //     data_per_channel_xnorm["2A"]   = 6.79865;
+  //     data_per_channel_xnorm["4A"]   = 6.84741;
+  //     data_per_channel_xnorm["4B"]   = 6.85515;
+  //     data_per_channel_norm_cb["2A"] = Qt::Unchecked;
+  //     data_per_channel_norm_cb["4A"] = Qt::Unchecked;
+  //     data_per_channel_norm_cb["4B"] = Qt::Unchecked;
+  //   }
+  // //END TEST
+
+  //debug
   for (int i=0; i<channList.size(); ++i )
     {
-      data_per_channel_xnorm[channList[i]]   = -1;
-      data_per_channel_norm_cb[channList[i]] = Qt::Checked; //2
-
-      //set all channels as unprocessed
-      data_per_channel_processed[ channList[i] ] = false;
+      //set all channs as "processed"
+      data_per_channel_processed[ channList[i] ] = true;
+      
+      qDebug() << "channel, " << channList[i]
+	       << ": data_per_channel_xnorm, data_per_channel_norm_cb -- "
+	       << data_per_channel_xnorm[channList[i]]
+	       << data_per_channel_norm_cb[channList[i]];
+	;
     }
-  // //TEST
-  // /* x_norm point for channel  "2A" ,  6.79865
-  //    x_norm point for channel  "4A" ,  6.84741
-  //    x_norm point for channel  "4B" ,  6.85515
-  // */
-  if ( abde_etype == "MWL" )
-    {
-      data_per_channel_xnorm["2A"]   = 6.79865;
-      data_per_channel_xnorm["4A"]   = 6.84741;
-      data_per_channel_xnorm["4B"]   = 6.85515;
-      data_per_channel_norm_cb["2A"] = Qt::Unchecked;
-      data_per_channel_norm_cb["4A"] = Qt::Unchecked;
-      data_per_channel_norm_cb["4B"] = Qt::Unchecked;
-    }
-  //END TEST
   
   //Populate channels
   cb_chann -> addItems( channList );
@@ -1428,7 +1465,8 @@ void US_Norm_Profile::plotData(void){
 	   // find intercection of point1 & 2 with the 'yp_intN_protein'
 	   // use xp_intN_protein as index
 	   // yp_intN_protein = data_per_channel[ channame ]["integralN"].at(i).data();
-	   find_percent_from_range( channame, point1_s, point2_s, xp_intN_protein, yp_intN_protein );
+	   if ( !us_auto_mode_report )
+	     find_percent_from_range( channame, point1_s, point2_s, xp_intN_protein, yp_intN_protein );
 	   
 	   QwtPlotCurve* v_line_peak1;
 	   double r1[ 2 ];
@@ -1897,6 +1935,9 @@ void US_Norm_Profile::save_auto( void )
 
   qDebug() << "JSON: " << json_p;
 
+  // // TEST 
+  // return;
+
   //Determine filename (MWL or SWL)
   QString filename_p;
   if ( abde_etype == "MWL" )
@@ -2171,6 +2212,7 @@ void US_Norm_Profile::update_autoflow_record_atAnalysisABDE( void )
      {
        QMessageBox::warning( this, tr( "Connection Problem" ),
 			     tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
+       delete db;
        return;
      }
 
@@ -2188,7 +2230,120 @@ void US_Norm_Profile::update_autoflow_record_atAnalysisABDE( void )
 			     tr( "Autoflow Record Not Updated" ),
 			     tr( "No autoflow record\n"
 				 "associated with this experiment." ) );
+       delete db;
        return;
      }
+   delete db;
+}
 
+
+QMap <QString, QString> US_Norm_Profile::read_autoflowAnalysisABDE_record( QString aID )
+{
+  QMap <QString, QString> abde_analysis_parms;
+  
+   // Check DB connection
+   US_Passwd pw;
+   QString masterpw = pw.getPasswd();
+   US_DB2* db = new US_DB2( masterpw );
+
+   if ( db->lastErrno() != US_DB2::OK )
+     {
+       QMessageBox::warning( this, tr( "Connection Problem" ),
+			     tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
+       delete db;
+       return abde_analysis_parms;
+     }
+   
+   QStringList qry;
+   qry << "read_autoflowAnalysisABDE_record"
+       << aID;
+   db->query(qry);
+   
+   if ( db->lastErrno() == US_DB2::OK )      // Autoflow record exists
+     {
+       while ( db->next() )
+	 {
+	   abde_analysis_parms[ "ID" ]                = db->value( 0 ).toString();
+	   abde_analysis_parms[ "etype" ]             = db->value( 1 ).toString();
+	   abde_analysis_parms[ "xnorms_percents" ]   = db->value( 2 ).toString();
+	   abde_analysis_parms[ "filename_blc" ]      = db->value( 3 ).toString();
+	 }
+     }
+   
+   delete db;
+   return abde_analysis_parms;
+}
+
+void US_Norm_Profile::parse_abde_analysis_jsons( QString abde_analysis_parms_string,
+						 QMap <QString, QString>& protocol_details,
+						 QMap <QString, double>&  data_chann_x_norm,
+						 QMap< QString, int >& data_chann_x_norm_cb,
+						 QMap< QString, QMap < QString, double>>& data_chann_range_percent )
+{
+  QString channels_to_radial_ranges;
+  
+  if ( !abde_analysis_parms_string.isEmpty() )
+    {
+      QJsonDocument jsonDoc = QJsonDocument::fromJson( abde_analysis_parms_string.toUtf8() );
+      QJsonObject json_obj = jsonDoc.object();
+      
+      foreach(const QString& key, json_obj.keys())
+	{
+	  QJsonValue value = json_obj.value(key);
+	  qDebug() << "XNORMS, PERCENTS key, value: " << key << value;
+
+	  if ( key == "filename" )
+	    {
+	      qDebug() << "PARSED filename_abde -- " << value.toString();
+	      protocol_details[ "filename_abde" ] = value.toString();
+	    }
+	  else if ( key == "blcorrs" )
+	    {
+	      qDebug() << "PARSED blccorrs -- " << value.toString();
+	      protocol_details[ "baseline_corrections" ] = value.toString();
+	    }
+	  else //channNames...
+	    {
+	      channels_to_radial_ranges += key + ":";
+	      
+	      QJsonObject json_obj_1 = value.toObject();
+	      foreach(const QString& key_1, json_obj_1.keys())
+		{
+		  QJsonValue value_1 = json_obj_1.value(key_1);
+		  qDebug() << "XNORMS-1, PERCENTS-1 key-1, value-1: " << key_1 << value_1;
+		  if ( key_1 == "x_norm" )
+		    {
+		      double x_norm_val      = value_1.toString().toDouble();
+		      data_chann_x_norm[key] = x_norm_val;
+		      data_chann_x_norm_cb[key] = (x_norm_val != -1) ? Qt::Unchecked : Qt::Checked ;
+		    }
+		  else if ( key_1 == "percents" )
+		    {
+		      QJsonObject json_obj_2 = value_1.toObject();
+		      foreach(const QString& key_2, json_obj_2.keys())
+			{
+			  QJsonValue value_2 = json_obj_2.value(key_2);
+			  //for ranges-to-percents
+			  double percent_c = value_2.toString().toDouble();
+			  data_chann_range_percent[key][key_2] = percent_c;
+			  
+			  //ned to make somethimg like
+			  //protocol_details[ "channels_to_radial_ranges" ]
+			  //   = QString("2A:6.2-6.5,6.6-6.9;4A:6.1-6.5,6.6-6.94;4B:6.25-6.55,6.65-7");
+			  channels_to_radial_ranges += key_2 + ",";
+			}
+		      channels_to_radial_ranges.chop(1);
+		    }
+		}
+	      channels_to_radial_ranges += ";";
+	    }
+	}
+      channels_to_radial_ranges.chop(1);
+    }
+  
+  if ( !channels_to_radial_ranges.isEmpty() )
+    {
+      qDebug() << "[PARSE], channels_to_radial_ranges -- " << channels_to_radial_ranges;
+      protocol_details[ "channels_to_radial_ranges" ] = channels_to_radial_ranges;
+    }
 }
