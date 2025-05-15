@@ -233,7 +233,7 @@ US_Norm_Profile::US_Norm_Profile( QString auto_mode ): US_Widgets()
     lw_selData ->hide();
     
     //TEST
-    // QMap<QString, QString> protocol_details;
+    //QMap<QString, QString> protocol_details;
     // //ABDE-MWL (CCH)
     // protocol_details[ "invID_passed" ] = QString("165");
     // protocol_details[ "protocolName" ] = QString("GMP-test-ABDE-fromDisk");
@@ -255,13 +255,36 @@ US_Norm_Profile::US_Norm_Profile( QString auto_mode ): US_Widgets()
     // protocol_details[ "analysisIDs"  ] = QString("");
     // protocol_details[ "expType" ]      = QString("ABDE");
     // protocol_details[ "dataSource" ]   = QString("dataDiskAUC");
+    // protocol_details["abde_etype"]     = QString("MWL");
     // protocol_details[ "statusID" ]     = QString("46");
     // protocol_details[ "autoflowID" ]   = QString("71");
     // protocol_details["ssf_dir_name"]   = QString("/home/alexey/ultrascan/imports/SSF-AAV_GMP_test_030325-run2366-dataDiskRun-71");
+    // protocol_details["directory_for_gmp"] = QString("");
+    // protocol_details[ "baseline_corrections" ] = QString("");
+    // protocol_details["filename_abde"]  = QString("SSF-AAV_GMP_test_030325-run2366-dataDiskRun-71");
     // protocol_details[ "channels_to_radial_ranges" ] = QString("2A:6.2-6.5,6.6-6.9;2B:5.8-7;4A:6.1-6.5,6.6-6.94;4B:6.25-6.55,6.65-7");
-    // load_data_auto( protocol_details );
-    // //END TEST
+    // /** plus info on x_norm form DB's JSON -- for MWL only**/
 
+    // //ABDE-SWL (CANADA-test)
+    // protocol_details[ "invID_passed" ] = QString("2");
+    // protocol_details[ "protocolName" ] = QString("GMP-test-ABDE-Disk-SingleWVL");
+    // protocol_details[ "aprofileguid" ] = QString("0a033cbb-8cc6-4efd-be99-81772f0c7d02");
+    // protocol_details[ "filename" ]     = QString("McCue_AAVCsCl_25JAN25-run2255-dataDiskRun-72");
+    // protocol_details[ "analysisIDs"  ] = QString("");
+    // protocol_details[ "expType" ]      = QString("ABDE");
+    // protocol_details[ "dataSource" ]   = QString("dataDiskAUC");
+    // protocol_details["abde_etype"]     = QString("SWL");
+    // protocol_details[ "statusID" ]     = QString("47");
+    // protocol_details[ "autoflowID" ]   = QString("72");
+    // protocol_details["ssf_dir_name"]   = QString("");
+    // protocol_details["directory_for_gmp"] = QString("/home/alexey/ultrascan/results/McCue_AAVCsCl_25JAN25-run2255-dataDiskRun-72");
+    // protocol_details[ "baseline_corrections" ] = QString("2A230:6.037,7.08,0.0175125,-0.034958");
+    // protocol_details["filename_abde"]  = QString("McCue_AAVCsCl_25JAN25-run2255-dataDiskRun-72");
+    // protocol_details[ "channels_to_radial_ranges" ] = QString("2A:6.2-6.5,6.6-6.9");
+    
+    // load_data_auto_report( protocol_details ); //<-- for REPORT
+    //load_data_auto( protocol_details );          //<-- for ANALYSIS
+    //END TEST
 }
 
 
@@ -510,6 +533,102 @@ void US_Norm_Profile::load_data_auto( QMap<QString,QString> & protocol_details )
   channels_ranges = protocol_details[ "channels_to_radial_ranges" ];
   abde_etype = protocol_details["abde_etype"];
   slt_loadAUC_auto( protocol_details );
+}
+
+//for use in GMP REPORT
+void US_Norm_Profile::load_data_auto_report( QMap<QString,QString> & protocol_details )
+{
+  prot_details = protocol_details;
+  slt_reset();
+  data_per_channel. clear();
+  data_per_channel_xnorm . clear();
+  data_per_channel_norm_cb. clear();
+  data_per_channel_ranges_percents. clear();
+  data_per_channel_processed. clear();
+  channels_ranges = protocol_details[ "channels_to_radial_ranges" ];
+  abde_etype = protocol_details["abde_etype"];
+  slt_loadAUC_auto_report( protocol_details );
+}
+
+//For use in GMP REPORTing 
+void US_Norm_Profile::slt_loadAUC_auto_report(QMap<QString,QString> & protocol_details)
+{
+  channList. clear();
+  
+  QVector< US_DataIO::RawData > allData;
+  QStringList triples;
+  QString workingDir;
+  US_LoadAUC* dialog = new US_LoadAUC( false, protocol_details, allData, triples, workingDir );
+
+  if (!us_auto_mode)
+    if ( dialog->exec() == QDialog::Rejected )  return;
+  
+  QFileInfo finfo(workingDir);
+  QString runid = finfo.baseName();
+  QString dirname = finfo.dir().absolutePath();
+
+  qDebug() << "[in slt_loadAUC_auto_report() ], triples -- " << triples; 
+
+  char chtype[ 3 ] = { 'R', 'A', '\0' };
+  strncpy( chtype, allData[ 0 ].type, 2 );
+  QString dataType = QString( chtype ).left( 2 );
+  qDebug() << "Data type -- " << dataType;
+  
+  for (int i = 0; i < triples.size(); i++)
+    {
+      QStringList triple_n_list = triples[i].split(u'/');
+      channList << triple_n_list[0].trimmed() + triple_n_list[1].trimmed();
+      
+      QStringList ccw = triples.at(i).split(u'/');
+      US_DataIO::RawData rawData = allData.at(i);
+      qDebug() << "RawData desc -- " << rawData.description;
+
+      QString fn = tr("%1.%2.%3.%4.%5").arg(runid, dataType, ccw.at(0).trimmed(),
+					 ccw.at(1).trimmed(), ccw.at(2).trimmed());
+      QString fp = tr("%1.%2.auc").arg(dirname, fn);
+      
+      filenames << fn;
+      filePaths << fp;
+      lw_inpData->addItem(fn);
+      xvalues << rawData.xvalues;
+      yvalues << rawData.scanData.last().rvalues;
+    }
+  
+  //clean chanlist
+  channList. removeDuplicates();
+  qDebug() << "filenames -- " << filenames;
+  qDebug() << "filePaths -- " << filePaths;
+  qDebug() << "channList -- " << channList;
+
+  //Read x_norm vals, and ranges
+  //set x_norm to "-1" for each channel
+  for (int i=0; i<channList.size(); ++i )
+    {
+      data_per_channel_xnorm[channList[i]]   = -1;
+      data_per_channel_norm_cb[channList[i]] = Qt::Checked; //2
+
+      //set all channels as unprocessed
+      data_per_channel_processed[ channList[i] ] = false;
+    }
+  // //TEST
+  // /* x_norm point for channel  "2A" ,  6.79865
+  //    x_norm point for channel  "4A" ,  6.84741
+  //    x_norm point for channel  "4B" ,  6.85515
+  // */
+  if ( abde_etype == "MWL" )
+    {
+      data_per_channel_xnorm["2A"]   = 6.79865;
+      data_per_channel_xnorm["4A"]   = 6.84741;
+      data_per_channel_xnorm["4B"]   = 6.85515;
+      data_per_channel_norm_cb["2A"] = Qt::Unchecked;
+      data_per_channel_norm_cb["4A"] = Qt::Unchecked;
+      data_per_channel_norm_cb["4B"] = Qt::Unchecked;
+    }
+  //END TEST
+  
+  //Populate channels
+  cb_chann -> addItems( channList );
+  cb_chann->setCurrentIndex( 0 );
 }
 
 void US_Norm_Profile::slt_loadAUC_auto( QMap<QString,QString> & protocol_details)
@@ -1899,13 +2018,14 @@ void US_Norm_Profile::save_auto( void )
 
    //Also, update autoflowStatus's 'analysisABDE' && 'analysisABDEts' (new fields) with info from gmp_submitter_map:
    record_AnalysisABDE_status( gmp_submitter_map );
-
+ 
+   /***  FOR TEST
    //Now, update parent autoflow record with 'REPORT' stage
    update_autoflow_record_atAnalysisABDE();  //TEST (will turn ON!)
    
    //Finally, switch to 6. REPORT -- need to communicate with parent autoflow_Analysis....
    emit abde_to_report( prot_details );
-   
+   ***/
 }
 
 void US_Norm_Profile::record_AnalysisABDE_status( QMap<QString,QString> gmp_form )
