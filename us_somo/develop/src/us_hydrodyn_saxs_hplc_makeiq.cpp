@@ -293,10 +293,10 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q_ng( QStringList files, double t_min, d
          istarq_mode                    = ISTARQ_CONC_POINTWISE;
          parameters[ "istarq_ok" ]      = "true";
          parameters[ "istarq_message" ] =
-            QString( us_tr( "Make I*(q) using the concentration curve %1 ?" ) )
-            .arg( lbl_conc_file->text() )
-                                    ;
-         
+            QString( us_tr( "Make I*(q) using the concentration curve listed below ?" ) )
+            ;
+         parameters[ "istarq_conc_file" ] = lbl_conc_file->text();
+
          US_Hydrodyn_Saxs_Hplc_Ciq *hplc_ciq = 
             new US_Hydrodyn_Saxs_Hplc_Ciq(
                                           this,
@@ -1049,9 +1049,8 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
          istarq_mode                    = ISTARQ_CONC_POINTWISE;
          parameters[ "istarq_ok" ]      = "true";
          parameters[ "istarq_message" ] =
-            QString( us_tr( "Make I*(q) using the concentration curve %1 ?" ) )
-            .arg( lbl_conc_file->text() )
-            ;
+            QString( us_tr( "Make I*(q) using the concentration curve listed below ?" ) );
+         parameters[ "istarq_conc_file" ] = lbl_conc_file->text();
       }         
 
       parameters[ "hplc_param_I0_exp" ] = QString( "%1" ).arg( saxs_hplc_param_I0_exp );
@@ -1659,7 +1658,7 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
    }
 
    {
-      avg_peaks = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cb_makeiq_avg_peaks" ] == "true";
+      avg_peaks = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cb_makeiq_avg_peaks" ] == "true" && !mode_testiq;
 
       if ( avg_peaks ) {
          double peak_frac = 
