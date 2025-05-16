@@ -161,6 +161,7 @@ DbgLv(1) << "  irow" << irow << "icol" << icol;
 
        //iterate over triples in lw_triples
        qDebug() << "lw_triples->count() -- " << lw_triples->count();
+       rmsd_for_gmp. clear();
        for( int i=0; i< lw_triples->count(); ++i )
 	 {
 	   //new_triple( i );
@@ -170,10 +171,8 @@ DbgLv(1) << "  irow" << irow << "icol" << icol;
 	   triple_text = t_list[0] + " / " + t_list[1];
 	   qDebug() << "Processing chanel -- " << triple_text;
 
-
 	   if ( this->protocol_details["abde_etype"] == "MWL" )
 	     {
-	       
 	       //associate ext. profiles
 	       QMap< QString, QMap< double, double > > analytes_profs = extinction_profiles_per_channel[ triple_text ];
 	       
@@ -188,6 +187,9 @@ DbgLv(1) << "  irow" << irow << "icol" << icol;
 	   protocol_details_p["channels_to_radial_ranges"] = this->protocol_details[ "channels_to_radial_ranges" ];
 	   protocol_details_p[ "directory_for_gmp" ] = this->protocol_details[ "directory_for_gmp" ];
 	 }
+       rmsd_for_gmp.chop(1);
+       protocol_details_p[ "rmsds_for_gmp" ] = rmsd_for_gmp;
+       qDebug() << "RMDSs -- " << rmsd_for_gmp;
      }
 }
 
@@ -1944,6 +1946,14 @@ void US_MwlSpeciesFit::get_fit_error(){
         RMSD += fit_dev.scansMSE.at(i);
     RMSD /= fit_dev.scansMSE.size();
     le_fit_error->setText(QString::number(qSqrt(RMSD), 'f', 6));
+
+    if (us_gmp_auto_mode)
+      {
+	QString triple_t = lw_triples->currentItem()->text();
+	QStringList triple_t_l = triple_t.split(" / ");
+	QString triple_m = triple_t_l[0].trimmed() + triple_t_l[1].trimmed();
+	rmsd_for_gmp += triple_m + ":" + le_fit_error->text() + ";";
+      }
 }
 
 void US_MwlSpeciesFit::rmsd_3dplot(){

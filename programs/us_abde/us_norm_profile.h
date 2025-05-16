@@ -75,9 +75,11 @@ class US_Norm_Profile : public US_Widgets
         double x_max_picked = -1; //!< Maximum X value picked.
         double x_norm = -1; //!< A radial point that normalization occurs based on
         QString channels_ranges;
+        QString channels_rmsds;
         QString abde_etype;
         QMap< QString, QMap < QString, QVector<QVector<double>> > > data_per_channel;
         QMap< QString, double > data_per_channel_xnorm;
+        QMap< QString, double > data_per_channel_rmsd;
         QMap< QString, int > data_per_channel_norm_cb;
         QMap< QString, QMap < QString, double>> data_per_channel_ranges_percents;
         QMap< QString, bool > data_per_channel_processed;
@@ -152,7 +154,8 @@ class US_Norm_Profile : public US_Widgets
 					QMap <QString, QString>&,
 					QMap <QString, double>&,
 					QMap< QString, int >&,
-					QMap< QString, QMap < QString, double>>& );
+					QMap< QString, QMap < QString, double>>&,
+					QMap <QString, double>& );
 
         //! \brief Slot to add or remove an item.
         //! \param item The list widget item.

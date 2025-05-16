@@ -38,7 +38,8 @@ class US_MwlSpeciesFit : public US_AnalysisBase2
   //QMap< QString, QString> channels_to_radial_ranges;
         QMap< QString, QMap <QString, QStringList>> editProfile_blc;
         QMap< QString, QMap< QString, QMap< double, double > > > extinction_profiles_per_channel;
-             //chann.    //type[protein, DNA]  //ext. profile 
+             //chann.    //type[protein, DNA]  //ext. profile
+        QString rmsd_for_gmp;
 
     private:
         int dbg_level;         //!< Debug level

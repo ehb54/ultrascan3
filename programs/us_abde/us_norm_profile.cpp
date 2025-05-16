@@ -525,8 +525,10 @@ void US_Norm_Profile::load_data_auto( QMap<QString,QString> & protocol_details )
   data_per_channel_norm_cb. clear();
   data_per_channel_ranges_percents. clear();
   data_per_channel_processed. clear();
+  data_per_channel_rmsd. clear();
   channels_ranges = protocol_details[ "channels_to_radial_ranges" ];
   abde_etype = protocol_details["abde_etype"];
+  channels_rmsds = protocol_details["rmsds_for_gmp" ];
   slt_loadAUC_auto( protocol_details );
 }
 
@@ -542,6 +544,7 @@ void US_Norm_Profile::load_data_auto_report( QMap<QString,QString> & protocol_de
   data_per_channel_norm_cb. clear();
   data_per_channel_ranges_percents. clear();
   data_per_channel_processed. clear();
+  data_per_channel_rmsd. clear();
   
   //First, read autoflowAnalysisABDE record
   QMap<QString, QString> abde_analysis_parms =
@@ -558,13 +561,15 @@ void US_Norm_Profile::load_data_auto_report( QMap<QString,QString> & protocol_de
 			     protocol_details,
 			     data_per_channel_xnorm,
 			     data_per_channel_norm_cb,
-			     data_per_channel_ranges_percents );
+			     data_per_channel_ranges_percents,
+			     data_per_channel_rmsd );
 
   parse_abde_analysis_jsons( abde_analysis_parms[ "filename_blc" ],
 			     protocol_details,
 			     data_per_channel_xnorm,
 			     data_per_channel_norm_cb,
-			     data_per_channel_ranges_percents );
+			     data_per_channel_ranges_percents,
+			     data_per_channel_rmsd );
   
   //set some fields
   protocol_details["abde_etype"]     = abde_analysis_parms["etype"];
@@ -625,31 +630,6 @@ void US_Norm_Profile::slt_loadAUC_auto_report(QMap<QString,QString> & protocol_d
   qDebug() << "filePaths -- " << filePaths;
   qDebug() << "channList -- " << channList;
 
-  // //set x_norm to "-1" for each channel
-  // for (int i=0; i<channList.size(); ++i )
-  //   {
-  //     data_per_channel_xnorm[channList[i]]   = -1;
-  //     data_per_channel_norm_cb[channList[i]] = Qt::Checked; //2
-
-  //     //set all channels as unprocessed
-  //     data_per_channel_processed[ channList[i] ] = false;
-  //   }
-  // // //TEST
-  // // /* x_norm point for channel  "2A" ,  6.79865
-  // //    x_norm point for channel  "4A" ,  6.84741
-  // //    x_norm point for channel  "4B" ,  6.85515
-  // // */
-  // if ( abde_etype == "MWL" )
-  //   {
-  //     data_per_channel_xnorm["2A"]   = 6.79865;
-  //     data_per_channel_xnorm["4A"]   = 6.84741;
-  //     data_per_channel_xnorm["4B"]   = 6.85515;
-  //     data_per_channel_norm_cb["2A"] = Qt::Unchecked;
-  //     data_per_channel_norm_cb["4A"] = Qt::Unchecked;
-  //     data_per_channel_norm_cb["4B"] = Qt::Unchecked;
-  //   }
-  // //END TEST
-
   //debug
   for (int i=0; i<channList.size(); ++i )
     {
@@ -657,9 +637,10 @@ void US_Norm_Profile::slt_loadAUC_auto_report(QMap<QString,QString> & protocol_d
       data_per_channel_processed[ channList[i] ] = true;
       
       qDebug() << "channel, " << channList[i]
-	       << ": data_per_channel_xnorm, data_per_channel_norm_cb -- "
+	       << ": data_per_channel_xnorm, data_per_channel_norm_cb, data_per_channel_ rmsd -- "
 	       << data_per_channel_xnorm[channList[i]]
-	       << data_per_channel_norm_cb[channList[i]];
+	       << data_per_channel_norm_cb[channList[i]]
+	       << data_per_channel_rmsd[channList[i]];
 	;
     }
   
@@ -730,8 +711,11 @@ void US_Norm_Profile::slt_loadAUC_auto( QMap<QString,QString> & protocol_details
       qDebug() << "in ABDE_norm: reading eProfiles BC -- "
 	       << protocol_details[ "baseline_corrections" ];
     }
+
   
-  //set x_norm to "-1" for each channel
+  //set x_norm to "-1" for each channel, and RMSDs
+  QStringList channels_rmsds_l = channels_rmsds.split(";");
+
   for (int i=0; i<channList.size(); ++i )
     {
       data_per_channel_xnorm[channList[i]]   = -1;
@@ -739,6 +723,16 @@ void US_Norm_Profile::slt_loadAUC_auto( QMap<QString,QString> & protocol_details
 
       //set all channels as unprocessed
       data_per_channel_processed[ channList[i] ] = false;
+
+      //also fill in the RMSD map
+      for (int j=0; j<channels_rmsds_l.size(); ++j)
+	{
+	  QStringList c_chan_rmsd = channels_rmsds_l[j].split(":");
+	  QString c_chan_rmsd_channel =  c_chan_rmsd[0];
+	  QString c_chan_rmsd_rmsd    =  c_chan_rmsd[1];
+	  if ( c_chan_rmsd_channel == channList[i] )
+	    data_per_channel_rmsd[channList[i]] = c_chan_rmsd_rmsd.toDouble();
+	}
     }
   // //TEST
   // /* x_norm point for channel  "2A" ,  6.79865
@@ -1695,6 +1689,7 @@ void US_Norm_Profile::slt_reset(){
 	cb_chann->clear();
 	//cb_chann->disconnect();
 	channels_ranges.clear();
+	channels_rmsds .clear();
       }
 
 }
@@ -1919,6 +1914,10 @@ void US_Norm_Profile::save_auto( void )
       //x_normalization
       json_p += "\"" + channame + "\":{\"x_norm\":\"" + x_normal + "\",";
 
+      //add rmsds
+      if ( abde_etype=="MWL" )
+	json_p += "\"rmsd\":\"" + QString::number(data_per_channel_rmsd[channame]) + "\",";
+      
       //now over ranges:percents
       QMap < QString, double> ranges_percents = data_per_channel_ranges_percents[ channame ];
       json_p += "\"percents\":{";
@@ -2278,7 +2277,8 @@ void US_Norm_Profile::parse_abde_analysis_jsons( QString abde_analysis_parms_str
 						 QMap <QString, QString>& protocol_details,
 						 QMap <QString, double>&  data_chann_x_norm,
 						 QMap< QString, int >& data_chann_x_norm_cb,
-						 QMap< QString, QMap < QString, double>>& data_chann_range_percent )
+						 QMap< QString, QMap < QString, double>>& data_chann_range_percent,
+						 QMap <QString, double>&  data_chann_rmsd )
 {
   QString channels_to_radial_ranges;
   
@@ -2316,6 +2316,11 @@ void US_Norm_Profile::parse_abde_analysis_jsons( QString abde_analysis_parms_str
 		      double x_norm_val      = value_1.toString().toDouble();
 		      data_chann_x_norm[key] = x_norm_val;
 		      data_chann_x_norm_cb[key] = (x_norm_val != -1) ? Qt::Unchecked : Qt::Checked ;
+		    }
+		  else if ( key_1 == "rmsd" )
+		    {
+		       double rmsd_val      = value_1.toString().toDouble();
+		       data_chann_rmsd[key] = rmsd_val;
 		    }
 		  else if ( key_1 == "percents" )
 		    {
