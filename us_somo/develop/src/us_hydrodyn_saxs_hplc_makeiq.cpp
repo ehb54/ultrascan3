@@ -1658,7 +1658,7 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
    }
 
    {
-      avg_peaks = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cb_makeiq_avg_peaks" ] == "true";
+      avg_peaks = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cb_makeiq_avg_peaks" ] == "true" && !mode_testiq;
 
       if ( avg_peaks ) {
          double peak_frac = 
