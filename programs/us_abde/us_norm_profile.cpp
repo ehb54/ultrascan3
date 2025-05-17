@@ -578,6 +578,14 @@ void US_Norm_Profile::load_data_auto_report( QMap<QString,QString> & protocol_de
   channels_ranges = protocol_details[ "channels_to_radial_ranges" ];
   abde_etype = protocol_details["abde_etype"];
   slt_loadAUC_auto_report( protocol_details );
+
+  emit pass_channels_info( channList );
+}
+
+//return pointer to data_plot1
+QwtPlot* US_Norm_Profile::rp_data_plot()
+{
+  return plot;
 }
 
 //For use in GMP REPORTing 
@@ -630,6 +638,8 @@ void US_Norm_Profile::slt_loadAUC_auto_report(QMap<QString,QString> & protocol_d
   qDebug() << "filePaths -- " << filePaths;
   qDebug() << "channList -- " << channList;
 
+  emit pass_channels_info( channList );
+  
   //debug
   for (int i=0; i<channList.size(); ++i )
     {
@@ -754,13 +764,21 @@ void US_Norm_Profile::slt_loadAUC_auto( QMap<QString,QString> & protocol_details
   cb_chann->setCurrentIndex( 0 );
 }
 
+QString US_Norm_Profile::select_channel_public( int index )
+{
+  qDebug() << "[in select_channel_public()]: channame, index -- "
+	   << cb_chann->itemText( index ) << index;
+  cb_chann->setCurrentIndex( index );
+  return cb_chann->itemText( index );
+}
+
 //[AUTO]go over channels
 void US_Norm_Profile::new_chann_auto( int index )
 {
   slt_cleanList();
   
   QString channame = cb_chann->itemText( index );
-  qDebug() << "ChannName: " << channame;
+  qDebug() << "Index, ChannName: " << index << "," << channame;
 
   ckb_norm_max->setChecked( data_per_channel_norm_cb[ channame ] );
 
@@ -2059,13 +2077,13 @@ void US_Norm_Profile::save_auto( void )
    //Also, update autoflowStatus's 'analysisABDE' && 'analysisABDEts' (new fields) with info from gmp_submitter_map:
    record_AnalysisABDE_status( gmp_submitter_map );
  
-   /***  FOR TEST
+   /***  FOR TEST */
    //Now, update parent autoflow record with 'REPORT' stage
    update_autoflow_record_atAnalysisABDE();  //TEST (will turn ON!)
    
    //Finally, switch to 6. REPORT -- need to communicate with parent autoflow_Analysis....
    emit abde_to_report( prot_details );
-   ***/
+   /***/
 }
 
 void US_Norm_Profile::record_AnalysisABDE_status( QMap<QString,QString> gmp_form )

@@ -17,6 +17,7 @@
 #include "us_help.h"
 #include "us_extern.h"
 #include "us_select_item.h"
+#include "../us_abde/us_norm_profile.h"
 
 /**
  * @class US_ReporterGMP
@@ -70,6 +71,8 @@ class US_ReporterGMP : public US_Widgets
 
         QString ap_xml;                     //!< XML string for analysis profile
 
+        US_Norm_Profile*  sdiag_norm_profile;
+  
         US_Pseudo3D_Combine* sdiag_pseudo3d; //!< Pseudo3D combine dialog
         US_DDistr_Combine* sdiag_combplot;   //!< D distribution combine dialog
         US_AnalysisProfileGui* sdiag;        //!< Analysis profile GUI dialog
@@ -263,6 +266,9 @@ class US_ReporterGMP : public US_Widgets
         QString optimaName;                  //!< Optima name
         QString dataSource;
         bool    simulatedData;
+        QString expType;
+        QStringList abde_channList;
+        QMap<QString, QString >prot_details_at_report;
   
         QString current_date;                //!< Current date
 
@@ -318,7 +324,7 @@ class US_ReporterGMP : public US_Widgets
         void write_pdf_report(void); //!< Write PDF report
         void remove_files_by_mask(QString, QStringList); //!< Remove files by mask
         void write_gmp_report_DB(QString, QString); //!< Write GMP report to DB
-
+        
         void assemble_user_inputs_html(void); //!< Assemble user inputs in HTML
         void assemble_run_details_html(void); //!< Assemble run details in HTML
         int get_expID_by_runID_invID(US_DB2*, QString); //!< Get experiment ID by run ID and investigator ID
@@ -571,6 +577,8 @@ class US_ReporterGMP : public US_Widgets
         void process_combined_plots(QString); //!< Process combined plots
         void process_combined_plots_individual(QString, QString); //!< Process combined plots (individual)
         QMap< QString, QStringList > find_sim_ranges( QString, QString );
+        void process_abde_plots( void );
+        void get_abde_channels( QStringList& );
 
         QMap<QString, QString> read_autoflowGMPReportEsign_record(QString); //!< Read autoflow GMP report electronic signature record
         void get_assigned_oper_revs(QJsonDocument, QStringList&); //!< Get assigned operator revisions

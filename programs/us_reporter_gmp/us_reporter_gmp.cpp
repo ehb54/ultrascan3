@@ -592,9 +592,12 @@ void US_ReporterGMP::loadRun_auto ( QMap < QString, QString > & protocol_details
   autoflowStatusID   = protocol_details[ "statusID" ];
   optimaName         = protocol_details[ "OptimaName" ] ;
   dataSource         = protocol_details[ "dataSource" ] ;
-
+  expType            = protocol_details[ "expType" ] ;
   simulatedData      = false;
-
+  abde_channList. clear();
+  
+  prot_details_at_report = protocol_details;
+  
   QString full_runname = protocol_details[ "filename" ];
   FullRunName_auto = runName + "-run" + runID;
   if ( full_runname.contains(",") && full_runname.contains("IP") && full_runname.contains("RI") )
@@ -644,43 +647,50 @@ void US_ReporterGMP::loadRun_auto ( QMap < QString, QString > & protocol_details
   progress_msg->setValue( 7 );
   qApp->processEvents();
 
-  //check triples for failure
-  check_failed_triples( );
-  
-  //check models existence
-  check_models( AutoflowID_auto.toInt() );
-  progress_msg->setValue( 8 );
-  qApp->processEvents();
-
-  //identify what's intended to be simulated
-  check_for_missing_models( );
-  ////
+  if ( expType == "VELOCITY" )
+    {
+      //check triples for failure
+      check_failed_triples( );
+      
+      //check models existence
+      check_models( AutoflowID_auto.toInt() );
+      progress_msg->setValue( 8 );
+      qApp->processEvents();
+      
+      //identify what's intended to be simulated
+      check_for_missing_models( );
+      ////
+    }
 
   //Check for dropped triples
   check_for_dropped_triples();
   ////
+    
   
   //build Trees
   build_genTree();  
   progress_msg->setValue( 9 );
   qApp->processEvents();
 
-  build_perChanTree();
-  progress_msg->setValue( 10);
-  qApp->processEvents();
-
-  build_combPlotsTree();
-  progress_msg->setValue( 11 );
-  qApp->processEvents();
+  if ( expType == "VELOCITY" )
+    {
+      build_perChanTree();
+      progress_msg->setValue( 10);
+      qApp->processEvents();
+      
+      build_combPlotsTree();
+      progress_msg->setValue( 11 );
+      qApp->processEvents();
+    }
 
   build_miscTree();  
   progress_msg->setValue( 12 );
   qApp->processEvents();
-
+  
   progress_msg->setValue( progress_msg->maximum() );
   qApp->processEvents();
   progress_msg->close();
-
+  
   //compose a message on missing models
   QString msg_missing_models = missing_models_msg();
   
@@ -1611,9 +1621,12 @@ void US_ReporterGMP::load_gmp_run ( void )
   autoflowStatusID   = protocol_details[ "statusID" ];
   optimaName         = protocol_details[ "OptimaName" ];
   dataSource         = protocol_details[ "dataSource" ];
-
+  expType            = protocol_details[ "expType" ] ;
   simulatedData      = false;
-  
+  abde_channList. clear();
+
+  prot_details_at_report = protocol_details;
+
   progress_msg->setValue( 1 );
   qApp->processEvents();
 
@@ -1630,14 +1643,18 @@ void US_ReporterGMP::load_gmp_run ( void )
   //Now, read protocol's 'reportMask' && reportItems masks && populate trees
   read_protocol_and_reportMasks( );
 
-  //check triples for failure
-  check_failed_triples( );
-  
-  //check models existence
-  check_models( autoflowID );
-  progress_msg->setValue( 7 );
-  qApp->processEvents();
 
+  if ( expType == "VELOCITY ")
+    {
+      //check triples for failure
+      check_failed_triples( );
+      
+      //check models existence
+      check_models( autoflowID );
+      progress_msg->setValue( 7 );
+      qApp->processEvents();
+    }
+  
   //debug
   for ( int i=0; i < Array_of_tripleNames.size(); ++ i )
     {
@@ -1662,10 +1679,13 @@ void US_ReporterGMP::load_gmp_run ( void )
   
   //DEBUG
   //exit(1);
-  
-  //identify what's intended to be simulated
-  check_for_missing_models();
-  ////
+
+  if ( expType == "VELOCITY ")
+    {
+      //identify what's intended to be simulated
+      check_for_missing_models();
+      ////
+    }
 
   //Check for dropped triples
   check_for_dropped_triples();
@@ -1675,23 +1695,26 @@ void US_ReporterGMP::load_gmp_run ( void )
   progress_msg->setValue( 8 );
   qApp->processEvents();
 
-  build_perChanTree();
-  progress_msg->setValue( 0 );
-  qApp->processEvents();
-  
-  build_combPlotsTree();
-  progress_msg->setValue( 10 );
-  qApp->processEvents();
-
-  build_miscTree();  
-  progress_msg->setValue( 11 );
-  qApp->processEvents();
-  
-  //debug
-  qDebug() << "Built gen Tree: height -- "     << genTree->height();
-  qDebug() << "Built perChan Tree: height -- " << perChanTree->height();
-  qDebug() << "Built Combo Tree: height -- "   << combPlotsTree->height();
-
+   if ( expType == "VELOCITY" )
+    {
+      build_perChanTree();
+      progress_msg->setValue( 0 );
+      qApp->processEvents();
+      
+      build_combPlotsTree();
+      progress_msg->setValue( 10 );
+      qApp->processEvents();
+    }
+   
+   build_miscTree();  
+   progress_msg->setValue( 11 );
+   qApp->processEvents();
+   
+   //debug
+   qDebug() << "Built gen Tree: height -- "     << genTree->height();
+   qDebug() << "Built perChan Tree: height -- " << perChanTree->height();
+   qDebug() << "Built Combo Tree: height -- "   << combPlotsTree->height();
+   
   
   progress_msg->setValue( progress_msg->maximum() );
   qApp->processEvents();
@@ -3382,13 +3405,19 @@ void US_ReporterGMP::generate_report( void )
 	    }
 	}
 
-      //Combined Plots
-      for ( int i=0; i<fileNameList.size(); ++i )
-	process_combined_plots( fileNameList[i] );
-
-      //Replicas' averages
-      assemble_replicate_av_integration_html();
-      
+      if ( expType == "VELOCITY" )
+	{
+	  //Combined Plots
+	  for ( int i=0; i<fileNameList.size(); ++i )
+	    process_combined_plots( fileNameList[i] );
+	  
+	  //Replicas' averages
+	  assemble_replicate_av_integration_html();
+	}
+      else if ( expType == "ABDE" )
+	{
+	  process_abde_plots();
+	}
     }
   else
     { //Will be modified for stand-alone GMP Reporter based on edited tree JSON
@@ -3430,17 +3459,24 @@ void US_ReporterGMP::generate_report( void )
 	    }
 	}
 
-      //Combined Plots
-      if ( combPlotsMask_edited. has_combo_plots )
+      if ( expType == "VELOCITY" )
 	{
-	  for ( int i=0; i<fileNameList.size(); ++i )
-	    process_combined_plots( fileNameList[i] );
+	  //Combined Plots
+	  if ( combPlotsMask_edited. has_combo_plots )
+	    {
+	      for ( int i=0; i<fileNameList.size(); ++i )
+		process_combined_plots( fileNameList[i] );
+	    }
+	  
+	  //Replicas' averages
+	  if ( miscMask_edited. ShowMiscParts[ "Replicate Groups Averaging" ] ) 
+	    assemble_replicate_av_integration_html();
 	}
-
-      //Replicas' averages
-      if ( miscMask_edited. ShowMiscParts[ "Replicate Groups Averaging" ] ) 
-	assemble_replicate_av_integration_html();
-      
+      else if ( expType == "ABDE" )
+	{
+	  qDebug() << "Assembling plots ABDE!";
+	  process_abde_plots();
+	}
     }
   //End of Part 2
 
@@ -3449,7 +3485,10 @@ void US_ReporterGMP::generate_report( void )
   qApp->processEvents();
 
   pb_view_report -> setEnabled( true );
-  
+
+
+  //TEST !!!!!!!!1
+  //auto_mode = false; //REMOVE!!!
   if ( auto_mode )
     {
 
@@ -3550,10 +3589,12 @@ void US_ReporterGMP::generate_report( void )
       qDebug() << "Query for autoflowHistory -- " << qry;
       db->query( qry );
 
+      /*** TEST - DO NOT delete parent autoflow YET --------------------------------- **/
       //delete autoflow record
       qry.clear();
       qry << "delete_autoflow_record_by_id" << AutoflowID_auto;
       db->statusQuery( qry );
+      /****/ 
 
       // //Also delete record from autoflowStages table:           //DO NOT DELETE autoflowStages yet - req. by eSigning process!!
       // qry.clear();
@@ -3610,6 +3651,42 @@ void US_ReporterGMP::generate_report( void )
   
 }
 
+void US_ReporterGMP::process_abde_plots( void )
+{
+  //read, parse
+  sdiag_norm_profile = new US_Norm_Profile("AUTO");
+  connect( sdiag_norm_profile, SIGNAL( pass_channels_info( QStringList& )), this, SLOT( get_abde_channels(QStringList&) ) );
+  sdiag_norm_profile->load_data_auto_report( prot_details_at_report );
+    
+  //Process all channels & capture plots
+  QString subDirName  = runName + "-run" + runID;
+  QString dirName     = US_Settings::reportDir() + "/" + subDirName;
+  const QString svgext( ".svgz" );
+  const QString pngext( ".png" );
+  const QString csvext( ".csv" );
+  
+  QStringList ABDEPlotsFileNames;
+
+  for (int i=0; i< abde_channList.size(); ++i )
+    {
+      QString channel_name_abde = sdiag_norm_profile->select_channel_public( i );
+      qDebug() << "[ABDE proc.], channel_name_abde, abde_channList[i] -- "
+	       << channel_name_abde << abde_channList[i];
+      QString img01File = dirName + "/" + "ABDE_norm." + channel_name_abde + ".deconv"  + svgext;
+      qDebug() << "ABDE plot filepath -- " << img01File;
+      write_plot( img01File, sdiag_norm_profile->rp_data_plot() );
+      img01File.replace( svgext, pngext ); 
+      ABDEPlotsFileNames << img01File;
+    }
+  
+  assemble_plots_html(ABDEPlotsFileNames);
+}
+
+void US_ReporterGMP::get_abde_channels( QStringList& abde_cl)
+{
+  abde_channList = abde_cl;
+  qDebug() << "ABDE channel List passed -- " << abde_channList;
+}
 
 //read eSign GMP record for assigned oper(s) && rev(s) && status
 QMap< QString, QString> US_ReporterGMP::read_autoflowGMPReportEsign_record( QString aID)
@@ -7357,6 +7434,7 @@ void  US_ReporterGMP::assemble_replicate_av_integration_html( void )
 //output HTML plots for currentTriple
 void  US_ReporterGMP::assemble_plots_html( QStringList PlotsFilenames, const QString plot_type )
 {
+  qDebug() << "[in assemble_plots_html()], PlotsFilenames -- " << PlotsFilenames;  
   // Embed plots in the composite report
   html_assembled += "<p class=\"pagebreak \">\n";
   for ( int i = 0;  i < PlotsFilenames.size(); ++ i )
@@ -10320,15 +10398,18 @@ void US_ReporterGMP::assemble_pdf( QProgressDialog * progress_msg )
       
       if ( currAProf.analysis_run[ i ] )
 	{
-	  //check what representative wvl is:
-	  QString rep_wvl = QString::number( currAProf.wvl_edit[ i ] );
-	  html_analysis_gen += tr(
+	  if ( expType == "VELOCITY" )
+	    {
+	      //check what representative wvl is:
+	      QString rep_wvl = QString::number( currAProf.wvl_edit[ i ] );
+	      html_analysis_gen += tr(
 				      "<table style=\"margin-left:50px\">"
-				         "<tr><td> Wavelength for Edit, 2DSA-FM & Fitmen Stages (nm):   </td>  <td> %1 </td> </tr>"
+				      "<tr><td> Wavelength for Edit, 2DSA-FM & Fitmen Stages (nm):   </td>  <td> %1 </td> </tr>"
 				      "</table>"
 				      )
-	    .arg( rep_wvl )                //1
-	    ;
+		.arg( rep_wvl )                //1
+		;
+	    }
 	  
 	  //now check if report will be run:
 	  QString run_report;
@@ -10366,9 +10447,17 @@ void US_ReporterGMP::assemble_pdf( QProgressDialog * progress_msg )
 	    
 	  int chann_wvl_number = chann_wvls.size();
 
+	  //for ABDE, identify only 1st wvl in the cahnnel, and proceed with it only!
+	  QString wvl_abde  = QString::number( chann_wvls[0] );
+	  
 	  for ( int jj = 0; jj < chann_wvl_number; ++jj )
 	    {
 	      QString wvl            = QString::number( chann_wvls[ jj ] );
+
+	      //abde
+	      if ( expType == "ABDE" && wvl != wvl_abde )
+		continue;
+	      
 	      QString triple_name    = channel_desc.split(":")[ 0 ] + "/" + wvl;
 	      US_ReportGMP reportGMP = chann_reports[ wvl ];
 
@@ -11047,8 +11136,10 @@ void US_ReporterGMP::printDocument(QPrinter& printer, QTextDocument* doc) //, QW
       paintPage( printer, pageIndex, pageCount, &painter, doc, textRect, footerHeight );
       firstPage = false;
     }
-
+  
+  qApp->processEvents();
   progress_msg->close();
+  qApp->processEvents();
 }
 
 
@@ -11947,11 +12038,14 @@ void US_ReporterGMP::assemble_parts( QString & html_str )
     	{
 	  if ( genMask_edited.has_anagen_items ) 
 	    html_str += html_analysis_profile;
-	  if ( genMask_edited.has_ana2dsa_items ) 
-	    html_str += html_analysis_profile_2dsa;
-	  if ( genMask_edited.has_anapcsa_items ) 
-	    html_str += html_analysis_profile_pcsa ;
-    	}
+	  if ( expType == "VELOCITY")
+	    {
+	      if ( genMask_edited.has_ana2dsa_items ) 
+		html_str += html_analysis_profile_2dsa;
+	      if ( genMask_edited.has_anapcsa_items ) 
+		html_str += html_analysis_profile_pcsa ;
+	    }
+	}
     }
 }
 

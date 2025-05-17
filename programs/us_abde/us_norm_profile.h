@@ -27,12 +27,16 @@ class US_Norm_Profile : public US_Widgets
 
         bool us_auto_mode;
         bool us_auto_mode_report;
+        void load_data_auto_report( QMap<QString,QString>& );
+        QwtPlot* rp_data_plot();
+        QString select_channel_public( int index );
 
     signals:
         //! \brief Signal emitted when the widget is closed.
         void widgetClosed();
         void abde_to_report( QMap<QString,QString>&);
         void back_to_runManager();
+        void pass_channels_info( QStringList& );
 
     protected:
         //! \brief Override of the close event to emit widgetClosed signal.
@@ -138,7 +142,7 @@ class US_Norm_Profile : public US_Widgets
         void slt_loadAUC_auto( QMap<QString,QString>& );
         void slt_loadAUC_auto_report(QMap<QString,QString>& );
         void load_data_auto( QMap<QString,QString>& );
-        void load_data_auto_report( QMap<QString,QString>& );
+  //void load_data_auto_report( QMap<QString,QString>& );
         void new_chann_auto   ( int  );
         void next_chann_auto( void );
         void prev_chann_auto( void );

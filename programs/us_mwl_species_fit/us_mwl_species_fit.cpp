@@ -948,7 +948,7 @@ bool US_MwlSpeciesFit::read_protocol(QStringList& msg_to_user)
       QMap < QString, US_ReportGMP > chann_reports = ch_reports[ channel_desc_alt ];
       QString wvl  = QString::number( ch_wvls[ channel_desc_alt ][0] );
 
-      qDebug() << "Channel, " << channel_desc_alt << ", qst wvl, " << wvl;
+      qDebug() << "Channel, " << channel_desc_alt << ", 1st wvl, " << wvl;
       US_ReportGMP reportGMP = chann_reports[ wvl ];
 
       //Identify which type-methods will be in Combined ptols
