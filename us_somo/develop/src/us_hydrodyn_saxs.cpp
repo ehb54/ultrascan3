@@ -5905,7 +5905,7 @@ void US_Hydrodyn_Saxs::select_saxs_file(const QString &filename)
          {
             continue;
          }
-         qs.trimmed();
+         qs = qs.trimmed();
          QStringList qsl = (qs ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
          int pos = 0;
          if ( qsl.size() == 11 )
