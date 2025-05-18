@@ -21,6 +21,7 @@ static double bblm_scale;
 #endif
 static bool   bblm_ref_has_errors;
 static vector < bool >   bblm_fit_param;
+static bool   shutting_down;
 
 static unordered_map < double,
                        unordered_map < double,
@@ -250,6 +251,7 @@ void US_Hydrodyn_Saxs_Hplc::broaden() {
    ubb.clear();
 
    running               = false;
+   shutting_down         = false;
 
    broaden_names.clear();
    broaden_created.clear();
@@ -357,7 +359,8 @@ void US_Hydrodyn_Saxs_Hplc::broaden_done( bool save ) {
    TSO << "US_Hydrodyn_Saxs_Hplc::broaden_done() start\n";
 
    ubb.clear();
-
+   shutting_down = true;
+   
    if ( broaden_names.size() > 2 ) {
       set < QString > to_remove = { broaden_names.takeLast() };
       remove_files( to_remove );
@@ -438,7 +441,7 @@ void US_Hydrodyn_Saxs_Hplc::broaden_done( bool save ) {
          if ( !usu->linear_interpolate( ts, I, f_qs[ broaden_names[ 1 ] ], I_interp ) ) {
             editor_msg( "red", QString( "Error while fitting: interpolation error: %1\n" ).arg( usu->errormsg ) );
          } else {
-            add_plot( fname + "xx", f_qs[ broaden_names[ 1 ] ], I_interp, true, false );
+            add_plot( fname, f_qs[ broaden_names[ 1 ] ], I_interp, true, false );
             broaden_names << last_created_file;
             conc_files.insert( last_created_file );
             f_header[ last_created_file ] = QString( " Broadening target %1" ).arg( broaden_names[ 1 ] );
@@ -513,6 +516,10 @@ void US_Hydrodyn_Saxs_Hplc::broaden_done( bool save ) {
 }
 
 void US_Hydrodyn_Saxs_Hplc::broaden_enables() {
+   if ( shutting_down ) {
+      return;
+   }
+
    TSO << "US_Hydrodyn_Saxs_Hplc::broaden_enables() start\n";
 
    cb_broaden_tau               -> setEnabled( true );
@@ -676,6 +683,10 @@ void US_Hydrodyn_Saxs_Hplc::broaden_tau_text( const QString & ) {
 
 void US_Hydrodyn_Saxs_Hplc::broaden_tau_focus( bool hasFocus ) {
    TSO << "US_Hydrodyn_Saxs_Hplc::broaden_tau_focus() start\n";
+   if ( shutting_down ) {
+      return;
+   }
+
    broaden_enables();
    if ( !hasFocus ) {
       broaden_compute_one();
@@ -720,6 +731,9 @@ void US_Hydrodyn_Saxs_Hplc::broaden_sigma_text( const QString & ) {
 
 void US_Hydrodyn_Saxs_Hplc::broaden_sigma_focus( bool hasFocus ) {
    TSO << "US_Hydrodyn_Saxs_Hplc::broaden_sigma_focus() start\n";
+   if ( shutting_down ) {
+      return;
+   }
    broaden_enables();
    if ( !hasFocus ) {
       broaden_compute_one();
@@ -764,6 +778,9 @@ void US_Hydrodyn_Saxs_Hplc::broaden_deltat_text( const QString & ) {
 
 void US_Hydrodyn_Saxs_Hplc::broaden_deltat_focus( bool hasFocus ) {
    TSO << "US_Hydrodyn_Saxs_Hplc::broaden_deltat_focus() start\n";
+   if ( shutting_down ) {
+      return;
+   }
    broaden_enables();
    if ( !hasFocus ) {
       broaden_compute_one();
@@ -799,6 +816,9 @@ void US_Hydrodyn_Saxs_Hplc::broaden_baseline_text( const QString & ) {
 
 void US_Hydrodyn_Saxs_Hplc::broaden_baseline_focus( bool hasFocus ) {
    TSO << "US_Hydrodyn_Saxs_Hplc::broaden_baseline_focus() start\n";
+   if ( shutting_down ) {
+      return;
+   }
    broaden_enables();
    if ( !hasFocus ) {
       broaden_compute_one();
@@ -816,6 +836,9 @@ void US_Hydrodyn_Saxs_Hplc::broaden_scale_text( const QString & ) {
 
 void US_Hydrodyn_Saxs_Hplc::broaden_scale_focus( bool hasFocus ) {
    TSO << "US_Hydrodyn_Saxs_Hplc::broaden_scale_focus() start\n";
+   if ( shutting_down ) {
+      return;
+   }
    broaden_enables();
    if ( !hasFocus ) {
       broaden_compute_one();
@@ -828,6 +851,9 @@ void US_Hydrodyn_Saxs_Hplc::broaden_kernel_end_text( const QString & ) {
 
 void US_Hydrodyn_Saxs_Hplc::broaden_kernel_end_focus( bool hasFocus ) {
    TSO << "US_Hydrodyn_Saxs_Hplc::broaden_kernel_end_focus() start\n";
+   if ( shutting_down ) {
+      return;
+   }
    broaden_enables();
    if ( !hasFocus ) {
       broaden_compute_one();
@@ -840,6 +866,9 @@ void US_Hydrodyn_Saxs_Hplc::broaden_kernel_deltat_text( const QString & ) {
 
 void US_Hydrodyn_Saxs_Hplc::broaden_kernel_deltat_focus( bool hasFocus ) {
    TSO << "US_Hydrodyn_Saxs_Hplc::broaden_kernel_deltat_focus() start\n";
+   if ( shutting_down ) {
+      return;
+   }
    broaden_enables();
    if ( !hasFocus ) {
       broaden_compute_one();
@@ -852,6 +881,9 @@ void US_Hydrodyn_Saxs_Hplc::broaden_fit_range_start_text( const QString & ) {
 
 void US_Hydrodyn_Saxs_Hplc::broaden_fit_range_start_focus( bool hasFocus ) {
    TSO << "US_Hydrodyn_Saxs_Hplc::broaden_fit_range_start_focus() start\n";
+   if ( shutting_down ) {
+      return;
+   }
    broaden_enables();
    if ( !hasFocus ) {
       broaden_compute_one();
@@ -864,6 +896,9 @@ void US_Hydrodyn_Saxs_Hplc::broaden_fit_range_end_text( const QString & ) {
 
 void US_Hydrodyn_Saxs_Hplc::broaden_fit_range_end_focus( bool hasFocus ) {
    TSO << "US_Hydrodyn_Saxs_Hplc::broaden_fit_range_end_focus() start\n";
+   if ( shutting_down ) {
+      return;
+   }
    broaden_enables();
    if ( !hasFocus ) {
       broaden_compute_one();
