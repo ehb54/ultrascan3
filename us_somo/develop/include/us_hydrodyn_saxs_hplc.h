@@ -850,6 +850,10 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       QLabel                           * lbl_broaden_baseline;
       mQLineEdit                       * le_broaden_baseline;
 
+      QCheckBox                        * cb_broaden_scale;
+      QLabel                           * lbl_broaden_scale;
+      mQLineEdit                       * le_broaden_scale;
+
       QLabel                           * lbl_broaden_kernel_end;
       mQLineEdit                       * le_broaden_kernel_end;
 
@@ -863,6 +867,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       QCheckBox                        * cb_broaden_repeak;
       QComboBox                        * cb_broaden_kernel_type;
 
+      QPushButton                      * pb_broaden_scale_compute;
       QPushButton                      * pb_broaden_fit;
       QPushButton                      * pb_broaden_minimize;
       QPushButton                      * pb_broaden_reset;
@@ -951,6 +956,12 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 
       void                               broaden_baseline_text( const QString & );
       void                               broaden_baseline_focus( bool );
+
+      void                               set_broaden_scale();
+
+      void                               broaden_scale_text( const QString & );
+      void                               broaden_scale_focus( bool );
+      void                               broaden_scale_compute();
 
       void                               broaden_kernel_end_text( const QString & );
       void                               broaden_kernel_end_focus( bool );
