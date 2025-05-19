@@ -655,10 +655,11 @@ void US_Hydrodyn_Saxs_Hplc::broaden_reset() {
 #if defined( BROADEN_SCALE_FIT )
    cb_broaden_scale    ->setChecked( true );
    le_broaden_scale    ->setText( "1" );
-   // broaden_compute_one();
-   // broaden_scale_compute();
-#endif
    broaden_compute_one();
+   broaden_scale_compute();
+#else
+   broaden_compute_one();
+#endif
 
    broaden_enables();
 }
@@ -1201,7 +1202,7 @@ void US_Hydrodyn_Saxs_Hplc::broaden_lm_fit( bool final_refinement_only ) {
 
    // original loss
    double original_loss = broaden_compute_loss();
-   TSO << QString( "broaden_fit original loss %1\n" ).arg( original_loss );
+   US_Vector::printvector( QString( "broaden_fit original loss %1, params:" ).arg( original_loss ), broaden_params() );
       
    bblm_kernel_size       = le_broaden_kernel_end    ->text().toDouble();
    bblm_kernel_delta_t    = le_broaden_kernel_deltat ->text().toDouble();
@@ -1499,7 +1500,8 @@ void US_Hydrodyn_Saxs_Hplc::broaden_lm_fit( bool final_refinement_only ) {
    // final loss
    broaden_compute_one();
    double final_loss = broaden_compute_loss();
-   TSO << QString( "broaden_fit original loss %1 final loss %2\n" ).arg( original_loss ).arg( final_loss );
+   US_Vector::printvector( QString( "broaden_fit original loss %1 final loss %2 : params" ).arg( original_loss ).arg( final_loss ), broaden_params() );
+
    if ( final_loss > original_loss ) {
       editor_msg( "darkred", "No improvement\n" );
       TSO << "No improvement!!\n";
@@ -1881,4 +1883,16 @@ void US_Hydrodyn_Saxs_Hplc::broaden_scale_compute() {
    le_broaden_scale->setText( QString( "%1" ).arg( broaden_scale, 0, 'g', 8 ) );
    cb_broaden_repeak->setChecked( repeak_set );
    broaden_compute_one();
+}
+
+vector < double > US_Hydrodyn_Saxs_Hplc::broaden_params() {
+   return {
+      le_broaden_tau->text().toDouble()
+      ,le_broaden_sigma->text().toDouble()
+      ,le_broaden_deltat->text().toDouble()
+      ,le_broaden_baseline->text().toDouble()
+#if defined( BROADEN_SCALE_FIT )
+      ,le_broaden_scale->text().toDouble()
+#endif
+   };
 }

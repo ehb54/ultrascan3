@@ -3046,7 +3046,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    lbl_broaden_scale->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 
    le_broaden_scale = new mQLineEdit( this );    le_broaden_scale->setObjectName( "le_broaden_scale Line Edit" );
-   le_broaden_scale->setText( "1" );
+   le_broaden_scale->setText( "0" );
    le_broaden_scale->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_broaden_scale->setPalette( PALET_NORMAL );
    AUTFBACK( le_broaden_scale );

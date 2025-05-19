@@ -884,6 +884,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void                               broaden_clear_plot();
       void                               broaden_compute_one( bool details = false );
       double                             broaden_compute_loss();
+      vector < double >                  broaden_params();
+      
  public:
       bool                               broaden_compute_one_no_ui(
                                                                    double tau
