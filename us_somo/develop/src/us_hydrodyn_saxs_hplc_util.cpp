@@ -113,9 +113,9 @@ void US_Hydrodyn_Saxs_Hplc::add()
       }
 
       if ( rp_values.size() ) {
-         name = QString( "sum_of_%1_files_no_rp" ).arg( files.size() );
-      } else {
          name = QString( "sum_of_%1_files-rp%2" ).arg( files.size() ).arg( rp_first );
+      } else {
+         name = QString( "sum_of_%1_files_no_rp" ).arg( files.size() );
       }
    }
 
