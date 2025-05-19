@@ -85,8 +85,41 @@ void US_Hydrodyn_Saxs_Hplc::add()
 
    disable_all();
 
+   QString repeak_str;
+
+   QString name;
+   
+   {
+      QRegExp rx_repeak( "-rp(.\\d*(_|\\.)\\d+(|e.\\d+))" );
+      
+      set < QString > rp_values;
+
+      QString rp_first;
+
+      for ( auto const & f : files ) {
+         if ( rx_repeak.indexIn( f ) != -1 ) {
+            if ( !rp_values.size() ) {
+               rp_first = rx_repeak.cap( 1 );
+            }
+            rp_values.insert( rx_repeak.cap( 1 ) );
+         }
+      }
+
+      if ( rp_values.size() > 1 ) {
+         QMessageBox::information( this,
+                                   windowTitle() + us_tr( ": Sum" ),
+                                   us_tr( "Multiple differing repeak values found in summed file names, using the first one" )
+                                   );
+      }
+
+      if ( rp_values.size() ) {
+         name = QString( "sum_of_%1_files_no_rp" ).arg( files.size() );
+      } else {
+         name = QString( "sum_of_%1_files-rp%2" ).arg( files.size() ).arg( rp_first );
+      }
+   }
+
    QString header = QString( " Sum: %1" ).arg( files.join( " , " ) );
-   QString name = QString( "sum_of_%1_files" ).arg( files.size() );
 
    for ( unsigned int i = 1; i < ( unsigned int ) files.size(); i++ )
    {
