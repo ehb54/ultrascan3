@@ -85,7 +85,8 @@ void US_Hydrodyn_Saxs_Hplc::add()
 
    disable_all();
 
-   QString name = us_tr( "sum_" ) + files[ 0 ];
+   QString header = QString( " Sum: %1" ).arg( files.join( " , " ) );
+   QString name = QString( "sum_of_%1_files" ).arg( files.size() );
 
    for ( unsigned int i = 1; i < ( unsigned int ) files.size(); i++ )
    {
@@ -96,7 +97,7 @@ void US_Hydrodyn_Saxs_Hplc::add()
          return;
       }
       
-      name += "+" + files[ i ];
+      // name += "+" + files[ i ];
 
       for ( unsigned int j = 0; j < ( unsigned int ) sum.size(); j++ )
       {
@@ -123,8 +124,11 @@ void US_Hydrodyn_Saxs_Hplc::add()
    } else {
       add_plot( name, f_qs[ files[ 0 ] ], sum, f_is_time.count( files[ 0 ] ) ? f_is_time[ files[ 0 ] ] : false, false );
    }
+
+   f_header[ last_created_file ] = header;
+
    if ( conc_files.count( files[ 0 ] ) ) {
-      conc_files.insert( name );
+      conc_files.insert( last_created_file );
    }
    update_enables();
 }
