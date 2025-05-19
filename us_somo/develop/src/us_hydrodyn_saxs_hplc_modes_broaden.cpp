@@ -388,10 +388,8 @@ void US_Hydrodyn_Saxs_Hplc::broaden_done( bool save ) {
 
          // setup plot curve
 
-         QString fname =
-#if defined( BROADEN_SCALE_FIT )
-            QString( "%1_tau%2_sigma%3_b%4_s%5_dt%6_kte%7_ktdelta%8" )
-            .arg( broaden_names[ 0 ] )
+         QString header =
+            QString( "tau:%1 sigma:%2 baseline:%3 scale:%4 delta_t:%5 kernel_end:%6 kernel_delta_t:%7" )
             .arg( le_broaden_tau->text() )
             .arg( le_broaden_sigma->text() )
             .arg( le_broaden_baseline->text() )
@@ -399,6 +397,14 @@ void US_Hydrodyn_Saxs_Hplc::broaden_done( bool save ) {
             .arg( le_broaden_deltat->text() )
             .arg( le_broaden_kernel_end->text() )
             .arg( le_broaden_kernel_deltat->text() )
+            ;
+
+         QString fname = 
+#if defined( BROADEN_SCALE_FIT )
+            QString( "%1_Tau%2_Sigma%3" )
+            .arg( broaden_names[ 0 ] )
+            .arg( le_broaden_tau->text().toDouble(), 0, 'g', 3 )
+            .arg( le_broaden_sigma->text().toDouble(), 0, 'g', 3 )
 #else
             QString( "%1_tau%2_sigma%3_b%4_dt%5_kte%6_ktdelta%7" )
             .arg( broaden_names[ 0 ] )
@@ -444,7 +450,7 @@ void US_Hydrodyn_Saxs_Hplc::broaden_done( bool save ) {
             add_plot( fname, f_qs[ broaden_names[ 1 ] ], I_interp, true, false );
             broaden_names << last_created_file;
             conc_files.insert( last_created_file );
-            f_header[ last_created_file ] = QString( " Broadening target %1" ).arg( broaden_names[ 1 ] );
+            f_header[ last_created_file ] = QString( " Broadening target %1 %2" ).arg( broaden_names[ 1 ] ).arg( header );
             f_errors.erase( last_created_file );
 
 #if defined( BROADEN_SCALE_FIT )
@@ -460,7 +466,7 @@ void US_Hydrodyn_Saxs_Hplc::broaden_done( bool save ) {
 
             add_plot( name, f_qs[ broaden_names[ 1 ] ], I_interp, true, false );
             conc_files.insert( last_created_file );
-            f_header[ last_created_file ] = QString( " Broadening target %1" ).arg( broaden_names[ 1 ] );
+            f_header[ last_created_file ] = QString( " Broadening target %1 %2 scaled" ).arg( broaden_names[ 1 ] ).arg( header );
             f_errors.erase( last_created_file );
 #else
             // scale area
