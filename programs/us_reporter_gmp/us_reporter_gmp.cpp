@@ -7482,6 +7482,8 @@ QString US_ReporterGMP::distrib_info_abde( QString& abde_channame )
 
    mstr += table_row( tr( "Residual RMS Deviation:" ),
                       QString::number( abde_rmsd[abde_channame] )  );
+   mstr += indent( 2 ) + "</table>\n";
+   
 
    //Get Report for a channel && item(s)
    US_ReportGMP* reportGMP;
@@ -7555,8 +7557,6 @@ QString US_ReporterGMP::distrib_info_abde( QString& abde_channame )
      }
    mstr += indent( 2 ) + "</table>\n";
    //End of integration results
-
-	   
 
    return mstr;
 }
