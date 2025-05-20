@@ -269,6 +269,9 @@ class US_ReporterGMP : public US_Widgets
         QString expType;
         QStringList abde_channList;
         QMap<QString, QString >prot_details_at_report;
+        QMap< QString, QMap < QString, double>> abde_ranges_percents;
+        QMap< QString, double > abde_rmsd;
+        QMap<QString, QString > abde_plots_filenames;
   
         QString current_date;                //!< Current date
 
@@ -529,7 +532,9 @@ class US_ReporterGMP : public US_Widgets
 
         QString text_model(US_Model, int); //!< Convert model to text
         QString html_header(QString, QString, US_DataIO::EditedData*); //!< Generate HTML header
+        QString html_header_abde(QString, QString, QString); //!< Generate HTML header
         QString distrib_info(QMap<QString, QString>&); //!< Generate distribution information
+        QString distrib_info_abde( QString& ); //!< Generate distribution information
         QString calc_replicates_averages(void); //!< Calculate replicates averages
         QString get_replicate_group_number(QString); //!< Get replicate group number
         QMap<QString, double> get_replicate_group_results(US_ReportGMP::ReportItem, QString, QStringList); //!< Get replicate group results
@@ -568,6 +573,7 @@ class US_ReporterGMP : public US_Widgets
         void show_results(QMap<QString, QString>&); //!< Show results
         void calc_residuals(void); //!< Calculate residuals
         void assemble_distrib_html(QMap<QString, QString>&); //!< Assemble distribution HTML
+        void assemble_distrib_ABDE_html( QString& ); //!< Assemble distribution HTML
         void assemble_plots_html(QStringList, QString = QString("")); //!< Assemble plots HTML
         double interp_sval(double, double*, double*, int); //!< Interpolate s-value
         void plotres(QMap<QString, QString>&); //!< Plot residuals
@@ -579,6 +585,8 @@ class US_ReporterGMP : public US_Widgets
         QMap< QString, QStringList > find_sim_ranges( QString, QString );
         void process_abde_plots( void );
         void get_abde_channels( QStringList& );
+        void get_abde_rmsds(QMap< QString, double >&);
+        void get_abde_percents(QMap< QString, QMap < QString, double>>&);
 
         QMap<QString, QString> read_autoflowGMPReportEsign_record(QString); //!< Read autoflow GMP report electronic signature record
         void get_assigned_oper_revs(QJsonDocument, QStringList&); //!< Get assigned operator revisions

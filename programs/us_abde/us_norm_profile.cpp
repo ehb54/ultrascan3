@@ -580,6 +580,8 @@ void US_Norm_Profile::load_data_auto_report( QMap<QString,QString> & protocol_de
   slt_loadAUC_auto_report( protocol_details );
 
   emit pass_channels_info( channList );
+  emit pass_rmsd_info( data_per_channel_rmsd );
+  emit pass_percents_info( data_per_channel_ranges_percents );
 }
 
 //return pointer to data_plot1
@@ -638,7 +640,7 @@ void US_Norm_Profile::slt_loadAUC_auto_report(QMap<QString,QString> & protocol_d
   qDebug() << "filePaths -- " << filePaths;
   qDebug() << "channList -- " << channList;
 
-  emit pass_channels_info( channList );
+  //emit pass_channels_info( channList );
   
   //debug
   for (int i=0; i<channList.size(); ++i )
@@ -647,10 +649,11 @@ void US_Norm_Profile::slt_loadAUC_auto_report(QMap<QString,QString> & protocol_d
       data_per_channel_processed[ channList[i] ] = true;
       
       qDebug() << "channel, " << channList[i]
-	       << ": data_per_channel_xnorm, data_per_channel_norm_cb, data_per_channel_ rmsd -- "
+	       << ": data_per_channel_xnorm, data_per_channel_norm_cb, data_per_channel_rmsd, data_per_channel_ranges_percents -- "
 	       << data_per_channel_xnorm[channList[i]]
 	       << data_per_channel_norm_cb[channList[i]]
-	       << data_per_channel_rmsd[channList[i]];
+	       << data_per_channel_rmsd[channList[i]]
+	       << data_per_channel_ranges_percents[channList[i]];
 	;
     }
   

@@ -37,7 +37,9 @@ class US_Norm_Profile : public US_Widgets
         void abde_to_report( QMap<QString,QString>&);
         void back_to_runManager();
         void pass_channels_info( QStringList& );
-
+        void pass_rmsd_info( QMap< QString, double >& );
+        void pass_percents_info( QMap< QString, QMap < QString, double>>& );
+  
     protected:
         //! \brief Override of the close event to emit widgetClosed signal.
         //! \param event The close event.
