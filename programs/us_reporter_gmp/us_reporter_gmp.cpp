@@ -1650,7 +1650,7 @@ void US_ReporterGMP::load_gmp_run ( void )
   read_protocol_and_reportMasks( );
 
 
-  if ( expType == "VELOCITY ")
+  if ( expType == "VELOCITY")
     {
       //check triples for failure
       check_failed_triples( );
@@ -1686,7 +1686,7 @@ void US_ReporterGMP::load_gmp_run ( void )
   //DEBUG
   //exit(1);
 
-  if ( expType == "VELOCITY ")
+  if ( expType == "VELOCITY")
     {
       //identify what's intended to be simulated
       check_for_missing_models();
