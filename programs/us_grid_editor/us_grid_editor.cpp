@@ -123,10 +123,21 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
 
    chkb_log = new QCheckBox();
    QGridLayout* lyt_log = us_checkbox( "X-Axis Logarithmic", chkb_log );
-   connect( chkb_log, &QCheckBox::stateChanged, this, &US_Grid_Editor::set_xlog );
+   connect( chkb_log, &QCheckBox::stateChanged, this, &US_Grid_Editor::update_log_midpoint );
 
    QPushButton* pb_load_model = us_pushbutton( "Load Model" );
    connect( pb_load_model, &QPushButton::clicked, this, &US_Grid_Editor::load );
+
+   rb_start_point = new QRadioButton();
+   rb_midpoint    = new QRadioButton();
+   QGridLayout* lyt_sp = us_radiobutton( "Use Start of Bins", rb_start_point );
+   QGridLayout* lyt_mp = us_radiobutton( "Use Midpoint of Bins", rb_midpoint );
+
+   bg_point = new QButtonGroup();
+   bg_point->addButton( rb_start_point );
+   bg_point->addButton( rb_midpoint );
+   rb_start_point->setChecked( true );
+   connect( bg_point, &QButtonGroup::idClicked, this, &US_Grid_Editor::update_log_midpoint );
 
    QLabel *lb_grid_list = us_label( "Partial Grid List" );
    lb_grid_list->setAlignment( Qt::AlignCenter );
@@ -286,6 +297,9 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
 
    left->addLayout( lyt_log,              row,   0, 1, 2 );
    left->addWidget( pb_load_model,        row++, 2, 1, 2 );
+
+   left->addLayout( lyt_sp,               row,   0, 1, 2 );
+   left->addLayout( lyt_mp,               row++, 2, 1, 2 );
 
    left->addWidget( lb_grid_list,         row++, 0, 1, 4 );
 
@@ -1018,10 +1032,11 @@ void US_Grid_Editor::add_update()
    if ( ! validate_xyz( ginfo ) ) return;
 
    bool isLog = chkb_log->isChecked();
+   bool isMid = rb_midpoint->isChecked();
    QVector<double> xpoints;
    QVector<double> ypoints;
-   bool ok = gen_points( ginfo.xMin, ginfo.xMax, ginfo.xRes, isLog, xpoints );
-   ok = ok && gen_points( ginfo.yMin, ginfo.yMax, ginfo.yRes, false, ypoints );
+   bool ok = gen_points( ginfo.xMin, ginfo.xMax, ginfo.xRes, isLog, isMid, xpoints );
+   ok = ok && gen_points( ginfo.yMin, ginfo.yMax, ginfo.yRes, false, isMid, ypoints );
    if ( ! ok ) return;
 
    if ( check_overlap( xpoints.first(), xpoints.last(),
@@ -1050,18 +1065,19 @@ void US_Grid_Editor::add_update()
    highlight( lw_grids->currentRow() );
 }
 
-void US_Grid_Editor::set_xlog()
+void US_Grid_Editor::update_log_midpoint()
 {
    if ( grid_info.isEmpty() ) return;
    bool isLog = chkb_log->isChecked();
+   bool isMid = rb_midpoint->isChecked();
    QList<QVector<GridPoint>> new_grid_points;
 
    for ( int ii = 0; ii < grid_info.size(); ii++ ) {
       GridInfo ginfo = grid_info.at( ii );
       QVector<double> xpoints;
       QVector<double> ypoints;
-      gen_points( ginfo.xMin, ginfo.xMax, ginfo.xRes, isLog, xpoints );
-      gen_points( ginfo.yMin, ginfo.yMax, ginfo.yRes, false, ypoints );
+      gen_points( ginfo.xMin, ginfo.xMax, ginfo.xRes, isLog, isMid, xpoints );
+      gen_points( ginfo.yMin, ginfo.yMax, ginfo.yRes, false, isMid, ypoints );
       QVector<GridPoint> gpoints;
       if ( ! gen_grid_points( xpoints, ypoints, ginfo.zVal, gpoints ) ) {
          return;
@@ -1080,7 +1096,7 @@ void US_Grid_Editor::set_xlog()
 }
 
 bool US_Grid_Editor::gen_points( double x1, double x2, int np,
-                           bool isLog, QVector<double>& result )
+                           bool isLog, bool isMid, QVector<double>& result )
 {
    if ( x2 <= x1 ) return false;
    if ( isLog && ( x1 * x2 < 0 ) ) return false;
@@ -1101,7 +1117,10 @@ bool US_Grid_Editor::gen_points( double x1, double x2, int np,
       x2 = std::log10( x2 * sign );
    }
    dx = ( x2 - x1 ) / static_cast<double>( np );
-   double val = x1 + 0.5 * dx;
+   double val = x1;
+   if ( isMid ) {
+       val = x1 + 0.5 * dx;
+   }
    for ( int ii = 0; ii < np; ii++ ) {
       if ( ii != 0 ) {
          val += dx;
@@ -1684,8 +1703,11 @@ void US_Grid_Editor::load()
    lb_z_ax->setText( Attribute::short_desc( z_param ) );
 
    chkb_log->disconnect();
+   bg_point->disconnect();
    chkb_log->setChecked( model.customGridData.xLogarithmic );
-   connect( chkb_log, &QCheckBox::stateChanged, this, &US_Grid_Editor::set_xlog );
+   rb_midpoint->setChecked( model.customGridData.midpointBins );
+   connect( chkb_log, &QCheckBox::stateChanged, this, &US_Grid_Editor::update_log_midpoint );
+   connect( bg_point, &QButtonGroup::idClicked, this, &US_Grid_Editor::update_log_midpoint );
 
    for ( int ii = 0; ii < grid_info.size(); ii++ ) {
       QVector<GridPoint> gpvec;
@@ -1743,7 +1765,8 @@ void US_Grid_Editor::save()
    model.customGridData.components.clear();
 
    model.customGridData.grids << grid_info;
-   QStringList grid_metadat;
+   model.customGridData.xLogarithmic = chkb_log->isChecked();
+   model.customGridData.midpointBins = rb_midpoint->isChecked();
 
    for ( int ii = 0; ii < sorted_points.size(); ii++ )
    {

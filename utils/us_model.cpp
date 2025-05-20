@@ -1038,9 +1038,15 @@ void US_Model::get_metadata( QXmlStreamReader &xml )
       bool ok;
       int ngrids = a.value( "ngrids" ).toInt( &ok );
       int xl = a.value( "xLogarithmic" ).toInt();
+      bool midpointBins = true;
+      if ( a.hasAttribute( "midpointBins" ) ) {
+          int mb = a.value( "midpointBins" ).toInt();
+          midpointBins = mb == 1 ? true: false;
+      }
       if ( ok )
       {
          customGridData.xLogarithmic = xl == 1 ? true: false;
+         customGridData.midpointBins = midpointBins;
          ginfo_list.reserve( ngrids );
          bool flag = true;
          int counter = 0;
@@ -1303,7 +1309,9 @@ void US_Model::write_stream( QXmlStreamWriter& xml )
       xml.writeAttribute( "type", "CUSTOMGRID" );
       xml.writeAttribute( "ngrids", QString::number(ngrids) );
       int xl = customGridData.xLogarithmic ? 1 : 0;
+      int mb = customGridData.midpointBins ? 1 : 0;
       xml.writeAttribute( "xLogarithmic", QString::number(xl) );
+      xml.writeAttribute( "midpointBins", QString::number(mb) );
       for ( int ii = 0; ii < ngrids; ii++ )
       {
          CustomGridMetadata::GridInfo ginfo = customGridData.grids.at(ii);

@@ -282,6 +282,10 @@ private:
 
    QCheckBox*       chkb_log;             //!< checkbox for setting x-axis logarithmic.
 
+   QRadioButton*    rb_start_point;
+   QRadioButton*    rb_midpoint;
+   QButtonGroup*    bg_point;
+
    QButtonGroup*    x_axis;               //!< X-axis button group.
    QButtonGroup*    y_axis;               //!< Y-axis button group.
 
@@ -330,7 +334,7 @@ private:
    bool check_overlap( double, double, double, double, int );
 
    //! \brief Generate evenly spaced numbers over a specified interval.
-   bool gen_points( double, double, int, bool, QVector<double>& );
+   bool gen_points( double, double, int, bool,bool, QVector<double>& );
 
    //! \brief Generate evenly spaced numbers over a specified interval.
    bool gen_grid_points( const QVector<double>&, const QVector<double>&,
@@ -423,7 +427,7 @@ private slots:
    void add_update( void );
 
    //! \brief Slot to set x axis logarithmic.
-   void set_xlog( void );
+   void update_log_midpoint( void );
 
    //! \brief Slot to select X-axis type to plot.
    void select_x_axis( int );
