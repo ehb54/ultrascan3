@@ -62,6 +62,7 @@ class US_UTIL_EXTERN US_Model
             int column;
          };
          bool xLogarithmic;
+         bool midpointBins;
          QList <GridInfo> grids;
          QList <CompInfo> components;
       };
