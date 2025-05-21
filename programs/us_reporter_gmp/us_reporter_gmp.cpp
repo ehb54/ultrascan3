@@ -7836,6 +7836,18 @@ QString US_ReporterGMP::html_header_abde( QString title, QString runName,
 {
   qDebug() << "[in html_header_abde()], title, runName, abde_chanName -- "
 	   << title << runName << abde_chanName;
+
+  //check if MWL-Doconv.
+  bool mwl_abde = false;
+  for ( int ii = 0; ii < currProto.rpRange. nranges; ii++ )
+    {
+      if ( currProto.rpRange. chrngs[ii].wvlens.size() > 1 )
+	{
+	  mwl_abde = true;
+	  break;
+	}
+    }
+  QString etype_abde = mwl_abde ? " (MWL-DECONV.)" : "";
   
    QString s = QString( "<?xml version=\"1.0\"?>\n" );
    s  += "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\"\n";
@@ -7858,7 +7870,7 @@ QString US_ReporterGMP::html_header_abde( QString title, QString runName,
    
    s  += "    </style>\n";
    s  += "  </head>\n  <body>\n";
-   s  += "    <h1>" + tr("ABDE Analysis") + "</h1>\n";
+   s  += "    <h1>" + tr("ABDE Analysis") + etype_abde + "</h1>\n";
    s  += indent( 2 ) + tr( "<h2>Data Report for Run \"" ) + runName;
    s  += "\",<br/>\n" + indent( 2 ) + "&nbsp;"; // + tr( " Cell " ) + edata->cell;
    s  += tr( "  Channel " ) + abde_chanName;
