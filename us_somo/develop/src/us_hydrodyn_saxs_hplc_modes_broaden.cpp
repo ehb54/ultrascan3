@@ -246,6 +246,8 @@ void US_Hydrodyn_Saxs_Hplc::broaden() {
    TSO << "US_Hydrodyn_Saxs_Hplc::broaden() start\n";
    broaden_org_selected = all_selected_files_set();
 
+   gauss_delete_markers();
+
    disable_all();
 
    ubb.clear();
@@ -352,6 +354,16 @@ void US_Hydrodyn_Saxs_Hplc::broaden() {
 
    mode_select( MODE_BROADEN );
    broaden_compute_one();
+   gauss_add_marker( le_broaden_fit_range_start->text().toDouble(),
+                     Qt::red,
+                     "Start",
+                     Qt::AlignRight | Qt::AlignTop );
+   
+   gauss_add_marker( le_broaden_fit_range_end->text().toDouble(),
+                     Qt::red,
+                     "End",
+                     Qt::AlignLeft | Qt::AlignTop );
+   
    broaden_enables();
 }
 
@@ -360,6 +372,7 @@ void US_Hydrodyn_Saxs_Hplc::broaden_done( bool save ) {
 
    ubb.clear();
    shutting_down = true;
+   gauss_delete_markers();
    
    if ( broaden_names.size() > 2 ) {
       set < QString > to_remove = { broaden_names.takeLast() };
@@ -389,7 +402,7 @@ void US_Hydrodyn_Saxs_Hplc::broaden_done( bool save ) {
          // setup plot curve
 
          QString header =
-            QString( "tau:%1 sigma:%2 baseline:%3 scale:%4 delta_t:%5 kernel_end:%6 kernel_delta_t:%7" )
+            QString( "tau:%1 sigma:%2 baseline:%3 scale:%4 delta_t:%5 kernel_end:%6 kernel_delta_t:%7 fit_range:[%8:%9]" )
             .arg( le_broaden_tau->text() )
             .arg( le_broaden_sigma->text() )
             .arg( le_broaden_baseline->text() )
@@ -397,6 +410,8 @@ void US_Hydrodyn_Saxs_Hplc::broaden_done( bool save ) {
             .arg( le_broaden_deltat->text() )
             .arg( le_broaden_kernel_end->text() )
             .arg( le_broaden_kernel_deltat->text() )
+            .arg( le_broaden_fit_range_start->text() )
+            .arg( le_broaden_fit_range_end->text() )
             ;
 
          QString fname = 
@@ -893,6 +908,13 @@ void US_Hydrodyn_Saxs_Hplc::broaden_fit_range_start_focus( bool hasFocus ) {
    }
    broaden_enables();
    if ( !hasFocus ) {
+      if ( plotted_markers.size() > 1 ) {
+         qDebug() << "set marker 0 " << le_broaden_fit_range_start->text();
+         plotted_markers[ 0 ]->setXValue( le_broaden_fit_range_start->text().toDouble() );
+         plot_dist->replot();
+      } else {
+         TSO << "US_Hydrodyn_Saxs_Hplc::broaden_fit_range_focus() no marker\n";
+      }
       broaden_compute_one();
    }
 }
@@ -908,6 +930,13 @@ void US_Hydrodyn_Saxs_Hplc::broaden_fit_range_end_focus( bool hasFocus ) {
    }
    broaden_enables();
    if ( !hasFocus ) {
+      if ( plotted_markers.size() > 1 ) {
+         qDebug() << "set marker 1 " << le_broaden_fit_range_end->text();
+         plotted_markers[ 1 ]->setXValue( le_broaden_fit_range_end->text().toDouble() );
+         plot_dist->replot();
+      } else {
+         TSO << "US_Hydrodyn_Saxs_Hplc::broaden_fit_range_focus() no marker\n";
+      }
       broaden_compute_one();
    }
 }

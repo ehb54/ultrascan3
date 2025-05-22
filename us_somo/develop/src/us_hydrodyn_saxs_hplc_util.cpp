@@ -69,6 +69,10 @@ void US_Hydrodyn_Saxs_Hplc::add()
 {
    QStringList files = all_selected_files();
 
+   if ( ! files.size() ) {
+      return;
+   }
+
    vector < double > sum = f_Is[ files[ 0 ] ];
    vector < double > e   = f_errors[ files[ 0 ] ];
 
@@ -89,6 +93,14 @@ void US_Hydrodyn_Saxs_Hplc::add()
 
    QString name;
    
+   // get base name
+   QString prefix = qstring_common_head( files, true );
+   {
+      
+      QStringList qsl = prefix.split( QRegExp( "[^A-Za-z0-9]" ) );
+      prefix = qsl[ 0 ];
+   }
+
    {
       QRegExp rx_repeak( "-rp(.\\d*(_|\\.)\\d+(|e.\\d+))" );
       
@@ -106,16 +118,16 @@ void US_Hydrodyn_Saxs_Hplc::add()
       }
 
       if ( rp_values.size() > 1 ) {
-         QMessageBox::information( this,
+         QMessageBox::warning( this,
                                    windowTitle() + us_tr( ": Sum" ),
                                    us_tr( "Multiple differing repeak values found in summed file names, using the first one" )
                                    );
       }
 
       if ( rp_values.size() ) {
-         name = QString( "sum_of_%1_files-rp%2" ).arg( files.size() ).arg( rp_first );
+         name = QString( "%1_sum_nf%2-rp%3" ).arg( prefix ).arg( files.size() ).arg( rp_first );
       } else {
-         name = QString( "sum_of_%1_files_no_rp" ).arg( files.size() );
+         name = QString( "%1_sum_nf%2-no_rp" ).arg( prefix ).arg( files.size() );
       }
    }
 
