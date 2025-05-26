@@ -131,7 +131,7 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    QRadioButton* rb_exctpoints = new QRadioButton();
    QRadioButton* rb_midpoints    = new QRadioButton();
    QGridLayout* lyt_sp = us_radiobutton( "Start / End Points", rb_exctpoints );
-   QGridLayout* lyt_mp = us_radiobutton( "Bin Midpoints", rb_midpoints );
+   QGridLayout* lyt_mp = us_radiobutton( "Bin Centers", rb_midpoints );
 
    bg_point_type = new QButtonGroup();
    bg_point_type->addButton( rb_midpoints, MIDPOINTS );
