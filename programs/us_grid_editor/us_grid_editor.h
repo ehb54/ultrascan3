@@ -233,6 +233,7 @@ public:
 private:
 
    enum BufferType {ST_WATER, ARBITRARY, USER_BUFFER};
+   enum PointType  {MIDPOINTS, EXACTPOINTS};
 
    bool             plot_flag;            //!< plotting flag.
    double           buff_dens;            //!< buffer density.
@@ -282,9 +283,7 @@ private:
 
    QCheckBox*       chkb_log;             //!< checkbox for setting x-axis logarithmic.
 
-   QRadioButton*    rb_start_point;
-   QRadioButton*    rb_midpoint;
-   QButtonGroup*    bg_point;
+   QButtonGroup*    bg_point_type;
 
    QButtonGroup*    x_axis;               //!< X-axis button group.
    QButtonGroup*    y_axis;               //!< Y-axis button group.
@@ -426,8 +425,11 @@ private slots:
    //! \brief Slot to add or update a grid.
    void add_update( void );
 
-   //! \brief Slot to set x axis logarithmic.
-   void update_log_midpoint( void );
+   //! \brief Slot to update the way the grid points are made.
+   void set_mid_exct_points( int );
+
+   //! \brief Slot to set recalculate all points.
+   void refill_grid_points( void );
 
    //! \brief Slot to select X-axis type to plot.
    void select_x_axis( int );
