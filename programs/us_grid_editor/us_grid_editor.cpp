@@ -1067,6 +1067,7 @@ void US_Grid_Editor::add_update()
 
 void US_Grid_Editor::set_mid_exct_points( int id )
 {
+   if ( grid_info.isEmpty() ) return;
    if ( id == EXACTPOINTS ) 
    {
       GridInfo ginfo = grid_info.first();
