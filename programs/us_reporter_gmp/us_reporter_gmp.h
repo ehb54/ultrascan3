@@ -116,6 +116,11 @@ class US_ReporterGMP : public US_Widgets
 
         GenReportMaskStructure genMask_edited; //!< Edited general report mask structure
 
+        struct PerChanReportMaskStructureABDE
+        {
+	  QMap<QString, bool> ShowChannelParts;
+	};
+  
         struct PerChanReportMaskStructure
         {
             QMap<QString, bool> ShowChannelParts; //!< Map of channel parts to show
@@ -137,6 +142,7 @@ class US_ReporterGMP : public US_Widgets
             QMap<QString, QMap<QString, int>> has_tripleModelIndCombo_items;                               //!< Map of triple model individual combined items
         };
 
+        PerChanReportMaskStructureABDE perChanMask_edited_abde;
         PerChanReportMaskStructure perChanMask_edited; //!< Edited per-channel report mask structure
 
         struct CombPlotsReportMaskStructure
@@ -356,6 +362,7 @@ class US_ReporterGMP : public US_Widgets
         void build_genTree(void); //!< Build general tree
         void build_miscTree(void); //!< Build miscellaneous tree
         void build_perChanTree(void); //!< Build per-channel tree
+        void build_perChanTree_abde(void); //!< Build per-channel tree
         void build_combPlotsTree(void); //!< Build combined plots tree
         void gui_to_parms(void); //!< Convert GUI to parameters
 
@@ -363,6 +370,7 @@ class US_ReporterGMP : public US_Widgets
         QString tree_to_json(QMap<QString, QTreeWidgetItem*>); //!< Convert tree to JSON
         void parse_edited_gen_mask_json(const QString, GenReportMaskStructure&); //!< Parse edited general mask JSON
         void parse_edited_perChan_mask_json(const QString, PerChanReportMaskStructure&); //!< Parse edited per-channel mask JSON
+        void parse_edited_perChan_mask_json_abde(const QString, PerChanReportMaskStructureABDE&);
         void parse_edited_combPlots_mask_json(const QString, CombPlotsReportMaskStructure&); //!< Parse edited combined plots mask JSON
         void parse_edited_misc_mask_json(const QString, MiscReportMaskStructure&); //!< Parse edited miscellaneous mask JSON
 

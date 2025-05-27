@@ -1704,13 +1704,19 @@ void US_ReporterGMP::load_gmp_run ( void )
    if ( expType == "VELOCITY" )
     {
       build_perChanTree();
-      progress_msg->setValue( 0 );
+      progress_msg->setValue( 9 );
       qApp->processEvents();
       
       build_combPlotsTree();
       progress_msg->setValue( 10 );
       qApp->processEvents();
     }
+   else if ( expType == "ABDE" )
+     {
+       build_perChanTree_abde();
+       progress_msg->setValue( 9 );
+       qApp->processEvents();
+     }
    
    build_miscTree();  
    progress_msg->setValue( 11 );
@@ -2381,6 +2387,10 @@ void US_ReporterGMP::build_genTree ( void )
 	  for ( int ia=0; ia < analysisItems.size(); ++ia )
 	    {
 	      QString analysisItemName = analysisItems[ ia ];
+
+	      if ( expType == "ABDE" && ( analysisItemName.contains("2DSA") || analysisItemName.contains("PCSA") ))
+		continue;
+	      
 	      analysisItemNameList.clear();
 	      analysisItemNameList << "" << indent.repeated( 2 ) + analysisItemName;
 	      analysisItem [ analysisItemName ] = new QTreeWidgetItem( topItem [ topItemName ], analysisItemNameList, wiubase);
@@ -2569,7 +2579,43 @@ void US_ReporterGMP::changedItem( QTreeWidgetItem* item, int col )
 	   this,                 SLOT(   changedItem( QTreeWidgetItem*, int ) ) );
 }
 
+//build perChanTree:ABDE
+void US_ReporterGMP::build_perChanTree_abde ( void )
+{
+  QStringList chanItemNameList;
+  QString indent( "  " );
+  int wiubase = (int)QTreeWidgetItem::UserType;
 
+  process_abde_plots();
+  
+  for (int ac=0; ac<abde_channList.size(); ++ac)
+    {
+      QString chanItemName = "Channel " + abde_channList[ac];
+      chanItemNameList.clear();
+      chanItemNameList << "" << indent + chanItemName;
+      chanItem [ chanItemName ] = new QTreeWidgetItem( perChanTree, chanItemNameList, wiubase );
+
+      chanItem [ chanItemName ] ->setCheckState( 0, Qt::Checked );
+    }
+
+  perChanTree->expandAll();
+  //perChanTree->expandToDepth( 2 );
+  perChanTree->resizeColumnToContents( 0 );
+  perChanTree->resizeColumnToContents( 1 );
+
+  //qDebug() << "Build perChan Tree: height -- " << perChanTree->height();
+  qDebug() << "perChan Tree first time build ? " << first_time_perChan_tree_build;
+  if ( first_time_perChan_tree_build )
+    {
+      qDebug() << "Resizing perChan Tree: ";
+      perChanTree->setMinimumHeight( (perChanTree->height())*2.0 );
+      first_time_perChan_tree_build = false;
+    }
+  
+  connect( perChanTree, SIGNAL( itemChanged( QTreeWidgetItem*, int ) ),
+  	   this,        SLOT(   changedItem( QTreeWidgetItem*, int ) ) );
+}
+  
 //build perChanTree
 void US_ReporterGMP::build_perChanTree ( void )
 {
@@ -3421,6 +3467,17 @@ void US_ReporterGMP::generate_report( void )
       else if ( expType == "ABDE" )
 	{
 	  process_abde_plots();
+
+	  for (int ac=0; ac<abde_channList.size(); ++ac)
+	    {
+	      //display channel info: RMSD, exp. params, integration ranges & percents
+	      assemble_distrib_ABDE_html( abde_channList[ac] );
+	      
+	      //assemble ABDE plot
+	      QStringList abdePlots;
+	      abdePlots << abde_plots_filenames[abde_channList[ac]];
+	      assemble_plots_html( abdePlots );
+	    }
 	}
     }
   else
@@ -3485,6 +3542,16 @@ void US_ReporterGMP::generate_report( void )
 	  process_abde_plots();
 	  for (int ac=0; ac<abde_channList.size(); ++ac)
 	    {
+	      QString key_m = "Channel " + abde_channList[ac];
+	      if ( !perChanMask_edited_abde. ShowChannelParts[ key_m ] )
+		{
+		  QString f_name_mask = abde_plots_filenames[abde_channList[ac]];
+		  QDir().remove(f_name_mask);
+		  f_name_mask.replace(".png",".svgz");
+		  QDir().remove(f_name_mask);
+		  continue;
+		}
+	      
 	      //display channel info: RMSD, exp. params, integration ranges & percents
 	      assemble_distrib_ABDE_html( abde_channList[ac] );
 	      
@@ -3683,6 +3750,7 @@ void US_ReporterGMP::process_abde_plots( void )
   //Process all channels & capture plots
   QString subDirName  = runName + "-run" + runID;
   QString dirName     = US_Settings::reportDir() + "/" + subDirName;
+  //mkdir( US_Settings::reportDir(), subDirName );
   const QString svgext( ".svgz" );
   const QString pngext( ".png" );
   const QString csvext( ".csv" );
@@ -11629,7 +11697,10 @@ void US_ReporterGMP::gui_to_parms( void )
 
   //tree-to-json: perChanTree
   QString editedMask_perChan = tree_to_json ( chanItem );
-  parse_edited_perChan_mask_json( editedMask_perChan, perChanMask_edited );
+  if ( expType == "VELOCITY" )
+    parse_edited_perChan_mask_json( editedMask_perChan, perChanMask_edited );
+  else if ( expType == "ABDE" )
+    parse_edited_perChan_mask_json_abde( editedMask_perChan, perChanMask_edited_abde );
 
   //tree-to-json: combPlotsTree
   QString editedMask_combPlots = tree_to_json ( topItemCombPlots );
@@ -11786,6 +11857,30 @@ void US_ReporterGMP::parse_edited_gen_mask_json( const QString maskJson, GenRepo
 	     MaskStr.ShowReportParts[ key ] = false;
 	}
     }
+}
+
+//Pasre reportMask JSON: perChan: ABDE
+void US_ReporterGMP::parse_edited_perChan_mask_json_abde( const QString maskJson, PerChanReportMaskStructureABDE & MaskStr )
+{
+  qDebug() << "[in parse_edited_perChan_mask_json_abde()] ";
+  QJsonDocument jsonDoc = QJsonDocument::fromJson( maskJson.toUtf8() );
+  QJsonObject json = jsonDoc.object();
+
+  MaskStr.ShowChannelParts              .clear();
+
+  foreach(const QString& key, json.keys())                                          //over channels
+    {
+      int has_channel_items = 0;
+	
+      QJsonValue value = json.value(key);
+      qDebug() << "Key = " << key << ", Value = " << value;//.toString();
+
+      if ( value.toString().toInt() ) 
+	MaskStr.ShowChannelParts[ key ] = true;
+      else
+	MaskStr.ShowChannelParts[ key ] = false;
+    }
+  
 }
 
 //Pasre reportMask JSON: perChan
