@@ -737,14 +737,17 @@ void US_Norm_Profile::slt_loadAUC_auto( QMap<QString,QString> & protocol_details
       //set all channels as unprocessed
       data_per_channel_processed[ channList[i] ] = false;
 
-      //also fill in the RMSD map
-      for (int j=0; j<channels_rmsds_l.size(); ++j)
+      //also fill in the RMSD map: MWL-deconv.
+      if ( abde_etype == "MWL" )
 	{
-	  QStringList c_chan_rmsd = channels_rmsds_l[j].split(":");
-	  QString c_chan_rmsd_channel =  c_chan_rmsd[0];
-	  QString c_chan_rmsd_rmsd    =  c_chan_rmsd[1];
-	  if ( c_chan_rmsd_channel == channList[i] )
-	    data_per_channel_rmsd[channList[i]] = c_chan_rmsd_rmsd.toDouble();
+	  for (int j=0; j<channels_rmsds_l.size(); ++j)
+	    {
+	      QStringList c_chan_rmsd = channels_rmsds_l[j].split(":");
+	      QString c_chan_rmsd_channel =  c_chan_rmsd[0];
+	      QString c_chan_rmsd_rmsd    =  c_chan_rmsd[1];
+	      if ( c_chan_rmsd_channel == channList[i] )
+		data_per_channel_rmsd[channList[i]] = c_chan_rmsd_rmsd.toDouble();
+	    }
 	}
     }
   // //TEST

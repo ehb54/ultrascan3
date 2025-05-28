@@ -1953,6 +1953,9 @@ void US_MwlSpeciesFit::get_fit_error(){
 	QStringList triple_t_l = triple_t.split(" / ");
 	QString triple_m = triple_t_l[0].trimmed() + triple_t_l[1].trimmed();
 	rmsd_for_gmp += triple_m + ":" + le_fit_error->text() + ";";
+
+	qDebug() << "RMSD_: triple_m, rmsd_for_gmp -- "
+		 << triple_m << ", " << rmsd_for_gmp;
       }
 }
 
