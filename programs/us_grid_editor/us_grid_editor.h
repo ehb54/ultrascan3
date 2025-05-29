@@ -233,6 +233,7 @@ public:
 private:
 
    enum BufferType {ST_WATER, ARBITRARY, USER_BUFFER};
+   enum PointType  {MIDPOINTS, EXACTPOINTS};
 
    bool             plot_flag;            //!< plotting flag.
    double           buff_dens;            //!< buffer density.
@@ -282,6 +283,8 @@ private:
 
    QCheckBox*       chkb_log;             //!< checkbox for setting x-axis logarithmic.
 
+   QButtonGroup*    bg_point_type;
+
    QButtonGroup*    x_axis;               //!< X-axis button group.
    QButtonGroup*    y_axis;               //!< Y-axis button group.
 
@@ -330,7 +333,7 @@ private:
    bool check_overlap( double, double, double, double, int );
 
    //! \brief Generate evenly spaced numbers over a specified interval.
-   bool gen_points( double, double, int, bool, QVector<double>& );
+   bool gen_points( double, double, int, bool,bool, QVector<double>& );
 
    //! \brief Generate evenly spaced numbers over a specified interval.
    bool gen_grid_points( const QVector<double>&, const QVector<double>&,
@@ -422,8 +425,11 @@ private slots:
    //! \brief Slot to add or update a grid.
    void add_update( void );
 
-   //! \brief Slot to set x axis logarithmic.
-   void set_xlog( void );
+   //! \brief Slot to update the way the grid points are made.
+   void set_mid_exct_points( int );
+
+   //! \brief Slot to set recalculate all points.
+   void refill_grid_points( void );
 
    //! \brief Slot to select X-axis type to plot.
    void select_x_axis( int );
