@@ -3535,13 +3535,40 @@ void US_ReporterGMP::generate_report( void )
 
 	  for (int ac=0; ac<abde_channList.size(); ++ac)
 	    {
+	      QString key_m = "Channel " + abde_channList[ac];
+	      if ( !perChanMask_edited_abde. ShowChannelParts[ key_m ] )
+		{
+		  QString f_name_mask = abde_plots_filenames[abde_channList[ac]];
+		  QDir().remove(f_name_mask);
+		  f_name_mask.replace(".png",".svgz");
+		  QDir().remove(f_name_mask);
+		  continue;
+		}
+	      
 	      //display channel info: RMSD, exp. params, integration ranges & percents
 	      assemble_distrib_ABDE_html( abde_channList[ac] ); // temp
+
+	      bool do_integration = true;
+	      bool do_plots = true;
+	      QMap<QString, QString> channs_features = perChanMask_edited_abde. ShowChannelItemParts[ key_m ];
+	      QStringList channs_features_keys = channs_features.keys();
+	      for ( int fc=0; fc<channs_features_keys.size(); ++fc )
+		{
+		  QString fc_key = channs_features_keys[fc];
+		  bool do_feature = (channs_features[fc_key].toInt()) ? true : false;
+		  if ( fc_key.contains("Integration") )
+		    do_integration = do_feature;
+		  else if ( fc_key.contains("Plots") )
+		    do_plots = do_feature;
+		}
 	      
 	      //assemble ABDE plot
-	      QStringList abdePlots;
-	      abdePlots << abde_plots_filenames[abde_channList[ac]];
-	      assemble_plots_html( abdePlots );
+	      if ( do_plots )
+		{
+		  QStringList abdePlots;
+		  abdePlots << abde_plots_filenames[abde_channList[ac]];
+		  assemble_plots_html( abdePlots );
+		}
 	    }
 	}
     }
@@ -6670,6 +6697,7 @@ void US_ReporterGMP::assemble_user_inputs_html( void )
   QMap < QString, QString > data_types_edit;
   QMap < QString, QString > data_types_edit_ts;
   QString editRIJson, editIPJson, editRIts, editIPts, analysisJson, analysisCancelJson;
+  QString analysisABDEJson, analysisABDEts;
   
   // //TEMP: DEBUG
   // importRIJson =
@@ -6692,7 +6720,8 @@ void US_ReporterGMP::assemble_user_inputs_html( void )
   read_autoflowStatus_record( importRIJson, importRIts, importIPJson, importIPts,
 			      editRIJson, editRIts, editIPJson, editIPts, analysisJson,
 			      stopOptimaJson, stopOptimats, skipOptimaJson, skipOptimats,
-			      analysisCancelJson, createdGMPrunJson, createdGMPrunts ); 
+			      analysisCancelJson, createdGMPrunJson, createdGMPrunts,
+			      analysisABDEJson, analysisABDEts); 
   /////////////////////////////
 
   //1. GMP run creation
@@ -7124,6 +7153,75 @@ void US_ReporterGMP::assemble_user_inputs_html( void )
   html_assembled += tr("<hr>");
 
   //5. ANALYSIS
+  if ( expType == "VLOCITY" )
+    user_interactions_analysis( analysisJson, analysisCancelJson );
+  else if ( expType == "ABDE" )
+    user_interactions_analysis_abde( analysisABDEJson, analysisABDEts );
+  //End of 5. ANALYSIS
+  
+  html_assembled += "</p>\n";
+}
+
+//do user-interactions-analysis separately:ABDE
+void US_ReporterGMP::user_interactions_analysis_abde( QString analysisABDEJson, QString analysisABDEts )
+{
+  html_assembled += tr( "<h3 align=left>ABDE Profile Processing (5. ANALYSIS)</h3>" );
+  QMap< QString, QMap < QString, QString > > status_map_c = parse_autoflowStatus_json( analysisABDEJson, "" );
+
+  //html_assembled += tr("<br>");
+  html_assembled += tr(
+		           "<table style=\"margin-left:10px\">"
+			   "<caption align=left> <b><i>Performed by: </i></b> </caption>"
+			   "</table>"
+			   
+			   "<table style=\"margin-left:25px\">"
+			   "<tr><td>User ID: </td> <td>%1</td></tr>"
+			   "<tr><td>Name: </td><td> %2, %3 </td></tr>"
+			   "<tr><td>E-mail: </td><td> %4 </td> </tr>"
+			   "<tr><td>Level: </td><td> %5 </td></tr>"
+			   "</table>"
+			   )
+    .arg( status_map_c[ "Person" ][ "ID"] )                       //1
+    .arg( status_map_c[ "Person" ][ "lname" ] )                   //2
+    .arg( status_map_c[ "Person" ][ "fname" ] )                   //3
+    .arg( status_map_c[ "Person" ][ "email" ] )                   //4
+    .arg( status_map_c[ "Person" ][ "level" ] )                   //5
+    ;
+
+  html_assembled += tr(
+			   "<table style=\"margin-left:10px\">"
+			   "<caption align=left> <b><i>Time of ABDE profiles processing: </i></b> </caption>"
+			   "</table>"
+			   
+			   "<table style=\"margin-left:25px\">"
+			   "<tr>"
+			   "<td> Processed at:     %1 (UTC) </td>"
+			   "</tr>"
+			   "</table>"
+			   )
+    .arg( analysisABDEts )     //1
+    ;
+  
+  html_assembled += tr(
+			   "<table style=\"margin-left:10px\">"
+			   "<caption align=left> <b><i>Comment at the Time of ABDE Profile Processing: </i></b> </caption>"
+			   "</table>"
+			   
+			   "<table style=\"margin-left:25px\">"
+			   "<tr>"
+			   "<td> Comment:  %1 </td> "
+			   "</tr>"
+			   "</table>"
+			   )
+    .arg( status_map_c[ "Comment" ][ "comment"] )     //1
+    ;
+  html_assembled += tr("<hr>");
+  
+}
+
+//do user-interactions-analysis separately:
+void US_ReporterGMP::user_interactions_analysis( QString analysisJson, QString analysisCancelJson )
+{
   html_assembled += tr( "<h3 align=left>Meniscus Position from FITMEN Stage, Job Cancellation (5. ANALYSIS)</h3>" );
 
   QMap < QString, QString > analysis_status_map       = parse_autoflowStatus_analysis_json( analysisJson );
@@ -7246,9 +7344,8 @@ void US_ReporterGMP::assemble_user_inputs_html( void )
   html_assembled += tr( "</table>" );
   
   html_assembled += tr("<hr>");
-  //
-  html_assembled += "</p>\n";
 }
+
 
 //Read AProfile's reportIDs per channel:
 void US_ReporterGMP::read_reportLists_from_aprofile( QStringList & dropped_triples_RI, QStringList & dropped_triples_IP )
@@ -7384,9 +7481,11 @@ bool US_ReporterGMP::readReportLists( QXmlStreamReader& xmli, QMap< QString, QSt
 
 //read autoflowStatus, populate internals
 void US_ReporterGMP::read_autoflowStatus_record( QString& importRIJson, QString& importRIts, QString& importIPJson, QString& importIPts,
-						 QString& editRIJson, QString& editRIts, QString& editIPJson, QString& editIPts, QString& analysisJson,
+						 QString& editRIJson, QString& editRIts, QString& editIPJson, QString& editIPts,
+						 QString& analysisJson,
 						 QString& stopOptimaJson, QString& stopOptimats, QString& skipOptimaJson, QString& skipOptimats,
-						 QString& analysisCancelJson, QString& createdGMPrunJson, QString& createdGMPrunts  )
+						 QString& analysisCancelJson, QString& createdGMPrunJson, QString& createdGMPrunts,
+						 QString& analysisABDEJson, QString& analysisABDEts )
 {
   importRIJson.clear();
   importRIts  .clear();
@@ -7446,6 +7545,9 @@ void US_ReporterGMP::read_autoflowStatus_record( QString& importRIJson, QString&
 
 	  createdGMPrunJson = db.value( 14 ).toString();
 	  createdGMPrunts   = db.value( 15 ).toString();
+	  
+	  analysisABDEJson = db.value( 16 ).toString();
+	  analysisABDEts   = db.value( 17 ).toString();
 	}
     }
 

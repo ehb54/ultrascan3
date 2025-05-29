@@ -336,6 +336,9 @@ class US_ReporterGMP : public US_Widgets
         void write_gmp_report_DB(QString, QString); //!< Write GMP report to DB
         
         void assemble_user_inputs_html(void); //!< Assemble user inputs in HTML
+        void user_interactions_analysis( QString, QString );
+        void user_interactions_analysis_abde( QString, QString );
+  
         void assemble_run_details_html(void); //!< Assemble run details in HTML
         int get_expID_by_runID_invID(US_DB2*, QString); //!< Get experiment ID by run ID and investigator ID
         double get_loading_volume(int); //!< Get loading volume
@@ -343,7 +346,7 @@ class US_ReporterGMP : public US_Widgets
         void read_autoflowStatus_record(QString&, QString&, QString&, QString&,
                                         QString&, QString&, QString&, QString&, QString&,
                                         QString&, QString&, QString&, QString&, QString&,
-                                        QString&, QString&); //!< Read autoflow status record
+                                        QString&, QString&, QString&, QString&); //!< Read autoflow status record
         QMap<QString, QMap<QString, QString>> parse_autoflowStatus_json(const QString, const QString); //!< Parse autoflow status JSON
         QMap<QString, QString> parse_autoflowStatus_analysis_json(const QString); //!< Parse autoflow status analysis JSON
 
