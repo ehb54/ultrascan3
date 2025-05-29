@@ -2582,20 +2582,85 @@ void US_ReporterGMP::changedItem( QTreeWidgetItem* item, int col )
 //build perChanTree:ABDE
 void US_ReporterGMP::build_perChanTree_abde ( void )
 {
-  QStringList chanItemNameList;
+  //trees
+  QStringList chanItemNameList, tripleMaskItemNameList;
+
+  //internals
+  QStringList tripleReportMasksList;
+  QList< bool > tripleReportMasksList_vals;
+
   QString indent( "  " );
   int wiubase = (int)QTreeWidgetItem::UserType;
 
   process_abde_plots();
   
+  int nchna   = currAProf.pchans.count();
+  
   for (int ac=0; ac<abde_channList.size(); ++ac)
     {
+      US_ReportGMP reportGMP;
+      for ( int i = 0; i < nchna; i++ )
+	{
+	  QString channel_desc_alt = chndescs_alt[ i ];
+	  QString channel_desc     = chndescs[ i ];
+
+	  if ( channel_desc_alt.split(":")[0] == abde_channList[ac] )
+	    {
+	      double chann_wvl  = ch_wvls[ channel_desc_alt ][0];
+	      reportGMP         = ch_reports[ channel_desc_alt ][ QString::number(chann_wvl) ];
+	      break;
+	    }
+	}
+      
       QString chanItemName = "Channel " + abde_channList[ac];
       chanItemNameList.clear();
       chanItemNameList << "" << indent + chanItemName;
       chanItem [ chanItemName ] = new QTreeWidgetItem( perChanTree, chanItemNameList, wiubase );
 
-      chanItem [ chanItemName ] ->setCheckState( 0, Qt::Checked );
+      //go over report items
+      int report_items_number = reportGMP.reportItems.size();
+      for ( int jj = 0; jj < report_items_number; ++jj )
+	{
+	  //is this will be needed?
+	  US_ReportGMP::ReportItem curr_item = reportGMP.reportItems[ jj ];
+	}
+
+      qDebug() << "For ABDE-channel, " << chanItemName << ", report parms. are -- "
+	       << reportGMP. integration_results_mask
+	       << reportGMP. plots_mask;
+
+      //Populate tripleReportMasksList && values from scratch
+      tripleReportMasksList.clear();
+      tripleReportMasksList << "Integration Results"
+			    << "Plots";
+      
+      tripleReportMasksList_vals.clear();
+      tripleReportMasksList_vals << reportGMP. integration_results_mask
+				 << reportGMP. plots_mask;
+      
+      int checked_masks = 0;
+      //start triple's masks
+      for ( int kk = 0; kk < tripleReportMasksList.size(); ++kk )
+	{
+	  //Triple's mask params: child-level 3 in a perChanTree
+	  QString tripleMaskItemName = tripleReportMasksList[ kk ];
+	  tripleMaskItemNameList.clear();
+	  tripleMaskItemNameList << "" << indent.repeated( 2 ) + tripleMaskItemName;
+	  tripleMaskItem [ chanItemName ] = new QTreeWidgetItem(  chanItem [ chanItemName ], tripleMaskItemNameList, wiubase);
+	  
+	  if ( tripleReportMasksList_vals[ kk ] )
+	    {
+	      tripleMaskItem [ chanItemName ] ->setCheckState( 0, Qt::Checked );
+	      ++checked_masks;
+	    }
+	  else
+	    tripleMaskItem [ chanItemName ] ->setCheckState( 0, Qt::Unchecked );
+	}
+
+      if ( checked_masks )
+	chanItem [ chanItemName ] ->setCheckState( 0, Qt::Checked );
+      else
+	chanItem [ chanItemName ] ->setCheckState( 0, Qt::Unchecked );
     }
 
   perChanTree->expandAll();
@@ -3471,7 +3536,7 @@ void US_ReporterGMP::generate_report( void )
 	  for (int ac=0; ac<abde_channList.size(); ++ac)
 	    {
 	      //display channel info: RMSD, exp. params, integration ranges & percents
-	      assemble_distrib_ABDE_html( abde_channList[ac] );
+	      assemble_distrib_ABDE_html( abde_channList[ac] ); // temp
 	      
 	      //assemble ABDE plot
 	      QStringList abdePlots;
@@ -3551,14 +3616,32 @@ void US_ReporterGMP::generate_report( void )
 		  QDir().remove(f_name_mask);
 		  continue;
 		}
+
+	      //else: go over features for a channel:
+	      bool do_integration = true;
+	      bool do_plots = true;
+	      QMap<QString, QString> channs_features = perChanMask_edited_abde. ShowChannelItemParts[ key_m ];
+	      QStringList channs_features_keys = channs_features.keys();
+	      for ( int fc=0; fc<channs_features_keys.size(); ++fc )
+		{
+		  QString fc_key = channs_features_keys[fc];
+		  bool do_feature = (channs_features[fc_key].toInt()) ? true : false;
+		  if ( fc_key.contains("Integration") )
+		    do_integration = do_feature;
+		  else if ( fc_key.contains("Plots") )
+		    do_plots = do_feature;
+		}
 	      
 	      //display channel info: RMSD, exp. params, integration ranges & percents
 	      assemble_distrib_ABDE_html( abde_channList[ac] );
 	      
 	      //assemble ABDE plot
-	      QStringList abdePlots;
-	      abdePlots << abde_plots_filenames[abde_channList[ac]];
-	      assemble_plots_html( abdePlots );
+	      if ( do_plots )
+		{
+		  QStringList abdePlots;
+		  abdePlots << abde_plots_filenames[abde_channList[ac]];
+		  assemble_plots_html( abdePlots );
+		}
 	    }
 	}
     }
@@ -7533,7 +7616,7 @@ void  US_ReporterGMP::assemble_distrib_ABDE_html( QString& abde_channame )
   html_assembled += "</body></html>";
 }
 
-QString US_ReporterGMP::distrib_info_abde( QString& abde_channame )
+QString US_ReporterGMP::distrib_info_abde( QString& abde_channame  )
 {
   //TimeStamps
    QString mstr = "\n" + indent( 2 )
@@ -7572,59 +7655,77 @@ QString US_ReporterGMP::distrib_info_abde( QString& abde_channame )
      }
 
    //get reportItems
-   int report_items_number = reportGMP-> reportItems.size();
-
-   mstr += "\n" + indent( 2 ) + tr( "<h3>Integration Results: Fraction of Total Concentration:</h3>\n" );
-   mstr += indent( 2 ) + "<table>\n";
-   mstr += table_row( tr( "Type:" ),
-		      tr( "Range:"),
-		      tr( "Fraction % from Model (target):" ),
-		      tr( "Tolerance, %:"),
-		      tr( "PASSED ?" ));
-   for ( int kk = 0; kk < report_items_number; ++kk )
+   bool do_integration = true;
+   bool do_plots = true;
+   QString key_m = "Channel " + abde_channame;
+   QMap<QString, QString> channs_features = perChanMask_edited_abde. ShowChannelItemParts[ key_m ];
+   QStringList channs_features_keys = channs_features.keys();
+   for ( int fc=0; fc<channs_features_keys.size(); ++fc )
      {
-       US_ReportGMP::ReportItem curr_item = reportGMP-> reportItems[ kk ];
-       QString type           = curr_item.type;
-       QString method         = curr_item.method;
-
-       QString int_val_r      = QString::number( curr_item.integration_val );
-       double  frac_tot_r     = curr_item.total_percent;
-       double  frac_tot_tol_r = curr_item.tolerance ;
-       double  low            = curr_item.range_low;
-       double  high           = curr_item.range_high;
-       
-       QString range     = "[" + QString::number(low) + " - " + QString::number(high) + "]";
-       QString range_alt = QString::number(low) + "-" + QString::number(high);
-       
-       //integrate over model_used
-       double int_val_m = 0;
- 
-       
-       double frac_tot_m = abde_ranges_percents[abde_channame][range_alt];
-             
-       QString tot_frac_passed = ( qAbs( frac_tot_m - frac_tot_r ) <= frac_tot_tol_r ) ? "YES" : "NO";
-       
-       // reportGMP-> reportItems[ kk ]. integration_val_sim = int_val_m;
-       // reportGMP-> reportItems[ kk ]. total_percent_sim   = frac_tot_m;
-       // reportGMP-> reportItems[ kk ]. passed              = tot_frac_passed;
-       
-       qDebug() << "In distrib_info(), fill simulated integration vals: for chann/wvl/type/method/low/high, "
-		<< "Inter. val. Sim -- "
-		<< wvl_abde
-		<< curr_item.type
-		<< curr_item.method
-		<< curr_item.range_low
-		<< curr_item.range_high
-		<< int_val_m;
-	   
-       mstr += table_row( type,
-			  range,
-			  QString().sprintf( "%5.2f%%", frac_tot_m ) + " (" + QString::number( frac_tot_r ) + "%)",
-			  QString::number( frac_tot_tol_r ),
-			  tot_frac_passed );
+       QString fc_key = channs_features_keys[fc];
+       bool do_feature = (channs_features[fc_key].toInt()) ? true : false;
+       if ( fc_key.contains("Integration") )
+	 do_integration = do_feature;
+       else if ( fc_key.contains("Plots") )
+	 do_plots = do_feature;
      }
-   mstr += indent( 2 ) + "</table>\n";
-   //End of integration results
+   if ( do_integration )
+     {
+       int report_items_number = reportGMP-> reportItems.size();
+       
+       mstr += "\n" + indent( 2 ) + tr( "<h3>Integration Results: Fraction of Total Concentration:</h3>\n" );
+       mstr += indent( 2 ) + "<table>\n";
+       mstr += table_row( tr( "Type:" ),
+			  tr( "Range:"),
+			  tr( "Fraction % from Model (target):" ),
+			  tr( "Tolerance, %:"),
+			  tr( "PASSED ?" ));
+       for ( int kk = 0; kk < report_items_number; ++kk )
+	 {
+	   US_ReportGMP::ReportItem curr_item = reportGMP-> reportItems[ kk ];
+	   QString type           = curr_item.type;
+	   QString method         = curr_item.method;
+	   
+	   QString int_val_r      = QString::number( curr_item.integration_val );
+	   double  frac_tot_r     = curr_item.total_percent;
+	   double  frac_tot_tol_r = curr_item.tolerance ;
+	   double  low            = curr_item.range_low;
+	   double  high           = curr_item.range_high;
+	   
+	   QString range     = "[" + QString::number(low) + " - " + QString::number(high) + "]";
+	   QString range_alt = QString::number(low) + "-" + QString::number(high);
+	   
+	   //integrate over model_used
+	   double int_val_m = 0;
+	   
+	   
+	   double frac_tot_m = abde_ranges_percents[abde_channame][range_alt];
+	   
+	   QString tot_frac_passed = ( qAbs( frac_tot_m - frac_tot_r ) <= frac_tot_tol_r ) ? "YES" : "NO";
+	   
+	   // reportGMP-> reportItems[ kk ]. integration_val_sim = int_val_m;
+	   // reportGMP-> reportItems[ kk ]. total_percent_sim   = frac_tot_m;
+	   // reportGMP-> reportItems[ kk ]. passed              = tot_frac_passed;
+	   
+	   qDebug() << "In distrib_info(), fill simulated integration vals: for chann/wvl/type/method/low/high, "
+		    << "Inter. val. Sim -- "
+		    << wvl_abde
+		    << curr_item.type
+		    << curr_item.method
+		    << curr_item.range_low
+		    << curr_item.range_high
+		    << int_val_m;
+	   
+	   mstr += table_row( type,
+			      range,
+			  QString().sprintf( "%5.2f%%", frac_tot_m ) + " (" + QString::number( frac_tot_r ) + "%)",
+			      QString::number( frac_tot_tol_r ),
+			      tot_frac_passed );
+	 }
+       mstr += indent( 2 ) + "</table>\n";
+       //End of integration results
+     }
+   
 
    return mstr;
 }
@@ -11866,7 +11967,9 @@ void US_ReporterGMP::parse_edited_perChan_mask_json_abde( const QString maskJson
   QJsonDocument jsonDoc = QJsonDocument::fromJson( maskJson.toUtf8() );
   QJsonObject json = jsonDoc.object();
 
-  MaskStr.ShowChannelParts              .clear();
+  //clean structure
+  MaskStr.ShowChannelParts         .clear();
+  MaskStr.ShowChannelItemParts     .clear();
 
   foreach(const QString& key, json.keys())                                          //over channels
     {
@@ -11875,9 +11978,29 @@ void US_ReporterGMP::parse_edited_perChan_mask_json_abde( const QString maskJson
       QJsonValue value = json.value(key);
       qDebug() << "Key = " << key << ", Value = " << value;//.toString();
 
-      if ( value.toString().toInt() ) 
-	MaskStr.ShowChannelParts[ key ] = true;
-      else
+      MaskStr.ShowChannelParts[ key ] = true;  //for now
+
+      QJsonArray json_array = value.toArray();  //should be size 1 only!
+
+      QJsonObject tripleObj = json_array[0].toObject();
+      foreach(const QString& n_key, tripleObj.keys())        //over single channel!
+	{
+	  QJsonValue feature_value = tripleObj.value( n_key );
+		  
+	  qDebug() << "channel's " << key
+		   << " feature: " << n_key
+		   << ", value: "  << feature_value;
+
+	  if ( feature_value.isString() ) //all strings by default; may be more complex if JSON is complexer...
+	    {
+	      if ( feature_value.toString().toInt() )
+		++has_channel_items;
+	      
+	      MaskStr.ShowChannelItemParts[ key ][ n_key ] = feature_value.toString();
+	    }
+	}
+      
+      if ( !has_channel_items )
 	MaskStr.ShowChannelParts[ key ] = false;
     }
   
@@ -11907,7 +12030,7 @@ void US_ReporterGMP::parse_edited_perChan_mask_json( const QString maskJson, Per
 	QJsonValue value = json.value(key);
 	qDebug() << "Key = " << key << ", Value = " << value;//.toString();
 
-	MaskStr.ShowChannelParts[ key ] = false;  //for now
+	MaskStr.ShowChannelParts[ key ] = true;  //for now
 	
 	QJsonArray json_array = value.toArray();
 	for (int i=0; i < json_array.size(); ++i )  

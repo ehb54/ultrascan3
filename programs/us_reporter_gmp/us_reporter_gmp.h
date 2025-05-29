@@ -119,6 +119,7 @@ class US_ReporterGMP : public US_Widgets
         struct PerChanReportMaskStructureABDE
         {
 	  QMap<QString, bool> ShowChannelParts;
+	  QMap<QString, QMap<QString, QString>> ShowChannelItemParts;
 	};
   
         struct PerChanReportMaskStructure
