@@ -7045,6 +7045,9 @@ void US_ReporterGMP::assemble_user_inputs_html( void )
   data_types_edit_ts [ "RI" ] = editRIts;
   data_types_edit_ts [ "IP" ] = editIPts;
 
+  if ( expType == "ABDE" )
+    editing_time_abde = editRIts;
+
   html_assembled += tr( "<h3 align=left>Meniscus Position Determination, Edit Profiles Saving (4. EDITING)</h3>" );
   
   for ( im = data_types_edit.begin(); im != data_types_edit.end(); ++im )
@@ -7201,6 +7204,8 @@ void US_ReporterGMP::user_interactions_analysis_abde( QString analysisABDEJson, 
 			   )
     .arg( analysisABDEts )     //1
     ;
+
+  analysis_time_abde = analysisABDEts;
   
   html_assembled += tr(
 			   "<table style=\"margin-left:10px\">"
@@ -7726,8 +7731,8 @@ QString US_ReporterGMP::distrib_info_abde( QString& abde_channame  )
    QString mstr = "\n" + indent( 2 )
                   + tr( "<h3>Timestamps:</h3>\n" )
                   + indent( 2 ) + "<table>\n";
-   //mstr += table_row( tr( "Data Edited at:" ), model.editDataUpdated + " (UTC)");
-   //mstr += table_row( tr( "Model Analysed at:" ), model.timeCreated + " (UTC)");
+   mstr += table_row( tr( "Data Edited at:" ), editing_time_abde + " (UTC)");
+   mstr += table_row( tr( "Analysed at:" ), analysis_time_abde + " (UTC)");
    mstr += indent( 2 ) + "</table>\n";
 
    //Main Analysis Settings

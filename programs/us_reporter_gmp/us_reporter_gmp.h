@@ -300,6 +300,9 @@ class US_ReporterGMP : public US_Widgets
         bool has_interference;               //!< Flag for interference
         bool has_fluorescense;               //!< Flag for fluorescence
 
+        QString editing_time_abde;
+        QString analysis_time_abde;
+
         QVector<QString> Array_of_triples;   //!< Array of triples
         QVector<QString> Array_of_tripleNames; //!< Array of triple names
         QMap<QString, QStringList> Triple_to_Models; //!< Triple to models map
