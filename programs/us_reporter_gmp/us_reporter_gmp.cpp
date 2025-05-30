@@ -7153,7 +7153,7 @@ void US_ReporterGMP::assemble_user_inputs_html( void )
   html_assembled += tr("<hr>");
 
   //5. ANALYSIS
-  if ( expType == "VLOCITY" )
+  if ( expType == "VELOCITY" )
     user_interactions_analysis( analysisJson, analysisCancelJson );
   else if ( expType == "ABDE" )
     user_interactions_analysis_abde( analysisABDEJson, analysisABDEts );
@@ -7503,6 +7503,8 @@ void US_ReporterGMP::read_autoflowStatus_record( QString& importRIJson, QString&
   analysisCancelJson. clear();
   createdGMPrunJson .clear();
   createdGMPrunts   .clear();
+  analysisABDEJson  .clear();
+  analysisABDEts    .clear();
 
   US_Passwd pw;
   US_DB2    db( pw.getPasswd() );
