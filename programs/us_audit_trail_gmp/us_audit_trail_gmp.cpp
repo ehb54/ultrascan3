@@ -1527,11 +1527,108 @@ void US_auditTrailGMP::user_interactions_analysis_abde( QString name, QString an
 							QString analysisABDEts, QVector< QGroupBox * >& groupBoxes )
 {
   html_assembled += tr( "<h3 align=left>ABDE Profile Processing (5. ANALYSIS)</h3>" );
-  QMap< QString, QMap < QString, QString > > status_map_c = parse_autoflowStatus_json( analysisABDEJson, "" );
-
+  QMap< QString, QMap < QString, QString > > status_map = parse_autoflowStatus_json( analysisABDEJson, "" );
+    
+  //GUI
+  QHBoxLayout* genL   = new QHBoxLayout();
+  genL->setSpacing        ( 2 );
+  genL->setContentsMargins( 20, 10, 20, 15 );
+  
+  //Person
+  QLabel* lb_init         = us_label( tr("Performed by:") );
+  QLabel* lb_ID           = us_label( tr("User ID:") );
+  QLabel* lb_name         = us_label( tr("Name:") );
+  QLabel* lb_email        = us_label( tr("E-mail:") );
+  QLabel* lb_level        = us_label( tr("Level:") );
+  QLineEdit* le_ID        = us_lineedit( status_map[ "Person" ][ "ID"], 0, true);
+  QLineEdit* le_name      = us_lineedit( status_map[ "Person" ][ "lname" ] + "," + status_map[ "Person" ][ "fname"], 0, true);
+  QLineEdit* le_email     = us_lineedit( status_map[ "Person" ][ "email" ], 0, true);
+  QLineEdit* le_level     = us_lineedit( status_map[ "Person" ][ "level" ], 0, true);
+  
+  QGridLayout* genL1  = new QGridLayout();
+  QVBoxLayout* genL11 = new QVBoxLayout();
+  
+  int row=0;
+  genL1 -> addWidget( lb_init,      row++,   0,  1,  6  );
+  genL1 -> addWidget( lb_ID,        row,     1,  1,  2  );
+  genL1 -> addWidget( le_ID,        row++,   3,  1,  3  );
+  genL1 -> addWidget( lb_name,      row,     1,  1,  2  );
+  genL1 -> addWidget( le_name,      row++,   3,  1,  3  );
+  genL1 -> addWidget( lb_email,     row,     1,  1,  2  );
+  genL1 -> addWidget( le_email,     row++,   3,  1,  3  );
+  genL1 -> addWidget( lb_level,     row,     1,  1,  2  );
+  genL1 -> addWidget( le_level,     row++,   3,  1,  3  );
+  
+  genL11 -> addLayout( genL1);
+  genL11 -> addStretch();
+  
+  //TimeStamp
+  QGridLayout* genL2  = new QGridLayout();
+  QVBoxLayout* genL21 = new QVBoxLayout();
+  
+  QLabel* lb_time         = us_label( tr("Time of ABDE profiles processing:") );
+  lb_time->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
+  QLabel* lb_time1        = us_label( tr("Processed at:") );
+  QLineEdit* le_time1     = us_lineedit( analysisABDEts + " (UTC)", 0, true );
+  
+  row=0;
+  genL2 -> addWidget( lb_time,      row++,   0,  1,  6  );
+  genL2 -> addWidget( lb_time1,     row,     1,  1,  2  );
+  genL2 -> addWidget( le_time1,     row++,   3,  1,  3  );
+  
+  genL21 -> addLayout( genL2);
+  genL21 -> addStretch();
+  
+  // int ihgt        = lb_time1->height();
+  // QSpacerItem* spacer2 = new QSpacerItem( 20, 3*ihgt, QSizePolicy::Expanding);
+  // genL2->setRowStretch( 1, 1 );
+  // genL2->addItem( spacer2,  row++,  0, 1, 6 );
+  
+  //Comment
+  QGridLayout* genL3  = new QGridLayout();
+  QVBoxLayout* genL31 = new QVBoxLayout();
+  
+  QLabel* lb_comm         = us_label( tr("Comment at the Time of ABDE Profile Processing:") );
+  lb_comm->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
+  QLabel* lb_comm1        = us_label( tr("Comment:") );
+  
+  QTextEdit* te_comm1    = us_textedit();
+  te_comm1    -> setFixedHeight  ( RowHeight * 2 );
+  te_comm1    ->setFont( QFont( US_Widgets::fixedFont().family(),
+				US_GuiSettings::fontSize() - 1) );
+  us_setReadOnly( te_comm1, true );
+  te_comm1 -> setText( status_map[ "Comment" ][ "comment" ] );
+  
+  row=0;
+  genL3 -> addWidget( lb_comm,      row++,   0,  1,  6  );
+  genL3 -> addWidget( lb_comm1,     row,     1,  1,  2  );
+  genL3 -> addWidget( te_comm1,     row++,   3,  1,  3  );
+  
+  genL31 -> addLayout( genL3);
+  genL31 -> addStretch();
+  
+  //assemble
+  genL->addLayout( genL11);
+  genL->addLayout( genL21);
+  genL->addLayout( genL31);
+  
+  //Set GroupBox
+  QGroupBox *groupBox = new QGroupBox ( name );
+  QPalette p = groupBox->palette();
+  p.setColor(QPalette::Dark, Qt::white);
+  groupBox->setPalette(p);
+  
+  groupBox-> setStyleSheet( "QGroupBox { font: bold;  background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #E0E0E0, stop: 1 #FFFFFF); border: 2px solid gray; border-radius: 10px; margin-top: 20px; margin-bottom: 10px; padding-top: 5px; } QGroupBox::title { subcontrol-origin: margin; subcontrol-position: top left; left: 10px; margin: 0 5px; background-color: black; color: white; padding: 0 3px;}  QGroupBox::indicator { width: 13px; height: 13px; border: 1px solid grey; background-color: rgba(204, 204, 204, 255);} QGroupBox::indicator:hover {background-color: rgba(235, 235, 235, 255);} QLabel {background-color: rgb(105,105,105);}");
+  
+  groupBox->setFlat(true);
+  
+  groupBox->setLayout(genL);
+  groupBoxes. push_back( groupBox );
+  
+  
   //html_assembled += tr("<br>");
   html_assembled += tr(
-		           "<table style=\"margin-left:10px\">"
+		          "<table style=\"margin-left:10px\">"
 			   "<caption align=left> <b><i>Performed by: </i></b> </caption>"
 			   "</table>"
 			   
@@ -1542,11 +1639,11 @@ void US_auditTrailGMP::user_interactions_analysis_abde( QString name, QString an
 			   "<tr><td>Level: </td><td> %5 </td></tr>"
 			   "</table>"
 			   )
-    .arg( status_map_c[ "Person" ][ "ID"] )                       //1
-    .arg( status_map_c[ "Person" ][ "lname" ] )                   //2
-    .arg( status_map_c[ "Person" ][ "fname" ] )                   //3
-    .arg( status_map_c[ "Person" ][ "email" ] )                   //4
-    .arg( status_map_c[ "Person" ][ "level" ] )                   //5
+    .arg( status_map[ "Person" ][ "ID"] )                       //1
+    .arg( status_map[ "Person" ][ "lname" ] )                   //2
+    .arg( status_map[ "Person" ][ "fname" ] )                   //3
+    .arg( status_map[ "Person" ][ "email" ] )                   //4
+    .arg( status_map[ "Person" ][ "level" ] )                   //5
     ;
 
   html_assembled += tr(
@@ -1574,7 +1671,7 @@ void US_auditTrailGMP::user_interactions_analysis_abde( QString name, QString an
 			   "</tr>"
 			   "</table>"
 			   )
-    .arg( status_map_c[ "Comment" ][ "comment"] )     //1
+    .arg( status_map[ "Comment" ][ "comment"] )     //1
     ;
   html_assembled += tr("<hr>");
   
