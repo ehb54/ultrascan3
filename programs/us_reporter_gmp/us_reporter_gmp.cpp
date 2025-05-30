@@ -7735,6 +7735,30 @@ QString US_ReporterGMP::distrib_info_abde( QString& abde_channame  )
    mstr += table_row( tr( "Analysed at:" ), analysis_time_abde + " (UTC)");
    mstr += indent( 2 ) + "</table>\n";
 
+   //if MWL-Deconv., add info on which analytes' ext. profiles have been used
+   bool mwl_abde = false;
+   for ( int ii = 0; ii < currProto.rpRange. nranges; ii++ )
+     {
+       if ( currProto.rpRange. chrngs[ii].wvlens.size() > 1 )
+	 {
+	   mwl_abde = true;
+	   break;
+	 }
+     }
+   if( mwl_abde )
+     {
+       mstr +=    "\n" + indent( 2 )
+	          + tr( "<h3>Analytes and Buffer Used in MWL-Deconvolution:</h3>\n" )
+                  + indent( 2 ) + "<table>\n";
+       QMap< QString, QString > channs_analytes_buffers = get_channels_analytes_mwl_abde( abde_channame );
+
+       QMap < QString, QString >::iterator ab;
+       for ( ab = channs_analytes_buffers.begin(); ab != channs_analytes_buffers.end(); ++ab )
+	 mstr += table_row( ab.key(), ab.value() );
+	       
+       mstr += indent( 2 ) + "</table>\n";
+     }
+   
    //Main Analysis Settings
    mstr +=        "\n" + indent( 2 )
                   + tr( "<h3>Data Analysis Settings:</h3>\n" )
@@ -7838,6 +7862,109 @@ QString US_ReporterGMP::distrib_info_abde( QString& abde_channame  )
 
    return mstr;
 }
+
+//ABDE: read all analytes (& possibly buffers) used in MWL-deconv.
+QMap< QString, QString > US_ReporterGMP::get_channels_analytes_mwl_abde( QString abde_channame )
+{
+  QMap< QString, QString > analytes_buffer_map;
+
+  US_Passwd pw;
+  QString masterPW = pw.getPasswd();
+  US_DB2 db( masterPW );
+  
+  if ( db.lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "Database Problem" ),
+         tr( "Database returned the following error: \n" ) +  db.lastError() );
+      
+      return analytes_buffer_map;
+    }
+
+  for ( int ii = 0; ii < currProto.rpRange.nranges; ii++ )
+    {
+      QString channel   = currProto.rpRange.chrngs[ ii ].channel;
+      QString channel_s = channel.split(",")[0].trimmed();
+      channel_s.replace(" / ","");
+      qDebug() << "[in get_channels_analytes_mwl_abde()], channel, channel_s, abde_channame;"
+	       <<  channel << channel_s << abde_channame;
+
+      if ( channel_s == abde_channame )
+	{
+	  QList< double > all_wvls = currProto.rpRange.chrngs[ ii ].wvlens;
+	  int    nwavl      = all_wvls.count();
+	  bool   buff_req   = currProto.rpRange.chrngs[ ii ].abde_buffer_spectrum;
+	  bool   mwl_deconv = currProto.rpRange.chrngs[ ii ].abde_mwl_deconvolution;
+	  
+	  if ( nwavl > 1 && mwl_deconv )
+	    {
+	      QString sol_id = currProto.rpSolut.chsols[ii].sol_id;
+	      US_Solution*   solution = new US_Solution;
+	      int solutionID = sol_id.toInt();
+	      
+	      int status = US_DB2::OK;
+	      status = solution->readFromDB  ( solutionID, &db );
+	      // Error reporting
+	      if ( status == US_DB2::NO_BUFFER )
+		{
+		  QMessageBox::information( this,
+					    tr( "Attention" ),
+					    tr( "The buffer this solution refers to was not found.\n"
+						"Please restore and try again.\n" ) );
+		  return analytes_buffer_map;
+		}
+	      
+	      else if ( status == US_DB2::NO_ANALYTE )
+		{
+		  QMessageBox::information( this,
+					    tr( "Attention" ),
+					    tr( "One of the analytes this solution refers to was not found.\n"
+						"Please restore and try again.\n" ) );
+		  return analytes_buffer_map;
+		}
+	      
+	      else if ( status != US_DB2::OK )
+		{
+		  QMessageBox::warning( this, tr( "Database Problem" ),
+					tr( "Database returned the following error: \n" ) +  db.lastError() );
+		  return analytes_buffer_map;
+		}
+	      //End of reading Solution:
+	      
+	      //Reading Analytes
+	      int num_analytes = solution->analyteInfo.size();
+	      for (int i=0; i < num_analytes; ++i )
+		{
+		  US_Analyte analyte = solution->analyteInfo[ i ].analyte;
+		  QString a_name     = analyte.description;
+		  QString a_ID       = analyte.analyteID;
+		  QString a_GUID     = analyte.analyteGUID;
+		  
+		  qDebug() << "[GMP REPORT] Solution "  << solution->solutionDesc
+			   << ", (GUID)Analyte " << "(" << a_GUID << ")" << a_name
+			   << ", (ID)Analyte " << "(" << a_ID << ")" << a_name;
+		  
+		  QString ana_name = "Analyte #" + QString::number(i+1) + ":";
+		  analytes_buffer_map[ ana_name ] = a_name;
+		}
+	      
+	      //Reading Buffers
+	      if ( buff_req ) //only if buffer spectrum required
+		{
+		  US_Buffer buffer = solution->buffer;
+		  QString b_name   = buffer.description;
+		  QString b_ID     = buffer.bufferID;
+		  qDebug() << "[GMP REPORT] Solution "  << solution->solutionDesc
+			   << ", (ID)Buffer " << "(" << b_ID << ")" << b_name;
+		  
+		  analytes_buffer_map[ "Buffer:" ] = b_name;
+		}
+	    }
+	}
+    }
+
+  return analytes_buffer_map;
+}
+
 
 
 //output HTML string for Average Integration Results:
