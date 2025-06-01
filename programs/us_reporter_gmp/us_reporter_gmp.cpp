@@ -685,6 +685,12 @@ void US_ReporterGMP::loadRun_auto ( QMap < QString, QString > & protocol_details
       progress_msg->setValue( 11 );
       qApp->processEvents();
     }
+  else if ( expType == "ABDE" )
+     {
+       build_perChanTree_abde();
+       progress_msg->setValue( 10 );
+       qApp->processEvents();
+     }
 
   build_miscTree();  
   progress_msg->setValue( 12 );
@@ -3545,9 +3551,6 @@ void US_ReporterGMP::generate_report( void )
 		  continue;
 		}
 	      
-	      //display channel info: RMSD, exp. params, integration ranges & percents
-	      assemble_distrib_ABDE_html( abde_channList[ac] ); // temp
-
 	      bool do_integration = true;
 	      bool do_plots = true;
 	      QMap<QString, QString> channs_features = perChanMask_edited_abde. ShowChannelItemParts[ key_m ];
@@ -3561,6 +3564,9 @@ void US_ReporterGMP::generate_report( void )
 		  else if ( fc_key.contains("Plots") )
 		    do_plots = do_feature;
 		}
+
+	      //display channel info: RMSD, exp. params, integration ranges & percents
+	      assemble_distrib_ABDE_html( abde_channList[ac] );
 	      
 	      //assemble ABDE plot
 	      if ( do_plots )
@@ -3783,12 +3789,12 @@ void US_ReporterGMP::generate_report( void )
       qDebug() << "Query for autoflowHistory -- " << qry;
       db->query( qry );
 
-      /*** TEST - DO NOT delete parent autoflow YET --------------------------------- **/
+      /*** TEST - DO NOT delete parent autoflow YET --------------------------------- 
       //delete autoflow record
       qry.clear();
       qry << "delete_autoflow_record_by_id" << AutoflowID_auto;
       db->statusQuery( qry );
-      /****/ 
+      ***/ 
 
       // //Also delete record from autoflowStages table:           //DO NOT DELETE autoflowStages yet - req. by eSigning process!!
       // qry.clear();
