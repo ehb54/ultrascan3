@@ -1709,6 +1709,8 @@ void US_Norm_Profile::slt_reset(){
 
     if ( us_auto_mode )
       {
+	qDebug() << "[AUTO-mode] -- resetting!";
+	
 	channList. clear();
 	cb_chann->clear();
 	//cb_chann->disconnect();

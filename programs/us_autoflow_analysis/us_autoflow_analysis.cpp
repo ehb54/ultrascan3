@@ -204,6 +204,15 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
     {
       qDebug() << "[ABDE] - ANALYSIS!";
 
+      //close sdiag_norm_profile if left open:
+      bool norm_abde_open = sdiag_norm_profile->isVisible();
+      qDebug() << "[in autoflow_analysis: ] norm_abde_open? " << norm_abde_open;
+      if ( norm_abde_open )
+	{
+	  qDebug() << "Closing/deleting ABDE-norm widget!";
+	  sdiag_norm_profile->close();
+	}
+
       //check if MWL or SWL
       QMap<QString, QString> abde_analysis_details = get_abdeAnalysis_info( &db, QString::number(autoflowID_passed));
       QString abde_etype = abde_analysis_details["etype"];
@@ -3685,6 +3694,9 @@ void US_Analysis_auto::reset_analysis_panel( )
     }
   else
     {
+      //add clearing ABDE-norm. GUI when switching btw. runs
+      
+      
       sdiag_norm_profile->hide();
       emit analysis_update_process_stopped();
     }
