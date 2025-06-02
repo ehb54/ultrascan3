@@ -839,6 +839,14 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       mQLineEdit                       * le_broaden_sigma_end;
       mQLineEdit                       * le_broaden_sigma_delta;
 
+      QCheckBox                        * cb_broaden_xi_1;
+      QLabel                           * lbl_broaden_xi_1;
+      mQLineEdit                       * le_broaden_xi_1;
+
+      QCheckBox                        * cb_broaden_xi_2;
+      QLabel                           * lbl_broaden_xi_2;
+      mQLineEdit                       * le_broaden_xi_2;
+
       QCheckBox                        * cb_broaden_deltat;
       QLabel                           * lbl_broaden_deltat;
       mQLineEdit                       * le_broaden_deltat_start;
@@ -890,6 +898,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       bool                               broaden_compute_one_no_ui(
                                                                    double tau
                                                                    ,double sigma
+                                                                   ,double xi_1
+                                                                   ,double xi_2
                                                                    ,double kernel_size
                                                                    ,double kernel_delta_t
                                                                    ,const vector < double > & I
@@ -939,6 +949,16 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 
       void                               broaden_sigma_delta_text( const QString & );
       void                               broaden_sigma_delta_focus( bool );
+
+      void                               set_broaden_xi_1();
+
+      void                               broaden_xi_1_text( const QString & );
+      void                               broaden_xi_1_focus( bool );
+
+      void                               set_broaden_xi_2();
+
+      void                               broaden_xi_2_text( const QString & );
+      void                               broaden_xi_2_focus( bool );
 
       void                               set_broaden_deltat();
 

@@ -79,6 +79,7 @@
 // #define USE_H
 
 #define BROADEN_TEST
+// #define BROADEN_TESTING
 #if defined( BROADEN_TEST )
 #include "../include/us_band_broaden.h"
 #endif

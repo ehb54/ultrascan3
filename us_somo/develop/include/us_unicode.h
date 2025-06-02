@@ -19,12 +19,18 @@
 #define UNICODE_DELTA_QS QString( "%1" ).arg( UNICODE_DELTA )
 #define UNICODE_EPSILON u8"\u03B5"
 #define UNICODE_EPSILON_QS QString( "%1" ).arg( UNICODE_EPSILON )
+#define UNICODE_XI u8"\u03BE"
+#define UNICODE_XI_QS QString( "%1" ).arg( UNICODE_XI )
 #define UNICODE_SUPER_2 u8"\u00B2"
 #define UNICODE_SUPER_2_QS QString( "%1" ).arg( UNICODE_SUPER_2 )
 #define UNICODE_SUPER_3 u8"\u00B3"
 #define UNICODE_SUPER_3_QS QString( "%1" ).arg( UNICODE_SUPER_3 )
 #define UNICODE_SUPER_MINUS u8"\u207B"
 #define UNICODE_SUPER_MINUS_QS QString( "%1" ).arg( UNICODE_SUPER_MINUS )
+#define UNICODE_SUB_1 u8"\u2081"
+#define UNICODE_SUB_1_QS QString( "%1" ).arg( UNICODE_SUB_1 )
+#define UNICODE_SUB_2 u8"\u2082"
+#define UNICODE_SUB_2_QS QString( "%1" ).arg( UNICODE_SUB_2 )
 
 #else
 
@@ -44,12 +50,18 @@
 #define UNICODE_DELTA_QS QString( "%1" ).arg( UNICODE_DELTA )
 #define UNICODE_EPSILON "Epsilon"
 #define UNICODE_EPSILON_QS QString( "%1" ).arg( UNICODE_EPSILON )
+#define UNICODE_XI "Xi"
+#define UNICODE_XI_QS QString( "%1" ).arg( UNICODE_XI )
 #define UNICODE_SUPER_2 "^2"
 #define UNICODE_SUPER_2_QS QString( "%1" ).arg( UNICODE_SUPER_2 )
 #define UNICODE_SUPER_3 "^3"
 #define UNICODE_SUPER_3_QS QString( "%1" ).arg( UNICODE_SUPER_3 )
 #define UNICODE_SUPER_MINUS "^-"
 #define UNICODE_SUPER_MINUS_QS QString( "%1" ).arg( UNICODE_SUPER_MINUS )
+#define UNICODE_SUB_1 "_1"
+#define UNICODE_SUB_1_QS QString( "%1" ).arg( UNICODE_SUB_1 )
+#define UNICODE_SUB_2 "_2"
+#define UNICODE_SUB_2_QS QString( "%1" ).arg( UNICODE_SUB_2 )
    
 #endif // NO_UNICODE
 
