@@ -7763,17 +7763,16 @@ QString US_ReporterGMP::distrib_info_abde( QString& abde_channame  )
 	 mstr += table_row( ab.key(), ab.value() );
 	       
        mstr += indent( 2 ) + "</table>\n";
+        
+       //Main Analysis Settings
+       mstr +=        "\n" + indent( 2 )
+	 + tr( "<h3>Data Analysis Settings:</h3>\n" )
+	 + indent( 2 ) + "<table>\n";
+       
+       mstr += table_row( tr( "Residual RMS Deviation:" ),
+			  QString::number( abde_rmsd[abde_channame] )  );
+       mstr += indent( 2 ) + "</table>\n";
      }
-   
-   //Main Analysis Settings
-   mstr +=        "\n" + indent( 2 )
-                  + tr( "<h3>Data Analysis Settings:</h3>\n" )
-                  + indent( 2 ) + "<table>\n";
-
-   mstr += table_row( tr( "Residual RMS Deviation:" ),
-                      QString::number( abde_rmsd[abde_channame] )  );
-   mstr += indent( 2 ) + "</table>\n";
-   
 
    //Get Report for a channel && item(s)
    US_ReportGMP* reportGMP;
@@ -8674,19 +8673,19 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
    mstr += table_row( tr( "Model Analysed at:" ), model.timeCreated + " (UTC)");
    mstr += indent( 2 ) + "</table>\n";
       
-   //Main Analysis Settings
-   mstr +=        "\n" + indent( 2 )
-                  + tr( "<h3>Data Analysis Settings:</h3>\n" )
-                  + indent( 2 ) + "<table>\n";
 
+   mstr +=        "\n" + indent( 2 )
+     + tr( "<h3>Data Analysis Settings:</h3>\n" )
+     + indent( 2 ) + "<table>\n";
+   
    mstr += table_row( tr( "Model Analysis:" ), mdla + msim );
    mstr += table_row( tr( "Number of Components:" ),
-                      QString::number( ncomp ) );
+		      QString::number( ncomp ) );
    mstr += table_row( tr( "Residual RMS Deviation:" ),
-                      rmsd_global  );
+		      rmsd_global  );
    mstr += table_row( tr( "Model-reported RMSD:"    ),
-                      ( rmsd_m > 0.0 ) ? QString::number( rmsd_m ) : "(none)" );
-
+		      ( rmsd_m > 0.0 ) ? QString::number( rmsd_m ) : "(none)" );
+   
    double sum_mw  = 0.0;
    double sum_s   = 0.0;
    double sum_D   = 0.0;
@@ -10985,34 +10984,61 @@ void US_ReporterGMP::assemble_pdf( QProgressDialog * progress_msg )
 	.arg( channel_desc )              //1
 	;
 
-      QString loading_ratio  = QString::number( currAProf.lc_ratios[ i ] );
-      QString ratio_tol      = QString::number( currAProf.lc_tolers[ i ] );
-      QString volume         = QString::number( currAProf.l_volumes[ i ] );
-      QString volume_tol     = QString::number( currAProf.lv_tolers[ i ] );
-      QString data_end       = QString::number( currAProf.data_ends[ i ] );
-
+      
       QString run_analysis;
       if ( currAProf.analysis_run[ i ] )
 	run_analysis = tr("YES");
       else
 	run_analysis = tr("NO");
       
-      html_analysis_gen += tr(
+      if ( expType == "VELOCITY" )
+	{
+	  QString loading_ratio  = QString::number( currAProf.lc_ratios[ i ] );
+	  QString ratio_tol      = QString::number( currAProf.lc_tolers[ i ] );
+	  QString volume         = QString::number( currAProf.l_volumes[ i ] );
+	  QString volume_tol     = QString::number( currAProf.lv_tolers[ i ] );
+	  QString data_end       = QString::number( currAProf.data_ends[ i ] );
+	 	  
+	  html_analysis_gen += tr(
 				  "<table style=\"margin-left:30px\">"
-				     "<tr><td> Loading Ratio:              </td>  <td> %1 </td> </tr>"
-				     "<tr><td> Ratio Tolerance (&#177;%):  </td>  <td> %2 </td> </tr>"
-				     "<tr><td> Loading Volume (&#181;l):   </td>  <td> %3 </td> </tr>"
-				     "<tr><td> Volume Tolerance (&#177;%): </td>  <td> %4 </td> </tr>"
-				     "<tr><td> Data End (cm):              </td>  <td> %5 </td> </tr>"
+				  "<tr><td> Loading Ratio:              </td>  <td> %1 </td> </tr>"
+				  "<tr><td> Ratio Tolerance (&#177;%):  </td>  <td> %2 </td> </tr>"
+				  "<tr><td> Loading Volume (&#181;l):   </td>  <td> %3 </td> </tr>"
+				  "<tr><td> Volume Tolerance (&#177;%): </td>  <td> %4 </td> </tr>"
+				  "<tr><td> Data End (cm):              </td>  <td> %5 </td> </tr>"
 				  "</table>"
 				  )
-	.arg( loading_ratio )             //1
-	.arg( ratio_tol )                 //2
-	.arg( volume )                    //3
-	.arg( volume_tol )                //4
-	.arg( data_end )                  //5
-	;
-
+	    .arg( loading_ratio )             //1
+	    .arg( ratio_tol )                 //2
+	    .arg( volume )                    //3
+	    .arg( volume_tol )                //4
+	    .arg( data_end )                  //5
+	    ;
+	}
+      else if ( expType == "ABDE" )
+	{
+	  QString loading_density  = QString::number( currAProf.ld_dens_0s[ i ] );
+	  QString gm_vbar          = QString::number( currAProf.gm_vbars[ i ] );
+	  QString gm_mw            = QString::number( currAProf.gm_mws[ i ] );
+	  QString volume           = QString::number( currAProf.l_volumes[ i ] );
+	  QString volume_tol       = QString::number( currAProf.lv_tolers[ i ] );
+	  	  
+	  html_analysis_gen += tr(
+				  "<table style=\"margin-left:30px\">"
+				  "<tr><td> Loading Dansity (g/ml):     </td>  <td> %1 </td> </tr>"
+				  "<tr><td> Gradient Mat. vbar (ml/g):  </td>  <td> %2 </td> </tr>"
+				  "<tr><td> Gradient Mat. MW (g/mol):   </td>  <td> %3 </td> </tr>"
+				  "<tr><td> Loading Volume (&#181;l):   </td>  <td> %4 </td> </tr>"
+				  "<tr><td> Volume Tolerance (&#177;%): </td>  <td> %5 </td> </tr>"
+				  "</table>"
+				  )
+	    .arg( loading_density )        //1
+	    .arg( gm_vbar )                //2
+	    .arg( gm_mw )                  //3
+	    .arg( volume )                 //4
+	    .arg( volume_tol )             //5
+	    ;
+	}
       
       html_analysis_gen    += tr(
 				  "<table style=\"margin-left:30px\">"
@@ -11058,6 +11084,50 @@ void US_ReporterGMP::assemble_pdf( QProgressDialog * progress_msg )
 	    ;
 	}
 
+      //For ABDE, show if channel is reference one; if not, what reference is used
+      if ( expType == "ABDE" )
+	{
+	  QString ref_channel;
+	  bool is_ref_channel = false;
+	  if ( currAProf.ref_channels[ i ] )
+	    {
+	      ref_channel    = tr("YES");
+	      is_ref_channel = true;
+	    }
+	  else
+	    ref_channel = tr("NO");
+	  
+	  if ( is_ref_channel )
+	    {
+	      html_analysis_gen     += tr(
+					  "<table style=\"margin-left:30px\">"
+					  "<tr>"
+					  "<td> <i> Reference Channel? </i> </td>  <td> %1 </td>"
+					  "<td> <i> Reference #: </i> </td>        <td> %2 </td>" 
+					  "</tr>"
+					  "</table>"
+					  )
+		.arg( ref_channel )                                     //1
+		.arg( QString::number (currAProf.ref_channels[ i ]) )   //2
+		;
+	    }
+	  else
+	    {
+	      html_analysis_gen     += tr(
+					  "<table style=\"margin-left:30px\">"
+					  "<tr>"
+					  "<td> <i> Reference Channel? </i> </td>  <td> %1 </td>"
+					  "<td> <i> Using Reference #: </i> </td>  <td> %2 </td>" 
+					  "</tr>"
+					  "</table>"
+					  )
+		.arg( ref_channel )                                       //1
+		.arg( QString::number (currAProf.ref_use_channels[ i ]) ) //2
+		;
+	    }
+	  
+	}
+
       if ( genMask_edited.ShowAnalysisGenParts[ "Channel General Settings" ].toInt()  )
 	{
 	  html_analysis_profile += html_analysis_gen;
@@ -11093,7 +11163,10 @@ void US_ReporterGMP::assemble_pdf( QProgressDialog * progress_msg )
 	      QList< int > hms_tot;
 	      double total_time = reportGMP.experiment_duration;
 	      US_RunProtocol::timeToList( total_time, hms_tot );
-	      QString exp_dur_str = QString::number( hms_tot[ 0 ] ) + "d " + QString::number( hms_tot[ 1 ] ) + "h " + QString::number( hms_tot[ 2 ] ) + "m ";
+	      QString exp_dur_str =
+		QString::number( hms_tot[ 0 ] ) + "d " +
+		QString::number( hms_tot[ 1 ] ) + "h " +
+		QString::number( hms_tot[ 2 ] ) + "m ";
 
 	      if ( genMask_edited.ShowAnalysisGenParts[ "Report Parameters (per-triple)" ].toInt()  )
 		{
@@ -11104,24 +11177,40 @@ void US_ReporterGMP::assemble_pdf( QProgressDialog * progress_msg )
 					      )
 		    .arg( triple_name )                                             //1
 		    ;
-		  
-		  html_analysis_profile += tr(
-					      "<table style=\"margin-left:70px\">"
-					      "<tr><td> Total Concentration:           </td>  <td> %1 </td> </tr>"
-					      "<tr><td> Total Concentration Tolerance: </td>  <td> %2 </td> </tr>"
-					      "<tr><td> RMSD (upper limit):            </td>  <td> %3 </td> </tr>"
-					      "<tr><td> Average Intensity:             </td>  <td> %4 </td> </tr>"
-					      "<tr><td> Experiment Duration:           </td>  <td> %5 </td> </tr>"
-					      "<tr><td> Experiment Duration Tolerance: </td>  <td> %6 </td> </tr>"
-					      "</table>"
-					      )
-		    .arg( QString::number( reportGMP.tot_conc ) )                    //1
-		    .arg( QString::number( reportGMP.tot_conc_tol ) )                //2
-		    .arg( QString::number( reportGMP.rmsd_limit )  )                 //3
-		    .arg( QString::number( reportGMP.av_intensity )  )               //4
-		    .arg( exp_dur_str )                                              //5
-		    .arg( QString::number( reportGMP.experiment_duration_tol ) )     //6
-		    ;
+
+
+		  if ( expType == "VELOCITY" )
+		    {
+		      html_analysis_profile += tr(
+						  "<table style=\"margin-left:70px\">"
+						  "<tr><td> Total Concentration:           </td>  <td> %1 </td> </tr>"
+						  "<tr><td> Total Concentration Tolerance: </td>  <td> %2 </td> </tr>"
+						  "<tr><td> RMSD (upper limit):            </td>  <td> %3 </td> </tr>"
+						  "<tr><td> Average Intensity:             </td>  <td> %4 </td> </tr>"
+						  "<tr><td> Experiment Duration:           </td>  <td> %5 </td> </tr>"
+						  "<tr><td> Experiment Duration Tolerance: </td>  <td> %6 </td> </tr>"
+						  "</table>"
+						  )
+			.arg( QString::number( reportGMP.tot_conc ) )                    //1
+			.arg( QString::number( reportGMP.tot_conc_tol ) )                //2
+			.arg( QString::number( reportGMP.rmsd_limit )  )                 //3
+			.arg( QString::number( reportGMP.av_intensity )  )               //4
+			.arg( exp_dur_str )                                              //5
+			.arg( QString::number( reportGMP.experiment_duration_tol ) )     //6
+			;
+		    }
+		  else if ( expType == "ABDE" )
+		    {
+		      html_analysis_profile += tr(
+						  "<table style=\"margin-left:70px\">"
+						  "<tr><td> Experiment Duration:           </td>  <td> %1 </td> </tr>"
+						  "<tr><td> Experiment Duration Tolerance: </td>  <td> %2 </td> </tr>"
+						  "</table>"
+						  )
+			.arg( exp_dur_str )                                              //1
+			.arg( QString::number( reportGMP.experiment_duration_tol ) )     //2
+			;
+		    }
 		}
 
 	      //Now go over ReportItems for the current triple:
@@ -11140,26 +11229,49 @@ void US_ReporterGMP::assemble_pdf( QProgressDialog * progress_msg )
 						  )
 			.arg( QString::number( kk + 1 ) )                                 //1
 			;
-		      
-		      html_analysis_profile += tr(
-						  "<table style=\"margin-left:110px\">"
-						  "<tr><td> Type:                  </td>  <td> %1 </td> </tr>"
-						  "<tr><td> Method:                </td>  <td> %2 </td> </tr>"
-						  "<tr><td> Range Low:             </td>  <td> %3 </td> </tr>"
-						  "<tr><td> Range High:            </td>  <td> %4 </td> </tr>"
-						  "<tr><td> Integration Value:     </td>  <td> %5 </td> </tr>"
-						  "<tr><td> Tolerance (%):         </td>  <td> %6 </td> </tr>"
-						  "<tr><td> Fraction of Total (%): </td>  <td> %7 </td> </tr>"
-						  "</table>"
-						  )
-			.arg( curr_item.type )                                      //1
-			.arg( curr_item.method   )                                  //2
-			.arg( QString::number( curr_item.range_low )  )             //3
-			.arg( QString::number( curr_item.range_high )  )            //4
-			.arg( QString::number( curr_item.integration_val )  )       //5
-			.arg( QString::number( curr_item.tolerance )  )             //6
-			.arg( QString::number( curr_item.total_percent )  )         //7
-			;
+
+		      if ( expType == "VELOCITY" )
+			{
+			  html_analysis_profile += tr(
+						      "<table style=\"margin-left:110px\">"
+						      "<tr><td> Type:                  </td>  <td> %1 </td> </tr>"
+						      "<tr><td> Method:                </td>  <td> %2 </td> </tr>"
+						      "<tr><td> Range Low:             </td>  <td> %3 </td> </tr>"
+						      "<tr><td> Range High:            </td>  <td> %4 </td> </tr>"
+						      "<tr><td> Integration Value:     </td>  <td> %5 </td> </tr>"
+						      "<tr><td> Tolerance (%):         </td>  <td> %6 </td> </tr>"
+						      "<tr><td> Fraction of Total (%): </td>  <td> %7 </td> </tr>"
+						      "</table>"
+						      )
+			    .arg( curr_item.type )                                      //1
+			    .arg( curr_item.method   )                                  //2
+			    .arg( QString::number( curr_item.range_low )  )             //3
+			    .arg( QString::number( curr_item.range_high )  )            //4
+			    .arg( QString::number( curr_item.integration_val )  )       //5
+			    .arg( QString::number( curr_item.tolerance )  )             //6
+			    .arg( QString::number( curr_item.total_percent )  )         //7
+			    ;
+			}
+		      else if ( expType == "ABDE" )
+			{
+			  html_analysis_profile += tr(
+						      "<table style=\"margin-left:110px\">"
+						      "<tr><td> Type:                  </td>  <td> %1 </td> </tr>"
+						      "<tr><td> Method:                </td>  <td> %2 </td> </tr>"
+						      "<tr><td> Range Low:             </td>  <td> %3 </td> </tr>"
+						      "<tr><td> Range High:            </td>  <td> %4 </td> </tr>"
+						      "<tr><td> Tolerance (%):         </td>  <td> %5 </td> </tr>"
+						      "<tr><td> Fraction of Total (%): </td>  <td> %6 </td> </tr>"
+						      "</table>"
+						      )
+			    .arg( curr_item.type )                                      //1
+			    .arg( curr_item.method   )                                  //2
+			    .arg( QString::number( curr_item.range_low )  )             //3
+			    .arg( QString::number( curr_item.range_high )  )            //4
+			    .arg( QString::number( curr_item.tolerance )  )             //5
+			    .arg( QString::number( curr_item.total_percent )  )         //6
+			    ;
+			}
 		    }
 		}
 	    }
