@@ -850,7 +850,12 @@ void US_Hydrodyn_Saxs_Hplc::set_eb()
 void US_Hydrodyn_Saxs_Hplc::plot_files( bool save_zoom_state ) 
 {
    // qDebug() << "plot files";
-   plot_dist->detachItems( QwtPlotItem::Rtti_PlotCurve ); plot_dist->detachItems( QwtPlotItem::Rtti_PlotMarker );;
+   plot_dist->detachItems( QwtPlotItem::Rtti_PlotCurve );
+
+   if ( current_mode != MODE_BROADEN ) {
+      plot_dist->detachItems( QwtPlotItem::Rtti_PlotMarker );
+   }
+
    bool any_selected = false;
    double minx = 0e0;
    double maxx = 1e0;

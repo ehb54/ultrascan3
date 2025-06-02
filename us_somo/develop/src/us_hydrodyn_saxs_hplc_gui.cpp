@@ -3030,6 +3030,31 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    connect( le_broaden_baseline, SIGNAL( focussed ( bool ) ), SLOT( broaden_baseline_focus( bool ) ) );
    le_broaden_baseline->setToolTip( us_tr( "Current baseline offset value" ) );
 
+   cb_broaden_scale = new QCheckBox(this);
+   cb_broaden_scale->setText(us_tr(""));
+   cb_broaden_scale->setChecked( true );
+   cb_broaden_scale->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
+   cb_broaden_scale->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_broaden_scale );
+   connect( cb_broaden_scale, SIGNAL( clicked() ), SLOT( set_broaden_scale() ) );
+   cb_broaden_scale->setToolTip( us_tr( "Check to fit, Unchecked is fixed to the current value" ) );
+
+   lbl_broaden_scale = new QLabel( " Scale :" , this );
+   lbl_broaden_scale->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
+   lbl_broaden_scale->setPalette( PALET_NORMAL );
+   AUTFBACK( lbl_broaden_scale );
+   lbl_broaden_scale->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+
+   le_broaden_scale = new mQLineEdit( this );    le_broaden_scale->setObjectName( "le_broaden_scale Line Edit" );
+   le_broaden_scale->setText( "0" );
+   le_broaden_scale->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_broaden_scale->setPalette( PALET_NORMAL );
+   AUTFBACK( le_broaden_scale );
+   le_broaden_scale->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_broaden_scale->setEnabled( false );
+   connect( le_broaden_scale, SIGNAL( focussed ( bool ) ), SLOT( broaden_scale_focus( bool ) ) );
+   le_broaden_scale->setToolTip( us_tr( "Current scale offset value" ) );
+
    lbl_broaden_kernel_end = new QLabel( us_tr( "Kernel end :" ), this );
    lbl_broaden_kernel_end->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
    lbl_broaden_kernel_end->setPalette( PALET_NORMAL );
@@ -3111,6 +3136,13 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    connect( cb_broaden_kernel_type, SIGNAL( currentIndexChanged( QString ) ), SLOT( broaden_kernel_type_index( ) ) );
    cb_broaden_kernel_type->setCurrentIndex( 0 );
 
+   pb_broaden_scale_compute = new QPushButton(us_tr("Rescale"), this);
+   pb_broaden_scale_compute->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_broaden_scale_compute->setMinimumHeight(minHeight1);
+   pb_broaden_scale_compute->setPalette( PALET_PUSHB );
+   connect(pb_broaden_scale_compute, SIGNAL(clicked()), SLOT(broaden_scale_compute()));
+   pb_broaden_scale_compute->setEnabled( false );
+   
    pb_broaden_fit = new QPushButton(us_tr("Fit"), this);
    pb_broaden_fit->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_broaden_fit->setMinimumHeight(minHeight1);
@@ -4167,6 +4199,9 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
       hbl->addWidget( cb_broaden_baseline );
       hbl->addWidget( lbl_broaden_baseline );
       hbl->addWidget( le_broaden_baseline );
+      hbl->addWidget( cb_broaden_scale );
+      hbl->addWidget( lbl_broaden_scale );
+      hbl->addWidget( le_broaden_scale );
       vbl_broaden->addLayout( hbl );
    }      
    {
@@ -4180,6 +4215,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
       hbl->addWidget( le_broaden_fit_range_end );
       hbl->addWidget( cb_broaden_repeak );
       hbl->addWidget( cb_broaden_kernel_type );
+      hbl->addWidget( pb_broaden_scale_compute );
       hbl->addWidget( pb_broaden_fit );
       hbl->addWidget( pb_broaden_minimize );
       hbl->addWidget( pb_broaden_reset );
@@ -4316,6 +4352,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
          ,le_broaden_deltat_start
          ,le_broaden_deltat_end
          ,le_broaden_deltat_delta
+         ,pb_broaden_scale_compute
       } );
 
    mode_setup_widgets();
@@ -4593,6 +4630,9 @@ void US_Hydrodyn_Saxs_Hplc::mode_setup_widgets()
    broaden_widgets.push_back( cb_broaden_baseline );
    broaden_widgets.push_back( lbl_broaden_baseline );
    broaden_widgets.push_back( le_broaden_baseline );
+   broaden_widgets.push_back( cb_broaden_scale );
+   broaden_widgets.push_back( lbl_broaden_scale );
+   broaden_widgets.push_back( le_broaden_scale );
    broaden_widgets.push_back( lbl_broaden_kernel_end );
    broaden_widgets.push_back( le_broaden_kernel_end );
    broaden_widgets.push_back( lbl_broaden_kernel_deltat );
@@ -4602,6 +4642,7 @@ void US_Hydrodyn_Saxs_Hplc::mode_setup_widgets()
    broaden_widgets.push_back( le_broaden_fit_range_end );
    broaden_widgets.push_back( cb_broaden_repeak );
    broaden_widgets.push_back( cb_broaden_kernel_type );
+   broaden_widgets.push_back( pb_broaden_scale_compute );
    broaden_widgets.push_back( pb_broaden_fit );
    broaden_widgets.push_back( pb_broaden_minimize );
    broaden_widgets.push_back( pb_broaden_reset );
@@ -5562,12 +5603,15 @@ void US_Hydrodyn_Saxs_Hplc::disable_all()
    le_broaden_deltat_delta      -> setEnabled( false );
    cb_broaden_baseline          -> setEnabled( false );
    le_broaden_baseline          -> setEnabled( false );
+   cb_broaden_scale             -> setEnabled( false );
+   le_broaden_scale             -> setEnabled( false );
    le_broaden_kernel_end        -> setEnabled( false );
    le_broaden_kernel_deltat     -> setEnabled( false );
    le_broaden_fit_range_start   -> setEnabled( false );
    le_broaden_fit_range_end     -> setEnabled( false );
    cb_broaden_repeak            -> setEnabled( false );
    cb_broaden_kernel_type       -> setEnabled( false );
+   pb_broaden_scale_compute     -> setEnabled( false );
    pb_broaden_fit               -> setEnabled( false );
    pb_broaden_minimize          -> setEnabled( false );
    pb_broaden_reset             -> setEnabled( false );

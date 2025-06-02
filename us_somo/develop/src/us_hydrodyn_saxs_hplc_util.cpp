@@ -69,6 +69,10 @@ void US_Hydrodyn_Saxs_Hplc::add()
 {
    QStringList files = all_selected_files();
 
+   if ( ! files.size() ) {
+      return;
+   }
+
    vector < double > sum = f_Is[ files[ 0 ] ];
    vector < double > e   = f_errors[ files[ 0 ] ];
 
@@ -85,7 +89,49 @@ void US_Hydrodyn_Saxs_Hplc::add()
 
    disable_all();
 
-   QString name = us_tr( "sum_" ) + files[ 0 ];
+   QString repeak_str;
+
+   QString name;
+   
+   // get base name
+   QString prefix = qstring_common_head( files, true );
+   {
+      
+      QStringList qsl = prefix.split( QRegExp( "[^A-Za-z0-9]" ) );
+      prefix = qsl[ 0 ];
+   }
+
+   {
+      QRegExp rx_repeak( "-rp(.\\d*(_|\\.)\\d+(|e.\\d+))" );
+      
+      set < QString > rp_values;
+
+      QString rp_first;
+
+      for ( auto const & f : files ) {
+         if ( rx_repeak.indexIn( f ) != -1 ) {
+            if ( !rp_values.size() ) {
+               rp_first = rx_repeak.cap( 1 );
+            }
+            rp_values.insert( rx_repeak.cap( 1 ) );
+         }
+      }
+
+      if ( rp_values.size() > 1 ) {
+         QMessageBox::warning( this,
+                                   windowTitle() + us_tr( ": Sum" ),
+                                   us_tr( "Multiple differing repeak values found in summed file names, using the first one" )
+                                   );
+      }
+
+      if ( rp_values.size() ) {
+         name = QString( "%1_sum_nf%2-rp%3" ).arg( prefix ).arg( files.size() ).arg( rp_first );
+      } else {
+         name = QString( "%1_sum_nf%2-no_rp" ).arg( prefix ).arg( files.size() );
+      }
+   }
+
+   QString header = QString( " Sum: %1" ).arg( files.join( " , " ) );
 
    for ( unsigned int i = 1; i < ( unsigned int ) files.size(); i++ )
    {
@@ -96,7 +142,7 @@ void US_Hydrodyn_Saxs_Hplc::add()
          return;
       }
       
-      name += "+" + files[ i ];
+      // name += "+" + files[ i ];
 
       for ( unsigned int j = 0; j < ( unsigned int ) sum.size(); j++ )
       {
@@ -123,8 +169,11 @@ void US_Hydrodyn_Saxs_Hplc::add()
    } else {
       add_plot( name, f_qs[ files[ 0 ] ], sum, f_is_time.count( files[ 0 ] ) ? f_is_time[ files[ 0 ] ] : false, false );
    }
+
+   f_header[ last_created_file ] = header;
+
    if ( conc_files.count( files[ 0 ] ) ) {
-      conc_files.insert( name );
+      conc_files.insert( last_created_file );
    }
    update_enables();
 }
