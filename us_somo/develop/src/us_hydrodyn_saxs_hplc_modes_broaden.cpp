@@ -98,10 +98,8 @@ static double bblm_fit( double t, const double *par ) {
    }
 
    if ( !uhsh->broaden_compute_one_no_ui(
-                                         tau
-                                         ,sigma
-                                         ,0 // lambda_1
-                                         ,0 // lambda_2                                         
+                                         sigma
+                                         ,tau
                                          ,bblm_kernel_size
                                          ,bblm_kernel_delta_t
                                          ,bblm_org_conc_I
@@ -466,6 +464,22 @@ void US_Hydrodyn_Saxs_Hplc::broaden() {
    broaden_enables();
 }
 
+vector < double > US_Hydrodyn_Saxs_Hplc::broaden_parameter_current_values() {
+   TSO << "US_Hydrodyn_Saxs_Hplc::broaden_parameter_current_values() start\n";
+   if ( !broaden_parameter_value_le_widgets.count( cb_broaden_kernel_mode->currentIndex() ) ) {
+      editor_msg( "red", "Internal error::errobroaden_parameter_current_values() - mode not set!" );
+      return {};
+   }
+
+   vector < double > result;
+   auto const & le_widgets = broaden_parameter_value_le_widgets[ cb_broaden_kernel_mode->currentIndex() ];
+   for ( auto const & le : le_widgets ) {
+      result.push_back( le->text().toDouble() );
+   }
+
+   return result;
+}
+
 void US_Hydrodyn_Saxs_Hplc::broaden_done( bool save ) {
    TSO << "US_Hydrodyn_Saxs_Hplc::broaden_done() start\n";
 
@@ -487,10 +501,8 @@ void US_Hydrodyn_Saxs_Hplc::broaden_done( bool save ) {
 
       vector < double > broadened = ubb.broaden(
                                                 f_Is[ broaden_names[ 0 ] ]
-                                                ,le_broaden_tau->text().toDouble()
                                                 ,le_broaden_sigma->text().toDouble()
-                                                // ,le_broaden_lambda_1->text().toDouble()
-                                                // ,le_broaden_lambda_2->text().toDouble()
+                                                ,le_broaden_tau->text().toDouble()
                                                 ,0
                                                 ,le_broaden_kernel_end->text().toDouble()
                                                 ,le_broaden_kernel_deltat->text().toDouble()
@@ -1097,10 +1109,8 @@ void US_Hydrodyn_Saxs_Hplc::broaden_kernel_mode_index() {
 }
 
 bool US_Hydrodyn_Saxs_Hplc::broaden_compute_one_no_ui(
-                                                      double tau
-                                                      ,double sigma
-                                                      ,double /* lambda_1 */ // inactive for now
-                                                      ,double /* lambda_2 */ // inactive for now
+                                                      double sigma
+                                                      ,double tau
                                                       ,double kernel_size
                                                       ,double kernel_delta_t
                                                       ,const vector < double > & I
@@ -1110,8 +1120,8 @@ bool US_Hydrodyn_Saxs_Hplc::broaden_compute_one_no_ui(
    ubb.clear();
    broadened = ubb.broaden(
                            I
-                           ,tau
                            ,sigma
+                           ,tau
                            ,0
                            ,kernel_size
                            ,kernel_delta_t
@@ -1149,8 +1159,8 @@ void US_Hydrodyn_Saxs_Hplc::broaden_compute_one( bool details ) {
 
    vector < double > broadened = ubb.broaden(
                                              f_Is[ broaden_names[ 0 ] ]
-                                             ,le_broaden_tau->text().toDouble()
                                              ,le_broaden_sigma->text().toDouble()
+                                             ,le_broaden_tau->text().toDouble()
                                              ,0
                                              ,le_broaden_kernel_end->text().toDouble()
                                              ,le_broaden_kernel_deltat->text().toDouble()

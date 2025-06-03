@@ -900,13 +900,22 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       map < int, vector < mQLineEdit * > >  broaden_parameter_value_le_widgets;
       map < int, vector < QCheckBox * > >   broaden_parameter_value_cb_widgets;
       map < int, vector < double > >        broaden_parameter_value_minimum;
+
+      // parameter values for variable count kernel parameters
+      vector < double >                     broaden_parameter_current_values();
       
  public:
       bool                               broaden_compute_one_no_ui(
-                                                                   double tau
-                                                                   ,double sigma
-                                                                   ,double xi_1
-                                                                   ,double xi_2
+                                                                   vector < double > params
+                                                                   ,double kernel_size
+                                                                   ,double kernel_delta_t
+                                                                   ,const vector < double > & I
+                                                                   ,vector < double > & broadened
+                                                                   );
+
+      bool                               broaden_compute_one_no_ui(
+                                                                   double sigma
+                                                                   ,double tau
                                                                    ,double kernel_size
                                                                    ,double kernel_delta_t
                                                                    ,const vector < double > & I

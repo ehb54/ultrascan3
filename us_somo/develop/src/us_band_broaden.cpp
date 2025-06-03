@@ -198,17 +198,51 @@ bool US_Band_Broaden::build_kernel(
 
 vector < double > US_Band_Broaden::broaden(
                                            const vector < double > & f
-                                           ,const double & tau_e
-                                           ,const double & tau_g
+                                           ,const vector < double > & kernel_params
+                                           ,const double & time_start
+                                           ,const double & time_end
+                                           ,const double & time_delta
+                                           ,const enum kernel_mode & kmode
+                                           ) {
+   switch( kmode ) {
+   case BAND_BROADEN_KERNEL_MODE_DEFAULT :
+      if ( kernel_params.size() != 2 ) {
+         errormsg = "US_Band_Broaden::broaden() default mode, parameters not exactly 2";
+         qDebug() << errormsg;
+         return {};
+      }
+      return broaden( f, kernel_params[ 0 ], kernel_params[ 1 ], time_start, time_end, time_delta );
+      
+   case BAND_BROADEN_KERNEL_MODE_ASYMMETRIC_LAPLACE :
+      errormsg = "US_Band_Broaden::broaden() Asymmetric Laplace mode not yet supported";
+      qDebug() << errormsg;
+      return {};
+
+   case BAND_BROADEN_KERNEL_MODE_EMG_GMG :
+      errormsg = "US_Band_Broaden::broaden() EMG+GMG mode not yet supported";
+      qDebug() << errormsg;
+      return {};
+
+   default :
+      errormsg = "US_Band_Broaden::broaden() unknown kernel mode";
+      qDebug() << errormsg;
+      return {};
+   }
+}
+
+vector < double > US_Band_Broaden::broaden(
+                                           const vector < double > & f
+                                           ,const double & sigma
+                                           ,const double & tau
                                            ,const double & time_start
                                            ,const double & time_end
                                            ,const double & time_delta
                                            ) {
-   vector < double > result = broaden( f, tau_e, BAND_BROADEN_KERNEL_EXPONENTIAL, time_start, time_end, time_delta );
+   vector < double > result = broaden( f, tau, BAND_BROADEN_KERNEL_EXPONENTIAL, time_start, time_end, time_delta );
    if ( !result.size() ) {
       return result;
    }
-   return broaden( result, tau_g, BAND_BROADEN_KERNEL_GAUSSIAN, time_start, time_end, time_delta );
+   return broaden( result, sigma, BAND_BROADEN_KERNEL_GAUSSIAN, time_start, time_end, time_delta );
 }
 
 vector < double > US_Band_Broaden::broaden(

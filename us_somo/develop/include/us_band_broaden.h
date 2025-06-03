@@ -33,11 +33,21 @@ class US_Band_Broaden {
 
    US_Band_Broaden( bool debug = false );
 
+   // broaden a specific kernel mode
+   vector < double > broaden(
+                             const vector < double > & f
+                             ,const vector < double > & kernel_params
+                             ,const double & time_start = 0
+                             ,const double & time_end   = 100
+                             ,const double & time_delta = 0.1
+                             ,const enum kernel_mode & kmode = US_Band_Broaden::BAND_BROADEN_KERNEL_MODE_DEFAULT
+                             );
+
    // broaden with both exponential & gaussian kernels
    vector < double > broaden(
                              const vector < double > & f
-                             ,const double & tau_e
-                             ,const double & tau_g
+                             ,const double & sigma
+                             ,const double & tau
                              ,const double & time_start = 0
                              ,const double & time_end   = 100
                              ,const double & time_delta = 0.1
