@@ -599,6 +599,7 @@ void US_ReporterGMP::loadRun_auto ( QMap < QString, QString > & protocol_details
   abde_rmsd. clear();
   abde_menisc. clear();
   abde_plots_filenames. clear();
+  abde_data_per_channel. clear();
   
   prot_details_at_report = protocol_details;
   
@@ -1638,6 +1639,7 @@ void US_ReporterGMP::load_gmp_run ( void )
   abde_rmsd. clear();
   abde_menisc. clear();
   abde_plots_filenames. clear();
+  abde_data_per_channel. clear();
 
   prot_details_at_report = protocol_details;
 
@@ -3865,8 +3867,11 @@ void US_ReporterGMP::process_abde_plots( void )
 	   this, SLOT( get_abde_menisc(QMap< QString, double >&) ) );
   connect( sdiag_norm_profile, SIGNAL( pass_percents_info( QMap< QString, QMap < QString, double>>& )),
 	   this, SLOT( get_abde_percents(QMap< QString, QMap < QString, double>>&) ) );
+  connect( sdiag_norm_profile, SIGNAL( pass_data_per_channel( QMap< QString, QMap < QString, QVector<QVector<double>> > >& )),
+	   this, SLOT( get_abde_data_per_channel(QMap< QString, QMap < QString, QVector<QVector<double>> > >&) ) );
+
   sdiag_norm_profile->load_data_auto_report( prot_details_at_report );
-    
+  
   //Process all channels & capture plots
   QString subDirName  = runName + "-run" + runID;
   QString dirName     = US_Settings::reportDir() + "/" + subDirName;
@@ -3912,6 +3917,11 @@ void US_ReporterGMP::get_abde_menisc( QMap< QString, double >& abde_menisc_p)
 void US_ReporterGMP::get_abde_percents(QMap< QString, QMap < QString, double>>& abde_perc_p )
 {
   abde_ranges_percents = abde_perc_p;
+}
+
+void US_ReporterGMP::get_abde_data_per_channel(QMap< QString, QMap < QString, QVector<QVector<double>> > >& data_per_chan)
+{
+  abde_data_per_channel = data_per_chan;
 }
 
 //read eSign GMP record for assigned oper(s) && rev(s) && status
@@ -7855,7 +7865,6 @@ QString US_ReporterGMP::distrib_info_abde( QString& abde_channame  )
 	   //integrate over model_used
 	   double int_val_m = 0;
 	   
-	   
 	   double frac_tot_m = abde_ranges_percents[abde_channame][range_alt];
 	   
 	   QString tot_frac_passed = ( qAbs( frac_tot_m - frac_tot_r ) <= frac_tot_tol_r ) ? "YES" : "NO";
@@ -7882,8 +7891,7 @@ QString US_ReporterGMP::distrib_info_abde( QString& abde_channame  )
        mstr += indent( 2 ) + "</table>\n";
        //End of integration results
      }
-   
-
+ 
    return mstr;
 }
 

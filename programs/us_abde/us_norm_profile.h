@@ -40,6 +40,7 @@ class US_Norm_Profile : public US_Widgets
         void pass_rmsd_info( QMap< QString, double >& );
         void pass_menisc_info( QMap< QString, double >& );
         void pass_percents_info( QMap< QString, QMap < QString, double>>& );
+        void pass_data_per_channel( QMap< QString, QMap < QString, QVector<QVector<double>> > >&);
   
     protected:
         //! \brief Override of the close event to emit widgetClosed signal.

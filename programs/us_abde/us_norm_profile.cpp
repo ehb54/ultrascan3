@@ -789,6 +789,9 @@ QString US_Norm_Profile::select_channel_public( int index )
   qDebug() << "[in select_channel_public()]: channame, index -- "
 	   << cb_chann->itemText( index ) << index;
   cb_chann->setCurrentIndex( index );
+
+  emit pass_data_per_channel( data_per_channel );
+  
   return cb_chann->itemText( index );
 }
 
@@ -1147,9 +1150,6 @@ void US_Norm_Profile::selectData_auto(void){
 	else //SWL
 	  {
 	    //set x_min_picked, x_max_picked to data ranges in eProfile
-	    // x_min_picked = 6.03700000; //TEST: will be read from ePRofile PER Channel!!!
-	    // x_max_picked = 7.08000000; //TEST: will be read from ePRofile
-
 	    double bl_slope  = 0;
 	    double bl_interp = 0;
 	    QString chann_blc = prot_details[ "baseline_corrections" ];
@@ -1194,8 +1194,9 @@ void US_Norm_Profile::selectData_auto(void){
     data_per_channel[ channame ]["yvaluesN"]   = yvaluesN_sel;
     data_per_channel[ channame ]["integral"]   = integral_sel;
     data_per_channel[ channame ]["integralN"]  = integralN_sel;
-    
-    
+    data_per_channel[ channame ]["xvalues"]    = xvalues_sel;
+    data_per_channel[ channame ]["yvalues"]    = yvalues_sel;
+        
     plotData();
 }
 
@@ -1245,6 +1246,8 @@ void US_Norm_Profile::plotData(void){
     QwtText yTitle = plot->axisTitle(QwtPlot::yLeft);
 
     int nd = selFilenames.size();
+    qDebug() << "[in plotData(): ] selFilenames -- " << selFilenames;
+    
     bool plt_state = ckb_rawData->isChecked() || ckb_integral->isChecked();
 
     if (! plt_state || nd == 0){
