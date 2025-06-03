@@ -43,8 +43,8 @@ static double bblm_fit( double t, const double *par ) {
    size_t pos_param = 0;
    double sigma     = bblm_fit_param[ pos_param++ ] ? par[pos++] : bblm_fixed_params[ pos_fixed++ ];
    double tau       = bblm_fit_param[ pos_param++ ] ? par[pos++] : bblm_fixed_params[ pos_fixed++ ];
-   // double xi_1      = bblm_fit_param[ pos_param++ ] ? par[pos++] : bblm_fixed_params[ pos_fixed++ ];
-   // double xi_2      = bblm_fit_param[ pos_param++ ] ? par[pos++] : bblm_fixed_params[ pos_fixed++ ];
+   // double lambda_1      = bblm_fit_param[ pos_param++ ] ? par[pos++] : bblm_fixed_params[ pos_fixed++ ];
+   // double lambda_2      = bblm_fit_param[ pos_param++ ] ? par[pos++] : bblm_fixed_params[ pos_fixed++ ];
    double deltat    = bblm_fit_param[ pos_param++ ] ? par[pos++] : bblm_fixed_params[ pos_fixed++ ];
    double baseline  = bblm_fit_param[ pos_param++ ] ? par[pos++] : bblm_fixed_params[ pos_fixed++ ];
 #if defined( BROADEN_SCALE_FIT )
@@ -100,8 +100,8 @@ static double bblm_fit( double t, const double *par ) {
    if ( !uhsh->broaden_compute_one_no_ui(
                                          tau
                                          ,sigma
-                                         ,0 // xi_1
-                                         ,0 // xi_2                                         
+                                         ,0 // lambda_1
+                                         ,0 // lambda_2                                         
                                          ,bblm_kernel_size
                                          ,bblm_kernel_delta_t
                                          ,bblm_org_conc_I
@@ -255,6 +255,100 @@ void US_Hydrodyn_Saxs_Hplc::broaden() {
 
    disable_all();
 
+   // setup data for kernel_mode based parameters
+   // these could be setup once globally in the class constructor, but easier to maintain here...
+
+   broaden_parameter_widgets[ US_Band_Broaden::BAND_BROADEN_KERNEL_MODE_DEFAULT ]
+      .insert( 
+              {
+                 cb_broaden_tau
+                 ,lbl_broaden_tau
+                 ,le_broaden_tau
+              } );
+
+   broaden_parameter_widgets[ US_Band_Broaden::BAND_BROADEN_KERNEL_MODE_ASYMMETRIC_LAPLACE ]
+      .insert(
+              {
+                 cb_broaden_lambda_1
+                 ,lbl_broaden_lambda_1
+                 ,le_broaden_lambda_1
+                 ,cb_broaden_lambda_2
+                 ,lbl_broaden_lambda_2
+                 ,le_broaden_lambda_2
+              } );
+   
+   broaden_parameter_widgets[ US_Band_Broaden::BAND_BROADEN_KERNEL_MODE_EMG_GMG ]
+      .insert( 
+              {
+                 cb_broaden_lambda_1
+                 ,lbl_broaden_lambda_1
+                 ,le_broaden_lambda_1
+                 ,cb_broaden_lambda_2
+                 ,lbl_broaden_lambda_2
+                 ,le_broaden_lambda_2
+              } );
+
+   broaden_parameter_value_le_widgets[ US_Band_Broaden::BAND_BROADEN_KERNEL_MODE_DEFAULT ] =
+      {
+         le_broaden_sigma
+         ,le_broaden_tau
+      };
+
+   broaden_parameter_value_le_widgets[ US_Band_Broaden::BAND_BROADEN_KERNEL_MODE_ASYMMETRIC_LAPLACE ] =
+      {
+         le_broaden_sigma
+         ,le_broaden_lambda_1
+         ,le_broaden_lambda_2
+      };
+   
+   broaden_parameter_value_le_widgets[ US_Band_Broaden::BAND_BROADEN_KERNEL_MODE_EMG_GMG ] =
+      {
+         le_broaden_sigma
+         ,le_broaden_lambda_1
+         ,le_broaden_lambda_2
+      };
+   
+   broaden_parameter_value_cb_widgets[ US_Band_Broaden::BAND_BROADEN_KERNEL_MODE_DEFAULT ] =
+      {
+         cb_broaden_sigma
+         ,cb_broaden_tau
+      };
+
+   broaden_parameter_value_cb_widgets[ US_Band_Broaden::BAND_BROADEN_KERNEL_MODE_ASYMMETRIC_LAPLACE ] =
+      {
+         cb_broaden_sigma
+         ,cb_broaden_lambda_1
+         ,cb_broaden_lambda_2
+      };
+   
+   broaden_parameter_value_cb_widgets[ US_Band_Broaden::BAND_BROADEN_KERNEL_MODE_EMG_GMG ] =
+      {
+         cb_broaden_sigma
+         ,cb_broaden_lambda_1
+         ,cb_broaden_lambda_2
+      };
+
+   broaden_parameter_value_minimum[ US_Band_Broaden::BAND_BROADEN_KERNEL_MODE_DEFAULT ] =
+      {
+         0
+         ,0
+      };
+
+   broaden_parameter_value_minimum[ US_Band_Broaden::BAND_BROADEN_KERNEL_MODE_ASYMMETRIC_LAPLACE ] =
+      {
+         0
+         ,-DBL_MAX
+         ,-DBL_MAX
+      };
+   
+   broaden_parameter_value_minimum[ US_Band_Broaden::BAND_BROADEN_KERNEL_MODE_EMG_GMG ] =
+      {
+         0
+         ,-DBL_MAX
+         ,-DBL_MAX
+      };
+   // end of data setup   
+   
    ubb.clear();
 
    running               = false;
@@ -395,8 +489,8 @@ void US_Hydrodyn_Saxs_Hplc::broaden_done( bool save ) {
                                                 f_Is[ broaden_names[ 0 ] ]
                                                 ,le_broaden_tau->text().toDouble()
                                                 ,le_broaden_sigma->text().toDouble()
-                                                // ,le_broaden_xi_1->text().toDouble()
-                                                // ,le_broaden_xi_2->text().toDouble()
+                                                // ,le_broaden_lambda_1->text().toDouble()
+                                                // ,le_broaden_lambda_2->text().toDouble()
                                                 ,0
                                                 ,le_broaden_kernel_end->text().toDouble()
                                                 ,le_broaden_kernel_deltat->text().toDouble()
@@ -412,8 +506,8 @@ void US_Hydrodyn_Saxs_Hplc::broaden_done( bool save ) {
             QString( "sigma:%1 tau:%2 xi:(%3,%4) baseline:%5 scale:%6 delta_t:%7 kernel_end:%8 kernel_delta_t:%9 fit_range:[%10:%11]" )
             .arg( le_broaden_sigma->text() )
             .arg( le_broaden_tau->text() )
-            .arg( le_broaden_xi_1->text() )
-            .arg( le_broaden_xi_2->text() )
+            .arg( le_broaden_lambda_1->text() )
+            .arg( le_broaden_lambda_2->text() )
             .arg( le_broaden_baseline->text() )
             .arg( le_broaden_scale->text() )
             .arg( le_broaden_deltat->text() )
@@ -562,10 +656,10 @@ void US_Hydrodyn_Saxs_Hplc::broaden_enables() {
    le_broaden_tau               -> setEnabled( true );
    le_broaden_tau_end           -> setEnabled( true );
    le_broaden_tau_delta         -> setEnabled( true );
-   cb_broaden_xi_1              -> setEnabled( true );
-   le_broaden_xi_1              -> setEnabled( true );
-   cb_broaden_xi_2              -> setEnabled( true );
-   le_broaden_xi_2              -> setEnabled( true );
+   cb_broaden_lambda_1          -> setEnabled( true );
+   le_broaden_lambda_1          -> setEnabled( true );
+   cb_broaden_lambda_2          -> setEnabled( true );
+   le_broaden_lambda_2          -> setEnabled( true );
    cb_broaden_deltat            -> setEnabled( true );
    le_broaden_deltat_start      -> setEnabled( true );
    le_broaden_deltat            -> setEnabled( true );
@@ -589,6 +683,7 @@ void US_Hydrodyn_Saxs_Hplc::broaden_enables() {
    le_broaden_fit_range_start   -> setEnabled( true );
    le_broaden_fit_range_end     -> setEnabled( true );
    cb_broaden_kernel_type       -> setEnabled( true );
+   cb_broaden_kernel_mode       -> setEnabled( true );
    pb_broaden_minimize          -> setEnabled( true );
    pb_broaden_reset             -> setEnabled( true );
    pb_broaden_scale_compute     -> setEnabled( broaden_names.size() == 3 );
@@ -617,6 +712,21 @@ void US_Hydrodyn_Saxs_Hplc::broaden_enables() {
    pb_color_rotate              -> setEnabled( true );
    pb_line_width                -> setEnabled( true );
    pb_legend                    -> setEnabled( true );
+
+   // mode base visiblilty
+
+   for ( auto const & i : broaden_parameter_widgets ) {
+      ShowHide::hide_widgets( i.second );
+   }
+
+   if ( broaden_parameter_widgets.count( cb_broaden_kernel_mode->currentIndex() ) ) {
+      TSO << QString( "kernel mode %1\n" ).arg( cb_broaden_kernel_mode->currentIndex() );
+      ShowHide::hide_widgets( broaden_parameter_widgets[ cb_broaden_kernel_mode->currentIndex() ], false );
+   } else {                              
+      QString msg = "internal error: unknown kernel mode";
+      editor_msg( "red", msg + "\n" );
+      qDebug() << msg;
+   }
 }
 
 void US_Hydrodyn_Saxs_Hplc::broaden_plot( bool /* replot */ ) {
@@ -640,11 +750,11 @@ void US_Hydrodyn_Saxs_Hplc::broaden_reset() {
    cb_broaden_tau      ->setChecked( true );
    le_broaden_tau      ->setText( "0" );
 
-   cb_broaden_xi_1       ->setChecked( false );
-   le_broaden_xi_1       ->setText( "0" );
+   cb_broaden_lambda_1 ->setChecked( true );
+   le_broaden_lambda_1 ->setText( "0" );
    
-   cb_broaden_xi_2       ->setChecked( false );
-   le_broaden_xi_2       ->setText( "0" );
+   cb_broaden_lambda_2 ->setChecked( true );
+   le_broaden_lambda_2 ->setText( "0" );
    
    cb_broaden_deltat   ->setChecked( true );
    le_broaden_deltat   ->setText( "0" );
@@ -713,6 +823,10 @@ void US_Hydrodyn_Saxs_Hplc::broaden_sigma_delta_focus( bool ) {
 
 void US_Hydrodyn_Saxs_Hplc::set_broaden_tau() {
    TSO << "US_Hydrodyn_Saxs_Hplc::set_broaden_tau() start\n";
+   if ( cb_broaden_tau->isChecked() ) {
+      cb_broaden_lambda_1->setChecked( false );
+      cb_broaden_lambda_2->setChecked( false );
+   }
    broaden_enables();
 }
 
@@ -759,17 +873,20 @@ void US_Hydrodyn_Saxs_Hplc::broaden_tau_delta_focus( bool ) {
    broaden_enables();
 }
 
-void US_Hydrodyn_Saxs_Hplc::set_broaden_xi_1() {
-   TSO << "US_Hydrodyn_Saxs_Hplc::set_broaden_xi_1() start\n";
+void US_Hydrodyn_Saxs_Hplc::set_broaden_lambda_1() {
+   TSO << "US_Hydrodyn_Saxs_Hplc::set_broaden_lambda_1() start\n";
+   if ( cb_broaden_lambda_1->isChecked() ) {
+      cb_broaden_tau->setChecked( false );
+   }
    broaden_enables();
 }
 
-void US_Hydrodyn_Saxs_Hplc::broaden_xi_1_text( const QString & ) {
-   TSO << "US_Hydrodyn_Saxs_Hplc::broaden_xi_1_text() start\n";
+void US_Hydrodyn_Saxs_Hplc::broaden_lambda_1_text( const QString & ) {
+   TSO << "US_Hydrodyn_Saxs_Hplc::broaden_lambda_1_text() start\n";
 }
 
-void US_Hydrodyn_Saxs_Hplc::broaden_xi_1_focus( bool hasFocus ) {
-   TSO << "US_Hydrodyn_Saxs_Hplc::broaden_xi_1_focus() start\n";
+void US_Hydrodyn_Saxs_Hplc::broaden_lambda_1_focus( bool hasFocus ) {
+   TSO << "US_Hydrodyn_Saxs_Hplc::broaden_lambda_1_focus() start\n";
    if ( shutting_down ) {
       return;
    }
@@ -779,17 +896,20 @@ void US_Hydrodyn_Saxs_Hplc::broaden_xi_1_focus( bool hasFocus ) {
    }
 }
 
-void US_Hydrodyn_Saxs_Hplc::set_broaden_xi_2() {
-   TSO << "US_Hydrodyn_Saxs_Hplc::set_broaden_xi_2() start\n";
+void US_Hydrodyn_Saxs_Hplc::set_broaden_lambda_2() {
+   TSO << "US_Hydrodyn_Saxs_Hplc::set_broaden_lambda_2() start\n";
+   if ( cb_broaden_lambda_2->isChecked() ) {
+      cb_broaden_tau->setChecked( false );
+   }
    broaden_enables();
 }
 
-void US_Hydrodyn_Saxs_Hplc::broaden_xi_2_text( const QString & ) {
-   TSO << "US_Hydrodyn_Saxs_Hplc::broaden_xi_2_text() start\n";
+void US_Hydrodyn_Saxs_Hplc::broaden_lambda_2_text( const QString & ) {
+   TSO << "US_Hydrodyn_Saxs_Hplc::broaden_lambda_2_text() start\n";
 }
 
-void US_Hydrodyn_Saxs_Hplc::broaden_xi_2_focus( bool hasFocus ) {
-   TSO << "US_Hydrodyn_Saxs_Hplc::broaden_xi_2_focus() start\n";
+void US_Hydrodyn_Saxs_Hplc::broaden_lambda_2_focus( bool hasFocus ) {
+   TSO << "US_Hydrodyn_Saxs_Hplc::broaden_lambda_2_focus() start\n";
    if ( shutting_down ) {
       return;
    }
@@ -970,11 +1090,17 @@ void US_Hydrodyn_Saxs_Hplc::broaden_kernel_type_index() {
    broaden_compute_one();
 }
 
+void US_Hydrodyn_Saxs_Hplc::broaden_kernel_mode_index() {
+   TSO << "US_Hydrodyn_Saxs_Hplc::broaden_kernel_mode_index() start\n";
+   broaden_enables();
+   broaden_compute_one();
+}
+
 bool US_Hydrodyn_Saxs_Hplc::broaden_compute_one_no_ui(
                                                       double tau
                                                       ,double sigma
-                                                      ,double /* xi_1 */ // inactive for now
-                                                      ,double /* xi_2 */ // inactive for now
+                                                      ,double /* lambda_1 */ // inactive for now
+                                                      ,double /* lambda_2 */ // inactive for now
                                                       ,double kernel_size
                                                       ,double kernel_delta_t
                                                       ,const vector < double > & I
@@ -998,6 +1124,11 @@ bool US_Hydrodyn_Saxs_Hplc::broaden_compute_one_no_ui(
 }
 
 void US_Hydrodyn_Saxs_Hplc::broaden_compute_one( bool details ) {
+
+   if ( cb_broaden_kernel_mode->currentIndex() != US_Band_Broaden::BAND_BROADEN_KERNEL_MODE_DEFAULT ) {
+      editor_msg( "red", "Broaden compute : current mode not yet supported\n" );
+      return;
+   }
 
    TSO << "US_Hydrodyn_Saxs_Hplc::broaden_compute_one() start\n";
 
@@ -1213,22 +1344,54 @@ void US_Hydrodyn_Saxs_Hplc::broaden_lm_fit( bool final_refinement_only ) {
    bblm_fit_param = fit_param;
 
    vector < double > init_params_min;
-   
-   if ( cb_broaden_sigma->isChecked() ) {
-      bblm_init_params.push_back( le_broaden_sigma->text().toDouble() );
-      bblm_fit_param[ 1 ] = true;
-      init_params_min.push_back( 0 );
-   } else {
-      bblm_fixed_params.push_back( le_broaden_sigma->text().toDouble() );
+
+   if ( !broaden_parameter_value_cb_widgets.count( cb_broaden_kernel_mode->currentIndex() )
+        || !broaden_parameter_value_le_widgets.count( cb_broaden_kernel_mode->currentIndex() )
+        || !broaden_parameter_value_minimum.count( cb_broaden_kernel_mode->currentIndex() )
+        ) {
+      QString msg = "Fit error: internal error: kernel mode missing from tables!";
+      editor_msg( "red", msg + "\n" );
+      qDebug() << msg;
+      return;
    }
 
-   if ( cb_broaden_tau->isChecked() ) {
-      bblm_init_params.push_back( le_broaden_tau->text().toDouble() );
-      bblm_fit_param[ 0 ] = true;
-      init_params_min.push_back( 0 );
-   } else {
-      bblm_fixed_params.push_back( le_broaden_tau->text().toDouble() );
+   // setup kernel mode specific variables
+   auto const & cb_widgets = broaden_parameter_value_cb_widgets[ cb_broaden_kernel_mode->currentIndex() ];
+   auto const & le_widgets = broaden_parameter_value_le_widgets[ cb_broaden_kernel_mode->currentIndex() ];
+
+   {
+      auto const & minimum    = broaden_parameter_value_minimum   [ cb_broaden_kernel_mode->currentIndex() ];
+   
+      for ( size_t i = 0; i < cb_widgets.size(); ++i ) {
+         if ( cb_widgets[ i ]->isChecked() ) {
+            bblm_init_params.push_back( le_widgets[ i ]->text().toDouble() );
+            bblm_fit_param[ i ] = true;
+            init_params_min.push_back( minimum[ i ] );
+         } else {
+            bblm_fixed_params.push_back( le_widgets[ i ]->text().toDouble() );
+         }
+      }
    }
+
+   // old way ... preserving for now for checks
+         
+   // if ( cb_broaden_sigma->isChecked() ) {
+   //    bblm_init_params.push_back( le_broaden_sigma->text().toDouble() );
+   //    bblm_fit_param[ 0 ] = true;
+   //    init_params_min.push_back( 0 );
+   // } else {
+   //    bblm_fixed_params.push_back( le_broaden_sigma->text().toDouble() );
+   // }
+
+   // if ( cb_broaden_tau->isChecked() ) {
+   //    bblm_init_params.push_back( le_broaden_tau->text().toDouble() );
+   //    bblm_fit_param[ 1 ] = true;
+   //    init_params_min.push_back( 0 );
+   // } else {
+   //    bblm_fixed_params.push_back( le_broaden_tau->text().toDouble() );
+   // }
+
+   // always have delta t, baseline & scale
 
    if ( cb_broaden_deltat->isChecked() ) {
       bblm_init_params.push_back( le_broaden_deltat->text().toDouble() );
@@ -1377,7 +1540,7 @@ void US_Hydrodyn_Saxs_Hplc::broaden_lm_fit( bool final_refinement_only ) {
       }
    }         
       
-   #define RANDOM_RESTARTS 0
+#define RANDOM_RESTARTS 0
 
    for ( size_t i = 0; i < RANDOM_RESTARTS; ++i ) {
       vector < double > this_init( params_size );
@@ -1419,7 +1582,7 @@ void US_Hydrodyn_Saxs_Hplc::broaden_lm_fit( bool final_refinement_only ) {
 
 #endif
 
-   #define REFITS 5
+#define REFITS 5
    size_t do_refits = REFITS;
    
    progress->setMaximum( init_params.size() + REFITS );
@@ -1458,8 +1621,8 @@ void US_Hydrodyn_Saxs_Hplc::broaden_lm_fit( bool final_refinement_only ) {
          // LM ENORM version
          LM::lmcurve_fit
 #else
-         // RMSD LM version (originally used)
-         LM::lmcurve_fit_rmsd
+            // RMSD LM version (originally used)
+            LM::lmcurve_fit_rmsd
 #endif
             (
              ( int )      this_params.size(),
@@ -1524,13 +1687,21 @@ void US_Hydrodyn_Saxs_Hplc::broaden_lm_fit( bool final_refinement_only ) {
    {
       size_t pos = 0;
 
-      if ( cb_broaden_sigma->isChecked() ) {
-         le_broaden_sigma   ->setText( QString( "%1" ).arg( best_params[ pos++ ], 0, 'g', 8 ) );
+      for ( size_t i = 0; i < cb_widgets.size(); ++i ) {
+         if ( cb_widgets[ i ]->isChecked() ) {
+            le_widgets[ i ]->setText( QString( "%1" ).arg( best_params[ pos++ ], 0, 'g', 8 ) );
+         }
       }
 
-      if ( cb_broaden_tau->isChecked() ) {
-         le_broaden_tau     ->setText( QString( "%1" ).arg( best_params[ pos++ ], 0, 'g', 8 ) );
-      }
+      // old way ... preserving for now for checks
+
+      // if ( cb_broaden_sigma->isChecked() ) {
+      //    le_broaden_sigma   ->setText( QString( "%1" ).arg( best_params[ pos++ ], 0, 'g', 8 ) );
+      // }
+
+      // if ( cb_broaden_tau->isChecked() ) {
+      //    le_broaden_tau     ->setText( QString( "%1" ).arg( best_params[ pos++ ], 0, 'g', 8 ) );
+      // }
 
       if ( cb_broaden_deltat->isChecked() ) {
          le_broaden_deltat  ->setText( QString( "%1" ).arg( best_params[ pos++ ], 0, 'g', 8 ) );
@@ -1564,13 +1735,20 @@ void US_Hydrodyn_Saxs_Hplc::broaden_lm_fit( bool final_refinement_only ) {
       // reset to original params!
       size_t pos = 0;
 
-      if ( cb_broaden_sigma->isChecked() ) {
-         le_broaden_sigma   ->setText( QString( "%1" ).arg( bblm_init_params[ pos++ ], 0, 'g', 8 ) );
+      for ( size_t i = 0; i < cb_widgets.size(); ++i ) {
+         if ( cb_widgets[ i ]->isChecked() ) {
+            le_widgets[ i ]->setText( QString( "%1" ).arg( bblm_init_params[ pos++ ], 0, 'g', 8 ) );
+         }
       }
 
-      if ( cb_broaden_tau->isChecked() ) {
-         le_broaden_tau     ->setText( QString( "%1" ).arg( bblm_init_params[ pos++ ], 0, 'g', 8 ) );
-      }
+      // old way ... preserving for now for checks
+      // if ( cb_broaden_sigma->isChecked() ) {
+      //    le_broaden_sigma   ->setText( QString( "%1" ).arg( bblm_init_params[ pos++ ], 0, 'g', 8 ) );
+      // }
+
+      // if ( cb_broaden_tau->isChecked() ) {
+      //    le_broaden_tau     ->setText( QString( "%1" ).arg( bblm_init_params[ pos++ ], 0, 'g', 8 ) );
+      // }
 
       if ( cb_broaden_deltat->isChecked() ) {
          le_broaden_deltat  ->setText( QString( "%1" ).arg( bblm_init_params[ pos++ ], 0, 'g', 8 ) );
@@ -1594,15 +1772,23 @@ void US_Hydrodyn_Saxs_Hplc::broaden_lm_fit( bool final_refinement_only ) {
       set < QCheckBox * > cb_active;
       set < QCheckBox * > cb_all;
 
-      cb_all.insert( cb_broaden_sigma );
-      if ( cb_broaden_sigma->isChecked() ) {
-         cb_active.insert( cb_broaden_sigma );
+      for ( size_t i = 0; i < cb_widgets.size(); ++i ) {
+         cb_all.insert( cb_widgets[ i ] );
+         if ( cb_widgets[ i ]->isChecked() ) {
+            cb_active.insert( cb_widgets[ i ] );
+         }
       }
 
-      cb_all.insert( cb_broaden_tau );
-      if ( cb_broaden_tau->isChecked() ) {
-         cb_active.insert( cb_broaden_tau );
-      }
+      // old way ... preserving for now for checks
+      // cb_all.insert( cb_broaden_sigma );
+      // if ( cb_broaden_sigma->isChecked() ) {
+      //    cb_active.insert( cb_broaden_sigma );
+      // }
+
+      // cb_all.insert( cb_broaden_tau );
+      // if ( cb_broaden_tau->isChecked() ) {
+      //    cb_active.insert( cb_broaden_tau );
+      // }
 
       cb_all.insert( cb_broaden_deltat );
       if ( cb_broaden_deltat->isChecked() ) {
@@ -1643,6 +1829,12 @@ void US_Hydrodyn_Saxs_Hplc::broaden_lm_fit( bool final_refinement_only ) {
 
 void US_Hydrodyn_Saxs_Hplc::broaden_fit() {
    TSO << "US_Hydrodyn_Saxs_Hplc::broaden_fit() start\n";
+
+   if ( cb_broaden_kernel_mode->currentIndex() != US_Band_Broaden::BAND_BROADEN_KERNEL_MODE_DEFAULT ) {
+      editor_msg( "red", "Broaden fit : current mode not yet supported\n" );
+      return;
+   }
+
    editor_msg( "darkblue", us_tr( "Broaden fit starting\n" ) );
 
    running = true;

@@ -839,13 +839,13 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       mQLineEdit                       * le_broaden_sigma_end;
       mQLineEdit                       * le_broaden_sigma_delta;
 
-      QCheckBox                        * cb_broaden_xi_1;
-      QLabel                           * lbl_broaden_xi_1;
-      mQLineEdit                       * le_broaden_xi_1;
+      QCheckBox                        * cb_broaden_lambda_1;
+      QLabel                           * lbl_broaden_lambda_1;
+      mQLineEdit                       * le_broaden_lambda_1;
 
-      QCheckBox                        * cb_broaden_xi_2;
-      QLabel                           * lbl_broaden_xi_2;
-      mQLineEdit                       * le_broaden_xi_2;
+      QCheckBox                        * cb_broaden_lambda_2;
+      QLabel                           * lbl_broaden_lambda_2;
+      mQLineEdit                       * le_broaden_lambda_2;
 
       QCheckBox                        * cb_broaden_deltat;
       QLabel                           * lbl_broaden_deltat;
@@ -874,6 +874,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 
       QCheckBox                        * cb_broaden_repeak;
       QComboBox                        * cb_broaden_kernel_type;
+      QComboBox                        * cb_broaden_kernel_mode;
 
       QPushButton                      * pb_broaden_scale_compute;
       QPushButton                      * pb_broaden_fit;
@@ -893,6 +894,12 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void                               broaden_compute_one( bool details = false );
       double                             broaden_compute_loss();
       vector < double >                  broaden_params();
+
+      // these maps are from US_Band_Broaden::kernel_mode enum (int)
+      map < int, set < QWidget * > >        broaden_parameter_widgets;
+      map < int, vector < mQLineEdit * > >  broaden_parameter_value_le_widgets;
+      map < int, vector < QCheckBox * > >   broaden_parameter_value_cb_widgets;
+      map < int, vector < double > >        broaden_parameter_value_minimum;
       
  public:
       bool                               broaden_compute_one_no_ui(
@@ -950,15 +957,15 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void                               broaden_sigma_delta_text( const QString & );
       void                               broaden_sigma_delta_focus( bool );
 
-      void                               set_broaden_xi_1();
+      void                               set_broaden_lambda_1();
 
-      void                               broaden_xi_1_text( const QString & );
-      void                               broaden_xi_1_focus( bool );
+      void                               broaden_lambda_1_text( const QString & );
+      void                               broaden_lambda_1_focus( bool );
 
-      void                               set_broaden_xi_2();
+      void                               set_broaden_lambda_2();
 
-      void                               broaden_xi_2_text( const QString & );
-      void                               broaden_xi_2_focus( bool );
+      void                               broaden_lambda_2_text( const QString & );
+      void                               broaden_lambda_2_focus( bool );
 
       void                               set_broaden_deltat();
 
@@ -1000,6 +1007,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void                               broaden_repeak_set();
 
       void                               broaden_kernel_type_index();
+      void                               broaden_kernel_mode_index();
       
  private:
 

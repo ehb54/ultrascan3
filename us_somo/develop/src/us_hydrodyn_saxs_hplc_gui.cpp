@@ -2950,55 +2950,55 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    connect( le_broaden_sigma_delta, SIGNAL( focussed ( bool ) ), SLOT( broaden_sigma_delta_focus( bool ) ) );
    le_broaden_sigma_delta->setToolTip( us_tr( UNICODE_SIGMA_QS + " step increment for fitting" ) );
    
-   cb_broaden_xi_1 = new QCheckBox(this);
-   cb_broaden_xi_1->setText(us_tr(""));
-   cb_broaden_xi_1->setChecked( false );
-   cb_broaden_xi_1->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
-   cb_broaden_xi_1->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_broaden_xi_1 );
-   connect( cb_broaden_xi_1, SIGNAL( clicked() ), SLOT( set_broaden_xi_1() ) );
-   cb_broaden_xi_1->setToolTip( us_tr( "Check to fit, Unchecked is fixed to the current value" ) );
+   cb_broaden_lambda_1 = new QCheckBox(this);
+   cb_broaden_lambda_1->setText(us_tr(""));
+   cb_broaden_lambda_1->setChecked( false );
+   cb_broaden_lambda_1->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
+   cb_broaden_lambda_1->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_broaden_lambda_1 );
+   connect( cb_broaden_lambda_1, SIGNAL( clicked() ), SLOT( set_broaden_lambda_1() ) );
+   cb_broaden_lambda_1->setToolTip( us_tr( "Check to fit, Unchecked is fixed to the current value" ) );
 
-   lbl_broaden_xi_1 = new QLabel( " " + UNICODE_XI_QS + UNICODE_SUB_1_QS + " :" , this );
-   lbl_broaden_xi_1->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
-   lbl_broaden_xi_1->setPalette( PALET_NORMAL );
-   AUTFBACK( lbl_broaden_xi_1 );
-   lbl_broaden_xi_1->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   lbl_broaden_lambda_1 = new QLabel( " " + UNICODE_LAMBDA_QS + UNICODE_SUB_1_QS + " :" , this );
+   lbl_broaden_lambda_1->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
+   lbl_broaden_lambda_1->setPalette( PALET_NORMAL );
+   AUTFBACK( lbl_broaden_lambda_1 );
+   lbl_broaden_lambda_1->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 
-   le_broaden_xi_1 = new mQLineEdit( this );    le_broaden_xi_1->setObjectName( "le_broaden_xi_1 Line Edit" );
-   le_broaden_xi_1->setText( "0" );
-   le_broaden_xi_1->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
-   le_broaden_xi_1->setPalette( PALET_NORMAL );
-   AUTFBACK( le_broaden_xi_1 );
-   le_broaden_xi_1->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-   le_broaden_xi_1->setEnabled( false );
-   connect( le_broaden_xi_1, SIGNAL( focussed ( bool ) ), SLOT( broaden_xi_1_focus( bool ) ) );
-   le_broaden_xi_1->setToolTip( us_tr( "Current " +  UNICODE_XI_QS + UNICODE_SUB_1_QS + " value" ) );
+   le_broaden_lambda_1 = new mQLineEdit( this );    le_broaden_lambda_1->setObjectName( "le_broaden_lambda_1 Line Edit" );
+   le_broaden_lambda_1->setText( "0" );
+   le_broaden_lambda_1->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_broaden_lambda_1->setPalette( PALET_NORMAL );
+   AUTFBACK( le_broaden_lambda_1 );
+   le_broaden_lambda_1->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_broaden_lambda_1->setEnabled( false );
+   connect( le_broaden_lambda_1, SIGNAL( focussed ( bool ) ), SLOT( broaden_lambda_1_focus( bool ) ) );
+   le_broaden_lambda_1->setToolTip( us_tr( "Current " +  UNICODE_LAMBDA_QS + UNICODE_SUB_1_QS + " value" ) );
 
-   cb_broaden_xi_2 = new QCheckBox(this);
-   cb_broaden_xi_2->setText(us_tr(""));
-   cb_broaden_xi_2->setChecked( false );
-   cb_broaden_xi_2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
-   cb_broaden_xi_2->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_broaden_xi_2 );
-   connect( cb_broaden_xi_2, SIGNAL( clicked() ), SLOT( set_broaden_xi_2() ) );
-   cb_broaden_xi_2->setToolTip( us_tr( "Check to fit, Unchecked is fixed to the current value" ) );
+   cb_broaden_lambda_2 = new QCheckBox(this);
+   cb_broaden_lambda_2->setText(us_tr(""));
+   cb_broaden_lambda_2->setChecked( false );
+   cb_broaden_lambda_2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
+   cb_broaden_lambda_2->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_broaden_lambda_2 );
+   connect( cb_broaden_lambda_2, SIGNAL( clicked() ), SLOT( set_broaden_lambda_2() ) );
+   cb_broaden_lambda_2->setToolTip( us_tr( "Check to fit, Unchecked is fixed to the current value" ) );
 
-   lbl_broaden_xi_2 = new QLabel( " " + UNICODE_XI_QS + UNICODE_SUB_2_QS + " :" , this );
-   lbl_broaden_xi_2->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
-   lbl_broaden_xi_2->setPalette( PALET_NORMAL );
-   AUTFBACK( lbl_broaden_xi_2 );
-   lbl_broaden_xi_2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   lbl_broaden_lambda_2 = new QLabel( " " + UNICODE_LAMBDA_QS + UNICODE_SUB_2_QS + " :" , this );
+   lbl_broaden_lambda_2->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
+   lbl_broaden_lambda_2->setPalette( PALET_NORMAL );
+   AUTFBACK( lbl_broaden_lambda_2 );
+   lbl_broaden_lambda_2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 
-   le_broaden_xi_2 = new mQLineEdit( this );    le_broaden_xi_2->setObjectName( "le_broaden_xi_2 Line Edit" );
-   le_broaden_xi_2->setText( "0" );
-   le_broaden_xi_2->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
-   le_broaden_xi_2->setPalette( PALET_NORMAL );
-   AUTFBACK( le_broaden_xi_2 );
-   le_broaden_xi_2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-   le_broaden_xi_2->setEnabled( false );
-   connect( le_broaden_xi_2, SIGNAL( focussed ( bool ) ), SLOT( broaden_xi_2_focus( bool ) ) );
-   le_broaden_xi_2->setToolTip( us_tr( "Current " +  UNICODE_XI_QS + UNICODE_SUB_2_QS + " value" ) );
+   le_broaden_lambda_2 = new mQLineEdit( this );    le_broaden_lambda_2->setObjectName( "le_broaden_lambda_2 Line Edit" );
+   le_broaden_lambda_2->setText( "0" );
+   le_broaden_lambda_2->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_broaden_lambda_2->setPalette( PALET_NORMAL );
+   AUTFBACK( le_broaden_lambda_2 );
+   le_broaden_lambda_2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_broaden_lambda_2->setEnabled( false );
+   connect( le_broaden_lambda_2, SIGNAL( focussed ( bool ) ), SLOT( broaden_lambda_2_focus( bool ) ) );
+   le_broaden_lambda_2->setToolTip( us_tr( "Current " +  UNICODE_LAMBDA_QS + UNICODE_SUB_2_QS + " value" ) );
 
    cb_broaden_deltat = new QCheckBox(this);
    cb_broaden_deltat->setText(us_tr(""));
@@ -3185,6 +3185,21 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
 
    connect( cb_broaden_kernel_type, SIGNAL( currentIndexChanged( QString ) ), SLOT( broaden_kernel_type_index( ) ) );
    cb_broaden_kernel_type->setCurrentIndex( 0 );
+
+   cb_broaden_kernel_mode = new QComboBox( this );
+   cb_broaden_kernel_mode->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_broaden_kernel_mode );
+   cb_broaden_kernel_mode->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   cb_broaden_kernel_mode->setEnabled(true);
+   cb_broaden_kernel_mode->setMinimumHeight( minHeight1 );
+   cb_broaden_kernel_mode->setMaxVisibleItems( 1 );
+
+   cb_broaden_kernel_mode->addItem( US_Band_Broaden::kernel_mode_name( US_Band_Broaden::BAND_BROADEN_KERNEL_MODE_DEFAULT ),            US_Band_Broaden::BAND_BROADEN_KERNEL_MODE_DEFAULT );
+   cb_broaden_kernel_mode->addItem( US_Band_Broaden::kernel_mode_name( US_Band_Broaden::BAND_BROADEN_KERNEL_MODE_ASYMMETRIC_LAPLACE ), US_Band_Broaden::BAND_BROADEN_KERNEL_MODE_ASYMMETRIC_LAPLACE );
+   cb_broaden_kernel_mode->addItem( US_Band_Broaden::kernel_mode_name( US_Band_Broaden::BAND_BROADEN_KERNEL_MODE_EMG_GMG ),            US_Band_Broaden::BAND_BROADEN_KERNEL_MODE_EMG_GMG );
+
+   connect( cb_broaden_kernel_mode, SIGNAL( currentIndexChanged( QString ) ), SLOT( broaden_kernel_mode_index( ) ) );
+   cb_broaden_kernel_mode->setCurrentIndex( 0 );
 
    pb_broaden_scale_compute = new QPushButton(us_tr("Rescale"), this);
    pb_broaden_scale_compute->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
@@ -4228,6 +4243,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    QBoxLayout * vbl_broaden = new QVBoxLayout( 0 ); vbl_broaden->setContentsMargins( 0, 0, 0, 0 ); vbl_broaden->setSpacing( 0 );
    {
       QBoxLayout * hbl = new QHBoxLayout(); hbl->setContentsMargins( 0, 0, 0, 0 ); hbl->setSpacing( 0 );
+      hbl->addWidget( cb_broaden_kernel_mode );
       hbl->addWidget( cb_broaden_sigma );
       hbl->addWidget( lbl_broaden_sigma );
       hbl->addWidget( le_broaden_sigma_start );
@@ -4240,12 +4256,12 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
       hbl->addWidget( le_broaden_tau );
       hbl->addWidget( le_broaden_tau_end );
       hbl->addWidget( le_broaden_tau_delta );
-      hbl->addWidget( cb_broaden_xi_1 );
-      hbl->addWidget( lbl_broaden_xi_1 );
-      hbl->addWidget( le_broaden_xi_1 );
-      hbl->addWidget( cb_broaden_xi_2 );
-      hbl->addWidget( lbl_broaden_xi_2 );
-      hbl->addWidget( le_broaden_xi_2 );
+      hbl->addWidget( cb_broaden_lambda_1 );
+      hbl->addWidget( lbl_broaden_lambda_1 );
+      hbl->addWidget( le_broaden_lambda_1 );
+      hbl->addWidget( cb_broaden_lambda_2 );
+      hbl->addWidget( lbl_broaden_lambda_2 );
+      hbl->addWidget( le_broaden_lambda_2 );
       hbl->addWidget( cb_broaden_deltat );
       hbl->addWidget( lbl_broaden_deltat );
       hbl->addWidget( le_broaden_deltat_start );
@@ -4677,12 +4693,12 @@ void US_Hydrodyn_Saxs_Hplc::mode_setup_widgets()
    broaden_widgets.push_back( le_broaden_sigma );
    broaden_widgets.push_back( le_broaden_sigma_end );
    broaden_widgets.push_back( le_broaden_sigma_delta );
-   broaden_widgets.push_back( cb_broaden_xi_1 );
-   broaden_widgets.push_back( lbl_broaden_xi_1 );
-   broaden_widgets.push_back( le_broaden_xi_1 );
-   broaden_widgets.push_back( cb_broaden_xi_2 );
-   broaden_widgets.push_back( lbl_broaden_xi_2 );
-   broaden_widgets.push_back( le_broaden_xi_2 );
+   broaden_widgets.push_back( cb_broaden_lambda_1 );
+   broaden_widgets.push_back( lbl_broaden_lambda_1 );
+   broaden_widgets.push_back( le_broaden_lambda_1 );
+   broaden_widgets.push_back( cb_broaden_lambda_2 );
+   broaden_widgets.push_back( lbl_broaden_lambda_2 );
+   broaden_widgets.push_back( le_broaden_lambda_2 );
    broaden_widgets.push_back( cb_broaden_deltat );
    broaden_widgets.push_back( lbl_broaden_deltat );
    broaden_widgets.push_back( le_broaden_deltat_start );
@@ -4704,6 +4720,7 @@ void US_Hydrodyn_Saxs_Hplc::mode_setup_widgets()
    broaden_widgets.push_back( le_broaden_fit_range_end );
    broaden_widgets.push_back( cb_broaden_repeak );
    broaden_widgets.push_back( cb_broaden_kernel_type );
+   broaden_widgets.push_back( cb_broaden_kernel_mode );
    broaden_widgets.push_back( pb_broaden_scale_compute );
    broaden_widgets.push_back( pb_broaden_fit );
    broaden_widgets.push_back( pb_broaden_minimize );
@@ -5658,10 +5675,10 @@ void US_Hydrodyn_Saxs_Hplc::disable_all()
    le_broaden_sigma             -> setEnabled( false );
    le_broaden_sigma_end         -> setEnabled( false );
    le_broaden_sigma_delta       -> setEnabled( false );
-   cb_broaden_xi_1              -> setEnabled( false );
-   le_broaden_xi_1              -> setEnabled( false );
-   cb_broaden_xi_2              -> setEnabled( false );
-   le_broaden_xi_2              -> setEnabled( false );
+   cb_broaden_lambda_1          -> setEnabled( false );
+   le_broaden_lambda_1          -> setEnabled( false );
+   cb_broaden_lambda_2          -> setEnabled( false );
+   le_broaden_lambda_2          -> setEnabled( false );
    cb_broaden_deltat            -> setEnabled( false );
    le_broaden_deltat_start      -> setEnabled( false );
    le_broaden_deltat            -> setEnabled( false );
@@ -5677,6 +5694,7 @@ void US_Hydrodyn_Saxs_Hplc::disable_all()
    le_broaden_fit_range_end     -> setEnabled( false );
    cb_broaden_repeak            -> setEnabled( false );
    cb_broaden_kernel_type       -> setEnabled( false );
+   cb_broaden_kernel_mode       -> setEnabled( false );
    pb_broaden_scale_compute     -> setEnabled( false );
    pb_broaden_fit               -> setEnabled( false );
    pb_broaden_minimize          -> setEnabled( false );

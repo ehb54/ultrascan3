@@ -21,8 +21,15 @@ class US_Band_Broaden {
       BAND_BROADEN_KERNEL_EXPONENTIAL = 0
      ,BAND_BROADEN_KERNEL_GAUSSIAN    = 1
    };
+
+   enum kernel_mode : int {
+      BAND_BROADEN_KERNEL_MODE_DEFAULT            = 0
+     ,BAND_BROADEN_KERNEL_MODE_ASYMMETRIC_LAPLACE = 1
+     ,BAND_BROADEN_KERNEL_MODE_EMG_GMG            = 2
+   };
    
    static QString kernel_type_name( const enum kernel_type & ktype );
+   static QString kernel_mode_name( const enum kernel_mode & kmode );
 
    US_Band_Broaden( bool debug = false );
 

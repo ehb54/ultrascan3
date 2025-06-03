@@ -288,6 +288,23 @@ QString US_Band_Broaden::kernel_type_name( const enum kernel_type & ktype ) {
    }
 }
 
+QString US_Band_Broaden::kernel_mode_name( const enum kernel_mode & kmode ) {
+   switch ( kmode ) {
+
+   case BAND_BROADEN_KERNEL_MODE_DEFAULT :
+      return "Default";
+
+   case BAND_BROADEN_KERNEL_MODE_ASYMMETRIC_LAPLACE :
+      return "Asym. Laplace";
+
+   case BAND_BROADEN_KERNEL_MODE_EMG_GMG :
+      return "EMG+GMG";
+ 
+   default :
+      return "Unknown";
+   }
+}
+
 #if defined( BROADEN_TESTING ) 
 
 #include "/Users/eb/sda1/mattia/band_broadening_issue_202410/code/data.h"
