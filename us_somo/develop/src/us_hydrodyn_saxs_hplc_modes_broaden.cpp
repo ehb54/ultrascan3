@@ -34,7 +34,15 @@ static unordered_map < double,
 // #define BROADEN_NO_BASELINE
 #define BROADEN_SCALE_FIT
 
-static double bblm_fit( double t, const double *par ) {
+static double bblm_fit_mode_asymmetric_laplace( double t, const double *par ) {
+   return DBL_MAX;
+}
+
+static double bblm_fit_mode_emg_gmg( double t, const double *par ) {
+   return DBL_MAX;
+}
+
+static double bblm_fit_mode_default( double t, const double *par ) {
    // qDebug() << "bblm_fit 0";
    static US_Saxs_Util usu;
 
@@ -43,8 +51,6 @@ static double bblm_fit( double t, const double *par ) {
    size_t pos_param = 0;
    double sigma     = bblm_fit_param[ pos_param++ ] ? par[pos++] : bblm_fixed_params[ pos_fixed++ ];
    double tau       = bblm_fit_param[ pos_param++ ] ? par[pos++] : bblm_fixed_params[ pos_fixed++ ];
-   // double lambda_1      = bblm_fit_param[ pos_param++ ] ? par[pos++] : bblm_fixed_params[ pos_fixed++ ];
-   // double lambda_2      = bblm_fit_param[ pos_param++ ] ? par[pos++] : bblm_fixed_params[ pos_fixed++ ];
    double deltat    = bblm_fit_param[ pos_param++ ] ? par[pos++] : bblm_fixed_params[ pos_fixed++ ];
    double baseline  = bblm_fit_param[ pos_param++ ] ? par[pos++] : bblm_fixed_params[ pos_fixed++ ];
 #if defined( BROADEN_SCALE_FIT )
@@ -344,6 +350,11 @@ void US_Hydrodyn_Saxs_Hplc::broaden() {
          ,-DBL_MAX
          ,-DBL_MAX
       };
+
+   broaden_lm_fit_functions[ US_Band_Broaden::BAND_BROADEN_KERNEL_MODE_DEFAULT ]            = bblm_fit_mode_default;
+   broaden_lm_fit_functions[ US_Band_Broaden::BAND_BROADEN_KERNEL_MODE_ASYMMETRIC_LAPLACE ] = bblm_fit_mode_asymmetric_laplace;
+   broaden_lm_fit_functions[ US_Band_Broaden::BAND_BROADEN_KERNEL_MODE_EMG_GMG]             = bblm_fit_mode_emg_gmg;
+
    // end of data setup   
    
    ubb.clear();
@@ -1669,7 +1680,7 @@ void US_Hydrodyn_Saxs_Hplc::broaden_lm_fit( bool final_refinement_only ) {
              ( int )      t.size(),
              ( double * ) &( t[ 0 ] ),
              ( double * ) &( y[ 0 ] ),
-             bblm_fit,
+             broaden_lm_fit_functions[ cb_broaden_kernel_mode->currentIndex() ],
              (const LM::lm_control_struct *)&control,
              &status
              );
@@ -1704,7 +1715,7 @@ void US_Hydrodyn_Saxs_Hplc::broaden_lm_fit( bool final_refinement_only ) {
                                ( int )      t.size(),
                                ( double * ) &( t[ 0 ] ),
                                ( double * ) &( y[ 0 ] ),
-                               bblm_fit,
+                               broaden_lm_fit_functions[ cb_broaden_kernel_mode->currentIndex() ],
                                (const LM::lm_control_struct *)&control,
                                &status );
 

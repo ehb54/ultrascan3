@@ -896,10 +896,12 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       vector < double >                  broaden_params();
 
       // these maps are from US_Band_Broaden::kernel_mode enum (int)
-      map < int, set < QWidget * > >        broaden_parameter_widgets;
-      map < int, vector < mQLineEdit * > >  broaden_parameter_value_le_widgets;
-      map < int, vector < QCheckBox * > >   broaden_parameter_value_cb_widgets;
-      map < int, vector < double > >        broaden_parameter_value_minimum;
+      map < int, set < QWidget * > >                     broaden_parameter_widgets;
+      map < int, vector < mQLineEdit * > >               broaden_parameter_value_le_widgets;
+      map < int, vector < QCheckBox * > >                broaden_parameter_value_cb_widgets;
+      map < int, vector < double > >                     broaden_parameter_value_minimum;
+      map < int, double( * )( double, const double * ) > broaden_lm_fit_functions;
+
 
       // parameter values for variable count kernel parameters
       vector < double >                     broaden_parameter_current_values();
