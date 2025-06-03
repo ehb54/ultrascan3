@@ -125,6 +125,7 @@ DbgLv(1) << "  irow" << irow << "icol" << icol;
 
    //pass edata BC
    protocol_details_p[ "baseline_corrections" ] = this->protocol_details[ "baseline_corrections" ];
+   protocol_details_p[ "meniscus_info" ] = this->protocol_details[ "meniscus_info" ];
      
    //read protocol & check (once more) extinction profiles
    QStringList msg_to_user;
@@ -715,15 +716,18 @@ void US_MwlSpeciesFit::load( void )
 
    if ( us_gmp_auto_mode )
      {
-       dialog = new US_DataLoader( edlast, dbdisk, rawList, dataList, triples,
+       // dialog = new US_DataLoader( edlast, dbdisk, rawList, dataList, triples,
+       // 				   description, protocol_details, "none" );
+       dialog = new US_DataLoader( true, dbdisk, rawList, dataList, triples,
 				   description, protocol_details, "none" );
               
        QString dir_gmp = description;
        qDebug() << "[AFTER data_load: description ]: -- " << description;
        protocol_details[ "directory_for_gmp" ] = US_Settings::resultDir() + "/" + dir_gmp.split(";")[1];
        
-       //editedData: chann - to - baseline corr:
+       //editedData: chann - to - baseline corr: && meniscus info
        QString triples_bc;
+       QMap<QString, QString> chans_meniscus; 
        for (int i=0; i<dataList.size(); ++i)
 	 {
 	   QString triple_name = dataList[i].cell + dataList[i].channel + dataList[i].wavelength;
@@ -731,16 +735,31 @@ void US_MwlSpeciesFit::load( void )
 		    << ", the baseline slope  "
 		    << dataList[i].bl_corr_slope << ", intercept " << dataList[i].bl_corr_yintercept
 		    << ", left "   << dataList[i].xvalues[0]
-		    << ", right "  << dataList[i].xvalues.last();
+		    << ", right "  << dataList[i].xvalues.last()
+		    << ", editID " << dataList[i].editID
+		    << ", editGUID " << dataList[i].editGUID;
 	   triples_bc += triple_name + ":"
 	     + QString::number(dataList[i].xvalues[0]) + ","
 	     + QString::number(dataList[i].xvalues.last()) + ","
 	     + QString::number(dataList[i].bl_corr_slope) + ","
 	     + QString::number(dataList[i].bl_corr_yintercept) + ";";
 
+	   //add meniscus info for each channel:
+	   QString channel_n = dataList[i].cell + dataList[i].channel;
+	   chans_meniscus[ channel_n ] = QString::number( dataList[i].meniscus );
 	 }
        triples_bc.chop(1);
        protocol_details[ "baseline_corrections" ] = triples_bc;
+
+       QString channel_men_info;
+       QStringList ch_men_list = chans_meniscus.keys();
+       for( int i=0; i<ch_men_list.size(); ++i )
+	 {
+	   channel_men_info += ch_men_list[i] + ":"
+	     + chans_meniscus[ ch_men_list[i] ] + ",";
+	 }
+       channel_men_info.chop(1);
+       protocol_details[ "meniscus_info" ] = channel_men_info;
      }
    else
      dialog = new US_DataLoader( edlast, dbdisk, rawList, dataList, triples, description, "none" );

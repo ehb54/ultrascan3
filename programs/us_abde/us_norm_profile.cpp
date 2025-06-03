@@ -522,6 +522,7 @@ void US_Norm_Profile::load_data_auto( QMap<QString,QString> & protocol_details )
   slt_reset();
   data_per_channel. clear();
   data_per_channel_xnorm . clear();
+  data_per_channel_meniscus. clear();
   data_per_channel_norm_cb. clear();
   data_per_channel_ranges_percents. clear();
   data_per_channel_processed. clear();
@@ -541,6 +542,7 @@ void US_Norm_Profile::load_data_auto_report( QMap<QString,QString> & protocol_de
   slt_reset();
   data_per_channel. clear();
   data_per_channel_xnorm . clear();
+  data_per_channel_meniscus. clear();
   data_per_channel_norm_cb. clear();
   data_per_channel_ranges_percents. clear();
   data_per_channel_processed. clear();
@@ -562,14 +564,16 @@ void US_Norm_Profile::load_data_auto_report( QMap<QString,QString> & protocol_de
 			     data_per_channel_xnorm,
 			     data_per_channel_norm_cb,
 			     data_per_channel_ranges_percents,
-			     data_per_channel_rmsd );
+			     data_per_channel_rmsd,
+			     data_per_channel_meniscus );
 
   parse_abde_analysis_jsons( abde_analysis_parms[ "filename_blc" ],
 			     protocol_details,
 			     data_per_channel_xnorm,
 			     data_per_channel_norm_cb,
 			     data_per_channel_ranges_percents,
-			     data_per_channel_rmsd );
+			     data_per_channel_rmsd,
+			     data_per_channel_meniscus );
   
   //set some fields
   protocol_details["abde_etype"]     = abde_analysis_parms["etype"];
@@ -581,6 +585,7 @@ void US_Norm_Profile::load_data_auto_report( QMap<QString,QString> & protocol_de
 
   emit pass_channels_info( channList );
   emit pass_rmsd_info( data_per_channel_rmsd );
+  emit pass_menisc_info( data_per_channel_meniscus );
   emit pass_percents_info( data_per_channel_ranges_percents );
 }
 
@@ -649,11 +654,13 @@ void US_Norm_Profile::slt_loadAUC_auto_report(QMap<QString,QString> & protocol_d
       data_per_channel_processed[ channList[i] ] = true;
       
       qDebug() << "channel, " << channList[i]
-	       << ": data_per_channel_xnorm, data_per_channel_norm_cb, data_per_channel_rmsd, data_per_channel_ranges_percents -- "
+	       << ": data_per_channel_xnorm, data_per_channel_norm_cb, data_per_channel_rmsd, "
+	       << " data_per_channel_ranges_percents, data_per_channel_meniscus -- "
 	       << data_per_channel_xnorm[channList[i]]
 	       << data_per_channel_norm_cb[channList[i]]
 	       << data_per_channel_rmsd[channList[i]]
-	       << data_per_channel_ranges_percents[channList[i]];
+	       << data_per_channel_ranges_percents[channList[i]]
+	       << data_per_channel_meniscus[channList[i]];
 	;
     }
   
@@ -719,13 +726,9 @@ void US_Norm_Profile::slt_loadAUC_auto( QMap<QString,QString> & protocol_details
   //read ePRofiles if non-MWL
   qDebug() << "in ABDE_norm: reading eProfiles BC-- "
 	       << protocol_details[ "baseline_corrections" ];
-  if ( abde_etype == "SWL" || abde_etype != "MWL" )
-    {
-      qDebug() << "in ABDE_norm: reading eProfiles BC -- "
-	       << protocol_details[ "baseline_corrections" ];
-    }
-
-  
+  qDebug() << "in ABDE_norm: reading meniscus info -- "
+	       << protocol_details[ "meniscus_info" ];
+    
   //set x_norm to "-1" for each channel, and RMSDs
   QStringList channels_rmsds_l = channels_rmsds.split(";");
 
@@ -748,6 +751,17 @@ void US_Norm_Profile::slt_loadAUC_auto( QMap<QString,QString> & protocol_details
 	      if ( c_chan_rmsd_channel == channList[i] )
 		data_per_channel_rmsd[channList[i]] = c_chan_rmsd_rmsd.toDouble();
 	    }
+	}
+
+      //and also, fill meniscus info per channel
+      QStringList channels_menisc_l = protocol_details["meniscus_info"].split(",");
+      for (int j=0; j<channels_menisc_l.size(); ++j)
+	{
+	  QStringList c_chan_menisc = channels_menisc_l[j].split(":");
+	  QString c_chan_menisc_channel =  c_chan_menisc[0];
+	  QString c_chan_menisc_menisc  =  c_chan_menisc[1];
+	  if ( c_chan_menisc_channel == channList[i] )
+	    data_per_channel_meniscus[channList[i]] = c_chan_menisc_menisc.toDouble();
 	}
     }
   // //TEST
@@ -1940,6 +1954,9 @@ void US_Norm_Profile::save_auto( void )
       //x_normalization
       json_p += "\"" + channame + "\":{\"x_norm\":\"" + x_normal + "\",";
 
+      //meniscus
+      json_p += "\"meniscus\":\"" + QString::number(data_per_channel_meniscus[channame]) + "\",";
+
       //add rmsds
       if ( abde_etype=="MWL" )
 	json_p += "\"rmsd\":\"" + QString::number(data_per_channel_rmsd[channame]) + "\",";
@@ -1960,7 +1977,7 @@ void US_Norm_Profile::save_auto( void )
 
   qDebug() << "JSON: " << json_p;
 
-  // // TEST 
+  // // // TEST 
   // return;
 
   //Determine filename (MWL or SWL)
@@ -2304,7 +2321,8 @@ void US_Norm_Profile::parse_abde_analysis_jsons( QString abde_analysis_parms_str
 						 QMap <QString, double>&  data_chann_x_norm,
 						 QMap< QString, int >& data_chann_x_norm_cb,
 						 QMap< QString, QMap < QString, double>>& data_chann_range_percent,
-						 QMap <QString, double>&  data_chann_rmsd )
+						 QMap <QString, double>&  data_chann_rmsd,
+						 QMap <QString, double>&  data_chann_menisc )
 {
   QString channels_to_radial_ranges;
   
@@ -2342,6 +2360,11 @@ void US_Norm_Profile::parse_abde_analysis_jsons( QString abde_analysis_parms_str
 		      double x_norm_val      = value_1.toString().toDouble();
 		      data_chann_x_norm[key] = x_norm_val;
 		      data_chann_x_norm_cb[key] = (x_norm_val != -1) ? Qt::Unchecked : Qt::Checked ;
+		    }
+		  else if ( key_1 == "meniscus" )
+		    {
+		      double menisc_val = value_1.toString().toDouble();
+		      data_chann_menisc[key] = menisc_val;
 		    }
 		  else if ( key_1 == "rmsd" )
 		    {

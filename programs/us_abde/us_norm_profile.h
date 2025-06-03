@@ -38,6 +38,7 @@ class US_Norm_Profile : public US_Widgets
         void back_to_runManager();
         void pass_channels_info( QStringList& );
         void pass_rmsd_info( QMap< QString, double >& );
+        void pass_menisc_info( QMap< QString, double >& );
         void pass_percents_info( QMap< QString, QMap < QString, double>>& );
   
     protected:
@@ -85,6 +86,7 @@ class US_Norm_Profile : public US_Widgets
         QString abde_etype;
         QMap< QString, QMap < QString, QVector<QVector<double>> > > data_per_channel;
         QMap< QString, double > data_per_channel_xnorm;
+        QMap< QString, double > data_per_channel_meniscus;
         QMap< QString, double > data_per_channel_rmsd;
         QMap< QString, int > data_per_channel_norm_cb;
         QMap< QString, QMap < QString, double>> data_per_channel_ranges_percents;
@@ -161,6 +163,7 @@ class US_Norm_Profile : public US_Widgets
 					QMap <QString, double>&,
 					QMap< QString, int >&,
 					QMap< QString, QMap < QString, double>>&,
+					QMap <QString, double>&,
 					QMap <QString, double>& );
 
         //! \brief Slot to add or remove an item.

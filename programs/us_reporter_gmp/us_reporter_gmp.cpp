@@ -597,6 +597,7 @@ void US_ReporterGMP::loadRun_auto ( QMap < QString, QString > & protocol_details
   abde_channList. clear();
   abde_ranges_percents. clear();
   abde_rmsd. clear();
+  abde_menisc. clear();
   abde_plots_filenames. clear();
   
   prot_details_at_report = protocol_details;
@@ -1635,6 +1636,7 @@ void US_ReporterGMP::load_gmp_run ( void )
   abde_channList. clear();
   abde_ranges_percents. clear();
   abde_rmsd. clear();
+  abde_menisc. clear();
   abde_plots_filenames. clear();
 
   prot_details_at_report = protocol_details;
@@ -3789,12 +3791,12 @@ void US_ReporterGMP::generate_report( void )
       qDebug() << "Query for autoflowHistory -- " << qry;
       db->query( qry );
 
-      /*** TEST - DO NOT delete parent autoflow YET --------------------------------- **/
+      /*** TEST - DO NOT delete parent autoflow YET ---------------------------------
       //delete autoflow record
       qry.clear();
       qry << "delete_autoflow_record_by_id" << AutoflowID_auto;
       db->statusQuery( qry );
-      /****/ 
+      ****/ 
 
       // //Also delete record from autoflowStages table:           //DO NOT DELETE autoflowStages yet - req. by eSigning process!!
       // qry.clear();
@@ -3859,6 +3861,8 @@ void US_ReporterGMP::process_abde_plots( void )
 	   this, SLOT( get_abde_channels(QStringList&) ) );
   connect( sdiag_norm_profile, SIGNAL( pass_rmsd_info( QMap< QString, double >& )),
 	   this, SLOT( get_abde_rmsds(QMap< QString, double >&) ) );
+  connect( sdiag_norm_profile, SIGNAL( pass_menisc_info( QMap< QString, double >& )),
+	   this, SLOT( get_abde_menisc(QMap< QString, double >&) ) );
   connect( sdiag_norm_profile, SIGNAL( pass_percents_info( QMap< QString, QMap < QString, double>>& )),
 	   this, SLOT( get_abde_percents(QMap< QString, QMap < QString, double>>&) ) );
   sdiag_norm_profile->load_data_auto_report( prot_details_at_report );
@@ -3898,6 +3902,11 @@ void US_ReporterGMP::get_abde_channels( QStringList& abde_cl_p)
 void US_ReporterGMP::get_abde_rmsds( QMap< QString, double >& abde_rmsd_p)
 {
   abde_rmsd = abde_rmsd_p;
+}
+
+void US_ReporterGMP::get_abde_menisc( QMap< QString, double >& abde_menisc_p)
+{
+  abde_menisc = abde_menisc_p;
 }
 
 void US_ReporterGMP::get_abde_percents(QMap< QString, QMap < QString, double>>& abde_perc_p )
@@ -7117,14 +7126,24 @@ void US_ReporterGMP::assemble_user_inputs_html( void )
       QMap < QString, QString >::iterator mp;
       for ( mp = status_map[ "Meniscus" ].begin(); mp != status_map[ "Meniscus" ].end(); ++mp )
 	{
+	  QString val_str   = mp.value();
+	  QString chann_str = mp.key();
+
+	  if ( expType == "ABDE" )
+	    {
+	      val_str = "manual;  Meniscus Value: " +
+		QString::number( abde_menisc[ chann_str.replace(" / ","")] );
+	      
+	    }
+	  
 	  html_assembled += tr(
 			       "<tr>"
 			       "<td> Channel:  %1 </td>"
 			       "<td> Type:     %2 </td>"
 			       "</tr>"
 			       )
-	    .arg( mp.key()   )     //1
-	    .arg( mp.value() )     //2
+	    .arg( mp.key()  )  //1
+	    .arg( val_str )    //2
 	    ;
 	}
       html_assembled += tr( "</table>" );
