@@ -26,7 +26,12 @@ static bool   shutting_down;
 static unordered_map < double,
                        unordered_map < double,
                                        unordered_map < double,
-                                                       vector < double > > > > bblm_broadened_conc_I_cache;
+                                                       vector < double > > > > bblm_broadened_conc_I_cache_3;
+static unordered_map < double,
+                       unordered_map < double,
+                                       unordered_map < double,
+                                                       unordered_map < double,
+                                                                       vector < double > > > > > bblm_broadened_conc_I_cache_4;
 #define BBLM_INTERP_PAD 1e6
 #define BROADEN_LM_ENORM
 /// BROADEN_NO_CHI2 turns off SD in curves for testing
@@ -35,12 +40,158 @@ static unordered_map < double,
 #define BROADEN_SCALE_FIT
 
 static double bblm_fit_mode_asymmetric_laplace( double t, const double *par ) {
+   // qDebug() << "bblm_fit 0";
+   static US_Saxs_Util usu;
+
+   size_t pos       = 0;
+   size_t pos_fixed = 0;
+   size_t pos_param = 0;
+   double sigma     = bblm_fit_param[ pos_param++ ] ? par[pos++] : bblm_fixed_params[ pos_fixed++ ];
+   double lambda_1  = bblm_fit_param[ pos_param++ ] ? par[pos++] : bblm_fixed_params[ pos_fixed++ ];
+   double lambda_2  = bblm_fit_param[ pos_param++ ] ? par[pos++] : bblm_fixed_params[ pos_fixed++ ];
+   double deltat    = bblm_fit_param[ pos_param++ ] ? par[pos++] : bblm_fixed_params[ pos_fixed++ ];
+   double baseline  = bblm_fit_param[ pos_param++ ] ? par[pos++] : bblm_fixed_params[ pos_fixed++ ];
+#if defined( BROADEN_SCALE_FIT )
+   double scale     = bblm_fit_param[ pos_param++ ] ? par[pos++] : bblm_fixed_params[ pos_fixed++ ];
+#endif
+
+   if ( sigma < 0 ) {
+      return DBL_MAX;
+   }
+
+#if defined( BROADEN_SCALE_FIT )
+   if ( scale <= 0 ) {
+      return DBL_MAX;
+   }
+#endif
+   
+   vector < double > bblm_conc_I;
+
+   // qDebug() << "bblm_fit 1";
+
+   if ( bblm_broadened_conc_I_cache_4.count( sigma )
+        && bblm_broadened_conc_I_cache_4[ sigma ].count( lambda_1 ) 
+        && bblm_broadened_conc_I_cache_4[ sigma ][ lambda_1 ].count( lambda_2 )
+        && bblm_broadened_conc_I_cache_4[ sigma ][ lambda_1 ][ lambda_2 ].count( deltat ) ) {
+      // return point value
+      if ( floor( t ) != t
+           || t > bblm_broadened_conc_I_cache_4[ sigma ][ lambda_1 ][ lambda_2 ][ deltat ].size()
+           || t < 0
+           ) {
+         qDebug() << QString( "--> error, t value %1 not integer or outside of fitting range" ).arg( t );
+         return DBL_MAX;
+      }
+
+      if ( bblm_ref_has_errors ) {
+         if ( (size_t) t >= bblm_ref_errors_mult.size() ) {
+            qDebug() << QString( "--> error, t value %1 outside of errors range" ).arg( t );
+            return DBL_MAX;
+         }
+#if defined( BROADEN_SCALE_FIT )
+         // scale first, then add the baseline -- this is consistent with what we do in broaden_done()
+         return scale * bblm_broadened_conc_I_cache_4[ sigma ][ lambda_1 ][ lambda_2 ][ deltat ][ (size_t) t ] + baseline * bblm_ref_errors_mult[ t ];
+      } else {
+         return scale * bblm_broadened_conc_I_cache_4[ sigma ][ lambda_1 ][ lambda_2 ][ deltat ][ (size_t) t ] + baseline;
+#else
+         return bblm_broadened_conc_I_cache_4[ sigma ][ lambda_1 ][ lambda_2 ][ deltat ][ (size_t) t ] + baseline * bblm_scale * bblm_ref_errors_mult[ t ];
+      } else {
+         return bblm_broadened_conc_I_cache_4[ sigma ][ lambda_1 ][ lambda_2 ][ deltat ][ (size_t) t ] + baseline * bblm_scale;
+#endif
+      }
+   }
+
+   if ( !uhsh->broaden_compute_one_no_ui(
+                                         { sigma, lambda_1, lambda_2 }
+                                         ,bblm_kernel_size
+                                         ,bblm_kernel_delta_t
+                                         ,bblm_org_conc_I
+                                         ,bblm_conc_I
+                                         ) ) {
+      qDebug() << "band_broaden_fit() fit error";
+      return DBL_MAX;
+   }
+   
+   // qDebug() << "bblm_fit 2";
+
+   vector < double > bblm_conc_t = bblm_org_conc_t;
+   for ( auto & t : bblm_conc_t ) {
+      t += deltat;
+   }
+
+#if defined( BROADEN_SCALE_FIT )
+   // the I is unscaled when we are doing a scaling fit
+#else
+   for ( auto & I : bblm_conc_I ) {
+      I *= bblm_scale;
+   }
+#endif
+   
+   vector < double > new_conc_I;
+
+   if ( !usu.linear_interpolate( bblm_conc_t, bblm_conc_I, bblm_ref_t, new_conc_I ) ) {
+      uhsh->editor_msg( "red", QString( "Error while fitting: interpolation error: %1\n" ).arg( usu.errormsg ) );
+      qDebug() << "interpolation error";
+      US_Vector::printvector2( "bblm_conc_t, bblm_conc_I", bblm_conc_t, bblm_conc_I );
+      US_Vector::printvector2( "bblm_ref_t, bblm_ref_I", bblm_ref_t, bblm_ref_I );
+      exit(-1);
+      return DBL_MAX;
+   }
+
+   if ( bblm_ref_has_errors ) {
+      for ( size_t i = 0; i < bblm_size; ++i ) {
+         new_conc_I[ i ] *= bblm_ref_errors_mult[ i ];
+      }
+   }
+
+   bblm_broadened_conc_I_cache_4[ sigma ][ lambda_1 ][ lambda_2 ][ deltat ] = new_conc_I;
+
+   // US_Vector::printvector2( "bblm_fit after += deltat: bblm_org_conc_t, bblm_conc_t:", bblm_org_conc_t, bblm_conc_t );
+
+   // US_Vector::printvector3( "bblm org conc t, I, conc I", bblm_org_conc_t, bblm_org_conc_I, bblm_conc_I );
+   // qDebug() << "bblm_fit 3";
+   // US_Vector::printvector3( "bblm ref t, I, errors", bblm_ref_t, bblm_ref_I, bblm_ref_errors );
+
+   // double loss = uhsh->broaden_compute_loss_no_ui(
+   //                                                bblm_conc_t
+   //                                                ,bblm_conc_I
+   //                                                ,bblm_ref_t
+   //                                                ,bblm_ref_I
+   //                                                ,bblm_ref_errors
+   //                                                );
+   // qDebug() << "bblm_fit 4";
+
+   if ( floor( t ) != t
+        || t > new_conc_I.size()
+        || t < 0
+        ) {
+      qDebug() << QString( "--> error, t value %1 not integer or outside of fitting range" ).arg( t );
+      return DBL_MAX;
+   }
+
+   if ( bblm_ref_has_errors ) {
+      if ( (size_t) t >= bblm_ref_errors_mult.size() ) {
+         qDebug() << QString( "--> error, t value %1 outside of errors range" ).arg( t );
+         return DBL_MAX;
+      }
+#if defined( BROADEN_SCALE_FIT )
+      // scale first, then add the baseline -- this is consistent with what we do in broaden_done()
+      return scale * new_conc_I[ (size_t) t ] + baseline * bblm_ref_errors_mult[ t ];
+   } else {
+      return scale * new_conc_I[ (size_t) t ] + baseline;
+#else
+      return new_conc_I[ (size_t) t ] + baseline * bblm_scale * bblm_ref_errors_mult[ t ];
+   } else {
+      return new_conc_I[ (size_t) t ] + baseline * bblm_scale;
+#endif
+   }
+
    return DBL_MAX;
 }
 
-static double bblm_fit_mode_emg_gmg( double t, const double *par ) {
-   return DBL_MAX;
-}
+// currently duplicate of asymmetric laplace 
+// static double bblm_fit_mode_emg_gmg( double t, const double *par ) {
+//    return DBL_MAX;
+// }
 
 static double bblm_fit_mode_default( double t, const double *par ) {
    // qDebug() << "bblm_fit 0";
@@ -73,12 +224,12 @@ static double bblm_fit_mode_default( double t, const double *par ) {
 
    // qDebug() << "bblm_fit 1";
 
-   if ( bblm_broadened_conc_I_cache.count( tau )
-        && bblm_broadened_conc_I_cache[ tau ].count( sigma ) 
-        && bblm_broadened_conc_I_cache[ tau ][ sigma ].count( deltat ) ) {
+   if ( bblm_broadened_conc_I_cache_3.count( sigma )
+        && bblm_broadened_conc_I_cache_3[ sigma ].count( tau ) 
+        && bblm_broadened_conc_I_cache_3[ sigma ][ tau ].count( deltat ) ) {
       // return point value
       if ( floor( t ) != t
-           || t > bblm_broadened_conc_I_cache[ tau ][ sigma ][ deltat ].size()
+           || t > bblm_broadened_conc_I_cache_3[ sigma ][ tau ][ deltat ].size()
            || t < 0
            ) {
          qDebug() << QString( "--> error, t value %1 not integer or outside of fitting range" ).arg( t );
@@ -92,13 +243,13 @@ static double bblm_fit_mode_default( double t, const double *par ) {
          }
 #if defined( BROADEN_SCALE_FIT )
          // scale first, then add the baseline -- this is consistent with what we do in broaden_done()
-         return scale * bblm_broadened_conc_I_cache[ tau ][ sigma ][ deltat ][ (size_t) t ] + baseline * bblm_ref_errors_mult[ t ];
+         return scale * bblm_broadened_conc_I_cache_3[ sigma ][ tau ][ deltat ][ (size_t) t ] + baseline * bblm_ref_errors_mult[ t ];
       } else {
-         return scale * bblm_broadened_conc_I_cache[ tau ][ sigma ][ deltat ][ (size_t) t ] + baseline;
+         return scale * bblm_broadened_conc_I_cache_3[ sigma ][ tau ][ deltat ][ (size_t) t ] + baseline;
 #else
-         return bblm_broadened_conc_I_cache[ tau ][ sigma ][ deltat ][ (size_t) t ] + baseline * bblm_scale * bblm_ref_errors_mult[ t ];
+         return bblm_broadened_conc_I_cache_3[ sigma ][ tau ][ deltat ][ (size_t) t ] + baseline * bblm_scale * bblm_ref_errors_mult[ t ];
       } else {
-         return bblm_broadened_conc_I_cache[ tau ][ sigma ][ deltat ][ (size_t) t ] + baseline * bblm_scale;
+         return bblm_broadened_conc_I_cache_3[ sigma ][ tau ][ deltat ][ (size_t) t ] + baseline * bblm_scale;
 #endif
       }
    }
@@ -146,7 +297,7 @@ static double bblm_fit_mode_default( double t, const double *par ) {
       }
    }
 
-   bblm_broadened_conc_I_cache[ tau ][ sigma ][ deltat ] = new_conc_I;
+   bblm_broadened_conc_I_cache_3[ sigma ][ tau ][ deltat ] = new_conc_I;
 
    // US_Vector::printvector2( "bblm_fit after += deltat: bblm_org_conc_t, bblm_conc_t:", bblm_org_conc_t, bblm_conc_t );
 
@@ -353,7 +504,9 @@ void US_Hydrodyn_Saxs_Hplc::broaden() {
 
    broaden_lm_fit_functions[ US_Band_Broaden::BAND_BROADEN_KERNEL_MODE_DEFAULT ]            = bblm_fit_mode_default;
    broaden_lm_fit_functions[ US_Band_Broaden::BAND_BROADEN_KERNEL_MODE_ASYMMETRIC_LAPLACE ] = bblm_fit_mode_asymmetric_laplace;
-   broaden_lm_fit_functions[ US_Band_Broaden::BAND_BROADEN_KERNEL_MODE_EMG_GMG]             = bblm_fit_mode_emg_gmg;
+   // currently the fit code is the same for eme_gmg & asymmetric laplace... difference handled in underlying broaden function
+   // broaden_lm_fit_functions[ US_Band_Broaden::BAND_BROADEN_KERNEL_MODE_EMG_GMG]             = bblm_fit_mode_emg_gmg;
+   broaden_lm_fit_functions[ US_Band_Broaden::BAND_BROADEN_KERNEL_MODE_EMG_GMG]             = bblm_fit_mode_asymmetric_laplace;
 
    // end of data setup   
    
@@ -1381,7 +1534,8 @@ void US_Hydrodyn_Saxs_Hplc::broaden_lm_fit( bool final_refinement_only ) {
 
    uhsh = (US_Hydrodyn_Saxs_Hplc *)this;
 
-   bblm_broadened_conc_I_cache.clear();
+   bblm_broadened_conc_I_cache_3.clear();
+   bblm_broadened_conc_I_cache_4.clear();
 
    bblm_init_params.clear();
    bblm_fixed_params.clear();
@@ -1730,7 +1884,8 @@ void US_Hydrodyn_Saxs_Hplc::broaden_lm_fit( bool final_refinement_only ) {
 
    progress->reset();
 
-   bblm_broadened_conc_I_cache.clear();
+   bblm_broadened_conc_I_cache_3.clear();
+   bblm_broadened_conc_I_cache_4.clear();
 
    US_Vector::printvector( QString( "*** BEST after lmcurve_fit_rmsd fnorm %1, best_params" ).arg( best_fit ), best_params );
 
