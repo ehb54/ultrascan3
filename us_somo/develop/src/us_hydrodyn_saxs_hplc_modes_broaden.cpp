@@ -98,8 +98,7 @@ static double bblm_fit( double t, const double *par ) {
    }
 
    if ( !uhsh->broaden_compute_one_no_ui(
-                                         sigma
-                                         ,tau
+                                         { sigma, tau }
                                          ,bblm_kernel_size
                                          ,bblm_kernel_delta_t
                                          ,bblm_org_conc_I
@@ -501,8 +500,7 @@ void US_Hydrodyn_Saxs_Hplc::broaden_done( bool save ) {
 
       vector < double > broadened = ubb.broaden(
                                                 f_Is[ broaden_names[ 0 ] ]
-                                                ,le_broaden_sigma->text().toDouble()
-                                                ,le_broaden_tau->text().toDouble()
+                                                ,broaden_parameter_current_values()
                                                 ,0
                                                 ,le_broaden_kernel_end->text().toDouble()
                                                 ,le_broaden_kernel_deltat->text().toDouble()
@@ -703,16 +701,22 @@ void US_Hydrodyn_Saxs_Hplc::broaden_enables() {
    {
       double fit_range_start = le_broaden_fit_range_start->text().toDouble();
       double fit_range_end   = le_broaden_fit_range_end  ->text().toDouble();
-      pb_broaden_fit               -> setEnabled(
-                                                 ( cb_broaden_tau->isChecked()
-                                                   || cb_broaden_sigma->isChecked()
-                                                   || cb_broaden_deltat->isChecked()
-                                                   || cb_broaden_baseline->isChecked()
+
+      bool any_parameters_checked =
+         cb_broaden_deltat->isChecked()
+         || cb_broaden_baseline->isChecked()
 #if defined( BROADEN_SCALE_FIT )
-                                                   || cb_broaden_scale->isChecked()
+         || cb_broaden_scale->isChecked()
 #endif
-                                                   ) &&
-                                                 fit_range_start < fit_range_end
+         ;
+
+      for ( auto const & cb : broaden_parameter_value_cb_widgets[ cb_broaden_kernel_mode->currentIndex() ] ) {
+         any_parameters_checked |= cb->isChecked();
+      }
+
+      pb_broaden_fit               -> setEnabled(
+                                                 any_parameters_checked
+                                                 && fit_range_start < fit_range_end
                                                  );
    }
 
@@ -1109,8 +1113,7 @@ void US_Hydrodyn_Saxs_Hplc::broaden_kernel_mode_index() {
 }
 
 bool US_Hydrodyn_Saxs_Hplc::broaden_compute_one_no_ui(
-                                                      double sigma
-                                                      ,double tau
+                                                      const vector < double > params
                                                       ,double kernel_size
                                                       ,double kernel_delta_t
                                                       ,const vector < double > & I
@@ -1120,11 +1123,11 @@ bool US_Hydrodyn_Saxs_Hplc::broaden_compute_one_no_ui(
    ubb.clear();
    broadened = ubb.broaden(
                            I
-                           ,sigma
-                           ,tau
+                           ,params
                            ,0
                            ,kernel_size
                            ,kernel_delta_t
+                           ,(US_Band_Broaden::kernel_mode) cb_broaden_kernel_mode->currentIndex()
                            );
    if ( !broadened.size() ) {
       lbl_broaden_msg->setText( QString( "Error: %1" ).arg( ubb.errormsg ) );
@@ -1132,6 +1135,32 @@ bool US_Hydrodyn_Saxs_Hplc::broaden_compute_one_no_ui(
    }
    return true;
 }
+
+// obsolete, using vector double for parameters
+// bool US_Hydrodyn_Saxs_Hplc::broaden_compute_one_no_ui(
+//                                                       double sigma
+//                                                       ,double tau
+//                                                       ,double kernel_size
+//                                                       ,double kernel_delta_t
+//                                                       ,const vector < double > & I
+//                                                       ,vector < double > & broadened
+//                                                       ) {
+// #warning need to better support changing kernel type etc in US_Band_Broaden, currently only caching on Tau, so clearing it all for now
+//    ubb.clear();
+//    broadened = ubb.broaden(
+//                            I
+//                            ,sigma
+//                            ,tau
+//                            ,0
+//                            ,kernel_size
+//                            ,kernel_delta_t
+//                            );
+//    if ( !broadened.size() ) {
+//       lbl_broaden_msg->setText( QString( "Error: %1" ).arg( ubb.errormsg ) );
+//       return false;
+//    }
+//    return true;
+// }
 
 void US_Hydrodyn_Saxs_Hplc::broaden_compute_one( bool details ) {
 
@@ -1159,11 +1188,11 @@ void US_Hydrodyn_Saxs_Hplc::broaden_compute_one( bool details ) {
 
    vector < double > broadened = ubb.broaden(
                                              f_Is[ broaden_names[ 0 ] ]
-                                             ,le_broaden_sigma->text().toDouble()
-                                             ,le_broaden_tau->text().toDouble()
+                                             ,broaden_parameter_current_values()
                                              ,0
                                              ,le_broaden_kernel_end->text().toDouble()
                                              ,le_broaden_kernel_deltat->text().toDouble()
+                                             ,(US_Band_Broaden::kernel_mode) cb_broaden_kernel_mode->currentIndex()
                                              );
    if ( !broadened.size() ) {
       lbl_broaden_msg->setText( QString( "Error: %1" ).arg( ubb.errormsg ) );
