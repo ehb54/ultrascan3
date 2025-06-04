@@ -107,6 +107,7 @@ class US_Norm_Profile : public US_Widgets
         QCheckBox *ckb_legend; //!< Checkbox for legend.
         QCheckBox *ckb_xrange; //!< Checkbox for X range.
         QCheckBox *ckb_norm_max; //!< Normalize by Maximum.
+        QCheckBox *ckb_ranges;
         US_PlotPicker *picker; //!< Plot picker object.
 
         QStringList channList;
@@ -215,6 +216,8 @@ class US_Norm_Profile : public US_Widgets
         //! \brief Slot to toggle the raw data.
         //! \param state The state of the raw data checkbox.
         void slt_rawData(int state);
+
+        void slt_ranges(int state);
 
         //! \brief Slot to reset the profile.
         void slt_reset(void);

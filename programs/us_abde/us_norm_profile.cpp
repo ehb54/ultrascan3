@@ -131,12 +131,17 @@ US_Norm_Profile::US_Norm_Profile( QString auto_mode ): US_Widgets()
     QGridLayout *legend_lyt = us_checkbox("Legend", ckb_legend);
     ckb_legend->setChecked(true);
 
+    ckb_ranges = new QCheckBox();
+    QGridLayout *ranges_lyt = us_checkbox("Ranges", ckb_ranges);
+    ckb_ranges->setChecked(true);
+    
     QHBoxLayout *intg_lyt = new QHBoxLayout();
     intg_lyt->addStretch(1);
     intg_lyt->addLayout(rawData_lyt);
     intg_lyt->addLayout(integral_lyt);
     intg_lyt->addLayout(norm_lyt);
     intg_lyt->addLayout(legend_lyt);
+    intg_lyt->addLayout(ranges_lyt);
     intg_lyt->addStretch(1);
 
     usplot = new US_Plot( plot, tr( "" ),
@@ -213,6 +218,7 @@ US_Norm_Profile::US_Norm_Profile( QString auto_mode ): US_Widgets()
     connect(ckb_norm, SIGNAL(stateChanged(int)), this, SLOT(slt_norm(int)));
     connect(ckb_rawData, SIGNAL(stateChanged(int)), this, SLOT(slt_rawData(int)));
     connect(ckb_norm_max, SIGNAL(stateChanged(int)), this, SLOT(slt_norm_by_max(int)));
+    connect(ckb_ranges, SIGNAL(stateChanged(int)), this, SLOT(slt_ranges(int)));
     connect(picker, SIGNAL(cMouseUp(const QwtDoublePoint&)),
             this,   SLOT(slt_mouse(const QwtDoublePoint&)));
     ckb_norm_max->setCheckState(Qt::Checked);
@@ -583,6 +589,9 @@ void US_Norm_Profile::load_data_auto_report( QMap<QString,QString> & protocol_de
   abde_etype = protocol_details["abde_etype"];
   slt_loadAUC_auto_report( protocol_details );
 
+  qDebug() << "[in load_for_REPORT]: us_auto_mode, abde_etype -- "
+	   << us_auto_mode << abde_etype;
+
   emit pass_channels_info( channList );
   emit pass_rmsd_info( data_per_channel_rmsd );
   emit pass_menisc_info( data_per_channel_meniscus );
@@ -786,8 +795,9 @@ void US_Norm_Profile::slt_loadAUC_auto( QMap<QString,QString> & protocol_details
 
 QString US_Norm_Profile::select_channel_public( int index )
 {
-  qDebug() << "[in select_channel_public()]: channame, index -- "
-	   << cb_chann->itemText( index ) << index;
+  qDebug() << "[in select_channel_public()]: channame, index, abde_etype, us_auto_mode -- "
+	   << cb_chann->itemText( index ) << index
+	   << abde_etype <<  us_auto_mode;
   cb_chann->setCurrentIndex( index );
 
   emit pass_data_per_channel( data_per_channel );
@@ -1243,11 +1253,14 @@ void US_Norm_Profile::plotData(void){
     QPen pen = QPen(Qt::SolidPattern, 1, Qt::SolidLine, Qt::RoundCap, Qt::BevelJoin);
     pen.setWidth(2);
 
+    QVector<Qt::PenStyle> penstyles_list;
+    penstyles_list << Qt::DashLine << Qt::DotLine << Qt::DashDotLine << Qt::DashDotDotLine;
+
     QwtText yTitle = plot->axisTitle(QwtPlot::yLeft);
 
     int nd = selFilenames.size();
     qDebug() << "[in plotData(): ] selFilenames -- " << selFilenames;
-    
+        
     bool plt_state = ckb_rawData->isChecked() || ckb_integral->isChecked();
 
     if (! plt_state || nd == 0){
@@ -1265,6 +1278,9 @@ void US_Norm_Profile::plotData(void){
     double maxX = -1e99;
     double minY =  1e99;
     double maxY = -1e99;
+
+    double minY_global = minY;
+    double maxY_global = maxY;
 
     if (ckb_rawData->isChecked()){
         bool norm = ckb_norm->isChecked();
@@ -1293,13 +1309,25 @@ void US_Norm_Profile::plotData(void){
 	    QString legend;
 	    if ( us_auto_mode )
 	      {
-		if ( selFilenames.at(i). contains(".002") )
+		if ( selFilenames.at(i). contains("_002") ||
+		     selFilenames.at(i). contains(".002") ||
+		     selFilenames.at(i). endsWith(".2")   ||
+		     selFilenames.at(i). contains("protein", Qt::CaseInsensitive) ||
+		     selFilenames.at(i). contains("prot", Qt::CaseInsensitive) )
 		  {
 		    legend = channame + "-protein";
 		    pen.setColor("red");
 		  }
-		else if ( selFilenames.at(i). contains(".001") )
-		  legend = channame + "-DNA";
+		else if ( selFilenames.at(i). contains("_001") ||
+			  selFilenames.at(i). contains(".001") ||
+			  selFilenames.at(i). endsWith(".1")   ||
+			  selFilenames.at(i). contains("dna", Qt::CaseInsensitive) )
+		  {
+		    legend = channame + "-DNA";
+		    pen.setColor("blue");
+		  }
+		else
+		  legend = channame;
 	      }
 	    else
 	      legend = tr("(D)_") + selFilenames.at(i);
@@ -1318,7 +1346,8 @@ void US_Norm_Profile::plotData(void){
 	    if ( us_auto_mode )
 	      {
 		curve->setYAxis(QwtPlot::yRight);
-		curve->setItemAttribute( QwtPlotItem::Legend, false );
+		if ( ckb_integral->isChecked() )
+		  curve->setItemAttribute( QwtPlotItem::Legend, false );
 	      }
 	    
             curve->setPen(pen);
@@ -1337,19 +1366,25 @@ void US_Norm_Profile::plotData(void){
 	  plot->setAxisScale( QwtPlot::yRight, minY - dy, maxY + dy);
 	else
 	  plot->setAxisScale( QwtPlot::yLeft, minY - dy, maxY + dy);
+
+	minY_global = minY;
+	maxY_global = maxY;
+
+	qDebug() << "[plotting rawData: minY_global, maxY_global ] -- "
+		 << minY_global << maxY_global;
     }
 
     minY =  1e99;
     maxY = -1e99;
 
-    if (ckb_integral->isChecked()){
-
-        bool norm = ckb_norm->isChecked();
+    if (ckb_integral->isChecked())
+      {
+	bool norm = ckb_norm->isChecked();
         if (norm)
-            yTitle.setText("Integral (%)");
+	  yTitle.setText("Integral (%)");
         else
-            yTitle.setText("Integral");
-
+	  yTitle.setText("Integral");
+	
 	if ( us_auto_mode )
 	  {
 	    plot->setAxisTitle(QwtPlot::yLeft, yTitle);
@@ -1366,7 +1401,7 @@ void US_Norm_Profile::plotData(void){
 	      plot->enableAxis(QwtPlot::yLeft, true);
 	    }
 	  }
-    
+	
         for (int i = 0; i < nd; i++){
 	  
 	    int np;
@@ -1390,6 +1425,8 @@ void US_Norm_Profile::plotData(void){
 		if (abde_etype == "MWL")
 		  {
 		    if ( selFilenames.at(i). contains("_002") ||
+			 selFilenames.at(i). contains(".002") ||
+			 selFilenames.at(i). endsWith(".2")   ||
 			 selFilenames.at(i). contains("protein", Qt::CaseInsensitive) ||
 			 selFilenames.at(i). contains("prot", Qt::CaseInsensitive))
 		      {
@@ -1401,8 +1438,13 @@ void US_Norm_Profile::plotData(void){
 			//qDebug() << "yp_intN_protein, size() " << yp_intN_protein << ", size: " << yp_intN_protein.size();
 		      }
 		    else if ( selFilenames.at(i). contains("_001") ||
+			      selFilenames.at(i). contains(".001") ||
+			      selFilenames.at(i). endsWith(".1")   ||
 			      selFilenames.at(i). contains("dna", Qt::CaseInsensitive) )
-		      legend = channame + "-DNA";
+		      {
+			legend = channame + "-DNA";
+			pen.setColor("blue");
+		      }
 		    else
 		      legend = channame;
 		  }
@@ -1466,10 +1508,16 @@ void US_Norm_Profile::plotData(void){
 	      plot->setAxisScale( QwtPlot::yLeft, minY - dy, maxY + dy);
 	    }
 	  }
-    }
+	
+	minY_global = minY;
+	maxY_global = maxY;
 
+	qDebug() << "[plotting Integral: minY_global, maxY_global ] -- "
+		 << minY_global << maxY_global;
+      } //end of in ckb_integral is Checked!!!
+    
     //if [AUTO-ABDE] mode, add ranges
-    if ( us_auto_mode )
+    if ( us_auto_mode && ckb_ranges->isChecked() )
       {
 	QStringList c_ranges;
 	QString channame = cb_chann->currentText();
@@ -1489,78 +1537,109 @@ void US_Norm_Profile::plotData(void){
 		break;
 	      }
 	  }
-
+	
 	for (int i=0; i<c_ranges.size(); ++i )
-	 {
-	   QString point1_s = c_ranges[ i ].split("-")[0];
-	   QString point2_s = c_ranges[ i ].split("-")[1];
-	   double point1 = point1_s.toDouble();
-	   double point2 = point2_s.toDouble();
-
-	   // find intercection of point1 & 2 with the 'yp_intN_protein'
-	   // use xp_intN_protein as index
-	   // yp_intN_protein = data_per_channel[ channame ]["integralN"].at(i).data();
-	   if ( !us_auto_mode_report )
-	     find_percent_from_range( channame, point1_s, point2_s, xp_intN_protein, yp_intN_protein );
-	   
-	   QwtPlotCurve* v_line_peak1;
-	   double r1[ 2 ];
-	   r1[ 0 ] = point1;
-	   r1[ 1 ] = point1;
-	   
-	   QwtPlotCurve* v_line_peak2;
-	   double r2[ 2 ];
-	   r2[ 0 ] = point2;
-	   r2[ 1 ] = point2;
-
+	  {
+	    QString point1_s = c_ranges[ i ].split("-")[0];
+	    QString point2_s = c_ranges[ i ].split("-")[1];
+	    double point1 = point1_s.toDouble();
+	    double point2 = point2_s.toDouble();
+	    
+	    // find intercection of point1 & 2 with the 'yp_intN_protein'
+	    // use xp_intN_protein as index
+	    // yp_intN_protein = data_per_channel[ channame ]["integralN"].at(i).data();
+	    if ( !us_auto_mode_report )
+	      find_percent_from_range( channame, point1_s, point2_s, xp_intN_protein, yp_intN_protein );
+	    
+	    QwtPlotCurve* v_line_peak1;
+	    double r1[ 2 ];
+	    r1[ 0 ] = point1;
+	    r1[ 1 ] = point1;
+	    
+	    QwtPlotCurve* v_line_peak2;
+	    double r2[ 2 ];
+	    r2[ 0 ] = point2;
+	    r2[ 1 ] = point2;
+	    
 	   	   
 #if QT_VERSION < 0x050000
-	   QwtScaleDiv* y_axis = plot->axisScaleDiv( QwtPlot::yLeft );
+	    QwtScaleDiv* y_axis = plot->axisScaleDiv( QwtPlot::yLeft );
 #else
-	   QwtScaleDiv* y_axis = (QwtScaleDiv*)&(plot->axisScaleDiv( QwtPlot::yLeft ));
+	    QwtScaleDiv* y_axis = (QwtScaleDiv*)&(plot->axisScaleDiv( QwtPlot::yLeft ));
 #endif
-	   
-	   double padding = ( y_axis->upperBound() - y_axis->lowerBound() ) / 30.0;
-	   
-	   double v[ 2 ];
-	   v [ 0 ] = y_axis->upperBound() - padding;
-	   v [ 1 ] = y_axis->lowerBound();// + padding;
-	   
-	   QString vline_name1 = "Low "  + QString::number( i );
-	   QString vline_name2 = "High " + QString::number( i );
+	    
+	    double padding = ( y_axis->upperBound() - y_axis->lowerBound() ) / 30.0;
 
-	   int color_index = i;
-	   
-	   while ( color_index >= sz_clist )
-	     color_index -= sz_clist;
-	   
-	   QPen pen1 = QPen( QBrush( color_list[ color_index ] ), 2.0, Qt::DotLine );
-	   
-	   v_line_peak1 = us_curve( plot, vline_name1 );
-	   //v_line_peak1 = us_curve( plot, "" );
-	   v_line_peak1 ->setSamples( r1, v, 2 );
-	   
-	   v_line_peak2 = us_curve( plot, vline_name2 );
-	   //v_line_peak2 = us_curve( plot, "" );
-	   v_line_peak2 ->setSamples( r2, v, 2 );
-	   
-	   v_line_peak1->setPen( pen1 );
-	   v_line_peak2->setPen( pen1 );
+	    qDebug() << "In Plotting ranges: y_axis->upperBound(), y_axis->lowerBound(), padding --- "
+		     << y_axis->upperBound() << y_axis->lowerBound() << padding;
+	    qDebug() << "In Plotting ranges: maxY, minY ---  "
+		     << maxY << minY;
+	    qDebug() << "In Plotting ranges: maxY_global, minY_global ---  "
+		     << maxY_global << minY_global;
+	    
+	    double v[ 2 ];
+	    // v [ 0 ] = y_axis->upperBound() - padding;
+	    // v [ 1 ] = y_axis->lowerBound();// + padding;
 
-	   v_line_peak1->setItemAttribute( QwtPlotItem::Legend, false );
-	   v_line_peak2->setItemAttribute( QwtPlotItem::Legend, false );
-	 }
-	plot->replot();
+	    double dy = (maxY_global - minY_global) * 0.05;
+
+	    if ( ckb_integral->isChecked() )
+	      {
+		v [ 0 ] = maxY_global;// + dy;
+		v [ 1 ] = minY_global;// - dy;
+	      }
+	    else
+	      {
+		v [ 0 ] = y_axis->upperBound() - padding;
+		v [ 1 ] = y_axis->lowerBound() + padding;
+	      }
+	    
+	    QString vline_name1 = "Low "  + QString::number( i );
+	    QString vline_name2 = "High " + QString::number( i );
+	    
+	    int color_index = i;
+	    
+	    while ( color_index >= sz_clist )
+	      color_index -= sz_clist;
+	    
+	    QPen pen1 = QPen( QBrush( color_list[ color_index ] ), 2.0, Qt::DotLine );
+	    pen1.setColor("black");
+	    int style_num = 0;
+	    if ( i < penstyles_list.size() )
+	      style_num = i;
+	    
+	    pen1.setStyle(penstyles_list[ style_num ]);
+	    
+	    v_line_peak1 = us_curve( plot, vline_name1 );
+	    //v_line_peak1 = us_curve( plot, "" );
+	    v_line_peak1 ->setSamples( r1, v, 2 );
+	    
+	    v_line_peak2 = us_curve( plot, vline_name2 );
+	    //v_line_peak2 = us_curve( plot, "" );
+	    v_line_peak2 ->setSamples( r2, v, 2 );
+	    
+	    v_line_peak1->setPen( pen1 );
+	    v_line_peak2->setPen( pen1 );
+	    
+	    v_line_peak1->setItemAttribute( QwtPlotItem::Legend, false );
+	    v_line_peak2->setItemAttribute( QwtPlotItem::Legend, false );
+
+	    qDebug() << "Finish plotting vertical ranges";
+	  }
+	//plot->replot();
       }
 
-    if (ckb_legend->isChecked()) {
-      QwtLegend* legend = new QwtLegend();
-      legend->setFrameStyle( QFrame::Box | QFrame::Sunken );
-      plot->insertLegend( legend, QwtPlot::BottomLegend   );
-    } else {
+    if (ckb_legend->isChecked())
+      {
+	QwtLegend* legend = new QwtLegend();
+	legend->setFrameStyle( QFrame::Box | QFrame::Sunken );
+	plot->insertLegend( legend, QwtPlot::BottomLegend   );
+      }
+    else
+      {
         plot->insertLegend( NULL, QwtPlot::BottomLegend );
-    }
-
+      }
+    
     double dx = (maxX - minX) * 0.05;
     plot->setAxisScale( QwtPlot::xBottom, minX - dx, maxX + dx);
     plot->replot();
@@ -1607,6 +1686,9 @@ void US_Norm_Profile::slt_legend(int state) {
     plot->replot();
 }
 
+void US_Norm_Profile::slt_ranges(int) {
+    plotData();
+}
 
 void US_Norm_Profile::slt_rawData(int) {
     plotData();
@@ -1617,6 +1699,7 @@ void US_Norm_Profile::slt_integral(int) {
 }
 
 void US_Norm_Profile::slt_norm(int) {
+  qDebug() << "ckb_ranges() checked ? " << ckb_ranges->isChecked();
     plotData();
 }
 

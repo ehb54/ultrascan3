@@ -3922,6 +3922,10 @@ void US_ReporterGMP::get_abde_percents(QMap< QString, QMap < QString, double>>& 
 void US_ReporterGMP::get_abde_data_per_channel(QMap< QString, QMap < QString, QVector<QVector<double>> > >& data_per_chan)
 {
   abde_data_per_channel = data_per_chan;
+
+  // qDebug() << "Passed data_for_chan 2A: xvalues -- "   << abde_data_per_channel["2A"]["xvalues"];
+  // qDebug() << "Passed data_for_chan 2A: yvaluesN -- "  << abde_data_per_channel["2A"]["yvaluesN"];
+  // qDebug() << "Passed data_for_chan 2A: integralN -- " << abde_data_per_channel["2A"]["integralN"];
 }
 
 //read eSign GMP record for assigned oper(s) && rev(s) && status
@@ -7803,6 +7807,70 @@ QString US_ReporterGMP::distrib_info_abde( QString& abde_channame  )
        mstr += indent( 2 ) + "</table>\n";
      }
 
+   //Distribution Info - to separate .pdf file //////////////////////////////////////////////////
+   mstr += "\n" + indent( 2 ) + tr( "<h3>Distribution Information:</h3>\n" );
+   mstr += indent( 2 ) + "<table>\n";
+
+   QString subDirName  = runName + "-run" + runID;
+   QString dirName     = US_Settings::reportDir() + "/" + subDirName;
+   mkdir( US_Settings::reportDir(), subDirName );
+
+   QString abde_dist_info;
+   QString html_abde_s;
+
+   abde_dist_info = "Radial Pos., DNA Data (Norm.), Protein Data (Norm.), Integral DNA (Norm), Integral Protein (Norm.)";
+   html_abde_s += abde_dist_info + "<br>";
+
+   QMap < QString, QVector<QVector<double>>> abde_data = abde_data_per_channel[abde_channame];
+   const double *xp, *yp_dna, *yp_protein, *yp_int_dna, *yp_int_protein;
+   xp = abde_data[ "xvalues" ].at(0).data();
+   int xvals_size = abde_data[ "xvalues" ].at(0).size();
+   
+   yp_dna         = abde_data[ "yvaluesN" ].at(0).data();
+   yp_protein     = abde_data[ "yvaluesN" ].at(1).data();
+   yp_int_dna     = abde_data[ "integralN" ].at(0).data();
+   yp_int_protein = abde_data[ "integralN" ].at(1).data();
+
+   qDebug() << "Printing distros...";
+   
+   for ( int ii = 0; ii < xvals_size; ii++ )
+     {
+       double x_val                = xp[ii];
+       double y_dna_val            = yp_dna[ii];
+       double y_protein_val        = yp_protein[ii];
+       double yp_int_dna_val       = yp_int_dna[ii];
+       double yp_int_protein_val   = yp_int_protein[ii];
+       
+       abde_dist_info  =
+	 QString().sprintf( "%10.4e", x_val ) + ", " + 
+	 QString().sprintf( "%10.4e", y_dna_val  ) + ", " + 
+	 QString().sprintf( "%10.4e", y_protein_val  ) + ", " + 
+	 QString().sprintf( "%10.4e", yp_int_dna_val  ) + ", " + 
+	 QString().sprintf( "%10.4e", yp_int_protein_val  );
+
+       //qDebug() << abde_dist_info; 
+       
+       html_abde_s += abde_dist_info + "<br>";
+     }
+  
+   // create a .pdf
+   QString f_model_path = dirName + "/" + "ABDE_distro_" + abde_channame + ".pdf";
+   QString f_model_path_str_only = "ABDE_distro_" + abde_channame + ".pdf";
+   QTextDocument document;
+   document.setHtml( html_abde_s );
+  
+   QPrinter printer(QPrinter::PrinterResolution);
+   printer.setOutputFormat(QPrinter::PdfFormat);
+   printer.setPaperSize(QPrinter::Letter);
+   
+   printer.setOutputFileName( f_model_path );
+   printer.setFullPage(true);
+   printer.setPageMargins(0, 0, 0, 0, QPrinter::Millimeter);
+  
+   document.print(&printer);
+   mstr += "<a href=\"./" + f_model_path_str_only + "\">View Model Distributions</a>";
+   //END of ABDE distributions .csv format
+   
    //Get Report for a channel && item(s)
    US_ReportGMP* reportGMP;
    QString wvl_abde;
