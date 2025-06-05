@@ -1256,6 +1256,16 @@ void US_Norm_Profile::plotData(void){
     QVector<Qt::PenStyle> penstyles_list;
     penstyles_list << Qt::DashLine << Qt::DotLine << Qt::DashDotLine << Qt::DashDotDotLine;
 
+    //symbols
+    QVector<QwtSymbol*> line_symbols;
+    QwtSymbol *s_cross      = new QwtSymbol(QwtSymbol::Cross, QBrush(Qt::black), QPen(Qt::black), QSize(4, 4));
+    QwtSymbol *s_xcross     = new QwtSymbol(QwtSymbol::XCross, QBrush(Qt::black), QPen(Qt::black), QSize(4, 4));
+    QwtSymbol *s_hline      = new QwtSymbol(QwtSymbol::HLine, QBrush(Qt::black), QPen(Qt::black), QSize(4, 4));
+    QwtSymbol *s_utriangle  = new QwtSymbol(QwtSymbol::UTriangle, QBrush(Qt::black), QPen(Qt::black), QSize(4, 4));
+    QwtSymbol *s_dtriangle  = new QwtSymbol(QwtSymbol::DTriangle, QBrush(Qt::black), QPen(Qt::black), QSize(4, 4));
+    line_symbols <<  s_cross << s_xcross << s_hline << s_utriangle << s_dtriangle;
+    
+
     QwtText yTitle = plot->axisTitle(QwtPlot::yLeft);
 
     int nd = selFilenames.size();
@@ -1593,33 +1603,57 @@ void US_Norm_Profile::plotData(void){
 		v [ 0 ] = y_axis->upperBound() - padding;
 		v [ 1 ] = y_axis->lowerBound() + padding;
 	      }
+
+	    //[TEST]get new samples
+	    QVector<double> x_vals_1(60, point1);
+	    QVector<double> x_vals_2(60, point2);
+	    QVector<double> y_vals_1, y_vals_2;
+	    double delta_v = (v [ 0 ] - v [ 1 ]) / double(x_vals_1.size());
+	    for ( int x1=0; x1<x_vals_1.size(); ++x1)
+	      {
+		double c_val = v [ 1 ] + x1* delta_v;
+		y_vals_1.push_back( c_val );
+		y_vals_2.push_back( c_val );
+	      }
+	    
 	    
 	    QString vline_name1 = "Low "  + QString::number( i );
 	    QString vline_name2 = "High " + QString::number( i );
 	    
-	    int color_index = i;
+	    // int color_index = i;
+	    // while ( color_index >= sz_clist )
+	    //   color_index -= sz_clist;
 	    
-	    while ( color_index >= sz_clist )
-	      color_index -= sz_clist;
-	    
-	    QPen pen1 = QPen( QBrush( color_list[ color_index ] ), 2.0, Qt::DotLine );
-	    pen1.setColor("black");
-	    int style_num = 0;
-	    if ( i < penstyles_list.size() )
-	      style_num = i;
-	    
-	    pen1.setStyle(penstyles_list[ style_num ]);
+	    // QPen pen1 = QPen( QBrush( color_list[ color_index ] ), 2.0, Qt::DotLine );
+	    // pen1.setColor("black");
+	    // int style_num = 0;
+	    // if ( i < penstyles_list.size() )
+	    //   style_num = i;
+	    // pen1.setStyle(penstyles_list[ style_num ]);
+	    QPen pen1;
+	    pen1.setColor(Qt::black);
+	    pen1.setWidth(1);
+	    pen1.setStyle(Qt::NoPen);
+	    //pen1.setStyle(Qt::SolidLine);
+
+	    int symbol_number = 0;
+	    if ( i < line_symbols.size() )
+	      symbol_number = i;
 	    
 	    v_line_peak1 = us_curve( plot, vline_name1 );
-	    //v_line_peak1 = us_curve( plot, "" );
-	    v_line_peak1 ->setSamples( r1, v, 2 );
+	    //v_line_peak1 ->setSamples( r1, v, 2 );
+	    v_line_peak1 ->setSamples(x_vals_1, y_vals_1);
 	    
 	    v_line_peak2 = us_curve( plot, vline_name2 );
-	    //v_line_peak2 = us_curve( plot, "" );
-	    v_line_peak2 ->setSamples( r2, v, 2 );
+	    //v_line_peak2 ->setSamples( r2, v, 2 );
+	    v_line_peak2 ->setSamples(x_vals_2, y_vals_2);
 	    
 	    v_line_peak1->setPen( pen1 );
 	    v_line_peak2->setPen( pen1 );
+	    v_line_peak1->setRenderHint(QwtPlotCurve::RenderAntialiased, true);
+	    v_line_peak2->setRenderHint(QwtPlotCurve::RenderAntialiased, true);
+	    v_line_peak1->setSymbol( line_symbols[ symbol_number ]);
+	    v_line_peak2->setSymbol( line_symbols[ symbol_number ]);
 	    
 	    v_line_peak1->setItemAttribute( QwtPlotItem::Legend, false );
 	    v_line_peak2->setItemAttribute( QwtPlotItem::Legend, false );
