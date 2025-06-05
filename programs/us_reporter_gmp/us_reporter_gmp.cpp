@@ -25,6 +25,7 @@ US_ReporterGMP::US_ReporterGMP( QMap< QString, QString> t_c ) : US_Widgets()
   QString report_filepath  = "/home/alexey/ultrascan/reports/eGFP-DNA-MW-08OCT23-run1981_GMP_DB.tar";
   QString html_filePath    = "/home/alexey/ultrascan/reports/eGFP-DNA-MW-08OCT23-run1981/html_string.html";
   int autolfowGMPReportID  = 25;
+  
   QString autoStatusID     = QString::number(231);
   QString autoID           = QString::number(1002);
 
@@ -3912,6 +3913,7 @@ void US_ReporterGMP::get_abde_rmsds( QMap< QString, double >& abde_rmsd_p)
 void US_ReporterGMP::get_abde_menisc( QMap< QString, double >& abde_menisc_p)
 {
   abde_menisc = abde_menisc_p;
+  qDebug() << "[in get_abde_menisc()] -- " << abde_menisc;
 }
 
 void US_ReporterGMP::get_abde_percents(QMap< QString, QMap < QString, double>>& abde_perc_p )
@@ -7142,12 +7144,29 @@ void US_ReporterGMP::assemble_user_inputs_html( void )
 	{
 	  QString val_str   = mp.value();
 	  QString chann_str = mp.key();
-
+	  
 	  if ( expType == "ABDE" )
 	    {
-	      val_str = "manual;  Meniscus Value: " +
-		QString::number( abde_menisc[ chann_str.replace(" / ","")] );
-	      
+	      bool mwl_abde = false;
+	      for ( int ii = 0; ii < currProto.rpRange. nranges; ii++ )
+		{
+		  if ( currProto.rpRange. chrngs[ii].wvlens.size() > 1 )
+		    {
+		      mwl_abde = true;
+		      break;
+		    }
+		}
+
+	      QString menisc_val;
+	      if (mwl_abde)
+		menisc_val = QString::number( abde_menisc[ chann_str.replace(" / ","")] );
+	      else
+		{
+		  QString chann_swl = chann_str.split(" / ")[0] + chann_str.split(" / ")[1];
+		  menisc_val = QString::number( abde_menisc[ chann_swl ] );
+		}
+
+	      val_str = "manual;  Meniscus Value: " + menisc_val;
 	    }
 	  
 	  html_assembled += tr(
@@ -7818,7 +7837,10 @@ QString US_ReporterGMP::distrib_info_abde( QString& abde_channame  )
    QString abde_dist_info;
    QString html_abde_s;
 
-   abde_dist_info = "Radial Pos., DNA Data (Norm.), Protein Data (Norm.), Integral DNA (Norm), Integral Protein (Norm.)";
+   if ( mwl_abde ) 
+     abde_dist_info = "Radial Pos., DNA Data (Norm.), Protein Data (Norm.), Integral DNA (Norm), Integral Protein (Norm.)";
+   else
+     abde_dist_info = "Radial Pos., Sample Data (Norm.), Sample Integral (Norm.)";
    html_abde_s += abde_dist_info + "<br>";
 
    QMap < QString, QVector<QVector<double>>> abde_data = abde_data_per_channel[abde_channame];
@@ -7827,27 +7849,43 @@ QString US_ReporterGMP::distrib_info_abde( QString& abde_channame  )
    int xvals_size = abde_data[ "xvalues" ].at(0).size();
    
    yp_dna         = abde_data[ "yvaluesN" ].at(0).data();
-   yp_protein     = abde_data[ "yvaluesN" ].at(1).data();
    yp_int_dna     = abde_data[ "integralN" ].at(0).data();
-   yp_int_protein = abde_data[ "integralN" ].at(1).data();
 
+   if ( mwl_abde )
+     {
+       yp_protein     = abde_data[ "yvaluesN" ].at(1).data();
+       yp_int_protein = abde_data[ "integralN" ].at(1).data();
+     }
+   
    qDebug() << "Printing distros...";
    
    for ( int ii = 0; ii < xvals_size; ii++ )
      {
        double x_val                = xp[ii];
        double y_dna_val            = yp_dna[ii];
-       double y_protein_val        = yp_protein[ii];
        double yp_int_dna_val       = yp_int_dna[ii];
-       double yp_int_protein_val   = yp_int_protein[ii];
-       
-       abde_dist_info  =
-	 QString().sprintf( "%10.4e", x_val ) + ", " + 
-	 QString().sprintf( "%10.4e", y_dna_val  ) + ", " + 
-	 QString().sprintf( "%10.4e", y_protein_val  ) + ", " + 
-	 QString().sprintf( "%10.4e", yp_int_dna_val  ) + ", " + 
-	 QString().sprintf( "%10.4e", yp_int_protein_val  );
 
+       double y_protein_val;
+       double yp_int_protein_val;
+       if ( mwl_abde )
+	 {
+	   y_protein_val        = yp_protein[ii];
+	   yp_int_protein_val   = yp_int_protein[ii];
+	   
+	   abde_dist_info  =
+	     QString().sprintf( "%10.4e", x_val ) + ", " + 
+	     QString().sprintf( "%10.4e", y_dna_val  ) + ", " + 
+	     QString().sprintf( "%10.4e", y_protein_val  ) + ", " + 
+	     QString().sprintf( "%10.4e", yp_int_dna_val  ) + ", " + 
+	     QString().sprintf( "%10.4e", yp_int_protein_val  );
+	 }
+       else
+	 {
+	   abde_dist_info  =
+	     QString().sprintf( "%10.4e", x_val ) + ", " + 
+	     QString().sprintf( "%10.4e", y_dna_val  ) + ", " +
+	     QString().sprintf( "%10.4e", yp_int_dna_val  );
+	 }
        //qDebug() << abde_dist_info; 
        
        html_abde_s += abde_dist_info + "<br>";
