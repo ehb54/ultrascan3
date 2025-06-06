@@ -12,10 +12,10 @@
 #include <QStandardItem>
 #include <QStandardItemModel>
 
-
 //! \class CSVTableView
 //! \brief A class to provide a custom QTableView for CSV data with context menu options for deleting rows and columns.
-class CSVTableView : public QTableView {
+class CSVTableView : public QTableView
+{
     Q_OBJECT
 public:
     /*!
@@ -26,13 +26,13 @@ public:
 
 signals:
     /*!
-    * \brief Signal emitted when a row is deleted.
-    */
+     * \brief Signal emitted when a row is deleted.
+     */
     void row_deleted();
 
     /*!
-    * \brief Signal emitted when a column is deleted.
-    */
+     * \brief Signal emitted when a column is deleted.
+     */
     void column_deleted();
 
 protected:
@@ -44,8 +44,8 @@ protected:
 
 private slots:
     /*!
-    * \brief Slot to handle deletion of rows.
-    */
+     * \brief Slot to handle deletion of rows.
+     */
     void delete_rows();
 
     /*!
@@ -56,7 +56,8 @@ private slots:
 
 //! \class CSVSortFilterProxyModel
 //! \brief A custom QSortFilterProxyModel for CSV data sorting.
-class CSVSortFilterProxyModel : public QSortFilterProxyModel {
+class CSVSortFilterProxyModel : public QSortFilterProxyModel
+{
 public:
     /*!
      * \brief Constructor for CSVSortFilterProxyModel.
@@ -75,60 +76,69 @@ public:
 
 //! \class US_CSV_Loader
 //! \brief A class to provide a dialog for loading and editing CSV data.
-class US_GUI_EXTERN US_CSV_Loader : public US_WidgetsDialog {
+class US_GUI_EXTERN US_CSV_Loader : public US_WidgetsDialog
+{
     Q_OBJECT
 
 public:
     /*!
-    * \brief Constructor for US_CSV_Loader.
-    * \param filePath CSV file path.
-    * \param note     An optional note.
-    * \param editable If it is true, all table items are editable.
-    * \param parent   Parent widget.
-    */
+     * \brief Constructor for US_CSV_Loader.
+     * \param filePath CSV file path.
+     * \param note     An optional note.
+     * \param editable If it is true, all table items are editable.
+     * \param parent   Parent widget.
+     */
     US_CSV_Loader(const QString &filePath, const QString &note = "", bool editable = false, QWidget *parent = 0);
 
     /*!
-    * \brief Get the loaded CSV data.
-    * \return Return CSV data.
-    */
+     * \brief Get the loaded CSV data.
+     * \return Return CSV data.
+     */
     US_CSV_Data data();
 
     /*!
-    * \brief Get the error message if any.
-    * \return Return the error message.
-    */
+     * \brief Get the error message if any.
+     * \return Return the error message.
+     */
     QString error_message();
 
 private:
-    enum DELIMITER { TAB, COMMA, SEMICOLON, SPACE, OTHER, NONE }; /*!< Enum for delimiter types. */
-    bool m_editable; /*!< Flag indicating if the data is editable. */
-    bool is_dsp; /*!< Flag indicating if the file format is dsp. */
-    QFileInfo infile; /*!< Input file information. */
-    DELIMITER delimiter; /*!< Current delimiter type. */
-    QPushButton *pb_ok; /*!< OK button. */
-    QPushButton *pb_cancel; /*!< Cancel button. */
-    QPushButton *pb_add_header; /*!< Add header button. */
-    QPushButton *pb_save_csv; /*!< Save CSV button. */
-    QPushButton *pb_reset; /*!< Reset button. */
-    QPushButton *pb_show_red; /*!< Show red button. */
-    QRadioButton *rb_tab; /*!< Radio button for tab delimiter. */
-    QRadioButton *rb_comma; /*!< Radio button for comma delimiter. */
-    QRadioButton *rb_semicolon; /*!< Radio button for semicolon delimiter. */
-    QRadioButton *rb_space; /*!< Radio button for space delimiter. */
-    QRadioButton *rb_other; /*!< Radio button for other delimiter. */
-    QButtonGroup *bg_delimiter; /*!< Button group for delimiters. */
-    QWidget *wg_delimiter; /*!< A widget to hold the delimiters. */
-    QLineEdit *le_other; /*!< Line edit for other delimiter. */
-    QLineEdit *le_filename; /*!< Line edit for file name. */
-    QLineEdit *le_msg; /*!< Line edit for messages. */
-    QString str_delimiter; /*!< String representation of the delimiter. */
-    QString error_msg; /*!< Error message. */
-    QStringList file_lines; /*!< Lines of the file. */
-    CSVTableView *tv_data; /*!< Table view for CSV data. */
-    QStandardItemModel *model; /*!< Standard item model for CSV data. */
+    enum DELIMITER
+    {
+        TAB,
+        COMMA,
+        SEMICOLON,
+        SPACE,
+        OTHER,
+        NONE
+    };                              /*!< Enum for delimiter types. */
+    bool m_editable;                /*!< Flag indicating if the data is editable. */
+    bool is_dsp;                    /*!< Flag indicating if the file format is dsp. */
+    QFileInfo infile;               /*!< Input file information. */
+    DELIMITER delimiter;            /*!< Current delimiter type. */
+    QPushButton *pb_ok;             /*!< OK button. */
+    QPushButton *pb_cancel;         /*!< Cancel button. */
+    QPushButton *pb_add_header;     /*!< Add header button. */
+    QPushButton *pb_save_csv;       /*!< Save CSV button. */
+    QPushButton *pb_reset;          /*!< Reset button. */
+    QPushButton *pb_show_red;       /*!< Show red button. */
+    QRadioButton *rb_tab;           /*!< Radio button for tab delimiter. */
+    QRadioButton *rb_comma;         /*!< Radio button for comma delimiter. */
+    QRadioButton *rb_semicolon;     /*!< Radio button for semicolon delimiter. */
+    QRadioButton *rb_space;         /*!< Radio button for space delimiter. */
+    QRadioButton *rb_other;         /*!< Radio button for other delimiter. */
+    QButtonGroup *bg_delimiter;     /*!< Button group for delimiters. */
+    QWidget *wg_delimiter;          /*!< A widget to hold the delimiters. */
+    QLineEdit *le_other;            /*!< Line edit for other delimiter. */
+    QLineEdit *le_filename;         /*!< Line edit for file name. */
+    QLineEdit *le_msg;              /*!< Line edit for messages. */
+    QString str_delimiter;          /*!< String representation of the delimiter. */
+    QString error_msg;              /*!< Error message. */
+    QStringList file_lines;         /*!< Lines of the file. */
+    CSVTableView *tv_data;          /*!< Table view for CSV data. */
+    QStandardItemModel *model;      /*!< Standard item model for CSV data. */
     CSVSortFilterProxyModel *proxy; /*!< Proxy model for sorting CSV data. */
-    US_CSV_Data csv_data; /*!< CSV data. */
+    US_CSV_Data csv_data;           /*!< CSV data. */
 
     /*!
      * \brief Set up the user interface.
@@ -140,21 +150,21 @@ private:
      * \param filePath The file path to the CSV file.
      * \return True if the file was parsed successfully, otherwise false.
      */
-    bool parse_file(const QString&);
+    bool parse_file(const QString &);
 
     /*!
      * \brief Parse the DSP file.
      * \param filePath The file path to the DSP file.
      * \return True if the file was parsed successfully, otherwise false.
      */
-    bool parse_dsp_file(const QString&);
+    bool parse_dsp_file(const QString &);
 
     /*!
      * \brief Check if the file contains binary data.
      * \param filePath The file path to the file.
      * \return True if the file is binary.
      */
-    bool check_file(const QString&);
+    bool check_file(const QString &);
 
     /*!
      * \brief Generate a list of alphabetic column headers.
@@ -170,16 +180,15 @@ private:
     bool check_table();
 
     /*!
-    * \brief Check the validity of the header.
-    */
+     * \brief Check the validity of the header.
+     */
     void check_header();
 
     /*!
-    * \brief Make CSV Data for report
-    * \return True the CSV_Data is made.
-    */
-    bool make_csv_data(QString&);
-
+     * \brief Make CSV Data for report
+     * \return True the CSV_Data is made.
+     */
+    bool make_csv_data(QString &);
 
 private slots:
 
@@ -207,13 +216,13 @@ private slots:
      * \brief Slot to fill the table with data.
      * \param columnCount The number of columns.
      */
-    void fill_table(int );
+    void fill_table(int);
 
     /*!
      * \brief Slot to handle change of delimiter.
      * \param delimiter The new delimiter.
      */
-    void new_delimiter(const QString&);
+    void new_delimiter(const QString &);
 
     /*!
      * \brief Slot to add a header row.
@@ -224,7 +233,7 @@ private slots:
      * \brief Slot to handle item change in the table.
      * \param item The changed item.
      */
-    void item_changed(QStandardItem*);
+    void item_changed(QStandardItem *);
 
     /*!
      * \brief Slot to relabel the headers.
