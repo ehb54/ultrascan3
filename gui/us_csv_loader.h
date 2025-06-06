@@ -103,6 +103,7 @@ public:
 private:
     enum DELIMITER { TAB, COMMA, SEMICOLON, SPACE, OTHER, NONE }; /*!< Enum for delimiter types. */
     bool m_editable; /*!< Flag indicating if the data is editable. */
+    bool is_dsp; /*!< Flag indicating if the file format is dsp. */
     QFileInfo infile; /*!< Input file information. */
     DELIMITER delimiter; /*!< Current delimiter type. */
     QPushButton *pb_ok; /*!< OK button. */
@@ -117,6 +118,7 @@ private:
     QRadioButton *rb_space; /*!< Radio button for space delimiter. */
     QRadioButton *rb_other; /*!< Radio button for other delimiter. */
     QButtonGroup *bg_delimiter; /*!< Button group for delimiters. */
+    QWidget *wg_delimiter; /*!< A widget to hold the delimiters. */
     QLineEdit *le_other; /*!< Line edit for other delimiter. */
     QLineEdit *le_filename; /*!< Line edit for file name. */
     QLineEdit *le_msg; /*!< Line edit for messages. */
@@ -135,10 +137,24 @@ private:
 
     /*!
      * \brief Parse the CSV file.
-     * \param filePath The file path of the CSV file.
+     * \param filePath The file path to the CSV file.
      * \return True if the file was parsed successfully, otherwise false.
      */
     bool parse_file(const QString&);
+
+    /*!
+     * \brief Parse the DSP file.
+     * \param filePath The file path to the DSP file.
+     * \return True if the file was parsed successfully, otherwise false.
+     */
+    bool parse_dsp_file(const QString&);
+
+    /*!
+     * \brief Check if the file contains binary data.
+     * \param filePath The file path to the file.
+     * \return True if the file is binary.
+     */
+    bool check_file(const QString&);
 
     /*!
      * \brief Generate a list of alphabetic column headers.

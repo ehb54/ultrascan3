@@ -84,6 +84,11 @@ US_CSV_Loader::US_CSV_Loader(const QString& filePath, const QString& note,
         set_UI();
         m_editable = editable;
         le_msg->setText(note);
+        if (is_dsp)
+        {
+            wg_delimiter->setDisabled(true);
+            rb_semicolon->setChecked(true);
+        }
         delimiter = NONE;
         fill_table(bg_delimiter->checkedId());
         infile = QFileInfo(filePath);
@@ -137,6 +142,7 @@ void US_CSV_Loader::set_UI() {
     le_other->setFrame(false);
 
     QHBoxLayout* lyt_delimiter = new QHBoxLayout();
+    lyt_delimiter->setMargin(0);
     lyt_delimiter->setSpacing(0);
     lyt_delimiter->setMargin(0);
     lyt_delimiter->addLayout(lyt_tab);
@@ -146,6 +152,8 @@ void US_CSV_Loader::set_UI() {
     lyt_delimiter->addLayout(lyt_other);
     lyt_delimiter->addSpacing(2);
     lyt_delimiter->addWidget(le_other);
+    wg_delimiter = new QWidget();
+    wg_delimiter->setLayout(lyt_delimiter);
 
     pb_add_header = us_pushbutton("Add Header");
     pb_cancel = us_pushbutton("Cancel");
@@ -231,7 +239,7 @@ void US_CSV_Loader::set_UI() {
 
     QGridLayout* top_lyt = new QGridLayout();
     top_lyt->addWidget(le_filename,       0, 0, 1, 3);
-    top_lyt->addLayout(lyt_delimiter,     1, 0, 1, 3);
+    top_lyt->addWidget(wg_delimiter,      1, 0, 1, 3);
     top_lyt->addWidget(pb_reset,          2, 0, 1, 1);
     top_lyt->addWidget(pb_show_red,       2, 1, 1, 1);
     top_lyt->addWidget(pb_add_header,     2, 2, 1, 1);
@@ -426,49 +434,56 @@ void US_CSV_Loader::save_csv_clicked() {
 
     QString delimiter_str;
     QString user_delimiter = le_other->text().trimmed();
-    int state = QMessageBox::question(this, "Set Delimiter", "Do you want to save it with a different delimiter?");
-    if (state == QMessageBox::Yes) {
-        QComboBox* cb_delimiter = us_comboBox();
-        cb_delimiter->addItem("Tab");
-        cb_delimiter->addItem("Space");
-        cb_delimiter->addItem("Comma");
-        cb_delimiter->addItem("Semicolon");
-        if (! user_delimiter.isEmpty()) {
-            cb_delimiter->addItem(tr("Other: %1").arg(user_delimiter));
-        }
-        QDialog *dialog = new QDialog(this);
-        QDialogButtonBox *buttons = new QDialogButtonBox(Qt::Horizontal);
-        buttons->addButton(QDialogButtonBox::Ok);
-        buttons->addButton(QDialogButtonBox::Cancel);
-        QVBoxLayout* lyt = new QVBoxLayout();
-        lyt->addWidget(cb_delimiter);
-        lyt->addWidget(buttons);
-        dialog->setLayout(lyt);
-        connect(buttons, &QDialogButtonBox::accepted, dialog, &QDialog::accept);
-        connect(buttons, &QDialogButtonBox::rejected, dialog, &QDialog::reject);
-        state = dialog->exec();
-        if (state == QDialog::Accepted) {
-            int id = cb_delimiter->currentIndex();
-            if (id == 0) delimiter_str = "\t";
-            else if (id == 1) delimiter_str = " ";
-            else if (id == 2) delimiter_str = ",";
-            else if (id == 3) delimiter_str = ";";
-            else if (id == 4) delimiter_str = user_delimiter;
-        } else {
-            QMessageBox::warning(this, "Warning!", "Nothing Saved!");
-            return;
-        }
-    } else {
-        if (rb_tab->isChecked()) delimiter_str = "\t";
-        else if (rb_space->isChecked()) delimiter_str = " ";
-        else if (rb_comma->isChecked()) delimiter_str = ",";
-        else if (rb_semicolon->isChecked()) delimiter_str = ";";
-        else if (rb_other->isChecked()) delimiter_str = user_delimiter;
+    QComboBox *cb_delimiter = us_comboBox();
+    cb_delimiter->addItem("Tab");
+    cb_delimiter->addItem("Space");
+    cb_delimiter->addItem("Comma");
+    cb_delimiter->addItem("Semicolon");
+    if (!user_delimiter.isEmpty())
+    {
+        cb_delimiter->addItem(tr("Other: %1").arg(user_delimiter));
+    }
+    QDialog *dialog = new QDialog(this);
+    QDialogButtonBox *buttons = new QDialogButtonBox(Qt::Horizontal);
+    buttons->addButton(QDialogButtonBox::Ok);
+    buttons->addButton(QDialogButtonBox::Cancel);
+    QVBoxLayout *lyt = new QVBoxLayout();
+    lyt->addWidget(cb_delimiter);
+    lyt->addWidget(buttons);
+    dialog->setLayout(lyt);
+    connect(buttons, &QDialogButtonBox::accepted, dialog, &QDialog::accept);
+    connect(buttons, &QDialogButtonBox::rejected, dialog, &QDialog::reject);
+    int state = dialog->exec();
+    if (state == QDialog::Accepted)
+    {
+        int id = cb_delimiter->currentIndex();
+        if (id == 0)
+            delimiter_str = "\t";
+        else if (id == 1)
+            delimiter_str = " ";
+        else if (id == 2)
+            delimiter_str = ",";
+        else if (id == 3)
+            delimiter_str = ";";
+        else if (id == 4)
+            delimiter_str = user_delimiter;
+    }
+    else
+    {
+        // QMessageBox::warning(this, "Warning!", "Nothing Saved!");
+        return;
     }
 
     QString file_path = QFileDialog::getSaveFileName(this, "Save CSV File",
                                                      US_Settings::workBaseDir(), "(CSV)(*.csv)");
-    if (file_path.isEmpty()) return;
+    if (file_path.isEmpty())
+    {
+        return;
+    }
+    QFileInfo finfo(file_path);
+    if(finfo.suffix().toLower() != "csv") {
+        file_path += ".csv";
+    }
     csv_data.setFilePath(file_path);
 
     if (csv_data.writeFile(delimiter_str)) {
@@ -483,10 +498,47 @@ void US_CSV_Loader::cancel() {
     reject();
 }
 
-bool US_CSV_Loader::parse_file(const QString& filepath) {
+bool US_CSV_Loader::check_file(const QString& filepath) {
     QFile file(filepath);
     error_msg.clear();
-    if(file.open(QIODevice::ReadOnly)) {
+    if (!file.open(QIODevice::ReadOnly))
+    {
+        error_msg = tr("Cannot open the file\n\n%1!").arg(filepath);
+        return false;
+    }
+
+    QByteArray data = file.read(1024);
+
+    for (char ch : data)
+    {
+        uchar byte = static_cast<uchar>(ch);
+        if (byte == 0 || (byte < 0x09 && ch != '\n' && ch != '\r') || byte > 0x7F)
+        {
+            file.close();
+            error_msg = "Cannot parse a binary file.";
+            return false;
+        }
+    }
+    file.close();
+    return true;
+}
+
+bool US_CSV_Loader::parse_file(const QString& filepath) {
+
+    if(! check_file(filepath)) {
+        return false;
+    }
+
+    QFileInfo finfo(filepath);
+    if (finfo.suffix().toLower() == "dsp") {
+        is_dsp = true;
+        return parse_dsp_file(filepath);
+    }
+
+    is_dsp = false;
+    QFile file(filepath);
+    error_msg.clear();
+    if(file.open(QIODevice::ReadOnly | QIODevice::Text)) {
         file_lines.clear();
         QTextStream ts(&file);
         bool isAscii = true;
@@ -523,6 +575,100 @@ bool US_CSV_Loader::parse_file(const QString& filepath) {
         error_msg = tr("Cannot open the file\n\n%1!").arg(filepath);
         return false;
     }
+}
+
+bool US_CSV_Loader::parse_dsp_file(const QString& filepath) {
+
+    error_msg.clear();
+    QFile file(filepath);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        error_msg = tr("Cannot open non-text files!\n\n%1").arg(filepath);
+        return false;
+    }
+
+    QTextStream in(&file);
+    QStringList lines;
+    while (!in.atEnd()) {
+        QString line = in.readLine().trimmed();
+        if (!line.isEmpty())
+            lines.append(line);
+    }
+
+    double startWavelength = -1;
+    double endWavelength = -1;
+    QList<QList<double>> scans;
+    QList<double> currentScan;
+    bool recording = false;
+
+    for (int i = 0; i < lines.size(); ++i) {
+        QString line = lines[i];
+
+        if (line.toLower() == "nm" && i + 2 < lines.size()) {
+            bool ok1, ok2;
+            startWavelength = lines[i + 1].toDouble(&ok1);
+            endWavelength = lines[i + 2].toDouble(&ok2);
+            if (!(ok1 && ok2)) {
+                startWavelength = endWavelength = -1;
+            }
+        }
+
+        if (line == "#DATA") {
+            if (!currentScan.isEmpty()) {
+                scans.append(currentScan);
+                currentScan.clear();
+            }
+            recording = true;
+            continue;
+        }
+
+        if (recording) {
+            if (line.startsWith("#") || !line.contains(QRegExp("\\d"))) {
+                if (!currentScan.isEmpty()) {
+                    scans.append(currentScan);
+                    currentScan.clear();
+                }
+                recording = false;
+            } else {
+                bool ok;
+                double val = line.toDouble(&ok);
+                if (ok)
+                    currentScan.append(val);
+            }
+        }
+    }
+
+    if (!currentScan.isEmpty()){
+        scans.append(currentScan);
+    }
+
+    int np = -1;
+    int ns = scans.size();
+    for (int ii = 0; ii < ns; ++ii) {
+        if (np == -1) {
+            np = scans.at(ii).size();
+        }
+        if (np != scans.at(ii).size()) {
+            error_msg = tr("Multiple scans detected, but each has different number data points!\n\n%1").arg(filepath);
+            return false;
+        }
+    }
+    
+    file_lines.clear();
+    QString line = "nm";
+    for(QString ss : gen_alpha_list(ns)) {
+        line += ";" + ss;
+    }
+    file_lines << line;
+
+    double dw = (endWavelength - startWavelength) / (np - 1);
+    for (int ii = 0; ii < np; ++ii) {
+        QString line = QString::number(startWavelength + dw * ii);
+        for(int jj = 0; jj < ns; ++jj) {
+            line += ";" + QString::number(scans.at(jj).at(ii));
+        }
+        file_lines << line;
+    }
+    return true;
 }
 
 void US_CSV_Loader::new_delimiter(const QString &) {
