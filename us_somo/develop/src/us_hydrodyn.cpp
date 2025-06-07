@@ -79,7 +79,6 @@
 // #define USE_H
 
 #define BROADEN_TEST
-// #define BROADEN_TESTING
 #if defined( BROADEN_TEST )
 #include "../include/us_band_broaden.h"
 #endif
@@ -113,7 +112,7 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
 
 #if defined( BROADEN_TEST ) && defined( BROADEN_TESTING )
    {
-      US_Band_Broaden ubb;
+      US_Band_Broaden ubb( true );
       ubb.test();
    }
    //   exit( -1 );

@@ -3195,7 +3195,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    cb_broaden_kernel_mode->setMaxVisibleItems( 1 );
 
    cb_broaden_kernel_mode->addItem( US_Band_Broaden::kernel_mode_name( US_Band_Broaden::BAND_BROADEN_KERNEL_MODE_DEFAULT ),            US_Band_Broaden::BAND_BROADEN_KERNEL_MODE_DEFAULT );
-   cb_broaden_kernel_mode->addItem( US_Band_Broaden::kernel_mode_name( US_Band_Broaden::BAND_BROADEN_KERNEL_MODE_ASYMMETRIC_LAPLACE ), US_Band_Broaden::BAND_BROADEN_KERNEL_MODE_ASYMMETRIC_LAPLACE );
+   cb_broaden_kernel_mode->addItem( US_Band_Broaden::kernel_mode_name( US_Band_Broaden::BAND_BROADEN_KERNEL_MODE_HALF_GAUSSIAN ),      US_Band_Broaden::BAND_BROADEN_KERNEL_MODE_HALF_GAUSSIAN );
    cb_broaden_kernel_mode->addItem( US_Band_Broaden::kernel_mode_name( US_Band_Broaden::BAND_BROADEN_KERNEL_MODE_EMG_GMG ),            US_Band_Broaden::BAND_BROADEN_KERNEL_MODE_EMG_GMG );
 
    connect( cb_broaden_kernel_mode, SIGNAL( currentIndexChanged( QString ) ), SLOT( broaden_kernel_mode_index( ) ) );
