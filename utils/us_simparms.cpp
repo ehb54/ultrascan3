@@ -672,8 +672,8 @@ DbgLv(1) << "sH: cp ch cp_id" << cp << ch << cp_id;
          }
       if (!found){
          QString shape   = cp_list[ cp ].shape;
-         bottom_position = cp_list[ cp ].bottom_position[ ch ];
-         cp_pathlen      = cp_list[ cp ].path_length    [ ch ];
+         bottom_position = cp_list[ cp ].bottom_position[ qMin(ch, cp_list[ cp ].bottom_position.count()-1) ];
+         cp_pathlen      = cp_list[ cp ].path_length    [ qMin( ch, cp_list[ cp ].path_length.count()-1) ];
          cp_angle        = cp_list[ cp ].angle;
          cp_width        = cp_list[ cp ].width;
          cp_sector       = qMax( 0, shapes.indexOf( shape ) );
