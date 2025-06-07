@@ -23,7 +23,7 @@ US_Hydrosim::US_Hydrosim()
    viscosity   = VISC_20W;
    vbar        = TYPICAL_VBAR;
    temperature = 20.0;
-temperature = 25.0;
+   temperature = 25.0;
    axial_ratio = 10.0;
    analyteGUID = QString();
 }

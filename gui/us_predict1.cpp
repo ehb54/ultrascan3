@@ -395,7 +395,7 @@ void US_Predict1::update_vbar( const US_Analyte ad )
    solution.vbar20 = ad.vbar20;
 
    le_mw  ->setText( QString::number( (int) mw,      'e', 3 ) );
-   le_vbar->setText( QString::number( solution.vbar, 'f', 4 ) );
+   le_vbar->setText( QString::number( solution.vbar20, 'f', 4 ) );
 
    US_Math2::data_correction( temperature, solution );
    update();
@@ -432,6 +432,7 @@ void US_Predict1::update_buffer( const US_Buffer b )
 void US_Predict1::density( const QString& s )
 {
    solution.density = s.toDouble();
+   solution.manual = true;
    US_Math2::data_correction( temperature, solution );
    update();
 }
@@ -439,13 +440,15 @@ void US_Predict1::density( const QString& s )
 void US_Predict1::viscosity( const QString& s )
 {
    solution.viscosity = s.toDouble();
+   solution.manual = true;
    US_Math2::data_correction( temperature, solution );
    update();
 }
 
 void US_Predict1::vbar( const QString& s )
 {
-   solution.vbar = s.toDouble();
+   solution.vbar20 = s.toDouble();
+   solution.vbar      = solution.vbar20 + 4.25e-4 * ( temperature - 20.0 );
    US_Math2::data_correction( temperature, solution );
    update();
 }
@@ -655,7 +658,7 @@ void US_Predict1::update_solution( US_Solution soln )
 {
    solution.density   = soln.buffer.density;
    solution.viscosity = soln.buffer.viscosity;
-
+   solution.manual = soln.buffer.manual;
    le_density  ->setText( QString::number( solution.density,   'f', 4 ) );
    le_viscosity->setText( QString::number( solution.viscosity, 'f', 4 ) );
 
