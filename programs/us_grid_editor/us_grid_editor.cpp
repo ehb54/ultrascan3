@@ -123,10 +123,21 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
 
    chkb_log = new QCheckBox();
    QGridLayout* lyt_log = us_checkbox( "X-Axis Logarithmic", chkb_log );
-   connect( chkb_log, &QCheckBox::stateChanged, this, &US_Grid_Editor::set_xlog );
+   connect( chkb_log, &QCheckBox::stateChanged, this, &US_Grid_Editor::refill_grid_points );
 
    QPushButton* pb_load_model = us_pushbutton( "Load Model" );
    connect( pb_load_model, &QPushButton::clicked, this, &US_Grid_Editor::load );
+
+   QRadioButton* rb_exctpoints = new QRadioButton();
+   QRadioButton* rb_midpoints    = new QRadioButton();
+   QGridLayout* lyt_sp = us_radiobutton( "Start / End Points", rb_exctpoints );
+   QGridLayout* lyt_mp = us_radiobutton( "Bin Centers", rb_midpoints );
+
+   bg_point_type = new QButtonGroup();
+   bg_point_type->addButton( rb_midpoints, MIDPOINTS );
+   bg_point_type->addButton( rb_exctpoints, EXACTPOINTS );
+   rb_exctpoints->setChecked( true );
+   connect( bg_point_type, &QButtonGroup::idClicked, this, &US_Grid_Editor::set_mid_exct_points );
 
    QLabel *lb_grid_list = us_label( "Partial Grid List" );
    lb_grid_list->setAlignment( Qt::AlignCenter );
@@ -287,6 +298,9 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    left->addLayout( lyt_log,              row,   0, 1, 2 );
    left->addWidget( pb_load_model,        row++, 2, 1, 2 );
 
+   left->addLayout( lyt_sp,               row,   0, 1, 2 );
+   left->addLayout( lyt_mp,               row++, 2, 1, 2 );
+   
    left->addWidget( lb_grid_list,         row++, 0, 1, 4 );
 
    left->addWidget( lw_grids,             row,   0, 1, 4 );
@@ -1018,14 +1032,15 @@ void US_Grid_Editor::add_update()
    if ( ! validate_xyz( ginfo ) ) return;
 
    bool isLog = chkb_log->isChecked();
+   bool isMid = bg_point_type->checkedId() == MIDPOINTS;
    QVector<double> xpoints;
    QVector<double> ypoints;
-   bool ok = gen_points( ginfo.xMin, ginfo.xMax, ginfo.xRes, isLog, xpoints );
-   ok = ok && gen_points( ginfo.yMin, ginfo.yMax, ginfo.yRes, false, ypoints );
+   bool ok = gen_points( ginfo.xMin, ginfo.xMax, ginfo.xRes, isLog, isMid, xpoints );
+   ok = ok && gen_points( ginfo.yMin, ginfo.yMax, ginfo.yRes, false, isMid, ypoints );
    if ( ! ok ) return;
 
-   if ( check_overlap( xpoints.first(), xpoints.last(),
-                     ypoints.first(), ypoints.last(), excl ) ) {
+   if ( check_overlap( ginfo.xMin, ginfo.xMax,
+                     ginfo.yMin, ginfo.yMax, excl ) ) {
       QMessageBox::critical( this, "Error!", "Grid Points Overlap!" );
       return;
    }
@@ -1050,18 +1065,60 @@ void US_Grid_Editor::add_update()
    highlight( lw_grids->currentRow() );
 }
 
-void US_Grid_Editor::set_xlog()
+void US_Grid_Editor::set_mid_exct_points( int id )
+{
+   if ( grid_info.isEmpty() ) return;
+   if ( id == EXACTPOINTS ) 
+   {
+      GridInfo ginfo = grid_info.first();
+      double xMin = ginfo.xMin;
+      double xMax = ginfo.xMax;
+      double yMin = ginfo.yMin;
+      double yMax = ginfo.yMax;
+      bool overlap = false;
+      for (int ii = 1; ii < grid_info.size(); ii++)
+      {
+         GridInfo ginfo = grid_info.at(ii);
+         double x1 = ginfo.xMin;
+         double x2 = ginfo.xMax;
+         double y1 = ginfo.yMin;
+         double y2 = ginfo.yMax;
+         bool x_ovrlp = !(xMin > x2 || xMax < x1);
+         bool y_ovrlp = !(yMin > y2 || yMax < y1);
+         if (x_ovrlp && y_ovrlp)
+         {
+            overlap = true;
+            break;
+         }
+      }
+      if ( overlap )
+      {
+         QMessageBox::warning( this, "Warning!", 
+         "Partial grids are overlapping.\n"
+         "Please correct the ranges, then try again.");
+         bg_point_type->disconnect();
+         bg_point_type->button( MIDPOINTS )->setChecked( true );
+         connect( bg_point_type, &QButtonGroup::idClicked, this, &US_Grid_Editor::set_mid_exct_points );
+         return;
+      }
+   }
+
+   refill_grid_points();
+}
+
+void US_Grid_Editor::refill_grid_points()
 {
    if ( grid_info.isEmpty() ) return;
    bool isLog = chkb_log->isChecked();
+   bool isMid = bg_point_type->checkedId() == MIDPOINTS;
    QList<QVector<GridPoint>> new_grid_points;
 
    for ( int ii = 0; ii < grid_info.size(); ii++ ) {
       GridInfo ginfo = grid_info.at( ii );
       QVector<double> xpoints;
       QVector<double> ypoints;
-      gen_points( ginfo.xMin, ginfo.xMax, ginfo.xRes, isLog, xpoints );
-      gen_points( ginfo.yMin, ginfo.yMax, ginfo.yRes, false, ypoints );
+      gen_points( ginfo.xMin, ginfo.xMax, ginfo.xRes, isLog, isMid, xpoints );
+      gen_points( ginfo.yMin, ginfo.yMax, ginfo.yRes, false, isMid, ypoints );
       QVector<GridPoint> gpoints;
       if ( ! gen_grid_points( xpoints, ypoints, ginfo.zVal, gpoints ) ) {
          return;
@@ -1080,12 +1137,11 @@ void US_Grid_Editor::set_xlog()
 }
 
 bool US_Grid_Editor::gen_points( double x1, double x2, int np,
-                           bool isLog, QVector<double>& result )
+                           bool isLog, bool isMid, QVector<double>& result )
 {
    if ( x2 <= x1 ) return false;
    if ( isLog && ( x1 * x2 < 0 ) ) return false;
    result.resize( np );
-   double dx;
    double sign = 1;
    if ( isLog ) {
       if ( x1 < 0 || x2 < 0 ) {
@@ -1100,8 +1156,14 @@ bool US_Grid_Editor::gen_points( double x1, double x2, int np,
       x1 = std::log10( x1 * sign );
       x2 = std::log10( x2 * sign );
    }
-   dx = ( x2 - x1 ) / static_cast<double>( np );
-   double val = x1 + 0.5 * dx;
+   double dx, val;
+   if ( isMid ) {
+       dx = ( x2 - x1 ) / static_cast<double>( np );
+       val = x1 + 0.5 * dx;
+   } else {
+       dx = ( x2 - x1 ) / static_cast<double>( np - 1 );
+       val = x1;
+   }
    for ( int ii = 0; ii < np; ii++ ) {
       if ( ii != 0 ) {
          val += dx;
@@ -1191,16 +1253,22 @@ double US_Grid_Editor::correct_unit( double val, Attribute::Type type, bool h_fl
 bool US_Grid_Editor::check_overlap( double xMin, double xMax,
                                    double yMin, double yMax, int excl )
 {
-   for ( int ii= 0; ii < grid_points.size(); ii++ ) {
+   bool isMid = bg_point_type->checkedId() == MIDPOINTS;
+   for ( int ii= 0; ii < grid_info.size(); ii++ ) {
       if ( ii == excl ) continue;
-      QVector<GridPoint> item = grid_points.at( ii );
-      int sz = item.size();
-      double x1 = item[0].value( x_param );
-      double y1 = item[0].value( y_param );
-      double x2 = item[sz - 1].value( x_param );
-      double y2 = item[sz - 1].value( y_param );
-      bool x_ovrlp = ! ( xMin > x2 || xMax < x1 );
-      bool y_ovrlp = ! ( yMin > y2 || yMax < y1 );
+      GridInfo ginfo = grid_info.at( ii );
+      double x1 = ginfo.xMin;
+      double x2 = ginfo.xMax;
+      double y1 = ginfo.yMin;
+      double y2 = ginfo.yMax;
+      bool x_ovrlp, y_ovrlp;
+      if ( isMid ) {
+         x_ovrlp = ! ( xMin >= x2 || xMax <= x1 );
+         y_ovrlp = ! ( yMin >= y2 || yMax <= y1 );
+      } else {
+         x_ovrlp = ! ( xMin > x2 || xMax < x1 );
+         y_ovrlp = ! ( yMin > y2 || yMax < y1 );
+      }
       if ( x_ovrlp && y_ovrlp ) {
          return true;
       }
@@ -1684,8 +1752,12 @@ void US_Grid_Editor::load()
    lb_z_ax->setText( Attribute::short_desc( z_param ) );
 
    chkb_log->disconnect();
+   bg_point_type->disconnect();
    chkb_log->setChecked( model.customGridData.xLogarithmic );
-   connect( chkb_log, &QCheckBox::stateChanged, this, &US_Grid_Editor::set_xlog );
+   bool isMid = model.customGridData.midpointBins;
+   bg_point_type->button( MIDPOINTS )->setChecked( isMid );
+   connect( chkb_log, &QCheckBox::stateChanged, this, &US_Grid_Editor::refill_grid_points );
+   connect( bg_point_type, &QButtonGroup::idClicked, this, &US_Grid_Editor::set_mid_exct_points );
 
    for ( int ii = 0; ii < grid_info.size(); ii++ ) {
       QVector<GridPoint> gpvec;
@@ -1743,7 +1815,8 @@ void US_Grid_Editor::save()
    model.customGridData.components.clear();
 
    model.customGridData.grids << grid_info;
-   QStringList grid_metadat;
+   model.customGridData.xLogarithmic = chkb_log->isChecked();
+   model.customGridData.midpointBins = bg_point_type->checkedId() == MIDPOINTS;
 
    for ( int ii = 0; ii < sorted_points.size(); ii++ )
    {
