@@ -16,9 +16,6 @@ static vector < double > bblm_ref_errors_mult;
 static vector < double > bblm_init_params;
 static vector < double > bblm_fixed_params;
 static size_t bblm_size;
-#if !defined( BROADEN_SCALE_FIT )
-static double bblm_scale;
-#endif
 static bool   bblm_ref_has_errors;
 static vector < bool >   bblm_fit_param;
 static bool   shutting_down;
@@ -38,7 +35,6 @@ static unordered_map < double,
 /// BROADEN_NO_CHI2 turns off SD in curves for testing
 // #define BROADEN_NO_CHI2
 // #define BROADEN_NO_BASELINE
-#define BROADEN_SCALE_FIT
 
 static double bblm_fit_mode_half_gaussian( double t, const double *par ) {
    static US_Saxs_Util usu;
@@ -51,19 +47,15 @@ static double bblm_fit_mode_half_gaussian( double t, const double *par ) {
    double lambda_1  = bblm_fit_param[ pos_param++ ] ? par[pos++] : bblm_fixed_params[ pos_fixed++ ];
    double deltat    = bblm_fit_param[ pos_param++ ] ? par[pos++] : bblm_fixed_params[ pos_fixed++ ];
    double baseline  = bblm_fit_param[ pos_param++ ] ? par[pos++] : bblm_fixed_params[ pos_fixed++ ];
-#if defined( BROADEN_SCALE_FIT )
    double scale     = bblm_fit_param[ pos_param++ ] ? par[pos++] : bblm_fixed_params[ pos_fixed++ ];
-#endif
 
    if ( sigma < 0 ) {
       return DBL_MAX;
    }
 
-#if defined( BROADEN_SCALE_FIT )
    if ( scale <= 0 ) {
       return DBL_MAX;
    }
-#endif
    
    vector < double > bblm_conc_I;
 
@@ -87,16 +79,10 @@ static double bblm_fit_mode_half_gaussian( double t, const double *par ) {
             qDebug() << QString( "--> error, t value %1 outside of errors range" ).arg( t );
             return DBL_MAX;
          }
-#if defined( BROADEN_SCALE_FIT )
          // scale first, then add the baseline -- this is consistent with what we do in broaden_done()
          return scale * bblm_broadened_conc_I_cache_4[ sigma ][ tau ][ lambda_1 ][ deltat ][ (size_t) t ] + baseline * bblm_ref_errors_mult[ t ];
       } else {
          return scale * bblm_broadened_conc_I_cache_4[ sigma ][ tau ][ lambda_1 ][ deltat ][ (size_t) t ] + baseline;
-#else
-         return bblm_broadened_conc_I_cache_4[ sigma ][ tau ][ lambda_1 ][ deltat ][ (size_t) t ] + baseline * bblm_scale * bblm_ref_errors_mult[ t ];
-      } else {
-         return bblm_broadened_conc_I_cache_4[ sigma ][ tau ][ lambda_1 ][ deltat ][ (size_t) t ] + baseline * bblm_scale;
-#endif
       }
    }
 
@@ -118,14 +104,6 @@ static double bblm_fit_mode_half_gaussian( double t, const double *par ) {
       t += deltat;
    }
 
-#if defined( BROADEN_SCALE_FIT )
-   // the I is unscaled when we are doing a scaling fit
-#else
-   for ( auto & I : bblm_conc_I ) {
-      I *= bblm_scale;
-   }
-#endif
-   
    vector < double > new_conc_I;
 
    if ( !usu.linear_interpolate( bblm_conc_t, bblm_conc_I, bblm_ref_t, new_conc_I ) ) {
@@ -151,15 +129,6 @@ static double bblm_fit_mode_half_gaussian( double t, const double *par ) {
    // qDebug() << "bblm_fit 3";
    // US_Vector::printvector3( "bblm ref t, I, errors", bblm_ref_t, bblm_ref_I, bblm_ref_errors );
 
-   // double loss = uhsh->broaden_compute_loss_no_ui(
-   //                                                bblm_conc_t
-   //                                                ,bblm_conc_I
-   //                                                ,bblm_ref_t
-   //                                                ,bblm_ref_I
-   //                                                ,bblm_ref_errors
-   //                                                );
-   // qDebug() << "bblm_fit 4";
-
    if ( floor( t ) != t
         || t > new_conc_I.size()
         || t < 0
@@ -173,16 +142,10 @@ static double bblm_fit_mode_half_gaussian( double t, const double *par ) {
          qDebug() << QString( "--> error, t value %1 outside of errors range" ).arg( t );
          return DBL_MAX;
       }
-#if defined( BROADEN_SCALE_FIT )
       // scale first, then add the baseline -- this is consistent with what we do in broaden_done()
       return scale * new_conc_I[ (size_t) t ] + baseline * bblm_ref_errors_mult[ t ];
    } else {
       return scale * new_conc_I[ (size_t) t ] + baseline;
-#else
-      return new_conc_I[ (size_t) t ] + baseline * bblm_scale * bblm_ref_errors_mult[ t ];
-   } else {
-      return new_conc_I[ (size_t) t ] + baseline * bblm_scale;
-#endif
    }
 
    qDebug() << "bblm_fit - half gauss - shouldn't get there!";
@@ -201,19 +164,15 @@ static double bblm_fit_mode_emg_gmg( double t, const double *par ) {
    double lambda_2  = bblm_fit_param[ pos_param++ ] ? par[pos++] : bblm_fixed_params[ pos_fixed++ ];
    double deltat    = bblm_fit_param[ pos_param++ ] ? par[pos++] : bblm_fixed_params[ pos_fixed++ ];
    double baseline  = bblm_fit_param[ pos_param++ ] ? par[pos++] : bblm_fixed_params[ pos_fixed++ ];
-#if defined( BROADEN_SCALE_FIT )
    double scale     = bblm_fit_param[ pos_param++ ] ? par[pos++] : bblm_fixed_params[ pos_fixed++ ];
-#endif
 
    if ( sigma < 0 ) {
       return DBL_MAX;
    }
 
-#if defined( BROADEN_SCALE_FIT )
    if ( scale <= 0 ) {
       return DBL_MAX;
    }
-#endif
    
    vector < double > bblm_conc_I;
 
@@ -237,16 +196,10 @@ static double bblm_fit_mode_emg_gmg( double t, const double *par ) {
             qDebug() << QString( "--> error, t value %1 outside of errors range" ).arg( t );
             return DBL_MAX;
          }
-#if defined( BROADEN_SCALE_FIT )
          // scale first, then add the baseline -- this is consistent with what we do in broaden_done()
          return scale * bblm_broadened_conc_I_cache_4[ sigma ][ lambda_1 ][ lambda_2 ][ deltat ][ (size_t) t ] + baseline * bblm_ref_errors_mult[ t ];
       } else {
          return scale * bblm_broadened_conc_I_cache_4[ sigma ][ lambda_1 ][ lambda_2 ][ deltat ][ (size_t) t ] + baseline;
-#else
-         return bblm_broadened_conc_I_cache_4[ sigma ][ lambda_1 ][ lambda_2 ][ deltat ][ (size_t) t ] + baseline * bblm_scale * bblm_ref_errors_mult[ t ];
-      } else {
-         return bblm_broadened_conc_I_cache_4[ sigma ][ lambda_1 ][ lambda_2 ][ deltat ][ (size_t) t ] + baseline * bblm_scale;
-#endif
       }
    }
 
@@ -268,14 +221,6 @@ static double bblm_fit_mode_emg_gmg( double t, const double *par ) {
       t += deltat;
    }
 
-#if defined( BROADEN_SCALE_FIT )
-   // the I is unscaled when we are doing a scaling fit
-#else
-   for ( auto & I : bblm_conc_I ) {
-      I *= bblm_scale;
-   }
-#endif
-   
    vector < double > new_conc_I;
 
    if ( !usu.linear_interpolate( bblm_conc_t, bblm_conc_I, bblm_ref_t, new_conc_I ) ) {
@@ -323,16 +268,10 @@ static double bblm_fit_mode_emg_gmg( double t, const double *par ) {
          qDebug() << QString( "--> error, t value %1 outside of errors range" ).arg( t );
          return DBL_MAX;
       }
-#if defined( BROADEN_SCALE_FIT )
       // scale first, then add the baseline -- this is consistent with what we do in broaden_done()
       return scale * new_conc_I[ (size_t) t ] + baseline * bblm_ref_errors_mult[ t ];
    } else {
       return scale * new_conc_I[ (size_t) t ] + baseline;
-#else
-      return new_conc_I[ (size_t) t ] + baseline * bblm_scale * bblm_ref_errors_mult[ t ];
-   } else {
-      return new_conc_I[ (size_t) t ] + baseline * bblm_scale;
-#endif
    }
 
    return DBL_MAX;
@@ -349,9 +288,7 @@ static double bblm_fit_mode_default( double t, const double *par ) {
    double tau       = bblm_fit_param[ pos_param++ ] ? par[pos++] : bblm_fixed_params[ pos_fixed++ ];
    double deltat    = bblm_fit_param[ pos_param++ ] ? par[pos++] : bblm_fixed_params[ pos_fixed++ ];
    double baseline  = bblm_fit_param[ pos_param++ ] ? par[pos++] : bblm_fixed_params[ pos_fixed++ ];
-#if defined( BROADEN_SCALE_FIT )
    double scale     = bblm_fit_param[ pos_param++ ] ? par[pos++] : bblm_fixed_params[ pos_fixed++ ];
-#endif
 
    if ( sigma < 0 ) {
       return DBL_MAX;
@@ -359,11 +296,9 @@ static double bblm_fit_mode_default( double t, const double *par ) {
    // if ( tau < 0 ) {
    //    return DBL_MAX;
    // }
-#if defined( BROADEN_SCALE_FIT )
    if ( scale <= 0 ) {
       return DBL_MAX;
    }
-#endif
    
    vector < double > bblm_conc_I;
 
@@ -386,16 +321,10 @@ static double bblm_fit_mode_default( double t, const double *par ) {
             qDebug() << QString( "--> error, t value %1 outside of errors range" ).arg( t );
             return DBL_MAX;
          }
-#if defined( BROADEN_SCALE_FIT )
          // scale first, then add the baseline -- this is consistent with what we do in broaden_done()
          return scale * bblm_broadened_conc_I_cache_3[ sigma ][ tau ][ deltat ][ (size_t) t ] + baseline * bblm_ref_errors_mult[ t ];
       } else {
          return scale * bblm_broadened_conc_I_cache_3[ sigma ][ tau ][ deltat ][ (size_t) t ] + baseline;
-#else
-         return bblm_broadened_conc_I_cache_3[ sigma ][ tau ][ deltat ][ (size_t) t ] + baseline * bblm_scale * bblm_ref_errors_mult[ t ];
-      } else {
-         return bblm_broadened_conc_I_cache_3[ sigma ][ tau ][ deltat ][ (size_t) t ] + baseline * bblm_scale;
-#endif
       }
    }
 
@@ -417,14 +346,6 @@ static double bblm_fit_mode_default( double t, const double *par ) {
       t += deltat;
    }
 
-#if defined( BROADEN_SCALE_FIT )
-   // the I is unscaled when we are doing a scaling fit
-#else
-   for ( auto & I : bblm_conc_I ) {
-      I *= bblm_scale;
-   }
-#endif
-   
    vector < double > new_conc_I;
 
    if ( !usu.linear_interpolate( bblm_conc_t, bblm_conc_I, bblm_ref_t, new_conc_I ) ) {
@@ -472,22 +393,12 @@ static double bblm_fit_mode_default( double t, const double *par ) {
          qDebug() << QString( "--> error, t value %1 outside of errors range" ).arg( t );
          return DBL_MAX;
       }
-#if defined( BROADEN_SCALE_FIT )
       // scale first, then add the baseline -- this is consistent with what we do in broaden_done()
       return scale * new_conc_I[ (size_t) t ] + baseline * bblm_ref_errors_mult[ t ];
    } else {
       return scale * new_conc_I[ (size_t) t ] + baseline;
-#else
-      return new_conc_I[ (size_t) t ] + baseline * bblm_scale * bblm_ref_errors_mult[ t ];
-   } else {
-      return new_conc_I[ (size_t) t ] + baseline * bblm_scale;
-#endif
    }
 }
-
-#if !defined( BROADEN_SCALE_FIT )
-static double broaden_scale;
-#endif
 
 static double discrete_area_under_curve( const vector < double > & x, const vector < double > & y ) {
    double area = 0;
@@ -817,6 +728,7 @@ void US_Hydrodyn_Saxs_Hplc::broaden_done( bool save ) {
                                                 ,0
                                                 ,le_broaden_kernel_end->text().toDouble()
                                                 ,le_broaden_kernel_deltat->text().toDouble()
+                                                ,(US_Band_Broaden::kernel_mode) cb_broaden_kernel_mode->currentIndex()
                                                 );
       if ( !broadened.size() ) {
          lbl_broaden_msg->setText( QString( "Error: %1" ).arg( ubb.errormsg ) );
@@ -825,38 +737,81 @@ void US_Hydrodyn_Saxs_Hplc::broaden_done( bool save ) {
 
          // setup plot curve
 
-         QString header =
-            QString( "sigma:%1 tau:%2 xi:(%3,%4) baseline:%5 scale:%6 delta_t:%7 kernel_end:%8 kernel_delta_t:%9 fit_range:[%10:%11]" )
-            .arg( le_broaden_sigma->text() )
-            .arg( le_broaden_tau->text() )
-            .arg( le_broaden_lambda_1->text() )
-            .arg( le_broaden_lambda_2->text() )
-            .arg( le_broaden_baseline->text() )
-            .arg( le_broaden_scale->text() )
-            .arg( le_broaden_deltat->text() )
-            .arg( le_broaden_kernel_end->text() )
-            .arg( le_broaden_kernel_deltat->text() )
-            .arg( le_broaden_fit_range_start->text() )
-            .arg( le_broaden_fit_range_end->text() )
-            ;
+         QString header;
+         QString fname;
 
-         QString fname = 
-#if defined( BROADEN_SCALE_FIT )
-            QString( "%1_Sigma%2_Tau%3" )
-            .arg( broaden_names[ 0 ] )
-            .arg( le_broaden_sigma->text().toDouble(), 0, 'g', 3 )
-            .arg( le_broaden_tau->text().toDouble(), 0, 'g', 3 )
-#else
-            QString( "%1_sigma_%2_tau%3_b%4_dt%5_kte%6_ktdelta%7" )
-            .arg( broaden_names[ 0 ] )
-            .arg( le_broaden_sigma->text() )
-            .arg( le_broaden_tau->text() )
-            .arg( le_broaden_baseline->text() )
-            .arg( le_broaden_deltat->text() )
-            .arg( le_broaden_kernel_end->text() )
-            .arg( le_broaden_kernel_deltat->text() )
-#endif
-            ;
+         switch ( cb_broaden_kernel_mode->currentIndex() ) {
+         case US_Band_Broaden::BAND_BROADEN_KERNEL_MODE_DEFAULT :
+            header =
+               QString( "sigma:%1 tau:%2 baseline:%3 scale:%4 delta_t:%5 kernel_end:%6 kernel_delta_t:%7 fit_range:[%8:%9] kernel_mode:%10" )
+               .arg( le_broaden_sigma->text() )
+               .arg( le_broaden_tau->text() )
+               .arg( le_broaden_baseline->text() )
+               .arg( le_broaden_scale->text() )
+               .arg( le_broaden_deltat->text() )
+               .arg( le_broaden_kernel_end->text() )
+               .arg( le_broaden_kernel_deltat->text() )
+               .arg( le_broaden_fit_range_start->text() )
+               .arg( le_broaden_fit_range_end->text() )
+               .arg( US_Band_Broaden::kernel_mode_name( (US_Band_Broaden::kernel_mode) cb_broaden_kernel_mode->currentIndex() ) )
+               ;
+            fname = 
+               QString( "%1_Sigma%2_Tau%3" )
+               .arg( broaden_names[ 0 ] )
+               .arg( le_broaden_sigma->text().toDouble(), 0, 'g', 3 )
+               .arg( le_broaden_tau->text().toDouble(), 0, 'g', 3 )
+               ;
+            break;
+
+         case US_Band_Broaden::BAND_BROADEN_KERNEL_MODE_HALF_GAUSSIAN :
+            header =
+               QString( "sigma:%1 tau:%2 lambda_1:%3 baseline:%4 scale:%5 delta_t:%6 kernel_end:%7 kernel_delta_t:%8 fit_range:[%9:%10] kernel_mode:%11" )
+               .arg( le_broaden_sigma->text() )
+               .arg( le_broaden_tau->text() )
+               .arg( le_broaden_lambda_1->text() )
+               .arg( le_broaden_baseline->text() )
+               .arg( le_broaden_scale->text() )
+               .arg( le_broaden_deltat->text() )
+               .arg( le_broaden_kernel_end->text() )
+               .arg( le_broaden_kernel_deltat->text() )
+               .arg( le_broaden_fit_range_start->text() )
+               .arg( le_broaden_fit_range_end->text() )
+               .arg( US_Band_Broaden::kernel_mode_name( (US_Band_Broaden::kernel_mode) cb_broaden_kernel_mode->currentIndex() ) )
+               ;
+            fname = 
+               QString( "%1_Sigma%2_Tau%3_Lambda%4" )
+               .arg( broaden_names[ 0 ] )
+               .arg( le_broaden_sigma->text().toDouble(), 0, 'g', 3 )
+               .arg( le_broaden_tau->text().toDouble(), 0, 'g', 3 )
+               .arg( le_broaden_lambda_1->text().toDouble(), 0, 'g', 3 )
+               ;
+            break;
+            
+         case US_Band_Broaden::BAND_BROADEN_KERNEL_MODE_EMG_GMG :
+            header =
+               QString( "sigma:%1 lambda:(%2,%3) baseline:%4 scale:%5 delta_t:%6 kernel_end:%7 kernel_delta_t:%8 fit_range:[%9:%10] kernel_mode:%11" )
+               .arg( le_broaden_sigma->text() )
+               .arg( le_broaden_lambda_1->text() )
+               .arg( le_broaden_lambda_2->text() )
+               .arg( le_broaden_baseline->text() )
+               .arg( le_broaden_scale->text() )
+               .arg( le_broaden_deltat->text() )
+               .arg( le_broaden_kernel_end->text() )
+               .arg( le_broaden_kernel_deltat->text() )
+               .arg( le_broaden_fit_range_start->text() )
+               .arg( le_broaden_fit_range_end->text() )
+               .arg( US_Band_Broaden::kernel_mode_name( (US_Band_Broaden::kernel_mode) cb_broaden_kernel_mode->currentIndex() ) )
+               ;
+            fname = 
+               QString( "%1_Sigma%2_Lambda%4_Lambda%5" )
+               .arg( broaden_names[ 0 ] )
+               .arg( le_broaden_sigma->text().toDouble(), 0, 'g', 3 )
+               .arg( le_broaden_lambda_1->text().toDouble(), 0, 'g', 3 )
+               .arg( le_broaden_lambda_2->text().toDouble(), 0, 'g', 3 )
+               ;
+            break;
+
+         }
 
          vector < double > ts = f_qs[ broaden_names[ 0 ] ];
          double deltat = le_broaden_deltat->text().toDouble();
@@ -894,7 +849,6 @@ void US_Hydrodyn_Saxs_Hplc::broaden_done( bool save ) {
             f_header[ last_created_file ] = QString( " Broadening target %1 %2" ).arg( broaden_names[ 1 ] ).arg( header );
             f_errors.erase( last_created_file );
 
-#if defined( BROADEN_SCALE_FIT )
             double baseline        = le_broaden_baseline       ->text().toDouble();
             double scale           = le_broaden_scale          ->text().toDouble();
 
@@ -909,41 +863,6 @@ void US_Hydrodyn_Saxs_Hplc::broaden_done( bool save ) {
             conc_files.insert( last_created_file );
             f_header[ last_created_file ] = QString( " Broadening target %1 %2 scaled" ).arg( broaden_names[ 1 ] ).arg( header );
             f_errors.erase( last_created_file );
-#else
-            // scale area
-
-            double fit_range_start = le_broaden_fit_range_start->text().toDouble();
-            double fit_range_end   = le_broaden_fit_range_end  ->text().toDouble();
-            double baseline        = le_broaden_baseline       ->text().toDouble();
-
-            vector < double > conc_t = ts;
-            vector < double > conc_I = I;
-
-            // crop only ref, conc is full and will be interpolated to ref
-            vector < double > & ref_t = f_qs[ broaden_names[ 1 ] ];
-            vector < double > & ref_I = f_Is[ broaden_names[ 1 ] ];
-
-            double area_ref  = discrete_area_under_curve( ref_t, ref_I, fit_range_start, fit_range_end );
-            double area_conc = discrete_area_under_curve( conc_t, conc_I, fit_range_start, fit_range_end );
-
-            if ( area_conc <= 0 ) {
-               editor_msg( "red", QString( "Error: area under broadened curve restricted to fitting range is not positive" ) );
-            } else {
-               broaden_scale = area_ref / area_conc;
-
-               QString name = last_created_file + "_scaled";
-
-               for ( auto & I : I_interp ) {
-                  I *= broaden_scale;
-                  I += baseline;
-               }
-
-               add_plot( name, f_qs[ broaden_names[ 1 ] ], I_interp, true, false );
-               conc_files.insert( last_created_file );
-               f_header[ last_created_file ] = QString( " Broadening target %1" ).arg( broaden_names[ 1 ] );
-               f_errors.erase( last_created_file );
-            }
-#endif
          }
       }
    } else {
@@ -999,10 +918,8 @@ void US_Hydrodyn_Saxs_Hplc::broaden_enables() {
    cb_broaden_baseline          -> setEnabled( true );
    le_broaden_baseline          -> setEnabled( true );
 #endif
-#if defined( BROADEN_SCALE_FIT )
    cb_broaden_scale             -> setEnabled( true );
    le_broaden_scale             -> setEnabled( true );
-#endif
    le_broaden_kernel_end        -> setEnabled( true );
    le_broaden_kernel_deltat     -> setEnabled( true );
    cb_broaden_repeak            -> setEnabled( true );
@@ -1021,9 +938,7 @@ void US_Hydrodyn_Saxs_Hplc::broaden_enables() {
       bool any_parameters_checked =
          cb_broaden_deltat->isChecked()
          || cb_broaden_baseline->isChecked()
-#if defined( BROADEN_SCALE_FIT )
          || cb_broaden_scale->isChecked()
-#endif
          ;
 
       for ( auto const & cb : broaden_parameter_value_cb_widgets[ cb_broaden_kernel_mode->currentIndex() ] ) {
@@ -1148,14 +1063,10 @@ void US_Hydrodyn_Saxs_Hplc::broaden_reset() {
    cb_broaden_baseline ->setChecked( false );
    le_broaden_baseline ->setText( "0" );
 
-#if defined( BROADEN_SCALE_FIT )
    cb_broaden_scale    ->setChecked( true );
    le_broaden_scale    ->setText( "1" );
    broaden_compute_one();
    broaden_scale_compute();
-#else
-   broaden_compute_one();
-#endif
 
    broaden_enables();
 }
@@ -1539,18 +1450,6 @@ void US_Hydrodyn_Saxs_Hplc::broaden_compute_one( bool details ) {
       lbl_broaden_msg->setText( QString( "Broadened vector size: %1" ).arg( broadened.size() ) );
    }      
 
-#if defined( BROADEN_SCALE_FIT )
-   // only the "repeaked" display will have the baseline offset
-#else
-   // baseline offset
-   {
-      double baseline = le_broaden_baseline->text().toDouble();
-      for ( auto & I : broadened ) {
-         I += baseline;
-      }
-   }
-#endif
-   
    // deltat offset
    vector < double > ts = f_qs[ broaden_names[ 0 ] ];
    double deltat = le_broaden_deltat->text().toDouble();
@@ -1561,7 +1460,6 @@ void US_Hydrodyn_Saxs_Hplc::broaden_compute_one( bool details ) {
    // setup plot curve
 
    QString fname =
-#if defined( BROADEN_SCALE_FIT )
       QString( "%1_tau%2_sigma%3_b%4_rp%5_dt%6_kte%7_ktdelta%8" )
       .arg( broaden_names[ 0 ] )
       .arg( le_broaden_tau->text() )
@@ -1571,16 +1469,6 @@ void US_Hydrodyn_Saxs_Hplc::broaden_compute_one( bool details ) {
       .arg( le_broaden_deltat->text() )
       .arg( le_broaden_kernel_end->text() )
       .arg( le_broaden_kernel_deltat->text() )
-#else
-      QString( "%1_tau%2_sigma%3_b%4_dt%5_kte%6_ktdelta%7" )
-      .arg( broaden_names[ 0 ] )
-      .arg( le_broaden_tau->text() )
-      .arg( le_broaden_sigma->text() )
-      .arg( le_broaden_baseline->text() )
-      .arg( le_broaden_deltat->text() )
-      .arg( le_broaden_kernel_end->text() )
-      .arg( le_broaden_kernel_deltat->text() )
-#endif
       ;
    
    add_plot( fname, ts, broadened, true, false );
@@ -1604,10 +1492,8 @@ void US_Hydrodyn_Saxs_Hplc::broaden_compute_one( bool details ) {
          files << broaden_names[ 1 ];
          double baseline = le_broaden_baseline       ->text().toDouble();
          QString broadened_not_repeaked = broaden_names.takeLast();
-#if defined( BROADEN_SCALE_FIT )
          // scale
          double broaden_scale = le_broaden_scale->text().toDouble();
-#endif
          for ( auto & I : f_Is[ broadened_not_repeaked ] ) {
             I *= broaden_scale;
             I += baseline;
@@ -1658,49 +1544,89 @@ void US_Hydrodyn_Saxs_Hplc::broaden_compute_one( bool details ) {
          }
       }
 
-#if defined( BROADEN_SCALE_FIT )
-      editor_msg( "darkblue"
-                  ,QString( "Broaden - last fit:\n%1, %2, %3, %4, %5, %6, %7, %8, %9\n%10, %11, %12, %13, %14, %15, %16, %17, %18\n" )
-                  .arg( UNICODE_TAU )
-                  .arg( UNICODE_SIGMA )
-                  .arg( UNICODE_DELTA_QS + "t" )
-                  .arg( "baseline" )
-                  .arg( "scale" )
-                  .arg( "target area" )
-                  .arg( "broadened area" )
-                  .arg( "q" )
-                  .arg( broaden_ref_has_errors ? "nChi^2" : "RMSD" )
-                  .arg( le_broaden_tau->text() )
-                  .arg( le_broaden_sigma->text() )
-                  .arg( le_broaden_deltat->text() )
-                  .arg( le_broaden_baseline->text() )
-                  .arg( le_broaden_scale->text() )
-                  .arg( broaden_names.size() > 2 ? QString( "%1" ).arg( discrete_area_under_curve( f_qs[ broaden_names[ 1 ] ] , f_Is[ broaden_names[ 1 ] ], fit_range_start, fit_range_end ) ) : "n/a" )
-                  .arg( broaden_names.size() > 2 ? QString( "%1" ).arg( discrete_area_under_curve( f_qs[ broaden_names[ 2 ] ] , f_Is[ broaden_names[ 2 ] ], fit_range_start, fit_range_end ) ) : "n/a" )
-                  .arg( q_val_str )
-                  .arg( fit )
-                  );
-#else
-      editor_msg( "darkblue"
-                  ,QString( "Broaden - last fit:\n%1, %2, %3, %4, %5, %6, %7, %8\n%9, %10, %11, %12, %13, %14, %15, %16\n" )
-                  .arg( UNICODE_TAU )
-                  .arg( UNICODE_SIGMA )
-                  .arg( UNICODE_DELTA_QS + "t" )
-                  .arg( "baseline" )
-                  .arg( "target area" )
-                  .arg( "broadened area" )
-                  .arg( "q" )
-                  .arg( broaden_ref_has_errors ? "nChi^2" : "RMSD" )
-                  .arg( le_broaden_tau->text() )
-                  .arg( le_broaden_sigma->text() )
-                  .arg( le_broaden_deltat->text() )
-                  .arg( le_broaden_baseline->text() )
-                  .arg( broaden_names.size() > 2 ? QString( "%1" ).arg( discrete_area_under_curve( f_qs[ broaden_names[ 1 ] ] , f_Is[ broaden_names[ 1 ] ], fit_range_start, fit_range_end ) ) : "n/a" )
-                  .arg( broaden_names.size() > 2 ? QString( "%1" ).arg( discrete_area_under_curve( f_qs[ broaden_names[ 2 ] ] , f_Is[ broaden_names[ 2 ] ], fit_range_start, fit_range_end ) ) : "n/a" )
-                  .arg( q_val_str )
-                  .arg( fit )
-                  );
-#endif
+      switch ( cb_broaden_kernel_mode->currentIndex() ) {
+      case US_Band_Broaden::BAND_BROADEN_KERNEL_MODE_DEFAULT :
+         editor_msg( "darkblue"
+                     ,QString( "Broaden - last fit:\n%1, %2, %3, %4, %5, %6, %7, %8, %9, %10\n%11, %12, %13, %14, %15, %16, %17, %18, %19, %20\n" )
+                     .arg( UNICODE_SIGMA )
+                     .arg( UNICODE_TAU )
+                     .arg( UNICODE_DELTA_QS + "t" )
+                     .arg( "baseline" )
+                     .arg( "scale" )
+                     .arg( "target area" )
+                     .arg( "broadened area" )
+                     .arg( "q" )
+                     .arg( broaden_ref_has_errors ? "nChi^2" : "RMSD" )
+                     .arg( "mode" )
+                     .arg( le_broaden_sigma->text() )
+                     .arg( le_broaden_tau->text() )
+                     .arg( le_broaden_deltat->text() )
+                     .arg( le_broaden_baseline->text() )
+                     .arg( le_broaden_scale->text() )
+                     .arg( broaden_names.size() > 2 ? QString( "%1" ).arg( discrete_area_under_curve( f_qs[ broaden_names[ 1 ] ] , f_Is[ broaden_names[ 1 ] ], fit_range_start, fit_range_end ) ) : "n/a" )
+                     .arg( broaden_names.size() > 2 ? QString( "%1" ).arg( discrete_area_under_curve( f_qs[ broaden_names[ 2 ] ] , f_Is[ broaden_names[ 2 ] ], fit_range_start, fit_range_end ) ) : "n/a" )
+                     .arg( q_val_str )
+                     .arg( fit )
+                     .arg( US_Band_Broaden::kernel_mode_name( (US_Band_Broaden::kernel_mode) cb_broaden_kernel_mode->currentIndex() ) )
+                     );
+         break;
+
+      case US_Band_Broaden::BAND_BROADEN_KERNEL_MODE_HALF_GAUSSIAN :
+         editor_msg( "darkblue"
+                     ,QString( "Broaden - last fit:\n%1, %2, %3, %4, %5, %6, %7, %8, %9, %10, %11\n%12, %13, %14, %15, %16, %17, %18, %19, %20, %21, %22\n" )
+                     .arg( UNICODE_SIGMA )
+                     .arg( UNICODE_TAU )
+                     .arg( UNICODE_LAMBDA_QS + UNICODE_SUB_1_QS )
+                     .arg( UNICODE_DELTA_QS + "t" )
+                     .arg( "baseline" )
+                     .arg( "scale" )
+                     .arg( "target area" )
+                     .arg( "broadened area" )
+                     .arg( "q" )
+                     .arg( broaden_ref_has_errors ? "nChi^2" : "RMSD" )
+                     .arg( "mode" )
+                     .arg( le_broaden_sigma->text() )
+                     .arg( le_broaden_tau->text() )
+                     .arg( le_broaden_lambda_1->text() )
+                     .arg( le_broaden_deltat->text() )
+                     .arg( le_broaden_baseline->text() )
+                     .arg( le_broaden_scale->text() )
+                     .arg( broaden_names.size() > 2 ? QString( "%1" ).arg( discrete_area_under_curve( f_qs[ broaden_names[ 1 ] ] , f_Is[ broaden_names[ 1 ] ], fit_range_start, fit_range_end ) ) : "n/a" )
+                     .arg( broaden_names.size() > 2 ? QString( "%1" ).arg( discrete_area_under_curve( f_qs[ broaden_names[ 2 ] ] , f_Is[ broaden_names[ 2 ] ], fit_range_start, fit_range_end ) ) : "n/a" )
+                     .arg( q_val_str )
+                     .arg( fit )
+                     .arg( US_Band_Broaden::kernel_mode_name( (US_Band_Broaden::kernel_mode) cb_broaden_kernel_mode->currentIndex() ) )
+                     );
+         break;
+
+      case US_Band_Broaden::BAND_BROADEN_KERNEL_MODE_EMG_GMG :
+         editor_msg( "darkblue"
+                     ,QString( "Broaden - last fit:\n%1, %2, %3, %4, %5, %6, %7, %8, %9, %10, %11\n%12, %13, %14, %15, %16, %17, %18, %19, %20, %21, %22\n" )
+                     .arg( UNICODE_SIGMA )
+                     .arg( UNICODE_LAMBDA_QS + UNICODE_SUB_1_QS )
+                     .arg( UNICODE_LAMBDA_QS + UNICODE_SUB_2_QS )
+                     .arg( UNICODE_DELTA_QS + "t" )
+                     .arg( "baseline" )
+                     .arg( "scale" )
+                     .arg( "target area" )
+                     .arg( "broadened area" )
+                     .arg( "q" )
+                     .arg( broaden_ref_has_errors ? "nChi^2" : "RMSD" )
+                     .arg( "mode" )
+                     .arg( le_broaden_sigma->text() )
+                     .arg( le_broaden_lambda_1->text() )
+                     .arg( le_broaden_lambda_2->text() )
+                     .arg( le_broaden_deltat->text() )
+                     .arg( le_broaden_baseline->text() )
+                     .arg( le_broaden_scale->text() )
+                     .arg( broaden_names.size() > 2 ? QString( "%1" ).arg( discrete_area_under_curve( f_qs[ broaden_names[ 1 ] ] , f_Is[ broaden_names[ 1 ] ], fit_range_start, fit_range_end ) ) : "n/a" )
+                     .arg( broaden_names.size() > 2 ? QString( "%1" ).arg( discrete_area_under_curve( f_qs[ broaden_names[ 2 ] ] , f_Is[ broaden_names[ 2 ] ], fit_range_start, fit_range_end ) ) : "n/a" )
+                     .arg( q_val_str )
+                     .arg( fit )
+                     .arg( US_Band_Broaden::kernel_mode_name( (US_Band_Broaden::kernel_mode) cb_broaden_kernel_mode->currentIndex() ) )
+                     );
+         break;
+      }
    }
 }
 
@@ -1715,11 +1641,7 @@ void US_Hydrodyn_Saxs_Hplc::broaden_lm_fit( bool final_refinement_only ) {
    bblm_init_params.clear();
    bblm_fixed_params.clear();
 
-#if defined( BROADEN_SCALE_FIT )
    vector < bool > fit_param( broaden_parameter_value_le_widgets.size() + 3, false ); // 3 is deltat, baseline & scale
-#else
-   vector < bool > fit_param( broaden_parameter_value_le_widgets.size() + 2, false ); // +2 is deltat & baseline
-#endif
    bblm_fit_param = fit_param;
 
    vector < double > init_params_min;
@@ -1798,7 +1720,6 @@ void US_Hydrodyn_Saxs_Hplc::broaden_lm_fit( bool final_refinement_only ) {
       }
       ++pos;
 
-#if defined( BROADEN_SCALE_FIT )
       qDebug() << "scale pos " << pos;
       if ( cb_broaden_scale->isChecked() ) {
          bblm_init_params.push_back( le_broaden_scale->text().toDouble() );
@@ -1808,7 +1729,6 @@ void US_Hydrodyn_Saxs_Hplc::broaden_lm_fit( bool final_refinement_only ) {
          bblm_fixed_params.push_back( le_broaden_scale->text().toDouble() );
       }
       ++pos;
-#endif
    }
 
    US_Vector::printvector( "bblm_fit_param", bblm_fit_param );
@@ -1867,16 +1787,14 @@ void US_Hydrodyn_Saxs_Hplc::broaden_lm_fit( bool final_refinement_only ) {
       }
    }      
 
-#if defined( BROADEN_SCALE_FIT )
-   double area_ref  = discrete_area_under_curve( bblm_ref_t, bblm_ref_I, fit_range_start, fit_range_end );
-   double area_conc = discrete_area_under_curve( bblm_org_conc_t, bblm_org_conc_I, fit_range_start, fit_range_end );
-   if ( area_conc <= 0 ) {
-      editor_msg( "red", "concentraton curve has negative or zero area in the fitting range fitting\n" );
-      return;
-   }
+   // double area_ref  = discrete_area_under_curve( bblm_ref_t, bblm_ref_I, fit_range_start, fit_range_end );
+   // double area_conc = discrete_area_under_curve( bblm_org_conc_t, bblm_org_conc_I, fit_range_start, fit_range_end );
+   // if ( area_conc <= 0 ) {
+   //    editor_msg( "red", "concentraton curve has negative or zero area in the fitting range fitting\n" );
+   //    return;
+   // }
 
-   bblm_scale = area_ref / area_conc;
-#endif
+   // bblm_scale = area_ref / area_conc;
 
    // divide by sd (or sd^2) for chi2 fitting, after scaling area computation
 
@@ -1946,8 +1864,7 @@ void US_Hydrodyn_Saxs_Hplc::broaden_lm_fit( bool final_refinement_only ) {
       US_Vector::printvector( QString( "randoms rand() %1 RAND_MAX %2 rand()/RAND_MAX %3 " ).arg( rv ).arg( RAND_MAX ).arg( rv / (double) RAND_MAX ), this_init );
    }
 
-#if defined( BROADEN_SCALE_FIT )
-   if ( 0 ) {
+   if ( 0 ) { // deprecated
       // remove any init_params violating a preset minimum value
       vector < vector < double > > cleaned_init_params;
       for ( auto const & this_params : init_params ) {
@@ -1973,8 +1890,6 @@ void US_Hydrodyn_Saxs_Hplc::broaden_lm_fit( bool final_refinement_only ) {
          }
       }
    }
-
-#endif
 
 #define REFITS 5
    size_t do_refits = REFITS;
@@ -2116,11 +2031,9 @@ void US_Hydrodyn_Saxs_Hplc::broaden_lm_fit( bool final_refinement_only ) {
          le_broaden_baseline  ->setText( QString( "%1" ).arg( best_params[ pos++ ], 0, 'g', 8 ) );
       }
 
-#if defined( BROADEN_SCALE_FIT )
       if ( cb_broaden_scale->isChecked() ) {
          le_broaden_scale  ->setText( QString( "%1" ).arg( best_params[ pos++ ], 0, 'g', 8 ) );
       }
-#endif
    }
 
    // double loss = bblm_fit( 0, &( bblm_init_params[ 0 ] ) );
@@ -2163,12 +2076,9 @@ void US_Hydrodyn_Saxs_Hplc::broaden_lm_fit( bool final_refinement_only ) {
          le_broaden_baseline->setText( QString( "%1" ).arg( bblm_init_params[ pos++ ], 0, 'g', 8 ) );
       }
 
-#if defined( BROADEN_SCALE_FIT )
       if ( cb_broaden_scale->isChecked() ) {
          le_broaden_scale->setText( QString( "%1" ).arg( bblm_init_params[ pos++ ], 0, 'g', 8 ) );
       }
-#endif
-      
    }
 
    // scan individual params
@@ -2205,12 +2115,10 @@ void US_Hydrodyn_Saxs_Hplc::broaden_lm_fit( bool final_refinement_only ) {
          cb_active.insert( cb_broaden_baseline );
       }
 
-#if defined( BROADEN_SCALE_FIT )
       cb_all.insert( cb_broaden_scale );
       if ( cb_broaden_scale->isChecked() ) {
          cb_active.insert( cb_broaden_scale );
       }
-#endif
 
       if ( cb_active.size() > 1 ) {
          for ( auto const cb : cb_active ) {
@@ -2256,76 +2164,6 @@ void US_Hydrodyn_Saxs_Hplc::broaden_fit() {
    
 }
 
-#if defined( INCLUDE_UNUSED_FUNCTIONS )
-double US_Hydrodyn_Saxs_Hplc::broaden_compute_loss_no_ui(
-                                                         const vector < double > & conc_t
-                                                         ,const vector < double > & conc_I
-                                                         ,const vector < double > & ref_t
-                                                         ,const vector < double > & ref_I
-                                                         ,const vector < double > & ref_errors
-                                                         ) {
-   static US_Saxs_Util usu;
-
-   size_t ref_t_size  = ref_t.size();
-
-   vector < double > new_conc_I;
-
-   tso_vector_info( "in loss conc_t", conc_t );
-   tso_vector_info( "in loss conc_I", conc_I );
-   tso_vector_info( "in loss ref_t", ref_t );
-
-   if ( !usu.linear_interpolate( conc_t, conc_I, ref_t, new_conc_I ) ) {
-      editor_msg( "red", QString( "Error while fitting: interpolation error: %1\n" ).arg( usu.errormsg ) );
-      US_Vector::printvector2( "conc_t, conc_I", conc_t, conc_I );
-      US_Vector::printvector2( "ref_t, ref_I", ref_t, ref_I );
-      return DBL_MAX;
-   }
-
-   // scale area
-
-   double area_ref  = discrete_area_under_curve( ref_t, ref_I );
-   double area_conc = discrete_area_under_curve( ref_t, new_conc_I );
-
-   if ( area_conc <= 0 ) {
-      editor_msg( "red", QString( "Error: area under broadened curve restricted to fitting range is not positive" ) );
-      return DBL_MAX;
-   }
-  
-   broaden_scale = area_ref / area_conc;
-   for ( auto & I : new_conc_I ) {
-      I *= broaden_scale;
-   }
-   TSO << QString( "area_ref %1 area_conc %2 scale %3 area_new_conc %4\n" )
-      .arg( area_ref )
-      .arg( area_conc )
-      .arg( broaden_scale )
-      .arg( discrete_area_under_curve( ref_t, new_conc_I ) )
-      ;
-
-   // US_Vector::printvector3( "new conc I, ref_i, ref_errors", new_conc_I, ref_I, ref_errors );
-   
-   if ( broaden_ref_has_errors ) {
-      // TSO << "broaden_compute_loss_no_ui() - has errors, compute chi2\n";
-      double chi2;
-      if ( usu.calc_mychi2( new_conc_I
-                            ,ref_I
-                            ,ref_errors
-                            ,chi2 ) ) {
-         // TSO << "broaden_compute_loss_no_ui() - has errors, compute chi2 ok\n";
-         return chi2 / ref_t_size;
-      } else {
-         // TSO << "broaden_compute_loss_no_ui() - has errors, compute chi2 NOT ok\n";
-         editor_msg( "red", QString( "Error while fitting: error computing chi^2" ) );
-         return DBL_MAX;
-      }
-   }
-
-   // TSO << "broaden_compute_loss_no_ui() - no errors, compute RMSD\n";
-
-   return usu.calc_rmsd( new_conc_I, ref_I );
-}
-#endif
-
 double US_Hydrodyn_Saxs_Hplc::broaden_compute_loss() {
    TSO << "US_Hydrodyn_Saxs_Hplc::broaden_compute_loss() start\n";
    // crop curves to fit range
@@ -2337,7 +2175,7 @@ double US_Hydrodyn_Saxs_Hplc::broaden_compute_loss() {
       return DBL_MAX;
    }
 
-   bool repeak_set = cb_broaden_repeak->isChecked();
+   // bool repeak_set = cb_broaden_repeak->isChecked();
 
    // NOTE the reference curve range bits should be calculated once at fit start
 
@@ -2394,30 +2232,12 @@ double US_Hydrodyn_Saxs_Hplc::broaden_compute_loss() {
       return DBL_MAX;
    }
 
-#if defined( BROADEN_SCALE_FIT )
    double broaden_scale = le_broaden_scale->text().toDouble();
    double baseline = le_broaden_baseline  ->text().toDouble();
    for ( auto & I : new_conc_I ) {
       I *= broaden_scale;
       I += baseline;
    }
-#else
-   // scale area
-
-   double area_ref  = discrete_area_under_curve( ref_t, ref_I );
-   double area_conc = discrete_area_under_curve( ref_t, new_conc_I );
-
-   if ( area_conc <= 0 ) {
-      editor_msg( "red", QString( "Error: area under broadened curve restricted to fitting range is not positive" ) );
-      return DBL_MAX;
-   }
-  
-   broaden_scale = area_ref / area_conc;
-
-   for ( auto & I : new_conc_I ) {
-      I *= broaden_scale;
-   }
-#endif
 
    if ( broaden_ref_has_errors ) {
       double chi2;
@@ -2528,24 +2348,26 @@ void US_Hydrodyn_Saxs_Hplc::broaden_scale_compute() {
       return;
    }
   
-#if defined( BROADEN_SCALE_FIT )
    double broaden_scale = area_ref / area_conc;
-#else
-   broaden_scale = area_ref / area_conc;
-#endif
+
    le_broaden_scale->setText( QString( "%1" ).arg( broaden_scale, 0, 'g', 8 ) );
    cb_broaden_repeak->setChecked( repeak_set );
    broaden_compute_one();
 }
 
 vector < double > US_Hydrodyn_Saxs_Hplc::broaden_params() {
-   return {
-      le_broaden_sigma->text().toDouble()
-      ,le_broaden_tau->text().toDouble()
-      ,le_broaden_deltat->text().toDouble()
-      ,le_broaden_baseline->text().toDouble()
-#if defined( BROADEN_SCALE_FIT )
-      ,le_broaden_scale->text().toDouble()
-#endif
-   };
+   vector < double > result;
+
+   for ( auto const & le : broaden_parameter_value_le_widgets[ cb_broaden_kernel_mode->currentIndex() ] ) {
+      result.push_back( le->text().toDouble() );
+   }
+   for ( auto const & le : {
+         le_broaden_deltat
+            ,le_broaden_baseline
+            ,le_broaden_scale
+      } ) {
+      result.push_back( le->text().toDouble() );
+   }
+
+   return result;
 }
