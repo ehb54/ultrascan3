@@ -20,6 +20,7 @@ static bool   bblm_ref_has_errors;
 static vector < bool >   bblm_fit_param;
 static bool   shutting_down;
 static set < int > broaden_supported_modes;
+static double broaden_last_fit;
 
 static unordered_map < double,
                        unordered_map < double,
@@ -447,15 +448,15 @@ static double discrete_area_under_curve( const vector < double > & org_x, const 
 }
 
 static US_Band_Broaden ubb;
-static void tso_vector_info( QString msg, const vector < double > & v ) {
-   TSO <<
-      QString( "%1 : size %2 range [%3:%4]\n" )
-      .arg( msg )
-      .arg( v.size() )
-      .arg( v.front() )
-      .arg( v.back() )
-      ;
-}
+// static void tso_vector_info( QString msg, const vector < double > & v ) {
+//    TSO <<
+//       QString( "%1 : size %2 range [%3:%4]\n" )
+//       .arg( msg )
+//       .arg( v.size() )
+//       .arg( v.front() )
+//       .arg( v.back() )
+//       ;
+// }
 
 void US_Hydrodyn_Saxs_Hplc::broaden() {
    TSO << "US_Hydrodyn_Saxs_Hplc::broaden() start\n";
@@ -710,6 +711,8 @@ void US_Hydrodyn_Saxs_Hplc::broaden_done( bool save ) {
    shutting_down = true;
    gauss_delete_markers();
    
+   broaden_compute_one();
+
    if ( broaden_names.size() > 2 ) {
       set < QString > to_remove = { broaden_names.takeLast() };
       remove_files( to_remove );
@@ -740,10 +743,12 @@ void US_Hydrodyn_Saxs_Hplc::broaden_done( bool save ) {
          QString header;
          QString fname;
 
+         QString fit_type = broaden_ref_has_errors ? "nChi^2" : "RMSD";
+
          switch ( cb_broaden_kernel_mode->currentIndex() ) {
          case US_Band_Broaden::BAND_BROADEN_KERNEL_MODE_DEFAULT :
             header =
-               QString( "sigma:%1 tau:%2 baseline:%3 scale:%4 delta_t:%5 kernel_end:%6 kernel_delta_t:%7 fit_range:[%8:%9] kernel_mode:%10" )
+               QString( "sigma:%1 tau:%2 baseline:%3 scale:%4 delta_t:%5 kernel_end:%6 kernel_delta_t:%7 fit_range:[%8:%9] kernel_mode:%10 %11:%12" )
                .arg( le_broaden_sigma->text() )
                .arg( le_broaden_tau->text() )
                .arg( le_broaden_baseline->text() )
@@ -754,6 +759,8 @@ void US_Hydrodyn_Saxs_Hplc::broaden_done( bool save ) {
                .arg( le_broaden_fit_range_start->text() )
                .arg( le_broaden_fit_range_end->text() )
                .arg( US_Band_Broaden::kernel_mode_name( (US_Band_Broaden::kernel_mode) cb_broaden_kernel_mode->currentIndex() ) )
+               .arg( fit_type )
+               .arg( broaden_last_fit )
                ;
             fname = 
                QString( "%1_Sigma%2_Tau%3" )
@@ -765,7 +772,7 @@ void US_Hydrodyn_Saxs_Hplc::broaden_done( bool save ) {
 
          case US_Band_Broaden::BAND_BROADEN_KERNEL_MODE_HALF_GAUSSIAN :
             header =
-               QString( "sigma:%1 tau:%2 lambda_1:%3 baseline:%4 scale:%5 delta_t:%6 kernel_end:%7 kernel_delta_t:%8 fit_range:[%9:%10] kernel_mode:%11" )
+               QString( "sigma:%1 tau:%2 lambda_1:%3 baseline:%4 scale:%5 delta_t:%6 kernel_end:%7 kernel_delta_t:%8 fit_range:[%9:%10] kernel_mode:%11 %12:%13" )
                .arg( le_broaden_sigma->text() )
                .arg( le_broaden_tau->text() )
                .arg( le_broaden_lambda_1->text() )
@@ -777,6 +784,8 @@ void US_Hydrodyn_Saxs_Hplc::broaden_done( bool save ) {
                .arg( le_broaden_fit_range_start->text() )
                .arg( le_broaden_fit_range_end->text() )
                .arg( US_Band_Broaden::kernel_mode_name( (US_Band_Broaden::kernel_mode) cb_broaden_kernel_mode->currentIndex() ) )
+               .arg( fit_type )
+               .arg( broaden_last_fit )
                ;
             fname = 
                QString( "%1_Sigma%2_Tau%3_Lambda%4" )
@@ -789,7 +798,7 @@ void US_Hydrodyn_Saxs_Hplc::broaden_done( bool save ) {
             
          case US_Band_Broaden::BAND_BROADEN_KERNEL_MODE_EMG_GMG :
             header =
-               QString( "sigma:%1 lambda:(%2,%3) baseline:%4 scale:%5 delta_t:%6 kernel_end:%7 kernel_delta_t:%8 fit_range:[%9:%10] kernel_mode:%11" )
+               QString( "sigma:%1 lambda:(%2,%3) baseline:%4 scale:%5 delta_t:%6 kernel_end:%7 kernel_delta_t:%8 fit_range:[%9:%10] kernel_mode:%11 %12:%13" )
                .arg( le_broaden_sigma->text() )
                .arg( le_broaden_lambda_1->text() )
                .arg( le_broaden_lambda_2->text() )
@@ -801,6 +810,8 @@ void US_Hydrodyn_Saxs_Hplc::broaden_done( bool save ) {
                .arg( le_broaden_fit_range_start->text() )
                .arg( le_broaden_fit_range_end->text() )
                .arg( US_Band_Broaden::kernel_mode_name( (US_Band_Broaden::kernel_mode) cb_broaden_kernel_mode->currentIndex() ) )
+               .arg( fit_type )
+               .arg( broaden_last_fit )
                ;
             fname = 
                QString( "%1_Sigma%2_Lambda%4_Lambda%5" )
@@ -1408,6 +1419,7 @@ bool US_Hydrodyn_Saxs_Hplc::broaden_compute_one_no_ui(
 }
 
 void US_Hydrodyn_Saxs_Hplc::broaden_compute_one( bool details ) {
+   broaden_last_fit = -1;
 
    qDebug() << "current mode " << cb_broaden_kernel_mode->currentIndex();
    for ( auto const & mode : broaden_supported_modes ) {
@@ -1478,6 +1490,7 @@ void US_Hydrodyn_Saxs_Hplc::broaden_compute_one( bool details ) {
    f_errors.erase( last_created_file );
 
    double fit = broaden_compute_loss();
+   broaden_last_fit = fit;
 
    if ( fit != DBL_MAX ) {
       lbl_broaden_msg  ->setText(
@@ -1547,7 +1560,7 @@ void US_Hydrodyn_Saxs_Hplc::broaden_compute_one( bool details ) {
       switch ( cb_broaden_kernel_mode->currentIndex() ) {
       case US_Band_Broaden::BAND_BROADEN_KERNEL_MODE_DEFAULT :
          editor_msg( "darkblue"
-                     ,QString( "Broaden - last fit:\n%1, %2, %3, %4, %5, %6, %7, %8, %9, %10\n%11, %12, %13, %14, %15, %16, %17, %18, %19, %20\n" )
+                     ,QString( "Broaden - last fit:\n%1, %2, %3, %4, %5, %6, %7, %8, %9, %10, %11, %12, %13\n%11, %12, %13, %14, %15, %16, %17, %18, %19, %20, %21, %22, %23, %24, %25, %26\n" )
                      .arg( UNICODE_SIGMA )
                      .arg( UNICODE_TAU )
                      .arg( UNICODE_DELTA_QS + "t" )
@@ -1558,6 +1571,10 @@ void US_Hydrodyn_Saxs_Hplc::broaden_compute_one( bool details ) {
                      .arg( "q" )
                      .arg( broaden_ref_has_errors ? "nChi^2" : "RMSD" )
                      .arg( "mode" )
+                     .arg( "fit start" )
+                     .arg( "fit end" )
+                     .arg( "kernel end" )
+
                      .arg( le_broaden_sigma->text() )
                      .arg( le_broaden_tau->text() )
                      .arg( le_broaden_deltat->text() )
@@ -1568,12 +1585,16 @@ void US_Hydrodyn_Saxs_Hplc::broaden_compute_one( bool details ) {
                      .arg( q_val_str )
                      .arg( fit )
                      .arg( US_Band_Broaden::kernel_mode_name( (US_Band_Broaden::kernel_mode) cb_broaden_kernel_mode->currentIndex() ) )
+                     .arg( le_broaden_fit_range_start->text() )
+                     .arg( le_broaden_fit_range_end->text() )
+                     .arg( le_broaden_kernel_end->text() )
+                     
                      );
          break;
 
       case US_Band_Broaden::BAND_BROADEN_KERNEL_MODE_HALF_GAUSSIAN :
          editor_msg( "darkblue"
-                     ,QString( "Broaden - last fit:\n%1, %2, %3, %4, %5, %6, %7, %8, %9, %10, %11\n%12, %13, %14, %15, %16, %17, %18, %19, %20, %21, %22\n" )
+                     ,QString( "Broaden - last fit:\n%1, %2, %3, %4, %5, %6, %7, %8, %9, %10, %11, %12, %13, %14\n%15, %16, %17, %18, %19, %20, %21, %22, %23, %24, %25, %26, %27, %28\n" )
                      .arg( UNICODE_SIGMA )
                      .arg( UNICODE_TAU )
                      .arg( UNICODE_LAMBDA_QS + UNICODE_SUB_1_QS )
@@ -1585,6 +1606,10 @@ void US_Hydrodyn_Saxs_Hplc::broaden_compute_one( bool details ) {
                      .arg( "q" )
                      .arg( broaden_ref_has_errors ? "nChi^2" : "RMSD" )
                      .arg( "mode" )
+                     .arg( "fit start" )
+                     .arg( "fit end" )
+                     .arg( "kernel end" )
+
                      .arg( le_broaden_sigma->text() )
                      .arg( le_broaden_tau->text() )
                      .arg( le_broaden_lambda_1->text() )
@@ -1596,12 +1621,15 @@ void US_Hydrodyn_Saxs_Hplc::broaden_compute_one( bool details ) {
                      .arg( q_val_str )
                      .arg( fit )
                      .arg( US_Band_Broaden::kernel_mode_name( (US_Band_Broaden::kernel_mode) cb_broaden_kernel_mode->currentIndex() ) )
+                     .arg( le_broaden_fit_range_start->text() )
+                     .arg( le_broaden_fit_range_end->text() )
+                     .arg( le_broaden_kernel_end->text() )
                      );
          break;
 
       case US_Band_Broaden::BAND_BROADEN_KERNEL_MODE_EMG_GMG :
          editor_msg( "darkblue"
-                     ,QString( "Broaden - last fit:\n%1, %2, %3, %4, %5, %6, %7, %8, %9, %10, %11\n%12, %13, %14, %15, %16, %17, %18, %19, %20, %21, %22\n" )
+                     ,QString( "Broaden - last fit:\n%1, %2, %3, %4, %5, %6, %7, %8, %9, %10, %11, %12, %13, %14\n%15, %16, %17, %18, %19, %20, %21, %22, %23, %24, %25, %26, %27, %28\n" )
                      .arg( UNICODE_SIGMA )
                      .arg( UNICODE_LAMBDA_QS + UNICODE_SUB_1_QS )
                      .arg( UNICODE_LAMBDA_QS + UNICODE_SUB_2_QS )
@@ -1613,6 +1641,10 @@ void US_Hydrodyn_Saxs_Hplc::broaden_compute_one( bool details ) {
                      .arg( "q" )
                      .arg( broaden_ref_has_errors ? "nChi^2" : "RMSD" )
                      .arg( "mode" )
+                     .arg( "fit start" )
+                     .arg( "fit end" )
+                     .arg( "kernel end" )
+
                      .arg( le_broaden_sigma->text() )
                      .arg( le_broaden_lambda_1->text() )
                      .arg( le_broaden_lambda_2->text() )
@@ -1624,6 +1656,9 @@ void US_Hydrodyn_Saxs_Hplc::broaden_compute_one( bool details ) {
                      .arg( q_val_str )
                      .arg( fit )
                      .arg( US_Band_Broaden::kernel_mode_name( (US_Band_Broaden::kernel_mode) cb_broaden_kernel_mode->currentIndex() ) )
+                     .arg( le_broaden_fit_range_start->text() )
+                     .arg( le_broaden_fit_range_end->text() )
+                     .arg( le_broaden_kernel_end->text() )
                      );
          break;
       }

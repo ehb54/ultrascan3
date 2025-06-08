@@ -328,7 +328,7 @@ vector < double > US_Band_Broaden::broaden(
                                            ,const double            & time_start
                                            ,const double            & time_end
                                            ,const double            & time_delta
-                                           ,const enum kernel_mode  & kmode
+                                           ,const enum kernel_mode  & /* kmode */
                                            ) {
    if ( !kernel_params.size() ) {
       errormsg = "US_Band_Broaden::broaden() empty kernel_params";
