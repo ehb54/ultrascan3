@@ -12,7 +12,7 @@
 
 using namespace std;
 
-#define BROADEN_TESTING
+// #define BROADEN_TESTING
 
 class US_Band_Broaden {
  public:
