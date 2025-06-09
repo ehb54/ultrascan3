@@ -2599,9 +2599,10 @@ double US_MPI_Analysis::rmsd_combined_mc_models( US_Model& model )
    if ( dset->simparams.meshType == US_SimulationParameters::ASTFVM)
    {
       US_LammAstfvm* astfvm = new US_LammAstfvm( model, simparms );
-      astfvm->set_buffer( dset->solution_rec.buffer );
-      US_DataIO::RawData auc_data = dset->run_data.convert_to_raw_data();
-      astfvm->bandFormingGradient->calculate_gradient(dset->simparams, &auc_data);
+      astfvm->
+      astfvm->set_buffer( dset->solution_rec.buffer,
+         (!bfgs.isEmpty())?bfgs[0]:bandFormingGradient,
+         (!csDs.isEmpty())?csDs[0]:nullptr);
       astfvm->calculate( sdata );
    }
    else
