@@ -104,6 +104,8 @@ class US_InitDialogueGui : public US_WidgetsDialog
 
    QMessageBox * msg_norec;
    QMessageBox * msg_norec_del;
+
+   bool isDataDiskOnly;
    
             
   private:
@@ -147,6 +149,7 @@ class US_InitDialogueGui : public US_WidgetsDialog
      void switch_to_report_init(  QMap < QString, QString > & protocol_details );
      void switch_to_esign_init(  QMap < QString, QString > & protocol_details );
      void to_initAutoflow( void );
+     void pass_allow_dataDisk_only();
 
 };
 
@@ -185,6 +188,7 @@ class US_ExperGui : public US_WidgetsDialog
       void pass_used_instruments( QStringList & );
       void expsetup_msg_closed( void );
       void to_initAutoflow( void );
+      void allow_dataDisk_only( void );
       
       
    signals:
@@ -196,6 +200,7 @@ class US_ExperGui : public US_WidgetsDialog
       void define_used_instruments( QStringList & );
       //void close_expsetup_msg( void );
       void switch_to_initAutoflow( void );
+      void data_disk_only( void );
 };
 
 
@@ -524,6 +529,7 @@ signals:
   void reset_live_update( void );
   void reset_reporting( void );
   void reset_esigning( void );
+  
 };
 
 

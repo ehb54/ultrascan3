@@ -66,6 +66,30 @@ bool Link::connectToServer( const QString& host, const int port )
   return status_ok;
 }
 
+bool Link::connectToServer_init_check( const QString& host, const int port )
+{
+  bool status_ok = false;
+
+  // if ( !QDir( certPath ).exists() )
+  //   return status_ok;
+
+  
+  server.connectToHostEncrypted(host, port);
+  if (server.waitForEncrypted(3000))
+    {
+      //server.write("***qsslsocket_client_example sent this nothing command***\n");
+      //status_ok = true;
+      status_ok = server.waitForReadyRead(3000);
+    }
+  else
+    {
+      qDebug("Unable to connect to server");
+      //exit(0);
+    }
+
+  return status_ok;
+}
+
 
 void Link::stopOptima( void )
 {

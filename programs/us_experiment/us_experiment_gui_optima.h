@@ -143,6 +143,7 @@ class US_ExperGuiRotor : public US_WidgetsDialog
       void        setFirstLab( void );
       void        reset_dataSource_public( void );
       void        get_chann_ranges_public( QString, QMap <QString, QStringList>& );
+      void        switch_to_dataDisk_public (void );
    
            
       QString     getSValue( const QString );
@@ -1158,8 +1159,9 @@ class US_ExperimentMain : public US_Widgets
       void us_exp_clear( QString &protocolName );
       //void auto_mode_passed( void ); 
       void reset     ( void );
-      void    exclude_used_instruments( QStringList &);
+      void exclude_used_instruments( QStringList &);
       void accept_passed_protocol_details( QMap < QString, QString > &protocol_details );
+      void enable_data_disk_only();
 
       US_AnaProfile* get_aprofile( void );
       US_AnaProfile* get_aprofile_loaded( void );
@@ -1167,8 +1169,8 @@ class US_ExperimentMain : public US_Widgets
       QMap< QString, QString> get_all_solution_names( void );
       void initCells( void );
       void reset_dataDisk( void );
-      void  get_importDisk_data( QString,  QMap< QString, QStringList>& );
-  
+      void get_importDisk_data( QString,  QMap< QString, QStringList>& );
+       
       void back_to_pcsa( void );
 	
     signals:
