@@ -2241,7 +2241,7 @@ void US_LammAstfvm::AdjustSD( const double t, const int      Nv, const double* x
          }
          if ( codiff_needed )
          {
-            bandFormingGradient->interpolateCCodiff( Nv, x, t, Dens, Visc );
+            bandFormingGradient->interpolateCCodiff( Nv, x, t, simparams.temperature + K0,  Dens, Visc );
          }
          #ifdef DEBUG
             if (dbg_level > 2){
@@ -2801,6 +2801,7 @@ void US_LammAstfvm::validate_bfg()
       !qFuzzyCompare( simparams.cp_angle, bandFormingGradient->cp_angle ) ||
       !qFuzzyCompare( simparams.radial_resolution, bandFormingGradient->simparms.radial_resolution) ||
       !qFuzzyCompare( simparams.temperature, bandFormingGradient->simparms.temperature ) ||
+      bandFormingGradient->is_empty || bandFormingGradient->dens_bfg_data.scanCount(  ) == 0 ||
       auc_data->scanData.last().seconds > bandFormingGradient->dens_bfg_data.scanData.last().seconds )
    {
       // recalculation needed
@@ -2899,6 +2900,7 @@ void US_LammAstfvm::validate_bfg()
          for ( int i = 0; i < auc_data->scanCount(); i++ )
          {
             double          time = auc_data->scanData[i].seconds;
+            double          temp = auc_data->scanData[i].temperature + K0;
             QVector<double> ViscVec( auc_data->pointCount() );
             QVector<double> DensVec( auc_data->pointCount() );
             QVector<double> ConcVec( auc_data->pointCount() );
@@ -2911,8 +2913,8 @@ void US_LammAstfvm::validate_bfg()
                Visc[j] = bandFormingGradient->base_viscosity;
                Conc[j] = 0.0;
             }
-            bandFormingGradient->interpolateCCodiff( auc_data->pointCount(), auc_data->xvalues.data(), time, Visc, Dens,
-                                                     Conc );
+            bandFormingGradient->interpolateCCodiff( auc_data->pointCount(), auc_data->xvalues.data(), time,
+                                                      temp, Dens, Visc, Conc );
             dens_data[i] = DensVec;
             visc_data[i] = ViscVec;
             conc_data[i] = ConcVec;
