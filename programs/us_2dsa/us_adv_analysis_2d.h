@@ -52,6 +52,8 @@ class US_AdvAnalysis2D : public US_WidgetsDialog
       QwtCounter*   ct_regufact;
       QwtCounter*   ct_bandload;
       QwtCounter*   ct_spoints;
+      QwtCounter*   ct_sigma;
+      QwtCounter*   ct_delta;
 
       QCheckBox*    ck_unifgr;
       QCheckBox*    ck_locugr;
@@ -63,6 +65,7 @@ class US_AdvAnalysis2D : public US_WidgetsDialog
       QCheckBox*    ck_regulz;
       QCheckBox*    ck_mdgrid;
       QCheckBox*    ck_mdrati;
+      QCheckBox*    ck_conc_dependent;
 
       QPushButton*  pb_ldmodel;
       QPushButton*  pb_accept;
@@ -92,6 +95,7 @@ class US_AdvAnalysis2D : public US_WidgetsDialog
       void checkRegular (    bool );
       void select       (    void );
       void load_model   (    void );
+      void checkConcDependent( bool );
 
       void help     ( void )
       { showHelp.show_help( "2dsa_advan.html" ); };

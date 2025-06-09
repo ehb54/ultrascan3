@@ -1030,7 +1030,7 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
    update_filelist( repfiles, plot4File );
 
    // Add fit files if fit-meniscus or fit-bottom
-   if ( fitMeni  ||  fitBott || fitAngle )
+   if ( fitMeni  ||  fitBott || fitAngle || fitMeBo || fitMeAngle )
    {
       QString fitstr = fit_meniscus_data();
 
@@ -1702,6 +1702,16 @@ QString US_2dsa::fit_meniscus_data()
 DbgLv(1) << "fitmdat:  ii" << ii << "meni bott rmsd"
  << ameni << abott << armsd;
       }
+      else if ( usemen && useangle )
+      {
+         QString ameni = mdesc.mid( mdesc.indexOf( "MENISCUS=" ) + 9 )
+                         .section( " ", 0, 0 );
+         QString aangle = mdesc.mid( mdesc.indexOf( "ANGLE=" ) + 6 )
+                         .section( " ", 0, 0 );
+         mstr         += ( ameni + " " + aangle + " " + armsd + "\n" );
+         DbgLv(1) << "fitmdat:  ii" << ii << "meni angle rmsd"
+          << ameni << aangle << armsd;
+      }
       else if ( usemen )
       {
          QString ameni = mdesc.mid( mdesc.indexOf( "MENISCUS=" ) + 9 )
@@ -1718,16 +1728,7 @@ DbgLv(1) << "fitmdat:  ii" << ii << "meni rmsd"
 DbgLv(1) << "fitbdat:  ii" << ii << "bott rmsd"
  << abott << armsd;
       }
-      else if ( usemen && useangle )
-      {
-         QString ameni = mdesc.mid( mdesc.indexOf( "MENISCUS=" ) + 9 )
-                         .section( " ", 0, 0 );
-         QString aangle = mdesc.mid( mdesc.indexOf( "ANGLE=" ) + 6 )
-                         .section( " ", 0, 0 );
-         mstr         += ( ameni + " " + aangle + " " + armsd + "\n" );
-         DbgLv(1) << "fitmdat:  ii" << ii << "meni angle rmsd"
-          << ameni << aangle << armsd;
-      }
+
       else if ( useangle )
       {
          QString aangle = mdesc.mid( mdesc.indexOf( "ANGLE=" ) + 6 )

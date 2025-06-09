@@ -38,7 +38,8 @@ US_AdvAnalysis2D::US_AdvAnalysis2D( US_SimulationParameters* sim_par,
          + QString( QChar( 181 ) ) + "l):" );
    QLabel* lb_spoints      = us_label(  tr( "Simulation Points:" ) );
    QLabel* lb_refopts      = us_banner( tr( "Refinement Options:" ) );
-
+   QLabel* lb_sigma     = us_label(  tr( "Sigma:" ) );
+   QLabel* lb_delta      = us_label( tr( "Delta:" ) );
    QLabel* lb_optimiz      = us_banner( tr( "Optimization Methods:" ) );
    QLabel* lb_repetloc     = us_label(  tr( "Repetitions:" ) );
    QLabel* lb_scfactor     = us_label(  tr( "Scaling Factor:" ) );
@@ -61,6 +62,11 @@ US_AdvAnalysis2D::US_AdvAnalysis2D( US_SimulationParameters* sim_par,
 
    ct_bandload  = us_counter( 3,    1,    20,   15 );
    ct_spoints   = us_counter( 3,   50, 10000,  10 );
+   ct_sigma = us_counter(3, -10.0, 10.0, 1);
+   ct_delta = us_counter(3, -10.0, 10.0, 1);
+   QLayout* lo_concd = us_checkbox( tr( "Concentration Dependent" ), ck_conc_dependent );
+   ct_sigma->setEnabled( ck_conc_dependent->isChecked() );
+   ct_delta->setEnabled( ck_conc_dependent->isChecked() );
 
    ct_bandload->setSingleStep(  0.1 );
    ct_bandload->setValue( sparms->band_volume * 1000.0 );
@@ -162,6 +168,11 @@ US_AdvAnalysis2D::US_AdvAnalysis2D( US_SimulationParameters* sim_par,
    simparmsLayout->addWidget( ct_spoints,    row++, 4, 1, 2 );
    simparmsLayout->addWidget( cmb_mesh,      row++, 0, 1, 6 );
    simparmsLayout->addWidget( cmb_moving,    row++, 0, 1, 6 );
+   simparmsLayout->addLayout( lo_concd,     row++,   0, 1, 6 );
+   simparmsLayout->addWidget( lb_sigma,      row,   0, 1, 4 );
+   simparmsLayout->addWidget( ct_sigma,      row++, 4, 1, 2 );
+   simparmsLayout->addWidget( lb_delta,      row,   0, 1, 4 );
+   simparmsLayout->addWidget( ct_delta,      row++, 4, 1, 2 );
    simparmsLayout->addWidget( lb_refopts,    row++, 0, 1, 6 );
    //simparmsLayout->addLayout( lo_menisc,     row++, 0, 1, 6 );
    //simparmsLayout->addWidget( lb_menisrng,   row,   0, 1, 4 );
@@ -200,6 +211,8 @@ US_AdvAnalysis2D::US_AdvAnalysis2D( US_SimulationParameters* sim_par,
             this,  SLOT( checkSoluCoal( bool ) ) );
    connect( ck_clipcs, SIGNAL( toggled( bool ) ),
             this,  SLOT( checkClipLow(  bool ) ) );
+   connect( ck_conc_dependent, SIGNAL( toggled( bool ) ),
+      this, SLOT(checkConcDependent( bool)));
    //connect( ck_menisc, SIGNAL( toggled( bool ) ),
    //         this,  SLOT( checkMeniscus( bool ) ) );
    //connect( ck_mcarlo, SIGNAL( toggled( bool ) ),
@@ -323,6 +336,12 @@ void US_AdvAnalysis2D::uncheck_optimize( int ckflag )
 void US_AdvAnalysis2D::checkBandForm( bool checked )
 {
    ct_bandload->setEnabled( checked );
+}
+
+void US_AdvAnalysis2D::checkConcDependent( bool checked )
+{
+   ct_sigma->setEnabled( checked );
+   ct_delta->setEnabled( checked );
 }
 
 // handle uniform grid checked
@@ -462,6 +481,16 @@ void US_AdvAnalysis2D::select()
 
    if ( sparms->band_forming  &&  ck_locugr->isChecked() )
       sparms->cp_width     = ct_scfactor->value();
+   if (ck_conc_dependent->isChecked())
+   {
+      sparms->sigma = ct_sigma->value();
+      sparms->delta = ct_delta->value();
+   }
+   else
+   {
+      sparms->sigma = 0.0;
+      sparms->delta = 0.0;
+   }
 
    accept();
 }

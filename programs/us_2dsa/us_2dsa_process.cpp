@@ -1396,7 +1396,6 @@ if(mtiters>50)
             simparms->meniscus = edata->meniscus;
             simparms->bottom   = edata->bottom;
             calculate_cosedimenting_component();
-
          }
    }
 
