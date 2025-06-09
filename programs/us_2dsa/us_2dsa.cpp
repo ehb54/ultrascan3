@@ -872,13 +872,6 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
          if (dset.simparams.meshType == US_SimulationParameters::ASTFVM)
          {
             US_LammAstfvm* lamm = new US_LammAstfvm(model2, simparms);
-            delete bfg;
-            bfg = new US_Math_BF::Band_Forming_Gradient(simparms.meniscus,simparms.bottom,
-                                                        simparms.band_volume,
-                                                        dsets[0]->solution_rec.buffer.cosed_component,
-                                                        simparms.cp_pathlen,simparms.cp_angle);
-            bfg->get_eigenvalues();
-            bfg->calculate_gradient(simparms, &sdata);
             lamm->set_buffer( dset.solution_rec.buffer, bfg, nullptr );
             lamm->calculate(sdata);
             delete lamm;
