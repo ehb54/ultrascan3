@@ -958,6 +958,14 @@ int US_LammAstfvm::calculate( US_DataIO::RawData& sim_data )
 int US_LammAstfvm::solve_component( int compx )
 {
    comp_x = compx;
+   if (model.components[compx].sigma == 0.0 && simparams.sigma != 0.0)
+   {
+      model.components[compx].sigma = simparams.sigma;
+   }
+   if (model.components[compx].delta == 0.0 && simparams.delta != 0.0)
+   {
+      model.components[compx].delta = simparams.delta;
+   }
 
    param_s20w = model.components[compx].s != 0.0 ? model.components[compx].s : 1e-14;
    param_D20w = model.components[compx].D;
@@ -2209,8 +2217,22 @@ void US_LammAstfvm::AdjustSD( const double t, const int      Nv, const double* x
       case 1: // concentration dependent
          for ( jj = 0; jj < Nv; jj++ )
          {
-            s_adj[jj] = param_s / ( 1. + sigma * u[jj] / x[jj] );
-            D_adj[jj] = param_D / ( 1. + delta * u[jj] / x[jj] );
+            if (sigma > 0.0)
+            {
+               s_adj[jj] = param_s / ( 1. + sigma * u[jj] / x[jj] );
+            }
+            else if (sigma < 0.0)
+            {
+               s_adj[jj] = param_s * ( 1. + sigma * u[jj] / x[jj] );
+            }
+            if (delta > 0.0)
+            {
+               D_adj[jj] = param_D / ( 1. + delta * u[jj] / x[jj] );
+            }
+            else if (delta < 0.0)
+            {
+               D_adj[jj] = param_D * ( 1. + delta * u[jj] / x[jj] );
+            }
          }
          break;
 
@@ -2290,8 +2312,26 @@ void US_LammAstfvm::AdjustSD( const double t, const int      Nv, const double* x
          {
             const double curVisc = Visc[jj];
             const double curConc = u[jj] / x[jj];
-            s_adj[jj]            = s20w_correction_stem / curVisc * ( 1.0 - vbar * Dens[jj] ) / ( 1.0 + sigmas * curConc );
-            D_adj[jj]            = D20w_correction_stem / curVisc / ( 1.0 + deltas * curConc );
+            double sigma_corr = 1.0;
+            double delta_corr = 1.0;
+            if (sigma > 0.0)
+            {
+               sigma_corr = 1. / ( 1. + sigmas * curConc );
+            }
+            else if (sigma < 0.0)
+            {
+               sigma_corr = ( 1. + sigmas * curConc );
+            }
+            if (delta > 0.0)
+            {
+               delta_corr = 1. / ( 1. + deltas * curConc );
+            }
+            else if (delta < 0.0)
+            {
+               delta_corr = ( 1. + deltas * curConc );
+            }
+            s_adj[jj]            = s20w_correction_stem / curVisc * ( 1.0 - vbar * Dens[jj] ) * sigma_corr;
+            D_adj[jj]            = D20w_correction_stem / curVisc * delta_corr;
          }
          #ifdef DEBUG
             if (dbg_level > 3){
