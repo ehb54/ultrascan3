@@ -191,6 +191,8 @@ class US_UTIL_EXTERN US_SimulationParameters
    double    cp_pathlen;        //!< Pathlength of centerpiece
    double    cp_angle;          //!< Angle of centerpiece sector
    double    cp_width;          //!< Width of centerpiece channel if rectangular
+   double    sigma;             //!< Sigma for concentration dependence of s
+   double    delta;             //!< Delta for concentration dependence of D
 
    //! Each distinct RPM value in a series of speeds 
    class US_UTIL_EXTERN  SpeedProfile
