@@ -16,12 +16,12 @@ This project provides a secure, setuid PAM authentication helper binary callable
 
 ```
 pam_auth_helper/
-├── Makefile             # Build, install, and clean targets
+├── Makefile             # Build, install, uninstall and clean targets
 ├── pam_auth_helper.c    # Main helper source file
 ├── pam_auth_test.php    # PHP test script using proc_open
 └── pam.d/
     └── php-helper       # PAM stack used by the helper binary
-    ```
+```
 
 ---
 
@@ -52,28 +52,28 @@ $pass = 'correctpassword';
 
 $env = [
     'PAM_USER'    => $user,
-        'PAM_AUTHTOK' => $pass,
-        ];
+    'PAM_AUTHTOK' => $pass
+    ];
 
 $descriptorspec = [
     0 => ["pipe", "r"],
-        1 => ["pipe", "w"],
-            2 => ["pipe", "w"]
-            ];
+    1 => ["pipe", "w"],
+    2 => ["pipe", "w"]
+   ];
 
 $process = proc_open('/usr/local/bin/pam_auth_helper', $descriptorspec, $pipes, null, $env);
 
 if (is_resource($process)) {
     fclose($pipes[0]);
-        $stdout = stream_get_contents($pipes[1]); fclose($pipes[1]);
-            $stderr = stream_get_contents($pipes[2]); fclose($pipes[2]);
+    $stdout = stream_get_contents($pipes[1]); fclose($pipes[1]);
+    $stderr = stream_get_contents($pipes[2]); fclose($pipes[2]);
 
     $status = proc_close($process);
-        echo ($status === 0) ? "✅ Success!\n" : "❌ Failed\n";
-        } else {
-            echo "❌ Could not start helper\n";
-            }
-            ```
+    echo ($status === 0) ? "✅ Success!\n" : "❌ Failed\n";
+} else {
+    echo "❌ Could not start helper\n";
+}
+```
 
 ### From CLI (test mode)
 
@@ -104,9 +104,9 @@ This can be extended to use LDAP, 2FA, or other PAM modules as needed.
 
 - `pam_auth_helper` must be owned by `root` and have mode `4755`:
   ```bash
-    sudo chown root:root /usr/local/bin/pam_auth_helper
-      sudo chmod 4755 /usr/local/bin/pam_auth_helper
-        ```
+  sudo chown root:root /usr/local/bin/pam_auth_helper
+  sudo chmod 4755 /usr/local/bin/pam_auth_helper
+  ```
 
 - Avoid exposing sensitive environment variables in logs or external tools.
 
