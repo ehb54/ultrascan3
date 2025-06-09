@@ -14,10 +14,10 @@
 #define US_MATH_BF_H
 
 #include <QtCore>
-#include "us_simparms.h"
 #include "us_buffer.h"
 #include "us_dataIO.h"
 #include "us_extern.h"
+#include "us_simparms.h"
 
 
 #ifndef DbgLv
@@ -179,7 +179,16 @@ class US_UTIL_EXTERN US_Math_BF  : public QObject {
 
             bool adjust_sd(const double &x, const double &t, double& s, double& d, const double& T, const double& vbar);
 
-            bool calc_dens_visc(const double &x, const double &t, double& s, double& d, const double& T, double& conc);
+            //! \brief Calculate the density/viscosity of the band forming gradient at a given radius x and a given point
+            //! at time t
+            //! \param x The double value representing the position
+            //! \param t The double value representing the point of time
+            //! \param T The double value representing the experimental temperature
+            //! \param dens The double value representing the output density at the position and time
+            //! \param visc The double value representing the output viscosity at the position and time
+            //! \param conc The double value representing the output concentration at the position and time
+            //! \return boolean flag for the success of the adjustment
+            bool calc_dens_visc(const double &x, const double &t, const double& T, double &dens, double &visc, double& conc);
 
             bool calculate_gradient(US_SimulationParameters sim_params, US_DataIO::RawData* editedData);
 
@@ -188,19 +197,21 @@ class US_UTIL_EXTERN US_Math_BF  : public QObject {
             //! \param N The number of elements in the arrays
             //! \param x The pointer to start of radial position array
             //! \param t The double value representing the point of time
+            //! \param temp The double value representing the current temperature
             //! \param DensCosed The pointer to the start of the Density array
             //! \param ViscCosed The pointer to the start of the Viscosity array
-            void interpolateCCodiff(int N, const double *x, double t, double *DensCosed, double *ViscCosed);
+            void interpolateCCodiff(int N, const double *x, double t, const double temp, double *DensCosed, double *ViscCosed);
 
             //! \brief Calculate the density/viscosity of the band forming gradient at a given radius x and a given point
             //! at time t
             //! \param N The number of elements in the arrays
             //! \param x The pointer to start of radial position array
             //! \param t The double value representing the point of time
+            //! \param temp The double value representing the current temperature
             //! \param DensCosed The pointer to the start of the Density array
             //! \param ViscCosed The pointer to the start of the Viscosity array
             //! \param ConcCosed The pointer to the start of the Concentration array
-            void interpolateCCodiff(int N, const double *x, double t, double *DensCosed, double *ViscCosed, double *ConcCosed);
+            void interpolateCCodiff(int N, const double *x, double t, const double temp, double *DensCosed, double *ViscCosed, double *ConcCosed);
 
             double dt;
          private:
@@ -242,7 +253,7 @@ class US_UTIL_EXTERN US_Math_BF  : public QObject {
       //! \brief Given a chebyshev series and a value, return the value of the chebyshev series
       //! \param cheb_series The pointer to the chebyshev series
       //! \param x           The value to calculate the chebyshev series for
-      static double cheb_eval(const cheb_series *, const double &);
+      static double cheb_eval(const cheb_series * cheb_series, const double & x);
 
       static double bessel_asymp_Mnu(const double &, const double &);
 

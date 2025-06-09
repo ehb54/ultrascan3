@@ -613,7 +613,7 @@ bool US_Math_BF::Band_Forming_Gradient::adjust_sd(const double &x, const double 
 
 
 
-bool US_Math_BF::Band_Forming_Gradient::calc_dens_visc(const double &x, const double &t, double &dens, double &visc, const double& T, double& conc) {
+bool US_Math_BF::Band_Forming_Gradient::calc_dens_visc(const double &x, const double &t, const double& T, double &dens, double &visc, double& conc) {
    // check if eigenvalues exist already
    if (eigenvalues.isEmpty()) {
       return false;
@@ -761,7 +761,7 @@ US_Math_BF::Band_Forming_Gradient::calculate_gradient(US_SimulationParameters si
       for ( int jj = 0; jj < Nx; jj++ )// iterate over all radial points for each scan
       {
          if ( zero_counter < 6) {
-            calc_dens_visc(visc_bfg_data.radius(jj),runtime,dens,visc,temp, conc);
+            calc_dens_visc(visc_bfg_data.radius(jj),runtime,temp,dens,visc, conc);
          }
          else {
             conc = 0.0;
@@ -836,37 +836,37 @@ US_Math_BF::Band_Forming_Gradient::calculate_gradient(US_SimulationParameters si
       DbgLv(2) << "  Integral Min Max Mean" << c_min << c_max << c_avg;
       DbgLv(2) << "  ( range of" << c_diff << "=" << c_diff_percent << " percent of mean )";
    }
+   is_empty = false;
    return false;
 }
 
 void
-US_Math_BF::Band_Forming_Gradient::interpolateCCodiff(int N, const double *x, double t, double *DensCosed, double *ViscCosed) {
+US_Math_BF::Band_Forming_Gradient::interpolateCCodiff(int N, const double *x, double t, const double temp, double *DensCosed, double *ViscCosed) {
+   // check if the Gradient is properly initialized
+   if ( is_empty || cosed_component.isEmpty() )
+   {
+      // there is nothing we can do
+      return;
+   }
+   // ensure the eigenvalues were calculated
+   if ( eigenvalues.isEmpty() )
+   {
+      get_eigenvalues();
+   }
+   // check if there is already precalculated values are available, for this simparams has to be different
+   // this can be checked by comparing the meshType as the default is ASTFEM and this could can only be invoked
+   // from ASTFVM
+   if ( simparms.meshType == US_SimulationParameters::ASTFEM )
+   {
+      // no precalculated data is available, calculate it manually
+      calc_dens_visc(N, x, t, temp, DensCosed, ViscCosed );
+      return;
+   }
    const auto scanData = dens_bfg_data.scanData.constData();
    int scn = 2;
 
    double t0 = scanData[ scn - 2 ].seconds; // times of 1st 2 salt scans
    double t1 = scanData[ scn - 1 ].seconds;
-
-//   double* Ds0;      // density for the 1st time interval
-//   double* Ds1;      // density for the 2nd time interval
-//   double* Vs0;      // viscosity for the 1st time interval
-//   double* Vs1;      // viscosity for the 2nd time interval
-//   double* xs;       // grids in radial direction
-//   QVector< double > tmpDs0;
-//   QVector< double > tmpDs1;
-//   QVector< double > tmpVs0;
-//   QVector< double > tmpVs1;
-//   QVector< double > tmpxs;
-//   tmpDs0.fill(0.0, N);
-//   tmpDs1.fill(0.0, N);
-//   tmpVs0.fill(0.0, N);
-//   tmpVs1.fill(0.0, N);
-//   tmpxs.fill(0.0, N);
-//   Ds0 = tmpDs0.data();
-//   Ds1 = tmpDs1.data();
-//   Vs0 = tmpVs0.data();
-//   Vs1 = tmpVs1.data();
-//   xs = tmpxs.data();
 
    while ((t1 < t) && scn < dens_bfg_data.scanCount() - 1) {  // walk down salt scans until we are straddling desired time value
       t0 = t1;
@@ -914,32 +914,39 @@ US_Math_BF::Band_Forming_Gradient::interpolateCCodiff(int N, const double *x, do
 }
 
 void
-US_Math_BF::Band_Forming_Gradient::interpolateCCodiff(int N, const double *x, double t, double *DensCosed, double *ViscCosed, double *ConcCosed) {
+US_Math_BF::Band_Forming_Gradient::interpolateCCodiff(int N, const double *x, double t, const double temp, double *DensCosed, double *ViscCosed, double *ConcCosed) {
+   // check if the Gradient is properly initialized
+   if ( is_empty || cosed_component.isEmpty() )
+   {
+      // there is nothing we can do
+      return;
+   }
+   // ensure the eigenvalues were calculated
+   if ( eigenvalues.isEmpty() )
+   {
+      get_eigenvalues();
+   }
+   // check if there is already precalculated values are available, for this simparams has to be different
+   // this can be checked by comparing the meshType as the default is ASTFEM and this could can only be invoked
+   // from ASTFVM
+   if ( simparms.meshType == US_SimulationParameters::ASTFEM )
+   {
+      // no precalculated data is available, calculate it manually
+      double density, viscosity, concentration;
+      for ( int ii = 0; ii < N; ii++ )
+      {
+         calc_dens_visc( x[ii], t, temp, density, viscosity, concentration );
+         DensCosed[ii] = density;
+         ViscCosed[ii] = viscosity ;
+         ConcCosed[ii] = concentration;
+      }
+      return;
+   }
+
    int scn = 2;
    const auto scanData = dens_bfg_data.scanData.constData();
    double t0 = scanData[ scn - 2 ].seconds; // times of 1st 2 salt scans
    double t1 = scanData[ scn - 1 ].seconds;// index to the next scan to use
-                               // index to next scan to use
-//   double* Ds0;      // density for the 1st time interval
-//   double* Ds1;      // density for the 2nd time interval
-//   double* Vs0;      // viscosity for the 1st time interval
-//   double* Vs1;      // viscosity for the 2nd time interval
-//   double* xs;       // grids in radial direction
-//   QVector< double > tmpDs0;
-//   QVector< double > tmpDs1;
-//   QVector< double > tmpVs0;
-//   QVector< double > tmpVs1;
-//   QVector< double > tmpxs;
-//   tmpDs0.fill(0.0, N);
-//   tmpDs1.fill(0.0, N);
-//   tmpVs0.fill(0.0, N);
-//   tmpVs1.fill(0.0, N);
-//   tmpxs.fill(0.0, N);
-//   Ds0 = tmpDs0.data();
-//   Ds1 = tmpDs1.data();
-//   Vs0 = tmpVs0.data();
-//   Vs1 = tmpVs1.data();
-//   xs = tmpxs.data();
 
    while ((t1 < t) && scn < dens_bfg_data.scanCount() - 1) {  // walk down salt scans until we are straddling desired time value
       t0 = t1;
