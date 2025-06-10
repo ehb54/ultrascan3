@@ -3794,19 +3794,12 @@ void US_ReporterGMP::generate_report( void )
       qDebug() << "Query for autoflowHistory -- " << qry;
       db->query( qry );
 
-      /*** TEST - DO NOT delete parent autoflow YET ---------------------------------
+      /*** TEST - DO NOT delete parent autoflow YET --------------------------------- */
       //delete autoflow record
       qry.clear();
       qry << "delete_autoflow_record_by_id" << AutoflowID_auto;
       db->statusQuery( qry );
-      ****/ 
-
-      // //Also delete record from autoflowStages table:           //DO NOT DELETE autoflowStages yet - req. by eSigning process!!
-      // qry.clear();
-      // qry << "delete_autoflow_stages_record" << AutoflowID_auto;
-      // db->statusQuery( qry );
-      // //END of copy to History, deletion of primary autoflow record
-      /***************************************************************************/
+      /****/ 
 
       //Inform user of the PDF location
       QMessageBox msgBox_a;
@@ -6444,7 +6437,7 @@ void  US_ReporterGMP::assemble_run_details_html( void )
       
       // html_assembled += tr( "<h3 align=left>TimeStamp Parameters for Run: %1</h3>" ).
       // 	arg( fileNameList[ i ] );
-      html_assembled += tr( "<h3 align=left>TimeStamp Parameters:</h3>" );
+      //html_assembled += tr( "<h3 align=left>TimeStamp Parameters:</h3>" );
       //html_assembled += tr("<br>");
       
       //3. get expID based on runID && invID
@@ -6610,7 +6603,7 @@ void  US_ReporterGMP::assemble_run_details_html( void )
 
 	      val_passed  = ( val_measured_sec >= ( val_target * (1 - val_tol/100.0)  ) && val_measured_sec <= ( val_target * (1 + val_tol/100.0) ) ) ? "YES" : "NO";
 	      
-	      html_assembled += table_row( tr( "Experiment Duration" ),
+	      html_assembled += table_row( tr( "Duration" ),
 					   val_target_hh_mm,
 					   QString::number( val_tol ) + "%",
 					   val_measured_hh_mm,
@@ -6650,12 +6643,18 @@ void  US_ReporterGMP::assemble_run_details_html( void )
 	      val_measured = davgs_stdd_first_scan [ dkeys[ i ] ][ "Avg" ];
 	      val_passed  = ( val_measured  >= ( val_target - val_tol ) && val_measured  <= ( val_target + val_tol ) ) ? "YES" : "NO"; 
 	  	  
-	      html_assembled += table_row( dkeys[ i ] + " (RPM)",
+	      html_assembled += table_row( "Speed (RPM)",
 					   QString::number( val_target ),
 					   "&#177;" + QString::number( val_tol ),
 					   QString::number( val_measured ),
 					   "",
 					   val_passed );
+
+	      //Plot Raw Speed plot
+	      QString img01File = dirName + "/" + "RunDetails_Speed" + svgext;
+	      write_plot( img01File, tsdiag->rp_data_plot1( "RawSpeed" ) );
+	      img01File.replace( svgext, pngext ); 
+	      RunDetailsPlotsFileNames << img01File;
 	    }
 	   
 	  
@@ -6676,7 +6675,7 @@ void  US_ReporterGMP::assemble_run_details_html( void )
       //end of the loop over filenames (only one IF not a combined RI+IP run)
     }
   
-  assemble_plots_html( RunDetailsPlotsFileNames );
+  assemble_plots_html( RunDetailsPlotsFileNames, "RunDetails" );
     
   html_assembled += tr("<hr>");
   //
@@ -8120,7 +8119,13 @@ void  US_ReporterGMP::assemble_plots_html( QStringList PlotsFilenames, const QSt
 {
   qDebug() << "[in assemble_plots_html()], PlotsFilenames -- " << PlotsFilenames;  
   // Embed plots in the composite report
-  html_assembled += "<p class=\"pagebreak \">\n";
+
+  if ( !plot_type.isEmpty() && plot_type != "RunDetails")
+    html_assembled += "<p class=\"pagebreak \">\n";
+  else
+     html_assembled  += "<p ><br>";
+
+
   for ( int i = 0;  i < PlotsFilenames.size(); ++ i )
     {
       QString filename = PlotsFilenames[ i ];
@@ -8166,7 +8171,7 @@ void  US_ReporterGMP::assemble_plots_html( QStringList PlotsFilenames, const QSt
       html_assembled   += "    <div><img src=\"" + filename 
        	+ "\" alt=\"" + label;
 
-      if ( !plot_type.isEmpty() ) // For Combined plots, scale down .png 
+      if ( !plot_type.isEmpty() && plot_type == "CombPlots") // For Combined plots, scale down .png 
        	{
 	  //reduce comb. plots somewhat
 	  double i_scale_factor_h   = double( qprinters_hight / scaled_i_height );
@@ -8175,6 +8180,12 @@ void  US_ReporterGMP::assemble_plots_html( QStringList PlotsFilenames, const QSt
 	  
 	  //html_assembled  += " \"height=\"" + QString::number( scaled_i_height ) + "\"width=\"" + QString::number( scaled_i_width);
 	  html_assembled  += " \"height=\"" + QString::number( scaled_i_height_cp ) + "\"width=\"" + QString::number( scaled_i_width_cp );
+	}
+      else if ( !plot_type.isEmpty() && plot_type == "RunDetails" )
+	{
+	  double scaled_rd_width  = double( scaled_i_width  * 0.9 );
+	  double scaled_rd_height = double(scaled_i_height) * ( scaled_rd_width / double(scaled_i_width ));
+	  html_assembled  += " \"height=\"" + QString::number( scaled_rd_height ) + "\"width=\"" + QString::number( scaled_rd_width );
 	}
       else
 	{
@@ -8188,7 +8199,7 @@ void  US_ReporterGMP::assemble_plots_html( QStringList PlotsFilenames, const QSt
       html_assembled   += "<br>";
 
       //add custom legen for combined plots
-      if ( !plot_type.isEmpty() )
+      if ( !plot_type.isEmpty() && plot_type == "CombPlots" )
 	{
 	  QStringList combparms            = CombPlotsParmsMap[ filename ];
 	  QList< QColor > combparms_colors = CombPlotsParmsMap_Colors[ filename ];
@@ -10731,6 +10742,26 @@ void US_ReporterGMP::assemble_pdf( QProgressDialog * progress_msg )
 
   
   //SPEEDS: begin
+  //check for optics per channel
+  nchan_optics = currProto. rpOptic. nochan;
+  bool has_uv   = false;
+  bool has_int  = false;
+  bool has_fluo = false;
+  for ( int i=0; i<nchan_optics; ++i )
+    {
+      QString channel  = currProto. rpOptic. chopts[i].channel;
+      QString scan1    = currProto. rpOptic. chopts[i].scan1;
+      QString scan2    = currProto. rpOptic. chopts[i].scan2;
+      QString scan3    = currProto. rpOptic. chopts[i].scan3;
+
+      if ( !scan1.isEmpty() )
+	has_uv = true;
+      if ( !scan2.isEmpty() )
+	has_int = true;
+      if ( !scan3.isEmpty() )
+	has_fluo = true;
+    }  
+  
   html_speed = tr(
     "<h3 align=left>Speed Parameters </h3>"
       "<table>"
@@ -10739,24 +10770,59 @@ void US_ReporterGMP::assemble_pdf( QProgressDialog * progress_msg )
         "<tr><td>Active Scaning Time:    </td>                  <td>%3</td></tr>"
         "<tr><td>Stage Delay:          </td>                    <td>%4</td></tr>"
         "<tr><td>Total Time (without equilibration):  </td>     <td>%5</td></tr>"
-        "<tr><td><br><b><i>UV-visible optics (total):</i></b>   </td>  "
-        "<tr><td>Delay to First Scan:            </td>          <td>%6</td></tr>"
-        "<tr><td>Scan Interval:                  </td>          <td>%7</td></tr>"
-        "<tr><td><br><b><i>Interference optics (per cell):</i></b></td>   "
-        "<tr><td>Delay to First Scan:  </td>                    <td>%8</td></tr>"
-        "<tr><td>Scan Interval:        </td>                    <td>%9</td></tr>"
-      "</table>"
-    "<hr>"
-			  )
+		  )			  
     .arg( QString::number ( currProto. rpSpeed. ssteps[0].speed ) )       //1
     .arg( QString::number ( currProto. rpSpeed. ssteps[0].accel ) )       //2
     .arg( duration_str    )                                               //3
     .arg( delay_stage_str )                                               //4
     .arg( total_time_str  )                                               //5
-    .arg( delay_uvvis_str )                                               //6
-    .arg( scanint_uvvis_str )                                             //7
-    .arg( delay_int_str   )                                               //8
-    .arg( scanint_int_str )                                               //9
+    ;
+  
+
+  if ( has_uv )
+    {
+      html_speed += tr(
+		       "<tr><td><br><b><i>UV-visible optics (total):</i></b>   </td>  "
+		       "<tr><td>Delay to First Scan:            </td>          <td>%6</td></tr>"
+		       "<tr><td>Scan Interval:                  </td>          <td>%7</td></tr>"
+		       )
+	.arg( delay_uvvis_str )                                               //6
+	.arg( scanint_uvvis_str )                                             //7
+	;
+    }
+  else
+    {
+      html_speed += tr(
+		       "<tr><td><br><b><i>UV-visible optics:</i></b>   </td>  "
+		       "<tr><td>Not Used  </td></tr>"
+		       )
+	;
+    }
+  
+  if ( has_int )
+    {
+      html_speed += tr(
+		       "<tr><td><br><b><i>Interference optics (per cell):</i></b></td>   "
+		       "<tr><td>Delay to First Scan:  </td>                    <td>%8</td></tr>"
+		       "<tr><td>Scan Interval:        </td>                    <td>%9</td></tr>"
+		       )
+	.arg( delay_int_str   )                                               //8
+	.arg( scanint_int_str )                                               //9
+	;
+    }
+  else
+    {
+      html_speed += tr(
+		       "<tr><td><br><b><i>Interference optics:</i></b></td>   "
+		       "<tr><td>Not Used </td></tr>"
+		       )
+	;
+    }
+  
+  html_speed += tr(
+		   "</table>"
+		   "<hr>"
+		   )
     ;
   //SPEEDS: end
 
@@ -11158,7 +11224,7 @@ void US_ReporterGMP::assemble_pdf( QProgressDialog * progress_msg )
 	  	  
 	  html_analysis_gen += tr(
 				  "<table style=\"margin-left:30px\">"
-				  "<tr><td> Loading Dansity (g/ml):     </td>  <td> %1 </td> </tr>"
+				  "<tr><td> Loading Density (g/ml):     </td>  <td> %1 </td> </tr>"
 				  "<tr><td> Gradient Mat. vbar (ml/g):  </td>  <td> %2 </td> </tr>"
 				  "<tr><td> Gradient Mat. MW (g/mol):   </td>  <td> %3 </td> </tr>"
 				  "<tr><td> Loading Volume (&#181;l):   </td>  <td> %4 </td> </tr>"

@@ -1319,25 +1319,35 @@ void US_Norm_Profile::plotData(void){
 	    QString legend;
 	    if ( us_auto_mode )
 	      {
-		if ( selFilenames.at(i). contains("_002") ||
-		     selFilenames.at(i). contains(".002") ||
-		     selFilenames.at(i). endsWith(".2")   ||
-		     selFilenames.at(i). contains("protein", Qt::CaseInsensitive) ||
-		     selFilenames.at(i). contains("prot", Qt::CaseInsensitive) )
+		if (abde_etype == "MWL")
 		  {
-		    legend = channame + "-protein";
-		    pen.setColor("red");
+		    if ( selFilenames.at(i). contains("_002") ||
+			 selFilenames.at(i). contains(".002") ||
+			 selFilenames.at(i). endsWith(".2")   ||
+			 selFilenames.at(i). contains("protein", Qt::CaseInsensitive) ||
+			 selFilenames.at(i). contains("prot", Qt::CaseInsensitive) )
+		      {
+			legend = channame + "-protein";
+			//pen.setColor("red");
+			pen.setColor("magenta");
+		      }
+		    else if ( selFilenames.at(i). contains("_001") ||
+			      selFilenames.at(i). contains(".001") ||
+			      selFilenames.at(i). endsWith(".1")   ||
+			      selFilenames.at(i). contains("dna", Qt::CaseInsensitive) )
+		      {
+			legend = channame + "-DNA";
+			//pen.setColor("blue");
+			pen.setColor("cyan");
+		      }
+		    else
+		      legend = channame;
 		  }
-		else if ( selFilenames.at(i). contains("_001") ||
-			  selFilenames.at(i). contains(".001") ||
-			  selFilenames.at(i). endsWith(".1")   ||
-			  selFilenames.at(i). contains("dna", Qt::CaseInsensitive) )
+		else // SWL
 		  {
-		    legend = channame + "-DNA";
-		    pen.setColor("blue");
+		    legend = channame;
+		    pen.setColor("cyan");
 		  }
-		else
-		  legend = channame;
 	      }
 	    else
 	      legend = tr("(D)_") + selFilenames.at(i);
@@ -1442,7 +1452,7 @@ void US_Norm_Profile::plotData(void){
 		      {
 			legend = channame + "-protein";
 			pen.setColor("red");
-			
+						
 			xp_intN_protein = data_per_channel[ channame ]["midxval"][i];
 			yp_intN_protein = data_per_channel[ channame ]["integralN"][i];
 			//qDebug() << "yp_intN_protein, size() " << yp_intN_protein << ", size: " << yp_intN_protein.size();
@@ -1463,6 +1473,7 @@ void US_Norm_Profile::plotData(void){
 		    xp_intN_protein = data_per_channel[ channame ]["midxval"][i];
 		    yp_intN_protein = data_per_channel[ channame ]["integralN"][i];
 		    legend = channame;
+		    pen.setColor("darkBlue");
 		  }
 	      }
 	    else
