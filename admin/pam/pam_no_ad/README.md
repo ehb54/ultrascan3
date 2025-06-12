@@ -1,4 +1,4 @@
-# pam_no_ad
+# PAM no AD/LDAP
 
 This project provides a minimal, secure PAM + SSSD configuration for systems using **local Linux users only** — no LDAP, no Active Directory. It enables authentication via `pam_sss.so` using SSSD's proxy support, avoiding direct access to `/etc/shadow` (which is critical for applications like PHP or MariaDB that cannot or should not run as root).
 
@@ -79,24 +79,17 @@ Try authenticating via your PHP or MariaDB application using a local Linux user.
 - The process runs as a non-root user
 - Authentication works without direct access to `/etc/shadow`
 
-You can also test with:
-
-```bash
-pam_auth_helper <username> <password>
-```
-
-(Ensure the PAM service is set to `php` or `mariadb` accordingly.)
-
 ---
 
 ## 📎 Notes
 
 - The SSSD config uses:
-  ```ini
-    auth_provider = proxy
-      proxy_pam_target = system-auth
-        ```
-          This delegates password checking to your existing system PAM stack (which includes `pam_unix.so`), all handled internally by the root-owned SSSD daemon.
+  ```
+  id_provider = files
+  auth_provider = proxy
+  proxy_pam_target = system-auth
+  ```
+  This delegates password checking to your existing system PAM stack (which includes `pam_unix.so`), all handled internally by the root-owned SSSD daemon.
 
 - The PAM stacks (`php`, `mariadb`) only use `pam_sss.so`, completely avoiding `pam_unix.so` from the application’s perspective.
 
