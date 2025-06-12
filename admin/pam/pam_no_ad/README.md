@@ -73,11 +73,48 @@ make backup
 
 ## ✅ Test
 
-Try authenticating via your PHP or MariaDB application using a local Linux user. Check that:
+You can test your PAM+SSSD setup using the included `pam_auth_test.php` script. This interactive script allows you to verify authentication using both the `php` and `mariadb` PAM service stacks.
 
-- The user is listed in `getent passwd`
-- The process runs as a non-root user
-- Authentication works without direct access to `/etc/shadow`
+### 🔹 Usage
+
+Make sure the script is executable:
+
+```bash
+chmod +x pam_auth_test.php
+```
+
+Then run:
+
+```bash
+./pam_auth_test.php
+```
+
+You will be prompted for a username and password. The script will attempt to authenticate using both PAM services:
+
+```
+Username: testuser
+Password:
+✅ Authentication successful for user 'testuser' using service 'php'
+✅ Authentication successful for user 'testuser' using service 'mariadb'
+```
+
+### ✅ What to Expect
+
+- You should see success messages if the user exists in `/etc/passwd` and has a valid local password.
+- The authentication is performed via `pam_sss.so` and proxied through `sssd`, so no access to `/etc/shadow` is required.
+- If authentication fails, the error message from PAM will be printed.
+
+### 🛠 Troubleshooting
+
+- Ensure SSSD is running:  
+  ```bash
+  sudo systemctl status sssd
+  ```
+- Check that the user is available to SSSD:  
+  ```bash
+  getent passwd testuser
+  ```
+- Check `/var/log/sssd/` for debugging info (e.g., `sssd_pam.log` or `sssd_local.log`)
 
 ---
 
