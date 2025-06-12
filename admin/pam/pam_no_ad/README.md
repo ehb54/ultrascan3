@@ -18,10 +18,12 @@ This project provides a minimal, secure PAM + SSSD configuration for systems usi
 ```
 pam_no_ad/
 ├── files/
-│   ├── php          # PAM stack for PHP
-│   ├── sssd.conf    # SSSD configuration for proxying local auth
-├── Makefile         # Install/uninstall automation
-├── README.md        # This file
+│   ├── mariadb       # PAM stack for mariadb
+│   ├── php           # PAM stack for PHP
+│   ├── sssd.conf     # SSSD configuration for proxying local auth
+├── system-auth-nosss # PAM stack used by SSSD to avoid recursion
+├── Makefile          # Install/uninstall automation
+├── README.md         # This file
 ```
 
 ---
@@ -30,9 +32,10 @@ pam_no_ad/
 
 - Linux system with:
   - `sssd` installed and enabled
-    - `pam_sss.so` and `pam_unix.so` available
-    - Local users in `/etc/passwd` with valid passwords in `/etc/shadow`
-    - `systemd` and root access to manage `sssd`
+  - `pam_sss.so` and `pam_unix.so` available
+  - Local users in `/etc/passwd` with valid `/etc/shadow` entries
+  - `systemd` and root access to manage `sssd`
+  - `make` utility for installation
 
 ---
 
@@ -42,10 +45,16 @@ pam_no_ad/
 
 This will:
 
-- Back up existing `/etc/pam.d/php`, `/etc/pam.d/mariadb`, and `/etc/sssd/sssd.conf`
-- Install the PAM stack for `php` and `mariadb`
-- Replace `/etc/sssd/sssd.conf` with the proxy-enabled version
-- Restart the `sssd` service
+- Back up:
+  - `/etc/pam.d/php`
+  - `/etc/pam.d/mariadb`
+  - `/etc/pam.d/system-auth-nosss`
+  - `/etc/sssd/sssd.conf`
+- Install:
+  - PAM stack for `php` and `mariadb`
+  - A clean, recursion-free `system-auth-nosss` file
+  - Updated `sssd.conf` to proxy via `system-auth-nosss`
+  - Restart the `sssd` service
 
 ```bash
 make install
@@ -124,9 +133,9 @@ Password:
   ```
   id_provider = files
   auth_provider = proxy
-  proxy_pam_target = system-auth
+  proxy_pam_target = system-auth-nosss
   ```
-  This delegates password checking to your existing system PAM stack (which includes `pam_unix.so`), all handled internally by the root-owned SSSD daemon.
+  This delegates password verification to a custom PAM target (system-auth-nosss) that only includes pam_unix.so — avoiding recursion by excluding pam_sss.so.
 
 - The PAM stacks (`php`, `mariadb`) only use `pam_sss.so`, completely avoiding `pam_unix.so` from the application’s perspective.
 
