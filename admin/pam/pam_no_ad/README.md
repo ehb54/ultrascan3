@@ -18,12 +18,12 @@ This project provides a minimal, secure PAM + SSSD configuration for systems usi
 ```
 pam_no_ad/
 ├── files/
-│   ├── mariadb       # PAM stack for mariadb
-│   ├── php           # PAM stack for PHP
-│   ├── sssd.conf     # SSSD configuration for proxying local auth
-├── system-auth-nosss # PAM stack used by SSSD to avoid recursion
-├── Makefile          # Install/uninstall automation
-├── README.md         # This file
+│   ├── mariadb           # PAM stack for mariadb
+│   ├── php               # PAM stack for PHP
+│   ├── sssd.conf         # SSSD configuration for proxying local auth
+│   ├── system-auth-nosss # PAM stack used by SSSD to avoid recursion
+├── Makefile              # Install/uninstall automation
+├── README.md             # This file
 ```
 
 ---
