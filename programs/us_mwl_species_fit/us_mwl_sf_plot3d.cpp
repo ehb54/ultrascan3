@@ -34,6 +34,36 @@ void SFData::computeMSE(){
 
 US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFData& spFitData): US_WidgetsDialog(w)
 {
+    // initialize the graph
+    graph = new Q3DSurface();
+
+    if (!graph->hasContext())
+    {
+        QMessageBox::critical(this, "Error!", "Couldn't initialize the OpenGL context.");
+        QTimer::singleShot(0, this, &QWidget::close);
+    }
+
+    graph->setFlags(graph->flags() ^ Qt::FramelessWindowHint);
+
+    QWidget* graph_wg = QWidget::createWindowContainer(graph);
+    graph_wg->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+
+    // create an empty widget
+    QWidget *spacer = new QWidget();
+    spacer->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Expanding);
+    spacer->setFixedWidth(1);
+
+    // create the container to hold both the graph and spacer
+    QWidget *tab0 = new QWidget();
+    tab0->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    tab0->setMinimumWidth(100);
+
+    QHBoxLayout *lyt_graph = new QHBoxLayout(tab0);
+    lyt_graph->setContentsMargins(0, 0, 0, 0);
+    lyt_graph->setSpacing(0);
+    lyt_graph->addWidget(spacer, Qt::AlignLeft);
+    lyt_graph->addWidget(graph_wg);
+
     this->setWindowFlags(Qt::Window);
     setWindowTitle("Spectral Decomposition Residual Plot");
     setPalette( US_GuiSettings::frameColorDefault() );
@@ -130,7 +160,6 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFData& spFitData): US_Widg
     xAngle = 30;
     yAngle = 90;
     zAngle = 30;
-    graph = new Q3DSurface();
     graph->setShadowQuality(QAbstract3DGraph::ShadowQualityNone);
     graph->setAxisX(new QValue3DAxis);
     graph->setAxisY(new QValue3DAxis);
@@ -156,13 +185,6 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFData& spFitData): US_Widg
     camera->setWrapXRotation(true);
     camera->setWrapYRotation(false);
     camera->setCameraPreset(Q3DCamera::CameraPresetIsometricRightHigh);
-
-    surfaceWgt = QWidget::createWindowContainer(graph);
-    QSize screenSize = graph->screen()->size();
-    surfaceWgt->setMinimumSize(QSize(screenSize.width() / 2, screenSize.height() / 1.6));
-    surfaceWgt->setMaximumSize(screenSize);
-    surfaceWgt->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    surfaceWgt->setFocusPolicy(Qt::StrongFocus);
 
     QLabel* lb_scan_ctrl = us_banner("Scan Control");
     QLabel* lb_scan = us_label("Scan:");
@@ -538,7 +560,7 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFData& spFitData): US_Widg
 
     tabs = new QTabWidget();
 //    tabs->setAutoFillBackground(true);
-    tabs->addTab(surfaceWgt, tr("3D Plot"));
+    tabs->addTab(tab0, tr("3D Plot"));
     tabs->addTab(tab1, tr("Inspect Residual"));
     tabs->tabBar()->setMinimumWidth(300);
     QStringList styleSheet;

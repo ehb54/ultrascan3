@@ -114,7 +114,6 @@ private:
 
     Q3DSurface *graph;
     Q3DCamera *camera;
-    QWidget *surfaceWgt;
     QTabWidget *tabs;
     QSurfaceDataProxy *dataProxy;
     QSurface3DSeries *dataSeries;
