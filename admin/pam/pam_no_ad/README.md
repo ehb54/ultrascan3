@@ -80,7 +80,7 @@ make backup
 
 ---
 
-## ✅ Test
+## ✅ Test (simple)
 
 You can test your PAM+SSSD setup using the included `pam_auth_test.php` script. This interactive script allows you to verify authentication using both the `php` and `mariadb` PAM service stacks.
 
@@ -124,6 +124,88 @@ Password:
   getent passwd testuser
   ```
 - Check `/var/log/sssd/` for debugging info (e.g., `sssd_pam.log` or `sssd_local.log`)
+
+---
+## ✅ Testing PAM Services
+
+This project includes a comprehensive test script, `pam_auth_pamtester.php`, which uses the `pamtester` utility to validate authentication and session-related PAM actions for configured services such as `php` and `mariadb`.
+
+### 🔹 What It Does
+
+The script:
+
+- Prompts for a username and password
+- Tests multiple PAM actions (authentication, session handling, credential setup, etc.)
+- Displays result and timing for each operation
+- Logs the test results to a file (`pam_test.log`) for review or auditing
+
+Supported actions:
+
+- `authenticate` – test password verification  
+- `acct_mgmt` – check account validity (expiration, lockout, etc.)  
+- `setcred` – establish user credentials  
+- `open_session` / `close_session` – simulate login/logout session  
+- `reinitcred` / `refreshcred` – simulate long-running session revalidation  
+- `chauthtok` – test password change capabilities (if applicable)
+
+### 🔹 Requirements
+
+Ensure `pamtester` is installed:
+
+```bash
+# RHEL / CentOS / Oracle Linux
+sudo dnf install pamtester
+
+# Debian / Ubuntu
+sudo apt install pamtester
+```
+
+### 🔹 Running the Script
+
+Make it executable:
+
+```bash
+chmod +x pam_auth_pamtester.php
+```
+
+Run it interactively:
+
+```bash
+./pam_auth_pamtester.php
+```
+
+Example output:
+
+```
+🔐 PAM Multi-Action Test via pamtester
+======================================
+Username: testuser
+Password: 
+
+🧪 Testing service: php
+ - Authentication                 (authenticate): ✅ Success   [ 25.3 ms]
+ - Account Management             (acct_mgmt):    ✅ Success   [  3.1 ms]
+ - Establish Credentials          (setcred):      ✅ Success   [  2.7 ms]
+ - Open Session                   (open_session): ✅ Success   [  3.5 ms]
+ - Close Session                  (close_session):✅ Success   [  2.4 ms]
+ - Reinitialize Credentials       (reinitcred):   ❌ Failed    [  2.6 ms]
+ - Refresh Credentials            (refreshcred):  ❌ Failed    [  2.7 ms]
+ - Change Authentication Token    (chauthtok):    ❌ Failed    [  5.0 ms]
+
+📄 Results saved to: pam_test.log
+```
+
+### 🔹 Troubleshooting
+
+- Ensure the specified PAM services (`php`, `mariadb`) exist in `/etc/pam.d/`
+- Verify that SSSD is running and correctly configured for local authentication:
+
+  ```bash
+  sudo systemctl status sssd
+  ```
+
+- Check logs in `/var/log/sssd/` for authentication issues
+- Some actions (e.g., `chauthtok`) may fail unless explicitly supported or configured in the PAM stack
 
 ---
 
