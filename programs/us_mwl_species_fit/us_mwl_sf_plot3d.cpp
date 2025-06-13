@@ -186,13 +186,6 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFData& spFitData): US_Widg
     camera->setWrapYRotation(false);
     camera->setCameraPreset(Q3DCamera::CameraPresetIsometricRightHigh);
 
-    // surfaceWgt = QWidget::createWindowContainer(graph);
-    // QSize screenSize = graph->screen()->size();
-    // surfaceWgt->setMinimumSize(QSize(screenSize.width() / 2, screenSize.height() / 1.6));
-    // surfaceWgt->setMaximumSize(screenSize);
-    // surfaceWgt->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    // surfaceWgt->setFocusPolicy(Qt::StrongFocus);
-
     QLabel* lb_scan_ctrl = us_banner("Scan Control");
     QLabel* lb_scan = us_label("Scan:");
     cb_scan = us_comboBox();
