@@ -1,0 +1,15 @@
+#%PAM-1.0
+auth        required    pam_env.so
+auth        sufficient  pam_sss.so
+auth        requisite   pam_deny.so
+
+account     sufficient  pam_sss.so
+account     requisite   pam_deny.so
+
+password    sufficient  pam_sss.so
+password    requisite   pam_deny.so
+
+session     optional    pam_keyinit.so revoke
+session     required    pam_limits.so
+session     optional    pam_mkhomedir.so
+session     [success=1 default=ignore] pam_sss.so
