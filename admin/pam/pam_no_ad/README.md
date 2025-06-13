@@ -80,7 +80,7 @@ make backup
 
 ---
 
-## ✅ Test (simple)
+## ✅ Test (basic)
 
 You can test your PAM+SSSD setup using the included `pam_auth_test.php` script. This interactive script allows you to verify authentication using both the `php` and `mariadb` PAM service stacks.
 
