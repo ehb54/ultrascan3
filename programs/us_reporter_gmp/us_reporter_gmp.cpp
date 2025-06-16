@@ -3794,7 +3794,7 @@ void US_ReporterGMP::generate_report( void )
       qDebug() << "Query for autoflowHistory -- " << qry;
       db->query( qry );
 
-      /*** TEST - DO NOT delete parent autoflow YET --------------------------------- */
+      /*** TEST - DO NOT delete parent autoflow YET --------------------------------- **/
       //delete autoflow record
       qry.clear();
       qry << "delete_autoflow_record_by_id" << AutoflowID_auto;

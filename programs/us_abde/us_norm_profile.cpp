@@ -1327,7 +1327,7 @@ void US_Norm_Profile::plotData(void){
 			 selFilenames.at(i). contains("protein", Qt::CaseInsensitive) ||
 			 selFilenames.at(i). contains("prot", Qt::CaseInsensitive) )
 		      {
-			legend = channame + "-protein";
+			legend = tr("(D)_") + channame + "-protein";
 			//pen.setColor("red");
 			pen.setColor("magenta");
 		      }
@@ -1336,7 +1336,7 @@ void US_Norm_Profile::plotData(void){
 			      selFilenames.at(i). endsWith(".1")   ||
 			      selFilenames.at(i). contains("dna", Qt::CaseInsensitive) )
 		      {
-			legend = channame + "-DNA";
+			legend = tr("(D)_") + channame + "-DNA";
 			//pen.setColor("blue");
 			pen.setColor("cyan");
 		      }
@@ -1345,7 +1345,7 @@ void US_Norm_Profile::plotData(void){
 		  }
 		else // SWL
 		  {
-		    legend = channame;
+		    legend = tr("(D)_") + channame;
 		    pen.setColor("cyan");
 		  }
 	      }
@@ -1366,8 +1366,8 @@ void US_Norm_Profile::plotData(void){
 	    if ( us_auto_mode )
 	      {
 		curve->setYAxis(QwtPlot::yRight);
-		if ( ckb_integral->isChecked() )
-		  curve->setItemAttribute( QwtPlotItem::Legend, false );
+		// if ( ckb_integral->isChecked() )
+		//   curve->setItemAttribute( QwtPlotItem::Legend, false );
 	      }
 	    
             curve->setPen(pen);
@@ -1450,7 +1450,7 @@ void US_Norm_Profile::plotData(void){
 			 selFilenames.at(i). contains("protein", Qt::CaseInsensitive) ||
 			 selFilenames.at(i). contains("prot", Qt::CaseInsensitive))
 		      {
-			legend = channame + "-protein";
+			legend = tr("(I)_") + channame + "-protein";
 			pen.setColor("red");
 						
 			xp_intN_protein = data_per_channel[ channame ]["midxval"][i];
@@ -1462,7 +1462,7 @@ void US_Norm_Profile::plotData(void){
 			      selFilenames.at(i). endsWith(".1")   ||
 			      selFilenames.at(i). contains("dna", Qt::CaseInsensitive) )
 		      {
-			legend = channame + "-DNA";
+			legend = tr("(I)_") + channame + "-DNA";
 			pen.setColor("blue");
 		      }
 		    else
@@ -1472,7 +1472,7 @@ void US_Norm_Profile::plotData(void){
 		  {
 		    xp_intN_protein = data_per_channel[ channame ]["midxval"][i];
 		    yp_intN_protein = data_per_channel[ channame ]["integralN"][i];
-		    legend = channame;
+		    legend = tr("(I)_") + channame;
 		    pen.setColor("darkBlue");
 		  }
 	      }
