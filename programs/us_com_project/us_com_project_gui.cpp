@@ -1463,7 +1463,9 @@ void US_InitDialogueGui::checkCertificates( void )
 
       //emit pass_allow_dataDisk_only();
       isDataDiskOnly = true;
-      //exit(1);
+
+      if ( mainw->us_mode_bool ) 
+	exit(1);
       return;
     }
 
