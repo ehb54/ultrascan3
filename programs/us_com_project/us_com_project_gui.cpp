@@ -1453,8 +1453,9 @@ void US_InitDialogueGui::checkCertificates( void )
 	msg_sys_text_info_final += QString( tr("\n\nSubmission of the experimental protocol to the Optima instruments is suspended until at least one of these conditions is resolved."));
       else
 	msg_sys_text_info_final += QString( tr("\n\nSubmission of the experimental protocol to the Optima instrument is suspended until this condition is resolved."));
-      
-      msg_sys_text_info_final += QString( tr("\n\nUser has an option to upload data from disk (tab 2. Lab/Rotor -> Select Data Source) and proceed with that workflow.") );
+
+      if ( !mainw->us_mode_bool ) 
+	msg_sys_text_info_final += QString( tr("\n\nUser has an option to upload data from disk (tab 2. Lab/Rotor -> Select Data Source) and proceed with that workflow.") );
 
       msgBox_sys_data.setInformativeText( msg_sys_text_info_final );
       QPushButton *Cancel_sys    = msgBox_sys_data.addButton(tr("OK"), QMessageBox::RejectRole);
