@@ -225,7 +225,7 @@ bool US_Hydrodyn::calc_grpy_hydro() {
 
 #if defined( TEST_VDW_GRPY_ASA )
    bool use_threshold = false;
-   if ( !hydro.bead_inclusion && bead_model_suffix.contains( "-vdw" ) ) {
+   if ( !hydro.bead_inclusion && grpy_vdw ) {
 
       switch ( QMessageBox::question(this, 
                                      this->windowTitle() + us_tr(": GRPY ASA" ),
@@ -319,6 +319,30 @@ bool US_Hydrodyn::calc_grpy_hydro() {
             write_bead_model( QFileInfo( fname ).fileName(),
                               & bead_model,
                               US_HYDRODYN_OUTPUT_GRPY );
+
+            #define GRPY_MAX_FILENAME_LENGTH 70
+            #define GRPY_MAX_FILENAME_LENGTH_PAD 10
+            if ( last_bead_model.length() > GRPY_MAX_FILENAME_LENGTH ) {
+               QString msg =
+                  QString( us_tr( "Resulting file name length is %1 characters too long for GRPY calculations\n" ) )
+                  .arg( last_bead_model.length() + GRPY_MAX_FILENAME_LENGTH_PAD - GRPY_MAX_FILENAME_LENGTH )
+                  ;
+               editor_msg( "red", msg );
+               if ( batch_active() ) {
+                  batch_window->editor_msg( "red", msg );
+               }
+               set_enabled();
+               pb_calc_hydro->setEnabled(grpy_was_hydro_enabled);
+               pb_calc_zeno->setEnabled(true);
+               pb_bead_saxs->setEnabled(true);
+               pb_calc_grpy->setEnabled( true );
+               pb_calc_hullrad->setEnabled( true );
+               pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
+               pb_show_hydro_results->setEnabled(false);
+               progress->reset();
+               grpy_success = false;
+               return false;
+            }               
 
             write_bead_model( QFileInfo( fname ).fileName() + "-grpy", 
                               & bead_model );

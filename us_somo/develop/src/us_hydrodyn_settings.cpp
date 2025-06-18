@@ -4179,7 +4179,7 @@ void US_Hydrodyn::display_default_differences( bool update_bead_model_suffix )
    {
       editor_msg( "dark green", "\nAll options set to default values\n");
    }
-   if ( update_bead_model_suffix ) {
+   if ( update_bead_model_suffix && !batch_active() ) {
       le_bead_model_suffix->setText(
                                     setSuffix
                                     ? (
