@@ -96,7 +96,9 @@ int US_GuiUtil::save_png( const QString& filename, const QwtPlot* plot )
       QPixmap pixmap = QPixmap::grabWidget( (QWidget*)plot, 0, 0, pw, ph );
 #endif
       if ( ! pixmap.save( filename ) )
+      {
          status = 2;
+      }
    }
 
    else
@@ -269,7 +271,6 @@ int US_GuiUtil::save_csv( const QString& filename, const QwtPlot* plot )
          myFile.close();
       }
    }
-
    else
    {  // Mark error: filename does not end with ".csv"
        status = 1;
