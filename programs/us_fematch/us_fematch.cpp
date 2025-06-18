@@ -403,7 +403,7 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    adv_vals[ "parameter"  ] = "0";
    adv_vals[ "modelnbr"   ] = "0";
    adv_vals[ "meshtype"   ] = "ASTFEM";
-   adv_vals[ "gridtype"   ] = "Moving";
+   adv_vals[ "gridtype"   ] = "Moving Hat";
    adv_vals[ "modelsim"   ] = "mean";
 
    sdata          = &wsdata;
@@ -2119,7 +2119,7 @@ DbgLv(1) << "SimMdl: speed_steps:" << simparams.speed_step.size();
    QString gtyp = adv_vals[ "gridtype"   ];
    QString bvol = adv_vals[ "bandvolume" ];
 
-#if 0
+
    if ( mtyp.contains( "Claverie" ) )
       simparams.meshType = US_SimulationParameters::CLAVERIE;
    else if ( mtyp.contains( "Moving Hat" ) )
@@ -2129,11 +2129,10 @@ DbgLv(1) << "SimMdl: speed_steps:" << simparams.speed_step.size();
    else if ( mtyp.contains( "ASTFVM"     ) )
    {
       simparams.meshType = US_SimulationParameters::ASTFVM;
-      qDebug() << "meshtype= fvm";
    }
-#endif
    if ( gtyp.contains( "Constant" ) )
       simparams.gridType = US_SimulationParameters::FIXED;
+   }
 
    simparams.firstScanIsConcentration = false;
 
