@@ -8,6 +8,8 @@
 
 #include <qwt_legend.h>
 
+using namespace Qwt3D;
+
 // constructor:  enhanced plot control widget
 US_PlotControlFem::US_PlotControlFem( QWidget* p, US_Model* amodel )
    : US_WidgetsDialog( 0, 0 )
@@ -448,7 +450,7 @@ void US_PlotControlFem::plot3_btn_auto()
    double ryscl  = ct_ryscale->value();
 //qDebug() << "PC: p3btn type x,y" << typex << typey;
 
-   if ( plot3d_w == 0 )
+   if ( plot3d_w == nullptr )
    {
      plot3d_w = new US_Plot3D( this, model );
      connect( plot3d_w, SIGNAL( has_closed() ),
@@ -465,8 +467,10 @@ void US_PlotControlFem::plot3_btn_auto()
 // close button clicked
 void US_PlotControlFem::close_all()
 {
-   if ( plot3d_w != 0 )
+   if ( plot3d_w != nullptr )
+   {
       plot3d_w->close();
+   }
 
    close();
 }
@@ -474,7 +478,7 @@ void US_PlotControlFem::close_all()
 // plot window close has happened
 void US_PlotControlFem::plot_close()
 {
-   plot3d_w = 0;
+   plot3d_w = nullptr;
 }
 
 int US_PlotControlFem::dimensionType( QVector< QCheckBox* >& xycheck )
