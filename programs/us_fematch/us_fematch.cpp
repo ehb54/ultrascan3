@@ -2077,20 +2077,20 @@ void US_FeMatch::simulate_model( )
    double radhi   = edata->radius( nconc - 1 );
 
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
-int lc=model_used.components.size()-1;
-DbgLv(1) << "SimMdl: 0) s D c"
- << model_used.components[ 0].s << model_used.components[ 0].D
- << model_used.components[ 0].signal_concentration << "  n" << lc;
-DbgLv(1) << "SimMdl: n) s D c"
- << model_used.components[lc].s << model_used.components[lc].D
- << model_used.components[lc].signal_concentration;
-   adjust_model();
-DbgLv(1) << "SimMdl: 0) s D c"
- << model.components[ 0].s << model.components[ 0].D
- << model.components[ 0].signal_concentration;
-DbgLv(1) << "SimMdl: n) s D c"
- << model.components[lc].s << model.components[lc].D
- << model.components[lc].signal_concentration;
+   int lc=model_used.components.size()-1;
+   DbgLv(1) << "SimMdl: 0) s D c"
+    << model_used.components[ 0].s << model_used.components[ 0].D
+    << model_used.components[ 0].signal_concentration << "  n" << lc;
+   DbgLv(1) << "SimMdl: n) s D c"
+    << model_used.components[lc].s << model_used.components[lc].D
+    << model_used.components[lc].signal_concentration;
+      adjust_model();
+   DbgLv(1) << "SimMdl: 0) s D c"
+    << model.components[ 0].s << model.components[ 0].D
+    << model.components[ 0].signal_concentration;
+   DbgLv(1) << "SimMdl: n) s D c"
+    << model.components[lc].s << model.components[lc].D
+    << model.components[lc].signal_concentration;
 
    // Initialize simulation parameters using edited data information
    US_Passwd pw;
@@ -2121,16 +2121,23 @@ DbgLv(1) << "SimMdl: speed_steps:" << simparams.speed_step.size();
 
 
    if ( mtyp.contains( "Claverie" ) )
+   {
       simparams.meshType = US_SimulationParameters::CLAVERIE;
+   }
    else if ( mtyp.contains( "Moving Hat" ) )
+   {
       simparams.meshType = US_SimulationParameters::MOVING_HAT;
+   }
    else if ( mtyp.contains( "File:"      ) )
+   {
       simparams.meshType = US_SimulationParameters::USER;
+   }
    else if ( mtyp.contains( "ASTFVM"     ) )
    {
       simparams.meshType = US_SimulationParameters::ASTFVM;
    }
    if ( gtyp.contains( "Constant" ) )
+   {
       simparams.gridType = US_SimulationParameters::FIXED;
    }
 
@@ -2145,7 +2152,9 @@ DbgLv(1) << "SimMdl: speed_steps:" << simparams.speed_step.size();
       //simparams.firstScanIsConcentration = true;
    }
    else
+   {
       simparams.band_volume = 0.0;
+   }
 
    // Make a simulation copy of the experimental data without actual readings
 
@@ -2278,19 +2287,19 @@ DbgLv(1) << "SimMdl: nthread" << nthread << "ncomp" << ncomp
    {
       if ( simparams.meshType != US_SimulationParameters::ASTFVM )
       {
-DbgLv(1) << "SimMdl: (fematch:)Finite Element Solver is called";
-//*DEBUG*
-for(int ii=0; ii<model.components.size(); ii++ )
-{
-DbgLv(1) << "SimMdl:   comp" << ii << "s D v"
- << model.components[ii].s
- << model.components[ii].D
- << model.components[ii].vbar20 << "  c"
- << model.components[ii].signal_concentration;
-}
-DbgLv(1) << "SimMdl: (fematch:)Sim Pars--";
-simparams.debug();
-//*DEBUG*
+         DbgLv(1) << "SimMdl: (fematch:)Finite Element Solver is called";
+         //*DEBUG*
+         for(int ii=0; ii<model.components.size(); ii++ )
+         {
+            DbgLv(1) << "SimMdl:   comp" << ii << "s D v"
+             << model.components[ii].s
+             << model.components[ii].D
+             << model.components[ii].vbar20 << "  c"
+             << model.components[ii].signal_concentration;
+         }
+         DbgLv(1) << "SimMdl: (fematch:)Sim Pars--";
+         simparams.debug();
+         //*DEBUG*
          US_Astfem_RSA* astfem_rsa = new US_Astfem_RSA( model, simparams );
 
          connect( astfem_rsa, SIGNAL( current_component( int ) ),
@@ -2303,31 +2312,31 @@ simparams.debug();
          //astfem_rsa->set_buffer( solution_rec.buffer );
 
          astfem_rsa->calculate( *sdata );
-//*DEBUG*
-int kpts=0;
-double trmsd=0.0;
-double tnoi=0.0;
-double rnoi=0.0;
-bool ftin=ti_noise.count > 0;
-bool frin=ri_noise.count > 0;
-for(int ss=0; ss<sdata->scanCount(); ss++)
-{
- rnoi = frin ? ri_noise.values[ss] : 0.0;
- for (int rr=0; rr<sdata->pointCount(); rr++)
- {
-  tnoi = ftin ? ti_noise.values[rr] : 0.0;
-  double rval=edata->value(ss,rr) - sdata->value(ss,rr) - rnoi - tnoi;
-  trmsd += sq( rval );
-  kpts++;
- }
-}
-trmsd = sqrt( trmsd / (float)kpts );
-DbgLv(1) << "SimMdl: (1)trmsd" << trmsd;
-//*DEBUG*
+         //*DEBUG*
+         int kpts=0;
+         double trmsd=0.0;
+         double tnoi=0.0;
+         double rnoi=0.0;
+         bool ftin=ti_noise.count > 0;
+         bool frin=ri_noise.count > 0;
+         for(int ss=0; ss<sdata->scanCount(); ss++)
+         {
+            rnoi = frin ? ri_noise.values[ss] : 0.0;
+            for (int rr=0; rr<sdata->pointCount(); rr++)
+            {
+               tnoi = ftin ? ti_noise.values[rr] : 0.0;
+               double rval=edata->value(ss,rr) - sdata->value(ss,rr) - rnoi - tnoi;
+               trmsd += sq( rval );
+               kpts++;
+            }
+         }
+         trmsd = sqrt( trmsd / (float)kpts );
+         DbgLv(1) << "SimMdl: (1)trmsd" << trmsd;
+         //*DEBUG*
       }
       else
       {
-DbgLv(1) << "SimMdl: (fematch:)Finite Volume Solver is called";
+         DbgLv(1) << "SimMdl: (fematch:)Finite Volume Solver is called";
          US_LammAstfvm *astfvm     = new US_LammAstfvm( model, simparams );
          connect( astfvm,  SIGNAL( comp_progress( int ) ), this,  SLOT(   update_progress(   int ) ) );
          //solution_rec.buffer.compressibility = compress;
