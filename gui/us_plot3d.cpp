@@ -2278,82 +2278,7 @@ void US_Plot3D::dump_contents()
    bool ok           = false;
    if (fileext == "csv")
    {
-      // save to csv located at ofname
-      QFile myFile(ofname);
-      if (!myFile.open(QIODevice::WriteOnly)) {
-         qDebug() << "Could not write to file:" << ofname << "Error string:" << myFile.errorString();
-      }
-      else{
-         QTextStream out(&myFile);
-         unsigned int kcols = (unsigned int)ncols;
-         unsigned int krows = (unsigned int)nrows;
-         DbgLv(1) << "P3D:replot: ncols nrows" << ncols << nrows
-                  << "triples-in" << triples_in;
-         double xcmin   = xmin;
-         double xcmax   = xmax;
-         double ycmin   = reverse_y ? ymax : ymin;
-         double ycmax   = reverse_y ? ymin : ymax;
-         double zcmin   = zmin;
-         double zcmax   = zmax;
-         double zdmx    = zmin;
-         double zfac    = 1.0;
-         Triple** wdata = NULL;
-         double** wddat = NULL;
-         int lcol       = ncols - 1;
-         if ( triples_in )
-         {
-            wdata          = new Triple* [ ncols ];
-            DbgLv(1) << "P3D:replot: wdata size" << tdata.size();
-
-            if ( reverse_y )
-            {
-               double yroff   = ( ycmin + ycmax ) / y_norm;
-
-               for ( int ii = 0; ii < ncols; ii++ )
-               {
-                  wdata[ ii ]    = new Triple [ nrows ];
-                  int kk         = lcol - ii;
-
-                  for ( int jj = 0; jj < nrows; jj++ )
-                  {
-                     double xval       = tdata[ kk ][ jj ].x;
-                     double yval       = ( yroff - tdata[ kk ][ jj ].y );
-                     double zval       = tdata[ kk ][ jj ].z;
-                     wdata[ ii ][ jj ] = Triple( xval/x_norm, yval/y_norm, zval/z_norm );
-                  }
-               }
-            }
-            else
-            {
-               for ( int ii = 0; ii < ncols; ii++ )
-               {
-                  wdata[ ii ]    = new Triple [ nrows ];
-                  for ( int jj = 0; jj < nrows; jj++ )
-                     wdata[ ii ][ jj ] = tdata[ ii ][ jj ];
-               }
-            }
-
-            out << xatitle << ", " << yatitle << ", " << zatitle;
-            out << Qt::endl;
-            for ( int ii = 0; ii < ncols; ii++){
-               for ( int jj = 0; jj < nrows; jj++){
-                  out << QString::number(wdata[ii][jj].x) << ", " << QString::number(wdata[ii][jj].y) << ", " << QString::number(wdata[ii][jj].z) << Qt::endl;
-               }
-            }
-            myFile.flush();}
-         else {
-            out << xatitle << ", " << yatitle << ", " << zatitle;
-            out << Qt::endl;
-            for ( int ii = 0; ii < tdata.size(); ii++){
-               for ( int jj = 0; jj < tdata.first().size(); jj++){
-                  out << QString::number(tdata[ii][jj].x) << ", " << QString::number(tdata[ii][jj].y) << ", " << QString::number(tdata[ii][jj].z) << Qt::endl;
-               }
-            }
-            myFile.flush();
-         }
-
-         myFile.close();
-         ok = true;}
+      ok = save_csv( ofname );
    }
    else {
       ok = IO::save( dataWidget, ofname, imagetype );
@@ -2436,3 +2361,81 @@ void US_Plot3D::closeEvent( QCloseEvent* e )
    e->accept();
 }
 
+bool US_Plot3D::save_csv( const QString& filename)
+{
+   bool ok = false;
+         // save to csv located at ofname
+   QFile myFile( filename );
+   if ( !myFile.open( QIODevice::WriteOnly ) )
+   {
+      qDebug() << "Could not write to file:" << filename << "Error string:" << myFile.errorString();
+   }
+   else{
+      QTextStream  out(&myFile);
+      DbgLv(1) << "P3D:replot: ncols nrows" << ncols << nrows << "triples-in" << triples_in;
+      double ycmin   = reverse_y ? ymax : ymin;
+      double ycmax   = reverse_y ? ymin : ymax;
+      Triple** wdata = nullptr;
+      int lcol       = ncols - 1;
+      if ( triples_in )
+      {
+         wdata          = new Triple* [ ncols ];
+         DbgLv(1) << "P3D:replot: wdata size" << tdata.size();
+
+         if ( reverse_y )
+         {
+            double yroff   = ( ycmin + ycmax ) / y_norm;
+
+            for ( int ii = 0; ii < ncols; ii++ )
+            {
+               wdata[ ii ]    = new Triple [ nrows ];
+               int kk         = lcol - ii;
+
+               for ( int jj = 0; jj < nrows; jj++ )
+               {
+                  double xval       = tdata[ kk ][ jj ].x;
+                  double yval       = ( yroff - tdata[ kk ][ jj ].y );
+                  double zval       = tdata[ kk ][ jj ].z;
+                  wdata[ ii ][ jj ] = Triple( xval/x_norm, yval/y_norm, zval/z_norm );
+               }
+            }
+         }
+         else
+         {
+            for ( int ii = 0; ii < ncols; ii++ )
+            {
+               wdata[ ii ]    = new Triple [ nrows ];
+               for ( int jj = 0; jj < nrows; jj++ )
+               {
+                  wdata[ ii ][ jj ] = tdata[ ii ][ jj ];
+               }
+            }
+         }
+
+         out << xatitle << ", " << yatitle << ", " << zatitle;
+         out << "\n";
+         for ( int ii = 0; ii < ncols; ii++){
+            for ( int jj = 0; jj < nrows; jj++){
+               out << QString::number(wdata[ii][jj].x) << ", "
+                     << QString::number(wdata[ii][jj].y) << ", "
+                     << QString::number(wdata[ii][jj].z) << "\n";
+            }
+         }
+         myFile.flush();}
+      else {
+         out << xatitle << ", " << yatitle << ", " << zatitle;
+         out << "\n";
+         for ( int ii = 0; ii < tdata.size(); ii++){
+            for ( int jj = 0; jj < tdata.first().size(); jj++){
+               out << QString::number(tdata[ii][jj].x) << ", "
+                     << QString::number(tdata[ii][jj].y) << ", "
+                     << QString::number(tdata[ii][jj].z) << "\n";
+            }
+         }
+         myFile.flush();
+      }
+      myFile.close();
+      ok = true;
+   }
+   return ok;
+}

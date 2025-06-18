@@ -102,6 +102,11 @@ class US_GUI_EXTERN US_Plot3D : public QMainWindow
       //! \return          Flag if save was successful
       bool save_plot( const QString, const QString );
 
+      //! \brief Public function to save the plot to a csv file
+      //! \param filename  The full path to the file to create
+      //! \return          Flag if save was successful
+      bool save_csv( const QString& filename);
+
    signals:
       //! \brief A signal emitted when this dialog has been closed.
       void has_closed( void );
