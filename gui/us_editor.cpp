@@ -145,9 +145,7 @@ void US_Editor::save(  )
 
 void US_Editor::saveAs(  )
 {
-   QString fn;
-
-   fn = QFileDialog::getSaveFileName( this );
+   QString fn = QFileDialog::getSaveFileName( this, tr( "Save File" ), file_directory, file_extension );
 
    if ( ! fn.isEmpty(  ) )
    {
