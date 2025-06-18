@@ -66,7 +66,7 @@ US_Editor::US_Editor( int menu, bool readonly, const QString& extension,
 
       default:
          QAction* saveAsAction = new QAction( tr( "Save&As" ), this );;
-         saveAsAction->setShortcut( tr( "Ctrl+A" ) );
+         saveAsAction->setShortcut( tr( "Ctrl+S" ) );
          connect( saveAsAction, SIGNAL( triggered() ), this, SLOT( saveAs() ) );
 
          QAction* clearAction = new QAction( tr( "Clear" ), this );;
