@@ -393,6 +393,7 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    bmd_pos    = this->pos() + QPoint( 100, 100 );
    epd_pos    = this->pos() + QPoint( 200, 200 );
    rpd_pos    = this->pos() + QPoint( 300, 400 );
+   report_pos = this->pos();
 
    ti_noise.count = 0;
    ri_noise.count = 0;
@@ -802,6 +803,12 @@ DbgLv(1) << "Fem:Upd: (0)svbar" << svbar;
       bmd_pos  = rbmapd->pos();
       rbmapd->close();
       rbmapd   = 0;
+   }
+   if ( report_dialog )
+   {
+      report_pos  = report_dialog->pos();
+      report_dialog->close();
+      report_dialog.clear();
    }
 }
 
@@ -1260,6 +1267,15 @@ void US_FeMatch::view_report( )
 
    // generate the report file
    write_report( ts );
+   if ( report_dialog.isNull())
+   {
+      report_dialog = new US_Editor( US_Editor::DEFAULT, true, "HTML (*.html);;Text files (*.txt)", this );
+      report_dialog->setWindowTitle( tr( "Report:  FE Match Model Simulation" ) );
+      report_dialog->resize( 800, 700 );
+      report_dialog->e->setFont( QFont( US_GuiSettings::fontFamily(),
+                             US_GuiSettings::fontSize() ) );
+      report_dialog->move(report_pos);
+   }
 
    // display the report dialog
    US_Editor* editd = new US_Editor( US_Editor::DEFAULT, true, "", this );
@@ -1270,6 +1286,8 @@ void US_FeMatch::view_report( )
                              US_GuiSettings::fontSize() ) );
    editd->e->setHtml( mtext );
    editd->show();
+   report_dialog->e->setHtml( mtext );
+   report_dialog->show();
 }
 
 // Slot to handle a change in Exclude-From
