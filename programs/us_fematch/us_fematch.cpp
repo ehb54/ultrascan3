@@ -3068,12 +3068,40 @@ QString US_FeMatch::distrib_info()
                   + indent( 4 ) + "<table>\n";
 
    mstr += table_row( tr( "Model Analysis:" ), mdla + msim );
+   mstr += table_row( tr( "Solution:" ),
+                      QString( solution_rec.solutionDesc ) + " " + solution_rec.solutionGUID );
    mstr += table_row( tr( "Number of Components:" ),
                       QString::number( ncomp ) );
    mstr += table_row( tr( "Residual RMS Deviation:" ),
                       le_rmsd->text()  );
    mstr += table_row( tr( "Model-reported RMSD:"    ),
                       ( rmsd_m > 0.0 ) ? QString::number( rmsd_m ) : "(none)" );
+   mstr += table_row( tr( "s20w correction:" ),
+                      QString::number( solution.s20w_correction )  );
+   mstr += table_row( tr( "D20w correction:" ),
+                      QString::number( solution.D20w_correction )  );
+   QStringList meshType;
+   meshType <<"ASTFEM"<< "CLAVERIE"<< "MOVING_HAT"<< "USER"<< "ASTFVM";
+   mstr += table_row( tr( "Mesh Type:" ),
+                      meshType[simparams.meshType] );
+   QStringList gridType;
+   gridType << "FIXED" << "MOVING";
+   mstr += table_row( tr( "Grid Type:" ),
+                      gridType[simparams.gridType] );
+   mstr += table_row( tr( "Simulation points:" ),
+                      QString::number( simparams.simpoints )  );
+   mstr += table_row( tr( "Radial Resolution:" ),
+                      QString::number( simparams.radial_resolution )  );
+   mstr += table_row( tr( "Band forming:" ),
+                      QString( simparams.band_forming?(QString("Yes") + " "+ QString::number(simparams.band_volume) + " mL"):"No" ));
+   mstr += table_row( tr( "Channel angle:" ),
+                      QString::number( simparams.cp_angle )  );
+   mstr += table_row( tr( "Meniscus:" ),
+                      QString::number( simparams.meniscus )  + " cm");
+   mstr += table_row( tr( "Bottom:" ),
+                      QString::number( simparams.bottom )  );
+   mstr += table_row( tr( "Bottom Position" ),
+                      QString::number( simparams.bottom_position )  + " cm");
 
    double sum_mw  = 0.0;
    double sum_s   = 0.0;
