@@ -1306,9 +1306,13 @@ void US_AddRefScan::write2txt(const QString& file, US_RefScanDataIO::RefData& da
             dval = data.wavelength.at(i);
             sval = QString::number(dval, 'f', 1);
             if (i < nw - 1)
+            {
                 out_str << sval << ",";
+            }
             else
+            {
                 out_str << sval << "\n";
+            }
         }
         for (int i = 0; i < nw; ++i){
             out_str << "xValues=";
@@ -1316,9 +1320,13 @@ void US_AddRefScan::write2txt(const QString& file, US_RefScanDataIO::RefData& da
                 dval = data.xValues.at(j);
                 sval = QString::number(dval, 'f', 4);
                 if (j < np - 1)
+                {
                     out_str << sval << ",";
+                }
                 else
+                {
                     out_str << sval << "\n";
+                }
             }
         }
         for (int i = 0; i < nw; ++i){
@@ -1327,9 +1335,13 @@ void US_AddRefScan::write2txt(const QString& file, US_RefScanDataIO::RefData& da
                 dval = data.rValues.at(i).at(j);
                 sval = QString::number(dval, 'e', 6);
                 if (j < np - 1)
+                {
                     out_str << sval << ",";
+                }
                 else
+                {
                     out_str << sval << "\n";
+                }
             }
         }
         for (int i = 0; i < nw; ++i){
@@ -1338,9 +1350,13 @@ void US_AddRefScan::write2txt(const QString& file, US_RefScanDataIO::RefData& da
                 dval = data.std.at(i).at(j);
                 sval = QString::number(dval, 'e', 6);
                 if (j < np - 1)
+                {
                     out_str << sval << ",";
+                }
                 else
+                {
                     out_str << sval << "\n";
+                }
             }
         }
         out_file.flush();
