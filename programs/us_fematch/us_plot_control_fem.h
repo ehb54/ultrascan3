@@ -29,6 +29,7 @@ class US_PlotControlFem : public US_WidgetsDialog
       //! \brief Force (re-)plot of currently specified 3-D plot
       void do_3dplot( void );
       void do_3dplot_auto( void );
+      void close_everything();
       
       //! \brief Return 3-d plot data widget pointer
       QGLWidget* data_3dplot( void );
@@ -58,6 +59,7 @@ class US_PlotControlFem : public US_WidgetsDialog
 
    protected:
       US_Help       showHelp;
+      void closeEvent( QCloseEvent* event ) override; // overwrite the close event to close the 3D plot window
 
    private slots:
       void xmwtCheck( bool );

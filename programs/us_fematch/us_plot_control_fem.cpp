@@ -489,3 +489,19 @@ int US_PlotControlFem::dimensionType( QVector< QCheckBox* >& xycheck )
    return dimType;
 }
 
+void US_PlotControlFem::closeEvent( QCloseEvent* event )
+{
+   // Make sure any open 3D plot is closed when this dialog goes away
+   close_everything();
+   US_WidgetsDialog::closeEvent( event );
+}
+
+// Actually close (and destroy) the 3D‐plot widget if it exists
+void US_PlotControlFem::close_everything()
+{
+   if ( plot3d_w )
+   {
+      plot3d_w->close();    // send close to the 3D‐plot window
+      plot3d_w.clear();     // QPointer becomes null and object is deleted
+   }
+}
