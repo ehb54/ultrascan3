@@ -156,7 +156,18 @@ void US_Editor::saveAs(  )
 
 void US_Editor::saveFile( void )
 {
-      QString text = e->toPlainText();
+   // check for the filetype and don't convert to plain text if it is HTML
+   QString ext = filename.section( ".", -1 );
+   QString text;
+   if ( ext != "html" )
+   {
+      text = e->toPlainText();
+   }
+   else
+   {
+      // saving as HTML
+      text = e->toHtml();
+   }
 
       QFile f( filename );
 
