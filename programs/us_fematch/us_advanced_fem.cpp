@@ -43,7 +43,7 @@ US_AdvancedFem::US_AdvancedFem( US_Model* amodel,
    ct_parameter  = us_counter( 2, 1,  50,     1 );
    if (parmap.contains("parameter"))
    {
-      ct_parameter->setValue(adv_vals["parameter"].toDouble());
+      ct_parameter->setValue(parmap["parameter"].toDouble());
    }
 
    cb_mesh      = us_comboBox();
