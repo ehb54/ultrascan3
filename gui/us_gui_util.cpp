@@ -263,7 +263,7 @@ int US_GuiUtil::save_csv( const QString& filename, const QwtPlot* plot )
             {
                out << export_data[ jj ][ ii ] << ", ";
             }
-            out << export_data.last()[ ii ] << Qt::endl;
+            out << export_data.last()[ ii ] << "\n";
          }
          myFile.flush();
       }
