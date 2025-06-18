@@ -327,7 +327,6 @@ US_Plot3D::US_Plot3D( QWidget* p, US_Model* m, QVector< QVector3D >* d )
 
    setStandardView();
    reset_colors();
-   setVisible( true );
 
    resize( p1size );
 }
