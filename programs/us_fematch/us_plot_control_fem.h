@@ -82,6 +82,7 @@ class US_PlotControlFem : public US_WidgetsDialog
       void plot3_btn(  void );
       void plot3_btn_auto(  void );
       void close_all(  void );
+      void save_all(  void );
       void plot_close( void );
       int  dimensionType( QVector< QCheckBox* >& );
 
