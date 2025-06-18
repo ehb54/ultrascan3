@@ -2135,12 +2135,6 @@ DbgLv(1) << "SimMdl: speed_steps:" << simparams.speed_step.size();
    if ( gtyp.contains( "Constant" ) )
       simparams.gridType = US_SimulationParameters::FIXED;
 
-   if ( model.components[ 0 ].sigma == 0.0  &&
-        model.components[ 0 ].delta == 0.0)
-      simparams.meshType = US_SimulationParameters::ASTFEM;
-   else
-      simparams.meshType = US_SimulationParameters::ASTFVM;
-
    simparams.firstScanIsConcentration = false;
 
    double concval1      = 0.0;
@@ -2283,10 +2277,7 @@ DbgLv(1) << "SimMdl: nthread" << nthread << "ncomp" << ncomp
    // Do simulation by several possible ways: 1-/Multi-thread, ASTFEM/ASTFVM
    if ( nthread < 2 )
    {
-      if ( model.components[ 0 ].sigma == 0.0  &&
-           model.components[ 0 ].delta == 0.0  &&
-           model.coSedSolute           <  0.0  &&
-           compress                    == 0.0 )
+      if ( simparams.meshType != US_SimulationParameters::ASTFVM )
       {
 DbgLv(1) << "SimMdl: (fematch:)Finite Element Solver is called";
 //*DEBUG*
@@ -2339,10 +2330,10 @@ DbgLv(1) << "SimMdl: (1)trmsd" << trmsd;
       {
 DbgLv(1) << "SimMdl: (fematch:)Finite Volume Solver is called";
          US_LammAstfvm *astfvm     = new US_LammAstfvm( model, simparams );
-         //connect( astfvm,  SIGNAL( comp_progress( int ) ), this,  SLOT(   update_progress(   int ) ) );
+         connect( astfvm,  SIGNAL( comp_progress( int ) ), this,  SLOT(   update_progress(   int ) ) );
          //solution_rec.buffer.compressibility = compress;
          //solution_rec.buffer.manual          = manual;
-         //astfvm->set_buffer( solution_rec.buffer );
+         astfvm->set_buffer( solution_rec.buffer );
          astfvm->calculate(     *sdata );
       }
       //-----------------------
