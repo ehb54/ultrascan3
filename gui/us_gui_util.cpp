@@ -266,9 +266,8 @@ int US_GuiUtil::save_csv( const QString& filename, const QwtPlot* plot )
             out << export_data.last()[ ii ] << "\n";
          }
          myFile.flush();
+         myFile.close();
       }
-
-      myFile.close();
    }
 
    else
