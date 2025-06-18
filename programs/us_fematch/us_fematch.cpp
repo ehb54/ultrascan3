@@ -390,9 +390,9 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    rbmapd     = 0;
    eplotcd    = 0;
    resplotd   = 0;
-   bmd_pos    = this->pos() + QPoint( 100, 100 );
-   epd_pos    = this->pos() + QPoint( 200, 200 );
-   rpd_pos    = this->pos() + QPoint( 300, 400 );
+   bmd_pos    = this->pos();
+   epd_pos    = this->pos();
+   rpd_pos    = this->pos();
    report_pos = this->pos();
 
    ti_noise.count = 0;
@@ -784,25 +784,25 @@ DbgLv(1) << "Fem:Upd: (0)svbar" << svbar;
    pb_plot3d   ->setEnabled( false );
    pb_plotres  ->setEnabled( false );
    pb_distrib  ->setText   ( tr( "s20,W Distribution" ) );
-   if ( eplotcd != 0 )
+   if ( eplotcd )
    {
       epd_pos  = eplotcd->pos();
       eplotcd->close();
-      eplotcd  = 0;
+      eplotcd.clear();
    }
 
-   if ( resplotd != 0 )
+   if ( resplotd )
    {
       rpd_pos  = resplotd->pos();
       resplotd->close();
-      resplotd = 0;
+      resplotd.clear();
    }
 
-   if ( rbmapd != 0 )
+   if ( rbmapd )
    {
       bmd_pos  = rbmapd->pos();
       rbmapd->close();
-      rbmapd   = 0;
+      rbmapd.clear();
    }
    if ( report_dialog )
    {
@@ -1278,16 +1278,10 @@ void US_FeMatch::view_report( )
    }
 
    // display the report dialog
-   US_Editor* editd = new US_Editor( US_Editor::DEFAULT, true, "", this );
-   editd->setWindowTitle( tr( "Report:  FE Match Model Simulation" ) );
-   editd->move( this->pos() + QPoint( 100, 100 ) );
-   editd->resize( 800, 700 );
-   editd->e->setFont( QFont( US_GuiSettings::fontFamily(),
-                             US_GuiSettings::fontSize() ) );
-   editd->e->setHtml( mtext );
-   editd->show();
    report_dialog->e->setHtml( mtext );
    report_dialog->show();
+   report_dialog->activateWindow();
+   report_dialog->raise();
 }
 
 // Slot to handle a change in Exclude-From
