@@ -11,7 +11,7 @@
 #include "us_extern.h"
 
 /*! Class for edit and/or display of text in a main window. The text may be
-    editable or read-only. The window may be flagged to have text file load
+    editable or read-only. The window may be flagged to have the text file load
     and save menu items (and actions) or not. If text files may be loaded,
     a file extension for the open file dialog may be specified.
     \brief Class for text edit/display.
@@ -28,8 +28,8 @@ class US_GUI_EXTERN US_Editor : public QMainWindow
           \param parent Parent widget.
           \param flags Standard main window flags.
       */
-      US_Editor( int, bool = false, const QString& = "Data Files (*.dat)", 
-            QWidget* = 0, Qt::WindowFlags = 0 );
+      US_Editor( int menu, bool readonly = false, const QString& extension = "Data Files (*.dat)",
+            QWidget* parent = nullptr, Qt::WindowFlags flags = Qt::WindowFlags() );
 
       enum { LOAD, DEFAULT };
 
@@ -37,7 +37,7 @@ class US_GUI_EXTERN US_Editor : public QMainWindow
 
       QMenuBar*  edMenuBar;
    signals:
-      //! Signal that file load is complete (passes name of file loaded).
+      //! Signal that the file load is complete (passes the name of the file loaded).
       void US_EditorLoadComplete( QString );
 
    private:
@@ -55,7 +55,7 @@ class US_GUI_EXTERN US_Editor : public QMainWindow
       void save       ( void );
       void saveAs     ( void );
       void print      ( void );
-      void clear      ( void ) { e->clear(); };
+      void clear      ( void ) const { e->clear(); };
       void update_font( void );
 };
 #endif
