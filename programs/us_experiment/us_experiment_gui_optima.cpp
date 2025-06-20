@@ -293,6 +293,12 @@ void US_ExperimentMain::set_loadAProf ( US_AnaProfile aprof_curr_read )
   epanAProfile->sdiag->loadProf = aprof_curr_read;
 }
 
+void US_ExperimentMain::enable_data_disk_only( )
+{
+  qDebug() << "In enable_data_disk_only()...";
+
+  epanRotor->switch_to_dataDisk_public();
+}
 
 void US_ExperimentMain::exclude_used_instruments( QStringList & occupied_instruments )
 {
@@ -1508,6 +1514,28 @@ void US_ExperGuiRotor::reset_dataSource_public( void )
   importDataPath = "";
   ra_data_type = false;
   ra_data_sim  = false;
+}
+
+void US_ExperGuiRotor::switch_to_dataDisk_public()
+{
+  ck_disksource-> disconnect();
+  
+  bool checked = true;
+  
+  pb_importDisk   -> setVisible( checked );
+  le_dataDiskPath -> setVisible( checked );
+  ck_absorbance_t -> setVisible( checked );
+
+  lb_instrument  -> setVisible( !checked );
+  cb_optima  -> setVisible( !checked );
+  lb_optima_connected -> setVisible( !checked );
+  le_optima_connected -> setVisible( !checked );
+  
+  ck_disksource   ->setChecked( true );
+  ck_disksource   ->setEnabled( false );
+
+  connect( ck_disksource, SIGNAL( toggled     ( bool ) ),
+	   this,           SLOT  ( importDiskChecked( bool ) ) );
 }
 
 void US_ExperGuiRotor::get_chann_ranges_public( QString d_type, QMap< QString, QStringList>& f_data )
