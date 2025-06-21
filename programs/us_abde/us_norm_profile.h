@@ -23,11 +23,25 @@ class US_Norm_Profile : public US_Widgets
     public:
         //! \brief Constructor for the US_Norm_Profile class.
         explicit US_Norm_Profile();
+        US_Norm_Profile(QString);
+
+        bool us_auto_mode;
+        bool us_auto_mode_report;
+        void load_data_auto_report( QMap<QString,QString>& );
+        QwtPlot* rp_data_plot();
+        QString select_channel_public( int index );
 
     signals:
         //! \brief Signal emitted when the widget is closed.
         void widgetClosed();
-
+        void abde_to_report( QMap<QString,QString>&);
+        void back_to_runManager();
+        void pass_channels_info( QStringList& );
+        void pass_rmsd_info( QMap< QString, double >& );
+        void pass_menisc_info( QMap< QString, double >& );
+        void pass_percents_info( QMap< QString, QMap < QString, double>>& );
+        void pass_data_per_channel( QMap< QString, QMap < QString, QVector<QVector<double>> > >&);
+  
     protected:
         //! \brief Override of the close event to emit widgetClosed signal.
         //! \param event The close event.
@@ -41,6 +55,7 @@ class US_Norm_Profile : public US_Widgets
         QPushButton* pb_reset; //!< Button to reset the profile.
         QPushButton* pb_close; //!< Button to close the widget.
         QPushButton* pb_save; //!< Button to save the profile.
+        QPushButton* pb_save_auto; 
 
         QLineEdit* le_investigator; //!< Line edit for investigator name.
         QLineEdit* le_runinfo; //!< Line edit for run information.
@@ -67,7 +82,18 @@ class US_Norm_Profile : public US_Widgets
         double x_min_picked = -1; //!< Minimum X value picked.
         double x_max_picked = -1; //!< Maximum X value picked.
         double x_norm = -1; //!< A radial point that normalization occurs based on
-
+        QString channels_ranges;
+        QString channels_rmsds;
+        QString abde_etype;
+        QMap< QString, QMap < QString, QVector<QVector<double>> > > data_per_channel;
+        QMap< QString, double > data_per_channel_xnorm;
+        QMap< QString, double > data_per_channel_meniscus;
+        QMap< QString, double > data_per_channel_rmsd;
+        QMap< QString, int > data_per_channel_norm_cb;
+        QMap< QString, QMap < QString, double>> data_per_channel_ranges_percents;
+        QMap< QString, bool > data_per_channel_processed;
+        QMap< QString, QString > prot_details;
+ 
         QListWidget *lw_inpData; //!< List widget for input data.
         QListWidget *lw_selData; //!< List widget for selected data.
 
@@ -81,10 +107,18 @@ class US_Norm_Profile : public US_Widgets
         QCheckBox *ckb_legend; //!< Checkbox for legend.
         QCheckBox *ckb_xrange; //!< Checkbox for X range.
         QCheckBox *ckb_norm_max; //!< Normalize by Maximum.
+        QCheckBox *ckb_ranges;
         US_PlotPicker *picker; //!< Plot picker object.
+
+        QStringList channList;
+        QComboBox* cb_chann;
+        QPushButton *pb_next_chann;
+        QPushButton *pb_prev_chann;
 
         //! \brief Select data for the plot.
         void selectData(void);
+        void selectData_auto(void);
+        void find_percent_from_range( QString, QString, QString, QVector<double>, QVector< double > );
 
         //! \brief Plot the selected data.
         void plotData(void);
@@ -111,6 +145,28 @@ class US_Norm_Profile : public US_Widgets
     private slots:
         //! \brief Slot to load AUC data.
         void slt_loadAUC(void);
+        void slt_loadAUC_auto( QMap<QString,QString>& );
+        void slt_loadAUC_auto_report(QMap<QString,QString>& );
+        void load_data_auto( QMap<QString,QString>& );
+  //void load_data_auto_report( QMap<QString,QString>& );
+        void new_chann_auto   ( int  );
+        void next_chann_auto( void );
+        void prev_chann_auto( void );
+        void save_auto( void );
+        bool areAllProcessed_auto( void );
+        bool areAllNormalized_auto( QString& );
+        int  read_autoflowAnalyisABDEstages_record( QString );
+        void revert_autoflowAnalysisABDEstages_record( QString );
+        void record_AnalysisABDE_status( QMap<QString,QString> );
+        void update_autoflow_record_atAnalysisABDE( void );
+        QMap <QString, QString> read_autoflowAnalysisABDE_record( QString );
+        void parse_abde_analysis_jsons( QString,
+					QMap <QString, QString>&,
+					QMap <QString, double>&,
+					QMap< QString, int >&,
+					QMap< QString, QMap < QString, double>>&,
+					QMap <QString, double>&,
+					QMap <QString, double>& );
 
         //! \brief Slot to add or remove an item.
         //! \param item The list widget item.
@@ -135,6 +191,7 @@ class US_Norm_Profile : public US_Widgets
 
         //! \brief Slot to pick a normaling point on the plot.
         void slt_pickPoint(void);
+        //void slt_pickPoint_auto(void);
 
         //! \brief Slot to handle mouse events on the plot.
         //! \param point The point where the mouse event occurred.
@@ -155,10 +212,12 @@ class US_Norm_Profile : public US_Widgets
         //! \brief Slot to toggle the normalization.
         //! \param state The state of the normalization checkbox.
         void slt_norm(int state);
-
+       
         //! \brief Slot to toggle the raw data.
         //! \param state The state of the raw data checkbox.
         void slt_rawData(int state);
+
+        void slt_ranges(int state);
 
         //! \brief Slot to reset the profile.
         void slt_reset(void);

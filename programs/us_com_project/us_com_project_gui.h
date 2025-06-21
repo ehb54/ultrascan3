@@ -303,6 +303,7 @@ class US_EditingGui : public US_WidgetsDialog
    void do_editing( QMap < QString, QString > & );
    void reset_data_editing( void );
    void to_analysis( QMap < QString, QString > & );
+   void to_report( QMap < QString, QString > & );
    void resize_main( void );
    void to_initAutoflow( void );
 
@@ -310,6 +311,7 @@ class US_EditingGui : public US_WidgetsDialog
    void start_editing( QMap < QString, QString > & );
    void reset_data_editing_passed ( void );
    void switch_to_analysis( QMap < QString, QString > &  );
+   void switch_to_report( QMap < QString, QString > &  );
    void switch_to_initAutoflow( void);
 };
 

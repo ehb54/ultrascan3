@@ -30,6 +30,10 @@ class US_LoadRunNoise : public QObject
     //! \param parent A pointer to the parent QObject.  This normally can be 
     //!               left as NULL.
     US_LoadRunNoise( QObject* = 0 );
+    US_LoadRunNoise( QMap<QString,QString>& ,QObject* = 0 );
+
+    QMap<QString, QString> protocol_details;
+    bool us_automode;
 
     //! \brief Count available noise records and set up for load dialog.
     //! \param dbload   Flag for noise source is DB: true=db; false=local.

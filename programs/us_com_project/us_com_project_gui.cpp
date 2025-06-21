@@ -503,6 +503,7 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    connect( this, SIGNAL( reset_data_editing() ),  epanEditing, SLOT( reset_data_editing( )  ) );
 
    connect( epanEditing, SIGNAL( switch_to_analysis( QMap < QString, QString > & ) ), this, SLOT( switch_to_analysis( QMap < QString, QString > & )  ) );
+   connect( epanEditing, SIGNAL( switch_to_report( QMap < QString, QString > & ) ), this, SLOT( switch_to_report( QMap < QString, QString > & )  ) );
    connect( this, SIGNAL( pass_to_analysis( QMap < QString, QString > & ) ),   epanAnalysis, SLOT( do_analysis( QMap < QString, QString > & )  ) );
    connect( epanEditing, SIGNAL( switch_to_initAutoflow( ) ), this, SLOT( close_all( )  ) );
 
@@ -3475,9 +3476,10 @@ US_EditingGui::US_EditingGui( QWidget* topw )
    
    connect( this, SIGNAL( reset_data_editing_passed( ) ), sdiag, SLOT(  reset_editdata_panel (  )  ) );
 
-   //ALEXEY: switch to Analysis
+   //ALEXEY: switch to Analysis || REPORT (abde)
    connect( sdiag, SIGNAL( edit_complete_auto(  QMap < QString, QString > & ) ), this, SLOT( to_analysis (  QMap < QString, QString > &) ) );
-
+   connect( sdiag, SIGNAL( edit_complete_auto_abde(  QMap < QString, QString > & ) ), this, SLOT( to_report (  QMap < QString, QString > &) ) );
+   
    //ALEXEY: back to initAutoflow 
    connect( sdiag, SIGNAL( back_to_initAutoflow( ) ), this, SLOT( to_initAutoflow ( ) ) );
 
@@ -3538,6 +3540,13 @@ void US_EditingGui::to_analysis( QMap < QString, QString > & protocol_details )
 {
   emit switch_to_analysis( protocol_details );
 }
+
+
+void US_EditingGui::to_report( QMap < QString, QString > & protocol_details )
+{
+  emit switch_to_report( protocol_details );
+}
+
 
 void US_EditingGui::to_initAutoflow( void )
 {

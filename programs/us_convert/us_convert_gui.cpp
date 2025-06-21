@@ -51,6 +51,7 @@ US_ConvertGui::US_ConvertGui( QString auto_mode ) : US_Widgets()
    ExpData.invID = US_Settings::us_inv_ID();
 
    usmode    = false;
+   us_import_ssf_abde = false;
 
    auto_ref_scan = true;
    first_time_plot_auto = true;
@@ -158,6 +159,7 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    static QChar clambda( 955 );   // Lambda character
 
    lb_mwlctrl   = us_banner  ( tr( "Multi-Wavelength Lambda Controls" ) );
+   lb_mwlctrl->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
    lb_lambstrt  = us_label   ( tr( "%1 Start:"    ).arg( clambda ) );
    lb_lambstop  = us_label   ( tr( "%1 End:"      ).arg( clambda ) );
    lb_lambplot  = us_label   ( tr( "Plot %1:"     ).arg( clambda ) );
@@ -172,7 +174,8 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    mwl_connect( true );
 
    QLabel* lb_runinfo  = us_banner(   tr( "Run Information" ) );
-
+   lb_runinfo->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
+   
    // Change Run ID
    QLabel* lb_runID2   = us_label(    tr( "Run ID:" ) );
 
@@ -194,6 +197,7 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
 
    lb_triple           = us_banner(
                             tr( "Cell / Channel / Wavelength" ) );
+   lb_triple->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
    lw_triple           = us_listwidget();
    // QLabel* lb_ccwinfo  = us_label(
    //                          tr( "Enter Associated Triple (c/c/w) Info:" ) );
@@ -345,8 +349,14 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    todo->addWidget( lb_todoinfo,     row++, 0, 1, 4 );
    todo->addWidget( lw_todoinfo,     row++, 0, 1, 4 );
 
+   
+
    //ALEXEY hide todo layout
    settings ->addLayout( todo,       row++, 0, 1, 4 );
+
+   int ihgt        = lb_todoinfo->height();
+   QSpacerItem* spacer2 = new QSpacerItem( 10, 100*ihgt, QSizePolicy::Expanding);
+   settings->addItem( spacer2,  row++,  0, 1, 4 );
    
    settings ->addWidget( lb_status,       row,     0, 1,  1 );
    settings ->addWidget( le_status,       row++,   1, 1,  3 );
@@ -462,8 +472,8 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
        cb_centerpiece->hide();
 
        //ALEXEY hide todo layout
-       //lb_todoinfo->hide();
-       //lw_todoinfo->hide();
+       lb_todoinfo->hide();
+       lw_todoinfo->hide();
 
        pb_reset->hide();
        pb_close->hide();
@@ -644,6 +654,7 @@ US_ConvertGui::US_ConvertGui() : US_Widgets()
    ExpData.invID = US_Settings::us_inv_ID();
 
    usmode    = false;
+   us_import_ssf_abde = false;
 
    auto_ref_scan = true;
    first_time_plot_auto = true;
@@ -1388,10 +1399,117 @@ void US_ConvertGui::us_mode_passed( void )
   
 }
 
+//alt. import_auto_ssf (for [ABDE-MWL])
+void US_ConvertGui::import_ssf_data_auto( QMap < QString, QString > & details_at_live_update )
+{
+  us_import_ssf_abde     = true;
+  dataSavedOtherwise     = false;
+  runType_combined_IP_RI = false;
+  
+  autoflowID_passed = details_at_live_update[ "autoflowID" ].toInt();
+
+  qDebug() << "autoflowID: " << autoflowID_passed;
+
+  details_at_editing = details_at_live_update;
+
+  ExpData.invID     = details_at_live_update[ "invID_passed" ].toInt();
+  ProtocolName_auto = details_at_live_update[ "protocolName" ];
+  OptimaName        = details_at_live_update[ "OptimaName" ];
+  runID_numeric     = details_at_live_update[ "runID" ];
+
+  Exp_label         = details_at_live_update[ "label" ];
+
+  AProfileGUID      = details_at_live_update[ "aprofileguid" ];
+  expType           = details_at_live_update[ "expType" ];
+  dataSource        = details_at_live_update[ "dataSource" ];
+  opticsFailedType  = details_at_live_update[ "opticsFailedType" ];
+
+  //debug
+  qDebug() << "ssf_dir_name" << details_at_live_update["ssf_dir_name"];
+  qDebug() << "Exp_label: " << Exp_label;
+  qDebug() << "ExpType: "   << expType;
+  qDebug() << "dataSource: " << dataSource;
+
+  impType     = getImports_auto( details_at_live_update["ssf_dir_name"] );
+  qDebug() << "impType, IMPORT AUC auto..." << impType;
+  importAUC();
+  
+  //ALEXEY: For autoflow: Reset to-do list && maybe solutions, triple desc.
+  if ( us_convert_auto_mode ) 
+    {
+      lw_todoinfo->clear();
+      le_solutionDesc ->setText( "" );
+      le_description  ->setText( "" );
+      le_centerpieceDesc -> setText( "");
+    }
+  
+  //emit data_loaded();
+  
+  editRuninfo_auto();
+  
+  if( dataSavedOtherwise )
+    return;
+  
+  //debug
+  qDebug() << "Before reading protocol: out_triples, out_channles -- "
+	   << out_triples << ", \n "
+	   << out_channels;
+  qDebug() << "outData descs.: -- ";
+  for(int i=0; i<outData.size(); ++i )
+    qDebug() << "for triple (cell|chann): " << outData[ i ]->cell << "|"
+	     << outData[ i ]->channel << ", desc. is: " << outData[ i ]->description;
+  
+  for(int i=0; i<out_tripinfo.size(); ++i )
+    qDebug() << "for triple: " << out_tripinfo[i].tripleDesc
+	     << ", desc. is: " << out_tripinfo[i].description
+	     << ", solution is: " << out_tripinfo[i].solution.solutionDesc;
+  
+  //read protocol && labs/rotor etc info
+  readProtocol_auto();
+  getLabInstrumentOperatorInfo_auto();
+  
+  //debug
+  qDebug() << "After reading protocol: out_triples, out_channles -- "
+	   << out_triples << ", "
+	   << out_channels;
+  qDebug() << "outData descs.: -- ";
+  for(int i=0; i<outData.size(); ++i )
+    qDebug() << "for triple (cell|chann): " << outData[ i ]->cell << "|"
+	     << outData[ i ]->channel << ", desc. is: " << outData[ i ]->description;
+  
+  for(int i=0; i<out_tripinfo.size(); ++i )
+    qDebug() << "for triple: " << out_tripinfo[i].tripleDesc
+	     << ", desc. is: " << out_tripinfo[i].description
+	     << ", solution is: " << out_tripinfo[i].solution.solutionDesc;
+  
+  //And save to DB -- Will probably be a separate funciton with:
+  // (1) check for if saved already?
+  // (2) switch to Reporting stage
+  
+  if( isSaved_auto() )
+    {
+      qDebug() << "SSF Already saved!";
+      return;
+    }
+    
+  saveUS3DB();          
+  writeTimeStateDisk(); // do we need timestate?
+  writeTimeStateDB();   // do we need timestate?
+
+  //message? (will likely be shown in the parent AUTO-analysis widget)
+  // QMessageBox::information( this,
+  // 			    tr( "[ABDE-SSF]Save is Complete" ),
+  // 			    tr( "The save of all data and reports is complete.\n\n"
+  // 				"The program will switch to Reporting stage." ) );
+  // emit to_report();
+  
+}
+
 
 //void US_ConvertGui::import_data_auto( QString &currDir, QString &protocolName, QString &invID_passed, QString &correctRadii )
 void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_live_update )
 {
+  us_import_ssf_abde     = false;
   dataSavedOtherwise     = false;
   runType_combined_IP_RI = false;
 
@@ -2220,7 +2338,7 @@ DbgLv(1) << "CGui:iA: CURRENT DIR_1: " << importDir;
    runID         = QString( fname ).section( ".",  0, -6 );
 
    //For DataFromDisk, we need to append runID with something like "-dataDiskRun-{autoflowID_passed}"
-   if ( dataSource.contains("Disk") && us_convert_auto_mode )
+   if ( dataSource.contains("Disk") && us_convert_auto_mode && !us_import_ssf_abde )
      runID += QString("-dataDiskRun-") + QString::number( autoflowID_passed );
    
    if ( runType_combined_IP_RI )
@@ -3454,7 +3572,9 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
 	       //Description
 	       //triple_desc = ProtInfo.ProtSolutions.chsols[ index_curr ].ch_comment;  //channel's comment from protocol
 	       triple_desc = ProtInfo.ProtSolutions.chsols[ index_curr ].ch_comment;  //channel's comment from protocol
-	       outData[ i ]->description = triple_desc;
+
+	       if ( !us_import_ssf_abde )
+		 outData[ i ]->description = triple_desc;
 
 	       //DUPL
 	       allData[ i ].description = triple_desc;
@@ -3560,11 +3680,13 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
 		       qDebug() << "Triple. NAME: " << out_triples[ j ] << "Channel. NAME: " << out_channels[ i ];
 		       out_chaninfo[ j ].solution = solution_auto;
 		       out_tripinfo[ j ].solution = solution_auto;
-		       outData[ j ]->description = triple_desc;
+		       if ( !us_import_ssf_abde )
+			 outData[ j ]->description = triple_desc;
 
 		       //DUPL
 		       all_tripinfo[ j ].solution = solution_auto;
-		       allData[ j ].description = triple_desc;
+		       if ( !us_import_ssf_abde )
+			 allData[ j ].description = triple_desc;
 
 		       
 		     }
@@ -7684,7 +7806,7 @@ DbgLv(1) << "Writing to database";
 		       // Either emit ONLY if not US_MODE, or do NOT connect with slot on us_comproject...
 		       //update_autoflow_record_atLimsImport();
 
-		       //set autoflowSatges to "DONE" ?
+		       //set autoflowStages to "DONE" ?
 		       
 		       resetAll_auto();
 		       emit saving_complete_auto( details_at_editing  );   
@@ -8287,6 +8409,7 @@ DbgLv(1) << "Unable to remove file" << rmvfiles[ ii ];
 // Save to Database
 void US_ConvertGui::saveUS3DB( void )
 {
+ 
    // Verify connectivity
    US_Passwd pw;
    QString masterPW = pw.getPasswd();

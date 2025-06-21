@@ -49,6 +49,7 @@ int US_Experiment::checkRunID_auto( int invID_passed, US_DB2* db )
    q << runID
      << QString::number( invID_passed );
    db->query( q );
+   qDebug() << "checkRunID_auto(), query -- " << q;
    if ( db->lastErrno() == US_DB2::NOROWS )
       return US_DB2::NOROWS;
    

@@ -44,6 +44,10 @@ US_ABDE_MW::US_ABDE_MW() : US_Widgets()
     main_lyt->addWidget(hline);
     fitter = new US_Buoyancy("AUTO");
     normalizer = new US_Norm_Profile();
+    //// TEST
+    //normalizer = new US_Norm_Profile( "AUTO" );
+    ////END TEST
+    
     main_lyt->addWidget(fitter);
     main_lyt->addWidget(normalizer);
     normalizer->setVisible(false);

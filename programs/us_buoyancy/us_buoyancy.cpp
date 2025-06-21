@@ -306,7 +306,7 @@ US_Buoyancy::US_Buoyancy( QString auto_mode ) : US_Widgets()
    QLabel* lb_fit_progress_bn = us_banner( tr( "Fitting" ) );
    specs->addWidget( lb_fit_progress_bn,  s_row++, 0, 1, 4 );
 
-   us_checkbox( tr( "[AUTO] Fit All Triples" ), ck_auto_fit, true );
+   us_checkbox( tr( "[AUTO] Fit All Triples" ), ck_auto_fit, false );
    connect( ck_auto_fit, SIGNAL( toggled     ( bool ) ),
 	    this,        SLOT  ( enblFitBtn  ( bool ) ) );
    specs->addWidget( ck_auto_fit,  s_row, 0, 1, 2 );

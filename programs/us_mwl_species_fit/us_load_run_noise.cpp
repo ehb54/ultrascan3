@@ -17,13 +17,21 @@ US_LoadRunNoise::US_LoadRunNoise( QObject* parent ) : QObject( parent )
 {
    dbg_level   = US_Settings::us_debug();
    dbP         = NULL;
-
+   us_automode = false;
 }
 
+// Alt. Constructor
+US_LoadRunNoise::US_LoadRunNoise( QMap<QString, QString>& protocol_details, QObject* parent ) : QObject( parent )
+{
+   dbg_level   = US_Settings::us_debug();
+   dbP         = NULL;
+   this->protocol_details = protocol_details;
+   us_automode = true;
+}
 
 // Determine if edit/model related noise available and build lists
 int US_LoadRunNoise::count_noise( const bool dbload, const QString runID,
-   QStringList* edIDsP, QStringList* noiInfP, int* neditsP )
+				  QStringList* edIDsP, QStringList* noiInfP, int* neditsP )
 {
    int nrnois  = 0;       // Number of runID-data-related noises
    edGUIDs .clear();
@@ -122,7 +130,9 @@ int US_LoadRunNoise::scan_db( const QString runID )
 {
    int krnois     = 0;
    QStringList query;
-   QString invID  = QString::number( US_Settings::us_inv_ID() );
+
+   //QString invID  = QString::number( US_Settings::us_inv_ID() );
+   QString invID  = ( us_automode ) ? protocol_details["invID_passed"] : QString::number( US_Settings::us_inv_ID() );
 
    QVector< QString >    vEaucIDs;    // Edit info vectors
    QVector< QString >    vEedtIDs;

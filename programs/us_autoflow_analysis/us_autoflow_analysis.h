@@ -7,6 +7,30 @@
 #include "us_passwd.h"
 #include "../us_fit_meniscus/us_fit_meniscus.h"
 #include "../us_fematch/us_fematch.h"
+#include "../us_mwl_species_fit/us_mwl_species_fit.h"
+#include "../us_mwl_species_fit/us_mwl_sf_plot3d.h"
+#include "../us_mwl_species_fit/us_load_run_noise.h"
+#include "../us_convert/us_convert.h"
+#include "../us_convert/us_experiment.h"     
+#include "../us_convert/us_experiment_gui.h" 
+#include "../us_convert/us_convert_gui.h"    
+#include "../us_convert/us_convertio.h"      
+#include "../us_convert/us_get_run.h"        
+#include "../us_convert/us_intensity.h"      
+#include "../us_convert/us_selectbox.h"      
+//#include "../us_convert/us_select_triples.h"
+#include "../us_abde/us_norm_profile.h"
+
+
+#include "us_analysis_base2.h"
+#include "us_images.h"
+#include "us_editor.h"
+#include "us_data_loader.h"
+#include "us_plot.h"
+#include "us_dataIO.h"
+#include "us_solution.h"
+#include "us_simparms.h"
+#include "us_mwl_data.h"
 
 /**
  * @class US_Analysis_auto
@@ -21,6 +45,10 @@ class US_Analysis_auto : public US_Widgets
          * @brief Constructor for the US_Analysis_auto class.
          */
         US_Analysis_auto();
+
+        US_MwlSpeciesFit* sdiag;
+        US_ConvertGui*    sdiag_convert;
+        US_Norm_Profile*  sdiag_norm_profile;
 
         QTreeWidget     *treeWidget;                             /**< Tree widget for displaying analysis data. */
         QMap<QString, QTreeWidgetItem *> topItem;                /**< Top-level items in the tree widget. */
@@ -250,7 +278,8 @@ class US_Analysis_auto : public US_Widgets
             int scanCount;                                           /**< Scan count. */
 
             QPoint rpd_pos;                                          /**< Residual plot position. */
-
+  
+            QLabel* lb_hdr1;
             QPushButton* pb_show_all;                                /**< Show all button. */
             QPushButton* pb_hide_all;                                /**< Hide all button. */
 
@@ -264,6 +293,8 @@ class US_Analysis_auto : public US_Widgets
             QString defaultDB;                                       /**< Default database. */
             int autoflowStatusID;                                    /**< Auto flow status ID. */
             int autoflowID_passed;                                   /**< Passed auto flow ID. */
+            QString autoflow_expType;
+            QString dataSource;
 
             QString FileName;                                        /**< File name. */
             QString FileName_parsed;                                 /**< Parsed file name. */
@@ -309,6 +340,7 @@ class US_Analysis_auto : public US_Widgets
              * @return A map of the investigator information.
              */
             QMap < QString, QString > get_investigator_info ( US_DB2*, const QString& );
+            QMap < QString, QString > get_abdeAnalysis_info ( US_DB2*, const QString& );
 
             /**
              * @brief Scans the database for analysis data.
@@ -667,6 +699,9 @@ class US_Analysis_auto : public US_Widgets
          */
         void plotres( void );
 
+        void proceed_abde_to_report( QMap< QString, QString > & );
+        void back_to_initAutoflow( void );
+
     signals:
         /**
          * @brief Signal emitted when the analysis update process is stopped.
@@ -688,6 +723,8 @@ class US_Analysis_auto : public US_Widgets
          * @param analysisData A map containing the analysis data.
          */
         void analysis_complete_auto( QMap <QString, QString> & );
+
+        void process_abde( QMap < QString, QString > & );
 };
 
 #endif
