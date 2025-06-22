@@ -9454,6 +9454,7 @@ void US_ExperGuiUpload::submitExperiment()
    //Make 'autoflow' table record:
    if ( mainw->automode )
      {
+       protocol_details[ "dataSource" ] = "INSTRUMENT";
        add_autoflow_record( protocol_details );
 
        /*** 
