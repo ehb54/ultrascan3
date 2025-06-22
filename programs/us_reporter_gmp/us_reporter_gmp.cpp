@@ -6405,6 +6405,8 @@ void  US_ReporterGMP::assemble_run_details_html( void )
   else
     fileNameList << FileName;
 
+  qDebug() << "[in assemble_run_details_html()], FileName,  fileNameList -- "
+	   << FileName <<  fileNameList;
   
   US_Passwd pw;
   US_DB2*   dbP  = new US_DB2( pw.getPasswd() );
@@ -6415,7 +6417,8 @@ void  US_ReporterGMP::assemble_run_details_html( void )
       return;
     }
 
-
+  qDebug() << "[in assemble_run_details_html()], after DB conneciton check ";
+  
   //Create dir for plots: (if any)
   QString subDirName  = runName + "-run" + runID;
   QString dirName     = US_Settings::reportDir() + "/" + subDirName;
@@ -6431,9 +6434,14 @@ void  US_ReporterGMP::assemble_run_details_html( void )
   //2. Iterate over runIds
   for ( int i=0; i<fileNameList.size(); ++i )
     {
-
-      if ( fileNameList[ i ].contains("IP") )
+      qDebug() << "[in assemble_run_details_html()1], Filename -- "
+	       << fileNameList[ i ];
+      
+      if ( fileNameList[ i ].endsWith("-IP") )
 	continue;
+
+      qDebug() << "[in assemble_run_details_html()2], Filename -- "
+	       << fileNameList[ i ];
       
       // html_assembled += tr( "<h3 align=left>TimeStamp Parameters for Run: %1</h3>" ).
       // 	arg( fileNameList[ i ] );
@@ -6442,6 +6450,9 @@ void  US_ReporterGMP::assemble_run_details_html( void )
       
       //3. get expID based on runID && invID
       int experimentID = get_expID_by_runID_invID( dbP, fileNameList[ i ] );
+
+      qDebug() << "[in assemble_run_details_html()], experimentID -- "
+	       << experimentID;
 
       if ( experimentID == 0 )
        	{
