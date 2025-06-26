@@ -206,10 +206,12 @@ class US_FeMatch : public US_Widgets
         QPointer<US_PlotControlFem> eplotcd; //!< Pointer to plot control.
         QPointer<US_ResidPlotFem> resplotd; //!< Pointer to residual plot.
         QPointer<US_AdvancedFem> advdiag; //!< Pointer to advanced dialog.
+        QPointer<US_Editor> report_dialog; //!< Pointer to report window.
 
         QPoint bmd_pos; //!< Bitmap position.
         QPoint epd_pos; //!< Plot control position.
         QPoint rpd_pos; //!< Residual plot position.
+        QPoint report_pos; //!< Report window position.
 
         QDateTime start_time; //!< Start time.
 
