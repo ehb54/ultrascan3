@@ -1041,6 +1041,11 @@ void US_LineEdit_RE::setText(const QString & inText) {
     _editstate = false;
 }
 
+void US_LineEdit_RE::setText_auto(const QString & txt){
+    _editstate = true;
+    this->setText(txt);
+}
+
 void US_LineEdit_RE::_set_etext(const QString & txt){
     _editstate = true;
     this->setText(txt);

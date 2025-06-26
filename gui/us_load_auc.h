@@ -28,7 +28,11 @@ class US_GUI_EXTERN US_LoadAUC : public US_WidgetsDialog
       US_LoadAUC( bool, QString, QVector< US_DataIO::RawData >&, QStringList&,
                   QString& );
 
-      bool us_auto_mode; 
+      US_LoadAUC( bool, QMap<QString,QString>&, QVector< US_DataIO::RawData >&, QStringList&,
+                  QString& );
+
+      bool us_auto_mode;
+      bool us_auto_mode_abde;
 
    signals:
       //! \brief A signal to tell the parent when the disk/db selection
@@ -45,6 +49,7 @@ class US_GUI_EXTERN US_LoadAUC : public US_WidgetsDialog
       QVector< US_DataIO::RawData >&   rawList;    // Raw data vector
       QStringList&                     triples;    // Triples list
       QString&                         workingDir; // Base working directory
+      QMap<QString, QString>           protocol_details;
 
       class DataDesc   // Description of each data set in the list presented
       {
