@@ -6,6 +6,9 @@
 #include "us_editor.h"
 #include "us_math2.h"
 #include "us_mwl_sf_plot3d.h"
+#include "us_run_protocol.h"
+#include "us_protocol_util.h"
+#include "../us_analysis_profile/us_analysis_profile.h"
 
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug()
@@ -20,6 +23,23 @@ class US_MwlSpeciesFit : public US_AnalysisBase2
     public:
         //! \brief Constructor for US_MwlSpeciesFit
         US_MwlSpeciesFit();
+
+        US_MwlSpeciesFit( QMap<QString, QString> &);
+
+        bool us_gmp_auto_mode;
+        QMap<QString, QString> protocol_details;
+        US_RunProtocol currProto;           //!< Current run protocol
+        US_AnalysisProfileGui* sdiag_aprof; //!< Analysis profile GUI dialog
+        US_AnaProfile currAProf;            //!< Current analysis profile
+        QMap<QString, QMap<QString, US_ReportGMP>> ch_reports; //!< Channel reports
+        QStringList chndescs;               //!< Channel descriptions
+        QStringList chndescs_alt;           //!< Alternative channel descriptions
+        QMap<QString, QList<double>> ch_wvls; //!< Channel wavelengths
+  //QMap< QString, QString> channels_to_radial_ranges;
+        QMap< QString, QMap <QString, QStringList>> editProfile_blc;
+        QMap< QString, QMap< QString, QMap< double, double > > > extinction_profiles_per_channel;
+             //chann.    //type[protein, DNA]  //ext. profile
+        QString rmsd_for_gmp;
 
     private:
         int dbg_level;         //!< Debug level
@@ -84,7 +104,11 @@ class US_MwlSpeciesFit : public US_AnalysisBase2
 
         //! \brief Load species data
         void loadSpecs(void);
-
+        void loadSpecs_auto( QMap< QString, QMap< double, double > > );
+        bool read_protocol(QStringList &);
+        bool validExtinctionProfile( QString, QList< double >,
+				     QList< double >, QStringList& );
+         
         //! \brief Perform species fit data analysis
         void specFitData(void);
 

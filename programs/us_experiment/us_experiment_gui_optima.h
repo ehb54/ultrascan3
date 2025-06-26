@@ -560,6 +560,7 @@ class US_ExperGuiSolutions : public US_WidgetsDialog
       int      mxrow;                           // Max rows (24)
       //QVector< QComboBox* >    cc_solus;        // Solution choice pointers
       QMap<QString,QString> get_solutions_public( void );
+      void get_new_solutions_public( void );
       
    private:
       US_ExperimentMain*   mainw;
@@ -972,6 +973,7 @@ class US_ExperGuiUpload : public US_WidgetsDialog
       bool    matchRefSampleWvls( QString, QString, QStringList&);
       bool    useReferenceNumbersSet( QStringList& );
       bool    extinctionProfilesExist( QStringList& );
+      bool    ifMixedABDE( QStringList& );
       bool    validExtinctionProfile( QString, QList< double >,
 				      QList< double >, QStringList& );
 
@@ -1167,6 +1169,7 @@ class US_ExperimentMain : public US_Widgets
       US_AnaProfile* get_aprofile_loaded( void );
       void set_loadAProf ( US_AnaProfile );
       QMap< QString, QString> get_all_solution_names( void );
+      void get_new_solution_names(void);
       void initCells( void );
       void reset_dataDisk( void );
       void get_importDisk_data( QString,  QMap< QString, QStringList>& );
