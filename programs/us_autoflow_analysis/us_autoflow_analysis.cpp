@@ -82,7 +82,7 @@ US_Analysis_auto::US_Analysis_auto() : US_Widgets()
   all_processed = true;
   
   // // // // // ---- Testing ----
-  // QMap < QString, QString > protocol_details;
+  QMap < QString, QString > protocol_details;
 
 
   // protocol_details[ "invID_passed" ] = QString("95");
@@ -101,6 +101,18 @@ US_Analysis_auto::US_Analysis_auto() : US_Widgets()
   // protocol_details[ "dataSource" ]   = QString("dataDiskAUC");
   // protocol_details[ "statusID" ]     = QString("588");
   // protocol_details[ "autoflowID" ]   = QString("1515");
+
+  //VELOCITY: failed JSON (bad fitmen-auto, "NAN")
+  protocol_details[ "invID_passed" ] = QString("165");
+  protocol_details[ "protocolName" ] = QString("GMP-test-ABDE-fromDisk");
+  protocol_details[ "aprofileguid" ] = QString("6c376179-6eda-47e9-b699-3eef63c6fe6e");
+  protocol_details[ "filename" ]     = QString("AAV_GMP_test_030325-run2366-dataDiskRun-1515");
+  protocol_details[ "analysisIDs"  ] = QString("");
+  protocol_details[ "expType" ]      = QString("ABDE");
+  protocol_details[ "dataSource" ]   = QString("dataDiskAUC");
+  protocol_details[ "statusID" ]     = QString("588");
+  protocol_details[ "autoflowID" ]   = QString("1515");
+  
 
   // // // //What's needed ////////////////////////////////////////////////////////
   // // AProfileGUID       = protocol_details[ "aprofileguid" ];
