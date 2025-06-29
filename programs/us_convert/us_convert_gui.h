@@ -48,6 +48,8 @@ class US_ConvertGui : public US_Widgets
 
       void us_mode_passed  ( void );
       bool usmode;
+      bool us_import_ssf_abde;
+      void import_ssf_data_auto  ( QMap < QString, QString > & ) ;
 
   signals:
       void saving_complete_auto( QMap < QString, QString > &  );
@@ -316,6 +318,8 @@ class US_ConvertGui : public US_Widgets
       bool    protDev_bool;
       bool dataSavedOtherwise;
       QString expType;
+      QString dataSource;
+      QString opticsFailedType;
       
       void getExpInfo_auto ( void );
       void getLabInstrumentOperatorInfo_auto   ( void );
@@ -325,7 +329,7 @@ class US_ConvertGui : public US_Widgets
 
   QString correct_description( QString&, QString, QString );
 
-      
+      void check_scans     ( void );
       void setTripleInfo   ( void );
       void checkTemperature( void );
       int  findTripleIndex ( void );
@@ -382,6 +386,7 @@ class US_ConvertGui : public US_Widgets
 
       //void import_data_auto  (QString &, QString &, QString &, QString &);
       void import_data_auto  ( QMap < QString, QString > & ) ;
+      
       QMap < QString, QString > read_autoflow_record( int );
       int  read_autoflow_stages_record( int );
       void revert_autoflow_stages_record ( int );

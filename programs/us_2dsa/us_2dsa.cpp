@@ -203,7 +203,7 @@ void US_2dsa::analysis_done( int updflag )
       double  rmsd  = sqrt( vari );
       le_vari->setText( QString::number( vari ) );
       le_rmsd->setText( QString::number( rmsd ) );
-DbgLv(1) << "Analysis Done VARI" << vari << "model,noise counts"
+DbgLv(0) << "Analysis Done VARI" << vari << "model,noise counts"
  << models.count() << (ti_noises.count()+ri_noises.count())
  << "menisc bott"
  << mdesc.mid( mdesc.indexOf( "MENISCUS=" ) + 9 ).section( " ", 0, 0 )
@@ -807,7 +807,56 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
 
       if ( dbP != NULL )
       {  // If DB, load and store in the database
-         model.load( tname );
+         model.load( mname );
+
+         US_Model model2 = model;
+         qDebug() << "::::: nmodel=" << model.components.size() << " nmodel2=" << model2.components.size();
+         double avtemp  = dset.temperature;
+         for ( int ii = 0; ii < model2.components.size(); ii++ )
+         {
+            US_Model::SimulationComponent* component = &model2.components[ ii ];
+
+            US_Math2::SolutionData  sd;
+            sd.viscosity   = dset.viscosity;
+            sd.density     = dset.density;
+            sd.manual      = dset.manual;
+            sd.vbar20      = model2.components[ ii ].vbar20;
+            sd.vbar        = US_Math2::adjust_vbar20( sd.vbar20, avtemp );
+            US_Math2::data_correction( avtemp, sd );
+            double scorr   = sd.s20w_correction;
+            double dcorr   = sd.D20w_correction;
+            component->s  /= scorr;
+            component->D  /= dcorr;
+            if ( component->extinction > 0.0 )
+               component->molar_concentration = component->signal_concentration / component->extinction;
+         }
+
+         SIMPARAMS simparms = dset.simparams;
+         int drow = lw_triples->currentRow();
+         US_AstfemMath::initSimData( sdata, dataList[ drow ], 0.0 );
+         US_Astfem_RSA* astfem_rsa = new US_Astfem_RSA( model2, simparms );
+         astfem_rsa->calculate( sdata );
+
+         int kpts = 0;
+         double variance = 0.0;
+         bool sub_ri = ri_noise.values.size() > 0 ? true : false;
+         bool sub_ti = ti_noise.values.size() > 0 ? true : false;
+         qDebug() << "::::: sub_ri=" << sub_ri << " sub_ti=" << sub_ti;
+         for ( int ii = 0; ii < sdata.scanCount(); ii++ )
+         {
+            double rin = sub_ri ? ri_noise.values.at( ii ) : 0.0;
+            for ( int jj = 0; jj < sdata.pointCount(); jj++ )
+            { // Calculate the residuals and the RMSD
+               double tin  = sub_ti ? ti_noise.values.at( jj ) : 0.0;
+               double diff = edata->value( ii, jj ) - sdata.value( ii, jj ) - rin - tin;
+               variance += sq( diff );
+               kpts++;
+            }
+         }
+         variance  /= static_cast<double>( kpts );
+         le_vari->setText( QString::number( variance ) );
+         le_rmsd->setText( QString::number( sqrt( variance ) ) );
+         model.variance = variance;
          model.write( dbP );
       }
    }
@@ -1028,20 +1077,7 @@ void US_2dsa::open_fitcntl()
    double avTemp   = edata->average_temperature();
    double vbar20   = US_Math2::calcCommonVbar( solution_rec, 20.0   );
    double vbartb   = US_Math2::calcCommonVbar( solution_rec, avTemp );
-   double buoy     = 1.0 - vbar20 * DENS_20W;
 
-   if ( buoy <= 0.0 )
-   {
-      QMessageBox::critical( this, tr( "Negative Buoyancy Implied" ),
-      tr( "The current vbar20 value (%1) implies a buoyancy\n"
-          "value (%2) that is non-positive.\n\n"
-          "2DSA cannot proceed with this value. Click on the\n"
-          "<Solution> button and change the vbar20 value.\n"
-          "Note that the Solution may be accepted without being saved.\n"
-          "Include negative values in the sedimentation coefficient\n"
-          "range to represent floating data." ).arg( vbar20 ).arg( buoy ) );
-      return;
-   }
    US_Math2::SolutionData sd;
    sd.density      = density;
    sd.viscosity    = viscosity;
@@ -1117,13 +1153,19 @@ DbgLv(1)<<"2dsa : timestate newly created.  timestateobject = "
    dset.simparams.speedstepsFromSSprof();
 
    // Do a quick test of the speed step implied by TimeState
-   int tf_scan   = dset.simparams.speed_step[ 0 ].time_first;
-   int accel1    = dset.simparams.speed_step[ 0 ].acceleration;
-   QString svalu = US_Settings::debug_value( "SetSpeedLowA" );
-   int lo_ss_acc = svalu.isEmpty() ? 250 : svalu.toInt();
-   int rspeed    = dset.simparams.speed_step[ 0 ].rotorspeed;
-   int tf_aend   = ( rspeed + accel1 - 1 ) / accel1;
-   int accel2    = dset.simparams.sim_speed_prof[ 0 ].acceleration;
+   int     tf_scan   = dset.simparams.speed_step[ 0 ].time_first;
+   int     accel1    = dset.simparams.speed_step[ 0 ].acceleration;
+   QString svalu     = US_Settings::debug_value( "SetSpeedLowA" );
+   int     lo_ss_acc = svalu.isEmpty() ? 250 : svalu.toInt();
+   int     rspeed    = dset.simparams.speed_step[ 0 ].rotorspeed;
+   int     accel2    = dset.simparams.sim_speed_prof[ 0 ].acceleration;
+   double  tf_aend   = static_cast<double>(tf_scan);
+   // prevent any division by zero
+   if (accel1 != 0)
+   {
+      tf_aend = static_cast<double>(rspeed) / static_cast<double>(accel1);
+   }
+
 DbgLv(1)<<"2dsa : ssck: rspeed accel1 tf_aend tf_scan"
  << rspeed << accel1 << tf_aend << tf_scan
  << "accel2" << accel2 << "lo_ss_acc" << lo_ss_acc;
@@ -1137,7 +1179,7 @@ DbgLv(1)<<"2dsa : ssck: rspeed accel1 tf_aend tf_scan"
                          "<b>You should rerun the experiment without<br/>"
                          "any interim constant speed, and then<br/>"
                          "you should reimport the data.</b>" )
-                     .arg( accel1 ).arg( tf_aend ).arg( tf_scan );
+                     .arg( accel1 ).arg( QString::number(tf_aend) ).arg( QString::number(tf_scan) );
 
       QMessageBox msgBox( this );
       msgBox.setWindowTitle( tr( "Bad TimeState Implied!" ) );

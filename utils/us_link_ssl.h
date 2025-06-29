@@ -36,6 +36,7 @@ public:
      * @return True if the connection was successful, false otherwise.
      */
     bool connectToServer(const QString& serverAddress, const int port);
+    bool connectToServer_init_check(const QString& serverAddress, const int port);
 
     /**
      * @brief Disconnects from the server.

@@ -72,10 +72,7 @@ class US_GUI_EXTERN US_License : public US_Widgets
     QLineEdit* le_firstname;
     QLineEdit* le_lastname;
     QLineEdit* le_institution;
-    QLineEdit* le_address;
     QLineEdit* le_city;
-    QLineEdit* le_zip;
-    QLineEdit* le_phone;
     QLineEdit* le_email;
     QLineEdit* le_platform;
     QLineEdit* le_expiration;
@@ -114,11 +111,8 @@ class US_GUI_EXTERN US_License : public US_Widgets
     void update_firstname  ( const QString& s ){ firstname   = trim( s ); };
     void update_lastname   ( const QString& s ){ lastname    = trim( s ); };
     void update_institution( const QString& s ){ institution = trim( s ); };
-    void update_address    ( const QString& s ){ address     = trim( s ); };
     void update_city       ( const QString& s ){ city        = trim( s ); };
     void update_state      ( const QString& s ){ state       = trim( s ); };
-    void update_zip        ( const QString& s ){ zip         = trim( s ); };
-    void update_phone      ( const QString& s ){ phone       = trim( s ); };
     void update_email      ( const QString& s ){ email       = trim( s ); };
     void update_licensetype( const QString& s ){ licensetype = trim( s ); };
 };

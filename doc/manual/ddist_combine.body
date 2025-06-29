@@ -15,7 +15,7 @@
     diffusion coefficient, frictional ratio or vbar (specific density).
     Vertical bars are computed at every 2% mark of the X range. </p>
 
-    <img src="images/ddist_combine.png" alt="DDist main Combine Window"/>
+    <p class="center"><img src="images/ddist_combine.png" alt="DDist main Combine Window"/></p>
 
     <ul>
         <li>

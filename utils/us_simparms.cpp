@@ -597,74 +597,29 @@ void US_SimulationParameters::computeSpeedSteps(
       computeSpeedSteps( &allrData[ 0 ].scanData, speedsteps );
       return;
    }
+   QVector<US_DataIO::Scan> scans;
+   QVector<double> times;
 
-   // Get indexes to low and high step scan
-   int     ndx1        = -1;
-   int     ndx2        = -1;
-   double timel        = 1e+20;
-   double timeh        = -1e+20;
-
-   for ( int ii = 0; ii < allrData.count(); ii++ )
-   {
-      int    ls           = allrData[ ii ].scanCount() - 1;
-      double time1        = allrData[ ii ].scanData[  0 ].seconds;
-      double time2        = allrData[ ii ].scanData[ ls ].seconds;
-
-      if ( time1 < timel )
-      {  // Accumulate low scan time
-         timel               = time1;   // Lowest scan time
-         ndx1                = ii;      // Triple to which it belongs
-      }
-
-      if ( time2 > timeh )
-      {  // Accumulate high scan time
-         timeh               = time2;   // High scan time
-         ndx2                = ii;      // Triple to which it belongs
+   for ( int ii = 0; ii < allrData.count(); ii++ ) {
+      for ( int jj = 0; jj < allrData[ii].scanCount(); jj++ ) {
+         if ( !times.contains(allrData[ii].scanData[jj].seconds) ) {
+            scans << allrData[ii].scanData[jj];
+            times << allrData[ii].scanData[jj].seconds;
+         }
       }
    }
+   times.clear();
+
+   struct SortBySeconds {
+      bool operator()(const US_DataIO::Scan& a, const US_DataIO::Scan& b) const {
+         return a.seconds < b.seconds;
+      }
+   };
+   // Sort the scans by their respective attribute seconds
+   std::sort(scans.begin(), scans.end(), SortBySeconds());
 
    // Compute time steps for two triples at the extreme
-   QVector< SpeedProfile >  speedstps2;
-   computeSpeedSteps( &allrData[ ndx1 ].scanData, speedsteps );
-   computeSpeedSteps( &allrData[ ndx2 ].scanData, speedstps2 );
-
-   // Merge them so step time ranges cover all triples' time ranges
-   for ( int ii = 0; ii < speedsteps.count(); ii++ )
-   {
-      SpeedProfile sp1     = speedsteps[ ii ];
-      SpeedProfile sp2     = speedstps2[ ii ];
-      double time1         = sp1.time_first;
-      double time2         = sp2.time_last;
-      double w2t1          = sp1.w2t_first;
-      double w2t2          = sp2.w2t_last;
-      double delay_secs    = sp1.delay_hours * 3600.0 +
-                             sp1.delay_minutes * 60.0;
-
-      if ( sp2.time_first < sp1.time_first )
-      {  // Low time in the step and its corresponding omega2t
-         time1                = sp2.time_first;
-         w2t1                 = sp2.w2t_first;
-      }
-
-      if ( sp1.time_last > sp2.time_last )
-      {  // High time in the step and its corresponding omega2t
-         time2                = sp1.time_last;
-         w2t2                 = sp1.w2t_last;
-      }
-
-      // Reset, recompute time and omega2t values for step
-      double step_secs     = time2 - time1 + delay_secs;
-      sp1.duration_hours   = (int)( step_secs / 3600.0 );
-      sp1.duration_minutes = ( step_secs / 60.0 )
-                            - ( (double)sp1.duration_hours * 60.0 );
-      sp1.w2t_first        = w2t1;
-      sp1.w2t_last         = w2t2;
-      sp1.time_first       = qRound( time1 );
-      sp1.time_last        = qRound( time2 );
-      sp1.avg_speed        = ( sp1.avg_speed + sp2.avg_speed ) * 0.5;
-
-      speedsteps[ ii ]     = sp1;   // Save merged speed step
-   }
+   computeSpeedSteps( &scans, speedsteps );
 }
 
 // Set parameters from hardware files, related to rotor and centerpiece
@@ -741,7 +696,7 @@ int US_SimulationParameters::load_simparms( QString fname )
    US_SimulationParameters::SpeedProfile sp;
 
    QFile xfile( fname );
-
+   auto old_speed_step = speed_step;
    if ( xfile.open( QIODevice::ReadOnly | QIODevice::Text ) )
    {
       QXmlStreamReader xml( &xfile );
@@ -851,6 +806,13 @@ int US_SimulationParameters::load_simparms( QString fname )
 
    else
    {
+      stat = -1;
+   }
+   // simulation parameters must contain at least the speed steps
+   if ( speed_step.isEmpty() )
+   {
+      // revert speed_step.clear() to ensure proper simparams at all time
+      speed_step = old_speed_step;
       stat = -1;
    }
 
@@ -1319,10 +1281,14 @@ DbgLv(1) << "Sim parms:ssProf: accel-end ss_p ss_c" << ss_p << ss_c
             ssp.w2t_e_accel  = w2_p;       // Accel end omega2t
             ssp.time_e_accel = tm_p;       // Accel end time
             //qDebug()<<"accln times"<<ssp.time_e_accel<< ss_c<<ss_p<<rs_c<<rs_p ;
-            sum_accel       -= accel_p;    // Back off 1 second
-            double tmi_accel = naintvs > 1 // Accel time intervals minus 1
-                              ? (double)( naintvs - 1 )
-                              : 1.0;
+            double tmi_accel = 1.0;
+            // only back off one time intervall if there are more than one time interval with acceleration
+            if ( naintvs > 1 )
+            {
+               // Back off 1 intervall of acceleration
+               sum_accel    -= accel_p;
+               tmi_accel     = (double)( naintvs - 1 );
+            }
             ssp.acceleration = sum_accel   // Average acceleration
                              / tmi_accel;
 

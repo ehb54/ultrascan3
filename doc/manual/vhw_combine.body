@@ -30,7 +30,7 @@
     Reset Plot button; and then quickly make new selections that are
     plotted without need for recalculations.</p>
 
-    <img src="images/vhw_combine.png" alt="vHW main Combine Window"/>
+    <p class="center"><img src="images/vhw_combine.png" alt="vHW main Combine Window"/></p>
 
     <ul>
         <li>
@@ -115,11 +115,11 @@
     <p> Besides the integral distribution plots shown above, you may
     display envelope plots.</p>
 
-    <img src="images/vhw_combine-envel.png" alt="vHW Combine Envelope Plot"/>
+    <p class="center"><img src="images/vhw_combine-envel.png" alt="vHW Combine Envelope Plot"/></p>
 
     <p> You may also combine both integral and envelope plots in a single
     plot.</p>
 
-    <img src="images/vhw_combine-combo.png" alt="vHW Combine Combo Plot"/>
+    <p class="center"><img src="images/vhw_combine-combo.png" alt="vHW Combine Combo Plot"/></p>
 
 [% INCLUDE footer.us3 %]

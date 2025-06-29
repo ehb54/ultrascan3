@@ -870,11 +870,113 @@ QString US_DataTree::record_state( int istate )
     return "(" + hexn + ") " + flags;  // return hex flag and text version
 }
 
+
+//Check for model
+bool US_DataTree::is_modelIDs_from_autoflow( QString mID )
+{
+  QStringList modelInfos_autoflow;
+  QStringList modelIDs_autoflow;
+  
+  US_Passwd pw;
+  US_DB2    db( pw.getPasswd() );
+
+  if ( db.lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( parentw, tr( "Connection Problem" ),
+			    tr( "Could not connect to database \n" ) + db.lastError() );
+      return false;
+    }
+  
+  QStringList q;
+  q << "get_modelIDs_for_autoflow";
+  db.query( q );
+  
+  while ( db.next() )
+    modelInfos_autoflow << db. value( 0 ).toString();
+
+  return parse_models_desc_json ( modelInfos_autoflow, mID ); 
+}
+
+bool US_DataTree::parse_models_desc_json( QStringList modelInfos_autoflow, QString mID )
+{
+  qDebug() << "Size of modelInfos_autoflow: " << modelInfos_autoflow.size();
+  qDebug() << "mID: " << mID;
+  for ( int i=0; i<modelInfos_autoflow.size(); ++i )
+    {
+      QString modelDescJson = modelInfos_autoflow[ i ];
+      if ( modelDescJson.isEmpty() )
+	return false;
+
+      QJsonDocument jsonDoc = QJsonDocument::fromJson( modelDescJson.toUtf8() );
+      QJsonObject json_obj = jsonDoc.object();
+
+      foreach(const QString& key, json_obj.keys())
+	{
+	  QJsonValue value = json_obj.value(key);
+	  
+	  if ( key == "2DSA_IT" || key == "2DSA_MC" || key == "PCSA" ) 
+	    {
+	      //qDebug() << "ModelsDesc key, value: " << key << value;
+	      
+	      QJsonArray json_array = value.toArray();
+	      for (int i=0; i < json_array.size(); ++i )
+		{
+		  foreach(const QString& array_key, json_array[i].toObject().keys())
+		    {
+		      //by modelID
+		      if ( array_key == "modelID" )
+			{
+			  QString c_modelID = json_array[i].toObject().value(array_key).toString();
+			  // qDebug() << "modelDescJson Map: -- model, property, value: "
+			  // 	   << key
+			  // 	   << array_key
+			  // 	   << c_modelID;
+			  
+			  if ( c_modelID == mID )
+			    {
+			      qDebug() << "Model to affect [delete:update], ID=" << mID << " IS autoflow produced!!!";
+			      return true;
+			    }
+			}
+		    }
+		}
+	    }
+	}
+    }
+
+  return false;
+}
+
+
+//Check if the run [filename] a part of the GMP framework
+bool US_DataTree::check_filename_for_autoflow( QString rFilename )
+{
+  bool isRequired = false;
+  int  autoflowNumber = 0;
+  
+  US_Passwd pw;
+  US_DB2* db = new US_DB2( pw.getPasswd() );
+
+  QStringList q;
+  q  << QString( "check_filename_for_autoflow" ) //for now, both GMP and R&D
+     << rFilename;
+
+  autoflowNumber  = db -> functionQuery( q );
+
+  (autoflowNumber > 0) ? isRequired = true : isRequired = false;
+
+  qDebug() << "in check_filename_for_autoflow(): autoflowNumber, isRequired -- "
+	   << autoflowNumber << isRequired;
+  
+  return isRequired;
+}
+
 // Perform the action(s) chosen in context menu
 int US_DataTree::do_actions( QString item_exs, QString item_act )
 {
    int narows  = action_rows();
 DbgLv(1) << "ITEM do_actions" << narows << item_exs << item_act;
+ qDebug() <<  "ITEM do_actions" << narows << item_exs << item_act; 
    int naerrs  = 0;
    int istat   = 0;
    bool frDB   = item_exs.contains( "Datab" )
@@ -900,8 +1002,66 @@ DbgLv(1) << "ITEM do_actions" << narows << item_exs << item_act;
          int irow   = actrows[ jj ];
          US_DataModel::DataDesc ddesc = da_model->row_datadesc( irow );
          int ityp   = ddesc.recType;
-DbgLv(1) << "RMV_REC: irow ityp lrtyp" << irow << ityp << lrtyp;
+	 DbgLv(1) << "RMV_REC: irow ityp lrtyp" << irow << ityp << lrtyp;
 
+	 //Debug && Test ////////////////////////
+	 qDebug() << "DataModel: recType, recordID, parentID, description: "
+		  << ddesc.recType  // recType={1,2,3,4} => {Raw, EditedData, Model, Noise}
+		  << ddesc.recordID // to delete EditedData, Model, OR Noise ( recType==2,3,4)
+		  << ddesc.parentID // to delete Raw Data                    ( recType==1)
+		  << ddesc.description
+	   ;
+	 
+	 //Now, by the recType, determine the ID of the rawData (top-level parentID)
+	 //Obvious for types {1,2}=> {Raw, EditedData}
+	 QString rFilename = ddesc.description.split(".")[0].simplified();
+	 qDebug() << "Filename of the run: " << rFilename;
+
+	 if ( ddesc.recType == 1 || ddesc.recType == 2 || ddesc.recType == 3 || ddesc.recType == 4) // all types
+	   {
+	     bool isRequired = check_filename_for_autoflow( rFilename );
+	     if ( isRequired )
+	       {
+		 QMessageBox::information( parentw, tr( "Data Cannot be Deleted" ),
+					   tr( "The Data for the Run:\n\n"
+					       "\"%1\"\n\n"
+					       "can NOT be deleted since it is required by the GMP framework!" )
+					   .arg( rFilename ) );
+       
+		 return istat;
+	       }
+	   }
+
+	 /*****
+	       NOTE: if we do not want to delete *any* model/noise associated but NOT actually required by GMP run,
+	       we can stop here....
+	       Below, is a finer model/noise treatment based on GMP run to require ONLY {2DSA-IT, 2DSA-MC & PSCA} models...
+	  ****/
+	 
+	 if ( ddesc.recType == 3 || ddesc.recType == 4 ) //model OR noise
+	   {
+	     int model_idDB;
+	     if ( ddesc.recType == 3 ) 
+	       model_idDB = ddesc.recordID;
+	     else if ( ddesc.recType == 4 )
+	       model_idDB = ddesc.parentID;
+	     if ( is_modelIDs_from_autoflow( QString::number( model_idDB ) ) )
+	       {
+		 qDebug() << "Select:: Model GMP/autolfow-generated!";
+		 
+		 QMessageBox::information( parentw, tr( "Selected Model GMP produced!" ),
+					   tr( "Selected Model / Noise "
+					       "was generated within GMP framework!\n\n"
+					       "It can NOT be deleted...")
+					   );
+		 return istat;
+	       }
+	   }
+	 
+	 ////////////////////////////////
+ 
+
+	 /** TEMP   ***/
          if ( ityp > lrtyp )
          {  // Just mark as deleted if descendant of last removed
             ddesc.recordID = -1;
@@ -919,6 +1079,7 @@ DbgLv(1) << "RMV_REC:   karows stat1" << karows << stat1;
             naerrs++;
             istat      = stat1;
          }
+	 /****/
       }
 
       narows      = karows;

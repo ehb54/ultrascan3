@@ -11,11 +11,11 @@
     with an explanation of column headers, followed by a color legend
     for the row colors.</p>
 
-    <img src="images/manage_data_thelp-1.png" alt="Tree Help part 1"/>
+    <p class="center"><img src="images/manage_data_thelp-1.png" alt="Tree Help part 1"/></p>
 
     <p> As you scroll down in the window, the text explains the use of
     context menus that may be invoked on any row.</p>
 
-    <img src="images/manage_data_thelp-2.png" alt="Tree Help part 2"/>
+    <p class="center"><img src="images/manage_data_thelp-2.png" alt="Tree Help part 2"/></p>
 
 [% INCLUDE footer.us3 %]

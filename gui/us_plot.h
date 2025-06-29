@@ -105,6 +105,7 @@ class US_GUI_EXTERN US_Plot : public QHBoxLayout
       void print   ( void );
       void svg     ( void );
       void png     ( void );
+      void csv     ( void );
       void config  ( void );
       void colorMap( void );
 #if QT_VERSION < 0x050000

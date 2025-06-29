@@ -1,0 +1,21 @@
+[% INCLUDE header.us3/
+title = 'UltraScan III Solution Modeler'
+%]
+
+<h2><i>UltraScan</i> SOMO: </h2>
+
+<p class="left"><img src="images/somo/somo_icon.png" alt="SOMO Icon"/></p>
+
+<p>UltraScan Solution Modeler (US-SOMO) processes atomic and lower-resolution bead model representations of biological
+    and other macromolecules to compute various hydrodynamic parameters, such as the sedimentation and diffusion
+    coefficients, relaxation times and intrinsic viscosity, and small angle scattering curves, that contribute to our
+    understanding of molecular structure in solution. Knowledge of biological macromolecules' structure aids researchers
+    in understanding their function as a path to disease prevention and therapeutics for conditions such as cancer,
+    thrombosis, Alzheimer's disease and others. US-SOMO provides a convergence of experimental, computational, and
+    modeling techniques, in which detailed molecular structure and properties are determined from data obtained in a
+    range of experimental techniques that, by themselves, give incomplete information.</p>
+
+<p> SOMO help is available by starting US-SOMO either from the dedicated US-SOMO icon or from Simulation->Bead modeling,
+    and then pressing the Help button on the SOMO window which will open a web browser to the relevant docs. </p>
+
+[% INCLUDE footer.us3 %]

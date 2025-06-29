@@ -51,6 +51,7 @@ US_ConvertGui::US_ConvertGui( QString auto_mode ) : US_Widgets()
    ExpData.invID = US_Settings::us_inv_ID();
 
    usmode    = false;
+   us_import_ssf_abde = false;
 
    auto_ref_scan = true;
    first_time_plot_auto = true;
@@ -158,6 +159,7 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    static QChar clambda( 955 );   // Lambda character
 
    lb_mwlctrl   = us_banner  ( tr( "Multi-Wavelength Lambda Controls" ) );
+   lb_mwlctrl->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
    lb_lambstrt  = us_label   ( tr( "%1 Start:"    ).arg( clambda ) );
    lb_lambstop  = us_label   ( tr( "%1 End:"      ).arg( clambda ) );
    lb_lambplot  = us_label   ( tr( "Plot %1:"     ).arg( clambda ) );
@@ -172,10 +174,13 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    mwl_connect( true );
 
    QLabel* lb_runinfo  = us_banner(   tr( "Run Information" ) );
-
+   lb_runinfo->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
+   
    // Change Run ID
    QLabel* lb_runID2   = us_label(    tr( "Run ID:" ) );
+
    le_runID2           = new US_LineEdit_RE( "", 1, true );
+   le_runID2  ->setMaxChars(250);
    //le_runID2 ->setMinimumWidth( 225 );
 
    // Directory
@@ -192,6 +197,7 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
 
    lb_triple           = us_banner(
                             tr( "Cell / Channel / Wavelength" ) );
+   lb_triple->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
    lw_triple           = us_listwidget();
    // QLabel* lb_ccwinfo  = us_label(
    //                          tr( "Enter Associated Triple (c/c/w) Info:" ) );
@@ -343,8 +349,14 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    todo->addWidget( lb_todoinfo,     row++, 0, 1, 4 );
    todo->addWidget( lw_todoinfo,     row++, 0, 1, 4 );
 
+   
+
    //ALEXEY hide todo layout
    settings ->addLayout( todo,       row++, 0, 1, 4 );
+
+   int ihgt        = lb_todoinfo->height();
+   QSpacerItem* spacer2 = new QSpacerItem( 10, 100*ihgt, QSizePolicy::Expanding);
+   settings->addItem( spacer2,  row++,  0, 1, 4 );
    
    settings ->addWidget( lb_status,       row,     0, 1,  1 );
    settings ->addWidget( le_status,       row++,   1, 1,  3 );
@@ -460,8 +472,8 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
        cb_centerpiece->hide();
 
        //ALEXEY hide todo layout
-       //lb_todoinfo->hide();
-       //lw_todoinfo->hide();
+       lb_todoinfo->hide();
+       lw_todoinfo->hide();
 
        pb_reset->hide();
        pb_close->hide();
@@ -642,6 +654,7 @@ US_ConvertGui::US_ConvertGui() : US_Widgets()
    ExpData.invID = US_Settings::us_inv_ID();
 
    usmode    = false;
+   us_import_ssf_abde = false;
 
    auto_ref_scan = true;
    first_time_plot_auto = true;
@@ -1386,10 +1399,117 @@ void US_ConvertGui::us_mode_passed( void )
   
 }
 
+//alt. import_auto_ssf (for [ABDE-MWL])
+void US_ConvertGui::import_ssf_data_auto( QMap < QString, QString > & details_at_live_update )
+{
+  us_import_ssf_abde     = true;
+  dataSavedOtherwise     = false;
+  runType_combined_IP_RI = false;
+  
+  autoflowID_passed = details_at_live_update[ "autoflowID" ].toInt();
+
+  qDebug() << "autoflowID: " << autoflowID_passed;
+
+  details_at_editing = details_at_live_update;
+
+  ExpData.invID     = details_at_live_update[ "invID_passed" ].toInt();
+  ProtocolName_auto = details_at_live_update[ "protocolName" ];
+  OptimaName        = details_at_live_update[ "OptimaName" ];
+  runID_numeric     = details_at_live_update[ "runID" ];
+
+  Exp_label         = details_at_live_update[ "label" ];
+
+  AProfileGUID      = details_at_live_update[ "aprofileguid" ];
+  expType           = details_at_live_update[ "expType" ];
+  dataSource        = details_at_live_update[ "dataSource" ];
+  opticsFailedType  = details_at_live_update[ "opticsFailedType" ];
+
+  //debug
+  qDebug() << "ssf_dir_name" << details_at_live_update["ssf_dir_name"];
+  qDebug() << "Exp_label: " << Exp_label;
+  qDebug() << "ExpType: "   << expType;
+  qDebug() << "dataSource: " << dataSource;
+
+  impType     = getImports_auto( details_at_live_update["ssf_dir_name"] );
+  qDebug() << "impType, IMPORT AUC auto..." << impType;
+  importAUC();
+  
+  //ALEXEY: For autoflow: Reset to-do list && maybe solutions, triple desc.
+  if ( us_convert_auto_mode ) 
+    {
+      lw_todoinfo->clear();
+      le_solutionDesc ->setText( "" );
+      le_description  ->setText( "" );
+      le_centerpieceDesc -> setText( "");
+    }
+  
+  //emit data_loaded();
+  
+  editRuninfo_auto();
+  
+  if( dataSavedOtherwise )
+    return;
+  
+  //debug
+  qDebug() << "Before reading protocol: out_triples, out_channles -- "
+	   << out_triples << ", \n "
+	   << out_channels;
+  qDebug() << "outData descs.: -- ";
+  for(int i=0; i<outData.size(); ++i )
+    qDebug() << "for triple (cell|chann): " << outData[ i ]->cell << "|"
+	     << outData[ i ]->channel << ", desc. is: " << outData[ i ]->description;
+  
+  for(int i=0; i<out_tripinfo.size(); ++i )
+    qDebug() << "for triple: " << out_tripinfo[i].tripleDesc
+	     << ", desc. is: " << out_tripinfo[i].description
+	     << ", solution is: " << out_tripinfo[i].solution.solutionDesc;
+  
+  //read protocol && labs/rotor etc info
+  readProtocol_auto();
+  getLabInstrumentOperatorInfo_auto();
+  
+  //debug
+  qDebug() << "After reading protocol: out_triples, out_channles -- "
+	   << out_triples << ", "
+	   << out_channels;
+  qDebug() << "outData descs.: -- ";
+  for(int i=0; i<outData.size(); ++i )
+    qDebug() << "for triple (cell|chann): " << outData[ i ]->cell << "|"
+	     << outData[ i ]->channel << ", desc. is: " << outData[ i ]->description;
+  
+  for(int i=0; i<out_tripinfo.size(); ++i )
+    qDebug() << "for triple: " << out_tripinfo[i].tripleDesc
+	     << ", desc. is: " << out_tripinfo[i].description
+	     << ", solution is: " << out_tripinfo[i].solution.solutionDesc;
+  
+  //And save to DB -- Will probably be a separate funciton with:
+  // (1) check for if saved already?
+  // (2) switch to Reporting stage
+  
+  if( isSaved_auto() )
+    {
+      qDebug() << "SSF Already saved!";
+      return;
+    }
+    
+  saveUS3DB();          
+  writeTimeStateDisk(); // do we need timestate?
+  writeTimeStateDB();   // do we need timestate?
+
+  //message? (will likely be shown in the parent AUTO-analysis widget)
+  // QMessageBox::information( this,
+  // 			    tr( "[ABDE-SSF]Save is Complete" ),
+  // 			    tr( "The save of all data and reports is complete.\n\n"
+  // 				"The program will switch to Reporting stage." ) );
+  // emit to_report();
+  
+}
+
 
 //void US_ConvertGui::import_data_auto( QString &currDir, QString &protocolName, QString &invID_passed, QString &correctRadii )
 void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_live_update )
 {
+  us_import_ssf_abde     = false;
   dataSavedOtherwise     = false;
   runType_combined_IP_RI = false;
 
@@ -1435,13 +1555,17 @@ void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_liv
 
   AProfileGUID      = details_at_live_update[ "aprofileguid" ];
   expType           = details_at_live_update[ "expType" ];
-
+  dataSource        = details_at_live_update[ "dataSource" ];
+  opticsFailedType  = details_at_live_update[ "opticsFailedType" ];
+  
   // //After AProfileGUID, read details from analysis profile
   // read_aprofile_data_from_aprofile();
 
   qDebug() << "Exp_label: " << Exp_label;
   qDebug() << "ExpType: "   << expType;
-
+  qDebug() << "dataSource: " << dataSource;
+  qDebug() << "opticsFailedType: " << opticsFailedType;
+  
   // qDebug() << "Filename: " << details_at_live_update[ "filename" ];
   // qDebug() << "Filename_INT: " << details_at_live_update[ "filename" ].toInt();
   
@@ -1471,6 +1595,12 @@ void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_liv
     }
   qDebug() << "runType_combined_IP_RI: " << runType_combined_IP_RI;
 
+  //Here, redefine bach to non-combined if opticsFailedType exists!!!
+  if ( !opticsFailedType.isEmpty() )
+    {
+      runTypes_map. clear();
+      runType_combined_IP_RI = false;
+    }
   // //************************ TEMP - Reverse after test ************************************** //
   // runTypes_map.insert("IP", 1);
   // runTypes_map.insert("RI", 1);
@@ -1513,7 +1643,7 @@ void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_liv
   /* ----------------------------------------------------------------------------------------------------------------------------*/
   //ALEXEY: if there is no radii_correction data found, return for commercial, and present dialog for academic:
   //if ( correctRadii == "NO" )
-  if ( details_at_live_update[ "correctRadii" ] == "NO" )
+  if ( details_at_live_update[ "correctRadii" ] == "NO" && dataSource == "INSTRUMENT" )
     {
       if ( !usmode ) // us_comproject
 	{
@@ -1625,11 +1755,11 @@ void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_liv
      getLabInstrumentOperatorInfo_auto();
 
      //Auto-process reference scans
-     if ( dataType == "IP" )
+     if ( dataType == "IP" || dataSource == "dataDiskAUC:Absorbance" )
        auto_ref_scan = false;
 
      //TEMPORARY !!!!
-     if ( dataType == "RI" && expType != "ABDE" )
+     if ( dataType == "RI" && expType != "ABDE" && dataSource != "dataDiskAUC:Absorbance" )
        {
      	 // double low_ref  = 5.87 - 0.005;
      	 // double high_ref = 5.87 + 0.005;
@@ -1774,10 +1904,10 @@ void US_ConvertGui::process_optics()
      getLabInstrumentOperatorInfo_auto();
 
      //Auto-process reference scans
-     if ( dataType == "IP" )
+     if ( dataType == "IP" || dataSource == "dataDiskAUC:Absorbance" )
        auto_ref_scan = false;
      
-     if ( dataType == "RI" && expType != "ABDE" )
+     if ( dataType == "RI" && expType != "ABDE" && dataSource != "dataDiskAUC:Absorbance")
        {
 	 // double low_ref  = 5.87 - 0.005;
 	 // double high_ref = 5.87 + 0.005;
@@ -1869,6 +1999,9 @@ DbgLv(1) << "CGui:IMP: convert success" << success;
 DbgLv(1) << "CGui:IMP: initout success" << success;
 
    if ( ! success ) return;
+
+   // check number scans
+   check_scans();
 
    setTripleInfo();
 
@@ -2086,6 +2219,9 @@ DbgLv(1) << "CGui:iM: mwlsetup";
    qApp->processEvents();
    QApplication::restoreOverrideCursor();
 DbgLv(1) << "CGui:iM:  DONE";
+
+   // check number scans
+   check_scans();
 }
 
 // Import simulation data in AUC form
@@ -2194,7 +2330,6 @@ DbgLv(1) << "CGui:iA: CURRENT DIR_1: " << importDir;
    if ( runType_combined_IP_RI )
      runTypes_map[ type_to_process ] = 0;
 
-   
    qApp->processEvents();
    QApplication::restoreOverrideCursor();
 
@@ -2202,6 +2337,10 @@ DbgLv(1) << "CGui:iA: CURRENT DIR_1: " << importDir;
    runType       = QString( fname ).section( ".", -5, -5 );
    runID         = QString( fname ).section( ".",  0, -6 );
 
+   //For DataFromDisk, we need to append runID with something like "-dataDiskRun-{autoflowID_passed}"
+   if ( dataSource.contains("Disk") && us_convert_auto_mode && !us_import_ssf_abde )
+     runID += QString("-dataDiskRun-") + QString::number( autoflowID_passed );
+   
    if ( runType_combined_IP_RI )
      {
        runID += QString("-") + QString( type_to_process );
@@ -2289,6 +2428,9 @@ DbgLv(1) << "rTS: NON_EXIST:" << tmst_fnamei;
    }
      
    pb_showTmst->setEnabled( ! tmst_fnamei.isEmpty() );
+
+   // check number scans
+   check_scans();
 }
 
 
@@ -2331,6 +2473,57 @@ QString US_ConvertGui::correct_description( QString & description, QString cell,
     }
   
   return desc_corrected;
+}
+
+void US_ConvertGui::check_scans()
+{
+   int nsmin = 99999;
+   for (int ii = 0; ii < allData.size(); ii++ ) {
+      nsmin = qMin(allData[ii].scanCount(), nsmin);
+   }
+
+   QStringList ccws_list;
+   bool same = true;
+   for (int ii = 0; ii < allData.size(); ii++ ) {
+      int ns = allData[ii].scanCount();
+      // In most cases, df is zero. However, occasionally it becomes 1,
+      // and the following code removes it from end of the code.
+      int df = ns - nsmin;
+      int cell = allData[ii].cell;
+      char channel = allData[ii].channel;
+      double lambda = allData[ii].scanData.first().wavelength;
+      ccws_list << tr("%1 / %2 / %3 : number of scans = %4").arg(cell).arg(channel).arg(lambda).arg(ns);
+      if ( df > 0 ) {
+         same = false;
+         allData[ii].scanData.remove( ns - df, df );
+      }
+   }
+   if ( ! same ) {
+      US_WidgetsDialog *error_wgt = new US_WidgetsDialog(this);
+      error_wgt->setWindowTitle("Warning !!!");
+      error_wgt->setPalette(US_GuiSettings::frameColor());
+      QPlainTextEdit *msg = new QPlainTextEdit();
+      msg->setStyleSheet("QPlainTextEdit { background-color: white; }");
+      msg->setReadOnly(true);
+      msg->appendPlainText("Please note:\nThe number of scans per triple differs for some triples:\n");
+      foreach (QString line, ccws_list) {
+         msg->appendPlainText(line);
+      }
+      msg->appendPlainText(tr( "\nAmong other reasons, this can occur when the run has been "
+                               "aborted in the middle of data acquisition. The number of scans "
+                               "for all triples has been set to %1, triples with additional "
+                               "scans will be truncated to %1 scans.").arg(nsmin));
+      QPushButton *pb_ok = us_pushbutton("&OK");
+      pb_ok->setIcon(this->style()->standardIcon(QStyle::SP_DialogOkButton));
+      QGridLayout* lyt = new QGridLayout();
+      lyt->addWidget(msg,   0, 0, 5, 5);
+      lyt->addWidget(pb_ok,    5, 2, 1, 1);
+      lyt->setMargin(2);
+      error_wgt->setLayout(lyt);
+      error_wgt->setMinimumSize(500, 500);
+      connect(pb_ok, &QPushButton::clicked, error_wgt, &US_WidgetsDialog::accept);
+      error_wgt->exec();
+   }
 }
   
 // Enable the common dialog controls when there is data
@@ -3379,7 +3572,9 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
 	       //Description
 	       //triple_desc = ProtInfo.ProtSolutions.chsols[ index_curr ].ch_comment;  //channel's comment from protocol
 	       triple_desc = ProtInfo.ProtSolutions.chsols[ index_curr ].ch_comment;  //channel's comment from protocol
-	       outData[ i ]->description = triple_desc;
+
+	       if ( !us_import_ssf_abde )
+		 outData[ i ]->description = triple_desc;
 
 	       //DUPL
 	       allData[ i ].description = triple_desc;
@@ -3485,11 +3680,13 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
 		       qDebug() << "Triple. NAME: " << out_triples[ j ] << "Channel. NAME: " << out_channels[ i ];
 		       out_chaninfo[ j ].solution = solution_auto;
 		       out_tripinfo[ j ].solution = solution_auto;
-		       outData[ j ]->description = triple_desc;
+		       if ( !us_import_ssf_abde )
+			 outData[ j ]->description = triple_desc;
 
 		       //DUPL
 		       all_tripinfo[ j ].solution = solution_auto;
-		       allData[ j ].description = triple_desc;
+		       if ( !us_import_ssf_abde )
+			 allData[ j ].description = triple_desc;
 
 		       
 		     }
@@ -5512,7 +5709,21 @@ void US_ConvertGui::PseudoCalcAvg( void )
 
    if ( referenceDefined ) return;  // Average calculation has already been done
 
-   if ( isMwl )
+   bool is_mwl_data = false;
+   int temp_wvl = -1;
+   for ( int ii = 0; ii < outData.size(); ii++) {
+      int wvl = qRound(outData.at(ii)->scanData.first().wavelength);
+      if ( temp_wvl == -1) {
+         temp_wvl = wvl;
+         continue;
+      }
+      if ( temp_wvl != wvl) {
+         is_mwl_data = true;
+         break;
+      }
+   }
+
+   if ( is_mwl_data )
    {  // Do calculations for each wavelength, if MWL
          PseudoCalcAvgMWL();
          return;
@@ -6058,12 +6269,13 @@ void US_ConvertGui::cancel_reference( void )
    int wvoff    = 0;
    int rscans   = ExpData.RI_nscans;
 
+   int nwl_rip = ExpData.RIwvlns.size();
    // Do the inverse operation and retrieve raw intensity data
    for ( int ii = 0; ii < outData.size(); ii++ )
    {
        US_DataIO::RawData* currentData = outData[ ii ];
 
-       if ( isMwl )
+       if ( nwl_rip > 1 )
        {  // For MWL, profile is offset by wavelength
          int iwavl    = out_triples[ ii ].section( " / ", 2, 2 ).toInt();
          wvoff        = ExpData.RIwvlns.indexOf( iwavl );
@@ -6079,7 +6291,7 @@ void US_ConvertGui::cancel_reference( void )
                                          .arg( out_triples[ ii ] ) );
             int kwavl    = 99999;
 
-            for ( int jj = 0; jj < ExpData.RI_nwvlns; jj++ )
+            for ( int jj = 0; jj < ExpData.RIwvlns.size(); jj++ )
             {  // Find index of nearest wavelength
                int jwavl    = qAbs( ExpData.RIwvlns[ jj ] - iwavl );
 
@@ -6892,6 +7104,8 @@ QMap< QString, QString> US_ConvertGui::read_autoflow_record( int autoflowID  )
 	   protocol_details[ "aprofileguid" ]   = db->value( 18 ).toString();
 
 	   protocol_details[ "expType" ]        = db->value( 26 ).toString();
+	   protocol_details[ "dataSource" ]     = db->value( 27 ).toString();
+	   protocol_details[ "opticsFailedType" ]    = db->value( 28 ).toString();
 	   	   
 	 }
      }
@@ -7452,6 +7666,11 @@ DbgLv(1) << "Writing to database";
        record_import_status( auto_ref_scan, runType );
      }
    
+//Define mesage string if opticsFailedType
+   QString msg_optics_failed = ( !opticsFailedType.isEmpty() ) ?
+     QString("\n\nNOTE: Data type %1 were not saved due to failed instrument optics!").arg(opticsFailedType) : "";
+   QString msg_save_complete = "The save of all data and reports is complete. ";
+   msg_save_complete += msg_optics_failed;
    
 // x  x  x  x  x x  x  x  x  x x  x  x  x  x x  x  x  x  x x  x  x  x  x x  x  x  x  x 
    if ( us_convert_auto_mode )   // if us_comproject OR us_comproject_academic
@@ -7471,9 +7690,10 @@ DbgLv(1) << "Writing to database";
 	     }
 	   else
 	     {
+	       qDebug() << "R&D program used!! ";
 	       QMessageBox::information( this,
-				     tr( "Save is Complete" ),
-				     tr( "The save of all data and reports is complete." ) );
+					 tr( "Save is Complete" ),
+					 msg_save_complete );
 	       
 	       //ALEXY: need to delete autoflow record here
 	       delete_autoflow_record();
@@ -7507,10 +7727,12 @@ DbgLv(1) << "Writing to database";
 
 		   if ( !protDev_bool ) // no GMP && no ProtDev()!!!!!!!!!!!!!
 		     {
+		       qDebug() << "GMP program used for non-GMP runs!! ";
+		       
 		       QMessageBox::information( this,
 						 tr( "Save is Complete" ),
-						 tr( "The save of all data and reports is complete." ) );
-		       
+						 msg_save_complete );
+						 		       
 		       //ALEXY: need to delete autoflow record here
 		       delete_autoflow_record();
 		       resetAll_auto();
@@ -7521,6 +7743,8 @@ DbgLv(1) << "Writing to database";
 		   else    // no GMP BUT  ProtDev(), so proceed!!!!!!!!!!!!!
 		     {
 		       update_autoflow_record_atLimsImport();
+
+		       qDebug() << "GMP program used for ProtDev runs!! ";
 		       
 		       QMessageBox::information( this,
 						 tr( "Save is Complete" ),
@@ -7552,6 +7776,25 @@ DbgLv(1) << "Writing to database";
 		     }
 		   else
 		     {
+		       qDebug() << "GMP program used for GMP runs!! ";
+		       //HERE, IF opticsFailedType(s), we need to STOP, SAVE, DELETE record & quit!
+		       if ( !opticsFailedType.isEmpty() )
+			 {
+			   msg_save_complete +=
+			     "\nBecause of this, the run will be aborted and not processed further within GMP framework...";
+			   
+			   QMessageBox::information( this,
+						     tr( "Save is Complete" ),
+						     msg_save_complete );
+						 		       
+			   //ALEXY: need to delete autoflow record here
+			   delete_autoflow_record();
+			   resetAll_auto();
+			   //emit saving_complete_back_to_exp( ProtocolName_auto );
+			   emit saving_complete_back_to_initAutoflow();
+			   return;
+			 }
+		       ///////////////////////////////////////////////////////////////////////////
 		       
 		       update_autoflow_record_atLimsImport();
 		       
@@ -7563,7 +7806,7 @@ DbgLv(1) << "Writing to database";
 		       // Either emit ONLY if not US_MODE, or do NOT connect with slot on us_comproject...
 		       //update_autoflow_record_atLimsImport();
 
-		       //set autoflowSatges to "DONE" ?
+		       //set autoflowStages to "DONE" ?
 		       
 		       resetAll_auto();
 		       emit saving_complete_auto( details_at_editing  );   
@@ -7636,7 +7879,7 @@ void US_ConvertGui::record_import_status( bool auto_ref, QString runtype )
   
   qry.clear();
   
-  if ( runtype == "RI")
+  if ( runtype == "RI" || runtype == "RA" )
     {
       QString refScan = auto_ref ? QString("automated") : QString("manual");
 	
@@ -7797,16 +8040,20 @@ void US_ConvertGui::update_autoflow_record_atLimsImport( void )
 
    //now, make a record in the autoflowIntensity table, return ID
    int autoflowIntensityID = 0;
+   qDebug() << "[in update_autoflow_record_atLimsImport()] intensityJsonRI -- " << intensityJsonRI;
    if ( ! intensityJsonRI.isEmpty() )
      {
        qry.clear();
        qry << "new_autoflow_intensity_record"
 	   << QString::number( autoflowID_passed )
 	   << intensityJsonRI;
-       
-       autoflowIntensityID = db->functionQuery( qry );
 
-       if ( !autoflowIntensityID )
+       qDebug() << "qry new_autoflow_intensity_record -- " << qry;
+              
+       autoflowIntensityID = db->functionQuery( qry );
+       qDebug() << "[after qry] autoflowIntensityID -- " << autoflowIntensityID;
+
+       if ( !autoflowIntensityID || autoflowIntensityID == 0 || autoflowIntensityID < 1 )
 	 {
 	   QMessageBox::warning( this, tr( "AutoflowIntensity Record Problem" ),
 				 tr( "autoflowIntensity: There was a problem with creating a record in autoflowIntensity table \n" ) + db->lastError() );
@@ -7832,12 +8079,18 @@ void US_ConvertGui::update_autoflow_record_atLimsImport( void )
    
    //finally, update autoflow record
    qry.clear();
+   // qry << "update_autoflow_at_lims_import"
+   //     << runID_numeric
+   //     << filename_toDB
+   //     << OptimaName
+   //     << QString::number( autoflowIntensityID )
+   //     << QString::number( autoflowStatusID );
+
    qry << "update_autoflow_at_lims_import"
-       << runID_numeric
        << filename_toDB
-       << OptimaName
        << QString::number( autoflowIntensityID )
-       << QString::number( autoflowStatusID );
+       << QString::number( autoflowStatusID )
+       << QString::number( autoflowID_passed );
 
    qDebug() << "Query for update_autoflow_at_lims_import -- " << qry;
    //db->query( qry );
@@ -7870,9 +8123,11 @@ void US_ConvertGui::delete_autoflow_record( void )
      }
 
    QStringList qry;
-   qry << "delete_autoflow_record"
-       << runID_numeric
-       << OptimaName;
+   // qry << "delete_autoflow_record"
+   //     << runID_numeric
+   //     << OptimaName;
+   qry  << "delete_autoflow_record_by_id" 
+	<< QString::number( autoflowID_passed );
 
    //db->query( qry );
 
@@ -7960,6 +8215,8 @@ int US_ConvertGui::saveUS3Disk( void )
    status = ExpData.saveToDisk( out_tripinfo, runType, runID, dirname,
                                 speedsteps );
 
+   qDebug() << "saveDisk: xml status -- " << status;
+   
    // How many files should have been written?
    int fileCount = out_tripinfo.size();
 DbgLv(1) << "SV:   fileCount" << fileCount;
@@ -8014,7 +8271,7 @@ DbgLv(1) << "SV:   fileCount" << fileCount;
       if ( referenceDefined )
       {
          status = ExpData.saveRIDisk( runID, dirname );
-DbgLv(1) << "SV:   saveRIDisk status" << status;
+	 qDebug() << "SV:   saveRIDisk status" << status;
 
          if ( status == US_Convert::CANTOPEN )
          {
@@ -8051,6 +8308,7 @@ DbgLv(1) << "SV:   NO saveRIDisk : refDef" << referenceDefined;
    }
 else
 DbgLv(1) << "SV:   NO saveRIDisk : runType" << runType;
+
 
    // Insure that we have a TimeState record locally for this run
    le_status->setText( tr( "Writing Time State to disk..." ) );
@@ -8151,6 +8409,7 @@ DbgLv(1) << "Unable to remove file" << rmvfiles[ ii ];
 // Save to Database
 void US_ConvertGui::saveUS3DB( void )
 {
+ 
    // Verify connectivity
    US_Passwd pw;
    QString masterPW = pw.getPasswd();
@@ -8223,7 +8482,7 @@ DbgLv(1) << "DBSv:     tripleGUID       "
    
    qDebug() << "AFTER checkDiskData(): ExpData.invID = " << ExpData.invID;
    
-DbgLv(1) << "Status from SaveUs3DB" << status;
+   qDebug() << "Status from SaveUs3DB" << status;
    // Save a flag for need to repeat the disk write later
    bool repeat_disk = ( status == US_DB2::NO_RAWDATA );
 
@@ -8290,13 +8549,13 @@ DbgLv(1) << "DBSv:  (2)dset tripleID    " << out_tripinfo[0].tripleID;
  qDebug() << "BEFORE saveUS3Disk(): ExpData.invID = " << ExpData.invID;
  
    status = saveUS3Disk();
-DbgLv(1) << "DBSv: Status after saveUS3Disk()" << status;
+   qDebug() << "DBSv: Status after saveUS3Disk()" << status;
 
- qDebug() << "AFTER saveUS3Disk(): ExpData.invID = " << ExpData.invID;
+   qDebug() << "AFTER saveUS3Disk(): ExpData.invID = " << ExpData.invID;
  
    if ( status != US_Convert::OK )
      {
-       qDebug() << "Status : " << status;
+       qDebug() << "Status : " << status;                  //HERE it prematurely quits!!! Cannot write timestamp to DISK
        return;
      }
 DbgLv(1) << "DBSv:  local files saved";
@@ -9465,6 +9724,11 @@ DbgLv(1) << "rsL: PlCurr RTN";
 // Do pseudo-absorbance calculation and apply for MultiWaveLength case
 void US_ConvertGui::PseudoCalcAvgMWL( void )
 {
+   for (int ii = 0; ii < outData.size(); ii++ ) {
+      DbgLv(1) << "PseudoCalcAvgMWL: CCW: " << outData.at(ii)->cell << " / " <<
+                  outData.at(ii)->channel << " / " << outData[ii]->scanData.first().wavelength <<
+                  " : nscans : " << outData[ii]->scanCount();
+   }
    QVector< double >  ri_prof;      // RI profile for a single wavelength
    ExpData.RIProfile.clear();       // Composite RI profile
    ExpData.RIwvlns  .clear();       // RI profile wavelengths
@@ -9475,43 +9739,40 @@ void US_ConvertGui::PseudoCalcAvgMWL( void )
    int ref_size = refData->xvalues.size();
    int ccx      = tripListx;
    int tripx    = out_chandatx[ ccx ];
-   nlambda      = mwl_data.lambdas( exp_lambdas, tripListx );
    ExpData.RI_nscans = refData->scanData.size();
-//   ExpData.RI_nwvlns = all_wavelength_tripx.size();
 DbgLv(1) << "PseCalcAvgMWL: ccx tripx nlambda" << ccx << tripx << nlambda;
 
-   QMap<int, int> wvl_to_tripx;
-   for ( int wvx = 0; wvx < nlambda; wvx++ ) {
-      refData  = outData[ tripx ];
-      int wvl = refData->scanData.at(0).wavelength;
-      wvl_to_tripx[wvl] = tripx;
-      tripx++;
-   }
+   QVector<int> unified_lambdas;
+   QVector<int> unified_lambdas_tripx;
+   int counter = 0;
+   QVector<int> argsort;
+
    for ( int ii = 0; ii < outData.size(); ii++) {
-      // to make sure to take account half-wavelength lambda, each multiplies to 10
-      //      int wvl = qRound(outData.at(ii)->scanData.at(0).wavelength * 10);
-      int wvl = outData.at(ii)->scanData.at(0).wavelength;
-      if (wvl_to_tripx.contains(wvl)) {
+      int wvl = qRound( outData.at(ii)->scanData.first().wavelength );
+      if (unified_lambdas.contains(wvl)) {
          continue;
       }
-      wvl_to_tripx[wvl] = ii;
+      unified_lambdas << wvl;
+      unified_lambdas_tripx << ii;
+      argsort << counter++;
 DbgLv(1) << "PseCalcAvgMWL: added_lambda tripx " << wvl << ii;
    }
-   ExpData.RI_nwvlns = wvl_to_tripx.size();
-DbgLv(1) << "PseCalcAvgMWL: tripx nlambda_i nlambda_f" << tripx << nlambda << wvl_to_tripx.size();
+   ExpData.RI_nwvlns = unified_lambdas.size();
+DbgLv(1) << "PseCalcAvgMWL: tripx nlambda_i nlambda_f" << tripx << nlambda << unified_lambdas.size();
 
+   std::sort( argsort.begin(), argsort.end(), [&unified_lambdas] (int a, int b) {
+                       return  unified_lambdas.at(a) < unified_lambdas.at(b); } );
    // Loop to calculate reference data for each wavelength,
    //  then apply it to all triples with that same wavelength.
-   foreach ( int iwavl, wvl_to_tripx.keys())
+   for ( int ii = 0; ii < argsort.size(); ii++)
    {
-      tripx        = wvl_to_tripx.value(iwavl);
+      int iwavl    = unified_lambdas.at(argsort.at(ii));
+      tripx        = unified_lambdas_tripx.at(argsort.at(ii));
       refData      = outData[ tripx ];
-      ref_size     = refData->xvalues.size();
-      int nscan    = refData->scanData.size();
       ri_prof.clear();
 
       // Get the reference profile for the current wavelength
-      for ( int ss = 0; ss < nscan; ss++ )
+      for ( int ss = 0; ss < ExpData.RI_nscans; ss++ )
       {
          US_DataIO::Scan* scan = &refData->scanData[ ss ];
 
@@ -9785,7 +10046,13 @@ DbgLv(1) << "CGui:IOD:   cSS nspeed" << speedsteps.size();
       int tf_scan      = speedsteps[ 0 ].time_first;
       int accel1       = (int)qRound( rate );
       int rspeed       = speedsteps[ 0 ].rotorspeed;
-      int tf_aend      = ( rspeed + accel1 - 1 ) / accel1;
+   	double  tf_aend   = static_cast<double>(tf_scan);
+   	// prevent any division by zero
+   	if (accel1 != 0)
+   	{
+   		tf_aend = static_cast<double>(rspeed) / static_cast<double>(accel1);
+   	}
+
 
       QString wmsg = tr( "The SpeedStep computed/used is likely bad:<br/>"
                          "The acceleration implied is %1 rpm/sec.<br/>"
@@ -9794,7 +10061,7 @@ DbgLv(1) << "CGui:IOD:   cSS nspeed" << speedsteps.size();
                          "<b>You should rerun the experiment without<br/>"
                          "any interim constant speed, and then<br/>"
                          "you should reimport the data.</b>" )
-                     .arg( accel1 ).arg( tf_aend ).arg( tf_scan );
+                     .arg( accel1 ).arg( QString::number(tf_aend) ).arg( QString::number(tf_scan) );
 
       QMessageBox msgBox( this );
       msgBox.setWindowTitle( tr( "Bad TimeState Implied!" ) );

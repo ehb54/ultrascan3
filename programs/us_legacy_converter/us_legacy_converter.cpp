@@ -1,8 +1,7 @@
 #include "us_legacy_converter.h"
 #include "us_license_t.h"
 #include "us_license.h"
-//#include "us_extern.h"
-#include <QtGlobal>
+#include "us_archive.h"
 
 int main(int argc, char *argv[])
 {
@@ -26,8 +25,8 @@ US_LegacyConverter::US_LegacyConverter() : US_Widgets()
 
    data_types.insert("RI", "Intensity");
    data_types.insert("RA", "Absorbance");
-   data_types.insert("WI", "Intensity");
-   data_types.insert("WA", "Absorbance");
+   data_types.insert("WI", "WI");
+   data_types.insert("WA", "WA");
    data_types.insert("IP", "Interference");
    data_types.insert("FI", "Fluorensce");
 
@@ -49,24 +48,10 @@ US_LegacyConverter::US_LegacyConverter() : US_Widgets()
    lb_runid->setAlignment(Qt::AlignRight);
    le_runid = new US_LineEdit_RE("", 0);
 
-   QLabel *lb_runtype = us_label("Run Type:");
-   lb_runtype->setAlignment(Qt::AlignRight);
-   cb_runtype = us_comboBox();
    pb_save = us_pushbutton("Save", true, 0);
-
-   QLabel* lb_tolerance = us_label("Separation Tolerance:");
-   lb_tolerance->hide();
-   lb_tolerance->setAlignment(Qt::AlignRight);
-   ct_tolerance = us_counter ( 2, 0.0, 100.0, 5.0 );
-   ct_tolerance->setSingleStep( 1 );
-   ct_tolerance->hide();
-   pb_reload = us_pushbutton("Reload");
-   pb_reload->hide();
 
    te_info = us_textedit();
    te_info->setReadOnly(true);
-
-   pb_save->setMinimumWidth(lb_tolerance->sizeHint().width());
 
    QGridLayout *layout = new QGridLayout();
    layout->addWidget(pb_load,      0, 0, 1, 1);
@@ -75,37 +60,47 @@ US_LegacyConverter::US_LegacyConverter() : US_Widgets()
    layout->addWidget(le_dir,       1, 1, 1, 2);
    layout->addWidget(lb_runid,     2, 0, 1, 1);
    layout->addWidget(le_runid,     2, 1, 1, 2);
-   layout->addWidget(lb_runtype,   3, 0, 1, 1);
-   layout->addWidget(cb_runtype,   3, 1, 1, 1);
-   layout->addWidget(pb_save,      3, 2, 1, 1);
-   layout->addWidget(lb_tolerance, 4, 0, 1, 1);
-   layout->addWidget(ct_tolerance, 4, 1, 1, 1);
-   layout->addWidget(pb_reload,    4, 2, 1, 1);
+   layout->addWidget(pb_save,      3, 1, 1, 1);
    layout->addWidget(te_info,      5, 0, 4, 3);
    layout->setMargin(2);
    layout->setSpacing(2);
    this->setLayout(layout);
 
+   archive = new US_Archive();
+   reset();
+
    connect(pb_load, &QPushButton::clicked, this, &US_LegacyConverter::load);
-   connect(pb_reload, &QPushButton::clicked, this, &US_LegacyConverter::reload);
    connect(le_runid, &US_LineEdit_RE::textUpdated, this, &US_LegacyConverter::runid_updated);
    connect(le_dir, &QLineEdit::textChanged, this, &US_LegacyConverter::runid_updated);
    connect(pb_save, &QPushButton::clicked, this, &US_LegacyConverter::save_auc);
-   connect(ct_tolerance, &QwtCounter::valueChanged, this, &US_LegacyConverter::new_tolerance);
-}
-
-void US_LegacyConverter::new_tolerance(double){
-   reset();
-   if (! tar_fpath.isEmpty()){
-      te_info->setText("Reload the current file or load another file!");
-   }
+   connect(archive, &US_Archive::itemExtracted, this, &US_LegacyConverter::itemExtracted);
 }
 
 void US_LegacyConverter::runid_updated() {
    QDir dir = QDir(le_dir->text());
-   dir.setPath(dir.absoluteFilePath(le_runid->text()));
-   if (dir.exists()) {
-      lb_runid->setText("( existing )    Run ID:");
+   QList<int> speed_list = data_map.keys();
+   QString basename = le_runid->text();
+   bool mspeed = speed_list.size() > 1;
+   exists = false;
+   bool br = false;
+   foreach (int speed, speed_list) {
+      foreach (QString rtype, data_map.value(speed).keys()) {
+         QString path;
+         if ( mspeed ) {
+            path = tr("%1-%2-Speed%3").arg(basename, rtype).arg(speed);
+         } else {
+            path = tr("%1-%2").arg(basename, rtype);
+         }
+         if (dir.exists(path)) {
+            exists = true;
+            br = true;
+            break;
+         }
+      }
+      if (br) break;
+   }
+   if (exists) {
+      lb_runid->setText("( Already Exists! ) Run ID:");
       le_runid->setStyleSheet("color: red;");
    } else {
       lb_runid->setText("Run ID:");
@@ -121,62 +116,65 @@ void US_LegacyConverter::save_auc() {
    }
    QString runid = le_runid->text();
    if (runid.isEmpty()) {
-      QMessageBox::warning(this, "Error!", "No Run ID Set!");
+      QMessageBox::warning(this, "Error!", "No RunID Set!");
       return;
    }
+
+   if (exists) {
+      int state = QMessageBox::question(this, "Warning!", "RunID already exists!\n"
+                                                          "Do you want to overwrite it?");
+      if (state == QMessageBox::No) return;
+   }
+   qApp->setOverrideCursor(QCursor(Qt::WaitCursor));
+   pb_save->setDisabled(true);
    QDir dir = QDir(le_dir->text());
-   dir.setPath(dir.absoluteFilePath(runid));
-   if (dir.exists()) {
-      QMessageBox::StandardButton state;
-      state = QMessageBox::question(this, "Warning!", "The output directory exists!\n\n"
-                            + dir.absolutePath() + "\n\nBy clicking on 'YES', all data will be overwritten! "
-                                                           + "Do you want to proceed?");
-      if (state == QMessageBox::No) {
-         return;
-      } else {
-         dir.removeRecursively();
+   QDir subdir = QDir();
+   QString basename = le_runid->text();
+
+   QString msg;
+   QList<int> speed_list = data_map.keys();
+   bool mspeed = speed_list.size() > 1;
+   foreach (int speed, speed_list) {
+      foreach (QString rtype, data_map.value(speed).keys()) {
+         QString runid;
+         if ( mspeed ) {
+            runid = tr("%1-%2-Speed%3").arg(basename, rtype).arg(speed);
+         } else {
+            runid = tr("%1-%2").arg(basename, rtype);
+         }
+         QString path = dir.absoluteFilePath(runid);
+         subdir.setPath(path);
+         if (subdir.exists()) {
+            subdir.removeRecursively();
+         }
+         subdir.mkpath(subdir.absolutePath());
+
+         QVector< US_DataIO::RawData* > data;
+         QList< US_Convert::TripleInfo > triples;
+         QVector< US_Convert::Excludes > excludes;
+         foreach (QString ccw, data_map.value(speed).value(rtype).keys()) {
+            int idx = data_map.value(speed).value(rtype).value(ccw);
+            triples << all_data.at(idx).triple;
+            data << &all_data[idx].rdata;
+            US_Convert::Excludes excl;
+            excludes << excl;
+         }
+
+         int state = US_Convert::saveToDisk(data, triples, excludes, rtype, runid, path, false);
+         if (state == US_Convert::OK) {
+            msg += runid + "\n";
+         } else {
+            QMessageBox::warning(this, "Error!", "Failed to Save this RunID!\n\n" + runid);
+            subdir.removeRecursively();
+         }
       }
-   }
-   dir.mkdir(dir.absolutePath());
-   QMapIterator<QString, QString> it(data_types);
-   QString rtype;
-   while (it.hasNext()) {
-      it.next();
-      if (QString::compare(it.value(), cb_runtype->currentText(), Qt::CaseInsensitive) == 0) {
-         rtype = it.key();
-         break;
-      }
-   }
-   QVector< US_DataIO::RawData* > data;
-   QList< US_Convert::TripleInfo > triples;
-   QVector< US_Convert::Excludes > excludes;
-   QMapIterator< QString, US_Convert::TripleInfo > it_triple(all_triples);
-   QString msg = tr("Saving the %1 OpenAuc files:\n").arg(cb_runtype->currentText());
-   msg += dir.absolutePath() + "\n";
-   while (it_triple.hasNext()) {
-      it_triple.next();
-      if (QString::compare(it_triple.key().split(':').at(0), rtype) == 0){
-         triples << it_triple.value();
-         US_DataIO::RawData *rdp;
-         US_DataIO::RawData rd = all_data[it_triple.key()];
-         rdp = &all_data[it_triple.key()];
-         data << rdp;
-         US_Convert::Excludes excl;
-         excludes << excl;
-         msg += it_triple.key().split(':').at(1).trimmed() + "\n";
-      }
-   }
-   msg += "------------------------------\n";
-   int state = US_Convert::saveToDisk(data, triples, excludes, rtype, runid, dir.absolutePath(), false);
-   if (state == US_Convert::OK) {
-      te_info->insertPlainText(msg);
-      te_info->moveCursor(QTextCursor::End);
-      QMessageBox::information(this, "Data Saved!", cb_runtype->currentText() +
-                               " data saved in \n\n" + dir.absolutePath());
-   } else {
-      QMessageBox::warning(this, "Error!", "Data cannot be saved! Check the output directory!");
    }
    runid_updated();
+   qApp->restoreOverrideCursor();
+   if (! msg.isEmpty()) {
+      QMessageBox::information(this, "Data Stored!", "Run(s) Successfully Saved!\n\n" + msg);
+   }
+   pb_save->setEnabled(true);
 }
 
 void US_LegacyConverter::reset(void) {
@@ -184,316 +182,355 @@ void US_LegacyConverter::reset(void) {
    lb_runid->setText("Run ID:");
    le_runid->setStyleSheet("color: black;");
    te_info->clear();
-   cb_runtype->clear();
    all_data.clear();
-   all_triples.clear();
+   data_map.clear();
+   counter = 0;
+   exists = false;
+   pb_save->setDisabled(true);
 }
 
 void US_LegacyConverter::load() {
+
    QString ext_str = "tar.gz Files ( *.tar.gz )";
-   QString fpath = QFileDialog::getOpenFileName(this, tr("Beckman Optima tar.gz File"), QDir::homePath(), ext_str);
-   if (fpath.size() == 0){
+   QString tar_fpath = QFileDialog::getOpenFileName(this, tr("Beckman Optima tar.gz File"), QDir::homePath(), ext_str);
+   if (tar_fpath.isEmpty()){
       return;
    }
-   tar_fpath = fpath;
-   reload();
-}
 
-bool US_LegacyConverter::extract_files(const QString& tarfile, const QString& savepath) {
-
-   QFileInfo finfo(tarfile);
-   QString ost;
-#ifdef Q_OS_LINUX
-   ost = "LINUX";
-#elif defined ( Q_OS_MACOS )
-   ost = "MACOS";
-#elif defined ( Q_OS_WINDOWS )
-   ost = "WINDOWS";
-#else
-   ost = "NONE";
-#endif
-
-   QString sys_tar;
-   if (ost.compare("WINDOWS") == 0) {
-      sys_tar = QDir(QCoreApplication::applicationDirPath()).filePath("tar.exe");
-      if (! QFileInfo::exists(sys_tar) || ! QFileInfo(sys_tar).isExecutable()) {
-         QMessageBox::warning(this, "Error!", "TAR program is not found in the following path!\n" + sys_tar);
-         sys_tar.clear();
-         return false;
-      }
-   } else if (ost.compare("MACOS") == 0 || ost.compare("LINUX") == 0){
-      sys_tar = "tar";
-   } else {
-      QMessageBox::warning(this, "Error!", "This program only supports the MS Windows, macOS, and Linux!");
-      return false;
-   }
-   te_info->append("Process: starting to extract the loaded file using the system tar program ...");
-   qApp->processEvents();
-   QStringList tarr_args;
-   tarr_args << "-zxf" << finfo.absoluteFilePath() << "-C" << savepath;
-   int state = QProcess::execute(sys_tar, tarr_args);
-   if (state == -2) {
-      QString mesg = tr("The process of extracting the tar file cannot start!\n%1 %2\n\n"
-                        "Starting to use the internal methods!");
-      QMessageBox::warning(this, "Warning!", mesg.arg(sys_tar, tarr_args.join(" ")));
-   } else if (state == -1) {
-      QString mesg = tr("The process of extracting the tar file crashed!\n%1 %2\n\n"
-                        "Starting to use the internal methods!");
-      QMessageBox::warning(this, "Warning!", mesg.arg(sys_tar, tarr_args.join(" ")));
-   } else if (state == 0) {
-      return true;
-   } else {
-      QString mesg = tr("Extracting the tar file failed with the return value of %1!\n%2%3\n\n"
-                        "Starting to use the internal methods!");
-      QMessageBox::warning(this, "Warning!", mesg.arg(state).arg(sys_tar, tarr_args.join(" ")));
-   }
-
-   QString tmpfile = QDir(savepath).filePath("data.tar.gz");
-
-   if (QFile::copy(tarfile, tmpfile)) {
-      US_Gzip gzip;
-      te_info->append("Process: starting to unzip the file using the US_Gzip program ...");
-      qApp->processEvents();
-
-      state = gzip.gunzip(tmpfile);
-      if (state != 0) {
-         QMessageBox::warning(this, "Error!", "Failed to unzip the file!\n" +
-                                                  gzip.explain(state));
-         return false;
-      }
-      tmpfile.chop(3);
-      // qDebug() << tmpfile;
-      te_info->append("Process: starting to extract the tar file using the US_Tar program ...");
-      qApp->processEvents();
-      US_Tar ustar;
-      QStringList extlist;
-      state = ustar.extract(tmpfile, &extlist, savepath);
-      if (state != 0) {
-         QMessageBox::warning(this, "Error!", "FAILED to extract the file!\n" +
-                                                  ustar.explain(state));
-         return false;
-      }
-   } else {
-      QMessageBox::warning(this, "Error!", tr("FAILED to copy the file to the /tmp directory!"));
-      return false;
-   }
-   return true;
-
-}
-
-void US_LegacyConverter::reload() {
    reset();
+   pb_load->setDisabled(true);
    le_load->clear();
    QRegularExpression re;
    re.setPatternOptions(QRegularExpression::CaseInsensitiveOption);
    QRegularExpressionMatch match;
 
    te_info->clear();
-   te_info->append("Parsing Data. Please Wait!");
+   te_info->append("Extracting the Archive File. Please Wait!");
    te_info->moveCursor(QTextCursor::End);
    qApp->setOverrideCursor(QCursor(Qt::WaitCursor));
    qApp->processEvents();
-   if (tar_fpath.size() == 0) {
-      QMessageBox::warning(this, "Warning!", tr("No File Loaded!"));
-      qApp->restoreOverrideCursor();
-      return;
-   }
+
    QFileInfo tar_finfo = QFileInfo(tar_fpath);
-   if (! tar_finfo.exists()) {
-      QMessageBox::warning(this, "Error!", tr("TAR File Not Found!\n\n(%1)!").arg(tar_finfo.absoluteFilePath()));
-      tar_fpath.clear();
-      qApp->restoreOverrideCursor();
-      return;
-   }
    qDebug() << "file path: " << tar_fpath;
 
    QTemporaryDir tmp_dir;
    QTemporaryDir tmp_dir_sorted;
    QString runid;
    if (tmp_dir.isValid()) {
-      if (! extract_files(tar_finfo.absoluteFilePath(), tmp_dir.path())) {
-         te_info->append("Failed to exctract the file: " + tar_finfo.absoluteFilePath());
+      QString fpath = tar_finfo.absoluteFilePath();
+      QString opath = tmp_dir.path();
+      bool ok = archive->extract(fpath, opath);
+      te_info->append("Process: Extracting File ...");
+      qApp->processEvents();
+      if (! ok) {
+         te_info->clear();
+         te_info->append( tr("Failed to Exctract the File: %1 \n").arg(tar_finfo.absoluteFilePath()) );
+         te_info->append(archive->getError());
          tar_fpath.clear();
          qApp->restoreOverrideCursor();
+         pb_load->setEnabled(true);
          return;
       }
+      te_info->clear();
+      te_info->append("Parsing Data. Please Wait!");
+      qApp->processEvents();
       runid = tar_finfo.fileName().chopped(7);
    } else {
-      QMessageBox::warning(this, "Error!", tr("FAILED to create a /tmp directory!"));
+      QMessageBox::warning(this, "Error!", tr("FAILED to Create a Temporary Directory!"));
       tar_fpath.clear();
       qApp->restoreOverrideCursor();
+      pb_load->setEnabled(true);
       return;
    }
    QStringList filelist;
    list_files(tmp_dir.path(), filelist);
-   if (filelist.size() == 0) {
-      QMessageBox::warning(this, "Warning!", tr("File is empty!\n(%1)").arg(tar_finfo.absoluteFilePath()));
+   if (filelist.isEmpty()) {
+      QMessageBox::warning(this, "Warning!", tr("Empty TGZ File!\n(%1)").arg(tar_finfo.absoluteFilePath()));
       tar_fpath.clear();
+      te_info->clear();
       qApp->restoreOverrideCursor();
+      pb_load->setEnabled(true);
       return;
    }
    if (! sort_files( filelist, tmp_dir_sorted.path() ) ) {
-      QMessageBox::warning(this, "Warning!", tr("Incorrect filename pattern!\n\n(%1)").arg(tar_finfo.absoluteFilePath()));
+      QMessageBox::warning(this, "Warning!", tr("Incorrect Filename Pattern!\n\n(%1)").arg(tar_finfo.absoluteFilePath()));
       tar_fpath.clear();
+      te_info->clear();
       qApp->restoreOverrideCursor();
+      pb_load->setEnabled(true);
       return;
    }
    QString status;
    if(! read_beckman_files(tmp_dir_sorted.path(), status)) {
       qApp->restoreOverrideCursor();
+      pb_load->setEnabled(true);
       return;
    }
+
    le_load->setText(tar_finfo.absoluteFilePath());
    le_runid->setText(runid);
-   QStringList loaded_types;
-   QMapIterator< QString, US_Convert::TripleInfo > it(all_triples);
-   while (it.hasNext()) {
-      it.next();
-      QString dtype = it.key().split(':').at(0).trimmed();
-      if (! loaded_types.contains(dtype)){
-         loaded_types << dtype;
-      }
-   }
-   foreach (QString key, loaded_types) {
-      cb_runtype->addItem(data_types.value(key));
-   }
    te_info->setText(status);
    te_info->moveCursor(QTextCursor::End);
    runid_updated();
+   pb_save->setEnabled(true);
+   pb_load->setEnabled(true);
    qApp->restoreOverrideCursor();
 }
 
 void US_LegacyConverter::list_files(const QString& path, QStringList& flist) {
    QDir dir(path);
-   QStringList filter;
-   QStringList tmp_list = dir.entryList(QStringList({"*"}), QDir::Files | QDir::NoSymLinks);
-   foreach (const QString& fname, tmp_list) {
-      QFileInfo fileInfo(dir.absoluteFilePath(fname));
-      flist.append(fileInfo.absoluteFilePath());
-   }
-
-   // Recursively process subdirectories
-   QStringList subdirs = dir.entryList(QDir::Dirs | QDir::NoDotAndDotDot | QDir::NoDotAndDotDot | QDir::NoSymLinks);
-   foreach (const QString& subdir, subdirs) {
-      QString subdirPath = dir.absoluteFilePath(subdir);
-      list_files(subdirPath, flist);
+   QDir::Filters filter = QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot | QDir::NoDotAndDotDot | QDir::NoSymLinks;
+   QFileInfoList info_list = dir.entryInfoList(filter);
+   foreach (const QFileInfo item, info_list) {
+      if (item.isDir()) {
+         list_files(item.absoluteFilePath(), flist);
+      } else {
+         flist << item.absoluteFilePath();
+      }
    }
 }
 
-bool US_LegacyConverter::sort_files(const QStringList& flist, const QString& tmpDir) {
+bool US_LegacyConverter::sort_files(const QStringList& flist, const QString& path) {
    QRegularExpression re;
    re.setPatternOptions(QRegularExpression::CaseInsensitiveOption);
    QRegularExpressionMatch match;
    // RunId1991-s0001-c2-s0009-w260-r_-n1.ri2
    // RunId1991-s0002-c1-s0001-n1.ip1
-   QString pattern = "^(.+)-s(\\d{4,6})-c(\\d)-s(\\d{4,6})-(?:w(\\d{3})-)?(.+?)[.](?:RA|RI|IP|FI|WA|WI)\\d$";
+   //group1                    (.+)  =  runID
+   //group2            -s(\\d{4,6})  =  speed
+   //group3                 -c(\\d)  =  cell number
+   //group4            -s(\\d{4,6})  =  scan number
+   //group5      (?:-w(\\d{3})-r_)?  =  wavelength (optional: some files include it)
+   //group6                 -n(\\d)  =  scan repetition
+   //group7  (ra|ri|ip|fi|wa|wi)\\d  =  run type
+   QString pattern = "^(.+)-s(\\d{4,6})-c(\\d)-s(\\d{4,6})(?:-w(\\d{3})-r_)?-n(\\d)[.](ra|ri|ip|fi|wa|wi)\\d$";
    re.setPattern(pattern);
 
    QString runid;
-   QString runtype;
-   QMap<QString, QString> file_map;
-   QMap<QString, QVector<int>> tcws_map;
+   QMap<QString, QVector<int>> scan_list; // speed-type-cell-wavelength-replica      -> scans
+   QMap<QString, QString> fpath_list;     // speed-type-cell-wavelength-replica-scan -> filepath
+   QVector<int> speed_list;
 
    foreach (QString fpath, flist) {
-      QFileInfo finfo = QFileInfo(fpath);
-      QFile file(fpath);
+      QFileInfo finfo(fpath);
       QString fname = finfo.fileName();
-      match = re.match(fname);
+      match = re.match(fname.toLower());
       if (match.hasMatch()) {
-         if (runid.size() == 0) {
+         if (runid.isEmpty()) {
             runid = match.captured(1);
          } else {
             if (QString::compare(runid, match.captured(1)) != 0) {
-               QMessageBox::warning(this, "Error!", "Multiple run IDs found!");
+               QMessageBox::warning(this, "Error!", "Multiple Run IDs Found!");
                return false;
             }
          }
-         runtype = fname.right(3).left(2).toUpper();
+         int speed = match.captured(2).toInt();
+         if (! speed_list.contains(speed)) {
+            speed_list << speed;
+            std::sort(speed_list.begin(), speed_list.end());
+         }
+         int speed_id = speed_list.indexOf(speed) + 1;
          QString cell = match.captured(3);
          int scan = match.captured(4).toInt();
          QString wavl = match.captured(5);
-         QString tcw = runtype + "-" + cell + "-" + wavl;
-         if (tcws_map.contains(tcw)) {
-            tcws_map[tcw] << scan;
+         if (wavl.isEmpty()) {
+             wavl = "000";
+         }
+         QString replica = match.captured(6);
+         QString runtype = match.captured(7);
+         // speed-type-cell-wavelength-replica
+         QString key1 = tr("%1-%2-%3-%4-%5").arg(speed_id).arg(runtype, cell, wavl, replica);
+         if (scan_list.contains(key1)) {
+            scan_list[key1] << scan;
          } else {
             QVector<int> ss(1, scan);
-            tcws_map.insert(tcw, ss);
+            scan_list.insert(key1, ss);
          }
-         QString tcws = tcw + "-" + QString::number(scan);
-         if (file_map.contains(tcws)) {
-            QMessageBox::warning(this, "Error!", "Some of scans are redundant!");
+         // speed-type-cell-wavelength-replica-scan
+         QString key2 = tr("%1-%2").arg(key1).arg(scan);
+         if (fpath_list.contains(key2)) {
+            QMessageBox::warning(this, "Error!", tr("Some of scans are redundant!\n\n%1").arg(fname));
             return false;
          } else {
-            file_map.insert(tcws, fpath);
+            fpath_list.insert(key2, fpath);
          }
       }
    }
-   QDir dir = QDir(tmpDir);
-   QMapIterator<QString, QVector<int>> it(tcws_map);
-   bool state = false;
+   QDir dir = QDir(path);
+   QDir subdir = QDir();
+   QMapIterator<QString, QVector<int>> it(scan_list);
+   bool state = true;
    while (it.hasNext()) {
       it.next();
-      QString tcw = it.key();
-      dir.mkdir(tcw);
-      QDir subdir = QDir(dir.absoluteFilePath(tcw));
+      QString key1 = it.key();
+      dir.mkdir(key1);
+      subdir.setPath(dir.absoluteFilePath(key1));
       QVector<int> scans = it.value();
       std::sort(scans.begin(), scans.end());
-      QFileInfo finfo = QFileInfo();
       for (int ii = 0; ii < scans.size(); ii++) {
-         QString ss = QString::number(scans.at(ii));
-         QString fpath1 = file_map.value(tcw + "-" + ss);
-         QString fname2 = ss.rightJustified(5, '0') + fpath1.right(4);
-         finfo.setFile(subdir, fname2);
-         if (QFile::copy(fpath1, finfo.absoluteFilePath())) state = true;
+         QString key2 = tr("%1-%2").arg(key1).arg(scans.at(ii));
+         QString fpath1 = fpath_list.value(key2);
+
+         QString fname2 = tr("%1").arg(ii + 1).rightJustified(6, '0') + fpath1.right(4);
+         if (! QFile::copy(fpath1, subdir.absoluteFilePath(fname2)) ) {
+            state = false;
+         }
       }
    }
    return state;
 }
 
 bool US_LegacyConverter::read_beckman_files(const QString& path, QString& status){
-   QDir tmpdir(path);
-   QStringList subdirs = tmpdir.entryList(QDir::Dirs | QDir::NoDotAndDotDot | QDir::NoSymLinks);
-   int counter = 1;
-   double tolerance = static_cast<double>(ct_tolerance->value());
+   QDir dir(path);
+   QStringList subdirs = dir.entryList(QDir::Dirs | QDir::NoDotAndDotDot | QDir::NoSymLinks);
+   QStringList replicates;
    foreach (QString path, subdirs) {
       QList<US_DataIO::BeckmanRawScan> rawscan;
       QString runtype;
-      US_Convert::readLegacyData(tmpdir.absoluteFilePath(path), rawscan, runtype);
+      US_Convert::readLegacyData(dir.absoluteFilePath(path), rawscan, runtype);
       if (rawscan.size() == 0) {
          continue;
       }
+      QVector< US_DataIO::RawData > rdata_list;
+      QList< US_Convert::TripleInfo > triple_list;
+      US_Convert::convertLegacyData(rawscan, rdata_list, triple_list, runtype, 0.5);
 
-      QVector< US_DataIO::RawData  > rawdata;
-      QList< US_Convert::TripleInfo > triples;
-      US_Convert::convertLegacyData(rawscan, rawdata, triples, runtype, tolerance);
+      // speed-type-cell-wavelength-replica
+      int speed = path.split('-').at(0).toInt();
 
-      QDir subd = QDir(tmpdir.absoluteFilePath(path), "*", QDir::Name, QDir::Files);
-      status += QString::number(counter) + ":\n";
-      counter ++;
-      status += tr("Run type: %1 (%2)\n").arg(data_types.value(runtype), runtype);
-      status += tr("Number of the parsed files: %1\n").arg(subd.count());
-      status += tr("Number of the beckman data objects: %1\n").arg(rawscan.count());
+      QDir subd = QDir(dir.absoluteFilePath(path), "*", QDir::Name, QDir::Files);
+      QString log_1;
+      log_1 += tr("Speed : %1\n").arg(speed);
+      log_1 += tr("Run Type : %1 (%2)\n").arg(data_types.value(runtype), runtype);
+      log_1 += tr("Number of Parsed Files : %1\n").arg(subd.count());
+      log_1 += tr("Number of Beckman Data Objects : %1\n").arg(rawscan.count());
+      qDebug().noquote() << log_1;
 
-      QString msg("Run type: %1 (%2), Number of the processed files: %3");
-      te_info->append(msg.arg(data_types.value(runtype), runtype).arg(subd.count()));
+      QString msg("Speed : %1, Run type : %2 (%3), Number of the processed files: %4");
+      te_info->append(msg.arg(speed).arg(data_types.value(runtype), runtype).arg(subd.count()));
       te_info->moveCursor(QTextCursor::End);
       qApp->processEvents();
 
-      for (int ii = 0; ii < triples.size(); ii ++) {
-         QString tdesc = triples.at(ii).tripleDesc.trimmed();
-         QString key = tr("%1:%2").arg(runtype, tdesc);
-         if (all_triples.contains(key)){
-            QMessageBox::warning(this, "Error!", "Triple redundancy!");
-            qDebug().noquote() << status;
-            return false;
+      for (int ii = 0; ii < triple_list.size(); ii ++) {
+         US_Convert::TripleInfo triple = triple_list.at(ii);
+         US_DataIO::RawData rdata = rdata_list.at(ii);
+         int nscans  = rdata.scanCount();
+         int npoints = rdata.pointCount();
+         QString ccw = triple.tripleDesc;
+         DataCrate dc;
+         dc.rdata = rdata;
+         dc.triple = triple;
+         dc.n_replicates = 1;
+
+         bool replicated = false;
+         if (data_map.contains(speed))
+         {
+            if (data_map.value(speed).contains(runtype))
+            {
+               if (data_map.value(speed).value(runtype).contains(ccw))
+               {
+                  replicated = true;
+                  int idx = data_map.value(speed).value(runtype).value(ccw);
+                  int ns = all_data[idx].rdata.scanCount();
+                  int np = all_data[idx].rdata.pointCount();
+                  if ( np == npoints && ns == nscans )
+                  {
+                     for (int ss = 0; ss < nscans; ss++) {
+                        for (int pp = 0; pp < npoints; pp++)
+                        {
+                           double val1 = all_data[idx].rdata.value(ss, pp);
+                           double val2 = rdata.value(ss, pp);
+                           all_data[idx].rdata.setValue(ss, pp, val1 + val2);
+                        }
+                     }
+                     all_data[idx].n_replicates++;
+                     QString rr = tr("%1-%2-%3").arg(speed).arg(runtype, ccw);
+                     if (! replicates.contains(rr)) {
+                        replicates << rr;
+                     }
+                  }
+               }
+               else
+               {
+                  all_data << dc;
+                  int idx = all_data.size() - 1;
+                  data_map[speed][runtype].insert(ccw, idx);
+               }
+            }
+            else
+            {
+               all_data << dc;
+               int idx = all_data.size() - 1;
+               QHash< QString, int > m;
+               m.insert(ccw, idx);
+               data_map[speed].insert(runtype, m);
+            }
          }
-         all_triples.insert(key, triples.at(ii));
-         all_data.insert(key, rawdata.at(ii));
-         status += tr("Triple: %1   # Scans: %2\n").arg(tdesc).arg(rawdata.at(ii).scanData.count());
+         else
+         {
+            all_data << dc;
+            int idx = all_data.size() - 1;
+
+            QHash< QString, int > m1;
+            m1.insert(ccw, idx);
+
+            QHash< QString, QHash< QString, int > > m2;
+            m2.insert(runtype, m1);
+
+            data_map.insert(speed, m2);
+         }
+         QString log_2 = tr( "Triple : %1 ; Number of Scans : %2\n").arg(ccw).arg(nscans);
+         qDebug().noquote() << log_2;
+         if ( ii == 0 && !replicated ) {
+            status += log_1 + log_2;
+         } else if ( !replicated ) {
+            status += log_2;
+         }
       }
+      qDebug().noquote() << "------------------------------\n";
       status += "------------------------------\n";
-      // qApp->processEvents();
    }
-   qDebug().noquote() << status;
+   replicates.sort();
+   if ( ! replicates.isEmpty() ) {
+      QString details;
+      foreach (QString key, replicates) {
+         QStringList ksp = key.split("-");
+         int speed = ksp.at(0).toInt();
+         QString runtype = ksp.at(1);
+         QString ccw = ksp.at(2);
+         int idx = data_map.value(speed).value(runtype).value(ccw);
+         int nscans = all_data[idx].rdata.scanCount();
+         int npoints = all_data[idx].rdata.pointCount();
+         double n_replicas = all_data[idx].n_replicates;
+         details += tr("Speed: %1, Type: %2, Triple: %3, Number of Replicates: %4\n").arg(speed).arg(runtype, ccw).arg(n_replicas);
+         for (int ss = 0; ss < nscans; ss++) {
+            for (int pp = 0; pp < npoints; pp++)
+            {
+               double val = all_data[idx].rdata.value(ss, pp);
+               all_data[idx].rdata.setValue(ss, pp, val / n_replicas);
+            }
+         }
+      }
+
+      QMessageBox msgBox(this);
+      msgBox.setIcon(QMessageBox::Warning);
+      msgBox.setWindowTitle("Warning");
+      msgBox.setText("Your experiment contains replicates. "
+                     "Replicates will be averaged and saved "
+                     "as a single scan. \nAveraging multiple scans "
+                     "produces suboptimal velocity experiments and "
+                     "replicates should not be used for analysis.");
+      msgBox.setInformativeText("Please check the details below.");
+      msgBox.setDetailedText(details);
+      msgBox.setStandardButtons(QMessageBox::Ok);
+      msgBox.exec();
+   }
    return true;
+}
+
+
+void US_LegacyConverter::itemExtracted(const QString& relative, const QString&) {
+   te_info->append(relative);
+   if ( counter % 10 == 0) qApp->processEvents();
+   counter++;
 }

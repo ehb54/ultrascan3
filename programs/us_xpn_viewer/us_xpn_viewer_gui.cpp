@@ -247,6 +247,7 @@ US_XpnDataViewer::US_XpnDataViewer(QString auto_mode) : US_Widgets()
    auto_mode_bool     = true;
    experimentAborted  = false;
    experimentAborted_remotely  = false;
+   opticsFailed       = false;
    inExport           = false;
    combinedOptics     = false;
    autoflowStatusID   = 0;
@@ -838,6 +839,7 @@ US_XpnDataViewer::US_XpnDataViewer() : US_Widgets()
    auto_mode_bool = false;
    experimentAborted  = false;
    experimentAborted_remotely  = false;
+   opticsFailed       = false;
    autoflowStatusID   = 0;
    
    navgrec      = 10;
@@ -1261,7 +1263,10 @@ void US_XpnDataViewer::reset_auto( void )
    cb_cellchn ->disconnect();
    cb_cellchn ->clear();
    le_dir     ->setText( currentDir );
-   le_runID   ->setText( runID );
+
+   //le_runID   ->setText( runID );
+   le_runID  ->setText_auto( runID );
+   
    //le_dbhost  ->setText( xpnhost + ":" + xpnport + "   (" + xpndesc + ")" );       //New
 
    //Also clear Wavelengths && Lambda ranges:
@@ -1935,9 +1940,11 @@ void US_XpnDataViewer::delete_autoflow_record( void )
      }
 
    QStringList qry;
-   qry << "delete_autoflow_record"
-       << RunID_to_retrieve
-       << OptimaName;
+   // qry << "delete_autoflow_record"
+   //     << RunID_to_retrieve
+   //     << OptimaName;
+   qry << "delete_autoflow_record_by_id"
+       << QString::number( autoflowID_passed );
 
    //db->query( qry );
 
@@ -2026,7 +2033,7 @@ void US_XpnDataViewer::updateautoflow_record_atLiveUpdate( void )
 
        db->query( qry );
 
-       details_at_live_update[ "correctRadii" ] = QString("NO"); //currentDir;
+       details_at_live_update[ "correctRadii" ] = QString("NO"); 
      }
 
    //ALEXEY: if run was aborted manually from the Optima panel, set expAborted to 'YES'
@@ -2052,8 +2059,23 @@ void US_XpnDataViewer::updateautoflow_record_atLiveUpdate( void )
 	   << OptimaName;
        
        db->query( qry );
-       
+
+       details_at_live_update[ "expAborted" ] = QString("YES");
        details_at_live_update[ "statusID" ] = QString::number( autoflowStatusID );
+     }
+
+   //If one of the optics type failed:
+   if ( opticsFailed )
+     {
+       qry.clear();
+       qry << "update_autoflow_at_live_update_optics_types_failed"
+	   << opticsFailed_type
+	   << RunID_to_retrieve
+	   << OptimaName;
+       
+       db->query( qry );
+       
+       details_at_live_update[ "opticsFailedType" ] = opticsFailed_type;
      }
 
    /***/
@@ -2186,7 +2208,20 @@ void US_XpnDataViewer::stop_optima( void )
       // Do we need to do anything ??
       // IF status "0", it will switch to IMPORT and will ask what to do with data
       // IF status "0" && no data collected yet - what then ? Needs testing...
-      // **************  if ( link->tot_scans.toInt() == 0 ) ??? 
+      // **************  if ( link->tot_scans.toInt() == 0 ) ???
+
+      // if ( combinedOptics )
+      // 	{
+      // 	  if ( opsys_auto.count() < 2 ) //combo-run && just 1 ootics collected (so far)
+      // 	    {
+      // 	      QString optics_failed    = (runType == "RI" ) ? "Interference" : "Absorbance";
+      // 	      QString optics_processed = (runType == "RI" ) ? "Absorbance" : "Interference";
+	      
+      // 	      opticsFailed     = true;
+      // 	      opticsFailed_type = (runType == "RI" ) ? "IP" : "RI";
+      // 	    }
+      // 	}
+      
       
       //Now, create OR update (if exists due to clicking "Skip Stage") autoflowStatus record: 
       /* We can (or even should) do it here - NOT at the time of switching to 3. IMPORT,    */
@@ -2658,8 +2693,30 @@ void US_XpnDataViewer::check_for_sysdata( void )
 	  if ( !timer_data_reload->isActive() )
 	    {
 	      qDebug() << "TRY PROCEED INTO == 5/0 from check_for_sys_data()....";
-	      
-	      export_auc_auto();
+
+	      bool tmstampOK = true;
+	      export_auc_auto( tmstampOK );
+	      if ( !tmstampOK )
+		{
+		  in_reload_check_sysdata   = false;
+
+		  QMessageBox::critical( this,
+					 tr( "GMP Compliance Problem:" ),
+					 tr( "This run did not start at zero RPM because the w2t value "
+					     "was non-zero at the beginning of the experiment. \n\n"
+					     "Therefore, the boundary conditions are unknown and the experiment "
+					     "cannot be reliably analyzed. It fails GMP requirements and will "
+					     "therefore be aborted. The run will be deleted.\n\n"
+					     "The data can be retrieved with the \"View Raw Optima Data\" function "
+					     "in the UltraScan Utilities." ) );
+
+		  
+		  delete_autoflow_record();  /** Do we want to delete GMP run NOW? **/ 
+		  reset_auto();
+		  emit aborted_back_to_initAutoflow();
+		  
+		  return;
+		}
 	      
 	      // QString mtitle_complete  = tr( "Complete!" );
 	      // QString message_done     = tr( "Experiment was completed. Optima data saved..." );
@@ -2723,6 +2780,8 @@ void US_XpnDataViewer::check_for_data( QMap < QString, QString > & protocol_deta
   
   xpn_data->setEtimOffZero(); //ALEXEY: intialize etimoff to zero for the first time
 
+  opticsFailed       = false;
+  opticsFailed_type  = "";
   experimentAborted  = false;
   counter_mins = 0;
   ElapsedTimeOffset = 0;
@@ -2972,7 +3031,8 @@ void US_XpnDataViewer::end_processes( void )
 	  
 	  QString msg_sys_text = QString(tr("Attention! UltraScan GMP is not able to communicate with the data acquisition server on the %1.\n\n "))
 	    .arg(xpndesc);
-	  QString msg_sys_text_info = QString(tr("The program will <b>Return</b> to \"Manage Optima Runs\" where you can re-attach to this run later "
+	  QString msg_sys_text_info = QString(tr("The program will <b>Return</b> to \"Manage Optima Runs\" "
+						 "where you can re-attach to this run later "
 						 "by clicking \"Select Optima Run to follow\" once the network "
 						 "issue is resolved. UltraScan will then resume data acquisition.\n\n"
 						 "NOTE: If the network connection cannot be re-established to the ongoing run, " 
@@ -3161,7 +3221,10 @@ void US_XpnDataViewer::retrieve_xpn_raw_auto( void )
 
    // Set the runID and directory
    runID       = new_runID;
-   le_runID->setText( runID );
+   
+   // le_runID->setText( runID );
+   le_runID->setText_auto ( runID );
+
    currentDir  = US_Settings::importDir() + "/" + runID;
    le_dir  ->setText( currentDir );
    qApp->processEvents();
@@ -3477,7 +3540,7 @@ DbgLv(1) << "RDa:   runType2 scanmask" << runType2 << scanmask << "[ifw]scn_rows
    qApp->processEvents();  //ALEXEY: maybe this will help
    DbgLv(1) << "RDa: 1. Crashes HERE!!!!";
 
-
+   /****** REVERSE TO GUI refreshing *********************************************************************
    //First time setting Optics types counter //////////////////////////////////////////////
    if ( !in_reload_all_data_set_gui )
      {
@@ -3494,22 +3557,24 @@ DbgLv(1) << "RDa:   runType2 scanmask" << runType2 << scanmask << "[ifw]scn_rows
 		this,         SLOT  ( changeOptics_auto(  )       ));
      }
    // END of [First time setting Optics types counter] /////////////////////////////////////
-  
-   
-   // cb_optsys->disconnect();
-   // cb_optsys->clear();
-   // DbgLv(1) << "RDa: 1a. Crashes HERE!!!!";
-   
-   // cb_optsys->addItems( opsys_auto );                                  // ALEXEY fill out Optics listbox
-   // DbgLv(1) << "RDa: 1ab. Crashes HERE!!!! - BEFORE Setting index to cb_optsys: optndx_auto = " << optndx_auto;
-   // cb_optsys->setCurrentIndex( optndx_auto );
-   // DbgLv(1) << "RDa: 1ac. Crashes HERE!!!! - AFTER Setting index to cb_optsys";
-   
-   // // connect( cb_optsys,    SIGNAL( currentIndexChanged( int ) ),
-   // //          this,         SLOT  ( changeOptics( )            ) );
+   *******************************************************************************************************/
 
+   /********* OLDER code *************************************************/
+   cb_optsys->disconnect();
+   cb_optsys->clear();
+   DbgLv(1) << "RDa: 1a. Crashes HERE!!!!";
+   
+   cb_optsys->addItems( opsys_auto );                                  // ALEXEY fill out Optics listbox
+   DbgLv(1) << "RDa: 1ab. Crashes HERE!!!! - BEFORE Setting index to cb_optsys: optndx_auto = " << optndx_auto;
+   cb_optsys->setCurrentIndex( optndx_auto );
+   DbgLv(1) << "RDa: 1ac. Crashes HERE!!!! - AFTER Setting index to cb_optsys";
+   
    // connect( cb_optsys,    SIGNAL( currentIndexChanged( int ) ),
-   //          this,         SLOT  ( changeOptics_auto(  )       ));
+   //          this,         SLOT  ( changeOptics( )            ) );
+
+   connect( cb_optsys,    SIGNAL( currentIndexChanged( int ) ),
+            this,         SLOT  ( changeOptics_auto(  )       ));
+   /*** END of an older code **********************************************/
    
    DbgLv(1) << "RDa: 1b. Crashes HERE!!!!";
 
@@ -3550,7 +3615,7 @@ DbgLv(1) << "RDa: ncellch" << ncellch << cellchans.count();
 DbgLv(1) << "RDa: nscan" << nscan << "npoint" << npoint;
 DbgLv(1) << "RDa:   rvS rvE" << r_radii[0] << r_radii[npoint-1];
 
- 
+   /****** REVERSE TO GUI refreshing *********************************************************************
    //First time setting Cell/Channs counter //////////////////////////////////////////////////////
    if ( !in_reload_all_data_set_gui )
      {
@@ -3562,14 +3627,17 @@ DbgLv(1) << "RDa:   rvS rvE" << r_radii[0] << r_radii[npoint-1];
 		this,         SLOT  ( changeCellCh(            ) ) );
      }
    //END of [First time setting Cell/Channs counter ] //////////////////////////////////////////////
+   ********************************************************************************************************/
 
- 
-   // cb_cellchn->disconnect();                                      
-   // cb_cellchn->clear();
-   // cb_cellchn->addItems( cellchans );                             // ALEXEY fill out Cells/Channels listbox
-   // connect( cb_cellchn,   SIGNAL( currentIndexChanged( int ) ),
-   //          this,         SLOT  ( changeCellCh(            ) ) );
+   /********* OLDER code **************************************************************/
+   cb_cellchn->disconnect();                                      
+   cb_cellchn->clear();
+   cb_cellchn->addItems( cellchans );                             // ALEXEY fill out Cells/Channels listbox
+   connect( cb_cellchn,   SIGNAL( currentIndexChanged( int ) ),
+            this,         SLOT  ( changeCellCh(            ) ) );
+   /*** END of an older code ***********************************************************/
 
+   
    nlambda      = xpn_data->lambdas_raw( lambdas );               // ALEXEY  lambdas
    int wvlo     = lambdas[ 0 ];
    int wvhi     = lambdas[ nlambda - 1 ];
@@ -3609,6 +3677,7 @@ DbgLv(1) << "RDa: allData size" << allData.size();
    in_reload_auto      = false;
 
    // Ok to enable some buttons now
+   /****** REVERSE TO GUI refreshing *********************************************************************
    //First time enabling Controls ///////////////////////////////////////////////////////
    if ( !in_reload_all_data_set_gui )
      {
@@ -3617,10 +3686,12 @@ DbgLv(1) << "RDa: allData size" << allData.size();
        in_reload_all_data_set_gui = true;
      }
    //ENF of [First time enabling Controls ] //////////////////////////////////////////////
-
+   *******************************************************************************************************/
    
-   // enableControls();                                    //ALEXEY ...and actual plotting data
-
+   /** OLDER WAY *******************************************************************************/
+   enableControls();                                    //ALEXEY ...and actual plotting data
+   /** END of OLDER WAY ************************************************************************/
+   
    if ( combinedOptics )
      {
        qDebug() << "CellChNumber, cellchans.count() for runType " <<  runType << ": " << CellChNumber_map[ runType ].toInt() << ", " << cellchans.count();
@@ -3654,10 +3725,54 @@ DbgLv(1) << "RDa: allData size" << allData.size();
        
        timer_all_data_avail->stop();
        disconnect(timer_all_data_avail, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
+
+       //For combined Optics type && opticsFailed!
+       qDebug() << "[ABORTION IN EARLY STAGE...] : combinedOptics,  opsys_auto.count(), opsys_auto -- "
+		<< combinedOptics << opsys_auto.count() << opsys_auto;
+       if ( combinedOptics && opsys_auto.count() < 2 )
+	 {
+	   QString optics_failed    = (runType == "RI" ) ? "Interference" : "Absorbance";
+	   QString optics_processed = (runType == "RI" ) ? "Absorbance" : "Interference";
+	   //Inform user that run completed but one of the optics failed
+	   QMessageBox::critical( this,
+				  tr( "Optima Optics Failed | Not Initiated:" ),
+				  tr( "Data collection for %1 optics type failed / not initiated. \n\n"
+				      "The program will proceed to the 3. IMPORT stage where "
+				      "collected data (%2) can be saved into DB.")
+				  . arg( optics_failed)
+				  . arg( optics_processed ) );
+
+	   opticsFailed     = true;
+	   opticsFailed_type = (runType == "RI" ) ? "IP" : "RI";
+	 }
        
        if ( !timer_check_sysdata->isActive()  ) // Check if sys_data Timer is stopped
 	 {
-	   export_auc_auto();
+	   bool tmstampOK = true;
+	   export_auc_auto( tmstampOK );
+	   if ( !tmstampOK )
+	     {
+	       in_reload_all_data = false;
+
+	       QMessageBox::critical( this,
+				      tr( "GMP Compliance Problem:" ),
+				      tr( "This run did not start at zero RPM because the w2t value "
+					  "was non-zero at the beginning of the experiment. \n\n"
+					  "Therefore, the boundary conditions are unknown and the experiment "
+					  "cannot be reliably analyzed. It fails GMP requirements and will "
+					  "therefore be aborted. The run will be deleted.\n\n"
+					  "The data can be retrieved with the \"View Raw Optima Data\" function "
+					  "in the UltraScan Utilities." ) );
+	       
+	       
+	       delete_autoflow_record();  /** Do we want to delete GMP run NOW? **/ 
+	       reset_auto();
+	       emit aborted_back_to_initAutoflow();
+	       
+	       return;
+	     }
+
+  
 	   updateautoflow_record_atLiveUpdate();
 
 	   reset_auto();
@@ -3696,16 +3811,17 @@ DbgLv(1) << "RDa: allData size" << allData.size();
      }
    else
      {
-       qDebug() << " In retrieve_xpn_raw_auto(): Combined optics! cellchans.count(), CellChNumber_map[ runType ].toInt(); ntriple, TripleNumber_map[ runType ].toInt() -- "
+       qDebug() << " In retrieve_xpn_raw_auto(): Combined optics! cellchans.count(), CellChNumber_map[ runType ].toInt(); ntriple, TripleNumber_map[ runType ].toInt(), runtype -- "
 		<< cellchans.count() << ", " <<  CellChNumber_map[ runType ].toInt() << "; "
-		<< ntriple << ", " <<  TripleNumber_map[ runType ].toInt();
+		<< ntriple << ", " <<  TripleNumber_map[ runType ].toInt() << runType;
        if ( cellchans.count() == CellChNumber_map[ runType ].toInt() && ntriple == TripleNumber_map[ runType ].toInt() )    
 	 {
-
+	   qDebug() << "opsys_auto, opsys_auto.count(): " << opsys_auto << opsys_auto.count();
+	   
 	   //ALEXEY: here - either check that
 	   // 1. xpn_data->countOf( "ascn_rows" ) != 0 && xpn_data->countOf( "iscn_rows" ) != 0 OR opsys_auto.count() > 1
 	   // 2. all triples for ALL optics systems are populated
-	   if ( opsys_auto.count() > 1 )
+	   if ( opsys_auto.count() > 1 ) //All optics processed
 	     {
 	       	       
 	       //stop timer
@@ -3724,6 +3840,50 @@ DbgLv(1) << "RDa: allData size" << allData.size();
 		   //update hereafter
 		   connect(timer_data_reload, SIGNAL(timeout()), this, SLOT( reloadData_auto( ) ));
 		   timer_data_reload->start(10000);     // 10 sec
+		 }
+	     }
+	   else //not all optics processed & Exp Completed
+	     {
+	       bool oconn = true;
+	       int expStat = CheckExpComplete_auto( RunID_to_retrieve, oconn );
+	       if ( expStat == 5 || expStat == 0 ) //Run Completed, or Aborted (SHOULD BE '3' as per documentaiton but never implemented...)
+		 {
+		   //stop timer
+		   timer_all_data_avail->stop();
+		   disconnect(timer_all_data_avail, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
+
+		   if ( !timer_check_sysdata->isActive()  ) // Check if sys_data Timer is stopped
+		     {
+		       in_reload_all_data   = false;
+		       
+		       QString optics_failed    = (runType == "RI" ) ? "Interference" : "Absorbance";
+		       QString optics_processed = (runType == "RI" ) ? "Absorbance" : "Interference";
+		       //Inform user that run completed but one of the optics failed
+		       QMessageBox::critical( this,
+					      tr( "Optima Optics Failed:" ),
+					      tr( "Data collection for %1 optics type failed. \n\n"
+						  "The program will proceed to the 3. IMPORT stage where "
+						  "collected data (%2) can be saved into DB.")
+					      . arg( optics_failed)
+					      . arg( optics_processed ) );
+		       
+		       //proceed to IMPORT
+		       bool tmstampOK = true;
+		       export_auc_auto( tmstampOK );
+		       qDebug() << "[Optics FAILED]tmstampOK? " << tmstampOK;
+
+		       opticsFailed     = true;
+		       opticsFailed_type = (runType == "RI" ) ? "IP" : "RI";
+		       
+		       updateautoflow_record_atLiveUpdate(); // We need to include info on the failed optics here!!!
+
+		       reset_auto();
+	   
+		       in_reload_all_data   = false;  
+	   
+		       emit experiment_complete_auto( details_at_live_update  ); 
+		       return;
+		     }
 		 }
 	     }
 	 }
@@ -4765,7 +4925,7 @@ void US_XpnDataViewer::connect_ranges( bool conn )
 }
 
 // export_auc data in us_com_project -- CORRECTED
-void US_XpnDataViewer::export_auc_auto()
+void US_XpnDataViewer::export_auc_auto( bool& tmstampOK )
 {
    inExport = true;
 
@@ -4777,7 +4937,7 @@ void US_XpnDataViewer::export_auc_auto()
    if ( noptsy == 1 )
      {
        correct_radii();      // Perform chromatic aberration radius corrections
-       nfiles     = xpn_data->export_auc( allData );
+       nfiles     = xpn_data->export_auc_auto( allData, tmstampOK  );
      }
 
    //--- Combined optics type -----//
@@ -4800,7 +4960,7 @@ void US_XpnDataViewer::export_auc_auto()
 	 
          cb_optsys->setCurrentIndex( osx );   
          correct_radii();                  // Chromatic aberration correction if needed
-         int kfiles     = xpn_data->export_auc( allData ) - 2;  // Export data
+         int kfiles     = xpn_data->export_auc_auto( allData, tmstampOK ) - 2;  // Export data
          nfiles        += kfiles;          // Total files written
       }
 
@@ -5322,8 +5482,31 @@ DbgLv(1) << "RLd:       NO CHANGE";
 	    {
 
 	      qDebug() << "Exporing/Writing to disk...";
-	      // ALEXEY Export AUC data: devise export_auc_auto() function which would return directory name with saved data - to pass to emit signal below... 
-	      export_auc_auto();
+	      // ALEXEY Export AUC data: devise export_auc_auto() function which would return directory name with saved data - to pass to emit signal below...
+	      bool tmstampOK = true;
+	      export_auc_auto( tmstampOK );
+	      qDebug() << "tmstampOK? " << tmstampOK;
+	      if ( !tmstampOK )
+		{
+		  in_reload_auto = false;
+		  
+		  QMessageBox::critical( this,
+					 tr( "GMP Compliance Problem:" ),
+					 tr( "This run did not start at zero RPM because the w2t value "
+					     "was non-zero at the beginning of the experiment. \n\n"
+					     "Therefore, the boundary conditions are unknown and the experiment "
+					     "cannot be reliably analyzed. It fails GMP requirements and will "
+					     "therefore be aborted. The run will be deleted.\n\n"
+					     "The data can be retrieved with the \"View Raw Optima Data\" function "
+					     "in the UltraScan Utilities." ) );
+		  
+		  
+		  delete_autoflow_record();  /** Do we want to delete GMP run NOW? **/ 
+		  reset_auto();
+		  emit aborted_back_to_initAutoflow();
+		  
+		  return;
+		}
 	  
 	      // QString mtitle_complete  = tr( "Complete!" );
 	      // QString message_done     = tr( "Experiment was completed. Optima data saved..." );

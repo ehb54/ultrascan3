@@ -106,20 +106,20 @@ US_AnaProfile::US_AnaProfile()
       "\"s,2DSA-IT\":"
                "[{"
                   "\"Envelope Gaussian Sigma\":  \"0.01\","
-                  "\"Plot X Minimum\":   \"1\","
-                  "\"Plot X Maximum\":    \"10\""
+                  "\"Plot X Minimum\":   \"0\","
+                  "\"Plot X Maximum\":    \"0\""
                 "}],"
       "\"s,2DSA-MC\":"
                "[{"
                   "\"Envelope Gaussian Sigma\":  \"0.01\","
-                  "\"Plot X Minimum\":   \"1\","
-                  "\"Plot X Maximum\":    \"10\""
+                  "\"Plot X Minimum\":   \"0\","
+                  "\"Plot X Maximum\":    \"0\""
                 "}],"
       "\"s,PCSA\":"
                "[{"
                   "\"Envelope Gaussian Sigma\":  \"0.01\","
-                  "\"Plot X Minimum\":   \"1\","
-                  "\"Plot X Maximum\":    \"10\""
+                  "\"Plot X Minimum\":   \"0\","
+                  "\"Plot X Maximum\":    \"0\""
                 "}],"
       "\"D,2DSA-IT\":"
                "[{"
@@ -1191,7 +1191,8 @@ US_AnaProfile::AnaProfPCSA::ParmPCSA::ParmPCSA()
    creso_pts  = 200;
    noise_flag = 0;
    treg_flag  = 0;
-   mc_iters   = 1;
+   //mc_iters   = 1;
+   mc_iters   = 100;
    channel    = "1A";
    curv_type  = "All";
    x_type     = "s";

@@ -11,6 +11,7 @@
 #include "us_solution_vals.h"
 #include "us_lamm_astfvm.h"
 #include "../us_fematch/us_thread_worker.h"
+#include "../us_mwl_species_fit/us_mwl_species_fit.h"
 
 #define MIN_NTC   25
 
@@ -31,7 +32,8 @@ US_Analysis_auto::US_Analysis_auto() : US_Widgets()
   panel->setSpacing        ( 2 );
   panel->setContentsMargins( 2, 2, 2, 2 );
 
-  QLabel* lb_hdr1          = us_banner( tr( "Analysis Stages for All Triples" ) );
+  //QLabel* lb_hdr1          = us_banner( tr( "Analysis Stages for All Triples" ) );
+  lb_hdr1          = us_banner( tr( "Analysis Stages for All Triples" ) );
   panel->addWidget(lb_hdr1);
 
   QHBoxLayout* buttons     = new QHBoxLayout();
@@ -60,6 +62,17 @@ US_Analysis_auto::US_Analysis_auto() : US_Widgets()
   //QScroller *scroller = QScroller::scroller(treeWidget->viewport());
   //scroller->grabGesture(treeWidget, QScroller::MiddleMouseButtonGesture);
   treeWidget->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
+
+  //for (SSF-)ABDE
+  sdiag_norm_profile = new US_Norm_Profile("AUTO");
+  connect( this, SIGNAL( process_abde( QMap < QString, QString > & ) ),
+	   sdiag_norm_profile, SLOT( load_data_auto ( QMap < QString, QString > & )  ) );
+  connect( sdiag_norm_profile, SIGNAL( abde_to_report( QMap < QString, QString > &) ),
+	   this, SLOT( proceed_abde_to_report( QMap < QString, QString > &) ) );
+  connect( sdiag_norm_profile, SIGNAL( back_to_runManager( ) ),
+	   this, SLOT( back_to_initAutoflow() ));
+  panel->addWidget( sdiag_norm_profile );
+  sdiag_norm_profile->hide();
   
   setMinimumSize( 950, 450 );
   adjustSize();
@@ -68,7 +81,7 @@ US_Analysis_auto::US_Analysis_auto() : US_Widgets()
   in_reload_end_process = false;
   all_processed = true;
   
-  // // // // // // ---- Testing ----
+  // // // // // ---- Testing ----
   // QMap < QString, QString > protocol_details;
 
 
@@ -78,20 +91,32 @@ US_Analysis_auto::US_Analysis_auto() : US_Widgets()
   // protocol_details[ "filename" ]     = QString("MartinR_RP12_EcoRI_Digest_Optima1_24823-v3-run1963");
   // protocol_details[ "analysisIDs"  ] = QString( "3657,3658");
 
-  // // //What's needed ////////////////////////////////////////////////////////
-  // AProfileGUID       = protocol_details[ "aprofileguid" ];
-  // ProtocolName_auto  = protocol_details[ "protocolName" ];
-  // invID              = protocol_details[ "invID_passed" ].toInt();
+  // //ABDE-MWL
+  // protocol_details[ "invID_passed" ] = QString("165");
+  // protocol_details[ "protocolName" ] = QString("GMP-test-ABDE-fromDisk");
+  // protocol_details[ "aprofileguid" ] = QString("6c376179-6eda-47e9-b699-3eef63c6fe6e");
+  // protocol_details[ "filename" ]     = QString("AAV_GMP_test_030325-run2366-dataDiskRun-1515");
+  // protocol_details[ "analysisIDs"  ] = QString("");
+  // protocol_details[ "expType" ]      = QString("ABDE");
+  // protocol_details[ "dataSource" ]   = QString("dataDiskAUC");
+  // protocol_details[ "statusID" ]     = QString("588");
+  // protocol_details[ "autoflowID" ]   = QString("1515");
 
-  // FileName           = protocol_details[ "filename" ];
-  
-  // analysisIDs        = protocol_details[ "analysisIDs" ];
-  // /////////////////////////////////////////////////////////////////////
-
+  // // // //What's needed ////////////////////////////////////////////////////////
+  // // AProfileGUID       = protocol_details[ "aprofileguid" ];
+  // // ProtocolName_auto  = protocol_details[ "protocolName" ];
+  // // invID              = protocol_details[ "invID_passed" ].toInt();
+  // // FileName           = protocol_details[ "filename" ];
+  // // analysisIDs        = protocol_details[ "analysisIDs" ];
+  // // autoflow_expType   = protocol_details[ "expType" ];
+  // // dataSource         = protocol_details[ "dataSource" ];
+  // // autoflowStatusID   = protocol_details[ "statusID" ].toInt();
+  // // autoflowID_passed  = protocol_details[ "autoflowID" ].toInt();
+  // // /////////////////////////////////////////////////////////////////////
   
   // initPanel( protocol_details );
 
-  // // -----------------
+  // -----------------
 
 }
 
@@ -127,10 +152,28 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
   sim_msg_pos_x      = protocol_details[ "sim_msg_pos_x" ].toInt();
   sim_msg_pos_y      = protocol_details[ "sim_msg_pos_y" ].toInt();
 
+  autoflow_expType   = protocol_details[ "expType" ];
+  dataSource         = protocol_details[ "dataSource" ];
+
+  //hide if ABDE, close message
+  if ( autoflow_expType == "ABDE")
+    {
+      qDebug() << "[ABDE] - ANALYSIS!";
+      //emit close_analysissetup_msg();
+
+      lb_hdr1     ->hide();
+      pb_show_all ->hide();
+      pb_hide_all ->hide();
+      treeWidget  ->hide();
+    }
+  else
+    {
+      sdiag_norm_profile->hide();
+    }
+  
+
   //Copy protocol details
   protocol_details_at_analysis = protocol_details;
-
-  QStringList analysisIDs_list = analysisIDs.split(",");
 
   US_Passwd pw;
   US_DB2    db( pw.getPasswd() );
@@ -156,7 +199,61 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
       qDebug() << "defaultDB -- " << defaultDB;
     }
 
+  // IF ABDE:
+  if ( autoflow_expType == "ABDE")
+    {
+      qDebug() << "[ABDE] - ANALYSIS!";
+
+      //close sdiag_norm_profile if left open:
+      bool norm_abde_open = sdiag_norm_profile->isVisible();
+      qDebug() << "[in autoflow_analysis: ] norm_abde_open? " << norm_abde_open;
+      if ( norm_abde_open )
+	{
+	  qDebug() << "Closing/deleting ABDE-norm widget!";
+	  sdiag_norm_profile->close();
+	}
+
+      //check if MWL or SWL
+      QMap<QString, QString> abde_analysis_details = get_abdeAnalysis_info( &db, QString::number(autoflowID_passed));
+      QString abde_etype = abde_analysis_details["etype"];
+      qDebug() << "ABDE_exp_type: " << abde_etype;
+
+      if ( abde_etype == "MWL" )
+	{
+	  protocol_details_at_analysis["abde_etype"] = "MWL";
+	  
+	  //Pre-process data (decomposition for MWL); build alt. GUI (to integrate and manually normalize);
+	  sdiag = new US_MwlSpeciesFit( protocol_details_at_analysis );
+	  //sdiag -> show(); //for debug
+	  
+	  qDebug() << "SSF-Dir: " << protocol_details_at_analysis["ssf_dir_name"];
+	  
+	  //now save ssf-produced-data to DB
+	  sdiag_convert = new US_ConvertGui("AUTO");
+	  sdiag_convert->import_ssf_data_auto( protocol_details_at_analysis );
+	  //sdiag_convert -> show(); //for debug
+	}
+      else if ( abde_etype == "SWL" )
+	{
+	  protocol_details_at_analysis["abde_etype"] = "SWL";
+	  sdiag = new US_MwlSpeciesFit( protocol_details_at_analysis );
+
+	  qDebug() << "Dir for GMP: " << protocol_details_at_analysis["directory_for_gmp"];
+	}
+      
+      emit close_analysissetup_msg();
+
+      //call abde normalizer
+      emit process_abde( protocol_details_at_analysis );
+      sdiag_norm_profile->show();
+      
+      return;
+    }
+  // END for ABDE
+  
+  
   //retrieve AutoflowAnalysis records, build autoflowAnalysis objects:
+  QStringList analysisIDs_list = analysisIDs.split(",");
   for( int i=0; i < analysisIDs_list.size(); ++i )
     {
       QMap <QString, QString> analysis_details;
@@ -271,9 +368,7 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
 	job5run = true;
       if ( json.contains("PCSA") )
 	job6run_pcsa = true;
-    
-      
-      
+          
       triple_name_width = fmet.width( triple_curr );
       //triple_name_width = fmet.horizontalAdvance( triple_curr );
       
@@ -1182,10 +1277,11 @@ void US_Analysis_auto::update_autoflow_record_atAnalysis( void )
      }
 
    QStringList qry;
+   // qry << "update_autoflow_at_analysis"
+   //     << protocol_details_at_analysis[ "runID" ]
+   //     << protocol_details_at_analysis[ "OptimaName" ];
    qry << "update_autoflow_at_analysis"
-       << protocol_details_at_analysis[ "runID" ]
-       << protocol_details_at_analysis[ "OptimaName" ];
-       
+       << QString::number( autoflowID_passed );
 
    //db->query( qry );
 
@@ -2137,13 +2233,21 @@ void US_Analysis_auto::simulateModel( )
   QString svalu = US_Settings::debug_value( "SetSpeedLowA" );
   int lo_ss_acc = svalu.isEmpty() ? 250 : svalu.toInt();
   int rspeed    = simparams.speed_step[ 0 ].rotorspeed;
-  int tf_aend   = ( rspeed + accel1 - 1 ) / accel1;
+  double  tf_aend   = static_cast<double>(tf_scan);
+  // prevent any division by zero
+  if (accel1 != 0)
+  {
+    tf_aend = static_cast<double>(rspeed) / static_cast<double>(accel1);
+  }
   
   qDebug() << "SimMdl: ssck: rspeed accel1 lo_ss_acc"
 	   << rspeed << accel1 << lo_ss_acc << "tf_aend tf_scan"
 	   << tf_aend << tf_scan;
   //x0  1  2  3  4  5
-  if ( accel1 < lo_ss_acc  ||  tf_aend > ( tf_scan - 3 ) )
+  // check if the acceleration rate is low or the first scan was taken before the acceleration ended
+  // Due to older, wrong timestate calculation there might be a case, in which the calculated end of acceleration can
+  // be up to 1 second later than expected, tf_scan + 1 accounts for this.
+  if ( accel1 < lo_ss_acc  ||  tf_aend > ( tf_scan + 1 ) )
     {
       QString wmsg = tr( "The TimeState computed/used is likely bad:<br/>"
 			 "The acceleration implied is %1 rpm/sec.<br/>"
@@ -2152,7 +2256,7 @@ void US_Analysis_auto::simulateModel( )
 			 "<b>You should rerun the experiment without<br/>"
 			 "any interim constant speed, and then<br/>"
 			 "you should reimport the data.</b>" )
-	.arg( accel1 ).arg( tf_aend ).arg( tf_scan );
+	.arg( accel1 ).arg( QString::number(tf_aend) ).arg( QString::number(tf_scan) );
       
       QMessageBox msgBox( this );
       msgBox.setWindowTitle( tr( "Bad TimeState Implied!" ) );
@@ -2685,7 +2789,7 @@ void US_Analysis_auto::show_overlay( QString triple_stage )
   
   dbg_level  = US_Settings::us_debug();
 
-  adv_vals[ "simpoints"  ] = "500";
+  adv_vals[ "simpoints"  ] = "200";
   adv_vals[ "bandvolume" ] = "0.015";
   adv_vals[ "parameter"  ] = "0";
   adv_vals[ "modelnbr"   ] = "0";
@@ -3573,18 +3677,29 @@ bool US_Analysis_auto::check_fitmen_status( const QString& requestID, const QStr
 //reset Analysis GUI: stopping all update processes
 void US_Analysis_auto::reset_analysis_panel( )
 {
-  //Stop  timer if active
-  if ( timer_update -> isActive() ) 
+  if ( autoflow_expType != "ABDE" || autoflow_expType == "VELOCITY" )
     {
-      timer_update -> stop();
-      disconnect(timer_update, SIGNAL(timeout()), 0, 0);
-
-      qDebug() << "Stopping timer_update !!!!";
+      //Stop  timer if active
+      if ( timer_update -> isActive() ) 
+	{
+	  timer_update -> stop();
+	  disconnect(timer_update, SIGNAL(timeout()), 0, 0);
+	  
+	  qDebug() << "Stopping timer_update !!!!";
+	}
+      
+      //ALEXEY: now we should wait for completion of the last timer_update shot...
+      connect(timer_end_process, SIGNAL(timeout()), this, SLOT( end_process ( ) ));
+      timer_end_process->start(1000);     // 5 sec
     }
-
-  //ALEXEY: now we should wait for completion of the last timer_update shot...
-  connect(timer_end_process, SIGNAL(timeout()), this, SLOT( end_process ( ) ));
-  timer_end_process->start(1000);     // 5 sec
+  else
+    {
+      //add clearing ABDE-norm. GUI when switching btw. runs
+      
+      
+      sdiag_norm_profile->hide();
+      emit analysis_update_process_stopped();
+    }
 }
 
 //Periodically check for ended processes
@@ -3870,6 +3985,27 @@ QMap< QString, QString> US_Analysis_auto::read_autoflowAnalysisHistory_record( U
 }
 
 
+QMap< QString, QString> US_Analysis_auto::get_abdeAnalysis_info( US_DB2* db, const QString& ID )
+{
+  QMap<QString, QString> abdeAnalysis_details;
+  
+  QStringList qry;
+  qry << "read_autoflowAnalysisABDE_record"
+      << ID;
+  
+  db->query( qry );
+
+  if ( db->lastErrno() == US_DB2::OK )    
+    {
+      while ( db->next() )
+	{
+	  abdeAnalysis_details["ID"]             = db->value( 0 ).toString();
+	  abdeAnalysis_details["etype"]          = db->value( 1 ).toString();
+	  abdeAnalysis_details["xnorm_percents"] = db->value( 2 ).toString();
+	}
+    }
+  return abdeAnalysis_details;
+}
 
 QMap< QString, QString> US_Analysis_auto::get_investigator_info( US_DB2* db, const QString& ID )
 {
@@ -6394,4 +6530,14 @@ DbgLv(1) << "NIE: db_upd" << db_upd << "nlnois" << nlnois
  << "nieDescs-size" << nieDescs.size() << "nieIDs-size" << nieIDs.size();
 
    return;
+}
+
+void US_Analysis_auto::proceed_abde_to_report( QMap< QString, QString > & protocol_details_at_analysis )
+{
+  emit analysis_complete_auto( protocol_details_at_analysis );  
+}
+
+void US_Analysis_auto::back_to_initAutoflow( void )
+{
+  emit analysis_back_to_initAutoflow( );
 }

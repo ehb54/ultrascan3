@@ -3,6 +3,7 @@
 #include <QApplication>
 #include <QtSvg>
 #include "us_plot.h"
+#include "us_images.h"
 #if QT_VERSION > 0x050000
 #include <QtPrintSupport>
 #include "us_colorgradIO.h"
@@ -79,13 +80,26 @@ US_Plot::US_Plot( QwtPlot*& parent_plot, const QString& title,
    btnZoom->setCheckable( true );
    btnZoom->setToolButtonStyle( Qt::ToolButtonTextUnderIcon );
    btnZoom->setFont( buttonFont );
+   btnZoom->setIconSize ( QSize( 20, 20 ) );
+   btnZoom->setFixedSize( QSize( 40, 50 ) );
    connect( btnZoom, SIGNAL( toggled( bool ) ), SLOT( zoom( bool ) ) );
+
+   QToolButton* btnCSV = new QToolButton( toolBar );
+   btnCSV->setText( "CSV" );
+   btnCSV->setIcon( US_Images::getIcon( US_Images::TABLE ) );
+   btnCSV->setToolButtonStyle( Qt::ToolButtonTextUnderIcon );
+   btnCSV->setFont( buttonFont );
+   btnCSV->setIconSize ( QSize( 20, 20 ) );
+   btnCSV->setFixedSize( QSize( 40, 50 ) );
+   connect( btnCSV, SIGNAL( clicked() ), SLOT( csv() ) );
 
    QToolButton* btnPrint = new QToolButton( toolBar );
    btnPrint->setText( "Print" );
    btnPrint->setIcon( QIcon( QPixmap( print_xpm ) ) );
    btnPrint->setToolButtonStyle( Qt::ToolButtonTextUnderIcon );
    btnPrint->setFont( buttonFont );
+   btnPrint->setIconSize ( QSize( 20, 20 ) );
+   btnPrint->setFixedSize( QSize( 40, 50 ) );
    connect( btnPrint, SIGNAL( clicked() ), SLOT( print() ) );
 
    QToolButton* btnSVG = new QToolButton( toolBar );
@@ -93,6 +107,8 @@ US_Plot::US_Plot( QwtPlot*& parent_plot, const QString& title,
    btnSVG->setIcon( QIcon( QPixmap( vec_xpm ) ) );
    btnSVG->setToolButtonStyle( Qt::ToolButtonTextUnderIcon );
    btnSVG->setFont( buttonFont );
+   btnSVG->setIconSize ( QSize( 20, 20 ) );
+   btnSVG->setFixedSize( QSize( 40, 50 ) );
    connect( btnSVG, SIGNAL( clicked() ), SLOT( svg() ) );
 
    QToolButton* btnPNG = new QToolButton( toolBar );
@@ -100,6 +116,8 @@ US_Plot::US_Plot( QwtPlot*& parent_plot, const QString& title,
    btnPNG->setIcon( QIcon( QPixmap( ras_xpm ) ) );
    btnPNG->setToolButtonStyle( Qt::ToolButtonTextUnderIcon );
    btnPNG->setFont( buttonFont );
+   btnPNG->setIconSize ( QSize( 20, 20 ) );
+   btnPNG->setFixedSize( QSize( 40, 50 ) );
    connect( btnPNG, SIGNAL( clicked() ), SLOT( png() ) );
 
    QToolButton* btnConfig = new QToolButton( toolBar );
@@ -107,6 +125,8 @@ US_Plot::US_Plot( QwtPlot*& parent_plot, const QString& title,
    btnConfig->setIcon(QIcon( QPixmap( configure_32_xpm ) ) );
    btnConfig->setToolButtonStyle( Qt::ToolButtonTextUnderIcon );
    btnConfig->setFont( buttonFont );
+   btnConfig->setIconSize ( QSize( 20, 20 ) );
+   btnConfig->setFixedSize( QSize( 40, 50 ) );
    connect( btnConfig, SIGNAL( clicked() ), SLOT( config() ) );
 
    btnCMap                = new QToolButton( toolBar );
@@ -120,6 +140,7 @@ US_Plot::US_Plot( QwtPlot*& parent_plot, const QString& title,
    connect( btnCMap,   SIGNAL( clicked() ), SLOT( colorMap() ) );
 
    toolBar->addWidget( btnZoom   );
+   toolBar->addWidget( btnCSV    );
    toolBar->addWidget( btnPrint  );
    toolBar->addWidget( btnSVG    );
    toolBar->addWidget( btnPNG    );
@@ -278,7 +299,7 @@ void US_Plot::zoom( bool on )
    }
 }
 
-void US_Plot::svg( void )
+void US_Plot::csv( void )
 {
    QDir dir;
    QString reportDir = US_Settings::reportDir();
@@ -286,6 +307,24 @@ void US_Plot::svg( void )
 
    QString fileName = QFileDialog::getSaveFileName( plot, 
       tr( "Export File Name" ), reportDir, 
+                                                     tr( "CSV Documents (*.csv)" ) );
+
+   if ( ! fileName.isEmpty() )
+   {
+        if ( fileName.right( 4 ) != ".csv" ) fileName += ".csv";
+
+        US_GuiUtil::save_csv( fileName, plot );
+   }
+}
+
+void US_Plot::svg( void )
+{
+   QDir dir;
+   QString reportDir = US_Settings::reportDir();
+   if ( ! dir.exists( reportDir ) ) dir.mkpath( reportDir );
+
+   QString fileName = QFileDialog::getSaveFileName( plot,
+      tr( "Export File Name" ), reportDir,
       tr( "SVG Documents (*.svgz)" ) );
 
    if ( ! fileName.isEmpty() )

@@ -45,6 +45,9 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+      - name: Install libarchive
+        run: |
+          apt-get install -y libarchive-dev
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
@@ -53,6 +56,7 @@ jobs:
       - name: Build
         run: |
           cp admin/codeql/docker/local.pri.mpi local.pri
+          git config --global --add safe.directory /__w/ultrascan3/ultrascan3
           cd utils
           qmake
           make -j4
@@ -84,6 +88,9 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+      - name: Install libarchive
+        run: |
+          apt-get install -y libarchive-dev
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
@@ -179,7 +186,7 @@ jobs:
 
       - name: Configure and build
         run: |
-          apt-get install -y cmake
+          apt-get install -y cmake libarchive-dev
           bdir=`pwd`
           echo $bdir
           pwd

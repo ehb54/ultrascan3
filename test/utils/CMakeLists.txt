@@ -2,7 +2,7 @@
 project(TestUSUtils)
 
 # Find Qt5 packages
-find_package(Qt5 REQUIRED COMPONENTS Core Test Xml)
+find_package(Qt5 REQUIRED COMPONENTS Core Network Sql Test Xml)
 find_package(MySQL)
 
 # Include directories
@@ -15,6 +15,7 @@ add_executable(test_us_utils
         test_us_utils_main.cpp
         test_us_datafiles.cpp
         test_us_util.cpp
+        test_us_simparams.cpp
         test_us_ana_profile.cpp
         test_us_math2.cpp
         test_us_crc.cpp test_us_crc.h

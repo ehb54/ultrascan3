@@ -4,7 +4,7 @@
 
 <h2> Edit UltraScan Multi-WaveLength (MWL) Data </h2>
 
-<p> <img src="images/us_edit_mwl.png" alt="MWL Data Editor Window"/> </p>
+<p class="center"> <img src="images/us_edit_mwl.png" alt="MWL Data Editor Window"/> </p>
 
 <p>Where the data loaded in an editing session is comprised of multiple
 wavelengths (more than two), the main editor window is changed to the above

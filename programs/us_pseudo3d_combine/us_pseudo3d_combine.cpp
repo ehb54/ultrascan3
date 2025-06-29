@@ -510,7 +510,17 @@ void US_Pseudo3D_Combine::plot_data( void )
 
    QString tstr = tsys->run_name + "\n" + tsys->analys_name
                   + "\n" + tsys->method;
-   data_plot->setTitle( tstr );
+
+   QwtText p_title( tstr );
+   // QFont font_c("Arial", 10);
+   p_title.setFont( QFont( US_Widgets::fixedFont().family(),
+    			   US_GuiSettings::fontSize() + 1 ) );
+   //p_title.setFont( font_c );
+   //QFontInfo info(font_c);
+   //qDebug() << "Font family: " <<  info.family();
+   //data_plot->setTitle( tstr );
+   data_plot->setTitle( p_title );
+   
    data_plot->detachItems( QwtPlotItem::Rtti_PlotSpectrogram );
    QColor bg   = colormap->color1();
    data_plot->setCanvasBackground( bg );

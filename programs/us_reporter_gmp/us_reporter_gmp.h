@@ -17,6 +17,7 @@
 #include "us_help.h"
 #include "us_extern.h"
 #include "us_select_item.h"
+#include "../us_abde/us_norm_profile.h"
 
 /**
  * @class US_ReporterGMP
@@ -70,6 +71,8 @@ class US_ReporterGMP : public US_Widgets
 
         QString ap_xml;                     //!< XML string for analysis profile
 
+        US_Norm_Profile*  sdiag_norm_profile;
+  
         US_Pseudo3D_Combine* sdiag_pseudo3d; //!< Pseudo3D combine dialog
         US_DDistr_Combine* sdiag_combplot;   //!< D distribution combine dialog
         US_AnalysisProfileGui* sdiag;        //!< Analysis profile GUI dialog
@@ -78,6 +81,8 @@ class US_ReporterGMP : public US_Widgets
         US_AnaProfile::AnaProfPCSA cAPp;    //!< PCSA analysis profile
         QStringList chndescs;               //!< Channel descriptions
         QStringList chndescs_alt;           //!< Alternative channel descriptions
+        QList<int> analysis_runs;           //!< Analysis runs  
+        QList<int> report_runs;             //!< Report runs
         QMap<QString, QMap<QString, US_ReportGMP>> ch_reports; //!< Channel reports
         QMap<QString, QMap<QString, US_ReportGMP>> ch_reports_internal; //!< Internal channel reports
         QMap<QString, QList<double>> ch_wvls; //!< Channel wavelengths
@@ -111,6 +116,12 @@ class US_ReporterGMP : public US_Widgets
 
         GenReportMaskStructure genMask_edited; //!< Edited general report mask structure
 
+        struct PerChanReportMaskStructureABDE
+        {
+	  QMap<QString, bool> ShowChannelParts;
+	  QMap<QString, QMap<QString, QString>> ShowChannelItemParts;
+	};
+  
         struct PerChanReportMaskStructure
         {
             QMap<QString, bool> ShowChannelParts; //!< Map of channel parts to show
@@ -132,6 +143,7 @@ class US_ReporterGMP : public US_Widgets
             QMap<QString, QMap<QString, int>> has_tripleModelIndCombo_items;                               //!< Map of triple model individual combined items
         };
 
+        PerChanReportMaskStructureABDE perChanMask_edited_abde;
         PerChanReportMaskStructure perChanMask_edited; //!< Edited per-channel report mask structure
 
         struct CombPlotsReportMaskStructure
@@ -259,7 +271,17 @@ class US_ReporterGMP : public US_Widgets
         QString analysisIDs;                 //!< Analysis IDs
         QString autoflowStatusID;            //!< Autoflow status ID
         QString optimaName;                  //!< Optima name
-
+        QString dataSource;
+        bool    simulatedData;
+        QString expType;
+        QStringList abde_channList;
+        QMap<QString, QString >prot_details_at_report;
+        QMap< QString, QMap < QString, double>> abde_ranges_percents;
+        QMap< QString, double > abde_rmsd;
+        QMap< QString, double > abde_menisc;
+        QMap<QString, QString > abde_plots_filenames;
+        QMap< QString, QMap < QString, QVector<QVector<double>> > > abde_data_per_channel;
+  
         QString current_date;                //!< Current date
 
         QString duration_str;                //!< Duration string
@@ -279,6 +301,9 @@ class US_ReporterGMP : public US_Widgets
         bool has_uvvis;                      //!< Flag for UVVIS
         bool has_interference;               //!< Flag for interference
         bool has_fluorescense;               //!< Flag for fluorescence
+
+        QString editing_time_abde;
+        QString analysis_time_abde;
 
         QVector<QString> Array_of_triples;   //!< Array of triples
         QVector<QString> Array_of_tripleNames; //!< Array of triple names
@@ -314,8 +339,11 @@ class US_ReporterGMP : public US_Widgets
         void write_pdf_report(void); //!< Write PDF report
         void remove_files_by_mask(QString, QStringList); //!< Remove files by mask
         void write_gmp_report_DB(QString, QString); //!< Write GMP report to DB
-
+        
         void assemble_user_inputs_html(void); //!< Assemble user inputs in HTML
+        void user_interactions_analysis( QString, QString );
+        void user_interactions_analysis_abde( QString, QString );
+  
         void assemble_run_details_html(void); //!< Assemble run details in HTML
         int get_expID_by_runID_invID(US_DB2*, QString); //!< Get experiment ID by run ID and investigator ID
         double get_loading_volume(int); //!< Get loading volume
@@ -323,7 +351,7 @@ class US_ReporterGMP : public US_Widgets
         void read_autoflowStatus_record(QString&, QString&, QString&, QString&,
                                         QString&, QString&, QString&, QString&, QString&,
                                         QString&, QString&, QString&, QString&, QString&,
-                                        QString&, QString&); //!< Read autoflow status record
+                                        QString&, QString&, QString&, QString&); //!< Read autoflow status record
         QMap<QString, QMap<QString, QString>> parse_autoflowStatus_json(const QString, const QString); //!< Parse autoflow status JSON
         QMap<QString, QString> parse_autoflowStatus_analysis_json(const QString); //!< Parse autoflow status analysis JSON
 
@@ -343,6 +371,7 @@ class US_ReporterGMP : public US_Widgets
         void build_genTree(void); //!< Build general tree
         void build_miscTree(void); //!< Build miscellaneous tree
         void build_perChanTree(void); //!< Build per-channel tree
+        void build_perChanTree_abde(void); //!< Build per-channel tree
         void build_combPlotsTree(void); //!< Build combined plots tree
         void gui_to_parms(void); //!< Convert GUI to parameters
 
@@ -350,6 +379,7 @@ class US_ReporterGMP : public US_Widgets
         QString tree_to_json(QMap<QString, QTreeWidgetItem*>); //!< Convert tree to JSON
         void parse_edited_gen_mask_json(const QString, GenReportMaskStructure&); //!< Parse edited general mask JSON
         void parse_edited_perChan_mask_json(const QString, PerChanReportMaskStructure&); //!< Parse edited per-channel mask JSON
+        void parse_edited_perChan_mask_json_abde(const QString, PerChanReportMaskStructureABDE&);
         void parse_edited_combPlots_mask_json(const QString, CombPlotsReportMaskStructure&); //!< Parse edited combined plots mask JSON
         void parse_edited_misc_mask_json(const QString, MiscReportMaskStructure&); //!< Parse edited miscellaneous mask JSON
 
@@ -519,7 +549,11 @@ class US_ReporterGMP : public US_Widgets
 
         QString text_model(US_Model, int); //!< Convert model to text
         QString html_header(QString, QString, US_DataIO::EditedData*); //!< Generate HTML header
+        QString html_header_abde(QString, QString, QString); //!< Generate HTML header
         QString distrib_info(QMap<QString, QString>&); //!< Generate distribution information
+        QString distrib_info_abde( QString& ); //!< Generate distribution information
+        QMap< QString, QString > get_channels_analytes_mwl_abde( QString );
+  
         QString calc_replicates_averages(void); //!< Calculate replicates averages
         QString get_replicate_group_number(QString); //!< Get replicate group number
         QMap<QString, double> get_replicate_group_results(US_ReportGMP::ReportItem, QString, QStringList); //!< Get replicate group results
@@ -558,6 +592,7 @@ class US_ReporterGMP : public US_Widgets
         void show_results(QMap<QString, QString>&); //!< Show results
         void calc_residuals(void); //!< Calculate residuals
         void assemble_distrib_html(QMap<QString, QString>&); //!< Assemble distribution HTML
+        void assemble_distrib_ABDE_html( QString& ); //!< Assemble distribution HTML
         void assemble_plots_html(QStringList, QString = QString("")); //!< Assemble plots HTML
         double interp_sval(double, double*, double*, int); //!< Interpolate s-value
         void plotres(QMap<QString, QString>&); //!< Plot residuals
@@ -566,6 +601,13 @@ class US_ReporterGMP : public US_Widgets
         bool modelGuidExistsForStage_ind(QString, QString, QString); //!< Check if model GUID exists for stage (individual)
         void process_combined_plots(QString); //!< Process combined plots
         void process_combined_plots_individual(QString, QString); //!< Process combined plots (individual)
+        QMap< QString, QStringList > find_sim_ranges( QString, QString );
+        void process_abde_plots( void );
+        void get_abde_channels( QStringList& );
+        void get_abde_rmsds(QMap< QString, double >&);
+        void get_abde_menisc(QMap< QString, double >&);
+        void get_abde_percents(QMap< QString, QMap < QString, double>>&);
+        void get_abde_data_per_channel(QMap< QString, QMap < QString, QVector<QVector<double>> > >&);
 
         QMap<QString, QString> read_autoflowGMPReportEsign_record(QString); //!< Read autoflow GMP report electronic signature record
         void get_assigned_oper_revs(QJsonDocument, QStringList&); //!< Get assigned operator revisions
@@ -640,7 +682,7 @@ class US_ReporterGMP : public US_Widgets
          * @brief Display help.
          */
         void help(void)
-        { showHelp.show_help("reporter_gmp.html"); };
+        { showHelp.show_help("manual/gmp_report_generator.html"); };
 
         signals:
                 /**

@@ -38,9 +38,9 @@
     Ctrl key and left mouse button to select an overriding elbow point
     and its associated Alpha value.</p>
 
-    <img src="images/pcsa_rpscan-auto.png" alt="Reg. Par. Auto Select"/>
+    <p class="center"><img src="images/pcsa_rpscan-auto.png" alt="Reg. Par. Auto Select"/></p>
     <p/>
-    <img src="images/pcsa_rpscan-select.png" alt="Reg. Par. Manual Select"/>
+    <p class="center"><img src="images/pcsa_rpscan-select.png" alt="Reg. Par. Manual Select"/></p>
 
     <h3> Functions:</h3>
 

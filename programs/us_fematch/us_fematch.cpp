@@ -397,7 +397,7 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    ti_noise.count = 0;
    ri_noise.count = 0;
 
-   adv_vals[ "simpoints"  ] = "500";
+   adv_vals[ "simpoints"  ] = "200";
    adv_vals[ "bandvolume" ] = "0.015";
    adv_vals[ "parameter"  ] = "0";
    adv_vals[ "modelnbr"   ] = "0";
@@ -1347,12 +1347,12 @@ void US_FeMatch::distrib_type( )
       "s20,w distribution",
       "MW distribution",
       "D20,w distribution",
-      "f_f0 vs s20,w",
-      "f_f0 vs MW",
-      "vbar vs s20,w",
-      "vbar vs MW",
-      "D20,w vs s20,w",
-      "D20,w vs MW",
+      // "f_f0 vs s20,w",
+      // "f_f0 vs MW",
+      // "vbar vs s20,w",
+      // "vbar vs MW",
+      // "D20,w vs s20,w",
+      // "D20,w vs MW",
       "Residuals"
    };
    const int ndptyp = sizeof( dptyp ) / sizeof( dptyp[0] );
@@ -1376,17 +1376,20 @@ void US_FeMatch::distrib_type( )
       case 2:     // D20,w distribution
          distrib_plot_stick( itype );  // bar (1-d) plot
          break;
-      case 3:     // f_f0 vs s20,w
-      case 4:     // f_f0 vs MW
-      case 5:     // vbar vs s20,w
-      case 6:     // vbar vs MW
-      case 7:     // D20,w vs s20,w
-      case 8:     // D20,w vs MW
-         distrib_plot_2d(    itype );  // 2-d plot
-         break;
-      case 9:     // Residuals
-         distrib_plot_resids();        // residuals plot
-         break;
+      // case 3:     // f_f0 vs s20,w
+      // case 4:     // f_f0 vs MW
+      // case 5:     // vbar vs s20,w
+      // case 6:     // vbar vs MW
+      // case 7:     // D20,w vs s20,w
+      // case 8:     // D20,w vs MW
+      //    distrib_plot_2d(    itype );  // 2-d plot
+      //    break;
+      // case 9:     // Residuals
+      //    distrib_plot_resids();        // residuals plot
+      //    break;
+      case 3:     // Residuals
+	distrib_plot_resids();        // residuals plot
+	break;	 
    }
 }
 
@@ -2205,12 +2208,20 @@ DbgLv(1) << "SimMdl:  accel-calc:  t1 t2 w2t t_acc speed rate"
    QString svalu = US_Settings::debug_value( "SetSpeedLowA" );
    int lo_ss_acc = svalu.isEmpty() ? 250 : svalu.toInt();
    int rspeed    = simparams.speed_step[ 0 ].rotorspeed;
-   int tf_aend   = ( rspeed + accel1 - 1 ) / accel1;
+   double  tf_aend   = static_cast<double>(tf_scan);
+   // prevent any division by zero
+   if (accel1 != 0)
+   {
+      tf_aend = static_cast<double>(rspeed) / static_cast<double>(accel1);
+   }
 DbgLv(1) << "SimMdl: ssck: rspeed accel1 lo_ss_acc"
  << rspeed << accel1 << lo_ss_acc << "tf_aend tf_scan"
  << tf_aend << tf_scan;
 //x0  1  2  3  4  5
-   if ( accel1 < lo_ss_acc  ||  tf_aend > ( tf_scan - 3 ) )
+   // check if the acceleration rate is low or the first scan was taken before the acceleration ended
+   // Due to older, wrong timestate calculation there might be a case, in which the calculated end of acceleration can
+   // be up to 1 second later than expected, tf_scan + 1 accounts for this.
+   if ( accel1 < lo_ss_acc  ||  tf_aend > ( tf_scan + 1 ) )
    {
       QString wmsg = tr( "The TimeState computed/used is likely bad:<br/>"
                          "The acceleration implied is %1 rpm/sec.<br/>"
@@ -2219,7 +2230,7 @@ DbgLv(1) << "SimMdl: ssck: rspeed accel1 lo_ss_acc"
                          "<b>You should rerun the experiment without<br/>"
                          "any interim constant speed, and then<br/>"
                          "you should reimport the data.</b>" )
-                     .arg( accel1 ).arg( tf_aend ).arg( tf_scan );
+                     .arg( accel1 ).arg( QString::number(tf_aend) ).arg( QString::number(tf_scan) );
 
       QMessageBox msgBox( this );
       msgBox.setWindowTitle( tr( "Bad TimeState Implied!" ) );
@@ -3761,12 +3772,12 @@ int US_FeMatch::type_distrib( )
       "s20,w distribution",
       "MW distribution",
       "D20,w distribution",
-      "f_f0 vs s20,w",
-      "f_f0 vs MW",
-      "vbar vs s20,w",
-      "vbar vs MW",
-      "D20,w vs s20,w",
-      "D20,w vs MW",
+      // "f_f0 vs s20,w",
+      // "f_f0 vs MW",
+      // "vbar vs s20,w",
+      // "vbar vs MW",
+      // "D20,w vs s20,w",
+      // "D20,w vs MW",
       "Residuals"
    };
    const int ndptyp = sizeof( dptyp ) / sizeof( dptyp[0] );

@@ -104,6 +104,8 @@ class US_InitDialogueGui : public US_WidgetsDialog
 
    QMessageBox * msg_norec;
    QMessageBox * msg_norec_del;
+
+   bool isDataDiskOnly;
    
             
   private:
@@ -124,9 +126,11 @@ class US_InitDialogueGui : public US_WidgetsDialog
     
     void read_optima_machines( US_DB2* = 0 ); 
     QList< QMap<QString, QString> > instruments;
+    QMap<QString, QString> selectCurrentOptima( QString );
 
     void do_run_tables_cleanup( QMap< QString, QString > );
     void do_run_data_cleanup( QMap< QString, QString > );
+    void do_create_autoflowStatus_for_failedRun( QMap< QString, QString > );
     bool readAProfileBasicParms_auto ( QXmlStreamReader& );
       
  protected:
@@ -134,6 +138,7 @@ class US_InitDialogueGui : public US_WidgetsDialog
       
   private slots:
      void update_autoflow_data( void );
+     void refresh_optima_states( void ); 
           
   signals:
      void define_new_experiment_init ( QStringList & );
@@ -144,6 +149,7 @@ class US_InitDialogueGui : public US_WidgetsDialog
      void switch_to_report_init(  QMap < QString, QString > & protocol_details );
      void switch_to_esign_init(  QMap < QString, QString > & protocol_details );
      void to_initAutoflow( void );
+     void pass_allow_dataDisk_only();
 
 };
 
@@ -176,21 +182,25 @@ class US_ExperGui : public US_WidgetsDialog
       void manageExperiment ( void );        // Slot for exp.  button clicked
       void us_exp_is_closed_set_button( void );
       void to_live_update( QMap < QString, QString > & protocol_details );
+      void to_import( QMap < QString, QString > & protocol_details );
       //void clear_experiment( QString & protocolName);
       void exp_cleared( void );
       void pass_used_instruments( QStringList & );
       void expsetup_msg_closed( void );
       void to_initAutoflow( void );
+      void allow_dataDisk_only( void );
       
       
    signals:
       void switch_to_live_update( QMap < QString, QString > & protocol_details );
+      void switch_to_import( QMap < QString, QString > & protocol_details );
       void set_auto_mode( void );
       void reset_experiment( QString & protocolName);
       void to_autoflow_records( void );
       void define_used_instruments( QStringList & );
       //void close_expsetup_msg( void );
       void switch_to_initAutoflow( void );
+      void data_disk_only( void );
 };
 
 
@@ -293,6 +303,7 @@ class US_EditingGui : public US_WidgetsDialog
    void do_editing( QMap < QString, QString > & );
    void reset_data_editing( void );
    void to_analysis( QMap < QString, QString > & );
+   void to_report( QMap < QString, QString > & );
    void resize_main( void );
    void to_initAutoflow( void );
 
@@ -300,6 +311,7 @@ class US_EditingGui : public US_WidgetsDialog
    void start_editing( QMap < QString, QString > & );
    void reset_data_editing_passed ( void );
    void switch_to_analysis( QMap < QString, QString > &  );
+   void switch_to_report( QMap < QString, QString > &  );
    void switch_to_initAutoflow( void);
 };
 
@@ -519,6 +531,7 @@ signals:
   void reset_live_update( void );
   void reset_reporting( void );
   void reset_esigning( void );
+  
 };
 
 

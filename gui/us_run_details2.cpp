@@ -236,6 +236,10 @@ void US_RunDetails2::setup( void )
    
    last          = qRound( last );
    first         = qFloor( first );
+
+   //run length in secs
+   run_length = last - first;
+   
    int  hours    = (int)qFloor( last / 3600.0 );
    int  mins     = (int)qRound( ( last - hours * 3600.0 ) / 60.0 );
 
@@ -315,12 +319,28 @@ qDebug() << "dtails: ds 1, scan 1: secs,omg2t,rpm" << s1tim << s1omg << s1rpm;
    lw_rpm->addItems( s_rpms );
 
    // Set triples + scans
+   scanCount_per_dataType .clear();
    for ( int i = 0; i < triples.size(); i++ )
    {
       int scans = dataList[ i ].scanData.size();
-      lw_triples->addItem( triples[ i ] + wks.sprintf( " -- %d scans", scans ) );    
+      lw_triples->addItem( triples[ i ] + wks.sprintf( " -- %d scans", scans ) );
+
+      //determine also dataType:
+      char chtype[ 3 ] = { 'R', 'A', '\0' };
+      strncpy( chtype, dataList[ i ].type, 2 );
+      QString dataType = QString( chtype ).left( 2 );
+      qDebug() << "[US_RunDetails] dataType -- " << dataType;
+
+      scanCount_per_dataType[ dataType ] << QString::number( scans );
    }
 
+   //removeDupl.
+   for( int i=0; i<scanCount_per_dataType.keys().size(); ++ i )
+     {
+       scanCount_per_dataType[ scanCount_per_dataType.keys()[i] ].removeDuplicates();
+       qDebug() << "[US_RunDetails] dataType--scanCount: "
+		<< scanCount_per_dataType.keys()[i] << " -- " << scanCount_per_dataType[ scanCount_per_dataType.keys()[i] ];
+     }
    lw_triples->addItem( wks.sprintf( "All scans -- %d scans", scanCount ) );    
 
    // Set triple to indicate All Data
@@ -342,7 +362,7 @@ void US_RunDetails2::show_all_data( void )
    // Note that these are not weighted averages 
    foreach( triple, dataList )
    {
-      foreach( scan, triple.scanData )
+     foreach( scan, triple.scanData )
       {
          temp += scan.temperature;
          rpm  += scan.rpm;
@@ -358,6 +378,9 @@ void US_RunDetails2::show_all_data( void )
    rpm /= scanCount;             // Get average
    rpm  = qRound( rpm / 100.0 );  // Round to closest 100 rpm
    le_rotorSpeed->setText( QString::number( (int)rpm * 100 ) + " RPM" );
+
+   rpm_av        = (int)rpm * 100;
+   scan_count_av = (int)scanCount/(int)dataList.size();
 
    // Determine temperature variation
    double dt = 0.0;
@@ -809,3 +832,24 @@ else
    return msg;
 }
 
+//get main params
+QMap< QString, QString>  US_RunDetails2::get_params_public()
+{
+  QMap< QString, QString> parms;
+
+  parms[ "RPM" ]       = QString::number( rpm_av );
+  parms[ "Time" ]      = QString::number( run_length );
+  //parms[ "ScanCount" ] = QString::number( scan_count_av );
+
+  QString scanCount_str;
+  for( int i=0; i<scanCount_per_dataType.keys().size(); ++ i )
+    {
+      QString key = scanCount_per_dataType.keys()[i];
+      scanCount_str += key + ":" + scanCount_per_dataType[ key ][0] + ",";
+    }
+  scanCount_str. chop(1);
+  parms[ "ScanCount" ] = scanCount_str;
+  
+  return parms;
+}
+ 

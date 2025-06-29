@@ -22,7 +22,7 @@ struct WavelengthProfile
     float scale;                  //!< Scale factor
     float amplitude;              //!< Amplitude
     QString filename;             //!< Filename
-    QString filenameBasis;        //!< Basis filename
+    QString header;               //!< Column header
     float nnls_factor;            //!< NNLS factor
     float nnls_percentage;        //!< NNLS percentage
 };
@@ -44,6 +44,8 @@ class US_Spectrum : public US_Widgets
         QString current_path;         //!< Current path
 
     private:
+        QVector <double> residuals;    //!< residual vector
+
         QwtPlot* data_plot;           //!< Data plot
         QwtPlot* residuals_plot;      //!< Residuals plot
         US_Plot* plotLayout1;         //!< Plot layout 1

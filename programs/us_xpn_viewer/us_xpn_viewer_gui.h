@@ -329,7 +329,9 @@ class US_XpnDataViewer : public US_Widgets
 
      bool           experimentAborted;
      bool           experimentAborted_remotely;
-     
+     bool           opticsFailed;
+     QString        opticsFailed_type;
+  
      int            ElapsedTimeOffset;
 
      void           timeToList( int&, QList< int >& );
@@ -378,7 +380,7 @@ class US_XpnDataViewer : public US_Widgets
      void   runDetails     ( void );
      
      void   export_auc     ( void );
-     void   export_auc_auto( void );
+     void   export_auc_auto( bool& );
 
      void   changeRadius   ( void );
      void   changeCellCh   ( void );
