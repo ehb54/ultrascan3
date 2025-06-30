@@ -1263,7 +1263,10 @@ void US_XpnDataViewer::reset_auto( void )
    cb_cellchn ->disconnect();
    cb_cellchn ->clear();
    le_dir     ->setText( currentDir );
-   le_runID   ->setText( runID );
+
+   //le_runID   ->setText( runID );
+   le_runID  ->setText_auto( runID );
+   
    //le_dbhost  ->setText( xpnhost + ":" + xpnport + "   (" + xpndesc + ")" );       //New
 
    //Also clear Wavelengths && Lambda ranges:
@@ -3218,7 +3221,10 @@ void US_XpnDataViewer::retrieve_xpn_raw_auto( void )
 
    // Set the runID and directory
    runID       = new_runID;
-   le_runID->setText( runID );
+   
+   // le_runID->setText( runID );
+   le_runID->setText_auto ( runID );
+
    currentDir  = US_Settings::importDir() + "/" + runID;
    le_dir  ->setText( currentDir );
    qApp->processEvents();

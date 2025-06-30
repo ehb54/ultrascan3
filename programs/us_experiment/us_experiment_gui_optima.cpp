@@ -271,7 +271,12 @@ QMap< QString, QString> US_ExperimentMain::get_all_solution_names()
 {
   
   return epanSolutions->get_solutions_public();
-}  
+}
+
+void US_ExperimentMain::get_new_solution_names()
+{
+  epanSolutions->get_new_solutions_public();
+}
 
 US_AnaProfile* US_ExperimentMain::get_aprofile( )
 {
@@ -288,6 +293,12 @@ void US_ExperimentMain::set_loadAProf ( US_AnaProfile aprof_curr_read )
   epanAProfile->sdiag->loadProf = aprof_curr_read;
 }
 
+void US_ExperimentMain::enable_data_disk_only( )
+{
+  qDebug() << "In enable_data_disk_only()...";
+
+  epanRotor->switch_to_dataDisk_public();
+}
 
 void US_ExperimentMain::exclude_used_instruments( QStringList & occupied_instruments )
 {
@@ -1505,6 +1516,28 @@ void US_ExperGuiRotor::reset_dataSource_public( void )
   ra_data_sim  = false;
 }
 
+void US_ExperGuiRotor::switch_to_dataDisk_public()
+{
+  ck_disksource-> disconnect();
+  
+  bool checked = true;
+  
+  pb_importDisk   -> setVisible( checked );
+  le_dataDiskPath -> setVisible( checked );
+  ck_absorbance_t -> setVisible( checked );
+
+  lb_instrument  -> setVisible( !checked );
+  cb_optima  -> setVisible( !checked );
+  lb_optima_connected -> setVisible( !checked );
+  le_optima_connected -> setVisible( !checked );
+  
+  ck_disksource   ->setChecked( true );
+  ck_disksource   ->setEnabled( false );
+
+  connect( ck_disksource, SIGNAL( toggled     ( bool ) ),
+	   this,           SLOT  ( importDiskChecked( bool ) ) );
+}
+
 void US_ExperGuiRotor::get_chann_ranges_public( QString d_type, QMap< QString, QStringList>& f_data )
 {
   f_data. clear();
@@ -2194,8 +2227,24 @@ QMap <QString, QStringList> US_ExperGuiRotor::build_protocol_for_data_import( QM
   qDebug() << "cpnames_t: " << cpnames_t;
 
   //Get solutions names & IDs
+
+  if ( mainw->solutions_change )
+    mainw->get_new_solution_names(); // in case Inv. changed
+
   QMap< QString, QString > solutions_t   = mainw->get_all_solution_names();
   qDebug() << "solutions_t [names]: "         << solutions_t.keys();
+
+  if ( solutions_t.keys().size() == 0 )
+    {      
+      //inform user on absence of solutions
+      QMessageBox::critical( this, tr( "No Solutions in the DB!" ),
+			     tr( "No solutions found in the DB for the current investigator!\n"
+				 "Setup of the ABDE experiment is not possible without solutions..."
+				 "\n\nThe program will be closed." )  );
+      exit(1);
+      //return ;
+    }
+  
   qDebug() << "solutions_t [ID of the 1st]: " << solutions_t[solutions_t.keys()[0]];
    
   //[FROM  DATA IMPORTED:] Channels' list, channel-to-wavelength ranges 
@@ -4660,6 +4709,11 @@ DbgLv(1) << "EGSo:main: call initPanel()";
 QMap< QString, QString> US_ExperGuiSolutions::get_solutions_public()
 {
   return solu_ids;
+}
+
+void US_ExperGuiSolutions::get_new_solutions_public()
+{
+  allSolutions();
 }
 
 //Function to clear solution's comment when colution changed
@@ -9400,6 +9454,7 @@ void US_ExperGuiUpload::submitExperiment()
    //Make 'autoflow' table record:
    if ( mainw->automode )
      {
+       protocol_details[ "dataSource" ] = "INSTRUMENT";
        add_autoflow_record( protocol_details );
 
        /*** 
@@ -9712,9 +9767,40 @@ void US_ExperGuiUpload::add_autoflow_record_dataDisk( QMap< QString, QString> & 
        
        qDebug() << "update_autoflow_with_statusID qry -- " << qry;
        db->query( qry );
-     }
 
-   
+       /************** IF ABDE - add record to the new 'autoflowAnalysisABDE' table  ***/
+       /** IF protocol_details[ "expType" ] = "ABDE" **/
+       /** IF SWL or MWL **/
+       /************** IF ABDE - add record to the new 'autoflowAnalysisABDEStages' table *****/
+       /** status 'unknown' ****/
+       if ( protocol_details[ "expType" ] == "ABDE" )
+	 {
+	   // new autoflowAnalysisABDE record
+	   qry. clear();
+	   bool mwl_abde = false;
+	   for ( int ii = 0; ii < rpRange->nranges; ii++ )
+	     {
+	       if ( rpRange->chrngs[ii].wvlens.size() > 1 )
+		 {
+		   mwl_abde = true;
+		   break;
+		 }
+	     }
+	   QString etype_abde = mwl_abde ? "MWL" : "SWL";
+	   qry << "new_autoflowAnalysisABDE_record"
+	       << protocol_details[ "autoflowID" ]
+	       << etype_abde;
+       
+	   qDebug() << "new_autoflowAnalysisABDE_record qry -- " << qry;
+       	   int autoflowAnalysisABDE_ID = db->functionQuery( qry );
+	   qDebug() << "autoflowAnalysisABDE_ID: "  << autoflowAnalysisABDE_ID;
+
+	   // new autoflowAnalysisABDEStages record
+	   qry. clear();
+	   qry << "new_autoflowAnalyisABDEstages_record" << protocol_details[ "autoflowID" ];
+	   db->statusQuery( qry );
+	 }
+     }
 }
 
 // Standard autoflow record
@@ -9984,6 +10070,39 @@ void US_ExperGuiUpload::add_autoflow_record( QMap< QString, QString> & protocol_
        
        qDebug() << "update_autoflow_with_statusID qry -- " << qry;
        db->query( qry );
+
+       /************** IF ABDE - add record to the new 'autoflowAnalysisABDE' table  ***/
+       /** IF protocol_details[ "expType" ] = "ABDE" **/
+       /** IF SWL or MWL **/
+       /************** IF ABDE - add record to the new 'autoflowAnalysisABDEStages' table *****/
+       /** status 'unknown' ****/
+       if ( protocol_details[ "expType" ] == "ABDE" )
+	 {
+	   // new autoflowAnalysisABDE record
+	   qry. clear();
+	   bool mwl_abde = false;
+	   for ( int ii = 0; ii < rpRange->nranges; ii++ )
+	     {
+	       if ( rpRange->chrngs[ii].wvlens.size() > 1 )
+		 {
+		   mwl_abde = true;
+		   break;
+		 }
+	     }
+	   QString etype_abde = mwl_abde ? "MWL" : "SWL";
+	   qry << "new_autoflowAnalysisABDE_record"
+	       << protocol_details[ "autoflowID" ]
+	       << etype_abde;
+       
+	   qDebug() << "new_autoflowAnalysisABDE_record qry -- " << qry;
+       	   int autoflowAnalysisABDE_ID = db->functionQuery( qry );
+	   qDebug() << "autoflowAnalysisABDE_ID: "  << autoflowAnalysisABDE_ID;
+
+	   // new autoflowAnalysisABDEStages record
+	   qry. clear();
+	   qry << "new_autoflowAnalyisABDEstages_record" << protocol_details[ "autoflowID" ];
+	   db->statusQuery( qry );
+	 }
      }
 }
 
@@ -10264,8 +10383,40 @@ void US_ExperGuiUpload::add_autoflow_record_protDev( QMap< QString, QString> & p
        
        qDebug() << "update_autoflow_with_statusID qry -- " << qry;
        db->query( qry );
+
+       /************** IF ABDE - add record to the new 'autoflowAnalysisABDE' table  ***/
+       /** IF protocol_details[ "expType" ] = "ABDE" **/
+       /** IF SWL or MWL **/
+       /************** IF ABDE - add record to the new 'autoflowAnalysisABDEStages' table *****/
+       /** status 'unknown' ****/
+       if ( protocol_details[ "expType" ] == "ABDE" )
+	 {
+	   // new autoflowAnalysisABDE record
+	   qry. clear();
+	   bool mwl_abde = false;
+	   for ( int ii = 0; ii < rpRange->nranges; ii++ )
+	     {
+	       if ( rpRange->chrngs[ii].wvlens.size() > 1 )
+		 {
+		   mwl_abde = true;
+		   break;
+		 }
+	     }
+	   QString etype_abde = mwl_abde ? "MWL" : "SWL";
+	   qry << "new_autoflowAnalysisABDE_record"
+	       << protocol_details[ "autoflowID" ]
+	       << etype_abde;
+       
+	   qDebug() << "new_autoflowAnalysisABDE_record qry -- " << qry;
+       	   int autoflowAnalysisABDE_ID = db->functionQuery( qry );
+	   qDebug() << "autoflowAnalysisABDE_ID: "  << autoflowAnalysisABDE_ID;
+
+	   // new autoflowAnalysisABDEStages record
+	   qry. clear();
+	   qry << "new_autoflowAnalyisABDEstages_record" << protocol_details[ "autoflowID" ];
+	   db->statusQuery( qry );
+	 }
      }
-   
 }
 
 // // [OLD - when starting from 4. EDIT ] Add autoflow record for ProtocolDev

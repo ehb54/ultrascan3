@@ -143,6 +143,7 @@ class US_ExperGuiRotor : public US_WidgetsDialog
       void        setFirstLab( void );
       void        reset_dataSource_public( void );
       void        get_chann_ranges_public( QString, QMap <QString, QStringList>& );
+      void        switch_to_dataDisk_public (void );
    
            
       QString     getSValue( const QString );
@@ -559,6 +560,7 @@ class US_ExperGuiSolutions : public US_WidgetsDialog
       int      mxrow;                           // Max rows (24)
       //QVector< QComboBox* >    cc_solus;        // Solution choice pointers
       QMap<QString,QString> get_solutions_public( void );
+      void get_new_solutions_public( void );
       
    private:
       US_ExperimentMain*   mainw;
@@ -971,6 +973,7 @@ class US_ExperGuiUpload : public US_WidgetsDialog
       bool    matchRefSampleWvls( QString, QString, QStringList&);
       bool    useReferenceNumbersSet( QStringList& );
       bool    extinctionProfilesExist( QStringList& );
+      bool    ifMixedABDE( QStringList& );
       bool    validExtinctionProfile( QString, QList< double >,
 				      QList< double >, QStringList& );
 
@@ -1158,17 +1161,19 @@ class US_ExperimentMain : public US_Widgets
       void us_exp_clear( QString &protocolName );
       //void auto_mode_passed( void ); 
       void reset     ( void );
-      void    exclude_used_instruments( QStringList &);
+      void exclude_used_instruments( QStringList &);
       void accept_passed_protocol_details( QMap < QString, QString > &protocol_details );
+      void enable_data_disk_only();
 
       US_AnaProfile* get_aprofile( void );
       US_AnaProfile* get_aprofile_loaded( void );
       void set_loadAProf ( US_AnaProfile );
       QMap< QString, QString> get_all_solution_names( void );
+      void get_new_solution_names(void);
       void initCells( void );
       void reset_dataDisk( void );
-      void  get_importDisk_data( QString,  QMap< QString, QStringList>& );
-  
+      void get_importDisk_data( QString,  QMap< QString, QStringList>& );
+       
       void back_to_pcsa( void );
 	
     signals:

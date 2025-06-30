@@ -57,6 +57,7 @@ class US_auditTrailGMP : public US_Widgets
         bool p_2dsa_run_fitmen; //!< Flag for 2DSA run fitmen.
         bool p_2dsa_auto_fitmen; //!< Flag for 2DSA auto fitmen.
         QString dataSource;
+        QString expType;
 
         int RowHeight; //!< Height of the row.
         QString html_assembled; //!< Assembled HTML content.
@@ -95,6 +96,9 @@ class US_auditTrailGMP : public US_Widgets
         //! \brief Initialize the auto panel.
         //! \param details The details map for initialization.
         void initPanel_auto(QMap<QString, QString>& details);
+
+  void user_interactions_analysis( QString, QString, QString,  QVector< QGroupBox * >&);
+  void user_interactions_analysis_abde( QString, QString, QString, QVector< QGroupBox * >& );
 
         //! \brief Reset the panel.
         void reset_panel(void);
@@ -149,7 +153,7 @@ class US_auditTrailGMP : public US_Widgets
                                         QString& expType, QString& date, QString& filename, QString& projectName,
                                         QString& solutionName, QString& bufferName, QString& analyteName,
                                         QString& gradientName, QString& hardwareName, QString& aprofileName,
-                                        QString& aprofileGUID, QString& dataSource);
+                                        QString& aprofileGUID, QString& dataSource, QString&, QString&  );
 
         //! \brief Parse the autoflow status JSON.
         //! \param json The JSON string.

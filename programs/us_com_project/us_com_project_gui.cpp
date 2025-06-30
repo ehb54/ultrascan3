@@ -228,6 +228,8 @@ US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
    connect( epanInit, SIGNAL( to_initAutoflow( ) ), this, SLOT( close_all( )  ) );
    
    connect( this, SIGNAL( pass_used_instruments( QStringList & ) ), epanExp, SLOT( pass_used_instruments( QStringList &)  ) );
+
+   connect( epanInit, SIGNAL( pass_allow_dataDisk_only( ) ), epanExp, SLOT( allow_dataDisk_only( )  ) );
    
    connect( epanExp, SIGNAL( switch_to_live_update( QMap < QString, QString > &) ), this, SLOT( switch_to_live_update( QMap < QString, QString > & )  ) );
    connect( epanExp, SIGNAL( switch_to_import( QMap < QString, QString > &) ), this, SLOT( switch_to_post_processing( QMap < QString, QString > & )  ) );
@@ -478,6 +480,8 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    connect( epanInit, SIGNAL( to_initAutoflow( ) ), this, SLOT( close_all( )  ) );
          
    connect( this, SIGNAL( pass_used_instruments( QStringList & ) ), epanExp, SLOT( pass_used_instruments( QStringList &)  ) );
+
+   connect( epanInit, SIGNAL( pass_allow_dataDisk_only( ) ), epanExp, SLOT( allow_dataDisk_only( )  ) );
    
    connect( epanExp, SIGNAL( switch_to_live_update( QMap < QString, QString > &) ), this, SLOT( switch_to_live_update( QMap < QString, QString > & )  ) );
    connect( epanExp, SIGNAL( switch_to_import( QMap < QString, QString > &) ), this, SLOT( switch_to_post_processing( QMap < QString, QString > & )  ) );
@@ -499,6 +503,7 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    connect( this, SIGNAL( reset_data_editing() ),  epanEditing, SLOT( reset_data_editing( )  ) );
 
    connect( epanEditing, SIGNAL( switch_to_analysis( QMap < QString, QString > & ) ), this, SLOT( switch_to_analysis( QMap < QString, QString > & )  ) );
+   connect( epanEditing, SIGNAL( switch_to_report( QMap < QString, QString > & ) ), this, SLOT( switch_to_report( QMap < QString, QString > & )  ) );
    connect( this, SIGNAL( pass_to_analysis( QMap < QString, QString > & ) ),   epanAnalysis, SLOT( do_analysis( QMap < QString, QString > & )  ) );
    connect( epanEditing, SIGNAL( switch_to_initAutoflow( ) ), this, SLOT( close_all( )  ) );
 
@@ -924,9 +929,6 @@ void US_ComProjectMain::define_new_experiment( QStringList & occupied_instrument
 }
 
 
-
-
-
 // Slot to pass submitted to Optima run info to the Live Update tab
 void US_ComProjectMain::close_all( void )
 {
@@ -1286,6 +1288,8 @@ void US_InitDialogueGui::initAutoflowPanel( void )
 //Check for certificates
 void US_InitDialogueGui::checkCertificates( void )
 {
+  isDataDiskOnly = false;
+  
   US_Passwd  pw;
   US_DB2* dbP  = new US_DB2( pw.getPasswd() );
 
@@ -1316,7 +1320,7 @@ void US_InitDialogueGui::checkCertificates( void )
       // Check for certificate license key and its expiraiton
       Link *link = new Link( alias );
 
-      bool status_sys_data = link->connectToServer( dbhost, optima_msgPort.toInt() );
+      bool status_sys_data = link->connectToServer_init_check( dbhost, optima_msgPort.toInt() );
       bool combined_check = status_sys_data & link->connected_itself;
       
       // Ceritificate location && check for nearing or actual expiration date ////////////////////
@@ -1420,6 +1424,7 @@ void US_InitDialogueGui::checkCertificates( void )
 	  //Disconnect link
 	  link->disconnectFromServer();
 	}
+      //Disconnect link
       link->disconnectFromServer();
     }
   
@@ -1446,20 +1451,28 @@ void US_InitDialogueGui::checkCertificates( void )
 	}
 
       if ( Optima_names.size() > 1 )  
-	msg_sys_text_info_final += QString( tr("\n\nSubmission of the experimental protocol is suspended until at least one of these conditions is resolved."));
+	msg_sys_text_info_final += QString( tr("\n\nSubmission of the experimental protocol to the Optima instruments is suspended until at least one of these conditions is resolved."));
       else
-	msg_sys_text_info_final += QString( tr("\n\nSubmission of the experimental protocol is suspended until this condition is resolved."));
-      
-      msg_sys_text_info_final += QString( tr("\n\nThe program will be closed.") );
+	msg_sys_text_info_final += QString( tr("\n\nSubmission of the experimental protocol to the Optima instrument is suspended until this condition is resolved."));
+
+      if ( !mainw->us_mode_bool ) 
+	msg_sys_text_info_final += QString( tr("\n\nUser has an option to upload data from disk (tab 2. Lab/Rotor -> Select Data Source) and proceed with that workflow.") );
 
       msgBox_sys_data.setInformativeText( msg_sys_text_info_final );
       QPushButton *Cancel_sys    = msgBox_sys_data.addButton(tr("OK"), QMessageBox::RejectRole);
       msgBox_sys_data.exec();
 
-      exit(1);
+      //emit pass_allow_dataDisk_only();
+      isDataDiskOnly = true;
+
+      if ( mainw->us_mode_bool ) 
+	exit(1);
       return;
     }
-  
+
+  //TEST
+  //isDataDiskOnly = true;
+  //emit pass_allow_dataDisk_only();
   //  End of checkig for conneciton to Optima sys_data server ///////////////////////////////////////////////
 }
 
@@ -1571,7 +1584,9 @@ void US_InitDialogueGui::initRecordsDialogue( void )
        	{
        	  msg_norec->close();
 	  emit define_new_experiment_init( occupied_instruments );
-       	  //qApp->processEvents();
+       	  qApp->processEvents();
+	  if ( isDataDiskOnly )
+	    emit pass_allow_dataDisk_only();
        	}
 
       //emit define_new_experiment_init( occupied_instruments );
@@ -1653,6 +1668,8 @@ void US_InitDialogueGui::initRecordsDialogue( void )
 	{
 	  qDebug() << "No occuied instruments (No LIVE_UPDATE status)";
 	  emit define_new_experiment_init( occupied_instruments );
+	  if ( isDataDiskOnly )
+	    emit pass_allow_dataDisk_only();
 	  return;
 	}
       else
@@ -1671,6 +1688,8 @@ void US_InitDialogueGui::initRecordsDialogue( void )
 	  msg_instr_use->exec();
 	  
 	  emit define_new_experiment_init( occupied_instruments );
+	  if ( isDataDiskOnly )
+	    emit pass_allow_dataDisk_only();
 	  return;
 	}
     }
@@ -2333,6 +2352,8 @@ void US_InitDialogueGui::update_autoflow_data( void )
 	{
 	  msg_norec_del->close();
 	  emit define_new_experiment_init( occupied_instruments );
+	  if ( isDataDiskOnly )
+	    emit pass_allow_dataDisk_only();
 	  
 	  //qApp->processEvents();
 	}
@@ -2951,6 +2972,8 @@ US_ExperGui::US_ExperGui( QWidget* topw )
    
    connect( this, SIGNAL( define_used_instruments( QStringList & ) ), sdiag, SLOT( exclude_used_instruments( QStringList & ) ) );
 
+   connect( this, SIGNAL( data_disk_only( ) ), sdiag, SLOT( enable_data_disk_only(  ) ) );
+
    connect( sdiag, SIGNAL( close_expsetup_msg() ), this, SLOT ( expsetup_msg_closed() ) ); 
    
    connect( sdiag, SIGNAL( to_live_update( QMap < QString, QString > & ) ),
@@ -3020,6 +3043,11 @@ void US_ExperGui::pass_used_instruments( QStringList & occupied_instruments )
   emit define_used_instruments( occupied_instruments );
 }
 
+void US_ExperGui::allow_dataDisk_only( void )
+{
+  qDebug() << "In US_ExperGui::allowing DataDisk ONLY";
+  emit data_disk_only();
+}
 
 void US_ExperGui::to_initAutoflow( void )
 {
@@ -3448,9 +3476,10 @@ US_EditingGui::US_EditingGui( QWidget* topw )
    
    connect( this, SIGNAL( reset_data_editing_passed( ) ), sdiag, SLOT(  reset_editdata_panel (  )  ) );
 
-   //ALEXEY: switch to Analysis
+   //ALEXEY: switch to Analysis || REPORT (abde)
    connect( sdiag, SIGNAL( edit_complete_auto(  QMap < QString, QString > & ) ), this, SLOT( to_analysis (  QMap < QString, QString > &) ) );
-
+   connect( sdiag, SIGNAL( edit_complete_auto_abde(  QMap < QString, QString > & ) ), this, SLOT( to_report (  QMap < QString, QString > &) ) );
+   
    //ALEXEY: back to initAutoflow 
    connect( sdiag, SIGNAL( back_to_initAutoflow( ) ), this, SLOT( to_initAutoflow ( ) ) );
 
@@ -3511,6 +3540,13 @@ void US_EditingGui::to_analysis( QMap < QString, QString > & protocol_details )
 {
   emit switch_to_analysis( protocol_details );
 }
+
+
+void US_EditingGui::to_report( QMap < QString, QString > & protocol_details )
+{
+  emit switch_to_report( protocol_details );
+}
+
 
 void US_EditingGui::to_initAutoflow( void )
 {

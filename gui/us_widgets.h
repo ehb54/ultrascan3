@@ -318,6 +318,7 @@ signals:
 
 public slots:
     void setText(const QString &);
+    void setText_auto(const QString &);
 
 private slots:
     void newEdit(const QString &);
