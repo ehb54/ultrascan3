@@ -3051,6 +3051,12 @@ void US_Analysis_auto::delete_jobs_at_fitmen( QMap < QString, QString > & triple
   QString requestID = ana_details["requestID"];
   qDebug() << "RequestID -- " << requestID;
 
+
+  //First, revert unique status, so it does not block execution:
+  revert_autoflow_analysis_stages_record( requestID );
+  //////////////
+  
+
   bool mwl_channel = false;
   QStringList triple_list_affected;
   
@@ -3114,6 +3120,29 @@ void US_Analysis_auto::delete_jobs_at_fitmen( QMap < QString, QString > & triple
 				    tr( "Could not connect to database \n" ) +  db.lastError() );
 	      return;
 	    }
+
+	  //block triple processing again:
+	  int status_fitmen_unique;
+	  status_fitmen_unique = read_autoflowAnalysisStages( requestID );
+  
+	  qDebug() << "[in delete_fitmen_job(no fitmen_bad_vals)] status_fitmen_unique -- " << status_fitmen_unique ;
+  
+	  if ( !status_fitmen_unique )
+	    {
+	      QMessageBox::information( this,
+					tr( "FITMEN | Triple Analysis already processed" ),
+					tr( "It appears that FITMEN stage has already been OR being processed by "
+					    "a different user from different session. \n\n"
+					    "The program will return to the autoflow runs dialog where "
+					    "you can re-attach to the actual current stage of the run. "));
+	      
+	      
+	      emit analysis_back_to_initAutoflow( );
+	      //emit triple_analysis_processed( );
+	      //close();
+	      return;
+	    }
+	  /****/
 	  
 	  
 	  /** DEBUG **/
@@ -3125,6 +3154,7 @@ void US_Analysis_auto::delete_jobs_at_fitmen( QMap < QString, QString > & triple
 	  /* **********/
 	  
 	  update_autoflowAnalysis_uponDeletion( &db, requestID );
+	  //maybe if mwl_channel=true?
 	  update_autoflowAnalysis_uponDeletion_other_wvl( &db, requestID_list );
 	  
 	}
@@ -3177,8 +3207,33 @@ void US_Analysis_auto::delete_jobs_at_fitmen( QMap < QString, QString > & triple
 				    tr( "Could not connect to database \n" ) +  db.lastError() );
 	      return;
 	    }
+
+	  //block triple processing again:
+	  int status_fitmen_unique;
+	  status_fitmen_unique = read_autoflowAnalysisStages( requestID );
+  
+	  qDebug() << "[in delete_fitmen_job(yes fitmen_bad_vals)] status_fitmen_unique -- " << status_fitmen_unique ;
+  
+	  if ( !status_fitmen_unique )
+	    {
+	      QMessageBox::information( this,
+					tr( "FITMEN | Triple Analysis already processed" ),
+					tr( "It appears that FITMEN stage has already been OR being processed by "
+					    "a different user from different session. \n\n"
+					    "The program will return to the autoflow runs dialog where "
+					    "you can re-attach to the actual current stage of the run. "));
+	      
+	      
+	      emit analysis_back_to_initAutoflow( );
+	      //emit triple_analysis_processed( );
+	      //close();
+	      return;
+	    }
+	  /****/
+	  
 	  
 	  update_autoflowAnalysis_uponDeletion( &db, requestID );
+	  //maybe if mwl_channel=true?
 	  update_autoflowAnalysis_uponDeletion_other_wvl( &db, requestID_list );
 	}
     }
@@ -5258,9 +5313,9 @@ void US_Analysis_auto::revert_autoflow_analysis_stages_record( const QString& re
 // Update an edit file with a new meniscus and/or bottom radius value
 void US_Analysis_auto::edit_update_auto( QMap < QString, QString > & triple_information )
 {
+
   /***/
   //ALEXEY: if autoflow: check if edit profiles already updated from other FITMEN session
-  
   QString requestID = triple_information[ "requestID" ];
   //--- LOCK && UPDATE the autoflowStages' ANALYSIS field for the record
   int status_fitmen_unique;
@@ -5272,12 +5327,12 @@ void US_Analysis_auto::edit_update_auto( QMap < QString, QString > & triple_info
     {
       QMessageBox::information( this,
 				tr( "FITMEN | Triple Analysis already processed" ),
-				tr( "It appears that FITMEN stage has already been processed by "
+				tr( "It appears that FITMEN stage has already been OR being processed by "
 				    "a different user from different session. \n\n"
 				    "The program will return to the autoflow runs dialog where "
 				    "you can re-attach to the actual current stage of the run. "));
       
-
+      
       emit analysis_back_to_initAutoflow( );
       //emit triple_analysis_processed( );
       //close();
@@ -5285,6 +5340,7 @@ void US_Analysis_auto::edit_update_auto( QMap < QString, QString > & triple_info
     }
   /****/
 
+  
 #define MENI_HIGHVAL 7.0
 #define BOTT_LOWVAL 7.0
    QString fn = filedir + "/" + fname_edit;
@@ -5523,6 +5579,8 @@ DbgLv(1) << " eupd:   ixmlin ixblin" << ixmlin << ixblin << "ncmlin ncblin" << n
       tso << edtext;
       fileo.close();
 
+
+     
       // If using DB, update the edit record there
 
       if ( db_upd )
