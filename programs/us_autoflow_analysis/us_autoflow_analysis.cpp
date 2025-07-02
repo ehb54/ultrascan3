@@ -2,6 +2,7 @@
 #include <QJsonValue>
 #include <QJsonArray>
 #include <QJsonObject>
+#include <QtNumeric>
 
 #include "us_autoflow_analysis.h"
 #include "us_settings.h"
@@ -102,16 +103,16 @@ US_Analysis_auto::US_Analysis_auto() : US_Widgets()
   // protocol_details[ "statusID" ]     = QString("588");
   // protocol_details[ "autoflowID" ]   = QString("1515");
 
-  //VELOCITY: failed JSON (bad fitmen-auto, "NAN")
-  protocol_details[ "invID_passed" ] = QString("165");
-  protocol_details[ "protocolName" ] = QString("GMP-test-ABDE-fromDisk");
-  protocol_details[ "aprofileguid" ] = QString("6c376179-6eda-47e9-b699-3eef63c6fe6e");
-  protocol_details[ "filename" ]     = QString("AAV_GMP_test_030325-run2366-dataDiskRun-1515");
-  protocol_details[ "analysisIDs"  ] = QString("");
-  protocol_details[ "expType" ]      = QString("ABDE");
-  protocol_details[ "dataSource" ]   = QString("dataDiskAUC");
-  protocol_details[ "statusID" ]     = QString("588");
-  protocol_details[ "autoflowID" ]   = QString("1515");
+  // //VELOCITY: failed JSON (bad fitmen-auto, "NAN")
+  // protocol_details[ "invID_passed" ] = QString("11");
+  // protocol_details[ "protocolName" ] = QString("MartinR_alexey-dev-issue425-SWL-RI-T3_21JUN25");
+  // protocol_details[ "aprofileguid" ] = QString("bc5641b1-27f2-4604-a3e2-5d24196fc9de");
+  // protocol_details[ "filename" ]     = QString("MartinR_alexey-dev-issue425-SWL-RI-T3_21JUN25-run2395");
+  // protocol_details[ "analysisIDs"  ] = QString("61,62");
+  // protocol_details[ "expType" ]      = QString("VELOCITY");
+  // protocol_details[ "dataSource" ]   = QString("INSTRUMENT");
+  // protocol_details[ "statusID" ]     = QString("53");
+  // protocol_details[ "autoflowID" ]   = QString("78");
   
 
   // // // //What's needed ////////////////////////////////////////////////////////
@@ -5458,6 +5459,17 @@ DbgLv(1) << " eupd:  s_meni s_bott" << s_meni << s_bott;
 
      return;
    }
+   
+   //Capture, when fit_men = NAN, for both SWL && MWL
+   if ( qIsNaN(mennew) )
+     {
+       fitmen_bad_vals = true;
+        QString reason_for_failure = "NaN meniscus position!";
+       triple_information[ "failed" ] = reason_for_failure;
+       delete_jobs_at_fitmen( triple_information );
+       return;
+     }
+   
    
    mmsg           = "";
 
