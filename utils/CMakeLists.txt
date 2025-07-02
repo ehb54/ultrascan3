@@ -9,6 +9,7 @@ add_library(utils SHARED
         us_cfa_data.cpp us_cfa_data.h
         us_constants.cpp us_constants.h
         us_crc.cpp us_crc.h
+        us_crypto.cpp us_crypto.h
         us_csv_data.cpp us_csv_data.h
         us_dataIO.cpp us_dataIO.h
         us_datafiles.cpp us_datafiles.h
@@ -51,7 +52,7 @@ add_library(utils SHARED
         us_vector.cpp us_vector.h
         us_xpn_data.cpp us_xpn_data.h
         us_zsolute.cpp us_zsolute.h
-        )
+        ius_db2.h)
 
 # Ensure debug information is included
 target_compile_options(utils PRIVATE -g -O0)

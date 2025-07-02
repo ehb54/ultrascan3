@@ -1,16 +1,11 @@
 #include "test_us_simparms.h"
 #include "us_simparms.h"
-#include "us_db2.h"
 #include "us_hardware.h"
 
-// Mock classes
-class MockUS_DB2 : public US_DB2 {
-    // Implement necessary mock methods if required
-};
-
+// Mock classes for the actual functionality being tested
 class MockUS_AbstractCenterpiece {
 public:
-    static bool read_centerpieces(US_DB2* db, QList<US_AbstractCenterpiece>& cp_list) {
+    static bool read_centerpieces(IUS_DB2* db, QList<US_AbstractCenterpiece>& cp_list) {
         // Add mock data
         US_AbstractCenterpiece cp;
         cp.serial_number = 1;
@@ -26,7 +21,7 @@ public:
 
 class MockUS_Hardware {
 public:
-    static bool readRotorMap(US_DB2* db, QMap<QString, QString>& rotor_map) {
+    static bool readRotorMap(IUS_DB2* db, QMap<QString, QString>& rotor_map) {
         // Add mock data
         rotor_map["calID"] = "mock_calibration";
         return true;
@@ -42,12 +37,16 @@ public:
 // Extending US_SimulationParameters to override the setHardware method for testing
 class TestUS_SimulationParameters : public US_SimulationParameters {
 public:
-    void setHardwareMock(US_DB2* db, QString rCalID, int cp, int ch) {
+    void setHardwareMock(QString rCalID, int cp, int ch) {
         QList<US_AbstractCenterpiece> cp_list;
         QMap<QString, QString> rotor_map;
-        MockUS_AbstractCenterpiece::read_centerpieces(db, cp_list);
-        MockUS_Hardware::readRotorMap(db, rotor_map);
-        MockUS_Hardware::rotorValues(rCalID, rotor_map, rotorcoeffs);
+
+        // Use mock classes to populate data (no database needed)
+        MockUS_AbstractCenterpiece::read_centerpieces(nullptr, cp_list);
+        MockUS_Hardware::readRotorMap(nullptr, rotor_map);
+
+        double mock_rotorcoeffs[2];
+        MockUS_Hardware::rotorValues(rCalID, rotor_map, mock_rotorcoeffs);
 
         // Copy data from the mock data to the member variables
         this->rotorCalID = rCalID;
@@ -57,12 +56,8 @@ public:
         this->cp_width = cp_list[cp].width;
         this->cp_sector = 1;  // Assuming "standard" is the second item in the shapes list
         this->band_forming = false;
-        this->rotorcoeffs[0] = rotorcoeffs[0];
-        this->rotorcoeffs[1] = rotorcoeffs[1];
-    }
-
-    void setHardwareMock(QString rCalID, int cp, int ch) {
-        setHardwareMock(nullptr, rCalID, cp, ch);
+        this->rotorcoeffs[0] = mock_rotorcoeffs[0];
+        this->rotorcoeffs[1] = mock_rotorcoeffs[1];
     }
 };
 
@@ -99,13 +94,12 @@ void TestUSSimparms::testConstructor() {
 
 void TestUSSimparms::testSetHardware_DB() {
     TestUS_SimulationParameters simParams;
-    MockUS_DB2 db;
     QString rCalID = "calID";
     int cp = 0; // Index 0 because cp_list will have only one item
     int ch = 0;
 
-    // Use mock classes
-    simParams.setHardwareMock(&db, rCalID, cp, ch);
+    // Test the mock hardware setup (simulating database case)
+    simParams.setHardwareMock(rCalID, cp, ch);
 
     QCOMPARE(simParams.rotorCalID, rCalID);
     QCOMPARE(simParams.bottom_position, 7.2);
@@ -124,7 +118,7 @@ void TestUSSimparms::testSetHardware_Local() {
     int cp = 0; // Index 0 because cp_list will have only one item
     int ch = 0;
 
-    // Use mock classes
+    // Test the mock hardware setup (local case)
     simParams.setHardwareMock(rCalID, cp, ch);
 
     QCOMPARE(simParams.rotorCalID, rCalID);
