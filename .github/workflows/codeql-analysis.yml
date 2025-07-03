@@ -198,11 +198,6 @@ jobs:
           cmake .. 
           make -j4 
 
-      - name: Run a specific test
-        run: |
-          cd build
-          ./test_us_utils --gtest_filter=US_StiffBaseTest.CompLocalStifComputesCorrectly
-
       - name: Run tests
         run: |
           cd build
