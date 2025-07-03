@@ -1,21 +1,20 @@
+// test_us_analyte.h - Fixed version with declarations only
 #ifndef TEST_US_ANALYTE_H
 #define TEST_US_ANALYTE_H
 
-#include <QtTest/QtTest>
+#include <gtest/gtest.h>
+#include "qt_test_base.h"
 #include "us_analyte.h"
 
-class TestUSAnalyte : public QObject
-{
-Q_OBJECT
+// Test fixture class - inherits from your QtTestBase
+class TestUSAnalyte : public QtTestBase {
+protected:
+    void SetUp() override;
+    void TearDown() override;
 
-private slots:
-    void initTestCase();    // Called before the first test function is executed
-    void cleanupTestCase(); // Called after the last test function is executed
-
-    void testConstructor(); // Test the default constructor
-    void testEqualityOperator(); // Test the equality operator
-    void testLoad(); // Test loading an analyte using the public interface
-    void testWrite(); // Test writing an analyte using the public interface
+    // Suite-level setup and cleanup declarations only
+    static void SetUpTestSuite();
+    static void TearDownTestSuite();
 };
 
 #endif // TEST_US_ANALYTE_H

@@ -1,32 +1,28 @@
 #ifndef TEST_US_SETTINGS_H
 #define TEST_US_SETTINGS_H
 
-#include <QtTest/QtTest>
+#include <gtest/gtest.h>
+#include "qt_test_base.h"
+// Forward declaration to avoid multiple inclusion issues
+class US_Settings;
 
-class TestUSSettings : public QObject
-{
-Q_OBJECT
+// Test fixture class for US_Settings - inherits from your QtTestBase
+class TestUSSettings : public QtTestBase {
+protected:
+    void SetUp() override;
+    void TearDown() override;
 
-private slots:
-    void testBrowserSettings();
-    void testWorkBaseDir();
-    void testImportDir();
-    void testTmpDir();
-    void testDirectories();
-    void testLicenseSettings();
-    void testPasswordSettings();
-    void testTemperatureTolerance();
-    void testBeckmanBug();
-    void testDefaultDataLocation();
-    void testDebugSettings();
-    void testInvestigatorSettings();
-    void testAdvancedLevel();
-    void testThreads();
-    void testNoiseDialog();
-    void testDatabases();
-    void testXpnDbHosts();
-    void testDAStatus();
-    void testStatus();
+    // Suite-level setup and cleanup declarations
+    static void SetUpTestSuite();
+    static void TearDownTestSuite();
+
+protected:
+    // Helper methods for settings validation
+    void validateDirectoryPath(const QString& path, const QString& description);
+    bool isValidPath(const QString& path);
+    void backupAndRestoreStringSetting(const QString& testValue,
+                                       std::function<QString()> getter,
+                                       std::function<void(const QString&)> setter);
 };
 
 #endif // TEST_US_SETTINGS_H

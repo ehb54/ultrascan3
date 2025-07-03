@@ -15,6 +15,9 @@ set(CMAKE_CXX_FLAGS_DEBUG "-g")
 
 add_definitions(-DNO_DB)
 
+# Enable testing
+enable_testing()
+
 # Find Qt packages
 find_package(Qt5 REQUIRED COMPONENTS Core Gui Network Sql Test Widgets Xml)
 

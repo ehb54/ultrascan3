@@ -1,15 +1,19 @@
+// test_us_crc.h
 #ifndef TEST_US_CRC_H
 #define TEST_US_CRC_H
 
-#include <QtTest/QtTest>
-#include "us_crc.h"
+#include <gtest/gtest.h>
+#include "qt_test_base.h"
 
-class TestUSCrc : public QObject {
-Q_OBJECT
+// Test fixture class for US_Crc - inherits from your QtTestBase
+class TestUSCrc : public QtTestBase {
+protected:
+    void SetUp() override;
+    void TearDown() override;
 
-private slots:
-    void test_crc32_data();
-    void test_crc32();
+    // Suite-level setup and cleanup declarations
+    static void SetUpTestSuite();
+    static void TearDownTestSuite();
 };
 
 #endif // TEST_US_CRC_H

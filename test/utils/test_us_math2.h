@@ -1,20 +1,22 @@
 #ifndef TESTUSMATH2_H
 #define TESTUSMATH2_H
 
-#include <QtTest/QtTest>
-#include "us_math2.h"
-#include "us_dataIO.h"
-#include "us_matrix.h"
+#include <gtest/gtest.h>
+#include "qt_test_base.h"
+// Forward declarations to avoid multiple inclusion issues
+class US_Math2;
+class US_DataIO;
+class US_Matrix;
 
-class TestUSMath2 : public QObject
-{
-Q_OBJECT
+// Test fixture class for US_Math2 - inherits from your QtTestBase
+class TestUSMath2 : public QtTestBase {
+protected:
+    void SetUp() override;
+    void TearDown() override;
 
-private slots:
-    void test_box_muller();
-    void test_ranf();
-    void test_linefit();
-    void test_nearest_curve_point();
+    // Suite-level setup and cleanup declarations
+    static void SetUpTestSuite();
+    static void TearDownTestSuite();
 };
 
 #endif // TESTUSMATH2_H

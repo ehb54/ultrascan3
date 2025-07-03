@@ -1,77 +1,108 @@
-#include "test_us_ana_profile.h"  // Include the header file
+// test_us_ana_profile.cpp
+#include "test_us_ana_profile.h"
 #include "us_ana_profile.h"
 #include <QXmlStreamWriter>
 #include <QBuffer>
-#include <QtTest/QtTest>
+#include <QXmlStreamReader>
 
-void TestUSAnaProfile::testConstructor()
-{
+// Use your custom Qt matchers
+using namespace qt_matchers;
+
+// Convert Qt Test methods to Google Test
+TEST_F(TestUSAnaProfile, Constructor) {
     US_AnaProfile profile;
-    QCOMPARE(profile.aprofname, QString(""));
-    QCOMPARE(profile.aprofGUID, QString("00000000-0000-0000-0000-000000000000"));
-    QCOMPARE(profile.protoname, QString(""));
-    QCOMPARE(profile.protoGUID, QString("00000000-0000-0000-0000-000000000000"));
-    QCOMPARE(profile.pchans.size(), 1);
-    QCOMPARE(profile.pchans[0], QString("1A"));
-    QCOMPARE(profile.chndescs.size(), 1);
-    QCOMPARE(profile.chndescs[0], QString("1A:UV/vis.:(unspecified)"));
-    QCOMPARE(profile.lc_ratios.size(), 1);
-    QCOMPARE(profile.lc_ratios[0], 1.0);
-    QCOMPARE(profile.lc_tolers.size(), 1);
-    QCOMPARE(profile.lc_tolers[0], 5.0);
-    QCOMPARE(profile.l_volumes.size(), 1);
-    QCOMPARE(profile.l_volumes[0], 460.0);
-    QCOMPARE(profile.lv_tolers.size(), 1);
-    QCOMPARE(profile.lv_tolers[0], 10.0);
-    QCOMPARE(profile.data_ends.size(), 1);
-    QCOMPARE(profile.data_ends[0], 7.0);
-    QCOMPARE(profile.ld_dens_0s.size(), 1);
-    QCOMPARE(profile.ld_dens_0s[0], 1.42);
-    QCOMPARE(profile.gm_vbars.size(), 1);
-    QCOMPARE(profile.gm_vbars[0], 0.2661);
-    QCOMPARE(profile.gm_mws.size(), 1);
-    QCOMPARE(profile.gm_mws[0], 168.36);
-    QCOMPARE(profile.ref_channels.size(), 1);
-    QCOMPARE(profile.ref_channels[0], 0);
-    QCOMPARE(profile.ref_use_channels.size(), 1);
-    QCOMPARE(profile.ref_use_channels[0], 0);
-    QCOMPARE(profile.analysis_run.size(), 1);
-    QCOMPARE(profile.analysis_run[0], 1);
-    QCOMPARE(profile.report_run.size(), 1);
-    QCOMPARE(profile.report_run[0], 1);
-    QCOMPARE(profile.scan_excl_begin.size(), 1);
-    QCOMPARE(profile.scan_excl_begin[0], 0);
-    QCOMPARE(profile.scan_excl_end.size(), 1);
-    QCOMPARE(profile.scan_excl_end[0], 0);
-    QCOMPARE(profile.replicates.size(), 1);
-    QCOMPARE(profile.replicates[0], 0);
-    QCOMPARE(profile.wvl_edit.size(), 1);
-    QCOMPARE(profile.wvl_edit[0], 180);
-    QCOMPARE(profile.wvl_not_run.size(), 1);
-    QCOMPARE(profile.wvl_not_run[0], QString(""));
-    QCOMPARE(profile.report_mask.isEmpty(), false);
-    QCOMPARE(profile.combPlots_parms.isEmpty(), false);
+
+    // Qt Test → Google Test conversions:
+    // QCOMPARE(a, b) → EXPECT_EQ(a, b)
+    // QVERIFY(condition) → EXPECT_TRUE(condition)
+
+    EXPECT_EQ(profile.aprofname, QString(""));
+    EXPECT_EQ(profile.aprofGUID, QString("00000000-0000-0000-0000-000000000000"));
+    EXPECT_EQ(profile.protoname, QString(""));
+    EXPECT_EQ(profile.protoGUID, QString("00000000-0000-0000-0000-000000000000"));
+
+    EXPECT_EQ(profile.pchans.size(), 1);
+    EXPECT_EQ(profile.pchans[0], QString("1A"));
+
+    EXPECT_EQ(profile.chndescs.size(), 1);
+    EXPECT_EQ(profile.chndescs[0], QString("1A:UV/vis.:(unspecified)"));
+
+    EXPECT_EQ(profile.lc_ratios.size(), 1);
+    EXPECT_EQ(profile.lc_ratios[0], 1.0);
+
+    EXPECT_EQ(profile.lc_tolers.size(), 1);
+    EXPECT_EQ(profile.lc_tolers[0], 5.0);
+
+    EXPECT_EQ(profile.l_volumes.size(), 1);
+    EXPECT_EQ(profile.l_volumes[0], 460.0);
+
+    EXPECT_EQ(profile.lv_tolers.size(), 1);
+    EXPECT_EQ(profile.lv_tolers[0], 10.0);
+
+    EXPECT_EQ(profile.data_ends.size(), 1);
+    EXPECT_EQ(profile.data_ends[0], 7.0);
+
+    EXPECT_EQ(profile.ld_dens_0s.size(), 1);
+    EXPECT_EQ(profile.ld_dens_0s[0], 1.42);
+
+    EXPECT_EQ(profile.gm_vbars.size(), 1);
+    EXPECT_EQ(profile.gm_vbars[0], 0.2661);
+
+    EXPECT_EQ(profile.gm_mws.size(), 1);
+    EXPECT_EQ(profile.gm_mws[0], 168.36);
+
+    EXPECT_EQ(profile.ref_channels.size(), 1);
+    EXPECT_EQ(profile.ref_channels[0], 0);
+
+    EXPECT_EQ(profile.ref_use_channels.size(), 1);
+    EXPECT_EQ(profile.ref_use_channels[0], 0);
+
+    EXPECT_EQ(profile.analysis_run.size(), 1);
+    EXPECT_EQ(profile.analysis_run[0], 1);
+
+    EXPECT_EQ(profile.report_run.size(), 1);
+    EXPECT_EQ(profile.report_run[0], 1);
+
+    EXPECT_EQ(profile.scan_excl_begin.size(), 1);
+    EXPECT_EQ(profile.scan_excl_begin[0], 0);
+
+    EXPECT_EQ(profile.scan_excl_end.size(), 1);
+    EXPECT_EQ(profile.scan_excl_end[0], 0);
+
+    EXPECT_EQ(profile.replicates.size(), 1);
+    EXPECT_EQ(profile.replicates[0], 0);
+
+    EXPECT_EQ(profile.wvl_edit.size(), 1);
+    EXPECT_EQ(profile.wvl_edit[0], 180);
+
+    EXPECT_EQ(profile.wvl_not_run.size(), 1);
+    EXPECT_EQ(profile.wvl_not_run[0], QString(""));
+
+    EXPECT_FALSE(profile.report_mask.isEmpty());
+    EXPECT_FALSE(profile.combPlots_parms.isEmpty());
 }
 
-void TestUSAnaProfile::testEqualityOperator()
-{
+TEST_F(TestUSAnaProfile, EqualityOperator) {
     US_AnaProfile profile1;
     US_AnaProfile profile2;
 
-    QVERIFY(profile1 == profile2);
+    // Test initial equality
+    EXPECT_TRUE(profile1 == profile2);
 
+    // Test inequality after change
     profile1.aprofname = "Profile 1";
-    QVERIFY(!(profile1 == profile2));
+    EXPECT_FALSE(profile1 == profile2);
 
+    // Test equality after matching change
     profile2.aprofname = "Profile 1";
-    QVERIFY(profile1 == profile2);
+    EXPECT_TRUE(profile1 == profile2);
 
+    // Test inequality with different field
     profile1.l_volumes[0] = 500.0;
-    QVERIFY(!(profile1 == profile2));
+    EXPECT_FALSE(profile1 == profile2);
 }
 
-void TestUSAnaProfile::testToXml()
-{
+TEST_F(TestUSAnaProfile, ToXml) {
     US_AnaProfile profile;
     profile.aprofname = "TestProfile";
     profile.aprofGUID = "12345678-1234-1234-1234-123456789012";
@@ -82,16 +113,21 @@ void TestUSAnaProfile::testToXml()
     buffer.open(QIODevice::WriteOnly);
     QXmlStreamWriter xmlWriter(&buffer);
 
-    QVERIFY(profile.toXml(xmlWriter));
+    EXPECT_TRUE(profile.toXml(xmlWriter));
     buffer.close();
 
     QString xmlContent = buffer.data();
-    QVERIFY(xmlContent.contains("<analysis_profile name=\"TestProfile\" guid=\"12345678-1234-1234-1234-123456789012\""));
-    QVERIFY(xmlContent.contains("<channel_parms channel=\"2A\" chandesc=\"2A:UV/vis.:(modified)\""));
+
+    // Using your custom Qt matchers for cleaner assertions
+    EXPECT_THAT(xmlContent, QStringContains(QString("<analysis_profile name=\"TestProfile\" guid=\"12345678-1234-1234-1234-123456789012\"")));
+    EXPECT_THAT(xmlContent, QStringContains(QString("<channel_parms channel=\"2A\" chandesc=\"2A:UV/vis.:(modified)\"")));
+
+    // Alternative: traditional Google Test assertions
+    EXPECT_TRUE(xmlContent.contains("<analysis_profile name=\"TestProfile\" guid=\"12345678-1234-1234-1234-123456789012\""));
+    EXPECT_TRUE(xmlContent.contains("<channel_parms channel=\"2A\" chandesc=\"2A:UV/vis.:(modified)\""));
 }
 
-void TestUSAnaProfile::testFromXml()
-{
+TEST_F(TestUSAnaProfile, FromXml) {
     QString xmlContent = R"DELIM(
 <AnalysisProfileData version="1.0">
     <analysis_profile name="TestProfile" guid="12345678-1234-1234-1234-123456789012">
@@ -113,47 +149,67 @@ void TestUSAnaProfile::testFromXml()
     QXmlStreamReader xmlReader(&buffer);
 
     US_AnaProfile profile;
-    QVERIFY(profile.fromXml(xmlReader));
+    EXPECT_TRUE(profile.fromXml(xmlReader));
     buffer.close();
 
-    QCOMPARE(profile.aprofname, QString("TestProfile"));
-    QCOMPARE(profile.aprofGUID, QString("12345678-1234-1234-1234-123456789012"));
-    QCOMPARE(profile.pchans.size(), 1);
-    QCOMPARE(profile.pchans[0], QString("1A"));
-    QCOMPARE(profile.chndescs.size(), 1);
-    QCOMPARE(profile.chndescs[0], QString("1A:UV/vis.:(unspecified)"));
-    QCOMPARE(profile.lc_ratios.size(), 1);
-    QCOMPARE(profile.lc_ratios[0], 1.0);
-    QCOMPARE(profile.lc_tolers.size(), 1);
-    QCOMPARE(profile.lc_tolers[0], 5.0);
-    QCOMPARE(profile.l_volumes.size(), 1);
-    QCOMPARE(profile.l_volumes[0], 460.0);
-    QCOMPARE(profile.lv_tolers.size(), 1);
-    QCOMPARE(profile.lv_tolers[0], 10.0);
-    QCOMPARE(profile.data_ends.size(), 1);
-    QCOMPARE(profile.data_ends[0], 7.0);
-    QCOMPARE(profile.ld_dens_0s.size(), 1);
-    QCOMPARE(profile.ld_dens_0s[0], 1.42);
-    QCOMPARE(profile.gm_vbars.size(), 1);
-    QCOMPARE(profile.gm_vbars[0], 0.2661);
-    QCOMPARE(profile.gm_mws.size(), 1);
-    QCOMPARE(profile.gm_mws[0], 168.36);
-    QCOMPARE(profile.ref_channels.size(), 1);
-    QCOMPARE(profile.ref_channels[0], 0);
-    QCOMPARE(profile.ref_use_channels.size(), 1);
-    QCOMPARE(profile.ref_use_channels[0], 0);
-    QCOMPARE(profile.analysis_run.size(), 1);
-    QCOMPARE(profile.analysis_run[0], 1);
-    QCOMPARE(profile.report_run.size(), 1);
-    QCOMPARE(profile.report_run[0], 1);
-    QCOMPARE(profile.scan_excl_begin.size(), 1);
-    QCOMPARE(profile.scan_excl_begin[0], 0);
-    QCOMPARE(profile.scan_excl_end.size(), 1);
-    QCOMPARE(profile.scan_excl_end[0], 0);
-    QCOMPARE(profile.replicates.size(), 1);
-    QCOMPARE(profile.replicates[0], 0);
-    QCOMPARE(profile.wvl_edit.size(), 1);
-    QCOMPARE(profile.wvl_edit[0], 180);
-    QCOMPARE(profile.wvl_not_run.size(), 1);
-    QCOMPARE(profile.wvl_not_run[0], QString(""));
+    // Verify parsed values
+    EXPECT_EQ(profile.aprofname, QString("TestProfile"));
+    EXPECT_EQ(profile.aprofGUID, QString("12345678-1234-1234-1234-123456789012"));
+
+    EXPECT_EQ(profile.pchans.size(), 1);
+    EXPECT_EQ(profile.pchans[0], QString("1A"));
+
+    EXPECT_EQ(profile.chndescs.size(), 1);
+    EXPECT_EQ(profile.chndescs[0], QString("1A:UV/vis.:(unspecified)"));
+
+    EXPECT_EQ(profile.lc_ratios.size(), 1);
+    EXPECT_EQ(profile.lc_ratios[0], 1.0);
+
+    EXPECT_EQ(profile.lc_tolers.size(), 1);
+    EXPECT_EQ(profile.lc_tolers[0], 5.0);
+
+    EXPECT_EQ(profile.l_volumes.size(), 1);
+    EXPECT_EQ(profile.l_volumes[0], 460.0);
+
+    EXPECT_EQ(profile.lv_tolers.size(), 1);
+    EXPECT_EQ(profile.lv_tolers[0], 10.0);
+
+    EXPECT_EQ(profile.data_ends.size(), 1);
+    EXPECT_EQ(profile.data_ends[0], 7.0);
+
+    EXPECT_EQ(profile.ld_dens_0s.size(), 1);
+    EXPECT_EQ(profile.ld_dens_0s[0], 1.42);
+
+    EXPECT_EQ(profile.gm_vbars.size(), 1);
+    EXPECT_EQ(profile.gm_vbars[0], 0.2661);
+
+    EXPECT_EQ(profile.gm_mws.size(), 1);
+    EXPECT_EQ(profile.gm_mws[0], 168.36);
+
+    EXPECT_EQ(profile.ref_channels.size(), 1);
+    EXPECT_EQ(profile.ref_channels[0], 0);
+
+    EXPECT_EQ(profile.ref_use_channels.size(), 1);
+    EXPECT_EQ(profile.ref_use_channels[0], 0);
+
+    EXPECT_EQ(profile.analysis_run.size(), 1);
+    EXPECT_EQ(profile.analysis_run[0], 1);
+
+    EXPECT_EQ(profile.report_run.size(), 1);
+    EXPECT_EQ(profile.report_run[0], 1);
+
+    EXPECT_EQ(profile.scan_excl_begin.size(), 1);
+    EXPECT_EQ(profile.scan_excl_begin[0], 0);
+
+    EXPECT_EQ(profile.scan_excl_end.size(), 1);
+    EXPECT_EQ(profile.scan_excl_end[0], 0);
+
+    EXPECT_EQ(profile.replicates.size(), 1);
+    EXPECT_EQ(profile.replicates[0], 0);
+
+    EXPECT_EQ(profile.wvl_edit.size(), 1);
+    EXPECT_EQ(profile.wvl_edit[0], 180);
+
+    EXPECT_EQ(profile.wvl_not_run.size(), 1);
+    EXPECT_EQ(profile.wvl_not_run[0], QString(""));
 }

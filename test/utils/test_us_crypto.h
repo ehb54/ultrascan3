@@ -1,17 +1,21 @@
+// test_us_crypto.h - Converted to Google Test
 #ifndef TEST_US_CRYPTO_H
 #define TEST_US_CRYPTO_H
 
-#include <QtTest/QtTest>
-#include "us_crypto.h"
+#include <gtest/gtest.h>
+#include "qt_test_base.h"
+// Forward declaration to avoid multiple inclusion issues
+class US_Crypto;
 
-class TestUSCrypto : public QObject
-{
-Q_OBJECT
+// Test fixture class for US_Crypto - inherits from your QtTestBase
+class TestUSCrypto : public QtTestBase {
+protected:
+    void SetUp() override;
+    void TearDown() override;
 
-private slots:
-    void initTestCase();
-    void cleanupTestCase();
-    void testEncryptDecrypt();
+    // Suite-level setup and cleanup declarations
+    static void SetUpTestSuite();
+    static void TearDownTestSuite();
 };
 
 #endif // TEST_US_CRYPTO_H

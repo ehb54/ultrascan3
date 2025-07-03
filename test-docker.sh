@@ -25,6 +25,47 @@ print_error() {
     echo -e "${RED}[ERROR]${NC} $1"
 }
 
+# Parse command line arguments
+TEST_FILTER=""
+PARALLEL_JOBS=$(nproc)
+VERBOSE=false
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -f|--filter)
+            TEST_FILTER="$2"
+            shift 2
+            ;;
+        -j|--jobs)
+            PARALLEL_JOBS="$2"
+            shift 2
+            ;;
+        -v|--verbose)
+            VERBOSE=true
+            shift
+            ;;
+        -h|--help)
+            echo "Usage: $0 [options]"
+            echo "Options:"
+            echo "  -f, --filter PATTERN    Run only tests matching pattern"
+            echo "  -j, --jobs N           Use N parallel jobs (default: $(nproc))"
+            echo "  -v, --verbose          Verbose output (shows individual tests)"
+            echo "  -h, --help             Show this help"
+            echo ""
+            echo "Examples:"
+            echo "  $0                     # Run all tests"
+            echo "  $0 -v                  # Show individual test output"
+            echo "  $0 -f utils            # Run only utility tests"
+            echo "  $0 -j 4 -v            # Use 4 jobs with verbose output"
+            exit 0
+            ;;
+        *)
+            print_error "Unknown option: $1"
+            exit 1
+            ;;
+    esac
+done
+
 # Check if Docker is available
 print_status "Checking for Docker..."
 if ! command -v docker &> /dev/null; then
@@ -61,6 +102,12 @@ mkdir -p build-docker
 
 # Run tests in container
 print_status "Starting test container..."
+if [ -n "$TEST_FILTER" ]; then
+    print_status "Running tests with filter: $TEST_FILTER"
+fi
+if [ "$VERBOSE" = true ]; then
+    print_status "Verbose output enabled - showing individual test details"
+fi
 echo ""
 
 docker run --rm \
@@ -90,34 +137,61 @@ docker run --rm \
             echo 'Using existing CMake configuration (incremental build)'
         fi
 
-        echo 'Compiling test executable...'
-        make test_us_utils -j\$(nproc)
+        echo 'Building project...'
+        make -j$PARALLEL_JOBS
 
-        echo 'Running tests...'
+        echo 'Listing available tests...'
         echo '=================================='
-        if [ -f test/utils/test_us_utils ]; then
-            echo 'Found test executable: test/utils/test_us_utils'
-            ./test/utils/test_us_utils
-        else
-            echo 'Searching for test executable...'
-            find . -name 'test_us_utils' -type f -executable
-            TEST_EXECUTABLE=\$(find . -name 'test_us_utils' -type f -executable | head -1)
-            if [ -n \"\$TEST_EXECUTABLE\" ]; then
-                echo \"Found: \$TEST_EXECUTABLE\"
-                \"\$TEST_EXECUTABLE\"
+        ctest -N
+        echo '=================================='
+
+        echo 'Running tests with CTest...'
+        echo '=================================='
+
+        # Build CTest command based on options
+        if [ '$VERBOSE' = true ]; then
+            # Verbose mode - shows all individual test output
+            if [ -n '$TEST_FILTER' ]; then
+                ctest --output-on-failure --verbose -L '$TEST_FILTER' -j$PARALLEL_JOBS
             else
-                echo 'No test executable found'
-                exit 1
+                ctest --output-on-failure --verbose -j$PARALLEL_JOBS
+            fi
+        else
+            # Normal mode - just summary
+            if [ -n '$TEST_FILTER' ]; then
+                ctest --output-on-failure -L '$TEST_FILTER' -j$PARALLEL_JOBS
+            else
+                ctest --output-on-failure -j$PARALLEL_JOBS
             fi
         fi
+
+        # Check result
+        if [ \$? -eq 0 ]; then
+            echo ''
+            echo '=== Test Summary ==='
+            echo 'All tests passed successfully!'
+        else
+            echo ''
+            echo '=== Failed Tests Details ==='
+            echo 'Some tests failed. Rerunning failed tests with verbose output:'
+            ctest --rerun-failed -V || true
+            exit 1
+        fi
+
         echo '=================================='
-        echo 'All tests completed!'
+        echo 'CTest execution completed!'
     "
 
 # Check exit code
 if [ $? -eq 0 ]; then
     echo ""
     print_success "All tests passed!"
+    echo ""
+    print_status "Available commands:"
+    echo "  ./test-docker.sh                    # Run all tests (summary)"
+    echo "  ./test-docker.sh -v                # Show individual test output"
+    echo "  ./test-docker.sh -f utils          # Run only utility tests"
+    echo "  ./test-docker.sh -j 8 -v          # 8 parallel jobs with verbose output"
 else
     echo ""
     print_error "Some tests failed!"
