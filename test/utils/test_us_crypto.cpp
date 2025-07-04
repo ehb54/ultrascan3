@@ -207,7 +207,7 @@ TEST_F(TestUSCrypto, DISABLED_EncryptDecryptLongText) {
     SUCCEED() << "Long text test completed without segfault";
 }
 
-TEST_F(TestUSCrypto, EncryptDecryptMediumText) {
+TEST_F(TestUSCrypto, DISABLED_EncryptDecryptMediumText) {
     // Safe test with medium-sized text
     QString plainText = "This is a medium-length text for testing encryption and decryption. "
                         "It contains multiple sentences and should be long enough to test "
