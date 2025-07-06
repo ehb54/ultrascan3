@@ -173,8 +173,8 @@ jobs:
 
       - name: Install cppcheck
         run: |
-            sudo apt-get update
-            sudo apt-get install -y cppcheck clang-tidy
+            apt-get update
+            apt-get install -y cppcheck clang-tidy
 
       - name: Run Critical Error Analysis with Qt suppressions
         run: |
