@@ -27,7 +27,7 @@ print_error() {
 
 # Parse command line arguments
 TEST_FILTER=""
-PARALLEL_JOBS=$(nproc)
+PARALLEL_JOBS=$(nproc 2>/dev/null || echo 4) # If nproc command does not exist default to 4 parallel
 VERBOSE=false
 
 while [[ $# -gt 0 ]]; do
@@ -48,7 +48,6 @@ while [[ $# -gt 0 ]]; do
             echo "Usage: $0 [options]"
             echo "Options:"
             echo "  -f, --filter PATTERN    Run only tests matching pattern"
-            echo "  -j, --jobs N           Use N parallel jobs (default: $(nproc))"
             echo "  -v, --verbose          Verbose output (shows individual tests)"
             echo "  -h, --help             Show this help"
             echo ""
@@ -56,7 +55,6 @@ while [[ $# -gt 0 ]]; do
             echo "  $0                     # Run all tests"
             echo "  $0 -v                  # Show individual test output"
             echo "  $0 -f utils            # Run only utility tests"
-            echo "  $0 -j 4 -v            # Use 4 jobs with verbose output"
             exit 0
             ;;
         *)
@@ -148,22 +146,20 @@ docker run --rm \
         echo 'Running tests with CTest...'
         echo '=================================='
 
-        # Build CTest command based on options
-        if [ '$VERBOSE' = true ]; then
-            # Verbose mode - shows all individual test output
-            if [ -n '$TEST_FILTER' ]; then
-                ctest --output-on-failure --verbose -L '$TEST_FILTER' -j$PARALLEL_JOBS
-            else
-                ctest --output-on-failure --verbose -j$PARALLEL_JOBS
-            fi
-        else
-            # Normal mode - just summary
-            if [ -n '$TEST_FILTER' ]; then
-                ctest --output-on-failure -L '$TEST_FILTER' -j$PARALLEL_JOBS
-            else
-                ctest --output-on-failure -j$PARALLEL_JOBS
-            fi
-        fi
+       # Build CTest command based on options
+       CTEST_CMD="ctest --output-on-failure --parallel"
+
+       if [ '$VERBOSE' = true ]; then
+           CTEST_CMD="$CTEST_CMD --verbose"
+       fi
+
+       if [ -n '$TEST_FILTER' ]; then
+           CTEST_CMD="$CTEST_CMD -L '$TEST_FILTER'"
+       fi
+
+       echo 'Running tests with CTest...'
+       echo '=================================='
+       $CTEST_CMD
 
         # Check result
         if [ \$? -eq 0 ]; then
@@ -191,7 +187,6 @@ if [ $? -eq 0 ]; then
     echo "  ./test-docker.sh                    # Run all tests (summary)"
     echo "  ./test-docker.sh -v                # Show individual test output"
     echo "  ./test-docker.sh -f utils          # Run only utility tests"
-    echo "  ./test-docker.sh -j 8 -v          # 8 parallel jobs with verbose output"
 else
     echo ""
     print_error "Some tests failed!"
