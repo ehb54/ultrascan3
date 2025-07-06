@@ -163,6 +163,65 @@ jobs:
           make -j4
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
+  static-analysis:
+    runs-on: ubuntu-latest
+    container:
+      image: ehb1/us3comp:latest
+      options: --cpus 2
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install cppcheck
+        run: |
+            sudo apt-get update
+            sudo apt-get install -y cppcheck clang-tidy
+
+      - name: Run Critical Error Analysis with Qt suppressions
+        run: |
+          cppcheck --std=c++14 \
+            --suppress=missingIncludeSystem \
+            --suppress=missingInclude \
+            --suppress=uninitvar \
+            --suppress=uninitMemberVar \
+            --suppress=unusedFunction \
+            --suppress=functionStatic \
+            --suppress=noExplicitConstructor \
+            --suppress=passedByValue \
+            --suppress=useStlAlgorithm \
+            --suppress=constParameter \
+            --suppress=shadowVariable \
+            --quiet \
+            --error-exitcode=1 \
+            gui/ programs/ utils/
+      - name: Run clang-tidy
+        uses: cpp-linter/cpp-linter-action@v2
+        id: linter
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          style: ''
+          tidy-checks: |
+              -*,
+              modernize-use-using,
+              bugprone-forward-declaration-namespace,
+              bugprone-use-after-move,
+              performance-move-const-arg
+          files-changed-only: true
+          ignore: |
+              build*|
+              *_autogen*|
+              moc_*|
+              ui_*|
+              qrc_*|
+              qwtplot3d*
+          extra-args: |
+              -std=c++14
+              -I./gui
+              -I./utils
+              -I./programs
+              -DQT_CORE_LIB
+          version: 14
+
   unit-testing:
     name: Unit Testing
     runs-on: ubuntu-latest
