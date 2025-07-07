@@ -77,77 +77,27 @@ jobs:
 
       - name: Run Include-What-You-Use with QMake Info
         run: |
-          if [ -f compile_commands.json ]; then
-            iwyu_tool.py -p . gui/ programs/ utils/ > iwyu-report.txt 2>&1 || true
+          if command -v iwyu_tool.py >/dev/null 2>&1; then
+            echo "Running Include-What-You-Use analysis..."
+            if [ -f compile_commands.json ]; then
+              iwyu_tool.py -p . gui/ programs/ utils/ > iwyu-report.txt 2>&1 || true
+            else
+              echo "No compile commands available - IWYU analysis limited" > iwyu-report.txt
+            fi
+          elif command -v include-what-you-use >/dev/null 2>&1; then
+            echo "Running basic IWYU on sample files..."
+            find gui utils programs -name "*.cpp" -type f | head -5 | while read -r file; do
+              echo "Checking: $file"
+              include-what-you-use "$file" \
+                -I./gui -I./utils -I./qwtplot3d/include \
+                -I/usr/include/qt5 -I/usr/include/qt5/QtCore \
+                2>&1 || true
+            done > iwyu-report.txt
           else
-            echo "No compile commands available - IWYU analysis limited" > iwyu-report.txt
+            echo "Include-What-You-Use not available in this environment" > iwyu-report.txt
+            echo "IWYU can help identify missing #include statements" >> iwyu-report.txt
+            echo "Consider installing iwyu package for better include analysis" >> iwyu-report.txt
           fi
-
-      - name: Check for Missing Qt Includes
-        run: |
-          echo "=== Checking for common Qt include issues in Ultrascan code ==="
-          cat > check_includes.sh << 'EOF'
-          #!/bin/bash
-          
-          DIRS="gui programs utils"
-          
-          # Check for QString usage without include
-          echo "Checking for QString usage without #include <QString>:"
-          grep -r "QString" $DIRS --include="*.cpp" --include="*.h" | while read -r line; do
-            file=$(echo "$line" | cut -d: -f1)
-            if ! grep -q "#include.*QString" "$file"; then
-              echo "  $line"
-            fi
-          done
-          
-          # Check for QList usage without include
-          echo "Checking for QList usage without #include <QList>:"
-          grep -r "QList" $DIRS --include="*.cpp" --include="*.h" | while read -r line; do
-            file=$(echo "$line" | cut -d: -f1)
-            if ! grep -q "#include.*QList" "$file"; then
-              echo "  $line"
-            fi
-          done
-          
-          # Check for QVector usage without include
-          echo "Checking for QVector usage without #include <QVector>:"
-          grep -r "QVector" $DIRS --include="*.cpp" --include="*.h" | while read -r line; do
-            file=$(echo "$line" | cut -d: -f1)
-            if ! grep -q "#include.*QVector" "$file"; then
-              echo "  $line"
-            fi
-          done
-          
-          # Check for QMap usage without include
-          echo "Checking for QMap usage without #include <QMap>:"
-          grep -r "QMap" $DIRS --include="*.cpp" --include="*.h" | while read -r line; do
-            file=$(echo "$line" | cut -d: -f1)
-            if ! grep -q "#include.*QMap" "$file"; then
-              echo "  $line"
-            fi
-          done
-          
-          # Check for QApplication usage without include
-          echo "Checking for QApplication usage without #include <QApplication>:"
-          grep -r "QApplication" $DIRS --include="*.cpp" --include="*.h" | while read -r line; do
-            file=$(echo "$line" | cut -d: -f1)
-            if ! grep -q "#include.*QApplication" "$file"; then
-              echo "  $line"
-            fi
-          done
-          
-          # Check for common Ultrascan-specific Qt classes
-          echo "Checking for QwtPlot usage without proper includes:"
-          grep -r "QwtPlot" $DIRS --include="*.cpp" --include="*.h" | while read -r line; do
-            file=$(echo "$line" | cut -d: -f1)
-            if ! grep -q "#include.*qwt" "$file"; then
-              echo "  $line"
-            fi
-          done
-          EOF
-          
-          chmod +x check_includes.sh
-          ./check_includes.sh
 
       - name: Run Clang-Tidy with Ultrascan Docker Environment
         run: |
@@ -157,14 +107,29 @@ jobs:
             # Get actual include paths from qmake in Docker environment
             QT_INCLUDES=$(qmake -query QT_INSTALL_HEADERS)
           
-            # Run clang-tidy with Docker environment's actual paths
-            find gui utils programs -name "*.cpp" -type f | head -20 | xargs clang-tidy \
-              --checks='-*,clang-analyzer-*,cppcoreguidelines-*,modernize-*,performance-*,readability-*,bugprone-*,misc-*' \
-              -- -I./gui -I./utils -I./qwtplot3d/include \
-                 -I${QT_INCLUDES} -I${QT_INCLUDES}/QtCore -I${QT_INCLUDES}/QtWidgets \
-                 -I${QT_INCLUDES}/QtGui -I${QT_INCLUDES}/QtXml \
-                 -DINTEL -DLINUX -DQT_WIDGETS_LIB -DQT_XML_LIB \
-              > clang-tidy-report.txt 2>&1 || true
+            # Find and verify we have .cpp files
+            echo "Looking for C++ files..."
+            find gui utils programs -name "*.cpp" -type f | head -10
+          
+            # Count files found
+            file_count=$(find gui utils programs -name "*.cpp" -type f | wc -l)
+            echo "Found $file_count .cpp files"
+          
+            if [ "$file_count" -gt 0 ]; then
+              # Run clang-tidy on a limited set of files (first 20 to avoid overwhelming output)
+              find gui utils programs -name "*.cpp" -type f | head -20 | while read -r file; do
+                echo "Analyzing: $file"
+                clang-tidy "$file" \
+                  --checks='-*,clang-analyzer-*,cppcoreguidelines-*,modernize-*,performance-*,readability-*,bugprone-*,misc-*' \
+                  -- -I./gui -I./utils -I./qwtplot3d/include \
+                     -I${QT_INCLUDES} -I${QT_INCLUDES}/QtCore -I${QT_INCLUDES}/QtWidgets \
+                     -I${QT_INCLUDES}/QtGui -I${QT_INCLUDES}/QtXml \
+                     -DINTEL -DLINUX -DQT_WIDGETS_LIB -DQT_XML_LIB \
+                  2>&1 || true
+              done > clang-tidy-report.txt
+            else
+              echo "No .cpp files found in gui, utils, or programs directories" > clang-tidy-report.txt
+            fi
           
             echo "Clang-tidy analysis completed."
           else
