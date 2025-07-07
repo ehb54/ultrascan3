@@ -3037,7 +3037,7 @@ void US_Analysis_auto::show_overlay( QString triple_stage )
 //Cancel all jobs if FITMEN for a channel was processed by other means: NO FM modles
 void US_Analysis_auto::delete_jobs_at_fitmen( QMap < QString, QString > & triple_info )
 {
-
+  
   qDebug() << "At delete_jobs_at_fitmen: triple_name: " << triple_info[ "triple_name_key" ];
 
   QString triple_name   = triple_info[ "triple_name_key" ];
@@ -3052,12 +3052,12 @@ void US_Analysis_auto::delete_jobs_at_fitmen( QMap < QString, QString > & triple
   QString requestID = ana_details["requestID"];
   qDebug() << "RequestID -- " << requestID;
 
-
+  
   //First, revert unique status, so it does not block execution:
   revert_autoflow_analysis_stages_record( requestID );
   //////////////
-  
 
+  
   bool mwl_channel = false;
   QStringList triple_list_affected;
   

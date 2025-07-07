@@ -756,14 +756,14 @@ pb_plateau->setVisible(false);
    // details[ "runID" ]        = QString("1981");
    // details[ "OptimaName" ]   = QString("Optima 1");
 
-   // details[ "invID_passed" ] = QString("165");
-   // details[ "filename" ]     = QString("GMPMeniscusFitTest_6MAY24-run2023");
-   // details[ "protocolName" ] = QString("GMPMeniscusFitTest_6MAY24v2");
-   // details[ "statusID" ]     = QString("334");
-   // details[ "autoflowID" ]   = QString("1140");
-   // details[ "runID" ]        = QString("2023");
-   // details[ "OptimaName" ]   = QString("Optima 1");
-   // details[ "expType" ]      = QString("VELOCITY");  
+   details[ "invID_passed" ] = QString("165");
+   details[ "filename" ]     = QString("GMPMeniscusFitTest_6MAY24-run2023");
+   details[ "protocolName" ] = QString("GMPMeniscusFitTest_6MAY24v2");
+   details[ "statusID" ]     = QString("334");
+   details[ "autoflowID" ]   = QString("1140");
+   details[ "runID" ]        = QString("2023");
+   details[ "OptimaName" ]   = QString("Optima 1");
+   details[ "expType" ]      = QString("VELOCITY");  
 
    // details[ "invID_passed" ] = QString("165");
    // details[ "filename" ]     = QString("ABDE-Test-052124-run1693");
@@ -784,7 +784,7 @@ pb_plateau->setVisible(false);
    // details[ "expType" ]      = QString("ABDE");
    // details[ "dataSource" ]   = QString("dataDiskAUC");
    
-   // load_auto( details );
+   load_auto( details );
   
 }
 
@@ -14450,6 +14450,10 @@ void US_Edit::pass_values( void )
   QMap< QString, QStringList > editProfile_triple;
   QMap< QString, QList<int> >  editProfile_triple_includes;
   QMap< QString, QStringList > editProfile_triple_blc;
+
+  //make sure all principal params account for possible manual field edit:
+  meniscus     = le_meniscus->text().toDouble();
+  range_right  = le_dataEnd->text().toDouble();
   
   QStringList triple_params, triple_params_blc;
   triple_params <<  QString::number(meniscus)
