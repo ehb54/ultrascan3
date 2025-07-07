@@ -1,0 +1,265 @@
+name: Static Analysis
+on:
+  pull_request:
+    branches:
+      - master
+      - aaron-dev-test-utils
+    paths:
+      - 'gui/**/*.cpp'
+      - 'gui/**/*.h'
+      - 'programs/**/*.cpp'
+      - 'programs/**/*.h'
+      - 'utils/**/*.cpp'
+      - 'utils/**/*.h'
+      - '.github/workflows/static-analysis.yml'
+  workflow_dispatch:
+
+jobs:
+  static-analysis:
+    runs-on: ubuntu-latest
+    container:
+      image: ehb1/us3comp:latest
+      options: --cpus 2
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Additional Analysis Tools
+        run: |
+          # Only install static analysis tools that might not be in the Docker image
+          apt-get update
+          apt-get install -y clang-tidy cppcheck bear clang-format libxml2-utils || true
+          # Note: iwyu might not be available in all repos, so make it optional
+          apt-get install -y iwyu || echo "iwyu not available, skipping"
+
+      - name: Setup Ultrascan Build Environment
+        run: |
+          # Your Docker image should already have local.pri configured
+          # If not, copy from template
+          if [ ! -f local.pri ]; then
+            cp local.pri.template local.pri
+          fi
+
+      - name: Generate Compile Commands from QMake
+        run: |
+          # Your Docker environment should have all the right paths
+          echo "Generating compile commands for Ultrascan components..."
+          
+          # Generate Makefiles using your Docker's configured environment
+          cd qwtplot3d && qmake qwtplot3d.pro && cd ..
+          cd utils && qmake libus_utils.pro && cd ..
+          cd gui && qmake libus_gui.pro && cd ..
+          
+          # Try to capture compile commands
+          if command -v bear >/dev/null 2>&1; then
+            bear -- make -n -C qwtplot3d 2>/dev/null || true
+            bear -- make -n -C utils 2>/dev/null || true
+            bear -- make -n -C gui 2>/dev/null || true
+          fi
+          
+          # Show what qmake detected for debugging
+          echo "QMake configuration detected:"
+          qmake -query
+
+      - name: Run Cppcheck on Ultrascan
+        run: |
+          cppcheck --version
+          cppcheck --enable=all --inconclusive --xml --xml-version=2 \
+            --suppress=missingIncludeSystem \
+            --suppress=unmatchedSuppression \
+            --suppress=unusedFunction \
+            --library=qt \
+            --platform=unix64 \
+            -I./gui -I./utils -I./qwtplot3d/include \
+            -I/usr/include/qt5 -I/usr/include/mysql \
+            -DINTEL -DLINUX \
+            gui/ utils/ programs/ 2> cppcheck-report.xml || true
+
+      - name: Run Include-What-You-Use with QMake Info
+        run: |
+          if [ -f compile_commands.json ]; then
+            iwyu_tool.py -p . gui/ programs/ utils/ > iwyu-report.txt 2>&1 || true
+          else
+            echo "No compile commands available - IWYU analysis limited" > iwyu-report.txt
+          fi
+
+      - name: Check for Missing Qt Includes
+        run: |
+          echo "=== Checking for common Qt include issues in Ultrascan code ==="
+          cat > check_includes.sh << 'EOF'
+          #!/bin/bash
+          
+          DIRS="gui programs utils"
+          
+          # Check for QString usage without include
+          echo "Checking for QString usage without #include <QString>:"
+          grep -r "QString" $DIRS --include="*.cpp" --include="*.h" | while read -r line; do
+            file=$(echo "$line" | cut -d: -f1)
+            if ! grep -q "#include.*QString" "$file"; then
+              echo "  $line"
+            fi
+          done
+          
+          # Check for QList usage without include
+          echo "Checking for QList usage without #include <QList>:"
+          grep -r "QList" $DIRS --include="*.cpp" --include="*.h" | while read -r line; do
+            file=$(echo "$line" | cut -d: -f1)
+            if ! grep -q "#include.*QList" "$file"; then
+              echo "  $line"
+            fi
+          done
+          
+          # Check for QVector usage without include
+          echo "Checking for QVector usage without #include <QVector>:"
+          grep -r "QVector" $DIRS --include="*.cpp" --include="*.h" | while read -r line; do
+            file=$(echo "$line" | cut -d: -f1)
+            if ! grep -q "#include.*QVector" "$file"; then
+              echo "  $line"
+            fi
+          done
+          
+          # Check for QMap usage without include
+          echo "Checking for QMap usage without #include <QMap>:"
+          grep -r "QMap" $DIRS --include="*.cpp" --include="*.h" | while read -r line; do
+            file=$(echo "$line" | cut -d: -f1)
+            if ! grep -q "#include.*QMap" "$file"; then
+              echo "  $line"
+            fi
+          done
+          
+          # Check for QApplication usage without include
+          echo "Checking for QApplication usage without #include <QApplication>:"
+          grep -r "QApplication" $DIRS --include="*.cpp" --include="*.h" | while read -r line; do
+            file=$(echo "$line" | cut -d: -f1)
+            if ! grep -q "#include.*QApplication" "$file"; then
+              echo "  $line"
+            fi
+          done
+          
+          # Check for common Ultrascan-specific Qt classes
+          echo "Checking for QwtPlot usage without proper includes:"
+          grep -r "QwtPlot" $DIRS --include="*.cpp" --include="*.h" | while read -r line; do
+            file=$(echo "$line" | cut -d: -f1)
+            if ! grep -q "#include.*qwt" "$file"; then
+              echo "  $line"
+            fi
+          done
+          EOF
+          
+          chmod +x check_includes.sh
+          ./check_includes.sh
+
+      - name: Run Clang-Tidy with Ultrascan Docker Environment
+        run: |
+          if command -v clang-tidy >/dev/null 2>&1; then
+            clang-tidy --version
+          
+            # Get actual include paths from qmake in Docker environment
+            QT_INCLUDES=$(qmake -query QT_INSTALL_HEADERS)
+          
+            # Run clang-tidy with Docker environment's actual paths
+            find gui utils programs -name "*.cpp" -type f | head -20 | xargs clang-tidy \
+              --checks='-*,clang-analyzer-*,cppcoreguidelines-*,modernize-*,performance-*,readability-*,bugprone-*,misc-*' \
+              -- -I./gui -I./utils -I./qwtplot3d/include \
+                 -I${QT_INCLUDES} -I${QT_INCLUDES}/QtCore -I${QT_INCLUDES}/QtWidgets \
+                 -I${QT_INCLUDES}/QtGui -I${QT_INCLUDES}/QtXml \
+                 -DINTEL -DLINUX -DQT_WIDGETS_LIB -DQT_XML_LIB \
+              > clang-tidy-report.txt 2>&1 || true
+          
+            echo "Clang-tidy analysis completed."
+          else
+            echo "Clang-tidy not available in Docker image" > clang-tidy-report.txt
+          fi
+
+      - name: Check Code Format
+        run: |
+          # Check if clang-format is available before using it
+          if command -v clang-format >/dev/null 2>&1; then
+            echo "Checking code formatting standards..."
+            find gui programs utils -name "*.cpp" -o -name "*.h" | xargs clang-format --dry-run --Werror || true
+          else
+            echo "clang-format not available, skipping format check"
+          fi
+
+      - name: Generate Analysis Summary
+        run: |
+          echo "## Static Analysis Results" > analysis-summary.md
+          echo "" >> analysis-summary.md
+          
+          echo "### Clang-Tidy Results" >> analysis-summary.md
+          echo '```' >> analysis-summary.md
+          head -50 clang-tidy-report.txt >> analysis-summary.md
+          echo '```' >> analysis-summary.md
+          echo "" >> analysis-summary.md
+          
+          echo "### Cppcheck Results" >> analysis-summary.md
+          echo '```' >> analysis-summary.md
+          if command -v xmllint >/dev/null 2>&1; then
+            xmllint --format cppcheck-report.xml | head -50 >> analysis-summary.md
+          else
+            head -50 cppcheck-report.xml >> analysis-summary.md
+          fi
+          echo '```' >> analysis-summary.md
+          echo "" >> analysis-summary.md
+          
+          echo "### Include-What-You-Use Results" >> analysis-summary.md
+          echo '```' >> analysis-summary.md
+          head -50 iwyu-report.txt >> analysis-summary.md
+          echo '```' >> analysis-summary.md
+
+      - name: Show Analysis Results
+        run: |
+          echo "=== STATIC ANALYSIS COMPLETE ==="
+          echo ""
+          echo "Clang-tidy found $(wc -l < clang-tidy-report.txt) lines of output"
+          echo "Cppcheck results saved to cppcheck-report.xml"
+          echo "Missing includes check completed"
+          echo ""
+          echo "=== SUMMARY OF FINDINGS ==="
+          cat analysis-summary.md
+          echo ""
+          echo "=== FILES GENERATED ==="
+          ls -la *report* analysis-summary.md 2>/dev/null || true
+
+      - name: Upload Analysis Reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: static-analysis-reports
+          path: |
+            clang-tidy-report.txt
+            cppcheck-report.xml
+            iwyu-report.txt
+            analysis-summary.md
+
+      - name: Comment PR with Results
+        uses: actions/github-script@v7
+        if: github.event_name == 'pull_request'
+        with:
+          script: |
+            const fs = require('fs');
+            if (fs.existsSync('analysis-summary.md')) {
+              const summary = fs.readFileSync('analysis-summary.md', 'utf8');
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: summary
+              });
+            }
+
+      - name: Fail on Critical Issues
+        run: |
+          # Count critical issues and fail if too many
+          if [ -f clang-tidy-report.txt ]; then
+            critical_issues=$(grep -c "error:" clang-tidy-report.txt 2>/dev/null || echo "0")
+            echo "Found $critical_issues critical issues"
+            if [ "$critical_issues" -gt 10 ]; then
+              echo "Too many critical issues found: $critical_issues"
+              exit 1
+            else
+              echo "Critical issues within acceptable range: $critical_issues"
+            fi
+          else
+            echo "No clang-tidy report found, skipping critical issue check"
+          fi
