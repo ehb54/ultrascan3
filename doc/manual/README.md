@@ -1,14 +1,23 @@
 # UltraScan III Documentation
 
+## Table of Contents
+
+- [Building Documentation Files](#building-documentation-files)
+- [File Organization](#file-organization)
+- [Documentation Style Guidelines](#documentation-style-guidelines)
+- [Example Document Structure](#example-document-structure)
+- [Adding New Pages to the Documentation](#adding-new-pages-to-the-documentation)
+- [Testing Documentation with Qt Assistant](#testing-documentation-with-qt-assistant)
+
 ## Building Documentation Files
 
-To make the UltraScan III documentation files for Qt Assistant, from the `ultrascan3/doc/manual` directory, simply run:
+To build the UltraScan III documentation files for Qt Assistant, from the `ultrascan3/doc/manual` directory, simply run:
 
 ```bash
 make
 ```
 
-This requires that the Qt5 binaries are in your PATH and the Perl tool `tpage` is available.
+This requires that the Qt binaries are in your PATH and the Perl tool `tpage` is available.
 
 ### Installing Required Tools
 
@@ -55,7 +64,6 @@ When creating or editing documentation files:
      ```html
      <p class="center"><img src="images/example.png" alt="Example"/></p>
      ```
-   - Keep image dimensions at 800px or smaller for optimal display across devices
    - Ensure all images have descriptive alt text
 
 2. body Structure
@@ -78,26 +86,114 @@ When creating or editing documentation files:
 
 ```html
 [% INCLUDE header.us3/
-   title = 'UltraScan III Component Name'
+title = 'UltraScan III Component Name'
 %]
 
-    <h2>Component Name</h2>
+<h2>Component Name</h2>
 
-    <p>Description of the component and its purpose.</p>
+<p>Description of the component and its purpose.</p>
 
-    <p class="center"><img src="images/component.png" alt="Component Description"/></p>
+<p class="center"><img src="images/component.png" alt="Component Description"/></p>
 
-    <h3>Functions:</h3>
+<h3>Functions:</h3>
 
-    <ul>
-       <li>
-          <b>Function Name:</b> Description of what this function does.
-       </li>
-       <!-- Additional functions -->
-    </ul>
+<ul>
+   <li>
+      <b>Function Name:</b> Description of what this function does.
+   </li>
+   <!-- Additional functions -->
+</ul>
 
 [% INCLUDE footer.us3 %]
 ```
+
+## Adding New Pages to the Documentation
+
+To include a new help page in the UltraScan III documentation and ensure it's properly indexed and accessible in Qt Assistant, follow these steps:
+
+### 1. Create the Content File
+
+Create a new `.body` file in the appropriate directory (e.g., `gmp/`, `us3/`, etc.) under `ultrascan3/doc/manual`.
+
+Use the existing template structure:
+
+```html
+[% INCLUDE header.us3
+   title = 'Your Page Title'
+%]
+
+<h2>Your Page Title</h2>
+
+<p>Description of the topic.</p>
+
+[% INCLUDE footer.us3 %]
+```
+
+Name it logically (e.g., `gmp_new_feature.body`).
+
+---
+
+### 2. Add the File to `index.body`
+
+To include the new page in the Table of Contents (TOC):
+
+1. Open `index.body`
+2. Find the appropriate section or create a new one using `<ul>` and `<li>` elements.
+3. Add an entry linking to your new HTML file:
+
+```html
+<li><a href="gmp_new_feature.html">New Feature Title</a></li>
+```
+
+Use `.html` as the extension because the build process will convert `.body` files to `.html`.
+
+---
+
+### 3. Understand `manual.qhp` and `manual.qhcp`
+
+#### `manual.qhp` – Qt Help Project File
+
+This file defines:
+- The help project’s name, virtual folder, namespace
+- All HTML files to be included
+- The TOC (Table of Contents) structure
+- Index keywords and search keywords
+
+When you add a new page:
+- Ensure its `.html` file is listed in the `<files>` section.
+- Add it to the `<toc>` and optionally `<keywords>` sections for visibility and searchability.
+
+Example TOC snippet:
+```xml
+<section title="GMP" ref="index.html">
+  <section title="New Feature Title" ref="gmp_new_feature.html" />
+</section>
+```
+
+#### `manual.qhcp` – Qt Help Collection Project File
+
+This file wraps the `.qhp` into a `.qhc` collection file. It defines:
+- The help collection
+- Which `.qhp` projects to include
+- The output collection file name
+
+You don’t typically need to change this unless you're renaming `manual.qhp` or including multiple help projects.
+
+### 4. Rebuild the Documentation
+
+Run the following from `ultrascan3/doc/manual`:
+
+```bash
+make
+```
+
+This will:
+- Convert `.body` files to `.html`
+- Generate the `.qch` and `.qhc` files needed by Qt Assistant
+
+### 5. View Changes
+
+You can use Qt Assistant to review updates locally.
 
 ## Testing Documentation with Qt Assistant
 
@@ -126,7 +222,4 @@ After building your documentation, it's important to test it with Qt Assistant t
    - Check for any broken references or outdated information
 
 For additional help, refer to the UltraScan support resources.
-
-
-
 
