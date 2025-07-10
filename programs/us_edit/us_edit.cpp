@@ -784,7 +784,7 @@ pb_plateau->setVisible(false);
    // details[ "expType" ]      = QString("ABDE");
    // details[ "dataSource" ]   = QString("dataDiskAUC");
    
-   // load_auto( details );
+   //load_auto( details );
   
 }
 
@@ -14450,6 +14450,10 @@ void US_Edit::pass_values( void )
   QMap< QString, QStringList > editProfile_triple;
   QMap< QString, QList<int> >  editProfile_triple_includes;
   QMap< QString, QStringList > editProfile_triple_blc;
+
+  //make sure all principal params account for possible manual field edit:
+  meniscus     = le_meniscus->text().toDouble();
+  range_right  = le_dataEnd->text().toDouble();
   
   QStringList triple_params, triple_params_blc;
   triple_params <<  QString::number(meniscus)
