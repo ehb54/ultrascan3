@@ -128,3 +128,18 @@ For targeted debugging:
 - Linux/macOS: Run script directly
 - Windows: Use WSL2 for best compatibility, or Git Bash as alternative
 - Docker requirement: Same across all platforms
+
+## Example Script: Checking Which utils/ Files Are Missing Unit Tests
+To identify which files in the utils directory are not covered by unit tests in test/utils, use the following one-liner:
+```bash 
+comm -23 \
+<(find utils -type f -name '*.cpp' -exec basename {} \; | sort | uniq) \
+<(find test/utils -type f -name '*.cpp' -exec basename {} \; | sed 's/^test_//' | sort | uniq)
+```
+This will output a list of utils files (by basename) that do not have a corresponding test file in test/utils/.
+
+This assumes the naming convention:
+
+Source file: utils/us_example.cpp \
+Test file: test/utils/test_us_example.cpp \
+You can run this from the root of the repository.
