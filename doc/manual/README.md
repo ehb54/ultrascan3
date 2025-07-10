@@ -131,8 +131,6 @@ Use the existing template structure:
 
 Name it logically (e.g., `gmp_new_feature.body`).
 
----
-
 ### 2. Add the File to `index.body`
 
 To include the new page in the Table of Contents (TOC):
@@ -146,8 +144,6 @@ To include the new page in the Table of Contents (TOC):
 ```
 
 Use `.html` as the extension because the build process will convert `.body` files to `.html`.
-
----
 
 ### 3. Understand `manual.qhp` and `manual.qhcp`
 
