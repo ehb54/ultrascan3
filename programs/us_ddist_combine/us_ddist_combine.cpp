@@ -454,6 +454,9 @@ US_DDistr_Combine::US_DDistr_Combine( const QString auto_mode ) : US_Widgets()
    resize( 1180, 580 );
    reset_data();
 
+   // //TEST
+   // setStyleSheet("QWidget {font-size: 2pt};");
+
 }
 
 //Load auto | GMP report
@@ -522,6 +525,27 @@ QList< QStringList > US_DDistr_Combine::load_auto( QStringList runids_passed, QS
 //return pointer to data_plot1
 QwtPlot* US_DDistr_Combine::rp_data_plot1()
 {
+  //reset fonts for title, axis titles
+  setStyleSheet("QWidget {font-size: 12pt};");
+  QFont font_c("Arial", 12);
+  QwtText p_title = data_plot1->title();
+  p_title.setFont( font_c );
+  data_plot1->setTitle( p_title );
+
+  QwtText xTitle = data_plot1->axisTitle(QwtPlot::xBottom);
+  xTitle.setFont( font_c );
+  data_plot1->setAxisTitle( QwtPlot::xBottom, xTitle );
+
+  QwtText yTitle = data_plot1->axisTitle(QwtPlot::yLeft);
+  yTitle.setFont( font_c );
+  data_plot1->setAxisTitle( QwtPlot::yLeft, yTitle );
+
+  QwtText zTitle = data_plot1->axisTitle(QwtPlot::yRight);
+  zTitle.setFont( font_c );
+  data_plot1->setAxisTitle( QwtPlot::yRight, zTitle );
+
+  data_plot1->replot();
+  
   return data_plot1;
 }
 

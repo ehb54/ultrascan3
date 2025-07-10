@@ -325,13 +325,55 @@ void US_ResidPlotFem::set_plot( int plotf )
 // Return a pointer to the QwtPlot for the upper plot
 QwtPlot* US_ResidPlotFem::rp_data_plot1()
 {
+  //reset fonts for title, axis titles
+  setStyleSheet("QWidget {font-size: 10pt};");
+  QFont font_c("Arial", 12);
+  QwtText p_title = data_plot1->title();
+  p_title.setFont( font_c );
+  data_plot1->setTitle( p_title );
+
+  QwtText xTitle = data_plot1->axisTitle(QwtPlot::xBottom);
+  xTitle.setFont( font_c );
+  data_plot1->setAxisTitle( QwtPlot::xBottom, xTitle );
+
+  QwtText yTitle = data_plot1->axisTitle(QwtPlot::yLeft);
+  yTitle.setFont( font_c );
+  data_plot1->setAxisTitle( QwtPlot::yLeft, yTitle );
+
+  QwtText zTitle = data_plot1->axisTitle(QwtPlot::yRight);
+  zTitle.setFont( font_c );
+  data_plot1->setAxisTitle( QwtPlot::yRight, zTitle );
+
+  data_plot1->replot();
+  
    return data_plot1;
 }
 
 // Return a pointer to the QwtPlot for the lower plot
 QwtPlot* US_ResidPlotFem::rp_data_plot2()
 {
-   return data_plot2;
+  //reset fonts for title, axis titles
+  setStyleSheet("QWidget {font-size: 10pt};");
+  QFont font_c("Arial", 12);
+  QwtText p_title = data_plot2->title();
+  p_title.setFont( font_c );
+  data_plot2->setTitle( p_title );
+
+  QwtText xTitle = data_plot1->axisTitle(QwtPlot::xBottom);
+  xTitle.setFont( font_c );
+  data_plot2->setAxisTitle( QwtPlot::xBottom, xTitle );
+
+  QwtText yTitle = data_plot2->axisTitle(QwtPlot::yLeft);
+  yTitle.setFont( font_c );
+  data_plot2->setAxisTitle( QwtPlot::yLeft, yTitle );
+
+  QwtText zTitle = data_plot2->axisTitle(QwtPlot::yRight);
+  zTitle.setFont( font_c );
+  data_plot2->setAxisTitle( QwtPlot::yRight, zTitle );
+
+  data_plot2->replot();
+  
+  return data_plot2;
 }
 
 // plot-experimental-data box [un]checked
