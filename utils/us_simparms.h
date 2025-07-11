@@ -20,6 +20,9 @@ class US_UTIL_EXTERN US_SimulationParameters
    //! For a simulation, specify the grid type.
    enum GridType  { FIXED, MOVING };
 
+   //! The type of parameter variation of a set of simulations
+   enum FitType { NOTHING, MENISCUS, BOTTOM, ANGLE, BAND_VOLUME, SIGMA, DELTA, VBAR, FF0, TEMPERATURE };
+
    class SpeedProfile;
    class SimSpeedProf;
 
@@ -145,6 +148,12 @@ class US_UTIL_EXTERN US_SimulationParameters
    //! \brief Dump class contents to stderr
    void debug( void );
 
+   //! \brief Get the value of the parameter fitted
+   double get_parameter_value( FitType param ) const;
+
+   //! \brief Set the value of the parameter fitted
+   void set_parameter_value( FitType param, double value );
+
 
    //! The radii from a user-selected mesh file (mesh == USER)
    QVector< double > mesh_radius; 
@@ -161,38 +170,47 @@ class US_UTIL_EXTERN US_SimulationParameters
    QVector< SimSpeedProf > sim_speed_prof;
    US_TimeState*           tsobj;
 
-   int       simpoints;         //!< number of radial grid points used in sim
-   MeshType  meshType;          //!< Type of radial grid 
-   GridType  gridType;          //!< Designation if grid is fixed or can move
-   double    radial_resolution; //!< The radial datapoint increment/resolution 
-                                //!< of the final data
-   double    meniscus;          //!< Meniscus position at first constant speed
-                                //!< For multiple speeds, the user must measure 
-                                //!< the meniscus at the first constant speed 
-                                //!< and use that to initialize the routine
-   double    bottom;            //!< Bottom of cell position with rotor stretch
-   double    temperature;       //!< Temperature in degrees centigrade
-   double    rnoise;            //!< Random noise, proportional to total concentration
-   double    lrnoise;           //!< Random noise, proportional to local concentration
-   double    tinoise;           //!< Time invariant noise
-   double    rinoise;           //!< Radially invariant noise
-   bool      band_forming;      //!< True for band-forming centerpieces
-   double    band_volume;       //!< Loading volume (of lamella) in a 
-                                //!< Band-forming centerpiece
-   double    bottom_position;   //!< Bottom at rest from centerpiece,channel
-   QString   rotorCalID;        //!< Rotor calibration identifier in DB/XML
-   double    rotorcoeffs[ 2 ];  //!< Rotor coefficients for stretch calculation
+   int       simpoints;            //!< Number of radial grid points used in sim
+   MeshType  meshType;             //!< Type of radial grid
+   GridType  gridType;             //!< Designation if grid is fixed or can move
+   FitType   primaryFit;           //!< Primary parameter to fit
+   FitType   secondaryFit;         //!< Secondary parameter to fit
+   double    primary_range;        //!< Value range of the primary parameter
+   double    secondary_range;      //!< Value range of the secondary parameter
+   int       primary_variations;   //!< Number of variations for the primary parameter
+   int       secondary_variations; //!< Number of variations for the secondary parameter
+   int       current_primary_variation; //!< Current primary parameter variation, -1 if not set
+   int       current_secondary_variation; //!< Current secondary parameter variation, -1 if not set
+   double    radial_resolution;    //!< The radial datapoint increment/resolution
+                                   //!< of the final data
+   double    meniscus;             //!< Meniscus position at first constant speed
+                                   //!< For multiple speeds, the user must measure
+                                   //!< the meniscus at the first constant speed
+                                   //!< and use that to initialize the routine
+   double    bottom;               //!< Bottom of cell position with rotor stretch
+   double    temperature;          //!< Temperature in degrees centigrade
+   double    rnoise;               //!< Random noise, proportional to total concentration
+   double    lrnoise;              //!< Random noise, proportional to local concentration
+   double    tinoise;              //!< Time invariant noise
+   double    rinoise;              //!< Radially invariant noise
+   bool      band_forming;         //!< True for band-forming centerpieces
+   double    band_volume;          //!< Loading volume (of lamella) in a
+                                   //!< Band-forming centerpiece
+   double    bottom_position;      //!< Bottom at rest from centerpiece,channel
+   QString   rotorCalID;           //!< Rotor calibration identifier in DB/XML
+   double    rotorcoeffs[ 2 ];     //!< Rotor coefficients for stretch calculation
 
    //! First sedimentation scan is initializer for concentration
    bool      firstScanIsConcentration; 
   
-   bool      sim ;
-   int       cp_sector;         //!< Shape of centerpiece (0-4: see US_Hardware)
-   double    cp_pathlen;        //!< Pathlength of centerpiece
-   double    cp_angle;          //!< Angle of centerpiece sector
-   double    cp_width;          //!< Width of centerpiece channel if rectangular
-   double    sigma;             //!< Sigma for concentration dependence of s
-   double    delta;             //!< Delta for concentration dependence of D
+   bool      sim;                  //!< Flag if this is a simulation
+   int       cp_sector;            //!< Shape of centerpiece (0-4: see US_Hardware)
+   double    cp_pathlen;           //!< Path length of centerpiece
+   double    cp_angle;             //!< Angle of centerpiece sector
+   double    cp_width;             //!< Width of centerpiece channel if rectangular
+   double    sigma;                //!< Sigma for concentration dependence of s
+   double    delta;                //!< Delta for concentration dependence of D
+   double    vbar;                 //!< Vbar for all the components of the analysis
 
    //! Each distinct RPM value in a series of speeds 
    class US_UTIL_EXTERN  SpeedProfile

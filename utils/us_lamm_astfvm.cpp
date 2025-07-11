@@ -109,7 +109,10 @@ void US_LammAstfvm::Mesh::ComputeMeshDen_D3( const double *u0, const double *u1 
    for ( i = 0; i < Ne; i++ ) {
       MeshDen[ i ] = pow( 1 + MonScale * ( fabs( D20[ i ] ) + fabs( D21[ i ] ) ), 0.33333 );
 
-      if ( MeshDen[ i ] > MonCutoff ) MeshDen[ i ] = MonCutoff;
+      if ( MeshDen[ i ] > MonCutoff )
+      {
+         MeshDen[ i ] = MonCutoff;
+      }
    }
 
    Smoothing( Ne, MeshDen, SmoothingWt, SmoothingCyl );
@@ -599,9 +602,9 @@ void US_LammAstfvm::CosedData::InterpolateCCosed( int     N, const double* x, do
    QVector<double> tmpCs0;
    QVector<double> tmpCs1;
    QVector<double> tmpXs;
-   tmpCs0.fill( 0.0, N );
-   tmpCs1.fill( 0.0, N );
-   tmpXs.fill( 0.0, N );
+   tmpCs0.fill( 0.0, sa_data.pointCount() );
+   tmpCs1.fill( 0.0, sa_data.pointCount() );
+   tmpXs.fill( 0.0, sa_data.pointCount() );
    Cs0 = tmpCs0.data();
    Cs1 = tmpCs1.data();
 
@@ -641,7 +644,7 @@ void US_LammAstfvm::CosedData::InterpolateCCosed( int     N, const double* x, do
 
       // interpolate between xs[k-1] and xs[k]
       int    k             = 1;
-      int    Lx            = Nx;
+      int    Lx            = sa_data.pointCount(  );
       int    count_NaN     = 0;
       double dens_coeff[6] = {0.0}; //!< The density coefficients.
       double visc_coeff[6] = {0.0};
@@ -1068,8 +1071,14 @@ int US_LammAstfvm::solve_component( int compx )
    {
       SetNonIdealCase_2();
       mesh_refine_option = 1;
+      double gradient_dt = 200.0;
+      if (bandFormingGradient != nullptr && !bandFormingGradient->is_empty)
+      {
+         gradient_dt = min(gradient_dt, bandFormingGradient->dt);
+      }
 
-      dt      = min( bandFormingGradient->dt, dt );
+
+      dt      = min( gradient_dt, dt );
       solut_t = af_data.scan[nts - 1].time; // true total time
       ntc     = static_cast<int>(solut_t / dt) + 1;
    }
@@ -1145,7 +1154,7 @@ int US_LammAstfvm::solve_component( int compx )
       }
       else
       {
-         u0[kk] = msh->x[jj] * sig_conc; // C*r value
+         u0[kk] = r_value * sig_conc; // C*r value
       }
       u1[kk] = u0[kk];
    }
