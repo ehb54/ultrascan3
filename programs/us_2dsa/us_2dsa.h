@@ -105,7 +105,7 @@ class US_2dsa : public US_AnalysisBase2
         
         QGridLayout* progressLayout; //!< Layout for progress display.
 
-        US_Editor* te_results; //!< Text editor for results.
+        QPointer<US_Editor> te_results; //!< Text editor for results.
 
         SS_DATASET dset; //!< Dataset for solving simulation.
 

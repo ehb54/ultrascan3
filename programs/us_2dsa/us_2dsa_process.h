@@ -63,15 +63,10 @@ class US_2dsaProcess : public QObject
       //! \brief Set up iteration-related parameters for a fit
       //! \param mxiter  Maximum refinement iterations
       //! \param mciter  Number of monte carlo iterations
-      //! \param mniter  Number of meniscus iterations
       //! \param vtoler  Variance difference tolerance
-      //! \param menrng  Meniscus range
       //! \param cff0    Constant f/f0 (or 0.0)
       //! \param jgref   Flag of refine/solute type
-      //! \param fittyp  Flag of fit: 0-3 -> none,meni,bott,menbot,angle,meniangle
-      //! \param angle_range  Angle range
-      void set_iters( int mxiter, int mciter, int mniter, double vtoler, double menrng, double cff0, int jgref,
-                      int fittyp = 0, double angle_range = 0.0 );
+      void set_iters( int mxiter, int mciter, double vtoler, double cff0, int jgref );
 
       //! \brief Get results upon completion of all refinements
       //! \param da_sim  Calculated simulation data
@@ -169,6 +164,8 @@ private:
       QString    s_rfiter;     // current process refine iteration as text
       QString    s_mmiter;     // current process mc/fit iteration as text
       QString    s_variance;   // current process variance as text
+      QString    s_primary;    // current process primary as text
+      QString    s_secondary;  // current process secondary as text
       QString    s_meniscus;   // current process meniscus as text
       QString    s_bottom;     // current process bottom as text
       QString    s_angle;      // current process angle as text

@@ -21,6 +21,9 @@ class US_AdvAnalysis2D : public US_WidgetsDialog
       //! \param p       Pointer to the parent of this widget
       US_AdvAnalysis2D( US_SimulationParameters*, bool&, QWidget* p = 0 );
 
+      void set_parameters( int&,  double&, double&, double&,
+                           US_Model&, bool&, double& );
+
    public slots:
       void get_parameters( int&,  double&, double&, double&,
                            US_Model&, bool&, double& );

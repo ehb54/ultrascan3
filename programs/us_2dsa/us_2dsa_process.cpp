@@ -53,6 +53,8 @@ US_2dsaProcess::US_2dsaProcess( QList< SS_DATASET* >& dsets,
    s_meniscus       = QString( "" );
    s_bottom         = QString( "" );
    s_angle          = QString( "" );
+   s_primary        = QString( "" );
+   s_secondary      = QString( "" );
    vari_curr        = 0.0;
    nscans           = bdata->scanCount();
    npoints          = bdata->pointCount();
@@ -139,23 +141,36 @@ DbgLv(1) << "2P:SF: sll sul nss" << slolim << suplim << nssteps
       if ( mmtype == 1 )
       {  // if meniscus, use the start meniscus,bottom,angle values
          edata              = &wdata;
-         double bmeniscus   = bdata->meniscus;
-         double bbottom     = bdata->bottom;
-         double bangle      = bsimparms.band_volume;
-         if ( bbottom == 0.0 )
+         int k_iter         = mm_iter;
+         int primary_iter   = 0;
+         int secondary_iter = 0;
+         if ( bsimparms.primaryFit != US_SimulationParameters::NOTHING && bsimparms.secondaryFit != US_SimulationParameters::NOTHING )
          {
-            bbottom            = dsets[ 0 ]->simparams.bottom;
-            bdata->bottom      = bbottom;
+            primary_iter   = k_iter / bsimparms.secondary_variations;
+            secondary_iter = k_iter % bsimparms.secondary_variations;
          }
-         edata->meniscus    = bmeniscus - menrange * 0.5;
-         edata->bottom      = bbottom   - menrange * 0.5;
-         dsets[ 0 ]->simparams.band_volume = bangle - angle_range * 0.5;
-         dsets[ 0 ]->simparams.meniscus = edata->meniscus;
-         dsets[ 0 ]->simparams.bottom   = edata->bottom;
-DbgLv(1) << "2P:SF: MENISC: mm_iter" << mm_iter
- << "bmeniscus bbottom" << bmeniscus << bbottom
- << "emeniscus ebottom" << edata->meniscus << edata->bottom
-         << "bangle eangle" << bsimparms.band_volume << dsets[ 0 ]->simparams.band_volume;
+         else if ( bsimparms.primaryFit != US_SimulationParameters::NOTHING )
+         {
+            primary_iter   = k_iter;
+         }
+         else if ( bsimparms.secondaryFit != US_SimulationParameters::NOTHING )
+         {
+            secondary_iter = k_iter;
+         }
+
+         DbgLv( 1 ) << "SET_MEN: k_iter primary_iter secondary_iter" << k_iter << primary_iter << secondary_iter;
+         double primary_base = bsimparms.get_parameter_value( bsimparms.primaryFit );
+         double secondary_base = bsimparms.get_parameter_value( bsimparms.secondaryFit );
+         double current_primary = primary_base - bsimparms.primary_range * 0.5;
+         current_primary += (bsimparms.primary_range / (double)(bsimparms.primary_variations - 1) * (double)primary_iter);
+         double current_secondary = secondary_base - bsimparms.secondary_range * 0.5;
+         current_secondary += (bsimparms.secondary_range / (double)(bsimparms.secondary_variations - 1) * (double)secondary_iter);
+         simparms->set_parameter_value( bsimparms.primaryFit, current_primary );
+         simparms->set_parameter_value( bsimparms.secondaryFit, current_secondary );
+         simparms->current_primary_variation = primary_iter;
+         simparms->current_secondary_variation = secondary_iter;
+         edata->meniscus = simparms->meniscus;
+         edata->bottom   = simparms->bottom;
 
 //         set_meniscus();
       }
@@ -674,41 +689,47 @@ void US_2dsaProcess::calculate_cosedimenting_component()
    }
 
 // Set iteration parameters
-void US_2dsaProcess::set_iters( int    mxiter, int    mciter, int    mniter,
-                                double vtoler, double menrng, double cff0,
-                                int    jgref,  int    fittyp, double angledelta )
+void US_2dsaProcess::set_iters( int    mxiter, int    mciter,
+                                double vtoler, double cff0,
+                                int    jgref )
 {
    maxiters   = mxiter;
+   int mniter = 0;
+   menrange = 0.0;
+   angle_range = 0.0;
+   mendelta = 0.0;
+   angle_delta = 0.0;
+   if (bsimparms.primaryFit != US_SimulationParameters::NOTHING)
+   {
+      mniter = (mniter != 0)?mniter*bsimparms.primary_variations:bsimparms.primary_variations;
+      menrange = bsimparms.primary_range;
+      mendelta = menrange / (double)( bsimparms.primary_variations - 1 );
+   }
+   if (bsimparms.secondaryFit != US_SimulationParameters::NOTHING)
+   {
+      mniter = (mniter != 0)?mniter*bsimparms.secondary_variations:bsimparms.secondary_variations;
+      angle_range = bsimparms.secondary_range;
+      angle_delta = angle_range / (double)( bsimparms.secondary_variations - 1 );
+   }
    mmtype     = ( mciter > 1 ) ? 2 : ( ( mniter > 1 ) ? 1 : 0 );
    mmiters    = ( mmtype == 0 ) ? 0 : qMax( mciter, mniter );
-   fit_type   = fittyp;
    varitol    = vtoler;
-   menrange   = menrng;
-   angle_range = angledelta;
-   mendelta   = menrange / (double)( mmiters - 1 );
-   angle_delta = angle_range / (double)( mmiters - 1 );
    cnstff0    = cff0;
    jgrefine   = jgref;
-   ff_none    = ( fit_type == 0 );
-   ff_omeni   = ( fit_type == 1 );
-   ff_obott   = ( fit_type == 2 );
-   ff_menbot  = ( fit_type == 3 );
-   ff_oangle  = ( fit_type == 4 );
-   ff_meniangle = ( fit_type == 5 );
-   ff_meni    = ( ( fit_type & 1 ) != 0 );
-   ff_bott    = ( ( fit_type & 2 ) != 0 );
-   ff_angle  =  ( ( fit_type & 4 ) != 0 );
-DbgLv(1) << "2PSI: fittyp" << fit_type << "ff_omeni obott menbot meni bott oangle meniangle"
- << ff_omeni << ff_obott << ff_menbot << ff_meni << ff_bott << ff_oangle << ff_meniangle;
+
 
    int stype  = 0;            // Constant vbar, varying f/f0
    if ( jgrefine > 0 )
    {
       if ( cnstff0 > 0.0 )
-         stype   = 1;         // Constant f/f0, varying vbar
+      {
+         stype   = 1; // Constant f/f0, varying vbar
+      }
    }
    else
-      stype   = 2;            // Custom grid
+   {
+      stype   = 2; // Custom grid
+   }
 
    dsets[ 0 ]->solute_type = stype;   // Store solute type
 DbgLv(1) << "2PSI: cnstff0 jgrefine stype" << cnstff0 << jgrefine << stype;
@@ -1148,13 +1169,29 @@ DbgLv(1) << "FIN_FIN: vari" << vari << "vari2" << vari2 << "rmsd2" << rmsd2
    s_meniscus         = QString::number( edata->meniscus );
    s_bottom           = QString::number( edata->bottom );
    s_angle            = QString::number( simparms->cp_angle );
+   if (simparms->primaryFit != US_SimulationParameters::NOTHING)
+   {
+      s_primary          = QString::number( simparms->get_parameter_value( simparms->primaryFit ));
+   }
+   else
+   {
+      s_primary          = "";
+   }
+   if (simparms->secondaryFit != US_SimulationParameters::NOTHING)
+   {
+      s_secondary        = QString::number( simparms->get_parameter_value( simparms->secondaryFit ));
+   }
+   else
+   {
+      s_secondary        = "";
+   }
    vari_curr          = vari;
 #endif
 
 //DbgLv(1) << "FIN_FIN: vari riter miter menisc" << rscan0->delta_r
 //            << rscan0->rpm << rscan0->seconds << rscan0->plateau;
 DbgLv(1) << "FIN_FIN: vari riter miter menisc bott angle" << s_variance
-            << s_rfiter << s_mmiter << s_meniscus << s_bottom << s_angle;
+            << s_rfiter << s_mmiter << s_meniscus << s_bottom << s_angle << s_primary << s_secondary;
 
    // determine elapsed time
    int ktimes  = ((int) timer.elapsed() + 500 ) / 1000;
@@ -1282,67 +1319,73 @@ DbgLv(1) << "FIN_FIN: neediter" << neediter << "  sdiffs" << sdiffs
            }
        }
    }
-
+   int mtiters = mmiters;
+   menrange = 0.0;
+   angle_range = 0.0;
+   mendelta = 0.0;
+   angle_delta = 0.0;
+   if (bsimparms.primaryFit != US_SimulationParameters::NOTHING)
+   {
+      menrange = bsimparms.primary_range;
+      mendelta = menrange / (double)( bsimparms.primary_variations - 1 );
+   }
+   if (bsimparms.secondaryFit != US_SimulationParameters::NOTHING)
+   {
+      angle_range = bsimparms.secondary_range;
+      angle_delta = angle_range / (double)( bsimparms.secondary_variations - 1 );
+   }
    // Done with refinement iterations:   check for meniscus or MC iteration
-   int mtiters        = ff_menbot ? ( mmiters * mmiters ) : ff_meniangle ? ( mmiters * mmiters ): mmiters;
    int k_iter         = mm_iter;
    bool dens_grad = simparms->meshType == US_SimulationParameters::ASTFVM && !dsets[0]->solution_rec.buffer.cosed_component.isEmpty();
    if ( mmtype > 0  &&  ++mm_iter < mtiters )
    {  // doing meniscus or monte carlo and more to do
-      int m_iter = 0; // no meniscus fitting
-      int b_iter = 0; // no bottom fitting
-      int a_iter = 0; // no angle fitting
-      if ( ff_omeni )
-         m_iter = k_iter; // only fitting meniscus
-      else if ( ff_meni )
-         m_iter = k_iter / mmiters; // fitting not only meniscus
-
-      if ( ff_obott )
-         b_iter = k_iter; // only fitting bottom
-      else if ( ff_bott )
-         b_iter = k_iter % mmiters; // fitting not only bottom
-
-      if ( ff_oangle )
-         a_iter = k_iter; // only fitting angle
-      else if ( ff_angle )
-         a_iter = k_iter % mmiters; // fitting not only angle
-
-      double bmeniscus   = bdata->meniscus;
-      double bbottom     = bdata->bottom;
-      double bangle      = bsimparms.band_volume;
-      double emeniscus   = bmeniscus;
-      double ebottom     = bbottom;
-      double eangle      = bangle;
-      if ( ff_meni )
+      int primary_iter   = 0;
+      int secondary_iter = 0;
+      if ( bsimparms.primaryFit != US_SimulationParameters::NOTHING && bsimparms.secondaryFit != US_SimulationParameters::NOTHING )
       {
-         emeniscus          = ( bmeniscus - menrange * 0.5 ) +
-                              ( (double)m_iter * mendelta );
+         primary_iter   = k_iter / bsimparms.secondary_variations;
+         secondary_iter = k_iter % bsimparms.secondary_variations;
       }
-      if ( ff_bott )
+      else if ( bsimparms.primaryFit != US_SimulationParameters::NOTHING )
       {
-         ebottom            = ( bbottom   - menrange * 0.5 ) +
-                              ( (double)b_iter * mendelta );
+         primary_iter   = k_iter;
       }
-      if ( ff_angle )
+      else if ( bsimparms.secondaryFit != US_SimulationParameters::NOTHING )
       {
-         eangle             = ( bangle - angle_range * 0.5 ) +
-                              ( (double)a_iter * angle_delta);
+         secondary_iter = k_iter;
       }
-      edata->meniscus    = emeniscus;
-      edata->bottom      = ebottom;
-      simparms->meniscus = emeniscus;
-      simparms->bottom   = ebottom;
-      simparms->band_volume = eangle;
+
+      DbgLv( 1 ) << "SET_MEN: k_iter primary_iter secondary_iter" << k_iter << primary_iter << secondary_iter;
+      double primary_base = bsimparms.get_parameter_value( bsimparms.primaryFit );
+      double secondary_base = bsimparms.get_parameter_value( bsimparms.secondaryFit );
+      double current_primary = primary_base - bsimparms.primary_range * 0.5;
+      current_primary += (mendelta * (double)primary_iter);
+      double current_secondary = secondary_base - bsimparms.secondary_range * 0.5;
+      current_secondary += (angle_delta * (double)secondary_iter);
+      if (bsimparms.primaryFit != US_SimulationParameters::NOTHING)
+      {
+         simparms->set_parameter_value( bsimparms.primaryFit, current_primary );
+         simparms->current_primary_variation = primary_iter;
+      }
+      if (bsimparms.secondaryFit != US_SimulationParameters::NOTHING)
+      {
+         simparms->set_parameter_value( bsimparms.secondaryFit, current_secondary );
+         simparms->current_secondary_variation = secondary_iter;
+      }
+      edata->meniscus = simparms->meniscus;
+      edata->bottom   = simparms->bottom;
       s_rfiter           = QString::number( r_iter + 1 );
       s_mmiter           = QString::number( mm_iter );
       s_variance         = QString::number( vari_curr );
       s_meniscus         = QString::number( edata->meniscus );
       s_bottom           = QString::number( edata->bottom );
       s_angle            = QString::number( simparms->band_volume );
+      s_primary          = QString::number( simparms->get_parameter_value( simparms->primaryFit ));
+      s_secondary        = QString::number( simparms->get_parameter_value( simparms->secondaryFit ));
 
-DbgLv(1) << "MENISC: k_iter m_iter b_iter a_iter" << k_iter << m_iter << b_iter << a_iter
- << "meniscus bottom angle" << edata->meniscus << simparms->bottom << simparms->band_volume
- << "bbottom mtiters" << bbottom << mtiters;
+DbgLv(1) << "MENISC: k_iter m_iter b_iter a_iter" << k_iter << primary_iter << secondary_iter
+ << "meniscus bottom angle" << current_primary << current_secondary
+ << "bbottom mtiters" << mtiters;
 if(mtiters>50)
  DbgLv(1) << "MENISC: mtiters mmiters" << mtiters << mmiters
   << "ff_: omeni" << ff_omeni << "obott" << ff_obott
@@ -1360,7 +1403,9 @@ if(mtiters>50)
       }
 
       else if ( mmtype == 2 )
+      {
          set_monteCarlo();
+      }
 
       return;
    }
@@ -1371,30 +1416,43 @@ if(mtiters>50)
 
    if ( mmtype == 1 )
    {
-      if ( ff_meni )
+      int primary_iter   = 0;
+      int secondary_iter = 0;
+      if ( bsimparms.primaryFit != US_SimulationParameters::NOTHING && bsimparms.secondaryFit != US_SimulationParameters::NOTHING )
       {
-         int m_iter = ff_omeni ? k_iter : k_iter / mmiters;
-         double smeniscus   = bdata->meniscus - menrange * 0.5;
-         edata->meniscus    = smeniscus + (double)m_iter * mendelta;
-         simparms->meniscus = smeniscus + (double)m_iter * mendelta;
+         primary_iter   = k_iter / bsimparms.secondary_variations;
+         secondary_iter = k_iter % bsimparms.secondary_variations;
       }
-      if ( ff_bott )
+      else if ( bsimparms.primaryFit != US_SimulationParameters::NOTHING )
       {
-         int b_iter = ff_obott ? k_iter : k_iter / mmiters;
-         double sbottom   = bdata->bottom - menrange * 0.5;
-         edata->bottom    = sbottom + (double)b_iter * mendelta;
-         simparms->bottom = sbottom + (double)b_iter * mendelta;
+         primary_iter   = k_iter;
       }
-      if ( ff_angle )
+      else if ( bsimparms.secondaryFit != US_SimulationParameters::NOTHING )
       {
-         int a_iter = ff_oangle ? k_iter : k_iter / mmiters;
-         double sangle   = bsimparms.band_volume - angle_range * 0.5;
-         simparms->band_volume = sangle + (double)a_iter * angle_delta;
+         secondary_iter = k_iter;
       }
+
+      DbgLv( 1 ) << "SET_MEN: k_iter primary_iter secondary_iter" << k_iter << primary_iter << secondary_iter;
+      double primary_base = bsimparms.get_parameter_value( bsimparms.primaryFit );
+      double secondary_base = bsimparms.get_parameter_value( bsimparms.secondaryFit );
+      double current_primary = primary_base - bsimparms.primary_range * 0.5;
+      current_primary += (mendelta * (double)primary_iter);
+      double current_secondary = secondary_base - bsimparms.secondary_range * 0.5;
+      current_secondary += (angle_delta * (double)secondary_iter);
+      if (bsimparms.primaryFit != US_SimulationParameters::NOTHING)
+      {
+         simparms->set_parameter_value( bsimparms.primaryFit, current_primary );
+         simparms->current_primary_variation = primary_iter;
+      }
+      if (bsimparms.secondaryFit != US_SimulationParameters::NOTHING)
+      {
+         simparms->set_parameter_value( bsimparms.secondaryFit, current_secondary );
+         simparms->current_secondary_variation = secondary_iter;
+      }
+      edata->meniscus = simparms->meniscus;
+      edata->bottom   = simparms->bottom;
      if (dens_grad)
          {
-            simparms->meniscus = edata->meniscus;
-            simparms->bottom   = edata->bottom;
             calculate_cosedimenting_component();
          }
    }
@@ -1403,6 +1461,8 @@ if(mtiters>50)
    s_meniscus         = QString::number( edata->meniscus );
    s_bottom           = QString::number( edata->bottom );
    s_angle            = QString::number( simparms->band_volume );
+   s_primary          = QString::number( simparms->get_parameter_value( simparms->primaryFit ));
+   s_secondary        = QString::number( simparms->get_parameter_value( simparms->secondaryFit ));
 
    emit process_complete( 9 );     // signal that all processing is complete
 }
@@ -1453,15 +1513,19 @@ DbgLv(1) << "2P:GV: variance" << s_variance << vari_curr << "iter" << s_mmiter;
    mp_val[ "meniscus"     ]    = s_meniscus;
    mp_val[ "bottom"       ]    = s_bottom;
    mp_val[ "angle"        ]    = s_angle;
-DbgLv(1) << " GET_VAL: rfit mcit vari meni bott"
- << s_rfiter << s_mmiter << s_variance << s_meniscus << s_bottom << s_angle;
+   mp_val[ "primary"      ]    = s_primary;
+   mp_val[ "secondary"    ]    = s_secondary;
+DbgLv(0) << " GET_VAL: rfit mcit vari meni bott"
+ << s_rfiter << s_mmiter << s_variance << s_meniscus << s_bottom << s_angle << s_primary << s_secondary;
 
-   all_ok      = s_rfiter  .isEmpty() ? false : all_ok;
-   all_ok      = s_mmiter  .isEmpty() ? false : all_ok;
-   all_ok      = s_variance.isEmpty() ? false : all_ok;
-   all_ok      = s_meniscus.isEmpty() ? false : all_ok;
-   all_ok      = s_bottom  .isEmpty() ? false : all_ok;
-   all_ok      = s_angle   .isEmpty() ? false : all_ok;
+   all_ok      = s_rfiter   .isEmpty() ? false : all_ok;
+   all_ok      = s_mmiter   .isEmpty() ? false : all_ok;
+   all_ok      = s_variance .isEmpty() ? false : all_ok;
+   all_ok      = s_meniscus .isEmpty() ? false : all_ok;
+   all_ok      = s_bottom   .isEmpty() ? false : all_ok;
+   all_ok      = s_angle    .isEmpty() ? false : all_ok;
+   all_ok      = s_primary  .isEmpty() ? false : all_ok;
+   all_ok      = s_secondary.isEmpty() ? false : all_ok;
 
    return all_ok;
 }
@@ -1810,12 +1874,14 @@ DbgLv(1) << "ITER:   r-iter1 ncto (diff)" << nctotal << kadd;
 
    int    jdpth = 0;
    int    jnois = fnoionly ? 0 : noisflag;
-//*DEBUG
-for(int jj=0; jj<ncsol; jj++ )
- DbgLv(1) << "ITER:     csol" << jj << "  s k c"
-  << csolutes[jj].s*1.e13 << csolutes[jj].k << csolutes[jj].c;
-int ktadd=0;
-//*DEBUG
+   //*DEBUG
+   for(int jj=0; jj<ncsol; jj++ )
+   {
+      DbgLv( 1 ) << "ITER:     csol" << jj << "  s k c"
+     << csolutes[jj].s*1.e13 << csolutes[jj].k << csolutes[jj].c;
+   }
+   int ktadd=0;
+   //*DEBUG
 
    // Build and queue the subgrid tasks
    for ( ktask = 0; ktask < nsubgrid; ktask++ )
@@ -1827,17 +1893,21 @@ int ktadd=0;
       for ( int cc = 0; cc < ncsol; cc++ )
       {
          if ( ! isolutes.contains( csolutes[ cc ] ) )
+         {
             isolutes << csolutes[ cc ];
+         }
       }
-//*DEBUG
-int kosz=orig_sols[ktask].size();
-int kasz=isolutes.size();
-int kadd=kasz-kosz;
-ktadd += (ncsol-kadd);
-if ( kadd < ncsol )
-DbgLv(1) << "ITER: kt" << ktask << "iterate nisol o a c +"
- << kosz << kasz << ncsol << kadd << "ktadd" << ktadd << "nsubg" << nsubgrid;
-//*DEBUG
+      //*DEBUG
+      int kosz=orig_sols[ktask].size();
+      int kasz=isolutes.size();
+      int kadd=kasz-kosz;
+      ktadd += (ncsol-kadd);
+      if ( kadd < ncsol )
+      {
+         DbgLv( 1 ) << "ITER: kt" << ktask << "iterate nisol o a c +"
+       << kosz << kasz << ncsol << kadd << "ktadd" << ktadd << "nsubg" << nsubgrid;
+      }
+      //*DEBUG
       // Queue a subgrid task and update the maximum task solute count
       double llss = isolutes[ 0 ].s;
       double llsk = isolutes[ 0 ].k;
@@ -1847,18 +1917,25 @@ DbgLv(1) << "ITER: kt" << ktask << "iterate nisol o a c +"
       maxtsols       = qMax( maxtsols, isolutes.size() );
    }
 
-//*DEBUG
-if(ktadd<ncsol) {
- for(int kt=0;kt<nsubgrid;kt++)
-  for(int cc=0;cc<orig_sols[kt].size();cc++)
-   DbgLv(1) << "ITER          kt cc" << kt << cc << " s k c"
-    << orig_sols[kt][cc].s*1.e13 << orig_sols[kt][cc].k << orig_sols[kt][cc].c;
-}
-//*DEBUG
+   //*DEBUG
+   if(ktadd<ncsol)
+   {
+      for(int kt=0;kt<nsubgrid;kt++)
+      {
+         for(int cc=0;cc<orig_sols[kt].size();cc++)
+         {
+            DbgLv( 1 ) << "ITER          kt cc" << kt << cc << " s k c"
+            << orig_sols[kt][cc].s*1.e13 << orig_sols[kt][cc].k << orig_sols[kt][cc].c;
+         }
+      }
+   }
+   //*DEBUG
 
    // Make sure calculated solutes are cleared out for new iteration
    for ( int ii = 0; ii < c_solutes.size(); ii++ )
+   {
       c_solutes[ ii ].clear();
+   }
 
    // Start the first threads. This will begin the first work units (subgrids).
    // Thereafter, work units are started in new threads when threads signal
@@ -1885,7 +1962,9 @@ void US_2dsaProcess::free_worker( int tx )
    if ( tx >= 0  &&  tx < nthreads )
    {
       if ( wthreads[ tx ] != 0 )
-         delete wthreads[ tx ];       // destroy thread
+      {
+         delete wthreads[ tx ]; // destroy thread
+      }
 
       wthreads[ tx ] = 0;             // set thread pointer to null
       wkstates[ tx ] = READY;         // mark its slot as available
@@ -1988,57 +2067,43 @@ int US_2dsaProcess::jobs_at_depth( int depth )
 void US_2dsaProcess::set_meniscus()
 {
    // Give the working data set an appropriate meniscus value
-//   int k_iter         = mm_iter - 1;
+   //   int k_iter         = mm_iter - 1;
    int k_iter         = mm_iter;
-   int m_iter = 0; // no meniscus fitting
-   int b_iter = 0; // no bottom fitting
-   int a_iter = 0; // no angle fitting
-   if ( ff_omeni )
-      m_iter = k_iter; // only fitting meniscus
-   else if ( ff_meni )
-      m_iter = k_iter / mmiters; // fitting not only meniscus
-
-   if ( ff_obott )
-      b_iter = k_iter; // only fitting bottom
-   else if ( ff_bott )
-      b_iter = k_iter % mmiters; // fitting not only bottom
-
-   if ( ff_oangle )
-      a_iter = k_iter; // only fitting angle
-   else if ( ff_angle )
-      a_iter = k_iter % mmiters; // fitting not only angle
-
-DbgLv(1) << "SET_MEN: k_iter m_iter b_iter a_iter" << k_iter << m_iter << b_iter << a_iter;
-   double bmeniscus   = bdata->meniscus;
-   double bbottom     = bdata->bottom;
-   double bangle      = bsimparms.band_volume;
-DbgLv(1) << "SET_MEN: bmeniscus bbottom bangle" << bmeniscus << bbottom << bangle;
-   double emeniscus   = bmeniscus;
-   double ebottom     = bbottom;
-   double eangle      = bangle;
-   if ( ff_meni )
+   int primary_iter   = 0;
+   int secondary_iter = 0;
+   if ( bsimparms.primaryFit != US_SimulationParameters::NOTHING && bsimparms.secondaryFit != US_SimulationParameters::NOTHING )
    {
-      emeniscus          = ( bmeniscus - menrange * 0.5 ) +
-                           ( (double)m_iter * mendelta );
+      primary_iter   = k_iter / bsimparms.secondary_variations;
+      secondary_iter = k_iter % bsimparms.secondary_variations;
    }
-   if ( ff_bott )
+   else if ( bsimparms.primaryFit != US_SimulationParameters::NOTHING )
    {
-      ebottom            = ( bbottom   - menrange * 0.5 ) +
-                           ( (double)b_iter * mendelta );
+      primary_iter   = k_iter;
    }
-   if ( ff_angle )
+   else if ( bsimparms.secondaryFit != US_SimulationParameters::NOTHING )
    {
-      eangle             = ( bangle    - angle_range * 0.5 ) +
-                           ( (double)a_iter * angle_delta );
+      secondary_iter = k_iter;
    }
-   edata->meniscus    = emeniscus;
-   edata->bottom      = ebottom;
-   simparms->band_volume = eangle;
-DbgLv(1) << "SET_MEN: emeniscus ebottom eangle" << edata->meniscus << edata->bottom << simparms->band_volume;
-   simparms->meniscus = edata->meniscus;
-   simparms->bottom   = edata->bottom;
-DbgLv(1) << "SET_MEN: k_iter m_iter b_iter a_iter" << k_iter << m_iter << b_iter << a_iter
- << "meniscus bottom angle" << edata->meniscus << simparms->bottom << simparms->band_volume << "bbot" << bbottom;
+
+   DbgLv( 1 ) << "SET_MEN: k_iter primary_iter secondary_iter" << k_iter << primary_iter << secondary_iter;
+   double primary_base = bsimparms.get_parameter_value( bsimparms.primaryFit );
+   double secondary_base = bsimparms.get_parameter_value( bsimparms.secondaryFit );
+   double current_primary = primary_base - bsimparms.primary_range * 0.5;
+   current_primary += (mendelta * (double)primary_iter);
+   double current_secondary = secondary_base - bsimparms.secondary_range * 0.5;
+   current_secondary += (angle_delta * (double)secondary_iter);
+   if (bsimparms.primaryFit != US_SimulationParameters::NOTHING)
+   {
+      simparms->set_parameter_value( bsimparms.primaryFit, current_primary );
+      simparms->current_primary_variation = primary_iter;
+   }
+   if (bsimparms.secondaryFit != US_SimulationParameters::NOTHING)
+   {
+      simparms->set_parameter_value( bsimparms.secondaryFit, current_secondary );
+      simparms->current_secondary_variation = secondary_iter;
+   }
+   edata->meniscus = simparms->meniscus;
+   edata->bottom   = simparms->bottom;
 
    // Re-queue all the original subgrid tasks
    if ( mm_iter > 0 )
@@ -2104,7 +2169,9 @@ void US_2dsaProcess::requeue_tasks()
 
    // Make sure calculated solutes are cleared out for new iteration
    for ( int ii = 0; ii < c_solutes.size(); ii++ )
+   {
       c_solutes[ ii ].clear();
+   }
 
    // Start the first threads
    for ( int ii = 0; ii < nthreads; ii++ )

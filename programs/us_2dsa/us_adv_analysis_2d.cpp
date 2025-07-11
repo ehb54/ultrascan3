@@ -309,6 +309,96 @@ void US_AdvAnalysis2D::get_parameters(
    repar1  = ct_regufact->value();
 }
 
+void US_AdvAnalysis2D::set_parameters(
+   int&  rtype, double& rtpar1, double& rtpar2, double& rtpar3,
+   US_Model& modpar, bool& reg, double& repar1 )
+{
+
+   if( rtype   == US_2dsaProcess::LUGRID )
+   {
+      if (!ck_locugr->isChecked())
+      {
+         ck_locugr->setChecked( true );
+      }
+      ct_repetloc->setValue( rtpar1 );
+      ct_scfactor->setValue( rtpar2 );
+      ct_scfact2 ->setValue( rtpar3 );
+   }
+   else if (ck_locugr->isChecked())
+   {
+      ck_locugr->setChecked( false );
+   }
+
+   if ( rtype == US_2dsaProcess::RLGRID )
+   {
+      if ( !ck_ranlgr->isChecked() )
+      {
+         ck_ranlgr->setChecked( true );
+      }
+      ct_repetran->setValue( rtpar1 );
+      ct_stddevia->setValue( rtpar2 );
+   }
+   else if ( ck_ranlgr->isChecked() )
+   {
+      ck_ranlgr->setChecked( false );
+   }
+
+   if ( rtype   == US_2dsaProcess::SOLCO )
+   {
+      if ( !ck_soluco->isChecked() )
+      {
+         ck_soluco->setChecked( true );
+      }
+      ct_coaldist->setValue( rtpar1 );
+   }
+   else if ( ck_soluco->isChecked() )
+   {
+      ck_soluco->setChecked( false );
+   }
+
+   if ( rtype   == US_2dsaProcess::CLIPLO )
+   {
+      if ( !ck_clipcs->isChecked() )
+      {
+         ck_clipcs->setChecked( true );
+      }
+      ct_nbrclips->setValue( rtpar1 );
+   }
+   else if ( ck_clipcs->isChecked() )
+   {
+      ck_clipcs->setChecked( false );
+   }
+
+   if ( rtype == -1 )
+   {
+      model = modpar;
+      if (!ck_mdgrid->isChecked())
+      {
+         ck_mdgrid->setChecked( true );
+      }
+   }
+   else if (ck_mdgrid->isChecked())
+   {
+      ck_mdgrid->setChecked( false );
+   }
+
+   if ( rtype == -2 )
+   {
+      model = modpar;
+      if (!ck_mdrati->isChecked())
+      {
+         ck_mdrati->setChecked( true );
+      }
+   }
+   else if (ck_mdrati->isChecked())
+   {
+      ck_mdrati->setChecked( false );
+   }
+
+   ck_regulz->setChecked( reg );
+   ct_regufact->setValue( repar1 );
+}
+
 // enable/disable optimize counters based on chosen method
 void US_AdvAnalysis2D::optimize_options()
 {
