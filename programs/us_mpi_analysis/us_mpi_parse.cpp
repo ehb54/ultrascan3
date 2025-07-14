@@ -539,6 +539,6 @@ void US_MPI_Analysis::parse_solution( QXmlStreamReader& xml, DATASET* dataset )
    }
 
    dataset->vbar20  = US_Math2::calcCommonVbar( dataset->solution_rec, 20.0 );
-   dataset->simparams.vbar20 = dataset->vbar20;
+   dataset->simparams.vbar = dataset->vbar20;
 }
 
