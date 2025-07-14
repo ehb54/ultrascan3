@@ -2087,6 +2087,17 @@ void US_MPI_Analysis::write_model( const SIMULATION&      sim,
    QStringList fitType;
    fitType << "NOTHING" << "MENISCUS" << "BOTTOM" << "ANGEL" << "VOLUME" << "SIGMA" << "DELTA"
                << "VBAR" << "FF0" << "TEMPERATURE";
+   QMap< US_SimulationParameters::FitType, QString > maDescMap;
+   maDescMap.insert( US_SimulationParameters::NOTHING, "" );
+   maDescMap.insert( US_SimulationParameters::MENISCUS, "M" );
+   maDescMap.insert( US_SimulationParameters::BOTTOM, "B" );
+   maDescMap.insert( US_SimulationParameters::ANGLE, "A" );
+   maDescMap.insert( US_SimulationParameters::BAND_VOLUME, "V" );
+   maDescMap.insert( US_SimulationParameters::SIGMA, "S" );
+   maDescMap.insert( US_SimulationParameters::DELTA, "D" );
+   maDescMap.insert( US_SimulationParameters::VBAR, "R" );
+   maDescMap.insert( US_SimulationParameters::FF0, "F" );
+   maDescMap.insert( US_SimulationParameters::TEMPERATURE, "T" );
    // Fill in and write out the model file
    US_Model model;
    int subtype       = ( type == US_Model::PCSA ) ? mrecs[ 0 ].ctype : 0;
@@ -2133,17 +2144,7 @@ DbgLv(1) << "wrMo:  mc mciter mGUID" << model.monteCarlo << mc_iter
       {
          model.dataDescrip += desc;
       }
-      QMap< US_SimulationParameters::FitType, QString > maDescMap;
-      maDescMap.insert( US_SimulationParameters::NOTHING, "" );
-      maDescMap.insert( US_SimulationParameters::MENISCUS, "M" );
-      maDescMap.insert( US_SimulationParameters::BOTTOM, "B" );
-      maDescMap.insert( US_SimulationParameters::ANGLE, "A" );
-      maDescMap.insert( US_SimulationParameters::BAND_VOLUME, "V" );
-      maDescMap.insert( US_SimulationParameters::SIGMA, "S" );
-      maDescMap.insert( US_SimulationParameters::DELTA, "D" );
-      maDescMap.insert( US_SimulationParameters::VBAR, "R" );
-      maDescMap.insert( US_SimulationParameters::FF0, "F" );
-      maDescMap.insert( US_SimulationParameters::TEMPERATURE, "T" );
+
    }
    //model.optics      = ???  How to get this?  Is is needed?
    model.analysis    = type;
