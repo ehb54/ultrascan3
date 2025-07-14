@@ -227,9 +227,9 @@ class US_MPI_Analysis : public QObject
                     length = 0;
                     command = IDLE;
                     depth = 0;
-                    primary_fit = 0;
+                    primary_fit = US_SimulationParameters::NOTHING;
                     meniscus_value = 0.0;
-                    secondary_fit = 0;
+                    secondary_fit = US_SimulationParameters::NOTHING;
                     bottom_value = 0.0;
                     dataset_offset = 0;
                     dataset_count = 1;

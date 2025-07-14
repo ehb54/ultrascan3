@@ -1095,8 +1095,8 @@ void US_MPI_Analysis::submit( Sa_Job& job, int worker )
    job.mpi_job.dataset_offset = current_dataset;
    job.mpi_job.dataset_count  = datasets_to_process;
    job.mpi_job.bfg_offset     = bfg_offset;
-   job.mpi_job.primary_fit = (int)primaryFit;
-   job.mpi_job.secondary_fit = (int)secondaryFit;
+   job.mpi_job.primary_fit = primaryFit;
+   job.mpi_job.secondary_fit = secondaryFit;
 int dd=job.mpi_job.depth;
 if (dd==0) { DbgLv(1) << "Mast: submit: worker" << worker << "  sols"
  << job.mpi_job.length << "mciter cds" << mc_iteration << current_dataset << " depth" << dd; }
