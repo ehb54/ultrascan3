@@ -217,6 +217,8 @@ class US_MPI_Analysis : public QObject
                 int dataset_count;  //!< Dataset count
                 int     bfg_offset; //!< Bfg offset
                 int     csd_offset; //!< csd offset
+                US_SimulationParameters::FitType primary_fit;   //!< Primary fit
+                US_SimulationParameters::FitType secondary_fit; //!< Secondary fit
 
                 //! \brief Constructor for MPI_Job
                 MPI_Job()
