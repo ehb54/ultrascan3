@@ -61,10 +61,10 @@ DbgLv(1) << "w:" << my_rank << ": offs cnt" << offset << dataset_count;
       }
       data_sets[ offset ]->run_data.meniscus  = data_sets[ offset ]->simparams.meniscus;
       data_sets[ offset ]->run_data.bottom   = data_sets[ offset ]->simparams.bottom;
-      data_sets[ offset ]->vbar20 = data_sets[offset]->vbar;
+      data_sets[ offset ]->vbar20 = data_sets[offset]->simparams.vbar;
       if ( primaryFit == US_SimulationParameters::VBAR || secondaryFit == US_SimulationParameters::VBAR )
       {
-         double avTemp = data_sets[offset]->run_data->average_temperature();
+         double avTemp = data_sets[offset]->run_data.average_temperature();
          US_Math2::SolutionData sd;
          sd.density      = data_sets[offset]->solution_rec.buffer.density;
          sd.viscosity    = data_sets[offset]->solution_rec.buffer.viscosity;
