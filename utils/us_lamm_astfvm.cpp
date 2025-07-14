@@ -20,7 +20,7 @@ US_LammAstfvm::Mesh::Mesh( const double xl, const double xr, const int Nelem, co
    // constants
    MaxRefLev    = 20;
    MonScale     = 1;
-   MonCutoff    = 10000;
+   MonCutoff    = 1000;
    SmoothingWt  = 0.7;
    SmoothingCyl = 4;
 
@@ -258,28 +258,44 @@ void US_LammAstfvm::Mesh::Refine( double beta ) {
       // set marker for elements that need to be refined
       for ( k = 0; k < Ne; k++ ) {
          if ((x[ k + 1 ] - x[ k ]) * MeshDen[ k ] > beta && RefLev[ k ] < MaxRefLev )
+         {
             Mark[ k ] = 1;
+         }
 
          else
+         {
             Mark[ k ] = 0;
+         }
       }
 
       for ( k = 0; k < Ne - 1; k++ ) {    // RefLev differs at most 2 for nabos
          int rldiff = RefLev[ k ] - RefLev[ k + 1 ];
 
          if ( rldiff < (-1))
+         {
             Mark[ k ] = 1;
+         }
 
          else if ( rldiff > 1 )
+         {
             Mark[ k + 1 ] = 1;
+         }
       }
 
       Ne1 = Ne;
 
       for ( k = 0; k < Ne; k++ )
-         if ( Mark[ k ] == 1 ) Ne1++;
+      {
+         if ( Mark[ k ] == 1 )
+         {
+            Ne1++;
+         }
+      }
 
-      if ( Ne1 == Ne ) return;     // no more elements need refine
+      if ( Ne1 == Ne )
+      {
+         return; // no more elements need refine
+      }
 
       // allocate memory for new mesh
       Nv1 = Ne1 + 1;
@@ -362,7 +378,7 @@ void US_LammAstfvm::Mesh::InitMesh(double s, double D, double w2) {
    double nu0;
    double nu1;
    double nu;
-   double t = 0.0;
+   double t = 1.0;
    double m2;
    double b2;
    double x2;
@@ -379,13 +395,13 @@ void US_LammAstfvm::Mesh::InitMesh(double s, double D, double w2) {
    // FILE *fout;
    // fout = fopen("ti.tmp", "w");
 
-   for ( int i = 0; i < 10; i++ ) {
-      t += 0.1;
+   //for ( int i = 9; i < 10; i++ ) {
+      //t += 0.1;
       u0 = new double[2 * Nv - 1];
       u1 = new double[2 * Nv - 1];
 
-      nu = pow(nu1, t) * pow(nu0, 1 - t);
-
+      //nu = pow(nu1, t) * pow(nu0, 1 - t);
+      nu = nu1;
       for ( j = 0; j < Nv; j++ ) {
          x2 = x[ j ] * x[ j ];
          u0[ 2 * j ] = exp(nu * (m2 - x2)) * (nu * nu * m2);
@@ -403,7 +419,7 @@ void US_LammAstfvm::Mesh::InitMesh(double s, double D, double w2) {
 
       delete[] u0;
       delete[] u1;
-   }
+   //}
 }
 
 // create the salt data set by solving ideal astfem equations
@@ -999,8 +1015,7 @@ int US_LammAstfvm::solve_component( int compx )
    double* u1p;
    double* d_tmp;
    double  total_t = ( param_b - param_m ) * 2.0 / ( param_s * param_w2 * param_m );
-   dt              = log( param_b / param_m ) / ( param_w2 * param_s * simparams.simpoints );
-
+   dt              = log( param_b / param_m ) / ( param_w2 * param_s * simparams.simpoints ) / 2.5;
    int ntcc = static_cast<int>(total_t / dt) + 1; // nbr. times in calculations
    int jt   = 0;
    int nts  = af_data.scan.size(); // nbr. output times (scans)
@@ -1057,7 +1072,7 @@ int US_LammAstfvm::solve_component( int compx )
 
    Mesh* msh = new Mesh( param_m, param_b, simparams.simpoints, 0 );
 
-   msh->InitMesh( param_s20w, param_D20w, param_w2 );
+   // msh->InitMesh( param_s20w, param_D20w, param_w2 );
    int    mesh_refine_option = 1; // mesh refine option;
    double dt_old             = dt;
    // make settings based on the non-ideal case type
@@ -1167,7 +1182,7 @@ int US_LammAstfvm::solve_component( int compx )
    }
    DbgLv( 2 ) << "LAsc:  u0 0,1,2...,N" << u0[0] << u0[1] << u0[2] << u0[N0u - 3] << u0[N0u - 2]
             << u0[N0u - 1];
-
+   msh->RefineMesh( u0, u1, err_tol );
    for ( int jj = 0; jj < ncs; jj++ )
    {
       // get output radius vector
@@ -1327,10 +1342,6 @@ int US_LammAstfvm::solve_component( int compx )
       const double rpm_t0dt = rpm_prior * a + rpm_after * b;
       param_w2_t0 = sq( rpm_t0 * M_PI / 30.0 );
       param_w2_t0dt = sq( rpm_t0dt * M_PI / 30.0 );
-
-
-
-
 
       N0u = N0 + N0 - 1;
       DbgLv( 2 ) << "LAsc: MainLoop Time jt=" << jt << "kt=" << kt << "t0=" << t0 << "t1=" << t1 << "ts=" << ts << "N0="
