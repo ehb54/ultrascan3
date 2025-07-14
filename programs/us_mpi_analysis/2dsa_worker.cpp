@@ -3,6 +3,7 @@
 #include "us_math2.h"
 #include "us_astfem_rsa.h"
 #include "us_simparms.h"
+#include "../../utils/us_simparms.h"
 
 void US_MPI_Analysis::_2dsa_worker( void )
 {
@@ -39,6 +40,8 @@ DbgLv(1) << "w:" << my_rank << ": job_recvd  length" << job.length
 
       meniscus_value     = job.meniscus_value;
       bottom_value       = job.bottom_value;
+      primaryFit = (US_SimulationParameters::FitType)job.primary_fit;
+      secondaryFit = (US_SimulationParameters::FitType)job.secondary_fit;
       int offset         = job.dataset_offset;
       int bfg_offset     = job.bfg_offset;
       int dataset_count  = job.dataset_count;
@@ -46,11 +49,33 @@ DbgLv(1) << "w:" << my_rank << ": job_recvd  length" << job.length
       int noisflag       = ( parameters[ "tinoise_option" ].toInt() > 0 ?  1 : 0 )
                          + ( parameters[ "rinoise_option" ].toInt() > 0 ?  2 : 0 );
 DbgLv(1) << "w:" << my_rank << ": offs cnt" << offset << dataset_count;
+      data_sets[ offset ]->simparams.primaryFit = primaryFit;
+      data_sets[ offset ]->simparams.secondaryFit = secondaryFit;
+      if (primaryFit != US_SimulationParameters::NOTHING)
+      {
+         data_sets[ offset ]->simparams.set_parameter_value( primaryFit, meniscus_value );
+      }
+      if (secondaryFit != US_SimulationParameters::NOTHING)
+      {
+         data_sets[ offset ]->simparams.set_parameter_value( secondaryFit, bottom_value );
+      }
+      data_sets[ offset ]->run_data.meniscus  = data_sets[ offset ]->simparams.meniscus;
+      data_sets[ offset ]->run_data.bottom   = data_sets[ offset ]->simparams.bottom;
+      data_sets[ offset ]->vbar20 = data_sets[offset]->vbar;
+      if ( primaryFit == US_SimulationParameters::VBAR || secondaryFit == US_SimulationParameters::VBAR )
+      {
+         double avTemp = data_sets[offset]->run_data->average_temperature();
+         US_Math2::SolutionData sd;
+         sd.density      = data_sets[offset]->solution_rec.buffer.density;
+         sd.viscosity    = data_sets[offset]->solution_rec.buffer.viscosity;
+         sd.vbar20       = data_sets[offset]->vbar20;
+         sd.vbar         = US_Math2::adjust_vbar20(sd.vbar20, avTemp);
+         sd.manual       = data_sets[offset]->solution_rec.buffer.manual;
+         US_Math2::data_correction( avTemp, sd );
+         data_sets[offset]->s20w_correction = sd.s20w_correction;
+         data_sets[offset]->D20w_correction = sd.D20w_correction;
+      }
 
-      data_sets[ offset ]->run_data.meniscus  = meniscus_value;
-      data_sets[ offset ]->run_data.bottom   = bottom_value;
-      data_sets[ offset ]->simparams.meniscus = meniscus_value;
-      data_sets[ offset ]->simparams.bottom   = bottom_value;
 
       switch( job.command )
       {

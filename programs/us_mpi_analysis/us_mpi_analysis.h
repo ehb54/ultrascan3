@@ -122,6 +122,14 @@ class US_MPI_Analysis : public QObject
         int max_depth;           //!< Maximum depth
         int worknext;            //!< Next work index
         int fit_mb_select;       //!< Fit meniscus/bottom selection (0-3)
+        US_SimulationParameters::FitType primaryFit; //!< Primary parameter to fit
+        US_SimulationParameters::FitType   secondaryFit;         //!< Secondary parameter to fit
+        double    primary_range;        //!< Value range of the primary parameter
+        double    secondary_range;      //!< Value range of the secondary parameter
+        int       primary_variations;   //!< Number of variations for the primary parameter
+        int       secondary_variations; //!< Number of variations for the secondary parameter
+        int       current_primary_variation; //!< Current primary parameter variation, -1 if not set
+        int       current_secondary_variation; //!< Current secondary parameter variation, -1 if not set
         int menibott_ndx;        //!< Meniscus/bottom index
         int meniscus_run;        //!< Meniscus run
         int bottom_run;          //!< Bottom run
@@ -217,7 +225,9 @@ class US_MPI_Analysis : public QObject
                     length = 0;
                     command = IDLE;
                     depth = 0;
+                    primary_fit = 0;
                     meniscus_value = 0.0;
+                    secondary_fit = 0;
                     bottom_value = 0.0;
                     dataset_offset = 0;
                     dataset_count = 1;

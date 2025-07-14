@@ -12,6 +12,9 @@
 #include <mpi.h>
 #include <sys/user.h>
 #include <cstdio>
+#include <QtCore/QString>
+
+#include "../../utils/us_simparms.h"
 
 #define ELAPSED_SECS (startTime.msecsTo(QDateTime::currentDateTime())/1000.0)
 
@@ -347,8 +350,16 @@ DbgLv(0) << "BAD DATA. ioError" << error << "rank" << my_rank << proc_count;
 
    mc_iterations   = parameters[ "mc_iterations" ].toInt();
    mc_iterations   = qMax( mc_iterations, 1 );
+   menibott_count = 1;
+
 
    // Set Fit-Meniscus/Bottom parameters
+   primaryFit    = (US_SimulationParameters::FitType)parameters[ "primary_fit" ].toInt();
+   secondaryFit  = (US_SimulationParameters::FitType)parameters[ "secondary_fit" ].toInt();
+   primary_range = parameters[ "primary_range" ].toDouble();
+   secondary_range = parameters[ "secondary_range" ].toDouble();
+   primary_variations = parameters[ "primary_variations" ].toInt();
+   secondary_variations = parameters[ "secondary_variations" ].toInt();
    fit_mb_select   = parameters[ "fit_mb_select"   ].toInt();
    meniscus_range  = parameters[ "meniscus_range"  ].toDouble();
    meniscus_points = parameters[ "meniscus_points" ].toInt();
@@ -359,38 +370,29 @@ DbgLv(0) << "BAD DATA. ioError" << error << "rank" << my_rank << proc_count;
 if (my_rank==0) {
 DbgLv(0) << "FMB: fit_mb_select" << fit_mb_select
  << "    fit_meni _bott _menbot" << fit_meni << fit_bott << fit_menbot; }
-
-   if ( fit_menbot )
-   {  // Meniscus-and-bottom fit iterations will be run
-      bottom_range    = meniscus_range;
-      bottom_points   = meniscus_points;
-      menibott_count  = meniscus_points * bottom_points;
+   if ( primaryFit != US_SimulationParameters::NOTHING)
+   {
+      meniscus_range  = primary_range;
+      meniscus_points = primary_variations;
+      menibott_count *= primary_variations;
    }
-
-   else if ( fit_meni )
-   {  // Meniscus-only fit iterations will be run
-      bottom_range    = 0.0;
-      bottom_points   = 1;
-      menibott_count  = meniscus_points;
-   }
-
-   else if ( fit_bott )
-   {  // Bottom-only fit iterations will be run
-      bottom_range    = meniscus_range;
-      bottom_points   = meniscus_points;
-      meniscus_range  = 0.0;
-      meniscus_points = 1;
-      menibott_count  = bottom_points;
-   }
-
    else
-   {  // No meniscus/bottom fit
+   {
       meniscus_range  = 0.0;
       meniscus_points = 1;
+   }
+   if ( secondaryFit != US_SimulationParameters::NOTHING)
+   {  // Meniscus-and-bottom fit iterations will be run
+      bottom_range    = secondary_range;
+      bottom_points   = secondary_variations;
+      menibott_count  *= secondary_variations;
+   }
+   else
+   {
       bottom_range    = 0.0;
       bottom_points   = 1;
-      menibott_count  = 1;
    }
+
 if (my_rank==0) {
 DbgLv(0) << "FMB: meni range points" << meniscus_range << meniscus_points
  << "  bott range points" << bottom_range << bottom_points; }
@@ -464,10 +466,10 @@ DbgLv(0) << "FMB: meni range points" << meniscus_range << meniscus_points
    // Calculate meniscus values
    meniscus_values.resize( meniscus_points );
 
-   double meniscus_start = data_sets[ 0 ]->run_data.meniscus 
+   double meniscus_start = data_sets[0]->simparams.get_parameter_value(primaryFit)
                          - meniscus_range / 2.0;
    
-   double dmen           = fit_meni ?
+   double dmen           = primaryFit != US_SimulationParameters::NOTHING ?
                            ( meniscus_range / ( meniscus_points - 1 ) ) :
                            0.0;
 
@@ -475,36 +477,39 @@ DbgLv(0) << "FMB: meni range points" << meniscus_range << meniscus_points
    {
       meniscus_values[ ii ]  = meniscus_start + dmen * ii;
    }
-
-   // Get lower limit of data and last (largest) meniscus value
-   double start_range    = data_sets[ 0 ]->run_data.radius( 0 );
-   double last_meniscus  = meniscus_values[ meniscus_points - 1 ];
-if (my_rank==0) {
- DbgLv(0) << "FMB: meniscus:  start delta" << meniscus_start << dmen; }
-
-   if ( last_meniscus >= start_range )
+   if ( primaryFit == US_SimulationParameters::MENISCUS )
    {
-      if ( my_rank == 0 )
+      // Get lower limit of data and last (largest) meniscus value
+      double start_range    = data_sets[ 0 ]->run_data.radius( 0 );
+      double last_meniscus  = meniscus_values[ meniscus_points - 1 ];
+      if (my_rank==0) {
+         DbgLv(0) << "FMB: meniscus:  start delta" << meniscus_start << dmen; }
+
+      if ( last_meniscus >= start_range )
       {
-         qDebug() << "*ERROR* Meniscus value extends into data";
-         qDebug() << " data meniscus" << data_sets[0]->run_data.meniscus;
-         qDebug() << " meniscus_start" << meniscus_start;
-         qDebug() << " meniscus_range" << meniscus_range;
-         qDebug() << " meniscus_points" << meniscus_points;
-         qDebug() << " meniscus delta" << dmen;
-         qDebug() << " last_meniscus" << last_meniscus;
-         qDebug() << " left_data" << start_range;
+         if ( my_rank == 0 )
+         {
+            qDebug() << "*ERROR* Meniscus value extends into data";
+            qDebug() << " data meniscus" << data_sets[0]->run_data.meniscus;
+            qDebug() << " meniscus_start" << meniscus_start;
+            qDebug() << " meniscus_range" << meniscus_range;
+            qDebug() << " meniscus_points" << meniscus_points;
+            qDebug() << " meniscus delta" << dmen;
+            qDebug() << " last_meniscus" << last_meniscus;
+            qDebug() << " left_data" << start_range;
+         }
+         abort( "Meniscus value extends into data" );
       }
-      abort( "Meniscus value extends into data" );
    }
+
+
 
    // Calculate bottom values
    bottom_values.resize( bottom_points );
-
    // Use bottom from edited data if it is given
    US_SolveSim::DataSet*  ds    = data_sets[ 0 ];
-   double bottom_ds    = ds->run_data.bottom;
-   if ( bottom_ds == 0.0 )
+   double bottom_ds    = ds->simparams.get_parameter_value(secondaryFit);
+   if ( bottom_ds == 0.0 && secondaryFit == US_SimulationParameters::BOTTOM)
    {
       double rpm          = ds->run_data.scanData[ 0 ].rpm;
       bottom_ds           = US_AstfemMath::calc_bottom( rpm,
@@ -513,7 +518,7 @@ if (my_rank==0) {
    }
    double bottom_start = bottom_ds - bottom_range / 2.0;
    
-   double dbot         = fit_bott ?
+   double dbot         = secondaryFit != US_SimulationParameters::NOTHING ?
                          ( bottom_range / ( bottom_points - 1 ) ) :
                          0.0;
 
@@ -2078,7 +2083,10 @@ void US_MPI_Analysis::write_model( const SIMULATION&      sim,
                                    bool                   glob_sols )
 {
    US_DataIO::EditedData* edata = &data_sets[ current_dataset ]->run_data;
-
+   US_SimulationParameters* sparms = &data_sets[ current_dataset ]->sim_params;
+   QStringList fitType;
+   fitType << "NOTHING" << "MENISCUS" << "BOTTOM" << "ANGEL" << "VOLUME" << "SIGMA" << "DELTA"
+               << "VBAR" << "FF0" << "TEMPERATURE";
    // Fill in and write out the model file
    US_Model model;
    int subtype       = ( type == US_Model::PCSA ) ? mrecs[ 0 ].ctype : 0;
@@ -2102,20 +2110,46 @@ DbgLv(1) << "wrMo:  mc mciter mGUID" << model.monteCarlo << mc_iter
    model.editGUID    = edata->editGUID;
    model.requestGUID = requestGUID;
    model.dataDescrip = edata->description;
+   if ( sparms->primaryFit != US_SimulationParameters::NOTHING || sparms->secondaryFit != US_SimulationParameters::NOTHING )
+   {  // Meniscus (or Meniscus,Bottom)
+      model->global = US_Model::MENISCUS;
+      QString desc = QString( "MMITER=%1 VARI=%2" ).arg(menibott_ndx + 1).arg(varinew);
+      if ( sparms->primaryFit != US_SimulationParameters::NOTHING )
+      {
+         QString pfit = fitType[ sparms->primaryFit ];
+         desc += QString( " %1=%2" ).arg( pfit ).arg( meniscus_value );
+
+      }
+      if ( sparms->secondaryFit != US_SimulationParameters::NOTHING )
+      {
+         QString sfit = fitType[ sparms->secondaryFit ];
+         desc += QString( " %1=%2" ).arg( sfit ).arg( bottom_value );
+      }
+      if (model.dataDescrip.isEmpty())
+      {
+         model.dataDescrip = desc;
+      }
+      else
+      {
+         model.dataDescrip += desc;
+      }
+      QMap< US_SimulationParameters::FitType, QString > maDescMap;
+      maDescMap.insert( US_SimulationParameters::NOTHING, "" );
+      maDescMap.insert( US_SimulationParameters::MENISCUS, "M" );
+      maDescMap.insert( US_SimulationParameters::BOTTOM, "B" );
+      maDescMap.insert( US_SimulationParameters::ANGLE, "A" );
+      maDescMap.insert( US_SimulationParameters::BAND_VOLUME, "V" );
+      maDescMap.insert( US_SimulationParameters::SIGMA, "S" );
+      maDescMap.insert( US_SimulationParameters::DELTA, "D" );
+      maDescMap.insert( US_SimulationParameters::VBAR, "R" );
+      maDescMap.insert( US_SimulationParameters::FF0, "F" );
+      maDescMap.insert( US_SimulationParameters::TEMPERATURE, "T" );
+   }
    //model.optics      = ???  How to get this?  Is is needed?
    model.analysis    = type;
    QString runID     = edata->runID;
 
-   if ( fit_menbot )
-      model.global      = US_Model::MENIBOTT;
-
-   else if ( fit_meni )
-      model.global      = US_Model::MENISCUS;
-
-   else if ( fit_bott )
-      model.global      = US_Model::BOTTOM;
-
-   else if ( is_global_fit )
+   if ( is_global_fit )
    {
       model.global      = US_Model::GLOBAL;
       subtype          += ( glob_sols ? SUBT_SC : SUBT_VR );
@@ -2128,8 +2162,8 @@ DbgLv(1) << "wrMo:  mc mciter mGUID" << model.monteCarlo << mc_iter
 DbgLv(0) << "wrMo:  is_glob glob_sols" << is_global_fit << glob_sols
  << "f_men f_bot f_mbo" << fit_meni << fit_bott << fit_menbot << "m.glob" << model.global;
 
-   model.meniscus    = meniscus_value;
-   model.bottom      = fit_bott ? bottom_value : 0.0;
+   model.meniscus    = data_sets[current_dataset]->simparams.meniscus;
+   model.bottom      = data_sets[current_dataset]->simparams.bottom;
    model.variance    = sim.variance;
 
    // demo1_veloc. 1A999. e201101171200_a201101171400_2DSA us3-0000003           .model
@@ -2172,8 +2206,17 @@ DbgLv(1) << "wrMo: tripleID" << tripleID << "dates" << dates;
    QString id        = model.typeText( subtype );
    if ( analysis_type.contains( "CG" ) )
       id                = id.replace( "2DSA", "2DSA-CG" );
+   if ( primaryFit != US_SimulationParameters::NOTHING ||
+         secondaryFit != US_SimulationParameters::NOTHING )
+   {
+      id += "-F";
+      id += maDescMap[primaryFit];
+      id += maDescMap[secondaryFit];
+   }
+
    if ( max_iterations > 1  &&  mc_iterations == 1 )
       id               += "-IT";
+
    QString analyID   = dates + "_" + id + "_" + requestID + "_" + iterID;
    int     stype     = data_sets[ current_dataset ]->solute_type;
    double  vbar20    = data_sets[ current_dataset ]->vbar20;

@@ -5,6 +5,7 @@
 #include "us_astfem_rsa.h"
 #include "us_simparms.h"
 #include "us_constants.h"
+#include "../../utils/us_simparms.h"
 
 void US_MPI_Analysis::_2dsa_master( void )
 {
@@ -23,29 +24,29 @@ void US_MPI_Analysis::_2dsa_master( void )
 
    if ( mc_iterations > 1 )
       max_iterations   = max_iters_all > 1 ? max_iters_all : 5;
-
+   menibott_count = 1;
    menibott_ndx        = 0;
    meniscus_run        = 0;
    bottom_run          = 0;
-   if ( fit_mb_select == 0 )
+   if ( primaryFit != US_SimulationParameters::NOTHING)
    {
-      menibott_count      = 1;
-      meniscus_points     = 1;
-      bottom_points       = 1;
+      meniscus_points = primary_variations;
+      menibott_count *= primary_variations;
    }
-   else if ( fit_menbot )
+   else
    {
-      menibott_count      = meniscus_points * bottom_points;
+      meniscus_range  = 0.0;
+      meniscus_points = 1;
    }
-   else if ( fit_meni )
-   {
-      menibott_count      = meniscus_points;
-      bottom_points       = 1;
+   if ( secondaryFit != US_SimulationParameters::NOTHING)
+   {  // Meniscus-and-bottom fit iterations will be run
+      bottom_points   = secondary_variations;
+      menibott_count  *= secondary_variations;
    }
-   else if ( fit_bott )
+   else
    {
-      menibott_count      = bottom_points;
-      meniscus_points     = 1;
+      bottom_range    = 0.0;
+      bottom_points   = 1;
    }
    qDebug() << "w:" << my_rank << "Preparing start of queue";
    while ( true )
@@ -79,7 +80,9 @@ void US_MPI_Analysis::_2dsa_master( void )
          QString tripleID = edata->cell + edata->channel + edata->wavelength;
          QString progress =
             "Iteration: "    + QString::number( iterations );
-
+         QStringList fitType;
+         fitType << "NOTHING" << "MENISCUS" << "BOTTOM" << "ANGEL" << "VOLUME" << "SIGMA" << "DELTA"
+                     << "VBAR" << "FF0" << "TEMPERATURE";
          if ( datasets_to_process > 1 )
             progress     += "; Datasets: "
                             + QString::number( datasets_to_process );
@@ -92,26 +95,20 @@ void US_MPI_Analysis::_2dsa_master( void )
          if ( mc_iterations > 1 )
             progress     += "; MonteCarlo: "
                             + QString::number( mc_iteration + 1 );
-
-         else if ( fit_menbot )
-            progress     += "; Meniscus: "
-               + QString::number( meniscus_value, 'f', 4 )
-               + "; Bottom: "
-               + QString::number( bottom_value,   'f', 4 )
-               + tr( "  ( m%1 b%2 )").arg( meniscus_run + 1 ).arg( bottom_run + 1 );
-         else if ( fit_meni )
-            progress     += "; Meniscus: "
-               + QString::number( meniscus_value, 'f', 4 )
-               + tr( " (%1 of %2)" ).arg( meniscus_run + 1 )
-                                    .arg( meniscus_points );
-         else if ( fit_bott )
-            progress     += "; Bottom: "
-               + QString::number( bottom_value,   'f', 4 )
-               + tr( " (%1 of %2)" ).arg( bottom_run + 1 )
-                                    .arg( bottom_points );
-         else
-            progress     += "; RMSD: "
-               + QString::number( sqrt( simulation_values.variance ) );
+         if ( primaryFit )
+         {
+            progress += "; " + fitType[ primaryFit ] + ": " + QString::number( data_sets[ current_dataset]->simparams.get_parameter_value(primaryFit));
+         }
+         if ( secondaryFit )
+         {
+            progress += "; " + fitType[ secondaryFit ] + ": " + QString::number( data_sets[ current_dataset]->simparams.get_parameter_value(secondaryFit));
+         }
+         if ( primaryFit || secondaryFit )
+         {
+            progress += tr( "  ( m%1 b%2 )").arg( meniscus_run + 1 ).arg( bottom_run + 1 );
+         }
+         progress     += "; RMSD: "
+            + QString::number( sqrt( simulation_values.variance ) );
 
          send_udp( progress );
 
@@ -627,16 +624,16 @@ void US_MPI_Analysis::set_meniscus( void )
 {
    menibott_ndx++;
 
-   if ( fit_menbot )
+   if ( primaryFit != US_SimulationParameters::NOTHING && secondaryFit != US_SimulationParameters::NOTHING )
    {
-      meniscus_run   = menibott_ndx / meniscus_points;
-      bottom_run     = menibott_ndx % meniscus_points;
+      meniscus_run   = menibott_ndx / bottom_points;
+      bottom_run     = menibott_ndx % bottom_points;
    }
-   else if ( fit_meni )
+   else if ( primaryFit == US_SimulationParameters::NOTHING && secondaryFit != US_SimulationParameters::NOTHING )
    {
       meniscus_run   = menibott_ndx;
    }
-   else if ( fit_bott )
+   else if ( primaryFit != US_SimulationParameters::NOTHING && secondaryFit == US_SimulationParameters::NOTHING )
    {
       bottom_run     = menibott_ndx;
    }
@@ -1098,6 +1095,8 @@ void US_MPI_Analysis::submit( Sa_Job& job, int worker )
    job.mpi_job.dataset_offset = current_dataset;
    job.mpi_job.dataset_count  = datasets_to_process;
    job.mpi_job.bfg_offset     = bfg_offset;
+   job.mpi_job.primary_fit = (int)primaryFit;
+   job.mpi_job.secondary_fit = (int)secondaryFit;
 int dd=job.mpi_job.depth;
 if (dd==0) { DbgLv(1) << "Mast: submit: worker" << worker << "  sols"
  << job.mpi_job.length << "mciter cds" << mc_iteration << current_dataset << " depth" << dd; }
