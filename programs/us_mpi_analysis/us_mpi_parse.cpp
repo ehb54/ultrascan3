@@ -344,6 +344,18 @@ void US_MPI_Analysis::parse_dataset( QXmlStreamReader& xml, DATASET* dataset )
                               a.value( "value" ).toString().toInt();
       }
 
+      if ( xml.name() == "sigma" )
+      {
+         dataset->simparams.sigma
+                            = a.value( "value" ).toString().toDouble();
+      }
+
+      if ( xml.name() == "delta" )
+      {
+         dataset->simparams.delta
+                            = a.value( "value" ).toString().toDouble();
+      }
+
       if ( xml.name() == "density" )
       {
          dataset->density     = a.value( "value" ).toString().toDouble();
@@ -527,5 +539,6 @@ void US_MPI_Analysis::parse_solution( QXmlStreamReader& xml, DATASET* dataset )
    }
 
    dataset->vbar20  = US_Math2::calcCommonVbar( dataset->solution_rec, 20.0 );
+   dataset->simparams.vbar20 = dataset->vbar20;
 }
 
