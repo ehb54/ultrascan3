@@ -105,6 +105,14 @@ US_SimulationParameters::SimSpeedProf::SimSpeedProf()
 void US_SimulationParameters::initFromData( US_DB2* db,
    US_DataIO::RawData& rawdata, bool incl_speed, QString runID, QString dataType )
 {
+   primaryFit                  = NOTHING;
+   secondaryFit                = NOTHING;
+   primary_range               = 0.0;
+   secondary_range             = 0.0;
+   primary_variations          = 0;
+   secondary_variations        = 0;
+   current_primary_variation   = -1;
+   current_secondary_variation = -1;
    SpeedProfile sp;
 
    int     dbg_level   = US_Settings::us_debug();
@@ -273,7 +281,14 @@ void US_SimulationParameters::initFromData( US_DB2* db,
    US_DataIO::EditedData& editdata, bool incl_speed )
 {
    SpeedProfile sp;
-
+   primaryFit                  = NOTHING;
+   secondaryFit                = NOTHING;
+   primary_range               = 0.0;
+   secondary_range             = 0.0;
+   primary_variations          = 0;
+   secondary_variations        = 0;
+   current_primary_variation   = -1;
+   current_secondary_variation = -1;
    int     dbg_level   = US_Settings::us_debug();
    int     cp_id       = 0;
    QString channel     = editdata.channel;
