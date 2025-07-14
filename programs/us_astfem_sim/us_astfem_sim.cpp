@@ -2060,7 +2060,7 @@ DbgLv(1) << "Sim:SV: reset s1plat" << s1plat;
       }
    } else
    {
-      dthresh = total_conc * 2.0;
+      dthresh = total_conc * 100.0;
    }
 
 
@@ -2095,13 +2095,16 @@ DbgLv(1) << "Sim:SV: OD-Limit nchange nmodscn" << nchange << nmodscn
  << "maxc dthresh" << maxc << dthresh;
 
       // Report that some readings were threshold-limited
-      QMessageBox::information( this,
-            tr( "OD Values Threshold Limited" ),
-            tr( "%1 readings in %2 scans were reset\n"
-                "to a threshold value of %3 .\n"
-                "The pre-threshold-limit maximum OD\n"
-                "value was %4 ." )
-            .arg( nchange ).arg( nmodscn ).arg( dthresh ).arg( maxc ) );
+      if (!supress_dialog)
+      {
+         QMessageBox::information( this,
+      tr( "OD Values Threshold Limited" ),
+      tr( "%1 readings in %2 scans were reset\n"
+          "to a threshold value of %3 .\n"
+          "The pre-threshold-limit maximum OD\n"
+          "value was %4 ." )
+      .arg( nchange ).arg( nmodscn ).arg( dthresh ).arg( maxc ) );
+      }
    }
 
 
