@@ -159,7 +159,7 @@ DbgLv(1) << "idealThrCout" << nthr;
       us_checkbox( tr( "Monte Carlo Iterations"  ), ck_mcarlo, false );
 
    QStringList fitType;
-   fitType << "" << "MENISCUS" << "BOTTOM" << "ANGEL" << "BAND VOLUME" << "SIGMA" << "DELTA";
+   fitType << "" << "MENISCUS" << "BOTTOM" << "ANGEL" << "BAND VOLUME" << "SIGMA" << "DELTA" << "VBAR";
    cmb_primary = us_comboBox(  );
    cmb_secondary = us_comboBox(  );
    for ( int i = 0; i < fitType.size(); i++ )
@@ -189,6 +189,10 @@ DbgLv(1) << "idealThrCout" << nthr;
    ct_angle_points ->setSingleStep(     1 );
    ct_mciters  ->setSingleStep(    1 );
    ct_iters    ->setSingleStep(    1 );
+   ct_menisrng->setEnabled( false );
+   ct_menispts->setEnabled( false );
+   ct_angle_range->setEnabled( false );
+   ct_angle_points->setEnabled( false );
    QLabel* lb_optspace1    = us_banner( "" );
 
    int row       = 0;
@@ -1525,6 +1529,20 @@ void US_AnalysisControl2D::checkPrimary( int kk )
             sparms->primary_range = ct_menisrng->value();
             break;
          }
+      case (US_SimulationParameters::VBAR):
+         {
+            ct_menisrng->setEnabled( true );
+            ct_menispts->setEnabled( true );
+            ct_menisrng->disconnect(  );
+            ct_menisrng->setValue( 0.01 );
+            ct_menisrng->setMinimum( 0.001 );
+            ct_menisrng->setMaximum( 2.0 );
+            connect(ct_menisrng, SIGNAL(valueChanged(double)), this, SLOT(primary_range_changed( double )));
+            sparms->primaryFit = fit;
+            sparms->primary_variations = 11;
+            sparms->primary_range = ct_menisrng->value();
+            break;
+         }
    }
 }
 
@@ -1631,6 +1649,20 @@ void US_AnalysisControl2D::checkSecondary( int kk )
             ct_angle_range->disconnect(  );
             ct_angle_range->setValue( 0.5 );
             ct_angle_range->setMinimum( 0.1 );
+            ct_angle_range->setMaximum( 2.0 );
+            connect(ct_angle_range, SIGNAL(valueChanged(double)), this, SLOT(secondary_range_changed( double )));
+            sparms->secondaryFit = fit;
+            sparms->secondary_variations = 11;
+            sparms->secondary_range = ct_angle_range->value();
+            break;
+         }
+      case (US_SimulationParameters::VBAR):
+         {
+            ct_angle_range->setEnabled( true );
+            ct_angle_points->setEnabled( true );
+            ct_angle_range->disconnect(  );
+            ct_angle_range->setValue( 0.01 );
+            ct_angle_range->setMinimum( 0.001 );
             ct_angle_range->setMaximum( 2.0 );
             connect(ct_angle_range, SIGNAL(valueChanged(double)), this, SLOT(secondary_range_changed( double )));
             sparms->secondaryFit = fit;

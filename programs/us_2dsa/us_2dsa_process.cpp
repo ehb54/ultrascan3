@@ -42,6 +42,7 @@ US_2dsaProcess::US_2dsaProcess( QList< SS_DATASET* >& dsets,
    ical_sols.clear();                 // iteration final calculated solutes
    simparms = &dsets[ 0 ]->simparams; // pointer to simulation parameters
    bsimparms = dsets[ 0 ]->simparams; // pointer to simulation parameters
+   bsimparms.vbar = dsets[0]->vbar20;
    if ( bdata->bottom == simparms->bottom_position )
    {
       bdata->bottom    = 0.0;
@@ -171,7 +172,17 @@ DbgLv(1) << "2P:SF: sll sul nss" << slolim << suplim << nssteps
          simparms->current_secondary_variation = secondary_iter;
          edata->meniscus = simparms->meniscus;
          edata->bottom   = simparms->bottom;
-
+         dsets[0]->vbar20 = simparms->vbar;
+         double avTemp = edata->average_temperature();
+         US_Math2::SolutionData sd;
+         sd.density      = dsets[0]->solution_rec.buffer.density;
+         sd.viscosity    = dsets[0]->solution_rec.buffer.viscosity;
+         sd.vbar20       = dsets[0]->vbar20;
+         sd.vbar         = US_Math2::adjust_vbar20(sd.vbar20, avTemp);
+         sd.manual       = dsets[0]->solution_rec.buffer.manual;
+         US_Math2::data_correction( avTemp, sd );
+         dsets[0]->s20w_correction = sd.s20w_correction;
+         dsets[0]->D20w_correction = sd.D20w_correction;
 //         set_meniscus();
       }
    }
@@ -1374,6 +1385,17 @@ DbgLv(1) << "FIN_FIN: neediter" << neediter << "  sdiffs" << sdiffs
       }
       edata->meniscus = simparms->meniscus;
       edata->bottom   = simparms->bottom;
+      dsets[0]->vbar20 = simparms->vbar;
+      double avTemp = edata->average_temperature();
+      US_Math2::SolutionData sd;
+      sd.density      = dsets[0]->solution_rec.buffer.density;
+      sd.viscosity    = dsets[0]->solution_rec.buffer.viscosity;
+      sd.vbar20       = dsets[0]->vbar20;
+      sd.vbar         = US_Math2::adjust_vbar20(sd.vbar20, avTemp);
+      sd.manual       = dsets[0]->solution_rec.buffer.manual;
+      US_Math2::data_correction( avTemp, sd );
+      dsets[0]->s20w_correction = sd.s20w_correction;
+      dsets[0]->D20w_correction = sd.D20w_correction;
       s_rfiter           = QString::number( r_iter + 1 );
       s_mmiter           = QString::number( mm_iter );
       s_variance         = QString::number( vari_curr );
@@ -1451,6 +1473,17 @@ if(mtiters>50)
       }
       edata->meniscus = simparms->meniscus;
       edata->bottom   = simparms->bottom;
+      dsets[0]->vbar20 = simparms->vbar;
+      double avTemp = edata->average_temperature();
+      US_Math2::SolutionData sd;
+      sd.density      = dsets[0]->solution_rec.buffer.density;
+      sd.viscosity    = dsets[0]->solution_rec.buffer.viscosity;
+      sd.vbar20       = dsets[0]->vbar20;
+      sd.vbar         = US_Math2::adjust_vbar20(sd.vbar20, avTemp);
+      sd.manual       = dsets[0]->solution_rec.buffer.manual;
+      US_Math2::data_correction( avTemp, sd );
+      dsets[0]->s20w_correction = sd.s20w_correction;
+      dsets[0]->D20w_correction = sd.D20w_correction;
      if (dens_grad)
          {
             calculate_cosedimenting_component();
@@ -2104,6 +2137,17 @@ void US_2dsaProcess::set_meniscus()
    }
    edata->meniscus = simparms->meniscus;
    edata->bottom   = simparms->bottom;
+   dsets[0]->vbar20 = simparms->vbar;
+   double avTemp = edata->average_temperature();
+   US_Math2::SolutionData sd;
+   sd.density      = dsets[0]->solution_rec.buffer.density;
+   sd.viscosity    = dsets[0]->solution_rec.buffer.viscosity;
+   sd.vbar20       = dsets[0]->vbar20;
+   sd.vbar         = US_Math2::adjust_vbar20(sd.vbar20, avTemp);
+   sd.manual       = dsets[0]->solution_rec.buffer.manual;
+   US_Math2::data_correction( avTemp, sd );
+   dsets[0]->s20w_correction = sd.s20w_correction;
+   dsets[0]->D20w_correction = sd.D20w_correction;
 
    // Re-queue all the original subgrid tasks
    if ( mm_iter > 0 )
