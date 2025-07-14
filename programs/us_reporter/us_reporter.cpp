@@ -528,7 +528,7 @@ DbgLv(1) << "build_map:  ttag" << ttag << " path" << path;
             QXmlStreamAttributes a = xml.attributes();
             QString name   = a.value( "name"  ).toString();
             QString label  = a.value( "label" ).toString();
-            QString anum   = QString().sprintf( "%3.3i", kmap++ );
+            QString anum   = QString::asprintf( "%3.3i", kmap++ );
             QString akey   = anum + ":" + name;
 DbgLv(1) << "     b_m: name label" << name << label;
 

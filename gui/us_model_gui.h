@@ -82,7 +82,7 @@ class US_GUI_EXTERN US_ModelGui : public US_WidgetsDialog
 
       bool    verify_model   ( void );
       bool    status_query   ( const QStringList& );
-      bool    database_ok    ( US_DB2& );
+      bool    database_ok    ( IUS_DB2& );
       bool    ignore_changes ( void );
       void    show_model_desc( void );
       void    connect_error  ( const QString& );

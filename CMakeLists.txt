@@ -3,6 +3,7 @@ project(UltrascanTest)
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
 # Enable AUTOMOC
 set(CMAKE_AUTOMOC ON)
@@ -19,7 +20,31 @@ add_definitions(-DNO_DB)
 enable_testing()
 
 # Find Qt packages
-find_package(Qt5 REQUIRED COMPONENTS Core Gui Network Sql Test Widgets Xml)
+find_package(Qt5 REQUIRED COMPONENTS Core Gui Network Sql Test Widgets Xml Svg OpenGL PrintSupport)
+
+# Add this after your existing find_package calls
+find_path(QWT_INCLUDE_DIR
+        NAMES qwt.h
+        PATHS
+        /usr/include/qwt
+        /usr/local/include/qwt
+        /usr/include/qwt-qt5
+        )
+
+find_library(QWT_LIBRARY
+        NAMES qwt qwt-qt5 qwt6-qt5
+        PATHS
+        /usr/lib
+        /usr/local/lib
+        /usr/lib/x86_64-linux-gnu
+        )
+
+if(QWT_INCLUDE_DIR AND QWT_LIBRARY)
+    message(STATUS "Qwt found: ${QWT_LIBRARY}")
+    message(STATUS "Qwt include: ${QWT_INCLUDE_DIR}")
+else()
+    message(FATAL_ERROR "Qwt not found. Please install Qwt development libraries.")
+endif()
 
 # Include FetchContent module
 include(FetchContent)
@@ -74,6 +99,13 @@ pkg_search_module(MYSQL REQUIRED mysqlclient)
 include_directories(${MySQL_INCLUDE_DIRS} ${OPENSSL_INCLUDE_DIR} ${GTEST_INCLUDE_DIRS})
 link_directories(${MySQL_LIBRARY_DIRS} ${OPENSSL_LIBRARY_DIRS})
 
+# Find libarchive
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(LIBARCHIVE REQUIRED libarchive)
+
 # Include the src subdirectory
 add_subdirectory(utils)
+#add_subdirectory(qwtplot3d)
+#add_subdirectory(gui)
+#add_subdirectory(programs)
 add_subdirectory(test)

@@ -147,19 +147,19 @@ docker run --rm \
         echo '=================================='
 
        # Build CTest command based on options
-       CTEST_CMD="ctest --output-on-failure --parallel"
+       CTEST_CMD=\"ctest --output-on-failure --parallel\"
 
-       if [ '$VERBOSE' = true ]; then
-           CTEST_CMD="$CTEST_CMD --verbose"
-       fi
+        if [ \"$VERBOSE\" = true ]; then
+            CTEST_CMD=\"\$CTEST_CMD --verbose\"
+        fi
 
-       if [ -n '$TEST_FILTER' ]; then
-           CTEST_CMD="$CTEST_CMD -L '$TEST_FILTER'"
-       fi
+        if [ -n \"$TEST_FILTER\" ]; then
+            CTEST_CMD=\"\$CTEST_CMD -L \$TEST_FILTER\"
+        fi
 
-       echo 'Running tests with CTest...'
-       echo '=================================='
-       $CTEST_CMD
+        echo 'Running tests with CTest...'
+        echo '=================================='
+        \$CTEST_CMD
 
         # Check result
         if [ \$? -eq 0 ]; then

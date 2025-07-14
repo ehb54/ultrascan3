@@ -1,5 +1,4 @@
-// test_us_utils_main.cpp - Pure Google Test (Future-Proof)
-#include <gtest/gtest.h>
+// test_us_utils_main.cpp - Google Test
 #include "qt_test_base.h"
 #include <QCoreApplication>
 #include <QApplication>

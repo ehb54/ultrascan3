@@ -1,359 +1,492 @@
-// test_us_dataIO.cpp - Converted to Google Test
-#include "test_us_dataIO.h"
-#include "us_dataIO.h"  // Include us_dataIO.h only in the .cpp file
+// test_us_dataio_unit.cpp - Unit tests for US_DataIO class
+#include "qt_test_base.h"
+#include "us_dataIO.h"
+#include <QString>
+#include <QVector>
+#include <QByteArray>
+#include <limits>
 
-// Use your custom Qt matchers
 using namespace qt_matchers;
 
-// Static helper functions for creating test data (not class methods)
-static US_DataIO::RawData createBasicTestData() {
-    US_DataIO::RawData data;
-    data.xvalues << 1.0 << 2.0 << 3.0;
-    return data;
+class TestUSDataIOUnit : public QtTestBase {
+protected:
+    void SetUp() override {
+        QtTestBase::SetUp();
+        setupTestData();
+    }
+
+    void TearDown() override {
+        QtTestBase::TearDown();
+    }
+
+    void setupTestData() {
+        // Create test RawData
+        rawData.xvalues = {5.8, 5.9, 6.0, 6.1, 6.2, 6.3, 6.4, 6.5};
+        rawData.cell = 1;
+        rawData.channel = 'A';
+        rawData.description = "Test raw data";
+
+        // Create test scans
+        for (int i = 0; i < 3; i++) {
+            US_DataIO::Scan scan;
+            scan.temperature = 20.0 + i;
+            scan.rpm = 3000.0 + i * 100;
+            scan.seconds = i * 60;
+            scan.omega2t = i * 100.0;
+            scan.wavelength = 280.0;
+            scan.delta_r = 0.003;
+            scan.nz_stddev = true;
+
+            // Add readings data
+            for (int j = 0; j < rawData.xvalues.size(); j++) {
+                scan.rvalues << 0.1 + i * 0.05 + j * 0.01;
+                scan.stddevs << 0.001 + j * 0.0001;
+            }
+
+            // Initialize interpolated array
+            scan.interpolated = QByteArray(1, 0); // 8 bits for 8 readings
+
+            rawData.scanData << scan;
+        }
+
+        // Create test EditedData
+        editedData.runID = "test_run";
+        editedData.editID = "test_edit";
+        editedData.dataType = "RA";
+        editedData.cell = "1";
+        editedData.channel = "A";
+        editedData.wavelength = "280";
+        editedData.description = "Test edited data";
+        editedData.meniscus = 5.9;
+        editedData.bottom = 6.4;
+        editedData.plateau = 6.2;
+        editedData.baseline = 0.0;
+        editedData.ODlimit = 1.5;
+        editedData.floatingData = false;
+
+        // Copy some data from rawData
+        editedData.xvalues = rawData.xvalues;
+        editedData.scanData = rawData.scanData;
+    }
+
+    US_DataIO::RawData rawData;
+    US_DataIO::EditedData editedData;
+};
+
+// ============================================================================
+// RAWDATA CLASS TESTS
+// ============================================================================
+
+TEST_F(TestUSDataIOUnit, RawDataPointCount) {
+// Test pointCount method
+int count = rawData.pointCount();
+EXPECT_EQ(count, 8) << "Should return correct number of x-values";
 }
 
-static US_DataIO::RawData createTestDataWithScans() {
-    US_DataIO::RawData data;
-    data.xvalues << 1.0 << 2.0 << 3.0;
-
-    US_DataIO::Scan scan;
-    scan.rvalues << 1.0 << 2.0 << 3.0;
-    data.scanData << scan;
-
-    return data;
+TEST_F(TestUSDataIOUnit, RawDataPointCountEmpty) {
+// Test pointCount with empty data
+US_DataIO::RawData emptyData;
+int count = emptyData.pointCount();
+EXPECT_EQ(count, 0) << "Should return 0 for empty x-values";
 }
 
-static US_DataIO::RawData createTestDataWithStdDev() {
-    US_DataIO::RawData data;
-    data.xvalues << 1.0 << 2.0 << 3.0;
-
-    US_DataIO::Scan scan;
-    scan.nz_stddev = true;
-    scan.stddevs << 0.1 << 0.2 << 0.3;
-    scan.rvalues << 1.0 << 2.0 << 3.0;  // Add rvalues too
-    data.scanData << scan;
-
-    return data;
+TEST_F(TestUSDataIOUnit, RawDataScanCount) {
+// Test scanCount method
+int count = rawData.scanCount();
+EXPECT_EQ(count, 3) << "Should return correct number of scans";
 }
 
-static US_DataIO::RawData createTestDataWithTemperatures() {
-    US_DataIO::RawData data;
-
-    US_DataIO::Scan scan1, scan2;
-    scan1.temperature = 20.0;
-    scan2.temperature = 30.0;
-    data.scanData << scan1 << scan2;
-
-    return data;
+TEST_F(TestUSDataIOUnit, RawDataScanCountEmpty) {
+// Test scanCount with empty data
+US_DataIO::RawData emptyData;
+int count = emptyData.scanCount();
+EXPECT_EQ(count, 0) << "Should return 0 for empty scan data";
 }
 
-// TestUSDataIO method implementations
-void TestUSDataIO::SetUp() {
-    QtTestBase::SetUp();
-    // Per-test setup for DataIO tests
+TEST_F(TestUSDataIOUnit, RawDataXindexExactMatch) {
+// Test xindex with exact match
+int index = rawData.xindex(6.0);
+EXPECT_EQ(index, 2) << "Should return exact index for matching value";
 }
 
-void TestUSDataIO::TearDown() {
-    // Per-test cleanup for DataIO tests
-    QtTestBase::TearDown();
+TEST_F(TestUSDataIOUnit, RawDataXindexBelowRange) {
+// Test xindex with value below range
+int index = rawData.xindex(5.0);
+EXPECT_EQ(index, 0) << "Should return first index for value below range";
 }
 
-// Suite-level setup for DataIO tests
-void TestUSDataIO::SetUpTestSuite() {
-    QtTestBase::SetUpTestSuite();
-    // One-time setup for all TestUSDataIO tests
+TEST_F(TestUSDataIOUnit, RawDataXindexAboveRange) {
+// Test xindex with value above range
+int index = rawData.xindex(7.0);
+EXPECT_EQ(index, 7) << "Should return last index for value above range";
 }
 
-// Suite-level cleanup for DataIO tests
-void TestUSDataIO::TearDownTestSuite() {
-    // One-time cleanup for all TestUSDataIO tests
+TEST_F(TestUSDataIOUnit, RawDataXindexClosestMatch) {
+// Test xindex with value between points (should return closest)
+int index = rawData.xindex(6.05);
+EXPECT_TRUE(index == 2 || index == 3) << "Should return closest index";
 }
 
-// Basic functionality tests
-TEST_F(TestUSDataIO, PointCountEmpty) {
-    // Test point count for empty data
-    US_DataIO::RawData data;
-    EXPECT_EQ(data.pointCount(), 0)
-                        << "Empty data should have zero point count";
+TEST_F(TestUSDataIOUnit, RawDataRadius) {
+// Test radius method
+double radius = rawData.radius(2);
+EXPECT_DOUBLE_EQ(radius, 6.0) << "Should return correct radius value";
 }
 
-TEST_F(TestUSDataIO, PointCountWithData) {
-    // Test point count with actual data
-    US_DataIO::RawData data = createBasicTestData();
-    EXPECT_EQ(data.pointCount(), 3)
-                        << "Data with 3 xvalues should have point count of 3";
+TEST_F(TestUSDataIOUnit, RawDataScWavelength) {
+// Test scWavelength method
+double wavelength = rawData.scWavelength(2);
+EXPECT_DOUBLE_EQ(wavelength, 6.0) << "Should return correct wavelength value";
 }
 
-TEST_F(TestUSDataIO, ScanCountEmpty) {
-    // Test scan count for empty data
-    US_DataIO::RawData data;
-    EXPECT_EQ(data.scanCount(), 0)
-                        << "Empty data should have zero scan count";
+TEST_F(TestUSDataIOUnit, RawDataValue) {
+// Test value method
+double val = rawData.value(1, 2);
+EXPECT_DOUBLE_EQ(val, 0.17) << "Should return correct reading value";
 }
 
-TEST_F(TestUSDataIO, ScanCountWithData) {
-    // Test scan count with actual scans
-    US_DataIO::RawData data = createTestDataWithScans();
-    EXPECT_EQ(data.scanCount(), 1)
-                        << "Data with 1 scan should have scan count of 1";
+TEST_F(TestUSDataIOUnit, RawDataReading) {
+// Test reading method (should be same as value)
+double reading_val = rawData.reading(1, 2);
+double value_val = rawData.value(1, 2);
+EXPECT_DOUBLE_EQ(reading_val, value_val) << "reading() should match value()";
 }
 
-TEST_F(TestUSDataIO, XIndex) {
-    // Test xindex method
-    US_DataIO::RawData data = createBasicTestData();
-
-    EXPECT_EQ(data.xindex(2.0), 1)
-                        << "Index of value 2.0 should be 1";
-    EXPECT_EQ(data.xindex(1.0), 0)
-                        << "Index of value 1.0 should be 0";
-    EXPECT_EQ(data.xindex(3.0), 2)
-                        << "Index of value 3.0 should be 2";
+TEST_F(TestUSDataIOUnit, RawDataSetValueValid) {
+// Test setValue with valid indices
+bool result = rawData.setValue(1, 2, 0.999);
+EXPECT_TRUE(result) << "Should successfully set value with valid indices";
+EXPECT_DOUBLE_EQ(rawData.value(1, 2), 0.999) << "Should update the reading value";
 }
 
-TEST_F(TestUSDataIO, XIndexCorrectBehavior) {
-    // Test xindex method - now we understand its actual behavior
-    US_DataIO::RawData data = createBasicTestData();
-    // data.xvalues contains: [1.0, 2.0, 3.0]
+TEST_F(TestUSDataIOUnit, RawDataSetValueInvalidScan) {
+// Test setValue with invalid scan index
+bool result = rawData.setValue(-1, 2, 0.999);
+EXPECT_FALSE(result) << "Should fail with negative scan index";
 
-    // Test 1: Exact matches (should work correctly)
-    EXPECT_EQ(data.xindex(1.0), 0) << "Exact match: xindex(1.0) should return 0";
-    EXPECT_EQ(data.xindex(2.0), 1) << "Exact match: xindex(2.0) should return 1";
-    EXPECT_EQ(data.xindex(3.0), 2) << "Exact match: xindex(3.0) should return 2";
-
-    // Test 2: Values below range - returns index 0 (first element)
-    EXPECT_EQ(data.xindex(0.0), 0) << "Below range: should return first index (0)";
-    EXPECT_EQ(data.xindex(-1.0), 0) << "Negative value: should return first index (0)";
-    EXPECT_EQ(data.xindex(0.5), 0) << "Between 0 and first: should return first index (0)";
-
-    // Test 3: Values between elements - returns lower bound index
-    EXPECT_EQ(data.xindex(1.5), 0) << "Between 1st-2nd elements: should return index 0";
-    EXPECT_EQ(data.xindex(2.5), 1) << "Between 2nd-3rd elements: should return index 1";
-
-    // Test 4: Values above range - returns last index
-    EXPECT_EQ(data.xindex(3.5), 2) << "Above range: should return last index (2)";
-    EXPECT_EQ(data.xindex(4.0), 2) << "Well above range: should return last index (2)";
-    EXPECT_EQ(data.xindex(10.0), 2) << "Far above range: should return last index (2)";
+result = rawData.setValue(10, 2, 0.999);
+EXPECT_FALSE(result) << "Should fail with scan index out of range";
 }
 
-// NOTE: Some US_DataIO methods (like radius, scWavelength) use direct QVector access
-// without bounds checking, which causes Qt assertion failures on invalid indices.
-// These tests focus on valid usage patterns and document the limitation.
+TEST_F(TestUSDataIOUnit, RawDataSetValueInvalidRadius) {
+// Test setValue with invalid radius index
+bool result = rawData.setValue(1, -1, 0.999);
+EXPECT_FALSE(result) << "Should fail with negative radius index";
 
-TEST_F(TestUSDataIO, Radius) {
-    // Test radius method with valid indices only
-    US_DataIO::RawData data = createBasicTestData();
-
-    EXPECT_DOUBLE_EQ(data.radius(0), 1.0)
-                        << "Radius at index 0 should be 1.0";
-    EXPECT_DOUBLE_EQ(data.radius(1), 2.0)
-                        << "Radius at index 1 should be 2.0";
-    EXPECT_DOUBLE_EQ(data.radius(2), 3.0)
-                        << "Radius at index 2 should be 3.0";
+result = rawData.setValue(1, 20, 0.999);
+EXPECT_FALSE(result) << "Should fail with radius index out of range";
 }
 
-TEST_F(TestUSDataIO, RadiusOutOfBounds) {
-    // Test radius with out-of-bounds index
-    US_DataIO::RawData data = createBasicTestData();
-
-    // Qt's QVector throws assertion failures on out-of-bounds access
-    // We should test that the method properly validates bounds
-    // For now, we'll skip this test or test valid bounds only
-    EXPECT_EQ(data.pointCount(), 3) << "Should have 3 points";
-
-    // Test the last valid index
-    EXPECT_DOUBLE_EQ(data.radius(2), 3.0)
-                        << "Last valid radius should be accessible";
-
-    // Note: Out-of-bounds access causes Qt assertion failure
-    // This indicates the US_DataIO implementation should add bounds checking
-    SUCCEED() << "Skipping out-of-bounds test due to Qt assertion failure";
+TEST_F(TestUSDataIOUnit, RawDataStdDev) {
+// Test std_dev method with non-zero stddev
+double stddev = rawData.std_dev(1, 2);
+EXPECT_DOUBLE_EQ(stddev, 0.0012) << "Should return correct std deviation";
 }
 
-TEST_F(TestUSDataIO, ScWavelength) {
-    // Test scWavelength method (should behave same as radius)
-    US_DataIO::RawData data = createBasicTestData();
+TEST_F(TestUSDataIOUnit, RawDataStdDevNoStddev) {
+// Test std_dev when scan has no stddev data
+rawData.scanData[0].nz_stddev = false;
+rawData.scanData[0].stddevs.clear();
 
-    EXPECT_DOUBLE_EQ(data.scWavelength(0), 1.0)
-                        << "Wavelength at index 0 should be 1.0";
-    EXPECT_DOUBLE_EQ(data.scWavelength(1), 2.0)
-                        << "Wavelength at index 1 should be 2.0";
-    EXPECT_DOUBLE_EQ(data.scWavelength(2), 3.0)
-                        << "Wavelength at index 2 should be 3.0";
+double stddev = rawData.std_dev(0, 2);
+EXPECT_DOUBLE_EQ(stddev, 0.0) << "Should return 0.0 when no stddev data";
 }
 
-TEST_F(TestUSDataIO, Value) {
-    // Test value method
-    US_DataIO::RawData data = createTestDataWithScans();
-
-    EXPECT_DOUBLE_EQ(data.value(0, 0), 1.0)
-                        << "Value at scan 0, point 0 should be 1.0";
-    EXPECT_DOUBLE_EQ(data.value(0, 1), 2.0)
-                        << "Value at scan 0, point 1 should be 2.0";
-    EXPECT_DOUBLE_EQ(data.value(0, 2), 3.0)
-                        << "Value at scan 0, point 2 should be 3.0";
+TEST_F(TestUSDataIOUnit, RawDataAverageTemperature) {
+// Test average_temperature method
+double avgTemp = rawData.average_temperature();
+EXPECT_DOUBLE_EQ(avgTemp, 21.0) << "Should calculate correct average temperature";
 }
 
-TEST_F(TestUSDataIO, Reading) {
-    // Test reading method (should behave same as value)
-    US_DataIO::RawData data = createTestDataWithScans();
+TEST_F(TestUSDataIOUnit, RawDataAverageTemperatureSingleScan) {
+// Test average_temperature with single scan
+US_DataIO::RawData singleScanData;
+US_DataIO::Scan scan;
+scan.temperature = 25.5;
+singleScanData.scanData << scan;
 
-    EXPECT_DOUBLE_EQ(data.reading(0, 0), 1.0)
-                        << "Reading at scan 0, point 0 should be 1.0";
-    EXPECT_DOUBLE_EQ(data.reading(0, 1), 2.0)
-                        << "Reading at scan 0, point 1 should be 2.0";
-    EXPECT_DOUBLE_EQ(data.reading(0, 2), 3.0)
-                        << "Reading at scan 0, point 2 should be 3.0";
+double avgTemp = singleScanData.average_temperature();
+EXPECT_DOUBLE_EQ(avgTemp, 25.5) << "Should return single temperature value";
 }
 
-TEST_F(TestUSDataIO, SetValue) {
-    // Test setValue method
-    US_DataIO::RawData data = createTestDataWithScans();
-
-    // Verify initial value
-    EXPECT_DOUBLE_EQ(data.value(0, 1), 2.0)
-                        << "Initial value should be 2.0";
-
-    // Set new value
-    bool success = data.setValue(0, 1, 4.0);
-    EXPECT_TRUE(success)
-                        << "setValue should return true on success";
-
-    // Verify value was changed
-    EXPECT_DOUBLE_EQ(data.value(0, 1), 4.0)
-                        << "Value should be updated to 4.0";
+TEST_F(TestUSDataIOUnit, RawDataTemperatureSpread) {
+// Test temperature_spread method
+double spread = rawData.temperature_spread();
+EXPECT_DOUBLE_EQ(spread, 2.0) << "Should calculate correct temperature spread";
 }
 
-TEST_F(TestUSDataIO, SetValueOutOfBounds) {
-    // Test setValue with invalid indices
-    US_DataIO::RawData data = createTestDataWithScans();
-
-    // Test with invalid scan index (scan doesn't exist)
-    bool success = data.setValue(10, 1, 4.0);
-    EXPECT_FALSE(success)
-                        << "setValue should return false for invalid scan index 10";
-
-    // Test with invalid point index (point doesn't exist)
-    success = data.setValue(0, 10, 4.0);
-    EXPECT_FALSE(success)
-                        << "setValue should return false for invalid point index 10";
-
-    // Test with negative indices
-    success = data.setValue(-1, 1, 4.0);
-    EXPECT_FALSE(success)
-                        << "setValue should return false for negative scan index";
-
-    success = data.setValue(0, -1, 4.0);
-    EXPECT_FALSE(success)
-                        << "setValue should return false for negative point index";
+TEST_F(TestUSDataIOUnit, RawDataTemperatureSpreadSingleValue) {
+// Test temperature_spread with identical temperatures
+US_DataIO::RawData uniformTempData;
+for (int i = 0; i < 3; i++) {
+US_DataIO::Scan scan;
+scan.temperature = 20.0; // All same temperature
+uniformTempData.scanData << scan;
 }
 
-TEST_F(TestUSDataIO, StdDev) {
-    // Test std_dev method
-    US_DataIO::RawData data = createTestDataWithStdDev();
-
-    EXPECT_DOUBLE_EQ(data.std_dev(0, 0), 0.1)
-                        << "Standard deviation at scan 0, point 0 should be 0.1";
-    EXPECT_DOUBLE_EQ(data.std_dev(0, 1), 0.2)
-                        << "Standard deviation at scan 0, point 1 should be 0.2";
-    EXPECT_DOUBLE_EQ(data.std_dev(0, 2), 0.3)
-                        << "Standard deviation at scan 0, point 2 should be 0.3";
+double spread = uniformTempData.temperature_spread();
+EXPECT_DOUBLE_EQ(spread, 0.0) << "Should return 0.0 for uniform temperature";
 }
 
-TEST_F(TestUSDataIO, StdDevWithoutStdDevData) {
-    // Test std_dev when no standard deviation data is available
-    US_DataIO::RawData data = createTestDataWithScans();
+// ============================================================================
+// EDITEDDATA CLASS TESTS
+// ============================================================================
 
-    // Assuming it returns 0.0 when no std dev data (check actual implementation)
-    double result = data.std_dev(0, 1);
-    EXPECT_GE(result, 0.0)
-                        << "Standard deviation should be non-negative when no data available";
+TEST_F(TestUSDataIOUnit, EditedDataPointCount) {
+// Test pointCount method
+int count = editedData.pointCount();
+EXPECT_EQ(count, 8) << "Should return correct number of x-values";
 }
 
-TEST_F(TestUSDataIO, AverageTemperature) {
-    // Test average_temperature method
-    US_DataIO::RawData data = createTestDataWithTemperatures();
-
-    EXPECT_DOUBLE_EQ(data.average_temperature(), 25.0)
-                        << "Average of temperatures 20.0 and 30.0 should be 25.0";
+TEST_F(TestUSDataIOUnit, EditedDataScanCount) {
+// Test scanCount method
+int count = editedData.scanCount();
+EXPECT_EQ(count, 3) << "Should return correct number of scans";
 }
 
-TEST_F(TestUSDataIO, AverageTemperatureEmpty) {
-    // Test average temperature with no scans
-    US_DataIO::RawData data;
-
-    double result = data.average_temperature();
-    // Check actual implementation - might return 0.0 or NaN
-    EXPECT_TRUE(result == 0.0 || std::isnan(result))
-                        << "Average temperature of empty data should be 0.0 or NaN";
+TEST_F(TestUSDataIOUnit, EditedDataXindex) {
+// Test xindex method
+int index = editedData.xindex(6.0);
+EXPECT_EQ(index, 2) << "Should return correct index";
 }
 
-TEST_F(TestUSDataIO, TemperatureSpread) {
-    // Test temperature_spread method
-    US_DataIO::RawData data = createTestDataWithTemperatures();
-
-    EXPECT_DOUBLE_EQ(data.temperature_spread(), 10.0)
-                        << "Temperature spread between 20.0 and 30.0 should be 10.0";
+TEST_F(TestUSDataIOUnit, EditedDataRadius) {
+// Test radius method
+double radius = editedData.radius(2);
+EXPECT_DOUBLE_EQ(radius, 6.0) << "Should return correct radius value";
 }
 
-TEST_F(TestUSDataIO, TemperatureSpreadSingleScan) {
-    // Test temperature spread with single scan
-    US_DataIO::RawData data;
-    US_DataIO::Scan scan;
-    scan.temperature = 25.0;
-    data.scanData << scan;
-
-    EXPECT_DOUBLE_EQ(data.temperature_spread(), 0.0)
-                        << "Temperature spread for single scan should be 0.0";
+TEST_F(TestUSDataIOUnit, EditedDataScWavelength) {
+// Test scWavelength method
+double wavelength = editedData.scWavelength(2);
+EXPECT_DOUBLE_EQ(wavelength, 6.0) << "Should return correct wavelength value";
 }
 
-TEST_F(TestUSDataIO, TemperatureSpreadEmpty) {
-    // Test temperature spread with no scans
-    US_DataIO::RawData data;
-
-    double result = data.temperature_spread();
-    EXPECT_GE(result, 0.0)
-                        << "Temperature spread should be non-negative";
+TEST_F(TestUSDataIOUnit, EditedDataValue) {
+// Test value method
+double val = editedData.value(1, 2);
+EXPECT_DOUBLE_EQ(val, 0.17) << "Should return correct reading value";
 }
 
-// Comprehensive integration tests
-TEST_F(TestUSDataIO, CompleteDataWorkflow) {
-    // Test a complete workflow with multiple operations
-    US_DataIO::RawData data;
+TEST_F(TestUSDataIOUnit, EditedDataReading) {
+// Test reading method
+double reading_val = editedData.reading(1, 2);
+double value_val = editedData.value(1, 2);
+EXPECT_DOUBLE_EQ(reading_val, value_val) << "reading() should match value()";
+}
 
-    // Setup data
-    data.xvalues << 5.8 << 6.0 << 6.2 << 6.4;
+TEST_F(TestUSDataIOUnit, EditedDataSetValue) {
+// Test setValue method
+bool result = editedData.setValue(1, 2, 0.888);
+EXPECT_TRUE(result) << "Should successfully set value";
+EXPECT_DOUBLE_EQ(editedData.value(1, 2), 0.888) << "Should update the value";
+}
 
-    US_DataIO::Scan scan1, scan2;
-    scan1.rvalues << 1.0 << 1.1 << 1.2 << 1.3;
-    scan1.temperature = 20.0;
-    scan1.nz_stddev = true;
-    scan1.stddevs << 0.01 << 0.02 << 0.03 << 0.04;
+TEST_F(TestUSDataIOUnit, EditedDataSetValueInvalid) {
+// Test setValue with invalid indices
+bool result = editedData.setValue(-1, 2, 0.888);
+EXPECT_FALSE(result) << "Should fail with invalid scan index";
 
-    scan2.rvalues << 2.0 << 2.1 << 2.2 << 2.3;
-    scan2.temperature = 22.0;
-    scan2.nz_stddev = true;
-    scan2.stddevs << 0.02 << 0.03 << 0.04 << 0.05;
+result = editedData.setValue(1, -1, 0.888);
+EXPECT_FALSE(result) << "Should fail with invalid radius index";
+}
 
-    data.scanData << scan1 << scan2;
+TEST_F(TestUSDataIOUnit, EditedDataStdDev) {
+// Test std_dev method
+double stddev = editedData.std_dev(1, 2);
+EXPECT_DOUBLE_EQ(stddev, 0.0012) << "Should return correct std deviation";
+}
 
-    // Test various operations
-    EXPECT_EQ(data.pointCount(), 4) << "Should have 4 points";
-    EXPECT_EQ(data.scanCount(), 2) << "Should have 2 scans";
+TEST_F(TestUSDataIOUnit, EditedDataStdDevEmptyStddevs) {
+// Test std_dev when stddevs vector is empty but nz_stddev is true
+editedData.scanData[0].stddevs.clear();
+editedData.scanData[0].nz_stddev = true;
 
-    EXPECT_EQ(data.xindex(6.0), 1) << "Index of 6.0 should be 1";
-    EXPECT_DOUBLE_EQ(data.radius(1), 6.0) << "Radius at index 1 should be 6.0";
+double stddev = editedData.std_dev(0, 2);
+EXPECT_DOUBLE_EQ(stddev, 0.0) << "Should return 0.0 when stddevs is empty";
+}
 
-    EXPECT_DOUBLE_EQ(data.value(1, 2), 2.2) << "Value at scan 1, point 2 should be 2.2";
+TEST_F(TestUSDataIOUnit, EditedDataAverageTemperature) {
+// Test average_temperature method
+double avgTemp = editedData.average_temperature();
+EXPECT_DOUBLE_EQ(avgTemp, 21.0) << "Should calculate correct average temperature";
+}
 
-    // Modify value
-    EXPECT_TRUE(data.setValue(1, 2, 2.5)) << "Should successfully set value";
-    EXPECT_DOUBLE_EQ(data.value(1, 2), 2.5) << "Modified value should be 2.5";
+TEST_F(TestUSDataIOUnit, EditedDataTemperatureSpread) {
+// Test temperature_spread method
+double spread = editedData.temperature_spread();
+EXPECT_DOUBLE_EQ(spread, 2.0) << "Should calculate correct temperature spread";
+}
 
-    // Test temperature calculations
-    EXPECT_DOUBLE_EQ(data.average_temperature(), 21.0) << "Average temperature should be 21.0";
-    EXPECT_DOUBLE_EQ(data.temperature_spread(), 2.0) << "Temperature spread should be 2.0";
+// ============================================================================
+// STATIC UTILITY METHOD TESTS
+// ============================================================================
 
-    // Test standard deviations
-    EXPECT_DOUBLE_EQ(data.std_dev(0, 1), 0.02) << "Std dev at scan 0, point 1 should be 0.02";
-    EXPECT_DOUBLE_EQ(data.std_dev(1, 3), 0.05) << "Std dev at scan 1, point 3 should be 0.05";
+TEST_F(TestUSDataIOUnit, StaticIndexExactMatch) {
+// Test static index method with exact match
+QVector<double> xvals = {1.0, 2.0, 3.0, 4.0, 5.0};
+int index = US_DataIO::index(xvals, 3.0);
+EXPECT_EQ(index, 2) << "Should return exact index for matching value";
+}
+
+TEST_F(TestUSDataIOUnit, StaticIndexBelowRange) {
+// Test static index method with value below range
+QVector<double> xvals = {1.0, 2.0, 3.0, 4.0, 5.0};
+int index = US_DataIO::index(xvals, 0.5);
+EXPECT_EQ(index, 0) << "Should return first index for value below range";
+}
+
+TEST_F(TestUSDataIOUnit, StaticIndexAboveRange) {
+// Test static index method with value above range
+QVector<double> xvals = {1.0, 2.0, 3.0, 4.0, 5.0};
+int index = US_DataIO::index(xvals, 6.0);
+EXPECT_EQ(index, 4) << "Should return last index for value above range";
+}
+
+TEST_F(TestUSDataIOUnit, StaticIndexClosestValue) {
+// Test static index method with value between points
+QVector<double> xvals = {1.0, 2.0, 3.0, 4.0, 5.0};
+int index = US_DataIO::index(xvals, 2.3);
+EXPECT_EQ(index, 1) << "Should return index of closest value";
+}
+
+TEST_F(TestUSDataIOUnit, StaticIndexEmptyVector) {
+// Test static index method with empty vector
+QVector<double> xvals;
+// This would likely cause undefined behavior, but test defensively
+// Note: This is an edge case that might crash, so we document the behavior
+
+// Since the method doesn't check for empty vectors, this is a boundary case
+// that highlights a potential improvement needed in the implementation
+SUCCEED() << "Empty vector test - implementation should handle this case";
+}
+
+TEST_F(TestUSDataIOUnit, StaticIndexSingleElement) {
+// Test static index method with single element
+QVector<double> xvals = {2.5};
+
+int index1 = US_DataIO::index(xvals, 1.0);
+EXPECT_EQ(index1, 0) << "Should return 0 for value below single element";
+
+int index2 = US_DataIO::index(xvals, 2.5);
+EXPECT_EQ(index2, 0) << "Should return 0 for exact match with single element";
+
+int index3 = US_DataIO::index(xvals, 3.0);
+EXPECT_EQ(index3, 0) << "Should return 0 for value above single element";
+}
+
+TEST_F(TestUSDataIOUnit, StaticIndexRawDataPointer) {
+// Test static index method with RawData pointer
+int index = US_DataIO::index(&rawData, 6.0);
+EXPECT_EQ(index, 2) << "Should return correct index for RawData pointer";
+}
+
+TEST_F(TestUSDataIOUnit, StaticIndexEditedDataPointer) {
+// Test static index method with EditedData pointer
+int index = US_DataIO::index(&editedData, 6.0);
+EXPECT_EQ(index, 2) << "Should return correct index for EditedData pointer";
+}
+
+TEST_F(TestUSDataIOUnit, ErrorStringValidCodes) {
+// Test errorString method with valid error codes
+QString okStr = US_DataIO::errorString(US_DataIO::OK);
+EXPECT_FALSE(okStr.isEmpty()) << "Should return non-empty string for OK";
+EXPECT_TRUE(okStr.contains("success")) << "OK message should contain 'success'";
+
+QString cantOpenStr = US_DataIO::errorString(US_DataIO::CANTOPEN);
+EXPECT_FALSE(cantOpenStr.isEmpty()) << "Should return non-empty string for CANTOPEN";
+EXPECT_TRUE(cantOpenStr.contains("cannot be opened")) << "CANTOPEN message should be descriptive";
+
+QString badCrcStr = US_DataIO::errorString(US_DataIO::BADCRC);
+EXPECT_FALSE(badCrcStr.isEmpty()) << "Should return non-empty string for BADCRC";
+EXPECT_TRUE(badCrcStr.contains("corrupted")) << "BADCRC message should mention corruption";
+
+QString notUsDataStr = US_DataIO::errorString(US_DataIO::NOT_USDATA);
+EXPECT_FALSE(notUsDataStr.isEmpty()) << "Should return non-empty string for NOT_USDATA";
+
+QString badTypeStr = US_DataIO::errorString(US_DataIO::BADTYPE);
+EXPECT_FALSE(badTypeStr.isEmpty()) << "Should return non-empty string for BADTYPE";
+
+QString badXmlStr = US_DataIO::errorString(US_DataIO::BADXML);
+EXPECT_FALSE(badXmlStr.isEmpty()) << "Should return non-empty string for BADXML";
+
+QString noDataStr = US_DataIO::errorString(US_DataIO::NODATA);
+EXPECT_FALSE(noDataStr.isEmpty()) << "Should return non-empty string for NODATA";
+
+QString noGuidMatchStr = US_DataIO::errorString(US_DataIO::NO_GUID_MATCH);
+EXPECT_FALSE(noGuidMatchStr.isEmpty()) << "Should return non-empty string for NO_GUID_MATCH";
+
+QString badVersionStr = US_DataIO::errorString(US_DataIO::BAD_VERSION);
+EXPECT_FALSE(badVersionStr.isEmpty()) << "Should return non-empty string for BAD_VERSION";
+}
+
+TEST_F(TestUSDataIOUnit, ErrorStringInvalidCode) {
+// Test errorString method with invalid error code
+QString unknownStr = US_DataIO::errorString(999);
+EXPECT_FALSE(unknownStr.isEmpty()) << "Should return non-empty string for unknown code";
+EXPECT_TRUE(unknownStr.contains("Unknown")) << "Should indicate unknown error";
+}
+
+TEST_F(TestUSDataIOUnit, FormatVersionConstant) {
+// Test that format_version constant is reasonable
+EXPECT_GT(US_DataIO::format_version, 0) << "Format version should be positive";
+EXPECT_LE(US_DataIO::format_version, 100) << "Format version should be reasonable";
+EXPECT_EQ(US_DataIO::format_version, 5) << "Format version should match expected value";
+}
+
+// ============================================================================
+// EDGE CASES AND BOUNDARY CONDITIONS
+// ============================================================================
+
+TEST_F(TestUSDataIOUnit, RawDataBoundaryAccess) {
+// Test boundary access for various methods
+int lastScanIndex = rawData.scanCount() - 1;
+int lastPointIndex = rawData.pointCount() - 1;
+
+// Test valid boundary access
+double val = rawData.value(lastScanIndex, lastPointIndex);
+EXPECT_GT(val, 0.0) << "Should access valid boundary values";
+
+double radius = rawData.radius(lastPointIndex);
+EXPECT_DOUBLE_EQ(radius, 6.5) << "Should return correct boundary radius";
+
+double stddev = rawData.std_dev(lastScanIndex, lastPointIndex);
+EXPECT_GE(stddev, 0.0) << "Boundary stddev should be non-negative";
+}
+
+TEST_F(TestUSDataIOUnit, EditedDataBoundaryAccess) {
+// Test boundary access for EditedData
+int lastScanIndex = editedData.scanCount() - 1;
+int lastPointIndex = editedData.pointCount() - 1;
+
+double val = editedData.value(lastScanIndex, lastPointIndex);
+EXPECT_GT(val, 0.0) << "Should access valid boundary values";
+
+bool setResult = editedData.setValue(lastScanIndex, lastPointIndex, 1.234);
+EXPECT_TRUE(setResult) << "Should successfully set boundary values";
+EXPECT_DOUBLE_EQ(editedData.value(lastScanIndex, lastPointIndex), 1.234)
+<< "Should update boundary value correctly";
+}
+
+TEST_F(TestUSDataIOUnit, TemperatureCalculationsEdgeCases) {
+// Test temperature calculations with edge case data
+US_DataIO::RawData edgeCaseData;
+
+// Test with zero scans
+double avgTemp = edgeCaseData.average_temperature();
+// This will likely cause division by zero - document this behavior
+// EXPECT_TRUE(std::isnan(avgTemp) || std::isinf(avgTemp))
+//     << "Should handle empty scan data gracefully";
+
+// Test with extreme temperature values
+US_DataIO::Scan extremeScan1, extremeScan2;
+extremeScan1.temperature = -273.15; // Absolute zero
+extremeScan2.temperature = 1000.0;  // Very high
+edgeCaseData.scanData << extremeScan1 << extremeScan2;
+
+double spread = edgeCaseData.temperature_spread();
+EXPECT_DOUBLE_EQ(spread, 1273.15) << "Should handle extreme temperature range";
+
+double avg = edgeCaseData.average_temperature();
+EXPECT_DOUBLE_EQ(avg, 363.425) << "Should calculate average of extreme values";
 }

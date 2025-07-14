@@ -1,246 +1,380 @@
-// test_us_datafiles.cpp
-#include "test_us_datafiles.h"
+// test_us_datafiles_unit.cpp - Unit tests for US_DataFiles class
+#include "qt_test_base.h"
 #include "us_datafiles.h"
-#include <QFile>
-#include <QXmlStreamWriter>
+#include <QString>
 #include <QDir>
+#include <QFile>
+#include <QTextStream>
+#include <QTemporaryDir>
+#include <QXmlStreamWriter>
 
-// Use your custom Qt matchers
 using namespace qt_matchers;
 
-// TestUSDataFiles method implementations
-void TestUSDataFiles::SetUp() {
-    QtTestBase::SetUp();
-    // Per-test setup - create test directory for each test
-    path = QString("tmp").append(QDir::separator()).append("test_data");
-    QDir().mkpath(path); // Create test directory
-}
+class TestUSDataFilesUnit : public QtTestBase {
+protected:
+    void SetUp() override {
+        QtTestBase::SetUp();
 
-void TestUSDataFiles::TearDown() {
-    // Per-test cleanup - remove test directory after each test
-    QDir(path).removeRecursively(); // Cleanup after each test
-    QtTestBase::TearDown();
-}
-
-// Suite-level setup for DataFiles tests
-void TestUSDataFiles::SetUpTestSuite() {
-    QtTestBase::SetUpTestSuite();
-    // One-time setup for all TestUSDataFiles tests
-}
-
-// Suite-level cleanup for DataFiles tests
-void TestUSDataFiles::TearDownTestSuite() {
-    // One-time cleanup for all TestUSDataFiles tests
-}
-
-// Helper function to create an XML file with the specified GUID
-void TestUSDataFiles::createXmlFile(const QString& filename, const QString& tag,
-                                    const QString& att, const QString& guid) {
-    QFile file(filename);
-    ASSERT_TRUE(file.open(QIODevice::WriteOnly))
-                                << "Should be able to create XML file: " << filename.toStdString();
-
-    QXmlStreamWriter xmlWriter(&file);
-    xmlWriter.setAutoFormatting(true);
-    xmlWriter.writeStartDocument();
-    xmlWriter.writeStartElement(tag);
-    xmlWriter.writeAttribute(att, guid);
-    xmlWriter.writeEndElement();
-    xmlWriter.writeEndDocument();
-    file.close();
-
-    // Verify file was created successfully
-    EXPECT_TRUE(QFile::exists(filename))
-                        << "XML file should exist after creation: " << filename.toStdString();
-}
-
-// Test case for no existing files
-TEST_F(TestUSDataFiles, NoExistingFiles) {
-    // Arrange
-    bool newFile;
-    QString guid = "12345";
-    QString lfchar = "M";
-    QString lkupTag = "model";
-    QString lkupAtt = "guid";
-    QString expectedFilename = path + QDir::separator() + "M0000001.xml";
-
-    // Act - Test case 1: No existing files, should create the first file
-    QString filename = US_DataFiles::get_filename(path, guid, lfchar, lkupTag, lkupAtt, newFile);
-
-    // Assert
-    EXPECT_THAT(filename, QStringEq(expectedFilename))
-            << "Should create the first file with correct naming pattern";
-    EXPECT_TRUE(newFile)
-                        << "newFile flag should be true when creating a new file";
-
-    // Create the file to simulate it being written (for subsequent tests)
-    createXmlFile(filename, lkupTag, lkupAtt, guid);
-}
-
-// Test case for existing file with matching GUID
-TEST_F(TestUSDataFiles, ExistingFileWithMatchingGuid) {
-    // Arrange - First create an existing file
-    bool initialNewFile;
-    QString guid = "12345";
-    QString lfchar = "M";
-    QString lkupTag = "model";
-    QString lkupAtt = "guid";
-
-    // Create the initial file
-    QString initialFilename = US_DataFiles::get_filename(path, guid, lfchar, lkupTag, lkupAtt, initialNewFile);
-    createXmlFile(initialFilename, lkupTag, lkupAtt, guid);
-
-    // Act - Test case 2: Existing file with a matching GUID, should return the existing file
-    bool newFile;
-    QString filename = US_DataFiles::get_filename(path, guid, lfchar, lkupTag, lkupAtt, newFile);
-    QString expectedFilename = path + QDir::separator() + "M0000001.xml";
-
-    // Assert
-    EXPECT_THAT(filename, QStringEq(expectedFilename))
-            << "Should return the existing file with matching GUID";
-    EXPECT_FALSE(newFile)
-                        << "newFile flag should be false when returning existing file";
-}
-
-// Test case for existing files without matching GUID
-TEST_F(TestUSDataFiles, ExistingFilesWithoutMatchingGuid) {
-    // Arrange - Create an existing file with different GUID
-    bool initialNewFile;
-    QString existingGuid = "12345";
-    QString newGuid = "67890";
-    QString lfchar = "M";
-    QString lkupTag = "model";
-    QString lkupAtt = "guid";
-
-    // Create the first file with different GUID
-    QString initialFilename = US_DataFiles::get_filename(path, existingGuid, lfchar, lkupTag, lkupAtt, initialNewFile);
-    createXmlFile(initialFilename, lkupTag, lkupAtt, existingGuid);
-
-    // Act - Test case 3: Existing files without a matching GUID, should create the next file
-    bool newFile;
-    QString filename = US_DataFiles::get_filename(path, newGuid, lfchar, lkupTag, lkupAtt, newFile);
-    QString expectedFilename = path + QDir::separator() + "M0000002.xml";
-
-    // Assert
-    EXPECT_THAT(filename, QStringEq(expectedFilename))
-            << "Should create the next sequential file when GUID doesn't match";
-    EXPECT_TRUE(newFile)
-                        << "newFile flag should be true when creating new file for different GUID";
-
-    // Create the second file to simulate it being written
-    createXmlFile(filename, lkupTag, lkupAtt, newGuid);
-}
-
-// Test case for gap in numbering
-TEST_F(TestUSDataFiles, GapInNumbering) {
-    // Arrange - Create files with a gap
-    bool newFile1, newFile2;
-    QString guid1 = "11111";
-    QString guid2 = "22222";
-    QString guid3 = "33333";
-    QString lfchar = "M";
-    QString lkupTag = "model";
-    QString lkupAtt = "guid";
-
-    // Create first file
-    QString filename1 = US_DataFiles::get_filename(path, guid1, lfchar, lkupTag, lkupAtt, newFile1);
-    createXmlFile(filename1, lkupTag, lkupAtt, guid1);
-
-    // Create second file
-    QString filename2 = US_DataFiles::get_filename(path, guid2, lfchar, lkupTag, lkupAtt, newFile2);
-    createXmlFile(filename2, lkupTag, lkupAtt, guid2);
-
-    // Remove the first file to create a gap
-    QString fileToRemove = path + QDir::separator() + "M0000001.xml";
-    ASSERT_TRUE(QFile::remove(fileToRemove))
-                                << "Should be able to remove first file to create gap";
-
-    // Verify the gap exists
-    EXPECT_FALSE(QFile::exists(fileToRemove))
-                        << "First file should be removed";
-    EXPECT_TRUE(QFile::exists(path + QDir::separator() + "M0000002.xml"))
-                        << "Second file should still exist";
-
-    // Act - Test case 4: Should fill the gap in numbering
-    bool newFile;
-    QString filename = US_DataFiles::get_filename(path, guid3, lfchar, lkupTag, lkupAtt, newFile);
-    QString expectedFilename = path + QDir::separator() + "M0000001.xml";
-
-    // Assert
-    EXPECT_THAT(filename, QStringEq(expectedFilename))
-            << "Should fill the gap in numbering";
-    EXPECT_TRUE(newFile)
-                        << "newFile flag should be true when filling gap";
-}
-
-// Additional comprehensive tests
-TEST_F(TestUSDataFiles, DifferentFileCharacters) {
-    // Test with different leading file characters
-    QStringList testChars = {"A", "B", "C", "X", "Z"};
-    QString guid = "test123";
-    QString lkupTag = "model";
-    QString lkupAtt = "guid";
-
-    for (const QString& lfchar : testChars) {
-        bool newFile;
-        QString filename = US_DataFiles::get_filename(path, guid + lfchar, lfchar, lkupTag, lkupAtt, newFile);
-        QString expectedPattern = path + QDir::separator() + lfchar + "0000001.xml";
-
-        EXPECT_THAT(filename, QStringEq(expectedPattern))
-                << "Should create correct filename pattern for character: " << lfchar.toStdString();
-        EXPECT_TRUE(newFile)
-                            << "Should indicate new file for character: " << lfchar.toStdString();
-
-        // Create the file for next iteration
-        createXmlFile(filename, lkupTag, lkupAtt, guid + lfchar);
-    }
-}
-
-TEST_F(TestUSDataFiles, EmptyInputHandling) {
-    // Test behavior with empty inputs
-    bool newFile;
-    QString result;
-
-    // Test with empty GUID
-    result = US_DataFiles::get_filename(path, "", "M", "model", "guid", newFile);
-    // Should handle empty GUID gracefully (exact behavior depends on implementation)
-    EXPECT_FALSE(result.isEmpty()) << "Should handle empty GUID";
-
-    // Test with empty path
-    result = US_DataFiles::get_filename("", "testguid", "M", "model", "guid", newFile);
-    // Should handle empty path gracefully
-    EXPECT_FALSE(result.isEmpty()) << "Should handle empty path";
-}
-
-TEST_F(TestUSDataFiles, LargeNumberSequence) {
-    // Test that the function can handle larger file numbers correctly
-    QString guid = "sequence_test";
-    QString lfchar = "S";
-    QString lkupTag = "model";
-    QString lkupAtt = "guid";
-
-    // Create several files to test sequence numbering
-    QStringList createdFiles;
-    for (int i = 1; i <= 5; i++) {
-        bool newFile;
-        QString filename = US_DataFiles::get_filename(path, guid + QString::number(i),
-                                                      lfchar, lkupTag, lkupAtt, newFile);
-
-        QString expectedPattern = path + QDir::separator() +
-                                  QString("S%1.xml").arg(i, 7, 10, QChar('0'));
-
-        EXPECT_THAT(filename, QStringEq(expectedPattern))
-                << "Should create correct sequential filename for iteration: " << i;
-        EXPECT_TRUE(newFile)
-                            << "Should indicate new file for iteration: " << i;
-
-        createXmlFile(filename, lkupTag, lkupAtt, guid + QString::number(i));
-        createdFiles << filename;
+        // Create temporary directory for each test
+        tempDir = std::make_unique<QTemporaryDir>();
+        ASSERT_TRUE(tempDir->isValid()) << "Failed to create temporary directory";
+        testPath = tempDir->path();
     }
 
-    // Verify all files exist
-    for (const QString& file : createdFiles) {
-        EXPECT_TRUE(QFile::exists(file))
-                            << "Created file should exist: " << file.toStdString();
+    void TearDown() override {
+        // Cleanup happens automatically with QTemporaryDir destructor
+        tempDir.reset();
+        QtTestBase::TearDown();
     }
+
+    // Helper method to create a test XML file with specific content
+    void createXmlFile(const QString& filename, const QString& tag,
+                       const QString& attribute, const QString& guid) {
+        QFile file(testPath + "/" + filename);
+        ASSERT_TRUE(file.open(QIODevice::WriteOnly | QIODevice::Text));
+
+        QXmlStreamWriter xml(&file);
+        xml.setAutoFormatting(true);
+        xml.writeStartDocument();
+        xml.writeStartElement("root");
+        xml.writeStartElement(tag);
+        xml.writeAttribute(attribute, guid);
+        xml.writeEndElement(); // tag
+        xml.writeEndElement(); // root
+        xml.writeEndDocument();
+
+        file.close();
+    }
+
+    // Helper method to create a simple XML file without specific content
+    void createEmptyXmlFile(const QString& filename) {
+        QFile file(testPath + "/" + filename);
+        ASSERT_TRUE(file.open(QIODevice::WriteOnly | QIODevice::Text));
+
+        QXmlStreamWriter xml(&file);
+        xml.writeStartDocument();
+        xml.writeStartElement("root");
+        xml.writeEndElement();
+        xml.writeEndDocument();
+
+        file.close();
+    }
+
+    // Helper method to verify file name format
+    bool isValidFileName(const QString& fileName, const QString& lfchar) {
+        QString baseName = QFileInfo(fileName).baseName();
+        if (baseName.length() != 8) return false;
+        if (!baseName.startsWith(lfchar)) return false;
+
+        QString numPart = baseName.mid(1);
+        bool ok;
+        numPart.toInt(&ok);
+        return ok;
+    }
+
+    std::unique_ptr<QTemporaryDir> tempDir;
+    QString testPath;
+};
+
+// ============================================================================
+// MAIN GET_FILENAME METHOD TESTS (with newFile reference parameter)
+// ============================================================================
+
+TEST_F(TestUSDataFilesUnit, GetFilenameEmptyDirectory) {
+// Test with empty directory - should create first file
+bool newFile = false;
+QString result = US_DataFiles::get_filename(testPath, "test-guid", "M",
+                                            "model", "guid", newFile);
+
+EXPECT_TRUE(newFile) << "Should indicate new file creation";
+EXPECT_TRUE(result.endsWith("/M0000001.xml")) << "Should create first numbered file";
+EXPECT_TRUE(result.startsWith(testPath)) << "Should use correct path";
+}
+
+TEST_F(TestUSDataFilesUnit, GetFilenameEmptyGuid) {
+// Test with empty GUID - should skip XML searching and create new file
+createEmptyXmlFile("M0000001.xml");
+
+bool newFile = false;
+QString result = US_DataFiles::get_filename(testPath, "", "M",
+                                            "model", "guid", newFile);
+
+EXPECT_TRUE(newFile) << "Should indicate new file creation with empty GUID";
+EXPECT_TRUE(result.endsWith("/M0000002.xml")) << "Should create next numbered file";
+}
+
+TEST_F(TestUSDataFilesUnit, GetFilenameMatchingGuidFound) {
+// Test finding existing file with matching GUID
+QString testGuid = "12345678-1234-1234-1234-123456789abc";
+createXmlFile("M0000001.xml", "model", "guid", testGuid);
+
+bool newFile = true; // Start as true to verify it gets set to false
+QString result = US_DataFiles::get_filename(testPath, testGuid, "M",
+                                            "model", "guid", newFile);
+
+EXPECT_FALSE(newFile) << "Should indicate existing file found";
+EXPECT_TRUE(result.endsWith("/M0000001.xml")) << "Should return existing file";
+EXPECT_TRUE(result.startsWith(testPath)) << "Should use correct path";
+}
+
+TEST_F(TestUSDataFilesUnit, GetFilenameNoMatchingGuid) {
+// Test with GUID that doesn't match any existing file
+QString existingGuid = "existing-guid";
+QString searchGuid = "different-guid";
+createXmlFile("M0000001.xml", "model", "guid", existingGuid);
+
+bool newFile = false;
+QString result = US_DataFiles::get_filename(testPath, searchGuid, "M",
+                                            "model", "guid", newFile);
+
+EXPECT_TRUE(newFile) << "Should indicate new file creation";
+EXPECT_TRUE(result.endsWith("/M0000002.xml")) << "Should create next numbered file";
+}
+
+TEST_F(TestUSDataFilesUnit, GetFilenameGapInNumbering) {
+// Test finding gap in file numbering
+createEmptyXmlFile("M0000001.xml");
+createEmptyXmlFile("M0000003.xml"); // Gap at 0000002
+
+bool newFile = false;
+QString result = US_DataFiles::get_filename(testPath, "non-existing-guid", "M",
+                                            "model", "guid", newFile);
+
+EXPECT_TRUE(newFile) << "Should indicate new file creation";
+EXPECT_TRUE(result.endsWith("/M0000002.xml")) << "Should fill the gap";
+}
+
+TEST_F(TestUSDataFilesUnit, GetFilenameMultipleGaps) {
+// Test with multiple gaps - should use first gap
+createEmptyXmlFile("M0000001.xml");
+createEmptyXmlFile("M0000004.xml"); // Gaps at 0000002 and 0000003
+createEmptyXmlFile("M0000006.xml");
+
+bool newFile = false;
+QString result = US_DataFiles::get_filename(testPath, "non-existing-guid", "M",
+                                            "model", "guid", newFile);
+
+EXPECT_TRUE(newFile) << "Should indicate new file creation";
+EXPECT_TRUE(result.endsWith("/M0000002.xml")) << "Should use first gap";
+}
+
+TEST_F(TestUSDataFilesUnit, GetFilenameIncrementPastLast) {
+// Test incrementing past last existing file when no gaps
+createEmptyXmlFile("M0000001.xml");
+createEmptyXmlFile("M0000002.xml");
+createEmptyXmlFile("M0000003.xml");
+
+bool newFile = false;
+QString result = US_DataFiles::get_filename(testPath, "non-existing-guid", "M",
+                                            "model", "guid", newFile);
+
+EXPECT_TRUE(newFile) << "Should indicate new file creation";
+EXPECT_TRUE(result.endsWith("/M0000004.xml")) << "Should increment past last";
+}
+
+TEST_F(TestUSDataFilesUnit, GetFilenameDifferentLeadingChar) {
+// Test with different leading character
+createEmptyXmlFile("N0000001.xml");
+
+bool newFile = false;
+QString result = US_DataFiles::get_filename(testPath, "", "N",
+                                            "noise", "guid", newFile);
+
+EXPECT_TRUE(newFile) << "Should indicate new file creation";
+EXPECT_TRUE(result.endsWith("/N0000002.xml")) << "Should create next N file";
+EXPECT_TRUE(isValidFileName(result, "N")) << "Should have valid N file format";
+}
+
+TEST_F(TestUSDataFilesUnit, GetFilenameDifferentTagAndAttribute) {
+// Test with different XML tag and attribute names
+QString testGuid = "special-guid";
+createXmlFile("S0000001.xml", "analyte", "analyteGUID", testGuid);
+
+bool newFile = true;
+QString result = US_DataFiles::get_filename(testPath, testGuid, "S",
+                                            "analyte", "analyteGUID", newFile);
+
+EXPECT_FALSE(newFile) << "Should find existing file with different tag/attribute";
+EXPECT_TRUE(result.endsWith("/S0000001.xml")) << "Should return existing file";
+}
+
+TEST_F(TestUSDataFilesUnit, GetFilenameWrongTagName) {
+// Test searching for wrong tag name - should not find match
+QString testGuid = "test-guid";
+createXmlFile("M0000001.xml", "model", "guid", testGuid);
+
+bool newFile = false;
+QString result = US_DataFiles::get_filename(testPath, testGuid, "M",
+                                            "wrongtag", "guid", newFile);
+
+EXPECT_TRUE(newFile) << "Should not find match with wrong tag name";
+EXPECT_TRUE(result.endsWith("/M0000002.xml")) << "Should create new file";
+}
+
+TEST_F(TestUSDataFilesUnit, GetFilenameWrongAttributeName) {
+// Test searching for wrong attribute name - should not find match
+QString testGuid = "test-guid";
+createXmlFile("M0000001.xml", "model", "guid", testGuid);
+
+bool newFile = false;
+QString result = US_DataFiles::get_filename(testPath, testGuid, "M",
+                                            "model", "wrongattr", newFile);
+
+EXPECT_TRUE(newFile) << "Should not find match with wrong attribute name";
+EXPECT_TRUE(result.endsWith("/M0000002.xml")) << "Should create new file";
+}
+
+// ============================================================================
+// EDGE CASES AND ERROR CONDITIONS
+// ============================================================================
+
+TEST_F(TestUSDataFilesUnit, GetFilenameNonExistentPath) {
+// Test with non-existent directory path
+QString fakePath = testPath + "/nonexistent";
+
+bool newFile = false;
+QString result = US_DataFiles::get_filename(fakePath, "guid", "M",
+                                            "model", "guid", newFile);
+
+EXPECT_TRUE(newFile) << "Should indicate new file for non-existent path";
+EXPECT_TRUE(result.endsWith("/M0000001.xml")) << "Should create first file";
+EXPECT_TRUE(result.startsWith(fakePath)) << "Should use provided path";
+}
+
+TEST_F(TestUSDataFilesUnit, GetFilenameEmptyParameters) {
+// Test with empty string parameters
+bool newFile = false;
+QString result = US_DataFiles::get_filename("", "", "", "", "", newFile);
+
+EXPECT_TRUE(newFile) << "Should indicate new file with empty parameters";
+EXPECT_TRUE(result.endsWith("/0000001.xml")) << "Should handle empty leading char";
+}
+
+TEST_F(TestUSDataFilesUnit, GetFilenameUnreadableFile) {
+// Create a file but make it unreadable (this test may be platform dependent)
+QFile file(testPath + "/M0000001.xml");
+ASSERT_TRUE(file.open(QIODevice::WriteOnly));
+file.write("invalid xml content");
+file.close();
+
+// Note: Making file unreadable may not work on all platforms in test environment
+// but we test the behavior when file can't be opened
+bool newFile = false;
+QString result = US_DataFiles::get_filename(testPath, "any-guid", "M",
+                                            "model", "guid", newFile);
+
+// Should either find the file or create a new one
+EXPECT_TRUE(result.contains(".xml")) << "Should return valid filename";
+}
+
+TEST_F(TestUSDataFilesUnit, GetFilenameLargeNumbering) {
+// Test with large file numbers
+createEmptyXmlFile("M0000999.xml");
+createEmptyXmlFile("M0001000.xml");
+
+bool newFile = false;
+QString result = US_DataFiles::get_filename(testPath, "non-existing", "M",
+                                            "model", "guid", newFile);
+
+EXPECT_TRUE(newFile) << "Should indicate new file creation";
+EXPECT_TRUE(result.endsWith("/M0001001.xml")) << "Should handle large numbers";
+}
+
+TEST_F(TestUSDataFilesUnit, GetFilenameMaxNumberFormat) {
+// Test with maximum 7-digit number
+createEmptyXmlFile("M9999999.xml");
+
+bool newFile = false;
+QString result = US_DataFiles::get_filename(testPath, "non-existing", "M",
+                                            "model", "guid", newFile);
+
+EXPECT_TRUE(newFile) << "Should indicate new file creation";
+// Note: This will overflow the 7-digit format, behavior depends on implementation
+EXPECT_TRUE(result.contains(".xml")) << "Should still return XML filename";
+}
+
+// ============================================================================
+// OVERLOADED METHOD TESTS (without newFile parameter)
+// ============================================================================
+
+TEST_F(TestUSDataFilesUnit, GetFilenameOverloadEmptyDirectory) {
+// Test overloaded method with empty directory
+QString result = US_DataFiles::get_filename(testPath, "test-guid", "M",
+                                            "model", "guid");
+
+EXPECT_TRUE(result.endsWith("/M0000001.xml")) << "Should create first numbered file";
+EXPECT_TRUE(result.startsWith(testPath)) << "Should use correct path";
+}
+
+TEST_F(TestUSDataFilesUnit, GetFilenameOverloadMatchingGuid) {
+// Test overloaded method finding existing file
+QString testGuid = "existing-guid";
+createXmlFile("M0000001.xml", "model", "guid", testGuid);
+
+QString result = US_DataFiles::get_filename(testPath, testGuid, "M",
+                                            "model", "guid");
+
+EXPECT_TRUE(result.endsWith("/M0000001.xml")) << "Should return existing file";
+}
+
+TEST_F(TestUSDataFilesUnit, GetFilenameOverloadGapFilling) {
+// Test overloaded method gap filling
+createEmptyXmlFile("M0000001.xml");
+createEmptyXmlFile("M0000003.xml");
+
+QString result = US_DataFiles::get_filename(testPath, "non-existing", "M",
+                                            "model", "guid");
+
+EXPECT_TRUE(result.endsWith("/M0000002.xml")) << "Should fill the gap";
+}
+
+TEST_F(TestUSDataFilesUnit, GetFilenameOverloadConsistency) {
+// Test that overloaded method produces same result as main method
+QString testGuid = "consistency-test";
+
+bool newFile = false;
+QString result1 = US_DataFiles::get_filename(testPath, testGuid, "M",
+                                             "model", "guid", newFile);
+QString result2 = US_DataFiles::get_filename(testPath, testGuid, "M",
+                                             "model", "guid");
+
+EXPECT_EQ(result1, result2) << "Both methods should return same result";
+EXPECT_TRUE(newFile) << "Main method should indicate new file";
+}
+
+// ============================================================================
+// FILENAME FORMAT VALIDATION TESTS
+// ============================================================================
+
+TEST_F(TestUSDataFilesUnit, GetFilenameFormatValidation) {
+// Test that generated filenames follow correct format
+bool newFile = false;
+QString result = US_DataFiles::get_filename(testPath, "", "X",
+                                            "test", "attr", newFile);
+
+QString fileName = QFileInfo(result).fileName();
+
+EXPECT_EQ(fileName.length(), 12) << "Filename should be 12 characters (X0000001.xml)";
+EXPECT_TRUE(fileName.startsWith("X")) << "Should start with leading character";
+EXPECT_TRUE(fileName.endsWith(".xml")) << "Should end with .xml";
+
+QString numPart = fileName.mid(1, 7);
+bool ok;
+int num = numPart.toInt(&ok);
+EXPECT_TRUE(ok) << "Middle part should be valid number";
+EXPECT_GE(num, 1) << "Number should be at least 1";
+}
+
+TEST_F(TestUSDataFilesUnit, GetFilenamePathHandling) {
+// Test proper path concatenation
+QString customPath = testPath + "/subdir";
+QDir().mkpath(customPath);
+
+bool newFile = false;
+QString result = US_DataFiles::get_filename(customPath, "", "P",
+                                            "test", "attr", newFile);
+
+EXPECT_TRUE(result.startsWith(customPath)) << "Should use provided path";
+EXPECT_TRUE(result.contains("/P0000001.xml")) << "Should append correct filename";
+EXPECT_EQ(result.count("/"), testPath.count("/") + 2) << "Should have correct path depth";
 }

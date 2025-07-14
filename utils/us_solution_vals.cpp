@@ -3,7 +3,7 @@
 #include "us_settings.h"
 
 // Get Solution/Buffer values for a data set
-bool US_SolutionVals::values( US_DB2* dbP, US_DataIO::EditedData* edata,
+bool US_SolutionVals::values( IUS_DB2* dbP, US_DataIO::EditedData* edata,
       QString& soluID, QString& cvbar20, QString& density, QString& viscosity,
       QString& compress, QString& manual, QString& errmsg )
 {
@@ -43,7 +43,7 @@ bool US_SolutionVals::values( US_DB2* dbP, US_DataIO::EditedData* edata,
 }
 
 // Get solution/buffer info from DB: ID, GUID, description
-bool US_SolutionVals::solinfo_db( US_DB2* dbP, US_DataIO::EditedData* edata,
+bool US_SolutionVals::solinfo_db( IUS_DB2* dbP, US_DataIO::EditedData* edata,
       QString& cvbar20, QString& soluID, QString& bufId, QString& bufGuid,
       QString& bufDesc, QString& errmsg )
 {
@@ -55,7 +55,7 @@ bool US_SolutionVals::solinfo_db( US_DB2* dbP, US_DataIO::EditedData* edata,
    query << "get_rawDataID_from_GUID" << rawGUID;
    dbP->query( query );
 
-   if ( dbP->lastErrno() != US_DB2::OK )
+   if ( dbP->lastErrno() != IUS_DB2::OK )
    {
       errmsg += QObject::tr( "  Unable to get raw data ID from GUID " )
          + rawGUID + "\n" + dbP->lastError() + "\n";
@@ -72,7 +72,7 @@ bool US_SolutionVals::solinfo_db( US_DB2* dbP, US_DataIO::EditedData* edata,
    query << "get_solutionBuffer" << soluID;
    dbP->query( query );
    
-   if ( dbP->lastErrno() != US_DB2::OK )
+   if ( dbP->lastErrno() != IUS_DB2::OK )
    {
       query.clear();
       query << "get_solutionIDs" << expID;
@@ -84,7 +84,7 @@ bool US_SolutionVals::solinfo_db( US_DB2* dbP, US_DataIO::EditedData* edata,
       query << "get_solutionBuffer" << soluID;
       dbP->query( query );
 
-      if ( dbP->lastErrno() != US_DB2::OK )
+      if ( dbP->lastErrno() != IUS_DB2::OK )
       {
          errmsg +=
             QObject::tr( "Unable to get solutionBuffer from solution ID" )
@@ -109,7 +109,7 @@ bool US_SolutionVals::solinfo_db( US_DB2* dbP, US_DataIO::EditedData* edata,
    query << "get_solution" << soluID;
    dbP->query( query );
    
-   if ( dbP->lastErrno() != US_DB2::OK )
+   if ( dbP->lastErrno() != IUS_DB2::OK )
    {
       errmsg +=
          QObject::tr( "Unable to get solution vbar from solution ID" )
@@ -246,7 +246,7 @@ bool US_SolutionVals::solinfo_disk( US_DataIO::EditedData* edata,
 }
 
 // Get buffer values from DB:  density, viscosity
-bool US_SolutionVals::bufvals_db( US_DB2*dbP, QString& bufId,
+bool US_SolutionVals::bufvals_db( IUS_DB2*dbP, QString& bufId,
    QString& bufGuid, QString& bufDesc, QString& density, QString& viscosity,
    QString& compress, QString& manual, QString& errmsg  )
 {
@@ -260,7 +260,7 @@ bool US_SolutionVals::bufvals_db( US_DB2*dbP, QString& bufId,
       query << "get_bufferID" << bufGuid;
       dbP->query( query );
       
-      if ( dbP->lastErrno() != US_DB2::OK )
+      if ( dbP->lastErrno() != IUS_DB2::OK )
       {
          errmsg += QObject::tr( "Unable to get buffer ID from buffer GUID " )
             + bufGuid + "\n" + dbP->lastError() + "\n";
@@ -278,7 +278,7 @@ bool US_SolutionVals::bufvals_db( US_DB2*dbP, QString& bufId,
       query.clear();
       query << "get_buffer_info" << bufId;
       dbP->query( query );
-      if ( dbP->lastErrno() != US_DB2::OK )
+      if ( dbP->lastErrno() != IUS_DB2::OK )
       {
          errmsg +=
             QObject::tr( "Unable to get buffer information from buffer ID " )
@@ -306,7 +306,7 @@ bool US_SolutionVals::bufvals_db( US_DB2*dbP, QString& bufId,
       query << "get_buffer_desc" << invID;
       dbP->query( query );
 
-      if ( dbP->lastErrno() != US_DB2::OK )
+      if ( dbP->lastErrno() != IUS_DB2::OK )
       {
          errmsg +=
             QObject::tr( "Unable to get buffer description for investigator " )
@@ -331,7 +331,7 @@ bool US_SolutionVals::bufvals_db( US_DB2*dbP, QString& bufId,
          query << "get_buffer_info" << bufId;
          dbP->query( query );
 
-         if ( dbP->lastErrno() != US_DB2::OK )
+         if ( dbP->lastErrno() != IUS_DB2::OK )
          {
             errmsg +=
                QObject::tr( "Unable to get buffer information for buffer ID " )

@@ -11,15 +11,15 @@
 /**
  * @brief Mock class for US_DB2 database operations
  *
- * Uses specific method names to avoid Google Mock overload issues
- * This version provides better handling of overloaded methods
+ * This version handles overloaded methods using Google Mock's overload resolution.
+ * Use ::testing::An<Type>() matchers to disambiguate overloaded methods in tests.
  */
 class US_DB2_Mock : public IUS_DB2 {
 public:
     US_DB2_Mock() = default;
     ~US_DB2_Mock() override = default;
 
-    // Connection methods (no overloads, so these are fine)
+    // Connection methods (overloaded)
     MOCK_METHOD(bool, connect, (const QString& masterPW, QString& err), (override));
     MOCK_METHOD(bool, connect, (const QString& host, const QString& dbname,
             const QString& user, const QString& password,
@@ -37,30 +37,13 @@ public:
                         const QString& email, const QString& pw,
                         QString& err), (override));
 
-    // Query methods - USE SPECIFIC NAMES TO AVOID OVERLOAD ISSUES
-    MOCK_METHOD(void, queryString, (const QString& sqlQuery), ());
-    MOCK_METHOD(void, queryStringList, (const QStringList& arguments), ());
-    MOCK_METHOD(int, statusQueryString, (const QString& sqlQuery), ());
-    MOCK_METHOD(int, statusQueryStringList, (const QStringList& arguments), ());
+    // Query methods (overloaded) - Mock the actual interface methods directly
+    MOCK_METHOD(void, query, (const QString& sqlQuery), (override));
+    MOCK_METHOD(void, query, (const QStringList& arguments), (override));
+    MOCK_METHOD(int, statusQuery, (const QString& sqlQuery), (override));
+    MOCK_METHOD(int, statusQuery, (const QStringList& arguments), (override));
 
-    // Delegate interface methods to specific mock methods
-    void query(const QString& sqlQuery) override {
-        queryString(sqlQuery);
-    }
-
-    void query(const QStringList& arguments) override {
-        queryStringList(arguments);
-    }
-
-    int statusQuery(const QString& sqlQuery) override {
-        return statusQueryString(sqlQuery);
-    }
-
-    int statusQuery(const QStringList& arguments) override {
-        return statusQueryStringList(arguments);
-    }
-
-    // Other methods (no overloads, so mock directly)
+    // Other methods (no overloads)
     MOCK_METHOD(void, rawQuery, (const QString& sqlQuery), (override));
     MOCK_METHOD(int, functionQuery, (const QStringList& arguments), (override));
 
@@ -101,8 +84,6 @@ public:
 
 /**
  * @brief Helper class to create a mock database with default behaviors
- *
- * This can be useful for tests that need consistent default behavior
  */
 class US_DB2_MockHelper {
 public:
@@ -119,6 +100,50 @@ public:
         ON_CALL(*mock, lastError())
                 .WillByDefault(::testing::Return(QString()));
 
+        // Default successful connections
+        ON_CALL(*mock, connect(::testing::An<const QString&>(), ::testing::An<QString&>()))
+                .WillByDefault(::testing::Return(true));
+        ON_CALL(*mock, connect(::testing::An<const QString&>(), ::testing::An<const QString&>(),
+                               ::testing::An<const QString&>(), ::testing::An<const QString&>(),
+                               ::testing::An<QString&>()))
+                .WillByDefault(::testing::Return(true));
+
+        // Default successful queries
+        ON_CALL(*mock, statusQuery(::testing::An<const QString&>()))
+                .WillByDefault(::testing::Return(IUS_DB2::OK));
+        ON_CALL(*mock, statusQuery(::testing::An<const QStringList&>()))
+                .WillByDefault(::testing::Return(IUS_DB2::OK));
+
+        return mock;
+    }
+};
+
+/**
+ * @brief Builder class for creating mocks with defaults (used by tests)
+ */
+class MockBuilder {
+public:
+    template<typename MockType = US_DB2_Mock>
+    static std::unique_ptr<MockType> createConnectedMock() {
+        auto mock = std::make_unique<MockType>();
+
+        // Set up reasonable defaults
+        ON_CALL(*mock, isConnected()).WillByDefault(::testing::Return(true));
+        ON_CALL(*mock, lastErrno()).WillByDefault(::testing::Return(IUS_DB2::OK));
+        ON_CALL(*mock, lastError()).WillByDefault(::testing::Return(QString()));
+
+        // Default successful connections
+        ON_CALL(*mock, connect(::testing::_, ::testing::_))
+                .WillByDefault(::testing::Return(true));
+        ON_CALL(*mock, connect(::testing::_, ::testing::_, ::testing::_, ::testing::_, ::testing::_))
+                .WillByDefault(::testing::Return(true));
+
+        // Default successful queries
+        ON_CALL(*mock, statusQuery(::testing::An<const QString&>()))
+                .WillByDefault(::testing::Return(IUS_DB2::OK));
+        ON_CALL(*mock, statusQuery(::testing::An<const QStringList&>()))
+                .WillByDefault(::testing::Return(IUS_DB2::OK));
+
         return mock;
     }
 };
@@ -126,5 +151,10 @@ public:
 // Convenient typedefs for different mock types
 using US_DB2_MockNice = ::testing::NiceMock<US_DB2_Mock>;
 using US_DB2_MockStrict = ::testing::StrictMock<US_DB2_Mock>;
+
+// Additional aliases used by test files
+using MockDB = US_DB2_Mock;
+using NiceMockDB = ::testing::NiceMock<US_DB2_Mock>;
+using StrictMockDB = ::testing::StrictMock<US_DB2_Mock>;
 
 #endif // US_DB2_MOCK_H

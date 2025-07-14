@@ -123,7 +123,7 @@ int US_MrecsLoader::load_mrecs( VEC_MRECS& mrecs, int index )
          US_Passwd pw;
          dbP         = new US_DB2( pw.getPasswd() );
 
-         if ( ( rc = dbP->lastErrno() ) != US_DB2::OK )
+         if ( ( rc = dbP->lastErrno() ) != IUS_DB2::OK )
          {
             QMessageBox::information( this,
                   tr( "DB Connection Problem" ),
@@ -140,7 +140,7 @@ qDebug() << "LdM: index" << index << "descsz" << mrecs_descriptions.size();
 qDebug() << " query" << query;
       dbP->query( query );
 
-      if ( dbP->lastErrno() == US_DB2::OK  &&  dbP->numRows() == 1 )
+      if ( dbP->lastErrno() == IUS_DB2::OK  &&  dbP->numRows() == 1 )
       {
 qDebug() << "  numRows" << dbP->numRows();
          dbP->next();
@@ -300,7 +300,7 @@ qDebug() << "listall" << listall << "listdesc listedit" << listdesc << listedit;
          US_Passwd   pw;
          dbP         = new US_DB2( pw.getPasswd() );
 
-         if ( dbP->lastErrno() != US_DB2::OK )
+         if ( dbP->lastErrno() != IUS_DB2::OK )
          {
             QMessageBox::information( this,
                   tr( "DB Connection Problem" ),
@@ -831,7 +831,7 @@ void US_MrecsLoader::delete_mrecs()
          US_Passwd pw;
          dbP         = new US_DB2( pw.getPasswd() );
 
-         if ( dbP->lastErrno() != US_DB2::OK )
+         if ( dbP->lastErrno() != IUS_DB2::OK )
          {
             QMessageBox::critical( this,
                   tr( "DB Connection Problem" ),

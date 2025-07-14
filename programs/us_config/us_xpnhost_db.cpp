@@ -219,7 +219,7 @@ US_XpnHostDB::US_XpnHostDB( QWidget* w, Qt::WindowFlags flags )
 
    // Populate instrument list and pull instrument detailed info
    US_Passwd pw;
-   US_DB2* dbP = use_db ? new US_DB2( pw.getPasswd() ) : NULL;
+   IUS_DB2* dbP = use_db ? new US_DB2( pw.getPasswd() ) : NULL;
    if ( dbP != NULL )    //fromDB
      readInstruments( dbP );
 
@@ -255,9 +255,9 @@ US_XpnHostDB::US_XpnHostDB( QWidget* w, Qt::WindowFlags flags )
 void US_XpnHostDB::update_inv( void )
 {
    US_Passwd   pw;
-   US_DB2      db( pw.getPasswd() );
+   IUS_DB2      db( pw.getPasswd() );
 
-   if ( db.lastErrno() != US_DB2::OK )
+   if ( db.lastErrno() != IUS_DB2::OK )
    {
 //qDebug() << "USCFG: UpdInv: ERROR connect";
       QMessageBox::information( this,
@@ -285,12 +285,12 @@ void US_XpnHostDB::update_inv( void )
 }
 
 // read Instrument names/info from DB
-void US_XpnHostDB::readInstruments( US_DB2* db )
+void US_XpnHostDB::readInstruments( IUS_DB2* db )
 {
   qDebug() << "Reading Instrument: ";
   instruments.clear();
 
-  if ( db->lastErrno() != US_DB2::OK )
+  if ( db->lastErrno() != IUS_DB2::OK )
     {
       QMessageBox::warning( this,
                             tr( "Database Connection Problem!" ),
@@ -308,7 +308,7 @@ void US_XpnHostDB::readInstruments( US_DB2* db )
 
   db->query( q );
   
-  if ( db->lastErrno() == US_DB2::OK )      // If not, no instruments defined
+  if ( db->lastErrno() == IUS_DB2::OK )      // If not, no instruments defined
     {
       QList< int > instrumentIDs;
       
@@ -663,7 +663,7 @@ void US_XpnHostDB::select_db( QListWidgetItem* entry, const bool showmsg )
 
 	//ALEXEY: set in DB selected to '1' for this entry and reset selected to '0' for all others...
 	US_Passwd pw;
-	US_DB2* db = use_db ? new US_DB2( pw.getPasswd() ) : NULL;
+	IUS_DB2* db = use_db ? new US_DB2( pw.getPasswd() ) : NULL;
 	
 	if ( db->lastErrno() != US_DB2::OK )
 	  {

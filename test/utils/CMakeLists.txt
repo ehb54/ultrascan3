@@ -49,10 +49,12 @@ else()
     endif()
 endif()
 
-# Include directories
-include_directories(${CMAKE_SOURCE_DIR}/utils
+include_directories(
+        ${CMAKE_SOURCE_DIR}/utils
         ${CMAKE_SOURCE_DIR}/test/utils
-        ${CMAKE_SOURCE_DIR}/test/common)
+        ${CMAKE_SOURCE_DIR}/test/utils/mock
+        ${CMAKE_SOURCE_DIR}/test/common
+        )
 
 if(MYSQL_FOUND)
     include_directories(${MYSQL_INCLUDE_DIRS})
@@ -75,7 +77,7 @@ add_executable(test_us_utils
         ${AUTO_TEST_SOURCES}
         ${AUTO_TEST_HEADERS}
         ../../utils/ius_db2.h
-        ../common/qt_test_base.cpp)
+        ../common/qt_test_base.cpp test_us_vector.cpp test_us_timer.cpp)
 
 target_compile_definitions(test_us_utils PRIVATE NO_DB)
 
@@ -100,25 +102,22 @@ else()
     message(WARNING "MySQL not found - database tests may not work")
 endif()
 
-# Add the test to CTest - This registers your test with CTest
-add_test(NAME us_utils_tests COMMAND test_us_utils)
-
-# Set test properties with environment for headless Qt
-set_tests_properties(us_utils_tests PROPERTIES
-        TIMEOUT 300
-        LABELS "unit;utils"
+# ENABLE Google Test discovery - this will register individual test cases
+include(GoogleTest)
+gtest_discover_tests(test_us_utils
+        PROPERTIES
+        LABELS "gtest;unit;utils"
+        TIMEOUT 60
         ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
         )
 
-# DISABLE gtest_discover_tests for now to avoid the error
-# We'll use the basic add_test() above which works fine
-#
-# include(GoogleTest)
-# gtest_discover_tests(test_us_utils
-#     PROPERTIES
-#         LABELS "gtest;unit"
-#         TIMEOUT 60
-# )
+# Keep the old add_test as fallback (commented out since we're using gtest_discover_tests now)
+# add_test(NAME us_utils_tests COMMAND test_us_utils)
+# set_tests_properties(us_utils_tests PROPERTIES
+#         TIMEOUT 300
+#         LABELS "unit;utils"
+#         ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
+#         )
 
 # Create convenience targets for different test categories
 add_custom_target(test_utils

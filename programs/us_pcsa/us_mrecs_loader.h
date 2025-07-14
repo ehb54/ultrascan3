@@ -37,7 +37,7 @@ class US_MrecsLoader : public US_WidgetsDialog
       QString&             odescr;    // reference to description argument
       QString              editGUID;  // edit GUID to possibly match
       QString              runID;     // run ID to possibly limit local files
-      US_DB2*              dbP;       // pointer to a database connection
+      IUS_DB2*              dbP;       // pointer to a database connection
 
       US_Help showHelp;
 

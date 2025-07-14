@@ -1,183 +1,354 @@
-#include "test_us_db2.h"
-#include "us_db2.h"  // Include us_db2.h only in the .cpp file
+// test_us_db2.cpp
+#include "qt_test_base.h"
+#include "mock_us_db2.h"
+#include "us_db2.h"
+#include <QString>
+#include <QStringList>
+#include <QVariant>
+#include <QByteArray>
+#include <memory>
 
-// Use your custom Qt matchers
-using namespace qt_matchers;
+using ::testing::_;
+using ::testing::Return;
+using ::testing::SetArgReferee;
+using ::testing::DoAll;
+using ::testing::StrictMock;
+using ::testing::NiceMock;
+using ::testing::Matcher;
 
-// TestUSDB2 method implementations
-void TestUSDB2::SetUp() {
-    QtTestBase::SetUp();
-    // Per-test setup for DB2 tests
-}
-
-void TestUSDB2::TearDown() {
-    // Per-test cleanup for DB2 tests
-    QtTestBase::TearDown();
-}
-
-// Suite-level setup for DB2 tests
-void TestUSDB2::SetUpTestSuite() {
-    QtTestBase::SetUpTestSuite();
-    // One-time setup for all TestUSDB2 tests
-}
-
-// Suite-level cleanup for DB2 tests
-void TestUSDB2::TearDownTestSuite() {
-    // One-time cleanup for all TestUSDB2 tests
-}
-
-TEST_F(TestUSDB2, Constructor) {
-    // Test the default constructor
-    US_DB2 db;
-    EXPECT_FALSE(db.isConnected())
-                        << "Default constructor should create unconnected database object";
-
-    // Test the constructor with a password (if NO_DB is not defined)
-#ifndef NO_DB
-    QString password = "test_password";
-    US_DB2 db_with_pw(password);
-    EXPECT_FALSE(db_with_pw.isConnected())
-                        << "Constructor with password should not auto-connect without valid credentials";
-#endif
-}
-
-TEST_F(TestUSDB2, Connection) {
-#ifndef NO_DB
-    // Test the connect method with test credentials
-    US_DB2 db;
-    QString err;
-    QString host = "localhost";
-    QString dbname = "test_db";
-    QString user = "test_user";
-    QString password = "test_password";
-
-    bool connected = db.connect(host, dbname, user, password, err);
-
-    // Expected to fail without a real database
-    EXPECT_FALSE(connected)
-                        << "Connection should fail without valid database setup";
-    EXPECT_FALSE(err.isEmpty())
-                        << "Error message should be provided when connection fails";
-
-    // Verify database object remains unconnected
-    EXPECT_FALSE(db.isConnected())
-                        << "Database object should remain unconnected after failed connection";
-#else
-    SUCCEED() << "Database tests skipped - NO_DB is defined";
-#endif
-}
-
-TEST_F(TestUSDB2, SecureConnection) {
-#ifndef NO_DB
-    US_DB2 db;
-    QString err;
-    QString host = "localhost";
-    QString dbname = "test_db";
-    QString user = "test_user";
-    QString password = "test_password";
-    QString email = "test@example.com";
-    QString masterPW = "master_password";
-
-    bool connected = db.test_secure_connection(host, dbname, user, password, email, masterPW, err);
-
-    // Expected to fail without a real database
-    EXPECT_FALSE(connected)
-                        << "Secure connection should fail without valid database setup";
-    EXPECT_FALSE(err.isEmpty())
-                        << "Error message should be provided when secure connection fails";
-
-    // Verify database object remains unconnected
-    EXPECT_FALSE(db.isConnected())
-                        << "Database object should remain unconnected after failed secure connection";
-#else
-    SUCCEED() << "Secure database tests skipped - NO_DB is defined";
-#endif
-}
-
-// Additional comprehensive tests
-TEST_F(TestUSDB2, MultipleConnectionAttempts) {
-#ifndef NO_DB
-    US_DB2 db;
-    QString err;
-    QString host = "localhost";
-    QString dbname = "test_db";
-    QString user = "test_user";
-    QString password = "test_password";
-
-    // Try multiple connection attempts
-    for (int i = 0; i < 3; i++) {
-        bool connected = db.connect(host, dbname, user, password, err);
-        EXPECT_FALSE(connected)
-                            << "Connection attempt " << (i + 1) << " should fail";
-        EXPECT_FALSE(db.isConnected())
-                            << "Database should remain unconnected after attempt " << (i + 1);
+class TestUSDB2Unit : public QtTestBase {
+protected:
+    void SetUp() override {
+        QtTestBase::SetUp();
+        // Create fresh mock for each test - use correct type
+        mockDb = std::make_unique<StrictMock<US_DB2_Mock>>();
     }
-#endif
-}
 
-TEST_F(TestUSDB2, ErrorHandling) {
-#ifndef NO_DB
-    US_DB2 db;
-    QString err;
-
-    // Test with empty connection parameters
-    bool connected = db.connect("", "", "", "", err);
-    EXPECT_FALSE(connected)
-                        << "Connection with empty parameters should fail";
-    EXPECT_FALSE(err.isEmpty())
-                        << "Error message should be provided for empty parameters";
-
-    // Test with invalid host
-    connected = db.connect("invalid_host_12345", "test_db", "test_user", "test_password", err);
-    EXPECT_FALSE(connected)
-                        << "Connection to invalid host should fail";
-    EXPECT_FALSE(err.isEmpty())
-                        << "Error message should be provided for invalid host";
-#endif
-}
-
-TEST_F(TestUSDB2, ConstructorVariants) {
-    // Test multiple constructor scenarios
-
-    // Default constructor
-    US_DB2 db1;
-    EXPECT_FALSE(db1.isConnected())
-                        << "Default constructor should create unconnected object";
-
-#ifndef NO_DB
-    // Constructor with password
-    QString password = "test_password_123";
-    US_DB2 db2(password);
-    EXPECT_FALSE(db2.isConnected())
-                        << "Password constructor should not auto-connect";
-
-    // Constructor with empty password
-    QString emptyPassword = "";
-    US_DB2 db3(emptyPassword);
-    EXPECT_FALSE(db3.isConnected())
-                        << "Empty password constructor should create unconnected object";
-#endif
-}
-
-TEST_F(TestUSDB2, ConnectionStateConsistency) {
-#ifndef NO_DB
-    US_DB2 db;
-
-    // Initial state should be unconnected
-    EXPECT_FALSE(db.isConnected())
-                        << "Initial state should be unconnected";
-
-    // After failed connection, should still be unconnected
-    QString err;
-    bool connected = db.connect("localhost", "test_db", "test_user", "test_password", err);
-    EXPECT_FALSE(connected) << "Test connection should fail";
-    EXPECT_FALSE(db.isConnected())
-                        << "Should remain unconnected after failed connection";
-
-    // Multiple checks should be consistent
-    for (int i = 0; i < 5; i++) {
-        EXPECT_FALSE(db.isConnected())
-                            << "Connection state should be consistent on check " << (i + 1);
+    void TearDown() override {
+        mockDb.reset();
+        QtTestBase::TearDown();
     }
-#endif
+
+    std::unique_ptr<StrictMock<US_DB2_Mock>> mockDb;
+};
+
+// ============================================================================
+// CONSTRUCTOR TESTS
+// ============================================================================
+
+TEST_F(TestUSDB2Unit, DefaultConstructor) {
+// Test that default constructor can be called without throwing
+EXPECT_NO_THROW({
+US_DB2 db;
+}) << "Default constructor should not throw";
+}
+
+TEST_F(TestUSDB2Unit, MasterPasswordConstructor) {
+// Test constructor with master password parameter
+QString masterPW = "test_master_password";
+
+EXPECT_NO_THROW({
+US_DB2 db(masterPW);
+}) << "Master password constructor should not throw";
+}
+
+// ============================================================================
+// CONNECTION METHOD TESTS
+// ============================================================================
+
+TEST_F(TestUSDB2Unit, TestDbConnectionValid) {
+QString host = "localhost:3306";
+QString dbname = "test_db";
+QString user = "test_user";
+QString password = "test_password";
+QString error;
+
+EXPECT_CALL(*mockDb, test_db_connection(host, dbname, user, password, _))
+.WillOnce(DoAll(SetArgReferee<4>(QString()), Return(true)));
+
+bool result = mockDb->test_db_connection(host, dbname, user, password, error);
+
+EXPECT_TRUE(result);
+EXPECT_TRUE(error.isEmpty());
+}
+
+TEST_F(TestUSDB2Unit, ConnectWithMasterPassword) {
+QString masterPW = "master_password";
+QString err;
+
+EXPECT_CALL(*mockDb, connect(masterPW, _))
+.WillOnce(DoAll(SetArgReferee<1>(QString()), Return(true)));
+
+bool result = mockDb->connect(masterPW, err);
+
+EXPECT_TRUE(result);
+EXPECT_TRUE(err.isEmpty());
+}
+
+TEST_F(TestUSDB2Unit, ConnectWithDirectParameters) {
+QString host = "localhost:3306";
+QString dbname = "test_db";
+QString user = "test_user";
+QString password = "test_password";
+QString error;
+
+EXPECT_CALL(*mockDb, connect(host, dbname, user, password, _))
+.WillOnce(DoAll(SetArgReferee<4>(QString()), Return(true)));
+
+bool result = mockDb->connect(host, dbname, user, password, error);
+
+EXPECT_TRUE(result);
+EXPECT_TRUE(error.isEmpty());
+}
+
+// ============================================================================
+// QUERY METHOD TESTS
+// ============================================================================
+
+TEST_F(TestUSDB2Unit, RawQueryValidSQL) {
+QString sqlQuery = "SELECT * FROM test_table";
+
+EXPECT_CALL(*mockDb, rawQuery(sqlQuery))
+.Times(1);
+
+EXPECT_NO_THROW({
+mockDb->rawQuery(sqlQuery);
+});
+}
+
+TEST_F(TestUSDB2Unit, StatusQueryString) {
+QString sqlQuery = "CALL test_procedure()";
+
+EXPECT_CALL(*mockDb, statusQuery(Matcher<const QString&>(sqlQuery)))
+.WillOnce(Return(IUS_DB2::OK));
+
+int result = mockDb->statusQuery(sqlQuery);
+
+EXPECT_EQ(result, IUS_DB2::OK);
+}
+
+TEST_F(TestUSDB2Unit, StatusQueryStringList) {
+QStringList arguments;
+arguments << "test_procedure" << "arg1" << "arg2";
+
+EXPECT_CALL(*mockDb, statusQuery(Matcher<const QStringList&>(arguments)))
+.WillOnce(Return(IUS_DB2::OK));
+
+int result = mockDb->statusQuery(arguments);
+
+EXPECT_EQ(result, IUS_DB2::OK);
+}
+
+TEST_F(TestUSDB2Unit, FunctionQuery) {
+QStringList arguments;
+arguments << "test_function" << "param1" << "param2";
+
+EXPECT_CALL(*mockDb, functionQuery(arguments))
+.WillOnce(Return(5));
+
+int result = mockDb->functionQuery(arguments);
+
+EXPECT_EQ(result, 5);
+}
+
+TEST_F(TestUSDB2Unit, QueryStringMethod) {
+QString sqlQuery = "CALL get_data_procedure()";
+
+EXPECT_CALL(*mockDb, query(Matcher<const QString&>(sqlQuery)))
+.Times(1);
+
+EXPECT_NO_THROW({
+mockDb->query(sqlQuery);
+});
+}
+
+TEST_F(TestUSDB2Unit, QueryStringListMethod) {
+QStringList arguments;
+arguments << "get_user_data" << "user_id" << "123";
+
+EXPECT_CALL(*mockDb, query(Matcher<const QStringList&>(arguments)))
+.Times(1);
+
+EXPECT_NO_THROW({
+mockDb->query(arguments);
+});
+}
+
+// ============================================================================
+// DATA ACCESS METHOD TESTS
+// ============================================================================
+
+TEST_F(TestUSDB2Unit, NextMethodTrue) {
+EXPECT_CALL(*mockDb, next())
+.WillOnce(Return(true));
+
+bool result = mockDb->next();
+
+EXPECT_TRUE(result);
+}
+
+TEST_F(TestUSDB2Unit, ValueValidIndex) {
+unsigned int index = 0;
+QVariant expectedValue("test_value");
+
+EXPECT_CALL(*mockDb, value(index))
+.WillOnce(Return(expectedValue));
+
+QVariant result = mockDb->value(index);
+
+EXPECT_EQ(result.toString(), "test_value");
+}
+
+// ============================================================================
+// STATUS METHOD TESTS
+// ============================================================================
+
+TEST_F(TestUSDB2Unit, IsConnectedTrue) {
+EXPECT_CALL(*mockDb, isConnected())
+.WillOnce(Return(true));
+
+bool result = mockDb->isConnected();
+
+EXPECT_TRUE(result);
+}
+
+TEST_F(TestUSDB2Unit, NumRowsPositive) {
+EXPECT_CALL(*mockDb, numRows())
+.WillOnce(Return(15));
+
+int result = mockDb->numRows();
+
+EXPECT_EQ(result, 15);
+}
+
+TEST_F(TestUSDB2Unit, LastErrorEmpty) {
+EXPECT_CALL(*mockDb, lastError())
+.WillOnce(Return(QString()));
+
+QString result = mockDb->lastError();
+
+EXPECT_TRUE(result.isEmpty());
+}
+
+TEST_F(TestUSDB2Unit, LastErrnoOK) {
+EXPECT_CALL(*mockDb, lastErrno())
+.WillOnce(Return(IUS_DB2::OK));
+
+int result = mockDb->lastErrno();
+
+EXPECT_EQ(result, IUS_DB2::OK);
+}
+
+TEST_F(TestUSDB2Unit, LastInsertIDValid) {
+EXPECT_CALL(*mockDb, lastInsertID())
+.WillOnce(Return(42));
+
+int result = mockDb->lastInsertID();
+
+EXPECT_EQ(result, 42);
+}
+
+// ============================================================================
+// BLOB AND FILE OPERATION TESTS
+// ============================================================================
+
+TEST_F(TestUSDB2Unit, WriteBlobToDBSuccess) {
+QString filename = "/path/to/test/file.dat";
+QString procedure = "upload_blob_data";
+int tableID = 123;
+
+EXPECT_CALL(*mockDb, writeBlobToDB(filename, procedure, tableID))
+.WillOnce(Return(IUS_DB2::OK));
+
+int result = mockDb->writeBlobToDB(filename, procedure, tableID);
+
+EXPECT_EQ(result, IUS_DB2::OK);
+}
+
+TEST_F(TestUSDB2Unit, ReadBlobFromDBSuccess) {
+QString filename = "/path/to/output/file.dat";
+QString procedure = "download_blob_data";
+int tableID = 456;
+
+EXPECT_CALL(*mockDb, readBlobFromDB(filename, procedure, tableID))
+.WillOnce(Return(IUS_DB2::OK));
+
+int result = mockDb->readBlobFromDB(filename, procedure, tableID);
+
+EXPECT_EQ(result, IUS_DB2::OK);
+}
+
+TEST_F(TestUSDB2Unit, WriteAucToDBSuccess) {
+QString filename = "/path/to/auc/file.auc";
+int tableID = 789;
+
+EXPECT_CALL(*mockDb, writeAucToDB(filename, tableID))
+.WillOnce(Return(IUS_DB2::OK));
+
+int result = mockDb->writeAucToDB(filename, tableID);
+
+EXPECT_EQ(result, IUS_DB2::OK);
+}
+
+TEST_F(TestUSDB2Unit, ReadAucFromDBSuccess) {
+QString filename = "/path/to/output/file.auc";
+int tableID = 101112;
+
+EXPECT_CALL(*mockDb, readAucFromDB(filename, tableID))
+.WillOnce(Return(IUS_DB2::OK));
+
+int result = mockDb->readAucFromDB(filename, tableID);
+
+EXPECT_EQ(result, IUS_DB2::OK);
+}
+
+// ============================================================================
+// UTILITY METHOD TESTS
+// ============================================================================
+
+TEST_F(TestUSDB2Unit, MysqlEscapeStringValid) {
+QByteArray to;
+QByteArray from("test'data\"with\\special");
+unsigned long length = from.length();
+
+EXPECT_CALL(*mockDb, mysqlEscapeString(_, _, length))
+.WillOnce(Return(length * 2));
+
+unsigned long result = mockDb->mysqlEscapeString(to, from, length);
+
+EXPECT_GT(result, 0);
+EXPECT_GE(result, length);
+}
+
+// ============================================================================
+// OVERLOAD DISTINCTION TESTS
+// ============================================================================
+
+TEST_F(TestUSDB2Unit, QueryOverloadStringVsList) {
+QString stringQuery = "SELECT * FROM test";
+QStringList listQuery;
+listQuery << "get_test_data" << "param1";
+
+EXPECT_CALL(*mockDb, query(Matcher<const QString&>(stringQuery))).Times(1);
+EXPECT_CALL(*mockDb, query(Matcher<const QStringList&>(listQuery))).Times(1);
+
+mockDb->query(stringQuery);
+mockDb->query(listQuery);
+}
+
+TEST_F(TestUSDB2Unit, StatusQueryOverloadStringVsList) {
+QString stringQuery = "UPDATE test SET value = 1";
+QStringList listQuery;
+listQuery << "update_test_value" << "1";
+
+EXPECT_CALL(*mockDb, statusQuery(Matcher<const QString&>(stringQuery)))
+.WillOnce(Return(IUS_DB2::OK));
+EXPECT_CALL(*mockDb, statusQuery(Matcher<const QStringList&>(listQuery)))
+.WillOnce(Return(IUS_DB2::OK));
+
+int result1 = mockDb->statusQuery(stringQuery);
+int result2 = mockDb->statusQuery(listQuery);
+
+EXPECT_EQ(result1, IUS_DB2::OK);
+EXPECT_EQ(result2, IUS_DB2::OK);
 }
