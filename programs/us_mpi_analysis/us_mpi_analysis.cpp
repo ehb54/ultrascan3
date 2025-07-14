@@ -462,7 +462,10 @@ DbgLv(0) << "FMB: meni range points" << meniscus_range << meniscus_points
    {
       abort( "Global fit is not compatible with noise computation" );
    }
-
+   for ( int ee = 0; ee < data_sets.size(); ee++ )
+   {
+      data_sets[ee]->simparams.vbar = data_sets[ee]->vbar20;
+   }
    // Calculate meniscus values
    meniscus_values.resize( meniscus_points );
 
