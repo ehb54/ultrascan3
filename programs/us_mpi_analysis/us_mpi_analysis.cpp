@@ -2083,7 +2083,7 @@ void US_MPI_Analysis::write_model( const SIMULATION&      sim,
                                    bool                   glob_sols )
 {
    US_DataIO::EditedData* edata = &data_sets[ current_dataset ]->run_data;
-   US_SimulationParameters* sparms = &data_sets[ current_dataset ]->sim_params;
+   US_SimulationParameters* sparms = &data_sets[ current_dataset ]->simparams;
    QStringList fitType;
    fitType << "NOTHING" << "MENISCUS" << "BOTTOM" << "ANGEL" << "VOLUME" << "SIGMA" << "DELTA"
                << "VBAR" << "FF0" << "TEMPERATURE";
@@ -2123,8 +2123,8 @@ DbgLv(1) << "wrMo:  mc mciter mGUID" << model.monteCarlo << mc_iter
    model.dataDescrip = edata->description;
    if ( sparms->primaryFit != US_SimulationParameters::NOTHING || sparms->secondaryFit != US_SimulationParameters::NOTHING )
    {  // Meniscus (or Meniscus,Bottom)
-      model->global = US_Model::MENISCUS;
-      QString desc = QString( "MMITER=%1 VARI=%2" ).arg(menibott_ndx + 1).arg(varinew);
+      model.global = US_Model::MENISCUS;
+      QString desc = QString( "MMITER=%1 VARI=%2" ).arg(menibott_ndx + 1).arg(sim.variance);
       if ( sparms->primaryFit != US_SimulationParameters::NOTHING )
       {
          QString pfit = fitType[ sparms->primaryFit ];
@@ -2157,9 +2157,6 @@ DbgLv(1) << "wrMo:  mc mciter mGUID" << model.monteCarlo << mc_iter
       model.modelGUID   = US_Util::new_guid();
       modelGUID         = model.modelGUID;
    }
-
-   else
-      model.global      = US_Model::NONE; 
 DbgLv(0) << "wrMo:  is_glob glob_sols" << is_global_fit << glob_sols
  << "f_men f_bot f_mbo" << fit_meni << fit_bott << fit_menbot << "m.glob" << model.global;
 
