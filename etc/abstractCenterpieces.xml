@@ -310,4 +310,17 @@
       <channel name="A" bottom="7.2" shape="band forming" pathlen="1.2" angle="2.5" width="0" />
       <channel name="B" bottom="7.2" shape="band forming" pathlen="1.2" angle="2.5" width="0" />
    </abstractCenterpiece>
+   <abstractCenterpiece
+         id="26"
+         guid="f95ad09d-7258-4782-84e3-201f61db0a01"
+         name="ULETH 15U0114"
+         materialName="Epon-Helmut"
+         channels="1"
+         shape="band forming"
+         maxRPM="60000"
+         angle="2.52"
+         width="0" >
+      <channel name="A" bottom="7.2" shape="band forming" pathlen="1.2" angle="2.518" width="0" />
+      <channel name="B" bottom="7.2" shape="band forming" pathlen="1.2" angle="2.54" width="0" />
+   </abstractCenterpiece>
 </abstractCenterpieces>
