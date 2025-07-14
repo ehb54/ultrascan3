@@ -2121,19 +2121,19 @@ DbgLv(1) << "wrMo:  mc mciter mGUID" << model.monteCarlo << mc_iter
    model.editGUID    = edata->editGUID;
    model.requestGUID = requestGUID;
    model.dataDescrip = edata->description;
-   if ( sparms->primaryFit != US_SimulationParameters::NOTHING || sparms->secondaryFit != US_SimulationParameters::NOTHING )
+   if ( primaryFit != US_SimulationParameters::NOTHING || secondaryFit != US_SimulationParameters::NOTHING )
    {  // Meniscus (or Meniscus,Bottom)
       model.global = US_Model::MENISCUS;
-      QString desc = QString( "MMITER=%1 VARI=%2" ).arg(menibott_ndx + 1).arg(sim.variance);
-      if ( sparms->primaryFit != US_SimulationParameters::NOTHING )
+      QString desc = QString( " MMITER=%1 VARI=%2" ).arg(menibott_ndx + 1).arg(sim.variance);
+      if ( primaryFit != US_SimulationParameters::NOTHING )
       {
-         QString pfit = fitType[ sparms->primaryFit ];
+         QString pfit = fitType[ primaryFit ];
          desc += QString( " %1=%2" ).arg( pfit ).arg( meniscus_value );
 
       }
-      if ( sparms->secondaryFit != US_SimulationParameters::NOTHING )
+      if ( secondaryFit != US_SimulationParameters::NOTHING )
       {
-         QString sfit = fitType[ sparms->secondaryFit ];
+         QString sfit = fitType[ secondaryFit ];
          desc += QString( " %1=%2" ).arg( sfit ).arg( bottom_value );
       }
       if (model.dataDescrip.isEmpty())
@@ -2184,16 +2184,16 @@ DbgLv(1) << "wrMo: tripleID" << tripleID << "dates" << dates;
 
    if ( mc_iterations > 1 )
       iterID.sprintf( "mc%04d", mc_iter );
-   else if ( fit_menbot )
+   else if ( primaryFit && secondaryFit )
       iterID.sprintf( "i%02d-m%05db%05d", 
               menibott_ndx + 1,
               (int)( meniscus_value * 10000 ),
               (int)( bottom_value * 10000 ) );
-   else if (  fit_meni )
+   else if (  primaryFit )
       iterID.sprintf( "i%02d-m%05d", 
               meniscus_run + 1,
               (int)( meniscus_value * 10000 ) );
-   else if (  fit_bott )
+   else if (  secondaryFit )
       iterID.sprintf( "i%02d-b%05d", 
               bottom_run + 1,
               (int)( bottom_value * 10000 ) );
@@ -2306,11 +2306,11 @@ DbgLv(1) << "wrMo: stype" << stype << QString().sprintf("0%o",stype)
 
    QString runstring = "Run: " + QString::number( run ) + " " + tripleID;
 
-   tsout << fn << ";meniscus_value=" << meniscus_value
+   tsout << fn << ";"<< fitType[primaryFit] << "=" << meniscus_value
+         << ";"<< fitType[secondaryFit] << "=" << bottom_value
                << ";MC_iteration="   << mc_iter
                << ";variance="       << sim.variance
                << ";run="            << runstring
-               << ";bottom_value="   << bottom_value
                << "\n";
    fileo.close();
 }
