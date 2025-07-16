@@ -2310,10 +2310,10 @@ DbgLv(1) << "wrMo: stype" << stype << QString().sprintf("0%o",stype)
    QString runstring = "Run: " + QString::number( run ) + " " + tripleID;
 
    tsout << fn << ";"<< fitType[primaryFit] << "=" << meniscus_value
-         << ";"<< fitType[secondaryFit] << "=" << bottom_value
                << ";MC_iteration="   << mc_iter
                << ";variance="       << sim.variance
                << ";run="            << runstring
+   << ";"<< fitType[secondaryFit] << "=" << bottom_value
                << "\n";
    fileo.close();
 }

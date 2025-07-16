@@ -1,3 +1,5 @@
+#include <QtCore/QString>
+
 #include "us_mpi_analysis.h"
 #include "us_math2.h"
 #include "us_util.h"
@@ -97,15 +99,15 @@ void US_MPI_Analysis::_2dsa_master( void )
                             + QString::number( mc_iteration + 1 );
          if ( primaryFit )
          {
-            progress += "; " + fitType[ primaryFit ] + ": " + QString::number( data_sets[ current_dataset]->simparams.get_parameter_value(primaryFit));
+            progress += "; " + fitType[ primaryFit ] + ": " + QString::number( meniscus_values[ meniscus_run ]);
          }
          if ( secondaryFit )
          {
-            progress += "; " + fitType[ secondaryFit ] + ": " + QString::number( data_sets[ current_dataset]->simparams.get_parameter_value(secondaryFit));
+            progress += "; " + fitType[ secondaryFit ] + ": " + QString::number( bottom_values[ bottom_run ]);
          }
          if ( primaryFit || secondaryFit )
          {
-            progress += tr( "  ( m%1 b%2 )").arg( meniscus_run + 1 ).arg( bottom_run + 1 );
+            progress += tr( "  ( p%1 s%2 )").arg( meniscus_run + 1 ).arg( bottom_run + 1 );
          }
          progress     += "; RMSD: "
             + QString::number( sqrt( simulation_values.variance ) );
