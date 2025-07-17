@@ -465,6 +465,8 @@ DbgLv(0) << "FMB: meni range points" << meniscus_range << meniscus_points
    for ( int ee = 0; ee < data_sets.size(); ee++ )
    {
       data_sets[ee]->simparams.vbar = data_sets[ee]->vbar20;
+      data_sets[ee]->simparams.bottom = data_sets[ee]->run_data.bottom;
+      data_sets[ee]->simparams.meniscus = data_sets[ee]->run_data.meniscus;
    }
    // Calculate meniscus values
    meniscus_values.resize( meniscus_points );
