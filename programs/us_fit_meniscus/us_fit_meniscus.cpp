@@ -663,7 +663,7 @@ DbgLv(1) << "LD:  ii" << ii << "valsize" << valsize;
       double rbott  = values[ 1 ].toDouble();
       double rmsdv  = rbott;
 
-      if ( rmeni < 5.0  || rmeni > 8.0 )  continue;
+      //if ( rmeni < 5.0  || rmeni > 8.0 )  continue;
 
       count++;
 
@@ -1009,10 +1009,10 @@ void US_FitMeniscus::plot_2d( void )
    double* rmsd_values   = v_rmsd.data();
 
    double  minx = 1e20;
-   double  maxx = 0.0;
+   double  maxx = -1e20;
 
    double  miny = 1e20;
-   double  maxy = 0.0;
+   double  maxy = -1e20;
 
    // Remove any non-data lines and put values in arrays
    for ( int ii = 0; ii < count; ii++ )
@@ -2381,7 +2381,7 @@ void US_FitMeniscus::scan_dbase()
 
    QString invID = QString::number( US_Settings::us_inv_ID() );
 
-   QRegExp fmIter  = QRegExp( "i\?\?-[mb]*",
+   QRegExp fmIter  = QRegExp( "i\?\?-[mbavsdrft]*",
          Qt::CaseSensitive, QRegExp::Wildcard );
 
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
@@ -2437,7 +2437,7 @@ DbgLv(1) << "DbSc:    *FIT* " << descript << "fitVals" << fitVals;
          QString fextn      = ( fittype != 2 ) ?
                               ".fitmen.dat" : ".fitbot.dat";
 DbgLv(1) << "DbSc:     fittype" << fittype << "fextn" << fextn;
-         if ( fittype == 2  ||  fittype == 3 )
+         if ( fittype == 2  ||  fittype == 3  || variance == 1.0)
          {  // Bottom or Meniscus+Bottom:  add to list of bottom redo's
             botredo << mDescrs.count();
          }
@@ -2550,7 +2550,11 @@ DbgLv(1) << "DbSc:    *FIT* " << descript;
          mDescrs << mdescr;
       }
    }
-
+   QStringList fitType;
+   fitType << "MENISCUS" << "BOTTOM" << "ANGEL" << "VOLUME" << "SIGMA" << "DELTA"
+               << "VBAR" << "FF0" << "TEMPERATURE";
+   QStringList shortfitType;
+   shortfitType << "M" << "B" << "A" << "V" << "S" << "D" << "R" << "F" << "T";
    // Redo any model descriptions that need a bottom value
    for ( int ii = 0; ii < botredo.count(); ii++ )
    {
@@ -2560,8 +2564,48 @@ DbgLv(1) << "DbSc:    *FIT* " << descript;
       US_Model wmodel;
       wmodel.load( modelID, &db );
       double bottom      = wmodel.bottom;
+      // use wmodel.dataDescrip to get the primary and secondary fit value and its type
+      // get the fit type from the ending of ansysID using the shortfitType Stringlist
+      QString ansysID    = wmodel.description.section( '.', -2, -2 );
+      QString fit_type = ansysID.section( '-', -1, -1 );
+      // if fit_type starts with F strip it
+      if (fit_type.startsWith("F"))
+      {
+         fit_type = fit_type.mid(1);
+      }
+      QStringList desc = wmodel.dataDescrip.split(" ");
+      // iterate over the remaining letters of fit_type
+      for (int kk = 0; kk < fit_type.length(); kk++)
+      {
+         // get the current letter
+         QString letter = fit_type.mid(kk,1);
+         // if the letter is in the shortfitType Stringlist
+         if (shortfitType.contains(letter))
+         {
+            // get the index of the letter in the shortfitType Stringlist
+            int index = shortfitType.indexOf(letter);
+            // get the index of the letter in the fitType Stringlist
+            // get the fit value from the wmodel.dataDescrip
+            for (int jj = 0; jj < desc.count(); jj++)
+            {
+               if (desc[jj].startsWith(fitType[index]))
+               {
+                  double fit_value = desc[jj].section("=", 1, 1).toDouble( );
+                  if (kk == 0)
+                  {
+                     wmodel.meniscus = fit_value;
+                  }
+                  else if (kk == 1)
+                  {
+                     wmodel.bottom = fit_value;
+                  }
+               }
+            }
+         }
+      }
 
-      if ( bottom < 1.0 )
+
+      if ( bottom < 1.0 && false)
       {  // Bottom not reliable in model, get from model description
          QString descript   = mdescr.description;
          QString ansysID    = descript.section( '.', -2, -2 );
