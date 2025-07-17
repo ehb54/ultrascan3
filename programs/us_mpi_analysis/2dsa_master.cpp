@@ -631,11 +631,11 @@ void US_MPI_Analysis::set_meniscus( void )
       meniscus_run   = menibott_ndx / bottom_points;
       bottom_run     = menibott_ndx % bottom_points;
    }
-   else if ( primaryFit == US_SimulationParameters::NOTHING && secondaryFit != US_SimulationParameters::NOTHING )
+   else if ( primaryFit != US_SimulationParameters::NOTHING && secondaryFit == US_SimulationParameters::NOTHING )
    {
       meniscus_run   = menibott_ndx;
    }
-   else if ( primaryFit != US_SimulationParameters::NOTHING && secondaryFit == US_SimulationParameters::NOTHING )
+   else if ( primaryFit == US_SimulationParameters::NOTHING && secondaryFit != US_SimulationParameters::NOTHING )
    {
       bottom_run     = menibott_ndx;
    }
