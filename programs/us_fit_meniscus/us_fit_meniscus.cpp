@@ -2567,7 +2567,8 @@ DbgLv(1) << "DbSc:    *FIT* " << descript;
       // use wmodel.dataDescrip to get the primary and secondary fit value and its type
       // get the fit type from the ending of ansysID using the shortfitType Stringlist
       QString ansysID    = wmodel.description.section( '.', -2, -2 );
-      QString fit_type = ansysID.section( '-', -1, -1 );
+      QString anType     = ansysID .section( '_',  2, -3 );
+      QString fit_type = anType.section( '-', -1, -1 );
       // if fit_type starts with F strip it
       if (fit_type.startsWith("F"))
       {
@@ -2732,6 +2733,9 @@ DbgLv(1) << "ScDB: NOT-EXIST local:  nfadds" << nfadds;
       QStringList mrpairs;
 
 DbgLv(1) << " Creating" << ftfname << "jf,jl" << jfirst << jlast;
+      QString primary = "";
+      QString secondary = "";
+      QString third = "RMSD";
       for ( int jj = jfirst; jj < jlast; jj++ )
       {  // First build the pairs (or triples) list
          double bottom   = mDescrs[ jj ].bottom;
@@ -2739,24 +2743,63 @@ DbgLv(1) << " Creating" << ftfname << "jf,jl" << jfirst << jlast;
          double variance = mDescrs[ jj ].variance;
          double rmsd     = sqrt( variance );
          QString antime  = mDescrs[ jj ].antime;
+         QString ansysID    = mDescrs[ jj ].description.section( '.', -2, -2 );
+         QString anType     = ansysID .section( '_',  2, -3 );
+         QString fit_type = anType.section( '-', -1, -1 );
+         // if fit_type starts with F strip it
+         if (fit_type.startsWith("F"))
+         {
+            fit_type = fit_type.mid(1);
+         }
          QString mrpair  = QString::number( meniscus, 'f', 6 ) + " "
-                         + QString::number( rmsd,     'e', 6 ); 
-
-         if ( bottom > 1.0 )
-         {  // Either Bottom or Meniscus+Bottom
-            if ( ftfname.contains( "FB" ) )
-            {  // Bottom only
-               mrpair          = QString::number( bottom,   'f', 6 ) + " "
-                               + QString::number( rmsd,     'e', 6 ); 
-            }
-            else
-            {  // Meniscus and Bottom
-               mrpair          = QString::number( meniscus, 'f', 6 ) + " "
-                               + QString::number( bottom,   'f', 6 ) + " "
-                               + QString::number( rmsd,     'e', 6 ); 
+                         + QString::number( rmsd,     'e', 6 );
+         if (primary.isEmpty())
+         {
+            int index = shortfitType.indexOf(fit_type.mid(0,1));
+            if (index >= 0)
+            {
+               primary = fitType[index];
             }
          }
+         if ( fit_type.length() > 1 )
+         {
+            if (secondary.isEmpty())
+            {
+               int index = shortfitType.indexOf(fit_type.mid(1,1));
+               if (index >= 0)
+               {
+                  secondary = fitType[index];
+               }
+            }
+            mrpair          = QString::number( meniscus, 'f', 6 ) + " "
+                               + QString::number( bottom,   'f', 6 ) + " "
+                               + QString::number( rmsd,     'e', 6 );
+         }
+
+
+         //if ( bottom > 1.0 )
+         //{  // Either Bottom or Meniscus+Bottom
+         //   if ( ftfname.contains( "FB" ) )
+         //   {  // Bottom only
+         //      mrpair          = QString::number( bottom,   'f', 6 ) + " "
+         //                      + QString::number( rmsd,     'e', 6 );
+         //   }
+         //   else
+         //   {  // Meniscus and Bottom
+         //
+         //   }
+         //}
 DbgLv(1) << "  jj desc" << jj << mDescrs[jj].description;
+         if ( mrpairs.isEmpty() && !primary.isEmpty() )
+         {
+            QString header = primary + " ";
+            if ( !secondary.isEmpty() )
+            {
+               header += secondary + " ";
+            }
+            header += third;
+            mrpairs << header;
+         }
 
          if ( antime == antiml )
             mrpairs << mrpair;
