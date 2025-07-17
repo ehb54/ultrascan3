@@ -2587,11 +2587,11 @@ DbgLv(1) << "DbSc:    *FIT* " << descript;
             int index = shortfitType.indexOf(letter);
             // get the index of the letter in the fitType Stringlist
             // get the fit value from the wmodel.dataDescrip
-            for (int jj = 0; jj < desc.count(); jj++)
+            for (int jj1 = 0; jj1 < desc.count(); jj1++)
             {
-               if (desc[jj].startsWith(fitType[index]))
+               if (desc[jj1].startsWith(fitType[index]))
                {
-                  double fit_value = desc[jj].section("=", 1, 1).toDouble( );
+                  double fit_value = desc[jj1].section("=", 1, 1).toDouble( );
                   if (kk == 0)
                   {
                      wmodel.meniscus = fit_value;
@@ -2624,7 +2624,8 @@ DbgLv(1) << "DbSc:    *FIT* " << descript;
                               ( fitVals.mid( 6, 5 ).toDouble() / 10000.0 );
       }
 
-      mdescr.bottom      = bottom;
+      mdescr.bottom      = wmodel.bottom;
+      mdescr.meniscus    = wmodel.meniscus;
       mDescrs[ jj ]      = mdescr;
    }
 
