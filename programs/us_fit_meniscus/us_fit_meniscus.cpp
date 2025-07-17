@@ -2425,7 +2425,7 @@ DbgLv(1) << "DbSc:   modelID vari meni" << modelID << variance << meniscus
       {  // Model from meniscus fit, so save information
 
          // Format and save the potential fit table file name
-         QString fitVals    = iterID  .section( '-',  1,  1 );
+         QString fitVals    = iterID  .section( '-',  1,  -1 );
 DbgLv(1) << "DbSc:    *FIT* " << descript << "fitVals" << fitVals;
          int fittype        = 0;         // no fit
          if ( fitVals.length() > 6 )
@@ -2513,7 +2513,7 @@ DbgLv(1) << "DbSc:    *FIT* " << descript;
          QString runID      = descript.section( '.',  0, -4 );
          QString tripleID   = descript.section( '.', -3, -3 );
          QString editLabel  = ansysID .section( '_',  0, -5 );
-         QString fitVals    = iterID  .section( '-',  1,  1 );
+         QString fitVals    = iterID  .section( '-',  1,  -1 );
          int fittype        = 0;
          if ( fitVals.length() > 6 )
             fittype            = 3;
@@ -2611,7 +2611,7 @@ DbgLv(1) << "DbSc:    *FIT* " << descript;
          QString descript   = mdescr.description;
          QString ansysID    = descript.section( '.', -2, -2 );
          QString iterID     = ansysID .section( '_', -1, -1 );
-         QString fitVals    = iterID  .section( '-',  1,  1 );
+         QString fitVals    = iterID  .section( '-',  1,  -1 );
          int fittype        = 0;         // no fit
          if ( fitVals.length() > 6 )
             fittype            = 3;      // meniscus+bottom fit
@@ -2737,6 +2737,7 @@ DbgLv(1) << " Creating" << ftfname << "jf,jl" << jfirst << jlast;
       QString primary = "";
       QString secondary = "";
       QString third = "RMSD";
+      QString header = "";
       for ( int jj = jfirst; jj < jlast; jj++ )
       {  // First build the pairs (or triples) list
          double bottom   = mDescrs[ jj ].bottom;
@@ -2793,13 +2794,12 @@ DbgLv(1) << " Creating" << ftfname << "jf,jl" << jfirst << jlast;
 DbgLv(1) << "  jj desc" << jj << mDescrs[jj].description;
          if ( mrpairs.isEmpty() && !primary.isEmpty() )
          {
-            QString header = primary + " ";
+            header = primary + " ";
             if ( !secondary.isEmpty() )
             {
                header += secondary + " ";
             }
             header += third;
-            mrpairs << header;
          }
 
          if ( antime == antiml )
@@ -2808,7 +2808,7 @@ DbgLv(1) << "  jj desc" << jj << mDescrs[jj].description;
 
       mrpairs.sort();
       QTextStream ts( &ftfile );
-
+      ts << header << "\n";
       // Output the pairs to the file
       for ( int jj = 0; jj < mrpairs.size(); jj++ )
          ts << mrpairs.at( jj ) + "\n";
