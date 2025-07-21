@@ -214,7 +214,7 @@ bool US_DataIO::readLegacyFile( const QString&  file,
 
    // Read scan parameters
    QString     sc = ts.readLine();
-   QStringList pp = sc.split( " ", QString::SkipEmptyParts );
+   QStringList pp = sc.split( " ", Qt::SkipEmptyParts );
 
    if ( pp.size() < 8 ) return false;
 
@@ -242,9 +242,9 @@ bool US_DataIO::readLegacyFile( const QString&  file,
    {
       sc = ts.readLine();
 
-      pp = sc.split( " ", QString::SkipEmptyParts );
+      pp = sc.split( " ", Qt::SkipEmptyParts );
       if ( pp.size() == 1 )
-         pp = sc.split( "\t", QString::SkipEmptyParts );
+         pp = sc.split( "\t", Qt::SkipEmptyParts );
       if ( pp.size() < 2 )
          break;
 
