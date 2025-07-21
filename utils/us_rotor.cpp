@@ -670,7 +670,7 @@ QString US_Rotor::get_filename(
    int number = ( f_names.size() > 0 ) ? f_names.last().mid( 1, 7 ).toInt() : 0;
 
    QString startName = "/" + fileMask.left( 1 );  // for instance "/R" for rotors
-   return path + startName + QString().sprintf( "%07i", number + 1 ) + ".xml";
+   return path + startName + QString( "%1" ).arg( number + 1, 7, 10, QChar( '0' ) ) + ".xml";
 }
 
 US_Rotor::Lab::Lab()

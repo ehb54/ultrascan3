@@ -894,7 +894,9 @@ int US_Model::load_multi_model( QTextStream& tsi )
    {  // Build list of solute point strings and list of unique ones
       double sval   = mmcomps[ ii ].s * 1.0e+13;
       double kval   = cnst_vb ? mmcomps[ ii ].f_f0 : mmcomps[ ii ].vbar20;
-      QString skval = QString().sprintf( "%10.4f %8.5f", sval, kval );
+      QString skval = QString( "%1 %2" )
+                         .arg( sval, 10, 'f', 4, QChar(' ') )
+                         .arg( kval,  8, 'f', 5, QChar(' ') );
       sklist << skval; 
       if ( ! skvals.contains( skval ) )
          skvals << skval;
@@ -919,7 +921,8 @@ int US_Model::load_multi_model( QTextStream& tsi )
          }
       }
 
-      scomp.name                 = QString().sprintf( "SC%04d", ii + 1 );
+      scomp.name                 = QString( "SC%1" ).arg( ii + 1, 4, 10, QChar( '0' ) );
+
       scomp.signal_concentration = conc * sclnrm;
       components << scomp;
    }
@@ -931,7 +934,7 @@ int US_Model::load_multi_model( QTextStream& tsi )
    QString mdsc2 = QString( mdesc ).section( ".", -2, -2 )
                                    .section( "_",  0, -2 );
    QString mdsc3 = QString( mdesc ).section( ".", -1, -1 );
-   QString miter = QString().sprintf( "_mcN%03i", nmcixs );
+   QString miter = QString( "_mcN%1" ).arg( nmcixs, 3, 10, QChar( '0' ) );
    description   = mdsc1 + "." + mdsc2 + miter + "." + mdsc3;
 qDebug() << "MDL:LMM: miter" << miter << "desc" << description << mdesc;
 
@@ -1493,7 +1496,7 @@ QString US_Model::get_filename( const QString& path, const QString& guid,
 
       for ( int ii = 0; ii < number; ii++ )
       {
-         QString fnamck = "M" + QString().sprintf( "%07i", ii + 1 ) + ".xml";
+         QString fnamck = "M" + QString( "%1" ).arg( ii + 1, 7, 10, QChar( '0' ) ) + ".xml";
 
          if ( ! f_names.contains( fnamck ) )
          {  // There is a hole in the sequence, so re-use this number
@@ -1503,7 +1506,7 @@ QString US_Model::get_filename( const QString& path, const QString& guid,
       }
 
       // File name uses a break in the sequence or one past last used.
-      fnamo = path + "/M" + QString().sprintf( "%07i", number + 1 ) + ".xml";
+      fnamo = path + "/M" + QString( "%1" ).arg( number + 1, 7, 10, QChar( '0' ) ) + ".xml";
    }
 
    return fnamo;
@@ -1589,7 +1592,7 @@ QString US_Model::composite_mc_file( QStringList& mcfiles, const bool rmvi )
                                         return empty_str;
    }
 
-   QString mditer1  = QString().sprintf( ".mcN%03i", mc_iters );
+   QString mditer1 = QString( ".mcN%1" ).arg( mc_iters, 3, 10, QChar( '0' ) );
    QString mditer2  = QString( mditer1 ).replace( ".mcN", "_mcN" );
    QString mditer   = mditer1;
 //qDebug() << "MDL:CMF: mditer1 mditer2" << mditer1 << mditer2;
@@ -1701,7 +1704,7 @@ QString US_Model::composite_mc_file( QStringList& mcfiles, const bool rmvi )
          QString moiter   = QString( cmfname ).mid( moix, 7 );
          int mc_ittot     = QString( moiter ).mid( 4 ).toInt() + mc_iters;
          mditer           = ( ( moix1 > 0 ) ? "." : "_" )
-                            + QString().sprintf( "mcN%03i", mc_ittot );
+                            + QString( "mcN%1" ).arg( mc_ittot, 3, 10, QChar( '0' ) );
 //qDebug() << "MDL:CMF: (B)moix1 moix2 moiter mditer" << moix1 << moix2 << moiter << mditer;
 
          if ( moiter != mditer )

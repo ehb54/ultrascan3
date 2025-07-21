@@ -3929,8 +3929,9 @@ DbgLv(1) << "XpDa:b_i:   csdrec count" << sdknt;
       QString cechn = scell + " / " + schan;
       QString tripl = cechn + " / " + swavl;
       QString tnode = scell + "." + schan + "." + swavl;
-      QString darec = tnode + "."
-                    + QString().sprintf( "%05i.%05i", stage, scnnbr );
+      QString darec = tnode + "." + QString( "%1.%2" )
+                                       .arg( stage , 5, 10, QChar( '0' ) )
+                                       .arg( scnnbr, 5, 10, QChar( '0' ) );
 DbgLv(1) << "XpDa:b_i: ii" << ii << "schan cechn"
  << schan << cechn << "darec" << darec
  << "rad0 rad1" << csdrec.rads->at(0) << csdrec.rads->at(1);
@@ -4140,8 +4141,9 @@ DbgLv(1) << "XpDa:rb_i:   csdrec count" << sdknt << "nscno" << nscno << "nstgo" 
       QString tripl = cechn + " / " + swavl;
       QString tnode = scell + "." + schan + "." + swavl;
 
-      QString darec = tnode + "."
-                    + QString().sprintf( "%05i.%05i", stage, scnnbr );
+      QString darec = tnode + "." + QString( "%1.%2" )
+                                       .arg( stage , 5, 10, QChar( '0' ) )
+                                       .arg( scnnbr, 5, 10, QChar( '0' ) );
 DbgLv(1) << "XpDa:b_i: ii" << ii << "scnnbr" << scnnbr
  << "darec" << darec;
 

@@ -143,12 +143,24 @@ QString US_Util::toISODatetimeText( QString dttext )
 // Convert a binary uuid to a QString
 QString US_Util::uuid_unparse( unsigned char* uu )
 {
-   return QString().asprintf(
-         "%02hhx%02hhx%02hhx%02hhx-%02hhx%02hhx-%02hhx%02hhx-%02hhx%02hhx-"
-         "%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx",
-         uu[  0 ], uu[  1 ], uu[  2 ], uu[  3 ], uu[  4 ], uu[  5 ],
-         uu[  6 ], uu[  7 ], uu[  8 ], uu[  9 ], uu[ 10 ], uu[ 11 ],
-         uu[ 12 ], uu[ 13 ], uu[ 14 ], uu[ 15 ] );
+//    return QString().asprintf(
+//          "%02hhx%02hhx%02hhx%02hhx-%02hhx%02hhx-%02hhx%02hhx-%02hhx%02hhx-"
+//          "%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx",
+//          uu[  0 ], uu[  1 ], uu[  2 ], uu[  3 ], uu[  4 ], uu[  5 ],
+//          uu[  6 ], uu[  7 ], uu[  8 ], uu[  9 ], uu[ 10 ], uu[ 11 ],
+//          uu[ 12 ], uu[ 13 ], uu[ 14 ], uu[ 15 ] );
+
+   QStringList parts;
+   for ( int i = 0; i < 16; ++i )
+   {
+      parts << QString::number( uu[i], 16 ).rightJustified( 2, '0' );
+   }
+   return QString( "%1%2%3%4-%5%6-%7%8-%9%10-%11%12%13%14%15%16" )
+             .arg( parts[0] ).arg( parts[1] ).arg( parts[2] ).arg( parts[3] )
+             .arg( parts[4] ).arg( parts[5] )
+             .arg( parts[6] ).arg( parts[7] )
+             .arg( parts[8] ).arg( parts[9] )
+             .arg( parts[10] ).arg( parts[11] ).arg( parts[12] ).arg( parts[13] ).arg( parts[14] ).arg( parts[15] );
 }
 
 // Convert a triple string from expanded to compressed form

@@ -773,12 +773,10 @@ int US_Tar::list( const QString& archive, QStringList& files )
             throw TAR_ARCHIVEERROR;
          }
 
-         QString s;
-
          // perms user/group size date time filename
          files << format_permissions( mode, directory ) + " " +
             uname + "/" + gname                   + " " +
-            s.sprintf( "%10d", fsize )            + " " +
+            QString( "%1" ).arg( fsize, 10 )      + " " +
             format_datetime( mtime )              + " " +
             filename;
 
@@ -830,9 +828,13 @@ QString US_Tar::format_datetime( const unsigned int mtime )
    time_t     time = mtime;
    struct tm* t    = localtime( &time );
    
-   QString s;
-   s = s.sprintf( "%04d-%02d-%02d %02d:%02d", 
-                  t->tm_year + 1900, t->tm_mon + 1, t->tm_mday, t->tm_hour, t->tm_min );
+   QString s = QString( "%1-%2-%3 %4:%5" )
+                  .arg( t->tm_year + 1900, 4, 10, QChar( '0' ) )
+                  .arg( t->tm_mon + 1    , 2, 10, QChar( '0' ) )
+                  .arg( t->tm_mday       , 2, 10, QChar( '0' ) )
+                  .arg( t->tm_hour       , 2, 10, QChar( '0' ) )
+                  .arg( t->tm_min        , 2, 10, QChar( '0' ) );
+
    return s;
 }
 

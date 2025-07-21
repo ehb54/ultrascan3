@@ -412,8 +412,7 @@ void US_Matrix::print_vector( double* v, int n )
 {
    QString s;
    QString t;
-   for ( int i = 0; i < n; i++ ) s += t.sprintf( "%.15f ", v[ i ] );
-
+   for ( int i = 0; i < n; i++ ) s += QString::number( v[i], 'f', 15 ) + " ";
    qDebug() << s;
 }
 

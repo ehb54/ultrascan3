@@ -87,7 +87,7 @@ int US_License_t::isValid( QString& ErrorMessage, const QStringList& newLicense 
   QString calculation = "";
   QString str;
   for ( int i = 0; i < license_string.size(); i++ )
-    calculation += str.sprintf( "%X", license_string[ i ].unicode() );
+    calculation += QString::number( license_string[i].unicode(), 16 ).toUpper();
 
   calculation.truncate(24);
 

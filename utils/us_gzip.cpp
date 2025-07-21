@@ -290,8 +290,8 @@ int US_Gzip::treat_file( const QString& iname, bool decompress )
 
     char timestring[40];
 #ifdef WIN32
-    //ctime_s( timestring, sizeof( timestring ),  &filetime );
-    int stringCount = sprintf( timestring, "%s", ctime( &filetime ) );
+    ctime_s( timestring, sizeof( timestring ),  &filetime );
+    // int stringCount = sprintf( timestring, "%s", ctime( &filetime ) );
 #else
     ctime_r( &filetime, timestring );
 #endif
