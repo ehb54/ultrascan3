@@ -650,6 +650,10 @@ DbgLv(1) << "LD:  bott_fit" << bott_fit << "fname_load" << fname_load;
 
       int valsize        = values.size();
 DbgLv(1) << "LD:  ii" << ii << "valsize" << valsize;
+      if (values.last() == "RMSD")
+      {
+         continue;
+      }
 
       if ( valsize < 2 )   continue;
 
