@@ -356,7 +356,11 @@ DbgLv(1) << "   CR:B fill kodl" << kodl;
    }
    else
    {
-      qSort( sim_vals.solutes );
+      // s values of the US_Solute are used to sort the sim_vals.solutes.
+      std::sort(sim_vals.solutes.begin(), sim_vals.solutes.end(),
+                [](const US_Solute& a, const US_Solute& b) {
+                   return a.s < b.s;
+                });
    }
 
    int count_cut  = 0;         // Count of A columns cut by norm tolerance
