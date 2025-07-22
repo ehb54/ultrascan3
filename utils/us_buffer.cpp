@@ -238,6 +238,8 @@ int US_BufferComponent::saveToDB(US_DB2 * db) {
 
    qDebug() << "buffer_component_ID for new buffer component: " << idBufferComponent;
    componentID = QString::number(idBufferComponent);
+
+   return idBufferComponent;
 }
 
 //-------------  US_Buffer
