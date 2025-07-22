@@ -5,6 +5,7 @@
 #include "us_extern.h"
 #include <QLocalSocket>
 #include <QLocalServer>
+#include <QDebug>
 
 // *********** user defines *************
 
