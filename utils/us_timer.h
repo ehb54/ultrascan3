@@ -9,6 +9,7 @@
 #include <qstring.h>
 #include <qdatetime.h>
 #include <map>
+#include <QElapsedTimer>
 #include "us_extern.h"
 
 using namespace std;
@@ -72,7 +73,7 @@ public:
     QString list_times();
 
 private:
-    map<QString, QTime> timers;            ///< Map of timer names to QTime objects.
+    map<QString, QElapsedTimer> timers;    ///< Map of timer names to QElapsedTimer objects.
     map<QString, unsigned int> counts;     ///< Map of timer names to counts.
     map<QString, unsigned long> times;     ///< Map of timer names to recorded times.
     map<QString, unsigned long> times2;    ///< Map of timer names to secondary recorded times.
