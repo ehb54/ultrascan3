@@ -885,7 +885,7 @@ DbgLv(1) << "CfDa:scn: ii" << ii << "dbtab" << dbtab << "rows" << rows
             datrow.wavelen   = sqry.value( jwvl ).toInt();
             datrow.scanNbr   = sqry.value( jscn ).toInt();
             datrow.triple    = QString::number( datrow.cell ) + "/"
-                             + QString( 'A' + datrow.channel ) + "/"
+                             + QString( QChar( 'A' + datrow.channel ) ) + "/"
                              + QString::number( datrow.wavelen );
 //if(row<15)
 DbgLv(1) << "CfDa:scn: scanID" << datrow.scanId << "scNbr" << datrow.scanNbr
@@ -1059,7 +1059,7 @@ DbgLv(1) << "CfDa:scn: TIMEMS total scan " << time00.msecsTo(time20);
       int scnid     = tsmetas[ ii ].scanId;
       int scnnbr    = tsmetas[ ii ].scanNbr;
       QString scell = QString::number( icell );
-      QString schan = QString( 'A' + ichan );
+      QString schan = QString( QChar( 'A' + ichan ) );
       QString swavl = QString::number( iwavl );
       QString cechn = scell + " / " + schan;
       QString tripl = cechn + " / " + swavl;
