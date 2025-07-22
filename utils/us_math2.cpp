@@ -2,6 +2,8 @@
 
 #include <stdlib.h>
 #include <math.h>
+#include <chrono>
+#include <unistd.h>
 #ifdef _BF_NNLS_
 #include <dlfcn.h>
 #endif
@@ -63,6 +65,9 @@ static libnnls libnnls0;
 
 */
 
+// Initialize static US_Math2::rng
+std::mt19937 US_Math2::rng;
+
 double US_Math2::box_muller( double m, double s )   
 {
    static bool  use_last = false;
@@ -100,7 +105,8 @@ double US_Math2::box_muller( double m, double s )
 //  such that 0.0 <= R < 1.0
 double US_Math2::ranf( void )
 {
-   return  (double)qrand() / ( (double)RAND_MAX + 1.0 );
+   std::uniform_real_distribution<double> dist(0.0, 1.0);
+   return dist(rng);
 }
 
 
@@ -801,27 +807,29 @@ double US_Math2::time_correction(
 
 uint US_Math2::randomize( void )
 {
-   QTime now = QTime::currentTime();
-
-   uint seed = now.msec() 
-             + now.second() *    1000 
-             + now.minute() *   60000 
-             + now.hour()   * 3600000;
+   uint seed = static_cast<uint>(
+       std::chrono::duration_cast<std::chrono::milliseconds>(
+           std::chrono::system_clock::now().time_since_epoch()
+           ).count()
+       );
 
 #ifdef UNIX
-   seed -= getpid();
+   seed -= static_cast<uint>(getpid());
 #endif
 
-   qsrand( seed );
+   rng.seed(seed);
    return seed;
 }
 
 uint US_Math2::randomize( uint seed )
 {
-   if ( seed == 0 ) 
+   if (seed == 0)
+   {
       seed = randomize();
-   else
-      qsrand( seed );
+   } else
+   {
+      rng.seed(seed);
+   }
 
    return seed;
 }
