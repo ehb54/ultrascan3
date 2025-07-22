@@ -898,7 +898,7 @@ DbgLv(2) << "LAsc:   sigma delta" << model.components[comp_x].sigma
    // get initial concentration for this component
    double sig_conc = model.components[ comp_x ].signal_concentration;
 
-QTime timer;
+QElapsedTimer timer;
 int ktime1=0;
 int ktime2=0;
 int ktime3=0;
@@ -1290,7 +1290,7 @@ void US_LammAstfvm::LammStepSedDiff_C( double t, double dt, int M0,
    double* phi     = flux_p[ 2 ] + Ng; 
    double* phiL    = phi         + 3;
    double* phiR    = phiL        + 6; 
-QTime timer;
+QElapsedTimer timer;
 static int ktim1=0;
 static int ktim2=0;
 static int ktim3=0;
@@ -1582,7 +1582,7 @@ void US_LammAstfvm::AdjustSD( double t, int Nv, double *x, double *u,
    //double  vbar   = 0.72;      // 0.251; 
    //double  vbar   = model.components[ 0 ].vbar20;
    double  vbar   = model.components[ comp_x ].vbar20;
-QTime timer;
+QElapsedTimer timer;
 static int kst1=0;
 static int kst2=0;
 
