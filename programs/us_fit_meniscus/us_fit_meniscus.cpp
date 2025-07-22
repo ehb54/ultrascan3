@@ -35,6 +35,9 @@ US_FitMeniscus::US_FitMeniscus( QMap<QString, QString> triple_info_map ) : US_Wi
   auto_mode = true;
   no_fm_data = false;
   bad_men_vals = false;
+  x_axis_type = "Meniscus";
+  y_axis_type = "Bottom";
+  z_axis_type = "Offset Reciprocal RMSD";
   
   setWindowTitle( tr( "Fit Meniscus from 2DSA Data: ") + triple_information[ "triple_name" ] );
   setPalette( US_GuiSettings::frameColor() );
@@ -334,6 +337,10 @@ US_FitMeniscus::US_FitMeniscus() : US_Widgets()
    auto_mode = false;
    no_fm_data = false;
    bad_men_vals = false;
+
+   x_axis_type = "Meniscus";
+   y_axis_type = "Bottom";
+   z_axis_type = "Offset Reciprocal RMSD";
    
    setWindowTitle( tr( "Fit Meniscus from 2DSA Data" ) );
    setPalette( US_GuiSettings::frameColor() );
@@ -589,6 +596,10 @@ DbgLv(1) << "Main: BB";
 // Clear the plot, m-r table text, and other elements
 void US_FitMeniscus::reset( void )
 {
+   x_axis_type = "Meniscus";
+   y_axis_type = "Bottom";
+   z_axis_type = "Offset Reciprocal RMSD";
+
 //   dataPlotClear( meniscus_plot );
    meniscus_plot->replot();
    
@@ -633,27 +644,49 @@ void US_FitMeniscus::plot_data( void )
 void US_FitMeniscus::load_data()
 {
    int count         = 0;
+   int start_line    = 0;
+   QString x_old = x_axis_type;
+   QString y_old = y_axis_type;
    QString contents  = te_data->e->toPlainText();
-   contents.replace( QRegExp( "[^0-9eE\\.\\n\\+\\-]+" ), " " );
+   // contents.replace( QRegExp( "[^0-9eE\\.\\n\\+\\-]+" ), " " );
 
    QStringList lines = contents.split( "\n", QString::SkipEmptyParts );
+   if ( lines.count() >= 1)
+   {
+      QStringList values = lines[ 0 ].split( ' ', Qt::SkipEmptyParts );
+      int valsize        = values.size();
+      if (values.last() == "RMSD")
+      {
+         if (valsize == 2)
+         {
+            x_axis_type = values.first();
+            y_axis_type = values.last();
+         }
+         else if (valsize == 3)
+         {
+            x_axis_type = values.first();
+            y_axis_type = values.at(1);
+            z_axis_type = values.last();
+         }
+         start_line = 1;
+      }
+   }
    QStringList parsed;
    v_meni.clear();
    v_bott.clear();
    v_rmsd.clear();
-   bott_fit          = fname_load.contains( "fitbot" );
+   bott_fit          = false;
+   auto regex_exp = QRegExp( "[^0-9eE\\.\\n\\+\\-]+" ) ;
+
 DbgLv(1) << "LD:  bott_fit" << bott_fit << "fname_load" << fname_load;
 
-   for ( int ii = 0; ii < lines.size(); ii++ )
+   for ( int ii = start_line; ii < lines.size(); ii++ )
    {
-      QStringList values = lines[ ii ].split( ' ', QString::SkipEmptyParts );
+      QString line = lines[ ii ].replace(regex_exp, " ");
+      QStringList values = line.split( ' ', Qt::SkipEmptyParts );
 
       int valsize        = values.size();
 DbgLv(1) << "LD:  ii" << ii << "valsize" << valsize;
-      if (values.last() == "RMSD")
-      {
-         continue;
-      }
 
       if ( valsize < 2 )   continue;
 
@@ -706,6 +739,17 @@ DbgLv(1) << "LD:  was3val have3val" << was3val << have3val
    if ( ( have3val && !was3val )  || 
         ( !have3val && was3val ) )
       change_plot_type();
+   if ( x_old != x_axis_type )
+   {
+      lb_men_sel->setText( tr( qPrintable( x_axis_type + " selected:" ) ) );
+      lb_men_lor->setText( tr( qPrintable( "Low-RMSD " + x_axis_type + ":" ) ) );
+      lb_men_fit->setText( tr( qPrintable( "Fit " + x_axis_type + ":" ) ) );
+   }
+   if ( y_old != y_axis_type && have3val)
+   {
+      lb_bot_lor->setText( tr( qPrintable( "Low-RMSD " + y_axis_type + ":" ) ) );
+      lb_bot_fit->setText( tr( qPrintable( "Fit " + y_axis_type + ":" ) ) );
+   }
 }
 
 // Handle a mouse click according to the current pick step
@@ -908,9 +952,10 @@ DbgLv(1) << "pl3d:    cblack" << cblack << "cwhite" << cwhite;
    rightAxis    ->setColorMap( spec_dat->range(),
                                ColorMapCopy( colormap ) );
    d_spectrogram->setColorMap( ColorMapCopy( colormap ) );
-   meniscus_plot->setAxisTitle( QwtPlot::xBottom, tr( "Meniscus Radius" ) );
-   meniscus_plot->setAxisTitle( QwtPlot::yLeft,   tr( "Bottom Radius" ) );
+   meniscus_plot->setAxisTitle( QwtPlot::xBottom, tr(qPrintable( x_axis_type )) );
+   meniscus_plot->setAxisTitle( QwtPlot::yLeft,   tr( qPrintable( y_axis_type ) ) );
    meniscus_plot->setAxisTitle( QwtPlot::yRight,  tr( "Offset Reciprocal RMSD" ) );
+   meniscus_plot->setTitle( qPrintable( x_axis_type + "," + y_axis_type + " Fit" ) );
    meniscus_plot->axisTitle( QwtPlot::yRight ).setFont(
                         meniscus_plot->axisTitle( QwtPlot::yLeft ).font() );
    meniscus_plot->setAxisScale( QwtPlot::yRight,
@@ -949,11 +994,11 @@ DbgLv(1) << "pl3d:    cblack" << cblack << "cwhite" << cwhite;
    mx_bott[ 1 ] = max_x;
    my_bott[ 0 ] = b_bott;
    my_bott[ 1 ] = b_bott;
-   QwtPlotCurve* mmeni_curve = us_curve( meniscus_plot, tr( "Low-RMSD Meniscus" ) ); 
+   QwtPlotCurve* mmeni_curve = us_curve( meniscus_plot, tr(qPrintable( "Low-RMSD " + x_axis_type) ) );
    mmeni_curve->setPen    ( QPen( Qt::black, 0, Qt::DashLine ) );
    mmeni_curve->setStyle  ( QwtPlotCurve::Lines );
    mmeni_curve->setSamples( mx_meni, my_meni, 2 );
-   QwtPlotCurve* mbott_curve = us_curve( meniscus_plot, tr( "Low-RMSD Bottom" ) ); 
+   QwtPlotCurve* mbott_curve = us_curve( meniscus_plot, tr(qPrintable( "Low-RMSD " + y_axis_type) ) );
    mbott_curve->setPen    ( QPen( Qt::black, 0, Qt::DashLine ) );
    mbott_curve->setStyle  ( QwtPlotCurve::Lines );
    mbott_curve->setSamples( mx_bott, my_bott, 2 );
@@ -967,13 +1012,13 @@ void US_FitMeniscus::plot_2d( void )
    if ( ! bott_fit )
    {
      if ( auto_mode )
-      meniscus_plot->setTitle    ( tr( "Meniscus Fit" )  + ": " + triple_information[ "triple_name" ] );
+      meniscus_plot->setTitle    ( tr( qPrintable( x_axis_type + " Fit" ) )  + ": " + triple_information[ "triple_name" ] );
      else
-       meniscus_plot->setTitle    ( tr( "Meniscus Fit" ) );
+       meniscus_plot->setTitle    ( tr( qPrintable( x_axis_type + " Fit" ) ) );
 
-      meniscus_plot->setAxisTitle( QwtPlot::yLeft,   tr( "2DSA Meniscus RMSD" ) );
-      meniscus_plot->setAxisTitle( QwtPlot::xBottom, tr( "Meniscus Radius" ) );
-      lb_men_sel->setText( tr( "Meniscus selected:" ) );
+      meniscus_plot->setAxisTitle( QwtPlot::yLeft,   tr( qPrintable("2DSA " + x_axis_type + " RMSD" ) ) );
+      meniscus_plot->setAxisTitle( QwtPlot::xBottom, tr( qPrintable( x_axis_type ) ) );
+      lb_men_sel->setText( tr( qPrintable( x_axis_type + " selected:" ) ) );
    }
    else
    {
@@ -2555,7 +2600,7 @@ DbgLv(1) << "DbSc:    *FIT* " << descript;
       }
    }
    QStringList fitType;
-   fitType << "MENISCUS" << "BOTTOM" << "ANGEL" << "VOLUME" << "SIGMA" << "DELTA"
+   fitType << "MENISCUS" << "BOTTOM" << "ANGLE" << "VOLUME" << "SIGMA" << "DELTA"
                << "VBAR" << "FF0" << "TEMPERATURE";
    QStringList shortfitType;
    shortfitType << "M" << "B" << "A" << "V" << "S" << "D" << "R" << "F" << "T";
@@ -4103,17 +4148,17 @@ void US_FitMeniscus::change_plot_type( )
 
      if ( auto_mode )
        {
-         setWindowTitle( tr( "Fit Meniscus,Bottom from 2DSA Data" ) + ": " + triple_information[ "triple_name" ]  );
-         meniscus_plot->setTitle    ( tr( "Meniscus,Bottom Fit" ) + ": " + triple_information[ "triple_name" ]  );
+         setWindowTitle( tr(qPrintable( "Fit "+ x_axis_type + "," + y_axis_type +" from 2DSA Data" )) + ": " + triple_information[ "triple_name" ]  );
+         meniscus_plot->setTitle    ( tr(qPrintable( x_axis_type + "," + y_axis_type +" Fit" )) + ": " + triple_information[ "triple_name" ]  );
        }
      else
        {
-         setWindowTitle( tr( "Fit Meniscus,Bottom from 2DSA Data" ) );
-         meniscus_plot->setTitle    ( tr( "Meniscus,Bottom Fit" ) );
+         setWindowTitle( tr(qPrintable( "Fit "+ x_axis_type + "," + y_axis_type +" from 2DSA Data" )) );
+         meniscus_plot->setTitle    ( tr(qPrintable( x_axis_type + "," + y_axis_type +" Fit" )) );
        }
      
-      meniscus_plot->setAxisTitle( QwtPlot::yLeft,   tr( "2DSA Meniscus,Bottom RMSD" ) );
-      meniscus_plot->setAxisTitle( QwtPlot::xBottom, tr( "Meniscus Radius" ) );
+      meniscus_plot->setAxisTitle( QwtPlot::yLeft,   tr(qPrintable( "2DSA " + x_axis_type + "," + y_axis_type +" RMSD" )) );
+      meniscus_plot->setAxisTitle( QwtPlot::xBottom, tr(qPrintable( x_axis_type  )) );
       meniscus_plot->enableAxis  ( QwtPlot::yRight,  true );
    }
 
@@ -4122,18 +4167,18 @@ void US_FitMeniscus::change_plot_type( )
 
      if ( auto_mode )
        {
-         setWindowTitle( tr( "Fit Meniscus from 2DSA Data" ) + ": " + triple_information[ "triple_name" ] );
-         meniscus_plot->setTitle    ( tr( "Meniscus Fit" ) + ": " + triple_information[ "triple_name" ] );
+         setWindowTitle( tr(qPrintable( "Fit " + x_axis_type +" from 2DSA Data" )) + ": " + triple_information[ "triple_name" ] );
+         meniscus_plot->setTitle    ( tr(qPrintable( x_axis_type + " Fit" )) + ": " + triple_information[ "triple_name" ] );
        }
      else
        {
-         setWindowTitle( tr( "Fit Meniscus from 2DSA Data" ) );
-         meniscus_plot->setTitle    ( tr( "Meniscus Fit" ) );
+         setWindowTitle( tr(qPrintable( "Fit " + x_axis_type +" from 2DSA Data" )) );
+         meniscus_plot->setTitle    ( tr(qPrintable( x_axis_type + " Fit" )) );
        }
      
      
-      meniscus_plot->setAxisTitle( QwtPlot::yLeft,   tr( "2DSA Meniscus,Bottom RMSD" ) );
-      meniscus_plot->setAxisTitle( QwtPlot::xBottom, tr( "Meniscus Radius" ) );
+      meniscus_plot->setAxisTitle( QwtPlot::yLeft,   tr( qPrintable("2DSA " + x_axis_type + "," + y_axis_type + " RMSD" )) );
+      meniscus_plot->setAxisTitle( QwtPlot::xBottom, tr( qPrintable( x_axis_type ) ) );
       meniscus_plot->enableAxis  ( QwtPlot::yRight, false );
       meniscus_plot->setCanvasBackground( QBrush( US_GuiSettings::plotCanvasBG() ) );
    }

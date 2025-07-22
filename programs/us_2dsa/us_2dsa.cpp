@@ -248,7 +248,7 @@ DbgLv(1) << "  edat0 sdat0 rdat0 tnoi0"
    // For multiple models (e.g., Fit-Meniscus) report on best
    int nmodels     = models.count();
    bool fitMeni    = ( model.global == US_Model::MENISCUS || model.global == US_Model::BOTTOM ||
-   model.global == US_Model::MENIBOTT || model.global == US_Model::ANGEL || model.global == US_Model::MENIANGEL);
+   model.global == US_Model::MENIBOTT || model.global == US_Model::ANGLE || model.global == US_Model::MENIANGLE);
    if ( nmodels > 1  &&  fitMeni )
    {
       double b_rmsd   = 1.0e+99;
@@ -582,8 +582,8 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
    bool    fitMeni      = ( model.global == US_Model::MENISCUS );
    bool    fitBott      = ( model.global == US_Model::BOTTOM );
    bool    fitMeBo      = ( model.global == US_Model::MENIBOTT );
-   bool    fitAngle     = ( model.global == US_Model::ANGEL );
-   bool    fitMeAngle   = ( model.global == US_Model::MENIANGEL );
+   bool    fitAngle     = ( model.global == US_Model::ANGLE );
+   bool    fitMeAngle   = ( model.global == US_Model::MENIANGLE );
    bool    montCar      = model.monteCarlo;
    QString analysisType = QString( cusGrid ? "2DSA-CG" : "2DSA" )
                         + QString( fitMeni ? "-FM" : "" )
@@ -697,7 +697,7 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
       QString iterID    = "i01";
       int     iterNum   = jj + 1;
       QStringList fitTypeAttr;
-      fitTypeAttr << "NOTHING" << "MENISCUS" << "BOTTOM" << "ANGEL" << "VOLUME" << "SIGMA" << "DELTA"
+      fitTypeAttr << "NOTHING" << "MENISCUS" << "BOTTOM" << "ANGLE" << "VOLUME" << "SIGMA" << "DELTA"
                   << "VBAR" << "FF0" << "TEMPERATURE";
       if ( montCar )
          iterID.sprintf( "mc%04d", iterNum );
@@ -1366,7 +1366,7 @@ QString US_2dsa::distrib_info()
    QStringList gridType;
    gridType << "FIXED" << "MOVING";
    QStringList fitType;
-   fitType << "NOTHING" << "MENISCUS" << "BOTTOM" << "ANGEL" << "BAND_VOLUME" << "SIGMA" << "DELTA"
+   fitType << "NOTHING" << "MENISCUS" << "BOTTOM" << "ANGLE" << "BAND_VOLUME" << "SIGMA" << "DELTA"
                << "VBAR" << "FF0" << "TEMPERATURE";
    mstr += table_row( tr( "Grid Type:" ),
                       gridType[dset.simparams.gridType] );
@@ -1536,7 +1536,7 @@ QString US_2dsa::iteration_info()
 
    model            = models[ nmodels - 1 ];
    bool fitMeni    = ( model.global == US_Model::MENISCUS || model.global == US_Model::BOTTOM ||
-model.global == US_Model::MENIBOTT || model.global == US_Model::ANGEL || model.global == US_Model::MENIANGEL);
+model.global == US_Model::MENIBOTT || model.global == US_Model::ANGLE || model.global == US_Model::MENIANGLE);
    bool    montCar  = model.monteCarlo;
    QString anType   = montCar ? "Monte Carlo" : "Fit Meniscus";
 
@@ -1548,7 +1548,7 @@ model.global == US_Model::MENIBOTT || model.global == US_Model::ANGEL || model.g
                       QString::number( nmodels ) );
    mstr += table_row( tr( "Iteration Analysis Type:" ), anType );
    QStringList fitType;
-   fitType << "NOTHING" << "MENISCUS" << "BOTTOM" << "ANGEL" << "BAND_VOLUME" << "SIGMA" << "DELTA"
+   fitType << "NOTHING" << "MENISCUS" << "BOTTOM" << "ANGLE" << "BAND_VOLUME" << "SIGMA" << "DELTA"
                << "VBAR" << "FF0" << "TEMPERATURE";
    if ( dset.simparams.primaryFit != US_SimulationParameters::NOTHING )
    {
@@ -1606,7 +1606,7 @@ model.global == US_Model::MENIBOTT || model.global == US_Model::ANGEL || model.g
                          tr( "RMSD" ) );
    }
    QStringList fitTypeAttr;
-   fitTypeAttr << "NOTHING" << "MENISCUS" << "BOTTOM" << "ANGEL" << "VOLUME" << "SIGMA" << "DELTA"
+   fitTypeAttr << "NOTHING" << "MENISCUS" << "BOTTOM" << "ANGLE" << "VOLUME" << "SIGMA" << "DELTA"
                << "VBAR" << "FF0" << "TEMPERATURE";
    for ( int ii = 0; ii < nmodels; ii++ )
    {
@@ -1775,7 +1775,7 @@ QString US_2dsa::fit_meniscus_data()
    }
 
    QStringList fitTypeAttr;
-   fitTypeAttr << "NOTHING" << "MENISCUS" << "BOTTOM" << "ANGEL" << "VOLUME" << "SIGMA" << "DELTA"
+   fitTypeAttr << "NOTHING" << "MENISCUS" << "BOTTOM" << "ANGLE" << "VOLUME" << "SIGMA" << "DELTA"
                << "VBAR" << "FF0" << "TEMPERATURE";
    QString prim = fitTypeAttr[dset.simparams.primaryFit] + "=";
    QString sec  = fitTypeAttr[dset.simparams.secondaryFit] + "=";

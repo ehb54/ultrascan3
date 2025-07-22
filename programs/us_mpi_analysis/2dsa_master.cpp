@@ -83,7 +83,7 @@ void US_MPI_Analysis::_2dsa_master( void )
          QString progress =
             "Iteration: "    + QString::number( iterations );
          QStringList fitType;
-         fitType << "NOTHING" << "MENISCUS" << "BOTTOM" << "ANGEL" << "VOLUME" << "SIGMA" << "DELTA"
+         fitType << "NOTHING" << "MENISCUS" << "BOTTOM" << "ANGLE" << "VOLUME" << "SIGMA" << "DELTA"
                      << "VBAR" << "FF0" << "TEMPERATURE";
          if ( datasets_to_process > 1 )
             progress     += "; Datasets: "

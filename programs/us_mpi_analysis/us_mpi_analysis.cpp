@@ -2090,7 +2090,7 @@ void US_MPI_Analysis::write_model( const SIMULATION&      sim,
    US_DataIO::EditedData* edata = &data_sets[ current_dataset ]->run_data;
    US_SimulationParameters* sparms = &data_sets[ current_dataset ]->simparams;
    QStringList fitType;
-   fitType << "NOTHING" << "MENISCUS" << "BOTTOM" << "ANGEL" << "VOLUME" << "SIGMA" << "DELTA"
+   fitType << "NOTHING" << "MENISCUS" << "BOTTOM" << "ANGLE" << "VOLUME" << "SIGMA" << "DELTA"
                << "VBAR" << "FF0" << "TEMPERATURE";
    QMap< US_SimulationParameters::FitType, QString > maDescMap;
    maDescMap.insert( US_SimulationParameters::NOTHING, "" );

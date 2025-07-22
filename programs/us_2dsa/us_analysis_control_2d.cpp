@@ -159,7 +159,7 @@ DbgLv(1) << "idealThrCout" << nthr;
       us_checkbox( tr( "Monte Carlo Iterations"  ), ck_mcarlo, false );
 
    QStringList fitType;
-   fitType << "" << "MENISCUS" << "BOTTOM" << "ANGEL" << "BAND VOLUME" << "SIGMA" << "DELTA" << "VBAR";
+   fitType << "" << "MENISCUS" << "BOTTOM" << "ANGLE" << "BAND VOLUME" << "SIGMA" << "DELTA" << "VBAR";
    cmb_primary = us_comboBox(  );
    cmb_secondary = us_comboBox(  );
    for ( int i = 0; i < fitType.size(); i++ )
@@ -1120,7 +1120,7 @@ void US_AnalysisControl2D::completed_process( int stage )
    le_newvari  ->setText( s_vari );
    le_improve  ->setText( QString::number( vimprov ) );
    QStringList fitType;
-   fitType << "NOTHING" << "MENISCUS" << "BOTTOM" << "ANGEL" << "VOLUME" << "SIGMA" << "DELTA"
+   fitType << "NOTHING" << "MENISCUS" << "BOTTOM" << "ANGLE" << "VOLUME" << "SIGMA" << "DELTA"
                << "VBAR" << "FF0" << "TEMPERATURE";
 
    if ( mmitnum == 0 )
