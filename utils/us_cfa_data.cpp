@@ -90,7 +90,7 @@ DbgLv(1) << "CfDa: sctype" << sctype << "is_absorb" << is_absorb;
    runID        = cur_dir.section( "/", -2, -2 );
    QString old_runID  = runID;
 
-   runID.replace( QRegExp( "![A-Za-z0-9_-]" ), "_" );
+   runID.replace( QRegularExpression( "[^A-Za-z0-9_-]" ), "_" );
 
    if ( runID != old_runID )
    {

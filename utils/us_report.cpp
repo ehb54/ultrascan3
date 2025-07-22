@@ -84,11 +84,11 @@ US_Report::ReportDocument::ReportDocument()
 US_Report::Status US_Report::ReportDocument::saveDB( 
            int tripleID, QString dir, US_DB2* db )
 {
-   QRegExp rx( "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" );
+   static const QRegularExpression rx( "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" );
    int status;
 
    // First let's be sure we have a valid GUID
-   if ( ! rx.exactMatch( this->documentGUID ) )
+   if ( ! rx.match( this->documentGUID ).hasMatch() )
       this->documentGUID = US_Util::new_guid();
 DbgLv(1) << "Doc::saveDB - GUID" << this->documentGUID;
 
@@ -265,11 +265,11 @@ US_Report::ReportTriple::ReportTriple()
 // Saves a report triple record to DB
 US_Report::Status US_Report::ReportTriple::saveDB( int reportID, US_DB2* db )
 {
-   QRegExp rx( "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" );
+   static const QRegularExpression rx( "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" );
    int status;
 
    // First let's be sure we have a valid GUID
-   if ( ! rx.exactMatch( this->tripleGUID ) )
+   if ( ! rx.match( this->tripleGUID ).hasMatch() )
       this->tripleGUID = US_Util::new_guid();
 
    // Find out if this triple has been saved already or not
@@ -635,12 +635,12 @@ US_Report::Status US_Report::readDB_auto( int invID_passed, QString new_runID, U
 // Saves the global report information to DB
 US_Report::Status US_Report::saveDB( US_DB2* db )
 {
-   QRegExp rx( "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" );
+   static const QRegularExpression rx( "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" );
    int status;
    QString now   = QDateTime::currentDateTime().toString();
 
    // First let's be sure we have a valid GUID
-   if ( ! rx.exactMatch( this->GUID ) )
+   if ( ! rx.match( this->GUID ).hasMatch() )
       this->GUID    = US_Util::new_guid();
 
    // Find out if the runID is in the DB already
@@ -730,12 +730,12 @@ US_Report::Status US_Report::saveDB( US_DB2* db )
 // COPY for autoflow - with invID passed 
 US_Report::Status US_Report::saveDB_auto( int invID_passed, US_DB2* db )
 {
-   QRegExp rx( "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" );
+   static const QRegularExpression rx( "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" );
    int status;
    QString now   = QDateTime::currentDateTime().toString();
 
    // First let's be sure we have a valid GUID
-   if ( ! rx.exactMatch( this->GUID ) )
+   if ( ! rx.match( this->GUID ).hasMatch() )
       this->GUID    = US_Util::new_guid();
 
    // Find out if the runID is in the DB already

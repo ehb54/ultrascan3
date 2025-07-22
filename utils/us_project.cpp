@@ -183,9 +183,9 @@ int US_Project::readFromDB  ( int projectID, US_DB2* db )
 void US_Project::saveToDisk( void )
 {
    // First make sure we have a GUID
-   QRegExp rx( "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" );
+   static const QRegularExpression rx( "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" );
 
-   if ( ! rx.exactMatch( projectGUID ) )
+   if ( ! rx.match( projectGUID ).hasMatch() )
       projectGUID = US_Util::new_guid();
 
    // Get a path and file name for project

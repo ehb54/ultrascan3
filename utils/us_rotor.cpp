@@ -939,9 +939,9 @@ int US_Rotor::Rotor::deleteRotorDB( int rotorID, US_DB2* db )
 void US_Rotor::Rotor::saveDisk( void )
 {
    // First make sure we have a GUID
-   QRegExp rx( "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" );
+   static const QRegularExpression rx( "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" );
 
-   if ( ! rx.exactMatch( GUID ) )
+   if ( ! rx.match( GUID ).hasMatch() )
       GUID = US_Util::new_guid();
 
    // Get a path and file name for the rotor
@@ -1203,9 +1203,9 @@ int US_Rotor::RotorCalibration::replaceDummyDB( int& oldCalibrationID, US_DB2* d
 void US_Rotor::RotorCalibration::saveDisk( void )
 {
    // First make sure we have a GUID
-   QRegExp rx( "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" );
+   static const QRegularExpression rx( "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" );
 
-   if ( ! rx.exactMatch( GUID ) )
+   if ( ! rx.match( GUID ).hasMatch() )
       GUID = US_Util::new_guid();
 
    // Get a path and file name for the calibration
