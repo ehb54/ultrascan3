@@ -807,17 +807,23 @@ double US_Math2::time_correction(
 
 uint US_Math2::randomize( void )
 {
-   uint seed = static_cast<uint>(
+   // Use random_device to get high-quality seed
+   std::random_device rd;
+   uint seed = static_cast<uint>( rd() );
+
+   // Mix with current time to increase entropy
+   seed ^= static_cast<uint>(
        std::chrono::duration_cast<std::chrono::milliseconds>(
            std::chrono::system_clock::now().time_since_epoch()
            ).count()
        );
 
-#ifdef UNIX
-   seed -= static_cast<uint>(getpid());
+   // Add process ID for uniqueness (especially helpful in parallel MPI runs)
+#if defined( Q_OS_UNIX )
+   seed ^= static_cast<uint>( getpid() );
 #endif
 
-   rng.seed(seed);
+   rng.seed( seed );
    return seed;
 }
 
