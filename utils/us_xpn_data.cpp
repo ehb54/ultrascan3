@@ -99,14 +99,17 @@ int US_XpnData::checkExpStatus( QString runid )
     }
   
    QString tabname( "ExperimentRun" );
-   QSqlQuery  sqry;
+    QSqlQuery  sqry( dbxpn );
    QString schname( "AUC_schema" );
    QString sqtab   = schname + "." + tabname;
    QString qrytab  = "\"" + schname + "\".\"" + tabname + "\"";
   
    QString qrytext = "SELECT \"RunStatus\" from " + qrytab
                         + " WHERE \"RunId\"=" + runid + ";";
-   sqry            = dbxpn.exec( qrytext );
+   if ( ! sqry.exec( qrytext ) )
+   {
+      return -1;
+   }
    sqry.next();
 
    qDebug() << "INSIDE CheckExpSTATUS: status: " <<  sqry.value( 0 ).toInt();
@@ -129,14 +132,17 @@ int US_XpnData::checkExpStatus_auto( QString runid, bool& o_conn )
     }
     
    QString tabname( "ExperimentRun" );
-   QSqlQuery  sqry;
+   QSqlQuery  sqry( dbxpn );
    QString schname( "AUC_schema" );
    QString sqtab   = schname + "." + tabname;
    QString qrytab  = "\"" + schname + "\".\"" + tabname + "\"";
   
    QString qrytext = "SELECT \"RunStatus\" from " + qrytab
                         + " WHERE \"RunId\"=" + runid + ";";
-   sqry            = dbxpn.exec( qrytext );
+   if ( ! sqry.exec( qrytext ) )
+   {
+      return -1;
+   }
    sqry.next();
 
    qDebug() << "INSIDE CheckExpSTATUS: status: " <<  sqry.value( 0 ).toInt();
@@ -159,7 +165,7 @@ int US_XpnData::update_isysrec( const int runId )
    static QList< int > cxs;
    static int cols = -1;
 
-   QSqlQuery    sqry;
+   QSqlQuery    sqry( dbxpn );
    QSqlRecord   qrec;
    QString sRunId  = QString::number( runId );
    QString sExpTm;
@@ -179,7 +185,10 @@ int US_XpnData::update_isysrec( const int runId )
    qrytab          = "\"" + schname + "\".\"" + tabname + "\"";
    qrytext         = "SELECT count(*) from " + qrytab
                    + " WHERE \"RunId\"=" + sRunId + ";";
-   sqry            = dbxpn.exec( qrytext );
+   if ( ! sqry.exec( qrytext ) )
+   {
+      return -1;
+   }
    sqry.next();
    nnrows          = sqry.value( 0 ).toInt();
 
@@ -217,7 +226,10 @@ int US_XpnData::update_isysrec( const int runId )
             QDateTime expstart;      //!< Experiment start
       };
 */
-   sqry            = dbxpn.exec( qrytext );
+   if ( ! sqry.exec( qrytext ) )
+   {
+      return -1;
+   }
    sqry.next();
 
    isyrec.dataId   = sqry.value( cxs[  0 ] ).toInt();
@@ -256,14 +268,17 @@ int US_XpnData::get_runid( QString expid)
    QVector< int > RunIDs;
    
    QString tabname( "ExperimentRun" );
-   QSqlQuery  sqry;
+   QSqlQuery  sqry( dbxpn );
    QString schname( "AUC_schema" );
    QString sqtab   = schname + "." + tabname;
    QString qrytab  = "\"" + schname + "\".\"" + tabname + "\"";
   
    QString qrytext = "SELECT * from " + qrytab
                         + " WHERE \"ExperimentId\"=" + expid + ";";
-   sqry            = dbxpn.exec( qrytext );
+   if ( ! sqry.exec( qrytext ) )
+   {
+      return -1;
+   }
 
    while( sqry.next() )       //ALEXEY: does NOT seem to see all records with the same ExpId ???
      {
@@ -290,7 +305,7 @@ int US_XpnData::scan_runs( QStringList& runInfo )
       return nruns;
 
    QString tabname( "ExperimentRun" );
-   QSqlQuery  sqry;
+   QSqlQuery  sqry( dbxpn );
    QString schname( "AUC_schema" );
    QString sqtab   = schname + "." + tabname;
    QString qrytab  = "\"" + schname + "\".\"" + tabname + "\"";
@@ -298,8 +313,11 @@ int US_XpnData::scan_runs( QStringList& runInfo )
    QList< int > cxs;
 
    int cols        = column_indexes( tabname, cnames, cxs );
-
-   sqry            = dbxpn.exec( "SELECT count(*) from " + qrytab + ";" );
+   QString qrytext =  "SELECT count(*) from " + qrytab + ";";
+   if ( ! sqry.exec( qrytext ) )
+   {
+      return -1;
+   }
    sqry.next();
    int rows        = sqry.value( 0 ).toInt();
 DbgLv(1) << "XpDa:scn: ExpRun rows" << rows;
@@ -313,15 +331,19 @@ DbgLv(1) << "XpDa:scn: ExpRun rows" << rows;
                        .arg( rows ).arg( tabname );
    emit status_text( stat_text );
 
-   QString qtxt  = QString( "SELECT * from " ) + qrytab;        
+   qrytext  = QString( "SELECT * from " ) + qrytab;
+   if ( ! sqry.exec( qrytext ) )
+   {
+      return -1;
+   }
+
    const QString delim( "^" );
    runInfo.clear();
    runInfo.reserve( rows );
 
-   sqry          = dbxpn.exec( qtxt );
    int row       = 0;
 DbgLv(1) << "XpDa:scn: tabname" << tabname << "rows" << rows
- << "cols" << cols << "qtxt" << qtxt;
+ << "cols" << cols << "qtxt" << qrytext;
 DbgLv(1) << "XpDa:inforow: run exp 0 estart ename rname A F I W stat";
 
    while( sqry.next() )
@@ -391,7 +413,7 @@ int US_XpnData::scan_runs_auto( QStringList& runInfo, QString & RunID_to_retriev
       return nruns;
 
    QString tabname( "ExperimentRun" );
-   QSqlQuery  sqry;
+   QSqlQuery  sqry( dbxpn );
    QString schname( "AUC_schema" );
    QString sqtab   = schname + "." + tabname;
    QString qrytab  = "\"" + schname + "\".\"" + tabname + "\"";
@@ -399,8 +421,12 @@ int US_XpnData::scan_runs_auto( QStringList& runInfo, QString & RunID_to_retriev
    QList< int > cxs;
 
    int cols        = column_indexes( tabname, cnames, cxs );
+   QString qrytext = "SELECT count(*) from " + qrytab + ";";
+   if ( ! sqry.exec( qrytext ) )
+   {
+      return -1;
+   }
 
-   sqry            = dbxpn.exec( "SELECT count(*) from " + qrytab + ";" );
    sqry.next();
    int rows        = sqry.value( 0 ).toInt();
 DbgLv(1) << "XpDa:scn: ExpRun rows" << rows;
@@ -414,15 +440,19 @@ DbgLv(1) << "XpDa:scn: ExpRun rows" << rows;
                        .arg( rows ).arg( tabname );
    emit status_text( stat_text );
 
-   QString qtxt  = QString( "SELECT * from " ) + qrytab + QString( " WHERE \"RunId\" = %1" ).arg(RunID);        //ALEXEY add WHERE ExperimentID=xxx for us_comproject
+   qrytext  = QString( "SELECT * from " ) + qrytab + QString( " WHERE \"RunId\" = %1" ).arg(RunID);        //ALEXEY add WHERE ExperimentID=xxx for us_comproject
+   if ( ! sqry.exec( qrytext ) )
+   {
+      return -1;
+   }
+
    const QString delim( "^" );
    runInfo.clear();
    runInfo.reserve( rows );
 
-   sqry          = dbxpn.exec( qtxt );
    int row       = 0;
 DbgLv(1) << "XpDa:scn: tabname" << tabname << "rows" << rows
- << "cols" << cols << "qtxt" << qtxt;
+ << "cols" << cols << "qtxt" << qrytext;
 DbgLv(1) << "XpDa:inforow: run exp 0 estart ename rname A F I W stat";
 
    while( sqry.next() )
@@ -484,7 +514,7 @@ int US_XpnData::filter_runs( QStringList& runInfo )
    int nruns     = 0;
    int kruns     = runInfo.size();
    const QString delim( "^" );
-   QSqlQuery  sqry;
+   QSqlQuery sqry( dbxpn );
    QStringList runIsav = runInfo;
    QVector< tbExpRun > tExprsv = tExprun;
    QString schname( "AUC_schema" );
@@ -506,7 +536,10 @@ int US_XpnData::filter_runs( QStringList& runInfo )
          QString qrytab  = "\"" + schname + "\".\"" + tabname + "\"";
          QString qrytext = "SELECT count(*) from " + qrytab
                          + " WHERE \"RunId\"=" + sRunId + ";";
-         sqry            = dbxpn.exec( qrytext );
+         if ( ! sqry.exec( qrytext ) )
+         {
+            return -1;
+         }
          sqry.next();
          kdat           += sqry.value( 0 ).toInt();
       }
@@ -517,7 +550,10 @@ int US_XpnData::filter_runs( QStringList& runInfo )
          QString qrytab  = "\"" + schname + "\".\"" + tabname + "\"";
          QString qrytext = "SELECT count(*) from " + qrytab
                          + " WHERE \"RunId\"=" + sRunId + ";";
-         sqry            = dbxpn.exec( qrytext );
+         if ( ! sqry.exec( qrytext ) )
+         {
+            return -1;
+         }
          sqry.next();
          kdat           += sqry.value( 0 ).toInt();
       }
@@ -528,7 +564,10 @@ int US_XpnData::filter_runs( QStringList& runInfo )
          QString qrytab  = "\"" + schname + "\".\"" + tabname + "\"";
          QString qrytext = "SELECT count(*) from " + qrytab
                          + " WHERE \"RunId\"=" + sRunId + ";";
-         sqry            = dbxpn.exec( qrytext );
+         if ( ! sqry.exec( qrytext ) )
+         {
+            return -1;
+         }
          sqry.next();
          kdat           += sqry.value( 0 ).toInt();
       }
@@ -539,7 +578,10 @@ int US_XpnData::filter_runs( QStringList& runInfo )
          QString qrytab  = "\"" + schname + "\".\"" + tabname + "\"";
          QString qrytext = "SELECT count(*) from " + qrytab
                          + " WHERE \"RunId\"=" + sRunId + ";";
-         sqry            = dbxpn.exec( qrytext );
+         if ( ! sqry.exec( qrytext ) )
+         {
+            return -1;
+         }
          sqry.next();
          kdat           += sqry.value( 0 ).toInt();
       }
@@ -884,7 +926,7 @@ DbgLv(1) << "XpDa: rei_dat: arows frows irows wrows"
 // Query and save data for a [AIFW]ScanData or [SC] table
 int US_XpnData::scan_xpndata( const int runId, const QChar scantype )
 {
-   QSqlQuery  sqry;
+   QSqlQuery  sqry( dbxpn );
    QSqlRecord qrec;
    QString schname( "AUC_schema" );
    QString tabname( "AbsorbanceScanData" );
@@ -908,7 +950,10 @@ int US_XpnData::scan_xpndata( const int runId, const QChar scantype )
    if ( scantype == 'C' )
       qrytext         = "SELECT count(*) from " + qrytab + ";";
 
-   sqry            = dbxpn.exec( qrytext );
+   if ( ! sqry.exec( qrytext ) )
+   {
+      return -1;
+   }
    sqry.next();
    count           = sqry.value( 0 ).toInt();
 DbgLv(1) << "XpDa:s_x: sRunId" << sRunId << "count" << count;
@@ -932,7 +977,10 @@ DbgLv(1) << "XpDa:s_x: sRunId" << sRunId << "count" << count;
 DbgLv(1) << "XpDa:s_x:  cols" << cols << "cnames" << cnames[0] << "..."
  << cnames[cols-1] << "tabname" << tabname;
 
-   sqry            = dbxpn.exec( qrytext );
+   if ( ! sqry.exec( qrytext ) )
+   {
+      return -1;
+   }
 
    int isctyp    = ( scantype == 'A' ) ? 1 : 0;
    isctyp        = ( scantype == 'F' ) ? 2 : isctyp;
@@ -1080,8 +1128,11 @@ DbgLv(1) << "XpDa:scn:    tCrprof count" << tCrprof.count();
       tabname         = "ExperimentRun";
       sqtab           = schname + "." + tabname;
       qrytab          = "\"" + schname + "\".\"" + tabname + "\"";
-      qrytext         = "SELECT * from " + qrytab + ";"; 
-      sqry            = dbxpn.exec( qrytext );
+      qrytext         = "SELECT * from " + qrytab + ";";
+      if ( ! sqry.exec( qrytext ) )
+      {
+         return -1;
+      }
       qrec            = dbxpn.record( qrytab );
       // Get indexes to ExperimentId and RunId
       cols            = column_indexes( tabname, cnames, cxs );
@@ -1098,8 +1149,11 @@ DbgLv(1) << "XpDa:scn:    tCrprof count" << tCrprof.count();
       tabname         = "ExperimentDefinition";
       sqtab           = schname + "." + tabname;
       qrytab          = "\"" + schname + "\".\"" + tabname + "\"";
-      qrytext         = "SELECT * from " + qrytab + ";"; 
-      sqry            = dbxpn.exec( qrytext );
+      qrytext         = "SELECT * from " + qrytab + ";";
+      if ( ! sqry.exec( qrytext ) )
+      {
+         return -1;
+      }
       qrec            = dbxpn.record( qrytab );
       cols            = column_indexes( tabname, cnames, cxs );
       // Get indexes to ExperimentId and FugeRunProfileId
@@ -1211,7 +1265,7 @@ DbgLv(1) << "XpDa:scn:  nn=" << nn << " Vals nn-5 to nn-1 --";
 // Query and save data for a [AIFW]ScanData or [SC] table: [for autoflow framework]
 int US_XpnData::scan_xpndata_auto( const int runId, const QChar scantype, bool& o_conn, QElapsedTimer elapse_t )
 {
-   QSqlQuery  sqry;
+   QSqlQuery  sqry( dbxpn );
    QSqlRecord qrec;
    QString schname( "AUC_schema" );
    QString tabname( "AbsorbanceScanData" );
@@ -1240,7 +1294,10 @@ int US_XpnData::scan_xpndata_auto( const int runId, const QChar scantype, bool& 
    
    qDebug() << "[TIME 1] of scan_xpndata_auto(): " << int( elapse_t.elapsed() / 1000 ) << " sec";
    
-   sqry            = dbxpn.exec( qrytext );
+   if ( ! sqry.exec( qrytext ) )
+   {
+      return -1;
+   }
    qDebug() << "sqry.isActive() ? " << sqry.isActive();
 
    qDebug() << "[TIME 2] of scan_xpndata_auto(): " << int( elapse_t.elapsed() / 1000 ) << " sec";
@@ -1290,7 +1347,10 @@ DbgLv(1) << "XpDa:s_x:  cols" << cols << "cnames" << cnames[0] << "..."
  qDebug() << "XpDa:s_x:  cols" << cols << "cnames" << cnames[0] << "..."
  << cnames[cols-1] << "tabname" << tabname;
 
-   sqry            = dbxpn.exec( qrytext );
+   if ( ! sqry.exec( qrytext ) )
+   {
+      return -1;
+   }
 
    qDebug() << "[TIME 6] of scan_xpndata_auto(): " << int( elapse_t.elapsed() / 1000 ) << " sec";
 
@@ -1459,7 +1519,10 @@ DbgLv(1) << "XpDa:scn:    tCrprof count" << tCrprof.count();
 
       qDebug() << "[TIME 8 'C'] of scan_xpndata_auto(): " << int( elapse_t.elapsed() / 1000 ) << " sec";
       
-      sqry            = dbxpn.exec( qrytext );
+      if ( ! sqry.exec( qrytext ) )
+      {
+         return -1;
+      }
 
       qDebug() << "[TIME 9 'C'] of scan_xpndata_auto(): " << int( elapse_t.elapsed() / 1000 ) << " sec";
       
@@ -1488,7 +1551,10 @@ DbgLv(1) << "XpDa:scn:    tCrprof count" << tCrprof.count();
 
       qDebug() << "[TIME 12 'C'] of scan_xpndata_auto(): " << int( elapse_t.elapsed() / 1000 ) << " sec";
       
-      sqry            = dbxpn.exec( qrytext );
+      if ( ! sqry.exec( qrytext ) )
+      {
+         return -1;
+      }
 
       qDebug() << "[TIME 13 'C'] of scan_xpndata_auto(): " << int( elapse_t.elapsed() / 1000 ) << " sec";
       
@@ -1616,7 +1682,7 @@ int US_XpnData::update_xpndata( const int runId, const QChar scantype )
 {
    QStringList  cnames;
    QList< int > cxs;
-   QSqlQuery    sqry;
+   QSqlQuery    sqry( dbxpn );
    QSqlRecord   qrec;
    QString sRunId  = QString::number( runId );
    QString sExpTm;
@@ -1681,14 +1747,20 @@ DbgLv(1) << "XpDa:updx:  sdat count" << tknt << "last-exptime" << sExpTm;;
    qrytab          = "\"" + schname + "\".\"" + tabname + "\"";
    qrytext         = "SELECT count(*) from " + qrytab
                    + " WHERE \"RunId\"=" + sRunId + ";";
-   sqry            = dbxpn.exec( qrytext );
+   if ( ! sqry.exec( qrytext ) )
+   {
+      return -1;
+   }
    sqry.next();
    nnrows          = sqry.value( 0 ).toInt();
 
    qrytext         = "SELECT count(*) from " + qrytab
                    + " WHERE \"RunId\"=" + sRunId
                    + " AND \"ExperimentTime\">=" + sExpTm + ";";
-   sqry            = dbxpn.exec( qrytext );
+   if ( ! sqry.exec( qrytext ) )
+   {
+      return -1;
+   }
    sqry.next();
    int narows      = sqry.value( 0 ).toInt();
 DbgLv(1) << "XpDa:updx:  qrytext" << qrytext;
@@ -1709,7 +1781,10 @@ DbgLv(1) << "XpDa:updx:  norows" << norows << "nnrows" << nnrows
       qrytext         = "SELECT * from " + qrytab
                       + " WHERE \"RunId\"=" + sRunId
                       + " AND \"ExperimentTime\">=" + sExpTm + ";";
-      sqry            = dbxpn.exec( qrytext );
+      if ( ! sqry.exec( qrytext ) )
+      {
+         return -1;
+      }
       int cols        = column_indexes( tabname, cnames, cxs );
 DbgLv(1) << "XpDa:updx:   cols" << cols << "flds" << cxs.count();
       int rows        = 0;
