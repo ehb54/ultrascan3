@@ -1592,7 +1592,7 @@ QString US_Model::composite_mc_file( QStringList& mcfiles, const bool rmvi )
                                         return empty_str;
    }
 
-   QString mditer1 = QString( ".mcN%1" ).arg( mc_iters, 3, 10, QChar( '0' ) );
+   QString mditer1  = QString( ".mcN%1" ).arg( mc_iters, 3, 10, QChar( '0' ) );
    QString mditer2  = QString( mditer1 ).replace( ".mcN", "_mcN" );
    QString mditer   = mditer1;
 //qDebug() << "MDL:CMF: mditer1 mditer2" << mditer1 << mditer2;
