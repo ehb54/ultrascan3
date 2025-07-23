@@ -710,58 +710,71 @@ bool US_AnaProfile::AnaProf2DSA::fromXml( QXmlStreamReader& xmli )
          else if ( ename == "job_2dsa_fm" )
          {
             QXmlStreamAttributes attr = xmli.attributes();
-       QStringView attr_ref;
-	    
+            QStringView attr_ref;
+
             //job1run        = US_Util::bool_flag( attr.value( "run" ).toString() );
-	    job2run        = US_Util::bool_flag( attr.value( "run" ).toString() );      // ALEXEY; shouldn't it be job2run ?
+            job2run        = US_Util::bool_flag( attr.value( "run" ).toString() );      // ALEXEY; shouldn't it be job2run ?
             job2nois       = attr.value( "noise" ).toString();
 
-	    //fitrng         = attr.value( "fit_range" ).toString().toDouble();
-	    //grpoints       = attr.value( "grid_points" ).toString().toInt();
+            //fitrng         = attr.value( "fit_range" ).toString().toDouble();
+            //grpoints       = attr.value( "grid_points" ).toString().toInt();
 
-	    //ALEXEY -- check if the following 3 attributes exist (for older ana_profiles):
-	    //Meniscus Range
-	    attr_ref       = attr.value("meniscus_range");
-	    if ( !attr_ref.isNull() )
-	      {
-		fitrng         = attr.value( "meniscus_range" ).toString().toDouble();
-		if ( fitrng == 0 )
-		  fitrng = 0.03; //DEFAULT if 0 stored in xml (due old ana_profiles)
-	      }
-	    else
-	      fitrng         = 0.03; //DEFAULT if no attribute found
+            //ALEXEY -- check if the following 3 attributes exist (for older ana_profiles):
+            //Meniscus Range
+            attr_ref       = attr.value("meniscus_range");
+            if ( !attr_ref.isNull() )
+            {
+               fitrng         = attr.value( "meniscus_range" ).toString().toDouble();
+               if ( fitrng == 0 )
+               {
+                  fitrng = 0.03; //DEFAULT if 0 stored in xml (due old ana_profiles)
+               }
+            }
+            else
+               fitrng         = 0.03; //DEFAULT if no attribute found
 
-	    //Meniscus Points
-	    attr_ref       = attr.value("meniscus_points");
-	    if ( !attr_ref.isNull() )
-	      {
-		grpoints       = attr.value( "meniscus_points" ).toString().toInt();
-		if ( !grpoints )
-		  grpoints = 11; //DEFAULT if 0 stored in xml (due old ana_profiles)
-	      }
-	    else
-	      grpoints       = 11; //DEFAULT if no attribute found
+            //Meniscus Points
+            attr_ref       = attr.value("meniscus_points");
+            if ( !attr_ref.isNull() )
+            {
+               grpoints       = attr.value( "meniscus_points" ).toString().toInt();
+               if ( !grpoints )
+               {
+                  grpoints = 11; //DEFAULT if 0 stored in xml (due old ana_profiles)
+               }
+            }
+            else
+               grpoints       = 11; //DEFAULT if no attribute found
 
-	    //Refinement Iterations
-	    attr_ref       = attr.value("max_iterations");
-	    if ( !attr_ref.isNull() )
-	      {
-		j2rfiters       = attr.value( "max_iterations" ).toString().toInt();
-		if ( !j2rfiters )
-		  j2rfiters = 1; //DEFAULT if 0 stored in xml (due old ana_profiles)
-	      }
-	    else
-	      j2rfiters       = 1; //DEFAULT if no attribute found
-	    
-	    
-	    //fit m|b
-	    int fmb_n      = attr.value( "fit_mb_select" ).toString().toInt();
-	    if ( fmb_n == 1 )
-	      fmb = "fm";
-	    if ( fmb_n == 2 )
-	      fmb = "fb";
-	    if ( fmb_n == 3 )
-	      fmb = "fmb";
+            //Refinement Iterations
+            attr_ref       = attr.value("max_iterations");
+            if ( !attr_ref.isNull() )
+            {
+               j2rfiters       = attr.value( "max_iterations" ).toString().toInt();
+               if ( !j2rfiters )
+               {
+                  j2rfiters = 1; //DEFAULT if 0 stored in xml (due old ana_profiles)
+               }
+            }
+            else
+            {
+               j2rfiters       = 1; //DEFAULT if no attribute found
+            }
+
+            //fit m|b
+            int fmb_n      = attr.value( "fit_mb_select" ).toString().toInt();
+            if ( fmb_n == 1 )
+            {
+               fmb = "fm";
+            }
+            if ( fmb_n == 2 )
+            {
+               fmb = "fb";
+            }
+            if ( fmb_n == 3 )
+            {
+               fmb = "fmb";
+            }
          }
          else if ( ename == "job_fitmen" || ename == "job_fitmen_auto" )
          {
@@ -769,7 +782,7 @@ bool US_AnaProfile::AnaProf2DSA::fromXml( QXmlStreamReader& xmli )
             job3run        = US_Util::bool_flag( attr.value( "run" ).toString() );
             job3auto       = attr.value( "interactive" ).toString().toInt() == 0;
 
-	    qDebug() << "In 2DSA's fromXml(): job3auto -- " << job3auto;
+            qDebug() << "In 2DSA's fromXml(): job3auto -- " << job3auto;
          }
          else if ( ename == "job_2dsa_it" )
          {
@@ -790,7 +803,9 @@ bool US_AnaProfile::AnaProf2DSA::fromXml( QXmlStreamReader& xmli )
       xmli.readNext();                        // Read the next element
 
       if ( was_end  &&  ename == "p_2dsa" )   // Break after "</p_2dsa>"
+      {
          break;
+      }
    }
 
    return ( ! xmli.hasError() );
