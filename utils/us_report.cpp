@@ -730,7 +730,7 @@ US_Report::Status US_Report::saveDB( US_DB2* db )
 // COPY for autoflow - with invID passed 
 US_Report::Status US_Report::saveDB_auto( int invID_passed, US_DB2* db )
 {
-   static const QRegularExpression rx( "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" );
+   static const QRegularExpression rx( "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", QRegularExpression::CaseInsensitiveOption );
    int status;
    QString now   = QDateTime::currentDateTime().toString();
 
