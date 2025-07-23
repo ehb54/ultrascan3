@@ -1,29 +1,26 @@
 //! \file us_crypto.cpp
 
 #include "us_crypto.h"
+#include <random>
 #include <openssl/evp.h>
 
 QStringList US_Crypto::encrypt( const QString& plain_text, const QString& pw )
 {
    QStringList      result;
+   // Use a random_device to seed the PRNG (non-deterministic)
+   std::random_device rd;
+   std::mt19937 rng(rd());
 
-   // Seed the pseudo random number generator if needed
-   static bool seed = false;
+   // Uniform distribution for bytes [0, 255]
+   std::uniform_int_distribution<int> dist(0, 255);
 
-   if ( ! seed )
-   {
-      QTime time = QTime::currentTime();
-      // Not a great amount of entropy, but probably good enough for us
-
-      qsrand( (uint)time.msec() );
-      seed = true;
-   }
-
-   // Determine the initialization vector 
+   // Determine the initialization vector
    QByteArray iv_ba( 16, '0' );
 
-   for ( int i = 0; i < 16; i++ )
-      iv_ba[ i ] = qrand() % 256;
+   for (int i = 0; i < 16; ++i)
+   {
+      iv_ba[i] = static_cast<char>(dist(rng));
+   }
 
    uchar* iv_ptr = (uchar*)iv_ba.data();
 

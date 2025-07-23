@@ -3,6 +3,7 @@
 #define US_MATH_H
 
 #include <QtCore>
+#include <random>
 #include "us_extern.h"
 #include "us_dataIO.h"
 #include "us_solution.h"
@@ -330,6 +331,10 @@ class US_UTIL_EXTERN US_Math2
       static void _nnls_g1 ( double a, double b, double*, double*, double* );
       static int  _nnls_h12( int, int, int, int m, double*, int,
                              double*, double *, int, int, int );
+
+   private:
+      // A Mersenne Twister pseudo-random generator of 32-bit numbers with a state size of 19937 bits.
+      static std::mt19937 rng;
 };
 #endif
 

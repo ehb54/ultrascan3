@@ -3,9 +3,7 @@
 #define US_STIFFBASE_H
 
 #include "us_extern.h"
-
-//! Set a convenient shorthand
-#define uint unsigned int
+#include <QtGlobal>
 
 //! \brief Stiff Base object
 class US_UTIL_EXTERN US_StiffBase

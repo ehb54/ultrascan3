@@ -98,7 +98,7 @@ QString US_Settings::etcDir( void )
 // Base to application directory
 QString US_Settings::appBaseDir( void )
 {
-   QString base = qApp->applicationDirPath().remove( QRegExp( "/bin$" ) );
+   QString base = qApp->applicationDirPath().remove( QRegularExpression( "/bin$" ) );
 
    if ( base.contains( ".app/Contents" ) )
    {  // For Mac, move up path to where ./bin exists

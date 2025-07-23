@@ -183,9 +183,9 @@ int US_Project::readFromDB  ( int projectID, US_DB2* db )
 void US_Project::saveToDisk( void )
 {
    // First make sure we have a GUID
-   QRegExp rx( "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" );
+   static const QRegularExpression rx( "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", QRegularExpression::CaseInsensitiveOption );
 
-   if ( ! rx.exactMatch( projectGUID ) )
+   if ( ! rx.match( projectGUID ).hasMatch() )
       projectGUID = US_Util::new_guid();
 
    // Get a path and file name for project
@@ -564,7 +564,7 @@ QString US_Project::get_filename(
    // If we get here, generate a new filename
    int number = ( f_names.size() > 0 ) ? f_names.last().mid( 1, 7 ).toInt() : 0;
 
-   return path + "/P" + QString().sprintf( "%07i", number + 1 ) + ".xml";
+   return path + "/P" + QString( "%1" ).arg( number + 1, 7, 10, QChar( '0' ) ) + ".xml";
 }
 
 void US_Project::clear( void )
