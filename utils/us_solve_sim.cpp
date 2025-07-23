@@ -343,24 +343,11 @@ DbgLv(1) << "   CR:B fill kodl" << kodl;
 
    if ( use_zsol )
    {
-      // sorting a vector of US_ZSolute is tricky. we should decide
-      // what parameter of the US_ZSolute should be used to sort the vector based on.
-      // US_ZSolute has x, y, z, c where x, y, and z are the parameters used to make
-      // grids for 2DSA. For example s, ff0, and vbar. So they change by analysis.
-      // c is the concetration of the species which is used here to sort the sim_vals.zsolutes.
-
-      std::sort(sim_vals.zsolutes.begin(), sim_vals.zsolutes.end(),
-                [](const US_ZSolute& a, const US_ZSolute& b) {
-                   return a.c < b.c;
-                });
+      std::sort( sim_vals.zsolutes.begin(), sim_vals.zsolutes.end() );
    }
    else
    {
-      // s values of the US_Solute are used to sort the sim_vals.solutes.
-      std::sort(sim_vals.solutes.begin(), sim_vals.solutes.end(),
-                [](const US_Solute& a, const US_Solute& b) {
-                   return a.s < b.s;
-                });
+      std::sort( sim_vals.solutes.begin(), sim_vals.solutes.end() );
    }
 
    int count_cut  = 0;         // Count of A columns cut by norm tolerance
