@@ -265,7 +265,7 @@ US_Report::ReportTriple::ReportTriple()
 // Saves a report triple record to DB
 US_Report::Status US_Report::ReportTriple::saveDB( int reportID, US_DB2* db )
 {
-   static const QRegularExpression rx( "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" );
+   static const QRegularExpression rx( "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", QRegularExpression::CaseInsensitiveOption );
    int status;
 
    // First let's be sure we have a valid GUID
@@ -635,7 +635,7 @@ US_Report::Status US_Report::readDB_auto( int invID_passed, QString new_runID, U
 // Saves the global report information to DB
 US_Report::Status US_Report::saveDB( US_DB2* db )
 {
-   static const QRegularExpression rx( "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" );
+   static const QRegularExpression rx( "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", QRegularExpression::CaseInsensitiveOption );
    int status;
    QString now   = QDateTime::currentDateTime().toString();
 
@@ -730,7 +730,7 @@ US_Report::Status US_Report::saveDB( US_DB2* db )
 // COPY for autoflow - with invID passed 
 US_Report::Status US_Report::saveDB_auto( int invID_passed, US_DB2* db )
 {
-   static const QRegularExpression rx( "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" );
+   static const QRegularExpression rx( "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", QRegularExpression::CaseInsensitiveOption );
    int status;
    QString now   = QDateTime::currentDateTime().toString();
 
