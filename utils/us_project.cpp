@@ -183,7 +183,7 @@ int US_Project::readFromDB  ( int projectID, US_DB2* db )
 void US_Project::saveToDisk( void )
 {
    // First make sure we have a GUID
-   static const QRegularExpression rx( "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" );
+   static const QRegularExpression rx( "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", QRegularExpression::CaseInsensitiveOption );
 
    if ( ! rx.match( projectGUID ).hasMatch() )
       projectGUID = US_Util::new_guid();
