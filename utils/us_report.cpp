@@ -265,7 +265,7 @@ US_Report::ReportTriple::ReportTriple()
 // Saves a report triple record to DB
 US_Report::Status US_Report::ReportTriple::saveDB( int reportID, US_DB2* db )
 {
-   static const QRegularExpression rx( "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" );
+   static const QRegularExpression rx( "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", QRegularExpression::CaseInsensitiveOption );
    int status;
 
    // First let's be sure we have a valid GUID
