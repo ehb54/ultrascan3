@@ -598,7 +598,7 @@ DbgLv(1) << "TRP:H3: x1,y1,x2,y2" << xl3p1 << yl3p1 << yl3p2 << yl3p2;
          alpha     = alphas[ nalpha / 2 ];
 
       // Use nearest curve point for default alpha
-      le_selalpha->setText( QString().sprintf( "%.3f", alpha ) );
+      le_selalpha->setText( QString::asprintf( "%.3f", alpha ) );
    }
 
    connect( pick, SIGNAL( cMouseUp( const QwtDoublePoint& ) ),
@@ -621,7 +621,7 @@ void US_RpScan::mouse( const QwtDoublePoint& p )
          xloc, yloc, &xcurv, &ycurv, alphas.data(), &alpha );
 
    alpha          = (double)qRound( alpha * 1000.0 ) / 1000.0;
-   QString salpha = QString().sprintf( "%.3f", alpha );
+   QString salpha = QString::asprintf( "%.3f", alpha );
    le_selalpha->setText( salpha );
 
    // Mark selected curve point and give it a label

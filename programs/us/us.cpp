@@ -104,9 +104,9 @@ int main( int argc, char* argv[] )
       qDebug() << "defaultDB -- " << defaultDB.at( 2 );
             
       US_Passwd   pw;
-      US_DB2      db( pw.getPasswd() );
+      IUS_DB2      db( pw.getPasswd() );
       
-      if ( db.lastErrno() != US_DB2::OK )
+      if ( db.lastErrno() != IUS_DB2::OK )
         {
 	  QMessageBox msgBox;
           msgBox.setWindowTitle ("ERROR: User Level Synchronization");
@@ -852,7 +852,7 @@ void US_Win::apply_prefs()
 // //level=2;
 //    // Query notice table in the us3_notice database
 //    US_Passwd pw;
-//    US_DB2    db;
+//    IUS_DB2    db;
 //    QString   host  ( "ultrascan.aucsolutions.com" );
 //    QString   dbname( "us3_notice" );
 //    QString   user  ( "us3_notice" );
@@ -888,7 +888,7 @@ void US_Win::apply_prefs()
 //    db.rawQuery( query );
 
 //    // If no notices in the database, return now with no notice pop-up
-//    if ( db.lastErrno() != US_DB2::OK  ||  db.numRows() == 0 )
+//    if ( db.lastErrno() != IUS_DB2::OK  ||  db.numRows() == 0 )
 //    {
 // qDebug() << "US:NOTE: No DB notices" << db.lastError()
 //  << "numRows" << db.numRows();

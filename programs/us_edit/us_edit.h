@@ -329,7 +329,7 @@ class US_Edit : public US_Widgets
 
       double             odlimit;
 
-      US_DB2*            dbP;
+      IUS_DB2*            dbP;
 
       QVector< double >  expd_radii;
       QVector< int >     expi_wvlns;
@@ -414,10 +414,10 @@ class US_Edit : public US_Widgets
 
       static bool bool_flag( const QString );
       
-      void update_autoflow_record_atEditData( US_DB2*, QString& );
-      void update_autoflow_record_atEditData_abde( US_DB2* );
-      int  create_autoflowAnalysis_record( US_DB2*, QString&,  QString& );
-      void create_autoflowAnalysisStages_record( US_DB2*, int ); 
+      void update_autoflow_record_atEditData( IUS_DB2*, QString& );
+      void update_autoflow_record_atEditData_abde( IUS_DB2* );
+      int  create_autoflowAnalysis_record( IUS_DB2*, QString&,  QString& );
+      void create_autoflowAnalysisStages_record( IUS_DB2*, int );
       QString compose_json( bool );
 
       void delete_autoflow_record ( void );
@@ -506,7 +506,7 @@ class US_Edit : public US_Widgets
       void write_auto        ( void );
       void write_triple_auto ( int );
       void write_mwl_auto    ( int );
-  QString get_rawDataGUID( US_DB2*, QString, QString );
+  QString get_rawDataGUID( IUS_DB2*, QString, QString );
       
       void review_edits      ( void );
       
@@ -536,12 +536,12 @@ class US_Edit : public US_Widgets
       void od_radius_limit   ( double );
       void progress_load     ( QString );
       int  write_xml_file    ( QString&, QString&, QString&, QString& );
-      int  write_edit_db     ( US_DB2*,
+      int  write_edit_db     ( IUS_DB2*,
                                QString&, QString&, QString&, QString& );
       int  index_data        ( int = -1 );
       int  index_data_auto   ( int, int = -1 );
       
-      int  like_edit_files   ( QString, QStringList&, US_DB2* );
+      int  like_edit_files   ( QString, QStringList&, IUS_DB2* );
       int  apply_edits       ( US_DataIO::EditValues parameters );
       int  lambdas_by_cell   ( int = -1 );
       double radius_indexed  ( const double );
