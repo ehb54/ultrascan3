@@ -99,7 +99,7 @@ int US_XpnData::checkExpStatus( QString runid )
     }
   
    QString tabname( "ExperimentRun" );
-    QSqlQuery  sqry( dbxpn );
+   QSqlQuery  sqry( dbxpn );
    QString schname( "AUC_schema" );
    QString sqtab   = schname + "." + tabname;
    QString qrytab  = "\"" + schname + "\".\"" + tabname + "\"";

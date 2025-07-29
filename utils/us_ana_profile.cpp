@@ -731,7 +731,9 @@ bool US_AnaProfile::AnaProf2DSA::fromXml( QXmlStreamReader& xmli )
                }
             }
             else
+            {
                fitrng         = 0.03; //DEFAULT if no attribute found
+            }
 
             //Meniscus Points
             attr_ref       = attr.value("meniscus_points");
@@ -744,7 +746,9 @@ bool US_AnaProfile::AnaProf2DSA::fromXml( QXmlStreamReader& xmli )
                }
             }
             else
+            {
                grpoints       = 11; //DEFAULT if no attribute found
+            }
 
             //Refinement Iterations
             attr_ref       = attr.value("max_iterations");
