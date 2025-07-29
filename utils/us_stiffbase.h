@@ -3,7 +3,7 @@
 #define US_STIFFBASE_H
 
 #include "us_extern.h"
-#include <QtGlobal>
+using uint = unsigned int;
 
 //! \brief Stiff Base object
 class US_UTIL_EXTERN US_StiffBase
