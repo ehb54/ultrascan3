@@ -2,7 +2,7 @@
 #ifndef US_VECTOR_H
 #define US_VECTOR_H
 
-#include <QtCore>
+#include <QVector>
 #include "us_extern.h"
 
 //! \brief A collecion of vector routines for doubles.

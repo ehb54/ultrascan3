@@ -2,8 +2,8 @@
 #ifndef US_STIFFBASE_H
 #define US_STIFFBASE_H
 
+#include <QtMath>
 #include "us_extern.h"
-using uint = unsigned int;
 
 //! \brief Stiff Base object
 class US_UTIL_EXTERN US_StiffBase

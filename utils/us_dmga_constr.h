@@ -2,6 +2,7 @@
 #ifndef US_DMGA_CONSTRAINTS_H
 #define US_DMGA_CONSTRAINTS_H
 
+#include <QDebug>
 #include "us_extern.h"
 #include "us_model.h"
 

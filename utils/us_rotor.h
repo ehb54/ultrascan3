@@ -2,6 +2,8 @@
 #ifndef US_ROTOR_H
 #define US_ROTOR_H
 
+#include <QDate>
+#include <QXmlStreamReader>
 #include "us_extern.h"
 #include "us_db2.h"
 

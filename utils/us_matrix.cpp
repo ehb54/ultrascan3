@@ -3,8 +3,6 @@
 #include "us_matrix.h"
 #include "us_math2.h"
 
-#include <QtCore>
-
 bool US_Matrix::lsfit( double* c, double* x, double* y,
                        int N, int order )
 {

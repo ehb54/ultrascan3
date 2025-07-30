@@ -2,7 +2,9 @@
 #ifndef US_ASTFEM_RSA_H
 #define US_ASTFEM_RSA_H
 
-#include <QtCore>
+#include <QObject>
+#include <QVector>
+#include <QString>
 #include "us_extern.h"
 #include "us_model.h"
 #include "us_simparms.h"

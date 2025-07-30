@@ -2,7 +2,10 @@
 #ifndef US_BUFFER_H
 #define US_BUFFER_H
 
-#include <QtCore>
+#include <QDebug>
+#include <QMap>
+#include <QStringList>
+#include <QXmlStreamReader>
 #include "us_extern.h"
 #include "us_db2.h"
 

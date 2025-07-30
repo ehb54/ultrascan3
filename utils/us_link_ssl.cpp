@@ -1,12 +1,8 @@
-#include <QSslKey>
-#include <QSslCertificate>
-#include <QJsonDocument>
-#include <QJsonValue>
-#include <QJsonArray>
-#include <QJsonObject>
 #include "us_link_ssl.h"
 #include "us_settings.h"
-
+#include <QDomDocument>
+#include <QJsonDocument>
+#include <QJsonObject>
 
 Link::Link( QString alias )
 //Link::Link()

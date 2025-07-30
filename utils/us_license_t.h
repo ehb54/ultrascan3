@@ -2,8 +2,7 @@
 #ifndef US_LICENSE_T_H
 #define US_LICENSE_T_H
 
-#include <QtCore>
-
+#include <QStringList>
 #include "us_extern.h"
 
 //! \brief A text only class to provide a check to ensure a valid license

@@ -1,7 +1,6 @@
 //! \file us_global.cpp
-#include "us_global.h"
-#include <QtCore>
 #include <QTextStream>
+#include "us_global.h"
 
 #ifndef Q_OS_WIN
 #include <unistd.h>

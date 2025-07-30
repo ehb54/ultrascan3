@@ -1,6 +1,7 @@
 //! \file us_constants.cpp
 
 #include "us_constants.h"
+#include <QObject>
 
 QStringList US_Constants::modelStrings( void )
 {

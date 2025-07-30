@@ -4,6 +4,10 @@
 #include "us_settings.h"
 #include "us_util.h"
 #include "us_db2.h"
+#include <QXmlStreamReader>
+#include <QDateTime>
+#include <QFile>
+#include <QDir>
 
 // Initialize re
 const QRegularExpression US_Report::rx( "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", QRegularExpression::CaseInsensitiveOption );

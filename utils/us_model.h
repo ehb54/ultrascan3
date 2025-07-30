@@ -2,7 +2,9 @@
 #ifndef US_MODEL_H
 #define US_MODEL_H
 
-#include <QtCore>
+#include <QTextStream>
+#include <QXmlStreamReader>
+#include <QXmlStreamWriter>
 #include "us_extern.h"
 #include "us_db2.h"
 

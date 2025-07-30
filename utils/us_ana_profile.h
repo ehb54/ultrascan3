@@ -1,10 +1,12 @@
 #ifndef US_ANAPROFILE_H
 #define US_ANAPROFILE_H
 
-#include <QtCore>
-
+#include <QMap>
+#include <QDebug>
+#include <QStringList>
+#include <QStringView>
+#include <QXmlStreamReader>
 #include "us_extern.h"
-#include "us_db2.h"
 #include "us_report_gmp.h"
 
 //! A class to define an Ana Profile object for US_AnalysisProfileGui and related classes

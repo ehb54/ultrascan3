@@ -1,7 +1,8 @@
 #ifndef US_ARCHIVE_H
 #define US_ARCHIVE_H
 
-#include <QtCore>
+#include <QObject>
+#include <QStringList>
 #include "us_extern.h"
 
 //! \brief A class to extract and compress archive files

@@ -4,7 +4,6 @@
 #include "us_constants.h"
 #include "us_settings.h"
 #include "us_util.h"
-#include <QStringView>
 
 #ifndef _TR_
 #define _TR_(a) QObject::tr(a)

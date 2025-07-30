@@ -10,8 +10,7 @@
  *  Univerity of Texas Health Science Center
 */
 
-#include <QFileInfo> 
-#include <QDataStream>
+#include <QFileInfo>
 #include <QDateTime>
 
 #include <stdlib.h>
@@ -42,7 +41,7 @@
 #  define O_BINARY 0
 #endif
 
-#include <iostream>
+// #include <iostream>
 using namespace std;
 
 #include "us_gzip.h"

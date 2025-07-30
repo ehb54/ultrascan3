@@ -2,8 +2,7 @@
 #ifndef US_DATAFILES_H
 #define US_DATAFILES_H
 
-#include <QtCore>
-
+#include <QString>
 #include "us_extern.h"
 
 //! \brief Get output data file name. All functions are static.

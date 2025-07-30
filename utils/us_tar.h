@@ -2,7 +2,7 @@
 #ifndef US_TAR_H
 #define US_TAR_H
 
-#include <QtCore>
+#include <QStringList>
 #include "us_extern.h"
 
 // Error codes

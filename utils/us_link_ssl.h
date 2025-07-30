@@ -6,8 +6,9 @@
 #ifndef LINK_H_
 #define LINK_H_
 
-#include "us_extern.h"
+#include <QObject>
 #include <QSslSocket>
+#include "us_extern.h"
 
 /**
  * @class Link

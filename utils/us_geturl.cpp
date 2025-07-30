@@ -1,4 +1,5 @@
 #include "us_geturl.h"
+#include <QNetworkReply>
 
 US_GetUrl::US_GetUrl() {
    manager = new QNetworkAccessManager();

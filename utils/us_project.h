@@ -2,6 +2,8 @@
 #ifndef US_PROJECT_H
 #define US_PROJECT_H
 
+#include <QDateTime>
+#include <QXmlStreamReader>
 #include "us_extern.h"
 #include "us_db2.h"
 

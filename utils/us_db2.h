@@ -2,13 +2,13 @@
 #ifndef US_DB2_H
 #define US_DB2_H
 
-#include <QtCore>
-
+#include <QStringList>
+#include <QVariant>
+#include <QDebug>
 // The supercomputer does not use the DB
 #ifndef NO_DB
 #include "mysql.h"
 #endif
-
 #include "us_extern.h"
 
 /*! \brief This class provides connectivity and convenience functions

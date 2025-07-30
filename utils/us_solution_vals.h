@@ -2,8 +2,6 @@
 #ifndef US_SOLVALS_H
 #define US_SOLVALS_H
 
-#include <QtCore>
-
 #include "us_extern.h"
 #include "us_dataIO.h"
 #include "us_db2.h"

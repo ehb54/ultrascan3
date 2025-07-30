@@ -2,8 +2,7 @@
 #ifndef US_GZIP_H
 #define US_GZIP_H
 
-#include <qstring.h>
-#include <sys/types.h>
+#include <QStringList>
 #include "us_extern.h"
 
 // Error codes

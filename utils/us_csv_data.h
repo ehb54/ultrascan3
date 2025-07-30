@@ -1,7 +1,7 @@
 #ifndef US_CSV_DATA_H
 #define US_CSV_DATA_H
 
-#include <QtCore>
+#include <QStringList>
 #include "us_extern.h"
 
 //! \class US_CSV_Data

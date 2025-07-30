@@ -1,8 +1,9 @@
 //! \file us_stiffbase.cpp
 
-#include <QtCore>
 #include <math.h>
 #include "us_stiffbase.h"
+#include <QDebug>
+#include <QString>
 
 US_StiffBase::US_StiffBase()
 {  

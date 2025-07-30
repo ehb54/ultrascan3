@@ -2,8 +2,7 @@
 #ifndef US_SOLUTE_H
 #define US_SOLUTE_H
 
-#include <QtCore>
-
+#include <QVector>
 #include "us_extern.h"
 
 //! \brief Solutes for UltraScan

@@ -1,10 +1,20 @@
 //! \file us_cfa_data.cpp
+#include <QRegularExpression>
+#include <QDateTime>
+#include <QFileInfo>
+#include <QFile>
+#include <QDir>
+// #include <QSqlDatabase>
+// #include <QSqlError>
+#include <QSqlQuery>
+#include <QSqlRecord>
 
 #include "us_cfa_data.h"
 #include "us_util.h"
 #include "us_settings.h"
 #include "us_memory.h"
 #include "us_time_state.h"
+
 
 // Hold data read in and selected from a raw CFA data directory
 US_CfaData::US_CfaData( )

@@ -2,10 +2,9 @@
 #ifndef US_LSERVER_H
 #define US_LSERVER_H
 
-#include "us_extern.h"
-#include <QLocalSocket>
+#include <QString>
 #include <QLocalServer>
-#include <QDebug>
+#include "us_extern.h"
 
 // *********** user defines *************
 

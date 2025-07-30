@@ -1,4 +1,5 @@
 //! \file us_solve_sim.cpp
+#include <QFileInfo>
 #include "us_solve_sim.h"
 #include "us_util.h"
 #include "us_settings.h"

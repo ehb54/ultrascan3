@@ -4,6 +4,9 @@
 #include "us_settings.h"
 #include "us_util.h"
 #include "us_db2.h"
+#include <QRegularExpression>
+#include <QFile>
+#include <QDir>
 
 // The constructor clears out the data structure
 US_Rotor::US_Rotor()

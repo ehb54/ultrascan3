@@ -2,11 +2,10 @@
 #ifndef US_MATH_H
 #define US_MATH_H
 
-#include <QtCore>
-#include <random>
 #include "us_extern.h"
 #include "us_dataIO.h"
 #include "us_solution.h"
+#include <random>
 
 #define sq(x) ((x) * (x))
 #ifndef max

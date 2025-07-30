@@ -1,6 +1,7 @@
 //! \file us_license_t.cpp
-#include <QtCore>
 
+#include <QCoreApplication>
+#include <QDate>
 #include "us_license_t.h"
 #include "us_settings.h"
 #include "us_defines.h"

@@ -27,7 +27,6 @@
  * Last Mod;   Gary Gorbet    2013. Conversion to CPP/classes for US3.
  */
 
-#include <QtCore>
 #include <stdlib.h>
 #include <math.h>
 #include <float.h>

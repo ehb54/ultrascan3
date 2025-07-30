@@ -68,9 +68,8 @@ namespace crc
 
 using namespace crc;
 
-#include <QtCore>
-
 #include "us_extern.h"
+#include <QtMath>
 
 //! \brief Class to provide a method for CRC-32 calculations.
 class US_UTIL_EXTERN US_Crc
