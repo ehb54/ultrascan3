@@ -633,6 +633,7 @@ void US_Astfem_Sim::init_simparams( void )
    simparams.lrnoise           = 0.0;
    simparams.tinoise           = 0.0;
    simparams.rinoise           = 0.0;
+   simparams.baseline          = 0.0;
    simparams.band_volume       = 0.015;
    simparams.rotorCalID        = rotor_calibr;
    simparams.band_forming      = false;
@@ -1341,6 +1342,7 @@ void US_Astfem_Sim::finish( void )
 //DbgLv(1) << "FIN: comp size" << system.components.size();
 //DbgLv(1) << "FIN:  total_conc" << total_conc;
    ri_noise();
+   baseline();
    random_noise();
    ti_noise();
 
@@ -1390,6 +1392,21 @@ void US_Astfem_Sim::ri_noise( void )
 
            for ( int mp = 0; mp < sim_datas[ jd ].pointCount(); mp++ )
               sim_datas[ jd ].scanData[ ks ].rvalues[ mp ] += rinoise;
+       }
+   }
+}
+
+void US_Astfem_Sim::baseline( void )
+{
+   if ( simparams.baseline == 0.0 ) return;
+
+   // Add a constant baseline offset
+   for ( int jd = 0; jd < simparams.speed_step.size(); jd++ )
+   {
+       for ( int ks = 0; ks < sim_datas[ jd ].scanData.size(); ks++ )
+       {
+           for ( int mp = 0; mp < sim_datas[ jd ].pointCount(); mp++ )
+              sim_datas[ jd ].scanData[ ks ].rvalues[ mp ] += simparams.baseline;
        }
    }
 }
