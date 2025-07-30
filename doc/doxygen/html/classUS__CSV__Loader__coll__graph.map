@@ -1,0 +1,8 @@
+<map id="US_CSV_Loader" name="US_CSV_Loader">
+<area shape="rect" id="node2" href="$classUS__WidgetsDialog.html" title="Set up widgets the UltraScan way. " alt="" coords="58,184,189,211"/>
+<area shape="rect" id="node4" href="$classUS__Global.html" title="Manage shared memory. " alt="" coords="97,95,181,121"/>
+<area shape="rect" id="node5" href="$classUS__Global_1_1Global.html" title="US_Global::Global" alt="" coords="75,5,204,32"/>
+<area shape="rect" id="node6" href="$classCSVSortFilterProxyModel.html" title="A custom QSortFilterProxyModel for CSV data sorting. " alt="" coords="213,184,383,211"/>
+<area shape="rect" id="node8" href="$classUS__CSV__Data.html" title="A class to parse and write CSV files. " alt="" coords="408,184,516,211"/>
+<area shape="rect" id="node9" href="$classCSVTableView.html" title="A class to provide a custom QTableView for CSV data with context menu options for deleting rows and c..." alt="" coords="541,184,650,211"/>
+</map>

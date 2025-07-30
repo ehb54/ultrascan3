@@ -1,0 +1,296 @@
+/home/haben/ultrascan3/gui/us_combined_plots_parms_gui.h:1: warning: the name `us_combined_plots_gui.h' supplied as the second argument in the \file statement is not an input file
+/home/haben/ultrascan3/programs/us_analysis_profile/us_analysis_profile.cpp:1: warning: the name `us_analysis_profile.cp' supplied as the second argument in the \file statement is not an input file
+/home/haben/ultrascan3/programs/us_audit_trail_gmp/us_audit_trail_gmp.h:1: warning: the name `us_audittrail_gmp.h' supplied as the second argument in the \file statement is not an input file
+/home/haben/ultrascan3/programs/us_combine_models/us_combine_models.h:1: warning: the name `us_combmodel.h' supplied as the second argument in the \file statement is not an input file
+/home/haben/ultrascan3/programs/us_edit/us_select_lambdas.h:1: warning: the name `us_sel_lambdas.h' supplied as the second argument in the \file statement is not an input file
+/home/haben/ultrascan3/programs/us_pseudo_absorbance/us_refScan_dataIO.h:1: warning: the name `us_refscan_dataio.h' supplied as the second argument in the \file statement is not an input file
+/home/haben/ultrascan3/programs/us_rasmol_control/us_rasmol_control.h:1: warning: the name `us_rasmol_ctrl.h' supplied as the second argument in the \file statement is not an input file
+/home/haben/ultrascan3/programs/us_vhw_combine/us_vhw_combine.h:1: warning: the name `us_vhw_combo.h' supplied as the second argument in the \file statement is not an input file
+/home/haben/ultrascan3/programs/us_vhw_enhanced/us_vhw_enhanced.h:1: warning: the name `us_vhw_enhcd.h' supplied as the second argument in the \file statement is not an input file
+/home/haben/ultrascan3/programs/us_grid_editor/us_grid_editor.h:31: warning: the name `Class' supplied as the argument of the \class, \struct, \union, or \include command is not an input file
+/home/haben/ultrascan3/programs/us_grid_editor/us_grid_editor.h:62: warning: the name `Class' supplied as the argument of the \class, \struct, \union, or \include command is not an input file
+/home/haben/ultrascan3/gui/us_failed_gmp_run_gui.cpp:1: warning: Found unknown command `\us_failed_gmp_run_gui'
+warning: Included by graph for 'us_extern.h' not generated, too many nodes. Consider increasing DOT_GRAPH_MAX_NODES.
+warning: Included by graph for 'us_settings.h' not generated, too many nodes. Consider increasing DOT_GRAPH_MAX_NODES.
+/home/haben/ultrascan3/programs/us_grid_editor/us_grid_editor.h:83: warning: argument 'component.' of command @param is not found in the argument list of GridPoint::set_component(const US_Model::SimulationComponent &component, const QVector< Attribute::Type > *types=nullptr)
+/home/haben/ultrascan3/programs/us_grid_editor/us_grid_editor.h:85: warning: The following parameters of GridPoint::set_component(const US_Model::SimulationComponent &component, const QVector< Attribute::Type > *types=nullptr) are not documented:
+  parameter 'component'
+  parameter 'types'
+/home/haben/ultrascan3/programs/us_grid_editor/us_grid_editor.h:77: warning: argument 'density.' of command @param is not found in the argument list of GridPoint::set_dens_visc_temp(double density, double viscosity, double T)
+/home/haben/ultrascan3/programs/us_grid_editor/us_grid_editor.h:77: warning: argument 'viscosity.' of command @param is not found in the argument list of GridPoint::set_dens_visc_temp(double density, double viscosity, double T)
+/home/haben/ultrascan3/programs/us_grid_editor/us_grid_editor.h:77: warning: argument 'temperature' of command @param is not found in the argument list of GridPoint::set_dens_visc_temp(double density, double viscosity, double T)
+/home/haben/ultrascan3/programs/us_grid_editor/us_grid_editor.h:81: warning: The following parameters of GridPoint::set_dens_visc_temp(double density, double viscosity, double T) are not documented:
+  parameter 'density'
+  parameter 'viscosity'
+  parameter 'T'
+/home/haben/ultrascan3/programs/us_grid_editor/us_grid_editor.h:92: warning: argument 'id.' of command @param is not found in the argument list of GridPoint::set_id(int id)
+/home/haben/ultrascan3/programs/us_grid_editor/us_grid_editor.h:94: warning: The following parameters of GridPoint::set_id(int id) are not documented:
+  parameter 'id'
+/home/haben/ultrascan3/programs/us_grid_editor/us_grid_editor.h:96: warning: argument 'row.' of command @param is not found in the argument list of GridPoint::set_row_col(int row, int column)
+/home/haben/ultrascan3/programs/us_grid_editor/us_grid_editor.h:99: warning: The following parameters of GridPoint::set_row_col(int row, int column) are not documented:
+  parameter 'row'
+/home/haben/ultrascan3/programs/us_grid_editor/us_grid_editor.h:88: warning: argument 'Attribute' of command @param is not found in the argument list of GridPoint::value(Attribute::Type type) const
+/home/haben/ultrascan3/programs/us_grid_editor/us_grid_editor.h:88: warning: argument 'Type.' of command @param is not found in the argument list of GridPoint::value(Attribute::Type type) const
+/home/haben/ultrascan3/programs/us_grid_editor/us_grid_editor.h:90: warning: The following parameters of GridPoint::value(Attribute::Type type) const are not documented:
+  parameter 'type'
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:722: warning: argument 'analysisData' of command @param is not found in the argument list of US_Analysis_auto::analysis_complete_auto(QMap< QString, QString > &)
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:652: warning: argument 'analysisID' of command @param is not found in the argument list of US_Analysis_auto::check_fitmen_status(const QString &requestID, const QString &stageName)
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:652: warning: argument 'status' of command @param is not found in the argument list of US_Analysis_auto::check_fitmen_status(const QString &requestID, const QString &stageName)
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:657: warning: The following parameters of US_Analysis_auto::check_fitmen_status(const QString &requestID, const QString &stageName) are not documented:
+  parameter 'requestID'
+  parameter 'stageName'
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:492: warning: argument 'editData' of command @param is not found in the argument list of US_Analysis_auto::count_noise_auto(US_DataIO::EditedData *edata, US_Model *model, QStringList &mieGUIDs, QStringList &nieGUIDs)
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:492: warning: argument 'modelData' of command @param is not found in the argument list of US_Analysis_auto::count_noise_auto(US_DataIO::EditedData *edata, US_Model *model, QStringList &mieGUIDs, QStringList &nieGUIDs)
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:492: warning: argument 'noiseIDs' of command @param is not found in the argument list of US_Analysis_auto::count_noise_auto(US_DataIO::EditedData *edata, US_Model *model, QStringList &mieGUIDs, QStringList &nieGUIDs)
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:492: warning: argument 'noiseTypes' of command @param is not found in the argument list of US_Analysis_auto::count_noise_auto(US_DataIO::EditedData *edata, US_Model *model, QStringList &mieGUIDs, QStringList &nieGUIDs)
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:499: warning: The following parameters of US_Analysis_auto::count_noise_auto(US_DataIO::EditedData *edata, US_Model *model, QStringList &mieGUIDs, QStringList &nieGUIDs) are not documented:
+  parameter 'edata'
+  parameter 'model'
+  parameter 'mieGUIDs'
+  parameter 'nieGUIDs'
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:542: warning: argument 'title' of command @param is not found in the argument list of US_Analysis_auto::createGroup(QString &triple_name)
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:546: warning: The following parameters of US_Analysis_auto::createGroup(QString &triple_name) are not documented:
+  parameter 'triple_name'
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:660: warning: argument 'jobID' of command @param is not found in the argument list of US_Analysis_auto::delete_job(QString triple_stage)
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:663: warning: The following parameters of US_Analysis_auto::delete_job(QString triple_stage) are not documented:
+  parameter 'triple_stage'
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:666: warning: argument 'jobData' of command @param is not found in the argument list of US_Analysis_auto::delete_jobs_at_fitmen(QMap< QString, QString > &triple_info)
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:669: warning: The following parameters of US_Analysis_auto::delete_jobs_at_fitmen(QMap< QString, QString > &triple_info) are not documented:
+  parameter 'triple_info'
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:381: warning: argument 'editData' of command @param is not found in the argument list of US_Analysis_auto::edit_update_auto(QMap< QString, QString > &triple_information)
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:384: warning: The following parameters of US_Analysis_auto::edit_update_auto(QMap< QString, QString > &triple_information) are not documented:
+  parameter 'triple_information'
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:358: warning: argument 'fileData' of command @param is not found in the argument list of US_Analysis_auto::file_loaded_auto(QMap< QString, QString > &triple_information)
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:362: warning: The following parameters of US_Analysis_auto::file_loaded_auto(QMap< QString, QString > &triple_information) are not documented:
+  parameter 'triple_information'
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:352: warning: argument 'profile' of command @param is not found in the argument list of US_Analysis_auto::get_editProfile_copy(QMap< QString, QString > &triple_information)
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:355: warning: The following parameters of US_Analysis_auto::get_editProfile_copy(QMap< QString, QString > &triple_information) are not documented:
+  parameter 'triple_information'
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:525: warning: argument 'fileID' of command @param is not found in the argument list of US_Analysis_auto::get_filename(QString triple_name)
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:529: warning: The following parameters of US_Analysis_auto::get_filename(QString triple_name) are not documented:
+  parameter 'triple_name'
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:337: warning: argument 'invID' of command @param is not found in the argument list of US_Analysis_auto::get_investigator_info(US_DB2 *db, const QString &ID)
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:342: warning: The following parameters of US_Analysis_auto::get_investigator_info(US_DB2 *db, const QString &ID) are not documented:
+  parameter 'ID'
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:502: warning: argument 'idType' of command @param is not found in the argument list of US_Analysis_auto::id_list_db_auto(QString daEditGUID)
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:506: warning: The following parameters of US_Analysis_auto::id_list_db_auto(QString daEditGUID) are not documented:
+  parameter 'daEditGUID'
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:590: warning: argument 'panelData' of command @param is not found in the argument list of US_Analysis_auto::initPanel(QMap< QString, QString > &protocol_details)
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:593: warning: The following parameters of US_Analysis_auto::initPanel(QMap< QString, QString > &protocol_details) are not documented:
+  parameter 'protocol_details'
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:688: warning: argument 'x' of command @param is not found in the argument list of US_Analysis_auto::interp_sval(double xv, double *sx, double *sy, int ssize)
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:688: warning: argument 'xVals' of command @param is not found in the argument list of US_Analysis_auto::interp_sval(double xv, double *sx, double *sy, int ssize)
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:688: warning: argument 'yVals' of command @param is not found in the argument list of US_Analysis_auto::interp_sval(double xv, double *sx, double *sy, int ssize)
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:688: warning: argument 'n' of command @param is not found in the argument list of US_Analysis_auto::interp_sval(double xv, double *sx, double *sy, int ssize)
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:695: warning: The following parameters of US_Analysis_auto::interp_sval(double xv, double *sx, double *sy, int ssize) are not documented:
+  parameter 'xv'
+  parameter 'sx'
+  parameter 'sy'
+  parameter 'ssize'
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:365: warning: argument 'fileName' of command @param is not found in the argument list of US_Analysis_auto::load_data_auto(const QString &text_content)
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:368: warning: The following parameters of US_Analysis_auto::load_data_auto(const QString &text_content) are not documented:
+  parameter 'text_content'
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:466: warning: argument 'dataMap' of command @param is not found in the argument list of US_Analysis_auto::loadData(QMap< QString, QString > &triple_information)
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:470: warning: The following parameters of US_Analysis_auto::loadData(QMap< QString, QString > &triple_information) are not documented:
+  parameter 'triple_information'
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:473: warning: argument 'dataMap' of command @param is not found in the argument list of US_Analysis_auto::loadModel(QMap< QString, QString > &triple_information)
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:477: warning: The following parameters of US_Analysis_auto::loadModel(QMap< QString, QString > &triple_information) are not documented:
+  parameter 'triple_information'
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:480: warning: argument 'dataMap' of command @param is not found in the argument list of US_Analysis_auto::loadNoises(QMap< QString, QString > &triple_information)
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:484: warning: The following parameters of US_Analysis_auto::loadNoises(QMap< QString, QString > &triple_information) are not documented:
+  parameter 'triple_information'
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:509: warning: argument 'editID' of command @param is not found in the argument list of US_Analysis_auto::models_in_edit_auto(QString eGUID, QStringList &mGUIDs)
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:509: warning: argument 'modelIDs' of command @param is not found in the argument list of US_Analysis_auto::models_in_edit_auto(QString eGUID, QStringList &mGUIDs)
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:514: warning: The following parameters of US_Analysis_auto::models_in_edit_auto(QString eGUID, QStringList &mGUIDs) are not documented:
+  parameter 'eGUID'
+  parameter 'mGUIDs'
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:418: warning: argument 'editID' of command @param is not found in the argument list of US_Analysis_auto::noises_in_edit(QString modDesc, QStringList &nieDescs, QStringList &nieIDs, QStringList &nieFnams, QString invID)
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:418: warning: argument 'noiseIDs' of command @param is not found in the argument list of US_Analysis_auto::noises_in_edit(QString modDesc, QStringList &nieDescs, QStringList &nieIDs, QStringList &nieFnams, QString invID)
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:418: warning: argument 'noiseEdIDs' of command @param is not found in the argument list of US_Analysis_auto::noises_in_edit(QString modDesc, QStringList &nieDescs, QStringList &nieIDs, QStringList &nieFnams, QString invID)
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:418: warning: argument 'noiseMoIDs' of command @param is not found in the argument list of US_Analysis_auto::noises_in_edit(QString modDesc, QStringList &nieDescs, QStringList &nieIDs, QStringList &nieFnams, QString invID)
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:418: warning: argument 'modelID' of command @param is not found in the argument list of US_Analysis_auto::noises_in_edit(QString modDesc, QStringList &nieDescs, QStringList &nieIDs, QStringList &nieFnams, QString invID)
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:425: warning: The following parameters of US_Analysis_auto::noises_in_edit(QString modDesc, QStringList &nieDescs, QStringList &nieIDs, QStringList &nieFnams, QString invID) are not documented:
+  parameter 'modDesc'
+  parameter 'nieDescs'
+  parameter 'nieIDs'
+  parameter 'nieFnams'
+  parameter 'invID'
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:517: warning: argument 'modelID' of command @param is not found in the argument list of US_Analysis_auto::noises_in_model_auto(QString mGUID, QStringList &nGUIDs)
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:517: warning: argument 'noiseIDs' of command @param is not found in the argument list of US_Analysis_auto::noises_in_model_auto(QString mGUID, QStringList &nGUIDs)
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:522: warning: The following parameters of US_Analysis_auto::noises_in_model_auto(QString mGUID, QStringList &nGUIDs) are not documented:
+  parameter 'mGUID'
+  parameter 'nGUIDs'
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:321: warning: argument 'analysisID' of command @param is not found in the argument list of US_Analysis_auto::read_autoflowAnalysis_record(US_DB2 *db, const QString &requestID)
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:326: warning: The following parameters of US_Analysis_auto::read_autoflowAnalysis_record(US_DB2 *db, const QString &requestID) are not documented:
+  parameter 'requestID'
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:329: warning: argument 'analysisID' of command @param is not found in the argument list of US_Analysis_auto::read_autoflowAnalysisHistory_record(US_DB2 *db, const QString &requestID)
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:334: warning: The following parameters of US_Analysis_auto::read_autoflowAnalysisHistory_record(US_DB2 *db, const QString &requestID) are not documented:
+  parameter 'requestID'
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:387: warning: argument 'analysisID' of command @param is not found in the argument list of US_Analysis_auto::read_autoflowAnalysisStages(const QString &requestID)
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:391: warning: The following parameters of US_Analysis_auto::read_autoflowAnalysisStages(const QString &requestID) are not documented:
+  parameter 'requestID'
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:443: warning: argument 'analysisID' of command @param is not found in the argument list of US_Analysis_auto::record_or_update_analysis_cancel_status(US_DB2 *db, QString triple_name, QString other_chan_triples, QString comment_t)
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:443: warning: argument 'status' of command @param is not found in the argument list of US_Analysis_auto::record_or_update_analysis_cancel_status(US_DB2 *db, QString triple_name, QString other_chan_triples, QString comment_t)
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:443: warning: argument 'reason' of command @param is not found in the argument list of US_Analysis_auto::record_or_update_analysis_cancel_status(US_DB2 *db, QString triple_name, QString other_chan_triples, QString comment_t)
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:449: warning: The following parameters of US_Analysis_auto::record_or_update_analysis_cancel_status(US_DB2 *db, QString triple_name, QString other_chan_triples, QString comment_t) are not documented:
+  parameter 'triple_name'
+  parameter 'other_chan_triples'
+  parameter 'comment_t'
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:435: warning: argument 'analysisID' of command @param is not found in the argument list of US_Analysis_auto::record_or_update_analysis_meniscus_status(US_DB2 *db, QString triple_name, QString FMB_changed)
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:435: warning: argument 'status' of command @param is not found in the argument list of US_Analysis_auto::record_or_update_analysis_meniscus_status(US_DB2 *db, QString triple_name, QString FMB_changed)
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:440: warning: The following parameters of US_Analysis_auto::record_or_update_analysis_meniscus_status(US_DB2 *db, QString triple_name, QString FMB_changed) are not documented:
+  parameter 'triple_name'
+  parameter 'FMB_changed'
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:407: warning: argument 'modelID' of command @param is not found in the argument list of US_Analysis_auto::remove_models_auto(QString invID)
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:410: warning: The following parameters of US_Analysis_auto::remove_models_auto(QString invID) are not documented:
+  parameter 'invID'
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:394: warning: argument 'analysisID' of command @param is not found in the argument list of US_Analysis_auto::revert_autoflow_analysis_stages_record(const QString &requestID)
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:397: warning: The following parameters of US_Analysis_auto::revert_autoflow_analysis_stages_record(const QString &requestID) are not documented:
+  parameter 'requestID'
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:346: warning: argument 'analysisData' of command @param is not found in the argument list of US_Analysis_auto::scan_dbase_auto(QMap< QString, QString > &triple_information)
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:349: warning: The following parameters of US_Analysis_auto::scan_dbase_auto(QMap< QString, QString > &triple_information) are not documented:
+  parameter 'triple_information'
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:672: warning: argument 'analysisID' of command @param is not found in the argument list of US_Analysis_auto::show_overlay(QString triple_stage)
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:675: warning: The following parameters of US_Analysis_auto::show_overlay(QString triple_stage) are not documented:
+  parameter 'triple_stage'
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:572: warning: argument 'threadID' of command @param is not found in the argument list of US_Analysis_auto::thread_complete(int thr)
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:575: warning: The following parameters of US_Analysis_auto::thread_complete(int thr) are not documented:
+  parameter 'thr'
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:565: warning: argument 'threadID' of command @param is not found in the argument list of US_Analysis_auto::thread_progress(int thr, int icomp)
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:565: warning: argument 'progress' of command @param is not found in the argument list of US_Analysis_auto::thread_progress(int thr, int icomp)
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:569: warning: The following parameters of US_Analysis_auto::thread_progress(int thr, int icomp) are not documented:
+  parameter 'thr'
+  parameter 'icomp'
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:428: warning: argument 'analysisIDs' of command @param is not found in the argument list of US_Analysis_auto::update_autoflowAnalysis_status_at_fitmen(US_DB2 *db, const QStringList &requestID_list)
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:432: warning: The following parameters of US_Analysis_auto::update_autoflowAnalysis_status_at_fitmen(US_DB2 *db, const QStringList &requestID_list) are not documented:
+  parameter 'requestID_list'
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:631: warning: argument 'analysisData' of command @param is not found in the argument list of US_Analysis_auto::update_autoflowAnalysis_statuses(QMap< QString, QString > &triple_info)
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:634: warning: The following parameters of US_Analysis_auto::update_autoflowAnalysis_statuses(QMap< QString, QString > &triple_info) are not documented:
+  parameter 'triple_info'
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:452: warning: argument 'analysisID' of command @param is not found in the argument list of US_Analysis_auto::update_autoflowAnalysis_uponDeletion(US_DB2 *db, const QString &requestID)
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:456: warning: The following parameters of US_Analysis_auto::update_autoflowAnalysis_uponDeletion(US_DB2 *db, const QString &requestID) are not documented:
+  parameter 'requestID'
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:459: warning: argument 'analysisIDs' of command @param is not found in the argument list of US_Analysis_auto::update_autoflowAnalysis_uponDeletion_other_wvl(US_DB2 *db, const QStringList &requestID_list)
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:463: warning: The following parameters of US_Analysis_auto::update_autoflowAnalysis_uponDeletion_other_wvl(US_DB2 *db, const QStringList &requestID_list) are not documented:
+  parameter 'requestID_list'
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:400: warning: argument 'editID' of command @param is not found in the argument list of US_Analysis_auto::update_db_edit(QString edtext, QString efilepath)
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:400: warning: argument 'editGUID' of command @param is not found in the argument list of US_Analysis_auto::update_db_edit(QString edtext, QString efilepath)
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:404: warning: The following parameters of US_Analysis_auto::update_db_edit(QString edtext, QString efilepath) are not documented:
+  parameter 'edtext'
+  parameter 'efilepath'
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:583: warning: argument 'progress' of command @param is not found in the argument list of US_Analysis_auto::update_progress(int icomp)
+/home/haben/ultrascan3/programs/us_autoflow_analysis/us_autoflow_analysis.h:586: warning: The following parameters of US_Analysis_auto::update_progress(int icomp) are not documented:
+  parameter 'icomp'
+/home/haben/ultrascan3/utils/us_archive.h:23: warning: argument 'sourcePathList' of command @param is not found in the argument list of US_Archive::compress(const QStringList &list, QString &filename)
+/home/haben/ultrascan3/utils/us_archive.h:23: warning: argument 'archivePath' of command @param is not found in the argument list of US_Archive::compress(const QStringList &list, QString &filename)
+/home/haben/ultrascan3/utils/us_archive.h:29: warning: The following parameters of US_Archive::compress(const QStringList &list, QString &filename) are not documented:
+  parameter 'list'
+  parameter 'filename'
+/home/haben/ultrascan3/utils/us_archive.h:16: warning: argument 'archivePath' of command @param is not found in the argument list of US_Archive::extract(const QString &filename, const QString &path="", QStringList *file_list=nullptr)
+/home/haben/ultrascan3/utils/us_archive.h:16: warning: argument 'outputPath' of command @param is not found in the argument list of US_Archive::extract(const QString &filename, const QString &path="", QStringList *file_list=nullptr)
+/home/haben/ultrascan3/utils/us_archive.h:16: warning: argument 'outputFileList' of command @param is not found in the argument list of US_Archive::extract(const QString &filename, const QString &path="", QStringList *file_list=nullptr)
+/home/haben/ultrascan3/utils/us_archive.h:21: warning: The following parameters of US_Archive::extract(const QString &filename, const QString &path="", QStringList *file_list=nullptr) are not documented:
+  parameter 'filename'
+  parameter 'path'
+  parameter 'file_list'
+/home/haben/ultrascan3/utils/us_archive.h:41: warning: argument 'relative_path' of command @param is not found in the argument list of US_Archive::itemAdded(const QString &, const QString &)
+/home/haben/ultrascan3/utils/us_archive.h:41: warning: argument 'absolute_path' of command @param is not found in the argument list of US_Archive::itemAdded(const QString &, const QString &)
+/home/haben/ultrascan3/utils/us_archive.h:36: warning: argument 'relative_path' of command @param is not found in the argument list of US_Archive::itemExtracted(const QString &, const QString &)
+/home/haben/ultrascan3/utils/us_archive.h:36: warning: argument 'absolute_path' of command @param is not found in the argument list of US_Archive::itemExtracted(const QString &, const QString &)
+/home/haben/ultrascan3/utils/us_archive.h:51: warning: argument 'absolute_path' of command @param is not found in the argument list of US_Archive::list_files(const QString &abs_path, const QString &base_dir)
+/home/haben/ultrascan3/utils/us_archive.h:51: warning: argument 'relative_path' of command @param is not found in the argument list of US_Archive::list_files(const QString &abs_path, const QString &base_dir)
+/home/haben/ultrascan3/utils/us_archive.h:54: warning: The following parameters of US_Archive::list_files(const QString &abs_path, const QString &base_dir) are not documented:
+  parameter 'abs_path'
+  parameter 'base_dir'
+/home/haben/ultrascan3/programs/us_audit_trail_gmp/us_audit_trail_gmp.h:152: warning: The following parameters of US_auditTrailGMP::read_autoflowStatus_record(QString &status, QString &runID, QString &protocolName, QString &investigatorName, QString &expType, QString &date, QString &filename, QString &projectName, QString &solutionName, QString &bufferName, QString &analyteName, QString &gradientName, QString &hardwareName, QString &aprofileName, QString &aprofileGUID, QString &dataSource, QString &analysisABDEJson, QString &analysisABDEts) are not documented:
+  parameter 'analysisABDEJson'
+  parameter 'analysisABDEts'
+/home/haben/ultrascan3/gui/us_buffer_gui.h:342: warning: argument 'load_id' of command @param is not found in the argument list of US_BufferGui::US_BufferGui(bool signal_wanted=false, const US_Buffer &buf=US_Buffer(), int select_db_disk=US_Disk_DB_Controls::Default)
+/home/haben/ultrascan3/gui/us_buffer_gui.h:31: warning: argument 'load_id' of command @param is not found in the argument list of US_BufferGuiSelect::US_BufferGuiSelect(int *invID, int *select_db_disk, US_Buffer *tmp_buffer)
+/home/haben/ultrascan3/utils/us_csv_data.h:75: warning: argument 'headers' of command @param is not found in the argument list of US_CSV_Data::setFilePath(const QString &filePath)
+/home/haben/ultrascan3/utils/us_csv_data.h:75: warning: argument 'columns' of command @param is not found in the argument list of US_CSV_Data::setFilePath(const QString &filePath)
+/home/haben/ultrascan3/utils/us_csv_data.h:81: warning: The following parameters of US_CSV_Data::setFilePath(const QString &filePath) are not documented:
+  parameter 'filePath'
+/home/haben/ultrascan3/gui/us_csv_loader.h:163: warning: argument 'filePath' of command @param is not found in the argument list of US_CSV_Loader::check_file(const QString &filepath)
+/home/haben/ultrascan3/gui/us_csv_loader.h:167: warning: The following parameters of US_CSV_Loader::check_file(const QString &filepath) are not documented:
+  parameter 'filepath'
+/home/haben/ultrascan3/gui/us_csv_loader.h:216: warning: argument 'columnCount' of command @param is not found in the argument list of US_CSV_Loader::fill_table(int id)
+/home/haben/ultrascan3/gui/us_csv_loader.h:219: warning: The following parameters of US_CSV_Loader::fill_table(int id) are not documented:
+  parameter 'id'
+/home/haben/ultrascan3/gui/us_csv_loader.h:170: warning: argument 'count' of command @param is not found in the argument list of US_CSV_Loader::gen_alpha_list(int num)
+/home/haben/ultrascan3/gui/us_csv_loader.h:174: warning: The following parameters of US_CSV_Loader::gen_alpha_list(int num) are not documented:
+  parameter 'num'
+/home/haben/ultrascan3/gui/us_csv_loader.h:222: warning: argument 'delimiter' of command @param is not found in the argument list of US_CSV_Loader::new_delimiter(const QString &)
+/home/haben/ultrascan3/gui/us_csv_loader.h:156: warning: argument 'filePath' of command @param is not found in the argument list of US_CSV_Loader::parse_dsp_file(const QString &filepath)
+/home/haben/ultrascan3/gui/us_csv_loader.h:160: warning: The following parameters of US_CSV_Loader::parse_dsp_file(const QString &filepath) are not documented:
+  parameter 'filepath'
+/home/haben/ultrascan3/gui/us_csv_loader.h:149: warning: argument 'filePath' of command @param is not found in the argument list of US_CSV_Loader::parse_file(const QString &filepath)
+/home/haben/ultrascan3/gui/us_csv_loader.h:153: warning: The following parameters of US_CSV_Loader::parse_file(const QString &filepath) are not documented:
+  parameter 'filepath'
+/home/haben/ultrascan3/programs/us_globalequil/us_eqfit_control.h:23: warning: argument 'scan_fits' of command @param is not found in the argument list of US_EqFitControl::US_EqFitControl(QVector< EqScanFit > &a_scanfits, EqRunFit &a_runfit, US_DataIO::EditedData *a_edata, US_EqMath *a_emath, US_EqReporter *a_ereporter, int a_modelx, QStringList a_models, bool &a_fWidget, int &a_selscan)
+/home/haben/ultrascan3/programs/us_globalequil/us_eqfit_control.h:23: warning: argument 'run_fit' of command @param is not found in the argument list of US_EqFitControl::US_EqFitControl(QVector< EqScanFit > &a_scanfits, EqRunFit &a_runfit, US_DataIO::EditedData *a_edata, US_EqMath *a_emath, US_EqReporter *a_ereporter, int a_modelx, QStringList a_models, bool &a_fWidget, int &a_selscan)
+/home/haben/ultrascan3/programs/us_globalequil/us_eqfit_control.h:23: warning: argument 'edata' of command @param is not found in the argument list of US_EqFitControl::US_EqFitControl(QVector< EqScanFit > &a_scanfits, EqRunFit &a_runfit, US_DataIO::EditedData *a_edata, US_EqMath *a_emath, US_EqReporter *a_ereporter, int a_modelx, QStringList a_models, bool &a_fWidget, int &a_selscan)
+/home/haben/ultrascan3/programs/us_globalequil/us_eqfit_control.h:23: warning: argument 'emath' of command @param is not found in the argument list of US_EqFitControl::US_EqFitControl(QVector< EqScanFit > &a_scanfits, EqRunFit &a_runfit, US_DataIO::EditedData *a_edata, US_EqMath *a_emath, US_EqReporter *a_ereporter, int a_modelx, QStringList a_models, bool &a_fWidget, int &a_selscan)
+/home/haben/ultrascan3/programs/us_globalequil/us_eqfit_control.h:23: warning: argument 'ereporter' of command @param is not found in the argument list of US_EqFitControl::US_EqFitControl(QVector< EqScanFit > &a_scanfits, EqRunFit &a_runfit, US_DataIO::EditedData *a_edata, US_EqMath *a_emath, US_EqReporter *a_ereporter, int a_modelx, QStringList a_models, bool &a_fWidget, int &a_selscan)
+/home/haben/ultrascan3/programs/us_globalequil/us_eqfit_control.h:23: warning: argument 'model_index' of command @param is not found in the argument list of US_EqFitControl::US_EqFitControl(QVector< EqScanFit > &a_scanfits, EqRunFit &a_runfit, US_DataIO::EditedData *a_edata, US_EqMath *a_emath, US_EqReporter *a_ereporter, int a_modelx, QStringList a_models, bool &a_fWidget, int &a_selscan)
+/home/haben/ultrascan3/programs/us_globalequil/us_eqfit_control.h:23: warning: argument 'model_titles' of command @param is not found in the argument list of US_EqFitControl::US_EqFitControl(QVector< EqScanFit > &a_scanfits, EqRunFit &a_runfit, US_DataIO::EditedData *a_edata, US_EqMath *a_emath, US_EqReporter *a_ereporter, int a_modelx, QStringList a_models, bool &a_fWidget, int &a_selscan)
+/home/haben/ultrascan3/programs/us_globalequil/us_eqfit_control.h:23: warning: argument 'fitting_widget_created' of command @param is not found in the argument list of US_EqFitControl::US_EqFitControl(QVector< EqScanFit > &a_scanfits, EqRunFit &a_runfit, US_DataIO::EditedData *a_edata, US_EqMath *a_emath, US_EqReporter *a_ereporter, int a_modelx, QStringList a_models, bool &a_fWidget, int &a_selscan)
+/home/haben/ultrascan3/programs/us_globalequil/us_eqfit_control.h:23: warning: argument 'selected_scan' of command @param is not found in the argument list of US_EqFitControl::US_EqFitControl(QVector< EqScanFit > &a_scanfits, EqRunFit &a_runfit, US_DataIO::EditedData *a_edata, US_EqMath *a_emath, US_EqReporter *a_ereporter, int a_modelx, QStringList a_models, bool &a_fWidget, int &a_selscan)
+/home/haben/ultrascan3/programs/us_globalequil/us_eqfit_control.h:33: warning: The following parameters of US_EqFitControl::US_EqFitControl(QVector< EqScanFit > &a_scanfits, EqRunFit &a_runfit, US_DataIO::EditedData *a_edata, US_EqMath *a_emath, US_EqReporter *a_ereporter, int a_modelx, QStringList a_models, bool &a_fWidget, int &a_selscan) are not documented:
+  parameter 'a_scanfits'
+  parameter 'a_runfit'
+  parameter 'a_edata'
+  parameter 'a_emath'
+  parameter 'a_ereporter'
+  parameter 'a_modelx'
+  parameter 'a_models'
+  parameter 'a_fWidget'
+  parameter 'a_selscan'
+/home/haben/ultrascan3/programs/us_esigner_gmp/us_esigner_gmp.cpp:2782: warning: Invalid list item found
+/home/haben/ultrascan3/gui/us_failed_gmp_run_gui.cpp:1: warning: Found unknown command `\us_failed_gmp_run_gui'
+/home/haben/ultrascan3/gui/us_failed_gmp_run_gui.cpp:1: warning: Found unknown command `\us_failed_gmp_run_gui'
+/home/haben/ultrascan3/programs/us_protocol_dev/us_protocol_dev_gui.h:176: warning: argument 'records' of command @param is not found in the argument list of US_InitDialogueGui::list_all_autoflow_records(QList< QStringList > &autoflowdata, US_DB2 *dbP, QString type)
+/home/haben/ultrascan3/programs/us_protocol_dev/us_protocol_dev_gui.h:176: warning: argument 'db' of command @param is not found in the argument list of US_InitDialogueGui::list_all_autoflow_records(QList< QStringList > &autoflowdata, US_DB2 *dbP, QString type)
+/home/haben/ultrascan3/programs/us_protocol_dev/us_protocol_dev_gui.h:176: warning: argument 'status' of command @param is not found in the argument list of US_InitDialogueGui::list_all_autoflow_records(QList< QStringList > &autoflowdata, US_DB2 *dbP, QString type)
+/home/haben/ultrascan3/programs/us_protocol_dev/us_protocol_dev_gui.h:182: warning: The following parameters of US_InitDialogueGui::list_all_autoflow_records(QList< QStringList > &autoflowdata, US_DB2 *dbP, QString type) are not documented:
+  parameter 'autoflowdata'
+  parameter 'dbP'
+  parameter 'type'
+/home/haben/ultrascan3/programs/us_legacy_converter/us_legacy_converter.h:81: warning: argument 'absolute' of command @param is not found in the argument list of US_LegacyConverter::itemExtracted(const QString &relative, const QString &)
+/home/haben/ultrascan3/programs/us_modelmetrics/us_modelmetrics.h:249: warning: The following parameters of US_ModelMetrics::table_row(const int row, const QString &col1, const QString &col2, const QString &col3, const QString &col4, const QString &col5, const QString &col6) const are not documented:
+  parameter 'col6'
+/home/haben/ultrascan3/programs/us_abde/us_norm_profile.h:132: warning: argument 'imin' of command @param is not found in the argument list of US_Norm_Profile::getXlimit(QVector< double > x, double xmin, double xmax)
+/home/haben/ultrascan3/programs/us_abde/us_norm_profile.h:132: warning: argument 'imax' of command @param is not found in the argument list of US_Norm_Profile::getXlimit(QVector< double > x, double xmin, double xmax)
+/home/haben/ultrascan3/gui/us_plot3d.h:32: warning: The following parameters of US_Plot3D::US_Plot3D(QWidget *p=NULL, US_Model *m=NULL, QVector< QVector3D > *d=NULL) are not documented:
+  parameter 'd'
+/home/haben/ultrascan3/gui/us_plot3d.h:57: warning: argument 'x_scale' of command @param is not found in the argument list of US_Plot3D::setParameters(int a_gridy, int a_gridx, double x_scale_in=1.0, double y_scale_in=1.0, double z_scale_in=1.0, double a_alpha=0.0, double a_beta=0.0)
+/home/haben/ultrascan3/gui/us_plot3d.h:57: warning: argument 'y_scale' of command @param is not found in the argument list of US_Plot3D::setParameters(int a_gridy, int a_gridx, double x_scale_in=1.0, double y_scale_in=1.0, double z_scale_in=1.0, double a_alpha=0.0, double a_beta=0.0)
+/home/haben/ultrascan3/gui/us_plot3d.h:57: warning: argument 'z_scale' of command @param is not found in the argument list of US_Plot3D::setParameters(int a_gridy, int a_gridx, double x_scale_in=1.0, double y_scale_in=1.0, double z_scale_in=1.0, double a_alpha=0.0, double a_beta=0.0)
+/home/haben/ultrascan3/gui/us_plot3d.h:65: warning: The following parameters of US_Plot3D::setParameters(int a_gridy, int a_gridx, double x_scale_in=1.0, double y_scale_in=1.0, double z_scale_in=1.0, double a_alpha=0.0, double a_beta=0.0) are not documented:
+  parameter 'x_scale_in'
+  parameter 'y_scale_in'
+  parameter 'z_scale_in'
+/home/haben/ultrascan3/gui/us_plot3d.h:68: warning: argument 'z_scale' of command @param is not found in the argument list of US_Plot3D::setParameters(double z_scale_in, double a_gridr_in, double a_alpha_in, double a_beta_in, double x_scale_in=1.0, double y_scale_in=1.0)
+/home/haben/ultrascan3/gui/us_plot3d.h:68: warning: argument 'a_gridr' of command @param is not found in the argument list of US_Plot3D::setParameters(double z_scale_in, double a_gridr_in, double a_alpha_in, double a_beta_in, double x_scale_in=1.0, double y_scale_in=1.0)
+/home/haben/ultrascan3/gui/us_plot3d.h:68: warning: argument 'a_alpha' of command @param is not found in the argument list of US_Plot3D::setParameters(double z_scale_in, double a_gridr_in, double a_alpha_in, double a_beta_in, double x_scale_in=1.0, double y_scale_in=1.0)
+/home/haben/ultrascan3/gui/us_plot3d.h:68: warning: argument 'a_beta' of command @param is not found in the argument list of US_Plot3D::setParameters(double z_scale_in, double a_gridr_in, double a_alpha_in, double a_beta_in, double x_scale_in=1.0, double y_scale_in=1.0)
+/home/haben/ultrascan3/gui/us_plot3d.h:68: warning: argument 'x_scale' of command @param is not found in the argument list of US_Plot3D::setParameters(double z_scale_in, double a_gridr_in, double a_alpha_in, double a_beta_in, double x_scale_in=1.0, double y_scale_in=1.0)
+/home/haben/ultrascan3/gui/us_plot3d.h:68: warning: argument 'y_scale' of command @param is not found in the argument list of US_Plot3D::setParameters(double z_scale_in, double a_gridr_in, double a_alpha_in, double a_beta_in, double x_scale_in=1.0, double y_scale_in=1.0)
+/home/haben/ultrascan3/gui/us_plot3d.h:75: warning: The following parameters of US_Plot3D::setParameters(double z_scale_in, double a_gridr_in, double a_alpha_in, double a_beta_in, double x_scale_in=1.0, double y_scale_in=1.0) are not documented:
+  parameter 'z_scale_in'
+  parameter 'a_gridr_in'
+  parameter 'a_alpha_in'
+  parameter 'a_beta_in'
+  parameter 'x_scale_in'
+  parameter 'y_scale_in'
+/home/haben/ultrascan3/programs/us_predict2/us_predict2.cpp:476: warning: argument 'order' of command @param is not found in the argument list of US_Predict2::root(int shape, double goal)
+/home/haben/ultrascan3/programs/us_predict2/us_predict2.cpp:476: warning: argument 'value' of command @param is not found in the argument list of US_Predict2::root(int shape, double goal)
+/home/haben/ultrascan3/gui/us_sim_params_gui.h:17: warning: argument 'load_file' of command @param is not found in the argument list of US_SimParamsGui::US_SimParamsGui(US_SimulationParameters &params)
+/home/haben/ultrascan3/utils/us_tar.h:45: warning: argument 'path' of command @param is not found in the argument list of US_Tar::extract(const QString &archive, QStringList *list=0, const QString &outpath=0)
+/home/haben/ultrascan3/utils/us_tar.h:51: warning: The following parameters of US_Tar::extract(const QString &archive, QStringList *list=0, const QString &outpath=0) are not documented:
+  parameter 'outpath'
+/home/haben/ultrascan3/gui/us_new_spectrum.cpp:335: warning: argument 'tmp_extinction' of command @param is not found in the argument list of US_ViewSpectrum::US_ViewSpectrum(QMap< double, double > &tmp_extinciton)
+/home/haben/ultrascan3/gui/us_new_spectrum.h:105: warning: The following parameters of US_ViewSpectrum::US_ViewSpectrum(QMap< double, double > &tmp_extinciton) are not documented:
+  parameter 'tmp_extinciton'
+/home/haben/ultrascan3/gui/us_widgets_dialog.h:36: warning: The following parameters of US_WidgetsDialog::US_WidgetsDialog(QWidget *w, Qt::WindowFlags f=0, bool set_style=true) are not documented:
+  parameter 'set_style'

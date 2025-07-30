@@ -1,0 +1,9 @@
+<map id="US_AnalysisBase2" name="US_AnalysisBase2">
+<area shape="rect" id="node4" href="$classUS__2dsa.html" title="A class for 2&#45;dimensional spectrum analysis. " alt="" coords="5,229,80,256"/>
+<area shape="rect" id="node5" href="$classUS__Dcdt.html" title="A class for performing second moment (dc/dt) analysis. " alt="" coords="104,229,179,256"/>
+<area shape="rect" id="node6" href="$classUS__MwlSpeciesFit.html" title="Class for managing and performing multi&#45;wavelength species fit analysis. " alt="" coords="203,229,335,256"/>
+<area shape="rect" id="node7" href="$classUS__pcsa.html" title="Class for processing and analyzing PCSA data. " alt="" coords="360,229,435,256"/>
+<area shape="rect" id="node8" href="$classUS__SecondMoment.html" title="The US_SecondMoment class provides functionality for second moment analysis. " alt="" coords="459,229,597,256"/>
+<area shape="rect" id="node9" href="$classUS__vHW__Enhanced.html" title="The US_vHW_Enhanced class provides functionality for enhanced vHW analysis. " alt="" coords="622,229,762,256"/>
+<area shape="rect" id="node2" href="$classUS__Widgets.html" title="Set up widgets the UltraScan way. " alt="" coords="286,80,381,107"/>
+</map>

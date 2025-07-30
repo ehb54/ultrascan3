@@ -1,0 +1,24 @@
+<map id="US_PseudoAbsorbance" name="US_PseudoAbsorbance">
+<area shape="rect" id="node2" href="$classUS__Widgets.html" title="Set up widgets the UltraScan way. " alt="" coords="813,258,907,285"/>
+<area shape="rect" id="node6" href="$classUS__AddRefScan.html" title="The US_AddRefScan class handles the addition and management of reference scans in the application..." alt="" coords="1395,157,1515,184"/>
+<area shape="rect" id="node10" href="$classUS__Passwd.html" title="A class to get the user&#39;s master password. " alt="" coords="1099,30,1192,57"/>
+<area shape="rect" id="node11" href="$classUS__RemoveRI.html" title="The US_RemoveRI class provides functionality to remove refractive index (RI) effects from data..." alt="" coords="1401,378,1509,405"/>
+<area shape="rect" id="node28" href="$classUS__ConvertScan.html" title="US_ConvertScan" alt="" coords="1393,552,1516,578"/>
+<area shape="rect" id="node4" href="$classUS__Global.html" title="Manage shared memory. " alt="" coords="221,514,305,541"/>
+<area shape="rect" id="node16" href="$classUS__WidgetsDialog.html" title="Set up widgets the UltraScan way. " alt="" coords="365,765,496,792"/>
+<area shape="rect" id="node5" href="$classUS__Global_1_1Global.html" title="US_Global::Global" alt="" coords="5,514,135,541"/>
+<area shape="rect" id="node7" href="$classUS__RefScanDataIO_1_1RefData.html" title="Class to store reference scan data. " alt="" coords="1049,81,1242,108"/>
+<area shape="rect" id="node8" href="$classUS__DB2.html" title="This class provides connectivity and convenience functions for database access in the US3 system..." alt="" coords="1109,182,1181,209"/>
+<area shape="rect" id="node9" href="$classUS__AddRefScan_1_1currentValues.html" title="Holds the current values for reference scan calculations. " alt="" coords="1041,233,1249,260"/>
+<area shape="rect" id="node12" href="$classCCW.html" title="The CCW class represents a cross&#45;cell wavelength (CCW) list. " alt="" coords="1119,284,1171,310"/>
+<area shape="rect" id="node13" href="$classUS__Plot.html" title="A class that provides plot widgets. " alt="" coords="1110,664,1181,690"/>
+<area shape="rect" id="node29" href="$classUS__Disk__DB__Controls.html" title="Create a Lyaout with radio buttons for selection of disk or DB selection. " alt="" coords="1069,602,1222,629"/>
+<area shape="rect" id="node15" href="$classUS__PlotConfig.html" title="A window to allow customization of plots initialized. " alt="" coords="807,794,913,821"/>
+<area shape="rect" id="node18" href="$classUS__PlotCurveConfig.html" title="A window to customize plot curves. " alt="" coords="1075,812,1216,838"/>
+<area shape="rect" id="node21" href="$classUS__PlotAxisConfig.html" title="A window to customize plot axes. " alt="" coords="556,816,689,842"/>
+<area shape="rect" id="node22" href="$classUS__PlotGridConfig.html" title="A window to customize a plot&#39;s grid. " alt="" coords="557,866,688,893"/>
+<area shape="rect" id="node19" href="$classUS__PlotLabel.html" title="A window to customize plot labels. " alt="" coords="1404,796,1505,822"/>
+<area shape="rect" id="node23" href="$classUS__LineEdit__RE.html" title="US_LineEdit_RE" alt="" coords="1086,440,1205,466"/>
+<area shape="rect" id="node25" href="$classUS__PlotPicker.html" title="Customize plot picker characteristics and mouse events. " alt="" coords="1092,552,1199,578"/>
+<area shape="rect" id="node27" href="$classCCW__ITEM.html" title="The CCW_ITEM class represents items in a cross&#45;cell wavelength (CCW) list. " alt="" coords="1100,334,1191,361"/>
+</map>

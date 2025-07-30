@@ -1,0 +1,34 @@
+<map id="us_solution_gui.cpp" name="us_solution_gui.cpp">
+<area shape="rect" id="node2" href="$us__solution__gui_8h.html" title="us_solution_gui.h" alt="" coords="2659,80,2781,107"/>
+<area shape="rect" id="node15" href="$us__gui__settings_8h.html" title="us_gui_settings.h" alt="" coords="3809,677,3933,704"/>
+<area shape="rect" id="node18" href="$us__db2_8h.html" title="us_db2.h" alt="" coords="407,752,481,779"/>
+<area shape="rect" id="node21" href="$us__solution_8h.html" title="us_solution.h" alt="" coords="245,603,344,629"/>
+<area shape="rect" id="node24" href="$us__settings_8h.html" title="us_settings.h" alt="" coords="825,528,925,555"/>
+<area shape="rect" id="node51" href="$us__analyte__gui_8h.html" title="us_analyte_gui.h" alt="" coords="2425,304,2545,331"/>
+<area shape="rect" id="node62" href="$us__passwd_8h.html" title="us_passwd.h" alt="" coords="4821,528,4920,555"/>
+<area shape="rect" id="node63" href="$us__investigator_8h.html" title="us_investigator.h" alt="" coords="3862,304,3983,331"/>
+<area shape="rect" id="node64" href="$us__buffer__gui_8h.html" title="us_buffer_gui.h" alt="" coords="3259,80,3370,107"/>
+<area shape="rect" id="node3" href="$us__extern_8h.html" title="Defines macros for exporting and importing symbols in shared libraries. " alt="" coords="1661,827,1752,853"/>
+<area shape="rect" id="node4" href="$us__widgets_8h.html" title="us_widgets.h" alt="" coords="3421,603,3520,629"/>
+<area shape="rect" id="node16" href="$us__widgets__dialog_8h.html" title="us_widgets_dialog.h" alt="" coords="3544,603,3683,629"/>
+<area shape="rect" id="node17" href="$us__buffer_8h.html" title="us_buffer.h" alt="" coords="441,677,527,704"/>
+<area shape="rect" id="node20" href="$us__analyte_8h.html" title="us_analyte.h" alt="" coords="163,677,259,704"/>
+<area shape="rect" id="node22" href="$us__help_8h.html" title="us_help.h" alt="" coords="3630,379,3709,405"/>
+<area shape="rect" id="node23" href="$us__minimize_8h.html" title="us_minimize.h" alt="" coords="1221,453,1328,480"/>
+<area shape="rect" id="node47" href="$us__extinction__gui_8h.html" title="us_extinction_gui.h" alt="" coords="2653,229,2787,256"/>
+<area shape="rect" id="node48" href="$us__extinctfitter__gui_8h.html" title="us_extinctfitter_gui.h" alt="" coords="2757,379,2899,405"/>
+<area shape="rect" id="node61" href="$us__new__spectrum_8h.html" title="us_new_spectrum.h" alt="" coords="3048,155,3187,181"/>
+<area shape="rect" id="node12" href="$us__global_8h.html" title="us_global.h" alt="" coords="4008,677,4096,704"/>
+<area shape="rect" id="node25" href="$us__plot_8h.html" title="us_plot.h" alt="" coords="2549,528,2624,555"/>
+<area shape="rect" id="node36" href="$us__util_8h.html" title="us_util.h" alt="" coords="1130,752,1201,779"/>
+<area shape="rect" id="node37" href="$us__math2_8h.html" title="us_math2.h" alt="" coords="949,528,1040,555"/>
+<area shape="rect" id="node39" href="$us__matrix_8h.html" title="us_matrix.h" alt="" coords="5021,752,5112,779"/>
+<area shape="rect" id="node43" href="$us__timer_8h.html" title="Defines the US_Timer class for managing multiple timers. " alt="" coords="1233,528,1316,555"/>
+<area shape="rect" id="node38" href="$us__dataIO_8h.html" title="us_dataIO.h" alt="" coords="860,752,953,779"/>
+<area shape="rect" id="node53" href="$us__csv__loader_8h.html" title="us_csv_loader.h" alt="" coords="3991,528,4108,555"/>
+<area shape="rect" id="node50" href="$us__editor_8h.html" title="us_editor.h" alt="" coords="2683,677,2770,704"/>
+<area shape="rect" id="node52" href="$us__constants_8h.html" title="us_constants.h" alt="" coords="1225,752,1335,779"/>
+<area shape="rect" id="node54" href="$us__csv__data_8h.html" title="us_csv_data.h" alt="" coords="1512,752,1619,779"/>
+<area shape="rect" id="node65" href="$us__edit__spectrum_8h.html" title="us_edit_spectrum.h" alt="" coords="1001,155,1137,181"/>
+<area shape="rect" id="node66" href="$us__eprofile_8h.html" title="us_eprofile.h" alt="" coords="603,677,699,704"/>
+</map>

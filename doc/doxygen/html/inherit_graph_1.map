@@ -1,0 +1,31 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="node2" href="$classAttribute.html" title="Enumeration for attribute types. " alt="" coords="161,5,232,32"/>
+<area shape="rect" id="node3" href="$classLink.html" title="A class to manage SSL connections to a server. " alt="" coords="173,56,220,83"/>
+<area shape="rect" id="node4" href="$classThreadWorker.html" title="Worker thread to do Lamm equation calculations for us_fematch. " alt="" coords="145,107,248,133"/>
+<area shape="rect" id="node5" href="$classUS__2dsaProcess.html" title="2DSA Processor object " alt="" coords="135,157,258,184"/>
+<area shape="rect" id="node6" href="$classUS__Archive.html" title="A class to extract and compress archive files Supported files format: tar, tar.gz, tgz, tar.bz2, tar.xz, .zip. " alt="" coords="151,208,242,235"/>
+<area shape="rect" id="node7" href="$classUS__Astfem__RSA.html" title="The module that calculates simulation data. " alt="" coords="135,259,258,285"/>
+<area shape="rect" id="node8" href="$classUS__CfaData.html" title="US_CfaData" alt="" coords="149,309,244,336"/>
+<area shape="rect" id="node9" href="$classUS__DataModel.html" title="Class to manage data model operations, including database interactions and data processing. " alt="" coords="142,360,251,387"/>
+<area shape="rect" id="node10" href="$classUS__DataProcess.html" title="Class to manage data processing operations, including database interactions and file handling..." alt="" coords="135,411,258,437"/>
+<area shape="rect" id="node11" href="$classUS__DataTree.html" title="Class to manage the data tree, including building, expanding, and handling context menus..." alt="" coords="147,461,247,488"/>
+<area shape="rect" id="node12" href="$classUS__EqMath.html" title="A class for performing equilibrium mathematical calculations in UltraScan. " alt="" coords="151,512,243,539"/>
+<area shape="rect" id="node13" href="$classUS__EqReporter.html" title="A class for generating reports on equilibrium fitting in UltraScan. " alt="" coords="141,563,253,589"/>
+<area shape="rect" id="node14" href="$classUS__GetUrl.html" title="US_GetUrl" alt="" coords="155,613,239,640"/>
+<area shape="rect" id="node15" href="$classUS__Help.html" title="Launch help programs. " alt="" coords="160,664,233,691"/>
+<area shape="rect" id="node16" href="$classUS__HelpDaemon.html" title="Launch help programs. " alt="" coords="136,715,257,741"/>
+<area shape="rect" id="node17" href="$classUS__HttpPost.html" title="A text only class to manage HTTP requests. " alt="" coords="147,765,246,792"/>
+<area shape="rect" id="node18" href="$classUS__LammAstfvm.html" title="Module to calculate simulation data by AST Finite Volume Method. " alt="" coords="134,816,259,843"/>
+<area shape="rect" id="node19" href="$classUS__LoadableNoise.html" title="Count loadable noise available and set up for load. " alt="" coords="131,867,263,893"/>
+<area shape="rect" id="node20" href="$classUS__LoadRunNoise.html" title="Load the latest noises for a run and set up for edit loads. " alt="" coords="131,917,262,944"/>
+<area shape="rect" id="node21" href="$classUS__MPI__Analysis.html" title="Class for performing MPI&#45;based analysis. " alt="" coords="133,968,261,995"/>
+<area shape="rect" id="node22" href="$classUS__MwlData.html" title="US_MwlData" alt="" coords="148,1019,245,1045"/>
+<area shape="rect" id="node23" href="$classUS__mwlRamp.html" title="Class for Ramp Data: importing from raw files or loading from vectors of rawData. ..." alt="" coords="145,1069,249,1096"/>
+<area shape="rect" id="node24" href="$classUS__pcsaProcess.html" title="PCSA Processor object. " alt="" coords="135,1120,258,1147"/>
+<area shape="rect" id="node25" href="$classUS__SoluteData.html" title="US_SoluteData" alt="" coords="141,1171,252,1197"/>
+<area shape="rect" id="node26" href="$classUS__SolveSim.html" title="Solve a simulation, using an experiment data set, a model, and simulation parameters. " alt="" coords="145,1221,248,1248"/>
+<area shape="rect" id="node27" href="$classUS__SyncExperiment.html" title="US_SyncExperiment" alt="" coords="125,1272,268,1299"/>
+<area shape="rect" id="node28" href="$classUS__TimeState.html" title="A class for Time State details in time&#45;indexed data records. " alt="" coords="143,1323,250,1349"/>
+<area shape="rect" id="node29" href="$classUS__WindowMessage.html" title="Connect with window(s) for control messages. " alt="" coords="124,1373,269,1400"/>
+<area shape="rect" id="node30" href="$classUS__XpnData.html" title="US_XpnData" alt="" coords="148,1424,245,1451"/>
+</map>

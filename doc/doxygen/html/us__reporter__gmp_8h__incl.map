@@ -1,0 +1,68 @@
+<map id="us_reporter_gmp.h" name="us_reporter_gmp.h">
+<area shape="rect" id="node3" href="$us__widgets_8h.html" title="us_widgets.h" alt="" coords="2691,811,2789,837"/>
+<area shape="rect" id="node14" href="$us__extern_8h.html" title="Defines macros for exporting and importing symbols in shared libraries. " alt="" coords="5980,960,6071,987"/>
+<area shape="rect" id="node16" href="$us__db2_8h.html" title="us_db2.h" alt="" coords="9167,885,9241,912"/>
+<area shape="rect" id="node18" href="$us__passwd_8h.html" title="us_passwd.h" alt="" coords="1699,729,1797,755"/>
+<area shape="rect" id="node19" href="$us__run__protocol_8h.html" title="us_run_protocol.h" alt="" coords="8649,811,8775,837"/>
+<area shape="rect" id="node20" href="$us__protocol__util_8h.html" title="us_protocol_util.h" alt="" coords="7363,811,7487,837"/>
+<area shape="rect" id="node24" href="$us__analysis__profile_8h.html" title="../us_analysis_profile\l/us_analysis_profile.h" alt="" coords="3186,632,3334,673"/>
+<area shape="rect" id="node32" href="$us__help_8h.html" title="us_help.h" alt="" coords="5513,811,5591,837"/>
+<area shape="rect" id="node39" href="$us__fematch_8h.html" title="Contains the declaration of the US_FeMatch class and its members. " alt="" coords="6791,80,6977,107"/>
+<area shape="rect" id="node74" href="$us__solution_8h.html" title="us_solution.h" alt="" coords="9173,729,9272,755"/>
+<area shape="rect" id="node103" href="$us__ddist__combine_8h.html" title="../us_ddist_combine\l/us_ddist_combine.h" alt="" coords="4131,632,4274,673"/>
+<area shape="rect" id="node104" href="$us__pseudo3d__combine_8h.html" title="../us_pseudo3d_combine\l/us_pseudo3d_combine.h" alt="" coords="1011,543,1181,584"/>
+<area shape="rect" id="node113" href="$us__select__item_8h.html" title="us_select_item.h" alt="" coords="3153,729,3274,755"/>
+<area shape="rect" id="node114" href="$us__norm__profile_8h.html" title="Contains the declaration of the US_Norm_Profile class and its members. " alt="" coords="4262,453,4399,495"/>
+<area shape="rect" id="node11" href="$us__global_8h.html" title="us_global.h" alt="" coords="2529,885,2617,912"/>
+<area shape="rect" id="node15" href="$us__gui__settings_8h.html" title="us_gui_settings.h" alt="" coords="1638,885,1762,912"/>
+<area shape="rect" id="node21" href="$us__settings_8h.html" title="us_settings.h" alt="" coords="6819,885,6919,912"/>
+<area shape="rect" id="node22" href="$us__util_8h.html" title="us_util.h" alt="" coords="7283,885,7354,912"/>
+<area shape="rect" id="node23" href="$us__datafiles_8h.html" title="us_datafiles.h" alt="" coords="7481,885,7583,912"/>
+<area shape="rect" id="node27" href="$us__ana__profile_8h.html" title="us_ana_profile.h" alt="" coords="7043,729,7160,755"/>
+<area shape="rect" id="node28" href="$us__report__gmp_8h.html" title="Defines the US_ReportGMP class for managing GMP reports. " alt="" coords="6089,811,6207,837"/>
+<area shape="rect" id="node29" href="$us__editor_8h.html" title="us_editor.h" alt="" coords="1334,729,1421,755"/>
+<area shape="rect" id="node30" href="$us__investigator_8h.html" title="us_investigator.h" alt="" coords="2854,729,2975,755"/>
+<area shape="rect" id="node33" href="$us__select__runs_8h.html" title="us_select_runs.h" alt="" coords="4430,729,4551,755"/>
+<area shape="rect" id="node35" href="$us__report__gui_8h.html" title="us_report_gui.h" alt="" coords="5995,729,6106,755"/>
+<area shape="rect" id="node36" href="$us__scan__excl__gui_8h.html" title="us_scan_excl_gui.h" alt="" coords="2507,729,2645,755"/>
+<area shape="rect" id="node37" href="$us__report__general__gui_8h.html" title="us_report_general_gui.h" alt="" coords="2669,729,2829,755"/>
+<area shape="rect" id="node38" href="$us__combined__plots__parms__gui_8h.html" title="us_combined_plots_parms\l_gui.h" alt="" coords="2227,721,2405,763"/>
+<area shape="rect" id="node31" href="$us__widgets__dialog_8h.html" title="us_widgets_dialog.h" alt="" coords="3537,811,3676,837"/>
+<area shape="rect" id="node34" href="$us__dataIO_8h.html" title="us_dataIO.h" alt="" coords="6384,811,6477,837"/>
+<area shape="rect" id="node41" href="$us__resids__bitmap_8h.html" title="us_resids_bitmap.h" alt="" coords="4705,639,4839,666"/>
+<area shape="rect" id="node53" href="$us__plot__control__fem_8h.html" title="us_plot_control_fem.h" alt="" coords="4526,461,4677,487"/>
+<area shape="rect" id="node54" href="$us__resplot__fem_8h.html" title="us_resplot_fem.h" alt="" coords="4709,550,4832,577"/>
+<area shape="rect" id="node55" href="$us__noise_8h.html" title="us_noise.h" alt="" coords="7720,729,7805,755"/>
+<area shape="rect" id="node57" href="$us__model_8h.html" title="us_model.h" alt="" coords="8478,729,8567,755"/>
+<area shape="rect" id="node62" href="$us__advanced__fem_8h.html" title="us_advanced_fem.h" alt="" coords="3359,639,3497,666"/>
+<area shape="rect" id="node63" href="$us__dmga__mc__stats_8h.html" title="us_dmga_mc_stats.h" alt="" coords="8720,639,8867,666"/>
+<area shape="rect" id="node64" href="$us__noise__loader_8h.html" title="us_noise_loader.h" alt="" coords="6537,639,6663,666"/>
+<area shape="rect" id="node65" href="$us__astfem__rsa_8h.html" title="us_astfem_rsa.h" alt="" coords="8470,550,8589,577"/>
+<area shape="rect" id="node72" href="$us__model__loader_8h.html" title="us_model_loader.h" alt="" coords="3976,639,4107,666"/>
+<area shape="rect" id="node73" href="$us__math2_8h.html" title="us_math2.h" alt="" coords="7915,639,8005,666"/>
+<area shape="rect" id="node75" href="$us__analyte_8h.html" title="us_analyte.h" alt="" coords="9444,811,9540,837"/>
+<area shape="rect" id="node76" href="$us__run__details2_8h.html" title="us_run_details2.h" alt="" coords="3623,639,3747,666"/>
+<area shape="rect" id="node77" href="$us__buffer__gui_8h.html" title="us_buffer_gui.h" alt="" coords="6526,155,6637,181"/>
+<area shape="rect" id="node42" href="$us__plot_8h.html" title="us_plot.h" alt="" coords="4229,729,4304,755"/>
+<area shape="rect" id="node56" href="$us__plot3d_8h.html" title="us_plot3d.h" alt="" coords="5059,639,5149,666"/>
+<area shape="rect" id="node66" href="$us__simparms_8h.html" title="us_simparms.h" alt="" coords="8683,729,8794,755"/>
+<area shape="rect" id="node68" href="$us__astfem__math_8h.html" title="us_astfem_math.h" alt="" coords="8464,639,8595,666"/>
+<area shape="rect" id="node70" href="$us__stiffbase_8h.html" title="us_stiffbase.h" alt="" coords="6891,639,6995,666"/>
+<area shape="rect" id="node71" href="$us__buffer_8h.html" title="us_buffer.h" alt="" coords="9565,811,9651,837"/>
+<area shape="rect" id="node67" href="$us__time__state_8h.html" title="us_time_state.h" alt="" coords="8900,811,9015,837"/>
+<area shape="rect" id="node78" href="$us__minimize_8h.html" title="us_minimize.h" alt="" coords="6496,550,6603,577"/>
+<area shape="rect" id="node87" href="$us__extinction__gui_8h.html" title="us_extinction_gui.h" alt="" coords="6290,304,6425,331"/>
+<area shape="rect" id="node88" href="$us__extinctfitter__gui_8h.html" title="us_extinctfitter_gui.h" alt="" coords="3739,461,3882,487"/>
+<area shape="rect" id="node99" href="$us__new__spectrum_8h.html" title="us_new_spectrum.h" alt="" coords="6512,229,6651,256"/>
+<area shape="rect" id="node100" href="$us__edit__spectrum_8h.html" title="us_edit_spectrum.h" alt="" coords="6891,229,7027,256"/>
+<area shape="rect" id="node79" href="$us__matrix_8h.html" title="us_matrix.h" alt="" coords="10151,885,10241,912"/>
+<area shape="rect" id="node83" href="$us__timer_8h.html" title="Defines the US_Timer class for managing multiple timers. " alt="" coords="7217,639,7300,666"/>
+<area shape="rect" id="node89" href="$us__analyte__gui_8h.html" title="us_analyte_gui.h" alt="" coords="6261,379,6381,405"/>
+<area shape="rect" id="node91" href="$us__csv__loader_8h.html" title="us_csv_loader.h" alt="" coords="8235,729,8352,755"/>
+<area shape="rect" id="node90" href="$us__constants_8h.html" title="us_constants.h" alt="" coords="6995,885,7106,912"/>
+<area shape="rect" id="node92" href="$us__csv__data_8h.html" title="us_csv_data.h" alt="" coords="7659,885,7765,912"/>
+<area shape="rect" id="node101" href="$us__eprofile_8h.html" title="us_eprofile.h" alt="" coords="9828,811,9924,837"/>
+<area shape="rect" id="node105" href="$us__colorgradIO_8h.html" title="us_colorgradIO.h" alt="" coords="377,885,498,912"/>
+<area shape="rect" id="node107" href="$us__spectrodata_8h.html" title="us_spectrodata.h" alt="" coords="627,639,749,666"/>
+<area shape="rect" id="node115" href="$us__images_8h.html" title="us_images.h" alt="" coords="1939,885,2035,912"/>
+</map>

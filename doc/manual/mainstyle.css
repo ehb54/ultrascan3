@@ -62,6 +62,10 @@ th {
   border-bottom: 2px solid #ccc;
 }
 
+span.putBar {
+  border-top: 1px solid black;
+}
+
 /* Alternate styling for even rows (with class fallback for older browsers) */
 tr:nth-child(even), tr.even {
   background-color: #f8f8f8;

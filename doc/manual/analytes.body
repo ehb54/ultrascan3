@@ -1,6 +1,14 @@
 [% INCLUDE header.us3
    title = 'UltraScan III Analytes Window'
 %]
+<p id="top"><strong>Index</strong></p>
+<ul>
+	<li><a href="#introduction">Edit Ultrascan Data</a>
+	<li><a href="#functions">Functions</a>
+</ul>
+<hr/>
+
+
     <h2> Analyte Management: </h2>
     <p class='center'><img src="images/analytes.png" 
     alt="Analyte Window"/></p>

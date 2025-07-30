@@ -1,0 +1,6 @@
+<map id="US_LegacyConverter::DataCrate" name="US_LegacyConverter::DataCrate">
+<area shape="rect" id="node2" href="$classUS__DataIO_1_1RawData.html" title="All data associated with a cell / channel / wavelength (CCW) " alt="" coords="5,184,153,211"/>
+<area shape="rect" id="node3" href="$classUS__Convert_1_1TripleInfo.html" title="Class that contains information about relevant cell/channel/wavelength combinations. " alt="" coords="178,184,333,211"/>
+<area shape="rect" id="node4" href="$classUS__Solution.html" title="US_Solution" alt="" coords="208,95,303,121"/>
+<area shape="rect" id="node5" href="$classUS__Buffer.html" title="The internal structure of a buffer. " alt="" coords="214,5,297,32"/>
+</map>

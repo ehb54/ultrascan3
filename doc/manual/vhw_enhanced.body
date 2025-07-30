@@ -2,9 +2,18 @@
    title = 'UltraScan III van Holde - Weischet Analysis'
 %]
 
-    <h2> <i>UltraScan</i> van Holde - Weischet Enhanced Analysis: </h2>
+<p id="top"><strong>Index</strong></p>
+<ul>
+	<li><a href="#introduction">Edit Ultrascan Data</a>
+	<li><a href="#functions">Functions</a>
+	<li><a href="#steps">Analysis Steps</a>
+</ul>
+<hr/>
 
-    <p> The method of van Holde and Weischet (vHW) is a versatile,
+<p class="center"><img src="images/vhw_enhanced.png" alt="van Holde - Weischet Main Window"/></p>
+<h2 id="introductions"> <i>UltraScan</i> van Holde - Weischet Enhanced Analysis: </h2>
+    
+<p> The method of van Holde and Weischet (vHW) is a versatile,
     model-independent approach to determine sedimentation coefficient
     distribution by graphically analyzing sedimentation velocity experimental
     data. The vHW method's strength derives from its ability to differentiate
@@ -12,91 +21,98 @@
     to heterogeneity in the sedimentation coefficient. This program uses a
     number of enhanced techniques for vHW analysis.</p>
 
-    <p class="center"><img src="images/vhw_enhanced.png" alt="van Holde - Weischet Main Window"/></p>
-    <ul>
-        <li>
-            <b>Load Experiment</b> Click on this button and, in the resulting
+<a href=#top>Return to Index</a>
+
+<h3 id="functions"> Functions: </h3>
+
+<ul>
+<table>
+	 <tr>
+		<td><b>Load Experiment</b></td>
+		<td>Click on this button and, in the resulting
             <a href="data_loader.html">Load Data Dialog</a>, select an edited
-            data set to load.
-        </li>
-            
-        <li>
-            <b>Run Details</b> Bring up a dialog with a summary of data
-            and run details.
-        </li>
+            data set to load.</td>
+	</tr>
+	<tr>
+		<td><b>Run Details</b></td>
+		<td>Bring up a dialog with a summary of data
+            and run details.</td>		
+	</tr> 
+	<tr>
+		<td><b>Latest Data Edit</b></td>
+		<td>Uncheck to allow choosing an edit other
+            than the latest one for the experimental data.</td>		
+	</tr>
+	<tr>
+		<td><b>Database</b></td>
+		<td>Check to specify data input from the database.</td>		
+	</tr>	
+	<tr>
+		<td><b>Local Disk</b></td>
+		<td>Check to specify data input from local disk.</td>		
+	</tr>
+	<tr>
+		<td><b>View Data Report</b></td>
+		<td>Create a results text file and display
+            its contents in a text dialog.</td>		
+	</tr>
+	<tr>
+		<td><b>Save Data</b> </td>
+		<td>Create several data and report files based on
+            input data and vHW parameters.</td>		
+	</tr>
+	<tr>
+		<td><b>Run ID / Edit ID:</b></td>
+		<td>The main run title of the data and
+            an edit identifier are displayed.</td>		
+	</tr>			
+	<tr>
+		<td><b>Avg Temperature:</b></td>
+		<td>The average temperature of solute is
+            displayed in Celsius.</td>		
+	</tr>
+	<tr>
+		<td><b>(description box)</b></td>
+		<td>The text box below the one for temperature
+            shows a full data description string.</td>		
+	</tr>
+</table>
+</ul>
 
-        <li>
-            <b>Latest Data Edit</b> Uncheck to allow choosing an edit other
-            than the latest one for the experimental data.
-        </li>
-
-        <li>
-            <b>Database</b> Check to specify data input from the database.
-        </li>
-
-        <li>
-            <b>Local Disk</b> Check to specify data input from local disk.
-        </li>
-
-        <li>
-            <b>View Data Report</b> Create a results text file and display
-            its contents in a text dialog.
-        </li>
-
-        <li>
-            <b>Save Data</b> Create several data and report files based on
-            input data and vHW parameters.
-        </li>
-            
-        <li>
-            <b>Run ID / Edit ID:</b> The main run title of the data and
-            an edit identifier are displayed.
-        </li>
-            
-        <li>
-            <b>Avg Temperature:</b> The average temperature of solute is
-            displayed in Celsius.
-        </li>
-
-        <li>
-            <b>(description)</b> The text box below the one for temperature
-            shows a full data description string.
-        </li>
-
-        <li>
-            <b>Cell / Channel / Wavelength</b> The text box below this label
+</p><b>Cell / Channel / Wavelength:</b> The text box below this label
             gives cell, channel and wavelength triples available in this
-            data set. Highlight the desired value.
-        </li>
-
-        <li>
-            <b>Solution</b> Click this button to open a
+            data set. Highlight the desired value.</p>
+<ul>
+<table>
+	 <tr>
+		<td><b>Solution</b> </td>
+		<td>Click this button to open a
             <a href="us_solution.html">Solution Management dialog</a>
             that allows changes to buffer and analyte characteristics of
-            the data set.
-        </li>
-
-        <li>
-            <b>Density (20&deg; C)</b> Shows the density value for the loaded
+            the data set.</tr>
+	</tr>
+	<tr>
+		<td><b>Density (20<sup>o</sup>C)</b></td>
+		<td>Shows the density value for the loaded
             experiment. Click the Solution button to open a dialog in which
-            density and other values may be changed.
-        </li>
-
-        <li>
-            <b>Viscosity (20&deg; C)</b> Shows the viscosity value for thes
+            density and other values may be changed.</td>		
+	</tr>
+	<tr>
+		<td><b>Viscosity (20&deg; C)</b></td>
+		<td>Shows the viscosity value for thes
             loaded experiment. Click the Solution button to open a dialog
-            in which viscosity and other values may be changed.
-        </li>
-
-        <li>
-            <b>Distribution Plot</b> Click for a plot dialog that shows a
+            in which viscosity and other values may be changed.</td>		
+	</tr>
+	<tr>
+		<td><b>Distribution Plot</b></td>
+		<td>Click for a plot dialog that shows a
             <a href="vhw_distrib_plot.html">vHW Distribution plot</a>
             illustrating sedimentation coefficient power related to separate
-            species.
-        </li>
-
-        <li>
-            <b>Select Groups</b> Click on this button to begin a session of
+            species.</td>		
+	</tr>
+	<tr>
+		<td><b>Select Groups</b></td>
+		<td>Click on this button to begin a session of
             choosing vHW Extrapolation Plot division groups. As an initial
             pop-up dialog explains, you must click first above any group of
             division lines and then below it. Multiple groups may be chosen,
@@ -104,87 +120,143 @@
             label becomes <b>Clear Groups</b> after selection, allowing the
             set of selected groups to be discarded in favor of a new set
             of selections. (See the
-            <a href="vhw_enh_groups.img.html">vHW Groups image</a>).
-        </li>
-
-        <li>
-            <b>Manual-only Replot</b> Check this box to suppress automatic
+            <a href="vhw_enh_groups.img.html">vHW Groups image</a>).</td>		
+	</tr>
+	<tr>
+		<td><b>Refresh Plot</b></td>
+		<td>Click on this button at any time to refresh
+            the right-side plots, based on current parameter settings.</td>		
+	</tr>
+	<tr>
+		<td><b>Use FE Data</b></td>
+		<td> </td>		
+	</tr>
+	<tr>
+		<td><b>Manual-only Replot</b></td>
+		<td>Check this box to suppress automatic
             re-plotting with each parameter change. This may be desirable
             when you plan to change several settings, in order to avoid a
             replot with each change. With this box checked, you may force
-            a plot with the Refresh Plot button.
-        </li>
-
-        <li>
-            <b>Refresh Plot</b> Click on this button at any time to refresh
-            the right-side plots, based on current parameter settings.
-        </li>
-
-        <li>
-            <b>Plateaus from 2DSA</b> Check this box to have plateau values
+            a plot with the Refresh Plot button.</td>		
+	</tr>
+	<tr>
+		<td><b>Manual-only Replot</b></td>
+		<td>Check this box to suppress automatic
+            re-plotting with each parameter change. This may be desirable
+            when you plan to change several settings, in order to avoid a
+            replot with each change. With this box checked, you may force
+            a plot with the Refresh Plot button.</td>		
+	</tr>
+	
+	<tr>
+		<td><b>Plateaus from 2DSA</b></td>
+		<td>Check this box to have plateau values
             calculated from a model associated with any loaded noise values.
             With this box unchecked, each scan's plateau value is determined
-            by a series of fits to initially designated plateaus.
-        </li>
+            by a series of fits to initially designated plateaus.</td>		
+	</tr>
+	<tr>
+		<td><b>Use Enhanced vWH</b></td>
+		<td></td>		
+	</tr>
+</table>	
+</ul>
 
-        <li>
-            <b>(model existence text)</b> The text to the right of the
-            Plateaus from 2DSA check box indicates whether a model was
-            determined from loaded noise for the current triple and, therefore,
-            whether scan plateaus can be calculated using that model.
-        </li>
+    
+<h4>Analysis Controls:</h4>
 
-        <li>
-            <b>Back Diffusion Tolerance:</b> Select a tolerance value to
-            fine tune exclusion of points affected by back diffusion.
-        </li>
-
-        <li>
-            <b>Divisions:</b> Choose the number of divisions to use in
-            vHW analysis.
-        </li>
-            
-        <li>
-            <b>Data Smoothing:</b> Choose the number of points to use for
-            any smoothing of raw input data.
-        </li>
-            
-        <li>
-            <b>% of Boundary:</b> Choose the percentage of the range from
-            concentration baseline to plateau that is to be used for analysis.
-        </li>
-            
-        <li>
-            <b>Boundary Position (%):</b> Choose the percent of the
+<ul>
+<table>
+	 <tr>
+		<td><b>Back Diffusion Tolerance:</b></td>
+		<td>Select a tolerance value to
+            fine tune exclusion of points affected by back diffusion, as indicated by the red line on the velocity data.</td> 
+	</tr>
+	 <tr>
+		<td><b>Divisions:</b></td>
+		<td>Choose the number of divisions (yellow lines in the vWH Extrapolation Plot) to use in
+            vHW analysis.</td> 
+	</tr>
+	 <tr>
+		<td><b>Data Smoothing:</b></td>
+		<td>Choose the number of points to use for
+            any smoothing of raw input data.</td> 
+	</tr>
+	 <tr>
+		<td><b>% of Boundary:</b></td>
+		<td>Choose the percentage of the range from
+            concentration baseline to plateau that is to be used for analysis.</td> 
+	</tr>
+	 <tr>
+		<td><b>Boundary Position (%):</b></td>
+		<td>Choose the percent of the
             plateau-baseline range that is to be added to the baseline to
-            form the beginning of analysis span.
-        </li>
-            
-        <li>
-            <b>From:</b> Choose the first of a range of scan numbers that
-            may potentially be excluded from analysis.
-        </li>
-            
-        <li>
-            <b>To:</b> Choose the end of a range of scan numbers that may
+            form the beginning of analysis span. For typical analysis 5% is recommended.</td> 
+		</table> 
+		</ul>
+          
+<h4>Scan Control:</h4>
+
+<ul>
+<table>
+	<tr>
+		<td><strong>Scan Focus from:</strong></td>
+		<td>Choose the first of a range of scan numbers that
+            may potentially be excluded from analysis.</td>
+    </tr>
+    <tr>
+		<td><strong>Scan Focus to:</strong></td>
+		<td>Choose the end of a range of scan numbers that may
             potentially be excluded from analysis. The From/To scan range
-            is illustrated in both plots to the right.
-        </li>
-            
-        <li>
-            <b>Exclude Scan Range</b> If the From/To scan range selections
-            are as desired, click on this button to exclude the indicated
-            scans from analysis.
-        </li>
-            
-        <li>
-            <b>Reset</b> Indicate that parameters are to be reset and the
-            plots re-displayed based on original parameters.
-        </li>
-            
-        <li>
-            <b>Help:</b> Display detailed vHW-Enhanced help.
-        </li>
+            is illustrated in both plots to the right.</td>
+    </tr>
+    <tr>
+		<td><strong>Exclude Scan Range</strong></td>
+		<td>Exclude the scans indicated by the two preceding scan bounding counters.</td>
+	</tr>
+    <tr>
+		<td><strong>Reset Scan Range</strong></td>
+		<td>Resetting the scan range to include all excluded scans.</td>
+	</tr>     
+    </table>
+ </ul>              
+ 
+<h4>Window controls: </h4>
+
+<ul>
+<table>
+	<tr> 
+		<td><strong>Reset</strong></td>
+		<td>This button removes all data and sets the program to a known starting point.</td>
+	</tr>
+	<tr>
+	  	<td><strong>Help</strong></td>
+		<td>Display this help.</td>
+	</tr>
+	<tr> 
+		<td><strong>Close</strong></td>
+		<td>Close the editing session.</td>
+	</tr>
+ </table>
+</ul>
+    
+<a href=#top>Return to Index</a>
+<h3 id="steps">  Analysis Steps:</h3>   
+
+<ul>
+	  <p><b>Step 1:</b> First, load a velocity
+	  dataset. Click on "Load Experiment" to select an edited velocity data set from
+	  the database or from local disk.</p>
+	  <p><b>Step 2:</b> Secondly, select a model from
+	  database or disk. Simply click on a triplicate in the  <b>Cell / Channel / Wavelegth</b>.  Enhanced van Holde -
+	   Weischet analysis is automatically applied according to the Analsys Controls</p>
+	 <p><b>Step 3:</b> If necessary, adjust the <b>Back Diffusion Tolarance</b>, <b>Divisions</b>, <b>% of Boundary</b> 
+		and <b>Boundary Position (%)</b>.</p>
+	  <p><b>Step 4:</b> After analysis is complete, the resulting distribution and histogram are available for 
+		display in the <b> Distribution Plot</b>.</p>
     </ul>
+
+
+<a href=#top>Return to Index</a>
 
 [% INCLUDE footer.us3 %]

@@ -1,0 +1,62 @@
+<map id="us_edit_spectrum.h" name="us_edit_spectrum.h">
+<area shape="rect" id="node2" href="$us__buffer__gui_8h.html" title="us_buffer_gui.h" alt="" coords="2374,80,2485,107"/>
+<area shape="rect" id="node5" href="$us__edit__spectrum_8cpp.html" title="us_edit_spectrum.cpp" alt="" coords="357,155,507,181"/>
+<area shape="rect" id="node61" href="$us__analyte__gui_8cpp.html" title="us_analyte_gui.cpp" alt="" coords="2509,80,2643,107"/>
+<area shape="rect" id="node3" href="$us__analysis__base2_8cpp.html" title="us_analysis_base2.cpp" alt="" coords="3659,155,3818,181"/>
+<area shape="rect" id="node4" href="$us__buffer__gui_8cpp.html" title="us_buffer_gui.cpp" alt="" coords="3843,155,3968,181"/>
+<area shape="rect" id="node6" href="$us__extinction__gui_8cpp.html" title="us_extinction_gui.cpp" alt="" coords="3993,155,4141,181"/>
+<area shape="rect" id="node7" href="$us__new__spectrum_8cpp.html" title="us_new_spectrum.cpp" alt="" coords="532,155,684,181"/>
+<area shape="rect" id="node8" href="$us__predict1_8cpp.html" title="us_predict1.cpp" alt="" coords="708,155,823,181"/>
+<area shape="rect" id="node9" href="$us__solution__gui_8cpp.html" title="us_solution_gui.cpp" alt="" coords="847,155,985,181"/>
+<area shape="rect" id="node10" href="$us__2dsa_8h.html" title="Contains the declaration of the US_2dsa class and its members. " alt="" coords="1009,155,1092,181"/>
+<area shape="rect" id="node18" href="$us__astfem__sim_8cpp.html" title="us_astfem_sim.cpp" alt="" coords="1863,155,1999,181"/>
+<area shape="rect" id="node19" href="$us__fematch_8h.html" title="Contains the declaration of the US_FeMatch class and its members. " alt="" coords="2023,155,2124,181"/>
+<area shape="rect" id="node41" href="$us__buffer__main_8cpp.html" title="us_buffer_main.cpp" alt="" coords="2188,155,2324,181"/>
+<area shape="rect" id="node42" href="$us__eqmodel__control_8cpp.html" title="us_eqmodel_control.cpp" alt="" coords="2348,155,2511,181"/>
+<area shape="rect" id="node43" href="$us__grid__editor_8h.html" title="us_grid_editor.h" alt="" coords="2535,155,2649,181"/>
+<area shape="rect" id="node45" href="$us__mwl__species__sim_8h.html" title="us_mwl_species_sim.h" alt="" coords="2680,155,2837,181"/>
+<area shape="rect" id="node47" href="$us__pcsa_8h.html" title="us_pcsa.h" alt="" coords="3092,155,3175,181"/>
+<area shape="rect" id="node55" href="$us__predict2_8cpp.html" title="us_predict2.cpp" alt="" coords="3199,155,3313,181"/>
+<area shape="rect" id="node56" href="$us__vhw__combine_8h.html" title="us_vhw_combine.h" alt="" coords="3337,155,3471,181"/>
+<area shape="rect" id="node59" href="$us__vhw__enhanced_8h.html" title="us_vhw_enhanced.h" alt="" coords="3495,155,3635,181"/>
+<area shape="rect" id="node11" href="$us__2dsa_8cpp.html" title="us_2dsa.cpp" alt="" coords="5,237,101,263"/>
+<area shape="rect" id="node12" href="$us__2dsa__process_8cpp.html" title="us_2dsa_process.cpp" alt="" coords="125,237,275,263"/>
+<area shape="rect" id="node13" href="$us__adv__analysis__2d_8cpp.html" title="us_adv_analysis_2d.cpp" alt="" coords="299,237,464,263"/>
+<area shape="rect" id="node14" href="$us__analysis__control__2d_8cpp.html" title="us_analysis_control\l_2d.cpp" alt="" coords="489,229,626,271"/>
+<area shape="rect" id="node15" href="$us__plot__control__2d_8cpp.html" title="us_plot_control_2d.cpp" alt="" coords="650,237,806,263"/>
+<area shape="rect" id="node16" href="$us__resplot__2d_8cpp.html" title="us_resplot_2d.cpp" alt="" coords="831,237,959,263"/>
+<area shape="rect" id="node17" href="$us__show__norm_8cpp.html" title="us_show_norm.cpp" alt="" coords="983,237,1118,263"/>
+<area shape="rect" id="node20" href="$us__autoflow__analysis_8h.html" title="us_autoflow_analysis.h" alt="" coords="1995,237,2152,263"/>
+<area shape="rect" id="node27" href="$us__resplot__fem_8cpp.html" title="us_resplot_fem.cpp" alt="" coords="2089,326,2225,353"/>
+<area shape="rect" id="node31" href="$us__reporter__gmp_8h.html" title="us_reporter_gmp.h" alt="" coords="2227,237,2357,263"/>
+<area shape="rect" id="node34" href="$us__adv__dmgamc_8cpp.html" title="us_adv_dmgamc.cpp" alt="" coords="1143,237,1289,263"/>
+<area shape="rect" id="node35" href="$us__advanced__fem_8cpp.html" title="us_advanced_fem.cpp" alt="" coords="1314,237,1467,263"/>
+<area shape="rect" id="node36" href="$us__fematch_8cpp.html" title="us_fematch.cpp" alt="" coords="1492,237,1607,263"/>
+<area shape="rect" id="node37" href="$us__fematch__main_8cpp.html" title="us_fematch_main.cpp" alt="" coords="1631,237,1782,263"/>
+<area shape="rect" id="node38" href="$us__plot__control__fem_8cpp.html" title="us_plot_control_fem.cpp" alt="" coords="1806,237,1970,263"/>
+<area shape="rect" id="node39" href="$us__query__rmsd_8h.html" title="us_query_rmsd.h" alt="" coords="2381,237,2504,263"/>
+<area shape="rect" id="node21" href="$us__autoflow__analysis_8cpp.html" title="us_autoflow_analysis.cpp" alt="" coords="1719,326,1889,353"/>
+<area shape="rect" id="node22" href="$us__autoflow__analysis__main_8cpp.html" title="us_autoflow_analysis\l_main.cpp" alt="" coords="1548,319,1695,360"/>
+<area shape="rect" id="node23" href="$us__com__project__gui_8h.html" title="us_com_project_gui.h" alt="" coords="2249,326,2399,353"/>
+<area shape="rect" id="node28" href="$us__protocol__dev__gui_8h.html" title="This file contains the declaration of the classes for the US Protocol Development GUI..." alt="" coords="1913,326,2065,353"/>
+<area shape="rect" id="node24" href="$us__com__project__gui_8cpp.html" title="us_com_project_gui.cpp" alt="" coords="2103,415,2265,442"/>
+<area shape="rect" id="node25" href="$us__com__project__main_8cpp.html" title="us_com_project_main.cpp" alt="" coords="2290,415,2465,442"/>
+<area shape="rect" id="node26" href="$us__com__project__academic__main_8cpp.html" title="us_com_project_academic\l_main.cpp" alt="" coords="2489,408,2666,449"/>
+<area shape="rect" id="node29" href="$us__protocol__dev__gui_8cpp.html" title="us_protocol_dev_gui.cpp" alt="" coords="1710,415,1877,442"/>
+<area shape="rect" id="node30" href="$us__protocol__dev__main_8cpp.html" title="us_protocol_dev_main.cpp" alt="" coords="1901,415,2078,442"/>
+<area shape="rect" id="node32" href="$us__reporter__gmp_8cpp.html" title="us_reporter_gmp.cpp" alt="" coords="2625,326,2769,353"/>
+<area shape="rect" id="node33" href="$us__reporter__gmp__main_8cpp.html" title="us_reporter_gmp_main.cpp" alt="" coords="2423,326,2601,353"/>
+<area shape="rect" id="node40" href="$us__query__rmsd_8cpp.html" title="us_query_rmsd.cpp" alt="" coords="2793,326,2929,353"/>
+<area shape="rect" id="node44" href="$us__grid__editor_8cpp.html" title="us_grid_editor.cpp" alt="" coords="2528,237,2656,263"/>
+<area shape="rect" id="node46" href="$us__mwl__species__sim_8cpp.html" title="us_mwl_species_sim.cpp" alt="" coords="2680,237,2851,263"/>
+<area shape="rect" id="node48" href="$us__adv__analysis__pc_8cpp.html" title="us_adv_analysis_pc.cpp" alt="" coords="2875,237,3040,263"/>
+<area shape="rect" id="node49" href="$us__analysis__control__pc_8cpp.html" title="us_analysis_control\l_pc.cpp" alt="" coords="3065,229,3202,271"/>
+<area shape="rect" id="node50" href="$us__mlplot_8cpp.html" title="us_mlplot.cpp" alt="" coords="3226,237,3329,263"/>
+<area shape="rect" id="node51" href="$us__pcsa_8cpp.html" title="us_pcsa.cpp" alt="" coords="3353,237,3449,263"/>
+<area shape="rect" id="node52" href="$us__plot__control__pc_8cpp.html" title="us_plot_control_pc.cpp" alt="" coords="3474,237,3630,263"/>
+<area shape="rect" id="node53" href="$us__resplot__pc_8cpp.html" title="us_resplot_pc.cpp" alt="" coords="3655,237,3783,263"/>
+<area shape="rect" id="node54" href="$us__rpscan_8cpp.html" title="us_rpscan.cpp" alt="" coords="3807,237,3913,263"/>
+<area shape="rect" id="node57" href="$us__vhw__combine_8cpp.html" title="us_vhw_combine.cpp" alt="" coords="3937,237,4084,263"/>
+<area shape="rect" id="node58" href="$us__vhwc__pltctl_8cpp.html" title="us_vhwc_pltctl.cpp" alt="" coords="4108,237,4241,263"/>
+<area shape="rect" id="node60" href="$us__vhw__enhanced_8cpp.html" title="us_vhw_enhanced.cpp" alt="" coords="4265,237,4420,263"/>
+</map>

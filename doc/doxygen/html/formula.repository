@@ -1,0 +1,27 @@
+\form#0:\[ \rho_t = \xi_{max}{{c_0 + c_1 * t + c_2 * t^2 + c_3 * t^3 + c_4 * t^4 + c_5 * t^5} \over{ 1 + bt }} \]
+\form#1:$ \xi_{max} = 1.000028 \times 10^{-3} $
+\form#2:$ c_0 = 999.83952 $
+\form#3:$ c_1 = 16.945176 \times 10^{-3} $
+\form#4:$ c_2 = -7.9870401 \times 10^{-3} $
+\form#5:$ c_3 = -46.170461 \times 10^{-6} $
+\form#6:$ c_4 = 105.56302 \times 10^{-9} $
+\form#7:$ c_5 = -280.54253 \times 10^{-12}$
+\form#8:$ b = 16.879850 \times 10^{-3}$
+\form#9:\[ \log_{10} \eta_t ={ c_0 \over{ c_1 + c_2 ( t-20 ) + c_3 ( t - 20 )^2 }} - c_4 \]
+\form#10:$ \eta $
+\form#11:$ t $
+\form#12:$ c_0 = 1301$
+\form#13:$ c_1 = 998.333$
+\form#14:$ c_2 = 8.1855$
+\form#15:$ c_3 = 0.00585$
+\form#16:$ c_4 = 3.30233$
+\form#17:\[ \log_{10}{\eta_t\over\eta_{20}} = { {c_1(20 - t) -c_2(t-20)^2}\over {t+c_3}} \]
+\form#18:$ c_1 = 1.3272$
+\form#19:$ c_2 = 1.053 \times 10^{-3}$
+\form#20:$ c_3 = 105$
+\form#21:\[ s_{t,b} = s_{20,w} \frac{ ( 1 - (\bar v \rho)_{t,b} ) \eta_{20,w} } {( 1 - (\bar v \rho)_{20,w} ) \eta_{t,b} } \]
+\form#22:$ s $
+\form#23:$ b $
+\form#24:$ w $
+\form#25:$ \bar v $
+\form#26:$ \rho $

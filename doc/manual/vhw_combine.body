@@ -1,8 +1,17 @@
 [% INCLUDE header.us3/
    title = 'UltraScan III van Holde - Weischet Combine'
 %]
+<p id="top"><strong>Index</strong></p>
+<ul>
+	<li><a href="#introduction">Edit Ultrascan Data</a>
+	<li><a href="#functions">Functions</a>
+	
+</ul>
+<hr/>
 
     <h2> <i>UltraScan</i> van Holde - Weischet Combined Plots: </h2>
+
+ <p class="center"><img src="images/vhw_combine.png" alt="vHW main Combine Window"/></p>
 
     <p> To combine integral van Holde - Weischet G(s) distributions from
     multiple datasets (either from different cells of the same run or from
@@ -30,7 +39,11 @@
     Reset Plot button; and then quickly make new selections that are
     plotted without need for recalculations.</p>
 
-    <p class="center"><img src="images/vhw_combine.png" alt="vHW main Combine Window"/></p>
+
+<a href=#top>Return to Index</a>
+
+<h3 id="functions"> Functions: </h3>
+   
 
     <ul>
         <li>

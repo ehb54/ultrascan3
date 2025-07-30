@@ -1,0 +1,113 @@
+<map id="US_WidgetsDialog" name="US_WidgetsDialog">
+<area shape="rect" id="node3" href="$classFileNameWidget.html" title="The FileNameWidget class provides a dialog for editing file names. " alt="" coords="347,5,464,32"/>
+<area shape="rect" id="node4" href="$classsetRefTime.html" title="The setRefTime class provides a dialog for setting reference times. " alt="" coords="361,56,450,83"/>
+<area shape="rect" id="node5" href="$classUS__AbstractRotorGui.html" title="US_AbstractRotorGui" alt="" coords="332,107,479,133"/>
+<area shape="rect" id="node6" href="$classUS__AdvAnalysis2D.html" title="A class to provide a window for advanced analysis controls. " alt="" coords="337,157,473,184"/>
+<area shape="rect" id="node7" href="$classUS__AdvAnalysisPc.html" title="A class to provide a window for advanced analysis controls. " alt="" coords="337,208,473,235"/>
+<area shape="rect" id="node8" href="$classUS__AdvancedFem.html" title="A class to provide a window for advanced analysis controls. " alt="" coords="340,259,471,285"/>
+<area shape="rect" id="node9" href="$classUS__AdvDmgaMc.html" title="A class to provide a window for advanced DMGA&#45;MC analysis controls. " alt="" coords="344,309,467,336"/>
+<area shape="rect" id="node10" href="$classUS__AnalysisControl2D.html" title="A class to provide a window with 2DSA analysis controls. " alt="" coords="328,360,483,387"/>
+<area shape="rect" id="node11" href="$classUS__AnalysisControlPc.html" title="A class to provide a window with 2DSA analysis controls. " alt="" coords="328,411,483,437"/>
+<area shape="rect" id="node12" href="$classUS__AnalysisGui.html" title="Analysis panel. " alt="" coords="347,461,464,488"/>
+<area shape="rect" id="node13" href="$classUS__AnalyteGui.html" title="US_AnalyteGui" alt="" coords="350,512,461,539"/>
+<area shape="rect" id="node14" href="$classUS__AnaprofPan2DSA.html" title="2DSA controls panel " alt="" coords="331,563,480,589"/>
+<area shape="rect" id="node15" href="$classUS__AnaprofPanGen.html" title="Experiment General panel. " alt="" coords="336,613,475,640"/>
+<area shape="rect" id="node16" href="$classUS__AnaprofPanPCSA.html" title="Experiment Cells panel. " alt="" coords="330,664,481,691"/>
+<area shape="rect" id="node17" href="$classUS__AssociationsGui.html" title="A window to edit a model&#39;s associations. " alt="" coords="334,715,477,741"/>
+<area shape="rect" id="node18" href="$classUS__BufferComponentRequerster.html" title="US_BufferComponentRequerster" alt="" coords="300,765,511,792"/>
+<area shape="rect" id="node19" href="$classUS__BufferGui.html" title="US_BufferGui" alt="" coords="354,816,457,843"/>
+<area shape="rect" id="node20" href="$classUS__Choice.html" title="US_Choice" alt="" coords="362,867,449,893"/>
+<area shape="rect" id="node21" href="$classUS__ClipData.html" title="A window for specifing the data range for a simulation. " alt="" coords="357,917,453,944"/>
+<area shape="rect" id="node22" href="$classUS__ConstraintsEdit.html" title="A window to edit a discreteGA constraints model. " alt="" coords="337,968,473,995"/>
+<area shape="rect" id="node23" href="$classUS__CSV__Loader.html" title="A class to provide a dialog for loading and editing CSV data. " alt="" coords="345,1019,465,1045"/>
+<area shape="rect" id="node24" href="$classUS__DataLoader.html" title="A dialog class to select and load data (edited or raw) " alt="" coords="349,1069,462,1096"/>
+<area shape="rect" id="node25" href="$classUS__DeleteModels.html" title="A class to provide a window for remove_distros analysis controls. " alt="" coords="342,1120,469,1147"/>
+<area shape="rect" id="node26" href="$classUS__DistribPlot.html" title="A class to provide a window with the details of a run. " alt="" coords="352,1171,459,1197"/>
+<area shape="rect" id="node27" href="$classUS__EditingGui.html" title="Editing panel. " alt="" coords="352,1221,459,1248"/>
+<area shape="rect" id="node28" href="$classUS__EditorGui.html" title="US_EditorGui" alt="" coords="355,1272,456,1299"/>
+<area shape="rect" id="node29" href="$classUS__EditScan.html" title="A class for editing scan data in UltraScan. " alt="" coords="355,1323,455,1349"/>
+<area shape="rect" id="node30" href="$classUS__EqFitControl.html" title="A class for controlling equilibrium fitting in UltraScan. " alt="" coords="346,1373,465,1400"/>
+<area shape="rect" id="node31" href="$classUS__EqHistogram.html" title="A simple dialog to display a histogram plot. " alt="" coords="344,1424,467,1451"/>
+<area shape="rect" id="node32" href="$classUS__EqModelControl.html" title="A class for controlling equilibrium model parameters in UltraScan. " alt="" coords="336,1475,475,1501"/>
+<area shape="rect" id="node33" href="$classUS__eSignaturesGui.html" title="eSign panel " alt="" coords="337,1525,473,1552"/>
+<area shape="rect" id="node34" href="$classUS__ExcludeProfile.html" title="A class for managing exclusion profiles in UltraScan. " alt="" coords="340,1576,471,1603"/>
+<area shape="rect" id="node35" href="$classUS__ExperGui.html" title="Experiment panel. " alt="" coords="355,1627,456,1653"/>
+<area shape="rect" id="node36" href="$classUS__ExperGuiAProfile.html" title="Experiment AnalysisProfile panel. " alt="" coords="332,1677,479,1704"/>
+<area shape="rect" id="node37" href="$classUS__ExperGuiCells.html" title="Experiment Cells panel. " alt="" coords="340,1728,471,1755"/>
+<area shape="rect" id="node38" href="$classUS__ExperGuiGeneral.html" title="Experiment General panel. " alt="" coords="332,1779,479,1805"/>
+<area shape="rect" id="node39" href="$classUS__ExperGuiOptical.html" title="Experiment Optical Systems panel. " alt="" coords="334,1829,477,1856"/>
+<area shape="rect" id="node40" href="$classUS__ExperGuiRanges.html" title="Experiment Ranges panel. " alt="" coords="333,1880,478,1907"/>
+<area shape="rect" id="node41" href="$classUS__ExperGuiRotor.html" title="Experiment Rotor panel. " alt="" coords="339,1931,471,1957"/>
+<area shape="rect" id="node42" href="$classUS__ExperGuiSolutions.html" title="Experiment Solutions panel. " alt="" coords="328,1981,483,2008"/>
+<area shape="rect" id="node43" href="$classUS__ExperGuiSpeeds.html" title="Experiment Speeds panel. " alt="" coords="333,2032,478,2059"/>
+<area shape="rect" id="node44" href="$classUS__ExperGuiUpload.html" title="Experiment Upload panel. " alt="" coords="335,2083,476,2109"/>
+<area shape="rect" id="node45" href="$classUS__ExperimentGui.html" title="US_ExperimentGui" alt="" coords="339,2133,472,2160"/>
+<area shape="rect" id="node46" href="$classUS__ExperimentGuiRa.html" title="US_ExperimentGuiRa" alt="" coords="331,2184,480,2211"/>
+<area shape="rect" id="node47" href="$classUS__GetDBExp.html" title="US_GetDBExp" alt="" coords="351,2235,460,2261"/>
+<area shape="rect" id="node48" href="$classUS__GetDBRunRa.html" title="US_GetDBRunRa" alt="" coords="343,2285,468,2312"/>
+<area shape="rect" id="node49" href="$classUS__GetEdit.html" title="A class for selecting an edit profile in UltraScan. " alt="" coords="360,2336,451,2363"/>
+<area shape="rect" id="node50" href="$classUS__GetRun.html" title="US_GetRun" alt="" coords="360,2387,451,2413"/>
+<area shape="rect" id="node51" href="$classUS__Grid__Preset.html" title="US_Grid_Preset" alt="" coords="347,2437,463,2464"/>
+<area shape="rect" id="node52" href="$classUS__InitDialogueGui.html" title="Initial panel. " alt="" coords="338,2488,473,2515"/>
+<area shape="rect" id="node53" href="$classUS__Intensity.html" title="A class to provide a detail plot of the intensity profile. " alt="" coords="357,2539,454,2565"/>
+<area shape="rect" id="node54" href="$classUS__IntensityRa.html" title="A class to provide a detail plot of the intensity profile. " alt="" coords="349,2589,462,2616"/>
+<area shape="rect" id="node55" href="$classUS__Investigator.html" title="An Interface for investigator information. " alt="" coords="348,2640,463,2667"/>
+<area shape="rect" id="node56" href="$classUS__LoadAUC.html" title="A dialog class to select and load raw data. " alt="" coords="354,2691,457,2717"/>
+<area shape="rect" id="node57" href="$classUS__LongMessageBox.html" title="Simple QMessageBox&#45;like dialog for long messages. " alt="" coords="330,2741,481,2768"/>
+<area shape="rect" id="node58" href="$classUS__MLinesPlot.html" title="A class to provide a window with a model lines plot. " alt="" coords="349,2792,461,2819"/>
+<area shape="rect" id="node59" href="$classUS__ModelAdPars.html" title="A class to handle additional model parameters for global equilibrium analysis. " alt="" coords="343,2843,468,2869"/>
+<area shape="rect" id="node60" href="$classUS__ModelEditor.html" title="A window to edit a model for simulation. " alt="" coords="347,2893,463,2920"/>
+<area shape="rect" id="node61" href="$classUS__ModelGui.html" title="A window to edit a model for simulation. " alt="" coords="354,2944,457,2971"/>
+<area shape="rect" id="node62" href="$classUS__ModelLoader.html" title="A dialog class to select a model and load its distribution data. " alt="" coords="345,2995,466,3021"/>
+<area shape="rect" id="node63" href="$classUS__ModelParams.html" title="A class to provide a window for setting parameters for each model. " alt="" coords="342,3045,469,3072"/>
+<area shape="rect" id="node64" href="$classUS__ModelSelect.html" title="A class to handle the selection of models for global equilibrium analysis. " alt="" coords="346,3096,465,3123"/>
+<area shape="rect" id="node65" href="$classUS__MrecsLoader.html" title="A dialog class to select a model and load its distribution data. " alt="" coords="344,3147,467,3173"/>
+<area shape="rect" id="node66" href="$classUS__MWL__SF__PLOT3D.html" title="The US_MWL_SF_PLOT3D class. " alt="" coords="326,3197,485,3224"/>
+<area shape="rect" id="node67" href="$classUS__MwlPlotControl.html" title="A class to provide a window with enhanced plot controls. " alt="" coords="338,3248,473,3275"/>
+<area shape="rect" id="node68" href="$classUS__MwlRun.html" title="US_MwlRun" alt="" coords="359,3299,452,3325"/>
+<area shape="rect" id="node69" href="$classUS__MwlSPlotControl.html" title="A class to provide a window with enhanced plot controls. " alt="" coords="334,3349,477,3376"/>
+<area shape="rect" id="node70" href="$classUS__NoiseLoader.html" title="A class for selecting and loading noise records from a tree view. " alt="" coords="346,3400,465,3427"/>
+<area shape="rect" id="node71" href="$classUS__ObservGui.html" title="Observ panel. " alt="" coords="351,3451,460,3477"/>
+<area shape="rect" id="node72" href="$classUS__PlotAxisConfig.html" title="A window to customize plot axes. " alt="" coords="339,3501,472,3528"/>
+<area shape="rect" id="node73" href="$classUS__PlotConfig.html" title="A window to allow customization of plots initialized. " alt="" coords="352,3552,459,3579"/>
+<area shape="rect" id="node74" href="$classUS__PlotControl2D.html" title="A class to provide a window with enhanced plot controls. " alt="" coords="342,3603,469,3629"/>
+<area shape="rect" id="node75" href="$classUS__PlotControlFem.html" title="A class to provide a window with enhanced plot controls. " alt="" coords="337,3653,474,3680"/>
+<area shape="rect" id="node76" href="$classUS__PlotControlPc.html" title="A class to provide a window with enhanced plot controls. " alt="" coords="342,3704,469,3731"/>
+<area shape="rect" id="node77" href="$classUS__PlotCurveConfig.html" title="A window to customize plot curves. " alt="" coords="335,3755,476,3781"/>
+<area shape="rect" id="node78" href="$classUS__PlotGridConfig.html" title="A window to customize a plot&#39;s grid. " alt="" coords="340,3805,471,3832"/>
+<area shape="rect" id="node79" href="$classUS__PostProdGui.html" title="PostProd panel. " alt="" coords="345,3856,466,3883"/>
+<area shape="rect" id="node80" href="$classUS__Predict1.html" title="US_Predict1" alt="" coords="358,3907,453,3933"/>
+<area shape="rect" id="node81" href="$classUS__ProjectGui.html" title="US_ProjectGui" alt="" coords="351,3957,459,3984"/>
+<area shape="rect" id="node82" href="$classUS__Properties.html" title="A class to manage analytes in a model. " alt="" coords="352,4008,459,4035"/>
+<area shape="rect" id="node83" href="$classUS__RemoveDistros.html" title="A class to provide a window for remove_distros analysis controls. " alt="" coords="337,4059,473,4085"/>
+<area shape="rect" id="node84" href="$classUS__RemoveModels.html" title="A class to provide a window for remove_distros analysis controls. " alt="" coords="337,4109,474,4136"/>
+<area shape="rect" id="node85" href="$classUS__ReportStageGui.html" title="Report panel. " alt="" coords="336,4160,475,4187"/>
+<area shape="rect" id="node86" href="$classUS__ResidPlot2D.html" title="A class to provide a window with experimental/residuals plots. " alt="" coords="346,4211,465,4237"/>
+<area shape="rect" id="node87" href="$classUS__ResidPlotFem.html" title="A class to provide a window with experimental/residuals plots. " alt="" coords="341,4261,470,4288"/>
+<area shape="rect" id="node88" href="$classUS__ResidPlotPc.html" title="A class to provide a window with experimental/residuals plots. " alt="" coords="346,4312,465,4339"/>
+<area shape="rect" id="node89" href="$classUS__ResidsBitmap.html" title="A class to provide a window with a residuals bitmap. " alt="" coords="341,4363,469,4389"/>
+<area shape="rect" id="node90" href="$classUS__RiNoise.html" title="A class for handling radially invariant noise in UltraScan. " alt="" coords="359,4413,451,4440"/>
+<area shape="rect" id="node91" href="$classUS__RotorGui.html" title="US_RotorGui" alt="" coords="356,4464,455,4491"/>
+<area shape="rect" id="node92" href="$classUS__RpScan.html" title="A dialog class for Tikhonov regularization parameter scan/plot. " alt="" coords="359,4515,452,4541"/>
+<area shape="rect" id="node93" href="$classUS__RunDetails2.html" title="A class to provide a window with the details of a run. " alt="" coords="347,4565,464,4592"/>
+<area shape="rect" id="node94" href="$classUS__SelectEdits.html" title="A dialog class to select edit IDs of runs for models,noises pre&#45;filter. " alt="" coords="348,4616,463,4643"/>
+<area shape="rect" id="node95" href="$classUS__SelectItem.html" title="A dialog class to select from an input list of items. " alt="" coords="350,4667,461,4693"/>
+<area shape="rect" id="node96" href="$classUS__SelectLambdas.html" title="A class for selecting lambda (wavelength) values in UltraScan. " alt="" coords="337,4717,474,4744"/>
+<area shape="rect" id="node97" href="$classUS__SelectRunDD.html" title="A dialog class to select run ID for combo discrete distributions plot. " alt="" coords="343,4768,468,4795"/>
+<area shape="rect" id="node98" href="$classUS__SelectRunid.html" title="A dialog class to select run ID for vHW plot distributions. " alt="" coords="347,4819,464,4845"/>
+<area shape="rect" id="node99" href="$classUS__SelectRuns.html" title="A dialog class to select run IDs of runs for models,noises pre&#45;filter. " alt="" coords="348,4869,463,4896"/>
+<area shape="rect" id="node100" href="$classUS__SelectTriples.html" title="US_SelectTriples" alt="" coords="344,4920,467,4947"/>
+<area shape="rect" id="node101" href="$classUS__SelectTriplesRa.html" title="US_SelectTriplesRa" alt="" coords="336,4971,475,4997"/>
+<area shape="rect" id="node102" href="$classUS__SelectWavelengths.html" title="US_SelectWavelengths" alt="" coords="326,5021,485,5048"/>
+<area shape="rect" id="node103" href="$classUS__SelectWavelengths__manual.html" title="US_SelectWavelengths\l_manual" alt="" coords="326,5073,485,5114"/>
+<area shape="rect" id="node104" href="$classUS__SequenceEditor.html" title="A class to bring up a dialog that edits an analyte sequence. " alt="" coords="336,5139,475,5165"/>
+<area shape="rect" id="node105" href="$classUS__show__norm.html" title="A class to provide a window with 2DSA analysis controls. " alt="" coords="349,5189,462,5216"/>
+<area shape="rect" id="node106" href="$classUS__SimParamsGui.html" title="A window for editing simulation parameters. " alt="" coords="338,5240,473,5267"/>
+<area shape="rect" id="node107" href="$classUS__SolutionGui.html" title="This class provides the main Solutions GUI dialog. " alt="" coords="348,5291,463,5317"/>
+<area shape="rect" id="node108" href="$classUS__SyncWithDB.html" title="A dialog class to select and load data (edited or raw) " alt="" coords="345,5341,466,5368"/>
+<area shape="rect" id="node109" href="$classUS__Table.html" title="US_Table" alt="" coords="366,5392,445,5419"/>
+<area shape="rect" id="node110" href="$classUS__TmstPlot.html" title="A class to provide a dialog to display Time State plots. " alt="" coords="355,5443,455,5469"/>
+<area shape="rect" id="node111" href="$classUS__VhwCPlotControl.html" title="A class to provide a window with enhanced plot controls. " alt="" coords="333,5493,478,5520"/>
+<area shape="rect" id="node112" href="$classUS__XpnRunAuc.html" title="US_XpnRunAuc" alt="" coords="347,5544,463,5571"/>
+<area shape="rect" id="node113" href="$classUS__XpnRunRaw.html" title="US_XpnRunRaw" alt="" coords="346,5595,465,5621"/>
+</map>

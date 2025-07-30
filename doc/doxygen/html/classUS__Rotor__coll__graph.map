@@ -1,0 +1,5 @@
+<map id="US_Rotor" name="US_Rotor">
+<area shape="rect" id="node2" href="$classUS__Rotor_1_1Rotor.html" title="the rotor structure describes a derived 4&#45; or 8&#45;hole rotor " alt="" coords="5,5,123,32"/>
+<area shape="rect" id="node3" href="$classUS__Rotor_1_1RotorCalibration.html" title="the RotorCalibration class describes a calibration experiment and associated data ..." alt="" coords="147,5,325,32"/>
+<area shape="rect" id="node4" href="$classUS__Rotor_1_1AbstractRotor.html" title="the AbstractRotor structure describes a generic 4&#45; or 8&#45;hole rotor " alt="" coords="350,5,517,32"/>
+</map>

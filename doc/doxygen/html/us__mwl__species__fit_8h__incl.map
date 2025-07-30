@@ -1,0 +1,35 @@
+<map id="us_mwl_species_fit.h" name="us_mwl_species_fit.h">
+<area shape="rect" id="node2" href="$us__analysis__base2_8h.html" title="! " alt="" coords="633,80,777,107"/>
+<area shape="rect" id="node29" href="$us__math2_8h.html" title="us_math2.h" alt="" coords="297,162,388,189"/>
+<area shape="rect" id="node37" href="$us__editor_8h.html" title="us_editor.h" alt="" coords="6470,408,6556,435"/>
+<area shape="rect" id="node38" href="$us__mwl__sf__plot3d_8h.html" title="us_mwl_sf_plot3d.h" alt="" coords="3114,162,3251,189"/>
+<area shape="rect" id="node68" href="$us__run__protocol_8h.html" title="us_run_protocol.h" alt="" coords="4436,333,4561,360"/>
+<area shape="rect" id="node69" href="$us__protocol__util_8h.html" title="us_protocol_util.h" alt="" coords="366,333,490,360"/>
+<area shape="rect" id="node72" href="$us__analysis__profile_8h.html" title="../us_analysis_profile\l/us_analysis_profile.h" alt="" coords="5743,155,5891,196"/>
+<area shape="rect" id="node3" href="$us__extern_8h.html" title="Defines macros for exporting and importing symbols in shared libraries. " alt="" coords="4612,483,4702,509"/>
+<area shape="rect" id="node4" href="$us__widgets_8h.html" title="us_widgets.h" alt="" coords="5465,333,5564,360"/>
+<area shape="rect" id="node16" href="$us__dataIO_8h.html" title="us_dataIO.h" alt="" coords="1209,408,1302,435"/>
+<area shape="rect" id="node17" href="$us__plot_8h.html" title="us_plot.h" alt="" coords="869,251,944,278"/>
+<area shape="rect" id="node31" href="$us__db2_8h.html" title="us_db2.h" alt="" coords="1060,408,1134,435"/>
+<area shape="rect" id="node33" href="$us__buffer_8h.html" title="us_buffer.h" alt="" coords="83,333,170,360"/>
+<area shape="rect" id="node34" href="$us__analyte_8h.html" title="us_analyte.h" alt="" coords="245,333,341,360"/>
+<area shape="rect" id="node35" href="$us__help_8h.html" title="us_help.h" alt="" coords="5964,408,6043,435"/>
+<area shape="rect" id="node36" href="$us__noise_8h.html" title="us_noise.h" alt="" coords="616,333,701,360"/>
+<area shape="rect" id="node12" href="$us__global_8h.html" title="us_global.h" alt="" coords="5801,408,5889,435"/>
+<area shape="rect" id="node15" href="$us__gui__settings_8h.html" title="us_gui_settings.h" alt="" coords="6322,408,6446,435"/>
+<area shape="rect" id="node18" href="$us__widgets__dialog_8h.html" title="us_widgets_dialog.h" alt="" coords="5588,333,5726,360"/>
+<area shape="rect" id="node30" href="$us__solution_8h.html" title="us_solution.h" alt="" coords="290,251,389,278"/>
+<area shape="rect" id="node48" href="$us__images_8h.html" title="us_images.h" alt="" coords="4566,408,4662,435"/>
+<area shape="rect" id="node49" href="$us__settings_8h.html" title="us_settings.h" alt="" coords="840,408,940,435"/>
+<area shape="rect" id="node70" href="$us__util_8h.html" title="us_util.h" alt="" coords="964,408,1035,435"/>
+<area shape="rect" id="node71" href="$us__datafiles_8h.html" title="us_datafiles.h" alt="" coords="611,408,714,435"/>
+<area shape="rect" id="node75" href="$us__ana__profile_8h.html" title="us_ana_profile.h" alt="" coords="5313,251,5430,278"/>
+<area shape="rect" id="node76" href="$us__report__gmp_8h.html" title="Defines the US_ReportGMP class for managing GMP reports. " alt="" coords="4839,333,4958,360"/>
+<area shape="rect" id="node77" href="$us__investigator_8h.html" title="us_investigator.h" alt="" coords="6510,251,6631,278"/>
+<area shape="rect" id="node78" href="$us__passwd_8h.html" title="us_passwd.h" alt="" coords="6225,251,6324,278"/>
+<area shape="rect" id="node79" href="$us__select__runs_8h.html" title="us_select_runs.h" alt="" coords="6079,251,6200,278"/>
+<area shape="rect" id="node80" href="$us__report__gui_8h.html" title="us_report_gui.h" alt="" coords="5506,251,5616,278"/>
+<area shape="rect" id="node81" href="$us__scan__excl__gui_8h.html" title="us_scan_excl_gui.h" alt="" coords="6348,251,6486,278"/>
+<area shape="rect" id="node82" href="$us__report__general__gui_8h.html" title="us_report_general_gui.h" alt="" coords="5641,251,5801,278"/>
+<area shape="rect" id="node83" href="$us__combined__plots__parms__gui_8h.html" title="us_combined_plots_parms\l_gui.h" alt="" coords="5826,244,6003,285"/>
+</map>

@@ -1,0 +1,25 @@
+<map id="us_pseudo_absorbance.h" name="us_pseudo_absorbance.h">
+<area shape="rect" id="node2" href="$us__widgets_8h.html" title="us_widgets.h" alt="" coords="413,304,511,331"/>
+<area shape="rect" id="node15" href="$us__add__refScan_8h.html" title="us_add_refScan.h" alt="" coords="2341,155,2468,181"/>
+<area shape="rect" id="node38" href="$us__convert__scan_8h.html" title="us_convert_scan.h" alt="" coords="2541,80,2673,107"/>
+<area shape="rect" id="node47" href="$us__remove__ri_8h.html" title="us_remove_ri.h" alt="" coords="2847,80,2957,107"/>
+<area shape="rect" id="node10" href="$us__global_8h.html" title="us_global.h" alt="" coords="50,379,138,405"/>
+<area shape="rect" id="node13" href="$us__extern_8h.html" title="Defines macros for exporting and importing symbols in shared libraries. " alt="" coords="2442,453,2533,480"/>
+<area shape="rect" id="node14" href="$us__gui__settings_8h.html" title="us_gui_settings.h" alt="" coords="213,379,337,405"/>
+<area shape="rect" id="node16" href="$us__plot_8h.html" title="us_plot.h" alt="" coords="1579,229,1654,256"/>
+<area shape="rect" id="node28" href="$us__dataIO_8h.html" title="us_dataIO.h" alt="" coords="2727,229,2821,256"/>
+<area shape="rect" id="node29" href="$us__db2_8h.html" title="us_db2.h" alt="" coords="3229,379,3303,405"/>
+<area shape="rect" id="node31" href="$us__passwd_8h.html" title="us_passwd.h" alt="" coords="550,229,649,256"/>
+<area shape="rect" id="node33" href="$us__refScan__dataIO_8h.html" title="us_refScan_dataIO.h" alt="" coords="2896,229,3041,256"/>
+<area shape="rect" id="node35" href="$us__settings_8h.html" title="us_settings.h" alt="" coords="2456,229,2556,256"/>
+<area shape="rect" id="node36" href="$us__util_8h.html" title="us_util.h" alt="" coords="2632,229,2703,256"/>
+<area shape="rect" id="node37" href="$us__images_8h.html" title="us_images.h" alt="" coords="2303,379,2399,405"/>
+<area shape="rect" id="node17" href="$us__widgets__dialog_8h.html" title="us_widgets_dialog.h" alt="" coords="637,304,775,331"/>
+<area shape="rect" id="node34" href="$us__crc_8h.html" title="us_crc.h" alt="" coords="2778,379,2850,405"/>
+<area shape="rect" id="node39" href="$us__pabs__common_8h.html" title="us_pabs_common.h" alt="" coords="3063,155,3202,181"/>
+<area shape="rect" id="node43" href="$us__math2_8h.html" title="us_math2.h" alt="" coords="2898,155,2989,181"/>
+<area shape="rect" id="node44" href="$us__solution_8h.html" title="us_solution.h" alt="" coords="3117,229,3215,256"/>
+<area shape="rect" id="node45" href="$us__buffer_8h.html" title="us_buffer.h" alt="" coords="3399,304,3485,331"/>
+<area shape="rect" id="node46" href="$us__analyte_8h.html" title="us_analyte.h" alt="" coords="3126,304,3222,331"/>
+<area shape="rect" id="node49" href="$us__matrix_8h.html" title="us_matrix.h" alt="" coords="3435,379,3526,405"/>
+</map>

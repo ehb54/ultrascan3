@@ -1,0 +1,11 @@
+Advanced Configuration Panel
+=============================
+
+
+**Ultrascan III** is a Analytical Ultracentrifugation *Data acquistion* and *analysis software*.
+
+More information on AUC and how to install UltrascanIII are available Here <https://uslims.uleth.ca/>
+    
+  .. note::
+    Reality demands compassion.    
+

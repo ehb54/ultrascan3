@@ -1,0 +1,50 @@
+<map id="us_adv_dmgamc.cpp" name="us_adv_dmgamc.cpp">
+<area shape="rect" id="node2" href="$us__adv__dmgamc_8h.html" title="us_adv_dmgamc.h" alt="" coords="1563,603,1695,629"/>
+<area shape="rect" id="node20" href="$us__gui__settings_8h.html" title="us_gui_settings.h" alt="" coords="1113,827,1237,853"/>
+<area shape="rect" id="node32" href="$us__fematch_8h.html" title="Contains the declaration of the US_FeMatch class and its members. " alt="" coords="4136,80,4237,107"/>
+<area shape="rect" id="node64" href="$us__settings_8h.html" title="us_settings.h" alt="" coords="3758,603,3858,629"/>
+<area shape="rect" id="node89" href="$us__gui__util_8h.html" title="us_gui_util.h" alt="" coords="6158,752,6253,779"/>
+<area shape="rect" id="node3" href="$us__extern_8h.html" title="Defines macros for exporting and importing symbols in shared libraries. " alt="" coords="3089,901,3180,928"/>
+<area shape="rect" id="node4" href="$us__widgets__dialog_8h.html" title="us_widgets_dialog.h" alt="" coords="2227,752,2365,779"/>
+<area shape="rect" id="node15" href="$us__model_8h.html" title="us_model.h" alt="" coords="4650,677,4739,704"/>
+<area shape="rect" id="node18" href="$us__plot_8h.html" title="us_plot.h" alt="" coords="717,677,792,704"/>
+<area shape="rect" id="node31" href="$us__help_8h.html" title="us_help.h" alt="" coords="2691,677,2770,704"/>
+<area shape="rect" id="node12" href="$us__global_8h.html" title="us_global.h" alt="" coords="1995,827,2083,853"/>
+<area shape="rect" id="node16" href="$us__db2_8h.html" title="us_db2.h" alt="" coords="5327,827,5401,853"/>
+<area shape="rect" id="node19" href="$us__widgets_8h.html" title="us_widgets.h" alt="" coords="1952,752,2051,779"/>
+<area shape="rect" id="node35" href="$us__resids__bitmap_8h.html" title="us_resids_bitmap.h" alt="" coords="2337,603,2471,629"/>
+<area shape="rect" id="node36" href="$us__dataIO_8h.html" title="us_dataIO.h" alt="" coords="2944,752,3037,779"/>
+<area shape="rect" id="node37" href="$us__plot__control__fem_8h.html" title="us_plot_control_fem.h" alt="" coords="1671,453,1822,480"/>
+<area shape="rect" id="node38" href="$us__resplot__fem_8h.html" title="us_resplot_fem.h" alt="" coords="2387,528,2509,555"/>
+<area shape="rect" id="node39" href="$us__noise_8h.html" title="us_noise.h" alt="" coords="4485,677,4571,704"/>
+<area shape="rect" id="node45" href="$us__advanced__fem_8h.html" title="us_advanced_fem.h" alt="" coords="1920,603,2059,629"/>
+<area shape="rect" id="node46" href="$us__dmga__mc__stats_8h.html" title="us_dmga_mc_stats.h" alt="" coords="4973,603,5120,629"/>
+<area shape="rect" id="node47" href="$us__noise__loader_8h.html" title="us_noise_loader.h" alt="" coords="3006,603,3133,629"/>
+<area shape="rect" id="node48" href="$us__astfem__rsa_8h.html" title="us_astfem_rsa.h" alt="" coords="4621,528,4739,555"/>
+<area shape="rect" id="node56" href="$us__model__loader_8h.html" title="us_model_loader.h" alt="" coords="2851,603,2981,629"/>
+<area shape="rect" id="node57" href="$us__editor_8h.html" title="us_editor.h" alt="" coords="3563,528,3650,555"/>
+<area shape="rect" id="node58" href="$us__math2_8h.html" title="us_math2.h" alt="" coords="3883,603,3973,629"/>
+<area shape="rect" id="node59" href="$us__solution_8h.html" title="us_solution.h" alt="" coords="5448,677,5547,704"/>
+<area shape="rect" id="node60" href="$us__analyte_8h.html" title="us_analyte.h" alt="" coords="5451,752,5547,779"/>
+<area shape="rect" id="node61" href="$us__run__details2_8h.html" title="us_run_details2.h" alt="" coords="1771,603,1895,629"/>
+<area shape="rect" id="node62" href="$us__buffer__gui_8h.html" title="us_buffer_gui.h" alt="" coords="3891,155,4002,181"/>
+<area shape="rect" id="node40" href="$us__plot3d_8h.html" title="us_plot3d.h" alt="" coords="1297,603,1386,629"/>
+<area shape="rect" id="node49" href="$us__simparms_8h.html" title="us_simparms.h" alt="" coords="5009,677,5119,704"/>
+<area shape="rect" id="node52" href="$us__astfem__math_8h.html" title="us_astfem_math.h" alt="" coords="4717,603,4848,629"/>
+<area shape="rect" id="node54" href="$us__stiffbase_8h.html" title="us_stiffbase.h" alt="" coords="4048,603,4152,629"/>
+<area shape="rect" id="node55" href="$us__buffer_8h.html" title="us_buffer.h" alt="" coords="5894,752,5981,779"/>
+<area shape="rect" id="node50" href="$us__time__state_8h.html" title="us_time_state.h" alt="" coords="5008,752,5123,779"/>
+<area shape="rect" id="node51" href="$us__util_8h.html" title="us_util.h" alt="" coords="5009,827,5079,853"/>
+<area shape="rect" id="node63" href="$us__minimize_8h.html" title="us_minimize.h" alt="" coords="3916,528,4023,555"/>
+<area shape="rect" id="node73" href="$us__extinction__gui_8h.html" title="us_extinction_gui.h" alt="" coords="3747,304,3882,331"/>
+<area shape="rect" id="node74" href="$us__extinctfitter__gui_8h.html" title="us_extinctfitter_gui.h" alt="" coords="3898,453,4041,480"/>
+<area shape="rect" id="node85" href="$us__new__spectrum_8h.html" title="us_new_spectrum.h" alt="" coords="3877,229,4016,256"/>
+<area shape="rect" id="node86" href="$us__edit__spectrum_8h.html" title="us_edit_spectrum.h" alt="" coords="4100,229,4236,256"/>
+<area shape="rect" id="node65" href="$us__matrix_8h.html" title="us_matrix.h" alt="" coords="6036,827,6127,853"/>
+<area shape="rect" id="node69" href="$us__timer_8h.html" title="Defines the US_Timer class for managing multiple timers. " alt="" coords="4227,603,4309,629"/>
+<area shape="rect" id="node75" href="$us__analyte__gui_8h.html" title="us_analyte_gui.h" alt="" coords="3623,379,3743,405"/>
+<area shape="rect" id="node77" href="$us__csv__loader_8h.html" title="us_csv_loader.h" alt="" coords="4011,677,4128,704"/>
+<area shape="rect" id="node76" href="$us__constants_8h.html" title="us_constants.h" alt="" coords="3654,827,3765,853"/>
+<area shape="rect" id="node78" href="$us__csv__data_8h.html" title="us_csv_data.h" alt="" coords="4573,827,4680,853"/>
+<area shape="rect" id="node87" href="$us__eprofile_8h.html" title="us_eprofile.h" alt="" coords="5672,752,5768,779"/>
+</map>

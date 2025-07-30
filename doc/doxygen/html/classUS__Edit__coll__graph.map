@@ -1,0 +1,18 @@
+<map id="US_Edit" name="US_Edit">
+<area shape="rect" id="node2" href="$classUS__Widgets.html" title="Set up widgets the UltraScan way. " alt="" coords="383,191,478,218"/>
+<area shape="rect" id="node4" href="$classUS__Global.html" title="Manage shared memory. " alt="" coords="221,133,305,159"/>
+<area shape="rect" id="node11" href="$classUS__WidgetsDialog.html" title="Set up widgets the UltraScan way. " alt="" coords="365,78,496,105"/>
+<area shape="rect" id="node5" href="$classUS__Global_1_1Global.html" title="US_Global::Global" alt="" coords="5,133,135,159"/>
+<area shape="rect" id="node6" href="$classUS__MwlData.html" title="US_MwlData" alt="" coords="1059,495,1156,522"/>
+<area shape="rect" id="node22" href="$classUS__Help.html" title="Launch help programs. " alt="" coords="1071,546,1144,573"/>
+<area shape="rect" id="node8" href="$classUS__Plot.html" title="A class that provides plot widgets. " alt="" coords="1072,343,1143,370"/>
+<area shape="rect" id="node23" href="$classUS__Disk__DB__Controls.html" title="Create a Lyaout with radio buttons for selection of disk or DB selection. " alt="" coords="1031,394,1184,421"/>
+<area shape="rect" id="node10" href="$classUS__PlotConfig.html" title="A window to allow customization of plots initialized. " alt="" coords="796,90,903,117"/>
+<area shape="rect" id="node13" href="$classUS__PlotCurveConfig.html" title="A window to customize plot curves. " alt="" coords="1037,45,1178,71"/>
+<area shape="rect" id="node16" href="$classUS__PlotAxisConfig.html" title="A window to customize plot axes. " alt="" coords="545,39,679,66"/>
+<area shape="rect" id="node17" href="$classUS__PlotGridConfig.html" title="A window to customize a plot&#39;s grid. " alt="" coords="547,90,677,117"/>
+<area shape="rect" id="node14" href="$classUS__PlotLabel.html" title="A window to customize plot labels. " alt="" coords="1313,71,1415,98"/>
+<area shape="rect" id="node18" href="$classUS__DB2.html" title="This class provides connectivity and convenience functions for database access in the US3 system..." alt="" coords="1071,242,1143,269"/>
+<area shape="rect" id="node19" href="$classUS__DataIO_1_1RawData.html" title="All data associated with a cell / channel / wavelength (CCW) " alt="" coords="1033,293,1181,319"/>
+<area shape="rect" id="node20" href="$classUS__PlotPicker.html" title="Customize plot picker characteristics and mouse events. " alt="" coords="1054,445,1161,471"/>
+</map>

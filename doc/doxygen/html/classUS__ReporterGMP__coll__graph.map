@@ -1,0 +1,55 @@
+<map id="US_ReporterGMP" name="US_ReporterGMP">
+<area shape="rect" id="node2" href="$classUS__Widgets.html" title="Set up widgets the UltraScan way. " alt="" coords="1182,967,1277,993"/>
+<area shape="rect" id="node22" href="$classUS__Norm__Profile.html" title="A class for handling normalization profiles in the analysis. " alt="" coords="1555,1272,1678,1299"/>
+<area shape="rect" id="node32" href="$classUS__Pseudo3D__Combine.html" title="Class for displaying models in pseudo&#45;3D. " alt="" coords="1534,1479,1699,1505"/>
+<area shape="rect" id="node38" href="$classUS__DDistr__Combine.html" title="A class to combine discrete distributions (models) in a bar plot. " alt="" coords="1546,1428,1687,1455"/>
+<area shape="rect" id="node42" href="$classUS__AnalysisProfileGui.html" title="Analysis Profile GUI Main Window. " alt="" coords="1539,488,1694,515"/>
+<area shape="rect" id="node46" href="$classUS__CombPlotsGui.html" title="This class provides a tabbed entry for solution selection. " alt="" coords="1551,879,1682,905"/>
+<area shape="rect" id="node47" href="$classUS__ReportGui.html" title="This class provides a tabbed entry for solution selection. " alt="" coords="1564,715,1669,741"/>
+<area shape="rect" id="node49" href="$classUS__ScanExclGui.html" title="This class provides a tabbed entry for solution selection. " alt="" coords="1555,929,1678,956"/>
+<area shape="rect" id="node50" href="$classUS__ReportGenGui.html" title="This class provides a tabbed entry for solution selection. " alt="" coords="1552,980,1681,1007"/>
+<area shape="rect" id="node4" href="$classUS__Global.html" title="Manage shared memory. " alt="" coords="221,707,305,733"/>
+<area shape="rect" id="node14" href="$classUS__WidgetsDialog.html" title="Set up widgets the UltraScan way. " alt="" coords="365,208,496,235"/>
+<area shape="rect" id="node5" href="$classUS__Global_1_1Global.html" title="US_Global::Global" alt="" coords="5,707,135,733"/>
+<area shape="rect" id="node6" href="$structUS__ReporterGMP_1_1MiscReportMaskStructure.html" title="US_ReporterGMP::MiscReport\lMaskStructure" alt="" coords="1517,1694,1717,1735"/>
+<area shape="rect" id="node7" href="$structUS__ReporterGMP_1_1CombPlotsReportMaskStructure.html" title="US_ReporterGMP::CombPlots\lReportMaskStructure" alt="" coords="1517,1759,1716,1801"/>
+<area shape="rect" id="node8" href="$classUS__SimulationParameters.html" title="A class to hold parameters of a run for simulation purposes. " alt="" coords="1529,2235,1704,2261"/>
+<area shape="rect" id="node9" href="$classUS__TimeState.html" title="A class for Time State details in time&#45;indexed data records. " alt="" coords="1176,2297,1283,2324"/>
+<area shape="rect" id="node29" href="$classUS__Help.html" title="Launch help programs. " alt="" coords="1193,1399,1266,1425"/>
+<area shape="rect" id="node11" href="$classUS__Plot.html" title="A class that provides plot widgets. " alt="" coords="1194,1141,1265,1168"/>
+<area shape="rect" id="node25" href="$classUS__Disk__DB__Controls.html" title="Create a Lyaout with radio buttons for selection of disk or DB selection. " alt="" coords="1153,1459,1306,1485"/>
+<area shape="rect" id="node13" href="$classUS__PlotConfig.html" title="A window to allow customization of plots initialized. " alt="" coords="842,68,949,95"/>
+<area shape="rect" id="node16" href="$classUS__PlotCurveConfig.html" title="A window to customize plot curves. " alt="" coords="1159,88,1300,115"/>
+<area shape="rect" id="node19" href="$classUS__PlotAxisConfig.html" title="A window to customize plot axes. " alt="" coords="545,56,679,83"/>
+<area shape="rect" id="node20" href="$classUS__PlotGridConfig.html" title="A window to customize a plot&#39;s grid. " alt="" coords="547,5,677,32"/>
+<area shape="rect" id="node28" href="$classUS__SelectItem.html" title="A dialog class to select from an input list of items. " alt="" coords="1561,1377,1672,1404"/>
+<area shape="rect" id="node43" href="$classUS__AnaprofPanPCSA.html" title="Experiment Cells panel. " alt="" coords="1937,256,2088,283"/>
+<area shape="rect" id="node44" href="$classUS__AnaprofPan2DSA.html" title="2DSA controls panel " alt="" coords="1938,448,2087,475"/>
+<area shape="rect" id="node45" href="$classUS__AnaprofPanGen.html" title="Experiment General panel. " alt="" coords="1943,775,2082,801"/>
+<area shape="rect" id="node17" href="$classUS__PlotLabel.html" title="A window to customize plot labels. " alt="" coords="1566,95,1667,121"/>
+<area shape="rect" id="node21" href="$classUS__AnaProfile_1_1AnaProf2DSA.html" title="Profile 2DSA controls class. " alt="" coords="797,523,993,549"/>
+<area shape="rect" id="node34" href="$classUS__AnaProfile.html" title="A class to define an Ana Profile object for US_AnalysisProfileGui and related classes. " alt="" coords="1176,523,1283,549"/>
+<area shape="rect" id="node23" href="$classUS__PlotPicker.html" title="Customize plot picker characteristics and mouse events. " alt="" coords="1176,1260,1283,1287"/>
+<area shape="rect" id="node26" href="$classUS__DataIO_1_1RawData.html" title="All data associated with a cell / channel / wavelength (CCW) " alt="" coords="1543,1876,1691,1903"/>
+<area shape="rect" id="node27" href="$structUS__ReporterGMP_1_1PerChanReportMaskStructure.html" title="US_ReporterGMP::PerChanReport\lMaskStructure" alt="" coords="1505,1927,1728,1969"/>
+<area shape="rect" id="node30" href="$structUS__ReporterGMP_1_1PerChanReportMaskStructureABDE.html" title="US_ReporterGMP::PerChanReport\lMaskStructureABDE" alt="" coords="1505,2045,1728,2086"/>
+<area shape="rect" id="node31" href="$classUS__AnaProfile_1_1AnaProfPCSA.html" title="Analysis Profile PCSA controls class. " alt="" coords="796,369,995,396"/>
+<area shape="rect" id="node33" href="$classUS__Noise.html" title="Noise Vector object. " alt="" coords="1577,1825,1657,1852"/>
+<area shape="rect" id="node35" href="$classUS__Model.html" title="A class to define a model and provide Disk/DB IO for models. " alt="" coords="1575,2184,1658,2211"/>
+<area shape="rect" id="node36" href="$structUS__Model_1_1CustomGridMetadata.html" title="Custom Grid Data. " alt="" coords="1123,2247,1336,2273"/>
+<area shape="rect" id="node37" href="$structUS__ReporterGMP_1_1GenReportMaskStructure.html" title="US_ReporterGMP::GenReport\lMaskStructure" alt="" coords="1519,2110,1715,2151"/>
+<area shape="rect" id="node39" href="$classUS__Math2_1_1SolutionData.html" title="A structure used for holding solution data. " alt="" coords="1534,2285,1699,2312"/>
+<area shape="rect" id="node40" href="$classUS__Solution.html" title="US_Solution" alt="" coords="1569,1592,1664,1619"/>
+<area shape="rect" id="node41" href="$classUS__Buffer.html" title="The internal structure of a buffer. " alt="" coords="1188,1672,1271,1699"/>
+<area shape="rect" id="node48" href="$classUS__ReportGMP.html" title="A class for managing GMP (Good Manufacturing Practice) reports. " alt="" coords="1172,715,1287,741"/>
+<area shape="rect" id="node51" href="$classUS__RunProtocol.html" title="A class to define a Run Protocol object. " alt="" coords="1557,1993,1676,2020"/>
+<area shape="rect" id="node52" href="$classUS__RunProtocol_1_1RunProtoUpload.html" title="Protocol Upload controls class. " alt="" coords="1139,1789,1319,1830"/>
+<area shape="rect" id="node53" href="$classUS__RunProtocol_1_1RunProtoOptics.html" title="Protocol Optical Systems controls class. " alt="" coords="1139,1854,1319,1895"/>
+<area shape="rect" id="node54" href="$classUS__RunProtocol_1_1RunProtoSolutions.html" title="Protocol Solutions controls class. " alt="" coords="1139,1985,1319,2026"/>
+<area shape="rect" id="node55" href="$classUS__RunProtocol_1_1RunProtoRanges.html" title="Protocol Ranges controls class. " alt="" coords="1139,1919,1319,1961"/>
+<area shape="rect" id="node56" href="$classUS__RunProtocol_1_1RunProtoAProfile.html" title="Protocol Analysis Profile controls class. " alt="" coords="1139,2050,1319,2091"/>
+<area shape="rect" id="node57" href="$classUS__RunProtocol_1_1RunProtoRotor.html" title="Protocol Lab/Rotor controls class. " alt="" coords="1139,2115,1319,2157"/>
+<area shape="rect" id="node58" href="$classUS__RunProtocol_1_1RunProtoSpeed.html" title="Protocol Speed Steps controls class. " alt="" coords="1139,2181,1319,2222"/>
+<area shape="rect" id="node59" href="$classUS__RunProtocol_1_1RunProtoCells.html" title="Protocol Cells controls class. " alt="" coords="1139,1723,1319,1765"/>
+<area shape="rect" id="node60" href="$classUS__DataIO_1_1EditedData.html" title="The CCW data after edits are applied. " alt="" coords="1537,1643,1697,1669"/>
+</map>

@@ -1,0 +1,20 @@
+<map id="us_convert_scan.h" name="us_convert_scan.h">
+<area shape="rect" id="node2" href="$us__widgets_8h.html" title="us_widgets.h" alt="" coords="72,229,171,256"/>
+<area shape="rect" id="node15" href="$us__settings_8h.html" title="us_settings.h" alt="" coords="2080,304,2180,331"/>
+<area shape="rect" id="node16" href="$us__dataIO_8h.html" title="us_dataIO.h" alt="" coords="2015,155,2108,181"/>
+<area shape="rect" id="node17" href="$us__refScan__dataIO_8h.html" title="us_refScan_dataIO.h" alt="" coords="2689,229,2834,256"/>
+<area shape="rect" id="node19" href="$us__plot_8h.html" title="us_plot.h" alt="" coords="974,155,1048,181"/>
+<area shape="rect" id="node31" href="$us__pabs__common_8h.html" title="us_pabs_common.h" alt="" coords="1720,80,1859,107"/>
+<area shape="rect" id="node35" href="$us__db2_8h.html" title="us_db2.h" alt="" coords="2502,304,2576,331"/>
+<area shape="rect" id="node37" href="$us__images_8h.html" title="us_images.h" alt="" coords="330,304,426,331"/>
+<area shape="rect" id="node38" href="$us__util_8h.html" title="us_util.h" alt="" coords="2204,304,2274,331"/>
+<area shape="rect" id="node39" href="$us__math2_8h.html" title="us_math2.h" alt="" coords="2100,80,2191,107"/>
+<area shape="rect" id="node10" href="$us__global_8h.html" title="us_global.h" alt="" coords="656,304,744,331"/>
+<area shape="rect" id="node13" href="$us__extern_8h.html" title="Defines macros for exporting and importing symbols in shared libraries. " alt="" coords="1895,379,1986,405"/>
+<area shape="rect" id="node14" href="$us__gui__settings_8h.html" title="us_gui_settings.h" alt="" coords="181,304,305,331"/>
+<area shape="rect" id="node18" href="$us__crc_8h.html" title="us_crc.h" alt="" coords="2600,304,2672,331"/>
+<area shape="rect" id="node20" href="$us__widgets__dialog_8h.html" title="us_widgets_dialog.h" alt="" coords="1188,229,1327,256"/>
+<area shape="rect" id="node40" href="$us__solution_8h.html" title="us_solution.h" alt="" coords="2299,155,2398,181"/>
+<area shape="rect" id="node41" href="$us__buffer_8h.html" title="us_buffer.h" alt="" coords="2305,229,2392,256"/>
+<area shape="rect" id="node42" href="$us__analyte_8h.html" title="us_analyte.h" alt="" coords="2416,229,2512,256"/>
+</map>

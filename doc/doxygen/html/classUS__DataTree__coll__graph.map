@@ -1,0 +1,9 @@
+<map id="US_DataTree" name="US_DataTree">
+<area shape="rect" id="node4" href="$classUS__DataModel.html" title="Class to manage data model operations, including database interactions and data processing. " alt="" coords="493,95,602,121"/>
+<area shape="rect" id="node8" href="$classUS__DataProcess.html" title="Class to manage data processing operations, including database interactions and file handling..." alt="" coords="214,184,337,211"/>
+<area shape="rect" id="node9" href="$classUS__SyncExperiment.html" title="US_SyncExperiment" alt="" coords="325,95,468,121"/>
+<area shape="rect" id="node3" href="$classUS__DataModel_1_1DataDesc.html" title="Class for describing data records. " alt="" coords="5,5,180,32"/>
+<area shape="rect" id="node5" href="$classUS__Analyte.html" title="A base class to hold analytes. " alt="" coords="498,5,589,32"/>
+<area shape="rect" id="node6" href="$classUS__DB2.html" title="This class provides connectivity and convenience functions for database access in the US3 system..." alt="" coords="399,5,471,32"/>
+<area shape="rect" id="node7" href="$classUS__Buffer.html" title="The internal structure of a buffer. " alt="" coords="613,5,695,32"/>
+</map>

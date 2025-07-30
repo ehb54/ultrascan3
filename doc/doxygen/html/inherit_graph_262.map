@@ -1,0 +1,105 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="node2" href="$classUS__Widgets.html" title="Set up widgets the UltraScan way. " alt="" coords="123,2387,217,2413"/>
+<area shape="rect" id="node3" href="$classUS__2dPlot.html" title="A class for creating 2D plots with user&#45;defined parameters. " alt="" coords="331,5,415,32"/>
+<area shape="rect" id="node4" href="$classUS__ABDE__MW.html" title="A class for managing the ABDE (Analysis by Density Estimation) main window. " alt="" coords="317,56,430,83"/>
+<area shape="rect" id="node5" href="$classUS__AddRefScan.html" title="The US_AddRefScan class handles the addition and management of reference scans in the application..." alt="" coords="313,107,433,133"/>
+<area shape="rect" id="node6" href="$classUS__Admin.html" title="A class to allow the user to set or change the user&#39;s Master Password. " alt="" coords="331,157,415,184"/>
+<area shape="rect" id="node7" href="$classUS__Advanced.html" title="A class to allow the user to set, modify or delete advanced parameters. " alt="" coords="321,208,426,235"/>
+<area shape="rect" id="node8" href="$classUS__Analysis__auto.html" title="This class handles the automatic analysis of ultra&#45;sedimentation data. " alt="" coords="309,259,438,285"/>
+<area shape="rect" id="node9" href="$classUS__AnalysisBase2.html" title="A base class for analysis programs. Other programs will derive from this class and override layouts a..." alt="" coords="306,309,441,336"/>
+<area shape="rect" id="node16" href="$classUS__AnalysisProfileGui.html" title="Analysis Profile GUI Main Window. " alt="" coords="296,360,451,387"/>
+<area shape="rect" id="node17" href="$classUS__AnalyteMgrEdit.html" title="US_AnalyteMgrEdit" alt="" coords="305,411,441,437"/>
+<area shape="rect" id="node18" href="$classUS__AnalyteMgrNew.html" title="US_AnalyteMgrNew" alt="" coords="304,461,443,488"/>
+<area shape="rect" id="node19" href="$classUS__AnalyteMgrSelect.html" title="US_AnalyteMgrSelect" alt="" coords="298,512,449,539"/>
+<area shape="rect" id="node20" href="$classUS__AnalyteMgrSettings.html" title="US_AnalyteMgrSettings" alt="" coords="293,563,454,589"/>
+<area shape="rect" id="node21" href="$classUS__Astfem__Sim.html" title="Main window to control and display an ultracentrifugation simulation. " alt="" coords="314,613,433,640"/>
+<area shape="rect" id="node22" href="$classUS__auditTrailGMP.html" title="A class for handling the GMP audit trail functionality. " alt="" coords="308,664,439,691"/>
+<area shape="rect" id="node23" href="$classUS__BufferGuiEdit.html" title="US_BufferGuiEdit" alt="" coords="311,715,436,741"/>
+<area shape="rect" id="node24" href="$classUS__BufferGuiNew.html" title="US_BufferGuiNew" alt="" coords="310,765,437,792"/>
+<area shape="rect" id="node25" href="$classUS__BufferGuiSelect.html" title="US_BufferGuiSelect" alt="" coords="304,816,443,843"/>
+<area shape="rect" id="node26" href="$classUS__BufferGuiSettings.html" title="US_BufferGuiSettings" alt="" coords="298,867,449,893"/>
+<area shape="rect" id="node27" href="$classUS__Buoyancy.html" title="A class for performing buoyancy analysis. " alt="" coords="321,917,426,944"/>
+<area shape="rect" id="node28" href="$classUS__Color.html" title="Allow the user to set or change the colors used in UltraScan. " alt="" coords="335,968,412,995"/>
+<area shape="rect" id="node29" href="$classUS__ColorGradient.html" title="Color gradient generator; output is color steps XML file. " alt="" coords="310,1019,437,1045"/>
+<area shape="rect" id="node30" href="$classUS__CombineModels.html" title="A class for combining models in UltraScan. " alt="" coords="303,1069,443,1096"/>
+<area shape="rect" id="node31" href="$classUS__CombPlotsGui.html" title="This class provides a tabbed entry for solution selection. " alt="" coords="308,1120,439,1147"/>
+<area shape="rect" id="node32" href="$classUS__ComProjectMain.html" title="ComProject Main Window. " alt="" coords="302,1171,445,1197"/>
+<area shape="rect" id="node33" href="$classUS__Config.html" title="Provide the top level window for user configuration. " alt="" coords="331,1221,415,1248"/>
+<area shape="rect" id="node34" href="$classUS__ConvertGui.html" title="US_ConvertGui" alt="" coords="317,1272,429,1299"/>
+<area shape="rect" id="node35" href="$classUS__ConvertScan.html" title="US_ConvertScan" alt="" coords="312,1323,435,1349"/>
+<area shape="rect" id="node36" href="$classUS__Database.html" title="A class to allow the user to set, modify or delete parameters for database access. " alt="" coords="322,1373,425,1400"/>
+<area shape="rect" id="node37" href="$classUS__DDistr__Combine.html" title="A class to combine discrete distributions (models) in a bar plot. " alt="" coords="303,1424,444,1451"/>
+<area shape="rect" id="node38" href="$classUS__Density__Match.html" title="Class for displaying models in pseudo&#45;3D. " alt="" coords="306,1475,441,1501"/>
+<area shape="rect" id="node39" href="$classUS__DMGA__Init.html" title="US_DMGA_Init" alt="" coords="318,1525,429,1552"/>
+<area shape="rect" id="node40" href="$classUS__Edit.html" title="US_Edit" alt="" coords="338,1576,409,1603"/>
+<area shape="rect" id="node41" href="$classUS__EditSpectrum.html" title="A class to provide a GUI for editing spectra for buffers, analytes, and solutions. " alt="" coords="310,1627,437,1653"/>
+<area shape="rect" id="node42" href="$classUS__EquilTime.html" title="A class for estimating equilibrium times in UltraScan. " alt="" coords="321,1677,426,1704"/>
+<area shape="rect" id="node43" href="$classUS__eSignaturesGMP.html" title="A class for managing electronic signatures for GMP compliance in UltraScan. " alt="" coords="300,1728,447,1755"/>
+<area shape="rect" id="node44" href="$classUS__ExperimentMain.html" title="Experiment Main Window. " alt="" coords="303,1779,444,1805"/>
+<area shape="rect" id="node45" href="$classUS__ExportLegacy.html" title="A class for exporting legacy data in UltraScan. " alt="" coords="310,1829,437,1856"/>
+<area shape="rect" id="node46" href="$classUS__Extinction.html" title="Class to handle extinction data and GUI. " alt="" coords="321,1880,426,1907"/>
+<area shape="rect" id="node47" href="$classUS__FailedRunGui.html" title="A dialog class. " alt="" coords="311,1931,436,1957"/>
+<area shape="rect" id="node48" href="$classUS__FDS__FileManager.html" title="A class for managing FDS files in UltraScan. " alt="" coords="298,1981,449,2008"/>
+<area shape="rect" id="node49" href="$classUS__FeMatch.html" title="A class for managing finite element matches in UltraScan. " alt="" coords="324,2032,423,2059"/>
+<area shape="rect" id="node50" href="$classUS__FitMeniscus.html" title="A class for fitting meniscus values in UltraScan. " alt="" coords="314,2083,433,2109"/>
+<area shape="rect" id="node51" href="$classUS__Font.html" title="A class to allow the user to select a customized font. " alt="" coords="337,2133,410,2160"/>
+<area shape="rect" id="node52" href="$classUS__GA__Initialize.html" title="US_GA_Initialize" alt="" coords="313,2184,434,2211"/>
+<area shape="rect" id="node53" href="$classUS__GlobalEquil.html" title="A class for performing global equilibrium analysis in UltraScan. " alt="" coords="317,2235,430,2261"/>
+<area shape="rect" id="node54" href="$classUS__Grid__Editor.html" title="Class to handle the grid editor GUI and functionality. " alt="" coords="317,2285,429,2312"/>
+<area shape="rect" id="node55" href="$classUS__Integral.html" title="Class for displaying models in pseudo&#45;3D. " alt="" coords="328,2336,419,2363"/>
+<area shape="rect" id="node56" href="$classUS__LegacyConverter.html" title="Class to converte Beckman legacy data to OpenAUC. " alt="" coords="301,2387,446,2413"/>
+<area shape="rect" id="node57" href="$classUS__License.html" title="Manage a user&#39;s UltraScan license. " alt="" coords="327,2437,419,2464"/>
+<area shape="rect" id="node58" href="$classUS__ManageData.html" title="Class to manage data including display, processing, and database interactions. " alt="" coords="313,2488,433,2515"/>
+<area shape="rect" id="node59" href="$classUS__Minimize.html" title="A class for performing minimization operations with GUI support. " alt="" coords="324,2539,423,2565"/>
+<area shape="rect" id="node61" href="$classUS__ModelMetrics.html" title="Class for managing and analyzing model metrics. " alt="" coords="311,2589,436,2616"/>
+<area shape="rect" id="node62" href="$classUS__MwlRawViewer.html" title="US_MwlRawViewer" alt="" coords="306,2640,441,2667"/>
+<area shape="rect" id="node63" href="$classUS__MwlSpeciesSim.html" title="Class for simulating multi&#45;wavelength species data. " alt="" coords="303,2691,443,2717"/>
+<area shape="rect" id="node64" href="$classUS__MwlSpectra.html" title="US_MwlSpectra" alt="" coords="316,2741,431,2768"/>
+<area shape="rect" id="node65" href="$classUS__NewSpectrum.html" title="Class to handle the creation of new spectrum data. " alt="" coords="309,2792,437,2819"/>
+<area shape="rect" id="node66" href="$classUS__NewXpnHostDB.html" title="A class to allow the user to set, modify or delete parameters for database access. " alt="" coords="303,2843,443,2869"/>
+<area shape="rect" id="node67" href="$classUS__Norm__Profile.html" title="A class for handling normalization profiles in the analysis. " alt="" coords="312,2893,435,2920"/>
+<area shape="rect" id="node68" href="$classUS__Passwd.html" title="A class to get the user&#39;s master password. " alt="" coords="327,2944,420,2971"/>
+<area shape="rect" id="node69" href="$classUS__Predict2.html" title="Class for predicting molecular weight, sedimentation, and diffusion coefficients. ..." alt="" coords="326,2995,421,3021"/>
+<area shape="rect" id="node70" href="$classUS__ProjectGuiAUC__questions.html" title="This class forms the content of the AUC_questions tab in the US_Project GUI. " alt="" coords="274,3045,473,3072"/>
+<area shape="rect" id="node71" href="$classUS__ProjectGuiBufferComponents.html" title="This class forms the content of the buffer components tab in the US_Project GUI. " alt="" coords="265,3096,481,3123"/>
+<area shape="rect" id="node72" href="$classUS__ProjectGuiExpDesign.html" title="This class forms the content of the expDesign tab in the US_Project GUI. " alt="" coords="288,3147,459,3173"/>
+<area shape="rect" id="node73" href="$classUS__ProjectGuiExpense.html" title="This class forms the content of the expense tab in the US_Project GUI. " alt="" coords="294,3197,453,3224"/>
+<area shape="rect" id="node74" href="$classUS__ProjectGuiGeneral.html" title="US_ProjectGuiGeneral" alt="" coords="297,3248,450,3275"/>
+<area shape="rect" id="node75" href="$classUS__ProjectGuiGoals.html" title="This class forms the content of the Goals tab in the US_Project GUI. " alt="" coords="302,3299,445,3325"/>
+<area shape="rect" id="node76" href="$classUS__ProjectGuiMolecules.html" title="This class forms the content of the molecules tab in the US_Project GUI. " alt="" coords="290,3349,457,3376"/>
+<area shape="rect" id="node77" href="$classUS__ProjectGuiNotes.html" title="This class forms the content of the notes tab in the US_Project GUI. " alt="" coords="302,3400,445,3427"/>
+<area shape="rect" id="node78" href="$classUS__ProjectGuiPurity.html" title="This class forms the content of the purity tab in the US_Project GUI. " alt="" coords="302,3451,445,3477"/>
+<area shape="rect" id="node79" href="$classUS__ProjectGuiSaltInformation.html" title="This class forms the content of the salt information tab in the US_Project GUI. " alt="" coords="275,3501,471,3528"/>
+<area shape="rect" id="node80" href="$classUS__ProtocolDevMain.html" title="Class representing the main window for protocol development. " alt="" coords="300,3552,447,3579"/>
+<area shape="rect" id="node81" href="$classUS__Pseudo3D__Combine.html" title="Class for displaying models in pseudo&#45;3D. " alt="" coords="291,3603,456,3629"/>
+<area shape="rect" id="node82" href="$classUS__PseudoAbsorbance.html" title="The US_PseudoAbsorbance class provides a user interface for managing pseudo&#45;absorbance data..." alt="" coords="293,3653,453,3680"/>
+<area shape="rect" id="node83" href="$classUS__QueryRmsd.html" title="The US_QueryRmsd class provides functionality to query and analyze RMSD values from the database..." alt="" coords="315,3704,431,3731"/>
+<area shape="rect" id="node84" href="$classUS__RampGui.html" title="US_RampGui" alt="" coords="323,3755,424,3781"/>
+<area shape="rect" id="node85" href="$classUS__RasmolControl.html" title="The US_RasmolControl class provides a user interface to control Rasmol visualization. " alt="" coords="307,3805,439,3832"/>
+<area shape="rect" id="node86" href="$classUS__RemoveRI.html" title="The US_RemoveRI class provides functionality to remove refractive index (RI) effects from data..." alt="" coords="319,3856,427,3883"/>
+<area shape="rect" id="node87" href="$classUS__Reporter.html" title="The US_Reporter class provides a user interface for generating and managing reports. " alt="" coords="325,3907,421,3933"/>
+<area shape="rect" id="node88" href="$classUS__ReporterGMP.html" title="The US_ReporterGMP class provides functionality for generating GMP reports. " alt="" coords="310,3957,437,3984"/>
+<area shape="rect" id="node89" href="$classUS__ReportGenGui.html" title="This class provides a tabbed entry for solution selection. " alt="" coords="309,4008,438,4035"/>
+<area shape="rect" id="node90" href="$classUS__ReportGui.html" title="This class provides a tabbed entry for solution selection. " alt="" coords="321,4059,426,4085"/>
+<area shape="rect" id="node91" href="$classUS__RotorCalibration.html" title="The US_RotorCalibration class provides a user interface for rotor calibration. " alt="" coords="304,4109,443,4136"/>
+<area shape="rect" id="node92" href="$classUS__Sassoc.html" title="Class to show results of Self&#45;Association Equilibrium Simulation This program allows you to simulate ..." alt="" coords="328,4160,419,4187"/>
+<area shape="rect" id="node93" href="$classUS__ScanExclGui.html" title="This class provides a tabbed entry for solution selection. " alt="" coords="312,4211,435,4237"/>
+<area shape="rect" id="node94" href="$classUS__SolutionMgrEdit.html" title="This class provides a tabbed entry for non&#45;hydrodynamic solution mods. " alt="" coords="304,4261,443,4288"/>
+<area shape="rect" id="node95" href="$classUS__SolutionMgrNew.html" title="This class provides a tabbed entry for new solution creation. " alt="" coords="303,4312,444,4339"/>
+<area shape="rect" id="node96" href="$classUS__SolutionMgrSelect.html" title="This class provides a tabbed entry for solution selection. " alt="" coords="297,4363,450,4389"/>
+<area shape="rect" id="node97" href="$classUS__SolutionMgrSettings.html" title="This class provides a tabbed entry for general solution settings. " alt="" coords="291,4413,455,4440"/>
+<area shape="rect" id="node98" href="$classUS__Spectrum.html" title="The US_Spectrum class provides a user interface for spectrum analysis. " alt="" coords="322,4464,425,4491"/>
+<area shape="rect" id="node99" href="$classUS__TmstViewer.html" title="US_TmstViewer" alt="" coords="315,4515,431,4541"/>
+<area shape="rect" id="node100" href="$classUS__vHW__Combine.html" title="The US_vHW_Combine class provides functionality for combining vHW distributions. " alt="" coords="307,4565,440,4592"/>
+<area shape="rect" id="node101" href="$classUS__ViewSpectrum.html" title="Class to view spectrum data. " alt="" coords="308,4616,439,4643"/>
+<area shape="rect" id="node102" href="$classUS__XpnDataViewer.html" title="US_XpnDataViewer" alt="" coords="305,4667,441,4693"/>
+<area shape="rect" id="node103" href="$classUS__XpnHost.html" title="A class to allow the user to set, modify or delete parameters for database access. " alt="" coords="325,4717,422,4744"/>
+<area shape="rect" id="node104" href="$classUS__XpnHostDB.html" title="A class to allow the user to set, modify or delete parameters for database access. " alt="" coords="316,4768,431,4795"/>
+<area shape="rect" id="node10" href="$classUS__2dsa.html" title="A class for 2&#45;dimensional spectrum analysis. " alt="" coords="562,183,637,209"/>
+<area shape="rect" id="node11" href="$classUS__Dcdt.html" title="A class for performing second moment (dc/dt) analysis. " alt="" coords="562,233,637,260"/>
+<area shape="rect" id="node12" href="$classUS__MwlSpeciesFit.html" title="Class for managing and performing multi&#45;wavelength species fit analysis. " alt="" coords="533,284,665,311"/>
+<area shape="rect" id="node13" href="$classUS__pcsa.html" title="Class for processing and analyzing PCSA data. " alt="" coords="562,335,637,361"/>
+<area shape="rect" id="node14" href="$classUS__SecondMoment.html" title="The US_SecondMoment class provides functionality for second moment analysis. " alt="" coords="530,385,669,412"/>
+<area shape="rect" id="node15" href="$classUS__vHW__Enhanced.html" title="The US_vHW_Enhanced class provides functionality for enhanced vHW analysis. " alt="" coords="529,436,669,463"/>
+<area shape="rect" id="node60" href="$classUS__ExtinctFitter.html" title="A class to perform extinction fitting using the US_Minimize framework. " alt="" coords="540,2539,659,2565"/>
+</map>

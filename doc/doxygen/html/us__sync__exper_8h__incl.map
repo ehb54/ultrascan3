@@ -1,0 +1,14 @@
+<map id="us_sync_exper.h" name="us_sync_exper.h">
+<area shape="rect" id="node3" href="$us__extern_8h.html" title="Defines macros for exporting and importing symbols in shared libraries. " alt="" coords="1271,304,1361,331"/>
+<area shape="rect" id="node4" href="$us__dataIO_8h.html" title="us_dataIO.h" alt="" coords="1404,229,1497,256"/>
+<area shape="rect" id="node6" href="$us__db2_8h.html" title="us_db2.h" alt="" coords="1775,229,1849,256"/>
+<area shape="rect" id="node8" href="$us__data__model_8h.html" title="us_data_model.h" alt="" coords="1342,80,1463,107"/>
+<area shape="rect" id="node9" href="$us__widgets_8h.html" title="us_widgets.h" alt="" coords="679,155,777,181"/>
+<area shape="rect" id="node20" href="$us__model_8h.html" title="us_model.h" alt="" coords="1627,155,1717,181"/>
+<area shape="rect" id="node21" href="$us__noise_8h.html" title="us_noise.h" alt="" coords="1517,155,1603,181"/>
+<area shape="rect" id="node22" href="$us__buffer_8h.html" title="us_buffer.h" alt="" coords="1843,155,1930,181"/>
+<area shape="rect" id="node23" href="$us__analyte_8h.html" title="us_analyte.h" alt="" coords="1397,155,1493,181"/>
+<area shape="rect" id="node24" href="$us__help_8h.html" title="us_help.h" alt="" coords="1149,229,1227,256"/>
+<area shape="rect" id="node16" href="$us__global_8h.html" title="us_global.h" alt="" coords="79,229,167,256"/>
+<area shape="rect" id="node19" href="$us__gui__settings_8h.html" title="us_gui_settings.h" alt="" coords="293,229,417,256"/>
+</map>

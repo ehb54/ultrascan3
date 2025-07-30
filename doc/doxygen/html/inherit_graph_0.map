@@ -1,0 +1,9 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="node2" href="$classata__d__thr__t.html" title="ata_d_thr_t" alt="" coords="162,5,249,32"/>
+<area shape="rect" id="node3" href="$classQThreadEx.html" title="QThreadEx" alt="" coords="161,56,249,83"/>
+<area shape="rect" id="node4" href="$classUS__FitWorker.html" title="A class for performing equilibrium fitting in a separate thread in UltraScan. " alt="" coords="154,107,257,133"/>
+<area shape="rect" id="node5" href="$classUS__Sleep.html" title="A static only class to provide sleep functions, primarily for Windows. Although this file is in the u..." alt="" coords="165,157,245,184"/>
+<area shape="rect" id="node6" href="$classWorkerThread2D.html" title="Worker thread to do actual work of 2DSA analysis. " alt="" coords="146,208,265,235"/>
+<area shape="rect" id="node7" href="$classWorkerThreadCalcNorm.html" title="Worker thread to do actual work of 2DSA analysis. " alt="" coords="125,259,285,285"/>
+<area shape="rect" id="node8" href="$classWorkerThreadPc.html" title="Worker thread to do the actual computational work of PCSA analysis. " alt="" coords="146,309,265,336"/>
+</map>

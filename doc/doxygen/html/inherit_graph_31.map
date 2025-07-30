@@ -1,0 +1,5 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="node2" href="$classMyButton.html" title="Class to enable tracing which button was clicked. " alt="" coords="182,5,261,32"/>
+<area shape="rect" id="node3" href="$classUS__PlotPushbutton.html" title="A specialized push button class for US_Plot to automatically tie a specialized signal to a push butto..." alt="" coords="153,56,289,83"/>
+<area shape="rect" id="node4" href="$classUS__PushButton.html" title="An overloaded QPushButton to allow an index to be set and a signal to be emitted with the index..." alt="" coords="164,107,279,133"/>
+</map>

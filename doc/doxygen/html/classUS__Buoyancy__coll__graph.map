@@ -1,0 +1,22 @@
+<map id="US_Buoyancy" name="US_Buoyancy">
+<area shape="rect" id="node2" href="$classUS__Widgets.html" title="Set up widgets the UltraScan way. " alt="" coords="1054,181,1149,208"/>
+<area shape="rect" id="node20" href="$classUS__Minimize.html" title="A class for performing minimization operations with GUI support. " alt="" coords="1377,131,1475,157"/>
+<area shape="rect" id="node4" href="$classUS__Global.html" title="Manage shared memory. " alt="" coords="221,269,305,296"/>
+<area shape="rect" id="node9" href="$classUS__WidgetsDialog.html" title="Set up widgets the UltraScan way. " alt="" coords="365,401,496,428"/>
+<area shape="rect" id="node5" href="$classUS__Global_1_1Global.html" title="US_Global::Global" alt="" coords="5,269,135,296"/>
+<area shape="rect" id="node6" href="$classUS__Plot.html" title="A class that provides plot widgets. " alt="" coords="1066,283,1137,309"/>
+<area shape="rect" id="node28" href="$classUS__Disk__DB__Controls.html" title="Create a Lyaout with radio buttons for selection of disk or DB selection. " alt="" coords="1196,387,1349,413"/>
+<area shape="rect" id="node8" href="$classUS__PlotConfig.html" title="A window to allow customization of plots initialized. " alt="" coords="796,408,903,435"/>
+<area shape="rect" id="node11" href="$classUS__PlotCurveConfig.html" title="A window to customize plot curves. " alt="" coords="1031,475,1172,501"/>
+<area shape="rect" id="node14" href="$classUS__PlotAxisConfig.html" title="A window to customize plot axes. " alt="" coords="545,401,679,428"/>
+<area shape="rect" id="node15" href="$classUS__PlotGridConfig.html" title="A window to customize a plot&#39;s grid. " alt="" coords="547,452,677,479"/>
+<area shape="rect" id="node12" href="$classUS__PlotLabel.html" title="A window to customize plot labels. " alt="" coords="1375,536,1477,563"/>
+<area shape="rect" id="node16" href="$classUS__Editor.html" title="Class for text edit/display. " alt="" coords="1385,52,1467,79"/>
+<area shape="rect" id="node19" href="$classUS__ExtinctFitter.html" title="A class to perform extinction fitting using the US_Minimize framework. " alt="" coords="1623,131,1741,157"/>
+<area shape="rect" id="node18" href="$classUS__DataIO_1_1RawData.html" title="All data associated with a cell / channel / wavelength (CCW) " alt="" coords="1608,232,1756,259"/>
+<area shape="rect" id="node21" href="$classUS__Settings.html" title="Fetch and set values via QSettings. All functions are static. " alt="" coords="1054,56,1149,83"/>
+<area shape="rect" id="node22" href="$classUS__Matrix.html" title="US_Matrix" alt="" coords="1060,107,1143,133"/>
+<area shape="rect" id="node23" href="$classUS__PlotPicker.html" title="Customize plot picker characteristics and mouse events. " alt="" coords="1629,333,1735,360"/>
+<area shape="rect" id="node25" href="$structDataPoint.html" title="Structure to hold data points for buoyancy analysis. " alt="" coords="1643,384,1721,411"/>
+<area shape="rect" id="node26" href="$classUS__Help.html" title="Launch help programs. " alt="" coords="1645,435,1719,461"/>
+</map>

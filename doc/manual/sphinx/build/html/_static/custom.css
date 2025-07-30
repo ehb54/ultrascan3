@@ -1,0 +1,5 @@
+/* To make tables responsive and fill their container */
+table.docutils {
+    width: 100%;
+    table-layout: fixed; /* Optional: for fixed column widths based on content */
+}

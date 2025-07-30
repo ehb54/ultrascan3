@@ -1,0 +1,107 @@
+<map id="US_ProtocolDevMain" name="US_ProtocolDevMain">
+<area shape="rect" id="node6" href="$classUS__EditingGui.html" title="Editing panel. " alt="" coords="2035,5732,2141,5759"/>
+<area shape="rect" id="node27" href="$classUS__ExperGui.html" title="Experiment panel. " alt="" coords="2596,5703,2697,5729"/>
+<area shape="rect" id="node60" href="$classUS__InitDialogueGui.html" title="Initial panel. " alt="" coords="2579,4247,2714,4273"/>
+<area shape="rect" id="node62" href="$classUS__AnalysisGui.html" title="Analysis panel. " alt="" coords="2588,5163,2705,5189"/>
+<area shape="rect" id="node95" href="$classUS__PostProdGui.html" title="PostProd panel. " alt="" coords="2586,6097,2707,6124"/>
+<area shape="rect" id="node96" href="$classUS__ObservGui.html" title="Observ panel. " alt="" coords="2592,6388,2701,6415"/>
+<area shape="rect" id="node106" href="$classUS__ReportStageGui.html" title="Report panel. " alt="" coords="2577,5399,2716,5425"/>
+<area shape="rect" id="node2" href="$classUS__Widgets.html" title="Set up widgets the UltraScan way. " alt="" coords="1255,4803,1350,4829"/>
+<area shape="rect" id="node9" href="$classUS__Edit.html" title="US_Edit" alt="" coords="1655,6059,1725,6085"/>
+<area shape="rect" id="node26" href="$classUS__ComProjectMain.html" title="ComProject Main Window. " alt="" coords="2300,5744,2443,5771"/>
+<area shape="rect" id="node28" href="$classUS__ExperimentMain.html" title="Experiment Main Window. " alt="" coords="1619,1520,1761,1547"/>
+<area shape="rect" id="node40" href="$classUS__AnalysisProfileGui.html" title="Analysis Profile GUI Main Window. " alt="" coords="1613,2960,1767,2987"/>
+<area shape="rect" id="node47" href="$classUS__CombPlotsGui.html" title="This class provides a tabbed entry for solution selection. " alt="" coords="1625,4691,1755,4717"/>
+<area shape="rect" id="node48" href="$classUS__ReportGui.html" title="This class provides a tabbed entry for solution selection. " alt="" coords="1637,3515,1743,3541"/>
+<area shape="rect" id="node50" href="$classUS__ScanExclGui.html" title="This class provides a tabbed entry for solution selection. " alt="" coords="1629,4472,1751,4499"/>
+<area shape="rect" id="node51" href="$classUS__ReportGenGui.html" title="This class provides a tabbed entry for solution selection. " alt="" coords="1625,4523,1755,4549"/>
+<area shape="rect" id="node63" href="$classUS__Analysis__auto.html" title="This class handles the automatic analysis of ultra&#45;sedimentation data. " alt="" coords="2307,4015,2436,4041"/>
+<area shape="rect" id="node64" href="$classUS__FitMeniscus.html" title="A class for fitting meniscus values in UltraScan. " alt="" coords="1631,4421,1749,4448"/>
+<area shape="rect" id="node71" href="$classUS__Norm__Profile.html" title="A class for handling normalization profiles in the analysis. " alt="" coords="1629,5765,1751,5792"/>
+<area shape="rect" id="node73" href="$classUS__AnalysisBase2.html" title="A base class for analysis programs. Other programs will derive from this class and override layouts a..." alt="" coords="1623,3768,1757,3795"/>
+<area shape="rect" id="node80" href="$classUS__ConvertGui.html" title="US_ConvertGui" alt="" coords="1634,5621,1746,5648"/>
+<area shape="rect" id="node97" href="$classUS__XpnDataViewer.html" title="US_XpnDataViewer" alt="" coords="1622,6547,1758,6573"/>
+<area shape="rect" id="node107" href="$classUS__ReporterGMP.html" title="The US_ReporterGMP class provides functionality for generating GMP reports. " alt="" coords="2025,4224,2151,4251"/>
+<area shape="rect" id="node112" href="$classUS__Pseudo3D__Combine.html" title="Class for displaying models in pseudo&#45;3D. " alt="" coords="1607,4924,1773,4951"/>
+<area shape="rect" id="node114" href="$classUS__DDistr__Combine.html" title="A class to combine discrete distributions (models) in a bar plot. " alt="" coords="1619,4975,1761,5001"/>
+<area shape="rect" id="node116" href="$classUS__eSignaturesGMP.html" title="A class for managing electronic signatures for GMP compliance in UltraScan. " alt="" coords="1617,4640,1763,4667"/>
+<area shape="rect" id="node4" href="$classUS__Global.html" title="Manage shared memory. " alt="" coords="221,5040,305,5067"/>
+<area shape="rect" id="node7" href="$classUS__WidgetsDialog.html" title="Set up widgets the UltraScan way. " alt="" coords="365,2892,496,2919"/>
+<area shape="rect" id="node5" href="$classUS__Global_1_1Global.html" title="US_Global::Global" alt="" coords="5,5040,135,5067"/>
+<area shape="rect" id="node14" href="$classUS__PlotConfig.html" title="A window to allow customization of plots initialized. " alt="" coords="901,6289,1007,6316"/>
+<area shape="rect" id="node15" href="$classUS__PlotCurveConfig.html" title="A window to customize plot curves. " alt="" coords="1232,6532,1373,6559"/>
+<area shape="rect" id="node18" href="$classUS__PlotAxisConfig.html" title="A window to customize plot axes. " alt="" coords="569,6211,702,6237"/>
+<area shape="rect" id="node19" href="$classUS__PlotGridConfig.html" title="A window to customize a plot&#39;s grid. " alt="" coords="570,6276,701,6303"/>
+<area shape="rect" id="node29" href="$classUS__ExperGuiUpload.html" title="Experiment Upload panel. " alt="" coords="1232,1219,1373,1245"/>
+<area shape="rect" id="node39" href="$classUS__ExperGuiAProfile.html" title="Experiment AnalysisProfile panel. " alt="" coords="2015,487,2161,513"/>
+<area shape="rect" id="node41" href="$classUS__AnaprofPanPCSA.html" title="Experiment Cells panel. " alt="" coords="1227,2653,1378,2680"/>
+<area shape="rect" id="node43" href="$classUS__AnaprofPan2DSA.html" title="2DSA controls panel " alt="" coords="2013,2741,2163,2768"/>
+<area shape="rect" id="node46" href="$classUS__AnaprofPanGen.html" title="Experiment General panel. " alt="" coords="2019,3616,2157,3643"/>
+<area shape="rect" id="node52" href="$classUS__ExperGuiSpeeds.html" title="Experiment Speeds panel. " alt="" coords="2015,2028,2161,2055"/>
+<area shape="rect" id="node53" href="$classUS__ExperGuiCells.html" title="Experiment Cells panel. " alt="" coords="2023,2128,2153,2155"/>
+<area shape="rect" id="node54" href="$classUS__ExperGuiRanges.html" title="Experiment Ranges panel. " alt="" coords="2015,736,2161,763"/>
+<area shape="rect" id="node55" href="$classUS__ExperGuiSolutions.html" title="Experiment Solutions panel. " alt="" coords="2011,915,2165,941"/>
+<area shape="rect" id="node56" href="$classUS__ExperGuiOptical.html" title="Experiment Optical Systems panel. " alt="" coords="2017,1355,2159,1381"/>
+<area shape="rect" id="node57" href="$classUS__ExperGuiRotor.html" title="Experiment Rotor panel. " alt="" coords="2022,1668,2154,1695"/>
+<area shape="rect" id="node59" href="$classUS__ExperGuiGeneral.html" title="Experiment General panel. " alt="" coords="2015,2352,2161,2379"/>
+<area shape="rect" id="node61" href="$classUS__SelectItem.html" title="A dialog class to select from an input list of items. " alt="" coords="1247,3888,1358,3915"/>
+<area shape="rect" id="node115" href="$classUS__eSignaturesGui.html" title="eSign panel " alt="" coords="2579,5845,2715,5872"/>
+<area shape="rect" id="node10" href="$classUS__MwlData.html" title="US_MwlData" alt="" coords="1254,6149,1351,6176"/>
+<area shape="rect" id="node24" href="$classUS__Help.html" title="Launch help programs. " alt="" coords="917,3888,991,3915"/>
+<area shape="rect" id="node70" href="$classUS__TimeState.html" title="A class for Time State details in time&#45;indexed data records. " alt="" coords="901,4893,1007,4920"/>
+<area shape="rect" id="node101" href="$classUS__XpnData.html" title="US_XpnData" alt="" coords="905,6775,1003,6801"/>
+<area shape="rect" id="node105" href="$classLink.html" title="A class to manage SSL connections to a server. " alt="" coords="1107,6192,1154,6219"/>
+<area shape="rect" id="node12" href="$classUS__Plot.html" title="A class that provides plot widgets. " alt="" coords="1267,5912,1338,5939"/>
+<area shape="rect" id="node25" href="$classUS__Disk__DB__Controls.html" title="Create a Lyaout with radio buttons for selection of disk or DB selection. " alt="" coords="1226,5584,1379,5611"/>
+<area shape="rect" id="node16" href="$classUS__PlotLabel.html" title="A window to customize plot labels. " alt="" coords="1639,6637,1741,6664"/>
+<area shape="rect" id="node98" href="$classDialBox.html" title="DialBox" alt="" coords="1269,6684,1336,6711"/>
+<area shape="rect" id="node104" href="$classWheelBox.html" title="WheelBox" alt="" coords="1262,6583,1343,6609"/>
+<area shape="rect" id="node20" href="$classUS__DB2.html" title="This class provides connectivity and convenience functions for database access in the US3 system..." alt="" coords="1267,6348,1339,6375"/>
+<area shape="rect" id="node21" href="$classUS__DataIO_1_1RawData.html" title="All data associated with a cell / channel / wavelength (CCW) " alt="" coords="1229,4116,1377,4143"/>
+<area shape="rect" id="node22" href="$classUS__PlotPicker.html" title="Customize plot picker characteristics and mouse events. " alt="" coords="1249,6013,1356,6040"/>
+<area shape="rect" id="node30" href="$classUS__RunProtocol_1_1RunProtoUpload.html" title="Protocol Upload controls class. " alt="" coords="545,855,725,897"/>
+<area shape="rect" id="node38" href="$classUS__RunProtocol.html" title="A class to define a Run Protocol object. " alt="" coords="895,1179,1013,1205"/>
+<area shape="rect" id="node31" href="$classUS__RunProtocol_1_1RunProtoOptics.html" title="Protocol Optical Systems controls class. " alt="" coords="545,1223,725,1265"/>
+<area shape="rect" id="node32" href="$classUS__RunProtocol_1_1RunProtoSolutions.html" title="Protocol Solutions controls class. " alt="" coords="545,465,725,506"/>
+<area shape="rect" id="node33" href="$classUS__RunProtocol_1_1RunProtoRanges.html" title="Protocol Ranges controls class. " alt="" coords="545,921,725,962"/>
+<area shape="rect" id="node34" href="$classUS__RunProtocol_1_1RunProtoAProfile.html" title="Protocol Analysis Profile controls class. " alt="" coords="545,717,725,758"/>
+<area shape="rect" id="node35" href="$classUS__RunProtocol_1_1RunProtoRotor.html" title="Protocol Lab/Rotor controls class. " alt="" coords="545,1410,725,1451"/>
+<area shape="rect" id="node36" href="$classUS__RunProtocol_1_1RunProtoSpeed.html" title="Protocol Speed Steps controls class. " alt="" coords="545,1779,725,1821"/>
+<area shape="rect" id="node37" href="$classUS__RunProtocol_1_1RunProtoCells.html" title="Protocol Cells controls class. " alt="" coords="545,1975,725,2017"/>
+<area shape="rect" id="node72" href="$classUS__MwlSpeciesFit.html" title="Class for managing and performing multi&#45;wavelength species fit analysis. " alt="" coords="2022,3051,2154,3077"/>
+<area shape="rect" id="node42" href="$classUS__AnaProfile_1_1AnaProfPCSA.html" title="Analysis Profile PCSA controls class. " alt="" coords="855,2683,1053,2709"/>
+<area shape="rect" id="node45" href="$classUS__AnaProfile.html" title="A class to define an Ana Profile object for US_AnalysisProfileGui and related classes. " alt="" coords="1249,2603,1356,2629"/>
+<area shape="rect" id="node44" href="$classUS__AnaProfile_1_1AnaProf2DSA.html" title="Profile 2DSA controls class. " alt="" coords="856,2525,1052,2552"/>
+<area shape="rect" id="node49" href="$classUS__ReportGMP.html" title="A class for managing GMP (Good Manufacturing Practice) reports. " alt="" coords="1245,3285,1360,3312"/>
+<area shape="rect" id="node58" href="$classUS__Rotor_1_1Instrument.html" title="the Instrument class describes an AUC instrument " alt="" coords="1616,1899,1764,1925"/>
+<area shape="rect" id="node65" href="$classUS__SpectrogramData.html" title="Class derived from QwtRasterData to supply QwtPlotSpectrogram data. " alt="" coords="1229,3336,1377,3363"/>
+<area shape="rect" id="node67" href="$classUS__Editor.html" title="Class for text edit/display. " alt="" coords="1262,3387,1343,3413"/>
+<area shape="rect" id="node69" href="$classUS__SimulationParameters.html" title="A class to hold parameters of a run for simulation purposes. " alt="" coords="1215,4412,1390,4439"/>
+<area shape="rect" id="node74" href="$classUS__Noise.html" title="Noise Vector object. " alt="" coords="1263,3657,1343,3684"/>
+<area shape="rect" id="node75" href="$classUS__Solution.html" title="US_Solution" alt="" coords="1255,3437,1350,3464"/>
+<area shape="rect" id="node76" href="$classUS__Buffer.html" title="The internal structure of a buffer. " alt="" coords="913,3075,995,3101"/>
+<area shape="rect" id="node77" href="$classUS__Math2_1_1SolutionData.html" title="A structure used for holding solution data. " alt="" coords="1220,3545,1385,3572"/>
+<area shape="rect" id="node78" href="$classUS__Model.html" title="A class to define a model and provide Disk/DB IO for models. " alt="" coords="1649,3997,1731,4024"/>
+<area shape="rect" id="node79" href="$structUS__Model_1_1CustomGridMetadata.html" title="Custom Grid Data. " alt="" coords="1196,4060,1409,4087"/>
+<area shape="rect" id="node81" href="$classUS__LineEdit__RE.html" title="US_LineEdit_RE" alt="" coords="1243,6481,1362,6508"/>
+<area shape="rect" id="node83" href="$classUS__Experiment.html" title="US_Experiment" alt="" coords="1246,5533,1359,5560"/>
+<area shape="rect" id="node84" href="$structUS__Experiment_1_1RotorInfo.html" title="US_Experiment::RotorInfo" alt="" coords="867,5619,1041,5645"/>
+<area shape="rect" id="node85" href="$classUS__Project.html" title="US_Project" alt="" coords="910,5669,998,5696"/>
+<area shape="rect" id="node86" href="$structUS__ConvertGui_1_1ProtocolInfo.html" title="US_ConvertGui::ProtocolInfo" alt="" coords="1207,5467,1398,5493"/>
+<area shape="rect" id="node87" href="$structUS__ConvertGui_1_1ProtocolOptics.html" title="US_ConvertGui::ProtocolOptics" alt="" coords="851,5416,1057,5443"/>
+<area shape="rect" id="node88" href="$structUS__ConvertGui_1_1ProtocolSolutions.html" title="US_ConvertGui::ProtocolSolutions" alt="" coords="843,5467,1065,5493"/>
+<area shape="rect" id="node89" href="$structUS__ConvertGui_1_1ProtocolCells.html" title="US_ConvertGui::ProtocolCells" alt="" coords="855,5517,1053,5544"/>
+<area shape="rect" id="node90" href="$structUS__ConvertGui_1_1ProtocolRotor.html" title="US_ConvertGui::ProtocolRotor" alt="" coords="855,5568,1053,5595"/>
+<area shape="rect" id="node91" href="$classUS__SelectBox.html" title="US_SelectBox" alt="" coords="1249,5720,1356,5747"/>
+<area shape="rect" id="node93" href="$classUS__SelectBase.html" title="US_SelectBase" alt="" coords="897,5720,1011,5747"/>
+<area shape="rect" id="node94" href="$classUS__DataIO_1_1EditedData.html" title="The CCW data after edits are applied. " alt="" coords="1610,3869,1770,3896"/>
+<area shape="rect" id="node99" href="$classSpeedoMeter.html" title="SpeedoMeter" alt="" coords="905,6696,1003,6723"/>
+<area shape="rect" id="node102" href="$classUS__XpnData_1_1tbSyData.html" title="System Status Data table values. " alt="" coords="556,6751,715,6777"/>
+<area shape="rect" id="node103" href="$classUS__XpnData_1_1tbCsData.html" title="Table values shared by all Scan Data types. " alt="" coords="556,6801,715,6828"/>
+<area shape="rect" id="node108" href="$structUS__ReporterGMP_1_1MiscReportMaskStructure.html" title="US_ReporterGMP::MiscReport\lMaskStructure" alt="" coords="1590,4574,1790,4615"/>
+<area shape="rect" id="node109" href="$structUS__ReporterGMP_1_1CombPlotsReportMaskStructure.html" title="US_ReporterGMP::CombPlots\lReportMaskStructure" alt="" coords="1591,4742,1789,4783"/>
+<area shape="rect" id="node110" href="$structUS__ReporterGMP_1_1PerChanReportMaskStructure.html" title="US_ReporterGMP::PerChanReport\lMaskStructure" alt="" coords="1579,4807,1801,4849"/>
+<area shape="rect" id="node111" href="$structUS__ReporterGMP_1_1PerChanReportMaskStructureABDE.html" title="US_ReporterGMP::PerChanReport\lMaskStructureABDE" alt="" coords="1579,5026,1801,5067"/>
+<area shape="rect" id="node113" href="$structUS__ReporterGMP_1_1GenReportMaskStructure.html" title="US_ReporterGMP::GenReport\lMaskStructure" alt="" coords="1592,4099,1788,4141"/>
+<area shape="rect" id="node117" href="$classUS__eSignaturesGMP_1_1US__InvestigatorData.html" title="A class to hold investigator data. " alt="" coords="1225,4566,1380,4607"/>
+</map>

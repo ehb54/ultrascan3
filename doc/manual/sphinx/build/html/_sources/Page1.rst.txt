@@ -1,0 +1,10 @@
+This is our first attempt 
+=============================
+
+.. toctree:: 
+    :makedepth: 2
+    :caption: Advanced Configuration Panel
+
+    Page 1
+    
+

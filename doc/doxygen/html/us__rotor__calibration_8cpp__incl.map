@@ -1,0 +1,34 @@
+<map id="us_rotor_calibration.cpp" name="us_rotor_calibration.cpp">
+<area shape="rect" id="node2" href="$us__rotor_8h.html" title="us_rotor.h" alt="" coords="3314,229,3394,256"/>
+<area shape="rect" id="node4" href="$us__db2_8h.html" title="us_db2.h" alt="" coords="615,304,690,331"/>
+<area shape="rect" id="node7" href="$us__rotor__calibration_8h.html" title="us_rotor_calibration.h" alt="" coords="2649,155,2795,181"/>
+<area shape="rect" id="node20" href="$us__gui__settings_8h.html" title="us_gui_settings.h" alt="" coords="4408,379,4532,405"/>
+<area shape="rect" id="node41" href="$us__rotor__gui_8h.html" title="us_rotor_gui.h" alt="" coords="3422,80,3526,107"/>
+<area shape="rect" id="node44" href="$us__abstractrotor__gui_8h.html" title="us_abstractrotor_gui.h" alt="" coords="3783,155,3933,181"/>
+<area shape="rect" id="node47" href="$us__util_8h.html" title="us_util.h" alt="" coords="2637,304,2708,331"/>
+<area shape="rect" id="node48" href="$us__settings_8h.html" title="us_settings.h" alt="" coords="5,304,105,331"/>
+<area shape="rect" id="node49" href="$us__license__t_8h.html" title="us_license_t.h" alt="" coords="130,304,237,331"/>
+<area shape="rect" id="node50" href="$us__math2_8h.html" title="us_math2.h" alt="" coords="599,80,690,107"/>
+<area shape="rect" id="node54" href="$us__license_8h.html" title="us_license.h" alt="" coords="4056,229,4151,256"/>
+<area shape="rect" id="node55" href="$us__gui__util_8h.html" title="us_gui_util.h" alt="" coords="4624,304,4719,331"/>
+<area shape="rect" id="node60" href="$us__run__details2_8h.html" title="us_run_details2.h" alt="" coords="2008,155,2132,181"/>
+<area shape="rect" id="node61" href="$us__passwd_8h.html" title="us_passwd.h" alt="" coords="4226,229,4325,256"/>
+<area shape="rect" id="node62" href="$us__get__dbexp_8h.html" title="us_get_dbexp.h" alt="" coords="2759,229,2874,256"/>
+<area shape="rect" id="node63" href="$main1_8inc.html" title="program for plotting an arbitrary function " alt="" coords="4509,80,4588,107"/>
+<area shape="rect" id="node3" href="$us__extern_8h.html" title="Defines macros for exporting and importing symbols in shared libraries. " alt="" coords="2770,453,2861,480"/>
+<area shape="rect" id="node10" href="$us__widgets_8h.html" title="us_widgets.h" alt="" coords="3875,304,3974,331"/>
+<area shape="rect" id="node21" href="$us__help_8h.html" title="us_help.h" alt="" coords="3729,304,3808,331"/>
+<area shape="rect" id="node22" href="$us__plot_8h.html" title="us_plot.h" alt="" coords="2033,229,2107,256"/>
+<area shape="rect" id="node34" href="$us__dataIO_8h.html" title="us_dataIO.h" alt="" coords="1662,229,1755,256"/>
+<area shape="rect" id="node35" href="$us__matrix_8h.html" title="us_matrix.h" alt="" coords="2370,304,2461,331"/>
+<area shape="rect" id="node39" href="$us__editor_8h.html" title="us_editor.h" alt="" coords="3047,304,3133,331"/>
+<area shape="rect" id="node17" href="$us__global_8h.html" title="us_global.h" alt="" coords="3513,379,3601,405"/>
+<area shape="rect" id="node23" href="$us__widgets__dialog_8h.html" title="us_widgets_dialog.h" alt="" coords="3257,304,3395,331"/>
+<area shape="rect" id="node42" href="$us__editor__gui_8h.html" title="us_editor_gui.h" alt="" coords="3419,229,3529,256"/>
+<area shape="rect" id="node43" href="$us__investigator_8h.html" title="us_investigator.h" alt="" coords="3757,229,3879,256"/>
+<area shape="rect" id="node45" href="$us__simparms_8h.html" title="us_simparms.h" alt="" coords="2187,155,2297,181"/>
+<area shape="rect" id="node46" href="$us__time__state_8h.html" title="us_time_state.h" alt="" coords="2215,229,2330,256"/>
+<area shape="rect" id="node51" href="$us__solution_8h.html" title="us_solution.h" alt="" coords="473,155,571,181"/>
+<area shape="rect" id="node52" href="$us__buffer_8h.html" title="us_buffer.h" alt="" coords="363,229,449,256"/>
+<area shape="rect" id="node53" href="$us__analyte_8h.html" title="us_analyte.h" alt="" coords="474,229,570,256"/>
+</map>

@@ -1,0 +1,47 @@
+<map id="us_resids_bitmap.h" name="us_resids_bitmap.h">
+<area shape="rect" id="node2" href="$us__resids__bitmap_8cpp.html" title="us_resids_bitmap.cpp" alt="" coords="463,80,612,107"/>
+<area shape="rect" id="node3" href="$us__resplot__2d_8h.html" title="us_resplot_2d.h" alt="" coords="952,80,1067,107"/>
+<area shape="rect" id="node5" href="$us__2dsa_8cpp.html" title="us_2dsa.cpp" alt="" coords="5,237,101,263"/>
+<area shape="rect" id="node12" href="$us__fematch_8h.html" title="Contains the declaration of the US_FeMatch class and its members. " alt="" coords="1192,237,1293,263"/>
+<area shape="rect" id="node34" href="$us__resplot__fem_8h.html" title="us_resplot_fem.h" alt="" coords="1143,80,1265,107"/>
+<area shape="rect" id="node36" href="$us__mlplot_8h.html" title="us_mlplot.h" alt="" coords="2090,80,2179,107"/>
+<area shape="rect" id="node42" href="$us__pcsa_8cpp.html" title="us_pcsa.cpp" alt="" coords="2955,326,3051,353"/>
+<area shape="rect" id="node46" href="$us__resplot__pc_8h.html" title="us_resplot_pc.h" alt="" coords="2359,155,2473,181"/>
+<area shape="rect" id="node4" href="$us__2dsa_8h.html" title="Contains the declaration of the US_2dsa class and its members. " alt="" coords="687,155,769,181"/>
+<area shape="rect" id="node10" href="$us__resplot__2d_8cpp.html" title="us_resplot_2d.cpp" alt="" coords="989,237,1117,263"/>
+<area shape="rect" id="node6" href="$us__2dsa__process_8cpp.html" title="us_2dsa_process.cpp" alt="" coords="125,237,275,263"/>
+<area shape="rect" id="node7" href="$us__adv__analysis__2d_8cpp.html" title="us_adv_analysis_2d.cpp" alt="" coords="299,237,464,263"/>
+<area shape="rect" id="node8" href="$us__analysis__control__2d_8cpp.html" title="us_analysis_control\l_2d.cpp" alt="" coords="489,229,626,271"/>
+<area shape="rect" id="node9" href="$us__plot__control__2d_8cpp.html" title="us_plot_control_2d.cpp" alt="" coords="650,237,806,263"/>
+<area shape="rect" id="node11" href="$us__show__norm_8cpp.html" title="us_show_norm.cpp" alt="" coords="830,237,965,263"/>
+<area shape="rect" id="node13" href="$us__autoflow__analysis_8h.html" title="us_autoflow_analysis.h" alt="" coords="1497,326,1655,353"/>
+<area shape="rect" id="node20" href="$us__resplot__fem_8cpp.html" title="us_resplot_fem.cpp" alt="" coords="685,415,821,442"/>
+<area shape="rect" id="node24" href="$us__reporter__gmp_8h.html" title="us_reporter_gmp.h" alt="" coords="1343,326,1473,353"/>
+<area shape="rect" id="node27" href="$us__adv__dmgamc_8cpp.html" title="us_adv_dmgamc.cpp" alt="" coords="679,326,825,353"/>
+<area shape="rect" id="node28" href="$us__advanced__fem_8cpp.html" title="us_advanced_fem.cpp" alt="" coords="850,326,1003,353"/>
+<area shape="rect" id="node29" href="$us__fematch_8cpp.html" title="us_fematch.cpp" alt="" coords="1028,326,1143,353"/>
+<area shape="rect" id="node30" href="$us__fematch__main_8cpp.html" title="us_fematch_main.cpp" alt="" coords="1167,326,1318,353"/>
+<area shape="rect" id="node31" href="$us__plot__control__fem_8cpp.html" title="us_plot_control_fem.cpp" alt="" coords="1826,326,1990,353"/>
+<area shape="rect" id="node32" href="$us__query__rmsd_8h.html" title="us_query_rmsd.h" alt="" coords="1679,326,1801,353"/>
+<area shape="rect" id="node14" href="$us__autoflow__analysis_8cpp.html" title="us_autoflow_analysis.cpp" alt="" coords="1676,415,1847,442"/>
+<area shape="rect" id="node15" href="$us__autoflow__analysis__main_8cpp.html" title="us_autoflow_analysis\l_main.cpp" alt="" coords="1871,408,2017,449"/>
+<area shape="rect" id="node16" href="$us__com__project__gui_8h.html" title="us_com_project_gui.h" alt="" coords="1327,415,1476,442"/>
+<area shape="rect" id="node21" href="$us__protocol__dev__gui_8h.html" title="This file contains the declaration of the classes for the US Protocol Development GUI..." alt="" coords="1500,415,1652,442"/>
+<area shape="rect" id="node17" href="$us__com__project__gui_8cpp.html" title="us_com_project_gui.cpp" alt="" coords="1320,505,1483,531"/>
+<area shape="rect" id="node18" href="$us__com__project__main_8cpp.html" title="us_com_project_main.cpp" alt="" coords="919,505,1094,531"/>
+<area shape="rect" id="node19" href="$us__com__project__academic__main_8cpp.html" title="us_com_project_academic\l_main.cpp" alt="" coords="1118,497,1295,539"/>
+<area shape="rect" id="node22" href="$us__protocol__dev__gui_8cpp.html" title="us_protocol_dev_gui.cpp" alt="" coords="1507,505,1674,531"/>
+<area shape="rect" id="node23" href="$us__protocol__dev__main_8cpp.html" title="us_protocol_dev_main.cpp" alt="" coords="1698,505,1875,531"/>
+<area shape="rect" id="node25" href="$us__reporter__gmp_8cpp.html" title="us_reporter_gmp.cpp" alt="" coords="1159,415,1303,442"/>
+<area shape="rect" id="node26" href="$us__reporter__gmp__main_8cpp.html" title="us_reporter_gmp_main.cpp" alt="" coords="956,415,1135,442"/>
+<area shape="rect" id="node33" href="$us__query__rmsd_8cpp.html" title="us_query_rmsd.cpp" alt="" coords="2041,415,2177,442"/>
+<area shape="rect" id="node35" href="$us__plot__control__fem_8h.html" title="us_plot_control_fem.h" alt="" coords="1243,155,1394,181"/>
+<area shape="rect" id="node37" href="$us__analysis__control__pc_8h.html" title="us_analysis_control_pc.h" alt="" coords="2114,155,2283,181"/>
+<area shape="rect" id="node38" href="$us__pcsa_8h.html" title="us_pcsa.h" alt="" coords="2343,237,2425,263"/>
+<area shape="rect" id="node41" href="$us__mlplot_8cpp.html" title="us_mlplot.cpp" alt="" coords="2014,326,2117,353"/>
+<area shape="rect" id="node40" href="$us__analysis__control__pc_8cpp.html" title="us_analysis_control\l_pc.cpp" alt="" coords="2141,319,2278,360"/>
+<area shape="rect" id="node39" href="$us__adv__analysis__pc_8cpp.html" title="us_adv_analysis_pc.cpp" alt="" coords="2613,326,2779,353"/>
+<area shape="rect" id="node43" href="$us__plot__control__pc_8cpp.html" title="us_plot_control_pc.cpp" alt="" coords="2302,326,2458,353"/>
+<area shape="rect" id="node44" href="$us__resplot__pc_8cpp.html" title="us_resplot_pc.cpp" alt="" coords="2803,326,2931,353"/>
+<area shape="rect" id="node45" href="$us__rpscan_8cpp.html" title="us_rpscan.cpp" alt="" coords="2483,326,2589,353"/>
+</map>

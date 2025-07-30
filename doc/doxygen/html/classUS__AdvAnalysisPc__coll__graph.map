@@ -1,0 +1,14 @@
+<map id="US_AdvAnalysisPc" name="US_AdvAnalysisPc">
+<area shape="rect" id="node2" href="$classUS__WidgetsDialog.html" title="Set up widgets the UltraScan way. " alt="" coords="662,44,793,71"/>
+<area shape="rect" id="node4" href="$classUS__Global.html" title="Manage shared memory. " alt="" coords="403,56,487,83"/>
+<area shape="rect" id="node5" href="$classUS__Global_1_1Global.html" title="US_Global::Global" alt="" coords="47,56,177,83"/>
+<area shape="rect" id="node6" href="$classUS__SolveSim_1_1DataSet.html" title="Class containing information for each data set input to calc_residuals() " alt="" coords="648,305,807,332"/>
+<area shape="rect" id="node7" href="$classUS__Model.html" title="A class to define a model and provide Disk/DB IO for models. " alt="" coords="404,235,487,261"/>
+<area shape="rect" id="node12" href="$classUS__ModelRecord.html" title="US_ModelRecord object. " alt="" coords="666,183,789,209"/>
+<area shape="rect" id="node8" href="$structUS__Model_1_1CustomGridMetadata.html" title="Custom Grid Data. " alt="" coords="5,235,219,261"/>
+<area shape="rect" id="node9" href="$classUS__Solution.html" title="US_Solution" alt="" coords="398,315,493,341"/>
+<area shape="rect" id="node10" href="$classUS__Buffer.html" title="The internal structure of a buffer. " alt="" coords="71,315,153,341"/>
+<area shape="rect" id="node11" href="$classUS__DataIO_1_1EditedData.html" title="The CCW data after edits are applied. " alt="" coords="365,384,525,411"/>
+<area shape="rect" id="node13" href="$classUS__DataIO_1_1RawData.html" title="All data associated with a cell / channel / wavelength (CCW) " alt="" coords="371,120,519,147"/>
+<area shape="rect" id="node14" href="$classUS__Help.html" title="Launch help programs. " alt="" coords="691,465,764,492"/>
+</map>

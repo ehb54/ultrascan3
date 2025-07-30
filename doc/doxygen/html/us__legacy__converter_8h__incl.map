@@ -1,0 +1,17 @@
+<map id="us_legacy_converter.h" name="us_legacy_converter.h">
+<area shape="rect" id="node3" href="$us__widgets_8h.html" title="us_widgets.h" alt="" coords="515,229,613,256"/>
+<area shape="rect" id="node16" href="$us__dataIO_8h.html" title="us_dataIO.h" alt="" coords="1235,229,1328,256"/>
+<area shape="rect" id="node17" href="$us__settings_8h.html" title="us_settings.h" alt="" coords="1247,304,1347,331"/>
+<area shape="rect" id="node18" href="$us__archive_8h.html" title="us_archive.h" alt="" coords="1076,304,1172,331"/>
+<area shape="rect" id="node19" href="$us__convert_8h.html" title="../us_convert/us_convert.h" alt="" coords="1193,80,1370,107"/>
+<area shape="rect" id="node11" href="$us__global_8h.html" title="us_global.h" alt="" coords="149,304,237,331"/>
+<area shape="rect" id="node14" href="$us__extern_8h.html" title="Defines macros for exporting and importing symbols in shared libraries. " alt="" coords="1321,379,1412,405"/>
+<area shape="rect" id="node15" href="$us__gui__settings_8h.html" title="us_gui_settings.h" alt="" coords="313,304,437,331"/>
+<area shape="rect" id="node20" href="$us__solution_8h.html" title="us_solution.h" alt="" coords="1803,155,1901,181"/>
+<area shape="rect" id="node25" href="$us__simparms_8h.html" title="us_simparms.h" alt="" coords="1498,155,1609,181"/>
+<area shape="rect" id="node21" href="$us__db2_8h.html" title="us_db2.h" alt="" coords="1924,304,1999,331"/>
+<area shape="rect" id="node23" href="$us__buffer_8h.html" title="us_buffer.h" alt="" coords="1809,229,1895,256"/>
+<area shape="rect" id="node24" href="$us__analyte_8h.html" title="us_analyte.h" alt="" coords="2021,229,2117,256"/>
+<area shape="rect" id="node26" href="$us__time__state_8h.html" title="us_time_state.h" alt="" coords="1604,229,1719,256"/>
+<area shape="rect" id="node27" href="$us__util_8h.html" title="us_util.h" alt="" coords="1626,304,1697,331"/>
+</map>

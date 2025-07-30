@@ -1,0 +1,6 @@
+<map id="US_DataModel" name="US_DataModel">
+<area shape="rect" id="node3" href="$classUS__Analyte.html" title="A base class to hold analytes. " alt="" coords="101,5,191,32"/>
+<area shape="rect" id="node4" href="$classUS__DB2.html" title="This class provides connectivity and convenience functions for database access in the US3 system..." alt="" coords="215,5,287,32"/>
+<area shape="rect" id="node5" href="$classUS__DataModel_1_1DataDesc.html" title="Class for describing data records. " alt="" coords="312,5,487,32"/>
+<area shape="rect" id="node6" href="$classUS__Buffer.html" title="The internal structure of a buffer. " alt="" coords="511,5,594,32"/>
+</map>

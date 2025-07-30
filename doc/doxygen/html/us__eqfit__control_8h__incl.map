@@ -1,0 +1,20 @@
+<map id="us_eqfit_control.h" name="us_eqfit_control.h">
+<area shape="rect" id="node2" href="$us__extern_8h.html" title="Defines macros for exporting and importing symbols in shared libraries. " alt="" coords="2087,528,2177,555"/>
+<area shape="rect" id="node3" href="$us__widgets__dialog_8h.html" title="us_widgets_dialog.h" alt="" coords="152,379,291,405"/>
+<area shape="rect" id="node14" href="$us__globeq__data_8h.html" title="Contains the definition of data structures used for global equilibrium analysis in UltraScan..." alt="" coords="2197,304,2321,331"/>
+<area shape="rect" id="node15" href="$us__eqmath_8h.html" title="Contains the declaration of the US_EqMath class and its members. " alt="" coords="2534,155,2631,181"/>
+<area shape="rect" id="node16" href="$us__dataIO_8h.html" title="us_dataIO.h" alt="" coords="2347,304,2440,331"/>
+<area shape="rect" id="node27" href="$us__eqreporter_8h.html" title="Contains the declaration of the US_EqReporter class and its members. " alt="" coords="2093,229,2205,256"/>
+<area shape="rect" id="node28" href="$us__fit__worker_8h.html" title="Contains the declaration of the US_FitWorker class and its members. " alt="" coords="2401,80,2511,107"/>
+<area shape="rect" id="node29" href="$us__plot_8h.html" title="us_plot.h" alt="" coords="1101,304,1176,331"/>
+<area shape="rect" id="node42" href="$us__help_8h.html" title="us_help.h" alt="" coords="1889,453,1967,480"/>
+<area shape="rect" id="node11" href="$us__global_8h.html" title="us_global.h" alt="" coords="263,453,351,480"/>
+<area shape="rect" id="node17" href="$us__matrix_8h.html" title="us_matrix.h" alt="" coords="2833,229,2924,256"/>
+<area shape="rect" id="node21" href="$us__math2_8h.html" title="us_math2.h" alt="" coords="2533,229,2624,256"/>
+<area shape="rect" id="node22" href="$us__solution_8h.html" title="us_solution.h" alt="" coords="2699,304,2797,331"/>
+<area shape="rect" id="node23" href="$us__db2_8h.html" title="us_db2.h" alt="" coords="2904,453,2979,480"/>
+<area shape="rect" id="node25" href="$us__buffer_8h.html" title="us_buffer.h" alt="" coords="2923,379,3010,405"/>
+<area shape="rect" id="node26" href="$us__analyte_8h.html" title="us_analyte.h" alt="" coords="2752,379,2848,405"/>
+<area shape="rect" id="node30" href="$us__widgets_8h.html" title="us_widgets.h" alt="" coords="315,379,413,405"/>
+<area shape="rect" id="node31" href="$us__gui__settings_8h.html" title="us_gui_settings.h" alt="" coords="946,453,1070,480"/>
+</map>

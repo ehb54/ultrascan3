@@ -1,0 +1,5 @@
+<map id="US_FitWorker" name="US_FitWorker">
+<area shape="rect" id="node3" href="$structFitCtrlPar.html" title="A structure to hold control parameters for fitting in equilibrium analysis. " alt="" coords="101,95,179,121"/>
+<area shape="rect" id="node4" href="$classUS__EqMath.html" title="A class for performing equilibrium mathematical calculations in UltraScan. " alt="" coords="203,95,295,121"/>
+<area shape="rect" id="node6" href="$structEqRunFit.html" title="A structure to hold run fitting parameters and results for equilibrium analysis. " alt="" coords="261,5,337,32"/>
+</map>
