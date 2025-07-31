@@ -9,6 +9,8 @@
 #define UNICODE_PLUSMINUS_QS QString( "%1" ).arg( UNICODE_PLUSMINUS )
 #define UNICODE_ALPHA u8"\u03B1"
 #define UNICODE_ALPHA_QS QString( "%1" ).arg( UNICODE_ALPHA )
+#define UNICODE_ETA u8"\u03B7"
+#define UNICODE_ETA_QS QString( "%1" ).arg( UNICODE_ETA )
 #define UNICODE_LAMBDA u8"\u03BB"
 #define UNICODE_LAMBDA_QS QString( "%1" ).arg( UNICODE_LAMBDA )
 #define UNICODE_TAU u8"\u03C4"
@@ -40,6 +42,8 @@
 #define UNICODE_PLUSMINUS_QS QString( "%1" ).arg( UNICODE_PLUSMINUS )
 #define UNICODE_ALPHA "Alpha"
 #define UNICODE_ALPHA_QS QString( "%1" ).arg( UNICODE_ALPHA )
+#define UNICODE_ETA "Eta"
+#define UNICODE_ETA_QS QString( "%1" ).arg( UNICODE_ETA )
 #define UNICODE_LAMBDA "Lambda"
 #define UNICODE_LAMBDA_QS QString( "%1" ).arg( UNICODE_LAMBDA )
 #define UNICODE_TAU "Tau"

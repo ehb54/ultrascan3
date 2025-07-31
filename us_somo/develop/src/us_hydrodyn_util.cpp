@@ -294,12 +294,14 @@ double US_Hydrodyn::protons_at_pH( double pH, const struct PDB_model & model ) {
    int chains   = (int) model.molecule.size();
    double protons = 0;
 
+   int p_residue_msg_count = 0;
+   
    for ( int j = 0; j < chains; ++j ) {
       // struct PDB_chain
       int atoms = (int) model.molecule[ j ].atom.size();
       for ( int k = 0; k < atoms; ++k ) {
          if ( !model.molecule[ j ].atom[ k ].p_residue ) {
-            qDebug() << "**** US_Hydrodyn::protons_at_pH(): p_residue not set!";
+            ++p_residue_msg_count;
             continue;
          }
          if ( !model.molecule[ j ].atom[ k ].p_atom ) {
@@ -321,6 +323,11 @@ double US_Hydrodyn::protons_at_pH( double pH, const struct PDB_model & model ) {
                                                   model.molecule[ j ].atom[ k ].p_atom );
       }
    }
+
+   if ( p_residue_msg_count ) {
+      qDebug() << QString( "**** US_Hydrodyn::protons_at_pH(): p_residue not set occured %1 times!" ).arg( p_residue_msg_count );
+   };
+
    // qDebug() << "US_Hydrodyn::protons_at_pH() returns " << protons;
    return protons;
 }
