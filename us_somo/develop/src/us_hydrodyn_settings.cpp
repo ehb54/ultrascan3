@@ -3220,13 +3220,13 @@ void US_Hydrodyn::hard_coded_defaults()
    hydro.zeno_surface_thickness_from_rg_b                   = 20.85931361;
    hydro.zeno_surface_thickness_from_rg_c                   = 8.013801076;
 
-   hydro.zeno_grpy_correction_from_bead_count               = false;
-   hydro.zeno_grpy_correction_from_bead_count_Dt_a          = -1.058;
-   hydro.zeno_grpy_correction_from_bead_count_Dt_b          = 1.048;
-   hydro.zeno_grpy_correction_from_bead_count_Dt_c          = 0.106;
-   hydro.zeno_grpy_correction_from_bead_count_eta_a         = -9.851;
-   hydro.zeno_grpy_correction_from_bead_count_eta_b         = 9.858;
-   hydro.zeno_grpy_correction_from_bead_count_eta_c         = -.0018;
+   hydro.zeno_grpy_correction_from_bead_count               = true;
+   hydro.zeno_grpy_correction_from_bead_count_Dt_a          = -1.05766;
+   hydro.zeno_grpy_correction_from_bead_count_Dt_b          = 1.047449;
+   hydro.zeno_grpy_correction_from_bead_count_Dt_c          = 0.105866;
+   hydro.zeno_grpy_correction_from_bead_count_eta_a         = -9.85141578;
+   hydro.zeno_grpy_correction_from_bead_count_eta_b         = 9.858277668;
+   hydro.zeno_grpy_correction_from_bead_count_eta_c         = -0.01776568;
 
    misc.hydro_supc                                          = true;
    misc.hydro_zeno                                          = false;

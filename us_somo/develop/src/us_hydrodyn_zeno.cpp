@@ -8,11 +8,7 @@ static mQProgressBar * zeno_progress;
 bool * zeno_stop_flag;
 static US_Udp_Msg  * zeno_us_udp_msg;
 
-// // note: this program uses cout and/or cerr and this should be replaced
-
-// static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const QString& str) { 
-//    return os << qPrintable(str);
-// }
+#define ZENO_GRPY_CORRECTION_BEAD_COUNT_THRESHOLD 1000
 
 namespace zeno {
    /*
@@ -13948,6 +13944,12 @@ bool US_Hydrodyn::calc_zeno()
 
    int models_procd = 0;
 
+   if ( hydro.zeno_grpy_correction_from_bead_count ) {
+      editor_msg( "darkblue", us_tr( "ZENO correction is enabled\n" ) );
+   } else {
+      editor_msg( "darkred", us_tr( "ZENO correction is disabled\n" ) );
+   }
+
    for (current_model = 0; current_model < (unsigned int)lb_model->count(); current_model++) {
       if (lb_model->item(current_model)->isSelected()) {
          if (somo_processed[current_model]) {
@@ -14017,6 +14019,14 @@ bool US_Hydrodyn::calc_zeno()
                us_timers.init_timer( "compute zeno" );
 
                us_timers.start_timer( "compute zeno" );
+
+               if ( bead_model.size() < ZENO_GRPY_CORRECTION_BEAD_COUNT_THRESHOLD ) {
+                  editor_msg(
+                             "darkred",
+                             QString( us_tr( "For less than %1 beads, we recommend to use GRPY\n" ) )
+                             .arg( ZENO_GRPY_CORRECTION_BEAD_COUNT_THRESHOLD )
+                             );
+               }
 
                bool result = 
                   uhz.run( 
@@ -14422,18 +14432,19 @@ bool US_Hydrodyn::calc_zeno()
                   QString add_to_zeno_correction_results = "";
 
                   if ( hydro.zeno_grpy_correction_from_bead_count ) {
+                     size_t bead_count = bead_model.size();
+
                      double dt_corr =
                         hydro.zeno_grpy_correction_from_bead_count_Dt_a +
                         hydro.zeno_grpy_correction_from_bead_count_Dt_b *
-                        pow( bead_model.size(), hydro.zeno_grpy_correction_from_bead_count_Dt_c );
+                        pow( bead_count, hydro.zeno_grpy_correction_from_bead_count_Dt_c );
                      double eta_corr =
                         hydro.zeno_grpy_correction_from_bead_count_eta_a +
                         hydro.zeno_grpy_correction_from_bead_count_eta_b *
-                        pow( bead_model.size(), hydro.zeno_grpy_correction_from_bead_count_eta_c );
-
+                        pow( bead_count, hydro.zeno_grpy_correction_from_bead_count_eta_c );
+                                
                      double dt_new  = 100 * this_data.results.D20w / ( dt_corr + 100 );
                      double eta_new = 100 * this_data.results.viscosity / ( eta_corr + 100 );
-
                      
                      // recompute f, rs
                      double fconv = pow( 10.0, this_data.hydro.unit + 9 );
@@ -14445,25 +14456,25 @@ bool US_Hydrodyn::calc_zeno()
                      
                      QTextStream( stdout ) <<
                         QString(
-                                    "ZENO bead count correction active\n"
-                                    "bead count       %1\n"
-                                    "correction dt    %2\n"
-                                    "current dt       %3\n"
-                                    "corrected dt     %4\n"
+                                "ZENO bead count correction active\n"
+                                "bead count       %1\n"
+                                "correction dt    %2\n"
+                                "current dt       %3\n"
+                                "corrected dt     %4\n"
 
-                                    "correction eta   %5\n"
-                                    "current eta      %6\n"
-                                    "corrected eta    %7\n"
+                                "correction eta   %5\n"
+                                "current eta      %6\n"
+                                "corrected eta    %7\n"
 
-                                    "tra fric coef f  %8\n"
-                                    "corrected f      %9\n"
-                                    "stoke's r r_s    %10\n"
-                                    "hydro_unit       %11\n"
-                                    "fconv            %12\n"
-                                    "corrected r_s    %13\n"
+                                "tra fric coef f  %8\n"
+                                "corrected f      %9\n"
+                                "stoke's r r_s    %10\n"
+                                "hydro_unit       %11\n"
+                                "fconv            %12\n"
+                                "corrected r_s    %13\n"
 
                                 )
-                        .arg( bead_model.size() )
+                        .arg( bead_count )
                         .arg( dt_corr )
                         .arg( this_data.results.D20w )
                         .arg( dt_new )
@@ -14477,24 +14488,22 @@ bool US_Hydrodyn::calc_zeno()
                         .arg( this_data.hydro.unit )
                         .arg( fconv )
                         .arg( rs_new )
-                        
                         ;
 
-                     this_data.tra_fric_coef = f_new;
-                     this_data.results.D20w  = dt_new;
-                     this_data.results.rs    = rs_new;
+                     this_data.tra_fric_coef     = f_new;
+                     this_data.results.D20w      = dt_new;
+                     this_data.results.rs        = rs_new;
+                     this_data.results.viscosity = eta_new;
 
                      add_to_zeno_correction_notes =
-                         us_tr(
-                                "ZENO correction active\n"
-                                "Details in Brookes et al., 2025. Eur. Biophy. J., https://doi.org/10.1007/s00249-025-01758-8\n"
-                                )
+                        us_tr(
+                              "ZENO correction active\n"
+                              "Details in Brookes et al., 2025. Eur. Biophy. J., https://doi.org/10.1007/s00249-025-01758-8\n"
+                              )
                         + "---------------------------------------------------------\n"
                         ;
-                  }                     
-               
-                  // us_qdebug( QString( "fric coeff %1" ).arg( this_data.tra_fric_coef ) );
-
+                  }
+                     
                   {
                      double fconv = pow(10.0, this_data.hydro.unit + 9);
                      // us_qdebug( QString( "fconv %1" ).arg( fconv ) );
@@ -14983,7 +14992,11 @@ bool US_Hydrodyn::calc_zeno()
 
    pb_stop_calc->setEnabled(false);
    editor_msg( "black", "Calculate RB hydrodynamics ZENO completed\n");
-   editor_msg( "dark blue", info_cite( "zeno" ) );
+   if ( hydro.zeno_grpy_correction_from_bead_count ) {
+      editor_msg( "dark blue", info_cite( "zeno-correction" ) );
+   } else {
+      editor_msg( "dark blue", info_cite( "zeno" ) );
+   }
 
    if ( advanced_config.auto_show_hydro ) 
    {
