@@ -1,7 +1,4 @@
 //! \file us_hardware.cpp
-#include <QFile>
-#include <QDir>
-#include <QXmlStreamReader>
 #include "us_hardware.h"
 #include "us_settings.h"
 

@@ -10,9 +10,6 @@
  *  Univerity of Texas Health Science Center
 */
 
-#include <QFileInfo>
-#include <QDateTime>
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>

@@ -2,7 +2,6 @@
 #ifndef US_HYDROSIM_H
 #define US_HYDROSIM_H
 
-#include <QString>
 #include "us_extern.h"
 
 //! A class describing the characteristics of a molecule

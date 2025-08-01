@@ -1,6 +1,4 @@
 //! \file us_analyte.cpp
-#include <QFile>
-#include <QDir>
 #include "us_analyte.h"
 #include "us_constants.h"
 #include "us_settings.h"

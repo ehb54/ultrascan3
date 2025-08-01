@@ -3,7 +3,6 @@
 #include "us_math2.h"
 #include "us_hardware.h"
 #include "us_settings.h"
-#include <QtMath>
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug() //!< debug-level-conditioned qDebug()
 #endif

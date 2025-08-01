@@ -1,9 +1,5 @@
+//! \file us_csv_data.cpp
 #include "us_csv_data.h"
-#include <QObject>
-#include <QTextStream>
-#include <QFileInfo>
-#include <QFile>
-#include <QDir>
 
 US_CSV_Data::US_CSV_Data() {}
 

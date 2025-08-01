@@ -2,8 +2,6 @@
 #ifndef US_HTTP_POST_H
 #define US_HTTP_POST_H
 
-#include <QObject>
-#include <QNetworkReply>
 #include "us_extern.h"
 
 //! \brief A text only class to manage HTTP requests

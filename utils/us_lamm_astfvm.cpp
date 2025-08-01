@@ -1,9 +1,4 @@
 //! \file us_lamm_astfvm.cpp
-#include <QCoreApplication>
-#include <QRegularExpression>
-#include <QElapsedTimer>
-#include <QDir>
-
 #include "us_lamm_astfvm.h"
 #include "us_math2.h"
 #include "us_constants.h"

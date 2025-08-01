@@ -2,7 +2,6 @@
 #ifndef US_GZIP_H
 #define US_GZIP_H
 
-#include <QStringList>
 #include "us_extern.h"
 
 // Error codes

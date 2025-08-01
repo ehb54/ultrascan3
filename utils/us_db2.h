@@ -2,9 +2,6 @@
 #ifndef US_DB2_H
 #define US_DB2_H
 
-#include <QStringList>
-#include <QVariant>
-#include <QDebug>
 // The supercomputer does not use the DB
 #ifndef NO_DB
 #include "mysql.h"

@@ -2,8 +2,6 @@
 #ifndef US_ASTFEM_MATH_H
 #define US_ASTFEM_MATH_H
 
-#include <QVector>
-#include <QString>
 #include "us_extern.h"
 #include "us_model.h"
 #include "us_simparms.h"

@@ -1,14 +1,4 @@
 //! \file us_cfa_data.cpp
-#include <QRegularExpression>
-#include <QDateTime>
-#include <QFileInfo>
-#include <QFile>
-#include <QDir>
-// #include <QSqlDatabase>
-// #include <QSqlError>
-#include <QSqlQuery>
-#include <QSqlRecord>
-
 #include "us_cfa_data.h"
 #include "us_util.h"
 #include "us_settings.h"

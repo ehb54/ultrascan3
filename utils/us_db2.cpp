@@ -4,11 +4,6 @@
 #include "us_crypto.h"
 #include "us_gzip.h"
 #include "us_util.h"
-#include <QFileInfo>
-#include <QFile>
-#include <QDir>
-#include <QIODevice>
-#include <QCryptographicHash>
 
 #define CIPHER "AES256-GCM-SHA384:AES256-SHA:AES256-SHA256:AES256-CCM:AES256-GCM-SHA384:AES128-SHA"
 

@@ -2,10 +2,6 @@
 #ifndef US_MATRIX_H
 #define US_MATRIX_H
 
-#include <QVector>
-#include <QThread>
-#include <QMutex>
-#include <QWaitCondition>
 #include "us_extern.h"
 
 /*! A class of general purpose static matrix functions. The elements of all

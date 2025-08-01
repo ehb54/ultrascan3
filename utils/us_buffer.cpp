@@ -6,9 +6,6 @@
 #include "us_datafiles.h"
 #include "us_util.h"
 #include "us_eprofile.h"
-#include <QFile>
-#include <QDir>
-#include <QtMath>
 
 void US_BufferComponent::getAllFromDB( const QString& masterPW, 
          QMap< QString, US_BufferComponent >& componentList )

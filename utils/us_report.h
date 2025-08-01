@@ -4,7 +4,6 @@
 
 #include "us_extern.h"
 #include "us_db2.h"
-#include <QRegularExpression>
 
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug() //!< debug-level-conditioned qDebug()

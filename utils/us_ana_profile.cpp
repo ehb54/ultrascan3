@@ -1,5 +1,4 @@
 //! \file us_ana_profile.cpp
-
 #include "us_ana_profile.h"
 #include "us_constants.h"
 #include "us_settings.h"

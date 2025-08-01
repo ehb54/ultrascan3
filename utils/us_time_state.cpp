@@ -1,11 +1,6 @@
 //! \file us_time_state.cpp
 #include "us_time_state.h"
 #include "us_settings.h"
-#include <QFileInfo>
-#include <QDateTime>
-#include <QDataStream>
-#include <QXmlStreamReader>
-#include <QCryptographicHash>
 
 #ifndef _TR_
 #define _TR_(a) QObject::tr(a)

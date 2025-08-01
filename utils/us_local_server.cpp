@@ -1,5 +1,5 @@
+//! \file us_local_server.cpp
 #include "us_local_server.h"
-#include <QLocalSocket>
 
 // the maximum number of instances available
 #define MAX_INSTANCES 10

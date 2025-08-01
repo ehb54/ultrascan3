@@ -1,8 +1,6 @@
 //! \file us_solution_vals.cpp
 #include "us_solution_vals.h"
 #include "us_settings.h"
-#include <QFile>
-#include <QDir>
 
 // Get Solution/Buffer values for a data set
 bool US_SolutionVals::values( US_DB2* dbP, US_DataIO::EditedData* edata,

@@ -1,9 +1,5 @@
 //! \file us_datafiles.cpp
-
 #include "us_datafiles.h"
-#include <QXmlStreamReader>
-#include <QFileInfo>
-#include <QDir>
 
 // Get a data file name; either by matching the GUID,
 //  finding a numeric gap in existing file names,

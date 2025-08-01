@@ -2,7 +2,6 @@
 #ifndef US_SETTINGS_H
 #define US_SETTINGS_H
 
-#include <QStringList>
 #include "us_extern.h"
 
 //! \brief Fetch and set values via QSettings.  All functions are static.

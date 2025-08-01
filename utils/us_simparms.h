@@ -6,9 +6,6 @@
 #include "us_dataIO.h"
 #include "us_db2.h"
 #include "us_time_state.h"
-#include <QThread>
-#include <QDateTime>
-#include <QCoreApplication>
 
 //! A class to hold parameters of a run for simulation purposes.
 

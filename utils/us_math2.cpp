@@ -1,5 +1,4 @@
 //! \file us_math2.cpp
-#include <QtMath>
 #include <stdlib.h>
 #include <math.h>
 #include <chrono>

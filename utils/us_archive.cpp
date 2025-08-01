@@ -1,11 +1,7 @@
+//! \file us_archive.cpp
 #include "us_archive.h"
 #include "archive_entry.h"
 #include "archive.h"
-#include <QDataStream>
-#include <QTextStream>
-#include <QFileInfo>
-#include <QFile>
-#include <QDir>
 
 bool US_Archive::extract(const QString& filename, const QString& path, QStringList* file_list) {
 

@@ -2,7 +2,6 @@
 #ifndef US_TIMESTATE_H
 #define US_TIMESTATE_H
 
-#include <QFile>
 #include "us_extern.h"
 #include "us_util.h"
 #include "us_db2.h"

@@ -9,11 +9,6 @@
  *  Univerity of Texas Health Science Center
  */
 
-#include <QFileInfo>
-#include <QDebug>
-#include <QFile>
-#include <QDir>
-
 #include "us_tar.h"
 
 #include <sys/stat.h>

@@ -1,13 +1,8 @@
 //! \file us_project.cpp
-
 #include "us_settings.h"
 #include "us_db2.h"
 #include "us_util.h"
 #include "us_project.h"
-#include <QFile>
-#include <QDir>
-#include <QFileInfo>
-#include <QRegularExpression>
 
 // The constructor clears out the data structure
 US_Project::US_Project()

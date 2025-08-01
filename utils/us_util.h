@@ -2,7 +2,6 @@
 #ifndef US_UTIL_H
 #define US_UTIL_H
 
-#include <QStringList>
 #include "us_extern.h"
 
 #ifndef DbgErr

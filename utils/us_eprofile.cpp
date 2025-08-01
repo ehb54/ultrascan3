@@ -1,7 +1,6 @@
 //! \file us_eprofile.cpp
 #include "us_eprofile.h"
 #include "us_settings.h"
-#include <QXmlStreamReader>
 
 // This source contains static utility functions for handling extinctionProfile
 // XML strings and database tables.

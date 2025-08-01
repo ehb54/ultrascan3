@@ -2,8 +2,6 @@
 #ifndef US_LSERVER_H
 #define US_LSERVER_H
 
-#include <QString>
-#include <QLocalServer>
 #include "us_extern.h"
 
 // *********** user defines *************

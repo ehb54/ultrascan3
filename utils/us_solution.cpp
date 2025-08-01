@@ -1,5 +1,4 @@
 //! \file us_solution.cpp
-
 #include "us_settings.h"
 #include "us_db2.h"
 #include "us_util.h"
@@ -8,9 +7,6 @@
 #include "us_analyte.h"
 #include "us_datafiles.h"
 #include "us_eprofile.h"
-#include <QRegularExpression>
-#include <QFile>
-#include <QDir>
 
 // The constructor clears out the data structure
 US_Solution::US_Solution()

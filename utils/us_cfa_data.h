@@ -2,11 +2,6 @@
 #ifndef US_CFA_DATA_H
 #define US_CFA_DATA_H
 
-#include <QDebug>
-#include <QMap>
-#include <QObject>
-#include <QStringList>
-#include <QSqlDatabase>
 #include "us_extern.h"
 #include "us_dataIO.h"
 

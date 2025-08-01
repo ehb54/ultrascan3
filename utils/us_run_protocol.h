@@ -2,7 +2,6 @@
 #ifndef US_RPROTOCOL_H
 #define US_RPROTOCOL_H
 
-#include <QXmlStreamReader>
 #include "us_extern.h"
 #include "us_db2.h"
 

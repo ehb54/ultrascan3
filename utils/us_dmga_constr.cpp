@@ -1,6 +1,4 @@
 //! \file us_dmga_constr.cpp
-
-#include <QtMath>
 #include "us_dmga_constr.h"
 #include "us_settings.h"
 #include "us_util.h"

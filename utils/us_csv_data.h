@@ -1,7 +1,6 @@
 #ifndef US_CSV_DATA_H
 #define US_CSV_DATA_H
 
-#include <QStringList>
 #include "us_extern.h"
 
 //! \class US_CSV_Data

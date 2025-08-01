@@ -1,13 +1,5 @@
 //! \file us_memory.cpp
-#include <QRegularExpression>
-#include <QProcess>
-#include <QtMath>
-#include <QDebug>
-#include <QFile>
-#include <QDir>
-
 #include "us_memory.h"
-
 #ifdef Q_OS_LINUX
 #include <sys/sysinfo.h>
 #include <unistd.h>

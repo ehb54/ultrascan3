@@ -1,9 +1,6 @@
+//! \file us_settings.cpp
 #include "us_settings.h"
 #include "us_defines.h"
-#include <QCoreApplication>
-#include <QRegularExpression>
-#include <QSettings>
-#include <QDir>
 
 // Programs
 QString US_Settings::browser( void )

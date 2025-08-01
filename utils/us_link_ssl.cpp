@@ -1,8 +1,6 @@
+//! \file us_link_ssl.cpp
 #include "us_link_ssl.h"
 #include "us_settings.h"
-#include <QDomDocument>
-#include <QJsonDocument>
-#include <QJsonObject>
 
 Link::Link( QString alias )
 //Link::Link()

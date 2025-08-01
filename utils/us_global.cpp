@@ -1,5 +1,4 @@
 //! \file us_global.cpp
-#include <QTextStream>
 #include "us_global.h"
 
 #ifndef Q_OS_WIN

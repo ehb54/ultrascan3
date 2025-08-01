@@ -1,6 +1,4 @@
 //! \file us_pcsa_modelrec.cpp
-
-#include <QtMath>
 #include "us_pcsa_modelrec.h"
 #include "us_solute.h"
 #include "us_settings.h"

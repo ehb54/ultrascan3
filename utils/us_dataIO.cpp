@@ -5,11 +5,6 @@
 #include "us_matrix.h"
 #include "us_util.h"
 #include "us_settings.h"
-#include <QCoreApplication>
-#include <QDataStream>
-#include <QtEndian>
-#include <QFile>
-#include <QDir>
 
 // Return the count of readings points
 int US_DataIO::RawData::pointCount( )

@@ -1,8 +1,4 @@
 //! \file us_protocol_util.cpp
-
-#include <QDir>
-#include <QDateTime>
-#include <QXmlStreamReader>
 #include "us_protocol_util.h"
 
 // Build a list of string lists containing basic protocol

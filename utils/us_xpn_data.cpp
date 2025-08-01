@@ -1,5 +1,4 @@
 //! \file us_xpn_data.cpp
-
 #include "us_xpn_data.h"
 #include "us_util.h"
 #include "us_settings.h"
@@ -7,7 +6,6 @@
 #include "us_memory.h"
 #include "us_time_state.h"
 #include "us_simparms.h"
-#include <QDir>
 
 // Hold data read in and selected from a raw XPN data directory
 US_XpnData::US_XpnData( ) {

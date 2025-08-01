@@ -2,8 +2,6 @@
 #ifndef US_ANALYTE_H
 #define US_ANALYTE_H
 
-#include <QStringList>
-#include <QMap>
 #include "us_extern.h"
 #include "us_db2.h"
 

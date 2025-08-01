@@ -1,5 +1,4 @@
 //! \file us_simparms.cpp
-
 #include "us_simparms.h"
 #include "us_astfem_math.h"
 #include "us_hardware.h"

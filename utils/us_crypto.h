@@ -2,7 +2,6 @@
 #ifndef US_CRYPTO_H
 #define US_CRYPTO_H
 
-#include <QStringList>
 #include "us_extern.h"
 
 /*! \brief A class to encrypt and decrypt the user's database passwords.

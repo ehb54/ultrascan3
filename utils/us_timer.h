@@ -6,9 +6,6 @@
 #ifndef US_TIMER_H
 #define US_TIMER_H
 
-#include <QMap>
-#include <QString>
-#include <QElapsedTimer>
 #include "us_extern.h"
 
 using namespace std;

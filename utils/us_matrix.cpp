@@ -1,5 +1,4 @@
 //! \file us_matrix.cpp
-
 #include "us_matrix.h"
 #include "us_math2.h"
 

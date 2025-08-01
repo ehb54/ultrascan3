@@ -1,7 +1,4 @@
 //! \file us_astfem_rsa.cpp
-
-#include <QCoreApplication>
-#include <QDateTime>
 #include "us_astfem_rsa.h"
 #include "us_astfem_math.h"
 #include "us_hardware.h"

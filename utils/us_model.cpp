@@ -1,12 +1,9 @@
 //! \file us_model.cpp
-
 #include "us_model.h"
 #include "us_constants.h"
 #include "us_settings.h"
 #include "us_util.h"
 #include "us_math2.h"
-#include <QDir>
-#include <QRegularExpression>
 
 US_Model::SimulationComponent::SimulationComponent()
 {

@@ -1,12 +1,5 @@
 //! \file us_util.cpp
 #include "us_util.h"
-#include <QUuid>
-#include <QIODevice>
-#include <QCryptographicHash>
-#include <QUuid>
-#include <QFile>
-#include <QDir>
-#include <QDateTime>
 
 // Get next token in a string, as defined by a separator; update for next pass
 QString US_Util::getToken( QString& s, const QString& separator )

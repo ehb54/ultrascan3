@@ -2,7 +2,6 @@
 #ifndef US_CONSTANTS_H
 #define US_CONSTANTS_H
 
-#include <QString>
 #include "us_extern.h"
 
 #define AVOGADRO     6.022140857e+23 //!< Avogadro's number

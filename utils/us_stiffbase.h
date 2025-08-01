@@ -2,7 +2,6 @@
 #ifndef US_STIFFBASE_H
 #define US_STIFFBASE_H
 
-#include <QtMath>
 #include "us_extern.h"
 
 //! \brief Stiff Base object

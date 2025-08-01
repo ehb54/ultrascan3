@@ -1,3 +1,4 @@
+//! \file us_timer.cpp
 #include "us_timer.h"
 #include <math.h>
  

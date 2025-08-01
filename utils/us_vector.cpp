@@ -1,5 +1,4 @@
 //! \file us_vector.cpp
-
 #include "us_vector.h"
 #include "us_math2.h"
 
