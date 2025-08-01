@@ -17,7 +17,7 @@
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Edit UltraScan Multi-WaveLength (MWL) Data" href="us_edit_mwl.html" />
+    <link rel="next" title="UltraScanIII Time Derivative (dC/dt) Data Analysis" href="time_derivative.html" />
     <link rel="prev" title="Welcome to UltraScan III’s Documentation and Resource!" href="index.html" /> 
   </head><body>
       <div class="header" role="banner"><h1 class="heading"><a href="index.html">
@@ -31,7 +31,7 @@
         &#160;&#160;::&#160;&#160;
         <a class="uplink" href="index.html">Contents</a>
         &#160;&#160;::&#160;&#160;
-        <a href="us_edit_mwl.html">Edit UltraScan Multi-WaveLength (MWL) Data</a>&#160;&#160;»
+        <a href="time_derivative.html">UltraScanIII Time Derivative (dC/dt) Data Analysis</a>&#160;&#160;»
         </p>
 
       </div>
@@ -45,21 +45,24 @@
 <div class="contents local topic" id="index">
 <p class="topic-title first">Index</p>
 <ul class="simple">
-<li><a class="reference internal" href="#functions" id="id1">Functions</a><ul>
-<li><a class="reference internal" href="#scan-control" id="id2">Scan Control</a></li>
-<li><a class="reference internal" href="#edit-control" id="id3">Edit Control</a></li>
-<li><a class="reference internal" href="#window-controls" id="id4">Window controls</a></li>
+<li><a class="reference internal" href="#functions" id="id2">Functions</a><ul>
+<li><a class="reference internal" href="#scan-control" id="id3">Scan Control</a></li>
+<li><a class="reference internal" href="#edit-control" id="id4">Edit Control</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#editing-steps" id="id5">Editing Steps</a></li>
-<li><a class="reference internal" href="#multi-wavelength-mwl-controls" id="id6">Multi-WaveLength (MWL) Controls</a></li>
-<li><a class="reference internal" href="#related" id="id7">Related</a></li>
+<li><a class="reference internal" href="#edit-multi-wavelength-mwl-data" id="id6">Edit Multi-Wavelength (MWL) Data</a><ul>
+<li><a class="reference internal" href="#functions-specific-to-mwl" id="id7">Functions specific to MWL:</a></li>
+<li><a class="reference internal" href="#editing-steps-specific-to-mwl" id="id8">Editing steps specific to MWL</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#related" id="id9">Related</a></li>
 </ul>
 </div>
 <p>All experimental data acquired with the analytical ultracentrifuge must be processed into an edit profile before analysis can be performed using UltraScanIII modules. For velocity experiment, the edit profiles define key analysis parameters, including the meniscus and data range, and scans selected. A user can choose to create multiple edit profiles for a particular data set, for example, to explore the effect of various editing steps on the analysis results. For example, a user may wish to exclude either early or late scans to track time dependent changes in the sample. Each profile will receive a unique name automatically based on the time at which the editing process was conducted or a user-defined name. For data analysis, any associated edit profile may be selected at run time to provide a custom data selection.</p>
-<img alt="_images/us_edit.png" src="_images/us_edit.png" />
+<img alt="_images/us_edit.png" id="us-edit-functions" src="_images/us_edit.png" />
 <div class="section" id="functions">
-<h2><a class="toc-backref" href="#id1">Functions</a><a class="headerlink" href="#functions" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#id2">Functions</a><a class="headerlink" href="#functions" title="Permalink to this headline">¶</a></h2>
 <table border="1" class="colwidths-given docutils">
 <colgroup>
 <col width="29%" />
@@ -79,7 +82,7 @@
 <td>Check to specify data input from local disk.</td>
 </tr>
 <tr class="row-odd"><td><strong>Load Data</strong></td>
-<td>Click here and, in the resulting  <a class="reference external" href="link">Load Data Dialog</a>, select raw data set(s) to load for editing.</td>
+<td>Click here and, in the resulting  <a class="reference external" href="load_auc.html">Load Data Dialog</a>, select raw data set(s) to load for editing.</td>
 </tr>
 <tr class="row-even"><td><strong>Run Details</strong></td>
 <td>This button brings up a child window that describes additional information associated with the data. The data description may be updated in this window.</td>
@@ -93,7 +96,7 @@
 </tbody>
 </table>
 <div class="section" id="scan-control">
-<h3><a class="toc-backref" href="#id2">Scan Control</a><a class="headerlink" href="#scan-control" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id3">Scan Control</a><a class="headerlink" href="#scan-control" title="Permalink to this headline">¶</a></h3>
 <p>Scans to be included in analysis, exluded scans are note deleted.</p>
 <table border="1" class="colwidths-given docutils">
 <colgroup>
@@ -101,32 +104,29 @@
 <col width="71%" />
 </colgroup>
 <tbody valign="top">
-<tr class="row-odd"><td><strong>Run Info</strong></td>
-<td>This text box displays run information for the currently selected run.</td>
-</tr>
-<tr class="row-even"><td><strong>Scan Focus from:</strong></td>
+<tr class="row-odd"><td><strong>Scan Focus from:</strong></td>
 <td>Set the counter to the lower bound of scans to exclude.</td>
 </tr>
-<tr class="row-odd"><td><strong>Scan Focus to:</strong></td>
+<tr class="row-even"><td><strong>Scan Focus to:</strong></td>
 <td>Set the counter to the upper bound of scans to exclude.</td>
 </tr>
-<tr class="row-even"><td><strong>Exclude Scan Range</strong></td>
+<tr class="row-odd"><td><strong>Exclude Scan Range</strong></td>
 <td>Exclude the scans indicated by the two preceding scan bounding counters.</td>
 </tr>
-<tr class="row-odd"><td><strong>Exclusion Profile</strong></td>
+<tr class="row-even"><td><strong>Exclusion Profile</strong></td>
 <td>This button displays a window where additional options for scan exclusion are available. Here it is possible to save only every 2nd, 3rd or nth scan.</td>
 </tr>
-<tr class="row-even"><td><strong>Edit Single Scan</strong></td>
+<tr class="row-odd"><td><strong>Edit Single Scan</strong></td>
 <td>This button displays a window where individual points may be changed by a Control-Left_Click-Drag operation.</td>
 </tr>
-<tr class="row-odd"><td><strong>Include All</strong></td>
+<tr class="row-even"><td><strong>Include All</strong></td>
 <td>This button removes all data and sets the program to a known starting point.</td>
 </tr>
 </tbody>
 </table>
 </div>
 <div class="section" id="edit-control">
-<h3><a class="toc-backref" href="#id3">Edit Control</a><a class="headerlink" href="#edit-control" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id4">Edit Control</a><a class="headerlink" href="#edit-control" title="Permalink to this headline">¶</a></h3>
 <table border="1" class="colwidths-given docutils">
 <colgroup>
 <col width="29%" />
@@ -143,7 +143,7 @@
 <td>This button enables the edit range selection stepto be set to specify the plateau via Ctrl-Click on the plateau position.The radius value of the selected point is displayed in the text box to the right of the button.</td>
 </tr>
 <tr class="row-even"><td><strong>Baseline</strong></td>
-<td>The text box displays the radius value and average ODvalue of a baseline automatically computed after the plateau is chosen.</td>
+<td>The text box displays the radius value and average OD value of a baseline automatically computed after the plateau is chosen.</td>
 </tr>
 <tr class="row-odd"><td><strong>OD Limit:</strong></td>
 <td>Select an upper limit on OD values in the data above which data is excluded from 2-Dimensional Spectrum Analysis computations.</td>
@@ -161,22 +161,20 @@
 <td>This button determines if data readings are beyond acceptable limits and adjusts outlying data points to an interpolated</td>
 </tr>
 <tr class="row-even"><td><strong>Apply Prior Edits</strong></td>
-<td>This button requests the user to specify asaved set of edit operations and applies them to the current data.</td>
+<td>This button requests the user to specify a saved set of edit operations and applies them to the current data.</td>
 </tr>
 <tr class="row-odd"><td><strong>Undo Noise and Spikes</strong></td>
-<td>This button removes any corrections madeto the data by noise or spike calculations.</td>
+<td>This button removes any corrections made to the data by noise or spike calculations.</td>
 </tr>
 <tr class="row-even"><td><strong>Mark Data as Floating</strong></td>
 <td>This button sets a flag to mark the data as floating.</td>
 </tr>
 <tr class="row-odd"><td><strong>Save Current Edit Profile</strong></td>
-<td>This button initiates a save of theedited data to local file(s) and/or database.</td>
+<td>This button initiates a save of the edited data to local file(s) and/or database.</td>
 </tr>
 </tbody>
 </table>
-</div>
-<div class="section" id="window-controls">
-<h3><a class="toc-backref" href="#id4">Window controls</a><a class="headerlink" href="#window-controls" title="Permalink to this headline">¶</a></h3>
+<p><strong>Window Controls</strong></p>
 <table border="1" class="colwidths-given docutils">
 <colgroup>
 <col width="29%" />
@@ -204,7 +202,7 @@
 <p class="last">When zoomed, the graph may be panned by pressing the center mouse button (usually the scroll wheel) and dragging.</p>
 </div>
 <ul class="simple">
-<li><strong>Step 1:</strong> Load data from the database or a local data directory that contains the UltraScan 3 data files previously converted from the Beckman raw data. Load choices are made in a Load Data Dialog.</li>
+<li><strong>Step 1:</strong> Load data from the database or a local data directory that contains the UltraScanIII data files previously converted from the Beckman raw data. Load choices are made in a <a class="reference external" href="load_auc.html">Load Data Dialog</a>.</li>
 <li><strong>Step 2:</strong> Select the Cell / Channel / Wavelength triple to be edited.</li>
 <li><strong>Step 3:</strong> Specify the meniscus of the data by holding down the Control key and using the left mouse button. The meniscus value may be manually adjusted with the keyboard.</li>
 <li><strong>Step 4:</strong> If the data were collected with the interference detector, specify the left and right edges of the air gap area of the data.</li>
@@ -218,15 +216,91 @@
 <p class="last">The above process may be reset to any point by pressing the appropriate button at the associated specification entry.</p>
 </div>
 </div>
-<div class="section" id="multi-wavelength-mwl-controls">
-<h2><a class="toc-backref" href="#id6">Multi-WaveLength (MWL) Controls</a><a class="headerlink" href="#multi-wavelength-mwl-controls" title="Permalink to this headline">¶</a></h2>
-<p>If the raw data loaded contains multiple wavelengths (more than two), the form of the main window changes to allow an editing sequence oriented towards cell / channel selection and individual wavelength selection (<a class="reference external" href="us_edit_mwl.html">MultiWavelength Edit</a>).</p>
+<div class="section" id="edit-multi-wavelength-mwl-data">
+<h2><a class="toc-backref" href="#id6">Edit Multi-Wavelength (MWL) Data</a><a class="headerlink" href="#edit-multi-wavelength-mwl-data" title="Permalink to this headline">¶</a></h2>
+<img alt="_images/us_edit_mwl.png" src="_images/us_edit_mwl.png" />
+<p>Where the data loaded in an editing session is comprised of multiple wavelengths (more than two), the main editor window is changed to the above form. Instead of selecting triples to edit, this MWL edit procedure consists of selecting Cell / Channel pairs and the wavelengths within those doubles. Once editing in the normal way has been completed, the user may save the edit for either the specific triple (“Save Current Edit Profile”) or for all of the wavelengths of the current double (“Save to all Wavelengths”).</p>
+<p>Most of the edit controls for MWL are the same as for the standard <a class="reference internal" href="#us-edit-functions"><span class="std std-ref">Data Editor Window</span></a>; and are not repeated here. The steps and control objects described herein are those specific to MWL processing.</p>
+<div class="section" id="functions-specific-to-mwl">
+<h3><a class="toc-backref" href="#id7">Functions specific to MWL:</a><a class="headerlink" href="#functions-specific-to-mwl" title="Permalink to this headline">¶</a></h3>
+<table border="1" class="colwidths-given docutils">
+<colgroup>
+<col width="29%" />
+<col width="71%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>Cell / Channel</strong></td>
+<td>This button removes all data and sets the program to a known starting point.</td>
+</tr>
+<tr class="row-even"><td><strong>Lamdba Range</strong></td>
+<td>Display this help.</td>
+</tr>
+<tr class="row-odd"><td><strong>Close</strong></td>
+<td>Close the editing session.</td>
+</tr>
+<tr class="row-even"><td><strong>Cell / Channel</strong></td>
+<td>Select the double for which to perform editing.</td>
+</tr>
+<tr class="row-odd"><td><strong>Lamdba Range</strong></td>
+<td>Select this radio button to indicate that wavelength selection will be by start/end/increment specification.</td>
+</tr>
+<tr class="row-even"><td><strong>Custom Lambda List</strong></td>
+<td>Alternatively, select this radio button to indicate that wavelengths will be individually indicated in a list dialog.</td>
+</tr>
+<tr class="row-odd"><td><strong>λ Index Increment:</strong></td>
+<td>Select the wavelength range increment.</td>
+</tr>
+<tr class="row-even"><td><strong>λ Start:</strong></td>
+<td>Select the wavelength range start value.</td>
+</tr>
+<tr class="row-odd"><td><strong>λ End:</strong></td>
+<td>Select the wavelength range end value.</td>
+</tr>
+<tr class="row-even"><td><strong>Custom Lambdas</strong></td>
+<td>Click to bring up a list dialog in which individual output wavelengths can be enumerated.</td>
+</tr>
+<tr class="row-odd"><td><strong>Include All Lambdas</strong></td>
+<td>Reset the implied output wavelength range or list to the full set of loaded dataset values.</td>
+</tr>
+<tr class="row-even"><td><strong>x axis Radius</strong></td>
+<td>Select this radio button to indicate that the plots of data should have an X axis of Radius (the default).</td>
+</tr>
+<tr class="row-odd"><td><strong>x axis Wavelength</strong></td>
+<td>Select this radio button to indicate that the plots of data should have an X axis of Wavelength; and, therefore, that each plot is for a selected Radius.</td>
+</tr>
+<tr class="row-even"><td><strong>Plot (W nm):</strong></td>
+<td>Select the Wavelength (in NM) or (if the title of this button is “<strong>Plot (R cm):</strong>” when the “<strong>x axis Wavelength</strong>” radio button was selected) select the Radius (in CM) to plot and edit.</td>
+</tr>
+<tr class="row-odd"><td><strong>(left arrow) previous</strong></td>
+<td>Click to change the plot to the one for the previous Wavelength or Radius value.</td>
+</tr>
+<tr class="row-even"><td><strong>(right arrow) next</strong></td>
+<td>Click to change the plot to the one for the next Wavelength or Radius value.</td>
+</tr>
+<tr class="row-odd"><td><strong>Save Current Edit Profile</strong></td>
+<td>Click this button (in the MWL case) to save the current edit for the current Cell / Channel / Wavelength only.</td>
+</tr>
+<tr class="row-even"><td><strong>Save to all Wavelengths</strong></td>
+<td>Click this button to save the current edit for all wavelengths of the currently selected Cell / Channel.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="editing-steps-specific-to-mwl">
+<h3><a class="toc-backref" href="#id8">Editing steps specific to MWL</a><a class="headerlink" href="#editing-steps-specific-to-mwl" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><strong>Step 1:</strong> Load data from the database or a local data directory. Select an entire runID so that MWL data is recognized as such.</li>
+<li><strong>Step 2:</strong> Select the Cell / Channel to be edited; specify the Lambda (wavelength) range to be edited; and select a single wavelength for display and edit.</li>
+<li><strong>Step 3:</strong> Specify editing parameters - such as Meniscus, Data Range, and Plateau - in the normal Control-Click way.</li>
+<li><strong>Step 4:</strong> Save editing for either the specific triple selected or to be applied to all wavelengths of a cell / channel double.</li>
+</ul>
+</div>
 </div>
 <div class="section" id="related">
-<h2><a class="toc-backref" href="#id7">Related</a><a class="headerlink" href="#related" title="Permalink to this headline">¶</a></h2>
-<p><a class="reference external" href="link">Time Derivative</a></p>
-<p><a class="reference external" href="link">Fit Meniscus</a></p>
-<p><a class="reference external" href="link">Finite Element Model Viewer</a></p>
+<h2><a class="toc-backref" href="#id9">Related</a><a class="headerlink" href="#related" title="Permalink to this headline">¶</a></h2>
+<p><a class="reference external" href="convart.html">Import Experimental Data</a></p>
+<p><a class="reference external" href="time_derivative.html">Time Derivative</a></p>
+<p><a class="reference external" href="fit_meniscus.html">Fit Meniscus</a></p>
 </div>
 </div>
 
@@ -239,7 +313,7 @@
         &#160;&#160;::&#160;&#160;
         <a class="uplink" href="index.html">Contents</a>
         &#160;&#160;::&#160;&#160;
-        <a href="us_edit_mwl.html">Edit UltraScan Multi-WaveLength (MWL) Data</a>&#160;&#160;»
+        <a href="time_derivative.html">UltraScanIII Time Derivative (dC/dt) Data Analysis</a>&#160;&#160;»
         </p>
 
       </div>
