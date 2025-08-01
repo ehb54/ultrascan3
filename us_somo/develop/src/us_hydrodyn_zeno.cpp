@@ -14023,7 +14023,7 @@ bool US_Hydrodyn::calc_zeno()
                if ( bead_model.size() < ZENO_GRPY_CORRECTION_BEAD_COUNT_THRESHOLD ) {
                   editor_msg(
                              "darkred",
-                             QString( us_tr( "For less than %1 beads, we recommend to use GRPY\n" ) )
+                             QString( us_tr( "For less than %1 beads, we recommend using GRPY\n" ) )
                              .arg( ZENO_GRPY_CORRECTION_BEAD_COUNT_THRESHOLD )
                              );
                }
