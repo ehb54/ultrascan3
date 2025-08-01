@@ -41,13 +41,13 @@
 <h2>Functions<a class="headerlink" href="#functions" title="Permalink to this heading">¶</a></h2>
 <table class="docutils align-default">
 <thead>
-<tr class="row-odd"><th class="head"><p>Function</p></th>
-<th class="head"><p>usage</p></th>
+<tr class="row-odd"><th class="head"><p></p></th>
+<th class="head"><p></p></th>
 </tr>
 </thead>
 <tbody>
-<tr class="row-even"><td><p><strong>(Meniscus-RMSD points)</strong></p></td>
-<td><p>The main left-side text box displays a list of meniscus-RMSD values from a selected fit output by 2DSA. The fit to display is chosen by a <em>File-&gt;Load</em> selection in a <a class="reference download internal" download="" href="_downloads/81fb45f7b6931fba574ce783ce0281cc/fit_men-load.img.html"><span class="xref download myst"><strong>FitMen Load Dialog</strong></span></a> that allows navigation to a ./results/runID directory and choice of a fitmen.dat file.</p></td>
+<tr class="row-even"><td><p><strong>Meniscus-RMSD points)</strong></p></td>
+<td><p>The main left-side text box displays a list of meniscus-RMSD values from a selected fit output by 2DSA. The fit to display is chosen by a <em>File-&gt;Load</em> selection in a <a class="reference internal" href="#"><span class="xref myst">FitMen Load Dialog</span></a> that allows navigation to a ./results/runID directory and choice of a fitmen.dat file.</p></td>
 </tr>
 <tr class="row-odd"><td><p><strong>(right side plot)</strong></p></td>
 <td><p>This plot shows a yellow curve connecting all fitmen radius-RMSD points; a red fitted polynomial curve; and a vertical bar with annotation delineating the meniscus value at the low point of the polynomial curve.</p></td>
@@ -58,8 +58,54 @@
 <tr class="row-odd"><td><p><strong>Fit Order</strong></p></td>
 <td><p>The counter here may be modified to select the order of the polynomial to fit to meniscus-radius points.</p></td>
 </tr>
+<tr class="row-even"><td><p><strong>Meniscus selected:</strong></p></td>
+<td><p>The text box here is initially loaded with the meniscus value of the low point in the fitted curve.It may be edited to, for example, fit more closely to an actual entry in the meniscus-RMSD list. It’s value at the time Update Edit is clicked determines the replacement value in an Edited data set and model and noises to be preserved after the update.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>RMS Error:</strong></p></td>
+<td><p>Displays the RMS error of the curve fitted to meniscus, RMSD points.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Database</strong></p></td>
+<td><p>Select to include database model and noise records in the clean-up of non-selected models and noises after edit update; and to include the database Edited data in meniscus update.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Local Disk</strong></p></td>
+<td><p>Select to limit any model and noise removal and any menicus value Edited data update to local disk.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Update Edit</strong></p></td>
+<td><p>Click this button to update the associated Edited data with the currently selected meniscus value. After that update, a <strong>Edited File Update Dialog</strong> appears that also allows models and noises with meniscus values not the closest to the selected one to be removed.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Scan Database</strong></p></td>
+<td><p>Click this button to scan the database for any “fitmen” data sets that do not already have an associated local disk file. Any such files will be downloaded and their presence reported in the Status text box.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Plot</strong></p></td>
+<td><p>Click this button to re-plot the currently selected fitmen set. This is generally not necessary.</p></td>
+</tr>
 </tbody>
 </table>
+<p><img alt="fit_men-editupd.png" src="_images/fit_men-editupd.png" /></p>
+<p style="text-align:center;">Edited File Update Dialog</p> 
+<p><strong>Window Controls</strong></p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p></p></th>
+<th class="head"><p></p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><strong>Reset</strong></p></td>
+<td><p>Indicate that parameters are to be reset and the plots re-displayed based on original parameters.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Help</strong></p></td>
+<td><p>Display this detailed Fit Meniscus help.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Close</strong></p></td>
+<td><p>Close all windows and exit.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="related">
+<h2>Related<a class="headerlink" href="#related" title="Permalink to this heading">¶</a></h2>
+<p><a class="reference download internal" download="" href="_downloads/09267fbfb48386bb84fa7e72e075e944/fit_meniscus.png"><span class="xref download myst">htmlfile</span></a></p>
 </section>
 </section>
 
@@ -83,6 +129,7 @@
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Fit Meniscus</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#functions">Functions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#related">Related</a></li>
 </ul>
 </li>
 </ul>
