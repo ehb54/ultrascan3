@@ -1415,7 +1415,7 @@ void US_Hydrodyn::setupGUI()
    le_bead_model_file->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_bead_model_file, SIGNAL(textChanged(const QString &)), SLOT(update_bead_model_file(const QString &)));
 
-   lbl_bead_model_prefix = new QLabel(us_tr(" Bead Model Suffix:"), this);
+   lbl_bead_model_prefix = new QLabel(us_tr(" Bead Model \n Prefix/Suffix: "), this);
    Q_CHECK_PTR(lbl_bead_model_prefix);
    lbl_bead_model_prefix->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_bead_model_prefix->setMinimumHeight( minHeight1 * 2 );

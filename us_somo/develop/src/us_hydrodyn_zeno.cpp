@@ -13978,6 +13978,7 @@ bool US_Hydrodyn::calc_zeno()
                            + QString( "_%1" ).arg( current_model + 1 )
                            + mc
                            + ( repeats > 1 ? QString( "_r%1" ).arg( this_repeat ) : QString( "" ) )
+                           + ( hydro.zeno_grpy_correction_from_bead_count ? "-HC" : "" )
                            + QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "" )
                            + ".zno" )
                   ;
