@@ -306,7 +306,6 @@ void US_Hydrodyn_Hydro_Zeno::setupGUI()
    le_zeno_grpy_correction_from_bead_count_eta_c->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_zeno_grpy_correction_from_bead_count_eta_c, SIGNAL(textChanged(const QString &)), SLOT(update_zeno_grpy_correction_from_bead_count_eta_c(const QString &)));
 
-   
    cb_zeno_cxx = new QCheckBox( this );
    cb_zeno_cxx->setText( us_tr( "Test experimental new Zeno version") );
    cb_zeno_cxx->setEnabled( true );

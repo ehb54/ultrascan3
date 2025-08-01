@@ -8,8 +8,6 @@ static mQProgressBar * zeno_progress;
 bool * zeno_stop_flag;
 static US_Udp_Msg  * zeno_us_udp_msg;
 
-#define ZENO_GRPY_CORRECTION_BEAD_COUNT_THRESHOLD 1000
-
 namespace zeno {
    /*
      Original translation from Fortran:
@@ -13950,6 +13948,8 @@ bool US_Hydrodyn::calc_zeno()
       editor_msg( "darkred", us_tr( "ZENO correction is disabled\n" ) );
    }
 
+   bool use_grpy_msg_displayed = false;
+
    for (current_model = 0; current_model < (unsigned int)lb_model->count(); current_model++) {
       if (lb_model->item(current_model)->isSelected()) {
          if (somo_processed[current_model]) {
@@ -14027,6 +14027,20 @@ bool US_Hydrodyn::calc_zeno()
                              QString( us_tr( "For less than %1 beads, we recommend using GRPY\n" ) )
                              .arg( ZENO_GRPY_CORRECTION_BEAD_COUNT_THRESHOLD )
                              );
+                  if ( !use_grpy_msg_displayed && !batch_active() && guiFlag ) {
+                     use_grpy_msg_displayed = true;
+                     QMessageBox::warning(
+                                          this
+                                          ,this->windowTitle() + " Hydrodynamic Calculations ZENO"
+                                          ,QString( us_tr(
+                                                          "For less than %1 beads, we recommend using GRPY.\n"
+                                                          "This bead model contains %2 beads.\n"
+                                                          ) )
+                                          .arg( ZENO_GRPY_CORRECTION_BEAD_COUNT_THRESHOLD )
+                                          .arg( bead_model.size() )
+                                          ,QMessageBox::Ok
+                                          );
+                  }
                }
 
                bool result = 

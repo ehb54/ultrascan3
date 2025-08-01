@@ -4413,7 +4413,8 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    //                 !( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_created_files_widgets" ) || ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_creaded_files_widgets" ] == "false" ? false : true );
 
    always_hide_widgets.insert( {
-         pb_broaden_minimize
+         pb_broaden // temporarily for release 2025.08
+         ,pb_broaden_minimize
          ,cb_broaden_kernel_type
          ,le_broaden_tau_start
          ,le_broaden_tau_end
