@@ -192,11 +192,26 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    lb_z_ax->setAlignment( Qt::AlignCenter );
    le_z_val = us_lineedit();
 
-   connect( le_x_min, &QLineEdit::editingFinished, this, &US_Grid_Editor::new_xMin );
-   connect( le_x_max, &QLineEdit::editingFinished, this, &US_Grid_Editor::new_xMax );
-   connect( le_y_min, &QLineEdit::editingFinished, this, &US_Grid_Editor::new_yMin );
-   connect( le_y_max, &QLineEdit::editingFinished, this, &US_Grid_Editor::new_yMax );
-   connect( le_z_val, &QLineEdit::editingFinished, this, &US_Grid_Editor::new_zVal );
+   QRadioButton *rb_cons_z;
+   QRadioButton *rb_vary_z;
+   QGridLayout  *lyt_cons_z = us_radiobutton( "Constant", rb_cons_z );
+   QGridLayout  *lyt_vary_z = us_radiobutton( "Varying" , rb_vary_z );
+
+   QButtonGroup *btng_zval = new QButtonGroup( this );
+   btng_zval->addButton( rb_cons_z, 0 );
+   btng_zval->addButton( rb_vary_z, 1 );
+   rb_cons_z->setChecked( true );
+
+   pb_z_set_func = us_pushbutton( "Set Function" );
+   pb_z_set_func->hide();
+
+   connect( le_x_min,  &QLineEdit::editingFinished, this, &US_Grid_Editor::new_xMin );
+   connect( le_x_max,  &QLineEdit::editingFinished, this, &US_Grid_Editor::new_xMax );
+   connect( le_y_min,  &QLineEdit::editingFinished, this, &US_Grid_Editor::new_yMin );
+   connect( le_y_max,  &QLineEdit::editingFinished, this, &US_Grid_Editor::new_yMax );
+   connect( le_z_val,  &QLineEdit::editingFinished, this, &US_Grid_Editor::new_zVal );
+   connect( btng_zval, &QButtonGroup::idClicked,    this, &US_Grid_Editor::set_zval_id );
+   connect( pb_z_set_func, &QPushButton::clicked,   this, &US_Grid_Editor::set_z_function);
 
    pb_add_update = us_pushbutton( "Add / Update " );
    connect( pb_add_update, &QPushButton::clicked, this, &US_Grid_Editor::add_update );
@@ -324,11 +339,15 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    left->addWidget( le_y_max,             row,   2, 1, 1 );
    left->addWidget( le_y_res,             row++, 3, 1, 1 );
 
-   left->addWidget( hline2,               row++, 0, 1, 4 );
-
    left->addWidget( lb_z_ax,              row,   0, 1, 1 );
    left->addWidget( le_z_val,             row,   1, 1, 1 );
-   left->addWidget( pb_add_update,        row++, 2, 1, 2 );
+   left->addWidget( pb_z_set_func,        row,   1, 1, 1 );
+   left->addLayout( lyt_cons_z,           row,   2, 1, 1 );
+   left->addLayout( lyt_vary_z,           row++, 3, 1, 1 );
+
+   left->addWidget( pb_add_update,        row++, 1, 1, 2 );
+
+   left->addWidget( hline2,               row++, 0, 1, 4 );
 
    left->addWidget( lb_subgrid,           row,   0, 1, 2 );
    left->addWidget( ct_subgrid,           row++, 2, 1, 2 );
@@ -1946,6 +1965,25 @@ void US_Grid_Editor::sel_investigator( void )
    investigator = US_Settings::us_inv_ID();
    QString inv_text = tr( "%1: %2" ).arg( investigator ).arg( US_Settings::us_inv_name() );
    le_investigator->setText( inv_text );
+}
+
+void US_Grid_Editor::set_zval_id( int id )
+{
+   if ( id == 0 )
+   {
+      le_z_val->show();
+      pb_z_set_func->hide();
+   }
+   else
+   {
+      le_z_val->hide();
+      pb_z_set_func->show();
+   }
+}
+
+void US_Grid_Editor::set_z_function()
+{
+   qDebug() << "OK";
 }
 
 US_Grid_Preset::US_Grid_Preset( QWidget * parent, Attribute::Type x,

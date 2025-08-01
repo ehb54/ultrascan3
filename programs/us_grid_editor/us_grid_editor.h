@@ -24,7 +24,9 @@
 
 
 const double S_TRSHL   = 1e-15;
+#if !defined( DbgLv )
 #define DbgLv( a ) if( US_Settings::us_debug() >= a ) qDebug()
+#endif
 #define GridInfo US_Model::CustomGridMetadata::GridInfo
 #define CompInfo US_Model::CustomGridMetadata::CompInfo
 
@@ -276,6 +278,7 @@ private:
    QPushButton*     pb_lu_buffer;         //!< push button to update the buffer condition.
    QPushButton*     pb_save;              //!< push button to save the model.
    QPushButton*     pb_default_plot;      //!< plot grid points where x and y axis match x and y types.
+   QPushButton*     pb_z_set_func;        //!< set a function for varying z-values
 
    QwtCounter*      ct_size;              //!< to set plot symbol size.
    QwtCounter*      ct_subgrid;           //!< to set what subgrid to be plotted.
@@ -460,6 +463,12 @@ private slots:
 
    //! \brief Slot to load the model.
    void load( void );
+
+   //! \brief Slot to switch between the constant and varying Z-values.
+   void set_zval_id( int );
+
+   //! \brief Set a function for Z-values.
+   void set_z_function( void );
 
    // //! \brief Slot to display help information.
    // void help( void ) { showHelp.show_help( "grid_editor.html" ); };
