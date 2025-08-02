@@ -618,8 +618,8 @@ void US_RunDetails2::update( int index )
 
       x[ i ] = i + 1;
       t[ i ] = s->temperature;
-      maxTemp = max( maxTemp, s->temperature );
-      minTemp = min( minTemp, s->temperature );
+      maxTemp = std::max( maxTemp, s->temperature );
+      minTemp = std::min( minTemp, s->temperature );
 
       r[ i ] = s->rpm / 1000.0;
 

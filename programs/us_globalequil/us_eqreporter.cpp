@@ -79,7 +79,7 @@ DbgLv(1) << "SCAN_DIAGS()";
       int ivstx = index_radius( sdata, radlo );
       int ivenx = index_radius( sdata, radhi );
       int endx  = scanfits[ jes ].stop_ndx;
-          ivenx = min( ivenx, endx );
+          ivenx = std::min( ivenx, endx );
       int ivenn = ivenx + 1;
       int npts  = ivenn - ivstx;
 

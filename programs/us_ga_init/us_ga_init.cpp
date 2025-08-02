@@ -1786,7 +1786,7 @@ void US_GA_Initialize::sort_distro( QList< S_Solute >& listsols,
           else
           {   // duplicate:  sum c value
 DbgLv(1) << "DUP: sval svpr jj" << sol1.s << sol2.s << jj;
-             kdup    = max( kdup, ++jdup );
+             kdup    = std::max( kdup, ++jdup );
              qreal f = (qreal)( jdup + 1 );
              sol2.c += sol1.c;   // sum c value
              sol2.s  = ( sol1.s * jdup + sol2.s ) / f;  // average s,k

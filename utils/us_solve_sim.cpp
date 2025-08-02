@@ -1218,7 +1218,7 @@ DbgLv(1)<< " norm cuts for #solutes=" << ksolutes << ":  count_cut" << count_cut
 
 
    int kstodo   = nsolutes / 50;          // Set steps count for NNLS
-   kstodo       = max( kstodo, 2 );
+   kstodo       = std::max( kstodo, 2 );
 DbgLv(1) << "   CR:200  rss now" << US_Memory::rss_now() << "thrn" << thrnrank;
 //DebugTime("BEG:clcr-cn");
 //------------------------------------------
@@ -1876,8 +1876,8 @@ DebugTime("BEG:ri_smab");
    int nscans  = edata->scanCount();
    int kstodo  = sq( nsolutes ) / 10;   // progress steps to report
    int incprg  = nsolutes / 20;         // increment between reports
-   incprg      = max( incprg,  1 );
-   incprg      = min( incprg, 10 );
+   incprg      = std::max( incprg,  1 );
+   incprg      = std::min( incprg, 10 );
    int jsols   = qMax( 1, nsolutes );
    int jstprg  = ( kstodo * incprg ) / jsols;     // steps for each report
    int kstep   = 0;                               // progress counter
@@ -1976,8 +1976,8 @@ void US_SolveSim::ti_small_a_and_b( int                      nsolutes,
    int nscans  = edata->scanCount();
    int kstodo  = sq( nsolutes ) / 10;   // progress steps to report
    int incprg  = nsolutes / 20;         // increment between reports
-   incprg      = max( incprg,  1 );
-   incprg      = min( incprg, 10 );
+   incprg      = std::max( incprg,  1 );
+   incprg      = std::min( incprg, 10 );
 
 DbgLv(1)<< "ti_small_a_and_b: nsolutes=" << nsolutes;
 
