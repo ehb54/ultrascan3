@@ -45,6 +45,7 @@ extensions = [
     'sphinx.ext.coverage',
     'sphinx.ext.mathjax',
     'sphinx.ext.autosectionlabel',
+    'sphinx_subfigure',
 ]
 
 # Add any paths that contain templates here, relative to this directory.

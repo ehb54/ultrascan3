@@ -62,11 +62,11 @@ Functions
     - The text box below this label gives cell, channel and wavelength triples available in this data set. Highlight the desired value.
   * - **Solution** 
     - Click this button to open a `Solution Management dialog <us_solution.html>`_ that allows changes to buffer and analyte characteristics of the data set.
-  * - **Density (20° C)** 
+  * - **Density (20°C)** 
     - Shows the density value for the loaded experiment. Click the Solution button to open a dialog in which density and other values may be changed.
-  * - **Viscosity (20° C)**
+  * - **Viscosity (20°C)**
     -  Shows the viscosity value for thes loaded experiment. Click the Solution button to open a dialog in which viscosity and other values may be changed.
-  * - **Vbar (20° C)** 
+  * - **Vbar (20°C)** 
     - Shows the vbar value for the loaded experiment. Click the Solution button to open a dialog in which vbar and other values may be changed.
   * - **Skipped** 
     - The count of experiment data scans skipped.
