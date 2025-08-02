@@ -13,6 +13,8 @@ Welcome to UltraScan III's Documentation and Resource!
    us_edit
    time_derivative
    fit_meniscus
+   advanced_config
+   vhw_enhanced
    
 
 

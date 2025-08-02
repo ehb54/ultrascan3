@@ -15,6 +15,7 @@ All experimental data acquired with the analytical ultracentrifuge must be proce
 .. _US-edit-Functions:
 
 .. image:: USstatic/images/us_edit.png
+  :align: center
 
 
 Functions
@@ -42,8 +43,8 @@ Functions
   * - **Threshold for Scan Gaps** 
     - This spin button controls the check for consecutive interpolated data. If more than the specified number of consecutive points on a scan have been interpolated, a warning is displayed when the data is loaded. When editing wavelength data, this control specifies the gap in wavelengths 
 
-Scan Control
--------------
+**Scan Control**
+
 Scans to be included in analysis, exluded scans are note deleted.
 
 .. list-table::
@@ -65,8 +66,7 @@ Scans to be included in analysis, exluded scans are note deleted.
   * - **Include All**
     - This button removes all data and sets the program to a known starting point.
 
-Edit Control
--------------
+**Edit Control**
 
 .. list-table::
   :widths: 20 50 
@@ -151,8 +151,8 @@ Where the data loaded in an editing session is comprised of multiple wavelengths
 Most of the edit controls for MWL are the same as for the standard :ref:`Data Editor Window <US-edit-Functions>`; and are not repeated here. The steps and control objects described herein are those specific to MWL processing.
 
 
-Functions specific to MWL:
-----------------------------
+**Functions specific to MWL:**
+
 
 
 .. list-table::
@@ -198,8 +198,8 @@ Functions specific to MWL:
 
 
 
-Editing steps specific to MWL
--------------------------------
+**Editing steps specific to MWL**
+
 
 *   **Step 1:** Load data from the database or a local data directory. Select an entire runID so that MWL data is recognized as such. 
 *   **Step 2:** Select the Cell / Channel to be edited; specify the Lambda (wavelength) range to be edited; and select a single wavelength for display and edit.

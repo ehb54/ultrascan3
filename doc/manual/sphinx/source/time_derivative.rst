@@ -37,8 +37,8 @@ Functions
   * - **Save Data** 
     -  Create several data and report files based on  input data and vHW parameters.
 
-Information for this Run
--------------------------
+**Information for this Run**
+
 
 .. list-table::
   :widths: 20 50
@@ -51,8 +51,8 @@ Information for this Run
   * - **(description)** 
     - The text box below the one for temperature   shows a full data description string.
 
-Cell / Channel / Wavelength
-----------------------------
+**Cell / Channel / Wavelength** 
+
 
 .. list-table::
   :widths: 20 50
@@ -79,8 +79,8 @@ Cell / Channel / Wavelength
   * - **Reset Scan Range** 
     - Reset to the full range of scans
   
-Analysis Controls
--------------------------
+**Analysis Controls**
+
 
 .. list-table::
   :widths: 20 50
@@ -93,8 +93,8 @@ Analysis Controls
   * - **S-value Cutoff:** 
     - Choose the sedimentation coefficient value to form the maximum X value of the Time Derivative plot.
 
-Graph Selection
--------------------------
+**Graph Selection**
+
 
 .. list-table::
   :widths: 20 50

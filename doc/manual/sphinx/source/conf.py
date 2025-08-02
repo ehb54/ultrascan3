@@ -95,9 +95,9 @@ html_static_path = ['USstatic']
 html_css_files = [
     'custom.css',
 ]
-def setup(app):
+#def setup(app):
 
-   app.add_stylesheet('.custom.css')
+#   app.add_stylesheet('.custom.css')
 
 # Custom sidebar templates, must be a dictionary that maps document names
 # to template names.
