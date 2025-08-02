@@ -29,6 +29,7 @@
 #include <QDir>
 
 #include <QtEndian>
+#include <QtGlobal>
 #include <QtMath>
 #include <QUuid>
 

@@ -440,7 +440,7 @@ double US_AstfemMath::minval( const QVector< US_Model::SimulationComponent >& va
    double minimum = 1.0e300;
 
    for ( int i = 0; i < value.size(); i++ )
-      minimum = std::min( minimum, value[ i ].s );
+      minimum = qMin( minimum, value[ i ].s );
 
    return minimum;
 }
@@ -461,7 +461,7 @@ double US_AstfemMath::maxval( const QVector< US_Model::SimulationComponent >& va
    double maximum = -1.0e300;
 
    for ( int i = 0; i < value.size(); i++ )
-      maximum = std::max( maximum, value[ i ].s );
+      maximum = qMax( maximum, value[ i ].s );
 
    return maximum;
 }
@@ -583,7 +583,7 @@ double US_AstfemMath::cube_root( double a0, double a1, double a2 )
       long double Dc2 = -3.0 * (pow(B, 2.0) + 4 * Q);
 
       if ( Dc2 > 0 )
-         x = std::max( B, 0.5 * ( -B + sqrt( Dc2 ) ) );
+         x = qMax( B, 0.5 * ( -B + sqrt( Dc2 ) ) );
       else
          x = B;
    }
