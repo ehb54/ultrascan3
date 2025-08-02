@@ -623,7 +623,7 @@ DbgLv(1) << "LD: after if block, nssp=" << nssp << "   exp_steps" << exp_steps;
    QFont font( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() );
    QFontMetrics fm( font );
    int fontHeight = fm.lineSpacing();
-   lw_triples->setMaximumHeight( fontHeight * min( ntriples, 4 ) + 12 );
+   lw_triples->setMaximumHeight( fontHeight * qMin( ntriples, 4 ) + 12 );
 
    for ( int ii = 0; ii < ntriples; ii++ )
       lw_triples->addItem( triples.at( ii ) );
@@ -1450,10 +1450,10 @@ void US_FeMatch::distrib_plot_stick( int type )
       yval     = model_used.components[ jj ].signal_concentration;
       xx[ jj ] = xval;
       yy[ jj ] = yval;
-      xmin     = min( xval, xmin );
-      xmax     = max( xval, xmax );
-      ymin     = min( yval, ymin );
-      ymax     = max( yval, ymax );
+      xmin     = qMin( xval, xmin );
+      xmax     = qMax( xval, xmax );
+      ymin     = qMin( yval, ymin );
+      ymax     = qMax( yval, ymax );
    }
 
    rdif   = ( xmax - xmin ) / 20.0;
@@ -1462,8 +1462,8 @@ void US_FeMatch::distrib_plot_stick( int type )
    rdif   = ( ymax - ymin ) / 20.0;
    ymin  -= rdif;
    ymax  += rdif;
-   xmin   = ( type == 0 ) ? xmin : max( xmin, 0.0 );
-   ymin   = max( ymin, 0.0 );
+   xmin   = ( type == 0 ) ? xmin : qMax( xmin, 0.0 );
+   ymin   = qMax( ymin, 0.0 );
 
    data_grid->enableYMin ( true );
    data_grid->enableY    ( true );
@@ -1566,10 +1566,10 @@ void US_FeMatch::distrib_plot_2d( int type )
 
       xx[ jj ] = xval;
       yy[ jj ] = yval;
-      xmin     = min( xval, xmin );
-      xmax     = max( xval, xmax );
-      ymin     = min( yval, ymin );
-      ymax     = max( yval, ymax );
+      xmin     = qMin( xval, xmin );
+      xmax     = qMax( xval, xmax );
+      ymin     = qMin( yval, ymin );
+      ymax     = qMax( yval, ymax );
    }
 
    rdif   = ( xmax - xmin ) / 20.0;
@@ -1578,8 +1578,8 @@ void US_FeMatch::distrib_plot_2d( int type )
    rdif   = ( ymax - ymin ) / 20.0;
    ymin  -= rdif;
    ymax  += rdif;
-   xmin   = ( type & 1 ) == 1 ? xmin : max( xmin, 0.0 );
-   ymin   = max( ymin, 0.0 );
+   xmin   = ( type & 1 ) == 1 ? xmin : qMax( xmin, 0.0 );
+   ymin   = qMax( ymin, 0.0 );
 
    data_grid->enableYMin ( true );
    data_grid->enableY    ( true );
@@ -1656,23 +1656,23 @@ DbgLv(1) << "FEM: DPR: nmcols" << nmcols;
    for ( int jj = 0; jj < dsize; jj++ )
    { // accumulate x (radius) values and min,max
       xval     = edata->radius( jj );
-      xmin     = min( xval, xmin );
-      xmax     = max( xval, xmax );
+      xmin     = qMin( xval, xmin );
+      xmax     = qMax( xval, xmax );
       xx[ jj ] = xval;
    }
 
    rdif   = ( xmax - xmin ) / 20.0;  // expand grid range slightly
    xmin  -= rdif;
    xmax  += rdif;
-   xmin   = max( xmin, 0.0 );
+   xmin   = qMax( xmin, 0.0 );
 
    for ( int ii = 0; ii < scanCount; ii++ )
    {  // accumulate min,max y (residual) values
       for ( int jj = 0; jj < dsize; jj++ )
       {
          yval     = resids[ ii ][ jj ];
-         ymin     = min( yval, ymin );
-         ymax     = max( yval, ymax );
+         ymin     = qMin( yval, ymin );
+         ymax     = qMax( yval, ymax );
       }
    }
 
@@ -2870,8 +2870,8 @@ QString US_FeMatch::run_details( void )
    {
       double t = d->scanData[ i ].temperature;
       sum += t;
-      maxTemp = max( maxTemp, t );
-      minTemp = min( minTemp, t );
+      maxTemp = qMax( maxTemp, t );
+      minTemp = qMin( minTemp, t );
    }
 
    QString average = QString::number( sum / d->scanData.size(), 'f', 1 );

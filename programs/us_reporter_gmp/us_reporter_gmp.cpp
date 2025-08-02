@@ -10149,10 +10149,10 @@ void US_ReporterGMP::distrib_plot_stick( int type )
       yval     = model_used.components[ jj ].signal_concentration;
       xx[ jj ] = xval;
       yy[ jj ] = yval;
-      xmin     = min( xval, xmin );
-      xmax     = max( xval, xmax );
-      ymin     = min( yval, ymin );
-      ymax     = max( yval, ymax );
+      xmin     = qMin( xval, xmin );
+      xmax     = qMax( xval, xmax );
+      ymin     = qMin( yval, ymin );
+      ymax     = qMax( yval, ymax );
    }
 
    rdif   = ( xmax - xmin ) / 20.0;
@@ -10161,8 +10161,8 @@ void US_ReporterGMP::distrib_plot_stick( int type )
    rdif   = ( ymax - ymin ) / 20.0;
    ymin  -= rdif;
    ymax  += rdif;
-   xmin   = ( type == 0 ) ? xmin : max( xmin, 0.0 );
-   ymin   = max( ymin, 0.0 );
+   xmin   = ( type == 0 ) ? xmin : qMax( xmin, 0.0 );
+   ymin   = qMax( ymin, 0.0 );
 
    data_grid->enableYMin ( true );
    data_grid->enableY    ( true );
@@ -10265,10 +10265,10 @@ void US_ReporterGMP::distrib_plot_2d( int type )
 
       xx[ jj ] = xval;
       yy[ jj ] = yval;
-      xmin     = min( xval, xmin );
-      xmax     = max( xval, xmax );
-      ymin     = min( yval, ymin );
-      ymax     = max( yval, ymax );
+      xmin     = qMin( xval, xmin );
+      xmax     = qMax( xval, xmax );
+      ymin     = qMin( yval, ymin );
+      ymax     = qMax( yval, ymax );
    }
 
    rdif   = ( xmax - xmin ) / 20.0;
@@ -10277,8 +10277,8 @@ void US_ReporterGMP::distrib_plot_2d( int type )
    rdif   = ( ymax - ymin ) / 20.0;
    ymin  -= rdif;
    ymax  += rdif;
-   xmin   = ( type & 1 ) == 1 ? xmin : max( xmin, 0.0 );
-   ymin   = max( ymin, 0.0 );
+   xmin   = ( type & 1 ) == 1 ? xmin : qMax( xmin, 0.0 );
+   ymin   = qMax( ymin, 0.0 );
 
    data_grid->enableYMin ( true );
    data_grid->enableY    ( true );

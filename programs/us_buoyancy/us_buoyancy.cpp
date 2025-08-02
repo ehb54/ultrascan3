@@ -2045,10 +2045,10 @@ void US_Buoyancy::plot_scan( double scan_number )
          r[ count ] = data.xvalues[ jj ];
          v[ count ] = s->rvalues[ jj ];
 
-         maxR = max( maxR, r[ count ] );
-         minR = min( minR, r[ count ] );
-         maxV = max( maxV, v[ count ] );
-         minV = min( minV, v[ count ] );
+         maxR = qMax( maxR, r[ count ] );
+         minR = qMin( minR, r[ count ] );
+         maxV = qMax( maxV, v[ count ] );
+         minV = qMin( minV, v[ count ] );
 
          count++;
 
@@ -2114,12 +2114,12 @@ void US_Buoyancy::plot_scan( double scan_number )
        double minV_fit  =  1.0e99;
        for ( int i=0; i< yfit_data.size(); i++ )
 	 {
-	   maxV_fit = max( maxV_fit, yfit_data[ triple_n ][ i ] );
-	   minV_fit = min( minV_fit, yfit_data[ triple_n ][ i ] );
+	   maxV_fit = qMax( maxV_fit, yfit_data[ triple_n ][ i ] );
+	   minV_fit = qMin( minV_fit, yfit_data[ triple_n ][ i ] );
 	 }
 
-       double minV_final = min( minV_fit, minV);
-       double maxV_final = max( maxV_fit, maxV);
+       double minV_final = qMin( minV_fit, minV);
+       double maxV_final = qMax( maxV_fit, maxV);
 
        double padR = ( maxR - minR ) / 30.0;
        double padV = ( maxV_final - minV_final ) / 30.0;
@@ -2142,8 +2142,8 @@ void US_Buoyancy::plot_scan( double scan_number )
        double minV_C =  1.0e99;
        for ( int i=0; i< triple_name_to_Cdata[triple_n].size(); i++ )
 	 {
-	   maxV_C = max( maxV_C, triple_name_to_Cdata[ triple_n ][ i ] );
-	   minV_C = min( minV_C, triple_name_to_Cdata[ triple_n ][ i ] );
+	   maxV_C = qMax( maxV_C, triple_name_to_Cdata[ triple_n ][ i ] );
+	   minV_C = qMin( minV_C, triple_name_to_Cdata[ triple_n ][ i ] );
 	 }
 
        data_plot->setAxisScale( QwtPlot::yRight , minV_C - padV, maxV_C + padV );
@@ -2310,7 +2310,7 @@ void US_Buoyancy::plot_scan( double scan_number )
 	       
 	       qDebug() << "Triple " << triple_n << ": sigma, order, variance -- " << ss.key() << mm.key() << mm.value();
 	       
-	       minVariance = min( minVariance, mm.value() );
+	       minVariance = qMin( minVariance, mm.value() );
 	     }
 	 }
        
@@ -2461,7 +2461,7 @@ bool US_Buoyancy::isMaximum_y( QVector<double> ydata, int curr_i, int left_i, in
   	{
   	  mean += ydata[ i ];
 
-  	  minimum = min( minimum,  ydata[ i ]);
+  	  minimum = qMin( minimum,  ydata[ i ]);
   	}
 
       if ( ( curr_y - minimum ) < od_threshold )

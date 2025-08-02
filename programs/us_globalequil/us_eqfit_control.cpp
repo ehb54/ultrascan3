@@ -506,8 +506,8 @@ qDebug() << "  ydelta0" << ydelta[0] << " ydeltan" << ydelta[ntpts-1];
       }
 //qDebug() << "RPlot:  jdsx jvxy" << jdsx << jvxy;
 
-      xmax   = std::max( xmax, xplot[ nspts - 1 ] );
-      xmin   = std::min( xmin, -xpad );
+      xmax   = qMax( xmax, xplot[ nspts - 1 ] );
+      xmin   = qMin( xmin, -xpad );
       QwtPlotCurve* lcurve = us_curve( data_plot,
             QString( "RLine-%1" ).arg( scnn ) );
 
@@ -651,8 +651,8 @@ qDebug() << "  yguess0" << yguess[0] << " yguessn" << yguess[ntpts-1];
       }
 //qDebug() << "RPlot:  jdsx jvxy" << jdsx << jvxy;
 
-      xmax   = std::max( xmax, xplot[ nspts - 1 ] );
-      xmin   = std::min( xmin, -xpad );
+      xmax   = qMax( xmax, xplot[ nspts - 1 ] );
+      xmin   = qMin( xmin, -xpad );
 
       QwtPlotCurve* scurve = us_curve( data_plot,
             QString( "RSymb-%1" ).arg( scnn ) );
@@ -777,7 +777,7 @@ void US_EqFitControl::prepare_data()
       dscnx[ ii ] = dssx;                 // Save scan's start data index
       liscnn      = scann;                // Last included scan number
       int nspts   = scnf->stop_ndx - scnf->start_ndx + 1;
-      mxspts      = std::max( mxspts, nspts ); // Maximum data points in a scan
+      mxspts      = qMax( mxspts, nspts ); // Maximum data points in a scan
 
       if ( scann >= ipscnn )
          kpscns++;
@@ -814,8 +814,8 @@ void US_EqFitControl::prepare_data()
    else if ( rb_pltgrp5->isChecked() )
    {  // Plot in group of 5
       plotgrpf   = 5;                 // Flag plot-5
-      npscns     = std::min( kpscns, 5 );  // Plot scans is at-most 5
-      jpscnn     = std::max( npscns, ( jpscnn - ipscnn ) );
+      npscns     = qMin( kpscns, 5 );  // Plot scans is at-most 5
+      jpscnn     = qMax( npscns, ( jpscnn - ipscnn ) );
    }
 
    else if ( rb_pltsscn->isChecked() )

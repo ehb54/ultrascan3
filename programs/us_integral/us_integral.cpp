@@ -858,7 +858,7 @@ void US_Integral::sort_distro( QList< S_Solute >& listsols,
              sol2.w  = ( sol1.w + sol2.w ) * 0.5;
              sol2.k  = ( sol2.k + sol2.k ) * 0.5;
              reduced.replace( reduced.size() - 1, sol2 );
-             kdup    = std::max( kdup, ++jdup );
+             kdup    = qMax( kdup, ++jdup );
           }
 
           sol1    = sol2;        // save entry for next iteration

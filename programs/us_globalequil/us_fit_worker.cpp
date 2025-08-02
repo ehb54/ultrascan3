@@ -228,7 +228,7 @@ DbgLv(1) << "FWk:   ii tguess guess BB" << 1
 DbgLv(1) << "FWk: *** VARIANCE<0 ***" << variance;
       double dlt1 = qAbs( fitpars.y_delta[ 0 ]         );
       double dltn = qAbs( fitpars.y_delta[ ntpts - 1 ] );
-      int    lgdl = qRound( log10( std::max( dlt1, dltn ) ) );
+      int    lgdl = qRound( log10( qMax( dlt1, dltn ) ) );
       double dlmx = pow( 10.0, lgdl );
       fitpars.infomsg = tr( "Huge Variance w/ ydelta max %1" ).arg( dlmx );
 DbgLv(1) << "FWk: *** VARI<0: lgd dlm dl1 dln" << lgdl << dlmx << dlt1 << dltn;

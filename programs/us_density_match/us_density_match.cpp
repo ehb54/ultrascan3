@@ -863,7 +863,7 @@ void US_Density_Match::sort_distro( QList< S_Solute >& listsols,
              sol2.s  = ( sol1.s + sol2.s ) * 0.5;  // average s,d
              sol2.d  = ( sol1.d + sol2.d ) * 0.5;
              reduced.replace( reduced.size() - 1, sol2 );
-             kdup    = std::max( kdup, ++jdup );
+             kdup    = qMax( kdup, ++jdup );
           }
 
           sol1    = sol2;        // save entry for next iteration

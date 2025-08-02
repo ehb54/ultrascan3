@@ -302,8 +302,8 @@ void US_DistribPlot::plot_distrib( void )
 
    for ( int jj = 0; jj < divsCount; jj++ )
    {
-      maxx     = std::max( maxx, xx[ jj ] );
-      minx     = std::min( minx, xx[ jj ] );
+      maxx     = qMax( maxx, xx[ jj ] );
+      minx     = qMin( minx, xx[ jj ] );
    }
 
    rngx     = maxx - minx;
@@ -499,8 +499,8 @@ int US_DistribPlot::histo_data( QVector< double >& xvec,
 
    for ( int jj = 0; jj < divsCount; jj++ )
    {  // get min,max intercept sedimentation coefficients
-      max_cept   = std::max( max_cept, dsedcs.at( jj ) );
-      min_cept   = std::min( min_cept, dsedcs.at( jj ) );
+      max_cept   = qMax( max_cept, dsedcs.at( jj ) );
+      min_cept   = qMin( min_cept, dsedcs.at( jj ) );
    }
 
    // calculate values based on range and sensitivity
@@ -557,8 +557,8 @@ int US_DistribPlot::envel_data( QVector< double >& xvec,
 
    for ( int jj = 0; jj < divsCount; jj++ )
    {  // get min,max intercept sedimentation coefficients
-      max_cept   = std::max( max_cept, dsedcs.at( jj ) );
-      min_cept   = std::min( min_cept, dsedcs.at( jj ) );
+      max_cept   = qMax( max_cept, dsedcs.at( jj ) );
+      min_cept   = qMin( min_cept, dsedcs.at( jj ) );
    }
 
    // calculate values based on range and sensitivity
