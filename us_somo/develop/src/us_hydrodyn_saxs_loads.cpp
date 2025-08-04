@@ -2347,11 +2347,9 @@ void US_Hydrodyn_Saxs::load_saxs( QString filename, bool just_plotted_curves, QS
          ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqa.clear( );
          ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqc.clear( );
          ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header =
-            QString("")
-            .sprintf(
-                     "Saxs curves from %s"
-                     , filename.toLatin1().data()
-                     );
+            QString::asprintf( "Saxs curves from %s"
+                               , filename.toLatin1( ).data()
+                               );
          for ( unsigned int i = 0; i < q.size(); i++ )
          {
             ((US_Hydrodyn *)us_hydrodyn)->last_saxs_q.push_back(q[i]);
@@ -4798,11 +4796,9 @@ void US_Hydrodyn_Saxs::load_sans( QString filename, bool just_plotted_curves )
          ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqa.clear( );
          ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqc.clear( );
          ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header =
-            QString("")
-            .sprintf(
-                     "Saxs curves from %s"
-                     , filename.toLatin1().data()
-                     );
+            QString::asprintf( "Saxs curves from %s"
+                               , filename.toLatin1( ).data()
+                               );
          for ( unsigned int i = 0; i < q.size(); i++ )
          {
             ((US_Hydrodyn *)us_hydrodyn)->last_saxs_q.push_back(q[i]);

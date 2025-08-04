@@ -305,7 +305,7 @@ bool US_Register::read()
   for ( int i = 0; i < (int) concat.length(); i++ )
   {
      cval = concat[i];
-     temp_license += str.sprintf("%X", cval.unicode());
+     temp_license += QString::asprintf("%X", cval.unicode());
   }
   temp_license.truncate(70);
   if ( QString::compare(temp_license, register_list.license) == 0 )

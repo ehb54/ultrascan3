@@ -2110,7 +2110,7 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
          ts << residue_list[i].comment << Qt::endl;
          ts << residue_list[i].name.toUpper()
             << "\t" << residue_list[i].type
-            << "\t" << str1.sprintf("%7.2f", residue_list[i].molvol)
+            << "\t" << QString::asprintf("%7.2f", residue_list[i].molvol)
             << "\t" << residue_list[i].asa
             << "\t" << residue_list[i].r_atom.size()
             << "\t" << residue_list[i].r_bead.size()
@@ -2135,7 +2135,7 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                << "\t" << residue_list[i].r_bead[j].chain
                << "\t" << residue_list[i].r_bead[j].volume << Qt::endl;
          }
-         str1.sprintf("%d: ", i+1);
+         str1 = QString::asprintf( "%d: ", i+1 );
          str1 += residue_list[i].name.toUpper();
       }
       f.close();

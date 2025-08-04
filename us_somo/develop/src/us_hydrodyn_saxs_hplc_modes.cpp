@@ -2422,19 +2422,17 @@ void US_Hydrodyn_Saxs_Hplc::guinier_analysis()
 
          QString report =
             QString("%1:%2 ").arg( pos ).arg( this_name ) +
-            QString( "" )
-            .sprintf(
-                     "Rg %.1f (%.1f) (A) I(0) %.2e (%.2e) qRg [%.3f,%.3f] pts %u chi^2 %.2e r-chi %.2e\n"
-                     , Rg
-                     , sigb
-                     , I0
-                     , siga
-                     , sRgmin
-                     , sRgmax
-                     , (unsigned int) usu->wave[ "hplc" ].q.size()
-                     , chi2
-                     , sqrt( chi2 / usu->wave[ "hplc" ].q.size() )
-                     ) +
+            QString::asprintf( "Rg %.1f (%.1f ) (A) I(0) %.2e (%.2e) qRg [%.3f,%.3f] pts %u chi^2 %.2e r-chi %.2e\n"
+                               , Rg
+                               , sigb
+                               , I0
+                               , siga
+                               , sRgmin
+                               , sRgmax
+                               , (unsigned int) usu->wave[ "hplc" ].q.size()
+                               , chi2
+                               , sqrt( chi2 / usu->wave[ "hplc" ].q.size() )
+                               ) +
             us_tr( use_SD_weighting ? "SD  on" : "SD OFF" )
             ;
 
@@ -2461,13 +2459,10 @@ void US_Hydrodyn_Saxs_Hplc::guinier_analysis()
               !us_isnan( mwt ) )
          {
             report += 
-               QString("")
-               .sprintf( 
-                        " Vc[T] %.1e Qr[T] %.2e MW[RT] %.2e ",
-                        Vct,
-                        Qrt,
-                        mwt
-                         ) + notest;
+               QString::asprintf( " Vc[T] %.1e Qr[T] %.2e MW[RT] %.2e ",
+                                  Vct,
+                                  Qrt,
+                                  mwt ) + notest;
             if ( mw_min > mwt )
             {
                mw_min = mwt;
@@ -2519,14 +2514,11 @@ void US_Hydrodyn_Saxs_Hplc::guinier_analysis()
                  !us_isnan( mwc ) )
             {
                report += 
-                  QString("")
-                  .sprintf( 
-                           " Vc[%.3f,C] %.1e Qr[C] %.2e MW[C] %.2e ",
-                           qm,
-                           Vcc,
-                           Qrc,
-                           mwc
-                            ) + notesc;
+                  QString::asprintf( " Vc[%.3f,C] %.1e Qr[C] %.2e MW[C] %.2e ",
+                                     qm,
+                                     Vcc,
+                                     Qrc,
+                                     mwc ) + notesc;
                mwc_x  .push_back( pos );
                mwc_y  .push_back( mwc );
                mwc_sds.push_back( mwc_sd );
@@ -2817,21 +2809,19 @@ void US_Hydrodyn_Saxs_Hplc::guinier_analysis()
 
             msg += QString( "of %1 " ).arg( guinier_q2.size() );
          }
-         msg += QString( "" )
-            .sprintf(
-                     "curves  qmax*Rg %.3f [%.3f:%.3f]  Rg %.1f (%.1f) [%.1f:%.1f]\nI0 %.2e (%.2e) [%.2e:%.2e]"
-                     , qrg_avg
-                     , qrg_min
-                     , qrg_max
-                     , rg_avg
-                     , rg_sd
-                     , rg_min
-                     , rg_max
-                     , i0_avg
-                     , i0_sd
-                     , i0_min
-                     , i0_max
-                     )
+         msg += QString::asprintf( "curves  qmax*Rg %.3f [%.3f:%.3f]  Rg %.1f (%.1f ) [%.1f:%.1f]\nI0 %.2e (%.2e) [%.2e:%.2e]"
+                                   , qrg_avg
+                                   , qrg_min
+                                   , qrg_max
+                                   , rg_avg
+                                   , rg_sd
+                                   , rg_min
+                                   , rg_max
+                                   , i0_avg
+                                   , i0_sd
+                                   , i0_min
+                                   , i0_max
+                                   )
             ;
       }
       break;
@@ -2856,19 +2846,15 @@ void US_Hydrodyn_Saxs_Hplc::guinier_analysis()
             double countm1inv = 1e0 / (count - 1e0 );
             double mwt_sd = sqrt( countm1inv * ( mwt_sum2 - count * mwt_avg * mwt_avg ) );
 
-            msg += QString( "" )
-               .sprintf(
-                        " %.4g (%.4g) [%.4g:%.4g]"
-                        , mwt_avg
-                        , mwt_sd
-                        , mwt_min
-                        , mwt_max
-                        );
+            msg += QString::asprintf( " %.4g (%.4g ) [%.4g:%.4g]"
+                                      , mwt_avg
+                                      , mwt_sd
+                                      , mwt_min
+                                      , mwt_max
+                                      );
          } else {
-            msg += QString( "" )
-               .sprintf(
-                        " %.4g "
-                        , mwt_avg );
+            msg += QString::asprintf( " %.4g "
+                                      , mwt_avg );
          }
          if ( mwc_x.size() )
          {
@@ -2892,19 +2878,15 @@ void US_Hydrodyn_Saxs_Hplc::guinier_analysis()
             double countm1inv = 1e0 / (count - 1e0 );
             double mwc_sd = sqrt( countm1inv * ( mwc_sum2 - count * mwc_avg * mwc_avg ) );
 
-            msg += QString( "" )
-               .sprintf(
-                        " %.4g (%.4g) [%.4g:%.4g]"
-                        , mwc_avg
-                        , mwc_sd
-                        , mwc_min
-                        , mwc_max
-                        );
+            msg += QString::asprintf( " %.4g (%.4g ) [%.4g:%.4g]"
+                                      , mwc_avg
+                                      , mwc_sd
+                                      , mwc_min
+                                      , mwc_max
+                                      );
          } else {
-            msg += QString( "" )
-               .sprintf(
-                        " %.4g "
-                        , mwc_avg );
+            msg += QString::asprintf( " %.4g "
+                                      , mwc_avg );
          }
          if ( mwc_x.size() )
          {

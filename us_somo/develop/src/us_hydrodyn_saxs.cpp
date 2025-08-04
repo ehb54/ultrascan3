@@ -4020,16 +4020,14 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                cout << QString( "get mw <%1>\n" ).arg( te_filename2->text() );
                normalize_pr(r, &pr_n, &pr_error, get_mw(te_filename2->text(), false));
                ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header =
-               QString("")
-                  .sprintf(
-                           "SOMO p(r) vs r data generated from %s by US_SOMO %s %s bin size %f mw %.2f Daltons area %.2f\n"
-                           , model_filename.toLatin1().data()
-                           , US_Version.toLatin1().data()
-                           , REVISION
-                           , delta
-                           , get_mw(te_filename2->text(), false)
-                           , compute_pr_area(pr, r)
-                           );
+                  QString::asprintf( "SOMO p(r ) vs r data generated from %s by US_SOMO %s %s bin size %f mw %.2f Daltons area %.2f\n"
+                                     , model_filename.toLatin1().data()
+                                     , US_Version.toLatin1().data()
+                                     , REVISION
+                                     , delta
+                                     , get_mw(te_filename2->text(), false)
+                                     , compute_pr_area(pr, r)
+                                     );
                fprintf(fpr, "%s",
                        ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header.toLatin1().data() );
                fprintf(fpr, "r\tp(r)\tnorm. p(r)\n");
@@ -4085,16 +4083,14 @@ void US_Hydrodyn_Saxs::show_plot_pr()
          }
          normalize_pr(r, &pr_n, get_mw(te_filename2->text(), false));
          ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header =
-            QString("")
-            .sprintf(
-                     "SOMO p(r) vs r data generated from %s by US_SOMO %s %s bin size %f mw %.2f Daltons area %.2f\n"
-                     , model_filename.toLatin1().data()
-                     , US_Version.toLatin1().data()
-                     , REVISION
-                     , delta
-, get_mw(te_filename2->text(), false)
-                     , compute_pr_area(pr, r)
-                     );
+            QString::asprintf( "SOMO p(r ) vs r data generated from %s by US_SOMO %s %s bin size %f mw %.2f Daltons area %.2f\n"
+                               , model_filename.toLatin1().data()
+                               , US_Version.toLatin1().data()
+                               , REVISION
+                               , delta
+                               , get_mw(te_filename2->text(), false)
+                               , compute_pr_area(pr, r)
+                               );
          for ( unsigned int i = 0; i < hist.size(); i++ )
          {
             // allow zeros in output ... esp important for intermediates...
@@ -5150,7 +5146,7 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
                                     q[j],
                                     I[j] );
 #endif
-      }
+}
 #endif
 #if defined(BUG_DEBUG)
       qApp->processEvents();
@@ -5289,16 +5285,14 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
                ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqa.clear( );
                ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqc.clear( );
                ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header =
-                  QString("")
-                  .sprintf(
-                           "Simulated SAXS data generated from %s by US_SOMO %s %s q(%.3f:%.3f) step %.3f\n"
-                           , model_filename.toLatin1().data()
-                           , US_Version.toLatin1().data()
-                           , REVISION
-                           , our_saxs_options->start_q
-                           , our_saxs_options->end_q
-                           , our_saxs_options->delta_q
-                           );
+                  QString::asprintf( "Simulated SAXS data generated from %s by US_SOMO %s %s q(%.3f:%.3f ) step %.3f\n"
+                                     , model_filename.toLatin1().data()
+                                     , US_Version.toLatin1().data()
+                                     , REVISION
+                                     , our_saxs_options->start_q
+                                     , our_saxs_options->end_q
+                                     , our_saxs_options->delta_q
+                                     );
                fprintf(fsaxs, "%s",
                        ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header.toLatin1().data() );
                for ( unsigned int i = 0; i < q.size(); i++ )
@@ -5337,16 +5331,14 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
          ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqa.clear( );
          ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqc.clear( );
          ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header =
-            QString("")
-            .sprintf(
-                     "Simulated SAXS data generated from %s by US_SOMO %s %s q(%.3f:%.3f) step %.3f\n"
-                     , model_filename.toLatin1().data()
-                     , US_Version.toLatin1().data()
-                     , REVISION
-                     , our_saxs_options->start_q
-                     , our_saxs_options->end_q
-                     , our_saxs_options->delta_q
-                     );
+            QString::asprintf( "Simulated SAXS data generated from %s by US_SOMO %s %s q(%.3f:%.3f ) step %.3f\n"
+                               , model_filename.toLatin1().data()
+                               , US_Version.toLatin1().data()
+                               , REVISION
+                               , our_saxs_options->start_q
+                               , our_saxs_options->end_q
+                               , our_saxs_options->delta_q
+                               );
          for ( unsigned int i = 0; i < q.size(); i++ )
          {
             ((US_Hydrodyn *)us_hydrodyn)->last_saxs_q.push_back(q[i]);
@@ -9083,21 +9075,19 @@ bool US_Hydrodyn_Saxs::write_temp_pdb_selected_models( QString & error_msg ) {
             PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
 
             pdb_text +=
-               QString("")
-               .sprintf(     
-                        "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
-                        this_atom->serial,
-                        this_atom->orgName.toLatin1().data(),
-                        this_atom->resName.toLatin1().data(),
-                        this_atom->chainID.toLatin1().data(),
-                        this_atom->resSeq.toUInt(),
-                        this_atom->coordinate.axis[ 0 ],
-                        this_atom->coordinate.axis[ 1 ],
-                        this_atom->coordinate.axis[ 2 ],
-                        this_atom->occupancy,
-                        this_atom->tempFactor,
-                        this_atom->element.toLatin1().data()
-                             );
+               QString::asprintf( "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
+                                  this_atom->serial,
+                                  this_atom->orgName.toLatin1( ).data(),
+                                  this_atom->resName.toLatin1().data(),
+                                  this_atom->chainID.toLatin1().data(),
+                                  this_atom->resSeq.toUInt(),
+                                  this_atom->coordinate.axis[ 0 ],
+                                  this_atom->coordinate.axis[ 1 ],
+                                  this_atom->coordinate.axis[ 2 ],
+                                  this_atom->occupancy,
+                                  this_atom->tempFactor,
+                                  this_atom->element.toLatin1().data()
+                                  );
          }
       }
 

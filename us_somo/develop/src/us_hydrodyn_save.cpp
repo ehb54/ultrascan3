@@ -2646,8 +2646,8 @@ QString US_Hydrodyn_Save::hydroFormatStats(vector < save_data > stats, enum Hydr
    
    if ( stats.size() != 2 )
    {
-      result.sprintf("INTERNAL ERROR: ******** US_Hydrodyn_Save::hydroFormatStats called with wrong size stats %u\n",
-                     (unsigned int) stats.size());
+      result = QString::asprintf("INTERNAL ERROR: ******** US_Hydrodyn_Save::hydroFormatStats called with wrong size stats %u\n",
+                                 (unsigned int) stats.size());
       cout << result;
       return result;
    }

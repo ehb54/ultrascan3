@@ -441,7 +441,7 @@ void US_Config_GUI::update_screen()
    le_result_dir->setText(USglobal->config_list.result_dir);
    le_tmp_dir->setText(USglobal->config_list.tmp_dir);
    le_html_dir->setText(USglobal->config_list.html_dir);
-   str.sprintf("%4.3f", USglobal->config_list.temperature_tol);
+   str = QString::asprintf( "%4.3f", USglobal->config_list.temperature_tol );
    le_temperature_tol->setText(str);
    if (USglobal->config_list.beckman_bug)
    {

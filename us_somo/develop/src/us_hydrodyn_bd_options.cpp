@@ -242,7 +242,7 @@ void US_Hydrodyn_BD_Options::setupGUI()
    lbl_nmol->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_nmol = new QLineEdit( this );    le_nmol->setObjectName( "Nmol Line Edit" );
-   le_nmol->setText(str.sprintf("%d",(*bd_options).nmol));
+   le_nmol->setText( QString::asprintf( "%d",(*bd_options).nmol ) );
    le_nmol->setAlignment(Qt::AlignVCenter);
    le_nmol->setPalette( PALET_NORMAL );
    AUTFBACK( le_nmol );
@@ -258,7 +258,7 @@ void US_Hydrodyn_BD_Options::setupGUI()
    lbl_nconf->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_nconf = new QLineEdit( this );    le_nconf->setObjectName( "Nconf Line Edit" );
-   le_nconf->setText(str.sprintf("%d",(*bd_options).nconf));
+   le_nconf->setText( QString::asprintf( "%d",(*bd_options).nconf ) );
    le_nconf->setAlignment(Qt::AlignVCenter);
    le_nconf->setPalette( PALET_NORMAL );
    AUTFBACK( le_nconf );
@@ -275,7 +275,7 @@ void US_Hydrodyn_BD_Options::setupGUI()
    lbl_iseed->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_iseed = new QLineEdit( this );    le_iseed->setObjectName( "Iseed Line Edit" );
-   le_iseed->setText(str.sprintf("%d",(*bd_options).iseed));
+   le_iseed->setText( QString::asprintf( "%d",(*bd_options).iseed ) );
    le_iseed->setAlignment(Qt::AlignVCenter);
    le_iseed->setPalette( PALET_NORMAL );
    AUTFBACK( le_iseed );
@@ -341,7 +341,7 @@ void US_Hydrodyn_BD_Options::setupGUI()
    lbl_tprev->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_tprev = new QLineEdit( this );    le_tprev->setObjectName( "Tprev Line Edit" );
-   le_tprev->setText(str.sprintf("%4.2g",(*bd_options).tprev));
+   le_tprev->setText( QString::asprintf( "%4.2g",(*bd_options).tprev ) );
    le_tprev->setAlignment(Qt::AlignVCenter);
    le_tprev->setPalette( PALET_NORMAL );
    AUTFBACK( le_tprev );
@@ -357,7 +357,7 @@ void US_Hydrodyn_BD_Options::setupGUI()
    lbl_ttraj->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_ttraj = new QLineEdit( this );    le_ttraj->setObjectName( "Ttraj Line Edit" );
-   le_ttraj->setText(str.sprintf("%4.2g",(*bd_options).ttraj));
+   le_ttraj->setText( QString::asprintf( "%4.2g",(*bd_options).ttraj ) );
    le_ttraj->setAlignment(Qt::AlignVCenter);
    le_ttraj->setPalette( PALET_NORMAL );
    AUTFBACK( le_ttraj );
@@ -373,7 +373,7 @@ void US_Hydrodyn_BD_Options::setupGUI()
    lbl_deltat->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_deltat = new QLineEdit( this );    le_deltat->setObjectName( "Deltat Line Edit" );
-   le_deltat->setText(str.sprintf("%4.6g",(*bd_options).deltat));
+   le_deltat->setText( QString::asprintf( "%4.6g",(*bd_options).deltat ) );
    le_deltat->setAlignment(Qt::AlignVCenter);
    le_deltat->setPalette( PALET_NORMAL );
    AUTFBACK( le_deltat );
@@ -1368,7 +1368,7 @@ void US_Hydrodyn_BD_Options::setupGUI()
    lbl_chem_pb_pb_force_constant->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_chem_pb_pb_force_constant = new QLineEdit( this );    le_chem_pb_pb_force_constant->setObjectName( "Chem_Pb_Pb_Force_Constant Line Edit" );
-   le_chem_pb_pb_force_constant->setText(str.sprintf("%4.2f",(*bd_options).chem_pb_pb_force_constant));
+   le_chem_pb_pb_force_constant->setText( QString::asprintf( "%4.2f",(*bd_options).chem_pb_pb_force_constant ) );
    le_chem_pb_pb_force_constant->setAlignment(Qt::AlignVCenter);
    le_chem_pb_pb_force_constant->setPalette( PALET_NORMAL );
    AUTFBACK( le_chem_pb_pb_force_constant );
@@ -1384,7 +1384,7 @@ void US_Hydrodyn_BD_Options::setupGUI()
    lbl_chem_pb_pb_equilibrium_dist->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_chem_pb_pb_equilibrium_dist = new QLineEdit( this );    le_chem_pb_pb_equilibrium_dist->setObjectName( "Chem_Pb_Pb_Equilibrium_Dist Line Edit" );
-   le_chem_pb_pb_equilibrium_dist->setText(str.sprintf("%4.2f",(*bd_options).chem_pb_pb_equilibrium_dist));
+   le_chem_pb_pb_equilibrium_dist->setText( QString::asprintf( "%4.2f",(*bd_options).chem_pb_pb_equilibrium_dist ) );
    le_chem_pb_pb_equilibrium_dist->setAlignment(Qt::AlignVCenter);
    le_chem_pb_pb_equilibrium_dist->setPalette( PALET_NORMAL );
    AUTFBACK( le_chem_pb_pb_equilibrium_dist );
@@ -1400,7 +1400,7 @@ void US_Hydrodyn_BD_Options::setupGUI()
    lbl_chem_pb_pb_max_elong->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_chem_pb_pb_max_elong = new QLineEdit( this );    le_chem_pb_pb_max_elong->setObjectName( "Chem_Pb_Pb_Max_Elong Line Edit" );
-   le_chem_pb_pb_max_elong->setText(str.sprintf("%4.2f",(*bd_options).chem_pb_pb_max_elong));
+   le_chem_pb_pb_max_elong->setText( QString::asprintf( "%4.2f",(*bd_options).chem_pb_pb_max_elong ) );
    le_chem_pb_pb_max_elong->setAlignment(Qt::AlignVCenter);
    le_chem_pb_pb_max_elong->setPalette( PALET_NORMAL );
    AUTFBACK( le_chem_pb_pb_max_elong );
@@ -1416,7 +1416,7 @@ void US_Hydrodyn_BD_Options::setupGUI()
    lbl_chem_pb_sc_force_constant->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_chem_pb_sc_force_constant = new QLineEdit( this );    le_chem_pb_sc_force_constant->setObjectName( "Chem_Pb_Sc_Force_Constant Line Edit" );
-   le_chem_pb_sc_force_constant->setText(str.sprintf("%4.2f",(*bd_options).chem_pb_sc_force_constant));
+   le_chem_pb_sc_force_constant->setText( QString::asprintf( "%4.2f",(*bd_options).chem_pb_sc_force_constant ) );
    le_chem_pb_sc_force_constant->setAlignment(Qt::AlignVCenter);
    le_chem_pb_sc_force_constant->setPalette( PALET_NORMAL );
    AUTFBACK( le_chem_pb_sc_force_constant );
@@ -1432,7 +1432,7 @@ void US_Hydrodyn_BD_Options::setupGUI()
    lbl_chem_pb_sc_equilibrium_dist->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_chem_pb_sc_equilibrium_dist = new QLineEdit( this );    le_chem_pb_sc_equilibrium_dist->setObjectName( "Chem_Pb_Sc_Equilibrium_Dist Line Edit" );
-   le_chem_pb_sc_equilibrium_dist->setText(str.sprintf("%4.2f",(*bd_options).chem_pb_sc_equilibrium_dist));
+   le_chem_pb_sc_equilibrium_dist->setText( QString::asprintf( "%4.2f",(*bd_options).chem_pb_sc_equilibrium_dist ) );
    le_chem_pb_sc_equilibrium_dist->setAlignment(Qt::AlignVCenter);
    le_chem_pb_sc_equilibrium_dist->setPalette( PALET_NORMAL );
    AUTFBACK( le_chem_pb_sc_equilibrium_dist );
@@ -1448,7 +1448,7 @@ void US_Hydrodyn_BD_Options::setupGUI()
    lbl_chem_pb_sc_max_elong->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_chem_pb_sc_max_elong = new QLineEdit( this );    le_chem_pb_sc_max_elong->setObjectName( "Chem_Pb_Sc_Max_Elong Line Edit" );
-   le_chem_pb_sc_max_elong->setText(str.sprintf("%4.2f",(*bd_options).chem_pb_sc_max_elong));
+   le_chem_pb_sc_max_elong->setText( QString::asprintf( "%4.2f",(*bd_options).chem_pb_sc_max_elong ) );
    le_chem_pb_sc_max_elong->setAlignment(Qt::AlignVCenter);
    le_chem_pb_sc_max_elong->setPalette( PALET_NORMAL );
    AUTFBACK( le_chem_pb_sc_max_elong );
@@ -1464,7 +1464,7 @@ void US_Hydrodyn_BD_Options::setupGUI()
    lbl_chem_sc_sc_force_constant->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_chem_sc_sc_force_constant = new QLineEdit( this );    le_chem_sc_sc_force_constant->setObjectName( "Chem_Sc_Sc_Force_Constant Line Edit" );
-   le_chem_sc_sc_force_constant->setText(str.sprintf("%4.2f",(*bd_options).chem_sc_sc_force_constant));
+   le_chem_sc_sc_force_constant->setText( QString::asprintf( "%4.2f",(*bd_options).chem_sc_sc_force_constant ) );
    le_chem_sc_sc_force_constant->setAlignment(Qt::AlignVCenter);
    le_chem_sc_sc_force_constant->setPalette( PALET_NORMAL );
    AUTFBACK( le_chem_sc_sc_force_constant );
@@ -1480,7 +1480,7 @@ void US_Hydrodyn_BD_Options::setupGUI()
    lbl_chem_sc_sc_equilibrium_dist->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_chem_sc_sc_equilibrium_dist = new QLineEdit( this );    le_chem_sc_sc_equilibrium_dist->setObjectName( "Chem_Sc_Sc_Equilibrium_Dist Line Edit" );
-   le_chem_sc_sc_equilibrium_dist->setText(str.sprintf("%4.2f",(*bd_options).chem_sc_sc_equilibrium_dist));
+   le_chem_sc_sc_equilibrium_dist->setText( QString::asprintf( "%4.2f",(*bd_options).chem_sc_sc_equilibrium_dist ) );
    le_chem_sc_sc_equilibrium_dist->setAlignment(Qt::AlignVCenter);
    le_chem_sc_sc_equilibrium_dist->setPalette( PALET_NORMAL );
    AUTFBACK( le_chem_sc_sc_equilibrium_dist );
@@ -1496,7 +1496,7 @@ void US_Hydrodyn_BD_Options::setupGUI()
    lbl_chem_sc_sc_max_elong->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_chem_sc_sc_max_elong = new QLineEdit( this );    le_chem_sc_sc_max_elong->setObjectName( "Chem_Sc_Sc_Max_Elong Line Edit" );
-   le_chem_sc_sc_max_elong->setText(str.sprintf("%4.2f",(*bd_options).chem_sc_sc_max_elong));
+   le_chem_sc_sc_max_elong->setText( QString::asprintf( "%4.2f",(*bd_options).chem_sc_sc_max_elong ) );
    le_chem_sc_sc_max_elong->setAlignment(Qt::AlignVCenter);
    le_chem_sc_sc_max_elong->setPalette( PALET_NORMAL );
    AUTFBACK( le_chem_sc_sc_max_elong );
@@ -1512,7 +1512,7 @@ void US_Hydrodyn_BD_Options::setupGUI()
    lbl_pb_pb_force_constant->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_pb_pb_force_constant = new QLineEdit( this );    le_pb_pb_force_constant->setObjectName( "Pb_Pb_Force_Constant Line Edit" );
-   le_pb_pb_force_constant->setText(str.sprintf("%4.2f",(*bd_options).pb_pb_force_constant));
+   le_pb_pb_force_constant->setText( QString::asprintf( "%4.2f",(*bd_options).pb_pb_force_constant ) );
    le_pb_pb_force_constant->setAlignment(Qt::AlignVCenter);
    le_pb_pb_force_constant->setPalette( PALET_NORMAL );
    AUTFBACK( le_pb_pb_force_constant );
@@ -1528,7 +1528,7 @@ void US_Hydrodyn_BD_Options::setupGUI()
    lbl_pb_pb_equilibrium_dist->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_pb_pb_equilibrium_dist = new QLineEdit( this );    le_pb_pb_equilibrium_dist->setObjectName( "Pb_Pb_Equilibrium_Dist Line Edit" );
-   le_pb_pb_equilibrium_dist->setText(str.sprintf("%4.2f",(*bd_options).pb_pb_equilibrium_dist));
+   le_pb_pb_equilibrium_dist->setText( QString::asprintf( "%4.2f",(*bd_options).pb_pb_equilibrium_dist ) );
    le_pb_pb_equilibrium_dist->setAlignment(Qt::AlignVCenter);
    le_pb_pb_equilibrium_dist->setPalette( PALET_NORMAL );
    AUTFBACK( le_pb_pb_equilibrium_dist );
@@ -1544,7 +1544,7 @@ void US_Hydrodyn_BD_Options::setupGUI()
    lbl_pb_pb_max_elong->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_pb_pb_max_elong = new QLineEdit( this );    le_pb_pb_max_elong->setObjectName( "Pb_Pb_Max_Elong Line Edit" );
-   le_pb_pb_max_elong->setText(str.sprintf("%4.2f",(*bd_options).pb_pb_max_elong));
+   le_pb_pb_max_elong->setText( QString::asprintf( "%4.2f",(*bd_options).pb_pb_max_elong ) );
    le_pb_pb_max_elong->setAlignment(Qt::AlignVCenter);
    le_pb_pb_max_elong->setPalette( PALET_NORMAL );
    AUTFBACK( le_pb_pb_max_elong );
@@ -1560,7 +1560,7 @@ void US_Hydrodyn_BD_Options::setupGUI()
    lbl_pb_sc_force_constant->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_pb_sc_force_constant = new QLineEdit( this );    le_pb_sc_force_constant->setObjectName( "Pb_Sc_Force_Constant Line Edit" );
-   le_pb_sc_force_constant->setText(str.sprintf("%4.2f",(*bd_options).pb_sc_force_constant));
+   le_pb_sc_force_constant->setText( QString::asprintf( "%4.2f",(*bd_options).pb_sc_force_constant ) );
    le_pb_sc_force_constant->setAlignment(Qt::AlignVCenter);
    le_pb_sc_force_constant->setPalette( PALET_NORMAL );
    AUTFBACK( le_pb_sc_force_constant );
@@ -1576,7 +1576,7 @@ void US_Hydrodyn_BD_Options::setupGUI()
    lbl_pb_sc_equilibrium_dist->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_pb_sc_equilibrium_dist = new QLineEdit( this );    le_pb_sc_equilibrium_dist->setObjectName( "Pb_Sc_Equilibrium_Dist Line Edit" );
-   le_pb_sc_equilibrium_dist->setText(str.sprintf("%4.2f",(*bd_options).pb_sc_equilibrium_dist));
+   le_pb_sc_equilibrium_dist->setText( QString::asprintf( "%4.2f",(*bd_options).pb_sc_equilibrium_dist ) );
    le_pb_sc_equilibrium_dist->setAlignment(Qt::AlignVCenter);
    le_pb_sc_equilibrium_dist->setPalette( PALET_NORMAL );
    AUTFBACK( le_pb_sc_equilibrium_dist );
@@ -1592,7 +1592,7 @@ void US_Hydrodyn_BD_Options::setupGUI()
    lbl_pb_sc_max_elong->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_pb_sc_max_elong = new QLineEdit( this );    le_pb_sc_max_elong->setObjectName( "Pb_Sc_Max_Elong Line Edit" );
-   le_pb_sc_max_elong->setText(str.sprintf("%4.2f",(*bd_options).pb_sc_max_elong));
+   le_pb_sc_max_elong->setText( QString::asprintf( "%4.2f",(*bd_options).pb_sc_max_elong ) );
    le_pb_sc_max_elong->setAlignment(Qt::AlignVCenter);
    le_pb_sc_max_elong->setPalette( PALET_NORMAL );
    AUTFBACK( le_pb_sc_max_elong );
@@ -1608,7 +1608,7 @@ void US_Hydrodyn_BD_Options::setupGUI()
    lbl_sc_sc_force_constant->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_sc_sc_force_constant = new QLineEdit( this );    le_sc_sc_force_constant->setObjectName( "Sc_Sc_Force_Constant Line Edit" );
-   le_sc_sc_force_constant->setText(str.sprintf("%4.2f",(*bd_options).sc_sc_force_constant));
+   le_sc_sc_force_constant->setText( QString::asprintf( "%4.2f",(*bd_options).sc_sc_force_constant ) );
    le_sc_sc_force_constant->setAlignment(Qt::AlignVCenter);
    le_sc_sc_force_constant->setPalette( PALET_NORMAL );
    AUTFBACK( le_sc_sc_force_constant );
@@ -1624,7 +1624,7 @@ void US_Hydrodyn_BD_Options::setupGUI()
    lbl_sc_sc_equilibrium_dist->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_sc_sc_equilibrium_dist = new QLineEdit( this );    le_sc_sc_equilibrium_dist->setObjectName( "Sc_Sc_Equilibrium_Dist Line Edit" );
-   le_sc_sc_equilibrium_dist->setText(str.sprintf("%4.2f",(*bd_options).sc_sc_equilibrium_dist));
+   le_sc_sc_equilibrium_dist->setText( QString::asprintf( "%4.2f",(*bd_options).sc_sc_equilibrium_dist ) );
    le_sc_sc_equilibrium_dist->setAlignment(Qt::AlignVCenter);
    le_sc_sc_equilibrium_dist->setPalette( PALET_NORMAL );
    AUTFBACK( le_sc_sc_equilibrium_dist );
@@ -1640,7 +1640,7 @@ void US_Hydrodyn_BD_Options::setupGUI()
    lbl_sc_sc_max_elong->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_sc_sc_max_elong = new QLineEdit( this );    le_sc_sc_max_elong->setObjectName( "Sc_Sc_Max_Elong Line Edit" );
-   le_sc_sc_max_elong->setText(str.sprintf("%4.2f",(*bd_options).sc_sc_max_elong));
+   le_sc_sc_max_elong->setText( QString::asprintf( "%4.2f",(*bd_options).sc_sc_max_elong ) );
    le_sc_sc_max_elong->setAlignment(Qt::AlignVCenter);
    le_sc_sc_max_elong->setPalette( PALET_NORMAL );
    AUTFBACK( le_sc_sc_max_elong );

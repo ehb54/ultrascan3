@@ -1025,40 +1025,36 @@ bool US_Saxs_Util::load_rotamer( QString filename )
 
                for ( unsigned int k = 0; k < rotated_rotamers[ name ][ jj ][ j ].side_chain.size(); k++ )
                {
-                  out += QString( "" )
-                     .sprintf(     
-                              "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
-                              ++apos,
-                              rotated_rotamers[ name ][ jj ][ j ].side_chain[ k ].name.toLatin1().data(),
-                              name.left( 3 ).toLatin1().data(),
-                              "A",
-                              1,
-                              rotated_rotamers[ name ][ jj ][ j ].side_chain[ k ].coordinate.axis[ 0 ],
-                              rotated_rotamers[ name ][ jj ][ j ].side_chain[ k ].coordinate.axis[ 1 ],
-                              rotated_rotamers[ name ][ jj ][ j ].side_chain[ k ].coordinate.axis[ 2 ],
-                              1.00,
-                              0.00,
-                              " "
-                              );
+                  out += QString::asprintf( "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
+                                            ++apos,
+                                            rotated_rotamers[ name ][ jj ][ j ].side_chain[ k ].name.toLatin1( ).data(),
+                                            name.left( 3 ).toLatin1().data(),
+                                            "A",
+                                            1,
+                                            rotated_rotamers[ name ][ jj ][ j ].side_chain[ k ].coordinate.axis[ 0 ],
+                                            rotated_rotamers[ name ][ jj ][ j ].side_chain[ k ].coordinate.axis[ 1 ],
+                                            rotated_rotamers[ name ][ jj ][ j ].side_chain[ k ].coordinate.axis[ 2 ],
+                                            1.00,
+                                            0.00,
+                                            " "
+                                            );
                }
                out += "TER\n";
                for ( unsigned int k = 0; k < rotated_rotamers[ name ][ jj ][ j ].waters.size(); k++ )
                {
-                  out += QString( "" )
-                     .sprintf(     
-                              "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
-                              ++apos,
-                              rotated_rotamers[ name ][ jj ][ j ].waters[ k ].name.toLatin1().data(),
-                              "WAT",
-                              "B",
-                              2,
-                              rotated_rotamers[ name ][ jj ][ j ].waters[ k ].coordinate.axis[ 0 ],
-                              rotated_rotamers[ name ][ jj ][ j ].waters[ k ].coordinate.axis[ 1 ],
-                              rotated_rotamers[ name ][ jj ][ j ].waters[ k ].coordinate.axis[ 2 ],
-                              1.00,
-                              0.00,
-                              " "
-                              );
+                  out += QString::asprintf( "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
+                                            ++apos,
+                                            rotated_rotamers[ name ][ jj ][ j ].waters[ k ].name.toLatin1( ).data(),
+                                            "WAT",
+                                            "B",
+                                            2,
+                                            rotated_rotamers[ name ][ jj ][ j ].waters[ k ].coordinate.axis[ 0 ],
+                                            rotated_rotamers[ name ][ jj ][ j ].waters[ k ].coordinate.axis[ 1 ],
+                                            rotated_rotamers[ name ][ jj ][ j ].waters[ k ].coordinate.axis[ 2 ],
+                                            1.00,
+                                            0.00,
+                                            " "
+                                            );
                }
                out += "TER\nENDMDL\n";
             }
@@ -2303,21 +2299,19 @@ bool US_Saxs_Util::buffer_pdb_with_waters()
          PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
 
          last_hydrated_pdb_text +=
-            QString("")
-            .sprintf(     
-                     "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
-                     this_atom->serial,
-                     this_atom->orgName.toLatin1().data(),
-                     this_atom->resName.toLatin1().data(),
-                     this_atom->chainID.toLatin1().data(),
-                     this_atom->resSeq.toUInt(),
-                     this_atom->coordinate.axis[ 0 ],
-                     this_atom->coordinate.axis[ 1 ],
-                     this_atom->coordinate.axis[ 2 ],
-                     this_atom->occupancy,
-                     this_atom->tempFactor,
-                     this_atom->element.toLatin1().data()
-                     );
+            QString::asprintf( "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
+                               this_atom->serial,
+                               this_atom->orgName.toLatin1( ).data(),
+                               this_atom->resName.toLatin1().data(),
+                               this_atom->chainID.toLatin1().data(),
+                               this_atom->resSeq.toUInt(),
+                               this_atom->coordinate.axis[ 0 ],
+                               this_atom->coordinate.axis[ 1 ],
+                               this_atom->coordinate.axis[ 2 ],
+                               this_atom->occupancy,
+                               this_atom->tempFactor,
+                               this_atom->element.toLatin1().data()
+                               );
          chains_used[ this_atom->chainID ] = true;
 
          if ( atom_number < this_atom->serial )
@@ -2379,16 +2373,14 @@ bool US_Saxs_Util::buffer_pdb_with_waters()
       for ( unsigned int i = 0; i < it->second.size(); i++ )
       {
          last_hydrated_pdb_text +=
-            QString("")
-            .sprintf(     
-                     "ATOM  %5d  OW  WAT %1s%4d    %8.3f%8.3f%8.3f  1.00  0.00           O  \n",
-                     ++atom_number,
-                     chainID.toLatin1().data(),
-                     ++residue_number,
-                     it->second[ i ].axis[ 0 ],
-                     it->second[ i ].axis[ 1 ],
-                     it->second[ i ].axis[ 2 ]
-                     );
+            QString::asprintf( "ATOM  %5d  OW  WAT %1s%4d    %8.3f%8.3f%8.3f  1.00  0.00           O  \n",
+                               ++atom_number,
+                               chainID.toLatin1( ).data(),
+                               ++residue_number,
+                               it->second[ i ].axis[ 0 ],
+                               it->second[ i ].axis[ 1 ],
+                               it->second[ i ].axis[ 2 ]
+                               );
 
       }
    }
