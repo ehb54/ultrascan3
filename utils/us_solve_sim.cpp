@@ -1210,7 +1210,7 @@ DbgLv(1)<< " norm cuts for #solutes=" << ksolutes << ":  count_cut" << count_cut
       for ( int jj = 0; jj < nsolutes; jj++ )
       {  // Compose each angle value string for each column of the row
          double aval  = angles[ aa++ ] * afact;
-         arow        += QString().sprintf( "%6.1f", aval );
+         arow        += QString( "%1" ).arg( aval, 6, 'f', 1 );
       }
       qDebug() << thrnrank << "w:ANGL:" << arow;
    }

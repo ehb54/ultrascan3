@@ -2518,8 +2518,7 @@ DbgLv(1) << "expA: ntrips" << ntrips << "ktnodes" << trnodes.count();
 #if 0
       QString trnode    = QString::number( rdata->cell ) + "." +
                           QString( rdata->channel ) + "." +
-                          QString().sprintf( "%03d",
-                                qRound( rdata->scanData[ 0 ].wavelength ) );
+                          QString::number( qRound( rdata->scanData[ 0 ].wavelength ) ).rightJustified( 3, '0' );
 #endif
       QString trnode    = trnodes[ ii ];
 //DbgLv(1) << "expA: ii" << ii << "triples[ii]" << triples[ii]
@@ -2896,8 +2895,7 @@ DbgLv(1) << "expA: ntrips" << ntrips << "ktnodes" << trnodes.count();
 #if 0
       QString trnode    = QString::number( rdata->cell ) + "." +
                           QString( rdata->channel ) + "." +
-                          QString().sprintf( "%03d",
-                                qRound( rdata->scanData[ 0 ].wavelength ) );
+                          QString::number( qRound( rdata->scanData[ 0 ].wavelength ) ).rightJustified( 3, '0' );
 #endif
       QString trnode    = trnodes[ ii ];
 //DbgLv(1) << "expA: ii" << ii << "triples[ii]" << triples[ii]
