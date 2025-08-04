@@ -2309,6 +2309,33 @@ void US_Hydrodyn_Batch::enable_after_stop()
 
 void US_Hydrodyn_Batch::start( bool quiet )
 {
+   if ( ((US_Hydrodyn *)us_hydrodyn)->guiFlag
+        && cb_zeno->isEnabled()
+        && cb_zeno->isChecked() ) {
+      switch ( QMessageBox::information(
+                                        this
+                                        ,this->windowTitle() + " Hydrodynamic Calculations ZENO"
+                                        ,QString( us_tr(
+                                                        "Note that for models using less than %1 beads, we recommend using GRPY.\n"
+                                                        ) )
+                                        .arg( ZENO_GRPY_CORRECTION_BEAD_COUNT_THRESHOLD )
+                                        ,us_tr("&Stop")
+                                        ,us_tr("&Continue")
+                                        ) ) {
+      case 0 : // stop
+         return;
+         break;
+
+      case 1 : //continue
+         break;
+
+      default: // stop
+         return;
+         break;
+         
+      }
+   }
+
    if ( !((US_Hydrodyn *)us_hydrodyn)->misc.compute_vbar && !overwrite_all )
    {
       switch ( QMessageBox::warning(this, 

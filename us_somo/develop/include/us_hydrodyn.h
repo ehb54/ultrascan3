@@ -102,6 +102,8 @@
 #include <list>
 #include <map>
 
+#define ZENO_GRPY_CORRECTION_BEAD_COUNT_THRESHOLD 1000
+
 #define START_RASMOL
 using namespace std;
 

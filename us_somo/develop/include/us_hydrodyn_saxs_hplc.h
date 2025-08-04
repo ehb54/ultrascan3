@@ -839,6 +839,14 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       mQLineEdit                       * le_broaden_sigma_end;
       mQLineEdit                       * le_broaden_sigma_delta;
 
+      QCheckBox                        * cb_broaden_lambda_1;
+      QLabel                           * lbl_broaden_lambda_1;
+      mQLineEdit                       * le_broaden_lambda_1;
+
+      QCheckBox                        * cb_broaden_lambda_2;
+      QLabel                           * lbl_broaden_lambda_2;
+      mQLineEdit                       * le_broaden_lambda_2;
+
       QCheckBox                        * cb_broaden_deltat;
       QLabel                           * lbl_broaden_deltat;
       mQLineEdit                       * le_broaden_deltat_start;
@@ -866,6 +874,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 
       QCheckBox                        * cb_broaden_repeak;
       QComboBox                        * cb_broaden_kernel_type;
+      QComboBox                        * cb_broaden_kernel_mode;
 
       QPushButton                      * pb_broaden_scale_compute;
       QPushButton                      * pb_broaden_fit;
@@ -885,11 +894,30 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void                               broaden_compute_one( bool details = false );
       double                             broaden_compute_loss();
       vector < double >                  broaden_params();
+
+      // these maps are from US_Band_Broaden::kernel_mode enum (int)
+      map < int, set < QWidget * > >                     broaden_parameter_widgets;
+      map < int, vector < mQLineEdit * > >               broaden_parameter_value_le_widgets;
+      map < int, vector < QCheckBox * > >                broaden_parameter_value_cb_widgets;
+      map < int, vector < double > >                     broaden_parameter_value_minimum;
+      map < int, double( * )( double, const double * ) > broaden_lm_fit_functions;
+
+
+      // parameter values for variable count kernel parameters
+      vector < double >                     broaden_parameter_current_values();
       
  public:
       bool                               broaden_compute_one_no_ui(
-                                                                   double tau
-                                                                   ,double sigma
+                                                                   vector < double > params
+                                                                   ,double kernel_size
+                                                                   ,double kernel_delta_t
+                                                                   ,const vector < double > & I
+                                                                   ,vector < double > & broadened
+                                                                   );
+
+      bool                               broaden_compute_one_no_ui(
+                                                                   double sigma
+                                                                   ,double tau
                                                                    ,double kernel_size
                                                                    ,double kernel_delta_t
                                                                    ,const vector < double > & I
@@ -940,6 +968,16 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void                               broaden_sigma_delta_text( const QString & );
       void                               broaden_sigma_delta_focus( bool );
 
+      void                               set_broaden_lambda_1();
+
+      void                               broaden_lambda_1_text( const QString & );
+      void                               broaden_lambda_1_focus( bool );
+
+      void                               set_broaden_lambda_2();
+
+      void                               broaden_lambda_2_text( const QString & );
+      void                               broaden_lambda_2_focus( bool );
+
       void                               set_broaden_deltat();
 
       void                               broaden_deltat_start_text( const QString & );
@@ -980,6 +1018,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void                               broaden_repeak_set();
 
       void                               broaden_kernel_type_index();
+      void                               broaden_kernel_mode_index();
       
  private:
 

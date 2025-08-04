@@ -955,6 +955,8 @@ void US_Hydrodyn::info_residue_protons_electrons_at_pH( double pH, const struct 
    double protons   = 0;
    double electrons = 0;
 
+   int p_residue_msg_count = 0;
+
    TSO
       << "pH" << "," << pH << Qt::endl
       << "resname" << ","
@@ -976,7 +978,7 @@ void US_Hydrodyn::info_residue_protons_electrons_at_pH( double pH, const struct 
       int atoms = (int) model.molecule[ j ].atom.size();
       for ( int k = 0; k < atoms; ++k ) {
          if ( !model.molecule[ j ].atom[ k ].p_residue ) {
-            qDebug() << "**** US_Hydrodyn::protons_at_pH(): p_residue not set!";
+            ++p_residue_msg_count;
             continue;
          }
          if ( !model.molecule[ j ].atom[ k ].p_atom ) {
@@ -1023,6 +1025,12 @@ void US_Hydrodyn::info_residue_protons_electrons_at_pH( double pH, const struct 
          electrons += this_electrons;
       }
    }
+
+   if ( p_residue_msg_count ) {
+      qDebug() << QString( "**** US_Hydrodyn::protons_at_pH(): p_residue not set occured %1 times!" ).arg( p_residue_msg_count );
+   };
+
+
    TSO
       << "Total" << ","
       << "" << ","
@@ -1077,6 +1085,13 @@ QString US_Hydrodyn::info_cite( const QString & package ) {
             "Juba et al., J Res Natl Inst Stand Technol. 2017;122:1–2.\n"
             "Rocco and Byron, Eur Biophys J. 2015;44:417–431.\n"
             // "Brookes and Rocco, Eur Biophys J. 2018;47:855–864.\n"
+         }
+         ,{
+            "zeno-correction",
+            "Kang et al., Phys Rev E Stat Nonlinear Soft Mater Phys. 2004;69:031918.\n"
+            "Juba et al., J Res Natl Inst Stand Technol. 2017;122:1–2.\n"
+            "Rocco and Byron, Eur Biophys J. 2015;44:417–431.\n"
+            "Brookes et al., Eur Biophys J. 2025;doi:10.1007/s00249-025-01758-8.\n"
          }
          ,{
             "grpy",

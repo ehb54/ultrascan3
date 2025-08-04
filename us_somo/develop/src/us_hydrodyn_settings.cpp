@@ -1667,6 +1667,14 @@ void US_Hydrodyn::write_config(const QString& fname)
       parameters[ "hydro.zeno_surface_thickness_from_rg_b" ] = QString( "%1" ).arg( hydro.zeno_surface_thickness_from_rg_b );
       parameters[ "hydro.zeno_surface_thickness_from_rg_c" ] = QString( "%1" ).arg( hydro.zeno_surface_thickness_from_rg_c );
 
+      parameters[ "hydro.zeno_grpy_correction_from_bead_count" ] = QString( "%1" ).arg( hydro.zeno_grpy_correction_from_bead_count ? "1" : "0" );
+      parameters[ "hydro.zeno_grpy_correction_from_bead_count_Dt_a" ] = QString( "%1" ).arg( hydro.zeno_grpy_correction_from_bead_count_Dt_a );
+      parameters[ "hydro.zeno_grpy_correction_from_bead_count_Dt_b" ] = QString( "%1" ).arg( hydro.zeno_grpy_correction_from_bead_count_Dt_b );
+      parameters[ "hydro.zeno_grpy_correction_from_bead_count_Dt_c" ] = QString( "%1" ).arg( hydro.zeno_grpy_correction_from_bead_count_Dt_c );
+      parameters[ "hydro.zeno_grpy_correction_from_bead_count_eta_a" ] = QString( "%1" ).arg( hydro.zeno_grpy_correction_from_bead_count_eta_a );
+      parameters[ "hydro.zeno_grpy_correction_from_bead_count_eta_b" ] = QString( "%1" ).arg( hydro.zeno_grpy_correction_from_bead_count_eta_b );
+      parameters[ "hydro.zeno_grpy_correction_from_bead_count_eta_c" ] = QString( "%1" ).arg( hydro.zeno_grpy_correction_from_bead_count_eta_c );
+      
       parameters[ "misc.hydro_supc" ] = QString( "%1" ).arg( misc.hydro_supc );
       parameters[ "misc.hydro_zeno" ] = QString( "%1" ).arg( misc.hydro_zeno );
       parameters[ "batch.saxs_search" ] = QString( "%1" ).arg( batch.saxs_search );
@@ -2173,6 +2181,13 @@ bool US_Hydrodyn::load_config_json ( QString &json )
    if ( parameters.count( "hydro.zeno_surface_thickness_from_rg_a" ) ) hydro.zeno_surface_thickness_from_rg_a = parameters[ "hydro.zeno_surface_thickness_from_rg_a" ].toDouble();
    if ( parameters.count( "hydro.zeno_surface_thickness_from_rg_b" ) ) hydro.zeno_surface_thickness_from_rg_b = parameters[ "hydro.zeno_surface_thickness_from_rg_b" ].toDouble();
    if ( parameters.count( "hydro.zeno_surface_thickness_from_rg_c" ) ) hydro.zeno_surface_thickness_from_rg_c = parameters[ "hydro.zeno_surface_thickness_from_rg_c" ].toDouble();
+   if ( parameters.count( "hydro.zeno_grpy_correction_from_bead_count" ) ) hydro.zeno_grpy_correction_from_bead_count = parameters[ "hydro.zeno_grpy_correction_from_bead_count" ] == "1";
+   if ( parameters.count( "hydro.zeno_grpy_correction_from_bead_count_Dt_a" ) ) hydro.zeno_grpy_correction_from_bead_count_Dt_a = parameters[ "hydro.zeno_grpy_correction_from_bead_count_Dt_a" ].toDouble();
+   if ( parameters.count( "hydro.zeno_grpy_correction_from_bead_count_Dt_b" ) ) hydro.zeno_grpy_correction_from_bead_count_Dt_b = parameters[ "hydro.zeno_grpy_correction_from_bead_count_Dt_b" ].toDouble();
+   if ( parameters.count( "hydro.zeno_grpy_correction_from_bead_count_Dt_c" ) ) hydro.zeno_grpy_correction_from_bead_count_Dt_c = parameters[ "hydro.zeno_grpy_correction_from_bead_count_Dt_c" ].toDouble();
+   if ( parameters.count( "hydro.zeno_grpy_correction_from_bead_count_eta_a" ) ) hydro.zeno_grpy_correction_from_bead_count_eta_a = parameters[ "hydro.zeno_grpy_correction_from_bead_count_eta_a" ].toDouble();
+   if ( parameters.count( "hydro.zeno_grpy_correction_from_bead_count_eta_b" ) ) hydro.zeno_grpy_correction_from_bead_count_eta_b = parameters[ "hydro.zeno_grpy_correction_from_bead_count_eta_b" ].toDouble();
+   if ( parameters.count( "hydro.zeno_grpy_correction_from_bead_count_eta_c" ) ) hydro.zeno_grpy_correction_from_bead_count_eta_c = parameters[ "hydro.zeno_grpy_correction_from_bead_count_eta_c" ].toDouble();
    if ( parameters.count( "misc.hydro_supc" ) ) misc.hydro_supc = parameters[ "misc.hydro_supc" ] == "1";
    if ( parameters.count( "misc.hydro_zeno" ) ) misc.hydro_zeno = parameters[ "misc.hydro_zeno" ] == "1";
    if ( parameters.count( "batch.saxs_search" ) ) batch.saxs_search = parameters[ "batch.saxs_search" ] == "1";
@@ -3205,6 +3220,14 @@ void US_Hydrodyn::hard_coded_defaults()
    hydro.zeno_surface_thickness_from_rg_b                   = 20.85931361;
    hydro.zeno_surface_thickness_from_rg_c                   = 8.013801076;
 
+   hydro.zeno_grpy_correction_from_bead_count               = true;
+   hydro.zeno_grpy_correction_from_bead_count_Dt_a          = -1.05766;
+   hydro.zeno_grpy_correction_from_bead_count_Dt_b          = 1.047449;
+   hydro.zeno_grpy_correction_from_bead_count_Dt_c          = 0.105866;
+   hydro.zeno_grpy_correction_from_bead_count_eta_a         = -9.85141578;
+   hydro.zeno_grpy_correction_from_bead_count_eta_b         = 9.858277668;
+   hydro.zeno_grpy_correction_from_bead_count_eta_c         = -0.01776568;
+
    misc.hydro_supc                                          = true;
    misc.hydro_zeno                                          = false;
 
@@ -4179,7 +4202,7 @@ void US_Hydrodyn::display_default_differences( bool update_bead_model_suffix )
    {
       editor_msg( "dark green", "\nAll options set to default values\n");
    }
-   if ( update_bead_model_suffix ) {
+   if ( update_bead_model_suffix && !batch_active() ) {
       le_bead_model_suffix->setText(
                                     setSuffix
                                     ? (
