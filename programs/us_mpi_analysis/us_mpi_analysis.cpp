@@ -2139,7 +2139,7 @@ DbgLv(1) << "wrMo: tripleID" << tripleID << "dates" << dates;
    QString iterID;
 
    if ( mc_iterations > 1 )
-      iterID.sprintf( "mc%04d", mc_iter );
+      iterID = QString::asprintf( "mc%04d", mc_iter );
    else if ( fit_menbot )
       iterID.sprintf( "i%02d-m%05db%05d", 
               menibott_ndx + 1,
@@ -2309,7 +2309,7 @@ void US_MPI_Analysis::write_noise( US_Noise::NoiseType      type,
    QString iterID;
 
    if ( mc_iterations > 1 )           // MonteCarlo iteration
-      iterID.sprintf( "mc%04d", mc_iteration + 1 );
+      iterID = QString::asprintf( "mc%04d", mc_iteration + 1 );
 
    else if ( fit_menbot )             // Meniscus+Bottom fit
       iterID.sprintf( "i%02d-m%05db%05d", 
@@ -2670,7 +2670,7 @@ DbgLv(1) << "wrMo: tripleID" << tripleID << "dates" << dates;
    QString iterID;
 
    if ( mc_iterations > 1 )
-      iterID.sprintf( "mc%04d", mc_iter );
+      iterID = QString::asprintf( "mc%04d", mc_iter );
    else if ( fit_menbot )
       iterID.sprintf( "i%02d-m%05db%05d", 
               menibott_ndx + 1,

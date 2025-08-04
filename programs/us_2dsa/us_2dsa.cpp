@@ -685,7 +685,7 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
       int     iterNum   = jj + 1;
 
       if ( montCar )
-         iterID.sprintf( "mc%04d", iterNum );
+         iterID = QString::asprintf( "mc%04d", iterNum );
 
       else if ( fitMeni )
       {
@@ -697,13 +697,13 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
             iterID.sprintf( "i%02d-m%05db%05d", iterNum, qRound( meniscus * 10000 ),
                             qRound( bottom * 10000 ) );
          else
-            iterID.sprintf( "i%02d-m%05d", iterNum, qRound( meniscus * 10000 ) );
+            iterID = QString::asprintf( "i%02d-m%05d", iterNum, qRound( meniscus * 10000 ) );
       }
       else if ( fitBott )
       {
          bottom            = mdesc.mid( mdesc.indexOf( "BOTTOM=" ) + 7 )
                              .section( ' ', 0, 0 ).toDouble();
-         iterID.sprintf( "i%02d-b%05d", iterNum, qRound( bottom * 10000 ) );
+         iterID = QString::asprintf( "i%02d-b%05d", iterNum, qRound( bottom * 10000 ) );
       }
 
       // fill in actual model parameters needed for output

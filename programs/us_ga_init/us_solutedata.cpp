@@ -672,7 +672,7 @@ int US_SoluteData::saveGAdata( QString& fname, int xtype, int ytype,
       QTextStream ts( &fileo );
 
       // Line 1 with count,xtype,ytype,ztype,fixed
-      line.sprintf( hfmt, nbuk, xtype, ytype, ztype, fixval );
+      line = QString::asprintf( hfmt, nbuk, xtype, ytype, ztype, fixval );
       line         += " # buckets=" + QString::number( nbuk )
                    +  " x=" + cts[ xtype ] + " y=" + cts[ ytype ]
                    +  " fixed=" + cts[ ztype ] +  "="
@@ -687,7 +687,7 @@ int US_SoluteData::saveGAdata( QString& fname, int xtype, int ytype,
 
          limitBucket( buk );
 
-         line.sprintf( lfmt, buk.x_min, buk.x_max, buk.y_min, buk.y_max );
+         line = QString::asprintf( lfmt, buk.x_min, buk.x_max, buk.y_min, buk.y_max );
          ts << line << endl;
       }
       fileo.close();
@@ -954,7 +954,7 @@ int US_SoluteData::reportDataMC( QString& fname, int mc_iters )
                vtotal    += bcomp.at( jj ).c;
             csums.append( vtotal );
             ts << tr( "Partial concentration:     " ) <<
-               str1.sprintf( " %6.4e\n", vtotal );
+               str1 = QString::asprintf( " %6.4e\n", vtotal );
 
          }
       }
@@ -1266,12 +1266,12 @@ void US_SoluteData::outputStats( QTextStream& ts, QList< qreal >& vals,
       ts << tr( "Distribution Area:         " ) 
          << str1.sprintf( "%6.4e\n", area );
 
-      str1.sprintf( "%e", conf95lo ).append( tr( " (low), " ) );
-      str2.sprintf( "%e", conf95hi ).append( tr( " (high)\n" ) );
+      str1 = QString::asprintf( "%e", conf95lo ).append( tr( " (low), " ) );
+      str2 = QString::asprintf( "%e", conf95hi ).append( tr( " (high)\n" ) );
       ts << tr( "95% Confidence Interval:   " ) << str1 << str2;
 
-      str1.sprintf( "%e", conf99lo ).append( tr( " (low), " ) );
-      str2.sprintf( "%e", conf99hi ).append( tr( " (high)\n" ) );
+      str1 = QString::asprintf( "%e", conf99lo ).append( tr( " (low), " ) );
+      str2 = QString::asprintf( "%e", conf99hi ).append( tr( " (high)\n" ) );
       ts << tr( "99% Confidence Interval:   " ) << str1 << str2;
    }
 

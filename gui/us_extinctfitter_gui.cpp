@@ -382,17 +382,17 @@ void US_ExtinctFitter::plot_overlays()
       if (datasets - firstScan == 0)
       {
          numScans = 1;
-         s1.sprintf((tr("Overlays for fitted Scan %ld")).toLatin1().data(), firstScan);
+         s1 = QString::asprintf( (tr("Overlays for fitted Scan %ld")).toLatin1().data(), firstScan );
       }
       else if (datasets - firstScan < 5)
       {
          numScans = datasets - firstScan + 1;
-         s1.sprintf((tr("Overlays for fitted Scans %ld - %ld")).toLatin1().data(), firstScan, firstScan + numScans - 1);
+         s1 = QString::asprintf( (tr("Overlays for fitted Scans %ld - %ld")).toLatin1().data(), firstScan, firstScan + numScans - 1 );
       }
       else
       {
          numScans = 5;
-         s1.sprintf((tr("Overlays for fitted Scans %ld - %ld")).toLatin1().data(),  firstScan, firstScan+4);
+         s1 = QString::asprintf( (tr("Overlays for fitted Scans %ld - %ld")).toLatin1().data(),  firstScan, firstScan+4 );
       }
    }
    else
@@ -402,7 +402,7 @@ void US_ExtinctFitter::plot_overlays()
 	
 	//	qDebug() << "Starting plot overlay 1: "  ;
 
-   //s2.sprintf((tr("Optical Density")).toLatin1().data());
+   //s2 = QString::asprintf( (tr("Optical Density")).toLatin1().data() );
    s2 = tr("Optical Density");
    point_counter = 0;
    for (int i=0; i<(*wls_v).size(); i++)
@@ -550,24 +550,24 @@ void US_ExtinctFitter::plot_residuals()
       if (datasets - firstScan == 0)
       {
          numScans = 1;
-         s1.sprintf((tr("Residuals from fitted Scan %ld")).toLatin1().data(), firstScan);
+         s1 = QString::asprintf( (tr("Residuals from fitted Scan %ld")).toLatin1().data(), firstScan );
      }
       else if (datasets - firstScan < 5)
       {
          numScans = datasets - firstScan + 1;
-         s1.sprintf((tr("Residuals from fitted Scans %ld - %ld")).toLatin1().data(), firstScan, firstScan + numScans - 1);
+         s1 = QString::asprintf( (tr("Residuals from fitted Scans %ld - %ld")).toLatin1().data(), firstScan, firstScan + numScans - 1 );
       }
       else
       {
          numScans = 5;
-         s1.sprintf((tr("Residuals from fitted Scans %ld - %ld")).toLatin1().data(),  firstScan, firstScan+4);
+         s1 = QString::asprintf( (tr("Residuals from fitted Scans %ld - %ld")).toLatin1().data(),  firstScan, firstScan+4 );
       }
    }
    else
    {
       s1 = tr("Residuals");
    }
-   //s2.sprintf((tr("Optical Density Difference\n")).toLatin1().data());
+   //s2 = QString::asprintf( (tr("Optical Density Difference\n")).toLatin1().data() );
    s2 = tr("Optical Density Difference\n");
    point_counter = 0;
    for (int i=0; i<(*wls_v).size(); i++)

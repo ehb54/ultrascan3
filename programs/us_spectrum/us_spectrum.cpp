@@ -570,7 +570,7 @@ void US_Spectrum::fit()
    for (i=0; i< (unsigned int) v_basis.size(); i++)
    {
       results.push_back(100.0 * nnls_x[i]/fval);
-      // str.sprintf((v_basis[i].filenameBasis +": %3.2f%% (%6.4e)").toLocal8Bit().data(), results[i], nnls_x[i]);
+      // str = QString::asprintf( (v_basis[i].filenameBasis +": %3.2f%% (%6.4e)").toLocal8Bit().data(), results[i], nnls_x[i] );
       // lw_basis->item((int)i)->setText(str);
       lw_basis->item((int)i)->setText(str.arg(v_basis[i].header).
                                        arg(results.at(i), 0, 'f', 2).arg(nnls_x[i], 0, 'e'));

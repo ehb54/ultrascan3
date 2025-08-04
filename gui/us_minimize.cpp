@@ -372,11 +372,11 @@ int US_Minimize::Fit()
    }
    if (GUI)
    {
-      str.sprintf(" %d", parameters);
+      str = QString::asprintf( " %d", parameters );
       le_parameters->setText(str);
-      str.sprintf(" %ld", datasets);
+      str = QString::asprintf( " %ld", datasets );
       le_datasets->setText(str);
-      str.sprintf(" %ld", points);
+      str = QString::asprintf( " %ld", points );
       le_points->setText(str);
    }
    bool dostep = false;   // only needed for hybrid method
@@ -507,13 +507,13 @@ int US_Minimize::Fit()
       iteration++;
       if (GUI)
       {
-         str.sprintf("%3.5e", variance);
+         str = QString::asprintf( "%3.5e", variance );
          le_variance->setText(str);
-         str.sprintf("%3.5e", pow((double) variance, (double) 0.5));
+         str = QString::asprintf( "%3.5e", pow((double) variance, (double) 0.5) );
          le_stddev->setText(str);
-         str.sprintf("%3.5e", (old_residuals - new_residuals)/points);
+         str = QString::asprintf( "%3.5e", (old_residuals - new_residuals)/points );
          le_improvement->setText(str);
-         str.sprintf("%d", iteration);
+         str = QString::asprintf( "%d", iteration );
          le_iteration->setText(str);
       }
       old_residuals = new_residuals;
@@ -743,7 +743,7 @@ int US_Minimize::Fit()
          if (GUI)
          {
             //lbl_status2->setText(tr("Processing Cholesky Decomposition..."));
-            str.sprintf("%d", decompositions);
+            str = QString::asprintf( "%d", decompositions );
             le_decompositions->setText(str);
             qApp->processEvents();
          }
@@ -955,7 +955,7 @@ int US_Minimize::Fit()
 	   //qDebug() << "new_residuals > old_residuals"  ;
             if(GUI)
             {
-               str.sprintf("%3.5e", (old_residuals - new_residuals)/points);
+               str = QString::asprintf( "%3.5e", (old_residuals - new_residuals)/points );
                le_improvement->setText(str);
 	       qApp->processEvents();
             }
@@ -1043,7 +1043,7 @@ int US_Minimize::Fit()
          }
          if (GUI)
          {
-            str.sprintf("%3.5e", lambda);
+            str = QString::asprintf( "%3.5e", lambda );
             le_currentLambda->setText(str);
 	    //return(0);
          }
@@ -1368,22 +1368,22 @@ void US_Minimize::update_fitDialog()
       return;
    }
    QString str;
-   str.sprintf("%1.4e", variance);
+   str = QString::asprintf( "%1.4e", variance );
    le_variance->setText(str);
-   str.sprintf("%d", function_evaluations);
+   str = QString::asprintf( "%d", function_evaluations );
    le_evaluations->setText(str);
-   str.sprintf("%1.4e", pow((double) variance, (double) 0.5));
+   str = QString::asprintf( "%1.4e", pow((double) variance, (double) 0.5) );
    le_stddev->setText(str);
-   str.sprintf("%1.4e", 0.0);
+   str = QString::asprintf( "%1.4e", 0.0 );
    le_improvement->setText(str);
    //lbl_status2->setText(tr("Results from loaded fit are shown"));
-   str.sprintf(" %d", parameters);
+   str = QString::asprintf( " %d", parameters );
    le_parameters->setText(str);
-   str.sprintf(" %ld", datasets);
+   str = QString::asprintf( " %ld", datasets );
    le_datasets->setText(str);
-   str.sprintf(" %ld", points);
+   str = QString::asprintf( " %ld", points );
    le_points->setText(str);
-   str.sprintf((tr("%ld Runs (%2.2f")).toLatin1().data(), runs, runs_percent);
+   str = QString::asprintf( (tr("%ld Runs (%2.2f")).toLatin1().data(), runs, runs_percent );
    str += " %)";
    //lbl_status4->setText(str);
 }
