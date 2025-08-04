@@ -116,6 +116,147 @@ static void write_csv_data( QFile * f, QString I_tag )
    clear_csv_data();
 }
 
+double US_Hydrodyn_Saxs::guinier_compute_chi2( enum guinier_methods guinier_method, size_t plot_number, bool exclude_outliers_if_present ) {
+   // qDebug() << "US_Hydrodyn_Saxs::guinier_compute_chi2\n";
+
+   if ( plotted_I.size() <= plot_number ) {
+      editor_msg( "red", "internal error US_Hydrodyn_Saxs::guinier_compute_chi2() I data not available\n" );
+      return DBL_MAX;
+   }
+
+   if ( plotted_q.size() <= plot_number ) {
+      editor_msg( "red", "internal error US_Hydrodyn_Saxs::guinier_compute_chi2() q data not available\n" );
+      return DBL_MAX;
+   }
+
+   if ( plotted_q2.size() <= plot_number ) {
+      editor_msg( "red", "internal error US_Hydrodyn_Saxs::guinier_compute_chi2() q2 data not available\n" );
+      return DBL_MAX;
+   }
+
+   if ( plotted_q.size() != plotted_I.size() ) {
+      editor_msg( "red", "internal error US_Hydrodyn_Saxs::guinier_compute_chi2() inconsistant q I pt count\n" );
+      return DBL_MAX;
+   }
+
+   if ( plotted_I.size() != plotted_I_error.size() ) {
+      editor_msg( "red", "internal error US_Hydrodyn_Saxs::guinier_compute_chi2() inconsistant I I_error pt count\n" );
+      return DBL_MAX;
+   }
+
+   map < unsigned int, vector < double > > * guinier_x;
+   map < unsigned int, vector < double > > * guinier_y;
+   map < unsigned int, map < double, double > > * guinier_pts_removed;
+   vector < double > & q  = plotted_q[ plot_number ];;
+   vector < double > & q2 = plotted_q2[ plot_number ];;
+
+   size_t pts = q.size();
+
+   vector < double > I    = plotted_I[ plot_number ];
+   vector < double > I_sd;
+   if ( plotted_I_error.size() <= plot_number ) {
+      I_sd = vector < double >( pts, 1 );
+   } else {
+      I_sd = plotted_I_error[ plot_number ];
+   }
+
+   switch ( guinier_method ) {
+   case GUINIER_METHOD_STD :
+      guinier_x           = &plotted_guinier_x;
+      guinier_y           = &plotted_guinier_y;
+      guinier_pts_removed = &plotted_guinier_pts_removed;
+      break;
+      
+   case GUINIER_METHOD_CS :
+      guinier_x           = &plotted_cs_guinier_x;
+      guinier_y           = &plotted_cs_guinier_y;
+      guinier_pts_removed = &plotted_cs_guinier_pts_removed;
+      for ( size_t i = 0; i < pts; ++i ) {
+         I   [ i ] *= q[ i ];
+         if ( plotted_I_error.size() > plot_number ) {
+            I_sd[ i ] *= q[ i ];
+         }
+      }
+      break;
+
+   case GUINIER_METHOD_TV :
+      guinier_x           = &plotted_Rt_guinier_x;
+      guinier_y           = &plotted_Rt_guinier_y;
+      guinier_pts_removed = &plotted_Rt_guinier_pts_removed;
+      for ( size_t i = 0; i < pts; ++i ) {
+         I   [ i ] *= q2[ i ];
+         if ( plotted_I_error.size() > plot_number ) {
+            I_sd[ i ] *= q2[ i ];
+         }
+      }
+      break;
+
+   default :
+      editor_msg( "red", "internal error US_Hydrodyn_Saxs::guinier_compute_chi2() unknown method\n" );
+      return DBL_MAX;
+
+   }
+
+   if ( !guinier_x->count( plot_number )
+        && !guinier_y->count( plot_number ) ) {
+      editor_msg( "red", "internal error US_Hydrodyn_Saxs::guinier_compute_chi2() x,y data missing\n" );
+      return DBL_MAX;
+   }
+
+   if ( (*guinier_x)[ plot_number ].size() < 2
+        || (*guinier_y)[ plot_number ].size() < 2 ) {
+      editor_msg( "red", "internal error US_Hydrodyn_Saxs::guinier_compute_chi2() x,y data incomplete\n" );
+      return DBL_MAX;
+   }
+
+   double slope =
+      ( (*guinier_y)[ plot_number ][ 1 ] - (*guinier_y)[ plot_number ][ 0 ] )
+      / 
+      ( (*guinier_x)[ plot_number ][ 1 ] - (*guinier_x)[ plot_number ][ 0 ] )
+      ;
+
+   double intercept =
+      (*guinier_y)[ plot_number ][ 0 ] - (*guinier_x)[ plot_number ][ 0 ] * slope;
+
+   double q2_start = (*guinier_x)[ plot_number ][ 0 ];
+   double q2_end   = (*guinier_x)[ plot_number ][ 1 ];
+
+   // QTextStream( stdout )
+   //    << "chi recompute steps\n"
+   //    << "slope " << slope << "\n"
+   //    << "intercept " << intercept << "\n"
+   //    << "range  " << q2_start << ":" << q2_end << "\n"
+   //    ;
+
+   double sumdiff2oversd = 0e0;
+
+   {
+      bool has_pts_removed =
+         exclude_outliers_if_present
+         && guinier_pts_removed->count( plot_number )
+         && (*guinier_pts_removed)[ plot_number ].size()
+         ;
+
+
+      if ( has_pts_removed ) {
+         for ( size_t i = 0; i < pts; ++i ) {
+            if ( q2[ i ] >= q2_start && q2[ i ] <= q2_end && !(*guinier_pts_removed)[ plot_number ].count( q2[ i ] ) ) {
+               double diff = I[ i ] - intercept - q2[ i ] * slope;
+               sumdiff2oversd += ( diff * diff ) / I_sd[ i ];
+            }
+         }
+      } else {
+         for ( size_t i = 0; i < pts; ++i ) {
+            if ( q2[ i ] >= q2_start && q2[ i ] <= q2_end ) {
+               double diff = I[ i ] - intercept - q2[ i ] * slope;
+               sumdiff2oversd += ( diff * diff ) / I_sd[ i ];
+            }
+         }
+      }
+   }
+   return sumdiff2oversd;
+}
+
 void US_Hydrodyn_Saxs::run_guinier_Rt()
 {
    clear_csv_data();
@@ -1066,29 +1207,44 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
          MW_sd = I0 ? MW * siga / I0 : 0e0;
          guinier_scratch[ QString( "%1-MW-sd" ).arg( i ) ] = MW_sd;
 
-         report = 
-            QString("")
-            .sprintf(
-                     "Guinier analysis of %s:\n"
-                     "Rg %.1f (%.1f) (A) I(0) %.2e (%.2e) MW %.2e (%.2e) q^2 [ %.5f:%.5f] qRgmin %.3f qRgmax %.3f points used %u chi^2 %.2e reduced-chi %.2e"
-                     , qsl_plotted_iq_names[ i ].toLatin1().data()
-                     , Rg
-                     , sigb
-                     , I0
-                     , siga
-                     , MW
-                     , MW_sd
-                     , smin * smin
-                     , smax * smax
-                     , sRgmin
-                     , sRgmax
-                     , bestend - beststart + 1 - pts_removed
-                     , chi2
-                     , sqrt( chi2 / (bestend - beststart - 1 - pts_removed ) )
-                     );
+         plotted_guinier_valid[ i ] = true;
+         plotted_guinier_lowq2[ i ] = smin * smin;
+         plotted_guinier_highq2[ i ] = smax * smax;
+         plotted_guinier_a[ i ] = a;
+         plotted_guinier_b[ i ] = b;
+         plotted_guinier_plotted[ i ] = false;
+         
+         plotted_guinier_x[ i ].clear( );
+         plotted_guinier_x[ i ].push_back(plotted_guinier_lowq2[ i ]);
+         plotted_guinier_x[ i ].push_back(plotted_guinier_highq2[ i ]);
+         
+         plotted_guinier_y[ i ].clear( );
+         plotted_guinier_y[ i ].push_back(exp(plotted_guinier_a[ i ] + plotted_guinier_b[ i ] * plotted_guinier_lowq2[ i ]));
+         plotted_guinier_y[ i ].push_back(exp(plotted_guinier_a[ i ] + plotted_guinier_b[ i ] * plotted_guinier_highq2[ i ]));
+
+         // recompute chi^2, exclude removed points if present
+         chi2 = guinier_compute_chi2( GUINIER_METHOD_STD, i, true );
+
+         report =
+            QString("Guinier analysis of %1:\n"
+                    "Rg %2 (%3) (A) I(0) %4 (%5) MW %6 (%7) q^2 [%8:%9] qRgmin %10 qRgmax %11 points used %12 chi^2 %13 reduced-chi %14\n")
+            .arg(qsl_plotted_iq_names[i])
+            .arg(QString::number(Rg, 'f', 1))
+            .arg(QString::number(sigb, 'f', 1))
+            .arg(QString::number(I0, 'e', 2))
+            .arg(QString::number(siga, 'e', 2))
+            .arg(QString::number(MW, 'e', 2))
+            .arg(QString::number(MW_sd, 'e', 2))
+            .arg(QString::number(smin * smin, 'f', 5))
+            .arg(QString::number(smax * smax, 'f', 5))
+            .arg(QString::number(sRgmin, 'f', 3))
+            .arg(QString::number(sRgmax, 'f', 3))
+            .arg(bestend - beststart + 1 - pts_removed)
+            .arg(QString::number(chi2, 'e', 2))
+            .arg(QString::number(sqrt(chi2 / (bestend - beststart - 1 - pts_removed)), 'e', 2))
+            ;
          
          // us_qdebug( QString( "plotted q.size() %1" ).arg( plotted_q[ i ].size() ) );
-
 
          // tainer mw method
          double Vct;
@@ -1122,14 +1278,12 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
                                    warningt
                                     ) )
             {
-               report += 
-                  QString("")
-                  .sprintf( 
-                           " Vc[T] %.1e Qr[T] %.2e MW[RT] %.2e ",
-                           Vct,
-                           Qrt,
-                           mwt
-                            ) + notest;
+               report += QString(" Vc[T] %1 Qr[T] %2 MW[RT] %3 ")
+                  .arg(QString::number(Vct, 'e', 1))
+                  .arg(QString::number(Qrt, 'e', 2))
+                  .arg(QString::number(mwt, 'e', 2))
+                  + notest
+                  ;
             } else {
                report += us_tr( " MW(Vc) could not compute " + messagest + " " + notest );
             }
@@ -1166,36 +1320,18 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
                                                              notesc
                                                               ) )
             {
-               report += 
-                  QString("")
-                  .sprintf( 
-                           " Vc[%.3f,C] %.1e Qr[C] %.2e MW[C] %.2e ",
-                           qm,
-                           Vcc,
-                           Qrc,
-                           mwc
-                            ) + notesc;
+               report += QString(" Vc[%1,C] %2 Qr[C] %3 MW[C] %4 ")
+                  .arg(QString::number(qm, 'f', 3))
+                  .arg(QString::number(Vcc, 'e', 1))
+                  .arg(QString::number(Qrc, 'e', 2))
+                  .arg(QString::number(mwc, 'e', 2))
+                  + notesc;
             } else {
                report += us_tr( " MW(Vc) could not compute " + messagesc + " " + notesc );
             }
          }
 
          report += "\n";
-
-         plotted_guinier_valid[ i ] = true;
-         plotted_guinier_lowq2[ i ] = smin * smin;
-         plotted_guinier_highq2[ i ] = smax * smax;
-         plotted_guinier_a[ i ] = a;
-         plotted_guinier_b[ i ] = b;
-         plotted_guinier_plotted[ i ] = false;
-         
-         plotted_guinier_x[ i ].clear( );
-         plotted_guinier_x[ i ].push_back(plotted_guinier_lowq2[ i ]);
-         plotted_guinier_x[ i ].push_back(plotted_guinier_highq2[ i ]);
-         
-         plotted_guinier_y[ i ].clear( );
-         plotted_guinier_y[ i ].push_back(exp(plotted_guinier_a[ i ] + plotted_guinier_b[ i ] * plotted_guinier_lowq2[ i ]));
-         plotted_guinier_y[ i ].push_back(exp(plotted_guinier_a[ i ] + plotted_guinier_b[ i ] * plotted_guinier_highq2[ i ]));
 
          /*
          cout << QString( "guinier line range q %1 %2 q^2 %3 %4 a %5 b %6\n" )
@@ -1785,27 +1921,6 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
          ML_sd = I0 ? ML * siga / I0 : 0e0;
          guinier_scratch[ QString( "%1-ML-sd" ).arg( i ) ] = ML_sd;
 
-         report = 
-            QString("")
-            .sprintf(
-                     "CS Guinier analysis of %s:\n"
-                     "Rc %.1f (%.1f) (A) I(0) %.2e (%.2e) M/L %.2e (%.2e) q^2 [%.5f:%.5f] qRcmin %.3f qRcmax %.3f points used %u chi^2 %.2e reduced-chi %.2e\n"
-                     , qsl_plotted_iq_names[ i ].toLatin1().data()
-                     , Rg
-                     , sigb 
-                     , I0
-                     , siga
-                     , ML
-                     , ML_sd
-                     , smin * smin
-                     , smax * smax
-                     , sRgmin
-                     , sRgmax
-                     , bestend - beststart + 1 - pts_removed
-                     , chi2
-                     , sqrt( chi2 / (bestend - beststart - 1 - pts_removed ) )
-                     );
-         
          plotted_cs_guinier_valid[ i ] = true;
          plotted_cs_guinier_lowq2[ i ] = smin * smin;
          plotted_cs_guinier_highq2[ i ] = smax * smax;
@@ -1820,6 +1935,28 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
          plotted_cs_guinier_y[ i ].clear( );
          plotted_cs_guinier_y[ i ].push_back(exp(plotted_cs_guinier_a[ i ] + plotted_cs_guinier_b[ i ] * plotted_cs_guinier_lowq2[ i ]));
          plotted_cs_guinier_y[ i ].push_back(exp(plotted_cs_guinier_a[ i ] + plotted_cs_guinier_b[ i ] * plotted_cs_guinier_highq2[ i ]));
+
+         // recompute chi^2, exclude removed points if present
+         chi2 = guinier_compute_chi2( GUINIER_METHOD_CS, i, true );
+
+         report =
+            QString("CS Guinier analysis of %1:\n"
+                    "Rg %2 (%3) (A) I(0) %4 (%5) MW %6 (%7) q^2 [%8:%9] qRgmin %10 qRgmax %11 points used %12 chi^2 %13 reduced-chi %14")
+            .arg(qsl_plotted_iq_names[i])
+            .arg(QString::number(Rg, 'f', 1))
+            .arg(QString::number(sigb, 'f', 1))
+            .arg(QString::number(I0, 'e', 2))
+            .arg(QString::number(siga, 'e', 2))
+            .arg(QString::number(ML, 'e', 2))
+            .arg(QString::number(ML_sd, 'e', 2))
+            .arg(QString::number(smin * smin, 'f', 5))
+            .arg(QString::number(smax * smax, 'f', 5))
+            .arg(QString::number(sRgmin, 'f', 3))
+            .arg(QString::number(sRgmax, 'f', 3))
+            .arg(bestend - beststart + 1 - pts_removed)
+            .arg(QString::number(chi2, 'e', 2))
+            .arg(QString::number(sqrt(chi2 / (bestend - beststart - 1 - pts_removed)), 'e', 2))
+            ;
 
          /*
          cout << QString( "cs guinier line range q %1 %2 q^2 %3 %4 a %5 b %6\n" )
@@ -2382,27 +2519,6 @@ bool US_Hydrodyn_Saxs::Rt_guinier_analysis( unsigned int i, QString &csvlog )
          MA_sd = I0 ? MA * siga / I0 : 0e0;
          guinier_scratch[ QString( "%1-MA-sd" ).arg( i ) ] = MA_sd;
 
-         report = 
-            QString("")
-            .sprintf(
-                     "TV Guinier analysis of %s:\n"
-                     "Rt %.1f (%.1f) (A) I(0) %.2e (%.2e) M/A %.2e (%.2e) q^2 [%.5f:%.5f] qRcmin %.3f qRcmax %.3f points used %u chi^2 %.2e reduced-chi %.2e\n"
-                     , qsl_plotted_iq_names[ i ].toLatin1().data()
-                     , Rg
-                     , sigb 
-                     , I0
-                     , siga
-                     , MA
-                     , MA_sd
-                     , smin * smin
-                     , smax * smax
-                     , sRgmin
-                     , sRgmax
-                     , bestend - beststart + 1 - pts_removed
-                     , chi2
-                     , sqrt( chi2 / (bestend - beststart - 1 - pts_removed ) )
-                     );
-         
          plotted_Rt_guinier_valid[ i ] = true;
          plotted_Rt_guinier_lowq2[ i ] = smin * smin;
          plotted_Rt_guinier_highq2[ i ] = smax * smax;
@@ -2418,6 +2534,28 @@ bool US_Hydrodyn_Saxs::Rt_guinier_analysis( unsigned int i, QString &csvlog )
          plotted_Rt_guinier_y[ i ].push_back(exp(plotted_Rt_guinier_a[ i ] + plotted_Rt_guinier_b[ i ] * plotted_Rt_guinier_lowq2[ i ]));
          plotted_Rt_guinier_y[ i ].push_back(exp(plotted_Rt_guinier_a[ i ] + plotted_Rt_guinier_b[ i ] * plotted_Rt_guinier_highq2[ i ]));
 
+         // recompute chi^2, exclude removed points if present
+         chi2 = guinier_compute_chi2( GUINIER_METHOD_TV, i, true );
+
+         report =
+            QString("TV Guinier analysis of %1:\n"
+                    "Rg %2 (%3) (A) I(0) %4 (%5) MW %6 (%7) q^2 [%8:%9] qRgmin %10 qRgmax %11 points used %12 chi^2 %13 reduced-chi %14\n")
+            .arg(qsl_plotted_iq_names[i])
+            .arg(QString::number(Rg, 'f', 1))
+            .arg(QString::number(sigb, 'f', 1))
+            .arg(QString::number(I0, 'e', 2))
+            .arg(QString::number(siga, 'e', 2))
+            .arg(QString::number(MA, 'e', 2))
+            .arg(QString::number(MA_sd, 'e', 2))
+            .arg(QString::number(smin * smin, 'f', 5))
+            .arg(QString::number(smax * smax, 'f', 5))
+            .arg(QString::number(sRgmin, 'f', 3))
+            .arg(QString::number(sRgmax, 'f', 3))
+            .arg(bestend - beststart + 1 - pts_removed)
+            .arg(QString::number(chi2, 'e', 2))
+            .arg(QString::number(sqrt(chi2 / (bestend - beststart - 1 - pts_removed)), 'e', 2))
+            ;
+         
          /*
          cout << QString( "cs guinier line range q %1 %2 q^2 %3 %4 a %5 b %6\n" )
             .arg( smin  )
