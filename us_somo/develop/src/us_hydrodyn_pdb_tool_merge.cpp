@@ -805,7 +805,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::start()
                   if ( cb_filter->isChecked() ) {
                      if ( !no_model )
                      {
-                        tsof << QString("").sprintf("MODEL  %7s\n", model_name_vector[ pos ].toLatin1().data() );
+                        tsof << QString::asprintf( "MODEL  %7s\n", model_name_vector[ pos ].toLatin1( ).data() );
                         tsof << model_remarks[ model_name_vector[ pos ] ];
                      }
                      tsof << ((US_Hydrodyn_Pdb_Tool *)pdb_tool_window)->csv_to_pdb( csv_to, true );
@@ -817,7 +817,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::start()
                } else {
                   if ( !no_model )
                   {
-                     tso << QString("").sprintf("MODEL  %7s\n", model_name_vector[ pos ].toLatin1().data() );
+                     tso << QString::asprintf( "MODEL  %7s\n", model_name_vector[ pos ].toLatin1( ).data() );
                      tso << model_remarks[ model_name_vector[ pos ] ];
                   }
                   tso << ((US_Hydrodyn_Pdb_Tool *)pdb_tool_window)->csv_to_pdb( csv_to, true );

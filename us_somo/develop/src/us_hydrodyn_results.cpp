@@ -106,9 +106,9 @@ void US_Hydrodyn_Results::setupGUI()
    }
    else
    {
-      le_total_beads->setText(QString("").sprintf("%u (%4.2e)",
-                                                  (int)(results->total_beads + .5),
-                                                  results->total_beads_sd));
+      le_total_beads->setText(QString::asprintf( "%u (%4.2e )",
+                                                 (int)(results->total_beads + .5),
+                                                 results->total_beads_sd));
    }
 
       
@@ -133,9 +133,9 @@ void US_Hydrodyn_Results::setupGUI()
    }
    else
    {
-      le_used_beads->setText(QString("").sprintf("%u (%4.2e)",
-                                                  (int)(results->used_beads + .5),
-                                                  results->used_beads_sd));
+      le_used_beads->setText(QString::asprintf( "%u (%4.2e )",
+                                                (int)(results->used_beads + .5),
+                                                results->used_beads_sd));
    }
    le_used_beads->setReadOnly(true);
    le_used_beads->setAlignment(Qt::AlignVCenter);

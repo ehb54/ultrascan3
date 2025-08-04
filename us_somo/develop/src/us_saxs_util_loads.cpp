@@ -364,7 +364,7 @@ bool US_Saxs_Util::select_saxs_file( QString filename )
          {
             continue;
          }
-         qs.trimmed();
+         qs = qs.trimmed();
          QStringList qsl = (qs ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
          int pos = 0;
          if ( qsl.size() == 11 )
@@ -1112,7 +1112,7 @@ bool US_Saxs_Util::calc_mw()
    {
       //       editor->append( QString( "\nModel: %1 vbar %2 cm^3/g\n" )
       //                       .arg( model_vector[i].model_id )
-      //                       .arg( QString("").sprintf("%.3f", model_vector[i].vbar) ) );
+      //                       .arg( QString::asprintf( "%.3f", model_vector[i].vbar ) ) );
                      
       current_model = i;
 

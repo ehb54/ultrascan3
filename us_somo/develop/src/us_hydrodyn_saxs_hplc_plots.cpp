@@ -200,13 +200,11 @@ void US_Hydrodyn_Saxs_Hplc::update_plot_errors_group()
 
 #if defined( DEBUG_RESCALE )
    qDebug() <<
-      QString("").sprintf(
-                          "hplc_plots::update_plot_errors_group\n"
-                          "\tminx %e maxx %e\n"
-                          "\tminy %e maxy %e\n"
-                          , minx, maxx
-                          , -maxy, maxy
-                          );
+      QString::asprintf( "hplc_plots::update_plot_errors_group\n"
+                         "\tminx %e maxx %e\n"
+                         "\tminy %e maxy %e\n"
+                         , minx, maxx
+                         , -maxy, maxy );
 #endif
 
    //       plot_errors_zoomer = new ScrollZoomer(plot_errors->canvas());
@@ -404,13 +402,12 @@ void US_Hydrodyn_Saxs_Hplc::update_plot_errors( vector < double > &grid,
          tso << "---\n";
 
          tso <<
-            QString("").sprintf(
-                                "hplc_plots::update_plot_errors\n"
-                                "\tminx %e maxx %e\n"
-                                "\tminy %e maxy %e\n"
-                                , x[0], x.back()
-                                , -maxy, maxy
-                                );
+            QString::asprintf( "hplc_plots::update_plot_errors\n"
+                               "\tminx %e maxx %e\n"
+                               "\tminy %e maxy %e\n"
+                               , x[0], x.back( )
+                               , -maxy, maxy
+                               );
          tso << "zoomrect "
              << plot_errors_zoomer->zoomRect().left() << " , "
              << plot_errors_zoomer->zoomRect().right() << " : " 
@@ -982,13 +979,11 @@ void US_Hydrodyn_Saxs_Hplc::plot_files( bool save_zoom_state )
       tso << "---\n";
 
       tso <<
-         QString("").sprintf(
-                             "hplc_plots::plot_files\n"
-                             "\tminx %e maxx %e\n"
-                             "\tminy %e maxy %e\n"
-                             , minx, maxx
-                             , miny, maxy
-                             );
+         QString::asprintf( "hplc_plots::plot_files\n"
+                            "\tminx %e maxx %e\n"
+                            "\tminy %e maxy %e\n"
+                            , minx, maxx
+                            , miny, maxy );
       tso << "zoomrect "
           << plot_dist_zoomer->zoomRect().left() << " , "
           << plot_dist_zoomer->zoomRect().right() << " : " 
@@ -1380,13 +1375,11 @@ void US_Hydrodyn_Saxs_Hplc::rescale()
       tso << "---\n";
 
       tso <<
-         QString("").sprintf(
-                             "hplc_plots::rescale\n"
-                             "\tminx %e maxx %e\n"
-                             "\tminy %e maxy %e\n"
-                             , minx, maxx
-                             , miny, maxy
-                             );
+         QString::asprintf( "hplc_plots::rescale\n"
+                            "\tminx %e maxx %e\n"
+                            "\tminy %e maxy %e\n"
+                            , minx, maxx
+                            , miny, maxy );
       tso << "zoomrect "
           << plot_dist_zoomer->zoomRect().left() << " , "
           << plot_dist_zoomer->zoomRect().right() << " : " 

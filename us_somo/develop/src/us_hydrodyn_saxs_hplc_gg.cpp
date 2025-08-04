@@ -310,20 +310,19 @@ bool US_Hydrodyn_Saxs_Hplc::gg_fit_vector(
       if ( cormap_tot ) {
          double tot_c_pct     =  100e0 / (double) ( cormap_green + cormap_yellow + cormap_red );
          QString msg = 
-            QString("").sprintf(
-                                "P value analysis summary:\n"
-                                " %5.1f%% P >= %.2f (%.1f%% P >= %.2f) + (%.1f%% %.2f > P >= %.2f) pairs\n"
-                                " %5.1f%% %.2f < P pairs\n"
-                                ,tot_c_pct * (double) (cormap_green + cormap_yellow )
-                                ,alpha_over_5
-                                ,tot_c_pct * (double) cormap_green
-                                ,alpha
-                                ,tot_c_pct * (double) cormap_yellow
-                                ,alpha
-                                ,alpha_over_5
-                                ,tot_c_pct * (double) cormap_red
-                                ,alpha_over_5
-                                )
+            QString::asprintf( "P value analysis summary:\n"
+                               " %5.1f%% P >= %.2f (%.1f%% P >= %.2f ) + (%.1f%% %.2f > P >= %.2f) pairs\n"
+                               " %5.1f%% %.2f < P pairs\n"
+                               ,tot_c_pct * (double) (cormap_green + cormap_yellow )
+                               ,alpha_over_5
+                               ,tot_c_pct * (double) cormap_green
+                               ,alpha
+                               ,tot_c_pct * (double) cormap_yellow
+                               ,alpha
+                               ,alpha_over_5
+                               ,tot_c_pct * (double) cormap_red
+                               ,alpha_over_5
+                               )
             ;
          editor_msg( "darkblue", msg );
       }
@@ -723,18 +722,17 @@ bool US_Hydrodyn_Saxs_Hplc::data_point_window( vector < double > &q, vector < do
    }
 
    QTextStream tso(stdout);
-   tso << QString().sprintf(
-                            "center       %g\n"
-                            "this_pos     %d\n"
-                            "q[this_pos]  %g\n"
-                            "start_pos    %d\n"
-                            "q[start_pos] %g\n"
-                            ,center
-                            ,this_pos
-                            ,(*t_q)[this_pos]
-                            ,start_pos
-                            ,(*t_q)[start_pos]
-                            );
+   tso << QString::asprintf( "center       %g\n"
+                             "this_pos     %d\n"
+                             "q[this_pos]  %g\n"
+                             "start_pos    %d\n"
+                             "q[start_pos] %g\n"
+                             ,center
+                             ,this_pos
+                             ,(*t_q )[this_pos]
+                             ,start_pos
+                             ,(*t_q)[start_pos]
+                             );
 
    
    for ( int i = 0; i < pts; ++i ) {

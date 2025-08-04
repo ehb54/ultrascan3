@@ -3168,14 +3168,14 @@ bool US_Hydrodyn_Saxs_Buffer::save_file( QString file, bool &cancel, bool &overw
       if ( use_errors &&
            (int)f_errors[ file ].size() > i )
       {
-         ts << QString("").sprintf( "%-18s\t%.6e\t%.6e\n",
-                                    f_qs_string[ file ][ i ].toLatin1().data(),
-                                    f_Is       [ file ][ i ],
-                                    f_errors   [ file ][ i ] );
+         ts << QString::asprintf( "%-18s\t%.6e\t%.6e\n",
+                                  f_qs_string[ file ][ i ].toLatin1( ).data(),
+                                  f_Is       [ file ][ i ],
+                                  f_errors   [ file ][ i ] );
       } else {
-         ts << QString("").sprintf( "%-18s\t%.6e\n",
-                                    f_qs_string[ file ][ i ].toLatin1().data(),
-                                    f_Is       [ file ][ i ] );
+         ts << QString::asprintf( "%-18s\t%.6e\n",
+                                  f_qs_string[ file ][ i ].toLatin1( ).data(),
+                                  f_Is       [ file ][ i ] );
       }
    }
 
@@ -5202,13 +5202,13 @@ void US_Hydrodyn_Saxs_Buffer::view()
             if ( use_errors &&
                  (int)f_errors[ file ].size() > i )
             {
-               text += QString("").sprintf( "%-18s\t%.6e\t%.6e\n",
-                                          f_qs_string[ file ][ i ].toLatin1().data(),
+               text += QString::asprintf( "%-18s\t%.6e\t%.6e\n",
+                                          f_qs_string[ file ][ i ].toLatin1( ).data(),
                                           f_Is       [ file ][ i ],
                                           f_errors   [ file ][ i ] );
             } else {
-               text += QString("").sprintf( "%-18s\t%.6e\n",
-                                          f_qs_string[ file ][ i ].toLatin1().data(),
+               text += QString::asprintf( "%-18s\t%.6e\n",
+                                          f_qs_string[ file ][ i ].toLatin1( ).data(),
                                           f_Is       [ file ][ i ] );
             }
          }

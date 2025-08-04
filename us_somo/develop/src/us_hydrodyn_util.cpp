@@ -357,8 +357,8 @@ double US_Hydrodyn::compute_isoelectric_point( const struct PDB_model & model ) 
          // double end_p    = protons_at_pH( end   , model ) - model.num_elect;
          // if ( !(iter % 50) ) {
          //    QTextStream( stdout )
-         //       << QString("").sprintf(
-         //                              "iter %d: net charge (start,middle,end) %g %g %g pos (start,middle,end) %g %g %g\n"
+         //       << QString::asprintf(
+         //                              "iter %d: net charge (start,middle,end ) %g %g %g pos (start,middle,end) %g %g %g\n"
          //                              ,iter
          //                              ,start_p
          //                              ,middle_p

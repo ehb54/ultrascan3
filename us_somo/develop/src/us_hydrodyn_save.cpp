@@ -2657,18 +2657,18 @@ QString US_Hydrodyn_Save::hydroFormatStats(vector < save_data > stats, enum Hydr
    QString tmpString;
    
    result = "\n\t AVERAGE PARAMETERS \n\n\t\t\t\t Mean value\tSt. Dev.\n\n";
-   result += QString("").sprintf("- TRANS. FRICT. COEFF.        \t%.3e\t%.3e\t[g/s]\n", 
-                                 stats[0].tra_fric_coef,
-                                 stats[1].tra_fric_coef);
+   result += QString::asprintf( "- TRANS. FRICT. COEFF.        \t%.3e\t%.3e\t[g/s]\n",
+                                stats[0].tra_fric_coef,
+                                stats[1].tra_fric_coef );
    
    
-   result += QString("").sprintf("- TRANS. DIFF. COEFF.         \t%.2e\t%.3e\t[cm^2/s]\n", 
-                                 stats[0].results.D20w,
-                                 stats[1].results.D20w);
+   result += QString::asprintf( "- TRANS. DIFF. COEFF.         \t%.2e\t%.3e\t[cm^2/s]\n",
+                                stats[0].results.D20w,
+                                stats[1].results.D20w );
    
    //   if (raflag == -1.0)
    //   {
-   //      result += QString("").sprintf("- SED. COEFF. (psv unhyd.rad.)\t%.2f\t\t%.2f\t\t[S]\n",
+   //      result += QString::asprintf( "- SED. COEFF. (psv unhyd.rad. )\t%.2f\t\t%.2f\t\t[S]\n",
    //                                    stats[0].results.s20w,
    //                                    stats[1].results.s20w
    //                                    );
@@ -2682,129 +2682,129 @@ QString US_Hydrodyn_Save::hydroFormatStats(vector < save_data > stats, enum Hydr
    
    //   if ((raflag == -2.0) || (raflag == -5.0) || (raflag == -3.0))
    //   {
-   result += QString("").sprintf("- SED. COEFF. (psv %s) \t%.2f\t\t%.2f\t\t[S]\n", 
-                                 bead_model_source.toLatin1().data(),
-                                 stats[0].results.s20w,
-                                 stats[1].results.s20w);
+   result += QString::asprintf( "- SED. COEFF. (psv %s ) \t%.2f\t\t%.2f\t\t[S]\n", 
+                                bead_model_source.toLatin1().data(),
+                                stats[0].results.s20w,
+                                stats[1].results.s20w);
    //   }
    
-   result += QString("").sprintf("- FRICTIONAL RATIO            \t%.2f\t%.3e\n\n",
-                                 stats[0].results.ff0,
-                                 stats[1].results.ff0);
+   result += QString::asprintf( "- FRICTIONAL RATIO            \t%.2f\t%.3e\n\n",
+                                stats[0].results.ff0,
+                                stats[1].results.ff0 );
    
    if ( hydrotype == HYDRO_UNKNOWN || hydrotype == HYDRO_SMI ) {
-      result += QString("").sprintf("- ROT. FRICT. COEFF.          \t%.3e\t%.3e\t[g*cm^2/s]\n",
-                                    stats[0].rot_fric_coef,
-                                    stats[1].rot_fric_coef);
+      result += QString::asprintf( "- ROT. FRICT. COEFF.          \t%.3e\t%.3e\t[g*cm^2/s]\n",
+                                   stats[0].rot_fric_coef,
+                                   stats[1].rot_fric_coef );
    }
 
    if ( hydrotype != HYDRO_ZENO ) {
-      result += QString("").sprintf("- ROT. DIFF. COEFF.           \t%.0f\t\t%.0f\t[1/s]\n",
-                                    stats[0].rot_diff_coef,
-                                    stats[1].rot_diff_coef);
+      result += QString::asprintf( "- ROT. DIFF. COEFF.           \t%.0f\t\t%.0f\t[1/s]\n",
+                                   stats[0].rot_diff_coef,
+                                   stats[1].rot_diff_coef );
    }
 
    if ( hydrotype == HYDRO_UNKNOWN || hydrotype == HYDRO_SMI ) {
-      result += QString("").sprintf("- ROT. FRICT. COEFF. [ X ]    \t%.3e\t%.3e\t[g*cm^2/s]\n",
-                                    stats[0].rot_fric_coef_x,
-                                    stats[1].rot_fric_coef_x);
-      result += QString("").sprintf("- ROT. FRICT. COEFF. [ Y ]    \t%.3e\t%.3e\t[g*cm^2/s]\n",
-                                    stats[0].rot_fric_coef_y,
-                                    stats[1].rot_fric_coef_y);
-      result += QString("").sprintf("- ROT. FRICT. COEFF. [ Z ]    \t%.3e\t%.3e\t[g*cm^2/s]\n",
-                                    stats[0].rot_fric_coef_z,
-                                    stats[1].rot_fric_coef_z);
-      result += QString("").sprintf("- ROT. DIFF. COEFF. [ X ]     \t%.0f\t\t%.0f\t[1/s]\n",
-                                    stats[0].rot_diff_coef_x,
-                                    stats[1].rot_diff_coef_x);
-      result += QString("").sprintf("- ROT. DIFF. COEFF. [ Y ]     \t%.0f\t\t%.0f\t[1/s]\n",
-                                    stats[0].rot_diff_coef_y,
-                                    stats[1].rot_diff_coef_y);
-      result += QString("").sprintf("- ROT. DIFF. COEFF. [ Z ]     \t%.0f\t\t%.0f\t[1/s]\n",
-                                    stats[0].rot_diff_coef_z,
-                                    stats[1].rot_diff_coef_z);
+      result += QString::asprintf( "- ROT. FRICT. COEFF. [ X ]    \t%.3e\t%.3e\t[g*cm^2/s]\n",
+                                   stats[0].rot_fric_coef_x,
+                                   stats[1].rot_fric_coef_x );
+      result += QString::asprintf( "- ROT. FRICT. COEFF. [ Y ]    \t%.3e\t%.3e\t[g*cm^2/s]\n",
+                                   stats[0].rot_fric_coef_y,
+                                   stats[1].rot_fric_coef_y );
+      result += QString::asprintf( "- ROT. FRICT. COEFF. [ Z ]    \t%.3e\t%.3e\t[g*cm^2/s]\n",
+                                   stats[0].rot_fric_coef_z,
+                                   stats[1].rot_fric_coef_z );
+      result += QString::asprintf( "- ROT. DIFF. COEFF. [ X ]     \t%.0f\t\t%.0f\t[1/s]\n",
+                                   stats[0].rot_diff_coef_x,
+                                   stats[1].rot_diff_coef_x );
+      result += QString::asprintf( "- ROT. DIFF. COEFF. [ Y ]     \t%.0f\t\t%.0f\t[1/s]\n",
+                                   stats[0].rot_diff_coef_y,
+                                   stats[1].rot_diff_coef_y );
+      result += QString::asprintf( "- ROT. DIFF. COEFF. [ Z ]     \t%.0f\t\t%.0f\t[1/s]\n",
+                                   stats[0].rot_diff_coef_z,
+                                   stats[1].rot_diff_coef_z );
    }
    
-   result += QString("").sprintf("\n- RADIUS OF GYRATION          \t%.2f\t\t%.2f\t\t[nm]\n", 
-                                 stats[0].results.rg,
-                                 stats[1].results.rg);
+   result += QString::asprintf( "\n- RADIUS OF GYRATION          \t%.2f\t\t%.2f\t\t[nm]\n",
+                                stats[0].results.rg,
+                                stats[1].results.rg );
    
-   result += QString("").sprintf("- TRANS. STOKES' RADIUS       \t%.2f\t\t%.2f\t\t[nm]\n",
-                                 stats[0].results.rs,
-                                 stats[1].results.rs);
+   result += QString::asprintf( "- TRANS. STOKES' RADIUS       \t%.2f\t\t%.2f\t\t[nm]\n",
+                                stats[0].results.rs,
+                                stats[1].results.rs );
 
    if ( hydrotype == HYDRO_UNKNOWN || hydrotype == HYDRO_SMI ) {
-      result += QString("").sprintf("- ROTAT. STOKES' RADIUS [ X ] \t%.2f\t\t%.2f\t\t[nm]\n",
-                                    stats[0].rot_stokes_rad_x,
-                                    stats[1].rot_stokes_rad_x);
-      result += QString("").sprintf("- ROTAT. STOKES' RADIUS [ Y ] \t%.2f\t\t%.2f\t\t[nm]\n",
-                                    stats[0].rot_stokes_rad_y,
-                                    stats[1].rot_stokes_rad_y);
-      result += QString("").sprintf("- ROTAT. STOKES' RADIUS [ Z ] \t%.2f\t\t%.2f\t\t[nm]\n",
-                                    stats[0].rot_stokes_rad_z,
-                                    stats[1].rot_stokes_rad_z);
+      result += QString::asprintf( "- ROTAT. STOKES' RADIUS [ X ] \t%.2f\t\t%.2f\t\t[nm]\n",
+                                   stats[0].rot_stokes_rad_x,
+                                   stats[1].rot_stokes_rad_x );
+      result += QString::asprintf( "- ROTAT. STOKES' RADIUS [ Y ] \t%.2f\t\t%.2f\t\t[nm]\n",
+                                   stats[0].rot_stokes_rad_y,
+                                   stats[1].rot_stokes_rad_y );
+      result += QString::asprintf( "- ROTAT. STOKES' RADIUS [ Z ] \t%.2f\t\t%.2f\t\t[nm]\n",
+                                   stats[0].rot_stokes_rad_z,
+                                   stats[1].rot_stokes_rad_z );
    }
 
    if ( stats[ 0 ].results.viscosity ) {
-      result += QString("").sprintf("\n- INTRINSIC VISC.\t%.2f\t\t%.2f\t\t[cm^3/g]\n",
-                                    stats[0].results.viscosity,
-                                    stats[1].results.viscosity);
+      result += QString::asprintf( "\n- INTRINSIC VISC.\t%.2f\t\t%.2f\t\t[cm^3/g]\n",
+                                   stats[0].results.viscosity,
+                                   stats[1].results.viscosity );
    }
    
    if ( hydrotype == HYDRO_UNKNOWN || hydrotype == HYDRO_SMI ) {
-      result += QString("").sprintf("\n- UNCORRECTED INTRINSIC VISC. \t%.2f\t\t%.2f\t\t[cm^3/g]\n",
-                                    stats[0].unc_int_visc,
-                                    stats[1].unc_int_visc);
-      result += QString("").sprintf("- UNCORRECTED EINSTEIN'S RADIUS\t%.2f\t\t%.2f\t\t[nm]\n",
-                                    stats[0].unc_einst_rad,
-                                    stats[1].unc_einst_rad);
-      result += QString("").sprintf("- CORRECTED INTRINSIC VISCOSITY\t%.2f\t\t%.2f\t\t[cm^3/g]\n",
-                                    stats[0].cor_int_visc,
-                                    stats[1].cor_int_visc);
-      result += QString("").sprintf("- CORRECTED EINSTEIN'S RADIUS\t%.2f\t\t%.2f\t\t[nm]\n",
-                                    stats[0].cor_einst_rad,
-                                    stats[1].cor_einst_rad);
+      result += QString::asprintf( "\n- UNCORRECTED INTRINSIC VISC. \t%.2f\t\t%.2f\t\t[cm^3/g]\n",
+                                   stats[0].unc_int_visc,
+                                   stats[1].unc_int_visc );
+      result += QString::asprintf( "- UNCORRECTED EINSTEIN'S RADIUS\t%.2f\t\t%.2f\t\t[nm]\n",
+                                   stats[0].unc_einst_rad,
+                                   stats[1].unc_einst_rad );
+      result += QString::asprintf( "- CORRECTED INTRINSIC VISCOSITY\t%.2f\t\t%.2f\t\t[cm^3/g]\n",
+                                   stats[0].cor_int_visc,
+                                   stats[1].cor_int_visc );
+      result += QString::asprintf( "- CORRECTED EINSTEIN'S RADIUS\t%.2f\t\t%.2f\t\t[nm]\n",
+                                   stats[0].cor_einst_rad,
+                                   stats[1].cor_einst_rad );
    }
    
 #if defined(TSUDA_DOUBLESUM)
-   result += QString("").sprintf("- INTRINSIC VISC. (Double Sum)\t%.2f\t\t%.2f\t\t[cm^3/g]\n",
-                                 stats[0].,
-                                 stats[1].);
-   result += QString("").sprintf("- EINSTEIN'S RADIUS (D. Sum)  \t%.2f\t\t%.2f\t\t[nm]\n",
-                                 stats[0].,
-                                 stats[1].);
-   result += QString("").sprintf("- INTRINSIC VISC. (Tsuda CM)  \t%.2f\t\t%.2f\t\t[cm^3/g]\n",
-                                 stats[0].,
-                                 stats[1].);
-   result += QString("").sprintf("- EINSTEIN'S RADIUS (Tsuda CM)\t%.2f\t\t%.2f\t\t[nm]\n",
-                                 stats[0].,
-                                 stats[1].);
-   result += QString("").sprintf("- INTRINSIC VISC. (Tsuda CV)  \t%.2f\t\t%.2f\t\t[cm^3/g]\n",
-                                 stats[0].,
-                                 stats[1].);
-   result += QString("").sprintf("- EINSTEIN'S RADIUS (Tsuda CV)\t%.2f\t\t%.2f\t\t[nm]\n",
-                                 stats[0].,
-                                 stats[1].);
+   result += QString::asprintf( "- INTRINSIC VISC. (Double Sum )\t%.2f\t\t%.2f\t\t[cm^3/g]\n",
+                                stats[0].,
+                                stats[1].);
+   result += QString::asprintf( "- EINSTEIN'S RADIUS (D. Sum )  \t%.2f\t\t%.2f\t\t[nm]\n",
+                                stats[0].,
+                                stats[1].);
+   result += QString::asprintf( "- INTRINSIC VISC. (Tsuda CM )  \t%.2f\t\t%.2f\t\t[cm^3/g]\n",
+                                stats[0].,
+                                stats[1].);
+   result += QString::asprintf( "- EINSTEIN'S RADIUS (Tsuda CM )\t%.2f\t\t%.2f\t\t[nm]\n",
+                                stats[0].,
+                                stats[1].);
+   result += QString::asprintf( "- INTRINSIC VISC. (Tsuda CV )  \t%.2f\t\t%.2f\t\t[cm^3/g]\n",
+                                stats[0].,
+                                stats[1].);
+   result += QString::asprintf( "- EINSTEIN'S RADIUS (Tsuda CV )\t%.2f\t\t%.2f\t\t[nm]\n",
+                                stats[0].,
+                                stats[1].);
 #endif
    
    if ( hydrotype != HYDRO_ZENO ) {
-      result += QString("").sprintf("\nRELAXATION TIMES\n\n");
+      result += QString::asprintf( "\nRELAXATION TIMES\n\n" );
    
-      result += QString("").sprintf(" Tau(1)                       \t%.2f\t\t%.2f\t\t[ns]\n",
-                                    stats[0].rel_times_tau_1,
-                                    stats[1].rel_times_tau_1);
-      result += QString("").sprintf(" Tau(2)                       \t%.2f\t\t%.2f\t\t[ns]\n",
-                                    stats[0].rel_times_tau_2,
-                                    stats[1].rel_times_tau_2);
-      result += QString("").sprintf(" Tau(3)                       \t%.2f\t\t%.2f\t\t[ns]\n",
-                                    stats[0].rel_times_tau_3,
-                                    stats[1].rel_times_tau_3);
-      result += QString("").sprintf(" Tau(4)                       \t%.2f\t\t%.2f\t\t[ns]\n",
-                                    stats[0].rel_times_tau_4,
-                                    stats[1].rel_times_tau_4);
-      result += QString("").sprintf(" Tau(5)                       \t%.2f\t\t%.2f\t\t[ns]\n",
-                                    stats[0].rel_times_tau_5,
-                                    stats[1].rel_times_tau_5);
+      result += QString::asprintf( " Tau(1 )                       \t%.2f\t\t%.2f\t\t[ns]\n",
+                                   stats[0].rel_times_tau_1,
+                                   stats[1].rel_times_tau_1);
+      result += QString::asprintf( " Tau(2 )                       \t%.2f\t\t%.2f\t\t[ns]\n",
+                                   stats[0].rel_times_tau_2,
+                                   stats[1].rel_times_tau_2);
+      result += QString::asprintf( " Tau(3 )                       \t%.2f\t\t%.2f\t\t[ns]\n",
+                                   stats[0].rel_times_tau_3,
+                                   stats[1].rel_times_tau_3);
+      result += QString::asprintf( " Tau(4 )                       \t%.2f\t\t%.2f\t\t[ns]\n",
+                                   stats[0].rel_times_tau_4,
+                                   stats[1].rel_times_tau_4);
+      result += QString::asprintf( " Tau(5 )                       \t%.2f\t\t%.2f\t\t[ns]\n",
+                                   stats[0].rel_times_tau_5,
+                                   stats[1].rel_times_tau_5);
 
    }
    // compute weighted mean average tau(m)
@@ -2932,21 +2932,21 @@ QString US_Hydrodyn_Save::hydroFormatStats(vector < save_data > stats, enum Hydr
    //   printf("sdv %f sdrv %f\n", sdv, sdrv);
 
    
-   //   result += QString("").sprintf(" Tau(m) (Weighted average)    \t%.2f\t\t\t\t[ns]\n",
+   //   result += QString::asprintf( " Tau(m ) (Weighted average)    \t%.2f\t\t\t\t[ns]\n",
    //                                 avgv);
-   //   result += QString("").sprintf(" Tau(h) (Weighted average)    \t%.2f\t\t\t\t[ns]\n",
+   //   result += QString::asprintf( " Tau(h ) (Weighted average)    \t%.2f\t\t\t\t[ns]\n",
    //                                 1.0 / avgrv);
    
    if ( hydrotype != HYDRO_ZENO ) {
-      result += QString("").sprintf("\n Tau(m) (Unweighted average)  \t%.2f\t\t%.2f\t\t[ns]\n",
-                                    stats[0].rel_times_tau_m,
-                                    stats[1].rel_times_tau_m);
-      result += QString("").sprintf(" Tau(h) (Unweighted average)  \t%.2f\t\t%.2f\t\t[ns]\n",
-                                    stats[0].rel_times_tau_h,
-                                    stats[1].rel_times_tau_h);
+      result += QString::asprintf( "\n Tau(m ) (Unweighted average)  \t%.2f\t\t%.2f\t\t[ns]\n",
+                                   stats[0].rel_times_tau_m,
+                                   stats[1].rel_times_tau_m);
+      result += QString::asprintf( " Tau(h ) (Unweighted average)  \t%.2f\t\t%.2f\t\t[ns]\n",
+                                   stats[0].rel_times_tau_h,
+                                   stats[1].rel_times_tau_h);
    }
    
-   result += QString("").sprintf("\n****************************************************************\n");
+   result += QString::asprintf( "\n****************************************************************\n" );
 
    return result;
 }

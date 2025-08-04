@@ -2292,40 +2292,36 @@ bool US_Hydrodyn::load_rotamer( QString &error_msg )
 
                for ( unsigned int k = 0; k < (unsigned int) rotated_rotamers[ name ][ jj ][ j ].side_chain.size(); k++ )
                {
-                  out += QString( "" )
-                     .sprintf(     
-                              "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
-                              ++apos,
-                              rotated_rotamers[ name ][ jj ][ j ].side_chain[ k ].name.toLatin1().data(),
-                              name.left( 3 ).toLatin1().data(),
-                              "A",
-                              1,
-                              rotated_rotamers[ name ][ jj ][ j ].side_chain[ k ].coordinate.axis[ 0 ],
-                              rotated_rotamers[ name ][ jj ][ j ].side_chain[ k ].coordinate.axis[ 1 ],
-                              rotated_rotamers[ name ][ jj ][ j ].side_chain[ k ].coordinate.axis[ 2 ],
-                              1.00,
-                              0.00,
-                              " "
-                              );
+                  out += QString::asprintf( "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
+                                            ++apos,
+                                            rotated_rotamers[ name ][ jj ][ j ].side_chain[ k ].name.toLatin1( ).data(),
+                                            name.left( 3 ).toLatin1().data(),
+                                            "A",
+                                            1,
+                                            rotated_rotamers[ name ][ jj ][ j ].side_chain[ k ].coordinate.axis[ 0 ],
+                                            rotated_rotamers[ name ][ jj ][ j ].side_chain[ k ].coordinate.axis[ 1 ],
+                                            rotated_rotamers[ name ][ jj ][ j ].side_chain[ k ].coordinate.axis[ 2 ],
+                                            1.00,
+                                            0.00,
+                                            " "
+                                            );
                }
                out += "TER\n";
                for ( unsigned int k = 0; k < (unsigned int) rotated_rotamers[ name ][ jj ][ j ].waters.size(); k++ )
                {
-                  out += QString( "" )
-                     .sprintf(     
-                              "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
-                              ++apos,
-                              rotated_rotamers[ name ][ jj ][ j ].waters[ k ].name.toLatin1().data(),
-                              "WAT",
-                              "B",
-                              2,
-                              rotated_rotamers[ name ][ jj ][ j ].waters[ k ].coordinate.axis[ 0 ],
-                              rotated_rotamers[ name ][ jj ][ j ].waters[ k ].coordinate.axis[ 1 ],
-                              rotated_rotamers[ name ][ jj ][ j ].waters[ k ].coordinate.axis[ 2 ],
-                              1.00,
-                              0.00,
-                              " "
-                              );
+                  out += QString::asprintf( "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
+                                            ++apos,
+                                            rotated_rotamers[ name ][ jj ][ j ].waters[ k ].name.toLatin1( ).data(),
+                                            "WAT",
+                                            "B",
+                                            2,
+                                            rotated_rotamers[ name ][ jj ][ j ].waters[ k ].coordinate.axis[ 0 ],
+                                            rotated_rotamers[ name ][ jj ][ j ].waters[ k ].coordinate.axis[ 1 ],
+                                            rotated_rotamers[ name ][ jj ][ j ].waters[ k ].coordinate.axis[ 2 ],
+                                            1.00,
+                                            0.00,
+                                            " "
+                                            );
                }
                out += "TER\nENDMDL\n";
             }
@@ -3945,15 +3941,15 @@ QString US_Hydrodyn::list_steric_clash_recheck( bool quiet )
    editor_msg( "blue",
                QString( "Maximum possible water to place %1, degree of hydration %2\n" )
                .arg( hydrate_max_waters_no_asa )
-               .arg( QString( "").sprintf( "%.2f", ( double ) hydrate_max_waters_no_asa * 18e0 / model_vector[ current_model ].mw ) )
+               .arg( QString::asprintf( "%.2f", ( double ) hydrate_max_waters_no_asa * 18e0 / model_vector[ current_model ].mw ) )
                +
                QString( "Maximum exposed possible water to place %1, degree of hydration %2\n" )
                .arg( count_waters_added + count_waters_not_added )
-               .arg( QString( "" ).sprintf( "%.2f", ( double ) ( count_waters_added + count_waters_not_added )  * 18e0 / model_vector[ current_model ].mw ) )
+               .arg( QString::asprintf( "%.2f", ( double ) ( count_waters_added + count_waters_not_added )  * 18e0 / model_vector[ current_model ].mw ) )
                + 
                QString( "Waters placed %1, degree of hydration %2\n" )
                .arg( count_waters_added )
-               .arg( QString( "" ).sprintf( "%.2f", ( double ) count_waters_added * 18e0 / model_vector[ current_model ].mw ) )
+               .arg( QString::asprintf( "%.2f", ( double ) count_waters_added * 18e0 / model_vector[ current_model ].mw ) )
                );
 
    last_steric_clash_log.clear( );
@@ -3963,17 +3959,17 @@ QString US_Hydrodyn::list_steric_clash_recheck( bool quiet )
    last_steric_clash_log <<
       QString( "REMARK Maximum possible water to place         %1   degree of hydration %2\n" )
       .arg( hydrate_max_waters_no_asa )
-      .arg( QString( "").sprintf( "%.2f", ( double ) hydrate_max_waters_no_asa * 18e0 / model_vector[ current_model ].mw ) );
+      .arg( QString::asprintf( "%.2f", ( double ) hydrate_max_waters_no_asa * 18e0 / model_vector[ current_model ].mw ) );
 
    last_steric_clash_log <<
       QString( "REMARK Maximum exposed possible water to place %1   degree of hydration %2\n" )
       .arg( count_waters_added + count_waters_not_added )
-      .arg( QString( "" ).sprintf( "%.2f", ( double ) ( count_waters_added + count_waters_not_added )  * 18e0 / model_vector[ current_model ].mw ) );
+      .arg( QString::asprintf( "%.2f", ( double ) ( count_waters_added + count_waters_not_added )  * 18e0 / model_vector[ current_model ].mw ) );
 
    last_steric_clash_log <<
       QString( "REMARK Waters placed                           %1   degree of hydration %2\n" )
       .arg( count_waters_added )
-      .arg( QString( "" ).sprintf( "%.2f", ( double ) count_waters_added * 18e0 / model_vector[ current_model ].mw ) );
+      .arg( QString::asprintf( "%.2f", ( double ) count_waters_added * 18e0 / model_vector[ current_model ].mw ) );
 
    last_steric_clash_log << 
          QString(
@@ -4099,21 +4095,19 @@ bool US_Hydrodyn::write_pdb_with_waters( QString &error_msg, bool quiet )
          PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
 
          last_hydrated_pdb_text +=
-            QString("")
-            .sprintf(     
-                     "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
-                     this_atom->serial,
-                     this_atom->orgName.toLatin1().data(),
-                     this_atom->resName.toLatin1().data(),
-                     this_atom->chainID.toLatin1().data(),
-                     this_atom->resSeq.toUInt(),
-                     this_atom->coordinate.axis[ 0 ],
-                     this_atom->coordinate.axis[ 1 ],
-                     this_atom->coordinate.axis[ 2 ],
-                     this_atom->occupancy,
-                     this_atom->tempFactor,
-                     this_atom->element.toLatin1().data()
-                     );
+            QString::asprintf( "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
+                               this_atom->serial,
+                               this_atom->orgName.toLatin1( ).data(),
+                               this_atom->resName.toLatin1().data(),
+                               this_atom->chainID.toLatin1().data(),
+                               this_atom->resSeq.toUInt(),
+                               this_atom->coordinate.axis[ 0 ],
+                               this_atom->coordinate.axis[ 1 ],
+                               this_atom->coordinate.axis[ 2 ],
+                               this_atom->occupancy,
+                               this_atom->tempFactor,
+                               this_atom->element.toLatin1().data()
+                               );
          chains_used[ this_atom->chainID ] = true;
 
          if ( atom_number < this_atom->serial )
@@ -4176,16 +4170,14 @@ bool US_Hydrodyn::write_pdb_with_waters( QString &error_msg, bool quiet )
       for ( unsigned int i = 0; i < (unsigned int) it->second.size(); i++ )
       {
          last_hydrated_pdb_text +=
-            QString("")
-            .sprintf(     
-                     "ATOM  %5d  OW  WAT %1s%4d    %8.3f%8.3f%8.3f  1.00  0.00           O  \n",
-                     ++atom_number,
-                     chainID.toLatin1().data(),
-                     ++residue_number,
-                     it->second[ i ].axis[ 0 ],
-                     it->second[ i ].axis[ 1 ],
-                     it->second[ i ].axis[ 2 ]
-                     );
+            QString::asprintf( "ATOM  %5d  OW  WAT %1s%4d    %8.3f%8.3f%8.3f  1.00  0.00           O  \n",
+                               ++atom_number,
+                               chainID.toLatin1( ).data(),
+                               ++residue_number,
+                               it->second[ i ].axis[ 0 ],
+                               it->second[ i ].axis[ 1 ],
+                               it->second[ i ].axis[ 2 ]
+                               );
          if ( hydrate_clash_map_rtmr_water.count( QString( "%1~%2" ).arg( it->first ).arg( i ) ) )
          {
             hydrate_clash_waters_rtmr_list << QString( "swh%1:%2" ).arg( residue_number ).arg( chainID );
@@ -5152,21 +5144,19 @@ bool US_Hydrodyn::alt_write_pdb_with_waters( QString &error_msg, bool /* quiet *
             PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
 
             last_hydrated_pdb_text +=
-               QString("")
-               .sprintf(     
-                        "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
-                        this_atom->serial,
-                        this_atom->orgName.toLatin1().data(),
-                        this_atom->resName.toLatin1().data(),
-                        this_atom->chainID.toLatin1().data(),
-                        this_atom->resSeq.toUInt(),
-                        this_atom->coordinate.axis[ 0 ],
-                        this_atom->coordinate.axis[ 1 ],
-                        this_atom->coordinate.axis[ 2 ],
-                        this_atom->occupancy,
-                        this_atom->tempFactor,
-                        this_atom->element.toLatin1().data()
-                        );
+               QString::asprintf( "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
+                                  this_atom->serial,
+                                  this_atom->orgName.toLatin1( ).data(),
+                                  this_atom->resName.toLatin1().data(),
+                                  this_atom->chainID.toLatin1().data(),
+                                  this_atom->resSeq.toUInt(),
+                                  this_atom->coordinate.axis[ 0 ],
+                                  this_atom->coordinate.axis[ 1 ],
+                                  this_atom->coordinate.axis[ 2 ],
+                                  this_atom->occupancy,
+                                  this_atom->tempFactor,
+                                  this_atom->element.toLatin1().data()
+                                  );
             chains_used[ this_atom->chainID ] = true;
 
             if ( atom_number < this_atom->serial )
@@ -5229,16 +5219,14 @@ bool US_Hydrodyn::alt_write_pdb_with_waters( QString &error_msg, bool /* quiet *
          for ( unsigned int i = 0; i < (unsigned int) it->second.size(); i++ )
          {
             last_hydrated_pdb_text +=
-               QString("")
-               .sprintf(     
-                        "ATOM  %5d  OW  WAT %1s%4d    %8.3f%8.3f%8.3f  1.00  0.00           O  \n",
-                        ++atom_number,
-                        chainID.toLatin1().data(),
-                        ++residue_number,
-                        it->second[ i ].axis[ 0 ],
-                        it->second[ i ].axis[ 1 ],
-                        it->second[ i ].axis[ 2 ]
-                        );
+               QString::asprintf( "ATOM  %5d  OW  WAT %1s%4d    %8.3f%8.3f%8.3f  1.00  0.00           O  \n",
+                                  ++atom_number,
+                                  chainID.toLatin1( ).data(),
+                                  ++residue_number,
+                                  it->second[ i ].axis[ 0 ],
+                                  it->second[ i ].axis[ 1 ],
+                                  it->second[ i ].axis[ 2 ]
+                                  );
             if ( hydrate_clash_map_rtmr_water.count( QString( "%1~%2" ).arg( it->first ).arg( i ) ) )
             {
                alt_hydrate_clash_waters_rtmr_list[ m ] << QString( "swh%1:%2" ).arg( residue_number ).arg( chainID );

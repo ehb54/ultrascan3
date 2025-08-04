@@ -3536,14 +3536,14 @@ bool US_Hydrodyn_Saxs_Hplc::save_file( QString file, bool &cancel, bool &overwri
       if ( use_errors &&
            (int)f_errors[ file ].size() > i )
       {
-         ts << QString("").sprintf( "%-18s\t%.6e\t%.6e\n",
-                                    f_qs_string[ file ][ i ].toLatin1().data(),
-                                    f_Is       [ file ][ i ],
-                                    f_errors   [ file ][ i ] );
+         ts << QString::asprintf( "%-18s\t%.6e\t%.6e\n",
+                                  f_qs_string[ file ][ i ].toLatin1( ).data(),
+                                  f_Is       [ file ][ i ],
+                                  f_errors   [ file ][ i ] );
       } else {
-         ts << QString("").sprintf( "%-18s\t%.6e\n",
-                                    f_qs_string[ file ][ i ].toLatin1().data(),
-                                    f_Is       [ file ][ i ] );
+         ts << QString::asprintf( "%-18s\t%.6e\n",
+                                  f_qs_string[ file ][ i ].toLatin1( ).data(),
+                                  f_Is       [ file ][ i ] );
       }
    }
 
@@ -4194,7 +4194,7 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_t( QStringList files )
                it++ )
          {
             t   .push_back( it->first );
-            t_qs.push_back( QString( "" ).sprintf( "%.8f", it->first ) );
+            t_qs.push_back( QString::asprintf( "%.8f", it->first ) );
             if ( it->second.count( qv ) )
             {
                I.push_back( it->second[ qv ] );
@@ -5578,13 +5578,13 @@ void US_Hydrodyn_Saxs_Hplc::view()
             if ( use_errors &&
                  (int)f_errors[ file ].size() > i )
             {
-               text += QString("").sprintf( "%-18s\t%.6e\t%.6e\n",
-                                          f_qs_string[ file ][ i ].toLatin1().data(),
+               text += QString::asprintf( "%-18s\t%.6e\t%.6e\n",
+                                          f_qs_string[ file ][ i ].toLatin1( ).data(),
                                           f_Is       [ file ][ i ],
                                           f_errors   [ file ][ i ] );
             } else {
-               text += QString("").sprintf( "%-18s\t%.6e\n",
-                                          f_qs_string[ file ][ i ].toLatin1().data(),
+               text += QString::asprintf( "%-18s\t%.6e\n",
+                                          f_qs_string[ file ][ i ].toLatin1( ).data(),
                                           f_Is       [ file ][ i ] );
             }
          }

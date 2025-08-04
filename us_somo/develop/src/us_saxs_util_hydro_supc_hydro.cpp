@@ -1518,9 +1518,9 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
          for (i = 0; i < out_nat; i++)
          {
 #if defined(MIMIC_FILE)
-            dtn[i].x = QString("").sprintf("%f",out_dt[i].x).toFloat();
-            dtn[i].y = QString("").sprintf("%f",out_dt[i].y).toFloat();
-            dtn[i].z = QString("").sprintf("%f",out_dt[i].z).toFloat();
+            dtn[i].x = QString::asprintf( "%f",out_dt[i].x ).toFloat();
+            dtn[i].y = QString::asprintf( "%f",out_dt[i].y ).toFloat();
+            dtn[i].z = QString::asprintf( "%f",out_dt[i].z ).toFloat();
 #else
             dtn[i].x = out_dt[i].x;
             dtn[i].y = out_dt[i].y;
@@ -6367,19 +6367,19 @@ overlap()
          }
          if ( diff < -( ( 0.001 + overlap_tolerance ) * 1.04) )
          {
-            us_log->log(QString("").sprintf("\n%s%d%s%d%s%.6f\n", "ERROR: Overlap among bead ", i + 1, " and bead ", j + 1, ". Value = ",
-                                               -(sqrt(dist) - (dt[i].r + dt[j].r))));
+            us_log->log(QString::asprintf( "\n%s%d%s%d%s%.6f\n", "ERROR: Overlap among bead ", i + 1, " and bead ", j + 1, ". Value = ",
+-(sqrt(dist ) - (dt[i].r + dt[j].r))));
 	    if ( us_udp_msg )
 	      {
 		map < QString, QString > msging;
-		msging[ "_textarea" ] = QString("").sprintf("\\n%s%d%s%d%s%.6f\\n", "ERROR: Overlap among bead ", i + 1, " and bead ", j + 1, ". Value = ",
-                                               -(sqrt(dist) - (dt[i].r + dt[j].r)));
+		msging[ "_textarea" ] = QString::asprintf( "\\n%s%d%s%d%s%.6f\\n", "ERROR: Overlap among bead ", i + 1, " and bead ", j + 1, ". Value = ",
+-(sqrt(dist ) - (dt[i].r + dt[j].r)));
 	   		
 		us_udp_msg->send_json( msging );
 		//sleep(1);
 	      }
-	    accumulated_msgs->append( QString("").sprintf("\\n%s%d%s%d%s%.6f\\n", "ERROR: Overlap among bead ", i + 1, " and bead ", j + 1, ". Value = ",
-							  -(sqrt(dist) - (dt[i].r + dt[j].r))));
+	    accumulated_msgs->append( QString::asprintf( "\\n%s%d%s%d%s%.6f\\n", "ERROR: Overlap among bead ", i + 1, " and bead ", j + 1, ". Value = ",
+-(sqrt(dist ) - (dt[i].r + dt[j].r))));
 
            // printf("\n%s%d%s%d%s%.6f\n", "OVERLAP AMONG BEAD ", i + 1, " and BEAD ", j + 1, " | Value = ",
             //        (sqrt(dist) - (dt[i].r + dt[j].r)));

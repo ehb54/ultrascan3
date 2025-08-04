@@ -776,15 +776,14 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
                   if ( this_frac > 1 ) {
                      this_frac = 1;
                   }
-                  QTextStream(stdout) << QString().sprintf(
-                                                           "~ bead radius %f asa %f sa %f pct asa %f asa_r %f pr %f \n"
-                                                           ,(*bead_models)[current_model][i].bead_computed_radius
-                                                           ,this_asa
-                                                           ,this_sa
-                                                           ,100.0 * ( this_asa / this_sa )
-                                                           ,this_r
-                                                           ,this_pr
-                                                           );
+                  QTextStream(stdout) << QString::asprintf( "~ bead radius %f asa %f sa %f pct asa %f asa_r %f pr %f \n"
+                                                            ,(*bead_models )[current_model][i].bead_computed_radius
+                                                            ,this_asa
+                                                            ,this_sa
+                                                            ,100.0 * ( this_asa / this_sa )
+                                                            ,this_r
+                                                            ,this_pr
+                                                            );
                   this_total_vol_from_asa += this_frac * bead_total_vol;
 
                   if ( us_hydrodyn->get_color(&(*bead_models)[current_model][i]) != 6 ) {
@@ -818,53 +817,46 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
             models_to_proc++;
 
             QTextStream( stdout ) <<
-               QString("").sprintf(
-                                   "model                  %d\n"
-
-                                   " total beads           %d\n"
-                                   " total volume          %g\n"
-                                   " avg volume from total %g\n"
-
-                                   " used beads            %d\n"
-                                   " used volume           %g\n"
-                                   " avg volume            %g\n"
-                                   "\n"
-
-                                   ,current_model
-
-                                   ,(int) (*bead_models)[current_model].size()
-                                   ,this_total_vol
-                                   ,this_total_vol / (double) (*bead_models)[current_model].size()
+               QString::asprintf( "model                  %d\n"
+                                  " total beads           %d\n"
+                                  " total volume          %g\n"
+                                  " avg volume from total %g\n"
+                                  " used beads            %d\n"
+                                  " used volume           %g\n"
+                                  " avg volume            %g\n"
+                                  "\n"
+                                  ,current_model
+                                  ,(int ) (*bead_models)[current_model].size()
+                                  ,this_total_vol
+                                  ,this_total_vol / (double) (*bead_models)[current_model].size()
                                    
-                                   ,tmp_count
-                                   ,this_used_vol
-                                   ,this_used_vol / (double) tmp_count
-                                   )
+                                  ,tmp_count
+                                  ,this_used_vol
+                                  ,this_used_vol / (double) tmp_count
+                                  )
                ;
 
 
-            QTextStream( stdout ) << QString().sprintf(
-                                          "model %d\n"
-                                          "total_asa          %f\n"
-                                          "total_s_a          %f\n"
-                                          "total_vol_from_asa %f\n"
-                                          "total_vol          %f\n"
-                                          "used_asa           %f\n"
-                                          "used_s_a           %f\n"
-                                          "used_vol_from_asa  %f\n"
-                                          "used_vol           %f\n"
-                                          "asa_vol            %f\n"
-                                          ,current_model
-                                          ,this_total_asa
-                                          ,this_total_s_a
-                                          ,this_total_vol_from_asa
-                                          ,this_total_vol
-                                          ,this_used_asa
-                                          ,this_used_s_a
-                                          ,this_used_vol_from_asa
-                                          ,this_used_vol
-                                          ,this_asa_vol
-                                          );
+            QTextStream( stdout ) << QString::asprintf( "model %d\n"
+                                                        "total_asa          %f\n"
+                                                        "total_s_a          %f\n"
+                                                        "total_vol_from_asa %f\n"
+                                                        "total_vol          %f\n"
+                                                        "used_asa           %f\n"
+                                                        "used_s_a           %f\n"
+                                                        "used_vol_from_asa  %f\n"
+                                                        "used_vol           %f\n"
+                                                        "asa_vol            %f\n"
+                                                        ,current_model
+                                                        ,this_total_asa
+                                                        ,this_total_s_a
+                                                        ,this_total_vol_from_asa
+                                                        ,this_total_vol
+                                                        ,this_used_asa
+                                                        ,this_used_s_a
+                                                        ,this_used_vol_from_asa
+                                                        ,this_used_vol
+                                                        ,this_asa_vol );
                                           
          }
       }
@@ -1552,9 +1544,9 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
          for (i = 0; i < out_nat; i++)
          {
 #if defined(MIMIC_FILE)
-            dtn[i].x = QString("").sprintf("%f",out_dt[i].x).toFloat();
-            dtn[i].y = QString("").sprintf("%f",out_dt[i].y).toFloat();
-            dtn[i].z = QString("").sprintf("%f",out_dt[i].z).toFloat();
+            dtn[i].x = QString::asprintf( "%f",out_dt[i].x ).toFloat();
+            dtn[i].y = QString::asprintf( "%f",out_dt[i].y ).toFloat();
+            dtn[i].z = QString::asprintf( "%f",out_dt[i].z ).toFloat();
 #else
             dtn[i].x = out_dt[i].x;
             dtn[i].y = out_dt[i].y;
@@ -4400,7 +4392,7 @@ autovalori()
       QTextStream( stdout ) <<
          "autovalori() Dr ";
       for ( int i = 0; i < 9; ++i ) {
-         QTextStream( stdout ) << QString().sprintf( "%Le ", Dr[i] );
+         QTextStream( stdout ) << QString::asprintf( "%Le ", Dr[i] );
       }
       QTextStream( stdout ) << "\n";
    }
@@ -4421,7 +4413,7 @@ autovalori()
          "autovalori()\n\ta = [ ";
       for ( int i = 0; i < 3; ++i ) {
          for ( int j = 0; j < 3; ++j ) {
-            QTextStream( stdout ) << QString().sprintf( "%Le ", a[i][j] );
+            QTextStream( stdout ) << QString::asprintf( "%Le ", a[i][j] );
          }
          QTextStream( stdout ) << ";\n";
       }
@@ -5043,7 +5035,7 @@ diffcalc()
       for ( int i = 0; i < 6; ++i ) {
          QTextStream( stdout ) << "\t";
          for ( int j = 0; j < 6; ++j ) {
-            QTextStream( stdout ) << QString().sprintf( "%e ", ro[i][j] );
+            QTextStream( stdout ) << QString::asprintf( "%e ", ro[i][j] );
          }
          QTextStream( stdout ) << "\n";
       }
@@ -5060,7 +5052,7 @@ diffcalc()
       for ( int i = 0; i < 6; ++i ) {
          QTextStream( stdout ) << "\t";
          for ( int j = 0; j < 6; ++j ) {
-            QTextStream( stdout ) << QString().sprintf( "%e ", inver[i][j] );
+            QTextStream( stdout ) << QString::asprintf( "%e ", inver[i][j] );
          }
          QTextStream( stdout ) << "\n";
       }
@@ -6229,12 +6221,10 @@ sigmarRcalc1()
    // hydro_msg = "Using average volume of all beads including buried for eq 11. ";
    // interm /= numero_sfere;
       hydro_msg = "Using the minimum of ASA volume and total volume of used beads for eq 11. ";
-      QTextStream( stdout ) << QString().sprintf(
-                                                 "active model : %d\n"
-                                                 "model_idx    : %d\n"
-                                                 ,active_model
-                                                 ,model_idx[active_model]
-                                                 );
+      QTextStream( stdout ) << QString::asprintf( "active model : %d\n"
+                                                  "model_idx    : %d\n"
+                                                  ,active_model
+                                                  ,model_idx[active_model] );
       interm = asa_vol[ active_model ] * 6.0 * ETAo;
    }
    
@@ -6297,8 +6287,8 @@ overlap()
          }
          if ( diff < -( ( 0.001 + overlap_tolerance ) * 1.04) )
          {
-            editor->append(QString("").sprintf("\n%s%d%s%d%s%.6f\n", "ERROR: Overlap among bead ", i + 1, " and bead ", j + 1, ". Value = ",
-                                               -(sqrt(dist) - (dt[i].r + dt[j].r))));
+            editor->append(QString::asprintf( "\n%s%d%s%d%s%.6f\n", "ERROR: Overlap among bead ", i + 1, " and bead ", j + 1, ". Value = ",
+                                              -(sqrt(dist ) - (dt[i].r + dt[j].r))));
             printf("\n%s%d%s%d%s%.6f\n", "OVERLAP AMONG BEAD ", i + 1, " and BEAD ", j + 1, " | Value = ",
                    (sqrt(dist) - (dt[i].r + dt[j].r)));
 #if defined(USE_MAIN)
@@ -6575,7 +6565,7 @@ terzo(long double b, long double c, long double d)
    // int coco;
 
 #if defined( DEBUG_EV )
-   qDebug() << QString().sprintf( "terzo b %Lf c %Lf d %Lf", b, c, d );
+   qDebug() << QString::asprintf( "terzo b %Lf c %Lf d %Lf", b, c, d );
 #endif
 
    if ((c == 0.0) && (d == 0.0))

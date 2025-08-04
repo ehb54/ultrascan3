@@ -2749,7 +2749,7 @@ bool US_Hydrodyn::calc_hullrad_hydro( QString filename ) {
                
                   tso << QString("HEADER    split from %1: Model %2 of %3\n").arg( f.fileName() ).arg( pos + 1 ).arg( model_count );
                   tso << model_header;
-                  tso << QString("").sprintf("MODEL  %7s\n", model_name_vector[ pos ].toLatin1().data() );
+                  tso <<  QString::asprintf( "MODEL  %7s\n", model_name_vector[ pos ].toLatin1().data()  ) ;
                   tso << model_lines;
                   tso << "ENDMDL\nEND\n";
                   

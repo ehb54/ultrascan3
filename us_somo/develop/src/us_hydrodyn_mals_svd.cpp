@@ -2397,7 +2397,7 @@ void US_Hydrodyn_Mals_Svd::add_i_of_q_or_t( QString source, QStringList files, b
             it++ )
       {
          t   .push_back( it->first );
-         t_qs.push_back( QString( "" ).sprintf( "%.8f", it->first ) );
+         t_qs.push_back( QString::asprintf( "%.8f", it->first ) );
          if ( it->second.count( q[ i ] ) )
          {
             I.push_back( it->second[ q[ i ] ] );

@@ -1115,14 +1115,14 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                      error_shown[count_idx] = true;
                   }
         
-                  // error_string->append(QString("").sprintf("%s: chain %s molecule %d atom %s residue %s %s\n",
+                  // error_string->append( QString::asprintf( "%s: chain %s molecule %d atom %s residue %s %s\n",
                   //               msg_tag.toLatin1().data(),
                   //               this_atom->chainID.toLatin1().data(),
                   //               j + 1,
                   //               this_atom->name.toLatin1().data(),
                   //               this_atom->resSeq.toLatin1().data(),
                   //               this_atom->resName.toLatin1().data()
-                  //               ));
+                  //                ) );
                }
             }
          }
@@ -1238,13 +1238,13 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                }
         
 
-               // error_string->append(QString("").sprintf("unknown atom chain %s molecule %d atom %s residue %s %s\n",
+               // error_string->append( QString::asprintf( "unknown atom chain %s molecule %d atom %s residue %s %s\n",
                //            this_atom->chainID.toLatin1().data(),
                //            j + 1,
                //            this_atom->name.toLatin1().data(),
                //            this_atom->resSeq.toLatin1().data(),
                //            this_atom->resName.toLatin1().data()
-               //            ));
+               //             ) );
             }
          }
       } // end for ( unsigned int k = 0; k < model->molecule[j].atom.size(); k++ )
@@ -2497,10 +2497,10 @@ int US_Hydrodyn::create_beads(QString *error_string, bool quiet)
                  && this_atom->resName != "DOD"
                  && this_atom->resName != "HOH" && (this_atom->altLoc == "A" || this_atom->altLoc == " ")))
             {
-               error_string->append(QString("").sprintf("unknown residue molecule %d atom %d name %s resname %s coord [%f,%f,%f]\n",
+               error_string->append( QString::asprintf( "unknown residue molecule %d atom %d name %s resname %s coord [%f,%f,%f]\n",
                                                         j + 1, k, this_atom->name.toLatin1().data(),
                                                         this_atom->resName.toLatin1().data(),
-                                                        this_atom->coordinate.axis[0], this_atom->coordinate.axis[1], this_atom->coordinate.axis[2]));
+                                                        this_atom->coordinate.axis[0], this_atom->coordinate.axis[1], this_atom->coordinate.axis[2] ) );
                return (US_SURFRACER_ERR_MISSING_RESIDUE);
             }
          } 
@@ -2584,10 +2584,10 @@ int US_Hydrodyn::create_beads(QString *error_string, bool quiet)
 
             if (atompos == -1)
             {
-               error_string->append(QString("").sprintf("unknown atom molecule %d atom %d name %s resname %s coord [%f,%f,%f]\n",
+               error_string->append( QString::asprintf( "unknown atom molecule %d atom %d name %s resname %s coord [%f,%f,%f]\n",
                                                         j + 1, k, this_atom->name.toLatin1().data(),
                                                         this_atom->resName.toLatin1().data(),
-                                                        this_atom->coordinate.axis[0], this_atom->coordinate.axis[1], this_atom->coordinate.axis[2]));
+                                                        this_atom->coordinate.axis[0], this_atom->coordinate.axis[1], this_atom->coordinate.axis[2] ) );
             } 
             else 
             {
@@ -7375,13 +7375,13 @@ void US_Hydrodyn::bead_check( bool use_threshold, bool message_type, bool vdw, b
          }
       }
       editor_msg( "dark blue",
-                  QString().sprintf(
+                   QString::asprintf( 
                                     "Recomputed ASA of beads:\n"
                                     "Total ASA: %f\n"
                                     "Used ASA: %f\n"
                                     ,total_asa
                                     ,used_asa
-                                    )
+                                     ) 
                   );
       return;
    }

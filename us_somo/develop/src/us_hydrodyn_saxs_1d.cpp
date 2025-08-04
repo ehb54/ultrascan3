@@ -161,7 +161,7 @@ void US_Hydrodyn_Saxs_1d::setupGUI()
    lbl_lambda->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_lambda = new QLineEdit(  this );    le_lambda->setObjectName( "Lambda Line Edit" );
-   le_lambda->setText( QString( "" ).sprintf("%g", 1.54 ));
+   le_lambda->setText( QString::asprintf( "%g", 1.54 ));
    le_lambda->setAlignment(Qt::AlignVCenter);
    le_lambda->setPalette( PALET_NORMAL );
    AUTFBACK( le_lambda );
@@ -175,7 +175,7 @@ void US_Hydrodyn_Saxs_1d::setupGUI()
    lbl_detector_distance->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_detector_distance = new QLineEdit(  this );    le_detector_distance->setObjectName( "Detector_Distance Line Edit" );
-   le_detector_distance->setText( QString( "" ).sprintf("%g", 1.33 ));
+   le_detector_distance->setText( QString::asprintf( "%g", 1.33 ));
    le_detector_distance->setAlignment(Qt::AlignVCenter);
    le_detector_distance->setPalette( PALET_NORMAL );
    AUTFBACK( le_detector_distance );
@@ -189,7 +189,7 @@ void US_Hydrodyn_Saxs_1d::setupGUI()
    lbl_detector_geometry->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_detector_width = new QLineEdit(  this );    le_detector_width->setObjectName( "Detector_Width Line Edit" );
-   le_detector_width->setText( QString( "" ).sprintf("%g", 341.0 ));
+   le_detector_width->setText( QString::asprintf( "%g", 341.0 ));
    le_detector_width->setAlignment(Qt::AlignVCenter);
    le_detector_width->setPalette( PALET_NORMAL );
    AUTFBACK( le_detector_width );
@@ -203,8 +203,8 @@ void US_Hydrodyn_Saxs_1d::setupGUI()
    lbl_detector_pixels->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_detector_pixels_width = new QLineEdit(  this );    le_detector_pixels_width->setObjectName( "Detector_Pixels_Width Line Edit" );
-   // le_detector_pixels_width->setText(QString( "" ).sprintf("%u",(*hydro).detector_pixels_width));
-   le_detector_pixels_width->setText( QString( "" ).sprintf( "%d", 50 ) );
+   // le_detector_pixels_width->setText(QString::asprintf( "%u",(*hydro ).detector_pixels_width));
+   le_detector_pixels_width->setText( QString::asprintf( "%d", 50 ) );
    le_detector_pixels_width->setAlignment(Qt::AlignVCenter);
    le_detector_pixels_width->setPalette( PALET_NORMAL );
    AUTFBACK( le_detector_pixels_width );
@@ -218,7 +218,7 @@ void US_Hydrodyn_Saxs_1d::setupGUI()
    lbl_rho0->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_rho0 = new QLineEdit(  this );    le_rho0->setObjectName( "rho0 (1/A^3):" );
-   le_rho0->setText( QString( "" ).sprintf( "%g", our_saxs_options->water_e_density ) );
+   le_rho0->setText( QString::asprintf( "%g", our_saxs_options->water_e_density ) );
    le_rho0->setAlignment(Qt::AlignVCenter);
    le_rho0->setPalette( PALET_NORMAL );
    AUTFBACK( le_rho0 );
@@ -248,7 +248,7 @@ void US_Hydrodyn_Saxs_1d::setupGUI()
    lbl_deltaR->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_deltaR = new QLineEdit(  this );    le_deltaR->setObjectName( "DeltaR Line Edit" );
-   le_deltaR->setText( QString( "" ).sprintf( "%g", 1.0 ) );
+   le_deltaR->setText( QString::asprintf( "%g", 1.0 ) );
    le_deltaR->setAlignment(Qt::AlignVCenter);
    le_deltaR->setPalette( PALET_NORMAL );
    AUTFBACK( le_deltaR );
@@ -262,7 +262,7 @@ void US_Hydrodyn_Saxs_1d::setupGUI()
    lbl_probe_radius->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_probe_radius = new QLineEdit(  this );    le_probe_radius->setObjectName( "probe radius Line Edit" );
-   le_probe_radius->setText( QString( "" ).sprintf( "%g", 1.4 ) );
+   le_probe_radius->setText( QString::asprintf( "%g", 1.4 ) );
    le_probe_radius->setAlignment(Qt::AlignVCenter);
    le_probe_radius->setPalette( PALET_NORMAL );
    AUTFBACK( le_probe_radius );
@@ -277,7 +277,7 @@ void US_Hydrodyn_Saxs_1d::setupGUI()
    connect(pb_set_target_ev, SIGNAL(clicked()), SLOT(set_target_ev()));
 
    le_target_ev = new QLineEdit(  this );    le_target_ev->setObjectName( "target_ev Line Edit" );
-   le_target_ev->setText( QString( "" ).sprintf( "%g", 1.0 ) );
+   le_target_ev->setText( QString::asprintf( "%g", 1.0 ) );
    le_target_ev->setAlignment(Qt::AlignVCenter);
    le_target_ev->setPalette( PALET_NORMAL );
    AUTFBACK( le_target_ev );
@@ -291,7 +291,7 @@ void US_Hydrodyn_Saxs_1d::setupGUI()
    connect(pb_find_target_ev_thresh, SIGNAL(clicked()), SLOT(find_target_ev_thresh()));
 
    le_threshold = new QLineEdit(  this );    le_threshold->setObjectName( "threshold Line Edit" );
-   le_threshold->setText( QString( "" ).sprintf( "%g", 1.0 ) );
+   le_threshold->setText( QString::asprintf( "%g", 1.0 ) );
    le_threshold->setAlignment(Qt::AlignVCenter);
    le_threshold->setPalette( PALET_NORMAL );
    AUTFBACK( le_threshold );
@@ -305,7 +305,7 @@ void US_Hydrodyn_Saxs_1d::setupGUI()
    lbl_sample_rotations->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_sample_rotations = new QLineEdit(  this );    le_sample_rotations->setObjectName( "Sample_Rotations Line Edit" );
-   le_sample_rotations->setText( QString( "" ).sprintf( "%u", 1 ) );
+   le_sample_rotations->setText( QString::asprintf( "%u", 1 ) );
    le_sample_rotations->setAlignment(Qt::AlignVCenter);
    le_sample_rotations->setPalette( PALET_NORMAL );
    AUTFBACK( le_sample_rotations );
@@ -319,7 +319,7 @@ void US_Hydrodyn_Saxs_1d::setupGUI()
    lbl_axis_rotations->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_axis_rotations = new QLineEdit(  this );    le_axis_rotations->setObjectName( "Axis_Rotations Line Edit" );
-   le_axis_rotations->setText( QString( "" ).sprintf( "%u", 1 ) );
+   le_axis_rotations->setText( QString::asprintf( "%u", 1 ) );
    le_axis_rotations->setAlignment(Qt::AlignVCenter);
    le_axis_rotations->setPalette( PALET_NORMAL );
    AUTFBACK( le_axis_rotations );
@@ -333,7 +333,7 @@ void US_Hydrodyn_Saxs_1d::setupGUI()
    lbl_spec_multiplier->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_spec_multiplier = new QLineEdit(  this );    le_spec_multiplier->setObjectName( "Spec_Multiplier Line Edit" );
-   le_spec_multiplier->setText( QString( "" ).sprintf( "%g", 1.0f ) );
+   le_spec_multiplier->setText( QString::asprintf( "%g", 1.0f ) );
    le_spec_multiplier->setAlignment(Qt::AlignVCenter);
    le_spec_multiplier->setPalette( PALET_NORMAL );
    AUTFBACK( le_spec_multiplier );
@@ -1473,39 +1473,33 @@ void US_Hydrodyn_Saxs_1d::start()
                      ts << QString( "MODEL     0\n" );
                      ts << QString( "REMARK    Rotations summary\n" );
                      
-                     ts << QString("")
-                        .sprintf(     
-                                 "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
-                                 1,
-                                 "CA",
-                                 " LYS",
-                                 "",
-                                 1,
-                                 0.0f,
-                                 0.0f,
-                                 0.0f,
-                                 0.0f,
-                                 0.0f,
-                                 "C"
-                                 );
+                     ts << QString::asprintf( "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
+                                              1,
+                                              "CA",
+                                              " LYS",
+                                              "",
+                                              1,
+                                              0.0f,
+                                              0.0f,
+                                              0.0f,
+                                              0.0f,
+                                              0.0f,
+                                              "C" );
 
                      for ( unsigned int r = 0; r < rotations.size(); r++ )
                      {
-                        ts << QString("")
-                           .sprintf(     
-                                    "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
-                                    r + 2,
-                                    "CA",
-                                    " LYS",
-                                    "",
-                                    r + 2,
-                                    rotations[ r ][ 0 ],
-                                    rotations[ r ][ 1 ],
-                                    rotations[ r ][ 2 ],
-                                    0.0f,
-                                    0.0f,
-                                    "C"
-                                    );
+                        ts << QString::asprintf( "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
+                                                 r + 2,
+                                                 "CA",
+                                                 " LYS",
+                                                 "",
+                                                 r + 2,
+                                                 rotations[ r ][ 0 ],
+                                                 rotations[ r ][ 1 ],
+                                                 rotations[ r ][ 2 ],
+                                                 0.0f,
+                                                 0.0f,
+                                                 "C" );
                      }
                      ts << "ENDMDL\n";
                   }                     
@@ -1518,21 +1512,18 @@ void US_Hydrodyn_Saxs_1d::start()
                
                   for ( unsigned int a = 0; a < atoms.size(); a++ )
                   {
-                     ts << QString("")
-                        .sprintf(     
-                                 "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
-                                 a + 1,
-                                 "CA",
-                                 " LYS",
-                                 "",
-                                 a + 1,
-                                 atoms[ a ].pos[ 0 ] * atomic_scaler_inv,
-                                 atoms[ a ].pos[ 1 ] * atomic_scaler_inv,
-                                 atoms[ a ].pos[ 2 ] * atomic_scaler_inv,
-                                 0.0f,
-                                 0.0f,
-                                 "C"
-                                 );
+                     ts << QString::asprintf( "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
+                                              a + 1,
+                                              "CA",
+                                              " LYS",
+                                              "",
+                                              a + 1,
+                                              atoms[ a ].pos[ 0 ] * atomic_scaler_inv,
+                                              atoms[ a ].pos[ 1 ] * atomic_scaler_inv,
+                                              atoms[ a ].pos[ 2 ] * atomic_scaler_inv,
+                                              0.0f,
+                                              0.0f,
+                                              "C" );
                   }
                   ts << "ENDMDL\n";
                   f.close();
@@ -1569,39 +1560,33 @@ void US_Hydrodyn_Saxs_1d::start()
                         ts << QString( "MODEL     0\n" );
                         ts << QString( "REMARK    Rotations summary\n" );
                      
-                        ts << QString("")
-                           .sprintf(     
-                                    "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
-                                    1,
-                                    "CA",
-                                    " LYS",
-                                    "",
-                                    1,
-                                    0.0f,
-                                    0.0f,
-                                    0.0f,
-                                    0.0f,
-                                    0.0f,
-                                    "C"
-                                    );
+                        ts << QString::asprintf( "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
+                                                 1,
+                                                 "CA",
+                                                 " LYS",
+                                                 "",
+                                                 1,
+                                                 0.0f,
+                                                 0.0f,
+                                                 0.0f,
+                                                 0.0f,
+                                                 0.0f,
+                                                 "C" );
 
                         for ( unsigned int r = 0; r < rotations.size(); r++ )
                         {
-                           ts << QString("")
-                              .sprintf(     
-                                       "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
-                                       r + 2,
-                                       "CA",
-                                       " LYS",
-                                       "",
-                                       r + 2,
-                                       rotations[ r ][ 0 ],
-                                       rotations[ r ][ 1 ],
-                                       rotations[ r ][ 2 ],
-                                       0.0f,
-                                       0.0f,
-                                       "C"
-                                       );
+                           ts << QString::asprintf( "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
+                                                    r + 2,
+                                                    "CA",
+                                                    " LYS",
+                                                    "",
+                                                    r + 2,
+                                                    rotations[ r ][ 0 ],
+                                                    rotations[ r ][ 1 ],
+                                                    rotations[ r ][ 2 ],
+                                                    0.0f,
+                                                    0.0f,
+                                                    "C" );
                         }
                         ts << "ENDMDL\n";
                      }                     
@@ -1614,21 +1599,18 @@ void US_Hydrodyn_Saxs_1d::start()
                
                      for ( unsigned int a = 0; a < excluded_volume.size(); a++ )
                      {
-                        ts << QString("")
-                           .sprintf(     
-                                    "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
-                                    a + 1,
-                                    "CA",
-                                    " LYS",
-                                    "",
-                                    a + 1,
-                                    excluded_volume[ a ].axis[ 0 ],
-                                    excluded_volume[ a ].axis[ 1 ],
-                                    excluded_volume[ a ].axis[ 2 ],
-                                    0.0f,
-                                    0.0f,
-                                    "C"
-                                    );
+                        ts << QString::asprintf( "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
+                                                 a + 1,
+                                                 "CA",
+                                                 " LYS",
+                                                 "",
+                                                 a + 1,
+                                                 excluded_volume[ a ].axis[ 0 ],
+                                                 excluded_volume[ a ].axis[ 1 ],
+                                                 excluded_volume[ a ].axis[ 2 ],
+                                                 0.0f,
+                                                 0.0f,
+                                                 "C" );
                      }
                      ts << "ENDMDL\n";
                      f.close();
@@ -1667,21 +1649,19 @@ void US_Hydrodyn_Saxs_1d::start()
                
                      for ( unsigned int a = 0; a < atoms.size(); a++ )
                      {
-                        ts << QString("")
-                           .sprintf(     
-                                    "ATOM  %5d%5s%4s %1s%4s    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
-                                    model[ a ].serial,
-                                    model[ a ].orgName.toLatin1().data(),
-                                    model[ a ].resName.toLatin1().data(),
-                                    model[ a ].chainID == " " ? "a" : model[ a ].chainID.toLatin1().data(),
-                                    model[ a ].resSeq.toLatin1().data(),
-                                    atoms[ a ].pos[ 0 ] * atomic_scaler_inv,
-                                    atoms[ a ].pos[ 1 ] * atomic_scaler_inv,
-                                    atoms[ a ].pos[ 2 ] * atomic_scaler_inv,
-                                    0.0f,
-                                    0.0f,
-                                    model[ a ].element.toLatin1().data()
-                                    );
+                        ts << QString::asprintf( "ATOM  %5d%5s%4s %1s%4s    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
+                                                 model[ a ].serial,
+                                                 model[ a ].orgName.toLatin1( ).data(),
+                                                 model[ a ].resName.toLatin1().data(),
+                                                 model[ a ].chainID == " " ? "a" : model[ a ].chainID.toLatin1().data(),
+                                                 model[ a ].resSeq.toLatin1().data(),
+                                                 atoms[ a ].pos[ 0 ] * atomic_scaler_inv,
+                                                 atoms[ a ].pos[ 1 ] * atomic_scaler_inv,
+                                                 atoms[ a ].pos[ 2 ] * atomic_scaler_inv,
+                                                 0.0f,
+                                                 0.0f,
+                                                 model[ a ].element.toLatin1().data()
+                                                 );
                      }
                      ts << "ENDMDL\n";
 
@@ -1703,21 +1683,18 @@ void US_Hydrodyn_Saxs_1d::start()
                            au = 1;
                            d++;
                         }
-                        ts << QString("")
-                           .sprintf(     
-                                    "ATOM  %5d%5s%4s %1d%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
-                                    au,
-                                    "CA",
-                                    " LYS",
-                                    d,
-                                    au,
-                                    excluded_volume[ a ].axis[ 0 ],
-                                    excluded_volume[ a ].axis[ 1 ],
-                                    excluded_volume[ a ].axis[ 2 ],
-                                    0.0f,
-                                    0.0f,
-                                    "C"
-                                    );
+                        ts << QString::asprintf( "ATOM  %5d%5s%4s %1d%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
+                                                 au,
+                                                 "CA",
+                                                 " LYS",
+                                                 d,
+                                                 au,
+                                                 excluded_volume[ a ].axis[ 0 ],
+                                                 excluded_volume[ a ].axis[ 1 ],
+                                                 excluded_volume[ a ].axis[ 2 ],
+                                                 0.0f,
+                                                 0.0f,
+                                                 "C" );
                      }
                      ts << "ENDMDL\n";
                      f.close();
@@ -1897,39 +1874,33 @@ void US_Hydrodyn_Saxs_1d::start()
                      ts << QString( "MODEL     0\n" );
                      ts << QString( "REMARK    Rotations summary\n" );
                      
-                     ts << QString("")
-                        .sprintf(     
-                                 "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
-                                 1,
-                                 "CA",
-                                 " LYS",
-                                 "",
-                                 1,
-                                 0.0f,
-                                 0.0f,
-                                 0.0f,
-                                 0.0f,
-                                 0.0f,
-                                 "C"
-                                 );
+                     ts << QString::asprintf( "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
+                                              1,
+                                              "CA",
+                                              " LYS",
+                                              "",
+                                              1,
+                                              0.0f,
+                                              0.0f,
+                                              0.0f,
+                                              0.0f,
+                                              0.0f,
+                                              "C" );
 
                      for ( unsigned int r = 0; r < rotations.size(); r++ )
                      {
-                        ts << QString("")
-                           .sprintf(     
-                                    "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
-                                    r + 2,
-                                    "CA",
-                                    " LYS",
-                                    "",
-                                    r + 2,
-                                    rotations[ r ][ 0 ],
-                                    rotations[ r ][ 1 ],
-                                    rotations[ r ][ 2 ],
-                                    0.0f,
-                                    0.0f,
-                                    "C"
-                                    );
+                        ts << QString::asprintf( "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
+                                                 r + 2,
+                                                 "CA",
+                                                 " LYS",
+                                                 "",
+                                                 r + 2,
+                                                 rotations[ r ][ 0 ],
+                                                 rotations[ r ][ 1 ],
+                                                 rotations[ r ][ 2 ],
+                                                 0.0f,
+                                                 0.0f,
+                                                 "C" );
                      }
                      ts << "ENDMDL\n";
                   }                     
@@ -1942,21 +1913,18 @@ void US_Hydrodyn_Saxs_1d::start()
                
                   for ( unsigned int a = 0; a < atoms.size(); a++ )
                   {
-                     ts << QString("")
-                        .sprintf(     
-                                 "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
-                                 a + 1,
-                                 "CA",
-                                 " LYS",
-                                 "",
-                                 a + 1,
-                                 atoms[ a ].pos[ 0 ] * atomic_scaler_inv,
-                                 atoms[ a ].pos[ 1 ] * atomic_scaler_inv,
-                                 atoms[ a ].pos[ 2 ] * atomic_scaler_inv,
-                                 0.0f,
-                                 0.0f,
-                                 "C"
-                                 );
+                     ts << QString::asprintf( "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
+                                              a + 1,
+                                              "CA",
+                                              " LYS",
+                                              "",
+                                              a + 1,
+                                              atoms[ a ].pos[ 0 ] * atomic_scaler_inv,
+                                              atoms[ a ].pos[ 1 ] * atomic_scaler_inv,
+                                              atoms[ a ].pos[ 2 ] * atomic_scaler_inv,
+                                              0.0f,
+                                              0.0f,
+                                              "C" );
                   }
                   ts << "ENDMDL\n";
                   f.close();
@@ -2841,8 +2809,8 @@ bool US_Hydrodyn_Saxs_1d::setup_excluded_volume_map()
                           "__EOF\n" )
       .arg( rasmol )
       .arg( f.fileName() )
-      .arg( QString( "" ).sprintf( "%.5f", probe_radius ) )
-      .arg( QString( "" ).sprintf( "%.5f", deltaR ) )
+      .arg( QString::asprintf( "%.5f", probe_radius ) )
+      .arg( QString::asprintf( "%.5f", deltaR ) )
       .arg( mapname );
 
    cout << cmd;
@@ -2972,13 +2940,13 @@ bool US_Hydrodyn_Saxs_1d::get_excluded_volume_map()
 
    if ( ( res = cbf_make_handle (&cbf) ) )
    {
-      errormsg = QString( "" ).sprintf( "Error: cbf make handle error %d\n", res );
+      errormsg = QString::asprintf( "Error: cbf make handle error %d\n", res );
       return false;
    }
 
    if ( ( res = cbf_read_widefile(cbf, fp, MSG_DIGEST) ) )
    {
-      errormsg = QString( "" ).sprintf( "Error: cbf read widefile %d\n", res );
+      errormsg = QString::asprintf( "Error: cbf read widefile %d\n", res );
       return false;
    }
 
@@ -2986,19 +2954,19 @@ bool US_Hydrodyn_Saxs_1d::get_excluded_volume_map()
 
    if ( ( res = cbf_find_category( cbf, "map_segment" ) ) )
    {
-      errormsg = QString( "" ).sprintf( "Error: cbf find category 'map_segment' %d\n", res );
+      errormsg = QString::asprintf( "Error: cbf find category 'map_segment' %d\n", res );
       return false;
    }
 
    if ( ( res = cbf_find_column( cbf, "array_id" ) )  )
    {
-      errormsg = QString( "" ).sprintf( "Error: cbf find column 'array_id' %d\n", res );
+      errormsg = QString::asprintf( "Error: cbf find column 'array_id' %d\n", res );
       return false;
    }
       
    if ( ( res = cbf_get_value( cbf, (const char **)&map_structure_id ) ) )
    {
-      errormsg = QString( "" ).sprintf( "Error: cbf get value for 'map structure id'' %d\n", res );
+      errormsg = QString::asprintf( "Error: cbf get value for 'map structure id'' %d\n", res );
       return false;
    }
 
@@ -3008,20 +2976,20 @@ bool US_Hydrodyn_Saxs_1d::get_excluded_volume_map()
 
    if ( ( res = cbf_find_category( cbf, "array_structure_list_axis" ) ) )
    {
-      errormsg = QString( "" ).sprintf( "Error: cbf find categoy 'array structure list axis' %d\n", res );
+      errormsg = QString::asprintf( "Error: cbf find categoy 'array structure list axis' %d\n", res );
       return false;
    }
       
    unsigned int rows;
    if ( ( res = cbf_count_rows( cbf, &rows ) ) )
    {
-      errormsg = QString( "" ).sprintf( "Error: cbf count rows %d\n", res );
+      errormsg = QString::asprintf( "Error: cbf count rows %d\n", res );
       return false;
    }
 
    if ( rows != 3 )
    {
-      errormsg = QString( "" ).sprintf( "Error: rows != 3\n" );
+      errormsg = QString::asprintf( "Error: rows != 3\n" );
       return false;
    }
       
@@ -3029,37 +2997,37 @@ bool US_Hydrodyn_Saxs_1d::get_excluded_volume_map()
    {
       if ( ( res = cbf_find_column( cbf, "axis_id" ) )  )
       {
-         errormsg = QString( "" ).sprintf( "Error: cbf find column 'axis_id' %d\n", res );
+         errormsg = QString::asprintf( "Error: cbf find column 'axis_id' %d\n", res );
          return false;
       }
 
       if ( ( res = cbf_select_row( cbf, row ) ) )
       {
-         errormsg = QString( "" ).sprintf( "Error: cbf select row %d %d\n", row, res );
+         errormsg = QString::asprintf( "Error: cbf select row %d %d\n", row, res );
          return false;
       }
 
       if ( ( res = cbf_find_column( cbf, "displacement" ) ) )
       {
-         errormsg = QString( "" ).sprintf( "Error: cbf find column 'displacement' %d\n", res );
+         errormsg = QString::asprintf( "Error: cbf find column 'displacement' %d\n", res );
          return false;
       }
       
       if ( ( res = cbf_get_doublevalue( cbf, &map_displacement[ row ] ) ) )
       {
-         errormsg = QString( "" ).sprintf( "Error: cbf get double value 'displacement' %d\n", res );
+         errormsg = QString::asprintf( "Error: cbf get double value 'displacement' %d\n", res );
          return false;
       }
 
       if ( ( res = cbf_find_column( cbf, "displacement_increment" ) ) )
       {
-         errormsg = QString( "" ).sprintf( "Error: cbf find column 'displacement_increment' %d\n", res );
+         errormsg = QString::asprintf( "Error: cbf find column 'displacement_increment' %d\n", res );
          return false;
       }
       
       if ( ( res = cbf_get_doublevalue( cbf, &map_displacement_increment[ row ] ) ) )
       {
-         errormsg = QString( "" ).sprintf( "Error: cbf get double value 'displacement_increment' %d\n", res );
+         errormsg = QString::asprintf( "Error: cbf get double value 'displacement_increment' %d\n", res );
          return false;
       }
    }
@@ -3093,37 +3061,37 @@ bool US_Hydrodyn_Saxs_1d::get_excluded_volume_map()
       
       if ( ( res = cbf_find_category( cbf, "array_data" ) ) )
       {
-         errormsg = QString( "" ).sprintf( "Error: cbf find category 'array_data' %d\n", res );
+         errormsg = QString::asprintf( "Error: cbf find category 'array_data' %d\n", res );
          return false;
       }
          
       if ( ( res = cbf_find_column( cbf, "array_id" ) ) )
       {
-         errormsg = QString( "" ).sprintf( "Error: cbf find column 'array_id' %d\n", res );
+         errormsg = QString::asprintf( "Error: cbf find column 'array_id' %d\n", res );
          return false;
       }
          
       if ( ( res = cbf_rewind_row( cbf ) ) )
       {
-         errormsg = QString( "" ).sprintf( "Error: cbf rewind row %d\n", res );
+         errormsg = QString::asprintf( "Error: cbf rewind row %d\n", res );
          return false;
       }
 
       if ( ( res = cbf_find_nextrow( cbf, map_structure_id ) ) )
       {
-         errormsg = QString( "" ).sprintf( "Error: cbf find nextrow %d %d\n", *map_structure_id, res );
+         errormsg = QString::asprintf( "Error: cbf find nextrow %d %d\n", *map_structure_id, res );
          return false;
       }
 
       if ( ( res = cbf_find_column( cbf, "binary_id" ) ) )
       {
-         errormsg = QString( "" ).sprintf( "Error: cbf find column 'binary id' %d\n", res );
+         errormsg = QString::asprintf( "Error: cbf find column 'binary id' %d\n", res );
          return false;
       }
 
       if ( ( res = cbf_get_integervalue( cbf, &binary_id ) ) )
       {
-         errormsg = QString( "" ).sprintf( "Error: cbf find column 'binary id' %d\n", res );
+         errormsg = QString::asprintf( "Error: cbf find column 'binary id' %d\n", res );
          return false;
       }
 
@@ -3131,7 +3099,7 @@ bool US_Hydrodyn_Saxs_1d::get_excluded_volume_map()
 
       if ( ( res = cbf_find_column( cbf, "data" ) ) )
       {
-         errormsg = QString( "" ).sprintf( "Error: cbf find column 'data' %d\n", res );
+         errormsg = QString::asprintf( "Error: cbf find column 'data' %d\n", res );
          return false;
       }
 
@@ -3154,7 +3122,7 @@ bool US_Hydrodyn_Saxs_1d::get_excluded_volume_map()
                                                  &dim3, 
                                                  &padding) ) )
       {
-         errormsg = QString( "" ).sprintf( "Error: cbf get arrayparameters wdims %d\n", res );
+         errormsg = QString::asprintf( "Error: cbf get arrayparameters wdims %d\n", res );
          return false;
       }
 
@@ -3162,7 +3130,7 @@ bool US_Hydrodyn_Saxs_1d::get_excluded_volume_map()
       printf( "dim1 %d, dim2 %d dim3 %d\n", dim1, dim2, dim3 );
       if ( elsize != sizeof( double ) )
       {
-         errormsg = QString( "" ).sprintf( "Error: elsize expected sizeof double but got %d\n", elsize );
+         errormsg = QString::asprintf( "Error: elsize expected sizeof double but got %d\n", elsize );
          return false;
       }
 
@@ -3176,13 +3144,13 @@ bool US_Hydrodyn_Saxs_1d::get_excluded_volume_map()
                                      elements, 
                                      &elements_read ) ) )
       {
-         errormsg = QString( "" ).sprintf( "Error: cbf get realarray error %d\n", res );
+         errormsg = QString::asprintf( "Error: cbf get realarray error %d\n", res );
          return false;
       }
             
       if ( elements != elements_read )
       {
-         errormsg = QString( "" ).sprintf( "Error: elements is %d but elements_read only %d\n", elements, elements_read );
+         errormsg = QString::asprintf( "Error: elements is %d but elements_read only %d\n", elements, elements_read );
          return false;
       }
 
@@ -3481,13 +3449,13 @@ bool US_Hydrodyn_Saxs_1d::save_copy_excluded_volume_map( QString
 
    if ( ( res = cbf_make_handle (&cbf) ) )
    {
-      errormsg = QString( "" ).sprintf( "Error: cbf make handle error %d\n", res );
+      errormsg = QString::asprintf( "Error: cbf make handle error %d\n", res );
       return false;
    }
 
    if ( ( res = cbf_read_widefile(cbf, fp, MSG_DIGEST) ) )
    {
-      errormsg = QString( "" ).sprintf( "Error: cbf read widefile %d\n", res );
+      errormsg = QString::asprintf( "Error: cbf read widefile %d\n", res );
       return false;
    }
 
@@ -3495,19 +3463,19 @@ bool US_Hydrodyn_Saxs_1d::save_copy_excluded_volume_map( QString
 
    if ( ( res = cbf_find_category( cbf, "map_segment" ) ) )
    {
-      errormsg = QString( "" ).sprintf( "Error: cbf find category 'map_segment' %d\n", res );
+      errormsg = QString::asprintf( "Error: cbf find category 'map_segment' %d\n", res );
       return false;
    }
 
    if ( ( res = cbf_find_column( cbf, "array_id" ) )  )
    {
-      errormsg = QString( "" ).sprintf( "Error: cbf find column 'array_id' %d\n", res );
+      errormsg = QString::asprintf( "Error: cbf find column 'array_id' %d\n", res );
       return false;
    }
       
    if ( ( res = cbf_get_value( cbf, (const char **)&map_structure_id ) ) )
    {
-      errormsg = QString( "" ).sprintf( "Error: cbf get value for 'map structure id'' %d\n", res );
+      errormsg = QString::asprintf( "Error: cbf get value for 'map structure id'' %d\n", res );
       return false;
    }
 
@@ -3517,20 +3485,20 @@ bool US_Hydrodyn_Saxs_1d::save_copy_excluded_volume_map( QString
 
    if ( ( res = cbf_find_category( cbf, "array_structure_list_axis" ) ) )
    {
-      errormsg = QString( "" ).sprintf( "Error: cbf find categoy 'array structure list axis' %d\n", res );
+      errormsg = QString::asprintf( "Error: cbf find categoy 'array structure list axis' %d\n", res );
       return false;
    }
       
    unsigned int rows;
    if ( ( res = cbf_count_rows( cbf, &rows ) ) )
    {
-      errormsg = QString( "" ).sprintf( "Error: cbf count rows %d\n", res );
+      errormsg = QString::asprintf( "Error: cbf count rows %d\n", res );
       return false;
    }
 
    if ( rows != 3 )
    {
-      errormsg = QString( "" ).sprintf( "Error: rows != 3\n" );
+      errormsg = QString::asprintf( "Error: rows != 3\n" );
       return false;
    }
       
@@ -3538,37 +3506,37 @@ bool US_Hydrodyn_Saxs_1d::save_copy_excluded_volume_map( QString
    {
       if ( ( res = cbf_find_column( cbf, "axis_id" ) )  )
       {
-         errormsg = QString( "" ).sprintf( "Error: cbf find column 'axis_id' %d\n", res );
+         errormsg = QString::asprintf( "Error: cbf find column 'axis_id' %d\n", res );
          return false;
       }
 
       if ( ( res = cbf_select_row( cbf, row ) ) )
       {
-         errormsg = QString( "" ).sprintf( "Error: cbf select row %d %d\n", row, res );
+         errormsg = QString::asprintf( "Error: cbf select row %d %d\n", row, res );
          return false;
       }
 
       if ( ( res = cbf_find_column( cbf, "displacement" ) ) )
       {
-         errormsg = QString( "" ).sprintf( "Error: cbf find column 'displacement' %d\n", res );
+         errormsg = QString::asprintf( "Error: cbf find column 'displacement' %d\n", res );
          return false;
       }
       
       if ( ( res = cbf_get_doublevalue( cbf, &map_displacement[ row ] ) ) )
       {
-         errormsg = QString( "" ).sprintf( "Error: cbf get double value 'displacement' %d\n", res );
+         errormsg = QString::asprintf( "Error: cbf get double value 'displacement' %d\n", res );
          return false;
       }
 
       if ( ( res = cbf_find_column( cbf, "displacement_increment" ) ) )
       {
-         errormsg = QString( "" ).sprintf( "Error: cbf find column 'displacement_increment' %d\n", res );
+         errormsg = QString::asprintf( "Error: cbf find column 'displacement_increment' %d\n", res );
          return false;
       }
       
       if ( ( res = cbf_get_doublevalue( cbf, &map_displacement_increment[ row ] ) ) )
       {
-         errormsg = QString( "" ).sprintf( "Error: cbf get double value 'displacement_increment' %d\n", res );
+         errormsg = QString::asprintf( "Error: cbf get double value 'displacement_increment' %d\n", res );
          return false;
       }
    }
@@ -3602,37 +3570,37 @@ bool US_Hydrodyn_Saxs_1d::save_copy_excluded_volume_map( QString
       
       if ( ( res = cbf_find_category( cbf, "array_data" ) ) )
       {
-         errormsg = QString( "" ).sprintf( "Error: cbf find category 'array_data' %d\n", res );
+         errormsg = QString::asprintf( "Error: cbf find category 'array_data' %d\n", res );
          return false;
       }
          
       if ( ( res = cbf_find_column( cbf, "array_id" ) ) )
       {
-         errormsg = QString( "" ).sprintf( "Error: cbf find column 'array_id' %d\n", res );
+         errormsg = QString::asprintf( "Error: cbf find column 'array_id' %d\n", res );
          return false;
       }
          
       if ( ( res = cbf_rewind_row( cbf ) ) )
       {
-         errormsg = QString( "" ).sprintf( "Error: cbf rewind row %d\n", res );
+         errormsg = QString::asprintf( "Error: cbf rewind row %d\n", res );
          return false;
       }
 
       if ( ( res = cbf_find_nextrow( cbf, map_structure_id ) ) )
       {
-         errormsg = QString( "" ).sprintf( "Error: cbf find nextrow %d %d\n", *map_structure_id, res );
+         errormsg = QString::asprintf( "Error: cbf find nextrow %d %d\n", *map_structure_id, res );
          return false;
       }
 
       if ( ( res = cbf_find_column( cbf, "binary_id" ) ) )
       {
-         errormsg = QString( "" ).sprintf( "Error: cbf find column 'binary id' %d\n", res );
+         errormsg = QString::asprintf( "Error: cbf find column 'binary id' %d\n", res );
          return false;
       }
 
       if ( ( res = cbf_get_integervalue( cbf, &binary_id ) ) )
       {
-         errormsg = QString( "" ).sprintf( "Error: cbf find column 'binary id' %d\n", res );
+         errormsg = QString::asprintf( "Error: cbf find column 'binary id' %d\n", res );
          return false;
       }
 
@@ -3640,7 +3608,7 @@ bool US_Hydrodyn_Saxs_1d::save_copy_excluded_volume_map( QString
 
       if ( ( res = cbf_find_column( cbf, "data" ) ) )
       {
-         errormsg = QString( "" ).sprintf( "Error: cbf find column 'data' %d\n", res );
+         errormsg = QString::asprintf( "Error: cbf find column 'data' %d\n", res );
          return false;
       }
 
@@ -3663,7 +3631,7 @@ bool US_Hydrodyn_Saxs_1d::save_copy_excluded_volume_map( QString
                                                  &dim3, 
                                                  &padding) ) )
       {
-         errormsg = QString( "" ).sprintf( "Error: cbf get arrayparameters wdims %d\n", res );
+         errormsg = QString::asprintf( "Error: cbf get arrayparameters wdims %d\n", res );
          return false;
       }
 
@@ -3671,7 +3639,7 @@ bool US_Hydrodyn_Saxs_1d::save_copy_excluded_volume_map( QString
       printf( "dim1 %d, dim2 %d dim3 %d\n", dim1, dim2, dim3 );
       if ( elsize != sizeof( double ) )
       {
-         errormsg = QString( "" ).sprintf( "Error: elsize expected sizeof double but got %d\n", elsize );
+         errormsg = QString::asprintf( "Error: elsize expected sizeof double but got %d\n", elsize );
          return false;
       }
 
@@ -3685,13 +3653,13 @@ bool US_Hydrodyn_Saxs_1d::save_copy_excluded_volume_map( QString
                                      elements, 
                                      &elements_read ) ) )
       {
-         errormsg = QString( "" ).sprintf( "Error: cbf get realarray error %d\n", res );
+         errormsg = QString::asprintf( "Error: cbf get realarray error %d\n", res );
          return false;
       }
             
       if ( elements != elements_read )
       {
-         errormsg = QString( "" ).sprintf( "Error: elements is %d but elements_read only %d\n", elements, elements_read );
+         errormsg = QString::asprintf( "Error: elements is %d but elements_read only %d\n", elements, elements_read );
          return false;
       }
 
@@ -4098,7 +4066,7 @@ bool US_Hydrodyn_Saxs_1d::find_target_ev_thresh()
          }
          threshold = ( min_thresh + threshold ) / 2e0;
       }
-      le_threshold->setText( QString( "" ).sprintf( "%g", threshold ) );
+      le_threshold->setText( QString::asprintf( "%g", threshold ) );
    } while ( fabs( ev - target_ev ) >= 1e-2  && max_thresh - min_thresh > 1e-5 );
 
    running = false;

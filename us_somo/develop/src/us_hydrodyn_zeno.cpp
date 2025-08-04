@@ -10669,11 +10669,11 @@ namespace zeno {
 //       ftnscopy((shore+4),2,(dateline+14),2,NULL);
 //       ftnscopy((shore+6),2,(dateline+17),2,NULL);
 //       READ(INTERNAL,shore,8,LISTIO,INT4,&Trandom->idum,0);
-      QString time = QString( "" ).sprintf( "%d%d%d%d",
-                                            QTime::currentTime().hour(),
-                                            QTime::currentTime().minute(),
-                                            QTime::currentTime().second(),
-                                            QTime::currentTime().msec() );
+      QString time = QString::asprintf( "%d%d%d%d",
+                                        QTime::currentTime( ).hour(),
+                                        QTime::currentTime().minute(),
+                                        QTime::currentTime().second(),
+                                        QTime::currentTime().msec() );
 
       Trandom->idum = time.toInt();
       Trandom->idum = -Trandom->idum;
@@ -13644,9 +13644,9 @@ bool US_Hydrodyn_Zeno::run(
          .arg( options->zeno_surface_steps ).toLatin1().data();
 
 
-      QString qs_zeno     = QString( "" ).sprintf( "z%ut", options->zeno_zeno_steps     );
-      QString qs_interior = QString( "" ).sprintf( "i%ut", options->zeno_interior_steps );
-      QString qs_surface  = QString( "" ).sprintf( "s%ut", options->zeno_surface_steps  );
+      QString qs_zeno     = QString::asprintf( "z%ut", options->zeno_zeno_steps );
+      QString qs_interior = QString::asprintf( "i%ut", options->zeno_interior_steps );
+      QString qs_surface  = QString::asprintf( "s%ut", options->zeno_surface_steps );
 
       int progress_steps = 0;
 
@@ -14743,11 +14743,11 @@ bool US_Hydrodyn::calc_zeno()
                                    " Radius of Gyration                   Rg : %6\n"
                                     ) )
                         .arg( add_to_zeno_correction_results )
-                        .arg( QString( "" ).sprintf( "%4.2e S" , this_data.results.s20w ) )
-                        .arg( this_data.results.s20w_sd ? QString( "" ).sprintf( " [%4.2e]"      , this_data.results.s20w_sd ) : "" )
-                        .arg( QString( "" ).sprintf( "%3.2f"   , this_data.results.ff0  ) )
-                        .arg( this_data.results.ff0_sd ? QString( "" ).sprintf( " [%4.2e]"      , this_data.results.ff0_sd ) : "" )
-                        .arg( QString( "" ).sprintf( "%4.2e nm", this_data.results.rg   ) )
+                        .arg( QString::asprintf( "%4.2e S" , this_data.results.s20w ) )
+                        .arg( this_data.results.s20w_sd ? QString::asprintf( " [%4.2e]"      , this_data.results.s20w_sd ) : "" )
+                        .arg( QString::asprintf( "%3.2f"   , this_data.results.ff0 ) )
+                        .arg( this_data.results.ff0_sd ? QString::asprintf( " [%4.2e]"      , this_data.results.ff0_sd ) : "" )
+                        .arg( QString::asprintf( "%4.2e nm", this_data.results.rg ) )
                         ;
 
                      if ( zeno_cxx ) {
@@ -14758,14 +14758,14 @@ bool US_Hydrodyn::calc_zeno()
                                    " Tr. Frictional coefficient            f : %5%6\n"
                                    " Tr. Diffusion Coefficient            Dt : %7%8\n"
                                     )
-                           .arg( QString( "" ).sprintf( "%4.2e nm"      , this_data.results.rs ) )
-                           .arg( this_data.results.rs_sd ? QString( "" ).sprintf( " [%4.2e]"      , this_data.results.rs_sd ) : "" )
-                           .arg( QString( "" ).sprintf( "%4.2e cm^3/g"  , this_data.results.viscosity ) )
-                           .arg( this_data.results.viscosity_sd ? QString( "" ).sprintf( " [%4.2e]"      , this_data.results.viscosity_sd ) : "" )
-                           .arg( QString( "" ).sprintf( "%4.2e g/s"     , this_data.tra_fric_coef ) )
-                           .arg( this_data.tra_fric_coef_sd ? QString( "" ).sprintf( " [%4.2e]"      , this_data.tra_fric_coef_sd ) : "" )
-                           .arg( QString( "" ).sprintf( "%4.2e cm^2/sec", this_data.results.D20w ) )
-                           .arg( this_data.results.D20w_sd ? QString( "" ).sprintf( " [%4.2e]"      , this_data.results.D20w_sd ) : "" )
+                           .arg( QString::asprintf( "%4.2e nm"      , this_data.results.rs ) )
+                           .arg( this_data.results.rs_sd ? QString::asprintf( " [%4.2e]"      , this_data.results.rs_sd ) : "" )
+                           .arg( QString::asprintf( "%4.2e cm^3/g"  , this_data.results.viscosity ) )
+                           .arg( this_data.results.viscosity_sd ? QString::asprintf( " [%4.2e]"      , this_data.results.viscosity_sd ) : "" )
+                           .arg( QString::asprintf( "%4.2e g/s"     , this_data.tra_fric_coef ) )
+                           .arg( this_data.tra_fric_coef_sd ? QString::asprintf( " [%4.2e]"      , this_data.tra_fric_coef_sd ) : "" )
+                           .arg( QString::asprintf( "%4.2e cm^2/sec", this_data.results.D20w ) )
+                           .arg( this_data.results.D20w_sd ? QString::asprintf( " [%4.2e]"      , this_data.results.D20w_sd ) : "" )
                            ;
 
                         {
@@ -14780,8 +14780,8 @@ bool US_Hydrodyn::calc_zeno()
                               QString(
                                       "                                   Dt/d0 : %1%2\n"
                                       )
-                              .arg( QString( "" ).sprintf( "%4.2e"      , this_data.dt_d0 ) )
-                              .arg( this_data.dt_d0_sd ? QString( "" ).sprintf( " [%4.2e]"  , this_data.dt_d0_sd ) : "" )
+                              .arg( QString::asprintf( "%4.2e"      , this_data.dt_d0 ) )
+                              .arg( this_data.dt_d0_sd ? QString::asprintf( " [%4.2e]"  , this_data.dt_d0_sd ) : "" )
                               ;
                            
                            if ( !has_overlap ) {
@@ -14789,8 +14789,8 @@ bool US_Hydrodyn::calc_zeno()
                                  QString(
                                          " Dimensionless Intrinsic Viscosity [eta] : %1%2\n"
                                          )
-                                 .arg( QString( "" ).sprintf( "%4.2e"      , this_data.dimless_eta ) )
-                                 .arg( this_data.dimless_eta_sd ? QString( "" ).sprintf( " [%4.2e]"      , this_data.dimless_eta_sd ) : "" )
+                                 .arg( QString::asprintf( "%4.2e"      , this_data.dimless_eta ) )
+                                 .arg( this_data.dimless_eta_sd ? QString::asprintf( " [%4.2e]"      , this_data.dimless_eta_sd ) : "" )
                                  ;
                            }
                         }

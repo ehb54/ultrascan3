@@ -310,7 +310,7 @@ bool US_Hydrodyn_Dad::gg_fit_vector(
       if ( cormap_tot ) {
          double tot_c_pct     =  100e0 / (double) ( cormap_green + cormap_yellow + cormap_red );
          QString msg = 
-            QString("").sprintf(
+             QString::asprintf( 
                                 "P value analysis summary:\n"
                                 " %5.1f%% P >= %.2f (%.1f%% P >= %.2f) + (%.1f%% %.2f > P >= %.2f) pairs\n"
                                 " %5.1f%% %.2f < P pairs\n"
@@ -323,7 +323,7 @@ bool US_Hydrodyn_Dad::gg_fit_vector(
                                 ,alpha_over_5
                                 ,tot_c_pct * (double) cormap_red
                                 ,alpha_over_5
-                                )
+                                 ) 
             ;
          editor_msg( "darkblue", msg );
       }
@@ -723,7 +723,7 @@ bool US_Hydrodyn_Dad::data_point_window( vector < double > &q, vector < double >
    }
 
    QTextStream tso(stdout);
-   tso << QString().sprintf(
+   tso <<  QString::asprintf( 
                             "center       %g\n"
                             "this_pos     %d\n"
                             "q[this_pos]  %g\n"
@@ -731,7 +731,7 @@ bool US_Hydrodyn_Dad::data_point_window( vector < double > &q, vector < double >
                             "q[start_pos] %g\n"
                             ,center
                             ,this_pos
-                            ,(*t_q)[this_pos]
+                            ,(*t_q ) [this_pos]
                             ,start_pos
                             ,(*t_q)[start_pos]
                             );

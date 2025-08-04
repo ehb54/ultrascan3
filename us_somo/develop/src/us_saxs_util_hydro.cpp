@@ -352,99 +352,99 @@ bool US_Saxs_Util::run_hydro(
     results[ "model_name" ] = results_hydro.name;
     results[ "method_used" ] = method; // QString("%1").arg(method);
 
-     if (method != "None")
-      {
-	if ( fabs(results_hydro.total_beads_sd) <= 1e-100 )
-	  {
-	    results[ "total_beads" ] =  QString::number(results_hydro.total_beads);		
-	  }
-	else
-	  {
-	    results[ "total_beads" ] = (QString("").sprintf("%u (%4.2e)", 
-							(int)(results_hydro.total_beads + .5),
-							results_hydro.total_beads_sd));
-	  }
+    if (method != "None")
+    {
+       if ( fabs(results_hydro.total_beads_sd) <= 1e-100 )
+       {
+          results[ "total_beads" ] =  QString::number(results_hydro.total_beads);		
+       }
+       else
+       {
+          results[ "total_beads" ] = (QString::asprintf( "%u (%4.2e )", 
+                                                         (int)(results_hydro.total_beads + .5),
+                                                         results_hydro.total_beads_sd));
+       }
 
-	if ( fabs(results_hydro.used_beads_sd) <= 1e-100 )
-	  {
-	    results[ "used_beads" ] =  QString::number(results_hydro.used_beads);			
-	  }
-	else
-	  {
-	    results[ "used_beads" ] = (QString("").sprintf("%u (%4.2e)", 
-                                                  (int)(results_hydro.used_beads + .5),
-                                                  results_hydro.used_beads_sd));
-	  }
+       if ( fabs(results_hydro.used_beads_sd) <= 1e-100 )
+       {
+          results[ "used_beads" ] =  QString::number(results_hydro.used_beads);			
+       }
+       else
+       {
+          results[ "used_beads" ] = (QString::asprintf( "%u (%4.2e )", 
+                                                        (int)(results_hydro.used_beads + .5),
+                                                        results_hydro.used_beads_sd));
+       }
 	
-	if (fabs(results_hydro.s20w_sd) <= 1e-100)
-	  {
-	    results[ "s20w" ] =  QString::number(results_hydro.s20w, 'e', 2) + " S";				    
-	  }
-	else
-	  {
-	    results[ "s20w" ] = (QString("").sprintf("%4.2e S (%4.2e)", results_hydro.s20w, results_hydro.s20w_sd));
-	  }
+       if (fabs(results_hydro.s20w_sd) <= 1e-100)
+       {
+          results[ "s20w" ] =  QString::number(results_hydro.s20w, 'e', 2) + " S";				    
+       }
+       else
+       {
+          results[ "s20w" ] = (QString::asprintf( "%4.2e S (%4.2e )", results_hydro.s20w, results_hydro.s20w_sd));
+       }
 
-	if (fabs(results_hydro.D20w_sd) <= 1e-100)
-	  {
-	    results[ "D20w" ] =  QString::number(results_hydro.D20w, 'e', 2) + " cm^2/sec";			   
-	  }
-	else
-	  {
-	    results[ "D20w" ] = (QString("").sprintf("%4.2e cm^2/sec (%4.2e)", results_hydro.D20w, results_hydro.D20w_sd));
-	  }
+       if (fabs(results_hydro.D20w_sd) <= 1e-100)
+       {
+          results[ "D20w" ] =  QString::number(results_hydro.D20w, 'e', 2) + " cm^2/sec";			   
+       }
+       else
+       {
+          results[ "D20w" ] = (QString::asprintf( "%4.2e cm^2/sec (%4.2e )", results_hydro.D20w, results_hydro.D20w_sd));
+       }
 	
-	if (fabs(results_hydro.rs_sd) <= 1e-100)
-	  {
-	    results[ "rs" ] =  QString::number(results_hydro.rs, 'e', 2) + " nm";			
-	  }
-	else
-	  {
-	    results[ "rs" ] = (QString("").sprintf("%4.2e nm (%4.2e)", results_hydro.rs, results_hydro.rs_sd));
-	  }
+       if (fabs(results_hydro.rs_sd) <= 1e-100)
+       {
+          results[ "rs" ] =  QString::number(results_hydro.rs, 'e', 2) + " nm";			
+       }
+       else
+       {
+          results[ "rs" ] = (QString::asprintf( "%4.2e nm (%4.2e )", results_hydro.rs, results_hydro.rs_sd));
+       }
 	
-	if (fabs(results_hydro.ff0_sd) <= 1e-100)
-	  {
-	    results[ "ff0" ] =  QString::number(results_hydro.ff0, 'f', 2);			
-	  }
-	else
-	  {
-	    results[ "ff0" ] =  (QString("").sprintf("%3.2f nm (%3.2e)", results_hydro.ff0, results_hydro.ff0_sd));
-	  }
+       if (fabs(results_hydro.ff0_sd) <= 1e-100)
+       {
+          results[ "ff0" ] =  QString::number(results_hydro.ff0, 'f', 2);			
+       }
+       else
+       {
+          results[ "ff0" ] =  (QString::asprintf( "%3.2f nm (%3.2e )", results_hydro.ff0, results_hydro.ff0_sd));
+       }
 
-	if (fabs(results_hydro.rg_sd) <= 1e-100)
-	  {
-	    results[ "rg" ] =  QString::number(results_hydro.rg, 'e', 2) + " nm";			
-	  }
-	else
-	  {
-	    results[ "rg" ] =  (QString("").sprintf("%4.2e nm (%4.2e)", results_hydro.rg, results_hydro.rg_sd));
-	  }
+       if (fabs(results_hydro.rg_sd) <= 1e-100)
+       {
+          results[ "rg" ] =  QString::number(results_hydro.rg, 'e', 2) + " nm";			
+       }
+       else
+       {
+          results[ "rg" ] =  (QString::asprintf( "%4.2e nm (%4.2e )", results_hydro.rg, results_hydro.rg_sd));
+       }
 
-	if ( method == "Zeno" ) {
+       if ( method == "Zeno" ) {
 	  results[ "tau" ] = "n/a" ; 
-	} else {
+       } else {
 	  if (fabs(results_hydro.tau_sd) <= 1e-100)
-	    {
-	      results[ "tau" ] =  QString::number(results_hydro.tau, 'e', 2) + " ns";			
-	    } else {
-	    results[ "tau" ] = (QString("").sprintf("%4.2e ns (%4.2e)", results_hydro.tau, results_hydro.tau_sd));
+          {
+             results[ "tau" ] =  QString::number(results_hydro.tau, 'e', 2) + " ns";			
+          } else {
+             results[ "tau" ] = (QString::asprintf( "%4.2e ns (%4.2e )", results_hydro.tau, results_hydro.tau_sd));
 	  }
-	}
+       }
 	
 
-	if (fabs(results_hydro.viscosity_sd) <= 1e-100)
-	  {
-	    results[ "viscosity" ] = QString::number(results_hydro.viscosity, 'e', 2) + " cm^3/g";		
-	  }
-	else
-	  {
-	    results[ "viscosity" ] = (QString("").sprintf("%4.2e cm^3/g (%4.2e)", results_hydro.viscosity, results_hydro.viscosity_sd));
-	  }
+       if (fabs(results_hydro.viscosity_sd) <= 1e-100)
+       {
+          results[ "viscosity" ] = QString::number(results_hydro.viscosity, 'e', 2) + " cm^3/g";		
+       }
+       else
+       {
+          results[ "viscosity" ] = (QString::asprintf( "%4.2e cm^3/g (%4.2e )", results_hydro.viscosity, results_hydro.viscosity_sd));
+       }
 
-	results[ "mass" ] =  QString::number(results_hydro.mass, 'e', 4) + " Da";			
-	results[ "vbar" ] =  QString::number(results_hydro.vbar) + " cm^3/g";			
-	results[ "hydro_name_file" ] = hydro_name_file;
+       results[ "mass" ] =  QString::number(results_hydro.mass, 'e', 4) + " Da";			
+       results[ "vbar" ] =  QString::number(results_hydro.vbar) + " cm^3/g";			
+       results[ "hydro_name_file" ] = hydro_name_file;
 	
       }
     else 
@@ -1573,8 +1573,8 @@ int US_Saxs_Util::check_for_missing_atoms_hydro(QString *error_string, PDB_model
                      error_shown[count_idx] = true;
                   }
         
-                  // error_string->append(QString("").sprintf("%s: chain %s molecule %d atom %s residue %s %s\n",
-                  //               msg_tag.toLatin1().data(),
+                  // error_string->append(QString::asprintf( "%s: chain %s molecule %d atom %s residue %s %s\n",
+                  //               msg_tag.toLatin1( ).data(),
                   //               this_atom->chainID.toLatin1().data(),
                   //               j + 1,
                   //               this_atom->name.toLatin1().data(),
@@ -1696,8 +1696,8 @@ int US_Saxs_Util::check_for_missing_atoms_hydro(QString *error_string, PDB_model
                }
         
 
-               // error_string->append(QString("").sprintf("unknown atom chain %s molecule %d atom %s residue %s %s\n",
-               //            this_atom->chainID.toLatin1().data(),
+               // error_string->append(QString::asprintf( "unknown atom chain %s molecule %d atom %s residue %s %s\n",
+               //            this_atom->chainID.toLatin1( ).data(),
                //            j + 1,
                //            this_atom->name.toLatin1().data(),
                //            this_atom->resSeq.toLatin1().data(),
@@ -3516,21 +3516,21 @@ bool US_Saxs_Util::calc_mw_hydro()
    {
      us_log->log( QString( "\nModel: %1 vbar %2 cm^3/g\n" )
                        .arg( model_vector[i].model_id )
-                       .arg( QString("").sprintf("%.3f", model_vector[i].vbar) ) );
+                       .arg( QString::asprintf( "%.3f", model_vector[i].vbar ) ) );
       
      if ( us_udp_msg )
        {
 	 map < QString, QString > msging;
 	 msging[ "_textarea" ] = QString( "\\nModel: %1 vbar %2 cm^3/g\\n" )
                        .arg( model_vector[i].model_id )
-                       .arg( QString("").sprintf("%.3f", model_vector[i].vbar) );
+                       .arg( QString::asprintf( "%.3f", model_vector[i].vbar ) );
       
 	 us_udp_msg->send_json( msging );
 	 //sleep(1);
        } 
      accumulated_msgs += QString( "\\nModel: %1 vbar %2 cm^3/g\\n" )
        .arg( model_vector[i].model_id )
-       .arg( QString("").sprintf("%.3f", model_vector[i].vbar) );
+       .arg( QString::asprintf( "%.3f", model_vector[i].vbar ) );
 
       current_model = i;
 
@@ -11886,14 +11886,12 @@ int US_Saxs_Util::write_pdb_hydro( QString fname, vector < PDB_atom > *model )
           )
       {
          ts << 
-            QString("")
-            .sprintf(     
-                     "ATOM   %4d  PB  UNK A%4d    %8.3f%8.3f%8.3f  1.00 10.00           PB  \n",
-                     i + 1, i + 1,
-                     (*model)[i].bead_coordinate.axis[0],
-                     (*model)[i].bead_coordinate.axis[1],
-                     (*model)[i].bead_coordinate.axis[2]
-                     );
+            QString::asprintf( "ATOM   %4d  PB  UNK A%4d    %8.3f%8.3f%8.3f  1.00 10.00           PB  \n",
+                               i + 1, i + 1,
+                               (*model )[i].bead_coordinate.axis[0],
+                               (*model)[i].bead_coordinate.axis[1],
+                               (*model)[i].bead_coordinate.axis[2]
+                               );
       }
    }
 
@@ -11965,7 +11963,7 @@ int US_Saxs_Util::write_pdb_hydro( QString fname, vector < PDB_atom > *model )
         ++it 
         )
    {
-      QString cbase = QString("").sprintf("CONECT%5d",it->x + 1);
+      QString cbase = QString::asprintf( "CONECT%5d",it->x + 1 );
       QString out;
       QString tmp = "";
       unsigned int j = 0;
@@ -11975,7 +11973,7 @@ int US_Saxs_Util::write_pdb_hydro( QString fname, vector < PDB_atom > *model )
            ++itj
            )
       {
-         tmp += QString("").sprintf("%5d",itj->x + 1);
+         tmp += QString::asprintf( "%5d",itj->x + 1 );
          if ( !((j + 1) % 4) )
          {
             out += cbase + tmp + "\n";
@@ -12211,10 +12209,10 @@ int US_Saxs_Util::create_beads_hydro(QString *error_string, bool quiet)
                  && this_atom->resName != "DOD"
                  && this_atom->resName != "HOH" && (this_atom->altLoc == "A" || this_atom->altLoc == " ")))
             {
-               error_string->append(QString("").sprintf("unknown residue molecule %d atom %d name %s resname %s coord [%f,%f,%f]\n",
-                                                        j + 1, k, this_atom->name.toLatin1().data(),
-                                                        this_atom->resName.toLatin1().data(),
-                                                        this_atom->coordinate.axis[0], this_atom->coordinate.axis[1], this_atom->coordinate.axis[2]));
+               error_string->append(QString::asprintf( "unknown residue molecule %d atom %d name %s resname %s coord [%f,%f,%f]\n",
+                                                       j + 1, k, this_atom->name.toLatin1( ).data(),
+                                                       this_atom->resName.toLatin1().data(),
+                                                       this_atom->coordinate.axis[0], this_atom->coordinate.axis[1], this_atom->coordinate.axis[2]));
                return (US_SURFRACER_ERR_MISSING_RESIDUE);
             }
          } 
@@ -12298,10 +12296,10 @@ int US_Saxs_Util::create_beads_hydro(QString *error_string, bool quiet)
 
             if (atompos == -1)
             {
-               error_string->append(QString("").sprintf("unknown atom molecule %d atom %d name %s resname %s coord [%f,%f,%f]\n",
-                                                        j + 1, k, this_atom->name.toLatin1().data(),
-                                                        this_atom->resName.toLatin1().data(),
-                                                        this_atom->coordinate.axis[0], this_atom->coordinate.axis[1], this_atom->coordinate.axis[2]));
+               error_string->append(QString::asprintf( "unknown atom molecule %d atom %d name %s resname %s coord [%f,%f,%f]\n",
+                                                       j + 1, k, this_atom->name.toLatin1( ).data(),
+                                                       this_atom->resName.toLatin1().data(),
+                                                       this_atom->coordinate.axis[0], this_atom->coordinate.axis[1], this_atom->coordinate.axis[2]));
             } 
             else 
             {

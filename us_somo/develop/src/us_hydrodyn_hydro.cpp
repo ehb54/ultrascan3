@@ -630,7 +630,7 @@ void US_Hydrodyn_Hydro::update_solvent_acronym(const QString &str)
 void US_Hydrodyn_Hydro::update_temperature(const QString &str, bool update_main )
 {
    (*hydro).temperature = str.toDouble();
-   //   le_temperature->setText(QString("").sprintf("%4.2f",(*hydro).temperature));
+   //   le_temperature->setText(QString::asprintf( "%4.2f",(*hydro ).temperature));
    check_solvent_defaults();
    if ( update_main ) {
       ((US_Hydrodyn *)us_hydrodyn)->update_temperature( str, false );
@@ -639,27 +639,27 @@ void US_Hydrodyn_Hydro::update_temperature(const QString &str, bool update_main 
       le_temperature->setText( str );
    }
    
-   le_tc_solvent_viscosity->setText(QString("").sprintf("%f", ((US_Hydrodyn *)us_hydrodyn)->tc_solvent_visc()));
-   le_tc_solvent_density->setText(QString("").sprintf("%f",((US_Hydrodyn *)us_hydrodyn)->tc_solvent_dens()));
+   le_tc_solvent_viscosity->setText(QString::asprintf( "%f", ((US_Hydrodyn * )us_hydrodyn)->tc_solvent_visc()));
+   le_tc_solvent_density->setText(QString::asprintf( "%f",((US_Hydrodyn * )us_hydrodyn)->tc_solvent_dens()));
 }
 
 void US_Hydrodyn_Hydro::update_solvent_viscosity(const QString &str)
 {
    (*hydro).solvent_viscosity = str.toDouble();
-   // le_solvent_viscosity->setText(QString("").sprintf("%f",(*hydro).solvent_viscosity));
+   // le_solvent_viscosity->setText(QString::asprintf( "%f",(*hydro ).solvent_viscosity));
    check_solvent_defaults();
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
-   le_tc_solvent_viscosity->setText(QString("").sprintf("%f", ((US_Hydrodyn *)us_hydrodyn)->tc_solvent_visc()));
+   le_tc_solvent_viscosity->setText(QString::asprintf( "%f", ((US_Hydrodyn * )us_hydrodyn)->tc_solvent_visc()));
    
 }
 
 void US_Hydrodyn_Hydro::update_solvent_density(const QString &str)
 {
    (*hydro).solvent_density = str.toDouble();
-   // le_solvent_density->setText(QString("").sprintf("%f",(*hydro).solvent_density));
+   // le_solvent_density->setText(QString::asprintf( "%f",(*hydro ).solvent_density));
    check_solvent_defaults();
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
-   le_tc_solvent_density->setText(QString("").sprintf("%f",((US_Hydrodyn *)us_hydrodyn)->tc_solvent_dens()));
+   le_tc_solvent_density->setText(QString::asprintf( "%f",((US_Hydrodyn * )us_hydrodyn)->tc_solvent_dens()));
 }
 
 void US_Hydrodyn_Hydro::update_volume(const QString &str)
@@ -845,10 +845,10 @@ void US_Hydrodyn_Hydro::set_solvent_defaults()
       hydro->solvent_density = DENS_20W;
       le_solvent_name->setText((*hydro).solvent_name);
       le_solvent_acronym->setText((*hydro).solvent_acronym.left(5));
-      le_temperature->setText(QString("").sprintf("%4.2f",(*hydro).temperature));
-      ((US_Hydrodyn *)us_hydrodyn)->le_temperature->setText(QString("").sprintf("%4.2f",(*hydro).temperature));
-      le_solvent_viscosity->setText(QString("").sprintf("%f",(*hydro).solvent_viscosity));
-      le_solvent_density->setText(QString("").sprintf("%f",(*hydro).solvent_density));
+      le_temperature->setText(QString::asprintf( "%4.2f",(*hydro ).temperature));
+      ((US_Hydrodyn *)us_hydrodyn)->le_temperature->setText(QString::asprintf( "%4.2f",(*hydro ).temperature));
+      le_solvent_viscosity->setText(QString::asprintf( "%f",(*hydro ).solvent_viscosity));
+      le_solvent_density->setText(QString::asprintf( "%f",(*hydro ).solvent_density));
    }
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }

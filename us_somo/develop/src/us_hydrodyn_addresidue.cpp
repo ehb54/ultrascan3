@@ -1003,8 +1003,8 @@ void US_AddResidue::add()
    {
       sum += (double)new_residue.r_bead[i].volume;
    }
-   QString cmp1 = QString("").sprintf("%7.2f", new_residue.molvol);
-   QString cmp2 = QString("").sprintf("%7.2f", sum);
+   QString cmp1 =  QString::asprintf( "%7.2f", new_residue.molvol ) ;
+   QString cmp2 =  QString::asprintf( "%7.2f", sum ) ;
 
    if ( cmp1 != cmp2 )
    {
@@ -1855,7 +1855,7 @@ void US_AddResidue::select_r_atom(int val)
       // pKa enabled
       {
          // QTextStream( stdout ) <<
-         //    QString().sprintf(
+         //     QString::asprintf( 
          //                      "select_r_atom(%d):\n"
          //                      "\tnew_residue.r_atom[%d].ionization_index  %d\n"
          //                      "\tr_atom_0.size()                         %d\n"
@@ -1864,7 +1864,7 @@ void US_AddResidue::select_r_atom(int val)
          //                      ,val, new_residue.r_atom[val].ionization_index
          //                      ,(int)new_residue.r_atom_0.size()
          //                      ,(int)new_residue.r_atom_1.size()
-         //                      );
+         //                       ) ;
 
          int index = new_residue.r_atom[val].ionization_index;
          bool has_index = index > 0;
@@ -2431,7 +2431,7 @@ void US_AddResidue::info_residue( const QString & msg ) {
    TSO << new_residue.comment << Qt::endl;
    TSO << new_residue.name.toUpper()
        << "\t" << new_residue.type
-       << "\t" << QString().sprintf("%7.2f", new_residue.molvol)
+       << "\t" <<  QString::asprintf( "%7.2f", new_residue.molvol ) 
        << "\t" << new_residue.asa
        << "\t" << new_residue.r_atom.size()
        << "\t" << new_residue.r_bead.size()

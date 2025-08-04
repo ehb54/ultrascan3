@@ -2094,32 +2094,32 @@ bool US_Saxs_Util::compute_waters_to_add()
             {
                for ( unsigned int l = 0; l < 3; l++ )
                {
-                  cout << QString( "" ).sprintf( "th   p1[ %u ].axis[ %u ] = %.10ff;\n",
-                                                 k, l, p1[ k ].axis[ l ] );
+                  cout << QString::asprintf( "th   p1[ %u ].axis[ %u ] = %.10ff;\n",
+                                             k, l, p1[ k ].axis[ l ] );
                }
             }
             for ( unsigned int k = 0; k < p2.size(); k++ )
             {
                for ( unsigned int l = 0; l < 3; l++ )
                {
-                  cout << QString( "" ).sprintf( "th   p2[ %u ].axis[ %u ] = %.10ff;\n",
-                                                 k, l, p2[ k ].axis[ l ] );
+                  cout << QString::asprintf( "th   p2[ %u ].axis[ %u ] = %.10ff;\n",
+                                             k, l, p2[ k ].axis[ l ] );
                }
             }
             for ( unsigned int k = 0; k < rotamer_waters.size(); k++ )
             {
                for ( unsigned int l = 0; l < 3; l++ )
                {
-                  cout << QString( "" ).sprintf( "th   rotamer_waters[ %u ].axis[ %u ] = %.10ff;\n",
-                                                 k, l, rotamer_waters[ k ].axis[ l ] );
+                  cout << QString::asprintf( "th   rotamer_waters[ %u ].axis[ %u ] = %.10ff;\n",
+                                             k, l, rotamer_waters[ k ].axis[ l ] );
                }
             }
             for ( unsigned int k = 0; k < new_waters.size(); k++ )
             {
                for ( unsigned int l = 0; l < 3; l++ )
                {
-                  cout << QString( "" ).sprintf( "th   new_waters[ %u ].axis[ %u ] = %.10ff;\n",
-                                                 k, l, new_waters[ k ].axis[ l ] );
+                  cout << QString::asprintf( "th   new_waters[ %u ].axis[ %u ] = %.10ff;\n",
+                                             k, l, new_waters[ k ].axis[ l ] );
                }
             }
             cout << QString( "th   if ( !atom_align( p1, p2, rotamer_waters, cmp_waters ) )\n"
@@ -3137,10 +3137,10 @@ bool US_Saxs_Util::pdb_asa_for_saxs_hydrate()
                }
                else 
                {
-                  errormsg = QString("").sprintf( "serious internal error 1 on %s %s %d, quitting\n",
-                                                  this_atom->name.toLatin1().data(),
-                                                  this_atom->resName.toLatin1().data(),
-                                                  this_atom->serial );
+                  errormsg = QString::asprintf( "serious internal error 1 on %s %s %d, quitting\n",
+                                                this_atom->name.toLatin1( ).data(),
+                                                this_atom->resName.toLatin1().data(),
+                                                this_atom->serial );
                   return false;
                   break;
                }
@@ -3309,10 +3309,10 @@ bool US_Saxs_Util::create_beads()
                  && this_atom->resName != "DOD"
                  && this_atom->resName != "HOH" && (this_atom->altLoc == "A" || this_atom->altLoc == " ")))
             {
-               errormsg.append(QString("").sprintf("unknown residue molecule %d atom %d name %s resname %s coord [%f,%f,%f]\n",
-                                                        j + 1, k, this_atom->name.toLatin1().data(),
-                                                        this_atom->resName.toLatin1().data(),
-                                                        this_atom->coordinate.axis[0], this_atom->coordinate.axis[1], this_atom->coordinate.axis[2]));
+               errormsg.append(QString::asprintf( "unknown residue molecule %d atom %d name %s resname %s coord [%f,%f,%f]\n",
+                                                  j + 1, k, this_atom->name.toLatin1( ).data(),
+                                                  this_atom->resName.toLatin1().data(),
+                                                  this_atom->coordinate.axis[0], this_atom->coordinate.axis[1], this_atom->coordinate.axis[2]));
                return false;
             }
          } 
@@ -3389,10 +3389,10 @@ bool US_Saxs_Util::create_beads()
 
             if (atompos == -1)
             {
-               errormsg.append(QString("").sprintf("unknown atom molecule %d atom %d name %s resname %s coord [%f,%f,%f]\n",
-                                                    j + 1, k, this_atom->name.toLatin1().data(),
-                                                    this_atom->resName.toLatin1().data(),
-                                                    this_atom->coordinate.axis[0], this_atom->coordinate.axis[1], this_atom->coordinate.axis[2]));
+               errormsg.append(QString::asprintf( "unknown atom molecule %d atom %d name %s resname %s coord [%f,%f,%f]\n",
+                                                  j + 1, k, this_atom->name.toLatin1( ).data(),
+                                                  this_atom->resName.toLatin1().data(),
+                                                  this_atom->coordinate.axis[0], this_atom->coordinate.axis[1], this_atom->coordinate.axis[2]));
             } 
             else 
             {
@@ -6212,15 +6212,15 @@ bool US_Saxs_Util::list_steric_clash_recheck()
    //    editor_msg( "blue",
    //                QString( "Maximum possible water to place %1, degree of hydration %2\n" )
    //                .arg( hydrate_max_waters_no_asa )
-   //                .arg( QString( "").sprintf( "%.2f", ( double ) hydrate_max_waters_no_asa * 18e0 / model_vector[ current_model ].mw ) )
+   //                .arg( QString::asprintf( "%.2f", ( double ) hydrate_max_waters_no_asa * 18e0 / model_vector[ current_model ].mw ) )
    //                +
    //                QString( "Maximum exposed possible water to place %1, degree of hydration %2\n" )
    //                .arg( count_waters_added + count_waters_not_added )
-   //                .arg( QString( "" ).sprintf( "%.2f", ( double ) ( count_waters_added + count_waters_not_added )  * 18e0 / model_vector[ current_model ].mw ) )
+   //                .arg( QString::asprintf( "%.2f", ( double ) ( count_waters_added + count_waters_not_added )  * 18e0 / model_vector[ current_model ].mw ) )
    //                + 
    //                QString( "Waters placed %1, degree of hydration %2\n" )
    //                .arg( count_waters_added )
-   //                .arg( QString( "" ).sprintf( "%.2f", ( double ) count_waters_added * 18e0 / model_vector[ current_model ].mw ) )
+   //                .arg( QString::asprintf( "%.2f", ( double ) count_waters_added * 18e0 / model_vector[ current_model ].mw ) )
    //                );
 
    last_steric_clash_log.clear( );
@@ -6230,17 +6230,17 @@ bool US_Saxs_Util::list_steric_clash_recheck()
    last_steric_clash_log <<
       QString( "REMARK Maximum possible water to place         %1   degree of hydration %2\n" )
       .arg( hydrate_max_waters_no_asa )
-      .arg( QString( "").sprintf( "%.2f", ( double ) hydrate_max_waters_no_asa * 18e0 / model_vector[ current_model ].mw ) );
+      .arg( QString::asprintf( "%.2f", ( double ) hydrate_max_waters_no_asa * 18e0 / model_vector[ current_model ].mw ) );
 
    last_steric_clash_log <<
       QString( "REMARK Maximum exposed possible water to place %1   degree of hydration %2\n" )
       .arg( count_waters_added + count_waters_not_added )
-      .arg( QString( "" ).sprintf( "%.2f", ( double ) ( count_waters_added + count_waters_not_added )  * 18e0 / model_vector[ current_model ].mw ) );
+      .arg( QString::asprintf( "%.2f", ( double ) ( count_waters_added + count_waters_not_added )  * 18e0 / model_vector[ current_model ].mw ) );
 
    last_steric_clash_log <<
       QString( "REMARK Waters placed                           %1   degree of hydration %2\n" )
       .arg( count_waters_added )
-      .arg( QString( "" ).sprintf( "%.2f", ( double ) count_waters_added * 18e0 / model_vector[ current_model ].mw ) );
+      .arg( QString::asprintf( "%.2f", ( double ) count_waters_added * 18e0 / model_vector[ current_model ].mw ) );
 
    last_steric_clash_log << 
          QString(

@@ -1273,7 +1273,7 @@ int US_Hydrodyn::read_pdb( const QString &filename ) {
                   exp_resnum++;
                   exp_prev_resnum = thisresnum;
                }
-               QString alt_str1 = str1.left( 22 ) + QString( "" ).sprintf( "%4d", exp_resnum ) + str1.right( str1.length() - 22 - 4 );
+               QString alt_str1 = str1.left( 22 ) + QString::asprintf( "%4d", exp_resnum ) + str1.right( str1.length() - 22 - 4 );
                // us_qdebug( QString( "<:%1\n>:%2" ).arg( str1 ).arg( alt_str1 ) );
                str1 = alt_str1;
             }
@@ -2266,7 +2266,7 @@ void US_Hydrodyn::calc_mw()
    for (unsigned int i = 0; i < model_vector.size(); i++) {
       // editor->append( QString(us_tr("\nModel: %1 vbar %2 cm^3/g\n") )
       //                 .arg( model_vector[i].model_id )
-      //                 .arg( QString("").sprintf("%.3f", model_vector[i].vbar) ) );
+      //                 .arg( QString::asprintf( "%.3f", model_vector[i].vbar ) ) );
       // {
       //    QFont courier = QFont( "Courier", USglobal->config_list.fontSize );
       //    editor_msg( "dark blue", courier, QString( us_tr("\nModel: %1\n") ).arg( model_vector[i].model_id ) );
@@ -2585,14 +2585,14 @@ void US_Hydrodyn::calc_mw()
       //       tmp_mw += model_vector[ i ].molecule[ j ].mw;
       //       us_qdebug( QString( "model %1 molecule %2 mw %3" ).arg( i ).arg( j ).arg( model_vector[ i ].molecule[ j ].mw ) );
       //    }
-      //    us_qdebug( QString( "" ).sprintf( 
-      //                                  "model %d total from molecules mw %.2f as model mw %.2f cm mw %.2f model_mw  %.2f", 
+      //    us_qdebug( QString::asprintf(
+      //                                  "model %d total from molecules mw %.2f as model mw %.2f cm mw %.2f model_mw  %.2f",
       //                                  i,
-      //                                  tmp_mw, 
+      //                                  tmp_mw,
       //                                  model_vector[ i ].mw,
       //                                  total_cm_mw,
       //                                  model_mw
-      //                                   ) );
+      // ) );
       // }
 
       update_model_chain_ionization( model_vector[ i ], true );

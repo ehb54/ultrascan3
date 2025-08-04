@@ -2072,7 +2072,7 @@ void US_Hydrodyn_BD_Options::set_iorder(int val)
 void US_Hydrodyn_BD_Options::update_tprev(const QString &str)
 {
    (*bd_options).tprev = str.toFloat();
-   //   le_tprev->setText(QString("").sprintf("%4.2f",(*hydro).tprev));
+   //   le_tprev->setText( QString::asprintf( "%4.2f",(*hydro).tprev ) );
    update_labels();
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
@@ -2080,7 +2080,7 @@ void US_Hydrodyn_BD_Options::update_tprev(const QString &str)
 void US_Hydrodyn_BD_Options::update_ttraj(const QString &str)
 {
    (*bd_options).ttraj = str.toFloat();
-   //   le_ttraj->setText(QString("").sprintf("%4.2f",(*hydro).ttraj));
+   //   le_ttraj->setText( QString::asprintf( "%4.2f",(*hydro).ttraj ) );
    update_labels();
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
@@ -2088,7 +2088,7 @@ void US_Hydrodyn_BD_Options::update_ttraj(const QString &str)
 void US_Hydrodyn_BD_Options::update_deltat(const QString &str)
 {
    (*bd_options).deltat = str.toFloat();
-   //   le_deltat->setText(QString("").sprintf("%4.2f",(*hydro).deltat));
+   //   le_deltat->setText( QString::asprintf( "%4.2f",(*hydro).deltat ) );
    update_labels();
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
@@ -2103,7 +2103,7 @@ void US_Hydrodyn_BD_Options::update_npadif(double val)
 void US_Hydrodyn_BD_Options::update_nconf(const QString &str)
 {
    (*bd_options).nconf = str.toInt();
-   //   le_nconf->setText(QString("").sprintf("%4.2f",(*hydro).nconf));
+   //   le_nconf->setText( QString::asprintf( "%4.2f",(*hydro).nconf ) );
    update_labels();
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
@@ -2111,14 +2111,14 @@ void US_Hydrodyn_BD_Options::update_nconf(const QString &str)
 void US_Hydrodyn_BD_Options::update_nmol(const QString &str)
 {
    (*bd_options).nmol = str.toInt();
-   //   le_nmol->setText(QString("").sprintf("%4.2f",(*hydro).nmol));
+   //   le_nmol->setText( QString::asprintf( "%4.2f",(*hydro).nmol ) );
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_BD_Options::update_iseed(const QString &str)
 {
    (*bd_options).iseed = str.toInt();
-   //   le_iseed->setText(QString("").sprintf("%4.2f",(*hydro).iseed));
+   //   le_iseed->setText( QString::asprintf( "%4.2f",(*hydro).iseed ) );
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
@@ -2257,7 +2257,7 @@ void US_Hydrodyn_BD_Options::set_sc_sc_bond_types(int val)
 void US_Hydrodyn_BD_Options::update_chem_pb_pb_force_constant(const QString &str)
 {
    (*bd_options).chem_pb_pb_force_constant = str.toFloat();
-   //   le_chem_pb_pb_force_constant->setText(QString("").sprintf("%4.2f",(*hydro).chem_pb_pb_force_constant));
+   //   le_chem_pb_pb_force_constant->setText( QString::asprintf( "%4.2f",(*hydro).chem_pb_pb_force_constant ) );
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
@@ -2265,7 +2265,7 @@ void US_Hydrodyn_BD_Options::update_chem_pb_pb_force_constant(const QString &str
 void US_Hydrodyn_BD_Options::update_chem_pb_pb_equilibrium_dist(const QString &str)
 {
    (*bd_options).chem_pb_pb_equilibrium_dist = str.toFloat();
-   //   le_chem_pb_pb_equilibrium_dist->setText(QString("").sprintf("%4.2f",(*hydro).chem_pb_pb_equilibrium_dist));
+   //   le_chem_pb_pb_equilibrium_dist->setText( QString::asprintf( "%4.2f",(*hydro).chem_pb_pb_equilibrium_dist ) );
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
@@ -2273,7 +2273,7 @@ void US_Hydrodyn_BD_Options::update_chem_pb_pb_equilibrium_dist(const QString &s
 void US_Hydrodyn_BD_Options::update_chem_pb_pb_max_elong(const QString &str)
 {
    (*bd_options).chem_pb_pb_max_elong = str.toFloat();
-   //   le_chem_pb_pb_max_elong->setText(QString("").sprintf("%4.2f",(*hydro).chem_pb_pb_max_elong));
+   //   le_chem_pb_pb_max_elong->setText( QString::asprintf( "%4.2f",(*hydro).chem_pb_pb_max_elong ) );
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
@@ -2281,7 +2281,7 @@ void US_Hydrodyn_BD_Options::update_chem_pb_pb_max_elong(const QString &str)
 void US_Hydrodyn_BD_Options::update_chem_pb_sc_force_constant(const QString &str)
 {
    (*bd_options).chem_pb_sc_force_constant = str.toFloat();
-   //   le_chem_pb_sc_force_constant->setText(QString("").sprintf("%4.2f",(*hydro).chem_pb_sc_force_constant));
+   //   le_chem_pb_sc_force_constant->setText( QString::asprintf( "%4.2f",(*hydro).chem_pb_sc_force_constant ) );
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
@@ -2289,7 +2289,7 @@ void US_Hydrodyn_BD_Options::update_chem_pb_sc_force_constant(const QString &str
 void US_Hydrodyn_BD_Options::update_chem_pb_sc_equilibrium_dist(const QString &str)
 {
    (*bd_options).chem_pb_sc_equilibrium_dist = str.toFloat();
-   //   le_chem_pb_sc_equilibrium_dist->setText(QString("").sprintf("%4.2f",(*hydro).chem_pb_sc_equilibrium_dist));
+   //   le_chem_pb_sc_equilibrium_dist->setText( QString::asprintf( "%4.2f",(*hydro).chem_pb_sc_equilibrium_dist ) );
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
@@ -2297,7 +2297,7 @@ void US_Hydrodyn_BD_Options::update_chem_pb_sc_equilibrium_dist(const QString &s
 void US_Hydrodyn_BD_Options::update_chem_pb_sc_max_elong(const QString &str)
 {
    (*bd_options).chem_pb_sc_max_elong = str.toFloat();
-   //   le_chem_pb_sc_max_elong->setText(QString("").sprintf("%4.2f",(*hydro).chem_pb_sc_max_elong));
+   //   le_chem_pb_sc_max_elong->setText( QString::asprintf( "%4.2f",(*hydro).chem_pb_sc_max_elong ) );
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
@@ -2305,7 +2305,7 @@ void US_Hydrodyn_BD_Options::update_chem_pb_sc_max_elong(const QString &str)
 void US_Hydrodyn_BD_Options::update_chem_sc_sc_force_constant(const QString &str)
 {
    (*bd_options).chem_sc_sc_force_constant = str.toFloat();
-   //   le_chem_sc_sc_force_constant->setText(QString("").sprintf("%4.2f",(*hydro).chem_sc_sc_force_constant));
+   //   le_chem_sc_sc_force_constant->setText( QString::asprintf( "%4.2f",(*hydro).chem_sc_sc_force_constant ) );
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
@@ -2313,7 +2313,7 @@ void US_Hydrodyn_BD_Options::update_chem_sc_sc_force_constant(const QString &str
 void US_Hydrodyn_BD_Options::update_chem_sc_sc_equilibrium_dist(const QString &str)
 {
    (*bd_options).chem_sc_sc_equilibrium_dist = str.toFloat();
-   //   le_chem_sc_sc_equilibrium_dist->setText(QString("").sprintf("%4.2f",(*hydro).chem_sc_sc_equilibrium_dist));
+   //   le_chem_sc_sc_equilibrium_dist->setText( QString::asprintf( "%4.2f",(*hydro).chem_sc_sc_equilibrium_dist ) );
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
@@ -2321,7 +2321,7 @@ void US_Hydrodyn_BD_Options::update_chem_sc_sc_equilibrium_dist(const QString &s
 void US_Hydrodyn_BD_Options::update_chem_sc_sc_max_elong(const QString &str)
 {
    (*bd_options).chem_sc_sc_max_elong = str.toFloat();
-   //   le_chem_sc_sc_max_elong->setText(QString("").sprintf("%4.2f",(*hydro).chem_sc_sc_max_elong));
+   //   le_chem_sc_sc_max_elong->setText( QString::asprintf( "%4.2f",(*hydro).chem_sc_sc_max_elong ) );
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
@@ -2329,7 +2329,7 @@ void US_Hydrodyn_BD_Options::update_chem_sc_sc_max_elong(const QString &str)
 void US_Hydrodyn_BD_Options::update_pb_pb_force_constant(const QString &str)
 {
    (*bd_options).pb_pb_force_constant = str.toFloat();
-   //   le_pb_pb_force_constant->setText(QString("").sprintf("%4.2f",(*hydro).pb_pb_force_constant));
+   //   le_pb_pb_force_constant->setText( QString::asprintf( "%4.2f",(*hydro).pb_pb_force_constant ) );
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
@@ -2337,7 +2337,7 @@ void US_Hydrodyn_BD_Options::update_pb_pb_force_constant(const QString &str)
 void US_Hydrodyn_BD_Options::update_pb_pb_equilibrium_dist(const QString &str)
 {
    (*bd_options).pb_pb_equilibrium_dist = str.toFloat();
-   //   le_pb_pb_equilibrium_dist->setText(QString("").sprintf("%4.2f",(*hydro).pb_pb_equilibrium_dist));
+   //   le_pb_pb_equilibrium_dist->setText( QString::asprintf( "%4.2f",(*hydro).pb_pb_equilibrium_dist ) );
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
@@ -2345,7 +2345,7 @@ void US_Hydrodyn_BD_Options::update_pb_pb_equilibrium_dist(const QString &str)
 void US_Hydrodyn_BD_Options::update_pb_pb_max_elong(const QString &str)
 {
    (*bd_options).pb_pb_max_elong = str.toFloat();
-   //   le_pb_pb_max_elong->setText(QString("").sprintf("%4.2f",(*hydro).pb_pb_max_elong));
+   //   le_pb_pb_max_elong->setText( QString::asprintf( "%4.2f",(*hydro).pb_pb_max_elong ) );
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
@@ -2353,7 +2353,7 @@ void US_Hydrodyn_BD_Options::update_pb_pb_max_elong(const QString &str)
 void US_Hydrodyn_BD_Options::update_pb_sc_force_constant(const QString &str)
 {
    (*bd_options).pb_sc_force_constant = str.toFloat();
-   //   le_pb_sc_force_constant->setText(QString("").sprintf("%4.2f",(*hydro).pb_sc_force_constant));
+   //   le_pb_sc_force_constant->setText( QString::asprintf( "%4.2f",(*hydro).pb_sc_force_constant ) );
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
@@ -2361,7 +2361,7 @@ void US_Hydrodyn_BD_Options::update_pb_sc_force_constant(const QString &str)
 void US_Hydrodyn_BD_Options::update_pb_sc_equilibrium_dist(const QString &str)
 {
    (*bd_options).pb_sc_equilibrium_dist = str.toFloat();
-   //   le_pb_sc_equilibrium_dist->setText(QString("").sprintf("%4.2f",(*hydro).pb_sc_equilibrium_dist));
+   //   le_pb_sc_equilibrium_dist->setText( QString::asprintf( "%4.2f",(*hydro).pb_sc_equilibrium_dist ) );
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
@@ -2369,7 +2369,7 @@ void US_Hydrodyn_BD_Options::update_pb_sc_equilibrium_dist(const QString &str)
 void US_Hydrodyn_BD_Options::update_pb_sc_max_elong(const QString &str)
 {
    (*bd_options).pb_sc_max_elong = str.toFloat();
-   //   le_pb_sc_max_elong->setText(QString("").sprintf("%4.2f",(*hydro).pb_sc_max_elong));
+   //   le_pb_sc_max_elong->setText( QString::asprintf( "%4.2f",(*hydro).pb_sc_max_elong ) );
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
@@ -2377,7 +2377,7 @@ void US_Hydrodyn_BD_Options::update_pb_sc_max_elong(const QString &str)
 void US_Hydrodyn_BD_Options::update_sc_sc_force_constant(const QString &str)
 {
    (*bd_options).sc_sc_force_constant = str.toFloat();
-   //   le_sc_sc_force_constant->setText(QString("").sprintf("%4.2f",(*hydro).sc_sc_force_constant));
+   //   le_sc_sc_force_constant->setText( QString::asprintf( "%4.2f",(*hydro).sc_sc_force_constant ) );
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
@@ -2385,7 +2385,7 @@ void US_Hydrodyn_BD_Options::update_sc_sc_force_constant(const QString &str)
 void US_Hydrodyn_BD_Options::update_sc_sc_equilibrium_dist(const QString &str)
 {
    (*bd_options).sc_sc_equilibrium_dist = str.toFloat();
-   //   le_sc_sc_equilibrium_dist->setText(QString("").sprintf("%4.2f",(*hydro).sc_sc_equilibrium_dist));
+   //   le_sc_sc_equilibrium_dist->setText( QString::asprintf( "%4.2f",(*hydro).sc_sc_equilibrium_dist ) );
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
@@ -2393,7 +2393,7 @@ void US_Hydrodyn_BD_Options::update_sc_sc_equilibrium_dist(const QString &str)
 void US_Hydrodyn_BD_Options::update_sc_sc_max_elong(const QString &str)
 {
    (*bd_options).sc_sc_max_elong = str.toFloat();
-   //   le_sc_sc_max_elong->setText(QString("").sprintf("%4.2f",(*hydro).sc_sc_max_elong));
+   //   le_sc_sc_max_elong->setText( QString::asprintf( "%4.2f",(*hydro).sc_sc_max_elong ) );
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
@@ -2605,7 +2605,7 @@ void US_Hydrodyn_BD_Options::update_labels()
    if ( fabs( total_steps * pow(0.1,digits) - (double)(int( total_steps * pow(0.1,digits) + 0.5 )) ) < TOLERANCE )
    {
       cout << QString("total steps %1 int total_steps %2\n").arg(total_steps).arg(int(total_steps));
-      cout << QString("").sprintf("%f %e %g\n", total_steps, total_steps, (total_steps - int(total_steps)));
+      cout <<  QString::asprintf( "%f %e %g\n", total_steps, total_steps, (total_steps - int(total_steps ) ));
       lbl_deltat->setPalette(label_font_ok);
       lbl_deltat->setText(us_tr(" Duration of each simulation step (s): "));
    } else {
@@ -2613,7 +2613,7 @@ void US_Hydrodyn_BD_Options::update_labels()
          .arg(total_steps)
          .arg(int(total_steps))
          .arg(fabs( ( total_steps ) - int( total_steps + 0.5 ) ));
-      cout << QString("").sprintf("%f %e %g\n", total_steps, total_steps, (total_steps - int(total_steps)));
+      cout <<  QString::asprintf( "%f %e %g\n", total_steps, total_steps, (total_steps - int(total_steps ) ));
       lbl_deltat->setPalette(label_font_warning);
       lbl_deltat->setText(us_tr(" Duration of each simulation step (s)\n"
                              " WARNING: does not divide total duration: "));

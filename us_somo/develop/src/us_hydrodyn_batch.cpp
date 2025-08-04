@@ -3770,7 +3770,7 @@ vector < int > US_Hydrodyn_Batch::split_if_mm( int i ) {
                
                   tso << QString("HEADER    split from %1: Model %2 of %3\n").arg( QFileInfo( file ).fileName() ).arg( pos + 1 ).arg( model_count );
                   tso << model_header;
-                  tso << QString("").sprintf("MODEL  %7s\n", model_name_vector[ pos ].toLatin1().data() );
+                  tso <<  QString::asprintf( "MODEL  %7s\n", model_name_vector[ pos ].toLatin1().data()  ) ;
                   tso << model_lines;
                   tso << "ENDMDL\nEND\n";
                   
@@ -4108,7 +4108,7 @@ void US_Hydrodyn_Batch::make_movie()
                           QString("mogrify -gravity southwest -fill %1 -font Courier-10-Pitch-Regular -pointsize %2 -draw 'text 25,25 \"%3 %4\"' ")
                           .arg(black_background ? "white" : "black")
                           .arg(tc_pointsize)
-                          .arg(QString("").sprintf(qPrintable(tc_format_string), tc_start))
+                          .arg( QString::asprintf( qPrintable(tc_format_string), tc_start ) )
                           .arg(tc_unit) 
                           + fi.fileName() + ".gif\n"
                           : "" ) +
