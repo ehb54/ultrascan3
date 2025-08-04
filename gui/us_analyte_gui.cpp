@@ -614,17 +614,17 @@ DbgLv(1) << "Tot AAs: " << all_abs;
      {
        absorbing_residues = "";
        if ( cys > 0)
-	 absorbing_residues += QString().sprintf( "%d", cys ) + " " + "Cys"  + ", ";
+	 absorbing_residues += QString::asprintf( "%d", cys ) + " " + "Cys"  + ", ";
        if ( hao > 0)
-	 absorbing_residues += QString().sprintf( "%d", hao ) + " " + "Hao"  + ", ";
+	 absorbing_residues += QString::asprintf( "%d", hao ) + " " + "Hao"  + ", ";
        if ( orn > 0)
-	 absorbing_residues += QString().sprintf( "%d", orn ) + " " + "Orn"  + ", ";
+	 absorbing_residues += QString::asprintf( "%d", orn ) + " " + "Orn"  + ", ";
        if ( trp > 0)
-	 absorbing_residues += QString().sprintf( "%d", trp ) + " " + "Trp"  + ", ";
+	 absorbing_residues += QString::asprintf( "%d", trp ) + " " + "Trp"  + ", ";
        if ( tyr > 0)
-	 absorbing_residues += QString().sprintf( "%d", tyr ) + " " + "Tyr"  + ", ";
+	 absorbing_residues += QString::asprintf( "%d", tyr ) + " " + "Tyr"  + ", ";
 
-       absorbing_residues += QString().sprintf( "%d", all_abs ) + " tot";
+       absorbing_residues += QString::asprintf( "%d", all_abs ) + " tot";
      }
    
 
@@ -668,12 +668,12 @@ DbgLv(1) << "Tot AAs: " << all_abs;
          total          += lcount;
          if ( lcount > 0 )
          {
-            seqsmry     += QString().sprintf( "%d", lcount )
+            seqsmry     += QString::asprintf( "%d", lcount )
                            + " " + letter.toUpper() + ", ";
 	    //seqsmry          += "\n  ";
          }
       }
-      seqsmry     += QString().sprintf( "%d", total ) + " tot";
+      seqsmry     += QString::asprintf( "%d", total ) + " tot";
    }
 
    // Compose analyte information lines
@@ -1245,17 +1245,17 @@ DbgLv(1) << "Tot AAs: " << all_abs;
      {
        absorbing_residues = "";
        if ( cys > 0)
-	 absorbing_residues += QString().sprintf( "%d", cys ) + " " + "Cys"  + ", ";
+	 absorbing_residues += QString::asprintf( "%d", cys ) + " " + "Cys"  + ", ";
        if ( hao > 0)
-	 absorbing_residues += QString().sprintf( "%d", hao ) + " " + "Hao"  + ", ";
+	 absorbing_residues += QString::asprintf( "%d", hao ) + " " + "Hao"  + ", ";
        if ( orn > 0)
-	 absorbing_residues += QString().sprintf( "%d", orn ) + " " + "Orn"  + ", ";
+	 absorbing_residues += QString::asprintf( "%d", orn ) + " " + "Orn"  + ", ";
        if ( trp > 0)
-	 absorbing_residues += QString().sprintf( "%d", trp ) + " " + "Trp"  + ", ";
+	 absorbing_residues += QString::asprintf( "%d", trp ) + " " + "Trp"  + ", ";
        if ( tyr > 0)
-	 absorbing_residues += QString().sprintf( "%d", tyr ) + " " + "Tyr"  + ", ";
+	 absorbing_residues += QString::asprintf( "%d", tyr ) + " " + "Tyr"  + ", ";
 
-       absorbing_residues += QString().sprintf( "%d", all_abs ) + " tot";
+       absorbing_residues += QString::asprintf( "%d", all_abs ) + " tot";
      }
    
 DbgLv(1) << "AA absorbibg String: " << absorbing_residues;
@@ -1286,11 +1286,11 @@ DbgLv(1) << "AA absorbibg String: " << absorbing_residues;
          total          += lcount;
          if ( lcount > 0 )
          {
-            seqsmry     += QString().sprintf( "%d", lcount )
+            seqsmry     += QString::asprintf( "%d", lcount )
                            + " " + letter.toUpper() + ", ";
          }
       }
-      seqsmry     += QString().sprintf( "%d", total ) + " tot";
+      seqsmry     += QString::asprintf( "%d", total ) + " tot";
    }
 
    qDebug() << "In Summary 3: analyte->extinciton: " <<  ana->extinction;

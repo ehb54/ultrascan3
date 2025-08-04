@@ -96,7 +96,7 @@ void US_MPI_Analysis::_2dsa_master( void )
                + QString::number( meniscus_value, 'f', 4 )
                + "; Bottom: "
                + QString::number( bottom_value,   'f', 4 )
-               + QString().sprintf( "  ( m%2d b%2d )",
+               + QString::asprintf( "  ( m%2d b%2d )",
                     ( meniscus_run + 1 ), ( bottom_run + 1 ) );
          else if ( fit_meni )
             progress     += "; Meniscus: "

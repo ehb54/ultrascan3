@@ -646,7 +646,7 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
 
    while( indx > 0 )
    {  // build a list of available model file names
-      mname = "M" + QString().sprintf( "%07i", indx++ ) + ".xml";
+      mname = "M" + QString::asprintf( "%07i", indx++ ) + ".xml";
       if ( ! mdnams.contains( mname ) )
       {  // no name with this index exists, so add it new-name list
          mnames << mname;
@@ -659,7 +659,7 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
 
    while( indx > 0 )
    {  // build a list of available noise file names
-      nname = "N" + QString().sprintf( "%07i", indx++ ) + ".xml";
+      nname = "N" + QString::asprintf( "%07i", indx++ ) + ".xml";
       if ( ! ndnams.contains( nname ) )
       {  // add to the list of new-name noises
          nnames << nname;
@@ -723,7 +723,7 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
       model.dataDescrip = edata->description;
 
       for ( int cc = 0; cc < model.components.size(); cc++ )
-         model.components[ cc ].name = QString().sprintf( "SC%04d", cc + 1 );
+         model.components[ cc ].name = QString::asprintf( "SC%04d", cc + 1 );
 
       // output the model
       if ( dbP == NULL  ||  montCar )
@@ -1302,13 +1302,13 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
                     > ( maxv - minv ) / qAbs( maxv ) );
 
    mstr += table_row( tr( "Weight Average s20,W:" ),
-                      QString().sprintf( "%6.4e", ( sum_s  / sum_c ) ) );
+                      QString::asprintf( "%6.4e", ( sum_s  / sum_c ) ) );
    mstr += table_row( tr( "Weight Average D20,W:" ),
-                      QString().sprintf( "%6.4e", ( sum_D  / sum_c ) ) );
+                      QString::asprintf( "%6.4e", ( sum_D  / sum_c ) ) );
    mstr += table_row( tr( "W.A. Molecular Weight:" ),
-                      QString().sprintf( "%6.4e", ( sum_mw / sum_c ) ) );
+                      QString::asprintf( "%6.4e", ( sum_mw / sum_c ) ) );
    mstr += table_row( tr( "Total Concentration:" ),
-                      QString().sprintf( "%6.4e", sum_c ) );
+                      QString::asprintf( "%6.4e", sum_c ) );
 
    if ( cnstvb )
       mstr += table_row( tr( "Constant Vbar at 20" ) + DEGC + ":",
@@ -1369,13 +1369,13 @@ DbgLv(1) << "Data_Corr manual" << sd.manual << "avTemp" << avTemp << "vbar20" <<
       D_ap       /= sd.D20w_correction;
 
       mstr       += table_row(
-            QString().sprintf( "%10.4e", model.components[ ii ].mw ),
-            QString().sprintf( "%10.4e", s_ap                      ),
-            QString().sprintf( "%10.4e", model.components[ ii ].s  ),
-            QString().sprintf( "%10.4e", D_ap                      ),
-            QString().sprintf( "%10.4e", model.components[ ii ].D  ),
-            QString().sprintf( "%10.4e", f_f0                      ),
-            QString().sprintf( "%10.4e (%5.2f %%)", conc, perc     ) );
+            QString::asprintf( "%10.4e", model.components[ ii ].mw ),
+            QString::asprintf( "%10.4e", s_ap ),
+            QString::asprintf( "%10.4e", model.components[ ii ].s ),
+            QString::asprintf( "%10.4e", D_ap ),
+            QString::asprintf( "%10.4e", model.components[ ii ].D ),
+            QString::asprintf( "%10.4e", f_f0 ),
+            QString::asprintf( "%10.4e (%5.2f %% )", conc, perc     ) );
    }
 
    mstr += indent( 4 ) + "</table>\n";
@@ -1446,11 +1446,11 @@ QString US_2dsa::iteration_info()
       QString mdesc = models[ ii ].description;
       QString avari = mdesc.mid( mdesc.indexOf( "VARI=" ) + 5 );
       double  rmsd  = sqrt( avari.section( " ", 0, 0 ).toDouble() );
-      QString armsd = QString().sprintf( "%10.8f", rmsd );
+      QString armsd = QString::asprintf( "%10.8f", rmsd );
 
       if ( montCar )
       {
-         QString itID  = QString().sprintf( "i%04i", ii + 1 );
+         QString itID  = QString::asprintf( "i%04i", ii + 1 );
          mstr         += table_row( itnum, itID, armsd );
       }
 
@@ -1576,7 +1576,7 @@ QString US_2dsa::fit_meniscus_data()
       QString avari = mdesc.mid( mdesc.indexOf( "VARI=" ) + 5 );
       double  variv = avari.section( " ", 0, 0 ).toDouble();
       double  rmsd  = ( variv > 0.0 ) ? sqrt( variv ) : 0.0;
-      QString armsd = QString().sprintf( "%10.8f", rmsd );
+      QString armsd = QString::asprintf( "%10.8f", rmsd );
       if ( usemen && usebot )
       {
          QString ameni = mdesc.mid( mdesc.indexOf( "MENISCUS=" ) + 9 )

@@ -245,12 +245,12 @@ void US_RunDetails2::setup( void )
 
    QString hh    = ( hours == 1 ) ? tr( "hr" ) : tr( "hrs" );
 	        hh    = "h";
-   QString wks   = QString().sprintf( "%d %s %02d m", hours, hh.toLatin1().data(), mins );
+   QString wks   = QString::asprintf( "%d %s %02d m", hours, hh.toLatin1( ).data(), mins );
    int fmins     = (int)qFloor( first / 60.0 );
    int fsecs     = first - fmins * 60.0;
    QString mm    = ( fmins == 1 ) ? tr( "min" ) : tr( "mins" );
 
-   QString scan1time = QString().sprintf( "%d m %02d s", fmins, fsecs );
+   QString scan1time = QString::asprintf( "%d m %02d s", fmins, fsecs );
 //*DEBUG*
 data=dataList[0];
 double s1tim=data.scanData[0].seconds;

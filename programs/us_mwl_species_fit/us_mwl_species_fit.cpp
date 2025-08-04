@@ -468,8 +468,8 @@ DbgLv(1) << "PlotData1: jspec" << jspec << "have" << have_p1[jspec];
 DbgLv(1) << "PlotData1:  jspec ispec" << jspec << ispec;
    US_DataIO::RawData*     rdata = &synData[ jspec ];
 //   US_DataIO::EditedData*  edata = &dataList[ tripx ];
-   QString str_wl = QString().sprintf( "%03i", ispec );
-   QString str_ce = QString().sprintf( "%d", rdata->cell );
+   QString str_wl = QString::asprintf( "%03i", ispec );
+   QString str_ce = QString::asprintf( "%d", rdata->cell );
 
    QString                                  dataType = tr( "Absorbance" );
    if ( strcmp( rdata->type, "RI" ) == 0 )  dataType = tr( "Intensity" );
@@ -1770,10 +1770,10 @@ DbgLv(1) << "sfd: (B)D1 cmn" << ms << mr << synData[1].value(ms,mr);
       if (us_gmp_auto_mode)
 	{
 	  QString solvent_name = spfiles[ ii ].section( "/", -1, -1 ).section( ".", 0, -2 );
-	  str_wl = "." + solvent_name +  QString().sprintf( "_%03i.auc", ii + 1 );
+	  str_wl = "." + solvent_name +  QString::asprintf( "_%03i.auc", ii + 1 );
 	}
       else
-	str_wl  = QString().sprintf( ".%03i.auc", ii + 1 );
+	str_wl  = QString::asprintf( ".%03i.auc", ii + 1 );
       
       QString fname   = QString( basefn ).replace( ".000.auc", str_wl );
 

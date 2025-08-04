@@ -809,7 +809,7 @@ QDateTime clcSt0=QDateTime::currentDateTime();
 
 int grp_nbr  = ( my_rank / gcores_count );
 int deme_nbr = my_rank - grp_nbr * gcores_count;
-QString Phd = "MIN:" + QString().sprintf("%d:%d",grp_nbr,deme_nbr) + ":";
+QString Phd = "MIN:" + QString::asprintf( "%d:%d",grp_nbr,deme_nbr ) + ":";
 DbgLv(DL) << Phd << "vsize" << vsize << "fitness" << fitness
  << "gene0.s" << gene[0].s;
    int index = 0;
@@ -1523,8 +1523,8 @@ void US_MPI_Analysis::dump_fitness( const QList< Fitness >& fitness )
    for ( int f = 0; f < fitness.size(); f++ )
    {
 
-      s += QString().sprintf( "i, index, fitness: %3i, %3i, %.6e\n",
-               f, fitness[ f ].index, fitness[ f ].fitness );
+      s += QString::asprintf( "i, index, fitness: %3i, %3i, %.6e\n",
+f, fitness[ f ].index, fitness[ f ].fitness );
    }
 
    DbgLv(1) << s;

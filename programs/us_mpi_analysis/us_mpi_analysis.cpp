@@ -950,13 +950,13 @@ if ( my_rank == 0 ) {
                   DbgLv(0) << "  Bucket j" << bucket_rects[j].topLeft()
                     << bucket_rects[j].bottomRight();
                   DbgLv(0) << "  Bucket i right "
-                    << QString().sprintf( "%22.18f", bucket_rects[i].right() );
+                    << QString::asprintf( "%22.18f", bucket_rects[i].right( ) );
                   DbgLv(0) << "  Bucket j left  "
-                    << QString().sprintf( "%22.18f", bucket_rects[j].left() );
+                    << QString::asprintf( "%22.18f", bucket_rects[j].left( ) );
                   DbgLv(0) << "  Bucket i bottom"
-                    << QString().sprintf( "%22.18f", bucket_rects[i].bottom() );
+                    << QString::asprintf( "%22.18f", bucket_rects[i].bottom( ) );
                   DbgLv(0) << "  Bucket j top   "
-                    << QString().sprintf( "%22.18f", bucket_rects[j].top() );
+                    << QString::asprintf( "%22.18f", bucket_rects[j].top( ) );
                }
 
                if ( qMin( sdif, fdif ) < 1.e-6 )
@@ -2180,7 +2180,7 @@ DbgLv(0) << "wrMo: model descr" << model.description;
 
          US_Model::SimulationComponent component;
          US_ZSolute::set_mcomp_values( component, zsolute, stype, true );
-         component.name     = QString().sprintf( "SC%04d", ii + 1 );
+         component.name     = QString::asprintf( "SC%04d", ii + 1 );
 
          US_Model::calc_coefficients( component );
          model.components << component;
@@ -2196,7 +2196,7 @@ DbgLv(0) << "wrMo: model descr" << model.description;
          US_Model::SimulationComponent component;
          component.s       = solute->s;
          component.f_f0    = solute->k;
-         component.name    = QString().sprintf( "SC%04d", ii + 1 );
+         component.name    = QString::asprintf( "SC%04d", ii + 1 );
          // component.vbar20  = (attr_z == ATTR_V) ? vbar20 : solute->v;
          if ( stype == 0) {
             component.vbar20  = vbar20;
@@ -2209,7 +2209,7 @@ DbgLv(0) << "wrMo: model descr" << model.description;
          model.components << component;
       }
    }
-DbgLv(1) << "wrMo: stype" << stype << QString().sprintf("0%o",stype)
+DbgLv(1) << "wrMo: stype" << stype << QString::asprintf( "0%o",stype )
  << "attr_z vbar20 mco0.v" << attr_z << vbar20 << model.components[0].vbar20;
 
    QString fext      = model.monteCarlo ? ".mdl.tmp" : ".model.xml";
@@ -2711,7 +2711,7 @@ DbgLv(1) << "wrMo: model descr" << model.description;
 
          US_Model::SimulationComponent component;
          US_ZSolute::set_mcomp_values( component, zsolute, stype, true );
-         component.name     = QString().sprintf( "SC%04d", ii + 1 );
+         component.name     = QString::asprintf( "SC%04d", ii + 1 );
 
          US_Model::calc_coefficients( component );
          model.components << component;
@@ -2727,7 +2727,7 @@ DbgLv(1) << "wrMo: model descr" << model.description;
          US_Model::SimulationComponent component;
          component.s       = solute->s;
          component.f_f0    = solute->k;
-         component.name    = QString().sprintf( "SC%04d", ii + 1 );
+         component.name    = QString::asprintf( "SC%04d", ii + 1 );
          component.vbar20  = (attr_z == ATTR_V) ? vbar20 : solute->v;
          component.signal_concentration = solute->c;
 
@@ -2735,7 +2735,7 @@ DbgLv(1) << "wrMo: model descr" << model.description;
          model.components << component;
       }
    }
-DbgLv(1) << "wrMo: stype" << stype << QString().sprintf("0%o",stype)
+DbgLv(1) << "wrMo: stype" << stype << QString::asprintf( "0%o",stype )
  << "attr_z vbar20 mco0.v" << attr_z << vbar20 << model.components[0].vbar20;
 
    QString fext      = model.monteCarlo ? ".mdl.tmp" : ".model.xml";

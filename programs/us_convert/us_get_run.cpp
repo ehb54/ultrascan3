@@ -439,7 +439,7 @@ void US_GetRun::populate_list()
       item->setFlags( item->flags() ^ Qt::ItemIsEditable );
       tw  ->setItem(  ii, 1, item );
 
-      item = new QTableWidgetItem( QString().sprintf( "%6d", rr.ID ) );
+      item = new QTableWidgetItem( QString::asprintf( "%6d", rr.ID ) );
       item->setFlags( item->flags() ^ Qt::ItemIsEditable );
       tw  ->setItem(  ii, 2, item );
 
@@ -514,7 +514,7 @@ qDebug() << "LimData: sfilt" << sfilt;
       item->setFlags( item->flags() ^ Qt::ItemIsEditable );
       tw  ->setItem(  ii, 1, item );
 
-      item = new QTableWidgetItem( QString().sprintf( "%6d", rr.ID ) );
+      item = new QTableWidgetItem( QString::asprintf( "%6d", rr.ID ) );
       item->setFlags( item->flags() ^ Qt::ItemIsEditable );
       tw  ->setItem(  ii, 2, item );
 

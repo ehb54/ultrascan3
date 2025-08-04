@@ -897,7 +897,7 @@ qDebug() << "      kmmmod" << kmmmod << "kmmold" << kmmold;
                      int mcndx        = desc.description.indexOf( "_mc0" );
                      desc.description =
                           QString( desc.description ).left( mcndx )
-                        + QString().sprintf( "_mcN%03i", nimods )
+                        + QString::asprintf( "_mcN%03i", nimods )
                         + QString( desc.description ).mid( mcndx + 7 );
                      desc.iterations  = nimods;
 
@@ -1867,7 +1867,7 @@ qDebug() << "SL:   niters" << niters << "cmiter" << cmiter;
 
          for ( int jj = 1; jj <= niters; jj++ )
          {  // Create and append a description for each iteration model
-            QString imiter      = QString().sprintf( "_mc%04d", jj );
+            QString imiter      = QString::asprintf( "_mc%04d", jj );
             ModelDesc idesc     = mdesc;
             idesc.description   = QString( cdtext ).replace( cmiter, imiter );
 qDebug() << "SL:     jj" << jj << "imiter" << imiter;

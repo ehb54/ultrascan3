@@ -1362,8 +1362,8 @@ DbgLv(1) << "==montecarlo_done()==";
          double  sol_y    = csolutes[ cc ].y;
          double  sol_z    = csolutes[ cc ].z;
          double  sol_c    = csolutes[ cc ].c;
-         QString sol_id   = QString().sprintf( "%.4f:%.4f:%d",
-            sol_x * 1.e13, sol_y, nccsol++ );
+         QString sol_id   = QString::asprintf( "%.4f:%.4f:%d",
+sol_x * 1.e13, sol_y, nccsol++ );
 DbgLv(1) << "MCD: cc" << cc << "sol_id" << sol_id;
 
          // Save unsorted/summed solute and sorting string
@@ -1381,7 +1381,7 @@ DbgLv(1) << "MCD: cc" << cc << "sol_id" << sol_id;
          model.components[ cc ].f_f0                  = sol_y;
          model.components[ cc ].vbar20                = sol_z;
          model.components[ cc ].signal_concentration  = sol_c;
-         model.components[ cc ].name = QString().sprintf( "SC%04d", cc + 1 );
+         model.components[ cc ].name = QString::asprintf( "SC%04d", cc + 1 );
 #endif
 #if 1
          model.components[ cc ] = zcomponent;
@@ -1396,7 +1396,7 @@ DbgLv(1) << "MCD: cc" << cc << "sol_id" << sol_id;
       mrecs_mc[ jmc ]  = mrec;
 
       // Write the iteration model to a temp file and save its name
-      QString iterID    = QString().sprintf( "mc%04d", jmc + 1 );
+      QString iterID    = QString::asprintf( "mc%04d", jmc + 1 );
       model.description = base_mdesc + iterID + ".model";
       QString mfname    = tmppath + model.description + ".tmp";
       mfnames << mfname;
@@ -1460,7 +1460,7 @@ DbgLv(1) << "MCD: cc ccin ncsols" << cc << ccin << ncsols;
       model.components[ cc ].f_f0                  = mrec.csolutes[ cc ].y;
       model.components[ cc ].vbar20                = mrec.csolutes[ cc ].z;
       model.components[ cc ].signal_concentration  = mrec.csolutes[ cc ].c;
-      model.components[ cc ].name = QString().sprintf( "SC%04d", cc + 1 );
+      model.components[ cc ].name = QString::asprintf( "SC%04d", cc + 1 );
       model.calc_coefficients( model.components[ cc ] );
 
       modela.components[ cc ]                      = model.components[ cc ];
@@ -1680,7 +1680,7 @@ void US_AdvAnalysisPc::bfm_model( void )
       model.components[ cc ].f_f0   = mrec.csolutes[ cc ].y;
       model.components[ cc ].signal_concentration
                                     = mrec.csolutes[ cc ].c;
-      model.components[ cc ].name   = QString().sprintf( "SC%04d", cc + 1 );
+      model.components[ cc ].name   = QString::asprintf( "SC%04d", cc + 1 );
 
       model.calc_coefficients( model.components[ cc ] );
 
