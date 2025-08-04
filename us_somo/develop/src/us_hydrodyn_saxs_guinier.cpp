@@ -237,19 +237,18 @@ double US_Hydrodyn_Saxs::guinier_compute_chi2( enum guinier_methods guinier_meth
          && (*guinier_pts_removed)[ plot_number ].size()
          ;
 
-
       if ( has_pts_removed ) {
          for ( size_t i = 0; i < pts; ++i ) {
             if ( q2[ i ] >= q2_start && q2[ i ] <= q2_end && !(*guinier_pts_removed)[ plot_number ].count( q2[ i ] ) ) {
                double diff = I[ i ] - intercept - q2[ i ] * slope;
-               sumdiff2oversd += ( diff * diff ) / I_sd[ i ];
+               sumdiff2oversd += ( diff * diff ) / ( I_sd[ i ] * I_sd[ i ] );
             }
          }
       } else {
          for ( size_t i = 0; i < pts; ++i ) {
             if ( q2[ i ] >= q2_start && q2[ i ] <= q2_end ) {
                double diff = I[ i ] - intercept - q2[ i ] * slope;
-               sumdiff2oversd += ( diff * diff ) / I_sd[ i ];
+               sumdiff2oversd += ( diff * diff ) / ( I_sd[ i ] * I_sd[ i ] );
             }
          }
       }
