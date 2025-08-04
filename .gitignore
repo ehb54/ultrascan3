@@ -17,3 +17,5 @@ gui/qrc_images.cpp
 *.pro.user
 *object_script*
 
+/doc/manual/sphinx/
+/cmake-build-debug/
