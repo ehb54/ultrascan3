@@ -1,5 +1,4 @@
 //! \file us_simparms.cpp
-
 #include "us_simparms.h"
 #include "us_astfem_math.h"
 #include "us_hardware.h"
@@ -8,7 +7,9 @@
 #include "us_math2.h"
 
 //!< level-conditioned debug print
-#define DbgLv(a) if(dbg_level>=a)qDebug()
+#ifndef DbgLv
+#define DbgLv(a) if(dbg_level>=a)qDebug() //!< debug-level-conditioned qDebug()
+#endif
 #define DSS_RESO   100   // default SetSpeedResolution
 #define DSS_LO_RPM 1500  // default SetSpeedLowRpm
 #define DSS_LO_SEC 20    // default SpeedStepLowSec
@@ -862,8 +863,10 @@ int US_SimulationParameters::save_simparms( QString fname )
 
       if ( rotorcoeffs[ 0 ] != 0.0 )
       {
-         xml.writeAttribute   ( "rotorcoeffs", QString().sprintf( "%.3e %.3e",
-            rotorcoeffs[ 0 ], rotorcoeffs[ 1 ] ) );
+         QString attr = QString( "%1 %2" )
+                           .arg( rotorcoeffs[0], 0, 'e', 3 )
+                           .arg( rotorcoeffs[1], 0, 'e', 3 );
+         xml.writeAttribute( "rotorcoeffs", attr );
       }
 
       xml.writeAttribute   ( "bandform",  band_forming ? "1" : "0" );
@@ -882,7 +885,7 @@ int US_SimulationParameters::save_simparms( QString fname )
          {
             xml.writeStartElement( "usermesh" );
             xml.writeAttribute( "radius",
-               QString().sprintf( "%11.5e", mesh_radius[ ii ] ).simplified() );
+               QString( "%1" ).arg( mesh_radius[ii], 11, 'e', 5).simplified() );
             xml.writeEndElement();
          }
       }

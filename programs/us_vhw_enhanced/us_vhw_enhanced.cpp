@@ -896,8 +896,8 @@ kcalls[7]+=1;QDateTime sttime=QDateTime::currentDateTime();
 //*TIMING
    double plato  = 0.0;
    int j2  = edata->xindex( edata->plateau );      // Index plateau radius
-   int j1  = max( 0, ( j2 - PA_POINTS ) );         // Point to 20 points before
-       j2  = min( valueCount, ( j2 + PA_POINTS + 1 ) );
+   int j1  = qMax( 0, ( j2 - PA_POINTS ) );         // Point to 20 points before
+       j2  = qMin( valueCount, ( j2 + PA_POINTS + 1 ) );
                                                    //  and 20 points after
    for ( int jj = j1; jj < j2; jj++ )    // Sum 41 points centered at the
       plato += dscan->rvalues[ jj ];     //  scan plateau radial position
@@ -1956,7 +1956,7 @@ DbgLv(1) << "    KDECR>2  jrelp prevy curry" << jrelp << prevy << curry;
 DbgLv(1) << "    JRELP" << jrelp << "KF" << kf;
    if ( jrelp < 0  ||  jrelp > ( kf - 2 ) )
    {
-      jrelp      = min( 2, ( kf - 1 ) );
+      jrelp      = qMin( 2, ( kf - 1 ) );
 DbgLv(1) << "     NO z-cross/k-decr, so default jrelp" << jrelp;
    }
 
