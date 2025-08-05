@@ -27,7 +27,9 @@ Welcome to UltraScan III's Documentation and Resource!
    vhw_combine
    second_moment
    
+.. only:: latex
 
+   .. printindex::
 
 
 

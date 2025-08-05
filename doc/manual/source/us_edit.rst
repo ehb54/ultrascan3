@@ -17,6 +17,7 @@ All experimental data acquired with the analytical ultracentrifuge must be proce
 .. image:: _static/images/us_edit.png
   :align: center
 
+.. index:: test entry
 
 Functions
 ====================
