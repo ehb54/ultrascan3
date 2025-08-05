@@ -143,7 +143,7 @@ For additional help, refer to the UltraScan support resources.
 
 - All output formats are built from the unified `source/` directory.
 - Output locations:
-  - HTML, LaTeX, Qt: `build/doc/manual/`
+  - HTML, LaTeX, Qthelp: `build/doc/manual/`
   - Qt Help binaries (`.qch`, `.qhc`): `bin/`
 
 For Sphinx usage help, see: https://www.sphinx-doc.org
