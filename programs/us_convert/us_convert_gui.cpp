@@ -7590,7 +7590,7 @@ DbgLv(1) << "nspeeds=" << nspeeds << "nripro=" << nripro;
       {
          int ispeed        = speeds[ spx ];
 DbgLv(1) << "us_convert: ispeed=" << ispeed << "spx=" << spx << "nspeeds=" << nspeeds;
-         runID             = runIDbase + QString().sprintf( "%05d", ispeed );
+         runID             = runIDbase + QString::asprintf( "%05d", ispeed );
          double speed      = (double)ispeed;
          ExpData.runID     = runID;
          ExpData.expGUID.clear();

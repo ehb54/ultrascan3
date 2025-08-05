@@ -577,7 +577,7 @@ DbgLv(1) << "SV: analysisType" << analysisType;
 
    while( indx > 0 )
    {  // build a list of available model file names
-      mname = "M" + QString().sprintf( "%07i", indx++ ) + ".xml";
+      mname = "M" + QString::asprintf( "%07i", indx++ ) + ".xml";
       if ( ! mdnams.contains( mname ) )
       {  // Add to the list of new-name models
          mnames << mname;
@@ -593,7 +593,7 @@ DbgLv(1) << "SV: mnames size" << mnames.size();
 
    while( indx > 0 )
    {  // build a list of available noise file names
-      nname = "N" + QString().sprintf( "%07i", indx++ ) + ".xml";
+      nname = "N" + QString::asprintf( "%07i", indx++ ) + ".xml";
       if ( ! ndnams.contains( nname ) )
       {  // add to the list of new-name noises
          nnames << nname;
@@ -628,7 +628,7 @@ DbgLv(1) << "SV: non-MC model ncomp" << model.components.size();
       model.dataDescrip = edata->description;
 
       for ( int cc = 0; cc < model.components.size(); cc++ )
-         model.components[ cc ].name = QString().sprintf( "SC%04d", cc + 1 );
+         model.components[ cc ].name = QString::asprintf( "SC%04d", cc + 1 );
 
       // Output the model
       if ( dbP != NULL )
@@ -642,7 +642,7 @@ DbgLv(1) << "SV: non-MC model ncomp" << model.components.size();
 DbgLv(1) << "SV: MC models  mciters" << mciters;
       for ( int jmc = 0; jmc < mciters; jmc++ )
       {
-         iterID            = QString().sprintf( "mc%04d", jmc + 1 );
+         iterID            = QString::asprintf( "mc%04d", jmc + 1 );
          model             = mrecs_mc[ jmc ].model;
          model.description = descbase + iterID + ".model";
          tname             = tmppath + descbase + iterID + ".mdl.tmp";
@@ -1058,13 +1058,13 @@ DbgLv(1) << "distrinfo: ncomp" << ncomp;
                     > ( maxv - minv ) / qAbs( maxv ) );
 
    mstr += table_row( tr( "Weight Average s20,W:" ),
-                      QString().sprintf( "%6.4e", ( sum_s  / sum_c ) ) );
+                      QString::asprintf( "%6.4e", ( sum_s  / sum_c ) ) );
    mstr += table_row( tr( "Weight Average D20,W:" ),
-                      QString().sprintf( "%6.4e", ( sum_D  / sum_c ) ) );
+                      QString::asprintf( "%6.4e", ( sum_D  / sum_c ) ) );
    mstr += table_row( tr( "W.A. Molecular Weight:" ),
-                      QString().sprintf( "%6.4e", ( sum_mw / sum_c ) ) );
+                      QString::asprintf( "%6.4e", ( sum_mw / sum_c ) ) );
    mstr += table_row( tr( "Total Concentration:" ),
-                      QString().sprintf( "%6.4e", sum_c ) );
+                      QString::asprintf( "%6.4e", sum_c ) );
 
    if ( cnstvb )
       mstr += table_row( tr( "Constant Vbar at 20" ) + DEGC + ":",
@@ -1123,13 +1123,13 @@ DbgLv(1) << "distrinfo: ncomp" << ncomp;
       D_ap       /= sd.D20w_correction;
 
       mstr       += table_row(
-            QString().sprintf( "%10.4e", model.components[ ii ].mw ),
-            QString().sprintf( "%10.4e", s_ap                      ),
-            QString().sprintf( "%10.4e", model.components[ ii ].s  ),
-            QString().sprintf( "%10.4e", D_ap                      ),
-            QString().sprintf( "%10.4e", model.components[ ii ].D  ),
-            QString().sprintf( "%10.4e", f_f0                      ),
-            QString().sprintf( "%10.4e (%5.2f %%)", conc, perc     ) );
+            QString::asprintf( "%10.4e", model.components[ ii ].mw ),
+            QString::asprintf( "%10.4e", s_ap ),
+            QString::asprintf( "%10.4e", model.components[ ii ].s ),
+            QString::asprintf( "%10.4e", D_ap ),
+            QString::asprintf( "%10.4e", model.components[ ii ].D ),
+            QString::asprintf( "%10.4e", f_f0 ),
+            QString::asprintf( "%10.4e (%5.2f %% )", conc, perc     ) );
    }
 
    mstr += indent( 4 ) + "</table>\n";

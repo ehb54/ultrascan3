@@ -1859,7 +1859,7 @@ void US_ExperGuiRotor::importDisk( void )
   int  rd_hours     = (int)qFloor( run_duration / 3600.0 );
   int  rd_mins      = (int)qRound( ( run_duration - rd_hours * 3600.0 ) / 60.0 );
   QString hh        = "h";
-  QString rd_str    = QString().sprintf( "%d %s %02d m", rd_hours, hh.toLatin1().data(), rd_mins );
+  QString rd_str    = QString::asprintf( "%d %s %02d m", rd_hours, hh.toLatin1( ).data(), rd_mins );
   msg_run_details  += rd_str + "; ";
   QString scanCount = run_details["ScanCount"];
   msg_run_details  += scanCount;
@@ -5190,7 +5190,7 @@ DbgLv(1) << "EGSo: allSo:      desc" << descr << "solID" << solID;
          ndup++;
          QString snbase     = sname;
          int kk             = 1;
-         sname              = snbase + QString().sprintf( "  (%d)", kk );
+         sname              = snbase + QString::asprintf( "  (%d )", kk );
          sonames.replace( ii, sname );        // Replace 1st of duplicates
          for ( int jj = ii + 1; jj <= lstx; jj++ )
          {
@@ -5199,7 +5199,7 @@ DbgLv(1) << "EGSo: allSo:      desc" << descr << "solID" << solID;
             if ( sname == snbase )
             {  // This is a duplicate
                kk++;
-               sname              = snbase + QString().sprintf( "  (%d)", kk );
+               sname              = snbase + QString::asprintf( "  (%d )", kk );
                sonames.replace( jj, sname );  // Replace each of duplicates
             }
          }
@@ -7059,7 +7059,7 @@ DbgLv(1) << "EGUp:svRP:   dbP" << dbP;
    // small bug fix above (UTC format, to be consistent with the format of existing records)
 
    QString protid      = ( dbP != NULL ) ? QString::number( idProt )
-                         : "R" + QString().sprintf( "%7d", idProt ) + ".xml";
+                         : "R" + QString::asprintf( "%7d", idProt ) + ".xml";
    QString pguid       = currProto->protoGUID;
    prentry << protoname << pdate << protid << pguid;
 

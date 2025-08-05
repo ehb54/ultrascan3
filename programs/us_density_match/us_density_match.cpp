@@ -1386,8 +1386,7 @@ DbgLv(1) << "WrCsv: fpath" << fpath;
    // Write data lines
    for ( int jj = 0; jj < vals1.size(); jj++ )
    {
-      QString line  = QString().sprintf(
-         "\"%9.6e\",\"%6.4f\"\n", vals1[ jj ], vals2[ jj ] );
+      QString line  = QString::asprintf( "\"%9.6e\",\"%6.4f\"\n", vals1[ jj ], vals2[ jj ] );
       line.replace( " ","" );
       ts << line;
    }
@@ -1417,7 +1416,7 @@ DbgLv(1) << "mosmry:  jj" << jj << "d2opct bdens mlab" << d2opct << bdens << mla
                            + "..."
                          : mdesc;
 DbgLv(1) << "mosmry:    mdesc" << mdesc;
-      dinfo            += QString().sprintf( "%.1f  %f  ", d2opct, bdens )
+      dinfo            += QString::asprintf( "%.1f  %f  ", d2opct, bdens )
                           + mlab + "  " + mdesc + "\n";
    }
 
