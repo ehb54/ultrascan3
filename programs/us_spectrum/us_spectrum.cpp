@@ -636,7 +636,7 @@ void US_Spectrum::fit()
    fval /= points;
    str = tr (" %1");
    le_rmsd->setText(str.arg(pow(fval, (float) 0.5), 0, 'e'));
-   // le_rmsd->setText(str.sprintf(" %3.2e", pow(fval, (float) 0.5)));
+   // le_rmsd->setText(QString::asprintf(" %3.2e", pow(fval, (float) 0.5)));
    resid_curve->setSamples(x, y, points);
    pen.setColor(Qt::yellow);
    pen.setWidth(2);

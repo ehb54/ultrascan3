@@ -173,9 +173,8 @@ void US_MPI_Analysis::parse_job( QXmlStreamReader& xml )
 
          else if ( xname == "request" )
          {
-            QString ss;
-            requestID   = ss.sprintf( "%06d",
-                             attr.value( "id" ).toString().toInt() );
+            requestID   = QString::asprintf( "%06d",
+                                             attr.value( "id" ).toString().toInt() );
             requestGUID = attr.value( "guid" ).toString();
          }
 

@@ -100,15 +100,14 @@ void US_ExtinctFitter::startFit()
      return_value = Fit();
      if (return_value != 0)
      {
-		 QString str;
-     	 if (GUI)
-       {
-         QMessageBox message;
-			message.setWindowTitle(tr("Extinction Fitter:"));
-			//message.setText(tr("The program exited with a return\nvalue of" + str.sprintf("%d.", return_value)));
-       }
-		}
-	}
+        if (GUI)
+        {
+           QMessageBox message;
+           message.setWindowTitle(tr("Extinction Fitter:"));
+           //message.setText(tr("The program exited with a return\nvalue of" + QString::asprintf("%d.", return_value)));
+        }
+     }
+   }
 }
 
 bool US_ExtinctFitter::fit_init()
@@ -168,7 +167,6 @@ bool US_ExtinctFitter::fit_init()
 
 int US_ExtinctFitter::calc_model(double *guess_par)
 {
-	QString str;
    unsigned int j, k, point_counter=0;
    float gaussian;
    for (int i=0; i<(*wls_v).size(); i++)
@@ -187,7 +185,7 @@ int US_ExtinctFitter::calc_model(double *guess_par)
       }
    }
    function_evaluations++;
-   le_evaluations->setText(str.sprintf(" %d", function_evaluations));
+   le_evaluations->setText(QString::asprintf(" %d", function_evaluations));
    qApp->processEvents();
    if (aborted)
    {
@@ -196,7 +194,6 @@ int US_ExtinctFitter::calc_model(double *guess_par)
    return(0);
 
    /* //Polynomial fit:
-      QString str;
       unsigned int i, j, k, point_counter=0;
       float polynomial;
       for (i=0; i<(*wls_v).size(); i++)
@@ -213,7 +210,7 @@ int US_ExtinctFitter::calc_model(double *guess_par)
       }
       }
       function_evaluations++;
-      lbl_evaluations2->setText(str.sprintf(" %d", function_evaluations));
+      lbl_evaluations2->setText(QString::asprintf(" %d", function_evaluations));
       qApp->processEvents();
       if (aborted)
       {

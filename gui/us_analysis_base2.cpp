@@ -1241,11 +1241,11 @@ QString US_AnalysisBase2::scan_info( void ) const
       double omg2t = d->scanData[ ii ].omega2t;
       int    ctime = (int)( time - time_correction ); 
 
-      s1 = s1.sprintf( "%4d",             ii + 1 );
-      s2 = s2.sprintf( "%4d min %2d sec", ctime / 60, ctime % 60 );
-      s3 = s3.sprintf( "%.6f OD",         od ); 
-      s4 = s4.sprintf( "%5d",             (int)time ); 
-      s5 = s5.sprintf( "%.5e",            omg2t ); 
+      s1 = QString::asprintf( "%4d",             ii + 1 );
+      s2 = QString::asprintf( "%4d min %2d sec", ctime / 60, ctime % 60 );
+      s3 = QString::asprintf( "%.6f OD",         od ); 
+      s4 = QString::asprintf( "%5d",             (int)time ); 
+      s5 = QString::asprintf( "%.5e",            omg2t ); 
 
       s += table_row( s1, s2, s3, s4, s5 );
    }

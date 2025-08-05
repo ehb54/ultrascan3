@@ -282,7 +282,7 @@ qDebug() << "dtails: ds 1, scan 1: secs,omg2t,rpm" << s1tim << s1omg << s1rpm;
    int minutes = (int) correction / 60;
    int seconds = (int) correction % 60;
 
-   le_timeCorr->setText( wks.sprintf( "%d m %02d s", minutes, seconds ) );
+   le_timeCorr->setText( QString::asprintf( "%d m %02d s", minutes, seconds ) );
 
    int ss_reso         = 100;
    // If debug_text so directs, change set_speed_resolution
@@ -323,7 +323,7 @@ qDebug() << "dtails: ds 1, scan 1: secs,omg2t,rpm" << s1tim << s1omg << s1rpm;
    for ( int i = 0; i < triples.size(); i++ )
    {
       int scans = dataList[ i ].scanData.size();
-      lw_triples->addItem( triples[ i ] + wks.sprintf( " -- %d scans", scans ) );
+      lw_triples->addItem( triples[ i ] + QString::asprintf( " -- %d scans", scans ) );
 
       //determine also dataType:
       char chtype[ 3 ] = { 'R', 'A', '\0' };
@@ -341,7 +341,7 @@ qDebug() << "dtails: ds 1, scan 1: secs,omg2t,rpm" << s1tim << s1omg << s1rpm;
        qDebug() << "[US_RunDetails] dataType--scanCount: "
 		<< scanCount_per_dataType.keys()[i] << " -- " << scanCount_per_dataType[ scanCount_per_dataType.keys()[i] ];
      }
-   lw_triples->addItem( wks.sprintf( "All scans -- %d scans", scanCount ) );    
+   lw_triples->addItem( QString::asprintf( "All scans -- %d scans", scanCount ) );    
 
    // Set triple to indicate All Data
    lw_triples->setCurrentRow( triples.size() );

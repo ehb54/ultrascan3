@@ -1254,10 +1254,10 @@ float US_Minimize::calc_testParameter(float **search, float step)
       //qDebug() << "Step: " << step << ", Test-guess(" << i << "): " << test_guess[i] << ", guess: " << guess[i] << ", search: " << (*search)[i]  ;
    }
    /*
-     QString s="", format;
+     QString s = "";
      for (unsigned int i=0; i<parameters; i++)
      {
-     s += format.sprintf("Parameter[%d]: %e, Search[%d]: %e\n", i, test_guess[i], i, (*search)[i]);
+     s += QString::asprintf("Parameter[%d]: %e, Search[%d]: %e\n", i, test_guess[i], i, (*search)[i]);
      }
      QMessageBox message;
 		message.setWindowTitle(tr("Debug:"));

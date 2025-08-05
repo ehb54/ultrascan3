@@ -694,8 +694,8 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
          bottom            = mdesc.mid( mdesc.indexOf( "BOTTOM=" ) + 7 )
                              .section( ' ', 0, 0 ).toDouble();
          if ( bottom > 0.0 )
-            iterID.sprintf( "i%02d-m%05db%05d", iterNum, qRound( meniscus * 10000 ),
-                            qRound( bottom * 10000 ) );
+            iterID = QString::asprintf( "i%02d-m%05db%05d", iterNum, qRound( meniscus * 10000 ),
+                                        qRound( bottom * 10000 ) );
          else
             iterID = QString::asprintf( "i%02d-m%05d", iterNum, qRound( meniscus * 10000 ) );
       }

@@ -1433,7 +1433,7 @@ DbgLv(1) << "WD: filename " << filename;
    {
       bfrac     = pterm + bterm * (double)( jj );
 
-      dline.sprintf(
+      dline = QString::asprintf(
          "\"%9.2f\",\"%7d\",\"%12.6f\",\"%12.6f\",\"%12.6f\",\"%12.6f\"\n",
          bfrac, dpnts[ jj ], dslos[ jj ], dseds[ jj ],
          dsigs[ jj ], dcors[ jj ] );

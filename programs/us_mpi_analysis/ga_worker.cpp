@@ -429,12 +429,11 @@ sim.dbg_level = qMax(0,dbg_level-1);
    fitness_count++;
    int     nisols = gene.size();
    QString key    = "";
-   QString str;
 
    for ( int cc = 0; cc < nisols; cc++ )
    {  // Concatenate all solute s,k values to form fitness key
-      key += str.sprintf( "%.5f%.5f", sim.solutes[ cc ].s,
-                                      sim.solutes[ cc ].k );
+      key += QString::asprintf( "%.5f%.5f", sim.solutes[ cc ].s,
+                                sim.solutes[ cc ].k );
    }
 
 DbgLv(2) << "get_fitness: nisols" << nisols << "key" << key;

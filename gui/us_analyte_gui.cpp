@@ -1781,10 +1781,8 @@ void US_AnalyteMgrNew::update_sequence( QString seq )
 
    for ( int i = 0; i < segments; i++ )
    {
-      QString t;
-
       if ( i % lsize == 0 )
-         s += t.sprintf( "%04i ", i * gsize + 1 );
+         s += QString::asprintf( "%04i ", i * gsize + 1 );
      
       s += seq.mid( p, gsize );
       p += gsize;
@@ -2030,13 +2028,13 @@ void US_AnalyteMgrNew::update_nucleotide( void )
 
    if ( analyte->doubleStranded )
    {
-      s.sprintf(" %2.5e kD (%d A, %d G, %d C, %d U, %d T, %d bp)",
-            MW / 1000.0, A, G, C, U, T, total / 2);
+      s = QString::asprintf(" %2.5e kD (%d A, %d G, %d C, %d U, %d T, %d bp)",
+                            MW / 1000.0, A, G, C, U, T, total / 2);
    }
    else
    {
-     s.sprintf(" %2.5e kD (%d A, %d G, %d C, %d U, %d T, %d bases)",
-            MW / 1000.0, A, G, C, U, T, total );
+      s = QString::asprintf(" %2.5e kD (%d A, %d G, %d C, %d U, %d T, %d bases)",
+                            MW / 1000.0, A, G, C, U, T, total );
    }
    
    le_nucle_mw->setText( s );

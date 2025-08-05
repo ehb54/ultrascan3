@@ -3826,9 +3826,9 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
 	     plot->btnZoom->setChecked( false );
 
 	   // Display the data
-	   QString wkstr;
-	   le_airGap->setText( wkstr.sprintf( "%.3f - %.3f",
-					      airGap_left, airGap_right ) );
+
+	   le_airGap->setText( QString::asprintf( "%.3f - %.3f",
+                                                  airGap_left, airGap_right ) );
 
 	   step          = RANGE;
 	   range_left    = meniscus + _RNGLEFT_OFFSET_;
@@ -6457,9 +6457,8 @@ DbgLv(1) << "AGap: L R" << airGap_left << airGap_right << " AdjIntf";
                plot->btnZoom->setChecked( false );
 
             // Display the data
-            QString wkstr;
-            le_airGap->setText( wkstr.sprintf( "%.3f - %.3f",
-                     airGap_left, airGap_right ) );
+            le_airGap->setText( QString::asprintf( "%.3f - %.3f",
+                                                   airGap_left, airGap_right ) );
 
             step          = RANGE;
             range_left    = meniscus + _RNGLEFT_OFFSET_;
@@ -6569,8 +6568,7 @@ DbgLv(1) << "AGap:  plot_range()";
             }
 
             // Display the data
-            QString wkstr;
-//            le_dataRange->setText( wkstr.sprintf( "%.3f - %.3f",
+//            le_dataRange->setText( QString::asprintf( "%.3f - %.3f",
 //                     range_left, range_right ) );
             le_dataStart->setText( QString::number( range_left,  'f', 8 ) );
             le_dataEnd  ->setText( QString::number( range_right, 'f', 8 ) );
@@ -6752,8 +6750,7 @@ DbgLv(1) << "AGap:  plot_range()";
             plateau   = ( plateau > 0.0 ) ? plateau
                                           : ( range_right - _PLATEAU_OFFSET_ );
 
-            QString wkstr;
-            le_baseline->setText( wkstr.sprintf( "%.3f (%.3e)", baseline, bl ) );
+            le_baseline->setText( QString::asprintf( "%.3f (%.3e)", baseline, bl ) );
 DbgLv(1) << "BL: AA : baseline bl" << baseline << bl;
             le_plateau ->setText( QString::number( plateau,     'f', 8 ) );
             plot_range();
@@ -6944,8 +6941,7 @@ void US_Edit::next_step( void )
 
          double bl = sum / 11.0;
 
-         QString str;
-         le_baseline->setText( str.sprintf( "%.3f (%.3e)", baseline, bl ) );
+         le_baseline->setText( QString::asprintf( "%.3f (%.3e)", baseline, bl ) );
 	 DbgLv(1) << "BL: BB : baseline bl" << baseline << bl;
 
 	 baseline_od = bl;
@@ -8423,17 +8419,15 @@ void US_Edit::remove_spikes_auto( void )
 	   airGap_left   = editProfile[ cb_triple->currentText() ][7].toDouble();
 	   airGap_right  = editProfile[ cb_triple->currentText() ][8].toDouble();
 
-	   QString wkstr;
-	   le_airGap->setText( wkstr.sprintf( "%.3f - %.3f",
-					      airGap_left, airGap_right ) );
+	   le_airGap->setText( QString::asprintf( "%.3f - %.3f",
+                                                  airGap_left, airGap_right ) );
 	 }
 
        if ( isMwl )
 	 le_baseline ->setText( QString::number( baseline,     'f', 3 ) );
        else
 	 {
-	   QString str;
-	   le_baseline->setText( str.sprintf( "%.3f (%.3e)", baseline, baseline_od ) );
+            le_baseline->setText( QString::asprintf( "%.3f (%.3e)", baseline, baseline_od ) );
 	 }
 
        if ( autoflow_expType == "ABDE" )
@@ -8503,9 +8497,8 @@ void US_Edit::undo_auto( void )
 	   airGap_left   = editProfile[ cb_triple->currentText() ][7].toDouble();
 	   airGap_right  = editProfile[ cb_triple->currentText() ][8].toDouble();
 
-	   QString wkstr;
-	   le_airGap->setText( wkstr.sprintf( "%.3f - %.3f",
-					      airGap_left, airGap_right ) );
+	   le_airGap->setText( QString::asprintf( "%.3f - %.3f",
+                                                  airGap_left, airGap_right ) );
 	 }
 
 
@@ -8513,8 +8506,7 @@ void US_Edit::undo_auto( void )
 	 le_baseline ->setText( QString::number( baseline,     'f', 3 ) );
        else
 	 {
-	   QString str;
-	   le_baseline->setText( str.sprintf( "%.3f (%.3e)", baseline, baseline_od ) );
+            le_baseline->setText( QString::asprintf( "%.3f (%.3e)", baseline, baseline_od ) );
 	 }
 
        if ( autoflow_expType == "ABDE" )
@@ -9069,8 +9061,7 @@ DbgLv(1) << "EDT:NewTr: DONE";
        le_baseline ->setText( QString::number( baseline,     'f', 3 ) );
      else
        {
-	 QString str;
-	 le_baseline->setText( str.sprintf( "%.3f (%.3e)", baseline, baseline_od ) );
+          le_baseline->setText( QString::asprintf( "%.3f (%.3e)", baseline, baseline_od ) );
        }
 
      qDebug() << "NEW_TRIPLE_AUTO: 3";
@@ -9099,9 +9090,8 @@ DbgLv(1) << "EDT:NewTr: DONE";
 	 airGap_left   = editProfile[ cb_triple->currentText() ][7].toDouble();
 	 airGap_right  = editProfile[ cb_triple->currentText() ][8].toDouble();
 
-	 QString wkstr;
-	 le_airGap->setText( wkstr.sprintf( "%.3f - %.3f",
-					    airGap_left, airGap_right ) );
+	 le_airGap->setText( QString::asprintf( "%.3f - %.3f",
+                                                airGap_left, airGap_right ) );
 
 	 US_DataIO::EditValues  edits;
 	 edits.airGapLeft  = airGap_left;
@@ -11771,7 +11761,6 @@ void US_Edit::prior_equil( void )
       }
 
       // Apply the edits
-      QString wkstr;
 
       meniscus    = parameters.meniscus;
       range_left  = parameters.rangeLeft;
@@ -11793,7 +11782,7 @@ void US_Edit::prior_equil( void )
             sData[ jsd++ ] = parameters.speedData[ jj ];
       }
 
-      le_meniscus->setText( wkstr.sprintf( "%.3f", meniscus ) );
+      le_meniscus->setText( QString::asprintf( "%.3f", meniscus ) );
       pb_meniscus->setIcon( check );
       pb_meniscus->setEnabled( true );
 
@@ -11804,14 +11793,14 @@ void US_Edit::prior_equil( void )
       {
          US_DataIO::adjust_interference( data, parameters );
          US_DataIO::calc_integral      ( data, parameters );
-         le_airGap->setText( wkstr.sprintf( "%.3f - %.3f",
-                  airGap_left, airGap_right ) );
+         le_airGap->setText( QString::asprintf( "%.3f - %.3f",
+                                                airGap_left, airGap_right ) );
          pb_airGap->setIcon( check );
          pb_airGap->setEnabled( true );
       }
 
-      le_dataRange->setText( wkstr.sprintf( "%.3f - %.3f",
-              range_left, range_right ) );
+      le_dataRange->setText( QString::asprintf( "%.3f - %.3f",
+                                                range_left, range_right ) );
       le_dataStart->setText( QString::number( range_left,  'f', 8 ) );
       le_dataEnd  ->setText( QString::number( range_right, 'f', 8 ) );
       pb_dataEnd  ->setIcon( check );
@@ -13703,7 +13692,6 @@ int US_Edit::apply_edits( US_DataIO::EditValues parameters )
    int status = 0;
 
    // Apply the edits with specified parameters
-   QString wkstr;
 
    meniscus    = parameters.meniscus;
    range_left  = parameters.rangeLeft;
@@ -13712,7 +13700,7 @@ int US_Edit::apply_edits( US_DataIO::EditValues parameters )
    baseline    = parameters.baseline;
    odlimit     = parameters.ODlimit;
 
-   le_meniscus->setText( wkstr.sprintf( "%.3f", meniscus ) );
+   le_meniscus->setText( QString::asprintf( "%.3f", meniscus ) );
    pb_meniscus->setIcon( check );
    pb_meniscus->setEnabled( true );
 
@@ -13723,7 +13711,7 @@ int US_Edit::apply_edits( US_DataIO::EditValues parameters )
    {
       US_DataIO::adjust_interference( data, parameters );
       US_DataIO::calc_integral      ( data, parameters );
-      le_airGap->setText( wkstr.sprintf( "%.3f - %.3f",
+      le_airGap->setText( QString::asprintf( "%.3f - %.3f",
                airGap_left, airGap_right ) );
       pb_airGap->setIcon( check );
       pb_airGap->setEnabled( true );
@@ -13747,7 +13735,7 @@ int US_Edit::apply_edits( US_DataIO::EditValues parameters )
 double bl=sum/11.0;
 DbgLv(1) << "BL: DD : baseline bl" << baseline << bl;
 
-   le_baseline->setText( wkstr.sprintf( "%.3f (%.3e)", baseline, sum / 11.0 ) );
+       le_baseline->setText( QString::asprintf( "%.3f (%.3e)", baseline, sum / 11.0 ) );
 
    // Invert
    invert = parameters.invert;
@@ -14388,12 +14376,12 @@ QString US_Edit::scan_info( void )
       int    platx = US_DataIO::index( dd->xvalues, plateau );
       double od    = dd->scanData[ ii ].rvalues[ platx ];
 
-      s1 = s1.sprintf( "%4d",             ii + 1 );
-      s2 = s2.sprintf( "%4d min %2d sec", ctime / 60, ctime % 60 );
-      s3 = s3.sprintf( "%.6f OD",         od );
-      s4 = s4.sprintf( "%5d",             (int)time );
-      s5 = s5.sprintf( "%.5e",            omg2t );
-      s6 = s6.sprintf( "%.1f",            speed );
+      s1 = QString::asprintf( "%4d",             ii + 1 );
+      s2 = QString::asprintf( "%4d min %2d sec", ctime / 60, ctime % 60 );
+      s3 = QString::asprintf( "%.6f OD",         od );
+      s4 = QString::asprintf( "%5d",             (int)time );
+      s5 = QString::asprintf( "%.5e",            omg2t );
+      s6 = QString::asprintf( "%.1f",            speed );
 
       ss += table_row( s1, s2, s3, s4, s5, s6 );
    }
@@ -14431,12 +14419,12 @@ QString US_Edit::scan_info_auto( int trx )
       int    platx = US_DataIO::index( dd->xvalues, plateau );
       double od    = dd->scanData[ ii ].rvalues[ platx ];
 
-      s1 = s1.sprintf( "%4d",             ii + 1 );
-      s2 = s2.sprintf( "%4d min %2d sec", ctime / 60, ctime % 60 );
-      s3 = s3.sprintf( "%.6f OD",         od );
-      s4 = s4.sprintf( "%5d",             (int)time );
-      s5 = s5.sprintf( "%.5e",            omg2t );
-      s6 = s6.sprintf( "%.1f",            speed );
+      s1 = QString::asprintf( "%4d",             ii + 1 );
+      s2 = QString::asprintf( "%4d min %2d sec", ctime / 60, ctime % 60 );
+      s3 = QString::asprintf( "%.6f OD",         od );
+      s4 = QString::asprintf( "%5d",             (int)time );
+      s5 = QString::asprintf( "%.5e",            omg2t );
+      s6 = QString::asprintf( "%.1f",            speed );
 
       ss += table_row( s1, s2, s3, s4, s5, s6 );
    }

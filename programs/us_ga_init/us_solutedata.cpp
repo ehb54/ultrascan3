@@ -831,7 +831,6 @@ int US_SoluteData::reportDataMC( QString& fname, int mc_iters )
       QList< qreal > concs;
       QList< qreal > csums;
       QTextStream ts( &fileo );
-      QString str1;
 
       ts << "*****************************************"
          "**********************************\n\n";
@@ -954,7 +953,7 @@ int US_SoluteData::reportDataMC( QString& fname, int mc_iters )
                vtotal    += bcomp.at( jj ).c;
             csums.append( vtotal );
             ts << tr( "Partial concentration:     " ) <<
-               str1 = QString::asprintf( " %6.4e\n", vtotal );
+               QString::asprintf( " %6.4e\n", vtotal );
 
          }
       }
@@ -1212,17 +1211,17 @@ void US_SoluteData::outputStats( QTextStream& ts, QList< qreal >& vals,
       if ( vhi == vlo )
       {
          ts << tr( "Constant Value:            " ) 
-            << str1.sprintf( "%6.4e\n", vhi   );
+            << QString::asprintf( "%6.4e\n", vhi   );
       }
 
       else
       {
          ts << tr( "Maximum Value:             " ) 
-            << str1.sprintf( "%6.4e\n", vhi   );
+            << QString::asprintf( "%6.4e\n", vhi   );
          ts << tr( "Minimum Value:             " ) 
-            << str1.sprintf( "%6.4e\n", vlo   );
+            << QString::asprintf( "%6.4e\n", vlo   );
          ts << tr( "(Nearly) Constant Value:   " ) 
-            << str1.sprintf( "%6.4e\n", vmean );
+            << QString::asprintf( "%6.4e\n", vmean );
       }
    }
 
@@ -1230,41 +1229,41 @@ void US_SoluteData::outputStats( QTextStream& ts, QList< qreal >& vals,
    {  // Details
       ts << "\n\n" << tr( "Results for the " ) << title << ":\n\n";
       ts << tr( "Maximum Value:             " ) 
-         << str1.sprintf( "%6.4e\n", vhi   );
+         << QString::asprintf( "%6.4e\n", vhi   );
       ts << tr( "Minimum Value:             " ) 
-         << str1.sprintf( "%6.4e\n", vlo   );
+         << QString::asprintf( "%6.4e\n", vlo   );
       ts << tr( "Mean Value:                " ) 
-         << str1.sprintf( "%6.4e\n", vmean );
+         << QString::asprintf( "%6.4e\n", vmean );
       ts << tr( "Median Value:              " ) 
-         << str1.sprintf( "%6.4e\n", vmedi );
+         << QString::asprintf( "%6.4e\n", vmedi );
       ts << tr( "Skew Value:                " ) 
-         << str1.sprintf( "%6.4e\n", skew  );
+         << QString::asprintf( "%6.4e\n", skew  );
       ts << tr( "Kurtosis Value:            " ) 
-         << str1.sprintf( "%6.4e\n", kurto );
+         << QString::asprintf( "%6.4e\n", kurto );
       ts << tr( "Lower Mode Value:          " ) 
-         << str1.sprintf( "%6.4e\n", mode_lo );
+         << QString::asprintf( "%6.4e\n", mode_lo );
       ts << tr( "Upper Mode Value:          " ) 
-         << str1.sprintf( "%6.4e\n", mode_hi );
+         << QString::asprintf( "%6.4e\n", mode_hi );
       ts << tr( "Mode Center:               " ) 
-         << str1.sprintf( "%6.4e\n", mode_cen );
+         << QString::asprintf( "%6.4e\n", mode_cen );
       ts << tr( "95% Confidence Limits:     " ) 
-         << str1.sprintf( "%6.4e, -%6.4e\n",
+         << QString::asprintf( "%6.4e, -%6.4e\n",
          ( conf95hi - mode_cen ), ( mode_cen - conf95lo ) );
       ts << tr( "99% Confidence Limits:     " ) 
-         << str1.sprintf( "%6.4e, -%6.4e\n",
+         << QString::asprintf( "%6.4e, -%6.4e\n",
          ( conf99hi - mode_cen ), ( mode_cen - conf99lo ) );
       ts << tr( "Standard Deviation:        " ) 
-         << str1.sprintf( "%6.4e\n", sdevi );
+         << QString::asprintf( "%6.4e\n", sdevi );
       ts << tr( "Standard Error:            " ) 
-         << str1.sprintf( "%6.4e\n", sderr );
+         << QString::asprintf( "%6.4e\n", sderr );
       ts << tr( "Variance:                  " ) 
-         << str1.sprintf( "%6.4e\n", vari );
+         << QString::asprintf( "%6.4e\n", vari );
       ts << tr( "Correlation Coefficent:    " ) 
-         << str1.sprintf( "%6.4e\n", corr );
+         << QString::asprintf( "%6.4e\n", corr );
       ts << tr( "Number of Bins:            " ) 
          << qRound( binsz ) << "\n";
       ts << tr( "Distribution Area:         " ) 
-         << str1.sprintf( "%6.4e\n", area );
+         << QString::asprintf( "%6.4e\n", area );
 
       str1 = QString::asprintf( "%e", conf95lo ).append( tr( " (low), " ) );
       str2 = QString::asprintf( "%e", conf95hi ).append( tr( " (high)\n" ) );
@@ -1277,12 +1276,12 @@ void US_SoluteData::outputStats( QTextStream& ts, QList< qreal >& vals,
 
    else if ( is_constant )
    {  // Summary (where value is constant)
-      ts << title << str1.sprintf( " %6.4e (**constant**)\n", vmean );
+      ts << title << QString::asprintf( " %6.4e (**constant**)\n", vmean );
    }
 
    else
    {  // Summary
-      ts << title << str1.sprintf( " %6.4e (%6.4e, %6.4e)\n",
+      ts << title << QString::asprintf( " %6.4e (%6.4e, %6.4e)\n",
             vmean, conf95lo, conf95hi );
    }
 }
