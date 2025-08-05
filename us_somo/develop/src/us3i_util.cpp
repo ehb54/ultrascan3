@@ -212,7 +212,7 @@ void US3i_Util::uuid_parse( const QString& in, unsigned char* uu )
 // in truth, that a random number over the given range has hit 1.
 bool US3i_Util::ithTime( int timeinc )
 {
-   int rannum  = qrand() % timeinc;
+   int rannum = QRandomGenerator::global()->bounded(timeinc);
    return ( rannum == 1 );
 }
 
