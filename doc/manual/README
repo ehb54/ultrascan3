@@ -32,21 +32,63 @@ Qt is already a core prerequisite for UltraScan and should be installed as part 
 
 Ensure the Qt binaries are in your `PATH`.
 
-#### LaTeX (for PDF Output)
+## Building the PDF Manual 
 
-A full LaTeX distribution is required:
+### Prerequisites
 
-- Linux:
+You will need:
+
+* full LaTeX distribution 
+
+### macOS Setup
+
+1. Install full MacTeX:
+
+   ```bash
+   brew install --cask mactex
+   ```
+
+2. Add TeX to your PATH:
+
+   ```bash
+   echo 'export PATH=/Library/TeX/texbin:$PATH' >> ~/.zprofile
+   source ~/.zprofile
+   ```
+
+### Linux Setup (Ubuntu/Debian)
+
+Install TeX Live Full:
+
+```bash
+sudo apt update
+sudo apt install texlive-full latexmk -y
+```
+
+### Building the PDF
+
+From the Sphinx documentation directory:
+
+```bash
+cd doc/manual/
+make pdf
+```
+
+The generated PDF will be located at:
+
+```
+build/doc/manual/latex/UltraScanIII.pdf
+```
+### Troubleshooting
+
+* Make sure you are using a full LaTeX distribution (MacTeX or texlive-full).
+
+* If you've changed font configurations or installed new fonts, run:
+
   ```bash
-  sudo apt install texlive-full
+  luaotfload-tool --update --force
   ```
 
-- macOS: https://tug.org/mactex/
-- Windows: https://miktex.org/
-
----
-
-## Building the Documentation
+## Building HTML and QT Help Documentation
 
 Run all commands from: `doc/manual/`
 
@@ -57,15 +99,6 @@ make html
 ```
 
 Output: `build/doc/manual/html/`
-
-### Build PDF
-
-```bash
-make latexpdf
-```
-
-Output: `build/doc/manual/latex/`
-
 
 ### Build Qt Help
 
@@ -110,7 +143,7 @@ For additional help, refer to the UltraScan support resources.
 
 - All output formats are built from the unified `source/` directory.
 - Output locations:
-  - HTML, LaTeX, Qt XML: `build/doc/manual/`
+  - HTML, LaTeX, Qt: `build/doc/manual/`
   - Qt Help binaries (`.qch`, `.qhc`): `bin/`
 
 For Sphinx usage help, see: https://www.sphinx-doc.org

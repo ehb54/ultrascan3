@@ -26,6 +26,9 @@ qhc: qthelp
 install: qthelp qch qhc
 	@cd $(SUBDIR) && make qthelpinstall
 
+pdf:
+	@cd $(SUBDIR) && make pdf
+
 clean:
 	@cd $(SUBDIR) && make clean
 	@rm -f $(OUTDIR)/$(PROJECT).qch $(OUTDIR)/$(PROJECT).qhc

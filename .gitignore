@@ -19,3 +19,4 @@ gui/qrc_images.cpp
 
 /doc/manual/sphinx/
 /cmake-build-debug/
+/build/

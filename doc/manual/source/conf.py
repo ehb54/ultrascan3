@@ -114,21 +114,10 @@ htmlhelp_basename = 'UltraScanIIIdoc'
 # -- Options for LaTeX output ------------------------------------------------
 
 latex_elements = {
-    # The paper size ('letterpaper' or 'a4paper').
-    #
-    # 'papersize': 'letterpaper',
-
-    # The font size ('10pt', '11pt' or '12pt').
-    #
-    # 'pointsize': '10pt',
-
-    # Additional stuff for the LaTeX preamble.
-    #
-    # 'preamble': '',
-
-    # Latex figure (float) alignment
-    #
-    # 'figure_align': 'htbp',
+    'fontpkg': r'''
+\usepackage{fontspec}
+\setmainfont{Libertinus Serif}
+''',
 }
 
 # Grouping the document tree into LaTeX files. List of tuples
@@ -139,6 +128,7 @@ latex_documents = [
      'Emre Brookes, Borries Demeler, Bruce Dubbs, Haben Gabir, Gary Gorbet, Saeed Mortezazadeh, Alexey Savelyev, and Dan Zollars', 'manual'),
 ]
 
+latex_engine = 'lualatex'
 
 # -- Options for manual page output ------------------------------------------
 
