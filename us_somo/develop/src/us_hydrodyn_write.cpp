@@ -212,7 +212,7 @@ void US_Hydrodyn::write_bead_asa(QString fname, vector<PDB_atom> *model) {
    fprintf(f, " N.      Res.       ASA        MAX ASA         %%\n");
 
    float total_asa = 0.0;
-   float total_ref_asa = 0.0;
+   // float total_ref_asa = 0.0;
    float total_vol = 0.0;
    float total_mass = 0.0;
 
@@ -224,7 +224,7 @@ void US_Hydrodyn::write_bead_asa(QString fname, vector<PDB_atom> *model) {
    for (unsigned int i = 0; i < model->size(); i++) {
       if ((*model)[i].active) {
          total_asa += (*model)[i].bead_asa;
-         total_ref_asa += (*model)[i].ref_asa;
+         // total_ref_asa += (*model)[i].ref_asa;
          total_mass += (*model)[i].bead_ref_mw + (*model)[i].bead_ref_ionized_mw_delta;
          // printf("write_bead_asa model[%d].bead_ref_mw %g\n",
          //        i, ((*model)[i].bead_ref_mw) + (*model)[i].bead_ref_ionized_mw_delta);

@@ -152,7 +152,7 @@ US_Config_GUI::US_Config_GUI(QWidget *parent, const char *) : QFrame( parent )
    AUTFBACK( lbl_misc );
    lbl_misc->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
-   lbl_temperature_tol = new QLabel(us_tr(" Temperature Tolerance (ºC):"),this);
+   lbl_temperature_tol = new QLabel(us_tr(" Temperature Tolerance (" + UNICODE_DEGREE_QS + "C):"),this);
    lbl_temperature_tol->setFrameStyle(QFrame::WinPanel|QFrame::Sunken);
    lbl_temperature_tol->setPalette( PALET_LABEL );
    AUTFBACK( lbl_temperature_tol );

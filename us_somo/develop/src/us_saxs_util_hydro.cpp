@@ -3561,7 +3561,7 @@ bool US_Saxs_Util::calc_mw_hydro()
             double chain_scaled_excl_vol   = 0.0;
             model_vector[i].molecule[j].mw = 0.0;
             unsigned int chain_total_e     = 0;
-            unsigned int chain_total_e_noh = 0;
+            // unsigned int chain_total_e_noh = 0;
 
             for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) 
             {
@@ -3598,7 +3598,7 @@ bool US_Saxs_Util::calc_mw_hydro()
                         chain_excl_vol        += excl_vol;
                         chain_scaled_excl_vol += scaled_excl_vol;
                         chain_total_e         += this_e;
-                        chain_total_e_noh     += this_e_noh;
+                        // chain_total_e_noh     += this_e_noh;
 
                         if ( this_atom->resName != "WAT" )
                         {
@@ -8239,8 +8239,8 @@ int US_Saxs_Util::calc_somo( bool no_ovlp_removal, bool parameters_set_first_mod
          
      current_model = i;
      // msg += QString( " %1" ).arg( i + 1 );
-     msg += " " + ( i + 1 );
-     msg_udp += " " + ( i + 1 );
+     msg += " " + QString::number( i + 1 );
+     msg_udp += " " + QString::number( i + 1 );
      // }
    }
    msg += "\n";

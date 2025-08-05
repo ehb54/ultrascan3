@@ -2193,18 +2193,18 @@ namespace zeno {
         ===========================================================
       */
 
-      typedef struct {
-         char fbod[USZ_MAX_ID_SIZE];
-         char fzno[USZ_MAX_ID_SIZE];
-         char fznr[USZ_MAX_ID_SIZE];
-         char fstk[USZ_MAX_ID_SIZE];
-         char fdfl[USZ_MAX_ID_SIZE];
-         char fefl[USZ_MAX_ID_SIZE];
-         char fzh[USZ_MAX_ID_SIZE];
-         char fih[USZ_MAX_ID_SIZE];
-         char fsh[USZ_MAX_ID_SIZE];
-         char fph[USZ_MAX_ID_SIZE];
-      } Cfilenames;
+      // typedef struct {
+      //    char fbod[USZ_MAX_ID_SIZE];
+      //    char fzno[USZ_MAX_ID_SIZE];
+      //    char fznr[USZ_MAX_ID_SIZE];
+      //    char fstk[USZ_MAX_ID_SIZE];
+      //    char fdfl[USZ_MAX_ID_SIZE];
+      //    char fefl[USZ_MAX_ID_SIZE];
+      //    char fzh[USZ_MAX_ID_SIZE];
+      //    char fih[USZ_MAX_ID_SIZE];
+      //    char fsh[USZ_MAX_ID_SIZE];
+      //    char fph[USZ_MAX_ID_SIZE];
+      // } Cfilenames;
       // static Cfilenames *Tfilenames = (Cfilenames*) Xfilenames;
       typedef struct {
          int nbod;
@@ -2233,40 +2233,40 @@ namespace zeno {
          unsigned int silent;
       } Cshush;
       static Cshush *Tshush = (Cshush*) Xshush;
-      typedef struct {
-         int sphere_code;
-         int triangle_code;
-         int disk_code;
-         int open_cylinder_code;
-         int solid_cylinder_code;
-         int donut_code;
-         int ellipsoid_code;
-         int cube_code;
-         int pillar_code;
-         int skin_code;
-         int units_code;
-         int hunits_code;
-         int meter_code;
-         int cm_code;
-         int nm_code;
-         int angstrom_code;
-         int length_code;
-         int temp_code;
-         int celcius_code;
-         int kelvin_code;
-         int mass_code;
-         int da_code;
-         int kda_code;
-         int gram_code;
-         int kg_code;
-         int visc_code;
-         int poise_code;
-         int cp_code;
-         int solvent_code;
-         int water_code;
-         int rlaunch_code;
-         int bf_code;
-      } Cmorse;
+      // typedef struct {
+      //    int sphere_code;
+      //    int triangle_code;
+      //    int disk_code;
+      //    int open_cylinder_code;
+      //    int solid_cylinder_code;
+      //    int donut_code;
+      //    int ellipsoid_code;
+      //    int cube_code;
+      //    int pillar_code;
+      //    int skin_code;
+      //    int units_code;
+      //    int hunits_code;
+      //    int meter_code;
+      //    int cm_code;
+      //    int nm_code;
+      //    int angstrom_code;
+      //    int length_code;
+      //    int temp_code;
+      //    int celcius_code;
+      //    int kelvin_code;
+      //    int mass_code;
+      //    int da_code;
+      //    int kda_code;
+      //    int gram_code;
+      //    int kg_code;
+      //    int visc_code;
+      //    int poise_code;
+      //    int cp_code;
+      //    int solvent_code;
+      //    int water_code;
+      //    int rlaunch_code;
+      //    int bf_code;
+      // } Cmorse;
       puts("z1");
       // static Cmorse *Tmorse = (Cmorse*) Xmorse;
       static int T1,T2;
@@ -5591,9 +5591,9 @@ namespace zeno {
       /*
         Interpret the next input string
       */
-      typedef struct {
-         unsigned int silent;
-      } Cshush;
+      // typedef struct {
+      //    unsigned int silent;
+      // } Cshush;
       // static Cshush *Tshush = (Cshush*) Xshush;
       typedef struct {
          int nbod;
@@ -5867,40 +5867,40 @@ namespace zeno {
                  int /* P2 */,
                  int /* P1 */)
    {
-      typedef struct {
-         int sphere_code;
-         int triangle_code;
-         int disk_code;
-         int open_cylinder_code;
-         int solid_cylinder_code;
-         int donut_code;
-         int ellipsoid_code;
-         int cube_code;
-         int pillar_code;
-         int skin_code;
-         int units_code;
-         int hunits_code;
-         int meter_code;
-         int cm_code;
-         int nm_code;
-         int angstrom_code;
-         int length_code;
-         int temp_code;
-         int celcius_code;
-         int kelvin_code;
-         int mass_code;
-         int da_code;
-         int kda_code;
-         int gram_code;
-         int kg_code;
-         int visc_code;
-         int poise_code;
-         int cp_code;
-         int solvent_code;
-         int water_code;
-         int rlaunch_code;
-         int bf_code;
-      } Cmorse;
+      // typedef struct {
+      //    int sphere_code;
+      //    int triangle_code;
+      //    int disk_code;
+      //    int open_cylinder_code;
+      //    int solid_cylinder_code;
+      //    int donut_code;
+      //    int ellipsoid_code;
+      //    int cube_code;
+      //    int pillar_code;
+      //    int skin_code;
+      //    int units_code;
+      //    int hunits_code;
+      //    int meter_code;
+      //    int cm_code;
+      //    int nm_code;
+      //    int angstrom_code;
+      //    int length_code;
+      //    int temp_code;
+      //    int celcius_code;
+      //    int kelvin_code;
+      //    int mass_code;
+      //    int da_code;
+      //    int kda_code;
+      //    int gram_code;
+      //    int kg_code;
+      //    int visc_code;
+      //    int poise_code;
+      //    int cp_code;
+      //    int solvent_code;
+      //    int water_code;
+      //    int rlaunch_code;
+      //    int bf_code;
+      // } Cmorse;
       // static Cmorse *Tmorse = (Cmorse*) Xmorse;
       typedef struct {
          int nbod;
@@ -10682,18 +10682,18 @@ namespace zeno {
 
    void gettime( char *start )
    {
-      typedef struct {
-         int nbod;
-         int nzno;
-         int nznr;
-         int nstk;
-         int ndfl;
-         int nefl;
-         int nzh;
-         int nih;
-         int nsh;
-         int nph;
-      } Cfilenumbers;
+      // typedef struct {
+      //    int nbod;
+      //    int nzno;
+      //    int nznr;
+      //    int nstk;
+      //    int ndfl;
+      //    int nefl;
+      //    int nzh;
+      //    int nih;
+      //    int nsh;
+      //    int nph;
+      // } Cfilenumbers;
 //       static Cfilenumbers *Tfilenumbers = (Cfilenumbers*) Xfilenumbers;
       // static char datest[10],timest[8];
       /*
@@ -10725,9 +10725,9 @@ namespace zeno {
              int *k1,
              int *k2)
    {
-      typedef struct {
-         int seed;
-      } Crandom;
+      // typedef struct {
+      //    int seed;
+      // } Crandom;
 //       static Crandom *Trandom = (Crandom*) Xrandom;
       static int jrand;
       static float rr;
@@ -14769,12 +14769,12 @@ bool US_Hydrodyn::calc_zeno()
                            ;
 
                         {
-                           double use_rs    = this_data.results.rs;
-                           double use_rs_sd = this_data.results.rs_sd;
-                           if ( hydro.unit == -10 ) {
-                              use_rs    *= 10;
-                              use_rs_sd *= 10;
-                           }
+                           // double use_rs    = this_data.results.rs;
+                           // double use_rs_sd = this_data.results.rs_sd;
+                           // if ( hydro.unit == -10 ) {
+                           //    use_rs    *= 10;
+                           //    use_rs_sd *= 10;
+                           // }
 
                            add_to_zeno +=
                               QString(

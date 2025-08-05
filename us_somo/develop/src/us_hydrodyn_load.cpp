@@ -2282,7 +2282,7 @@ void US_Hydrodyn::calc_mw()
       model_vector[i].ionized_mw_delta  = 0.0;
       model_vector[i].volume            = 0.0;
       double tot_excl_vol               = 0.0;
-      double tot_scaled_excl_vol        = 0.0;
+      // double tot_scaled_excl_vol        = 0.0;
       unsigned int total_e              = 0;
       // unsigned int total_e_noh   = 0;
       point cm;
@@ -2327,11 +2327,11 @@ void US_Hydrodyn::calc_mw()
          }
 
          for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) {
-            double chain_excl_vol          = 0.0;
-            double chain_scaled_excl_vol   = 0.0;
+            // double chain_excl_vol          = 0.0;
+            // double chain_scaled_excl_vol   = 0.0;
             model_vector[i].molecule[j].mw = 0.0;
-            unsigned int chain_total_e     = 0;
-            unsigned int chain_total_e_noh = 0;
+            // unsigned int chain_total_e     = 0;
+            // unsigned int chain_total_e_noh = 0;
             double molecule_mw             = 0e0;
 
             for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) {
@@ -2407,16 +2407,16 @@ void US_Hydrodyn::calc_mw()
                                                            si) ) {
                         editor_msg( "dark red", saxs_util->errormsg );
                      } else {
-                        chain_excl_vol        += excl_vol;
-                        chain_scaled_excl_vol += scaled_excl_vol;
-                        chain_total_e         += this_e;
-                        chain_total_e_noh     += this_e_noh;
+                        // chain_excl_vol        += excl_vol;
+                        // chain_scaled_excl_vol += scaled_excl_vol;
+                        // chain_total_e         += this_e;
+                        // chain_total_e_noh     += this_e_noh;
                         this_atom->si          = si;
                         model_vector_as_loaded[ i ].molecule[ j ].atom[ k ].si = si;
                         if ( this_atom->resName != "WAT" )
                         {
                            tot_excl_vol          += excl_vol;
-                           tot_scaled_excl_vol   += scaled_excl_vol;
+                           // tot_scaled_excl_vol   += scaled_excl_vol;
                            total_e               += this_e;
                         }
                         model_vector[i].volume += excl_vol;

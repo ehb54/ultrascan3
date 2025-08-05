@@ -902,10 +902,10 @@ void US_Hydrodyn_Saxs_2d::start()
    {
       unsigned int current_model = selected_models[ i ];
 
-      double tot_excl_vol      = 0e0;
-      double tot_excl_vol_noh  = 0e0;
-      unsigned int total_e     = 0;
-      unsigned int total_e_noh = 0;
+      // double tot_excl_vol      = 0e0;
+      // double tot_excl_vol_noh  = 0e0;
+      // unsigned int total_e     = 0;
+      // unsigned int total_e_noh = 0;
 
       editor_msg( "gray", 
                   QString( us_tr( "Preparing file %1 model %2." ) )
@@ -1046,7 +1046,7 @@ void US_Hydrodyn_Saxs_2d::start()
                }
             }
 
-            total_e += hybrid_map[ hybrid_name ].num_elect;
+            // total_e += hybrid_map[ hybrid_name ].num_elect;
             if ( this_atom->name == "OW" && our_saxs_options->swh_excl_vol > 0e0 )
             {
                new_atom.excl_vol = our_saxs_options->swh_excl_vol;
@@ -1071,12 +1071,12 @@ void US_Hydrodyn_Saxs_2d::start()
             if ( this_atom->name != "OW" )
             {
                new_atom.excl_vol *= our_saxs_options->scale_excl_vol;
-               tot_excl_vol_noh  += new_atom.excl_vol;
-               total_e_noh       += hybrid_map[ hybrid_name ].num_elect;
+               // tot_excl_vol_noh  += new_atom.excl_vol;
+               // total_e_noh       += hybrid_map[ hybrid_name ].num_elect;
             }
 
             new_atom.radius = hybrid_map[hybrid_name].radius;
-            tot_excl_vol += new_atom.excl_vol;
+            // tot_excl_vol += new_atom.excl_vol;
 
             new_atom.saxs_name = hybrid_map[hybrid_name].saxs_name; 
             new_atom.hybrid_name = hybrid_name;

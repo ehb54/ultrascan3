@@ -2603,7 +2603,8 @@ static void
 stampa_ris()
 {
 
-   float einst, bc, temp;
+   float einst, bc;
+   // float temp;
    int i;
    if (cc == 1)
       bc = 6;
@@ -2744,13 +2745,13 @@ stampa_ris()
 
    // printf("%s%.2f\n", "- FRICTIONAL RATIO                = ", supc_results->ff0);
 
-   temp = 0.0;
+   // temp = 0.0;
    for (i = 0; i < 3; i++)
-      temp += 1.0E-21 / Dr[i * 4] * pow(fconv, 3);
+      // temp += 1.0E-21 / Dr[i * 4] * pow(fconv, 3);
    //   printf("\n%s%.3e\t%s (%s)\n", "- ROT. FRICT. COEFF.    = ", temp / 3.0, "[g*cm^2/s] ", tag1.toLatin1().data());
-   temp = 0.0;
+   // temp = 0.0;
    for (i = 0; i < 3; i++)
-      temp += (KB * TE * Dr[i * 4] / 1.0E-21) * pow(fconv1, 3);
+      // temp += (KB * TE * Dr[i * 4] / 1.0E-21) * pow(fconv1, 3);
    //   printf("%s%.0f\t%s (%s)\n\n", "- ROT. DIFF. COEFF.     = ", temp / 3.0, "[1/s] ", tag2.toLatin1().data());
 
    // #if !defined( MINGW )
@@ -5461,7 +5462,7 @@ initarray(int k)
 
       // int mw_c = 0;
       // float pre_mw = 0.0;
-      float post_mw = 0.0;
+      // float post_mw = 0.0;
       // double dpre_mw = 0e0;
       // double dpost_mw = 0e0;
 
@@ -5483,7 +5484,7 @@ initarray(int k)
          //    dpre_mw += dt[i].m;
          // }
          dt[i].m = (float)((int)((double)dt[i].m * 100e0 + 5e-1)) / 1e2;
-         post_mw += dt[i].m;
+         // post_mw += dt[i].m;
          // if ( us_hydrodyn->advanced_config.debug_1 )
          // {
          //    dpost_mw += ((int)((double)dt[i].m * 100e0 + 5e-1)) / 1e2;

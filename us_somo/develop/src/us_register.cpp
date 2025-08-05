@@ -166,7 +166,7 @@ bool US_Register::read()
 #define TITLE    "Intel/AMD 32-bit"
 #endif
 
-#ifdef OPTERON
+#if defined( OPTERON ) && !defined( PLATFORM )
 #define PLATFORM "opteron"
 #undef TITLE
 #define TITLE    "Intel/AMD 64-bit"
@@ -241,6 +241,7 @@ bool US_Register::read()
 
 #ifdef OSX
 #define OS "osx"
+#undef OS_TITLE
 #define OS_TITLE " Macintosh OS-X"
 #endif
 

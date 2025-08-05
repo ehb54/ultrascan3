@@ -537,7 +537,7 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
                .arg( q.size() ? q[ q.size() - 1 ] : 0 )
                .arg( q.size() > 1 ? q[ 1 ] - q[ 0 ] : 0 );
             qsl_headers[ 0 ] = qsl[ 0 ];
-            TSO << qsl[ 0 ] << endl;
+            TSO << qsl[ 0 ] << "\n";
             QStringList new_qsl;
             QStringList new_qsl_errors;
             new_qsl << qsl[ 0 ];
@@ -803,7 +803,7 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
                      qs_tmp.replace(QRegExp("^\""),QString("\"%1: ").arg(QFileInfo(f2).baseName()));
                   }
                   qsl << qs_tmp;
-                  // TSO << "yes, all match\nadding:" << qs_tmp << endl;
+                  // TSO << "yes, all match\nadding:" << qs_tmp << "\n";
                } else {
                   // TSO << "not all match, interpolate\n";
 
@@ -939,7 +939,7 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
             .arg( q.size() ? q[ 0 ] : 0 )
             .arg( q.size() ? q[ q.size() - 1 ] : 0 );
          qsl_headers[ 0 ] = qsl[ 0 ];
-         TSO << qsl[ 0 ] << endl;
+         TSO << qsl[ 0 ] << "\n";
          QStringList new_qsl;
          QStringList new_qsl_errors;
          new_qsl << qsl[ 0 ];
@@ -2037,7 +2037,7 @@ void US_Hydrodyn_Saxs::load_saxs( QString filename, bool just_plotted_curves, QS
          test_line.replace(QRegExp("\\s+$"),"");
          QStringList test_list = (test_line).split( QRegExp("\\s+") , Qt::SkipEmptyParts );
          number_of_fields = test_list.size();
-         TSO << "number of fields: " << number_of_fields << endl;
+         TSO << "number of fields: " << number_of_fields << Qt::endl;
       }
 
       if ( scaleto.isEmpty() && !no_scaling ) {
@@ -2088,7 +2088,7 @@ void US_Hydrodyn_Saxs::load_saxs( QString filename, bool just_plotted_curves, QS
                   cerr << "US_Hydrodyn_Saxs::load_saxs : unknown type error" << endl;
                   return;
                }
-               TSO << " column " << Icolumn << endl;
+               TSO << " column " << Icolumn << Qt::endl;
             } 
             else
             {
@@ -2184,7 +2184,7 @@ void US_Hydrodyn_Saxs::load_saxs( QString filename, bool just_plotted_curves, QS
                   cerr << "US_Hydrodyn_Saxs::load_saxs : unknown type error" << endl;
                   return;
                }
-               TSO << " column " << Icolumn << endl;
+               TSO << " column " << Icolumn << Qt::endl;
             } 
             else
             {
@@ -2238,7 +2238,7 @@ void US_Hydrodyn_Saxs::load_saxs( QString filename, bool just_plotted_curves, QS
          if ( qv[i].contains(QRegExp("^#")) ||
               rx_ok_line.indexIn( qv[i] ) == -1 )
          {
-            TSO << "not ok: " << qv[i] << endl; 
+            TSO << "not ok: " << qv[i] << Qt::endl; 
             continue;
          }
          
@@ -2287,9 +2287,9 @@ void US_Hydrodyn_Saxs::load_saxs( QString filename, bool just_plotted_curves, QS
          }
       }
 
-      TSO << "q_range after load: " << q[0] << " , " << q[q.size() - 1] << endl;
+      TSO << "q_range after load: " << q[0] << " , " << q[q.size() - 1] << Qt::endl;
 
-      TSO << QFileInfo(filename).fileName() << endl;
+      TSO << QFileInfo(filename).fileName() << Qt::endl;
       // turn off cropping
       //
       // if ( do_crop )
@@ -2307,7 +2307,7 @@ void US_Hydrodyn_Saxs::load_saxs( QString filename, bool just_plotted_curves, QS
       //    }
       // }
          
-      // TSO << "q_range after crop: " << q[0] << " , " << q[q.size() - 1] << endl;
+      // TSO << "q_range after crop: " << q[0] << " , " << q[q.size() - 1] << Qt::endl;
 
       if ( q.size() &&
            !scaling_target.isEmpty() && 
@@ -2575,7 +2575,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
                      tmp2_qsl.push_back("\"MW (Daltons)\"");
                      tmp2_qsl.push_back("\"Area\"");
                      delta_r = tmp_qsl[3].toDouble() - tmp_qsl[2].toDouble();
-                     TSO << "delta_r found: " << delta_r << endl;
+                     TSO << "delta_r found: " << delta_r << Qt::endl;
                   } else {
                      tmp2_qsl.push_back(QString("%1").arg(get_mw(tmp_qsl[0], false)));
                      double tmp_area = 0e0;
@@ -2596,8 +2596,8 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
                   new_qsl.push_back(qsl[i]);
                }
             }
-            // TSO << "orginal csv:\n" << qsl.join("\n") << endl;
-            // TSO << "new csv:\n" << new_qsl.join("\n") << endl;
+            // TSO << "orginal csv:\n" << qsl.join("\n") << Qt::endl;
+            // TSO << "new csv:\n" << new_qsl.join("\n") << Qt::endl;
             qsl = new_qsl;
          }
 
@@ -2740,7 +2740,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
                            tmp2_qsl.push_back("\"MW (Daltons)\"");
                            tmp2_qsl.push_back("\"Area\"");
                            delta_r = tmp_qsl[3].toDouble() - tmp_qsl[2].toDouble();
-                           TSO << "delta_r found: " << delta_r << endl;
+                           TSO << "delta_r found: " << delta_r << Qt::endl;
                         } else {
                            tmp2_qsl.push_back(QString("%1").arg(get_mw(tmp_qsl[0], false)));
                            double tmp_area = 0e0;
@@ -2761,8 +2761,8 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
                         new_qsl.push_back(qsl[i]);
                      }
                   }
-                  // TSO << "orginal csv:\n" << qsl.join("\n") << endl;
-                  // TSO << "new csv:\n" << new_qsl.join("\n") << endl;
+                  // TSO << "orginal csv:\n" << qsl.join("\n") << Qt::endl;
+                  // TSO << "new csv:\n" << new_qsl.join("\n") << Qt::endl;
                   qsl2 = new_qsl;
                }
 
@@ -2910,7 +2910,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
                            qs_tmp.replace(QRegExp("^\""),QString("\"%1: ").arg(QFileInfo(f2).baseName()));
                         }
                         qsl << qs_tmp;
-                        // TSO << "yes, all match\nadding:" << qs_tmp << endl;
+                        // TSO << "yes, all match\nadding:" << qs_tmp << Qt::endl;
                         {
                            QStringList qsl_pr_8;
                            QStringList new_qsl = qs_tmp.split( "," );
@@ -3129,7 +3129,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
          {
             TSO << r[i] << ",";
          }
-         TSO << endl;
+         TSO << Qt::endl;
 #endif
       
          // build a list of names
@@ -3308,7 +3308,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
             
             if ( map_sel_names.count(qsl_tmp[0]) )
             {
-               // TSO << "loading: " << qsl_tmp[0] << endl;
+               // TSO << "loading: " << qsl_tmp[0] << Qt::endl;
 
                pr      .clear();
                pr_error.clear();
@@ -3409,7 +3409,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
                {
                   TSO << pr[i] << ",";
                }
-               TSO << endl;
+               TSO << Qt::endl;
 #endif
                // plot it
                vector < double > this_r = r;
@@ -3592,7 +3592,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
                {
                   TSO << sum_pr[i] << ",";
                }
-               TSO << endl;
+               TSO << Qt::endl;
                
                TSO << "sum pr2 (" << sum_pr2.size() << "): ";
                
@@ -3600,7 +3600,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
                {
                   TSO << sum_pr2[i] << ",";
                }
-               TSO << endl;
+               TSO << Qt::endl;
                
                TSO << "std values (" << std_dev.size() << "): ";
                
@@ -3608,7 +3608,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
                {
                   TSO << std_dev[i] << ",";
                }
-               TSO << endl;
+               TSO << Qt::endl;
 #endif
                pr = sum_pr;
                for ( unsigned int i = 0; i < sum_pr.size(); i++ )
@@ -3977,7 +3977,7 @@ void US_Hydrodyn_Saxs::rescale_iqq_curve( QString scaling_target,
    }
 
    unsigned int iq_pos = plotted_iq_names_to_pos[scaling_target];
-   TSO << "scaling target pos is " << iq_pos << endl;
+   TSO << "scaling target pos is " << iq_pos << Qt::endl;
    double target_q_min = plotted_q[iq_pos][0];
    double target_q_max = plotted_q[iq_pos][plotted_q[iq_pos].size() - 1];
    double source_q_min = q[0];
@@ -4502,7 +4502,7 @@ void US_Hydrodyn_Saxs::load_sans( QString filename, bool just_plotted_curves )
          test_line.replace(QRegExp("\\s+$"),"");
          QStringList test_list = (test_line).split( QRegExp("\\s+") , Qt::SkipEmptyParts );
          number_of_fields = test_list.size();
-         TSO << "number of fields: " << number_of_fields << endl;
+         TSO << "number of fields: " << number_of_fields << Qt::endl;
       }
 
       set_scaling_target( scaling_target );
@@ -4547,7 +4547,7 @@ void US_Hydrodyn_Saxs::load_sans( QString filename, bool just_plotted_curves )
                   cerr << "US_Hydrodyn_Saxs::load_saxs : unknown type error" << endl;
                   return;
                }
-               TSO << " column " << Icolumn << endl;
+               TSO << " column " << Icolumn << Qt::endl;
             } 
             else
             {
@@ -4643,7 +4643,7 @@ void US_Hydrodyn_Saxs::load_sans( QString filename, bool just_plotted_curves )
                   cerr << "US_Hydrodyn_Saxs::load_saxs : unknown type error" << endl;
                   return;
                }
-               TSO << " column " << Icolumn << endl;
+               TSO << " column " << Icolumn << Qt::endl;
             } 
             else
             {
@@ -4688,7 +4688,7 @@ void US_Hydrodyn_Saxs::load_sans( QString filename, bool just_plotted_curves )
          if ( qv[i].contains(QRegExp("^#")) ||
               rx_ok_line.indexIn( qv[i] ) == -1 )
          {
-            TSO << "not ok: " << qv[i] << endl; 
+            TSO << "not ok: " << qv[i] << Qt::endl; 
             continue;
          }
          
@@ -4737,10 +4737,10 @@ void US_Hydrodyn_Saxs::load_sans( QString filename, bool just_plotted_curves )
          }
       }
 
-      TSO << "q_range after load: " << q[0] << " , " << q[q.size() - 1] << endl;
+      TSO << "q_range after load: " << q[0] << " , " << q[q.size() - 1] << Qt::endl;
 
       // turn off cropping
-      // TSO << QFileInfo(filename).fileName() << endl;
+      // TSO << QFileInfo(filename).fileName() << Qt::endl;
       // if ( 0 &&  do_crop )
       // {
       //    if ( Icolumn2 )
@@ -4756,7 +4756,7 @@ void US_Hydrodyn_Saxs::load_sans( QString filename, bool just_plotted_curves )
       //    }
       // }
          
-      // TSO << "q_range after crop: " << q[0] << " , " << q[q.size() - 1] << endl;
+      // TSO << "q_range after crop: " << q[0] << " , " << q[q.size() - 1] << Qt::endl;
 
       if ( q.size() &&
            !scaling_target.isEmpty() && 
@@ -4960,7 +4960,7 @@ void US_Hydrodyn_Saxs::load_gnom()
                   q.push_back(rx5.cap(1).toDouble() * units );
                   I_exp.push_back(rx5.cap(2).toDouble());
                   I_reg.push_back(rx5.cap(5).toDouble());
-                  // cout << "iqq point: " << rx5.cap(1).toDouble() << " " << rx5.cap(5).toDouble() << endl;
+                  // cout << "iqq point: " << rx5.cap(1).toDouble() << " " << rx5.cap(5).toDouble() << Qt::endl;
                } else {
                   // end of iqq?
                   if ( rx2.indexIn(tmp) == -1 )
@@ -5006,7 +5006,7 @@ void US_Hydrodyn_Saxs::load_gnom()
                   r  .push_back(rx3.cap(1).toDouble() / units);
                   pr .push_back(rx3.cap(2).toDouble());
                   pre.push_back(rx3.cap(3).toDouble());
-                  // cout << "prr point: " << rx3.cap(1).toDouble() << " " << rx3.cap(2).toDouble() << endl;
+                  // cout << "prr point: " << rx3.cap(1).toDouble() << " " << rx3.cap(2).toDouble() << Qt::endl;
                } else {
                   // end of prr
                   TSO << "end of prr\n";

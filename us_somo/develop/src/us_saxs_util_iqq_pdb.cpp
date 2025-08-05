@@ -704,10 +704,10 @@ bool US_Saxs_Util::calc_saxs_iq_native_debye()
       iqq_timers.start_timer( "iqq native debye" );
       iqq_timers.start_timer( "iqq native debye setup" );
 #endif
-      double tot_excl_vol      = 0e0;
-      double tot_excl_vol_noh  = 0e0;
-      unsigned int total_e     = 0;
-      unsigned int total_e_noh = 0;
+      // double tot_excl_vol      = 0e0;
+      // double tot_excl_vol_noh  = 0e0;
+      // unsigned int total_e     = 0;
+      // unsigned int total_e_noh = 0;
       unsigned int current_model = i;
       noticemsg += QString("Preparing model %1 for SAXS plot.\n").arg(model_vector[ current_model ].model_id);
          
@@ -801,7 +801,7 @@ bool US_Saxs_Util::calc_saxs_iq_native_debye()
             }
 
 
-            total_e += hybrid_map[ hybrid_name ].num_elect;
+            // total_e += hybrid_map[ hybrid_name ].num_elect;
             if ( this_atom->name == "OW" && our_saxs_options.swh_excl_vol > 0e0 )
             {
                new_atom.excl_vol = our_saxs_options.swh_excl_vol;
@@ -813,11 +813,11 @@ bool US_Saxs_Util::calc_saxs_iq_native_debye()
             if ( this_atom->name != "OW" )
             {
                new_atom.excl_vol *= our_saxs_options.scale_excl_vol;
-               tot_excl_vol_noh  += new_atom.excl_vol;
-               total_e_noh       += hybrid_map[ hybrid_name ].num_elect;
+               // tot_excl_vol_noh  += new_atom.excl_vol;
+               // total_e_noh       += hybrid_map[ hybrid_name ].num_elect;
             }
             new_atom.radius = hybrid_map[hybrid_name].radius;
-            tot_excl_vol += new_atom.excl_vol;
+            // tot_excl_vol += new_atom.excl_vol;
 
             new_atom.saxs_name = hybrid_map[hybrid_name].saxs_name; 
             new_atom.hybrid_name = hybrid_name;
@@ -1182,10 +1182,10 @@ bool US_Saxs_Util::calc_saxs_iq_native_hybrid()
       iqq_timers.start_timer( "iqq hybrid debye" );
       iqq_timers.start_timer( "iqq hybrid debye setup" );
 #endif
-      double tot_excl_vol      = 0e0;
-      double tot_excl_vol_noh  = 0e0;
-      unsigned int total_e     = 0;
-      unsigned int total_e_noh = 0;
+      // double tot_excl_vol      = 0e0;
+      // double tot_excl_vol_noh  = 0e0;
+      // unsigned int total_e     = 0;
+      // unsigned int total_e_noh = 0;
       unsigned int current_model = i;
       noticemsg += QString("Preparing model %1 for SAXS plot.\n").arg(model_vector[ current_model ].model_id);
          
@@ -1271,7 +1271,7 @@ bool US_Saxs_Util::calc_saxs_iq_native_hybrid()
                }
             }
 
-            total_e += hybrid_map[ hybrid_name ].num_elect;
+            // total_e += hybrid_map[ hybrid_name ].num_elect;
             if ( this_atom->name == "OW" && our_saxs_options.swh_excl_vol > 0e0 )
             {
                new_atom.excl_vol = our_saxs_options.swh_excl_vol;
@@ -1283,11 +1283,11 @@ bool US_Saxs_Util::calc_saxs_iq_native_hybrid()
             if ( this_atom->name != "OW" )
             {
                new_atom.excl_vol *= our_saxs_options.scale_excl_vol;
-               tot_excl_vol_noh  += new_atom.excl_vol;
-               total_e_noh       += hybrid_map[ hybrid_name ].num_elect;
+               // tot_excl_vol_noh  += new_atom.excl_vol;
+               // total_e_noh       += hybrid_map[ hybrid_name ].num_elect;
             }
             new_atom.radius = hybrid_map[hybrid_name].radius;
-            tot_excl_vol += new_atom.excl_vol;
+            // tot_excl_vol += new_atom.excl_vol;
 
             new_atom.saxs_name = hybrid_map[hybrid_name].saxs_name; 
             new_atom.hybrid_name = hybrid_name;

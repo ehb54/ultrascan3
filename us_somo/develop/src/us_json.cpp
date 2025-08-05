@@ -11,7 +11,7 @@ map < QString, QString > US_Json::split( QString qs )
 
    map < QString, QString > result;
 
-   qs.trimmed();
+   qs = qs.trimmed();
 
    bool in_json = false;
    bool in_tok1 = false;

@@ -536,7 +536,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_sh()
       double                *Fp;
       shd_double            qp_t_rtp0;
 
-      complex < shd_double > tmp_cd;
+      // complex < shd_double > tmp_cd;
 
       complex < float > *i_lp;
       // complex < float > *Ap;

@@ -4501,10 +4501,10 @@ void US_Hydrodyn_Batch::save_csv_saxs_prr()
               vector_double_to_csv(saxs_r).toLatin1().data(),
               saxs_header_prr.remove("\n").toLatin1().data()
               );
-      float sum_mw = 0.0;
+      // float sum_mw = 0.0;
       for ( unsigned int i = 0; i < csv_source_name_prr.size(); i++ )
       {
-         sum_mw += saxs_prr_mw[i];
+         // sum_mw += saxs_prr_mw[i];
          fprintf(of, "\"%s\",%.2f,%.2f,\"%s\",%s\n", 
                  csv_source_name_prr[i].toLatin1().data(),
                  saxs_prr_mw[i],
@@ -4513,10 +4513,10 @@ void US_Hydrodyn_Batch::save_csv_saxs_prr()
                  vector_double_to_csv(saxs_prr[i]).toLatin1().data());
       }
       fprintf(of, "\n");
-      if ( csv_source_name_prr.size() )
-      {
-         sum_mw /= csv_source_name_prr.size();
-      }
+      // if ( csv_source_name_prr.size() )
+      // {
+      //    sum_mw /= csv_source_name_prr.size();
+      // }
       for ( unsigned int i = 0; i < csv_source_name_prr.size(); i++ )
       {
          fprintf(of, "\"%s\",%.2f,%.2f,\"%s\",%s\n", 

@@ -231,7 +231,7 @@ bool US_Saxs_Util::select_residue_file( QString filename )
 
 void US_Saxs_Util::calc_bead_mw( residue *res )
 {
-   double rmw = 0.0;
+   // double rmw = 0.0;
    for (unsigned int i=0; i<(*res).r_bead.size(); i++)
    {
       (*res).r_bead[i].mw = 0.0;
@@ -240,7 +240,7 @@ void US_Saxs_Util::calc_bead_mw( residue *res )
          if ((*res).r_atom[j].bead_assignment == i)
          {
             (*res).r_bead[i].mw += (*res).r_atom[j].hybrid.mw;
-            rmw += (*res).r_atom[j].hybrid.mw;
+            // rmw += (*res).r_atom[j].hybrid.mw;
          }
       }
    }
@@ -1141,7 +1141,7 @@ bool US_Saxs_Util::calc_mw()
             double chain_scaled_excl_vol   = 0.0;
             model_vector[i].molecule[j].mw = 0.0;
             unsigned int chain_total_e     = 0;
-            unsigned int chain_total_e_noh = 0;
+            // unsigned int chain_total_e_noh = 0;
 
             for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) 
             {
@@ -1178,7 +1178,7 @@ bool US_Saxs_Util::calc_mw()
                         chain_excl_vol        += excl_vol;
                         chain_scaled_excl_vol += scaled_excl_vol;
                         chain_total_e         += this_e;
-                        chain_total_e_noh     += this_e_noh;
+                        // chain_total_e_noh     += this_e_noh;
 
                         if ( this_atom->resName != "WAT" )
                         {

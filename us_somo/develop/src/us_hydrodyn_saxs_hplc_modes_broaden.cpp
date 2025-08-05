@@ -418,6 +418,8 @@ static double discrete_area_under_curve( const vector < double > & x, const vect
 }
 
 static double discrete_area_under_curve( const vector < double > & org_x, const vector < double > & org_y, double start_x, double end_x, QString msg = "" ) {
+   (void) msg; // to silence the warning
+
    double area = 0;
 
    vector < double > x;

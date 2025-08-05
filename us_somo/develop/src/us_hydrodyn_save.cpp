@@ -2814,8 +2814,8 @@ QString US_Hydrodyn_Save::hydroFormatStats(vector < save_data > stats, enum Hydr
    double rv[5];
    double s[5];
    double rs[5];
-   double avgv = 0.0;
-   double avgrv = 0.0;
+   // double avgv = 0.0;
+   // double avgrv = 0.0;
 
    v[0] = stats[0].rel_times_tau_1;
    v[1] = stats[0].rel_times_tau_2;
@@ -2868,8 +2868,8 @@ QString US_Hydrodyn_Save::hydroFormatStats(vector < save_data > stats, enum Hydr
    // compute averages
    for ( unsigned int i = 0; i < 5; i++ )
    {
-      avgv += v[i] * w[i];
-      avgrv += rv[i] * rw[i];
+      // avgv += v[i] * w[i];
+      // avgrv += rv[i] * rw[i];
    }
 
    //   printf("avgv %f avgrv %f\n", avgv, avgrv);
@@ -2898,8 +2898,8 @@ QString US_Hydrodyn_Save::hydroFormatStats(vector < save_data > stats, enum Hydr
    // compute weights
    sumw = 0.0;
    sumrw = 0.0;
-   double sdv = 0.0;
-   double sdrv = 0.0;
+   // double sdv = 0.0;
+   // double sdrv = 0.0;
 
    // setup weights
    for ( unsigned int i = 0; i < 5; i++ )
@@ -2923,11 +2923,11 @@ QString US_Hydrodyn_Save::hydroFormatStats(vector < save_data > stats, enum Hydr
 
    // compute averages
 
-   for ( unsigned int i = 0; i < 5; i++ )
-   {
-      sdv += v[i] * w[i];
-      sdrv += rv[i] * rw[i];
-   }
+   // for ( unsigned int i = 0; i < 5; i++ )
+   // {
+   //    sdv += v[i] * w[i];
+   //    sdrv += rv[i] * rw[i];
+   // }
 
    //   printf("sdv %f sdrv %f\n", sdv, sdrv);
 

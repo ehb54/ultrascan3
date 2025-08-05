@@ -3083,7 +3083,7 @@ void US_Hydrodyn_Mals::create_istar_q() {
    // extc_info( "extc after create_istar_q" );
 }
 
-bool US_Hydrodyn_Mals::create_istar_q( QStringList files, double t_min, double t_max ) {
+bool US_Hydrodyn_Mals::create_istar_q( QStringList /* files */, double /* t_min */, double /* t_max */ ) {
    QMessageBox::critical( this,
                              windowTitle() + us_tr( ": Make I*(q)" ),
                              us_tr( "Make I*(q) with Gaussians not currently implemented" )
