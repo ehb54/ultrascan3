@@ -2672,18 +2672,18 @@ DbgLv(1) << "wrMo: tripleID" << tripleID << "dates" << dates;
    if ( mc_iterations > 1 )
       iterID = QString::asprintf( "mc%04d", mc_iter );
    else if ( fit_menbot )
-      iterID::asprintf( "i%02d-m%05db%05d", 
-                        menibott_ndx + 1,
-                        (int)( meniscus_value * 10000 ),
-                        (int)( bottom_value * 10000 ) );
+      iterID = QString::asprintf( "i%02d-m%05db%05d", 
+                                  menibott_ndx + 1,
+                                  (int)( meniscus_value * 10000 ),
+                                  (int)( bottom_value * 10000 ) );
    else if (  fit_meni )
-      iterID::asprintf( "i%02d-m%05d", 
-                        meniscus_run + 1,
-                        (int)( meniscus_value * 10000 ) );
+      iterID = QString::asprintf( "i%02d-m%05d", 
+                                  meniscus_run + 1,
+                                  (int)( meniscus_value * 10000 ) );
    else if (  fit_bott )
-      iterID::asprintf( "i%02d-b%05d", 
-                        bottom_run + 1,
-                        (int)( bottom_value * 10000 ) );
+      iterID = QString::asprintf( "i%02d-b%05d", 
+                                  bottom_run + 1,
+                                  (int)( bottom_value * 10000 ) );
    else
       iterID = "i01";
 
