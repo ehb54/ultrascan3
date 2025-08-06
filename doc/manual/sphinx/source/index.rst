@@ -19,15 +19,24 @@ Welcome to UltraScan III's Documentation and Resource!
    :caption: Table of Content:
    
    us_edit
-   time_derivative
-   fit_meniscus
    advanced_config
+   fit_meniscus
+
    vhw_enhanced
    vhw_distrib_plot
    vhw_combine
-   second_moment
+
+   pseudo3d_combine
    
 
+.. toctree::
+   :maxdepth: 1
+   :caption: Analysis and Diagnostics: 
+
+   time_derivative
+   vhw_enhanced
+   vhw_distrib_plot
+   second_moment
 
 
 

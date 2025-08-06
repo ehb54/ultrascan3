@@ -1,0 +1,247 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+    <title>van Holde - Weishcet Enhanced Analysis &#8212; UltraScan III 0.0.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/haiku.css" />
+    <link rel="stylesheet" type="text/css" href="_static/custom.css" />
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/sphinx_highlight.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="UltraScan vHW Distribution Plot" href="vhw_distrib_plot.html" />
+    <link rel="prev" title="Advanced Configuration Panel" href="advanced_config.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="index.html">
+          <span>UltraScan III 0.0.1 documentation</span></a></h1>
+        <h2 class="heading"><span>van Holde - Weishcet Enhanced Analysis</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="top navigation">
+      
+        <p>
+        «&#160;&#160;<a href="advanced_config.html">Advanced Configuration Panel</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="vhw_distrib_plot.html">UltraScan vHW Distribution Plot</a>&#160;&#160;»
+        </p>
+
+      </div>
+      <div class="content" role="main">
+        
+        
+  <section id="van-holde-weishcet-enhanced-analysis">
+<h1>van Holde - Weishcet Enhanced Analysis<a class="headerlink" href="#van-holde-weishcet-enhanced-analysis" title="Permalink to this heading">¶</a></h1>
+<div class="toctree-wrapper compound">
+</div>
+<nav class="contents local" id="index">
+<p class="topic-title">Index</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#functions" id="id1">Functions</a></p></li>
+<li><p><a class="reference internal" href="#van-holde-wieschet-analysis-steps" id="id2">van Holde Wieschet Analysis Steps</a></p></li>
+<li><p><a class="reference internal" href="#related" id="id3">Related</a></p></li>
+</ul>
+</nav>
+<p>The method of van Holde and Weischet (vHW) is a versatile, model-independent approach to determine sedimentation coefficient distribution by graphically analyzing sedimentation velocity experimental data. The vHW method’s strength derives from its ability to differentiate boundary spreading due to diffusion from boundary spreading due to heterogeneity in the sedimentation coefficient. This program uses a number of enhanced techniques for vHW analysis.</p>
+<img alt="_images/vhw_enhanced.png" class="align-center" src="_images/vhw_enhanced.png" />
+<section id="functions">
+<h2><a class="toc-backref" href="#id1" role="doc-backlink">Functions</a><a class="headerlink" href="#functions" title="Permalink to this heading">¶</a></h2>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 28.6%" />
+<col style="width: 71.4%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><strong>Load Experiment</strong></p></td>
+<td><p>Click on this button and, in the resulting <a class="reference external" href="load_auc.html">Load Data Dialog</a>, select an edited data set to load.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Run Details</strong></p></td>
+<td><p>Bring up a dialog with a summary of data and run details.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Latest Data Edit</strong></p></td>
+<td><p>Uncheck to allow choosing an edit other than the latest one for the experimental data.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Database</strong></p></td>
+<td><p>Check to specify data input from the database.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Local Disk</strong></p></td>
+<td><p>Check to specify data input from local disk.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>View Data Report</strong></p></td>
+<td><p>Create a results text file and display its contents in a text dialog.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Save Data</strong></p></td>
+<td><p>Create several data and report files based on input data and vHW parameters.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Run ID / Edit ID:</strong></p></td>
+<td><p>The main run title of the data and an edit identifier are displayed.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Avg Temperature:</strong></p></td>
+<td><p>The average temperature of solute is displayed in Celsius.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>(description box)</strong></p></td>
+<td><p>The text box below the one for temperature shows a full data description string.</p></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Cell / Channel / Wavelength</strong> The text box below this label gives cell, channel and wavelength triples available in this data set. Highlight the desired value.</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 28.6%" />
+<col style="width: 71.4%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><strong>Solution</strong></p></td>
+<td><p>Click this button to open a <a class="reference external" href="us_solution.html">Solution Management</a> that allows changes to buffer and analyte characteristics of the data set.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Density (20°C)</strong></p></td>
+<td><p>Shows the density value for the loaded experiment. Click the Solution button to open a dialog in which density and other values may be changed.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Viscosity (20°C)</strong></p></td>
+<td><p>Shows the viscosity value for thes loaded experiment. Click the Solution button to open a dialog in which viscosity and other values may be changed.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Distribution Plot</strong></p></td>
+<td><p>Click for a plot dialog that shows a <a class="reference external" href="vhw_distrib_plot.html">vHW Distribution Plot</a> illustrating sedimentation coefficient power related to separate species.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Select Groups</strong></p></td>
+<td><dl>
+<dt>Click on this button to begin a session of choosing vHW Extrapolation Plot division groups. As an initial pop-up dialog explains, you must click first above any group of division lines and then below it. Multiple groups may be chosen, with division line overlap between groups.</dt><dd><div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The button label becomes <strong>Clear Groups</strong> after selection, allowing the set of selected groups to be discarded in favor of a new set of selections.</p>
+</div>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="row-even"><td><p><strong>Refresh Plot</strong></p></td>
+<td><p>Click on this button at any time to refresh the right-side plots, based on current parameter settings.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Use FE Data</strong></p></td>
+<td><p><strong>add definition</strong></p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Manual-only Replot</strong></p></td>
+<td><p>Check this box to suppress automatic re-plotting with each parameter change. This may be desirable when you plan to change several settings, in order to avoid a replot with each change. With this box checked, you may force a plot with the Refresh Plot button.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Manual-only Replot</strong></p></td>
+<td><p>Check this box to suppress automatic re-plotting with each parameter change. This may be desirable when you plan to change several settings, in order to avoid a replot with each change. With this box checked, you may force a plot with the Refresh Plot button.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Plateaus from 2DSA</strong></p></td>
+<td><p>Check this box to have plateau values calculated from a model associated with any loaded noise values. With this box unchecked, each scan’s plateau value is determined by a series of fits to initially designated plateaus.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Use Enhanced vWH</strong></p></td>
+<td><p><strong>add definition</strong></p></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Analysis Controls</strong></p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 28.6%" />
+<col style="width: 71.4%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><strong>Back Diffusion Tolerance:</strong></p></td>
+<td><p>Select a tolerance value to fine tune exclusion of points affected by back diffusion, as indicated by the red line on the velocity data.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Divisions:</strong></p></td>
+<td><p>Choose the number of divisions (yellow lines in the vWH Extrapolation Plot) to use in vHW analysis.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Data Smoothing:</strong></p></td>
+<td><p>Choose the number of points to use for any smoothing of raw input data.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>% of Boundary:</strong></p></td>
+<td><p>Choose the percentage of the range from concentration baseline to plateau that is to be used for analysis.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Boundary Position (%):</strong></p></td>
+<td><p>Choose the percent of the plateau-baseline range that is to be added to the baseline to form the beginning of analysis span. For typical analysis 5% is recommended.</p></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Scan Control</strong></p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 28.6%" />
+<col style="width: 71.4%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><strong>Scan Focus from:</strong></p></td>
+<td><p>Choose the first of a range of scan numbers that may potentially be excluded from analysis.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Scan Focus to:</strong></p></td>
+<td><p>Choose the end of a range of scan numbers that may potentially be excluded from analysis. The From/To scan range is illustrated in both plots to the right.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Exclude Scan Range</strong></p></td>
+<td><p>Exclude the scans indicated by the two preceding scan bounding counters.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Reset Scan Range</strong></p></td>
+<td><p>Resetting the scan range to include all excluded scans.</p></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Window Controls</strong></p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 28.6%" />
+<col style="width: 71.4%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><strong>Reset</strong></p></td>
+<td><p>Indicate that window is reset and the plots are initiated.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Help</strong></p></td>
+<td><p>Display this detailed van Holde-Weischet Analysis help.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Close</strong></p></td>
+<td><p>Close all windows and exit.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="van-holde-wieschet-analysis-steps">
+<h2><a class="toc-backref" href="#id2" role="doc-backlink">van Holde Wieschet Analysis Steps</a><a class="headerlink" href="#van-holde-wieschet-analysis-steps" title="Permalink to this heading">¶</a></h2>
+<ul class="simple">
+<li><p><strong>Step 1:</strong> First, load a velocity dataset. Click on “Load Experiment” to select an edited velocity data set from the database or from local disk.</p></li>
+<li><p><strong>Step 2:</strong> Secondly, select a model from database or disk. Simply click on a triplicate in the Cell / Channel / Wavelegth. Enhanced van Holde - Weischet analysis is automatically applied according to the Analsys Controls</p></li>
+<li><p><strong>Step 3:</strong> If necessary, adjust the Back Diffusion Tolarance, Divisions, % of Boundary and Boundary Position (%).</p></li>
+<li><p><strong>Step 4:</strong> After analysis is complete, the resulting distribution and histogram are available for display in the Distribution Plot.</p></li>
+<li><p><strong>Step 5:</strong> To choose the vHW Extrapolation Plot division groups, select <strong>Select Group</strong> and follow the prompt instructions. The vHW Extrapolation Plot will desplay the selected group.</p></li>
+</ul>
+<img alt="_images/vhw_enh_groups.png" class="align-center" src="_images/vhw_enh_groups.png" />
+<p class="center">vHW Extrapolation Plot division groups</p>
+<img alt="_images/vhw_enh_groups_res.png" class="align-center" src="_images/vhw_enh_groups_res.png" />
+<p class="center">vHW Extrapolation Plot division groups</p>
+</section>
+<section id="related">
+<h2><a class="toc-backref" href="#id3" role="doc-backlink">Related</a><a class="headerlink" href="#related" title="Permalink to this heading">¶</a></h2>
+<p><a class="reference external" href="vhw_distrib_plot.html">Combined vHW Distribution Plot</a></p>
+<p><a class="reference external" href="fe_match/fe_match.html">Finite Element Model Viewer</a></p>
+<p><a class="reference external" href="2dsa/2dsa.html">2-Dimensional Spectrum Analysis</a></p>
+</section>
+</section>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="bottom navigation">
+      
+        <p>
+        «&#160;&#160;<a href="advanced_config.html">Advanced Configuration Panel</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="vhw_distrib_plot.html">UltraScan vHW Distribution Plot</a>&#160;&#160;»
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2025, Emre Brookes, Borries Demeler, Bruce Dubbs, Haben Gabir, Gary Gorbet, Saeed Mortezazadeh, Alexey Savelyev, and Dan Zollars,.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 6.2.1.
+    </div>
+  </body>
+</html>

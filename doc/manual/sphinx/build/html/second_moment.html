@@ -1,0 +1,186 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+    <title>Second Moment Data Analysis &#8212; UltraScan III 0.0.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/haiku.css" />
+    <link rel="stylesheet" type="text/css" href="_static/custom.css" />
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/sphinx_highlight.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Pseudo-3D Combine" href="pseudo3d_combine.html" />
+    <link rel="prev" title="van Holde - Weischet Combined Plots" href="vhw_combine.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="index.html">
+          <span>UltraScan III 0.0.1 documentation</span></a></h1>
+        <h2 class="heading"><span>Second Moment Data Analysis</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="top navigation">
+      
+        <p>
+        «&#160;&#160;<a href="vhw_combine.html">van Holde - Weischet Combined Plots</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="pseudo3d_combine.html">Pseudo-3D Combine</a>&#160;&#160;»
+        </p>
+
+      </div>
+      <div class="content" role="main">
+        
+        
+  <section id="second-moment-data-analysis">
+<h1>Second Moment Data Analysis<a class="headerlink" href="#second-moment-data-analysis" title="Permalink to this heading">¶</a></h1>
+<div class="toctree-wrapper compound">
+</div>
+<nav class="contents local" id="index">
+<p class="topic-title">Index</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#functions" id="id1">Functions</a></p></li>
+<li><p><a class="reference internal" href="#related" id="id2">Related</a></p></li>
+</ul>
+</nav>
+<p>The second moment analysis will calculate weight-average sedimentation coefficients for each scan included in the analysis by finding the second moment point in the boundary. The second moment analysis can serve as a valuable diagnostics tool in identifying problems such as time-dependent degradation, aggregation and even concentration dependency.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>It is important to keep in mind that the second moment analysis is only valid for scans that have cleared the meniscus and still have a stable plateau. All other scans should be excluded from the analysis.</p>
+</div>
+<img alt="_images/second_moment.png" class="align-center" src="_images/second_moment.png" />
+<section id="functions">
+<h2><a class="toc-backref" href="#id1" role="doc-backlink">Functions</a><a class="headerlink" href="#functions" title="Permalink to this heading">¶</a></h2>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 28.6%" />
+<col style="width: 71.4%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><strong>Load Experiment</strong></p></td>
+<td><p>Click on this button and, in the resulting <a class="reference external" href="data_loader.html">Load Data Dialog</a>, select an edited data set to load.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Run Details</strong></p></td>
+<td><p>Bring up a dialog with a summary of data and run details.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Latest Data Edit</strong></p></td>
+<td><p>Uncheck to allow choosing an edit other than the latest one for the experimental data.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Database</strong></p></td>
+<td><p>Check to specify data input from the database.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Local Disk</strong></p></td>
+<td><p>Check to specify data input from local disk.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>View Data Report</strong></p></td>
+<td><p>Create a results text file and display its contents in a text dialog.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Save Data</strong></p></td>
+<td><p>Create several data and report files based on input data and vHW parameters.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Run ID / Edit ID:</strong></p></td>
+<td><p>The main run title of the data and an edit identifier are displayed.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Avg Temperature:</strong></p></td>
+<td><p>The average temperature of solute is displayed in Celsius.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>(description)</strong></p></td>
+<td><p>The text box below the one for temperature shows a full data description string.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Cell / Channel / Wavelength</strong></p></td>
+<td><p>The text box below this label gives cell, channel and wavelength triples available in this data set. Highlight the desired value.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Solution</strong></p></td>
+<td><p>Click this button to open a <a class="reference external" href="us_solution.html">Solution Management dialog</a> that allows changes to buffer and analyte characteristics of the data set.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Density (20°C)</strong></p></td>
+<td><p>Shows the density value for the loaded experiment. Click the Solution button to open a dialog in which density and other values may be changed.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Viscosity (20°C)</strong></p></td>
+<td><p>Shows the viscosity value for these loaded experiment. Click the Solution button to open a dialog in which viscosity and other values may be changed.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Vbar (20°C)</strong></p></td>
+<td><p>Shows the vbar value for the loaded experiment. Click the Solution button to open a dialog in which vbar and other values may be changed.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Skipped</strong></p></td>
+<td><p>The count of experiment data scans skipped.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Scan focus from:</strong></p></td>
+<td><p>Choose the first of a range of scan numbers that may potentially be excluded from analysis.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>To:</strong></p></td>
+<td><p>Choose the end of a range of scan numbers that may potentially be excluded from analysis. The From/To scan range is illustrated in both plots to the right.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Exclude Scan Range</strong></p></td>
+<td><p>If the From/To scan range selections are as desired, click on this button to exclude the indicated scans from analysis.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Reset Scan Range</strong></p></td>
+<td><p>Reset to the full range of scans.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Data Smoothing:</strong></p></td>
+<td><p>Choose the number of points to use for any smoothing of raw input data.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>% of Boundary:</strong></p></td>
+<td><p>Choose the percentage of the range from concentration baseline to plateau that is to be used for analysis.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Boundary Pos. (%):</strong></p></td>
+<td><p>Choose the percent of the plateau-baseline range that is to be added to the baseline to form the beginning of analysis span.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>(Second Moment Plot)</strong></p></td>
+<td><p>The upper of the two right-side plots shows the second moment plot of sedimentation coefficient for each scan.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>(Velocity Data Plot)</strong></p></td>
+<td><p>The lower of the right-side plots shows selected velocity data for which a second moment calculation has been made.</p></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Window Controls</strong></p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 28.6%" />
+<col style="width: 71.4%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><strong>Reset</strong></p></td>
+<td><p>Indicate that parameters are to be reset and the plots re-displayed based on original parameters.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Help</strong></p></td>
+<td><p>Display this detailed Second-Moment  help.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Close</strong></p></td>
+<td><p>Close all windows and exit.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="related">
+<h2><a class="toc-backref" href="#id2" role="doc-backlink">Related</a><a class="headerlink" href="#related" title="Permalink to this heading">¶</a></h2>
+<p><a class="reference external" href="vhw_enhanced.html">van Holde - Weischet Analysis</a></p>
+<p><a class="reference external" href="time_derivative.html">Time Derivative</a></p>
+</section>
+</section>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="bottom navigation">
+      
+        <p>
+        «&#160;&#160;<a href="vhw_combine.html">van Holde - Weischet Combined Plots</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="pseudo3d_combine.html">Pseudo-3D Combine</a>&#160;&#160;»
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2025, Emre Brookes, Borries Demeler, Bruce Dubbs, Haben Gabir, Gary Gorbet, Saeed Mortezazadeh, Alexey Savelyev, and Dan Zollars,.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 6.2.1.
+    </div>
+  </body>
+</html>

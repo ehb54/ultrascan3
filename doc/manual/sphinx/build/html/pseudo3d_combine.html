@@ -1,0 +1,235 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+    <title>Pseudo-3D Combine &#8212; UltraScan III 0.0.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/haiku.css" />
+    <link rel="stylesheet" type="text/css" href="_static/custom.css" />
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/sphinx_highlight.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Second Moment Data Analysis" href="second_moment.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="index.html">
+          <span>UltraScan III 0.0.1 documentation</span></a></h1>
+        <h2 class="heading"><span>Pseudo-3D Combine</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="top navigation">
+      
+        <p>
+        «&#160;&#160;<a href="second_moment.html">Second Moment Data Analysis</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="index.html">Contents</a>
+        </p>
+
+      </div>
+      <div class="content" role="main">
+        
+        
+  <section id="pseudo-3d-combine">
+<h1>Pseudo-3D Combine<a class="headerlink" href="#pseudo-3d-combine" title="Permalink to this heading">¶</a></h1>
+<div class="toctree-wrapper compound">
+</div>
+<nav class="contents local" id="index">
+<p class="topic-title">Index</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#functions" id="id1">Functions</a></p></li>
+<li><p><a class="reference internal" href="#remove-model-distributions" id="id2">Remove Model Distributions</a></p>
+<ul>
+<li><p><a class="reference internal" href="#remove-functions" id="id3">Remove Functions</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#related" id="id4">Related</a></p></li>
+</ul>
+</nav>
+<p>Solution distribution data can be displayed in pseudo-3-dimensional form where the Z axis is simulated using colors in a color map. Data from different cells can be combined.</p>
+<blockquote>
+<div><img alt="_images/pseudo3d_combine.png" src="_images/pseudo3d_combine.png" />
+</div></blockquote>
+<section id="functions">
+<h2><a class="toc-backref" href="#id1" role="doc-backlink">Functions</a><a class="headerlink" href="#functions" title="Permalink to this heading">¶</a></h2>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 28.6%" />
+<col style="width: 71.4%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><strong>Pseudo-3D Resolution:</strong></p></td>
+<td><p>Choose near-100 flattening parameter for Gaussian distribution of frequency points.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>X Resolution:</strong></p></td>
+<td><p>Choose the number of pixels to represent the full X (Sedimentation Coefficient or Molecular Weight) data range.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Y Resolution:</strong></p></td>
+<td><p>Choose the number of pixels to represent the full Y (Frictional Ratio) data range.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Z Floor Percent:</strong></p></td>
+<td><p>Choose the percent of the Z (Frequency) range to add below the minimum Z in order to affect display of faint values.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Autoscale X and Y</strong></p></td>
+<td><p>Select to automatically set X and Y plot range limits or unselect to allow explicitly setting these values.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Autoscale Z</strong></p></td>
+<td><p>Select to automatically scale Z to the current distribution’s range or unselect to scale Z to the global Z range of all distributions.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Continuous Loop</strong></p></td>
+<td><p>Check this box if you wish to continually loop through plots of distributions. While in a continuous loop, the plots are not automatically saved for reports.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Z as Percentage</strong></p></td>
+<td><p>Check this box if you wish to have the Z (color-mapped) values plotted as Percent of Total Concentration instead of the default Partial Concentration values.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Plot Limit f/f0 Minimum:</strong></p></td>
+<td><p>Choose the lower plot limit for f/f<sub>0</sub> (or vbar).</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Plot Limit f/f0 Maximum:</strong></p></td>
+<td><p>Choose upper lower plot limit for f/f<sub>0</sub> (or vbar).</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Plot Limit s Minimum:</strong></p></td>
+<td><p>Choose the lower plot limit for sedimentation (or MW).</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Plot Limit s Maximum:</strong></p></td>
+<td><p>Choose the upper plot limit for sedimentation (or MW).</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Plot Loop Delay Seconds:</strong></p></td>
+<td><p>Choose the number of seconds to delay between plots when all distros are plotted.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Current Distro:</strong></p></td>
+<td><p>Choose the index (1 to n) of the distribution to make the current one.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Plot f/f0 vs s</strong></p></td>
+<td><p>Select to plot f/f<sub>0</sub> versus sedimentation coefficient corrected for water at 20°Celsius.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Plot f/f0 vs MW</strong></p></td>
+<td><p>Select to plot f/f<sub>0</sub> versus molecular weight (Dalton).</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Plot vbar vs s</strong></p></td>
+<td><p>Select to plot vbar versus sedimentation coefficient corrected for water at 20°Celsius.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Plot vbar vs MW</strong></p></td>
+<td><p>Select to plot vbar versus molecular weight (Dalton).</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Plot All Distros</strong></p></td>
+<td><p>Loop to successively plot all loaded model distributions.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Stop Plotting Loop</strong></p></td>
+<td><p>Stop the successive plot of all loaded model distributions.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Refresh Pseudo-3D Plot</strong></p></td>
+<td><p>Refresh the pseudo-3d plot with current settings, current color map and current distribution data.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Reset</strong></p></td>
+<td><p>Reset parameters to their default settings.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Database</strong></p></td>
+<td><p>Select to specify data input from the database.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Local Disk</strong></p></td>
+<td><p>Select to specify data input from local disk.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Select PreFilter(s)</strong></p></td>
+<td><img alt="_images/select_runs.png" src="_images/select_runs.png" />
+</td>
+</tr>
+<tr class="row-even"><td><p><strong>Select Run(s) as Models Pre-Filter</strong> dialog to select Run IDs.</p></td>
+<td><p>This can significantly reduce model loading time, particularly with large model counts in the database. The text box to the right of this button will display a summary of runs selected as pre-filters.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Load Color File</strong></p></td>
+<td><p>Load a color map for Z dimension display as specified through the <a class="reference external" href="load_colormap.html">Color Map Load dialog</a>.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Load Distribution(s)</strong></p></td>
+<td><p>Load model distribution data as specified through a <a class="reference internal" href="#model-loader"><span class="std std-ref">Model Loader dialog</span></a>. Multiple distribution files may be selected.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Remove Distribution(s)</strong></p></td>
+<td><p>Open a <a class="reference internal" href="#remove-mod-dis"><span class="std std-ref">Remove Model Distributions</span></a> dialog to remove selected model distributions from the loaded set.</p></td>
+</tr>
+</tbody>
+</table>
+<img alt="_images/load_model_distrib.png" class="align-center" id="model-loader" src="_images/load_model_distrib.png" />
+<p><strong>Window Controls</strong></p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 28.6%" />
+<col style="width: 71.4%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><strong>Help</strong></p></td>
+<td><p>Display this detailed Fit Meniscus help.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Close</strong></p></td>
+<td><p>Close all windows and exit.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="remove-model-distributions">
+<span id="remove-mod-dis"></span><h2><a class="toc-backref" href="#id2" role="doc-backlink">Remove Model Distributions</a><a class="headerlink" href="#remove-model-distributions" title="Permalink to this heading">¶</a></h2>
+<p>The dialog is presented when <strong>Remove Distribution(s)</strong> is clicked. The dialog shows a list of loaded models, by selecting items in this list and clicking on a Remove button, you can remove models from the original distribution list. After all the desired removals have been performed, an Accept button passes the reduced model data to the caller.</p>
+<blockquote>
+<div><img alt="_images/pseudo3d_comb_rmv.png" class="align-center" src="_images/pseudo3d_comb_rmv.png" />
+</div></blockquote>
+<section id="remove-functions">
+<h3><a class="toc-backref" href="#id3" role="doc-backlink">Remove Functions</a><a class="headerlink" href="#remove-functions" title="Permalink to this heading">¶</a></h3>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 28.6%" />
+<col style="width: 71.4%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><strong>(list)</strong></p></td>
+<td><p>The list box is initially populated with a passed list of all loaded models. Individual or multiple item lines can be selected for removal.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Remove</strong></p></td>
+<td><p>After making selections, click this button to remove selections from the list.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Restore</strong></p></td>
+<td><p>Click on this button to restore the list to its original full-list state.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Help</strong></p></td>
+<td><p>Click to bring up this documentation.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Cancel</strong></p></td>
+<td><p>Click to close the dialog with no model list modifications made.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Accept</strong></p></td>
+<td><p>Click to accept the modified list as it appears and pass it back to the caller.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>(status)</strong></p></td>
+<td><p>The ongoing status of the list and current selections is documented here.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="related">
+<h2><a class="toc-backref" href="#id4" role="doc-backlink">Related</a><a class="headerlink" href="#related" title="Permalink to this heading">¶</a></h2>
+<p><a class="reference external" href="vhw_combine.html">van Holde - Weischet Combined Plots</a></p>
+<p><a class="reference external" href="fe_match/fe_match.html">Finite Element Model Viewer</a></p>
+<p><a class="reference external" href="2dsa/2dsa.html">2-Dimensional Spectrum Analysis</a></p>
+</section>
+</section>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="bottom navigation">
+      
+        <p>
+        «&#160;&#160;<a href="second_moment.html">Second Moment Data Analysis</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="index.html">Contents</a>
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2025, Emre Brookes, Borries Demeler, Bruce Dubbs, Haben Gabir, Gary Gorbet, Saeed Mortezazadeh, Alexey Savelyev, and Dan Zollars,.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 6.2.1.
+    </div>
+  </body>
+</html>

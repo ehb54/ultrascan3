@@ -1,0 +1,140 @@
+============================================================
+Pseudo-3D Combine
+============================================================
+
+.. toctree:: 
+  :maxdepth: 3
+
+.. contents:: Index
+  :local: 
+
+
+Solution distribution data can be displayed in pseudo-3-dimensional form where the Z axis is simulated using colors in a color map. Data from different cells can be combined. 
+
+  .. image:: USstatic/images/pseudo3d_combine.png
+
+
+Functions
+===========
+.. list-table::
+  :widths: 20 50
+  :header-rows: 0 
+
+  * - **Pseudo-3D Resolution:**
+    - Choose near-100 flattening parameter for Gaussian distribution of frequency points.
+  * - **X Resolution:**
+    - Choose the number of pixels to represent the full X (Sedimentation Coefficient or Molecular Weight) data range.
+  * - **Y Resolution:**
+    - Choose the number of pixels to represent the full Y (Frictional Ratio) data range.
+  * - **Z Floor Percent:**
+    - Choose the percent of the Z (Frequency) range to add below the minimum Z in order to affect display of faint values.
+  * - **Autoscale X and Y**
+    - Select to automatically set X and Y plot range limits or unselect to allow explicitly setting these values.
+  * - **Autoscale Z**
+    - Select to automatically scale Z to the current distribution's range or unselect to scale Z to the global Z range of all distributions.
+  * - **Continuous Loop**
+    - Check this box if you wish to continually loop through plots of distributions. While in a continuous loop, the plots are not automatically saved for reports.
+  * - **Z as Percentage**
+    - Check this box if you wish to have the Z (color-mapped) values plotted as Percent of Total Concentration instead of the default Partial Concentration values.
+  * - **Plot Limit f/f0 Minimum:**
+    - Choose the lower plot limit for f/f\ :sub:`0` (or vbar).
+  * - **Plot Limit f/f0 Maximum:**
+    - Choose upper lower plot limit for f/f\ :sub:`0` (or vbar).
+  * - **Plot Limit s Minimum:**
+    - Choose the lower plot limit for sedimentation (or MW).
+  * - **Plot Limit s Maximum:**
+    - Choose the upper plot limit for sedimentation (or MW).
+  * - **Plot Loop Delay Seconds:**
+    - Choose the number of seconds to delay between plots when all distros are plotted.
+  * - **Current Distro:**
+    - Choose the index (1 to n) of the distribution to make the current one.
+  * - **Plot f/f0 vs s**
+    - Select to plot f/f\ :sub:`0` versus sedimentation coefficient corrected for water at 20°Celsius.
+  * - **Plot f/f0 vs MW**
+    - Select to plot f/f\ :sub:`0` versus molecular weight (Dalton).
+  * - **Plot vbar vs s**
+    - Select to plot vbar versus sedimentation coefficient corrected for water at 20°Celsius.
+  * - **Plot vbar vs MW**
+    - Select to plot vbar versus molecular weight (Dalton).
+  * - **Plot All Distros**
+    - Loop to successively plot all loaded model distributions.
+  * - **Stop Plotting Loop**
+    - Stop the successive plot of all loaded model distributions.
+  * - **Refresh Pseudo-3D Plot**
+    - Refresh the pseudo-3d plot with current settings, current color map and current distribution data.
+  * - **Reset**
+    - Reset parameters to their default settings.
+  * - **Database**
+    - Select to specify data input from the database.
+  * - **Local Disk**
+    - Select to specify data input from local disk.
+  * - **Select PreFilter(s)**
+    - .. image:: USstatic/images/select_runs.png
+  * - **Select Run(s) as Models Pre-Filter** dialog to select Run IDs. 
+    - This can significantly reduce model loading time, particularly with large model counts in the database. The text box to the right of this button will display a summary of runs selected as pre-filters.
+  * - **Load Color File**
+    - Load a color map for Z dimension display as specified through the `Color Map Load dialog <load_colormap.html>`_.
+  * - **Load Distribution(s)**
+    - Load model distribution data as specified through a :ref:`Model Loader dialog <model_loader>`. Multiple distribution files may be selected.
+  * - **Remove Distribution(s)**
+    - Open a :ref:`Remove Model Distributions <remove_mod_dis>` dialog to remove selected model distributions from the loaded set.
+
+.. _model_loader:
+
+.. image:: USstatic/images/load_model_distrib.png
+    :align: center
+
+**Window Controls**
+
+
+.. list-table::
+  :widths: 20 50
+  :header-rows: 0 
+
+  * - **Help** 
+    - Display this detailed Fit Meniscus help.
+  * - **Close** 
+    - Close all windows and exit.
+
+.. _remove_mod_dis: 
+
+Remove Model Distributions
+===========================
+
+The dialog is presented when **Remove Distribution(s)** is clicked. The dialog shows a list of loaded models, by selecting items in this list and clicking on a Remove button, you can remove models from the original distribution list. After all the desired removals have been performed, an Accept button passes the reduced model data to the caller. 
+
+  .. image:: USstatic/images/pseudo3d_comb_rmv.png
+    :align: center
+
+
+Remove Functions
+------------------
+
+.. list-table::
+  :widths: 20 50
+  :header-rows: 0 
+
+  * - **(list)**
+    - The list box is initially populated with a passed list of all loaded models. Individual or multiple item lines can be selected for removal.
+  * - **Remove**
+    - After making selections, click this button to remove selections from the list.
+  * - **Restore**
+    - Click on this button to restore the list to its original full-list state.
+  * - **Help**
+    - Click to bring up this documentation.
+  * - **Cancel**
+    - Click to close the dialog with no model list modifications made.
+  * - **Accept**
+    - Click to accept the modified list as it appears and pass it back to the caller.
+  * - **(status)**
+    - The ongoing status of the list and current selections is documented here.
+
+
+Related
+====================
+
+`van Holde - Weischet Combined Plots <vhw_combine.html>`_
+
+`Finite Element Model Viewer <fe_match/fe_match.html>`_
+
+`2-Dimensional Spectrum Analysis <2dsa/2dsa.html>`_
