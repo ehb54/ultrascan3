@@ -1,0 +1,78 @@
+[% INCLUDE header.us3/
+   title = 'UltraScan III RunID Pre-Filter for Models'
+%]
+
+    <h2> <i>UltraScan</i> RunID Pre-Filter for Model Loading: </h2>
+
+    <p> A number of <b><i>UltraScan III</i></b> applications load model
+    distribution data for processing. For large-volume data bases, it helps
+    the speed of model list preparation to do a pre-filter of the model
+    data by run ID. These applications use the US_SelectRuns dialog class to
+    allow the user to choose runs with which to filter model listings.</p>
+
+    <p> The dialog presented when a US_SelectRuns is executed allows a
+    list of run ID data choices from database or local disk. A Search text
+    field allows the list to be pared down further to those of interest.
+    After one or more data sets are selected in the list, a button labelled
+    "Select PreFilter(s)" passes experiment data to the caller which passes
+    selections to the <a href="load_model_distrib.html">LoadModel Dialog</a>.
+
+    <table>
+      <tr>
+        <td>
+          <img src="images/select_runs.png" alt="SelectRuns Dialog"/>
+        </td>
+        <td>
+          <ul>
+            <li>
+              <b>Database</b> Check this radio button to generate a list
+              from the database
+            </li>
+
+            <li>
+              <b>Local Disk</b> Check this radio button to generate a list
+              from local disk */ultrascan/results files.
+            </li>
+
+            <li>
+              <b>Select Investigator</b> This button brings up an
+              <a href="us_investigator.html">Investigator Dialog</a> that allows
+              selecting the current investigator for whom to list runs.
+            </li>
+
+            <li>
+              <b>(investigator text)</b> This read-only text box displays the
+              current investigator ID, last name, and first name.
+            </li>
+
+            <li>
+              <b>Search</b> As characters are entered in the text box to the
+              right of the Search label, the list of data sets is modified to
+              consist of matching entries. A blank field restores the full
+              list. Note that the search is case-insensitive.
+            </li>
+
+            <li>
+              <b>(run list)</b> This box holds the generated list of
+              runs. You may select a single entry or multiple entries
+              using ctrl-click or shift-click in the normal way.
+            </li>
+
+            <li>
+              <b>Help</b> Click to bring up this documentation.
+            </li>
+
+            <li>
+              <b>Cancel</b> Click to close the dialog with no choices made.
+            </li>
+
+            <li>
+              <b>Select PreFilter(s)</b> Click to accept the choice(s)
+              highlighted in the data list and pass data back to the caller.
+            </li>
+          </ul>
+        </td>
+      </tr>
+    </table>
+
+[% INCLUDE footer.us3 %]

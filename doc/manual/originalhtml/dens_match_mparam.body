@@ -1,0 +1,76 @@
+[% INCLUDE header.us3/
+   title = 'UltraScan III Density Matching Model Parameters'
+%]
+
+    <h2> <i>UltraScan</i> Model Parameters:</h2>
+
+    <p> An option in <b><i>UltraScan III US_Density_Match</i></b>, this dialog
+    allows specifying parameters associated with each model distribution.</p>
+
+    <p> The dialog presents a row for each model selected in the calling
+    Density Matching main window. In each model row, the user may add or
+    change the value for (1) D2O (heavy water) percent; (2) density; or
+    (3) model label. After setting all percent values, the Compute Densities
+    button causes computation of the densities for non-zero-percent models,
+    based on the zero-percent model density value. Once all model values are
+    set, the Accept button closes the dialog and returns the values associated
+    with each model.
+
+    <h3> Dialog Window:</h3>
+
+    <p> Upon entry, the dialog appears as follows.</p>
+    <p>
+    <img src="images/densmatch_mpars_empty.png" alt="Model Parameters empty"/>
+    </p>
+
+    <p> After completion of parameter setting, the dialog will appear
+    similar to this:</p>
+    <p>
+    <img src="images/densmatch_mpars_completed.png" alt="Model Parameters completed"/>
+    </p>
+
+    <h3> Dialog Items:</h3>
+
+    <ul>
+       <li>
+          <b>(D2O Percent column)</b>: Text boxes allow setting D2O percent values
+          for each model.
+       </li>
+
+       <li>
+          <b>(Density (g/l) column)</b>: Text boxes allow setting density values in grams
+          per liter for each model. Initial values are computed and often need not
+          be manually changed by the user.
+       </li>
+
+       <li>
+          <b>(Label column)</b>: Text boxes allow setting labels for each model that
+          are used in the Legend of each plot.
+       </li>
+
+       <li>
+          <b>(Description column)</b>: Read-only text boxes display the description text
+          associated with  each model.
+       </li>
+
+       <li>
+          <b>Help</b>: Display this documentation.
+       </li>
+
+       <li>
+          <b>Cancel</b>: Exit this dialog without returning parameter values
+          to the caller.
+       </li>
+
+       <li>
+          <b>Accept</b>: Exit this dialog and return parameter values
+          to the caller.
+       </li>
+
+       <li>
+          <b>Compute Densities</b>: Compute densities values for all models with
+          non-zero D2O percent values .
+       </li>
+    </ul>
+
+[% INCLUDE footer.us3 %]

@@ -1,0 +1,35 @@
+[% INCLUDE header.us3 title = 'UltraScan III GMP Report Generator and Viewer' %]
+
+<h2><i>UltraScan</i> GMP Report Generator and Viewer:</h2>
+
+<p>Allows for the generation/viewing of GMP run reports</p>
+
+<p class="center"><img src="images/gmp/report_generator/gmp_report_generator_01.png" alt="GMP Report Generator and Viewer"/></p>
+
+<h3>3a: Load GMP Run:</h3>
+
+<p>Provides a list of completed GMP runs in the database, as well as the current reporting stage (Report generation or collection of e-signatures).</p>
+
+<p class="center"><img src="images/gmp/report_generator/gmp_report_generator_02.png" alt="Load GMP Run"/></p>
+
+<p>A GMP run can be loaded from the database by highlighting it and clicking the <strong>'Select Item'</strong> button. The user is then presented with the below message indicating the report profile used was defined in the original GMP run submission, and that any changes to the report profile settings will result in the generation of a non-GMP report.</p>
+
+<p class="center"><img src="images/gmp/report_generator/gmp_report_generator_03.png" alt="Report Profile Warning"/></p>
+
+<p>The user then has the option to expand/collapse and select/unselect all tree items for the report settings using the buttons, or manually expand/collapse and select/unselect individual report items using the check boxes in the portion of the window.</p>
+
+<p class="center"><img src="images/gmp/report_generator/gmp_report_generator_04.png" alt="Report Settings"/></p>
+
+<p>Once the user is satisfied with the report profile settings, the <strong>'Generate Report'</strong> button will generate the GMP/non-GMP report PDF file for viewing.</p>
+
+<h3>3b: Load GMP Report from DB (.PDF):</h3>
+
+<p>Allows for the viewing of a previously-generated GMP report stored in the database as a PDF file.</p>
+
+<p class="center"><img src="images/gmp/report_generator/gmp_report_generator_05.png" alt="Load GMP Report from DB"/></p>
+
+<p>A GMP report PDF file can be loaded from the database by highlighting it a clicking the <strong>'Select Item'</strong> button. The below message appears indicating the report was downloaded from the database and saved to the specified location. The <strong>'View Report'</strong> button opens the PDF file to be viewed.</p>
+
+<p class="center"><img src="images/gmp/report_generator/gmp_report_generator_06.png" alt="Report Download Message"/></p>
+
+[% INCLUDE footer.us3 %]

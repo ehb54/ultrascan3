@@ -1,0 +1,119 @@
+[% INCLUDE header.us3
+   title = 'UltraScan III Experiment General Panel'
+%]
+    <h2> Create Experiment - General Definitions Panel: </h2>
+    <p class='center'><img src="images/experiment_general.png"
+    alt="Define General parameters panel"/></p>
+
+    <p> Using this panel, you can define general experiment parameters,
+    such as Run ID and Project, along with data source (database or
+    local disk) and investigator. </p>
+
+    <p> As with all panels, a set of tabs allows you to navigate to
+    other panels in order to perform specialized subtasks relating
+    to experiment creation. Links to and summaries of the panels are
+    given in the final section of this page.</p>
+
+    <h3> Dialog Items: </h3>
+
+    <ul>
+      <li><b>Run ID:</b> Enter a unique run identifier string that
+      will identify the experiment to be run.</li>
+
+      <li><b>Select Project</b> Click this button to open a full Project
+      dialog in which a new project may be created or an existing one
+      modified. Hitting the <b>Accept</b> button in that dialog will
+      cause selection of a project for the experiment.</li>
+
+      <li><b>(project list)</b> Pulling down and releasing on an item in
+      the existing projects list causes the created experiment to be
+      associated with that project.</li>
+
+      <li><b>Select Investigator</b> Click this button to open a full
+      database Investigator dialog in which an investigator may be
+      chosen.</li>
+
+      <li><b>(investigator text)</b> Any investigator chosen will be
+      displayed in this text box. You may manually modify this text.</li>
+
+      <li><b>Database</b> Select this radio button to indicate that
+      data used in creating the experiment comes from the database.</li>
+
+      <li><b>Local Disk</b> Select this radio button to indicate that
+      data used in creating the experiment comes from the local disk.</li>
+    </ul>
+
+    <h3> Shared Dialog Items: </h3>
+
+    <p>A panel status box and multiple buttons are shared by all panels.</p>
+
+    <ul>
+      <li><b>Status:</b> A text box shows the status of completion of
+      needed parameterization for all the panels. Only when all panels
+      have a 'X' state is upload of controls possible.</li> 
+
+      <li><b>Help</b> Display the help manual page for the current panel.</li>
+
+      <li><b>Status Update</b> Click this button to re-read elements of all panels
+      to compose updated status summary text.</li>
+
+      <li><b>Previous Panel</b> Convenience button to move to the panel
+      previous to the current one.</li>
+
+      <li><b>Next Panel</b> Convenience button to move to the panel
+      that follows the current one.</li>
+
+      <li><b>Close</b> Close the Experiment dialog. Note that any changes to
+      database values or any upload of experiment controls is governed to
+      elements within the panels of the Experiment dialog. This Close button
+      merely closes the dialog, regardless of experiment definition state.</li>
+
+    </ul>
+
+    <h3>Panel Tab Options:</h3>
+
+    <p>In each panel, tabs are visible at the top of the window to enable the
+    user to move to another panel, to perform specific experiment subtasks.
+
+    <ul>
+      <li><a href="experiment_general.html">1: General</a>
+      A panel whose primary purpose is to specify the experiment run ID (a
+      description string), select a parent project name, and possibly change
+      data source (database or local disk) or database investigator name.
+      </li>
+
+      <li><a href="experiment_rotor.html">2: Lab/Rotor</a>
+      A panel whose primary purpose is to select the Laboratory, Rotor, and
+      Calibration values for the experiment.
+      </li>
+
+      <li><a href="experiment_speeds.html">3: Speeds</a>
+      A panel whose primary primary purpose is to specify one or more speed steps.
+      For each step, speeds and durations may be given.
+      </li>
+
+      <li><a href="experiment_cells.html">4: Cells</a>
+      A panel whose primary purpose is to select the centerpieces (or
+      counterbalance) for the cells, along with a quartz/sapphire windows
+      selection.
+      </li>
+
+      <li><a href="experiment_solutions.html">5: Solutions</a>
+      A panel whose primary purpose is to specify the solution to be used
+      in each cell/channel.
+      </li>
+
+      <li><a href="experiment_photomult.html">6: Photo Multiplier</a>
+      A panel whose primary purpose is to define extinction profiles and the
+      implied photo multiplier voltage at each wavelength.
+      </li>
+
+      <li><a href="experiment_upload.html">7: Upload</a>
+      A panel whose primary purpose is to engineer the creation of an
+      experiment-defining JSON string and upload it to an Optima XLA
+      database.
+      </li>
+    </ul>
+
+[% INCLUDE footer.us3 %]
+

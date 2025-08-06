@@ -1,0 +1,138 @@
+<?xml version="1.0"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+                      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+  <head>
+    <title> UltraScan III Data Editor </title>
+    <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1"/>
+    <link href="mainstyle.css" rel="styleSheet" type="text/css"/>
+  </head>
+  <body>
+
+    <div class='header'> <img src="images/ultrascan3.png" alt='Ultrascan logo'/>
+      <i>Manual</i> 
+    </div>
+
+    <div id='contents'>
+    <hr/>
+
+
+
+<h2> Edit UltraScan Multi-WaveLength (MWL) Data </h2>
+
+<p class="center"> <img src="images/us_edit_mwl.png" alt="MWL Data Editor Window"/> </p>
+
+<p>Where the data loaded in an editing session is comprised of multiple
+wavelengths (more than two), the main editor window is changed to the above
+form. Instead of selecting triples to edit, this MWL edit procedure consists
+of selecting Cell / Channel pairs and the wavelengths within those doubles.
+Once editing in the normal way has been completed, the user may save the edit
+for either the specific triple ("<b>Save Current Edit Profile</b>") or for all
+of the wavelengths of the current double ("<b>Save to all Wavelengths</b>").
+</p>
+
+<p>Most of the edit controls for MWL are the same as for the standard
+<a href="us_edit.html">Data Editor Window</a>;
+and are not repeated here. The steps and control objects described
+herein are those specific to MWL processing.</p>
+
+<h3> Editing steps specific to MWL: </h3>
+
+<ol> 
+  <li><strong>Step 1</strong>: Load data from the database or a local data
+  directory. Select an entire runID so that MWL data is recognized as such.
+  </li>
+
+  <li><strong>Step 2</strong>: Select the Cell / Channel to be edited;
+  specify the Lambda (wavelength) range to be edited; and select a single
+  wavelength for display and edit.</li>
+
+  <li><strong>Step 3</strong>: Specify editing parameters - such as Meniscus,
+  Data Range, and Plateau - in the normal Control-Click way. </li>
+
+  <li><strong>Step 4</strong>: Save editing for either the specific triple
+  selected or to be applied to all wavelengths of a cell / channel double.</li>
+</ol>
+
+
+<h3> Functions specific to MWL: </h3>
+
+<ul>
+  <li><b>Cell / Channel</b> Select the double for which to perform
+  editing.</li>
+
+  <li><b>Lamdba Range</b> Select this radio button to indicate that
+  wavelength selection will be by start/end/increment specification.</li>
+
+  <li><b>Custom Lambda List</b> Alternatively, select this radio button to
+  indicate that wavelengths will be individually indicated in a list
+  dialog.</li>
+
+  <li><b>&lambda; Index Increment:</b> Select the wavelength range increment.
+  </li>
+
+  <li><b>&lambda; Start:</b> Select the wavelength range start value.</li>
+
+  <li><b>&lambda; End:</b> Select the wavelength range end value.</li>
+
+  <li><b>Custom Lambdas</b> Click to bring up a list dialog in which
+  individual output wavelengths can be enumerated.</li>
+
+  <li><b>Include All Lambdas</b> Reset the implied output wavelength range or
+  list to the full set of loaded dataset values.</li>
+
+  <li><b>x axis Radius</b> Select this radio button to indicate that the
+  plots of data should have an X axis of Radius (the default).</li>
+
+  <li><b>x axis Wavelength</b> Select this radio button to indicate that the
+  plots of data should have an X axis of Wavelength; and, therefore, that
+  each plot is for a selected Radius.</li>
+
+  <li><b>Plot (W nm):</b> Select the Wavelength (in NM) or (if the title
+  of this button is "<b>Plot (R cm):</b>" when the "<b>x axis Wavelength</b>"
+  radio button was selected) select the Radius (in CM) to plot and edit.</li>
+ 
+  <li><b>(left arrow) previous</b> Click to change the plot to the one for
+  the previous Wavelength or Radius value.</li>
+ 
+  <li><b>(right arrow) next</b> Click to change the plot to the one for
+  the next Wavelength or Radius value.</li>
+ 
+  <li><b>Save Current Edit Profile</b> Click this button (in the MWL case) to
+  save the current edit for the current Cell / Channel / Wavelength only.</li>
+ 
+  <li><b>Save to all Wavelengths</b> Click this button to save the current
+  edit for all wavelengths of the currently selected Cell / Channel.</li>
+</ul>
+
+
+    </div> <!-- contents -->
+    <!-- footer -->
+    <hr />
+
+    <div class='footer'>
+    
+    <p>This document is part of the <i><b>UltraScan</b></i> Software
+    Documentation distribution. </p>
+    
+    <p>Ultrascan III software was developed by Emre Brookes, Borries Demeler,
+    Bruce Dubbs, Gary Gorbet, Saeed Mortezazadeh, Alexey Savelyev and Dan
+    Zollars.<p>
+
+    <p>This software is funded by the National Institutes of Health (US), the National
+    Science Foundation (US), the National Science and Engineering Research Council
+    of Canada and the Biomolecular Interactions Technology Center (US). UltraScan is
+    free software; you can redistribute it and/or modify it
+    under the terms of the <a href="http://www.gnu.org/licenses/lgpl.html"
+    rel="license">GNU Lesser General Public License</a> as published by the Free
+    Software Foundation; either version&nbsp;3 of the License, or (at your
+    option) any later version.</p>
+
+
+
+    <p>Last modified on 11:43:48 02-Aug-2025 </p>
+    
+    </div> <!-- footer -->
+  </body>
+</html>
+

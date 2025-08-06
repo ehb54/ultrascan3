@@ -1,0 +1,83 @@
+[% INCLUDE header.us3
+   title = 'UltraScan III Experiment Upload Panel'
+%]
+    <h2> Create Experiment - Perform Controls Upload Panel: </h2>
+    <p class='center'><img src="images/experiment_upload.png"
+    alt="Experiment Upload panel"/></p>
+
+    <p> Using this panel, you can view total experiment controls,
+    see the JSON thus formed, and upload the JSON control to
+    the Optima XLA database.</p>
+
+    <p> As with all panels, a set of tabs allows you to navigate to
+    other panels in order to perform specialized subtasks relating
+    to experiment creation. Links to and summaries of the panels are
+    given in the final section of this page.</p>
+
+    <h3> Dialog Items: </h3>
+
+    <ul>
+      <li><b>View Experiment Contols</b> Click this button to open a
+      text dialog showing a summary of experiment controls and a
+      copy of the JSON text to be uploaded.</li>
+
+      <li><b>Upload to XLA</b> Click this button to upload the JSON
+      record with experiment controls to the Optima XLA's database.
+      Note that specification of connection parameters for the XLA
+      is given in the Preferences -> XPN Host Preferences dialog of
+      the main UltraScan III window.</li>
+    </ul>
+
+    <h3> Shared Dialog Items: </h3>
+
+    <p>A panel status box and multiple buttons are shared by all panels.
+    The <a href="experiment_general.html">General tab help page</a>
+    has detailed explanations of these items.</p>
+
+    <h3>Panel Tab Options:</h3>
+
+    <p>In each panel, tabs are visible at the top of the window to enable the
+    user to move to another panel, to perform specific experiment subtasks.
+
+    <ul>
+      <li><a href="experiment_general.html">1: General</a>
+      A panel whose primary purpose is to specify the experiment run ID (a
+      description string), select a parent project name, and possibly change
+      data source (database or local disk) or database investigator name.
+      </li>
+
+      <li><a href="experiment_rotor.html">2: Lab/Rotor</a>
+      A panel whose primary purpose is to select the Laboratory, Rotor, and
+      Calibration values for the experiment.
+      </li>
+
+      <li><a href="experiment_speeds.html">3: Speeds</a>
+      A panel whose primary primary purpose is to specify one or more speed steps.
+      For each step, speeds and durations may be given.
+      </li>
+
+      <li><a href="experiment_cells.html">4: Cells</a>
+      A panel whose primary purpose is to select the centerpieces (or
+      counterbalance) for the cells, along with a quartz/sapphire windows
+      selection.
+      </li>
+
+      <li><a href="experiment_solutions.html">5: Solutions</a>
+      A panel whose primary purpose is to specify the solution to be used
+      in each cell/channel.
+      </li>
+
+      <li><a href="experiment_photomult.html">6: Photo Multiplier</a>
+      A panel whose primary purpose is to define extinction profiles and the
+      implied photo multiplier voltage at each wavelength.
+      </li>
+
+      <li><a href="experiment_upload.html">7: Upload</a>
+      A panel whose primary purpose is to engineer the creation of an
+      experiment-defining JSON string and upload it to an Optima XLA
+      database.
+      </li>
+    </ul>
+
+[% INCLUDE footer.us3 %]
+

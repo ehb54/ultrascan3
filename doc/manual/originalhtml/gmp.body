@@ -1,0 +1,50 @@
+[% INCLUDE header.us3/
+title = 'UltraScan III GMP' %]
+
+<h2> <i>UltraScan</i> GMP Help: </h2>
+
+<h3> User Roles and Permissions:</h3>
+
+<table>
+    <tr>
+        <th>Role</th>
+        <th>Responsibilities</th>
+        <th>Permissions</th>
+        <th>Restricted Actions</th>
+    </tr>
+    <tr>
+        <td>Operator</td>
+        <td>Conducting AUC experiments in accordance with standard operating procedures (SOPs), and ensuring raw data is properly collected</td>
+        <td>Setting up and conducting experiments</td>
+        <td>Modifying data after submission and approving or rejecting experiments.</td>
+    </tr>
+    <tr>
+        <td>Reviewer</td>
+        <td>Reviews experiment results for scientific accuracy and SOP compliance</td>
+        <td>Access completed experiment data, and view audit trails</td>
+        <td>Conducting experiments, modifying data, and approving or rejecting experiments</td>
+    </tr>
+    <tr>
+        <td>Approver</td>
+        <td>Verifies that the experiment conducted is compliant with SOPs, and that other compliance documentation is in order</td>
+        <td>Access completed experiment data, and view audit trails</td>
+        <td>Conducting experiments, modifying data, and validating scientific accuracy of experiments</td>
+    </tr>
+    <tr>
+        <td>Subject Matter Expert (SME)</td>
+        <td>Provides expertise on scientific accuracy and experiment validity</td>
+        <td>Access completed experiment data</td>
+        <td>Conducting experiments, and modifying data</td>
+    </tr>
+</table>
+
+<p><strong>Role Assignment:</strong> Roles are assigned from the lab-specific UltraScan3 LIMS portal
+    (<a href="https://uslims.aucsolutions.com/lims_servers.php">https://uslims.aucsolutions.com/lims_servers.php</a>)
+    by a system administrator (Level 0 user), whose role is restricted to assigning user levels and roles.
+    Each role is mutually exclusive to ensure a clear separation of responsibilities and maintain GMP compliance.</p>
+
+<p><strong>GMP</strong> (Button in top bar): The GMP module can be accessed using the drop-down 'GMP' menu located at the top of the UltraScan III module</p>
+
+<p class="center"><img src="images/gmp/gmp.png" alt="GMP Outline"/></p>
+
+[% INCLUDE "footer.us3" %]

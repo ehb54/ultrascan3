@@ -1,0 +1,42 @@
+[% INCLUDE header.us3/
+   title = 'UltraScan III Save Color Map'
+%]
+
+    <h2> <i>UltraScan</i> Save Color Map File: </h2>
+
+    <p> The <b><i>UltraScan III</i></b> US_Colorgradient application saves
+    a color map to a file using a file dialog.</p>
+
+    <img src="images/save_colormap.png" alt="Save CMap File Dialog"/>
+
+    <p> The file is saved to the ./etc directory and is generally of a
+    "cm_*.xml" form. It represents a color gradient in the form of a color map.
+    </p>
+
+    <p> The file naming convention is as follows:
+        <ul>
+            <li>
+                <b>cm- :</b> a prefix signifying colormap.
+            </li>
+            <li>
+                <b>b- :</b> a single-character code for the start color with
+                values such as "b" for black, "w" for white, "y" for yellow,
+                "g" for gray.
+            </li>
+            <li>
+                <b>cyan-magenta-... :</b> a string of color-step end color names.
+            </li>
+            <li>
+                <b>.xml :</b> a required suffix signifying that the file is XML.
+            </li>
+        </ul>
+    </p>
+
+    <p> When specifying the output file name, it is not necessary to include
+    the "cm-" prefix or ".xml" extension. They will be automatically added to
+    the name. If you wish to specify a name with no "cm-" prefix, prefix the
+    given name with ".". No "cm-" prefix will then be given and the "." prefix
+    will be ignored. Simularly, a "." suffix will signal a desire to add no
+    extension.</p>
+
+[% INCLUDE footer.us3 %]

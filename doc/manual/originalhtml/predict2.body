@@ -1,0 +1,11 @@
+[% INCLUDE header.us3
+   title = 'UltraScan III - Predict hydrodynamic parameters for 4 basic shapes'
+%]
+    <h2> Predict hydrodynamic parameters for 4 basic shapes: </h2>
+    <p> In this dialog, you can enter a combination of 2 different hydrodynamic 
+    parameters and predict the remaining hydrodynamic parameters for 4 basic shapes.</p>
+
+    <p class='center'><img src="images/predict2-1.png" 
+    alt="Model Shapes"/></p>
+
+[% INCLUDE footer.us3 %]

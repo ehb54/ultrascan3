@@ -1,0 +1,126 @@
+<?xml version="1.0"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+                      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+  <head>
+    <title> UltraScan III Edit Pre-Filter for Models </title>
+    <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1"/>
+    <link href="mainstyle.css" rel="styleSheet" type="text/css"/>
+  </head>
+  <body>
+
+    <div class='header'> <img src="images/ultrascan3.png" alt='Ultrascan logo'/>
+      <i>Manual</i> 
+    </div>
+
+    <div id='contents'>
+    <hr/>
+
+
+
+    <h2> <i>UltraScan</i> Edit Pre-Filter for Model Loading: </h2>
+
+    <p> A number of <b><i>UltraScan III</i></b> applications load model
+    distribution data for processing. For large-volume data bases, it helps
+    the speed of model list preparation to do a pre-filter of the model
+    data by editedData ID number or run ID. These applications use the
+    US_SelectEdits dialog class to allow the user to choose edits or runs with
+    which to filter model listings.</p>
+
+    <p> The dialog presented when a US_SelectEdits is executed allows a
+    list of edited data or raw (run) data choices from database or local disk.
+    A Search text field allows the list to be pared down to those of interest.
+    After one or more data sets are selected in the list, a button labelled
+    "Select PreFilter(s)" passes experiment data to the caller which passes
+    selections to the <a href="load_model_distrib.html">LoadModel Dialog</a>.
+
+    <table>
+      <tr>
+        <td>
+          <img src="images/select_edits.png" alt="SelectEdits Dialog"/>
+        </td>
+        <td>
+          <ul>
+            <li>
+              <b>Select Investigator</b> This button brings up an
+              <a href="us_investigator.html">Investigator Dialog</a> that allows
+              selecting the current investigator for whom to list runs/edits.
+            </li>
+
+            <li>
+              <b>by Run ID</b> Check this radio button to generate a list
+              of run IDs by which to filter models.
+            </li>
+
+            <li>
+              <b>by Latest Edit</b> Check this radio button to generate a list
+              of Run/Triple/Edit entries that are limited to the latest edits
+              of each triple and by which to filter.
+            </li>
+
+            <li>
+              <b>by Edit</b> Check this radio button to generate a list
+              of all Run/Triple/Edit entries by which to filter.
+            </li>
+
+            <li>
+              <b>Search</b> As characters are entered in the text box to the
+              right of the Search label, the list of data sets is modified to
+              consist of matching entries. A blank field restores the full
+              list. Note that the search is case-insensitive.
+            </li>
+
+            <li>
+              <b>(run/edit list)</b> This box holds the generated list of
+              runs or edits. You may select a single entry or multiple entries
+              using ctrl-click or shift-click in the normal way.
+            </li>
+
+            <li>
+              <b>Help</b> Click to bring up this documentation.
+            </li>
+
+            <li>
+              <b>Cancel</b> Click to close the dialog with no choices made.
+            </li>
+
+            <li>
+              <b>Select PreFilter(s)</b> Click to accept the choice(s)
+              highlighted in the data list and pass data back to the caller.
+            </li>
+          </ul>
+        </td>
+      </tr>
+    </table>
+
+
+    </div> <!-- contents -->
+    <!-- footer -->
+    <hr />
+
+    <div class='footer'>
+    
+    <p>This document is part of the <i><b>UltraScan</b></i> Software
+    Documentation distribution. </p>
+    
+    <p>Ultrascan III software was developed by Emre Brookes, Borries Demeler,
+    Bruce Dubbs, Gary Gorbet, Saeed Mortezazadeh, Alexey Savelyev and Dan
+    Zollars.<p>
+
+    <p>This software is funded by the National Institutes of Health (US), the National
+    Science Foundation (US), the National Science and Engineering Research Council
+    of Canada and the Biomolecular Interactions Technology Center (US). UltraScan is
+    free software; you can redistribute it and/or modify it
+    under the terms of the <a href="http://www.gnu.org/licenses/lgpl.html"
+    rel="license">GNU Lesser General Public License</a> as published by the Free
+    Software Foundation; either version&nbsp;3 of the License, or (at your
+    option) any later version.</p>
+
+
+
+    <p>Last modified on 11:43:47 02-Aug-2025 </p>
+    
+    </div> <!-- footer -->
+  </body>
+</html>
+

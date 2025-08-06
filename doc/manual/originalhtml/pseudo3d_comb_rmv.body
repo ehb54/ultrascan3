@@ -1,0 +1,59 @@
+[% INCLUDE header.us3/
+   title = 'UltraScan III Remove Model Distributions'
+%]
+
+    <h2> <i>UltraScan</i> Remove Model Distributions: </h2>
+
+    <p> The dialog presented when a US_RemoveDistr is executed shows a
+    list of loaded models. By selecting items in this list and clicking
+    on a Remove button, you can remove models from the original 
+    distribution list. After all the desired removals have been performed,
+    an Accept button passes the reduced model data to the caller. </p>
+    
+    <table>
+      <tr>
+        <td>
+          <img src="images/pseudo3d_comb_rmv.png" alt="RemoveDistr Dialog"/>
+        </td>
+        <td>
+          <ul>
+            <li>
+              <b>(list)</b> The list box is initially populated with a passed
+              list of all loaded models. Individual or multiple item lines
+              can be selected for removal.
+            </li>
+            
+            <li>
+              <b>Remove</b> After making selections, click this button
+              to remove selections from the list.
+            </li>
+
+            <li>
+              <b>Restore</b> Click on this button to restore the list to
+              its original full-list state.
+            </li>
+            
+            <li>
+              <b>Help</b> Click to bring up this documentation.
+            </li>
+            
+            <li>
+              <b>Cancel</b> Click to close the dialog with no model list
+              modifications made.
+            </li>
+
+            <li>
+              <b>Accept</b> Click to accept the modified list as it appears
+              and pass it back to the caller.
+            </li>
+
+            <li>
+              <b>(status)</b> The ongoing status of the list and current
+              selections is documented here.
+            </li>
+          </ul>
+        </td>
+      </tr>
+    </table>
+
+[% INCLUDE footer.us3 %]

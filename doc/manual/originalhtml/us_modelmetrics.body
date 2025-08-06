@@ -1,0 +1,62 @@
+[% INCLUDE header.us3
+   title = 'UltraScan III Solution Window'
+%]
+   <h2> Determining Finite Element Model Statistics and Metrics </h2>
+   <p class='center'><img src="images/us_modelmetrics-0.png" 
+   alt="Model Metrics Window"/></p>
+
+   <p>This program allows you to obtain statistics for a model computed
+   by any finite element analysis module in UltraScan. The following
+   metrics are supported:</p>
+
+   <ul>
+      <li>Three distribution limits D<sub>i</sub></li>
+      <li>The span computed from the distribution limits</li>
+      <li>The concentration integral between the lowest and highest distribution limit</li>
+      <li>The minimum X-value of the distribution</li>
+      <li>The maximum X-value of the distribution</li>
+      <li>The mean, mode and median of the distribution</li>
+      <li>The skew and kurtosis of the distribution</li>
+   </ul>
+
+   <p>The program is started by selecting a model from the database or
+   disk. When using the database, the investigator needs to be specified,
+   and a prefilter can be applied. Once a model has been loaded, the
+   user can choose the distribution based on any of the hydrodynamic
+   parameters available in the model by checking the radio button next to
+   the parameter. By default, the sedimentation coefficient distribution
+   will be shown. One of the parameters fitted will be fixed and not
+   available for plotting.</p>
+
+   <p>Once the model is loaded and the distribution parameter has been
+   selected, default distributions limits D<sub>1</sub> - D<sub>3</sub>
+   are set and the corresponding statistical values are calculated. At
+   this point, the user can choose to add the current calculation and plot
+   window to a report by clicking on <b><i>"Save to Report"</i></b>. The
+   user can also change the smoothing level of the displayed distribution
+   by changing the standard deviation (<b><i>"Sigma"</i></b>) value
+   to non-zero, positive value. The distribution limits can also be
+   adjusted to bracket different regions of the distribution and obtain
+   different spans and centers. The adjustment of the top and bottom
+   distribution limits can be used to integrate individual peaks in
+   the distribution.</p>
+
+   <p>The integral value between the top and bottom distribution
+   limits should be close, but will not exactly match the selected
+   difference. For example, a distribution limit of 10% and 90% will not
+   provide exactly 80% difference. The reason for this is the discrete
+   nature of the finite element model distributions, which contain
+   discrete solute points. To obtain integral values closer to the
+   selected percent difference the discrete nature of the distribution
+   can be reduced to a more continuous distribution by increasing the
+   sigma value</p>
+
+   <p>For each model to be included in the report, <b><i>"Save to
+   Report"</i></b> needs to be clicked once all parameters are set to
+   acceptable values. Once all models have been evaluated, clicking on
+   <b><i>"Show Report"</i></b> will call up the default browser on your
+   system and display the cumulative report in html format. Clicking
+   on the <b><i>"Reset"</i></b> button will reset all values to their
+   original default values.</p>
+
+[% INCLUDE footer.us3 %]

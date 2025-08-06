@@ -1,0 +1,53 @@
+[% INCLUDE header.us3
+   title = 'UltraScan III Rotor Calibration Window'
+%]
+    <h2> How to Manage Rotor Information </h2>
+
+    <p> Using this window, you can manage rotor information on your local
+    disk or in the current database.</p>
+
+    <p>To load rotor information into the current window, first select
+    the Use Database or the Use Local Disk radio button. Then select
+    the appropriate lab in the lab drop-down box. Follow the sequence
+    below that fits your particular situation. Note: most likely you
+    will be using Sequence 1.</p>
+
+    <h3>Sequence 1</h3>
+
+    <p>In this sequence you have come to this window from US_Convert, 
+    and you would like to select the rotor and rotor calibration 
+    that were in place during your experiment. First, select the
+    appropriate rotor from the top listbox, and then select the
+    correct rotor calibration profile. The rotor calibration profiles
+    are sorted in reverse order by date, so that the most recent
+    one is on top. This is the most likely choice.</p>
+
+    <p>Once the lab, rotor, and rotor calibration have been selected,
+    you may click on the &quot;View Calibration Report&quot; button
+    to view the report, or view other related information in the
+    stretch coefficient boxes or the omega2t box. Click the
+    &quot;Accept&quot; button to confirm your choices and return
+    to the previous window.</p>
+
+    <p class='center'><img src="images/rotor.png" 
+    alt="Rotor Window"/></p>
+
+    <h3>Sequence 2</h3>
+
+    <p>In this sequence you have come to this window from US_Rotor_Calibration,
+    and you would like to associate the calibration with an existing
+    rotor. Click on the rotor you would like to associate and then click
+    on &quot;Save Calibration Data.&quot; Administrators only.</p>
+
+    <p class='center'><img src="images/rotor-save-calibration.png" 
+    alt="Save Rotor Calibration Window"/></p>
+
+    <h3>Sequence 3</h3>
+
+    <p>Click on &quot;Add Rotor&quot; to add a new rotor. Administrators
+    only.</p>
+
+    <p class='center'><img src="images/rotor-add.png" 
+    alt="Add Rotor Window"/></p>
+
+[% INCLUDE footer.us3 %]
