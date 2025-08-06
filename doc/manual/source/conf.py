@@ -27,7 +27,7 @@ author = 'Emre Brookes, Borries Demeler, Bruce Dubbs, Haben Gabir, Gary Gorbet, 
 version = ''
 # The full version, including alpha/beta/rc tags
 release = '0.0.1'
-
+qthelp_namespace = 'com.aucsolutions'
 
 # -- General configuration ---------------------------------------------------
 
