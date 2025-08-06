@@ -130,6 +130,10 @@ latex_documents = [
 
 latex_engine = 'lualatex'
 
+# Index creation
+latex_use_modindex = True
+latex_domain_indices = True
+
 # -- Options for manual page output ------------------------------------------
 
 # One entry per manual page. List of tuples

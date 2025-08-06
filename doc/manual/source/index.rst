@@ -29,7 +29,7 @@ Welcome to UltraScan III's Documentation and Resource!
    
 .. only:: latex
 
-   .. printindex::
+   * :ref:`genindex`
 
 
 
