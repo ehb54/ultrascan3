@@ -1,102 +1,114 @@
-# UltraScan III Documentation
+# UltraScan III — Sphinx Documentation
 
-## Building Documentation Files
+The Sphinx-based system is used for generating UltraScan III documentation in:
 
-To make the UltraScan III documentation files for Qt Assistant, from the `ultrascan3/doc/manual` directory, simply run:
+- HTML (for browser viewing)
+- PDF (via LaTeX)
+- Qt Help (`.qch`, `.qhc` for Qt Assistant)
 
-```bash
-make
-```
+---
 
-This requires that the Qt5 binaries are in your PATH and the Perl tool `tpage` is available.
+## Requirements
 
-### Installing Required Tools
+### 1. Python Packages
 
-To get `tpage`, check your distribution for `libtemplate-perl` or install it yourself as root:
-
-```bash
-sudo cpan -i Template::Tools
-```
-
-Reference: http://template-toolkit.org/docs/index.html
-
-On some installations, AppConfig may also be required:
+Install from `source/requirements.txt`:
 
 ```bash
-sudo cpan -i AppConfig
+pip install -r source/requirements.txt
 ```
 
-For doxygen documentation generation, a program called "GraphViz" is needed. It's available from:
-http://www.graphviz.org/Download_source.php
+### 2. System Tools
 
-## File Organization
+#### Qt Help Build Tools (included with Qt)
 
-### Important Note on File Structure
+Building the Qt Help (`.qch`, `.qhc`) requires:
 
-During the build process:
-- Source `.body` files are organized in directories for ease of maintenance
-- The build process flattens this structure, placing all files in a single output directory and then creates the HTML
-- Image files maintain their original folder structure under the `images/` directory
+- `qhelpgenerator`
+- `qcollectiongenerator`
+- `assistant` (for local preview)
 
-Cross-referencing implications:
-- When linking to other HTML files, do not include directory paths as they won't exist in the built documentation
-- Example correct link: `<b><a href="gmp_define_experiment.html">Define Another Experiment</a></b>`
-- Incorrect link: `<a href="gmp/gmp_define_experiment.html">Define Another Experiment</a>`
-- For images, continue to include the full path with subdirectories: `<img src="images/gmp/data_acquisition/gmp_data_acquisition_01.png">`
+Qt is already a core prerequisite for UltraScan and should be installed as part of the main UltraScan build.
 
-This flattened structure simplifies the build process using a template engine while preserving logical organization in the source files.
+Ensure the Qt binaries are in your `PATH`.
 
-## Documentation Style Guidelines
+## Building the PDF Manual 
 
-When creating or editing documentation files:
+### Prerequisites
 
-1. Image Formatting
-   - Wrap all images in a centered paragraph to prevent large spaces:
-     ```html
-     <p class="center"><img src="images/example.png" alt="Example"/></p>
-     ```
-   - Keep image dimensions at 800px or smaller for optimal display across devices
-   - Ensure all images have descriptive alt text
+You will need:
 
-2. body Structure
-   - Follow the existing template structure with proper inclusion of header and footer elements
-   - Use semantic HTML elements appropriately
-   - Maintain consistent heading hierarchy (h1, h2, h3, etc.)
+* full LaTeX distribution 
 
-3. CSS Usage
-   - Use the provided CSS classes rather than inline styles
-   - The `center` class is particularly important for properly aligning images
-   - Refer to `mainstyle.css` for available styling options
+### macOS Setup
 
-4. Content Guidelines
-   - Use consistent formatting for navigation links, examples, and code snippets
-   - Keep explanations clear and concise
-   - Organize content with appropriate headings and lists
-   - Include cross-references to related documentation pages where helpful
+1. Install full MacTeX:
 
-## Example Document Structure
+   ```bash
+   brew install --cask mactex
+   ```
 
-```html
-[% INCLUDE header.us3/
-   title = 'UltraScan III Component Name'
-%]
+2. Add TeX to your PATH:
 
-    <h2>Component Name</h2>
+   ```bash
+   echo 'export PATH=/Library/TeX/texbin:$PATH' >> ~/.zprofile
+   source ~/.zprofile
+   ```
 
-    <p>Description of the component and its purpose.</p>
+### Linux Setup (Ubuntu/Debian)
 
-    <p class="center"><img src="images/component.png" alt="Component Description"/></p>
+Install TeX Live Full:
 
-    <h3>Functions:</h3>
+```bash
+sudo apt update
+sudo apt install texlive-full latexmk -y
+```
 
-    <ul>
-       <li>
-          <b>Function Name:</b> Description of what this function does.
-       </li>
-       <!-- Additional functions -->
-    </ul>
+### Building the PDF
 
-[% INCLUDE footer.us3 %]
+From the Sphinx documentation directory:
+
+```bash
+cd doc/manual/
+make pdf
+```
+
+The generated PDF will be located at:
+
+```
+build/doc/manual/latex/UltraScanIII.pdf
+```
+### Troubleshooting
+
+* Make sure you are using a full LaTeX distribution (MacTeX or texlive-full).
+
+* If you've changed font configurations or installed new fonts, run:
+
+  ```bash
+  luaotfload-tool --update --force
+  ```
+
+## Building HTML and QT Help Documentation
+
+Run all commands from: `doc/manual/`
+
+### Build HTML
+
+```bash
+make html
+```
+
+Output: `build/doc/manual/html/`
+
+### Build Qt Help
+
+```bash
+make qthelp
+```
+
+### Build Qt Help qhc file and copy to bin
+```bash
+make install
 ```
 
 ## Testing Documentation with Qt Assistant
@@ -127,6 +139,13 @@ After building your documentation, it's important to test it with Qt Assistant t
 
 For additional help, refer to the UltraScan support resources.
 
+## Notes
 
+- All output formats are built from the unified `source/` directory.
+- Output locations:
+  - HTML, LaTeX, Qthelp: `build/doc/manual/`
+  - Qt Help binaries (`.qch`, `.qhc`): `bin/`
+
+For Sphinx usage help, see: https://www.sphinx-doc.org
 
 

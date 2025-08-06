@@ -1,0 +1,12 @@
+# Core Sphinx engine
+sphinx>=7.0.0
+
+# Qt Help output support
+sphinxcontrib-qthelp
+
+# Subfigure extension (LaTeX/PDF)
+sphinx-subfigure
+
+# markdown support
+myst-parser
+

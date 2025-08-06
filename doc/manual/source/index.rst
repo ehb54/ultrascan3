@@ -18,17 +18,17 @@ Welcome to UltraScan III's Documentation and Resource!
    :maxdepth: 1
    :caption: Table of Content:
    
-   advanced_config
    us_edit
+   advanced_config
    fit_meniscus
 
-.. toctree::
-  :maxdepth: 1
-  :caption: Viewer:  
+   vhw_enhanced
+   vhw_distrib_plot
+   vhw_combine
 
-  vhw_combine
-  pseudo3d_combine
+   pseudo3d_combine
    
+<<<<<<< HEAD:doc/manual/sphinx/build/html/_sources/index.rst.txt
 
 .. toctree::
    :maxdepth: 1
@@ -38,6 +38,11 @@ Welcome to UltraScan III's Documentation and Resource!
    vhw_enhanced
    vhw_distrib_plot
    second_moment
+=======
+.. only:: latex
+
+   * :ref:`genindex`
+>>>>>>> ed42571eef45aa8fe056b8c6beed62adfa500925:doc/manual/source/index.rst
 
 
 
