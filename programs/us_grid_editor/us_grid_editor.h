@@ -18,7 +18,6 @@
 #include "us_license.h"
 #include "us_license_t.h"
 #include "us_settings.h"
-#include <math.h>
 #include "qwt_scale_engine.h"
 #include <qwt_plot_shapeitem.h>
 
@@ -219,6 +218,59 @@ private slots:
 
    //! \brief Slot to cancel the setup.
    void cancel( void );
+};
+
+class US_Grid_ZFunction : public US_WidgetsDialog
+{
+   Q_OBJECT
+
+public:
+   enum FunctionType { POLYN, EXP, NONE };
+
+   US_Grid_ZFunction( QWidget *, const QMap< QString, QString>& );
+
+
+private:
+   FunctionType type;
+   QMap< int, QVector< double > > parameters;
+   QVector< double >   xvalues;
+   QVector< double >   yvalues;
+   QList< QLabel* >    list_lb;
+   QList< QLineEdit* > list_le;
+
+   QLabel           *lb_formula;
+   QLabel           *lb_order;
+   QLabel           *lb_c0;
+   QLabel           *lb_c1;
+   QLabel           *lb_c2;
+   QLabel           *lb_c3;
+   QLabel           *lb_c4;
+   QLabel           *lb_c5;
+   QLineEdit        *le_c0;
+   QLineEdit        *le_c1;
+   QLineEdit        *le_c2;
+   QLineEdit        *le_c3;
+   QLineEdit        *le_c4;
+   QLineEdit        *le_c5;
+   QLineEdit        *le_min;
+   QLineEdit        *le_max;
+   QComboBox        *cb_ftype;
+   QSpinBox         *sb_order;
+   QwtPlot          *plot;
+
+   void draw_formula( void );
+   void compute( void );
+
+private slots:
+   void set_function( int index );
+   void set_order( int );
+   void apply( void );
+   void set_c0( void );
+   void set_c1( void );
+   void set_c2( void );
+   void set_c3( void );
+   void set_c4( void );
+   void set_c5( void );
 };
 
 
