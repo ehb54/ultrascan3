@@ -1,0 +1,96 @@
+[% INCLUDE header.us3
+   title = 'UltraScan III Analyte Properties'
+%]
+    <h2> Model Components: </h2>
+    <p> In this dialog, you can set the properties of components of a model.</p>
+
+    <p class='center'><img src="images/components.png" 
+    alt="Model Components"/></p>
+
+    <p>Dialog Items:</p>
+
+    <ul>
+      <li><b>New Analyte</b> Click to create a new analyte and add it to
+      the list of model components, using an
+      <a href="analytes.html">Analyte Management dialog</a>.</li>
+      
+      <li><b>Remove Current Analyte</b> Click to remove from the list of
+      model components the analyte currently selected.</li>
+      
+      <li><b>Analyte Description:</b> Enter in the text box the name to be
+      given a newly created analyte or the new name to be given to a
+      currently selected analyte.</li>
+      
+      <li> (Analyte List) Click on the name of an analyte to select it for
+      editing of its properties.</li>
+
+      <li><b>Global Identifier</b> Read-only global identifier of the
+      analyte.</li>
+
+      <li><b>Vbar at 20 &deg;C (ml/g):</b> Enter the vbar value at 20 degrees
+      centigrade.</li>
+      
+      <li><b>Extinction (optical units)/Wavelength:</b> Enter the extinction
+      value for the read-only-displayed wavelength.</li>
+
+      <li><b>Molar Concentration:</b> Read-only molar concentration
+      calculated from Extinction and Signal Concentration.</li>
+
+      <li><b>Analyte Signal Concentration:</b> Enter the analyte's signal
+      concentration value.</li>
+
+      <li><b>Simulate s and D</b> Bring up a
+      <a href="predict1.html">Shape dialog</a> that uses axial ratio to model
+      s, D, and f from MW for 4 basic shapes.</li>
+
+      <li><b>(Shape)</b> Select molecule shape: Sphere, Prolate Ellipsoid,
+      Oblate Ellipsoid, or Rod. The selection here should be made before any
+      use of the Shape dialog.</li>
+
+      <li><b>(Parameters/Coefficients)</b> Exactly 2 of the 5 component
+      parameters to follow should be checked and their values possibly
+      modified. If a different pair than currently checked is desired, you
+      must first uncheck one of the boxes to enable selection of an
+      alternate. Values for unchecked parameters are calculated from the
+      two selected.</li>
+
+      <li><b>Molecular Wt. (mw) / Oligomer:</b> Check Molecular Weight to
+      enable setting a value for it in the text box. For a polygomer
+      component, set the Oligomer value greater than 1.</li>
+
+      <li><b>Frictional Ratio (f/f0) (20W)</b> Select frictional ratio and
+      set a value for it.</li>
+
+      <li><b>Sedimentation Coeff. (s) (20W)</b> Select sedimentation
+      coefficient and set a value for it.</li>
+
+      <li><b>Diffusion Coeff. (D) (20W)</b> Select diffusion
+      coefficient and set a value for it.</li>
+
+      <li><b>Frictional Coeff. (f) (20W)</b> Select frictional
+      coefficient and set a value for it.</li>
+
+      <li><b>Conc. Dependency of s (&sigma;):</b> Set a non-zero value to
+      specify concentration dependency and its sedimentation coefficient
+      sigma factor.</li>
+
+      <li><b>Conc. Dependency of D (&delta;):</b> Set a non-zero value to
+      specify concentration dependency and its diffusion coefficient
+      delta factor.</li>
+
+      <li><b>Load C0 from File</b> Click this button to begin an input
+      file dialog in which you can specify a file with first-scan
+      concentration values.</li>
+
+      <li><b>Co-sedimenting Solute</b> Check this box to specify that the
+      current component is a co-sedimenting solute.</li>
+
+      <li><b>Cancel</b> Close the dialog and do not return component selections
+      to the caller.</li>
+
+      <li><b>Accept</b> Close the dialog and return component selections
+      to the caller.</li>
+
+    </ul>
+
+[% INCLUDE footer.us3 %]

@@ -1,0 +1,79 @@
+[% INCLUDE header.us3/
+   title = 'UltraScan III FE Match Plot Controls'
+%]
+
+    <h2> FE Match Plot Controls:</h2>
+
+    <p> Upon completion of FE Match simulation, a pair of enhanced plot
+    controls dialogs appears. The "3D Plot" button in the first of these
+    launches a 3-dimensional plot window whose primary control resides in
+    this dialog. There are size, orientation, and other controls that are
+    in the 3D dialog itself. A second dialog displays a set of data and
+    residuals plots that are more refined and controllable than those
+    in the main FE Match window.</p>
+
+    <p class="center"><img src="images/fe_match_sim5.png" alt="Enh. Plot Controls"/></p>
+
+    <h3> 3D Plot Control Functions: </h3>
+
+    <ul>
+       <li>
+          <b>Dimensions:</b> The five pairs of check boxes allow the
+          user a way to set the 3D plot X and Y dimension value types:
+          MW; s20,w; D20,w; f; and f/f0.
+       </li>
+
+       <li>
+          <b>Z-Scaling Factor:</b> Set the scale factor for 3D Z values,
+          to increase/decrease peak extents relative to X and Y.
+       </li>
+
+       <li>
+          <b>Grid Resolution:</b> Set the number of pixels in X and Y for
+          which Z raster values are calculated.
+       </li>
+
+       <li>
+          <b>Peak Smoothing:</b> Set the smoothing factor applied to peaks.
+       </li>
+
+       <li>
+          <b>Peak Width:</b> Set the factor that governs the spread of
+          peaks.
+       </li>
+
+       <li>
+          <b>3D Plot</b> Click this button initially to launch the 3D
+          plot window. Thereafter, when dimension value or other settings
+          are changed, click this button for a re-draw of the 3D plot.
+       </li>
+
+       <li>
+          <b>Help</b> Click for this documentation.
+       </li>
+
+       <li>
+          <b>Close</b> Click to close the control dialog, along with any
+          residuals or 3D dialogs it spawned.
+       </li>
+    </ul>
+
+    <p>Below is a 3D plot window sample. As mentioned, it is controlled
+    largely in the Controls dialog. In the 3D window itself, the toolbar
+    controls have tool tip text shown when the cursor hovers over each.
+    The mouse scroll wheel controls zoom. Left mouse button click and
+    hold and mouse movement, as well as arrow keys, control orientation.
+    In general, display control is easily learned in playing with the
+    mouse and keyboard, sometimes in combination with shift, alt or
+    control keys.</p>
+
+    <p class="center"><img src="images/fe_match_3dplot.png" alt="3D Plot Window"/></p>
+
+    <p>The image below is a Residuals plot dialog sample. The check boxes that
+    control plot contents are self-explanatory. It appears automatically
+    upon simulation completion and may be brought up any time using the
+    <b>Residual Plot</b> button in the main window.</p>
+
+    <p class="center"><img src="images/fe_match_resplot.png" alt="Residuals Plot Dialog"/></p>
+
+[% INCLUDE footer.us3 %]

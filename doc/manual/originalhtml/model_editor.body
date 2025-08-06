@@ -1,0 +1,71 @@
+[% INCLUDE header.us3
+   title = 'UltraScan III Model Editor'
+%]
+    <h2> Model Editor: </h2>
+    <p> Using this window, you choose a model to load and can create
+    or edit a model.</p>
+
+    <p class='center'><img src="images/model_editor.png" 
+    alt="Model Editor"/></p>
+
+    <p>Dialog Items:</p>
+
+    <ul>
+      <li><b>Select Investigator</b> This button brings up an
+      <a href="us_investigator.html">Investigator Dialog</a>
+      that allows selecting the current investigator for whom to list models.
+      </li>
+      
+      <li><b>Use Database</b> Check to select loading or editing the model
+      from the database.</li>
+      
+      <li><b>Use Local Disk</b> Check to select loading or editing the model
+      from the hard disk.</li>
+      
+      <li><b>List Available Models</b> This button initiates population of
+      the list of models from the designated source (DB or disk).</li>
+      
+      <li><b>Create New Model</b> This button designates that the model to be
+      specified and used by the caller is new. An entry with the name
+      "New Model" will be added to the list. It should be changed in the
+      Model Description text box to an appropriate name.</li>
+      
+      <li><b>Model Description:</b> The text box here echoes the name of the
+      model currently selected in the list. The text box entry can be edited
+      to change the model name; of use, particularly, when a new model is
+      being created.</li>
+      
+      <li><b>Manage Components</b> This button brings up a
+      <a href="components.html">Model Components Dialog</a> in which the
+      model components and their properties can be specified.</li>
+
+      <li><b>Manage Associations</b> This button brings up a
+      <a href="associations.html">Model Associations Dialog</a> in which
+      reversible association chemical equations can be defined.</li>
+
+      <li><b>Wavelength:</b> Specify the model wavelength value in this
+      text box.</li>
+
+      <li><b>Optical System:</b> Select the model optical system:
+      Absorbance, Interference, or Flourescence.</li>
+
+      <li><b>Global Identifier:</b> Read-only global identifier of the
+      model.</li>
+
+      <li><b>Save / Update Model</b> Save the new or edited model to the
+      database or local disk.</li>
+
+      <li><b>Delete Selected Model</b> Delete the selected model from the
+      database or local disk.</li>
+
+      <li><b>Help</b> Show this documentation.</li>
+
+      <li><b>Cancel</b> Close the dialog and do not return the model selection
+      to the caller.</li>
+
+      <li><b>Accept</b> Close the dialog and return the model selection
+      to the caller.</li>
+
+    </ul>
+
+[% INCLUDE footer.us3 %]

@@ -1,0 +1,18 @@
+[% INCLUDE header.us3/
+   title = 'UltraScan III Model Information Dialog'
+%]
+
+    <h2> Model Information Dialog: </h2>
+
+    <p class="center"><img src="images/load_model_dis-MID.png" alt="Model Information Dialog"/></p>
+
+    <p> This dialog is displayed with a right-mouse-button click on the models
+    list. If no model is selected, information displayed is for the model at
+    the row to which the cursor is pointing when the mouse button is clicked.
+    If one or more models are selected at the time of the right-mouse-button
+    click, information is for the selected model(s).</p>
+
+    <p> In the case of multiple selections, information is displayed on
+    any model Run ID or Type that is common to all selections.</p>
+    
+[% INCLUDE footer.us3 %]

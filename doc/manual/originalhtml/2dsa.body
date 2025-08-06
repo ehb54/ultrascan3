@@ -1,0 +1,232 @@
+[% INCLUDE header.us3/
+   title = 'UltraScan III 2-D Spectrum Analysis'
+%]
+
+    <h2> <i>UltraScan</i> 2-Dimensional Spectrum Analysis: </h2>
+
+    <p> This module enables you to perform 2-dimensional spectrum analysis
+    on a chosen experimental data set. Upon completion of an analysis fit,
+    plots available include: experiment; simulation; overlayed experiment
+    and simulation; residuals; time-invariant noise; radially-invariant noise;
+    3-d model. Final outputs may include one or more models and noises.</p>
+
+    <p> The 2DSA method is used for composition analysis of sedimentation
+    velocity experiments. It can generate sedimentation coefficient,
+    diffusion coefficient, frictional coefficient, f/f0 ratio, and molecular
+    weight distributions. The distributions can be plotted as 3-dimensional
+    plots (2 parameters from the above list against each other), with the
+    third dimension representing the concentration of the solute found in the
+    composition analysis. The set of all such final calculated solutes form a
+    model which are used to generate a simulation via Lamm equations. The
+    simulation is plotted overlaying a plot of experimental data.</p>
+
+    <p> Every 2DSA pass can be repeated for a specified number of refinement
+    iterations. These iterations, in turn, can be repeated for a specified
+    number of meniscus points or Monte Carlo iterations.</p>
+
+    <p> Each refinement iteration proceeds over a defined grid of s and f/f0
+    values. That grid is divided into subgrids as defined by a number of
+    grid refinements in each direction.</p>
+
+    <h3> Process:</h3>
+
+    <ul>
+       <li>
+          <b>Load Experimental Data:</b> First, load experimental velocity
+          data. Click on "Load Data" to select an edited velocity data set from
+          the database or from local disk.
+       </li>
+          
+       <li>
+          <b>Define the Analysis Fit:</b> Secondly, open an analysis
+          control window by clicking on "Fit Control". Within that dialog,
+          define the grids and iterations that comprise the analysis.
+       </li>
+          
+       <li>
+          <b>Start the Fit:</b> Next, after having specified analysis
+          parameters, begin the fit analysis by clicking "Start Fit".
+       </li>
+          
+       <li>
+          <b>Display and Save Results:</b> After simulation, a variety of
+          options are available for displaying simulation results, residuals,
+          and distributions. Report text files and graphics plot files can
+          also be generated.
+       </li>
+    </ul>
+          
+    <h3> Main Window (as it is upon open):</h3>
+
+    <p class="center"><img src="images/2dsa_main-o.png" alt="2DSA Main Window on open"/></p>
+
+    <p> Once an analysis is complete, the main window will appear similar
+    to this:</p>
+
+    <p class="center"><img src="images/2dsa_main-c.png" alt="2DSA Main Window, fit complete"/></p>
+          
+    <h3> Functions:</h3>
+
+    <ul>
+       <li>
+          <b>Load Experiment</b> Click here and, in the resulting
+          <a href="data_loader.html">Load Data Dialog</a>, select an edited
+          data set to load.
+       </li>
+
+       <li>
+          <b>Run Details</b> Pop up a dialog showing run details.
+       </li>
+
+       <li>
+          <b>Latest Data Edit</b> Uncheck to allow choosing an edit other
+          than the latest one for the raw experimental data.
+       </li>
+
+       <li>
+          <b>Database</b> Select to specify data input from the database.
+       </li>
+
+       <li>
+          <b>Local Disk</b> Select to specify data input from local disk.
+       </li>
+
+       <li>
+          <b>View Data Report</b> Generate a report file and view it in
+          a dialog.
+       </li>
+
+       <li>
+          <b>Save Data</b> Save models and noises, as well as report and
+          plot images files.
+       </li>
+
+
+       <li>
+          <b>Run ID / Edit ID:</b> The Run identifier string and the Edit
+          identifier (generally a time string) are displayed for loaded edit.
+       </li>
+
+       <li>
+          <b>Avg Temperature:</b> The average temperature over all the
+          scans of the loaded data.
+       </li>
+
+       <li>
+          <b>(experiment description)</b> A text string is displayed giving
+          a fairly detailed description of the experiment.
+       </li>
+
+       <li>
+          <b>Cell / Channel / Wavelength</b> One or more rows of data edit
+          triples. If more than one, click on a row to select it as the
+          data of interest.
+       </li>
+
+       <li>
+          <b>Solution</b> Click this button to open a
+          <a href="us_solution.html">Solution Management dialog</a>
+          that allows changes to buffer and analyte characteristics of
+          the data set.
+       </li>
+
+       <li>
+          <b>Density (20&deg; C)</b> Shows the density value for the loaded
+          experiment. Click the Solution button to open a dialog in which
+          density and other values may be changed.
+       </li>
+
+       <li>
+          <b>Viscosity (20&deg; C)</b> Shows the viscosity value for thes
+          loaded experiment. Click the Solution button to open a dialog
+          in which viscosity and other values may be changed.
+       </li>
+
+       <li>
+          <b>Vbar (20&deg; C)</b> Shows the vbar value for the loaded
+          experiment. Click the Solution button to open a dialog in
+          which vbar and other values may be changed.
+       </li>
+
+       <li>
+          <b>Skipped</b> The count of experiment data scans skipped.
+       </li>
+
+       <li>
+          <b>Variance:</b> Variance value (square of RMSD) for residuals.
+       </li>
+
+       <li>
+          <b>RMSD:</b> Root-Mean-Square-of-Differences for residuals.
+       </li>
+
+       <li>
+          <b>Scan focus from:</b> Select a low scan of the range of values for
+          exclusion from analysis.
+       </li>
+
+       <li>
+          <b>to:</b> Select a high scan of the range of values for
+          exclusion from analysis.
+       </li>
+
+       <li>
+          <b>Exclude Scan Range</b> Initiate exclusion of the scans given
+          in the above controls.
+       </li>
+
+       <li>
+          <b>Reset Scan Range</b> Reset to the full range of scans.
+       </li>
+
+       <li>
+          <b>Fit Control</b> Open a dialog to set analysis parameters and
+          start a fit run.
+          For details on the results of clicking this button, see
+          <a href="2dsa_analys.html">2DSA Analysis Control</a>.
+       </li>
+
+       <li>
+          <b>3-D Plot</b> Open a control window for a 3-dimensional plot of
+          the final computed model. See
+          <a href="2dsa_3dplot.img.html">2DSA 3-D Plot Dialog</a> 
+          for an example of a 3-D plot, along with its control dialog.
+       </li>
+
+       <li>
+          <b>Residual Plot</b> Open a plot dialog for a far more detailed set
+          of result plots. See
+          <a href="2dsa_resplot.img.html">2DSA Residual Plot Dialog</a> 
+          for an example of the residual plot dialog.
+       </li>
+
+       <li>
+          <b>Status Info:</b> This text window displays continually updated
+          summaries of computational activity and results.
+       </li>
+
+       <li>
+          <b>Reset</b> Reset display parameters to defaults.
+       </li>
+
+       <li>
+          <b>Help</b> Display this and other documentation.
+       </li>
+
+       <li>
+          <b>Close</b> Close all windows and exit.
+       </li>
+
+       <li>
+          <b>(upper right side plot)</b> Upon analysis completion, this plot
+          is of the Residuals (Experimental minus Simulation minus any Noise).
+       </li>
+
+       <li>
+          <b>(lower right side plot)</b> Upon analysis completion, this plot
+          is of an overlay of the Experimental and Simulation data.
+       </li>
+
+    </ul>
+
+[% INCLUDE footer.us3 %]

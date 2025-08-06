@@ -1,0 +1,126 @@
+[% INCLUDE header.us3/
+   title = 'UltraScan III FE Match Simulate Model'
+%]
+
+    <h2> FE Match Simulate Model:</h2>
+
+    <p> When the "Simulate Model" button is clicked in US_FeMatch, a
+    simulation is performed using the Edit data, a Loaded Model, and
+    simulation parameters primarily created using the edit data set.
+    A simulation data set is created that has the same ranges as the 
+    edit set, but with readings values that are calculated and compared
+    to the actual experimental data. The comparison spawns a number of
+    new dialogs and options that allow the user to evaluate the quality
+    of the model.</p>
+
+    <h3> Simulation Products Summary:</h3>
+
+    <ul>
+       <li>
+          Calculated simulation produced.
+       </li>
+
+       <li>
+          Simulation & experiment main window overlay plot.
+       </li>
+
+       <li>
+          Residuals and distribution main window upper plot.
+       </li>
+
+       <li>
+          Residuals bitmap display.
+       </li>
+
+       <li>
+          Enhanced plot controls dialog for 3-D and residuals plots.
+       </li>
+
+       <li>
+          Data report files and view dialog.
+       </li>
+    </ul>
+
+    <h3> Simulation Product Details:</h3>
+    
+    <p><b>The Simulation</b> The simulation creates a data set with the
+    same ranges as the edit experimental data set. The actual values for
+    scan readings vectors are synthetically produced, as illustrated by
+    the plot below.</p>
+
+    <p class="center"><img src="images/fe_match_sim1.png" alt="Simulation Illustration"/></p>
+    
+    <p><b>Overlay Plot</b> Upon completion of simulation computations
+    the plot of experimental data (in yellow and cyan) is overlayed
+    in the main window lower plot with the simulation data (in red),
+    as shown in the image below.</p>
+
+    <p class="center"><img src="images/fe_match_sim2.png" alt="Experiment/Sim Overlay"/></p>
+    
+    <p><b>Residuals/Distributions Plots</b> The upper main window
+    plot is initially a plot of residuals (experimental minus
+    simulation data). The button initially labelled "Residuals" then
+    gets re-labelled. Each time the button is clicked, it produces the
+    indicated plot and cycles its label to the next plot option. The
+    8 residual/distribution option buttons are shown below.</p>
+
+    <p>The initial
+    <img src="images/fe_match_sim3_1b.png" alt="Residuals button"/>
+    button produces the plot:</p>
+
+    <p class="center"><img src="images/fe_match_sim3_1p.png" alt="Residuals plot"/></p>
+
+    <p>Each of the next three buttons in the cycle,
+    <img src="images/fe_match_sim3_2b.png" alt="Bar 1     button"/>
+    <img src="images/fe_match_sim3_3b.png" alt="Bar 2     button"/>
+    <img src="images/fe_match_sim3_4b.png" alt="Bar 3     button"/>
+    , produces a bar plot similar to the one below.</p>
+
+    <p class="center"><img src="images/fe_match_sim3_2p.png" alt="Bar 1     plot"/></p>
+
+    <p>The final four buttons,
+    <img src="images/fe_match_sim3_5b.png" alt="2-D 1     button"/>
+    <img src="images/fe_match_sim3_6b.png" alt="2-D 2     button"/>
+    <img src="images/fe_match_sim3_7b.png" alt="2-D 3     button"/>
+    <img src="images/fe_match_sim3_8b.png" alt="2-D 4     button"/>
+    , produce 2-dimension distribution plots, as illustrated by:</p>
+
+    <p class="center"><img src="images/fe_match_sim3_5p.png" alt="2-D 1     plot"/></p>
+    
+    <p><b>Residuals Bit Map</b> Experimental-Simulation residuals are
+    plotted in another way in a bit map. This small window represents
+    each residual #Scans x #Readings point as a color: green where
+    simulation is greater than experimental; red where experimental is
+    greater. A random distribution of colors throughout the bit map is
+    indication of a good model fit.</p>
+
+    <p class="center"><img src="images/fe_match_sim4.png" alt="Residuals Bit Map"/></p>
+    
+    <p><b>3-D Controls</b> A 3-dimensional view of model data is controlled
+    by a dialog launched after simulation computations. This dialog may also
+    be launched at any time via the main window <b>3D Plot</b> button. See
+    <a href="fe_match_controls.html">Plot Controls Details</a>.</p>
+
+    <p class="center"><img src="images/fe_match_sim5.png" alt="3-D Plot Controls"/></p>
+    
+    <p><b>Residual Plots</b> Another dialog launched at simulation completion
+    is one that presents a more advanced set of data/residuals/noise plots.
+    It also may be launched at any time via the main window <b>Residual Plot</b>
+    button. See
+    <a href="fe_match_controls.html">Plot Controls Details</a>.</p>
+
+    <p class="center"><img src="images/fe_match_resplot.png" alt="Residual Plots"/></p>
+    
+    <p><b>Data Reports/Files</b> The "Save Data" button produces a
+    set of report files. One of these is displayable via the
+    "View Report" button, which produces a dialog that shows the contents
+    of a report. A dialog sample follows.</p>
+
+    <p class="center"><img src="images/fe_match_sim6.png" alt="View Report"/></p>
+
+    <p>Below is the same sample scrolled down to the bottom, showing
+    analysis settings and distribution information.</p>
+
+    <p class="center"><img src="images/fe_match_sim7.png" alt="Out Files"/></p>
+
+[% INCLUDE footer.us3 %]

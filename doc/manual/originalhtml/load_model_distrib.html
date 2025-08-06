@@ -1,0 +1,153 @@
+<?xml version="1.0"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+                      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+  <head>
+    <title> UltraScan III Load Model Distributions </title>
+    <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1"/>
+    <link href="mainstyle.css" rel="styleSheet" type="text/css"/>
+  </head>
+  <body>
+
+    <div class='header'> <img src="images/ultrascan3.png" alt='Ultrascan logo'/>
+      <i>Manual</i> 
+    </div>
+
+    <div id='contents'>
+    <hr/>
+
+
+
+    <h2> <i>UltraScan</i> Load Model Distributions: </h2>
+
+    <p> A number of <b><i>UltraScan III</i></b> applications load model
+    distribution data for processing. These applications use the
+    US_ModelLoader dialog class to allow the user to choose the model(s).</p>
+
+    <p> The dialog presented when a US_ModelLoader is executed allows a
+    list of model choices from local disk or from the database. A Search
+    button and text field allow the list to be pared down to those of
+    interest. After a model or set of models is selected in the list, an
+    Accept button passes model data to the caller. </p>
+    
+    <table>
+      <tr>
+        <td>
+          <img src="images/load_model_distrib.png" alt="ModelLoader Dialog"/>
+        </td>
+        <td>
+          <ul>
+            <li>
+              <b>Database</b> Check this radio button to generate a
+              list from the database.
+            </li>
+            
+            <li>
+              <b>Local Disk</b> Check this radio button to generate a
+              model list from local disk */ultrascan/data/models files.
+            </li>
+
+            <li>
+              <b>Select Investigator</b> Click on this button to open an
+              <a href="us_investigator.html">Investigator Dialog</a>
+              that enables you to browse potential database investigators
+              and select one. This button is diabled for normal unprivileged
+              users and when Local Disk is selected.
+            </li>
+            
+            <li>
+              <b>(investigator text)</b> This read-only text box displays the
+              current investigator identifier number, last name, and first
+              name.
+            </li>
+            
+            <li>
+              <b>Search</b> As characters are typed in the search text box,
+              the list of models is pared down to those whose description
+              matches the search field. Note that the search is
+              case-insensitive. Enter a blank field to restore the full list.
+              See detailed notes below on special search field text.
+            </li>
+            
+            <li>
+              <b>(model list)</b> The list of model descriptions is generated
+              either from local disk or db. Click on one or more entries to
+              indicate your choice(s) of data to load. Click an entry with
+              the right mouse button to get a <a href="load_model_dis-MID.html">
+              Model Information Dialog</a> detailing model information. If
+              models are selected, a right-mouse-button click displays
+              information for all selected model entries. If there are no
+              selections, the right-mouse-button click gives information for
+              the row at which the cursor is positioned.
+            </li>
+            
+            <li>
+              <b>Help</b> Click to bring up this documentation.
+            </li>
+            
+            <li>
+              <b>Cancel</b> Click to close the dialog with no choices made.
+            </li>
+            
+            <li>
+              <b>Accept</b> Click to accept the choice(s) highlighted in the
+              model list and pass distribution data to the caller.
+            </li>
+          </ul>
+        </td>
+      </tr>
+    </table>
+
+    <h3> Search Field Details: </h3>
+
+    <p> Text you enter in the search field limits the models listed to those
+    that match the implied criteria. In the simpliest and most common case,
+    a string entered pares down the list to models whose description contains
+    the given phrase without regard to case. For example, a search field of
+    <b>"mc"</b> results in models with "mc", "MC", "Mc", or "mC" in their 
+    descriptions.</p>
+
+    <p> The search field <b>"=edit"</b> results in only models that derive
+    from a specific edited data set. This facility applies in applications that
+    preceed the model loader dialog with an edited velocity data set loader
+    dialog.</p>
+
+    <p> Another special field - <b>"=s"</b> - designates that Monte Carlo
+    model sets normally presented as a composite model be separated out into
+    each of the single models comprising the group. Use of this field should
+    rarely be needed and be limited to advanced or developer users. If used,
+    it may be combined with other fields. So, entries like "=s demo1",
+    "demo1=s", "=edit=s" can be used to specify "single MC models" as well as
+    a description filter on the list.</p>
+
+
+    </div> <!-- contents -->
+    <!-- footer -->
+    <hr />
+
+    <div class='footer'>
+    
+    <p>This document is part of the <i><b>UltraScan</b></i> Software
+    Documentation distribution. </p>
+    
+    <p>Ultrascan III software was developed by Emre Brookes, Borries Demeler,
+    Bruce Dubbs, Gary Gorbet, Saeed Mortezazadeh, Alexey Savelyev and Dan
+    Zollars.<p>
+
+    <p>This software is funded by the National Institutes of Health (US), the National
+    Science Foundation (US), the National Science and Engineering Research Council
+    of Canada and the Biomolecular Interactions Technology Center (US). UltraScan is
+    free software; you can redistribute it and/or modify it
+    under the terms of the <a href="http://www.gnu.org/licenses/lgpl.html"
+    rel="license">GNU Lesser General Public License</a> as published by the Free
+    Software Foundation; either version&nbsp;3 of the License, or (at your
+    option) any later version.</p>
+
+
+
+    <p>Last modified on 11:43:44 02-Aug-2025 </p>
+    
+    </div> <!-- footer -->
+  </body>
+</html>
+

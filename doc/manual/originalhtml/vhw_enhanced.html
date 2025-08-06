@@ -1,0 +1,308 @@
+<?xml version="1.0"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+                      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+  <head>
+    <title> UltraScan III van Holde - Weischet Analysis </title>
+    <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1"/>
+    <link href="mainstyle.css" rel="styleSheet" type="text/css"/>
+  </head>
+  <body>
+
+    <div class='header'> <img src="images/ultrascan3.png" alt='Ultrascan logo'/>
+      <i>Manual</i> 
+    </div>
+
+    <div id='contents'>
+    <hr/>
+
+
+
+<p id="top"><strong>Index</strong></p>
+<ul>
+	<li><a href="#introduction">Edit Ultrascan Data</a>
+	<li><a href="#functions">Functions</a>
+	<li><a href="#steps">Analysis Steps</a>
+</ul>
+<hr/>
+
+<p class="center"><img src="images/vhw_enhanced.png" alt="van Holde - Weischet Main Window"/></p>
+<h2 id="introductions"> <i>UltraScan</i> van Holde - Weischet Enhanced Analysis: </h2>
+    
+<p> The method of van Holde and Weischet (vHW) is a versatile,
+    model-independent approach to determine sedimentation coefficient
+    distribution by graphically analyzing sedimentation velocity experimental
+    data. The vHW method's strength derives from its ability to differentiate
+    boundary spreading due to diffusion from boundary spreading due
+    to heterogeneity in the sedimentation coefficient. This program uses a
+    number of enhanced techniques for vHW analysis.</p>
+
+<a href=#top>Return to Index</a>
+
+<h3 id="functions"> Functions: </h3>
+
+<ul>
+<table>
+	 <tr>
+		<td><b>Load Experiment</b></td>
+		<td>Click on this button and, in the resulting
+            <a href="data_loader.html">Load Data Dialog</a>, select an edited
+            data set to load.</td>
+	</tr>
+	<tr>
+		<td><b>Run Details</b></td>
+		<td>Bring up a dialog with a summary of data
+            and run details.</td>		
+	</tr> 
+	<tr>
+		<td><b>Latest Data Edit</b></td>
+		<td>Uncheck to allow choosing an edit other
+            than the latest one for the experimental data.</td>		
+	</tr>
+	<tr>
+		<td><b>Database</b></td>
+		<td>Check to specify data input from the database.</td>		
+	</tr>	
+	<tr>
+		<td><b>Local Disk</b></td>
+		<td>Check to specify data input from local disk.</td>		
+	</tr>
+	<tr>
+		<td><b>View Data Report</b></td>
+		<td>Create a results text file and display
+            its contents in a text dialog.</td>		
+	</tr>
+	<tr>
+		<td><b>Save Data</b> </td>
+		<td>Create several data and report files based on
+            input data and vHW parameters.</td>		
+	</tr>
+	<tr>
+		<td><b>Run ID / Edit ID:</b></td>
+		<td>The main run title of the data and
+            an edit identifier are displayed.</td>		
+	</tr>			
+	<tr>
+		<td><b>Avg Temperature:</b></td>
+		<td>The average temperature of solute is
+            displayed in Celsius.</td>		
+	</tr>
+	<tr>
+		<td><b>(description box)</b></td>
+		<td>The text box below the one for temperature
+            shows a full data description string.</td>		
+	</tr>
+</table>
+</ul>
+
+</p><b>Cell / Channel / Wavelength:</b> The text box below this label
+            gives cell, channel and wavelength triples available in this
+            data set. Highlight the desired value.</p>
+<ul>
+<table>
+	 <tr>
+		<td><b>Solution</b> </td>
+		<td>Click this button to open a
+            <a href="us_solution.html">Solution Management dialog</a>
+            that allows changes to buffer and analyte characteristics of
+            the data set.</tr>
+	</tr>
+	<tr>
+		<td><b>Density (20<sup>o</sup>C)</b></td>
+		<td>Shows the density value for the loaded
+            experiment. Click the Solution button to open a dialog in which
+            density and other values may be changed.</td>		
+	</tr>
+	<tr>
+		<td><b>Viscosity (20&deg; C)</b></td>
+		<td>Shows the viscosity value for thes
+            loaded experiment. Click the Solution button to open a dialog
+            in which viscosity and other values may be changed.</td>		
+	</tr>
+	<tr>
+		<td><b>Distribution Plot</b></td>
+		<td>Click for a plot dialog that shows a
+            <a href="vhw_distrib_plot.html">vHW Distribution plot</a>
+            illustrating sedimentation coefficient power related to separate
+            species.</td>		
+	</tr>
+	<tr>
+		<td><b>Select Groups</b></td>
+		<td>Click on this button to begin a session of
+            choosing vHW Extrapolation Plot division groups. As an initial
+            pop-up dialog explains, you must click first above any group of
+            division lines and then below it. Multiple groups may be chosen,
+            with division line overlap between groups. Note that the button
+            label becomes <b>Clear Groups</b> after selection, allowing the
+            set of selected groups to be discarded in favor of a new set
+            of selections. (See the
+            <a href="vhw_enh_groups.img.html">vHW Groups image</a>).</td>		
+	</tr>
+	<tr>
+		<td><b>Refresh Plot</b></td>
+		<td>Click on this button at any time to refresh
+            the right-side plots, based on current parameter settings.</td>		
+	</tr>
+	<tr>
+		<td><b>Use FE Data</b></td>
+		<td> </td>		
+	</tr>
+	<tr>
+		<td><b>Manual-only Replot</b></td>
+		<td>Check this box to suppress automatic
+            re-plotting with each parameter change. This may be desirable
+            when you plan to change several settings, in order to avoid a
+            replot with each change. With this box checked, you may force
+            a plot with the Refresh Plot button.</td>		
+	</tr>
+	<tr>
+		<td><b>Manual-only Replot</b></td>
+		<td>Check this box to suppress automatic
+            re-plotting with each parameter change. This may be desirable
+            when you plan to change several settings, in order to avoid a
+            replot with each change. With this box checked, you may force
+            a plot with the Refresh Plot button.</td>		
+	</tr>
+	
+	<tr>
+		<td><b>Plateaus from 2DSA</b></td>
+		<td>Check this box to have plateau values
+            calculated from a model associated with any loaded noise values.
+            With this box unchecked, each scan's plateau value is determined
+            by a series of fits to initially designated plateaus.</td>		
+	</tr>
+	<tr>
+		<td><b>Use Enhanced vWH</b></td>
+		<td></td>		
+	</tr>
+</table>	
+</ul>
+
+    
+<h4>Analysis Controls:</h4>
+
+<ul>
+<table>
+	 <tr>
+		<td><b>Back Diffusion Tolerance:</b></td>
+		<td>Select a tolerance value to
+            fine tune exclusion of points affected by back diffusion, as indicated by the red line on the velocity data.</td> 
+	</tr>
+	 <tr>
+		<td><b>Divisions:</b></td>
+		<td>Choose the number of divisions (yellow lines in the vWH Extrapolation Plot) to use in
+            vHW analysis.</td> 
+	</tr>
+	 <tr>
+		<td><b>Data Smoothing:</b></td>
+		<td>Choose the number of points to use for
+            any smoothing of raw input data.</td> 
+	</tr>
+	 <tr>
+		<td><b>% of Boundary:</b></td>
+		<td>Choose the percentage of the range from
+            concentration baseline to plateau that is to be used for analysis.</td> 
+	</tr>
+	 <tr>
+		<td><b>Boundary Position (%):</b></td>
+		<td>Choose the percent of the
+            plateau-baseline range that is to be added to the baseline to
+            form the beginning of analysis span. For typical analysis 5% is recommended.</td> 
+		</table> 
+		</ul>
+          
+<h4>Scan Control:</h4>
+
+<ul>
+<table>
+	<tr>
+		<td><strong>Scan Focus from:</strong></td>
+		<td>Choose the first of a range of scan numbers that
+            may potentially be excluded from analysis.</td>
+    </tr>
+    <tr>
+		<td><strong>Scan Focus to:</strong></td>
+		<td>Choose the end of a range of scan numbers that may
+            potentially be excluded from analysis. The From/To scan range
+            is illustrated in both plots to the right.</td>
+    </tr>
+    <tr>
+		<td><strong>Exclude Scan Range</strong></td>
+		<td>Exclude the scans indicated by the two preceding scan bounding counters.</td>
+	</tr>
+    <tr>
+		<td><strong>Reset Scan Range</strong></td>
+		<td>Resetting the scan range to include all excluded scans.</td>
+	</tr>     
+    </table>
+ </ul>              
+ 
+<h4>Window controls: </h4>
+
+<ul>
+<table>
+	<tr> 
+		<td><strong>Reset</strong></td>
+		<td>This button removes all data and sets the program to a known starting point.</td>
+	</tr>
+	<tr>
+	  	<td><strong>Help</strong></td>
+		<td>Display this help.</td>
+	</tr>
+	<tr> 
+		<td><strong>Close</strong></td>
+		<td>Close the editing session.</td>
+	</tr>
+ </table>
+</ul>
+    
+<a href=#top>Return to Index</a>
+<h3 id="steps">  Analysis Steps:</h3>   
+
+<ul>
+	  <p><b>Step 1:</b> First, load a velocity
+	  dataset. Click on "Load Experiment" to select an edited velocity data set from
+	  the database or from local disk.</p>
+	  <p><b>Step 2:</b> Secondly, select a model from
+	  database or disk. Simply click on a triplicate in the  <b>Cell / Channel / Wavelegth</b>.  Enhanced van Holde -
+	   Weischet analysis is automatically applied according to the Analsys Controls</p>
+	 <p><b>Step 3:</b> If necessary, adjust the <b>Back Diffusion Tolarance</b>, <b>Divisions</b>, <b>% of Boundary</b> 
+		and <b>Boundary Position (%)</b>.</p>
+	  <p><b>Step 4:</b> After analysis is complete, the resulting distribution and histogram are available for 
+		display in the <b> Distribution Plot</b>.</p>
+    </ul>
+
+
+<a href=#top>Return to Index</a>
+
+
+    </div> <!-- contents -->
+    <!-- footer -->
+    <hr />
+
+    <div class='footer'>
+    
+    <p>This document is part of the <i><b>UltraScan</b></i> Software
+    Documentation distribution. </p>
+    
+    <p>Ultrascan III software was developed by Emre Brookes, Borries Demeler,
+    Bruce Dubbs, Gary Gorbet, Saeed Mortezazadeh, Alexey Savelyev and Dan
+    Zollars.<p>
+
+    <p>This software is funded by the National Institutes of Health (US), the National
+    Science Foundation (US), the National Science and Engineering Research Council
+    of Canada and the Biomolecular Interactions Technology Center (US). UltraScan is
+    free software; you can redistribute it and/or modify it
+    under the terms of the <a href="http://www.gnu.org/licenses/lgpl.html"
+    rel="license">GNU Lesser General Public License</a> as published by the Free
+    Software Foundation; either version&nbsp;3 of the License, or (at your
+    option) any later version.</p>
+
+
+
+    <p>Last modified on 11:43:49 02-Aug-2025 </p>
+    
+    </div> <!-- footer -->
+  </body>
+</html>
+

@@ -1,0 +1,71 @@
+[% INCLUDE header.us3
+   title = 'UltraScan III Combine Models'
+%]
+   <h2> Create Global Model </h2>
+
+   <p> This utility combines selected models into a single global model
+   that can be used in global fits. The most common use of its output is
+   to form an input to the Initialize Genetic Algorithm program in which
+   a global set of buckets may be created for use in a global fit
+   Genetic Algorithm run.</p>
+
+   <p class='center'><img src="images/combine_models.png" 
+   alt="Combine Models Main Window"/></p>
+
+   <h3> Functions: </h3>
+
+   <ul>
+     <li>
+       <b>(models list)</b> Look here to see the list of component models
+       so far selected.
+     </li>
+
+     <li>
+       <b>Database</b> Select to specify model input from the database.
+     </li>
+
+     <li>
+       <b>Local Disk</b> Select to specify model input from local disk.
+     </li>
+
+     <li>
+       <b>Add Models</b> Open a <a href="load_model_distrib.html">Model Loader
+       dialog</a> to select model(s) to load into the list of component
+       models to the global model.
+     </li>
+
+     <li>
+       <b>Reset List</b> Clear the list of input models in order to
+       start over in the model selection process.
+     </li>
+
+     <li>
+       <b>Save Global Model</b> Open a dialog (see below) to save the
+       output combined global model.
+     </li>
+
+     <li>
+       <b>Help</b> Display this documentation. 
+     </li>
+
+     <li>
+       <b>Close</b> Close all windows and exit.
+     </li>
+
+   </ul> 
+
+   <p>When the <b>Save Global Model</b> button is clicked, a dialog reports
+   on the combined global model to be created and allows the user options
+   in saving it.</p>
+
+   <p class='center'><img src="images/combine_models-save.png" 
+   alt="Global Model Save"/></p>
+
+   <p>If the user wishes to modify the RunID part of the output model
+   description, a click on the <b>Edit</b> button brings up a dialog for
+   entering new ID text.</p>
+
+   <p class='center'><img src="images/combine_models-idedit.png" 
+   alt="Model Description RunID Modify"/></p>
+
+[% INCLUDE footer.us3 %]
