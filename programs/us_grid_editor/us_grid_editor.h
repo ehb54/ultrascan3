@@ -225,27 +225,62 @@ class US_Grid_ZFunction : public US_WidgetsDialog
    Q_OBJECT
 
 public:
-   enum FunctionType { POLYN, EXP, NONE };
-
    US_Grid_ZFunction( QWidget *, const QMap< QString, QString>& );
 
 
 private:
-   FunctionType type;
-   QMap< int, QVector< double > > parameters;
-   QVector< double >   xvalues;
-   QVector< double >   yvalues;
-   QList< QLabel* >    list_lb;
+   QVector< QPair< double, double > >  minmax;
+   QVector< double > x_points;
+   QVector< double > y_points;
+   QVector< double > parameters;
+   QVector< double > xvalues;
+   QVector< double > yvalues;
+
+   QStringList short_title;
+   QStringList long_title;
+
    QList< QLineEdit* > list_le;
+   QList< QLabel* >    list_lb;
 
    QLabel           *lb_formula;
    QLabel           *lb_order;
+   QLabel           *lb_p0_x;
+   QLabel           *lb_p1_x;
+   QLabel           *lb_p2_x;
+   QLabel           *lb_p3_x;
+   QLabel           *lb_p4_x;
+   QLabel           *lb_p5_x;
+   QLabel           *lb_p0_y;
+   QLabel           *lb_p1_y;
+   QLabel           *lb_p2_y;
+   QLabel           *lb_p3_y;
+   QLabel           *lb_p4_y;
+   QLabel           *lb_p5_y;
    QLabel           *lb_c0;
    QLabel           *lb_c1;
    QLabel           *lb_c2;
    QLabel           *lb_c3;
    QLabel           *lb_c4;
    QLabel           *lb_c5;
+   QLabel           *lb_p0;
+   QLabel           *lb_p1;
+   QLabel           *lb_p2;
+   QLabel           *lb_p3;
+   QLabel           *lb_p4;
+   QLabel           *lb_p5;
+
+   QLineEdit        *le_p0_x;
+   QLineEdit        *le_p1_x;
+   QLineEdit        *le_p2_x;
+   QLineEdit        *le_p3_x;
+   QLineEdit        *le_p4_x;
+   QLineEdit        *le_p5_x;
+   QLineEdit        *le_p0_y;
+   QLineEdit        *le_p1_y;
+   QLineEdit        *le_p2_y;
+   QLineEdit        *le_p3_y;
+   QLineEdit        *le_p4_y;
+   QLineEdit        *le_p5_y;
    QLineEdit        *le_c0;
    QLineEdit        *le_c1;
    QLineEdit        *le_c2;
@@ -254,14 +289,19 @@ private:
    QLineEdit        *le_c5;
    QLineEdit        *le_min;
    QLineEdit        *le_max;
-   QComboBox        *cb_ftype;
-   QSpinBox         *sb_order;
+
+   QComboBox        *cb_dependent;
+   QComboBox        *cb_function;
+   QComboBox        *cb_order;
    QwtPlot          *plot;
 
+   void set_gui( const QMap< QString, QString>& );
    void draw_formula( void );
    void compute( void );
+   void set_points( int );
 
 private slots:
+   void set_dependent( int index );
    void set_function( int index );
    void set_order( int );
    void apply( void );
