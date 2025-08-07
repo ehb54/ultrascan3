@@ -3,9 +3,9 @@
 
 // QT defs:
 
+#include <qdialog.h>
 #include <qlabel.h>
 #include <qpushbutton.h>
-#include <qdialog.h>
 
 #include "us_util.h"
 
@@ -13,27 +13,16 @@ using namespace std;
 
 // set psv & mw for DAMMIN/DAMMIF file loads
 
-class US_EXTERN US_Hydrodyn_Dammin_Opts : public QDialog
-{
-   Q_OBJECT
+class US_EXTERN US_Hydrodyn_Dammin_Opts : public QDialog {
+      Q_OBJECT
 
    public:
-
       US_Hydrodyn_Dammin_Opts(
-                              QString msg,
-                              float *psv,
-                              float *mw,
-                              bool *write_bead_model,
-                              bool *remember,
-                              bool *use_partial,
-                              QString *partial,
-                              QWidget *p = 0, 
-                              const char *name = 0
-                              );
+         QString msg, float *psv, float *mw, bool *write_bead_model, bool *remember, bool *use_partial,
+         QString *partial, QWidget *p = 0, const char *name = 0);
       ~US_Hydrodyn_Dammin_Opts();
 
    private:
-
       QLabel *lbl_info;
       QLabel *lbl_psv;
       QLabel *lbl_mw;
@@ -52,7 +41,7 @@ class US_EXTERN US_Hydrodyn_Dammin_Opts : public QDialog
       void setupGUI();
 
       US_Config *USglobal;
-      
+
       QString msg;
       float *psv;
       float *mw;

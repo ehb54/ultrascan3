@@ -4,9 +4,9 @@
 
 #include <QtCore>
 
-#include "us_extern.h"
 #include "us_dataIO.h"
 #include "us_db2.h"
+#include "us_extern.h"
 
 //! \brief Fetch solution/buffer values (vbar, density, viscosity,
 //! compressibility) for an edited data set.
@@ -24,8 +24,7 @@
 //! are searched for ID values found in the experiment file of the runID
 //! subdirectory of the "results" directory.
 
-class US_UTIL_EXTERN US_SolutionVals
-{
+class US_UTIL_EXTERN US_SolutionVals {
    public:
       //! \brief Fetch solution/buffer values for a data set
       //! \param  dbP       Database connection pointer or NULL for local
@@ -38,8 +37,9 @@ class US_UTIL_EXTERN US_SolutionVals
       //! \param  manual    Reference for returned manual string ("0"/"1")
       //! \param  errmsg    Reference for returned error message string
       //! \return           Flag for successful fetch of all values
-      static bool values( US_DB2* dbP, US_DataIO::EditedData*, QString&,
-            QString&, QString&, QString&, QString&, QString&, QString& );
+      static bool values(
+         US_DB2 *dbP, US_DataIO::EditedData *, QString &, QString &, QString &, QString &, QString &, QString &,
+         QString &);
 
       //! \brief Get identification values for a data set from database
       //! \param  dbP       Pointer to opened database connection
@@ -50,9 +50,9 @@ class US_UTIL_EXTERN US_SolutionVals
       //! \param  bufGuid   Reference for returned buffer GUID value string
       //! \param  bufDesc   Reference for returned buffer description string
       //! \param  errmsg    Reference for returned error message string
-      static bool solinfo_db( US_DB2* dbP, US_DataIO::EditedData*,
-            QString&, QString&, QString&, QString&, QString&, QString& );
-                                   
+      static bool solinfo_db(
+         US_DB2 *dbP, US_DataIO::EditedData *, QString &, QString &, QString &, QString &, QString &, QString &);
+
       //! \brief Get identification values for a data set from local disk
       //! \param  edata     Pointer to edited data set
       //! \param  cvbar20   Reference for returned common vbar-20 value string
@@ -61,9 +61,8 @@ class US_UTIL_EXTERN US_SolutionVals
       //! \param  bufGuid   Reference for returned buffer GUID value string
       //! \param  bufDesc   Reference for returned buffer description string
       //! \param  errmsg    Reference for returned error message string
-      static bool solinfo_disk( US_DataIO::EditedData*, QString&,
-            QString&, QString&, QString&, QString&, QString& );
-                                   
+      static bool solinfo_disk(US_DataIO::EditedData *, QString &, QString &, QString &, QString &, QString &, QString &);
+
       //! \brief Get buffer values for a data set from database
       //! \param  dbP       Pointer to opened database connection
       //! \param  bufId     Reference for input buffer db ID value string
@@ -74,9 +73,9 @@ class US_UTIL_EXTERN US_SolutionVals
       //! \param  compress  Reference for returned compressibility string
       //! \param  manual    Reference for returned manual string ("0"/"1")
       //! \param  errmsg    Reference for returned error message string
-      static bool bufvals_db( US_DB2* dbP, QString&, QString&, QString&,
-            QString&, QString&, QString&, QString&, QString& );
-                                   
+      static bool bufvals_db(
+         US_DB2 *dbP, QString &, QString &, QString &, QString &, QString &, QString &, QString &, QString &);
+
       //! \brief Get buffer values for a data set from local disk
       //! \param  bufId     Reference for input buffer db ID value string
       //! \param  bufGuid   Reference for input buffer GUID value string
@@ -86,9 +85,7 @@ class US_UTIL_EXTERN US_SolutionVals
       //! \param  compress  Reference for returned compressibility string
       //! \param  manual    Reference for returned manual string ("0"/"1")
       //! \param  errmsg    Reference for returned error message string
-      static bool bufvals_disk( QString&, QString&, QString&,
-            QString&, QString&, QString&, QString&, QString& );
-                                   
+      static bool bufvals_disk(QString &, QString &, QString &, QString &, QString &, QString &, QString &, QString &);
 };
 
 #endif

@@ -9,108 +9,101 @@
 
 #include "us_hydrodyn.h"
 //Added by qt3to4:
-#include <QLabel>
 #include <QCloseEvent>
+#include <QLabel>
 
 using namespace std;
 
-class US_EXTERN US_Hydrodyn_Saxs_Ift : public QDialog
-{
-   Q_OBJECT
+class US_EXTERN US_Hydrodyn_Saxs_Ift : public QDialog {
+      Q_OBJECT
 
    public:
-      US_Hydrodyn_Saxs_Ift(
-                       void                     *              us_hydrodyn,
-                       map < QString, QString > *              parameters,
-                       QWidget *                               p = 0,
-                       const char *                            name = ""
-                       );
+      US_Hydrodyn_Saxs_Ift(void *us_hydrodyn, map<QString, QString> *parameters, QWidget *p = 0, const char *name = "");
 
       ~US_Hydrodyn_Saxs_Ift();
 
    private:
+      US_Config *USglobal;
+      void setupGUI();
+      map<QString, QString> *parameters;
+      void *us_hydrodyn;
+      vector<QPushButton *> bottom_row_buttons;
+      map<QWidget *, vector<QWidget *>> repeats;
+      void showhide(vector<QWidget *> &, bool isChecked);
 
-      US_Config *                             USglobal;
-      void                                    setupGUI();
-      map < QString, QString > *              parameters;
-      void *                                  us_hydrodyn;
-      vector < QPushButton * >                bottom_row_buttons;
-      map < QWidget *, vector < QWidget * > > repeats;
-      void                                    showhide( vector < QWidget * > &, bool isChecked );
+      QPushButton *pb_help;
+      QPushButton *pb_cancel;
 
-      QPushButton *                           pb_help;
-      QPushButton *                           pb_cancel;
+      QLabel *lbl_label_0;
 
-      QLabel *                                lbl_label_0;
+      QLabel *lbl_qmin;
+      QLineEdit *le_qmin;
 
-      QLabel *                                lbl_qmin;
-      QLineEdit *                             le_qmin;
+      QLabel *lbl_qmax;
+      QLineEdit *le_qmax;
 
-      QLabel *                                lbl_qmax;
-      QLineEdit *                             le_qmax;
+      QCheckBox *cb_fitbackground;
+      QLabel *lbl_dmax;
+      QLineEdit *le_dmax;
 
-      QCheckBox *                             cb_fitbackground;
-      QLabel *                                lbl_dmax;
-      QLineEdit *                             le_dmax;
+      QCheckBox *cb_dmaxfixed;
+      QLabel *lbl_alpha;
+      QLineEdit *le_alpha;
 
-      QCheckBox *                             cb_dmaxfixed;
-      QLabel *                                lbl_alpha;
-      QLineEdit *                             le_alpha;
+      QCheckBox *cb_alphafixed;
+      QLabel *lbl_smearing;
+      QLineEdit *le_smearing;
 
-      QCheckBox *                             cb_alphafixed;
-      QLabel *                                lbl_smearing;
-      QLineEdit *                             le_smearing;
+      QLabel *lbl_prpoints;
+      QLineEdit *le_prpoints;
 
-      QLabel *                                lbl_prpoints;
-      QLineEdit *                             le_prpoints;
+      QLabel *lbl_noextracalc;
+      QLineEdit *le_noextracalc;
 
-      QLabel *                                lbl_noextracalc;
-      QLineEdit *                             le_noextracalc;
+      QLabel *lbl_transform;
+      QListWidget *lb_transform;
 
-      QLabel *                                lbl_transform;
-      QListWidget *                              lb_transform;
+      map<QString, QString> value_map_transform;
+      QCheckBox *cb_nondilute;
+      QLabel *lbl_eta;
+      QLineEdit *le_eta;
 
-      map < QString, QString >                value_map_transform;
-      QCheckBox *                             cb_nondilute;
-      QLabel *                                lbl_eta;
-      QLineEdit *                             le_eta;
+      QLabel *lbl_fitratio;
+      QListWidget *lb_fitratio;
 
-      QLabel *                                lbl_fitratio;
-      QListWidget *                              lb_fitratio;
+      map<QString, QString> value_map_fitratio;
+      QLabel *lbl_estimateratio;
+      QLineEdit *le_estimateratio;
 
-      map < QString, QString >                value_map_fitratio;
-      QLabel *                                lbl_estimateratio;
-      QLineEdit *                             le_estimateratio;
-
-      QCheckBox *                             cb_estimateratiofixed;
-      QPushButton *                           pb_go;
+      QCheckBox *cb_estimateratiofixed;
+      QPushButton *pb_go;
 
    private slots:
 
-      void                                    help();
-      void                                    cancel();
+      void help();
+      void cancel();
 
-      void                                    update_qmin( const QString & );
-      void                                    update_qmax( const QString & );
-      void                                    set_fitbackground();
-      void                                    update_dmax( const QString & );
-      void                                    set_dmaxfixed();
-      void                                    update_alpha( const QString & );
-      void                                    set_alphafixed();
-      void                                    update_smearing( const QString & );
-      void                                    update_prpoints( const QString & );
-      void                                    update_noextracalc( const QString & );
-      void                                    set_transform();
-      void                                    set_nondilute();
-      void                                    update_eta( const QString & );
-      void                                    set_fitratio();
-      void                                    update_estimateratio( const QString & );
-      void                                    set_estimateratiofixed();
-      void                                    go();
+      void update_qmin(const QString &);
+      void update_qmax(const QString &);
+      void set_fitbackground();
+      void update_dmax(const QString &);
+      void set_dmaxfixed();
+      void update_alpha(const QString &);
+      void set_alphafixed();
+      void update_smearing(const QString &);
+      void update_prpoints(const QString &);
+      void update_noextracalc(const QString &);
+      void set_transform();
+      void set_nondilute();
+      void update_eta(const QString &);
+      void set_fitratio();
+      void update_estimateratio(const QString &);
+      void set_estimateratiofixed();
+      void go();
 
    protected slots:
 
-      void                                    closeEvent( QCloseEvent * );
+      void closeEvent(QCloseEvent *);
 };
 
 #endif

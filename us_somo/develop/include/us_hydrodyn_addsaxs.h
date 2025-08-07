@@ -1,32 +1,28 @@
 #ifndef US_HYDRODYN_ADDHYSAXS_H
 #define US_HYDRODYN_ADDHYSAXS_H
 
-#include <qwidget.h>
-#include <qpushbutton.h>
-#include <qlineedit.h>
-#include <qlabel.h>
-#include <qwidget.h>
 #include <QComboBox>
+#include <qlabel.h>
+#include <qlineedit.h>
 #include <qpushbutton.h>
+#include <qwidget.h>
 //#include <q3frame.h>
 //Added by qt3to4:
 #include <QCloseEvent>
 
 #include "us.h"
-#include "us_hydrodyn_pdbdefs.h"
 #include "us_extern.h"
+#include "us_hydrodyn_pdbdefs.h"
 #include "us_util.h"
 
-class US_AddSaxs : public QWidget
-{
-   Q_OBJECT
+class US_AddSaxs : public QWidget {
+      Q_OBJECT
 
    public:
-      US_AddSaxs(bool *, QWidget *p=0, const char *name=0);
+      US_AddSaxs(bool *, QWidget *p = 0, const char *name = 0);
       ~US_AddSaxs();
 
    private:
-
       US_Config *USglobal;
       bool *widget_flag;
 
@@ -80,10 +76,10 @@ class US_AddSaxs : public QWidget
       QLineEdit *le_5c;
       QLineEdit *le_5volume;
       struct saxs current_saxs;
-      vector <struct saxs> saxs_list;
+      vector<struct saxs> saxs_list;
       QString saxs_filename;
 
-      void info_saxs( const QString & msg, const struct saxs & );
+      void info_saxs(const QString &msg, const struct saxs &);
 
    private slots:
       void add();

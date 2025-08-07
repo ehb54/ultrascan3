@@ -1,35 +1,31 @@
 #ifndef US_HYDRODYN_ADDATOM_H
 #define US_HYDRODYN_ADDATOM_H
 
-#include <qwidget.h>
-#include <qpushbutton.h>
-#include <qlineedit.h>
-#include <qlabel.h>
-#include <qwidget.h>
 #include <QComboBox>
 #include <qcheckbox.h>
+#include <qlabel.h>
+#include <qlineedit.h>
 #include <qpushbutton.h>
+#include <qwidget.h>
 //#include <q3frame.h>
 //Added by qt3to4:
 #include <QCloseEvent>
 
 #include "us.h"
-#include "us_hydrodyn_pdbdefs.h"
-#include "us_hydrodyn_addhybrid.h"
 #include "us_extern.h"
+#include "us_hydrodyn_addhybrid.h"
+#include "us_hydrodyn_pdbdefs.h"
 #include "us_util.h"
 
 
-class US_AddAtom : public QWidget
-{
-   Q_OBJECT
+class US_AddAtom : public QWidget {
+      Q_OBJECT
 
    public:
-      US_AddAtom(bool *, QWidget *p=0, const char *name=0);
+      US_AddAtom(bool *, QWidget *p = 0, const char *name = 0);
       ~US_AddAtom();
 
    private:
-
       US_Config *USglobal;
       bool *widget_flag;
 
@@ -67,9 +63,9 @@ class US_AddAtom : public QWidget
       struct atom current_atom;
       struct hybridization current_hybrid;
       struct saxs current_saxs;
-      vector <struct atom> atom_list;
-      vector <struct hybridization> hybrid_list;
-      vector <struct saxs> saxs_list;
+      vector<struct atom> atom_list;
+      vector<struct hybridization> hybrid_list;
+      vector<struct saxs> saxs_list;
       QString atom_filename;
       QString hybrid_filename;
       QString saxs_filename;

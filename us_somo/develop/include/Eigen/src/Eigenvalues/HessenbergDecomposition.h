@@ -11,20 +11,20 @@
 #ifndef EIGEN_HESSENBERGDECOMPOSITION_H
 #define EIGEN_HESSENBERGDECOMPOSITION_H
 
-namespace Eigen { 
+namespace Eigen {
 
-namespace internal {
-  
-template<typename MatrixType> struct HessenbergDecompositionMatrixHReturnType;
-template<typename MatrixType>
-struct traits<HessenbergDecompositionMatrixHReturnType<MatrixType> >
-{
-  typedef MatrixType ReturnType;
-};
+   namespace internal {
 
-}
+      template<typename MatrixType>
+      struct HessenbergDecompositionMatrixHReturnType;
+      template<typename MatrixType>
+      struct traits<HessenbergDecompositionMatrixHReturnType<MatrixType>> {
+            typedef MatrixType ReturnType;
+      };
 
-/** \eigenvalues_module \ingroup Eigenvalues_Module
+   } // namespace internal
+
+   /** \eigenvalues_module \ingroup Eigenvalues_Module
   *
   *
   * \class HessenbergDecomposition
@@ -54,39 +54,40 @@ struct traits<HessenbergDecompositionMatrixHReturnType<MatrixType> >
   *
   * \sa class ComplexSchur, class Tridiagonalization, \ref QR_Module "QR Module"
   */
-template<typename _MatrixType> class HessenbergDecomposition
-{
-  public:
+   template<typename _MatrixType>
+   class HessenbergDecomposition {
+      public:
+         /** \brief Synonym for the template parameter \p _MatrixType. */
+         typedef _MatrixType MatrixType;
 
-    /** \brief Synonym for the template parameter \p _MatrixType. */
-    typedef _MatrixType MatrixType;
+         enum {
+            Size = MatrixType::RowsAtCompileTime,
+            SizeMinusOne = Size == Dynamic ? Dynamic : Size - 1,
+            Options = MatrixType::Options,
+            MaxSize = MatrixType::MaxRowsAtCompileTime,
+            MaxSizeMinusOne = MaxSize == Dynamic ? Dynamic : MaxSize - 1
+         };
 
-    enum {
-      Size = MatrixType::RowsAtCompileTime,
-      SizeMinusOne = Size == Dynamic ? Dynamic : Size - 1,
-      Options = MatrixType::Options,
-      MaxSize = MatrixType::MaxRowsAtCompileTime,
-      MaxSizeMinusOne = MaxSize == Dynamic ? Dynamic : MaxSize - 1
-    };
+         /** \brief Scalar type for matrices of type #MatrixType. */
+         typedef typename MatrixType::Scalar Scalar;
+         typedef Eigen::Index Index; ///< \deprecated since Eigen 3.3
 
-    /** \brief Scalar type for matrices of type #MatrixType. */
-    typedef typename MatrixType::Scalar Scalar;
-    typedef Eigen::Index Index; ///< \deprecated since Eigen 3.3
-
-    /** \brief Type for vector of Householder coefficients.
+         /** \brief Type for vector of Householder coefficients.
       *
       * This is column vector with entries of type #Scalar. The length of the
       * vector is one less than the size of #MatrixType, if it is a fixed-side
       * type.
       */
-    typedef Matrix<Scalar, SizeMinusOne, 1, Options & ~RowMajor, MaxSizeMinusOne, 1> CoeffVectorType;
+         typedef Matrix<Scalar, SizeMinusOne, 1, Options & ~RowMajor, MaxSizeMinusOne, 1> CoeffVectorType;
 
-    /** \brief Return type of matrixQ() */
-    typedef HouseholderSequence<MatrixType,typename internal::remove_all<typename CoeffVectorType::ConjugateReturnType>::type> HouseholderSequenceType;
-    
-    typedef internal::HessenbergDecompositionMatrixHReturnType<MatrixType> MatrixHReturnType;
+         /** \brief Return type of matrixQ() */
+         typedef HouseholderSequence<
+            MatrixType, typename internal::remove_all<typename CoeffVectorType::ConjugateReturnType>::type>
+            HouseholderSequenceType;
 
-    /** \brief Default constructor; the decomposition will be computed later.
+         typedef internal::HessenbergDecompositionMatrixHReturnType<MatrixType> MatrixHReturnType;
+
+         /** \brief Default constructor; the decomposition will be computed later.
       *
       * \param [in] size  The size of the matrix whose Hessenberg decomposition will be computed.
       *
@@ -97,16 +98,13 @@ template<typename _MatrixType> class HessenbergDecomposition
       *
       * \sa compute() for an example.
       */
-    explicit HessenbergDecomposition(Index size = Size==Dynamic ? 2 : Size)
-      : m_matrix(size,size),
-        m_temp(size),
-        m_isInitialized(false)
-    {
-      if(size>1)
-        m_hCoeffs.resize(size-1);
-    }
+         explicit HessenbergDecomposition(Index size = Size == Dynamic ? 2 : Size) :
+             m_matrix(size, size), m_temp(size), m_isInitialized(false) {
+            if (size > 1)
+               m_hCoeffs.resize(size - 1);
+         }
 
-    /** \brief Constructor; computes Hessenberg decomposition of given matrix.
+         /** \brief Constructor; computes Hessenberg decomposition of given matrix.
       *
       * \param[in]  matrix  Square matrix whose Hessenberg decomposition is to be computed.
       *
@@ -115,23 +113,19 @@ template<typename _MatrixType> class HessenbergDecomposition
       *
       * \sa matrixH() for an example.
       */
-    template<typename InputType>
-    explicit HessenbergDecomposition(const EigenBase<InputType>& matrix)
-      : m_matrix(matrix.derived()),
-        m_temp(matrix.rows()),
-        m_isInitialized(false)
-    {
-      if(matrix.rows()<2)
-      {
-        m_isInitialized = true;
-        return;
-      }
-      m_hCoeffs.resize(matrix.rows()-1,1);
-      _compute(m_matrix, m_hCoeffs, m_temp);
-      m_isInitialized = true;
-    }
+         template<typename InputType>
+         explicit HessenbergDecomposition(const EigenBase<InputType> &matrix) :
+             m_matrix(matrix.derived()), m_temp(matrix.rows()), m_isInitialized(false) {
+            if (matrix.rows() < 2) {
+               m_isInitialized = true;
+               return;
+            }
+            m_hCoeffs.resize(matrix.rows() - 1, 1);
+            _compute(m_matrix, m_hCoeffs, m_temp);
+            m_isInitialized = true;
+         }
 
-    /** \brief Computes Hessenberg decomposition of given matrix.
+         /** \brief Computes Hessenberg decomposition of given matrix.
       *
       * \param[in]  matrix  Square matrix whose Hessenberg decomposition is to be computed.
       * \returns    Reference to \c *this
@@ -148,22 +142,20 @@ template<typename _MatrixType> class HessenbergDecomposition
       * Example: \include HessenbergDecomposition_compute.cpp
       * Output: \verbinclude HessenbergDecomposition_compute.out
       */
-    template<typename InputType>
-    HessenbergDecomposition& compute(const EigenBase<InputType>& matrix)
-    {
-      m_matrix = matrix.derived();
-      if(matrix.rows()<2)
-      {
-        m_isInitialized = true;
-        return *this;
-      }
-      m_hCoeffs.resize(matrix.rows()-1,1);
-      _compute(m_matrix, m_hCoeffs, m_temp);
-      m_isInitialized = true;
-      return *this;
-    }
+         template<typename InputType>
+         HessenbergDecomposition &compute(const EigenBase<InputType> &matrix) {
+            m_matrix = matrix.derived();
+            if (matrix.rows() < 2) {
+               m_isInitialized = true;
+               return *this;
+            }
+            m_hCoeffs.resize(matrix.rows() - 1, 1);
+            _compute(m_matrix, m_hCoeffs, m_temp);
+            m_isInitialized = true;
+            return *this;
+         }
 
-    /** \brief Returns the Householder coefficients.
+         /** \brief Returns the Householder coefficients.
       *
       * \returns a const reference to the vector of Householder coefficients
       *
@@ -176,13 +168,12 @@ template<typename _MatrixType> class HessenbergDecomposition
       *
       * \sa packedMatrix(), \ref Householder_Module "Householder module"
       */
-    const CoeffVectorType& householderCoefficients() const
-    {
-      eigen_assert(m_isInitialized && "HessenbergDecomposition is not initialized.");
-      return m_hCoeffs;
-    }
+         const CoeffVectorType &householderCoefficients() const {
+            eigen_assert(m_isInitialized && "HessenbergDecomposition is not initialized.");
+            return m_hCoeffs;
+         }
 
-    /** \brief Returns the internal representation of the decomposition
+         /** \brief Returns the internal representation of the decomposition
       *
       *	\returns a const reference to a matrix with the internal representation
       *	         of the decomposition.
@@ -211,13 +202,12 @@ template<typename _MatrixType> class HessenbergDecomposition
       *
       * \sa householderCoefficients()
       */
-    const MatrixType& packedMatrix() const
-    {
-      eigen_assert(m_isInitialized && "HessenbergDecomposition is not initialized.");
-      return m_matrix;
-    }
+         const MatrixType &packedMatrix() const {
+            eigen_assert(m_isInitialized && "HessenbergDecomposition is not initialized.");
+            return m_matrix;
+         }
 
-    /** \brief Reconstructs the orthogonal matrix Q in the decomposition
+         /** \brief Reconstructs the orthogonal matrix Q in the decomposition
       *
       * \returns object representing the matrix Q
       *
@@ -231,15 +221,12 @@ template<typename _MatrixType> class HessenbergDecomposition
       *
       * \sa matrixH() for an example, class HouseholderSequence
       */
-    HouseholderSequenceType matrixQ() const
-    {
-      eigen_assert(m_isInitialized && "HessenbergDecomposition is not initialized.");
-      return HouseholderSequenceType(m_matrix, m_hCoeffs.conjugate())
-             .setLength(m_matrix.rows() - 1)
-             .setShift(1);
-    }
+         HouseholderSequenceType matrixQ() const {
+            eigen_assert(m_isInitialized && "HessenbergDecomposition is not initialized.");
+            return HouseholderSequenceType(m_matrix, m_hCoeffs.conjugate()).setLength(m_matrix.rows() - 1).setShift(1);
+         }
 
-    /** \brief Constructs the Hessenberg matrix H in the decomposition
+         /** \brief Constructs the Hessenberg matrix H in the decomposition
       *
       * \returns expression object representing the matrix H
       *
@@ -259,26 +246,24 @@ template<typename _MatrixType> class HessenbergDecomposition
       *
       * \sa matrixQ(), packedMatrix()
       */
-    MatrixHReturnType matrixH() const
-    {
-      eigen_assert(m_isInitialized && "HessenbergDecomposition is not initialized.");
-      return MatrixHReturnType(*this);
-    }
+         MatrixHReturnType matrixH() const {
+            eigen_assert(m_isInitialized && "HessenbergDecomposition is not initialized.");
+            return MatrixHReturnType(*this);
+         }
 
-  private:
+      private:
+         typedef Matrix<Scalar, 1, Size, int(Options) | int(RowMajor), 1, MaxSize> VectorType;
+         typedef typename NumTraits<Scalar>::Real RealScalar;
+         static void _compute(MatrixType &matA, CoeffVectorType &hCoeffs, VectorType &temp);
 
-    typedef Matrix<Scalar, 1, Size, int(Options) | int(RowMajor), 1, MaxSize> VectorType;
-    typedef typename NumTraits<Scalar>::Real RealScalar;
-    static void _compute(MatrixType& matA, CoeffVectorType& hCoeffs, VectorType& temp);
+      protected:
+         MatrixType m_matrix;
+         CoeffVectorType m_hCoeffs;
+         VectorType m_temp;
+         bool m_isInitialized;
+   };
 
-  protected:
-    MatrixType m_matrix;
-    CoeffVectorType m_hCoeffs;
-    VectorType m_temp;
-    bool m_isInitialized;
-};
-
-/** \internal
+   /** \internal
   * Performs a tridiagonal decomposition of \a matA in place.
   *
   * \param matA the input selfadjoint matrix
@@ -290,38 +275,36 @@ template<typename _MatrixType> class HessenbergDecomposition
   *
   * \sa packedMatrix()
   */
-template<typename MatrixType>
-void HessenbergDecomposition<MatrixType>::_compute(MatrixType& matA, CoeffVectorType& hCoeffs, VectorType& temp)
-{
-  eigen_assert(matA.rows()==matA.cols());
-  Index n = matA.rows();
-  temp.resize(n);
-  for (Index i = 0; i<n-1; ++i)
-  {
-    // let's consider the vector v = i-th column starting at position i+1
-    Index remainingSize = n-i-1;
-    RealScalar beta;
-    Scalar h;
-    matA.col(i).tail(remainingSize).makeHouseholderInPlace(h, beta);
-    matA.col(i).coeffRef(i+1) = beta;
-    hCoeffs.coeffRef(i) = h;
+   template<typename MatrixType>
+   void HessenbergDecomposition<MatrixType>::_compute(MatrixType &matA, CoeffVectorType &hCoeffs, VectorType &temp) {
+      eigen_assert(matA.rows() == matA.cols());
+      Index n = matA.rows();
+      temp.resize(n);
+      for (Index i = 0; i < n - 1; ++i) {
+         // let's consider the vector v = i-th column starting at position i+1
+         Index remainingSize = n - i - 1;
+         RealScalar beta;
+         Scalar h;
+         matA.col(i).tail(remainingSize).makeHouseholderInPlace(h, beta);
+         matA.col(i).coeffRef(i + 1) = beta;
+         hCoeffs.coeffRef(i) = h;
 
-    // Apply similarity transformation to remaining columns,
-    // i.e., compute A = H A H'
+         // Apply similarity transformation to remaining columns,
+         // i.e., compute A = H A H'
 
-    // A = H A
-    matA.bottomRightCorner(remainingSize, remainingSize)
-        .applyHouseholderOnTheLeft(matA.col(i).tail(remainingSize-1), h, &temp.coeffRef(0));
+         // A = H A
+         matA.bottomRightCorner(remainingSize, remainingSize)
+            .applyHouseholderOnTheLeft(matA.col(i).tail(remainingSize - 1), h, &temp.coeffRef(0));
 
-    // A = A H'
-    matA.rightCols(remainingSize)
-        .applyHouseholderOnTheRight(matA.col(i).tail(remainingSize-1), numext::conj(h), &temp.coeffRef(0));
-  }
-}
+         // A = A H'
+         matA.rightCols(remainingSize)
+            .applyHouseholderOnTheRight(matA.col(i).tail(remainingSize - 1), numext::conj(h), &temp.coeffRef(0));
+      }
+   }
 
-namespace internal {
+   namespace internal {
 
-/** \eigenvalues_module \ingroup Eigenvalues_Module
+      /** \eigenvalues_module \ingroup Eigenvalues_Module
   *
   *
   * \brief Expression type for return value of HessenbergDecomposition::matrixH()
@@ -336,38 +319,37 @@ namespace internal {
   * HessenbergDecomposition::matrixH(); there is probably no other use for this
   * class.
   */
-template<typename MatrixType> struct HessenbergDecompositionMatrixHReturnType
-: public ReturnByValue<HessenbergDecompositionMatrixHReturnType<MatrixType> >
-{
-  public:
-    /** \brief Constructor.
+      template<typename MatrixType>
+      struct HessenbergDecompositionMatrixHReturnType
+          : public ReturnByValue<HessenbergDecompositionMatrixHReturnType<MatrixType>> {
+         public:
+            /** \brief Constructor.
       *
       * \param[in] hess  Hessenberg decomposition
       */
-    HessenbergDecompositionMatrixHReturnType(const HessenbergDecomposition<MatrixType>& hess) : m_hess(hess) { }
+            HessenbergDecompositionMatrixHReturnType(const HessenbergDecomposition<MatrixType> &hess) : m_hess(hess) {}
 
-    /** \brief Hessenberg matrix in decomposition.
+            /** \brief Hessenberg matrix in decomposition.
       *
       * \param[out] result  Hessenberg matrix in decomposition \p hess which
       *                     was passed to the constructor
       */
-    template <typename ResultType>
-    inline void evalTo(ResultType& result) const
-    {
-      result = m_hess.packedMatrix();
-      Index n = result.rows();
-      if (n>2)
-        result.bottomLeftCorner(n-2, n-2).template triangularView<Lower>().setZero();
-    }
+            template<typename ResultType>
+            inline void evalTo(ResultType &result) const {
+               result = m_hess.packedMatrix();
+               Index n = result.rows();
+               if (n > 2)
+                  result.bottomLeftCorner(n - 2, n - 2).template triangularView<Lower>().setZero();
+            }
 
-    Index rows() const { return m_hess.packedMatrix().rows(); }
-    Index cols() const { return m_hess.packedMatrix().cols(); }
+            Index rows() const { return m_hess.packedMatrix().rows(); }
+            Index cols() const { return m_hess.packedMatrix().cols(); }
 
-  protected:
-    const HessenbergDecomposition<MatrixType>& m_hess;
-};
+         protected:
+            const HessenbergDecomposition<MatrixType> &m_hess;
+      };
 
-} // end namespace internal
+   } // end namespace internal
 
 } // end namespace Eigen
 

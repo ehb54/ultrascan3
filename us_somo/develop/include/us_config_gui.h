@@ -4,11 +4,11 @@
 // QT defs:
 
 //#include "us.h"
-#include "us_util.h"
 #include "us_extern.h"
+#include "us_util.h"
 
 #ifndef NO_DB
-#  include "us_database.h"
+#include "us_database.h"
 #endif
 
 #include "us_color.h"
@@ -19,14 +19,14 @@
 #include <qradiobutton.h>
 // #include <qmotifstyle.h>
 #include <qdir.h>
+#include <qevent.h>
+#include <qlabel.h>
+#include <qlayout.h>
+#include <qlineedit.h>
 #include <qmessagebox.h>
 #include <qpushbutton.h>
-#include <qlineedit.h>
-#include <qlabel.h>
-#include <qevent.h>
-#include <qwidget.h>
 #include <qtranslator.h>
-#include <qlayout.h>
+#include <qwidget.h>
 //#include <q3frame.h>
 //Added by qt3to4:
 #include <QCloseEvent>
@@ -34,12 +34,11 @@
 //extern int US_EXTERN global_Xpos;
 //extern int US_EXTERN global_Ypos;
 
-class US_EXTERN US_Config_GUI : public QFrame
-{
-   Q_OBJECT
+class US_EXTERN US_Config_GUI : public QFrame {
+      Q_OBJECT
 
    public:
-      US_Config_GUI(QWidget *parent=0, const char *name=0 );
+      US_Config_GUI(QWidget *parent = 0, const char *name = 0);
       ~US_Config_GUI();
 
       US_Config *USglobal;
@@ -62,8 +61,8 @@ class US_EXTERN US_Config_GUI : public QFrame
       QLabel *lbl_blank;
       QLabel *lbl_color;
       QLabel *lbl_font;
-      QLabel* lbl_database;
-      QLabel* lbl_numThreads;
+      QLabel *lbl_database;
+      QLabel *lbl_numThreads;
       QLineEdit *le_browser;
       QLineEdit *le_data_dir;
       QLineEdit *le_archive_dir;
@@ -122,4 +121,3 @@ class US_EXTERN US_Config_GUI : public QFrame
 };
 
 #endif
-

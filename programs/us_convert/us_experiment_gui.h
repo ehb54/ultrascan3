@@ -2,28 +2,26 @@
 #ifndef US_EXPERIMENT_GUI_H
 #define US_EXPERIMENT_GUI_H
 
-#include "us_widgets_dialog.h"
-#include "us_widgets.h"
-#include "us_extern.h"
-#include "us_help.h"
 #include "us_convert.h"
 #include "us_experiment.h"
-#include "us_selectbox.h"
+#include "us_extern.h"
+#include "us_help.h"
 #include "us_project.h"
 #include "us_rotor.h"
+#include "us_selectbox.h"
+#include "us_widgets.h"
+#include "us_widgets_dialog.h"
 
 /*! \class US_ExperimentGui
            This class provides the ability to associate raw data with
            the relevant experiment parameters, such as the lab,
            instrument, and rotor on which the experiment was run. 
 */
-           
-class US_ExperimentGui : public US_WidgetsDialog
-{
-   Q_OBJECT
+
+class US_ExperimentGui : public US_WidgetsDialog {
+      Q_OBJECT
 
    public:
-
       /*! \brief Generic constructor for the US_ExperimentGui class. To 
                  instantiate the class a calling function must
                  provide a structure to contain all the data.
@@ -34,11 +32,9 @@ class US_ExperimentGui : public US_WidgetsDialog
           \param select_db_disk Indicates whether the default search is on
                          the local disk or in the DB
       */
-      US_ExperimentGui( bool,
-                        US_Experiment&,
-                        int );
+      US_ExperimentGui(bool, US_Experiment &, int);
 
-      //! A null destructor. 
+      //! A null destructor.
       ~US_ExperimentGui() {};
 
    signals:
@@ -50,76 +46,75 @@ class US_ExperimentGui : public US_WidgetsDialog
           \param expInfo A reference to a structure that contains all
                          the current experiment data
       */
-      void updateExpInfoSelection( US_Experiment& expInfo );
+      void updateExpInfoSelection(US_Experiment &expInfo);
 
       /*! \brief The signal that is emitted when the user chooses
                  to cancel the current selection. In this case all
                  previously-entered experiment parameter associations
                  are erased.
       */
-      void cancelExpInfoSelection( void );
+      void cancelExpInfoSelection(void);
 
       //! A signal to indicate that the current disk/db selection has changed.
       //! /param DB True if DB is the new selection
-      void use_db( bool DB );
+      void use_db(bool DB);
 
    private:
-      US_Experiment&         expInfo;
-      QVector< US_Rotor::Lab > labList;
-      int                    currentLab;
-      int                    currentInstrument;
-      bool                   lab_changed;
-      bool                   signal;
+      US_Experiment &expInfo;
+      QVector<US_Rotor::Lab> labList;
+      int currentLab;
+      int currentInstrument;
+      bool lab_changed;
+      bool signal;
 
-      US_Disk_DB_Controls*   disk_controls; //!< Radiobuttons for disk/db choice
+      US_Disk_DB_Controls *disk_controls; //!< Radiobuttons for disk/db choice
 
-      US_Help                showHelp;
+      US_Help showHelp;
 
-      QStringList            experimentTypes;
-      QComboBox*             cb_expType;
+      QStringList experimentTypes;
+      QComboBox *cb_expType;
 
-      US_SelectBox*          cb_instrument;
-      US_SelectBox*          cb_operator;
-                          
-      QLineEdit*             le_investigator;
-      QLineEdit*             le_runID;
-      QLineEdit*             le_project;
-      QLineEdit*             le_runTemp;
-      QLineEdit*             le_label;
-      QLineEdit*             le_rotorDesc;
-      QTextEdit*             te_comment;
-                          
-      QListWidget*           lw_rotorSpeeds;
+      US_SelectBox *cb_instrument;
+      US_SelectBox *cb_operator;
 
-      QPushButton*           pb_project;
-      QPushButton*           pb_rotor;
-      QPushButton*           pb_accept;
+      QLineEdit *le_investigator;
+      QLineEdit *le_runID;
+      QLineEdit *le_project;
+      QLineEdit *le_runTemp;
+      QLineEdit *le_label;
+      QLineEdit *le_rotorDesc;
+      QTextEdit *te_comment;
 
-  private slots:
-      void reset             ( void );
-      bool load              ( void );
-      void reload            ( void );
-      void syncHardware      ( void );
-      void selectInvestigator( void );
-      void assignInvestigator( int  );
-      void getInvestigatorInfo( void );
-      void source_changed     ( bool );
-      void update_disk_db     ( bool );
-      void selectProject     ( void );
-      void assignProject     ( US_Project& );
-      void cancelProject     ( void );
-      void saveLabel         ( void );
-      QComboBox* us_expTypeComboBox         ( void );
-      void setInstrumentList ( void );
-      void setOperatorList   ( void );
-      void change_instrument ( int  );
-      void selectRotor       ( void );
-      void assignRotor       ( US_Rotor::Rotor&, US_Rotor::RotorCalibration& );
-      void cancelRotor       ( void );
-      void accept            ( void );
-      void cancel            ( void );
-      void connect_error     ( const QString& );
-      void help              ( void )
-        { showHelp.show_help( "manual/convert-experiment.html" ); };
+      QListWidget *lw_rotorSpeeds;
+
+      QPushButton *pb_project;
+      QPushButton *pb_rotor;
+      QPushButton *pb_accept;
+
+   private slots:
+      void reset(void);
+      bool load(void);
+      void reload(void);
+      void syncHardware(void);
+      void selectInvestigator(void);
+      void assignInvestigator(int);
+      void getInvestigatorInfo(void);
+      void source_changed(bool);
+      void update_disk_db(bool);
+      void selectProject(void);
+      void assignProject(US_Project &);
+      void cancelProject(void);
+      void saveLabel(void);
+      QComboBox *us_expTypeComboBox(void);
+      void setInstrumentList(void);
+      void setOperatorList(void);
+      void change_instrument(int);
+      void selectRotor(void);
+      void assignRotor(US_Rotor::Rotor &, US_Rotor::RotorCalibration &);
+      void cancelRotor(void);
+      void accept(void);
+      void cancel(void);
+      void connect_error(const QString &);
+      void help(void) { showHelp.show_help("manual/convert-experiment.html"); };
 };
 #endif

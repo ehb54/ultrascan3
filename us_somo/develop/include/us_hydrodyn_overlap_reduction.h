@@ -4,8 +4,8 @@
 // QT defs:
 
 #include <qlabel.h>
-#include <qstring.h>
 #include <qlayout.h>
+#include <qstring.h>
 //#include <q3frame.h>
 #include <qcheckbox.h>
 #include <qwt_counter.h>
@@ -14,52 +14,47 @@
 
 //standard C and C++ defs:
 
-#include <vector>
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
 #include <iostream>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <vector>
 
 #ifdef WIN32
-# if QT_VERSION < 0x040000
-#  pragma warning ( disable: 4251 )
-# endif
+#if QT_VERSION < 0x040000
+#pragma warning(disable : 4251)
+#endif
 #endif
 
 using namespace std;
 
-struct overlap_reduction
-{
-   QString title;
-   bool fuse_beads;
-   bool remove_hierarch;
-   bool remove_sync;
-   bool translate_out;
-   bool show_translate;
-   bool remove_overlap;
-   double fuse_beads_percent;
-   double remove_sync_percent;
-   double remove_hierarch_percent;
+struct overlap_reduction {
+      QString title;
+      bool fuse_beads;
+      bool remove_hierarch;
+      bool remove_sync;
+      bool translate_out;
+      bool show_translate;
+      bool remove_overlap;
+      double fuse_beads_percent;
+      double remove_sync_percent;
+      double remove_hierarch_percent;
 };
 
-class US_EXTERN US_Hydrodyn_OR : public QFrame
-{
-   Q_OBJECT
+class US_EXTERN US_Hydrodyn_OR : public QFrame {
+      Q_OBJECT
 
    public:
-      US_Hydrodyn_OR(struct overlap_reduction *,
-                     bool *replicate_o_r_method,
-                     vector < void * > *,
-                     void *, 
-                     QWidget *p = 0, 
-                     const char *name = 0);
+      US_Hydrodyn_OR(
+         struct overlap_reduction *, bool *replicate_o_r_method, vector<void *> *, void *, QWidget *p = 0,
+         const char *name = 0);
       ~US_Hydrodyn_OR();
 
    public:
       struct overlap_reduction *o_r;
       bool *replicate_o_r_method;
 
-      vector < void * > *other_ORs;  // this is to reference all _OR's when replication is used
+      vector<void *> *other_ORs; // this is to reference all _OR's when replication is used
 
       void *us_hydrodyn;
 
@@ -96,10 +91,9 @@ class US_EXTERN US_Hydrodyn_OR : public QFrame
 };
 
 #ifdef WIN32
-# if QT_VERSION < 0x040000
-#  pragma warning ( default: 4251 )
-# endif
+#if QT_VERSION < 0x040000
+#pragma warning(default : 4251)
+#endif
 #endif
 
 #endif
-

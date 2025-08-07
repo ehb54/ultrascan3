@@ -3,11 +3,11 @@
 
 // QT defs:
 
-#include <qlabel.h>
-#include <qstring.h>
-#include <qlayout.h>
 #include <qgroupbox.h>
+#include <qlabel.h>
+#include <qlayout.h>
 #include <qradiobutton.h>
+#include <qstring.h>
 //#include <q3frame.h>
 #include <qcheckbox.h>
 //Added by qt3to4:
@@ -17,51 +17,48 @@
 
 //standard C and C++ defs:
 
-#include <vector>
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
 #include <iostream>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <vector>
 
 using namespace std;
 
 
-struct pdb_parsing
-{
-   bool skip_hydrogen;      // true = Skip hydrogen atoms (default: true)
-   bool skip_water;         // true = Skip solven water molecules (default: true)
-   bool alternate;         // true = Skip alternate conformations (default: true), else prompt for action
-   bool find_sh;            // true = find free SH, change residue coding (default: false)
+struct pdb_parsing {
+      bool skip_hydrogen; // true = Skip hydrogen atoms (default: true)
+      bool skip_water; // true = Skip solven water molecules (default: true)
+      bool alternate; // true = Skip alternate conformations (default: true), else prompt for action
+      bool find_sh; // true = find free SH, change residue coding (default: false)
 
-   int missing_residues;   // 0 = List them and stop operation
-                           // 1 = List them, skip residue and proceed
-                           // 2 = use automatic bead builder (approximate method, default)
-   int missing_atoms;      // 0 = List them and stop operation (fix with WHATIF)
-                           // 1 = List them, skip residue and proceed
-                           // 2 = use approximate method to generate beads (approximate method, default)
+      int missing_residues; // 0 = List them and stop operation
+         // 1 = List them, skip residue and proceed
+         // 2 = use automatic bead builder (approximate method, default)
+      int missing_atoms; // 0 = List them and stop operation (fix with WHATIF)
+         // 1 = List them, skip residue and proceed
+         // 2 = use approximate method to generate beads (approximate method, default)
 };
 
-class US_EXTERN US_Hydrodyn_PDB_Parsing : public QFrame
-{
-   Q_OBJECT
+class US_EXTERN US_Hydrodyn_PDB_Parsing : public QFrame {
+      Q_OBJECT
 
    public:
       US_Hydrodyn_PDB_Parsing(struct pdb_parsing *, bool *, void *, QWidget *p = 0, const char *name = 0);
       ~US_Hydrodyn_PDB_Parsing();
 
    public:
-      
       struct pdb_parsing *pdb;
       bool *pdb_parsing_widget;
       void *us_hydrodyn;
-      
+
       US_Config *USglobal;
 
       QLabel *lbl_info;
 
       QPushButton *pb_help;
       QPushButton *pb_cancel;
-      
+
       QGroupBox *bg_misc;
       QGroupBox *bg_residues;
       QGroupBox *bg_atoms;
@@ -70,7 +67,7 @@ class US_EXTERN US_Hydrodyn_PDB_Parsing : public QFrame
       QCheckBox *cb_skip_water;
       QCheckBox *cb_alternate;
       QCheckBox *cb_find_sh;
-      QLabel    *lbl_thresh_SS;
+      QLabel *lbl_thresh_SS;
       QLineEdit *le_thresh_SS;
 
       QCheckBox *cb_save_csv_on_load;
@@ -86,11 +83,11 @@ class US_EXTERN US_Hydrodyn_PDB_Parsing : public QFrame
       QRadioButton *rb_atom_stop;
       QRadioButton *rb_atom_skip;
       QRadioButton *rb_atom_auto;
-      
+
       QCheckBox *cb_use_WAT_Tf;
 
    private slots:
-      
+
       void setupGUI();
       void update_thresh_SS(const QString &);
       void skip_hydrogen();
@@ -105,13 +102,11 @@ class US_EXTERN US_Hydrodyn_PDB_Parsing : public QFrame
       void atom(int);
       void cancel();
       void help();
-   
+
    protected slots:
 
       void closeEvent(QCloseEvent *);
 };
 
 
-
 #endif
-

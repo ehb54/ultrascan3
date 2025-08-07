@@ -13,25 +13,24 @@
     global memory vi \ref US_Global.  If the master password is not 
     yet in global memory, US_Global prompts the user for it.
 */
-class US_UTIL_EXTERN US_Crypto
-{
-  public:
-    /*! A static function to encrypt a password string.
+class US_UTIL_EXTERN US_Crypto {
+   public:
+      /*! A static function to encrypt a password string.
         \param  plain_text     The string to be encrypted.
         \param  pw             The password to use for encryption
         \retval encryptionData A list of two strings containing the ciphertext
                                of the password and the initialization vector
                                used during encryption.
     */
-    static QStringList encrypt( const QString&, const QString& );
+      static QStringList encrypt(const QString &, const QString &);
 
-    /*! A static function to decrypt a string.
+      /*! A static function to decrypt a string.
         \param  ciphertext The string to be encrypted.
         \param  pw         Password used to encrypt the string
         \param  initVector An initialization string used when the string was encrypted.
         \retval plaintext  The plaintext password.
     */
-    static QString     decrypt( const QString&, const QString&, const QString& );
+      static QString decrypt(const QString &, const QString &, const QString &);
 };
 
 #endif

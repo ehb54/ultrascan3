@@ -10,57 +10,53 @@
  * @class US_SecondMoment
  * @brief The US_SecondMoment class provides functionality for second moment analysis.
  */
-class US_SecondMoment : public US_AnalysisBase2
-{
-    Q_OBJECT
+class US_SecondMoment : public US_AnalysisBase2 {
+      Q_OBJECT
 
-    public:
-        /**
+   public:
+      /**
          * @brief Constructor for US_SecondMoment.
          */
-        US_SecondMoment();
+      US_SecondMoment();
 
-    private:
-        double     average_2nd;   //!< Average second moment value
-        double*    smPoints;      //!< Pointer to second moment points
-        double*    smSeconds;     //!< Pointer to second moment seconds
-        US_Editor* te_results;    //!< Editor for displaying results
-        QwtPlotGrid*  grid;       //!< Plot grid
+   private:
+      double average_2nd; //!< Average second moment value
+      double *smPoints; //!< Pointer to second moment points
+      double *smSeconds; //!< Pointer to second moment seconds
+      US_Editor *te_results; //!< Editor for displaying results
+      QwtPlotGrid *grid; //!< Plot grid
 
-        /**
+      /**
          * @brief Function to plot the data.
          */
-        void data_plot ( void );
+      void data_plot(void);
 
-    private slots:
-        /**
+   private slots:
+      /**
          * @brief Slot to write the report.
          * @param stream The text stream to write the report to.
          */
-        void write_report(QTextStream& stream);
+      void write_report(QTextStream &stream);
 
-        /**
+      /**
          * @brief Slot to exclude data points.
          */
-        void exclude(void);
+      void exclude(void);
 
-        /**
+      /**
          * @brief Slot to view the results.
          */
-        void view(void);
+      void view(void);
 
-        /**
+      /**
          * @brief Slot to save the results.
          */
-        void save(void);
+      void save(void);
 
-        /**
+      /**
          * @brief Slot to show help information.
          */
-        void help(void)
-        {
-            showHelp.show_help("manual/second_moment.html");
-        }
+      void help(void) { showHelp.show_help("manual/second_moment.html"); }
 };
 
 #endif

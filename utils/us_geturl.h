@@ -12,45 +12,45 @@
 // derived from last answer https://stackoverflow.com/questions/46943134/how-do-i-write-a-qt-http-get-request
 
 class US_UTIL_EXTERN US_GetUrl : public QObject {
-    Q_OBJECT
-public:
-    /**
+      Q_OBJECT
+   public:
+      /**
      * @brief Constructs a US_GetUrl object.
      */
-    explicit US_GetUrl();
+      explicit US_GetUrl();
 
-    /**
+      /**
      * @brief Initiates an HTTP GET request for the given URL.
      *
      * @param url The URL to send the GET request to.
      */
-    void get(const QString & url);
+      void get(const QString &url);
 
-    QNetworkAccessManager *manager; ///< Manager for handling network operations.
+      QNetworkAccessManager *manager; ///< Manager for handling network operations.
 
-    /**
+      /**
      * @brief Returns the downloaded data.
      *
      * @return The downloaded data as a QByteArray.
      */
-    QByteArray downloadedData() const;
+      QByteArray downloadedData() const;
 
-    signals:
-            /**
+   signals:
+      /**
              * @brief Signal emitted when the download is complete.
              */
-            void downloaded();
+      void downloaded();
 
-private:
-    QByteArray m_DownloadedData;    ///< Byte array to store downloaded data.
+   private:
+      QByteArray m_DownloadedData; ///< Byte array to store downloaded data.
 
-private slots:
-            /**
+   private slots:
+      /**
              * @brief Slot called when the network reply is finished.
              *
              * @param reply The QNetworkReply containing the response.
              */
-            void ReplyFinished(QNetworkReply *reply);
+      void ReplyFinished(QNetworkReply *reply);
 };
 
 #endif // US_GETURL_H

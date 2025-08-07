@@ -4,13 +4,13 @@
 // QT defs:
 
 #include <qlabel.h>
-#include <qstring.h>
 #include <qlayout.h>
 #include <qpushbutton.h>
+#include <qstring.h>
 //#include <q3frame.h>
 #include <qcheckbox.h>
-#include <qwt_counter.h>
 #include <qgroupbox.h>
+#include <qwt_counter.h>
 //Added by qt3to4:
 #include <QCloseEvent>
 
@@ -18,17 +18,16 @@
 
 //standard C and C++ defs:
 
-#include <vector>
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
 #include <iostream>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <vector>
 
 using namespace std;
 
-class US_EXTERN US_Hydrodyn_SasOptionsExperimental : public QFrame
-{
-   Q_OBJECT
+class US_EXTERN US_Hydrodyn_SasOptionsExperimental : public QFrame {
+      Q_OBJECT
 
    public:
       friend class US_Hydrodyn;
@@ -38,48 +37,48 @@ class US_EXTERN US_Hydrodyn_SasOptionsExperimental : public QFrame
 
    public:
       struct saxs_options *saxs_options;
-      bool        *sas_options_experimental_widget;
-      void        *us_hydrodyn;
-      US_Config   *USglobal;
+      bool *sas_options_experimental_widget;
+      void *us_hydrodyn;
+      US_Config *USglobal;
 
-      QLabel      *lbl_info;
+      QLabel *lbl_info;
 
-      QCheckBox   *cb_iqq_scale_linear_offset;
-      QCheckBox   *cb_autocorrelate;
-      QCheckBox   *cb_hybrid_radius_excl_vol;
+      QCheckBox *cb_iqq_scale_linear_offset;
+      QCheckBox *cb_autocorrelate;
+      QCheckBox *cb_hybrid_radius_excl_vol;
 
-      QCheckBox   *cb_subtract_radius;
-      QCheckBox   *cb_iqq_use_atomic_ff;
-      QCheckBox   *cb_iqq_use_saxs_excl_vol;
-      QCheckBox   *cb_use_somo_ff;
+      QCheckBox *cb_subtract_radius;
+      QCheckBox *cb_iqq_use_atomic_ff;
+      QCheckBox *cb_iqq_use_saxs_excl_vol;
+      QCheckBox *cb_use_somo_ff;
 
-      QCheckBox   *cb_iqq_scale_nnls;
-      QCheckBox   *cb_iqq_log_fitting;
-      QCheckBox   *cb_iqq_scale_play;
+      QCheckBox *cb_iqq_scale_nnls;
+      QCheckBox *cb_iqq_log_fitting;
+      QCheckBox *cb_iqq_scale_play;
 
-      QCheckBox   *cb_alt_ff;
-      QCheckBox   *cb_five_term_gaussians;
-      QCheckBox   *cb_iq_exact_q;
+      QCheckBox *cb_alt_ff;
+      QCheckBox *cb_five_term_gaussians;
+      QCheckBox *cb_iq_exact_q;
 
-      QCheckBox   *cb_compute_exponentials;
-      QwtCounter  *cnt_compute_exponential_terms;
+      QCheckBox *cb_compute_exponentials;
+      QwtCounter *cnt_compute_exponential_terms;
 
-      QCheckBox   *cb_multiply_iq_by_atomic_volume;
+      QCheckBox *cb_multiply_iq_by_atomic_volume;
 
-      QLabel      *lbl_ev_exp_mult;
-      QLineEdit   *le_ev_exp_mult;
+      QLabel *lbl_ev_exp_mult;
+      QLineEdit *le_ev_exp_mult;
 
-      QCheckBox   *cb_compute_chi2shannon;
+      QCheckBox *cb_compute_chi2shannon;
 
-      QLabel      *lbl_chi2shannon_dmax;
-      QLineEdit   *le_chi2shannon_dmax;
+      QLabel *lbl_chi2shannon_dmax;
+      QLineEdit *le_chi2shannon_dmax;
 
-      QLabel      *lbl_chi2shannon_k;
-      QLineEdit   *le_chi2shannon_k;
+      QLabel *lbl_chi2shannon_k;
+      QLineEdit *le_chi2shannon_k;
 
-      QCheckBox   *cb_alt_sh1;
-      QCheckBox   *cb_alt_sh2;
-      QCheckBox   *cb_create_shd;
+      QCheckBox *cb_alt_sh1;
+      QCheckBox *cb_alt_sh2;
+      QCheckBox *cb_create_shd;
 
       QPushButton *pb_create_somo_ff;
 
@@ -87,7 +86,7 @@ class US_EXTERN US_Hydrodyn_SasOptionsExperimental : public QFrame
       QPushButton *pb_cancel;
 
    private slots:
-      
+
       void setupGUI();
 
       void set_iqq_scale_linear_offset();
@@ -107,12 +106,12 @@ class US_EXTERN US_Hydrodyn_SasOptionsExperimental : public QFrame
 
 
       void set_compute_exponentials();
-      void update_compute_exponential_terms( double );
-      void update_ev_exp_mult (const QString & );
+      void update_compute_exponential_terms(double);
+      void update_ev_exp_mult(const QString &);
 
       void set_compute_chi2shannon();
-      void update_chi2shannon_dmax (const QString & );
-      void update_chi2shannon_k (const QString & );
+      void update_chi2shannon_dmax(const QString &);
+      void update_chi2shannon_k(const QString &);
 
       void set_alt_sh1();
       void set_alt_sh2();
@@ -122,11 +121,10 @@ class US_EXTERN US_Hydrodyn_SasOptionsExperimental : public QFrame
       void create_somo_ff();
       void cancel();
       void help();
-   
+
    protected slots:
 
       void closeEvent(QCloseEvent *);
 };
 
 #endif
-

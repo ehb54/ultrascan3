@@ -5,19 +5,17 @@
 
 using namespace std;
 
-class US_EXTERN US_Hydrodyn_Vdw_Overlap : public QFrame
-{
-   Q_OBJECT
+class US_EXTERN US_Hydrodyn_Vdw_Overlap : public QFrame {
+      Q_OBJECT
 
    public:
       US_Hydrodyn_Vdw_Overlap(struct misc_options *, bool *, void *, QWidget *p = 0, const char *name = 0);
       ~US_Hydrodyn_Vdw_Overlap();
 
    public:
-
       struct misc_options *misc;
       bool *misc_widget;
-                void *us_hydrodyn;
+      void *us_hydrodyn;
 
       US_Config *USglobal;
 #ifndef NO_DB
@@ -29,10 +27,10 @@ class US_EXTERN US_Hydrodyn_Vdw_Overlap : public QFrame
       QPushButton *pb_help;
       QPushButton *pb_cancel;
 
-      QLabel    *lbl_vdw_ot_mult;
+      QLabel *lbl_vdw_ot_mult;
       QLineEdit *le_vdw_ot_mult;
 
-      QLabel    *lbl_vdw_ot_dpct;
+      QLabel *lbl_vdw_ot_dpct;
       QLineEdit *le_vdw_ot_dpct;
 
       QCheckBox *cb_vdw_ot_alt;
@@ -59,4 +57,3 @@ class US_EXTERN US_Hydrodyn_Vdw_Overlap : public QFrame
 };
 
 #endif
-

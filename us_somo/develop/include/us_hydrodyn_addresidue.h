@@ -2,13 +2,11 @@
 #define US_HYDRODYN_ADDRESIDUE_H
 
 #include <qgroupbox.h>
+#include <qlabel.h>
+#include <qlineedit.h>
+#include <qpushbutton.h>
 #include <qradiobutton.h>
 #include <qwidget.h>
-#include <qpushbutton.h>
-#include <qlineedit.h>
-#include <qlabel.h>
-#include <qwidget.h>
-#include <qpushbutton.h>
 //#include <q3frame.h>
 #include <QComboBox>
 #include <qcheckbox.h>
@@ -21,21 +19,19 @@
 #include <math.h>
 
 #include "us.h"
-#include "us_hydrodyn_pdbdefs.h"
 #include "us_extern.h"
+#include "us_hydrodyn_pdbdefs.h"
 #include "us_util.h"
 
 
-class US_AddResidue : public QWidget
-{
-   Q_OBJECT
+class US_AddResidue : public QWidget {
+      Q_OBJECT
 
    public:
-      US_AddResidue(bool *, const double, QWidget *p=0, const char *name=0);
+      US_AddResidue(bool *, const double, QWidget *p = 0, const char *name = 0);
       ~US_AddResidue();
 
    private:
-
       US_Config *USglobal;
       US_Help *online_help;
       bool *widget_flag;
@@ -47,8 +43,8 @@ class US_AddResidue : public QWidget
       unsigned int current_bead;
       unsigned int atom_hydration;
       double hydrovol;
-      vector <QString> hybrids;
-      vector <QString> atoms;
+      vector<QString> hybrids;
+      vector<QString> atoms;
 
       QPushButton *pb_add;
       QPushButton *pb_accept_residue;
@@ -144,12 +140,12 @@ class US_AddResidue : public QWidget
       struct residue new_residue;
       struct atom new_atom;
       struct bead new_bead;
-      vector <struct residue> residue_list;
-      vector <struct atom> atom_list;
-      vector <struct bead> bead_list;
+      vector<struct residue> residue_list;
+      vector<struct atom> atom_list;
+      vector<struct bead> bead_list;
       QString atom_filename, residue_filename;
-      bool update_pKas( int atomno );
-      void info_residue( const QString & msg );
+      bool update_pKas(int atomno);
+      void info_residue(const QString &msg);
       void update_bead_hydrated_info();
       void clear_bead_hydrated_info();
 
@@ -157,7 +153,7 @@ class US_AddResidue : public QWidget
 
    private slots:
       void add();
-      void reset( bool reselect = true );
+      void reset(bool reselect = true);
       void help();
       void select_atom_file();
       void select_residue_file();

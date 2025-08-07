@@ -3,32 +3,32 @@
 
 //#include "us.h"
 //#include "us_util.h"
-#include   "us_write_config.h"
 #include "us_extern.h"
+#include "us_write_config.h"
 
-#include <qlabel.h>
-#include <qlistwidget.h>
-#include <qlineedit.h>
-#include <qpushbutton.h>
-#include <qmessagebox.h>
+#include <QComboBox>
 #include <qcolor.h>
 #include <qcolordialog.h>
-#include <qstring.h>
-#include <qlcdnumber.h>
-#include <qprogressbar.h>
-#include <QComboBox>
 #include <qevent.h>
+#include <qlabel.h>
+#include <qlcdnumber.h>
+#include <qlineedit.h>
+#include <qlistwidget.h>
+#include <qmessagebox.h>
+#include <qprogressbar.h>
+#include <qpushbutton.h>
+#include <qstring.h>
 //#include <q3frame.h>
-#include <qtranslator.h>
 #include <qpen.h>
+#include <qtranslator.h>
 
-#include <qwt_plot.h>
 #include <qwt_counter.h>
+#include <qwt_plot.h>
 //Added by qt3to4:
 #include <QCloseEvent>
 #if QT_VERSION >= 0x040000
-# include "qwt_plot_grid.h"
-# include "qwt_plot_curve.h"
+#include "qwt_plot_curve.h"
+#include "qwt_plot_grid.h"
 #endif
 
 /*
@@ -38,12 +38,11 @@
 #include <qwidget.h>
 */
 
-class US_EXTERN US_Color : public QFrame
-{
-   Q_OBJECT
-   
+class US_EXTERN US_Color : public QFrame {
+      Q_OBJECT
+
    public:
-      US_Color(QWidget *p=0, const char *name = 0);
+      US_Color(QWidget *p = 0, const char *name = 0);
       ~US_Color();
       QLabel *lbl_background;
       QLabel *lbl_example;
@@ -112,7 +111,7 @@ class US_EXTERN US_Color : public QFrame
       QwtPlot *plot;
       QwtCounter *cnt;
 #if QT_VERSION >= 0x040000
-      QwtPlotGrid  *grid;
+      QwtPlotGrid *grid;
       QwtPlotCurve *curve;
 #endif
       QProgressBar *progress;
@@ -127,7 +126,7 @@ class US_EXTERN US_Color : public QFrame
       int current_index;
       int temp_margin;
       struct us_colors temp_colors;
-   
+
    public slots:
       void setup_GUI();
       void help();
@@ -149,7 +148,7 @@ class US_EXTERN US_Color : public QFrame
       void pick_color6();
       void delete_scheme();
       void closeEvent(QCloseEvent *);
-      
+
    signals:
       void marginChanged(int);
 };

@@ -3,72 +3,51 @@
 
 // QT defs:
 
-#include <qlabel.h>
 #include <qcheckbox.h>
-#include <qpushbutton.h>
 #include <qdialog.h>
-#include <qstringlist.h>
-#include <qlistwidget.h>
+#include <qlabel.h>
 #include <qlineedit.h>
+#include <qlistwidget.h>
+#include <qpushbutton.h>
+#include <qstringlist.h>
 
 #include "us_util.h"
 
 using namespace std;
 
-class US_EXTERN US_Hydrodyn_Saxs_Load_Csv : public QDialog
-{
-   Q_OBJECT
+class US_EXTERN US_Hydrodyn_Saxs_Load_Csv : public QDialog {
+      Q_OBJECT
 
    public:
-
       US_Hydrodyn_Saxs_Load_Csv(
-                                QString msg,
-                                QStringList *qsl_names,
-                                QStringList *qsl_sel_names,
-                                QStringList *qsl,
-                                QString loaded_filename,
-                                bool *create_avg,
-                                bool *create_std_dev,
-                                bool *only_plot_stats,
-                                bool *save_to_csv,
-                                QString *csv_filename,
-                                bool *save_original_data,
-                                bool *run_nnls,
-                                bool *nnls_plot_contrib,
-                                bool *nnls_csv,
-                                bool *run_best_fit,
-                                bool *use_SDs_for_fitting,
-                                QString *nnls_target,
-                                bool *clear_plot_first,
-                                bool expert_mode,
-                                void *us_hydrodyn,
-                                QWidget *p = 0, 
-                                const char *name = 0
-                                );
+         QString msg, QStringList *qsl_names, QStringList *qsl_sel_names, QStringList *qsl, QString loaded_filename,
+         bool *create_avg, bool *create_std_dev, bool *only_plot_stats, bool *save_to_csv, QString *csv_filename,
+         bool *save_original_data, bool *run_nnls, bool *nnls_plot_contrib, bool *nnls_csv, bool *run_best_fit,
+         bool *use_SDs_for_fitting, QString *nnls_target, bool *clear_plot_first, bool expert_mode, void *us_hydrodyn,
+         QWidget *p = 0, const char *name = 0);
       ~US_Hydrodyn_Saxs_Load_Csv();
 
    private:
-
       QLabel *lbl_info;
 
-      QListWidget    *lb_names;
+      QListWidget *lb_names;
 
-      QCheckBox   *cb_create_avg;
-      QCheckBox   *cb_create_std_dev;
-      QCheckBox   *cb_only_plot_stats;
-      QCheckBox   *cb_save_to_csv;
+      QCheckBox *cb_create_avg;
+      QCheckBox *cb_create_std_dev;
+      QCheckBox *cb_only_plot_stats;
+      QCheckBox *cb_save_to_csv;
 
-      QLineEdit   *le_csv_filename;
+      QLineEdit *le_csv_filename;
 
-      QCheckBox   *cb_save_original_data;
+      QCheckBox *cb_save_original_data;
 
-      QCheckBox   *cb_run_nnls;
-      QCheckBox   *cb_nnls_plot_contrib;
-      QCheckBox   *cb_nnls_csv;
-      QCheckBox   *cb_run_best_fit;
-      QCheckBox   *cb_use_SDs_for_fitting;
-      QCheckBox   *cb_clear_plot_first;
-      QLabel      *lbl_nnls_target;
+      QCheckBox *cb_run_nnls;
+      QCheckBox *cb_nnls_plot_contrib;
+      QCheckBox *cb_nnls_csv;
+      QCheckBox *cb_run_best_fit;
+      QCheckBox *cb_use_SDs_for_fitting;
+      QCheckBox *cb_clear_plot_first;
+      QLabel *lbl_nnls_target;
 
       QPushButton *pb_select_all;
       QPushButton *pb_select_target;
@@ -81,7 +60,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Load_Csv : public QDialog
       void setupGUI();
 
       US_Config *USglobal;
-      
+
       QString msg;
       QStringList *qsl_names;
       QStringList *qsl_sel_names;

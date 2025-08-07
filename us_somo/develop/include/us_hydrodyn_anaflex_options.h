@@ -4,13 +4,13 @@
 // QT defs:
 
 #include <qlabel.h>
-#include <qstring.h>
 #include <qlayout.h>
 #include <qpushbutton.h>
+#include <qstring.h>
 //#include <q3frame.h>
 #include <qcheckbox.h>
-#include <qwt_counter.h>
 #include <qgroupbox.h>
+#include <qwt_counter.h>
 //Added by qt3to4:
 #include <QCloseEvent>
 
@@ -18,82 +18,79 @@
 
 //standard C and C++ defs:
 
-#include <vector>
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
 #include <iostream>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <vector>
 
 using namespace std;
 
-struct Anaflex_Options
-{
-   bool run_anaflex;
-   int nfrec;
-   bool instprofiles;
+struct Anaflex_Options {
+      bool run_anaflex;
+      int nfrec;
+      bool instprofiles;
 
-   bool run_mode_1;
-   bool run_mode_1_1;
-   bool run_mode_1_2;
-   bool run_mode_1_3;
-   bool run_mode_1_4;
-   bool run_mode_1_5;
-   bool run_mode_1_7;
-   bool run_mode_1_8;
-   bool run_mode_1_12;
-   bool run_mode_1_13;
-   bool run_mode_1_14;
-   bool run_mode_1_18;
-   bool run_mode_1_20;
-   bool run_mode_1_24;
-   
-   bool run_mode_2;
-   bool run_mode_2_1;
-   bool run_mode_2_2;
-   bool run_mode_2_3;
-   bool run_mode_2_4;
-   bool run_mode_2_5;
-   bool run_mode_2_7;
-   bool run_mode_2_8;
-   bool run_mode_2_12;
-   bool run_mode_2_13;
-   bool run_mode_2_14;
-   bool run_mode_2_18;
-   bool run_mode_2_20;
-   bool run_mode_2_24;
-   
-   bool run_mode_3;
-   bool run_mode_3_1;
-   bool run_mode_3_5;
-   int run_mode_3_5_iii;
-   int run_mode_3_5_jjj;
-   bool run_mode_3_9;
-   bool run_mode_3_10;
-   float run_mode_3_10_theta;
-   float run_mode_3_10_refractive_index;
-   float run_mode_3_10_lambda;
-   bool run_mode_3_14;
-   int run_mode_3_14_iii;
-   int run_mode_3_14_jjj;
-   bool run_mode_3_15;
-   bool run_mode_3_16;
+      bool run_mode_1;
+      bool run_mode_1_1;
+      bool run_mode_1_2;
+      bool run_mode_1_3;
+      bool run_mode_1_4;
+      bool run_mode_1_5;
+      bool run_mode_1_7;
+      bool run_mode_1_8;
+      bool run_mode_1_12;
+      bool run_mode_1_13;
+      bool run_mode_1_14;
+      bool run_mode_1_18;
+      bool run_mode_1_20;
+      bool run_mode_1_24;
 
-   bool run_mode_4;
-   bool run_mode_4_1;
-   bool run_mode_4_6;
-   bool run_mode_4_7;
-   bool run_mode_4_8;
+      bool run_mode_2;
+      bool run_mode_2_1;
+      bool run_mode_2_2;
+      bool run_mode_2_3;
+      bool run_mode_2_4;
+      bool run_mode_2_5;
+      bool run_mode_2_7;
+      bool run_mode_2_8;
+      bool run_mode_2_12;
+      bool run_mode_2_13;
+      bool run_mode_2_14;
+      bool run_mode_2_18;
+      bool run_mode_2_20;
+      bool run_mode_2_24;
 
-   bool run_mode_9;
+      bool run_mode_3;
+      bool run_mode_3_1;
+      bool run_mode_3_5;
+      int run_mode_3_5_iii;
+      int run_mode_3_5_jjj;
+      bool run_mode_3_9;
+      bool run_mode_3_10;
+      float run_mode_3_10_theta;
+      float run_mode_3_10_refractive_index;
+      float run_mode_3_10_lambda;
+      bool run_mode_3_14;
+      int run_mode_3_14_iii;
+      int run_mode_3_14_jjj;
+      bool run_mode_3_15;
+      bool run_mode_3_16;
 
-   int ntimc;
-   float tmax;
+      bool run_mode_4;
+      bool run_mode_4_1;
+      bool run_mode_4_6;
+      bool run_mode_4_7;
+      bool run_mode_4_8;
 
+      bool run_mode_9;
+
+      int ntimc;
+      float tmax;
 };
 
-class US_EXTERN US_Hydrodyn_Anaflex_Options : public QFrame
-{
-   Q_OBJECT
+class US_EXTERN US_Hydrodyn_Anaflex_Options : public QFrame {
+      Q_OBJECT
 
    public:
       US_Hydrodyn_Anaflex_Options(Anaflex_Options *, bool *, void *, QWidget *p = 0, const char *name = 0);
@@ -190,20 +187,19 @@ class US_EXTERN US_Hydrodyn_Anaflex_Options : public QFrame
 
       QPushButton *pb_help;
       QPushButton *pb_cancel;
-      
-   private:
 
+   private:
       void setupGUI();
 
       void update_deltat();
       void update_enables();
       void update_ntimc_msg();
 
-      QPalette      label_font_ok;
-      QPalette      label_font_warning;
+      QPalette label_font_ok;
+      QPalette label_font_warning;
 
    private slots:
-      
+
       void set_run_anaflex();
       void set_instprofiles();
 
@@ -267,7 +263,7 @@ class US_EXTERN US_Hydrodyn_Anaflex_Options : public QFrame
 
       void cancel();
       void help();
-   
+
    protected slots:
 
       void closeEvent(QCloseEvent *);

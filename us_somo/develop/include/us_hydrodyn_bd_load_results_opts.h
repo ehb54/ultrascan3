@@ -3,9 +3,9 @@
 
 // QT defs:
 
+#include <qdialog.h>
 #include <qlabel.h>
 #include <qpushbutton.h>
-#include <qdialog.h>
 
 #include "us_util.h"
 
@@ -13,30 +13,17 @@ using namespace std;
 
 // set psv & mw for DAMMIN/DAMMIF file loads
 
-class US_EXTERN US_Hydrodyn_BD_Load_Results_Opts : public QDialog
-{
-   Q_OBJECT
+class US_EXTERN US_Hydrodyn_BD_Load_Results_Opts : public QDialog {
+      Q_OBJECT
 
    public:
-
       US_Hydrodyn_BD_Load_Results_Opts(
-                                       QString msg,
-                                       double *temperature,
-                                       double *solvent_viscosity,
-                                       double *solvent_density,
-                                       QString *solvent_name,
-                                       QString *solvent_acronym,
-                                       double *psv,
-                                       double browflex_temperature,
-                                       double browflex_solvent_viscosity,
-                                       bool *check_fix_overlaps,
-                                       QWidget *p = 0, 
-                                       const char *name = 0
-                                       );
+         QString msg, double *temperature, double *solvent_viscosity, double *solvent_density, QString *solvent_name,
+         QString *solvent_acronym, double *psv, double browflex_temperature, double browflex_solvent_viscosity,
+         bool *check_fix_overlaps, QWidget *p = 0, const char *name = 0);
       ~US_Hydrodyn_BD_Load_Results_Opts();
 
    private:
-
       QLabel *lbl_info;
       QLabel *lbl_param;
       QLabel *lbl_browflex;
@@ -70,7 +57,7 @@ class US_EXTERN US_Hydrodyn_BD_Load_Results_Opts : public QDialog
       void setupGUI();
 
       US_Config *USglobal;
-      
+
       QString msg;
       double *temperature;
       double *solvent_viscosity;
@@ -85,9 +72,8 @@ class US_EXTERN US_Hydrodyn_BD_Load_Results_Opts : public QDialog
       bool *check_fix_overlaps;
 
    public:
-      
-      int write_conditions_to_file( QString filename );
-      void read_conditions_from_file( QString filename );
+      int write_conditions_to_file(QString filename);
+      void read_conditions_from_file(QString filename);
 
    public slots:
 

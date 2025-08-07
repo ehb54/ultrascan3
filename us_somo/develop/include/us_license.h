@@ -4,24 +4,24 @@
 // QT defs:
 
 #include "us.h"
-#include "us_util.h"
 #include "us_extern.h"
+#include "us_util.h"
 #ifndef NO_DB
-#  include "us_database.h"
+#include "us_database.h"
 #endif
 #include "us_color.h"
 #include "us_font.h"
 
 #include <qdir.h>
+#include <qevent.h>
+#include <qlabel.h>
+#include <qlineedit.h>
+#include <qlistwidget.h>
 #include <qmessagebox.h>
 #include <qpushbutton.h>
 #include <qradiobutton.h>
-#include <qlistwidget.h>
-#include <qlineedit.h>
-#include <qlabel.h>
-#include <qevent.h>
-#include <qwidget.h>
 #include <qtranslator.h>
+#include <qwidget.h>
 //#include <q3frame.h>
 #include <qstring.h>
 //Added by qt3to4:
@@ -29,16 +29,14 @@
 extern int US_EXTERN global_Xpos;
 extern int US_EXTERN global_Ypos;
 
-class US_EXTERN US_License : public QDialog
-{
-   Q_OBJECT
-   
+class US_EXTERN US_License : public QDialog {
+      Q_OBJECT
+
    public:
-      US_License(QWidget *parent=0, const char *name=0 );
+      US_License(QWidget *parent = 0, const char *name = 0);
       ~US_License();
-   
+
    private:
-      
       QProcess *proc;
       int stderrSize, trials;
 
@@ -98,14 +96,14 @@ class US_EXTERN US_License : public QDialog
       QComboBox *cbb_os1;
       QComboBox *cbb_version;
       QComboBox *cbb_licensetype;
-      
+
       QListWidget *lb_os;
       QRadioButton *rb_opteron;
       QRadioButton *rb_intel;
       QRadioButton *rb_sparc;
       QRadioButton *rb_sgi;
       QRadioButton *rb_mac;
-   
+
    public slots:
       void help();
       void cancel();
@@ -139,11 +137,8 @@ class US_EXTERN US_License : public QDialog
    protected slots:
       void closeEvent(QCloseEvent *);
 
-  private:
-
-      bool start_browser( const QString&, const QString&, const QString& );
-
+   private:
+      bool start_browser(const QString &, const QString &, const QString &);
 };
 
 #endif
-

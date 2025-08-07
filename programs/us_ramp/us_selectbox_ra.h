@@ -5,10 +5,9 @@
 #include "us_extern.h"
 #include "us_mwl_data.h"
 
-struct listInfo
-{
-   QString        ID;
-   QString        text;
+struct listInfo {
+      QString ID;
+      QString text;
 };
 
 /*! \class US_SelectBaseRa
@@ -19,22 +18,20 @@ struct listInfo
            a logical ID rather than the list item number as in 
            ordinary combo boxes and list widgets.
 */
-class US_SelectBaseRa
-{
+class US_SelectBaseRa {
    public:
       /*! \brief Generic constructor for the US_SelectBaseRa class. The
                  base class itself does not populate or manipulate
                  the widget's contents---this would be done in
                  the derived class.
       */
-      US_SelectBaseRa           ();
+      US_SelectBaseRa();
 
-      //! A null destructor. 
-      ~US_SelectBaseRa          () {};
+      //! A null destructor.
+      ~US_SelectBaseRa() {};
 
    protected:
-      QList< listInfo >         widgetList;
-
+      QList<listInfo> widgetList;
 };
 
 /*! \class US_SelectBoxRa
@@ -44,49 +41,48 @@ class US_SelectBaseRa
            instance, an ID from a database table), and to retrieve the 
            current logical ID are provided.
 */
-class US_SelectBoxRa : public QComboBox, public US_SelectBaseRa
-{
+class US_SelectBoxRa : public QComboBox, public US_SelectBaseRa {
    public:
       /*! \brief Generic constructor for the US_SelectBoxRa class.
 
           \param parent A reference to the parent dialog to which this 
                         US_SelectBoxRa belongs, or 0 if no parent.
       */
-      US_SelectBoxRa          ( QWidget* parent = 0 );
+      US_SelectBoxRa(QWidget *parent = 0);
 
-      //! A null destructor. 
-      ~US_SelectBoxRa         () {};
+      //! A null destructor.
+      ~US_SelectBoxRa() {};
 
       /*! \brief A function to add one option to the widget
 
           \param option A variable of type listInfo, containing an ID and
                         corresponding text information
       */
-      void addOption            ( listInfo& );
+      void addOption(listInfo &);
 
       /*! \brief A function to load the widget with appropriate information
 
           \param options A QList of type listInfo, containing the ID's and
                          corresponding text information
       */
-      void addOptions           ( QList< listInfo >& );
+      void addOptions(QList<listInfo> &);
 
       /*! \brief A function to load the contents of the widget from
                  the information it reads in widgetList.
       */
-      void load                ( void );
+      void load(void);
 
       /*! \brief A function to set the current index of the combo box
                  to a logical ID
 
           \param ID    The logical ID to set the current index to
       */
-      void setLogicalIndex    ( int );
+      void setLogicalIndex(int);
 
       /*! \brief A function to retrieve the logical ID of the option
                  the combo box is currently pointing to
       */
-      int  getLogicalID       ( void );
+      int getLogicalID(void);
 };
 
 /*! \class US_ListwidgetBoxRa
@@ -96,8 +92,7 @@ class US_SelectBoxRa : public QComboBox, public US_SelectBaseRa
            instance, an ID from a database table), and to retrieve the 
            current logical ID are provided.
 */
-class US_ListwidgetBoxRa : public QListWidget, public US_SelectBaseRa
-{
+class US_ListwidgetBoxRa : public QListWidget, public US_SelectBaseRa {
    public:
       /*! \brief Generic constructor for the US_ListwidgetBoxRa class.
 
@@ -105,38 +100,38 @@ class US_ListwidgetBoxRa : public QListWidget, public US_SelectBaseRa
                         US_ListwidgetBoxRa belongs, or 0 if no parent.
           \param fontAdjust Adjustment to default font size
       */
-      US_ListwidgetBoxRa          ( QWidget* parent = 0, int fontAdjust = 0 );
+      US_ListwidgetBoxRa(QWidget *parent = 0, int fontAdjust = 0);
 
-      //! A null destructor. 
-      ~US_ListwidgetBoxRa         () {};
+      //! A null destructor.
+      ~US_ListwidgetBoxRa() {};
 
       /*! \brief A function to add one option to the widget
           \param option  A variable of type listInfo, containing an ID and
                          corresponding text information
       */
-      void addOption              ( listInfo& );
+      void addOption(listInfo &);
 
       /*! \brief A function to load the widget with appropriate information
           \param options A QList of type listInfo, containing the ID's and
                          corresponding text information
       */
-      void addOptions             ( QList< listInfo >& );
+      void addOptions(QList<listInfo> &);
 
       /*! \brief A function to load the contents of the widget from
                  the information it reads in widgetList.
       */
-      void load                  ( void );
+      void load(void);
 
       /*! \brief A function to set the current index of the combo box
                  to a logical ID
           \param ID    The logical ID to set the current index to
       */
-      void setLogicalIndex    ( int );
+      void setLogicalIndex(int);
 
       /*! \brief A function to retrieve the logical ID of the option
                  the combo box is currently pointing to
       */
-      int  getLogicalID       ( void );
+      int getLogicalID(void);
 };
 
 #endif

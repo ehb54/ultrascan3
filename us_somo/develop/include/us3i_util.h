@@ -7,7 +7,9 @@
 #include "us3i_extern.h"
 
 #ifndef DbgErr
-#define DbgErr(a) if(US3i_Util::ithTime(a))qDebug() //!< Ith time error qDebug()
+#define DbgErr(a) \
+   if (US3i_Util::ithTime(a)) \
+   qDebug() //!< Ith time error qDebug()
 #endif
 
 //! \brief General utilities for UltraScan
@@ -15,8 +17,7 @@
 //! This class provides a number of general utility functions.
 //! All methods are static.
 //!
-class US_EXTERN US3i_Util
-{
+class US_EXTERN US3i_Util {
    public:
       //! \brief Returns the next string component where the components
       //!        are separated by a common delimiter. The function modifies
@@ -24,13 +25,13 @@ class US_EXTERN US3i_Util
       //!
       //! This function is designed to be called iteratively. On each call,
       //! the leading substring in the given string is returned and the
-      //! full string is modified by having that substring and the 
+      //! full string is modified by having that substring and the
       //! immediately following delimiter removed.
       //!
       //! \param s         String to search
       //! \param separator Delimiter to use for parsing
       //! \returns         Next token in the string (substring before delimiter)
-      static QString getToken( QString&, const QString& );
+      static QString getToken(QString &, const QString &);
 
 
       //! \brief Generates and returns a new Global Identifier (guid)
@@ -40,7 +41,7 @@ class US_EXTERN US3i_Util
       //! standard uuid form: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx".
       //!
       //! \returns         New GUID 36-character string
-      static QString new_guid( void );
+      static QString new_guid(void);
 
       //! \brief Generates a string for a file with md5 hash and file size
       //!
@@ -50,7 +51,7 @@ class US_EXTERN US3i_Util
       //!
       //! \param filename  Pull path name of file for md5 hash and size
       //! \returns         A string in the form of "hash size" for the file
-      static QString md5sum_file( QString );
+      static QString md5sum_file(QString);
 
       //! \brief Converts a DateTime string to unambiguous UTC form
       //!
@@ -69,7 +70,7 @@ class US_EXTERN US3i_Util
       //! \param knownUTC  A boolean whether the input string is known to
       //!                  represent date and time in Universal Time Coordinates.
       //! \returns         A DateTime string in "yyyy-mm-dd HH:MM:SS UTC" form
-      static QString toUTCDatetimeText( QString, bool );
+      static QString toUTCDatetimeText(QString, bool);
 
       //! \brief Converts a DateTime string to Qt's ISODate form
       //!
@@ -81,66 +82,66 @@ class US_EXTERN US3i_Util
       //!
       //! \param dttext    DateTime text string in UTC, ISO, or other form
       //! \returns         A DateTime string in ISO form ("2010-08-14T21:41:22")
-      static QString toISODatetimeText( QString );
+      static QString toISODatetimeText(QString);
 
       //! \brief Convert a QString uuid to a 16-byte binary character array
       //!
       //! \param in Uuid string to be converted
-      //! \param uu A pointer to a 16-byte character array for the 
+      //! \param uu A pointer to a 16-byte character array for the
       //!           converted data
-      static void uuid_parse( const QString&, unsigned char* );
+      static void uuid_parse(const QString &, unsigned char *);
 
       //! \brief Convert a binary uuid to a QString
       //!
       //! \param uu A pointer to a 16-byte array holding a binary uuid
-      static QString uuid_unparse( unsigned char* );
+      static QString uuid_unparse(unsigned char *);
 
       //! \brief Create a compressed (ccw) form of a triple (c/c/w) string.
       //!
       //! \param ccw Expanded triple string ("c/c/w" or "c / c / w")
       //! \returns   Compressed form of the triple string ("ccw")
-      static QString compressed_triple( const QString& );
+      static QString compressed_triple(const QString &);
 
       //! \brief Create an expanded (c/c/w) form of a triple (ccw) string.
       //!
       //! \param ccw    Compressed triple string ("ccw")
       //! \param spaces Flag to insert spaces around slashes.
       //! \returns      Uncompressed triple string ("c/c/w" or "c / c / w")
-      static QString expanded_triple( const QString&, bool = true );
+      static QString expanded_triple(const QString &, bool = true);
 
       //! \brief Return a flag if this is the i'th time an error occurs.
       //!
       //! \param timeinc Incidence increment to detect (default=10000).
       //! returns        Boolean flag if this is i'th time.
-      static bool ithTime( int = 10000 );
+      static bool ithTime(int = 10000);
 
       //! \brief Return a flag if an XML attribute string implies true/false.
       //!
       //! \param xmlattr XML attribute string ("T", "F", "1", "0").
       //! returns        Boolean flag if the implied boolean is true or false.
-      static bool bool_flag( const QString );
+      static bool bool_flag(const QString);
 
       //! \brief Return an XML attribute string for true or false.
       //!
       //! \param boolval Boolean value to represent as an XML attribute string.
       //! returns        XML attribute string representation ("0" or "1").
-      static QString bool_string( const bool );
+      static QString bool_string(const bool);
 
       //! \brief Return a string representing a QList<QStringList>.
       //!
       //! \param lsl      Input list of stringlists to represent
       //! \param llstring Output list of lists string representation
       //! returns         Count of stringlists in list
-      static int listlistBuild( QList< QStringList >&, QString& );
+      static int listlistBuild(QList<QStringList> &, QString &);
 
       //! \brief Return a QList<QStringList> as represented in a string.
       //!
       //! \param lsl      Output list of stringlists represented
       //! \param llstring Input list of lists string representation
       //! returns         Count of stringlists in list
-      static int listlistParse( QList< QStringList >&, QString& );
+      static int listlistParse(QList<QStringList> &, QString &);
 
    private:
-      static unsigned char hex2int( unsigned char c );
+      static unsigned char hex2int(unsigned char c);
 };
 #endif

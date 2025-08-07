@@ -8,7 +8,7 @@
 
 // *********** end user defines *************
 
-QInstances::QInstances( const QString & name_prefix ) {
+QInstances::QInstances(const QString &name_prefix) {
    this->name_prefix = name_prefix;
    server = new QLocalServer;
 }
@@ -19,12 +19,12 @@ QInstances::~QInstances() {
 
 
 bool QInstances::create() {
-   if ( server->isListening() ) {
+   if (server->isListening()) {
       qDebug() << "QInstances::create() WARNING already listening";
       return true;
    }
-   for ( int i = 0; i < MAX_INSTANCES; ++i ) {
-      if ( try_create( i ) ) {
+   for (int i = 0; i < MAX_INSTANCES; ++i) {
+      if (try_create(i)) {
          return true;
       }
    }
@@ -32,7 +32,7 @@ bool QInstances::create() {
 }
 
 bool QInstances::close() {
-   if ( server->isListening() ) {
+   if (server->isListening()) {
       server->close();
       return true;
    }
@@ -41,8 +41,8 @@ bool QInstances::close() {
 
 int QInstances::cleanup() {
    int count = 0;
-   for ( int i = 0; i < MAX_INSTANCES; ++i ) {
-      if ( try_create( i ) ) {
+   for (int i = 0; i < MAX_INSTANCES; ++i) {
+      if (try_create(i)) {
          close();
          ++count;
       }
@@ -52,31 +52,30 @@ int QInstances::cleanup() {
 
 int QInstances::count() {
    int count = 0;
-   for ( int i = 0; i < MAX_INSTANCES; ++i ) {
-      if ( is_running( i ) ) {
+   for (int i = 0; i < MAX_INSTANCES; ++i) {
+      if (is_running(i)) {
          ++count;
       }
    }
    return count;
 }
 
-bool QInstances::is_running( int n ) {
+bool QInstances::is_running(int n) {
    QLocalSocket socket;
-   socket.connectToServer( instance_name( n ) );
+   socket.connectToServer(instance_name(n));
    bool isOpen = socket.isOpen();
    socket.close();
    return isOpen;
 }
 
-bool QInstances::try_create( int n ) {
-   if ( is_running( n ) ) {
+bool QInstances::try_create(int n) {
+   if (is_running(n)) {
       return false;
    }
    server->setSocketOptions(QLocalServer::WorldAccessOption);
-   return server->listen( instance_name( n ) );
+   return server->listen(instance_name(n));
 }
 
-QString QInstances::instance_name( int n ) {
-   return name_prefix + QString( "%1" ).arg( n );
+QString QInstances::instance_name(int n) {
+   return name_prefix + QString("%1").arg(n);
 }
-

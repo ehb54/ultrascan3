@@ -13,23 +13,21 @@
 
 namespace Eigen {
 
-namespace internal {
+   namespace internal {
 
-template<typename MatrixType> struct TridiagonalizationMatrixTReturnType;
-template<typename MatrixType>
-struct traits<TridiagonalizationMatrixTReturnType<MatrixType> >
-  : public traits<typename MatrixType::PlainObject>
-{
-  typedef typename MatrixType::PlainObject ReturnType; // FIXME shall it be a BandMatrix?
-  enum { Flags = 0 };
-};
+      template<typename MatrixType>
+      struct TridiagonalizationMatrixTReturnType;
+      template<typename MatrixType>
+      struct traits<TridiagonalizationMatrixTReturnType<MatrixType>> : public traits<typename MatrixType::PlainObject> {
+            typedef typename MatrixType::PlainObject ReturnType; // FIXME shall it be a BandMatrix?
+            enum { Flags = 0 };
+      };
 
-template<typename MatrixType, typename CoeffVectorType>
-EIGEN_DEVICE_FUNC
-void tridiagonalization_inplace(MatrixType& matA, CoeffVectorType& hCoeffs);
-}
+      template<typename MatrixType, typename CoeffVectorType>
+      EIGEN_DEVICE_FUNC void tridiagonalization_inplace(MatrixType &matA, CoeffVectorType &hCoeffs);
+   } // namespace internal
 
-/** \eigenvalues_module \ingroup Eigenvalues_Module
+   /** \eigenvalues_module \ingroup Eigenvalues_Module
   *
   *
   * \class Tridiagonalization
@@ -61,45 +59,46 @@ void tridiagonalization_inplace(MatrixType& matA, CoeffVectorType& hCoeffs);
   *
   * \sa class HessenbergDecomposition, class SelfAdjointEigenSolver
   */
-template<typename _MatrixType> class Tridiagonalization
-{
-  public:
+   template<typename _MatrixType>
+   class Tridiagonalization {
+      public:
+         /** \brief Synonym for the template parameter \p _MatrixType. */
+         typedef _MatrixType MatrixType;
 
-    /** \brief Synonym for the template parameter \p _MatrixType. */
-    typedef _MatrixType MatrixType;
+         typedef typename MatrixType::Scalar Scalar;
+         typedef typename NumTraits<Scalar>::Real RealScalar;
+         typedef Eigen::Index Index; ///< \deprecated since Eigen 3.3
 
-    typedef typename MatrixType::Scalar Scalar;
-    typedef typename NumTraits<Scalar>::Real RealScalar;
-    typedef Eigen::Index Index; ///< \deprecated since Eigen 3.3
+         enum {
+            Size = MatrixType::RowsAtCompileTime,
+            SizeMinusOne = Size == Dynamic ? Dynamic : (Size > 1 ? Size - 1 : 1),
+            Options = MatrixType::Options,
+            MaxSize = MatrixType::MaxRowsAtCompileTime,
+            MaxSizeMinusOne = MaxSize == Dynamic ? Dynamic : (MaxSize > 1 ? MaxSize - 1 : 1)
+         };
 
-    enum {
-      Size = MatrixType::RowsAtCompileTime,
-      SizeMinusOne = Size == Dynamic ? Dynamic : (Size > 1 ? Size - 1 : 1),
-      Options = MatrixType::Options,
-      MaxSize = MatrixType::MaxRowsAtCompileTime,
-      MaxSizeMinusOne = MaxSize == Dynamic ? Dynamic : (MaxSize > 1 ? MaxSize - 1 : 1)
-    };
+         typedef Matrix<Scalar, SizeMinusOne, 1, Options & ~RowMajor, MaxSizeMinusOne, 1> CoeffVectorType;
+         typedef typename internal::plain_col_type<MatrixType, RealScalar>::type DiagonalType;
+         typedef Matrix<RealScalar, SizeMinusOne, 1, Options & ~RowMajor, MaxSizeMinusOne, 1> SubDiagonalType;
+         typedef typename internal::remove_all<typename MatrixType::RealReturnType>::type MatrixTypeRealView;
+         typedef internal::TridiagonalizationMatrixTReturnType<MatrixTypeRealView> MatrixTReturnType;
 
-    typedef Matrix<Scalar, SizeMinusOne, 1, Options & ~RowMajor, MaxSizeMinusOne, 1> CoeffVectorType;
-    typedef typename internal::plain_col_type<MatrixType, RealScalar>::type DiagonalType;
-    typedef Matrix<RealScalar, SizeMinusOne, 1, Options & ~RowMajor, MaxSizeMinusOne, 1> SubDiagonalType;
-    typedef typename internal::remove_all<typename MatrixType::RealReturnType>::type MatrixTypeRealView;
-    typedef internal::TridiagonalizationMatrixTReturnType<MatrixTypeRealView> MatrixTReturnType;
+         typedef typename internal::conditional<
+            NumTraits<Scalar>::IsComplex,
+            typename internal::add_const_on_value_type<typename Diagonal<const MatrixType>::RealReturnType>::type,
+            const Diagonal<const MatrixType>>::type DiagonalReturnType;
 
-    typedef typename internal::conditional<NumTraits<Scalar>::IsComplex,
-              typename internal::add_const_on_value_type<typename Diagonal<const MatrixType>::RealReturnType>::type,
-              const Diagonal<const MatrixType>
-            >::type DiagonalReturnType;
+         typedef typename internal::conditional<
+            NumTraits<Scalar>::IsComplex,
+            typename internal::add_const_on_value_type<typename Diagonal<const MatrixType, -1>::RealReturnType>::type,
+            const Diagonal<const MatrixType, -1>>::type SubDiagonalReturnType;
 
-    typedef typename internal::conditional<NumTraits<Scalar>::IsComplex,
-              typename internal::add_const_on_value_type<typename Diagonal<const MatrixType, -1>::RealReturnType>::type,
-              const Diagonal<const MatrixType, -1>
-            >::type SubDiagonalReturnType;
+         /** \brief Return type of matrixQ() */
+         typedef HouseholderSequence<
+            MatrixType, typename internal::remove_all<typename CoeffVectorType::ConjugateReturnType>::type>
+            HouseholderSequenceType;
 
-    /** \brief Return type of matrixQ() */
-    typedef HouseholderSequence<MatrixType,typename internal::remove_all<typename CoeffVectorType::ConjugateReturnType>::type> HouseholderSequenceType;
-
-    /** \brief Default constructor.
+         /** \brief Default constructor.
       *
       * \param [in]  size  Positive integer, size of the matrix whose tridiagonal
       * decomposition will be computed.
@@ -111,13 +110,10 @@ template<typename _MatrixType> class Tridiagonalization
       *
       * \sa compute() for an example.
       */
-    explicit Tridiagonalization(Index size = Size==Dynamic ? 2 : Size)
-      : m_matrix(size,size),
-        m_hCoeffs(size > 1 ? size-1 : 1),
-        m_isInitialized(false)
-    {}
+         explicit Tridiagonalization(Index size = Size == Dynamic ? 2 : Size) :
+             m_matrix(size, size), m_hCoeffs(size > 1 ? size - 1 : 1), m_isInitialized(false) {}
 
-    /** \brief Constructor; computes tridiagonal decomposition of given matrix.
+         /** \brief Constructor; computes tridiagonal decomposition of given matrix.
       *
       * \param[in]  matrix  Selfadjoint matrix whose tridiagonal decomposition
       * is to be computed.
@@ -127,17 +123,14 @@ template<typename _MatrixType> class Tridiagonalization
       * Example: \include Tridiagonalization_Tridiagonalization_MatrixType.cpp
       * Output: \verbinclude Tridiagonalization_Tridiagonalization_MatrixType.out
       */
-    template<typename InputType>
-    explicit Tridiagonalization(const EigenBase<InputType>& matrix)
-      : m_matrix(matrix.derived()),
-        m_hCoeffs(matrix.cols() > 1 ? matrix.cols()-1 : 1),
-        m_isInitialized(false)
-    {
-      internal::tridiagonalization_inplace(m_matrix, m_hCoeffs);
-      m_isInitialized = true;
-    }
+         template<typename InputType>
+         explicit Tridiagonalization(const EigenBase<InputType> &matrix) :
+             m_matrix(matrix.derived()), m_hCoeffs(matrix.cols() > 1 ? matrix.cols() - 1 : 1), m_isInitialized(false) {
+            internal::tridiagonalization_inplace(m_matrix, m_hCoeffs);
+            m_isInitialized = true;
+         }
 
-    /** \brief Computes tridiagonal decomposition of given matrix.
+         /** \brief Computes tridiagonal decomposition of given matrix.
       *
       * \param[in]  matrix  Selfadjoint matrix whose tridiagonal decomposition
       * is to be computed.
@@ -154,17 +147,16 @@ template<typename _MatrixType> class Tridiagonalization
       * Example: \include Tridiagonalization_compute.cpp
       * Output: \verbinclude Tridiagonalization_compute.out
       */
-    template<typename InputType>
-    Tridiagonalization& compute(const EigenBase<InputType>& matrix)
-    {
-      m_matrix = matrix.derived();
-      m_hCoeffs.resize(matrix.rows()-1, 1);
-      internal::tridiagonalization_inplace(m_matrix, m_hCoeffs);
-      m_isInitialized = true;
-      return *this;
-    }
+         template<typename InputType>
+         Tridiagonalization &compute(const EigenBase<InputType> &matrix) {
+            m_matrix = matrix.derived();
+            m_hCoeffs.resize(matrix.rows() - 1, 1);
+            internal::tridiagonalization_inplace(m_matrix, m_hCoeffs);
+            m_isInitialized = true;
+            return *this;
+         }
 
-    /** \brief Returns the Householder coefficients.
+         /** \brief Returns the Householder coefficients.
       *
       * \returns a const reference to the vector of Householder coefficients
       *
@@ -180,13 +172,12 @@ template<typename _MatrixType> class Tridiagonalization
       *
       * \sa packedMatrix(), \ref Householder_Module "Householder module"
       */
-    inline CoeffVectorType householderCoefficients() const
-    {
-      eigen_assert(m_isInitialized && "Tridiagonalization is not initialized.");
-      return m_hCoeffs;
-    }
+         inline CoeffVectorType householderCoefficients() const {
+            eigen_assert(m_isInitialized && "Tridiagonalization is not initialized.");
+            return m_hCoeffs;
+         }
 
-    /** \brief Returns the internal representation of the decomposition
+         /** \brief Returns the internal representation of the decomposition
       *
       *	\returns a const reference to a matrix with the internal representation
       *	         of the decomposition.
@@ -217,13 +208,12 @@ template<typename _MatrixType> class Tridiagonalization
       *
       * \sa householderCoefficients()
       */
-    inline const MatrixType& packedMatrix() const
-    {
-      eigen_assert(m_isInitialized && "Tridiagonalization is not initialized.");
-      return m_matrix;
-    }
+         inline const MatrixType &packedMatrix() const {
+            eigen_assert(m_isInitialized && "Tridiagonalization is not initialized.");
+            return m_matrix;
+         }
 
-    /** \brief Returns the unitary matrix Q in the decomposition
+         /** \brief Returns the unitary matrix Q in the decomposition
       *
       * \returns object representing the matrix Q
       *
@@ -238,15 +228,12 @@ template<typename _MatrixType> class Tridiagonalization
       * \sa Tridiagonalization(const MatrixType&) for an example,
       *     matrixT(), class HouseholderSequence
       */
-    HouseholderSequenceType matrixQ() const
-    {
-      eigen_assert(m_isInitialized && "Tridiagonalization is not initialized.");
-      return HouseholderSequenceType(m_matrix, m_hCoeffs.conjugate())
-             .setLength(m_matrix.rows() - 1)
-             .setShift(1);
-    }
+         HouseholderSequenceType matrixQ() const {
+            eigen_assert(m_isInitialized && "Tridiagonalization is not initialized.");
+            return HouseholderSequenceType(m_matrix, m_hCoeffs.conjugate()).setLength(m_matrix.rows() - 1).setShift(1);
+         }
 
-    /** \brief Returns an expression of the tridiagonal matrix T in the decomposition
+         /** \brief Returns an expression of the tridiagonal matrix T in the decomposition
       *
       * \returns expression object representing the matrix T
       *
@@ -263,13 +250,12 @@ template<typename _MatrixType> class Tridiagonalization
       * \sa Tridiagonalization(const MatrixType&) for an example,
       * matrixQ(), packedMatrix(), diagonal(), subDiagonal()
       */
-    MatrixTReturnType matrixT() const
-    {
-      eigen_assert(m_isInitialized && "Tridiagonalization is not initialized.");
-      return MatrixTReturnType(m_matrix.real());
-    }
+         MatrixTReturnType matrixT() const {
+            eigen_assert(m_isInitialized && "Tridiagonalization is not initialized.");
+            return MatrixTReturnType(m_matrix.real());
+         }
 
-    /** \brief Returns the diagonal of the tridiagonal matrix T in the decomposition.
+         /** \brief Returns the diagonal of the tridiagonal matrix T in the decomposition.
       *
       * \returns expression representing the diagonal of T
       *
@@ -282,9 +268,9 @@ template<typename _MatrixType> class Tridiagonalization
       *
       * \sa matrixT(), subDiagonal()
       */
-    DiagonalReturnType diagonal() const;
+         DiagonalReturnType diagonal() const;
 
-    /** \brief Returns the subdiagonal of the tridiagonal matrix T in the decomposition.
+         /** \brief Returns the subdiagonal of the tridiagonal matrix T in the decomposition.
       *
       * \returns expression representing the subdiagonal of T
       *
@@ -294,34 +280,29 @@ template<typename _MatrixType> class Tridiagonalization
       *
       * \sa diagonal() for an example, matrixT()
       */
-    SubDiagonalReturnType subDiagonal() const;
+         SubDiagonalReturnType subDiagonal() const;
 
-  protected:
+      protected:
+         MatrixType m_matrix;
+         CoeffVectorType m_hCoeffs;
+         bool m_isInitialized;
+   };
 
-    MatrixType m_matrix;
-    CoeffVectorType m_hCoeffs;
-    bool m_isInitialized;
-};
+   template<typename MatrixType>
+   typename Tridiagonalization<MatrixType>::DiagonalReturnType Tridiagonalization<MatrixType>::diagonal() const {
+      eigen_assert(m_isInitialized && "Tridiagonalization is not initialized.");
+      return m_matrix.diagonal().real();
+   }
 
-template<typename MatrixType>
-typename Tridiagonalization<MatrixType>::DiagonalReturnType
-Tridiagonalization<MatrixType>::diagonal() const
-{
-  eigen_assert(m_isInitialized && "Tridiagonalization is not initialized.");
-  return m_matrix.diagonal().real();
-}
+   template<typename MatrixType>
+   typename Tridiagonalization<MatrixType>::SubDiagonalReturnType Tridiagonalization<MatrixType>::subDiagonal() const {
+      eigen_assert(m_isInitialized && "Tridiagonalization is not initialized.");
+      return m_matrix.template diagonal<-1>().real();
+   }
 
-template<typename MatrixType>
-typename Tridiagonalization<MatrixType>::SubDiagonalReturnType
-Tridiagonalization<MatrixType>::subDiagonal() const
-{
-  eigen_assert(m_isInitialized && "Tridiagonalization is not initialized.");
-  return m_matrix.template diagonal<-1>().real();
-}
+   namespace internal {
 
-namespace internal {
-
-/** \internal
+      /** \internal
   * Performs a tridiagonal decomposition of the selfadjoint matrix \a matA in-place.
   *
   * \param[in,out] matA On input the selfadjoint matrix. Only the \b lower triangular part is referenced.
@@ -344,48 +325,49 @@ namespace internal {
   *
   * \sa Tridiagonalization::packedMatrix()
   */
-template<typename MatrixType, typename CoeffVectorType>
-EIGEN_DEVICE_FUNC
-void tridiagonalization_inplace(MatrixType& matA, CoeffVectorType& hCoeffs)
-{
-  using numext::conj;
-  typedef typename MatrixType::Scalar Scalar;
-  typedef typename MatrixType::RealScalar RealScalar;
-  Index n = matA.rows();
-  eigen_assert(n==matA.cols());
-  eigen_assert(n==hCoeffs.size()+1 || n==1);
+      template<typename MatrixType, typename CoeffVectorType>
+      EIGEN_DEVICE_FUNC void tridiagonalization_inplace(MatrixType &matA, CoeffVectorType &hCoeffs) {
+         using numext::conj;
+         typedef typename MatrixType::Scalar Scalar;
+         typedef typename MatrixType::RealScalar RealScalar;
+         Index n = matA.rows();
+         eigen_assert(n == matA.cols());
+         eigen_assert(n == hCoeffs.size() + 1 || n == 1);
 
-  for (Index i = 0; i<n-1; ++i)
-  {
-    Index remainingSize = n-i-1;
-    RealScalar beta;
-    Scalar h;
-    matA.col(i).tail(remainingSize).makeHouseholderInPlace(h, beta);
+         for (Index i = 0; i < n - 1; ++i) {
+            Index remainingSize = n - i - 1;
+            RealScalar beta;
+            Scalar h;
+            matA.col(i).tail(remainingSize).makeHouseholderInPlace(h, beta);
 
-    // Apply similarity transformation to remaining columns,
-    // i.e., A = H A H' where H = I - h v v' and v = matA.col(i).tail(n-i-1)
-    matA.col(i).coeffRef(i+1) = 1;
+            // Apply similarity transformation to remaining columns,
+            // i.e., A = H A H' where H = I - h v v' and v = matA.col(i).tail(n-i-1)
+            matA.col(i).coeffRef(i + 1) = 1;
 
-    hCoeffs.tail(n-i-1).noalias() = (matA.bottomRightCorner(remainingSize,remainingSize).template selfadjointView<Lower>()
-                                  * (conj(h) * matA.col(i).tail(remainingSize)));
+            hCoeffs.tail(n - i - 1).noalias()
+               = (matA.bottomRightCorner(remainingSize, remainingSize).template selfadjointView<Lower>()
+                  * (conj(h) * matA.col(i).tail(remainingSize)));
 
-    hCoeffs.tail(n-i-1) += (conj(h)*RealScalar(-0.5)*(hCoeffs.tail(remainingSize).dot(matA.col(i).tail(remainingSize)))) * matA.col(i).tail(n-i-1);
+            hCoeffs.tail(n - i - 1) += (conj(h) * RealScalar(-0.5)
+                                        * (hCoeffs.tail(remainingSize).dot(matA.col(i).tail(remainingSize))))
+                                       * matA.col(i).tail(n - i - 1);
 
-    matA.bottomRightCorner(remainingSize, remainingSize).template selfadjointView<Lower>()
-      .rankUpdate(matA.col(i).tail(remainingSize), hCoeffs.tail(remainingSize), Scalar(-1));
+            matA.bottomRightCorner(remainingSize, remainingSize)
+               .template selfadjointView<Lower>()
+               .rankUpdate(matA.col(i).tail(remainingSize), hCoeffs.tail(remainingSize), Scalar(-1));
 
-    matA.col(i).coeffRef(i+1) = beta;
-    hCoeffs.coeffRef(i) = h;
-  }
-}
+            matA.col(i).coeffRef(i + 1) = beta;
+            hCoeffs.coeffRef(i) = h;
+         }
+      }
 
-// forward declaration, implementation at the end of this file
-template<typename MatrixType,
-         int Size=MatrixType::ColsAtCompileTime,
-         bool IsComplex=NumTraits<typename MatrixType::Scalar>::IsComplex>
-struct tridiagonalization_inplace_selector;
+      // forward declaration, implementation at the end of this file
+      template<
+         typename MatrixType, int Size = MatrixType::ColsAtCompileTime,
+         bool IsComplex = NumTraits<typename MatrixType::Scalar>::IsComplex>
+      struct tridiagonalization_inplace_selector;
 
-/** \brief Performs a full tridiagonalization in place
+      /** \brief Performs a full tridiagonalization in place
   *
   * \param[in,out]  mat  On input, the selfadjoint matrix whose tridiagonal
   *    decomposition is to be computed. Only the lower triangular part referenced.
@@ -425,136 +407,121 @@ struct tridiagonalization_inplace_selector;
   *
   * \sa class Tridiagonalization
   */
-template<typename MatrixType, typename DiagonalType, typename SubDiagonalType, typename CoeffVectorType>
-EIGEN_DEVICE_FUNC
-void tridiagonalization_inplace(MatrixType& mat, DiagonalType& diag, SubDiagonalType& subdiag,
-                                CoeffVectorType& hcoeffs, bool extractQ)
-{
-  eigen_assert(mat.cols()==mat.rows() && diag.size()==mat.rows() && subdiag.size()==mat.rows()-1);
-  tridiagonalization_inplace_selector<MatrixType>::run(mat, diag, subdiag, hcoeffs, extractQ);
-}
+      template<typename MatrixType, typename DiagonalType, typename SubDiagonalType, typename CoeffVectorType>
+      EIGEN_DEVICE_FUNC void tridiagonalization_inplace(
+         MatrixType &mat, DiagonalType &diag, SubDiagonalType &subdiag, CoeffVectorType &hcoeffs, bool extractQ) {
+         eigen_assert(mat.cols() == mat.rows() && diag.size() == mat.rows() && subdiag.size() == mat.rows() - 1);
+         tridiagonalization_inplace_selector<MatrixType>::run(mat, diag, subdiag, hcoeffs, extractQ);
+      }
 
-/** \internal
+      /** \internal
   * General full tridiagonalization
   */
-template<typename MatrixType, int Size, bool IsComplex>
-struct tridiagonalization_inplace_selector
-{
-  typedef typename Tridiagonalization<MatrixType>::CoeffVectorType CoeffVectorType;
-  typedef typename Tridiagonalization<MatrixType>::HouseholderSequenceType HouseholderSequenceType;
-  template<typename DiagonalType, typename SubDiagonalType>
-  static EIGEN_DEVICE_FUNC
-      void run(MatrixType& mat, DiagonalType& diag, SubDiagonalType& subdiag, CoeffVectorType& hCoeffs, bool extractQ)
-  {
-    tridiagonalization_inplace(mat, hCoeffs);
-    diag = mat.diagonal().real();
-    subdiag = mat.template diagonal<-1>().real();
-    if(extractQ)
-      mat = HouseholderSequenceType(mat, hCoeffs.conjugate())
-            .setLength(mat.rows() - 1)
-            .setShift(1);
-  }
-};
+      template<typename MatrixType, int Size, bool IsComplex>
+      struct tridiagonalization_inplace_selector {
+            typedef typename Tridiagonalization<MatrixType>::CoeffVectorType CoeffVectorType;
+            typedef typename Tridiagonalization<MatrixType>::HouseholderSequenceType HouseholderSequenceType;
+            template<typename DiagonalType, typename SubDiagonalType>
+            static EIGEN_DEVICE_FUNC void run(
+               MatrixType &mat, DiagonalType &diag, SubDiagonalType &subdiag, CoeffVectorType &hCoeffs, bool extractQ) {
+               tridiagonalization_inplace(mat, hCoeffs);
+               diag = mat.diagonal().real();
+               subdiag = mat.template diagonal<-1>().real();
+               if (extractQ)
+                  mat = HouseholderSequenceType(mat, hCoeffs.conjugate()).setLength(mat.rows() - 1).setShift(1);
+            }
+      };
 
-/** \internal
+      /** \internal
   * Specialization for 3x3 real matrices.
   * Especially useful for plane fitting.
   */
-template<typename MatrixType>
-struct tridiagonalization_inplace_selector<MatrixType,3,false>
-{
-  typedef typename MatrixType::Scalar Scalar;
-  typedef typename MatrixType::RealScalar RealScalar;
+      template<typename MatrixType>
+      struct tridiagonalization_inplace_selector<MatrixType, 3, false> {
+            typedef typename MatrixType::Scalar Scalar;
+            typedef typename MatrixType::RealScalar RealScalar;
 
-  template<typename DiagonalType, typename SubDiagonalType, typename CoeffVectorType>
-  static void run(MatrixType& mat, DiagonalType& diag, SubDiagonalType& subdiag, CoeffVectorType&, bool extractQ)
-  {
-    using std::sqrt;
-    const RealScalar tol = (std::numeric_limits<RealScalar>::min)();
-    diag[0] = mat(0,0);
-    RealScalar v1norm2 = numext::abs2(mat(2,0));
-    if(v1norm2 <= tol)
-    {
-      diag[1] = mat(1,1);
-      diag[2] = mat(2,2);
-      subdiag[0] = mat(1,0);
-      subdiag[1] = mat(2,1);
-      if (extractQ)
-        mat.setIdentity();
-    }
-    else
-    {
-      RealScalar beta = sqrt(numext::abs2(mat(1,0)) + v1norm2);
-      RealScalar invBeta = RealScalar(1)/beta;
-      Scalar m01 = mat(1,0) * invBeta;
-      Scalar m02 = mat(2,0) * invBeta;
-      Scalar q = RealScalar(2)*m01*mat(2,1) + m02*(mat(2,2) - mat(1,1));
-      diag[1] = mat(1,1) + m02*q;
-      diag[2] = mat(2,2) - m02*q;
-      subdiag[0] = beta;
-      subdiag[1] = mat(2,1) - m01 * q;
-      if (extractQ)
-      {
-        mat << 1,   0,    0,
-               0, m01,  m02,
-               0, m02, -m01;
-      }
-    }
-  }
-};
+            template<typename DiagonalType, typename SubDiagonalType, typename CoeffVectorType>
+            static void run(
+               MatrixType &mat, DiagonalType &diag, SubDiagonalType &subdiag, CoeffVectorType &, bool extractQ) {
+               using std::sqrt;
+               const RealScalar tol = (std::numeric_limits<RealScalar>::min)();
+               diag[ 0 ] = mat(0, 0);
+               RealScalar v1norm2 = numext::abs2(mat(2, 0));
+               if (v1norm2 <= tol) {
+                  diag[ 1 ] = mat(1, 1);
+                  diag[ 2 ] = mat(2, 2);
+                  subdiag[ 0 ] = mat(1, 0);
+                  subdiag[ 1 ] = mat(2, 1);
+                  if (extractQ)
+                     mat.setIdentity();
+               }
+               else {
+                  RealScalar beta = sqrt(numext::abs2(mat(1, 0)) + v1norm2);
+                  RealScalar invBeta = RealScalar(1) / beta;
+                  Scalar m01 = mat(1, 0) * invBeta;
+                  Scalar m02 = mat(2, 0) * invBeta;
+                  Scalar q = RealScalar(2) * m01 * mat(2, 1) + m02 * (mat(2, 2) - mat(1, 1));
+                  diag[ 1 ] = mat(1, 1) + m02 * q;
+                  diag[ 2 ] = mat(2, 2) - m02 * q;
+                  subdiag[ 0 ] = beta;
+                  subdiag[ 1 ] = mat(2, 1) - m01 * q;
+                  if (extractQ) {
+                     mat << 1, 0, 0, 0, m01, m02, 0, m02, -m01;
+                  }
+               }
+            }
+      };
 
-/** \internal
+      /** \internal
   * Trivial specialization for 1x1 matrices
   */
-template<typename MatrixType, bool IsComplex>
-struct tridiagonalization_inplace_selector<MatrixType,1,IsComplex>
-{
-  typedef typename MatrixType::Scalar Scalar;
+      template<typename MatrixType, bool IsComplex>
+      struct tridiagonalization_inplace_selector<MatrixType, 1, IsComplex> {
+            typedef typename MatrixType::Scalar Scalar;
 
-  template<typename DiagonalType, typename SubDiagonalType, typename CoeffVectorType>
-  static EIGEN_DEVICE_FUNC
-  void run(MatrixType& mat, DiagonalType& diag, SubDiagonalType&, CoeffVectorType&, bool extractQ)
-  {
-    diag(0,0) = numext::real(mat(0,0));
-    if(extractQ)
-      mat(0,0) = Scalar(1);
-  }
-};
+            template<typename DiagonalType, typename SubDiagonalType, typename CoeffVectorType>
+            static EIGEN_DEVICE_FUNC void run(
+               MatrixType &mat, DiagonalType &diag, SubDiagonalType &, CoeffVectorType &, bool extractQ) {
+               diag(0, 0) = numext::real(mat(0, 0));
+               if (extractQ)
+                  mat(0, 0) = Scalar(1);
+            }
+      };
 
-/** \internal
+      /** \internal
   * \eigenvalues_module \ingroup Eigenvalues_Module
   *
   * \brief Expression type for return value of Tridiagonalization::matrixT()
   *
   * \tparam MatrixType type of underlying dense matrix
   */
-template<typename MatrixType> struct TridiagonalizationMatrixTReturnType
-: public ReturnByValue<TridiagonalizationMatrixTReturnType<MatrixType> >
-{
-  public:
-    /** \brief Constructor.
+      template<typename MatrixType>
+      struct TridiagonalizationMatrixTReturnType
+          : public ReturnByValue<TridiagonalizationMatrixTReturnType<MatrixType>> {
+         public:
+            /** \brief Constructor.
       *
       * \param[in] mat The underlying dense matrix
       */
-    TridiagonalizationMatrixTReturnType(const MatrixType& mat) : m_matrix(mat) { }
+            TridiagonalizationMatrixTReturnType(const MatrixType &mat) : m_matrix(mat) {}
 
-    template <typename ResultType>
-    inline void evalTo(ResultType& result) const
-    {
-      result.setZero();
-      result.template diagonal<1>() = m_matrix.template diagonal<-1>().conjugate();
-      result.diagonal() = m_matrix.diagonal();
-      result.template diagonal<-1>() = m_matrix.template diagonal<-1>();
-    }
+            template<typename ResultType>
+            inline void evalTo(ResultType &result) const {
+               result.setZero();
+               result.template diagonal<1>() = m_matrix.template diagonal<-1>().conjugate();
+               result.diagonal() = m_matrix.diagonal();
+               result.template diagonal<-1>() = m_matrix.template diagonal<-1>();
+            }
 
-    EIGEN_CONSTEXPR Index rows() const EIGEN_NOEXCEPT { return m_matrix.rows(); }
-    EIGEN_CONSTEXPR Index cols() const EIGEN_NOEXCEPT { return m_matrix.cols(); }
+            EIGEN_CONSTEXPR Index rows() const EIGEN_NOEXCEPT { return m_matrix.rows(); }
+            EIGEN_CONSTEXPR Index cols() const EIGEN_NOEXCEPT { return m_matrix.cols(); }
 
-  protected:
-    typename MatrixType::Nested m_matrix;
-};
+         protected:
+            typename MatrixType::Nested m_matrix;
+      };
 
-} // end namespace internal
+   } // end namespace internal
 
 } // end namespace Eigen
 

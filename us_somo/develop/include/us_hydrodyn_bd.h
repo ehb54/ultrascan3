@@ -4,52 +4,46 @@
 // QT defs:
 
 #include <qlabel.h>
-#include <qstring.h>
 #include <qlayout.h>
 #include <qpushbutton.h>
+#include <qstring.h>
 //#include <q3frame.h>
 #include <qcheckbox.h>
-#include <qwt_counter.h>
+#include <qfileinfo.h>
 #include <qgroupbox.h>
-#include <qtextedit.h>
+#include <qmenubar.h>
+#include <qprinter.h>
 #include <qprogressbar.h>
 #include <qradiobutton.h>
-#include <qmenubar.h>
-#include <qfileinfo.h>
-#include <qprinter.h>
+#include <qtextedit.h>
 #include <qtimer.h>
+#include <qwt_counter.h>
 //Added by qt3to4:
 #include <QCloseEvent>
 
-#include "us_util.h"
-#include "us_hydrodyn_pdbdefs.h"
-#include "us_hydrodyn_bd_options.h"
 #include "us_hydrodyn_anaflex_options.h"
+#include "us_hydrodyn_bd_options.h"
+#include "us_hydrodyn_pdbdefs.h"
+#include "us_util.h"
 
 //standard C and C++ defs:
 
-#include <map>
-#include <vector>
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
 #include <iostream>
+#include <map>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <vector>
 
 using namespace std;
 
-class US_EXTERN US_Hydrodyn_BD : public QFrame
-{
-   Q_OBJECT
+class US_EXTERN US_Hydrodyn_BD : public QFrame {
+      Q_OBJECT
 
    public:
       US_Hydrodyn_BD(
-                     bool               *bd_widget, 
-                     BD_Options         *our_bd_options,
-                     Anaflex_Options    *our_anaflex_options,
-                     void               *us_hydrodyn,
-                     QWidget            *p = 0, 
-                     const char         *name = 0
-                     );
+         bool *bd_widget, BD_Options *our_bd_options, Anaflex_Options *our_anaflex_options, void *us_hydrodyn,
+         QWidget *p = 0, const char *name = 0);
       ~US_Hydrodyn_BD();
 
    public:
@@ -65,7 +59,7 @@ class US_EXTERN US_Hydrodyn_BD : public QFrame
       QPushButton *pb_anaflex_run;
       QPushButton *pb_anaflex_load_results;
 
-      
+
    private:
       bool *bd_widget;
       US_Config *USglobal;
@@ -133,4 +127,3 @@ class US_EXTERN US_Hydrodyn_BD : public QFrame
 };
 
 #endif
-

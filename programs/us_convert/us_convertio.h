@@ -4,17 +4,16 @@
 
 #include <QtCore>
 
+#include "us_convert.h"
+#include "us_db2.h"
+#include "us_experiment.h"
 #include "us_extern.h"
 #include "us_help.h"
-#include "us_convert.h"
-#include "us_experiment.h"
-#include "us_db2.h"
 
-struct cellInfo
-{
-  QString     cellName;
-  QString     channelName;
-  int         centerpieceID;
+struct cellInfo {
+      QString cellName;
+      QString channelName;
+      int centerpieceID;
 };
 
 /*! \class US_ConvertIO
@@ -22,11 +21,10 @@ struct cellInfo
            data to the disk and the database.
            All methods are static.
 */
-class US_ConvertIO 
-{
+class US_ConvertIO {
    public:
       // \brief Generic constructor for the US_ConvertIO class.
-      US_ConvertIO( void );
+      US_ConvertIO(void);
 
       /*! \brief Reads entire experiment and auc files from the database,
                  save to HD
@@ -35,8 +33,7 @@ class US_ConvertIO
           \param db         An opened db connection
           \param speedsteps Reference for returned experiment speed steps vector
       */
-      static QString readDBExperiment( QString, QString, US_DB2*,
-                        QVector< SP_SPEEDPROFILE >& );
+      static QString readDBExperiment(QString, QString, US_DB2 *, QVector<SP_SPEEDPROFILE> &);
 
       /*! \brief Writes a new DB rawData record for each triple
 
@@ -49,11 +46,7 @@ class US_ConvertIO
           \param dir     Local disk directory where auc files can be found
           \param db      An opened db connection
       */
-      static QString writeRawDataToDB(
-                 US_Experiment& , 
-                 QList< US_Convert::TripleInfo >& ,
-                 QString,
-                 US_DB2* = 0 );
+      static QString writeRawDataToDB(US_Experiment &, QList<US_Convert::TripleInfo> &, QString, US_DB2 * = 0);
 
       /*! \brief Checks some info that was read from disk with values from DB
 
@@ -65,21 +58,10 @@ class US_ConvertIO
                          cell/channel/wavelength defined by the xml file.
           \param db      An opened db connection
       */
-      static int checkDiskData( 
-                 US_Experiment&,
-                 QList< US_Convert::TripleInfo >& ,
-                 US_DB2* = 0 );
-      static int checkDiskData_auto( 
-                 US_Experiment&,
-                 QList< US_Convert::TripleInfo >& ,
-                 US_DB2* = 0 );
+      static int checkDiskData(US_Experiment &, QList<US_Convert::TripleInfo> &, US_DB2 * = 0);
+      static int checkDiskData_auto(US_Experiment &, QList<US_Convert::TripleInfo> &, US_DB2 * = 0);
 
    private:
-      static QString readRawDataFromDB( 
-                 US_Experiment& , 
-                 QList< US_Convert::TripleInfo >& ,
-                 QString& ,
-                 US_DB2* = 0 );
-      
+      static QString readRawDataFromDB(US_Experiment &, QList<US_Convert::TripleInfo> &, QString &, US_DB2 * = 0);
 };
 #endif

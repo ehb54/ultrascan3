@@ -16,9 +16,8 @@
     a file extension for the open file dialog may be specified.
     \brief Class for text edit/display.
 */
-class US_GUI_EXTERN US_Editor : public QMainWindow
-{
-   Q_OBJECT
+class US_GUI_EXTERN US_Editor : public QMainWindow {
+      Q_OBJECT
 
    public:
       /*! \brief Text editor main window.
@@ -28,34 +27,32 @@ class US_GUI_EXTERN US_Editor : public QMainWindow
           \param parent Parent widget.
           \param flags Standard main window flags.
       */
-      US_Editor( int, bool = false, const QString& = "Data Files (*.dat)", 
-            QWidget* = 0, Qt::WindowFlags = 0 );
+      US_Editor(int, bool = false, const QString & = "Data Files (*.dat)", QWidget * = 0, Qt::WindowFlags = 0);
 
       enum { LOAD, DEFAULT };
 
-      QTextEdit* e;      //!< class's text editor component
+      QTextEdit *e; //!< class's text editor component
 
-      QMenuBar*  edMenuBar;
+      QMenuBar *edMenuBar;
    signals:
       //! Signal that file load is complete (passes name of file loaded).
-      void US_EditorLoadComplete( QString );
+      void US_EditorLoadComplete(QString);
 
    private:
-
-      QFont      currentFont;
-      QString    filename;
-      QString    file_extension;
-      QString    file_directory;
+      QFont currentFont;
+      QString filename;
+      QString file_extension;
+      QString file_directory;
       //QMenuBar*  edMenuBar;
-   
-      void saveFile   ( void );
+
+      void saveFile(void);
 
    private slots:
-      void load       ( void );
-      void save       ( void );
-      void saveAs     ( void );
-      void print      ( void );
-      void clear      ( void ) { e->clear(); };
-      void update_font( void );
+      void load(void);
+      void save(void);
+      void saveAs(void);
+      void print(void);
+      void clear(void) { e->clear(); };
+      void update_font(void);
 };
 #endif

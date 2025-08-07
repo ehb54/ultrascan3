@@ -1,18 +1,17 @@
 #include "us_fit_meniscus.h"
-#include "us_license_t.h"
 #include "us_license.h"
+#include "us_license_t.h"
 
 //! \brief Main program for US_FitMeniscus. Loads translators and starts
 //         the class US_FitMeniscus.
 
-int main( int argc, char* argv[] )
-{
-   QApplication application( argc, argv );
+int main(int argc, char *argv[]) {
+   QApplication application(argc, argv);
 
-   #include "main1.inc"
+#include "main1.inc"
 
    // License is OK.  Start up.
-   
+
    US_FitMeniscus w;
 
    // AutoFlow DEBUG
@@ -46,7 +45,7 @@ int main( int argc, char* argv[] )
    
    US_FitMeniscus w( triple_info_map );
    */
-   
-   w.show();                   //!< \memberof QWidget
-   return application.exec();  //!< \memberof QApplication
+
+   w.show(); //!< \memberof QWidget
+   return application.exec(); //!< \memberof QApplication
 }

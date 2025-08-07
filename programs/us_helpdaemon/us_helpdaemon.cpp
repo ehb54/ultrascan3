@@ -8,93 +8,83 @@
 #include <QtSingleApplication>
 #endif
 
-US_HelpDaemon::US_HelpDaemon( const QString& page, QObject* o ) : QObject( o )
-{
+US_HelpDaemon::US_HelpDaemon(const QString &page, QObject *o) : QObject(o) {
+   // special Q_OS_WIN code apparently does not work anymore
+   // #ifdef Q_OS_WIN
+   // QString location = US_Settings::appBaseDir() + "/bin/manual.qch";
+   // #else
+   QString location = US_Settings::appBaseDir() + "/bin/manual.qhc";
+   // #endif
 
-  // special Q_OS_WIN code apparently does not work anymore 
-  // #ifdef Q_OS_WIN
-  // QString location = US_Settings::appBaseDir() + "/bin/manual.qch";
-  // #else
-  QString location = US_Settings::appBaseDir() + "/bin/manual.qhc";
-  // #endif
+   QString url = "qthelp://ultrascaniii/";
+   if (!page.contains("manual/"))
+      url.append("manual/");
+   url.append(page);
+   debug("page=" + page);
+   debug("url=" + url);
+   debug("location=" + location);
 
-  QString url      = "qthelp://ultrascaniii/";
-  if ( !page.contains( "manual/" ) )
-     url.append( "manual/" );
-  url.append( page );
-debug("page="+page);
-debug("url="+url);
-debug("location="+location);
+   QStringList args;
 
-  QStringList args;
+   args << QLatin1String("-collectionFile") << location << QLatin1String("-enableRemoteControl")
+        << QLatin1String("-showURL") << url;
 
-  args << QLatin1String( "-collectionFile" )
-       << location
-       << QLatin1String( "-enableRemoteControl" )
-       << QLatin1String( "-showURL" )
-       << url;
-
-  debug( args.join( " " ) );
+   debug(args.join(" "));
 #ifndef Q_OS_MAC
-  QString assisloc  = US_Settings::appBaseDir() + "/bin/assistant";
+   QString assisloc = US_Settings::appBaseDir() + "/bin/assistant";
 #else
-  QString assisloc  = US_Settings::appBaseDir() + "/bin/Assistant.app";
+   QString assisloc = US_Settings::appBaseDir() + "/bin/Assistant.app";
 #endif
-  daemon.start( assisloc, args );
-//debug("assisloc="+assisloc);
-  daemon.waitForStarted();
+   daemon.start(assisloc, args);
+   //debug("assisloc="+assisloc);
+   daemon.waitForStarted();
 
-  connect( &daemon, SIGNAL( finished ( int, QProcess::ExitStatus ) ),
-                    SLOT  ( close    ( int, QProcess::ExitStatus ) ) );
-//show(page);
+   connect(&daemon, SIGNAL(finished(int, QProcess::ExitStatus)), SLOT(close(int, QProcess::ExitStatus)));
+   //show(page);
 }
 
-void US_HelpDaemon::close( int /*exitCode*/, QProcess::ExitStatus /*status*/ ) 
-{
-  exit( 0 );
+void US_HelpDaemon::close(int /*exitCode*/, QProcess::ExitStatus /*status*/) {
+   exit(0);
 }
 
-void US_HelpDaemon::show( const QString& helpPage )
-{
-debug("IN show()\n");
-  if ( helpPage == "Quit" )
-  {
-    daemon.close();
-    exit( 0 );
-  }
+void US_HelpDaemon::show(const QString &helpPage) {
+   debug("IN show()\n");
+   if (helpPage == "Quit") {
+      daemon.close();
+      exit(0);
+   }
 
-  if ( daemon.state() == QProcess::NotRunning ) 
-  {
-    debug( "assistant not running" );
-  }
+   if (daemon.state() == QProcess::NotRunning) {
+      debug("assistant not running");
+   }
 
-  QString page = helpPage;
-  if ( ! helpPage.contains( "manual/" ) ) page.prepend( "manual/" );
+   QString page = helpPage;
+   if (!helpPage.contains("manual/"))
+      page.prepend("manual/");
 
-  debug( "setSource qthelp://ultrascaniii/" + page );
+   debug("setSource qthelp://ultrascaniii/" + page);
 
-  QByteArray ba;
-  ba.append( "setSource qthelp://ultrascaniii/" );
+   QByteArray ba;
+   ba.append("setSource qthelp://ultrascaniii/");
 #ifdef Q_OS_WIN
-  ba.append( page.toLocal8Bit() );
-  ba.append( '\n' );
+   ba.append(page.toLocal8Bit());
+   ba.append('\n');
 #else
-  ba.append( page.toLatin1() );
-  ba.append( '\0' );
+   ba.append(page.toLatin1());
+   ba.append('\0');
 #endif
 
-  daemon.write( ba );
+   daemon.write(ba);
 }
 
-void US_HelpDaemon::debug( const QString& message )
-{
+void US_HelpDaemon::debug(const QString &message) {
 #ifdef Q_OS_WIN
-   QFile d( "c:/dist/helpdaemon.log" );
+   QFile d("c:/dist/helpdaemon.log");
 #else
-   QFile d( "/tmp/helpdaemon.log" );
+   QFile d("/tmp/helpdaemon.log");
 #endif
-   d.open( QIODevice::WriteOnly | QIODevice::Text | QIODevice::Append );
-   QTextStream out ( &d );
+   d.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Append);
+   QTextStream out(&d);
    out << message << endl;
    d.close();
 }
@@ -105,27 +95,25 @@ void US_HelpDaemon::debug( const QString& message )
     one active process.  When a second instance is launched, it just sends
     a message (the page to show) to the first instance and exits.
 */
-int main( int argc, char* argv[] )
-{
-   QString message = QString( argv[ 1 ] );
-  //  Need to add uid to identifier ????
-  //note: for doc files to show properly after an update, it may be necessary 
-  //      to remove  ~/.local/share/data/Trolltech/Assistant/manual.qch
+int main(int argc, char *argv[]) {
+   QString message = QString(argv[ 1 ]);
+   //  Need to add uid to identifier ????
+   //note: for doc files to show properly after an update, it may be necessary
+   //      to remove  ~/.local/share/data/Trolltech/Assistant/manual.qch
 #if QT_VERSION > 0x050000
-   QApplication application( argc, argv );
-   application.setApplicationDisplayName( "UltraScan Help Daemon" );
+   QApplication application(argc, argv);
+   application.setApplicationDisplayName("UltraScan Help Daemon");
 #else
-   QtSingleApplication application( "UltraScan Help Daemon", argc, argv );
-  
-   if ( application.sendMessage( message ) ) return 0;
+   QtSingleApplication application("UltraScan Help Daemon", argc, argv);
+
+   if (application.sendMessage(message))
+      return 0;
 
    application.initialize();
 #endif
-  US_HelpDaemon* daemon = new US_HelpDaemon( message );
- 
-  QObject::connect( &application, SIGNAL( messageReceived( const QString& ) ),
-                    daemon,       SLOT  ( show           ( const QString& ) ) );
+   US_HelpDaemon *daemon = new US_HelpDaemon(message);
 
-  return application.exec();
+   QObject::connect(&application, SIGNAL(messageReceived(const QString &)), daemon, SLOT(show(const QString &)));
+
+   return application.exec();
 }
-

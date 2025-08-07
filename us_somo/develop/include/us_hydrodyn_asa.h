@@ -4,14 +4,14 @@
 // QT defs:
 
 #include <qlabel.h>
-#include <qstring.h>
 #include <qlayout.h>
 #include <qpushbutton.h>
 #include <qradiobutton.h>
+#include <qstring.h>
 //#include <q3frame.h>
 #include <qcheckbox.h>
-#include <qwt_counter.h>
 #include <qgroupbox.h>
+#include <qwt_counter.h>
 //Added by qt3to4:
 #include <QCloseEvent>
 
@@ -19,41 +19,38 @@
 
 //standard C and C++ defs:
 
-#include <vector>
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
 #include <iostream>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <vector>
 
 using namespace std;
 
-struct asa_options
-{
-   float probe_radius;
-   float probe_recheck_radius;
-   float threshold;
-   float threshold_percent;
-   float grid_threshold;
-   float grid_threshold_percent;
-   bool calculation;
-   bool recheck_beads;
-   int method;  // 0 == surfracer , 1 == asab1
-   float asab1_step;
-   float hydrate_probe_radius;
-   float hydrate_threshold;
+struct asa_options {
+      float probe_radius;
+      float probe_recheck_radius;
+      float threshold;
+      float threshold_percent;
+      float grid_threshold;
+      float grid_threshold_percent;
+      bool calculation;
+      bool recheck_beads;
+      int method; // 0 == surfracer , 1 == asab1
+      float asab1_step;
+      float hydrate_probe_radius;
+      float hydrate_threshold;
 
-   float vdw_grpy_probe_radius;
-   float vdw_grpy_threshold_percent;
+      float vdw_grpy_probe_radius;
+      float vdw_grpy_threshold_percent;
 
-   bool  vvv;
-   float vvv_probe_radius;
-   float vvv_grid_dR;
-
+      bool vvv;
+      float vvv_probe_radius;
+      float vvv_grid_dR;
 };
 
-class US_EXTERN US_Hydrodyn_ASA : public QFrame
-{
-   Q_OBJECT
+class US_EXTERN US_Hydrodyn_ASA : public QFrame {
+      Q_OBJECT
 
    public:
       US_Hydrodyn_ASA(struct asa_options *, bool *, void *, QWidget *p = 0, const char *name = 0);
@@ -80,7 +77,7 @@ class US_EXTERN US_Hydrodyn_ASA : public QFrame
 
       QLabel *lbl_vvv_probe_radius;
       QLabel *lbl_vvv_grid_dR;
-      
+
       QwtCounter *cnt_probe_radius;
       QwtCounter *cnt_probe_recheck_radius;
       QwtCounter *cnt_asa_threshold;
@@ -106,11 +103,11 @@ class US_EXTERN US_Hydrodyn_ASA : public QFrame
 
       QPushButton *pb_help;
       QPushButton *pb_cancel;
-      
+
       QGroupBox *bg_asa_method;
 
    private slots:
-      
+
       void setupGUI();
       void update_probe_radius(double);
       void update_probe_recheck_radius(double);
@@ -132,13 +129,11 @@ class US_EXTERN US_Hydrodyn_ASA : public QFrame
       void set_vvv();
       void cancel();
       void help();
-   
+
    protected slots:
 
       void closeEvent(QCloseEvent *);
 };
 
 
-
 #endif
-
