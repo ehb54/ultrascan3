@@ -243,8 +243,12 @@ private:
    QList< QLineEdit* > list_le;
    QList< QLabel* >    list_lb;
 
+   QLabel           *lb_dependent;
+   QLabel           *lb_function;
    QLabel           *lb_formula;
    QLabel           *lb_order;
+   QLabel           *lb_min;
+   QLabel           *lb_max;
    QLabel           *lb_p0_x;
    QLabel           *lb_p1_x;
    QLabel           *lb_p2_x;

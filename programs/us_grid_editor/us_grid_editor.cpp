@@ -1,9 +1,7 @@
 //! \file us_ga_init.cpp
 
-#include <QApplication>
 #include "us_grid_editor.h"
 #include "us_matrix.h"
-#include "us_buffer.h"
 #include <cmath>
 
 // main program
@@ -2661,36 +2659,36 @@ void US_Grid_ZFunction::set_gui( const QMap< QString, QString>& settings )
    setPalette( US_GuiSettings::frameColor() );
    setWindowFlags( Qt::Window | Qt::WindowSystemMenuHint );
 
-   QLabel *lb_dependent = us_label( "Dependent" );
-   QLabel *lb_function  = us_label( "Function" );
-   QLabel *lb_min       = us_label( "Minimum" );
-   QLabel *lb_max       = us_label( "Maximum" );
-   lb_order             = us_label( "Order" );
-   lb_formula           = new QLabel();
-   lb_p0                = us_label( "1"  );
-   lb_p1                = us_label( "2"  );
-   lb_p2                = us_label( "3"  );
-   lb_p3                = us_label( "4"  );
-   lb_p4                = us_label( "5"  );
-   lb_p5                = us_label( "6"  );
-   lb_c0                = us_label( "c0" );
-   lb_c1                = us_label( "c1" );
-   lb_c2                = us_label( "c2" );
-   lb_c3                = us_label( "c3" );
-   lb_c4                = us_label( "c4" );
-   lb_c5                = us_label( "c5" );
-   lb_p0_x              = us_label( "" );
-   lb_p0_y              = us_label( "" );
-   lb_p1_x              = us_label( "" );
-   lb_p1_y              = us_label( "" );
-   lb_p2_x              = us_label( "" );
-   lb_p2_y              = us_label( "" );
-   lb_p3_x              = us_label( "" );
-   lb_p3_y              = us_label( "" );
-   lb_p4_x              = us_label( "" );
-   lb_p4_y              = us_label( "" );
-   lb_p5_x              = us_label( "" );
-   lb_p5_y              = us_label( "" );
+   lb_dependent = us_label( "Dependent" );
+   lb_function  = us_label( "Function" );
+   lb_min       = us_label( "Minimum" );
+   lb_max       = us_label( "Maximum" );
+   lb_order     = us_label( "Order" );
+   lb_formula   = new QLabel();
+   lb_p0        = us_label( "1"  );
+   lb_p1        = us_label( "2"  );
+   lb_p2        = us_label( "3"  );
+   lb_p3        = us_label( "4"  );
+   lb_p4        = us_label( "5"  );
+   lb_p5        = us_label( "6"  );
+   lb_c0        = us_label( "c0" );
+   lb_c1        = us_label( "c1" );
+   lb_c2        = us_label( "c2" );
+   lb_c3        = us_label( "c3" );
+   lb_c4        = us_label( "c4" );
+   lb_c5        = us_label( "c5" );
+   lb_p0_x      = us_label( "" );
+   lb_p0_y      = us_label( "" );
+   lb_p1_x      = us_label( "" );
+   lb_p1_y      = us_label( "" );
+   lb_p2_x      = us_label( "" );
+   lb_p2_y      = us_label( "" );
+   lb_p3_x      = us_label( "" );
+   lb_p3_y      = us_label( "" );
+   lb_p4_x      = us_label( "" );
+   lb_p4_y      = us_label( "" );
+   lb_p5_x      = us_label( "" );
+   lb_p5_y      = us_label( "" );
 
    lb_formula->setFixedHeight( 30 );
    lb_formula->setStyleSheet( "QLabel { background-color: lightblue; color: black; }" );
@@ -3032,6 +3030,8 @@ void US_Grid_ZFunction::set_dependent( int index )
       list_lb[ ii * 4 + 1 ]->setText( xtitle );
       list_lb[ ii * 4 + 2 ]->setText( ytitle );
    }
+   lb_min->setText( QString( "Min of %1" ).arg( ytitle ) );
+   lb_max->setText( QString( "Max of %1" ).arg( ytitle ) );
    set_function( cb_function->currentIndex() );
 }
 
@@ -3103,8 +3103,6 @@ void US_Grid_ZFunction::plot_data()
    plot->detachItems(QwtPlotItem::Rtti_PlotItem, false);
 
    QString type = cb_function->currentText().toLower();
-   double min =  1e99;
-   double max = -1e99;
    double xx;
    double yy;
    for ( int ii = 0; ii < xvalues.size(); ii++ ) {
@@ -3119,11 +3117,7 @@ void US_Grid_ZFunction::plot_data()
          yy = parameters.at( 0 ) * qExp( parameters.at( 1 ) * xx );
       }
       yvalues[ ii ] = yy;
-      min = qMin( min, yy );
-      max = qMax( max, yy );
    }
-   le_min->setText( QString::number( min ) );
-   le_max->setText( QString::number( max ) );
 
    QwtPlotCurve* curve = us_curve( plot, "Curve" );
    curve->setSamples( xvalues.data(), yvalues.data(), xvalues.size() );
@@ -3137,10 +3131,41 @@ void US_Grid_ZFunction::plot_data()
    points->setStyle( QwtPlotCurve::NoCurve );
    points->setSamples( x_points.data(), y_points.data(), x_points.size() );
 
+   std::pair<double*, double*> min_max;
+   double x_min, x_max, y_min, y_max, dx, dy;
+   min_max = std::minmax_element( xvalues.begin(), xvalues.end() );
+   x_min   = *min_max.first;
+   x_max   = *min_max.second;
+
+   min_max = std::minmax_element( yvalues.begin(), yvalues.end() );
+   y_min   = *min_max.first;
+   y_max   = *min_max.second;
+
+   le_min->setText( QString::number( y_min ) );
+   le_max->setText( QString::number( y_max ) );
+
+   min_max = std::minmax_element( x_points.begin(), x_points.end() );
+   x_min   = qMin( *min_max.first, x_min );
+   x_max   = qMax( *min_max.second, x_max );
+
+   min_max = std::minmax_element( y_points.begin(), y_points.end() );
+   y_min   = qMin( *min_max.first, y_min );
+   y_max   = qMax( *min_max.second, y_max );
+
+   dx = ( x_max - x_min ) * 0.1;
+   dy = ( y_max - y_min ) * 0.1;
+   dx = qMax( dx, 0.1 );
+   dy = qMax( dy, 0.1 );
+   x_min -= dx;
+   x_max += dx;
+   y_min -= dy;
+   y_max += dy;
    plot->setAxisTitle( QwtPlot::xBottom, long_title.at( cb_dependent->currentIndex() ) );
    plot->setAxisTitle( QwtPlot::yLeft,   long_title.last() );
-   plot->setAxisAutoScale(QwtPlot::xBottom, true);
-   plot->setAxisAutoScale(QwtPlot::yLeft, true);
+   plot->setAxisScale( QwtPlot::xBottom, x_min, x_max );
+   plot->setAxisScale( QwtPlot::yLeft  , y_min, y_max );
+   // plot->setAxisAutoScale(QwtPlot::xBottom, true);
+   // plot->setAxisAutoScale(QwtPlot::yLeft, true);
    // us_grid( plot );
    plot->replot();
 }
