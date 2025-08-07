@@ -2762,18 +2762,11 @@ void US_Grid_ZFunction::set_gui( const QMap< QString, QString>& settings )
    long_title  << settings.value( "x_long_title" )
                << settings.value( "y_long_title" )
                << settings.value( "z_long_title" );
-   QPair< double, double > pair;
-   double val = settings.value( "x_min" ).toDouble();
-   pair.first = val;
-   val = settings.value( "x_max" ).toDouble();
-   pair.second = val;
-   minmax << pair;
 
-   val = settings.value( "y_max" ).toDouble();
-   pair.first = val;
-   val = settings.value( "y_max" ).toDouble();
-   pair.second = val;
-   minmax << pair;
+   min_dependent << settings.value( "x_min" ).toDouble()
+                 << settings.value( "y_min" ).toDouble();
+   max_dependent << settings.value( "x_max" ).toDouble()
+                 << settings.value( "y_max" ).toDouble();
 
    cb_function = us_comboBox();
    cb_function->addItem( "Polynomial" );
@@ -2889,7 +2882,7 @@ void US_Grid_ZFunction::set_gui( const QMap< QString, QString>& settings )
    lyt_top->addWidget( cb_order      , row++ , 3, 1, 1 );
 
    lyt_top->addWidget( lb_max        , row   , 0, 1, 1 );
-   lyt_top->addWidget( le_max        , row++ , 1, 1, 1 );
+   lyt_top->addWidget( le_max        , row   , 1, 1, 1 );
    lyt_top->addWidget( pb_fit        , row++ , 2, 1, 2 );
 
    lyt_top->addWidget( pb_cancel     , row   , 2, 1, 1 );
@@ -2898,10 +2891,12 @@ void US_Grid_ZFunction::set_gui( const QMap< QString, QString>& settings )
 
    int w = 125;
    lb_dependent->setFixedWidth( w );
-   lb_function->setFixedWidth( w );
-   lb_order->setFixedWidth( w );
-   lb_min->setFixedWidth( w );
-   lb_max->setFixedWidth( w );
+   lb_function-> setFixedWidth( w );
+   cb_function-> setFixedWidth( w );
+   lb_order->    setFixedWidth( w );
+   cb_order->    setFixedWidth( w );
+   lb_min->      setFixedWidth( w );
+   lb_max->      setFixedWidth( w );
 
    QGridLayout *layout = new QGridLayout();
    layout->setContentsMargins( 2, 2, 2, 2 );
@@ -2952,6 +2947,10 @@ void US_Grid_ZFunction::set_gui( const QMap< QString, QString>& settings )
          parameters.resize( 2 );
       }
    }
+   qDebug() << "min" << min_dependent;
+   qDebug() << "max" << max_dependent;
+   qDebug() << "short_title" << short_title;
+   qDebug() << "long_title" << long_title;
 
    set_dependent( cb_dependent->currentIndex() );
 
@@ -3030,10 +3029,54 @@ void US_Grid_ZFunction::compute()
    plot->replot();
 }
 
+void US_Grid_ZFunction::set_dependent( int index )
+{
+   double min = min_dependent.at( index );
+   double max = max_dependent.at( index );
+   int num = 200;
+   double dx = ( max - min ) / static_cast<double>( num );
+   xvalues.clear();
+   yvalues.clear();
+   double val = min;
+   while ( val <= max ) {
+      xvalues << val;
+      val += dx;
+   }
+   yvalues.resize( xvalues.size() );
+   QString xtitle = short_title.at( index );
+   QString ytitle = short_title.last();
+   for ( int ii = 0; ii < 6; ii++ ) {
+      list_lb[ ii * 4 + 1 ]->setText( xtitle );
+      list_lb[ ii * 4 + 2 ]->setText( ytitle );
+   }
+   set_function( cb_function->currentIndex() );
+}
+
+void US_Grid_ZFunction::set_function( int index )
+{
+   QString type = cb_function->itemText( index ).toLower();
+   lb_order->hide();
+   cb_order->hide();
+   int size = 0;
+   if ( type == "polynomial" ) {
+      size = cb_order->currentText().toInt() + 1;
+      lb_c0->setText( QString( "c%1" ).arg( 0 ) );
+      lb_c1->setText( QString( "c%1" ).arg( 1 ) );
+      lb_order->show();
+      cb_order->show();
+   }
+   else if ( type == "exponential" ) {
+      size = 2;
+      lb_c0->setText( "a" );
+      lb_c1->setText( "b" );
+   }
+   set_points( size );
+}
+
 void US_Grid_ZFunction::set_points( int size )
 {
-   double x_min = minmax.at( cb_dependent->currentIndex() ).first;
-   double x_max = minmax.at( cb_dependent->currentIndex() ).second;
+   double x_min = min_dependent.at( cb_dependent->currentIndex() );
+   double x_max = max_dependent.at( cb_dependent->currentIndex() );
    parameters.resize( size );
    x_points.resize( size );
    y_points.resize( size );
@@ -3064,57 +3107,12 @@ void US_Grid_ZFunction::set_points( int size )
       }
    }
    for ( int ii = 0; ii < size; ii++ ) {
-      list_le[ ii * 3     ]->setText( QString::number( x_points.at( ii ) ) );
-      list_le[ ii * 3 + 1 ]->setText( QString::number( y_points.at( ii ) ) );
+      list_le[ ii * 3     ]->setText( QString::number(   x_points.at( ii ) ) );
+      list_le[ ii * 3 + 1 ]->setText( QString::number(   y_points.at( ii ) ) );
+      list_le[ ii * 3 + 2 ]->setText( QString::number( parameters.at( ii ) ) );
    }
    compute();
-}
-
-void US_Grid_ZFunction::set_dependent( int index )
-{
-   double min = minmax.at( index ).first;
-   double max = minmax.at( index ).second;
-   int num = 200;
-   double dx = ( max - min ) / static_cast<double>( num );
-   xvalues.clear();
-   yvalues.clear();
-   double val = min;
-   while ( val <= max ) {
-      xvalues << val;
-      val += dx;
-   }
-   yvalues.resize( xvalues.size() );
-   QString xtitle = short_title.at( index );
-   QString ytitle = short_title.last();
-   for ( int ii = 0; ii < list_lb.size(); ii++ ) {
-      int xx = ii / 4 + 1;
-      int yy = ii / 4 + 2;
-      list_lb[ xx ]->setText( xtitle );
-      list_lb[ yy ]->setText( ytitle );
-   }
-   set_function( cb_function->currentIndex() );
-}
-
-void US_Grid_ZFunction::set_function( int index )
-{
-   QString type = cb_function->itemText( index ).toLower();
-   lb_order->setDisabled( true );
-   cb_order->setDisabled( true );
-   int size = 0;
-   if ( type == "polynomial" ) {
-      size = cb_order->currentText().toInt() + 1;
-      lb_c0->setText( QString( "c%1" ).arg( 0 ) );
-      lb_c1->setText( QString( "c%1" ).arg( 1 ) );
-      lb_order->setEnabled( true );
-      cb_order->setEnabled( true );
-   }
-   else if ( type == "exponential" ) {
-      size = 2;
-      lb_c0->setText( "a" );
-      lb_c1->setText( "b" );
-   }
    draw_formula();
-   set_points( size );
 }
 
 void US_Grid_ZFunction::set_order( int index )

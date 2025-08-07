@@ -229,7 +229,8 @@ public:
 
 
 private:
-   QVector< QPair< double, double > >  minmax;
+   QVector< double > min_dependent;
+   QVector< double > max_dependent;
    QVector< double > x_points;
    QVector< double > y_points;
    QVector< double > parameters;
