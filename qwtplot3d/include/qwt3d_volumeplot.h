@@ -9,16 +9,15 @@ namespace Qwt3D
 //! TODO
 class QWT3D_EXPORT VolumePlot : public Plot3D
 {
-//    Q_OBJECT
+  //    Q_OBJECT
 
 public:
-  VolumePlot( QWidget* parent = 0, const char* name = 0 ){}
+  VolumePlot (QWidget *parent = 0, const char *name = 0) {}
 
 protected:
-	virtual void createData() = 0;
+  virtual void createData () = 0;
 };
 
 } // ns
-
 
 #endif

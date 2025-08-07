@@ -1,14 +1,13 @@
 #ifndef designerworkaround_h__2005_07_10_10_46_begin_guarded_code
 #define designerworkaround_h__2005_07_10_10_46_begin_guarded_code
 
-#include <QMenu>
-#include <QToolBar>
 #include <QAction>
 #include <QActionGroup>
-#include <QMainWindow>
 #include <QComboBox>
+#include <QMainWindow>
+#include <QMenu>
 #include <QMenuBar>
-
+#include <QToolBar>
 
 class DesignerWorkaround
 {
@@ -19,58 +18,58 @@ public:
   QMenu *fontmenu;
   QToolBar *mainToolbar;
   QToolBar *csToolbar;
-  QAction* openFile;
-  QAction* openMeshFile;
-  QAction* animation;
-  QAction* dump;
-  QAction* normals;
-  QAction* Exit;
-  
-  QActionGroup* coord;
-  QAction* Box;
-  QAction* Frame;
-  QAction* None;
-  
-  QActionGroup* plotstyle;
-  QAction* wireframe;
-  QAction* hiddenline;
-  QAction* polygon;
-  QAction* filledmesh;
-  QAction* nodata;
-  QAction* pointstyle;
-  
-  QActionGroup* color;
-  QAction* axescolor;
-  QAction* backgroundcolor;
-  QAction* meshcolor;
-  QAction* numbercolor;
-  QAction* labelcolor;
-  QAction* titlecolor;
-  QAction* datacolor;
-  QAction* resetcolor;
-  
-  QActionGroup* font;
-  QAction* numberfont;
-  QAction* labelfont;
-  QAction* titlefont;
-  QAction* resetfont;
-  
-  QActionGroup* floorstyle;
-  QAction* floordata;
-  QAction* flooriso;
-  QAction* floornone;
-  
-  QActionGroup* grids;
-  QAction* front;
-  QAction* back;
-  QAction* right;
-  QAction* left;
-  QAction* ceil;
-  QAction* floor;
+  QAction *openFile;
+  QAction *openMeshFile;
+  QAction *animation;
+  QAction *dump;
+  QAction *normals;
+  QAction *Exit;
 
-  QComboBox* filetypeCB, *functionCB, *psurfaceCB;
+  QActionGroup *coord;
+  QAction *Box;
+  QAction *Frame;
+  QAction *None;
 
-  void setupWorkaround(QMainWindow* mw);
+  QActionGroup *plotstyle;
+  QAction *wireframe;
+  QAction *hiddenline;
+  QAction *polygon;
+  QAction *filledmesh;
+  QAction *nodata;
+  QAction *pointstyle;
+
+  QActionGroup *color;
+  QAction *axescolor;
+  QAction *backgroundcolor;
+  QAction *meshcolor;
+  QAction *numbercolor;
+  QAction *labelcolor;
+  QAction *titlecolor;
+  QAction *datacolor;
+  QAction *resetcolor;
+
+  QActionGroup *font;
+  QAction *numberfont;
+  QAction *labelfont;
+  QAction *titlefont;
+  QAction *resetfont;
+
+  QActionGroup *floorstyle;
+  QAction *floordata;
+  QAction *flooriso;
+  QAction *floornone;
+
+  QActionGroup *grids;
+  QAction *front;
+  QAction *back;
+  QAction *right;
+  QAction *left;
+  QAction *ceil;
+  QAction *floor;
+
+  QComboBox *filetypeCB, *functionCB, *psurfaceCB;
+
+  void setupWorkaround (QMainWindow *mw);
 };
 
 #endif

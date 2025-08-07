@@ -10,88 +10,93 @@
 #ifndef EIGEN_SPARSE_DOT_H
 #define EIGEN_SPARSE_DOT_H
 
-namespace Eigen { 
-
-template<typename Derived>
-template<typename OtherDerived>
-typename internal::traits<Derived>::Scalar
-SparseMatrixBase<Derived>::dot(const MatrixBase<OtherDerived>& other) const
+namespace Eigen
 {
-  EIGEN_STATIC_ASSERT_VECTOR_ONLY(Derived)
-  EIGEN_STATIC_ASSERT_VECTOR_ONLY(OtherDerived)
-  EIGEN_STATIC_ASSERT_SAME_VECTOR_SIZE(Derived,OtherDerived)
-  EIGEN_STATIC_ASSERT((internal::is_same<Scalar, typename OtherDerived::Scalar>::value),
-    YOU_MIXED_DIFFERENT_NUMERIC_TYPES__YOU_NEED_TO_USE_THE_CAST_METHOD_OF_MATRIXBASE_TO_CAST_NUMERIC_TYPES_EXPLICITLY)
 
-  eigen_assert(size() == other.size());
-  eigen_assert(other.size()>0 && "you are using a non initialized vector");
+template <typename Derived>
+template <typename OtherDerived>
+typename internal::traits<Derived>::Scalar
+SparseMatrixBase<Derived>::dot (const MatrixBase<OtherDerived> &other) const
+{
+  EIGEN_STATIC_ASSERT_VECTOR_ONLY (Derived)
+  EIGEN_STATIC_ASSERT_VECTOR_ONLY (OtherDerived)
+  EIGEN_STATIC_ASSERT_SAME_VECTOR_SIZE (Derived, OtherDerived)
+  EIGEN_STATIC_ASSERT (
+      (internal::is_same<Scalar, typename OtherDerived::Scalar>::value),
+      YOU_MIXED_DIFFERENT_NUMERIC_TYPES__YOU_NEED_TO_USE_THE_CAST_METHOD_OF_MATRIXBASE_TO_CAST_NUMERIC_TYPES_EXPLICITLY)
 
-  internal::evaluator<Derived> thisEval(derived());
-  typename internal::evaluator<Derived>::InnerIterator i(thisEval, 0);
-  Scalar res(0);
+  eigen_assert (size () == other.size ());
+  eigen_assert (other.size () > 0 && "you are using a non initialized vector");
+
+  internal::evaluator<Derived> thisEval (derived ());
+  typename internal::evaluator<Derived>::InnerIterator i (thisEval, 0);
+  Scalar res (0);
   while (i)
-  {
-    res += numext::conj(i.value()) * other.coeff(i.index());
-    ++i;
-  }
-  return res;
-}
-
-template<typename Derived>
-template<typename OtherDerived>
-typename internal::traits<Derived>::Scalar
-SparseMatrixBase<Derived>::dot(const SparseMatrixBase<OtherDerived>& other) const
-{
-  EIGEN_STATIC_ASSERT_VECTOR_ONLY(Derived)
-  EIGEN_STATIC_ASSERT_VECTOR_ONLY(OtherDerived)
-  EIGEN_STATIC_ASSERT_SAME_VECTOR_SIZE(Derived,OtherDerived)
-  EIGEN_STATIC_ASSERT((internal::is_same<Scalar, typename OtherDerived::Scalar>::value),
-    YOU_MIXED_DIFFERENT_NUMERIC_TYPES__YOU_NEED_TO_USE_THE_CAST_METHOD_OF_MATRIXBASE_TO_CAST_NUMERIC_TYPES_EXPLICITLY)
-
-  eigen_assert(size() == other.size());
-
-  internal::evaluator<Derived> thisEval(derived());
-  typename internal::evaluator<Derived>::InnerIterator i(thisEval, 0);
-  
-  internal::evaluator<OtherDerived>  otherEval(other.derived());
-  typename internal::evaluator<OtherDerived>::InnerIterator j(otherEval, 0);
-
-  Scalar res(0);
-  while (i && j)
-  {
-    if (i.index()==j.index())
     {
-      res += numext::conj(i.value()) * j.value();
-      ++i; ++j;
-    }
-    else if (i.index()<j.index())
+      res += numext::conj (i.value ()) * other.coeff (i.index ());
       ++i;
-    else
-      ++j;
-  }
+    }
   return res;
 }
 
-template<typename Derived>
-inline typename NumTraits<typename internal::traits<Derived>::Scalar>::Real
-SparseMatrixBase<Derived>::squaredNorm() const
+template <typename Derived>
+template <typename OtherDerived>
+typename internal::traits<Derived>::Scalar
+SparseMatrixBase<Derived>::dot (
+    const SparseMatrixBase<OtherDerived> &other) const
 {
-  return numext::real((*this).cwiseAbs2().sum());
+  EIGEN_STATIC_ASSERT_VECTOR_ONLY (Derived)
+  EIGEN_STATIC_ASSERT_VECTOR_ONLY (OtherDerived)
+  EIGEN_STATIC_ASSERT_SAME_VECTOR_SIZE (Derived, OtherDerived)
+  EIGEN_STATIC_ASSERT (
+      (internal::is_same<Scalar, typename OtherDerived::Scalar>::value),
+      YOU_MIXED_DIFFERENT_NUMERIC_TYPES__YOU_NEED_TO_USE_THE_CAST_METHOD_OF_MATRIXBASE_TO_CAST_NUMERIC_TYPES_EXPLICITLY)
+
+  eigen_assert (size () == other.size ());
+
+  internal::evaluator<Derived> thisEval (derived ());
+  typename internal::evaluator<Derived>::InnerIterator i (thisEval, 0);
+
+  internal::evaluator<OtherDerived> otherEval (other.derived ());
+  typename internal::evaluator<OtherDerived>::InnerIterator j (otherEval, 0);
+
+  Scalar res (0);
+  while (i && j)
+    {
+      if (i.index () == j.index ())
+        {
+          res += numext::conj (i.value ()) * j.value ();
+          ++i;
+          ++j;
+        }
+      else if (i.index () < j.index ())
+        ++i;
+      else
+        ++j;
+    }
+  return res;
 }
 
-template<typename Derived>
+template <typename Derived>
 inline typename NumTraits<typename internal::traits<Derived>::Scalar>::Real
-SparseMatrixBase<Derived>::norm() const
+SparseMatrixBase<Derived>::squaredNorm () const
+{
+  return numext::real ((*this).cwiseAbs2 ().sum ());
+}
+
+template <typename Derived>
+inline typename NumTraits<typename internal::traits<Derived>::Scalar>::Real
+SparseMatrixBase<Derived>::norm () const
 {
   using std::sqrt;
-  return sqrt(squaredNorm());
+  return sqrt (squaredNorm ());
 }
 
-template<typename Derived>
+template <typename Derived>
 inline typename NumTraits<typename internal::traits<Derived>::Scalar>::Real
-SparseMatrixBase<Derived>::blueNorm() const
+SparseMatrixBase<Derived>::blueNorm () const
 {
-  return internal::blueNorm_impl(*this);
+  return internal::blueNorm_impl (*this);
 }
 } // end namespace Eigen
 

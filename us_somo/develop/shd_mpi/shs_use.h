@@ -5,32 +5,32 @@
 typedef double shd_double;
 
 #include "shd_global.h"
-#include <vector>
-#include <string>
 #include <iostream>
-#include <time.h>
 #include <stdlib.h>
+#include <string>
+#include <time.h>
+#include <vector>
 
 using namespace std;
 
 #ifndef M_PI
-#  define M_PI       3.14159265358979323846
+#define M_PI 3.14159265358979323846
 #endif
 
 #ifndef M_4PI
-#  define M_4PI       (4e0 * 3.14159265358979323846)
+#define M_4PI (4e0 * 3.14159265358979323846)
 #endif
 
 class SHS_USE
 {
-   int    max_harmonics;
- public:
-   string error_msg;
+  int max_harmonics;
 
-   SHS_USE( int max_harmonics );
+public:
+  string error_msg;
 
-   bool shs_compute_sphbes( shd_double   x,
-                            shd_double * yv );
+  SHS_USE (int max_harmonics);
+
+  bool shs_compute_sphbes (shd_double x, shd_double *yv);
 };
 
 #endif

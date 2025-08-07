@@ -3,68 +3,68 @@
 
 #include <qglobal.h>
 #include <qwt_plot_zoomer.h>
-//Added by qt3to4:
+// Added by qt3to4:
 #include <QEvent>
 
 class ScrollData;
 class ScrollBar;
 
-class ScrollZoomer: public QwtPlotZoomer
+class ScrollZoomer : public QwtPlotZoomer
 {
-    Q_OBJECT
+  Q_OBJECT
 public:
-    enum ScrollBarPosition
-    {
-        AttachedToScale,
-        OppositeToScale
-    };
+  enum ScrollBarPosition
+  {
+    AttachedToScale,
+    OppositeToScale
+  };
 
-    ScrollZoomer(QwtPlotCanvas *);
-    virtual ~ScrollZoomer();
+  ScrollZoomer (QwtPlotCanvas *);
+  virtual ~ScrollZoomer ();
 
-    ScrollBar *horizontalScrollBar() const;
-    ScrollBar *verticalScrollBar() const;
+  ScrollBar *horizontalScrollBar () const;
+  ScrollBar *verticalScrollBar () const;
 
-    void setHScrollBarMode(Qt::ScrollBarPolicy);
-    void setVScrollBarMode(Qt::ScrollBarPolicy);
+  void setHScrollBarMode (Qt::ScrollBarPolicy);
+  void setVScrollBarMode (Qt::ScrollBarPolicy);
 
-    Qt::ScrollBarPolicy vScrollBarMode () const;
-    Qt::ScrollBarPolicy hScrollBarMode () const;
+  Qt::ScrollBarPolicy vScrollBarMode () const;
+  Qt::ScrollBarPolicy hScrollBarMode () const;
 
-    void setHScrollBarPosition(ScrollBarPosition);
-    void setVScrollBarPosition(ScrollBarPosition);
+  void setHScrollBarPosition (ScrollBarPosition);
+  void setVScrollBarPosition (ScrollBarPosition);
 
-    ScrollBarPosition hScrollBarPosition() const;
-    ScrollBarPosition vScrollBarPosition() const;
+  ScrollBarPosition hScrollBarPosition () const;
+  ScrollBarPosition vScrollBarPosition () const;
 
-    QWidget* cornerWidget() const;
-    virtual void setCornerWidget(QWidget *); 
-    
-    virtual bool eventFilter(QObject *, QEvent *);
+  QWidget *cornerWidget () const;
+  virtual void setCornerWidget (QWidget *);
 
-    virtual void rescale();
+  virtual bool eventFilter (QObject *, QEvent *);
 
-    bool symmetric_rescale;
+  virtual void rescale ();
+
+  bool symmetric_rescale;
 
 protected:
-    virtual ScrollBar *scrollBar(Qt::Orientation);
-    virtual void updateScrollBars();
-    virtual void layoutScrollBars(const QRect &);
+  virtual ScrollBar *scrollBar (Qt::Orientation);
+  virtual void updateScrollBars ();
+  virtual void layoutScrollBars (const QRect &);
 
 private slots:
-    void scrollBarMoved(Qt::Orientation o, double min, double max);
+  void scrollBarMoved (Qt::Orientation o, double min, double max);
 
 private:
-    bool needScrollBar(Qt::Orientation) const;
-    int oppositeAxis(int) const;
+  bool needScrollBar (Qt::Orientation) const;
+  int oppositeAxis (int) const;
 
-    QWidget *d_cornerWidget;
+  QWidget *d_cornerWidget;
 
-    ScrollData *d_hScrollData;
-    ScrollData *d_vScrollData;
+  ScrollData *d_hScrollData;
+  ScrollData *d_vScrollData;
 
-    bool d_inZoom;
-    bool d_alignCanvasToScales;
+  bool d_inZoom;
+  bool d_alignCanvasToScales;
 };
-            
+
 #endif

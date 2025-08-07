@@ -20,15 +20,16 @@
  */
 struct Reading
 {
-    float lambda; ///< Wavelength
-    float od;     ///< Optical density
+  float lambda; ///< Wavelength
+  float od;     ///< Optical density
 };
 
 /**
  * @struct WavelengthScan
  * @brief Represents a scan over a range of wavelengths.
  *
- * This structure holds the data for a scan that includes multiple readings and related metadata.
+ * This structure holds the data for a scan that includes multiple readings and
+ * related metadata.
  *
  * @var WavelengthScan::v_readings
  * Vector of readings.
@@ -53,13 +54,13 @@ struct Reading
  */
 struct WavelengthScan
 {
-    QVector<Reading> v_readings; ///< Vector of readings
-    QString fileName;            ///< Name of the file
-    QString filePath;            ///< Path to the file
-    QString description;         ///< Description of the scan
-    int pos;                     ///< Number of positive runs
-    int neg;                     ///< Number of negative runs
-    int runs;                    ///< Total number of runs
+  QVector<Reading> v_readings; ///< Vector of readings
+  QString fileName;            ///< Name of the file
+  QString filePath;            ///< Path to the file
+  QString description;         ///< Description of the scan
+  int pos;                     ///< Number of positive runs
+  int neg;                     ///< Number of negative runs
+  int runs;                    ///< Total number of runs
 };
 
 #endif // US_EXTINCTUTILS_H

@@ -2,57 +2,60 @@
 #ifndef US_ASSOCIATIONS_GUI_H
 #define US_ASSOCIATIONS_GUI_H
 
-#include "us_widgets_dialog.h"
-#include "us_widgets.h"
-#include "us_model.h"
-#include "us_help.h"
 #include "us_extern.h"
+#include "us_help.h"
+#include "us_model.h"
+#include "us_widgets.h"
+#include "us_widgets_dialog.h"
 
 //! \brief A window to edit a model's associations
 
 class US_GUI_EXTERN US_AssociationsGui : public US_WidgetsDialog
 {
-   Q_OBJECT
- 
-   public:
-      //! \param current_model - Location of model structure for editing
-      US_AssociationsGui( US_Model& );
+  Q_OBJECT
 
-   signals:
-      
-      //! \brief A signal that the dialog is complete
-      void done( void );
+public:
+  //! \param current_model - Location of model structure for editing
+  US_AssociationsGui (US_Model &);
 
-   private:
-      US_Model&      model;
-      US_Help        showhelp;
-      US_ListWidget* lw_analytes;
-      QTableWidget*  tw;
+signals:
 
-      QFontMetrics*  fm;
+  //! \brief A signal that the dialog is complete
+  void done (void);
 
-      QPushButton* pb_accept;
+private:
+  US_Model &model;
+  US_Help showhelp;
+  US_ListWidget *lw_analytes;
+  QTableWidget *tw;
 
-      QList< QwtCounter* > keq;
-      QList< QwtCounter* > koff;
+  QFontMetrics *fm;
 
-      void new_row      ( void );
-      void populate     ( void );
-      void set_component( int, int, int );
-      bool combine_reactants( US_Model::Association* );
+  QPushButton *pb_accept;
 
-   private slots:
-      void changed      ( int, int );
-      void del          ( int      );
-      void complete     ( void     );
-      void disable_gui   ( void );
+  QList<QwtCounter *> keq;
+  QList<QwtCounter *> koff;
 
-      void help    ( void )
-      { showhelp.show_help( "associations.html" ); };
+  void new_row (void);
+  void populate (void);
+  void set_component (int, int, int);
+  bool combine_reactants (US_Model::Association *);
+
+private slots:
+  void changed (int, int);
+  void del (int);
+  void complete (void);
+  void disable_gui (void);
+
+  void
+  help (void)
+  {
+    showhelp.show_help ("associations.html");
+  };
 };
 
-//! \brief An overloaded QPushButton to allow an index to be set and a 
-//! signal to be emitted with the index.  Allows the connected handler to 
+//! \brief An overloaded QPushButton to allow an index to be set and a
+//! signal to be emitted with the index.  Allows the connected handler to
 //! tell which buttone was pushed.
 class US_GUI_EXTERN US_PushButton : public QPushButton
 {
@@ -62,20 +65,24 @@ public:
   //! Constructor for the pushbutton
   //! \param text Label for the pushbutton
   //! \param i Value to be used to identify the pushbutton
-  US_PushButton( const QString&, int );
+  US_PushButton (const QString &, int);
   //! \brief A utility to set the pushbutton's index
   //! \param i Value to be saved
-  void setIndex( int i ){ index = i; }; 
+  void
+  setIndex (int i)
+  {
+    index = i;
+  };
 
 signals:
   //! A signal to send with the index of the menu selected.
-  void pushed( int );
+  void pushed (int);
 
 private:
-  int  index;
+  int index;
 
 private slots:
-  void mousePressEvent( QMouseEvent* );
+  void mousePressEvent (QMouseEvent *);
 };
 
 #endif
