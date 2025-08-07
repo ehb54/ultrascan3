@@ -2,6 +2,9 @@
 
 #include <QApplication>
 #include "us_grid_editor.h"
+#include "us_matrix.h"
+#include "us_buffer.h"
+#include <cmath>
 
 // main program
 int main( int argc, char* argv[] )
@@ -1631,7 +1634,8 @@ void US_Grid_Editor::set_buffer()
          state = US_Disk_DB_Controls::Disk;
       }
       US_BufferGui* buffer_gui = new US_BufferGui( true, US_Buffer(), state );
-      connect( buffer_gui, SIGNAL( valueChanged( US_Buffer ) ), this, SLOT( buffer_selected( US_Buffer ) ) );
+      connect( buffer_gui, QOverload<US_Buffer>::of( &US_BufferGui::valueChanged ),
+               this      , &US_Grid_Editor::buffer_selected );
       buffer_gui->exec();
    }
 
@@ -2788,6 +2792,7 @@ void US_Grid_ZFunction::set_gui( const QMap< QString, QString>& settings )
 
    plot = new QwtPlot();
    QBoxLayout* usplot = new US_Plot( plot, "Grid Layout", "", "" );
+   plot->setCanvasBackground( QBrush( QColor( 32, 32, 32 ) ) );
 
    // layouts
    int row = 0;
@@ -2957,15 +2962,27 @@ void US_Grid_ZFunction::set_gui( const QMap< QString, QString>& settings )
    connect( cb_function,  QOverload<int>::of( &QComboBox::currentIndexChanged ), this, &US_Grid_ZFunction::set_function  );
    connect( cb_dependent, QOverload<int>::of( &QComboBox::currentIndexChanged ), this, &US_Grid_ZFunction::set_dependent );
    connect( cb_order    , QOverload<int>::of( &QComboBox::currentIndexChanged ), this, &US_Grid_ZFunction::set_order );
-   connect( le_c0       , &QLineEdit::editingFinished                          , this, &US_Grid_ZFunction::set_c0 );
-   connect( le_c1       , &QLineEdit::editingFinished                          , this, &US_Grid_ZFunction::set_c1 );
-   connect( le_c2       , &QLineEdit::editingFinished                          , this, &US_Grid_ZFunction::set_c2 );
-   connect( le_c3       , &QLineEdit::editingFinished                          , this, &US_Grid_ZFunction::set_c3 );
-   connect( le_c4       , &QLineEdit::editingFinished                          , this, &US_Grid_ZFunction::set_c4 );
-   connect( le_c5       , &QLineEdit::editingFinished                          , this, &US_Grid_ZFunction::set_c5 );
-   connect( pb_cancel   , &QPushButton::clicked                                , this, &US_Grid_ZFunction::reject );
-   connect( pb_apply    , &QPushButton::clicked                                , this, &US_Grid_ZFunction::apply );
-
+   connect( pb_fit      , &QPushButton::clicked, this, &US_Grid_ZFunction::fit );
+   connect( pb_apply    , &QPushButton::clicked, this, &US_Grid_ZFunction::apply );
+   connect( pb_cancel   , &QPushButton::clicked, this, &US_Grid_ZFunction::reject );
+   connect( le_c0       , &QLineEdit::editingFinished, this, &US_Grid_ZFunction::set_c0 );
+   connect( le_c1       , &QLineEdit::editingFinished, this, &US_Grid_ZFunction::set_c1 );
+   connect( le_c2       , &QLineEdit::editingFinished, this, &US_Grid_ZFunction::set_c2 );
+   connect( le_c3       , &QLineEdit::editingFinished, this, &US_Grid_ZFunction::set_c3 );
+   connect( le_c4       , &QLineEdit::editingFinished, this, &US_Grid_ZFunction::set_c4 );
+   connect( le_c5       , &QLineEdit::editingFinished, this, &US_Grid_ZFunction::set_c5 );
+   connect( le_p0_x     , &QLineEdit::editingFinished, this, &US_Grid_ZFunction::set_p0_x );
+   connect( le_p1_x     , &QLineEdit::editingFinished, this, &US_Grid_ZFunction::set_p1_x );
+   connect( le_p2_x     , &QLineEdit::editingFinished, this, &US_Grid_ZFunction::set_p2_x );
+   connect( le_p3_x     , &QLineEdit::editingFinished, this, &US_Grid_ZFunction::set_p3_x );
+   connect( le_p4_x     , &QLineEdit::editingFinished, this, &US_Grid_ZFunction::set_p4_x );
+   connect( le_p5_x     , &QLineEdit::editingFinished, this, &US_Grid_ZFunction::set_p5_x );
+   connect( le_p0_y     , &QLineEdit::editingFinished, this, &US_Grid_ZFunction::set_p0_y );
+   connect( le_p1_y     , &QLineEdit::editingFinished, this, &US_Grid_ZFunction::set_p1_y );
+   connect( le_p2_y     , &QLineEdit::editingFinished, this, &US_Grid_ZFunction::set_p2_y );
+   connect( le_p3_y     , &QLineEdit::editingFinished, this, &US_Grid_ZFunction::set_p3_y );
+   connect( le_p4_y     , &QLineEdit::editingFinished, this, &US_Grid_ZFunction::set_p4_y );
+   connect( le_p5_y     , &QLineEdit::editingFinished, this, &US_Grid_ZFunction::set_p5_y );
 }
 
 void US_Grid_ZFunction::draw_formula()
@@ -2993,40 +3010,6 @@ void US_Grid_ZFunction::draw_formula()
    if ( flag ) {
       lb_formula->setText( formula );
    }
-}
-
-void US_Grid_ZFunction::compute()
-{
-   QString type = cb_function->currentText().toLower();
-   double min =  1e99;
-   double max = -1e99;
-   double xx;
-   double yy;
-   for ( int ii = 0; ii < xvalues.size(); ii++ ) {
-      xx = xvalues.at( ii );
-      yy = 0;
-      if ( type == "polynomial" ) {
-         for( int jj = 0; jj < parameters.size(); jj++ ) {
-            yy += parameters.at( jj ) * qPow( xx, jj );
-         }
-      }
-      else if ( type == "exponential" ) {
-         yy = parameters.at( 0 ) * qExp( parameters.at( 1 ) * xx );
-      }
-      yvalues[ ii ] = yy;
-      min = qMin( min, yy );
-      max = qMax( max, yy );
-   }
-   le_min->setText( QString::number( min ) );
-   le_max->setText( QString::number( max ) );
-   plot->detachItems(QwtPlotItem::Rtti_PlotItem, false);
-   QwtPlotCurve* curve = us_curve( plot, "curve" );
-   curve->setSamples( xvalues.data(), yvalues.data(), xvalues.size() );
-   plot->setAxisTitle( QwtPlot::xBottom, long_title.at( cb_dependent->currentIndex() ) );
-   plot->setAxisTitle( QwtPlot::yLeft,   long_title.last() );
-   plot->setAxisAutoScale(QwtPlot::xBottom, true);
-   plot->setAxisAutoScale(QwtPlot::yLeft, true);
-   plot->replot();
 }
 
 void US_Grid_ZFunction::set_dependent( int index )
@@ -3111,14 +3094,111 @@ void US_Grid_ZFunction::set_points( int size )
       list_le[ ii * 3 + 1 ]->setText( QString::number(   y_points.at( ii ) ) );
       list_le[ ii * 3 + 2 ]->setText( QString::number( parameters.at( ii ) ) );
    }
-   compute();
+   plot_data();
    draw_formula();
+}
+
+void US_Grid_ZFunction::plot_data()
+{
+   plot->detachItems(QwtPlotItem::Rtti_PlotItem, false);
+
+   QString type = cb_function->currentText().toLower();
+   double min =  1e99;
+   double max = -1e99;
+   double xx;
+   double yy;
+   for ( int ii = 0; ii < xvalues.size(); ii++ ) {
+      xx = xvalues.at( ii );
+      yy = 0;
+      if ( type == "polynomial" ) {
+         for( int jj = 0; jj < parameters.size(); jj++ ) {
+            yy += parameters.at( jj ) * qPow( xx, jj );
+         }
+      }
+      else if ( type == "exponential" ) {
+         yy = parameters.at( 0 ) * qExp( parameters.at( 1 ) * xx );
+      }
+      yvalues[ ii ] = yy;
+      min = qMin( min, yy );
+      max = qMax( max, yy );
+   }
+   le_min->setText( QString::number( min ) );
+   le_max->setText( QString::number( max ) );
+
+   QwtPlotCurve* curve = us_curve( plot, "Curve" );
+   curve->setSamples( xvalues.data(), yvalues.data(), xvalues.size() );
+   curve->setPen( QPen( Qt::yellow, 2 ) );
+
+   QwtSymbol *symbol = new QwtSymbol( QwtSymbol::Ellipse,
+                                     QBrush( Qt::red ),
+                                     QPen( Qt::red, 5 ), QSize( 5, 5 ) );
+   QwtPlotCurve* points = us_curve( plot, "Points" );
+   points->setSymbol( symbol );
+   points->setStyle( QwtPlotCurve::NoCurve );
+   points->setSamples( x_points.data(), y_points.data(), x_points.size() );
+
+   plot->setAxisTitle( QwtPlot::xBottom, long_title.at( cb_dependent->currentIndex() ) );
+   plot->setAxisTitle( QwtPlot::yLeft,   long_title.last() );
+   plot->setAxisAutoScale(QwtPlot::xBottom, true);
+   plot->setAxisAutoScale(QwtPlot::yLeft, true);
+   // us_grid( plot );
+   plot->replot();
 }
 
 void US_Grid_ZFunction::set_order( int index )
 {
    int size = cb_order->itemText( index ).toInt() + 1;
    set_points( size );
+}
+
+void US_Grid_ZFunction::fit()
+{
+   QString type = cb_function->currentText().toLower();
+   QVector<double> xvec = x_points;
+   QVector<double> yvec = y_points;
+   QVector<double> pars = parameters;
+   if ( type == "exponential" ) {
+      for ( int ii = 0; ii < yvec.size(); ii++ ) {
+         yvec[ ii ] = std::log( yvec.at( ii ) );
+      }
+   }
+   double *c = pars.data();
+   double *x = xvec.data();
+   double *y = yvec.data();
+   int np    = xvec.size();
+
+   bool ok = US_Matrix::lsfit( c, x, y, np, np );
+   if ( ok ) {
+      if ( type == "exponential" ) {
+         pars [ 0 ] = std::exp( pars.first() );
+      }
+      parameters.clear();
+      parameters << pars;
+      for ( int ii = 0; ii < parameters.size(); ii++ ) {
+         QString str = QString::number( parameters.at( ii ) );
+         switch ( ii ) {
+         case 0:
+            le_c0->setText( str );
+            break;
+         case 1:
+            le_c1->setText( str );
+            break;
+         case 2:
+            le_c2->setText( str );
+            break;
+         case 3:
+            le_c3->setText( str );
+            break;
+         case 4:
+            le_c4->setText( str );
+            break;
+         case 5:
+            le_c5->setText( str );
+            break;
+         }
+      }
+      plot_data();
+   }
 }
 
 void US_Grid_ZFunction::apply()
@@ -3129,35 +3209,108 @@ void US_Grid_ZFunction::apply()
 void US_Grid_ZFunction::set_c0()
 {
    parameters[ 0 ] = le_c0->text().toDouble();
-   compute();
+   plot_data();
 }
 
 void US_Grid_ZFunction::set_c1()
 {
    parameters[ 1 ] = le_c1->text().toDouble();
-   compute();
+   plot_data();
 }
 
 void US_Grid_ZFunction::set_c2()
 {
    parameters[ 2 ] = le_c2->text().toDouble();
-   compute();
+   plot_data();
 }
 
 void US_Grid_ZFunction::set_c3()
 {
    parameters[ 3 ] = le_c3->text().toDouble();
-   compute();
+   plot_data();
 }
 
 void US_Grid_ZFunction::set_c4()
 {
    parameters[ 4 ] = le_c4->text().toDouble();
-   compute();
+   plot_data();
 }
 
 void US_Grid_ZFunction::set_c5()
 {
    parameters[ 5 ] = le_c5->text().toDouble();
-   compute();
+   plot_data();
 }
+
+void US_Grid_ZFunction::set_p0_x()
+{
+   x_points[ 0 ] = le_p0_x->text().toDouble();
+   plot_data();
+}
+
+void US_Grid_ZFunction::set_p1_x()
+{
+   x_points[ 1 ] = le_p1_x->text().toDouble();
+   plot_data();
+}
+
+void US_Grid_ZFunction::set_p2_x()
+{
+   x_points[ 2 ] = le_p2_x->text().toDouble();
+   plot_data();
+}
+
+void US_Grid_ZFunction::set_p3_x()
+{
+   x_points[ 3 ] = le_p3_x->text().toDouble();
+   plot_data();
+}
+
+void US_Grid_ZFunction::set_p4_x()
+{
+   x_points[ 4 ] = le_p4_x->text().toDouble();
+   plot_data();
+}
+
+void US_Grid_ZFunction::set_p5_x()
+{
+   x_points[ 5 ] = le_p5_x->text().toDouble();
+   plot_data();
+}
+
+void US_Grid_ZFunction::set_p0_y()
+{
+   y_points[ 0 ] = le_p0_y->text().toDouble();
+   plot_data();
+}
+
+void US_Grid_ZFunction::set_p1_y()
+{
+   y_points[ 1 ] = le_p1_y->text().toDouble();
+   plot_data();
+}
+
+void US_Grid_ZFunction::set_p2_y()
+{
+   y_points[ 2 ] = le_p2_y->text().toDouble();
+   plot_data();
+}
+
+void US_Grid_ZFunction::set_p3_y()
+{
+   y_points[ 3 ] = le_p3_y->text().toDouble();
+   plot_data();
+}
+
+void US_Grid_ZFunction::set_p4_y()
+{
+   y_points[ 4 ] = le_p4_y->text().toDouble();
+   plot_data();
+}
+
+void US_Grid_ZFunction::set_p5_y()
+{
+   y_points[ 5 ] = le_p5_y->text().toDouble();
+   plot_data();
+}
+

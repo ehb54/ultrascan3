@@ -298,20 +298,33 @@ private:
 
    void set_gui( const QMap< QString, QString>& );
    void draw_formula( void );
-   void compute( void );
-   void set_points( int );
+   void plot_data   ( void );
+   void set_points  ( int  );
 
 private slots:
    void set_dependent( int index );
-   void set_function( int index );
+   void set_function ( int index );
    void set_order( int );
-   void apply( void );
-   void set_c0( void );
-   void set_c1( void );
-   void set_c2( void );
-   void set_c3( void );
-   void set_c4( void );
-   void set_c5( void );
+   void set_c0  ( void );
+   void set_c1  ( void );
+   void set_c2  ( void );
+   void set_c3  ( void );
+   void set_c4  ( void );
+   void set_c5  ( void );
+   void set_p0_x( void );
+   void set_p1_x( void );
+   void set_p2_x( void );
+   void set_p3_x( void );
+   void set_p4_x( void );
+   void set_p5_x( void );
+   void set_p0_y( void );
+   void set_p1_y( void );
+   void set_p2_y( void );
+   void set_p3_y( void );
+   void set_p4_y( void );
+   void set_p5_y( void );
+   void fit     ( void );
+   void apply   ( void );
 };
 
 
