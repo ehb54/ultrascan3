@@ -1,72 +1,66 @@
 #ifndef US_HYDRODYN_MALS_DCTR_H
 #define US_HYDRODYN_MALS_DCTR_H
 
-#include "us_hydrodyn_mals.h"
 #include "qlabel.h"
-#include "qstring.h"
 #include "qlayout.h"
+#include "qstring.h"
 #include "qvalidator.h"
-//Added by qt3to4:
+#include "us_hydrodyn_mals.h"
+// Added by qt3to4:
 #include <QCloseEvent>
 
 using namespace std;
 
-class US_EXTERN US_Hydrodyn_Mals_Dctr : public QDialog
-{
-   Q_OBJECT
+class US_EXTERN US_Hydrodyn_Mals_Dctr : public QDialog {
+  Q_OBJECT
 
-   public:
-      US_Hydrodyn_Mals_Dctr(
-                                 void                     *              us_hydrodyn_mals,
-                                 map < QString, QString > *              parameters,
-                                 QWidget *                               p = 0,
-                                 const char *                            name = 0
-                                 );
+ public:
+  US_Hydrodyn_Mals_Dctr(void* us_hydrodyn_mals,
+                        map<QString, QString>* parameters, QWidget* p = 0,
+                        const char* name = 0);
 
-      ~US_Hydrodyn_Mals_Dctr();
+  ~US_Hydrodyn_Mals_Dctr();
 
-   private:
+ private:
+  US_Config* USglobal;
 
-      US_Config *                             USglobal;
+  QLabel* lbl_title;
 
-      QLabel *                                lbl_title;
+  QLabel* lbl_type;
+  QCheckBox* cb_uv;
+  QLabel* lbl_uv_conv;
+  QLineEdit* le_uv_conv;
 
-      QLabel *                                lbl_type;
-      QCheckBox *                             cb_uv;
-      QLabel *                                lbl_uv_conv;
-      QLineEdit *                             le_uv_conv;
+  QCheckBox* cb_ri;
+  QLabel* lbl_ri_conv;
+  QLineEdit* le_ri_conv;
 
-      QCheckBox *                             cb_ri;
-      QLabel *                                lbl_ri_conv;
-      QLineEdit *                             le_ri_conv;
+  QPushButton* pb_help;
+  QPushButton* pb_quit;
+  QPushButton* pb_keep;
+  QPushButton* pb_save;
 
-      QPushButton *                           pb_help;
-      QPushButton *                           pb_quit;
-      QPushButton *                           pb_keep;
-      QPushButton *                           pb_save;
+  void* us_hydrodyn_mals;
+  map<QString, QString>* parameters;
 
-      void                     *              us_hydrodyn_mals;
-      map < QString, QString > *              parameters;
+  void setupGUI();
 
+ private slots:
 
-      void                                    setupGUI();
+  void set_uv();
+  void set_ri();
 
-   private slots:
+  void ri_conv_text(const QString&);
+  void uv_conv_text(const QString&);
 
-      void                                    set_uv();
-      void                                    set_ri();
+  void help();
+  void quit();
+  void keep();
+  void save();
 
-      void                                    ri_conv_text( const QString & );
-      void                                    uv_conv_text( const QString & );
+ protected slots:
 
-      void                                    help();
-      void                                    quit();
-      void                                    keep();
-      void                                    save();
-
-   protected slots:
-
-      void                                    closeEvent( QCloseEvent * );
+  void closeEvent(QCloseEvent*);
 };
 
 #endif

@@ -1,53 +1,59 @@
-// ----------------------------------- asab1.c -------------------------------------
-// #warning asab1.c 
+// ----------------------------------- asab1.c
+// ------------------------------------- #warning asab1.c
 
 /*  ENGLISH VERSION 17 MAY 2002   */
 /*  UPDATED SEPTEMBER 2002        */
-/*  UPDATED DECEMBER 2002 IN GLASGOW FOR COLOR CODING DIFFERENTLY THE CARBOHYDRATES, BUT THEN NOT UTILIZED  */
-/*  ALSO FIXED OLD MISTAKES: 1-MISPELLED "PPO" INSTEAD OF "PRO" IN THE ASA OF PEPTIDE BOND ROUTINE */
-/*                           2-COUNTING ONE ATOM LESS WHEN "PRO" IS FOUND IN PEPTIDE BOND ROUTINE */
-/*              3-MISASSIGNING A "6" VALUE FOR "N" OF A LEU PEPTIDE BOND (FIXED BUT NOT UNDERSTOOD) */
-/*  UPDATED FEBRUARY 2003 IN GENOVA, FIXED ANOTHER MISTAKE IN THE BEAD COLOR ASSIGNMENT */
+/*  UPDATED DECEMBER 2002 IN GLASGOW FOR COLOR CODING DIFFERENTLY THE
+ * CARBOHYDRATES, BUT THEN NOT UTILIZED  */
+/*  ALSO FIXED OLD MISTAKES: 1-MISPELLED "PPO" INSTEAD OF "PRO" IN THE ASA OF
+ * PEPTIDE BOND ROUTINE */
+/*                           2-COUNTING ONE ATOM LESS WHEN "PRO" IS FOUND IN
+ * PEPTIDE BOND ROUTINE */
+/*              3-MISASSIGNING A "6" VALUE FOR "N" OF A LEU PEPTIDE BOND (FIXED
+ * BUT NOT UNDERSTOOD) */
+/*  UPDATED FEBRUARY 2003 IN GENOVA, FIXED ANOTHER MISTAKE IN THE BEAD COLOR
+ * ASSIGNMENT */
 /*                                   FIXED RE-CHECK ROUTINE */
 /*  UPDATED APRIL 2003 IN GENOVA, ADDED OCTYL GLUCOSIDE AND PSV  */
 /*  UPDATED JUNE 2005 IN GENOVA, FIXED INIT3.C PROBLEMS  */
-/*  FIXED JUNE 2006 IN GENOVA, INCORRECT ASSIGNMENT OF PEPTIDE BOND CODES FOR BURIED/EXPOSED DUE TO ORDER IN PDB FILE */
-/*  UPDATED AUGUST 2006 WITH AUTOMATIC SEARCH FOR TABELLA1.COR FILE BY M. NOLLMANN  */
+/*  FIXED JUNE 2006 IN GENOVA, INCORRECT ASSIGNMENT OF PEPTIDE BOND CODES FOR
+ * BURIED/EXPOSED DUE TO ORDER IN PDB FILE */
+/*  UPDATED AUGUST 2006 WITH AUTOMATIC SEARCH FOR TABELLA1.COR FILE BY M.
+ * NOLLMANN  */
 
 #undef DEBUG
 
-#define   false   0
-#define   true   1
+#define false 0
+#define true 1
 
 #define US_SAXS_UTIL_ASAB1_ERR_MEMORY_ALLOC -1
 
 #include "../include/us_saxs_util_asab1.h"
+
 #include <float.h>
 // #if defined(WIN32)
 // // #  define isnan _isnan
 // #endif
 
-#define  PI   ((float) 3.141592654)
-#define  SMAX   20
-#define  IMAX   20
+#define PI ((float)3.141592654)
+#define SMAX 20
+#define IMAX 20
 
-struct dati1
-{
-   float x, y, z;      /* coordinates of the sphere center  */
-   float r;         /* radius of the sphere              */
-   int m;         /* mass                             */
-   int col;         /* color                            */
-   char elm[4];
-   char amin[4];
-   char sugar[4];
-   float tab;
-   float vol;
-   char descr[10];
+struct dati1 {
+  float x, y, z; /* coordinates of the sphere center  */
+  float r;       /* radius of the sphere              */
+  int m;         /* mass                             */
+  int col;       /* color                            */
+  char elm[4];
+  char amin[4];
+  char sugar[4];
+  float tab;
+  float vol;
+  char descr[10];
 };
 
-struct dati2
-{
-   float xi, yi, ai;      /* coordinates of the intersection angle */
+struct dati2 {
+  float xi, yi, ai; /* coordinates of the intersection angle */
 };
 
 static void mami1();
@@ -80,12 +86,14 @@ static struct dati2 *trans;
 
 static struct dati2 dis[IMAX];
 
-static char ridotto[20], ridotto_rmc[20];   /* array for the output file name after ASA re-check */
+static char ridotto[20],
+    ridotto_rmc[20]; /* array for the output file name after ASA re-check */
 
-// static char ragcol[SMAX];   /* array for the file name where radii, masses and colors of the beads are stored */
+// static char ragcol[SMAX];   /* array for the file name where radii, masses
+// and colors of the beads are stored */
 
 static int nat;
-static int numdis;   /* index of the bead under examination */
+static int numdis; /* index of the bead under examination */
 static int nc;
 static int form, form1, vel;
 static int quota, passi, cont1;
@@ -102,1326 +110,1219 @@ static char outfile1[30];
 static char outfile2[30];
 static char outris[30];
 
-static float raggio;      /* radius of the sphere */
-static float psv;      /* partial specific volume */
+static float raggio; /* radius of the sphere */
+static float psv;    /* partial specific volume */
 static float fl, k;
 static float maxx, minx, maxy, miny, maxz, minz;
 static float xp1, xp2, yp1, yp2;
 static float m1, m2, medio, base, altez;
 // static float arr1[60];
 static float ro, ro1, xm, ym, zm;
-static float min_asa = (float) -1.0;
-static float rprobe = (float) 0.0;
+static float min_asa = (float)-1.0;
+static float rprobe = (float)0.0;
 
 static double ix1;
 static double ix2;
 static double iy1;
 static double iy2;
 
-static struct dati1 *dt = 0;       // [NMAX]
-static struct dati1 *dts = 0;      // [NMAX]
-static struct dati2 *inter = 0;    // [NMAX][IMAX];
-static int *pos = 0;               // [NMAX];
-static int *indec = 0;             // [NMAX1];
-static int *f = 0;                 // [NMAX1];
-static int *interna = 0;           // [NMAX1];
-static float *asa = 0;             // [NMAX];
+static struct dati1 *dt = 0;     // [NMAX]
+static struct dati1 *dts = 0;    // [NMAX]
+static struct dati2 *inter = 0;  // [NMAX][IMAX];
+static int *pos = 0;             // [NMAX];
+static int *indec = 0;           // [NMAX1];
+static int *f = 0;               // [NMAX1];
+static int *interna = 0;         // [NMAX1];
+static float *asa = 0;           // [NMAX];
 
 static int nmax;
 static int nmax1;
 static asa_options *asa_opts;
 static hydro_results *results;
 static bool recheck;
-static vector <PDB_atom *> active_atoms;
+static vector<PDB_atom *> active_atoms;
 
-static void
-em(const char *s)
-{
-   puts(s);
-   fflush(stdout);
+static void em(const char *s) {
+  puts(s);
+  fflush(stdout);
 }
 
-static void
-asab1_free_alloced()
-{
-   if (dt)
-   {
-      free(dt);
-      dt = 0;
-   }
-   if (dts)
-   {
-      free(dts);
-      dts = 0;
-   }
-   if (inter)
-   {
-      free(inter);
-      inter = 0;
-   }
-   if (pos)
-   {
-      free(pos);
-      pos = 0;
-   }
-   if (indec)
-   {
-      free(indec);
-      indec = 0;
-   }
-   if (f)
-   {
-      free(f);
-      f = 0;
-   }
-   if (interna)
-   {
-      free(interna);
-      interna = 0;
-   }
-   if (asa)
-   {
-      free(asa);
-      asa = 0;
-   }
+static void asab1_free_alloced() {
+  if (dt) {
+    free(dt);
+    dt = 0;
+  }
+  if (dts) {
+    free(dts);
+    dts = 0;
+  }
+  if (inter) {
+    free(inter);
+    inter = 0;
+  }
+  if (pos) {
+    free(pos);
+    pos = 0;
+  }
+  if (indec) {
+    free(indec);
+    indec = 0;
+  }
+  if (f) {
+    free(f);
+    f = 0;
+  }
+  if (interna) {
+    free(interna);
+    interna = 0;
+  }
+  if (asa) {
+    free(asa);
+    asa = 0;
+  }
 }
 
-static int
-asab1_alloc()
-{
-   dt = (struct dati1 *) malloc(nmax * sizeof(struct dati1));
-   if (!dt)
-   {
-      asab1_free_alloced();
-      fprintf(stderr, "memory allocation error\n");
-      return US_SAXS_UTIL_ASAB1_ERR_MEMORY_ALLOC;
-   }
-   memset(dt, 0, nmax * sizeof(struct dati1));
+static int asab1_alloc() {
+  dt = (struct dati1 *)malloc(nmax * sizeof(struct dati1));
+  if (!dt) {
+    asab1_free_alloced();
+    fprintf(stderr, "memory allocation error\n");
+    return US_SAXS_UTIL_ASAB1_ERR_MEMORY_ALLOC;
+  }
+  memset(dt, 0, nmax * sizeof(struct dati1));
 
-   dts = (struct dati1 *) malloc(nmax * sizeof(struct dati1));
-   if (!dts)
-   {
-      asab1_free_alloced();
-      fprintf(stderr, "memory allocation error\n");
-      return US_SAXS_UTIL_ASAB1_ERR_MEMORY_ALLOC;
-   }
-   memset(dts, 0, nmax * sizeof(struct dati1));
+  dts = (struct dati1 *)malloc(nmax * sizeof(struct dati1));
+  if (!dts) {
+    asab1_free_alloced();
+    fprintf(stderr, "memory allocation error\n");
+    return US_SAXS_UTIL_ASAB1_ERR_MEMORY_ALLOC;
+  }
+  memset(dts, 0, nmax * sizeof(struct dati1));
 
-   inter = (struct dati2 *) malloc(IMAX * nmax * sizeof(struct dati2));
-   if (!inter)
-   {
-      asab1_free_alloced();
-      fprintf(stderr, "memory allocation error\n");
-      return US_SAXS_UTIL_ASAB1_ERR_MEMORY_ALLOC;
-   }
-   memset(inter, 0, IMAX * nmax * sizeof(struct dati2));
+  inter = (struct dati2 *)malloc(IMAX * nmax * sizeof(struct dati2));
+  if (!inter) {
+    asab1_free_alloced();
+    fprintf(stderr, "memory allocation error\n");
+    return US_SAXS_UTIL_ASAB1_ERR_MEMORY_ALLOC;
+  }
+  memset(inter, 0, IMAX * nmax * sizeof(struct dati2));
 
-   pos = (int *) malloc(nmax * sizeof(int));
-   if (!pos)
-   {
-      asab1_free_alloced();
-      fprintf(stderr, "memory allocation error\n");
-      return US_SAXS_UTIL_ASAB1_ERR_MEMORY_ALLOC;
-   }
-   memset(pos, 0, nmax * sizeof(int));
+  pos = (int *)malloc(nmax * sizeof(int));
+  if (!pos) {
+    asab1_free_alloced();
+    fprintf(stderr, "memory allocation error\n");
+    return US_SAXS_UTIL_ASAB1_ERR_MEMORY_ALLOC;
+  }
+  memset(pos, 0, nmax * sizeof(int));
 
-   indec = (int *) malloc(nmax1 * sizeof(int));
-   if (!indec)
-   {
-      asab1_free_alloced();
-      fprintf(stderr, "memory allocation error\n");
-      return US_SAXS_UTIL_ASAB1_ERR_MEMORY_ALLOC;
-   }
-   memset(indec, 0, nmax1 * sizeof(int));
+  indec = (int *)malloc(nmax1 * sizeof(int));
+  if (!indec) {
+    asab1_free_alloced();
+    fprintf(stderr, "memory allocation error\n");
+    return US_SAXS_UTIL_ASAB1_ERR_MEMORY_ALLOC;
+  }
+  memset(indec, 0, nmax1 * sizeof(int));
 
-   f = (int *) malloc(nmax1 * sizeof(int));
-   if (!f)
-   {
-      asab1_free_alloced();
-      fprintf(stderr, "memory allocation error\n");
-      return US_SAXS_UTIL_ASAB1_ERR_MEMORY_ALLOC;
-   }
-   memset(f, 0, nmax1 * sizeof(int));
+  f = (int *)malloc(nmax1 * sizeof(int));
+  if (!f) {
+    asab1_free_alloced();
+    fprintf(stderr, "memory allocation error\n");
+    return US_SAXS_UTIL_ASAB1_ERR_MEMORY_ALLOC;
+  }
+  memset(f, 0, nmax1 * sizeof(int));
 
-   interna = (int *) malloc(nmax1 * sizeof(int));
-   if (!interna)
-   {
-      asab1_free_alloced();
-      fprintf(stderr, "memory allocation error\n");
-      return US_SAXS_UTIL_ASAB1_ERR_MEMORY_ALLOC;
-   }
-   memset(interna, 0, nmax1 * sizeof(int));
+  interna = (int *)malloc(nmax1 * sizeof(int));
+  if (!interna) {
+    asab1_free_alloced();
+    fprintf(stderr, "memory allocation error\n");
+    return US_SAXS_UTIL_ASAB1_ERR_MEMORY_ALLOC;
+  }
+  memset(interna, 0, nmax1 * sizeof(int));
 
-   asa = (float *) malloc(nmax * sizeof(float));
-   if (!asa)
-   {
-      asab1_free_alloced();
-      fprintf(stderr, "memory allocation error\n");
-      return US_SAXS_UTIL_ASAB1_ERR_MEMORY_ALLOC;
-   }
-   memset(asa, 0, nmax * sizeof(float));
+  asa = (float *)malloc(nmax * sizeof(float));
+  if (!asa) {
+    asab1_free_alloced();
+    fprintf(stderr, "memory allocation error\n");
+    return US_SAXS_UTIL_ASAB1_ERR_MEMORY_ALLOC;
+  }
+  memset(asa, 0, nmax * sizeof(float));
 
-   return 0;
+  return 0;
 }
 
-int
-us_saxs_util_asab1_main(vector <PDB_atom *> use_active_atoms, 
-                        asa_options *use_asa_opts,
-                        hydro_results *use_results,
-                        bool use_recheck
-                       )
-{
+int us_saxs_util_asab1_main(vector<PDB_atom *> use_active_atoms,
+                            asa_options *use_asa_opts,
+                            hydro_results *use_results, bool use_recheck) {
+  em("asab1_main");
+  em("asab1_main 1");
+  //  nmax1 = 4000;
+  em("asab1_main 2");
+  asa_opts = use_asa_opts;
+  results = use_results;
+  recheck = use_recheck;
+  active_atoms = use_active_atoms;
+  nmax = nmax1 = active_atoms.size();
+  if (int retval = asab1_alloc()) {
+    return retval;
+  }
 
-   em("asab1_main");
-   em("asab1_main 1");
-   //  nmax1 = 4000;
-   em("asab1_main 2");
-   asa_opts = use_asa_opts;
-   results = use_results;
-   recheck = use_recheck;
-   active_atoms = use_active_atoms;
-   nmax = nmax1 = active_atoms.size();
-   if (int retval = asab1_alloc())
-   {
-      return retval;
-   }
+  int i, ii, l, j, s, kk, kkk;
+  // int ini;
+  int contatom, contatom1, indCA, indC, indO;
+  int posiz, massa = 0, check_asa = 0;
+  float sommarc, Dz, d1z, zz, temp, asamin, asalevel = 10, asapep, asatot, perc,
+                                            voltot;
+  char azoto[2];
+  char carbonio0[3];
+  char carbonio1[3];
+  char carbonio2[4];
 
-   int i, ii, l, j, s, kk, kkk;
-   // int ini;
-   int contatom, contatom1, indCA, indC, indO;
-   int posiz, massa = 0, check_asa = 0;
-   float sommarc, Dz, d1z, zz, temp, asamin, asalevel = 10, asapep, asatot, perc, voltot;
-   char azoto[2];
-   char carbonio0[3];
-   char carbonio1[3];
-   char carbonio2[4];
+  struct dati1 *dd1, *dd2;
 
-   struct dati1 *dd1, *dd2;
+  /* memory addressing   */
+  //    trans = &(inter[0][0]);
+  trans = inter;
 
-   /* memory addressing   */
-   //    trans = &(inter[0][0]);
-   trans = inter;
+  flag1 = 0;
 
-   flag1 = 0;
+  printf("########################################################\n");
+  printf("#    National Institute for Cancer Research (IST)      #\n");
+  printf("#          Advanced Biotechnologies Center (CBA)       #\n");
+  printf("#                    Genova, ITALY                     #\n");
+  printf("########################################################\n");
+  printf("#    ASAB1 - Preparing PDB files for bead modelling    #\n");
+  printf("#          - Re-checking bead models for ASA           #\n");
+  printf("#                                                      #\n");
+  printf("#                Version 3.5, August 2006              #\n");
+  printf("########################################################\n");
 
-   printf("########################################################\n");
-   printf("#    National Institute for Cancer Research (IST)      #\n");
-   printf("#          Advanced Biotechnologies Center (CBA)       #\n");
-   printf("#                    Genova, ITALY                     #\n");
-   printf("########################################################\n");
-   printf("#    ASAB1 - Preparing PDB files for bead modelling    #\n");
-   printf("#          - Re-checking bead models for ASA           #\n");
-   printf("#                                                      #\n");
-   printf("#                Version 3.5, August 2006              #\n");
-   printf("########################################################\n");
+  // ini = 3;
 
-   // ini = 3;
+  /*choice of the probe's radius*/
 
-   /*choice of the probe's radius*/
+  raggio_probe();
 
-   raggio_probe();
+  {
+    em("s3");
+    flag1 = 1;
+    init2();
+    em("s4");
+    // ini = 2;
+    check_asa = 1;
+    min_asa = asa_opts->threshold_percent;
+  }
 
-   {
-      em("s3");
-      flag1 = 1;
-      init2();
-      em("s4");
-      // ini = 2;
-      check_asa = 1;
-      min_asa = asa_opts->threshold_percent;
-   }
+  // cout << QString(" rprobe %1\n" ).arg( rprobe );
+  // cout << QString(" min_asa %1\n" ).arg( min_asa );
 
-   // cout << QString(" rprobe %1\n" ).arg( rprobe );
-   // cout << QString(" min_asa %1\n" ).arg( min_asa );
+  if (check_asa != 1)
+    dt[nat - 1].m = 17; /* 17 is assigned as mass for OXT - WARNING, good for
+                           single-chain structures only!!  */
 
-   if (check_asa != 1)
-      dt[nat - 1].m = 17;   /* 17 is assigned as mass for OXT - WARNING, good for single-chain structures only!!  */
+  em("s8");
+  ragir();
+  em("s9");
+  if (!recheck) {
+    results->asa_rg_pos = ro;
+    results->asa_rg_neg = ro1;
+  }
 
-   em("s8");
-   ragir();
-   em("s9");
-   if ( !recheck )
-   {
-      results->asa_rg_pos = ro;
-      results->asa_rg_neg = ro1;
-   }
+  mol1 = us_fopen("controll", "w");
+  for (l = 0; l < nat; l++) {
+    fprintf(mol1, "%s\t", dt[l].amin);
+    fprintf(mol1, "%s\t", dt[l].elm);
+    fprintf(mol1, "%d\t", dt[l].col);
+    fprintf(mol1, "%d\n", dt[l].m);
+  }
+  fclose(mol1);
 
-   mol1 = us_fopen("controll", "w");
-   for (l = 0; l < nat; l++)
-   {
-      fprintf(mol1, "%s\t", dt[l].amin);
-      fprintf(mol1, "%s\t", dt[l].elm);
-      fprintf(mol1, "%d\t", dt[l].col);
-      fprintf(mol1, "%d\n", dt[l].m);
-   }
-   fclose(mol1);
+  xm = ym = zm = (float)0.0;
 
-   xm = ym = zm = (float) 0.0;
+  for (i = 0; i < nat; i++) {
+    xm += dt[i].x * dt[i].m;
+    ym += dt[i].y * dt[i].m;
+    zm += dt[i].z * dt[i].m;
 
-   for (i = 0; i < nat; i++)
-   {
-      xm += dt[i].x * dt[i].m;
-      ym += dt[i].y * dt[i].m;
-      zm += dt[i].z * dt[i].m;
+    asa[i] = (float)0.0;
+    pos[i] = 0;
+    massa += dt[i].m;
+  }
 
-      asa[i] = (float) 0.0;
-      pos[i] = 0;
-      massa += dt[i].m;
-   }
+  xm = xm / massa;
+  ym = ym / massa;
+  zm = zm / massa;
 
-   xm = xm / massa;
-   ym = ym / massa;
-   zm = zm / massa;
+  mami1();
+  formato();
 
-   mami1();
-   formato();
+  /*
+    ord_d();
+  */
 
-   /*
-     ord_d();
-   */
+  Dz = ((float)fabs(maxz - minz)) / passi;
+  printf("\n\n\n");
 
-   Dz = ((float) fabs(maxz - minz)) / passi;
-   printf("\n\n\n");
+  for (i = 1; i < passi; i++) /* iteration for the number of steps */
+  {
+    zz = maxz - (Dz * i); /* slab to be examined */
+    kk = 0;
 
-   for (i = 1; i < passi; i++)   /* iteration for the number of steps */
-   {
-      
-      zz = maxz - (Dz * i);   /* slab to be examined */
-      kk = 0;
-
-      for (l = 0; l < nat; l++)   /* iteration for the number of atoms */
-      {
-         if (fabs(dt[l].z - zz) < dt[l].r)
-         {
-            dts[kk] = dt[l];
-            dts[kk].z = zz;
-            temp = (float) (fabs(dt[l].z - zz));
-            dts[kk].r = (float) (sqrt((dt[l].r * dt[l].r) - (temp * temp)));
-            pos[kk] = l;
-            kk++;
-         }
+    for (l = 0; l < nat; l++) /* iteration for the number of atoms */
+    {
+      if (fabs(dt[l].z - zz) < dt[l].r) {
+        dts[kk] = dt[l];
+        dts[kk].z = zz;
+        temp = (float)(fabs(dt[l].z - zz));
+        dts[kk].r = (float)(sqrt((dt[l].r * dt[l].r) - (temp * temp)));
+        pos[kk] = l;
+        kk++;
       }
+    }
 
-      cont1 = kk;
-      for (l = 0; l < cont1; l++)
-      {
-         indec[l] = 0;
-         interna[l] = 0;
-         f[l] = 0;
-      }
+    cont1 = kk;
+    for (l = 0; l < cont1; l++) {
+      indec[l] = 0;
+      interna[l] = 0;
+      f[l] = 0;
+    }
 
-      if (i == quota)
-      {
-         scala();
-         plotinit();
-      }
+    if (i == quota) {
+      scala();
+      plotinit();
+    }
 
-      nc = 0;
-      printf("%s%d\t", "Iteration number  = ", i + 1);
-      if (flag1 == 0)
-      {
-         printf("%s%d  ", "Number of atoms in this iteration = ", cont1);
-      }
-      else
-      {
-         printf("%s%d  ", "Number of beads in this iteration = ", cont1);
-      }
-      fflush(stdout);
+    nc = 0;
+    printf("%s%d\t", "Iteration number  = ", i + 1);
+    if (flag1 == 0) {
+      printf("%s%d  ", "Number of atoms in this iteration = ", cont1);
+    } else {
+      printf("%s%d  ", "Number of beads in this iteration = ", cont1);
+    }
+    fflush(stdout);
 
-      while (nc < cont1)
-      {
-         sommarc = (float) 0.0;
+    while (nc < cont1) {
+      sommarc = (float)0.0;
 
-         for (s = nc + 1; s < cont1; s++)
-         {
-            /* nc internal to s */
-            if ((dist(dts[nc].x, dts[nc].y, dts[s].x, dts[s].y) + dts[nc].r <= dts[s].r) || (interna[nc] < 0))
-            {
-               s = cont1;
-               goto RET0;
+      for (s = nc + 1; s < cont1; s++) {
+        /* nc internal to s */
+        if ((dist(dts[nc].x, dts[nc].y, dts[s].x, dts[s].y) + dts[nc].r <=
+             dts[s].r) ||
+            (interna[nc] < 0)) {
+          s = cont1;
+          goto RET0;
+        } else {
+          if (dist(dts[nc].x, dts[nc].y, dts[s].x, dts[s].y) <
+              dts[nc].r + dts[s].r) {
+            /* s interna ad nc */
+            if (dist(dts[nc].x, dts[nc].y, dts[s].x, dts[s].y) + dts[s].r <=
+                dts[nc].r)
+              interna[s] = -1;
+            else {
+              f[nc] = f[s] = 1;
+              cercaint(s);
+              valida((float)ix1, (float)iy1, s);
+              valida((float)ix2, (float)iy2, s);
             }
-            else
-            {
-               if (dist(dts[nc].x, dts[nc].y, dts[s].x, dts[s].y) < dts[nc].r + dts[s].r)
-               {
-                  /* s interna ad nc */
-                  if (dist(dts[nc].x, dts[nc].y, dts[s].x, dts[s].y) + dts[s].r <= dts[nc].r)
-                     interna[s] = -1;
-                  else
-                  {
-                     f[nc] = f[s] = 1;
-                     cercaint(s);
-                     valida((float) ix1, (float) iy1, s);
-                     valida((float) ix2, (float) iy2, s);
-                  }
-               }
-            }
-            /* closing initial for */
-         }
+          }
+        }
+        /* closing initial for */
+      }
 
-         if (indec[nc] == 0)
-         {
-            if (f[nc] == 1)
-               ;
-            else
-            {
-               if (i == quota)
-                  plotcircle();
-               posiz = pos[nc];
-               temp = (float) (sqrt((dt[posiz].r * dt[posiz].r) - (dts[nc].r * dts[nc].r)));
-               if (Dz / 2.0 > temp)
-                  d1z = temp;
-               else
-                  d1z = Dz / ((float) 2.0);
-               asa[posiz] += (((float) 2.0) * PI * dts[nc].r * dt[posiz].r / dts[nc].r * (Dz / ((float) 2.0) + d1z));
-            }
-         }
+      if (indec[nc] == 0) {
+        if (f[nc] == 1)
+          ;
+        else {
+          if (i == quota) plotcircle();
+          posiz = pos[nc];
+          temp = (float)(sqrt((dt[posiz].r * dt[posiz].r) -
+                              (dts[nc].r * dts[nc].r)));
+          if (Dz / 2.0 > temp)
+            d1z = temp;
+          else
+            d1z = Dz / ((float)2.0);
+          asa[posiz] += (((float)2.0) * PI * dts[nc].r * dt[posiz].r /
+                         dts[nc].r * (Dz / ((float)2.0) + d1z));
+        }
+      } else {
+        j = indec[nc];
+        ord_a();
+        calcdis();
+
+        for (ii = 0; ii < (j / 2); ii++) {
+          if (dis[ii].ai != 0.0) {
+            sommarc += dis[ii].ai;
+            if (i == quota) plotarc(ii);
+          }
+        }
+
+        posiz = pos[nc];
+        temp = (float)(sqrt((dt[posiz].r * dt[posiz].r) -
+                            (dts[nc].r * dts[nc].r)));
+
+        if (Dz / 2.0 > temp)
+          d1z = temp;
+        else
+          d1z = Dz / ((float)2.0);
+
+        temp = PI * dts[nc].r / ((float)180.0);
+
+        asa[posiz] += sommarc * temp * dt[posiz].r / dts[nc].r *
+                      (Dz / ((float)2.0) + d1z);
+      }
+
+    RET0:
+      nc = nc + 1;
+
+      /* closing initial while */
+    }
+
+    printf("\r");
+
+    /* closing for of the number of steps */
+  }
+
+  plotend();
+  ordcol();
+
+  if (check_asa != 1)
+    pippa = us_fopen(outris, "w");
+  else
+    goto a300;
+
+  perc = (float)0.0;
+  kkk = 1;
+  azoto[0] = 'N';
+  azoto[1] = 0;
+
+  strcpy(carbonio0, "C1");
+  strcpy(carbonio2, "C11");
+  strcpy(carbonio1, "C7");
+
+  /* carboniof[0]='C';
+     carboniof[1]='1';
+     carboniof[2]='1';
+     carboniof[3]=0;
+     carbonio0[0]='C';
+     carbonio0[1]='1';
+     carbonio0[2]=0;
+     plutone[0]='C';
+     plutone[1]='7';
+     plutone[2]=0; */
+
+  asamin = asa[0];
+
+  voltot = dt[0].vol;
+  asatot = 0;
+
+  fprintf(pippa, " N.\t   Res.       ASA MAXASA   %% \n\n\n");
+  for (l = 1; l < nat; l++) /* GROUPING ASA OF ATOMS INTO ASA OF RESIDUES */
+  {
+    dd1 = dd2 = dt;
+    dd1 += l;
+    dd2 += (l - 1);
+
+    /*   printf("\n%d\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",l,"dd1->descr, dd1->elm,
+       azoto, carbonio0, carbonio1, carbonio2:
+       ",dd1->descr,dd1->elm,azoto,carbonio0,carbonio1,carbonio2); if ( 1 ==
+       scanf("%s",pluto) ) {}; getchar(); */
+
+    /*   if(strcmp(dd1->elm,azoto)!=0)
+         asamin+=asa[l];
          else
          {
-            j = indec[nc];
-            ord_a();
-            calcdis();
 
-            for (ii = 0; ii < (j / 2); ii++)
-            {
-               if (dis[ii].ai != 0.0)
-               {
-                  sommarc += dis[ii].ai;
-                  if (i == quota)
-                     plotarc(ii);
-               }
-            }
+         printf("\n%s\n","Ora passo");
+         if ( 1 == scanf("%d",&topolino);    ) {};
 
-            posiz = pos[nc];
-            temp = (float) (sqrt((dt[posiz].r * dt[posiz].r) - (dts[nc].r * dts[nc].r)));
-
-            if (Dz / 2.0 > temp)
-               d1z = temp;
-            else
-               d1z = Dz / ((float) 2.0);
-
-            temp = PI * dts[nc].r / ((float) 180.0);
-
-            asa[posiz] += sommarc * temp * dt[posiz].r / dts[nc].r * (Dz / ((float) 2.0) + d1z);
-         }
-
-      RET0:
-         nc = nc + 1;
-
-         /* closing initial while */
-      }
-
-      printf("\r");
-
-      /* closing for of the number of steps */
-   }
-
-   plotend();
-   ordcol();
-
-   if (check_asa != 1)
-      pippa = us_fopen(outris, "w");
-   else
-      goto a300;
-
-   perc = (float) 0.0;
-   kkk = 1;
-   azoto[0] = 'N';
-   azoto[1] = 0;
-
-   strcpy(carbonio0, "C1");
-   strcpy(carbonio2, "C11");
-   strcpy(carbonio1, "C7");
-
-   /* carboniof[0]='C';
-      carboniof[1]='1'; 
-      carboniof[2]='1'; 
-      carboniof[3]=0; 
-      carbonio0[0]='C';
-      carbonio0[1]='1'; 
-      carbonio0[2]=0; 
-      plutone[0]='C';
-      plutone[1]='7';
-      plutone[2]=0; */
-
-   asamin = asa[0];
-
-   voltot = dt[0].vol;
-   asatot = 0;
-
-   fprintf(pippa, " N.\t   Res.       ASA MAXASA   %% \n\n\n");
-   for (l = 1; l < nat; l++)   /* GROUPING ASA OF ATOMS INTO ASA OF RESIDUES */
-   {
-      dd1 = dd2 = dt;
-      dd1 += l;
-      dd2 += (l - 1);
-
-      /*   printf("\n%d\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",l,"dd1->descr, dd1->elm, azoto, carbonio0, carbonio1, carbonio2: ",dd1->descr,dd1->elm,azoto,carbonio0,carbonio1,carbonio2);
-           if ( 1 == scanf("%s",pluto) ) {};
-           getchar(); */
-
-      /*   if(strcmp(dd1->elm,azoto)!=0)
-           asamin+=asa[l];
-           else
-           {
-
-           printf("\n%s\n","Ora passo");
-           if ( 1 == scanf("%d",&topolino);    ) {};
-
-           if(dt[l-1].tab<.001)
-           perc=100*asamin/((float) .001);
-           else
-           perc=100*asamin/dt[l-1].tab;
-           asatot+=asamin;
-           voltot+=dt[l].vol;
-           fprintf(pippa,"[ %d\t%s ] %5.0f %5.0f  %.1f\n",kkk,dt[l-1].amin,asamin,dt[l-1].tab,perc);
-           asamin=asa[l];
-           kkk++;
-           } */
-
-      /*   if((strcmp(dd1->elm,azoto)==0) || (strcmp(dd1->elm,carbonio0)==0)) / * NEW VERSION INCLUDING CARBOHYDRATES */
-
-      /* NEW VERSION INCLUDING CARBOHYDRATES AND OG */
-
-      if ((strcmp(dd1->elm, azoto) == 0) || (strcmp(dd1->elm, carbonio0) == 0)
-          || ((strcmp(dd1->elm, carbonio1) == 0) && (strcmp(dd1->amin, "OG2") == 0)) || ((strcmp(dd1->elm, carbonio2) == 0)
-                                                                                         && (strcmp(dd1->amin, "OG3") == 0)))
-      {
-
-         /*      printf("\n%s\n","Ora passo");
-                 printf("\n%d\t%s%d%s\t%f\t%s\t%f\n",l-1,"dt[",l-1,"].tab: ",dt[l-1].tab,"asamin: ",asamin);
-                 if ( 1 == scanf("%d",&topolino);     ) {};
-                 getchar(); */
-
-         if (dt[l - 1].tab < .001)
-            perc = 100 * asamin / ((float) .001);
+         if(dt[l-1].tab<.001)
+         perc=100*asamin/((float) .001);
          else
-            perc = 100 * asamin / dt[l - 1].tab;
-         asatot += asamin;
-         voltot += dt[l].vol;
-         fprintf(pippa, "[ %d\t%s ]  %5.0f %5.0f  %.1f\n", kkk, dt[l - 1].descr, asamin, dt[l - 1].tab, perc);
-         asamin = asa[l];
-         kkk++;
-      }
+         perc=100*asamin/dt[l-1].tab;
+         asatot+=asamin;
+         voltot+=dt[l].vol;
+         fprintf(pippa,"[ %d\t%s ] %5.0f %5.0f
+       %.1f\n",kkk,dt[l-1].amin,asamin,dt[l-1].tab,perc); asamin=asa[l]; kkk++;
+         } */
+
+    /*   if((strcmp(dd1->elm,azoto)==0) || (strcmp(dd1->elm,carbonio0)==0)) / *
+     * NEW VERSION INCLUDING CARBOHYDRATES */
+
+    /* NEW VERSION INCLUDING CARBOHYDRATES AND OG */
+
+    if ((strcmp(dd1->elm, azoto) == 0) || (strcmp(dd1->elm, carbonio0) == 0) ||
+        ((strcmp(dd1->elm, carbonio1) == 0) &&
+         (strcmp(dd1->amin, "OG2") == 0)) ||
+        ((strcmp(dd1->elm, carbonio2) == 0) &&
+         (strcmp(dd1->amin, "OG3") == 0))) {
+      /*      printf("\n%s\n","Ora passo");
+              printf("\n%d\t%s%d%s\t%f\t%s\t%f\n",l-1,"dt[",l-1,"].tab:
+         ",dt[l-1].tab,"asamin: ",asamin); if ( 1 == scanf("%d",&topolino); )
+         {}; getchar(); */
+
+      if (dt[l - 1].tab < .001)
+        perc = 100 * asamin / ((float).001);
       else
-         asamin += asa[l];
+        perc = 100 * asamin / dt[l - 1].tab;
+      asatot += asamin;
+      voltot += dt[l].vol;
+      fprintf(pippa, "[ %d\t%s ]  %5.0f %5.0f  %.1f\n", kkk, dt[l - 1].descr,
+              asamin, dt[l - 1].tab, perc);
+      asamin = asa[l];
+      kkk++;
+    } else
+      asamin += asa[l];
+  }
 
-   }
+  asatot += asamin;
 
-   asatot += asamin;
+  if (dt[l - 1].tab < .001)
+    perc = 100 * asamin / ((float).001);
+  else
+    perc = ((float)100.0) * asamin / (dt[l - 1].tab);
 
-   if (dt[l - 1].tab < .001)
-      perc = 100 * asamin / ((float) .001);
-   else
-      perc = ((float) 100.0) * asamin / (dt[l - 1].tab);
+  fprintf(pippa, "[ %d\t%s ]  %5.0f %5.0f  %.1f\n\n", kkk, dt[l - 1].descr,
+          asamin, dt[l - 1].tab, perc);
 
-   fprintf(pippa, "[ %d\t%s ]  %5.0f %5.0f  %.1f\n\n", kkk, dt[l - 1].descr, asamin, dt[l - 1].tab, perc);
+  fprintf(pippa, "\n\n\t%s%.0f\t%s%.1f%s\n",
+          "TOTAL ASA OF THE MOLECULE    =  ", asatot,
+          "[A^2]  (Threshold used: ", asalevel, " A^2]");
+  fprintf(pippa, "\t%s%.2f\t%s\n", "TOTAL VOLUME OF THE MOLECULE =  ", voltot,
+          "[A^3]");
+  fprintf(pippa, "\t%s%.2f\t%s\n", "RADIUS OF GYRATION (+r) =  ", ro, "[A]");
+  fprintf(pippa, "\t%s%.2f\t%s\n", "RADIUS OF GYRATION (-r) =  ", ro1, "[A]");
+  fprintf(pippa, "\t%s%d\t%s\n", "MASS OF THE MOLECULE    =  ", massa, "[Da]");
+  fprintf(pippa, "\t%s%.4f %.4f %.4f [A]\n", "CENTRE OF MASS          =  ", xm,
+          ym, zm);
 
-   fprintf(pippa, "\n\n\t%s%.0f\t%s%.1f%s\n", "TOTAL ASA OF THE MOLECULE    =  ", asatot, "[A^2]  (Threshold used: ", asalevel,
-           " A^2]");
-   fprintf(pippa, "\t%s%.2f\t%s\n", "TOTAL VOLUME OF THE MOLECULE =  ", voltot, "[A^3]");
-   fprintf(pippa, "\t%s%.2f\t%s\n", "RADIUS OF GYRATION (+r) =  ", ro, "[A]");
-   fprintf(pippa, "\t%s%.2f\t%s\n", "RADIUS OF GYRATION (-r) =  ", ro1, "[A]");
-   fprintf(pippa, "\t%s%d\t%s\n", "MASS OF THE MOLECULE    =  ", massa, "[Da]");
-   fprintf(pippa, "\t%s%.4f %.4f %.4f [A]\n", "CENTRE OF MASS          =  ", xm, ym, zm);
+  fclose(pippa);
 
+  /* computation of the ASA of the peptide bond */
 
-   fclose(pippa);
+  asapep = (float)0.0;
 
-   /* computation of the ASA of the peptide bond */
+  for (l = 1; l < nat; l++) {
+    dd1 = dt;
+    dd1 += l;
+    /*    printf("\n%d\t%s\t%s\t%s\t%d\t%s\t%s\n",l,"dd1->elm:
+       ",dd1->elm,"dd1->col: ",dd1->col,"dd1->descr: ",dd1->descr); if ( 1 ==
+       scanf("%s",pluto) ) {}; getchar(); */
+    if (strcmp(dd1->elm, "CA") == 0) {
+      asapep += asa[l];
+      indCA = l;
+      /*            printf("\n%s\n","Ora passo in asapep CA");
+                    printf("\n%s\t%d\t%s\t%f\t%s\t%f\n","indCA= ",indCA,"asapep:
+         ",asapep,"asa[l]",asa[l]); if ( 1 == scanf("%d",&topolino);    ) {};
+                    getchar(); */
+    }
 
-   asapep = (float) 0.0;
+    if (strcmp(dd1->elm, "C") == 0) {
+      asapep += asa[l];
+      indC = l;
+      /*             printf("\n%s\n","Ora passo in asapep C");
+                     printf("\n%s\t%d\t%s\t%f\t%s\t%f\n","indC= ",indC,"asapep:
+         ",asapep,"asa[l]",asa[l]); if ( 1 == scanf("%d",&topolino);    ) {};
+                     getchar(); */
+    }
+    if (strcmp(dd1->elm, "O") == 0) {
+      asapep += asa[l];
+      indO = l;
+      /*            printf("\n%s\n","Ora passo in asapep O");
+                    printf("\n%s\t%d\t%s\t%f\t%s\t%f\n","indO= ",indO,"asapep:
+         ",asapep,"asa[l]",asa[l]); if ( 1 == scanf("%d",&topolino);    ) {};
+                    getchar(); */
+    }
 
-   for (l = 1; l < nat; l++)
-   {
-      dd1 = dt;
-      dd1 += l;
-      /*    printf("\n%d\t%s\t%s\t%s\t%d\t%s\t%s\n",l,"dd1->elm: ",dd1->elm,"dd1->col: ",dd1->col,"dd1->descr: ",dd1->descr); 
-            if ( 1 == scanf("%s",pluto) ) {};
-            getchar(); */
-      if (strcmp(dd1->elm, "CA") == 0)
+    if (strcmp(dd1->elm, "N") == 0) {
+      /*        printf("\n%s\n","Ora passo in N     ");
+                if ( 1 == scanf("%d",&topolino);    ) {};
+                getchar(); */
+      dd2 = dt;
+      if (strcmp(dd1->amin, "PRO") !=
+          0) /* IF NOT A PROLINE, COUNTING "N" FOR THE ASA */
       {
-         asapep += asa[l];
-         indCA = l;
-         /*            printf("\n%s\n","Ora passo in asapep CA");
-                       printf("\n%s\t%d\t%s\t%f\t%s\t%f\n","indCA= ",indCA,"asapep: ",asapep,"asa[l]",asa[l]);
+        asapep += asa[l];
+        /*             printf("\n%s\n","Ora passo in N no PRO");
+                       printf("\n%d\t%s\t%s\t%s\t%s\n",l,"dd1->amin, azoto,
+           carbonio0: ",dd1->amin,azoto,carbonio0);
+                       printf("\n%s\t%d\t%s\t%f\t%s\t%f\n","indO=
+           ",indO,"asapep: ",asapep,"asa[l]",asa[l]); if ( 1 ==
+           scanf("%d",&topolino);    ) {}; getchar(); */
+        if (asapep <= asalevel) {
+          /*             printf("\n%s\n","Ora passo in asa<asamin"); */
+          dd2 += indCA;
+          dd2->col = 10;
+          /*     printf("\n%d\t%s\t%s\t%s\t%d\t%s\t%s\n",indCA,"dd2->elm:
+           * ",dd2->elm,"dd2->col: ",dd2->col,"dd2->descr: ",dd2->descr); */
+          /*                      dd2++; */
+          dd2 = dt;
+          dd2 += indC;
+          dd2->col = 10;
+          /*     printf("\n%d\t%s\t%s\t%s\t%d\t%s\t%s\n",indC,"dd2->elm:
+           * ",dd2->elm,"dd2->col: ",dd2->col,"dd2->descr: ",dd2->descr);  */
+          /*              dd2++; */
+          dd2 = dt;
+          dd2 += indO;
+          dd2->col = 10;
+          /*     printf("\n%d\t%s\t%s\t%s\t%d\t%s\t%s\n",indO,"dd2->elm:
+           * ",dd2->elm,"dd2->col: ",dd2->col,"dd2->descr: ",dd2->descr); */
+          dd1->col = 10;
+          /*     printf("\n%d\t%s\t%s\t%s\t%d\t%s\t%s\n",indO,"dd1->elm:
+             ",dd1->elm,"dd1->col: ",dd1->col,"dd1->descr: ",dd1->descr); if ( 1
+             == scanf("%s",pluto) ) {}; getchar(); */
+        }
+      } else {
+        /*             printf("\n%s\n","Ora passo N PRO");
                        if ( 1 == scanf("%d",&topolino);    ) {};
                        getchar(); */
+        if (asapep <= asalevel) {
+          dd2 += indCA;
+          dd2->col = 10;
+          /*              dd2++; */
+          dd2 = dt;
+          dd2 += indC;
+          dd2->col = 10;
+          /*              dd2++; */
+          dd2 = dt;
+          dd2 += indO;
+          dd2->col = 10;
+        }
       }
+      asapep = (float)0.0;
+    }
+  }
 
-      if (strcmp(dd1->elm, "C") == 0)
-      {
-         asapep += asa[l];
-         indC = l;
-         /*             printf("\n%s\n","Ora passo in asapep C");
-                        printf("\n%s\t%d\t%s\t%f\t%s\t%f\n","indC= ",indC,"asapep: ",asapep,"asa[l]",asa[l]);
-                        if ( 1 == scanf("%d",&topolino);    ) {};
-                        getchar(); */
-      }
-      if (strcmp(dd1->elm, "O") == 0)
-      {
-         asapep += asa[l];
-         indO = l;
-         /*            printf("\n%s\n","Ora passo in asapep O");
-                       printf("\n%s\t%d\t%s\t%f\t%s\t%f\n","indO= ",indO,"asapep: ",asapep,"asa[l]",asa[l]);
-                       if ( 1 == scanf("%d",&topolino);    ) {};
-                       getchar(); */
-      }
+  /*****************************************************/
 
-      if (strcmp(dd1->elm, "N") == 0)
-      {
-         /*        printf("\n%s\n","Ora passo in N     ");
-                   if ( 1 == scanf("%d",&topolino);    ) {};
-                   getchar(); */
-         dd2 = dt;
-         if (strcmp(dd1->amin, "PRO") != 0)   /* IF NOT A PROLINE, COUNTING "N" FOR THE ASA */
+  if (check_asa != 1) {
+    mol = us_fopen(outfile, "w");
+    mol1 = us_fopen(outfile1, "w");
+    mol2 = us_fopen(outfile2, "w");
+
+    fprintf(mol, "%d\t%f\t%s\n", nat, 0.0, outfile1);
+  }
+
+  perc = (float)0.0;
+  kkk = 1;
+  azoto[0] = 'N';
+  asamin = asa[0];
+  contatom = 1;
+  contatom1 = 0;
+
+  for (l = 1; l < nat; l++) {
+    dd1 = dt;
+    dd1 += l;
+
+    /*   if(strcmp(dd1->elm,azoto)!=0)
          {
-            asapep += asa[l];
-            /*             printf("\n%s\n","Ora passo in N no PRO");
-                           printf("\n%d\t%s\t%s\t%s\t%s\n",l,"dd1->amin, azoto, carbonio0: ",dd1->amin,azoto,carbonio0);
-                           printf("\n%s\t%d\t%s\t%f\t%s\t%f\n","indO= ",indO,"asapep: ",asapep,"asa[l]",asa[l]);
-                           if ( 1 == scanf("%d",&topolino);    ) {};
-                           getchar(); */
-            if (asapep <= asalevel)
-            {
-               /*             printf("\n%s\n","Ora passo in asa<asamin"); */
-               dd2 += indCA;
-               dd2->col = 10;
-               /*     printf("\n%d\t%s\t%s\t%s\t%d\t%s\t%s\n",indCA,"dd2->elm: ",dd2->elm,"dd2->col: ",dd2->col,"dd2->descr: ",dd2->descr); */
-               /*                      dd2++; */
-               dd2 = dt;
-               dd2 += indC;
-               dd2->col = 10;
-               /*     printf("\n%d\t%s\t%s\t%s\t%d\t%s\t%s\n",indC,"dd2->elm: ",dd2->elm,"dd2->col: ",dd2->col,"dd2->descr: ",dd2->descr);  */
-               /*              dd2++; */
-               dd2 = dt;
-               dd2 += indO;
-               dd2->col = 10;
-               /*     printf("\n%d\t%s\t%s\t%s\t%d\t%s\t%s\n",indO,"dd2->elm: ",dd2->elm,"dd2->col: ",dd2->col,"dd2->descr: ",dd2->descr); */
-               dd1->col = 10;
-               /*     printf("\n%d\t%s\t%s\t%s\t%d\t%s\t%s\n",indO,"dd1->elm: ",dd1->elm,"dd1->col: ",dd1->col,"dd1->descr: ",dd1->descr);  
-                      if ( 1 == scanf("%s",pluto) ) {};
-                      getchar(); */
-            }
-         }
-         else
-         {
-            /*             printf("\n%s\n","Ora passo N PRO");
-                           if ( 1 == scanf("%d",&topolino);    ) {};
-                           getchar(); */
-            if (asapep <= asalevel)
-            {
-               dd2 += indCA;
-               dd2->col = 10;
-               /*              dd2++; */
-               dd2 = dt;
-               dd2 += indC;
-               dd2->col = 10;
-               /*              dd2++; */
-               dd2 = dt;
-               dd2 += indO;
-               dd2->col = 10;
-            }
-         }
-         asapep = (float) 0.0;
-      }
-   }
-
-   /*****************************************************/
-
-   if (check_asa != 1)
-   {
-      mol = us_fopen(outfile, "w");
-      mol1 = us_fopen(outfile1, "w");
-      mol2 = us_fopen(outfile2, "w");
-
-      fprintf(mol, "%d\t%f\t%s\n", nat, 0.0, outfile1);
-   }
-
-   perc = (float) 0.0;
-   kkk = 1;
-   azoto[0] = 'N';
-   asamin = asa[0];
-   contatom = 1;
-   contatom1 = 0;
-
-   for (l = 1; l < nat; l++)
-   {
-      dd1 = dt;
-      dd1 += l;
-
-      /*   if(strcmp(dd1->elm,azoto)!=0)
-           {
-           contatom++;
-           asamin+=asa[l];
-           }
-           else
-           {
-           for(i=0;i<contatom;i++)
-           {
-           dd2=dt;
-           dd2+=(i+contatom1);
-           if(check_asa!=1)
-           {
-           fprintf(mol,"%f\t",dd2->x);
-           fprintf(mol,"%f\t",dd2->y);
-           fprintf(mol,"%f\n",dd2->z);
-           fprintf(mol1,"%f\t",dd2->r-rprobe);
-           fprintf(mol1,"%d\t",dd2->m);
-         
-           if(dd2->col==10)
-           fprintf(mol1,"%d\n",10);
-           else
-           {
-           if(asamin<10)
-           fprintf(mol1,"%d\n",6);
-           else
-           fprintf(mol1,"%d\n",1);
-           }
-
-           fprintf(mol2,"%s\t",dd2->elm);
-           fprintf(mol2,"%s\t",dd2->amin);
-           fprintf(mol2,"%s\n",dd2->descr);
-           }
-           }
-           contatom1+=contatom;
-           contatom=1;
-           asamin=asa[l];
-           }  */
-
-      /*   NEW VERSION INCLUDING THE CARBOHYDRATES AND OG  */
-      /*   if((strcmp(dd1->elm,azoto)==0) || (strcmp(dd1->elm,carbonio0)==0)) */
-      if ((strcmp(dd1->elm, azoto) == 0) || (strcmp(dd1->elm, carbonio0) == 0)
-          || ((strcmp(dd1->elm, carbonio1) == 0) && (strcmp(dd1->amin, "OG2") == 0)) || ((strcmp(dd1->elm, carbonio2) == 0)
-                                                                                         && (strcmp(dd1->amin, "OG3") == 0)))
-      {
-         for (i = 0; i < contatom; i++)
-         {
-            dd2 = dt;
-            dd2 += (i + contatom1);
-            if (check_asa != 1)
-            {
-               fprintf(mol, "%f\t", dd2->x);
-               fprintf(mol, "%f\t", dd2->y);
-               fprintf(mol, "%f\n", dd2->z);
-               fprintf(mol1, "%f\t", dd2->r - rprobe);
-               fprintf(mol1, "%d\t", dd2->m);
-
-               if (dd2->col == 10)
-               {
-                  fprintf(mol1, "%d\n", 10);
-                  /*   printf("\n%d\t%s\t%s\t%s\t%d\t%s\t%s\n",i,"Minni dd2->elm: ",dd2->elm,"dd2->col: ",dd2->col,"dd2->descr: ",dd2->descr);
-                       if ( 1 == scanf("%s",pluto) ) {};
-                       getchar();   */
-               }
-               else
-               {
-                  if (asamin < asalevel)
-                  {
-                     if ((strcmp(dd2->amin, "MAN") == 0) || (strcmp(dd2->amin, "GAL") == 0) || (strcmp(dd2->amin, "SIA") == 0) || (strcmp(dd2->amin, "FUC") == 0) || (strcmp(dd2->amin, "NAG") == 0) || (strcmp(dd2->amin, "OG1") == 0) || (strcmp(dd2->amin, "OG2") == 0) || (strcmp(dd2->amin, "OG3") == 0))   /* COLOR CODING DIFFERENTLY THE CARBOHYDRATES AND OG */
-                     {
-                        fprintf(mol1, "%d\n", 6);   /* REVERTED TO ORIGINAL */
-                     }
-                     else
-                     {
-                        if (strcmp(dd2->elm, azoto) == 0)
-                        {
-                           if (dd2->col == 10)
-                           {
-                              fprintf(mol1, "%d\n", 10);
-                              /*   printf("\n%d\t%s\t%s\t%s\t%d\t%s\t%s\n",i,"Pluto dd2->elm: ",dd2->elm,"dd2->col: ",dd2->col,"dd2->descr: ",dd2->descr);
-                                   if ( 1 == scanf("%s",pluto) ) {};
-                                   getchar(); */
-                           }
-                           else
-                              fprintf(mol1, "%d\n", 1);
-                        }
-                        /* FIXED 27/2/2003 TO AVOID PRINTING '6' FOR THE CA, C, O ATOMS OF THE PEPTIDE BOND */
-                        else if (strcmp(dd2->elm, "CA") == 0 || strcmp(dd2->elm, "C") == 0
-                                 || strcmp(dd2->elm, "O") == 0)
-                           fprintf(mol1, "%d\n", 1);
-                        else
-                        {
-                           fprintf(mol1, "%d\n", 6);
-                           /*   printf("\n%d\t%s\t%s\t%s\t%d\t%s\t%s\n",i,"Pippo dd2->elm: ",dd2->elm,"dd2->col: ",dd2->col,"dd2->descr: ",dd2->descr);
-                                if ( 1 == scanf("%s",pluto) ) {};
-                                getchar(); */
-                        }
-                     }
-                  }
-                  else
-                  {
-                     if ((strcmp(dd2->amin, "MAN") == 0) || (strcmp(dd2->amin, "GAL") == 0) || (strcmp(dd2->amin, "SIA") == 0) || (strcmp(dd2->amin, "FUC") == 0) || (strcmp(dd2->amin, "NAG") == 0) || (strcmp(dd2->amin, "OG1") == 0) || (strcmp(dd2->amin, "OG2") == 0) || (strcmp(dd2->amin, "OG3") == 0))   /* COLOR CODING DIFFERENTLY THE CARBOHYDRATES AND OG */
-                     {
-                        fprintf(mol1, "%d\n", 1);   /* REVERTED TO ORIGINAL  */
-                     }
-                     else
-                        fprintf(mol1, "%d\n", 1);
-                  }
-               }
-
-               fprintf(mol2, "%s\t", dd2->elm);
-               fprintf(mol2, "%s\t", dd2->amin);
-               fprintf(mol2, "%s\n", dd2->descr);
-            }
-         }
-         contatom1 += contatom;
-         contatom = 1;
-         asamin = asa[l];
-      }
-      else
-      {
          contatom++;
-         asamin += asa[l];
-      }
-   }
+         asamin+=asa[l];
+         }
+         else
+         {
+         for(i=0;i<contatom;i++)
+         {
+         dd2=dt;
+         dd2+=(i+contatom1);
+         if(check_asa!=1)
+         {
+         fprintf(mol,"%f\t",dd2->x);
+         fprintf(mol,"%f\t",dd2->y);
+         fprintf(mol,"%f\n",dd2->z);
+         fprintf(mol1,"%f\t",dd2->r-rprobe);
+         fprintf(mol1,"%d\t",dd2->m);
 
-   for (i = 0; i < contatom; i++)
-   {
-      dd2 = dt;
-      dd2 += (i + contatom1);
+         if(dd2->col==10)
+         fprintf(mol1,"%d\n",10);
+         else
+         {
+         if(asamin<10)
+         fprintf(mol1,"%d\n",6);
+         else
+         fprintf(mol1,"%d\n",1);
+         }
 
-      if (check_asa != 1)
-      {
-         fprintf(mol, "%f\t", dd2->x);
-         fprintf(mol, "%f\t", dd2->y);
-         fprintf(mol, "%f\n", dd2->z);
-         fprintf(mol1, "%f\t", dd2->r - rprobe);
-         fprintf(mol1, "%d\t", dd2->m);
+         fprintf(mol2,"%s\t",dd2->elm);
+         fprintf(mol2,"%s\t",dd2->amin);
+         fprintf(mol2,"%s\n",dd2->descr);
+         }
+         }
+         contatom1+=contatom;
+         contatom=1;
+         asamin=asa[l];
+         }  */
 
-         if (dd2->col == 10)
+    /*   NEW VERSION INCLUDING THE CARBOHYDRATES AND OG  */
+    /*   if((strcmp(dd1->elm,azoto)==0) || (strcmp(dd1->elm,carbonio0)==0)) */
+    if ((strcmp(dd1->elm, azoto) == 0) || (strcmp(dd1->elm, carbonio0) == 0) ||
+        ((strcmp(dd1->elm, carbonio1) == 0) &&
+         (strcmp(dd1->amin, "OG2") == 0)) ||
+        ((strcmp(dd1->elm, carbonio2) == 0) &&
+         (strcmp(dd1->amin, "OG3") == 0))) {
+      for (i = 0; i < contatom; i++) {
+        dd2 = dt;
+        dd2 += (i + contatom1);
+        if (check_asa != 1) {
+          fprintf(mol, "%f\t", dd2->x);
+          fprintf(mol, "%f\t", dd2->y);
+          fprintf(mol, "%f\n", dd2->z);
+          fprintf(mol1, "%f\t", dd2->r - rprobe);
+          fprintf(mol1, "%d\t", dd2->m);
+
+          if (dd2->col == 10) {
             fprintf(mol1, "%d\n", 10);
-         else
-         {
-            if (asamin < asalevel)
-               fprintf(mol1, "%d\n", 6);
-            else
-               fprintf(mol1, "%d\n", 1);
-         }
-
-         fprintf(mol2, "%s\t", dd2->elm);
-         fprintf(mol2, "%s\t", dd2->amin);
-         fprintf(mol2, "%s\n", dd2->descr);
-      }
-   }
-
-   if (check_asa != 1)
-   {
-      fclose(mol);
-      fclose(mol1);
-      fclose(mol2);
-   }
- a300:
-
-   if (check_asa == 1)
-   {
-      printf("\n\nRE-CHECK\n");
-      /*   pippa=us_fopen(outfile1,"w");   */
-      dd2 = dt;
-      countb = 0;
-
-      for (l = 0; l < nat; l++)
-      {
-#if defined( DEBUG_ASA )
-         printf("%d %.2f\n", l, asa[l]);
-#endif
-         float sa = 4.0f * M_PI * active_atoms[l]->radius * active_atoms[l]->radius;
-         float sapp = 4.0f * M_PI * (rprobe + active_atoms[l]->radius) * (rprobe + active_atoms[l]->radius);
-
-         if ( us_isnan(asa[l]) )
-         {
-            printf("ASA WARNING NAN begin replaced by zero: atom %u asa %f > sa+p %f (sa %f)\n",
-                   l,
-                   asa[l],
-                   sapp,
-                   sa);
-            asa[l] = 0;
-         }
-
-         if ( asa[l] > sapp )
-         {
-            printf("ASA WARNING: atom %u asa %f > sa+p %f (sa %f)\n",
-                   l,
-                   asa[l],
-                   sapp,
-                   sa);
-         } else {
-#if defined( DEBUG_ASA )
-            printf("ASA: atom %u asa %f sapp %f sa %f\n",
-                   l,
-                   asa[l],
-                   sapp,
-                   sa);
-#endif
-         }            
-
-         if (!recheck) 
-         {
-            active_atoms[l]->asa = asa[l];
-         } else {
-            active_atoms[l]->bead_recheck_asa = asa[l];
-         }
-         if (dt[l].col == 6)
-         {
-            /*bead's surface */
-            zz = ((float) 4.0) * PI * dt[l].r * dt[l].r;
-            temp = asa[l] / zz;
-            temp *= (float) 100.0;
-            if (temp >= min_asa)
-            {
-               countb = countb + 1;
-               dt[l].col = 8;
-               printf("\n #%d [bead %4d] - Surf_%6.2f - ASA_%6.2f o/oASA_%6.2f - Threshold_%6.2f", countb, l + 1, zz,
-                      asa[l], asa[l] * 100 / zz, min_asa);
+            /*   printf("\n%d\t%s\t%s\t%s\t%d\t%s\t%s\n",i,"Minni dd2->elm:
+               ",dd2->elm,"dd2->col: ",dd2->col,"dd2->descr: ",dd2->descr); if (
+               1 == scanf("%s",pluto) ) {}; getchar();   */
+          } else {
+            if (asamin < asalevel) {
+              if ((strcmp(dd2->amin, "MAN") == 0) ||
+                  (strcmp(dd2->amin, "GAL") == 0) ||
+                  (strcmp(dd2->amin, "SIA") == 0) ||
+                  (strcmp(dd2->amin, "FUC") == 0) ||
+                  (strcmp(dd2->amin, "NAG") == 0) ||
+                  (strcmp(dd2->amin, "OG1") == 0) ||
+                  (strcmp(dd2->amin, "OG2") == 0) ||
+                  (strcmp(dd2->amin, "OG3") ==
+                   0)) /* COLOR CODING DIFFERENTLY THE CARBOHYDRATES AND OG */
+              {
+                fprintf(mol1, "%d\n", 6); /* REVERTED TO ORIGINAL */
+              } else {
+                if (strcmp(dd2->elm, azoto) == 0) {
+                  if (dd2->col == 10) {
+                    fprintf(mol1, "%d\n", 10);
+                    /*   printf("\n%d\t%s\t%s\t%s\t%d\t%s\t%s\n",i,"Pluto
+                       dd2->elm: ",dd2->elm,"dd2->col: ",dd2->col,"dd2->descr:
+                       ",dd2->descr); if ( 1 == scanf("%s",pluto) ) {};
+                         getchar(); */
+                  } else
+                    fprintf(mol1, "%d\n", 1);
+                }
+                /* FIXED 27/2/2003 TO AVOID PRINTING '6' FOR THE CA, C, O ATOMS
+                   OF THE PEPTIDE BOND */
+                else if (strcmp(dd2->elm, "CA") == 0 ||
+                         strcmp(dd2->elm, "C") == 0 ||
+                         strcmp(dd2->elm, "O") == 0)
+                  fprintf(mol1, "%d\n", 1);
+                else {
+                  fprintf(mol1, "%d\n", 6);
+                  /*   printf("\n%d\t%s\t%s\t%s\t%d\t%s\t%s\n",i,"Pippo
+                     dd2->elm: ",dd2->elm,"dd2->col: ",dd2->col,"dd2->descr:
+                     ",dd2->descr); if ( 1 == scanf("%s",pluto) ) {}; getchar();
+                   */
+                }
+              }
+            } else {
+              if ((strcmp(dd2->amin, "MAN") == 0) ||
+                  (strcmp(dd2->amin, "GAL") == 0) ||
+                  (strcmp(dd2->amin, "SIA") == 0) ||
+                  (strcmp(dd2->amin, "FUC") == 0) ||
+                  (strcmp(dd2->amin, "NAG") == 0) ||
+                  (strcmp(dd2->amin, "OG1") == 0) ||
+                  (strcmp(dd2->amin, "OG2") == 0) ||
+                  (strcmp(dd2->amin, "OG3") ==
+                   0)) /* COLOR CODING DIFFERENTLY THE CARBOHYDRATES AND OG */
+              {
+                fprintf(mol1, "%d\n", 1); /* REVERTED TO ORIGINAL  */
+              } else
+                fprintf(mol1, "%d\n", 1);
             }
+          }
+
+          fprintf(mol2, "%s\t", dd2->elm);
+          fprintf(mol2, "%s\t", dd2->amin);
+          fprintf(mol2, "%s\n", dd2->descr);
+        }
+      }
+      contatom1 += contatom;
+      contatom = 1;
+      asamin = asa[l];
+    } else {
+      contatom++;
+      asamin += asa[l];
+    }
+  }
+
+  for (i = 0; i < contatom; i++) {
+    dd2 = dt;
+    dd2 += (i + contatom1);
+
+    if (check_asa != 1) {
+      fprintf(mol, "%f\t", dd2->x);
+      fprintf(mol, "%f\t", dd2->y);
+      fprintf(mol, "%f\n", dd2->z);
+      fprintf(mol1, "%f\t", dd2->r - rprobe);
+      fprintf(mol1, "%d\t", dd2->m);
+
+      if (dd2->col == 10)
+        fprintf(mol1, "%d\n", 10);
+      else {
+        if (asamin < asalevel)
+          fprintf(mol1, "%d\n", 6);
+        else
+          fprintf(mol1, "%d\n", 1);
+      }
+
+      fprintf(mol2, "%s\t", dd2->elm);
+      fprintf(mol2, "%s\t", dd2->amin);
+      fprintf(mol2, "%s\n", dd2->descr);
+    }
+  }
+
+  if (check_asa != 1) {
+    fclose(mol);
+    fclose(mol1);
+    fclose(mol2);
+  }
+a300:
+
+  if (check_asa == 1) {
+    printf("\n\nRE-CHECK\n");
+    /*   pippa=us_fopen(outfile1,"w");   */
+    dd2 = dt;
+    countb = 0;
+
+    for (l = 0; l < nat; l++) {
+#if defined(DEBUG_ASA)
+      printf("%d %.2f\n", l, asa[l]);
+#endif
+      float sa =
+          4.0f * M_PI * active_atoms[l]->radius * active_atoms[l]->radius;
+      float sapp = 4.0f * M_PI * (rprobe + active_atoms[l]->radius) *
+                   (rprobe + active_atoms[l]->radius);
+
+      if (us_isnan(asa[l])) {
+        printf(
+            "ASA WARNING NAN begin replaced by zero: atom %u asa %f > sa+p %f "
+            "(sa %f)\n",
+            l, asa[l], sapp, sa);
+        asa[l] = 0;
+      }
+
+      if (asa[l] > sapp) {
+        printf("ASA WARNING: atom %u asa %f > sa+p %f (sa %f)\n", l, asa[l],
+               sapp, sa);
+      } else {
+#if defined(DEBUG_ASA)
+        printf("ASA: atom %u asa %f sapp %f sa %f\n", l, asa[l], sapp, sa);
+#endif
+      }
+
+      if (!recheck) {
+        active_atoms[l]->asa = asa[l];
+      } else {
+        active_atoms[l]->bead_recheck_asa = asa[l];
+      }
+      if (dt[l].col == 6) {
+        /*bead's surface */
+        zz = ((float)4.0) * PI * dt[l].r * dt[l].r;
+        temp = asa[l] / zz;
+        temp *= (float)100.0;
+        if (temp >= min_asa) {
+          countb = countb + 1;
+          dt[l].col = 8;
+          printf(
+              "\n #%d [bead %4d] - Surf_%6.2f - ASA_%6.2f o/oASA_%6.2f - "
+              "Threshold_%6.2f",
+              countb, l + 1, zz, asa[l], asa[l] * 100 / zz, min_asa);
+        }
+      }
+
+      /*      fprintf(pippa,"%f\t%d\t%d\n",dt[l].r-rprobe,dt[l].m,dt[l].col); */
+    }
+    /*   fclose(pippa);   */
+
+    /*   i=0;
+         for(l=0;l<nat;l++)
+         {
+         if(dt[l].col!=8)
+         i++;
          }
+    */
+    mol = us_fopen(ridotto, "w");
+    if ((raggio >= ((float)-2.1)) && (raggio <= ((float)-1.9)))
+      fprintf(mol, "%d\t%f\t%s\t%f\n", nat, raggio, ridotto_rmc, psv);
+    else
+      fprintf(mol, "%d\t%f\t%s\n", nat, raggio, ridotto_rmc);
 
-         /*      fprintf(pippa,"%f\t%d\t%d\n",dt[l].r-rprobe,dt[l].m,dt[l].col); */
-      }
-      /*   fclose(pippa);   */
-
-      /*   i=0;
-           for(l=0;l<nat;l++)
-           {
-           if(dt[l].col!=8)
-           i++;
-           }
-      */
-      mol = us_fopen(ridotto, "w");
-      if ((raggio >= ((float) -2.1)) && (raggio <= ((float) -1.9)))
-         fprintf(mol, "%d\t%f\t%s\t%f\n", nat, raggio, ridotto_rmc, psv);
+    mol1 = us_fopen(ridotto_rmc, "w");
+    for (l = 0; l < nat; l++) {
+      /*      if(dt[l].col!=8)
+              {   */
+      fprintf(mol, "%f\t%f\t%f\n", dt[l].x, dt[l].y, dt[l].z);
+      if ((raggio >= ((float)-4.1)) && (raggio <= ((float)-3.9)))
+        fprintf(mol1, "%f\t%d\t%d\t%s\n", dt[l].r - rprobe, dt[l].m, dt[l].col,
+                dt[l].descr);
       else
-         fprintf(mol, "%d\t%f\t%s\n", nat, raggio, ridotto_rmc);
+        fprintf(mol1, "%f\t%d\t%d\n", dt[l].r - rprobe, dt[l].m, dt[l].col);
+      /*         }   */
+    }
+    fclose(mol1);
+    fclose(mol);
+  }
+  printf("\n\n\n");
+  asab1_free_alloced();
+  QFile::remove("controll");
+  QFile::remove("plotter");
+  QFile::remove("plotter1");
 
-      mol1 = us_fopen(ridotto_rmc, "w");
-      for (l = 0; l < nat; l++)
-      {
-         /*      if(dt[l].col!=8)
-                 {   */
-         fprintf(mol, "%f\t%f\t%f\n", dt[l].x, dt[l].y, dt[l].z);
-         if ((raggio >= ((float) -4.1)) && (raggio <= ((float) -3.9)))
-            fprintf(mol1, "%f\t%d\t%d\t%s\n", dt[l].r - rprobe, dt[l].m, dt[l].col, dt[l].descr);
-         else
-            fprintf(mol1, "%f\t%d\t%d\n", dt[l].r - rprobe, dt[l].m, dt[l].col);
-         /*         }   */
-      }
-      fclose(mol1);
-      fclose(mol);
-   }
-   printf("\n\n\n");
-   asab1_free_alloced();
-   QFile::remove("controll");
-   QFile::remove("plotter");
-   QFile::remove("plotter1");
-
-   return 0;
+  return 0;
 }
 
-// ----------------------------------- bsort.c -------------------------------------
-// #warning bsort.c 
+// ----------------------------------- bsort.c
+// ------------------------------------- #warning bsort.c
 
 #if defined(NOT_USED)
-static void
-ord_d()
-{
-   int i, j;
-   struct dati1 x;
-   struct dati1 *y1, *y2;
+static void ord_d() {
+  int i, j;
+  struct dati1 x;
+  struct dati1 *y1, *y2;
 
-   for (i = 1; i < nat; i++)
-   {
-      for (j = nat - 1; j >= i; j--)
-      {
-         y1 = dt;
-         y1 += j;
-         y2 = y1 - 1;
+  for (i = 1; i < nat; i++) {
+    for (j = nat - 1; j >= i; j--) {
+      y1 = dt;
+      y1 += j;
+      y2 = y1 - 1;
 
-         if (y2->z < y1->z)
-         {
-            x = *y2;
-            *y2 = *y1;
-            *y1 = x;
-         }
+      if (y2->z < y1->z) {
+        x = *y2;
+        *y2 = *y1;
+        *y1 = x;
       }
-   }
+    }
+  }
 }
 #endif
 
-static void
-ord_a()
-{
+static void ord_a() {
+  int i, j;
+  struct dati2 x;
+  struct dati2 *y1, *y2;
 
-   int i, j;
-   struct dati2 x;
-   struct dati2 *y1, *y2;
+  for (i = 1; i < indec[nc]; i++) {
+    for (j = indec[nc] - 1; j >= i; j--) {
+      y1 = trans;
+      y1 += (nc * IMAX) + j;
+      y2 = y1 - 1;
 
-   for (i = 1; i < indec[nc]; i++)
-   {
-      for (j = indec[nc] - 1; j >= i; j--)
-      {
-         y1 = trans;
-         y1 += (nc * IMAX) + j;
-         y2 = y1 - 1;
-
-         if (y2->ai > y1->ai)
-         {
-            x = *y2;
-            *y2 = *y1;
-            *y1 = x;
-         }
+      if (y2->ai > y1->ai) {
+        x = *y2;
+        *y2 = *y1;
+        *y1 = x;
       }
-   }
+    }
+  }
 }
 
-// ----------------------------------- calc.c -------------------------------------
-// #warning calc.c 
+// ----------------------------------- calc.c
+// ------------------------------------- #warning calc.c
 
 // float ang(float, float);
 // float ang1(float, float, int);
 // float dist(float, float, float, float);
 
-static float
-ang(float xi, float yi)
-{
-   float ia, x, y;
-   struct dati1 *xy;
+static float ang(float xi, float yi) {
+  float ia, x, y;
+  struct dati1 *xy;
 
-   xy = dts;
-   xy += nc;
+  xy = dts;
+  xy += nc;
 
-   x = xy->x;
-   y = xy->y;
+  x = xy->x;
+  y = xy->y;
 
-   if (xi == x)
-   {
-      if (yi > y)
-         ia = PI / ((float) 2.0);
-      else
-         ia = ((float) 3.0) * PI / ((float) 2.0);
-   }
+  if (xi == x) {
+    if (yi > y)
+      ia = PI / ((float)2.0);
+    else
+      ia = ((float)3.0) * PI / ((float)2.0);
+  }
 
-   else
-   {
-      ia = (float) atan((yi - y) / (xi - x));
+  else {
+    ia = (float)atan((yi - y) / (xi - x));
 
-      if (xi >= x)
-      {
-         if (ia < 0.0)
-            ia = (float) fmod((2.0 * PI + ia), (2.0 * PI));
-      }
-      else
-         ia = ia + PI;
-   }
+    if (xi >= x) {
+      if (ia < 0.0) ia = (float)fmod((2.0 * PI + ia), (2.0 * PI));
+    } else
+      ia = ia + PI;
+  }
 
-   return (ia);
+  return (ia);
 }
 
 /**************************************************/
 
-static float
-ang1(float xi, float yi, int k)
-{
-   float ia, x, y;
-   struct dati1 *xy;
+static float ang1(float xi, float yi, int k) {
+  float ia, x, y;
+  struct dati1 *xy;
 
-   xy = dts;
-   xy += k;
+  xy = dts;
+  xy += k;
 
-   x = xy->x;
-   y = xy->y;
+  x = xy->x;
+  y = xy->y;
 
-   if (xi == x)
-   {
-      if (yi > y)
-         ia = PI / ((float) 2.0);
-      else
-         ia = ((float) 3.0) * PI / ((float) 2.0);
-   }
-   else
-   {
-      ia = (float) atan((yi - y) / (xi - x));
-      if (xi >= x)
-      {
-         if (ia < 0.0)
-            ia = (float) fmod((2.0 * PI + ia), (2.0 * PI));
-      }
-      else
-         ia = ia + PI;
-   }
+  if (xi == x) {
+    if (yi > y)
+      ia = PI / ((float)2.0);
+    else
+      ia = ((float)3.0) * PI / ((float)2.0);
+  } else {
+    ia = (float)atan((yi - y) / (xi - x));
+    if (xi >= x) {
+      if (ia < 0.0) ia = (float)fmod((2.0 * PI + ia), (2.0 * PI));
+    } else
+      ia = ia + PI;
+  }
 
-   return (ia);
+  return (ia);
 }
 
 /**********************************************/
 
-static float
-dist(float x1, float y1, float x2, float y2)
-{
-   float d;
+static float dist(float x1, float y1, float x2, float y2) {
+  float d;
 
-   d = (float) sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
-   return (d);
+  d = (float)sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
+  return (d);
 }
 
-// ----------------------------------- cdis.c -------------------------------------
-// #warning cdis.c 
+// ----------------------------------- cdis.c
+// ------------------------------------- #warning cdis.c
 
 // extern float dist(float, float, float, float);
 
-static void
-calcdis()
-{
-   int i, j, flag;
-   float ap, xp, yp;
-   float x, y, r;
+static void calcdis() {
+  int i, j, flag;
+  float ap, xp, yp;
+  float x, y, r;
 
-   struct dati1 *xy;
-   struct dati2 *z1, *z2;
+  struct dati1 *xy;
+  struct dati2 *z1, *z2;
 
-   xy = dts;
-   xy += nc;
+  xy = dts;
+  xy += nc;
 
-   x = xy->x;
-   y = xy->y;
-   r = xy->r;
+  x = xy->x;
+  y = xy->y;
+  r = xy->r;
 
-   z1 = trans;
-   z1 += (nc * IMAX);
-   z2 = z1;
-   z2++;
+  z1 = trans;
+  z1 += (nc * IMAX);
+  z2 = z1;
+  z2++;
 
-   ap = (z1->ai + z2->ai) / ((float) 2.0);
-   xp = ((float) cos(ap)) * r + x;
-   yp = ((float) sin(ap)) * r + y;
+  ap = (z1->ai + z2->ai) / ((float)2.0);
+  xp = ((float)cos(ap)) * r + x;
+  yp = ((float)sin(ap)) * r + y;
 
-   i = 0;
-   flag = 1;
+  i = 0;
+  flag = 1;
 
-   while ((i < cont1) && (flag == 1))
-   {
-      if (i == nc)
-         i++;
-      else
-      {
-         xy = dts;
-         xy += i;
-
-         x = xy->x;
-         y = xy->y;
-         r = xy->r;
-
-         if (dist(xp, yp, x, y) <= r)
-            flag = 0;
-      }
+  while ((i < cont1) && (flag == 1)) {
+    if (i == nc)
       i++;
-   }
+    else {
+      xy = dts;
+      xy += i;
 
-   if (flag == 1)
-   {
-      i = 0;
-      j = 0;
+      x = xy->x;
+      y = xy->y;
+      r = xy->r;
 
-      while (i < indec[nc])
-      {
-         z1 = trans;
-         z1 += (nc * IMAX) + i;
-         z2 = z1;
-         z2++;
+      if (dist(xp, yp, x, y) <= r) flag = 0;
+    }
+    i++;
+  }
 
-         dis[j].xi = z1->xi;
-         dis[j].yi = z1->yi;
-         dis[j].ai = (z2->ai - z1->ai) * 180 / PI;
+  if (flag == 1) {
+    i = 0;
+    j = 0;
 
-         i = i + 2;
-         j++;
-      }
-   }
-   else
-   {
-      i = 1;
-      j = 0;
-
-      while (i < indec[nc] - 1)
-      {
-         z1 = trans;
-         z1 += (nc * IMAX) + i;
-         z2 = z1;
-         z2++;
-
-         dis[j].xi = z1->xi;
-         dis[j].yi = z1->yi;
-         dis[j].ai = (z2->ai - z1->ai) * ((float) 180.0) / PI;
-
-         i = i + 2;
-         j++;
-      }
-
+    while (i < indec[nc]) {
       z1 = trans;
-      z1 += (nc * IMAX);
+      z1 += (nc * IMAX) + i;
       z2 = z1;
-      z1 += (indec[nc] - 1);
+      z2++;
 
       dis[j].xi = z1->xi;
       dis[j].yi = z1->yi;
-      dis[j].ai = (((float) 2.0) * PI - z1->ai + z2->ai) * ((float) 180.0) / PI;
-   }
+      dis[j].ai = (z2->ai - z1->ai) * 180 / PI;
+
+      i = i + 2;
+      j++;
+    }
+  } else {
+    i = 1;
+    j = 0;
+
+    while (i < indec[nc] - 1) {
+      z1 = trans;
+      z1 += (nc * IMAX) + i;
+      z2 = z1;
+      z2++;
+
+      dis[j].xi = z1->xi;
+      dis[j].yi = z1->yi;
+      dis[j].ai = (z2->ai - z1->ai) * ((float)180.0) / PI;
+
+      i = i + 2;
+      j++;
+    }
+
+    z1 = trans;
+    z1 += (nc * IMAX);
+    z2 = z1;
+    z1 += (indec[nc] - 1);
+
+    dis[j].xi = z1->xi;
+    dis[j].yi = z1->yi;
+    dis[j].ai = (((float)2.0) * PI - z1->ai + z2->ai) * ((float)180.0) / PI;
+  }
 }
 
-// ----------------------------------- cor.c -------------------------------------
-// #warning cor.c 
+// ----------------------------------- cor.c
+// ------------------------------------- #warning cor.c
 
 // void cordis(int);
 
 #if defined(NOT_USED)
-static void
-cordis(int s)
-{
-   double a, b, c, d;
-   double k1, k2, k3, k4, k5;
-   double x1, x2, y1, y2;
-   double fraxon;
-   int k;
+static void cordis(int s) {
+  double a, b, c, d;
+  double k1, k2, k3, k4, k5;
+  double x1, x2, y1, y2;
+  double fraxon;
+  int k;
 
-   struct dati1 *xy;
-   double xx, yy, rr;
+  struct dati1 *xy;
+  double xx, yy, rr;
 
-   xy = dts;
-   xy += nc;
-   xx = xy->x;
-   yy = xy->y;
-   rr = xy->r;
+  xy = dts;
+  xy += nc;
+  xx = xy->x;
+  yy = xy->y;
+  rr = xy->r;
 
-   d = fl * (1 + (ceil(nat / 15)) / 2.0);
+  d = fl * (1 + (ceil(nat / 15)) / 2.0);
 
-   for (k = 0; k < s / 2; k++)
-   {
-      a = (yy - dis[k].yi);
-      b = (rr * rr - d * d - xx * xx - yy * yy + dis[k].xi * dis[k].xi + dis[k].yi * dis[k].yi) / 2.0;
-      c = (dis[k].xi - xx);
+  for (k = 0; k < s / 2; k++) {
+    a = (yy - dis[k].yi);
+    b = (rr * rr - d * d - xx * xx - yy * yy + dis[k].xi * dis[k].xi +
+         dis[k].yi * dis[k].yi) /
+        2.0;
+    c = (dis[k].xi - xx);
 
-      if (dis[k].xi != xx)
-      {
-         k1 = (a * a + c * c);
-         k2 = (a * b - a * c * dis[k].xi - c * c * dis[k].yi);
-         k3 = (b - c * dis[k].xi) * (b - c * dis[k].xi) + c * c * (dis[k].yi * dis[k].yi - d * d);
+    if (dis[k].xi != xx) {
+      k1 = (a * a + c * c);
+      k2 = (a * b - a * c * dis[k].xi - c * c * dis[k].yi);
+      k3 = (b - c * dis[k].xi) * (b - c * dis[k].xi) +
+           c * c * (dis[k].yi * dis[k].yi - d * d);
 
-         y1 = (-k2 + sqrt(k2 * k2 - k1 * k3)) / k1;
-         y2 = (-k2 - sqrt(k2 * k2 - k1 * k3)) / k1;
-         x1 = (a * y1 + b) / c;
-         x2 = (a * y2 + b) / c;
+      y1 = (-k2 + sqrt(k2 * k2 - k1 * k3)) / k1;
+      y2 = (-k2 - sqrt(k2 * k2 - k1 * k3)) / k1;
+      x1 = (a * y1 + b) / c;
+      x2 = (a * y2 + b) / c;
+    } else {
+      k4 = (-a * a * dis[k].xi);
+      k5 = (b + a * dis[k].yi) * (b + a * dis[k].yi) +
+           a * a * (dis[k].xi * dis[k].xi - d * d);
+
+      y1 = (-b / a);
+      y2 = (-b / a);
+      x1 = (-k4 + sqrt(k4 * k4 - a * a * k5)) / (a * a);
+      x2 = (-k4 - sqrt(k4 * k4 - a * a * k5)) / (a * a);
+    }
+
+    if (dis[k].xi > xx) {
+      if (y1 > dis[k].yi) {
+        dis[k].yi = (float)y1;
+        dis[k].xi = (float)x1;
+      } else {
+        dis[k].yi = (float)y2;
+        dis[k].xi = (float)x2;
       }
-      else
-      {
-         k4 = (-a * a * dis[k].xi);
-         k5 = (b + a * dis[k].yi) * (b + a * dis[k].yi) + a * a * (dis[k].xi * dis[k].xi - d * d);
+    }
 
-         y1 = (-b / a);
-         y2 = (-b / a);
-         x1 = (-k4 + sqrt(k4 * k4 - a * a * k5)) / (a * a);
-         x2 = (-k4 - sqrt(k4 * k4 - a * a * k5)) / (a * a);
+    else {
+      if (y1 < dis[k].yi) {
+        dis[k].yi = (float)y1;
+        dis[k].xi = (float)x1;
+      } else {
+        dis[k].yi = (float)y2;
+        dis[k].xi = (float)x2;
       }
+    }
 
-      if (dis[k].xi > xx)
-      {
-         if (y1 > dis[k].yi)
-         {
-            dis[k].yi = (float) y1;
-            dis[k].xi = (float) x1;
-         }
-         else
-         {
-            dis[k].yi = (float) y2;
-            dis[k].xi = (float) x2;
-         }
-      }
-
-      else
-      {
-         if (y1 < dis[k].yi)
-         {
-            dis[k].yi = (float) y1;
-            dis[k].xi = (float) x1;
-         }
-         else
-         {
-            dis[k].yi = (float) y2;
-            dis[k].xi = (float) x2;
-         }
-      }
-
-      fraxon = asin((d / (2 * rr))) * 180.0 / PI;
-      dis[k].ai = dis[k].ai - ((float) (4.0 * fraxon));
-   }
+    fraxon = asin((d / (2 * rr))) * 180.0 / PI;
+    dis[k].ai = dis[k].ai - ((float)(4.0 * fraxon));
+  }
 }
 #endif
 
-// ----------------------------------- gir.c -------------------------------------
-// #warning gir.c 
+// ----------------------------------- gir.c
+// ------------------------------------- #warning gir.c
 
 // void ragir();
 
-static void
-ragir()
-{
-   int i;
-   float ro2, ro3, mt, rg, xm, ym, zm;
+static void ragir() {
+  int i;
+  float ro2, ro3, mt, rg, xm, ym, zm;
 
-   struct dati1 *dd;
-   float xx, yy, zz, rr;
-   int mm;
+  struct dati1 *dd;
+  float xx, yy, zz, rr;
+  int mm;
 
-   mt = (float) 0.0;
-   xm = (float) 0.0;
-   ym = (float) 0.0;
-   zm = (float) 0.0;
-   ro2 = (float) 0.0;
-   ro3 = (float) 0.0;
+  mt = (float)0.0;
+  xm = (float)0.0;
+  ym = (float)0.0;
+  zm = (float)0.0;
+  ro2 = (float)0.0;
+  ro3 = (float)0.0;
 
-   dd = dt;
-   for (i = 0; i < nat; i++)
-   {
-      xx = dd->x;
-      yy = dd->y;
-      zz = dd->z;
-      mm = dd->m;
+  dd = dt;
+  for (i = 0; i < nat; i++) {
+    xx = dd->x;
+    yy = dd->y;
+    zz = dd->z;
+    mm = dd->m;
 
-      xm += xx * mm;
-      ym += yy * mm;
-      zm += zz * mm;
-      mt += mm;
+    xm += xx * mm;
+    ym += yy * mm;
+    zm += zz * mm;
+    mt += mm;
 
-      dd++;
-   }
+    dd++;
+  }
 
-   xm = xm / mt;
-   ym = ym / mt;
-   zm = zm / mt;
+  xm = xm / mt;
+  ym = ym / mt;
+  zm = zm / mt;
 
-   dd = dt;
-   for (i = 0; i < nat; i++)
-   {
-      xx = dd->x;
-      yy = dd->y;
-      zz = dd->z;
-      rr = dd->r;
-      mm = dd->m;
+  dd = dt;
+  for (i = 0; i < nat; i++) {
+    xx = dd->x;
+    yy = dd->y;
+    zz = dd->z;
+    rr = dd->r;
+    mm = dd->m;
 
-      rg = ((float) 0.6) * (rr - rprobe) * (rr - rprobe);
-      ro2 += mm * ((float) (pow((xx - xm), 2) + pow((yy - ym), 2) + pow((zz - zm), 2) + rg));
-      ro3 += mm * ((float) (pow((xx - xm), 2) + pow((yy - ym), 2) + pow((zz - zm), 2   )));
+    rg = ((float)0.6) * (rr - rprobe) * (rr - rprobe);
+    ro2 += mm * ((float)(pow((xx - xm), 2) + pow((yy - ym), 2) +
+                         pow((zz - zm), 2) + rg));
+    ro3 += mm *
+           ((float)(pow((xx - xm), 2) + pow((yy - ym), 2) + pow((zz - zm), 2)));
 
-      dd++;
-   }
+    dd++;
+  }
 
-   ro2 = ro2 / mt;
-   ro3 = ro3 / mt;
+  ro2 = ro2 / mt;
+  ro3 = ro3 / mt;
 
-   ro = (float) sqrt(ro2);
-   ro1 = (float) sqrt(ro3);
+  ro = (float)sqrt(ro2);
+  ro1 = (float)sqrt(ro3);
 }
 
-// ----------------------------------- init1.c -------------------------------------
-// #warning init1.c 
+// ----------------------------------- init1.c
+// ------------------------------------- #warning init1.c
 
 // static FILE *init1_mol;
 // static FILE *init1_mol1;
@@ -1444,7 +1345,8 @@ ragir()
 //    fscanf(init1_mol, "%f", &raggio);
 //    fscanf(init1_mol, "%s", ragcol);
 
-//    init1_rmc = us_fopen(ragcol, "r");   /* opening the file containing the radii, masses and colors */
+//    init1_rmc = us_fopen(ragcol, "r");   /* opening the file containing the
+//    radii, masses and colors */
 
 //    for (i = 0; i < nat; i++)
 //    {
@@ -1465,16 +1367,15 @@ ragir()
 //    fclose(init1_mol1);
 // }
 
-static void
-pulisci()
-{
-   /* printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"); */
+static void pulisci() {
+  /* printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"); */
 }
 
-// ----------------------------------- init2.c -------------------------------------
-// #warning init2.c 
+// ----------------------------------- init2.c
+// ------------------------------------- #warning init2.c
 
-/* MODIFIED DEC 2002 IN GLASGOW FOR CHECK ON THE OUTPUT FILES WHEN RE-CHECKING ASA */
+/* MODIFIED DEC 2002 IN GLASGOW FOR CHECK ON THE OUTPUT FILES WHEN RE-CHECKING
+ * ASA */
 /* MODIFIED APRIL 2003 IN GENOVA FOR INCLUSION OF PSV */
 
 // static FILE *init2_mol;
@@ -1484,210 +1385,206 @@ static FILE *init2_mol1;
 // void init2();
 
 // extern void pulisci();
-static void
-init2()
-{
-   struct dati1 *dd;
+static void init2() {
+  struct dati1 *dd;
 
-   // int i;
-   // int fe, fe1;
-   // char rido[10];
-   // char command[200];
-   // char nome[30];
-   // extern int flag1;
+  // int i;
+  // int fe, fe1;
+  // char rido[10];
+  // char command[200];
+  // char nome[30];
+  // extern int flag1;
 
-   /*   printf("\n\n\t%s%d","Valore flag: ",flag1);
-        scanf("%s",rido);
-        getchar(); */
+  /*   printf("\n\n\t%s%d","Valore flag: ",flag1);
+       scanf("%s",rido);
+       getchar(); */
 
-   pulisci();
+  pulisci();
 
 #if defined(NOT_USED)
-   while (init2_mol == NULL)
-   {
-      /*   pulisci();  */
-      printf("\n\n\t%s", "Insert the bead model filename: ");
-      if ( 1 == scanf("%s", nome) ) {};
-      init2_mol = us_fopen(nome, "r");
+  while (init2_mol == NULL) {
+    /*   pulisci();  */
+    printf("\n\n\t%s", "Insert the bead model filename: ");
+    if (1 == scanf("%s", nome)) {
+    };
+    init2_mol = us_fopen(nome, "r");
+  }
+  /*init2_mol1=NULL;
+    while(init2_mol1==NULL)
+    { */
+  /*   pulisci(); */
+a50:
+  printf("\n\n\t%s", "Insert the re-checked bead model filename: ");
+  if (1 == scanf("%s", ridotto)) {
+  };
+  init2_mol1 = us_fopen(ridotto, "r");
+  if (init2_mol1 != NULL) {
+    printf("\n");
+    printf("\t*** CAUTION : File already exists ! ***\n\n");
+    printf("\t  Select one option:\n\n");
+    printf("\t 1) Overwrite existing file\n");
+    printf("\t 2) Create new file\n\n");
+    printf("\t** Select (1/2) :___ ");
+    if (1 == scanf("%d", &fe)) {
+    };
+    getchar();
+    fclose(init2_mol1);
+    if (fe == 1) {
+      QFile::remove(ridotto);
+    }
+    if (fe == 2) goto a50;
+  }
+#endif
+  strcpy(ridotto, "asab1_output");
+  init2_mol1 = us_fopen(ridotto, "w");
+  /*   }   */
+  fclose(init2_mol1);
 
-   }
-   /*init2_mol1=NULL;
-     while(init2_mol1==NULL) 
+  /* init2_mol1=NULL;
+     while(init2_mol1==NULL)
      { */
-   /*   pulisci(); */
- a50:
-   printf("\n\n\t%s", "Insert the re-checked bead model filename: ");
-   if ( 1 == scanf("%s", ridotto) ) {};
-   init2_mol1 = us_fopen(ridotto, "r");
-   if (init2_mol1 != NULL)
-   {
-      printf("\n");
-      printf("\t*** CAUTION : File already exists ! ***\n\n");
-      printf("\t  Select one option:\n\n");
-      printf("\t 1) Overwrite existing file\n");
-      printf("\t 2) Create new file\n\n");
-      printf("\t** Select (1/2) :___ ");
-      if ( 1 == scanf("%d", &fe) ) {};
-      getchar();
-      fclose(init2_mol1);
-      if (fe == 1)
-      {
-         QFile::remove(ridotto);
-      }
-      if (fe == 2)
-         goto a50;
-   }
-#endif
-   strcpy(ridotto, "asab1_output");
-   init2_mol1 = us_fopen(ridotto, "w");
-   /*   }   */
-   fclose(init2_mol1);
+  /*   pulisci(); */
 
-   /* init2_mol1=NULL;
-      while(init2_mol1==NULL)
-      { */
-   /*   pulisci(); */
-
-   strcpy(ridotto_rmc, ridotto);
-   strcat(ridotto_rmc, ".rmc");
-   printf("\n");
-   printf("\t Creating file %s for radii, masses and colors\n", ridotto_rmc);
+  strcpy(ridotto_rmc, ridotto);
+  strcat(ridotto_rmc, ".rmc");
+  printf("\n");
+  printf("\t Creating file %s for radii, masses and colors\n", ridotto_rmc);
 
 #if defined(NOT_USED)
- a55:
-   init2_mol1 = us_fopen(ridotto_rmc, "r");
-   if (init2_mol1 != NULL)
-   {
-      printf("\n");
-      printf("\t*** CAUTION : File %s already exists ! ***\n\n", ridotto_rmc);
-      printf("\t  Select one option:\n\n");
-      printf("\t 1) Overwrite existing .rmc file\n");
-      printf("\t 2) Create new .rmc file\n\n");
-      printf("\t** Select (1/2) :___ ");
-      if ( 1 == scanf("%d", &fe1) ) {};
-      getchar();
-      fclose(init2_mol1);
-      if (fe1 == 1)
-      {
-         QFile::remove(ridotto_rmc);
-      }
-      if (fe1 == 2)
-      {
-         printf("\n\n\t%s", "Insert the filename for the rmc file of the re-checked bead model: ");
-         if ( 1 == scanf("%s", ridotto_rmc) ) {};
-         goto a55;
-      }
-   }
+a55:
+  init2_mol1 = us_fopen(ridotto_rmc, "r");
+  if (init2_mol1 != NULL) {
+    printf("\n");
+    printf("\t*** CAUTION : File %s already exists ! ***\n\n", ridotto_rmc);
+    printf("\t  Select one option:\n\n");
+    printf("\t 1) Overwrite existing .rmc file\n");
+    printf("\t 2) Create new .rmc file\n\n");
+    printf("\t** Select (1/2) :___ ");
+    if (1 == scanf("%d", &fe1)) {
+    };
+    getchar();
+    fclose(init2_mol1);
+    if (fe1 == 1) {
+      QFile::remove(ridotto_rmc);
+    }
+    if (fe1 == 2) {
+      printf("\n\n\t%s",
+             "Insert the filename for the rmc file of the re-checked bead "
+             "model: ");
+      if (1 == scanf("%s", ridotto_rmc)) {
+      };
+      goto a55;
+    }
+  }
 #endif
 
-   /*   printf("\n\n\t%s","Insert the filename for the rmc file of the re-checked bead model: ");
-        scanf("%s",ridotto_rmc); */
-   //    init2_mol1 = us_fopen(ridotto_rmc, "w");
-   /*   } */
-   //    fclose(init2_mol1);
+  /*   printf("\n\n\t%s","Insert the filename for the rmc file of the re-checked
+     bead model: "); scanf("%s",ridotto_rmc); */
+  //    init2_mol1 = us_fopen(ridotto_rmc, "w");
+  /*   } */
+  //    fclose(init2_mol1);
 
-   /*   printf("\n\n\t%s%d","Valore flag1: ",flag1);
-        scanf("%s",rido);
-        getchar(); */
+  /*   printf("\n\n\t%s%d","Valore flag1: ",flag1);
+       scanf("%s",rido);
+       getchar(); */
 
-   //    if (flag1 != 1)
-   //   init2_mol1 = us_fopen("provaly2", "r");
+  //    if (flag1 != 1)
+  //   init2_mol1 = us_fopen("provaly2", "r");
 
-   nat = active_atoms.size();
-   // fscanf(init2_mol, "%d", &nat);
-   // fscanf(init2_mol, "%f", &raggio);
-   raggio = -2;
-   psv = results->vbar;
-   // fscanf(init2_mol, "%s", ragcol);
-   // if ((raggio >= ((float) -2.1)) && (raggio <= ((float) -1.9)))
-   //   fscanf(init2_mol, "%f", &psv);
+  nat = active_atoms.size();
+  // fscanf(init2_mol, "%d", &nat);
+  // fscanf(init2_mol, "%f", &raggio);
+  raggio = -2;
+  psv = results->vbar;
+  // fscanf(init2_mol, "%s", ragcol);
+  // if ((raggio >= ((float) -2.1)) && (raggio <= ((float) -1.9)))
+  //   fscanf(init2_mol, "%f", &psv);
 
-   // init2_rmc = us_fopen(ragcol, "r");   /* opening the file containing the radii, masses and colors */
+  // init2_rmc = us_fopen(ragcol, "r");   /* opening the file containing the
+  // radii, masses and colors */
 
-   dd = dt;
+  dd = dt;
 
-   maxz = dd->z + dd->r;
-   minz = dd->z - dd->r;
+  maxz = dd->z + dd->r;
+  minz = dd->z - dd->r;
 
 #if defined(NOT_USED)
-   for (i = 0; i < nat; i++)
-   {
-      if ( 1 == fscanf(init2_mol, "%f", &(dt[i].x)) ) {};
-      if ( 1 == fscanf(init2_mol, "%f", &(dt[i].y)) ) {};
-      if ( 1 == fscanf(init2_mol, "%f", &(dt[i].z)) ) {};
-      if ( 1 == fscanf(init2_rmc, "%f", &(dt[i].r)) ) {};
-      (dt[i].r) += rprobe;
-      if ( 1 == fscanf(init2_rmc, "%d", &(dt[i].m)) ) {};
-      if ( 1 == fscanf(init2_rmc, "%d", &(dt[i].col)) ) {};
-      if (flag1 != 1)
-      {
-         if ( 1 == fscanf(init2_mol1, "%s", &(dt[i].elm)) ) {};
-         if ( 1 == fscanf(init2_mol1, "%s", &(dt[i].amin)) ) {};
-         if ( 1 == fscanf(init2_mol1, "%s", &(dt[i].descr)) ) {};
-      }
-      if ((raggio >= ((float) -4.1)) && (raggio <= ((float) -3.9)))
-         if ( 1 == fscanf(init2_rmc, "%s", &(dt[i].descr)) ) {};
+  for (i = 0; i < nat; i++) {
+    if (1 == fscanf(init2_mol, "%f", &(dt[i].x))) {
+    };
+    if (1 == fscanf(init2_mol, "%f", &(dt[i].y))) {
+    };
+    if (1 == fscanf(init2_mol, "%f", &(dt[i].z))) {
+    };
+    if (1 == fscanf(init2_rmc, "%f", &(dt[i].r))) {
+    };
+    (dt[i].r) += rprobe;
+    if (1 == fscanf(init2_rmc, "%d", &(dt[i].m))) {
+    };
+    if (1 == fscanf(init2_rmc, "%d", &(dt[i].col))) {
+    };
+    if (flag1 != 1) {
+      if (1 == fscanf(init2_mol1, "%s", &(dt[i].elm))) {
+      };
+      if (1 == fscanf(init2_mol1, "%s", &(dt[i].amin))) {
+      };
+      if (1 == fscanf(init2_mol1, "%s", &(dt[i].descr))) {
+      };
+    }
+    if ((raggio >= ((float)-4.1)) && (raggio <= ((float)-3.9)))
+      if (1 == fscanf(init2_rmc, "%s", &(dt[i].descr))) {
+      };
 
-      if (maxz < (dd->z + dd->r))
-         maxz = dd->z + dd->r;
-      if (minz > (dd->z - dd->r))
-         minz = dd->z - dd->r;
+    if (maxz < (dd->z + dd->r)) maxz = dd->z + dd->r;
+    if (minz > (dd->z - dd->r)) minz = dd->z - dd->r;
 
-      dd++;
-   }
+    dd++;
+  }
 #endif
 
-   if (!recheck) 
-   {
-      for (unsigned int i = 0; i < active_atoms.size(); i++) 
-      {
-         dt[i].r = active_atoms[i]->radius;
-         dt[i].r += rprobe;
-         dt[i].x = active_atoms[i]->coordinate.axis[0];
-         dt[i].y = active_atoms[i]->coordinate.axis[1];
-         dt[i].z = active_atoms[i]->coordinate.axis[2];
-         dt[i].m = (int)active_atoms[i]->mw;
-         dt[i].col = active_atoms[i]->bead_color;
-      }
-   }  else {
-      for (unsigned int i = 0; i < active_atoms.size(); i++) 
-      {
-         dt[i].r = active_atoms[i]->bead_computed_radius;
-         dt[i].r += rprobe;
-         dt[i].x = active_atoms[i]->bead_coordinate.axis[0];
-         dt[i].y = active_atoms[i]->bead_coordinate.axis[1];
-         dt[i].z = active_atoms[i]->bead_coordinate.axis[2];
-         dt[i].m = (int)active_atoms[i]->bead_mw;
-         dt[i].col = active_atoms[i]->bead_color;
-      }
-   }
+  if (!recheck) {
+    for (unsigned int i = 0; i < active_atoms.size(); i++) {
+      dt[i].r = active_atoms[i]->radius;
+      dt[i].r += rprobe;
+      dt[i].x = active_atoms[i]->coordinate.axis[0];
+      dt[i].y = active_atoms[i]->coordinate.axis[1];
+      dt[i].z = active_atoms[i]->coordinate.axis[2];
+      dt[i].m = (int)active_atoms[i]->mw;
+      dt[i].col = active_atoms[i]->bead_color;
+    }
+  } else {
+    for (unsigned int i = 0; i < active_atoms.size(); i++) {
+      dt[i].r = active_atoms[i]->bead_computed_radius;
+      dt[i].r += rprobe;
+      dt[i].x = active_atoms[i]->bead_coordinate.axis[0];
+      dt[i].y = active_atoms[i]->bead_coordinate.axis[1];
+      dt[i].z = active_atoms[i]->bead_coordinate.axis[2];
+      dt[i].m = (int)active_atoms[i]->bead_mw;
+      dt[i].col = active_atoms[i]->bead_color;
+    }
+  }
 
 #if defined(DEBUG)
-   for(int i = 0; i < nat; i++) {
-      printf("%d %s %s %.4f %.4f %.4f %.4f %d %d\n", 
-             i,
-             active_atoms[i]->name.toLatin1().data(),
-             active_atoms[i]->resName.toLatin1().data(),
-             dt[i].r, 
-             dt[i].x, 
-             dt[i].y, 
-             dt[i].z, 
-             dt[i].m, 
-             dt[i].col);
-   }
+  for (int i = 0; i < nat; i++) {
+    printf("%d %s %s %.4f %.4f %.4f %.4f %d %d\n", i,
+           active_atoms[i]->name.toLatin1().data(),
+           active_atoms[i]->resName.toLatin1().data(), dt[i].r, dt[i].x,
+           dt[i].y, dt[i].z, dt[i].m, dt[i].col);
+  }
 #endif
-   //  fclose(init2_mol);
-   // fclose(init2_rmc);
-   // if (flag1 != 1)
-   //   fclose(init2_mol1);
+  //  fclose(init2_mol);
+  // fclose(init2_rmc);
+  // if (flag1 != 1)
+  //   fclose(init2_mol1);
 }
 
-// ----------------------------------- init3.c -------------------------------------
-// #warning init3.c 
+// ----------------------------------- init3.c
+// ------------------------------------- #warning init3.c
 
 /* MODIFIED IN GLASGOW DEC 2002 TO INSERT THE VARIABLE FILENAMES  */
 /* MODIFIED APRIL 2003 IN GENOVA FOR OCTYL GLUCOSIDE */
-/* FIXED JUNE 2005 IN GENOVA FOR NO SPACE BETWEEN 'ATOM' OR 'HETATM' FIELDS AND PROGRESSIVE NUMBER */
+/* FIXED JUNE 2005 IN GENOVA FOR NO SPACE BETWEEN 'ATOM' OR 'HETATM' FIELDS AND
+ * PROGRESSIVE NUMBER */
 
 // static FILE *init3_brook;
 // static FILE *init3_mol;
@@ -1718,7 +1615,8 @@ init2()
 //    switch (dd->elm[0])
 //    {
 //    case 'C':
-//       if (isalpha(dd->elm[1]) != 0 || isdigit(dd->elm[1]) != 0)   /* selects c alpha etc. */
+//       if (isalpha(dd->elm[1]) != 0 || isdigit(dd->elm[1]) != 0)   /* selects
+//       c alpha etc. */
 //       {
 //          if (dd->elm[1] == 'A')   /* C alpha C4H1 */
 //          {
@@ -1740,7 +1638,8 @@ init2()
 
 //          else if (dd->elm[1] == 'G')   /* C gamma  */
 //          {
-//             if ((strcmp(dd->amin, "VAL") == 0) || (strcmp(dd->amin, "THR") == 0))   /* C4H3 */
+//             if ((strcmp(dd->amin, "VAL") == 0) || (strcmp(dd->amin, "THR") ==
+//             0))   /* C4H3 */
 //             {
 //                flrad = (float) 1.87;
 //                dd->m = 15;
@@ -1758,32 +1657,38 @@ init2()
 //                flrad = (float) 1.87;
 //                dd->m = 13;
 //             }
-//             else if ((strcmp(dd->amin, "PRO") == 0) || (strcmp(dd->amin, "MET") == 0))   /* C4H2 */
+//             else if ((strcmp(dd->amin, "PRO") == 0) || (strcmp(dd->amin,
+//             "MET") == 0))   /* C4H2 */
 //             {
 //                flrad = (float) 1.87;
 //                dd->m = 14;
 //             }
-//             else if ((strcmp(dd->amin, "GLU") == 0) || (strcmp(dd->amin, "GLN") == 0))   /* C4H2 */
+//             else if ((strcmp(dd->amin, "GLU") == 0) || (strcmp(dd->amin,
+//             "GLN") == 0))   /* C4H2 */
 //             {
 //                flrad = (float) 1.87;
 //                dd->m = 14;
 //             }
-//             else if ((strcmp(dd->amin, "ARG") == 0) || (strcmp(dd->amin, "LYS") == 0))   /* C4H2 */
+//             else if ((strcmp(dd->amin, "ARG") == 0) || (strcmp(dd->amin,
+//             "LYS") == 0))   /* C4H2 */
 //             {
 //                flrad = (float) 1.87;
 //                dd->m = 14;
 //             }
-//             else if ((strcmp(dd->amin, "PHE") == 0) || (strcmp(dd->amin, "TRP") == 0))   /* C3H0 */
+//             else if ((strcmp(dd->amin, "PHE") == 0) || (strcmp(dd->amin,
+//             "TRP") == 0))   /* C3H0 */
 //             {
 //                flrad = (float) 1.76;
 //                dd->m = 12;
 //             }
-//             else if ((strcmp(dd->amin, "ASP") == 0) || (strcmp(dd->amin, "ASN") == 0))   /* C3H0 */
+//             else if ((strcmp(dd->amin, "ASP") == 0) || (strcmp(dd->amin,
+//             "ASN") == 0))   /* C3H0 */
 //             {
 //                flrad = (float) 1.76;
 //                dd->m = 12;
 //             }
-//             else if ((strcmp(dd->amin, "HIS") == 0) || (strcmp(dd->amin, "TYR") == 0))   /* C3H0 */
+//             else if ((strcmp(dd->amin, "HIS") == 0) || (strcmp(dd->amin,
+//             "TYR") == 0))   /* C3H0 */
 //             {
 //                flrad = (float) 1.76;
 //                dd->m = 12;
@@ -1810,22 +1715,26 @@ init2()
 //                else
 //                   dd->m = 12;
 //             }
-//             else if ((strcmp(dd->amin, "ILE") == 0) || (strcmp(dd->amin, "LEU") == 0))   /* C4H3 */
+//             else if ((strcmp(dd->amin, "ILE") == 0) || (strcmp(dd->amin,
+//             "LEU") == 0))   /* C4H3 */
 //             {
 //                flrad = (float) 1.87;
 //                dd->m = 15;
 //             }
-//             else if ((strcmp(dd->amin, "GLU") == 0) || (strcmp(dd->amin, "GLN") == 0))   /* C3H0 */
+//             else if ((strcmp(dd->amin, "GLU") == 0) || (strcmp(dd->amin,
+//             "GLN") == 0))   /* C3H0 */
 //             {
 //                flrad = (float) 1.76;
 //                dd->m = 12;
 //             }
-//             else if ((strcmp(dd->amin, "ARG") == 0) || (strcmp(dd->amin, "LYS") == 0))   /* C4H2 */
+//             else if ((strcmp(dd->amin, "ARG") == 0) || (strcmp(dd->amin,
+//             "LYS") == 0))   /* C4H2 */
 //             {
 //                flrad = (float) 1.87;
 //                dd->m = 14;
 //             }
-//             else if ((strcmp(dd->amin, "HIS") == 0) || (strcmp(dd->amin, "TYR") == 0))   /* C3H1 */
+//             else if ((strcmp(dd->amin, "HIS") == 0) || (strcmp(dd->amin,
+//             "TYR") == 0))   /* C3H1 */
 //             {
 //                flrad = (float) 1.76;
 //                dd->m = 13;
@@ -1857,7 +1766,8 @@ init2()
 //                else
 //                   dd->m = 13;
 //             }
-//             else if ((strcmp(dd->amin, "PHE") == 0) || (strcmp(dd->amin, "TYR") == 0))   /* C3H1 */
+//             else if ((strcmp(dd->amin, "PHE") == 0) || (strcmp(dd->amin,
+//             "TYR") == 0))   /* C3H1 */
 //             {
 //                flrad = (float) 1.76;
 //                dd->m = 13;
@@ -1866,12 +1776,14 @@ init2()
 
 //          else if (dd->elm[1] == 'Z')   /* C zeta  */
 //          {
-//             if ((strcmp(dd->amin, "PHE") == 0) || (strcmp(dd->amin, "TRP") == 0))   /* C3H1 */
+//             if ((strcmp(dd->amin, "PHE") == 0) || (strcmp(dd->amin, "TRP") ==
+//             0))   /* C3H1 */
 //             {
 //                flrad = (float) 1.76;
 //                dd->m = 13;
 //             }
-//             else if ((strcmp(dd->amin, "TYR") == 0) || (strcmp(dd->amin, "ARG") == 0))   /* C3H0 */
+//             else if ((strcmp(dd->amin, "TYR") == 0) || (strcmp(dd->amin,
+//             "ARG") == 0))   /* C3H0 */
 //             {
 //                flrad = (float) 1.76;
 //                dd->m = 12;
@@ -1886,7 +1798,8 @@ init2()
 
 //          else if (dd->elm[1] == '1')   /* C1X of sugar or detergent */
 //          {
-//             if (isalpha(dd->elm[2]) != 0 || isdigit(dd->elm[2]) != 0)   /* selects c >= 10  */
+//             if (isalpha(dd->elm[2]) != 0 || isdigit(dd->elm[2]) != 0)   /*
+//             selects c >= 10  */
 //             {
 //                if (dd->elm[2] == '0')   /* C10 of sugar or detergent */
 //                {
@@ -1895,7 +1808,8 @@ init2()
 //                      flrad = (float) 1.76;
 //                      dd->m = 12;
 //                   }
-//                   else if (strcmp(dd->amin, "OG2") == 0)   /* OCTYL GLUCOSIDE C10 C4H2 */
+//                   else if (strcmp(dd->amin, "OG2") == 0)   /* OCTYL GLUCOSIDE
+//                   C10 C4H2 */
 //                   {
 //                      /*                  strcpy(dd->amin,"OG2"); */
 //                      flrad = (float) 1.87;
@@ -1914,7 +1828,8 @@ init2()
 //                      flrad = (float) 1.87;
 //                      dd->m = 15;
 //                   }
-//                   else if (strcmp(dd->amin, "OG3") == 0)   /* OCTYL GLUCOSIDE C11 C4H2 */
+//                   else if (strcmp(dd->amin, "OG3") == 0)   /* OCTYL GLUCOSIDE
+//                   C11 C4H2 */
 //                   {
 //                      /*                  strcpy(dd->amin,"OG3"); */
 //                      flrad = (float) 1.87;
@@ -1928,7 +1843,8 @@ init2()
 //                }
 //                else if (dd->elm[2] == '2')   /* C12 of detergent */
 //                {
-//                   if (strcmp(dd->amin, "OG3") == 0)   /* OCTYL GLUCOSIDE C12 C4H2 */
+//                   if (strcmp(dd->amin, "OG3") == 0)   /* OCTYL GLUCOSIDE C12
+//                   C4H2 */
 //                   {
 //                      /*                  strcpy(dd->amin,"OG3"); */
 //                      flrad = (float) 1.87;
@@ -1942,7 +1858,8 @@ init2()
 //                }
 //                else if (dd->elm[2] == '3')   /* C13 of detergent */
 //                {
-//                   if (strcmp(dd->amin, "OG3") == 0)   /* OCTYL GLUCOSIDE C13 C4H2 */
+//                   if (strcmp(dd->amin, "OG3") == 0)   /* OCTYL GLUCOSIDE C13
+//                   C4H2 */
 //                   {
 //                      /*                  strcpy(dd->amin,"OG3"); */
 //                      flrad = (float) 1.87;
@@ -1956,7 +1873,8 @@ init2()
 //                }
 //                else if (dd->elm[2] == '4')   /* C14 of detergent */
 //                {
-//                   if (strcmp(dd->amin, "OG3") == 0)   /* OCTYL GLUCOSIDE C14 C4H3 */
+//                   if (strcmp(dd->amin, "OG3") == 0)   /* OCTYL GLUCOSIDE C14
+//                   C4H3 */
 //                   {
 //                      /*                  strcpy(dd->amin,"OG3"); */
 //                      flrad = (float) 1.87;
@@ -1976,7 +1894,8 @@ init2()
 //                   flrad = (float) 1.76;
 //                   dd->m = 12;
 //                }
-//                else if (strcmp(dd->amin, "OG1") == 0)   /* OCTYL GLUCOSIDE C1 C4H1 */
+//                else if (strcmp(dd->amin, "OG1") == 0)   /* OCTYL GLUCOSIDE C1
+//                C4H1 */
 //                {
 //                   /*               strcpy(dd->amin,"OG1");  */
 //                   flrad = (float) 1.87;
@@ -1997,7 +1916,8 @@ init2()
 //                flrad = (float) 1.87;
 //                dd->m = 12;
 //             }
-//             else if (strcmp(dd->amin, "OG1") == 0)   /* OCTYL GLUCOSIDE C2 C4H1 */
+//             else if (strcmp(dd->amin, "OG1") == 0)   /* OCTYL GLUCOSIDE C2
+//             C4H1 */
 //             {
 //                /*            strcpy(dd->amin,"OG1"); */
 //                flrad = (float) 1.87;
@@ -2017,7 +1937,8 @@ init2()
 //                flrad = (float) 1.87;
 //                dd->m = 14;
 //             }
-//             else if (strcmp(dd->amin, "OG1") == 0)   /* OCTYL GLUCOSIDE C3 C4H1 */
+//             else if (strcmp(dd->amin, "OG1") == 0)   /* OCTYL GLUCOSIDE C3
+//             C4H1 */
 //             {
 //                /*            strcpy(dd->amin,"OG1"); */
 //                flrad = (float) 1.87;
@@ -2072,7 +1993,8 @@ init2()
 //                flrad = (float) 1.87;
 //                dd->m = 15;
 //             }
-//             else if (strcmp(dd->amin, "OG1") == 0)   /* OCTYL GLUCOSIDE C6 C4H2 */
+//             else if (strcmp(dd->amin, "OG1") == 0)   /* OCTYL GLUCOSIDE C6
+//             C4H2 */
 //             {
 //                /*            strcpy(dd->amin,"OG1"); */
 //                flrad = (float) 1.87;
@@ -2097,7 +2019,8 @@ init2()
 //                flrad = (float) 1.87;
 //                dd->m = 13;
 //             }
-//             else if (strcmp(dd->amin, "OG2") == 0)   /* OCTYL GLUCOSIDE C7 C4H2 */
+//             else if (strcmp(dd->amin, "OG2") == 0)   /* OCTYL GLUCOSIDE C7
+//             C4H2 */
 //             {
 //                /*            strcpy(dd->amin,"OG2"); */
 //                flrad = (float) 1.87;
@@ -2122,7 +2045,8 @@ init2()
 //                flrad = (float) 1.87;
 //                dd->m = 13;
 //             }
-//             else if (strcmp(dd->amin, "OG2") == 0)   /* OCTYL GLUCOSIDE C8 C4H2 */
+//             else if (strcmp(dd->amin, "OG2") == 0)   /* OCTYL GLUCOSIDE C8
+//             C4H2 */
 //             {
 //                /*            strcpy(dd->amin,"OG2"); */
 //                flrad = (float) 1.87;
@@ -2142,7 +2066,8 @@ init2()
 //                flrad = (float) 1.87;
 //                dd->m = 14;
 //             }
-//             else if (strcmp(dd->amin, "OG2") == 0)   /* OCTYL GLUCOSIDE C9 C4H2 */
+//             else if (strcmp(dd->amin, "OG2") == 0)   /* OCTYL GLUCOSIDE C9
+//             C4H2 */
 //             {
 //                /*            strcpy(dd->amin,"OG2"); */
 //                flrad = (float) 1.87;
@@ -2169,24 +2094,29 @@ init2()
 //       break;
 
 //    case 'O':
-//       if (isalpha(dd->elm[1]) != 0 || isdigit(dd->elm[1]) != 0)   /* selects Ox  */
+//       if (isalpha(dd->elm[1]) != 0 || isdigit(dd->elm[1]) != 0)   /* selects
+//       Ox  */
 //       {
-//          if ((dd->elm[1] == 'D') || (dd->elm[1] == 'E'))   /* selects OD & OE  O1H0 */
+//          if ((dd->elm[1] == 'D') || (dd->elm[1] == 'E'))   /* selects OD & OE
+//          O1H0 */
 //          {
 //             flrad = (float) 1.42;
 //             dd->m = 16;
 //          }
 
-//          else if ((dd->elm[1] == 'G') || (dd->elm[1] == 'H'))   /* selects OG & OH  O2H1 */
+//          else if ((dd->elm[1] == 'G') || (dd->elm[1] == 'H'))   /* selects OG
+//          & OH  O2H1 */
 //          {
 //             flrad = (float) 1.46;
 //             dd->m = 17;
 //          }
 //          else if (dd->elm[1] == '1')   /* O1X of sugar */
 //          {
-//             if (isalpha(dd->elm[2]) != 0 || isdigit(dd->elm[2]) != 0)   /* selects O >= 10 or O1A/O1B  */
+//             if (isalpha(dd->elm[2]) != 0 || isdigit(dd->elm[2]) != 0)   /*
+//             selects O >= 10 or O1A/O1B  */
 //             {
-//                if ((dd->elm[2] == 'A') || (dd->elm[2] == 'B'))   /* selects O1A and O1B of SIA */
+//                if ((dd->elm[2] == 'A') || (dd->elm[2] == 'B'))   /* selects
+//                O1A and O1B of SIA */
 //                {
 //                   if (strcmp(dd->amin, "SIA") == 0)   /* O1H0 */
 //                   {
@@ -2220,7 +2150,8 @@ init2()
 //                   flrad = (float) 1.42;
 //                   dd->m = 16;
 //                }
-//                else if (strcmp(dd->amin, "OG1") == 0)   /* OCTYL GLUCOSIDE O1 O1H0 */
+//                else if (strcmp(dd->amin, "OG1") == 0)   /* OCTYL GLUCOSIDE O1
+//                O1H0 */
 //                {
 //                   /*               strcpy(dd->amin,"OG1"); */
 //                   flrad = (float) 1.42;
@@ -2268,7 +2199,8 @@ init2()
 //          {
 //             flrad = (float) 1.46;
 //             dd->m = 17;
-//             /*             if(strcmp(dd->amin,"OG1")==0) / * OCTYL GLUCOSIDE O4 O2H1 */
+//             /*             if(strcmp(dd->amin,"OG1")==0) / * OCTYL GLUCOSIDE
+//             O4 O2H1 */
 //             /*               strcpy(dd->amin,"OG1"); */
 //          }
 
@@ -2278,7 +2210,8 @@ init2()
 //             {
 //                flrad = (float) 1.42;
 //                dd->m = 16;
-//                /*             if(strcmp(dd->amin,"OG1")==0) / * OCTYL GLUCOSIDE O5 O2H1 */
+//                /*             if(strcmp(dd->amin,"OG1")==0) / * OCTYL
+//                GLUCOSIDE O5 O2H1 */
 //                /*               strcpy(dd->amin,"OG1"); */
 //             }
 //          }
@@ -2290,7 +2223,8 @@ init2()
 //                flrad = (float) 1.42;
 //                dd->m = 16;
 //             }
-//             else if (strcmp(dd->amin, "OG1") == 0)   /* OCTYL GLUCOSIDE O6 O2H1 */
+//             else if (strcmp(dd->amin, "OG1") == 0)   /* OCTYL GLUCOSIDE O6
+//             O2H1 */
 //             {
 //                /*            strcpy(dd->amin,"OG1"); */
 //                flrad = (float) 1.46;
@@ -2366,14 +2300,17 @@ init2()
 //       if (isalpha(dd->elm[1]) != 0 || isdigit(dd->elm[1]) != 0)
 //          /*      flrad=(float) 1.8;      */
 //       {
-//          if ((dd->elm[1] == 'D') || (dd->elm[1] == 'E'))   /* selects ND & NE  */
+//          if ((dd->elm[1] == 'D') || (dd->elm[1] == 'E'))   /* selects ND & NE
+//          */
 //          {
-//             if ((strcmp(dd->amin, "GLN") == 0) || (strcmp(dd->amin, "ASN") == 0))   /* N3H2 */
+//             if ((strcmp(dd->amin, "GLN") == 0) || (strcmp(dd->amin, "ASN") ==
+//             0))   /* N3H2 */
 //             {
 //                flrad = (float) 1.64;
 //                dd->m = 16;
 //             }
-//             else if ((strcmp(dd->amin, "TRP") == 0) || (strcmp(dd->amin, "HIS") == 0))   /* N3H2 */
+//             else if ((strcmp(dd->amin, "TRP") == 0) || (strcmp(dd->amin,
+//             "HIS") == 0))   /* N3H2 */
 //             {
 //                if (dd->elm[2] == '1')   /* ND1 of HIS or NE1  N3H1 */
 //                {
@@ -2484,7 +2421,9 @@ init2()
 //    else
 //       k = 28;
 
-//    if (rprobe > 0.001)      /* 25/6/02 CONTROLLO, E' STRANO! LA FORMULA È PER L'AREA DEL CERCHIO, NON PER LA SUPERFICE DELLA SFERA!!!!! IMPLEMENTATA QUELLA GIUSTA SOTTO, E RICALCOLATI I PARAMETRI PER LA TABELLA */
+//    if (rprobe > 0.001)      /* 25/6/02 CONTROLLO, E' STRANO! LA FORMULA È PER
+//    L'AREA DEL CERCHIO, NON PER LA SUPERFICE DELLA SFERA!!!!! IMPLEMENTATA
+//    QUELLA GIUSTA SOTTO, E RICALCOLATI I PARAMETRI PER LA TABELLA */
 //    {
 //       /*   for(rbulk=0;rbulk<20;rbulk++)
 //            {
@@ -2507,7 +2446,8 @@ init2()
 //          x *= x;
 //          x *= (4.0 * PI);
 //          arr1[28 + rbulk] = (int) x;
-//          /*      printf("%s%d%s%f\n","arr1[",28+rbulk,"]= ",arr1[28+rbulk]); */
+//          /*      printf("%s%d%s%f\n","arr1[",28+rbulk,"]= ",arr1[28+rbulk]);
+//          */
 //       }
 //    }
 
@@ -2834,7 +2774,8 @@ init2()
 //          case ('C'):
 //             if (strcmp(dd->elm, "CB") == 0)
 //                dd->m = 14;
-//             else if ((strcmp(dd->elm, "CG") == 0) || (strcmp(dd->elm, "CD2") == 0) || (strcmp(dd->elm, "CE2") == 0))
+//             else if ((strcmp(dd->elm, "CG") == 0) || (strcmp(dd->elm, "CD2")
+//             == 0) || (strcmp(dd->elm, "CE2") == 0))
 //                dd->m = 12;
 //             else
 //                dd->m = 13;   /*C? */
@@ -2853,7 +2794,8 @@ init2()
 //          case ('C'):
 //             if (strcmp(dd->elm, "CB") == 0)
 //                dd->m = 14;
-//             else if ((strcmp(dd->elm, "CG") == 0) || (strcmp(dd->elm, "CZ") == 0))
+//             else if ((strcmp(dd->elm, "CG") == 0) || (strcmp(dd->elm, "CZ")
+//             == 0))
 //                dd->m = 12;
 //             else
 //                dd->m = 13;   /*C? */
@@ -2896,7 +2838,7 @@ init2()
 
 //       /* printf("%s%s\t%s%f\n","dd->amin= ",dd->amin,"dd->tab= ",dd->tab);
 //          scanf("%s",pluto);
-//          getchar(); 
+//          getchar();
 //          break;
 //          printf("%s%s\t%s%f\n","dd->amin= ",dd->amin,"dd->tab= ",dd->tab);
 //          scanf("%s",pluto);
@@ -2907,64 +2849,52 @@ init2()
 //       getchar(); */
 // }
 
-// ----------------------------------- maxmin.c -------------------------------------
-// #warning maxmin.c 
+// ----------------------------------- maxmin.c
+// ------------------------------------- #warning maxmin.c
 
 // void mami();
 // void mami1();
 
-static void
-mami()
-{
-   int i;
+static void mami() {
+  int i;
 
-   struct dati1 *dd;
+  struct dati1 *dd;
 
-   dd = dts;
+  dd = dts;
 
-   minx = dd->x - dd->r;
-   miny = dd->y - dd->r;
-   maxx = dd->x + dd->r;
-   maxy = dd->y + dd->r;
+  minx = dd->x - dd->r;
+  miny = dd->y - dd->r;
+  maxx = dd->x + dd->r;
+  maxy = dd->y + dd->r;
 
-   for (i = 1; i < cont1; i++)
-   {
-      dd++;
-      if (maxx < (dd->x + dd->r))
-         maxx = dd->x + dd->r;
-      if (minx > (dd->x - dd->r))
-         minx = dd->x - dd->r;
-      if (maxy < (dd->y + dd->r))
-         maxy = dd->y + dd->r;
-      if (miny > (dd->y - dd->r))
-         miny = dd->y - dd->r;
-   }
+  for (i = 1; i < cont1; i++) {
+    dd++;
+    if (maxx < (dd->x + dd->r)) maxx = dd->x + dd->r;
+    if (minx > (dd->x - dd->r)) minx = dd->x - dd->r;
+    if (maxy < (dd->y + dd->r)) maxy = dd->y + dd->r;
+    if (miny > (dd->y - dd->r)) miny = dd->y - dd->r;
+  }
 }
 
-void
-mami1()
-{
-   int i;
+void mami1() {
+  int i;
 
-   struct dati1 *dd;
+  struct dati1 *dd;
 
-   dd = dt;
+  dd = dt;
 
-   minz = dd->z - dd->r;
-   maxz = dd->z + dd->r;
+  minz = dd->z - dd->r;
+  maxz = dd->z + dd->r;
 
-   for (i = 1; i < nat; i++)
-   {
-      dd++;
-      if (minz > (dd->z - dd->r))
-         minz = dd->z - dd->r;
-      if (maxz < (dd->z + dd->r))
-         maxz = dd->z + dd->r;
-   }
+  for (i = 1; i < nat; i++) {
+    dd++;
+    if (minz > (dd->z - dd->r)) minz = dd->z - dd->r;
+    if (maxz < (dd->z + dd->r)) maxz = dd->z + dd->r;
+  }
 }
 
-// ----------------------------------- ordcol.c -------------------------------------
-// #warning ordcol.c 
+// ----------------------------------- ordcol.c
+// ------------------------------------- #warning ordcol.c
 
 static FILE *ordcol_ord;
 static FILE *ord1;
@@ -2972,110 +2902,102 @@ static FILE *ord1;
 // void ordcol();
 static int conf(char *, char *, int);
 
-static void
-ordcol()
-{
-   char key[200];
-   char sp[4], fine[4];
-   int i;
+static void ordcol() {
+  char key[200];
+  char sp[4], fine[4];
+  int i;
 
-   fine[0] = 'S';
-   fine[1] = 'P';
-   fine[2] = ';';
+  fine[0] = 'S';
+  fine[1] = 'P';
+  fine[2] = ';';
 
-   ordcol_ord = us_fopen("plotter", "rb");
-   ord1 = us_fopen("plotter1", "ab");
+  ordcol_ord = us_fopen("plotter", "rb");
+  ord1 = us_fopen("plotter1", "ab");
 
-   if ( 1 == fscanf(ordcol_ord, "%s", key) ) {};
-   fprintf(ord1, "%s%c", key, ' ');
+  if (1 == fscanf(ordcol_ord, "%s", key)) {
+  };
+  fprintf(ord1, "%s%c", key, ' ');
 
-   if (form1 == 0)
-   {
-      if ( 1 == fscanf(ordcol_ord, "%s", key) ) {};
-      fprintf(ord1, "%s\n", key);
-   }
+  if (form1 == 0) {
+    if (1 == fscanf(ordcol_ord, "%s", key)) {
+    };
+    fprintf(ord1, "%s\n", key);
+  }
 
-   for (i = 1; i < 9; i++)
-   {
-      rewind(ordcol_ord);
-      if ( 1 == fscanf(ordcol_ord, "%s", key) ) {};
-      sp[0] = 'S';
-      sp[1] = 'P';
+  for (i = 1; i < 9; i++) {
+    rewind(ordcol_ord);
+    if (1 == fscanf(ordcol_ord, "%s", key)) {
+    };
+    sp[0] = 'S';
+    sp[1] = 'P';
 
-      switch (i)
-      {
+    switch (i) {
       case (1):
-         sp[2] = '1';
-         break;
+        sp[2] = '1';
+        break;
       case (2):
-         sp[2] = '2';
-         break;
+        sp[2] = '2';
+        break;
       case (3):
-         sp[2] = '3';
-         break;
+        sp[2] = '3';
+        break;
       case (4):
-         sp[2] = '4';
-         break;
+        sp[2] = '4';
+        break;
       case (5):
-         sp[2] = '5';
-         break;
+        sp[2] = '5';
+        break;
       case (6):
-         sp[2] = '6';
-         break;
+        sp[2] = '6';
+        break;
       case (7):
-         sp[2] = '7';
-         break;
+        sp[2] = '7';
+        break;
       case (8):
-         sp[2] = '8';
-         break;
+        sp[2] = '8';
+        break;
+    }
+
+    while (conf(key, fine, 3) == 0) {
+      while ((conf(key, sp, 3) == 0) && (conf(key, fine, 3) == 0)) {
+        if (1 == fscanf(ordcol_ord, "%s", key)) {
+        };
       }
 
-      while (conf(key, fine, 3) == 0)
-      {
-         while ((conf(key, sp, 3) == 0) && (conf(key, fine, 3) == 0)) {
-            if ( 1 == fscanf(ordcol_ord, "%s", key) ) {};
-         }
-
-         if (conf(key, fine, 3) == 0)
-         {
-            fprintf(ord1, "%s\n", key);
-            if ( 1 == fscanf(ordcol_ord, "%s", key) ) {};
-         }
+      if (conf(key, fine, 3) == 0) {
+        fprintf(ord1, "%s\n", key);
+        if (1 == fscanf(ordcol_ord, "%s", key)) {
+        };
       }
-   }
+    }
+  }
 
-   fprintf(ord1, "%s", "SP;");
-   if (numdis > 1)
-      fprintf(ord1, "%s%d%c\n", "RP", numdis - 1, ';');
+  fprintf(ord1, "%s", "SP;");
+  if (numdis > 1) fprintf(ord1, "%s%d%c\n", "RP", numdis - 1, ';');
 
-   fclose(ordcol_ord);
-   fclose(ord1);
+  fclose(ordcol_ord);
+  fclose(ord1);
 }
 
 /**************************************************************************/
 
-static int
-conf(char a[200], char b[4], int c)
-{
+static int conf(char a[200], char b[4], int c) {
+  int i, flag;
 
-   int i, flag;
+  i = 0;
+  flag = 0;
 
-   i = 0;
-   flag = 0;
+  while ((a[i] == b[i]) && (i < c)) i++;
 
-   while ((a[i] == b[i]) && (i < c))
-      i++;
+  if (i == c) flag = 1;
 
-   if (i == c)
-      flag = 1;
-
-   return (flag);
+  return (flag);
 }
 
 /**************************************************************************/
 
-// ----------------------------------- plotter.c -------------------------------------
-// #warning plotter.c 
+// ----------------------------------- plotter.c
+// ------------------------------------- #warning plotter.c
 
 static FILE *plotter_pl;
 
@@ -3085,150 +3007,139 @@ static void plotarc(int);
 static void plotend();
 
 /* plotter initializations  */
-static void
-plotinit()
-{
-   plotter_pl = us_fopen("plotter", "ab");
-   if (form == 1)
-   {
-      fprintf(plotter_pl, "%s%d%c", "DF;IN;IP;VS", vel, ';');
+static void plotinit() {
+  plotter_pl = us_fopen("plotter", "ab");
+  if (form == 1) {
+    fprintf(plotter_pl, "%s%d%c", "DF;IN;IP;VS", vel, ';');
 
-      if (numdis > 1)
-         fprintf(plotter_pl, "%s", "GM;BF;");
+    if (numdis > 1) fprintf(plotter_pl, "%s", "GM;BF;");
 
-      if (form1 == 0)
-      {
-         fprintf(plotter_pl, "%s", "RO 90;IP;");
-         fprintf(plotter_pl, "%s%d%c%d%c%d%c%d%c", "IP", 200, ',', 1830, ',', 7400, ',', 9030, ';');
-         fprintf(plotter_pl, "%s%f%c%f%c%f%c%f%c\n", "SC", xp1, ',', xp2, ',', yp1, ',', yp2, ';');
-      }
-      else
-      {
-         fprintf(plotter_pl, "%s%d%c%d%c%d%c%d%c", "IP", 1830, ',', 200, ',', 9030, ',', 7400, ';');
-         fprintf(plotter_pl, "%s%f%c%f%c%f%c%f%c\n", "SC", xp1, ',', xp2, ',', yp1, ',', yp2, ';');
-      }
-   }
-   else
-   {
-      fprintf(plotter_pl, "%s%d%c", "DF;IN;IP;VS", vel, ';');
-      if (numdis > 1)
-         fprintf(plotter_pl, "%s", "GM;BF;");
-      if (form1 == 0)
-      {
-         fprintf(plotter_pl, "%s", "RO 90;IP;");
-         fprintf(plotter_pl, "%s%d%c%d%c%d%c%d%c", "IP", 430, ',', 2965, ',', 10430, ',', 12965, ';');
-         fprintf(plotter_pl, "%s%f%c%f%c%f%c%f%c\n", "SC", xp1, ',', xp2, ',', yp1, ',', yp2, ';');
-      }
-      else
-      {
-         fprintf(plotter_pl, "%s%d%c%d%c%d%c%d%c\n", "IP", 2965, ',', 430, ',', 12965, ',', 10430, ';');
-         fprintf(plotter_pl, "%s%f%c%f%c%f%c%f%c\n", "SC", xp1, ',', xp2, ',', yp1, ',', yp2, ';');
-      }
-   }
+    if (form1 == 0) {
+      fprintf(plotter_pl, "%s", "RO 90;IP;");
+      fprintf(plotter_pl, "%s%d%c%d%c%d%c%d%c", "IP", 200, ',', 1830, ',', 7400,
+              ',', 9030, ';');
+      fprintf(plotter_pl, "%s%f%c%f%c%f%c%f%c\n", "SC", xp1, ',', xp2, ',', yp1,
+              ',', yp2, ';');
+    } else {
+      fprintf(plotter_pl, "%s%d%c%d%c%d%c%d%c", "IP", 1830, ',', 200, ',', 9030,
+              ',', 7400, ';');
+      fprintf(plotter_pl, "%s%f%c%f%c%f%c%f%c\n", "SC", xp1, ',', xp2, ',', yp1,
+              ',', yp2, ';');
+    }
+  } else {
+    fprintf(plotter_pl, "%s%d%c", "DF;IN;IP;VS", vel, ';');
+    if (numdis > 1) fprintf(plotter_pl, "%s", "GM;BF;");
+    if (form1 == 0) {
+      fprintf(plotter_pl, "%s", "RO 90;IP;");
+      fprintf(plotter_pl, "%s%d%c%d%c%d%c%d%c", "IP", 430, ',', 2965, ',',
+              10430, ',', 12965, ';');
+      fprintf(plotter_pl, "%s%f%c%f%c%f%c%f%c\n", "SC", xp1, ',', xp2, ',', yp1,
+              ',', yp2, ';');
+    } else {
+      fprintf(plotter_pl, "%s%d%c%d%c%d%c%d%c\n", "IP", 2965, ',', 430, ',',
+              12965, ',', 10430, ';');
+      fprintf(plotter_pl, "%s%f%c%f%c%f%c%f%c\n", "SC", xp1, ',', xp2, ',', yp1,
+              ',', yp2, ';');
+    }
+  }
 
-   fclose(plotter_pl);
+  fclose(plotter_pl);
 }
 
 /* drawing a complete circle */
-static void
-plotcircle()
-{
-   float d;
-   struct dati1 *dd;
+static void plotcircle() {
+  float d;
+  struct dati1 *dd;
 
-   dd = dts;
-   dd += nc;
+  dd = dts;
+  dd += nc;
 
-   plotter_pl = us_fopen("plotter", "ab");
+  plotter_pl = us_fopen("plotter", "ab");
 
-   d = dd->r - (fl * (((float) 1.0) + ((float) ceil(nat / 15.)) / ((float) 2.0)));
+  d = dd->r - (fl * (((float)1.0) + ((float)ceil(nat / 15.)) / ((float)2.0)));
 
-   fprintf(plotter_pl, "%s%d%c", "SP", dd->col, ';');
-   fprintf(plotter_pl, "%s%f%c%f%c", "PA", dd->x, ',', dd->y, ';');
-   fprintf(plotter_pl, "%s%f%c%d%c", "CI", d, ',', 5, ';');
-   fprintf(plotter_pl, "%s%c\n", "PU", ';');
+  fprintf(plotter_pl, "%s%d%c", "SP", dd->col, ';');
+  fprintf(plotter_pl, "%s%f%c%f%c", "PA", dd->x, ',', dd->y, ';');
+  fprintf(plotter_pl, "%s%f%c%d%c", "CI", d, ',', 5, ';');
+  fprintf(plotter_pl, "%s%c\n", "PU", ';');
 
-   fclose(plotter_pl);
+  fclose(plotter_pl);
 }
 
 /* disegna gli archi */
-static void
-plotarc(int i)
-{
-   struct dati1 *dd;
+static void plotarc(int i) {
+  struct dati1 *dd;
 
-   dd = dts;
-   dd += nc;
+  dd = dts;
+  dd += nc;
 
-   plotter_pl = us_fopen("plotter", "ab");
-   fprintf(plotter_pl, "%s%d%c", "SP", dd->col, ';');
-   fprintf(plotter_pl, "%s%f%c%f%c", "PA", dis[i].xi, ',', dis[i].yi, ';');
-   fprintf(plotter_pl, "%s%f%c%f%c%f%c", "PD;AA", dd->x, ',', dd->y, ',', dis[i].ai, ';');
-   fprintf(plotter_pl, "%s%c\n", "PU", ';');
+  plotter_pl = us_fopen("plotter", "ab");
+  fprintf(plotter_pl, "%s%d%c", "SP", dd->col, ';');
+  fprintf(plotter_pl, "%s%f%c%f%c", "PA", dis[i].xi, ',', dis[i].yi, ';');
+  fprintf(plotter_pl, "%s%f%c%f%c%f%c", "PD;AA", dd->x, ',', dd->y, ',',
+          dis[i].ai, ';');
+  fprintf(plotter_pl, "%s%c\n", "PU", ';');
 
-   fclose(plotter_pl);
+  fclose(plotter_pl);
 }
 
-static void
-plotend()
-{
-   plotter_pl = us_fopen("plotter", "ab");
-   fprintf(plotter_pl, "%s", "SP;");
-   fclose(plotter_pl);
+static void plotend() {
+  plotter_pl = us_fopen("plotter", "ab");
+  fprintf(plotter_pl, "%s", "SP;");
+  fclose(plotter_pl);
 }
 
-// ----------------------------------- rint.c -------------------------------------
-// #warning rint.c 
+// ----------------------------------- rint.c
+// ------------------------------------- #warning rint.c
 
-static void
-cercaint(int k)
-{
-   double a, b, c;
-   double k1, k2, k3, k4, k5, delta;
+static void cercaint(int k) {
+  double a, b, c;
+  double k1, k2, k3, k4, k5, delta;
 
-   struct dati1 *yy1, *yy2;
+  struct dati1 *yy1, *yy2;
 
-   yy1 = yy2 = dts;
-   yy1 += nc;
-   yy2 += k;
+  yy1 = yy2 = dts;
+  yy1 += nc;
+  yy2 += k;
 
-   a = (yy1->y - yy2->y);
-   b = (yy1->r * yy1->r - yy2->r * yy2->r - yy1->x * yy1->x - yy1->y * yy1->y + yy2->x * yy2->x + yy2->y * yy2->y) / 2.0;
-   c = (yy2->x - yy1->x);
+  a = (yy1->y - yy2->y);
+  b = (yy1->r * yy1->r - yy2->r * yy2->r - yy1->x * yy1->x - yy1->y * yy1->y +
+       yy2->x * yy2->x + yy2->y * yy2->y) /
+      2.0;
+  c = (yy2->x - yy1->x);
 
-   if (yy2->x != yy1->x)
-   {
-      k1 = (a * a + c * c);
-      k2 = (a * b - a * c * yy2->x - c * c * yy2->y);
-      k3 = (b - c * yy2->x) * (b - c * yy2->x) + c * c * (yy2->y * yy2->y - yy2->r * yy2->r);
+  if (yy2->x != yy1->x) {
+    k1 = (a * a + c * c);
+    k2 = (a * b - a * c * yy2->x - c * c * yy2->y);
+    k3 = (b - c * yy2->x) * (b - c * yy2->x) +
+         c * c * (yy2->y * yy2->y - yy2->r * yy2->r);
 
-      delta = (k2 * k2 - k1 * k3);
-      if ((delta < 0.0)) // && (delta > -0.00001))
-         delta = 0.0;
+    delta = (k2 * k2 - k1 * k3);
+    if ((delta < 0.0))  // && (delta > -0.00001))
+      delta = 0.0;
 
-      iy1 = (-k2 + sqrt(delta)) / k1;
-      iy2 = (-k2 - sqrt(delta)) / k1;
-      ix1 = (a * iy1 + b) / c;
-      ix2 = (a * iy2 + b) / c;
-   }
-   else
-   {
-      k4 = (-a * a * yy2->x);
-      k5 = (b + a * yy2->y) * (b + a * yy2->y) + a * a * (yy2->x * yy2->x - yy2->r * yy2->r);
+    iy1 = (-k2 + sqrt(delta)) / k1;
+    iy2 = (-k2 - sqrt(delta)) / k1;
+    ix1 = (a * iy1 + b) / c;
+    ix2 = (a * iy2 + b) / c;
+  } else {
+    k4 = (-a * a * yy2->x);
+    k5 = (b + a * yy2->y) * (b + a * yy2->y) +
+         a * a * (yy2->x * yy2->x - yy2->r * yy2->r);
 
-      delta = (k4 * k4 - a * a * k5);
-      if ((delta < 0.0)) // && (delta > -0.00001))
-         delta = 0.0;
+    delta = (k4 * k4 - a * a * k5);
+    if ((delta < 0.0))  // && (delta > -0.00001))
+      delta = 0.0;
 
-      iy1 = (-b / a);
-      iy2 = (-b / a);
-      ix1 = (-k4 + sqrt(delta)) / (a * a);
-      ix2 = (-k4 - sqrt(delta)) / (a * a);
-   }
+    iy1 = (-b / a);
+    iy2 = (-b / a);
+    ix1 = (-k4 + sqrt(delta)) / (a * a);
+    ix2 = (-k4 - sqrt(delta)) / (a * a);
+  }
 }
 
-// ----------------------------------- scala.c -------------------------------------
-// #warning scala.c 
+// ----------------------------------- scala.c
+// ------------------------------------- #warning scala.c
 
 // static void mami();
 
@@ -3238,205 +3149,190 @@ cercaint(int k)
 
 // static void pulisci();
 
-static void
-formato()
-{
-   // int p;
-   int conferma;
-   float passo;
+static void formato() {
+  // int p;
+  int conferma;
+  float passo;
 
-   pulisci();
-   printf("\n\n%s%f%s", "Molecule's extension along the z-axis = ", fabs(maxz - minz), " [angstrom]");
+  pulisci();
+  printf("\n\n%s%f%s",
+         "Molecule's extension along the z-axis = ", fabs(maxz - minz),
+         " [angstrom]");
 
-   conferma = 0;
-   while (conferma == 0)
-   {
-      printf("\n\nInsert the integration step in angstroms : ");
-      // scanf("%f", &passo);
-      passo = asa_opts->asab1_step;
-      printf("%.2f\n", passo);
+  conferma = 0;
+  while (conferma == 0) {
+    printf("\n\nInsert the integration step in angstroms : ");
+    // scanf("%f", &passo);
+    passo = asa_opts->asab1_step;
+    printf("%.2f\n", passo);
 
-      while (passo <= 0)
-      {
-         printf("\n");
-         printf("Wrong number!\n");
-         printf("Re-insert the step: ");
-         if ( 1 == scanf("%f", &passo) ) {};
-      }
+    while (passo <= 0) {
+      printf("\n");
+      printf("Wrong number!\n");
+      printf("Re-insert the step: ");
+      if (1 == scanf("%f", &passo)) {
+      };
+    }
 
-      printf("\n\n%s%.0f\n\n", "Number of resulting iterations: ", ceil(fabs(maxz - minz) / passo));
-      // printf("%s", "Confirm ? [yes=1;no=0] ");
-      // scanf("%d", &conferma);
-      conferma = 1;
-   }
+    printf("\n\n%s%.0f\n\n",
+           "Number of resulting iterations: ", ceil(fabs(maxz - minz) / passo));
+    // printf("%s", "Confirm ? [yes=1;no=0] ");
+    // scanf("%d", &conferma);
+    conferma = 1;
+  }
 
-   passi = (int) (ceil(fabs(maxz - minz) / passo));
+  passi = (int)(ceil(fabs(maxz - minz) / passo));
 
-   quota = 2;
-   form = 1;
-   form1 = 1;
-   vel = 1;
-   k = 1;
-   // p = 0;
-   fl = (float) 0.022;
-   q1 = 3;
-   numdis = 1;
+  quota = 2;
+  form = 1;
+  form1 = 1;
+  vel = 1;
+  k = 1;
+  // p = 0;
+  fl = (float)0.022;
+  q1 = 3;
+  numdis = 1;
 
-   /* closing the format procedure */
+  /* closing the format procedure */
 }
 
 /******************************************************************/
 
-static void
-scala()
-{
-   mami();
+static void scala() {
+  mami();
 
-   base = maxx - minx;
-   altez = maxy - miny;
+  base = maxx - minx;
+  altez = maxy - miny;
 
-   if (base > altez)
-      medio = base / ((float) 2.0);
-   else
-      medio = altez / ((float) 2.0);
+  if (base > altez)
+    medio = base / ((float)2.0);
+  else
+    medio = altez / ((float)2.0);
 
-   m1 = (maxx + minx) / ((float) 2.0);
-   m2 = (maxy + miny) / ((float) 2.0);
+  m1 = (maxx + minx) / ((float)2.0);
+  m2 = (maxy + miny) / ((float)2.0);
 
-   if (q1 == 1)
-      /* opening the quadrants' case */
-   {
-      switch (q2)
-      {
-      case 1:
-         {
-            xp1 = (m1 - k * 3 * medio);
-            yp1 = (m2 - k * 3 * medio);
-            xp2 = (m1 + k * medio);
-            yp2 = (m2 + k * medio);
-            break;
-         }
+  if (q1 == 1)
+  /* opening the quadrants' case */
+  {
+    switch (q2) {
+      case 1: {
+        xp1 = (m1 - k * 3 * medio);
+        yp1 = (m2 - k * 3 * medio);
+        xp2 = (m1 + k * medio);
+        yp2 = (m2 + k * medio);
+        break;
+      }
 
-      case 2:
-         {
-            xp1 = (m1 - k * medio);
-            yp1 = (m2 - k * 3 * medio);
-            xp2 = (m1 + k * 3 * medio);
-            yp2 = (m2 + k * medio);
+      case 2: {
+        xp1 = (m1 - k * medio);
+        yp1 = (m2 - k * 3 * medio);
+        xp2 = (m1 + k * 3 * medio);
+        yp2 = (m2 + k * medio);
 
-            break;
-         }
+        break;
+      }
 
-      case 3:
-         {
-            xp1 = (m1 - k * medio);
-            yp1 = (m2 - k * medio);
-            xp2 = (m1 + k * 3 * medio);
-            yp2 = (m2 + k * 3 * medio);
+      case 3: {
+        xp1 = (m1 - k * medio);
+        yp1 = (m2 - k * medio);
+        xp2 = (m1 + k * 3 * medio);
+        yp2 = (m2 + k * 3 * medio);
 
-            break;
-         }
+        break;
+      }
 
-      case 4:
-         {
-            xp1 = (m1 - k * 3 * medio);
-            yp1 = (m2 - k * medio);
-            xp2 = (m1 + k * medio);
-            yp2 = (m2 + k * 3 * medio);
+      case 4: {
+        xp1 = (m1 - k * 3 * medio);
+        yp1 = (m2 - k * medio);
+        xp2 = (m1 + k * medio);
+        yp2 = (m2 + k * 3 * medio);
 
-            break;
-         }
+        break;
+      }
 
-      }         /* closing the quadrants' switch */
+    } /* closing the quadrants' switch */
 
-   }            /* closing the quadrants' if */
+  } /* closing the quadrants' if */
 
-   else if (q1 == 2)      /* opening the halves case */
-   {
-      pulisci();
-      switch (q2)
-      {
-      case 1:
-         {
-            xp1 = (m1 - k * 3 * medio);
-            yp1 = (m2 - k * 2 * medio);
-            xp2 = (m1 + k * medio);
-            yp2 = (m2 + k * 2 * medio);
+  else if (q1 == 2) /* opening the halves case */
+  {
+    pulisci();
+    switch (q2) {
+      case 1: {
+        xp1 = (m1 - k * 3 * medio);
+        yp1 = (m2 - k * 2 * medio);
+        xp2 = (m1 + k * medio);
+        yp2 = (m2 + k * 2 * medio);
 
-            break;
-         }
+        break;
+      }
 
-      case 2:
-         {
-            xp1 = (m1 - k * medio);
-            yp1 = (m2 - k * 2 * medio);
-            xp2 = (m1 + k * 3 * medio);
-            yp2 = (m2 + k * 2 * medio);
+      case 2: {
+        xp1 = (m1 - k * medio);
+        yp1 = (m2 - k * 2 * medio);
+        xp2 = (m1 + k * 3 * medio);
+        yp2 = (m2 + k * 2 * medio);
 
-            break;
-         }
+        break;
+      }
 
-      case 3:
-         {
-            xp1 = (m1 - k * m2 * medio);
-            yp1 = (m2 - k * 3 * medio);
-            xp2 = (m1 + k * 2 * medio);
-            yp2 = (m2 + k * medio);
+      case 3: {
+        xp1 = (m1 - k * m2 * medio);
+        yp1 = (m2 - k * 3 * medio);
+        xp2 = (m1 + k * 2 * medio);
+        yp2 = (m2 + k * medio);
 
-            break;
-         }
+        break;
+      }
 
-      case 4:
-         {
-            xp1 = (m1 - k * m2 * medio);
-            yp1 = (m2 - k * medio);
-            xp2 = (m1 + k * 2 * medio);
-            yp2 = (m2 + k * 3 * medio);
+      case 4: {
+        xp1 = (m1 - k * m2 * medio);
+        yp1 = (m2 - k * medio);
+        xp2 = (m1 + k * 2 * medio);
+        yp2 = (m2 + k * 3 * medio);
 
-            break;
-         }
+        break;
+      }
 
-      }         /* closing the halves' switch */
+    } /* closing the halves' switch */
 
-   }            /* closing the halves' if */
+  } /* closing the halves' if */
 
-   else         /* case of the drawing in the center of the sheet */
-   {
-      xp1 = (m1 - k * medio);
-      yp1 = (m2 - k * medio);
-      xp2 = (m1 + k * medio);
-      yp2 = (m2 + k * medio);
-   }
+  else /* case of the drawing in the center of the sheet */
+  {
+    xp1 = (m1 - k * medio);
+    yp1 = (m2 - k * medio);
+    xp2 = (m1 + k * medio);
+    yp2 = (m2 + k * medio);
+  }
 }
 
-static void
-raggio_probe()
-{
-   // printf("\n\n\nPROBE RADIUS [>=0.0]___");
-   // rbulk = scanf("%f", &rprobe);
-    
-   // while ((rbulk != 1) || (rprobe < 0.0))
-   //{
-   //printf("\n\n\n");
-   //printf("Wrong number !!\n");
-   //printf("Re-insert the PROBE RADIUS");
-   //printf("\n\n\nPROBE RADIUS [>=0.0]___");
-   //rbulk = scanf("%f", &rprobe);
-   //}
-   if(recheck) {
-      rprobe = asa_opts->probe_recheck_radius;
-   } else {
-      rprobe = asa_opts->probe_radius;
-   }
-    
-   rbulk = 1;
+static void raggio_probe() {
+  // printf("\n\n\nPROBE RADIUS [>=0.0]___");
+  // rbulk = scanf("%f", &rprobe);
 
-   if (rprobe <= 0.001)
-      rbulk = 0;
+  // while ((rbulk != 1) || (rprobe < 0.0))
+  //{
+  // printf("\n\n\n");
+  // printf("Wrong number !!\n");
+  // printf("Re-insert the PROBE RADIUS");
+  // printf("\n\n\nPROBE RADIUS [>=0.0]___");
+  // rbulk = scanf("%f", &rprobe);
+  //}
+  if (recheck) {
+    rprobe = asa_opts->probe_recheck_radius;
+  } else {
+    rprobe = asa_opts->probe_radius;
+  }
+
+  rbulk = 1;
+
+  if (rprobe <= 0.001) rbulk = 0;
 }
 
-// ----------------------------------- val.c -------------------------------------
-// #warning val.c 
+// ----------------------------------- val.c
+// ------------------------------------- #warning val.c
 
 static float ang(float, float);
 static float ang1(float, float, int);
@@ -3444,50 +3340,45 @@ static float dist(float, float, float, float);
 
 static void valida(float, float, int);
 
-static void
-valida(float ix, float iy, int k)
-{
-   int flag, j, temp1;
+static void valida(float ix, float iy, int k) {
+  int flag, j, temp1;
 
-   struct dati1 *dd;
-   struct dati2 *y1;
+  struct dati1 *dd;
+  struct dati2 *y1;
 
-   flag = 1;
-   j = 0;
+  flag = 1;
+  j = 0;
 
-   while ((j < cont1) && (flag == 1))
-   {
-      if ((j == k) || (j == nc))
-         j++;
+  while ((j < cont1) && (flag == 1)) {
+    if ((j == k) || (j == nc))
+      j++;
+    else {
+      dd = dts;
+      dd += j;
+      if (dist(dd->x, dd->y, ix, iy) < dd->r)
+        flag = 0;
       else
-      {
-         dd = dts;
-         dd += j;
-         if (dist(dd->x, dd->y, ix, iy) < dd->r)
-            flag = 0;
-         else
-            j++;
-      }
-   }
+        j++;
+    }
+  }
 
-   if (flag == 1)
-   {
-      temp1 = indec[k];
-      y1 = trans;
-      y1 += (k * IMAX) + temp1;
+  if (flag == 1) {
+    temp1 = indec[k];
+    y1 = trans;
+    y1 += (k * IMAX) + temp1;
 
-      y1->xi = ix;
-      y1->yi = iy;
-      y1->ai = ang1(ix, iy, k);
-      indec[k]++;
+    y1->xi = ix;
+    y1->yi = iy;
+    y1->ai = ang1(ix, iy, k);
+    indec[k]++;
 
-      temp1 = indec[nc];
-      y1 = trans;
-      y1 += (nc * IMAX) + temp1;
+    temp1 = indec[nc];
+    y1 = trans;
+    y1 += (nc * IMAX) + temp1;
 
-      y1->xi = ix;
-      y1->yi = iy;
-      y1->ai = ang(ix, iy);
-      indec[nc]++;
-   }
+    y1->xi = ix;
+    y1->yi = iy;
+    y1->ai = ang(ix, iy);
+    indec[nc]++;
+  }
 }

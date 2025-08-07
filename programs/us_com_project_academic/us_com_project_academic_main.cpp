@@ -2,33 +2,27 @@
 
 #include "../us_com_project/us_com_project_gui.h"
 
+int main(int argc, char* argv[]) {
+  QApplication application(argc, argv);
 
+#include "main1.inc"
 
-int main( int argc, char* argv[] )
-{
-   QApplication application( argc, argv );
+  // License is OK.  Start up.
 
-   #include "main1.inc"
+  US_ComProjectMain* w = new US_ComProjectMain("US_MODE");
+  w->show();
 
-   // License is OK.  Start up.
+  // Create local "server" to register applicaiton
+  QString instance_socket = US_Settings::etcDir() + "/usinstance_";
+  QInstances instances(instance_socket);
+  bool instance_created = instances.create();
+  qDebug() << "instance create returned " << is_true(instance_created);
+  if (!instance_created) exit(-1);
 
-   US_ComProjectMain * w = new US_ComProjectMain("US_MODE");
-   w->show();
+  // w->check_current_stage();
+  w->call_AutoflowDialogue();
 
-   // Create local "server" to register applicaiton
-   QString instance_socket = US_Settings::etcDir() + "/usinstance_";
-   QInstances instances( instance_socket );
-   bool instance_created = instances.create();
-   qDebug() << "instance create returned " << is_true( instance_created );
-   if ( !instance_created ) 
-     exit(-1);
+  if (w->window_closed) return 0;
 
-   //w->check_current_stage();
-   w->call_AutoflowDialogue();
-   
-   if ( w->window_closed )
-     return 0;
-   
-   return application.exec();  //!< \memberof QApplication
+  return application.exec();  //!< \memberof QApplication
 }
-

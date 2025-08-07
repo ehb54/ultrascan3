@@ -5,12 +5,10 @@
 #define ulong unsigned long int
 #endif
 
-char* LastErrorMsg( void );
-int GetErrorCode( void );
-int ShowInterpNames( char*, int );
-int SendCommand( ulong, char*, char* );
-int SendQuery( ulong, char*, char*, char*, int );
+char* LastErrorMsg(void);
+int GetErrorCode(void);
+int ShowInterpNames(char*, int);
+int SendCommand(ulong, char*, char*);
+int SendQuery(ulong, char*, char*, char*, int);
 
 #endif
-
-

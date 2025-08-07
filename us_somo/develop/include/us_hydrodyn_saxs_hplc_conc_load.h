@@ -4,112 +4,107 @@
 // QT defs:
 
 #include <qlabel.h>
-#include <qstring.h>
 #include <qlayout.h>
 #include <qpushbutton.h>
-//#include <q3frame.h>
+#include <qstring.h>
+// #include <q3frame.h>
 #include <qcheckbox.h>
-#include <qtextedit.h>
-#include <qprogressbar.h>
-#include <qmenubar.h>
 #include <qfileinfo.h>
+#include <qmenubar.h>
 #include <qprinter.h>
+#include <qprogressbar.h>
 #include <qtablewidget.h>
-//Added by qt3to4:
+#include <qtextedit.h>
+// Added by qt3to4:
 #include <QCloseEvent>
 
 #include "us_util.h"
 
-//standard C and C++ defs:
+// standard C and C++ defs:
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include <iostream>
 #include <map>
 #include <vector>
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <iostream>
 
 #include "us_hydrodyn_comparative.h"
 
 using namespace std;
 
-class US_EXTERN US_Hydrodyn_Saxs_Hplc_Conc_Load : public QDialog
-{
-   Q_OBJECT
+class US_EXTERN US_Hydrodyn_Saxs_Hplc_Conc_Load : public QDialog {
+  Q_OBJECT
 
-      friend class US_Hydrodyn_Saxs_Hplc_Conc;
+  friend class US_Hydrodyn_Saxs_Hplc_Conc;
 
-   public:
-   // takes a text format file
-   // lets users select columns for name & concentration 
-   // and concentration units
-   // tries to set values in csv1
-      US_Hydrodyn_Saxs_Hplc_Conc_Load(
-                                        QStringList &qsl_text,
-                                        csv &csv1,
-                                        QWidget *p = 0, 
-                                        const char *name = 0
-                                        );
-      ~US_Hydrodyn_Saxs_Hplc_Conc_Load();
+ public:
+  // takes a text format file
+  // lets users select columns for name & concentration
+  // and concentration units
+  // tries to set values in csv1
+  US_Hydrodyn_Saxs_Hplc_Conc_Load(QStringList &qsl_text, csv &csv1,
+                                  QWidget *p = 0, const char *name = 0);
+  ~US_Hydrodyn_Saxs_Hplc_Conc_Load();
 
-   private:
-      QStringList   *text;
-      csv           *csv1;
-      csv           trial_csv;
+ private:
+  QStringList *text;
+  csv *csv1;
+  csv trial_csv;
 
-      US_Config     *USglobal;
+  US_Config *USglobal;
 
-      QLabel        *lbl_title;
+  QLabel *lbl_title;
 
-      QTableWidget        *t_csv;             
+  QTableWidget *t_csv;
 
-      QPushButton   *pb_del_row;
+  QPushButton *pb_del_row;
 
-      QPushButton   *pb_set_name;
-      QLabel        *lbl_name;
+  QPushButton *pb_set_name;
+  QLabel *lbl_name;
 
-      QPushButton   *pb_adjust;
-      
-      QPushButton   *pb_set_conc;
-      QLabel        *lbl_conc;
-      
-      QPushButton   *pb_trial;
-      QLabel        *lbl_trial;
+  QPushButton *pb_adjust;
 
-      QPushButton   *pb_help;
-      QPushButton   *pb_cancel;
-      QPushButton   *pb_set_ok;
+  QPushButton *pb_set_conc;
+  QLabel *lbl_conc;
 
-      void          setupGUI();
+  QPushButton *pb_trial;
+  QLabel *lbl_trial;
 
-      csv           disp_csv;
-      csv           current_csv();
-      void          reload_csv();
+  QPushButton *pb_help;
+  QPushButton *pb_cancel;
+  QPushButton *pb_set_ok;
 
-      bool          disable_updates;
+  void setupGUI();
 
-      QString       csv_to_qstring( csv from_csv );
+  csv disp_csv;
+  csv current_csv();
+  void reload_csv();
 
-   private slots:
+  bool disable_updates;
 
-      void update_enables();
-      void col_header_released( int col );
+  QString csv_to_qstring(csv from_csv);
 
-      void del_row();
-      void set_name();
-      void set_conc();
-      void adjust();
+ private slots:
 
-      void trial();
+  void update_enables();
+  void col_header_released(int col);
 
-      void cancel();
-      void help();
-      void set_ok();
+  void del_row();
+  void set_name();
+  void set_conc();
+  void adjust();
 
-   protected slots:
+  void trial();
 
-      void closeEvent(QCloseEvent *);
-   
+  void cancel();
+  void help();
+  void set_ok();
+
+ protected slots:
+
+  void closeEvent(QCloseEvent *);
 };
 
 #endif

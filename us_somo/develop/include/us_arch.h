@@ -10,11 +10,9 @@ using namespace std;
 
 class US_Arch {
  public:
-
-   static bool is_arm();
+  static bool is_arm();
 
  private:
-
 };
 
 #endif

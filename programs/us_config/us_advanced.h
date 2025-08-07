@@ -9,32 +9,29 @@
 /*! \brief A class to allow the user to set, modify or delete
     advanced parameters
 */
-class US_Advanced : public US_Widgets
-{
+class US_Advanced : public US_Widgets {
   Q_OBJECT
-  
-  public:
-    
-    //!  Construct the window to manage advanced parameters.
-    US_Advanced( QWidget* w = 0, Qt::WindowFlags flags = 0 );
-    
-  private:
 
-    QPushButton* pb_reset; 
-    QPushButton* pb_save;   
-    QPushButton* pb_help;
-    QPushButton* pb_close;
+ public:
+  //!  Construct the window to manage advanced parameters.
+  US_Advanced(QWidget* w = 0, Qt::WindowFlags flags = 0);
 
-    QSpinBox*    sb_debug;
-    QSpinBox*    sb_advanced;
-    QSpinBox*    sb_threads;
-    QSpinBox*    sb_noisdiag;
+ private:
+  QPushButton* pb_reset;
+  QPushButton* pb_save;
+  QPushButton* pb_help;
+  QPushButton* pb_close;
 
-    QTextEdit*   te_dbgtext;
+  QSpinBox* sb_debug;
+  QSpinBox* sb_advanced;
+  QSpinBox* sb_threads;
+  QSpinBox* sb_noisdiag;
 
-  private slots:
-    void save           ( void );
-    void help           ( void );
-    void reset          ( void );
+  QTextEdit* te_dbgtext;
+
+ private slots:
+  void save(void);
+  void help(void);
+  void reset(void);
 };
 #endif

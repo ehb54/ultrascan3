@@ -4,54 +4,53 @@
 
 #include <QtXml>
 
-#include "us_extern.h"
 #include "us_dataIO.h"
-#include "us_db2.h"
 #include "us_data_model.h"
+#include "us_db2.h"
+#include "us_extern.h"
 
 /*! \class US_SyncExperiment
            This class provides the ability to synchronize an
            experiment record on local disk and in the database.
 */
-class US_SyncExperiment : public QObject
-{
-   Q_OBJECT
+class US_SyncExperiment : public QObject {
+  Q_OBJECT
 
-   public:
-      /*! \brief Constructor for the US_SyncExperiment class.
-      
-      Sets up the database person ID and pointer to the database connection
+ public:
+  /*! \brief Constructor for the US_SyncExperiment class.
 
-          \param    a_db     A pointer to an open database connection
-          \param    parent   Pointer to parent QWidget.
-      */
-      US_SyncExperiment( US_DB2*, QWidget* = 0 );
+  Sets up the database person ID and pointer to the database connection
 
-      /*! \brief    Synchronize database and local experiment records
+      \param    a_db     A pointer to an open database connection
+      \param    parent   Pointer to parent QWidget.
+  */
+  US_SyncExperiment(US_DB2*, QWidget* = 0);
 
-                    This function evaluates the state of the experiment
-                    records associated with a raw data record and updates
-                    flags whether the upload/download can proceed.
+  /*! \brief    Synchronize database and local experiment records
 
-          \param    cdesc   Current description object for the raw data
-                            record being operated on (uploaded/downloaded).
-          \returns          A status flag (0 if all OK)
-      */
-      int synchronize( US_DataModel::DataDesc& );
+                This function evaluates the state of the experiment
+                records associated with a raw data record and updates
+                flags whether the upload/download can proceed.
 
-   private:
-      US_DB2*     db;
+      \param    cdesc   Current description object for the raw data
+                        record being operated on (uploaded/downloaded).
+      \returns          A status flag (0 if all OK)
+  */
+  int synchronize(US_DataModel::DataDesc&);
 
-      QStringList expIDs;
-      QStringList runIDs;
+ private:
+  US_DB2* db;
 
-      QWidget*    parentw;
+  QStringList expIDs;
+  QStringList runIDs;
 
-      QString     expID;
-      QString     rawID;
+  QWidget* parentw;
 
-      QString expGUIDauc( QString );  // get exper GUID from AUC-related file
+  QString expID;
+  QString rawID;
 
-      int           dbg_level;
+  QString expGUIDauc(QString);  // get exper GUID from AUC-related file
+
+  int dbg_level;
 };
 #endif

@@ -4,101 +4,96 @@
 // QT defs:
 
 #include <qlabel.h>
-#include <qstring.h>
 #include <qlayout.h>
 #include <qpushbutton.h>
-//#include <q3frame.h>
+#include <qstring.h>
+// #include <q3frame.h>
 #include <qcheckbox.h>
 #include <qtreewidget.h>
-//Added by qt3to4:
+// Added by qt3to4:
 #include <QCloseEvent>
 
-#include "us_util.h"
-#include "us_hydrodyn_pdbdefs.h"
 #include "us_hydrodyn_batch.h"
+#include "us_hydrodyn_pdbdefs.h"
+#include "us_util.h"
 
-//standard C and C++ defs:
+// standard C and C++ defs:
 
 using namespace std;
 
-class US_EXTERN US_Hydrodyn_Cluster_Results : public QDialog
-{
-   Q_OBJECT
-      friend class US_Hydrodyn_Cluster;
+class US_EXTERN US_Hydrodyn_Cluster_Results : public QDialog {
+  Q_OBJECT
+  friend class US_Hydrodyn_Cluster;
 
-   public:
-     US_Hydrodyn_Cluster_Results(
-                               void *us_hydrodyn,
-                               QWidget *p = 0, 
-                               const char *name = 0
-                               );
-      ~US_Hydrodyn_Cluster_Results();
-      
-    private:
-      void          *us_hydrodyn;
-      
-      US_Config     *USglobal;
+ public:
+  US_Hydrodyn_Cluster_Results(void *us_hydrodyn, QWidget *p = 0,
+                              const char *name = 0);
+  ~US_Hydrodyn_Cluster_Results();
 
-      QLabel        *lbl_title;
+ private:
+  void *us_hydrodyn;
 
-      QLabel        *lbl_files;
-      QTreeWidget     *lv_files;
+  US_Config *USglobal;
 
-      QPushButton   *pb_select_all;
-      QPushButton   *pb_purge;
-      QPushButton   *pb_load_results;
+  QLabel *lbl_title;
 
-      QFont         ft;
-      QTextEdit     *editor;
-      QMenuBar      *m;
+  QLabel *lbl_files;
+  QTreeWidget *lv_files;
 
-      QPushButton   *pb_help;
-      QPushButton   *pb_cancel;
-      
-      QStringList   files;
+  QPushButton *pb_select_all;
+  QPushButton *pb_purge;
+  QPushButton *pb_load_results;
 
-      void          editor_msg( QString color, QString msg );
+  QFont ft;
+  QTextEdit *editor;
+  QMenuBar *m;
 
-      QString       pkg_dir;
-      QString       completed_dir;
-      QString       tmp_dir;
-      QString       results_dir;
+  QPushButton *pb_help;
+  QPushButton *pb_cancel;
 
-      QString       errormsg;
-      bool          disable_updates;
+  QStringList files;
 
-      unsigned int  update_files( bool set_lv_files = true );
+  void editor_msg(QString color, QString msg);
 
-      bool          clean_dir( QString dir );
+  QString pkg_dir;
+  QString completed_dir;
+  QString tmp_dir;
+  QString results_dir;
 
-      bool          load_one_result        ( QString file );
-      bool          merge_csvs             ( QStringList &final_results );
-      bool          move_to_results        ( QString jobname, QStringList final_results );
-      bool          merge_this_csv         ( QString dest, vector < QString > csvs );
+  QString errormsg;
+  bool disable_updates;
 
-      bool          are_any_selected       ( QTreeWidget *lv );
+  unsigned int update_files(bool set_lv_files = true);
 
-   private slots:
+  bool clean_dir(QString dir);
 
-      void setupGUI();
-   
-      void update_enables();
+  bool load_one_result(QString file);
+  bool merge_csvs(QStringList &final_results);
+  bool move_to_results(QString jobname, QStringList final_results);
+  bool merge_this_csv(QString dest, vector<QString> csvs);
 
-      void select_all();
-      void purge();
-      void load_results();
+  bool are_any_selected(QTreeWidget *lv);
 
-      void clear_display();
-      void update_font();
-      void save();
+ private slots:
 
-      void cancel();
-      void help();
+  void setupGUI();
 
-   protected slots:
+  void update_enables();
 
-      void closeEvent(QCloseEvent *);
-   
+  void select_all();
+  void purge();
+  void load_results();
+
+  void clear_display();
+  void update_font();
+  void save();
+
+  void cancel();
+  void help();
+
+ protected slots:
+
+  void closeEvent(QCloseEvent *);
 };
 
 #endif

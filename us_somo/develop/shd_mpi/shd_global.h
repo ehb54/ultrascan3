@@ -4,4 +4,4 @@
 typedef double shd_double;
 #define MPI_SHD_DOUBLE MPI_DOUBLE
 
-#endif // SHD_GLOBAL
+#endif  // SHD_GLOBAL

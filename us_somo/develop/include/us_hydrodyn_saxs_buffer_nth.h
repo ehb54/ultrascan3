@@ -1,206 +1,202 @@
 #ifndef US_HYDRODYN_SAXS_BUFFER_NTH_H
 #define US_HYDRODYN_SAXS_BUFFER_NTH_H
 
+#include "qlabel.h"
+#include "qlayout.h"
+#include "qstring.h"
+#include "qvalidator.h"
 #include "us_hydrodyn.h"
 #include "us_hydrodyn_saxs_buffer.h"
-#include "qlabel.h"
-#include "qstring.h"
-#include "qlayout.h"
-#include "qvalidator.h"
-//Added by qt3to4:
+// Added by qt3to4:
 #include <QCloseEvent>
+
 #include "us_mqt.h"
 
 using namespace std;
 
 #ifdef WIN32
-# if QT_VERSION < 0x040000
-  #pragma warning ( disable: 4251 )
-# endif
+#if QT_VERSION < 0x040000
+#pragma warning(disable : 4251)
+#endif
 #endif
 
-class US_EXTERN US_Hydrodyn_Saxs_Buffer_Nth : public QDialog
-{
-   Q_OBJECT
+class US_EXTERN US_Hydrodyn_Saxs_Buffer_Nth : public QDialog {
+  Q_OBJECT
 
-   public:
-      US_Hydrodyn_Saxs_Buffer_Nth(
-                                void                     *              us_hydrodyn_saxs_buffer,
-                                map < QString, QString > *              parameters,
-                                QWidget *                               p = 0,
-                                const char *                            name = 0
-                                );
+ public:
+  US_Hydrodyn_Saxs_Buffer_Nth(void* us_hydrodyn_saxs_buffer,
+                              map<QString, QString>* parameters, QWidget* p = 0,
+                              const char* name = 0);
 
-      ~US_Hydrodyn_Saxs_Buffer_Nth();
+  ~US_Hydrodyn_Saxs_Buffer_Nth();
 
-   private:
+ private:
+  US_Config* USglobal;
 
-      US_Config *                             USglobal;
+  mQLabel* lbl_title;
+  vector<QWidget*> files_widgets;
 
-      mQLabel *                               lbl_title;
-      vector < QWidget * >                    files_widgets;
+  QLabel* lbl_files;
+  QListWidget* lb_files;
 
-      QLabel *                                lbl_files;
-      QListWidget *                              lb_files;
+  QLabel* lbl_files_sel;
+  QListWidget* lb_files_sel;
+  QLabel* lbl_files_selected;
 
-      QLabel *                                lbl_files_sel;
-      QListWidget *                              lb_files_sel;
-      QLabel *                                lbl_files_selected;
+  // select
 
-      // select
+  mQLabel* lbl_select_nth;
+  vector<QWidget*> select_widgets;
 
-      mQLabel *                               lbl_select_nth;
-      vector < QWidget * >                    select_widgets;
+  QLabel* lbl_n;
+  QLineEdit* le_n;
 
-      QLabel *                                lbl_n;
-      QLineEdit *                             le_n;
+  QLabel* lbl_start;
+  QLineEdit* le_start;
+  QLabel* lbl_start_name;
 
-      QLabel *                                lbl_start;
-      QLineEdit *                             le_start;
-      QLabel *                                lbl_start_name;
+  QLabel* lbl_end;
+  QLineEdit* le_end;
+  QLabel* lbl_end_name;
 
-      QLabel *                                lbl_end;
-      QLineEdit *                             le_end;
-      QLabel *                                lbl_end_name;
+  QPushButton* pb_nth_only;
+  QPushButton* pb_nth_add;
 
-      QPushButton *                           pb_nth_only;
-      QPushButton *                           pb_nth_add;
+  // contain
 
-      // contain
+  mQLabel* lbl_contain;
+  vector<QWidget*> contain_widgets;
 
-      mQLabel *                               lbl_contain;
-      vector < QWidget * >                    contain_widgets;
+  // QLabel *                                lbl_starts_with;
+  // QLineEdit *                             le_starts_with;
 
-   // QLabel *                                lbl_starts_with;
-   // QLineEdit *                             le_starts_with;
+  QLabel* lbl_contains;
+  QLineEdit* le_contains;
 
-      QLabel *                                lbl_contains;
-      QLineEdit *                             le_contains;
+  // QLabel *                                lbl_ends_with;
+  // QLineEdit *                             le_ends_with;
 
-   // QLabel *                                lbl_ends_with;
-   // QLineEdit *                             le_ends_with;
+  QPushButton* pb_contains_only;
+  QPushButton* pb_contains_add;
 
-      QPushButton *                           pb_contains_only;
-      QPushButton *                           pb_contains_add;
+  // ------ plot section
 
-      // ------ plot section
+  PC* pc;
+  mQwtPlot* plot_data;
+  US_Plot* usp_plot_data;
+ private slots:
+  void usp_config_plot_data(const QPoint&);
 
-      PC *                                    pc;
-      mQwtPlot *                              plot_data;
-      US_Plot *                               usp_plot_data;
-   private slots:
-      void usp_config_plot_data( const QPoint & );
-
-   private:
-      ScrollZoomer *                          plot_data_zoomer;
+ private:
+  ScrollZoomer* plot_data_zoomer;
 #if QT_VERSION >= 0x040000
-      QwtPlotGrid *                           grid_data;
+  QwtPlotGrid* grid_data;
 #endif
 #if QT_VERSION >= 0x040000
-      vector < QwtPlotCurve * >               plotted_curves;
-      QwtPlotMarker *                         plot_marker;
+  vector<QwtPlotCurve*> plotted_curves;
+  QwtPlotMarker* plot_marker;
 #else
-      vector < long >                         plotted_curves;
-      long *                                  plot_marker;
-#endif      
-      vector < QString >                      plotted_names;
-      vector < vector < double > >            plotted_x;
-      vector < vector < double > >            plotted_y;
+  vector<long> plotted_curves;
+  long* plot_marker;
+#endif
+  vector<QString> plotted_names;
+  vector<vector<double> > plotted_x;
+  vector<vector<double> > plotted_y;
 
-      QPushButton *                           pb_color_rotate;
-      QPushButton *                           pb_clear_plot;
-      QPushButton *                           pb_save_dat;
+  QPushButton* pb_color_rotate;
+  QPushButton* pb_clear_plot;
+  QPushButton* pb_save_dat;
 
-      // intensity
+  // intensity
 
-      mQLabel *                               lbl_intensity;
-      vector < QWidget * >                    intensity_widgets;
+  mQLabel* lbl_intensity;
+  vector<QWidget*> intensity_widgets;
 
-      QCheckBox *                             cb_q_range;
-      QLineEdit *                             le_q_start;
-      QLineEdit *                             le_q_end;
+  QCheckBox* cb_q_range;
+  QLineEdit* le_q_start;
+  QLineEdit* le_q_end;
 
-      QPushButton *                           pb_i_avg_all;
-      QPushButton *                           pb_i_avg_sel;
-      
-      QGroupBox *                          bg_i_above_below;
-      QRadioButton *                          rb_i_above;
-      QRadioButton *                          rb_i_below;
-      QLineEdit *                             le_i_level;
+  QPushButton* pb_i_avg_all;
+  QPushButton* pb_i_avg_sel;
 
-      QTextEdit *                             te_q;
+  QGroupBox* bg_i_above_below;
+  QRadioButton* rb_i_above;
+  QRadioButton* rb_i_below;
+  QLineEdit* le_i_level;
 
-      QPushButton *                           pb_i_only;
-      QPushButton *                           pb_i_add;
+  QTextEdit* te_q;
 
-      QwtWheel *                              qwtw_wheel;
+  QPushButton* pb_i_only;
+  QPushButton* pb_i_add;
 
-      QPushButton *                           pb_help;
-      QPushButton *                           pb_quit;
-      QPushButton *                           pb_do_select;
-      QPushButton *                           pb_go;
+  QwtWheel* qwtw_wheel;
 
-      void                     *              us_hydrodyn_saxs_buffer;
-      void                     *              us_hydrodyn;
-      map < QString, QString > *              parameters;
+  QPushButton* pb_help;
+  QPushButton* pb_quit;
+  QPushButton* pb_do_select;
+  QPushButton* pb_go;
 
-      void                                    setupGUI();
+  void* us_hydrodyn_saxs_buffer;
+  void* us_hydrodyn;
+  map<QString, QString>* parameters;
 
-      void                                    i_avg( QStringList files );
+  void setupGUI();
 
-      set < int >                             get_intensity_selected();
+  void i_avg(QStringList files);
 
-      bool                                    wheel_is_pressed;
+  set<int> get_intensity_selected();
 
-   private slots:
+  bool wheel_is_pressed;
 
-      // files
-      void                                    hide_files();
+ private slots:
 
-      // select
-      void                                    hide_select();
-      void                                    nth_only();
-      void                                    nth_add();
+  // files
+  void hide_files();
 
-      // contain
-      void                                    hide_contain();
-      void                                    contains_only();
-      void                                    contains_add();
+  // select
+  void hide_select();
+  void nth_only();
+  void nth_add();
 
-      // intensity 
-      void                                    hide_intensity();
-      void                                    i_avg_all();
-      void                                    i_avg_sel();
-      void                                    update_i_level();
-      void                                    adjust_wheel ( double );
-      void                                    i_only();
-      void                                    i_add();
+  // contain
+  void hide_contain();
+  void contains_only();
+  void contains_add();
 
-      void                                    color_rotate();
-      void                                    clear_plot();
-      void                                    save_dat();
+  // intensity
+  void hide_intensity();
+  void i_avg_all();
+  void i_avg_sel();
+  void update_i_level();
+  void adjust_wheel(double);
+  void i_only();
+  void i_add();
 
-      void                                    update_files_selected();
+  void color_rotate();
+  void clear_plot();
+  void save_dat();
 
-      void                                    do_select( bool update = true );
-      void                                    go();
-      void                                    quit();
-      void                                    help();
+  void update_files_selected();
 
-      void                                    update_enables();
+  void do_select(bool update = true);
+  void go();
+  void quit();
+  void help();
 
-      void wheel_pressed            ();
-      void wheel_released           ();
+  void update_enables();
 
-   protected slots:
+  void wheel_pressed();
+  void wheel_released();
 
-      void                                    closeEvent( QCloseEvent * );
+ protected slots:
+
+  void closeEvent(QCloseEvent*);
 };
 
 #ifdef WIN32
-# if QT_VERSION < 0x040000
-  #pragma warning ( default: 4251 )
-# endif
+#if QT_VERSION < 0x040000
+#pragma warning(default : 4251)
+#endif
 #endif
 
 #endif

@@ -16,5 +16,5 @@
  */
 
 #include "us_mac_utils.h"
-#include "us_x11_utils.c"
 
+#include "us_x11_utils.c"

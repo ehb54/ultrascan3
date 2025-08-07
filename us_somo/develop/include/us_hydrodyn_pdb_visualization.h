@@ -3,90 +3,84 @@
 
 // QT defs:
 
+#include <qgroupbox.h>
 #include <qlabel.h>
-#include <qstring.h>
 #include <qlayout.h>
 #include <qlineedit.h>
 #include <qpushbutton.h>
 #include <qradiobutton.h>
-#include <qgroupbox.h>
-//#include <q3frame.h>
+#include <qstring.h>
+// #include <q3frame.h>
 #include <qcheckbox.h>
-//Added by qt3to4:
+// Added by qt3to4:
 #include <QCloseEvent>
 
 #include "us_util.h"
 
-//standard C and C++ defs:
+// standard C and C++ defs:
 
-#include <vector>
-#include <string.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
 #include <iostream>
+#include <vector>
 
 using namespace std;
 
-
-struct pdb_visualization
-{
-   int visualization;   // 0 = Default RASMOL settings
-                        // 1 = Space-filling, colors as bead colors
-                        // 2 = Custom script file
-   QString filename;      // custom file name
+struct pdb_visualization {
+  int visualization;  // 0 = Default RASMOL settings
+                      // 1 = Space-filling, colors as bead colors
+                      // 2 = Custom script file
+  QString filename;   // custom file name
 };
 
-class US_EXTERN US_Hydrodyn_PDB_Visualization : public QFrame
-{
-   Q_OBJECT
+class US_EXTERN US_Hydrodyn_PDB_Visualization : public QFrame {
+  Q_OBJECT
 
-   public:
-      US_Hydrodyn_PDB_Visualization(struct pdb_visualization *, bool *, QWidget *p = 0, const char *name = 0);
-      ~US_Hydrodyn_PDB_Visualization();
+ public:
+  US_Hydrodyn_PDB_Visualization(struct pdb_visualization *, bool *,
+                                QWidget *p = 0, const char *name = 0);
+  ~US_Hydrodyn_PDB_Visualization();
 
-   public:
-      
-      struct pdb_visualization *pdb;
-      bool *pdb_visualization_widget;
-      
-      US_Config *USglobal;
+ public:
+  struct pdb_visualization *pdb;
+  bool *pdb_visualization_widget;
 
-      QLabel *lbl_info;
+  US_Config *USglobal;
 
-      QPushButton *pb_help;
-      QPushButton *pb_cancel;
-      QPushButton *pb_filename;
-      
-      QGroupBox *bg_visualization;
+  QLabel *lbl_info;
 
-      QCheckBox *cb_default;
-      QCheckBox *cb_spacefilling;
-      QCheckBox *cb_custom;
+  QPushButton *pb_help;
+  QPushButton *pb_cancel;
+  QPushButton *pb_filename;
 
-      QRadioButton *rb_default;
-      QRadioButton *rb_spacefilling;
-      QRadioButton *rb_custom;
+  QGroupBox *bg_visualization;
 
-      QLineEdit *le_filename;
-      
-      
-   private slots:
-      
-      void setupGUI();
-      void select_option();
-      void select_option(int);
-      void select_filename();
-      void update_filename(const QString &);
+  QCheckBox *cb_default;
+  QCheckBox *cb_spacefilling;
+  QCheckBox *cb_custom;
 
-      void cancel();
-      void help();
-   
-   protected slots:
+  QRadioButton *rb_default;
+  QRadioButton *rb_spacefilling;
+  QRadioButton *rb_custom;
 
-      void closeEvent(QCloseEvent *);
+  QLineEdit *le_filename;
+
+ private slots:
+
+  void setupGUI();
+  void select_option();
+  void select_option(int);
+  void select_filename();
+  void update_filename(const QString &);
+
+  void cancel();
+  void help();
+
+ protected slots:
+
+  void closeEvent(QCloseEvent *);
 };
-
-
 
 #endif
-

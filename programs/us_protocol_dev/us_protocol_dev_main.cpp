@@ -2,27 +2,22 @@
 
 #include "us_protocol_dev_gui.h"
 
+int main(int argc, char* argv[]) {
+  QApplication application(argc, argv);
 
+#include "main1.inc"
 
-int main( int argc, char* argv[] )
-{
-   QApplication application( argc, argv );
+  // License is OK.  Start up.
 
-   #include "main1.inc"
+  US_ProtocolDevMain* w = new US_ProtocolDevMain;
+  w->show();
 
-   // License is OK.  Start up.
+  w->call_AutoflowDialogue();
 
-   US_ProtocolDevMain * w = new US_ProtocolDevMain;
-   w->show(); 
+  if (w->window_closed) {
+    qDebug() << "Closing --- ";
+    return 0;
+  }
 
-   w->call_AutoflowDialogue();
-   
-   if ( w->window_closed )
-     {
-       qDebug() << "Closing --- ";
-       return 0;
-     }
-   
-   return application.exec();  //!< \memberof QApplication
+  return application.exec();  //!< \memberof QApplication
 }
-

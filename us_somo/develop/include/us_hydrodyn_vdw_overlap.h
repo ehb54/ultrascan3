@@ -5,58 +5,56 @@
 
 using namespace std;
 
-class US_EXTERN US_Hydrodyn_Vdw_Overlap : public QFrame
-{
-   Q_OBJECT
+class US_EXTERN US_Hydrodyn_Vdw_Overlap : public QFrame {
+  Q_OBJECT
 
-   public:
-      US_Hydrodyn_Vdw_Overlap(struct misc_options *, bool *, void *, QWidget *p = 0, const char *name = 0);
-      ~US_Hydrodyn_Vdw_Overlap();
+ public:
+  US_Hydrodyn_Vdw_Overlap(struct misc_options *, bool *, void *, QWidget *p = 0,
+                          const char *name = 0);
+  ~US_Hydrodyn_Vdw_Overlap();
 
-   public:
+ public:
+  struct misc_options *misc;
+  bool *misc_widget;
+  void *us_hydrodyn;
 
-      struct misc_options *misc;
-      bool *misc_widget;
-                void *us_hydrodyn;
-
-      US_Config *USglobal;
+  US_Config *USglobal;
 #ifndef NO_DB
-      US_Vbar_DB *vbar_dlg;
+  US_Vbar_DB *vbar_dlg;
 #endif
 
-      QLabel *lbl_info;
+  QLabel *lbl_info;
 
-      QPushButton *pb_help;
-      QPushButton *pb_cancel;
+  QPushButton *pb_help;
+  QPushButton *pb_cancel;
 
-      QLabel    *lbl_vdw_ot_mult;
-      QLineEdit *le_vdw_ot_mult;
+  QLabel *lbl_vdw_ot_mult;
+  QLineEdit *le_vdw_ot_mult;
 
-      QLabel    *lbl_vdw_ot_dpct;
-      QLineEdit *le_vdw_ot_dpct;
+  QLabel *lbl_vdw_ot_dpct;
+  QLineEdit *le_vdw_ot_dpct;
 
-      QCheckBox *cb_vdw_ot_alt;
-      QCheckBox *cb_vdw_saxs_water_beads;
-      QCheckBox *cb_vdw_saxs_skip_pr0pair;
+  QCheckBox *cb_vdw_ot_alt;
+  QCheckBox *cb_vdw_saxs_water_beads;
+  QCheckBox *cb_vdw_saxs_skip_pr0pair;
 
-   private slots:
+ private slots:
 
-      void setupGUI();
+  void setupGUI();
 
-      void update_vdw_ot_mult(const QString &);
-      void update_vdw_ot_dpct(const QString &);
+  void update_vdw_ot_mult(const QString &);
+  void update_vdw_ot_dpct(const QString &);
 
-      void set_vdw_ot_alt();
-      void set_vdw_saxs_water_beads();
-      void set_vdw_saxs_skip_pr0pair();
+  void set_vdw_ot_alt();
+  void set_vdw_saxs_water_beads();
+  void set_vdw_saxs_skip_pr0pair();
 
-      void cancel();
-      void help();
+  void cancel();
+  void help();
 
-   protected slots:
+ protected slots:
 
-      void closeEvent(QCloseEvent *);
+  void closeEvent(QCloseEvent *);
 };
 
 #endif
-

@@ -3,74 +3,69 @@
 
 #include "../include/us_hydrodyn.h"
 #include "../include/us_hydrodyn_mals_saxs.h"
-//Added by qt3to4:
-#include <QLabel>
+// Added by qt3to4:
 #include <QCloseEvent>
+#include <QLabel>
 
 using namespace std;
 
-class US_EXTERN US_Hydrodyn_Mals_Saxs_Gauss_Mode : public QDialog
-{
-   Q_OBJECT
+class US_EXTERN US_Hydrodyn_Mals_Saxs_Gauss_Mode : public QDialog {
+  Q_OBJECT
 
-   public:
-      US_Hydrodyn_Mals_Saxs_Gauss_Mode(
-                                    map < QString, QString > * parameters,
-                                    US_Hydrodyn              * us_hydrodyn,
-                                    QWidget                  * p = 0
-                                    );
-      ~US_Hydrodyn_Mals_Saxs_Gauss_Mode();
+ public:
+  US_Hydrodyn_Mals_Saxs_Gauss_Mode(map<QString, QString> *parameters,
+                                   US_Hydrodyn *us_hydrodyn, QWidget *p = 0);
+  ~US_Hydrodyn_Mals_Saxs_Gauss_Mode();
 
-   private:
-      void         * mals_saxs_win;
+ private:
+  void *mals_saxs_win;
 
 #ifdef WIN32
-# if QT_VERSION < 0x040000
-  #pragma warning ( disable: 4251 )
-# endif
+#if QT_VERSION < 0x040000
+#pragma warning(disable : 4251)
 #endif
-      map < QString, QString > *              parameters;
+#endif
+  map<QString, QString> *parameters;
 #ifdef WIN32
-# if QT_VERSION < 0x040000
-  #pragma warning ( default: 4251 )
-# endif
+#if QT_VERSION < 0x040000
+#pragma warning(default : 4251)
+#endif
 #endif
 
-      US_Hydrodyn *                           us_hydrodyn;
+  US_Hydrodyn *us_hydrodyn;
 
-      US_Config *                             USglobal;
+  US_Config *USglobal;
 
-      QLabel *                                lbl_gaussian_type;
+  QLabel *lbl_gaussian_type;
 
-      QButtonGroup *                          bg_gaussian_type;
+  QButtonGroup *bg_gaussian_type;
 
-      QRadioButton *                          rb_gauss;
-      QRadioButton *                          rb_gmg;
-      QRadioButton *                          rb_emg;
-      QRadioButton *                          rb_emggmg;
-      
-      QPushButton  *                          pb_clear_gauss;
+  QRadioButton *rb_gauss;
+  QRadioButton *rb_gmg;
+  QRadioButton *rb_emg;
+  QRadioButton *rb_emggmg;
 
-      QPushButton  *                          pb_quit;
-      QPushButton  *                          pb_help;
-      QPushButton  *                          pb_ok;
+  QPushButton *pb_clear_gauss;
 
-      void                                    setupGUI();
+  QPushButton *pb_quit;
+  QPushButton *pb_help;
+  QPushButton *pb_ok;
 
-   private slots:
+  void setupGUI();
 
-      void                                    quit();
-      void                                    help();
-      void                                    ok();
+ private slots:
 
-      void                                    clear_gauss();
+  void quit();
+  void help();
+  void ok();
 
-      void                                    update_enables();
+  void clear_gauss();
 
-   protected slots:
+  void update_enables();
 
-      void closeEvent(QCloseEvent *);
-   
+ protected slots:
+
+  void closeEvent(QCloseEvent *);
 };
 
 #endif

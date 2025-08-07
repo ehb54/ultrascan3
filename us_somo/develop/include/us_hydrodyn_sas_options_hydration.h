@@ -4,84 +4,84 @@
 // QT defs:
 
 #include <qlabel.h>
-#include <qstring.h>
 #include <qlayout.h>
 #include <qpushbutton.h>
-//#include <q3frame.h>
+#include <qstring.h>
+// #include <q3frame.h>
 #include <qcheckbox.h>
-#include <qwt_counter.h>
 #include <qgroupbox.h>
-//Added by qt3to4:
+#include <qwt_counter.h>
+// Added by qt3to4:
 #include <QCloseEvent>
 
 #include "us_util.h"
 
-//standard C and C++ defs:
+// standard C and C++ defs:
 
-#include <vector>
-#include <string.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
 #include <iostream>
+#include <vector>
 
 using namespace std;
 
-class US_EXTERN US_Hydrodyn_SasOptionsHydration : public QFrame
-{
-   Q_OBJECT
+class US_EXTERN US_Hydrodyn_SasOptionsHydration : public QFrame {
+  Q_OBJECT
 
-   public:
-      friend class US_Hydrodyn;
+ public:
+  friend class US_Hydrodyn;
 
-      US_Hydrodyn_SasOptionsHydration(struct saxs_options *, bool *, void *, QWidget *p = 0, const char *name = 0);
-      ~US_Hydrodyn_SasOptionsHydration();
+  US_Hydrodyn_SasOptionsHydration(struct saxs_options *, bool *, void *,
+                                  QWidget *p = 0, const char *name = 0);
+  ~US_Hydrodyn_SasOptionsHydration();
 
-   public:
-      struct saxs_options *saxs_options;
-      bool        *sas_options_hydration_widget;
-      void        *us_hydrodyn;
-      US_Config   *USglobal;
+ public:
+  struct saxs_options *saxs_options;
+  bool *sas_options_hydration_widget;
+  void *us_hydrodyn;
+  US_Config *USglobal;
 
-      QLabel      *lbl_info;
+  QLabel *lbl_info;
 
-      QCheckBox   *cb_hydrate_pdb;
+  QCheckBox *cb_hydrate_pdb;
 
-      QPushButton *pb_default_rotamer_filename;
-      QLineEdit   *le_default_rotamer_filename;
+  QPushButton *pb_default_rotamer_filename;
+  QLineEdit *le_default_rotamer_filename;
 
-      QLabel      *lbl_steric_clash_distance;
-      QwtCounter  *cnt_steric_clash_distance;
+  QLabel *lbl_steric_clash_distance;
+  QwtCounter *cnt_steric_clash_distance;
 
-      QLabel      *lbl_steric_clash_recheck_distance;
-      QwtCounter  *cnt_steric_clash_recheck_distance;
+  QLabel *lbl_steric_clash_recheck_distance;
+  QwtCounter *cnt_steric_clash_recheck_distance;
 
-      QCheckBox   *cb_alt_hydration;
-      QCheckBox   *cb_hydration_rev_asa;
+  QCheckBox *cb_alt_hydration;
+  QCheckBox *cb_hydration_rev_asa;
 
-      QPushButton *pb_help;
-      QPushButton *pb_cancel;
+  QPushButton *pb_help;
+  QPushButton *pb_cancel;
 
-   private slots:
-      
-      void setupGUI();
+ private slots:
 
-      void set_hydrate_pdb();
+  void setupGUI();
 
-      void default_rotamer_filename();
+  void set_hydrate_pdb();
 
-      void update_steric_clash_distance(double);
-      void update_steric_clash_recheck_distance(double);
+  void default_rotamer_filename();
 
-      void set_alt_hydration();
-      void set_hydration_rev_asa();
+  void update_steric_clash_distance(double);
+  void update_steric_clash_recheck_distance(double);
 
-      void cancel();
-      void help();
-   
-   protected slots:
+  void set_alt_hydration();
+  void set_hydration_rev_asa();
 
-      void closeEvent(QCloseEvent *);
+  void cancel();
+  void help();
+
+ protected slots:
+
+  void closeEvent(QCloseEvent *);
 };
 
 #endif
-
