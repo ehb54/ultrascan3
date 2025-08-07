@@ -9,43 +9,40 @@
 #include <sys/malloc.h>
 #endif
 
-#include <stdio.h>
-#include <string.h>
-#include <math.h>
-#include <stdlib.h>
 #include <ctype.h>
-//#include <values.h>
-#include <list>  
+#include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+// #include <values.h>
+#include <list>
 
 typedef float REAL;
 
-typedef struct pdb_entry
-{
-   REAL x, y, z, occ, bval;
-   struct pdb_entry *next;
-   int atnum;
-   int resnum;
-   char junk[8];
-   char atnam[8];
-   char resnam[8];
-   char insert[8];
-   char chain[8];
+typedef struct pdb_entry {
+  REAL x, y, z, occ, bval;
+  struct pdb_entry *next;
+  int atnum;
+  int resnum;
+  char junk[8];
+  char atnam[8];
+  char resnam[8];
+  char insert[8];
+  char chain[8];
 } PDB;
 
-typedef struct physical_properties
-{
-   REAL f, rVW;      /*electron density */
-   REAL mass;
-   REAL si;
-   struct physical_properties *next;
-   float saxs_excl_vol;
+typedef struct physical_properties {
+  REAL f, rVW; /*electron density */
+  REAL mass;
+  REAL si;
+  struct physical_properties *next;
+  float saxs_excl_vol;
 } PHYSPROP;
 
-vector <PDB_atom> us_hydrodyn_grid_atob(vector <PDB_atom> *bead_model, 
-               grid_options *our_grid_options,
-               QProgressBar *progress,
-               QTextEdit *editor,
-               US_Hydrodyn* us_hydrodyn
-               );
+vector<PDB_atom> us_hydrodyn_grid_atob(vector<PDB_atom> *bead_model,
+                                       grid_options *our_grid_options,
+                                       QProgressBar *progress,
+                                       QTextEdit *editor,
+                                       US_Hydrodyn *us_hydrodyn);
 
 #endif

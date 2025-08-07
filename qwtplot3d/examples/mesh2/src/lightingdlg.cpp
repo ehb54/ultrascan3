@@ -1,37 +1,30 @@
-#include <qlayout.h>
-#include <qframe.h>
-#include <qslider.h>
-#include <qcheckbox.h>
-#include <qpushbutton.h>
-
 #include "lightingdlg.h"
+
+#include <qcheckbox.h>
+#include <qframe.h>
+#include <qlayout.h>
+#include <qpushbutton.h>
+#include <qslider.h>
 
 using namespace Qwt3D;
 
-class Sphere : public ParametricSurface
-{
-public:
-
-  Sphere(SurfacePlot& pw)
-  :ParametricSurface(pw)
-  {
-    setMesh(41,31);
-    setDomain(0,2*Qwt3D::PI,0,Qwt3D::PI);
-    setPeriodic(false,false);
+class Sphere : public ParametricSurface {
+ public:
+  Sphere(SurfacePlot &pw) : ParametricSurface(pw) {
+    setMesh(41, 31);
+    setDomain(0, 2 * Qwt3D::PI, 0, Qwt3D::PI);
+    setPeriodic(false, false);
   }
 
-
-  Triple operator()(double u, double v)
-  {
-    double x,y,z;
+  Triple operator()(double u, double v) {
+    double x, y, z;
     double r = 1;
-    x = r*cos(u)*sin(v);
-    y = r*sin(u)*sin(v);
-    z = r*cos(v);
-    return Triple(x,y,z);
+    x = r * cos(u) * sin(v);
+    y = r * sin(u) * sin(v);
+    z = r * cos(v);
+    return Triple(x, y, z);
   }
 };
-
 
 /////////////////////////////////////////////////////////////////
 //
@@ -39,43 +32,33 @@ public:
 //
 /////////////////////////////////////////////////////////////////
 
-Plot::Plot(QWidget *parent)
-: SurfacePlot(parent)
-{
+Plot::Plot(QWidget *parent) : SurfacePlot(parent) {
   setTitle("A Simple SurfacePlot Demonstration");
-  
+
   Sphere sphere(*this);
   sphere.create();
 
-  reset();  
-  assignMouse(Qt::LeftButton,
-    Qt::RightButton,
-    Qt::LeftButton,
-    Qt::NoButton,
-    Qt::NoButton,
-    Qt::NoButton,
-    Qt::NoButton,
-    Qt::NoButton,
-    Qt::NoButton
-    );
+  reset();
+  assignMouse(Qt::LeftButton, Qt::RightButton, Qt::LeftButton, Qt::NoButton,
+              Qt::NoButton, Qt::NoButton, Qt::NoButton, Qt::NoButton,
+              Qt::NoButton);
 
-  stick = (Pointer*)addEnrichment(Pointer(0.05));
-  stick->setPos(0,0,1);
+  stick = (Pointer *)addEnrichment(Pointer(0.05));
+  stick->setPos(0, 0, 1);
 }
 
-void Plot::reset()
-{
+void Plot::reset() {
   makeCurrent();
-  setRotation(0,0,0);
+  setRotation(0, 0, 0);
   setTitle("Use your mouse buttons and keyboard");
   setTitleFont("Arial", 8, QFont::Bold);
-  setTitleColor(RGBA(0.9,0.9,0.9));
+  setTitleColor(RGBA(0.9, 0.9, 0.9));
   setSmoothMesh(true);
   setZoom(0.9);
   setCoordinateStyle(NOCOORD);
-  setMeshColor(RGBA(0.6,0.6,0.6,0.3));
+  setMeshColor(RGBA(0.6, 0.6, 0.6, 0.3));
   setPlotStyle(FILLEDMESH);
-  setBackgroundColor(RGBA(0,0,0));
+  setBackgroundColor(RGBA(0, 0, 0));
 
   updateData();
 }
@@ -86,135 +69,107 @@ void Plot::reset()
 //
 /////////////////////////////////////////////////////////////////
 
+Pointer::Pointer(double rad) { configure(rad); }
 
-Pointer::Pointer(double rad)
-{
-  configure(rad);
-}
+Pointer::~Pointer() {}
 
-Pointer::~Pointer()
-{
-}
-
-void Pointer::configure(double rad)
-{
+void Pointer::configure(double rad) {
   plot = 0;
-  
+
   radius_ = rad;
 }
 
-void Pointer::drawBegin()
-{
+void Pointer::drawBegin() {
   GLint mode;
-	glGetIntegerv(GL_MATRIX_MODE, &mode);
-	glMatrixMode( GL_MODELVIEW );
+  glGetIntegerv(GL_MATRIX_MODE, &mode);
+  glMatrixMode(GL_MODELVIEW);
   glPushMatrix();
-  
-  glColor3d(1,0,0);
+
+  glColor3d(1, 0, 0);
   glBegin(GL_LINES);
-    glVertex3d(pos_.x, pos_.y, pos_.z);
-    glVertex3d(0, 0, 0);
+  glVertex3d(pos_.x, pos_.y, pos_.z);
+  glVertex3d(0, 0, 0);
   glEnd();
 
   glPopMatrix();
-	glMatrixMode(mode);
+  glMatrixMode(mode);
 }
 
-
-LightingDlg::LightingDlg(QWidget *parent)
-:LightingBase(parent)
-{
+LightingDlg::LightingDlg(QWidget *parent) : LightingBase(parent) {
 #if QT_VERSION < 0x040000
-  QGridLayout *grid = new QGridLayout( frame, 0, 0 );
+  QGridLayout *grid = new QGridLayout(frame, 0, 0);
 #else
   setupUi(this);
-  QGridLayout *grid = new QGridLayout( frame);
+  QGridLayout *grid = new QGridLayout(frame);
 #endif
 
   dataPlot = 0;
-  
+
   plot = new Plot(frame);
   plot->updateData();
 
-  grid->addWidget( plot, 0, 0 );
+  grid->addWidget(plot, 0, 0);
 
-	connect( stdlight, SIGNAL( clicked() ), this, SLOT( reset() ) );
-	connect( distSL, SIGNAL(valueChanged(int)), this, SLOT(setDistance(int)) );
-	connect( emissSL, SIGNAL(valueChanged(int)), this, SLOT(setEmission(int)) );
-	connect( ambdiffSL, SIGNAL(valueChanged(int)), this, SLOT(setDiff(int)) );
-	connect( specSL, SIGNAL(valueChanged(int)), this, SLOT(setSpec(int)) );
-	connect( shinSL, SIGNAL(valueChanged(int)), this, SLOT(setShin(int)) );
-  connect( plot, SIGNAL(rotationChanged(double, double, double)), this, SLOT(setRotation(double, double, double)) );
+  connect(stdlight, SIGNAL(clicked()), this, SLOT(reset()));
+  connect(distSL, SIGNAL(valueChanged(int)), this, SLOT(setDistance(int)));
+  connect(emissSL, SIGNAL(valueChanged(int)), this, SLOT(setEmission(int)));
+  connect(ambdiffSL, SIGNAL(valueChanged(int)), this, SLOT(setDiff(int)));
+  connect(specSL, SIGNAL(valueChanged(int)), this, SLOT(setSpec(int)));
+  connect(shinSL, SIGNAL(valueChanged(int)), this, SLOT(setShin(int)));
+  connect(plot, SIGNAL(rotationChanged(double, double, double)), this,
+          SLOT(setRotation(double, double, double)));
 }
 
-LightingDlg::~LightingDlg()
-{
-  delete plot;
-}
+LightingDlg::~LightingDlg() { delete plot; }
 
-void LightingDlg::setEmission(int val)
-{
-  if (!dataPlot)
-    return;
+void LightingDlg::setEmission(int val) {
+  if (!dataPlot) return;
   dataPlot->setMaterialComponent(GL_EMISSION, val / 100.);
   dataPlot->updateGL();
 }
-void LightingDlg::setDiff(int val)
-{
-  if (!dataPlot)
-    return;
+void LightingDlg::setDiff(int val) {
+  if (!dataPlot) return;
   dataPlot->setLightComponent(GL_DIFFUSE, val / 100.);
   dataPlot->updateGL();
 }
-void LightingDlg::setSpec(int val)
-{
-  if (!dataPlot)
-    return;
+void LightingDlg::setSpec(int val) {
+  if (!dataPlot) return;
   dataPlot->setMaterialComponent(GL_SPECULAR, val / 100.);
   dataPlot->updateGL();
 }
-void LightingDlg::setShin(int val)
-{
-  if (!dataPlot)
-    return;
-  dataPlot->setShininess( val / 100.);
+void LightingDlg::setShin(int val) {
+  if (!dataPlot) return;
+  dataPlot->setShininess(val / 100.);
   dataPlot->updateGL();
 }
 
-void LightingDlg::reset()
-{
+void LightingDlg::reset() {
   plot->reset();
-  if (dataPlot)
-    dataPlot->updateGL();
+  if (dataPlot) dataPlot->updateGL();
 }
 
-void LightingDlg::setDistance(int val)
-{
-  
-  plot->stick->setPos(0,0,val/100.);
+void LightingDlg::setDistance(int val) {
+  plot->stick->setPos(0, 0, val / 100.);
   plot->updateData();
   plot->updateGL();
-  
-  double drad = (dataPlot->hull().maxVertex-dataPlot->hull().minVertex).length();
-  drad *= val/20.;
 
-  dataPlot->setLightShift(drad,drad,drad);
+  double drad =
+      (dataPlot->hull().maxVertex - dataPlot->hull().minVertex).length();
+  drad *= val / 20.;
+
+  dataPlot->setLightShift(drad, drad, drad);
   dataPlot->updateGL();
 }
 
-void LightingDlg::assign(Qwt3D::Plot3D* pl) 
-{
-  if (!pl) 
-    return;
+void LightingDlg::assign(Qwt3D::Plot3D *pl) {
+  if (!pl) return;
   dataPlot = pl;
 }
 
-void LightingDlg::setRotation(double x, double y, double z)
-{
-  if (!dataPlot)
-    return;
-  
+void LightingDlg::setRotation(double x, double y, double z) {
+  if (!dataPlot) return;
+
   setDistance(distSL->value());
-  dataPlot->setLightRotation(x,y,z);
+  dataPlot->setLightRotation(x, y, z);
   dataPlot->updateGL();
 }

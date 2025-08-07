@@ -38,49 +38,44 @@
 //!    [ 21 ] = 99% confidence limit low
 //!    [ 22 ] = 99% confidence limit high
 
-class US_DmgaMcStats
-{
-   public:
+class US_DmgaMcStats {
+ public:
+  //! \brief Build a vector of iteration models from a DMGA-MC model
+  //! \param model   Input DMGA-MC model
+  //! \param imodels Output vector of iteration models
+  //! \return        Number of MC iterations and vector elements
+  static int build_imodels(US_Model&, QVector<US_Model>&);
 
-      //! \brief Build a vector of iteration models from a DMGA-MC model
-      //! \param model   Input DMGA-MC model
-      //! \param imodels Output vector of iteration models
-      //! \return        Number of MC iterations and vector elements
-      static int  build_imodels     ( US_Model&, QVector< US_Model >& );
+  //! \brief Build RMSD statistics from iteration models
+  //! \param niters  Number of MC iterations
+  //! \param imodels Vector of iteration models
+  //! \param rstats  Vector of doubles holding iteration statistics
+  static void build_rmsd_stats(int, QVector<US_Model>&, QVector<double>&);
 
-      //! \brief Build RMSD statistics from iteration models
-      //! \param niters  Number of MC iterations
-      //! \param imodels Vector of iteration models
-      //! \param rstats  Vector of doubles holding iteration statistics
-      static void build_rmsd_stats  ( int, QVector< US_Model >&,
-                                      QVector< double >& );
+  //! \brief Build Model attribute statistics from iteration models
+  //! \param niters  Number of MC iterations
+  //! \param imodels Vector of iteration models
+  //! \param astats  Vector of vectors of iteration attribute statistics
+  //! \return        Number of total attributes analyzed
+  static int build_model_stats(int, QVector<US_Model>&,
+                               QVector<QVector<double> >&);
 
-      //! \brief Build Model attribute statistics from iteration models
-      //! \param niters  Number of MC iterations
-      //! \param imodels Vector of iteration models
-      //! \param astats  Vector of vectors of iteration attribute statistics
-      //! \return        Number of total attributes analyzed
-      static int  build_model_stats ( int, QVector< US_Model >&,
-                                      QVector< QVector< double > >& );
+  //! \brief Compute the statistical values for a vector of values
+  //! \param nvals   Number of values to analyze
+  //! \param vals    Vector of values to analyze
+  //! \param concs   Vector of concentrations (weights) for each value
+  //! \param stats   Vector of output statistics values (min,max,mean,...)
+  //! \returns       Boolean flag if values are fixed (all equal)
+  static bool compute_statistics(int, QVector<double>&, QVector<double>&,
+                                 QVector<double>&);
 
-      //! \brief Compute the statistical values for a vector of values
-      //! \param nvals   Number of values to analyze
-      //! \param vals    Vector of values to analyze
-      //! \param concs   Vector of concentrations (weights) for each value
-      //! \param stats   Vector of output statistics values (min,max,mean,...)
-      //! \returns       Boolean flag if values are fixed (all equal)
-      static bool compute_statistics( int, QVector< double >&,
-                                      QVector< double >&, QVector< double >& );
-
-      //! \brief Build used model of specified type from iteration models
-      //! \param smtype  Used model type ("model","mean","median","mode")
-      //! \param iter    Iteration number (1-niters) if "model" (iter.) used
-      //! \param imodels Vector of iteration models
-      //! \param umodel  Returned composed used model
-      //! \return        Statistics index used (-iter,2,3,8)
-      static int  build_used_model  ( const QString, const int, QVector< US_Model >&,
-                                      US_Model& );
-
+  //! \brief Build used model of specified type from iteration models
+  //! \param smtype  Used model type ("model","mean","median","mode")
+  //! \param iter    Iteration number (1-niters) if "model" (iter.) used
+  //! \param imodels Vector of iteration models
+  //! \param umodel  Returned composed used model
+  //! \return        Statistics index used (-iter,2,3,8)
+  static int build_used_model(const QString, const int, QVector<US_Model>&,
+                              US_Model&);
 };
 #endif
-

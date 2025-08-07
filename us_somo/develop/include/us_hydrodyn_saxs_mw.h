@@ -3,92 +3,81 @@
 
 // QT defs:
 
+#include <qdialog.h>
 #include <qlabel.h>
 #include <qpushbutton.h>
-#include <qdialog.h>
-
-#include "us_util.h"
 
 #include <map>
+
+#include "us_util.h"
 
 using namespace std;
 
 // set mw for saxs normalized p(r) computations
 
-class US_EXTERN US_Hydrodyn_Saxs_Mw : public QDialog
-{
-   Q_OBJECT
+class US_EXTERN US_Hydrodyn_Saxs_Mw : public QDialog {
+  Q_OBJECT
 
-   public:
+ public:
+  US_Hydrodyn_Saxs_Mw(QString msg, float *mw, float *last_mw, bool *remember,
+                      bool *use_partial, QString *partial,
+                      map<QString, float> *remember_mw,
+                      map<QString, QString> *remember_mw_source,
+                      bool allow_none, QWidget *p = 0, const char *name = 0);
+  ~US_Hydrodyn_Saxs_Mw();
 
-      US_Hydrodyn_Saxs_Mw(
-                          QString msg,
-                          float *mw,
-                          float *last_mw,
-                          bool *remember,
-                          bool *use_partial,
-                          QString *partial,
-                          map < QString, float > * remember_mw,
-                          map < QString, QString > * remember_mw_source,
-                          bool allow_none,
-                          QWidget *p = 0, 
-                          const char *name = 0
-                          );
-      ~US_Hydrodyn_Saxs_Mw();
+ private:
+  QLabel *lbl_info;
+  QLabel *lbl_mw;
+  QLabel *lbl_last_used_mw;
 
-   private:
+  QLineEdit *le_mw;
+  QLineEdit *le_partial;
 
-      QLabel *lbl_info;
-      QLabel *lbl_mw;
-      QLabel *lbl_last_used_mw;
+  QPushButton *pb_known_mw;
+  QPushButton *pb_do_not_normalize;
 
-      QLineEdit *le_mw;
-      QLineEdit *le_partial;
+  QPushButton *pb_set_to_last_used_mw;
 
-      QPushButton *pb_known_mw;
-      QPushButton *pb_do_not_normalize;
+  QCheckBox *cb_remember;
+  QCheckBox *cb_use_partial;
 
-      QPushButton *pb_set_to_last_used_mw;
+  QPushButton *pb_cancel;
+  QPushButton *pb_help;
 
-      QCheckBox *cb_remember;
-      QCheckBox *cb_use_partial;
+  void setupGUI();
 
-      QPushButton *pb_cancel;
-      QPushButton *pb_help;
+  US_Config *USglobal;
 
-      void setupGUI();
+  QString msg;
+  float *psv;
+  float *mw;
+  float *last_mw;
+  bool *write_bead_model;
+  bool *remember;
+  bool *use_partial;
+  QString *partial;
 
-      US_Config *USglobal;
-      
-      QString msg;
-      float *psv;
-      float *mw;
-      float *last_mw;
-      bool *write_bead_model;
-      bool *remember;
-      bool *use_partial;
-      QString *partial;
+  map<QString, float> *remember_mw;
+  map<QString, QString> *remember_mw_source;
 
-      map < QString, float > * remember_mw;
-      map < QString, QString > * remember_mw_source;
+  bool allow_none;
 
-      bool allow_none;
+ public slots:
 
-   public slots:
+ private slots:
 
-   private slots:
+  void update_mw(const QString &);
+  void update_partial(const QString &);
 
-      void update_mw(const QString &);
-      void update_partial(const QString &);
+  void set_known_mw();
+  void set_do_not_normalize();
+  void set_to_last_used_mw();
+  void set_remember();
+  void set_use_partial();
 
-      void set_known_mw();
-      void set_do_not_normalize();
-      void set_to_last_used_mw();
-      void set_remember();
-      void set_use_partial();
-
-      void cancel();
-      void help();
+  void cancel();
+  void help();
 };
 
 #endif

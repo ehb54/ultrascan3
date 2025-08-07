@@ -3,104 +3,95 @@
 
 // QT defs:
 
+#include <qdatetime.h>
+#include <qdialog.h>
 #include <qlabel.h>
-#include <qstring.h>
 #include <qlayout.h>
 #include <qpushbutton.h>
-#include <qdialog.h>
+#include <qstring.h>
 #include <qtablewidget.h>
-#include <qdatetime.h>
-//Added by qt3to4:
+// Added by qt3to4:
 #include <QCloseEvent>
 #if QT_VERSION >= 0x040000
-# include <QHeaderView>
+#include <QHeaderView>
 #endif
 
 #include "us_util.h"
 
-//standard C and C++ defs:
+// standard C and C++ defs:
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include <iostream>
 #include <map>
 #include <set>
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <iostream>
 
 using namespace std;
 
-
-
 #ifdef WIN32
-# if QT_VERSION < 0x040000
-  #pragma warning ( disable: 4251 )
-# endif
+#if QT_VERSION < 0x040000
+#pragma warning(disable : 4251)
+#endif
 #endif
 
-class US_EXTERN US_Dirhist : public QDialog
-{
-   Q_OBJECT
+class US_EXTERN US_Dirhist : public QDialog {
+  Q_OBJECT
 
-   public:
-      friend class US_Hydrodyn;
+ public:
+  friend class US_Hydrodyn;
 
-      US_Dirhist(
-                 QStringList                 & history,
-                 map < QString, QDateTime >  & last_access,
-                 map < QString, QString >    & last_filetype,
-                 QString                     & selected,
-                 bool                        & is_ok,
-                 QWidget                     * p = 0, 
-                 const char                  * name = 0
-                 );
-      ~US_Dirhist();
+  US_Dirhist(QStringList &history, map<QString, QDateTime> &last_access,
+             map<QString, QString> &last_filetype, QString &selected,
+             bool &is_ok, QWidget *p = 0, const char *name = 0);
+  ~US_Dirhist();
 
-   private:
+ private:
+  US_Config *USglobal;
 
-      US_Config                  * USglobal;
+  QLabel *lbl_info;
 
-      QLabel                     * lbl_info;
+  QTableWidget *t_hist;
 
-      QTableWidget                     * t_hist;
+  QPushButton *pb_del;
 
-      QPushButton                * pb_del;
+  QPushButton *pb_help;
+  QPushButton *pb_ok;
+  QPushButton *pb_cancel;
 
-      QPushButton                * pb_help;
-      QPushButton                * pb_ok;
-      QPushButton                * pb_cancel;
+  void setupGUI();
 
-      void                         setupGUI();
+  QStringList *history;
+  map<QString, QDateTime> *last_access;
+  map<QString, QString> *last_filetype;
+  QString *selected;
+  bool *is_ok;
 
-      QStringList                * history;
-      map < QString, QDateTime > * last_access;
-      map < QString, QString >   * last_filetype;
-      QString                    * selected;
-      bool                       * is_ok;
+  bool order_ascending;
 
-      bool                         order_ascending;
+ private slots:
 
-   private slots:
+  void update_enables();
+  void t_sort_column(int col);
+  void t_doubleClicked(int row, int col, int button, const QPoint &mousePos);
+  void t_doubleClicked(int row, int col);
 
-      void update_enables();
-      void t_sort_column  ( int col );
-      void t_doubleClicked( int row, int col, int button, const QPoint & mousePos );
-      void t_doubleClicked( int row, int col );
+  void del();
+  void ok();
 
-      void del();
-      void ok();
+  void cancel();
+  void help();
 
-      void cancel();
-      void help();
-   
-   protected slots:
+ protected slots:
 
-      void closeEvent(QCloseEvent *);
+  void closeEvent(QCloseEvent *);
 };
 
 #ifdef WIN32
-# if QT_VERSION < 0x040000
-  #pragma warning ( default: 4251 )
-# endif
+#if QT_VERSION < 0x040000
+#pragma warning(default : 4251)
+#endif
 #endif
 
 #endif
