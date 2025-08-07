@@ -10,8 +10,7 @@
   2002-08-19 Vesa Oikonen
 
 ******************************************************************************/
-int nnls(double *a, int a_dim1, int m, int n, double *b, double *x,
-          double *rnorm, double *w, double *zz, int *index);
+int nnls(double *a, int a_dim1, int m, int n, double *b, double *x, double *rnorm, double *w, double *zz, int *index);
 /*****************************************************************************/
 
 
@@ -34,7 +33,7 @@ int nnls(double *a, int a_dim1, int m, int n, double *b, double *x,
 // For some reson WIN32 is not picking up M_PI from math.h...
 
 #ifndef M_PI
-#define M_PI       3.14159265358979323846
+#define M_PI 3.14159265358979323846
 #endif
 
 #define isnotanumber(x) ((x) != (x))
@@ -67,16 +66,15 @@ int nnls(double *a, int a_dim1, int m, int n, double *b, double *x,
 //ADOL-C includes:
 #ifdef ADOLC
 #include <adouble.h>
-#include <interfaces.h>
 #include <drivers.h>
+#include <interfaces.h>
 #endif
 
 
 #include "us_matrix.h"
-   using namespace std;
+using namespace std;
 
-   struct peptide
-   {
+struct peptide {
       uint a;
       uint b;
       uint c;
@@ -112,25 +110,24 @@ int nnls(double *a, int a_dim1, int m, int n, double *b, double *x,
       float weight;
       float e280;
       uint residues;
-   };
+};
 
 
-   unsigned long square(int);
-   float square(float);
-   double square (double);
+unsigned long square(int);
+float square(float);
+double square(double);
 
-   double linefit(double **x, double **y, double *slope, double *intercept, double *sigma,
-                 double *correlation, int arraysize);
+double linefit(
+   double **x, double **y, double *slope, double *intercept, double *sigma, double *correlation, int arraysize);
 
-   float linefit(float **x, float **y, float *slope, float *intercept, float *sigma,
-                float *correlation, int arraysize);
+float linefit(float **x, float **y, float *slope, float *intercept, float *sigma, float *correlation, int arraysize);
 
-   int find_indexf(double, double **, int);
-   int find_indexf(float, float **, int);
-   int find_indexf(int, int **, int);
-   int find_indexr(double, double **, int);
-   int find_indexr(float, float **, int);
-   int find_indexr(int, int **, int);
+int find_indexf(double, double **, int);
+int find_indexf(float, float **, int);
+int find_indexf(int, int **, int);
+int find_indexr(double, double **, int);
+int find_indexr(float, float **, int);
+int find_indexr(int, int **, int);
 /*
    int max (int, int);
    unsigned int max (unsigned int, unsigned int);
@@ -142,66 +139,60 @@ int nnls(double *a, int a_dim1, int m, int n, double *b, double *x,
    float min (float, float);
    double min (double, double);
 */
-   float US_EXTERN box_muller(float, float);
-   int us_randomize();
-   float ranf();
-   float random_range(float, float);
-   float standard_distribution(float);
-   float us_normal_distribution(float, float, float);
-   double us_erfc(double);
+float US_EXTERN box_muller(float, float);
+int us_randomize();
+float ranf();
+float random_range(float, float);
+float standard_distribution(float);
+float us_normal_distribution(float, float, float);
+double us_erfc(double);
 
-   void get_1d_limits(double **, double *, double *, int, int start_count=0);
-   void get_1d_limits(float **, float *, float *, int, int start_count=0);
-   void get_1d_limits(int **, int *, int *, int, int start_count=0);
-   void get_2d_limits(double ***, double *, double *, int, int, int start_count1=0, int start_count2=0);
-   void get_2d_limits(float ***, float *, float *, int, int, int start_count1=0, int start_count2=0);
-   void get_2d_limits(int ***, int *, int *, int, int, int start_count1=0, int start_count2=0);
+void get_1d_limits(double **, double *, double *, int, int start_count = 0);
+void get_1d_limits(float **, float *, float *, int, int start_count = 0);
+void get_1d_limits(int **, int *, int *, int, int start_count = 0);
+void get_2d_limits(double ***, double *, double *, int, int, int start_count1 = 0, int start_count2 = 0);
+void get_2d_limits(float ***, float *, float *, int, int, int start_count1 = 0, int start_count2 = 0);
+void get_2d_limits(int ***, int *, int *, int, int, int start_count1 = 0, int start_count2 = 0);
 
 //Take an array of floats and returns it smoothed by a gaussian kernel with with width of smoothing level:
-   void US_EXTERN gaussian_smoothing(float **, unsigned int /*smoothing level*/, unsigned int /*number of datapoints*/);
+void US_EXTERN gaussian_smoothing(float **, unsigned int /*smoothing level*/, unsigned int /*number of datapoints*/);
 
-   double US_EXTERN inverse_error_function(double, double);
-   void calc_vbar(struct peptide *, QString *, float *);
-   float adjust_vbar20(float vbar20, float temperature);
-   float adjust_vbar(float vbar, float temperature);
-   float calc_buoyancy_tb(float, float, float);
-   float calc_bottom(int /* rotor */, int /* centerpiece */, 
-                     int /* channel */, unsigned int /* rpm */);
-   float calc_bottom(vector <struct rotorInfo>,
-                     vector <struct centerpieceInfo> cp_list,
-                     int /* rotor list index */,
-                     int /* centerpiece list index */,
-                     int /* channel */,
-                     unsigned int /* rpm */);
-   double stretch(int /*rotor id*/, unsigned int /*rotor speed*/);
-   double stretch_with_rotor_list(int rotor, unsigned int rpm, vector < rotorInfo > *rotor_list);
+double US_EXTERN inverse_error_function(double, double);
+void calc_vbar(struct peptide *, QString *, float *);
+float adjust_vbar20(float vbar20, float temperature);
+float adjust_vbar(float vbar, float temperature);
+float calc_buoyancy_tb(float, float, float);
+float calc_bottom(int /* rotor */, int /* centerpiece */, int /* channel */, unsigned int /* rpm */);
+float calc_bottom(
+   vector<struct rotorInfo>, vector<struct centerpieceInfo> cp_list, int /* rotor list index */,
+   int /* centerpiece list index */, int /* channel */, unsigned int /* rpm */);
+double stretch(int /*rotor id*/, unsigned int /*rotor speed*/);
+double stretch_with_rotor_list(int rotor, unsigned int rpm, vector<rotorInfo> *rotor_list);
 
 #if QT_VERSION < 0x040000 && defined(WIN32)
-  /* The following was derived from glibc source for IA32 architecture. */
-int __fpclassifyf (float x);
+/* The following was derived from glibc source for IA32 architecture. */
+int __fpclassifyf(float x);
 
-  /* All floating-point numbers can be put in one of these categories.  */
-  enum
-  {
-     FP_NAN,
-# define FP_NAN FP_NAN
-     FP_INFINITE,
-# define FP_INFINITE FP_INFINITE
-     FP_ZERO,
-# define FP_ZERO FP_ZERO
-     FP_SUBNORMAL,
-# define FP_SUBNORMAL FP_SUBNORMAL
-     FP_NORMAL
-# define FP_NORMAL FP_NORMAL
-  };
+/* All floating-point numbers can be put in one of these categories.  */
+enum {
+   FP_NAN,
+#define FP_NAN FP_NAN
+   FP_INFINITE,
+#define FP_INFINITE FP_INFINITE
+   FP_ZERO,
+#define FP_ZERO FP_ZERO
+   FP_SUBNORMAL,
+#define FP_SUBNORMAL FP_SUBNORMAL
+   FP_NORMAL
+#define FP_NORMAL FP_NORMAL
+};
 
-# define isnormal(x) ( __fpclassifyf (x) == FP_NORMAL)
+#define isnormal(x) (__fpclassifyf(x) == FP_NORMAL)
 
 #endif // WIN32
 
 float int_vol_2sphere(float r1, float r2, float d);
 
-QString us_double_decimal_places( double x, int dp );
+QString us_double_decimal_places(double x, int dp);
 
 #endif
-

@@ -19,9 +19,8 @@
  * This class contains unit tests for various functions defined in the US_SimulationParameters class.
  * The tests are implemented using the QtTest framework.
  */
-class TestUS_SimulationParameters : public QObject
-{
-   Q_OBJECT
+class TestUS_SimulationParameters : public QObject {
+      Q_OBJECT
 
    private slots:
       /**

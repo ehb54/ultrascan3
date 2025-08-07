@@ -69,42 +69,42 @@
 #ifndef EIGEN_LU_STRUCTS
 #define EIGEN_LU_STRUCTS
 namespace Eigen {
-namespace internal {
-  
-typedef enum {LUSUP, UCOL, LSUB, USUB, LLVL, ULVL} MemType; 
+   namespace internal {
 
-template <typename IndexVector, typename ScalarVector>
-struct LU_GlobalLU_t {
-  typedef typename IndexVector::Scalar StorageIndex; 
-  IndexVector xsup; //First supernode column ... xsup(s) points to the beginning of the s-th supernode
-  IndexVector supno; // Supernode number corresponding to this column (column to supernode mapping)
-  ScalarVector  lusup; // nonzero values of L ordered by columns 
-  IndexVector lsub; // Compressed row indices of L rectangular supernodes. 
-  IndexVector xlusup; // pointers to the beginning of each column in lusup
-  IndexVector xlsub; // pointers to the beginning of each column in lsub
-  Index   nzlmax; // Current max size of lsub
-  Index   nzlumax; // Current max size of lusup
-  ScalarVector  ucol; // nonzero values of U ordered by columns 
-  IndexVector usub; // row indices of U columns in ucol
-  IndexVector xusub; // Pointers to the beginning of each column of U in ucol 
-  Index   nzumax; // Current max size of ucol
-  Index   n; // Number of columns in the matrix  
-  Index   num_expansions; 
-};
+      typedef enum { LUSUP, UCOL, LSUB, USUB, LLVL, ULVL } MemType;
 
-// Values to set for performance
-struct perfvalues {
-  Index panel_size; // a panel consists of at most <panel_size> consecutive columns
-  Index relax; // To control degree of relaxing supernodes. If the number of nodes (columns) 
-                // in a subtree of the elimination tree is less than relax, this subtree is considered 
-                // as one supernode regardless of the row structures of those columns
-  Index maxsuper; // The maximum size for a supernode in complete LU
-  Index rowblk; // The minimum row dimension for 2-D blocking to be used;
-  Index colblk; // The minimum column dimension for 2-D blocking to be used;
-  Index fillfactor; // The estimated fills factors for L and U, compared with A
-}; 
+      template<typename IndexVector, typename ScalarVector>
+      struct LU_GlobalLU_t {
+            typedef typename IndexVector::Scalar StorageIndex;
+            IndexVector xsup; //First supernode column ... xsup(s) points to the beginning of the s-th supernode
+            IndexVector supno; // Supernode number corresponding to this column (column to supernode mapping)
+            ScalarVector lusup; // nonzero values of L ordered by columns
+            IndexVector lsub; // Compressed row indices of L rectangular supernodes.
+            IndexVector xlusup; // pointers to the beginning of each column in lusup
+            IndexVector xlsub; // pointers to the beginning of each column in lsub
+            Index nzlmax; // Current max size of lsub
+            Index nzlumax; // Current max size of lusup
+            ScalarVector ucol; // nonzero values of U ordered by columns
+            IndexVector usub; // row indices of U columns in ucol
+            IndexVector xusub; // Pointers to the beginning of each column of U in ucol
+            Index nzumax; // Current max size of ucol
+            Index n; // Number of columns in the matrix
+            Index num_expansions;
+      };
 
-} // end namespace internal
+      // Values to set for performance
+      struct perfvalues {
+            Index panel_size; // a panel consists of at most <panel_size> consecutive columns
+            Index relax; // To control degree of relaxing supernodes. If the number of nodes (columns)
+               // in a subtree of the elimination tree is less than relax, this subtree is considered
+               // as one supernode regardless of the row structures of those columns
+            Index maxsuper; // The maximum size for a supernode in complete LU
+            Index rowblk; // The minimum row dimension for 2-D blocking to be used;
+            Index colblk; // The minimum column dimension for 2-D blocking to be used;
+            Index fillfactor; // The estimated fills factors for L and U, compared with A
+      };
+
+   } // end namespace internal
 
 } // end namespace Eigen
 #endif // EIGEN_LU_STRUCTS

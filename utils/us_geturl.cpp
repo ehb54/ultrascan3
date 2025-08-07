@@ -4,11 +4,10 @@ US_GetUrl::US_GetUrl() {
    manager = new QNetworkAccessManager();
 }
 
-void US_GetUrl::get( const QString & url) {
+void US_GetUrl::get(const QString &url) {
    m_DownloadedData.clear();
 
-   connect(manager, &QNetworkAccessManager::finished,
-           this, &US_GetUrl::ReplyFinished, Qt::UniqueConnection);
+   connect(manager, &QNetworkAccessManager::finished, this, &US_GetUrl::ReplyFinished, Qt::UniqueConnection);
 
    manager->get(QNetworkRequest(QUrl(url)));
 }

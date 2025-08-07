@@ -3,46 +3,27 @@
 
 // QT defs:
 
-#include <qlabel.h>
-#include <qpushbutton.h>
+#include <qcheckbox.h>
 #include <qdialog.h>
 #include <qfileinfo.h>
-#include <qcheckbox.h>
+#include <qlabel.h>
+#include <qpushbutton.h>
 
 #include "us_util.h"
 
 using namespace std;
 
-class US_EXTERN US_Hydrodyn_Batch_Movie_Opts : public QDialog
-{
-   Q_OBJECT
+class US_EXTERN US_Hydrodyn_Batch_Movie_Opts : public QDialog {
+      Q_OBJECT
 
    public:
-
       US_Hydrodyn_Batch_Movie_Opts(
-                                   QString    msg,
-                                   QString    *title,
-                                   QString    *dir,
-                                   QString    somo_dir,
-                                   QString    *file,
-                                   double     *fps,
-                                   double     *scale,
-                                   bool       *cancel_req,
-                                   bool       *clean_up,
-                                   bool       *use_tc,
-                                   QString    *tc_unit,
-                                   double     *tc_start,
-                                   double     *tc_delta,
-                                   float      *tc_pointsize,
-                                   bool       *black_background,
-                                   bool       *do_pat,
-                                   QWidget    *p = 0, 
-                                   const char *name = 0
-                                   );
+         QString msg, QString *title, QString *dir, QString somo_dir, QString *file, double *fps, double *scale,
+         bool *cancel_req, bool *clean_up, bool *use_tc, QString *tc_unit, double *tc_start, double *tc_delta,
+         float *tc_pointsize, bool *black_background, bool *do_pat, QWidget *p = 0, const char *name = 0);
       ~US_Hydrodyn_Batch_Movie_Opts();
 
    private:
-
       QLabel *lbl_info;
       QLabel *lbl_title;
       QLabel *lbl_dir;
@@ -75,30 +56,29 @@ class US_EXTERN US_Hydrodyn_Batch_Movie_Opts : public QDialog
       void setupGUI();
 
       US_Config *USglobal;
-      
+
       QString msg;
-      
-      QString    *title;
-      QString    *dir;
-      QString    somo_dir;
-      QString    *file;
-      double     *fps;
-      double     *scale;
-      bool       *cancel_req;
-      bool       *clean_up;
-      bool       *use_tc;
-      QString    *tc_unit;
-      double     *tc_start;
-      double     *tc_delta;
-      float      *tc_pointsize;
-      bool       *black_background;
-      bool       *do_pat;
+
+      QString *title;
+      QString *dir;
+      QString somo_dir;
+      QString *file;
+      double *fps;
+      double *scale;
+      bool *cancel_req;
+      bool *clean_up;
+      bool *use_tc;
+      QString *tc_unit;
+      double *tc_start;
+      double *tc_delta;
+      float *tc_pointsize;
+      bool *black_background;
+      bool *do_pat;
 
       QPalette label_font_ok;
       QPalette label_font_warning;
 
    public:
-
    public slots:
 
    private slots:

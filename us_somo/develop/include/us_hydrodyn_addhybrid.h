@@ -2,34 +2,30 @@
 #define US_HYDRODYN_ADDHYBRID_H
 
 
-#include <memory>
-#include <QtCore/qbytearray.h>
-#include <qwidget.h>
-#include <qpushbutton.h>
-#include <qlineedit.h>
-#include <qlabel.h>
-#include <qwidget.h>
 #include <QComboBox>
+#include <QtCore/qbytearray.h>
+#include <memory>
+#include <qlabel.h>
+#include <qlineedit.h>
 #include <qpushbutton.h>
+#include <qwidget.h>
 //#include <q3frame.h>
 //Added by qt3to4:
 #include <QCloseEvent>
 
 #include "us.h"
-#include "us_hydrodyn_pdbdefs.h"
 #include "us_extern.h"
+#include "us_hydrodyn_pdbdefs.h"
 #include "us_util.h"
 
-class US_AddHybridization : public QWidget
-{
-   Q_OBJECT
+class US_AddHybridization : public QWidget {
+      Q_OBJECT
 
    public:
-      US_AddHybridization(bool *, QWidget *p=0, const char *name=0);
+      US_AddHybridization(bool *, QWidget *p = 0, const char *name = 0);
       ~US_AddHybridization();
 
    private:
-
       US_Config *USglobal;
       bool *widget_flag;
 
@@ -63,9 +59,9 @@ class US_AddHybridization : public QWidget
       QLineEdit *le_num_elect;
 
       struct hybridization current_hybrid;
-      vector <struct hybridization> hybrid_list;
+      vector<struct hybridization> hybrid_list;
       struct saxs current_saxs;
-      vector <struct saxs> saxs_list;
+      vector<struct saxs> saxs_list;
       QString hybrid_filename;
       QString saxs_filename;
 

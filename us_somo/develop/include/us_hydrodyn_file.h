@@ -3,9 +3,9 @@
 
 // QT defs:
 
+#include <qdialog.h>
 #include <qlabel.h>
 #include <qpushbutton.h>
-#include <qdialog.h>
 //Added by qt3to4:
 #include <QCloseEvent>
 
@@ -13,22 +13,14 @@
 
 using namespace std;
 
-class US_EXTERN US_Hydrodyn_File : public QDialog
-{
-   Q_OBJECT
+class US_EXTERN US_Hydrodyn_File : public QDialog {
+      Q_OBJECT
 
    public:
-
-      US_Hydrodyn_File(QString *dir,
-                       QString *base,
-                       QString *ext,
-                       int     *result,
-                       QWidget *p = 0, 
-                       const char *name = 0);
+      US_Hydrodyn_File(QString *dir, QString *base, QString *ext, int *result, QWidget *p = 0, const char *name = 0);
       ~US_Hydrodyn_File();
 
    private:
-
       bool ok_to_close;
 
       QString *dir;
@@ -60,13 +52,13 @@ class US_EXTERN US_Hydrodyn_File : public QDialog
 
    private slots:
 
-      void update_base( const QString & );
+      void update_base(const QString &);
       void overwrite();
       void auto_inc();
       void try_again();
       void help();
 
-      void closeEvent( QCloseEvent * );
+      void closeEvent(QCloseEvent *);
 };
 
 #endif

@@ -4,18 +4,17 @@
 
 #include <QtXml>
 
-#include "us_extern.h"
 #include "us_dataIO.h"
-#include "us_db2.h"
 #include "us_data_model.h"
+#include "us_db2.h"
+#include "us_extern.h"
 
 /*! \class US_SyncExperiment
            This class provides the ability to synchronize an
            experiment record on local disk and in the database.
 */
-class US_SyncExperiment : public QObject
-{
-   Q_OBJECT
+class US_SyncExperiment : public QObject {
+      Q_OBJECT
 
    public:
       /*! \brief Constructor for the US_SyncExperiment class.
@@ -25,7 +24,7 @@ class US_SyncExperiment : public QObject
           \param    a_db     A pointer to an open database connection
           \param    parent   Pointer to parent QWidget.
       */
-      US_SyncExperiment( US_DB2*, QWidget* = 0 );
+      US_SyncExperiment(US_DB2 *, QWidget * = 0);
 
       /*! \brief    Synchronize database and local experiment records
 
@@ -37,21 +36,21 @@ class US_SyncExperiment : public QObject
                             record being operated on (uploaded/downloaded).
           \returns          A status flag (0 if all OK)
       */
-      int synchronize( US_DataModel::DataDesc& );
+      int synchronize(US_DataModel::DataDesc &);
 
    private:
-      US_DB2*     db;
+      US_DB2 *db;
 
       QStringList expIDs;
       QStringList runIDs;
 
-      QWidget*    parentw;
+      QWidget *parentw;
 
-      QString     expID;
-      QString     rawID;
+      QString expID;
+      QString rawID;
 
-      QString expGUIDauc( QString );  // get exper GUID from AUC-related file
+      QString expGUIDauc(QString); // get exper GUID from AUC-related file
 
-      int           dbg_level;
+      int dbg_level;
 };
 #endif

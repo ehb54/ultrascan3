@@ -4,11 +4,11 @@
 
 #include <QtCore>
 
-#include "us_extern.h"
+#include "us_datafiles.h"
 #include "us_db2.h"
+#include "us_extern.h"
 #include "us_settings.h"
 #include "us_util.h"
-#include "us_datafiles.h"
 
 
 //! \brief Run Protocol utilities for UltraScan
@@ -16,8 +16,7 @@
 //! This class provides a number of run protocol utility functions.
 //! All methods are static.
 //!
-class US_UTIL_EXTERN US_ProtocolUtil
-{
+class US_UTIL_EXTERN US_ProtocolUtil {
    public:
       //! \brief Builds a list of string lists containing basic protocol
       //!        information for all records, needed to present a dialog list.
@@ -29,9 +28,9 @@ class US_UTIL_EXTERN US_ProtocolUtil
       //! \param protdata  Output list of QStringLists for each protocol.
       //! \param dbP       Pointer to DB connector or NULL to read from disk.
       //! \returns         The count of records listed.
-      static int list_all( QList< QStringList >&, US_DB2* );
-      static int list_all_auto( QList< QStringList >&, US_DB2* );
-      
+      static int list_all(QList<QStringList> &, US_DB2 *);
+      static int list_all_auto(QList<QStringList> &, US_DB2 *);
+
       //! \brief Update the protocol data list with a new entry.
       //!
       //! This adds a new entry to the list of protocol summary entries or
@@ -40,7 +39,7 @@ class US_UTIL_EXTERN US_ProtocolUtil
       //! \param protentry Protocol entry to add.
       //! \param protdata  Input/output list of protocol summary data entries.
       //! \returns         The index in the list of the new record (-1->error).
-      static int update_list( const QStringList, QList< QStringList >& );
+      static int update_list(const QStringList, QList<QStringList> &);
 
       //! \brief Write a new protocol record to database or disk.
       //!
@@ -52,7 +51,7 @@ class US_UTIL_EXTERN US_ProtocolUtil
       //! \param xml       XML string comprising protocol record information.
       //! \param dbP       Pointer to DB connector or NULL to write to disk.
       //! \returns         The db_id or filename suffix of the new record.
-      static int write_record( const QString, US_DB2* );
+      static int write_record(const QString, US_DB2 *);
 
       //! \brief Read in a protocol XML and entry, as indicated by a given name.
       //!
@@ -64,12 +63,9 @@ class US_UTIL_EXTERN US_ProtocolUtil
       //! \param protentry Pointer to summary protocol created.
       //! \param dbP       Pointer to DB connector or NULL to read from disk.
       //! \returns         Database Id of record or filename suffix.
-      static int read_record( const QString protname, QString* xml,
-                              QStringList*, US_DB2* );
+      static int read_record(const QString protname, QString *xml, QStringList *, US_DB2 *);
 
-      static int read_record_auto( const QString protname,
-				   int invID_passed, QString* xml,
-				   QStringList*, US_DB2* );
+      static int read_record_auto(const QString protname, int invID_passed, QString *xml, QStringList *, US_DB2 *);
 
       //! \brief Delete a protocol record from the database or local disk.
       //!
@@ -79,6 +75,6 @@ class US_UTIL_EXTERN US_ProtocolUtil
       //! \param protid    Protocol db ID or GUID in file.
       //! \param dbP       Pointer to DB connector or NULL to delete from disk.
       //! \returns         Flag if delete was successful.
-      static bool delete_record( const QString, US_DB2* );
+      static bool delete_record(const QString, US_DB2 *);
 };
 #endif

@@ -2,34 +2,31 @@
 
 #include <QApplication>
 
-#include "us_query_rmsd.h"
-#include "us_license_t.h"
-#include "us_license.h"
-#include "us_gui_settings.h"
-#include "us_settings.h"
-#include "us_select_runs.h"
 #include <QTemporaryDir>
-
+#include "us_gui_settings.h"
+#include "us_license.h"
+#include "us_license_t.h"
+#include "us_query_rmsd.h"
+#include "us_select_runs.h"
+#include "us_settings.h"
 
 
 //! \brief Main program. Loads the Model RMSD values from DB
-int main( int argc, char* argv[] )
-{
-   QApplication application( argc, argv );
+int main(int argc, char *argv[]) {
+   QApplication application(argc, argv);
 
-   #include "main1.inc"
+#include "main1.inc"
 
    // License is OK.  Start up.
-   
+
    US_QueryRmsd w;
-   w.show();                   //!< \memberof QWidget
-   return application.exec();  //!< \memberof QApplication
+   w.show(); //!< \memberof QWidget
+   return application.exec(); //!< \memberof QApplication
 }
 
-US_QueryRmsd::US_QueryRmsd() : US_Widgets()
-{
-   setWindowTitle( tr( "Query Model RMSDs" ) );
-   setPalette( US_GuiSettings::frameColor() );
+US_QueryRmsd::US_QueryRmsd() : US_Widgets() {
+   setWindowTitle(tr("Query Model RMSDs"));
+   setPalette(US_GuiSettings::frameColor());
 
    dbg_level = US_Settings::us_debug();
    dbCon = new US_DB2();
@@ -65,48 +62,48 @@ US_QueryRmsd::US_QueryRmsd() : US_Widgets()
    tw_rmsd = new QTableWidget();
    tw_rmsd->setRowCount(0);
    tw_rmsd->setColumnCount(5);
-   tw_rmsd-> setHorizontalHeaderLabels(QStringList{"Triple_Method_Analysis", "RMSD"});
-   tw_rmsd-> setHorizontalHeaderLabels(QStringList{"Edit", "Analysis", "Method", "Triple", "RMSD"});
+   tw_rmsd->setHorizontalHeaderLabels(QStringList{ "Triple_Method_Analysis", "RMSD" });
+   tw_rmsd->setHorizontalHeaderLabels(QStringList{ "Edit", "Analysis", "Method", "Triple", "RMSD" });
    hheader = tw_rmsd->horizontalHeader();
    tw_rmsd->setStyleSheet("background-color: white");
    QHeaderView *header = tw_rmsd->horizontalHeader();
-//   header->setSectionResizeMode(header->logicalIndexAt(0), QHeaderView::Stretch);
-//   header->setSectionResizeMode(header->logicalIndexAt(2), QHeaderView::Stretch);
-//   header->setSectionResizeMode(header->logicalIndexAt(3), QHeaderView::ResizeToContents);
-//   header->setSectionResizeMode(header->logicalIndexAt(4), QHeaderView::Stretch);
+   //   header->setSectionResizeMode(header->logicalIndexAt(0), QHeaderView::Stretch);
+   //   header->setSectionResizeMode(header->logicalIndexAt(2), QHeaderView::Stretch);
+   //   header->setSectionResizeMode(header->logicalIndexAt(3), QHeaderView::ResizeToContents);
+   //   header->setSectionResizeMode(header->logicalIndexAt(4), QHeaderView::Stretch);
 
-//   header->setSectionResizeMode(0, QHeaderView::Stretch);
-//   header->setSectionResizeMode(2, QHeaderView::Stretch);
-//   header->setSectionResizeMode(3, QHeaderView::ResizeToContents);
-//   header->setSectionResizeMode(4, QHeaderView::Stretch);
+   //   header->setSectionResizeMode(0, QHeaderView::Stretch);
+   //   header->setSectionResizeMode(2, QHeaderView::Stretch);
+   //   header->setSectionResizeMode(3, QHeaderView::ResizeToContents);
+   //   header->setSectionResizeMode(4, QHeaderView::Stretch);
 
    header->setSectionResizeMode(QHeaderView::Stretch);
-//   tw_rmsd->setColumnWidth(0, 100);
-//   tw_rmsd->setColumnWidth(1, 150);
-//   tw_rmsd->setColumnWidth(3, 120);
+   //   tw_rmsd->setColumnWidth(0, 100);
+   //   tw_rmsd->setColumnWidth(1, 150);
+   //   tw_rmsd->setColumnWidth(3, 120);
 
    QGridLayout *lyt_top = new QGridLayout();
    lyt_top->addWidget(pb_load_runid, 0, 0, 1, 2);
-   lyt_top->addWidget(lb_runid,      0, 2, 1, 1);
-   lyt_top->addWidget(le_runid,      0, 3, 1, 3);
+   lyt_top->addWidget(lb_runid, 0, 2, 1, 1);
+   lyt_top->addWidget(le_runid, 0, 3, 1, 3);
 
-   lyt_top->addWidget(lb_edit,       1, 0, 1, 1);
-   lyt_top->addWidget(cb_edit,       1, 1, 1, 1);
-   lyt_top->addWidget(lb_analysis,   1, 2, 1, 1);
-   lyt_top->addWidget(cb_analysis,   1, 3, 1, 1);
-   lyt_top->addWidget(lb_method,     1, 4, 1, 1);
-   lyt_top->addWidget(cb_method,     1, 5, 1, 1);
+   lyt_top->addWidget(lb_edit, 1, 0, 1, 1);
+   lyt_top->addWidget(cb_edit, 1, 1, 1, 1);
+   lyt_top->addWidget(lb_analysis, 1, 2, 1, 1);
+   lyt_top->addWidget(cb_analysis, 1, 3, 1, 1);
+   lyt_top->addWidget(lb_method, 1, 4, 1, 1);
+   lyt_top->addWidget(cb_method, 1, 5, 1, 1);
 
-   lyt_top->addWidget(lb_cell,       2, 0, 1, 1);
-   lyt_top->addWidget(cb_cell,       2, 1, 1, 1);
-   lyt_top->addWidget(lb_channel,    2, 2, 1, 1);
-   lyt_top->addWidget(cb_channel,    2, 3, 1, 1);
-   lyt_top->addWidget(lb_lambda,     2, 4, 1, 1);
-   lyt_top->addWidget(cb_lambda,     2, 5, 1, 1);
+   lyt_top->addWidget(lb_cell, 2, 0, 1, 1);
+   lyt_top->addWidget(cb_cell, 2, 1, 1, 1);
+   lyt_top->addWidget(lb_channel, 2, 2, 1, 1);
+   lyt_top->addWidget(cb_channel, 2, 3, 1, 1);
+   lyt_top->addWidget(lb_lambda, 2, 4, 1, 1);
+   lyt_top->addWidget(cb_lambda, 2, 5, 1, 1);
 
-   lyt_top->addWidget(lb_trsh,       3, 0, 1, 2);
-   lyt_top->addWidget(le_threshold,  3, 2, 1, 2);
-   lyt_top->addWidget(pb_simulate,   3, 4, 1, 2);
+   lyt_top->addWidget(lb_trsh, 3, 0, 1, 2);
+   lyt_top->addWidget(le_threshold, 3, 2, 1, 2);
+   lyt_top->addWidget(pb_simulate, 3, 4, 1, 2);
 
    lyt_top->setColumnStretch(0, 0);
    lyt_top->setColumnStretch(1, 1);
@@ -122,15 +119,15 @@ US_QueryRmsd::US_QueryRmsd() : US_Widgets()
    QPushButton *pb_save = us_pushbutton(tr("Save Data"));
 
    QHBoxLayout *lyt_bottom = new QHBoxLayout();
-   lyt_bottom->addWidget(lb_file,0);
-   lyt_bottom->addWidget(le_file,5);
-   lyt_bottom->addWidget(pb_save,1);
+   lyt_bottom->addWidget(lb_file, 0);
+   lyt_bottom->addWidget(le_file, 5);
+   lyt_bottom->addWidget(pb_save, 1);
    lyt_bottom->setMargin(0);
    lyt_bottom->setSpacing(1);
 
-   QLabel* lb_progress = us_label("Progress");
-   lb_progress->setAlignment( Qt::AlignCenter );
-   progress            = us_progressBar( 0, 100, 0 );
+   QLabel *lb_progress = us_label("Progress");
+   lb_progress->setAlignment(Qt::AlignCenter);
+   progress = us_progressBar(0, 100, 0);
    QHBoxLayout *lyt_progress = new QHBoxLayout();
    lyt_progress->addWidget(lb_progress);
    lyt_progress->addWidget(progress);
@@ -144,7 +141,7 @@ US_QueryRmsd::US_QueryRmsd() : US_Widgets()
    lyt_main->setSpacing(2);
 
    this->setLayout(lyt_main);
-   setMinimumSize(QSize(600,400));
+   setMinimumSize(QSize(600, 400));
 
    fematch = new US_FeMatch();
 
@@ -155,25 +152,23 @@ US_QueryRmsd::US_QueryRmsd() : US_Widgets()
    connect(fematch, SIGNAL(astfem_cmp(int)), SLOT(update_progress(int)));
 }
 
-bool US_QueryRmsd::check_connection(){
-
+bool US_QueryRmsd::check_connection() {
    QString error;
    dbCon->connect(pw.getPasswd(), error);
-   if (dbCon->isConnected()){
-      QStringList DB   = US_Settings::defaultDB();
+   if (dbCon->isConnected()) {
+      QStringList DB = US_Settings::defaultDB();
       DbgLv(1) << DB;
       return true;
-   } else{
+   }
+   else {
       QApplication::restoreOverrideCursor();
-      QMessageBox::information( this,
-                               tr( "DB Connection Problem" ),
-                               tr( "There was an error connecting to the database:\n" )
-                                   + dbCon->lastError() );
+      QMessageBox::information(
+         this, tr("DB Connection Problem"), tr("There was an error connecting to the database:\n") + dbCon->lastError());
       return false;
    }
 }
 
-void US_QueryRmsd::clear_data(){
+void US_QueryRmsd::clear_data() {
    allData.clear();
    threshold = -1;
    Models.clear();
@@ -187,14 +182,14 @@ void US_QueryRmsd::clear_data(){
    lambdaList.clear();
 }
 
-void US_QueryRmsd::load_runid(){
+void US_QueryRmsd::load_runid() {
    QStringList runList;
    US_SelectRuns *selrun = new US_SelectRuns(true, runList);
    selrun->setMinimumSize(QSize(500, 500));
    selrun->exec();
    if (runList.size() == 0)
       return;
-   if (! check_connection())
+   if (!check_connection())
       return;
 
    QString runId = runList.at(0);
@@ -206,26 +201,27 @@ void US_QueryRmsd::load_runid(){
    q << runId;
    qDebug() << q;
 
-   dbCon->query( q );
+   dbCon->query(q);
 
    QStringList modelIDs_tmp;
    QVector<int> editIDs_tmp;
-   if ( dbCon->lastErrno() == US_DB2::OK ){
-      while (dbCon->next()){
+   if (dbCon->lastErrno() == US_DB2::OK) {
+      while (dbCon->next()) {
          modelIDs_tmp << dbCon->value(0).toString();
          editIDs_tmp << dbCon->value(6).toInt();
       }
-   }else{
+   }
+   else {
       QMessageBox::warning(this, "Error", dbCon->lastError());
       return;
    }
    clear_data();
 
-   for (int i = 0; i < modelIDs_tmp.size(); i++){
+   for (int i = 0; i < modelIDs_tmp.size(); i++) {
       US_Model model = US_Model();
       int mId = modelIDs_tmp.at(i).toInt();
       int state = model.load(modelIDs_tmp.at(i), dbCon);
-      if (state == US_DB2::OK){
+      if (state == US_DB2::OK) {
          DataBundle data;
          QStringList list1 = model.description.split(u'.');
          data.cell = list1.at(1).at(0);
@@ -240,11 +236,11 @@ void US_QueryRmsd::load_runid(){
          data.rmsd = qSqrt(model.variance);
 
          QString mesg;
-         if (! get_metadata(data, mesg)) {
+         if (!get_metadata(data, mesg)) {
             qDebug() << mesg;
             continue;
          }
-         if (! editList.contains(data.edit))
+         if (!editList.contains(data.edit))
             editList << data.edit;
          allData << data;
          Models.insert(mId, model);
@@ -262,40 +258,40 @@ void US_QueryRmsd::load_runid(){
    foreach (QString item, editList)
       cb_edit->addItem(item);
    cb_edit->setCurrentIndex(0);
-   connect(cb_edit,     SIGNAL(currentIndexChanged(int)), this, SLOT(set_analysis(int)));
+   connect(cb_edit, SIGNAL(currentIndexChanged(int)), this, SLOT(set_analysis(int)));
    set_analysis(cb_edit->count() - 1);
 }
 
-bool US_QueryRmsd::get_metadata(DataBundle& data, QString& mesg) {
-   if (! check_connection()){
+bool US_QueryRmsd::get_metadata(DataBundle &data, QString &mesg) {
+   if (!check_connection()) {
       mesg = "Error: DB connection";
       return false;
    }
    QStringList query;
    query << "get_editedData" << QString::number(data.editID);
    dbCon->query(query);
-   if ( dbCon->lastErrno() == US_DB2::OK ){
-      if (dbCon->next()){
+   if (dbCon->lastErrno() == US_DB2::OK) {
+      if (dbCon->next()) {
          data.rdataID = dbCon->value(0).toInt();
          data.editFile = dbCon->value(3).toString();
       }
-   }else{
-      mesg = tr("Error: get_editedData: ID: %1\n%2").
-             arg(data.editID).arg(dbCon->lastError());
+   }
+   else {
+      mesg = tr("Error: get_editedData: ID: %1\n%2").arg(data.editID).arg(dbCon->lastError());
       return false;
    }
 
    query.clear();
    query << "get_rawData" << QString::number(data.rdataID);
    dbCon->query(query);
-   if ( dbCon->lastErrno() == US_DB2::OK ){
-      if (dbCon->next()){
+   if (dbCon->lastErrno() == US_DB2::OK) {
+      if (dbCon->next()) {
          data.rdataFile = dbCon->value(2).toString();
          data.expID = dbCon->value(4).toInt();
       }
-   }else{
-      mesg = tr("Error: get_rawData: ID: %1\n%2").
-             arg(data.rdataID).arg(dbCon->lastError());
+   }
+   else {
+      mesg = tr("Error: get_rawData: ID: %1\n%2").arg(data.rdataID).arg(dbCon->lastError());
       return false;
    }
    return true;
@@ -303,11 +299,11 @@ bool US_QueryRmsd::get_metadata(DataBundle& data, QString& mesg) {
 
 
 bool US_QueryRmsd::load_data(int index, QString &mesg) {
-   if (! check_connection())
+   if (!check_connection())
       return false;
 
    QTemporaryDir temp_dir;
-   if (! temp_dir.isValid())
+   if (!temp_dir.isValid())
       return false;
    int state;
    QString edit_file = allData.at(index).editFile;
@@ -325,19 +321,19 @@ bool US_QueryRmsd::load_data(int index, QString &mesg) {
       US_DataIO::RawData rdata = rawData.value(rdataId);
       state = US_DataIO::writeRawData(temp_dir.filePath(rdata_file), rdata);
       if (state != US_DataIO::OK) {
-         mesg = tr("Error: writeRawData: ID: %1\n%2").arg(editId).
-                arg(US_DataIO::errorString(state));
+         mesg = tr("Error: writeRawData: ID: %1\n%2").arg(editId).arg(US_DataIO::errorString(state));
          return false;
       }
-   } else {
+   }
+   else {
       dbCon->readBlobFromDB(temp_dir.filePath(rdata_file), "download_aucData", rdataId);
       if (dbCon->lastErrno() != US_DB2::OK) {
          mesg = tr("Error: download_aucData: ID: %1\n%2").arg(rdataId).arg(dbCon->lastError());
          return false;
       }
    }
-   QVector< US_DataIO::EditedData > edata;
-   QVector< US_DataIO::RawData > rdata;
+   QVector<US_DataIO::EditedData> edata;
+   QVector<US_DataIO::RawData> rdata;
    state = US_DataIO::loadData(temp_dir.path(), edit_file, edata, rdata);
    if (state != US_DataIO::OK) {
       mesg = tr("Error: US_DataIO::loadData:%1").arg(US_DataIO::errorString(state));
@@ -345,26 +341,26 @@ bool US_QueryRmsd::load_data(int index, QString &mesg) {
    }
 
    editData.insert(editId, edata.at(0));
-   if (! rawData.contains(rdataId)) {
+   if (!rawData.contains(rdataId)) {
       rawData.insert(rdataId, rdata.at(0));
    }
    return true;
-
 }
 
-bool US_QueryRmsd::check_combo_content(QComboBox* combo, QString& text){
+bool US_QueryRmsd::check_combo_content(QComboBox *combo, QString &text) {
    int cc = combo->count();
    if (cc == 0)
       return false;
-   if (cc == 1){
+   if (cc == 1) {
       if (text.compare(combo->currentText()) == 0)
          return true;
       else
          return false;
-   } else {
+   }
+   else {
       if (combo->currentIndex() == 0)
          return true;
-      else{
+      else {
          if (text.compare(combo->currentText()) == 0)
             return true;
          else
@@ -373,15 +369,15 @@ bool US_QueryRmsd::check_combo_content(QComboBox* combo, QString& text){
    }
 }
 
-void US_QueryRmsd::set_analysis(int){
+void US_QueryRmsd::set_analysis(int) {
    QString edit = cb_edit->currentText();
    analysisList.clear();
 
-   for(int i = 0; i < allData.size(); i++) {
-      if (! check_combo_content(cb_edit, edit))
+   for (int i = 0; i < allData.size(); i++) {
+      if (!check_combo_content(cb_edit, edit))
          continue;
       QString analysis = allData.at(i).analysis;
-      if (! analysisList.contains(analysis))
+      if (!analysisList.contains(analysis))
          analysisList << analysis;
    }
    analysisList.sort();
@@ -396,18 +392,18 @@ void US_QueryRmsd::set_analysis(int){
    set_method(0);
 }
 
-void US_QueryRmsd:: set_method(int){
+void US_QueryRmsd::set_method(int) {
    methodList.clear();
 
-   for(int i = 0; i < allData.size(); i++) {
+   for (int i = 0; i < allData.size(); i++) {
       QString edit = allData.at(i).edit;
       QString analysis = allData.at(i).analysis;
-      if (! check_combo_content(cb_edit, edit))
+      if (!check_combo_content(cb_edit, edit))
          continue;
-      if (! check_combo_content(cb_analysis, analysis))
+      if (!check_combo_content(cb_analysis, analysis))
          continue;
       QString method = allData.at(i).method;
-      if (! methodList.contains(method))
+      if (!methodList.contains(method))
          methodList << method;
    }
    methodList.sort();
@@ -422,30 +418,30 @@ void US_QueryRmsd:: set_method(int){
    set_triple(0);
 }
 
-void US_QueryRmsd::set_triple(int){
+void US_QueryRmsd::set_triple(int) {
    cellList.clear();
    channelList.clear();
    lambdaList.clear();
 
-   for (int i = 0; i < allData.size(); i++){
+   for (int i = 0; i < allData.size(); i++) {
       QString edit = allData.at(i).edit;
       QString analysis = allData.at(i).analysis;
       QString method = allData.at(i).method;
-      if (! check_combo_content(cb_edit, edit))
+      if (!check_combo_content(cb_edit, edit))
          continue;
-      if (! check_combo_content(cb_analysis, analysis))
+      if (!check_combo_content(cb_analysis, analysis))
          continue;
-      if (! check_combo_content(cb_method, method))
+      if (!check_combo_content(cb_method, method))
          continue;
 
       QString cell = allData.at(i).cell;
       QString channel = allData.at(i).channel;
       QString lambda = allData.at(i).lamda;
-      if (! cellList.contains(cell))
+      if (!cellList.contains(cell))
          cellList << cell;
-      if (! channelList.contains(channel))
+      if (!channelList.contains(channel))
          channelList << channel;
-      if (! lambdaList.contains(lambda))
+      if (!lambdaList.contains(lambda))
          lambdaList << lambda;
    }
    cellList.sort();
@@ -475,25 +471,23 @@ void US_QueryRmsd::set_triple(int){
       cb_lambda->addItem(item);
    cb_lambda->setCurrentIndex(0);
 
-   connect(cb_cell,     SIGNAL(currentIndexChanged(int)), this, SLOT(fill_table(int)));
-   connect(cb_channel,  SIGNAL(currentIndexChanged(int)), this, SLOT(fill_table(int)));
-   connect(cb_lambda,   SIGNAL(currentIndexChanged(int)), this, SLOT(fill_table(int)));
+   connect(cb_cell, SIGNAL(currentIndexChanged(int)), this, SLOT(fill_table(int)));
+   connect(cb_channel, SIGNAL(currentIndexChanged(int)), this, SLOT(fill_table(int)));
+   connect(cb_lambda, SIGNAL(currentIndexChanged(int)), this, SLOT(fill_table(int)));
    fill_table(0);
-
 }
 
-void US_QueryRmsd::fill_table(int){
-   QFont tw_font( US_Widgets::fixedFont().family(),
-                 US_GuiSettings::fontSize() );
-   QFontMetrics* fm = new QFontMetrics( tw_font );
-   int rowht        = fm->height() + 2;
+void US_QueryRmsd::fill_table(int) {
+   QFont tw_font(US_Widgets::fixedFont().family(), US_GuiSettings::fontSize());
+   QFontMetrics *fm = new QFontMetrics(tw_font);
+   int rowht = fm->height() + 2;
    tw_rmsd->clearContents();
    tw_rmsd->setRowCount(allData.size());
-   tw_rmsd->setSortingEnabled( false );
+   tw_rmsd->setSortingEnabled(false);
    selIndex.clear();
    int n = 0;
    double max_rmsd = 0;
-   for (int i = 0; i < allData.size(); i++){
+   for (int i = 0; i < allData.size(); i++) {
       double rmsd = allData.at(i).rmsd;
       max_rmsd = qMax(max_rmsd, rmsd);
       QString edit = allData.at(i).edit;
@@ -502,18 +496,18 @@ void US_QueryRmsd::fill_table(int){
       QString cell = allData.at(i).cell;
       QString channel = allData.at(i).channel;
       QString lambda = allData.at(i).lamda;
-      QString triple = tr("%1%2%3").arg(cell, channel,lambda);
-      if (! check_combo_content(cb_edit, edit))
+      QString triple = tr("%1%2%3").arg(cell, channel, lambda);
+      if (!check_combo_content(cb_edit, edit))
          continue;
-      if (! check_combo_content(cb_analysis, analysis))
+      if (!check_combo_content(cb_analysis, analysis))
          continue;
-      if (! check_combo_content(cb_method, method))
+      if (!check_combo_content(cb_method, method))
          continue;
-      if (! check_combo_content(cb_cell, cell))
+      if (!check_combo_content(cb_cell, cell))
          continue;
-      if (! check_combo_content(cb_channel, channel))
+      if (!check_combo_content(cb_channel, channel))
          continue;
-      if (! check_combo_content(cb_lambda, lambda))
+      if (!check_combo_content(cb_lambda, lambda))
          continue;
       selIndex << i;
       QTableWidgetItem *twi;
@@ -549,49 +543,47 @@ void US_QueryRmsd::fill_table(int){
    tw_rmsd->setRowCount(n);
    tw_rmsd->verticalHeader()->setFont(tw_font);
    tw_rmsd->verticalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
-   
-   if (threshold == -1){
+
+   if (threshold == -1) {
       threshold = max_rmsd;
       le_threshold->setText(QString::number(threshold));
    }
    highlight();
-   
-   tw_rmsd->setSortingEnabled( true );
-   if ( hheader->sortIndicatorSection() > 4 ) {
-      hheader->setSortIndicator( 4, Qt::DescendingOrder );
+
+   tw_rmsd->setSortingEnabled(true);
+   if (hheader->sortIndicatorSection() > 4) {
+      hheader->setSortIndicator(4, Qt::DescendingOrder);
    }
 
    QString fname("RMSD_%1_%2_%3_%4-%5-%6.dat");
-   le_file->setText(fname.arg(cb_edit->currentText(), cb_analysis->currentText(),
-                              cb_method->currentText(), cb_cell->currentText(),
-                              cb_channel->currentText(), cb_lambda->currentText()));
-
+   le_file->setText(fname.arg(
+      cb_edit->currentText(), cb_analysis->currentText(), cb_method->currentText(), cb_cell->currentText(),
+      cb_channel->currentText(), cb_lambda->currentText()));
 }
 
-void US_QueryRmsd::save_data(){
+void US_QueryRmsd::save_data() {
    int nRows = tw_rmsd->rowCount();
    int nCol = tw_rmsd->columnCount();
-   if( nRows == 0){
+   if (nRows == 0) {
       QMessageBox::warning(this, tr("Warning!"), tr("RMSD data not found!"));
       return;
    }
-   if (le_file->text().isEmpty()){
+   if (le_file->text().isEmpty()) {
       QMessageBox::warning(this, tr("Warning!"), tr("Give a name to the file, then try again!"));
       return;
    }
 
-   QString dir = QFileDialog::getExistingDirectory(this, tr("Open Directory"),
-                                                   US_Settings::reportDir(),
-                                                   QFileDialog::ShowDirsOnly
-                                                       | QFileDialog::DontResolveSymlinks);
+   QString dir = QFileDialog::getExistingDirectory(
+      this, tr("Open Directory"), US_Settings::reportDir(),
+      QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
    if (dir.isEmpty())
       return;
 
    QFileInfo finfo = QFileInfo(QDir(dir), le_file->text());
-   QFile file{finfo.absoluteFilePath()};
+   QFile file{ finfo.absoluteFilePath() };
    if (file.open(QIODevice::WriteOnly)) {
-      QTextStream outStream{&file};
-      for (int j = 0; j < nCol; j++){
+      QTextStream outStream{ &file };
+      for (int j = 0; j < nCol; j++) {
          QString header = tw_rmsd->horizontalHeaderItem(j)->text();
          outStream << header;
          if (j < nCol - 1)
@@ -599,8 +591,8 @@ void US_QueryRmsd::save_data(){
          else
             outStream << "\n";
       }
-      for (int i = 0; i < nRows; i++){
-         for (int j = 0; j < nCol; j++){
+      for (int i = 0; i < nRows; i++) {
+         for (int j = 0; j < nCol; j++) {
             outStream << tw_rmsd->item(i, j)->text();
             if (j < nCol - 1)
                outStream << ",";
@@ -612,9 +604,10 @@ void US_QueryRmsd::save_data(){
    file.close();
 }
 
-void US_QueryRmsd::simulate(){
+void US_QueryRmsd::simulate() {
    int row = tw_rmsd->currentRow();
-   if (row < 0) return;
+   if (row < 0)
+      return;
    pb_simulate->setDisabled(true);
    int index = tw_rmsd->item(row, 4)->data(Qt::UserRole).toInt();
    int editId = allData.at(index).editID;
@@ -623,7 +616,7 @@ void US_QueryRmsd::simulate(){
    progress->reset();
    if (!editData.contains(editId)) {
       QString mesg;
-      if (! load_data(index, mesg)){
+      if (!load_data(index, mesg)) {
          QMessageBox::warning(this, tr("Error!"), mesg);
          pb_simulate->setEnabled(true);
          progress->reset();
@@ -639,40 +632,42 @@ void US_QueryRmsd::simulate(){
    pb_simulate->setEnabled(true);
 }
 
-void US_QueryRmsd::highlight(){
+void US_QueryRmsd::highlight() {
    QTableWidgetItem *twi;
    DoubleTableWidgetItem *dtwi;
    QColor color;
-   for (int i = 0; i < tw_rmsd->rowCount(); i++){
-      dtwi = static_cast<DoubleTableWidgetItem*>(tw_rmsd->item(i, 4));
-      if (threshold == -1){
-         color = QColor(152,251,152);
-      } else{
+   for (int i = 0; i < tw_rmsd->rowCount(); i++) {
+      dtwi = static_cast<DoubleTableWidgetItem *>(tw_rmsd->item(i, 4));
+      if (threshold == -1) {
+         color = QColor(152, 251, 152);
+      }
+      else {
          if (dtwi->get_value() >= threshold)
-            color = QColor(255,250,205);
+            color = QColor(255, 250, 205);
          else
-            color = QColor(152,251,152);
+            color = QColor(152, 251, 152);
       }
       dtwi->setBackground(color);
-      for (int j = 0; j < 4; j++){
+      for (int j = 0; j < 4; j++) {
          twi = tw_rmsd->item(i, j);
          twi->setBackground(color);
       }
    }
 }
 
-void US_QueryRmsd::new_threshold(){
+void US_QueryRmsd::new_threshold() {
    QString text = le_threshold->text();
-   if (text.isEmpty()){
+   if (text.isEmpty()) {
       threshold = 1e99;
       highlight();
       return;
    }
    bool ok;
    double th = text.toDouble(&ok);
-   if (ok){
+   if (ok) {
       threshold = th;
-   }else{
+   }
+   else {
       le_threshold->setText(QString::number(threshold));
       return;
    }

@@ -27,13 +27,13 @@
  * Last Mod;   Gary Gorbet    2013. Conversion to CPP/classes for US3.
  */
 
-#include <QtCore>
-#include <stdlib.h>
-#include <math.h>
-#include <float.h>
 #include "us_lm.h"
+#include <QtCore>
+#include <float.h>
+#include <math.h>
+#include <stdlib.h>
 
-// 
+//
 //US_LM::US_LM()
 //{
 //};
@@ -43,13 +43,13 @@
 /*****************************************************************************/
 
 /* machine-dependent constants from float.h */
-#define LM_MACHEP     DBL_EPSILON   /* resolution of arithmetic */
-#define LM_DWARF      DBL_MIN       /* smallest nonzero number */
+#define LM_MACHEP DBL_EPSILON /* resolution of arithmetic */
+#define LM_DWARF DBL_MIN /* smallest nonzero number */
 #define LM_SQRT_DWARF sqrt(DBL_MIN) /* square should not underflow */
 #define LM_SQRT_GIANT sqrt(DBL_MAX) /* square should not overflow */
-#define LM_USERTOL    30*LM_MACHEP  /* users are recommended to require this */
+#define LM_USERTOL 30 * LM_MACHEP /* users are recommended to require this */
 
-   /* If the above values do not work, the following seem good for an x86:
+/* If the above values do not work, the following seem good for an x86:
       LM_MACHEP     .555e-16
       LM_DWARF      9.9e-324 
       LM_SQRT_DWARF 1.e-160   
@@ -64,150 +64,131 @@
    */
 
 
-   double (*lm_use_norm) ( int n, const double *x );
+double (*lm_use_norm)(int n, const double *x);
 
-   //*************************************************************************/
-   //  set message texts (indexed by status.info)
-   //*************************************************************************/
+//*************************************************************************/
+//  set message texts (indexed by status.info)
+//*************************************************************************/
 
-   const char *lm_infmsg[] = {
-      "success (sum of squares below underflow limit)",
-      "success (the relative error in the sum of squares is at most tol)",
-      "success (the relative error between x and the solution is at most tol)",
-      "success (both errors are at most tol)",
-      "trapped by degeneracy (fvec is orthogonal to the columns of the jacobian)",
-      "timeout (number of calls to fcn has reached maxcall*(n+1))",
-      "failure (ftol<tol: cannot reduce sum of squares any further)",
-      "failure (xtol<tol: cannot improve approximate solution any further)",
-      "failure (gtol<tol: cannot improve approximate solution any further)",
-      "exception (not enough memory)",
-      "fatal coding error (improper input parameters)",
-      "exception (break requested within function evaluation)"
-   };
+const char *lm_infmsg[] = { "success (sum of squares below underflow limit)",
+                            "success (the relative error in the sum of squares is at most tol)",
+                            "success (the relative error between x and the solution is at most tol)",
+                            "success (both errors are at most tol)",
+                            "trapped by degeneracy (fvec is orthogonal to the columns of the jacobian)",
+                            "timeout (number of calls to fcn has reached maxcall*(n+1))",
+                            "failure (ftol<tol: cannot reduce sum of squares any further)",
+                            "failure (xtol<tol: cannot improve approximate solution any further)",
+                            "failure (gtol<tol: cannot improve approximate solution any further)",
+                            "exception (not enough memory)",
+                            "fatal coding error (improper input parameters)",
+                            "exception (break requested within function evaluation)" };
 
-   const char *lm_shortmsg[] = {
-      "success (0)",
-      "success (f)",
-      "success (p)",
-      "success (f,p)",
-      "degenerate",
-      "call limit",
-      "failed (f)",
-      "failed (p)",
-      "failed (o)",
-      "no memory",
-      "invalid input",
-      "user break"
-   };
+const char *lm_shortmsg[] = { "success (0)", "success (f)", "success (p)",   "success (f,p)",
+                              "degenerate",  "call limit",  "failed (f)",    "failed (p)",
+                              "failed (o)",  "no memory",   "invalid input", "user break" };
 
-US_LM::LM_Control::LM_Control( double ftol, double xtol, double gtol,
-      double epsilon, double stepbound, int maxcall, int scale_diag,
-      int printflags )
-{
-   this->ftol       = ftol;
-   this->xtol       = xtol;
-   this->gtol       = gtol;
-   this->epsilon    = epsilon;
-   this->stepbound  = stepbound;
-   this->maxcall    = maxcall;
+US_LM::LM_Control::LM_Control(
+   double ftol, double xtol, double gtol, double epsilon, double stepbound, int maxcall, int scale_diag,
+   int printflags) {
+   this->ftol = ftol;
+   this->xtol = xtol;
+   this->gtol = gtol;
+   this->epsilon = epsilon;
+   this->stepbound = stepbound;
+   this->maxcall = maxcall;
    this->scale_diag = scale_diag;
    this->printflags = printflags;
 }
 
-US_LM::LM_Status::LM_Status( double fnorm, int nfev, int info )
-{
-   this->fnorm      = fnorm;
-   this->nfev       = nfev;
-   this->info       = info;
+US_LM::LM_Status::LM_Status(double fnorm, int nfev, int info) {
+   this->fnorm = fnorm;
+   this->nfev = nfev;
+   this->info = info;
 }
 
-US_LM::LM_CurveData::LM_CurveData( double* t, double* y,
-      double(*f)( double, double* ) )
-{
-   this->t          = t;
-   this->y          = y;
-   this->f          = f;
+US_LM::LM_CurveData::LM_CurveData(double *t, double *y, double (*f)(double, double *)) {
+   this->t = t;
+   this->y = y;
+   this->f = f;
 }
 
-QString US_LM::lm_statmsg( US_LM::LM_Status *status, bool longmsg )
-{
-   QString statmsg = longmsg
-                     ? QString( lm_infmsg[ status->info ] )
-                     : QString( lm_shortmsg[ status->info ] );
+QString US_LM::lm_statmsg(US_LM::LM_Status *status, bool longmsg) {
+   QString statmsg = longmsg ? QString(lm_infmsg[ status->info ]) : QString(lm_shortmsg[ status->info ]);
    return statmsg;
 }
 
-   //*************************************************************************/
-   //  lm_printout_std (default monitoring routine)
-   //*************************************************************************/
+//*************************************************************************/
+//  lm_printout_std (default monitoring routine)
+//*************************************************************************/
 
-   void US_LM::lm_printout_std( int n_par, double *par, int m_dat,
-                         const void * /* data */, const double *fvec,
-                         int printflags, int iflag, int iter, int nfev)
-      /*
+void US_LM::lm_printout_std(
+   int n_par, double *par, int m_dat, const void * /* data */, const double *fvec, int printflags, int iflag, int iter,
+   int nfev)
+/*
        *       data  : for soft control of printout behaviour, add control
        *                 variables to the data struct
        *       iflag : 0 (init) 1 (outer loop) 2(inner loop) -1(terminated)
        *       iter  : outer loop counter
        *       nfev  : number of calls to *evaluate
        */
-      {
-         int i;
+{
+   int i;
 
-         if( !printflags )
-            return;
+   if (!printflags)
+      return;
 
-         if( printflags & 1 ){
-            /* location of printout call within lmdif */
-            if (iflag == 2) {
-               printf("trying step in gradient direction  ");
-            } else if (iflag == 1) {
-               printf("determining gradient (iteration %2d)", iter);
-            } else if (iflag == 0) {
-               printf("starting minimization              ");
-            } else if (iflag == -1) {
-               printf("terminated after %3d evaluations   ", nfev);
-            }
-         }
-
-         if( printflags & 2 ){
-            printf("  par: ");
-            for (i = 0; i < n_par; ++i)
-               printf(" %18.11g", par[i]);
-            printf(" => norm: %18.11g", (*lm_use_norm)(m_dat, fvec));
-         }
-
-         if( printflags & 3 )
-            printf( "\n" );
-
-         if ( (printflags & 8) || ((printflags & 4) && iflag == -1) ) {
-            printf("  residuals:\n");
-            for (i = 0; i < m_dat; ++i)
-               printf("    fvec[%2d]=%12g\n", i, fvec[i] );
-         }
+   if (printflags & 1) {
+      /* location of printout call within lmdif */
+      if (iflag == 2) {
+         printf("trying step in gradient direction  ");
       }
+      else if (iflag == 1) {
+         printf("determining gradient (iteration %2d)", iter);
+      }
+      else if (iflag == 0) {
+         printf("starting minimization              ");
+      }
+      else if (iflag == -1) {
+         printf("terminated after %3d evaluations   ", nfev);
+      }
+   }
+
+   if (printflags & 2) {
+      printf("  par: ");
+      for (i = 0; i < n_par; ++i)
+         printf(" %18.11g", par[ i ]);
+      printf(" => norm: %18.11g", (*lm_use_norm)(m_dat, fvec));
+   }
+
+   if (printflags & 3)
+      printf("\n");
+
+   if ((printflags & 8) || ((printflags & 4) && iflag == -1)) {
+      printf("  residuals:\n");
+      for (i = 0; i < m_dat; ++i)
+         printf("    fvec[%2d]=%12g\n", i, fvec[ i ]);
+   }
+}
 
 
-   //*************************************************************************/
-   //  lm_minimize (intermediate-level interface)
-   //*************************************************************************/
+//*************************************************************************/
+//  lm_minimize (intermediate-level interface)
+//*************************************************************************/
 
-   void US_LM::lmmin( int n_par, double *par, int m_dat, const void *data, 
-               void (*evaluate) (double *par, int m_dat, const void *data,
-                                 double *fvec, int *info),
-               const LM_Control *control, LM_Status *status,
-               void (*printout) (int n_par, double *par, int m_dat,
-                                 const void *data, const double *fvec,
-                                 int printflags, int iflag, int iter, int nfev) )
-      {
+void US_LM::lmmin(
+   int n_par, double *par, int m_dat, const void *data,
+   void (*evaluate)(double *par, int m_dat, const void *data, double *fvec, int *info), const LM_Control *control,
+   LM_Status *status,
+   void (*printout)(
+      int n_par, double *par, int m_dat, const void *data, const double *fvec, int printflags, int iflag, int iter,
+      int nfev)) {
+   /*** allocate work space. ***/
 
-         /*** allocate work space. ***/
+   double *fvec, *diag, *fjac, *qtf, *wa1, *wa2, *wa3, *wa4;
+   int *ipvt, j;
 
-         double *fvec, *diag, *fjac, *qtf, *wa1, *wa2, *wa3, *wa4;
-         int *ipvt, j;
-
-         int n = n_par;
-         int m = m_dat;
+   int n = n_par;
+   int m = m_dat;
 
 #if 0
          if ( (fvec = (double *) malloc(m * sizeof(double))) == NULL ||
@@ -223,49 +204,46 @@ QString US_LM::lm_statmsg( US_LM::LM_Status *status, bool longmsg )
             return;
          }
 #endif
-         QVector< double > v_fvec( m );
-         QVector< double > v_diag( n );
-         QVector< double > v_qtf ( n );
-         QVector< double > v_fjac( m*n );
-         QVector< double > v_wa1 ( n );
-         QVector< double > v_wa2 ( n );
-         QVector< double > v_wa3 ( n );
-         QVector< double > v_wa4 ( m );
-         QVector< int    > v_ipvt( n );
-         fvec = v_fvec.data();
-         diag = v_diag.data();
-         qtf  = v_qtf .data();
-         fjac = v_fjac.data();
-         wa1  = v_wa1 .data();
-         wa2  = v_wa2 .data();
-         wa3  = v_wa3 .data();
-         wa4  = v_wa4 .data();
-         ipvt = v_ipvt.data();
+   QVector<double> v_fvec(m);
+   QVector<double> v_diag(n);
+   QVector<double> v_qtf(n);
+   QVector<double> v_fjac(m * n);
+   QVector<double> v_wa1(n);
+   QVector<double> v_wa2(n);
+   QVector<double> v_wa3(n);
+   QVector<double> v_wa4(m);
+   QVector<int> v_ipvt(n);
+   fvec = v_fvec.data();
+   diag = v_diag.data();
+   qtf = v_qtf.data();
+   fjac = v_fjac.data();
+   wa1 = v_wa1.data();
+   wa2 = v_wa2.data();
+   wa3 = v_wa3.data();
+   wa4 = v_wa4.data();
+   ipvt = v_ipvt.data();
 
-         if( ! control->scale_diag )
-            for( j=0; j<n_par; ++j )
-               diag[j] = 1;
+   if (!control->scale_diag)
+      for (j = 0; j < n_par; ++j)
+         diag[ j ] = 1;
 
-         /*** perform fit. ***/
+   /*** perform fit. ***/
 
-         status->info = 0;
+   status->info = 0;
 
-         /* this goes through the modified legacy interface: */
-         lm_lmdif( m, n, par, fvec, control->ftol, control->xtol, control->gtol,
-                   control->maxcall * (n + 1), control->epsilon, diag,
-                   ( control->scale_diag ? 1 : 2 ),
-                   control->stepbound, &(status->info),
-                   &(status->nfev), fjac, ipvt, qtf, wa1, wa2, wa3, wa4,
-                   evaluate, printout, control->printflags, data );
+   /* this goes through the modified legacy interface: */
+   lm_lmdif(
+      m, n, par, fvec, control->ftol, control->xtol, control->gtol, control->maxcall * (n + 1), control->epsilon, diag,
+      (control->scale_diag ? 1 : 2), control->stepbound, &(status->info), &(status->nfev), fjac, ipvt, qtf, wa1, wa2,
+      wa3, wa4, evaluate, printout, control->printflags, data);
 
-         if ( printout )
-            (*printout)( n, par, m, data, fvec,
-                         control->printflags, -1, 0, status->nfev );
-         status->fnorm = (*lm_use_norm)(m, fvec);
-         if ( status->info < 0 )
-            status->info = 11;
+   if (printout)
+      (*printout)(n, par, m, data, fvec, control->printflags, -1, 0, status->nfev);
+   status->fnorm = (*lm_use_norm)(m, fvec);
+   if (status->info < 0)
+      status->info = 11;
 
-         /*** clean up. ***/
+   /*** clean up. ***/
 
 #if 0
          free(fvec);
@@ -278,27 +256,24 @@ QString US_LM::lm_statmsg( US_LM::LM_Status *status, bool longmsg )
          free(wa4);
          free(ipvt);
 #endif
-      } /*** lmmin. ***/
+} /*** lmmin. ***/
 
 
-#define MIN(a,b) (((a)<=(b)) ? (a) : (b))
-#define MAX(a,b) (((a)>=(b)) ? (a) : (b))
-#define SQR(x)   (x)*(x)
+#define MIN(a, b) (((a) <= (b)) ? (a) : (b))
+#define MAX(a, b) (((a) >= (b)) ? (a) : (b))
+#define SQR(x) (x) * (x)
 
 
-   void US_LM::lm_lmdif( int m, int n, double *x, double *fvec, double ftol,
-                  double xtol, double gtol, int maxfev, double epsfcn,
-                  double *diag, int mode, double factor, int *info, int *nfev,
-                  double *fjac, int *ipvt, double *qtf, double *wa1,
-                  double *wa2, double *wa3, double *wa4,
-                  void (*evaluate) (double *par, int m_dat, const void *data,
-                                    double *fvec, int *info),
-                  void (*printout) (int n_par, double *par, int m_dat,
-                                    const void *data, const double *fvec,
-                                    int printflags, int iflag, int iter, int nfev),
-                  int printflags, const void *data )
-      {
-         /*
+void US_LM::lm_lmdif(
+   int m, int n, double *x, double *fvec, double ftol, double xtol, double gtol, int maxfev, double epsfcn,
+   double *diag, int mode, double factor, int *info, int *nfev, double *fjac, int *ipvt, double *qtf, double *wa1,
+   double *wa2, double *wa3, double *wa4,
+   void (*evaluate)(double *par, int m_dat, const void *data, double *fvec, int *info),
+   void (*printout)(
+      int n_par, double *par, int m_dat, const void *data, const double *fvec, int printflags, int iflag, int iter,
+      int nfev),
+   int printflags, const void *data) {
+   /*
           *   The purpose of lmdif is to minimize the sum of the squares of
           *   m nonlinear functions in n variables by a modification of
           *   the levenberg-marquardt algorithm. The user must provide a
@@ -449,314 +424,312 @@ QString US_LM::lm_statmsg( US_LM::LM_Status *status, bool longmsg )
           *        evaluate. Typically, it contains experimental data to be fitted.
           *
           */
-         int i, iter, j;
-         double actred, delta, dirder, eps, fnorm, fnorm1, gnorm, par, pnorm,
-            prered, ratio, step, sum, temp, temp1, temp2, temp3, xnorm;
-         static double p1 = 0.1;
-         static double p0001 = 1.0e-4;
+   int i, iter, j;
+   double actred, delta, dirder, eps, fnorm, fnorm1, gnorm, par, pnorm, prered, ratio, step, sum, temp, temp1, temp2,
+      temp3, xnorm;
+   static double p1 = 0.1;
+   static double p0001 = 1.0e-4;
 
-         *nfev = 0;                  /* function evaluation counter */
-         iter = 0;                   /* outer loop counter */
-         par = 0;                    /* levenberg-marquardt parameter */
-         delta = 0;   /* to prevent a warning (initialization within if-clause) */
-         xnorm = 0;   /* ditto */
-         temp = MAX(epsfcn, LM_MACHEP);
-         eps = sqrt(temp); /* for calculating the Jacobian by forward differences */
+   *nfev = 0; /* function evaluation counter */
+   iter = 0; /* outer loop counter */
+   par = 0; /* levenberg-marquardt parameter */
+   delta = 0; /* to prevent a warning (initialization within if-clause) */
+   xnorm = 0; /* ditto */
+   temp = MAX(epsfcn, LM_MACHEP);
+   eps = sqrt(temp); /* for calculating the Jacobian by forward differences */
 
-         /*** lmdif: check input parameters for errors. ***/
+   /*** lmdif: check input parameters for errors. ***/
 
-         if ((n <= 0) || (m < n) || (ftol < 0.)
-             || (xtol < 0.) || (gtol < 0.) || (maxfev <= 0) || (factor <= 0.)) {
-            *info = 10;             // invalid parameter
+   if ((n <= 0) || (m < n) || (ftol < 0.) || (xtol < 0.) || (gtol < 0.) || (maxfev <= 0) || (factor <= 0.)) {
+      *info = 10; // invalid parameter
+      return;
+   }
+   if (mode == 2) { /* scaling by diag[] */
+      for (j = 0; j < n; j++) { /* check for nonpositive elements */
+         if (diag[ j ] <= 0.0) {
+            *info = 10; // invalid parameter
             return;
          }
-         if (mode == 2) {            /* scaling by diag[] */
-            for (j = 0; j < n; j++) {       /* check for nonpositive elements */
-               if (diag[j] <= 0.0) {
-                  *info = 10;     // invalid parameter
-                  return;
-               }
-            }
-         }
+      }
+   }
 #ifdef LMFIT_DEBUG_MESSAGES
-         printf("lmdif\n");
+   printf("lmdif\n");
 #endif
 
-         /*** lmdif: evaluate function at starting point and calculate norm. ***/
+   /*** lmdif: evaluate function at starting point and calculate norm. ***/
+
+   *info = 0;
+   (*evaluate)(x, m, data, fvec, info);
+   ++(*nfev);
+   if (printout)
+      (*printout)(n, x, m, data, fvec, printflags, 0, 0, *nfev);
+   if (*info < 0)
+      return;
+   fnorm = (*lm_use_norm)(m, fvec);
+   if (fnorm <= LM_DWARF) {
+      *info = 0;
+      return;
+   }
+
+   /*** lmdif: the outer loop. ***/
+
+   do {
+#ifdef LMFIT_DEBUG_MESSAGES
+      printf("lmdif/ outer loop iter=%d nfev=%d fnorm=%.10e\n", iter, *nfev, fnorm);
+#endif
+
+      /*** outer: calculate the Jacobian. ***/
+
+      for (j = 0; j < n; j++) {
+         temp = x[ j ];
+         step = MAX(eps * eps, eps * fabs(temp));
+         x[ j ] = temp + step; /* replace temporarily */
+         *info = 0;
+         (*evaluate)(x, m, data, wa4, info);
+         ++(*nfev);
+         if (printout)
+            (*printout)(n, x, m, data, wa4, printflags, 1, iter, *nfev);
+         if (*info < 0)
+            return; /* user requested break */
+         for (i = 0; i < m; i++)
+            fjac[ j * m + i ] = (wa4[ i ] - fvec[ i ]) / step;
+         x[ j ] = temp; /* restore */
+      }
+#ifdef LMFIT_DEBUG_MATRIX
+      /* print the entire matrix */
+      for (i = 0; i < m; i++) {
+         for (j = 0; j < n; j++)
+            printf("%.5e ", fjac[ j * m + i ]);
+         printf("\n");
+      }
+#endif
+
+      /*** outer: compute the qr factorization of the Jacobian. ***/
+
+      lm_qrfac(m, n, fjac, 1, ipvt, wa1, wa2, wa3);
+      /* return values are ipvt, wa1=rdiag, wa2=acnorm */
+
+      if (!iter) {
+         /* first iteration only */
+         if (mode != 2) {
+            /* diag := norms of the columns of the initial Jacobian */
+            for (j = 0; j < n; j++) {
+               diag[ j ] = wa2[ j ];
+               if (wa2[ j ] == 0.)
+                  diag[ j ] = 1.;
+            }
+         }
+         /* use diag to scale x, then calculate the norm */
+         for (j = 0; j < n; j++)
+            wa3[ j ] = diag[ j ] * x[ j ];
+         xnorm = (*lm_use_norm)(n, wa3);
+         /* initialize the step bound delta. */
+         delta = factor * xnorm;
+         if (delta == 0.)
+            delta = factor;
+      }
+      else {
+         if (mode != 2) {
+            for (j = 0; j < n; j++)
+               diag[ j ] = MAX(diag[ j ], wa2[ j ]);
+         }
+      }
+
+      /*** outer: form (q transpose)*fvec and store first n components in qtf. ***/
+
+      for (i = 0; i < m; i++)
+         wa4[ i ] = fvec[ i ];
+
+      for (j = 0; j < n; j++) {
+         temp3 = fjac[ j * m + j ];
+         if (temp3 != 0.) {
+            sum = 0;
+            for (i = j; i < m; i++)
+               sum += fjac[ j * m + i ] * wa4[ i ];
+            temp = -sum / temp3;
+            for (i = j; i < m; i++)
+               wa4[ i ] += fjac[ j * m + i ] * temp;
+         }
+         fjac[ j * m + j ] = wa1[ j ];
+         qtf[ j ] = wa4[ j ];
+      }
+
+      /*** outer: compute norm of scaled gradient and test for convergence. ***/
+
+      gnorm = 0;
+      for (j = 0; j < n; j++) {
+         if (wa2[ ipvt[ j ] ] == 0)
+            continue;
+         sum = 0.;
+         for (i = 0; i <= j; i++)
+            sum += fjac[ j * m + i ] * qtf[ i ];
+         gnorm = MAX(gnorm, fabs(sum / wa2[ ipvt[ j ] ] / fnorm));
+      }
+
+      if (gnorm <= gtol) {
+         *info = 4;
+         return;
+      }
+
+      /*** the inner loop. ***/
+      do {
+#ifdef LMFIT_DEBUG_MESSAGES
+         printf("lmdif/ inner loop iter=%d nfev=%d\n", iter, *nfev);
+#endif
+
+         /*** inner: determine the levenberg-marquardt parameter. ***/
+
+         lm_lmpar(n, fjac, m, ipvt, diag, qtf, delta, &par, wa1, wa2, wa4, wa3);
+         /* used return values are fjac (partly), par, wa1=x, wa3=diag*x */
+
+         for (j = 0; j < n; j++)
+            wa2[ j ] = x[ j ] - wa1[ j ]; /* new parameter vector ? */
+
+         pnorm = (*lm_use_norm)(n, wa3);
+
+         /* at first call, adjust the initial step bound. */
+
+         if (*nfev <= 1 + n)
+            delta = MIN(delta, pnorm);
+
+         /*** inner: evaluate the function at x + p and calculate its norm. ***/
 
          *info = 0;
-         (*evaluate) (x, m, data, fvec, info);
+         (*evaluate)(wa2, m, data, wa4, info);
          ++(*nfev);
-         if( printout )
-            (*printout) (n, x, m, data, fvec, printflags, 0, 0, *nfev);
+         if (printout)
+            (*printout)(n, wa2, m, data, wa4, printflags, 2, iter, *nfev);
          if (*info < 0)
-            return;
-         fnorm = (*lm_use_norm)(m, fvec);
-         if( fnorm <= LM_DWARF ){
+            return; /* user requested break. */
+
+         fnorm1 = (*lm_use_norm)(m, wa4);
+#ifdef LMFIT_DEBUG_MESSAGES
+         printf(
+            "lmdif/ pnorm %.10e  fnorm1 %.10e  fnorm %.10e"
+            " delta=%.10e par=%.10e\n",
+            pnorm, fnorm1, fnorm, delta, par);
+#endif
+
+         /*** inner: compute the scaled actual reduction. ***/
+
+         if (p1 * fnorm1 < fnorm)
+            actred = 1 - SQR(fnorm1 / fnorm);
+         else
+            actred = -1;
+
+         /*** inner: compute the scaled predicted reduction and 
+                    the scaled directional derivative. ***/
+
+         for (j = 0; j < n; j++) {
+            wa3[ j ] = 0;
+            for (i = 0; i <= j; i++)
+               wa3[ i ] -= fjac[ j * m + i ] * wa1[ ipvt[ j ] ];
+         }
+         temp1 = (*lm_use_norm)(n, wa3) / fnorm;
+         temp2 = sqrt(par) * pnorm / fnorm;
+         prered = SQR(temp1) + 2 * SQR(temp2);
+         dirder = -(SQR(temp1) + SQR(temp2));
+
+         /*** inner: compute the ratio of the actual to the predicted reduction. ***/
+
+         ratio = prered != 0 ? actred / prered : 0;
+#ifdef LMFIT_DEBUG_MESSAGES
+         printf(
+            "lmdif/ actred=%.10e prered=%.10e ratio=%.10e"
+            " sq(1)=%.10e sq(2)=%.10e dd=%.10e\n",
+            actred, prered, prered != 0 ? ratio : 0., SQR(temp1), SQR(temp2), dirder);
+#endif
+
+         /*** inner: update the step bound. ***/
+
+         if (ratio <= 0.25) {
+            if (actred >= 0.)
+               temp = 0.5;
+            else
+               temp = 0.5 * dirder / (dirder + 0.5 * actred);
+            if (p1 * fnorm1 >= fnorm || temp < p1)
+               temp = p1;
+            delta = temp * MIN(delta, pnorm / p1);
+            par /= temp;
+         }
+         else if (par == 0. || ratio >= 0.75) {
+            delta = pnorm / 0.5;
+            par *= 0.5;
+         }
+
+         /*** inner: test for successful iteration. ***/
+
+         if (ratio >= p0001) {
+            /* yes, success: update x, fvec, and their norms. */
+            for (j = 0; j < n; j++) {
+               x[ j ] = wa2[ j ];
+               wa2[ j ] = diag[ j ] * x[ j ];
+            }
+            for (i = 0; i < m; i++)
+               fvec[ i ] = wa4[ i ];
+            xnorm = (*lm_use_norm)(n, wa2);
+            fnorm = fnorm1;
+            iter++;
+         }
+#ifdef LMFIT_DEBUG_MESSAGES
+         else {
+            printf("ATTN: iteration considered unsuccessful\n");
+         }
+#endif
+
+         /*** inner: test for convergence. ***/
+
+         if (fnorm <= LM_DWARF) {
             *info = 0;
             return;
          }
 
-         /*** lmdif: the outer loop. ***/
+         *info = 0;
+         if (fabs(actred) <= ftol && prered <= ftol && 0.5 * ratio <= 1)
+            *info = 1;
+         if (delta <= xtol * xnorm)
+            *info += 2;
+         if (*info != 0)
+            return;
 
-         do {
-#ifdef LMFIT_DEBUG_MESSAGES
-            printf("lmdif/ outer loop iter=%d nfev=%d fnorm=%.10e\n",
-                   iter, *nfev, fnorm);
-#endif
+         /*** inner: tests for termination and stringent tolerances. ***/
 
-            /*** outer: calculate the Jacobian. ***/
+         if (*nfev >= maxfev) {
+            *info = 5;
+            return;
+         }
+         if (fabs(actred) <= LM_MACHEP && prered <= LM_MACHEP && 0.5 * ratio <= 1) {
+            *info = 6;
+            return;
+         }
+         if (delta <= LM_MACHEP * xnorm) {
+            *info = 7;
+            return;
+         }
+         if (gnorm <= LM_MACHEP) {
+            *info = 8;
+            return;
+         }
 
-            for (j = 0; j < n; j++) {
-               temp = x[j];
-               step = MAX(eps*eps, eps * fabs(temp));
-               x[j] = temp + step; /* replace temporarily */
-               *info = 0;
-               (*evaluate) (x, m, data, wa4, info);
-               ++(*nfev);
-               if( printout )
-                  (*printout) (n, x, m, data, wa4, printflags, 1, iter, *nfev);
-               if (*info < 0)
-                  return; /* user requested break */
-               for (i = 0; i < m; i++)
-                  fjac[j*m+i] = (wa4[i] - fvec[i]) / step;
-               x[j] = temp; /* restore */
-            }
-#ifdef LMFIT_DEBUG_MATRIX
-            /* print the entire matrix */
-            for (i = 0; i < m; i++) {
-               for (j = 0; j < n; j++)
-                  printf("%.5e ", fjac[j*m+i]);
-               printf("\n");
-            }
-#endif
+         /*** inner: end of the loop. repeat if iteration unsuccessful. ***/
 
-            /*** outer: compute the qr factorization of the Jacobian. ***/
+      } while (ratio < p0001);
 
-            lm_qrfac(m, n, fjac, 1, ipvt, wa1, wa2, wa3);
-            /* return values are ipvt, wa1=rdiag, wa2=acnorm */
+      /*** outer: end of the loop. ***/
 
-            if (!iter) { 
-               /* first iteration only */
-               if (mode != 2) {
-                  /* diag := norms of the columns of the initial Jacobian */
-                  for (j = 0; j < n; j++) {
-                     diag[j] = wa2[j];
-                     if (wa2[j] == 0.)
-                        diag[j] = 1.;
-                  }
-               }
-               /* use diag to scale x, then calculate the norm */
-               for (j = 0; j < n; j++)
-                  wa3[j] = diag[j] * x[j];
-               xnorm = (*lm_use_norm)(n, wa3);
-               /* initialize the step bound delta. */
-               delta = factor * xnorm;
-               if (delta == 0.)
-                  delta = factor;
-            } else {
-               if (mode != 2) {
-                  for (j = 0; j < n; j++)
-                     diag[j] = MAX( diag[j], wa2[j] );
-               }
-            }
+   } while (1);
 
-            /*** outer: form (q transpose)*fvec and store first n components in qtf. ***/
-
-            for (i = 0; i < m; i++)
-               wa4[i] = fvec[i];
-
-            for (j = 0; j < n; j++) {
-               temp3 = fjac[j*m+j];
-               if (temp3 != 0.) {
-                  sum = 0;
-                  for (i = j; i < m; i++)
-                     sum += fjac[j*m+i] * wa4[i];
-                  temp = -sum / temp3;
-                  for (i = j; i < m; i++)
-                     wa4[i] += fjac[j*m+i] * temp;
-               }
-               fjac[j*m+j] = wa1[j];
-               qtf[j] = wa4[j];
-            }
-
-            /*** outer: compute norm of scaled gradient and test for convergence. ***/
-
-            gnorm = 0;
-            for (j = 0; j < n; j++) {
-               if (wa2[ipvt[j]] == 0)
-                  continue;
-               sum = 0.;
-               for (i = 0; i <= j; i++)
-                  sum += fjac[j*m+i] * qtf[i];
-               gnorm = MAX( gnorm, fabs( sum / wa2[ipvt[j]] / fnorm ) );
-            }
-
-            if (gnorm <= gtol) {
-               *info = 4;
-               return;
-            }
-
-            /*** the inner loop. ***/
-            do {
-#ifdef LMFIT_DEBUG_MESSAGES
-               printf("lmdif/ inner loop iter=%d nfev=%d\n", iter, *nfev);
-#endif
-
-               /*** inner: determine the levenberg-marquardt parameter. ***/
-
-               lm_lmpar( n, fjac, m, ipvt, diag, qtf, delta, &par,
-                         wa1, wa2, wa4, wa3 );
-               /* used return values are fjac (partly), par, wa1=x, wa3=diag*x */
-
-               for (j = 0; j < n; j++)
-                  wa2[j] = x[j] - wa1[j]; /* new parameter vector ? */
-
-               pnorm = (*lm_use_norm)(n, wa3);
-
-               /* at first call, adjust the initial step bound. */
-
-               if (*nfev <= 1+n)
-                  delta = MIN(delta, pnorm);
-
-               /*** inner: evaluate the function at x + p and calculate its norm. ***/
-
-               *info = 0;
-               (*evaluate) (wa2, m, data, wa4, info);
-               ++(*nfev);
-               if( printout )
-                  (*printout) (n, wa2, m, data, wa4, printflags, 2, iter, *nfev);
-               if (*info < 0)
-                  return; /* user requested break. */
-
-               fnorm1 = (*lm_use_norm)(m, wa4);
-#ifdef LMFIT_DEBUG_MESSAGES
-               printf("lmdif/ pnorm %.10e  fnorm1 %.10e  fnorm %.10e"
-                      " delta=%.10e par=%.10e\n",
-                      pnorm, fnorm1, fnorm, delta, par);
-#endif
-
-               /*** inner: compute the scaled actual reduction. ***/
-
-               if (p1 * fnorm1 < fnorm)
-                  actred = 1 - SQR(fnorm1 / fnorm);
-               else
-                  actred = -1;
-
-               /*** inner: compute the scaled predicted reduction and 
-                    the scaled directional derivative. ***/
-
-               for (j = 0; j < n; j++) {
-                  wa3[j] = 0;
-                  for (i = 0; i <= j; i++)
-                     wa3[i] -= fjac[j*m+i] * wa1[ipvt[j]];
-               }
-               temp1 = (*lm_use_norm)(n, wa3) / fnorm;
-               temp2 = sqrt(par) * pnorm / fnorm;
-               prered = SQR(temp1) + 2 * SQR(temp2);
-               dirder = -(SQR(temp1) + SQR(temp2));
-
-               /*** inner: compute the ratio of the actual to the predicted reduction. ***/
-
-               ratio = prered != 0 ? actred / prered : 0;
-#ifdef LMFIT_DEBUG_MESSAGES
-               printf("lmdif/ actred=%.10e prered=%.10e ratio=%.10e"
-                      " sq(1)=%.10e sq(2)=%.10e dd=%.10e\n",
-                      actred, prered, prered != 0 ? ratio : 0.,
-                      SQR(temp1), SQR(temp2), dirder);
-#endif
-
-               /*** inner: update the step bound. ***/
-
-               if (ratio <= 0.25) {
-                  if (actred >= 0.)
-                     temp = 0.5;
-                  else
-                     temp = 0.5 * dirder / (dirder + 0.5 * actred);
-                  if (p1 * fnorm1 >= fnorm || temp < p1)
-                     temp = p1;
-                  delta = temp * MIN(delta, pnorm / p1);
-                  par /= temp;
-               } else if (par == 0. || ratio >= 0.75) {
-                  delta = pnorm / 0.5;
-                  par *= 0.5;
-               }
-
-               /*** inner: test for successful iteration. ***/
-
-               if (ratio >= p0001) {
-                  /* yes, success: update x, fvec, and their norms. */
-                  for (j = 0; j < n; j++) {
-                     x[j] = wa2[j];
-                     wa2[j] = diag[j] * x[j];
-                  }
-                  for (i = 0; i < m; i++)
-                     fvec[i] = wa4[i];
-                  xnorm = (*lm_use_norm)(n, wa2);
-                  fnorm = fnorm1;
-                  iter++;
-               }
-#ifdef LMFIT_DEBUG_MESSAGES
-               else {
-                  printf("ATTN: iteration considered unsuccessful\n");
-               }
-#endif
-
-               /*** inner: test for convergence. ***/
-
-               if( fnorm<=LM_DWARF ){
-                  *info = 0;
-                  return;
-               }
-
-               *info = 0;
-               if (fabs(actred) <= ftol && prered <= ftol && 0.5 * ratio <= 1)
-                  *info = 1;
-               if (delta <= xtol * xnorm)
-                  *info += 2;
-               if (*info != 0)
-                  return;
-
-               /*** inner: tests for termination and stringent tolerances. ***/
-
-               if (*nfev >= maxfev){
-                  *info = 5;
-                  return;
-               }
-               if (fabs(actred) <= LM_MACHEP &&
-                   prered <= LM_MACHEP && 0.5 * ratio <= 1){
-                  *info = 6;
-                  return;
-               }
-               if (delta <= LM_MACHEP * xnorm){
-                  *info = 7;
-                  return;
-               }
-               if (gnorm <= LM_MACHEP){
-                  *info = 8;
-                  return;
-               }
-
-               /*** inner: end of the loop. repeat if iteration unsuccessful. ***/
-
-            } while (ratio < p0001);
-
-            /*** outer: end of the loop. ***/
-
-         } while (1);
-
-      } /*** lm_lmdif. ***/
+} /*** lm_lmdif. ***/
 
 
-   //*************************************************************************/
-   //  lm_lmpar (determine Levenberg-Marquardt parameter)
-   //*************************************************************************/
+//*************************************************************************/
+//  lm_lmpar (determine Levenberg-Marquardt parameter)
+//*************************************************************************/
 
-   void US_LM::lm_lmpar(int n, double *r, int ldr, int *ipvt, double *diag,
-                 double *qtb, double delta, double *par, double *x,
-                 double *sdiag, double *aux, double *xdi)
-      {
-         /*     Given an m by n matrix a, an n by n nonsingular diagonal
+void US_LM::lm_lmpar(
+   int n, double *r, int ldr, int *ipvt, double *diag, double *qtb, double delta, double *par, double *x, double *sdiag,
+   double *aux, double *xdi) {
+   /*     Given an m by n matrix a, an n by n nonsingular diagonal
           *     matrix d, an m-vector b, and a positive number delta,
           *     the problem is to determine a value for the parameter
           *     par such that if x solves the system
@@ -828,166 +801,160 @@ QString US_LM::lm_statmsg( US_LM::LM_Status *status, bool longmsg )
           *      xdi is a work array of length n. On OUTPUT: diag[j] * x[j].
           *
           */
-         int i, iter, j, nsing;
-         double dxnorm, fp, fp_old, gnorm, parc, parl, paru;
-         double sum, temp;
-         static double p1 = 0.1;
+   int i, iter, j, nsing;
+   double dxnorm, fp, fp_old, gnorm, parc, parl, paru;
+   double sum, temp;
+   static double p1 = 0.1;
 
 #ifdef LMFIT_DEBUG_MESSAGES
-         printf("lmpar\n");
+   printf("lmpar\n");
 #endif
 
-         /*** lmpar: compute and store in x the gauss-newton direction. if the
+   /*** lmpar: compute and store in x the gauss-newton direction. if the
               jacobian is rank-deficient, obtain a least squares solution. ***/
 
-         nsing = n;
-         for (j = 0; j < n; j++) {
-            aux[j] = qtb[j];
-            if (r[j * ldr + j] == 0 && nsing == n)
-               nsing = j;
-            if (nsing < n)
-               aux[j] = 0;
-         }
+   nsing = n;
+   for (j = 0; j < n; j++) {
+      aux[ j ] = qtb[ j ];
+      if (r[ j * ldr + j ] == 0 && nsing == n)
+         nsing = j;
+      if (nsing < n)
+         aux[ j ] = 0;
+   }
 #ifdef LMFIT_DEBUG_MESSAGES
-         printf("nsing %d ", nsing);
+   printf("nsing %d ", nsing);
 #endif
-         for (j = nsing - 1; j >= 0; j--) {
-            aux[j] = aux[j] / r[j + ldr * j];
-            temp = aux[j];
-            for (i = 0; i < j; i++)
-               aux[i] -= r[j * ldr + i] * temp;
-         }
+   for (j = nsing - 1; j >= 0; j--) {
+      aux[ j ] = aux[ j ] / r[ j + ldr * j ];
+      temp = aux[ j ];
+      for (i = 0; i < j; i++)
+         aux[ i ] -= r[ j * ldr + i ] * temp;
+   }
 
-         for (j = 0; j < n; j++)
-            x[ipvt[j]] = aux[j];
+   for (j = 0; j < n; j++)
+      x[ ipvt[ j ] ] = aux[ j ];
 
-         /*** lmpar: initialize the iteration counter, evaluate the function at the
+   /*** lmpar: initialize the iteration counter, evaluate the function at the
               origin, and test for acceptance of the gauss-newton direction. ***/
 
-         iter = 0;
-         for (j = 0; j < n; j++)
-            xdi[j] = diag[j] * x[j];
-         dxnorm = (*lm_use_norm)(n, xdi);
-         fp = dxnorm - delta;
-         if (fp <= p1 * delta) {
+   iter = 0;
+   for (j = 0; j < n; j++)
+      xdi[ j ] = diag[ j ] * x[ j ];
+   dxnorm = (*lm_use_norm)(n, xdi);
+   fp = dxnorm - delta;
+   if (fp <= p1 * delta) {
 #ifdef LMFIT_DEBUG_MESSAGES
-            printf("lmpar/ terminate (fp<p1*delta)\n");
+      printf("lmpar/ terminate (fp<p1*delta)\n");
 #endif
-            *par = 0;
-            return;
-         }
+      *par = 0;
+      return;
+   }
 
-         /*** lmpar: if the jacobian is not rank deficient, the newton
+   /*** lmpar: if the jacobian is not rank deficient, the newton
               step provides a lower bound, parl, for the 0. of
               the function. otherwise set this bound to 0.. ***/
 
-         parl = 0;
-         if (nsing >= n) {
-            for (j = 0; j < n; j++)
-               aux[j] = diag[ipvt[j]] * xdi[ipvt[j]] / dxnorm;
+   parl = 0;
+   if (nsing >= n) {
+      for (j = 0; j < n; j++)
+         aux[ j ] = diag[ ipvt[ j ] ] * xdi[ ipvt[ j ] ] / dxnorm;
 
-            for (j = 0; j < n; j++) {
-               sum = 0.;
-               for (i = 0; i < j; i++)
-                  sum += r[j * ldr + i] * aux[i];
-               aux[j] = (aux[j] - sum) / r[j + ldr * j];
-            }
-            temp = (*lm_use_norm)(n, aux);
-            parl = fp / delta / temp / temp;
-         }
+      for (j = 0; j < n; j++) {
+         sum = 0.;
+         for (i = 0; i < j; i++)
+            sum += r[ j * ldr + i ] * aux[ i ];
+         aux[ j ] = (aux[ j ] - sum) / r[ j + ldr * j ];
+      }
+      temp = (*lm_use_norm)(n, aux);
+      parl = fp / delta / temp / temp;
+   }
 
-         /*** lmpar: calculate an upper bound, paru, for the 0. of the function. ***/
+   /*** lmpar: calculate an upper bound, paru, for the 0. of the function. ***/
 
-         for (j = 0; j < n; j++) {
-            sum = 0;
-            for (i = 0; i <= j; i++)
-               sum += r[j * ldr + i] * qtb[i];
-            aux[j] = sum / diag[ipvt[j]];
-         }
-         gnorm = (*lm_use_norm)(n, aux);
-         paru = gnorm / delta;
-         if (paru == 0.)
-            paru = LM_DWARF / MIN(delta, p1);
+   for (j = 0; j < n; j++) {
+      sum = 0;
+      for (i = 0; i <= j; i++)
+         sum += r[ j * ldr + i ] * qtb[ i ];
+      aux[ j ] = sum / diag[ ipvt[ j ] ];
+   }
+   gnorm = (*lm_use_norm)(n, aux);
+   paru = gnorm / delta;
+   if (paru == 0.)
+      paru = LM_DWARF / MIN(delta, p1);
 
-         /*** lmpar: if the input par lies outside of the interval (parl,paru),
+   /*** lmpar: if the input par lies outside of the interval (parl,paru),
               set par to the closer endpoint. ***/
 
-         *par = MAX(*par, parl);
-         *par = MIN(*par, paru);
-         if (*par == 0.)
-            *par = gnorm / dxnorm;
+   *par = MAX(*par, parl);
+   *par = MIN(*par, paru);
+   if (*par == 0.)
+      *par = gnorm / dxnorm;
 #ifdef LMFIT_DEBUG_MESSAGES
-         printf("lmpar/ parl %.4e  par %.4e  paru %.4e\n", parl, *par, paru);
+   printf("lmpar/ parl %.4e  par %.4e  paru %.4e\n", parl, *par, paru);
 #endif
 
-         /*** lmpar: iterate. ***/
+   /*** lmpar: iterate. ***/
 
-         for (;; iter++) {
+   for (;; iter++) {
+      /** evaluate the function at the current value of par. **/
 
-            /** evaluate the function at the current value of par. **/
+      if (*par == 0.)
+         *par = MAX(LM_DWARF, 0.001 * paru);
+      temp = sqrt(*par);
+      for (j = 0; j < n; j++)
+         aux[ j ] = temp * diag[ j ];
 
-            if (*par == 0.)
-               *par = MAX(LM_DWARF, 0.001 * paru);
-            temp = sqrt(*par);
-            for (j = 0; j < n; j++)
-               aux[j] = temp * diag[j];
+      lm_qrsolv(n, r, ldr, ipvt, aux, qtb, x, sdiag, xdi);
+      /* return values are r, x, sdiag */
 
-            lm_qrsolv( n, r, ldr, ipvt, aux, qtb, x, sdiag, xdi );
-            /* return values are r, x, sdiag */
+      for (j = 0; j < n; j++)
+         xdi[ j ] = diag[ j ] * x[ j ]; /* used as output */
+      dxnorm = (*lm_use_norm)(n, xdi);
+      fp_old = fp;
+      fp = dxnorm - delta;
 
-            for (j = 0; j < n; j++)
-               xdi[j] = diag[j] * x[j]; /* used as output */
-            dxnorm = (*lm_use_norm)(n, xdi);
-            fp_old = fp;
-            fp = dxnorm - delta;
-        
-            /** if the function is small enough, accept the current value
+      /** if the function is small enough, accept the current value
                 of par. Also test for the exceptional cases where parl
                 is zero or the number of iterations has reached 10. **/
 
-            if (fabs(fp) <= p1 * delta
-                || (parl == 0. && fp <= fp_old && fp_old < 0.)
-                || iter == 10)
-               break; /* the only exit from the iteration. */
-        
-            /** compute the Newton correction. **/
+      if (fabs(fp) <= p1 * delta || (parl == 0. && fp <= fp_old && fp_old < 0.) || iter == 10)
+         break; /* the only exit from the iteration. */
 
-            for (j = 0; j < n; j++)
-               aux[j] = diag[ipvt[j]] * xdi[ipvt[j]] / dxnorm;
+      /** compute the Newton correction. **/
 
-            for (j = 0; j < n; j++) {
-               aux[j] = aux[j] / sdiag[j];
-               for (i = j + 1; i < n; i++)
-                  aux[i] -= r[j * ldr + i] * aux[j];
-            }
-            temp = (*lm_use_norm)(n, aux);
-            parc = fp / delta / temp / temp;
+      for (j = 0; j < n; j++)
+         aux[ j ] = diag[ ipvt[ j ] ] * xdi[ ipvt[ j ] ] / dxnorm;
 
-            /** depending on the sign of the function, update parl or paru. **/
+      for (j = 0; j < n; j++) {
+         aux[ j ] = aux[ j ] / sdiag[ j ];
+         for (i = j + 1; i < n; i++)
+            aux[ i ] -= r[ j * ldr + i ] * aux[ j ];
+      }
+      temp = (*lm_use_norm)(n, aux);
+      parc = fp / delta / temp / temp;
 
-            if (fp > 0)
-               parl = MAX(parl, *par);
-            else if (fp < 0)
-               paru = MIN(paru, *par);
-            /* the case fp==0 is precluded by the break condition  */
-        
-            /** compute an improved estimate for par. **/
-        
-            *par = MAX(parl, *par + parc);
-        
-         }
+      /** depending on the sign of the function, update parl or paru. **/
 
-      } /*** lm_lmpar. ***/
+      if (fp > 0)
+         parl = MAX(parl, *par);
+      else if (fp < 0)
+         paru = MIN(paru, *par);
+      /* the case fp==0 is precluded by the break condition  */
+
+      /** compute an improved estimate for par. **/
+
+      *par = MAX(parl, *par + parc);
+   }
+
+} /*** lm_lmpar. ***/
 
 
-   //*************************************************************************/
-   //  lm_qrfac (QR factorisation, from lapack)
-   //*************************************************************************/
+//*************************************************************************/
+//  lm_qrfac (QR factorisation, from lapack)
+//*************************************************************************/
 
-   void US_LM::lm_qrfac(int m, int n, double *a, int pivot, int *ipvt,
-                 double *rdiag, double *acnorm, double *wa)
-      {
-         /*
+void US_LM::lm_qrfac(int m, int n, double *a, int pivot, int *ipvt, double *rdiag, double *acnorm, double *wa) {
+   /*
           *     This subroutine uses householder transformations with column
           *     pivoting (optional) to compute a qr factorization of the
           *     m by n matrix a. That is, qrfac determines an orthogonal
@@ -1038,104 +1005,103 @@ QString US_LM::lm_statmsg( US_LM::LM_Status *status, bool longmsg )
           *        can coincide with rdiag.
           *
           */
-         int i, j, k, kmax, minmn;
-         double ajnorm, sum, temp;
+   int i, j, k, kmax, minmn;
+   double ajnorm, sum, temp;
 
-         /*** qrfac: compute initial column norms and initialize several arrays. ***/
+   /*** qrfac: compute initial column norms and initialize several arrays. ***/
 
-         for (j = 0; j < n; j++) {
-            acnorm[j] = (*lm_use_norm)(m, &a[j*m]);
-            rdiag[j] = acnorm[j];
-            wa[j] = rdiag[j];
-            if (pivot)
-               ipvt[j] = j;
-         }
+   for (j = 0; j < n; j++) {
+      acnorm[ j ] = (*lm_use_norm)(m, &a[ j * m ]);
+      rdiag[ j ] = acnorm[ j ];
+      wa[ j ] = rdiag[ j ];
+      if (pivot)
+         ipvt[ j ] = j;
+   }
 #ifdef LMFIT_DEBUG_MESSAGES
-         printf("qrfac\n");
+   printf("qrfac\n");
 #endif
 
-         /*** qrfac: reduce a to r with householder transformations. ***/
+   /*** qrfac: reduce a to r with householder transformations. ***/
 
-         minmn = MIN(m, n);
-         for (j = 0; j < minmn; j++) {
-            if (!pivot)
-               goto pivot_ok;
+   minmn = MIN(m, n);
+   for (j = 0; j < minmn; j++) {
+      if (!pivot)
+         goto pivot_ok;
 
-            /** bring the column of largest norm into the pivot position. **/
+      /** bring the column of largest norm into the pivot position. **/
 
-            kmax = j;
-            for (k = j + 1; k < n; k++)
-               if (rdiag[k] > rdiag[kmax])
-                  kmax = k;
-            if (kmax == j)
-               goto pivot_ok;
+      kmax = j;
+      for (k = j + 1; k < n; k++)
+         if (rdiag[ k ] > rdiag[ kmax ])
+            kmax = k;
+      if (kmax == j)
+         goto pivot_ok;
 
-            for (i = 0; i < m; i++) {
-               temp = a[j*m+i];
-               a[j*m+i] = a[kmax*m+i];
-               a[kmax*m+i] = temp;
-            }
-            rdiag[kmax] = rdiag[j];
-            wa[kmax] = wa[j];
-            k = ipvt[j];
-            ipvt[j] = ipvt[kmax];
-            ipvt[kmax] = k;
+      for (i = 0; i < m; i++) {
+         temp = a[ j * m + i ];
+         a[ j * m + i ] = a[ kmax * m + i ];
+         a[ kmax * m + i ] = temp;
+      }
+      rdiag[ kmax ] = rdiag[ j ];
+      wa[ kmax ] = wa[ j ];
+      k = ipvt[ j ];
+      ipvt[ j ] = ipvt[ kmax ];
+      ipvt[ kmax ] = k;
 
-         pivot_ok:
-            /** compute the Householder transformation to reduce the
+   pivot_ok:
+      /** compute the Householder transformation to reduce the
                 j-th column of a to a multiple of the j-th unit vector. **/
 
-            ajnorm = (*lm_use_norm)(m-j, &a[j*m+j]);
-            if (ajnorm == 0.) {
-               rdiag[j] = 0;
-               continue;
-            }
+      ajnorm = (*lm_use_norm)(m - j, &a[ j * m + j ]);
+      if (ajnorm == 0.) {
+         rdiag[ j ] = 0;
+         continue;
+      }
 
-            if (a[j*m+j] < 0.)
-               ajnorm = -ajnorm;
-            for (i = j; i < m; i++)
-               a[j*m+i] /= ajnorm;
-            a[j*m+j] += 1;
+      if (a[ j * m + j ] < 0.)
+         ajnorm = -ajnorm;
+      for (i = j; i < m; i++)
+         a[ j * m + i ] /= ajnorm;
+      a[ j * m + j ] += 1;
 
-            /** apply the transformation to the remaining columns
+      /** apply the transformation to the remaining columns
                 and update the norms. **/
 
-            for (k = j + 1; k < n; k++) {
-               sum = 0;
+      for (k = j + 1; k < n; k++) {
+         sum = 0;
 
-               for (i = j; i < m; i++)
-                  sum += a[j*m+i] * a[k*m+i];
+         for (i = j; i < m; i++)
+            sum += a[ j * m + i ] * a[ k * m + i ];
 
-               temp = sum / a[j + m * j];
+         temp = sum / a[ j + m * j ];
 
-               for (i = j; i < m; i++)
-                  a[k*m+i] -= temp * a[j*m+i];
+         for (i = j; i < m; i++)
+            a[ k * m + i ] -= temp * a[ j * m + i ];
 
-               if (pivot && rdiag[k] != 0.) {
-                  temp = a[m * k + j] / rdiag[k];
-                  temp = MAX(0., 1 - temp * temp);
-                  rdiag[k] *= sqrt(temp);
-                  temp = rdiag[k] / wa[k];
-                  if ( 0.05 * SQR(temp) <= LM_MACHEP ) {
-                     rdiag[k] = (*lm_use_norm)(m-j-1, &a[m*k+j+1]);
-                     wa[k] = rdiag[k];
-                  }
-               }
+         if (pivot && rdiag[ k ] != 0.) {
+            temp = a[ m * k + j ] / rdiag[ k ];
+            temp = MAX(0., 1 - temp * temp);
+            rdiag[ k ] *= sqrt(temp);
+            temp = rdiag[ k ] / wa[ k ];
+            if (0.05 * SQR(temp) <= LM_MACHEP) {
+               rdiag[ k ] = (*lm_use_norm)(m - j - 1, &a[ m * k + j + 1 ]);
+               wa[ k ] = rdiag[ k ];
             }
-
-            rdiag[j] = -ajnorm;
          }
       }
 
+      rdiag[ j ] = -ajnorm;
+   }
+}
 
-   //*************************************************************************/
-   //  lm_qrsolv (linear least-squares)
-   //*************************************************************************/
 
-   void US_LM::lm_qrsolv(int n, double *r, int ldr, int *ipvt, double *diag,
-                  double *qtb, double *x, double *sdiag, double *wa)
-   {
-         /*
+//*************************************************************************/
+//  lm_qrsolv (linear least-squares)
+//*************************************************************************/
+
+void US_LM::lm_qrsolv(
+   int n, double *r, int ldr, int *ipvt, double *diag, double *qtb, double *x, double *sdiag, double *wa) {
+   /*
           *     Given an m by n matrix a, an n by n diagonal matrix d,
           *     and an m-vector b, the problem is to determine an x which
           *     solves the system
@@ -1196,125 +1162,121 @@ QString US_LM::lm_statmsg( US_LM::LM_Status *status, bool longmsg )
           *      wa is a work array of length n.
           *
           */
-         int i, kk, j, k, nsing;
-         double qtbpj, sum, temp;
-         double _sin, _cos, _tan, _cot; /* local variables, not functions */
+   int i, kk, j, k, nsing;
+   double qtbpj, sum, temp;
+   double _sin, _cos, _tan, _cot; /* local variables, not functions */
 
-         /*** qrsolv: copy r and (q transpose)*b to preserve input and initialize s.
+   /*** qrsolv: copy r and (q transpose)*b to preserve input and initialize s.
               in particular, save the diagonal elements of r in x. ***/
 
-         for (j = 0; j < n; j++) {
-            for (i = j; i < n; i++)
-               r[j * ldr + i] = r[i * ldr + j];
-            x[j] = r[j * ldr + j];
-            wa[j] = qtb[j];
-         }
+   for (j = 0; j < n; j++) {
+      for (i = j; i < n; i++)
+         r[ j * ldr + i ] = r[ i * ldr + j ];
+      x[ j ] = r[ j * ldr + j ];
+      wa[ j ] = qtb[ j ];
+   }
 #ifdef LMFIT_DEBUG_MESSAGES
-         printf("qrsolv\n");
+   printf("qrsolv\n");
 #endif
 
-         /*** qrsolv: eliminate the diagonal matrix d using a Givens rotation. ***/
+   /*** qrsolv: eliminate the diagonal matrix d using a Givens rotation. ***/
 
-         for (j = 0; j < n; j++) {
-
-            /*** qrsolv: prepare the row of d to be eliminated, locating the
+   for (j = 0; j < n; j++) {
+      /*** qrsolv: prepare the row of d to be eliminated, locating the
                  diagonal element using p from the qr factorization. ***/
 
-            if (diag[ipvt[j]] == 0.)
-               goto L90;
-            for (k = j; k < n; k++)
-               sdiag[k] = 0.;
-            sdiag[j] = diag[ipvt[j]];
+      if (diag[ ipvt[ j ] ] == 0.)
+         goto L90;
+      for (k = j; k < n; k++)
+         sdiag[ k ] = 0.;
+      sdiag[ j ] = diag[ ipvt[ j ] ];
 
-            /*** qrsolv: the transformations to eliminate the row of d modify only 
+      /*** qrsolv: the transformations to eliminate the row of d modify only 
                  a single element of qT*b beyond the first n, which is initially 0. ***/
 
-            qtbpj = 0.;
-            for (k = j; k < n; k++) {
-
-               /** determine a Givens rotation which eliminates the
+      qtbpj = 0.;
+      for (k = j; k < n; k++) {
+         /** determine a Givens rotation which eliminates the
                    appropriate element in the current row of d. **/
 
-               if (sdiag[k] == 0.)
-                  continue;
-               kk = k + ldr * k;
-               if (fabs(r[kk]) < fabs(sdiag[k])) {
-                  _cot = r[kk] / sdiag[k];
-                  _sin = 1 / sqrt(1 + SQR(_cot));
-                  _cos = _sin * _cot;
-               } else {
-                  _tan = sdiag[k] / r[kk];
-                  _cos = 1 / sqrt(1 + SQR(_tan));
-                  _sin = _cos * _tan;
-               }
+         if (sdiag[ k ] == 0.)
+            continue;
+         kk = k + ldr * k;
+         if (fabs(r[ kk ]) < fabs(sdiag[ k ])) {
+            _cot = r[ kk ] / sdiag[ k ];
+            _sin = 1 / sqrt(1 + SQR(_cot));
+            _cos = _sin * _cot;
+         }
+         else {
+            _tan = sdiag[ k ] / r[ kk ];
+            _cos = 1 / sqrt(1 + SQR(_tan));
+            _sin = _cos * _tan;
+         }
 
-               /** compute the modified diagonal element of r and
+         /** compute the modified diagonal element of r and
                    the modified element of ((q transpose)*b,0). **/
 
-               r[kk] = _cos * r[kk] + _sin * sdiag[k];
-               temp = _cos * wa[k] + _sin * qtbpj;
-               qtbpj = -_sin * wa[k] + _cos * qtbpj;
-               wa[k] = temp;
+         r[ kk ] = _cos * r[ kk ] + _sin * sdiag[ k ];
+         temp = _cos * wa[ k ] + _sin * qtbpj;
+         qtbpj = -_sin * wa[ k ] + _cos * qtbpj;
+         wa[ k ] = temp;
 
-               /** accumulate the tranformation in the row of s. **/
+         /** accumulate the tranformation in the row of s. **/
 
-               for (i = k + 1; i < n; i++) {
-                  temp = _cos * r[k * ldr + i] + _sin * sdiag[i];
-                  sdiag[i] = -_sin * r[k * ldr + i] + _cos * sdiag[i];
-                  r[k * ldr + i] = temp;
-               }
-            }
+         for (i = k + 1; i < n; i++) {
+            temp = _cos * r[ k * ldr + i ] + _sin * sdiag[ i ];
+            sdiag[ i ] = -_sin * r[ k * ldr + i ] + _cos * sdiag[ i ];
+            r[ k * ldr + i ] = temp;
+         }
+      }
 
-         L90:
-            /** store the diagonal element of s and restore
+   L90:
+      /** store the diagonal element of s and restore
                 the corresponding diagonal element of r. **/
 
-            sdiag[j] = r[j * ldr + j];
-            r[j * ldr + j] = x[j];
-         }
-
-         /*** qrsolv: solve the triangular system for z. if the system is
-              singular, then obtain a least squares solution. ***/
-
-         nsing = n;
-         for (j = 0; j < n; j++) {
-            if (sdiag[j] == 0. && nsing == n)
-               nsing = j;
-            if (nsing < n)
-               wa[j] = 0;
-         }
-
-         for (j = nsing - 1; j >= 0; j--) {
-            sum = 0;
-            for (i = j + 1; i < nsing; i++)
-               sum += r[j * ldr + i] * wa[i];
-            wa[j] = (wa[j] - sum) / sdiag[j];
-         }
-
-         /*** qrsolv: permute the components of z back to components of x. ***/
-
-         for (j = 0; j < n; j++)
-            x[ipvt[j]] = wa[j];
-
-      } /*** lm_qrsolv. ***/
-
-   double US_LM::lm_rmsdnorm(int n, const double *x)
-   {
-      double rmsd = 0e0;
-      for ( int i = 0; i < n; i++ )
-      {
-         rmsd += x[ i ] * x[ i ];
-      }
-      return sqrt( rmsd );
+      sdiag[ j ] = r[ j * ldr + j ];
+      r[ j * ldr + j ] = x[ j ];
    }
 
-   //*************************************************************************/
-   //  lm_enorm (Euclidean norm)
-   //*************************************************************************/
+   /*** qrsolv: solve the triangular system for z. if the system is
+              singular, then obtain a least squares solution. ***/
 
-   double US_LM::lm_enorm(int n, const double *x)
-   {
-      /*     Given an n-vector x, this function calculates the
+   nsing = n;
+   for (j = 0; j < n; j++) {
+      if (sdiag[ j ] == 0. && nsing == n)
+         nsing = j;
+      if (nsing < n)
+         wa[ j ] = 0;
+   }
+
+   for (j = nsing - 1; j >= 0; j--) {
+      sum = 0;
+      for (i = j + 1; i < nsing; i++)
+         sum += r[ j * ldr + i ] * wa[ i ];
+      wa[ j ] = (wa[ j ] - sum) / sdiag[ j ];
+   }
+
+   /*** qrsolv: permute the components of z back to components of x. ***/
+
+   for (j = 0; j < n; j++)
+      x[ ipvt[ j ] ] = wa[ j ];
+
+} /*** lm_qrsolv. ***/
+
+double US_LM::lm_rmsdnorm(int n, const double *x) {
+   double rmsd = 0e0;
+   for (int i = 0; i < n; i++) {
+      rmsd += x[ i ] * x[ i ];
+   }
+   return sqrt(rmsd);
+}
+
+//*************************************************************************/
+//  lm_enorm (Euclidean norm)
+//*************************************************************************/
+
+double US_LM::lm_enorm(int n, const double *x) {
+   /*     Given an n-vector x, this function calculates the
        *     euclidean norm of x.
        *
        *     The euclidean norm is computed by accumulating the sum of
@@ -1334,92 +1296,85 @@ QString US_LM::lm_statmsg( US_LM::LM_Status *status, bool longmsg )
        *
        *      x is an input array of length n.
        */
-      int i;
-      double agiant, s1, s2, s3, xabs, x1max, x3max, temp;
+   int i;
+   double agiant, s1, s2, s3, xabs, x1max, x3max, temp;
 
-      s1 = 0;
-      s2 = 0;
-      s3 = 0;
-      x1max = 0;
-      x3max = 0;
-      agiant = LM_SQRT_GIANT / n;
+   s1 = 0;
+   s2 = 0;
+   s3 = 0;
+   x1max = 0;
+   x3max = 0;
+   agiant = LM_SQRT_GIANT / n;
 
-      /** sum squares. **/
+   /** sum squares. **/
 
-      for (i = 0; i < n; i++) {
-         xabs = fabs(x[i]);
-         if (xabs > LM_SQRT_DWARF) {
-            if ( xabs < agiant ) {
-               s2 += xabs * xabs;
-            } else if ( xabs > x1max ) {
-               temp = x1max / xabs;
-               s1 = 1 + s1 * SQR(temp);
-               x1max = xabs;
-            } else {
-               temp = xabs / x1max;
-               s1 += SQR(temp);
-            }
-         } else if ( xabs > x3max ) {
-            temp = x3max / xabs;
-            s3 = 1 + s3 * SQR(temp);
-            x3max = xabs;
-         } else if (xabs != 0.) {
-            temp = xabs / x3max;
-            s3 += SQR(temp);
+   for (i = 0; i < n; i++) {
+      xabs = fabs(x[ i ]);
+      if (xabs > LM_SQRT_DWARF) {
+         if (xabs < agiant) {
+            s2 += xabs * xabs;
+         }
+         else if (xabs > x1max) {
+            temp = x1max / xabs;
+            s1 = 1 + s1 * SQR(temp);
+            x1max = xabs;
+         }
+         else {
+            temp = xabs / x1max;
+            s1 += SQR(temp);
          }
       }
+      else if (xabs > x3max) {
+         temp = x3max / xabs;
+         s3 = 1 + s3 * SQR(temp);
+         x3max = xabs;
+      }
+      else if (xabs != 0.) {
+         temp = xabs / x3max;
+         s3 += SQR(temp);
+      }
+   }
 
-      /** calculation of norm. **/
+   /** calculation of norm. **/
 
-      if (s1 != 0)
-         return x1max * sqrt(s1 + (s2 / x1max) / x1max);
-      else if (s2 != 0)
-         if (s2 >= x3max)
-            return sqrt(s2 * (1 + (x3max / s2) * (x3max * s3)));
-         else
-            return sqrt(x3max * ((s2 / x3max) + (x3max * s3)));
+   if (s1 != 0)
+      return x1max * sqrt(s1 + (s2 / x1max) / x1max);
+   else if (s2 != 0)
+      if (s2 >= x3max)
+         return sqrt(s2 * (1 + (x3max / s2) * (x3max * s3)));
       else
-         return x3max * sqrt(s3);
+         return sqrt(x3max * ((s2 / x3max) + (x3max * s3)));
+   else
+      return x3max * sqrt(s3);
 
-   } /*** lm_enorm. ***/
-   
-   void US_LM::lmcurve_evaluate( double *par, int m_dat, const void *data,
-                          double *fvec, int * /* info */ )
-   {
-      int i;
-      for ( i = 0; i < m_dat; i++ )
-         fvec[i] = ((LM_CurveData*)data)->y[i] - 
-            ((LM_CurveData*)data)->f( ((LM_CurveData*)data)->t[i], par );
-      // *info = *info; /* to prevent a 'unused variable' warning */
-   }
+} /*** lm_enorm. ***/
 
-
-   void US_LM::lmcurve_fit( int n_par, double *par, int m_dat, 
-                     const double *t, const double *y,
-                     double (*f)( double t, double *par ),
-                     const LM_Control *control, LM_Status *status )
-   {
-      LM_CurveData data( (double*)t, (double*)y, f );
-      lm_use_norm = lm_enorm;
-      lmmin( n_par, par, m_dat, (const void*) &data,
-             lmcurve_evaluate, control, status, lm_printout_std );
-   }
-
-   void US_LM::lmcurve_fit_rmsd( int n_par, double *par, int m_dat, 
-                          const double *t, const double *y,
-                          double (*f)( double t, double *par ),
-                          const LM_Control *control, LM_Status *status
-                          )
-   {
-      LM_CurveData data( (double*)t, (double*)y, f );
-      lm_use_norm = lm_rmsdnorm;
-
-      lmmin( n_par, par, m_dat, (const void*) &data,
-             lmcurve_evaluate, control, status, lm_printout_std );
-   }
+void US_LM::lmcurve_evaluate(double *par, int m_dat, const void *data, double *fvec, int * /* info */) {
+   int i;
+   for (i = 0; i < m_dat; i++)
+      fvec[ i ] = (( LM_CurveData * ) data)->y[ i ]
+                  - (( LM_CurveData * ) data)->f((( LM_CurveData * ) data)->t[ i ], par);
+   // *info = *info; /* to prevent a 'unused variable' warning */
+}
 
 
-const US_LM::LM_Control lm_control_double(
-   LM_USERTOL, LM_USERTOL, LM_USERTOL, LM_USERTOL, 100., 100, 1, 0 );
-const US_LM::LM_Control lm_control_float(
-   1.e-7, 1.e-7, 1.e-7, 1.e-7, 100., 100, 0, 0 );
+void US_LM::lmcurve_fit(
+   int n_par, double *par, int m_dat, const double *t, const double *y, double (*f)(double t, double *par),
+   const LM_Control *control, LM_Status *status) {
+   LM_CurveData data(( double * ) t, ( double * ) y, f);
+   lm_use_norm = lm_enorm;
+   lmmin(n_par, par, m_dat, ( const void * ) &data, lmcurve_evaluate, control, status, lm_printout_std);
+}
+
+void US_LM::lmcurve_fit_rmsd(
+   int n_par, double *par, int m_dat, const double *t, const double *y, double (*f)(double t, double *par),
+   const LM_Control *control, LM_Status *status) {
+   LM_CurveData data(( double * ) t, ( double * ) y, f);
+   lm_use_norm = lm_rmsdnorm;
+
+   lmmin(n_par, par, m_dat, ( const void * ) &data, lmcurve_evaluate, control, status, lm_printout_std);
+}
+
+
+const US_LM::LM_Control lm_control_double(LM_USERTOL, LM_USERTOL, LM_USERTOL, LM_USERTOL, 100., 100, 1, 0);
+const US_LM::LM_Control lm_control_float(1.e-7, 1.e-7, 1.e-7, 1.e-7, 100., 100, 0, 0);

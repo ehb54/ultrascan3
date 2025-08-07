@@ -3,9 +3,9 @@
 #define US_SASSOC_H
 
 #include "us_extern.h"
-#include "us_widgets.h"
-#include "us_plot.h"
 #include "us_help.h"
+#include "us_plot.h"
+#include "us_widgets.h"
 
 #include <qwt_counter.h>
 #include <qwt_plot_curve.h>
@@ -14,15 +14,13 @@
 #define ARRAY_SIZE 555
 
 //! \brief Class to show results of Self-Association Equilibrium Simulation
-//! This program allows you to simulate the relative amounts of monomer, dimer 
+//! This program allows you to simulate the relative amounts of monomer, dimer
 //! and tetramer species present in a self-association equilibrium.
 
-class US_GUI_EXTERN US_Sassoc : public US_Widgets
-{
-   Q_OBJECT
-   
+class US_GUI_EXTERN US_Sassoc : public US_Widgets {
+      Q_OBJECT
+
    public:
-   
       /*! Constructor
          \param eq0 Equilibrium constant for first component
          \param eq1 Equilibrium constant for second component
@@ -36,84 +34,80 @@ class US_GUI_EXTERN US_Sassoc : public US_Widgets
          \param parent  Parent window, normally 0
          \param flags   Window flags, normally 0 (default)
       */
-      US_Sassoc( double, double, double, double, 
-                 const QString&, int, bool, 
-                 bool = true, QWidget* = 0, Qt::WindowFlags = 0 );
-      
+      US_Sassoc(
+         double, double, double, double, const QString &, int, bool, bool = true, QWidget * = 0, Qt::WindowFlags = 0);
+
    private:
-      double         eq    [ 2 ];
-      double         stoich[ 2 ];
-      QString        project;
-      int            model;
-                   
-      double         x       [ ARRAY_SIZE ];
-      double         species1[ ARRAY_SIZE ];
-      double         species2[ ARRAY_SIZE ];
-      double         species3[ ARRAY_SIZE ];
-                    
-      bool           updating;
+      double eq[ 2 ];
+      double stoich[ 2 ];
+      QString project;
+      int model;
 
-      QwtPlot*       plot;
-                    
-      QwtPlotCurve*  curve1;
-      QwtPlotCurve*  curve2;
-      QwtPlotCurve*  curve3;
-                    
-      QwtCounter*    c_equil1;
-      QwtCounter*    c_equil2;
-                    
-      QLineEdit*     le_species1;
-      QLineEdit*     le_species2;
-      QLineEdit*     le_species3;
-      QLineEdit*     le_conc;
-      QLineEdit*     le_assoc1;
-      QLineEdit*     le_assoc2;
-      QLineEdit*     le_equil1;
-      QLineEdit*     le_equil2;
-      
-      US_Plot*       plot1;
+      double x[ ARRAY_SIZE ];
+      double species1[ ARRAY_SIZE ];
+      double species2[ ARRAY_SIZE ];
+      double species3[ ARRAY_SIZE ];
 
-      US_Help        showHelp;
+      bool updating;
 
-      QwtPlotPicker* pick;
+      QwtPlot *plot;
 
-      void   recalc         ( void           );
-      double monomer_root   ( double         );
-      double polynomial     ( double, double );
-      void   update_legend  ( double         );
+      QwtPlotCurve *curve1;
+      QwtPlotCurve *curve2;
+      QwtPlotCurve *curve3;
+
+      QwtCounter *c_equil1;
+      QwtCounter *c_equil2;
+
+      QLineEdit *le_species1;
+      QLineEdit *le_species2;
+      QLineEdit *le_species3;
+      QLineEdit *le_conc;
+      QLineEdit *le_assoc1;
+      QLineEdit *le_assoc2;
+      QLineEdit *le_equil1;
+      QLineEdit *le_equil2;
+
+      US_Plot *plot1;
+
+      US_Help showHelp;
+
+      QwtPlotPicker *pick;
+
+      void recalc(void);
+      double monomer_root(double);
+      double polynomial(double, double);
+      void update_legend(double);
 
    private slots:
-      void   new_value      ( const QwtDoublePoint& );
-      void   mouseD         ( const QwtDoublePoint& );
-      void   mouseU         ( const QwtDoublePoint& );
-      void   update_stoich1 ( const QString&        );
-      void   update_stoich2 ( const QString&        );
-      void   update_eq1     ( const QString&        );
-      void   update_eq2     ( const QString&        );
-      void   update_eq1Count( double                );
-      void   update_eq2Count( double                );
-      void   save           ( void                  );
+      void new_value(const QwtDoublePoint &);
+      void mouseD(const QwtDoublePoint &);
+      void mouseU(const QwtDoublePoint &);
+      void update_stoich1(const QString &);
+      void update_stoich2(const QString &);
+      void update_eq1(const QString &);
+      void update_eq2(const QString &);
+      void update_eq1Count(double);
+      void update_eq2Count(double);
+      void save(void);
 
-      void   help           ( void )
-      { showHelp.show_help( "manual/sassoc.html" ); };
+      void help(void) { showHelp.show_help("manual/sassoc.html"); };
 };
 #endif
 
 #ifdef NEVER
-#include "us_util.h"
-#include "us_pixmap.h"
 #include "us_math.h"
-#include "us_selectplot.h"
+#include "us_pixmap.h"
 #include "us_printfilter.h"
+#include "us_selectplot.h"
+#include "us_util.h"
 
 
-class US_SassocLegend : public QFrame
-{
-   Q_OBJECT
-   
+class US_SassocLegend : public QFrame {
+      Q_OBJECT
+
    public:
-   
-      US_SassocLegend(QWidget *p=0 , const char *name=0);
+      US_SassocLegend(QWidget *p = 0, const char *name = 0);
       ~US_SassocLegend();
       US_Config *USglobal;
 
@@ -130,13 +124,11 @@ class US_SassocLegend : public QFrame
       void setup_GUI();
 };
 
-class US_GUI_EXTERN US_Sassoc : public QFrame
-{
-   Q_OBJECT
-   
+class US_GUI_EXTERN US_Sassoc : public QFrame {
+      Q_OBJECT
+
    public:
-   
-      US_Sassoc( float, float, float, float, QString, int, bool, QWidget *p=0 , const char *name=0);
+      US_Sassoc(float, float, float, float, QString, int, bool, QWidget *p = 0, const char *name = 0);
       ~US_Sassoc();
 
       QwtPlot *data_plot;
@@ -150,7 +142,7 @@ class US_GUI_EXTERN US_Sassoc : public QFrame
       QLabel *lbl_stoich1;
       QLabel *lbl_stoich2;
       QLabel *lbl_project;
-      
+
       QTextEdit *mle_model;
       QPushButton *pb_cancel;
       QPushButton *pb_write;
@@ -166,23 +158,22 @@ class US_GUI_EXTERN US_Sassoc : public QFrame
       QPoint point;
       US_SassocLegend *sas_l;
       US_Pixmap *pm;
-      
+
    private:
-   
       int xpos, buttonh, buttonw, ypos, spacing, border, model;
       unsigned int ARRAY_SIZE;
-      unsigned int curve[3];
+      unsigned int curve[ 3 ];
       double **data;
       QString htmlDir;
-      
+
    protected slots:
       void setup_GUI();
       void closeEvent(QCloseEvent *);
-//    void resizeEvent(QResizeEvent *e);
+      //    void resizeEvent(QResizeEvent *e);
       void mouseMoved(const QMouseEvent &e);
       void mousePressed(const QMouseEvent &e);
       void mouseReleased(const QMouseEvent &e);
-   
+
    public slots:
 
       void print();
@@ -202,4 +193,3 @@ class US_GUI_EXTERN US_Sassoc : public QFrame
 };
 
 #endif
-

@@ -4,13 +4,13 @@
 // QT defs:
 
 #include <qlabel.h>
-#include <qstring.h>
 #include <qlayout.h>
 #include <qpushbutton.h>
+#include <qstring.h>
 //#include <q3frame.h>
 #include <qcheckbox.h>
-#include <qwt_counter.h>
 #include <qgroupbox.h>
+#include <qwt_counter.h>
 //Added by qt3to4:
 #include <QCloseEvent>
 
@@ -18,28 +18,26 @@
 
 //standard C and C++ defs:
 
-#include <vector>
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
 #include <iostream>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <vector>
 
 using namespace std;
 
-struct DMD_Options
-{
-   bool force_chem;
+struct DMD_Options {
+      bool force_chem;
 
-   float threshold_pb_pb;
-   float threshold_pb_sc;
-   float threshold_sc_sc;
+      float threshold_pb_pb;
+      float threshold_pb_sc;
+      float threshold_sc_sc;
 
-   bool pdb_static_pairs;
+      bool pdb_static_pairs;
 };
 
-class US_EXTERN US_Hydrodyn_DMD_Options : public QFrame
-{
-   Q_OBJECT
+class US_EXTERN US_Hydrodyn_DMD_Options : public QFrame {
+      Q_OBJECT
 
    public:
       US_Hydrodyn_DMD_Options(DMD_Options *, bool *, void *, QWidget *p = 0, const char *name = 0);
@@ -68,9 +66,9 @@ class US_EXTERN US_Hydrodyn_DMD_Options : public QFrame
 
       QPushButton *pb_help;
       QPushButton *pb_cancel;
-      
+
    private slots:
-      
+
       void setupGUI();
 
       void update_threshold_pb_pb(double);
@@ -82,7 +80,7 @@ class US_EXTERN US_Hydrodyn_DMD_Options : public QFrame
 
       void cancel();
       void help();
-   
+
    protected slots:
 
       void closeEvent(QCloseEvent *);

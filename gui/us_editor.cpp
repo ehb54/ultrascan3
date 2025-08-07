@@ -1,229 +1,208 @@
 #include "us_editor.h"
-#include "us_settings.h"
 #include "us_gui_settings.h"
+#include "us_settings.h"
 #if QT_VERSION > 0x050000
 #include <QtPrintSupport>
 #endif
 
-US_Editor::US_Editor( int menu, bool readonly, const QString& extension,
-      QWidget* parent,  Qt::WindowFlags flags ) : QMainWindow( parent, flags )
-{
+US_Editor::US_Editor(int menu, bool readonly, const QString &extension, QWidget *parent, Qt::WindowFlags flags) :
+    QMainWindow(parent, flags) {
    file_extension = extension;
    file_directory = US_Settings::dataDir();
 
-   if ( extension.contains( "/" ) )
-   {  // Extension is actually directory-code/extension
+   if (extension.contains("/")) { // Extension is actually directory-code/extension
 
-      if ( extension.startsWith( "results" ) )
+      if (extension.startsWith("results"))
          file_directory = US_Settings::resultDir();
 
-      else if ( extension.startsWith( "reports" ) )
+      else if (extension.startsWith("reports"))
          file_directory = US_Settings::reportDir();
 
-      else if ( extension.startsWith( "data" ) )
+      else if (extension.startsWith("data"))
          file_directory = US_Settings::dataDir();
 
       else
-         file_directory = extension.section( "/", 0, -2 );
+         file_directory = extension.section("/", 0, -2);
 
-      file_extension = extension.section( "/", -1, -1 );
+      file_extension = extension.section("/", -1, -1);
    }
 
    filename = "";
 
 #ifndef Q_OS_MAC
-   edMenuBar       = menuBar();
+   edMenuBar = menuBar();
 #else
 #if QT_VERSION > 0x050000
-   edMenuBar       = menuBar();
-   edMenuBar->setNativeMenuBar( false );
+   edMenuBar = menuBar();
+   edMenuBar->setNativeMenuBar(false);
 #else
-   edMenuBar       = new QMenuBar( 0 );
+   edMenuBar = new QMenuBar(0);
 #endif
 #endif
-   QMenu* fileMenu = edMenuBar->addMenu( tr( "&File" ) );
-   fileMenu->setFont  ( QFont( US_GuiSettings::fontFamily(),
-                               US_GuiSettings::fontSize() - 1 ) );
+   QMenu *fileMenu = edMenuBar->addMenu(tr("&File"));
+   fileMenu->setFont(QFont(US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() - 1));
 
-   QAction* loadAction;
-   QAction* saveAction;
+   QAction *loadAction;
+   QAction *saveAction;
 
    // Add menu types as necessary
-   switch ( menu )
-   {
+   switch (menu) {
       case LOAD:
-         loadAction = new QAction( tr( "&Load" ), this );;
-         loadAction->setShortcut( tr( "Ctrl+L" ) );
-         connect( loadAction, SIGNAL( triggered() ), this, SLOT( load() ) );
+         loadAction = new QAction(tr("&Load"), this);
+         ;
+         loadAction->setShortcut(tr("Ctrl+L"));
+         connect(loadAction, SIGNAL(triggered()), this, SLOT(load()));
 
-         saveAction = new QAction( tr( "&Save" ), this );;
-         saveAction->setShortcut( tr( "Ctrl+S" ) );
-         connect( saveAction, SIGNAL( triggered() ), this, SLOT( save() ) );
+         saveAction = new QAction(tr("&Save"), this);
+         ;
+         saveAction->setShortcut(tr("Ctrl+S"));
+         connect(saveAction, SIGNAL(triggered()), this, SLOT(save()));
 
-         fileMenu->addAction( loadAction );
-         fileMenu->addAction( saveAction );
+         fileMenu->addAction(loadAction);
+         fileMenu->addAction(saveAction);
          // Fall through
 
       default:
-         QAction* saveAsAction = new QAction( tr( "Save&As" ), this );;
-         saveAsAction->setShortcut( tr( "Ctrl+A" ) );
-         connect( saveAsAction, SIGNAL( triggered() ), this, SLOT( saveAs() ) );
+         QAction *saveAsAction = new QAction(tr("Save&As"), this);
+         ;
+         saveAsAction->setShortcut(tr("Ctrl+A"));
+         connect(saveAsAction, SIGNAL(triggered()), this, SLOT(saveAs()));
 
-         QAction* clearAction = new QAction( tr( "Clear" ), this );;
-         connect( clearAction, SIGNAL( triggered() ), this, SLOT( clear() ) );
+         QAction *clearAction = new QAction(tr("Clear"), this);
+         ;
+         connect(clearAction, SIGNAL(triggered()), this, SLOT(clear()));
 
-         QAction* printAction = new QAction( tr( "&Print" ), this );;
-         printAction->setShortcut( tr( "Ctrl+P" ) );
-         connect( printAction, SIGNAL( triggered() ), this, SLOT( print() ) );
+         QAction *printAction = new QAction(tr("&Print"), this);
+         ;
+         printAction->setShortcut(tr("Ctrl+P"));
+         connect(printAction, SIGNAL(triggered()), this, SLOT(print()));
 
-         QAction* fontAction = new QAction( tr( "&Font" ), this );;
-         fontAction->setShortcut( tr( "Ctrl+F" ) );
-         connect( fontAction, SIGNAL( triggered() ), this, SLOT( update_font() ) );
+         QAction *fontAction = new QAction(tr("&Font"), this);
+         ;
+         fontAction->setShortcut(tr("Ctrl+F"));
+         connect(fontAction, SIGNAL(triggered()), this, SLOT(update_font()));
 
-         fileMenu->addAction( saveAsAction );
-         fileMenu->addAction( printAction );
-         fileMenu->addAction( fontAction );
-         fileMenu->addAction( clearAction );
+         fileMenu->addAction(saveAsAction);
+         fileMenu->addAction(printAction);
+         fileMenu->addAction(fontAction);
+         fileMenu->addAction(clearAction);
    }
 
-   edMenuBar->setPalette( US_GuiSettings::normalColor() );
-   edMenuBar->setFont   ( QFont( US_GuiSettings::fontFamily(),
-                          US_GuiSettings::fontSize() ) );
+   edMenuBar->setPalette(US_GuiSettings::normalColor());
+   edMenuBar->setFont(QFont(US_GuiSettings::fontFamily(), US_GuiSettings::fontSize()));
 
-   currentFont = QFont( "monospace", US_GuiSettings::fontSize() - 1,
-                        QFont::Bold );
+   currentFont = QFont("monospace", US_GuiSettings::fontSize() - 1, QFont::Bold);
 
-   e = new QTextEdit( this );
-   e->setFont          ( currentFont );
-   e->setPalette       ( US_GuiSettings::editColor() );
-   e->setAcceptRichText( true );
-   e->setWordWrapMode  ( QTextOption::WrapAtWordBoundaryOrAnywhere );
-   e->setReadOnly      ( readonly );
-   setCentralWidget    ( e );
+   e = new QTextEdit(this);
+   e->setFont(currentFont);
+   e->setPalette(US_GuiSettings::editColor());
+   e->setAcceptRichText(true);
+   e->setWordWrapMode(QTextOption::WrapAtWordBoundaryOrAnywhere);
+   e->setReadOnly(readonly);
+   setCentralWidget(e);
 }
 
-void US_Editor::load( void )
-{
+void US_Editor::load(void) {
    QString fn;
    QString text;
 
-   fn = QFileDialog::getOpenFileName( this,
-         tr( "Open File" ),
-         file_directory,
-         file_extension );
+   fn = QFileDialog::getOpenFileName(this, tr("Open File"), file_directory, file_extension);
 
-  if ( fn == "" ) return;
+   if (fn == "")
+      return;
 
-  filename = fn;
+   filename = fn;
 
-  QFile f( filename );
+   QFile f(filename);
 
-  if ( f.open( QIODevice::ReadOnly | QIODevice::Text ) )
-  {
-     QTextStream t( &f );
+   if (f.open(QIODevice::ReadOnly | QIODevice::Text)) {
+      QTextStream t(&f);
 
-     text = t.readAll();
-     f.close(  );
+      text = t.readAll();
+      f.close();
 
-     e->setPlainText( text );
-     emit US_EditorLoadComplete( filename );
-     file_directory = filename.section( "/", 0, -2 );
-  }
-  else
-     QMessageBox::information( this,
-           tr( "Error" ),
-           tr( "Could not open\n\n" ) + fn + tr( "\n\n for reading." ) );
+      e->setPlainText(text);
+      emit US_EditorLoadComplete(filename);
+      file_directory = filename.section("/", 0, -2);
+   }
+   else
+      QMessageBox::information(this, tr("Error"), tr("Could not open\n\n") + fn + tr("\n\n for reading."));
 }
 
-void US_Editor::save(  )
-{
-   if ( filename == "" )
+void US_Editor::save() {
+   if (filename == "")
       saveAs();
    else
       saveFile();
 }
 
-void US_Editor::saveAs(  )
-{
+void US_Editor::saveAs() {
    QString fn;
 
-   fn = QFileDialog::getSaveFileName( this );
+   fn = QFileDialog::getSaveFileName(this);
 
-   if ( ! fn.isEmpty(  ) )
-   {
+   if (!fn.isEmpty()) {
       filename = fn;
       saveFile();
    }
 }
 
-void US_Editor::saveFile( void )
-{
-      QString text = e->toPlainText();
+void US_Editor::saveFile(void) {
+   QString text = e->toPlainText();
 
-      QFile f( filename );
+   QFile f(filename);
 
-      if ( f.open( QIODevice::WriteOnly | QIODevice::Text ) )
-      {
-         QTextStream t( &f );
+   if (f.open(QIODevice::WriteOnly | QIODevice::Text)) {
+      QTextStream t(&f);
 
-         t << text;
-         f.close(  );
-      }
-      else
-         QMessageBox::information( this,
-            tr( "Error" ),
-            tr( "Could not open\n\n" ) + filename + tr( "\n\n for writing." ) );
+      t << text;
+      f.close();
+   }
+   else
+      QMessageBox::information(this, tr("Error"), tr("Could not open\n\n") + filename + tr("\n\n for writing."));
 }
 
-void US_Editor::update_font(  )
-{
-   bool  ok;
-   currentFont   = e->font();
-   QFont newFont = QFontDialog::getFont( &ok, currentFont, this );
+void US_Editor::update_font() {
+   bool ok;
+   currentFont = e->font();
+   QFont newFont = QFontDialog::getFont(&ok, currentFont, this);
 
-   if ( ok )
-   {
+   if (ok) {
       currentFont = newFont;
-      e->setFont( currentFont );
+      e->setFont(currentFont);
    }
 }
 
-void US_Editor::print( void )
-{
-   QPrinter      printer;
-   QPrintDialog* dialog = new QPrintDialog( &printer, this );
+void US_Editor::print(void) {
+   QPrinter printer;
+   QPrintDialog *dialog = new QPrintDialog(&printer, this);
 
-   dialog->setWindowTitle( tr( "Print Document" ) );
+   dialog->setWindowTitle(tr("Print Document"));
 
-   if ( dialog->exec() != QDialog::Accepted ) return;
+   if (dialog->exec() != QDialog::Accepted)
+      return;
 
-   QStringList text = e->toPlainText().split( "\n" );
+   QStringList text = e->toPlainText().split("\n");
    QPainter p;
 
-   p.begin( &printer );      // paint on printer
-   p.setFont( e->font() );
+   p.begin(&printer); // paint on printer
+   p.setFont(e->font());
 
-   int yPos = 0;             // y position for each line
+   int yPos = 0; // y position for each line
    QFontMetrics fm = p.fontMetrics();
 
    const int MARGIN = 10;
 
-   for ( int i = 0; i < text.size(); i++ )
-   {
-      if ( MARGIN + yPos > printer.height(  ) - MARGIN )
-      {
-         printer.newPage();   // no more room on this page
-         yPos = 0;            // back to top of page
+   for (int i = 0; i < text.size(); i++) {
+      if (MARGIN + yPos > printer.height() - MARGIN) {
+         printer.newPage(); // no more room on this page
+         yPos = 0; // back to top of page
       }
 
-      p.drawText( MARGIN, MARGIN + yPos,
-                  printer.width(), fm.lineSpacing(),
-                  Qt::TextExpandTabs, text[ i ]  );
+      p.drawText(MARGIN, MARGIN + yPos, printer.width(), fm.lineSpacing(), Qt::TextExpandTabs, text[ i ]);
 
       yPos = yPos + fm.lineSpacing();
-    }
+   }
 
-    p.end();                  // send job to printer
+   p.end(); // send job to printer
 }
-
-

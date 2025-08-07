@@ -13,12 +13,14 @@
 
 namespace Eigen {
 
-namespace internal {
+   namespace internal {
 
-template<int N> class FixedInt;
-template<int N> class VariableAndFixedInt;
+      template<int N>
+      class FixedInt;
+      template<int N>
+      class VariableAndFixedInt;
 
-/** \internal
+      /** \internal
   * \class FixedInt
   *
   * This class embeds a compile-time integer \c N.
@@ -48,50 +50,64 @@ template<int N> class VariableAndFixedInt;
   *
   * \sa fix<N>, class VariableAndFixedInt
   */
-template<int N> class FixedInt
-{
-public:
-  static const int value = N;
-  EIGEN_CONSTEXPR operator int() const { return value; }
-  FixedInt() {}
-  FixedInt( VariableAndFixedInt<N> other) {
-    #ifndef EIGEN_INTERNAL_DEBUGGING
-    EIGEN_UNUSED_VARIABLE(other);
-    #endif
-    eigen_internal_assert(int(other)==N);
-  }
+      template<int N>
+      class FixedInt {
+         public:
+            static const int value = N;
+            EIGEN_CONSTEXPR operator int() const { return value; }
+            FixedInt() {}
+            FixedInt(VariableAndFixedInt<N> other) {
+#ifndef EIGEN_INTERNAL_DEBUGGING
+               EIGEN_UNUSED_VARIABLE(other);
+#endif
+               eigen_internal_assert(int(other) == N);
+            }
 
-  FixedInt<-N> operator-() const { return FixedInt<-N>(); }
-  template<int M>
-  FixedInt<N+M> operator+( FixedInt<M>) const { return FixedInt<N+M>(); }
-  template<int M>
-  FixedInt<N-M> operator-( FixedInt<M>) const { return FixedInt<N-M>(); }
-  template<int M>
-  FixedInt<N*M> operator*( FixedInt<M>) const { return FixedInt<N*M>(); }
-  template<int M>
-  FixedInt<N/M> operator/( FixedInt<M>) const { return FixedInt<N/M>(); }
-  template<int M>
-  FixedInt<N%M> operator%( FixedInt<M>) const { return FixedInt<N%M>(); }
-  template<int M>
-  FixedInt<N|M> operator|( FixedInt<M>) const { return FixedInt<N|M>(); }
-  template<int M>
-  FixedInt<N&M> operator&( FixedInt<M>) const { return FixedInt<N&M>(); }
+            FixedInt<-N> operator-() const { return FixedInt<-N>(); }
+            template<int M>
+            FixedInt<N + M> operator+(FixedInt<M>) const {
+               return FixedInt<N + M>();
+            }
+            template<int M>
+            FixedInt<N - M> operator-(FixedInt<M>) const {
+               return FixedInt<N - M>();
+            }
+            template<int M>
+            FixedInt<N * M> operator*(FixedInt<M>) const {
+               return FixedInt<N * M>();
+            }
+            template<int M>
+            FixedInt<N / M> operator/(FixedInt<M>) const {
+               return FixedInt<N / M>();
+            }
+            template<int M>
+            FixedInt<N % M> operator%(FixedInt<M>) const {
+               return FixedInt<N % M>();
+            }
+            template<int M>
+            FixedInt<N | M> operator|(FixedInt<M>) const {
+               return FixedInt<N | M>();
+            }
+            template<int M>
+            FixedInt<N & M> operator&(FixedInt<M>) const {
+               return FixedInt<N & M>();
+            }
 
 #if EIGEN_HAS_CXX14_VARIABLE_TEMPLATES
-  // Needed in C++14 to allow fix<N>():
-  FixedInt operator() () const { return *this; }
+            // Needed in C++14 to allow fix<N>():
+            FixedInt operator()() const { return *this; }
 
-  VariableAndFixedInt<N> operator() (int val) const { return VariableAndFixedInt<N>(val); }
+            VariableAndFixedInt<N> operator()(int val) const { return VariableAndFixedInt<N>(val); }
 #else
-  FixedInt ( FixedInt<N> (*)() ) {}
+            FixedInt(FixedInt<N> (*)()) {}
 #endif
 
 #if EIGEN_HAS_CXX11
-  FixedInt(std::integral_constant<int,N>) {}
+            FixedInt(std::integral_constant<int, N>) {}
 #endif
-};
+      };
 
-/** \internal
+      /** \internal
   * \class VariableAndFixedInt
   *
   * This class embeds both a compile-time integer \c N and a runtime integer.
@@ -120,86 +136,119 @@ public:
   *
   * \sa fix<N>(int), class FixedInt
   */
-template<int N> class VariableAndFixedInt
-{
-public:
-  static const int value = N;
-  operator int() const { return m_value; }
-  VariableAndFixedInt(int val) { m_value = val; }
-protected:
-  int m_value;
-};
+      template<int N>
+      class VariableAndFixedInt {
+         public:
+            static const int value = N;
+            operator int() const { return m_value; }
+            VariableAndFixedInt(int val) { m_value = val; }
 
-template<typename T, int Default=Dynamic> struct get_fixed_value {
-  static const int value = Default;
-};
+         protected:
+            int m_value;
+      };
 
-template<int N,int Default> struct get_fixed_value<FixedInt<N>,Default> {
-  static const int value = N;
-};
+      template<typename T, int Default = Dynamic>
+      struct get_fixed_value {
+            static const int value = Default;
+      };
 
-#if !EIGEN_HAS_CXX14
-template<int N,int Default> struct get_fixed_value<FixedInt<N> (*)(),Default> {
-  static const int value = N;
-};
-#endif
-
-template<int N,int Default> struct get_fixed_value<VariableAndFixedInt<N>,Default> {
-  static const int value = N ;
-};
-
-template<typename T, int N, int Default>
-struct get_fixed_value<variable_if_dynamic<T,N>,Default> {
-  static const int value = N;
-};
-
-template<typename T> EIGEN_DEVICE_FUNC Index get_runtime_value(const T &x) { return x; }
-#if !EIGEN_HAS_CXX14
-template<int N> EIGEN_DEVICE_FUNC Index get_runtime_value(FixedInt<N> (*)()) { return N; }
-#endif
-
-// Cleanup integer/FixedInt/VariableAndFixedInt/etc types:
-
-// By default, no cleanup:
-template<typename T, int DynamicKey=Dynamic, typename EnableIf=void> struct cleanup_index_type { typedef T type; };
-
-// Convert any integral type (e.g., short, int, unsigned int, etc.) to Eigen::Index
-template<typename T, int DynamicKey> struct cleanup_index_type<T,DynamicKey,typename internal::enable_if<internal::is_integral<T>::value>::type> { typedef Index type; };
+      template<int N, int Default>
+      struct get_fixed_value<FixedInt<N>, Default> {
+            static const int value = N;
+      };
 
 #if !EIGEN_HAS_CXX14
-// In c++98/c++11, fix<N> is a pointer to function that we better cleanup to a true FixedInt<N>:
-template<int N, int DynamicKey> struct cleanup_index_type<FixedInt<N> (*)(), DynamicKey> { typedef FixedInt<N> type; };
+      template<int N, int Default>
+      struct get_fixed_value<FixedInt<N> (*)(), Default> {
+            static const int value = N;
+      };
 #endif
 
-// If VariableAndFixedInt does not match DynamicKey, then we turn it to a pure compile-time value:
-template<int N, int DynamicKey> struct cleanup_index_type<VariableAndFixedInt<N>, DynamicKey> { typedef FixedInt<N> type; };
-// If VariableAndFixedInt matches DynamicKey, then we turn it to a pure runtime-value (aka Index):
-template<int DynamicKey> struct cleanup_index_type<VariableAndFixedInt<DynamicKey>, DynamicKey> { typedef Index type; };
+      template<int N, int Default>
+      struct get_fixed_value<VariableAndFixedInt<N>, Default> {
+            static const int value = N;
+      };
+
+      template<typename T, int N, int Default>
+      struct get_fixed_value<variable_if_dynamic<T, N>, Default> {
+            static const int value = N;
+      };
+
+      template<typename T>
+      EIGEN_DEVICE_FUNC Index get_runtime_value(const T &x) {
+         return x;
+      }
+#if !EIGEN_HAS_CXX14
+      template<int N>
+      EIGEN_DEVICE_FUNC Index get_runtime_value(FixedInt<N> (*)()) {
+         return N;
+      }
+#endif
+
+      // Cleanup integer/FixedInt/VariableAndFixedInt/etc types:
+
+      // By default, no cleanup:
+      template<typename T, int DynamicKey = Dynamic, typename EnableIf = void>
+      struct cleanup_index_type {
+            typedef T type;
+      };
+
+      // Convert any integral type (e.g., short, int, unsigned int, etc.) to Eigen::Index
+      template<typename T, int DynamicKey>
+      struct cleanup_index_type<T, DynamicKey, typename internal::enable_if<internal::is_integral<T>::value>::type> {
+            typedef Index type;
+      };
+
+#if !EIGEN_HAS_CXX14
+      // In c++98/c++11, fix<N> is a pointer to function that we better cleanup to a true FixedInt<N>:
+      template<int N, int DynamicKey>
+      struct cleanup_index_type<FixedInt<N> (*)(), DynamicKey> {
+            typedef FixedInt<N> type;
+      };
+#endif
+
+      // If VariableAndFixedInt does not match DynamicKey, then we turn it to a pure compile-time value:
+      template<int N, int DynamicKey>
+      struct cleanup_index_type<VariableAndFixedInt<N>, DynamicKey> {
+            typedef FixedInt<N> type;
+      };
+      // If VariableAndFixedInt matches DynamicKey, then we turn it to a pure runtime-value (aka Index):
+      template<int DynamicKey>
+      struct cleanup_index_type<VariableAndFixedInt<DynamicKey>, DynamicKey> {
+            typedef Index type;
+      };
 
 #if EIGEN_HAS_CXX11
-template<int N, int DynamicKey> struct cleanup_index_type<std::integral_constant<int,N>, DynamicKey> { typedef FixedInt<N> type; };
+      template<int N, int DynamicKey>
+      struct cleanup_index_type<std::integral_constant<int, N>, DynamicKey> {
+            typedef FixedInt<N> type;
+      };
 #endif
 
-} // end namespace internal
+   } // end namespace internal
 
 #ifndef EIGEN_PARSED_BY_DOXYGEN
 
 #if EIGEN_HAS_CXX14_VARIABLE_TEMPLATES
-template<int N>
-static const internal::FixedInt<N> fix{};
+   template<int N>
+   static const internal::FixedInt<N> fix{};
 #else
-template<int N>
-inline internal::FixedInt<N> fix() { return internal::FixedInt<N>(); }
+   template<int N>
+   inline internal::FixedInt<N> fix() {
+      return internal::FixedInt<N>();
+   }
 
-// The generic typename T is mandatory. Otherwise, a code like fix<N> could refer to either the function above or this next overload.
-// This way a code like fix<N> can only refer to the previous function.
-template<int N,typename T>
-inline internal::VariableAndFixedInt<N> fix(T val) { return internal::VariableAndFixedInt<N>(internal::convert_index<int>(val)); }
+   // The generic typename T is mandatory. Otherwise, a code like fix<N> could refer to either the function above or this next overload.
+   // This way a code like fix<N> can only refer to the previous function.
+   template<int N, typename T>
+   inline internal::VariableAndFixedInt<N> fix(T val) {
+      return internal::VariableAndFixedInt<N>(internal::convert_index<int>(val));
+   }
 #endif
 
 #else // EIGEN_PARSED_BY_DOXYGEN
 
-/** \var fix<N>()
+   /** \var fix<N>()
   * \ingroup Core_Module
   *
   * This \em identifier permits to construct an object embedding a compile-time integer \c N.
@@ -231,10 +280,10 @@ inline internal::VariableAndFixedInt<N> fix(T val) { return internal::VariableAn
   *
   * \sa fix<N>(int), seq, seqN
   */
-template<int N>
-static const auto fix();
+   template<int N>
+   static const auto fix();
 
-/** \fn fix<N>(int)
+   /** \fn fix<N>(int)
   * \ingroup Core_Module
   *
   * This function returns an object embedding both a compile-time integer \c N, and a fallback runtime value \a val.
@@ -262,8 +311,8 @@ static const auto fix();
   *
   * \sa fix, seqN, class ArithmeticSequence
   */
-template<int N>
-static const auto fix(int val);
+   template<int N>
+   static const auto fix(int val);
 
 #endif // EIGEN_PARSED_BY_DOXYGEN
 

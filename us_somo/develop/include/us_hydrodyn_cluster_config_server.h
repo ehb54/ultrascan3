@@ -4,9 +4,9 @@
 // QT defs:
 
 #include <qlabel.h>
-#include <qstring.h>
 #include <qlayout.h>
 #include <qpushbutton.h>
+#include <qstring.h>
 //#include <q3frame.h>
 #include <qcheckbox.h>
 #include <qlistwidget.h>
@@ -19,53 +19,48 @@
 
 using namespace std;
 
-class US_EXTERN US_Hydrodyn_Cluster_Config_Server : public QDialog
-{
-   Q_OBJECT
+class US_EXTERN US_Hydrodyn_Cluster_Config_Server : public QDialog {
+      Q_OBJECT
       friend class US_Hydrodyn_Cluster;
 
    public:
       US_Hydrodyn_Cluster_Config_Server(
-                                        map < QString, QString > &system_map,
-                                        QString server_name,
-                                        void *us_hydrodyn,
-                                        QWidget *p = 0, 
-                                        const char *name = 0
-                                        );
+         map<QString, QString> &system_map, QString server_name, void *us_hydrodyn, QWidget *p = 0,
+         const char *name = 0);
       ~US_Hydrodyn_Cluster_Config_Server();
-      
-    private:
-      void          *us_hydrodyn;
-      
-      US_Config     *USglobal;
 
-      QLabel        *lbl_title;
+   private:
+      void *us_hydrodyn;
 
-#ifdef WIN32
-# if QT_VERSION < 0x040000
-  #pragma warning ( disable: 4251 )
-# endif
-#endif
+      US_Config *USglobal;
 
-      vector < QLabel    *> lbls;
-      vector < QLineEdit *> les;
-
-      map < QString, QString > *system_map;
-      map < QString, QString > our_system_map;
+      QLabel *lbl_title;
 
 #ifdef WIN32
-# if QT_VERSION < 0x040000
-  #pragma warning ( default: 4251 )
-# endif
+#if QT_VERSION < 0x040000
+#pragma warning(disable : 4251)
+#endif
 #endif
 
-      QPushButton   *pb_save_config;
-      QPushButton   *pb_help;
-      QPushButton   *pb_cancel;
+      vector<QLabel *> lbls;
+      vector<QLineEdit *> les;
 
-      void          *cluster_window;
+      map<QString, QString> *system_map;
+      map<QString, QString> our_system_map;
 
-      QString       server_name;
+#ifdef WIN32
+#if QT_VERSION < 0x040000
+#pragma warning(default : 4251)
+#endif
+#endif
+
+      QPushButton *pb_save_config;
+      QPushButton *pb_help;
+      QPushButton *pb_cancel;
+
+      void *cluster_window;
+
+      QString server_name;
 
    private slots:
 
@@ -78,7 +73,6 @@ class US_EXTERN US_Hydrodyn_Cluster_Config_Server : public QDialog
    protected slots:
 
       void closeEvent(QCloseEvent *);
-   
 };
 
 #endif

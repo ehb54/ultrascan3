@@ -4,13 +4,13 @@
 // QT defs:
 
 #include <qlabel.h>
-#include <qstring.h>
 #include <qlayout.h>
 #include <qpushbutton.h>
+#include <qstring.h>
 //#include <q3frame.h>
 #include <qcheckbox.h>
-#include <qwt_counter.h>
 #include <qgroupbox.h>
+#include <qwt_counter.h>
 //Added by qt3to4:
 #include <QCloseEvent>
 
@@ -18,17 +18,16 @@
 
 //standard C and C++ defs:
 
-#include <vector>
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
 #include <iostream>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <vector>
 
 using namespace std;
 
-class US_EXTERN US_Hydrodyn_SasOptionsCurve : public QFrame
-{
-   Q_OBJECT
+class US_EXTERN US_Hydrodyn_SasOptionsCurve : public QFrame {
+      Q_OBJECT
 
    public:
       friend class US_Hydrodyn;
@@ -38,19 +37,19 @@ class US_EXTERN US_Hydrodyn_SasOptionsCurve : public QFrame
 
    public:
       struct saxs_options *saxs_options;
-      bool       *sas_options_curve_widget;
-      void       *us_hydrodyn;
-      US_Config  *USglobal;
+      bool *sas_options_curve_widget;
+      void *us_hydrodyn;
+      US_Config *USglobal;
 
-      QLabel     *lbl_info;
+      QLabel *lbl_info;
 
-      QLabel     *lbl_wavelength;
-      QLabel     *lbl_start_angle;
-      QLabel     *lbl_end_angle;
-      QLabel     *lbl_delta_angle;
-      QLabel     *lbl_start_q;
-      QLabel     *lbl_end_q;
-      QLabel     *lbl_delta_q;
+      QLabel *lbl_wavelength;
+      QLabel *lbl_start_angle;
+      QLabel *lbl_end_angle;
+      QLabel *lbl_delta_angle;
+      QLabel *lbl_start_q;
+      QLabel *lbl_end_q;
+      QLabel *lbl_delta_q;
 
       QwtCounter *cnt_wavelength;
       QwtCounter *cnt_start_angle;
@@ -60,7 +59,7 @@ class US_EXTERN US_Hydrodyn_SasOptionsCurve : public QFrame
       QwtCounter *cnt_end_q;
       QwtCounter *cnt_delta_q;
 
-      QCheckBox  *cb_normalize_by_mw;
+      QCheckBox *cb_normalize_by_mw;
 
       QPushButton *pb_help;
       QPushButton *pb_cancel;
@@ -68,12 +67,12 @@ class US_EXTERN US_Hydrodyn_SasOptionsCurve : public QFrame
       void update_q();
 
    private slots:
-      
+
       void setupGUI();
 
-      void update_wavelength(double);      
+      void update_wavelength(double);
       void update_start_angle(double);
-      void update_end_angle(double);     
+      void update_end_angle(double);
       void update_delta_angle(double);
       void update_start_q(double);
       void update_end_q(double);
@@ -83,7 +82,7 @@ class US_EXTERN US_Hydrodyn_SasOptionsCurve : public QFrame
 
       void cancel();
       void help();
-   
+
    protected slots:
 
       void closeEvent(QCloseEvent *);

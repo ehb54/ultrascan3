@@ -18,10 +18,9 @@
  * @var Reading::od
  * Optical density of the reading.
  */
-struct Reading
-{
-    float lambda; ///< Wavelength
-    float od;     ///< Optical density
+struct Reading {
+      float lambda; ///< Wavelength
+      float od; ///< Optical density
 };
 
 /**
@@ -51,15 +50,14 @@ struct Reading
  * @var WavelengthScan::runs
  * Total number of runs.
  */
-struct WavelengthScan
-{
-    QVector<Reading> v_readings; ///< Vector of readings
-    QString fileName;            ///< Name of the file
-    QString filePath;            ///< Path to the file
-    QString description;         ///< Description of the scan
-    int pos;                     ///< Number of positive runs
-    int neg;                     ///< Number of negative runs
-    int runs;                    ///< Total number of runs
+struct WavelengthScan {
+      QVector<Reading> v_readings; ///< Vector of readings
+      QString fileName; ///< Name of the file
+      QString filePath; ///< Path to the file
+      QString description; ///< Description of the scan
+      int pos; ///< Number of positive runs
+      int neg; ///< Number of negative runs
+      int runs; ///< Total number of runs
 };
 
 #endif // US_EXTINCTUTILS_H

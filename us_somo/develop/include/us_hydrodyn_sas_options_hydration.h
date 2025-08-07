@@ -4,13 +4,13 @@
 // QT defs:
 
 #include <qlabel.h>
-#include <qstring.h>
 #include <qlayout.h>
 #include <qpushbutton.h>
+#include <qstring.h>
 //#include <q3frame.h>
 #include <qcheckbox.h>
-#include <qwt_counter.h>
 #include <qgroupbox.h>
+#include <qwt_counter.h>
 //Added by qt3to4:
 #include <QCloseEvent>
 
@@ -18,17 +18,16 @@
 
 //standard C and C++ defs:
 
-#include <vector>
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
 #include <iostream>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <vector>
 
 using namespace std;
 
-class US_EXTERN US_Hydrodyn_SasOptionsHydration : public QFrame
-{
-   Q_OBJECT
+class US_EXTERN US_Hydrodyn_SasOptionsHydration : public QFrame {
+      Q_OBJECT
 
    public:
       friend class US_Hydrodyn;
@@ -38,31 +37,31 @@ class US_EXTERN US_Hydrodyn_SasOptionsHydration : public QFrame
 
    public:
       struct saxs_options *saxs_options;
-      bool        *sas_options_hydration_widget;
-      void        *us_hydrodyn;
-      US_Config   *USglobal;
+      bool *sas_options_hydration_widget;
+      void *us_hydrodyn;
+      US_Config *USglobal;
 
-      QLabel      *lbl_info;
+      QLabel *lbl_info;
 
-      QCheckBox   *cb_hydrate_pdb;
+      QCheckBox *cb_hydrate_pdb;
 
       QPushButton *pb_default_rotamer_filename;
-      QLineEdit   *le_default_rotamer_filename;
+      QLineEdit *le_default_rotamer_filename;
 
-      QLabel      *lbl_steric_clash_distance;
-      QwtCounter  *cnt_steric_clash_distance;
+      QLabel *lbl_steric_clash_distance;
+      QwtCounter *cnt_steric_clash_distance;
 
-      QLabel      *lbl_steric_clash_recheck_distance;
-      QwtCounter  *cnt_steric_clash_recheck_distance;
+      QLabel *lbl_steric_clash_recheck_distance;
+      QwtCounter *cnt_steric_clash_recheck_distance;
 
-      QCheckBox   *cb_alt_hydration;
-      QCheckBox   *cb_hydration_rev_asa;
+      QCheckBox *cb_alt_hydration;
+      QCheckBox *cb_hydration_rev_asa;
 
       QPushButton *pb_help;
       QPushButton *pb_cancel;
 
    private slots:
-      
+
       void setupGUI();
 
       void set_hydrate_pdb();
@@ -77,11 +76,10 @@ class US_EXTERN US_Hydrodyn_SasOptionsHydration : public QFrame
 
       void cancel();
       void help();
-   
+
    protected slots:
 
       void closeEvent(QCloseEvent *);
 };
 
 #endif
-

@@ -3,22 +3,20 @@
 
 #include "qwt3d_plot.h"
 
-namespace Qwt3D
-{
+namespace Qwt3D {
 
-//! TODO
-class QWT3D_EXPORT MultiPlot : public Plot3D
-{
-//    Q_OBJECT
+   //! TODO
+   class QWT3D_EXPORT MultiPlot : public Plot3D {
+         //    Q_OBJECT
 
-public:
-  MultiPlot( QWidget* parent = 0, const char* name = 0 ){}
+      public:
+         MultiPlot(QWidget *parent = 0, const char *name = 0) {}
 
-protected:
-	virtual void createData() = 0;
-};
+      protected:
+         virtual void createData() = 0;
+   };
 
-} // ns
+} // namespace Qwt3D
 
 
 #endif

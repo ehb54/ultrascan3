@@ -12,13 +12,12 @@
 
 namespace Eigen {
 
-namespace internal {
+   namespace internal {
 
-//---------- associative ternary functors ----------
+      //---------- associative ternary functors ----------
 
 
-
-} // end namespace internal
+   } // end namespace internal
 
 } // end namespace Eigen
 

@@ -3,9 +3,9 @@
 
 #include "qapplication.h"
 #include "qobject.h"
+#include "qprocess.h"
 #include "qstring.h"
 #include "qstringlist.h"
-#include "qprocess.h"
 #include "qtimer.h"
 
 #include <iostream>
@@ -25,50 +25,44 @@ using namespace std;
 // this is designed to be run under nonGUI mode
 // and to support various external applications
 // that exist only in binary format requiring command line &
-// possibly some sequence of query/response 
+// possibly some sequence of query/response
 
-class US_Cmdline_App : public QObject
-{
-   Q_OBJECT
+class US_Cmdline_App : public QObject {
+      Q_OBJECT
 
    public:
-      US_Cmdline_App( 
-                     QApplication * qa,
-                     QString        dir,
-                     QStringList    args,
-                     QStringList    app_text,
-                     QStringList    response,
-                     QString      * error_msg,
-                     int            timer_delay_ms = 0
-                     //                     QStringList  * stdout         = (QStringList *)0,
-                     //                     QStringList  * stderr         = (QStringList *)0
-                     );
+      US_Cmdline_App(
+         QApplication *qa, QString dir, QStringList args, QStringList app_text, QStringList response,
+         QString *error_msg, int timer_delay_ms = 0
+         //                     QStringList  * stdout         = (QStringList *)0,
+         //                     QStringList  * stderr         = (QStringList *)0
+      );
       ~US_Cmdline_App();
-      QString      * error_msg;
+      QString *error_msg;
 
    private slots:
       void readFromStdout();
       void readFromStderr();
-      void finished( int, QProcess::ExitStatus );
+      void finished(int, QProcess::ExitStatus);
       void started();
 
       void timeout();
 
    private:
-      QProcess       process;
-      QApplication * qa;
-      QString        dir;
-      QStringList    args;
-      QStringList    app_text;
-      QStringList    response;
+      QProcess process;
+      QApplication *qa;
+      QString dir;
+      QStringList args;
+      QStringList app_text;
+      QStringList response;
       // QStringList  * stdout;
       // QStringList  * stderr;
 
-      int            query_response_pos;
-      bool           run_to_end;
+      int query_response_pos;
+      bool run_to_end;
 
-      QTimer         timer;
-      int            timer_delay_ms;
+      QTimer timer;
+      int timer_delay_ms;
 };
 
 #endif

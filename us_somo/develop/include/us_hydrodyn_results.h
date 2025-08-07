@@ -4,70 +4,68 @@
 // QT defs:
 
 #include <qlabel.h>
+#include <qlayout.h>
 #include <qlineedit.h>
 #include <qstring.h>
-#include <qlayout.h>
 //#include <q3frame.h>
 //Added by qt3to4:
 #include <QCloseEvent>
 
-#include "us_util.h"
 #include "us_editor.h"
+#include "us_util.h"
 
 #if QT_VERSION >= 0x040000
-#include "us3i_gui_settings.h"
 #include "us3i_editor.h"
+#include "us3i_gui_settings.h"
 #endif
 
 //standard C and C++ defs:
 
-#include <vector>
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
 #include <iostream>
 #include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <vector>
 
 using namespace std;
 
-struct hydro_results
-{
-   QString name;
-   QString method;
-   unsigned int num_models;
-   float total_beads;
-   float total_beads_sd;
-   float used_beads;
-   float used_beads_sd;
-   double mass;
-   double s20w;
-   double s20w_sd;
-   double D20w;
-   double D20w_sd;
-   double viscosity;
-   double viscosity_sd;
-   double rs;
-   double rs_sd;
-   double rg;
-   double rg_sd;
-   double tau;
-   double tau_sd;
-   double vbar;
-   double asa_rg_pos;
-   double asa_rg_neg;
-   double ff0;
-   double ff0_sd;
-   QString solvent_name;
-   QString solvent_acronym;
-   double temperature;
-   double solvent_viscosity;
-   double solvent_density;
-   double pH;
+struct hydro_results {
+      QString name;
+      QString method;
+      unsigned int num_models;
+      float total_beads;
+      float total_beads_sd;
+      float used_beads;
+      float used_beads_sd;
+      double mass;
+      double s20w;
+      double s20w_sd;
+      double D20w;
+      double D20w_sd;
+      double viscosity;
+      double viscosity_sd;
+      double rs;
+      double rs_sd;
+      double rg;
+      double rg_sd;
+      double tau;
+      double tau_sd;
+      double vbar;
+      double asa_rg_pos;
+      double asa_rg_neg;
+      double ff0;
+      double ff0_sd;
+      QString solvent_name;
+      QString solvent_acronym;
+      double temperature;
+      double solvent_viscosity;
+      double solvent_density;
+      double pH;
 };
 
-class US_EXTERN US_Hydrodyn_Results : public QFrame
-{
-   Q_OBJECT
+class US_EXTERN US_Hydrodyn_Results : public QFrame {
+      Q_OBJECT
 
    public:
       US_Hydrodyn_Results(struct hydro_results *, bool *, void *us_hydrodyn, QWidget *p = 0, const char *name = 0);
@@ -76,7 +74,6 @@ class US_EXTERN US_Hydrodyn_Results : public QFrame
       static hydro_results hydro_results_initialized(); // returns initialized hydro_results
 
    private:
-
       struct hydro_results *results;
       bool *result_widget;
       TextEdit *e;
@@ -140,6 +137,4 @@ class US_EXTERN US_Hydrodyn_Results : public QFrame
 };
 
 
-
 #endif
-
