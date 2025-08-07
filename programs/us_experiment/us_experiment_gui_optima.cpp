@@ -633,8 +633,17 @@ US_ExperGuiGeneral::US_ExperGuiGeneral( QWidget* topw )
                 le_runid        = us_lineedit( "", 0, false );
                 le_protocol     = us_lineedit( "", 0, false );
                 le_project      = us_lineedit( "", 0, true  );
-                ct_tempera      = us_counter ( 2, 0,  40, 20 );
-                ct_tedelay      = us_counter ( 2, 0, 120, 10 );
+
+		//ct_tempera      = us_counter ( 2, 0,  40, 20 );
+		ct_tempera      = us_spinbox();
+		ct_tempera      ->setRange(0, 40);
+		ct_tempera      ->setValue(20);  
+		
+		//ct_tedelay      = us_counter ( 2, 0, 120, 10 );
+		ct_tedelay      = us_spinbox();
+		ct_tedelay      ->setRange(0, 120);
+		ct_tedelay      ->setValue(10);  
+		
    int          ihgt            = pb_protocol->height();
    QSpacerItem* spacer1         = new QSpacerItem( 20, ihgt );
    QSpacerItem* spacer2         = new QSpacerItem( 20, ihgt );
@@ -647,9 +656,12 @@ US_ExperGuiGeneral::US_ExperGuiGeneral( QWidget* topw )
    le_runid->setPlaceholderText("Enter Run ID to continue");
    le_project->setPlaceholderText("Select Project to continue");
 
+   //temperature
    ct_tempera->setSingleStep( 1 );
    ct_tempera->setValue     ( 20 );
    ct_tempera->adjustSize   ();
+
+   //delay
    ct_tedelay->setSingleStep( 1 );
    ct_tedelay->setValue     ( 10 );
    ct_tedelay->adjustSize   ();
@@ -2892,8 +2904,18 @@ US_ExperGuiSpeeds::US_ExperGuiSpeeds( QWidget* topw )
      sb_count            ->setEnabled( false );
    
    cb_prof             = new QComboBox( this );
-   ct_speed            = us_counter( 2, 1000,  80000, 100 );
-   ct_accel            = us_counter( 2,   50,   1000,  50 );
+   
+   // ct_speed            = us_counter( 2, 1000,  80000, 100 );
+   // ct_accel            = us_counter( 2,   50,   1000,  50 );
+   ct_speed            = us_spinbox();
+   ct_accel            = us_spinbox();
+
+   ct_speed ->setRange(1000,  80000);
+   ct_speed ->setValue(100);
+   ct_accel ->setRange(50, 100);
+   ct_accel ->setValue(50);
+   
+   
     // QHBoxLayout* lo_durat                                             // ALEXEY
     //                       = us_timeedit( tm_durat,  0, &sb_durat  );
     // QHBoxLayout* lo_delay

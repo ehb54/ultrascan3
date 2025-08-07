@@ -102,9 +102,15 @@ US_ExperGuiRanges::US_ExperGuiRanges( QWidget* topw )
    QLabel*      cclabl;
    QPushButton* pbwavln;
    QLabel*      lbwlrng;
-   QwtCounter*  ctradfr;
+
+   //QwtCounter*  ctradfr;
+   QDoubleSpinBox*     ctradfr;
+   
    QLabel*      lablto;
-   QwtCounter*  ctradto;
+   
+   //QwtCounter*  ctradto;
+   QDoubleSpinBox*  ctradto;
+
    QCheckBox*   ck_buff_spectrum;
    
    QString swavln   = tr( "Select Wavelengths" );
@@ -125,9 +131,25 @@ US_ExperGuiRanges::US_ExperGuiRanges( QWidget* topw )
       cclabl           = us_label( scel );
       pbwavln          = us_pushbutton( swavln );
       lbwlrng          = us_label( "2,  278 to 282" );
-      ctradfr          = us_counter( 3, 5.75, 7.25, 5.75 );
+
+      //ctradfr          = us_counter( 3, 5.75, 7.25, 5.75 );
+      ctradfr = new QDoubleSpinBox;
+      ctradfr-> setRange(5.75, 7.25);
+      ctradfr-> setDecimals(2);
+      ctradfr-> setValue(5.75);
+      ctradfr-> setSingleStep(0.01);
+      ctradfr-> setSuffix(" cm");
+            
       lablto           = us_label( srngto );
-      ctradto          = us_counter( 3, 5.75, 7.25, 7.25 );
+
+      //ctradto          = us_counter( 3, 5.75, 7.25, 7.25 );
+      ctradto = new QDoubleSpinBox;
+      ctradto-> setRange(5.75, 7.25);
+      ctradto-> setDecimals(2);
+      ctradto-> setValue(7.25);
+      ctradto-> setSingleStep(0.01);
+      ctradto-> setSuffix(" cm");
+
       QString strow    = QString::number( ii );
       cclabl ->setObjectName( strow + ": label" );
       pbwavln->setObjectName( strow + ": pb_wavln" );
