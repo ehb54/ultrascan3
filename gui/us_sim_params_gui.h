@@ -55,6 +55,7 @@ class US_GUI_EXTERN US_SimParamsGui : public US_WidgetsDialog
       QwtCounter*   cnt_lrnoise;
       QwtCounter*   cnt_tinoise;
       QwtCounter*   cnt_rinoise;
+      QwtCounter*   cnt_baseline;
       QwtCounter*   cnt_temperature;
                    
       QCheckBox*    cb_acceleration_flag;
@@ -98,6 +99,7 @@ class US_GUI_EXTERN US_SimParamsGui : public US_WidgetsDialog
       void update_lrnoise       ( double lrnoise );
       void update_tinoise       ( double tinoise );
       void update_rinoise       ( double rinoise );
+      void update_baseline      ( double baseline );
       void update_moving        ( int grid );
       void select_centerpiece   ( bool );
       void update_temp          ( double temp );
