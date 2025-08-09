@@ -227,6 +227,8 @@ class US_Grid_ZFunction : public US_WidgetsDialog
 public:
    US_Grid_ZFunction( QWidget *, const QMap< QString, QString>& );
 
+   QString get_parameters( void );
+
 
 private:
    QVector< double > min_dependent;
@@ -304,6 +306,7 @@ private:
    void draw_formula( void );
    void plot_data   ( void );
    void set_points  ( int  );
+   bool check_data  ( void );
 
 private slots:
    void set_dependent( int index );
@@ -400,6 +403,7 @@ private:
 
    QButtonGroup*    x_axis;               //!< X-axis button group.
    QButtonGroup*    y_axis;               //!< Y-axis button group.
+   QButtonGroup*    z_cons_vary;          //!< Constant-Varying Z-value button group.
 
    QListWidget*     lw_grids;             //!< list of all grids.
 
@@ -440,7 +444,7 @@ private:
    bool validate_int( const QString, int& );
 
    //! \brief Validate grid before adding or updating.
-   bool validate_xyz( GridInfo& );
+   bool validate_partial_grid( GridInfo& );
 
    //! \brief Check if the set region overlaps with others.
    bool check_overlap( double, double, double, double, int );
@@ -448,9 +452,14 @@ private:
    //! \brief Generate evenly spaced numbers over a specified interval.
    bool gen_points( double, double, int, bool,bool, QVector<double>& );
 
+   //! \brief Compute a grid point
+   bool calc_grid_point( double, double, const QString&, QVector<double>& );
+
    //! \brief Generate evenly spaced numbers over a specified interval.
    bool gen_grid_points( const QVector<double>&, const QVector<double>&,
-                        double, QVector<GridPoint>& );
+                         const QString&, QVector<GridPoint>& );
+
+   bool parse_z_expression( const QString&, QString&, QString&, QVector<double>&, bool& );
 
    //! \brief Correct the unit of the parameter.
    double correct_unit( double, Attribute::Type, bool );
@@ -575,7 +584,7 @@ private slots:
    void load( void );
 
    //! \brief Slot to switch between the constant and varying Z-values.
-   void set_zval_id( int );
+   void set_zval_type( int );
 
    //! \brief Set a function for Z-values.
    void set_z_function( void );

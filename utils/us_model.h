@@ -47,11 +47,11 @@ class US_UTIL_EXTERN US_Model
             QString  xType;
             QString  yType;
             QString  zType;
+            QString  zVal;
             double   xMin;
             double   xMax;
             double   yMin;
             double   yMax;
-            double   zVal;
             int      xRes;
             int      yRes;
          };
