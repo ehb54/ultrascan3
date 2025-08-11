@@ -14027,19 +14027,36 @@ bool US_Hydrodyn::calc_zeno()
                              QString( us_tr( "For less than %1 beads, we recommend using GRPY\n" ) )
                              .arg( ZENO_GRPY_CORRECTION_BEAD_COUNT_THRESHOLD )
                              );
-                  if ( !use_grpy_msg_displayed && !batch_active() && guiFlag ) {
+                  if ( !use_grpy_msg_displayed && !batch_active() && guiFlag && hydro.zeno_grpy_correction_from_bead_count ) {
                      use_grpy_msg_displayed = true;
-                     QMessageBox::warning(
-                                          this
-                                          ,this->windowTitle() + " Hydrodynamic Calculations ZENO"
-                                          ,QString( us_tr(
-                                                          "For less than %1 beads, we recommend using GRPY.\n"
-                                                          "This bead model contains %2 beads.\n"
-                                                          ) )
-                                          .arg( ZENO_GRPY_CORRECTION_BEAD_COUNT_THRESHOLD )
-                                          .arg( bead_model.size() )
-                                          ,QMessageBox::Ok
-                                          );
+                     switch ( QMessageBox::warning(
+                                                   this
+                                                   ,this->windowTitle() + " Hydrodynamic Calculations ZENO"
+                                                   ,QString( us_tr(
+                                                                   "For less than %1 beads, we recommend using GRPY.\n"
+                                                                   "This bead model contains %2 beads.\n"
+                                                                   ) )
+                                                   .arg( ZENO_GRPY_CORRECTION_BEAD_COUNT_THRESHOLD )
+                                                   .arg( bead_model.size() )
+                                                   ,us_tr( "&Continue" )
+                                                   ,us_tr( "&Quit" )
+                                                   ) ) {
+                     case 0 : // continue
+                        break;
+                        
+                     case 1 : // quit
+                        editor->append("Stopped by user\n\n");
+                        pb_calc_hydro->setEnabled( was_hydro_enabled );
+                        pb_calc_zeno->setEnabled(true);
+                        pb_bead_saxs->setEnabled(true);
+                        pb_calc_grpy->setEnabled(true);
+                        pb_calc_hullrad->setEnabled(true);
+                        pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
+                        pb_show_hydro_results->setEnabled(false);
+                        progress->reset();
+                        mprogress->hide();
+                        return false;
+                     }
                   }
                }
 

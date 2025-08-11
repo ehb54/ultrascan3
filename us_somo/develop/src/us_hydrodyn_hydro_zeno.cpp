@@ -214,7 +214,7 @@ void US_Hydrodyn_Hydro_Zeno::setupGUI()
    // ZENO -> GRPY correction as per Brookes, E. et al., 2025. Eur. Biophy. J., https://doi.org/10.1007/s00249-025-01758-8
    
    cb_zeno_grpy_correction_from_bead_count = new QCheckBox( this );
-   cb_zeno_grpy_correction_from_bead_count->setText( us_tr( "Correct Dt and [" + UNICODE_ETA_QS + "] from sigmoid fit of bead count:") );
+   cb_zeno_grpy_correction_from_bead_count->setText( us_tr( "Correct Dt and [" + UNICODE_ETA_QS + "] from power law fit of bead count:") );
    cb_zeno_grpy_correction_from_bead_count->setEnabled( true );
    cb_zeno_grpy_correction_from_bead_count->setChecked( (*hydro).zeno_grpy_correction_from_bead_count );
    cb_zeno_grpy_correction_from_bead_count->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
