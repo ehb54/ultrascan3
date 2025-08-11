@@ -47,6 +47,7 @@ extensions = [
     'sphinx.ext.autosectionlabel',
     'sphinx_subfigure',
     'sphinxcontrib.video',
+    'sphinxcontrib.youtube',
 ]
 
 # Add any paths that contain templates here, relative to this directory.

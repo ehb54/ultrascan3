@@ -12,34 +12,47 @@ Welcome to UltraScan III's Documentation and Resource!
 .. note::
    For more information on AUC and how to install UltrascanIII visit `Ultrascan III website <https://uslims.uleth.ca>`_    
 
+.. video:: USstatic/videos/gmp-part1.mp4
+   :align: center
+
+.. youtube:: TWYU9kQxz8k
+   :align: center
+
 .. toctree::
    :maxdepth: 1
    :caption: Table of Content:
    
+   start_page
    config
+
    common_dialogs
    run_details
    3d_plot
+
 
 .. toctree::
    :maxdepth: 1
    :caption: Edit Data:
 
-   us_edit
-   fit_meniscus
    import
+   us_edit
+
+   fit_meniscus
+
 
 .. toctree::
    :maxdepth: 1
    :caption: Viewer:  
 
-   vhw_combine
+   us_modelmetrics
+   rmsd_query
+
    pseudo3d
    ddist_combine
-   idist_combine
-   ga_initialize
-   rmsd_query
-   
+   idist_combine 
+
+   vhw_combine
+
 
 .. toctree::
    :maxdepth: 1
@@ -50,6 +63,7 @@ Welcome to UltraScan III's Documentation and Resource!
    vhw_distrib_plot
    second_moment
 
+
 .. toctree::
    :maxdepth: 1
    :caption: Analysis: 
@@ -59,7 +73,9 @@ Welcome to UltraScan III's Documentation and Resource!
 
    fe_match
    fe_match_simulate
+
    ga_initialize
+
 
 .. toctree::
    :maxdepth: 1
