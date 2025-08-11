@@ -26,8 +26,8 @@ const double S_TRSHL   = 1e-15;
 #if !defined( DbgLv )
 #define DbgLv( a ) if( US_Settings::us_debug() >= a ) qDebug()
 #endif
-#define GridInfo US_Model::CustomGridMetadata::GridInfo
-#define CompInfo US_Model::CustomGridMetadata::CompInfo
+using GridInfo = US_Model::CustomGridMetadata::GridInfo;
+using CompInfo = US_Model::CustomGridMetadata::CompInfo;
 
 //! \class Attribute Class
 //! \brief Enumeration for attribute types.
@@ -229,7 +229,6 @@ public:
 
    QString get_parameters( void );
 
-
 private:
    QVector< double > min_dependent;
    QVector< double > max_dependent;
@@ -399,11 +398,12 @@ private:
 
    QCheckBox*       chkb_log;             //!< checkbox for setting x-axis logarithmic.
 
-   QButtonGroup*    bg_point_type;
+   QRadioButton*    rb_cons_z;
+   QRadioButton*    rb_vary_z;
 
+   QButtonGroup*    bg_point_type;
    QButtonGroup*    x_axis;               //!< X-axis button group.
    QButtonGroup*    y_axis;               //!< Y-axis button group.
-   QButtonGroup*    z_cons_vary;          //!< Constant-Varying Z-value button group.
 
    QListWidget*     lw_grids;             //!< list of all grids.
 
@@ -423,7 +423,6 @@ private:
    QList<QVector<int>>       final_subgrids;  //!< subgrid indexes.
 
    US_Disk_DB_Controls*      dkdb_cntrls;     //!< Disk DB controls.
-
 
    //! \brief Clear set region from the data plot.
    void rm_tmp_items( void );
@@ -450,10 +449,10 @@ private:
    bool check_overlap( double, double, double, double, int );
 
    //! \brief Generate evenly spaced numbers over a specified interval.
-   bool gen_points( double, double, int, bool,bool, QVector<double>& );
+   bool spaced_numbers( const GridInfo&, const QString&, int, bool, bool, QVector<double>& );
 
    //! \brief Compute a grid point
-   bool calc_grid_point( double, double, const QString&, QVector<double>& );
+   bool calc_xyz( double, double, const QString&, QVector<double>& );
 
    //! \brief Generate evenly spaced numbers over a specified interval.
    bool gen_grid_points( const QVector<double>&, const QVector<double>&,
@@ -474,7 +473,7 @@ private:
    void clear_xyz( void );
 
    //! \brief Get input values.
-   bool get_xyz( GridInfo&, QString& );
+   bool validate_xyz( GridInfo&, QString& );
 
    //! \brief Check minimum and maximum values.
    bool check_minmax( const QString& );
@@ -572,7 +571,7 @@ private slots:
    void plot_subgrid( double );
 
    //! \brief Slot to plot the selected grid.
-   void highlight( int );
+   void select_partial_grid( int );
 
    //! \brief Slot to update the symbol size.
    void set_symbol_size( double );
