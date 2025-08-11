@@ -10,35 +10,72 @@ Welcome to UltraScan III's Documentation and Resource!
 
     
 .. note::
-   Reality demands compassion. 
-
    For more information on AUC and how to install UltrascanIII visit `Ultrascan III website <https://uslims.uleth.ca>`_    
 
 .. toctree::
    :maxdepth: 1
    :caption: Table of Content:
    
-   advanced_config
-   us_edit
-   fit_meniscus
+   config
+   common_dialogs
+   run_details
+   3d_plot
 
 .. toctree::
-  :maxdepth: 1
-  :caption: Viewer:  
+   :maxdepth: 1
+   :caption: Edit Data:
 
-  vhw_combine
-  pseudo3d_combine
+   us_edit
+   fit_meniscus
+   import
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Viewer:  
+
+   vhw_combine
+   pseudo3d
+   ddist_combine
+   idist_combine
+   ga_initialize
+   rmsd_query
    
 
 .. toctree::
    :maxdepth: 1
-   :caption: Analysis and Diagnostics: 
+   :caption: Diagnostics: 
 
    time_derivative
    vhw_enhanced
    vhw_distrib_plot
    second_moment
 
+.. toctree::
+   :maxdepth: 1
+   :caption: Analysis: 
+
+   2dsa
+   2dsa_simulated
+
+   fe_match
+   fe_match_simulate
+   ga_initialize
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Utilities
+
+   us_investigator
+
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Utilities
+
+   custom_grid
+   combine_models
+ 
+   
 
 
 

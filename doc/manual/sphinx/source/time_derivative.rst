@@ -1,5 +1,5 @@
 ============================================================
-UltraScanIII Time Derivative (dC/dt) Data Analysis
+Time Derivative (dC/dt) Data Analysis
 ============================================================
 
 .. toctree:: 
@@ -23,9 +23,9 @@ Functions
 
 
   * - **Load Experiment** 
-    - Click on this button and, in the resulting `Load Data Dialog <data_loader.html>`_, select an edited data set to load.
+    - Click on this button and, in the resulting `Load Data Dialog <common_dialogs.html>`_, select an edited data set to load.
   * - **Run Details** 
-    - Bring up a dialog with a summary of data and run details.
+    - Bring up a `Details for Raw Data <run_details.html>`_ dialog with a summary of data and run details.
   * - **Latest Data Edit** 
     - Uncheck to allow choosing an edit other than the latest one for the experimental data.
   * - **Database** 

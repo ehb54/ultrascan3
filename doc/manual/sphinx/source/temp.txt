@@ -18,3 +18,18 @@
 	* - Title 
 	  - Title 2
 	
+
+	  * - **(model/Monte Carlo)**
+    -  Select one of the four choices for initial scan partial concentrations: Current Model; MC Mode value; MC Mean value; MC Median value.
+  * - **Sedimentation Coefficient:**
+    -  Sedimentation coefficient for the currently selected model component.
+  * - **Diffusion Coefficient:**
+    -  Diffusion coefficient for the selected component.
+  * - **Molecular Weight (kD):**
+    -  Molecular weight for the selected component. 
+  * - **Frictional Ratio (f/fₒ):**
+    -  Frictional ratio for the selected component.
+  * - **Partial Concentration:**
+    -  Partial concentration value for the selected component.
+  * - **Next Component:**
+    -  Click on this button to advance the component index to the next value, or change the index counter to point to the component for which the above values are to be displayed.

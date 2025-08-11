@@ -24,9 +24,9 @@ Functions
   :header-rows: 0
 
   * - **Load Experiment**
-    - Click on this button and, in the resulting `Load Data Dialog <load_auc.html>`_, select an edited data set to load.
+    - Click on this button and, in the resulting `Load Run Data Dialog <common_dialogs.html>`_, select an edited data set to load.
   * - **Run Details**
-    - Bring up a dialog with a summary of data and run details.		 
+    - Bring up a `Run Details Dialog <run_details.html>`_ with a summary of data and run details.		 
   * - **Latest Data Edit**
     - Uncheck to allow choosing an edit other than the latest one for the experimental data.		
   * - **Database**
@@ -162,4 +162,4 @@ Related
 
 `Finite Element Model Viewer <fe_match/fe_match.html>`_
 
-`2-Dimensional Spectrum Analysis <2dsa/2dsa.html>`_
+`2-Dimensional Spectrum Analysis <2dsa.html>`_
