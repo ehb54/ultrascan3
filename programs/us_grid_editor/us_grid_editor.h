@@ -456,14 +456,13 @@ private:
    bool check_overlap( double, double, double, double, int );
 
    //! \brief Generate evenly spaced numbers over a specified interval.
-   bool spaced_numbers( const GridInfo&, const QString&, int, bool, bool, QVector<double>& );
+   bool spaced_numbers( double, double, int, bool, bool, QVector<double>& );
 
    //! \brief Compute a grid point
    bool calc_xyz( double, double, const QString&, QVector<double>& );
 
    //! \brief Generate evenly spaced numbers over a specified interval.
-   bool gen_grid_points( const QVector<double>&, const QVector<double>&,
-                         const QString&, QVector<GridPoint>& );
+   bool gen_grid_points( const GridInfo&, QVector<GridPoint>& );
 
    bool parse_z_expression( const QString&, QString&, QString&, QVector<double>&, bool& );
 

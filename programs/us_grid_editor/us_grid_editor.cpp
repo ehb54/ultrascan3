@@ -1064,14 +1064,6 @@ void US_Grid_Editor::add_update()
    GridInfo ginfo;
    if ( ! validate_partial_grid( ginfo ) ) return;
 
-   bool isLog = chkb_log->isChecked();
-   bool isMid = bg_point_type->checkedId() == MIDPOINTS;
-   QVector<double> xpoints;
-   QVector<double> ypoints;
-   bool ok = spaced_numbers( ginfo, "x", ginfo.xRes, isLog, isMid, xpoints );
-   ok = ok && spaced_numbers( ginfo, "y", ginfo.yRes, false, isMid, ypoints );
-   if ( ! ok ) return;
-
    if ( check_overlap( ginfo.xMin, ginfo.xMax,
                      ginfo.yMin, ginfo.yMax, excl ) ) {
       QMessageBox::critical( this, "Error!", "Grid Points Overlap!" );
@@ -1079,7 +1071,7 @@ void US_Grid_Editor::add_update()
    }
 
    QVector<GridPoint> gpoints;
-   if ( ! gen_grid_points( xpoints, ypoints, ginfo.zVal, gpoints ) ) {
+   if ( ! gen_grid_points( ginfo, gpoints ) ) {
       return;
    }
 
@@ -1141,19 +1133,15 @@ void US_Grid_Editor::set_mid_exct_points( int id )
 
 void US_Grid_Editor::refill_grid_points()
 {
-   if ( partial_grid_info.isEmpty() ) return;
-   bool isLog = chkb_log->isChecked();
-   bool isMid = bg_point_type->checkedId() == MIDPOINTS;
-   QList<QVector<GridPoint>> new_grid_points;
+   if ( partial_grid_info.isEmpty() ) {
+      return;
+   }
 
+   QList<QVector<GridPoint>> new_grid_points;
    for ( int ii = 0; ii < partial_grid_info.size(); ii++ ) {
       GridInfo ginfo = partial_grid_info.at( ii );
-      QVector<double> xpoints;
-      QVector<double> ypoints;
-      spaced_numbers( ginfo, "x", ginfo.xRes, isLog, isMid, xpoints );
-      spaced_numbers( ginfo, "y", ginfo.yRes, false, isMid, ypoints );
       QVector<GridPoint> gpoints;
-      if ( ! gen_grid_points( xpoints, ypoints, ginfo.zVal, gpoints ) ) {
+      if ( ! gen_grid_points( ginfo, gpoints ) ) {
          return;
       }
       new_grid_points << gpoints;
@@ -1169,22 +1157,9 @@ void US_Grid_Editor::refill_grid_points()
    select_partial_grid( lw_grids->currentRow() );
 }
 
-bool US_Grid_Editor::spaced_numbers( const GridInfo& ginfo, const QString& type, int np,
+bool US_Grid_Editor::spaced_numbers( double x1, double x2, int np,
                            bool isLog, bool isMid, QVector<double>& result )
 {
-   double x1, x2;
-   if ( type == "x" ) {
-      x1 = ginfo.xMin;
-      x2 = ginfo.xMax;
-      // x1 = correct_unit( x1, x_param, true );
-      // x2 = correct_unit( x2, x_param, true );
-   }
-   else {
-      x1 = ginfo.yMin;
-      x2 = ginfo.yMax;
-      // x1 = correct_unit( x1, y_param, true );
-      // x2 = correct_unit( x2, y_param, true );
-   }
    if ( x2 <= x1 ) return false;
    if ( isLog && ( x1 * x2 < 0 ) ) return false;
    result.resize( np );
@@ -1288,9 +1263,18 @@ bool US_Grid_Editor::calc_xyz( double xx, double yy , const QString &z_expr,
    return true;
 }
 
-bool US_Grid_Editor::gen_grid_points( const QVector<double>& x_vec, const QVector<double>& y_vec,
-                                      const QString& zExpr, QVector<GridPoint>& gpoints )
+bool US_Grid_Editor::gen_grid_points( const GridInfo& ginfo, QVector<GridPoint>& gpoints )
 {
+   bool isLog = chkb_log->isChecked();
+   bool isMid = bg_point_type->checkedId() == MIDPOINTS;
+   QVector<double> xpoints;
+   QVector<double> ypoints;
+   bool ok =  spaced_numbers( ginfo.xMin, ginfo.xMax, ginfo.xRes, isLog, isMid, xpoints );
+   ok = ok && spaced_numbers( ginfo.yMin, ginfo.yMax, ginfo.yRes, false, isMid, ypoints );
+   if ( ! ok ) {
+      return false;
+   }
+
    QVector<Attribute::Type> types;
    types << x_param << y_param << z_param;
    gpoints.clear();
@@ -1300,18 +1284,20 @@ bool US_Grid_Editor::gen_grid_points( const QVector<double>& x_vec, const QVecto
    QString xs = Attribute::symbol( x_param );
    QString ys = Attribute::symbol( y_param );
    QString zs = Attribute::symbol( z_param );
-   for ( int ii = 0; ii < x_vec.size(); ii++ ) {
-      for ( int jj = 0; jj < y_vec.size(); jj++ ) {
+   for ( int ii = 0; ii < ypoints.size(); ii++ ) {
+      int row = ii % ginfo.yRes;
+      for ( int jj = 0; jj < xpoints.size(); jj++ ) {
+         int col = jj % ginfo.xRes;
          QVector<double> vals;
-         double xx = x_vec.at( ii );
-         double yy = y_vec.at( jj );
-         if ( ! calc_xyz( xx, yy, zExpr, vals ) ) {
+         double xx = xpoints.at( jj );
+         double yy = ypoints.at( ii );
+         if ( ! calc_xyz( xx, yy, ginfo.zVal, vals ) ) {
             return false;
          }
          GridPoint gp;
          gp.set_dens_visc_temp( buff_dens, buff_visc, buff_temp );
          if ( gp.set_param( vals, types ) ) {
-            gp.set_row_col( jj, ii );
+            gp.set_row_col( row, col );
             gpoints << gp;
          } else {
             double x = vals.at( 0 );
@@ -1607,14 +1593,15 @@ void US_Grid_Editor::sort_points()
 
 void US_Grid_Editor::sort_partial_grid_points( QVector<GridPoint> &vec )
 {
-   std::sort( vec.begin(), vec.end(),
-             []( const GridPoint &g1, const GridPoint &g2 ) {
-                if ( g1.get_row() != g2.get_row() ) {
-                   return g1.get_row() < g2.get_row();
-                }
-                else {
-                   return g1.get_col() < g2.get_col();}
-             } );
+   std::stable_sort( vec.begin(), vec.end(),
+                    []( const GridPoint &g1, const GridPoint &g2 ) {
+                       if ( g1.get_row() != g2.get_row() ) {
+                          return g1.get_row() < g2.get_row();
+                       }
+                       else {
+                          return g1.get_col() < g2.get_col();
+                       }
+                    });
 }
 
 void US_Grid_Editor::check_dens_visc_temp()
