@@ -10,13 +10,27 @@ Welcome to UltraScan III's Documentation and Resource!
 
     
 .. note::
-   For more information on AUC and how to install UltrascanIII visit `Ultrascan III website <https://uslims.uleth.ca>`_    
+
+   For more information on AUC and how to install UltrascanIII visit `Ultrascan III website <https://uslims.uleth.ca>`_.
+   
+
+.. youtube:: TWYU9kQxz8k
+   :align: center
+
+.. rst-class::
+    :align: center
+
+    **Jet Boating on the Waimakariri**
+
 
 .. video:: USstatic/videos/gmp-part1.mp4
    :align: center
 
-.. youtube:: TWYU9kQxz8k
-   :align: center
+.. rst-class::
+    :align: center
+
+    **Stage 1: How to program an SOP for GMP analysis with UltraScan**
+
 
 .. toctree::
    :maxdepth: 1

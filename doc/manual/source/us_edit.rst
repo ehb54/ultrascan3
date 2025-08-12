@@ -17,7 +17,6 @@ All experimental data acquired with the analytical ultracentrifuge must be proce
 .. image:: _static/images/us_edit.png
   :align: center
 
-.. index:: test entry
 
 Functions
 ====================
@@ -36,9 +35,9 @@ Functions
   * - **Local Disk** 
     - Check to specify data input from local disk. 
   * - **Load Data** 
-    - Click here and, in the resulting  `Load Data Dialog <load_auc.html>`_, select raw data set(s) to load for editing. 
+    - Click here and, in the resulting  `Load Data Dialog <common_dialogs.html>`_, select raw data set(s) to load for editing. 
   * - **Run Details**
-    - This button brings up a child window that describes additional information associated with the data. The data description may be updated in this window. 
+    - This button brings up a child window `Details for Raw Data <run_details.html>`_ to  that describes additional information associated with the data. The data description may be updated in this window. 
   * - **Cell / Channel / Wavelength** 
     - Select the triple for which to perform editing. 
   * - **Threshold for Scan Gaps** 
@@ -123,7 +122,7 @@ Editing Steps
     
     When zoomed, the graph may be panned by pressing the center mouse button (usually the scroll wheel) and dragging.
 
-*   **Step 1:** Load data from the database or a local data directory that contains the UltraScanIII data files previously converted from the Beckman raw data. Load choices are made in a `Load Data Dialog <load_auc.html>`_.
+*   **Step 1:** Load data from the database or a local data directory that contains the UltraScanIII data files previously converted from the Beckman raw data. Load choices are made in a `Load Data Dialog <common_dialogs.html>`_.
 
 *    **Step 2:** Select the Cell / Channel / Wavelength triple to be edited.
 

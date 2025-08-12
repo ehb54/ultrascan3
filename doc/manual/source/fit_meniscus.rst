@@ -22,7 +22,7 @@ Functions
   :header-rows: 0
 
   * - **(Meniscus-RMSD points)**
-    - The main left-side text box displays a list of meniscus-RMSD values from a selected fit output by 2DSA. The fit to display is chosen by a *File->Load* selection in a `FitMen Load Dialog <fit_men-load.img.html>`_ that allows navigation to a ./results/runID directory and choice of a fitmen.dat file.
+    - The main left-side text box displays a list of meniscus-RMSD values from a selected fit output by 2DSA. The fit to display is chosen by a *File->Load* selection in a FitMen Load Dialog  that allows navigation to a ./results/runID directory and choice of a fitmen.dat file.
   * - **(right side plot)**
     - This plot shows a yellow curve connecting all fitmen radius-RMSD points; a red fitted polynomial curve; and a vertical bar with annotation delineating the meniscus value at the low point of the polynomial curve.
   * - **Status:**
@@ -38,7 +38,7 @@ Functions
   * - **Local Disk**
     - Select to limit any model and noise removal and any menicus value Edited data update to local disk.
   * - **Update Edit**
-    - Click this button to update the associated Edited data with the currently selected meniscus value. After that update, a **Edited File Update Dialog** appears that also allows models and noises with meniscus values not the closest to the selected one to be removed.              
+    - Click this button to update the associated Edited data with the currently selected meniscus value. After that update, a :ref:`Edited File Update Dialog <edited_file>` appears that also allows models and noises with meniscus values not the closest to the selected one to be removed.              
   * - **Scan Database**
     - Click this button to scan the database for any "fitmen" data sets that do not already have an associated local disk file. Any such files will be downloaded and their presence reported in the Status text box.
   * - **Plot**
@@ -46,13 +46,14 @@ Functions
 
 |
 
+.. _edited_file:
 
 .. image:: _static/images/fit_men-editupd.png
     :align: center
 
 .. rst-class:: center
 
-    Edited File Update Dialog
+    **Edited File Update Dialog**
 
 
 **Window Controls**

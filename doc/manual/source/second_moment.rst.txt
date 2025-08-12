@@ -14,7 +14,7 @@ The second moment analysis will calculate weight-average sedimentation coefficie
 .. note::
     It is important to keep in mind that the second moment analysis is only valid for scans that have cleared the meniscus and still have a stable plateau. All other scans should be excluded from the analysis. 
 
-.. image:: USstatic/images/second_moment.png
+.. image:: _static/images/second_moment.png
     :align: center
 
 Functions

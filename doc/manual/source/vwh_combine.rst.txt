@@ -13,7 +13,7 @@ van Holde - Weischet Combined Plots
 
 When data are loaded, arrays of X,Y distribution and envelope values are read and saved. These are then used to quickly display plots. If you want to change the mix of data plotted, you may click the Reset Plot button; and then quickly make new selections that are plotted without need for recalculations.
 
-.. image:: USstatic/images/vhw_combine.png
+.. image:: _static/images/vhw_combine.png
   :align: center
 
 Functions

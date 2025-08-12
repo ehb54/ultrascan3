@@ -11,7 +11,7 @@ Pseudo-3D Combine
 
 Solution distribution data can be displayed in pseudo-3-dimensional form where the Z axis is simulated using colors in a color map. Data from different cells can be combined. 
 
-  .. image:: USstatic/images/pseudo3d_combine.png
+  .. image:: _static/images/pseudo3d_combine.png
 
 
 Functions
@@ -69,7 +69,7 @@ Functions
   * - **Local Disk**
     - Select to specify data input from local disk.
   * - **Select PreFilter(s)**
-    - .. image:: USstatic/images/select_runs.png
+    - .. image:: _static/images/select_runs.png
   * - **Select Run(s) as Models Pre-Filter** dialog to select Run IDs. 
     - This can significantly reduce model loading time, particularly with large model counts in the database. The text box to the right of this button will display a summary of runs selected as pre-filters.
   * - **Load Color File**
@@ -81,7 +81,7 @@ Functions
 
 .. _model_loader:
 
-.. image:: USstatic/images/load_model_distrib.png
+.. image:: _static/images/load_model_distrib.png
     :align: center
 
 **Window Controls**
@@ -103,7 +103,7 @@ Remove Model Distributions
 
 The dialog is presented when **Remove Distribution(s)** is clicked. The dialog shows a list of loaded models, by selecting items in this list and clicking on a Remove button, you can remove models from the original distribution list. After all the desired removals have been performed, an Accept button passes the reduced model data to the caller. 
 
-  .. image:: USstatic/images/pseudo3d_comb_rmv.png
+  .. image:: _static/images/pseudo3d_comb_rmv.png
     :align: center
 
 
