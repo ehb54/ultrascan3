@@ -995,7 +995,7 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    }
 #endif
 
-#warning - perhaps add select_atom_file() to input selections
+   // #warning - perhaps add select_atom_file() to input selections
 
    select_atom_file( US_Config::get_home_dir() + "etc/somo.atom" );
    clear_temp_dirs();

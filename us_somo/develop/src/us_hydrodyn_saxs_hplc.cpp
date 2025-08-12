@@ -2880,7 +2880,7 @@ void US_Hydrodyn_Saxs_Hplc::set_conc_file( QString file )
       curve->attach( plot_ref );
       plot_dist->setAxisScale( QwtPlot::xBottom, f_qs[ lbl_conc_file->text() ][ 0 ], f_qs[ lbl_conc_file->text() ].back() );
       
-#warning something is odd here, why plot_ref below & plot_dist setaxisscale?, and the below section causes 100% cpu
+      // #warning something is odd here, why plot_ref below & plot_dist setaxisscale?, and the below section causes 100% cpu
       /*
         if ( !suppress_replot )
         {
@@ -6010,7 +6010,7 @@ void US_Hydrodyn_Saxs_Hplc::regex_load()
 
 void US_Hydrodyn_Saxs_Hplc::rename_from_context( const QPoint & pos ) {
 #if defined(Q_OS_MACOS )
-# warning rename disabled for OSX, bug with calling QInputDialog in slot
+   #warning rename disabled for OSX, bug with calling QInputDialog in slot
    return;
 #endif
    QListWidgetItem * lwi = lb_created_files->itemAt( pos );

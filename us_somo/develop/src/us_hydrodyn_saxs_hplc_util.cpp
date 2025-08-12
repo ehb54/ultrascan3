@@ -1177,7 +1177,7 @@ void US_Hydrodyn_Saxs_Hplc::repeak( QStringList files, bool quiet, QString use_c
 
       if ( any_without_errors ) {
          if ( quiet ) {
-#warning is this the correct choice for autorunning
+            // #warning is this the correct choice for autorunning ?
             match_sd = true;
          } else {
             switch ( QMessageBox::question(this, 

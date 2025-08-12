@@ -4844,7 +4844,7 @@ void US_Hydrodyn_Dad::create_i_of_t( QStringList files )
    us_timers.start_timer      ( "check_discard_it_sd_mult" );
 #endif
 
-#warning it sd check disabled for DAD
+   // #warning it sd check disabled for DAD
    // check_discard_it_sd_mult( created_files );
 
 #ifdef USHC_TIMERS
@@ -4852,7 +4852,7 @@ void US_Hydrodyn_Dad::create_i_of_t( QStringList files )
    us_timers.start_timer      ( "check_zi_window" );
 #endif
 
-#warning zi check disabled for DAD
+   // #warning zi check disabled for DAD
    // (void) check_zi_window( created_files );
 
 #ifdef USHC_TIMERS

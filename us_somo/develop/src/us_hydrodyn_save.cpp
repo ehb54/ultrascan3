@@ -823,7 +823,7 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
       // vector < QString > data = ((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode ? expert_mode_data : non_expert_mode_data;
       // always use expert mode ... if expert_mode fields are selected and run in non expert mode, causes issues.
       // perhaps rethink thin
-#warning expert mode forced to avoid field switch issues
+      // #warning expert mode forced to avoid field switch issues
       vector < QString > data = expert_mode_data;
       
       field.clear( );

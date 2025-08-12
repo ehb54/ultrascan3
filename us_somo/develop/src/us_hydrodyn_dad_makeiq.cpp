@@ -3710,8 +3710,8 @@ bool US_Hydrodyn_Dad::create_istar_q_ng( QStringList files, double t_min, double
          f_conc_units[ name ] = "mg/mL";
 
          if ( !conc_ok ) { // no uv curve
-#warning what about loaded curve data?
-#warning check if dad_param_g_extinction_coef even used?
+            // #warning what about loaded curve data?
+            // #warning check if dad_param_g_extinction_coef even used?
             if ( f_extc.count( name ) ) {
                f_extc.erase( name );
             }

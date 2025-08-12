@@ -1214,7 +1214,7 @@ int US_Hydrodyn::pdb_asa_for_saxs_hydrate()
                if(bead_mc_asa.size() < this_atom->resSeq + 1) {
                   bead_mc_asa.resize(this_atom->resSeq + 32);
                }
-#warning broken by resSeq->QString
+               // #warning broken by resSeq->QString
                bead_mc_asa[this_atom->resSeq] += this_atom->asa;
             }
          }

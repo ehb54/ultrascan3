@@ -1517,7 +1517,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    SET_WIDTH_FROM_TEXT_LEN( pb_pr_to_iq );
    pb_pr_to_iq->setPalette( PALET_PUSHB );
    connect(pb_pr_to_iq, SIGNAL(clicked()), SLOT(pr_to_iq()));
-#warning restore when back to pr->iq testing
+   // #warning restore when back to pr->iq testing
    // pr_widgets.push_back( pb_pr_to_iq );
    pb_pr_to_iq->hide();
 
@@ -1568,7 +1568,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    pb_pr_info->setPalette( PALET_PUSHB );
    connect(pb_pr_info, SIGNAL(clicked()), SLOT(pr_info()));
    // pr_widgets.push_back( pb_pr_info );
-#warning restore info when back to vdw tests
+   // #warning restore info when back to vdw tests
    pb_pr_info->hide();
 
    pb_pr_info2 = new QPushButton(us_tr( "info2" ), this);
@@ -1578,7 +1578,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    pb_pr_info2->setPalette( PALET_PUSHB );
    connect(pb_pr_info2, SIGNAL(clicked()), SLOT(pr_info2()));
    // pr_widgets.push_back( pb_pr_info2 );
-#warning restore info2 when back to vdw tests
+   // #warning restore info2 when back to vdw tests
    pb_pr_info2->hide();
 
    cb_pr_eb = new QCheckBox(this);
@@ -2831,13 +2831,13 @@ void US_Hydrodyn_Saxs::show_plot_pr()
 
    QString use_name  = QFileInfo(model_filename).fileName();
    map < double, double > pr_exact;
-#warning set pr_exact to true to resurrect pr->iq
+   // #warning set pr_exact to true to resurrect pr->iq
    bool do_pr_exact = false;
    bool do_make_iq = false;
 
    for ( unsigned int i = 0; i < selected_models.size(); i++ )
    {
-#warning pr_to_iq off except for bead model source
+      // #warning pr_to_iq off except for bead model source
       current_model = selected_models[i];
 #if defined(PR_DEBUG)
       printf("creating pr %u\n", current_model); fflush(stdout);
@@ -3229,8 +3229,8 @@ void US_Hydrodyn_Saxs::show_plot_pr()
       double ow_cutoff           = 0;
       int ow_wats_kept           = 0;
 
-#warning REMOVE BEFORE DIST (WAT controls)
-      {
+      // #warning REMOVE BEFORE DIST (WAT controls)
+      if ( 0 ) {
          for ( unsigned int i = 0; i < atoms.size(); ++i ) {
             if ( atoms[i].atom_name == "OW" ) {
                ++ow_wat_count;
@@ -3522,6 +3522,7 @@ void US_Hydrodyn_Saxs::show_plot_pr()
             }
          }
       }
+      // commented out to here ^^^
 
       // restore threading later
       if ( 0 && USglobal->config_list.numThreads > 1 )
@@ -3856,19 +3857,19 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                   }
                }
             }
-#warning REMOVE BEFORE DIST
-            editor_msg( "darkblue",
-                        QString(
-                                "Computed cross-terms %1\n"
-                                "total scatter count  %2\n"
-                                "total non-OW  count  %3\n"
-                                "OW count             %4\n"
-                                )
-                        .arg( total_terms )
-                        .arg( atoms.size() )
-                        .arg( (int) atoms.size() - ow_wat_count_remaining )
-                        .arg( ow_wat_count_remaining )
-                        );
+            // #warning REMOVE BEFORE DIST
+            // editor_msg( "darkblue",
+            //             QString(
+            //                     "Computed cross-terms %1\n"
+            //                     "total scatter count  %2\n"
+            //                     "total non-OW  count  %3\n"
+            //                     "OW count             %4\n"
+            //                     )
+            //             .arg( total_terms )
+            //             .arg( atoms.size() )
+            //             .arg( (int) atoms.size() - ow_wat_count_remaining )
+            //             .arg( ow_wat_count_remaining )
+            //             );
          }
       } // end non-threaded
          

@@ -115,7 +115,7 @@ void US_Hydrodyn_Cluster_Advanced::setupGUI()
            ( csv1.data[ i ][ 1 ].isEmpty() &&
              csv1.data[ i ][ 2 ].isEmpty() ) )
       {
-#warning crash here, tried i,j but that also crashed, needs more debugging
+         // #warning crash here, tried i,j but that also crashed, needs more debugging
          { for ( int i = 0; i < t_csv->columnCount(); ++i ) { t_csv->item( i, i )->setFlags( t_csv->item( i, i )->flags() ^ Qt::ItemIsEditable ); } };
       }
    }

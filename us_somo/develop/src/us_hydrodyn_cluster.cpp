@@ -410,7 +410,7 @@ void US_Hydrodyn_Cluster::setupGUI()
    pb_advanced->setMinimumHeight(minHeight1);
    pb_advanced->setPalette( PALET_PUSHB );
    connect(pb_advanced, SIGNAL(clicked()), SLOT(advanced()));
-#warning us_hydrodyn_cluster_advanced currently crashes in setupGUI when initializing t_csv->item( i, i )
+   // #warning us_hydrodyn_cluster_advanced currently crashes in setupGUI when initializing t_csv->item( i, i )
    pb_advanced->setEnabled( false );
 
    pb_submit_pkg = new QPushButton(us_tr("Submit jobs for processing"), this);
@@ -4675,7 +4675,7 @@ bool US_Hydrodyn_Cluster::additional_processing(
                      editor_msg( "darkblue", QString( us_tr( "Bead model %1 mw %2" ) ).arg(file).arg(mw) );
                   }
                   // PAT
-                  # warning might need PAT
+                  // #warning might need PAT
                   /*
                   if ( !US_Saxs_Util::pat_model( ((US_Hydrodyn *)us_hydrodyn)->bead_models[ 0 ] ) )
                   {

@@ -3673,8 +3673,8 @@ bool US_Hydrodyn_Mals_Saxs::create_istar_q_ng( QStringList files, double t_min, 
          f_conc_units[ name ] = "mg/mL";
 
          if ( !conc_ok ) { // no uv curve
-#warning what about loaded curve data?
-#warning check if mals_saxs_param_g_extinction_coef even used?
+            // #warning what about loaded curve data?
+            // #warning check if mals_saxs_param_g_extinction_coef even used?
             if ( f_extc.count( name ) ) {
                f_extc.erase( name );
             }

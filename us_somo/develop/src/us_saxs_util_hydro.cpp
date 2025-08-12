@@ -9545,7 +9545,7 @@ int US_Saxs_Util::compute_asa( bool bd_mode, bool no_ovlp_removal, bool paramete
                if(bead_mc_asa_hydro.size() < this_atom->resSeq + 1) {
                   bead_mc_asa_hydro.resize(this_atom->resSeq + 32);
                }
-#warning broken by resSeq->QString
+               // #warning broken by resSeq->QString
                bead_mc_asa[this_atom->resSeq] += this_atom->asa;
             }
          }
