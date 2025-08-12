@@ -513,8 +513,8 @@ void US_Grid_Editor::reset()
 {
    lw_grids->disconnect();
    lw_grids->clear();
-   grid_points.clear();
-   grid_info.clear();
+   partial_grids.clear();
+   partial_grid_info.clear();
    sorted_points.clear();
    final_subgrids.clear();
 
@@ -587,7 +587,7 @@ void US_Grid_Editor::plot_tmp()
    bool   xMax_set = validate_double( le_x_max->text(), x2 );
    bool   yMin_set = validate_double( le_y_min->text(), y1 );
    bool   yMax_set = validate_double( le_y_max->text(), y2 );
-   bool   grid_set = ! grid_points.isEmpty();
+   bool   grid_set = ! partial_grids.isEmpty();
    double px1 = data_plot->axisScaleDiv( QwtPlot::xBottom ).lowerBound();
    double px2 = data_plot->axisScaleDiv( QwtPlot::xBottom ).upperBound();
    double py1 = data_plot->axisScaleDiv( QwtPlot::yLeft ).lowerBound();
@@ -601,13 +601,13 @@ void US_Grid_Editor::plot_tmp()
 
    if ( grid_set )
    {
-      GridInfo ginfo = grid_info.first();
+      GridInfo ginfo = partial_grid_info.first();
       px1 = correct_unit( ginfo.xMin, Attribute::from_symbol( ginfo.xType ), true );
       px2 = correct_unit( ginfo.xMax, Attribute::from_symbol( ginfo.xType ), true );
       py1 = correct_unit( ginfo.yMin, Attribute::from_symbol( ginfo.yType ), true );
       py2 = correct_unit( ginfo.yMax, Attribute::from_symbol( ginfo.yType ), true );
-      for ( int ii = 0; ii < grid_info.size(); ii++ ) {
-         GridInfo ginfo = grid_info.at( ii );
+      for ( int ii = 0; ii < partial_grid_info.size(); ii++ ) {
+         GridInfo ginfo = partial_grid_info.at( ii );
          px1 = qMin( px1, correct_unit( ginfo.xMin, Attribute::from_symbol( ginfo.xType ), true ) );
          px2 = qMax( px2, correct_unit( ginfo.xMax, Attribute::from_symbol( ginfo.xType ), true ) );
          py1 = qMin( py1, correct_unit( ginfo.yMin, Attribute::from_symbol( ginfo.yType ), true ) );
@@ -719,7 +719,7 @@ void US_Grid_Editor::plot_points()
    data_plot->setAxisScale( QwtPlot::yLeft  , 1, 10 );
    data_plot->replot();
 
-   if ( grid_points.isEmpty() ) {
+   if ( partial_grids.isEmpty() ) {
       pb_save->setDisabled( true );
       return;
    }
@@ -730,8 +730,8 @@ void US_Grid_Editor::plot_points()
    double py1 =  1e99;
    double py2 = -1e99;
    int ss = ct_size->value();
-   for ( int nn = 0; nn < grid_points.size(); nn++ ) {
-      QVector<GridPoint> gps = grid_points.at( nn );
+   for ( int nn = 0; nn < partial_grids.size(); nn++ ) {
+      QVector<GridPoint> gps = partial_grids.at( nn );
       QVector<double> xarr;
       QVector<double> yarr;
       for ( int ii = 0; ii < gps.size(); ii++ ) {
@@ -884,7 +884,7 @@ void US_Grid_Editor::select_partial_grid( int id )
       QwtSymbol *symbol = new QwtSymbol( QwtSymbol::Ellipse, QBrush( color_highlight ), pen, size );
       point_curves[id]->setSymbol( symbol );
 
-      GridInfo ginfo = grid_info.at( id );
+      GridInfo ginfo = partial_grid_info.at( id );
 
       double x_min = correct_unit( ginfo.xMin, Attribute::from_symbol( ginfo.xType ), true );
       double x_max = correct_unit( ginfo.xMax, Attribute::from_symbol( ginfo.xType ), true );
@@ -1038,8 +1038,8 @@ void US_Grid_Editor::delete_grid_clicked()
 
    rm_point_curves();
 
-   grid_points.removeAt( row );
-   grid_info.removeAt( row );
+   partial_grids.removeAt( row );
+   partial_grid_info.removeAt( row );
    check_grid_id();
    fill_list();
    sort_points();
@@ -1084,11 +1084,11 @@ void US_Grid_Editor::add_update()
    }
 
    if ( excl == -1 ) {
-      grid_points << gpoints;
-      grid_info << ginfo;
+      partial_grids << gpoints;
+      partial_grid_info << ginfo;
    } else {
-      grid_points.replace( excl, gpoints );
-      grid_info.replace( excl, ginfo );
+      partial_grids.replace( excl, gpoints );
+      partial_grid_info.replace( excl, ginfo );
    }
    check_grid_id();
    fill_list();
@@ -1100,18 +1100,18 @@ void US_Grid_Editor::add_update()
 
 void US_Grid_Editor::set_mid_exct_points( int id )
 {
-   if ( grid_info.isEmpty() ) return;
+   if ( partial_grid_info.isEmpty() ) return;
    if ( id == EXACTPOINTS ) 
    {
-      GridInfo ginfo = grid_info.first();
+      GridInfo ginfo = partial_grid_info.first();
       double xMin = ginfo.xMin;
       double xMax = ginfo.xMax;
       double yMin = ginfo.yMin;
       double yMax = ginfo.yMax;
       bool overlap = false;
-      for (int ii = 1; ii < grid_info.size(); ii++)
+      for (int ii = 1; ii < partial_grid_info.size(); ii++)
       {
-         GridInfo ginfo = grid_info.at(ii);
+         GridInfo ginfo = partial_grid_info.at(ii);
          double x1 = ginfo.xMin;
          double x2 = ginfo.xMax;
          double y1 = ginfo.yMin;
@@ -1141,13 +1141,13 @@ void US_Grid_Editor::set_mid_exct_points( int id )
 
 void US_Grid_Editor::refill_grid_points()
 {
-   if ( grid_info.isEmpty() ) return;
+   if ( partial_grid_info.isEmpty() ) return;
    bool isLog = chkb_log->isChecked();
    bool isMid = bg_point_type->checkedId() == MIDPOINTS;
    QList<QVector<GridPoint>> new_grid_points;
 
-   for ( int ii = 0; ii < grid_info.size(); ii++ ) {
-      GridInfo ginfo = grid_info.at( ii );
+   for ( int ii = 0; ii < partial_grid_info.size(); ii++ ) {
+      GridInfo ginfo = partial_grid_info.at( ii );
       QVector<double> xpoints;
       QVector<double> ypoints;
       spaced_numbers( ginfo, "x", ginfo.xRes, isLog, isMid, xpoints );
@@ -1159,8 +1159,8 @@ void US_Grid_Editor::refill_grid_points()
       new_grid_points << gpoints;
    }
 
-   grid_points.clear();
-   grid_points << new_grid_points;
+   partial_grids.clear();
+   partial_grids << new_grid_points;
    check_grid_id();
    fill_list();
    sort_points();
@@ -1369,9 +1369,9 @@ bool US_Grid_Editor::check_overlap( double xMin, double xMax,
                                     double yMin, double yMax, int excl )
 {
    bool isMid = bg_point_type->checkedId() == MIDPOINTS;
-   for ( int ii= 0; ii < grid_info.size(); ii++ ) {
+   for ( int ii= 0; ii < partial_grid_info.size(); ii++ ) {
       if ( ii == excl ) continue;
-      GridInfo ginfo = grid_info.at( ii );
+      GridInfo ginfo = partial_grid_info.at( ii );
       double x1 = ginfo.xMin;
       double x2 = ginfo.xMax;
       double y1 = ginfo.yMin;
@@ -1530,11 +1530,11 @@ void US_Grid_Editor::fill_list()
 
    int row = lw_grids->currentRow();
    lw_grids->clear();
-   int n_grids = grid_points.size();
+   int n_grids = partial_grids.size();
    QString title = "%1 ) %2 = %3 to %4 ; %5 = %6 to %7 ; %8 = %9";
 
    for ( int ii = 0; ii < n_grids; ii++ ) {
-      GridInfo ginfo = grid_info.at( ii );
+      GridInfo ginfo = partial_grid_info.at( ii );
       double x1 = correct_unit( ginfo.xMin, Attribute::from_symbol( ginfo.xType ), true );
       double x2 = correct_unit( ginfo.xMax, Attribute::from_symbol( ginfo.xType ), true );
       double y1 = correct_unit( ginfo.yMin, Attribute::from_symbol( ginfo.yType ), true );
@@ -1567,27 +1567,54 @@ void US_Grid_Editor::fill_list()
 void US_Grid_Editor::sort_points()
 {
    sorted_points.clear();
-   for ( int ii = 0; ii < grid_points.size(); ii++ ) {
-      sorted_points << grid_points.at( ii );
+   QVector< QMap< QString, QVariant > > data;
+   int max_rows = -1;
+   for ( int ii = 0; ii < partial_grid_info.size(); ii++ ) {
+      GridInfo ginfo = partial_grid_info.at( ii );
+      max_rows = qMax( max_rows, ginfo.yRes );
+      QMap< QString, QVariant > info;
+      info.insert( "x_min" , ginfo.xMin );
+      info.insert( "y_min" , ginfo.yMin );
+      info.insert( "n_cols", ginfo.xRes );
+      info.insert( "p_grid_id", ii );
+      info.insert( "grid_id"  , 0 );
+      data << info;
    }
-   sort_col_val( sorted_points );
-   sort_row_idx( sorted_points );
+   std::stable_sort( data.begin(), data.end(),
+                    []( const QMap< QString, QVariant >& a, const QMap< QString, QVariant >& b){
+                       return a.value( "x_min" ).toDouble() < b.value( "x_min" ).toDouble();
+                    });
+   std::stable_sort( data.begin(), data.end(),
+                    []( const QMap< QString, QVariant >& a, const QMap< QString, QVariant >& b){
+                       return a.value( "y_min" ).toDouble() < b.value( "y_min" ).toDouble();
+                    });
+   for ( int row = 0; row < max_rows; row++ ) {
+      for ( int dd = 0; dd < data.size(); dd++ ) {
+         int ii = data.at( dd ).value( "p_grid_id" ).toInt();
+         int aa = data.at( dd ).value( "grid_id" ).toInt();
+         int bb = aa + data.at( dd ).value( "n_cols" ).toInt();
+         int sz = partial_grids.at( ii ).size();
+         data[ dd ][ "grid_id" ] = bb;
+         for ( int jj = aa; jj < bb; jj++ ) {
+            if ( jj >= sz ) {
+               break;
+            }
+            sorted_points << partial_grids.at( ii ).at( jj );
+         }
+      }
+   }
 }
 
-void US_Grid_Editor::sort_col_val( QVector<GridPoint> &vec )
+void US_Grid_Editor::sort_partial_grid_points( QVector<GridPoint> &vec )
 {
-   std::stable_sort( vec.begin(), vec.end(),
-                    []( const GridPoint &g1, const GridPoint &g2 ) {
-                       return g1.x_value() < g2.x_value();
-                    } );
-}
-
-void US_Grid_Editor::sort_row_idx( QVector<GridPoint> &vec )
-{
-   std::stable_sort( vec.begin(), vec.end(),
-                    []( const GridPoint &g1, const GridPoint &g2 ) {
-                       return g1.get_row() < g2.get_row();
-                    } );
+   std::sort( vec.begin(), vec.end(),
+             []( const GridPoint &g1, const GridPoint &g2 ) {
+                if ( g1.get_row() != g2.get_row() ) {
+                   return g1.get_row() < g2.get_row();
+                }
+                else {
+                   return g1.get_col() < g2.get_col();}
+             } );
 }
 
 void US_Grid_Editor::check_dens_visc_temp()
@@ -1638,9 +1665,15 @@ void US_Grid_Editor::new_dens_visc_temp()
 
 void US_Grid_Editor::check_grid_id()
 {
-   for ( int ii = 0; ii < grid_points.size(); ii++ ) {
-      for ( int jj = 0; jj < grid_points.at( ii ).size(); jj++ ) {
-         grid_points[ ii ][ jj ].set_id( ii );
+   for ( int ii = 0; ii < partial_grids.size(); ii++ ) {
+      double xMin = partial_grid_info.at( ii ).xMin;
+      double xMax = partial_grid_info.at( ii ).xMax;
+      double yMin = partial_grid_info.at( ii ).yMin;
+      double yMax = partial_grid_info.at( ii ).yMax;
+      QPair< double, double > xrng( xMin, xMax );
+      QPair< double, double > yrng( yMin, yMax );
+      for ( int jj = 0; jj < partial_grids.at( ii ).size(); jj++ ) {
+         partial_grids[ ii ][ jj ].set_id_range( ii, xrng, yrng );
       }
    }
 }
@@ -1768,9 +1801,9 @@ void US_Grid_Editor::set_buffer()
 
    check_dens_visc_temp();
 
-   for ( int ii = 0; ii < grid_points.size(); ii++ ) {
-      for ( int jj = 0; jj < grid_points.at( ii ).size(); jj++ ) {
-         grid_points[ii][jj].set_dens_visc_temp( buff_dens, buff_visc, buff_temp );
+   for ( int ii = 0; ii < partial_grids.size(); ii++ ) {
+      for ( int jj = 0; jj < partial_grids.at( ii ).size(); jj++ ) {
+         partial_grids[ii][jj].set_dens_visc_temp( buff_dens, buff_visc, buff_temp );
       }
    }
 
@@ -1804,7 +1837,7 @@ void US_Grid_Editor::update_disk_db( bool isDB )
 
 void US_Grid_Editor::setup_grid()
 {
-   if ( ! grid_points.isEmpty() ) {
+   if ( ! partial_grids.isEmpty() ) {
       int yes = QMessageBox::question( this, "Warning!",
                                       tr( "Partial grid list is not empty and by changing the grid setting, it "
                                           "will be deleted.<br/>"
@@ -1833,8 +1866,8 @@ void US_Grid_Editor::setup_grid()
 
    lw_grids->disconnect();
    lw_grids->clear();
-   grid_points.clear();
-   grid_info.clear();
+   partial_grids.clear();
+   partial_grid_info.clear();
    sorted_points.clear();
    final_subgrids.clear();
    default_plot_ctrl();
@@ -1842,7 +1875,7 @@ void US_Grid_Editor::setup_grid()
 
 void US_Grid_Editor::load()
 {
-   if ( ! grid_points.isEmpty() ) {
+   if ( ! partial_grids.isEmpty() ) {
       int yes = QMessageBox::question( this, "Warning!",
                                       tr( "Grid list is not empty and it will "
                                          "be deleted by loading a model.<br/>To proceed with "
@@ -1850,8 +1883,8 @@ void US_Grid_Editor::load()
       if ( yes == QMessageBox::No ) return;
    }
 
-   grid_points.clear();
-   grid_info.clear();
+   partial_grids.clear();
+   partial_grid_info.clear();
    sorted_points.clear();
    final_subgrids.clear();
    fill_list();
@@ -1874,10 +1907,10 @@ void US_Grid_Editor::load()
       return;
    }
 
-   grid_info << model.customGridData.grids;
-   Attribute::Type xt = Attribute::from_symbol( grid_info.first().xType );
-   Attribute::Type yt = Attribute::from_symbol( grid_info.first().yType );
-   Attribute::Type zt = Attribute::from_symbol( grid_info.first().zType );
+   partial_grid_info << model.customGridData.grids;
+   Attribute::Type xt = Attribute::from_symbol( partial_grid_info.first().xType );
+   Attribute::Type yt = Attribute::from_symbol( partial_grid_info.first().yType );
+   Attribute::Type zt = Attribute::from_symbol( partial_grid_info.first().zType );
    if ( xt == Attribute::ATTR_NONE || yt == Attribute::ATTR_NONE || zt ==  Attribute::ATTR_NONE ) {
       QMessageBox::warning( this, "Warning!", "Incorrect grid type!"
                                              "<br/><br/><b>" + mdesc + "</b>" );
@@ -1904,9 +1937,9 @@ void US_Grid_Editor::load()
    connect( chkb_log, &QCheckBox::stateChanged, this, &US_Grid_Editor::refill_grid_points );
    connect( bg_point_type, &QButtonGroup::idClicked, this, &US_Grid_Editor::set_mid_exct_points );
 
-   for ( int ii = 0; ii < grid_info.size(); ii++ ) {
+   for ( int ii = 0; ii < partial_grid_info.size(); ii++ ) {
       QVector<GridPoint> gpvec;
-      grid_points << gpvec;
+      partial_grids << gpvec;
    }
 
    check_dens_visc_temp();
@@ -1920,12 +1953,11 @@ void US_Grid_Editor::load()
       gp.set_component( sc, &types );
       gp.set_row_col( row, col );
       gp.set_dens_visc_temp( buff_dens, buff_visc, buff_temp );
-      grid_points[ id ] << gp;
+      partial_grids[ id ] << gp;
    }
 
-   for ( int ii = 0; ii < grid_points.size(); ii++ ) {
-      sort_col_val( grid_points[ii] );
-      sort_row_idx( grid_points[ii] );
+   for ( int ii = 0; ii < partial_grids.size(); ii++ ) {
+      sort_partial_grid_points( partial_grids[ii] );
    }
    int nsubgrids = model.subGrids;
    check_grid_id();
@@ -1959,7 +1991,7 @@ void US_Grid_Editor::save()
    model.customGridData.grids.clear();
    model.customGridData.components.clear();
 
-   model.customGridData.grids << grid_info;
+   model.customGridData.grids << partial_grid_info;
    model.customGridData.xLogarithmic = chkb_log->isChecked();
    model.customGridData.midpointBins = bg_point_type->checkedId() == MIDPOINTS;
 
@@ -2471,9 +2503,13 @@ double GridPoint::value( Attribute::Type type ) const
    return val;
 }
 
-void GridPoint::set_id( int i )
+void GridPoint::set_id_range( int i,
+                              const QPair< double, double >& xrng,
+                              const QPair< double, double >& yrng )
 {
    id  = i;
+   x_range = xrng;
+   y_range = yrng;
 }
 
 void GridPoint::set_row_col( int r, int c )
@@ -2490,6 +2526,16 @@ int GridPoint::get_row() const
 int GridPoint::get_col() const
 {
    return col;
+}
+
+QPair<double, double> GridPoint::get_x_range() const
+{
+   return x_range;
+}
+
+QPair<double, double> GridPoint::get_y_range() const
+{
+   return y_range;
 }
 
 int GridPoint::get_id() const

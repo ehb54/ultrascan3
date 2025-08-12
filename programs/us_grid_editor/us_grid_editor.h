@@ -92,7 +92,9 @@ public:
 
    //! \brief A method to set the grid ID.
    //! \param id.
-   void set_id( int id );
+   void set_id_range( int id,
+                      const QPair< double, double >& xrng,
+                      const QPair< double, double >& yrng);
 
    //! \brief A method to set the grid row and column numbers where the grid point is placed.
    //! \param row.
@@ -107,6 +109,9 @@ public:
 
    //! \brief A method to get the grid point column.
    int get_col( void ) const;
+
+   QPair< double, double > get_x_range( void ) const;
+   QPair< double, double > get_y_range( void ) const;
 
    //! \brief A method to get the value of x parameter.
    double x_value( void ) const;
@@ -143,6 +148,8 @@ private:
    Attribute::Type       x_param;  //!< x axis parameter
    Attribute::Type       y_param;  //!< y axis parameter
    Attribute::Type       z_param;  //!< z axis parameter
+   QPair< double, double > x_range;
+   QPair< double, double > y_range;
 
    //! \brief Calculate all parameters from s, D, Vbar
    void calc_coefficients( void );
@@ -415,14 +422,14 @@ private:
 
    US_Help          showHelp;              //!< Help widget.
 
-   QwtPlotCurve*             subgrid_curve;   //!< subgrid curve.
-   QList<QwtPlotCurve*>      point_curves;    //!< all grid points curves.
-   QList<QVector<GridPoint>> grid_points;     //!< array of all grids.
-   QList<GridInfo>           grid_info;       //!< array of all grid information.
-   QVector<GridPoint>        sorted_points;   //!< sorted grid points.
-   QList<QVector<int>>       final_subgrids;  //!< subgrid indexes.
+   QwtPlotCurve*             subgrid_curve;     //!< subgrid curve.
+   QList<QwtPlotCurve*>      point_curves;      //!< all grid points curves.
+   QList<QVector<GridPoint>> partial_grids;     //!< array of all grids.
+   QList<GridInfo>           partial_grid_info; //!< array of all grid information.
+   QVector<GridPoint>        sorted_points;     //!< sorted grid points.
+   QList<QVector<int>>       final_subgrids;    //!< subgrid indexes.
 
-   US_Disk_DB_Controls*      dkdb_cntrls;     //!< Disk DB controls.
+   US_Disk_DB_Controls*      dkdb_cntrls;       //!< Disk DB controls.
 
    //! \brief Clear set region from the data plot.
    void rm_tmp_items( void );
@@ -481,11 +488,8 @@ private:
    //! \brief Sort grid points.
    void sort_points( void );
 
-   //! \brief Sort grid points.
-   void sort_col_val( QVector<GridPoint>& );
-
-   //! \brief Sort grid points.
-   void sort_row_idx( QVector<GridPoint>& );
+   //! \brief Sort partial grid points.
+   void sort_partial_grid_points( QVector<GridPoint>& );
 
    //! \brief Enable input widgets.
    void enable_ctrl( bool );
