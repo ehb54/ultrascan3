@@ -487,6 +487,11 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
        pb_exclude ->hide();
        pb_include ->hide();         
        
+       //hide lambda-start/end
+       lb_lambstrt ->hide();
+       lb_lambstop ->hide();
+       cb_lambstrt ->hide();
+       cb_lambstop ->hide();
      }
    
    // Now let's assemble the page
@@ -621,10 +626,10 @@ DbgLv(1) << "CGui: reset complete";
    // QString invid    = QString("12");
    // QString aprofileguid = QString("be10df3c-a567-4335-af26-59cb182c79b6");
 
-   // QString curdir   = QString("/home/alexey/ultrascan/imports/ABDE-Test-052124-run1693");
-   // QString protname = QString("ABDE-Test-052124-v2");
+   // QString curdir   = QString("/home/alexey/ultrascan/imports/AAV9_GMPABDEtest_24JUL25-run1994");
+   // QString protname = QString("AAV9_GMPABDEtest_24JUL25");
    // QString invid    = QString("165");
-   // QString aprofileguid = QString("ff68a3ec-b526-4f52-851b-b6890bfea7de");
+   // QString aprofileguid = QString("97152b36-ed61-4a56-bcc3-4a3c8c65f0c4");
    
    // QMap < QString, QString > protocol_details;
    // protocol_details[ "dataPath" ]       = curdir;
@@ -634,10 +639,11 @@ DbgLv(1) << "CGui: reset complete";
    // protocol_details[ "correctRadii" ]   = QString("YES");
    // protocol_details[ "expAborted" ]     = QString("NO");
    // //protocol_details[ "runID" ]          =  ;
-   // protocol_details[ "label" ]          = QString("Some label");
+   // protocol_details[ "label" ]          = QString("AAV9_GMPABDEtest_24JUL25");
    // protocol_details[ "aprofileguid" ]   = aprofileguid;
-   // protocol_details[ "CellChNumber" ]   = QString("6");
+   // protocol_details[ "CellChNumber" ]   = QString("2");
    // protocol_details[ "expType" ]        = QString("ABDE");
+   // protocol_details[ "dataSource" ]     = QString("INSTRUMENT");
 
    // // /*********************************************************************************/
 
@@ -9585,6 +9591,14 @@ void US_ConvertGui::show_mwl_control( bool show )
    pb_exclude  ->setVisible( !show );
    pb_include  ->setVisible( !show );
 
+   if ( us_convert_auto_mode )
+     {
+       lb_lambstrt ->hide();
+       lb_lambstop ->hide();
+       cb_lambstrt ->hide();
+       cb_lambstop ->hide();
+     }
+   
    adjustSize();
 }
 
