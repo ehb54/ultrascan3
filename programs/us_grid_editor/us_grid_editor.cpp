@@ -2919,9 +2919,9 @@ void US_Grid_ZFunction::set_gui( const QMap< QString, QString>& settings )
                << settings.value( "y_long_title" )
                << settings.value( "z_long_title" );
 
-   min_dependent << settings.value( "x_min" ).toDouble()
+   min_xy << settings.value( "x_min" ).toDouble()
                  << settings.value( "y_min" ).toDouble();
-   max_dependent << settings.value( "x_max" ).toDouble()
+   max_xy << settings.value( "x_max" ).toDouble()
                  << settings.value( "y_max" ).toDouble();
 
    cb_function = us_comboBox();
@@ -3191,7 +3191,7 @@ QString US_Grid_ZFunction::get_parameters()
    return params;
 }
 
-void US_Grid_ZFunction::draw_formula()
+void US_Grid_ZFunction::show_formula()
 {
    lb_formula->clear();
    QString type = cb_function->currentText().toLower();
@@ -3220,8 +3220,8 @@ void US_Grid_ZFunction::draw_formula()
 
 void US_Grid_ZFunction::set_dependent( int index )
 {
-   double min = min_dependent.at( index );
-   double max = max_dependent.at( index );
+   double min = min_xy.at( index );
+   double max = max_xy.at( index );
    int num = 200;
    double dx = ( max - min ) / static_cast<double>( num );
    xvalues.clear();
@@ -3266,8 +3266,8 @@ void US_Grid_ZFunction::set_function( int index )
 
 void US_Grid_ZFunction::set_points( int size )
 {
-   double x_min = min_dependent.at( cb_dependent->currentIndex() );
-   double x_max = max_dependent.at( cb_dependent->currentIndex() );
+   double x_min = min_xy.at( cb_dependent->currentIndex() );
+   double x_max = max_xy.at( cb_dependent->currentIndex() );
    parameters.resize( size );
    x_points.resize( size );
    y_points.resize( size );
@@ -3305,7 +3305,7 @@ void US_Grid_ZFunction::set_points( int size )
       list_le[ ii * 3 + 2 ]->setText( QString::number( parameters.at( ii ) ) );
    }
    plot_data();
-   draw_formula();
+   show_formula();
 }
 
 void US_Grid_ZFunction::compute( QVector< double >& x_vec, QVector< double >& y_vec )

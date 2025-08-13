@@ -59,7 +59,6 @@ public:
    static Type    from_symbol ( const QString& );
 };
 
-
 //! \class GridPoint Class
 //! \brief Enumeration for attribute types.
 class GridPoint
@@ -170,12 +169,17 @@ private:
 
 };
 
+//! \class US_Grid_Preset Class
+//! \brief Widget to set x, y, and z axis types.
 class US_Grid_Preset : public US_WidgetsDialog
 {
    Q_OBJECT
 
 public:
-
+   //! \brief Constructor of the US_Grid_Preset dialog.
+   //! \param type of the x parameter.
+   //! \param type of the y parameter.
+   //! \param type of the z parameter.
    US_Grid_Preset( QWidget *, Attribute::Type, Attribute::Type, Attribute::Type );
 
    //! \brief A method to obtain the grid parameters.
@@ -232,116 +236,178 @@ class US_Grid_ZFunction : public US_WidgetsDialog
    Q_OBJECT
 
 public:
+   //! \brief Constructor of the US_Grid_ZFunction dialog.
+   //! \param parent widget.
+   //! \param settings.
    US_Grid_ZFunction( QWidget *, const QMap< QString, QString>& );
 
+   //! \brief Constructor of the US_Grid_ZFunction dialog.
+   //! \param parent widget.
    QString get_parameters( void );
 
 private:
-   QVector< double > min_dependent;
-   QVector< double > max_dependent;
-   QVector< double > x_points;
-   QVector< double > y_points;
-   QVector< double > parameters;
-   QVector< double > xvalues;
-   QVector< double > yvalues;
+   QVector< double >   parameters;       //!< list of the function coefficients.
+   QVector< double >   x_points;         //!< x values of the points to fit the function.
+   QVector< double >   y_points;         //!< y values of the points to fit the function.
+   QVector< double >   xvalues;          //!< x values of the curve.
+   QVector< double >   yvalues;          //!< y values of the curve.
+   QVector< double >   min_xy;           //!< minimum values of the dependent parameters.
+   QVector< double >   max_xy;           //!< maximum values of the dependent parameters.
 
-   QStringList short_title;
-   QStringList long_title;
+   QStringList         short_title;      //!< list of short titles of the parameters.
+   QStringList         long_title;       //!< list of long titles of the parameters.
 
-   QList< QLineEdit* > list_le;
-   QList< QLabel* >    list_lb;
+   QList< QLineEdit* > list_le;          //!< list of lineedit objects.
+   QList< QLabel* >    list_lb;          //!< list of labels objects.
 
-   QLabel           *lb_dependent;
-   QLabel           *lb_function;
-   QLabel           *lb_formula;
-   QLabel           *lb_order;
-   QLabel           *lb_min;
-   QLabel           *lb_max;
-   QLabel           *lb_p0_x;
-   QLabel           *lb_p1_x;
-   QLabel           *lb_p2_x;
-   QLabel           *lb_p3_x;
-   QLabel           *lb_p4_x;
-   QLabel           *lb_p5_x;
-   QLabel           *lb_p0_y;
-   QLabel           *lb_p1_y;
-   QLabel           *lb_p2_y;
-   QLabel           *lb_p3_y;
-   QLabel           *lb_p4_y;
-   QLabel           *lb_p5_y;
-   QLabel           *lb_c0;
-   QLabel           *lb_c1;
-   QLabel           *lb_c2;
-   QLabel           *lb_c3;
-   QLabel           *lb_c4;
-   QLabel           *lb_c5;
-   QLabel           *lb_p0;
-   QLabel           *lb_p1;
-   QLabel           *lb_p2;
-   QLabel           *lb_p3;
-   QLabel           *lb_p4;
-   QLabel           *lb_p5;
+   QLabel*             lb_dependent;     //!< label for the word Dependent.
+   QLabel*             lb_function;      //!< label for the word Function.
+   QLabel*             lb_formula;       //!< label for the function formula.
+   QLabel*             lb_order;         //!< label for the word Order.
+   QLabel*             lb_min;           //!< label for the minimum z-value.
+   QLabel*             lb_max;           //!< label for the maximum z-value.
+   QLabel*             lb_p0_x;          //!< label for the first point x.
+   QLabel*             lb_p1_x;          //!< label for the second point x.
+   QLabel*             lb_p2_x;          //!< label for the third point x.
+   QLabel*             lb_p3_x;          //!< label for the fourth point x.
+   QLabel*             lb_p4_x;          //!< label for the fifth point x.
+   QLabel*             lb_p5_x;          //!< label for the sixth point x.
+   QLabel*             lb_p0_y;          //!< label for the first point y.
+   QLabel*             lb_p1_y;          //!< label for the second point y.
+   QLabel*             lb_p2_y;          //!< label for the third point y.
+   QLabel*             lb_p3_y;          //!< label for the fourth point y.
+   QLabel*             lb_p4_y;          //!< label for the fifth point y.
+   QLabel*             lb_p5_y;          //!< label for the sixth point y.
+   QLabel*             lb_c0;            //!< label for the first coefficient.
+   QLabel*             lb_c1;            //!< label for the second coefficient.
+   QLabel*             lb_c2;            //!< label for the third coefficient.
+   QLabel*             lb_c3;            //!< label for the fourth coefficient.
+   QLabel*             lb_c4;            //!< label for the fifth coefficient.
+   QLabel*             lb_c5;            //!< label for the sixth coefficient.
+   QLabel*             lb_p0;            //!< label for the first point.
+   QLabel*             lb_p1;            //!< label for the second point.
+   QLabel*             lb_p2;            //!< label for the third point.
+   QLabel*             lb_p3;            //!< label for the fourth point.
+   QLabel*             lb_p4;            //!< label for the fifth point.
+   QLabel*             lb_p5;            //!< label for the sixth point.
 
-   QLineEdit        *le_p0_x;
-   QLineEdit        *le_p1_x;
-   QLineEdit        *le_p2_x;
-   QLineEdit        *le_p3_x;
-   QLineEdit        *le_p4_x;
-   QLineEdit        *le_p5_x;
-   QLineEdit        *le_p0_y;
-   QLineEdit        *le_p1_y;
-   QLineEdit        *le_p2_y;
-   QLineEdit        *le_p3_y;
-   QLineEdit        *le_p4_y;
-   QLineEdit        *le_p5_y;
-   QLineEdit        *le_c0;
-   QLineEdit        *le_c1;
-   QLineEdit        *le_c2;
-   QLineEdit        *le_c3;
-   QLineEdit        *le_c4;
-   QLineEdit        *le_c5;
-   QLineEdit        *le_min;
-   QLineEdit        *le_max;
+   QLineEdit*          le_p0_x;          //!< input for the first point x.
+   QLineEdit*          le_p1_x;          //!< input for the second point x.
+   QLineEdit*          le_p2_x;          //!< input for the third point x.
+   QLineEdit*          le_p3_x;          //!< input for the fourth point x.
+   QLineEdit*          le_p4_x;          //!< input for the fifth point x.
+   QLineEdit*          le_p5_x;          //!< input for the sixth point x.
+   QLineEdit*          le_p0_y;          //!< input for the first point y.
+   QLineEdit*          le_p1_y;          //!< input for the second point y.
+   QLineEdit*          le_p2_y;          //!< input for the third point y.
+   QLineEdit*          le_p3_y;          //!< input for the fourth point y.
+   QLineEdit*          le_p4_y;          //!< input for the fifth point y.
+   QLineEdit*          le_p5_y;          //!< input for the sixth point y.
+   QLineEdit*          le_c0;            //!< input for the first coefficient.
+   QLineEdit*          le_c1;            //!< input for the second coefficient.
+   QLineEdit*          le_c2;            //!< input for the third coefficient.
+   QLineEdit*          le_c3;            //!< input for the fourth coefficient.
+   QLineEdit*          le_c4;            //!< input for the fifth coefficient.
+   QLineEdit*          le_c5;            //!< input for the sixth coefficient.
+   QLineEdit*          le_min;           //!< output to show minimum of the z-value.
+   QLineEdit*          le_max;           //!< output to show maximum of the z-value.
 
-   QComboBox        *cb_dependent;
-   QComboBox        *cb_function;
-   QComboBox        *cb_order;
-   QwtPlot          *plot;
+   QComboBox*          cb_dependent;     //!< combo box to select the dependent parameter.
+   QComboBox*          cb_function;      //!< combo box to select the function.
+   QComboBox*          cb_order;         //!< combo box to select the polynomial order.
+   QwtPlot*            plot;             //!< data plot.
 
+   //! \brief set all GUI widgets.
    void set_gui( const QMap< QString, QString>& );
-   void draw_formula( void );
+
+   //! \brief display the formula.
+   void show_formula( void );
+
+   //! \brief plot the curve and points.
    void plot_data   ( void );
+
+   //! \brief make x and y points based on the function.
    void set_points  ( int  );
+
+   //! \brief check the parameters before exporting.
    bool check_data  ( void );
+
+   //! \brief parse the z-value expression.
    void parse_params( const QString& );
+
+   //! \brief compute the curve and points based the functions and parameters.
    void compute( QVector< double >&, QVector< double >& );
 
 private slots:
+   //! \brief slot to select the dependent parameter.
    void set_dependent( int index );
+
+   //! \brief slot to select the function.
    void set_function ( int index );
+
+   //! \brief slot to select the polynomial order.
    void set_order( int );
+
+   //! \brief slot to set the first coefficient.
    void set_c0  ( void );
+
+   //! \brief slot to set the second coefficient.
    void set_c1  ( void );
+
+   //! \brief slot to set the third coefficient.
    void set_c2  ( void );
+
+   //! \brief slot to set the fourth coefficient.
    void set_c3  ( void );
+
+   //! \brief slot to set the fifth coefficient.
    void set_c4  ( void );
+
+   //! \brief slot to set the sixth coefficient.
    void set_c5  ( void );
+
+   //! \brief slot to set the first point x value.
    void set_p0_x( void );
+
+   //! \brief slot to set the second point x value.
    void set_p1_x( void );
+
+   //! \brief slot to set the third point x value.
    void set_p2_x( void );
+
+   //! \brief slot to set the fourth point x value.
    void set_p3_x( void );
+
+   //! \brief slot to set the fifth point x value.
    void set_p4_x( void );
+
+   //! \brief slot to set the sixth point x value.
    void set_p5_x( void );
+
+   //! \brief slot to set the first point y value.
    void set_p0_y( void );
+
+   //! \brief slot to set the second point y value.
    void set_p1_y( void );
+
+   //! \brief slot to set the third point y value.
    void set_p2_y( void );
+
+   //! \brief slot to set the fourth point y value.
    void set_p3_y( void );
+
+   //! \brief slot to set the fifth point y value.
    void set_p4_y( void );
+
+   //! \brief slot to set the sixth point y value.
    void set_p5_y( void );
+
+   //! \brief slot to fit the curve.
    void fit     ( void );
+
+   //! \brief slot to return the fitted function.
    void apply   ( void );
 };
-
 
 //! \class US_Grid_Editor
 //! \brief Class to handle the grid editor GUI and functionality.
@@ -407,8 +473,8 @@ private:
 
    QCheckBox*       chkb_log;             //!< checkbox for setting x-axis logarithmic.
 
-   QRadioButton*    rb_cons_z;
-   QRadioButton*    rb_vary_z;
+   QRadioButton*    rb_cons_z;            //!< radio button to select constant z-value
+   QRadioButton*    rb_vary_z;            //!< radio button to select varying z-value
 
    QButtonGroup*    bg_point_type;
    QButtonGroup*    x_axis;               //!< X-axis button group.
