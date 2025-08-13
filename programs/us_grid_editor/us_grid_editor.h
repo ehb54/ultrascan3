@@ -313,6 +313,8 @@ private:
    void plot_data   ( void );
    void set_points  ( int  );
    bool check_data  ( void );
+   void parse_params( const QString& );
+   void compute( QVector< double >&, QVector< double >& );
 
 private slots:
    void set_dependent( int index );

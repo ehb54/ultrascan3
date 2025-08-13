@@ -2136,9 +2136,7 @@ void US_Grid_Editor::set_z_function()
    setting.insert( "x_long_title" , Attribute::short_desc( x_param ) );
    setting.insert( "y_long_title" , Attribute::short_desc( y_param ) );
    setting.insert( "z_long_title" , Attribute::short_desc( z_param ) );
-   setting.insert( "parameters"   , "none" );
-   setting.insert( "dependent"    , "none" );
-   setting.insert( "function"     , "none" );
+   setting.insert( "parameters"   , le_z_val->text() );
 
    QString x_min_t = le_x_min->text();
    QString x_max_t = le_x_max->text();
@@ -2798,8 +2796,6 @@ US_Grid_ZFunction::US_Grid_ZFunction( QWidget *parent, const QMap< QString, QStr
                    settings.contains( "y_long_title"  ) &&
                    settings.contains( "z_long_title"  ) &&
                    settings.contains( "parameters"    ) &&
-                   settings.contains( "dependent"     ) &&
-                   settings.contains( "function"      ) &&
                    settings.contains( "x_min"         ) &&
                    settings.contains( "x_max"         ) &&
                    settings.contains( "y_min"         ) &&
@@ -2915,9 +2911,6 @@ void US_Grid_ZFunction::set_gui( const QMap< QString, QString>& settings )
    cb_dependent->addItem( settings.value( "x_long_title" ) );
    cb_dependent->addItem( settings.value( "y_long_title" ) );
    cb_dependent->setCurrentIndex( 0 );
-   if ( settings.value( "dependent" ) == "y_param" ) {
-      cb_dependent->setCurrentIndex( 1 );
-   }
 
    short_title << settings.value( "x_short_title" )
                << settings.value( "y_short_title" )
@@ -3076,46 +3069,7 @@ void US_Grid_ZFunction::set_gui( const QMap< QString, QString>& settings )
    setLayout( layout );
 
    // parse settings
-
-   foreach ( QString p, settings.value( "parameters" ).split( ";" ) ) {
-      bool ok;
-      double val = p.toDouble( &ok );
-      if ( ok ) {
-         parameters << val;
-      }
-      else {
-         parameters.clear();
-         break;
-      }
-   }
-
-   QString function = settings.value( "function" ).toLower();
-   if ( function == "polynomial" ) {
-      int sz = parameters.size();
-      if ( sz < 2 ) {
-         sz = cb_order->currentText().toInt() + 1;
-         parameters = QVector<double>( sz, 0.0 );
-      }
-      else if ( sz > 6 ) {
-         parameters.resize( 6 );
-      }
-      sz = parameters.size() - 1;
-      cb_order->setCurrentIndex( sz - 1 );
-   }
-   else if ( function == "exp" ) {
-      int sz = parameters.size();
-      if ( sz < 2 ) {
-         parameters = QVector<double>( 2, 0.0 );
-      }
-      else if ( sz > 2 ) {
-         parameters.resize( 2 );
-      }
-   }
-   qDebug() << "min" << min_dependent;
-   qDebug() << "max" << max_dependent;
-   qDebug() << "short_title" << short_title;
-   qDebug() << "long_title" << long_title;
-
+   parse_params( settings.value( "parameters" ) );
    set_dependent( cb_dependent->currentIndex() );
 
    connect( cb_function,  QOverload<int>::of( &QComboBox::currentIndexChanged ), this, &US_Grid_ZFunction::set_function  );
@@ -3163,6 +3117,57 @@ bool US_Grid_ZFunction::check_data()
       }
    }
    return ready;
+}
+
+void US_Grid_ZFunction::parse_params( const QString &pstr )
+{
+   parameters.clear();
+   QVector< double > pvec;
+   QStringList plist = pstr.trimmed().split( ";" );
+   int d_id = 0;
+   int f_id = 0;
+   int o_id = 0;
+
+   if ( plist.size() >= 4 ) {
+      if ( plist.at( 0 ).trimmed() == "polynomial" ) {
+         f_id = 0;
+      }
+      else if ( plist.at( 0 ).trimmed() == "exponential" ){
+         f_id = 1;
+      }
+
+      if ( plist.at( 1 ).trimmed() == "x" ) {
+         d_id = 0;
+      }
+      else if ( plist.at( 1 ).trimmed() == "y" ){
+         d_id = 1;
+      }
+
+      for ( int ii = 2; ii < plist.size(); ii++ ) {
+         if ( ii >= 8 ) {
+            break;
+         }
+         bool ok;
+         double val = plist.at( ii ).toDouble( &ok );
+         if ( ok ) {
+            pvec << val;
+         }
+         else {
+            pvec.clear();
+            break;
+         }
+      }
+   }
+   if ( pvec.isEmpty() ) {
+      o_id = 0;
+   }
+   else {
+      parameters << pvec;
+      o_id = pvec.size() - 2;
+   }
+   cb_dependent->setCurrentIndex( d_id );
+   cb_function->setCurrentIndex( f_id );
+   cb_order->setCurrentIndex( o_id );
 }
 
 QString US_Grid_ZFunction::get_parameters()
@@ -3292,6 +3297,8 @@ void US_Grid_ZFunction::set_points( int size )
          list_le[ ii ]->hide();
       }
    }
+
+   compute( x_points, y_points );
    for ( int ii = 0; ii < size; ii++ ) {
       list_le[ ii * 3     ]->setText( QString::number(   x_points.at( ii ) ) );
       list_le[ ii * 3 + 1 ]->setText( QString::number(   y_points.at( ii ) ) );
@@ -3301,15 +3308,14 @@ void US_Grid_ZFunction::set_points( int size )
    draw_formula();
 }
 
-void US_Grid_ZFunction::plot_data()
+void US_Grid_ZFunction::compute( QVector< double >& x_vec, QVector< double >& y_vec )
 {
-   plot->detachItems(QwtPlotItem::Rtti_PlotItem, false);
-
    QString type = cb_function->currentText().toLower();
+   y_vec.clear();
    double xx;
    double yy;
-   for ( int ii = 0; ii < xvalues.size(); ii++ ) {
-      xx = xvalues.at( ii );
+   for ( int ii = 0; ii < x_vec.size(); ii++ ) {
+      xx = x_vec.at( ii );
       yy = 0;
       if ( type == "polynomial" ) {
          for( int jj = 0; jj < parameters.size(); jj++ ) {
@@ -3319,8 +3325,15 @@ void US_Grid_ZFunction::plot_data()
       else if ( type == "exponential" ) {
          yy = parameters.at( 0 ) * qExp( parameters.at( 1 ) * xx );
       }
-      yvalues[ ii ] = yy;
+      y_vec << yy;
    }
+}
+
+void US_Grid_ZFunction::plot_data()
+{
+   plot->detachItems(QwtPlotItem::Rtti_PlotItem, false);
+
+   compute( xvalues, yvalues );
 
    QwtPlotCurve* curve = us_curve( plot, "Curve" );
    curve->setSamples( xvalues.data(), yvalues.data(), xvalues.size() );
