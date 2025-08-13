@@ -73,10 +73,7 @@ using namespace std;
 # define M_ONE_OVER_SQRT2   7.07106781188e-1
 #endif
 
-#define UNICODE_LAMBDA u8"\u03BB"
-#define UNICODE_LAMBDA_QS QString( "%1" ).arg( UNICODE_LAMBDA )
-#define UNICODE_EPSILON u8"\u03B5"
-#define UNICODE_EPSILON_QS QString( "%1" ).arg( UNICODE_EPSILON )
+#include "us_unicode.h"
 
 #define DAD_LAMBDA_EXTC_MSG QString( "<center>Selected lambda %1, extinction coefficient %2</br></center>" ).arg( dad_param_lambda ).arg( dad_param_g_extinction_coef ) 
 

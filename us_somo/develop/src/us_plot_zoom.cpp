@@ -3,14 +3,14 @@
 #include <qdebug.h>
 
 US_Plot_Zoom::US_Plot_Zoom( QwtPlot * plot, ScrollZoomer * zoomer ) {
-   qDebug() << "US_Plot_Zoom::US_Plot_Zoom()";
+   // qDebug() << "US_Plot_Zoom::US_Plot_Zoom()";
    this->plot   = plot;
    this->zoomer = zoomer;
    save();
 }
 
 void US_Plot_Zoom::save() {
-   qDebug() << "US_Plot_Zoom::save()";
+   // qDebug() << "US_Plot_Zoom::save()";
    if ( zoomer ) {
       stack = zoomer->zoomStack();
       currentIndex = zoomer->zoomRectIndex();
@@ -18,21 +18,24 @@ void US_Plot_Zoom::save() {
       stack.clear();
       currentIndex = 0;
    }
+   // QTextStream( stdout ) << info( "in save after work" );
 }
 
 void US_Plot_Zoom::restore( bool replot ) {
-   qDebug() << "US_Plot_Zoom::restore()";
+   // qDebug() << "US_Plot_Zoom::restore()";
 
    if ( zoomer && stack.size() ) {
+      // QTextStream( stdout ) << info( QString( "in restore, will restore stack to index %1" ).arg( currentIndex ) );
       zoomer->setZoomStack( stack, currentIndex );
       if ( replot ) {
+         // qDebug() << "US_Plot_Zoom::restore() replot";
          plot->replot();
       }
    }
 }
 
 QString US_Plot_Zoom::info( const QString & msg ) {
-   qDebug() << "US_Plot_Zoom::info()";
+   // qDebug() << "US_Plot_Zoom::info()";
 
    QStringList results;
    
@@ -42,6 +45,7 @@ QString US_Plot_Zoom::info( const QString & msg ) {
       << "========================================"
       << "US_Plot_Zoom::info( " + msg + " )"
       << "----------------------------------------"
+      <<  QString( "Current Index: %1" ).arg( currentIndex ) 
       ;
    
    if ( zoomer ) {

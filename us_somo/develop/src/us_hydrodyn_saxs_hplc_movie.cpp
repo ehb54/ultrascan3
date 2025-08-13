@@ -21,7 +21,6 @@ US_Hydrodyn_Saxs_Hplc_Movie::US_Hydrodyn_Saxs_Hplc_Movie(
                                                          ) : QDialog ( p )
 {
    this->hplc_win                = hplc_win;
-   this->hplc_selected_files     = hplc_selected_files;
    this->ush_win                 = (US_Hydrodyn *)(hplc_win->us_hydrodyn);
 
    USglobal = new US_Config();
@@ -65,6 +64,10 @@ US_Hydrodyn_Saxs_Hplc_Movie::US_Hydrodyn_Saxs_Hplc_Movie(
 
    last_mono =
       ush_win->gparams.count( "hplc_movie_mono" ) && ush_win->gparams[ "hplc_movie_mono" ] == "true" ?
+      true : false;
+
+   last_lock_zoom =
+      ush_win->gparams.count( "hplc_movie_lock_zoom" ) && ush_win->gparams[ "hplc_movie_lock_zoom" ] == "true" ?
       true : false;
 
    setupGUI();
@@ -113,54 +116,62 @@ void US_Hydrodyn_Saxs_Hplc_Movie::setupGUI()
    AUTFBACK( lbl_state );
    lbl_state->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
-   lbl_current = new QLabel( hplc_win->lb_files->item( hplc_selected_files[ pos ] )->text(), this);
-   lbl_current->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
-   lbl_current->setMinimumHeight(minHeight1);
-   lbl_current->setPalette( PALET_LABEL );
-   AUTFBACK( lbl_current );
-   lbl_current->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
+   le_current = new QLineEdit( hplc_win->lb_files->item( hplc_selected_files[ pos ] )->text(), this);
+   le_current->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_current->setMinimumHeight(minHeight1);
+   le_current->setPalette( PALET_LABEL );
+   le_current->setReadOnly( true );
+   AUTFBACK( le_current );
+   le_current->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
    pb_front = new QPushButton( "|<" , this);
    pb_front->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_front->setMinimumHeight(minHeight3);
    pb_front->setPalette( PALET_PUSHB );
    connect(pb_front, SIGNAL(clicked()), SLOT(front()));
+   pb_front->setToolTip( us_tr( "Go to the first frame" ) );
 
    pb_prev = new QPushButton( "<" , this);
    pb_prev->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_prev->setMinimumHeight(minHeight3);
    pb_prev->setPalette( PALET_PUSHB );
    connect(pb_prev, SIGNAL(clicked()), SLOT(prev()));
+   pb_prev->setToolTip( us_tr( "Go back one frame" ) );
 
    pb_slower = new QPushButton( "S-" , this);
    pb_slower->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_slower->setMinimumHeight(minHeight3);
    pb_slower->setPalette( PALET_PUSHB );
    connect(pb_slower, SIGNAL(clicked()), SLOT(slower()));
+   pb_slower->setToolTip( us_tr( "Go slower" ) );
 
    pb_start = new QPushButton( "[]" , this);
    pb_start->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_start->setMinimumHeight(minHeight3);
    pb_start->setPalette( PALET_PUSHB );
    connect(pb_start, SIGNAL(clicked()), SLOT(start()));
+   pb_start->setToolTip( us_tr( "Start [] or stop ||" ) );
 
    pb_faster = new QPushButton( "S+" , this);
    pb_faster->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_faster->setMinimumHeight(minHeight3);
    pb_faster->setPalette( PALET_PUSHB );
    connect(pb_faster, SIGNAL(clicked()), SLOT(faster()));
+   pb_faster->setToolTip( us_tr( "Go faster" ) );
 
    pb_next = new QPushButton( ">" , this);
    pb_next->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_next->setMinimumHeight(minHeight3);
    pb_next->setPalette( PALET_PUSHB );
    connect(pb_next, SIGNAL(clicked()), SLOT(next()));
+   pb_next->setToolTip( us_tr( "Go forward one frame" ) );
 
    pb_end = new QPushButton( ">|" , this);
    pb_end->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_end->setMinimumHeight(minHeight3);
    pb_end->setPalette( PALET_PUSHB );
    connect(pb_end, SIGNAL(clicked()), SLOT(end()));
+   pb_end->setToolTip( us_tr( "Go to the last frame" ) );
 
    cb_show_gauss = new QCheckBox(this);
    cb_show_gauss->setText(us_tr("Show Gaussians "));
@@ -170,6 +181,7 @@ void US_Hydrodyn_Saxs_Hplc_Movie::setupGUI()
    cb_show_gauss->setPalette( PALET_NORMAL );
    AUTFBACK( cb_show_gauss );
    connect( cb_show_gauss, SIGNAL( clicked() ), SLOT( set_show_gauss() ) );
+   cb_show_gauss->setToolTip( us_tr( "Show associated gaussians (if available)" ) );
 
    cb_show_ref = new QCheckBox(this);
    cb_show_ref->setText(us_tr("Show reference "));
@@ -179,6 +191,16 @@ void US_Hydrodyn_Saxs_Hplc_Movie::setupGUI()
    cb_show_ref->setPalette( PALET_NORMAL );
    AUTFBACK( cb_show_ref );
    connect( cb_show_ref, SIGNAL( clicked() ), SLOT( set_show_ref() ) );
+   cb_show_ref->setToolTip( us_tr( "Show associated reference curve (if available)" ) );
+
+   cb_lock_zoom = new QCheckBox(this);
+   cb_lock_zoom->setText(us_tr("Fixed Zoom "));
+   cb_lock_zoom->setEnabled( true );
+   cb_lock_zoom->setChecked( last_lock_zoom );
+   cb_lock_zoom->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
+   cb_lock_zoom->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_lock_zoom );
+   cb_lock_zoom->setToolTip( us_tr( "Fix the zoom size" ) );
 
    cb_mono = new QCheckBox(this);
    cb_mono->setText(us_tr("Monochrome   File save as type:"));
@@ -188,7 +210,9 @@ void US_Hydrodyn_Saxs_Hplc_Movie::setupGUI()
    cb_mono->setPalette( PALET_NORMAL );
    AUTFBACK( cb_mono );
    connect( cb_mono, SIGNAL( clicked() ), SLOT( set_mono() ) );
+   cb_mono->setToolTip( us_tr( "Use the same curve color for each frame" ) );
 
+   
    cb_save = new QCheckBox(this);
    cb_save->setText(us_tr("Save to file  Prefix:"));
    cb_save->setEnabled( true );
@@ -197,6 +221,7 @@ void US_Hydrodyn_Saxs_Hplc_Movie::setupGUI()
    cb_save->setPalette( PALET_NORMAL );
    AUTFBACK( cb_save );
    connect( cb_save, SIGNAL( clicked() ), SLOT( set_save() ) );
+   cb_save->setToolTip( us_tr( "Turn on file saving" ) );
 
    le_save = new QLineEdit( this );    le_save->setObjectName( "le_save Line Edit" );
    le_save->setText( "" );
@@ -204,6 +229,7 @@ void US_Hydrodyn_Saxs_Hplc_Movie::setupGUI()
    le_save->setPalette( PALET_NORMAL );
    AUTFBACK( le_save );
    le_save->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_save->setToolTip( us_tr( "Enter the prefix for saved frame files" ) );
 
    rb_save_png = new QRadioButton( us_tr("png"), this);
    rb_save_png->setEnabled(true);
@@ -211,6 +237,7 @@ void US_Hydrodyn_Saxs_Hplc_Movie::setupGUI()
    rb_save_png->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    rb_save_png->setPalette( PALET_NORMAL );
    AUTFBACK( rb_save_png );
+   rb_save_png->setToolTip( us_tr( "Save as PNG files" ) );
 
    rb_save_jpeg = new QRadioButton( us_tr("jpeg"), this);
    rb_save_jpeg->setEnabled(true);
@@ -218,6 +245,7 @@ void US_Hydrodyn_Saxs_Hplc_Movie::setupGUI()
    rb_save_jpeg->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    rb_save_jpeg->setPalette( PALET_NORMAL );
    AUTFBACK( rb_save_jpeg );
+   rb_save_jpeg->setToolTip( us_tr( "Save as JPEG files" ) );
 
    rb_save_bmp = new QRadioButton( us_tr("bmp"), this);
    rb_save_bmp->setEnabled(true);
@@ -225,6 +253,7 @@ void US_Hydrodyn_Saxs_Hplc_Movie::setupGUI()
    rb_save_bmp->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    rb_save_bmp->setPalette( PALET_NORMAL );
    AUTFBACK( rb_save_bmp );
+   rb_save_bmp->setToolTip( us_tr( "Save as BMP files" ) );
 
 #if QT_VERSION < 0x040000
    bg_save = new QGroupBox( this );
@@ -270,12 +299,15 @@ void US_Hydrodyn_Saxs_Hplc_Movie::setupGUI()
 
    QVBoxLayout * background = new QVBoxLayout(this); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 0 );
 
-   {
-      QBoxLayout * bl_tl = new QHBoxLayout(); bl_tl->setContentsMargins( 0, 0, 0, 0 ); bl_tl->setSpacing( 0 );
-      bl_tl->addWidget( lbl_state );
-      bl_tl->addWidget( lbl_current );
-      background->addLayout( bl_tl );
-   }
+   background->addWidget( lbl_state );
+   background->addWidget( le_current );
+
+   // {
+   //    QBoxLayout * bl_tl = new QHBoxLayout(); bl_tl->setContentsMargins( 0, 0, 0, 0 ); bl_tl->setSpacing( 0 );
+   //    bl_tl->addWidget( lbl_state );
+   //    bl_tl->addWidget( le_current );
+   //    background->addLayout( bl_tl );
+   // }
 
    {
       QBoxLayout * bl_tl = new QHBoxLayout(); bl_tl->setContentsMargins( 0, 0, 0, 0 ); bl_tl->setSpacing( 0 );
@@ -293,6 +325,7 @@ void US_Hydrodyn_Saxs_Hplc_Movie::setupGUI()
       QBoxLayout * bl_tl = new QHBoxLayout(); bl_tl->setContentsMargins( 0, 0, 0, 0 ); bl_tl->setSpacing( 0 );
       bl_tl->addWidget( cb_show_gauss );
       bl_tl->addWidget( cb_show_ref );
+      bl_tl->addWidget( cb_lock_zoom );
       bl_tl->addWidget( cb_mono );
       bl_tl->addWidget( rb_save_png );
       bl_tl->addWidget( rb_save_jpeg );
@@ -349,6 +382,8 @@ void US_Hydrodyn_Saxs_Hplc_Movie::closeEvent(QCloseEvent *e)
    ush_win->gparams[ "hplc_movie_timer_ms"   ] = QString( "%1" ).arg( timer_msec );
    ush_win->gparams[ "hplc_movie_show_gauss" ] = cb_show_gauss->isChecked() ? "true" : "false";
    ush_win->gparams[ "hplc_movie_show_ref"   ] = cb_show_ref->isChecked() ? "true" : "false";
+   ush_win->gparams[ "hplc_movie_mono"       ] = cb_mono->isChecked() ? "true" : "false";
+   ush_win->gparams[ "hplc_movie_lock_zoom"  ] = cb_lock_zoom->isChecked() ? "true" : "false";
    e->accept();
 }
 
@@ -475,6 +510,12 @@ void US_Hydrodyn_Saxs_Hplc_Movie::update_plot()
       last_show_gauss = cb_show_gauss->isChecked();
       last_show_ref   = cb_show_ref  ->isChecked();
 
+      bool has_errors = hplc_win->cb_eb->isChecked();
+
+      if ( hplc_win->current_mode == hplc_win->MODE_GAUSSIAN ) {
+         hplc_win->wheel_cancel();
+      }
+
       hplc_win->lb_files->clearSelection();
       if ( cb_show_ref->isChecked() )
       {
@@ -482,18 +523,23 @@ void US_Hydrodyn_Saxs_Hplc_Movie::update_plot()
       } else {
          hplc_win->plot_ref->hide();
       } 
-      hplc_win->lb_files->item( hplc_selected_files[ pos ])->setSelected( true );
 
-      if ( hplc_win->current_mode == hplc_win->MODE_GAUSSIAN )
-      {
-         hplc_win->wheel_cancel();
-      }
+      if ( cb_lock_zoom->isChecked() ) {
+         hplc_win->disable_updates = true;
+         hplc_win->lb_files->item( hplc_selected_files[ pos ])->setSelected( true );
+         hplc_win->disable_updates = false;
+         hplc_win->plot_files( true );
+         hplc_win->update_enables();
+      } else {
+         hplc_win->lb_files->item( hplc_selected_files[ pos ])->setSelected( true );
+      }         
+
       if ( cb_show_gauss->isChecked() &&
            hplc_win->f_is_time.count( hplc_win->lb_files->item( hplc_selected_files[ pos ] )->text() ) &&
-           hplc_win->f_is_time[ hplc_win->lb_files->item( hplc_selected_files[ pos ] )->text() ] )
-      {
+           hplc_win->f_is_time[ hplc_win->lb_files->item( hplc_selected_files[ pos ] )->text() ] ) {
          hplc_win->gauss_start();
       }
+
       // else {
       // hplc_win->plot_files();
       // }
@@ -502,10 +548,14 @@ void US_Hydrodyn_Saxs_Hplc_Movie::update_plot()
       hplc_win->plot_ref   ->replot();
       hplc_win->plot_errors->replot();
       lbl_state  -> setText( QString( us_tr( "%1: %2 of %3" ).arg( us_tr( timer->isActive() ? "Running" : "Stopped" ) ).arg( pos + 1 ).arg( hplc_selected_files.size() ) ) );
-      lbl_current-> setText( hplc_win->lb_files->item( hplc_selected_files[ pos ] )->text() );
+      le_current -> setText( hplc_win->lb_files->item( hplc_selected_files[ pos ] )->text() );
 
-      if ( cb_save->isChecked() )
-      {
+      if ( has_errors ) {
+         hplc_win->cb_eb->setChecked( true );
+         hplc_win->set_eb();
+      }
+
+      if ( cb_save->isChecked() ) {
          save_plot();
       }
    }
@@ -517,7 +567,7 @@ void US_Hydrodyn_Saxs_Hplc_Movie::save_plot()
    {
       if ( hplc_win->plot_ref->isVisible() )
       {
-         save_plot( hplc_win->plot_dist, hplc_win->plot_ref, hplc_win->plot_errors, le_save->text() );
+         save_plot( hplc_win->plot_dist, hplc_win->plot_errors, hplc_win->plot_ref, le_save->text() );
       } else {
          save_plot( hplc_win->plot_dist, hplc_win->plot_errors, le_save->text() );
       }
@@ -545,16 +595,18 @@ void US_Hydrodyn_Saxs_Hplc_Movie::save_plot( QWidget *plot, QString tag )
 
 void US_Hydrodyn_Saxs_Hplc_Movie::join_maps( QPixmap & m1, QPixmap & m2 )
 {
-   int m1h = m1.height();
-   int m2h = m2.height();
+   int width = std::max(m1.width(), m2.width());
+   int height = m1.height() + m2.height();
 
-#if QT_VERSION < 0x040000
-   m1.resize( m1.width() > m2.width() ? m1.width() : m2.width(), m1h + m2h );
-#else
-   m1 = m1.copy( 0, 0, m1.width() > m2.width() ? m1.width() : m2.width(), m1h + m2h );
-#endif
-   QPainter paint( &m1 );
-   paint.drawPixmap( 0, m1h, m2 );
+   QPixmap combined(width, height);
+   combined.fill(Qt::transparent);  // Preserve transparency if needed
+
+   QPainter painter(&combined);
+   painter.drawPixmap(0, 0, m1);
+   painter.drawPixmap(0, m1.height(), m2);
+   painter.end();
+
+   m1 = combined;  // Update m1 to be the joined image
 }
 
 void US_Hydrodyn_Saxs_Hplc_Movie::save_plot( QWidget *plot, QWidget *plot2, QWidget *plot3, QString tag )
@@ -593,8 +645,19 @@ void US_Hydrodyn_Saxs_Hplc_Movie::save_plot( QPixmap & qPix, QString tag, int my
    paint.setPen( Qt::blue );
    paint.setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold) );
    // paint.drawText( 5, 5, hplc_win->lb_files->item( hplc_selected_files[ mypos ] )->text() );
-   paint.drawText( qPix.rect(), Qt::AlignBottom | Qt::AlignLeft, hplc_win->lb_files->item( hplc_selected_files[ mypos ] )->text() );
+
+   QString curvefname = hplc_win->lb_files->item( hplc_selected_files[ mypos ] )->text();
+   QString qvaluetag  = "";
+
+   static QRegExp rx_q     ( "It_q(\\d+_\\d+)" );
+   if ( rx_q.indexIn( curvefname ) != -1 ) {
+      qvaluetag = QString( "q: %1 " ).arg( rx_q.cap( 1 ).replace( "_", "." ).toDouble() );
+   }
+
+   paint.drawText( qPix.rect(), Qt::AlignBottom | Qt::AlignLeft, QString( "%1%2" ).arg( qvaluetag ).arg( curvefname ));
+
    QString frame = QString( "%1" ).arg( mypos + 1 );
+
    while( frame.length() < 5 )
    {
       frame = "0" + frame;

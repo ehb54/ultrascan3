@@ -11089,7 +11089,7 @@ bool US_Saxs_Util::write_iq( QString & name, QString &msg, vector < double > &q,
 
    for ( int i = 0; i < (int) q.size(); ++i )
    {
-      ts << QString("").sprintf( "%.6e\t%.6e\n", q[ i ], I[ i ] );
+      ts << QString::asprintf( "%.6e\t%.6e\n", q[ i ], I[ i ] );
    }
    f.close();
    return true;
@@ -11159,7 +11159,7 @@ bool US_Saxs_Util::mwt(
 
    if ( fabs( q.back() - qmax ) > .01 )
    {
-      notes = QString( "" ).sprintf( "MW[RT] is calibrated for qmax %.2f and this qmax is %.3f", qmax, q.back() );
+      notes = QString::asprintf( "MW[RT] is calibrated for qmax %.2f and this qmax is %.3f", qmax, q.back( ) );
    }
 
    vector < double > dq ( q.size(), -1e0 );

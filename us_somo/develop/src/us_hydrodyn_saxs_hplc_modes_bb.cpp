@@ -292,7 +292,7 @@ void US_Hydrodyn_Saxs_Hplc::blanks_start()
                   it++ )
             {
                t   .push_back( it->first );
-               t_qs.push_back( QString( "" ).sprintf( "%.8f", it->first ) );
+               t_qs.push_back( QString::asprintf( "%.8f", it->first ) );
                if ( it->second.count( qv ) )
                {
                   I.push_back( it->second[ qv ] );
@@ -1001,7 +1001,7 @@ void US_Hydrodyn_Saxs_Hplc::baseline_enables()
 
    if ( baseline_test_mode ) {
       disable_all();
-      ShowHide::hide_widgets( wheel_below_widgets, false );
+      ShowHide::hide_widgets( wheel_below_widgets, always_hide_widgets, false );
       pb_wheel_cancel        ->setEnabled( true );
       pb_line_width          ->setEnabled( true );
       pb_color_rotate        ->setEnabled( true );
@@ -1013,7 +1013,7 @@ void US_Hydrodyn_Saxs_Hplc::baseline_enables()
       return;
    }
 
-   ShowHide::hide_widgets( wheel_below_widgets );
+   ShowHide::hide_widgets( wheel_below_widgets, always_hide_widgets );
 
    pb_line_width          ->setEnabled( true );
    pb_color_rotate        ->setEnabled( true );

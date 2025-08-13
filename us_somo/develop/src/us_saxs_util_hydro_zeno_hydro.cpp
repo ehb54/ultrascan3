@@ -2203,18 +2203,18 @@ namespace zeno {
         ===========================================================
       */
 
-      typedef struct {
-         char fbod[USZ_MAX_ID_SIZE];
-         char fzno[USZ_MAX_ID_SIZE];
-         char fznr[USZ_MAX_ID_SIZE];
-         char fstk[USZ_MAX_ID_SIZE];
-         char fdfl[USZ_MAX_ID_SIZE];
-         char fefl[USZ_MAX_ID_SIZE];
-         char fzh[USZ_MAX_ID_SIZE];
-         char fih[USZ_MAX_ID_SIZE];
-         char fsh[USZ_MAX_ID_SIZE];
-         char fph[USZ_MAX_ID_SIZE];
-      } Cfilenames;
+      // typedef struct {
+      //    char fbod[USZ_MAX_ID_SIZE];
+      //    char fzno[USZ_MAX_ID_SIZE];
+      //    char fznr[USZ_MAX_ID_SIZE];
+      //    char fstk[USZ_MAX_ID_SIZE];
+      //    char fdfl[USZ_MAX_ID_SIZE];
+      //    char fefl[USZ_MAX_ID_SIZE];
+      //    char fzh[USZ_MAX_ID_SIZE];
+      //    char fih[USZ_MAX_ID_SIZE];
+      //    char fsh[USZ_MAX_ID_SIZE];
+      //    char fph[USZ_MAX_ID_SIZE];
+      // } Cfilenames;
       // static Cfilenames *Tfilenames = (Cfilenames*) Xfilenames;
       typedef struct {
          int nbod;
@@ -2243,40 +2243,40 @@ namespace zeno {
          unsigned int silent;
       } Cshush;
       static Cshush *Tshush = (Cshush*) Xshush;
-      typedef struct {
-         int sphere_code;
-         int triangle_code;
-         int disk_code;
-         int open_cylinder_code;
-         int solid_cylinder_code;
-         int donut_code;
-         int ellipsoid_code;
-         int cube_code;
-         int pillar_code;
-         int skin_code;
-         int units_code;
-         int hunits_code;
-         int meter_code;
-         int cm_code;
-         int nm_code;
-         int angstrom_code;
-         int length_code;
-         int temp_code;
-         int celcius_code;
-         int kelvin_code;
-         int mass_code;
-         int da_code;
-         int kda_code;
-         int gram_code;
-         int kg_code;
-         int visc_code;
-         int poise_code;
-         int cp_code;
-         int solvent_code;
-         int water_code;
-         int rlaunch_code;
-         int bf_code;
-      } Cmorse;
+      // typedef struct {
+      //    int sphere_code;
+      //    int triangle_code;
+      //    int disk_code;
+      //    int open_cylinder_code;
+      //    int solid_cylinder_code;
+      //    int donut_code;
+      //    int ellipsoid_code;
+      //    int cube_code;
+      //    int pillar_code;
+      //    int skin_code;
+      //    int units_code;
+      //    int hunits_code;
+      //    int meter_code;
+      //    int cm_code;
+      //    int nm_code;
+      //    int angstrom_code;
+      //    int length_code;
+      //    int temp_code;
+      //    int celcius_code;
+      //    int kelvin_code;
+      //    int mass_code;
+      //    int da_code;
+      //    int kda_code;
+      //    int gram_code;
+      //    int kg_code;
+      //    int visc_code;
+      //    int poise_code;
+      //    int cp_code;
+      //    int solvent_code;
+      //    int water_code;
+      //    int rlaunch_code;
+      //    int bf_code;
+      // } Cmorse;
       //puts("z1");
       // static Cmorse *Tmorse = (Cmorse*) Xmorse;
       static int T1,T2;
@@ -5608,9 +5608,9 @@ namespace zeno {
       /*
         Interpret the next input string
       */
-      typedef struct {
-         unsigned int silent;
-      } Cshush;
+      // typedef struct {
+      //    unsigned int silent;
+      // } Cshush;
       // static Cshush *Tshush = (Cshush*) Xshush;
       typedef struct {
          int nbod;
@@ -5884,40 +5884,40 @@ namespace zeno {
                  int /* P2 */,
                  int /* P1 */)
    {
-      typedef struct {
-         int sphere_code;
-         int triangle_code;
-         int disk_code;
-         int open_cylinder_code;
-         int solid_cylinder_code;
-         int donut_code;
-         int ellipsoid_code;
-         int cube_code;
-         int pillar_code;
-         int skin_code;
-         int units_code;
-         int hunits_code;
-         int meter_code;
-         int cm_code;
-         int nm_code;
-         int angstrom_code;
-         int length_code;
-         int temp_code;
-         int celcius_code;
-         int kelvin_code;
-         int mass_code;
-         int da_code;
-         int kda_code;
-         int gram_code;
-         int kg_code;
-         int visc_code;
-         int poise_code;
-         int cp_code;
-         int solvent_code;
-         int water_code;
-         int rlaunch_code;
-         int bf_code;
-      } Cmorse;
+      // typedef struct {
+      //    int sphere_code;
+      //    int triangle_code;
+      //    int disk_code;
+      //    int open_cylinder_code;
+      //    int solid_cylinder_code;
+      //    int donut_code;
+      //    int ellipsoid_code;
+      //    int cube_code;
+      //    int pillar_code;
+      //    int skin_code;
+      //    int units_code;
+      //    int hunits_code;
+      //    int meter_code;
+      //    int cm_code;
+      //    int nm_code;
+      //    int angstrom_code;
+      //    int length_code;
+      //    int temp_code;
+      //    int celcius_code;
+      //    int kelvin_code;
+      //    int mass_code;
+      //    int da_code;
+      //    int kda_code;
+      //    int gram_code;
+      //    int kg_code;
+      //    int visc_code;
+      //    int poise_code;
+      //    int cp_code;
+      //    int solvent_code;
+      //    int water_code;
+      //    int rlaunch_code;
+      //    int bf_code;
+      // } Cmorse;
       // static Cmorse *Tmorse = (Cmorse*) Xmorse;
       typedef struct {
          int nbod;
@@ -10747,8 +10747,8 @@ namespace zeno {
 //       ftnscopy((shore+4),2,(dateline+14),2,NULL);
 //       ftnscopy((shore+6),2,(dateline+17),2,NULL);
 //       READ(INTERNAL,shore,8,LISTIO,INT4,&Trandom->idum,0);
-      QString time = QString( "" ).sprintf( "%d%d%d%d",
-                                            QTime::currentTime().hour(),
+      QString time = QString::asprintf( "%d%d%d%d",
+QTime::currentTime( ).hour(),
                                             QTime::currentTime().minute(),
                                             QTime::currentTime().second(),
                                             QTime::currentTime().msec() );
@@ -10760,18 +10760,18 @@ namespace zeno {
 
    void gettime( char *start )
    {
-      typedef struct {
-         int nbod;
-         int nzno;
-         int nznr;
-         int nstk;
-         int ndfl;
-         int nefl;
-         int nzh;
-         int nih;
-         int nsh;
-         int nph;
-      } Cfilenumbers;
+      // typedef struct {
+      //    int nbod;
+      //    int nzno;
+      //    int nznr;
+      //    int nstk;
+      //    int ndfl;
+      //    int nefl;
+      //    int nzh;
+      //    int nih;
+      //    int nsh;
+      //    int nph;
+      // } Cfilenumbers;
 //       static Cfilenumbers *Tfilenumbers = (Cfilenumbers*) Xfilenumbers;
       // static char datest[10],timest[8];
       /*
@@ -10803,9 +10803,9 @@ namespace zeno {
              int *k1,
              int *k2)
    {
-      typedef struct {
-         int seed;
-      } Crandom;
+      // typedef struct {
+      //    int seed;
+      // } Crandom;
 //       static Crandom *Trandom = (Crandom*) Xrandom;
       static int jrand;
       static float rr;
@@ -13799,9 +13799,9 @@ bool US_Hydrodyn_Zeno::run(
    //    .arg( options->zeno_surface_steps ).toLatin1().data();
 
 
-   QString qs_zeno     = QString( "" ).sprintf( "z%ut", options->zeno_zeno_steps     );
-   QString qs_interior = QString( "" ).sprintf( "i%ut", options->zeno_interior_steps );
-   QString qs_surface  = QString( "" ).sprintf( "s%ut", options->zeno_surface_steps  );
+   QString qs_zeno     = QString::asprintf( "z%ut", options->zeno_zeno_steps );
+   QString qs_interior = QString::asprintf( "i%ut", options->zeno_interior_steps );
+   QString qs_surface  = QString::asprintf( "s%ut", options->zeno_surface_steps );
 
    int progress_steps = 0;
 
@@ -14491,9 +14491,9 @@ bool US_Saxs_Util::calc_zeno_hydro()
                                 " Frictional Ratio           : %2\n"
                                 " Radius of Gyration         : %3\n"
                                  ) )
-                     .arg( QString( "" ).sprintf( "%4.2e S" , this_data.results.s20w ) )
-                     .arg( QString( "" ).sprintf( "%3.2f"   , this_data.results.ff0  ) )
-                     .arg( QString( "" ).sprintf( "%4.2e nm", this_data.results.rg   ) )
+                     .arg( QString::asprintf( "%4.2e S" , this_data.results.s20w ) )
+                     .arg( QString::asprintf( "%3.2f"   , this_data.results.ff0 ) )
+                     .arg( QString::asprintf( "%4.2e nm", this_data.results.rg ) )
                      ;
 
               if ( zeno_cxx ) {
@@ -14503,9 +14503,9 @@ bool US_Saxs_Util::calc_zeno_hydro()
                                 " Tr. Frictional coefficient : %2\n"
                                 " Tr. Diffusion Coefficient D: %3\n"
                                  )
-                        .arg( QString( "" ).sprintf( "%4.2e cm^3/g"  , this_data.results.viscosity ) )
-                        .arg( QString( "" ).sprintf( "%4.2e g/s"     , this_data.tra_fric_coef ) )
-                        .arg( QString( "" ).sprintf( "%4.2e cm^2/sec", this_data.results.D20w ) )
+                        .arg( QString::asprintf( "%4.2e cm^3/g"  , this_data.results.viscosity ) )
+                        .arg( QString::asprintf( "%4.2e g/s"     , this_data.tra_fric_coef ) )
+                        .arg( QString::asprintf( "%4.2e cm^2/sec", this_data.results.D20w ) )
                         ;
                   }		  
 

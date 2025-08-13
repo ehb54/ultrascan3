@@ -200,13 +200,11 @@ void US_Hydrodyn_Saxs_Hplc::update_plot_errors_group()
 
 #if defined( DEBUG_RESCALE )
    qDebug() <<
-      QString("").sprintf(
-                          "hplc_plots::update_plot_errors_group\n"
-                          "\tminx %e maxx %e\n"
-                          "\tminy %e maxy %e\n"
-                          , minx, maxx
-                          , -maxy, maxy
-                          );
+      QString::asprintf( "hplc_plots::update_plot_errors_group\n"
+                         "\tminx %e maxx %e\n"
+                         "\tminy %e maxy %e\n"
+                         , minx, maxx
+                         , -maxy, maxy );
 #endif
 
    //       plot_errors_zoomer = new ScrollZoomer(plot_errors->canvas());
@@ -392,9 +390,11 @@ void US_Hydrodyn_Saxs_Hplc::update_plot_errors( vector < double > &grid,
                                                             ) ) );
       }         
 
-      plot_errors->setAxisScale( QwtPlot::xBottom, x[ 0 ], x.back() );
-      plot_errors->setAxisScale( QwtPlot::yLeft  , -maxy * 1.2e0 , maxy * 1.2e0 );
-      plot_errors_zoomer->setZoomBase();
+      if ( !suppress_replot ) {
+         plot_errors->setAxisScale( QwtPlot::xBottom, x[ 0 ], x.back() );
+         plot_errors->setAxisScale( QwtPlot::yLeft  , -maxy * 1.2e0 , maxy * 1.2e0 );
+         plot_errors_zoomer->setZoomBase();
+      }
       
 #if defined( DEBUG_RESCALE )
       {
@@ -402,13 +402,12 @@ void US_Hydrodyn_Saxs_Hplc::update_plot_errors( vector < double > &grid,
          tso << "---\n";
 
          tso <<
-            QString("").sprintf(
-                                "hplc_plots::update_plot_errors\n"
-                                "\tminx %e maxx %e\n"
-                                "\tminy %e maxy %e\n"
-                                , x[0], x.back()
-                                , -maxy, maxy
-                                );
+            QString::asprintf( "hplc_plots::update_plot_errors\n"
+                               "\tminx %e maxx %e\n"
+                               "\tminy %e maxy %e\n"
+                               , x[0], x.back( )
+                               , -maxy, maxy
+                               );
          tso << "zoomrect "
              << plot_errors_zoomer->zoomRect().left() << " , "
              << plot_errors_zoomer->zoomRect().right() << " : " 
@@ -600,7 +599,7 @@ void US_Hydrodyn_Saxs_Hplc::errors()
       connect(((QObject*)guinier_plot       ->axisWidget(QwtPlot::xBottom)) , SIGNAL(scaleDivChanged () ), usp_guinier_plot_errors , SLOT(scaleDivChangedXSlot () ), Qt::UniqueConnection );
       connect(((QObject*)guinier_plot_errors->axisWidget(QwtPlot::xBottom)) , SIGNAL(scaleDivChanged () ), usp_guinier_plot        , SLOT(scaleDivChangedXSlot () ), Qt::UniqueConnection );
 
-      ShowHide::hide_widgets( guinier_errors_widgets, guinier_plot_errors->isVisible() );
+      ShowHide::hide_widgets( guinier_errors_widgets, always_hide_widgets, guinier_plot_errors->isVisible() );
       guinier_plot->enableAxis( QwtPlot::xBottom, !guinier_plot_errors->isVisible() );
 
       resize_guinier_plots();
@@ -845,10 +844,15 @@ void US_Hydrodyn_Saxs_Hplc::set_eb()
 }
 
 
-void US_Hydrodyn_Saxs_Hplc::plot_files()
+void US_Hydrodyn_Saxs_Hplc::plot_files( bool save_zoom_state ) 
 {
    // qDebug() << "plot files";
-   plot_dist->detachItems( QwtPlotItem::Rtti_PlotCurve ); plot_dist->detachItems( QwtPlotItem::Rtti_PlotMarker );;
+   plot_dist->detachItems( QwtPlotItem::Rtti_PlotCurve );
+
+   if ( current_mode != MODE_BROADEN ) {
+      plot_dist->detachItems( QwtPlotItem::Rtti_PlotMarker );
+   }
+
    bool any_selected = false;
    double minx = 0e0;
    double maxx = 1e0;
@@ -957,12 +961,16 @@ void US_Hydrodyn_Saxs_Hplc::plot_files()
 
    // enable zooming
 
-   if ( any_selected ) {
+   if ( any_selected && !save_zoom_state ) {
+      // qDebug() << "Plot files, save_zoom_state not active\n";
+
       plot_dist->setAxisScale( QwtPlot::xBottom, minx, maxx );
       plot_dist->setAxisScale( QwtPlot::yLeft  , miny * 0.9e0 , maxy * 1.1e0 );
       plot_dist_zoomer->setZoomBase();
       plot_errors->setAxisScale( QwtPlot::xBottom, minx, maxx );
       plot_errors_zoomer->setZoomBase();
+   } else {
+      qDebug() << "Plot files, save_zoom_state active\n";
    }
    
 #if defined( DEBUG_RESCALE )
@@ -971,13 +979,11 @@ void US_Hydrodyn_Saxs_Hplc::plot_files()
       tso << "---\n";
 
       tso <<
-         QString("").sprintf(
-                             "hplc_plots::plot_files\n"
-                             "\tminx %e maxx %e\n"
-                             "\tminy %e maxy %e\n"
-                             , minx, maxx
-                             , miny, maxy
-                             );
+         QString::asprintf( "hplc_plots::plot_files\n"
+                            "\tminx %e maxx %e\n"
+                            "\tminy %e maxy %e\n"
+                            , minx, maxx
+                            , miny, maxy );
       tso << "zoomrect "
           << plot_dist_zoomer->zoomRect().left() << " , "
           << plot_dist_zoomer->zoomRect().right() << " : " 
@@ -1369,13 +1375,11 @@ void US_Hydrodyn_Saxs_Hplc::rescale()
       tso << "---\n";
 
       tso <<
-         QString("").sprintf(
-                             "hplc_plots::rescale\n"
-                             "\tminx %e maxx %e\n"
-                             "\tminy %e maxy %e\n"
-                             , minx, maxx
-                             , miny, maxy
-                             );
+         QString::asprintf( "hplc_plots::rescale\n"
+                            "\tminx %e maxx %e\n"
+                            "\tminy %e maxy %e\n"
+                            , minx, maxx
+                            , miny, maxy );
       tso << "zoomrect "
           << plot_dist_zoomer->zoomRect().left() << " , "
           << plot_dist_zoomer->zoomRect().right() << " : " 

@@ -2250,21 +2250,19 @@ QString US_Hydrodyn_Pdb_Tool::csv_to_pdb( csv &csv1, bool only_atoms )
       }
 
       s +=
-         QString("")
-         .sprintf(     
-                  "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
-                  csv1.data[ i ][ 5  ].toUInt(),
-                  csv1.data[ i ][ 4  ].toLatin1().data(),
-                  csv1.data[ i ][ 2  ].toLatin1().data(),
-                  csv1.data[ i ][ 1  ].toLatin1().data(),
-                  csv1.data[ i ][ 3  ].toUInt(),
-                  csv1.data[ i ][ 8  ].toFloat(),
-                  csv1.data[ i ][ 9  ].toFloat(),
-                  csv1.data[ i ][ 10 ].toFloat(),
-                  csv1.data[ i ][ 11 ].toFloat(),
-                  csv1.data[ i ][ 12 ].toFloat(),
-                  csv1.data[ i ][ 13 ].toLatin1().data()
-                  );
+         QString::asprintf( "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
+                            csv1.data[ i ][ 5  ].toUInt( ),
+                            csv1.data[ i ][ 4  ].toLatin1().data(),
+                            csv1.data[ i ][ 2  ].toLatin1().data(),
+                            csv1.data[ i ][ 1  ].toLatin1().data(),
+                            csv1.data[ i ][ 3  ].toUInt(),
+                            csv1.data[ i ][ 8  ].toFloat(),
+                            csv1.data[ i ][ 9  ].toFloat(),
+                            csv1.data[ i ][ 10 ].toFloat(),
+                            csv1.data[ i ][ 11 ].toFloat(),
+                            csv1.data[ i ][ 12 ].toFloat(),
+                            csv1.data[ i ][ 13 ].toLatin1().data()
+                            );
    }
    if ( !only_atoms )
    {
@@ -2313,20 +2311,18 @@ QStringList US_Hydrodyn_Pdb_Tool::csv_to_pdb_qsl( csv &csv1, bool only_atoms )
       }
 
       qsl <<
-         QString("")
-         .sprintf(     
-                  "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
-                  csv1.data[ i ][ 5  ].toUInt(),
-                  csv1.data[ i ][ 4  ].toLatin1().data(),
-                  csv1.data[ i ][ 2  ].toLatin1().data(),
-                  csv1.data[ i ][ 1  ].toLatin1().data(),
-                  csv1.data[ i ][ 3  ].toUInt(),
-                  csv1.data[ i ][ 8  ].toFloat(),
-                  csv1.data[ i ][ 9  ].toFloat(),
-                  csv1.data[ i ][ 10 ].toFloat(),
-                  csv1.data[ i ][ 11 ].toFloat(),
-                  csv1.data[ i ][ 12 ].toFloat(),
-                  csv1.data[ i ][ 13 ].toLatin1().data()
+         QString::asprintf( "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
+                            csv1.data[ i ][ 5  ].toUInt( ),
+                            csv1.data[ i ][ 4  ].toLatin1().data(),
+                            csv1.data[ i ][ 2  ].toLatin1().data(),
+                            csv1.data[ i ][ 1  ].toLatin1().data(),
+                            csv1.data[ i ][ 3  ].toUInt(),
+                            csv1.data[ i ][ 8  ].toFloat(),
+                            csv1.data[ i ][ 9  ].toFloat(),
+                            csv1.data[ i ][ 10 ].toFloat(),
+                            csv1.data[ i ][ 11 ].toFloat(),
+                            csv1.data[ i ][ 12 ].toFloat(),
+                            csv1.data[ i ][ 13 ].toLatin1().data()
                   );
    }
    if ( !only_atoms )
@@ -3723,45 +3719,38 @@ bool US_Hydrodyn_Pdb_Tool::sol2wat( QTreeWidget *lv, double use_radius, QString 
                            
                         report_SOLs[ csvi ] +=
                            QString( "------------------------------------------------------------------------\n" )
-                           + QString("")
-                           .sprintf(     
-                                    "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
-                                    tmp_csv.data[ csvi ][ 5  ].toUInt(),
-                                    tmp_csv.data[ csvi ][ 4  ].toLatin1().data(),
-                                    tmp_csv.data[ csvi ][ 2  ].toLatin1().data(),
-                                    tmp_csv.data[ csvi ][ 1  ].toLatin1().data(),
-                                    tmp_csv.data[ csvi ][ 3  ].toUInt(),
-                                    tmp_csv.data[ csvi ][ 8  ].toFloat(),
-                                    tmp_csv.data[ csvi ][ 9  ].toFloat(),
-                                    tmp_csv.data[ csvi ][ 10 ].toFloat(),
-                                    tmp_csv.data[ csvi ][ 11 ].toFloat(),
-                                    tmp_csv.data[ csvi ][ 12 ].toFloat(),
-                                    tmp_csv.data[ csvi ][ 13 ].toLatin1().data()
-                                         )
-                           + QString("")
-                           .sprintf(     
-                                    "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
-                                    tmp_csv.data[ csvj ][ 5  ].toUInt(),
-                                    tmp_csv.data[ csvj ][ 4  ].toLatin1().data(),
-                                    tmp_csv.data[ csvj ][ 2  ].toLatin1().data(),
-                                    tmp_csv.data[ csvj ][ 1  ].toLatin1().data(),
-                                    tmp_csv.data[ csvj ][ 3  ].toUInt(),
-                                    tmp_csv.data[ csvj ][ 8  ].toFloat(),
-                                    tmp_csv.data[ csvj ][ 9  ].toFloat(),
-                                    tmp_csv.data[ csvj ][ 10 ].toFloat(),
-                                    tmp_csv.data[ csvj ][ 11 ].toFloat(),
-                                    tmp_csv.data[ csvj ][ 12 ].toFloat(),
-                                    tmp_csv.data[ csvj ][ 13 ].toLatin1().data()
-                                         )
-                           + QString( "" )
-                           .sprintf(
-                                    "Distance                              : %8.4f\n"
-                                    "vdW radius of non-SOL                 : %8.2f\n"
-                                    "computed vdW radius of SOL if tangent : %8.4f\n",
-                                    d,
-                                    compare_vdw[ j ],
-                                    d - compare_vdw[ j ]
-                                    )
+                           + QString::asprintf( "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
+                                                tmp_csv.data[ csvi ][ 5  ].toUInt( ),
+                                                tmp_csv.data[ csvi ][ 4  ].toLatin1().data(),
+                                                tmp_csv.data[ csvi ][ 2  ].toLatin1().data(),
+                                                tmp_csv.data[ csvi ][ 1  ].toLatin1().data(),
+                                                tmp_csv.data[ csvi ][ 3  ].toUInt(),
+                                                tmp_csv.data[ csvi ][ 8  ].toFloat(),
+                                                tmp_csv.data[ csvi ][ 9  ].toFloat(),
+                                                tmp_csv.data[ csvi ][ 10 ].toFloat(),
+                                                tmp_csv.data[ csvi ][ 11 ].toFloat(),
+                                                tmp_csv.data[ csvi ][ 12 ].toFloat(),
+                                                tmp_csv.data[ csvi ][ 13 ].toLatin1().data()
+                                                )
+                           + QString::asprintf( "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
+                                                tmp_csv.data[ csvj ][ 5  ].toUInt( ),
+                                                tmp_csv.data[ csvj ][ 4  ].toLatin1().data(),
+                                                tmp_csv.data[ csvj ][ 2  ].toLatin1().data(),
+                                                tmp_csv.data[ csvj ][ 1  ].toLatin1().data(),
+                                                tmp_csv.data[ csvj ][ 3  ].toUInt(),
+                                                tmp_csv.data[ csvj ][ 8  ].toFloat(),
+                                                tmp_csv.data[ csvj ][ 9  ].toFloat(),
+                                                tmp_csv.data[ csvj ][ 10 ].toFloat(),
+                                                tmp_csv.data[ csvj ][ 11 ].toFloat(),
+                                                tmp_csv.data[ csvj ][ 12 ].toFloat(),
+                                                tmp_csv.data[ csvj ][ 13 ].toLatin1().data()
+                                                )
+                           + QString::asprintf( "Distance                              : %8.4f\n"
+                                                "vdW radius of non-SOL                 : %8.2f\n"
+                                                "computed vdW radius of SOL if tangent : %8.4f\n",
+                                                d,
+                                                compare_vdw[ j ],
+                                                d - compare_vdw[ j ] )
                            ;
 
                         // new detail info
@@ -3877,36 +3866,32 @@ bool US_Hydrodyn_Pdb_Tool::sol2wat( QTreeWidget *lv, double use_radius, QString 
    report_header += "\n";
 
    report_header +=
-      QString("")
-      .sprintf(     
-               "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
-               tmp_csv.data[ minimum_computed_radius_posi ][ 5  ].toUInt(),
-               tmp_csv.data[ minimum_computed_radius_posi ][ 4  ].toLatin1().data(),
-               tmp_csv.data[ minimum_computed_radius_posi ][ 2  ].toLatin1().data(),
-               tmp_csv.data[ minimum_computed_radius_posi ][ 1  ].toLatin1().data(),
-               tmp_csv.data[ minimum_computed_radius_posi ][ 3  ].toUInt(),
-               tmp_csv.data[ minimum_computed_radius_posi ][ 8  ].toFloat(),
-               tmp_csv.data[ minimum_computed_radius_posi ][ 9  ].toFloat(),
-               tmp_csv.data[ minimum_computed_radius_posi ][ 10 ].toFloat(),
-               tmp_csv.data[ minimum_computed_radius_posi ][ 11 ].toFloat(),
-               tmp_csv.data[ minimum_computed_radius_posi ][ 12 ].toFloat(),
-               tmp_csv.data[ minimum_computed_radius_posi ][ 13 ].toLatin1().data()
-                    )
-      + QString("")
-      .sprintf(     
-               "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
-               tmp_csv.data[ minimum_computed_radius_posj ][ 5  ].toUInt(),
-               tmp_csv.data[ minimum_computed_radius_posj ][ 4  ].toLatin1().data(),
-               tmp_csv.data[ minimum_computed_radius_posj ][ 2  ].toLatin1().data(),
-               tmp_csv.data[ minimum_computed_radius_posj ][ 1  ].toLatin1().data(),
-               tmp_csv.data[ minimum_computed_radius_posj ][ 3  ].toUInt(),
-               tmp_csv.data[ minimum_computed_radius_posj ][ 8  ].toFloat(),
-               tmp_csv.data[ minimum_computed_radius_posj ][ 9  ].toFloat(),
-               tmp_csv.data[ minimum_computed_radius_posj ][ 10 ].toFloat(),
-               tmp_csv.data[ minimum_computed_radius_posj ][ 11 ].toFloat(),
-               tmp_csv.data[ minimum_computed_radius_posj ][ 12 ].toFloat(),
-               tmp_csv.data[ minimum_computed_radius_posj ][ 13 ].toLatin1().data()
-                    )
+      QString::asprintf( "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
+                         tmp_csv.data[ minimum_computed_radius_posi ][ 5  ].toUInt( ),
+                         tmp_csv.data[ minimum_computed_radius_posi ][ 4  ].toLatin1().data(),
+                         tmp_csv.data[ minimum_computed_radius_posi ][ 2  ].toLatin1().data(),
+                         tmp_csv.data[ minimum_computed_radius_posi ][ 1  ].toLatin1().data(),
+                         tmp_csv.data[ minimum_computed_radius_posi ][ 3  ].toUInt(),
+                         tmp_csv.data[ minimum_computed_radius_posi ][ 8  ].toFloat(),
+                         tmp_csv.data[ minimum_computed_radius_posi ][ 9  ].toFloat(),
+                         tmp_csv.data[ minimum_computed_radius_posi ][ 10 ].toFloat(),
+                         tmp_csv.data[ minimum_computed_radius_posi ][ 11 ].toFloat(),
+                         tmp_csv.data[ minimum_computed_radius_posi ][ 12 ].toFloat(),
+                         tmp_csv.data[ minimum_computed_radius_posi ][ 13 ].toLatin1().data()
+                         )
+      + QString::asprintf( "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
+                           tmp_csv.data[ minimum_computed_radius_posj ][ 5  ].toUInt( ),
+                           tmp_csv.data[ minimum_computed_radius_posj ][ 4  ].toLatin1().data(),
+                           tmp_csv.data[ minimum_computed_radius_posj ][ 2  ].toLatin1().data(),
+                           tmp_csv.data[ minimum_computed_radius_posj ][ 1  ].toLatin1().data(),
+                           tmp_csv.data[ minimum_computed_radius_posj ][ 3  ].toUInt(),
+                           tmp_csv.data[ minimum_computed_radius_posj ][ 8  ].toFloat(),
+                           tmp_csv.data[ minimum_computed_radius_posj ][ 9  ].toFloat(),
+                           tmp_csv.data[ minimum_computed_radius_posj ][ 10 ].toFloat(),
+                           tmp_csv.data[ minimum_computed_radius_posj ][ 11 ].toFloat(),
+                           tmp_csv.data[ minimum_computed_radius_posj ][ 12 ].toFloat(),
+                           tmp_csv.data[ minimum_computed_radius_posj ][ 13 ].toLatin1().data()
+                           )
       ;
                              
    report_header += "\n";
@@ -3920,16 +3905,14 @@ bool US_Hydrodyn_Pdb_Tool::sol2wat( QTreeWidget *lv, double use_radius, QString 
             ++it ) {
          if ( it->second > 1 ) {
             report_header +=
-               QString( "" )
-               .sprintf(     
-                        "ATOM  %5d%5s%4s %1s%4d is close to %d non-SOL atoms\n",
-                        tmp_csv.data[ it->first ][ 5  ].toUInt(),
-                        tmp_csv.data[ it->first ][ 4  ].toLatin1().data(),
-                        tmp_csv.data[ it->first ][ 2  ].toLatin1().data(),
-                        tmp_csv.data[ it->first ][ 1  ].toLatin1().data(),
-                        tmp_csv.data[ it->first ][ 3  ].toUInt(),
-                        it->second
-                             )
+               QString::asprintf( "ATOM  %5d%5s%4s %1s%4d is close to %d non-SOL atoms\n",
+                                  tmp_csv.data[ it->first ][ 5  ].toUInt( ),
+                                  tmp_csv.data[ it->first ][ 4  ].toLatin1().data(),
+                                  tmp_csv.data[ it->first ][ 2  ].toLatin1().data(),
+                                  tmp_csv.data[ it->first ][ 1  ].toLatin1().data(),
+                                  tmp_csv.data[ it->first ][ 3  ].toUInt(),
+                                  it->second
+                                  )
                ;
          }
       }
@@ -3968,7 +3951,7 @@ bool US_Hydrodyn_Pdb_Tool::sol2wat( QTreeWidget *lv, double use_radius, QString 
             tmp_csv.data[ i ][ 2 ] = "WAT";
             if ( chosen_radius_for_SOLs.count( tmp_csv.data[ i ][ 3 ] ) &&
                  chosen_radius_for_SOLs[ tmp_csv.data[ i ][ 3 ] ].count( tmp_csv.data[ i ][ 5 ] ) ) {
-               tmp_csv.data[ i ][ 12 ] = QString( "" ).sprintf( "%6.2f", chosen_radius_for_SOLs[ tmp_csv.data[ i ][ 3 ] ][ tmp_csv.data[ i ][ 5 ] ] );
+               tmp_csv.data[ i ][ 12 ] = QString::asprintf( "%6.2f", chosen_radius_for_SOLs[ tmp_csv.data[ i ][ 3 ] ][ tmp_csv.data[ i ][ 5 ] ] );
                // QTextStream( stderr ) <<
                //    QString( us_tr( "WAT pdb Tf radius for WAT %1 OW %2 is %3 but chosen_radius is %4\n" ) )
                //    .arg( tmp_csv.data[ i ][ 3 ] )
@@ -5892,7 +5875,7 @@ void US_Hydrodyn_Pdb_Tool::split_pdb()
                
                   tso << QString("HEADER    split from %1: Model %2 of %3\n").arg( f.fileName() ).arg( pos + 1 ).arg( model_count );
                   tso << model_header;
-                  tso << QString("").sprintf("MODEL  %7s\n", model_name_vector[ pos ].toLatin1().data() );
+                  tso << QString::asprintf( "MODEL  %7s\n", model_name_vector[ pos ].toLatin1( ).data() );
                   tso << model_lines;
                   tso << "ENDMDL\nEND\n";
                   
@@ -6345,7 +6328,7 @@ void US_Hydrodyn_Pdb_Tool::hybrid_split()
       {
          ts_out <<
             QString( "MODEL     %1\n%2\nENDMDL\n" )
-            .arg( QString( "" ).sprintf( "%4u", i + 1 ) )
+            .arg( QString::asprintf( "%4u", i + 1 ) )
             .arg( it->second[ i ] );
       }
       ts_out << "END\n";
@@ -6443,7 +6426,7 @@ void US_Hydrodyn_Pdb_Tool::h_to_chainX()
                   .replace( 12, 4, " XH " )
                   .replace( 17, 3, "XHY" )
                   .replace( 21, 1, "X" )
-                  .replace( 22, 4, QString( "" ).sprintf( "%4u",  i + 1 ) );
+                  .replace( 22, 4, QString::asprintf( "%4u",  i + 1 ) );
                out += hydrogens[ i ] + "\n";
             }
             out += "TER\n";
@@ -6920,7 +6903,7 @@ void US_Hydrodyn_Pdb_Tool::renum_pdb()
                   editor_msg( "dark red", us_tr( "Warning: more than 99,999 atoms, numbering restarted at 1" ) );
                   atomno = 1;
                }
-               line = line.replace( 6, 5, QString( "" ).sprintf( "%5d", atomno ++ ) );
+               line = line.replace( 6, 5, QString::asprintf( "%5d", atomno ++ ) );
                if ( rx_hetatm.indexIn( line ) == -1 )
                {
                   line = line.replace( 5, 1, " " );
@@ -6941,7 +6924,7 @@ void US_Hydrodyn_Pdb_Tool::renum_pdb()
                      residueno = 1;
                   }
                }
-               line = line.replace( 22, 4, QString( "" ).sprintf( "%4d", residueno ) );
+               line = line.replace( 22, 4, QString::asprintf( "%4d", residueno ) );
                last_residue_id = residue_id;
             }
          }
@@ -6962,7 +6945,7 @@ ATOM   2005  CA  GLY     5      29.121 -25.194   8.602  133 ARG
 
             QString residue_seq  = line.mid( 22, 4 );
             QString residue_name = line.mid( 17, 3 );
-            line = line.left( 55 ) + QString( "" ).sprintf( "%4d ", residue_seq.toUInt() ) + residue_name;
+            line = line.left( 55 ) + QString::asprintf( "%4d ", residue_seq.toUInt( ) ) + residue_name;
             // line = line.replace( 55, 4, residue_seq );
             // line = line.replace( 61, 4, residue_name );
          }

@@ -1683,7 +1683,7 @@ void US_Hydrodyn_Dad::add_files( bool load_conc, bool from_dir ) {
                QMessageBox::warning( this, 
                                      windowTitle()+ us_tr( ": Add files" ),
                                      us_tr( "I am having a problem decoding the frame numbers or q values from the file names\n"
-                                         "Please email a list of the file names you are trying to load to emre.brookes@umt.edu" ) );
+                                         "Please email a list of the file names you are trying to load to emre@biochem.uthscsa.edu" ) );
                return;
             }
             tmp = prepend_tmp + tmp;
@@ -4138,14 +4138,14 @@ bool US_Hydrodyn_Dad::save_file( QString file, bool &cancel, bool &overwrite_all
       if ( use_errors &&
            (int)f_errors[ file ].size() > i )
       {
-         ts << QString("").sprintf( "%-18s\t%.6e\t%.6e\n",
+         ts <<  QString::asprintf(  "%-18s\t%.6e\t%.6e\n",
                                     f_qs_string[ file ][ i ].toLatin1().data(),
                                     f_Is       [ file ][ i ],
-                                    f_errors   [ file ][ i ] );
+                                    f_errors   [ file ][ i ]  ) ;
       } else {
-         ts << QString("").sprintf( "%-18s\t%.6e\n",
+         ts <<  QString::asprintf(  "%-18s\t%.6e\n",
                                     f_qs_string[ file ][ i ].toLatin1().data(),
-                                    f_Is       [ file ][ i ] );
+                                    f_Is       [ file ][ i ]  ) ;
       }
    }
 
@@ -4797,7 +4797,7 @@ void US_Hydrodyn_Dad::create_i_of_t( QStringList files )
                it++ )
          {
             t   .push_back( it->first );
-            t_qs.push_back( QString( "" ).sprintf( "%.8f", it->first ) );
+            t_qs.push_back(  QString::asprintf(  "%.8f", it->first  )  );
             if ( it->second.count( qv ) )
             {
                I.push_back( it->second[ qv ] );
@@ -4844,7 +4844,7 @@ void US_Hydrodyn_Dad::create_i_of_t( QStringList files )
    us_timers.start_timer      ( "check_discard_it_sd_mult" );
 #endif
 
-#warning it sd check disabled for DAD
+   // #warning it sd check disabled for DAD
    // check_discard_it_sd_mult( created_files );
 
 #ifdef USHC_TIMERS
@@ -4852,7 +4852,7 @@ void US_Hydrodyn_Dad::create_i_of_t( QStringList files )
    us_timers.start_timer      ( "check_zi_window" );
 #endif
 
-#warning zi check disabled for DAD
+   // #warning zi check disabled for DAD
    // (void) check_zi_window( created_files );
 
 #ifdef USHC_TIMERS
@@ -6276,14 +6276,14 @@ void US_Hydrodyn_Dad::view()
             if ( use_errors &&
                  (int)f_errors[ file ].size() > i )
             {
-               text += QString("").sprintf( "%-18s\t%.6e\t%.6e\n",
+               text +=  QString::asprintf(  "%-18s\t%.6e\t%.6e\n",
                                           f_qs_string[ file ][ i ].toLatin1().data(),
                                           f_Is       [ file ][ i ],
-                                          f_errors   [ file ][ i ] );
+                                          f_errors   [ file ][ i ]  ) ;
             } else {
-               text += QString("").sprintf( "%-18s\t%.6e\n",
+               text +=  QString::asprintf(  "%-18s\t%.6e\n",
                                           f_qs_string[ file ][ i ].toLatin1().data(),
-                                          f_Is       [ file ][ i ] );
+                                          f_Is       [ file ][ i ]  ) ;
             }
          }
 

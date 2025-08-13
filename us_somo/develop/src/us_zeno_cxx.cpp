@@ -1714,6 +1714,7 @@ void Parser::nextToken()
 // used with the --debug option
 int Parser::lookup(bool recovery)
 {
+   (void) recovery;
     // $insert threading
     SR__ *sr = s_state[d_state__];        // get the appropriate state-table
     int lastIdx = sr->d_lastIdx;        // sentinel-index in the SR__ array

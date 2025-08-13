@@ -200,13 +200,11 @@ void US_Hydrodyn_Mals::update_plot_errors_group()
 
 #if defined( DEBUG_RESCALE )
    qDebug() <<
-      QString("").sprintf(
-                          "mals_plots::update_plot_errors_group\n"
-                          "\tminx %e maxx %e\n"
-                          "\tminy %e maxy %e\n"
-                          , minx, maxx
-                          , -maxy, maxy
-                          );
+      QString::asprintf( "mals_plots::update_plot_errors_group\n"
+                         "\tminx %e maxx %e\n"
+                         "\tminy %e maxy %e\n"
+                         , minx, maxx
+                         , -maxy, maxy );
 #endif
 
    //       plot_errors_zoomer = new ScrollZoomer(plot_errors->canvas());
@@ -436,13 +434,12 @@ void US_Hydrodyn_Mals::update_plot_errors( vector < double > &grid,
          tso << "---\n";
 
          tso <<
-            QString("").sprintf(
-                                "mals_plots::update_plot_errors\n"
-                                "\tminx %e maxx %e\n"
-                                "\tminy %e maxy %e\n"
-                                , x[0], x.back()
-                                , -maxy, maxy
-                                );
+            QString::asprintf( "mals_plots::update_plot_errors\n"
+                               "\tminx %e maxx %e\n"
+                               "\tminy %e maxy %e\n"
+                               , x[0], x.back( )
+                               , -maxy, maxy
+                               );
          tso << "zoomrect "
              << plot_errors_zoomer->zoomRect().left() << " , "
              << plot_errors_zoomer->zoomRect().right() << " : " 
@@ -1018,13 +1015,11 @@ void US_Hydrodyn_Mals::plot_files()
       tso << "---\n";
 
       tso <<
-         QString("").sprintf(
-                             "mals_plots::plot_files\n"
-                             "\tminx %e maxx %e\n"
-                             "\tminy %e maxy %e\n"
-                             , minx, maxx
-                             , miny, maxy
-                             );
+         QString::asprintf( "mals_plots::plot_files\n"
+                            "\tminx %e maxx %e\n"
+                            "\tminy %e maxy %e\n"
+                            , minx, maxx
+                            , miny, maxy );
       tso << "zoomrect "
           << plot_dist_zoomer->zoomRect().left() << " , "
           << plot_dist_zoomer->zoomRect().right() << " : " 
@@ -1491,13 +1486,11 @@ void US_Hydrodyn_Mals::rescale()
       tso << "---\n";
 
       tso <<
-         QString("").sprintf(
-                             "mals_plots::rescale\n"
-                             "\tminx %e maxx %e\n"
-                             "\tminy %e maxy %e\n"
-                             , minx, maxx
-                             , miny, maxy
-                             );
+         QString::asprintf( "mals_plots::rescale\n"
+                            "\tminx %e maxx %e\n"
+                            "\tminy %e maxy %e\n"
+                            , minx, maxx
+                            , miny, maxy );
       tso << "zoomrect "
           << plot_dist_zoomer->zoomRect().left() << " , "
           << plot_dist_zoomer->zoomRect().right() << " : " 

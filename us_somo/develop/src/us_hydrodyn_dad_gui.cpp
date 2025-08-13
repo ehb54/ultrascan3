@@ -5500,7 +5500,7 @@ void US_Hydrodyn_Dad::update_enables()
       tso << "--------------------------------------------------------------------------------\n";
       tso << "plot_dist" << "\n";
       tso << "--------------------------------------------------------------------------------\n";
-      tso << QString().sprintf(
+      tso <<  QString::asprintf( 
                                "plot_dist->axisScaleDiv( QwtPlot::xBottom ).lower,upperBound()     %g\t%g\n"
                                "plot_dist->axisScaleDiv( QwtPlot::yLeft ).lower,upperBound()       %g\t%g\n"
 
@@ -5508,7 +5508,7 @@ void US_Hydrodyn_Dad::update_enables()
                                ,plot_dist->axisScaleDiv( QwtPlot::xBottom ).upperBound()
                                ,plot_dist->axisScaleDiv( QwtPlot::yLeft ).lowerBound()
                                ,plot_dist->axisScaleDiv( QwtPlot::yLeft ).upperBound()
-                               );
+                                ) ;
 
       tso << "zoomrect "
           << plot_dist_zoomer->zoomRect().left() << " , "
@@ -5527,7 +5527,7 @@ void US_Hydrodyn_Dad::update_enables()
       tso << "--------------------------------------------------------------------------------\n";
       tso << "plot_errors" << "\n";
       tso << "--------------------------------------------------------------------------------\n";
-      tso << QString().sprintf(
+      tso <<  QString::asprintf( 
                                "plot_errors->axisScaleDiv( QwtPlot::xBottom ).lower,upperBound()     %g\t%g\n"
                                "plot_errors->axisScaleDiv( QwtPlot::yLeft ).lower,upperBound()       %g\t%g\n"
 
@@ -5535,7 +5535,7 @@ void US_Hydrodyn_Dad::update_enables()
                                ,plot_errors->axisScaleDiv( QwtPlot::xBottom ).upperBound()
                                ,plot_errors->axisScaleDiv( QwtPlot::yLeft ).lowerBound()
                                ,plot_errors->axisScaleDiv( QwtPlot::yLeft ).upperBound()
-                               );
+                                ) ;
 
 
       tso << "zoomrect "
@@ -6606,7 +6606,7 @@ void US_Hydrodyn_Dad::fasta_file() {
                             + seq_names
                             );
 
-   le_fasta_value->setText( QString( "" ).sprintf( "%.3f", psv ) );
+   le_fasta_value->setText(  QString::asprintf(  "%.3f", psv )  ) ;
    le_fasta_value->setEnabled( true );
    return;
 }
