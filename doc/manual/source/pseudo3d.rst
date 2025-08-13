@@ -12,6 +12,7 @@ Pseudo 3-Dimensional Distribution Plots
 Solution distribution data can be displayed in pseudo-3-dimensional form where the Z axis is simulated using colors in a color map. Data from different cells can be combined. 
 
   .. image:: _static/images/pseudo3d_combine.png
+    :align: center
 
 
 Functions
@@ -73,9 +74,9 @@ Functions
   * - **Load Color File**
     - Load a color map for Z dimension display as specified through the `Color Map Load dialog <config.html#color-configuration-panel>`_.
   * - **Load Distribution(s)**
-    - Load model distribution data as specified through a `Model Loader dialog <common_dialogs.html#fe_model_loader>`_. Multiple distribution files may be selected.
+    - Load model distribution data as specified through a `Model Loader dialog <common_dialogs.html#load-distribution-model>`_. Multiple distribution files may be selected.
   * - **Remove Distribution(s)**
-    - Open a `Remove Model Distributions <common_dialogs.html>`_ dialog to remove selected model distributions from the loaded set.
+    - Open a `Remove Model Distributions <common_dialogs.html#remove-model-distributions>`_ dialog to remove selected model distributions from the loaded set.
 
 
 **Window Controls**
