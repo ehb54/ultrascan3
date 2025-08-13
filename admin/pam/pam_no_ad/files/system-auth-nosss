@@ -1,0 +1,16 @@
+# /etc/pam.d/system-auth-noss
+auth        required      pam_env.so
+auth        required      pam_faildelay.so delay=2000000
+auth        sufficient    pam_unix.so nullok
+auth        required      pam_deny.so
+
+account     required      pam_unix.so
+account     required      pam_permit.so
+
+password    requisite     pam_pwquality.so local_users_only
+password    sufficient    pam_unix.so sha512 shadow nullok use_authtok
+password    required      pam_deny.so
+
+session     optional      pam_keyinit.so revoke
+session     required      pam_limits.so
+session     required      pam_unix.so
