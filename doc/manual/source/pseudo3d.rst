@@ -69,9 +69,9 @@ Functions
   * - **Local Disk**
     - Select to specify data input from local disk.
   * - **Select PreFilter(s)**
-    - `Select Run(s) as Models Pre-Filter <common_dialogs.html#fe_data_loader>`_ dialog to select Run IDs. This can significantly reduce model loading time, particularly with large model counts in the database. The text box to the right of this button will display a summary of runs selected as pre-filters.
+    - `Select Run(s) as Models Pre-Filter <common_dialogs.html#data-loader>`_ dialog to select Run IDs. This can significantly reduce model loading time, particularly with large model counts in the database. The text box to the right of this button will display a summary of runs selected as pre-filters.
   * - **Load Color File**
-    - Load a color map for Z dimension display as specified through the `Color Map Load dialog <config.html#col_change>`_.
+    - Load a color map for Z dimension display as specified through the `Color Map Load dialog <config.html#color-configuration-panel>`_.
   * - **Load Distribution(s)**
     - Load model distribution data as specified through a `Model Loader dialog <common_dialogs.html#fe_model_loader>`_. Multiple distribution files may be selected.
   * - **Remove Distribution(s)**

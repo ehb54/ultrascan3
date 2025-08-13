@@ -22,16 +22,6 @@ Welcome to UltraScan III's Documentation and Resource!
 
     **Jet Boating on the Waimakariri**
 
-
-.. video:: _static/videos/gmp-part1.mp4
-   :align: center
-
-.. rst-class::
-    :align: center
-
-    **Stage 1: How to program an SOP for GMP analysis with UltraScan**
-
-
 .. toctree::
    :maxdepth: 1
    :caption: Table of Content:
@@ -90,13 +80,17 @@ Welcome to UltraScan III's Documentation and Resource!
 
    ga_initialize
 
+.. toctree::
+   :maxdepth: 1
+   :caption: Advanced Analysis:     
+
+   dens_match
 
 .. toctree::
    :maxdepth: 1
-   :caption: Utilities
+   :caption: GMP:     
 
-   us_investigator
-
+   gmp
 
 .. toctree::
    :maxdepth: 1
@@ -104,6 +98,18 @@ Welcome to UltraScan III's Documentation and Resource!
 
    custom_grid
    combine_models
+
+
+.. toctree::
+   :maxdepth: 1
+   :caption: User Utilities
+
+   us_investigator
+   buffer
+   analyte
+
+
+
  
    
 

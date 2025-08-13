@@ -24,7 +24,7 @@ Functions
   :header-rows: 0
 
   * - **Load Experiment**
-    - Click on this button and, in the resulting `Load Run Data Dialog <common_dialogs.html>`_, select an edited data set to load.
+    - Click on this button and, in the resulting `Load Run Data Dialog <common_dialogs.html#data-loader>`_, select an edited data set to load.
   * - **Run Details**
     - Bring up a `Run Details Dialog <run_details.html>`_ with a summary of data and run details.		 
   * - **Latest Data Edit**
@@ -128,7 +128,7 @@ van Holde Wieschet Analysis Steps
 
 
 
-*  **Step 1:** First, load a velocity dataset. Click on "Load Experiment" to select an edited velocity data set from the database or from local disk.
+*  **Step 1:** First, load a velocity dataset. Click on **Load Experiment** to select an edited velocity data set from the database or from local disk.
 
 *  **Step 2:** Secondly, select a model from database or disk. Simply click on a triplicate in the Cell / Channel / Wavelegth. Enhanced van Holde - Weischet analysis is automatically applied according to the Analsys Controls
 

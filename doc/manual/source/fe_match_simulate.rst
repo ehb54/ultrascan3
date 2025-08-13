@@ -13,9 +13,9 @@ Steps to compare Experiment to FE models:
 
 
 
-*  **Step 1:** First, load experimental velocity data. Click on `Load Data <common_dialogs.html>`_* to select an edited velocity data set from the database or from local disk.
+*  **Step 1:** First, load experimental velocity data. Click on `Load Data <common_dialogs.html#data-loader>`_* to select an edited velocity data set from the database or from local disk.
 
-*  **Step 2:** Secondly, select a model from database or disk. Simply click on `Load Model <common_dialogs.html>`_ and choose a model in the resulting dialog. If they exist, you will be given the choice of also loading noise vectors.
+*  **Step 2:** Secondly, select a model from database or disk. Simply click on `Load Model <common_dialogs.html#load-distribution-model>`_ and choose a model in the resulting dialog. If they exist, you will be given the choice of also loading noise vectors.
 
 *  **Step 3:** Next, simulate the loaded model with a finite element solution by clicking **Simulate Model**.
 

@@ -35,7 +35,7 @@ Functions
   * - **Local Disk** 
     - Check to specify data input from local disk. 
   * - **Load Data** 
-    - Click here and, in the resulting  `Load Data Dialog <common_dialogs.html>`_, select raw data set(s) to load for editing. 
+    - Click here and, in the resulting  `Load Data Dialog <common_dialogs.html#data-loader>`_, select raw data set(s) to load for editing. 
   * - **Run Details**
     - This button brings up a child window `Details for Raw Data <run_details.html>`_ to  that describes additional information associated with the data. The data description may be updated in this window. 
   * - **Cell / Channel / Wavelength** 

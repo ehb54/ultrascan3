@@ -30,7 +30,7 @@ Functions
   :header-rows: 0
 
   * - **Load Experiment** 
-    - Click here and, in the resulting `Load Data Dialog <common_dialogs.html>`_, select an edited data set to load.
+    - Click here and, in the resulting `Load Data Dialog <common_dialogs.html#data-loader>`_, select an edited data set to load.
   * - **Run Details**
     - Pop up a dialog showing `Run details <run_details.html>`_.	
   * - **Latest Data Edit** 
@@ -40,7 +40,7 @@ Functions
   * - **Local Disk** 
     - Select to specify data input from local disk.			
   * - **Load Model**
-    - Load model data, choosing a model in a `Model Loader dialog <common_dialogs.html>`_. **If appropriate noise exists, you may also be presented with a `Noise Loader dialog <load_noise.html>`_ to select time-invariant and/or radially-invariant noise vector(s) to load.**
+    - Load model data, choosing a model in a `Model Loader dialog <common_dialogs.html#load-distribution-model>`_. **If appropriate noise exists, you may also be presented with a `Noise Loader dialog <load_noise.html>`_ to select time-invariant and/or radially-invariant noise vector(s) to load.**
   * - **Simulate Model** 
     -  Run a simulation and display results. For details on the results of clicking this button, see `Simulate Model Results <fe_match_simulate.html>`_.
   * - **View Data Report**

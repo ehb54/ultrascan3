@@ -19,7 +19,7 @@
 
 # -- Project information -----------------------------------------------------
 
-project = 'UltraScanIII'
+project = 'UltraScan III'
 copyright = '2025, Emre Brookes, Borries Demeler, Bruce Dubbs, Haben Gabir, Gary Gorbet, Saeed Mortezazadeh, Alexey Savelyev, and Dan Zollars,'
 author = 'Emre Brookes, Borries Demeler, Bruce Dubbs, Haben Gabir, Gary Gorbet, Saeed Mortezazadeh, Alexey Savelyev, and Dan Zollars'
 

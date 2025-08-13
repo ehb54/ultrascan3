@@ -10,7 +10,6 @@
   :local: 
 
 
-.. _3d_plot:
 
 Upon completion of FE Match simulation, a pair of enhanced plot controls dialogs appears. The **3D Plot** button in the first of these launches a 3-dimensional plot window whose primary control resides in this dialog. There are size, orientation, and other controls that are in the 3D dialog itself. A second dialog displays a set of data and residuals plots that are more refined and controllable than those in the main FE Match window.
 

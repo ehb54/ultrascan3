@@ -37,3 +37,7 @@ Fitting Analysis Process:
     :align: center
     
     **2-Dimensional Spectrum Simulated**
+
+
+Residual Bitmap
+=================

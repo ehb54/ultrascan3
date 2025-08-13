@@ -23,7 +23,7 @@ Functions
 
 
   * - **Load Experiment** 
-    - Click on this button and, in the resulting `Load Data Dialog <common_dialogs.html>`_, select an edited data set to load.
+    - Click on this button and, in the resulting `Load Data Dialog <common_dialogs.html#data-loader>`_, select an edited data set to load.
   * - **Run Details** 
     - Bring up a `Details for Raw Data <run_details.html>`_ dialog with a summary of data and run details.
   * - **Latest Data Edit** 

@@ -56,7 +56,7 @@ Configuration Functions:
   * - **Database Preferences:** 
     - See the Database Configuration below on the :ref:`Change <dat_change>` button if you want to set the database username, password, database name and server host name.
   * - **Master Password:** 
-    - See the Database Configuration below on the :ref:`Change <mp_change>` button to set or reset your personal **<i>UltraScanIII</i>** passord. Be sure to remember the password. If it is lost, you will need to reset all saved database information in the <i>Database Preferences</i> panel.
+    - See the Database Configuration below on the :ref:`Change <mp_change>` button to set or reset your personal **UltraScanIII** passord. Be sure to remember the password. If it is lost, you will need to reset all saved database information in the *Database Preferences* panel.
   * - **Advanced Settings:** 
     - See the Database Configuration below on the :ref:`Change <adv_change>` button to set advanced settings related to debug, advanced level, and number of threads.
 

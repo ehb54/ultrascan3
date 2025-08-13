@@ -4,7 +4,7 @@ SPHINXBUILD = sphinx-build
 SOURCEDIR   = .
 BUILDDIR    = ../../../build/doc/manual
 INSTALLDIR  = ../../../bin
-PROJECT    	= manual
+PROJECT    	= UltraScanIII
 
 .PHONY: all help html qthelp qch qhc qthelpinstall latex latexpdf
 

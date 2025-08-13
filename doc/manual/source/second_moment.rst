@@ -25,7 +25,7 @@ Functions
   :header-rows: 0 
 
   * - **Load Experiment** 
-    - Click on this button and, in the resulting `Load Data Dialog <data_loader.html>`_, select an edited data set to load.
+    - Click on this button and, in the resulting `Load Data Dialog <data_loader.html#data-loader>`_, select an edited data set to load.
   * - **Run Details** 
     - Bring up a `Run Details Dialog <run_details.html>`_ with a summary of data and run details.
   * - **Latest Data Edit** 

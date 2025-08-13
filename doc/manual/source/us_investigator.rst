@@ -5,6 +5,9 @@ Managing Personal Information
 .. toctree:: 
   :maxdepth: 3 
 
+.. contents:: Index
+    :local: 
+
 
 Using this window, you can update any personal information. Your database authorizations must allow update privileges for the record being changed.
 

@@ -2,7 +2,7 @@
 
 SPHINXBUILD = sphinx-build
 SOURCEDIR   = .
-BUILDDIR    = ../../../build/doc/manual
+BUILDDIR    = ../build/doc/manual
 INSTALLDIR  = ../../../bin
 PROJECT    	= manual
 
