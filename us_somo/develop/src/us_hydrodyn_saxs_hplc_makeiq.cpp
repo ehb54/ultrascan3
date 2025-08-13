@@ -3401,7 +3401,7 @@ void US_Hydrodyn_Saxs_Hplc::create_ihashq()
 
 #define TSO QTextStream(stdout)
 
-bool US_Hydrodyn_Saxs_Hplc::create_ihashq( QStringList files, double t_min, double t_max ) {
+bool US_Hydrodyn_Saxs_Hplc::create_ihashq( QStringList files, double /* t_min */, double /* t_max */ ) {
 
    // reset_saxs_hplc_params();
 

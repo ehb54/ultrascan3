@@ -60,7 +60,7 @@ US3i_Color::US3i_Color( QWidget* w )
   
   for ( int i = 1; i <= 15; i++ )   //set margin range from 2 to 30
   {  
-    s.sprintf( "%d  pixels", i * 2 );
+    s = QString::asprintf( "%d  pixels", i * 2 );
     cmbb_margin->insertItem( i - 1, s );
   }
 

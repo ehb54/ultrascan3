@@ -3812,7 +3812,7 @@ bool US_Saxs_Util::wiki(QString &result)
          it != conc_series.end();
          it++ )
    {
-      it->name;
+      // it->name;
       saxs_conc_names.push_back(it->name);
       QString outfile = get_file_name(it->name,"bsub");
       cmd += " " + outfile;
@@ -3902,7 +3902,7 @@ bool US_Saxs_Util::wiki(QString &result)
             it != exposure_time_series.end();
             it++ )
       {
-         it->name;
+         // it->name;
          saxs_exposure_time_names.push_back(it->name);
          QString outfile = get_file_name(it->name,"bsub");
          cmd += " " + outfile;

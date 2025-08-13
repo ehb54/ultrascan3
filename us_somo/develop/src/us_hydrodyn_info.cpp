@@ -1224,7 +1224,7 @@ void US_Hydrodyn::info_residue( struct residue & r, const QString & msg ) {
    TSO << r.comment << Qt::endl;
    TSO << r.name.toUpper()
        << "\t" << r.type
-       << "\t" << QString().sprintf("%7.2f", r.molvol)
+       << "\t" << QString::asprintf( "%7.2f", r.molvol )
        << "\t" << r.asa
        << "\t" << r.r_atom.size()
        << "\t" << r.r_bead.size()

@@ -177,11 +177,11 @@ void US_Hydrodyn_Saxs::normalize_pr( vector < double > r, vector < double > *pr 
       }
       // cout << "normalize_pr area " << area << "\n" << flush;
       {
-         double area = 0e0;
-         for ( unsigned int i = 0; i < pr->size(); i++ )
-         {
-            area += (*pr)[i] * gridspacing;
-         }
+         // double area = 0e0;
+         // for ( unsigned int i = 0; i < pr->size(); i++ )
+         // {
+         //    area += (*pr)[i] * gridspacing;
+         // }
          // cout << "after normalize_pr area " << area << "\n" << flush;
       }
    }

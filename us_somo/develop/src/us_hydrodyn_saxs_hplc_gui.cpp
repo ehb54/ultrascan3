@@ -4533,7 +4533,7 @@ void US_Hydrodyn_Saxs_Hplc::mode_setup_widgets()
    ggaussian_widgets.push_back( pb_gauss_fit );
    ggaussian_widgets.push_back( le_gauss_pos );
    ggaussian_widgets.push_back( le_gauss_pos_width );
-#warning these ggaussian fit start/end were hidden, likely for a reason
+   // #warning these ggaussian fit start/end were hidden, likely for a reason
    ggaussian_widgets.push_back( le_gauss_fit_start );
    ggaussian_widgets.push_back( le_gauss_fit_end );
    ggaussian_widgets.push_back( pb_ggauss_rmsd );
@@ -5136,7 +5136,6 @@ void US_Hydrodyn_Saxs_Hplc::update_enables()
    // pb_conc_avg           ->setEnabled( all_selected_have_nonzero_conc() && files_compatible && !files_are_time );
    pb_normalize          ->setEnabled( all_selected_have_nonzero_conc() && files_compatible && !files_are_time );
    pb_add                ->setEnabled( files_selected_count > 1 && files_compatible );
-#warning do we want to allow averaging of I(t)s in general?
    pb_avg                ->setEnabled( files_selected_count > 1 && files_compatible && ( !files_are_time || all_scaled ) );
    pb_bin                ->setEnabled( files_selected_count && files_compatible /* && !files_are_time */ );
    pb_smooth             ->setEnabled( files_selected_count );
@@ -5202,15 +5201,14 @@ void US_Hydrodyn_Saxs_Hplc::update_enables()
       tso << "--------------------------------------------------------------------------------\n";
       tso << "plot_dist" << "\n";
       tso << "--------------------------------------------------------------------------------\n";
-      tso << QString().sprintf(
-                               "plot_dist->axisScaleDiv( QwtPlot::xBottom ).lower,upperBound()     %g\t%g\n"
-                               "plot_dist->axisScaleDiv( QwtPlot::yLeft ).lower,upperBound()       %g\t%g\n"
+      tso << QString::asprintf( "plot_dist->axisScaleDiv( QwtPlot::xBottom ).lower,upperBound()     %g\t%g\n"
+                                "plot_dist->axisScaleDiv( QwtPlot::yLeft ).lower,upperBound()       %g\t%g\n"
 
-                               ,plot_dist->axisScaleDiv( QwtPlot::xBottom ).lowerBound()
-                               ,plot_dist->axisScaleDiv( QwtPlot::xBottom ).upperBound()
-                               ,plot_dist->axisScaleDiv( QwtPlot::yLeft ).lowerBound()
-                               ,plot_dist->axisScaleDiv( QwtPlot::yLeft ).upperBound()
-                               );
+                                ,plot_dist->axisScaleDiv( QwtPlot::xBottom ).lowerBound()
+                                ,plot_dist->axisScaleDiv( QwtPlot::xBottom ).upperBound()
+                                ,plot_dist->axisScaleDiv( QwtPlot::yLeft ).lowerBound()
+                                ,plot_dist->axisScaleDiv( QwtPlot::yLeft ).upperBound()
+                                );
 
       tso << "zoomrect "
           << plot_dist_zoomer->zoomRect().left() << " , "
@@ -5229,15 +5227,14 @@ void US_Hydrodyn_Saxs_Hplc::update_enables()
       tso << "--------------------------------------------------------------------------------\n";
       tso << "plot_errors" << "\n";
       tso << "--------------------------------------------------------------------------------\n";
-      tso << QString().sprintf(
-                               "plot_errors->axisScaleDiv( QwtPlot::xBottom ).lower,upperBound()     %g\t%g\n"
-                               "plot_errors->axisScaleDiv( QwtPlot::yLeft ).lower,upperBound()       %g\t%g\n"
+      tso << QString::asprintf( "plot_errors->axisScaleDiv( QwtPlot::xBottom ).lower,upperBound()     %g\t%g\n"
+                                "plot_errors->axisScaleDiv( QwtPlot::yLeft ).lower,upperBound()       %g\t%g\n"
 
-                               ,plot_errors->axisScaleDiv( QwtPlot::xBottom ).lowerBound()
-                               ,plot_errors->axisScaleDiv( QwtPlot::xBottom ).upperBound()
-                               ,plot_errors->axisScaleDiv( QwtPlot::yLeft ).lowerBound()
-                               ,plot_errors->axisScaleDiv( QwtPlot::yLeft ).upperBound()
-                               );
+                                ,plot_errors->axisScaleDiv( QwtPlot::xBottom ).lowerBound()
+                                ,plot_errors->axisScaleDiv( QwtPlot::xBottom ).upperBound()
+                                ,plot_errors->axisScaleDiv( QwtPlot::yLeft ).lowerBound()
+                                ,plot_errors->axisScaleDiv( QwtPlot::yLeft ).upperBound()
+                                );
 
 
       tso << "zoomrect "
@@ -6280,7 +6277,7 @@ void US_Hydrodyn_Saxs_Hplc::fasta_file() {
                             + seq_names
                             );
 
-   le_fasta_value->setText( QString( "" ).sprintf( "%.3f", psv ) );
+   le_fasta_value->setText( QString::asprintf( "%.3f", psv ) );
    le_fasta_value->setEnabled( true );
    return;
 }

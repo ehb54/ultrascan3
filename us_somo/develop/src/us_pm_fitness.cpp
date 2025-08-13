@@ -639,7 +639,7 @@ bool US_PM::compute_CA_I( set < pm_point > & model, vector < double > &I_result 
    double            *Fp;
    double            qp_t_rtp0;
 
-   complex < double > tmp_cd;
+   // complex < double > tmp_cd;
 
 #if defined( USE_TIMERS )
    us_timers.init_timer( "CA:combined" );

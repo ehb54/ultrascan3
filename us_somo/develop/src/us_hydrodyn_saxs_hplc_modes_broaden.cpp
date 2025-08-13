@@ -418,6 +418,8 @@ static double discrete_area_under_curve( const vector < double > & x, const vect
 }
 
 static double discrete_area_under_curve( const vector < double > & org_x, const vector < double > & org_y, double start_x, double end_x, QString msg = "" ) {
+   (void) msg; // to silence the warning
+
    double area = 0;
 
    vector < double > x;
@@ -1401,7 +1403,7 @@ bool US_Hydrodyn_Saxs_Hplc::broaden_compute_one_no_ui(
                                                       ,const vector < double > & I
                                                       ,vector < double > & broadened
                                                       ) {
-#warning need to better support changing kernel type etc in US_Band_Broaden, currently only caching on Tau, so clearing it all for now
+   // #warning need to better support changing kernel type etc in US_Band_Broaden, currently only caching on Tau, so clearing it all for now
    ubb.clear();
    broadened = ubb.broaden(
                            I
@@ -1445,7 +1447,7 @@ void US_Hydrodyn_Saxs_Hplc::broaden_compute_one( bool details ) {
 
    // compute broadened curve
 
-#warning need to better support changing kernel type etc in US_Band_Broaden, currently only caching on Tau, so clearing it all for now
+   // #warning need to better support changing kernel type etc in US_Band_Broaden, currently only caching on Tau, so clearing it all for now
    ubb.clear();
 
    vector < double > broadened = ubb.broaden(

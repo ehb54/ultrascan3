@@ -87,7 +87,7 @@ void US_Hydrodyn_Dad_Parameters::setupGUI()
    le_dad_param_lambda->setMinimumWidth( 200 );
    le_dad_param_lambda-> setMinimumHeight( minHeight1 );
 
-#warning might need to bring disable lambda change back
+   // #warning might need to bring disable lambda change back
 
    // if ( (( US_Hydrodyn_Dad *)us_hydrodyn_dad )->lb_files->count() > 0 ) {
    //    le_dad_param_lambda->setEnabled( false );

@@ -82,7 +82,7 @@ class US_EXTERN US_Tar
 
       int           blocks_written;
       int           blocks_read;
-      int           archive_size;
+      // int           archive_size;
 
       // Internal methods
 

@@ -148,14 +148,14 @@ void US_FitParameter::setEnabled(bool choice)
 void US_FitParameter::updateValue(float value)
 {
    QString str;
-   str.sprintf("%1.5e", value);
+   str = QString::asprintf( "%1.5e", value );
    le_value->setText(str);
 }
 
 void US_FitParameter::updateRange(float range)
 {
    QString str;
-   str.sprintf("%1.5e", range);
+   str = QString::asprintf( "%1.5e", range );
    le_range->setText(str);
 }
 
@@ -286,7 +286,7 @@ void getFooter(QString *footer)
    QDate date;
    date = QDate::currentDate();
    QString year;
-   year.sprintf("%d", date.year());
+   year = QString::asprintf( "%d", date.year() );
    *footer = "<hr><font face=helvetica size=-1>\nUltraScan Software Contact: <a href=mailto:demeler@biochem.uthscsa.edu>Borries Demeler</a>\n";
    *footer += "<br>\nThis document has been generated with the <i><b>UltraScan II</i></b> Data Analysis Software distribution.\n<br>\n";
    *footer += "All rights reserved, Copyright " + year + " <a href=http://www.uthscsa.edu>The University of";

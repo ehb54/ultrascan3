@@ -154,7 +154,7 @@ bool US_Fractal_Dimension::compute_box_counting(
                                                 ,double                                    angstrom_start
                                                 ,double                                    angstrom_end
                                                 ,double                                    angstrom_steps
-                                                ,double                                  & fd                 // computed fractal dimension
+                                                ,double                                  & /* fd */           // computed fractal dimension
                                                 ,vector < vector < vector < double > > > & x                  // x coordinate of plots
                                                 ,vector < vector < vector < double > > > & y                  // y coordinate of plots
                                                 ,QString                                 & x_title            // title of x axis
@@ -236,7 +236,7 @@ bool US_Fractal_Dimension::compute_box_alternate(
                                                  ,double                                    angstrom_start
                                                  ,double                                    angstrom_end
                                                  ,double                                    angstrom_steps
-                                                 ,double                                  & fd                 // computed fractal dimension
+                                                 ,double                                  & /* fd */           // computed fractal dimension
                                                  ,vector < vector < vector < double > > > & x                  // x coordinate of plots
                                                  ,vector < vector < vector < double > > > & y                  // y coordinate of plots
                                                  ,QString                                 & x_title            // title of x axis
@@ -336,7 +336,7 @@ bool US_Fractal_Dimension::compute_enright(
                                            ,double                                    angstrom_steps
                                            ,double                                    enright_ca_pct_start
                                            ,double                                    enright_ca_pct_end
-                                           ,double                                  & fd                 // computed fractal dimension
+                                           ,double                                  & /* fd */           // computed fractal dimension
                                            ,vector < vector < vector < double > > > & x                  // x coordinate of plots
                                            ,vector < vector < vector < double > > > & y                  // y coordinate of plots
                                            ,QString                                 & x_title            // title of x axis
@@ -495,7 +495,7 @@ bool US_Fractal_Dimension::compute_box_mass(
                                             ,double                                    angstrom_start
                                             ,double                                    angstrom_end
                                             ,double                                    angstrom_steps
-                                            ,double                                  & fd                 // computed fractal dimension
+                                            ,double                                  & /* fd */           // computed fractal dimension
                                             ,vector < vector < vector < double > > > & x                  // x coordinate of plots
                                             ,vector < vector < vector < double > > > & y                  // y coordinate of plots
                                             ,QString                                 & x_title            // title of x axis

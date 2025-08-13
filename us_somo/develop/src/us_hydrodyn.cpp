@@ -995,7 +995,7 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    }
 #endif
 
-#warning - perhaps add select_atom_file() to input selections
+   // #warning - perhaps add select_atom_file() to input selections
 
    select_atom_file( US_Config::get_home_dir() + "etc/somo.atom" );
    clear_temp_dirs();
@@ -1306,7 +1306,7 @@ void US_Hydrodyn::setupGUI()
    lbl_temperature->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_temperature = new QLineEdit( this );    le_temperature->setObjectName( "Temperature Line Edit" );
-   le_temperature->setText(QString("").sprintf("%4.2f",hydro.temperature));
+   le_temperature->setText( QString::asprintf( "%4.2f",hydro.temperature ) );
    le_temperature->setAlignment(Qt::AlignVCenter);
    le_temperature->setPalette( PALET_NORMAL );
    AUTFBACK( le_temperature );
@@ -1326,7 +1326,7 @@ void US_Hydrodyn::setupGUI()
    // eventually cb_pH->hide();
 
    le_pH = new QLineEdit( this );    le_pH->setObjectName( "PH Line Edit" );
-   le_pH->setText(QString("").sprintf("%4.2f",hydro.pH));
+   le_pH->setText( QString::asprintf( "%4.2f",hydro.pH ) );
    le_pH->setAlignment(Qt::AlignVCenter);
    le_pH->setPalette( PALET_NORMAL );
    AUTFBACK( le_pH );
@@ -1415,7 +1415,7 @@ void US_Hydrodyn::setupGUI()
    le_bead_model_file->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_bead_model_file, SIGNAL(textChanged(const QString &)), SLOT(update_bead_model_file(const QString &)));
 
-   lbl_bead_model_prefix = new QLabel(us_tr(" Bead Model \n Prefix/Suffix: "), this);
+   lbl_bead_model_prefix = new QLabel(us_tr(" Bead Model Suffix: "), this);
    Q_CHECK_PTR(lbl_bead_model_prefix);
    lbl_bead_model_prefix->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_bead_model_prefix->setMinimumHeight( minHeight1 * 2 );
@@ -2619,8 +2619,8 @@ void US_Hydrodyn::do_reset()
    anaflex_options = default_anaflex_options;
    gparams = default_gparams;
    //  save = default_save;
-   le_temperature->setText(QString("").sprintf("%4.2f",hydro.temperature));
-   le_pH->setText(QString("").sprintf("%4.2f",hydro.pH));
+   le_temperature->setText( QString::asprintf( "%4.2f",hydro.temperature ) );
+   le_pH->setText( QString::asprintf( "%4.2f",hydro.pH ) );
    cb_pH->setChecked( gparams.count( "use_pH" ) && gparams[ "use_pH" ] == "true" );
    le_pH->setEnabled( cb_pH->isChecked() );
    if ( batch_widget ) {
@@ -3686,7 +3686,7 @@ void US_Hydrodyn::update_pH(const QString &str)
    // if ( saxs_hplc_widget &&
    //      saxs_hplc_window &&
    //      saxs_hplc_window->saxs_hplc_options_widget ) {
-   //    ((US_Hydrodyn_Saxs_Hplc_Options*)saxs_hplc_window->saxs_hplc_options_widget)->le_fasta_pH->setText( QString( "" ).sprintf( "%4.2f", hydro.pH ) );
+   //    ((US_Hydrodyn_Saxs_Hplc_Options*)saxs_hplc_window->saxs_hplc_options_widget)->le_fasta_pH->setText(  QString::asprintf( "%4.2f", hydro.pH  )  );
    // }
 }
 

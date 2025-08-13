@@ -620,7 +620,7 @@ double compute_powerfit_dispersion_correction( double t, const double *par ) {
 void US_Hydrodyn_Dad::powerfit_fit() {
    qDebug() << "powerfit_fit()";
    disable_all();
-#warning qwtw_wheel probably should be in ::disable_all() but for some reason we commented it out there, probably should check all wheel usage and set as appropriate
+   // #warning qwtw_wheel probably should be in ::disable_all() but for some reason we commented it out there, probably should check all wheel usage and set as appropriate
    qwtw_wheel            ->setEnabled( false );
    powerfit_fit_clear();
    disable_all();

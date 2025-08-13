@@ -33,6 +33,8 @@
 #define UNICODE_SUB_1_QS QString( "%1" ).arg( UNICODE_SUB_1 )
 #define UNICODE_SUB_2 u8"\u2082"
 #define UNICODE_SUB_2_QS QString( "%1" ).arg( UNICODE_SUB_2 )
+#define UNICODE_DEGREE u8"\u00B0"
+#define UNICODE_DEGREE_QS QString( "%1" ).arg( UNICODE_DEGREE )
 
 #else
 
@@ -66,6 +68,8 @@
 #define UNICODE_SUB_1_QS QString( "%1" ).arg( UNICODE_SUB_1 )
 #define UNICODE_SUB_2 "_2"
 #define UNICODE_SUB_2_QS QString( "%1" ).arg( UNICODE_SUB_2 )
+#define UNICODE_DEGREE "degrees "
+#define UNICODE_DEGREE_QS QString( "%1" ).arg( UNICODE_DEGREE )
    
 #endif // NO_UNICODE
 

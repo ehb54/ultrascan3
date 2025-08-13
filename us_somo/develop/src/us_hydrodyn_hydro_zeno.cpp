@@ -65,7 +65,7 @@ void US_Hydrodyn_Hydro_Zeno::setupGUI()
    lbl_zeno_zeno_steps->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_zeno_zeno_steps = new QLineEdit(  this );    le_zeno_zeno_steps->setObjectName( "Zeno_Zeno_Steps Line Edit" );
-   le_zeno_zeno_steps->setText(str.sprintf("%u",(*hydro).zeno_zeno_steps));
+   le_zeno_zeno_steps->setText( QString::asprintf( "%u",(*hydro).zeno_zeno_steps ) );
    le_zeno_zeno_steps->setAlignment(Qt::AlignVCenter);
    le_zeno_zeno_steps->setPalette( PALET_NORMAL );
    AUTFBACK( le_zeno_zeno_steps );
@@ -116,7 +116,7 @@ void US_Hydrodyn_Hydro_Zeno::setupGUI()
    lbl_zeno_interior_steps->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_zeno_interior_steps = new QLineEdit(  this );    le_zeno_interior_steps->setObjectName( "Zeno_Interior_Steps Line Edit" );
-   le_zeno_interior_steps->setText(str.sprintf("%u",(*hydro).zeno_interior_steps));
+   le_zeno_interior_steps->setText( QString::asprintf( "%u",(*hydro).zeno_interior_steps ) );
    le_zeno_interior_steps->setAlignment(Qt::AlignVCenter);
    le_zeno_interior_steps->setPalette( PALET_NORMAL );
    AUTFBACK( le_zeno_interior_steps );
@@ -139,7 +139,7 @@ void US_Hydrodyn_Hydro_Zeno::setupGUI()
    lbl_zeno_surface_steps->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_zeno_surface_steps = new QLineEdit(  this );    le_zeno_surface_steps->setObjectName( "Zeno_Surface_Steps Line Edit" );
-   le_zeno_surface_steps->setText(str.sprintf("%u",(*hydro).zeno_surface_steps));
+   le_zeno_surface_steps->setText( QString::asprintf( "%u",(*hydro).zeno_surface_steps ) );
    le_zeno_surface_steps->setAlignment(Qt::AlignVCenter);
    le_zeno_surface_steps->setPalette( PALET_NORMAL );
    AUTFBACK( le_zeno_surface_steps );
@@ -153,7 +153,7 @@ void US_Hydrodyn_Hydro_Zeno::setupGUI()
    lbl_zeno_surface_thickness->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_zeno_surface_thickness = new QLineEdit(  this );    le_zeno_surface_thickness->setObjectName( "Zeno_Skin_Thickness Line Edit" );
-   le_zeno_surface_thickness->setText(str.sprintf("%.3f",(*hydro).zeno_surface_thickness));
+   le_zeno_surface_thickness->setText( QString::asprintf( "%.3f",(*hydro).zeno_surface_thickness ) );
    le_zeno_surface_thickness->setAlignment(Qt::AlignVCenter);
    le_zeno_surface_thickness->setPalette( PALET_NORMAL );
    AUTFBACK( le_zeno_surface_thickness );
@@ -214,7 +214,7 @@ void US_Hydrodyn_Hydro_Zeno::setupGUI()
    // ZENO -> GRPY correction as per Brookes, E. et al., 2025. Eur. Biophy. J., https://doi.org/10.1007/s00249-025-01758-8
    
    cb_zeno_grpy_correction_from_bead_count = new QCheckBox( this );
-   cb_zeno_grpy_correction_from_bead_count->setText( us_tr( "Correct Dt and [" + UNICODE_ETA_QS + "] from sigmoid fit of bead count:") );
+   cb_zeno_grpy_correction_from_bead_count->setText( us_tr( "Correct Dt and [" + UNICODE_ETA_QS + "] from power law fit of bead count:") );
    cb_zeno_grpy_correction_from_bead_count->setEnabled( true );
    cb_zeno_grpy_correction_from_bead_count->setChecked( (*hydro).zeno_grpy_correction_from_bead_count );
    cb_zeno_grpy_correction_from_bead_count->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );

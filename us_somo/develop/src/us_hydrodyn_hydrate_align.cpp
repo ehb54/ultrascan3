@@ -38,8 +38,8 @@ bool US_Hydrodyn::atom_align( vector < point > transform_from,
       for ( unsigned int j = 0; j < 3; j++ )
       {
 #if defined( KILL_INTERNAL_REPRESENTATION )
-         transform_from[ i ].axis[ j ] = QString( "" ).sprintf( "%.8f", transform_from[ i ].axis[ j ] ).toFloat();
-         transform_to  [ i ].axis[ j ] = QString( "" ).sprintf( "%.8f", transform_to  [ i ].axis[ j ] ).toFloat();
+         transform_from[ i ].axis[ j ] = QString::asprintf( "%.8f", transform_from[ i ].axis[ j ] ).toFloat();
+         transform_to  [ i ].axis[ j ] = QString::asprintf( "%.8f", transform_to  [ i ].axis[ j ] ).toFloat();
 #endif
          center_from.axis[ j ] += transform_from[ i ].axis[ j ];
          center_to.axis  [ j ] += transform_to  [ i ].axis[ j ];
@@ -49,8 +49,8 @@ bool US_Hydrodyn::atom_align( vector < point > transform_from,
 #if defined( KILL_INTERNAL_REPRESENTATION )
    for ( unsigned int j = 0; j < 3; j++ )
    {
-      center_from.axis[ j ] = QString( "" ).sprintf( "%.8f", center_from.axis[ j ] ).toFloat();
-      center_to  .axis[ j ] = QString( "" ).sprintf( "%.8f", center_to  .axis[ j ] ).toFloat();
+      center_from.axis[ j ] = QString::asprintf( "%.8f", center_from.axis[ j ] ).toFloat();
+      center_to  .axis[ j ] = QString::asprintf( "%.8f", center_to  .axis[ j ] ).toFloat();
    }
 #endif
 
@@ -68,8 +68,8 @@ bool US_Hydrodyn::atom_align( vector < point > transform_from,
 #if defined( KILL_INTERNAL_REPRESENTATION )
    for ( unsigned int j = 0; j < 3; j++ )
    {
-      center_from.axis[ j ] = QString( "" ).sprintf( "%.8f", center_from.axis[ j ] ).toFloat();
-      center_to  .axis[ j ] = QString( "" ).sprintf( "%.8f", center_to  .axis[ j ] ).toFloat();
+      center_from.axis[ j ] = QString::asprintf( "%.8f", center_from.axis[ j ] ).toFloat();
+      center_to  .axis[ j ] = QString::asprintf( "%.8f", center_to  .axis[ j ] ).toFloat();
    }
 #endif
 

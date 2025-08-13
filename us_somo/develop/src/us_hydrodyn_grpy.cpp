@@ -1047,9 +1047,9 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
                           " Tr. Frictional coefficient            f : %2\n"
                           " Radius of Gyration                   Rg : %3\n"
                            ) )
-            .arg( QString( "" ).sprintf( "%3.2f"     , this_data.results.ff0   ) )
-            .arg( QString( "" ).sprintf( "%4.2e g/s" , this_data.tra_fric_coef ) )
-            .arg( QString( "" ).sprintf( "%4.2e nm"  , this_data.results.rg    ) )
+            .arg( QString::asprintf( "%3.2f"     , this_data.results.ff0 ) )
+            .arg( QString::asprintf( "%4.2e g/s" , this_data.tra_fric_coef ) )
+            .arg( QString::asprintf( "%4.2e nm"  , this_data.results.rg ) )
             ;
 
          add_to_grpy += 
@@ -1065,15 +1065,15 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
                           " Rot. Stokes' radius                   Y : %8 \tnm (w@20C)\n"
                           " Rot. Stokes' radius                   Z : %9 \tnm (w@20C)\n"
                            ) )
-            .arg( QString().sprintf( "%5.4g"           , this_data.rot_diff_coef_x ) )
-            .arg( QString().sprintf( "%5.4g"           , this_data.rot_diff_coef_y ) )
-            .arg( QString().sprintf( "%5.4g"           , this_data.rot_diff_coef_z ) )
-            .arg( QString().sprintf( "%5.4g"           , this_data.rot_fric_coef_x ) )
-            .arg( QString().sprintf( "%5.4g"           , this_data.rot_fric_coef_y ) )
-            .arg( QString().sprintf( "%5.4g"           , this_data.rot_fric_coef_z ) )
-            .arg( QString().sprintf( "%5.4g"           , this_data.rot_stokes_rad_x ) )
-            .arg( QString().sprintf( "%5.4g"           , this_data.rot_stokes_rad_y ) )
-            .arg( QString().sprintf( "%5.4g"           , this_data.rot_stokes_rad_z ) )
+            .arg( QString::asprintf( "%5.4g"           , this_data.rot_diff_coef_x ) )
+            .arg( QString::asprintf( "%5.4g"           , this_data.rot_diff_coef_y ) )
+            .arg( QString::asprintf( "%5.4g"           , this_data.rot_diff_coef_z ) )
+            .arg( QString::asprintf( "%5.4g"           , this_data.rot_fric_coef_x ) )
+            .arg( QString::asprintf( "%5.4g"           , this_data.rot_fric_coef_y ) )
+            .arg( QString::asprintf( "%5.4g"           , this_data.rot_fric_coef_z ) )
+            .arg( QString::asprintf( "%5.4g"           , this_data.rot_stokes_rad_x ) )
+            .arg( QString::asprintf( "%5.4g"           , this_data.rot_stokes_rad_y ) )
+            .arg( QString::asprintf( "%5.4g"           , this_data.rot_stokes_rad_z ) )
             ;
 
          add_to_grpy +=
