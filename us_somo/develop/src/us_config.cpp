@@ -534,8 +534,8 @@ void US_Config::setDefault()
 #if QT_VERSION >= 0x050000
    config_list.numThreads      = QThread::idealThreadCount();
 #endif
-   if ( config_list.numThreads > 8 ) {
-      config_list.numThreads = 8;
+   if ( config_list.numThreads > 16 ) {
+      config_list.numThreads = 16;
    }
 }
 
