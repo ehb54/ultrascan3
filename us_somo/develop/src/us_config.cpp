@@ -661,8 +661,8 @@ bool US_Config::read()
          {
             return ( false );  // Bad numThreads
          }
-         if ( config_list.numThreads > 8 ) {
-            config_list.numThreads = 8;
+         if ( config_list.numThreads > 16 ) {
+            config_list.numThreads = 16;
          }
       }
       if ( ! ts.atEnd() )
