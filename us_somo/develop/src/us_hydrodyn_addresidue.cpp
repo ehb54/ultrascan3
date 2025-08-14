@@ -1854,6 +1854,7 @@ void US_AddResidue::select_r_atom(int val)
 
       // pKa enabled
       {
+         // debug code preserved for future debugging needs
          // QTextStream( stdout ) <<
          //     QString::asprintf( 
          //                      "select_r_atom(%d):\n"
@@ -1903,6 +1904,7 @@ void US_AddResidue::select_residue(int val)
    cmb_type->setCurrentIndex(residue_list[val].type);
    le_molvol->setText( QString::asprintf( "%7.2f", residue_list[val].molvol ) );
    le_vbar->setText( QString::asprintf( "%5.3f", residue_list[val].vbar ) );
+   // le_vbar2 & le_pKa below may be used in future when we define more complex residues
    // le_vbar2->setText( residue_list[val].vbar2 != 0 ? QString::asprintf("%5.3f", residue_list[val].vbar2 ) : QString( "" ) );
    // le_pKa->setText( residue_list[val].pKa != 0 ? QString::asprintf("%5.3f", residue_list[val].pKa) : QString( "" ) );
    le_asa->setText( QString::asprintf( "%7.2f", residue_list[val].asa ) );
