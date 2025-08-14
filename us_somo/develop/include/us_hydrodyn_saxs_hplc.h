@@ -819,7 +819,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 
       void           rgc_calc_rg();
 
-      // broaden
+      // gui element and functions for the band broaden window
 
       QPushButton                      * pb_broaden;
 
