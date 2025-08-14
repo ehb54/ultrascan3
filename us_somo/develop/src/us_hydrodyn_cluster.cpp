@@ -4675,7 +4675,7 @@ bool US_Hydrodyn_Cluster::additional_processing(
                      editor_msg( "darkblue", QString( us_tr( "Bead model %1 mw %2" ) ).arg(file).arg(mw) );
                   }
                   // PAT
-                  // #warning might need PAT
+                  // #warning might need PAT, keeping comment code for now
                   /*
                   if ( !US_Saxs_Util::pat_model( ((US_Hydrodyn *)us_hydrodyn)->bead_models[ 0 ] ) )
                   {

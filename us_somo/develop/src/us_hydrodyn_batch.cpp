@@ -4501,6 +4501,7 @@ void US_Hydrodyn_Batch::save_csv_saxs_prr()
               vector_double_to_csv(saxs_r).toLatin1().data(),
               saxs_header_prr.remove("\n").toLatin1().data()
               );
+      // sum_mw can be uncommented for debugging
       // float sum_mw = 0.0;
       for ( unsigned int i = 0; i < csv_source_name_prr.size(); i++ )
       {
