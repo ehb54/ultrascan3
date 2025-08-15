@@ -458,7 +458,7 @@ void US_Config::setDefault()
 #ifdef WIN32
    // internet explorer is past EOL
    // config_list.browser = "C:/Program Files (x86)/Internet Explorer/iexplore.exe";
-   config_list.browser = "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe";
+   config_list.browser = QSettings( "HKEY_CLASSES_ROOT\\http\\shell\\open\\command", QSettings::NativeFormat ).value( "Default" ).toString();
 #endif
 
 #ifdef MAC
@@ -534,8 +534,8 @@ void US_Config::setDefault()
 #if QT_VERSION >= 0x050000
    config_list.numThreads      = QThread::idealThreadCount();
 #endif
-   if ( config_list.numThreads > 8 ) {
-      config_list.numThreads = 8;
+   if ( config_list.numThreads > 16 ) {
+      config_list.numThreads = 16;
    }
 }
 
@@ -661,8 +661,8 @@ bool US_Config::read()
          {
             return ( false );  // Bad numThreads
          }
-         if ( config_list.numThreads > 8 ) {
-            config_list.numThreads = 8;
+         if ( config_list.numThreads > 16 ) {
+            config_list.numThreads = 16;
          }
       }
       if ( ! ts.atEnd() )
