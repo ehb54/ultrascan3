@@ -349,10 +349,10 @@ set < QTreeWidgetItem * > US_Hydrodyn_Pdb_Tool::get_exposed_set( QTreeWidget * l
       }
    }
 
-   float total_asa = 0.0;
-   float total_ref_asa = 0.0;
-   float total_vol = 0.0;
-   float total_mass = 0.0;
+   // float total_asa = 0.0;
+   // float total_ref_asa = 0.0;
+   // float total_vol = 0.0;
+   // float total_mass = 0.0;
 
    QString last_residue = "";
    int seqno = 0;
@@ -399,10 +399,10 @@ set < QTreeWidgetItem * > US_Hydrodyn_Pdb_Tool::get_exposed_set( QTreeWidget * l
             if ( usu->model_vector[ i ].molecule[ j ].atom[ k ].active ) 
             {
                aa++;
-               total_asa += usu->model_vector[ i ].molecule[ j ].atom[ k ].bead_asa;
-               total_ref_asa += usu->model_vector[ i ].molecule[ j ].atom[ k ].ref_asa;
-               total_mass += usu->model_vector[ i ].molecule[ j ].atom[ k ].bead_ref_mw;
-               total_vol += usu->model_vector[ i ].molecule[ j ].atom[ k ].bead_ref_volume_unhydrated;
+               // total_asa += usu->model_vector[ i ].molecule[ j ].atom[ k ].bead_asa;
+               // total_ref_asa += usu->model_vector[ i ].molecule[ j ].atom[ k ].ref_asa;
+               // total_mass += usu->model_vector[ i ].molecule[ j ].atom[ k ].bead_ref_mw;
+               // total_vol += usu->model_vector[ i ].molecule[ j ].atom[ k ].bead_ref_volume_unhydrated;
 
                QString residue =
                   usu->model_vector[ i ].molecule[ j ].atom[ k ].resName + "~" +

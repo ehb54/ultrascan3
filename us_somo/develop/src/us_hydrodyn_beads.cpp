@@ -1866,7 +1866,7 @@ int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
             //    .arg( this_atom->bead_recheck_asa )
             //    ;
 
-#warning commented out the next three lines, likely side effects ... were they added for some purpose?
+            // #warning commented out the next three lines, likely side effects ... were they added for some purpose?
             // this_atom->mw               = tmp_atom.mw;
             // this_atom->ionized_mw_delta = tmp_atom.ionized_mw_delta;
             // this_atom->radius           = tmp_atom.radius;
@@ -2749,7 +2749,7 @@ bool US_Hydrodyn::calc_hullrad_hydro( QString filename ) {
                
                   tso << QString("HEADER    split from %1: Model %2 of %3\n").arg( f.fileName() ).arg( pos + 1 ).arg( model_count );
                   tso << model_header;
-                  tso << QString("").sprintf("MODEL  %7s\n", model_name_vector[ pos ].toLatin1().data() );
+                  tso <<  QString::asprintf( "MODEL  %7s\n", model_name_vector[ pos ].toLatin1().data()  ) ;
                   tso << model_lines;
                   tso << "ENDMDL\nEND\n";
                   

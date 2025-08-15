@@ -62,7 +62,7 @@ void US_Hydrodyn_Saxs_Mw::setupGUI()
    lbl_mw->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
 
    le_mw = new QLineEdit( this );    le_mw->setObjectName( "mw Line Edit" );
-   le_mw->setText(QString("").sprintf("%5.3f", *mw));
+   le_mw->setText(QString::asprintf( "%5.3f", *mw ));
    le_mw->setReadOnly(false);
    le_mw->setMinimumWidth(100);
    le_mw->setMinimumHeight(minHeight2);
@@ -95,7 +95,7 @@ void US_Hydrodyn_Saxs_Mw::setupGUI()
    pb_set_to_last_used_mw->setEnabled(*last_mw > 0.0);
    connect(pb_set_to_last_used_mw, SIGNAL(clicked()), SLOT(set_to_last_used_mw()));
 
-   lbl_last_used_mw = new QLabel(QString("").sprintf("%5.3f", *last_mw), this);
+   lbl_last_used_mw = new QLabel(QString::asprintf( "%5.3f", *last_mw ), this);
    lbl_last_used_mw->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_last_used_mw->setPalette( PALET_NORMAL );
    AUTFBACK( lbl_last_used_mw );
@@ -173,7 +173,7 @@ void US_Hydrodyn_Saxs_Mw::setupGUI()
 
 void US_Hydrodyn_Saxs_Mw::set_to_last_used_mw()
 {
-   le_mw->setText(QString("").sprintf("%5.3f", *last_mw));
+   le_mw->setText(QString::asprintf( "%5.3f", *last_mw ));
    *mw = *last_mw;
 }
 
@@ -292,7 +292,7 @@ void US_Hydrodyn_Saxs_Mw::set_known_mw()
                                   QString( us_tr("Internal error: choice not found in choices" ) ) );
             return;
          }
-         le_mw->setText( QString("").sprintf("%5.3f", mw_as_displayed[ choice ] ) );
+         le_mw->setText( QString::asprintf( "%5.3f", mw_as_displayed[ choice ] ) );
       }
    }
 }

@@ -1273,7 +1273,7 @@ int US_Hydrodyn::read_pdb( const QString &filename ) {
                   exp_resnum++;
                   exp_prev_resnum = thisresnum;
                }
-               QString alt_str1 = str1.left( 22 ) + QString( "" ).sprintf( "%4d", exp_resnum ) + str1.right( str1.length() - 22 - 4 );
+               QString alt_str1 = str1.left( 22 ) + QString::asprintf( "%4d", exp_resnum ) + str1.right( str1.length() - 22 - 4 );
                // us_qdebug( QString( "<:%1\n>:%2" ).arg( str1 ).arg( alt_str1 ) );
                str1 = alt_str1;
             }
@@ -2266,7 +2266,7 @@ void US_Hydrodyn::calc_mw()
    for (unsigned int i = 0; i < model_vector.size(); i++) {
       // editor->append( QString(us_tr("\nModel: %1 vbar %2 cm^3/g\n") )
       //                 .arg( model_vector[i].model_id )
-      //                 .arg( QString("").sprintf("%.3f", model_vector[i].vbar) ) );
+      //                 .arg( QString::asprintf( "%.3f", model_vector[i].vbar ) ) );
       // {
       //    QFont courier = QFont( "Courier", USglobal->config_list.fontSize );
       //    editor_msg( "dark blue", courier, QString( us_tr("\nModel: %1\n") ).arg( model_vector[i].model_id ) );
@@ -2282,7 +2282,7 @@ void US_Hydrodyn::calc_mw()
       model_vector[i].ionized_mw_delta  = 0.0;
       model_vector[i].volume            = 0.0;
       double tot_excl_vol               = 0.0;
-      double tot_scaled_excl_vol        = 0.0;
+      // double tot_scaled_excl_vol        = 0.0;
       unsigned int total_e              = 0;
       // unsigned int total_e_noh   = 0;
       point cm;
@@ -2327,11 +2327,11 @@ void US_Hydrodyn::calc_mw()
          }
 
          for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) {
-            double chain_excl_vol          = 0.0;
-            double chain_scaled_excl_vol   = 0.0;
+            // double chain_excl_vol          = 0.0;
+            // double chain_scaled_excl_vol   = 0.0;
             model_vector[i].molecule[j].mw = 0.0;
-            unsigned int chain_total_e     = 0;
-            unsigned int chain_total_e_noh = 0;
+            // unsigned int chain_total_e     = 0;
+            // unsigned int chain_total_e_noh = 0;
             double molecule_mw             = 0e0;
 
             for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) {
@@ -2407,16 +2407,16 @@ void US_Hydrodyn::calc_mw()
                                                            si) ) {
                         editor_msg( "dark red", saxs_util->errormsg );
                      } else {
-                        chain_excl_vol        += excl_vol;
-                        chain_scaled_excl_vol += scaled_excl_vol;
-                        chain_total_e         += this_e;
-                        chain_total_e_noh     += this_e_noh;
+                        // chain_excl_vol        += excl_vol;
+                        // chain_scaled_excl_vol += scaled_excl_vol;
+                        // chain_total_e         += this_e;
+                        // chain_total_e_noh     += this_e_noh;
                         this_atom->si          = si;
                         model_vector_as_loaded[ i ].molecule[ j ].atom[ k ].si = si;
                         if ( this_atom->resName != "WAT" )
                         {
                            tot_excl_vol          += excl_vol;
-                           tot_scaled_excl_vol   += scaled_excl_vol;
+                           // tot_scaled_excl_vol   += scaled_excl_vol;
                            total_e               += this_e;
                         }
                         model_vector[i].volume += excl_vol;
@@ -2585,14 +2585,14 @@ void US_Hydrodyn::calc_mw()
       //       tmp_mw += model_vector[ i ].molecule[ j ].mw;
       //       us_qdebug( QString( "model %1 molecule %2 mw %3" ).arg( i ).arg( j ).arg( model_vector[ i ].molecule[ j ].mw ) );
       //    }
-      //    us_qdebug( QString( "" ).sprintf( 
-      //                                  "model %d total from molecules mw %.2f as model mw %.2f cm mw %.2f model_mw  %.2f", 
+      //    us_qdebug( QString::asprintf(
+      //                                  "model %d total from molecules mw %.2f as model mw %.2f cm mw %.2f model_mw  %.2f",
       //                                  i,
-      //                                  tmp_mw, 
+      //                                  tmp_mw,
       //                                  model_vector[ i ].mw,
       //                                  total_cm_mw,
       //                                  model_mw
-      //                                   ) );
+      // ) );
       // }
 
       update_model_chain_ionization( model_vector[ i ], true );
@@ -3247,7 +3247,7 @@ bool US_Hydrodyn::model_summary_csv( struct PDB_model *model, const QString & fi
 
    header
       << "Calculation done at pH"
-      << "Molecular weight [Da]"
+      << "Molecular mass [Da]"
       ;
    data
       << QString( "%1" ).arg( le_pH->text() )
@@ -3262,7 +3262,7 @@ bool US_Hydrodyn::model_summary_csv( struct PDB_model *model, const QString & fi
 
    // tbd. qs += vbar_msg( model->vbar );
 
-   header << "SAXS excluded volume (anhydrous) [" << UNICODE_ANGSTROM << "^3]";
+   header << "SAXS excluded volume (anhydrous) [" + UNICODE_ANGSTROM_QS + "^3]";
    data   << QString( "%1" ).arg( model->volume );
    
    
@@ -3280,14 +3280,15 @@ bool US_Hydrodyn::model_summary_csv( struct PDB_model *model, const QString & fi
    // }
 
    header
-      << "Anh. Molecular vol. (from vbar) [" << UNICODE_ANGSTROM << "^3]"
-      << "Hyd. Molecular vol. (from vbar) [" << UNICODE_ANGSTROM << "^3]"
-      << "Radius of gyration [" << UNICODE_ANGSTROM << "]"
+      << "Anh. Molecular vol. (from vbar) [" + UNICODE_ANGSTROM_QS + "^3]"
+      << "Hyd. Molecular vol. (from vbar) [" + UNICODE_ANGSTROM_QS + "^3]"
+      << "Radius of gyration [" + UNICODE_ANGSTROM_QS + "]"
       << "Number of electrons"
       << "Number of protons"
       << "Net charge"
       << "Isoelectric point"
       << "Hydration [g/g]"
+      << "Partial specific volume [cm^3/g]"
       ;
 
    data
@@ -3299,10 +3300,11 @@ bool US_Hydrodyn::model_summary_csv( struct PDB_model *model, const QString & fi
       << QString( "%1" ).arg( model->protons - model->num_elect, 0, 'f', 1 )
       << QString( "%1" ).arg( model->isoelectric_point, 0, 'f', 2 )
       << QString( "%1" ).arg( model->hydration_gg, 0, 'g', 3 )
+      << QString( "%1" ).arg( tc_vbar( model->vbar ), 0, 'g', 3 )
       ;      
       
    if ( model->volume ) {
-      header << "Average electron density [" << UNICODE_ANGSTROM << "^-3]";
+      header << "Average electron density [" + UNICODE_ANGSTROM_QS + "^-3]";
       data   << QString( "%1" ).arg( model->num_elect / model->volume, 0, 'f', 3 );
    }
 

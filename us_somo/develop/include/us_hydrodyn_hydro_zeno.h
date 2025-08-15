@@ -77,6 +77,22 @@ class US_EXTERN US_Hydrodyn_Hydro_Zeno : public QFrame
       QLabel    *lbl_zeno_surface_thickness_from_rg_c;
       QLineEdit *le_zeno_surface_thickness_from_rg_c;
 
+      // ZENO -> GRPY correction as per Brookes, E. et al., 2025. Eur. Biophy. J., https://doi.org/10.1007/s00249-025-01758-8
+
+      QCheckBox *cb_zeno_grpy_correction_from_bead_count;
+      QLabel    *lbl_zeno_grpy_correction_from_bead_count_Dt_a;
+      QLineEdit *le_zeno_grpy_correction_from_bead_count_Dt_a;
+      QLabel    *lbl_zeno_grpy_correction_from_bead_count_Dt_b;
+      QLineEdit *le_zeno_grpy_correction_from_bead_count_Dt_b;
+      QLabel    *lbl_zeno_grpy_correction_from_bead_count_Dt_c;
+      QLineEdit *le_zeno_grpy_correction_from_bead_count_Dt_c;
+      QLabel    *lbl_zeno_grpy_correction_from_bead_count_eta_a;
+      QLineEdit *le_zeno_grpy_correction_from_bead_count_eta_a;
+      QLabel    *lbl_zeno_grpy_correction_from_bead_count_eta_b;
+      QLineEdit *le_zeno_grpy_correction_from_bead_count_eta_b;
+      QLabel    *lbl_zeno_grpy_correction_from_bead_count_eta_c;
+      QLineEdit *le_zeno_grpy_correction_from_bead_count_eta_c;
+
       QLabel    *lbl_zeno_repeats;
       QLineEdit *le_zeno_repeats;
       
@@ -109,6 +125,14 @@ class US_EXTERN US_Hydrodyn_Hydro_Zeno : public QFrame
       void update_zeno_surface_thickness_from_rg_a ( const QString &str );
       void update_zeno_surface_thickness_from_rg_b ( const QString &str );
       void update_zeno_surface_thickness_from_rg_c ( const QString &str );
+
+      void set_zeno_grpy_correction_from_bead_count();
+      void update_zeno_grpy_correction_from_bead_count_Dt_a ( const QString &str );
+      void update_zeno_grpy_correction_from_bead_count_Dt_b ( const QString &str );
+      void update_zeno_grpy_correction_from_bead_count_Dt_c ( const QString &str );
+      void update_zeno_grpy_correction_from_bead_count_eta_a ( const QString &str );
+      void update_zeno_grpy_correction_from_bead_count_eta_b ( const QString &str );
+      void update_zeno_grpy_correction_from_bead_count_eta_c ( const QString &str );
 
       void set_zeno_cxx();
 

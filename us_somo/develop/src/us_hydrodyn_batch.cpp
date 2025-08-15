@@ -1229,28 +1229,33 @@ void US_Hydrodyn_Batch::load_somo()
               !((US_Hydrodyn *)us_hydrodyn)->is_dammin_dammif(file) )
          {
             // no save/restore settings for load into somo
-            if ( 
+            if (
                 ((US_Hydrodyn *)us_hydrodyn)->pdb_parse.missing_residues != batch->missing_residues ||
                 ((US_Hydrodyn *)us_hydrodyn)->pdb_parse.missing_atoms != batch->missing_atoms )
             {
-               switch ( QMessageBox::question(this, 
-                                              windowTitle() + us_tr( ": Notice" ),
-                                              QString(us_tr("Please note:\n\n"
-                                                         "You are loading a PDB file and the current Batch Operation\n"
-                                                         "PDB parsing options don't match SOMO's current settings\n"
-                                                         "What would you like to do?\n")),
-                                              us_tr("Use &Batch current mode settings"), 
-                                              us_tr("Keep &SOMO's setting"),
-                                              QString(),
-                                              0, // Stop == button 0
-                                              0 // Escape == button 0
-                                             ) )
-               {
-               case 0 : 
+               if ( ((US_Hydrodyn *)us_hydrodyn)->guiFlag ) {
+                  switch ( QMessageBox::question(this, 
+                                                 windowTitle() + us_tr( ": Notice" ),
+                                                 QString(us_tr("Please note:\n\n"
+                                                               "You are loading a PDB file and the current Batch Operation\n"
+                                                               "PDB parsing options don't match SOMO's current settings\n"
+                                                               "What would you like to do?\n")),
+                                                 us_tr("Use &Batch current mode settings"), 
+                                                 us_tr("Keep &SOMO's setting"),
+                                                 QString(),
+                                                 0, // Stop == button 0
+                                                 0 // Escape == button 0
+                                                 ) )
+                  {
+                  case 0 : 
+                     save_us_hydrodyn_settings();
+                     break;
+                  case 1 : 
+                     break;
+                  }
+               } else {
+                  // use batch mode settings if no GUI (e.g. running in script)
                   save_us_hydrodyn_settings();
-                  break;
-               case 1 : 
-                  break;
                }
             }
             result = ((US_Hydrodyn *)us_hydrodyn)->screen_pdb(file, true );
@@ -2304,6 +2309,33 @@ void US_Hydrodyn_Batch::enable_after_stop()
 
 void US_Hydrodyn_Batch::start( bool quiet )
 {
+   if ( ((US_Hydrodyn *)us_hydrodyn)->guiFlag
+        && cb_zeno->isEnabled()
+        && cb_zeno->isChecked() ) {
+      switch ( QMessageBox::information(
+                                        this
+                                        ,this->windowTitle() + " Hydrodynamic Calculations ZENO"
+                                        ,QString( us_tr(
+                                                        "Note that for models using less than %1 beads, we recommend using GRPY.\n"
+                                                        ) )
+                                        .arg( ZENO_GRPY_CORRECTION_BEAD_COUNT_THRESHOLD )
+                                        ,us_tr("&Stop")
+                                        ,us_tr("&Continue")
+                                        ) ) {
+      case 0 : // stop
+         return;
+         break;
+
+      case 1 : //continue
+         break;
+
+      default: // stop
+         return;
+         break;
+         
+      }
+   }
+
    if ( !((US_Hydrodyn *)us_hydrodyn)->misc.compute_vbar && !overwrite_all )
    {
       switch ( QMessageBox::warning(this, 
@@ -3738,7 +3770,7 @@ vector < int > US_Hydrodyn_Batch::split_if_mm( int i ) {
                
                   tso << QString("HEADER    split from %1: Model %2 of %3\n").arg( QFileInfo( file ).fileName() ).arg( pos + 1 ).arg( model_count );
                   tso << model_header;
-                  tso << QString("").sprintf("MODEL  %7s\n", model_name_vector[ pos ].toLatin1().data() );
+                  tso <<  QString::asprintf( "MODEL  %7s\n", model_name_vector[ pos ].toLatin1().data()  ) ;
                   tso << model_lines;
                   tso << "ENDMDL\nEND\n";
                   
@@ -4076,7 +4108,7 @@ void US_Hydrodyn_Batch::make_movie()
                           QString("mogrify -gravity southwest -fill %1 -font Courier-10-Pitch-Regular -pointsize %2 -draw 'text 25,25 \"%3 %4\"' ")
                           .arg(black_background ? "white" : "black")
                           .arg(tc_pointsize)
-                          .arg(QString("").sprintf(qPrintable(tc_format_string), tc_start))
+                          .arg( QString::asprintf( qPrintable(tc_format_string), tc_start ) )
                           .arg(tc_unit) 
                           + fi.fileName() + ".gif\n"
                           : "" ) +
@@ -4469,10 +4501,11 @@ void US_Hydrodyn_Batch::save_csv_saxs_prr()
               vector_double_to_csv(saxs_r).toLatin1().data(),
               saxs_header_prr.remove("\n").toLatin1().data()
               );
-      float sum_mw = 0.0;
+      // sum_mw can be uncommented for debugging
+      // float sum_mw = 0.0;
       for ( unsigned int i = 0; i < csv_source_name_prr.size(); i++ )
       {
-         sum_mw += saxs_prr_mw[i];
+         // sum_mw += saxs_prr_mw[i];
          fprintf(of, "\"%s\",%.2f,%.2f,\"%s\",%s\n", 
                  csv_source_name_prr[i].toLatin1().data(),
                  saxs_prr_mw[i],
@@ -4481,10 +4514,10 @@ void US_Hydrodyn_Batch::save_csv_saxs_prr()
                  vector_double_to_csv(saxs_prr[i]).toLatin1().data());
       }
       fprintf(of, "\n");
-      if ( csv_source_name_prr.size() )
-      {
-         sum_mw /= csv_source_name_prr.size();
-      }
+      // if ( csv_source_name_prr.size() )
+      // {
+      //    sum_mw /= csv_source_name_prr.size();
+      // }
       for ( unsigned int i = 0; i < csv_source_name_prr.size(); i++ )
       {
          fprintf(of, "\"%s\",%.2f,%.2f,\"%s\",%s\n", 

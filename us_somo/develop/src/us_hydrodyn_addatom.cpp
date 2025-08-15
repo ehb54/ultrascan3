@@ -393,7 +393,7 @@ void US_AddAtom::write_atom_file()
          ts << atom_list[i].name.toUpper() << "\t" << atom_list[i].hybrid.name.toUpper() << "\t" <<
                atom_list[i].hybrid.mw << "\t" << atom_list[i].hybrid.radius <<  "\t" <<
                atom_list[i].saxs_excl_vol << Qt::endl;
-         str1.sprintf("%d: ", i+1);
+         str1 = QString::asprintf( "%d: ", i+1 );
          str1 += atom_list[i].name.toUpper();
          str1 += " (";
          str1 += atom_list[i].hybrid.name.toUpper();
@@ -437,7 +437,7 @@ void US_AddAtom::select_atom_file()
             if (!current_atom.name.isEmpty() && current_atom.hybrid.radius > 0.0 && current_atom.hybrid.mw > 0.0)
             {
                atom_list.push_back(current_atom);
-               str1.sprintf("%d: ", i);
+               str1 = QString::asprintf( "%d: ", i );
                str1 += current_atom.name;
                str1 += " (";
                str1 += current_atom.hybrid.name.toUpper();
@@ -491,7 +491,7 @@ void US_AddAtom::select_hybrid_file()
             if (!current_hybrid.name.isEmpty() && current_hybrid.radius > 0.0 && current_hybrid.mw > 0.0)
             {
                hybrid_list.push_back(current_hybrid);
-               str1.sprintf("%d: ", i);
+               str1 = QString::asprintf( "%d: ", i );
                str1 += current_hybrid.name;
                cmb_hybrid->addItem(str1);
                i++;
@@ -536,7 +536,7 @@ void US_AddAtom::select_saxs_file()
             {
                continue;
             }
-            qs.trimmed();
+            qs = qs.trimmed();
             QStringList qsl = (qs ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
             int pos = 0;
             if ( qsl.size() == 11 )
@@ -609,9 +609,9 @@ void US_AddAtom::select_hybrid(int i)
    current_atom.hybrid.scat_len = hybrid_list[i].scat_len;
    current_atom.hybrid.exch_prot = hybrid_list[i].exch_prot;
    current_atom.hybrid.num_elect = hybrid_list[i].num_elect;
-   str.sprintf("%3.2f: ", current_atom.hybrid.mw);
+   str = QString::asprintf( "%3.2f: ", current_atom.hybrid.mw );
    lbl_mw2->setText(str);
-   str.sprintf("%3.2f: ", current_atom.hybrid.radius);
+   str = QString::asprintf( "%3.2f: ", current_atom.hybrid.radius );
    lbl_radius2->setText(str);
    lbl_hybrid2->setText(current_atom.hybrid.name);
    for (unsigned int j=0; j<saxs_list.size(); j++)
@@ -625,12 +625,12 @@ void US_AddAtom::select_hybrid(int i)
    }
    if (cb_excl_vol->isChecked())
    {
-      str.sprintf("%3.2f", val);
+      str = QString::asprintf( "%3.2f", val );
       le_excl_vol->setText(str);
    }
    else
    {
-      str.sprintf("%3.2f", current_atom.saxs_excl_vol);
+      str = QString::asprintf( "%3.2f", current_atom.saxs_excl_vol );
       le_excl_vol->setText(str);
    }
 }
@@ -664,11 +664,11 @@ void US_AddAtom::select_atom(int val)
    current_atom.hybrid.saxs_name = atom_list[val].hybrid.saxs_name;
    current_atom.saxs_excl_vol = atom_list[val].saxs_excl_vol;
 
-   str.sprintf("%3.2f", atom_list[val].hybrid.mw);
+   str = QString::asprintf( "%3.2f", atom_list[val].hybrid.mw );
    lbl_mw2->setText(str);
-   str.sprintf("%3.2f", atom_list[val].hybrid.radius);
+   str = QString::asprintf( "%3.2f", atom_list[val].hybrid.radius );
    lbl_radius2->setText(str);
-   str.sprintf("%3.2f", atom_list[val].saxs_excl_vol);
+   str = QString::asprintf( "%3.2f", atom_list[val].saxs_excl_vol );
    le_excl_vol->setText(str);
    le_name->setText(atom_list[val].name.toUpper());
    lbl_hybrid2->setText(atom_list[val].hybrid.name.toUpper());
@@ -746,7 +746,7 @@ void US_AddAtom::set_excl_vol()
             {
                current_atom.saxs_excl_vol = saxs_list[i].volume;
                QString str;
-               str.sprintf("%3.2f", current_atom.saxs_excl_vol);
+               str = QString::asprintf( "%3.2f", current_atom.saxs_excl_vol );
                le_excl_vol->setText(str);
                break;
             }

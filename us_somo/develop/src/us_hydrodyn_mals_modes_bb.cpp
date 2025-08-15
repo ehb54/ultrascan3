@@ -292,7 +292,7 @@ void US_Hydrodyn_Mals::blanks_start()
                   it++ )
             {
                t   .push_back( it->first );
-               t_qs.push_back( QString( "" ).sprintf( "%.8f", it->first ) );
+               t_qs.push_back( QString::asprintf( "%.8f", it->first ) );
                if ( it->second.count( qv ) )
                {
                   I.push_back( it->second[ qv ] );

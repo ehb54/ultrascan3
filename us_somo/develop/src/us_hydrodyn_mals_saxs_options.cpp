@@ -363,7 +363,7 @@ void US_Hydrodyn_Mals_Saxs_Options::setupGUI()
 
    le_fasta_pH = new QLineEdit( this );
    le_fasta_pH->setObjectName( "le_fasta_pH Line Edit" );
-   le_fasta_pH->setText( QString( "" ).sprintf( "%4.2f", ((US_Hydrodyn *)us_hydrodyn)->hydro.pH ) );
+   le_fasta_pH->setText( QString::asprintf( "%4.2f", ((US_Hydrodyn * )us_hydrodyn)->hydro.pH ) );
    le_fasta_pH->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    le_fasta_pH->setPalette( PALET_EDIT );
    AUTFBACK( le_fasta_pH );
@@ -1327,7 +1327,7 @@ void US_Hydrodyn_Mals_Saxs_Options::fasta_file() {
                             + seq_names
                             );
 
-   le_fasta_value->setText( QString( "" ).sprintf( "%.3f", psv ) );
+   le_fasta_value->setText( QString::asprintf( "%.3f", psv ) );
    le_fasta_value->setEnabled( true );
    return;
 }
@@ -1340,6 +1340,6 @@ void US_Hydrodyn_Mals_Saxs_Options::update_fasta_pH( const QString &str ) {
    ((US_Hydrodyn *)us_hydrodyn)->set_disabled();
    
    ((US_Hydrodyn *)us_hydrodyn)->hydro.pH = str.toDouble();
-   ((US_Hydrodyn *)us_hydrodyn)->le_pH->setText( QString( "" ).sprintf( "%4.2f", ((US_Hydrodyn *)us_hydrodyn)->hydro.pH ) );
+   ((US_Hydrodyn *)us_hydrodyn)->le_pH->setText( QString::asprintf( "%4.2f", ((US_Hydrodyn * )us_hydrodyn)->hydro.pH ) );
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }

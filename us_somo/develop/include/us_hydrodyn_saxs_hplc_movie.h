@@ -48,20 +48,21 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Movie : public QDialog
       QPushButton           * pb_end;
 
       QLabel                * lbl_state;
-      QLabel                * lbl_current;
+      QLineEdit             * le_current;
 
       QCheckBox             * cb_save;
       QLineEdit             * le_save;
 
       QCheckBox             * cb_save_overwrite;
 
-      QGroupBox          * bg_save;
+      QGroupBox             * bg_save;
       QRadioButton          * rb_save_png;
       QRadioButton          * rb_save_jpeg;
       QRadioButton          * rb_save_bmp;
 
       QCheckBox             * cb_show_gauss;
       QCheckBox             * cb_show_ref;
+      QCheckBox             * cb_lock_zoom;
       QCheckBox             * cb_mono;
 
       QPushButton           * pb_help;
@@ -78,6 +79,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Movie : public QDialog
       bool                    last_show_gauss;
       bool                    last_show_ref;
       bool                    last_mono;
+      bool                    last_lock_zoom;
 
       void                    save_plot();
       void                    save_plot( QWidget *plot, QString tag );
