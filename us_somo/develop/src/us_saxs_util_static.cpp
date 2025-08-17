@@ -11397,6 +11397,7 @@ double US_Saxs_Util::holm_bonferroni( vector < double > P, double alpha ) {
 // Forces UTF-8 so Unicode survives on Windows (avoids local-8bit/codepage).
 // Keeps signature unchanged; null QStrings remain null.
 // TODO: refactor to use QStringLiteral + QT_TR_NOOP for proper lupdate support.
+// lupdate is part of Qt's Linguist tools used for translation
 US_EXPORT QString us_tr( QString qs ) {
    if (qs.isNull()) {
       return qs;
