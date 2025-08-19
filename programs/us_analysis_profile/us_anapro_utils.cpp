@@ -372,10 +372,13 @@ use_db=false;
 	{
 	  QString c_wvl = tri.key();
 
-	  //if ref_report was not replaced yet, substitute all channels' reports witht he ref. one...
+	  //if ref_report was not replaced yet, substitute all channels' reports witht the ref. one...
 	  if ( !triple_reports_ref.isEmpty() )
 	    {
+	      //but before, remeber exp. duraiton:
+	      double exp_dur_ = currProf->ch_reports[ chan_desc ] [ c_wvl ].experiment_duration;
 	      currProf->ch_reports[ chan_desc ] [ c_wvl ] = triple_reports_ref[ wvl_ref ];
+	      currProf->ch_reports[ chan_desc ] [ c_wvl ].experiment_duration = exp_dur_;
 		  
 	    }
 	  else //check if some channel's report still contain 's'/'2DSA' etc. (caused by adding/removing wvl(s)/channels)
@@ -421,6 +424,8 @@ use_db=false;
       QString chan_desc = wi.key();
       qDebug() << "[BEGIN]US_AnaprofPanGen::initPanel(): chan_desc [ch_wvls]:::  " << chan_desc;
       qDebug() << "Wvls -- " << wi.value();
+
+      //still present from "1A:UV/vis.:(unspecified)" channel....
       
     }
   //END DEBUG
@@ -652,13 +657,20 @@ DbgLv(1) << "APGe: inP: 1)le_chn,lcr size" << le_channs.count() << le_lcrats.cou
 	     //internal_reports[ chdesc_alt ][ curr_w ].experiment_duration = currProf->ch_reports[ chdesc_alt ] [ curr_w ].experiment_duration;
 
 	     qDebug() << "US_AnaprofPanGen::initPanel(): ch_wavelengths[ w ] --  " << ch_wavelengths[ w ];
+
+	     qDebug() << "[ANAPROF->Gen->initPanel()]; internal_reports[ chdesc_alt ][ curr_w ].wavelength, currProf->ch_reports[ chdesc_alt ] [ curr_w ].experiment_duration, internal_reports[ chdesc_alt ][ curr_w ].experiment_duration -- "
+		      << internal_reports[ chdesc_alt ][ curr_w ].wavelength
+		      << currProf->ch_reports[ chdesc_alt ] [ curr_w ].experiment_duration
+		      << internal_reports[ chdesc_alt ][ curr_w ].experiment_duration;
 	   }
 	 
 	 //internal_reports[ chdesc_alt ] = currProf->ch_reports[ chdesc_alt ];
 	 qDebug() << "US_AnaprofPanGen::initPanel(): internal_reports[ chdesc_alt ].size() -- " << internal_reports.size();
 	 qDebug() << "US_AnaprofPanGen::initPanel(): internal_reports[ chdesc_alt ][ QString::number ( ch_wavelengths[ 0 ] )] -- "
 		  << internal_reports[ chdesc_alt ][ QString::number ( ch_wavelengths[ 0 ] )].tot_conc
-		  << internal_reports[ chdesc_alt ][ QString::number ( ch_wavelengths[ 0 ] )].wavelength;
+		  << internal_reports[ chdesc_alt ][ QString::number ( ch_wavelengths[ 0 ] )].wavelength
+		  << internal_reports[ chdesc_alt ][ QString::number ( ch_wavelengths[ 0 ] )].experiment_duration;
+	
 
 	 // //ALEXEY_NEW_REPORT: this .wavelength needs to be properly set for each triple
 	 // internal_reports[ chdesc_alt ].wavelength = currProf->wvl_edit[ kk ];
