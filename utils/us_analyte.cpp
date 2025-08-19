@@ -370,7 +370,7 @@ int US_Analyte::read_analyte( const QString& filename )
 
 void US_Analyte::nucleotide( void )
 {
-   sequence.toLower();
+   sequence = sequence.toLower();
 
    uint A = sequence.count( "a" );
    uint C = sequence.count( "c" );

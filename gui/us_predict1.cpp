@@ -224,7 +224,7 @@ US_Predict1::US_Predict1( US_Hydrosim&     parm,
    rod_curve->setPen( QPen( QBrush( Qt::cyan ), 2.0 ) );
    rod_curve->setSamples( ratio_x, rod, ARRAYSIZE );
 
-	double maxy = max(prolate_curve->maxYValue(), rod_curve->maxYValue());
+   double maxy = qMax(prolate_curve->maxYValue(), rod_curve->maxYValue());
    vline_x[ 0 ] = ratio;
    vline_x[ 1 ] = ratio;
    vline_y[ 0 ] = 0;
@@ -321,7 +321,7 @@ void US_Predict1::update_plot( void )
    prolate_curve->setSamples( ratio_x, prolate, ARRAYSIZE );
    rod_curve->setSamples( ratio_x, rod, ARRAYSIZE );
    oblate_curve ->setSamples( ratio_x, oblate, ARRAYSIZE );
-	double maxy = max(prolate_curve->maxYValue(), rod_curve->maxYValue());
+   double maxy = qMax(prolate_curve->maxYValue(), rod_curve->maxYValue());
    vline_x[ 0 ] = ratio;
    vline_x[ 1 ] = ratio;
    vline_y[ 0 ] = 0;
@@ -515,8 +515,8 @@ void US_Predict1::mouseU( const QwtDoublePoint& p )
 void US_Predict1::calc_column( const QString& name, const QString& unit, int column_index, double sphere_val,
                                double prolate_val, double oblate_val, double rod_val, double multiplier)
 {
-   double min_value = min( min( sphere_val, prolate_val ), min( oblate_val, rod_val ) ) * multiplier;
-   double max_value = max( max( sphere_val, prolate_val ), max( oblate_val, rod_val ) ) * multiplier;
+   double min_value = qMin( qMin( sphere_val, prolate_val ), qMin( oblate_val, rod_val ) ) * multiplier;
+   double max_value = qMax( qMax( sphere_val, prolate_val ), qMax( oblate_val, rod_val ) ) * multiplier;
    int log_min = (int) ( log10( min_value ) ) ;
    int log_max = (int) ( log10( max_value ) ) ;
    int power_of_ten = 1e+0;

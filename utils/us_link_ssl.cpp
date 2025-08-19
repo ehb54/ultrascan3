@@ -1,12 +1,6 @@
-#include <QSslKey>
-#include <QSslCertificate>
-#include <QJsonDocument>
-#include <QJsonValue>
-#include <QJsonArray>
-#include <QJsonObject>
+//! \file us_link_ssl.cpp
 #include "us_link_ssl.h"
 #include "us_settings.h"
-
 
 Link::Link( QString alias )
 //Link::Link()
@@ -21,7 +15,7 @@ Link::Link( QString alias )
   connected_itself    = false;
   
   QString client_name = alias;
-  client_name.simplified();
+  client_name = client_name.simplified();
   client_name.replace(" ", "");
   client_name = client_name.toLower();
   
