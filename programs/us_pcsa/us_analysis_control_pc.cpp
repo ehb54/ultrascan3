@@ -1204,8 +1204,8 @@ QString US_AnalysisControlPc::fitpars_string()
                    ( ck_rinoise->isChecked() ? 2 : 0 );
 
 
-   return QString().sprintf( "%d %.5e %.5e %.5e %.5e %d %d",
-            typ, xlo, xup, ylo, yup, nvar, noif );
+   return QString::asprintf( "%d %.5e %.5e %.5e %.5e %d %d",
+typ, xlo, xup, ylo, yup, nvar, noif );
 }
 
 // Re-Connect or disconnect fit parameters controls

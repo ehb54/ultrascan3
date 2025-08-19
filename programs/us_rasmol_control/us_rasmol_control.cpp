@@ -157,7 +157,7 @@ void US_RasmolControl::list_interps( void )
          namtext       += "\n";
 
       QString iname  = w_inames[ ii ];
-      QString ientry = QString().sprintf( "%lx : ", w_ids[ ii ] ) + iname;
+      QString ientry = QString::asprintf( "%lx : ", w_ids[ ii ] ) + iname;
 
       cb_intname->addItem( iname );        // Add name to combo box list
       namtext       += ientry;             // Add line to status text
