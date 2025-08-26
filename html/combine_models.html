@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Create Global Model &#8212; UltraScanIII 0.0.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="_static/haiku.css?v=fce32b03" />
+    <link rel="stylesheet" type="text/css" href="_static/custom.css?v=72df64ca" />
+    <script src="_static/documentation_options.js?v=d45e8c67"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
+    <script src="_static/sphinx_highlight.js?v=4825356b"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Managing Personal Information" href="us_investigator.html" />
+    <link rel="prev" title="Custom Grid Editor (CG)" href="custom_grid.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="index.html">
+          <span>UltraScanIII 0.0.1 documentation</span></a></h1>
+        <h2 class="heading"><span>Create Global Model</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="Top">
+      
+        <p>
+        «&#160;&#160;<a href="custom_grid.html">Custom Grid Editor (CG)</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="us_investigator.html">Managing Personal Information</a>&#160;&#160;»
+        </p>
+
+      </div>
+      <div class="content" role="main">
+        
+        
+  <section id="create-global-model">
+<h1>Create Global Model<a class="headerlink" href="#create-global-model" title="Link to this heading">¶</a></h1>
+<div class="toctree-wrapper compound">
+</div>
+<p>This utility combines selected models into a single global model that can be used in global fits. The most common use of its output is to form an input to the Initialize Genetic Algorithm program in which a global set of buckets may be created for use in a global fit Genetic Algorithm run.</p>
+<img alt="_images/combine_models.png" class="align-center" src="_images/combine_models.png" />
+<p class="align center"><strong>Create Global Model</strong></p>
+<p><strong>Window Controls</strong></p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 28.6%" />
+<col style="width: 71.4%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><strong>(models list)</strong></p></td>
+<td><p>Look here to see the list of component models so far selected.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Database</strong></p></td>
+<td><p>Select to specify model input from the database.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Local Disk</strong></p></td>
+<td><p>Select to specify model input from local disk.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Select PreFilter:</strong></p></td>
+<td><p>Open a <a class="reference external" href="common_dialogs.html#data-loader">Models Pre-Filter dialog</a> to select Run IDs on which to pre-filter lists of models for loading.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Add Models</strong></p></td>
+<td><p>Open a <a class="reference external" href="common_dialogs.html#load-distribution-model">Model Loader dialog</a> to select model(s) to load into the list of component models to the global model.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Reset List</strong></p></td>
+<td><p>Clear the list of input models in order to start over in the model selection process.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Save Global Model</strong></p></td>
+<td><p>Open a dialog (see below) to save the output combined global model.</p></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Window Controls</strong></p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 28.6%" />
+<col style="width: 71.4%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><strong>Help</strong></p></td>
+<td><p>Display this detailed Create Global Model help.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Close</strong></p></td>
+<td><p>Close all windows and exit.</p></td>
+</tr>
+</tbody>
+</table>
+<p>When the Save Global Model button is clicked, a dialog reports on the combined global model to be created and allows the user options in saving it.</p>
+<img alt="_images/combine_models-save.png" class="align-center" src="_images/combine_models-save.png" />
+<p class="align center"><strong>Save a Global Model</strong></p>
+<p>If the user wishes to modify the RunID part of the output model description, a click on the <strong>Edit</strong> button brings up a dialog for entering new ID text.</p>
+<img alt="_images/combine_models-idedit.png" class="align-center" src="_images/combine_models-idedit.png" />
+<p class="align center"><strong>Edit Global Model Name</strong></p>
+</section>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="Bottom">
+      
+        <p>
+        «&#160;&#160;<a href="custom_grid.html">Custom Grid Editor (CG)</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="us_investigator.html">Managing Personal Information</a>&#160;&#160;»
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2025, Emre Brookes, Borries Demeler, Bruce Dubbs, Haben Gabir, Gary Gorbet, Saeed Mortezazadeh, Alexey Savelyev, and Dan Zollars,.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
+    </div>
+  </body>
+</html>

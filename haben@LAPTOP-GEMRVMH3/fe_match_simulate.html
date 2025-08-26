@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Finite Element (FE) Model Simulation &#8212; UltraScanIII 0.0.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="_static/haiku.css?v=fce32b03" />
+    <link rel="stylesheet" type="text/css" href="_static/custom.css?v=72df64ca" />
+    <script src="_static/documentation_options.js?v=d45e8c67"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
+    <script src="_static/sphinx_highlight.js?v=4825356b"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Genetic Algorithm Initialization" href="ga_initialize.html" />
+    <link rel="prev" title="Finite Element (FE) Model Viewer" href="fe_match.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="index.html">
+          <span>UltraScanIII 0.0.1 documentation</span></a></h1>
+        <h2 class="heading"><span>Finite Element (FE) Model Simulation</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="Top">
+      
+        <p>
+        «&#160;&#160;<a href="fe_match.html">Finite Element (FE) Model Viewer</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="ga_initialize.html">Genetic Algorithm Initialization</a>&#160;&#160;»
+        </p>
+
+      </div>
+      <div class="content" role="main">
+        
+        
+  <section id="finite-element-fe-model-simulation">
+<h1>Finite Element (FE) Model Simulation<a class="headerlink" href="#finite-element-fe-model-simulation" title="Link to this heading">¶</a></h1>
+<div class="toctree-wrapper compound">
+</div>
+<nav class="contents local" id="index">
+<p class="topic-title">Index</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#steps-to-compare-experiment-to-fe-models" id="id3">Steps to compare Experiment to FE models:</a></p>
+<ul>
+<li><p><a class="reference internal" href="#simulation-product-output-summary" id="id4">Simulation Product Output Summary:</a></p></li>
+<li><p><a class="reference internal" href="#finite-element-viewer" id="id5">Finite Element Viewer</a></p>
+<ul>
+<li><p><a class="reference internal" href="#functions" id="id6">Functions</a></p></li>
+<li><p><a class="reference internal" href="#comparison-of-sv-data" id="id7">Comparison of SV data:</a></p></li>
+<li><p><a class="reference internal" href="#noise-data-analysis" id="id8">Noise Data analysis:</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#report-fe-match-model-simulation" id="id9">Report: FE Match Model Simulation</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#related" id="id10">Related</a></p></li>
+</ul>
+</nav>
+<section id="steps-to-compare-experiment-to-fe-models">
+<h2><a class="toc-backref" href="#id3" role="doc-backlink">Steps to compare Experiment to FE models:</a><a class="headerlink" href="#steps-to-compare-experiment-to-fe-models" title="Link to this heading">¶</a></h2>
+<ul class="simple">
+<li><p><strong>Step 1:</strong> First, load experimental velocity data. Click on <a href="#id1"><span class="problematic" id="id2">`</span></a>Load Data &lt;common_dialogs.html#data-loader&gt;`_* to select an edited velocity data set from the database or from local disk.</p></li>
+<li><p><strong>Step 2:</strong> Secondly, select a model from database or disk. Simply click on <a class="reference external" href="common_dialogs.html#load-distribution-model">Load Model</a> and choose a model in the resulting dialog. If they exist, you will be given the choice of also loading noise vectors.</p></li>
+<li><p><strong>Step 3:</strong> Next, simulate the loaded model with a finite element solution by clicking <strong>Simulate Model</strong>.</p></li>
+<li><p><strong>Step 4:</strong> After simulation, a variety of options are available for displaying simulation results, residuals, and distributions. Report text files and graphics plot files can also be generated.</p></li>
+</ul>
+<section id="simulation-product-output-summary">
+<h3><a class="toc-backref" href="#id4" role="doc-backlink">Simulation Product Output Summary:</a><a class="headerlink" href="#simulation-product-output-summary" title="Link to this heading">¶</a></h3>
+<p>When the “Simulate Model” button is clicked in the <strong>Finite Element Model Viewer</strong> window, a simulation is performed using the Edit data, a Loaded Model, and simulation parameters primarily created using the edit data set. A simulation data set is created that has the same ranges as the edit set, but with readings values that are calculated and compared to the actual experimental data. The comparison spawns a number of new dialogs and options that allow the user to evaluate the quality of the model.</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><strong>Finite Element Data/Resdiuals Viewer</strong> - Visual comparison of simulated and experimental data. Graphical display of time and radially invarient noise</p></li>
+<li><p><strong>Residuals Pixal Map</strong> - Bit map of</p></li>
+</ul>
+</div></blockquote>
+<ul class="simple">
+<li><p><cite>3-Dimensional Plot Controls &lt;3d_plot.html&gt;`_`</cite></p></li>
+</ul>
+<blockquote>
+<div><ul class="simple">
+<li><p><strong>Data report File</strong> - Report of the comparision</p></li>
+</ul>
+</div></blockquote>
+<img alt="_images/fe_match_allct.png" class="align-center" src="_images/fe_match_allct.png" />
+<p class="align center"><strong>Simulation Results</strong></p>
+</section>
+<section id="finite-element-viewer">
+<h3><a class="toc-backref" href="#id5" role="doc-backlink">Finite Element Viewer</a><a class="headerlink" href="#finite-element-viewer" title="Link to this heading">¶</a></h3>
+<p>: The simulation creates a data set with the same ranges as the edit experimental data set. The actual values for scan readings vectors are synthetically produced, as illustrated by the plot below.</p>
+<img alt="_images/fe_match_sim1.png" class="align-center" src="_images/fe_match_sim1.png" />
+<section class="center" id="functions">
+<h4><a class="toc-backref" href="#id6" role="doc-backlink">Functions</a><a class="headerlink" href="#functions" title="Link to this heading">¶</a></h4>
+<p><strong>FE Analysis Data Viewer</strong></p>
+<p><strong>FE Analysis Residual Viewer</strong></p>
+</section>
+<section id="comparison-of-sv-data">
+<h4><a class="toc-backref" href="#id7" role="doc-backlink">Comparison of SV data:</a><a class="headerlink" href="#comparison-of-sv-data" title="Link to this heading">¶</a></h4>
+<p>BitMap</p>
+</section>
+<section id="noise-data-analysis">
+<h4><a class="toc-backref" href="#id8" role="doc-backlink">Noise Data analysis:</a><a class="headerlink" href="#noise-data-analysis" title="Link to this heading">¶</a></h4>
+<blockquote>
+<div><p>Time- NOISE That doesn’t change over time and has the same offset for every scan. Sources of time in</p>
+<p>Radially : noise Constant offset of scan sources, exposure diffrence</p>
+<p>Random: random and different time or radius</p>
+</div></blockquote>
+</section>
+</section>
+<section id="report-fe-match-model-simulation">
+<h3><a class="toc-backref" href="#id9" role="doc-backlink">Report: FE Match Model Simulation</a><a class="headerlink" href="#report-fe-match-model-simulation" title="Link to this heading">¶</a></h3>
+<p>image</p>
+<p>from top right to bottom left. type of analsysi, data report of run label, cell number, channel leter, wavelength, edit name. the data analysis, titled as the timeanddata submited to database, type f analysis, model number, i01
+number of component found, rrmsD, mRRMSD, weight avaraged (what does that mean) total concen, the vbar selected to be constant.</p>
+<p>Distribution results of the m. weighm s apparent(**), s 20 D(apparant). d20, f/f0, conce (%)</p>
+</section>
+</section>
+<section id="related">
+<h2><a class="toc-backref" href="#id10" role="doc-backlink">Related</a><a class="headerlink" href="#related" title="Link to this heading">¶</a></h2>
+<p><a class="reference external" href="fe_match.html">Finite Element Model Viewer</a></p>
+</section>
+</section>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="Bottom">
+      
+        <p>
+        «&#160;&#160;<a href="fe_match.html">Finite Element (FE) Model Viewer</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="ga_initialize.html">Genetic Algorithm Initialization</a>&#160;&#160;»
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2025, Emre Brookes, Borries Demeler, Bruce Dubbs, Haben Gabir, Gary Gorbet, Saeed Mortezazadeh, Alexey Savelyev, and Dan Zollars,.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
+    </div>
+  </body>
+</html>

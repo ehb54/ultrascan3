@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Manage Buffer Information &#8212; UltraScanIII 0.0.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="_static/haiku.css?v=fce32b03" />
+    <link rel="stylesheet" type="text/css" href="_static/custom.css?v=72df64ca" />
+    <script src="_static/documentation_options.js?v=d45e8c67"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
+    <script src="_static/sphinx_highlight.js?v=4825356b"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Manage Analyte Information" href="analyte.html" />
+    <link rel="prev" title="Managing Personal Information" href="us_investigator.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="index.html">
+          <span>UltraScanIII 0.0.1 documentation</span></a></h1>
+        <h2 class="heading"><span>Manage Buffer Information</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="Top">
+      
+        <p>
+        «&#160;&#160;<a href="us_investigator.html">Managing Personal Information</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="analyte.html">Manage Analyte Information</a>&#160;&#160;»
+        </p>
+
+      </div>
+      <div class="content" role="main">
+        
+        
+  <section id="manage-buffer-information">
+<h1>Manage Buffer Information<a class="headerlink" href="#manage-buffer-information" title="Link to this heading">¶</a></h1>
+<div class="toctree-wrapper compound">
+</div>
+<nav class="contents local" id="index">
+<p class="topic-title">Index</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#select-buffer-panel" id="id1">Select Buffer Panel:</a></p>
+<ul>
+<li><p><a class="reference internal" href="#select-buffer-functions" id="id2">Select Buffer Functions:</a></p></li>
+<li><p><a class="reference internal" href="#select-buffer-steps" id="id3">Select Buffer Steps:</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#enter-new-buffer-panel" id="id4">Enter New Buffer Panel:</a></p>
+<ul>
+<li><p><a class="reference internal" href="#enter-new-buffer-functions" id="id5">Enter New Buffer Functions:</a></p></li>
+<li><p><a class="reference internal" href="#enter-new-buffer-steps" id="id6">Enter New Buffer Steps:</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#edit-exisiting-buffer-panel" id="id7">Edit Exisiting Buffer Panel:</a></p>
+<ul>
+<li><p><a class="reference internal" href="#edit-exisiting-buffer-functions" id="id8">Edit Exisiting Buffer Functions:</a></p></li>
+<li><p><a class="reference internal" href="#edit-exisiting-buffer-steps" id="id9">Edit Exisiting Buffer Steps:</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#settings-panel" id="id10">Settings Panel:</a></p>
+<ul>
+<li><p><a class="reference internal" href="#settings-functions" id="id11">Settings Functions:</a></p></li>
+</ul>
+</li>
+</ul>
+</nav>
+<p><strong>Panel Tab Options:</strong></p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#select-buffer"><span class="std std-ref">Select Buffer</span></a> - A panel whose primary purpose is to select a buffer to return to the caller.</p></li>
+<li><p><a class="reference internal" href="#add-buffer"><span class="std std-ref">Enter New Buffer</span></a> - A panel whose primary purpose is to enter a brand new buffer, defined mostly by specifying components and each one’s concentration.</p></li>
+<li><p><a class="reference internal" href="#edit-buffer"><span class="std std-ref">Edit Existing Buffer</span></a> - A panel whose primary purpose is to change non-hydrodynamic characteristics of an already existing buffer.</p></li>
+<li><p><a class="reference internal" href="#settings-buffer"><span class="std std-ref">Settings</span></a> - A panel whose primary purpose is to set Database-or-Disk input, the investigator; or to synchronize the local buffer components file from the database.</p></li>
+</ul>
+<p>This window allows the user to manage buffer information by creating new buffer compositions, editing existing entries, and synchronizing buffer data between your local system and the user database.</p>
+<section id="select-buffer-panel">
+<h2><a class="toc-backref" href="#id1" role="doc-backlink">Select Buffer Panel:</a><a class="headerlink" href="#select-buffer-panel" title="Link to this heading">¶</a></h2>
+<p id="select-buffer">Using this panel, you can select a buffer in the current database or on the local disk. Most commonly, you select a buffer in the provided list and click the Accept button to return it to the caller.</p>
+<p>As with all panels, a set of tabs allows you to navigate to other panels in order to perform specialized subtasks relating to buffer management. Links to and summaries of the panels are given in the final section of this page.</p>
+<img alt="_images/buffer_select.png" class="align-center" src="_images/buffer_select.png" />
+<p class="align center"><strong>Select Buffer Window</strong></p>
+<section id="select-buffer-functions">
+<h3><a class="toc-backref" href="#id2" role="doc-backlink">Select Buffer Functions:</a><a class="headerlink" href="#select-buffer-functions" title="Link to this heading">¶</a></h3>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 28.6%" />
+<col style="width: 71.4%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><strong>(buffer list, left-side)</strong></p></td>
+<td><p>The items listed on the left side are all the descriptions (names) of buffers available or the descriptions as limited by the <strong>Search</strong> text. A single click on a list item selects a buffer.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>(component list, right-side)</strong></p></td>
+<td><p>The items listed on the right side are the components of the currently selected buffer, along with each one’s concentration. This list is solely for information purposes.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Search:</strong></p></td>
+<td><p>Enter a partial description to search for a specific buffer or set of buffers. Clear the text to expand to the full list.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Density</strong></p></td>
+<td><p>The density of the currently selected buffer.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Viscosity</strong></p></td>
+<td><p>The viscosity of the currently selected buffer.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>pH</strong></p></td>
+<td><p>The pH of the currently selected buffer.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Compressibility</strong></p></td>
+<td><p>The compressibility of the currently selected buffer.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Cancel</strong></p></td>
+<td><p>Close the buffer dialog and return to the caller with no change in buffer selection.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Accept</strong></p></td>
+<td><p>Close the buffer dialog and return to the caller with the current buffer selection.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>View Spectrum</strong></p></td>
+<td><p>Open a <a class="reference internal" href="#view-spectrum"><span class="std std-ref">Manage Spectrum</span></a> dialog showing the Wavelength/Extinction profile associated with the currently selected buffer.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Delete Buffer</strong></p></td>
+<td><p>Permanently delete the currently selected buffer. A confirmation dialog will appear to allow you to cancel the delete request or to proceed with it. Upon confirmation, the removal will proceed regardless of any further action (“Cancel” or “Accept”).</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Buffer Details</strong></p></td>
+<td><p>Open a <a class="reference internal" href="#buffer-details"><span class="std std-ref">Buffer Information</span></a> dialog showing detailed information about the currently selected buffer.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Help</strong></p></td>
+<td><p>Show this documentation.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Temperature:</strong></p></td>
+<td><p>Temperature range slider, select the temperature using the slider and the Density and Viscosity will update.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Reset Temperature:</strong></p></td>
+<td><p>Reset the Temperature range slider to 20°C, select the temperature using the slider and the Density and Viscosity will update.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="select-buffer-steps">
+<h3><a class="toc-backref" href="#id3" role="doc-backlink">Select Buffer Steps:</a><a class="headerlink" href="#select-buffer-steps" title="Link to this heading">¶</a></h3>
+<p>As mentioned above, the most common use of this panel is to select a buffer in the provided list and click on the Accept button to return the selected buffer to the caller, such as a Solution Management dialog.</p>
+<p>The panel allows actions beyond simple buffer selection, including getting buffer information, deleting a buffer, or choosing the buffer for which non-hydrodynamic modifications are to be made. In summary, the most common actions for this panel are as follows.</p>
+<ul class="simple">
+<li><p>Select a buffer and Accept it for a caller.</p></li>
+<li><p>Select a buffer and modify its non-hydrodynamic characteristics by selecting the Edit Existing Buffer panel.</p></li>
+<li><p>Select a buffer to obtain information about it, including the details shown with the <a class="reference internal" href="#buffer-details"><span class="std std-ref">Buffer Details</span></a> button.</p></li>
+<li><p>Select a buffer in order to remove it permanently from the database or local disk, with the Delete Buffer button.</p></li>
+</ul>
+<img alt="_images/buffer_info.png" class="align-center" id="buffer-details" src="_images/buffer_info.png" />
+<p class="align center"><strong>Buffer Information</strong></p>
+</section>
+</section>
+<section id="enter-new-buffer-panel">
+<h2><a class="toc-backref" href="#id4" role="doc-backlink">Enter New Buffer Panel:</a><a class="headerlink" href="#enter-new-buffer-panel" title="Link to this heading">¶</a></h2>
+<p id="add-buffer">Using this panel, you can create a new buffer in the current database or on the local disk. Most commonly, you select a set of buffer components in the provided list. As each is selected, you enter its concentration. After providing a description for the new buffer, you can click on the Accept button to upload the buffer to the DB or to local disk and to return to the Select Buffer panel.</p>
+<p>As with all panels, a set of tabs allows you to navigate to other panels in order to perform specialized subtasks relating to buffer management. Links to and summaries of the panels are given in the final section of this page.</p>
+<img alt="_images/buffer_new.png" class="align-center" src="_images/buffer_new.png" />
+<p class="align center"><strong>Enter New Buffer Panel</strong></p>
+<section id="enter-new-buffer-functions">
+<h3><a class="toc-backref" href="#id5" role="doc-backlink">Enter New Buffer Functions:</a><a class="headerlink" href="#enter-new-buffer-functions" title="Link to this heading">¶</a></h3>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 28.6%" />
+<col style="width: 71.4%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><strong>Description Enter</strong></p></td>
+<td><p>A new and unique description for a buffer to create.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>(all components list, left-side)</strong></p></td>
+<td><p>The items listed on the left are descriptions of all available buffer components. Click on one to select it as a component to add to the new buffer. Then enter its concentration in the box above.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>(buffer components list, right-side)</strong></p></td>
+<td><p>The items listed on the right side are the components added so far to the buffer. An item may be removed by double-clicking on it.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Manual unadjusted Density and Viscosity</strong></p></td>
+<td><p>Check this box to allow entry of Density and Viscosity values that override any values computed for the sum of buffer components or that define the values for a buffer with no components, such as water only.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Density Density value set by components choice.</strong></p></td>
+<td><p>It is also editable here (if “Manual…” is checked).</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Viscosity Viscosity value set by components choice.</strong></p></td>
+<td><p>It is also editable here (if “Manual…” is checked).</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>pH</strong></p></td>
+<td><p>pH value for the new buffer. It may be modified here.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Compressibility</strong></p></td>
+<td><p>The compressibility of the new buffer. It may be modified here.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Cancel</strong></p></td>
+<td><p>Close the panel and return to the <a class="reference internal" href="#select-buffer"><span class="std std-ref">Select Buffer</span></a> panel with no new buffer created.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Accept</strong></p></td>
+<td><p>Close the panel and return to the <a class="reference internal" href="#select-buffer"><span class="std std-ref">Select Buffer</span></a> panel with the new buffer selected.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Enter Spectrum</strong></p></td>
+<td><p>This button brings up a <a class="reference internal" href="#manage-buffer-spectrum"><span class="std std-ref">Manage Spectrum dialog</span></a> to set a Wavelength/Extinction profile.</p></td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Please enter the concentration of (component) in (unit): Enter a concentration for the currently selected component. Choose a value within the component range, then hit the keyboard Return key to add the component.</p>
+</div>
+</section>
+<section id="enter-new-buffer-steps">
+<h3><a class="toc-backref" href="#id6" role="doc-backlink">Enter New Buffer Steps:</a><a class="headerlink" href="#enter-new-buffer-steps" title="Link to this heading">¶</a></h3>
+<p>The purpose of this panel is to define a new buffer. A unique description must be given. Density and viscosity must be defined by adding components or by manually entering them. Other buffer values are optional.</p>
+<p>Once the new buffer has been sufficiently defined, the <strong>Accept</strong> button becomes enabled. Clicking on it causes the buffer to be added to the DB or the local disk and causes a return to the <a class="reference internal" href="#select-buffer"><span class="std std-ref">Select Buffer</span></a> panel with the new buffer selected.</p>
+</section>
+</section>
+<section id="edit-exisiting-buffer-panel">
+<h2><a class="toc-backref" href="#id7" role="doc-backlink">Edit Exisiting Buffer Panel:</a><a class="headerlink" href="#edit-exisiting-buffer-panel" title="Link to this heading">¶</a></h2>
+<p id="edit-buffer">Using this panel, you can change non-hydrodynamic characteristics of a buffer previously selected in the Select Buffer panel.</p>
+<p>Once any desired modifications have been made, clicking on the Accept button will return you to the Select Buffer panel with a modified buffer.</p>
+<p>As with all panels, a set of tabs allows you to navigate to other panels in order to perform specialized subtasks relating to buffer management. Links to and summaries of the panels are given in the final section of this page.</p>
+<img alt="_images/buffer_edit.png" class="align-center" src="_images/buffer_edit.png" />
+<p class="align center"><strong>Edit Exisiting Buffer Panel</strong></p>
+<section id="edit-exisiting-buffer-functions">
+<h3><a class="toc-backref" href="#id8" role="doc-backlink">Edit Exisiting Buffer Functions:</a><a class="headerlink" href="#edit-exisiting-buffer-functions" title="Link to this heading">¶</a></h3>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 28.6%" />
+<col style="width: 71.4%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><strong>Description</strong></p></td>
+<td><p>The description of the currently selected buffer for which modification are to be made.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Cancel</strong></p></td>
+<td><p>Click this button to abandon any changes and return to the Select Buffer panel with the original unchanged buffer.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Accept</strong></p></td>
+<td><p>Click this button to save any changes and return to the Select Buffer panel with a buffer as modified in this panel.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>pH:</strong></p></td>
+<td><p>Manually change pH to be associated with the current buffer.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Manage Spectrum</strong></p></td>
+<td><p>This button brings up a <a class="reference internal" href="#manage-spectrum"><span class="std std-ref">Manage Spectrum dialog</span></a> to enter a Wavelength / Extinction profile for the buffer.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Help</strong></p></td>
+<td><p>Show this documentation.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="edit-exisiting-buffer-steps">
+<h3><a class="toc-backref" href="#id9" role="doc-backlink">Edit Exisiting Buffer Steps:</a><a class="headerlink" href="#edit-exisiting-buffer-steps" title="Link to this heading">¶</a></h3>
+<div class="admonition caution">
+<p class="admonition-title">Caution</p>
+<p>No other parameters than those indicated in this panel may be modified for an existing buffer. This is because existing buffers may be already associated with solutions and runs. Changing hydrodynamic characteristics already associated with models will invalidate those models.</p>
+<p>To create a buffer with most characteristics similar to an existing one, the users should note those characteristics; then name and enter a new buffer in the <a class="reference internal" href="#edit-buffer"><span class="std std-ref">Enter New Buffer panel</span></a>, with selected parameters changed.</p>
+</div>
+<p>Using the Buffer settings panel users can upload new spectum CSV files, and view or edit  the spectrum.</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 28.6%" />
+<col style="width: 71.4%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><strong>Upload New Spectrum from Disk</strong></p></td>
+<td><p>to upload a new a spectrum CSV file from a local file, select this button and a file manager dialog will appear to select the buffer spectrum data.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>View Spectrum</strong></p></td>
+<td><p>Click the View Spectrum button to open the <a class="reference internal" href="#view-spectrum"><span class="std std-ref">View Spectrum Window</span></a>. Save to CSV file of the profile to <em>ultrascan/report/</em>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Edit Spectrum Manually</strong></p></td>
+<td><p>Click the Edit Spectrum manually button to open the <a class="reference internal" href="#edit-spectrum"><span class="std std-ref">Managa Extinction Spectrum</span></a> Window.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Delete Spectrum</strong></p></td>
+<td><p>Click to delete an existing spectrum.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Upload and fit new Spectrum</strong></p></td>
+<td><p>Upload and <a class="reference internal" href="#fit-spectrum"><span class="std std-ref">fit Spectrum data</span></a>.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Cancel</strong></p></td>
+<td><p>Cancel all changes and exit window.</p></td>
+</tr>
+</tbody>
+</table>
+<img alt="_images/buffer_edit_setting.png" class="align-center" id="manage-buffer-spectrum" src="_images/buffer_edit_setting.png" />
+<p class="align center"><strong>Edit Exisiting Buffer Setting</strong></p>
+<ul class="simple">
+<li><p>Opens an existing Extinxtion profile</p></li>
+<li><p>Upload a new spectrum in CSV format.</p></li>
+</ul>
+<img alt="_images/buffer_edit_spectrum.png" class="align-center" id="view-spectrum" src="_images/buffer_edit_spectrum.png" />
+<p class="align center"><strong>View Spectrum Window</strong></p>
+<span id="edit-spectrum"></span><img alt="_images/buffer_manage_spectrum.png" class="align-center" id="manage-spectrum" src="_images/buffer_manage_spectrum.png" />
+<p class="align center"><strong>Edit Spectrum Data Window</strong></p>
+<img alt="_images/upload_fit_spectrum.png" class="align-center" id="fit-spectrum" src="_images/upload_fit_spectrum.png" />
+<p class="align center"><strong>Upload and fit new Spectrum</strong></p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This window allows the user to fit the spectrum using the Spectral Fitter module (link when page made)</p>
+</div>
+</section>
+</section>
+<section id="settings-panel">
+<h2><a class="toc-backref" href="#id10" role="doc-backlink">Settings Panel:</a><a class="headerlink" href="#settings-panel" title="Link to this heading">¶</a></h2>
+<p id="settings-buffer">Using this window, you can manage settings that affect all other buffer panels. The essential environment for buffer management that you can change here involves the following.</p>
+<ul class="simple">
+<li><p>The investigator for database access.</p></li>
+<li><p>The choice of Database or Local Disk for input/output.</p></li>
+<li><p>A local buffer components file synchronized with the master list in the database.</p></li>
+</ul>
+<p>As with all panels, a set of tabs allows you to navigate to other panels in order to perform specialized subtasks relating to buffer management. Links to and summaries of the panels are given in the final section of this page.</p>
+<img alt="_images/buffer_settings.png" class="align-center" src="_images/buffer_settings.png" />
+<p class="align center"><strong>Settings Panel</strong></p>
+<section id="settings-functions">
+<h3><a class="toc-backref" href="#id11" role="doc-backlink">Settings Functions:</a><a class="headerlink" href="#settings-functions" title="Link to this heading">¶</a></h3>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 28.6%" />
+<col style="width: 71.4%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><strong>Select Investigator</strong></p></td>
+<td><p>This button brings up a window that allows selecting the current investigator for limiting buffer descriptions.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Database</strong></p></td>
+<td><p>Check to select read or write of the buffer definitions to or from the database.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Local Disk</strong></p></td>
+<td><p>Check to select read or write of the buffer definition to or from a local disk file.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Synchronize buffer components with DB</strong></p></td>
+<td><p>Click to obtain a local file listing of all buffer components downloaded from the database. This action is rarely needed, most commonly for new users who have no buffer components file whatsoever.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>(status box)</strong></p></td>
+<td><p>Status of any action, such as synchronizing buffer components.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Help</strong></p></td>
+<td><p>Show this documentation.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+</section>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="Bottom">
+      
+        <p>
+        «&#160;&#160;<a href="us_investigator.html">Managing Personal Information</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="analyte.html">Manage Analyte Information</a>&#160;&#160;»
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2025, Emre Brookes, Borries Demeler, Bruce Dubbs, Haben Gabir, Gary Gorbet, Saeed Mortezazadeh, Alexey Savelyev, and Dan Zollars,.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>van Holde - Weischet Combined Plots &#8212; UltraScanIII 0.0.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="_static/haiku.css?v=fce32b03" />
+    <link rel="stylesheet" type="text/css" href="_static/custom.css?v=72df64ca" />
+    <script src="_static/documentation_options.js?v=d45e8c67"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
+    <script src="_static/sphinx_highlight.js?v=4825356b"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Time Derivative (dC/dt) Data Analysis" href="time_derivative.html" />
+    <link rel="prev" title="Integral Distributions Combined Plots" href="idist_combine.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="index.html">
+          <span>UltraScanIII 0.0.1 documentation</span></a></h1>
+        <h2 class="heading"><span>van Holde - Weischet Combined Plots</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="Top">
+      
+        <p>
+        «&#160;&#160;<a href="idist_combine.html">Integral Distributions Combined Plots</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="time_derivative.html">Time Derivative (dC/dt) Data Analysis</a>&#160;&#160;»
+        </p>
+
+      </div>
+      <div class="content" role="main">
+        
+        
+  
+<style>
+  .ss-layout-default-AB { grid-template-areas: 'A B'; }
+</style>
+<section id="van-holde-weischet-combined-plots">
+<h1>van Holde - Weischet Combined Plots<a class="headerlink" href="#van-holde-weischet-combined-plots" title="Link to this heading">¶</a></h1>
+<div class="toctree-wrapper compound">
+</div>
+<nav class="contents local" id="index">
+<p class="topic-title">Index</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#functions" id="id1">Functions</a></p></li>
+<li><p><a class="reference internal" href="#related" id="id2">Related</a></p></li>
+</ul>
+</nav>
+<p>To combine integral van Holde - Weischet G(s) distributions from multiple datasets (either from different cells of the same run or from different runs), use <strong>Combine Distribution Plots (vHW)</strong> from the <em>Velocity</em> menu. This will allow you to compare integral distributions from different cells to each other. This may be useful if you analyzed the same sample under different conditions; for example, different pH levels or different concentrations. If the samples are the same, the distributions should overlay; if the samples behave differently, the distributions will be shifted relative to each other.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>All distributions will be plotted relative to the boundary fraction used in analysis. For example, if you analyzed 100% of the boundary, the distribution will range from 0 % to 100 % of the Y-axis. A distribution that was analyzed for 72 % of the boundary, shifted 8 % from the bottom will be plotted from 8 % to 80 % of the Y-axis. It is important that this distinction be made, since, for example, concentration-dependent samples will behave differently depending on the position in the boundary; or heterogeneous samples will show different distributions depending on which portion of the boundary was analyzed.</p>
+</div>
+<p>When data are loaded, arrays of X,Y distribution and envelope values are read and saved. These are then used to quickly display plots. If you want to change the mix of data plotted, you may click the Reset Plot button; and then quickly make new selections that are plotted without need for recalculations.</p>
+<img alt="_images/vhw_combine.png" class="align-center" src="_images/vhw_combine.png" />
+<section id="functions">
+<h2><a class="toc-backref" href="#id1" role="doc-backlink">Functions</a><a class="headerlink" href="#functions" title="Link to this heading">¶</a></h2>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 29.0%" />
+<col style="width: 71.0%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><strong>Database</strong></p></td>
+<td><p>Check this radio button to indicate that distribution data to be selected is in the database.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Local Disk</strong></p></td>
+<td><p>Check this radio button to indicate that distribution data to be selected is on local disk file systems.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Load Data</strong></p></td>
+<td><p>Click on this button to open :ref: RunID Select Dialog**  in which one or more run IDs may be selected from which distribution data files can be taken.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Save Data</strong></p></td>
+<td><p>Save combined integral distribution and envelope data to a local data file and, if input source so indicates, to the database.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Reset Data</strong></p></td>
+<td><p>Clear all data, lists and plots. To choose runs and triples, a new set of Load Data selections must be made.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Reset Plot</strong></p></td>
+<td><p>Clear all plots. Data is still saved, so a new set of plots can be created by simply selecting runs and triples.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Help</strong></p></td>
+<td><p>Display detailed vHW_Combine help.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Close</strong></p></td>
+<td><p>Close this application.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Integral</strong></p></td>
+<td><p>Check to specify that plots are to include integral distributions.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Envelope</strong></p></td>
+<td><p>Check to specify that plots are to include envelopes.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Current Run ID:</strong></p></td>
+<td><p>The read-only text to the right of this label indicates the currently selected run.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Save Plot under Project:</strong></p></td>
+<td><p>The name shown to the right of this label specifies the project subdirectory under which the combination is to be saved. By default, the name shown is the first run selected for plotting, but this can be changed by the user to any listed name. If “All” is selected, plot copies will be saved to all of the component run IDs.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Run IDs:</strong></p></td>
+<td><p>The list below shows all runs selected in Load Data dialogs. Click on a list line to reveal the Cell / Channel / Wavelength triples for the run.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Cell/Channel/ Wavelength:</strong></p></td>
+<td><p>The list below shows the triples for the currently selected run. Click on a triple line to have its distribution/envelope added to the combined plot.</p></td>
+</tr>
+</tbody>
+</table>
+<img alt="_images/vhw_combine-selrun.png" class="align-center" src="_images/vhw_combine-selrun.png" />
+<p class="center">RunID Select Dialog</p>
+<figure class="sphinx-subfigure align-center">
+<div class="sphinx-subfigure-grid ss-layout-default-AB outline" style="display: grid; gap: 8px; grid-gap: 8px;">
+<div class="sphinx-subfigure-area" style="display: flex; flex-direction: column; justify-content: center; align-items: center; grid-area: A;">
+<a class="reference internal image-reference" href="_images/vhw_combine-envel.png"><img alt="_images/vhw_combine-envel.png" class="align-left" src="_images/vhw_combine-envel.png" style="width: 85%;" />
+</a>
+</div>
+<div class="sphinx-subfigure-area" style="display: flex; flex-direction: column; justify-content: center; align-items: center; grid-area: B;">
+<a class="reference internal image-reference" href="_images/vhw_combine-combo.png"><img alt="_images/vhw_combine-combo.png" class="align-right" src="_images/vhw_combine-combo.png" style="width: 100%;" />
+</a>
+</div>
+</div>
+</figure>
+<p class="center">Envelope and Combined Displays</p>
+<p>Besides the integral distribution plots shown above, you may display envelope plots. You may also combine both integral and envelope plots in a single plot.</p>
+</section>
+<section id="related">
+<h2><a class="toc-backref" href="#id2" role="doc-backlink">Related</a><a class="headerlink" href="#related" title="Link to this heading">¶</a></h2>
+<p><a class="reference external" href="vhw_enhanced.html">van Holde - Weischet Analysis</a></p>
+</section>
+</section>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="Bottom">
+      
+        <p>
+        «&#160;&#160;<a href="idist_combine.html">Integral Distributions Combined Plots</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="time_derivative.html">Time Derivative (dC/dt) Data Analysis</a>&#160;&#160;»
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2025, Emre Brookes, Borries Demeler, Bruce Dubbs, Haben Gabir, Gary Gorbet, Saeed Mortezazadeh, Alexey Savelyev, and Dan Zollars,.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
+    </div>
+  </body>
+</html>

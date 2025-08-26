@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Pseudo 3-Dimensional Distribution Plots &#8212; UltraScanIII 0.0.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="_static/haiku.css?v=fce32b03" />
+    <link rel="stylesheet" type="text/css" href="_static/custom.css?v=72df64ca" />
+    <script src="_static/documentation_options.js?v=d45e8c67"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
+    <script src="_static/sphinx_highlight.js?v=4825356b"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Discrete Distributions Combined Plots" href="ddist_combine.html" />
+    <link rel="prev" title="RMSD Model Quary" href="rmsd_query.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="index.html">
+          <span>UltraScanIII 0.0.1 documentation</span></a></h1>
+        <h2 class="heading"><span>Pseudo 3-Dimensional Distribution Plots</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="Top">
+      
+        <p>
+        «&#160;&#160;<a href="rmsd_query.html">RMSD Model Quary</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="ddist_combine.html">Discrete Distributions Combined Plots</a>&#160;&#160;»
+        </p>
+
+      </div>
+      <div class="content" role="main">
+        
+        
+  <section id="pseudo-3-dimensional-distribution-plots">
+<h1>Pseudo 3-Dimensional Distribution Plots<a class="headerlink" href="#pseudo-3-dimensional-distribution-plots" title="Link to this heading">¶</a></h1>
+<div class="toctree-wrapper compound">
+</div>
+<nav class="contents local" id="index">
+<p class="topic-title">Index</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#functions" id="id1">Functions</a></p></li>
+<li><p><a class="reference internal" href="#related" id="id2">Related</a></p></li>
+</ul>
+</nav>
+<p>Solution distribution data can be displayed in pseudo-3-dimensional form where the Z axis is simulated using colors in a color map. Data from different cells can be combined.</p>
+<blockquote>
+<div><img alt="_images/pseudo3d_combine.png" class="align-center" src="_images/pseudo3d_combine.png" />
+</div></blockquote>
+<section id="functions">
+<h2><a class="toc-backref" href="#id1" role="doc-backlink">Functions</a><a class="headerlink" href="#functions" title="Link to this heading">¶</a></h2>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 28.6%" />
+<col style="width: 71.4%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><strong>Pseudo-3D Resolution:</strong></p></td>
+<td><p>Choose near-100 flattening parameter for Gaussian distribution of frequency points.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>X Resolution:</strong></p></td>
+<td><p>Choose the number of pixels to represent the full X (Sedimentation Coefficient or Molecular Weight) data range.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Y Resolution:</strong></p></td>
+<td><p>Choose the number of pixels to represent the full Y (Frictional Ratio) data range.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Z Floor Percent:</strong></p></td>
+<td><p>Choose the percent of the Z (Frequency) range to add below the minimum Z in order to affect display of faint values.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Autoscale X and Y</strong></p></td>
+<td><p>Select to automatically set X and Y plot range limits or unselect to allow explicitly setting these values.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Autoscale Z</strong></p></td>
+<td><p>Select to automatically scale Z to the current distribution’s range or unselect to scale Z to the global Z range of all distributions.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Continuous Loop</strong></p></td>
+<td><p>Check this box if you wish to continually loop through plots of distributions. While in a continuous loop, the plots are not automatically saved for reports.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Z as Percentage</strong></p></td>
+<td><p>Check this box if you wish to have the Z (color-mapped) values plotted as Percent of Total Concentration instead of the default Partial Concentration values.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Plot Limit f/f0 Minimum:</strong></p></td>
+<td><p>Choose the lower plot limit for f/f<sub>0</sub> (or vbar).</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Plot Limit f/f0 Maximum:</strong></p></td>
+<td><p>Choose upper lower plot limit for f/f<sub>0</sub> (or vbar).</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Plot Limit s Minimum:</strong></p></td>
+<td><p>Choose the lower plot limit for sedimentation (or MW).</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Plot Limit s Maximum:</strong></p></td>
+<td><p>Choose the upper plot limit for sedimentation (or MW).</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Plot Loop Delay Seconds:</strong></p></td>
+<td><p>Choose the number of seconds to delay between plots when all distros are plotted.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Current Distro:</strong></p></td>
+<td><p>Choose the index (1 to n) of the distribution to make the current one.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Plot f/f0 vs s</strong></p></td>
+<td><p>Select to plot f/f<sub>0</sub> versus sedimentation coefficient corrected for water at 20°Celsius.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Plot f/f0 vs MW</strong></p></td>
+<td><p>Select to plot f/f<sub>0</sub> versus molecular weight (Dalton).</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Plot vbar vs s</strong></p></td>
+<td><p>Select to plot vbar versus sedimentation coefficient corrected for water at 20°Celsius.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Plot vbar vs MW</strong></p></td>
+<td><p>Select to plot vbar versus molecular weight (Dalton).</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Plot All Distros</strong></p></td>
+<td><p>Loop to successively plot all loaded model distributions.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Stop Plotting Loop</strong></p></td>
+<td><p>Stop the successive plot of all loaded model distributions.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Refresh Pseudo-3D Plot</strong></p></td>
+<td><p>Refresh the pseudo-3d plot with current settings, current color map and current distribution data.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Reset</strong></p></td>
+<td><p>Reset parameters to their default settings.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Database</strong></p></td>
+<td><p>Select to specify data input from the database.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Local Disk</strong></p></td>
+<td><p>Select to specify data input from local disk.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Select PreFilter(s)</strong></p></td>
+<td><p><a class="reference external" href="common_dialogs.html#data-loader">Select Run(s) as Models Pre-Filter</a> dialog to select Run IDs. This can significantly reduce model loading time, particularly with large model counts in the database. The text box to the right of this button will display a summary of runs selected as pre-filters.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Load Color File</strong></p></td>
+<td><p>Load a color map for Z dimension display as specified through the <a class="reference external" href="config.html#color-configuration-panel">Color Map Load dialog</a>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Load Distribution(s)</strong></p></td>
+<td><p>Load model distribution data as specified through a <a class="reference external" href="common_dialogs.html#load-distribution-model">Model Loader dialog</a>. Multiple distribution files may be selected.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Remove Distribution(s)</strong></p></td>
+<td><p>Open a <a class="reference external" href="common_dialogs.html#remove-model-distributions">Remove Model Distributions</a> dialog to remove selected model distributions from the loaded set.</p></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Window Controls</strong></p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 28.6%" />
+<col style="width: 71.4%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><strong>Help</strong></p></td>
+<td><p>Display this detailed Fit Meniscus help.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Close</strong></p></td>
+<td><p>Close all windows and exit.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="related">
+<h2><a class="toc-backref" href="#id2" role="doc-backlink">Related</a><a class="headerlink" href="#related" title="Link to this heading">¶</a></h2>
+<p><a class="reference external" href="vhw_combine.html">van Holde - Weischet Combined Plots</a></p>
+<p><a class="reference external" href="fe_match/fe_match.html">Finite Element Model Viewer</a></p>
+<p><a class="reference external" href="2dsa.html">2-Dimensional Spectrum Analysis</a></p>
+</section>
+</section>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="Bottom">
+      
+        <p>
+        «&#160;&#160;<a href="rmsd_query.html">RMSD Model Quary</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="ddist_combine.html">Discrete Distributions Combined Plots</a>&#160;&#160;»
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2025, Emre Brookes, Borries Demeler, Bruce Dubbs, Haben Gabir, Gary Gorbet, Saeed Mortezazadeh, Alexey Savelyev, and Dan Zollars,.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
+    </div>
+  </body>
+</html>

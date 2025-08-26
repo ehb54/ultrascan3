@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Edit UltraScan Data &#8212; UltraScanIII 0.0.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="_static/haiku.css?v=fce32b03" />
+    <link rel="stylesheet" type="text/css" href="_static/custom.css?v=72df64ca" />
+    <script src="_static/documentation_options.js?v=d45e8c67"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
+    <script src="_static/sphinx_highlight.js?v=4825356b"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Fit Meniscus" href="fit_meniscus.html" />
+    <link rel="prev" title="Import Experimental Data" href="import.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="index.html">
+          <span>UltraScanIII 0.0.1 documentation</span></a></h1>
+        <h2 class="heading"><span>Edit UltraScan Data</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="Top">
+      
+        <p>
+        «&#160;&#160;<a href="import.html">Import Experimental Data</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="fit_meniscus.html">Fit Meniscus</a>&#160;&#160;»
+        </p>
+
+      </div>
+      <div class="content" role="main">
+        
+        
+  <section id="edit-ultrascan-data">
+<h1>Edit UltraScan Data<a class="headerlink" href="#edit-ultrascan-data" title="Link to this heading">¶</a></h1>
+<div class="toctree-wrapper compound">
+</div>
+<nav class="contents local" id="index">
+<p class="topic-title">Index</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#functions" id="id2">Functions</a></p></li>
+<li><p><a class="reference internal" href="#editing-steps" id="id3">Editing Steps</a></p></li>
+<li><p><a class="reference internal" href="#edit-multi-wavelength-mwl-data" id="id4">Edit Multi-Wavelength (MWL) Data</a></p></li>
+<li><p><a class="reference internal" href="#related" id="id5">Related</a></p></li>
+</ul>
+</nav>
+<p>All experimental data acquired with the analytical ultracentrifuge must be processed into an edit profile before analysis can be performed using UltraScanIII modules. For velocity experiment, the edit profiles define key analysis parameters, including the meniscus and data range, and scans selected. A user can choose to create multiple edit profiles for a particular data set, for example, to explore the effect of various editing steps on the analysis results. For example, a user may wish to exclude either early or late scans to track time dependent changes in the sample. Each profile will receive a unique name automatically based on the time at which the editing process was conducted or a user-defined name. For data analysis, any associated edit profile may be selected at run time to provide a custom data selection.</p>
+<img alt="_images/us_edit.png" class="align-center" id="us-edit-functions" src="_images/us_edit.png" />
+<section id="functions">
+<h2><a class="toc-backref" href="#id2" role="doc-backlink">Functions</a><a class="headerlink" href="#functions" title="Link to this heading">¶</a></h2>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 28.6%" />
+<col style="width: 71.4%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><strong>Run Info</strong></p></td>
+<td><p>This text box displays run information for the currently selected run.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Select Investigator</strong></p></td>
+<td><p>This button brings up a window that allows selecting the current investigator for input from the database.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Database</strong></p></td>
+<td><p>Check to specify data input from the database.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Local Disk</strong></p></td>
+<td><p>Check to specify data input from local disk.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Load Data</strong></p></td>
+<td><p>Click here and, in the resulting  <a class="reference external" href="common_dialogs.html#data-loader">Load Data Dialog</a>, select raw data set(s) to load for editing.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Run Details</strong></p></td>
+<td><p>This button brings up a child window <a class="reference external" href="run_details.html">Details for Raw Data</a> to  that describes additional information associated with the data. The data description may be updated in this window.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Cell / Channel / Wavelength</strong></p></td>
+<td><p>Select the triple for which to perform editing.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Threshold for Scan Gaps</strong></p></td>
+<td><p>This spin button controls the check for consecutive interpolated data. If more than the specified number of consecutive points on a scan have been interpolated, a warning is displayed when the data is loaded. When editing wavelength data, this control specifies the gap in wavelengths</p></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Scan Control</strong></p>
+<p>Scans to be included in analysis, exluded scans are note deleted.</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 28.6%" />
+<col style="width: 71.4%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><strong>Scan Focus from:</strong></p></td>
+<td><p>Set the counter to the lower bound of scans to exclude.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Scan Focus to:</strong></p></td>
+<td><p>Set the counter to the upper bound of scans to exclude.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Exclude Scan Range</strong></p></td>
+<td><p>Exclude the scans indicated by the two preceding scan bounding counters.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Exclusion Profile</strong></p></td>
+<td><p>This button displays a window where additional options for scan exclusion are available. Here it is possible to save only every 2nd, 3rd or nth scan.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Edit Single Scan</strong></p></td>
+<td><p>This button displays a window where individual points may be changed by a Control-Left_Click-Drag operation.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Include All</strong></p></td>
+<td><p>This button removes all data and sets the program to a known starting point.</p></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Edit Control</strong></p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 28.6%" />
+<col style="width: 71.4%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><strong>Specify Meniscus</strong></p></td>
+<td><p>This button enables the edit range selection step to be set to specify the meniscus via Ctrl-Click on the meniscus position. The radius value of the selected point is displayed in the text box tothe right of the button.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Specify Data Range</strong></p></td>
+<td><p>This button enables the edit range selection step to be set to specify the data range via Ctrl-Click’s on the start and end data positions. The radius values of the selected points are displayed in the text box to the right of the button.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Specify Plateau</strong></p></td>
+<td><p>This button enables the edit range selection stepto be set to specify the plateau via Ctrl-Click on the plateau position.The radius value of the selected point is displayed in the text box to the right of the button.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Baseline</strong></p></td>
+<td><p>The text box displays the radius value and average OD value of a baseline automatically computed after the plateau is chosen.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>OD Limit:</strong></p></td>
+<td><p>Select an upper limit on OD values in the data above which data is excluded from 2-Dimensional Spectrum Analysis computations.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Determine RI Noise</strong></p></td>
+<td><p>This button analyzes all scans to determine any radial invariant noise. It brings up a window that shows polynomial coefficients for a best fit of the scan integral. Residuals to this integral represent radially invariant noise. Subtracting the residual values from each data point in a scan will correct radially invariant noise. It is important that the loss of mass in the data as a function of time is properly matched to an appropriate polynomial, so select a polynomial degree thatprovides the best overall fit to all integral values.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Subtract Noise</strong></p></td>
+<td><p>This button removes the calculated noise from the current data set.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Invert Sign</strong></p></td>
+<td><p>This button inverts the measured data.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Remove Spikes</strong></p></td>
+<td><p>This button determines if data readings are beyond acceptable limits and adjusts outlying data points to an interpolated</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Apply Prior Edits</strong></p></td>
+<td><p>This button requests the user to specify a saved set of edit operations and applies them to the current data.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Undo Noise and Spikes</strong></p></td>
+<td><p>This button removes any corrections made to the data by noise or spike calculations.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Mark Data as Floating</strong></p></td>
+<td><p>This button sets a flag to mark the data as floating.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Save Current Edit Profile</strong></p></td>
+<td><p>This button initiates a save of the edited data to local file(s) and/or database.</p></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Window Controls</strong></p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 29.0%" />
+<col style="width: 71.0%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><strong>Reset</strong></p></td>
+<td><p>This button removes all data and sets the program to a known starting point.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Help</strong></p></td>
+<td><p>Display this help.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Close</strong></p></td>
+<td><p>Close the editing session.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="editing-steps">
+<h2><a class="toc-backref" href="#id3" role="doc-backlink">Editing Steps</a><a class="headerlink" href="#editing-steps" title="Link to this heading">¶</a></h2>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>When editing, the plot may be zoomed by selecting the Zoom button on the graph and dragging the mouse over the area desired. This operation may be repeated as needed. Each right mouse click will un-zoom one level. Clicking on the Zoom button again at any zoom level will restore the un-zoomed graph.</p>
+<p>When zoomed, the graph may be panned by pressing the center mouse button (usually the scroll wheel) and dragging.</p>
+</div>
+<ul class="simple">
+<li><p><strong>Step 1:</strong> Load data from the database or a local data directory that contains the UltraScanIII data files previously converted from the Beckman raw data. Load choices are made in a <a class="reference external" href="common_dialogs.html">Load Data Dialog</a>.</p></li>
+<li><p><strong>Step 2:</strong> Select the Cell / Channel / Wavelength triple to be edited.</p></li>
+<li><p><strong>Step 3:</strong> Specify the meniscus of the data by holding down the Control key and using the left mouse button. The meniscus value may be manually adjusted with the keyboard.</p></li>
+<li><p><strong>Step 4:</strong> If the data were collected with the interference detector, specify the left and right edges of the air gap area of the data.</p></li>
+<li><p><strong>Step 5:</strong> Specify the left and right edges of the data to be analyzed. Please note: Do not pick the left data edge too close to the meniscus. During meniscus fitting, the evaluated meniscus positions may reach inside of the data range and violate the boundary conditions of the finite element solution. This will cause the meniscus fit to fail.</p></li>
+<li><p><strong>Step 6:</strong> Specify the location of the scan plateau. This is the radial position where most scans have a stable plateau, but the selected position should not reach into the back-diffusion region. The most appropriate point tends to be close to the right edge of the data range, but not so far to the right that it extends into the region where the concentration of the later scans curves upward at the bottom of the cell due to back-diffusion.</p></li>
+<li><p><strong>Step 7:</strong> Make any other optional adjustments to the data that are necesary and save the edit profile. When saving, a pop-up message is presented asking for an edit ID. The default for this ID is the current date and time in the form of YYMMddhhmm (Year / Month / Day / Hour / Minute), but this default can be supplemented with a suffix of your own choice.</p></li>
+<li><p><strong>Step 8:</strong> Repeat the above process for each triple (Cell / Channel / Wavelength combination) in the data set.</p></li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The above process may be reset to any point by pressing the appropriate button at the associated specification entry.</p>
+</div>
+</section>
+<section id="edit-multi-wavelength-mwl-data">
+<h2><a class="toc-backref" href="#id4" role="doc-backlink">Edit Multi-Wavelength (MWL) Data</a><a class="headerlink" href="#edit-multi-wavelength-mwl-data" title="Link to this heading">¶</a></h2>
+<img alt="_images/us_edit_mwl.png" src="_images/us_edit_mwl.png" />
+<p>Where the data loaded in an editing session is comprised of multiple wavelengths (more than two), the main editor window is changed to the above form. Instead of selecting triples to edit, this MWL edit procedure consists of selecting Cell / Channel pairs and the wavelengths within those doubles. Once editing in the normal way has been completed, the user may save the edit for either the specific triple (“Save Current Edit Profile”) or for all of the wavelengths of the current double (“Save to all Wavelengths”).</p>
+<p>Most of the edit controls for MWL are the same as for the standard <a class="reference internal" href="#us-edit-functions"><span class="std std-ref">Data Editor Window</span></a>; and are not repeated here. The steps and control objects described herein are those specific to MWL processing.</p>
+<p><strong>Functions specific to MWL:</strong></p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 29.0%" />
+<col style="width: 71.0%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><strong>Cell / Channel</strong></p></td>
+<td><p>This button removes all data and sets the program to a known starting point.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Lamdba Range</strong></p></td>
+<td><p>Display this help.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Close</strong></p></td>
+<td><p>Close the editing session.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Cell / Channel</strong></p></td>
+<td><p>Select the double for which to perform editing.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Lamdba Range</strong></p></td>
+<td><p>Select this radio button to indicate that wavelength selection will be by start/end/increment specification.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Custom Lambda List</strong></p></td>
+<td><p>Alternatively, select this radio button to indicate that wavelengths will be individually indicated in a list dialog.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>λ Index Increment:</strong></p></td>
+<td><p>Select the wavelength range increment.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>λ Start:</strong></p></td>
+<td><p>Select the wavelength range start value.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>λ End:</strong></p></td>
+<td><p>Select the wavelength range end value.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Custom Lambdas</strong></p></td>
+<td><p>Click to bring up a list dialog in which individual output wavelengths can be enumerated.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Include All Lambdas</strong></p></td>
+<td><p>Reset the implied output wavelength range or list to the full set of loaded dataset values.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>x axis Radius</strong></p></td>
+<td><p>Select this radio button to indicate that the plots of data should have an X axis of Radius (the default).</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>x axis Wavelength</strong></p></td>
+<td><p>Select this radio button to indicate that the plots of data should have an X axis of Wavelength; and, therefore, that each plot is for a selected Radius.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Plot (W nm):</strong></p></td>
+<td><p>Select the Wavelength (in NM) or (if the title of this button is “<strong>Plot (R cm):</strong>” when the “<strong>x axis Wavelength</strong>” radio button was selected) select the Radius (in CM) to plot and edit.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>(left arrow) previous</strong></p></td>
+<td><p>Click to change the plot to the one for the previous Wavelength or Radius value.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>(right arrow) next</strong></p></td>
+<td><p>Click to change the plot to the one for the next Wavelength or Radius value.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Save Current Edit Profile</strong></p></td>
+<td><p>Click this button (in the MWL case) to save the current edit for the current Cell / Channel / Wavelength only.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Save to all Wavelengths</strong></p></td>
+<td><p>Click this button to save the current edit for all wavelengths of the currently selected Cell / Channel.</p></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Editing steps specific to MWL</strong></p>
+<ul class="simple">
+<li><p><strong>Step 1:</strong> Load data from the database or a local data directory. Select an entire runID so that MWL data is recognized as such.</p></li>
+<li><p><strong>Step 2:</strong> Select the Cell / Channel to be edited; specify the Lambda (wavelength) range to be edited; and select a single wavelength for display and edit.</p></li>
+<li><p><strong>Step 3:</strong> Specify editing parameters - such as Meniscus, Data Range, and Plateau - in the normal Control-Click way.</p></li>
+<li><p><strong>Step 4:</strong> Save editing for either the specific triple selected or to be applied to all wavelengths of a cell / channel double.</p></li>
+</ul>
+</section>
+<section id="related">
+<h2><a class="toc-backref" href="#id5" role="doc-backlink">Related</a><a class="headerlink" href="#related" title="Link to this heading">¶</a></h2>
+<p><a class="reference external" href="convart.html">Import Experimental Data</a></p>
+<p><a class="reference external" href="time_derivative.html">Time Derivative</a></p>
+<p><a class="reference external" href="fit_meniscus.html">Fit Meniscus</a></p>
+</section>
+</section>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="Bottom">
+      
+        <p>
+        «&#160;&#160;<a href="import.html">Import Experimental Data</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="fit_meniscus.html">Fit Meniscus</a>&#160;&#160;»
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2025, Emre Brookes, Borries Demeler, Bruce Dubbs, Haben Gabir, Gary Gorbet, Saeed Mortezazadeh, Alexey Savelyev, and Dan Zollars,.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
+    </div>
+  </body>
+</html>

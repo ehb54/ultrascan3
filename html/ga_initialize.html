@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Genetic Algorithm Initialization &#8212; UltraScanIII 0.0.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="_static/haiku.css?v=fce32b03" />
+    <link rel="stylesheet" type="text/css" href="_static/custom.css?v=72df64ca" />
+    <script src="_static/documentation_options.js?v=d45e8c67"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
+    <script src="_static/sphinx_highlight.js?v=4825356b"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Density Matching" href="dens_match.html" />
+    <link rel="prev" title="Finite Element (FE) Model Simulation" href="fe_match_simulate.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="index.html">
+          <span>UltraScanIII 0.0.1 documentation</span></a></h1>
+        <h2 class="heading"><span>Genetic Algorithm Initialization</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="Top">
+      
+        <p>
+        «&#160;&#160;<a href="fe_match_simulate.html">Finite Element (FE) Model Simulation</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="dens_match.html">Density Matching</a>&#160;&#160;»
+        </p>
+
+      </div>
+      <div class="content" role="main">
+        
+        
+  
+<style>
+  .ss-layout-default-AB { grid-template-areas: 'A B'; }
+</style>
+<section id="genetic-algorithm-initialization">
+<h1>Genetic Algorithm Initialization<a class="headerlink" href="#genetic-algorithm-initialization" title="Link to this heading">¶</a></h1>
+<div class="toctree-wrapper compound">
+</div>
+<nav class="contents local" id="index">
+<p class="topic-title">Index</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#functions" id="id1">Functions</a></p></li>
+<li><p><a class="reference internal" href="#statistics-file-output" id="id2">Statistics File Output</a></p></li>
+</ul>
+</nav>
+<p>When the <strong>Initialize Genetic Algorithm module</strong> is opened from <em>Velocity</em>, a <strong>Etc Dorectory Cleaned</strong> dialog will open. Press <strong>OK</strong> to continue to the Genetic Algorithm Initiation Window.</p>
+<img alt="_images/ga_initialize-o.png" class="align-center" src="_images/ga_initialize-o.png" />
+<p class="align center"><strong>Etc Directory Cleaned</strong></p>
+<p>Press <strong>OK</strong> to continue to the Genetic Algorithm Initiation Window.</p>
+<img alt="_images/ga_initialize.png" class="align-center" src="_images/ga_initialize.png" />
+<p class="align center"><strong>Genetic Algorithm Initiation Window</strong></p>
+<p>Solute distribution data can be used to generate data for use with Genetic Algorithm analysis programs. The output data results from choosing bins (or buckets) around solute points. These buckets can be modified for better results. Once they are as desired, data for Genetic Algorithm analysis can be generated and output.
+The input data may come in one of two flavors, each of which is treated differently. The data is either 2DSA type or Monte Carlo. The 2DSA is relatively sparse and generally requires fashioning buckets containing a single point. For a Monte Carlo distribution, buckets should contain multiple points and be constructed around clusters.</p>
+<img alt="_images/ga_initialize-p.png" class="align-center" src="_images/ga_initialize-p.png" />
+<p class="align center"><strong>Genetic Algorithm populated with Monte Carlo Model</strong></p>
+<section id="functions">
+<h2><a class="toc-backref" href="#id1" role="doc-backlink">Functions</a><a class="headerlink" href="#functions" title="Link to this heading">¶</a></h2>
+<p><strong>Genetic Algorithm Controls</strong></p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 28.6%" />
+<col style="width: 71.4%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><strong>Number of Initial Solutes:</strong></p></td>
+<td><p>Choose the number of initial solute buckets when using the Autoassign Solute Bins option. If 0 or greater than the actual number of input solute points, all solute points will be binned. Otherwise, this number limits initial bins to those derived from the specified number of highest-concentration solute points.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Width of s Bucket:</strong></p></td>
+<td><p>Set the horizontal width of buckets for autoassigning or for resizing via list box double-click. Note that this may alternately read “Width of mw Bucket:”.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Height of f/f0 Bucket:</strong></p></td>
+<td><p>Set the vertical height of buckets for autoassigning or for resizing via list box double-click. Note that “bucket” and “bin” are used interchangeably herein.</p></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Pseudo-3D Controls</strong></p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 28.6%" />
+<col style="width: 71.4%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><strong>Pseudo-3D Resolution:</strong></p></td>
+<td><p>Choose near-100 flattening parameter for Gaussian distribution of frequency points.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>X Resolution:</strong></p></td>
+<td><p>Choose the number of pixels to represent the full X (Sedimentation Coefficient or Molecular Weight) data range.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Y Resolution:</strong></p></td>
+<td><p>Choose the number of pixels to represent the full Y (Frictional Ratio) data range.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Z Visibility Percent:</strong></p></td>
+<td><p>Choose the percent of the Z (Frequency) range to add below the minimum Z in order to affect display of faint values.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Automatic Plot Limits</strong></p></td>
+<td><p>Select to automatically set X and Y plot range limits or unselect to allow explicitly setting these values.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Plot Limit s Min:</strong></p></td>
+<td><p>Choose the lower plot limit for sedimentation (or other X).</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Plot Limit s Max:</strong></p></td>
+<td><p>Choose the upper plot limit for sedimentation (or other X).</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Plot Limit f/f0 Min:</strong></p></td>
+<td><p>Choose the lower plot limit for f/f:sub:<cite>0</cite> (or other Y).</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Plot Limit f/f0 Max:</strong></p></td>
+<td><p>Choose upper lower plot limit for f/f:sub:<cite>0</cite> (or other Y).</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>(list box)</strong></p></td>
+<td><p>This space is populated with lines giving the dimensions of bins generated manually or automatically, and displayed in the plot to its right. Clicking of a line causes the associated bin plot borders to be highlighted. Double-clicking a line results in the associated bin dimension being modified according to the bucket width and height values in the counter above. A right-mouse-button click of a line signals removal of the bin, if you default or click Yes in the resulting dialog.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Plot X:</strong></p></td>
+<td><p>Select one of the radio buttons to the right of this label to choose the X dimension of 3-D plots.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Plot Y:</strong></p></td>
+<td><p>Select one of the radio buttons to the right of this label to choose the Y dimension of 3-D plots.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Database</strong></p></td>
+<td><p>Select to specify data input from the database.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Local Disk</strong></p></td>
+<td><p>Select to specify data input from local disk.</p></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Data Input and Outout Controls</strong></p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 28.6%" />
+<col style="width: 71.4%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><strong>Select PreFilter(s)</strong></p></td>
+<td><p>Open  <a class="reference external" href="common_dialogs.html#data-loader">Select Pre-Filter</a> to select Run IDs on which to pre-filter lists of models for loading. This can significantly reduce model loading time, particularly with large model counts in the database. The text box to the right of this button will display a summary of runs selected as Pre-filters.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Load Distribution</strong></p></td>
+<td><p>Load model distribution data as specified through a <a class="reference external" href="common_dialogs.html#load-distribution-model">Model Loader dialog</a>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Load Colour File</strong></p></td>
+<td><p>Load a color map for Z dimension display as specified through <a class="reference external" href="config.html#color-configuration-panel">Load Colour File dialog</a>.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>1-Dimensional Plot</strong></p></td>
+<td><p>Select to plot in one dimension, displaying the selected X-axis variable on the horizontal axis and the partial concentration on the Y-axis as a bar plot.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>2-Dimensional Plot</strong></p></td>
+<td><p>Select to plot in 2 dimension, excluding the Z dimension.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Pseudo 3-D Plot</strong></p></td>
+<td><p>Select to plot in pseudo three-dimension, using a loaded or default color map to represent the “Z” dimension.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Refresh Plot</strong></p></td>
+<td><p>Re-draw the plot. This is sometimes necessary when one or more control parameters are changed.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Manually Draw Bins</strong></p></td>
+<td><p>Specify that you are about to manually draw bins in a 2-D or 3-D plot. Each bin is drawn by clicking and holding on one bin vertex, moving the mouse and showing a rubber band rectangle, then releasing when the diagonal vertex point is reached.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Check for Bin Overlaps / Sort</strong></p></td>
+<td><p>Click this button to check that no drawn bins overlap and to sort bins so they are ordered by the X,Y upper-left vertex.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Autoassign Solute Bins</strong></p></td>
+<td><p>Automatically draw bins around solute points, using bucket width and height values specified. If a number of initial solutes value is first specified, only that number of the bins with the highest concentration values will be initially drawn. Where bins overlap, additional rectangles will be drawn using the portion of the second rectangle that is not overlapping.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Reset Solute Bins</strong></p></td>
+<td><p>Erase bins from the plot and internal data base, so that a new set may be generated.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>View Statistics:</strong></p></td>
+<td><p>View a text dialog that shows detailed statistics on drawn bin points.</p></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Window Controls</strong></p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 28.6%" />
+<col style="width: 71.4%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><strong>Save:</strong></p></td>
+<td><p>Output a file with Genetic Algorithm data based on generated bins. If a Monte Carlo distribution was loaded, also generate a text file with detailed analysis.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Reset</strong></p></td>
+<td><p>Reset parameters to their default settings.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Help</strong></p></td>
+<td><p>Display this detailed Genetic Algorithm Initialize help.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Close</strong></p></td>
+<td><p>Close all windows and exit.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="statistics-file-output">
+<h2><a class="toc-backref" href="#id2" role="doc-backlink">Statistics File Output</a><a class="headerlink" href="#statistics-file-output" title="Link to this heading">¶</a></h2>
+<p>Once the bins for Genetic Algorithm analysis are selected, detailed statistical analysis can be performed on the Monte Carlo models. Click on ‘View Statistics’ to generate the detailed analysis.</p>
+<img alt="_images/ga_report-1.png" class="align-center" src="_images/ga_report-1.png" />
+<blockquote class="align center">
+<div><p><strong>Summary Statistics File Content</strong></p>
+</div></blockquote>
+<p class="align center">For each selected bin, the GA statistical analysis includes the mean, along with the lower and upper 95% confidence intervals for the molecular weight, sedimentation coefficient, diffusion coefficient, and frictional ratio. The partial specific volume and partial concentration are treated as constant values. For a more detailed analysis, refer to the Detailed Results section of the report.</p>
+<figure class="sphinx-subfigure align-center">
+<div class="sphinx-subfigure-grid ss-layout-default-AB outline" style="display: grid; gap: 8px; grid-gap: 8px;">
+<div class="sphinx-subfigure-area" style="display: flex; flex-direction: column; justify-content: center; align-items: center; grid-area: A;">
+<a class="reference internal image-reference" href="_images/ga_report-2.png"><img alt="_images/ga_report-2.png" class="align-left" src="_images/ga_report-2.png" style="width: 100%;" />
+</a>
+</div>
+<div class="sphinx-subfigure-area" style="display: flex; flex-direction: column; justify-content: center; align-items: center; grid-area: B;">
+<a class="reference internal image-reference" href="_images/ga_report-3.png"><img alt="_images/ga_report-3.png" class="align-right" src="_images/ga_report-3.png" style="width: 100%;" />
+</a>
+</div>
+</div>
+</figure>
+<p class="center"><strong>Detailed Statistics Results of GA Initialization Analysis</strong></p>
+</section>
+</section>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="Bottom">
+      
+        <p>
+        «&#160;&#160;<a href="fe_match_simulate.html">Finite Element (FE) Model Simulation</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="dens_match.html">Density Matching</a>&#160;&#160;»
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2025, Emre Brookes, Borries Demeler, Bruce Dubbs, Haben Gabir, Gary Gorbet, Saeed Mortezazadeh, Alexey Savelyev, and Dan Zollars,.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
+    </div>
+  </body>
+</html>
