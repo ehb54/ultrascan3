@@ -42,7 +42,7 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
 
    setWindowTitle( tr( "Combine Pseudo-3D Distribution Overlays" ) );
    setPalette( US_GuiSettings::frameColor() );
-
+   
    // primary layouts
    QHBoxLayout* main = new QHBoxLayout( this );
    QVBoxLayout* left = new QVBoxLayout();
@@ -510,16 +510,18 @@ void US_Pseudo3D_Combine::plot_data( void )
 
    QString tstr = tsys->run_name + "\n" + tsys->analys_name
                   + "\n" + tsys->method;
-
-   QwtText p_title( tstr );
+   data_plot->setTitle( tstr );
+   
+   //TEST
+   // QwtText p_title( tstr );
+   // p_title.setFont( QFont( US_Widgets::fixedFont().family(),
+   //  			   US_GuiSettings::fontSize() + 1 ) );
    // QFont font_c("Arial", 10);
-   p_title.setFont( QFont( US_Widgets::fixedFont().family(),
-    			   US_GuiSettings::fontSize() + 1 ) );
-   //p_title.setFont( font_c );
-   //QFontInfo info(font_c);
-   //qDebug() << "Font family: " <<  info.family();
-   //data_plot->setTitle( tstr );
-   data_plot->setTitle( p_title );
+   // p_title.setFont( font_c );
+   // QFontInfo info(font_c);
+   // qDebug() << "Font family: " <<  info.family();
+   // data_plot->setTitle( p_title );
+   //END OF TEST
    
    data_plot->detachItems( QwtPlotItem::Rtti_PlotSpectrogram );
    QColor bg   = colormap->color1();
@@ -864,6 +866,27 @@ void US_Pseudo3D_Combine::load_distro_auto( QString invID_passed, QStringList m_
 //return pointer to data_plot
 QwtPlot* US_Pseudo3D_Combine::rp_data_plot()
 {
+  //reset fonts for title, axis titles
+  setStyleSheet("QWidget {font-size: 10pt};");
+  QFont font_c("Arial", 12);
+  QwtText p_title = data_plot->title();
+  p_title.setFont( font_c );
+  data_plot->setTitle( p_title );
+
+  QwtText xTitle = data_plot->axisTitle(QwtPlot::xBottom);
+  xTitle.setFont( font_c );
+  data_plot->setAxisTitle( QwtPlot::xBottom, xTitle );
+
+  QwtText yTitle = data_plot->axisTitle(QwtPlot::yLeft);
+  yTitle.setFont( font_c );
+  data_plot->setAxisTitle( QwtPlot::yLeft, yTitle );
+
+  QwtText zTitle = data_plot->axisTitle(QwtPlot::yRight);
+  zTitle.setFont( font_c );
+  data_plot->setAxisTitle( QwtPlot::yRight, zTitle );
+
+  data_plot->replot();
+  
   return data_plot;
 }
 
