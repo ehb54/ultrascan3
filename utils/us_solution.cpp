@@ -3,7 +3,7 @@
 #include <QtCore>
 
 #include "us_settings.h"
-#include "IUS_DB2.h"
+#include "ius_db2.h"
 #include "us_util.h"
 #include "us_solution.h"
 #include "us_buffer.h"
