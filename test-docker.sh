@@ -314,10 +314,10 @@ CONTAINER_SCRIPT="
 
     if [ ! -f CMakeCache.txt ] || [ \"$REBUILD\" = true ]; then
         if [ \"$QUICK_MODE\" = false ]; then
-            cmake -DCMAKE_BUILD_TYPE=Debug ..
+            cmake -DCMAKE_BUILD_TYPE=Debug -C ../admin/test/cmake/hints.cmake ..
         else
             echo 'Running CMake configuration...'
-            cmake -DCMAKE_BUILD_TYPE=Debug .. > cmake_config.log 2>&1
+            cmake -DCMAKE_BUILD_TYPE=Debug -C ../admin/test/cmake/hints.cmake .. > cmake_config.log 2>&1
             echo 'CMake configuration complete'
         fi
     else

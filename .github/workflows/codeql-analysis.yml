@@ -195,7 +195,7 @@ jobs:
           git config --global --add safe.directory /__w/ultrascan3/ultrascan3
           mkdir -p $bdir/build
           cd build
-          cmake .. 
+          cmake .. -C ../admin/test/cmake/hints.cmake -DCMAKE_BUILD_TYPE=Release
           make -j4 
 
       - name: Run tests

@@ -9,8 +9,7 @@ RUN apt-get update -qq && \
         libarchive-dev \
         pkg-config \
         build-essential \
-        git \
-        libqwt-qt5-dev && \
+        git && \
     rm -rf /var/lib/apt/lists/*
 
 # Set working directory
