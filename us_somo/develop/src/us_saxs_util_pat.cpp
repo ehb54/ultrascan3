@@ -284,21 +284,19 @@ bool US_Saxs_Util::write_model( PDB_model & model, QString filename )
       {
          PDB_atom *this_atom = &( model.molecule[ j ].atom[ k ] );
          ts <<
-            QString("")
-            .sprintf(     
-                     "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
-                     this_atom->serial,
-                     this_atom->orgName.toLatin1().data(),
-                     this_atom->resName.toLatin1().data(),
-                     this_atom->chainID.toLatin1().data(),
-                     this_atom->resSeq.toUInt(),
-                     this_atom->coordinate.axis[ 0 ],
-                     this_atom->coordinate.axis[ 1 ],
-                     this_atom->coordinate.axis[ 2 ],
-                     this_atom->occupancy,
-                     this_atom->tempFactor,
-                     this_atom->element.toLatin1().data()
-                          );
+            QString::asprintf( "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
+                               this_atom->serial,
+                               this_atom->orgName.toLatin1( ).data(),
+                               this_atom->resName.toLatin1().data(),
+                               this_atom->chainID.toLatin1().data(),
+                               this_atom->resSeq.toUInt(),
+                               this_atom->coordinate.axis[ 0 ],
+                               this_atom->coordinate.axis[ 1 ],
+                               this_atom->coordinate.axis[ 2 ],
+                               this_atom->occupancy,
+                               this_atom->tempFactor,
+                               this_atom->element.toLatin1().data()
+                               );
       }
    }
    f.close();

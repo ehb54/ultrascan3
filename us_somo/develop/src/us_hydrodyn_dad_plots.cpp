@@ -200,13 +200,13 @@ void US_Hydrodyn_Dad::update_plot_errors_group()
 
 #if defined( DEBUG_RESCALE )
    qDebug() <<
-      QString("").sprintf(
+       QString::asprintf( 
                           "dad_plots::update_plot_errors_group\n"
                           "\tminx %e maxx %e\n"
                           "\tminy %e maxy %e\n"
                           , minx, maxx
                           , -maxy, maxy
-                          );
+                           ) ;
 #endif
 
    //       plot_errors_zoomer = new ScrollZoomer(plot_errors->canvas());
@@ -398,13 +398,13 @@ void US_Hydrodyn_Dad::update_plot_errors( vector < double > &grid,
          tso << "---\n";
 
          tso <<
-            QString("").sprintf(
+             QString::asprintf( 
                                 "dad_plots::update_plot_errors\n"
                                 "\tminx %e maxx %e\n"
                                 "\tminy %e maxy %e\n"
                                 , x[0], x.back()
                                 , -maxy, maxy
-                                );
+                                 ) ;
          tso << "zoomrect "
              << plot_errors_zoomer->zoomRect().left() << " , "
              << plot_errors_zoomer->zoomRect().right() << " : " 
@@ -982,13 +982,13 @@ void US_Hydrodyn_Dad::plot_files( bool save_zoom_state )
       tso << "---\n";
 
       tso <<
-         QString("").sprintf(
+          QString::asprintf( 
                              "dad_plots::plot_files\n"
                              "\tminx %e maxx %e\n"
                              "\tminy %e maxy %e\n"
                              , minx, maxx
                              , miny, maxy
-                             );
+                              ) ;
       tso << "zoomrect "
           << plot_dist_zoomer->zoomRect().left() << " , "
           << plot_dist_zoomer->zoomRect().right() << " : " 
@@ -1436,13 +1436,13 @@ void US_Hydrodyn_Dad::rescale()
       tso << "---\n";
 
       tso <<
-         QString("").sprintf(
+          QString::asprintf( 
                              "dad_plots::rescale\n"
                              "\tminx %e maxx %e\n"
                              "\tminy %e maxy %e\n"
                              , minx, maxx
                              , miny, maxy
-                             );
+                              ) ;
       tso << "zoomrect "
           << plot_dist_zoomer->zoomRect().left() << " , "
           << plot_dist_zoomer->zoomRect().right() << " : " 

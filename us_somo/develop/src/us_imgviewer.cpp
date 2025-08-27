@@ -220,27 +220,27 @@ void US_ImageViewer::updateStatus()
          status->setText("No image - select Open from File menu.");
    } else {
       QString message, moremsg;
-      message.sprintf("%dx%d", image.width(), image.height());
+      message = QString::asprintf( "%dx%d", image.width(), image.height() );
       if ( pm.size() != pmScaled.size() ) {
-         moremsg.sprintf(" [%dx%d]", pmScaled.width(),
-                         pmScaled.height());
+         moremsg = QString::asprintf(" [%dx%d]", pmScaled.width(),
+                                     pmScaled.height());
          message += moremsg;
       }
-      moremsg.sprintf(", %d bits ", image.depth());
+      moremsg = QString::asprintf( ", %d bits ", image.depth() );
       message += moremsg;
       if (image.valid(pickx,picky)) {
-         moremsg.sprintf("(%d,%d)=#%0*x ",
-                         pickx, picky,
-                         image.hasAlphaBuffer() ? 8 : 6,
-                         image.pixel(pickx,picky));
+         moremsg = QString::asprintf("(%d,%d)=#%0*x ",
+                                     pickx, picky,
+                                     image.hasAlphaBuffer() ? 8 : 6,
+                                     image.pixel(pickx,picky));
          message += moremsg;
       }
       if ( image.numColors() > 0 ) {
          if (image.valid(pickx,picky)) {
-            moremsg.sprintf(", %d/%d colors", image.pixelIndex(pickx,picky),
-                            image.numColors());
+            moremsg = QString::asprintf(", %d/%d colors", image.pixelIndex(pickx,picky),
+                                        image.numColors());
          } else {
-            moremsg.sprintf(", %d colors", image.numColors());
+            moremsg = QString::asprintf( ", %d colors", image.numColors() );
          }
          message += moremsg;
       }
@@ -260,7 +260,7 @@ void US_ImageViewer::updateStatus()
                   nalpha++;
                }
             }
-            moremsg.sprintf(", %d alpha levels", nalpha);
+            moremsg = QString::asprintf( ", %d alpha levels", nalpha );
          } else {
             // Too many pixels to bother counting.
             moremsg = ", 8-bit alpha channel";

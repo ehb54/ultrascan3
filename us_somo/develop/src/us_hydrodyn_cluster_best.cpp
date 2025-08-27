@@ -110,6 +110,28 @@ void US_Hydrodyn_Cluster_Best::setupGUI()
    le_bestmsrfinenessangle ->setMinimumWidth   ( 150 );
    connect( le_bestmsrfinenessangle, SIGNAL( textChanged( const QString & ) ), SLOT( update_bestmsrfinenessangle( const QString & ) ) );
 
+   lbl_bestmsrminfinenessangle = new QLabel      ( us_tr( "MSROLL: starting fineness angle (recommended 0.3)" ), this );
+   lbl_bestmsrminfinenessangle ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
+   lbl_bestmsrminfinenessangle ->setMinimumHeight( minHeight1 );
+   lbl_bestmsrminfinenessangle ->setPalette      ( PALET_LABEL );
+   AUTFBACK( lbl_bestmsrminfinenessangle );
+   lbl_bestmsrminfinenessangle ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
+   lbl_bestmsrminfinenessangle ->setMinimumWidth ( QFontMetrics( lbl_bestmsrminfinenessangle->font() ).maxWidth() * 41 );
+
+   le_bestmsrminfinenessangle = new QLineEdit     (  this );    le_bestmsrminfinenessangle->setObjectName( "bestmsrminfinenessangle Line Edit" );
+   if ( !parameters->count( "bestmsrminfinenessangle" ) )
+   {
+      ( *parameters )[ "bestmsrminfinenessangle" ] = ".3";
+   }
+   le_bestmsrminfinenessangle ->setText           ( parameters->count( "bestmsrminfinenessangle" ) ? ( *parameters )[ "bestmsrminfinenessangle" ] : "" );
+   le_bestmsrminfinenessangle ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
+   le_bestmsrminfinenessangle ->setPalette        ( PALET_NORMAL );
+   AUTFBACK( le_bestmsrminfinenessangle );
+   le_bestmsrminfinenessangle ->setFont           ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_bestmsrminfinenessangle ->setMinimumHeight  ( minHeight1 );
+   le_bestmsrminfinenessangle ->setMinimumWidth   ( 150 );
+   connect( le_bestmsrminfinenessangle, SIGNAL( textChanged( const QString & ) ), SLOT( update_bestmsrminfinenessangle( const QString & ) ) );
+
    lbl_bestmsrmaxtriangles = new QLabel      ( us_tr( "MSROLL: maximum output triangles (recommended max value 60000)" ), this );
    lbl_bestmsrmaxtriangles ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_bestmsrmaxtriangles ->setMinimumHeight( minHeight1 );
@@ -387,6 +409,12 @@ void US_Hydrodyn_Cluster_Best::setupGUI()
    background->addLayout( hbl );
    hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
+   hbl->addWidget( lbl_bestmsrminfinenessangle );
+   hbl->addWidget( le_bestmsrminfinenessangle );
+   hbl->addSpacing( 4 );
+   background->addLayout( hbl );
+   hbl = new QHBoxLayout();
+   hbl->addSpacing( 4 );
    hbl->addWidget( lbl_bestmsrmaxtriangles );
    hbl->addWidget( le_bestmsrmaxtriangles );
    hbl->addSpacing( 4 );
@@ -512,6 +540,11 @@ void US_Hydrodyn_Cluster_Best::closeEvent( QCloseEvent *e )
    {
       parameters->erase( "bestmsrfinenessangle" );
    }
+   if ( parameters->count( "bestmsrminfinenessangle" ) &&
+        (*parameters)[ "bestmsrminfinenessangle" ].isEmpty() )
+   {
+      parameters->erase( "bestmsrminfinenessangle" );
+   }
    if ( parameters->count( "bestmsrmaxtriangles" ) &&
         (*parameters)[ "bestmsrmaxtriangles" ].isEmpty() )
    {
@@ -577,6 +610,11 @@ void US_Hydrodyn_Cluster_Best::update_bestmsrprober( const QString & )
 void US_Hydrodyn_Cluster_Best::update_bestmsrfinenessangle( const QString & )
 {
    ( *parameters )[ "bestmsrfinenessangle" ] = le_bestmsrfinenessangle->text();
+}
+
+void US_Hydrodyn_Cluster_Best::update_bestmsrminfinenessangle( const QString & )
+{
+   ( *parameters )[ "bestmsrminfinenessangle" ] = le_bestmsrminfinenessangle->text();
 }
 
 void US_Hydrodyn_Cluster_Best::update_bestmsrmaxtriangles( const QString & )
@@ -746,6 +784,7 @@ void US_Hydrodyn_Cluster_Best::update_fields()
 {
    le_bestmsrprober                                ->setText( parameters->count( "bestmsrprober" ) ? ( *parameters )[ "bestmsrprober" ] : "" );
    le_bestmsrfinenessangle                         ->setText( parameters->count( "bestmsrfinenessangle" ) ? ( *parameters )[ "bestmsrfinenessangle" ] : "" );
+   le_bestmsrminfinenessangle                      ->setText( parameters->count( "bestmsrminfinenessangle" ) ? ( *parameters )[ "bestmsrminfinenessangle" ] : "" );
    le_bestmsrmaxtriangles                          ->setText( parameters->count( "bestmsrmaxtriangles" ) ? ( *parameters )[ "bestmsrmaxtriangles" ] : "" );
    cb_bestrcoalautominmax                          ->setChecked( parameters->count( "bestrcoalautominmax" ) && ( *parameters )[ "bestrcoalautominmax" ] == "true" ? true : false );
    le_bestrcoalnmin                                ->setText( parameters->count( "bestrcoalnmin" ) ? ( *parameters )[ "bestrcoalnmin" ] : "" );

@@ -85,119 +85,105 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
          bool so_ovlp = QFileInfo( f ).completeBaseName().contains( "so_ovlp" );
          us_qdebug( QString( "so_ovlp %1" ).arg( so_ovlp ? "true" : "false" ) );
          QTextStream ts(&f);
-         if (!ts.atEnd()) {
-            ts >> bead_count;
-         }
-         else
-         {
-            editor->append("Error in line 1!\n");
+         QString qs = ts.readLine();
+         qDebug() << "qs " << qs;
+         QStringList qsl = qs.split( QRegExp( "\\s+" ) );
+         if (qsl.size()) {
+            bead_count = qsl.takeFirst().toInt();
+         } else {
+            editor->append("Error in line 1! (reading number of beads)\n");
             return 1;
          }
-         if (!ts.atEnd()) {
-            ts >> results.vbar;
-         }
-         else
-         {
-            editor->append("Error in line 1!\n");
+         if (qsl.size() ) {
+            results.vbar  = qsl.takeFirst().toDouble();
+         } else {
+            editor->append("Error in line 1! (reading vbar)\n");
             return 1;
          }
          editor->append(QString("Beads %1\n").arg(bead_count));
-         while (!ts.atEnd() && linepos < bead_count)
-         {
+         while ( !ts.atEnd() && linepos < bead_count ) {
+            QString qs = ts.readLine();
+            qDebug() << "qs " << qs;
+            QStringList qsl = qs.split( QRegExp( "\\s+" ) );
+            
+            qDebug() << "qsl size " << qsl.size() << " joined - " << qsl.join( ":" );
+
             ++linepos;
-            for (unsigned int i = 0; i < 3; i++)
-            {
-               if (!ts.atEnd()) {
-                  ts >>  tmp_atom.bead_coordinate.axis[i];
-               }
-               else
-               {
-                  editor->append(QString("\nError in line %1!\n").arg(linepos));
+            for (unsigned int i = 0; i < 3; i++) {
+               if (qsl.size()) {
+                  tmp_atom.bead_coordinate.axis[i] = qsl.takeFirst().toDouble();
+               } else {
+                  editor->append(QString("\nError in line %1! (reading bead coordinates)\n").arg(linepos));
                   return linepos;
                }
             }
-            if (!ts.atEnd()) {
-               ts >>  tmp_atom.bead_computed_radius;
-            }
-            else
-            {
-               editor->append(QString("\nError in line %1!\n").arg(linepos));
+            if (qsl.size()) {
+               tmp_atom.bead_computed_radius = qsl.takeFirst().toDouble();
+            } else {
+               editor->append(QString("\nError in line %1! (reading radius)\n").arg(linepos));
                return linepos;
             }
-            if (!ts.atEnd()) {
-               ts >>  tmp_atom.bead_mw;
+            if (qsl.size()) {
+               tmp_atom.bead_mw = qsl.takeFirst().toDouble();
                tmp_atom.bead_ref_mw = tmp_atom.bead_mw;
                tmp_atom.bead_ref_ionized_mw_delta = 0;
                tmp_mw += tmp_atom.bead_mw;
-            }
-            else
-            {
-               editor->append(QString("\nError in line %1!\n").arg(linepos));
+            } else {
+               editor->append(QString("\nError in line %1 (reading mw)!\n").arg(linepos));
                return linepos;
             }
-            if (!ts.atEnd()) {
-               ts >>  tmp_atom.bead_color;
-            }
-            else
-            {
-               editor->append(QString("\nError in line %1!\n").arg(linepos));
+            if (qsl.size()) {
+               tmp_atom.bead_color = qsl.takeFirst().toInt();
+            } else {
+               editor->append(QString("\nError in line %1! (reading color)\n").arg(linepos));
                return linepos;
             }
-            if (!ts.atEnd()) {
+            if (qsl.size()) {
                tmp_atom.serial = linepos;
-            }
-            else
-            {
-               editor->append(QString("\nError in line %1!\n").arg(linepos));
+            } else {
+               editor->append(QString("\nError in line %1! (reading serial number)\n").arg(linepos));
                return linepos;
             }
-            if (!ts.atEnd()) {
-               ts >>  tmp_atom.residue_list;
-            }
-            else
-            {
-               editor->append(QString("\nError in line %1!\n").arg(linepos));
+            if (qsl.size()) {
+               tmp_atom.residue_list = qsl.takeFirst();
+            } else {
+               editor->append(QString("\nError in line %1! (reading residue list)\n").arg(linepos));
                return linepos;
             }
-            if (!ts.atEnd()) {
-               ts >> tmp_atom.bead_asa;
+            if (qsl.size()) {
+               tmp_atom.bead_asa = qsl.takeFirst().toDouble();
             } else {
                tmp_atom.bead_asa = 0;
             }
-            if (!ts.atEnd()) {
-               ts >>  tmp_atom.num_elect;
-            }
-            else
-            {
+            if (qsl.size()) {
+               tmp_atom.num_elect = qsl.takeFirst().toDouble();
+            } else {
                tmp_atom.num_elect = 0;
             }
-            if (!ts.atEnd()) {
-               ts >>  tmp_atom.saxs_excl_vol;
-            }
-            else
-            {
+            if (qsl.size()) {
+               tmp_atom.saxs_excl_vol = qsl.takeFirst().toDouble();
+            } else {
                tmp_atom.saxs_excl_vol = 0;
             }
-            if (!ts.atEnd()) {
-               ts >> tmp_atom.bead_hydration;
-            }
-            else
-            {
+            if (qsl.size()) {
+               tmp_atom.bead_hydration = qsl.takeFirst().toDouble();
+            } else {
                tmp_atom.bead_hydration = 0;
             }
-            if (!ts.atEnd()) {
+            if (qsl.size()) {
                QString tmp_string;
                // strip extra fields
-               tmp_string = ts.readLine();
+               tmp_string = qsl.join( " " );
                tmp_string.replace(QRegExp("^\\s*"),"");
                tmp_string.replace(QRegExp("\\s.*"),"");
                tmp_atom.bead_recheck_asa = tmp_string.toFloat();
+               //  } else {
+               // editor->append(QString("\nError in line %1!\n").arg(linepos));
+               // return linepos;
+            } else {
+               tmp_atom.bead_recheck_asa = 0;
             }
-            else
-            {
-               editor->append(QString("\nError in line %1!\n").arg(linepos));
-               return linepos;
-            }
+               
             tmp_atom.exposed_code = 1;
             tmp_atom.all_beads.clear( );
             tmp_atom.active = true;
@@ -207,14 +193,14 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
             tmp_atom.chainID = "CHAIN";
             tmp_atom.saxs_data.saxs_name = "";
             if ( saxs_options.compute_saxs_coeff_for_bead_models && 
-                 saxs_util->saxs_map.count( saxs_options.dummy_saxs_name ) )
-            {
+                 saxs_util->saxs_map.count( saxs_options.dummy_saxs_name ) ) {
                tmp_atom.saxs_name = saxs_options.dummy_saxs_name;
                tmp_atom.saxs_data = saxs_util->saxs_map[ saxs_options.dummy_saxs_name ];
                tmp_atom.hydrogens = 0;
             }
 
             bead_model.push_back(tmp_atom);
+            // info_bead_model( "after push back", bead_model );
          }
          if ( read_vdw && bead_model.size() ) {
             bead_model[0].is_vdw                   = "vdw";
@@ -516,6 +502,13 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
          lb_model->setEnabled(false);
          model_vector.resize(1);
          model_vector[0].vbar = results.vbar;
+         {
+            double tot_mw = 0;
+            for ( auto const & bead : bead_model ) {
+               tot_mw += bead.bead_mw;
+            }
+            model_vector[0].mw = tot_mw;
+         }
          somo_processed.resize(lb_model->count());
          bead_models.resize(lb_model->count());
          current_model = 0;
@@ -678,6 +671,14 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
          model_vector.resize(1);
          model_vector[0].vbar = results.vbar;
          model_vector[0].Rg = results.rg;
+         {
+            double tot_mw = 0;
+            for ( auto const & bead : bead_model ) {
+               tot_mw += bead.bead_mw;
+            }
+            model_vector[0].mw = tot_mw;
+         }
+            
          somo_processed.resize(lb_model->count());
          bead_models.resize(lb_model->count());
          current_model = 0;

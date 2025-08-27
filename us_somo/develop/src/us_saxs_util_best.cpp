@@ -651,14 +651,39 @@ bool US_Saxs_Util::run_best()
    // us_qdebug( QString( "outfiles %1" ).arg( outfiles.join( ":" ) ) );
    // us_qdebug( QString( "use_outfiles %1" ).arg( use_outfiles.join( ":" ) ) );
 
+   QTextStream( stdout ) << "inputbase " << inputbase << "\n" << QString( "use_outfiles %1" ).arg( use_outfiles.join( ":" ) )  << "\n";
+
    outfiles = use_outfiles;
 
+   run_best_csv( inputbase
+                 ,outfiles
+                 ,csvfiles
+                 ,triangles
+                 ,one_over_triangles
+                 );
+
+   // if ( !errormsg.isEmpty() )
+   // {
+   //    return false;
+   // }
+
+   return true;
+}
+
+bool US_Saxs_Util::run_best_csv(
+                                const QString & inputbase
+                                ,const QStringList & outfiles
+                                ,const QStringList & csvfiles
+                                ,const QStringList & triangles
+                                ,const vector < double > & one_over_triangles
+                                ) {
+      
    bool do_linear_fit = outfiles.size() > 1;
 
    {
       QFile f( QString( "%1.csv" ).arg( inputbase ) );
 
-      // us_qdebug( QString( "output file %1\n" ).arg( f.fileName() ) );
+      qDebug() << QString( "output file %1\n" ).arg( f.fileName() );
 
       vector < QStringList > csvresults;
       QStringList csv_header;
@@ -741,7 +766,7 @@ bool US_Saxs_Util::run_best()
 
       for ( int i = 0 ; i < (int) csvfiles.size(); ++i )
       {
-         // us_qdebug( QString( "csv input file %1 triangles %2\n" ).arg( csvfiles[ i ] ).arg( triangles[ i ] ) );
+         qDebug() << QString( "csv input file %1 triangles %2\n" ).arg( csvfiles[ i ] ).arg( triangles[ i ] );
          QStringList qsl = best_output_column( csvfiles[ i ] );
          csvresults.push_back( qsl );
 
@@ -824,12 +849,12 @@ bool US_Saxs_Util::run_best()
                ts << "=-1,";
                missing_data = true;
             }
-            // us_qdebug( QString( "i %1 missing_data %2 do_linear_fit %3 extrapolate.count( i ) %4" )
-            //         .arg( i )
-            //         .arg( missing_data ? "true" : "false" )
-            //         .arg( do_linear_fit ? "true" : "false" )
-            //         .arg( extrapolate.count( i ) ) 
-            //         );
+            // qDebug() << QString( "i %1 missing_data %2 do_linear_fit %3 extrapolate.count( i ) %4" )
+            //    .arg( i )
+            //    .arg( missing_data ? "true" : "false" )
+            //    .arg( do_linear_fit ? "true" : "false" )
+            //    .arg( extrapolate.count( i ) ) 
+            //    ;
          }
          if ( !missing_data && do_linear_fit && extrapolate.count( i ) )
          {
@@ -855,12 +880,6 @@ bool US_Saxs_Util::run_best()
       f.close();
       output_files << f.fileName();
    }
-
-   // if ( !errormsg.isEmpty() )
-   // {
-   //    return false;
-   // }
-
    return true;
 }
 
@@ -1043,7 +1062,7 @@ QStringList US_Saxs_Util::best_output_column( QString fname )
    {
       QString qs = ts.readLine();
       qs.replace( QRegExp( "\\s+cm\\^2/s\\s*$" ), "" );
-      // us_qdebug( QString( "qs dtt cm^2/s <%1>\n" ).arg( qs ) );
+      qDebug() << QString( "qs dtt cm^2/s <%1>\n" ).arg( qs );
       if ( rx_1.indexIn( qs ) == -1 )
       {
          qsl << QString( "error in %1 could not read data pos %2" ).arg( f.fileName() ).arg( "Dtt (cm^2/s) 1/3 trace" );

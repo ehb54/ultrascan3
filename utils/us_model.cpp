@@ -1087,7 +1087,7 @@ void US_Model::get_metadata( QXmlStreamReader &xml )
                   ginfo.yRes  = a.value( "yRes"  ).toInt();
 
                   ginfo.zType = a.value( "zType" ).toString();
-                  ginfo.zVal  = a.value( "zVal"  ).toDouble();
+                  ginfo.zVal  = a.value( "zVal"  ).toString();
 
                   ginfo_list.insert( id, ginfo );
                   counter++;
@@ -1328,7 +1328,7 @@ void US_Model::write_stream( QXmlStreamWriter& xml )
          xml.writeAttribute( "yRes",  QString::number( ginfo.yRes ) );
 
          xml.writeAttribute( "zType", ginfo.zType );
-         xml.writeAttribute( "zVal",  QString::number( ginfo.zVal ) );
+         xml.writeAttribute( "zVal",  ginfo.zVal );
          xml.writeEndElement();
       }
       xml.writeEndElement();

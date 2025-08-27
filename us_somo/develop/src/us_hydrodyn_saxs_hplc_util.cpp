@@ -69,6 +69,10 @@ void US_Hydrodyn_Saxs_Hplc::add()
 {
    QStringList files = all_selected_files();
 
+   if ( ! files.size() ) {
+      return;
+   }
+
    vector < double > sum = f_Is[ files[ 0 ] ];
    vector < double > e   = f_errors[ files[ 0 ] ];
 
@@ -85,7 +89,49 @@ void US_Hydrodyn_Saxs_Hplc::add()
 
    disable_all();
 
-   QString name = us_tr( "sum_" ) + files[ 0 ];
+   QString repeak_str;
+
+   QString name;
+   
+   // get base name
+   QString prefix = qstring_common_head( files, true );
+   {
+      
+      QStringList qsl = prefix.split( QRegExp( "[^A-Za-z0-9]" ) );
+      prefix = qsl[ 0 ];
+   }
+
+   {
+      QRegExp rx_repeak( "-rp(.\\d*(_|\\.)\\d+(|e.\\d+))" );
+      
+      set < QString > rp_values;
+
+      QString rp_first;
+
+      for ( auto const & f : files ) {
+         if ( rx_repeak.indexIn( f ) != -1 ) {
+            if ( !rp_values.size() ) {
+               rp_first = rx_repeak.cap( 1 );
+            }
+            rp_values.insert( rx_repeak.cap( 1 ) );
+         }
+      }
+
+      if ( rp_values.size() > 1 ) {
+         QMessageBox::warning( this,
+                                   windowTitle() + us_tr( ": Sum" ),
+                                   us_tr( "Multiple differing repeak values found in summed file names, using the first one" )
+                                   );
+      }
+
+      if ( rp_values.size() ) {
+         name = QString( "%1_sum_nf%2-rp%3" ).arg( prefix ).arg( files.size() ).arg( rp_first );
+      } else {
+         name = QString( "%1_sum_nf%2-no_rp" ).arg( prefix ).arg( files.size() );
+      }
+   }
+
+   QString header = QString( " Sum: %1" ).arg( files.join( " , " ) );
 
    for ( unsigned int i = 1; i < ( unsigned int ) files.size(); i++ )
    {
@@ -96,7 +142,7 @@ void US_Hydrodyn_Saxs_Hplc::add()
          return;
       }
       
-      name += "+" + files[ i ];
+      // name += "+" + files[ i ];
 
       for ( unsigned int j = 0; j < ( unsigned int ) sum.size(); j++ )
       {
@@ -122,6 +168,12 @@ void US_Hydrodyn_Saxs_Hplc::add()
       add_plot( name, f_qs[ files[ 0 ] ], sum, e, f_is_time.count( files[ 0 ] ) ? f_is_time[ files[ 0 ] ] : false, false );
    } else {
       add_plot( name, f_qs[ files[ 0 ] ], sum, f_is_time.count( files[ 0 ] ) ? f_is_time[ files[ 0 ] ] : false, false );
+   }
+
+   f_header[ last_created_file ] = header;
+
+   if ( conc_files.count( files[ 0 ] ) ) {
+      conc_files.insert( last_created_file );
    }
    update_enables();
 }
@@ -1026,12 +1078,15 @@ void US_Hydrodyn_Saxs_Hplc::repeak()
    repeak( files );
 }
 
-void US_Hydrodyn_Saxs_Hplc::repeak( QStringList files )
+void US_Hydrodyn_Saxs_Hplc::repeak( QStringList files, bool quiet, QString use_conc )
 {
 
    QString peak_target = files.front();
 
-   QString use_conc = select_conc_file( "Repeak" );
+   if ( use_conc.isEmpty() ) {
+      use_conc = select_conc_file( "Repeak" );
+   }
+
    if ( use_conc.isEmpty() )
    {
       update_enables();
@@ -1120,37 +1175,39 @@ void US_Hydrodyn_Saxs_Hplc::repeak( QStringList files )
          wo_errors_count++;
       }
 
-      if ( any_without_errors )
-      {
-         switch ( QMessageBox::question(this, 
-                                        windowTitle() + us_tr( ": repeak" ),
-                                        // QString( us_tr( "The target has SDs but %1 of %2 file%3 to repeak do not have SDs at every point\n"
-                                        //              "What would you like to do?\n" ) )
-                                        // .arg( wo_errors_count ).arg( files.size() - 1 ).arg( files.size() > 2 ? "s" : "" ),
-                                        QString( us_tr( "The repeak target:\n\t%1\nhas SDs, but the concentration file:\n\t%2\nto repeak does not have SDs at every point.\n\n"
-                                                     "What would you like to do?\n" ) )
-                                        .arg( peak_target ).arg( use_conc ),
-                                        us_tr( "&Ignore SDs" ), 
-                                        us_tr( "Match target SD % pointwise" ),
-                                        us_tr( "Set S.D.'s to 5 %" ), 
-                                        0, // Stop == button 0
-                                        0 // Escape == button 0
-                                        ) )
-         {
-         case 0 : // ignore SDs
-            any_without_errors = false;
-            break;
-         case 1 : // keep avg_sd_mult
+      if ( any_without_errors ) {
+         if ( quiet ) {
+            // #warning is this the correct choice for autorunning ?
             match_sd = true;
-            break;
-         case 2 : // set to 5%
-            avg_sd_mult = 0.05;
-            break;
-         }  
+         } else {
+            switch ( QMessageBox::question(this, 
+                                           windowTitle() + us_tr( ": repeak" ),
+                                           // QString( us_tr( "The target has SDs but %1 of %2 file%3 to repeak do not have SDs at every point\n"
+                                           //              "What would you like to do?\n" ) )
+                                           // .arg( wo_errors_count ).arg( files.size() - 1 ).arg( files.size() > 2 ? "s" : "" ),
+                                           QString( us_tr( "The repeak target:\n\t%1\nhas SDs, but the concentration file:\n\t%2\nto repeak does not have SDs at every point.\n\n"
+                                                           "What would you like to do?\n" ) )
+                                           .arg( peak_target ).arg( use_conc ),
+                                           us_tr( "&Ignore SDs" ), 
+                                           us_tr( "Match target SD % pointwise" ),
+                                           us_tr( "Set S.D.'s to 5 %" ), 
+                                           0, // Stop == button 0
+                                           0 // Escape == button 0
+                                           ) )
+            {
+            case 0 : // ignore SDs
+               any_without_errors = false;
+               break;
+            case 1 : // keep avg_sd_mult
+               match_sd = true;
+               break;
+            case 2 : // set to 5%
+               avg_sd_mult = 0.05;
+               break;
+            }
+         }
       }       
    }
-
-   QString last_repeak_name;
 
    for ( unsigned int i = 0; i < ( unsigned int ) files.size(); i++ )
    {
@@ -1258,27 +1315,29 @@ void US_Hydrodyn_Saxs_Hplc::repeak( QStringList files )
       editor_msg( "gray", QString( "Created %1\n" ).arg( repeak_name ) );
    }
 
-   lb_files->clearSelection();
-   for ( int i = 0; i < (int)lb_files->count(); i++ )
-   {
-      if ( select_files.count( lb_files->item( i )->text() ) )
+   if ( !quiet ) {
+      lb_files->clearSelection();
+      for ( int i = 0; i < (int)lb_files->count(); i++ )
       {
-         lb_files->item( i)->setSelected( true );
+         if ( select_files.count( lb_files->item( i )->text() ) )
+         {
+            lb_files->item( i)->setSelected( true );
+         }
       }
-   }
 
-   rescale();
-   if ( QMessageBox::Yes == QMessageBox::question(
-                                                  this,
-                                                  windowTitle() + us_tr( ": repeak : set concentration file" ),
-                                                  us_tr("Would you like to *set* the repeaked concentration file?" ),
-                                                  QMessageBox::Yes, 
-                                                  QMessageBox::No | QMessageBox::Default
-                                                  ) )
-   {
-      return set_conc_file( last_repeak_name );
+      rescale();
+      if ( QMessageBox::Yes == QMessageBox::question(
+                                                     this,
+                                                     windowTitle() + us_tr( ": repeak : set concentration file" ),
+                                                     us_tr("Would you like to *set* the repeaked concentration file?" ),
+                                                     QMessageBox::Yes, 
+                                                     QMessageBox::No | QMessageBox::Default
+                                                     ) )
+      {
+         return set_conc_file( last_repeak_name );
+      }
+      update_enables();
    }
-   update_enables();
 }
 
 void US_Hydrodyn_Saxs_Hplc::crop_common()
@@ -1515,6 +1574,7 @@ void US_Hydrodyn_Saxs_Hplc::avg( QStringList files, QString suffix )
    unsigned int min_q_len = 0;
 
    bool all_nonzero_errors = true;
+   bool is_time = false;
 
    for ( int i = 0; i < (int)files.size(); i++ )
    {
@@ -1533,6 +1593,7 @@ void US_Hydrodyn_Saxs_Hplc::avg( QStringList files, QString suffix )
       if ( first )
       {
          first = false;
+         is_time = f_is_time.count( this_file ) && f_is_time[ this_file ] ? true : false;
          min_q_len = t_qs[ this_file ].size();
       } else {
          if ( min_q_len > t_qs[ this_file ].size() )
@@ -1825,7 +1886,7 @@ void US_Hydrodyn_Saxs_Hplc::avg( QStringList files, QString suffix )
    f_qs        [ avg_name ] = avg_qs;
    f_Is        [ avg_name ] = avg_Is;
    f_errors    [ avg_name ] = avg_sd;
-   f_is_time   [ avg_name ] = false;
+   f_is_time   [ avg_name ] = is_time;
    f_conc      [ avg_name ] = avg_conc;
    f_psv       [ avg_name ] = avg_psv;
    f_I0se      [ avg_name ] = avg_I0se;
@@ -1890,8 +1951,8 @@ void US_Hydrodyn_Saxs_Hplc::conc_avg( QStringList files )
 
    vector < double > nIs;
 
-   double tot_conc;
-   double tot_conc2;
+   // double tot_conc;
+   // double tot_conc2;
 
    // copies for potential cropping:
 
@@ -2012,8 +2073,8 @@ void US_Hydrodyn_Saxs_Hplc::conc_avg( QStringList files )
       if ( first )
       {
          first = false;
-         tot_conc  = inv_concs[ this_file ];
-         tot_conc2 = tot_conc * tot_conc;
+         // tot_conc  = inv_concs[ this_file ];
+         // tot_conc2 = tot_conc * tot_conc;
          avg_qs_string = t_qs_string[ this_file ];
          avg_qs        = t_qs       [ this_file ];
          nIs           = t_Is       [ this_file ];
@@ -2045,8 +2106,8 @@ void US_Hydrodyn_Saxs_Hplc::conc_avg( QStringList files )
             editor_msg( "red", us_tr( "Error: incompatible grids, the files selected do not have the same number of points" ) );
             return;
          }
-         tot_conc  += inv_concs[ this_file ];
-         tot_conc2 += inv_concs[ this_file ] * inv_concs[ this_file ];
+         // tot_conc  += inv_concs[ this_file ];
+         // tot_conc2 += inv_concs[ this_file ] * inv_concs[ this_file ];
          nIs       = t_Is     [ this_file ];
          for ( int j = 0; j < (int)nIs.size(); j++ )
          {
@@ -2750,41 +2811,49 @@ double US_Hydrodyn_Saxs_Hplc::tot_intensity( QString &file, double q_min, double
    return tot_i;
 }
 
-void US_Hydrodyn_Saxs_Hplc::set_selected( set < QString > & to_select, bool do_replot )
-{
-   disable_updates = true;
-   lb_files->clearSelection();
-   for ( int i = 0; i < (int)lb_files->count(); i++ )
-   {
-      if ( to_select.count( lb_files->item( i )->text() ) )
-      {
-         lb_files->item( i)->setSelected( true );
-      }
+bool US_Hydrodyn_Saxs_Hplc::set_selected( const QStringList & to_select_qsl, bool do_replot, bool save_zoom_state ) {
+   set < QString > to_select;
+   for ( auto name : to_select_qsl ) {
+      to_select.insert( name );
    }
-
-   disable_updates = false;
-   if ( do_replot )
-   {
-      plot_files();
-   }
+   return set_selected( to_select, do_replot, save_zoom_state );
 }
 
-void US_Hydrodyn_Saxs_Hplc::set_created_selected( set < QString > & to_select, bool do_replot )
-{
+bool US_Hydrodyn_Saxs_Hplc::set_selected( const set < QString > & to_select, bool do_replot, bool save_zoom_state ) {
+   disable_updates = true;
+   lb_files->clearSelection();
+   set < QString > missing = to_select;
+   for ( int i = 0; i < (int)lb_files->count(); i++ ) {
+      if ( to_select.count( lb_files->item( i )->text() ) ) {
+         lb_files->item( i)->setSelected( true );
+         missing.erase( lb_files->item( i )->text() );
+         // qDebug() << "set_selected() : to plot " << lb_files->item( i )->text();
+      }
+   }
+
+   disable_updates = false;
+   if ( do_replot ) {
+      plot_files( save_zoom_state );
+   }
+   return missing.size() == 0;
+}
+
+bool US_Hydrodyn_Saxs_Hplc::set_created_selected( const set < QString > & to_select, bool do_replot ) {
    disable_updates = true;
    lb_created_files->clearSelection();
-   for ( int i = 0; i < (int)lb_created_files->count(); i++ )
-   {
-      if ( to_select.count( lb_created_files->item( i )->text() ) )
-      {
+   set < QString > missing = to_select;
+   for ( int i = 0; i < (int)lb_created_files->count(); i++ ) {
+
+      if ( to_select.count( lb_created_files->item( i )->text() ) ) {
          lb_created_files->item( i)->setSelected( true );
+         missing.erase( lb_files->item( i )->text() );
       }
    }
    disable_updates = false;
-   if ( do_replot )
-   {
+   if ( do_replot ) {
       plot_files();
    }
+   return missing.size() == 0;
 }
 
 void US_Hydrodyn_Saxs_Hplc::artificial_gaussians()
@@ -3164,73 +3233,72 @@ void US_Hydrodyn_Saxs_Hplc::plot_debug() {
          it->second->axisWidget( QwtPlot::yRight )->getBorderDistHint( yRightStartDist, yRightEndDist );
 
          tso << QString( "plot for %1\n" ).arg( it->first )
-             << QString().sprintf(
-                                  "plotLayout()->alignCanvasToScale( yLeft )          %s\n"
-                                  "plotLayout()->alignCanvasToScale( yRight )         %s\n"
+             << QString::asprintf( "plotLayout( )->alignCanvasToScale( yLeft )          %s\n"
+                                   "plotLayout()->alignCanvasToScale( yRight )         %s\n"
                                   
-                                  "plotLayout()->spacing()                            %d\n"
+                                   "plotLayout()->spacing()                            %d\n"
 
-                                  "plotLayout()->canvasRect()                         %g, %g\n"
-                                  "plotLayout()->titleRect()                          %g, %g\n"
-                                  "plotLayout()->footerRect()                         %g, %g\n"
-                                  "plotLayout()->legendRect()                         %g, %g\n"
+                                   "plotLayout()->canvasRect()                         %g, %g\n"
+                                   "plotLayout()->titleRect()                          %g, %g\n"
+                                   "plotLayout()->footerRect()                         %g, %g\n"
+                                   "plotLayout()->legendRect()                         %g, %g\n"
 
-                                  "plotLayout()->scaleRect( yLeft )                   %g, %g\n"
-                                  "plotLayout()->scaleRect( yRight )                  %g, %g\n"
+                                   "plotLayout()->scaleRect( yLeft )                   %g, %g\n"
+                                   "plotLayout()->scaleRect( yRight )                  %g, %g\n"
 
-                                  "plotLayout()->canvasMargin( yLeft )                %d\n"
-                                  "plotLayout()->canvasMargin( yRight )               %d\n"
+                                   "plotLayout()->canvasMargin( yLeft )                %d\n"
+                                   "plotLayout()->canvasMargin( yRight )               %d\n"
 
-                                  "axisWidget( yLeft )->getBorderDistHint( yLeft )    %d, %d\n"
-                                  "axisWidget( yRight )->getBorderDistHint( yRight )  %d, %d\n"
+                                   "axisWidget( yLeft )->getBorderDistHint( yLeft )    %d, %d\n"
+                                   "axisWidget( yRight )->getBorderDistHint( yRight )  %d, %d\n"
 
-                                  "axisWidget( yLeft )->scaleDraw()->extent()         %g\n"
-                                  "axisWidget( yRight )->scaleDraw()->extent()        %g\n"
+                                   "axisWidget( yLeft )->scaleDraw()->extent()         %g\n"
+                                   "axisWidget( yRight )->scaleDraw()->extent()        %g\n"
 
-                                  "width guess                                        %g\n"
+                                   "width guess                                        %g\n"
 
-                                  ,( it->second->plotLayout()->alignCanvasToScale( QwtPlot::yLeft ) ? "True" : "False" )
-                                  ,( it->second->plotLayout()->alignCanvasToScale( QwtPlot::yRight ) ? "True" : "False" )
+                                   ,( it->second->plotLayout()->alignCanvasToScale( QwtPlot::yLeft ) ? "True" : "False" )
+                                   ,( it->second->plotLayout()->alignCanvasToScale( QwtPlot::yRight ) ? "True" : "False" )
 
-                                  ,it->second->plotLayout()->spacing()
+                                   ,it->second->plotLayout()->spacing()
 
-                                  ,it->second->plotLayout()->canvasRect().x()
-                                  ,it->second->plotLayout()->canvasRect().y()
+                                   ,it->second->plotLayout()->canvasRect().x()
+                                   ,it->second->plotLayout()->canvasRect().y()
 
-                                  ,it->second->plotLayout()->titleRect().x()
-                                  ,it->second->plotLayout()->titleRect().y()
+                                   ,it->second->plotLayout()->titleRect().x()
+                                   ,it->second->plotLayout()->titleRect().y()
 
-                                  ,it->second->plotLayout()->footerRect().x()
-                                  ,it->second->plotLayout()->footerRect().y()
+                                   ,it->second->plotLayout()->footerRect().x()
+                                   ,it->second->plotLayout()->footerRect().y()
 
-                                  ,it->second->plotLayout()->legendRect().x()
-                                  ,it->second->plotLayout()->legendRect().y()
+                                   ,it->second->plotLayout()->legendRect().x()
+                                   ,it->second->plotLayout()->legendRect().y()
 
-                                  ,it->second->plotLayout()->scaleRect( QwtPlot::yLeft ).x()
-                                  ,it->second->plotLayout()->scaleRect( QwtPlot::yLeft ).y()
+                                   ,it->second->plotLayout()->scaleRect( QwtPlot::yLeft ).x()
+                                   ,it->second->plotLayout()->scaleRect( QwtPlot::yLeft ).y()
 
-                                  ,it->second->plotLayout()->scaleRect( QwtPlot::yRight ).x()
-                                  ,it->second->plotLayout()->scaleRect( QwtPlot::yRight ).y()
+                                   ,it->second->plotLayout()->scaleRect( QwtPlot::yRight ).x()
+                                   ,it->second->plotLayout()->scaleRect( QwtPlot::yRight ).y()
 
-                                  ,it->second->plotLayout()->canvasMargin( QwtPlot::yLeft )
-                                  ,it->second->plotLayout()->canvasMargin( QwtPlot::yRight )
+                                   ,it->second->plotLayout()->canvasMargin( QwtPlot::yLeft )
+                                   ,it->second->plotLayout()->canvasMargin( QwtPlot::yRight )
 
-                                  ,yLeftStartDist
-                                  ,yLeftEndDist
+                                   ,yLeftStartDist
+                                   ,yLeftEndDist
 
-                                  ,yRightStartDist
-                                  ,yRightEndDist
+                                   ,yRightStartDist
+                                   ,yRightEndDist
 
-                                  ,it->second->axisWidget( QwtPlot::yLeft )->scaleDraw()->extent( it->second->axisWidget( QwtPlot::yLeft )->font() )
-                                  ,it->second->axisWidget( QwtPlot::yRight )->scaleDraw()->extent( it->second->axisWidget( QwtPlot::yRight )->font() )
-                                  , (
-                                     it->second->plotLayout()->canvasMargin( QwtPlot::yLeft ) +
-                                     it->second->plotLayout()->canvasMargin( QwtPlot::yRight ) +
-                                     it->second->plotLayout()->scaleRect( QwtPlot::yLeft ).x() +
-                                     it->second->plotLayout()->scaleRect( QwtPlot::yRight ).x() +
-                                     it->second->plotLayout()->canvasRect().x()
-                                     )
-                                  );
+                                   ,it->second->axisWidget( QwtPlot::yLeft )->scaleDraw()->extent( it->second->axisWidget( QwtPlot::yLeft )->font() )
+                                   ,it->second->axisWidget( QwtPlot::yRight )->scaleDraw()->extent( it->second->axisWidget( QwtPlot::yRight )->font() )
+                                   , (
+                                      it->second->plotLayout()->canvasMargin( QwtPlot::yLeft ) +
+                                      it->second->plotLayout()->canvasMargin( QwtPlot::yRight ) +
+                                      it->second->plotLayout()->scaleRect( QwtPlot::yLeft ).x() +
+                                      it->second->plotLayout()->scaleRect( QwtPlot::yRight ).x() +
+                                      it->second->plotLayout()->canvasRect().x()
+                                      )
+                                   );
       }
    }
 }
@@ -3269,10 +3337,10 @@ bool US_Hydrodyn_Saxs_Hplc::ask_to_decimate( map < QString, QString > & paramete
    switch ( QMessageBox::warning(this, 
                                  windowTitle() + us_tr( " : Optional PVP Analysis Correlation Correction" )
                                  ,us_tr( 
-                                    "Warning: datasets having finely spaced q-values might exhibit cross-correlation issues.\n"
-                                    "Sampling one every few q points will alleviate this problem.\n"
-                                    "Would you like to?"
-                                     )
+                                        "Warning: datasets having finely spaced q-values might exhibit cross-correlation issues.\n"
+                                        "Sampling one every few q points will alleviate this problem.\n"
+                                        "Would you like to?"
+                                         )
                                  ,us_tr( "&Sample alternate q points" )
                                  ,us_tr( "&Specify a larger gap in q points" )
                                  ,us_tr( "&Continue" )
@@ -3298,10 +3366,10 @@ bool US_Hydrodyn_Saxs_Hplc::ask_to_decimate( map < QString, QString > & paramete
 
    bool ok;
    int result = US_Static::getInteger(
-                                         windowTitle() + us_tr( " : Optional PVP Analysis Correlation Correction" )
-                                         ,us_tr( "Sample one q point out of every:" )
-                                         ,3
-                                         ,3
+                                      windowTitle() + us_tr( " : Optional PVP Analysis Correlation Correction" )
+                                      ,us_tr( "Sample one q point out of every:" )
+                                      ,3
+                                      ,3
                                          ,10
                                          ,1 
                                          ,&ok
@@ -3555,7 +3623,7 @@ void US_Hydrodyn_Saxs_Hplc::cormap( map < QString, QString > & parameters )
                      .arg( N, 6 )
                      .arg( S, 6 )
                      .arg( C, 6 )
-                     .arg( QString( "" ).sprintf( "%.4g", P ).leftJustified( 12 ) )
+                     .arg( QString::asprintf( "%.4g", P ).leftJustified( 12 ) )
                      // .arg( adjP ) 
                      ;
                }
@@ -3801,7 +3869,7 @@ void US_Hydrodyn_Saxs_Hplc::cormap( map < QString, QString > & parameters )
                      .arg( N, 6 )
                      .arg( S, 6 )
                      .arg( C, 6 )
-                     .arg( QString( "" ).sprintf( "%.4g", P ).leftJustified( 12 ) )
+                     .arg( QString::asprintf( "%.4g", P ).leftJustified( 12 ) )
                      // .arg( adjP ) 
                      ;
                }
@@ -4133,7 +4201,7 @@ void US_Hydrodyn_Saxs_Hplc::cormap( map < QString, QString > & parameters )
                   .arg( N, 6 )
                   .arg( S, 6 )
                   .arg( C, 6 )
-                  .arg( QString( "" ).sprintf( "%.4g", P ).leftJustified( 12 ) )
+                  .arg( QString::asprintf( "%.4g", P ).leftJustified( 12 ) )
                   // .arg( adjP ) 
                   ;
             }
@@ -4439,7 +4507,7 @@ void US_Hydrodyn_Saxs_Hplc::cormap( map < QString, QString > & parameters )
                   .arg( N, 6 )
                   .arg( S, 6 )
                   .arg( C, 6 )
-                  .arg( QString( "" ).sprintf( "%.4g", P ).leftJustified( 12 ) )
+                  .arg( QString::asprintf( "%.4g", P ).leftJustified( 12 ) )
                   // .arg( adjP ) 
                   ;
             }
@@ -4620,7 +4688,7 @@ void US_Hydrodyn_Saxs_Hplc::cormap( map < QString, QString > & parameters )
                .arg( ggaussian_last_pfit_N[ i ], 6 )
                .arg( ggaussian_last_pfit_S[ i ], 6 )
                .arg( ggaussian_last_pfit_C[ i ], 6 )
-               .arg( QString( "" ).sprintf( "%.4g", ggaussian_last_pfit_P[ i ] ).leftJustified( 12 ) )
+               .arg( QString::asprintf( "%.4g", ggaussian_last_pfit_P[ i ] ).leftJustified( 12 ) )
                // .arg( adjP ) 
                ;
 
@@ -4894,7 +4962,7 @@ void US_Hydrodyn_Saxs_Hplc::cormap( map < QString, QString > & parameters )
                   .arg( N, 6 )
                   .arg( S, 6 )
                   .arg( C, 6 )
-                  .arg( QString( "" ).sprintf( "%.4g", P ).leftJustified( 12 ) )
+                  .arg( QString::asprintf( "%.4g", P ).leftJustified( 12 ) )
                   // .arg( adjP ) 
                   ;
             }
@@ -5365,3 +5433,43 @@ void US_Hydrodyn_Saxs_Hplc::reset_saxs_hplc_params() {
    saxs_hplc_param_solvent_electron_density = QString( "%1" ).arg( ((US_Hydrodyn *)us_hydrodyn)->saxs_options.water_e_density, 0, 'f', 4 ).toDouble();
 }
    
+QString US_Hydrodyn_Saxs_Hplc::gaussian_info( const vector < double > & gs, const QString & msg ) {
+   double tot_area = 0e0;
+   vector < double > g_area;
+   for ( size_t g = 0; g < gs.size(); g += gaussian_type_size )
+   {
+      g_area.push_back( gs[ g + 0 ] * gs[ g + 2 ] * M_SQRT2PI );
+      tot_area += g_area.back();
+   }
+
+   QStringList qsl_result;
+
+   QString use_msg = msg;
+   if ( !use_msg.isEmpty() ) {
+      use_msg += " ";
+   }
+
+   for ( size_t g = 0; g < gs.size(); g += gaussian_type_size )
+   {
+      qsl_result <<
+         QString( "%1Gaussian %2: center %3; height %4; width %5; skew1 %6; skew2 %7; area %8; % of total %9" ) 
+         .arg( use_msg )
+         .arg( ( g / gaussian_type_size ) + 1 )
+         .arg( gs[ g + 1 ] )
+         .arg( gs[ g + 0 ] )
+         .arg( gs[ g + 2 ] )
+         .arg( gaussian_type_size > 3 ? QString( "%1" ).arg( gs[ g + 3 ] ) : "n/a" )
+         .arg( gaussian_type_size > 4 ? QString( "%1" ).arg( gs[ g + 4 ] ) : "n/a" )
+         .arg( g_area[ g/gaussian_type_size ] )
+         .arg( tot_area != 0e0 ? 100e0 * g_area[ g/gaussian_type_size ] / tot_area : 0e0 )
+         ;
+   }
+
+   qsl_result <<
+      QString( "%1Gaussian total area %2" )
+      .arg( use_msg )
+      .arg( tot_area )
+      ;
+   
+   return qsl_result.join( "\n" );
+}

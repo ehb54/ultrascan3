@@ -117,7 +117,7 @@ void US_Hydrodyn_Hydro::setupGUI()
    lbl_temperature->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_temperature = new QLineEdit();
-   le_temperature->setText(str.sprintf("%4.2f",(*hydro).temperature));
+   le_temperature->setText( QString::asprintf( "%4.2f",(*hydro).temperature ) );
    le_temperature->setAlignment(Qt::AlignVCenter);
    le_temperature->setPalette( PALET_NORMAL );
    AUTFBACK( le_temperature );
@@ -133,7 +133,7 @@ void US_Hydrodyn_Hydro::setupGUI()
    lbl_solvent_viscosity->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_solvent_viscosity = new QLineEdit();
-   le_solvent_viscosity->setText(str.sprintf("%f",(*hydro).solvent_viscosity));
+   le_solvent_viscosity->setText( QString::asprintf( "%f",(*hydro).solvent_viscosity ) );
    le_solvent_viscosity->setAlignment(Qt::AlignVCenter);
    le_solvent_viscosity->setPalette( PALET_NORMAL );
    AUTFBACK( le_solvent_viscosity );
@@ -149,7 +149,7 @@ void US_Hydrodyn_Hydro::setupGUI()
    lbl_solvent_density->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_solvent_density = new QLineEdit();
-   le_solvent_density->setText(str.sprintf("%f",(*hydro).solvent_density));
+   le_solvent_density->setText( QString::asprintf( "%f",(*hydro).solvent_density ) );
    le_solvent_density->setAlignment(Qt::AlignVCenter);
    le_solvent_density->setPalette( PALET_NORMAL );
    AUTFBACK( le_solvent_density );
@@ -174,7 +174,7 @@ void US_Hydrodyn_Hydro::setupGUI()
    lbl_tc_solvent_viscosity->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_tc_solvent_viscosity = new QLineEdit();
-   le_tc_solvent_viscosity->setText(str.sprintf("%f", ((US_Hydrodyn *)us_hydrodyn)->tc_solvent_visc()));
+   le_tc_solvent_viscosity->setText( QString::asprintf( "%f", ((US_Hydrodyn *)us_hydrodyn)->tc_solvent_visc() ) );
    le_tc_solvent_viscosity->setAlignment(Qt::AlignVCenter);
    le_tc_solvent_viscosity->setPalette( PALET_NORMAL );
    AUTFBACK( le_tc_solvent_viscosity );
@@ -190,7 +190,7 @@ void US_Hydrodyn_Hydro::setupGUI()
    lbl_tc_solvent_density->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_tc_solvent_density = new QLineEdit();
-   le_tc_solvent_density->setText(str.sprintf("%f",((US_Hydrodyn *)us_hydrodyn)->tc_solvent_dens()));
+   le_tc_solvent_density->setText( QString::asprintf( "%f",((US_Hydrodyn *)us_hydrodyn)->tc_solvent_dens() ) );
    le_tc_solvent_density->setAlignment(Qt::AlignVCenter);
    le_tc_solvent_density->setPalette( PALET_NORMAL );
    AUTFBACK( le_tc_solvent_density );
@@ -319,7 +319,7 @@ void US_Hydrodyn_Hydro::setupGUI()
    lbl_mass->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_mass = new QLineEdit( bg_mass_correction );    le_mass->setObjectName( "Mass Line Edit" );
-   le_mass->setText(str.sprintf("%5.3e", (*hydro).mass));
+   le_mass->setText( QString::asprintf( "%5.3e", (*hydro).mass ) );
    le_mass->setAlignment(Qt::AlignVCenter);
    le_mass->setPalette( PALET_NORMAL );
    AUTFBACK( le_mass );
@@ -376,7 +376,7 @@ void US_Hydrodyn_Hydro::setupGUI()
    lbl_volume->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_volume = new QLineEdit( bg_volume_correction );    le_volume->setObjectName( "Volume Line Edit" );
-   le_volume->setText(str.sprintf("%5.3e", (*hydro).volume));
+   le_volume->setText( QString::asprintf( "%5.3e", (*hydro).volume ) );
    le_volume->setAlignment(Qt::AlignVCenter);
    le_volume->setPalette( PALET_NORMAL );
    AUTFBACK( le_volume );
@@ -534,7 +534,7 @@ void US_Hydrodyn_Hydro::setupGUI()
    lbl_overlap->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_overlap = new QLineEdit( bg_overlap );    le_overlap->setObjectName( "Mass Line Edit" );
-   le_overlap->setText(str.sprintf("%5.3e", (*hydro).overlap));
+   le_overlap->setText( QString::asprintf( "%5.3e", (*hydro).overlap ) );
    le_overlap->setAlignment(Qt::AlignVCenter);
    le_overlap->setPalette( PALET_NORMAL );
    AUTFBACK( le_overlap );
@@ -630,7 +630,7 @@ void US_Hydrodyn_Hydro::update_solvent_acronym(const QString &str)
 void US_Hydrodyn_Hydro::update_temperature(const QString &str, bool update_main )
 {
    (*hydro).temperature = str.toDouble();
-   //   le_temperature->setText(QString("").sprintf("%4.2f",(*hydro).temperature));
+   //   le_temperature->setText(QString::asprintf( "%4.2f",(*hydro ).temperature));
    check_solvent_defaults();
    if ( update_main ) {
       ((US_Hydrodyn *)us_hydrodyn)->update_temperature( str, false );
@@ -639,27 +639,27 @@ void US_Hydrodyn_Hydro::update_temperature(const QString &str, bool update_main 
       le_temperature->setText( str );
    }
    
-   le_tc_solvent_viscosity->setText(QString("").sprintf("%f", ((US_Hydrodyn *)us_hydrodyn)->tc_solvent_visc()));
-   le_tc_solvent_density->setText(QString("").sprintf("%f",((US_Hydrodyn *)us_hydrodyn)->tc_solvent_dens()));
+   le_tc_solvent_viscosity->setText(QString::asprintf( "%f", ((US_Hydrodyn * )us_hydrodyn)->tc_solvent_visc()));
+   le_tc_solvent_density->setText(QString::asprintf( "%f",((US_Hydrodyn * )us_hydrodyn)->tc_solvent_dens()));
 }
 
 void US_Hydrodyn_Hydro::update_solvent_viscosity(const QString &str)
 {
    (*hydro).solvent_viscosity = str.toDouble();
-   // le_solvent_viscosity->setText(QString("").sprintf("%f",(*hydro).solvent_viscosity));
+   // le_solvent_viscosity->setText(QString::asprintf( "%f",(*hydro ).solvent_viscosity));
    check_solvent_defaults();
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
-   le_tc_solvent_viscosity->setText(QString("").sprintf("%f", ((US_Hydrodyn *)us_hydrodyn)->tc_solvent_visc()));
+   le_tc_solvent_viscosity->setText(QString::asprintf( "%f", ((US_Hydrodyn * )us_hydrodyn)->tc_solvent_visc()));
    
 }
 
 void US_Hydrodyn_Hydro::update_solvent_density(const QString &str)
 {
    (*hydro).solvent_density = str.toDouble();
-   // le_solvent_density->setText(QString("").sprintf("%f",(*hydro).solvent_density));
+   // le_solvent_density->setText(QString::asprintf( "%f",(*hydro ).solvent_density));
    check_solvent_defaults();
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
-   le_tc_solvent_density->setText(QString("").sprintf("%f",((US_Hydrodyn *)us_hydrodyn)->tc_solvent_dens()));
+   le_tc_solvent_density->setText(QString::asprintf( "%f",((US_Hydrodyn * )us_hydrodyn)->tc_solvent_dens()));
 }
 
 void US_Hydrodyn_Hydro::update_volume(const QString &str)
@@ -845,10 +845,10 @@ void US_Hydrodyn_Hydro::set_solvent_defaults()
       hydro->solvent_density = DENS_20W;
       le_solvent_name->setText((*hydro).solvent_name);
       le_solvent_acronym->setText((*hydro).solvent_acronym.left(5));
-      le_temperature->setText(QString("").sprintf("%4.2f",(*hydro).temperature));
-      ((US_Hydrodyn *)us_hydrodyn)->le_temperature->setText(QString("").sprintf("%4.2f",(*hydro).temperature));
-      le_solvent_viscosity->setText(QString("").sprintf("%f",(*hydro).solvent_viscosity));
-      le_solvent_density->setText(QString("").sprintf("%f",(*hydro).solvent_density));
+      le_temperature->setText(QString::asprintf( "%4.2f",(*hydro ).temperature));
+      ((US_Hydrodyn *)us_hydrodyn)->le_temperature->setText(QString::asprintf( "%4.2f",(*hydro ).temperature));
+      le_solvent_viscosity->setText(QString::asprintf( "%f",(*hydro ).solvent_viscosity));
+      le_solvent_density->setText(QString::asprintf( "%f",(*hydro ).solvent_density));
    }
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }

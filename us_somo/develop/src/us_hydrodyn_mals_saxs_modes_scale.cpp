@@ -349,7 +349,7 @@ void US_Hydrodyn_Mals_Saxs::scale_pair_scroll_highlight( int pos )
       ,scale_pair_time_to_names[ time ][ fixed_set ]
    };
 
-#warning call fit
+   // #warning call fit
    lbl_scale_pair_msg->setText( "" ); 
    set_selected( toplot );
 }
@@ -653,7 +653,7 @@ void US_Hydrodyn_Mals_Saxs::scale_pair_created_init() {
          add_plot( scaled_name, q, I, false, false );
       }
 
-#warning should add all the MALS units to MALS_SAXS & copy from here, possibly extend add_plot with a ref name to centralize
+      // #warning should add all the MALS units to MALS_SAXS & copy from here, possibly extend add_plot with a ref name to centralize
 
       scale_pair_created_names.insert( last_created_file );
       scale_pair_created_time_to_name[ time ] = last_created_file;
@@ -715,7 +715,7 @@ void US_Hydrodyn_Mals_Saxs::scale_pair_reset() {
 void US_Hydrodyn_Mals_Saxs::scale_pair_fit() {
    qDebug() << "scale_pair_fit()";
    disable_all();
-#warning qwtw_wheel probably should be in ::disable_all() but for some reason we commented it out there, probably should check all wheel usage and set as appropriate
+   // #warning qwtw_wheel probably should be in ::disable_all() but for some reason we commented it out there, probably should check all wheel usage and set as appropriate
    qwtw_wheel            ->setEnabled( false );
    scale_pair_fit_clear();
 
@@ -1408,7 +1408,7 @@ void US_Hydrodyn_Mals_Saxs::scale_pair_scale_saxs() {
 }
 
 void US_Hydrodyn_Mals_Saxs::scale_pair_create_scaled_curves() {
-#warning save headers
+   // #warning save headers
 
    qDebug() << "scale_pair_create_scaled_curves()";
    // qDebug() << "scale_pair_create_scaled_curves() last_minimize_scale " << last_minimize_scale << " scale_pair_scale: " << le_scale_pair_scale->text().toDouble();

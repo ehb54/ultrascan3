@@ -507,15 +507,14 @@ void US_Plot_Util::rescale( QwtPlot * plot,
        << ( only_scale_y ? "true" : "false" )
        << ( rescale_rounding ? "true" : "false" )
        << ")\n";
-   tso << QString().sprintf(
-                            "plot->axisScaleDiv( QwtPlot::xBottom ).lower,upperBound()     %g\t%g\n"
-                            "plot->axisScaleDiv( QwtPlot::yLeft ).lower,upperBound()       %g\t%g\n"
+   tso << QString::asprintf( "plot->axisScaleDiv( QwtPlot::xBottom ).lower,upperBound()     %g\t%g\n"
+                             "plot->axisScaleDiv( QwtPlot::yLeft ).lower,upperBound()       %g\t%g\n"
 
-                            ,plot->axisScaleDiv( QwtPlot::xBottom ).lowerBound()
-                            ,plot->axisScaleDiv( QwtPlot::xBottom ).upperBound()
-                            ,plot->axisScaleDiv( QwtPlot::yLeft ).lowerBound()
-                            ,plot->axisScaleDiv( QwtPlot::yLeft ).upperBound()
-                            );
+                             ,plot->axisScaleDiv( QwtPlot::xBottom ).lowerBound()
+                             ,plot->axisScaleDiv( QwtPlot::xBottom ).upperBound()
+                             ,plot->axisScaleDiv( QwtPlot::yLeft ).lowerBound()
+                             ,plot->axisScaleDiv( QwtPlot::yLeft ).upperBound()
+                             );
 #endif
    vector < double > x;
    vector < double > y;
@@ -539,15 +538,12 @@ void US_Plot_Util::rescale( QwtPlot * plot,
    double min_x_alt = zoomer->zoomRect().bottomLeft().x();
    double max_x_alt = zoomer->zoomRect().bottomRight().x();
    
-   tso << QString().sprintf(
-                            "min_x, max_x                                                  %g\t%g\n"
-                            "min_x_alt, max_x_alt                                          %g\t%g\n"
-
-                            ,min_x
-                            ,max_x
-                            ,min_x_alt
-                            ,max_x_alt
-                            );
+   tso << QString::asprintf( "min_x, max_x                                                  %g\t%g\n"
+                             "min_x_alt, max_x_alt                                          %g\t%g\n"
+                             ,min_x
+                             ,max_x
+                             ,min_x_alt
+                             ,max_x_alt );
 #endif
                             
    double min_y = numeric_limits<double>::max();
@@ -602,30 +598,26 @@ void US_Plot_Util::rescale( QwtPlot * plot,
       return;
    }
 #if defined( DEBUG_RESCALE )
-   tso << QString().sprintf(
-                            "computed min_y, max_y                                         %g\t%g\n"
-
-                            ,min_y
-                            ,max_y
-                            );
+   tso << QString::asprintf( "computed min_y, max_y                                         %g\t%g\n"
+                             ,min_y
+                             ,max_y );
 
    // check zoom stack
-   tso << QString().sprintf(
-                            "zoomer->zoomRect().bottomLeft().x(),y()                       %g\t%g\n"
-                            "zoomer->zoomRect().bottomRight().x(),y()                      %g\t%g\n"
-                            "zoomer->zoomRect().topLeft().x(),y()                          %g\t%g\n"
-                            "zoomer->zoomRect().topRight().x(),y()                         %g\t%g\n"
+   tso << QString::asprintf( "zoomer->zoomRect( ).bottomLeft().x(),y()                       %g\t%g\n"
+                             "zoomer->zoomRect().bottomRight().x(),y()                      %g\t%g\n"
+                             "zoomer->zoomRect().topLeft().x(),y()                          %g\t%g\n"
+                             "zoomer->zoomRect().topRight().x(),y()                         %g\t%g\n"
 
-                            ,zoomer->zoomRect().bottomLeft().x()
-                            ,zoomer->zoomRect().bottomLeft().y()
-                            ,zoomer->zoomRect().bottomRight().x()
-                            ,zoomer->zoomRect().bottomRight().y()
-                            ,zoomer->zoomRect().topLeft().x()
-                            ,zoomer->zoomRect().topLeft().y()
-                            ,zoomer->zoomRect().topRight().x()
-                            ,zoomer->zoomRect().topRight().y()
+                             ,zoomer->zoomRect().bottomLeft().x()
+                             ,zoomer->zoomRect().bottomLeft().y()
+                             ,zoomer->zoomRect().bottomRight().x()
+                             ,zoomer->zoomRect().bottomRight().y()
+                             ,zoomer->zoomRect().topLeft().x()
+                             ,zoomer->zoomRect().topLeft().y()
+                             ,zoomer->zoomRect().topRight().x()
+                             ,zoomer->zoomRect().topRight().y()
                           
-                            );
+                             );
 #endif
 
    // ok, construct QRectF an zoom

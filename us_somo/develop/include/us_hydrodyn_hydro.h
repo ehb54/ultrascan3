@@ -70,6 +70,15 @@ struct hydro_options
    double zeno_surface_thickness_from_rg_a;
    double zeno_surface_thickness_from_rg_b;
    double zeno_surface_thickness_from_rg_c;
+
+   // ZENO -> GRPY correction as per Brookes, E. et al., 2025. Eur. Biophy. J., https://doi.org/10.1007/s00249-025-01758-8
+   bool zeno_grpy_correction_from_bead_count;
+   double zeno_grpy_correction_from_bead_count_Dt_a;
+   double zeno_grpy_correction_from_bead_count_Dt_b;
+   double zeno_grpy_correction_from_bead_count_Dt_c;
+   double zeno_grpy_correction_from_bead_count_eta_a;
+   double zeno_grpy_correction_from_bead_count_eta_b;
+   double zeno_grpy_correction_from_bead_count_eta_c;
 };
 
 class US_EXTERN US_Hydrodyn_Hydro : public QFrame

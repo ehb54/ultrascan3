@@ -34,6 +34,8 @@
 #include "us_util.h"
 #include "us_plot_util.h"
 
+#include "../include/us_band_broaden.h"
+
 //standard C and C++ defs:
 
 #include <map>
@@ -356,7 +358,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 
       QPushButton   *pb_load_conc;
       QPushButton   *pb_conc_file;
-      QLabel        *lbl_conc_file;
+      QLineEdit     *lbl_conc_file;
 
       QPushButton   *pb_detector;
 
@@ -603,7 +605,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       QCheckBox    * cb_testiq_from_gaussian;
 
       QLabel                *    lbl_testiq_gaussians;
-      QButtonGroup         *    bg_testiq_gaussians;
+      QButtonGroup          *    bg_testiq_gaussians;
       QRadioButton          *    rb_testiq_from_i_t;
       QHBoxLayout           *    hbl_testiq_gaussians;
       vector < QRadioButton * >  rb_testiq_gaussians;
@@ -725,6 +727,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 
    private:
 
+      QString                             gaussian_info( const vector < double > & gaussians, const QString & msg = "" );
+
       void                                normalize( set < QString > & produced );
       int                                 guinier_scroll_pos;
       void                                guinier_scroll_highlight( int pos );
@@ -815,6 +819,211 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 
       void           rgc_calc_rg();
 
+      // gui element and functions for the band broaden window
+
+      QPushButton                      * pb_broaden;
+
+      QLabel                           * lbl_broaden_msg;
+
+      QCheckBox                        * cb_broaden_tau;
+      QLabel                           * lbl_broaden_tau;
+      mQLineEdit                       * le_broaden_tau_start;
+      mQLineEdit                       * le_broaden_tau;
+      mQLineEdit                       * le_broaden_tau_end;
+      mQLineEdit                       * le_broaden_tau_delta;
+
+      QCheckBox                        * cb_broaden_sigma;
+      QLabel                           * lbl_broaden_sigma;
+      mQLineEdit                       * le_broaden_sigma_start;
+      mQLineEdit                       * le_broaden_sigma;
+      mQLineEdit                       * le_broaden_sigma_end;
+      mQLineEdit                       * le_broaden_sigma_delta;
+
+      QCheckBox                        * cb_broaden_lambda_1;
+      QLabel                           * lbl_broaden_lambda_1;
+      mQLineEdit                       * le_broaden_lambda_1;
+
+      QCheckBox                        * cb_broaden_lambda_2;
+      QLabel                           * lbl_broaden_lambda_2;
+      mQLineEdit                       * le_broaden_lambda_2;
+
+      QCheckBox                        * cb_broaden_deltat;
+      QLabel                           * lbl_broaden_deltat;
+      mQLineEdit                       * le_broaden_deltat_start;
+      mQLineEdit                       * le_broaden_deltat;
+      mQLineEdit                       * le_broaden_deltat_end;
+      mQLineEdit                       * le_broaden_deltat_delta;
+
+      QCheckBox                        * cb_broaden_baseline;
+      QLabel                           * lbl_broaden_baseline;
+      mQLineEdit                       * le_broaden_baseline;
+
+      QCheckBox                        * cb_broaden_scale;
+      QLabel                           * lbl_broaden_scale;
+      mQLineEdit                       * le_broaden_scale;
+
+      QLabel                           * lbl_broaden_kernel_end;
+      mQLineEdit                       * le_broaden_kernel_end;
+
+      QLabel                           * lbl_broaden_kernel_deltat;
+      mQLineEdit                       * le_broaden_kernel_deltat;
+      
+      QLabel                           * lbl_broaden_fit_range;
+      mQLineEdit                       * le_broaden_fit_range_start;
+      mQLineEdit                       * le_broaden_fit_range_end;
+
+      QCheckBox                        * cb_broaden_repeak;
+      QComboBox                        * cb_broaden_kernel_type;
+      QComboBox                        * cb_broaden_kernel_mode;
+
+      QPushButton                      * pb_broaden_scale_compute;
+      QPushButton                      * pb_broaden_fit;
+      QPushButton                      * pb_broaden_minimize;
+      QPushButton                      * pb_broaden_reset;
+
+      void                               broaden_enables();
+      void                               broaden_done( bool save );
+      
+      set < QString >                    broaden_org_selected;
+      QStringList                        broaden_names;
+      set < QString >                    broaden_created;
+                                                             
+      bool                               broaden_ref_has_errors;
+      void                               broaden_plot( bool replot = true );
+      void                               broaden_clear_plot();
+      void                               broaden_compute_one( bool details = false );
+      double                             broaden_compute_loss();
+      vector < double >                  broaden_params();
+
+      // these maps are from US_Band_Broaden::kernel_mode enum (int)
+      map < int, set < QWidget * > >                     broaden_parameter_widgets;
+      map < int, vector < mQLineEdit * > >               broaden_parameter_value_le_widgets;
+      map < int, vector < QCheckBox * > >                broaden_parameter_value_cb_widgets;
+      map < int, vector < double > >                     broaden_parameter_value_minimum;
+      map < int, double( * )( double, const double * ) > broaden_lm_fit_functions;
+
+
+      // parameter values for variable count kernel parameters
+      vector < double >                     broaden_parameter_current_values();
+      
+ public:
+      bool                               broaden_compute_one_no_ui(
+                                                                   vector < double > params
+                                                                   ,double kernel_size
+                                                                   ,double kernel_delta_t
+                                                                   ,const vector < double > & I
+                                                                   ,vector < double > & broadened
+                                                                   );
+
+      bool                               broaden_compute_one_no_ui(
+                                                                   double sigma
+                                                                   ,double tau
+                                                                   ,double kernel_size
+                                                                   ,double kernel_delta_t
+                                                                   ,const vector < double > & I
+                                                                   ,vector < double > & broadened
+                                                                   );
+      double                             broaden_compute_loss_no_ui(
+                                                                    const vector < double > & conc_t
+                                                                    ,const vector < double > & conc_I
+                                                                    ,const vector < double > & ref_t
+                                                                    ,const vector < double > & ref_I
+                                                                    ,const vector < double > & ref_errors
+                                                                    );
+ private:
+                                                       
+ private slots:
+
+      void                               broaden();
+      void                               broaden_fit();
+      void                               broaden_lm_fit( bool final_refinement_only = false );
+      void                               broaden_minimize();
+      void                               broaden_reset();
+
+      void                               set_broaden_tau();
+
+      void                               broaden_tau_start_text( const QString & );
+      void                               broaden_tau_start_focus( bool );
+
+      void                               broaden_tau_text( const QString & );
+      void                               broaden_tau_focus( bool );
+
+      void                               broaden_tau_end_text( const QString & );
+      void                               broaden_tau_end_focus( bool );
+
+      void                               broaden_tau_delta_text( const QString & );
+      void                               broaden_tau_delta_focus( bool );
+
+      void                               set_broaden_sigma();
+
+      void                               broaden_sigma_start_text( const QString & );
+      void                               broaden_sigma_start_focus( bool );
+
+      void                               broaden_sigma_text( const QString & );
+      void                               broaden_sigma_focus( bool );
+
+      void                               broaden_sigma_end_text( const QString & );
+      void                               broaden_sigma_end_focus( bool );
+
+      void                               broaden_sigma_delta_text( const QString & );
+      void                               broaden_sigma_delta_focus( bool );
+
+      void                               set_broaden_lambda_1();
+
+      void                               broaden_lambda_1_text( const QString & );
+      void                               broaden_lambda_1_focus( bool );
+
+      void                               set_broaden_lambda_2();
+
+      void                               broaden_lambda_2_text( const QString & );
+      void                               broaden_lambda_2_focus( bool );
+
+      void                               set_broaden_deltat();
+
+      void                               broaden_deltat_start_text( const QString & );
+      void                               broaden_deltat_start_focus( bool );
+
+      void                               broaden_deltat_text( const QString & );
+      void                               broaden_deltat_focus( bool );
+
+      void                               broaden_deltat_end_text( const QString & );
+      void                               broaden_deltat_end_focus( bool );
+
+      void                               broaden_deltat_delta_text( const QString & );
+      void                               broaden_deltat_delta_focus( bool );
+
+      void                               set_broaden_baseline();
+
+      void                               broaden_baseline_text( const QString & );
+      void                               broaden_baseline_focus( bool );
+
+      void                               set_broaden_scale();
+
+      void                               broaden_scale_text( const QString & );
+      void                               broaden_scale_focus( bool );
+      void                               broaden_scale_compute();
+
+      void                               broaden_kernel_end_text( const QString & );
+      void                               broaden_kernel_end_focus( bool );
+
+      void                               broaden_kernel_deltat_text( const QString & );
+      void                               broaden_kernel_deltat_focus( bool );
+
+      void                               broaden_fit_range_start_text( const QString & );
+      void                               broaden_fit_range_start_focus( bool );
+
+      void                               broaden_fit_range_end_text( const QString & );
+      void                               broaden_fit_range_end_focus( bool );
+
+      void                               broaden_repeak_set();
+
+      void                               broaden_kernel_type_index();
+      void                               broaden_kernel_mode_index();
+      
+ private:
+
+      set < QWidget * >                   always_hide_widgets;
+
       // simulate
       QPushButton  * pb_simulate;
 
@@ -854,10 +1063,13 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 
       bool          order_ascending;
 
+ public:
       void          editor_msg( QString color, QString msg );
       void          editor_msg_qc( QColor qcolor, QString msg );
-
       bool          running;
+
+ private:
+
 
       US_Hydrodyn_Saxs *saxs_window;
       bool             *saxs_widget;
@@ -1065,6 +1277,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       vector < QWidget * >                guinier_widgets;
       vector < QWidget * >                testiq_widgets;
       vector < vector < QWidget * > >     pb_row_widgets;
+      vector < QWidget * >                broaden_widgets;
 
       vector < double >                   conc_curve( vector < double > &t,
                                                       unsigned int peak,
@@ -1124,7 +1337,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 
       bool load_file( QString file, bool load_conc = false );
 
-      void plot_files();
+      void plot_files( bool save_zoom_state = false );
+
       bool plot_file( QString file,
                       double &minx,
                       double &maxx,
@@ -1168,7 +1382,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void                         conc_avg( QStringList files );
       void                         bin( QStringList files );
       void                         smooth( QStringList files );
-      void                         repeak( QStringList files );
+      void                         repeak( QStringList files, bool quiet = false, QString conc_file = "" );
+      QString                      last_repeak_name;
       void                         create_i_of_t( QStringList files );
       bool                         create_i_of_q( QStringList files,
                                                   double t_min = -1e99,
@@ -1223,6 +1438,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
          ,MODE_GUINIER
          ,MODE_TESTIQ
          ,MODE_WYATT
+         ,MODE_BROADEN
       };
 
       modes                        current_mode;
@@ -1420,8 +1636,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       double                       scale_applied_q_max;
 
       set < QString >              scale_last_created;
-      void                         set_selected        ( set < QString > &, bool do_replot = true );
-      void                         set_created_selected( set < QString > &, bool do_replot = true );
+      bool                         set_selected        ( const QStringList &, bool do_replot = true, bool save_zoom_state = false );
+      bool                         set_selected        ( const set < QString > &, bool do_replot = true, bool save_zoom_state = false );
+      bool                         set_created_selected( const set < QString > &, bool do_replot = true );
 
       map < QString, vector <double > > scale_q;
       map < QString, vector <double > > scale_I;

@@ -805,7 +805,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::start()
                   if ( cb_filter->isChecked() ) {
                      if ( !no_model )
                      {
-                        tsof << QString("").sprintf("MODEL  %7s\n", model_name_vector[ pos ].toLatin1().data() );
+                        tsof << QString::asprintf( "MODEL  %7s\n", model_name_vector[ pos ].toLatin1( ).data() );
                         tsof << model_remarks[ model_name_vector[ pos ] ];
                      }
                      tsof << ((US_Hydrodyn_Pdb_Tool *)pdb_tool_window)->csv_to_pdb( csv_to, true );
@@ -817,7 +817,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::start()
                } else {
                   if ( !no_model )
                   {
-                     tso << QString("").sprintf("MODEL  %7s\n", model_name_vector[ pos ].toLatin1().data() );
+                     tso << QString::asprintf( "MODEL  %7s\n", model_name_vector[ pos ].toLatin1( ).data() );
                      tso << model_remarks[ model_name_vector[ pos ] ];
                   }
                   tso << ((US_Hydrodyn_Pdb_Tool *)pdb_tool_window)->csv_to_pdb( csv_to, true );
@@ -3458,45 +3458,41 @@ void US_Hydrodyn_Pdb_Tool_Merge::run_one()
                            {
                               int i = types_to_pos[ 4 ][ j ];
                               us_qdebug( 
-                                     QString("")
-                                     .sprintf(     
-                                              "type 4 info:\n"
-                                              "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
-                                              new_csv.data[ i ][ 5  ].toUInt(),
-                                              new_csv.data[ i ][ 4  ].toLatin1().data(),
-                                              new_csv.data[ i ][ 2  ].toLatin1().data(),
-                                              new_csv.data[ i ][ 1  ].toLatin1().data(),
-                                              new_csv.data[ i ][ 3  ].toUInt(),
-                                              new_csv.data[ i ][ 8  ].toFloat(),
-                                              new_csv.data[ i ][ 9  ].toFloat(),
-                                              new_csv.data[ i ][ 10 ].toFloat(),
-                                              new_csv.data[ i ][ 11 ].toFloat(),
-                                              new_csv.data[ i ][ 12 ].toFloat(),
-                                              new_csv.data[ i ][ 13 ].toLatin1().data()
-                                                   )
-                                      );
+                                        QString::asprintf( "type 4 info:\n"
+                                                           "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
+                                                           new_csv.data[ i ][ 5  ].toUInt( ),
+                                                           new_csv.data[ i ][ 4  ].toLatin1().data(),
+                                                           new_csv.data[ i ][ 2  ].toLatin1().data(),
+                                                           new_csv.data[ i ][ 1  ].toLatin1().data(),
+                                                           new_csv.data[ i ][ 3  ].toUInt(),
+                                                           new_csv.data[ i ][ 8  ].toFloat(),
+                                                           new_csv.data[ i ][ 9  ].toFloat(),
+                                                           new_csv.data[ i ][ 10 ].toFloat(),
+                                                           new_csv.data[ i ][ 11 ].toFloat(),
+                                                           new_csv.data[ i ][ 12 ].toFloat(),
+                                                           new_csv.data[ i ][ 13 ].toLatin1().data()
+                                                           )
+                                         );
                            }
                            {
                               int i = it->second[ k ];
                               us_qdebug( 
-                                     QString("")
-                                     .sprintf(     
-                                              "type %d info:\n"
-                                              "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
-                                              it->first,
-                                              new_csv.data[ i ][ 5  ].toUInt(),
-                                              new_csv.data[ i ][ 4  ].toLatin1().data(),
-                                              new_csv.data[ i ][ 2  ].toLatin1().data(),
-                                              new_csv.data[ i ][ 1  ].toLatin1().data(),
-                                              new_csv.data[ i ][ 3  ].toUInt(),
-                                              new_csv.data[ i ][ 8  ].toFloat(),
-                                              new_csv.data[ i ][ 9  ].toFloat(),
-                                              new_csv.data[ i ][ 10 ].toFloat(),
-                                              new_csv.data[ i ][ 11 ].toFloat(),
-                                              new_csv.data[ i ][ 12 ].toFloat(),
-                                              new_csv.data[ i ][ 13 ].toLatin1().data()
-                                                   )
-                                      );
+                                        QString::asprintf( "type %d info:\n"
+                                                           "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
+                                                           it->first,
+                                                           new_csv.data[ i ][ 5  ].toUInt( ),
+                                                           new_csv.data[ i ][ 4  ].toLatin1().data(),
+                                                           new_csv.data[ i ][ 2  ].toLatin1().data(),
+                                                           new_csv.data[ i ][ 1  ].toLatin1().data(),
+                                                           new_csv.data[ i ][ 3  ].toUInt(),
+                                                           new_csv.data[ i ][ 8  ].toFloat(),
+                                                           new_csv.data[ i ][ 9  ].toFloat(),
+                                                           new_csv.data[ i ][ 10 ].toFloat(),
+                                                           new_csv.data[ i ][ 11 ].toFloat(),
+                                                           new_csv.data[ i ][ 12 ].toFloat(),
+                                                           new_csv.data[ i ][ 13 ].toLatin1().data()
+                                                           )
+                                         );
                            }
 #endif
                                
