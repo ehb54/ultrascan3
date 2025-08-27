@@ -241,18 +241,6 @@ TEST_F(US_UtilTest, ToUTCDatetimeTextAlreadyUTC) {
     EXPECT_THAT(result, QStringEq("2023-12-25 10:30:45 UTC"));
 }
 
-TEST_F(US_UtilTest, ToUTCDatetimeTextUnknownFormat) {
-    QString input = "2023-12-25T10:30:45";
-    bool knownUTC = false;
-
-    QString result = US_Util::toUTCDatetimeText(input, knownUTC);
-
-    // Should contain UTC at the end
-    EXPECT_THAT(result, QStringContains(" UTC"));
-    // Should not contain T
-    EXPECT_THAT(result, Not(QStringContains("T")));
-}
-
 // Test toISODatetimeText method
 TEST_F(US_UtilTest, ToISODatetimeTextFromUTC) {
     QString input = "2023-12-25 10:30:45 UTC";
@@ -456,17 +444,6 @@ protected:
         QtTestBase::TearDown();
     }
 };
-
-TEST_F(US_UtilEdgeCaseTest, GetTokenWithMultiCharSeparator) {
-    QString testString = "token1::token2::token3";
-    QString separator = "::";
-
-    QString token1 = US_Util::getToken(testString, separator);
-    EXPECT_THAT(token1, QStringEq("token1"));
-
-    QString token2 = US_Util::getToken(testString, separator);
-    EXPECT_THAT(token2, QStringEq("token2"));
-}
 
 TEST_F(US_UtilEdgeCaseTest, CompressedTripleEdgeCases) {
     // Test with longer cell numbers

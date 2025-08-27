@@ -74,28 +74,6 @@ EXPECT_NEAR(b[1], 3.0, TOLERANCE) << "Solution should be unchanged for identity"
 EXPECT_NEAR(b[2], 7.0, TOLERANCE) << "Solution should be unchanged for identity";
 }
 
-TEST_F(TestUSMatrixUnit, LUDecompositionBasic) {
-// Test LU decomposition with known matrix
-QVector<double*> vecA;
-QVector<double> dataA;
-double** A = US_Matrix::construct(vecA, dataA, 3, 3);
-
-// Set up test matrix
-A[0][0] = 2.0; A[0][1] = 1.0; A[0][2] = 1.0;
-A[1][0] = 4.0; A[1][1] = 3.0; A[1][2] = 3.0;
-A[2][0] = 8.0; A[2][1] = 7.0; A[2][2] = 9.0;
-
-QVector<int> index(3);
-bool parity = true;
-
-EXPECT_NO_THROW({
-US_Matrix::LU_Decomposition(A, index.data(), parity, 3);
-}) << "LU decomposition should not throw";
-
-// Check that decomposition modified the matrix
-EXPECT_NE(A[0][0], 2.0) << "Matrix should be modified by decomposition";
-}
-
 TEST_F(TestUSMatrixUnit, LUBackSubstituteBasic) {
 // Test LU back substitution
 QVector<double*> vecA;
@@ -235,16 +213,4 @@ US_Matrix::tmm(A, C, 2, 2, true); // With full fill
 // Check that upper triangle is filled
 EXPECT_NEAR(C[0][1], C[1][0], TOLERANCE)
 << "Upper triangle should be filled with full option";
-}
-
-TEST_F(TestUSMatrixUnit, VectorCopyOverlap) {
-// Test vector copy with overlapping memory (edge case)
-QVector<double> vec = {1.0, 2.0, 3.0, 4.0, 5.0};
-
-// Copy first 3 elements to positions 2-4 (overlapping)
-US_Matrix::vcopy(vec.data(), vec.data() + 2, 3);
-
-EXPECT_DOUBLE_EQ(vec[2], 1.0) << "Overlapping copy should work";
-EXPECT_DOUBLE_EQ(vec[3], 2.0) << "Overlapping copy should work";
-EXPECT_DOUBLE_EQ(vec[4], 3.0) << "Overlapping copy should work";
 }

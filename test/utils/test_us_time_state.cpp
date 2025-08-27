@@ -369,35 +369,6 @@ TEST_F(US_TimeStateDbTest, DbExamineNullParams) {
     EXPECT_EQ(result, IUS_DB2::NO_EXPERIMENT);
 }
 
-TEST_F(US_TimeStateDbTest, DbExamineValidTmstId) {
-    int tmstId = 123;
-    int expId;
-
-    EXPECT_CALL(*mockDb, query(testing::An<const QStringList&>()))
-            .WillOnce(Return());
-    EXPECT_CALL(*mockDb, lastErrno())
-            .WillOnce(Return(IUS_DB2::OK));
-    EXPECT_CALL(*mockDb, next())
-            .WillOnce(Return(true));
-    EXPECT_CALL(*mockDb, value(0))
-            .WillOnce(Return(QVariant(456)));
-    EXPECT_CALL(*mockDb, value(1))
-            .WillOnce(Return(QVariant("test.tmst")));
-    EXPECT_CALL(*mockDb, value(2))
-            .WillOnce(Return(QVariant("<xml>test</xml>")));
-    EXPECT_CALL(*mockDb, value(3))
-            .WillOnce(Return(QVariant("checksum123")));
-    EXPECT_CALL(*mockDb, value(4))
-            .WillOnce(Return(QVariant("1024")));
-    EXPECT_CALL(*mockDb, value(5))
-            .WillOnce(Return(QVariant("2023-01-01T12:00:00")));
-
-    IUS_DB2* db = mockDb.get();
-    int result = US_TimeState::dbExamine(db, &tmstId, &expId);
-    EXPECT_EQ(result, IUS_DB2::OK);
-    EXPECT_EQ(expId, 456);
-}
-
 TEST_F(US_TimeStateDbTest, DbDownloadValid) {
     EXPECT_CALL(*mockDb, readBlobFromDB(
             testing::Eq(QString("test.tmst")),

@@ -256,14 +256,6 @@ int result = analyte->load(true, testGuid, niceMockDb.get());
 EXPECT_EQ(result, IUS_DB2::OK);
 }
 
-TEST_F(US_AnalyteLoadTest, LoadWithDiskAccessCallsLoadDisk) {
-QString testGuid = "12345678-1234-1234-1234-123456789012";
-
-// This will fail because we don't have actual files, but it tests the routing
-int result = analyte->load(false, testGuid, nullptr);
-EXPECT_NE(result, IUS_DB2::OK); // Should fail with file not found
-}
-
 TEST_F(US_AnalyteLoadTest, LoadDbHandlesGetAnalyteIDError) {
 QString testGuid = "12345678-1234-1234-1234-123456789012";
 

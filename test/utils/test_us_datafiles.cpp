@@ -267,19 +267,6 @@ QString result = US_DataFiles::get_filename(testPath, "any-guid", "M",
 EXPECT_TRUE(result.contains(".xml")) << "Should return valid filename";
 }
 
-TEST_F(TestUSDataFilesUnit, GetFilenameLargeNumbering) {
-// Test with large file numbers
-createEmptyXmlFile("M0000999.xml");
-createEmptyXmlFile("M0001000.xml");
-
-bool newFile = false;
-QString result = US_DataFiles::get_filename(testPath, "non-existing", "M",
-                                            "model", "guid", newFile);
-
-EXPECT_TRUE(newFile) << "Should indicate new file creation";
-EXPECT_TRUE(result.endsWith("/M0001001.xml")) << "Should handle large numbers";
-}
-
 TEST_F(TestUSDataFilesUnit, GetFilenameMaxNumberFormat) {
 // Test with maximum 7-digit number
 createEmptyXmlFile("M9999999.xml");

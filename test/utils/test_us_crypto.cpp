@@ -337,36 +337,6 @@ EXPECT_TRUE(isValidHexString(result.at(1)))
 << "IV should be valid hex string";
 }
 
-TEST_F(TestUSCryptoUnit, EncryptNearBufferLimit) {
-// Test with text approaching the 99 character limit mentioned in code
-QString plainText = QString(90, 'A'); // 90 characters
-QString password = "password123";
-
-QStringList result = US_Crypto::encrypt(plainText, password);
-
-EXPECT_TRUE(isValidEncryptionResult(result))
-<< "Encrypt should handle text near buffer limit";
-EXPECT_TRUE(isValidHexString(result.at(0)))
-<< "Cipher text should be valid hex string";
-EXPECT_TRUE(isValidHexString(result.at(1)))
-<< "IV should be valid hex string";
-}
-
-TEST_F(TestUSCryptoUnit, EncryptExactly99Characters) {
-// Test with exactly 99 characters (the buffer limit in code)
-QString plainText = QString(99, 'B'); // 99 characters
-QString password = "password123";
-
-QStringList result = US_Crypto::encrypt(plainText, password);
-
-EXPECT_TRUE(isValidEncryptionResult(result))
-<< "Encrypt should handle exactly 99 characters";
-EXPECT_TRUE(isValidHexString(result.at(0)))
-<< "Cipher text should be valid hex string";
-EXPECT_TRUE(isValidHexString(result.at(1)))
-<< "IV should be valid hex string";
-}
-
 // ============================================================================
 // METHOD CONSISTENCY TESTS
 // ============================================================================

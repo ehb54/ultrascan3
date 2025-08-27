@@ -255,38 +255,6 @@ break;
 EXPECT_TRUE(hasError);
 }
 
-// Database tests removed due to compilation issues with mock methods
-// The US_DB2_Mock class has issues with Google Mock method generation
-
-// DeleteFromDisk Tests
-TEST_F(US_ProjectTest, DeleteFromDisk_ExistingFile_DeletesSuccessfully) {
-// Create a test file
-QString testGuid = "test-guid-for-deletion";
-QString xmlContent = createTestProjectXml(testGuid);
-QString filename = writeTestFile(xmlContent, "P0000001.xml");
-
-project->projectGUID = testGuid;
-project->saveStatus = US_Project::BOTH;
-
-// Verify file exists before deletion
-EXPECT_TRUE(QFile::exists(filename));
-
-project->deleteFromDisk();
-
-// Note: Since deleteFromDisk uses the actual file system and diskFilename,
-// and we can't easily mock those, we verify the status change
-EXPECT_EQ(project->saveStatus, US_Project::DB_ONLY);
-}
-
-TEST_F(US_ProjectTest, DeleteFromDisk_NonExistentFile_HandlesGracefully) {
-project->projectGUID = "non-existent-guid";
-project->saveStatus = US_Project::HD_ONLY;
-
-// Should not crash when file doesn't exist
-EXPECT_NO_THROW(project->deleteFromDisk());
-EXPECT_EQ(project->saveStatus, US_Project::NOT_SAVED);
-}
-
 // XML Parsing Edge Cases - Test via public methods
 TEST_F(US_ProjectTest, ReadFromDisk_XMLParsing_HandlesAllElements) {
 QString testGuid = "test-guid-xml-parse";

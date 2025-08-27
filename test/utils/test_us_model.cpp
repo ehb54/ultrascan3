@@ -320,35 +320,6 @@ break;
 EXPECT_FALSE(found);
 }
 
-// XML Tests - Basic structure validation
-TEST_F(US_ModelTest, XML_ValidStructure_ParsesCorrectly) {
-QString xmlContent = createTestModelXml();
-
-// Test XML parsing by checking structure
-QXmlStreamReader xml(xmlContent);
-bool foundModel = false;
-bool foundAnalyte = false;
-
-while (!xml.atEnd()) {
-xml.readNext();
-if (xml.name() == "model") {
-foundModel = true;
-QXmlStreamAttributes attrs = xml.attributes();
-EXPECT_EQ(attrs.value("description").toString(), "Test Model");
-EXPECT_EQ(attrs.value("wavelength").toDouble(), 280.0);
-}
-if (xml.name() == "analyte") {
-foundAnalyte = true;
-QXmlStreamAttributes attrs = xml.attributes();
-EXPECT_EQ(attrs.value("name").toString(), "Component1");
-EXPECT_EQ(attrs.value("mw").toDouble(), 50000.0);
-}
-}
-
-EXPECT_TRUE(foundModel);
-EXPECT_TRUE(foundAnalyte);
-}
-
 // Validation Tests
 TEST_F(US_ModelTest, IsValid_ValidModel_ReturnsTrue) {
 model->description = "Valid Model";

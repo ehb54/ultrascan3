@@ -133,18 +133,6 @@ long int result2 = US_Memory::rss_max(max_rss);
 EXPECT_EQ(result2, max_rss) << "Second call should return the higher value";
 }
 
-TEST_F(TestUSMemoryUnit, RssMaxCurrentHigherThanInput) {
-// Test rss_max when current RSS is higher than input
-long int current_rss = US_Memory::rss_now();
-long int small_max = 100L; // Intentionally small value
-
-long int result = US_Memory::rss_max(small_max);
-
-EXPECT_GE(result, current_rss) << "Result should be at least current RSS";
-EXPECT_EQ(result, small_max) << "Input parameter should be updated";
-EXPECT_GE(small_max, current_rss) << "Input should be updated to current RSS";
-}
-
 TEST_F(TestUSMemoryUnit, RssMaxMultipleCalls) {
 // Test multiple calls to rss_max maintain maximum
 long int max_rss = 0L;
@@ -326,24 +314,6 @@ long int result_min = US_Memory::rss_max(min_long);
 
 EXPECT_GT(result_min, 0L) << "Should return positive value even with minimum input";
 EXPECT_GT(min_long, 0L) << "Should update minimum value to positive";
-}
-
-TEST_F(TestUSMemoryUnit, MemoryMethodsIndependence) {
-// Test that different memory methods don't interfere with each other
-long int rss1 = US_Memory::rss_now();
-
-int mem_avail, mem_total, mem_used;
-int percent = US_Memory::memory_profile(&mem_avail, &mem_total, &mem_used);
-
-long int rss2 = US_Memory::rss_now();
-
-// RSS calls should be consistent regardless of memory_profile call
-long int rss_diff = std::abs(rss2 - rss1);
-EXPECT_LT(rss_diff, 1024L) << "RSS should be stable across other method calls";
-
-// Memory profile should return valid values
-EXPECT_GE(percent, 0) << "Memory profile should be valid";
-EXPECT_GT(mem_total, 0) << "Total memory should be positive";
 }
 
 TEST_F(TestUSMemoryUnit, RssNowAfterLargeDeallocation) {

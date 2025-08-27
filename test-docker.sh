@@ -6,189 +6,533 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
+CYAN='\033[0;36m'
+MAGENTA='\033[0;35m'
 NC='\033[0m' # No Color
 
 # Function to print colored output
-print_status() {
-    echo -e "${BLUE}[INFO]${NC} $1"
-}
+print_status() { echo -e "${BLUE}[INFO]${NC} $1"; }
+print_success() { echo -e "${GREEN}[SUCCESS]${NC} $1"; }
+print_warning() { echo -e "${YELLOW}[WARNING]${NC} $1"; }
+print_error() { echo -e "${RED}[ERROR]${NC} $1"; }
+print_debug() { echo -e "${CYAN}[DEBUG]${NC} $1"; }
+print_highlight() { echo -e "${MAGENTA}[HIGHLIGHT]${NC} $1"; }
 
-print_success() {
-    echo -e "${GREEN}[SUCCESS]${NC} $1"
-}
+# Default values
+TEST_FILTER=""
+SPECIFIC_TEST=""
+PARALLEL_JOBS=$(nproc 2>/dev/null || echo 4)
+VERBOSE=false
+DEBUG_MODE=false
+INTERACTIVE=false
+GDB=false
+VALGRIND=false
+REBUILD=false
+LIST_TESTS=false
+FAILED_ONLY=false
+TIMEOUT=""
+REPEAT=1
+SEARCH_TESTS=""
+SHOW_STATS=false
+QUICK_MODE=false
+SAVE_LOGS=false
+STOP_ON_FIRST_FAILURE=false
 
-print_warning() {
-    echo -e "${YELLOW}[WARNING]${NC} $1"
-}
+show_help() {
+    cat << 'EOF'
+Usage: ./test-docker.sh [options]
 
-print_error() {
-    echo -e "${RED}[ERROR]${NC} $1"
+=== BASIC USAGE ===
+  -h, --help               Show this comprehensive help
+  -v, --verbose            Verbose output (shows individual tests)
+  -q, --quick             Quick mode: minimal output, stop on first failure
+
+=== TEST SELECTION ===
+  -f, --filter PATTERN    Run tests matching CTest label pattern
+  -t, --test TEST_NAME    Run specific GTest (supports wildcards)
+  -s, --search PATTERN    Search for tests containing pattern
+  -l, --list              List all available tests and exit
+  --failed-only           Rerun only previously failed tests
+  --repeat N              Repeat tests N times (useful for flaky tests)
+
+=== DEBUGGING OPTIONS ===
+  -d, --debug             Enable debug mode with extra output
+  -i, --interactive       Start interactive shell in container
+  -g, --gdb               Run specific test under GDB debugger
+  --valgrind              Run specific test under Valgrind
+  --timeout SECONDS       Set test timeout (default: CTest default)
+  --stop-on-fail          Stop on first test failure
+  --save-logs             Save test output to timestamped log files
+
+=== BUILD OPTIONS ===
+  -j, --jobs N            Parallel build jobs (default: auto-detect)
+  --rebuild               Force complete rebuild
+  --stats                 Show build and test statistics
+
+=== EXAMPLES FOR DEBUGGING WORKFLOW ===
+
+# 1. DISCOVER TESTS
+./test-docker.sh -l | grep -i "xml"              # Find XML-related tests
+./test-docker.sh -s "Profile"                    # Search for tests with "Profile"
+./test-docker.sh --stats                         # Show test suite statistics
+
+# 2. RUN SUBSETS
+./test-docker.sh -f utils -v                     # Run utility tests with details
+./test-docker.sh -t "*AnaProfile*" -v            # Run all AnaProfile tests
+./test-docker.sh -t "US_AnaProfileXmlTest.*"     # Run entire test suite
+
+# 3. DEBUG SPECIFIC ISSUES
+./test-docker.sh -t "US_AnaProfileXmlTest.ToXmlSkipsInterferenceBChannels" -v
+./test-docker.sh -g -t "US_AnaProfileXmlTest.ToXmlSkipsInterferenceBChannels"
+./test-docker.sh --valgrind -t "SuspiciousTest.*"
+
+# 4. HANDLE FLAKY TESTS
+./test-docker.sh -t "FlakyTest" --repeat 10      # Run 10 times to catch intermittent issues
+./test-docker.sh --failed-only -v                # Rerun only tests that failed last time
+./test-docker.sh -t "TestSuite.*" --stop-on-fail # Stop at first failure for investigation
+
+# 5. LARGE SCALE DEBUGGING
+./test-docker.sh -q --save-logs                  # Run all tests, save logs, minimal output
+./test-docker.sh -f utils --timeout 30           # Run with shorter timeout
+./test-docker.sh -i                              # Interactive debugging session
+
+# 6. PERFORMANCE AND STATISTICS
+./test-docker.sh --stats                         # Show performance metrics
+./test-docker.sh -j 8 -q                        # Use 8 cores, quick mode
+
+=== DEBUGGING LARGE TEST SUITES ===
+
+When you have thousands of tests, use this workflow:
+
+1. GET OVERVIEW:
+   ./test-docker.sh --stats                      # See test counts and categories
+
+2. NARROW DOWN:
+   ./test-docker.sh -s "keyword" -l              # Find tests related to your issue
+   ./test-docker.sh -f category                  # Run tests by category
+
+3. INVESTIGATE FAILURES:
+   ./test-docker.sh --failed-only -v             # Focus on what's actually broken
+   ./test-docker.sh -t "SpecificTest" -g         # Deep dive with debugger
+
+4. BATCH DEBUGGING:
+   ./test-docker.sh -q --save-logs               # Run all, save detailed logs
+   ./test-docker.sh --repeat 5 -t "FlakyTest"    # Test for intermittent issues
+
+=== ADVANCED CONTAINER OPTIONS ===
+
+Interactive mode gives you full control:
+  ./test-docker.sh -i
+
+Inside container, you can:
+  # Build and explore
+  cd /ultrascan3/build-docker && make -j$(nproc)
+
+  # List and filter tests
+  ctest -N                                       # All CTest tests
+  ctest -N | grep -i xml                         # Filter CTest tests
+  ./test/utils/test_us_utils --gtest_list_tests  # All GTest cases
+  ./test/utils/test_us_utils --gtest_list_tests | grep Profile  # Filter GTest
+
+  # Run tests with various options
+  ctest -R "pattern" -V                          # CTest with pattern
+  ./test/utils/test_us_utils --gtest_filter="Test.*" --gtest_print_time=1
+
+  # Debug crashed tests
+  gdb --args ./test/utils/test_us_utils --gtest_filter="CrashedTest"
+  valgrind --tool=memcheck ./test/utils/test_us_utils --gtest_filter="MemoryTest"
+
+  # Analyze test output
+  ./test/utils/test_us_utils --gtest_filter="*" 2>&1 | tee test_output.log
+
+EOF
 }
 
 # Parse command line arguments
-TEST_FILTER=""
-PARALLEL_JOBS=$(nproc 2>/dev/null || echo 4) # If nproc command does not exist default to 4 parallel
-VERBOSE=false
-
 while [[ $# -gt 0 ]]; do
     case $1 in
-        -f|--filter)
-            TEST_FILTER="$2"
-            shift 2
-            ;;
-        -j|--jobs)
-            PARALLEL_JOBS="$2"
-            shift 2
-            ;;
-        -v|--verbose)
-            VERBOSE=true
-            shift
-            ;;
-        -h|--help)
-            echo "Usage: $0 [options]"
-            echo "Options:"
-            echo "  -f, --filter PATTERN    Run only tests matching pattern"
-            echo "  -v, --verbose          Verbose output (shows individual tests)"
-            echo "  -h, --help             Show this help"
-            echo ""
-            echo "Examples:"
-            echo "  $0                     # Run all tests"
-            echo "  $0 -v                  # Show individual test output"
-            echo "  $0 -f utils            # Run only utility tests"
-            exit 0
-            ;;
-        *)
-            print_error "Unknown option: $1"
-            exit 1
-            ;;
+        -f|--filter) TEST_FILTER="$2"; shift 2 ;;
+        -t|--test) SPECIFIC_TEST="$2"; shift 2 ;;
+        -s|--search) SEARCH_TESTS="$2"; shift 2 ;;
+        -j|--jobs) PARALLEL_JOBS="$2"; shift 2 ;;
+        --timeout) TIMEOUT="$2"; shift 2 ;;
+        --repeat) REPEAT="$2"; shift 2 ;;
+        -v|--verbose) VERBOSE=true; shift ;;
+        -d|--debug) DEBUG_MODE=true; shift ;;
+        -i|--interactive) INTERACTIVE=true; shift ;;
+        -g|--gdb) GDB=true; shift ;;
+        --valgrind) VALGRIND=true; shift ;;
+        -l|--list) LIST_TESTS=true; shift ;;
+        --failed-only) FAILED_ONLY=true; shift ;;
+        --rebuild) REBUILD=true; shift ;;
+        --stats) SHOW_STATS=true; shift ;;
+        -q|--quick) QUICK_MODE=true; shift ;;
+        --save-logs) SAVE_LOGS=true; shift ;;
+        --stop-on-fail) STOP_ON_FIRST_FAILURE=true; shift ;;
+        -h|--help) show_help; exit 0 ;;
+        *) print_error "Unknown option: $1"; echo "Use -h for help"; exit 1 ;;
     esac
 done
 
-# Check if Docker is available
-print_status "Checking for Docker..."
+# Validation
+if [ "$GDB" = true ] || [ "$VALGRIND" = true ]; then
+    if [ -z "$SPECIFIC_TEST" ]; then
+        print_error "GDB and Valgrind require a specific test (-t option)"
+        exit 1
+    fi
+fi
+
+if [ "$REPEAT" -gt 1 ] && [ -z "$SPECIFIC_TEST" ]; then
+    print_error "Repeat option requires a specific test (-t option)"
+    exit 1
+fi
+
+# Docker availability check
+print_status "Checking Docker environment..."
 if ! command -v docker &> /dev/null; then
     print_error "Docker not found. Please install Docker first."
     exit 1
 fi
 
-print_success "Docker found: $(docker --version)"
-
-# Check if Docker daemon is running
-print_status "Checking Docker daemon..."
 if ! docker info &> /dev/null; then
     print_error "Docker daemon is not running."
     exit 1
 fi
 
-print_success "Docker daemon is running"
-
-# Build our custom image (only rebuilds if Dockerfile changed)
+# Build image
 print_status "Building test image..."
-docker build -f admin/test/docker/Dockerfile -t us3comp-test:latest .
+# Force legacy Docker build to avoid buildx issues
+export DOCKER_BUILDKIT=0
 
-print_success "Image built successfully"
-
-# Check if we're in the right directory
-if [ ! -f "CMakeLists.txt" ]; then
-    print_warning "CMakeLists.txt not found in current directory"
-    print_warning "Make sure you're running this from the ultrascan3 root directory"
+if [ "$QUICK_MODE" = true ]; then
+    print_status "Quick mode: Building image quietly..."
+    docker build -f admin/test/docker/Dockerfile -t us3comp-test:latest . --quiet
+elif [ "$DEBUG_MODE" = true ]; then
+    print_status "Debug mode: Building with full output..."
+    docker build -f admin/test/docker/Dockerfile -t us3comp-test:latest .
+else
+    print_status "Building image (use -d for full build output)..."
+    docker build -f admin/test/docker/Dockerfile -t us3comp-test:latest . --quiet
 fi
 
-# Create persistent build directory
-print_status "Setting up persistent build directory..."
+print_success "Docker image built successfully"
+
+# Check directory
+if [ ! -f "CMakeLists.txt" ]; then
+    print_warning "CMakeLists.txt not found. Ensure you're in the ultrascan3 root directory."
+fi
+
+# Setup build directory
+print_status "Setting up build environment..."
 mkdir -p build-docker
 
-# Run tests in container
-print_status "Starting test container..."
-if [ -n "$TEST_FILTER" ]; then
-    print_status "Running tests with filter: $TEST_FILTER"
+if [ "$REBUILD" = true ]; then
+    print_status "Forcing complete rebuild..."
+    rm -rf build-docker/*
 fi
-if [ "$VERBOSE" = true ]; then
-    print_status "Verbose output enabled - showing individual test details"
+
+# Interactive mode
+if [ "$INTERACTIVE" = true ]; then
+    print_highlight "Starting interactive debugging session..."
+    echo ""
+    echo "=== INTERACTIVE DEBUGGING COMMANDS ==="
+    echo ""
+    echo "BUILD:"
+    echo "  cd /ultrascan3/build-docker && make -j$PARALLEL_JOBS"
+    echo ""
+    echo "DISCOVER TESTS:"
+    echo "  ctest -N                                    # List CTest tests"
+    echo "  ctest -N | grep -i 'pattern'                # Filter CTest tests"
+    echo "  ./test/utils/test_us_utils --gtest_list_tests              # List GTest cases"
+    echo "  ./test/utils/test_us_utils --gtest_list_tests | grep Pattern # Filter GTest"
+    echo ""
+    echo "RUN TESTS:"
+    echo "  ctest -R 'pattern' -V                       # Run CTest with pattern, verbose"
+    echo "  ctest -L utils --output-on-failure          # Run by label"
+    echo "  ./test/utils/test_us_utils --gtest_filter='Test.*' -v    # Run GTest with filter"
+    echo "  ./test/utils/test_us_utils --gtest_filter='Test.*' --gtest_print_time=1"
+    echo ""
+    echo "DEBUG:"
+    echo "  gdb --args ./test/utils/test_us_utils --gtest_filter='CrashedTest'"
+    echo "  valgrind --tool=memcheck ./test/utils/test_us_utils --gtest_filter='MemoryTest'"
+    echo ""
+    echo "ANALYZE:"
+    echo "  ./test/utils/test_us_utils 2>&1 | tee full_test_log.txt"
+    echo "  grep -A5 -B5 'FAILED' full_test_log.txt    # Find failure context"
+    echo ""
+
+    docker run --rm -it \
+        -v "$(pwd)":/ultrascan3 \
+        -v "$(pwd)/build-docker":/ultrascan3/build-docker \
+        -w /ultrascan3 \
+        us3comp-test:latest bash
+    exit 0
 fi
-echo ""
 
-docker run --rm \
-    -v "$(pwd)":/ultrascan3 \
-    -v "$(pwd)/build-docker":/ultrascan3/build-docker \
-    -w /ultrascan3 \
-    us3comp-test:latest \
-    bash -c "
-        set -e
+# Prepare status messages
+if [ "$QUICK_MODE" = false ]; then
+    [ -n "$TEST_FILTER" ] && print_status "CTest filter: $TEST_FILTER"
+    [ -n "$SPECIFIC_TEST" ] && print_status "GTest filter: $SPECIFIC_TEST"
+    [ -n "$SEARCH_TESTS" ] && print_status "Searching tests for: $SEARCH_TESTS"
+    [ "$VERBOSE" = true ] && print_status "Verbose output enabled"
+    [ "$GDB" = true ] && print_status "GDB debugging enabled"
+    [ "$VALGRIND" = true ] && print_status "Valgrind memory checking enabled"
+    [ "$FAILED_ONLY" = true ] && print_status "Running only previously failed tests"
+    [ "$REPEAT" -gt 1 ] && print_status "Repeating tests $REPEAT times"
+    [ "$SAVE_LOGS" = true ] && print_status "Saving logs to timestamped files"
+fi
 
+# Create log directory if needed
+if [ "$SAVE_LOGS" = true ]; then
+    LOG_DIR="test-logs-$(date +%Y%m%d-%H%M%S)"
+    mkdir -p "$LOG_DIR"
+    print_status "Logs will be saved to: $LOG_DIR"
+fi
+
+# Build container script
+CONTAINER_SCRIPT="
+    set -e
+    export QT_QPA_PLATFORM=offscreen
+
+    if [ \"$DEBUG_MODE\" = true ] && [ \"$QUICK_MODE\" = false ]; then
         echo '=== System Information ==='
-        gcc --version
-        g++ --version
-        cmake --version
-        cat /etc/os-release
-        echo '=========================='
+        gcc --version | head -1
+        cmake --version | head -1
+        cat /etc/os-release | grep PRETTY_NAME
+        echo 'Available CPU cores: \$(nproc)'
+        echo 'Available memory: \$(free -h | grep Mem | awk \"{print \\\$2}\")'
+        echo '==========================='
+    fi
 
-        # Go to build directory (now persistent)
-        cd /ultrascan3/build-docker
-        pwd  # Verify we're in build directory
+    cd /ultrascan3/build-docker
 
-        echo 'Configuring with CMake (if needed)...'
-        if [ ! -f CMakeCache.txt ]; then
-            echo 'Running initial CMake configuration...'
+    if [ \"$QUICK_MODE\" = false ]; then
+        echo 'Configuring with CMake...'
+    else
+        echo 'Configuring project...'
+    fi
+
+    if [ ! -f CMakeCache.txt ] || [ \"$REBUILD\" = true ]; then
+        if [ \"$QUICK_MODE\" = false ]; then
             cmake -DCMAKE_BUILD_TYPE=Debug ..
         else
-            echo 'Using existing CMake configuration (incremental build)'
+            echo 'Running CMake configuration...'
+            cmake -DCMAKE_BUILD_TYPE=Debug .. > cmake_config.log 2>&1
+            echo 'CMake configuration complete'
         fi
+    else
+        echo 'Using existing CMake configuration (incremental build)'
+    fi
 
-        echo 'Building project...'
+    if [ \"$QUICK_MODE\" = false ]; then
+        echo 'Building project with $PARALLEL_JOBS parallel jobs...'
         make -j$PARALLEL_JOBS
+    else
+        echo 'Building project (this may take a few minutes)...'
+        make -j$PARALLEL_JOBS > build.log 2>&1
+        echo 'Build complete'
+    fi
 
-        echo 'Listing available tests...'
-        echo '=================================='
-        ctest -N
-        echo '=================================='
-
-        echo 'Running tests with CTest...'
-        echo '=================================='
-
-       # Build CTest command based on options
-       CTEST_CMD=\"ctest --output-on-failure --parallel\"
-
-        if [ \"$VERBOSE\" = true ]; then
-            CTEST_CMD=\"\$CTEST_CMD --verbose\"
+    # Show statistics
+    if [ \"$SHOW_STATS\" = true ]; then
+        echo ''
+        echo '=== TEST SUITE STATISTICS ==='
+        echo \"Total CTest cases: \$(ctest -N 2>/dev/null | grep -c 'Test #' || echo 'Unknown')\"
+        if [ -f ./test/utils/test_us_utils ]; then
+            GTEST_COUNT=\$(./test/utils/test_us_utils --gtest_list_tests 2>/dev/null | grep -c '\\.' || echo 'Unknown')
+            echo \"Total GTest cases: \$GTEST_COUNT\"
         fi
+        echo \"Build directory size: \$(du -sh . | cut -f1)\"
+        echo \"Parallel jobs: $PARALLEL_JOBS\"
+        echo '============================='
+        echo ''
+    fi
 
-        if [ -n \"$TEST_FILTER\" ]; then
-            CTEST_CMD=\"\$CTEST_CMD -L \$TEST_FILTER\"
+    # List/search tests
+    if [ \"$LIST_TESTS\" = true ]; then
+        echo ''
+        echo '=== AVAILABLE TESTS ==='
+        echo ''
+        echo 'CTest Tests:'
+        ctest -N | grep 'Test #' | head -20
+        if [ \$(ctest -N 2>/dev/null | grep -c 'Test #') -gt 20 ]; then
+            echo \"... and \$((\$(ctest -N 2>/dev/null | grep -c 'Test #') - 20)) more CTest cases\"
         fi
+        echo ''
+        echo 'GTest Cases (first 20):'
+        if [ -f ./test/utils/test_us_utils ]; then
+            ./test/utils/test_us_utils --gtest_list_tests 2>/dev/null | head -20
+            TOTAL_GTESTS=\$(./test/utils/test_us_utils --gtest_list_tests 2>/dev/null | wc -l)
+            if [ \$TOTAL_GTESTS -gt 20 ]; then
+                echo \"... and \$((\$TOTAL_GTESTS - 20)) more GTest cases\"
+            fi
+        fi
+        echo '======================='
+        exit 0
+    fi
 
-        echo 'Running tests with CTest...'
-        echo '=================================='
-        \$CTEST_CMD
+    if [ -n \"$SEARCH_TESTS\" ]; then
+        echo ''
+        echo '=== SEARCH RESULTS ==='
+        echo \"Searching for tests containing: $SEARCH_TESTS\"
+        echo ''
+        echo 'Matching CTest cases:'
+        ctest -N | grep -i '$SEARCH_TESTS' || echo 'No matching CTest cases'
+        echo ''
+        echo 'Matching GTest cases:'
+        if [ -f ./test/utils/test_us_utils ]; then
+            ./test/utils/test_us_utils --gtest_list_tests 2>/dev/null | grep -i '$SEARCH_TESTS' || echo 'No matching GTest cases'
+        fi
+        echo '===================='
+        exit 0
+    fi
 
-        # Check result
-        if [ \$? -eq 0 ]; then
-            echo ''
-            echo '=== Test Summary ==='
-            echo 'All tests passed successfully!'
-        else
-            echo ''
-            echo '=== Failed Tests Details ==='
-            echo 'Some tests failed. Rerunning failed tests with verbose output:'
-            ctest --rerun-failed -V || true
+    # GDB debugging
+    if [ \"$GDB\" = true ]; then
+        if ! command -v gdb &> /dev/null; then
+            echo 'ERROR: GDB not available in container'
+            echo 'To add GDB, modify the Dockerfile to include: gdb'
             exit 1
         fi
+        echo 'Starting GDB debugging session...'
+        echo 'Useful GDB commands:'
+        echo '  run                    # Start the test'
+        echo '  bt                     # Show backtrace when crashed'
+        echo '  info locals            # Show local variables'
+        echo '  break function_name    # Set breakpoint'
+        echo '  continue               # Continue execution'
+        echo '  print variable_name    # Print variable value'
+        echo '  quit                   # Exit GDB'
+        echo ''
+        gdb --args ./test/utils/test_us_utils --gtest_filter=\"$SPECIFIC_TEST\"
+        exit 0
+    fi
 
-        echo '=================================='
-        echo 'CTest execution completed!'
-    "
+    # Valgrind debugging
+    if [ \"$VALGRIND\" = true ]; then
+        if ! command -v valgrind &> /dev/null; then
+            echo 'ERROR: Valgrind not available in container'
+            echo 'To add Valgrind, modify the Dockerfile:'
+            echo 'Add: RUN apt-get update && apt-get install -y valgrind'
+            exit 1
+        fi
+        echo 'Running memory analysis with Valgrind...'
+        valgrind --tool=memcheck --leak-check=full --show-leak-kinds=all --track-origins=yes ./test/utils/test_us_utils --gtest_filter=\"$SPECIFIC_TEST\"
+        exit 0
+    fi
 
-# Check exit code
-if [ $? -eq 0 ]; then
-    echo ""
-    print_success "All tests passed!"
-    echo ""
-    print_status "Available commands:"
-    echo "  ./test-docker.sh                    # Run all tests (summary)"
-    echo "  ./test-docker.sh -v                # Show individual test output"
-    echo "  ./test-docker.sh -f utils          # Run only utility tests"
+    # Run specific GTest
+    if [ -n \"$SPECIFIC_TEST\" ]; then
+        echo \"Running specific test: $SPECIFIC_TEST\"
+        if [ \"$REPEAT\" -gt 1 ]; then
+            echo \"Repeating $REPEAT times to check for flaky behavior...\"
+            for i in \$(seq 1 $REPEAT); do
+                echo \"=== Run \$i/$REPEAT ===\"
+                ./test/utils/test_us_utils --gtest_filter=\"$SPECIFIC_TEST\" ${VERBOSE:+--gtest_print_time=1} || {
+                    echo \"Test failed on run \$i\"
+                    exit 1
+                }
+            done
+            echo \"All $REPEAT runs passed successfully!\"
+        else
+            ./test/utils/test_us_utils --gtest_filter=\"$SPECIFIC_TEST\" ${VERBOSE:+--gtest_print_time=1}
+        fi
+        exit \$?
+    fi
+
+    # Run tests with CTest
+    CTEST_ARGS=\"--output-on-failure\"
+
+    [ \"$PARALLEL_JOBS\" -gt 1 ] && CTEST_ARGS=\"\$CTEST_ARGS --parallel $PARALLEL_JOBS\"
+    [ \"$VERBOSE\" = true ] && CTEST_ARGS=\"\$CTEST_ARGS --verbose\"
+    [ \"$STOP_ON_FIRST_FAILURE\" = true ] && CTEST_ARGS=\"\$CTEST_ARGS --stop-on-failure\"
+    [ -n \"$TEST_FILTER\" ] && CTEST_ARGS=\"\$CTEST_ARGS -L $TEST_FILTER\"
+    [ -n \"$TIMEOUT\" ] && CTEST_ARGS=\"\$CTEST_ARGS --timeout $TIMEOUT\"
+    [ \"$FAILED_ONLY\" = true ] && CTEST_ARGS=\"\$CTEST_ARGS --rerun-failed\"
+
+    if [ \"$DEBUG_MODE\" = true ]; then
+        echo \"Executing: ctest \$CTEST_ARGS\"
+    fi
+
+    START_TIME=\$(date +%s)
+
+    if [ \"$SAVE_LOGS\" = true ]; then
+        ctest \$CTEST_ARGS 2>&1 | tee test_output.log
+        RESULT=\${PIPESTATUS[0]}
+    else
+        ctest \$CTEST_ARGS
+        RESULT=\$?
+    fi
+
+    END_TIME=\$(date +%s)
+    DURATION=\$((END_TIME - START_TIME))
+
+    if [ \$RESULT -eq 0 ]; then
+        echo ''
+        echo '=== TEST SUMMARY ==='
+        echo \"All tests passed! (Duration: \${DURATION}s)\"
+        [ \"$SHOW_STATS\" = true ] && echo \"Used $PARALLEL_JOBS parallel jobs\"
+    else
+        echo ''
+        echo '=== FAILURE ANALYSIS ==='
+        echo \"Tests failed! (Duration: \${DURATION}s)\"
+        echo ''
+        echo 'Next steps for debugging:'
+        echo '  ./test-docker.sh --failed-only -v        # Rerun failed tests with details'
+        echo '  ./test-docker.sh -s \"keyword\"             # Search for specific tests'
+        echo '  ./test-docker.sh -t \"SpecificTest\" -g     # Debug with GDB'
+        echo '  ./test-docker.sh -i                      # Interactive debugging'
+        echo ''
+
+        # Show failed test details
+        echo 'Failed tests summary:'
+        ctest --rerun-failed -N 2>/dev/null | grep 'Test #' || echo 'Unable to get failed test list'
+    fi
+
+    exit \$RESULT
+"
+
+# Run the container
+if [ "$SAVE_LOGS" = true ]; then
+    TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+    docker run --rm \
+        -v "$(pwd)":/ultrascan3 \
+        -v "$(pwd)/build-docker":/ultrascan3/build-docker \
+        -w /ultrascan3 \
+        us3comp-test:latest \
+        bash -c "$CONTAINER_SCRIPT" 2>&1 | tee "test-log-$TIMESTAMP.txt"
+    RESULT=${PIPESTATUS[0]}
 else
-    echo ""
-    print_error "Some tests failed!"
+    docker run --rm \
+        -v "$(pwd)":/ultrascan3 \
+        -v "$(pwd)/build-docker":/ultrascan3/build-docker \
+        -w /ultrascan3 \
+        us3comp-test:latest \
+        bash -c "$CONTAINER_SCRIPT"
+    RESULT=$?
+fi
+
+# Final summary
+if [ $RESULT -eq 0 ]; then
+    if [ "$QUICK_MODE" = false ]; then
+        echo ""
+        print_success "Test execution completed successfully!"
+        if [ "$SAVE_LOGS" = true ]; then
+            print_status "Detailed logs saved to: test-log-$TIMESTAMP.txt"
+        fi
+    fi
+else
+    if [ "$QUICK_MODE" = false ]; then
+        echo ""
+        print_error "Test execution failed!"
+        echo ""
+        print_highlight "Quick debugging commands:"
+        echo "  ./test-docker.sh --failed-only -v          # Focus on failures"
+        echo "  ./test-docker.sh -s \"keyword\" -l           # Find related tests"
+        echo "  ./test-docker.sh -i                        # Interactive debugging"
+        if [ "$SAVE_LOGS" = true ]; then
+            print_status "Detailed logs saved to: test-log-$TIMESTAMP.txt"
+        fi
+    fi
     exit 1
 fi
