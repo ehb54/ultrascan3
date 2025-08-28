@@ -11,6 +11,12 @@
 class IUS_DB2
 {
 public:
+    // Default constructor
+    IUS_DB2() = default;
+
+    // Constructor with password parameter
+    IUS_DB2(const QString& pw) { Q_UNUSED(pw); }
+
     virtual ~IUS_DB2() = default;
 
     // Database status codes (needed for return values)

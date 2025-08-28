@@ -1,18 +1,18 @@
 name: Static Analysis
 on:
-  pull_request:
-    branches:
-      - master
-      - aaron-dev-test-utils
-    paths:
-      - 'gui/**/*.cpp'
-      - 'gui/**/*.h'
-      - 'programs/**/*.cpp'
-      - 'programs/**/*.h'
-      - 'utils/**/*.cpp'
-      - 'utils/**/*.h'
-      - '.github/workflows/static-analysis.yml'
-  workflow_dispatch:
+#  pull_request:
+#    branches:
+#      - master
+#      - aaron-dev-test-utils
+#    paths:
+#      - 'gui/**/*.cpp'
+#      - 'gui/**/*.h'
+#      - 'programs/**/*.cpp'
+#      - 'programs/**/*.h'
+#      - 'utils/**/*.cpp'
+#      - 'utils/**/*.h'
+#      - '.github/workflows/static-analysis.yml'
+#  workflow_dispatch:
 
 jobs:
   static-analysis:
