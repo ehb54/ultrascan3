@@ -12,15 +12,10 @@
 name: "CodeQL"
 
 on:
-  push:
-    branches: 
-     - master
-     - aaron-dev-test
+  push: # Runs on every push to any branch
   pull_request:
-    # The branches below must be a subset of the branches above
-    branches: 
+    branches:
      - master
-     - aaron-dev-test
   schedule:
     - cron: '20 18 * * 1'
 
@@ -52,6 +47,7 @@ jobs:
         uses: github/codeql-action/init@v3
         with:
           languages: ${{ matrix.language }}
+          queries: ./admin/codeql/custom-queries/cpp
       - name: Build
         run: |
           cp admin/codeql/docker/local.pri.mpi local.pri
@@ -87,6 +83,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+      - name: Allow CI to access repo directory
+        run: git config --global --add safe.directory /__w/ultrascan3/ultrascan3
       - name: Install libarchive
         run: |
           apt-get install -y libarchive-dev
@@ -94,10 +92,10 @@ jobs:
         uses: github/codeql-action/init@v3
         with:
           languages: ${{ matrix.language }}
+          queries: ./admin/codeql/custom-queries/cpp
       - name: Build
         run: |
           cp admin/codeql/docker/local.pri.gui local.pri
-          git config --global --add safe.directory /__w/ultrascan3/ultrascan3
           (cd programs/us && sh revision.sh)
           cd qwtplot3d
           qmake
@@ -193,7 +191,7 @@ jobs:
           git config --global --add safe.directory /__w/ultrascan3/ultrascan3
           mkdir -p $bdir/build
           cd build
-          cmake .. 
+          cmake .. -C ../admin/test/cmake/hints.cmake -DCMAKE_BUILD_TYPE=Release
           make -j4 
 
       - name: Run tests

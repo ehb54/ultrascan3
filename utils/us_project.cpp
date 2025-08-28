@@ -3,7 +3,7 @@
 #include <QtCore>
 
 #include "us_settings.h"
-#include "us_db2.h"
+#include "ius_db2.h"
 #include "us_util.h"
 #include "us_project.h"
 
@@ -23,7 +23,7 @@ int US_Project::readFromDisk( QString& guid )
    {
       qDebug() << "Error: project file not found -- guid "
                << guid;
-      return US_DB2::NO_PROJECT;
+      return IUS_DB2::NO_PROJECT;
    }
    
    QFile file( filename );
@@ -31,7 +31,7 @@ int US_Project::readFromDisk( QString& guid )
    {
       qDebug() << "Error: can't open file for reading"
                << filename;
-      return US_DB2::NO_PROJECT;
+      return IUS_DB2::NO_PROJECT;
    }
 
    QXmlStreamReader xml( &file );
@@ -62,12 +62,12 @@ int US_Project::readFromDisk( QString& guid )
    {
       qDebug() << "Error: xml error: \n"
                << xml.errorString();
-      return US_DB2::DBERROR;
+      return IUS_DB2::DBERROR;
    }
 
    saveStatus = HD_ONLY;
 
-   return US_DB2::OK;
+   return IUS_DB2::OK;
 }
 
 void US_Project::readProjectInfo( QXmlStreamReader& xml )
@@ -144,7 +144,7 @@ void US_Project::readProjectInfo( QXmlStreamReader& xml )
 }
 
 // Function to load a project from the db
-int US_Project::readFromDB  ( int projectID, US_DB2* db )
+int US_Project::readFromDB  ( int projectID, IUS_DB2* db )
 {
    // Try to get project info
    QStringList q( "get_project_info" );
@@ -172,11 +172,11 @@ int US_Project::readFromDB  ( int projectID, US_DB2* db )
    }
 
    else
-      return US_DB2::NO_PROJECT;
+      return IUS_DB2::NO_PROJECT;
 
    saveStatus = DB_ONLY;
 
-   return US_DB2::OK;
+   return IUS_DB2::OK;
 }
 
 // Function to save project information to disk
@@ -240,7 +240,7 @@ void US_Project::saveToDisk( void )
 }
 
 // Function to save project information to db
-int US_Project::saveToDB( US_DB2* db )
+int US_Project::saveToDB( IUS_DB2* db )
 {
    // Save it to disk too
    saveToDisk();
@@ -252,7 +252,7 @@ int US_Project::saveToDB( US_DB2* db )
    db->query( q );
 
    int db_status = db->lastErrno();
-   if ( db_status == US_DB2::OK )
+   if ( db_status == IUS_DB2::OK )
    {
       // Edit existing project entry
       db->next();
@@ -276,7 +276,7 @@ int US_Project::saveToDB( US_DB2* db )
       db->statusQuery( q );
    }
 
-   else if ( db_status == US_DB2::NOROWS )
+   else if ( db_status == IUS_DB2::NOROWS )
    {
       // Create new project entry
       q.clear();
@@ -307,15 +307,15 @@ int US_Project::saveToDB( US_DB2* db )
    }
 
    if ( projectID == 0 )        // double check
-      return US_DB2::NO_PROJECT;
+      return IUS_DB2::NO_PROJECT;
 
    saveStatus = BOTH;
 
-   return US_DB2::OK;
+   return IUS_DB2::OK;
 }
 
 // Function to save project information to db
-int US_Project::saveToDB_auto( int invID_passed, US_DB2* db )
+int US_Project::saveToDB_auto( int invID_passed, IUS_DB2* db )
 {
    // Save it to disk too
    saveToDisk();
@@ -327,7 +327,7 @@ int US_Project::saveToDB_auto( int invID_passed, US_DB2* db )
    db->query( q );
 
    int db_status = db->lastErrno();
-   if ( db_status == US_DB2::OK )
+   if ( db_status == IUS_DB2::OK )
    {
       // Edit existing project entry
       db->next();
@@ -351,7 +351,7 @@ int US_Project::saveToDB_auto( int invID_passed, US_DB2* db )
       db->statusQuery( q );
    }
 
-   else if ( db_status == US_DB2::NOROWS )
+   else if ( db_status == IUS_DB2::NOROWS )
    {
       // Create new project entry
       q.clear();
@@ -382,11 +382,11 @@ int US_Project::saveToDB_auto( int invID_passed, US_DB2* db )
    }
 
    if ( projectID == 0 )        // double check
-      return US_DB2::NO_PROJECT;
+      return IUS_DB2::NO_PROJECT;
 
    saveStatus = BOTH;
 
-   return US_DB2::OK;
+   return IUS_DB2::OK;
 }
 
 
@@ -411,7 +411,7 @@ void US_Project::deleteFromDisk( void )
 }
 
 // Function to delete a project from db
-void US_Project::deleteFromDB( US_DB2* db )
+void US_Project::deleteFromDB( IUS_DB2* db )
 {
    QStringList q;
    if ( projectID == 0 )
@@ -435,7 +435,7 @@ void US_Project::deleteFromDB( US_DB2* db )
         << QString::number( projectID );
    
       int status = db->statusQuery( q );
-      if ( status != US_DB2::OK )
+      if ( status != IUS_DB2::OK )
          qDebug() << "MySQL error: " << db->lastError();
 
    }

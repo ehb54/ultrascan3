@@ -67,7 +67,7 @@ class US_UTIL_EXTERN US_Solution
       /*! \brief    Function to read an entire solution structure from the disk
 
           \param    guid The GUID of the solution to look for
-          \return   One of the US_DB2 error codes
+          \return   One of the IUS_DB2 error codes
       */
       int readFromDisk( QString& );
 
@@ -75,9 +75,9 @@ class US_UTIL_EXTERN US_Solution
 
           \param    solutionID The database solutionID of the desired solution
           \param    db For database access, an open database connection
-          \return   One of the US_DB2 error codes
+          \return   One of the IUS_DB2 error codes
       */
-      int readFromDB  ( int, US_DB2* = 0 );
+      int readFromDB  ( int, IUS_DB2* = 0 );
 
       //! \brief    Quick method to zero out the solution attributes
       void clear             ( void );
@@ -91,7 +91,7 @@ class US_UTIL_EXTERN US_Solution
           \param    channelID The ID of the channel
           \param    db For database access, an open database connection
       */
-      int saveToDB           ( int = 1, int = 1, US_DB2* = 0 );
+      int saveToDB           ( int = 1, int = 1, IUS_DB2* = 0 );
 
       //! \brief    Function to delete the current solution from disk, if it exists
       int deleteFromDisk    ( void );
@@ -100,7 +100,7 @@ class US_UTIL_EXTERN US_Solution
 
           \param    db For database access, an open database connection
       */
-      int deleteFromDB      ( US_DB2* = 0 );
+      int deleteFromDB      ( IUS_DB2* = 0 );
 
       /*! \brief    Function to find the filename of a solution on disk, if it exists.
                     Returns true if successful, false otherwise
@@ -120,7 +120,7 @@ class US_UTIL_EXTERN US_Solution
       //! \brief Function to count occurrences of solution in protocols
       //! \param    dbP  Pointer to database connection or NULL if local test
       //! \returns       Count of this solution in protocols
-      int countInProtocols   ( US_DB2* = 0 );
+      int countInProtocols   ( IUS_DB2* = 0 );
 
       //! \brief An overloaded assignment operator
       US_Solution&           operator=( const US_Solution& );

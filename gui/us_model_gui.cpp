@@ -260,9 +260,9 @@ bool US_ModelGui::load_model( const QString& load_init, US_Model& modelIn )
                }
 
                US_Passwd pw;
-               US_DB2    db( pw.getPasswd() );
+               IUS_DB2    db( pw.getPasswd() );
 
-               if ( db.lastErrno() != US_DB2::OK )
+               if ( db.lastErrno() != IUS_DB2::OK )
                {
                   connect_error( db.lastError() );
                   return false;
@@ -294,9 +294,9 @@ bool US_ModelGui::load_model( const QString& load_init, US_Model& modelIn )
                   if ( dkdb_cntrls->db() )
                   {  // Load from database
                      US_Passwd pw;
-                     US_DB2    db( pw.getPasswd() );
+                     IUS_DB2    db( pw.getPasswd() );
 
-                     if ( db.lastErrno() != US_DB2::OK )
+                     if ( db.lastErrno() != IUS_DB2::OK )
                      {
                         connect_error( db.lastError() );
                         return false;
@@ -487,9 +487,9 @@ qDebug() << "SelMdl:  index modlx" << index << modlx << "mdesc" << mdesc;
    if ( dkdb_cntrls->db() )
    {  // Load from database
       US_Passwd pw;
-      US_DB2    db( pw.getPasswd() );
+      IUS_DB2    db( pw.getPasswd() );
 
-      if ( db.lastErrno() != US_DB2::OK )
+      if ( db.lastErrno() != IUS_DB2::OK )
       {
          connect_error( db.lastError() );
          return;
@@ -557,7 +557,7 @@ bool US_ModelGui::is_modelIDs_from_autoflow( QString mID )
   QStringList modelIDs_autoflow;
   
   US_Passwd pw;
-  US_DB2    db( pw.getPasswd() );
+  IUS_DB2    db( pw.getPasswd() );
 
   if ( db.lastErrno() != US_DB2::OK )
     {

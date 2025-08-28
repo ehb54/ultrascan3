@@ -102,9 +102,9 @@ bool US_GetDBRunRa::loadData( void )
 {
    US_Passwd pw;
    QString masterPW = pw.getPasswd();
-   US_DB2 db( masterPW );
+   IUS_DB2 db( masterPW );
 
-   if ( db.lastErrno() != US_DB2::OK )
+   if ( db.lastErrno() != IUS_DB2::OK )
    {
       QMessageBox::information( this,
              tr( "Error" ),
@@ -171,9 +171,9 @@ void US_GetDBRunRa::deleteRun( void )
 {
    US_Passwd pw;
    QString masterPW = pw.getPasswd();
-   US_DB2 db( masterPW );
+   IUS_DB2 db( masterPW );
 
-   if ( db.lastErrno() != US_DB2::OK )
+   if ( db.lastErrno() != IUS_DB2::OK )
    {
       QMessageBox::information( this,
              tr( "Error" ),
@@ -235,7 +235,7 @@ void US_GetDBRunRa::deleteRun( void )
      << expID ;
    status = db.statusQuery( q );
 
-   if ( status != US_DB2::OK )
+   if ( status != IUS_DB2::OK )
    {
       QMessageBox::information( this,
             tr( "Error" ),

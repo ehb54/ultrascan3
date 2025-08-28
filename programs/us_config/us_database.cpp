@@ -199,11 +199,11 @@ int US_Database::get_autoflow_records( )
    // Check DB connection
    US_Passwd pw;
    QString masterpw = pw.getPasswd();
-   US_DB2* db = new US_DB2( masterpw );
+   IUS_DB2* db = new US_DB2( masterpw );
 
    int record_number = 0;
    
-   if ( db->lastErrno() != US_DB2::OK )
+   if ( db->lastErrno() != IUS_DB2::OK )
      {
        QMessageBox::warning( this, tr( "Connection Problem" ),
 			     tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
@@ -298,9 +298,9 @@ void US_Database::select_db( QListWidgetItem* entry )
 void US_Database::update_inv( )
 {
    US_Passwd   pw;
-   US_DB2      db( pw.getPasswd() );
+   IUS_DB2      db( pw.getPasswd() );
 
-   if ( db.lastErrno() != US_DB2::OK )
+   if ( db.lastErrno() != IUS_DB2::OK )
    {
 //qDebug() << "USCFG: UpdInv: ERROR connect";
       QMessageBox::information( this,
