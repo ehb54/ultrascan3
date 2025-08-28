@@ -141,7 +141,7 @@ bool US_AbstractRotorGui::loadAbstractRotors( void )
    {
       US_Passwd pw;
       QString masterPW = pw.getPasswd();
-      IUS_DB2 db( masterPW );
+      US_DB2 db( masterPW );
      
       if ( db.lastErrno() != IUS_DB2::OK )
       {

@@ -12,15 +12,10 @@
 name: "CodeQL"
 
 on:
-  push:
-    branches: 
-     - master
-     - aaron-dev-test-utils
+  push: # Runs on every push to any branch
   pull_request:
-    # The branches below must be a subset of the branches above
-    branches: 
+    branches:
      - master
-     - aaron-dev-test-utils
   schedule:
     - cron: '20 18 * * 1'
 
