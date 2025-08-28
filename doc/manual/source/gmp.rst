@@ -1,5 +1,5 @@
 =====================================================
-UltraScanIII Good Manufacturing Practices Module Help
+UltraScanIII Good Manufacturing Practices (GMP)
 =====================================================
 
 

@@ -1,5 +1,5 @@
 ==============================================
-Genetic Algorithm Initialization
+Initialize Genetic Algorithm 
 ==============================================
 
 
@@ -29,7 +29,7 @@ Press **OK** to continue to the Genetic Algorithm Initiation Window.
 .. rst-class::
     :align: center
 
-    **Genetic Algorithm Initiation Window**
+    **Initialize Genetic Algorithm Window**
 
 Solute distribution data can be used to generate data for use with Genetic Algorithm analysis programs. The output data results from choosing bins (or buckets) around solute points. These buckets can be modified for better results. Once they are as desired, data for Genetic Algorithm analysis can be generated and output. 
 The input data may come in one of two flavors, each of which is treated differently. The data is either 2DSA type or Monte Carlo. The 2DSA is relatively sparse and generally requires fashioning buckets containing a single point. For a Monte Carlo distribution, buckets should contain multiple points and be constructed around clusters. 
@@ -147,8 +147,6 @@ Statistics File Output
 Once the bins for Genetic Algorithm analysis are selected, detailed statistical analysis can be performed on the Monte Carlo models. Click on 'View Statistics' to generate the detailed analysis.
 
 
-
-
 .. image:: /_static/images/ga_report-1.png
     :align: center
 
@@ -176,3 +174,12 @@ Once the bins for Genetic Algorithm analysis are selected, detailed statistical 
 .. rst-class:: center
 
     **Detailed Statistics Results of GA Initialization Analysis**
+
+
+Related
+====================
+`Simulated Finite Element Model Viewer <fe_match_simulate.html>`_
+
+`2-Dimensional Spectrum Analysis <2dsa.html>`_
+
+`Parametrically Constrained Spectrum Analysis (PCSA) <pcsa.html>`_

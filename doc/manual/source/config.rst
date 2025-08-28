@@ -164,10 +164,10 @@ Master Password Panel:
 
 .. rst-class::
     :align: center
-
+    
     **Change Master Password**
 
- The user's master password needs to be entered in order to access encrypted database information. Enter the **old password** and the **new password** *twice* to change the password. When entering the password for the first time, the Old Password entry will not be shown.
+The user's master password needs to be entered in order to access encrypted database information. Enter the **old password** and the **new password** *twice* to change the password. When entering the password for the first time, the Old Password entry will not be shown.
 
 .. caution::
      There is no way to recover the master password so it must be remembered. If the password is lost, UltraScan can be reset, but all database login settings will have to be manually reentered. 

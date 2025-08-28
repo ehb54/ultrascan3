@@ -8,28 +8,15 @@ Finite Element (FE) Model Simulation
 .. contents:: Index
   :local: 
 
-Steps to compare Experiment to FE models: 
-======================================================
-
-
-
-*  **Step 1:** First, load experimental velocity data. Click on `Load Data <common_dialogs.html#data-loader>`_* to select an edited velocity data set from the database or from local disk.
-
-*  **Step 2:** Secondly, select a model from database or disk. Simply click on `Load Model <common_dialogs.html#load-distribution-model>`_ and choose a model in the resulting dialog. If they exist, you will be given the choice of also loading noise vectors.
-
-*  **Step 3:** Next, simulate the loaded model with a finite element solution by clicking **Simulate Model**.
-
-*  **Step 4:** After simulation, a variety of options are available for displaying simulation results, residuals, and distributions. Report text files and graphics plot files can also be generated.
-
 Simulation Product Output Summary:
-----------------------------------------------
+===================================
 
-When the "Simulate Model" button is clicked in the **Finite Element Model Viewer** window, a simulation is performed using the Edit data, a Loaded Model, and simulation parameters primarily created using the edit data set. A simulation data set is created that has the same ranges as the edit set, but with readings values that are calculated and compared to the actual experimental data. The comparison spawns a number of new dialogs and options that allow the user to evaluate the quality of the model.
+When the **Simulate Model** button is clicked in the **Finite Element Model Viewer** window, a simulation is performed using the Edit data, a Loaded Model, and simulation parameters primarily created using the edit data set. A simulation data set is created that has the same ranges as the edit set, but with readings values that are calculated and compared to the actual experimental data. The comparison spawns a number of new dialogs and options that allow the user to evaluate the quality of the model.
 
- * **Finite Element Data/Resdiuals Viewer** - Visual comparison of simulated and experimental data. Graphical display of time and radially invarient noise 
- * **Residuals Pixal Map** - Bit map of 
-* `3-Dimensional Plot Controls <3d_plot.html>`_``
- * **Data report File** - Report of the comparision
+ * **Finite Element Data/Resdiuals Viewer** - Visual comparison of simulated and experimental data. Graphical display of time and radially invarient noises subtracted. 
+ * **Residuals Pixal Map** - Bit map of every scan as a pixal line and the positive or negative difference of the model to the data are highlighted as red (negative) and green(postive) pixals. an Excellent residuel map will have a random distribution of red and green pixals. 
+ * `3-Dimensional Plot Controls <3d_plot.html>`_ - 3D plots of the simulated data
+ * **Data report File** - Generate a Simulated model Report file and view it in a dialog.
 
 .. image:: _static/images/fe_match_allct.png
     :align: center
@@ -41,48 +28,184 @@ When the "Simulate Model" button is clicked in the **Finite Element Model Viewer
 
 Finite Element Viewer
 -----------------------
-: The simulation creates a data set with the same ranges as the edit experimental data set. The actual values for scan readings vectors are synthetically produced, as illustrated by the plot below.
+The simulation creates a data set with the same ranges as the edit experimental data set. The actual values for scan readings vectors are synthetically produced, as illustrated by the plot below.
 
-.. image:: _static/images/fe_match_sim1.png
+.. image:: _static/images/fe_match_viewer.png
   :align: center
 
-.. rst-class:: center
+.. rst-class:: 
+    :align: center
+
+    **Simulated Viewer Result**
 
 Functions
 ^^^^^^^^^^^^
 
 **FE Analysis Data Viewer**
 
+.. list-table::
+  :widths: 20 50
+  :header-rows: 0 
+      
+  * - Plot Experimental Data:
+    - View the experimental data in the Experimental and Simulated Data Plot. 
+  * - Subtract Time Invarient Noise:
+    - Add Time Invarient Noise to the Experimental data in the Experimental and Simulated Data Plot. 
+  * - Subtract Radially Invarient Noise:
+    - Add Radially Invarient Noise to the Experimental data in the Experimental and Simulated Data Plot. 
+  * - Plot Simulated/Modeled Data:
+    -  View the simulated data in the Experimental and Simulated Data Plot. 
+  * - Add Time Invarient Noise:
+    -  Add Time Invarient Noise to the Simulated data in the Experimental and Simulated Data Plot. 
+  * - Add Radially Invarient Noise:
+    - Add Radially Invarient Noise to the Simulated data in the Experimental and Simulated Data Plot. 
+
 **FE Analysis Residual Viewer**
 
-Comparison of SV data: 
-^^^^^^^^^^^^^^^^^^^^^^^^
-BitMap
+.. list-table::
+  :widths: 20 50
+  :header-rows: 0 
+      
+  * - Plot Residuals
+    - click to show the random residuels in the Residuels Plot  
+  * - Plot Time Invarient Noise
+    - click to show the time invarient noise in the Residuels Plot  
+  * - Plot Radially Invarient Noise
+    - click to show the Radially invarient noise in the Residuels Plot  
+  * - Plot Random Noise
+    - click to show the random residuels in the Residuels Plot 
+  * - Show Residuals Bit map
+    - Show a plot dialog of pixalized bit map. 
+  * - Variance:
+    - Variance value (square of RMSD) for residuals. 
+  * - RMSD:
+    - Root-Mean-Square-of-Differences for residuals.  
 
+|
+
+.. list-table::
+  :widths: 50 50
+  :header-rows: 1
+
+  * - **The Simulation**
+    - **Overlap Plot**
+  * - The simulation creates a data set with the same ranges as the edit experimental data set. The actual values for scan readings vectors are synthetically produced, as illustrated by the plot below. 
+    - Upon completion of simulation computations the plot of experimental data (in yellow and cyan) is overlayed in the main window lower plot with the simulation data (in red), as shown in the image below. 
+  
+.. subfigure:: AB     
+  :class-grid: outline 
+  :gap: 8px
+  :align: center
+
+
+  .. image:: _static/images/fe_sim-1.png
+    :align: left
+    :width: 100%
+
+  .. image:: _static/images/fe_sim-2.png
+    :width: 100%
+    :align: right
+
+.. rst-class:: 
+   :align: center
+
+  **Simulated Data alone (red) and overlapped with Experimental Data (yellow)**
+
+|
+
+.. list-table::
+  :widths: 50 50 50
+  :header-rows: 1   
+
+  * - Add time-invariant noise to data 
+    - Add radially-invariant noise to data
+    - Add time-invariant noise and radially-invariant to data
+  * - 
+    -
+    -
+
+.. subfigure:: ABC     
+  :class-grid: outline 
+  :gap: 8px
+  :align: center
+
+
+  .. image:: _static/images/add_TIN.png
+    :align: left
+    :width: 100%
+
+  .. image:: _static/images/add_RIN.png
+    :width: 100%
+    :align: center
+
+  .. image:: _static/images/add_RIN-TIN.png
+    :width: 100%
+    :align: right 
 
 
 Noise Data analysis:
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
- Time- NOISE That doesn't change over time and has the same offset for every scan. Sources of time in 
+^^^^^^^^^^^^^^^^^^^^^^
+
+.. list-table::
+  :widths: 50 50 50
+  :header-rows: 1   
+
+  * - Time-invariant noise plot
+    - Radially-invariant noise plot
+    - Random noise plot
+  * - 
+    -
+    -
+
+.. subfigure:: ABC     
+  :class-grid: outline 
+  :gap: 8px
+  :align: center
 
 
- Radially : noise Constant offset of scan sources, exposure diffrence 
+  .. image:: _static/images/TINplot.png
+    :align: left
+    :width: 100%
+
+  .. image:: _static/images/RINplot.png
+    :width: 100%
+    :align: center
+
+  .. image:: _static/images/residualplot.png
+    :width: 100%
+    :align: right 
 
 
- Random: random and different time or radius
+Resideul Bit Map
+-----------------
+Experimental-Simulation residuals are plotted in another way in a bit map. This small window represents each residual #Scans x #Readings point as a color: green where simulation is greater than experimental; red where experimental is greater. A random distribution of colors throughout the bit map is indication of a good model fit. 
 
+.. image:: _static/images/bitmap.png
+    :align: center
+
+.. rst-class:: 
+    :align: center
+
+    **Pixal Bit Map**
 
 Report: FE Match Model Simulation
---------------------------------------
+-----------------------------------
+The "Save Data" button produces a set of report files. One of these is displayable via the "View Report" button, which produces a dialog that shows the contents of a report. A dialog sample follows. 
 
-image
+.. image:: _static/images/simulatedReport.png
+  :align: center
 
-from top right to bottom left. type of analsysi, data report of run label, cell number, channel leter, wavelength, edit name. the data analysis, titled as the timeanddata submited to database, type f analysis, model number, i01
-number of component found, rrmsD, mRRMSD, weight avaraged (what does that mean) total concen, the vbar selected to be constant. 
 
-Distribution results of the m. weighm s apparent(**), s 20 D(apparant). d20, f/f0, conce (%)
+.. rst-class:: 
+   :align: center
+
+ 
 
 Related
 ====================
 
 `Finite Element Model Viewer <fe_match.html>`_
+
+`2-Dimensional Spectrum Analysis <2dsa.html>`_
+
+`Initialize Genetic Algorithm <ga_initialize.html>`_

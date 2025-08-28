@@ -2,7 +2,6 @@
 Finite Element (FE) Model Viewer
 ===========================================
 
-
 .. toctree:: 
     :maxdepth: 3
 
@@ -21,6 +20,26 @@ The main **Compare Experiment to Finite Element Solution** window may need addit
 
     **Compare Experiment to Finite Element Solution**
 
+
+Steps to compare Experiment to FE models: 
+=============================================
+
+*  **Step 1:** *Load experimental velocity data.* Click on `Load Data <common_dialogs.html#data-loader>`_ to select an edited velocity data set from the database or from local disk.
+
+*  **Step 2:** *Select a model from database or disk.* Simply click on `Load Model <common_dialogs.html#load-distribution-model>`_ and choose a model in the resulting dialog. If they exist, you will be given the choice of also loading noise vectors.
+
+*  **Step 3:** *Simulate a model.* Simulate the loaded model with a finite element solution by clicking **Simulate Model**.
+
+*  **Step 4:** *Examine the results.* After simulation, a variety of options are available for displaying `simulation results <fe_match_simulate.html>`_, residuals, and distributions. Report text files and graphics plot files can also be generated.
+
+|
+
+.. image:: /_static/images/fe_match_simulated.png
+  :align: center
+
+.. rst-class:: center
+
+    **Simulated Finite Element Solution**
 
 Functions
 ==============
@@ -51,14 +70,59 @@ Functions
 
 **Simulation Plot**: Bar plot of the selected distributions. The choices are as follows:
         
- * Residuals - Residuals scatter plot.
- * s :sub:`20,w` distribution - s :sub:`20,w` distribution bar plot.
- * MW distribution - MW distribution bar plot.
- * D :sub:`20,w` distribution - D :sub:`20,w` distribution bar plot.
- * f/f :sub:`0` vs s :sub:`20,w` - f/f :sub:`0` versus s :sub:`20,w` 2-D plot.
- * f/f :sub:`0` vs MW - f/f :sub:`0` version MW 2-D plot.
- * D :sub:`20,w` vs s :sub:`20,w` - D :sub:`20,w` versus s :sub:`20,w` 2-D plot.
- * D :sub:`20,w` vs MW - D :sub:`20,w` versus MW 2-D plot.
+.. list-table::
+  :widths: 50 50 
+  :header-rows: 1   
+
+  * - * Residuals
+    - * s :sub:`20,w` distribution
+  * - 
+    -
+
+.. subfigure:: AB     
+  :class-grid: outline 
+  :gap: 8px
+  :align: center
+
+
+  .. image:: _static/images/residuals.png
+    :align: left
+    :width: 100%
+
+  .. image:: _static/images/s20W_bar.png
+    :width: 100%
+    :align: right 
+
+
+.. list-table::
+  :widths: 50 50 
+  :header-rows: 1   
+
+  * - * MW distribution
+    - * D :sub:`20,w` distribution
+  * - 
+    -
+
+
+.. subfigure:: AB     
+  :class-grid: outline 
+  :gap: 8px
+  :align: center
+
+
+  .. image:: _static/images/MW-bar.png
+    :align: left
+    :width: 100%
+
+  .. image:: _static/images/D20W_bar.png
+    :width: 100%
+    :align: right
+
+
+
+
+
+
 
 **Information for this Run:**
 
@@ -123,7 +187,7 @@ Functions
 Advanced Analysis Dialog
 ===================================
 
-As raw data is collected, the temperature (°C), rotor speed (RPM), and time interval between scans (min) are recorded. The `Run Details <run_details.html>`_ module enables users to view variations in temperature, rotor speed, and scan intervals—both for individual triplicate scans and across the entire run.
+This dialog may be invoked from US_FeMatch in order to set advanced control parameters. 
 
 .. image:: /_static/images/fe_match_adv.png
     :align: center
@@ -148,8 +212,6 @@ Advanced Control Functions
     -  Specify a band-loading volume value.
   * - **Parameter:**
     -  Choose a parameter value.
-  * - **Show Model #**
-    -  Choose a model number.
   * - **(mesh type)**
     -  Select from one of several mesh types, including Adaptive Space Time (ASTFEM), Claverie, Moving Hat, user File, or Adaptive Space Volume (ASVFEM).
   * - **(grid type)**
@@ -167,4 +229,6 @@ Related
 `Simulated Finite Element Model Viewer <fe_match_simulate.html>`_
 
 `2-Dimensional Spectrum Analysis <2dsa.html>`_
+
+`Initialize Genetic Algorithm <ga_initialize.html>`_
 
