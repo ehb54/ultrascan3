@@ -2867,7 +2867,7 @@ void US_XpnDataViewer::check_for_data( QMap < QString, QString > & protocol_deta
   int exp_status = CheckExpComplete_auto( RunID_to_retrieve, o_connectivity  );
   qDebug() << "ENTRY POINT: Optims DB connection, exp_status, xpndesc: "
 	   << o_connectivity << exp_status << xpndesc;
-  if ( !o_connectivity || !check_sysdata_connection( ) )
+  if ( !o_connectivity ) //|| !check_sysdata_connection( ) )
     {
       qDebug() << "No connection, exit!";
       QMessageBox msgBox_sys_data;
