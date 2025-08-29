@@ -70,10 +70,10 @@ Model Solute 3-Dimensional Viewer
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * **Shft + Mouse scroll wheel** - expand the z dimension (Concentration in the 3-D Viewer)
-* **Alt + hold left mouse key and move right** - expand X axis (sedimentation - s*1e+12)
-* **Alt + hold left mouse key and move left** - contract X axis
-* **Alt + hold left mouse key and move up** - expand Y axis (Fricitional ratio - f/f0)
-* **Alt + hold left mouse key and move down** - expand Y axis
+* **Alt + hold right arrow key** - expand X axis (sedimentation - s*1e+12)
+* **Alt + hold left arrow key** - contract X axis
+* **Alt + hold up arrow key** - expand Y axis (Fricitional ratio - f/f0)
+* **Alt + hold down arrow key** - expand Y axis
 * **Mouse scroll wheel** - zoom in on all Dimensions
 * **Hold left mouse key and move up/down** - rotate X axis 
 * **Hold left mouse key and move left/right** - rotate along Y axis
