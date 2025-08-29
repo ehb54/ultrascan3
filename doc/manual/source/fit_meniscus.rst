@@ -11,7 +11,22 @@ Fit Meniscus
 
 This module enables you to modify an Edited data set's meniscus value based on meniscus-fit models. A polynomial fit to a set of meniscus-RMSD points is plotted and its low point presented as the default new meniscus value. That value - or a manually modified one - can then replace the value in the associated Edited data set. The model with closest meniscus value in the set of fit-meniscus models that were obtained by a front-end or back-end meniscus fit 2DSA run can be preserved, while all other models in the set (and any associated noises) are removed. 
 
-  .. image:: _static/images/fit_meniscus.png
+.. image:: _static/images/fit_meniscus.png
+    :align: center
+
+.. rst-class::
+    :align: center
+
+    **Meniscus Fitting**
+
+.. image:: _static/images/fit_men_bot.png
+    :align: center
+
+.. rst-class::
+    :align: center
+
+    **Meniscus and Bottom Fitting**
+
 
 
 Functions

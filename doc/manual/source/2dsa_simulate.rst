@@ -31,7 +31,7 @@ Fitting Analysis Process:
 *  **Step 1:** *Define the Grid and Grid points:* With *Fitting Controls*, define the overall solute grid by giving the lower and upper limits of s and f/f0; and the the number of grid points for s and f/f0. The default 64 grid points work well for typical Sedimentatation velocity datasets. that total grid into subgrids using Grid Refinements.
 *  **Step 2:** *Set Refinement Iterations:* Secondly, set a value for Maximum Iterations of refinement passes.
 *  **Step 3:** *Set any Meniscus/Monti Carlo:* Thirdly, if desired, set parameters defining a Meniscus scan or set of Monte Carlo iterations.
-*  **Step 4:** *Set Threads:* Next, after control values are set, define a number of threads that is appropriate to the complexity of the run and the number of processors or cores available on your machine.
+*  **Step 4:** *Set Threads:* Next, after control values are set, define a number of threads that is appropriate to the complexity of the run and the number of processors or cores available on your machine, 8-16 threads work best for a typical single-wavelength datasets.
 *  **Step 5:** *Start the Fit:* Begin the fit analysis by clicking "Start Fit".
 *  **Step 6:** *Display and Save Results:* After simulation, a variety of options are available for displaying simulation results, residuals, and distributions. Report text files and graphics plot files can also be generated.
 

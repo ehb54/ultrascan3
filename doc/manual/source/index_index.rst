@@ -1,9 +1,4 @@
-.. UltraScan III documentation master file, created by
-   sphinx-quickstart on Mon Jul 28 14:52:09 2025.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
-Welcome to UltraScan III's Documentation and Resource!
+Summary of All UltrascanIII Modules
 ==============================================================
 
 **Ultrascan III** is a Analytical Ultracentrifugation *Data acquistion* and *analysis software*.
@@ -21,12 +16,6 @@ Welcome to UltraScan III's Documentation and Resource!
     :align: center
 
     **Jet Boating on the Waimakariri**
-
-.. toctree::
-   :maxdepth: 1
-   :caption: summary Index :
-
-   index_index
 
 .. toctree::
    :maxdepth: 1
@@ -82,8 +71,6 @@ Welcome to UltraScan III's Documentation and Resource!
    2dsa_simulate
 
    pcsa
-   pcsa_analys
-   pcsa_results
 
    fe_match
    fe_match_simulate

@@ -83,6 +83,10 @@ Functions
 
 |
 
+
+Noise Data analysis:
+^^^^^^^^^^^^^^^^^^^^^^
+
 .. list-table::
   :widths: 50 50
   :header-rows: 1
@@ -136,15 +140,12 @@ Functions
 
   .. image:: _static/images/add_RIN.png
     :width: 100%
-    :align: center
+    :align: left
 
   .. image:: _static/images/add_RIN-TIN.png
     :width: 100%
     :align: right 
 
-
-Noise Data analysis:
-^^^^^^^^^^^^^^^^^^^^^^
 
 .. list-table::
   :widths: 50 50 50
@@ -169,7 +170,7 @@ Noise Data analysis:
 
   .. image:: _static/images/RINplot.png
     :width: 100%
-    :align: center
+    :align: left
 
   .. image:: _static/images/residualplot.png
     :width: 100%
@@ -199,6 +200,7 @@ The "Save Data" button produces a set of report files. One of these is displayab
 .. rst-class:: 
    :align: center
 
+  **Detailed 2DSA Report**
  
 
 Related
