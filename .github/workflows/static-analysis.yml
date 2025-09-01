@@ -1,9 +1,9 @@
 name: Static Analysis
 on:
-#  pull_request:
-#    branches:
-#      - master
-#      - aaron-dev-test-utils
+#Commented out to implement later.
+#push:
+#pull_request:
+#      branches: [ master ]
 #    paths:
 #      - 'gui/**/*.cpp'
 #      - 'gui/**/*.h'
@@ -22,6 +22,11 @@ jobs:
       options: --cpus 2
 
     steps:
+      - name: Skip workflow (disabled)
+        run: |
+          echo "Static analysis workflow is currently disabled"
+          exit 0
+
       - uses: actions/checkout@v4
 
       - name: Install Additional Analysis Tools
