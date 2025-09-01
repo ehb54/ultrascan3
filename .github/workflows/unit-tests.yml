@@ -1,0 +1,69 @@
+name: "Unit Tests"
+
+on:
+  push:
+  pull_request:
+    branches: [ master ]
+  # Optional: Allow manual triggering
+  workflow_dispatch:
+    inputs:
+      test_filter:
+        description: 'Test filter pattern (optional)'
+        required: false
+        default: ''
+      debug_mode:
+        description: 'Enable debug mode'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  unit-testing:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Verify Docker is available
+        run: |
+          docker --version
+          docker info
+
+      - name: Make test script executable
+        run: chmod +x test-docker.sh
+
+      - name: Run unit tests
+        run: |
+          # Use workflow inputs if provided, otherwise use defaults
+          ARGS="--quick --save-logs --stats"
+          
+          if [ "${{ github.event.inputs.debug_mode }}" == "true" ]; then
+            ARGS="$ARGS --debug"
+          fi
+          
+          if [ -n "${{ github.event.inputs.test_filter }}" ]; then
+            ARGS="$ARGS --filter '${{ github.event.inputs.test_filter }}'"
+          fi
+          
+          ./test-docker.sh $ARGS
+
+      - name: Upload test logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-logs-${{ github.run_number }}
+          path: test-log-*.txt
+          retention-days: 14
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ github.run_number }}
+          path: |
+            build-docker/Testing/
+            test-log-*.txt
+          retention-days: 7
+          if-no-files-found: ignore
