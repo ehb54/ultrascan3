@@ -255,7 +255,7 @@ US_XpnHostDB::US_XpnHostDB( QWidget* w, Qt::WindowFlags flags )
 void US_XpnHostDB::update_inv( void )
 {
    US_Passwd   pw;
-   IUS_DB2      db( pw.getPasswd() );
+   US_DB2      db( pw.getPasswd() );
 
    if ( db.lastErrno() != IUS_DB2::OK )
    {

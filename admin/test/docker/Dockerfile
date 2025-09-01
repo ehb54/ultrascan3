@@ -9,6 +9,9 @@ RUN apt-get update -qq && \
         libarchive-dev \
         pkg-config \
         build-essential \
+        libqwt-qt5-dev \
+        libqwt-qt5-6 \
+        libgl2ps-dev \
         git && \
     rm -rf /var/lib/apt/lists/*
 

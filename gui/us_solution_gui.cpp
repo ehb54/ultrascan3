@@ -199,7 +199,7 @@ void US_SolutionMgrSelect::delete_solution( void )
    {
       US_Passwd pw;
       QString masterPW = pw.getPasswd();
-      IUS_DB2 db( masterPW );
+      US_DB2 db( masterPW );
 
       if ( db.lastErrno() != IUS_DB2::OK )
       {
@@ -419,7 +419,7 @@ void US_SolutionMgrSelect::loadDB( void )
 {
    US_Passwd pw;
    QString masterPW = pw.getPasswd();
-   IUS_DB2 db( masterPW );
+   US_DB2 db( masterPW );
 DbgLv(1) << "loadDB: lasterr" << db.lastError();
 
    if ( db.lastErrno() != IUS_DB2::OK )

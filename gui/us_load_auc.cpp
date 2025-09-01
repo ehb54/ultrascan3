@@ -469,7 +469,7 @@ qDebug() << "Ed:Ld: runID_sel" << runID_sel;
 		 //read editedData IDs for all triples in the selected RUN
 		 US_Passwd pw;
 		 QString masterPW = pw.getPasswd();
-		 IUS_DB2 db( masterPW );
+		 US_DB2 db( masterPW );
 		 
 		 if ( db.lastErrno() != IUS_DB2::OK )
 		   {
@@ -900,7 +900,7 @@ int US_LoadAUC::scan_db()
    QStringList runIDs;
    QStringList infoDs;
    US_Passwd   pw;
-   IUS_DB2      db( pw.getPasswd() );
+   US_DB2     db( pw.getPasswd() );
 
    if ( db.lastErrno() != IUS_DB2::OK )
    {
@@ -1071,7 +1071,7 @@ int US_LoadAUC::scan_run_db()
    QStringList runIDs;
    QStringList infoDs;
    US_Passwd   pw;
-   IUS_DB2      db( pw.getPasswd() );
+   US_DB2     db( pw.getPasswd() );
 
    if ( db.lastErrno() != IUS_DB2::OK )
    {
@@ -1320,7 +1320,7 @@ void US_LoadAUC::load_db( QList< DataDesc >& sdescs )
 
    // Connect to DB
    US_Passwd pw;
-   IUS_DB2 db( pw.getPasswd() );
+   US_DB2 db( pw.getPasswd() );
 
    if ( db.lastErrno() != IUS_DB2::OK )
    {

@@ -84,7 +84,7 @@ target_compile_definitions(test_us_utils PRIVATE NO_DB)
 # Link libraries
 target_link_libraries(test_us_utils
         PRIVATE
-        utils
+        UltraScan3::Utils
         Qt5::Core
         Qt5::Network
         Qt5::Sql
@@ -110,14 +110,6 @@ gtest_discover_tests(test_us_utils
         TIMEOUT 60
         ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
         )
-
-# Keep the old add_test as fallback (commented out since we're using gtest_discover_tests now)
-# add_test(NAME us_utils_tests COMMAND test_us_utils)
-# set_tests_properties(us_utils_tests PROPERTIES
-#         TIMEOUT 300
-#         LABELS "unit;utils"
-#         ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
-#         )
 
 # Create convenience targets for different test categories
 add_custom_target(test_utils

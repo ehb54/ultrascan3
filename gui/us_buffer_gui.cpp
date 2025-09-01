@@ -284,7 +284,7 @@ DbgLv(1) << "BufS-rddb-item  row" << row << "bufID" << bufferID;
 void US_BufferGuiSelect::read_from_db( const QString& bufferID )
 {
    US_Passwd pw;
-   IUS_DB2    db( pw.getPasswd() );
+   US_DB2   db( pw.getPasswd() );
 
    // Get the buffer data from the database
    if ( db.lastErrno() != IUS_DB2::OK )
@@ -686,7 +686,7 @@ bool US_BufferGuiSelect::buffer_in_use( QString& bufferGUID )
 void US_BufferGuiSelect::delete_db( void )
 {
    US_Passwd pw;
-   IUS_DB2    db( pw.getPasswd() );
+   US_DB2   db( pw.getPasswd() );
 
    if ( db.lastErrno() != IUS_DB2::OK )
    {
@@ -809,7 +809,7 @@ void US_BufferGuiSelect::read_buffer( void )
 void US_BufferGuiSelect::read_db( void )
 {
    US_Passwd pw;
-   IUS_DB2 db( pw.getPasswd() );
+   US_DB2 db( pw.getPasswd() );
 
    if ( db.lastErrno() != IUS_DB2::OK )
    {
@@ -1292,7 +1292,7 @@ void US_BufferGuiNew::create_new_buffer_component() {
    }
    // check user level against database
    US_Passwd   pw;
-   IUS_DB2      db( pw.getPasswd() );
+   US_DB2     db( pw.getPasswd() );
 
    if ( db.lastErrno() != IUS_DB2::OK )
    {
@@ -1694,7 +1694,7 @@ void US_BufferGuiNew::write_db()
 {
 DbgLv(1) << "BufN:SL: write_db()  bufID" << buffer->bufferID;
    US_Passwd pw;
-   IUS_DB2    db( pw.getPasswd() );
+   US_DB2   db( pw.getPasswd() );
    int idBuf    = buffer->saveToDB( &db, "1" );
    buffer->bufferID = QString::number( idBuf );
 
@@ -1892,7 +1892,7 @@ void US_BufferGuiEdit::write_db()
 {
 DbgLv(1) << "BufE:SL: write_db()  bufID" << buffer->bufferID;
    US_Passwd pw;
-   IUS_DB2    db( pw.getPasswd() );
+   US_DB2   db( pw.getPasswd() );
    int idBuf    = buffer->saveToDB( &db, "1" );
 
    if ( idBuf < 0 )

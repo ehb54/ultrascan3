@@ -1,4 +1,4 @@
-// test_us_buffer.cpp - Fixed version
+// test_us_buffer.cpp
 #include "qt_test_base.h"
 #include "mock_us_db2.h"
 #include "us_buffer.h"

@@ -117,7 +117,7 @@ When you have thousands of tests, use this workflow:
 
 4. BATCH DEBUGGING:
    ./test-docker.sh -q --save-logs               # Run all, save detailed logs
-   ./test-docker.sh --repeat 5 -t "FlakyTest"    # Test for intermittent issues
+   ./test-docker.sh --repeat 5 -t "Test"    # Test for intermittent issues
 
 === ADVANCED CONTAINER OPTIONS ===
 
@@ -222,14 +222,18 @@ if [ ! -f "CMakeLists.txt" ]; then
     print_warning "CMakeLists.txt not found. Ensure you're in the ultrascan3 root directory."
 fi
 
-# Setup build directory
-print_status "Setting up build environment..."
-mkdir -p build-docker
+# Detect repo root and set build dir consistently
+ROOT_DIR="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+BUILD_DIR="${ROOT_DIR}/build-docker"
 
+print_status "Setting up build environment..."
 if [ "$REBUILD" = true ]; then
     print_status "Forcing complete rebuild..."
-    rm -rf build-docker/*
+    rm -rf "${BUILD_DIR}"
 fi
+
+mkdir -p "${BUILD_DIR}"  # ensure parent exists for logs and CMakeFiles
+
 
 # Interactive mode
 if [ "$INTERACTIVE" = true ]; then
@@ -312,14 +316,17 @@ CONTAINER_SCRIPT="
         echo 'Configuring project...'
     fi
 
-    if [ ! -f CMakeCache.txt ] || [ \"$REBUILD\" = true ]; then
-        if [ \"$QUICK_MODE\" = false ]; then
-            cmake -DCMAKE_BUILD_TYPE=Debug -C ../admin/test/cmake/hints.cmake ..
-        else
-            echo 'Running CMake configuration...'
-            cmake -DCMAKE_BUILD_TYPE=Debug -C ../admin/test/cmake/hints.cmake .. > cmake_config.log 2>&1
-            echo 'CMake configuration complete'
+    if [ ! -f CMakeCache.txt ] || [ "$REBUILD" = true ]; then
+        echo 'Running CMake configuration...'
+        # Always capture the full configure output so we can see the *first* real error
+        cmake -S .. -B . -DCMAKE_BUILD_TYPE=Debug -C ../admin/cmake/FindQwt.cmake | tee configure.log
+        # Point directly to the first configure error if there was one
+        if grep -q 'CMake Error' configure.log; then
+            echo '---- First CMake Error ----'
+            grep -n 'CMake Error' configure.log | head -1
+            exit 1
         fi
+        echo 'CMake configuration complete'
     else
         echo 'Using existing CMake configuration (incremental build)'
     fi

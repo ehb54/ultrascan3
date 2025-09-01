@@ -235,8 +235,8 @@ void US_pcsa::load( void )
    baserss    = 0;
 
    US_Passwd pw;
-   IUS_DB2* dbP             = disk_controls->db()
-                             ? new IUS_DB2( pw.getPasswd() )
+   US_DB2* dbP             = disk_controls->db()
+                             ? new US_DB2( pw.getPasswd() )
                              : NULL;
 
    // Get speed steps from disk or DB experiment

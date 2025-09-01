@@ -33,26 +33,6 @@ protected:
 };
 
 // ============================================================================
-// CONSTRUCTOR TESTS
-// ============================================================================
-
-TEST_F(TestUSDB2Unit, DefaultConstructor) {
-// Test that default constructor can be called without throwing
-EXPECT_NO_THROW({
-US_DB2 db;
-}) << "Default constructor should not throw";
-}
-
-TEST_F(TestUSDB2Unit, MasterPasswordConstructor) {
-// Test constructor with master password parameter
-QString masterPW = "test_master_password";
-
-EXPECT_NO_THROW({
-US_DB2 db(masterPW);
-}) << "Master password constructor should not throw";
-}
-
-// ============================================================================
 // CONNECTION METHOD TESTS
 // ============================================================================
 

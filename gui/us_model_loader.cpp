@@ -417,7 +417,7 @@ int US_ModelLoader::load_model( US_Model& model, int index )
       if ( dbP == NULL )
       {
          US_Passwd pw;
-         dbP         = new IUS_DB2( pw.getPasswd() );
+         dbP         = new US_DB2( pw.getPasswd() );
 
          if ( ( rc = dbP->lastErrno() ) != IUS_DB2::OK )
          {
@@ -593,7 +593,7 @@ qDebug() << "  listdesc listedit listsing" << listdesc << listedit << listsing;
       if ( dbP == NULL )
       {
          US_Passwd   pw;
-         dbP         = new IUS_DB2( pw.getPasswd() );
+         dbP         = new US_DB2( pw.getPasswd() );
 
          if ( dbP->lastErrno() != IUS_DB2::OK )
          {

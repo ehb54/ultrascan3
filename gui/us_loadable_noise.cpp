@@ -160,7 +160,7 @@ for (int jj=0;jj<nenois;jj++)
          else
          {
             US_Passwd pw;
-            IUS_DB2 db( pw.getPasswd() );
+            US_DB2 db( pw.getPasswd() );
             i_noise.load( true, noiID, &db );
          }
 
@@ -281,7 +281,7 @@ int US_LoadableNoise::id_list_db( QString daEditGUID )
    QString     invID  = QString::number( US_Settings::us_inv_ID() );
 
    US_Passwd pw;
-   IUS_DB2    db( pw.getPasswd() );
+   US_DB2   db( pw.getPasswd() );
 
    if ( db.lastErrno() != IUS_DB2::OK )
       return 0;

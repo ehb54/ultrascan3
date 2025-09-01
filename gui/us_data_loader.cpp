@@ -466,7 +466,7 @@ qDebug() << "LdEd: selsz" << selections.size() << "dlabsz" << dlabels.size();
    else                         // Load data from database
    { 
       US_Passwd   pw;
-      IUS_DB2      db( pw.getPasswd() );
+      US_DB2     db( pw.getPasswd() );
 
       if ( db.lastErrno() != IUS_DB2::OK )
       {

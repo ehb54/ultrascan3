@@ -104,7 +104,7 @@ int main( int argc, char* argv[] )
       qDebug() << "defaultDB -- " << defaultDB.at( 2 );
             
       US_Passwd   pw;
-      IUS_DB2      db( pw.getPasswd() );
+      US_DB2      db( pw.getPasswd() );
       
       if ( db.lastErrno() != IUS_DB2::OK )
         {
@@ -852,7 +852,7 @@ void US_Win::apply_prefs()
 // //level=2;
 //    // Query notice table in the us3_notice database
 //    US_Passwd pw;
-//    IUS_DB2    db;
+//    US_DB2    db;
 //    QString   host  ( "ultrascan.aucsolutions.com" );
 //    QString   dbname( "us3_notice" );
 //    QString   user  ( "us3_notice" );

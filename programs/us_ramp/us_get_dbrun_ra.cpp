@@ -102,7 +102,7 @@ bool US_GetDBRunRa::loadData( void )
 {
    US_Passwd pw;
    QString masterPW = pw.getPasswd();
-   IUS_DB2 db( masterPW );
+   US_DB2 db( masterPW );
 
    if ( db.lastErrno() != IUS_DB2::OK )
    {
@@ -171,7 +171,7 @@ void US_GetDBRunRa::deleteRun( void )
 {
    US_Passwd pw;
    QString masterPW = pw.getPasswd();
-   IUS_DB2 db( masterPW );
+   US_DB2 db( masterPW );
 
    if ( db.lastErrno() != IUS_DB2::OK )
    {

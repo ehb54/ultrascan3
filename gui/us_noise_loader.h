@@ -16,7 +16,7 @@ class US_GUI_EXTERN US_NoiseLoader : public US_WidgetsDialog
    Q_OBJECT
 
    public:
-      //! \param db      Pointer to a IUS_DB2 object or null if from local disk.
+      //! \param db      Pointer to a US_DB2object or null if from local disk.
       //! \param mieGUIDs List of model-in-edit GUID strings.
       //! \param nieGUIDs List of noise-in-edit GUID:type:index strings.
       //! \param ti_noise Reference to a time-independent noise object loaded.

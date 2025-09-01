@@ -252,7 +252,7 @@ void US_ExperimentGuiRa::reset( void )
       {
          US_Passwd pw;
          QString masterPW = pw.getPasswd();
-         IUS_DB2 db( masterPW );
+         US_DB2 db( masterPW );
          
          int runIDStatus = IUS_DB2::NO_EXPERIMENT;
          if ( db.lastErrno() == IUS_DB2::OK )
@@ -322,7 +322,7 @@ bool US_ExperimentGuiRa::load( void )
    {
       US_Passwd pw;
       QString masterPW = pw.getPasswd();
-      IUS_DB2 db( masterPW );
+      US_DB2 db( masterPW );
    
       if ( db.lastErrno() == IUS_DB2::OK )
          US_Rotor::readLabsDB( labList, &db );
@@ -435,7 +435,7 @@ void US_ExperimentGuiRa::getInvestigatorInfo( void )
    {
       US_Passwd pw;
       QString masterPW = pw.getPasswd();
-      IUS_DB2 db( masterPW );
+      US_DB2 db( masterPW );
    
       if ( db.lastErrno() == IUS_DB2::OK )
       {
@@ -741,7 +741,7 @@ void US_ExperimentGuiRa::accept( void )
    {
       US_Passwd pw;
       QString masterPW = pw.getPasswd();
-      IUS_DB2 db( masterPW );
+      US_DB2 db( masterPW );
       
       if ( db.lastErrno() == IUS_DB2::OK )
       {

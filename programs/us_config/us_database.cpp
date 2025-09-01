@@ -298,7 +298,7 @@ void US_Database::select_db( QListWidgetItem* entry )
 void US_Database::update_inv( )
 {
    US_Passwd   pw;
-   IUS_DB2      db( pw.getPasswd() );
+   US_DB2      db( pw.getPasswd() );
 
    if ( db.lastErrno() != IUS_DB2::OK )
    {

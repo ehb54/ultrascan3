@@ -129,7 +129,7 @@ bool US_RotorGui::load_rotor(QString& load_init, double& coeff1, double& coeff2)
       // Find out what labs we have
       US_Passwd pw;
       QString masterPW = pw.getPasswd();
-      IUS_DB2 db( masterPW );
+      US_DB2 db( masterPW );
 
       if ( db.lastErrno() != IUS_DB2::OK )
       {
@@ -169,7 +169,7 @@ bool US_RotorGui::load_rotor(QString& load_init, double& coeff1, double& coeff2)
          // Find out what rotors we have
          US_Passwd pw;
          QString masterPW = pw.getPasswd();
-         IUS_DB2 db( masterPW );
+         US_DB2 db( masterPW );
 
          if ( db.lastErrno() != IUS_DB2::OK )
          {
@@ -494,7 +494,7 @@ void US_RotorGui::newRotor( void )
    {
       US_Passwd pw;
       QString masterPW = pw.getPasswd();
-      IUS_DB2 db( masterPW );
+      US_DB2 db( masterPW );
    
       if ( db.lastErrno() != IUS_DB2::OK )
       {
@@ -580,7 +580,7 @@ US_Rotor::Status US_RotorGui::readRotor( int disk_db, int rotorID )
    {                         
       US_Passwd pw;
       QString masterPW = pw.getPasswd();
-      IUS_DB2 db( masterPW );
+      US_DB2 db( masterPW );
    
       if ( db.lastErrno() != IUS_DB2::OK )
       {
@@ -615,7 +615,7 @@ void US_RotorGui::deleteRotor( void )
    {
       US_Passwd pw;
       QString masterPW = pw.getPasswd();
-      IUS_DB2 db( masterPW );
+      US_DB2 db( masterPW );
    
       if ( db.lastErrno() != IUS_DB2::OK )
       {
@@ -662,7 +662,7 @@ bool US_RotorGui::readCalibrationProfiles( int rotorID )
       // Find out what rotor calibrations we have
       US_Passwd pw;
       QString masterPW = pw.getPasswd();
-      IUS_DB2 db( masterPW );
+      US_DB2 db( masterPW );
       
       if ( db.lastErrno() != IUS_DB2::OK )
       {
@@ -761,7 +761,7 @@ US_Rotor::Status US_RotorGui::readCalibration( int disk_db, int calibrationID )
    {                         
       US_Passwd pw;
       QString masterPW = pw.getPasswd();
-      IUS_DB2 db( masterPW );
+      US_DB2 db( masterPW );
    
       if ( db.lastErrno() != IUS_DB2::OK )
       {
@@ -808,7 +808,7 @@ void US_RotorGui::deleteCalibration( void )
    {
       US_Passwd pw;
       QString masterPW = pw.getPasswd();
-      IUS_DB2 db( masterPW );
+      US_DB2 db( masterPW );
    
       if ( db.lastErrno() != IUS_DB2::OK )
       {

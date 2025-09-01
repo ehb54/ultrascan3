@@ -104,7 +104,7 @@ void US_FailedRunGui::save_new( void )
   int autoflowFailedID = 0;
   
   US_Passwd pw;
-  IUS_DB2* db = new IUS_DB2( pw.getPasswd() );
+  IUS_DB2* db = new US_DB2( pw.getPasswd() );
    
   QStringList qry;
   qry << "new_autoflow_failed_record"
