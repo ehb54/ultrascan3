@@ -135,7 +135,7 @@ file(GLOB COM_PROJECT_FORMS "*.ui")
 file(GLOB COM_PROJECT_RESOURCES "*.qrc")
 
 # Create the executable (note: TARGET = us_comproject in .pro file)
-add_executable(us_comproject
+add_executable(us_com_project
         ${COM_PROJECT_SOURCES}
         ${COM_PROJECT_HEADERS}
         ${CROSS_DIR_SOURCES}
@@ -145,7 +145,7 @@ add_executable(us_comproject
         )
 
 # Set target properties
-set_target_properties(us_comproject PROPERTIES
+set_target_properties(us_com_project PROPERTIES
         AUTOMOC ON
         AUTOUIC ON
         AUTORCC ON
@@ -155,7 +155,7 @@ set_target_properties(us_comproject PROPERTIES
         )
 
 # Include directories for all the cross-directory headers
-target_include_directories(us_comproject PRIVATE
+target_include_directories(us_com_project PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/../us_experiment
         ${CMAKE_CURRENT_SOURCE_DIR}/../us_analysis_profile
@@ -174,16 +174,22 @@ target_include_directories(us_comproject PRIVATE
         )
 
 # Link libraries
-target_link_libraries(us_comproject PRIVATE
+target_link_libraries(us_com_project PRIVATE
         us_program_common
         Qt5::DataVisualization  # Required by .pro file
         Qt5::OpenGL            # Required by .pro file
         )
 
+# Set the binary output name
+set_target_properties(us_com_project PROPERTIES
+        OUTPUT_NAME us_comproject  # Binary will be named "us_comproject"
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
+        )
+
 # Install
-install(TARGETS us_comproject
+install(TARGETS us_com_project
         RUNTIME DESTINATION bin
         COMPONENT Programs
         )
 
-message(STATUS "Created: us_comproject")
+message(STATUS "Created: us_com_project")
