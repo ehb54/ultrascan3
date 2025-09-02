@@ -1,18 +1,17 @@
-name: Static Analysis
+name: Static Analysis (Non-Failing)
 on:
-#Commented out to implement later.
-#push:
-#pull_request:
-#      branches: [ master ]
-#    paths:
-#      - 'gui/**/*.cpp'
-#      - 'gui/**/*.h'
-#      - 'programs/**/*.cpp'
-#      - 'programs/**/*.h'
-#      - 'utils/**/*.cpp'
-#      - 'utils/**/*.h'
-#      - '.github/workflows/static-analysis.yml'
-#  workflow_dispatch:
+  push:
+  pull_request:
+    branches: [ master ]
+    paths:
+      - 'gui/**/*.cpp'
+      - 'gui/**/*.h'
+      - 'programs/**/*.cpp'
+      - 'programs/**/*.h'
+      - 'utils/**/*.cpp'
+      - 'utils/**/*.h'
+      - '.github/workflows/static-analysis.yml'
+  workflow_dispatch:
 
 jobs:
   static-analysis:
@@ -22,17 +21,12 @@ jobs:
       options: --cpus 2
 
     steps:
-      - name: Skip workflow (disabled)
-        run: |
-          echo "Static analysis workflow is currently disabled"
-          exit 0
-
       - uses: actions/checkout@v4
 
       - name: Install Additional Analysis Tools
         run: |
           # Only install static analysis tools that might not be in the Docker image
-          apt-get update
+          apt-get update || true
           apt-get install -y clang-tidy cppcheck bear clang-format libxml2-utils || true
           # Note: iwyu might not be available in all repos, so make it optional
           apt-get install -y iwyu || echo "iwyu not available, skipping"
@@ -42,7 +36,7 @@ jobs:
           # Your Docker image should already have local.pri configured
           # If not, copy from template
           if [ ! -f local.pri ]; then
-            cp local.pri.template local.pri
+            cp local.pri.template local.pri || true
           fi
 
       - name: Generate Compile Commands from QMake
@@ -51,9 +45,9 @@ jobs:
           echo "Generating compile commands for Ultrascan components..."
           
           # Generate Makefiles using your Docker's configured environment
-          cd qwtplot3d && qmake qwtplot3d.pro && cd ..
-          cd utils && qmake libus_utils.pro && cd ..
-          cd gui && qmake libus_gui.pro && cd ..
+          (cd qwtplot3d && qmake qwtplot3d.pro) || true
+          (cd utils && qmake libus_utils.pro) || true
+          (cd gui && qmake libus_gui.pro) || true
           
           # Try to capture compile commands
           if command -v bear >/dev/null 2>&1; then
@@ -64,11 +58,11 @@ jobs:
           
           # Show what qmake detected for debugging
           echo "QMake configuration detected:"
-          qmake -query
+          qmake -query || true
 
       - name: Run Cppcheck on Ultrascan
         run: |
-          cppcheck --version
+          cppcheck --version || true
           cppcheck --enable=all --inconclusive --xml --xml-version=2 \
             --suppress=missingIncludeSystem \
             --suppress=unmatchedSuppression \
@@ -97,7 +91,7 @@ jobs:
                 -I./gui -I./utils -I./qwtplot3d/include \
                 -I/usr/include/qt5 -I/usr/include/qt5/QtCore \
                 2>&1 || true
-            done > iwyu-report.txt
+            done > iwyu-report.txt || true
           else
             echo "Include-What-You-Use not available in this environment" > iwyu-report.txt
             echo "IWYU can help identify missing #include statements" >> iwyu-report.txt
@@ -107,17 +101,17 @@ jobs:
       - name: Run Clang-Tidy with Ultrascan Docker Environment
         run: |
           if command -v clang-tidy >/dev/null 2>&1; then
-            clang-tidy --version
+            clang-tidy --version || true
           
             # Get actual include paths from qmake in Docker environment
-            QT_INCLUDES=$(qmake -query QT_INSTALL_HEADERS)
+            QT_INCLUDES=$(qmake -query QT_INSTALL_HEADERS) || true
           
             # Find and verify we have .cpp files
             echo "Looking for C++ files..."
-            find gui utils programs -name "*.cpp" -type f | head -10
+            find gui utils programs -name "*.cpp" -type f | head -10 || true
           
             # Count files found
-            file_count=$(find gui utils programs -name "*.cpp" -type f | wc -l)
+            file_count=$(find gui utils programs -name "*.cpp" -type f | wc -l) || 0
             echo "Found $file_count .cpp files"
           
             if [ "$file_count" -gt 0 ]; then
@@ -131,7 +125,7 @@ jobs:
                      -I${QT_INCLUDES}/QtGui -I${QT_INCLUDES}/QtXml \
                      -DINTEL -DLINUX -DQT_WIDGETS_LIB -DQT_XML_LIB \
                   2>&1 || true
-              done > clang-tidy-report.txt
+              done > clang-tidy-report.txt || true
             else
               echo "No .cpp files found in gui, utils, or programs directories" > clang-tidy-report.txt
             fi
@@ -146,7 +140,7 @@ jobs:
           # Check if clang-format is available before using it
           if command -v clang-format >/dev/null 2>&1; then
             echo "Checking code formatting standards..."
-            find gui programs utils -name "*.cpp" -o -name "*.h" | xargs clang-format --dry-run --Werror || true
+            find gui programs utils -name "*.cpp" -o -name "*.h" | xargs clang-format --dry-run || true
           else
             echo "clang-format not available, skipping format check"
           fi
@@ -158,38 +152,54 @@ jobs:
           
           echo "### Clang-Tidy Results" >> analysis-summary.md
           echo '```' >> analysis-summary.md
-          head -50 clang-tidy-report.txt >> analysis-summary.md
+          if [ -f clang-tidy-report.txt ]; then
+            head -50 clang-tidy-report.txt >> analysis-summary.md
+          else
+            echo "No clang-tidy report generated" >> analysis-summary.md
+          fi
           echo '```' >> analysis-summary.md
           echo "" >> analysis-summary.md
           
           echo "### Cppcheck Results" >> analysis-summary.md
           echo '```' >> analysis-summary.md
-          if command -v xmllint >/dev/null 2>&1; then
-            xmllint --format cppcheck-report.xml | head -50 >> analysis-summary.md
+          if [ -f cppcheck-report.xml ]; then
+            if command -v xmllint >/dev/null 2>&1; then
+              xmllint --format cppcheck-report.xml | head -50 >> analysis-summary.md || head -50 cppcheck-report.xml >> analysis-summary.md
+            else
+              head -50 cppcheck-report.xml >> analysis-summary.md
+            fi
           else
-            head -50 cppcheck-report.xml >> analysis-summary.md
+            echo "No cppcheck report generated" >> analysis-summary.md
           fi
           echo '```' >> analysis-summary.md
           echo "" >> analysis-summary.md
           
           echo "### Include-What-You-Use Results" >> analysis-summary.md
           echo '```' >> analysis-summary.md
-          head -50 iwyu-report.txt >> analysis-summary.md
+          if [ -f iwyu-report.txt ]; then
+            head -50 iwyu-report.txt >> analysis-summary.md
+          else
+            echo "No IWYU report generated" >> analysis-summary.md
+          fi
           echo '```' >> analysis-summary.md
 
       - name: Show Analysis Results
         run: |
           echo "=== STATIC ANALYSIS COMPLETE ==="
           echo ""
-          echo "Clang-tidy found $(wc -l < clang-tidy-report.txt) lines of output"
-          echo "Cppcheck results saved to cppcheck-report.xml"
+          if [ -f clang-tidy-report.txt ]; then
+            echo "Clang-tidy found $(wc -l < clang-tidy-report.txt) lines of output"
+          else
+            echo "Clang-tidy report not found"
+          fi
+          echo "Cppcheck results saved to cppcheck-report.xml (if generated)"
           echo "Missing includes check completed"
           echo ""
           echo "=== SUMMARY OF FINDINGS ==="
-          cat analysis-summary.md
+          cat analysis-summary.md || echo "No analysis summary generated"
           echo ""
           echo "=== FILES GENERATED ==="
-          ls -la *report* analysis-summary.md 2>/dev/null || true
+          ls -la *report* analysis-summary.md 2>/dev/null || echo "No report files found"
 
       - name: Upload Analysis Reports
         uses: actions/upload-artifact@v4
@@ -205,6 +215,7 @@ jobs:
       - name: Comment PR with Results
         uses: actions/github-script@v7
         if: github.event_name == 'pull_request'
+        continue-on-error: true
         with:
           script: |
             const fs = require('fs');
@@ -216,20 +227,24 @@ jobs:
                 repo: context.repo.repo,
                 body: summary
               });
+            } else {
+              console.log('No analysis summary found to comment');
             }
 
-      - name: Fail on Critical Issues
+      - name: Report Critical Issues (Non-Failing)
         run: |
-          # Count critical issues and fail if too many
+          # Count critical issues and report (but don't fail)
           if [ -f clang-tidy-report.txt ]; then
             critical_issues=$(grep -c "error:" clang-tidy-report.txt 2>/dev/null || echo "0")
             echo "Found $critical_issues critical issues"
-            if [ "$critical_issues" -gt 10 ]; then
-              echo "Too many critical issues found: $critical_issues"
-              exit 1
+            if [ "$critical_issues" -gt 50 ]; then
+              echo "WARNING: Many critical issues found: $critical_issues"
+              echo "This would normally fail the build, but we're in introduction mode"
+              echo "Consider addressing these issues before enabling strict mode"
             else
               echo "Critical issues within acceptable range: $critical_issues"
             fi
           else
             echo "No clang-tidy report found, skipping critical issue check"
           fi
+          echo "Static analysis completed successfully (non-failing mode)"
