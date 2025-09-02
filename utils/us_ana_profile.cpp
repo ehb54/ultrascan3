@@ -958,7 +958,11 @@ bool US_AnaProfile::AnaProf2DSA::Parm2DSA::operator==
   if ( varyvbar  != p.varyvbar )  return false;
   
   if ( channel  != p.channel    ) return false;
-    
+
+  //also, compare in case of CG
+  if ( cust_grid != p.cust_grid ) return false;
+  if ( cgrid_name != p.cgrid_name ) return false;
+     
   return true;
 }
 
