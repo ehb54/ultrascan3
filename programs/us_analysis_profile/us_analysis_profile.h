@@ -240,7 +240,17 @@ class US_AnaprofPan2DSA : public US_WidgetsDialog
       QLineEdit*   le_kmin; 
       QLineEdit*   le_kmax; 
       QLineEdit*   le_kgrpts; 
-      QLineEdit*   le_grreps; 
+      QLineEdit*   le_grreps;
+
+      QLabel*  lb_smin;   
+      QLabel*  lb_smax;   
+      QLabel*  lb_sgrpts; 
+      QLabel*  lb_kmin;   
+      QLabel*  lb_kmax;   
+      QLabel*  lb_kgrpts; 
+      QLabel*  lb_varyvb; 
+      QLabel*  lb_constk; 
+      QLabel*  lb_grreps; 
 
       QLineEdit*   le_custmg;
       QLineEdit*   le_custmg_name;

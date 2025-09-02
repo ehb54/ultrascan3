@@ -2989,22 +2989,22 @@ US_AnaprofPan2DSA::US_AnaprofPan2DSA( QWidget* topw )
    // Labels and buttons
    QLabel*  lb_chnpro  = us_banner( tr( "Per-Channel Profile" ) );
    QLabel*  lb_chnsel  = us_label ( tr( "Channel [ Chn:Opt:Solut ]" ) );
-   QLabel*  lb_smin    = us_label ( tr( "s Minimum:         " ) );
-   QLabel*  lb_smax    = us_label ( tr( "s Maximum:         " ) );
-   QLabel*  lb_sgrpts  = us_label ( tr( "s Grid Points:     " ) );
-   QLabel*  lb_kmin    = us_label ( tr( "f/f0 Minimum:      " ) );
-   QLabel*  lb_kmax    = us_label ( tr( "f/f0 Maximum:      " ) );
-   QLabel*  lb_kgrpts  = us_label ( tr( "f/f0 Grid Points:  " ) );
-   QLabel*  lb_varyvb  = us_label ( tr( "Varying Vbar:      " ) );
-   QLabel*  lb_constk  = us_label ( tr( "Constant f/f0:     " ) );
-   QLabel*  lb_grreps  = us_label ( tr( "Grid Repetitions:  " ) );
-            pb_custmg  = us_pushbutton( tr( "Custom Grid" ) );;
-	    pb_applya  = us_pushbutton( tr( "Apply to All" ) );;
-            pb_nextch  = us_pushbutton( tr( "Next Channel" ) );;
-
-	    ck_customgrid = new QCheckBox( tr("Choose Custom Grid:"), this );
-	    ck_customgrid ->setAutoFillBackground( true );
-	    ck_customgrid ->setChecked( false );
+   lb_smin    = us_label ( tr( "s Minimum:         " ) );
+   lb_smax    = us_label ( tr( "s Maximum:         " ) );
+   lb_sgrpts  = us_label ( tr( "s Grid Points:     " ) );
+   lb_kmin    = us_label ( tr( "f/f0 Minimum:      " ) );
+   lb_kmax    = us_label ( tr( "f/f0 Maximum:      " ) );
+   lb_kgrpts  = us_label ( tr( "f/f0 Grid Points:  " ) );
+   lb_varyvb  = us_label ( tr( "Varying Vbar:      " ) );
+   lb_constk  = us_label ( tr( "Constant f/f0:     " ) );
+   lb_grreps  = us_label ( tr( "Grid Repetitions:  " ) );
+   pb_custmg  = us_pushbutton( tr( "Custom Grid" ) );;
+   pb_applya  = us_pushbutton( tr( "Apply to All" ) );;
+   pb_nextch  = us_pushbutton( tr( "Next Channel" ) );;
+   
+   ck_customgrid = new QCheckBox( tr("Choose Custom Grid:"), this );
+   ck_customgrid ->setAutoFillBackground( true );
+   ck_customgrid ->setChecked( false );
 
    QLabel*  lb_jflow   = us_banner( tr( "2DSA Job Flow"   ) );
    QLabel*  lb_sumry   = us_label ( tr( "Flow Summary:   "
@@ -3491,7 +3491,17 @@ void US_AnaprofPan2DSA::cust_grid_clicked( )
   le_kmax    ->setVisible( false ); 
   le_kgrpts  ->setVisible( false ); 
   le_grreps  ->setVisible( false );
-  
+
+  lb_smin    ->setVisible( false );   
+  lb_smax    ->setVisible( false );   
+  lb_sgrpts  ->setVisible( false ); 
+  lb_kmin    ->setVisible( false );   
+  lb_kmax    ->setVisible( false );   
+  lb_kgrpts  ->setVisible( false ); 
+  lb_varyvb  ->setVisible( false ); 
+  lb_constk  ->setVisible( false ); 
+  lb_grreps  ->setVisible( false ); 
+  ck_varyvb  ->setVisible( false ); 
 }
 
 void US_AnaprofPan2DSA::customGridChecked( bool checked )
@@ -3507,6 +3517,11 @@ void US_AnaprofPan2DSA::customGridChecked( bool checked )
 
   if (!checked)
     {
+      //clear
+      le_custmg_name ->setText("");
+      le_custmg      ->setText("");
+      
+      //and show regular one
       le_smin    ->setVisible( true );
       le_smax    ->setVisible( true );
       le_sgrpts  ->setVisible( true ); 
@@ -3514,6 +3529,17 @@ void US_AnaprofPan2DSA::customGridChecked( bool checked )
       le_kmax    ->setVisible( true ); 
       le_kgrpts  ->setVisible( true ); 
       le_grreps  ->setVisible( true );
+
+      lb_smin    ->setVisible( true );   
+      lb_smax    ->setVisible( true );   
+      lb_sgrpts  ->setVisible( true ); 
+      lb_kmin    ->setVisible( true );   
+      lb_kmax    ->setVisible( true );   
+      lb_kgrpts  ->setVisible( true ); 
+      lb_varyvb  ->setVisible( true ); 
+      lb_constk  ->setVisible( true ); 
+      lb_grreps  ->setVisible( true ); 
+      ck_varyvb  ->setVisible( true ); 
     }
 }
 
