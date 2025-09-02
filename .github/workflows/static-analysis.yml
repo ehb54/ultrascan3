@@ -1,6 +1,5 @@
 name: Static Analysis (Smart & Actionable)
 on:
-  push:
   pull_request:
     branches: [ master ]
     paths:
@@ -63,8 +62,15 @@ jobs:
           # Save to file for later steps
           echo "$CPP_FILES" > changed_cpp_files.txt
           
-          # Count files
-          FILE_COUNT=$(echo "$CPP_FILES" | grep -c . || echo "0")
+          # Count files - handle empty case properly
+          if [ -n "$CPP_FILES" ] && [ "$CPP_FILES" != "" ]; then
+            FILE_COUNT=$(echo "$CPP_FILES" | wc -l)
+            # Remove any leading/trailing whitespace
+            FILE_COUNT=$(echo "$FILE_COUNT" | tr -d ' ')
+          else
+            FILE_COUNT=0
+          fi
+          
           echo "CHANGED_FILE_COUNT=$FILE_COUNT" >> $GITHUB_ENV
           
           if [ "$FILE_COUNT" -eq 0 ]; then
@@ -163,9 +169,14 @@ jobs:
                     --format-style=none \
                     2>&1 || true)
           
-                  # Count issues in this file
-                  FILE_ISSUES=$(echo "$TIDY_OUTPUT" | grep -c "warning:\|error:" || echo "0")
-                  FILE_CRITICAL=$(echo "$TIDY_OUTPUT" | grep -c "error:\|clang-analyzer-\|bugprone-\|performance-" || echo "0")
+                  # Count issues in this file - handle empty output
+                  if [ -n "$TIDY_OUTPUT" ]; then
+                    FILE_ISSUES=$(echo "$TIDY_OUTPUT" | grep -c "warning:\|error:" || echo "0")
+                    FILE_CRITICAL=$(echo "$TIDY_OUTPUT" | grep -c "error:\|clang-analyzer-\|bugprone-\|performance-" || echo "0")
+                  else
+                    FILE_ISSUES=0
+                    FILE_CRITICAL=0
+                  fi
           
                   if [ "$FILE_ISSUES" -gt 0 ]; then
                     FILES_WITH_ISSUES=$((FILES_WITH_ISSUES + 1))
@@ -238,40 +249,48 @@ jobs:
         run: |
           echo "Parsing analysis results for summary..."
           
-          # Parse Cppcheck results
+          # Parse Cppcheck results - handle missing file gracefully
           CPPCHECK_ERRORS=0
           CPPCHECK_WARNINGS=0
           CPPCHECK_PERFORMANCE=0
           
-          if [ -f cppcheck-report.xml ]; then
+          if [ -f cppcheck-report.xml ] && [ -s cppcheck-report.xml ]; then
             CPPCHECK_ERRORS=$(grep -c 'severity="error"' cppcheck-report.xml 2>/dev/null || echo "0")
             CPPCHECK_WARNINGS=$(grep -c 'severity="warning"' cppcheck-report.xml 2>/dev/null || echo "0")
             CPPCHECK_PERFORMANCE=$(grep -c 'severity="performance"' cppcheck-report.xml 2>/dev/null || echo "0")
-          
-            echo "CPPCHECK_ERRORS=$CPPCHECK_ERRORS" >> $GITHUB_ENV
-            echo "CPPCHECK_WARNINGS=$CPPCHECK_WARNINGS" >> $GITHUB_ENV
-            echo "CPPCHECK_PERFORMANCE=$CPPCHECK_PERFORMANCE" >> $GITHUB_ENV
           fi
           
-          # Extract top Cppcheck issues
-          if [ -f cppcheck-report.xml ] && [ "$CPPCHECK_ERRORS" -gt 0 -o "$CPPCHECK_WARNINGS" -gt 0 ]; then
-            echo "=== Top Cppcheck Issues ===" > cppcheck-summary.txt
-            xmllint --xpath "//error[@severity='error' or @severity='warning']" cppcheck-report.xml 2>/dev/null | head -10 >> cppcheck-summary.txt || true
-            echo "" >> cppcheck-summary.txt
+          echo "CPPCHECK_ERRORS=$CPPCHECK_ERRORS" >> $GITHUB_ENV
+          echo "CPPCHECK_WARNINGS=$CPPCHECK_WARNINGS" >> $GITHUB_ENV
+          echo "CPPCHECK_PERFORMANCE=$CPPCHECK_PERFORMANCE" >> $GITHUB_ENV
+          
+          # Extract top Cppcheck issues - handle missing file gracefully
+          if [ -f cppcheck-report.xml ] && [ -s cppcheck-report.xml ]; then
+            TOTAL_CPPCHECK_ISSUES=$((CPPCHECK_ERRORS + CPPCHECK_WARNINGS))
+            if [ "$TOTAL_CPPCHECK_ISSUES" -gt 0 ]; then
+              echo "=== Top Cppcheck Issues ===" > cppcheck-summary.txt
+              xmllint --xpath "//error[@severity='error' or @severity='warning']" cppcheck-report.xml 2>/dev/null | head -10 >> cppcheck-summary.txt || true
+              echo "" >> cppcheck-summary.txt
+            fi
           fi
 
       - name: Generate Actionable PR Comment
         if: env.SKIP_ANALYSIS != 'true'
         run: |
-          # Read clang-tidy results
+          # Read clang-tidy results - handle missing or invalid JSON
           CLANG_TIDY_TOTAL=0
           CLANG_TIDY_CRITICAL=0
           CLANG_TIDY_FILES=0
           
           if [ -f clang-tidy-results.json ]; then
-            CLANG_TIDY_TOTAL=$(jq -r '.summary.total_issues // 0' clang-tidy-results.json)
-            CLANG_TIDY_CRITICAL=$(jq -r '.summary.critical_issues // 0' clang-tidy-results.json)
-            CLANG_TIDY_FILES=$(jq -r '.summary.files_with_issues // 0' clang-tidy-results.json)
+            # Validate JSON first
+            if jq empty clang-tidy-results.json >/dev/null 2>&1; then
+              CLANG_TIDY_TOTAL=$(jq -r '.summary.total_issues // 0' clang-tidy-results.json 2>/dev/null || echo "0")
+              CLANG_TIDY_CRITICAL=$(jq -r '.summary.critical_issues // 0' clang-tidy-results.json 2>/dev/null || echo "0")
+              CLANG_TIDY_FILES=$(jq -r '.summary.files_with_issues // 0' clang-tidy-results.json 2>/dev/null || echo "0")
+            else
+              echo "Invalid JSON in clang-tidy-results.json, using defaults"
+            fi
           fi
           
           # Generate smart summary
@@ -288,8 +307,11 @@ jobs:
           
           EOF
           
-          # Add critical issues section if there are any
-          TOTAL_CRITICAL=$(($CLANG_TIDY_CRITICAL + $CPPCHECK_ERRORS))
+          # Add critical issues section if there are any - handle arithmetic safely
+          TOTAL_CRITICAL=0
+          if [ "$CLANG_TIDY_CRITICAL" -ge 0 ] && [ "$CPPCHECK_ERRORS" -ge 0 ]; then
+            TOTAL_CRITICAL=$((CLANG_TIDY_CRITICAL + CPPCHECK_ERRORS))
+          fi
           if [ $TOTAL_CRITICAL -gt 0 ]; then
             cat >> pr-comment.md << 'EOF'
           ### Critical Issues Requiring Attention
