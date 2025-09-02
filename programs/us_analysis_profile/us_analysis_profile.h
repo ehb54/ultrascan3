@@ -24,6 +24,9 @@
 #include "us_report_general_gui.h"
 #include "us_combined_plots_parms_gui.h"
 
+#include "us_model.h"
+#include "us_model_loader.h"
+
 //#include "us_license_t.h"
 //#include "us_license.h"
 
@@ -226,6 +229,7 @@ class US_AnaprofPan2DSA : public US_WidgetsDialog
 
       QVector<int> active_items_2dsa;
 
+      QCheckBox*   ck_customgrid;
       QPushButton* pb_custmg; 
       QPushButton* pb_applya; 
       QPushButton* pb_nextch; 
@@ -237,7 +241,12 @@ class US_AnaprofPan2DSA : public US_WidgetsDialog
       QLineEdit*   le_kmax; 
       QLineEdit*   le_kgrpts; 
       QLineEdit*   le_grreps; 
-      QLineEdit*   le_custmg; 
+
+      QLineEdit*   le_custmg;
+      QLineEdit*   le_custmg_name;
+      QLabel*      lb_custmg;
+      QLabel*      lb_custmg_name;
+  
       QLineEdit*   le_constk; 
       QLineEdit*   le_j2gpts;
       QLineEdit*   le_j2mrng;
@@ -278,6 +287,7 @@ class US_AnaprofPan2DSA : public US_WidgetsDialog
       void vary_vbar_checked( bool );
       void constk_changed   ( );
       void apply_all_clicked( );
+      void customGridChecked( bool );
       void job1_run_checked ( bool );
       void job2_run_checked ( bool );
       void mgpoints_changed ( );
