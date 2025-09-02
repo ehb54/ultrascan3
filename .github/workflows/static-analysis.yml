@@ -28,6 +28,7 @@ jobs:
           # Only install static analysis tools that might not be in the Docker image
           apt-get update || true
           apt-get install -y clang-tidy cppcheck bear clang-format libxml2-utils || true
+          apt-get install -y libqwt-qt5-dev || apt-get install -y libqwt-dev || true
           # Note: iwyu might not be available in all repos, so make it optional
           apt-get install -y iwyu || echo "iwyu not available, skipping"
 
