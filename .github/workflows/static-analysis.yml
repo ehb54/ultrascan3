@@ -1,4 +1,4 @@
-name: Static Analysis (CMake-Based)
+name: Static Analysis (Smart & Actionable)
 on:
   push:
   pull_request:
@@ -26,42 +26,82 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Allow CI to access repo directory
         run: git config --global --add safe.directory /__w/ultrascan3/ultrascan3
 
+      - name: Get Changed Files
+        id: changed-files
+        run: |
+          # For PRs, compare against the base branch
+          # For pushes, compare against the previous commit
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE_SHA="${{ github.event.pull_request.base.sha }}"
+            HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+            echo "Comparing PR changes: $BASE_SHA..$HEAD_SHA"
+            CHANGED_FILES=$(git diff --name-only $BASE_SHA..$HEAD_SHA)
+          else
+            # For push events, compare with the previous commit
+            if [ "${{ github.event.before }}" != "0000000000000000000000000000000000000000" ]; then
+              echo "Comparing push changes: ${{ github.event.before }}..${{ github.sha }}"
+              CHANGED_FILES=$(git diff --name-only ${{ github.event.before }}..${{ github.sha }})
+            else
+              # First commit, analyze all files
+              echo "First commit - analyzing all files"
+              CHANGED_FILES=$(find gui utils programs -name "*.cpp" -o -name "*.h" 2>/dev/null || true)
+            fi
+          fi
+          
+          # Filter to only C++ files we care about
+          CPP_FILES=$(echo "$CHANGED_FILES" | grep -E '\.(cpp|h)$' | grep -E '^(gui|utils|programs)/' || true)
+          
+          echo "Changed C++ files:"
+          echo "$CPP_FILES"
+          
+          # Save to file for later steps
+          echo "$CPP_FILES" > changed_cpp_files.txt
+          
+          # Count files
+          FILE_COUNT=$(echo "$CPP_FILES" | grep -c . || echo "0")
+          echo "CHANGED_FILE_COUNT=$FILE_COUNT" >> $GITHUB_ENV
+          
+          if [ "$FILE_COUNT" -eq 0 ]; then
+            echo "No C++ files changed - static analysis will be skipped"
+            echo "SKIP_ANALYSIS=true" >> $GITHUB_ENV
+          else
+            echo "Will analyze $FILE_COUNT changed C++ files"
+            echo "SKIP_ANALYSIS=false" >> $GITHUB_ENV
+          fi
+
       - name: Install Analysis Tools and CMake Dependencies
+        if: env.SKIP_ANALYSIS != 'true'
         run: |
           apt-get update || true
-          apt-get install -y clang-tidy cppcheck clang-format libxml2-utils || true
+          apt-get install -y clang-tidy cppcheck clang-format libxml2-utils jq || true
           apt-get install -y libqwt-qt5-dev libarchive-dev || true
           apt-get install -y iwyu cmake ninja-build || true
-          
-          # Verify CMake version
-          cmake --version || true
 
       - name: Setup Build Environment
+        if: env.SKIP_ANALYSIS != 'true'
         run: |
-          # Set up any environment variables your CMake might need
           export ULTRASCAN=$(pwd)
           export us3=$(pwd)
           echo "ULTRASCAN=$(pwd)" >> $GITHUB_ENV
           echo "us3=$(pwd)" >> $GITHUB_ENV
           
-          # Set up revision info if needed
           if [ -d programs/us ]; then
             (cd programs/us && sh revision.sh) || true
           fi
 
       - name: Configure with CMake and Generate Compile Commands
+        if: env.SKIP_ANALYSIS != 'true'
         run: |
           echo "Configuring build with CMake..."
-          
-          # Create build directory
           mkdir -p build
           cd build
           
-          # Configure with CMake - this will use your FindQwt.cmake
           cmake .. \
             -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
             -DCMAKE_BUILD_TYPE=Debug \
@@ -69,256 +109,376 @@ jobs:
             -DQT_QMAKE_EXECUTABLE=$(which qmake) \
             -G "Unix Makefiles" || true
           
-          # Copy compile commands to root for tools to find
           if [ -f compile_commands.json ]; then
             cp compile_commands.json ../
             echo "Generated compile_commands.json with CMake"
-            echo "Compile commands contain $(cat ../compile_commands.json | jq length 2>/dev/null || echo "unknown") entries"
           else
             echo "Warning: Failed to generate compile_commands.json"
           fi
-          
           cd ..
 
       - name: Build Components to Resolve Dependencies
+        if: env.SKIP_ANALYSIS != 'true'
         run: |
           echo "Building components to ensure all dependencies are available..."
-          
           cd build
-          
-          # Build in parallel to resolve all dependencies
           make -j4 || true
-          
           echo "Build completed (errors ignored for analysis purposes)"
           cd ..
 
-      - name: Validate Compile Commands
-        run: |
-          if [ -f compile_commands.json ]; then
-            echo "Compile commands database found"
-            echo "Sample entries:"
-            head -20 compile_commands.json || true
-          
-            # Check if it contains our problematic file
-            if grep -q "us_report_general_gui.cpp" compile_commands.json; then
-              echo "Found problematic file in compile database"
-              grep -A5 -B5 "us_report_general_gui.cpp" compile_commands.json || true
-            fi
-          else
-            echo "No compile commands database found - tools will use manual include paths"
-          fi
-
-      - name: Run Clang-Tidy with CMake-Generated Commands
+      - name: Run Smart Clang-Tidy Analysis
+        if: env.SKIP_ANALYSIS != 'true'
         run: |
           if command -v clang-tidy >/dev/null 2>&1; then
-            echo "Running Clang-Tidy analysis..."
+            echo "Running focused Clang-Tidy analysis..."
             clang-tidy --version
+          
+            if [ ! -s changed_cpp_files.txt ]; then
+              echo "No changed files to analyze"
+              echo "No files to analyze" > clang-tidy-results.json
+              exit 0
+            fi
+          
+            # Use more focused, critical checks only
+            CRITICAL_CHECKS="-*,clang-analyzer-*,bugprone-*,cppcoreguidelines-avoid-*,cppcoreguidelines-pro-*,cppcoreguidelines-slicing,performance-*,readability-misleading-indentation,readability-braces-around-statements,readability-container-size-empty"
+          
+            # Initialize results
+            echo '{"files": [], "summary": {"total_issues": 0, "critical_issues": 0, "files_with_issues": 0}}' > clang-tidy-results.json
+          
+            TOTAL_ISSUES=0
+            CRITICAL_ISSUES=0
+            FILES_WITH_ISSUES=0
           
             if [ -f compile_commands.json ]; then
               echo "Using CMake-generated compile commands database"
           
-              # Find C++ files to analyze
-              find gui utils programs -name "*.cpp" -type f | head -20 | while read -r file; do
-                echo "Analyzing: $file"
+              while IFS= read -r file; do
+                if [ -n "$file" ] && [ -f "$file" ]; then
+                  echo "Analyzing: $file"
           
-                # Use compile_commands.json - this should have all the right paths
-                clang-tidy "$file" \
-                  -p . \
-                  --checks='-*,clang-analyzer-*,cppcoreguidelines-*,modernize-*,performance-*,readability-*,bugprone-*,misc-*,clang-analyzer-deadcode*' \
-                  --header-filter='.*' \
-                  2>&1 || echo "Analysis completed with warnings for $file"
-              done > clang-tidy-report.txt 2>&1 || true
+                  # Run clang-tidy and capture output
+                  TIDY_OUTPUT=$(clang-tidy "$file" \
+                    -p . \
+                    --checks="$CRITICAL_CHECKS" \
+                    --format-style=none \
+                    2>&1 || true)
           
-            else
-              echo "No compile commands available, using manual include discovery"
+                  # Count issues in this file
+                  FILE_ISSUES=$(echo "$TIDY_OUTPUT" | grep -c "warning:\|error:" || echo "0")
+                  FILE_CRITICAL=$(echo "$TIDY_OUTPUT" | grep -c "error:\|clang-analyzer-\|bugprone-\|performance-" || echo "0")
           
-              # Fallback: extract includes from CMake cache
-              QT_INCLUDES=""
-              QWT_INCLUDES=""
+                  if [ "$FILE_ISSUES" -gt 0 ]; then
+                    FILES_WITH_ISSUES=$((FILES_WITH_ISSUES + 1))
+                    TOTAL_ISSUES=$((TOTAL_ISSUES + FILE_ISSUES))
+                    CRITICAL_ISSUES=$((CRITICAL_ISSUES + FILE_CRITICAL))
           
-              if [ -f build/CMakeCache.txt ]; then
-                QT_INCLUDES=$(grep "QT.*_INCLUDE_DIR" build/CMakeCache.txt | cut -d'=' -f2 | tr '\n' ' ') || true
-                # Look for Qwt paths in CMake cache
-                QWT_INCLUDES=$(grep -i "qwt.*include" build/CMakeCache.txt | cut -d'=' -f2 | tr '\n' ' ') || true
-              fi
+                    # Extract top 5 most important issues for this file
+                    TOP_ISSUES=$(echo "$TIDY_OUTPUT" | grep -E "(error:|clang-analyzer-|bugprone-|performance-)" | head -5 || true)
           
-              find gui utils programs -name "*.cpp" -type f | head -20 | while read -r file; do
-                echo "Analyzing: $file"
-                clang-tidy "$file" \
-                  --checks='-*,clang-analyzer-*,cppcoreguidelines-*,modernize-*,performance-*,readability-*,bugprone-*,misc-*' \
-                  -- -I./gui -I./utils -I./qwtplot3d/include \
-                     ${QT_INCLUDES} ${QWT_INCLUDES} \
-                     -DINTEL -DLINUX -DQT_WIDGETS_LIB -DQT_XML_LIB \
-                  2>&1 || true
-              done > clang-tidy-report.txt || true
+                    if [ -n "$TOP_ISSUES" ]; then
+                      echo "=== Issues in $file ===" >> clang-tidy-summary.txt
+                      echo "$TOP_ISSUES" >> clang-tidy-summary.txt
+                      echo "" >> clang-tidy-summary.txt
+                    fi
+                  fi
+                fi
+              done < changed_cpp_files.txt
             fi
           
-            echo "Clang-Tidy analysis completed"
+            # Update summary
+            jq --argjson total "$TOTAL_ISSUES" \
+               --argjson critical "$CRITICAL_ISSUES" \
+               --argjson files "$FILES_WITH_ISSUES" \
+               '.summary.total_issues = $total | .summary.critical_issues = $critical | .summary.files_with_issues = $files' \
+               clang-tidy-results.json > temp.json && mv temp.json clang-tidy-results.json
+          
+            echo "Clang-Tidy analysis completed: $TOTAL_ISSUES total issues, $CRITICAL_ISSUES critical"
           else
-            echo "Clang-tidy not available" > clang-tidy-report.txt
+            echo "Clang-tidy not available" > clang-tidy-results.json
           fi
 
-      - name: Run Cppcheck Analysis
+      - name: Run Smart Cppcheck Analysis
+        if: env.SKIP_ANALYSIS != 'true'
         run: |
-          echo "Running Cppcheck analysis..."
+          echo "Running focused Cppcheck analysis..."
           
-          if [ -f compile_commands.json ]; then
-            echo "Using compile commands database for Cppcheck"
-            cppcheck --project=compile_commands.json \
-              --enable=all --inconclusive --xml --xml-version=2 \
+          if [ ! -s changed_cpp_files.txt ]; then
+            echo '<?xml version="1.0" encoding="UTF-8"?><results version="2"></results>' > cppcheck-report.xml
+            exit 0
+          fi
+          
+          # Create a list of files to analyze
+          FILES_TO_ANALYZE=""
+          while IFS= read -r file; do
+            if [ -n "$file" ] && [ -f "$file" ]; then
+              FILES_TO_ANALYZE="$FILES_TO_ANALYZE $file"
+            fi
+          done < changed_cpp_files.txt
+          
+          if [ -n "$FILES_TO_ANALYZE" ]; then
+            # Focus on the most important checks
+            cppcheck \
+              --enable=error,warning,performance,portability \
+              --inconclusive --xml --xml-version=2 \
               --suppress=missingIncludeSystem \
               --suppress=unmatchedSuppression \
+              --suppress=unusedFunction \
               --library=qt --library=posix \
               --platform=unix64 \
-              2> cppcheck-report.xml || true
-          else
-            echo "Using manual paths for Cppcheck"
-            cppcheck --enable=all --inconclusive --xml --xml-version=2 \
-              --suppress=missingIncludeSystem \
-              --suppress=unmatchedSuppression \
-              --library=qt --library=posix \
-              --platform=unix64 \
+              --max-ctu-depth=10 \
               -I./gui -I./utils -I./qwtplot3d/include \
               -DINTEL -DLINUX \
-              gui/ utils/ programs/ 2> cppcheck-report.xml || true
-          fi
-          
-          echo "Cppcheck analysis completed"
-
-      - name: Run Include-What-You-Use Analysis
-        run: |
-          echo "IWYU analysis temporarily disabled due to Qt header resolution issues" > iwyu-report.txt
-          echo "IWYU requires complex setup for Qt projects and may need manual configuration" >> iwyu-report.txt
-          echo "Consider enabling this after Clang-Tidy and Cppcheck are working properly" >> iwyu-report.txt
-          
-          # Uncomment below when ready to debug IWYU properly
-          # if command -v iwyu_tool.py >/dev/null 2>&1; then
-          #   echo "Running Include-What-You-Use analysis..."
-          #   if [ -f compile_commands.json ]; then
-          #     iwyu_tool.py -p . gui/ programs/ utils/ > iwyu-report.txt 2>&1 || true
-          #   fi
-          # fi
-
-      - name: Generate Analysis Summary
-        run: |
-          echo "## Static Analysis Results (CMake-Based)" > analysis-summary.md
-          echo "" >> analysis-summary.md
-          
-          echo "### Build Configuration" >> analysis-summary.md
-          echo '```' >> analysis-summary.md
-          echo "CMake configuration used for dependency resolution" >> analysis-summary.md
-          if [ -f compile_commands.json ]; then
-            echo "Compile commands database: $(cat compile_commands.json | jq length 2>/dev/null || echo "present") entries" >> analysis-summary.md
+              $FILES_TO_ANALYZE 2> cppcheck-report.xml || true
           else
-            echo "Compile commands database: not generated" >> analysis-summary.md
+            echo '<?xml version="1.0" encoding="UTF-8"?><results version="2"></results>' > cppcheck-report.xml
           fi
-          echo '```' >> analysis-summary.md
-          echo "" >> analysis-summary.md
+
+      - name: Parse Analysis Results
+        if: env.SKIP_ANALYSIS != 'true'
+        run: |
+          echo "Parsing analysis results for summary..."
           
-          echo "### Clang-Tidy Results" >> analysis-summary.md
-          echo '```' >> analysis-summary.md
-          if [ -f clang-tidy-report.txt ]; then
-            head -50 clang-tidy-report.txt >> analysis-summary.md
-          else
-            echo "No clang-tidy report generated" >> analysis-summary.md
-          fi
-          echo '```' >> analysis-summary.md
-          echo "" >> analysis-summary.md
+          # Parse Cppcheck results
+          CPPCHECK_ERRORS=0
+          CPPCHECK_WARNINGS=0
+          CPPCHECK_PERFORMANCE=0
           
-          echo "### Cppcheck Results" >> analysis-summary.md
-          echo '```' >> analysis-summary.md
           if [ -f cppcheck-report.xml ]; then
-            if command -v xmllint >/dev/null 2>&1; then
-              xmllint --format cppcheck-report.xml | head -50 >> analysis-summary.md || head -50 cppcheck-report.xml >> analysis-summary.md
-            else
-              head -50 cppcheck-report.xml >> analysis-summary.md
+            CPPCHECK_ERRORS=$(grep -c 'severity="error"' cppcheck-report.xml 2>/dev/null || echo "0")
+            CPPCHECK_WARNINGS=$(grep -c 'severity="warning"' cppcheck-report.xml 2>/dev/null || echo "0")
+            CPPCHECK_PERFORMANCE=$(grep -c 'severity="performance"' cppcheck-report.xml 2>/dev/null || echo "0")
+          
+            echo "CPPCHECK_ERRORS=$CPPCHECK_ERRORS" >> $GITHUB_ENV
+            echo "CPPCHECK_WARNINGS=$CPPCHECK_WARNINGS" >> $GITHUB_ENV
+            echo "CPPCHECK_PERFORMANCE=$CPPCHECK_PERFORMANCE" >> $GITHUB_ENV
+          fi
+          
+          # Extract top Cppcheck issues
+          if [ -f cppcheck-report.xml ] && [ "$CPPCHECK_ERRORS" -gt 0 -o "$CPPCHECK_WARNINGS" -gt 0 ]; then
+            echo "=== Top Cppcheck Issues ===" > cppcheck-summary.txt
+            xmllint --xpath "//error[@severity='error' or @severity='warning']" cppcheck-report.xml 2>/dev/null | head -10 >> cppcheck-summary.txt || true
+            echo "" >> cppcheck-summary.txt
+          fi
+
+      - name: Generate Actionable PR Comment
+        if: env.SKIP_ANALYSIS != 'true'
+        run: |
+          # Read clang-tidy results
+          CLANG_TIDY_TOTAL=0
+          CLANG_TIDY_CRITICAL=0
+          CLANG_TIDY_FILES=0
+          
+          if [ -f clang-tidy-results.json ]; then
+            CLANG_TIDY_TOTAL=$(jq -r '.summary.total_issues // 0' clang-tidy-results.json)
+            CLANG_TIDY_CRITICAL=$(jq -r '.summary.critical_issues // 0' clang-tidy-results.json)
+            CLANG_TIDY_FILES=$(jq -r '.summary.files_with_issues // 0' clang-tidy-results.json)
+          fi
+          
+          # Generate smart summary
+          cat > pr-comment.md << 'EOF'
+          ## Static Analysis Results
+          
+          **Files analyzed:** $CHANGED_FILE_COUNT changed files
+          
+          ### Summary
+          | Tool | Critical Issues | Total Issues | Status |
+          |------|----------------|--------------|--------|
+          | Clang-Tidy | $CLANG_TIDY_CRITICAL | $CLANG_TIDY_TOTAL | $([ $CLANG_TIDY_CRITICAL -eq 0 ] && echo "Clean" || echo "Needs attention") |
+          | Cppcheck | $CPPCHECK_ERRORS | $(($CPPCHECK_ERRORS + $CPPCHECK_WARNINGS)) | $([ $CPPCHECK_ERRORS -eq 0 ] && echo "Clean" || echo "Needs attention") |
+          
+          EOF
+          
+          # Add critical issues section if there are any
+          TOTAL_CRITICAL=$(($CLANG_TIDY_CRITICAL + $CPPCHECK_ERRORS))
+          if [ $TOTAL_CRITICAL -gt 0 ]; then
+            cat >> pr-comment.md << 'EOF'
+          ### Critical Issues Requiring Attention
+          
+          The following issues should be addressed before merging:
+          
+          EOF
+          
+            # Add Clang-Tidy critical issues
+            if [ -f clang-tidy-summary.txt ] && [ $CLANG_TIDY_CRITICAL -gt 0 ]; then
+              echo "#### Clang-Tidy Critical Issues" >> pr-comment.md
+              echo '```' >> pr-comment.md
+              head -20 clang-tidy-summary.txt >> pr-comment.md
+              echo '```' >> pr-comment.md
+              echo "" >> pr-comment.md
+            fi
+          
+            # Add Cppcheck critical issues
+            if [ -f cppcheck-summary.txt ] && [ $CPPCHECK_ERRORS -gt 0 ]; then
+              echo "#### Cppcheck Errors" >> pr-comment.md
+              echo '```' >> pr-comment.md
+              head -10 cppcheck-summary.txt >> pr-comment.md
+              echo '```' >> pr-comment.md
+              echo "" >> pr-comment.md
             fi
           else
-            echo "No cppcheck report generated" >> analysis-summary.md
-          fi
-          echo '```' >> analysis-summary.md
-          echo "" >> analysis-summary.md
+            cat >> pr-comment.md << 'EOF'
+          ### Great Job!
           
-          echo "### Include-What-You-Use Results" >> analysis-summary.md
-          echo '```' >> analysis-summary.md
-          if [ -f iwyu-report.txt ]; then
-            head -50 iwyu-report.txt >> analysis-summary.md
-          else
-            echo "No IWYU report generated" >> analysis-summary.md
+          No critical issues found in the changed files. Your code looks good!
+          
+          EOF
           fi
-          echo '```' >> analysis-summary.md
-          echo "" >> analysis-summary.md
+          
+          # Add performance suggestions if any
+          if [ $CPPCHECK_PERFORMANCE -gt 0 ]; then
+            cat >> pr-comment.md << 'EOF'
+          ### Performance Suggestions
+          
+          Found $CPPCHECK_PERFORMANCE performance improvement opportunities. While not critical, these could improve efficiency.
+          
+          EOF
+          fi
+          
+          # Add footer
+          cat >> pr-comment.md << 'EOF'
+          
+          ---
+          <details>
+          <summary>Analysis Details</summary>
+          
+          - Analysis focused on **changed files only** to provide relevant feedback
+          - **Critical checks**: Memory leaks, null pointer dereferences, buffer overflows, performance issues
+          - **Skipped**: Style suggestions, minor modernization hints
+          - View full reports in the Actions artifacts for complete details
+          
+          </details>
+          EOF
+          
+          # Substitute variables
+          sed -i "s/\$CHANGED_FILE_COUNT/$CHANGED_FILE_COUNT/g" pr-comment.md
+          sed -i "s/\$CLANG_TIDY_CRITICAL/$CLANG_TIDY_CRITICAL/g" pr-comment.md
+          sed -i "s/\$CLANG_TIDY_TOTAL/$CLANG_TIDY_TOTAL/g" pr-comment.md
+          sed -i "s/\$CPPCHECK_ERRORS/${CPPCHECK_ERRORS:-0}/g" pr-comment.md
+          sed -i "s/\$CPPCHECK_WARNINGS/${CPPCHECK_WARNINGS:-0}/g" pr-comment.md
+          sed -i "s/\$CPPCHECK_PERFORMANCE/${CPPCHECK_PERFORMANCE:-0}/g" pr-comment.md
+
+      - name: Generate Skip Analysis Comment
+        if: env.SKIP_ANALYSIS == 'true'
+        run: |
+          cat > pr-comment.md << 'EOF'
+          ## Static Analysis Results
+          
+          **No C++ files were changed in this PR** - static analysis was skipped.
+          
+          Only changes to documentation, configuration, or non-C++ files were detected.
+          EOF
 
       - name: Display Results Summary
+        if: always()
         run: |
-          echo "=== STATIC ANALYSIS COMPLETE ==="
+          echo "=== SMART STATIC ANALYSIS COMPLETE ==="
           echo ""
-          if [ -f clang-tidy-report.txt ]; then
-            issue_count=$(wc -l < clang-tidy-report.txt)
-            echo "Clang-tidy generated $issue_count lines of output"
+          
+          if [ "$SKIP_ANALYSIS" = "true" ]; then
+            echo "No C++ files changed - analysis was skipped"
           else
-            echo "Clang-tidy report not found"
+            echo "Files analyzed: $CHANGED_FILE_COUNT"
+          
+            if [ -f clang-tidy-results.json ]; then
+              CRITICAL=$(jq -r '.summary.critical_issues // 0' clang-tidy-results.json)
+              TOTAL=$(jq -r '.summary.total_issues // 0' clang-tidy-results.json)
+              echo "Clang-tidy: $CRITICAL critical issues, $TOTAL total"
+            fi
+          
+            if [ -n "${CPPCHECK_ERRORS:-}" ]; then
+              echo "Cppcheck: ${CPPCHECK_ERRORS:-0} errors, ${CPPCHECK_WARNINGS:-0} warnings"
+            fi
           fi
           
-          if [ -f cppcheck-report.xml ]; then
-            error_count=$(grep -c "<error" cppcheck-report.xml 2>/dev/null || echo "0")
-            echo "Cppcheck found $error_count potential issues"
-          else
-            echo "Cppcheck report not found"
-          fi
-          
-          echo "Analysis summary:"
-          cat analysis-summary.md || echo "No analysis summary generated"
+          echo ""
+          echo "PR Comment preview:"
+          echo "==================="
+          cat pr-comment.md || echo "No PR comment generated"
 
       - name: Upload Analysis Reports
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: cmake-static-analysis-reports
+          name: smart-static-analysis-reports
           path: |
-            clang-tidy-report.txt
+            clang-tidy-results.json
+            clang-tidy-summary.txt
             cppcheck-report.xml
-            iwyu-report.txt
-            analysis-summary.md
-            format-issues.txt
+            cppcheck-summary.txt
+            pr-comment.md
+            changed_cpp_files.txt
             compile_commands.json
 
-      - name: Comment PR with Results
+      - name: Comment PR with Smart Results
         uses: actions/github-script@v7
         if: github.event_name == 'pull_request'
         continue-on-error: true
         with:
           script: |
             const fs = require('fs');
-            if (fs.existsSync('analysis-summary.md')) {
-              const summary = fs.readFileSync('analysis-summary.md', 'utf8');
+            
+            if (!fs.existsSync('pr-comment.md')) {
+              console.log('No PR comment file found');
+              return;
+            }
+            
+            const comment = fs.readFileSync('pr-comment.md', 'utf8');
+            
+            // Check if we already commented on this PR
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            
+            // Look for existing static analysis comment
+            const botComment = comments.find(comment => 
+              comment.user.type === 'Bot' && 
+              comment.body.includes('Static Analysis Results')
+            );
+            
+            if (botComment) {
+              // Update existing comment
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: comment
+              });
+              console.log('Updated existing static analysis comment');
+            } else {
+              // Create new comment
               await github.rest.issues.createComment({
                 issue_number: context.issue.number,
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                body: summary
+                body: comment
               });
-            } else {
-              console.log('No analysis summary found to comment');
+              console.log('Created new static analysis comment');
             }
 
-      - name: Report Issues (Non-Failing)
+      - name: Set Analysis Status
+        if: env.SKIP_ANALYSIS != 'true'
         run: |
-          # Count issues but don't fail the build
-          critical_issues=0
+          # Determine if we should fail the build (optional)
+          SHOULD_FAIL=false
           
-          if [ -f clang-tidy-report.txt ]; then
-            critical_issues=$(grep -c "error:" clang-tidy-report.txt 2>/dev/null || echo "0")
+          if [ -f clang-tidy-results.json ]; then
+            CRITICAL=$(jq -r '.summary.critical_issues // 0' clang-tidy-results.json)
+            if [ "$CRITICAL" -gt 5 ]; then
+              echo "::warning::Found $CRITICAL critical issues - consider addressing before merge"
+              # Set SHOULD_FAIL=true if you want to enforce this
+            fi
           fi
           
-          echo "Found $critical_issues critical issues in Clang-Tidy analysis"
+          if [ -n "${CPPCHECK_ERRORS:-}" ] && [ "${CPPCHECK_ERRORS:-0}" -gt 3 ]; then
+            echo "::warning::Found ${CPPCHECK_ERRORS} Cppcheck errors - consider addressing before merge"
+            # Set SHOULD_FAIL=true if you want to enforce this
+          fi
           
-          if [ "$critical_issues" -gt 50 ]; then
-            echo "WARNING: Many critical issues found: $critical_issues"
-            echo "This would normally fail the build, but we're in introduction mode"
-            echo "Consider addressing these issues before enabling strict mode"
+          if [ "$SHOULD_FAIL" = "true" ]; then
+            echo "::error::Too many critical issues found - failing build"
+            exit 1
           else
-            echo "Critical issues within acceptable range: $critical_issues"
+            echo "Static analysis completed - issues noted but not failing build"
           fi
-          
-          echo "Static analysis completed successfully (non-failing mode)"
