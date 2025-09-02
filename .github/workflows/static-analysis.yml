@@ -187,26 +187,17 @@ jobs:
 
       - name: Run Include-What-You-Use Analysis
         run: |
-          if command -v iwyu_tool.py >/dev/null 2>&1; then
-            echo "Running Include-What-You-Use analysis..."
-            if [ -f compile_commands.json ]; then
-              iwyu_tool.py -p . gui/ programs/ utils/ > iwyu-report.txt 2>&1 || true
-            else
-              echo "No compile commands available - IWYU analysis limited" > iwyu-report.txt
-            fi
-          elif command -v include-what-you-use >/dev/null 2>&1; then
-            echo "Running basic IWYU on sample files..."
-            find gui utils programs -name "*.cpp" -type f | head -5 | while read -r file; do
-              echo "Checking: $file"
-              include-what-you-use "$file" \
-                -I./gui -I./utils -I./qwtplot3d/include \
-                2>&1 || true
-            done > iwyu-report.txt || true
-          else
-            echo "Include-What-You-Use not available in this environment" > iwyu-report.txt
-            echo "IWYU can help identify missing #include statements" >> iwyu-report.txt
-            echo "Consider installing iwyu package for better include analysis" >> iwyu-report.txt
-          fi
+          echo "IWYU analysis temporarily disabled due to Qt header resolution issues" > iwyu-report.txt
+          echo "IWYU requires complex setup for Qt projects and may need manual configuration" >> iwyu-report.txt
+          echo "Consider enabling this after Clang-Tidy and Cppcheck are working properly" >> iwyu-report.txt
+          
+          # Uncomment below when ready to debug IWYU properly
+          # if command -v iwyu_tool.py >/dev/null 2>&1; then
+          #   echo "Running Include-What-You-Use analysis..."
+          #   if [ -f compile_commands.json ]; then
+          #     iwyu_tool.py -p . gui/ programs/ utils/ > iwyu-report.txt 2>&1 || true
+          #   fi
+          # fi
 
       - name: Run Clang-Format Check
         run: |
