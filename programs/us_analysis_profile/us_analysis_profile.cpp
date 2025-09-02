@@ -3316,7 +3316,7 @@ DbgLv(1) << "2D:SL-gp: *ERROR* rowx>=kparm";
                        le_custmg->text() != "(none)" );
    parm1.channel    = sl_chnsel[ rowx ];
    parm1.cust_grid  = le_custmg->text();
-   parm1.cgrid_name = le_custmg->text();
+   parm1.cgrid_name = le_custmg_name->text();
 
    currProf->ap2DSA.parms.replace( rowx, parm1 );
 }
@@ -3345,7 +3345,19 @@ DbgLv(1) << "2D:SL-pg: *ERROR* rowx>=kparm";
    le_sgrpts->setText( QString::number( parm1.s_grpts   ) );
    le_kgrpts->setText( QString::number( parm1.k_grpts   ) );
    le_grreps->setText( QString::number( parm1.gridreps  ) );
-   le_custmg->setText( parm1.cust_grid );
+
+   le_custmg      ->setText( parm1.cust_grid );
+   le_custmg_name ->setText( parm1.cgrid_name );
+
+   if ( parm1.have_custg )
+     {
+       ck_customgrid->setChecked( true );
+       le_custmg      ->setText( parm1.cust_grid );
+       le_custmg_name ->setText( parm1.cgrid_name );
+     }
+   else
+     ck_customgrid->setChecked( false );
+   
    QString chan    = parm1.channel;
    QString chan_l  = sl_chnsel[ rowx ];
 DbgLv(1) << "2D:SL-pg:  rowx" << rowx << "channel" << chan << chan_l;
@@ -3484,24 +3496,30 @@ void US_AnaprofPan2DSA::cust_grid_clicked( )
   le_custmg_name  ->setText( m_desc );
 
   //hide regular grid
-  le_smin    ->setVisible( false );
-  le_smax    ->setVisible( false );
-  le_sgrpts  ->setVisible( false ); 
-  le_kmin    ->setVisible( false ); 
-  le_kmax    ->setVisible( false ); 
-  le_kgrpts  ->setVisible( false ); 
-  le_grreps  ->setVisible( false );
+  set_regular_grid( false );
+}
 
-  lb_smin    ->setVisible( false );   
-  lb_smax    ->setVisible( false );   
-  lb_sgrpts  ->setVisible( false ); 
-  lb_kmin    ->setVisible( false );   
-  lb_kmax    ->setVisible( false );   
-  lb_kgrpts  ->setVisible( false ); 
-  lb_varyvb  ->setVisible( false ); 
-  lb_constk  ->setVisible( false ); 
-  lb_grreps  ->setVisible( false ); 
-  ck_varyvb  ->setVisible( false ); 
+void US_AnaprofPan2DSA::set_regular_grid( bool set )
+{
+  le_smin    ->setVisible( set );
+  le_smax    ->setVisible( set );
+  le_sgrpts  ->setVisible( set ); 
+  le_kmin    ->setVisible( set ); 
+  le_kmax    ->setVisible( set ); 
+  le_kgrpts  ->setVisible( set ); 
+  le_grreps  ->setVisible( set );
+  le_constk  ->setVisible( set );
+
+  lb_smin    ->setVisible( set );   
+  lb_smax    ->setVisible( set );   
+  lb_sgrpts  ->setVisible( set ); 
+  lb_kmin    ->setVisible( set );   
+  lb_kmax    ->setVisible( set );   
+  lb_kgrpts  ->setVisible( set ); 
+  lb_varyvb  ->setVisible( set ); 
+  lb_constk  ->setVisible( set ); 
+  lb_grreps  ->setVisible( set ); 
+  ck_varyvb  ->setVisible( set );
 }
 
 void US_AnaprofPan2DSA::customGridChecked( bool checked )
@@ -3522,24 +3540,7 @@ void US_AnaprofPan2DSA::customGridChecked( bool checked )
       le_custmg      ->setText("");
       
       //and show regular one
-      le_smin    ->setVisible( true );
-      le_smax    ->setVisible( true );
-      le_sgrpts  ->setVisible( true ); 
-      le_kmin    ->setVisible( true ); 
-      le_kmax    ->setVisible( true ); 
-      le_kgrpts  ->setVisible( true ); 
-      le_grreps  ->setVisible( true );
-
-      lb_smin    ->setVisible( true );   
-      lb_smax    ->setVisible( true );   
-      lb_sgrpts  ->setVisible( true ); 
-      lb_kmin    ->setVisible( true );   
-      lb_kmax    ->setVisible( true );   
-      lb_kgrpts  ->setVisible( true ); 
-      lb_varyvb  ->setVisible( true ); 
-      lb_constk  ->setVisible( true ); 
-      lb_grreps  ->setVisible( true ); 
-      ck_varyvb  ->setVisible( true ); 
+      set_regular_grid( true );
     }
 }
 

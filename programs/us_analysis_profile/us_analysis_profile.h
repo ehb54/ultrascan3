@@ -298,6 +298,7 @@ class US_AnaprofPan2DSA : public US_WidgetsDialog
       void constk_changed   ( );
       void apply_all_clicked( );
       void customGridChecked( bool );
+      void set_regular_grid( bool );     
       void job1_run_checked ( bool );
       void job2_run_checked ( bool );
       void mgpoints_changed ( );
