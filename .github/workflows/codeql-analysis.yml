@@ -12,10 +12,10 @@
 name: "CodeQL"
 
 on:
-  push: # Runs on every push to any branch
+  push:
+    branches: [ master ]
   pull_request:
-    branches:
-     - master
+    branches: [ master ]
   schedule:
     - cron: '20 18 * * 1'
 

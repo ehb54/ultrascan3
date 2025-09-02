@@ -1,6 +1,6 @@
 name: Static Analysis (Smart & Actionable)
 on:
-  pull_request:
+  push: &trigger_config
     branches: [ master ]
     paths:
       - 'gui/**/*.cpp'
@@ -13,6 +13,8 @@ on:
       - 'CMakeLists.txt'
       - '**/CMakeLists.txt'
       - '**/*.cmake'
+  pull_request:
+    <<: *trigger_config #uses trigger definition from push
   workflow_dispatch:
 
 jobs:

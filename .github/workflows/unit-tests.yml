@@ -2,9 +2,9 @@ name: "Unit Tests"
 
 on:
   push:
+    branches: [ master ]
   pull_request:
     branches: [ master ]
-  # Optional: Allow manual triggering
   workflow_dispatch:
     inputs:
       test_filter:
