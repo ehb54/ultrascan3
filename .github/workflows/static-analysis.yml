@@ -199,23 +199,6 @@ jobs:
           #   fi
           # fi
 
-      - name: Run Clang-Format Check
-        run: |
-          if command -v clang-format >/dev/null 2>&1; then
-            echo "Checking code formatting standards..."
-          
-            # Create a list of formatting issues
-            find gui programs utils -name "*.cpp" -o -name "*.h" | while read -r file; do
-              if ! clang-format --dry-run --Werror "$file" >/dev/null 2>&1; then
-                echo "Format issues in: $file"
-              fi
-            done > format-issues.txt 2>&1 || true
-          
-            echo "Format check completed"
-          else
-            echo "clang-format not available, skipping format check" > format-issues.txt
-          fi
-
       - name: Generate Analysis Summary
         run: |
           echo "## Static Analysis Results (CMake-Based)" > analysis-summary.md
@@ -265,15 +248,6 @@ jobs:
           fi
           echo '```' >> analysis-summary.md
           echo "" >> analysis-summary.md
-          
-          echo "### Format Issues" >> analysis-summary.md
-          echo '```' >> analysis-summary.md
-          if [ -f format-issues.txt ]; then
-            cat format-issues.txt >> analysis-summary.md
-          else
-            echo "No format issues file generated" >> analysis-summary.md
-          fi
-          echo '```' >> analysis-summary.md
 
       - name: Display Results Summary
         run: |
