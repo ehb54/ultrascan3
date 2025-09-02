@@ -3352,6 +3352,7 @@ DbgLv(1) << "2D:SL-pg: *ERROR* rowx>=kparm";
    if ( parm1.have_custg )
      {
        ck_customgrid->setChecked( true );
+       set_regular_grid( false );
        le_custmg      ->setText( parm1.cust_grid );
        le_custmg_name ->setText( parm1.cgrid_name );
      }
