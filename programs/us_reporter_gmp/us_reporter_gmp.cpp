@@ -11661,29 +11661,46 @@ void US_ReporterGMP::assemble_pdf( QProgressDialog * progress_msg )
 
       QString grid_rep =  QString::number( cAP2.parms[ i ].gridreps );
 
-      QString custom_grid = cAP2.parms[ i ].cgrid_name;
+      QString custom_grid_n    = cAP2.parms[ i ].cgrid_name;
+
+      QString custom_grid_guid = cAP2.parms[ i ].cust_grid;
 
       QString vary_vbar = cAP2.parms[ i ].varyvbar ? tr( "YES" ) : tr( "no" );
 
       QString const_ff0 = QString::number( cAP2.parms[ i ].ff0_const );
 
-      html_analysis_profile_2dsa_per_channel += tr(
-                                       "<table style=\"margin-left:30px\">"
-                                          "<tr><td> s Min, Max, Grid Points:     </td>  <td> %1 </td> </tr>"
-                                          "<tr><td> f/f0 Min, Max, Grid Points:  </td>  <td> %2 </td> </tr>"
-                                          "<tr><td> Grid Repetitions:            </td>  <td> %3 </td> </tr>"
-                                          "<tr><td> Custom Grid:                 </td>  <td> %4 </td> </tr>"
-                                          "<tr><td> Varying Vbar:                </td>  <td> %5 </td> </tr>"
-                                          "<tr><td> Constant f/f0:               </td>  <td> %6 </td> </tr>"
-                                       "</table>"
-                                       )
-	.arg( s_data )                     //1                                                                                 
-        .arg( ff0_data )                   //2                                                                                 
-	.arg( grid_rep )                   //3                                                                                 
-        .arg( custom_grid )                //4                                                                                 
-	.arg( vary_vbar )                  //5                                                                                 
-        .arg( const_ff0 )                  //6
-	;
+      if ( custom_grid_n.isEmpty() )
+	{
+	  html_analysis_profile_2dsa_per_channel += tr(
+						       "<table style=\"margin-left:30px\">"
+						       "<tr><td> s Min, Max, Grid Points:     </td>  <td> %1 </td> </tr>"
+						       "<tr><td> f/f0 Min, Max, Grid Points:  </td>  <td> %2 </td> </tr>"
+						       "<tr><td> Grid Repetitions:            </td>  <td> %3 </td> </tr>"
+						       "<tr><td> Custom Grid:                 </td>  <td> %4 </td> </tr>"
+						       "<tr><td> Varying Vbar:                </td>  <td> %5 </td> </tr>"
+						       "<tr><td> Constant f/f0:               </td>  <td> %6 </td> </tr>"
+						       "</table>"
+						       )
+	    .arg( s_data )                     //1                                                                                 
+	    .arg( ff0_data )                   //2                                                                                 
+	    .arg( grid_rep )                   //3                                                                                 
+	    .arg( tr("N/A") )                  //4                                                                                 
+	    .arg( vary_vbar )                  //5                                                                                 
+	    .arg( const_ff0 )                  //6
+	    ;
+	}
+      else //CG
+	{
+	  html_analysis_profile_2dsa_per_channel += tr(
+						       "<table style=\"margin-left:30px\">"
+						       "<tr><td> Custom Grid Name:            </td>  <td> %1 </td> </tr>"
+						       "<tr><td> Custom Grid GUID:            </td>  <td> %2 </td> </tr>"
+						       "</table>"
+						       )
+	    .arg( custom_grid_n )              //1                                                                                 
+	    .arg( custom_grid_guid )           //2                                                                                 
+	    ;
+	}
     }
 
   if ( genMask_edited.ShowAnalysis2DSAParts[ "Per-Channel Profiles" ].toInt()  )
