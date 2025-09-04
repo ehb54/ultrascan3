@@ -4,10 +4,6 @@
 file(GLOB GUI_SOURCES "*.cpp")
 file(GLOB GUI_HEADERS "*.h")
 
-# Drop the problem files
-list(FILTER GUI_SOURCES EXCLUDE REGEX "us_model_editor\\.cpp$")
-list(FILTER GUI_HEADERS EXCLUDE REGEX "us_model_editor\\.h$")
-
 # Platform-specific source filtering
 if(NOT WIN32)
     # Add any other Windows-specific patterns as needed

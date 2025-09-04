@@ -26,7 +26,7 @@ class US_GUI_EXTERN US_NoiseLoader : public US_WidgetsDialog
                       US_Noise&, US_Noise&, US_DataIO::EditedData* = 0 );
 
    private:
-      IUS_DB2*       db;
+      IUS_DB2*      db;
       QStringList&  mieGUIDs;
       QStringList&  nieGUIDs;
       US_Noise&     ti_noise;

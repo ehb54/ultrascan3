@@ -329,7 +329,7 @@ class US_Edit : public US_Widgets
 
       double             odlimit;
 
-      IUS_DB2*            dbP;
+      IUS_DB2*           dbP;
 
       QVector< double >  expd_radii;
       QVector< int >     expi_wvlns;
@@ -506,7 +506,7 @@ class US_Edit : public US_Widgets
       void write_auto        ( void );
       void write_triple_auto ( int );
       void write_mwl_auto    ( int );
-  QString get_rawDataGUID( IUS_DB2*, QString, QString );
+      QString get_rawDataGUID( IUS_DB2*, QString, QString );
       
       void review_edits      ( void );
       

@@ -17,10 +17,6 @@ gui/qrc_images.cpp
 *.pro.user
 *object_script*
 
-/admin/codeql/custom-queries/cpp/codeql-pack.lock.yml
-/cmake-build-debug/
-/test/utils/Testing/
-/utils/latex/
 /build/
 /build-docker/
 /cmake-build-debug/

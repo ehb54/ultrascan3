@@ -900,7 +900,7 @@ int US_LoadAUC::scan_db()
    QStringList runIDs;
    QStringList infoDs;
    US_Passwd   pw;
-   US_DB2     db( pw.getPasswd() );
+   US_DB2      db( pw.getPasswd() );
 
    if ( db.lastErrno() != IUS_DB2::OK )
    {
@@ -1071,7 +1071,7 @@ int US_LoadAUC::scan_run_db()
    QStringList runIDs;
    QStringList infoDs;
    US_Passwd   pw;
-   US_DB2     db( pw.getPasswd() );
+   US_DB2      db( pw.getPasswd() );
 
    if ( db.lastErrno() != IUS_DB2::OK )
    {

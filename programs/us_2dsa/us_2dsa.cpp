@@ -298,7 +298,7 @@ void US_2dsa::load( void )
    if ( loadDB )
    {  // Fetch the speed steps for the experiment from the database
       US_Passwd   pw;
-      IUS_DB2*     dbP    = new US_DB2( pw.getPasswd() );
+      IUS_DB2*    dbP    = new US_DB2( pw.getPasswd() );
       QStringList query;
       QString     expID;
       int         idExp  = 0;
@@ -623,7 +623,7 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
    // Save the model and any noise file(s)
 
    US_Passwd   pw;
-   IUS_DB2*     dbP      = loadDB ? new US_DB2( pw.getPasswd() ): NULL;
+   IUS_DB2*    dbP      = loadDB ? new US_DB2( pw.getPasswd() ): NULL;
    QDir        dirm( mdlpath );
    QDir        dirn( noipath );
    mdlpath             += "/";

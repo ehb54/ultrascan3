@@ -260,7 +260,7 @@ bool US_ModelGui::load_model( const QString& load_init, US_Model& modelIn )
                }
 
                US_Passwd pw;
-               US_DB2   db( pw.getPasswd() );
+               US_DB2    db( pw.getPasswd() );
 
                if ( db.lastErrno() != IUS_DB2::OK )
                {
@@ -294,7 +294,7 @@ bool US_ModelGui::load_model( const QString& load_init, US_Model& modelIn )
                   if ( dkdb_cntrls->db() )
                   {  // Load from database
                      US_Passwd pw;
-                     US_DB2   db( pw.getPasswd() );
+                     US_DB2    db( pw.getPasswd() );
 
                      if ( db.lastErrno() != IUS_DB2::OK )
                      {

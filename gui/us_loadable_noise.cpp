@@ -281,7 +281,7 @@ int US_LoadableNoise::id_list_db( QString daEditGUID )
    QString     invID  = QString::number( US_Settings::us_inv_ID() );
 
    US_Passwd pw;
-   US_DB2   db( pw.getPasswd() );
+   US_DB2    db( pw.getPasswd() );
 
    if ( db.lastErrno() != IUS_DB2::OK )
       return 0;
