@@ -97,6 +97,7 @@ class US_InitDialogueGui : public US_WidgetsDialog
    bool initDialogueOpen;
    bool initMsgNorecOpen;
    bool initMsgNorecDelOpen;
+   bool runStatesUpdated;
    
    void initAutoflowPanel( void );
 
