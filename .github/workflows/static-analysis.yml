@@ -143,19 +143,28 @@ jobs:
           
             if [ ! -s changed_cpp_files.txt ]; then
               echo "No changed files to analyze"
-              echo "No files to analyze" > clang-tidy-results.json
+              echo '{"files": [], "summary": {"total_issues": 0, "critical_issues": 0, "important_issues": 0, "performance_issues": 0, "files_with_issues": 0}}' > clang-tidy-results.json
               exit 0
             fi
           
-            # Use more focused, critical checks only
-            CRITICAL_CHECKS="-*,clang-analyzer-*,bugprone-*,cppcoreguidelines-avoid-*,cppcoreguidelines-pro-*,cppcoreguidelines-slicing,performance-*,readability-misleading-indentation,readability-braces-around-statements,readability-container-size-empty"
+            # Define check categories by severity
+            CRITICAL_CHECKS="-*,clang-analyzer-core.*,clang-analyzer-security.*,clang-analyzer-unix.*,bugprone-use-after-move,bugprone-dangling-handle,bugprone-assert-side-effect,bugprone-infinite-loop"
+            IMPORTANT_CHECKS="-*,clang-analyzer-cplusplus.*,clang-analyzer-deadcode.*,bugprone-easily-swappable-parameters,bugprone-branch-clone,bugprone-narrowing-conversions,bugprone-macro-*,bugprone-reserved-identifier"
+            PERFORMANCE_CHECKS="-*,performance-*"
           
-            # Initialize results
-            echo '{"files": [], "summary": {"total_issues": 0, "critical_issues": 0, "files_with_issues": 0}}' > clang-tidy-results.json
+            # Initialize results with proper structure
+            echo '{"files": [], "summary": {"total_issues": 0, "critical_issues": 0, "important_issues": 0, "performance_issues": 0, "files_with_issues": 0}}' > clang-tidy-results.json
           
             TOTAL_ISSUES=0
             CRITICAL_ISSUES=0
+            IMPORTANT_ISSUES=0
+            PERFORMANCE_ISSUES=0
             FILES_WITH_ISSUES=0
+          
+            # Create separate analysis files
+            > clang-tidy-critical.txt
+            > clang-tidy-important.txt  
+            > clang-tidy-performance.txt
           
             if [ -f compile_commands.json ]; then
               echo "Using CMake-generated compile commands database"
@@ -164,57 +173,115 @@ jobs:
                 if [ -n "$file" ] && [ -f "$file" ]; then
                   echo "Analyzing: $file"
           
-                  # Run clang-tidy and capture output
-                  TIDY_OUTPUT=$(clang-tidy "$file" \
+                  # Run critical checks
+                  CRITICAL_OUTPUT=$(clang-tidy "$file" \
                     -p . \
                     --checks="$CRITICAL_CHECKS" \
                     --format-style=none \
                     2>&1 || true)
           
-                  # Count issues in this file - handle empty output safely
-                  FILE_ISSUES=0
+                  # Run important checks  
+                  IMPORTANT_OUTPUT=$(clang-tidy "$file" \
+                    -p . \
+                    --checks="$IMPORTANT_CHECKS" \
+                    --format-style=none \
+                    2>&1 || true)
+          
+                  # Run performance checks
+                  PERFORMANCE_OUTPUT=$(clang-tidy "$file" \
+                    -p . \
+                    --checks="$PERFORMANCE_CHECKS" \
+                    --format-style=none \
+                    2>&1 || true)
+          
+                  # Count issues by category - handle empty output safely
                   FILE_CRITICAL=0
+                  FILE_IMPORTANT=0
+                  FILE_PERFORMANCE=0
           
-                  if [ -n "$TIDY_OUTPUT" ]; then
-                    # Count warnings and errors, default to 0 if no matches
-                    FILE_ISSUES=$(echo "$TIDY_OUTPUT" | grep -c "warning:\|error:" 2>/dev/null || echo "0")
-                    FILE_CRITICAL=$(echo "$TIDY_OUTPUT" | grep -c "error:\|clang-analyzer-\|bugprone-\|performance-" 2>/dev/null || echo "0")
-          
-                    # Ensure variables are numeric
-                    case "$FILE_ISSUES" in
-                        ''|*[!0-9]*) FILE_ISSUES=0 ;;
-                    esac
+                  if [ -n "$CRITICAL_OUTPUT" ]; then
+                    FILE_CRITICAL=$(echo "$CRITICAL_OUTPUT" | grep -c "warning:\|error:" 2>/dev/null || echo "0")
                     case "$FILE_CRITICAL" in
                         ''|*[!0-9]*) FILE_CRITICAL=0 ;;
                     esac
                   fi
           
-                  if [ "$FILE_ISSUES" -gt 0 ]; then
+                  if [ -n "$IMPORTANT_OUTPUT" ]; then
+                    FILE_IMPORTANT=$(echo "$IMPORTANT_OUTPUT" | grep -c "warning:\|error:" 2>/dev/null || echo "0")
+                    case "$FILE_IMPORTANT" in
+                        ''|*[!0-9]*) FILE_IMPORTANT=0 ;;
+                    esac
+                  fi
+          
+                  if [ -n "$PERFORMANCE_OUTPUT" ]; then
+                    FILE_PERFORMANCE=$(echo "$PERFORMANCE_OUTPUT" | grep -c "warning:\|error:" 2>/dev/null || echo "0")
+                    case "$FILE_PERFORMANCE" in
+                        ''|*[!0-9]*) FILE_PERFORMANCE=0 ;;
+                    esac
+                  fi
+          
+                  FILE_TOTAL=$((FILE_CRITICAL + FILE_IMPORTANT + FILE_PERFORMANCE))
+          
+                  if [ "$FILE_TOTAL" -gt 0 ]; then
                     FILES_WITH_ISSUES=$((FILES_WITH_ISSUES + 1))
-                    TOTAL_ISSUES=$((TOTAL_ISSUES + FILE_ISSUES))
+                    TOTAL_ISSUES=$((TOTAL_ISSUES + FILE_TOTAL))
                     CRITICAL_ISSUES=$((CRITICAL_ISSUES + FILE_CRITICAL))
+                    IMPORTANT_ISSUES=$((IMPORTANT_ISSUES + FILE_IMPORTANT))
+                    PERFORMANCE_ISSUES=$((PERFORMANCE_ISSUES + FILE_PERFORMANCE))
           
-                    # Extract top 5 most important issues for this file
-                    TOP_ISSUES=$(echo "$TIDY_OUTPUT" | grep -E "(error:|clang-analyzer-|bugprone-|performance-)" | head -5 || true)
+                    # Save categorized issues
+                    if [ "$FILE_CRITICAL" -gt 0 ]; then
+                      echo "=== Critical Issues in $file ===" >> clang-tidy-critical.txt
+                      echo "$CRITICAL_OUTPUT" | grep -E "(error:|warning:)" | head -5 >> clang-tidy-critical.txt
+                      echo "" >> clang-tidy-critical.txt
+                    fi
           
-                    if [ -n "$TOP_ISSUES" ]; then
-                      echo "=== Issues in $file ===" >> clang-tidy-summary.txt
-                      echo "$TOP_ISSUES" >> clang-tidy-summary.txt
-                      echo "" >> clang-tidy-summary.txt
+                    if [ "$FILE_IMPORTANT" -gt 0 ]; then
+                      echo "=== Important Issues in $file ===" >> clang-tidy-important.txt
+                      echo "$IMPORTANT_OUTPUT" | grep -E "(error:|warning:)" | head -5 >> clang-tidy-important.txt
+                      echo "" >> clang-tidy-important.txt
+                    fi
+          
+                    if [ "$FILE_PERFORMANCE" -gt 0 ]; then
+                      echo "=== Performance Issues in $file ===" >> clang-tidy-performance.txt
+                      echo "$PERFORMANCE_OUTPUT" | grep -E "(error:|warning:)" | head -3 >> clang-tidy-performance.txt
+                      echo "" >> clang-tidy-performance.txt
                     fi
                   fi
                 fi
               done < changed_cpp_files.txt
             fi
           
-            # Update summary
+            # Create combined summary with top issues from each category
+            > clang-tidy-summary.txt
+            if [ "$CRITICAL_ISSUES" -gt 0 ]; then
+              echo "=== CRITICAL ISSUES (Security/Correctness) ===" >> clang-tidy-summary.txt
+              head -20 clang-tidy-critical.txt >> clang-tidy-summary.txt
+              echo "" >> clang-tidy-summary.txt
+            fi
+          
+            if [ "$IMPORTANT_ISSUES" -gt 0 ]; then
+              echo "=== IMPORTANT ISSUES (Potential Bugs) ===" >> clang-tidy-summary.txt
+              head -15 clang-tidy-important.txt >> clang-tidy-summary.txt
+              echo "" >> clang-tidy-summary.txt
+            fi
+          
+            if [ "$PERFORMANCE_ISSUES" -gt 0 ]; then
+              echo "=== PERFORMANCE SUGGESTIONS ===" >> clang-tidy-summary.txt
+              head -10 clang-tidy-performance.txt >> clang-tidy-summary.txt
+              echo "" >> clang-tidy-summary.txt
+            fi
+          
+            # Update summary with categorized counts
             jq --argjson total "$TOTAL_ISSUES" \
                --argjson critical "$CRITICAL_ISSUES" \
+               --argjson important "$IMPORTANT_ISSUES" \
+               --argjson performance "$PERFORMANCE_ISSUES" \
                --argjson files "$FILES_WITH_ISSUES" \
-               '.summary.total_issues = $total | .summary.critical_issues = $critical | .summary.files_with_issues = $files' \
+               '.summary.total_issues = $total | .summary.critical_issues = $critical | .summary.important_issues = $important | .summary.performance_issues = $performance | .summary.files_with_issues = $files' \
                clang-tidy-results.json > temp.json && mv temp.json clang-tidy-results.json
           
-            echo "Clang-Tidy analysis completed: $TOTAL_ISSUES total issues, $CRITICAL_ISSUES critical"
+            echo "Clang-Tidy analysis completed: $CRITICAL_ISSUES critical, $IMPORTANT_ISSUES important, $PERFORMANCE_ISSUES performance issues"
           else
             echo "Clang-tidy not available" > clang-tidy-results.json
           fi
@@ -264,12 +331,14 @@ jobs:
           CPPCHECK_ERRORS=0
           CPPCHECK_WARNINGS=0
           CPPCHECK_PERFORMANCE=0
+          CPPCHECK_PORTABILITY=0
           
           if [ -f cppcheck-report.xml ] && [ -s cppcheck-report.xml ]; then
             # Get counts and validate they're numbers
             TEMP_ERRORS=$(grep -c 'severity="error"' cppcheck-report.xml 2>/dev/null || echo "0")
             TEMP_WARNINGS=$(grep -c 'severity="warning"' cppcheck-report.xml 2>/dev/null || echo "0")
             TEMP_PERFORMANCE=$(grep -c 'severity="performance"' cppcheck-report.xml 2>/dev/null || echo "0")
+            TEMP_PORTABILITY=$(grep -c 'severity="portability"' cppcheck-report.xml 2>/dev/null || echo "0")
           
             # Validate numbers before assignment
             case "$TEMP_ERRORS" in
@@ -284,24 +353,37 @@ jobs:
                 ''|*[!0-9]*) CPPCHECK_PERFORMANCE=0 ;;
                 *) CPPCHECK_PERFORMANCE="$TEMP_PERFORMANCE" ;;
             esac
+            case "$TEMP_PORTABILITY" in
+                ''|*[!0-9]*) CPPCHECK_PORTABILITY=0 ;;
+                *) CPPCHECK_PORTABILITY="$TEMP_PORTABILITY" ;;
+            esac
           fi
           
           echo "CPPCHECK_ERRORS=$CPPCHECK_ERRORS" >> $GITHUB_ENV
           echo "CPPCHECK_WARNINGS=$CPPCHECK_WARNINGS" >> $GITHUB_ENV
           echo "CPPCHECK_PERFORMANCE=$CPPCHECK_PERFORMANCE" >> $GITHUB_ENV
+          echo "CPPCHECK_PORTABILITY=$CPPCHECK_PORTABILITY" >> $GITHUB_ENV
           
-          # Extract top Cppcheck issues - handle missing file gracefully
+          # Extract top Cppcheck issues by severity - handle missing file gracefully
           if [ -f cppcheck-report.xml ] && [ -s cppcheck-report.xml ]; then
-            # Calculate total safely
-            TOTAL_CPPCHECK_ISSUES=0
-            if [ "$CPPCHECK_ERRORS" -ge 0 ] 2>/dev/null && [ "$CPPCHECK_WARNINGS" -ge 0 ] 2>/dev/null; then
-              TOTAL_CPPCHECK_ISSUES=$((CPPCHECK_ERRORS + CPPCHECK_WARNINGS))
+            # Extract critical issues (errors) first
+            if [ "$CPPCHECK_ERRORS" -gt 0 ]; then
+              echo "=== Cppcheck Errors (Critical) ===" > cppcheck-summary.txt
+              xmllint --xpath "//error[@severity='error']" cppcheck-report.xml 2>/dev/null | head -5 >> cppcheck-summary.txt || true
+              echo "" >> cppcheck-summary.txt
             fi
           
-            if [ "$TOTAL_CPPCHECK_ISSUES" -gt 0 ]; then
-              echo "=== Top Cppcheck Issues ===" > cppcheck-summary.txt
-              xmllint --xpath "//error[@severity='error' or @severity='warning']" cppcheck-report.xml 2>/dev/null | head -10 >> cppcheck-summary.txt || true
+            # Then warnings  
+            if [ "$CPPCHECK_WARNINGS" -gt 0 ]; then
+              echo "=== Cppcheck Warnings ===" >> cppcheck-summary.txt
+              xmllint --xpath "//error[@severity='warning']" cppcheck-report.xml 2>/dev/null | head -5 >> cppcheck-summary.txt || true
               echo "" >> cppcheck-summary.txt
+            fi
+          
+            # Finally performance suggestions
+            if [ "$CPPCHECK_PERFORMANCE" -gt 0 ]; then
+              echo "=== Cppcheck Performance Suggestions ===" >> cppcheck-summary.txt
+              xmllint --xpath "//error[@severity='performance']" cppcheck-report.xml 2>/dev/null | head -3 >> cppcheck-summary.txt || true
             fi
           fi
 
@@ -311,6 +393,8 @@ jobs:
           # Read clang-tidy results - handle missing or invalid JSON with better validation
           CLANG_TIDY_TOTAL=0
           CLANG_TIDY_CRITICAL=0
+          CLANG_TIDY_IMPORTANT=0
+          CLANG_TIDY_PERFORMANCE=0
           CLANG_TIDY_FILES=0
           
           if [ -f clang-tidy-results.json ]; then
@@ -318,6 +402,8 @@ jobs:
             if jq empty clang-tidy-results.json >/dev/null 2>&1; then
               TEMP_TOTAL=$(jq -r '.summary.total_issues // 0' clang-tidy-results.json 2>/dev/null || echo "0")
               TEMP_CRITICAL=$(jq -r '.summary.critical_issues // 0' clang-tidy-results.json 2>/dev/null || echo "0")
+              TEMP_IMPORTANT=$(jq -r '.summary.important_issues // 0' clang-tidy-results.json 2>/dev/null || echo "0")
+              TEMP_PERFORMANCE=$(jq -r '.summary.performance_issues // 0' clang-tidy-results.json 2>/dev/null || echo "0")
               TEMP_FILES=$(jq -r '.summary.files_with_issues // 0' clang-tidy-results.json 2>/dev/null || echo "0")
           
               # Validate numbers
@@ -329,6 +415,14 @@ jobs:
                   ''|*[!0-9]*) CLANG_TIDY_CRITICAL=0 ;;
                   *) CLANG_TIDY_CRITICAL="$TEMP_CRITICAL" ;;
               esac
+              case "$TEMP_IMPORTANT" in
+                  ''|*[!0-9]*) CLANG_TIDY_IMPORTANT=0 ;;
+                  *) CLANG_TIDY_IMPORTANT="$TEMP_IMPORTANT" ;;
+              esac
+              case "$TEMP_PERFORMANCE" in
+                  ''|*[!0-9]*) CLANG_TIDY_PERFORMANCE=0 ;;
+                  *) CLANG_TIDY_PERFORMANCE="$TEMP_PERFORMANCE" ;;
+              esac
               case "$TEMP_FILES" in
                   ''|*[!0-9]*) CLANG_TIDY_FILES=0 ;;
                   *) CLANG_TIDY_FILES="$TEMP_FILES" ;;
@@ -338,17 +432,22 @@ jobs:
             fi
           fi
           
-          # Generate smart summary
+          # Generate smart summary with proper severity classification
           cat > pr-comment.md << 'EOF'
           ## Static Analysis Results
           
           **Files analyzed:** $CHANGED_FILE_COUNT changed files
           
-          ### Summary
-          | Tool | Critical Issues | Total Issues | Status |
-          |------|----------------|--------------|--------|
-          | Clang-Tidy | $CLANG_TIDY_CRITICAL | $CLANG_TIDY_TOTAL | $([ $CLANG_TIDY_CRITICAL -eq 0 ] && echo "Clean" || echo "Needs attention") |
-          | Cppcheck | $CPPCHECK_ERRORS | $(($CPPCHECK_ERRORS + $CPPCHECK_WARNINGS)) | $([ $CPPCHECK_ERRORS -eq 0 ] && echo "Clean" || echo "Needs attention") |
+          ### Summary by Severity
+          | Tool | Critical | Important | Performance | Total | Status |
+          |------|----------|-----------|-------------|-------|--------|
+          | Clang-Tidy | $CLANG_TIDY_CRITICAL | $CLANG_TIDY_IMPORTANT | $CLANG_TIDY_PERFORMANCE | $CLANG_TIDY_TOTAL | $([ $CLANG_TIDY_CRITICAL -eq 0 ] && echo "✅ Clean" || echo "⚠️ Needs attention") |
+          | Cppcheck | $CPPCHECK_ERRORS | $CPPCHECK_WARNINGS | $CPPCHECK_PERFORMANCE | $(($CPPCHECK_ERRORS + $CPPCHECK_WARNINGS + $CPPCHECK_PERFORMANCE)) | $([ $CPPCHECK_ERRORS -eq 0 ] && echo "✅ Clean" || echo "⚠️ Needs attention") |
+          
+          **Legend:**
+          - **Critical**: Security issues, null pointer dereferences, use-after-free, crashes
+          - **Important**: Potential bugs, logic errors, problematic patterns  
+          - **Performance**: Optimization opportunities, unnecessary copies
           
           EOF
           
@@ -357,46 +456,91 @@ jobs:
           if [ "$CLANG_TIDY_CRITICAL" -ge 0 ] 2>/dev/null && [ "$CPPCHECK_ERRORS" -ge 0 ] 2>/dev/null; then
             TOTAL_CRITICAL=$((CLANG_TIDY_CRITICAL + CPPCHECK_ERRORS))
           fi
+          
           if [ $TOTAL_CRITICAL -gt 0 ]; then
             cat >> pr-comment.md << 'EOF'
-          ### Critical Issues Requiring Attention
+          ### Critical Issues Requiring Immediate Attention
           
-          The following issues should be addressed before merging:
+          These issues could cause crashes, security vulnerabilities, or data corruption:
           
           EOF
           
             # Add Clang-Tidy critical issues
-            if [ -f clang-tidy-summary.txt ] && [ $CLANG_TIDY_CRITICAL -gt 0 ]; then
-              echo "#### Clang-Tidy Critical Issues" >> pr-comment.md
+            if [ -f clang-tidy-critical.txt ] && [ $CLANG_TIDY_CRITICAL -gt 0 ]; then
+              echo "#### Clang-Tidy Critical Issues ($CLANG_TIDY_CRITICAL)" >> pr-comment.md
               echo '```' >> pr-comment.md
-              head -20 clang-tidy-summary.txt >> pr-comment.md
+              head -20 clang-tidy-critical.txt >> pr-comment.md
               echo '```' >> pr-comment.md
               echo "" >> pr-comment.md
             fi
           
             # Add Cppcheck critical issues
             if [ -f cppcheck-summary.txt ] && [ $CPPCHECK_ERRORS -gt 0 ]; then
-              echo "#### Cppcheck Errors" >> pr-comment.md
+              echo "#### Cppcheck Errors ($CPPCHECK_ERRORS)" >> pr-comment.md
               echo '```' >> pr-comment.md
               head -10 cppcheck-summary.txt >> pr-comment.md
               echo '```' >> pr-comment.md
               echo "" >> pr-comment.md
             fi
-          else
-            cat >> pr-comment.md << 'EOF'
-          ### Great Job!
-          
-          No critical issues found in the changed files. Your code looks good!
-          
-          EOF
           fi
           
-          # Add performance suggestions if any
-          if [ $CPPCHECK_PERFORMANCE -gt 0 ]; then
+          # Add important issues section
+          TOTAL_IMPORTANT=$((CLANG_TIDY_IMPORTANT + CPPCHECK_WARNINGS))
+          if [ $TOTAL_IMPORTANT -gt 0 ] && [ $TOTAL_IMPORTANT -le 10 ]; then
             cat >> pr-comment.md << 'EOF'
-          ### Performance Suggestions
+          ### Important Issues to Consider
           
-          Found $CPPCHECK_PERFORMANCE performance improvement opportunities. While not critical, these could improve efficiency.
+          These issues could lead to bugs or maintenance problems:
+          
+          EOF
+          
+            if [ -f clang-tidy-important.txt ] && [ $CLANG_TIDY_IMPORTANT -gt 0 ]; then
+              echo "#### Potential Bugs ($CLANG_TIDY_IMPORTANT)" >> pr-comment.md
+              echo '<details><summary>Click to expand</summary>' >> pr-comment.md
+              echo '' >> pr-comment.md
+              echo '```' >> pr-comment.md
+              head -15 clang-tidy-important.txt >> pr-comment.md
+              echo '```' >> pr-comment.md
+              echo '</details>' >> pr-comment.md
+              echo "" >> pr-comment.md
+            fi
+          elif [ $TOTAL_IMPORTANT -gt 10 ]; then
+            echo "### Important Issues Found ($TOTAL_IMPORTANT)" >> pr-comment.md
+            echo "" >> pr-comment.md
+            echo "Found $TOTAL_IMPORTANT important issues. Consider reviewing these for potential bugs." >> pr-comment.md
+            echo "" >> pr-comment.md
+          fi
+          
+          # Add performance section only if not too many
+          TOTAL_PERFORMANCE=$((CLANG_TIDY_PERFORMANCE + CPPCHECK_PERFORMANCE))
+          if [ $TOTAL_PERFORMANCE -gt 0 ] && [ $TOTAL_PERFORMANCE -le 20 ]; then
+            cat >> pr-comment.md << 'EOF'
+          ### 💡 Performance Optimization Opportunities
+          
+          <details>
+          <summary>$TOTAL_PERFORMANCE performance suggestions (click to expand)</summary>
+          
+          EOF
+          
+            if [ -f clang-tidy-performance.txt ] && [ $CLANG_TIDY_PERFORMANCE -gt 0 ]; then
+              echo '```' >> pr-comment.md
+              head -10 clang-tidy-performance.txt >> pr-comment.md
+              echo '```' >> pr-comment.md
+            fi
+            echo '</details>' >> pr-comment.md
+            echo "" >> pr-comment.md
+          elif [ $TOTAL_PERFORMANCE -gt 20 ]; then
+            echo "### Performance Suggestions ($TOTAL_PERFORMANCE)" >> pr-comment.md
+            echo "" >> pr-comment.md
+            echo "Found $TOTAL_PERFORMANCE performance optimization opportunities. Most are parameter passing improvements." >> pr-comment.md
+            echo "" >> pr-comment.md
+          fi
+          
+          # Success message if clean
+          if [ $TOTAL_CRITICAL -eq 0 ] && [ $TOTAL_IMPORTANT -eq 0 ]; then
+            cat >> pr-comment.md << 'EOF'
+                    
+          No critical or important issues found in the changed files. Your code looks solid!
           
           EOF
           fi
@@ -408,9 +552,11 @@ jobs:
           <details>
           <summary>Analysis Details</summary>
           
-          - Analysis focused on **changed files only** to provide relevant feedback
-          - **Critical checks**: Memory leaks, null pointer dereferences, buffer overflows, performance issues
-          - **Skipped**: Style suggestions, minor modernization hints
+          - **Scope**: Analysis focused on **changed files only** to provide relevant feedback
+          - **Critical**: Security vulnerabilities, null pointer issues, use-after-free, crashes
+          - **Important**: Logic errors, easily-swappable parameters, potential undefined behavior  
+          - **Performance**: Unnecessary copies, parameter passing optimizations
+          - **Excluded**: Style suggestions, minor modernization hints (unless they affect correctness)
           - View full reports in the Actions artifacts for complete details
           
           </details>
@@ -419,10 +565,15 @@ jobs:
           # Substitute variables
           sed -i "s/\$CHANGED_FILE_COUNT/$CHANGED_FILE_COUNT/g" pr-comment.md
           sed -i "s/\$CLANG_TIDY_CRITICAL/$CLANG_TIDY_CRITICAL/g" pr-comment.md
+          sed -i "s/\$CLANG_TIDY_IMPORTANT/$CLANG_TIDY_IMPORTANT/g" pr-comment.md
+          sed -i "s/\$CLANG_TIDY_PERFORMANCE/$CLANG_TIDY_PERFORMANCE/g" pr-comment.md
           sed -i "s/\$CLANG_TIDY_TOTAL/$CLANG_TIDY_TOTAL/g" pr-comment.md
           sed -i "s/\$CPPCHECK_ERRORS/${CPPCHECK_ERRORS:-0}/g" pr-comment.md
           sed -i "s/\$CPPCHECK_WARNINGS/${CPPCHECK_WARNINGS:-0}/g" pr-comment.md
           sed -i "s/\$CPPCHECK_PERFORMANCE/${CPPCHECK_PERFORMANCE:-0}/g" pr-comment.md
+          sed -i "s/\$TOTAL_CRITICAL/$TOTAL_CRITICAL/g" pr-comment.md
+          sed -i "s/\$TOTAL_IMPORTANT/$TOTAL_IMPORTANT/g" pr-comment.md
+          sed -i "s/\$TOTAL_PERFORMANCE/$TOTAL_PERFORMANCE/g" pr-comment.md
 
       - name: Generate Skip Analysis Comment
         if: env.SKIP_ANALYSIS == 'true'
@@ -440,112 +591,3 @@ jobs:
         run: |
           echo "=== SMART STATIC ANALYSIS COMPLETE ==="
           echo ""
-          
-          if [ "$SKIP_ANALYSIS" = "true" ]; then
-            echo "No C++ files changed - analysis was skipped"
-          else
-            echo "Files analyzed: $CHANGED_FILE_COUNT"
-          
-            if [ -f clang-tidy-results.json ]; then
-              CRITICAL=$(jq -r '.summary.critical_issues // 0' clang-tidy-results.json)
-              TOTAL=$(jq -r '.summary.total_issues // 0' clang-tidy-results.json)
-              echo "Clang-tidy: $CRITICAL critical issues, $TOTAL total"
-            fi
-          
-            if [ -n "${CPPCHECK_ERRORS:-}" ]; then
-              echo "Cppcheck: ${CPPCHECK_ERRORS:-0} errors, ${CPPCHECK_WARNINGS:-0} warnings"
-            fi
-          fi
-          
-          echo ""
-          echo "PR Comment preview:"
-          echo "==================="
-          cat pr-comment.md || echo "No PR comment generated"
-
-      - name: Upload Analysis Reports
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: smart-static-analysis-reports
-          path: |
-            clang-tidy-results.json
-            clang-tidy-summary.txt
-            cppcheck-report.xml
-            cppcheck-summary.txt
-            pr-comment.md
-            changed_cpp_files.txt
-            compile_commands.json
-
-      - name: Comment PR with Smart Results
-        uses: actions/github-script@v7
-        if: github.event_name == 'pull_request'
-        continue-on-error: true
-        with:
-          script: |
-            const fs = require('fs');
-            
-            if (!fs.existsSync('pr-comment.md')) {
-              console.log('No PR comment file found');
-              return;
-            }
-            
-            const comment = fs.readFileSync('pr-comment.md', 'utf8');
-            
-            // Check if we already commented on this PR
-            const { data: comments } = await github.rest.issues.listComments({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-            });
-            
-            // Look for existing static analysis comment
-            const botComment = comments.find(comment => 
-              comment.user.type === 'Bot' && 
-              comment.body.includes('Static Analysis Results')
-            );
-            
-            if (botComment) {
-              // Update existing comment
-              await github.rest.issues.updateComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                comment_id: botComment.id,
-                body: comment
-              });
-              console.log('Updated existing static analysis comment');
-            } else {
-              // Create new comment
-              await github.rest.issues.createComment({
-                issue_number: context.issue.number,
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                body: comment
-              });
-              console.log('Created new static analysis comment');
-            }
-
-      - name: Set Analysis Status
-        if: env.SKIP_ANALYSIS != 'true'
-        run: |
-          # Determine if we should fail the build (optional)
-          SHOULD_FAIL=false
-          
-          if [ -f clang-tidy-results.json ]; then
-            CRITICAL=$(jq -r '.summary.critical_issues // 0' clang-tidy-results.json)
-            if [ "$CRITICAL" -gt 5 ]; then
-              echo "::warning::Found $CRITICAL critical issues - consider addressing before merge"
-              # Set SHOULD_FAIL=true if you want to enforce this
-            fi
-          fi
-          
-          if [ -n "${CPPCHECK_ERRORS:-}" ] && [ "${CPPCHECK_ERRORS:-0}" -gt 3 ]; then
-            echo "::warning::Found ${CPPCHECK_ERRORS} Cppcheck errors - consider addressing before merge"
-            # Set SHOULD_FAIL=true if you want to enforce this
-          fi
-          
-          if [ "$SHOULD_FAIL" = "true" ]; then
-            echo "::error::Too many critical issues found - failing build"
-            exit 1
-          else
-            echo "Static analysis completed - issues noted but not failing build"
-          fi
