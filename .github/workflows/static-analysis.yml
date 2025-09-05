@@ -441,8 +441,8 @@ jobs:
           ### Summary by Severity
           | Tool | Critical | Important | Performance | Total | Status |
           |------|----------|-----------|-------------|-------|--------|
-          | Clang-Tidy | $CLANG_TIDY_CRITICAL | $CLANG_TIDY_IMPORTANT | $CLANG_TIDY_PERFORMANCE | $CLANG_TIDY_TOTAL | $([ $CLANG_TIDY_CRITICAL -eq 0 ] && echo "✅ Clean" || echo "⚠️ Needs attention") |
-          | Cppcheck | $CPPCHECK_ERRORS | $CPPCHECK_WARNINGS | $CPPCHECK_PERFORMANCE | $(($CPPCHECK_ERRORS + $CPPCHECK_WARNINGS + $CPPCHECK_PERFORMANCE)) | $([ $CPPCHECK_ERRORS -eq 0 ] && echo "✅ Clean" || echo "⚠️ Needs attention") |
+          | Clang-Tidy | $CLANG_TIDY_CRITICAL | $CLANG_TIDY_IMPORTANT | $CLANG_TIDY_PERFORMANCE | $CLANG_TIDY_TOTAL | $([ $CLANG_TIDY_CRITICAL -eq 0 ] && echo "Clean" || echo "Needs attention") |
+          | Cppcheck | $CPPCHECK_ERRORS | $CPPCHECK_WARNINGS | $CPPCHECK_PERFORMANCE | $(($CPPCHECK_ERRORS + $CPPCHECK_WARNINGS + $CPPCHECK_PERFORMANCE)) | $([ $CPPCHECK_ERRORS -eq 0 ] && echo "Clean" || echo "Needs attention") |
           
           **Legend:**
           - **Critical**: Security issues, null pointer dereferences, use-after-free, crashes
@@ -515,7 +515,7 @@ jobs:
           TOTAL_PERFORMANCE=$((CLANG_TIDY_PERFORMANCE + CPPCHECK_PERFORMANCE))
           if [ $TOTAL_PERFORMANCE -gt 0 ] && [ $TOTAL_PERFORMANCE -le 20 ]; then
             cat >> pr-comment.md << 'EOF'
-          ### 💡 Performance Optimization Opportunities
+          ### Performance Optimization Opportunities
           
           <details>
           <summary>$TOTAL_PERFORMANCE performance suggestions (click to expand)</summary>
@@ -539,7 +539,8 @@ jobs:
           # Success message if clean
           if [ $TOTAL_CRITICAL -eq 0 ] && [ $TOTAL_IMPORTANT -eq 0 ]; then
             cat >> pr-comment.md << 'EOF'
-                    
+          ### Great Job!
+          
           No critical or important issues found in the changed files. Your code looks solid!
           
           EOF
@@ -591,3 +592,124 @@ jobs:
         run: |
           echo "=== SMART STATIC ANALYSIS COMPLETE ==="
           echo ""
+          
+          if [ "$SKIP_ANALYSIS" = "true" ]; then
+            echo "No C++ files changed - analysis was skipped"
+          else
+            echo "Files analyzed: $CHANGED_FILE_COUNT"
+          
+            if [ -f clang-tidy-results.json ]; then
+              CRITICAL=$(jq -r '.summary.critical_issues // 0' clang-tidy-results.json)
+              IMPORTANT=$(jq -r '.summary.important_issues // 0' clang-tidy-results.json)
+              PERFORMANCE=$(jq -r '.summary.performance_issues // 0' clang-tidy-results.json)
+              TOTAL=$(jq -r '.summary.total_issues // 0' clang-tidy-results.json)
+              echo "Clang-tidy: $CRITICAL critical, $IMPORTANT important, $PERFORMANCE performance ($TOTAL total)"
+            fi
+          
+            if [ -n "${CPPCHECK_ERRORS:-}" ]; then
+              echo "Cppcheck: ${CPPCHECK_ERRORS:-0} errors, ${CPPCHECK_WARNINGS:-0} warnings, ${CPPCHECK_PERFORMANCE:-0} performance"
+            fi
+          fi
+          
+          echo ""
+          echo "PR Comment preview:"
+          echo "==================="
+          cat pr-comment.md || echo "No PR comment generated"
+
+      - name: Upload Analysis Reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: smart-static-analysis-reports
+          path: |
+            clang-tidy-results.json
+            clang-tidy-summary.txt
+            clang-tidy-critical.txt
+            clang-tidy-important.txt
+            clang-tidy-performance.txt
+            cppcheck-report.xml
+            cppcheck-summary.txt
+            pr-comment.md
+            changed_cpp_files.txt
+            compile_commands.json
+
+      - name: Comment PR with Smart Results
+        uses: actions/github-script@v7
+        if: github.event_name == 'pull_request'
+        continue-on-error: true
+        with:
+          script: |
+            const fs = require('fs');
+            
+            if (!fs.existsSync('pr-comment.md')) {
+              console.log('No PR comment file found');
+              return;
+            }
+            
+            const comment = fs.readFileSync('pr-comment.md', 'utf8');
+            
+            // Check if we already commented on this PR
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            
+            // Look for existing static analysis comment
+            const botComment = comments.find(comment => 
+              comment.user.type === 'Bot' && 
+              comment.body.includes('Static Analysis Results')
+            );
+            
+            if (botComment) {
+              // Update existing comment
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: comment
+              });
+              console.log('Updated existing static analysis comment');
+            } else {
+              // Create new comment
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: comment
+              });
+              console.log('Created new static analysis comment');
+            }
+
+      - name: Set Analysis Status
+        if: env.SKIP_ANALYSIS != 'true'
+        run: |
+          # Report findings as informational only - never fail the build
+          
+          if [ -f clang-tidy-results.json ]; then
+            CRITICAL=$(jq -r '.summary.critical_issues // 0' clang-tidy-results.json)
+            IMPORTANT=$(jq -r '.summary.important_issues // 0' clang-tidy-results.json)
+            PERFORMANCE=$(jq -r '.summary.performance_issues // 0' clang-tidy-results.json)
+          
+            if [ "$CRITICAL" -gt 0 ]; then
+              echo "::notice::Found $CRITICAL critical security/correctness issues - consider reviewing"
+            fi
+          
+            if [ "$IMPORTANT" -gt 0 ]; then
+              echo "::notice::Found $IMPORTANT important issues - consider reviewing"
+            fi
+          
+            if [ "$PERFORMANCE" -gt 0 ]; then
+              echo "::notice::Found $PERFORMANCE performance optimization opportunities"
+            fi
+          fi
+          
+          if [ -n "${CPPCHECK_ERRORS:-}" ] && [ "${CPPCHECK_ERRORS:-0}" -gt 0 ]; then
+            echo "::notice::Found ${CPPCHECK_ERRORS} Cppcheck errors - consider reviewing"
+          fi
+          
+          if [ -n "${CPPCHECK_WARNINGS:-}" ] && [ "${CPPCHECK_WARNINGS:-0}" -gt 0 ]; then
+            echo "::notice::Found ${CPPCHECK_WARNINGS} Cppcheck warnings - consider reviewing"
+          fi
+          
+          echo "Static analysis completed successfully - all findings are informational only"
