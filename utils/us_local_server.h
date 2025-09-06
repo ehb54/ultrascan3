@@ -3,8 +3,6 @@
 #define US_LSERVER_H
 
 #include "us_extern.h"
-#include <QLocalSocket>
-#include <QLocalServer>
 
 // *********** user defines *************
 

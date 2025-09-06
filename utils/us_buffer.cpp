@@ -185,7 +185,7 @@ void US_BufferComponent::putAllToHD(
       xml.writeStartElement( "densityCoefficients" );
       for ( int j = 0; j < 6; j++ )
       {
-         factor.sprintf( "c%i", j );
+         factor = QString( "c%1" ).arg( j );
          value = QString::number( componentList[ key ].dens_coeff[ j ], 'f', 5 );
          xml.writeAttribute( factor, value );
       }
@@ -195,7 +195,7 @@ void US_BufferComponent::putAllToHD(
       xml.writeStartElement( "viscosityCoefficients" );
       for ( int j = 0; j < 6; j++ )
       {
-         factor.sprintf( "c%i", j );
+         factor = QString( "c%1" ).arg( j );
          value = QString::number( componentList[ key ].visc_coeff[ j ], 'f', 5 );
          xml.writeAttribute( factor, value );
       }
@@ -238,6 +238,8 @@ int US_BufferComponent::saveToDB(US_DB2 * db) {
 
    qDebug() << "buffer_component_ID for new buffer component: " << idBufferComponent;
    componentID = QString::number(idBufferComponent);
+
+   return idBufferComponent;
 }
 
 //-------------  US_Buffer

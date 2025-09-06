@@ -2,8 +2,6 @@
 #ifndef US_SOLVE_SIM_H
 #define US_SOLVE_SIM_H
 
-#include <QtCore>
-
 #include "us_model.h"
 #include "us_dataIO.h"
 #include "us_noise.h"
