@@ -1038,7 +1038,7 @@ DbgLv(1) << "PC:MS: nmtasks mrssiz nbmods" << nmtasks << mrecs.size() << nbmods;
    modstats << tr( "Solute Type:" )
             << US_ModelRecord::stype_text( soltype );
    modstats << tr( "X Range:" )
-            << QString().sprintf( "%10.4f  %10.4f", xlolim, xuplim );
+            << QString::asprintf( "%10.4f  %10.4f", xlolim, xuplim );
    double str_y  = mrecs[ 0 ].str_y;
    double end_y  = mrecs[ 0 ].end_y;
 
@@ -1047,10 +1047,10 @@ DbgLv(1) << "PC:MS: nmtasks mrssiz nbmods" << nmtasks << mrecs.size() << nbmods;
       double slope  = ( end_y - str_y ) / ( xuplim - xlolim );
       double yincr  = ( yuplim - ylolim ) / (double)( qMax( 1, (nypts - 1) ) );
       modstats << tr( "Y Range + delta:" )
-               << QString().sprintf( "%10.4f  %10.4f  %10.4f",
+               << QString::asprintf( "%10.4f  %10.4f  %10.4f",
                      ylolim, yuplim, yincr );
       modstats << tr( "Best curve Y end points + slope:" )
-               << QString().sprintf( "%10.4f  %10.4f  %10.4f",
+               << QString::asprintf( "%10.4f  %10.4f  %10.4f",
                      str_y, end_y, slope );
 DbgLv(1) << "PC:MS:  best str_y,end_y" << str_y << end_y;
    }
@@ -1064,70 +1064,70 @@ DbgLv(1) << "PC:MS:  best str_y,end_y" << str_y << end_y;
                            + ( log( 0.5 ) - log( 0.001 ) ) * p1off );
       double par2   = (double)p2ndx / krng;
       modstats << tr( "Y Range:" )
-               << QString().sprintf( "%10.4f  %10.4f", ylolim, yuplim );
+               << QString::asprintf( "%10.4f  %10.4f", ylolim, yuplim );
       modstats << tr( "Best curve par1 and par2:" )
-               << QString().sprintf( "%10.4f  %10.4f", par1, par2 );
+               << QString::asprintf( "%10.4f  %10.4f", par1, par2 );
       modstats << tr( "Best curve Y end points:" )
-               << QString().sprintf( "%10.4f  %10.4f",
+               << QString::asprintf( "%10.4f  %10.4f",
                      mrecs[ 0 ].str_y, mrecs[ 0 ].end_y );
    }
    else if ( curvtype == CTYPE_2O )
    {
       modstats << tr( "Y Range:" )
-               << QString().sprintf( "%10.4f  %10.4f", ylolim, yuplim );
+               << QString::asprintf( "%10.4f  %10.4f", ylolim, yuplim );
       modstats << tr( "Best curve A, B, C:" )
-               << QString().sprintf( "%10.4f  %10.4f  %10.4f",
+               << QString::asprintf( "%10.4f  %10.4f  %10.4f",
                      mrecs[ 0 ].par1, mrecs[ 0 ].par2, mrecs[ 0 ].par3 );
       modstats << tr( "Best curve Y end points:" )
-               << QString().sprintf( "%10.4f  %10.4f",
+               << QString::asprintf( "%10.4f  %10.4f",
                      mrecs[ 0 ].str_y, mrecs[ 0 ].end_y );
    }
    else
    {
       modstats << tr( "Y Range:" )
-               << QString().sprintf( "%10.4f  %10.4f", ylolim, yuplim );
+               << QString::asprintf( "%10.4f  %10.4f", ylolim, yuplim );
       modstats << tr( "Best curve par1 and par2:" )
-               << QString().sprintf( "%10.4f  %10.4f",
+               << QString::asprintf( "%10.4f  %10.4f",
                      mrecs[ 0 ].par1, mrecs[ 0 ].par2 );
       modstats << tr( "Best curve Y end points:" )
-               << QString().sprintf( "%10.4f  %10.4f",
+               << QString::asprintf( "%10.4f  %10.4f",
                      mrecs[ 0 ].str_y, mrecs[ 0 ].end_y );
    }
    modstats << tr( "Number of models:" )
-            << QString().sprintf( "%5d", nmtasks );
+            << QString::asprintf( "%5d", nmtasks );
    modstats << tr( "Number of curve variations:" )
-            << QString().sprintf( "%5d", nypts );
+            << QString::asprintf( "%5d", nypts );
    modstats << tr( "Solute points per curve:" )
-            << QString().sprintf( "%5d", nlpts );
+            << QString::asprintf( "%5d", nlpts );
    if ( nblpts != nlpts )
       modstats << tr( "Best-curve points per curve:" )
-               << QString().sprintf( "%5d", nblpts );
+               << QString::asprintf( "%5d", nblpts );
    modstats << tr( "Index of best model:" )
-            << QString().sprintf( "%5d", mrecs[ 0 ].taskx );
+            << QString::asprintf( "%5d", mrecs[ 0 ].taskx );
    modstats << tr( "Best curve calculated solutes:" )
-            << QString().sprintf( "%5d", mrecs[ 0 ].csolutes.size() );
+            << QString::asprintf( "%5d", mrecs[ 0 ].csolutes.size() );
    modstats << tr( "Minimum, Maximum calculated solutes:" )
-            << QString().sprintf( "%5d  %5d", nsolmin, nsolmax );
+            << QString::asprintf( "%5d  %5d", nsolmin, nsolmax );
    modstats << tr( "Average calculated solutes:" )
-            << QString().sprintf( "%5d", nsolavg );
+            << QString::asprintf( "%5d", nsolavg );
    modstats << tr( "Minimum variance:" )
-            << QString().sprintf( "%12.6e", varimin );
+            << QString::asprintf( "%12.6e", varimin );
    modstats << tr( "Minimum, Maximum rmsd:" )
-            << QString().sprintf( "%12.8f  %12.8f", rmsdmin, rmsdmax );
+            << QString::asprintf( "%12.8f  %12.8f", rmsdmin, rmsdmax );
    modstats << tr( "Average, Median rmsd:" )
-            << QString().sprintf( "%12.8f  %12.8f", rmsdavg, rmsdmed );
+            << QString::asprintf( "%12.8f  %12.8f", rmsdavg, rmsdmed );
    modstats << tr( "Number of \"better\" models:" )
-            << QString().sprintf( "%5d", nbmods );
+            << QString::asprintf( "%5d", nbmods );
    modstats << tr( "%1 Best Min,Max calculated solutes:" ).arg( nbmods )
-            << QString().sprintf( "%5d  %5d", nbsomin, nbsomax );
+            << QString::asprintf( "%5d  %5d", nbsomin, nbsomax );
    modstats << tr( "%1 Best Average calculated solutes:" ).arg( nbmods )
-            << QString().sprintf( "%5d", nbsoavg );
+            << QString::asprintf( "%5d", nbsoavg );
    modstats << tr( "%1 Best Minimum, Maximum rmsd:" ).arg( nbmods )
-            << QString().sprintf( "%12.8f  %12.8f", brmsmin, brmsmax );
+            << QString::asprintf( "%12.8f  %12.8f", brmsmin, brmsmax );
    modstats << tr( "%1 Best Average, Median rmsd:" ).arg( nbmods )
-            << QString().sprintf( "%12.8f  %12.8f", brmsavg, brmsmed );
+            << QString::asprintf( "%12.8f  %12.8f", brmsavg, brmsmed );
    modstats << tr( "Tikhonov regularization parameter:" )
-            << QString().sprintf( "%12.3f", alpha );
+            << QString::asprintf( "%12.3f", alpha );
 DbgLv(1) << "PC:MS:   RTN";
 
 }
@@ -1772,14 +1772,14 @@ DbgLv(0) << "   lmcfit xs,ys xe,ye rmsd" << xlolim << ys << xuplim << ye
       control.epsilon  = ibm_rmsd * 8.0e-5;
       fit_function_IS( -1.0, par );    // Make sure to reset eval. function
 DbgLv(0) << "lmcurve_fit (IS) with par1,par2" << par[0] << par[1]
-   << QString().sprintf( "%14.8e %14.8e", par[0], par[1] )
+   << QString::asprintf( "%14.8e %14.8e", par[0], par[1] )
    << "ftol,epsl" << control.ftol << control.epsilon;
 
       US_LM::lmcurve_fit_rmsd( npar, par, m_dat, t, y,
             &(US_pcsaProcess::fit_function_IS), &control, &status );
 
 DbgLv(0) << "  lmcurve_fit (IS) return: par1,par2" << par[0] << par[1]
-   << QString().sprintf( "%14.8e %14.8e", par[0], par[1] );
+   << QString::asprintf( "%14.8e %14.8e", par[0], par[1] );
 DbgLv(0) << "   lmcfit status: fnorm nfev info"
    << status.fnorm << status.nfev << status.info
    << US_LM::lm_statmsg( &status, false );
@@ -1796,14 +1796,14 @@ DbgLv(0) << "   lmcfit rmsd" << rmsd << "#solutes" << nsol;
       control.epsilon  = 1.e-4;
       fit_function_DS( -1.0, par );    // Make sure to reset eval. function
 DbgLv(0) << "lmcurve_fit (DS) with par1,par2" << par[0] << par[1]
-   << QString().sprintf( "%14.8e %14.8e", par[0], par[1] )
+   << QString::asprintf( "%14.8e %14.8e", par[0], par[1] )
    << "ftol,epsl" << control.ftol << control.epsilon;
 
       US_LM::lmcurve_fit_rmsd( npar, par, m_dat, t, y,
             &(US_pcsaProcess::fit_function_DS), &control, &status );
 
 DbgLv(0) << "  lmcurve_fit (DS) return: par1,par2" << par[0] << par[1]
-   << QString().sprintf( "%14.8e %14.8e", par[0], par[1] );
+   << QString::asprintf( "%14.8e %14.8e", par[0], par[1] );
 DbgLv(0) << "   lmcfit status: fnorm nfev info"
    << status.fnorm << status.nfev << status.info;
 double rmsd = sqrt( dsets[0]->model.variance );

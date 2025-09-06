@@ -3,7 +3,7 @@
 #define US_REPORT_H
 
 #include "us_extern.h"
-#include "us_db2.h"
+#include "ius_db2.h"
 
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug() //!< debug-level-conditioned qDebug()
@@ -25,7 +25,7 @@ class US_UTIL_EXTERN US_Report
          REPORT_OK,         //!< The last db operation completed successfully
          NOT_FOUND,         //!< The report, reportTriple or reportDocument ID/GUID was not found
          CONNECT_ERROR,     //!< Could not connect to the DB
-         DB_ERROR,          //!< A US_DB2 error occurred; check db->lastErrno();
+         DB_ERROR,          //!< A IUS_DB2 error occurred; check db->lastErrno();
          MISC_ERROR,        //!< An unspecified error occurred
          SAVED_DB           //!< The report has been saved to the DB
       };
@@ -79,14 +79,14 @@ class US_UTIL_EXTERN US_Report
              \param    dir The directory where the document contents file is located
              \param    db For database access, an open database connection
          */
-         Status        saveDB( int, QString, US_DB2* = 0 );
+         Status        saveDB( int, QString, IUS_DB2* = 0 );
 
          /*! \brief    Function to read the entire current report document from the DB
          
              \param    dir The directory where the document will be written
              \param    db  For database access, an open database connection
          */
-         Status readDB( QString, US_DB2* = 0 );
+         Status readDB( QString, IUS_DB2* = 0 );
 
          //! \brief Resets the class variables to their default vaules
          void    reset ( void );
@@ -126,14 +126,14 @@ class US_UTIL_EXTERN US_Report
              \param    db For database access, an open database connection
              \return   One of the US_Report error codes
          */
-         Status        saveDB( int, US_DB2* = 0 );
+         Status        saveDB( int, IUS_DB2* = 0 );
 
          /*! \brief    Function to read all the documents for the current triple,
                        except for the document content itself
          
              \param    db For database access, an open database connection
          */
-         Status        readDocsDB( US_DB2* = 0 );
+         Status        readDocsDB( IUS_DB2* = 0 );
 
          /*! \brief    Function to add an empty report document record, both in the object 
                        and the DB
@@ -156,7 +156,7 @@ class US_UTIL_EXTERN US_Report
                                     QString,
                                     QString,
                                     QString,
-                                    US_DB2* = 0 );
+                                    IUS_DB2* = 0 );
 
          /*! \brief    Function to add/replace an entire document record
 
@@ -165,14 +165,14 @@ class US_UTIL_EXTERN US_Report
              \param    db   For database access, an open database connection
              \return   One of the US_Report error codes
          */
-         Status        addDocument( US_Report::ReportDocument , QString , US_DB2* = 0 );
+         Status        addDocument( US_Report::ReportDocument , QString , IUS_DB2* = 0 );
 
          /*! \brief    Function to delete a report document from the DB
 
              \param    ndx The index into the docs QVector of the report document to delete
              \param    db  For database access, an open database connection
          */
-         Status        removeDocument( int, US_DB2* = 0 );
+         Status        removeDocument( int, IUS_DB2* = 0 );
 
          /*! \brief    Function to find an existing report document record, based on the
                        analysis, subAnalysis, and documentType fields
@@ -217,14 +217,14 @@ class US_UTIL_EXTERN US_Report
       //! \param    db For database access, an open database connection
       //! \param    new_triple The triple string for associated documents
       //! \return   One of the US_Report error codes
-      Status        readDB( QString, US_DB2* = 0, QString = "" );
-      Status        readDB_auto( int, QString, US_DB2* = 0, QString = "" );
+      Status        readDB( QString, IUS_DB2* = 0, QString = "" );
+      Status        readDB_auto( int, QString, IUS_DB2* = 0, QString = "" );
       
       //! \brief    Function to save the global report information to db
       //  \param    db For database access, an open database connection
       //  \returns  One of the US_Report error codes
-      Status        saveDB( US_DB2* = 0 );
-      Status        saveDB_auto( int, US_DB2* = 0 );
+      Status        saveDB( IUS_DB2* = 0 );
+      Status        saveDB_auto( int, IUS_DB2* = 0 );
       
 
       //! \brief    Function to add a new empty triple record to the report
@@ -232,20 +232,20 @@ class US_UTIL_EXTERN US_Report
       //! \param    dataDescription The data description from the original file
       //! \param    db For database access, an open database connection
       //! \returns  One of the US_Report error codes
-      Status        addTriple( QString, QString = "", US_DB2* = 0 );
+      Status        addTriple( QString, QString = "", IUS_DB2* = 0 );
 
       //! \brief    Function to add or replace an entire triple
       //! \param    t  A US_Report::ReportTriple object
       //! \param    db For database access, an open database connection
       //! \returns  One of the US_Report error codes
-      Status        addTriple( US_Report::ReportTriple , US_DB2* = 0 );
+      Status        addTriple( US_Report::ReportTriple , IUS_DB2* = 0 );
 
       //! \brief    Function to save the entire report structure to db
       //! \param    dir The directory where the document contents file is
       //!               located
       //! \param    db For database access, an open database connection
       //! \returns  One of the US_Report error codes
-      Status        saveAllToDB( QString, US_DB2* = 0 );
+      Status        saveAllToDB( QString, IUS_DB2* = 0 );
 
       //! \brief  Function to delete a report triple from the DB,
       //!         along with all documents
@@ -253,7 +253,7 @@ class US_UTIL_EXTERN US_Report
       //!             to delete
       //! \param  db For database access, an open database connection
       //! \returns  One of the US_Report error codes
-      Status        removeTriple( int, US_DB2* = 0 );
+      Status        removeTriple( int, IUS_DB2* = 0 );
 
       //! \brief Function to locate a triple record using the triple string
       //! \param    searchTriple The triple identifying which channel
@@ -275,10 +275,10 @@ class US_UTIL_EXTERN US_Report
       //!                    the original file, in case adding new triple
       //! \returns  One of the US_Report error codes
       Status       saveDocumentFromFile( const QString&, const QString&,
-                                         US_DB2*, int = 1, const QString = "" );
+                                         IUS_DB2*, int = 1, const QString = "" );
 
       Status       saveDocumentFromFile_auto( int, const QString&, const QString&,
-					      US_DB2*, int = 1, const QString = "" );
+					      IUS_DB2*, int = 1, const QString = "" );
 
       //! \brief Store multiple reportDocument records from the same triple.
       //! \param  dir      The directory where the report file is located.
@@ -294,15 +294,15 @@ class US_UTIL_EXTERN US_Report
       //!                         the original file, in case adding new triple
       //! \returns  One of the US_Report error codes
       Status       saveFileDocuments   ( const QString&, const QStringList&,
-                                         US_DB2*, int = 1, const QString = "" );
+                                         IUS_DB2*, int = 1, const QString = "" );
       
       Status       saveFileDocuments_auto  ( int, const QString&, const QStringList&,
-					     US_DB2*, int = 1, const QString = "" );
+					     IUS_DB2*, int = 1, const QString = "" );
       
       //! \brief Function to delete the specified report from the DB
       //! \param    reportID The database reportID of the report to delete
       //! \param    db       For database access, an open database connection
-      Status       removeReport( int, US_DB2* = 0 );
+      Status       removeReport( int, IUS_DB2* = 0 );
 
       //! \brief Resets the class variables to default values
       void         reset();

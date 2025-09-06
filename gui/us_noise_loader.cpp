@@ -8,7 +8,7 @@
 #include <qwt_legend.h>
 
 // constructor:  load loader dialog
-US_NoiseLoader::US_NoiseLoader( US_DB2* db, QStringList& mieGUIDs,
+US_NoiseLoader::US_NoiseLoader( IUS_DB2* db, QStringList& mieGUIDs,
    QStringList& nieGUIDs, US_Noise& ti_noise, US_Noise& ri_noise,
    US_DataIO::EditedData* edata )
    : US_WidgetsDialog( 0, 0 ), db( db ), mieGUIDs( mieGUIDs ),

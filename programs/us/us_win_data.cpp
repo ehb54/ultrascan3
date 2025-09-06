@@ -1,5 +1,8 @@
 //! \file us_win_data.cpp
 
+#include <QString>
+#include <QObject>
+
 /*! This namespace is used to configure data using C mechanisms instead
     of a large C++ constructor.  It is a convenience namespace used only
     by \ref US_Win.

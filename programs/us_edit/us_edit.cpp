@@ -10816,7 +10816,7 @@ QString US_Edit::compose_json( bool fm_stage )
 }
 
 // Set Autoflow record to REPORT (for ABDE)
-void US_Edit::update_autoflow_record_atEditData_abde( US_DB2* db )
+void US_Edit::update_autoflow_record_atEditData_abde( IUS_DB2* db )
 {
   QStringList qry;
 
@@ -10837,7 +10837,7 @@ void US_Edit::update_autoflow_record_atEditData_abde( US_DB2* db )
 }
 
 // Set Autoflow record to ANALSYIS && set analysises ID(s)
-void US_Edit::update_autoflow_record_atEditData( US_DB2* db,  QString& AnalysisIDsString )
+void US_Edit::update_autoflow_record_atEditData( IUS_DB2* db,  QString& AnalysisIDsString )
 {
    QString runID_numeric     = details_at_editing_local[ "runID" ];
    QString OptimaName        = details_at_editing_local[ "OptimaName" ];
@@ -10883,7 +10883,7 @@ void US_Edit::update_autoflow_record_atEditData( US_DB2* db,  QString& AnalysisI
 
 
 // Function to create a single autoflowAnalysis record: Pass some fields from autoflow table (set analysises IDs, filename etc.)
-int US_Edit::create_autoflowAnalysis_record( US_DB2* db, QString& tripleName, QString& status_json )
+int US_Edit::create_autoflowAnalysis_record( IUS_DB2* db, QString& tripleName, QString& status_json )
 {
   //create single record in autoflowAnalysis: return ID (auto-incremented), && update/push
 
@@ -10936,7 +10936,7 @@ int US_Edit::create_autoflowAnalysis_record( US_DB2* db, QString& tripleName, QS
 }
 
 // Function to create a single autoflowAnalysisStages record:
-void US_Edit::create_autoflowAnalysisStages_record( US_DB2* db, int ID )
+void US_Edit::create_autoflowAnalysisStages_record( IUS_DB2* db, int ID )
 {
   QStringList qry;
   qry << "new_autoflow_analysis_stages_record"
@@ -12909,7 +12909,7 @@ DbgLv(1) << "EDT:WrMwl:  dax fname" << idax << filename << "wrstat" << wrstat;
 }
 
 //get rawDataGUID based on filebase && triple names
-QString US_Edit::get_rawDataGUID( US_DB2* db, QString filebase_qry, QString triplename_qry )
+QString US_Edit::get_rawDataGUID( IUS_DB2* db, QString filebase_qry, QString triplename_qry )
 {
 
   QString rawID   = QString("");
@@ -13440,7 +13440,7 @@ DbgLv(1) << "EDT:WrXml:  waveln" << waveln;
 }
 
 // Write edit database record
-int US_Edit::write_edit_db( US_DB2* dbP, QString& fname, QString& editGUID,
+int US_Edit::write_edit_db( IUS_DB2* dbP, QString& fname, QString& editGUID,
       QString& editID, QString& rawGUID )
 {
    int idEdit;
@@ -13603,7 +13603,7 @@ DbgLv(1) << "IxDa: dx" << data_index << "plx wavl trx"
 
 // Get a list of filenames with Edit Label like a specified file name
 int US_Edit::like_edit_files( QString filename, QStringList& editfiles,
-      US_DB2* dbP )
+      IUS_DB2* dbP )
 {
    // Determine local-disk files with same edit label and cell/channel
    QString filebase = filename.section( ".", 0, -3 );

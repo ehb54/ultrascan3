@@ -112,7 +112,7 @@ class US_XpnHostDB : public US_Widgets
     void editDB      ( void ); 
     void deleteDB    ( void ); 
     bool test_connect( void ); 
-    void readInstruments ( US_DB2* = 0 );
+    void readInstruments ( IUS_DB2* = 0 );
     void newHost( QMap <QString, QString> & newInstrument );
     void editHost( QMap <QString, QString> & newInstrument );
     void fillGui( QMap <QString, QString> & );

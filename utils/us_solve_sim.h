@@ -3,6 +3,7 @@
 #define US_SOLVE_SIM_H
 
 #include <QtCore>
+#include <algorithm>
 
 #include "us_model.h"
 #include "us_dataIO.h"

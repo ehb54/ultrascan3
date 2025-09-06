@@ -131,7 +131,7 @@ bool US_RotorGui::load_rotor(QString& load_init, double& coeff1, double& coeff2)
       QString masterPW = pw.getPasswd();
       US_DB2 db( masterPW );
 
-      if ( db.lastErrno() != US_DB2::OK )
+      if ( db.lastErrno() != IUS_DB2::OK )
       {
          connect_error( db.lastError() );
          return( false );
@@ -171,7 +171,7 @@ bool US_RotorGui::load_rotor(QString& load_init, double& coeff1, double& coeff2)
          QString masterPW = pw.getPasswd();
          US_DB2 db( masterPW );
 
-         if ( db.lastErrno() != US_DB2::OK )
+         if ( db.lastErrno() != IUS_DB2::OK )
          {
             connect_error( db.lastError() );
             return( false );
@@ -496,14 +496,14 @@ void US_RotorGui::newRotor( void )
       QString masterPW = pw.getPasswd();
       US_DB2 db( masterPW );
    
-      if ( db.lastErrno() != US_DB2::OK )
+      if ( db.lastErrno() != IUS_DB2::OK )
       {
          db_error( db.lastError() );
          return;
       }
 
       int status = currentRotor.addRotorDB( &db );
-      if ( status != US_DB2::OK )
+      if ( status != IUS_DB2::OK )
          db_error( db.lastError() );
 
       else
@@ -582,7 +582,7 @@ US_Rotor::Status US_RotorGui::readRotor( int disk_db, int rotorID )
       QString masterPW = pw.getPasswd();
       US_DB2 db( masterPW );
    
-      if ( db.lastErrno() != US_DB2::OK )
+      if ( db.lastErrno() != IUS_DB2::OK )
       {
          connect_error( db.lastError() );
          return( US_Rotor::CONNECT_ERROR );
@@ -617,21 +617,21 @@ void US_RotorGui::deleteRotor( void )
       QString masterPW = pw.getPasswd();
       US_DB2 db( masterPW );
    
-      if ( db.lastErrno() != US_DB2::OK )
+      if ( db.lastErrno() != IUS_DB2::OK )
       {
          connect_error( db.lastError() );
          return;
       }
 
       int status = US_Rotor::Rotor::deleteRotorDB( rotorID, &db );
-      if ( status == US_DB2::ROTOR_IN_USE )
+      if ( status == IUS_DB2::ROTOR_IN_USE )
       {
          QString error = tr( "This rotor is in use, and can't be deleted" );
          db_error( error );
          return;
       }
 
-      else if ( status != US_DB2::OK )
+      else if ( status != IUS_DB2::OK )
       {
          db_error( db.lastError() );
          return;
@@ -664,7 +664,7 @@ bool US_RotorGui::readCalibrationProfiles( int rotorID )
       QString masterPW = pw.getPasswd();
       US_DB2 db( masterPW );
       
-      if ( db.lastErrno() != US_DB2::OK )
+      if ( db.lastErrno() != IUS_DB2::OK )
       {
          connect_error( db.lastError() );
          return( false );
@@ -763,7 +763,7 @@ US_Rotor::Status US_RotorGui::readCalibration( int disk_db, int calibrationID )
       QString masterPW = pw.getPasswd();
       US_DB2 db( masterPW );
    
-      if ( db.lastErrno() != US_DB2::OK )
+      if ( db.lastErrno() != IUS_DB2::OK )
       {
          connect_error( db.lastError() );
          return( US_Rotor::CONNECT_ERROR );
@@ -810,21 +810,21 @@ void US_RotorGui::deleteCalibration( void )
       QString masterPW = pw.getPasswd();
       US_DB2 db( masterPW );
    
-      if ( db.lastErrno() != US_DB2::OK )
+      if ( db.lastErrno() != IUS_DB2::OK )
       {
          connect_error( db.lastError() );
          return;
       }
 
       int status = US_Rotor::RotorCalibration::deleteCalibrationDB( calibrationID, &db );
-      if ( status == US_DB2::CALIB_IN_USE )
+      if ( status == IUS_DB2::CALIB_IN_USE )
       {
          QString error = tr( "This rotor calibration is in use, and can't be deleted" );
          db_error( error );
          return;
       }
 
-      else if ( status != US_DB2::OK )
+      else if ( status != IUS_DB2::OK )
       {
          db_error( QString::number( status ) + ": " + db.lastError() );
          return;
