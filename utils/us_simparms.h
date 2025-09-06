@@ -194,6 +194,7 @@ class US_UTIL_EXTERN US_SimulationParameters
    double    lrnoise;              //!< Random noise, proportional to local concentration
    double    tinoise;              //!< Time invariant noise
    double    rinoise;              //!< Radially invariant noise
+   double    baseline;          //!< constant baseline offset, can be negative
    bool      band_forming;         //!< True for band-forming centerpieces
    double    band_volume;          //!< Loading volume (of lamella) in a
                                    //!< Band-forming centerpiece
