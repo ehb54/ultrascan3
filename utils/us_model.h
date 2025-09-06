@@ -37,7 +37,7 @@ class US_UTIL_EXTERN US_Model
                           COFS, FE, CUSTOMGRID, DMGA, DMGA_CONSTR };
 
       //! The type of global analysis used with the model
-      enum GlobalType { NONE, MENISCUS, GLOBAL, SUPERGLOBAL, BOTTOM, MENIBOTT };
+      enum GlobalType { NONE, MENISCUS, GLOBAL, SUPERGLOBAL, BOTTOM, MENIBOTT, ANGLE, MENIANGLE };
 
       //! \brief Custom Grid Data
       struct CustomGridMetadata

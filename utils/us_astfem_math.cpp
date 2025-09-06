@@ -43,11 +43,11 @@ simparams.debug();
    timestate.set_key( "Step",        "I2" );
    timestate.set_key( "Scan",        "I2" );
 
-   double duration      = 0.0;
-   double duration_prev = 0.0;
+   double duration      = 0.0; // Duration of the current speed step in Seconds
+   double duration_prev = 0.0; // Duration of the previous speed step in Seconds
    double rpm           = 0.0;
    double omega2t       = 0.0;
-   double prvs_speed    = 0.0;
+   double prvs_speed    = 0.0; // Speed of the previous speed step
    int    scan_nbr      = 0;
    int    step_nbr      = 0;
    double temperature   = sim_data.scanData[ 0 ].temperature;
@@ -63,8 +63,8 @@ simparams.debug();
       if ( dbgtxt[ ii ].startsWith( "SetSpeedReso" ) )
          ss_reso        = QString( dbgtxt[ ii ] ).section( "=", 1, 1 ).toInt();
    }
-   US_SimulationParameters::SpeedProfile* sp;
-   US_SimulationParameters::SpeedProfile* sp_prev;
+   US_SimulationParameters::SpeedProfile* sp; // Current speed step
+   US_SimulationParameters::SpeedProfile* sp_prev; // Previous speed step
 DbgLv(1) << "AMATH:wrts: writetimestate : no of scans" << nscans;
    QList< int > scantimes;
    QList< double > scantemps;
@@ -100,7 +100,7 @@ DbgLv(0)<< "AMATH:wrts: computed rate:" << rate;
 DbgLv(0)<< "AMATH:wrts: rate is given by user : t_acc from timestate" << t_acc << rate;
    }
 
-   int d1     = 0;
+   int d1     = 0; // running time of the experiment at the start of the speed step
    int itime  = 0;
 
    for ( int step = 0; step < nspeed; step++ )
@@ -145,8 +145,8 @@ DbgLv(0)<< "AMATH:wrts: rate is given by user : t_acc from timestate" << t_acc <
       duration   += ( sp->duration_hours * 3600.0 )
                   + ( sp->duration_minutes * 60.0 );
 //DbgLv(1) << "duration from timestate = "<<  duration;
-      int tacc    = d1 + t_acc;
-      int d2      = (int)duration + 1;
+      int tacc    = d1 + t_acc; // end of the acceleration phase of this speed step
+      int d2      = (int)duration + 1; // running time of the experiment at the end of the speed step
 
       for ( int ii = d1; ii < d2; ii++ )
       {
@@ -157,9 +157,17 @@ DbgLv(0)<< "AMATH:wrts: rate is given by user : t_acc from timestate" << t_acc <
             rpm         = speed;
 
          int set_speed  = (int)qRound( rpm / (double)ss_reso ) * ss_reso;
+         if ( ii <= tacc )
+         {
+            double t = (double)( ii - d1 );
+            omega2t += sq( rate * M_PI / 30.0 ) * (sq(t)-t + 1.0/3.0);
+         }
+         else
+         {
+            double om1t = rpm * M_PI / 30.0;
+            omega2t    += sq( om1t );
+         }
 
-         double om1t = rpm * M_PI / 30.0;
-         omega2t    += sq( om1t );
 
          itime       = ii;
          int scanx   = scantimes.indexOf( itime );
@@ -947,8 +955,8 @@ int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata,
 #ifdef NO_DB
                //MPI_Abort( MPI_COMM_WORLD, -1 );
 #endif
-               simscan--;
-	       break;
+                simscan--;
+                break;
             }
          }
 
@@ -1094,10 +1102,10 @@ int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata,
 
    // Interpolate all radial points from each scan in tmp_data onto expdata
 
-   if ( tmp_data.radius[ 0 ] > expdata.radius[ 0 ] )
+   if ( tmp_data.radius[ 0 ] > expdata.radius[ 0 ] && qAbs(tmp_data.radius[ 0 ] - expdata.radius[ 0 ]) > 1.0e-4)
    {
-      qDebug() << "Radius comparison: " << tmp_data.radius[ 0 ]
-               << " (simulated), " << expdata.radius[ 0 ]
+      qDebug() << "Radius comparison: " << QString::number(tmp_data.radius[ 0 ])
+               << " (simulated), " << QString::number(expdata.radius[ 0 ])
                << " (experimental)";
 
       qDebug() << "jj = " << 0 << ", simdata radius: "
@@ -1148,7 +1156,8 @@ DbgLv(1) << "jj ii sztrad szerad" << jj << ii << tdradsz << expdata.radius.size(
 #ifdef NO_DB
             //MPI_Abort( MPI_COMM_WORLD, -2 );
 #endif
-            exit( -2 );
+         jj--;
+         break;
          }
       }
 

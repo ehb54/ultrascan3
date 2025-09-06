@@ -289,9 +289,9 @@ if (my_rank==0) DbgLv(0) << "PF:   DC_model" << parameters[name] << name;
 
       else
          dbg_level  = 0;
-
+      dbg_level = qMax(0, dbg_level);
 //      US_Settings::set_us_debug( dbg_level );
-      int dbglv = ( my_rank < 2 || my_rank == 15 ) ? dbg_level : 0;
+      int dbglv = ( my_rank < 2 || my_rank == 15 ) ? qMax(0,dbg_level) : 0;
       US_Settings::set_us_debug( dbglv );
       dbg_timing = ( parameters.contains( "debug_timings" )
                  &&  parameters[ "debug_timings" ].toInt() != 0 );
@@ -342,6 +342,18 @@ void US_MPI_Analysis::parse_dataset( QXmlStreamReader& xml, DATASET* dataset )
       {
          dataset->simparams.gridType = (US_SimulationParameters::GridType)
                               a.value( "value" ).toString().toInt();
+      }
+
+      if ( xml.name() == "sigma" )
+      {
+         dataset->simparams.sigma
+                            = a.value( "value" ).toString().toDouble();
+      }
+
+      if ( xml.name() == "delta" )
+      {
+         dataset->simparams.delta
+                            = a.value( "value" ).toString().toDouble();
       }
 
       if ( xml.name() == "density" )
@@ -421,6 +433,7 @@ void US_MPI_Analysis::parse_dataset( QXmlStreamReader& xml, DATASET* dataset )
          concentrations << a.value( "value" ).toString().toDouble();
       }
    }
+   DbgLv(-1) << "parse_dataset: finished" << my_rank;
 }
 
 void US_MPI_Analysis::parse_files( QXmlStreamReader& xml, DATASET* dataset )
@@ -470,7 +483,39 @@ void US_MPI_Analysis::parse_solution( QXmlStreamReader& xml, DATASET* dataset )
          dataset->viscosity = a.value( "viscosity" ).toString().toDouble();
          dataset->compress  = a.value( "compress"  ).toString().toDouble();
          dataset->manual    = a.value( "manual"    ).toString().toInt();
+         dataset->solution_rec.buffer.viscosity = dataset->viscosity;
+         dataset->solution_rec.buffer.density = dataset->density;
+         dataset->solution_rec.buffer.cosed_componentIDs.clear();
+         dataset->solution_rec.buffer.cosed_component.clear();
+         while (!xml.atEnd()){
+            xml.readNext();
+            if (xml.isEndElement() && xml.name() == "buffer") break;
+            if (xml.isStartElement() && xml.name() == "cosedcomponent") {
+               US_CosedComponent bc;
+
+               QXmlStreamAttributes ab = xml.attributes();
+               bc.id = ab.value("id").toInt();
+               bc.componentID = ab.value("id").toString();
+               bc.name = ab.value("name").toString();
+               bc.overlaying = US_Util::bool_flag(ab.value("overlay").toString());
+               bc.conc = ab.value("conc").toString().toDouble();
+               bc.s_coeff = ab.value("s").toString().toDouble()*1E-13;
+               bc.d_coeff = ab.value("D").toString().toDouble()*1e-6;
+               bc.vbar = ab.value("vbar").toString().toDouble();
+               QStringList dens = ab.value("dens").toString().split(" ");
+               QStringList visc = ab.value("visc").toString().split(" ");
+               for(int i = 0; i < dens.length(); i++ ){
+                  bc.dens_coeff[i] = dens[i].toDouble();
+               }
+               for(int i = 0; i < visc.length(); i++ ){
+                  bc.visc_coeff[i] = visc[i].toDouble();
+               }
+               dataset->solution_rec.buffer.cosed_component << bc;
+               dataset->solution_rec.buffer.cosed_componentIDs << bc.componentID;
+            }
+         }
       }
+
 
       if ( xml.isStartElement() && xml.name() == "analyte" )
       {
@@ -494,5 +539,6 @@ void US_MPI_Analysis::parse_solution( QXmlStreamReader& xml, DATASET* dataset )
    }
 
    dataset->vbar20  = US_Math2::calcCommonVbar( dataset->solution_rec, 20.0 );
+   dataset->simparams.vbar = dataset->vbar20;
 }
 
