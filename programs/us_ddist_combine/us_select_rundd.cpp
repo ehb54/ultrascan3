@@ -361,7 +361,7 @@ timer.start();
                      int niters    = attr.value( "MCIteration" ).toString()
                                                                 .toInt();
                      mdesc         = QString( mdesc ).left( kk ) +
-                                     QString().sprintf( "_mcN%03d", niters ) +
+                                     QString::asprintf( "_mcN%03d", niters ) +
                                      QString( mdesc ).mid( kk + 7 );
                   }
                }

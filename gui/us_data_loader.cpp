@@ -763,7 +763,7 @@ void US_DataLoader::list_data()
       QString  cdescr  = dlabels.at( ii );
       DataDesc ddesc   = ddescrs.at( ii );
       QString  dbID    = fromDB
-                         ? QString().sprintf( "%6d", ddesc.DB_id )
+                         ? QString::asprintf( "%6d", ddesc.DB_id )
                          : QString( "" );
       crlabels.clear();
       crlabels << ddesc.runID

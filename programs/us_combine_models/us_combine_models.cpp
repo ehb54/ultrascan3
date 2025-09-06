@@ -238,7 +238,7 @@ qDebug() << "SAVE:   im" << ii << "kcomps" << kcomps;
             
          // Add in any new unique component and bump count
          ncomps++;
-         sc.name = QString().sprintf( "SC%04d", ncomps );
+         sc.name = QString::asprintf( "SC%04d", ncomps );
          cmodel.components << sc;
 qDebug() << "SAVE:      NEW comp: ncomps" << ncomps;
       }
