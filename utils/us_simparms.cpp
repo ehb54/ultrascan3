@@ -807,6 +807,9 @@ int US_SimulationParameters::load_simparms( QString fname )
             astr  = a.value( "rinoise"     ).toString();
             if ( !astr.isEmpty() )
                rinoise      = astr.toDouble();
+            astr  = a.value( "baseline"     ).toString();
+            if ( !astr.isEmpty() )
+               baseline     = astr.toDouble();
             astr  = a.value( "temperature" ).toString();
             if ( !astr.isEmpty() )
                temperature  = astr.toDouble();
@@ -926,6 +929,7 @@ int US_SimulationParameters::save_simparms( QString fname )
       xml.writeAttribute   ( "lrnoise",     QString::number( lrnoise ) );
       xml.writeAttribute   ( "tinoise",     QString::number( tinoise ) );
       xml.writeAttribute   ( "rinoise",     QString::number( rinoise ) );
+      xml.writeAttribute   ( "baseline",     QString::number( baseline ) );
       xml.writeAttribute   ( "temperature", QString::number( temperature ) );
       xml.writeAttribute   ("sigma", QString::number(sigma));
       xml.writeAttribute   ("delta", QString::number(delta));
@@ -1620,6 +1624,7 @@ void US_SimulationParameters::debug( void )
    qDebug() << "Random noise (l):" << lrnoise;
    qDebug() << "Time Inv Noise  :" << tinoise;
    qDebug() << "Radial Inv Noise:" << rinoise;
+   qDebug() << "Baseline offset :" << baseline;
    qDebug() << "Band Forming    :" << band_forming;
    qDebug() << "Band Volume     :" << band_volume;
    qDebug() << "Rotor Calibr.ID :" << rotorCalID;

@@ -1020,7 +1020,8 @@ void US_Hydrodyn_Saxs_Hplc::clear_files( QStringList files, bool quiet )
    }
 
    disable_updates = false;
-   plot_files();
+   // ok, quiet is impling save zoom state...
+   plot_files( quiet );
    // if ( !lb_files->count() &&
    //      plot_dist_zoomer )
    // {
@@ -2857,11 +2858,13 @@ void US_Hydrodyn_Saxs_Hplc::set_conc_file( QString file )
       lbl_conc_file->setText( file );
    }
       
+   disable_all();
    update_csv_conc();
    if ( conc_widget )
    {
       conc_window->refresh( csv_conc );
    }
+
    plot_ref->detachItems( QwtPlotItem::Rtti_PlotCurve ); plot_ref->detachItems( QwtPlotItem::Rtti_PlotMarker );;
 
    if ( f_qs.count( lbl_conc_file->text() ) )
@@ -2877,11 +2880,15 @@ void US_Hydrodyn_Saxs_Hplc::set_conc_file( QString file )
       curve->attach( plot_ref );
       plot_dist->setAxisScale( QwtPlot::xBottom, f_qs[ lbl_conc_file->text() ][ 0 ], f_qs[ lbl_conc_file->text() ].back() );
       
-      if ( !suppress_replot )
-      {
-         plot_ref->replot();
+      // #warning something is odd here, why plot_ref below & plot_dist setaxisscale?, and the below section causes 100% cpu
+      /*
+        if ( !suppress_replot )
+        {
+        plot_ref->replot();
+        }
+      */
       }
-   }
+
    update_enables();
 }
 
@@ -3336,7 +3343,6 @@ bool US_Hydrodyn_Saxs_Hplc::save_files_csv( QStringList files )
 
 bool US_Hydrodyn_Saxs_Hplc::save_files( QStringList files )
 {
-
    bool errors = false;
    bool overwrite_all = false;
    bool cancel        = false;
@@ -3465,7 +3471,7 @@ bool US_Hydrodyn_Saxs_Hplc::save_file( QString file, bool &cancel, bool &overwri
       //    .arg( f_solvent_e_dens.count( file ) ? QString( " Solvent e density: %1 [e A^-3]" ).arg( f_solvent_e_dens[ file ] ) : QString("") )
       //    .arg( f_header.count( file ) ? f_header[ file ] : QString( "" ) )
       //    ;
-      ts << QString( windowTitle() + us_tr( " %1data: %2%3%4%5%6%7%8%9%10%11%12%13%14%15%16%17%18%19%20%21%22%23%24%25%26\n" ) )
+      ts << QString( windowTitle() + us_tr( " %1data: %2%3%4%5%6%7%8%9%10%11%12%13%14%15%16%17%18%19%20%21%22%23%24%25\n" ) )
          .arg( ( f_is_time.count( file ) && f_is_time[ file ] ? "Frame " : "" ) )
          .arg( file )
          .arg( units )
@@ -3482,7 +3488,6 @@ bool US_Hydrodyn_Saxs_Hplc::save_file( QString file, bool &cancel, bool &overwri
          .arg( f_e_nucleon_ratio.count( file ) ? QString( " Electron/nucleon ratio Z/A: %1" ).arg( f_e_nucleon_ratio[ file ] ) : QString("") )
          .arg( f_nucleon_mass.count( file ) ? QString( " Nucleon mass: %1 [g]" ).arg( f_nucleon_mass[ file ] ) : QString("") )
          .arg( f_solvent_e_dens.count( file ) ? QString( " Solvent e density: %1 [e A^-3]" ).arg( f_solvent_e_dens[ file ] ) : QString("") )
-         .arg( f_header.count( file ) ? f_header[ file ] : QString( "" ) )
          // .arg( mals_angles.loaded_filename.isEmpty() ? QString("") : QString( " Angles loaded from:%1" ).arg( mals_angles.loaded_filename ) )
          .arg( f_ri_corr.count( file ) ? QString( " RI-Corr scatt. angle:%1"  ).arg( f_ri_corr[ file ] ) : QString( "" ) )
          .arg( f_ri_corrs.count( file ) ? QString( " RI-Corr scatt. angles:%1"  ).arg( f_ri_corrs[ file ] ) : QString( "" ) )
@@ -3531,18 +3536,19 @@ bool US_Hydrodyn_Saxs_Hplc::save_file( QString file, bool &cancel, bool &overwri
       if ( use_errors &&
            (int)f_errors[ file ].size() > i )
       {
-         ts << QString("").sprintf( "%-18s\t%.6e\t%.6e\n",
-                                    f_qs_string[ file ][ i ].toLatin1().data(),
-                                    f_Is       [ file ][ i ],
-                                    f_errors   [ file ][ i ] );
+         ts << QString::asprintf( "%-18s\t%.6e\t%.6e\n",
+                                  f_qs_string[ file ][ i ].toLatin1( ).data(),
+                                  f_Is       [ file ][ i ],
+                                  f_errors   [ file ][ i ] );
       } else {
-         ts << QString("").sprintf( "%-18s\t%.6e\n",
-                                    f_qs_string[ file ][ i ].toLatin1().data(),
-                                    f_Is       [ file ][ i ] );
+         ts << QString::asprintf( "%-18s\t%.6e\n",
+                                  f_qs_string[ file ][ i ].toLatin1( ).data(),
+                                  f_Is       [ file ][ i ] );
       }
    }
 
    f.close();
+
    editor_msg( "black", QString( us_tr( "%1 written as %2" ) )
                .arg( file )
                .arg( use_filename ) );
@@ -4188,7 +4194,7 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_t( QStringList files )
                it++ )
          {
             t   .push_back( it->first );
-            t_qs.push_back( QString( "" ).sprintf( "%.8f", it->first ) );
+            t_qs.push_back( QString::asprintf( "%.8f", it->first ) );
             if ( it->second.count( qv ) )
             {
                I.push_back( it->second[ qv ] );
@@ -5505,7 +5511,7 @@ void US_Hydrodyn_Saxs_Hplc::view()
                //    .arg( f_header.count( file ) ? f_header[ file ] : QString( "" ) )
                //    ;
 
-               text += QString( windowTitle() + us_tr( " %1data: %2%3%4%5%6%7%8%9%10%11%12%13%14%15%16%17%18%19%20%21%22%23%24%25%26\n" ) )
+               text += QString( windowTitle() + us_tr( " %1data: %2%3%4%5%6%7%8%9%10%11%12%13%14%15%16%17%18%19%20%21%22%23%24%25\n" ) )
                   .arg( ( f_is_time.count( file ) && f_is_time[ file ] ? "Frame " : "" ) )
                   .arg( file )
                   .arg( units )
@@ -5522,7 +5528,6 @@ void US_Hydrodyn_Saxs_Hplc::view()
                   .arg( f_e_nucleon_ratio.count( file ) ? QString( " Electron/nucleon ratio Z/A: %1" ).arg( f_e_nucleon_ratio[ file ] ) : QString("") )
                   .arg( f_nucleon_mass.count( file ) ? QString( " Nucleon mass: %1 [g]" ).arg( f_nucleon_mass[ file ] ) : QString("") )
                   .arg( f_solvent_e_dens.count( file ) ? QString( " Solvent e density: %1 [e A^-3]" ).arg( f_solvent_e_dens[ file ] ) : QString("") )
-                  .arg( f_header.count( file ) ? f_header[ file ] : QString( "" ) )
                   // .arg( mals_angles.loaded_filename.isEmpty() ? QString("") : QString( " Angles loaded from:%1" ).arg( mals_angles.loaded_filename ) )
                   .arg( f_ri_corr.count( file ) ? QString( " RI-Corr scatt. angle:%1"  ).arg( f_ri_corr[ file ] ) : QString( "" ) )
                   .arg( f_ri_corrs.count( file ) ? QString( " RI-Corr scatt. angles:%1"  ).arg( f_ri_corrs[ file ] ) : QString( "" ) )
@@ -5573,13 +5578,13 @@ void US_Hydrodyn_Saxs_Hplc::view()
             if ( use_errors &&
                  (int)f_errors[ file ].size() > i )
             {
-               text += QString("").sprintf( "%-18s\t%.6e\t%.6e\n",
-                                          f_qs_string[ file ][ i ].toLatin1().data(),
+               text += QString::asprintf( "%-18s\t%.6e\t%.6e\n",
+                                          f_qs_string[ file ][ i ].toLatin1( ).data(),
                                           f_Is       [ file ][ i ],
                                           f_errors   [ file ][ i ] );
             } else {
-               text += QString("").sprintf( "%-18s\t%.6e\n",
-                                          f_qs_string[ file ][ i ].toLatin1().data(),
+               text += QString::asprintf( "%-18s\t%.6e\n",
+                                          f_qs_string[ file ][ i ].toLatin1( ).data(),
                                           f_Is       [ file ][ i ] );
             }
          }
@@ -6004,6 +6009,10 @@ void US_Hydrodyn_Saxs_Hplc::regex_load()
 }
 
 void US_Hydrodyn_Saxs_Hplc::rename_from_context( const QPoint & pos ) {
+#if defined(Q_OS_MACOS )
+   #warning rename disabled for OSX, bug with calling QInputDialog in slot
+   return;
+#endif
    QListWidgetItem * lwi = lb_created_files->itemAt( pos );
    if ( lwi ) {
       return rename_created( lwi, pos );
@@ -6693,6 +6702,9 @@ void US_Hydrodyn_Saxs_Hplc::gauss_start()
 
    // gaussian_mode = true;
    mode_select( MODE_GAUSSIAN );
+
+   QTextStream( stdout ) << gaussian_info( gaussians, "gauss_start()" ) << "\n";
+   editor_msg( "darkblue", gaussian_info( gaussians, "Initial " ) + "\n" );
 
    running               = true;
 
@@ -7575,10 +7587,8 @@ void US_Hydrodyn_Saxs_Hplc::gauss_add_gaussian( double *g, QColor color )
 void US_Hydrodyn_Saxs_Hplc::gauss_init_gaussians()
 {
    gauss_delete_gaussians();
-   plotted_gaussians.clear( );
-   plotted_gaussian_sum.clear( );
 
-   for ( unsigned int i = 0; i < ( unsigned int ) gaussians.size(); i += gaussian_type_size )
+   for ( unsigned  i = 0; i < ( unsigned int ) gaussians.size(); i += gaussian_type_size )
    {
       gauss_add_gaussian( &(gaussians[ i ]), Qt::green );
    }
@@ -7590,16 +7600,15 @@ void US_Hydrodyn_Saxs_Hplc::gauss_init_gaussians()
    }
 }
 
-void US_Hydrodyn_Saxs_Hplc::gauss_delete_gaussians()
-{
-   for ( unsigned int i = 0; i < ( unsigned int ) plotted_gaussians.size(); i++ )
-   {
+void US_Hydrodyn_Saxs_Hplc::gauss_delete_gaussians() {
+   for ( size_t i = 0; i < plotted_gaussians.size(); ++i ) {
       plotted_gaussians[ i ]->detach();
    }
-   for ( unsigned int i = 0; i < ( unsigned int ) plotted_gaussian_sum.size(); i++ )
-   {
+   for ( size_t i = 0; i < plotted_gaussian_sum.size(); ++i ) {
       plotted_gaussian_sum[ i ]->detach();
    }
+   plotted_gaussians.clear( );
+   plotted_gaussian_sum.clear( );
 }
 
 void US_Hydrodyn_Saxs_Hplc::gauss_pos_focus( bool hasFocus )
@@ -8709,6 +8718,9 @@ void US_Hydrodyn_Saxs_Hplc::gauss_as_curves()
                    compute_gaussian( f_qs[ wheel_file ], tmp_g ),
                    true,
                    false );
+         if ( conc_files.count( wheel_file ) ) {
+            conc_files.insert( last_created_file );
+         }
       }
       if ( ( unsigned int ) gaussians.size() / gaussian_type_size > 1 )
       {
@@ -8717,6 +8729,9 @@ void US_Hydrodyn_Saxs_Hplc::gauss_as_curves()
                    compute_gaussian_sum( f_qs[ wheel_file ], gaussians ),
                    true,
                    false );
+         if ( conc_files.count( wheel_file ) ) {
+            conc_files.insert( last_created_file );
+         }
       }
    } else {
       // ggaussian mode

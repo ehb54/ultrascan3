@@ -72,10 +72,10 @@ void US_Hydrodyn::write_bead_spt(QString fname,
    //           );
 
    last_spt_text = 
-      QString("").sprintf("load xyz %s\nselect all\nwireframe off\nset background %s\n",
-                          QString("%1.bms").arg(QFileInfo(fname).fileName()).toLatin1().data(),
-                          black_background ? "black" : "white"
-                          );
+      QString::asprintf( "load xyz %s\nselect all\nwireframe off\nset background %s\n",
+                         QString("%1.bms" ).arg(QFileInfo(fname).fileName()).toLatin1().data(),
+                         black_background ? "black" : "white"
+                         );
 
    int atomno = 0;
    for (unsigned int i = 0; i < model->size(); i++) {
@@ -103,24 +103,20 @@ void US_Hydrodyn::write_bead_spt(QString fname,
                  (*model)[i].bead_coordinate.axis[1] / scaling,
                  (*model)[i].bead_coordinate.axis[2] / scaling
                  );
-         last_spt_text += QString("")
-            .sprintf(
-                     "select atomno=%d\nspacefill %.2f\ncolour %s\n",
-                     ++atomno,
-                     (*model)[i].bead_computed_radius / scaling,
-                     colormap[get_color(&(*model)[i])]
-                     );
+         last_spt_text += QString::asprintf( "select atomno=%d\nspacefill %.2f\ncolour %s\n",
+                                             ++atomno,
+                                             (*model )[i].bead_computed_radius / scaling,
+                                             colormap[get_color(&(*model)[i])]
+                                             );
       }
    }
 
    if ( movie_frame )
    {
-      last_spt_text += QString("")
-         .sprintf(
-                  "save ppm %s.ppm\n"
-                  "exit\n",
-                  fname.toLatin1().data()
-                  );
+      last_spt_text += QString::asprintf( "save ppm %s.ppm\n"
+                                          "exit\n",
+                                          fname.toLatin1( ).data()
+                                          );
       movie_text.push_back(fname);
    }
    // fprintf(fspt, ( last_spt_text.isNull() ? "" : last_spt_text.toLatin1().data() ) );
@@ -216,7 +212,7 @@ void US_Hydrodyn::write_bead_asa(QString fname, vector<PDB_atom> *model) {
    fprintf(f, " N.      Res.       ASA        MAX ASA         %%\n");
 
    float total_asa = 0.0;
-   float total_ref_asa = 0.0;
+   // float total_ref_asa = 0.0;
    float total_vol = 0.0;
    float total_mass = 0.0;
 
@@ -228,7 +224,7 @@ void US_Hydrodyn::write_bead_asa(QString fname, vector<PDB_atom> *model) {
    for (unsigned int i = 0; i < model->size(); i++) {
       if ((*model)[i].active) {
          total_asa += (*model)[i].bead_asa;
-         total_ref_asa += (*model)[i].ref_asa;
+         // total_ref_asa += (*model)[i].ref_asa;
          total_mass += (*model)[i].bead_ref_mw + (*model)[i].bead_ref_ionized_mw_delta;
          // printf("write_bead_asa model[%d].bead_ref_mw %g\n",
          //        i, ((*model)[i].bead_ref_mw) + (*model)[i].bead_ref_ionized_mw_delta);
@@ -278,7 +274,7 @@ void US_Hydrodyn::write_bead_asa(QString fname, vector<PDB_atom> *model) {
            );
 
    fclose(f);
-   editor_msg("dark blue", QString("").sprintf("Anhydrous volume %.2f A^3", total_vol));
+   editor_msg("dark blue", QString::asprintf( "Anhydrous volume %.2f A^3", total_vol ));
 }
 
 void US_Hydrodyn::write_bead_model(
@@ -650,6 +646,27 @@ void US_Hydrodyn::write_bead_model( QString fname,
    }
 }
 
+bool US_Hydrodyn::write_bead_xyzr( const QString & name, const vector < PDB_atom > & model ) {
+   QStringList out;
+
+   int pos = 0;
+
+   for ( auto const & bead : model ) {
+      out << QString( "%1 %2 %3 %4 UNK %5 UNKN" )
+         .arg( bead.bead_coordinate.axis[ 0 ] )
+         .arg( bead.bead_coordinate.axis[ 1 ] )
+         .arg( bead.bead_coordinate.axis[ 2 ] )
+         .arg( bead.bead_computed_radius )
+         .arg( ++pos )
+         ;
+   }
+
+   QString error;
+
+   QString qs_out = out.join( "\n" ) + "\n";
+   return US_File_Util::putcontents( name, qs_out, error );
+}
+
 void US_Hydrodyn::write_corr( QString fname, vector<PDB_atom> *model ) 
 {
    FILE *fcorr = (FILE *)0;
@@ -878,8 +895,7 @@ void US_Hydrodyn::write_dati1_pat_bead_model( QString filename,
    
    for ( int i = 0; i < size; ++i ) {
       // QTextStream( stdout ) <<
-      //    QString()
-      //    .sprintf(
+      //    QString::asprintf(
       //             "xyz %f %f %f rg %f r %f m %f\n"
       //             ,udt[ i ].x
       //             ,udt[ i ].y
@@ -887,7 +903,7 @@ void US_Hydrodyn::write_dati1_pat_bead_model( QString filename,
       //             ,udt[ i ].rg
       //             ,udt[ i ].r
       //             ,udt[ i ].m
-      //             )
+      // )
       //    ;
                            
                                                  
@@ -940,21 +956,19 @@ bool US_Hydrodyn::write_pdb_from_model(
          PDB_atom *this_atom = (PDB_atom *)&(model.molecule[j].atom[k]);
 
          pdb_text +=
-            QString("")
-            .sprintf(     
-                     "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
-                     this_atom->serial,
-                     this_atom->orgName.toLatin1().data(),
-                     this_atom->resName.toLatin1().data(),
-                     this_atom->chainID.toLatin1().data(),
-                     this_atom->resSeq.toUInt(),
-                     this_atom->coordinate.axis[ 0 ],
-                     this_atom->coordinate.axis[ 1 ],
-                     this_atom->coordinate.axis[ 2 ],
-                     this_atom->occupancy,
-                     this_atom->tempFactor,
-                     this_atom->element.toLatin1().data()
-                     );
+            QString::asprintf( "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
+                               this_atom->serial,
+                               this_atom->orgName.toLatin1( ).data(),
+                               this_atom->resName.toLatin1().data(),
+                               this_atom->chainID.toLatin1().data(),
+                               this_atom->resSeq.toUInt(),
+                               this_atom->coordinate.axis[ 0 ],
+                               this_atom->coordinate.axis[ 1 ],
+                               this_atom->coordinate.axis[ 2 ],
+                               this_atom->occupancy,
+                               this_atom->tempFactor,
+                               this_atom->element.toLatin1().data()
+                               );
       }
    }
 

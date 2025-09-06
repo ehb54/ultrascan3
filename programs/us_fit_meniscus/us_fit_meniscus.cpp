@@ -1151,9 +1151,12 @@ void US_FitMeniscus::plot_2d( void )
    // Find the minimum
    if ( order == 2 )
    {
+     
       // Take the derivitive and get the minimum
       // c1 + 2 * c2 * x = 0
       fit_xvl = - c[ 1 ] / ( 2.0 * c[ 2 ] );
+      qDebug() << "2nd order...: c[1], c[2], fit_xvl -- "
+	       << c[ 1 ] << c[ 2 ] << fit_xvl; 
    }
    else
    {

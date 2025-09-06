@@ -648,6 +648,18 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       bool guinier_analysis( unsigned int i, QString &csvlog );
       bool cs_guinier_analysis( unsigned int i, QString &csvlog );
       bool Rt_guinier_analysis( unsigned int i, QString &csvlog );
+
+      enum guinier_methods : int {
+         GUINIER_METHOD_STD = 0
+         ,GUINIER_METHOD_CS  = 1
+         ,GUINIER_METHOD_TV  = 2
+      } guinier_method;
+
+      double guinier_compute_chi2( enum guinier_methods guinier_method
+                                   ,size_t plot_number
+                                   ,bool exclude_outliers_if_present = false
+                                   ); // compute chi2 of guinier fit
+      
       void crop_iq_data( vector < double > &q,
                          vector < double > &I );
 

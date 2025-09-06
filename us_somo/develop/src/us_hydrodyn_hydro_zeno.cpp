@@ -65,7 +65,7 @@ void US_Hydrodyn_Hydro_Zeno::setupGUI()
    lbl_zeno_zeno_steps->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_zeno_zeno_steps = new QLineEdit(  this );    le_zeno_zeno_steps->setObjectName( "Zeno_Zeno_Steps Line Edit" );
-   le_zeno_zeno_steps->setText(str.sprintf("%u",(*hydro).zeno_zeno_steps));
+   le_zeno_zeno_steps->setText( QString::asprintf( "%u",(*hydro).zeno_zeno_steps ) );
    le_zeno_zeno_steps->setAlignment(Qt::AlignVCenter);
    le_zeno_zeno_steps->setPalette( PALET_NORMAL );
    AUTFBACK( le_zeno_zeno_steps );
@@ -116,7 +116,7 @@ void US_Hydrodyn_Hydro_Zeno::setupGUI()
    lbl_zeno_interior_steps->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_zeno_interior_steps = new QLineEdit(  this );    le_zeno_interior_steps->setObjectName( "Zeno_Interior_Steps Line Edit" );
-   le_zeno_interior_steps->setText(str.sprintf("%u",(*hydro).zeno_interior_steps));
+   le_zeno_interior_steps->setText( QString::asprintf( "%u",(*hydro).zeno_interior_steps ) );
    le_zeno_interior_steps->setAlignment(Qt::AlignVCenter);
    le_zeno_interior_steps->setPalette( PALET_NORMAL );
    AUTFBACK( le_zeno_interior_steps );
@@ -139,7 +139,7 @@ void US_Hydrodyn_Hydro_Zeno::setupGUI()
    lbl_zeno_surface_steps->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_zeno_surface_steps = new QLineEdit(  this );    le_zeno_surface_steps->setObjectName( "Zeno_Surface_Steps Line Edit" );
-   le_zeno_surface_steps->setText(str.sprintf("%u",(*hydro).zeno_surface_steps));
+   le_zeno_surface_steps->setText( QString::asprintf( "%u",(*hydro).zeno_surface_steps ) );
    le_zeno_surface_steps->setAlignment(Qt::AlignVCenter);
    le_zeno_surface_steps->setPalette( PALET_NORMAL );
    AUTFBACK( le_zeno_surface_steps );
@@ -153,7 +153,7 @@ void US_Hydrodyn_Hydro_Zeno::setupGUI()
    lbl_zeno_surface_thickness->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_zeno_surface_thickness = new QLineEdit(  this );    le_zeno_surface_thickness->setObjectName( "Zeno_Skin_Thickness Line Edit" );
-   le_zeno_surface_thickness->setText(str.sprintf("%.3f",(*hydro).zeno_surface_thickness));
+   le_zeno_surface_thickness->setText( QString::asprintf( "%.3f",(*hydro).zeno_surface_thickness ) );
    le_zeno_surface_thickness->setAlignment(Qt::AlignVCenter);
    le_zeno_surface_thickness->setPalette( PALET_NORMAL );
    AUTFBACK( le_zeno_surface_thickness );
@@ -176,7 +176,7 @@ void US_Hydrodyn_Hydro_Zeno::setupGUI()
    lbl_zeno_surface_thickness_from_rg_a->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_zeno_surface_thickness_from_rg_a = new QLineEdit(  this );    le_zeno_surface_thickness_from_rg_a->setObjectName( "Zeno_Skin_Thickness_From_Rg_A Line Edit" );
-   le_zeno_surface_thickness_from_rg_a->setText(str.sprintf("%.4f",(*hydro).zeno_surface_thickness_from_rg_a));
+   le_zeno_surface_thickness_from_rg_a->setText( QString( "%1" ).arg( (*hydro).zeno_surface_thickness_from_rg_a, 0, 'g', 15 ) );
    le_zeno_surface_thickness_from_rg_a->setAlignment(Qt::AlignVCenter);
    le_zeno_surface_thickness_from_rg_a->setPalette( PALET_NORMAL );
    AUTFBACK( le_zeno_surface_thickness_from_rg_a );
@@ -190,7 +190,7 @@ void US_Hydrodyn_Hydro_Zeno::setupGUI()
    lbl_zeno_surface_thickness_from_rg_b->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_zeno_surface_thickness_from_rg_b = new QLineEdit(  this );    le_zeno_surface_thickness_from_rg_b->setObjectName( "Zeno_Skin_Thickness_From_Rg_B Line Edit" );
-   le_zeno_surface_thickness_from_rg_b->setText(str.sprintf("%.4f",(*hydro).zeno_surface_thickness_from_rg_b));
+   le_zeno_surface_thickness_from_rg_b->setText( QString( "%1" ).arg( (*hydro).zeno_surface_thickness_from_rg_b, 0, 'g', 15 ) );
    le_zeno_surface_thickness_from_rg_b->setAlignment(Qt::AlignVCenter);
    le_zeno_surface_thickness_from_rg_b->setPalette( PALET_NORMAL );
    AUTFBACK( le_zeno_surface_thickness_from_rg_b );
@@ -204,12 +204,107 @@ void US_Hydrodyn_Hydro_Zeno::setupGUI()
    lbl_zeno_surface_thickness_from_rg_c->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_zeno_surface_thickness_from_rg_c = new QLineEdit(  this );    le_zeno_surface_thickness_from_rg_c->setObjectName( "Zeno_Skin_Thickness_From_Rg_C Line Edit" );
-   le_zeno_surface_thickness_from_rg_c->setText(str.sprintf("%.4f",(*hydro).zeno_surface_thickness_from_rg_c));
+   le_zeno_surface_thickness_from_rg_c->setText( QString( "%1" ).arg( (*hydro).zeno_surface_thickness_from_rg_c, 0, 'g', 15 ) );
    le_zeno_surface_thickness_from_rg_c->setAlignment(Qt::AlignVCenter);
    le_zeno_surface_thickness_from_rg_c->setPalette( PALET_NORMAL );
    AUTFBACK( le_zeno_surface_thickness_from_rg_c );
    le_zeno_surface_thickness_from_rg_c->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_zeno_surface_thickness_from_rg_c, SIGNAL(textChanged(const QString &)), SLOT(update_zeno_surface_thickness_from_rg_c(const QString &)));
+
+   // ZENO -> GRPY correction as per Brookes, E. et al., 2025. Eur. Biophy. J., https://doi.org/10.1007/s00249-025-01758-8
+   
+   cb_zeno_grpy_correction_from_bead_count = new QCheckBox( this );
+   cb_zeno_grpy_correction_from_bead_count->setText( us_tr( "Correct Dt and [" + UNICODE_ETA_QS + "] from power law fit of bead count:") );
+   cb_zeno_grpy_correction_from_bead_count->setEnabled( true );
+   cb_zeno_grpy_correction_from_bead_count->setChecked( (*hydro).zeno_grpy_correction_from_bead_count );
+   cb_zeno_grpy_correction_from_bead_count->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   cb_zeno_grpy_correction_from_bead_count->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_zeno_grpy_correction_from_bead_count );
+   connect( cb_zeno_grpy_correction_from_bead_count, SIGNAL( clicked() ), this, SLOT( set_zeno_grpy_correction_from_bead_count() ) );
+
+   lbl_zeno_grpy_correction_from_bead_count_Dt_a = new QLabel(us_tr("Dt correction coeff. a:"), this );
+   lbl_zeno_grpy_correction_from_bead_count_Dt_a->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_zeno_grpy_correction_from_bead_count_Dt_a->setPalette( PALET_LABEL );
+   AUTFBACK( lbl_zeno_grpy_correction_from_bead_count_Dt_a );
+   lbl_zeno_grpy_correction_from_bead_count_Dt_a->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_zeno_grpy_correction_from_bead_count_Dt_a = new QLineEdit(  this );    le_zeno_grpy_correction_from_bead_count_Dt_a->setObjectName( "Zeno_Skin_Thickness_From_Rg_A Line Edit" );
+   le_zeno_grpy_correction_from_bead_count_Dt_a->setText( QString( "%1" ).arg( (*hydro).zeno_grpy_correction_from_bead_count_Dt_a, 0, 'g', 15 ) );
+   le_zeno_grpy_correction_from_bead_count_Dt_a->setAlignment(Qt::AlignVCenter);
+   le_zeno_grpy_correction_from_bead_count_Dt_a->setPalette( PALET_NORMAL );
+   AUTFBACK( le_zeno_grpy_correction_from_bead_count_Dt_a );
+   le_zeno_grpy_correction_from_bead_count_Dt_a->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   connect(le_zeno_grpy_correction_from_bead_count_Dt_a, SIGNAL(textChanged(const QString &)), SLOT(update_zeno_grpy_correction_from_bead_count_Dt_a(const QString &)));
+
+   lbl_zeno_grpy_correction_from_bead_count_Dt_b = new QLabel(us_tr("Dt correction coeff. b:"), this );
+   lbl_zeno_grpy_correction_from_bead_count_Dt_b->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_zeno_grpy_correction_from_bead_count_Dt_b->setPalette( PALET_LABEL );
+   AUTFBACK( lbl_zeno_grpy_correction_from_bead_count_Dt_b );
+   lbl_zeno_grpy_correction_from_bead_count_Dt_b->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_zeno_grpy_correction_from_bead_count_Dt_b = new QLineEdit(  this );    le_zeno_grpy_correction_from_bead_count_Dt_b->setObjectName( "Zeno_Skin_Thickness_From_Rg_B Line Edit" );
+   le_zeno_grpy_correction_from_bead_count_Dt_b->setText( QString( "%1" ).arg( (*hydro).zeno_grpy_correction_from_bead_count_Dt_b, 0, 'g', 15 ) );
+   le_zeno_grpy_correction_from_bead_count_Dt_b->setAlignment(Qt::AlignVCenter);
+   le_zeno_grpy_correction_from_bead_count_Dt_b->setPalette( PALET_NORMAL );
+   AUTFBACK( le_zeno_grpy_correction_from_bead_count_Dt_b );
+   le_zeno_grpy_correction_from_bead_count_Dt_b->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   connect(le_zeno_grpy_correction_from_bead_count_Dt_b, SIGNAL(textChanged(const QString &)), SLOT(update_zeno_grpy_correction_from_bead_count_Dt_b(const QString &)));
+
+   lbl_zeno_grpy_correction_from_bead_count_Dt_c = new QLabel(us_tr("Dt correction coeff. c:"), this );
+   lbl_zeno_grpy_correction_from_bead_count_Dt_c->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_zeno_grpy_correction_from_bead_count_Dt_c->setPalette( PALET_LABEL );
+   AUTFBACK( lbl_zeno_grpy_correction_from_bead_count_Dt_c );
+   lbl_zeno_grpy_correction_from_bead_count_Dt_c->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_zeno_grpy_correction_from_bead_count_Dt_c = new QLineEdit(  this );    le_zeno_grpy_correction_from_bead_count_Dt_c->setObjectName( "Zeno_Skin_Thickness_From_Rg_C Line Edit" );
+   le_zeno_grpy_correction_from_bead_count_Dt_c->setText( QString( "%1" ).arg( (*hydro).zeno_grpy_correction_from_bead_count_Dt_c, 0, 'g', 15 ) );
+   le_zeno_grpy_correction_from_bead_count_Dt_c->setAlignment(Qt::AlignVCenter);
+   le_zeno_grpy_correction_from_bead_count_Dt_c->setPalette( PALET_NORMAL );
+   AUTFBACK( le_zeno_grpy_correction_from_bead_count_Dt_c );
+   le_zeno_grpy_correction_from_bead_count_Dt_c->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   connect(le_zeno_grpy_correction_from_bead_count_Dt_c, SIGNAL(textChanged(const QString &)), SLOT(update_zeno_grpy_correction_from_bead_count_Dt_c(const QString &)));
+
+   lbl_zeno_grpy_correction_from_bead_count_eta_a = new QLabel( us_tr( QString( "[%1] correction coeff. a:" ) ).arg( UNICODE_ETA ), this );
+   lbl_zeno_grpy_correction_from_bead_count_eta_a->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_zeno_grpy_correction_from_bead_count_eta_a->setPalette( PALET_LABEL );
+   AUTFBACK( lbl_zeno_grpy_correction_from_bead_count_eta_a );
+   lbl_zeno_grpy_correction_from_bead_count_eta_a->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_zeno_grpy_correction_from_bead_count_eta_a = new QLineEdit(  this );    le_zeno_grpy_correction_from_bead_count_eta_a->setObjectName( "Zeno_Skin_Thickness_From_Rg_A Line Edit" );
+   le_zeno_grpy_correction_from_bead_count_eta_a->setText( QString( "%1" ).arg( (*hydro).zeno_grpy_correction_from_bead_count_eta_a, 0, 'g', 15 ) );
+   le_zeno_grpy_correction_from_bead_count_eta_a->setAlignment(Qt::AlignVCenter);
+   le_zeno_grpy_correction_from_bead_count_eta_a->setPalette( PALET_NORMAL );
+   AUTFBACK( le_zeno_grpy_correction_from_bead_count_eta_a );
+   le_zeno_grpy_correction_from_bead_count_eta_a->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   connect(le_zeno_grpy_correction_from_bead_count_eta_a, SIGNAL(textChanged(const QString &)), SLOT(update_zeno_grpy_correction_from_bead_count_eta_a(const QString &)));
+
+   lbl_zeno_grpy_correction_from_bead_count_eta_b = new QLabel( us_tr( QString( "[%1] correction coeff. b:" ) ).arg( UNICODE_ETA ), this );
+   lbl_zeno_grpy_correction_from_bead_count_eta_b->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_zeno_grpy_correction_from_bead_count_eta_b->setPalette( PALET_LABEL );
+   AUTFBACK( lbl_zeno_grpy_correction_from_bead_count_eta_b );
+   lbl_zeno_grpy_correction_from_bead_count_eta_b->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_zeno_grpy_correction_from_bead_count_eta_b = new QLineEdit(  this );    le_zeno_grpy_correction_from_bead_count_eta_b->setObjectName( "Zeno_Skin_Thickness_From_Rg_B Line Edit" );
+   le_zeno_grpy_correction_from_bead_count_eta_b->setText( QString( "%1" ).arg( (*hydro).zeno_grpy_correction_from_bead_count_eta_b, 0, 'g', 15 ) );
+   le_zeno_grpy_correction_from_bead_count_eta_b->setAlignment(Qt::AlignVCenter);
+   le_zeno_grpy_correction_from_bead_count_eta_b->setPalette( PALET_NORMAL );
+   AUTFBACK( le_zeno_grpy_correction_from_bead_count_eta_b );
+   le_zeno_grpy_correction_from_bead_count_eta_b->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   connect(le_zeno_grpy_correction_from_bead_count_eta_b, SIGNAL(textChanged(const QString &)), SLOT(update_zeno_grpy_correction_from_bead_count_eta_b(const QString &)));
+
+   lbl_zeno_grpy_correction_from_bead_count_eta_c = new QLabel( us_tr( QString( "[%1] correction coeff. c:" ) ).arg( UNICODE_ETA ), this );
+   lbl_zeno_grpy_correction_from_bead_count_eta_c->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_zeno_grpy_correction_from_bead_count_eta_c->setPalette( PALET_LABEL );
+   AUTFBACK( lbl_zeno_grpy_correction_from_bead_count_eta_c );
+   lbl_zeno_grpy_correction_from_bead_count_eta_c->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_zeno_grpy_correction_from_bead_count_eta_c = new QLineEdit(  this );    le_zeno_grpy_correction_from_bead_count_eta_c->setObjectName( "Zeno_Skin_Thickness_From_Rg_C Line Edit" );
+   le_zeno_grpy_correction_from_bead_count_eta_c->setText( QString( "%1" ).arg( (*hydro).zeno_grpy_correction_from_bead_count_eta_c, 0, 'g', 15 ) );
+   le_zeno_grpy_correction_from_bead_count_eta_c->setAlignment(Qt::AlignVCenter);
+   le_zeno_grpy_correction_from_bead_count_eta_c->setPalette( PALET_NORMAL );
+   AUTFBACK( le_zeno_grpy_correction_from_bead_count_eta_c );
+   le_zeno_grpy_correction_from_bead_count_eta_c->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   connect(le_zeno_grpy_correction_from_bead_count_eta_c, SIGNAL(textChanged(const QString &)), SLOT(update_zeno_grpy_correction_from_bead_count_eta_c(const QString &)));
 
    cb_zeno_cxx = new QCheckBox( this );
    cb_zeno_cxx->setText( us_tr( "Test experimental new Zeno version") );
@@ -293,6 +388,31 @@ void US_Hydrodyn_Hydro_Zeno::setupGUI()
    background->addWidget( le_zeno_surface_thickness_from_rg_c , j, 2 );
    j++;
 
+   background->addWidget( cb_zeno_grpy_correction_from_bead_count, j, 0 );
+   background->addWidget( lbl_zeno_grpy_correction_from_bead_count_Dt_a, j, 1 );
+   background->addWidget( le_zeno_grpy_correction_from_bead_count_Dt_a , j, 2 );
+   j++;
+
+   background->addWidget( lbl_zeno_grpy_correction_from_bead_count_Dt_b, j, 1 );
+   background->addWidget( le_zeno_grpy_correction_from_bead_count_Dt_b , j, 2 );
+   j++;
+
+   background->addWidget( lbl_zeno_grpy_correction_from_bead_count_Dt_c, j, 1 );
+   background->addWidget( le_zeno_grpy_correction_from_bead_count_Dt_c , j, 2 );
+   j++;
+
+   background->addWidget( lbl_zeno_grpy_correction_from_bead_count_eta_a, j, 1 );
+   background->addWidget( le_zeno_grpy_correction_from_bead_count_eta_a , j, 2 );
+   j++;
+
+   background->addWidget( lbl_zeno_grpy_correction_from_bead_count_eta_b, j, 1 );
+   background->addWidget( le_zeno_grpy_correction_from_bead_count_eta_b , j, 2 );
+   j++;
+
+   background->addWidget( lbl_zeno_grpy_correction_from_bead_count_eta_c, j, 1 );
+   background->addWidget( le_zeno_grpy_correction_from_bead_count_eta_c , j, 2 );
+   j++;
+
    background->addWidget( cb_zeno_cxx , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 2  ) - ( 0 ) );
    j++;
 
@@ -305,6 +425,23 @@ void US_Hydrodyn_Hydro_Zeno::setupGUI()
    hbl_help_cancel->addWidget( pb_help );
    hbl_help_cancel->addWidget( pb_cancel );
    background->addLayout( hbl_help_cancel , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 2  ) - ( 0 ) );
+
+   {
+      std::initializer_list<QWidget*> widgets = {
+         cb_zeno_surface_thickness_from_rg
+         ,lbl_zeno_surface_thickness_from_rg_a
+         ,le_zeno_surface_thickness_from_rg_a
+         ,lbl_zeno_surface_thickness_from_rg_b
+         ,le_zeno_surface_thickness_from_rg_b
+         ,lbl_zeno_surface_thickness_from_rg_c
+         ,le_zeno_surface_thickness_from_rg_c
+      };
+
+      for ( QWidget* w : widgets ) {
+         w->hide();
+      }
+      
+   }
 
 #if !defined(USE_OLD_ZENO) && QT_VERSION >= 0x040000
    cb_zeno_interior->hide();
@@ -422,6 +559,48 @@ void US_Hydrodyn_Hydro_Zeno::update_zeno_surface_thickness_from_rg_c(const QStri
    // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
+void US_Hydrodyn_Hydro_Zeno::set_zeno_grpy_correction_from_bead_count()
+{
+   (*hydro).zeno_grpy_correction_from_bead_count = cb_zeno_grpy_correction_from_bead_count->isChecked();
+   update_enables();
+}
+
+void US_Hydrodyn_Hydro_Zeno::update_zeno_grpy_correction_from_bead_count_Dt_a(const QString &str)
+{
+   (*hydro).zeno_grpy_correction_from_bead_count_Dt_a = str.toFloat();
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_Hydro_Zeno::update_zeno_grpy_correction_from_bead_count_Dt_b(const QString &str)
+{
+   (*hydro).zeno_grpy_correction_from_bead_count_Dt_b = str.toFloat();
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_Hydro_Zeno::update_zeno_grpy_correction_from_bead_count_Dt_c(const QString &str)
+{
+   (*hydro).zeno_grpy_correction_from_bead_count_Dt_c = str.toFloat();
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_Hydro_Zeno::update_zeno_grpy_correction_from_bead_count_eta_a(const QString &str)
+{
+   (*hydro).zeno_grpy_correction_from_bead_count_eta_a = str.toFloat();
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_Hydro_Zeno::update_zeno_grpy_correction_from_bead_count_eta_b(const QString &str)
+{
+   (*hydro).zeno_grpy_correction_from_bead_count_eta_b = str.toFloat();
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_Hydro_Zeno::update_zeno_grpy_correction_from_bead_count_eta_c(const QString &str)
+{
+   (*hydro).zeno_grpy_correction_from_bead_count_eta_c = str.toFloat();
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
 void US_Hydrodyn_Hydro_Zeno::update_zeno_repeats(const QString &str)
 {
    ((US_Hydrodyn *)us_hydrodyn)->gparams[ "zeno_repeats" ] = QString( "%1" ).arg( str.toUInt() );
@@ -470,4 +649,11 @@ void US_Hydrodyn_Hydro_Zeno:: update_enables()
    le_zeno_surface_thickness_from_rg_a->setEnabled( cb_zeno_surface_thickness_from_rg->isChecked() );
    le_zeno_surface_thickness_from_rg_b->setEnabled( cb_zeno_surface_thickness_from_rg->isChecked() );
    le_zeno_surface_thickness_from_rg_c->setEnabled( cb_zeno_surface_thickness_from_rg->isChecked() );
+
+   le_zeno_grpy_correction_from_bead_count_Dt_a ->setEnabled( cb_zeno_grpy_correction_from_bead_count->isChecked() );
+   le_zeno_grpy_correction_from_bead_count_Dt_b ->setEnabled( cb_zeno_grpy_correction_from_bead_count->isChecked() );
+   le_zeno_grpy_correction_from_bead_count_Dt_c ->setEnabled( cb_zeno_grpy_correction_from_bead_count->isChecked() );
+   le_zeno_grpy_correction_from_bead_count_eta_a->setEnabled( cb_zeno_grpy_correction_from_bead_count->isChecked() );
+   le_zeno_grpy_correction_from_bead_count_eta_b->setEnabled( cb_zeno_grpy_correction_from_bead_count->isChecked() );
+   le_zeno_grpy_correction_from_bead_count_eta_c->setEnabled( cb_zeno_grpy_correction_from_bead_count->isChecked() );
 }

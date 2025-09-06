@@ -1175,6 +1175,7 @@ US_InitDialogueGui::US_InitDialogueGui( QWidget* topw )
    initDialogueOpen = false;
    initMsgNorecOpen = false;
    initMsgNorecDelOpen = false;
+   runStatesUpdated = false; 
 
    
    setPalette( US_GuiSettings::frameColor() );
@@ -1280,6 +1281,7 @@ void US_InitDialogueGui::resizeEvent(QResizeEvent *event)
 // Init Autoflow Panel
 void US_InitDialogueGui::initAutoflowPanel( void )
 {
+  runStatesUpdated = false;
   initRecords();
   initRecordsDialogue();
 }
@@ -1661,7 +1663,7 @@ void US_InitDialogueGui::initRecordsDialogue( void )
       //ALEXEY: define what to do if some Optima(s) are occupied
       // should emit signal sending list of optima's in use to us_experiment.
 
-      if ( mainw-> window_closed)
+      if ( mainw-> window_closed || runStatesUpdated )
 	return;
       
       if ( occupied_instruments.size() == 0 )
@@ -2306,6 +2308,7 @@ void US_InitDialogueGui::do_run_data_cleanup( QMap < QString, QString > run_deta
 void US_InitDialogueGui::refresh_optima_states( void )
 {
   initAutoflowPanel();
+  runStatesUpdated = true;
 }
 
 //Re-evaluate autoflow records & occupied instruments & if Define Another Exp. should be enabled....

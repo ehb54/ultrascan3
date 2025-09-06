@@ -119,6 +119,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       QPushButton   *pb_asum;
       QPushButton   *pb_normalize;
       QPushButton   *pb_conc_avg;
+      QPushButton   *pb_fit;
 
       QPushButton   *pb_set_buffer;
       QLabel        *lbl_buffer;
@@ -380,6 +381,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
 
       bool                         wheel_is_pressed;
 
+      QWidget *                    fit_widget;
+
    private slots:
 
       void setupGUI();
@@ -409,6 +412,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       void asum();
       void normalize();
       void conc_avg();
+      void fit();
       void set_buffer();
       void set_empty();
       void set_signal();

@@ -638,6 +638,7 @@ void US_Astfem_Sim::init_simparams( void )
    simparams.lrnoise           = 0.0;
    simparams.tinoise           = 0.0;
    simparams.rinoise           = 0.0;
+   simparams.baseline          = 0.0;
    simparams.band_volume       = 0.015;
    simparams.rotorCalID        = rotor_calibr;
    simparams.band_forming      = false;
@@ -1404,6 +1405,7 @@ void US_Astfem_Sim::finish( void )
 //DbgLv(1) << "FIN: comp size" << system.components.size();
 //DbgLv(1) << "FIN:  total_conc" << total_conc;
    ri_noise();
+   baseline();
    random_noise();
    ti_noise();
 
@@ -1454,6 +1456,21 @@ void US_Astfem_Sim::ri_noise( void )
 
            for ( int mp = 0; mp < sim_datas[ jd ].pointCount(); mp++ )
               sim_datas[ jd ].scanData[ ks ].rvalues[ mp ] += rinoise;
+       }
+   }
+}
+
+void US_Astfem_Sim::baseline( void )
+{
+   if ( simparams.baseline == 0.0 ) return;
+
+   // Add a constant baseline offset
+   for ( int jd = 0; jd < simparams.speed_step.size(); jd++ )
+   {
+       for ( int ks = 0; ks < sim_datas[ jd ].scanData.size(); ks++ )
+       {
+           for ( int mp = 0; mp < sim_datas[ jd ].pointCount(); mp++ )
+              sim_datas[ jd ].scanData[ ks ].rvalues[ mp ] += simparams.baseline;
        }
    }
 }
@@ -2188,19 +2205,28 @@ void US_Astfem_Sim::plot( int step )
    QList< QColor > mcolors;
    int nmcols     = plot2->map_colors( mcolors );
   // dataPlotClear( scanPlot );
+   double min_y_axis = 0.0;
+   double max_y_axis = total_conc * 2.0;
 
-   // Set plot scale
+   // Set plot scale for band-forming
    if ( simparams.band_forming )
-       scanPlot->setAxisAutoScale( QwtPlot::yLeft   );
-
-   else if ( system.coSedSolute >= 0 )
+   {
+      min_y_axis = total_conc;
+   }
+   // adjust the plotting for the baseline offset if defined
+   if ( simparams.baseline != 0.0)
+   {
+      min_y_axis += simparams.baseline;
+      max_y_axis += simparams.baseline;
+   }
+   // For co-sedimenting solutes axis are auto-scaled
+   if ( system.coSedSolute >= 0 )
    {
       scanPlot->setAxisAutoScale( QwtPlot::yLeft   );
    }
-
    else
    {
-      scanPlot->setAxisAutoScale( QwtPlot::yLeft );
+      scanPlot->setAxisScale( QwtPlot::yLeft, min_y_axis, max_y_axis );
    }
 
    QwtPlotGrid* grid2 = us_grid( scanPlot );

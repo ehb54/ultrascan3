@@ -30,6 +30,8 @@ void US_Hydrodyn::gui_script_error( int line, QString cmd, QString msg, bool doe
 void US_Hydrodyn::gui_script_run() {
    TSO << "US_Hydrodyn::gui_script_run()\n";
 
+   guiFlag = false;
+
    QString script;
    {
       QString error;
@@ -267,6 +269,54 @@ void US_Hydrodyn::gui_script_run() {
             batch_window->overwrite_all = true;
          } else if ( opt1 == "load" ) {
             batch_window->load_somo();
+         } else if ( opt1 == "set" ) {
+            if ( ls.isEmpty() ) {
+               gui_script_error( i, cmd, "missing argument" );
+            }
+            QString opt2 = ls.front(); ls.pop_front();
+            if ( ls.isEmpty() ) {
+               gui_script_error( i, cmd, "missing argument" );
+            }
+            QString opt3 = ls.front(); ls.pop_front();
+            if ( opt2 == "residue" ) {
+               if ( opt3 == "stop" ) {
+                  batch_window->rb_residue_stop->setChecked( true );
+                  batch_window->residue();
+                  pdb_parse.missing_residues = batch_window->batch->missing_residues;
+               } else if ( opt3 == "skip" ) {
+                  batch_window->rb_residue_skip->setChecked( true );
+                  batch_window->residue();
+                  pdb_parse.missing_residues = batch_window->batch->missing_residues;
+               } else if ( opt3 == "auto" ) {
+                  batch_window->rb_residue_auto->setChecked( true );
+                  batch_window->residue();
+                  pdb_parse.missing_residues = batch_window->batch->missing_residues;
+               } else if ( opt3 == "info" ) {
+                  gui_script_msg( i, cmd, QString( "%1" ).arg( batch_window->batch->missing_residues ).arg( pdb_parse.missing_residues ) );;
+               } else {
+                  gui_script_error( i, cmd, "unknown option : " + opt1 + " " + opt2 + " " + opt3 );
+               }
+            } else if ( opt2 == "atom" ) {
+               if ( opt3 == "stop" ) {
+                  batch_window->rb_atom_stop->setChecked( true );
+                  batch_window->atom();
+                  pdb_parse.missing_atoms = batch_window->batch->missing_atoms;
+               } else if ( opt3 == "skip" ) {
+                  batch_window->rb_atom_skip->setChecked( true );
+                  batch_window->atom();
+                  pdb_parse.missing_atoms = batch_window->batch->missing_atoms;
+               } else if ( opt3 == "auto" ) {
+                  batch_window->rb_atom_auto->setChecked( true );
+                  batch_window->atom();
+                  pdb_parse.missing_atoms = batch_window->batch->missing_atoms;
+               } else if ( opt3 == "info" ) {
+                  gui_script_msg( i, cmd, QString( "%1 %2" ).arg( batch_window->batch->missing_atoms ).arg( pdb_parse.missing_atoms ) );
+               } else {
+                  gui_script_error( i, cmd, "unknown option : " + opt1 + " " + opt2 + " " + opt3 );
+               }
+            } else {
+               gui_script_error( i, cmd, "unknown option : " + opt1 + " " + opt2 );
+            }
          } else {
             gui_script_error( i, cmd, "unknown option : " + opt1 );
          }
@@ -276,4 +326,5 @@ void US_Hydrodyn::gui_script_run() {
       }
    }
    gui_script_msg( scriptlinesc, "script", "finished" );
+   guiFlag = true;
 }

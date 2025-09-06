@@ -146,12 +146,12 @@ us_hydrodyn_pat_main_hydro(int                 use_nmax,
    for (i = 0; i < nat; i++)
    {
 #if defined(MIMIC_FILE)
-      dt[i].x = QString("").sprintf("%f",in_dt[i].x).toFloat();
-      dt[i].y = QString("").sprintf("%f",in_dt[i].y).toFloat();
-      dt[i].z = QString("").sprintf("%f",in_dt[i].z).toFloat();
-      dt[i].r = QString("").sprintf("%f",in_dt[i].r).toFloat();
-      dt[i].m = QString("").sprintf("%f",in_dt[i].m).toFloat();
-      dt[i].col = QString("").sprintf("%d",in_dt[i].col).toInt();
+      dt[i].x = QString::asprintf( "%f",in_dt[i].x ).toFloat();
+      dt[i].y = QString::asprintf( "%f",in_dt[i].y ).toFloat();
+      dt[i].z = QString::asprintf( "%f",in_dt[i].z ).toFloat();
+      dt[i].r = QString::asprintf( "%f",in_dt[i].r ).toFloat();
+      dt[i].m = QString::asprintf( "%f",in_dt[i].m ).toFloat();
+      dt[i].col = QString::asprintf( "%d",in_dt[i].col ).toInt();
 #else
       dt[i].x = in_dt[i].x;
       dt[i].y = in_dt[i].y;

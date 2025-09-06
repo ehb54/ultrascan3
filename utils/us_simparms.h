@@ -170,6 +170,7 @@ class US_UTIL_EXTERN US_SimulationParameters
    QVector< SimSpeedProf > sim_speed_prof;
    US_TimeState*           tsobj;
 
+
    int       simpoints;            //!< Number of radial grid points used in sim
    MeshType  meshType;             //!< Type of radial grid
    GridType  gridType;             //!< Designation if grid is fixed or can move

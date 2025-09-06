@@ -1887,8 +1887,8 @@ void US_Hydrodyn_Mals_Saxs::conc_avg( QStringList files )
 
    vector < double > nIs;
 
-   double tot_conc;
-   double tot_conc2;
+   // double tot_conc;
+   // double tot_conc2;
 
    // copies for potential cropping:
 
@@ -2009,8 +2009,8 @@ void US_Hydrodyn_Mals_Saxs::conc_avg( QStringList files )
       if ( first )
       {
          first = false;
-         tot_conc  = inv_concs[ this_file ];
-         tot_conc2 = tot_conc * tot_conc;
+         // tot_conc  = inv_concs[ this_file ];
+         // tot_conc2 = tot_conc * tot_conc;
          avg_qs_string = t_qs_string[ this_file ];
          avg_qs        = t_qs       [ this_file ];
          nIs           = t_Is       [ this_file ];
@@ -2042,8 +2042,8 @@ void US_Hydrodyn_Mals_Saxs::conc_avg( QStringList files )
             editor_msg( "red", us_tr( "Error: incompatible grids, the files selected do not have the same number of points" ) );
             return;
          }
-         tot_conc  += inv_concs[ this_file ];
-         tot_conc2 += inv_concs[ this_file ] * inv_concs[ this_file ];
+         // tot_conc  += inv_concs[ this_file ];
+         // tot_conc2 += inv_concs[ this_file ] * inv_concs[ this_file ];
          nIs       = t_Is     [ this_file ];
          for ( int j = 0; j < (int)nIs.size(); j++ )
          {
@@ -3173,73 +3173,72 @@ void US_Hydrodyn_Mals_Saxs::plot_debug() {
          it->second->axisWidget( QwtPlot::yRight )->getBorderDistHint( yRightStartDist, yRightEndDist );
 
          tso << QString( "plot for %1\n" ).arg( it->first )
-             << QString().sprintf(
-                                  "plotLayout()->alignCanvasToScale( yLeft )          %s\n"
-                                  "plotLayout()->alignCanvasToScale( yRight )         %s\n"
+             << QString::asprintf( "plotLayout( )->alignCanvasToScale( yLeft )          %s\n"
+                                   "plotLayout()->alignCanvasToScale( yRight )         %s\n"
                                   
-                                  "plotLayout()->spacing()                            %d\n"
+                                   "plotLayout()->spacing()                            %d\n"
 
-                                  "plotLayout()->canvasRect()                         %g, %g\n"
-                                  "plotLayout()->titleRect()                          %g, %g\n"
-                                  "plotLayout()->footerRect()                         %g, %g\n"
-                                  "plotLayout()->legendRect()                         %g, %g\n"
+                                   "plotLayout()->canvasRect()                         %g, %g\n"
+                                   "plotLayout()->titleRect()                          %g, %g\n"
+                                   "plotLayout()->footerRect()                         %g, %g\n"
+                                   "plotLayout()->legendRect()                         %g, %g\n"
 
-                                  "plotLayout()->scaleRect( yLeft )                   %g, %g\n"
-                                  "plotLayout()->scaleRect( yRight )                  %g, %g\n"
+                                   "plotLayout()->scaleRect( yLeft )                   %g, %g\n"
+                                   "plotLayout()->scaleRect( yRight )                  %g, %g\n"
 
-                                  "plotLayout()->canvasMargin( yLeft )                %d\n"
-                                  "plotLayout()->canvasMargin( yRight )               %d\n"
+                                   "plotLayout()->canvasMargin( yLeft )                %d\n"
+                                   "plotLayout()->canvasMargin( yRight )               %d\n"
 
-                                  "axisWidget( yLeft )->getBorderDistHint( yLeft )    %d, %d\n"
-                                  "axisWidget( yRight )->getBorderDistHint( yRight )  %d, %d\n"
+                                   "axisWidget( yLeft )->getBorderDistHint( yLeft )    %d, %d\n"
+                                   "axisWidget( yRight )->getBorderDistHint( yRight )  %d, %d\n"
 
-                                  "axisWidget( yLeft )->scaleDraw()->extent()         %g\n"
-                                  "axisWidget( yRight )->scaleDraw()->extent()        %g\n"
+                                   "axisWidget( yLeft )->scaleDraw()->extent()         %g\n"
+                                   "axisWidget( yRight )->scaleDraw()->extent()        %g\n"
 
-                                  "width guess                                        %g\n"
+                                   "width guess                                        %g\n"
 
-                                  ,( it->second->plotLayout()->alignCanvasToScale( QwtPlot::yLeft ) ? "True" : "False" )
-                                  ,( it->second->plotLayout()->alignCanvasToScale( QwtPlot::yRight ) ? "True" : "False" )
+                                   ,( it->second->plotLayout()->alignCanvasToScale( QwtPlot::yLeft ) ? "True" : "False" )
+                                   ,( it->second->plotLayout()->alignCanvasToScale( QwtPlot::yRight ) ? "True" : "False" )
 
-                                  ,it->second->plotLayout()->spacing()
+                                   ,it->second->plotLayout()->spacing()
 
-                                  ,it->second->plotLayout()->canvasRect().x()
-                                  ,it->second->plotLayout()->canvasRect().y()
+                                   ,it->second->plotLayout()->canvasRect().x()
+                                   ,it->second->plotLayout()->canvasRect().y()
 
-                                  ,it->second->plotLayout()->titleRect().x()
-                                  ,it->second->plotLayout()->titleRect().y()
+                                   ,it->second->plotLayout()->titleRect().x()
+                                   ,it->second->plotLayout()->titleRect().y()
 
-                                  ,it->second->plotLayout()->footerRect().x()
-                                  ,it->second->plotLayout()->footerRect().y()
+                                   ,it->second->plotLayout()->footerRect().x()
+                                   ,it->second->plotLayout()->footerRect().y()
 
-                                  ,it->second->plotLayout()->legendRect().x()
-                                  ,it->second->plotLayout()->legendRect().y()
+                                   ,it->second->plotLayout()->legendRect().x()
+                                   ,it->second->plotLayout()->legendRect().y()
 
-                                  ,it->second->plotLayout()->scaleRect( QwtPlot::yLeft ).x()
-                                  ,it->second->plotLayout()->scaleRect( QwtPlot::yLeft ).y()
+                                   ,it->second->plotLayout()->scaleRect( QwtPlot::yLeft ).x()
+                                   ,it->second->plotLayout()->scaleRect( QwtPlot::yLeft ).y()
 
-                                  ,it->second->plotLayout()->scaleRect( QwtPlot::yRight ).x()
-                                  ,it->second->plotLayout()->scaleRect( QwtPlot::yRight ).y()
+                                   ,it->second->plotLayout()->scaleRect( QwtPlot::yRight ).x()
+                                   ,it->second->plotLayout()->scaleRect( QwtPlot::yRight ).y()
 
-                                  ,it->second->plotLayout()->canvasMargin( QwtPlot::yLeft )
-                                  ,it->second->plotLayout()->canvasMargin( QwtPlot::yRight )
+                                   ,it->second->plotLayout()->canvasMargin( QwtPlot::yLeft )
+                                   ,it->second->plotLayout()->canvasMargin( QwtPlot::yRight )
 
-                                  ,yLeftStartDist
-                                  ,yLeftEndDist
+                                   ,yLeftStartDist
+                                   ,yLeftEndDist
 
-                                  ,yRightStartDist
-                                  ,yRightEndDist
+                                   ,yRightStartDist
+                                   ,yRightEndDist
 
-                                  ,it->second->axisWidget( QwtPlot::yLeft )->scaleDraw()->extent( it->second->axisWidget( QwtPlot::yLeft )->font() )
-                                  ,it->second->axisWidget( QwtPlot::yRight )->scaleDraw()->extent( it->second->axisWidget( QwtPlot::yRight )->font() )
-                                  , (
-                                     it->second->plotLayout()->canvasMargin( QwtPlot::yLeft ) +
-                                     it->second->plotLayout()->canvasMargin( QwtPlot::yRight ) +
-                                     it->second->plotLayout()->scaleRect( QwtPlot::yLeft ).x() +
-                                     it->second->plotLayout()->scaleRect( QwtPlot::yRight ).x() +
-                                     it->second->plotLayout()->canvasRect().x()
-                                     )
-                                  );
+                                   ,it->second->axisWidget( QwtPlot::yLeft )->scaleDraw()->extent( it->second->axisWidget( QwtPlot::yLeft )->font() )
+                                   ,it->second->axisWidget( QwtPlot::yRight )->scaleDraw()->extent( it->second->axisWidget( QwtPlot::yRight )->font() )
+                                   , (
+                                      it->second->plotLayout()->canvasMargin( QwtPlot::yLeft ) +
+                                      it->second->plotLayout()->canvasMargin( QwtPlot::yRight ) +
+                                      it->second->plotLayout()->scaleRect( QwtPlot::yLeft ).x() +
+                                      it->second->plotLayout()->scaleRect( QwtPlot::yRight ).x() +
+                                      it->second->plotLayout()->canvasRect().x()
+                                      )
+                                   );
       }
    }
 }
@@ -3564,7 +3563,7 @@ void US_Hydrodyn_Mals_Saxs::cormap( map < QString, QString > & parameters )
                      .arg( N, 6 )
                      .arg( S, 6 )
                      .arg( C, 6 )
-                     .arg( QString( "" ).sprintf( "%.4g", P ).leftJustified( 12 ) )
+                     .arg( QString::asprintf( "%.4g", P ).leftJustified( 12 ) )
                      // .arg( adjP ) 
                      ;
                }
@@ -3810,7 +3809,7 @@ void US_Hydrodyn_Mals_Saxs::cormap( map < QString, QString > & parameters )
                      .arg( N, 6 )
                      .arg( S, 6 )
                      .arg( C, 6 )
-                     .arg( QString( "" ).sprintf( "%.4g", P ).leftJustified( 12 ) )
+                     .arg( QString::asprintf( "%.4g", P ).leftJustified( 12 ) )
                      // .arg( adjP ) 
                      ;
                }
@@ -4142,7 +4141,7 @@ void US_Hydrodyn_Mals_Saxs::cormap( map < QString, QString > & parameters )
                   .arg( N, 6 )
                   .arg( S, 6 )
                   .arg( C, 6 )
-                  .arg( QString( "" ).sprintf( "%.4g", P ).leftJustified( 12 ) )
+                  .arg( QString::asprintf( "%.4g", P ).leftJustified( 12 ) )
                   // .arg( adjP ) 
                   ;
             }
@@ -4448,7 +4447,7 @@ void US_Hydrodyn_Mals_Saxs::cormap( map < QString, QString > & parameters )
                   .arg( N, 6 )
                   .arg( S, 6 )
                   .arg( C, 6 )
-                  .arg( QString( "" ).sprintf( "%.4g", P ).leftJustified( 12 ) )
+                  .arg( QString::asprintf( "%.4g", P ).leftJustified( 12 ) )
                   // .arg( adjP ) 
                   ;
             }
@@ -4629,7 +4628,7 @@ void US_Hydrodyn_Mals_Saxs::cormap( map < QString, QString > & parameters )
                .arg( ggaussian_last_pfit_N[ i ], 6 )
                .arg( ggaussian_last_pfit_S[ i ], 6 )
                .arg( ggaussian_last_pfit_C[ i ], 6 )
-               .arg( QString( "" ).sprintf( "%.4g", ggaussian_last_pfit_P[ i ] ).leftJustified( 12 ) )
+               .arg( QString::asprintf( "%.4g", ggaussian_last_pfit_P[ i ] ).leftJustified( 12 ) )
                // .arg( adjP ) 
                ;
 
@@ -4903,7 +4902,7 @@ void US_Hydrodyn_Mals_Saxs::cormap( map < QString, QString > & parameters )
                   .arg( N, 6 )
                   .arg( S, 6 )
                   .arg( C, 6 )
-                  .arg( QString( "" ).sprintf( "%.4g", P ).leftJustified( 12 ) )
+                  .arg( QString::asprintf( "%.4g", P ).leftJustified( 12 ) )
                   // .arg( adjP ) 
                   ;
             }

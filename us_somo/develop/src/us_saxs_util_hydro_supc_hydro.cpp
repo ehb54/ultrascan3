@@ -43,35 +43,35 @@
 // #define MODE_2
 // #define DEBUG_THREAD
 #if defined(USE_THREADS)
-  static int threads;
-  static vector < supc_thr_t* > supc_thr_threads;
+static int threads;
+static vector < supc_thr_t* > supc_thr_threads;
 #endif
 
 // #define SHOW_TIMING
 #if defined(SHOW_TIMING)
 # include <sys/time.h>
-  static struct timeval s3tv0;
+static struct timeval s3tv0;
 //  static struct timeval tv1;
 //  static struct timeval tv2;
-  static struct timeval s3tv3;
-  static struct timeval s3tv4;
-  static struct timeval s3tv5;
+static struct timeval s3tv3;
+static struct timeval s3tv4;
+static struct timeval s3tv5;
 //  static struct timeval tv6;
-  static struct timeval s3tv7;
-  static struct timeval s3tv8;
-  static struct timeval s3tv9;
-  static struct timeval s1tv0;
-  static struct timeval s1tv9;
-  static struct timeval s2tv0;
-  static struct timeval s2tv9;
-  unsigned long cholsl_s1;
-  unsigned long cholsl_s2;
-  unsigned long supc3_s1;
-  unsigned long supc3_s2;
-  unsigned long supc1_tot;
-  unsigned long supc2_tot;
-  unsigned long supc3_tot;
-  unsigned long supc_tot;
+static struct timeval s3tv7;
+static struct timeval s3tv8;
+static struct timeval s3tv9;
+static struct timeval s1tv0;
+static struct timeval s1tv9;
+static struct timeval s2tv0;
+static struct timeval s2tv9;
+unsigned long cholsl_s1;
+unsigned long cholsl_s2;
+unsigned long supc3_s1;
+unsigned long supc3_s2;
+unsigned long supc1_tot;
+unsigned long supc2_tot;
+unsigned long supc3_tot;
+unsigned long supc_tot;
 #endif
 
 #undef R // it's defined as a us #define above & we use R as a local variable
@@ -91,26 +91,26 @@ static FILE *new_mol1;
 static FILE *new_rmc;
 static FILE *ris;
 #if defined(CREATE_EXE_TIME)
- static FILE *exe_time;
+static FILE *exe_time;
 #endif
 
 
 #if defined(CREATE_TOT_MOL)
- static FILE *tot_mol;
+static FILE *tot_mol;
 #else
- static vector < QString > molecola_v;
- static vector < int > nat_v;
- static vector < int > prima_v;
- static vector < int > ultima_v;
- static vector < float > raggio_v;
+static vector < QString > molecola_v;
+static vector < int > nat_v;
+static vector < int > prima_v;
+static vector < int > ultima_v;
+static vector < float > raggio_v;
 #endif
 
 #if defined(OLD_WAY_CHECK)
- static FILE *interinp;
- static FILE *interinp1;
+static FILE *interinp;
+static FILE *interinp1;
 #endif
 #if defined(OLD_WAY)
- static FILE *interout;
+static FILE *interout;
 #endif
 
 static char molecola[SMAX+1];
@@ -309,10 +309,10 @@ static void stampa_ris();
 static void mem_ris(int);
 static void val_med();
 #if defined(OLD_WAY_CHECK)
- static void inp_inter();
+static void inp_inter();
 #endif
 #if defined(OLD_WAY)
- static void out_inter();
+static void out_inter();
 #endif
 static void mem_mol();
 static void autovalori();
@@ -737,70 +737,70 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
  
 
    for ( unsigned int current_model = 0; current_model < model_vector->size(); current_model++  )
-     {
-         if ((*somo_processed)[current_model]) {
-            model_idx.push_back(current_model);
-            vector < int > tmp_active_idx;
-            int tmp_count = 0;
-            float this_total_asa = 0.0f;
-            float this_used_asa = 0.0f;
-            float this_total_s_a = 0.0f;
-            float this_used_s_a = 0.0f;
-            float this_total_vol = 0.0f;
-            float this_used_vol = 0.0f;
+   {
+      if ((*somo_processed)[current_model]) {
+         model_idx.push_back(current_model);
+         vector < int > tmp_active_idx;
+         int tmp_count = 0;
+         float this_total_asa = 0.0f;
+         float this_used_asa = 0.0f;
+         float this_total_s_a = 0.0f;
+         float this_used_s_a = 0.0f;
+         float this_total_vol = 0.0f;
+         float this_used_vol = 0.0f;
 	    
 	    
-	    for(int i = 0; i < (int)(*bead_models)[current_model].size(); i++) {
-               if((*bead_models)[current_model][i].active) {
-		 tmp_active_idx.push_back(i);
-                  tmp_count++;
-                  this_total_asa += (*bead_models)[current_model][i].bead_recheck_asa * lconv2;
-                  float bead_total_s_a = 4.0f * M_PI * lconv2 *
-                     (*bead_models)[current_model][i].bead_computed_radius *
-                     (*bead_models)[current_model][i].bead_computed_radius;
-                  this_total_s_a += bead_total_s_a;
-                  float bead_total_vol = ( 4.0f / 3.0f ) * M_PI * lconv3 *
-                     (*bead_models)[current_model][i].bead_computed_radius *
-                     (*bead_models)[current_model][i].bead_computed_radius *
-                     (*bead_models)[current_model][i].bead_computed_radius;
-                  this_total_vol += bead_total_vol;
-		  if ( get_color(&(*bead_models)[current_model][i]) != 6 ) {
-		    this_used_asa += (*bead_models)[current_model][i].bead_recheck_asa * lconv2;
-                     this_used_s_a += bead_total_s_a;
-                     this_used_vol += bead_total_vol;
-                  }
+         for(int i = 0; i < (int)(*bead_models)[current_model].size(); i++) {
+            if((*bead_models)[current_model][i].active) {
+               tmp_active_idx.push_back(i);
+               tmp_count++;
+               this_total_asa += (*bead_models)[current_model][i].bead_recheck_asa * lconv2;
+               float bead_total_s_a = 4.0f * M_PI * lconv2 *
+                  (*bead_models)[current_model][i].bead_computed_radius *
+                  (*bead_models)[current_model][i].bead_computed_radius;
+               this_total_s_a += bead_total_s_a;
+               float bead_total_vol = ( 4.0f / 3.0f ) * M_PI * lconv3 *
+                  (*bead_models)[current_model][i].bead_computed_radius *
+                  (*bead_models)[current_model][i].bead_computed_radius *
+                  (*bead_models)[current_model][i].bead_computed_radius;
+               this_total_vol += bead_total_vol;
+               if ( get_color(&(*bead_models)[current_model][i]) != 6 ) {
+                  this_used_asa += (*bead_models)[current_model][i].bead_recheck_asa * lconv2;
+                  this_used_s_a += bead_total_s_a;
+                  this_used_vol += bead_total_vol;
                }
             }
-	    
-            bead_count.push_back(tmp_count);
-            active_idx.push_back(tmp_active_idx);
-            total_asa.push_back(this_total_asa);
-            used_asa.push_back(this_used_asa);
-            total_s_a.push_back(this_total_s_a);
-            used_s_a.push_back(this_used_s_a);
-            total_vol.push_back(this_total_vol);
-            used_vol.push_back(this_used_vol);
-            models_to_proc++;
-            if (nmax < (int) (*bead_models)[current_model].size()) {
-               nmax = (int) (*bead_models)[current_model].size();
-            }
          }
-     }
+	    
+         bead_count.push_back(tmp_count);
+         active_idx.push_back(tmp_active_idx);
+         total_asa.push_back(this_total_asa);
+         used_asa.push_back(this_used_asa);
+         total_s_a.push_back(this_total_s_a);
+         used_s_a.push_back(this_used_s_a);
+         total_vol.push_back(this_total_vol);
+         used_vol.push_back(this_used_vol);
+         models_to_proc++;
+         if (nmax < (int) (*bead_models)[current_model].size()) {
+            nmax = (int) (*bead_models)[current_model].size();
+         }
+      }
+   }
    // }
 
 
    if(!models_to_proc) {
-     us_log->log("\nNo selected models ready to compute hydrodynamics.\n");
-     if ( us_udp_msg )
-       {
+      us_log->log("\nNo selected models ready to compute hydrodynamics.\n");
+      if ( us_udp_msg )
+      {
 	 map < QString, QString > msging;
 	 msging[ "_textarea" ] = "\\nNo selected models ready to compute hydrodynamics.\\n";
 	 
 	 us_udp_msg->send_json( msging );
-	  //sleep(1);
-       }   
-     accumulated_msgs->append("\\nNo selected models ready to compute hydrodynamics.\\n");
-     return US_HYDRODYN_SUPC_NO_SEL_MODELS;
+         //sleep(1);
+      }   
+      accumulated_msgs->append("\\nNo selected models ready to compute hydrodynamics.\\n");
+      return US_HYDRODYN_SUPC_NO_SEL_MODELS;
    }
     
       
@@ -833,7 +833,7 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
             supc_results->name += QString("-%1")
                .arg(model_idx[i+inc]+1);
             i += inc;
-        } 
+         } 
       }
    }
    //printf("model result name <%s>\n", supc_results->name.toLatin1().data());
@@ -1001,7 +1001,7 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
          strcat(command, risultati);
          if (system(command) != 0)
             //printf("Error writing file");
-      }
+            }
       if (fe == 3)
       {
          goto a50;
@@ -1204,8 +1204,8 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
    //printf("- Computational Method : SUPERMATRIX INVERSION\n\n");
 
    if (flag_mem == 1 )//  &&
-       // !(us_hydrodyn->batch_widget &&
-       //   us_hydrodyn->batch_window->save_batch_active))
+      // !(us_hydrodyn->batch_widget &&
+      //   us_hydrodyn->batch_window->save_batch_active))
    {
       ris = us_fopen(risultati, "wb");
       fprintf(ris, "\n%s", "BEAMS -           IST. CBA                - COEFF/SUPCW v. 5.0\n");
@@ -1336,42 +1336,42 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
 		  .arg(bead_count[k])
 		  .arg(misc_int.compute_vbar ?
 		       (int)(((*model_vector)[model_idx[active_model]].vbar * 1000) + 0.5) / 1000.0 :
-           misc_int.vbar)
+                       misc_int.vbar)
 		  .arg(misc_int.compute_vbar ? "" : " (User Entered)")
 		  .arg(hydro->mass_correction ? 
-           QString(" MW %1 (User Entered)").arg(hydro->mass) : "")
+                       QString(" MW %1 (User Entered)").arg(hydro->mass) : "")
 		  .arg(hydro->volume_correction ? 
 		       QString(" Volume %1 (User Entered)").arg(hydro->volume) : "")
-      );
+                  );
       if ( us_udp_msg )
-       {
+      {
 	 map < QString, QString > msging;
 	 msging[ "_textarea" ] = QString("\\nProcessing model %1 bead count %2 vbar %3%4%5%6\\n")
-		  .arg(k+1)
-		  .arg(bead_count[k])
-		  .arg(misc_int.compute_vbar ?
-		       (int)(((*model_vector)[model_idx[active_model]].vbar * 1000) + 0.5) / 1000.0 :
-           misc_int.vbar)
-		  .arg(misc_int.compute_vbar ? "" : " (User Entered)")
-		  .arg(hydro->mass_correction ? 
-           QString(" MW %1 (User Entered)").arg(hydro->mass) : "")
-		  .arg(hydro->volume_correction ? 
-		       QString(" Volume %1 (User Entered)").arg(hydro->volume) : "");
+            .arg(k+1)
+            .arg(bead_count[k])
+            .arg(misc_int.compute_vbar ?
+                 (int)(((*model_vector)[model_idx[active_model]].vbar * 1000) + 0.5) / 1000.0 :
+                 misc_int.vbar)
+            .arg(misc_int.compute_vbar ? "" : " (User Entered)")
+            .arg(hydro->mass_correction ? 
+                 QString(" MW %1 (User Entered)").arg(hydro->mass) : "")
+            .arg(hydro->volume_correction ? 
+                 QString(" Volume %1 (User Entered)").arg(hydro->volume) : "");
 	 
 	 us_udp_msg->send_json( msging );
-	  //sleep(1);
-       }   
+         //sleep(1);
+      }   
       accumulated_msgs->append( QString("\\nProcessing model %1 bead count %2 vbar %3%4%5%6\\n")
-		  .arg(k+1)
-		  .arg(bead_count[k])
-		  .arg(misc_int.compute_vbar ?
-		       (int)(((*model_vector)[model_idx[active_model]].vbar * 1000) + 0.5) / 1000.0 :
-           misc_int.vbar)
-		  .arg(misc_int.compute_vbar ? "" : " (User Entered)")
-		  .arg(hydro->mass_correction ? 
-           QString(" MW %1 (User Entered)").arg(hydro->mass) : "")
-		  .arg(hydro->volume_correction ? 
-		       QString(" Volume %1 (User Entered)").arg(hydro->volume) : ""));
+                                .arg(k+1)
+                                .arg(bead_count[k])
+                                .arg(misc_int.compute_vbar ?
+                                     (int)(((*model_vector)[model_idx[active_model]].vbar * 1000) + 0.5) / 1000.0 :
+                                     misc_int.vbar)
+                                .arg(misc_int.compute_vbar ? "" : " (User Entered)")
+                                .arg(hydro->mass_correction ? 
+                                     QString(" MW %1 (User Entered)").arg(hydro->mass) : "")
+                                .arg(hydro->volume_correction ? 
+                                     QString(" Volume %1 (User Entered)").arg(hydro->volume) : ""));
       
       // editor->setTextColor(save_color);
 
@@ -1380,13 +1380,13 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
       initarray(k);
       us_log->log(QString("Using %1 beads for the matrix\n").arg(nat));
       if ( us_udp_msg )
-	{
-	  map < QString, QString > msging;
-	  msging[ "_textarea" ] = QString("Using %1 beads for the matrix\\n").arg(nat);
+      {
+         map < QString, QString > msging;
+         msging[ "_textarea" ] = QString("Using %1 beads for the matrix\\n").arg(nat);
 	 
-	    us_udp_msg->send_json( msging );
-	  //sleep(1);
-       }   
+         us_udp_msg->send_json( msging );
+         //sleep(1);
+      }   
       accumulated_msgs->append( QString("Using %1 beads for the matrix\\n").arg(nat));
       // qApp->processEvents();
       // if (us_hydrodyn->stopFlag)
@@ -1405,13 +1405,13 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
 
       /* Reset Progress bar */
       if ( us_udp_msg )
-	{
-	  map < QString, QString > msging;
-	  msging[ "progress_output" ] = QString("");
-	  msging[ "progress1" ] = QString::number(0.0);
+      {
+         map < QString, QString > msging;
+         msging[ "progress_output" ] = QString("");
+         msging[ "progress1" ] = QString::number(0.0);
        
-	  us_udp_msg->send_json( msging );
-	}   
+         us_udp_msg->send_json( msging );
+      }   
       
       ppos = 1;
       mppos = (1 + 3 + 3) * nat + 17;
@@ -1419,14 +1419,14 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
       // progress->setValue(ppos++); // 1
       ppos++;      
       if ( us_udp_msg )
-	{
-	  map < QString, QString > msging;
-	  msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\%").arg(QString::number( (int(double(ppos)/double(mppos))*100.0) ) ); // arg(ppos).arg(mppos);
-	  msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
+      {
+         map < QString, QString > msging;
+         msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\%").arg(QString::number( (int(double(ppos)/double(mppos))*100.0) ) ); // arg(ppos).arg(mppos);
+         msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
 	  
-	  us_udp_msg->send_json( msging );
-	  //sleep(1);
-	}         
+         us_udp_msg->send_json( msging );
+         //sleep(1);
+      }         
       
       // qApp->processEvents();
       // if (us_hydrodyn->stopFlag)
@@ -1463,10 +1463,10 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
          //printf("\n\n- Starting PAT ...\n");
          {
             int retval = us_hydrodyn_pat_main_hydro(nmax,
-                                              nat,
-                                              dt,
-                                              &out_nat,
-                                              out_dt);
+                                                    nat,
+                                                    dt,
+                                                    &out_nat,
+                                                    out_dt);
             //printf("pat returns %d\n", retval);
             if ( retval )
             {
@@ -1483,14 +1483,14 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
          // progress->setValue(ppos); // 2
 	 ppos++;
 	 if ( us_udp_msg )
-	   {
-	     map < QString, QString > msging;
-	     msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) );
-	     msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
+         {
+            map < QString, QString > msging;
+            msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) );
+            msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
       
-	     us_udp_msg->send_json( msging );
-	     //sleep(1);
-	   }       
+            us_udp_msg->send_json( msging );
+            //sleep(1);
+         }       
 
          // qApp->processEvents();
          // if (us_hydrodyn->stopFlag)
@@ -1518,9 +1518,9 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
          for (i = 0; i < out_nat; i++)
          {
 #if defined(MIMIC_FILE)
-            dtn[i].x = QString("").sprintf("%f",out_dt[i].x).toFloat();
-            dtn[i].y = QString("").sprintf("%f",out_dt[i].y).toFloat();
-            dtn[i].z = QString("").sprintf("%f",out_dt[i].z).toFloat();
+            dtn[i].x = QString::asprintf( "%f",out_dt[i].x ).toFloat();
+            dtn[i].y = QString::asprintf( "%f",out_dt[i].y ).toFloat();
+            dtn[i].z = QString::asprintf( "%f",out_dt[i].z ).toFloat();
 #else
             dtn[i].x = out_dt[i].x;
             dtn[i].y = out_dt[i].y;
@@ -1594,14 +1594,14 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
       // qApp->processEvents();
       ppos++;
       if ( us_udp_msg )
-	{
-	  map < QString, QString > msging;
-	  msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) );
-	  msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
+      {
+         map < QString, QString > msging;
+         msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) );
+         msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
       
-	  us_udp_msg->send_json( msging );
-	  //sleep(1);
-	}    
+         us_udp_msg->send_json( msging );
+         //sleep(1);
+      }    
       
 
       // if (us_hydrodyn->stopFlag)
@@ -1639,14 +1639,14 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
       // qApp->processEvents();
       ppos++;
       if ( us_udp_msg )
-	{
-	  map < QString, QString > msging;
-	  msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) );
-	  msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
+      {
+         map < QString, QString > msging;
+         msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) );
+         msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
 	  
-	  us_udp_msg->send_json( msging );
-	  //sleep(1);
-	}    
+         us_udp_msg->send_json( msging );
+         //sleep(1);
+      }    
       
 
       // if (us_hydrodyn->stopFlag)
@@ -1663,14 +1663,14 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
       // qApp->processEvents();
       ppos++;
       if ( us_udp_msg )
-	{
-	  map < QString, QString > msging;
-	  msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) );
-	  msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
+      {
+         map < QString, QString > msging;
+         msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) );
+         msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
 	  
-	  us_udp_msg->send_json( msging );
-	  //sleep(1);
-	}    
+         us_udp_msg->send_json( msging );
+         //sleep(1);
+      }    
       
       // if (us_hydrodyn->stopFlag)
       // {
@@ -1685,14 +1685,14 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
       // qApp->processEvents();
       ppos++;
       if ( us_udp_msg )
-	{
-	  map < QString, QString > msging;
-	  msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) );
-	  msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
+      {
+         map < QString, QString > msging;
+         msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) );
+         msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
 	  
-	  us_udp_msg->send_json( msging );
-	  //sleep(1);
-	}    
+         us_udp_msg->send_json( msging );
+         //sleep(1);
+      }    
       // if (us_hydrodyn->stopFlag)
       // {
       //    supc_free_alloced();
@@ -1728,14 +1728,14 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
       // qApp->processEvents();
       ppos++;
       if ( us_udp_msg )
-	{
-	  map < QString, QString > msging;
-	  msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) );
-	  msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
+      {
+         map < QString, QString > msging;
+         msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) );
+         msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
 	  
-	  us_udp_msg->send_json( msging );
-	  //sleep(1);
-	}
+         us_udp_msg->send_json( msging );
+         //sleep(1);
+      }
     
       // if (us_hydrodyn->stopFlag)
       // {
@@ -1758,25 +1758,25 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
 
 
       /* THREADS !! */
-// #if defined(USE_THREADS)
-//       US_Config *USglobal = new US_Config();
-//       threads = USglobal->config_list.numThreads;
-//       if ( threads > 1 )
-//       {
-//          // create threads
+      // #if defined(USE_THREADS)
+      //       US_Config *USglobal = new US_Config();
+      //       threads = USglobal->config_list.numThreads;
+      //       if ( threads > 1 )
+      //       {
+      //          // create threads
 
-//          cout << QString("Using %1 threads for matrix inversion.\n").arg(threads);
-//          // us_log->log(QString("Using %1 threads for matrix inversion.\n").arg(threads));
+      //          cout << QString("Using %1 threads for matrix inversion.\n").arg(threads);
+      //          // us_log->log(QString("Using %1 threads for matrix inversion.\n").arg(threads));
          
-//          supc_thr_threads.resize(threads);
-//          for ( int j = 0; j < threads; j++ )
-//          {
-//             supc_thr_threads[j] = new supc_thr_t(j);
-//             supc_thr_threads[j]->start();
-//          }
-//       }
-//       delete USglobal;
-// #endif
+      //          supc_thr_threads.resize(threads);
+      //          for ( int j = 0; j < threads; j++ )
+      //          {
+      //             supc_thr_threads[j] = new supc_thr_t(j);
+      //             supc_thr_threads[j]->start();
+      //          }
+      //       }
+      //       delete USglobal;
+      // #endif
          
       riempimatrice();
 
@@ -1784,14 +1784,14 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
       // qApp->processEvents();
       ppos++;
       if ( us_udp_msg )
-	{
-	  map < QString, QString > msging;
-	  msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) );
-	  msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
+      {
+         map < QString, QString > msging;
+         msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) );
+         msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
 	  
-	  us_udp_msg->send_json( msging );
-	  //sleep(1);
-	}    
+         us_udp_msg->send_json( msging );
+         //sleep(1);
+      }    
 
       // if (us_hydrodyn->stopFlag)
       // {
@@ -1826,29 +1826,29 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
       //        );
 #endif
 
-// #if defined(USE_THREADS)
-//       if ( threads > 1 ) 
-//       {
-//          // destroy threads
+      // #if defined(USE_THREADS)
+      //       if ( threads > 1 ) 
+      //       {
+      //          // destroy threads
 
-//          int j;
+      //          int j;
     
-//          for ( j = 0; j < threads; j++ )
-//          {
-//             supc_thr_threads[j]->supc_thr_shutdown();
-//          }
+      //          for ( j = 0; j < threads; j++ )
+      //          {
+      //             supc_thr_threads[j]->supc_thr_shutdown();
+      //          }
          
-//          for ( j = 0; j < threads; j++ )
-//          {
-//             supc_thr_threads[j]->wait();
-//          }
+      //          for ( j = 0; j < threads; j++ )
+      //          {
+      //             supc_thr_threads[j]->wait();
+      //          }
          
-//          for ( j = 0; j < threads; j++ )
-//          {
-//             delete supc_thr_threads[j];
-//          }
-//       }
-// #endif
+      //          for ( j = 0; j < threads; j++ )
+      //          {
+      //             delete supc_thr_threads[j];
+      //          }
+      //       }
+      // #endif
 
 
       // qApp->processEvents();
@@ -1866,14 +1866,14 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
       // qApp->processEvents();
       ppos++;
       if ( us_udp_msg )
-	{
-	  map < QString, QString > msging;
-	  msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) );
-	  msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
+      {
+         map < QString, QString > msging;
+         msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) );
+         msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
 	  
-	  us_udp_msg->send_json( msging );
-	  //sleep(1);
-	}    
+         us_udp_msg->send_json( msging );
+         //sleep(1);
+      }    
       // if (us_hydrodyn->stopFlag)
       // {
       //    supc_free_alloced();
@@ -1888,14 +1888,14 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
       // qApp->processEvents();
       ppos++;
       if ( us_udp_msg )
-	{
-	  map < QString, QString > msging;
-	  msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) );
-	  msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
+      {
+         map < QString, QString > msging;
+         msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) );
+         msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
 	  
-	  us_udp_msg->send_json( msging );
-	  //sleep(1);
-	}    
+         us_udp_msg->send_json( msging );
+         //sleep(1);
+      }    
       // if (us_hydrodyn->stopFlag)
       // {
       //    supc_free_alloced();
@@ -1909,14 +1909,14 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
       // qApp->processEvents();
       ppos++;
       if ( us_udp_msg )
-	{
-	  map < QString, QString > msging;
-	  msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) );
-	  msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
+      {
+         map < QString, QString > msging;
+         msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) );
+         msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
 	  
-	     us_udp_msg->send_json( msging );
-	     //sleep(1);
-	}    
+         us_udp_msg->send_json( msging );
+         //sleep(1);
+      }    
       // if (us_hydrodyn->stopFlag)
       // {
       //    supc_free_alloced();
@@ -1929,14 +1929,14 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
       // qApp->processEvents();
       ppos++;
       if ( us_udp_msg )
-	{
-	  map < QString, QString > msging;
-	  msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) );
-	  msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
+      {
+         map < QString, QString > msging;
+         msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) );
+         msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
 	  
-	  us_udp_msg->send_json( msging );
-	  //sleep(1);
-	}    
+         us_udp_msg->send_json( msging );
+         //sleep(1);
+      }    
 
       // if (us_hydrodyn->stopFlag)
       // {
@@ -1951,14 +1951,14 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
       // qApp->processEvents();
       ppos++;
       if ( us_udp_msg )
-	{
-	  map < QString, QString > msging;
-	  msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) );
-	  msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
+      {
+         map < QString, QString > msging;
+         msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) );
+         msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
 	  
-	  us_udp_msg->send_json( msging );
-	     //sleep(1);
-	}    
+         us_udp_msg->send_json( msging );
+         //sleep(1);
+      }    
 
       // if (us_hydrodyn->stopFlag)
       // {
@@ -1972,14 +1972,14 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
       // qApp->processEvents();
       ppos++;
       if ( us_udp_msg )
-	{
-	  map < QString, QString > msging;
-	  msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) );
-	  msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
+      {
+         map < QString, QString > msging;
+         msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) );
+         msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
 	  
-	  us_udp_msg->send_json( msging );
-	  //sleep(1);
-	}    
+         us_udp_msg->send_json( msging );
+         //sleep(1);
+      }    
       
       // if (us_hydrodyn->stopFlag)
       // {
@@ -1993,14 +1993,14 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
       // qApp->processEvents();
       ppos++;
       if ( us_udp_msg )
-	{
-	  map < QString, QString > msging;
-	  msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) );
-	  msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
+      {
+         map < QString, QString > msging;
+         msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) );
+         msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
 	  
-	  us_udp_msg->send_json( msging );
-	  //sleep(1);
-	}    
+         us_udp_msg->send_json( msging );
+         //sleep(1);
+      }    
       
       // if (us_hydrodyn->stopFlag)
       // {
@@ -2014,14 +2014,14 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
       // qApp->processEvents();
       ppos++;
       if ( us_udp_msg )
-	{
-	  map < QString, QString > msging;
-	  msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) );
-	  msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
+      {
+         map < QString, QString > msging;
+         msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) );
+         msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
 	  
-	  us_udp_msg->send_json( msging );
-	  //sleep(1);
-	}    
+         us_udp_msg->send_json( msging );
+         //sleep(1);
+      }    
       // if (us_hydrodyn->stopFlag)
       // {
       //    supc_free_alloced();
@@ -2331,14 +2331,14 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
    //cout << ppos << " " << mppos << endl;
 
    if ( us_udp_msg )
-     {
-       map < QString, QString > msging;
-       msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\%").arg(QString::number( (int(double(mppos)/double(mppos))*100.0) ) ); // arg(ppos).arg(mppos);
-       msging[ "progress1" ] = QString::number(1.0);
+   {
+      map < QString, QString > msging;
+      msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\%").arg(QString::number( (int(double(mppos)/double(mppos))*100.0) ) ); // arg(ppos).arg(mppos);
+      msging[ "progress1" ] = QString::number(1.0);
 		      
-       us_udp_msg->send_json( msging );
-       //sleep(1);
-     } 
+      us_udp_msg->send_json( msging );
+      //sleep(1);
+   } 
    
    
    // if (us_hydrodyn->stopFlag)
@@ -2357,16 +2357,16 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
 static void
 intestazione()
 {
-  /*
-   printf("####################################################\n");
-   printf("#   National Institute for Cancer Research (IST)   #\n");
-   printf("#         Advanced Biotechnologies Center (CBA)    #\n");
-   printf("#                   Genova, ITALY                  #\n");
-   printf("####################################################\n");
-   printf("#  SUPC - HYDRODYNAMIC PROPERTIES COMPUTATION      #\n");
-   printf("#            Version 5.0  Februaury 2010           #\n");
-   printf("####################################################\n\n");
-  */
+   /*
+     printf("####################################################\n");
+     printf("#   National Institute for Cancer Research (IST)   #\n");
+     printf("#         Advanced Biotechnologies Center (CBA)    #\n");
+     printf("#                   Genova, ITALY                  #\n");
+     printf("####################################################\n");
+     printf("#  SUPC - HYDRODYNAMIC PROPERTIES COMPUTATION      #\n");
+     printf("#            Version 5.0  Februaury 2010           #\n");
+     printf("####################################################\n\n");
+   */
 }
 
 
@@ -2377,18 +2377,18 @@ intestazione()
 static void
 presentazione()
 {
-  /*
-   printf("####################################################\n");
-   printf("#   National Institute for Cancer Research (IST)   #\n");
-   printf("#         Advanced Biotechnologies Center (CBA)    #\n");
-   printf("#                   Genova, ITALY                  #\n");
-   printf("####################################################\n");
-   printf("#  SUPC - HYDRODYNAMIC PROPERTIES COMPUTATION      #\n");
-   printf("#            Version 5.0  Februaury 2010           #\n");
-   printf("####################################################\n\n");
-   printf("- Model        : %s\n", molecola);
-   printf("- TOTAL Beads in the MODEL : %d\n", numero_sfere);
-  */
+   /*
+     printf("####################################################\n");
+     printf("#   National Institute for Cancer Research (IST)   #\n");
+     printf("#         Advanced Biotechnologies Center (CBA)    #\n");
+     printf("#                   Genova, ITALY                  #\n");
+     printf("####################################################\n");
+     printf("#  SUPC - HYDRODYNAMIC PROPERTIES COMPUTATION      #\n");
+     printf("#            Version 5.0  Februaury 2010           #\n");
+     printf("####################################################\n\n");
+     printf("- Model        : %s\n", molecola);
+     printf("- TOTAL Beads in the MODEL : %d\n", numero_sfere);
+   */
 
    // printf("%s%d\n", "- FIRST Bead Included  : ", prima);
    // printf("%s%d\n", "- LAST Bead Included : ", ultima);
@@ -2603,7 +2603,8 @@ static void
 stampa_ris()
 {
 
-   float einst, bc, temp;
+   float einst, bc;
+   // float temp;
    int i;
    if (cc == 1)
       bc = 6;
@@ -2636,29 +2637,29 @@ stampa_ris()
    tot_used_beads2 += (float)nat * (float)nat;
 
    /*   if (volcor == 1)
-   {
-      if ((colorsixf == 0) && (sfecalc == 2))
-         printf("%s%.2f%s\n", "- Used BEADS Volume = ", volcor1 * pow(fconv, 3.0f),
-                "  [nm^3] (NO contribution from buried beads)");
-      if ((colorsixf == 1) && (sfecalc == 2))
-      {
-         printf("%s%.2f%s\n", "- Used BEADS Volume = ", volcor1 * pow(fconv, 3.0f),
-                "  [nm^3] (contribution from buried beads only for Dr)");
-         printf("%s%.2f%s\n", "- Used BEADS Volume = ", totvol * pow(fconv, 3.0f), "  [nm^3] (for [n])");
-      }
-      if ((colorsixf == 2) && (sfecalc == 2))
-      {
-         printf("%s%.2f%s\n", "- Used BEADS Volume = ", volcor1 * pow(fconv, 3.0f),
-                "  [nm^3] (contribution from buried beads only for [n])");
-         printf("%s%.2f%s\n", "- Used BEADS Volume = ", totvol * pow(fconv, 3.0f), "  [nm^3] (for Dr)");
-      }
-      if ((colorsixf == 3) && (sfecalc == 2))
-         printf("%s%.2f%s\n", "- Used BEADS Volume  = ", volcor1 * pow(fconv, 3.0f), "  [nm^3]");
-      if (sfecalc == 1)
-         printf("%s%.2f%s\n", "- Used BEADS Volume  = ", volcor1 * pow(fconv, 3.0f), "  [nm^3]");
-   }
-   if (volcor == 2)
-      printf("%s%.2f%s\n", "- Used BEADS Volume  = ", volcor1 * pow(fconv, 3.0f), "  [nm^3]");
+        {
+        if ((colorsixf == 0) && (sfecalc == 2))
+        printf("%s%.2f%s\n", "- Used BEADS Volume = ", volcor1 * pow(fconv, 3.0f),
+        "  [nm^3] (NO contribution from buried beads)");
+        if ((colorsixf == 1) && (sfecalc == 2))
+        {
+        printf("%s%.2f%s\n", "- Used BEADS Volume = ", volcor1 * pow(fconv, 3.0f),
+        "  [nm^3] (contribution from buried beads only for Dr)");
+        printf("%s%.2f%s\n", "- Used BEADS Volume = ", totvol * pow(fconv, 3.0f), "  [nm^3] (for [n])");
+        }
+        if ((colorsixf == 2) && (sfecalc == 2))
+        {
+        printf("%s%.2f%s\n", "- Used BEADS Volume = ", volcor1 * pow(fconv, 3.0f),
+        "  [nm^3] (contribution from buried beads only for [n])");
+        printf("%s%.2f%s\n", "- Used BEADS Volume = ", totvol * pow(fconv, 3.0f), "  [nm^3] (for Dr)");
+        }
+        if ((colorsixf == 3) && (sfecalc == 2))
+        printf("%s%.2f%s\n", "- Used BEADS Volume  = ", volcor1 * pow(fconv, 3.0f), "  [nm^3]");
+        if (sfecalc == 1)
+        printf("%s%.2f%s\n", "- Used BEADS Volume  = ", volcor1 * pow(fconv, 3.0f), "  [nm^3]");
+        }
+        if (volcor == 2)
+        printf("%s%.2f%s\n", "- Used BEADS Volume  = ", volcor1 * pow(fconv, 3.0f), "  [nm^3]");
    */
 
    if (mascor == 1)
@@ -2709,8 +2710,8 @@ stampa_ris()
       //         .arg( f ) );
       supc_results->s20w = (mascor1 * 1.0E20 * (1.0 - partvol * DENS)) / (f * fconv * AVO);
       if ((nat + colorzero + colorsix) < numero_sfere){}
-          // printf
-          //    ("- !!WARNING: ONLY PART OF THE MODEL HAS BEEN ANALYZED, BUT THE PSV UTILIZED         IS THAT OF THE ENTIRE MODEL!! - \n");
+      // printf
+      //    ("- !!WARNING: ONLY PART OF THE MODEL HAS BEEN ANALYZED, BUT THE PSV UTILIZED         IS THAT OF THE ENTIRE MODEL!! - \n");
    }
 
    if (raflag == -3.0)
@@ -2740,34 +2741,34 @@ stampa_ris()
    // ff0 calc
    supc_results->ff0 = 
       f * 1.0E-08 / ( 6.0 * M_PI * ETAo *
-      pow( 3.0 * supc_results->mass * partvol / (4.0 * M_PI * AVOGADRO), 1.0/3.0));
+                      pow( 3.0 * supc_results->mass * partvol / (4.0 * M_PI * AVOGADRO), 1.0/3.0));
 
    // printf("%s%.2f\n", "- FRICTIONAL RATIO                = ", supc_results->ff0);
 
-   temp = 0.0;
+   // temp = 0.0;
    for (i = 0; i < 3; i++)
-      temp += 1.0E-21 / Dr[i * 4] * pow(fconv, 3);
+      // temp += 1.0E-21 / Dr[i * 4] * pow(fconv, 3);
    //   printf("\n%s%.3e\t%s (%s)\n", "- ROT. FRICT. COEFF.    = ", temp / 3.0, "[g*cm^2/s] ", tag1.toLatin1().data());
-   temp = 0.0;
+   // temp = 0.0;
    for (i = 0; i < 3; i++)
-      temp += (KB * TE * Dr[i * 4] / 1.0E-21) * pow(fconv1, 3);
+      // temp += (KB * TE * Dr[i * 4] / 1.0E-21) * pow(fconv1, 3);
    //   printf("%s%.0f\t%s (%s)\n\n", "- ROT. DIFF. COEFF.     = ", temp / 3.0, "[1/s] ", tag2.toLatin1().data());
 
-// #if !defined( MINGW )
-//    printf("%s%.3Le\t%s (%s)\n", "- ROT. FRICT. COEFF. [ X ] = ", 1.0E-21 / Dr[0] * pow(fconv, 3), "[g*cm^2/s] ", tag1.toLatin1().data());
-//    printf("%s%.3Le\t%s (%s)\n", "- ROT. FRICT. COEFF. [ Y ] = ", 1.0E-21 / Dr[4] * pow(fconv, 3), "[g*cm^2/s] ", tag1.toLatin1().data());
-//    printf("%s%.3Le\t%s (%s)\n", "- ROT. FRICT. COEFF. [ Z ] = ", 1.0E-21 / Dr[8] * pow(fconv, 3), "[g*cm^2/s] ", tag1.toLatin1().data());
-//    printf("%s%.0Lf\t%s (%s)\n", "- ROT. DIFF. COEFF.  [ X ] = ", (KB * TE / 1.0E-21 * Dr[0]) * pow(fconv1, 3), "[1/s] ", tag2.toLatin1().data());
-//    printf("%s%.0Lf\t%s (%s)\n", "- ROT. DIFF. COEFF.  [ Y ] = ", (KB * TE / 1.0E-21 * Dr[4]) * pow(fconv1, 3), "[1/s] ", tag2.toLatin1().data());
-//    printf("%s%.0Lf\t%s (%s)\n\n", "- ROT. DIFF. COEFF.  [ Z ] = ", (KB * TE / 1.0E-21 * Dr[8]) * pow(fconv1, 3), "[1/s] ", tag2.toLatin1().data());
-// #else
-//    printf("%s%.3e\t%s (%s)\n", "- ROT. FRICT. COEFF. [ X ] = ", (double)(1.0E-21 / Dr[0] * pow(fconv, 3)), "[g*cm^2/s] ", tag1.toLatin1().data());
-//    printf("%s%.3e\t%s (%s)\n", "- ROT. FRICT. COEFF. [ Y ] = ", (double)(1.0E-21 / Dr[4] * pow(fconv, 3)), "[g*cm^2/s] ", tag1.toLatin1().data());
-//    printf("%s%.3e\t%s (%s)\n", "- ROT. FRICT. COEFF. [ Z ] = ", (double)(1.0E-21 / Dr[8] * pow(fconv, 3)), "[g*cm^2/s] ", tag1.toLatin1().data());
-//    printf("%s%.0f\t%s (%s)\n", "- ROT. DIFF. COEFF.  [ X ] = ", (double)((KB * TE / 1.0E-21 * Dr[0]) * pow(fconv1, 3)), "[1/s] ", tag2.toLatin1().data());
-//    printf("%s%.0f\t%s (%s)\n", "- ROT. DIFF. COEFF.  [ Y ] = ", (double)((KB * TE / 1.0E-21 * Dr[4]) * pow(fconv1, 3)), "[1/s] ", tag2.toLatin1().data());
-//    printf("%s%.0f\t%s (%s)\n\n", "- ROT. DIFF. COEFF.  [ Z ] = ", (double)((KB * TE / 1.0E-21 * Dr[8]) * pow(fconv1, 3)), "[1/s] ", tag2.toLatin1().data());
-// #endif
+   // #if !defined( MINGW )
+   //    printf("%s%.3Le\t%s (%s)\n", "- ROT. FRICT. COEFF. [ X ] = ", 1.0E-21 / Dr[0] * pow(fconv, 3), "[g*cm^2/s] ", tag1.toLatin1().data());
+   //    printf("%s%.3Le\t%s (%s)\n", "- ROT. FRICT. COEFF. [ Y ] = ", 1.0E-21 / Dr[4] * pow(fconv, 3), "[g*cm^2/s] ", tag1.toLatin1().data());
+   //    printf("%s%.3Le\t%s (%s)\n", "- ROT. FRICT. COEFF. [ Z ] = ", 1.0E-21 / Dr[8] * pow(fconv, 3), "[g*cm^2/s] ", tag1.toLatin1().data());
+   //    printf("%s%.0Lf\t%s (%s)\n", "- ROT. DIFF. COEFF.  [ X ] = ", (KB * TE / 1.0E-21 * Dr[0]) * pow(fconv1, 3), "[1/s] ", tag2.toLatin1().data());
+   //    printf("%s%.0Lf\t%s (%s)\n", "- ROT. DIFF. COEFF.  [ Y ] = ", (KB * TE / 1.0E-21 * Dr[4]) * pow(fconv1, 3), "[1/s] ", tag2.toLatin1().data());
+   //    printf("%s%.0Lf\t%s (%s)\n\n", "- ROT. DIFF. COEFF.  [ Z ] = ", (KB * TE / 1.0E-21 * Dr[8]) * pow(fconv1, 3), "[1/s] ", tag2.toLatin1().data());
+   // #else
+   //    printf("%s%.3e\t%s (%s)\n", "- ROT. FRICT. COEFF. [ X ] = ", (double)(1.0E-21 / Dr[0] * pow(fconv, 3)), "[g*cm^2/s] ", tag1.toLatin1().data());
+   //    printf("%s%.3e\t%s (%s)\n", "- ROT. FRICT. COEFF. [ Y ] = ", (double)(1.0E-21 / Dr[4] * pow(fconv, 3)), "[g*cm^2/s] ", tag1.toLatin1().data());
+   //    printf("%s%.3e\t%s (%s)\n", "- ROT. FRICT. COEFF. [ Z ] = ", (double)(1.0E-21 / Dr[8] * pow(fconv, 3)), "[g*cm^2/s] ", tag1.toLatin1().data());
+   //    printf("%s%.0f\t%s (%s)\n", "- ROT. DIFF. COEFF.  [ X ] = ", (double)((KB * TE / 1.0E-21 * Dr[0]) * pow(fconv1, 3)), "[1/s] ", tag2.toLatin1().data());
+   //    printf("%s%.0f\t%s (%s)\n", "- ROT. DIFF. COEFF.  [ Y ] = ", (double)((KB * TE / 1.0E-21 * Dr[4]) * pow(fconv1, 3)), "[1/s] ", tag2.toLatin1().data());
+   //    printf("%s%.0f\t%s (%s)\n\n", "- ROT. DIFF. COEFF.  [ Z ] = ", (double)((KB * TE / 1.0E-21 * Dr[8]) * pow(fconv1, 3)), "[1/s] ", tag2.toLatin1().data());
+   // #endif
 
    // printf("%s%.2f\t%s\n", "- MOLECULAR WEIGHT   (from file)         = ", pesmol, "[Da]");
    // if (sfecalc == 2)
@@ -2801,14 +2802,14 @@ stampa_ris()
 
    if ((raflag == -1.0) || (raflag == -3.0))
    {
-     //us_qdebug( QString( "ra -1 or -3 ro %1" ).arg( ro ) );
+      //us_qdebug( QString( "ra -1 or -3 ro %1" ).arg( ro ) );
       // printf("\n%s%.2f\t%s\n", "- RADIUS OF GYRATION (Hydrated Beads)   = ", ro * fconv, "[nm]");
       supc_results->rg = (double) ro * fconv;
       // printf("%s%.2f\t%s\n", "- RADIUS OF GYRATION (Unhydrated Beads) = ", rou * fconv, "[nm]");
    }
    else
    {
-     //us_qdebug( QString( "ra !(-1 or -3) ro %1" ).arg( ro ) );
+      //us_qdebug( QString( "ra !(-1 or -3) ro %1" ).arg( ro ) );
       // printf("\n%s%.2f\t%s\n", "- RADIUS OF GYRATION              = ", ro * fconv, "[nm]");
       supc_results->rg = (double) ro * fconv;
    }
@@ -2888,57 +2889,57 @@ stampa_ris()
 
    /*   printf("\nRELAXATION TIMES\n\n");
 
-#if !defined( MINGW )
-   if (taoflag == 1.0)
-   {
-      printf("%s\t%.2Lf\t%s (%s)\n", " Tau(1) ", tao[0] * pow(fconv, 3.0f), "[ns] ", tag2.toLatin1().data());
-      printf("%s\t%.2Lf\t%s (%s)\n", " Tau(2) ", tao[1] * pow(fconv, 3.0f), "[ns] ", tag2.toLatin1().data());
-      printf("%s\t%.2Lf\t%s (%s)\n", " Tau(3) ", tao[1] * pow(fconv, 3.0f), "[ns] ", tag2.toLatin1().data());
-      printf("%s\t%.2Lf\t%s (%s)\n", " Tau(4) ", tao[3] * pow(fconv, 3.0f), "[ns] ", tag2.toLatin1().data());
-      printf("%s\t%.2Lf\t%s (%s)\n", " Tau(5) ", tao[3] * pow(fconv, 3.0f), "[ns] ", tag2.toLatin1().data());
-   }
-   if (taoflag == 2.0)
-   {
-      printf("%s\t%.2Lf\t%s (%s)\n", " Tau(1) ", tao[4] * pow(fconv, 3.0f), "[ns] ", tag2.toLatin1().data());
-      printf("%s\t%.2Lf\t%s (%s)\n", " Tau(2) ", tao[1] * pow(fconv, 3.0f), "[ns] ", tag2.toLatin1().data());
-      printf("%s\t%.2Lf\t%s (%s)\n", " Tau(3) ", tao[1] * pow(fconv, 3.0f), "[ns] ", tag2.toLatin1().data());
-      printf("%s\t%.2Lf\t%s (%s)\n", " Tau(4) ", tao[3] * pow(fconv, 3.0f), "[ns] ", tag2.toLatin1().data());
-      printf("%s\t%.2Lf\t%s (%s)\n", " Tau(5) ", tao[3] * pow(fconv, 3.0f), "[ns] ", tag2.toLatin1().data());
-   }
-   if (taoflag == 0.0)
-   {
-      printf("%s\t%.2Lf\t%s (%s)\n", " Tau(1) ", tao[0] * pow(fconv, 3.0f), "[ns] ", tag2.toLatin1().data());
-      printf("%s\t%.2Lf\t%s (%s)\n", " Tau(2) ", tao[1] * pow(fconv, 3.0f), "[ns] ", tag2.toLatin1().data());
-      printf("%s\t%.2Lf\t%s (%s)\n", " Tau(3) ", tao[2] * pow(fconv, 3.0f), "[ns] ", tag2.toLatin1().data());
-      printf("%s\t%.2Lf\t%s (%s)\n", " Tau(4) ", tao[3] * pow(fconv, 3.0f), "[ns] ", tag2.toLatin1().data());
-      printf("%s\t%.2Lf\t%s (%s)\n", " Tau(5) ", tao[4] * pow(fconv, 3.0f), "[ns] ", tag2.toLatin1().data());
-   }
-#else
-   if (taoflag == 1.0)
-   {
-      printf("%s\t%.2f\t%s (%s)\n", " Tau(1) ", (double)(tao[0] * pow(fconv, 3.0f)), "[ns] ", tag2.toLatin1().data());
-      printf("%s\t%.2f\t%s (%s)\n", " Tau(2) ", (double)(tao[1] * pow(fconv, 3.0f)), "[ns] ", tag2.toLatin1().data());
-      printf("%s\t%.2f\t%s (%s)\n", " Tau(3) ", (double)(tao[1] * pow(fconv, 3.0f)), "[ns] ", tag2.toLatin1().data());
-      printf("%s\t%.2f\t%s (%s)\n", " Tau(4) ", (double)(tao[3] * pow(fconv, 3.0f)), "[ns] ", tag2.toLatin1().data());
-      printf("%s\t%.2f\t%s (%s)\n", " Tau(5) ", (double)(tao[3] * pow(fconv, 3.0f)), "[ns] ", tag2.toLatin1().data());
-   }
-   if (taoflag == 2.0)
-   {
-      printf("%s\t%.2f\t%s (%s)\n", " Tau(1) ", (double)(tao[4] * pow(fconv, 3.0f)), "[ns] ", tag2.toLatin1().data());
-      printf("%s\t%.2f\t%s (%s)\n", " Tau(2) ", (double)(tao[1] * pow(fconv, 3.0f)), "[ns] ", tag2.toLatin1().data());
-      printf("%s\t%.2f\t%s (%s)\n", " Tau(3) ", (double)(tao[1] * pow(fconv, 3.0f)), "[ns] ", tag2.toLatin1().data());
-      printf("%s\t%.2f\t%s (%s)\n", " Tau(4) ", (double)(tao[3] * pow(fconv, 3.0f)), "[ns] ", tag2.toLatin1().data());
-      printf("%s\t%.2f\t%s (%s)\n", " Tau(5) ", (double)(tao[3] * pow(fconv, 3.0f)), "[ns] ", tag2.toLatin1().data());
-   }
-   if (taoflag == 0.0)
-   {
-      printf("%s\t%.2f\t%s (%s)\n", " Tau(1) ", (double)(tao[0] * pow(fconv, 3.0f)), "[ns] ", tag2.toLatin1().data());
-      printf("%s\t%.2f\t%s (%s)\n", " Tau(2) ", (double)(tao[1] * pow(fconv, 3.0f)), "[ns] ", tag2.toLatin1().data());
-      printf("%s\t%.2f\t%s (%s)\n", " Tau(3) ", (double)(tao[2] * pow(fconv, 3.0f)), "[ns] ", tag2.toLatin1().data());
-      printf("%s\t%.2f\t%s (%s)\n", " Tau(4) ", (double)(tao[3] * pow(fconv, 3.0f)), "[ns] ", tag2.toLatin1().data());
-      printf("%s\t%.2f\t%s (%s)\n", " Tau(5) ", (double)(tao[4] * pow(fconv, 3.0f)), "[ns] ", tag2.toLatin1().data());
-   }
-#endif
+        #if !defined( MINGW )
+        if (taoflag == 1.0)
+        {
+        printf("%s\t%.2Lf\t%s (%s)\n", " Tau(1) ", tao[0] * pow(fconv, 3.0f), "[ns] ", tag2.toLatin1().data());
+        printf("%s\t%.2Lf\t%s (%s)\n", " Tau(2) ", tao[1] * pow(fconv, 3.0f), "[ns] ", tag2.toLatin1().data());
+        printf("%s\t%.2Lf\t%s (%s)\n", " Tau(3) ", tao[1] * pow(fconv, 3.0f), "[ns] ", tag2.toLatin1().data());
+        printf("%s\t%.2Lf\t%s (%s)\n", " Tau(4) ", tao[3] * pow(fconv, 3.0f), "[ns] ", tag2.toLatin1().data());
+        printf("%s\t%.2Lf\t%s (%s)\n", " Tau(5) ", tao[3] * pow(fconv, 3.0f), "[ns] ", tag2.toLatin1().data());
+        }
+        if (taoflag == 2.0)
+        {
+        printf("%s\t%.2Lf\t%s (%s)\n", " Tau(1) ", tao[4] * pow(fconv, 3.0f), "[ns] ", tag2.toLatin1().data());
+        printf("%s\t%.2Lf\t%s (%s)\n", " Tau(2) ", tao[1] * pow(fconv, 3.0f), "[ns] ", tag2.toLatin1().data());
+        printf("%s\t%.2Lf\t%s (%s)\n", " Tau(3) ", tao[1] * pow(fconv, 3.0f), "[ns] ", tag2.toLatin1().data());
+        printf("%s\t%.2Lf\t%s (%s)\n", " Tau(4) ", tao[3] * pow(fconv, 3.0f), "[ns] ", tag2.toLatin1().data());
+        printf("%s\t%.2Lf\t%s (%s)\n", " Tau(5) ", tao[3] * pow(fconv, 3.0f), "[ns] ", tag2.toLatin1().data());
+        }
+        if (taoflag == 0.0)
+        {
+        printf("%s\t%.2Lf\t%s (%s)\n", " Tau(1) ", tao[0] * pow(fconv, 3.0f), "[ns] ", tag2.toLatin1().data());
+        printf("%s\t%.2Lf\t%s (%s)\n", " Tau(2) ", tao[1] * pow(fconv, 3.0f), "[ns] ", tag2.toLatin1().data());
+        printf("%s\t%.2Lf\t%s (%s)\n", " Tau(3) ", tao[2] * pow(fconv, 3.0f), "[ns] ", tag2.toLatin1().data());
+        printf("%s\t%.2Lf\t%s (%s)\n", " Tau(4) ", tao[3] * pow(fconv, 3.0f), "[ns] ", tag2.toLatin1().data());
+        printf("%s\t%.2Lf\t%s (%s)\n", " Tau(5) ", tao[4] * pow(fconv, 3.0f), "[ns] ", tag2.toLatin1().data());
+        }
+        #else
+        if (taoflag == 1.0)
+        {
+        printf("%s\t%.2f\t%s (%s)\n", " Tau(1) ", (double)(tao[0] * pow(fconv, 3.0f)), "[ns] ", tag2.toLatin1().data());
+        printf("%s\t%.2f\t%s (%s)\n", " Tau(2) ", (double)(tao[1] * pow(fconv, 3.0f)), "[ns] ", tag2.toLatin1().data());
+        printf("%s\t%.2f\t%s (%s)\n", " Tau(3) ", (double)(tao[1] * pow(fconv, 3.0f)), "[ns] ", tag2.toLatin1().data());
+        printf("%s\t%.2f\t%s (%s)\n", " Tau(4) ", (double)(tao[3] * pow(fconv, 3.0f)), "[ns] ", tag2.toLatin1().data());
+        printf("%s\t%.2f\t%s (%s)\n", " Tau(5) ", (double)(tao[3] * pow(fconv, 3.0f)), "[ns] ", tag2.toLatin1().data());
+        }
+        if (taoflag == 2.0)
+        {
+        printf("%s\t%.2f\t%s (%s)\n", " Tau(1) ", (double)(tao[4] * pow(fconv, 3.0f)), "[ns] ", tag2.toLatin1().data());
+        printf("%s\t%.2f\t%s (%s)\n", " Tau(2) ", (double)(tao[1] * pow(fconv, 3.0f)), "[ns] ", tag2.toLatin1().data());
+        printf("%s\t%.2f\t%s (%s)\n", " Tau(3) ", (double)(tao[1] * pow(fconv, 3.0f)), "[ns] ", tag2.toLatin1().data());
+        printf("%s\t%.2f\t%s (%s)\n", " Tau(4) ", (double)(tao[3] * pow(fconv, 3.0f)), "[ns] ", tag2.toLatin1().data());
+        printf("%s\t%.2f\t%s (%s)\n", " Tau(5) ", (double)(tao[3] * pow(fconv, 3.0f)), "[ns] ", tag2.toLatin1().data());
+        }
+        if (taoflag == 0.0)
+        {
+        printf("%s\t%.2f\t%s (%s)\n", " Tau(1) ", (double)(tao[0] * pow(fconv, 3.0f)), "[ns] ", tag2.toLatin1().data());
+        printf("%s\t%.2f\t%s (%s)\n", " Tau(2) ", (double)(tao[1] * pow(fconv, 3.0f)), "[ns] ", tag2.toLatin1().data());
+        printf("%s\t%.2f\t%s (%s)\n", " Tau(3) ", (double)(tao[2] * pow(fconv, 3.0f)), "[ns] ", tag2.toLatin1().data());
+        printf("%s\t%.2f\t%s (%s)\n", " Tau(4) ", (double)(tao[3] * pow(fconv, 3.0f)), "[ns] ", tag2.toLatin1().data());
+        printf("%s\t%.2f\t%s (%s)\n", " Tau(5) ", (double)(tao[4] * pow(fconv, 3.0f)), "[ns] ", tag2.toLatin1().data());
+        }
+        #endif
    */
 
    // printf("\n%s\t%.2f\t%s (%s)\n", " Tau(m) ", taom * pow(fconv, 3.0f), "[ns] ", tag2.toLatin1().data());
@@ -2997,7 +2998,7 @@ mem_ris(int model)
    //    cout << "last_hydro_res " << us_hydrodyn->last_hydro_res << endl;
    // }
 
-   hydro_res.sprintf("%s", "MODEL File Name  :___ ");
+   hydro_res = QString::asprintf( "%s", "MODEL File Name  :___ " );
    create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
    this_data.hydro_res += hydro_res;
 
@@ -3010,25 +3011,25 @@ mem_ris(int model)
    this_data.results.name = QString("%1").arg(molecola_nb);
 
 
-   hydro_res.sprintf("%s\n", molecola_nb);
+   hydro_res = QString::asprintf( "%s\n", molecola_nb );
    create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
    this_data.hydro_res += hydro_res;
 
-   hydro_res.sprintf("%s%d\n", "TOTAL Beads in the MODEL :___ ", numero_sfere);
+   hydro_res = QString::asprintf( "%s%d\n", "TOTAL Beads in the MODEL :___ ", numero_sfere );
    create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
    this_data.hydro_res += hydro_res;
    this_data.results.total_beads = numero_sfere;
 
-   // hydro_res.sprintf("%s%.2f [nm^2]\n", "TOTAL ASA of Beads in the MODEL :___ ", total_asa[model]);
+   // hydro_res = QString::asprintf( "%s%.2f [nm^2]\n", "TOTAL ASA of Beads in the MODEL :___ ", total_asa[model] );
    // create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
    // this_data.hydro_res += hydro_res;
 
-   hydro_res.sprintf("%s%.2f [nm^2]\n", "TOTAL Surface Area of Beads in the MODEL :___ ", total_s_a[model]);
+   hydro_res = QString::asprintf( "%s%.2f [nm^2]\n", "TOTAL Surface Area of Beads in the MODEL :___ ", total_s_a[model] );
    create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
    this_data.hydro_res += hydro_res;
    this_data.tot_surf_area = total_s_a[model];
 
-   hydro_res.sprintf("%s%.2f [nm^3]\n", "TOTAL Volume of Beads in the MODEL :___ ", total_vol[model]);
+   hydro_res = QString::asprintf( "%s%.2f [nm^3]\n", "TOTAL Volume of Beads in the MODEL :___ ", total_vol[model] );
    create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
    this_data.hydro_res += hydro_res;
    this_data.tot_volume_of = total_vol[model];
@@ -3039,43 +3040,43 @@ mem_ris(int model)
    supc_results->vbar = partvol;
    this_data.results.vbar = partvol;
     
-   // hydro_res.sprintf("%s%d\n", "FIRST Bead Included  :___ ", prima);
+   // hydro_res = QString::asprintf( "%s%d\n", "FIRST Bead Included  :___ ", prima );
    // create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
    // this_data.hydro_res += hydro_res;
 
-   // hydro_res.sprintf("%s%d\n\n", "LAST Bead Included :___ ", ultima);
+   // hydro_res = QString::asprintf( "%s%d\n\n", "LAST Bead Included :___ ", ultima );
    // create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
    // this_data.hydro_res += hydro_res;
 
-   hydro_res.sprintf("\n");
+   hydro_res = QString::asprintf( "\n" );
    create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
    this_data.hydro_res += hydro_res;
 
    // solvent area
-   hydro_res.sprintf("Solvent:                %s\n", supc_results->solvent_name.toLatin1().data());
+   hydro_res = QString::asprintf( "Solvent:                %s\n", supc_results->solvent_name.toLatin1().data() );
    create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
    this_data.hydro_res += hydro_res;
 
-   hydro_res.sprintf("Temperature:            %5.2f\n", supc_results->temperature);
+   hydro_res = QString::asprintf( "Temperature:            %5.2f\n", supc_results->temperature );
    create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
    this_data.hydro_res += hydro_res;
 
-   hydro_res.sprintf("Solvent viscosity (cP): %f\n", supc_results->solvent_viscosity);
+   hydro_res = QString::asprintf( "Solvent viscosity (cP): %f\n", supc_results->solvent_viscosity );
    create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
    this_data.hydro_res += hydro_res;
 
-   hydro_res.sprintf("Solvent density (g/ml): %f\n", supc_results->solvent_density);
+   hydro_res = QString::asprintf( "Solvent density (g/ml): %f\n", supc_results->solvent_density );
    create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
    this_data.hydro_res += hydro_res;
 
-   hydro_res.sprintf("\n");
+   hydro_res = QString::asprintf( "\n" );
    create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
    this_data.hydro_res += hydro_res;
 
    // temporary vbar area
-   hydro_res.sprintf("Original vbar:          %5.3f %s\t[cm^3/g]\n", 
-                      org_vbar, 
-		     misc_int.compute_vbar ?  "(computed) "  : "user entered");
+   hydro_res = QString::asprintf("Original vbar:          %5.3f %s\t[cm^3/g]\n", 
+                                 org_vbar, 
+                                 misc_int.compute_vbar ?  "(computed) "  : "user entered");
 
    create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
 
@@ -3083,35 +3084,35 @@ mem_ris(int model)
 
    if ( !misc_int.compute_vbar )
    {
-      hydro_res.sprintf("Original vbar temp (C): %5.2f\n", misc_int.vbar_temperature);
+      hydro_res = QString::asprintf( "Original vbar temp (C): %5.2f\n", misc_int.vbar_temperature );
       create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
       this_data.hydro_res += hydro_res;
    }
-   hydro_res.sprintf("Temp corrected vbar:    %5.3f            \t[cm^3/g]\n", tc_vbar);
+   hydro_res = QString::asprintf( "Temp corrected vbar:    %5.3f            \t[cm^3/g]\n", tc_vbar );
    create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
    this_data.hydro_res += hydro_res;
    
-   hydro_res.sprintf("\n");
+   hydro_res = QString::asprintf( "\n" );
    create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
    this_data.hydro_res += hydro_res;
    
    if (colorzero == 1)
    {
-      hydro_res.sprintf("%s%d%s\n", "- WARNING: THERE IS ", colorzero, " BEAD COLOR CODED '0' [RADIUS < 0.005 NM]");
+      hydro_res = QString::asprintf( "%s%d%s\n", "- WARNING: THERE IS ", colorzero, " BEAD COLOR CODED '0' [RADIUS < 0.005 NM]" );
       create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
       this_data.hydro_res += hydro_res;
       
-      hydro_res.sprintf("%s\n", "- THIS BEAD IS NOT USED IN THE HYDRODYNAMIC COMPUTATIONS\n");
+      hydro_res = QString::asprintf( "%s\n", "- THIS BEAD IS NOT USED IN THE HYDRODYNAMIC COMPUTATIONS\n" );
       create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
       this_data.hydro_res += hydro_res;
    }
    if (colorzero > 1)
    {
-      hydro_res.sprintf("%s%d%s\n", "- WARNING: THERE ARE ", colorzero, " BEADS COLOR CODED '0' [RADIUS < 0.005 NM]");
+      hydro_res = QString::asprintf( "%s%d%s\n", "- WARNING: THERE ARE ", colorzero, " BEADS COLOR CODED '0' [RADIUS < 0.005 NM]" );
       create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
       this_data.hydro_res += hydro_res;
       
-      hydro_res.sprintf("%s\n", "- THOSE BEADS ARE NOT USED IN THE HYDRODYNAMIC COMPUTATIONS\n");
+      hydro_res = QString::asprintf( "%s\n", "- THOSE BEADS ARE NOT USED IN THE HYDRODYNAMIC COMPUTATIONS\n" );
       create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
       this_data.hydro_res += hydro_res;
    }
@@ -3119,25 +3120,25 @@ mem_ris(int model)
 
    if (flag_norm == 1)
    {
-      hydro_res.sprintf("%s\n", "- 'NORMALIZED' model -");
+      hydro_res = QString::asprintf( "%s\n", "- 'NORMALIZED' model -" );
       create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
       this_data.hydro_res += hydro_res;
    }
 
    if (cc == 1)
    {
-      hydro_res.sprintf("- STICK BOUNDARY CONDITIONS (6*PI*ETAo)\n\n");
+      hydro_res = QString::asprintf( "- STICK BOUNDARY CONDITIONS (6*PI*ETAo)\n\n" );
       create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
       this_data.hydro_res += hydro_res;
    }
    else
    {
-      hydro_res.sprintf("- SLIP BOUNDARY CONDITIONS (4*PI*ETAo)\n\n");
+      hydro_res = QString::asprintf( "- SLIP BOUNDARY CONDITIONS (4*PI*ETAo)\n\n" );
       create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
       this_data.hydro_res += hydro_res;
    }
 
-   hydro_res.sprintf("%s%d\n", "- Used BEADS Number       = ", nat);
+   hydro_res = QString::asprintf( "%s%d\n", "- Used BEADS Number       = ", nat );
    create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
    this_data.hydro_res += hydro_res;
    
@@ -3146,42 +3147,42 @@ mem_ris(int model)
    {
       if ((colorsixf == 0) && (sfecalc == 2))
       {
-         hydro_res.sprintf("%s%.2f%s\n", "- Used BEADS Volume       = ", volcor1 * pow(fconv, 3.0f),
-                 "  [nm^3] (NO contribution from buried beads)");
+         hydro_res = QString::asprintf("%s%.2f%s\n", "- Used BEADS Volume       = ", volcor1 * pow(fconv, 3.0f),
+                                       "  [nm^3] (NO contribution from buried beads)");
          create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
          this_data.hydro_res += hydro_res;         
       }
       if ((colorsixf == 1) && (sfecalc == 2))
       {
-         hydro_res.sprintf("%s%.2f%s\n", "- Used BEADS Volume       = ", volcor1 * pow(fconv, 3.0f),
-                 "  [nm^3] (contribution from buried beads only for Dr)");
+         hydro_res = QString::asprintf("%s%.2f%s\n", "- Used BEADS Volume       = ", volcor1 * pow(fconv, 3.0f),
+                                       "  [nm^3] (contribution from buried beads only for Dr)");
          create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
          this_data.hydro_res += hydro_res;
          
-         hydro_res.sprintf("%s%.2f%s\n", "- Used BEADS Volume       = ", totvol * pow(fconv, 3.0f), "  [nm^3] (for [n])");
+         hydro_res = QString::asprintf( "%s%.2f%s\n", "- Used BEADS Volume       = ", totvol * pow(fconv, 3.0f), "  [nm^3] (for [n])" );
          create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
          this_data.hydro_res += hydro_res;
       }
       if ((colorsixf == 2) && (sfecalc == 2))
       {
-         hydro_res.sprintf("%s%.2f%s\n", "- Used BEADS Volume       = ", volcor1 * pow(fconv, 3.0f),
-                 "  [nm^3] (contribution from buried beads only for [n])");
+         hydro_res = QString::asprintf("%s%.2f%s\n", "- Used BEADS Volume       = ", volcor1 * pow(fconv, 3.0f),
+                                       "  [nm^3] (contribution from buried beads only for [n])");
          create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
          this_data.hydro_res += hydro_res;
          
-         hydro_res.sprintf("%s%.2f%s\n", "- Used BEADS Volume       = ", totvol * pow(fconv, 3.0f), "  [nm^3] (for Dr)");
+         hydro_res = QString::asprintf( "%s%.2f%s\n", "- Used BEADS Volume       = ", totvol * pow(fconv, 3.0f), "  [nm^3] (for Dr)" );
          create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
          this_data.hydro_res += hydro_res;
       }
       if ((colorsixf == 3) && (sfecalc == 2)) 
       {
-         hydro_res.sprintf("%s%.2f%s\n", "- Used BEADS Volume       = ", volcor1 * pow(fconv, 3.0f), "  [nm^3]");
+         hydro_res = QString::asprintf( "%s%.2f%s\n", "- Used BEADS Volume       = ", volcor1 * pow(fconv, 3.0f), "  [nm^3]" );
          create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
          this_data.hydro_res += hydro_res;
       }
       if (sfecalc == 1)
       {
-         hydro_res.sprintf("%s%.2f%s\n", "- Used BEADS Volume       = ", volcor1 * pow(fconv, 3.0f), "  [nm^3]");
+         hydro_res = QString::asprintf( "%s%.2f%s\n", "- Used BEADS Volume       = ", volcor1 * pow(fconv, 3.0f), "  [nm^3]" );
          create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
          this_data.hydro_res += hydro_res;         
       }
@@ -3189,52 +3190,52 @@ mem_ris(int model)
    }
    if (volcor == 2)
    {
-      hydro_res.sprintf("%s%.2f%s\n", "- Used BEADS Volume       = ", volcor1 * pow(fconv, 3.0f), "  [nm^3]");
+      hydro_res = QString::asprintf( "%s%.2f%s\n", "- Used BEADS Volume       = ", volcor1 * pow(fconv, 3.0f), "  [nm^3]" );
       create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
       this_data.hydro_res += hydro_res;
       this_data.use_beads_vol =  (double) volcor1 * pow(fconv, 3.0f);
    }
 
-   // hydro_res.sprintf("%s%.2f [nm^2]\n", "- Used BEADS ASA          = ", used_asa[model]);
+   // hydro_res = QString::asprintf( "%s%.2f [nm^2]\n", "- Used BEADS ASA          = ", used_asa[model] );
    // create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
    // this_data.hydro_res += hydro_res;
 
-   hydro_res.sprintf("%s%.2f [nm^2]\n", "- Used BEADS Surface Area = ", used_s_a[model]);
+   hydro_res = QString::asprintf( "%s%.2f [nm^2]\n", "- Used BEADS Surface Area = ", used_s_a[model] );
    create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
    this_data.hydro_res += hydro_res;
    this_data.use_beads_surf = used_s_a[model];
 
-   // hydro_res.sprintf("%s%.2f [nm^3]\n", "- Used BEADS Volume       = ", used_vol[model]);
+   // hydro_res = QString::asprintf( "%s%.2f [nm^3]\n", "- Used BEADS Volume       = ", used_vol[model] );
    // create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
    // this_data.hydro_res += hydro_res;   
 
    if (mascor == 1)
       mascor1 = (float) pesmol;
 
-   hydro_res.sprintf("%s%.2f%s\n", "- Used BEAD Mass     = ", mascor1, "  [Da]");
+   hydro_res = QString::asprintf( "%s%.2f%s\n", "- Used BEAD Mass     = ", mascor1, "  [Da]" );
    create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
    this_data.hydro_res += hydro_res;
    this_data.use_bead_mass = mascor1;
 
-   hydro_res.sprintf("%s%.2f\n", "- Conversion Factor  = ", fconv);
+   hydro_res = QString::asprintf( "%s%.2f\n", "- Conversion Factor  = ", fconv );
    create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
    this_data.hydro_res += hydro_res;
    this_data.con_factor = fconv;
 
-   hydro_res.sprintf("\n%s%.3e\t%s (%s)\n", "- TRANS. FRICT. COEFF.  = ", f * 1.0E-07 * fconv, "[g/s] ", tag1.toLatin1().data());
+   hydro_res = QString::asprintf( "\n%s%.3e\t%s (%s)\n", "- TRANS. FRICT. COEFF.  = ", f * 1.0E-07 * fconv, "[g/s] ", tag1.toLatin1().data() );
    create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
    this_data.hydro_res += hydro_res;
    this_data.tra_fric_coef = f * 1.0E-07 * fconv;
 
-   hydro_res.sprintf("%s%.2e\t%s (%s)\n", "- TRANS. DIFF. COEFF.   = ", (KB * TE * 1.0E7) / f * fconv1, "[cm^2/s] ", tag2.toLatin1().data());
+   hydro_res = QString::asprintf( "%s%.2e\t%s (%s)\n", "- TRANS. DIFF. COEFF.   = ", (KB * TE * 1.0E7) / f * fconv1, "[cm^2/s] ", tag2.toLatin1().data() );
    create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
    this_data.hydro_res += hydro_res;
    this_data.results.D20w = (KB * TE * 1.0E7) / f * fconv1;
 
    if (raflag == -1.0)
    {
-      hydro_res.sprintf("%s%.2g\t%s (%s)\n", "- SED. COEFF. (psv from unhydrated radii) = ",
-              (mascor1 * 1.0E20 * (1.0 - partvolc * DENS)) / (f * fconv * AVO), "[S] ", tag2.toLatin1().data());
+      hydro_res = QString::asprintf("%s%.2g\t%s (%s)\n", "- SED. COEFF. (psv from unhydrated radii) = ",
+                                    (mascor1 * 1.0E20 * (1.0 - partvolc * DENS)) / (f * fconv * AVO), "[S] ", tag2.toLatin1().data());
       create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
       this_data.hydro_res += hydro_res;
       this_data.results.s20w = (mascor1 * 1.0E20 * (1.0 - partvolc * DENS)) / (f * fconv * AVO);
@@ -3243,14 +3244,14 @@ mem_ris(int model)
 
    if ((raflag == -2.0) || (raflag == -5.0))
    {
-      hydro_res.sprintf("%s%.2g\t%s (%s)\n", "- SED. COEFF.           = ",
-              (mascor1 * 1.0E20 * (1.0 - partvol * DENS)) / (f * fconv * AVO), "        [S] ", tag2.toLatin1().data());
+      hydro_res = QString::asprintf("%s%.2g\t%s (%s)\n", "- SED. COEFF.           = ",
+                                    (mascor1 * 1.0E20 * (1.0 - partvol * DENS)) / (f * fconv * AVO), "        [S] ", tag2.toLatin1().data());
       create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
       this_data.hydro_res += hydro_res;
       this_data.results.s20w = (mascor1 * 1.0E20 * (1.0 - partvol * DENS)) / (f * fconv * AVO);
       if ((nat + colorzero + colorsix) < numero_sfere)
       {
-         hydro_res.sprintf(                 "- !!WARNING: ONLY PART OF THE MODEL HAS BEEN ANALYZED, BUT THE PSV UTILIZED         IS THAT OF THE ENTIRE MODEL!! - \n");
+         hydro_res = QString::asprintf( "- !!WARNING: ONLY PART OF THE MODEL HAS BEEN ANALYZED, BUT THE PSV UTILIZED         IS THAT OF THE ENTIRE MODEL!! - \n" );
          create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
          this_data.hydro_res += hydro_res;
       }
@@ -3258,9 +3259,9 @@ mem_ris(int model)
 
    if (raflag == -3.0)
    {
-      hydro_res.sprintf("- SED. COEFF. (psv %s) = %.2g\t%s (%s)\n", 
-              misc_int.compute_vbar ?  "computed"  : "user entered",
-              (mascor1 * 1.0E20 * (1.0 - partvol * DENS)) / (f * fconv * AVO), "[S] ", tag2.toLatin1().data());
+      hydro_res = QString::asprintf("- SED. COEFF. (psv %s) = %.2g\t%s (%s)\n", 
+                                    misc_int.compute_vbar ?  "computed"  : "user entered",
+                                    (mascor1 * 1.0E20 * (1.0 - partvol * DENS)) / (f * fconv * AVO), "[S] ", tag2.toLatin1().data());
 
 
 
@@ -3270,22 +3271,22 @@ mem_ris(int model)
 
       if ((nat + colorzero + colorsix) < numero_sfere)
       {
-         hydro_res.sprintf(                 "- !!WARNING: ONLY PART OF THE MODEL HAS BEEN ANALYZED, BUT THE PSV UTILIZED         IS THAT OF THE ENTIRE MODEL!! - \n");
+         hydro_res = QString::asprintf( "- !!WARNING: ONLY PART OF THE MODEL HAS BEEN ANALYZED, BUT THE PSV UTILIZED         IS THAT OF THE ENTIRE MODEL!! - \n" );
          create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
          this_data.hydro_res += hydro_res;
       }
 
-      hydro_res.sprintf("%s%.2g\t%s (%s)\n", "- SED. COEFF. (psv from unhydrated radii) = ",
-              (mascor1 * 1.0E20 * (1.0 - partvolc * DENS)) / (f * fconv * AVO), "[S] ", tag2.toLatin1().data());
+      hydro_res = QString::asprintf("%s%.2g\t%s (%s)\n", "- SED. COEFF. (psv from unhydrated radii) = ",
+                                    (mascor1 * 1.0E20 * (1.0 - partvolc * DENS)) / (f * fconv * AVO), "[S] ", tag2.toLatin1().data());
       create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
       this_data.hydro_res += hydro_res;      
    }
 
    // ff0_calc
-   hydro_res.sprintf("%s%.2f\n", "- FRICTIONAL RATIO      = ", 
-           f * 1.0E-08 / 
-           ( 6.0 * M_PI * ETAo *
-             pow( 3.0 * supc_results->mass * partvol / (4.0 * M_PI * AVOGADRO), 1.0/3.0)));
+   hydro_res = QString::asprintf("%s%.2f\n", "- FRICTIONAL RATIO      = ", 
+                                 f * 1.0E-08 / 
+                                 ( 6.0 * M_PI * ETAo *
+                                   pow( 3.0 * supc_results->mass * partvol / (4.0 * M_PI * AVOGADRO), 1.0/3.0)));
    create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
    this_data.hydro_res += hydro_res;
    // ff0_calc
@@ -3297,7 +3298,7 @@ mem_ris(int model)
    temp = 0.0;
    for (i = 0; i < 3; i++)
       temp += 1.0E-21 / Dr[i * 4] * pow(fconv, 3);
-   hydro_res.sprintf("%s%.3e\t%s (%s)\n", "- ROT. FRICT. COEFF.    = ", temp / 3.0, "[g*cm^2/s] ", tag1.toLatin1().data());
+   hydro_res = QString::asprintf( "%s%.3e\t%s (%s)\n", "- ROT. FRICT. COEFF.    = ", temp / 3.0, "[g*cm^2/s] ", tag1.toLatin1().data() );
    create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
    this_data.hydro_res += hydro_res;
    this_data.rot_fric_coef = temp / 3.0;
@@ -3305,7 +3306,7 @@ mem_ris(int model)
    temp = 0.0;
    for (i = 0; i < 3; i++)
       temp += (KB * TE * Dr[i * 4] / 1.0E-21) * pow(fconv1, 3);
-   hydro_res.sprintf("%s%.0f\t%s (%s)\n\n", "- ROT. DIFF. COEFF.     = ", temp / 3.0, "[1/s] ", tag2.toLatin1().data());
+   hydro_res = QString::asprintf( "%s%.0f\t%s (%s)\n\n", "- ROT. DIFF. COEFF.     = ", temp / 3.0, "[1/s] ", tag2.toLatin1().data() );
    create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
    this_data.hydro_res += hydro_res;
    this_data.rot_diff_coef = temp / 3.0;
@@ -3313,9 +3314,9 @@ mem_ris(int model)
 
 
 #if !defined( MINGW )
-   hydro_res.sprintf("%s%.3Le\t%s (%s)\n", "- ROT. FRICT. COEFF. [ X ] = ", 1.0E-21 / Dr[0] * pow(fconv, 3), "[g*cm^2/s] ", tag1.toLatin1().data());
+   hydro_res = QString::asprintf( "%s%.3Le\t%s (%s)\n", "- ROT. FRICT. COEFF. [ X ] = ", 1.0E-21 / Dr[0] * pow(fconv, 3), "[g*cm^2/s] ", tag1.toLatin1().data() );
 #else
-   hydro_res.sprintf("%s%.3e\t%s (%s)\n", "- ROT. FRICT. COEFF. [ X ] = ", (double)(1.0E-21 / Dr[0] * pow(fconv, 3)), "[g*cm^2/s] ", tag1.toLatin1().data());
+   hydro_res = QString::asprintf( "%s%.3e\t%s (%s)\n", "- ROT. FRICT. COEFF. [ X ] = ", (double)(1.0E-21 / Dr[0] * pow(fconv, 3)), "[g*cm^2/s] ", tag1.toLatin1().data() );
 #endif
    create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
    this_data.hydro_res += hydro_res;
@@ -3323,57 +3324,57 @@ mem_ris(int model)
 
    /* WORKS */
 #if !defined( MINGW )
-   hydro_res.sprintf("%s%.3Le\t%s (%s)\n", "- ROT. FRICT. COEFF. [ Y ] = ", 1.0E-21 / Dr[4] * pow(fconv, 3), "[g*cm^2/s] ", tag1.toLatin1().data());
+   hydro_res = QString::asprintf( "%s%.3Le\t%s (%s)\n", "- ROT. FRICT. COEFF. [ Y ] = ", 1.0E-21 / Dr[4] * pow(fconv, 3), "[g*cm^2/s] ", tag1.toLatin1().data() );
 #else
-   hydro_res.sprintf("%s%.3e\t%s (%s)\n", "- ROT. FRICT. COEFF. [ Y ] = ", (double)(1.0E-21 / Dr[4] * pow(fconv, 3)), "[g*cm^2/s] ", tag1.toLatin1().data());
+   hydro_res = QString::asprintf( "%s%.3e\t%s (%s)\n", "- ROT. FRICT. COEFF. [ Y ] = ", (double)(1.0E-21 / Dr[4] * pow(fconv, 3)), "[g*cm^2/s] ", tag1.toLatin1().data() );
 #endif
    create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
    this_data.hydro_res += hydro_res;
    this_data.rot_fric_coef_y = 1.0E-21 / Dr[4] * pow(fconv, 3);
 
 #if !defined( MINGW )
-   hydro_res.sprintf("%s%.3Le\t%s (%s)\n", "- ROT. FRICT. COEFF. [ Z ] = ", 1.0E-21 / Dr[8] * pow(fconv, 3), "[g*cm^2/s] ", tag1.toLatin1().data());
+   hydro_res = QString::asprintf( "%s%.3Le\t%s (%s)\n", "- ROT. FRICT. COEFF. [ Z ] = ", 1.0E-21 / Dr[8] * pow(fconv, 3), "[g*cm^2/s] ", tag1.toLatin1().data() );
 #else
-   hydro_res.sprintf("%s%.3e\t%s (%s)\n", "- ROT. FRICT. COEFF. [ Z ] = ", (double)(1.0E-21 / Dr[8] * pow(fconv, 3)), "[g*cm^2/s] ", tag1.toLatin1().data());
+   hydro_res = QString::asprintf( "%s%.3e\t%s (%s)\n", "- ROT. FRICT. COEFF. [ Z ] = ", (double)(1.0E-21 / Dr[8] * pow(fconv, 3)), "[g*cm^2/s] ", tag1.toLatin1().data() );
 #endif
    create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
    this_data.hydro_res += hydro_res;
    this_data.rot_fric_coef_z = 1.0E-21 / Dr[8] * pow(fconv, 3);
 
 #if !defined( MINGW )
-   hydro_res.sprintf("%s%.2Lf\t%s (%s)\n", "- ROT. DIFF. COEFF.  [ X ] = ", KB * TE * Dr[0] / 1.0e-21 * pow(fconv1, 3),
-           "[1/s] ", tag2.toLatin1().data());
+   hydro_res = QString::asprintf("%s%.2Lf\t%s (%s)\n", "- ROT. DIFF. COEFF.  [ X ] = ", KB * TE * Dr[0] / 1.0e-21 * pow(fconv1, 3),
+                                 "[1/s] ", tag2.toLatin1().data());
 #else
-   hydro_res.sprintf("%s%.2f\t%s (%s)\n", "- ROT. DIFF. COEFF.  [ X ] = ", (double)(KB * TE * Dr[0] / 1.0e-21 * pow(fconv1, 3)),
-           "[1/s] ", tag2.toLatin1().data());
+   hydro_res = QString::asprintf("%s%.2f\t%s (%s)\n", "- ROT. DIFF. COEFF.  [ X ] = ", (double)(KB * TE * Dr[0] / 1.0e-21 * pow(fconv1, 3)),
+                                 "[1/s] ", tag2.toLatin1().data());
 #endif
    create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
    this_data.hydro_res += hydro_res;
    this_data.rot_diff_coef_x = KB * TE * Dr[0] / 1.0e-21 * pow(fconv1, 3);
 
 #if !defined( MINGW )
-   hydro_res.sprintf("%s%.2Lf\t%s (%s)\n", "- ROT. DIFF. COEFF.  [ Y ] = ", KB * TE * Dr[4] / 1.0e-21 * pow(fconv1, 3),
-           "[1/s] ", tag2.toLatin1().data());
+   hydro_res = QString::asprintf("%s%.2Lf\t%s (%s)\n", "- ROT. DIFF. COEFF.  [ Y ] = ", KB * TE * Dr[4] / 1.0e-21 * pow(fconv1, 3),
+                                 "[1/s] ", tag2.toLatin1().data());
 #else
-   hydro_res.sprintf("%s%.2f\t%s (%s)\n", "- ROT. DIFF. COEFF.  [ Y ] = ", (double)(KB * TE * Dr[4] / 1.0e-21 * pow(fconv1, 3)),
-           "[1/s] ", tag2.toLatin1().data());
+   hydro_res = QString::asprintf("%s%.2f\t%s (%s)\n", "- ROT. DIFF. COEFF.  [ Y ] = ", (double)(KB * TE * Dr[4] / 1.0e-21 * pow(fconv1, 3)),
+                                 "[1/s] ", tag2.toLatin1().data());
 #endif
    create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
    this_data.hydro_res += hydro_res;
    this_data.rot_diff_coef_y = KB * TE * Dr[4] / 1.0e-21 * pow(fconv1, 3);
 
 #if !defined( MINGW )
-   hydro_res.sprintf("%s%.2Lf\t%s (%s)\n\n", "- ROT. DIFF. COEFF.  [ Z ] = ", KB * TE * Dr[8] / 1.0e-21 * pow(fconv1, 3),
-           "[1/s] ", tag2.toLatin1().data());
+   hydro_res = QString::asprintf("%s%.2Lf\t%s (%s)\n\n", "- ROT. DIFF. COEFF.  [ Z ] = ", KB * TE * Dr[8] / 1.0e-21 * pow(fconv1, 3),
+                                 "[1/s] ", tag2.toLatin1().data());
 #else
-   hydro_res.sprintf("%s%.2f\t%s (%s)\n\n", "- ROT. DIFF. COEFF.  [ Z ] = ", (double)(KB * TE * Dr[8] / 1.0e-21 * pow(fconv1, 3)),
-           "[1/s] ", tag2.toLatin1().data());
+   hydro_res = QString::asprintf("%s%.2f\t%s (%s)\n\n", "- ROT. DIFF. COEFF.  [ Z ] = ", (double)(KB * TE * Dr[8] / 1.0e-21 * pow(fconv1, 3)),
+                                 "[1/s] ", tag2.toLatin1().data());
 #endif
    create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
    this_data.hydro_res += hydro_res;
    this_data.rot_diff_coef_z = KB * TE * Dr[8] / 1.0e-21 * pow(fconv1, 3);
 
-   hydro_res.sprintf("%s%.2f\t%s\n", "- MOLECULAR WEIGHT (from file)           = ", pesmol, "[Da]");
+   hydro_res = QString::asprintf( "%s%.2f\t%s\n", "- MOLECULAR WEIGHT (from file)           = ", pesmol, "[Da]" );
    create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
    this_data.hydro_res += hydro_res;
    this_data.results.mass = pesmol;
@@ -3382,31 +3383,31 @@ mem_ris(int model)
 
    //   if (sfecalc == 2)
    //   {
-   //      hydro_res.sprintf("%s%.2f\t%s\n", "- BEADS TOTAL VOLUME (from file) = ", interm1 / (6.0 * ETAo) * pow(fconv, 3), "[nm^3]");
+   //      hydro_res = QString::asprintf( "%s%.2f\t%s\n", "- BEADS TOTAL VOLUME (from file) = ", interm1 / (6.0 * ETAo) * pow(fconv, 3), "[nm^3]" );
    //      create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
    //      this_data.hydro_res += hydro_res;
    //   }
    
 
    //   else
-   //      hydro_res.sprintf("%s%.2f\t%s\n", "- BEADS TOTAL VOLUME (from file) = ", totvol * pow(fconv, 3), "[nm^3]");
-   //   hydro_res.sprintf("%s%.2f\t%s\n", "- BEADS TOTAL SURFACE AREA       = ", totsup * pow(fconv, 2), "[nm^2]");
+   //      hydro_res = QString::asprintf( "%s%.2f\t%s\n", "- BEADS TOTAL VOLUME (from file) = ", totvol * pow(fconv, 3), "[nm^3]" );
+   //   hydro_res = QString::asprintf( "%s%.2f\t%s\n", "- BEADS TOTAL SURFACE AREA       = ", totsup * pow(fconv, 2), "[nm^2]" );
 
 
    /* WORKS */
 
    if (raflag == -1.0)
    {
-      hydro_res.sprintf("%s%.3f\t%s\n", "- PARTIAL SPECIFIC VOLUME (from unhydrated radii) = ", partvolc, "[cm^3/g]");
+      hydro_res = QString::asprintf( "%s%.3f\t%s\n", "- PARTIAL SPECIFIC VOLUME (from unhydrated radii) = ", partvolc, "[cm^3/g]" );
       create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
       this_data.hydro_res += hydro_res;      
    }
 
    if ((raflag == -2.0) || (raflag == -5.0))
    {
-       hydro_res.sprintf("- PARTIAL SPECIFIC VOLUME %s = %.3f\t%s\n", 
-               misc_int.compute_vbar ? "(computed)    " : "(user entered)",
-               partvol, "[cm^3/g]");
+      hydro_res = QString::asprintf("- PARTIAL SPECIFIC VOLUME %s = %.3f\t%s\n", 
+                                    misc_int.compute_vbar ? "(computed)    " : "(user entered)",
+                                    partvol, "[cm^3/g]");
 
       
       create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
@@ -3416,68 +3417,68 @@ mem_ris(int model)
 
    if (raflag == -3.0)
    {
-     hydro_res.sprintf("- PARTIAL SPECIFIC VOLUME %s          = %.3f\t%s\n",
-               misc_int.compute_vbar ? "(computed)    ": "(user entered)", 
-               partvol, "[cm^3/g]");
+      hydro_res = QString::asprintf("- PARTIAL SPECIFIC VOLUME %s          = %.3f\t%s\n",
+                                    misc_int.compute_vbar ? "(computed)    ": "(user entered)", 
+                                    partvol, "[cm^3/g]");
 
       create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
       this_data.hydro_res += hydro_res;
       
-      hydro_res.sprintf("%s%.3f\t%s\n", "- PARTIAL SPECIFIC VOLUME (from unhydrated radii) = ", partvolc, "[cm^3/g]");
+      hydro_res = QString::asprintf( "%s%.3f\t%s\n", "- PARTIAL SPECIFIC VOLUME (from unhydrated radii) = ", partvolc, "[cm^3/g]" );
       create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
       this_data.hydro_res += hydro_res;
    }
 
    if ((raflag == -1.0) || (raflag == -3.0))
    {
-      hydro_res.sprintf("\n%s%.2f\t%s\n", "- RADIUS OF GYRATION (Hydrated Beads)  = ", ro * fconv, "[nm]");
+      hydro_res = QString::asprintf( "\n%s%.2f\t%s\n", "- RADIUS OF GYRATION (Hydrated Beads)  = ", ro * fconv, "[nm]" );
       create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
       this_data.hydro_res += hydro_res;
       
       this_data.results.rg = (double) ro * fconv;
-      hydro_res.sprintf("%s%.2f\t%s\n", "- RADIUS OF GYRATION (Unydrated Beads) = ", rou * fconv, "[nm]");
+      hydro_res = QString::asprintf( "%s%.2f\t%s\n", "- RADIUS OF GYRATION (Unydrated Beads) = ", rou * fconv, "[nm]" );
       create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
       this_data.hydro_res += hydro_res;
    }
    else
    {
-      hydro_res.sprintf("\n%s%.2f\t%s\n", "- RADIUS OF GYRATION              = ", ro * fconv, "[nm]");
+      hydro_res = QString::asprintf( "\n%s%.2f\t%s\n", "- RADIUS OF GYRATION              = ", ro * fconv, "[nm]" );
       create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
       this_data.hydro_res += hydro_res;
       this_data.results.rg = (double) ro * fconv;
    }
-   hydro_res.sprintf("%s%.2f\t%s\n", "- TRANSLATIONAL STOKES' RADIUS    = ", f * fconv / (bc * M_PI * ETAo), "[nm]");
+   hydro_res = QString::asprintf( "%s%.2f\t%s\n", "- TRANSLATIONAL STOKES' RADIUS    = ", f * fconv / (bc * M_PI * ETAo), "[nm]" );
    create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
    this_data.hydro_res += hydro_res;
    this_data.results.rs =  f * fconv / (bc * M_PI * ETAo);
 
-   hydro_res.sprintf("%s%.2f\t%s\n", "- ROTATIONAL STOKES' RADIUS [ X ] = ",
-           (double)( pow((3.0 / Dr[0] / bc / 4.0 / M_PI / ETAo), (long double)(0.33333)) * fconv ), "[nm]");
+   hydro_res = QString::asprintf("%s%.2f\t%s\n", "- ROTATIONAL STOKES' RADIUS [ X ] = ",
+                                 (double)( pow((3.0 / Dr[0] / bc / 4.0 / M_PI / ETAo), (long double)(0.33333)) * fconv ), "[nm]");
    create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
    this_data.hydro_res += hydro_res;
    this_data.rot_stokes_rad_x = pow((3.0 / Dr[0] / bc / 4.0 / M_PI / ETAo), (long double)(0.33333)) * fconv;
 
-   hydro_res.sprintf("%s%.2f\t%s\n", "- ROTATIONAL STOKES' RADIUS [ Y ] = ",
-                     ( double )( pow((3.0 / Dr[4] / bc / 4.0 / M_PI / ETAo), (long double)(0.33333)) * fconv ), "[nm]");
+   hydro_res = QString::asprintf("%s%.2f\t%s\n", "- ROTATIONAL STOKES' RADIUS [ Y ] = ",
+                                 ( double )( pow((3.0 / Dr[4] / bc / 4.0 / M_PI / ETAo), (long double)(0.33333)) * fconv ), "[nm]");
    create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
    this_data.hydro_res += hydro_res;
    this_data.rot_stokes_rad_y = pow((3.0 / Dr[4] / bc / 4.0 / M_PI / ETAo), (long double)(0.33333)) * fconv;
 
-   hydro_res.sprintf("%s%.2f\t%s\n\n", "- ROTATIONAL STOKES' RADIUS [ Z ] = ",
-                     ( double )( pow((3.0 / Dr[8] / bc / 4.0 / M_PI / ETAo),(long double) (0.33333)) * fconv ), "[nm]");
+   hydro_res = QString::asprintf("%s%.2f\t%s\n\n", "- ROTATIONAL STOKES' RADIUS [ Z ] = ",
+                                 ( double )( pow((3.0 / Dr[8] / bc / 4.0 / M_PI / ETAo),(long double) (0.33333)) * fconv ), "[nm]");
    create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
    this_data.hydro_res += hydro_res;
    this_data.rot_stokes_rad_z = pow((3.0 / Dr[8] / bc / 4.0 / M_PI / ETAo), (long double)(0.33333)) * fconv;
 
-   hydro_res.sprintf("%s%5.2f\t%5.2f\t%5.2f\t%s\n", "- CENTRE OF RESISTANCE   :  ", roR[0] * fconv, roR[1] * fconv, roR[2] * fconv,
-           "[nm]");
+   hydro_res = QString::asprintf("%s%5.2f\t%5.2f\t%5.2f\t%s\n", "- CENTRE OF RESISTANCE   :  ", roR[0] * fconv, roR[1] * fconv, roR[2] * fconv,
+                                 "[nm]");
    create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
    this_data.hydro_res += hydro_res;
    this_data.cen_of_res_x = (double) roR[0] * fconv;
    this_data.cen_of_res_y = (double) roR[1] * fconv;
    this_data.cen_of_res_z = (double) roR[2] * fconv;
 
-   hydro_res.sprintf("%s%5.2f\t%5.2f\t%5.2f\t%s\n", "- CENTRE OF MASS         :  ", xm * fconv, ym * fconv, zm * fconv, "[nm]");
+   hydro_res = QString::asprintf( "%s%5.2f\t%5.2f\t%5.2f\t%s\n", "- CENTRE OF MASS         :  ", xm * fconv, ym * fconv, zm * fconv, "[nm]" );
    create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
    this_data.hydro_res += hydro_res;
    this_data.cen_of_mass_x = (double) xm * fconv;
@@ -3486,8 +3487,8 @@ mem_ris(int model)
 
    if (cd == 2)
    {
-      hydro_res.sprintf("%s%5.2f\t%5.2f\t%5.2f\t%s\n", "- CENTRE OF DIFFUSION    :  ", roD[0] * fconv, roD[1] * fconv,
-              roD[2] * fconv, "[nm]");
+      hydro_res = QString::asprintf("%s%5.2f\t%5.2f\t%5.2f\t%s\n", "- CENTRE OF DIFFUSION    :  ", roD[0] * fconv, roD[1] * fconv,
+                                    roD[2] * fconv, "[nm]");
       create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
       this_data.hydro_res += hydro_res;
       this_data.cen_of_diff_x = (double) roD[0] * fconv;
@@ -3495,8 +3496,8 @@ mem_ris(int model)
       this_data.cen_of_diff_z = (double) roD[2] * fconv;
    }
 
-   hydro_res.sprintf("%s%5.2f\t%5.2f\t%5.2f\t%s\n\n", "- CENTRE OF VISCOSITY    :  ", vc[0] * fconv, vc[1] * fconv, vc[2] * fconv,
-           "[nm]");
+   hydro_res = QString::asprintf("%s%5.2f\t%5.2f\t%5.2f\t%s\n\n", "- CENTRE OF VISCOSITY    :  ", vc[0] * fconv, vc[1] * fconv, vc[2] * fconv,
+                                 "[nm]");
    create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
    this_data.hydro_res += hydro_res;
    this_data.cen_of_visc_x = (double) vc[0] * fconv;
@@ -3514,31 +3515,31 @@ mem_ris(int model)
       vol_mas = pesmol;
    }
 
-   // hydro_res.sprintf("%s%.2f\t%s\n", "- INTRINSIC VISCOSITY                  = ", vis * correz * pow(fconv, 3.0f), "[cm^3/g]");
+   // hydro_res = QString::asprintf( "%s%.2f\t%s\n", "- INTRINSIC VISCOSITY                  = ", vis * correz * pow(fconv, 3.0f), "[cm^3/g]" );
    //   create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
    // this_data.hydro_res += hydro_res;
 
-   hydro_res.sprintf("%s%.2f\t%s\n", "- UNCORRECTED INTRINSIC VISCOSITY      = ", vis * correz * pow(fconv, 3.0f), "[cm^3/g]");
+   hydro_res = QString::asprintf( "%s%.2f\t%s\n", "- UNCORRECTED INTRINSIC VISCOSITY      = ", vis * correz * pow(fconv, 3.0f), "[cm^3/g]" );
    create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
    this_data.hydro_res += hydro_res;
    this_data.unc_int_visc = (double) vis * correz * pow(fconv, 3.0f);
 
    einst = pow(0.3 * pesmol * vis / ( M_PI * AVO), 0.33333);
    einst = 1E7 * einst;
-   // hydro_res.sprintf("%s%.2f\t%s\n", "- EINSTEIN'S RADIUS                    = ", einst * fconv, "[nm]");
+   // hydro_res = QString::asprintf( "%s%.2f\t%s\n", "- EINSTEIN'S RADIUS                    = ", einst * fconv, "[nm]" );
    // create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
    // this_data.hydro_res += hydro_res;   
 
-   hydro_res.sprintf("%s%.2f\t%s\n", "- UNCORRECTED EINSTEIN'S RADIUS        = ", einst * fconv, "[nm]");
+   hydro_res = QString::asprintf( "%s%.2f\t%s\n", "- UNCORRECTED EINSTEIN'S RADIUS        = ", einst * fconv, "[nm]" );
    create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
    this_data.hydro_res += hydro_res;
    this_data.unc_einst_rad = (double) einst * fconv;
 
    if ((volcor == 1) && ((colorsixf == 0) || (colorsixf == 1) || (colorsixf == 2)))
    {
-      // hydro_res.sprintf("%s%.2f\t%s\n", "- INTRINSIC VISCOSITY (GDLT corrected) = ",
-      hydro_res.sprintf("%s%.2f\t%s\n", "- CORRECTED INTRINSIC VISCOSITY        = ",
-              (vis * correz + vis3 * totvol / vol_mas) * pow(fconv, 3), "[cm^3/g]");
+      // hydro_res = QString::asprintf("%s%.2f\t%s\n", "- INTRINSIC VISCOSITY (GDLT corrected) = ",
+      hydro_res = QString::asprintf("%s%.2f\t%s\n", "- CORRECTED INTRINSIC VISCOSITY        = ",
+                                    (vis * correz + vis3 * totvol / vol_mas) * pow(fconv, 3), "[cm^3/g]");
       create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
       this_data.hydro_res += hydro_res;
       this_data.results.viscosity =  (vis * correz + vis3 * totvol / vol_mas) * pow(fconv, 3);
@@ -3546,20 +3547,20 @@ mem_ris(int model)
 
       einst = pow(0.3 * vol_mas * (vis * correz + vis3 * totvol / vol_mas) / ( M_PI * AVO), 0.33333);
       einst = 1E7 * einst;
-      // hydro_res.sprintf("%s%.2f\t%s\n", "- EINSTEIN'S RADIUS (GDLT corrected)   = ", einst * fconv, "[nm]");
+      // hydro_res = QString::asprintf( "%s%.2f\t%s\n", "- EINSTEIN'S RADIUS (GDLT corrected)   = ", einst * fconv, "[nm]" );
       // create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
       // this_data.hydro_res += hydro_res;
       
-      hydro_res.sprintf("%s%.2f\t%s\n", "- CORRECTED EINSTEIN'S RADIUS          = ", einst * fconv, "[nm]");
+      hydro_res = QString::asprintf( "%s%.2f\t%s\n", "- CORRECTED EINSTEIN'S RADIUS          = ", einst * fconv, "[nm]" );
       create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
       this_data.hydro_res += hydro_res;
       this_data.cor_einst_rad = (double) einst * fconv;
    }
    else
    {
-      // hydro_res.sprintf("%s%.2f\t%s\n", "- INTRINSIC VISCOSITY (GDLT corrected)  = ",
-      hydro_res.sprintf("%s%.2f\t%s\n", "- CORRECTED INTRINSIC VISCOSITY         = ",
-              (vis * correz + vis3 * volcor1 / vol_mas) * pow(fconv, 3), "[cm^3/g]");
+      // hydro_res = QString::asprintf("%s%.2f\t%s\n", "- INTRINSIC VISCOSITY (GDLT corrected)  = ",
+      hydro_res = QString::asprintf("%s%.2f\t%s\n", "- CORRECTED INTRINSIC VISCOSITY         = ",
+                                    (vis * correz + vis3 * volcor1 / vol_mas) * pow(fconv, 3), "[cm^3/g]");
       create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
       this_data.hydro_res += hydro_res;
       this_data.results.viscosity = (vis * correz + vis3 * volcor1 / vol_mas) * pow(fconv, 3);
@@ -3567,49 +3568,49 @@ mem_ris(int model)
 
       einst = pow(0.3 * vol_mas * (vis * correz + vis3 * volcor1 / vol_mas) / ( M_PI * AVO), 0.33333);
       einst = 1E7 * einst;
-      // hydro_res.sprintf("%s%.2f\t%s\n", "- EINSTEIN'S RADIUS (GDLT corrected)   = ", einst * fconv, "[nm]");
+      // hydro_res = QString::asprintf( "%s%.2f\t%s\n", "- EINSTEIN'S RADIUS (GDLT corrected)   = ", einst * fconv, "[nm]" );
       // create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
       // this_data.hydro_res += hydro_res;
       
-      hydro_res.sprintf("%s%.2f\t%s\n", "- CORRECTED EINSTEIN'S RADIUS          = ", einst * fconv, "[nm]");
+      hydro_res = QString::asprintf( "%s%.2f\t%s\n", "- CORRECTED EINSTEIN'S RADIUS          = ", einst * fconv, "[nm]" );
       create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
       this_data.hydro_res += hydro_res;
       this_data.cor_einst_rad = (double) einst * fconv;
    }
 
 #if defined(TSUDA_DOUBLESUM)
-   hydro_res.sprintf("%s%.2f\t%s\n", "- INTRINSIC VISCOSITY(DoubleSum CM)    = ", vis4 * correz * pow(fconv, 3), "[cm^3/g]");
+   hydro_res = QString::asprintf( "%s%.2f\t%s\n", "- INTRINSIC VISCOSITY(DoubleSum CM)    = ", vis4 * correz * pow(fconv, 3), "[cm^3/g]" );
    create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
    this_data.hydro_res += hydro_res;
    
    einst = pow(0.3 * pesmol * vis4 / ( M_PI * AVO), 0.33333);
    einst = 1E7 * einst;
-   hydro_res.sprintf("%s%.2f\t%s\n", "- EINSTEIN'S RADIUS (DoubleSum CM)     = ", einst * fconv, "[nm]");
+   hydro_res = QString::asprintf( "%s%.2f\t%s\n", "- EINSTEIN'S RADIUS (DoubleSum CM)     = ", einst * fconv, "[nm]" );
    create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
    this_data.hydro_res += hydro_res;
    
-   hydro_res.sprintf("%s%.2f\t%s\n", "- INTRINSIC VISCOSITY(Tsuda CM)        = ", vis1 * correz * pow(fconv, 3), "[cm^3/g]");
+   hydro_res = QString::asprintf( "%s%.2f\t%s\n", "- INTRINSIC VISCOSITY(Tsuda CM)        = ", vis1 * correz * pow(fconv, 3), "[cm^3/g]" );
    create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
    this_data.hydro_res += hydro_res;
    
    einst = pow(0.3 * pesmol * vis1 / ( M_PI * AVO), 0.33333);
    einst = 1E7 * einst;
-   hydro_res.sprintf("%s%.2f\t%s\n", "- EINSTEIN'S RADIUS (Tsuda CM)         = ", einst * fconv, "[nm]");
+   hydro_res = QString::asprintf( "%s%.2f\t%s\n", "- EINSTEIN'S RADIUS (Tsuda CM)         = ", einst * fconv, "[nm]" );
    create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
    this_data.hydro_res += hydro_res;
    
-   hydro_res.sprintf("%s%.2f\t%s\n", "- INTRINSIC VISCOSITY(Tsuda CV)        = ", vis2 * correz * pow(fconv, 3), "[cm^3/g]");
+   hydro_res = QString::asprintf( "%s%.2f\t%s\n", "- INTRINSIC VISCOSITY(Tsuda CV)        = ", vis2 * correz * pow(fconv, 3), "[cm^3/g]" );
    create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
    this_data.hydro_res += hydro_res;
    
    einst = pow(0.3 * pesmol * vis2 / ( M_PI * AVO), 0.33333);
    einst = 1E7 * einst;
-   hydro_res.sprintf("%s%.2f\t%s\n", "- EINSTEIN'S RADIUS (Tsuda CV)         = ", einst * fconv, "[nm]");
+   hydro_res = QString::asprintf( "%s%.2f\t%s\n", "- EINSTEIN'S RADIUS (Tsuda CV)         = ", einst * fconv, "[nm]" );
    create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
    this_data.hydro_res += hydro_res;
 #endif
 
-   hydro_res.sprintf("\nRELAXATION TIMES\n\n");
+   hydro_res = QString::asprintf( "\nRELAXATION TIMES\n\n" );
    create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
    this_data.hydro_res += hydro_res;   
 
@@ -3618,81 +3619,81 @@ mem_ris(int model)
 #if !defined( MINGW )
    if (taoflag == 1.0)
    {
-      hydro_res.sprintf("%s\t%.2Lf\t%s (%s)\n", " Tau(1) ", tao[0] * pow(fconv, 3.0f), "[ns] ", tag2.toLatin1().data());
+      hydro_res = QString::asprintf( "%s\t%.2Lf\t%s (%s)\n", " Tau(1) ", tao[0] * pow(fconv, 3.0f), "[ns] ", tag2.toLatin1().data() );
       create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
       this_data.hydro_res += hydro_res;
       this_data.rel_times_tau_1 = tao[0] * pow(fconv, 3.0f);
 
-      hydro_res.sprintf("%s\t%.2Lf\t%s (%s)\n", " Tau(2) ", tao[1] * pow(fconv, 3.0f), "[ns] ", tag2.toLatin1().data());
+      hydro_res = QString::asprintf( "%s\t%.2Lf\t%s (%s)\n", " Tau(2) ", tao[1] * pow(fconv, 3.0f), "[ns] ", tag2.toLatin1().data() );
       create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
       this_data.hydro_res += hydro_res;
       this_data.rel_times_tau_2 = tao[1] * pow(fconv, 3.0f);
 
-      hydro_res.sprintf("%s\t%.2Lf\t%s (%s)\n", " Tau(3) ", tao[1] * pow(fconv, 3.0f), "[ns] ", tag2.toLatin1().data());
+      hydro_res = QString::asprintf( "%s\t%.2Lf\t%s (%s)\n", " Tau(3) ", tao[1] * pow(fconv, 3.0f), "[ns] ", tag2.toLatin1().data() );
       create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
       this_data.hydro_res += hydro_res;
       this_data.rel_times_tau_3 = tao[1] * pow(fconv, 3.0f);
 
-      hydro_res.sprintf("%s\t%.2Lf\t%s (%s)\n", " Tau(4) ", tao[3] * pow(fconv, 3.0f), "[ns] ", tag2.toLatin1().data());
+      hydro_res = QString::asprintf( "%s\t%.2Lf\t%s (%s)\n", " Tau(4) ", tao[3] * pow(fconv, 3.0f), "[ns] ", tag2.toLatin1().data() );
       create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
       this_data.hydro_res += hydro_res;
       this_data.rel_times_tau_4 = tao[3] * pow(fconv, 3.0f);
 
-      hydro_res.sprintf("%s\t%.2Lf\t%s (%s)\n", " Tau(5) ", tao[3] * pow(fconv, 3.0f), "[ns] ", tag2.toLatin1().data());
+      hydro_res = QString::asprintf( "%s\t%.2Lf\t%s (%s)\n", " Tau(5) ", tao[3] * pow(fconv, 3.0f), "[ns] ", tag2.toLatin1().data() );
       create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
       this_data.hydro_res += hydro_res;
       this_data.rel_times_tau_5 = tao[3] * pow(fconv, 3.0f);
    }
    if (taoflag == 2.0)
    {
-      hydro_res.sprintf("%s\t%.2Lf\t%s (%s)\n", " Tau(1) ", tao[4] * pow(fconv, 3.0f), "[ns] ", tag2.toLatin1().data());
+      hydro_res = QString::asprintf( "%s\t%.2Lf\t%s (%s)\n", " Tau(1) ", tao[4] * pow(fconv, 3.0f), "[ns] ", tag2.toLatin1().data() );
       create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
       this_data.hydro_res += hydro_res;
       this_data.rel_times_tau_1 = tao[4] * pow(fconv, 3.0f);
 
-      hydro_res.sprintf("%s\t%.2Lf\t%s (%s)\n", " Tau(2) ", tao[1] * pow(fconv, 3.0f), "[ns] ", tag2.toLatin1().data());
+      hydro_res = QString::asprintf( "%s\t%.2Lf\t%s (%s)\n", " Tau(2) ", tao[1] * pow(fconv, 3.0f), "[ns] ", tag2.toLatin1().data() );
       create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
       this_data.hydro_res += hydro_res;
       this_data.rel_times_tau_2 = tao[1] * pow(fconv, 3.0f);
 
-      hydro_res.sprintf("%s\t%.2Lf\t%s (%s)\n", " Tau(3) ", tao[1] * pow(fconv, 3.0f), "[ns] ", tag2.toLatin1().data());
+      hydro_res = QString::asprintf( "%s\t%.2Lf\t%s (%s)\n", " Tau(3) ", tao[1] * pow(fconv, 3.0f), "[ns] ", tag2.toLatin1().data() );
       create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
       this_data.hydro_res += hydro_res;
       this_data.rel_times_tau_3 = tao[1] * pow(fconv, 3.0f);
 
-      hydro_res.sprintf("%s\t%.2Lf\t%s (%s)\n", " Tau(4) ", tao[3] * pow(fconv, 3.0f), "[ns] ", tag2.toLatin1().data());
+      hydro_res = QString::asprintf( "%s\t%.2Lf\t%s (%s)\n", " Tau(4) ", tao[3] * pow(fconv, 3.0f), "[ns] ", tag2.toLatin1().data() );
       create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
       this_data.hydro_res += hydro_res;
       this_data.rel_times_tau_4 = tao[3] * pow(fconv, 3.0f);
 
-      hydro_res.sprintf("%s\t%.2Lf\t%s (%s)\n", " Tau(5) ", tao[3] * pow(fconv, 3.0f), "[ns] ", tag2.toLatin1().data());
+      hydro_res = QString::asprintf( "%s\t%.2Lf\t%s (%s)\n", " Tau(5) ", tao[3] * pow(fconv, 3.0f), "[ns] ", tag2.toLatin1().data() );
       create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
       this_data.hydro_res += hydro_res;
       this_data.rel_times_tau_5 = tao[3] * pow(fconv, 3.0f);
    }
    if (taoflag == 0.0)
    {
-      hydro_res.sprintf("%s\t%.2Lf\t%s (%s)\n", " Tau(1) ", tao[0] * pow(fconv, 3.0f), "[ns] ", tag2.toLatin1().data());
+      hydro_res = QString::asprintf( "%s\t%.2Lf\t%s (%s)\n", " Tau(1) ", tao[0] * pow(fconv, 3.0f), "[ns] ", tag2.toLatin1().data() );
       create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
       this_data.hydro_res += hydro_res;
       this_data.rel_times_tau_1 = tao[0] * pow(fconv, 3.0f);
 
-      hydro_res.sprintf("%s\t%.2Lf\t%s (%s)\n", " Tau(2) ", tao[1] * pow(fconv, 3.0f), "[ns] ", tag2.toLatin1().data());
+      hydro_res = QString::asprintf( "%s\t%.2Lf\t%s (%s)\n", " Tau(2) ", tao[1] * pow(fconv, 3.0f), "[ns] ", tag2.toLatin1().data() );
       create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
       this_data.hydro_res += hydro_res;
       this_data.rel_times_tau_2 = tao[1] * pow(fconv, 3.0f);
 
-      hydro_res.sprintf("%s\t%.2Lf\t%s (%s)\n", " Tau(3) ", tao[2] * pow(fconv, 3.0f), "[ns] ", tag2.toLatin1().data());
+      hydro_res = QString::asprintf( "%s\t%.2Lf\t%s (%s)\n", " Tau(3) ", tao[2] * pow(fconv, 3.0f), "[ns] ", tag2.toLatin1().data() );
       create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
       this_data.hydro_res += hydro_res;
       this_data.rel_times_tau_3 = tao[2] * pow(fconv, 3.0f);
 
-      hydro_res.sprintf("%s\t%.2Lf\t%s (%s)\n", " Tau(4) ", tao[3] * pow(fconv, 3.0f), "[ns] ", tag2.toLatin1().data());
+      hydro_res = QString::asprintf( "%s\t%.2Lf\t%s (%s)\n", " Tau(4) ", tao[3] * pow(fconv, 3.0f), "[ns] ", tag2.toLatin1().data() );
       create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
       this_data.hydro_res += hydro_res;
       this_data.rel_times_tau_4 = tao[3] * pow(fconv, 3.0f);
 
-      hydro_res.sprintf("%s\t%.2Lf\t%s (%s)\n", " Tau(5) ", tao[4] * pow(fconv, 3.0f), "[ns] ", tag2.toLatin1().data());
+      hydro_res = QString::asprintf( "%s\t%.2Lf\t%s (%s)\n", " Tau(5) ", tao[4] * pow(fconv, 3.0f), "[ns] ", tag2.toLatin1().data() );
       create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
       this_data.hydro_res += hydro_res;
       this_data.rel_times_tau_5 = tao[4] * pow(fconv, 3.0f);
@@ -3700,119 +3701,119 @@ mem_ris(int model)
 #else
    if (taoflag == 1.0)
    {
-      hydro_res.sprintf("%s\t%.2f\t%s (%s)\n", " Tau(1) ", (double)(tao[0] * pow(fconv, 3.0f)), "[ns] ", tag2.toLatin1().data());
+      hydro_res = QString::asprintf( "%s\t%.2f\t%s (%s)\n", " Tau(1) ", (double)(tao[0] * pow(fconv, 3.0f)), "[ns] ", tag2.toLatin1().data() );
       create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
       this_data.hydro_res += hydro_res;
       this_data.rel_times_tau_1 = tao[0] * pow(fconv, 3.0f);
 
-      hydro_res.sprintf("%s\t%.2f\t%s (%s)\n", " Tau(2) ", (double)(tao[1] * pow(fconv, 3.0f)), "[ns] ", tag2.toLatin1().data());
+      hydro_res = QString::asprintf( "%s\t%.2f\t%s (%s)\n", " Tau(2) ", (double)(tao[1] * pow(fconv, 3.0f)), "[ns] ", tag2.toLatin1().data() );
       create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
       this_data.hydro_res += hydro_res;
       this_data.rel_times_tau_2 = tao[1] * pow(fconv, 3.0f);
 
-      hydro_res.sprintf("%s\t%.2f\t%s (%s)\n", " Tau(3) ", (double)(tao[1] * pow(fconv, 3.0f)), "[ns] ", tag2.toLatin1().data());
+      hydro_res = QString::asprintf( "%s\t%.2f\t%s (%s)\n", " Tau(3) ", (double)(tao[1] * pow(fconv, 3.0f)), "[ns] ", tag2.toLatin1().data() );
       create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
       this_data.hydro_res += hydro_res;
       this_data.rel_times_tau_3 = tao[1] * pow(fconv, 3.0f);
 
-      hydro_res.sprintf("%s\t%.2f\t%s (%s)\n", " Tau(4) ", (double)(tao[3] * pow(fconv, 3.0f)), "[ns] ", tag2.toLatin1().data());
+      hydro_res = QString::asprintf( "%s\t%.2f\t%s (%s)\n", " Tau(4) ", (double)(tao[3] * pow(fconv, 3.0f)), "[ns] ", tag2.toLatin1().data() );
       create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
       this_data.hydro_res += hydro_res;
       this_data.rel_times_tau_4 = tao[3] * pow(fconv, 3.0f);
 
-      hydro_res.sprintf("%s\t%.2f\t%s (%s)\n", " Tau(5) ", (double)(tao[3] * pow(fconv, 3.0f)), "[ns] ", tag2.toLatin1().data());
+      hydro_res = QString::asprintf( "%s\t%.2f\t%s (%s)\n", " Tau(5) ", (double)(tao[3] * pow(fconv, 3.0f)), "[ns] ", tag2.toLatin1().data() );
       create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
       this_data.hydro_res += hydro_res;
       this_data.rel_times_tau_5 = tao[3] * pow(fconv, 3.0f);
    }
    if (taoflag == 2.0)
    {
-      hydro_res.sprintf("%s\t%.2f\t%s (%s)\n", " Tau(1) ", (double)(tao[4] * pow(fconv, 3.0f)), "[ns] ", tag2.toLatin1().data());
+      hydro_res = QString::asprintf( "%s\t%.2f\t%s (%s)\n", " Tau(1) ", (double)(tao[4] * pow(fconv, 3.0f)), "[ns] ", tag2.toLatin1().data() );
       create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
       this_data.hydro_res += hydro_res;
       this_data.rel_times_tau_1 = tao[4] * pow(fconv, 3.0f);
 
-      hydro_res.sprintf("%s\t%.2f\t%s (%s)\n", " Tau(2) ", (double)(tao[1] * pow(fconv, 3.0f)), "[ns] ", tag2.toLatin1().data());
+      hydro_res = QString::asprintf( "%s\t%.2f\t%s (%s)\n", " Tau(2) ", (double)(tao[1] * pow(fconv, 3.0f)), "[ns] ", tag2.toLatin1().data() );
       create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
       this_data.hydro_res += hydro_res;
       this_data.rel_times_tau_2 = tao[1] * pow(fconv, 3.0f);
 
-      hydro_res.sprintf("%s\t%.2f\t%s (%s)\n", " Tau(3) ", (double)(tao[1] * pow(fconv, 3.0f)), "[ns] ", tag2.toLatin1().data());
+      hydro_res = QString::asprintf( "%s\t%.2f\t%s (%s)\n", " Tau(3) ", (double)(tao[1] * pow(fconv, 3.0f)), "[ns] ", tag2.toLatin1().data() );
       create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
       this_data.hydro_res += hydro_res;
       this_data.rel_times_tau_3 = tao[1] * pow(fconv, 3.0f);
 
-      hydro_res.sprintf("%s\t%.2f\t%s (%s)\n", " Tau(4) ", (double)(tao[3] * pow(fconv, 3.0f)), "[ns] ", tag2.toLatin1().data());
+      hydro_res = QString::asprintf( "%s\t%.2f\t%s (%s)\n", " Tau(4) ", (double)(tao[3] * pow(fconv, 3.0f)), "[ns] ", tag2.toLatin1().data() );
       create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
       this_data.hydro_res += hydro_res;
       this_data.rel_times_tau_4 = tao[3] * pow(fconv, 3.0f);
 
-      hydro_res.sprintf("%s\t%.2f\t%s (%s)\n", " Tau(5) ", (double)(tao[3] * pow(fconv, 3.0f)), "[ns] ", tag2.toLatin1().data());
+      hydro_res = QString::asprintf( "%s\t%.2f\t%s (%s)\n", " Tau(5) ", (double)(tao[3] * pow(fconv, 3.0f)), "[ns] ", tag2.toLatin1().data() );
       create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
       this_data.hydro_res += hydro_res;
       this_data.rel_times_tau_5 = tao[3] * pow(fconv, 3.0f);
    }
    if (taoflag == 0.0)
    {
-      hydro_res.sprintf("%s\t%.2f\t%s (%s)\n", " Tau(1) ", (double)(tao[0] * pow(fconv, 3.0f)), "[ns] ", tag2.toLatin1().data());
+      hydro_res = QString::asprintf( "%s\t%.2f\t%s (%s)\n", " Tau(1) ", (double)(tao[0] * pow(fconv, 3.0f)), "[ns] ", tag2.toLatin1().data() );
       create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
       this_data.hydro_res += hydro_res;
       this_data.rel_times_tau_1 = tao[0] * pow(fconv, 3.0f);
 
-      hydro_res.sprintf("%s\t%.2f\t%s (%s)\n", " Tau(2) ", (double)(tao[1] * pow(fconv, 3.0f)), "[ns] ", tag2.toLatin1().data());
+      hydro_res = QString::asprintf( "%s\t%.2f\t%s (%s)\n", " Tau(2) ", (double)(tao[1] * pow(fconv, 3.0f)), "[ns] ", tag2.toLatin1().data() );
       create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
       this_data.hydro_res += hydro_res;
       this_data.rel_times_tau_2 = tao[1] * pow(fconv, 3.0f);
 
-      hydro_res.sprintf("%s\t%.2f\t%s (%s)\n", " Tau(3) ", (double)(tao[2] * pow(fconv, 3.0f)), "[ns] ", tag2.toLatin1().data());
+      hydro_res = QString::asprintf( "%s\t%.2f\t%s (%s)\n", " Tau(3) ", (double)(tao[2] * pow(fconv, 3.0f)), "[ns] ", tag2.toLatin1().data() );
       create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
       this_data.hydro_res += hydro_res;
       this_data.rel_times_tau_3 = tao[2] * pow(fconv, 3.0f);
 
-      hydro_res.sprintf("%s\t%.2f\t%s (%s)\n", " Tau(4) ", (double)(tao[3] * pow(fconv, 3.0f)), "[ns] ", tag2.toLatin1().data());
+      hydro_res = QString::asprintf( "%s\t%.2f\t%s (%s)\n", " Tau(4) ", (double)(tao[3] * pow(fconv, 3.0f)), "[ns] ", tag2.toLatin1().data() );
       create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
       this_data.hydro_res += hydro_res;
       this_data.rel_times_tau_4 = tao[3] * pow(fconv, 3.0f);
 
-      hydro_res.sprintf("%s\t%.2f\t%s (%s)\n", " Tau(5) ", (double)(tao[4] * pow(fconv, 3.0f)), "[ns] ", tag2.toLatin1().data());
+      hydro_res = QString::asprintf( "%s\t%.2f\t%s (%s)\n", " Tau(5) ", (double)(tao[4] * pow(fconv, 3.0f)), "[ns] ", tag2.toLatin1().data() );
       create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
       this_data.hydro_res += hydro_res;
       this_data.rel_times_tau_5 = tao[4] * pow(fconv, 3.0f);
    }
 #endif
 
-   hydro_res.sprintf("\n%s\t%.2f\t%s (%s)\n", " Tau(m) ", taom * pow(fconv, 3.0f), "[ns] ", tag2.toLatin1().data());
+   hydro_res = QString::asprintf( "\n%s\t%.2f\t%s (%s)\n", " Tau(m) ", taom * pow(fconv, 3.0f), "[ns] ", tag2.toLatin1().data() );
    create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
    this_data.hydro_res += hydro_res;
    this_data.rel_times_tau_m = (double) taom * pow(fconv, 3.0f);
 
-   hydro_res.sprintf("%s\t%.2f\t%s (%s)\n", " Tau(h) ", taoh * 1.0E+09 * pow(fconv, 3.0f), "[ns] ", tag2.toLatin1().data());
+   hydro_res = QString::asprintf( "%s\t%.2f\t%s (%s)\n", " Tau(h) ", taoh * 1.0E+09 * pow(fconv, 3.0f), "[ns] ", tag2.toLatin1().data() );
    create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
    this_data.hydro_res += hydro_res;
    this_data.results.tau = taoh * 1.0E+09 * pow(fconv, 3.0f);
    this_data.rel_times_tau_h = taoh * 1.0E+09 * pow(fconv, 3.0f);
 
-   hydro_res.sprintf("\n%s", "- MAX EXTENSIONS:");
+   hydro_res = QString::asprintf( "\n%s", "- MAX EXTENSIONS:" );
    create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
    this_data.hydro_res += hydro_res;
    
-   hydro_res.sprintf("\n%s%.2f%s%s%.2f%s%s%.2f%s\n", "[X axis] = ", (maxx * fconv), " [nm];  ", "[Y axis] = ", (maxy * fconv),
-                     " [nm];  ", "[Z axis] = ", (maxz * fconv), " [nm]");
+   hydro_res = QString::asprintf("\n%s%.2f%s%s%.2f%s%s%.2f%s\n", "[X axis] = ", (maxx * fconv), " [nm];  ", "[Y axis] = ", (maxy * fconv),
+                                 " [nm];  ", "[Z axis] = ", (maxz * fconv), " [nm]");
    create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
    this_data.hydro_res += hydro_res;
    this_data.max_ext_x = (maxx * fconv);
    this_data.max_ext_y = (maxy * fconv);
    this_data.max_ext_z = (maxz * fconv);
 
-   hydro_res.sprintf("%s%.1f%s%.1f%s%.1f%s\n\n", "- AXIAL RATIOS : [X:Z] = ", (maxx / maxz), "; [X:Y] = ", (maxx / maxy),
-           "; [Y:Z] = ", (maxy / maxz), "");
+   hydro_res = QString::asprintf("%s%.1f%s%.1f%s%.1f%s\n\n", "- AXIAL RATIOS : [X:Z] = ", (maxx / maxz), "; [X:Y] = ", (maxx / maxy),
+                                 "; [Y:Z] = ", (maxy / maxz), "");
    create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
    this_data.hydro_res += hydro_res;
    this_data.axi_ratios_xz = (maxx /maxz);
    this_data.axi_ratios_xy = (maxx /maxy);
    this_data.axi_ratios_yz = (maxy /maxz);
 
-   hydro_res.sprintf("\n********************************************************************************\n");
+   hydro_res = QString::asprintf( "\n********************************************************************************\n" );
    create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
    this_data.hydro_res += hydro_res;
 
@@ -3822,41 +3823,41 @@ mem_ris(int model)
 
 
 
-  // // add text output also
-  //  if ( us_hydrodyn->batch_widget &&
-  //       us_hydrodyn->batch_window->save_batch_active )
-  //  {
-  //     //      if ( us_hydrodyn->save_params.data_vector.size() &&
-  //     //           ( us_hydrodyn->save_params.raflag != raflag ||
-  //     //             us_hydrodyn->save_params.taoflag != taoflag ) )
-  //     //      {
-  //     //         printf("WARNING: ******* differing raflag (%f != %f) or taofalg (%f != %f)\n",
-  //     //                us_hydrodyn->save_params.raflag, raflag,
-  //     //                us_hydrodyn->save_params.taoflag, taoflag);
-  //     //      } else {
-  //     //         us_hydrodyn->save_params.raflag = raflag;
-  //     //         us_hydrodyn->save_params.taoflag = taoflag;
-  //     //      }
-  //     us_hydrodyn->save_params.data_vector.push_back(this_data);
-  //     printf("batch save on, push back info into save_params!\n");
-  //  }
+   // // add text output also
+   //  if ( us_hydrodyn->batch_widget &&
+   //       us_hydrodyn->batch_window->save_batch_active )
+   //  {
+   //     //      if ( us_hydrodyn->save_params.data_vector.size() &&
+   //     //           ( us_hydrodyn->save_params.raflag != raflag ||
+   //     //             us_hydrodyn->save_params.taoflag != taoflag ) )
+   //     //      {
+   //     //         printf("WARNING: ******* differing raflag (%f != %f) or taofalg (%f != %f)\n",
+   //     //                us_hydrodyn->save_params.raflag, raflag,
+   //     //                us_hydrodyn->save_params.taoflag, taoflag);
+   //     //      } else {
+   //     //         us_hydrodyn->save_params.raflag = raflag;
+   //     //         us_hydrodyn->save_params.taoflag = taoflag;
+   //     //      }
+   //     us_hydrodyn->save_params.data_vector.push_back(this_data);
+   //     printf("batch save on, push back info into save_params!\n");
+   //  }
 
-  //  if ( us_hydrodyn->saveParams &&
-  //       create_hydro_res )
-  //  {
-  //     QString fname = this_data.results.name + ".csv";
-  //     FILE *of = us_fopen(fname, "wb");
-  //     if ( of )
-  //     {
-  //        fprintf(of, "%s", us_hydrodyn->save_util->header().toLatin1().data());
-  //        fprintf(of, "%s", us_hydrodyn->save_util->dataString(&this_data).toLatin1().data());
-  //        fclose(of);
-  //     }
-  //  }
-  //  // print out results:
-  //  us_hydrodyn->save_util->header();
-  //  us_hydrodyn->save_util->dataString(&this_data);
-  //  // printf("end of mem_ris\n");
+   //  if ( us_hydrodyn->saveParams &&
+   //       create_hydro_res )
+   //  {
+   //     QString fname = this_data.results.name + ".csv";
+   //     FILE *of = us_fopen(fname, "wb");
+   //     if ( of )
+   //     {
+   //        fprintf(of, "%s", us_hydrodyn->save_util->header().toLatin1().data());
+   //        fprintf(of, "%s", us_hydrodyn->save_util->dataString(&this_data).toLatin1().data());
+   //        fclose(of);
+   //     }
+   //  }
+   //  // print out results:
+   //  us_hydrodyn->save_util->header();
+   //  us_hydrodyn->save_util->dataString(&this_data);
+   //  // printf("end of mem_ris\n");
 }
 
 /**************************************************************************/
@@ -4269,7 +4270,7 @@ mem_mol()
 
    if (nat == numero_sfere)
    {
-     //printf("** Same File Name r_m_c ? (y/n) :___ ");
+      //printf("** Same File Name r_m_c ? (y/n) :___ ");
       if ( 1 == scanf("%s", &risp1) ) {};
       getchar();
    }
@@ -4280,7 +4281,7 @@ mem_mol()
    if ((risp1 == 'n') || (risp1 == 'N'))
    {
    a150:
-     //printf("** Insert file name r_m_c :___ ");
+      //printf("** Insert file name r_m_c :___ ");
       if ( 1 == scanf("%s", nragcol) ) {};
       getchar();
       new_mol1 = us_fopen(nragcol, "r");
@@ -4488,13 +4489,13 @@ riempimatrice()
 
    us_log->log("Supermatrix inversion Cycle 1 of 3\n");
    if ( us_udp_msg )
-     {
-       map < QString, QString > msging;
-       msging[ "_textarea" ] = "Supermatrix inversion Cycle 1 of 3\\n";
+   {
+      map < QString, QString > msging;
+      msging[ "_textarea" ] = "Supermatrix inversion Cycle 1 of 3\\n";
        
-       us_udp_msg->send_json( msging );
-       //sleep(1);
-     }
+      us_udp_msg->send_json( msging );
+      //sleep(1);
+   }
    accumulated_msgs->append("Supermatrix inversion Cycle 1 of 3\\n");
    
    // qApp->processEvents();
@@ -4507,26 +4508,26 @@ riempimatrice()
       // progress->setValue(ppos);
       // qApp->processEvents();
  
-    ppos++;
-     if ( us_udp_msg )
-       {
+      ppos++;
+      if ( us_udp_msg )
+      {
     	 map < QString, QString > msging;
     	 msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) );
     	 msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
     	 
     	 us_udp_msg->send_json( msging );
     	 //sleep(1);
-       }    
+      }    
 
-     // if ( us_udp_msg )
-     //   {
-     // 	 map < QString, QString > msging;
-     // 	 msging[ "progress_output" ] = QString("Iteration %1 of %2").arg(i+1).arg(nat);
-     // 	 msging[ "progress1" ] = QString::number(double(i+1)/double(nat));
+      // if ( us_udp_msg )
+      //   {
+      // 	 map < QString, QString > msging;
+      // 	 msging[ "progress_output" ] = QString("Iteration %1 of %2").arg(i+1).arg(nat);
+      // 	 msging[ "progress1" ] = QString::number(double(i+1)/double(nat));
       	 
-     // 	 us_udp_msg->send_json( msging );
-     // 	 //sleep(1);
-     //   }
+      // 	 us_udp_msg->send_json( msging );
+      // 	 //sleep(1);
+      //   }
 
       // us_hydrodyn->lbl_core_progress->setText(QString("Iteration %1 of %2")
       //                                         .arg(i+1)
@@ -4576,13 +4577,13 @@ choldc(int N)
    // printf("Cycle 2 of 3; model %d of %d\n\n", kkk, num);
    us_log->log("Supermatrix inversion Cycle 2 of 3\n");
    if ( us_udp_msg )
-     {
-       map < QString, QString > msging;
-       msging[ "_textarea" ] = "Supermatrix inversion Cycle 2 of 3\\n";
+   {
+      map < QString, QString > msging;
+      msging[ "_textarea" ] = "Supermatrix inversion Cycle 2 of 3\\n";
        
-       us_udp_msg->send_json( msging );
-       //sleep(1);
-     }
+      us_udp_msg->send_json( msging );
+      //sleep(1);
+   }
    accumulated_msgs->append("Supermatrix inversion Cycle 2 of 3\\n");
    // qApp->processEvents();
 
@@ -4592,16 +4593,16 @@ choldc(int N)
       // progress->setValue(ppos);
       // qApp->processEvents();
 
-     ppos++;
-     if ( us_udp_msg )
-       {
+      ppos++;
+      if ( us_udp_msg )
+      {
      	 map < QString, QString > msging;
      	 msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) );
      	 msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
       
      	 us_udp_msg->send_json( msging );
-     	     //sleep(1);
-       }    
+         //sleep(1);
+      }    
 
       // if (us_hydrodyn->stopFlag)
       // {
@@ -4611,16 +4612,16 @@ choldc(int N)
       // printf("%s%d%s%d", "Iteration  ", i + 1, " of ", 3 * N);
       //fflush(stdout);
 
-     // if ( us_udp_msg )
-     //   {
-     // 	 map < QString, QString > msging;
-     // 	 msging[ "progress_output" ] = QString("Iteration %1 of %2").arg(i+1).arg(3 * N);
-     // 	 msging[ "progress1" ] = QString::number(double(i+1)/double(3*N));
-     // 	 //msging[ "_progress" ] = QString::number(double(i+1)/double(npoints_x));
+      // if ( us_udp_msg )
+      //   {
+      // 	 map < QString, QString > msging;
+      // 	 msging[ "progress_output" ] = QString("Iteration %1 of %2").arg(i+1).arg(3 * N);
+      // 	 msging[ "progress1" ] = QString::number(double(i+1)/double(3*N));
+      // 	 //msging[ "_progress" ] = QString::number(double(i+1)/double(npoints_x));
       
-     // 	 us_udp_msg->send_json( msging );
-     // 	 //sleep(1);
-     //   }
+      // 	 us_udp_msg->send_json( msging );
+      // 	 //sleep(1);
+      //   }
 
       // us_hydrodyn->lbl_core_progress->setText(QString("Iteration %1 of %2")
       //                                         .arg(i+1)
@@ -4842,13 +4843,13 @@ relax_rigid_calc()
    ddr[1] = dl2;
    ddr[2] = dl3;
 
-// #if !defined( MINGW )
-//    printf("\nsupc compute_tau: ddr[0] ddr[1] ddr[2] : %Lf\t%Lf\t%Lf\n",dl1,dl2,dl3);
-//    printf("\nsupc compute_tau: ddr[0] ddr[1] ddr[2] : %Lf\t%Lf\t%Lf\n",ddr[0],ddr[1],ddr[2]);
-// #else
-//    printf("\nsupc compute_tau: ddr[0] ddr[1] ddr[2] : %f\t%f\t%f\n",(double)dl1,(double)dl2,(double)dl3);
-//    printf("\nsupc compute_tau: ddr[0] ddr[1] ddr[2] : %f\t%f\t%f\n",(double)ddr[0],(double)ddr[1],(double)ddr[2]);
-// #endif
+   // #if !defined( MINGW )
+   //    printf("\nsupc compute_tau: ddr[0] ddr[1] ddr[2] : %Lf\t%Lf\t%Lf\n",dl1,dl2,dl3);
+   //    printf("\nsupc compute_tau: ddr[0] ddr[1] ddr[2] : %Lf\t%Lf\t%Lf\n",ddr[0],ddr[1],ddr[2]);
+   // #else
+   //    printf("\nsupc compute_tau: ddr[0] ddr[1] ddr[2] : %f\t%f\t%f\n",(double)dl1,(double)dl2,(double)dl3);
+   //    printf("\nsupc compute_tau: ddr[0] ddr[1] ddr[2] : %f\t%f\t%f\n",(double)ddr[0],(double)ddr[1],(double)ddr[2]);
+   // #endif
 
    /*      printf("\nValori ddr[0] ddr[1] ddr[2] : %Lf\t%Lf\t%Lf\n",ddr[0],ddr[1],ddr[2]);
            if ( 1 == scanf("%s",&pluto1) ) {};
@@ -5246,7 +5247,7 @@ init_da_a()
    prima = (-1);
    while ((prima < 0) || (prima > (nat - 1)))
    {
-     //    printf("%s", "** Insert FIRST BEAD # to be included  :___ ");
+      //    printf("%s", "** Insert FIRST BEAD # to be included  :___ ");
       if ( 1 == scanf("%d", &prima) ) {};
       getchar();
       //   printf("\n");
@@ -5255,7 +5256,7 @@ init_da_a()
    ultima = nat + 1;
    while ((ultima < prima) || (ultima > nat))
    {
-     //   printf("%s", "** Insert LAST BEAD # to be included :___ ");
+      //   printf("%s", "** Insert LAST BEAD # to be included :___ ");
       if ( 1 == scanf("%d", &ultima) ) {};
       getchar();
       //   printf("\n");
@@ -5306,13 +5307,13 @@ initarray(int k)
 
    us_log->log(QString("initarray - 0 From file: %1 beads\n").arg(nat));
    if ( us_udp_msg )
-     {
-       map < QString, QString > msging;
-       msging[ "_textarea" ] = QString("initarray - 0 From file: %1 beads\\n").arg(nat);
+   {
+      map < QString, QString > msging;
+      msging[ "_textarea" ] = QString("initarray - 0 From file: %1 beads\\n").arg(nat);
        
-       us_udp_msg->send_json( msging );
-       //sleep(1);
-     }
+      us_udp_msg->send_json( msging );
+      //sleep(1);
+   }
    accumulated_msgs->append(QString("initarray - 0 From file: %1 beads\\n").arg(nat));
 
    for (i = 0; i < nat; i++)
@@ -5435,14 +5436,14 @@ initarray(int k)
       // }
 
       if (!misc_int.compute_vbar) {
-      	org_vbar = misc_int.vbar;
-      	partvol = (int)((
-      			 (
-      			  misc_int.vbar -
-      			  (4.25e-4 * (K0 + misc_int.vbar_temperature - K20)) +
-      			  (4.25e-4 * (TE - K20))
-      			  )
-      			 * 1000) + 0.5) / 1000.0;
+         org_vbar = misc_int.vbar;
+         partvol = (int)((
+                          (
+                           misc_int.vbar -
+                           (4.25e-4 * (K0 + misc_int.vbar_temperature - K20)) +
+                           (4.25e-4 * (TE - K20))
+                           )
+                          * 1000) + 0.5) / 1000.0;
       }
       
       tc_vbar = partvol;
@@ -5461,7 +5462,7 @@ initarray(int k)
 
       // int mw_c = 0;
       // float pre_mw = 0.0;
-      float post_mw = 0.0;
+      // float post_mw = 0.0;
       // double dpre_mw = 0e0;
       // double dpost_mw = 0e0;
 
@@ -5483,7 +5484,7 @@ initarray(int k)
          //    dpre_mw += dt[i].m;
          // }
          dt[i].m = (float)((int)((double)dt[i].m * 100e0 + 5e-1)) / 1e2;
-         post_mw += dt[i].m;
+         // post_mw += dt[i].m;
          // if ( us_hydrodyn->advanced_config.debug_1 )
          // {
          //    dpost_mw += ((int)((double)dt[i].m * 100e0 + 5e-1)) / 1e2;
@@ -5670,13 +5671,13 @@ initarray(int k)
    nat = ultima - prima + 1;
    us_log->log(QString("initarray - 1 (ultima - prima): %1 beads\n").arg(nat));
    if ( us_udp_msg )
-     {
-       map < QString, QString > msging;
-       msging[ "_textarea" ] = QString("initarray - 1 (ultima - prima): %1 beads\\n").arg(nat);
+   {
+      map < QString, QString > msging;
+      msging[ "_textarea" ] = QString("initarray - 1 (ultima - prima): %1 beads\\n").arg(nat);
        
-       us_udp_msg->send_json( msging );
-       //sleep(1);
-     }
+      us_udp_msg->send_json( msging );
+      //sleep(1);
+   }
    accumulated_msgs->append( QString("initarray - 1 (ultima - prima): %1 beads\\n").arg(nat));
    //  printf("\n\n Starting function: ragir()\n");
    ragir();
@@ -5685,10 +5686,10 @@ initarray(int k)
    /* removing from the hydrodynamic computations the beads color-coded '0' */
 
    for (i = 0; i < nat; i++) {
-     // printf("bead %d col %d\n", i, dt[i].col);
-     if(dt[i].col == 6) {
-       count6++;
-     }
+      // printf("bead %d col %d\n", i, dt[i].col);
+      if(dt[i].col == 6) {
+         count6++;
+      }
    }
    
    {
@@ -5711,13 +5712,13 @@ initarray(int k)
 
    us_log->log(QString("initarray - 2 (remove cc 0): %1 beads\n").arg(nat));
    if ( us_udp_msg )
-     {
-       map < QString, QString > msging;
-       msging[ "_textarea" ] = QString("initarray - 2 (remove cc 0): %1 beads\\n").arg(nat);
+   {
+      map < QString, QString > msging;
+      msging[ "_textarea" ] = QString("initarray - 2 (remove cc 0): %1 beads\\n").arg(nat);
        
-       us_udp_msg->send_json( msging );
-       //sleep(1);
-     }
+      us_udp_msg->send_json( msging );
+      //sleep(1);
+   }
    accumulated_msgs->append( QString("initarray - 2 (remove cc 0): %1 beads\\n").arg(nat));
 
    if (sfecalc == 2)      /* computation with all beads or with only the 'exposed'                           beads */
@@ -5746,18 +5747,18 @@ initarray(int k)
 
    us_log->log(QString("initarray - 3 (only exposed): %1 beads (count6 == %2)\n").arg(nat).arg(count6));
    if ( us_udp_msg )
-     {
-       map < QString, QString > msging;
-       msging[ "_textarea" ] = QString("initarray - 3 (only exposed): %1 beads (count6 == %2)\\n").arg(nat).arg(count6); 
+   {
+      map < QString, QString > msging;
+      msging[ "_textarea" ] = QString("initarray - 3 (only exposed): %1 beads (count6 == %2)\\n").arg(nat).arg(count6); 
        
-       us_udp_msg->send_json( msging );
-       //sleep(1);
-     }
+      us_udp_msg->send_json( msging );
+      //sleep(1);
+   }
    accumulated_msgs->append( QString("initarray - 3 (only exposed): %1 beads (count6 == %2)\\n").arg(nat).arg(count6)); 
    
    if (nat > nmax)
    {
-     //printf("\n%s%d%s", " TOO MANY BEADS to COMPUTE ! (max: ", nmax, ")\n");
+      //printf("\n%s%d%s", " TOO MANY BEADS to COMPUTE ! (max: ", nmax, ")\n");
       exit(0);
    }
 #if defined(DEBUG_WW)
@@ -5931,19 +5932,19 @@ inverti(int N)
    // printf("Cycle 3 of 3; model %d of %d\n\n", kkk, num);
    us_log->log("Supermatrix inversion Cycle 3 of 3\n");
    if ( us_udp_msg )
-     {
-       map < QString, QString > msging;
-       msging[ "_textarea" ] = "Supermatrix inversion Cycle 3 of 3\\n";
+   {
+      map < QString, QString > msging;
+      msging[ "_textarea" ] = "Supermatrix inversion Cycle 3 of 3\\n";
        
-       us_udp_msg->send_json( msging );
-       //sleep(1);
-     }
+      us_udp_msg->send_json( msging );
+      //sleep(1);
+   }
    accumulated_msgs->append( "Supermatrix inversion Cycle 3 of 3\\n");
 
    // qApp->processEvents();
 
 #if defined(SHOW_TIMING)
-      gettimeofday(&s3tv0, NULL);
+   gettimeofday(&s3tv0, NULL);
 #endif
       
    for (j = 1; j <= 3 * N; j++)
@@ -5952,19 +5953,19 @@ inverti(int N)
       // qApp->processEvents();
 
 
-     ppos++;
-     if ( us_udp_msg )
-       {
+      ppos++;
+      if ( us_udp_msg )
+      {
      	 map < QString, QString > msging;
      	 msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) );
      	 msging[ "progress1" ] = QString::number(double(ppos-2)/double(mppos));
      
      	 us_udp_msg->send_json( msging );
      	 //sleep(1);
-       }    
+      }    
 
 
-     // if (us_hydrodyn->stopFlag)
+      // if (us_hydrodyn->stopFlag)
       // {
       //    return;
       // }
@@ -6367,21 +6368,21 @@ overlap()
          }
          if ( diff < -( ( 0.001 + overlap_tolerance ) * 1.04) )
          {
-            us_log->log(QString("").sprintf("\n%s%d%s%d%s%.6f\n", "ERROR: Overlap among bead ", i + 1, " and bead ", j + 1, ". Value = ",
-                                               -(sqrt(dist) - (dt[i].r + dt[j].r))));
+            us_log->log(QString::asprintf( "\n%s%d%s%d%s%.6f\n", "ERROR: Overlap among bead ", i + 1, " and bead ", j + 1, ". Value = ",
+                                           -(sqrt(dist ) - (dt[i].r + dt[j].r))));
 	    if ( us_udp_msg )
-	      {
-		map < QString, QString > msging;
-		msging[ "_textarea" ] = QString("").sprintf("\\n%s%d%s%d%s%.6f\\n", "ERROR: Overlap among bead ", i + 1, " and bead ", j + 1, ". Value = ",
-                                               -(sqrt(dist) - (dt[i].r + dt[j].r)));
+            {
+               map < QString, QString > msging;
+               msging[ "_textarea" ] = QString::asprintf( "\\n%s%d%s%d%s%.6f\\n", "ERROR: Overlap among bead ", i + 1, " and bead ", j + 1, ". Value = ",
+                                                          -(sqrt(dist ) - (dt[i].r + dt[j].r)));
 	   		
-		us_udp_msg->send_json( msging );
-		//sleep(1);
-	      }
-	    accumulated_msgs->append( QString("").sprintf("\\n%s%d%s%d%s%.6f\\n", "ERROR: Overlap among bead ", i + 1, " and bead ", j + 1, ". Value = ",
-							  -(sqrt(dist) - (dt[i].r + dt[j].r))));
+               us_udp_msg->send_json( msging );
+               //sleep(1);
+            }
+	    accumulated_msgs->append( QString::asprintf( "\\n%s%d%s%d%s%.6f\\n", "ERROR: Overlap among bead ", i + 1, " and bead ", j + 1, ". Value = ",
+                                                         -(sqrt(dist ) - (dt[i].r + dt[j].r))));
 
-           // printf("\n%s%d%s%d%s%.6f\n", "OVERLAP AMONG BEAD ", i + 1, " and BEAD ", j + 1, " | Value = ",
+            // printf("\n%s%d%s%d%s%.6f\n", "OVERLAP AMONG BEAD ", i + 1, " and BEAD ", j + 1, " | Value = ",
             //        (sqrt(dist) - (dt[i].r + dt[j].r)));
 #if defined(USE_MAIN)
             // printf("\n** Do you want to proceed anyway? (y/n) ");
@@ -7168,7 +7169,7 @@ main()
    int use_nmax;
    do
    {
-     //  printf("\n\n\n** Insert number of beads to use? :  ");
+      //  printf("\n\n\n** Insert number of beads to use? :  ");
       if ( 1 == scanf("%d", &use_nmax) ) {};
    }
    while (use_nmax < 1);

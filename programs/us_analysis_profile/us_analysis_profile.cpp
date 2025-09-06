@@ -2989,18 +2989,22 @@ US_AnaprofPan2DSA::US_AnaprofPan2DSA( QWidget* topw )
    // Labels and buttons
    QLabel*  lb_chnpro  = us_banner( tr( "Per-Channel Profile" ) );
    QLabel*  lb_chnsel  = us_label ( tr( "Channel [ Chn:Opt:Solut ]" ) );
-   QLabel*  lb_smin    = us_label ( tr( "s Minimum:         " ) );
-   QLabel*  lb_smax    = us_label ( tr( "s Maximum:         " ) );
-   QLabel*  lb_sgrpts  = us_label ( tr( "s Grid Points:     " ) );
-   QLabel*  lb_kmin    = us_label ( tr( "f/f0 Minimum:      " ) );
-   QLabel*  lb_kmax    = us_label ( tr( "f/f0 Maximum:      " ) );
-   QLabel*  lb_kgrpts  = us_label ( tr( "f/f0 Grid Points:  " ) );
-   QLabel*  lb_varyvb  = us_label ( tr( "Varying Vbar:      " ) );
-   QLabel*  lb_constk  = us_label ( tr( "Constant f/f0:     " ) );
-   QLabel*  lb_grreps  = us_label ( tr( "Grid Repetitions:  " ) );
-            pb_custmg  = us_pushbutton( tr( "Custom Grid" ) );;
-            pb_applya  = us_pushbutton( tr( "Apply to All" ) );;
-            pb_nextch  = us_pushbutton( tr( "Next Channel" ) );;
+   lb_smin    = us_label ( tr( "s Minimum:         " ) );
+   lb_smax    = us_label ( tr( "s Maximum:         " ) );
+   lb_sgrpts  = us_label ( tr( "s Grid Points:     " ) );
+   lb_kmin    = us_label ( tr( "f/f0 Minimum:      " ) );
+   lb_kmax    = us_label ( tr( "f/f0 Maximum:      " ) );
+   lb_kgrpts  = us_label ( tr( "f/f0 Grid Points:  " ) );
+   lb_varyvb  = us_label ( tr( "Varying Vbar:      " ) );
+   lb_constk  = us_label ( tr( "Constant f/f0:     " ) );
+   lb_grreps  = us_label ( tr( "Grid Repetitions:  " ) );
+   pb_custmg  = us_pushbutton( tr( "Custom Grid" ) );;
+   pb_applya  = us_pushbutton( tr( "Apply to All" ) );;
+   pb_nextch  = us_pushbutton( tr( "Next Channel" ) );;
+   
+   ck_customgrid = new QCheckBox( tr("Choose Custom Grid:"), this );
+   ck_customgrid ->setAutoFillBackground( true );
+   ck_customgrid ->setChecked( false );
 
    QLabel*  lb_jflow   = us_banner( tr( "2DSA Job Flow"   ) );
    QLabel*  lb_sumry   = us_label ( tr( "Flow Summary:   "
@@ -3052,7 +3056,12 @@ US_AnaprofPan2DSA::US_AnaprofPan2DSA( QWidget* topw )
    le_kmax         = us_lineedit( "4", 0, false );
    le_kgrpts       = us_lineedit( "64", 0, false );
    le_grreps       = us_lineedit( "8", 0, false );
-   le_custmg       = us_lineedit( "(none)", 0, false );
+
+   le_custmg       = us_lineedit( "(none)", 0, true );
+   le_custmg_name  = us_lineedit( "", 0, true );
+   lb_custmg       = us_label ( tr( "CG GUID:" ) );
+   lb_custmg_name  = us_label ( tr( "CG Name:" ) );
+   
    ck_varyvb       = new QCheckBox( "VV", this );
    ck_varyvb->setPalette( US_GuiSettings::normalColor() );
    ck_varyvb->setChecked( false );
@@ -3113,14 +3122,22 @@ US_AnaprofPan2DSA::US_AnaprofPan2DSA( QWidget* topw )
    genL->addWidget( lb_kgrpts,  row,    8, 1,  3 );
    genL->addWidget( le_kgrpts,  row++, 11, 1,  1 );
    genL->addWidget( lb_grreps,  row,    0, 1,  3 );
-   genL->addWidget( le_grreps,  row,    3, 1,  1 );
-   genL->addWidget( pb_custmg,  row,    4, 1,  3 );
-   genL->addWidget( le_custmg,  row++,  7, 1,  5 );
+   genL->addWidget( le_grreps,  row++,  3, 1,  1 );
+   
    genL->addWidget( lb_varyvb,  row,    0, 1,  3 );
    genL->addWidget( ck_varyvb,  row,    3, 1,  1 );
    genL->addWidget( lb_constk,  row,    4, 1,  3 );
    genL->addWidget( le_constk,  row,    7, 1,  1 );
    genL->addWidget( pb_applya,  row++, 10, 1,  2 );
+
+   //custom grid
+   genL->addWidget( ck_customgrid,   row,   0, 1,  3 );
+   genL->addWidget( pb_custmg,       row,   3, 1,  3 );
+   genL->addWidget( lb_custmg_name,  row,   6, 1,  2 );
+   genL->addWidget( le_custmg_name,  row++, 8, 1,  5 );
+   genL->addWidget( lb_custmg,       row,   6, 1,  2 );
+   genL->addWidget( le_custmg,       row++, 8, 1,  5 );
+   
 //   genL->addItem  ( spacer1,         row++,  0, 1, 12 );
 
    genL->addWidget( lb_jflow,   row++,  0, 1, 12 );
@@ -3188,6 +3205,10 @@ US_AnaprofPan2DSA::US_AnaprofPan2DSA( QWidget* topw )
             this,         SLOT  ( constk_changed   ( )      ) );
    connect( pb_applya,    SIGNAL( clicked          ( )      ),
             this,         SLOT  ( apply_all_clicked( )      ) );
+   connect( ck_customgrid, SIGNAL( toggled     ( bool ) ),
+	    this,          SLOT  ( customGridChecked( bool ) ) );
+
+   
    connect( ck_j1run,     SIGNAL( toggled          ( bool ) ),
             this,         SLOT  ( job1_run_checked ( bool ) ) );
    connect( ck_j2run,     SIGNAL( toggled          ( bool ) ),
@@ -3212,6 +3233,13 @@ US_AnaprofPan2DSA::US_AnaprofPan2DSA( QWidget* topw )
             this,         SLOT  ( job5_run_checked ( bool ) ) );
    connect( le_j5iter,    SIGNAL( editingFinished  ( )      ),
             this,         SLOT  ( mciters_changed  ( )      ) );
+
+   //hide custom grids
+   pb_custmg->setVisible( false );
+   le_custmg->setVisible( false );
+   le_custmg_name->setVisible( false );
+   lb_custmg->setVisible( false );
+   lb_custmg_name->setVisible( false );
 
 DbgLv(1) << "AP2d: addWidg/Layo II";
    // Complete overall layout
@@ -3288,7 +3316,7 @@ DbgLv(1) << "2D:SL-gp: *ERROR* rowx>=kparm";
                        le_custmg->text() != "(none)" );
    parm1.channel    = sl_chnsel[ rowx ];
    parm1.cust_grid  = le_custmg->text();
-   parm1.cgrid_name = le_custmg->text();
+   parm1.cgrid_name = le_custmg_name->text();
 
    currProf->ap2DSA.parms.replace( rowx, parm1 );
 }
@@ -3317,7 +3345,20 @@ DbgLv(1) << "2D:SL-pg: *ERROR* rowx>=kparm";
    le_sgrpts->setText( QString::number( parm1.s_grpts   ) );
    le_kgrpts->setText( QString::number( parm1.k_grpts   ) );
    le_grreps->setText( QString::number( parm1.gridreps  ) );
-   le_custmg->setText( parm1.cust_grid );
+
+   le_custmg      ->setText( parm1.cust_grid );
+   le_custmg_name ->setText( parm1.cgrid_name );
+
+   if ( parm1.have_custg )
+     {
+       ck_customgrid->setChecked( true );
+       set_regular_grid( false );
+       le_custmg      ->setText( parm1.cust_grid );
+       le_custmg_name ->setText( parm1.cgrid_name );
+     }
+   else
+     ck_customgrid->setChecked( false );
+   
    QString chan    = parm1.channel;
    QString chan_l  = sl_chnsel[ rowx ];
 DbgLv(1) << "2D:SL-pg:  rowx" << rowx << "channel" << chan << chan_l;
@@ -3415,10 +3456,7 @@ void US_AnaprofPan2DSA::grid_reps_changed( )
 {
 DbgLv(1) << "2D:SL: GRDREPS_CHG";
 }
-void US_AnaprofPan2DSA::cust_grid_clicked( )
-{
-DbgLv(1) << "2D:SL: CUSTG_CLK";
-}
+
 void US_AnaprofPan2DSA::cust_grid_changed( )
 {
 DbgLv(1) << "2D:SL: CUSTG_CHG";
@@ -3430,6 +3468,81 @@ DbgLv(1) << "2D:SL: VVBAR_CKD" << chkd;
 void US_AnaprofPan2DSA::constk_changed( )
 {
 DbgLv(1) << "2D:SL: CONSTK_CHG";
+}
+
+void US_AnaprofPan2DSA::cust_grid_clicked( )
+{
+  DbgLv(1) << "2D:SL: CUSTG_CLK";
+
+  QString mfilter ( "CustomGrid" );
+  QString mdesc;
+  US_Model model;
+
+  US_ModelLoader* mloader = new US_ModelLoader( true, mfilter, model, mdesc, "" );
+  if ( mloader->exec() != QDialog::Accepted ) return;
+  
+  bool cgmdata = ! model.customGridData.grids.isEmpty() &&
+    ! model.customGridData.components.isEmpty() &&
+    model.customGridData.components.size() == model.components.size();
+  if ( ! cgmdata ) {
+    QMessageBox::warning( this, "Warning!", "The following model doesn't have custom "
+			  "grid metadata!<br/><br/><b>" + mdesc + "</b>" );
+    return;
+  }
+
+  QString m_desc = model.description;
+  QString m_guid = model.modelGUID;
+
+  le_custmg       ->setText( m_guid );
+  le_custmg_name  ->setText( m_desc );
+
+  //hide regular grid
+  set_regular_grid( false );
+}
+
+void US_AnaprofPan2DSA::set_regular_grid( bool set )
+{
+  le_smin    ->setVisible( set );
+  le_smax    ->setVisible( set );
+  le_sgrpts  ->setVisible( set ); 
+  le_kmin    ->setVisible( set ); 
+  le_kmax    ->setVisible( set ); 
+  le_kgrpts  ->setVisible( set ); 
+  le_grreps  ->setVisible( set );
+  le_constk  ->setVisible( set );
+
+  lb_smin    ->setVisible( set );   
+  lb_smax    ->setVisible( set );   
+  lb_sgrpts  ->setVisible( set ); 
+  lb_kmin    ->setVisible( set );   
+  lb_kmax    ->setVisible( set );   
+  lb_kgrpts  ->setVisible( set ); 
+  lb_varyvb  ->setVisible( set ); 
+  lb_constk  ->setVisible( set ); 
+  lb_grreps  ->setVisible( set ); 
+  ck_varyvb  ->setVisible( set );
+}
+
+void US_AnaprofPan2DSA::customGridChecked( bool checked )
+{
+  qDebug() << "In checking ck_customGrid; checked, !checked = "
+	   << checked << !checked;
+
+  pb_custmg->setVisible( checked );
+  le_custmg->setVisible( checked );
+  le_custmg_name->setVisible( checked );
+  lb_custmg->setVisible( checked );
+  lb_custmg_name->setVisible( checked );
+
+  if (!checked)
+    {
+      //clear
+      le_custmg_name ->setText("");
+      le_custmg      ->setText("");
+      
+      //and show regular one
+      set_regular_grid( true );
+    }
 }
 
 void US_AnaprofPan2DSA::apply_all_clicked( )

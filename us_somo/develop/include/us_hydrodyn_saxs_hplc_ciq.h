@@ -52,6 +52,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Ciq : public QDialog
       QCheckBox *                             cb_zero_keep_as_zeros;
 
       QCheckBox *                             cb_istarq;
+      QLineEdit *                             le_istarq;
 
       QCheckBox *                             cb_I0se;
       QLineEdit *                             le_I0se;

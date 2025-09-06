@@ -44,10 +44,10 @@ static bool linear_fit(
       return false;
    }
 
-   double global_a_sum    = 0;
-   double global_b_sum    = 0;
-   double global_siga_sum = 0;
-   double global_sigb_sum = 0;
+   // double global_a_sum    = 0;
+   // double global_b_sum    = 0;
+   // double global_siga_sum = 0;
+   // double global_sigb_sum = 0;
    int    global_count    = 0;
 
    vector < double > global_no_weights_a_v;
@@ -64,10 +64,10 @@ static bool linear_fit(
          msgbox->setText( us_tr( "Internal error: fitcurves x size mismatch" ) );
          return false;
       }
-      double a_sum    = 0;
-      double b_sum    = 0;
-      double siga_sum = 0;
-      double sigb_sum = 0;
+      // double a_sum    = 0;
+      // double b_sum    = 0;
+      // double siga_sum = 0;
+      // double sigb_sum = 0;
 
       vector < double > a_v;
       vector < double > siga_v;
@@ -109,15 +109,15 @@ static bool linear_fit(
    
          US_Saxs_Util::linear_fit( use_x, use_y, a, b, siga, sigb, chi2 );
 
-         a_sum    += a;
-         b_sum    += b;
-         siga_sum += siga;
-         sigb_sum += sigb;
+         // a_sum    += a;
+         // b_sum    += b;
+         // siga_sum += siga;
+         // sigb_sum += sigb;
       
-         global_a_sum    += a;
-         global_b_sum    += b;
-         global_siga_sum += siga;
-         global_sigb_sum += sigb;
+         // global_a_sum    += a;
+         // global_b_sum    += b;
+         // global_siga_sum += siga;
+         // global_sigb_sum += sigb;
          ++global_count;
 
          a_v.push_back( a );
@@ -900,7 +900,7 @@ void US_Hydrodyn::fractal_dimension( bool from_parameters, save_info * fd_save_i
          // find SAS points, build set
 
          size_t total_atoms = 0;
-         double asa_total   = 0;
+         // double asa_total   = 0;
 
          for ( unsigned int j = 0; j < model_vector[current_model].molecule.size(); ++j) {
             for ( unsigned int k = 0; k < model_vector[current_model].molecule[j].atom.size(); ++k ) {
@@ -917,7 +917,7 @@ void US_Hydrodyn::fractal_dimension( bool from_parameters, save_info * fd_save_i
                   return;
                }
 
-               asa_total += this_atom->asa;
+               // asa_total += this_atom->asa;
 
                if ( this_atom->asa >= sas_asa_threshold ) {
                   {

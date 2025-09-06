@@ -2,6 +2,7 @@
 #include <QJsonValue>
 #include <QJsonArray>
 #include <QJsonObject>
+#include <QtNumeric>
 
 #include "us_autoflow_analysis.h"
 #include "us_settings.h"
@@ -82,7 +83,7 @@ US_Analysis_auto::US_Analysis_auto() : US_Widgets()
   all_processed = true;
   
   // // // // // ---- Testing ----
-  // QMap < QString, QString > protocol_details;
+  QMap < QString, QString > protocol_details;
 
 
   // protocol_details[ "invID_passed" ] = QString("95");
@@ -101,6 +102,18 @@ US_Analysis_auto::US_Analysis_auto() : US_Widgets()
   // protocol_details[ "dataSource" ]   = QString("dataDiskAUC");
   // protocol_details[ "statusID" ]     = QString("588");
   // protocol_details[ "autoflowID" ]   = QString("1515");
+
+  // //VELOCITY: failed JSON (bad fitmen-auto, "NAN")
+  // protocol_details[ "invID_passed" ] = QString("11");
+  // protocol_details[ "protocolName" ] = QString("MartinR_alexey-dev-issue425-SWL-RI-T3_21JUN25");
+  // protocol_details[ "aprofileguid" ] = QString("bc5641b1-27f2-4604-a3e2-5d24196fc9de");
+  // protocol_details[ "filename" ]     = QString("MartinR_alexey-dev-issue425-SWL-RI-T3_21JUN25-run2395");
+  // protocol_details[ "analysisIDs"  ] = QString("61,62");
+  // protocol_details[ "expType" ]      = QString("VELOCITY");
+  // protocol_details[ "dataSource" ]   = QString("INSTRUMENT");
+  // protocol_details[ "statusID" ]     = QString("53");
+  // protocol_details[ "autoflowID" ]   = QString("78");
+  
 
   // // // //What's needed ////////////////////////////////////////////////////////
   // // AProfileGUID       = protocol_details[ "aprofileguid" ];
@@ -3024,7 +3037,7 @@ void US_Analysis_auto::show_overlay( QString triple_stage )
 //Cancel all jobs if FITMEN for a channel was processed by other means: NO FM modles
 void US_Analysis_auto::delete_jobs_at_fitmen( QMap < QString, QString > & triple_info )
 {
-
+  
   qDebug() << "At delete_jobs_at_fitmen: triple_name: " << triple_info[ "triple_name_key" ];
 
   QString triple_name   = triple_info[ "triple_name_key" ];
@@ -3039,6 +3052,12 @@ void US_Analysis_auto::delete_jobs_at_fitmen( QMap < QString, QString > & triple
   QString requestID = ana_details["requestID"];
   qDebug() << "RequestID -- " << requestID;
 
+  
+  //First, revert unique status, so it does not block execution:
+  revert_autoflow_analysis_stages_record( requestID );
+  //////////////
+
+  
   bool mwl_channel = false;
   QStringList triple_list_affected;
   
@@ -3102,6 +3121,29 @@ void US_Analysis_auto::delete_jobs_at_fitmen( QMap < QString, QString > & triple
 				    tr( "Could not connect to database \n" ) +  db.lastError() );
 	      return;
 	    }
+
+	  //block triple processing again:
+	  int status_fitmen_unique;
+	  status_fitmen_unique = read_autoflowAnalysisStages( requestID );
+  
+	  qDebug() << "[in delete_fitmen_job(no fitmen_bad_vals)] status_fitmen_unique -- " << status_fitmen_unique ;
+  
+	  if ( !status_fitmen_unique )
+	    {
+	      QMessageBox::information( this,
+					tr( "FITMEN | Triple Analysis already processed" ),
+					tr( "It appears that FITMEN stage has already been OR being processed by "
+					    "a different user from different session. \n\n"
+					    "The program will return to the autoflow runs dialog where "
+					    "you can re-attach to the actual current stage of the run. "));
+	      
+	      
+	      emit analysis_back_to_initAutoflow( );
+	      //emit triple_analysis_processed( );
+	      //close();
+	      return;
+	    }
+	  /****/
 	  
 	  
 	  /** DEBUG **/
@@ -3113,6 +3155,7 @@ void US_Analysis_auto::delete_jobs_at_fitmen( QMap < QString, QString > & triple
 	  /* **********/
 	  
 	  update_autoflowAnalysis_uponDeletion( &db, requestID );
+	  //maybe if mwl_channel=true?
 	  update_autoflowAnalysis_uponDeletion_other_wvl( &db, requestID_list );
 	  
 	}
@@ -3165,8 +3208,33 @@ void US_Analysis_auto::delete_jobs_at_fitmen( QMap < QString, QString > & triple
 				    tr( "Could not connect to database \n" ) +  db.lastError() );
 	      return;
 	    }
+
+	  //block triple processing again:
+	  int status_fitmen_unique;
+	  status_fitmen_unique = read_autoflowAnalysisStages( requestID );
+  
+	  qDebug() << "[in delete_fitmen_job(yes fitmen_bad_vals)] status_fitmen_unique -- " << status_fitmen_unique ;
+  
+	  if ( !status_fitmen_unique )
+	    {
+	      QMessageBox::information( this,
+					tr( "FITMEN | Triple Analysis already processed" ),
+					tr( "It appears that FITMEN stage has already been OR being processed by "
+					    "a different user from different session. \n\n"
+					    "The program will return to the autoflow runs dialog where "
+					    "you can re-attach to the actual current stage of the run. "));
+	      
+	      
+	      emit analysis_back_to_initAutoflow( );
+	      //emit triple_analysis_processed( );
+	      //close();
+	      return;
+	    }
+	  /****/
+	  
 	  
 	  update_autoflowAnalysis_uponDeletion( &db, requestID );
+	  //maybe if mwl_channel=true?
 	  update_autoflowAnalysis_uponDeletion_other_wvl( &db, requestID_list );
 	}
     }
@@ -5246,9 +5314,9 @@ void US_Analysis_auto::revert_autoflow_analysis_stages_record( const QString& re
 // Update an edit file with a new meniscus and/or bottom radius value
 void US_Analysis_auto::edit_update_auto( QMap < QString, QString > & triple_information )
 {
+
   /***/
   //ALEXEY: if autoflow: check if edit profiles already updated from other FITMEN session
-  
   QString requestID = triple_information[ "requestID" ];
   //--- LOCK && UPDATE the autoflowStages' ANALYSIS field for the record
   int status_fitmen_unique;
@@ -5260,12 +5328,12 @@ void US_Analysis_auto::edit_update_auto( QMap < QString, QString > & triple_info
     {
       QMessageBox::information( this,
 				tr( "FITMEN | Triple Analysis already processed" ),
-				tr( "It appears that FITMEN stage has already been processed by "
+				tr( "It appears that FITMEN stage has already been OR being processed by "
 				    "a different user from different session. \n\n"
 				    "The program will return to the autoflow runs dialog where "
 				    "you can re-attach to the actual current stage of the run. "));
       
-
+      
       emit analysis_back_to_initAutoflow( );
       //emit triple_analysis_processed( );
       //close();
@@ -5273,6 +5341,7 @@ void US_Analysis_auto::edit_update_auto( QMap < QString, QString > & triple_info
     }
   /****/
 
+  
 #define MENI_HIGHVAL 7.0
 #define BOTT_LOWVAL 7.0
    QString fn = filedir + "/" + fname_edit;
@@ -5390,6 +5459,17 @@ DbgLv(1) << " eupd:  s_meni s_bott" << s_meni << s_bott;
 
      return;
    }
+   
+   //Capture, when fit_men = NAN, for both SWL && MWL
+   if ( qIsNaN(mennew) )
+     {
+       fitmen_bad_vals = true;
+        QString reason_for_failure = "NaN meniscus position!";
+       triple_information[ "failed" ] = reason_for_failure;
+       delete_jobs_at_fitmen( triple_information );
+       return;
+     }
+   
    
    mmsg           = "";
 
@@ -5511,6 +5591,8 @@ DbgLv(1) << " eupd:   ixmlin ixblin" << ixmlin << ixblin << "ncmlin ncblin" << n
       tso << edtext;
       fileo.close();
 
+
+     
       // If using DB, update the edit record there
 
       if ( db_upd )

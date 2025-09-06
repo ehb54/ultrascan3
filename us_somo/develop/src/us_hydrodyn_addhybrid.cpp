@@ -300,7 +300,7 @@ void US_AddHybridization::add()
             << "\t" << hybrid_list[i].num_elect
             << Qt::endl;
          //         cout << "item: " << item << ", " << hybrid_list[i].name.toUpper() << "\t" << hybrid_list[i].mw << "\t" << hybrid_list[i].radius << ", " <<  hybrid_filename << endl;
-         str1.sprintf("%d: ", i+1);
+         str1 = QString::asprintf( "%d: ", i+1 );
          str1 += hybrid_list[i].name.toUpper();
          cmb_hybrid->addItem(str1);
       }
@@ -343,7 +343,7 @@ void US_AddHybridization::select_file()
             if (!current_hybrid.name.isEmpty() && current_hybrid.radius > 0.0 && current_hybrid.mw > 0.0)
             {
                hybrid_list.push_back(current_hybrid);
-               str1.sprintf("%d: ", i);
+               str1 = QString::asprintf( "%d: ", i );
                str1 += current_hybrid.name;
                cmb_hybrid->addItem(str1);
                i++;
@@ -391,7 +391,7 @@ void US_AddHybridization::select_saxs_file()
             {
                continue;
             }
-            qs.trimmed();
+            qs = qs.trimmed();
             QStringList qsl = (qs ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
             int pos = 0;
             if ( qsl.size() == 11 )
@@ -441,7 +441,7 @@ void US_AddHybridization::select_saxs_file()
                it++ )
          {
             saxs_list.push_back( it->second );
-            str1.sprintf("%d: ", i);
+            str1 = QString::asprintf( "%d: ", i );
             str1 += it->second.saxs_name;
             cmb_saxs->addItem(str1);
             i++;
@@ -491,15 +491,15 @@ void US_AddHybridization::update_name(const QString &str)
 void US_AddHybridization::select_hybrid(int val)
 {
    QString str;
-   str.sprintf("%3.4f", hybrid_list[val].mw);
+   str = QString::asprintf( "%3.4f", hybrid_list[val].mw );
    le_mw->setText(str);
-   str.sprintf("%3.4f", hybrid_list[val].radius);
+   str = QString::asprintf( "%3.4f", hybrid_list[val].radius );
    le_radius->setText(str);
-   str.sprintf("%3.4f", hybrid_list[val].scat_len);
+   str = QString::asprintf( "%3.4f", hybrid_list[val].scat_len );
    le_scat_len->setText(str);
-   str.sprintf("%d", hybrid_list[val].exch_prot);
+   str = QString::asprintf( "%d", hybrid_list[val].exch_prot );
    le_exch_prot->setText(str);
-   str.sprintf("%3.0f", hybrid_list[val].num_elect);
+   str = QString::asprintf( "%3.0f", hybrid_list[val].num_elect );
    le_num_elect->setText(str);
    le_name->setText(hybrid_list[val].name.toUpper());
    unsigned int i;

@@ -785,6 +785,11 @@ void US_Hydrodyn_Saxs_Hplc::wheel_cancel( bool from_wheel_save )
    case MODE_RGC :
       break;
 
+   case MODE_BROADEN :
+      broaden_done( false );
+      return;
+      break;
+
    default : us_qdebug( "wheel cancel called in invalid mode" ); break;
    }
 
@@ -1097,6 +1102,11 @@ void US_Hydrodyn_Saxs_Hplc::wheel_save()
          update_enables();
       }
       break;
+
+   case MODE_BROADEN :
+      broaden_done( true );
+      break;
+
    default : us_qdebug( "wheel save called in invalid mode" ); break;
    }
 }

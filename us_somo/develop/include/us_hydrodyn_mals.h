@@ -352,6 +352,7 @@ class US_EXTERN US_Hydrodyn_Mals : public QFrame
       QPushButton   *pb_create_i_of_q;
       QPushButton   *pb_create_ihash_t;
       QPushButton   *pb_create_istar_q;
+      QPushButton   *pb_fitting;
 
       QPushButton   *pb_fasta_file;
       QLabel        *lbl_fasta_value;
@@ -365,6 +366,7 @@ class US_EXTERN US_Hydrodyn_Mals : public QFrame
  private:
 
       QPushButton   *pb_load_conc;
+      QPushButton   *pb_load_saxs_ref;
       QPushButton   *pb_conc_file;
       QLabel        *lbl_conc_file;
 
@@ -1584,9 +1586,11 @@ class US_EXTERN US_Hydrodyn_Mals : public QFrame
       void create_i_of_t();
       void create_ihash_t();
       void create_istar_q();
+      void fitting();
       void test_i_of_t();
       void create_i_of_q();
       void load_conc();
+      void load_saxs_ref();
       void set_conc_file( QString file = "" );
       void set_detector();
       void set_mals();

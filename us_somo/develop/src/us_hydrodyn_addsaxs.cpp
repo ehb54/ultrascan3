@@ -520,7 +520,7 @@ void US_AddSaxs::add()
                << saxs_list[i].c5 << "\t"
                << saxs_list[i].volume << Qt::endl;
          }
-         str1.sprintf("%d: ", i+1);
+         str1 = QString::asprintf( "%d: ", i+1 );
          str1 += saxs_list[i].saxs_name.toUpper();
          cmb_saxs->addItem(str1);
       }
@@ -594,7 +594,7 @@ void US_AddSaxs::select_file()
             ++it ) {
          if ( !it->first.isEmpty() ) {
             saxs_list.push_back( it->second );
-            str1.sprintf("%d: ", i);
+            str1 = QString::asprintf( "%d: ", i );
             str1 += it->second.saxs_name;
             cmb_saxs->addItem(str1);
             i++;
@@ -743,48 +743,48 @@ void US_AddSaxs::select_saxs(int val)
 {
    QString str;
    le_saxs_name->setText(saxs_list[val].saxs_name.toUpper());
-   str.sprintf("%3.6f", saxs_list[val].a[0]);
+   str = QString::asprintf( "%3.6f", saxs_list[val].a[0] );
    le_a1->setText(str);
-   str.sprintf("%3.6f", saxs_list[val].b[0]);
+   str = QString::asprintf( "%3.6f", saxs_list[val].b[0] );
    le_b1->setText(str);
-   str.sprintf("%3.6f", saxs_list[val].a[1]);
+   str = QString::asprintf( "%3.6f", saxs_list[val].a[1] );
    le_a2->setText(str);
-   str.sprintf("%3.6f", saxs_list[val].b[1]);
+   str = QString::asprintf( "%3.6f", saxs_list[val].b[1] );
    le_b2->setText(str);
-   str.sprintf("%3.6f", saxs_list[val].a[2]);
+   str = QString::asprintf( "%3.6f", saxs_list[val].a[2] );
    le_a3->setText(str);
-   str.sprintf("%3.6f", saxs_list[val].b[2]);
+   str = QString::asprintf( "%3.6f", saxs_list[val].b[2] );
    le_b3->setText(str);
-   str.sprintf("%3.6f", saxs_list[val].a[3]);
+   str = QString::asprintf( "%3.6f", saxs_list[val].a[3] );
    le_a4->setText(str);
-   str.sprintf("%3.6f", saxs_list[val].b[3]);
+   str = QString::asprintf( "%3.6f", saxs_list[val].b[3] );
    le_b4->setText(str);
-   str.sprintf("%3.6f", saxs_list[val].c);
+   str = QString::asprintf( "%3.6f", saxs_list[val].c );
    le_c->setText(str);
-   str.sprintf("%3.6f", saxs_list[val].volume);
+   str = QString::asprintf( "%3.6f", saxs_list[val].volume );
    le_volume->setText(str);
 
-   str.sprintf("%3.6f", saxs_list[val].a5[0]);
+   str = QString::asprintf( "%3.6f", saxs_list[val].a5[0] );
    le_5a1->setText(str);
-   str.sprintf("%3.6f", saxs_list[val].b5[0]);
+   str = QString::asprintf( "%3.6f", saxs_list[val].b5[0] );
    le_5b1->setText(str);
-   str.sprintf("%3.6f", saxs_list[val].a5[1]);
+   str = QString::asprintf( "%3.6f", saxs_list[val].a5[1] );
    le_5a2->setText(str);
-   str.sprintf("%3.6f", saxs_list[val].b5[1]);
+   str = QString::asprintf( "%3.6f", saxs_list[val].b5[1] );
    le_5b2->setText(str);
-   str.sprintf("%3.6f", saxs_list[val].a5[2]);
+   str = QString::asprintf( "%3.6f", saxs_list[val].a5[2] );
    le_5a3->setText(str);
-   str.sprintf("%3.6f", saxs_list[val].b5[2]);
+   str = QString::asprintf( "%3.6f", saxs_list[val].b5[2] );
    le_5b3->setText(str);
-   str.sprintf("%3.6f", saxs_list[val].a5[3]);
+   str = QString::asprintf( "%3.6f", saxs_list[val].a5[3] );
    le_5a4->setText(str);
-   str.sprintf("%3.6f", saxs_list[val].b5[3]);
+   str = QString::asprintf( "%3.6f", saxs_list[val].b5[3] );
    le_5b4->setText(str);
-   str.sprintf("%3.6f", saxs_list[val].a5[4]);
+   str = QString::asprintf( "%3.6f", saxs_list[val].a5[4] );
    le_5a5->setText(str);
-   str.sprintf("%3.6f", saxs_list[val].b5[4]);
+   str = QString::asprintf( "%3.6f", saxs_list[val].b5[4] );
    le_5b5->setText(str);
-   str.sprintf("%3.6f", saxs_list[val].c5);
+   str = QString::asprintf( "%3.6f", saxs_list[val].c5 );
    le_5c->setText(str);
    
 }

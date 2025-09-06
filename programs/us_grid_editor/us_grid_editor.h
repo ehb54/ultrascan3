@@ -18,15 +18,16 @@
 #include "us_license.h"
 #include "us_license_t.h"
 #include "us_settings.h"
-#include <math.h>
 #include "qwt_scale_engine.h"
 #include <qwt_plot_shapeitem.h>
 
 
 const double S_TRSHL   = 1e-15;
+#if !defined( DbgLv )
 #define DbgLv( a ) if( US_Settings::us_debug() >= a ) qDebug()
-#define GridInfo US_Model::CustomGridMetadata::GridInfo
-#define CompInfo US_Model::CustomGridMetadata::CompInfo
+#endif
+using GridInfo = US_Model::CustomGridMetadata::GridInfo;
+using CompInfo = US_Model::CustomGridMetadata::CompInfo;
 
 //! \class Attribute Class
 //! \brief Enumeration for attribute types.
@@ -57,7 +58,6 @@ public:
    //! \brief A static method to return Type of the input integer.
    static Type    from_symbol ( const QString& );
 };
-
 
 //! \class GridPoint Class
 //! \brief Enumeration for attribute types.
@@ -91,7 +91,9 @@ public:
 
    //! \brief A method to set the grid ID.
    //! \param id.
-   void set_id( int id );
+   void set_id_range( int id,
+                      const QPair< double, double >& xrng,
+                      const QPair< double, double >& yrng);
 
    //! \brief A method to set the grid row and column numbers where the grid point is placed.
    //! \param row.
@@ -106,6 +108,9 @@ public:
 
    //! \brief A method to get the grid point column.
    int get_col( void ) const;
+
+   QPair< double, double > get_x_range( void ) const;
+   QPair< double, double > get_y_range( void ) const;
 
    //! \brief A method to get the value of x parameter.
    double x_value( void ) const;
@@ -142,6 +147,8 @@ private:
    Attribute::Type       x_param;  //!< x axis parameter
    Attribute::Type       y_param;  //!< y axis parameter
    Attribute::Type       z_param;  //!< z axis parameter
+   QPair< double, double > x_range;
+   QPair< double, double > y_range;
 
    //! \brief Calculate all parameters from s, D, Vbar
    void calc_coefficients( void );
@@ -162,12 +169,17 @@ private:
 
 };
 
+//! \class US_Grid_Preset Class
+//! \brief Widget to set x, y, and z axis types.
 class US_Grid_Preset : public US_WidgetsDialog
 {
    Q_OBJECT
 
 public:
-
+   //! \brief Constructor of the US_Grid_Preset dialog.
+   //! \param type of the x parameter.
+   //! \param type of the y parameter.
+   //! \param type of the z parameter.
    US_Grid_Preset( QWidget *, Attribute::Type, Attribute::Type, Attribute::Type );
 
    //! \brief A method to obtain the grid parameters.
@@ -219,6 +231,183 @@ private slots:
    void cancel( void );
 };
 
+class US_Grid_ZFunction : public US_WidgetsDialog
+{
+   Q_OBJECT
+
+public:
+   //! \brief Constructor of the US_Grid_ZFunction dialog.
+   //! \param parent widget.
+   //! \param settings.
+   US_Grid_ZFunction( QWidget *, const QMap< QString, QString>& );
+
+   //! \brief Constructor of the US_Grid_ZFunction dialog.
+   //! \param parent widget.
+   QString get_parameters( void );
+
+private:
+   QVector< double >   parameters;       //!< list of the function coefficients.
+   QVector< double >   x_points;         //!< x values of the points to fit the function.
+   QVector< double >   y_points;         //!< y values of the points to fit the function.
+   QVector< double >   xvalues;          //!< x values of the curve.
+   QVector< double >   yvalues;          //!< y values of the curve.
+   QVector< double >   min_xy;           //!< minimum values of the dependent parameters.
+   QVector< double >   max_xy;           //!< maximum values of the dependent parameters.
+
+   QStringList         short_title;      //!< list of short titles of the parameters.
+   QStringList         long_title;       //!< list of long titles of the parameters.
+
+   QList< QLineEdit* > list_le;          //!< list of lineedit objects.
+   QList< QLabel* >    list_lb;          //!< list of labels objects.
+
+   QLabel*             lb_dependent;     //!< label for the word Dependent.
+   QLabel*             lb_function;      //!< label for the word Function.
+   QLabel*             lb_formula;       //!< label for the function formula.
+   QLabel*             lb_order;         //!< label for the word Order.
+   QLabel*             lb_min;           //!< label for the minimum z-value.
+   QLabel*             lb_max;           //!< label for the maximum z-value.
+   QLabel*             lb_p0_x;          //!< label for the first point x.
+   QLabel*             lb_p1_x;          //!< label for the second point x.
+   QLabel*             lb_p2_x;          //!< label for the third point x.
+   QLabel*             lb_p3_x;          //!< label for the fourth point x.
+   QLabel*             lb_p4_x;          //!< label for the fifth point x.
+   QLabel*             lb_p5_x;          //!< label for the sixth point x.
+   QLabel*             lb_p0_y;          //!< label for the first point y.
+   QLabel*             lb_p1_y;          //!< label for the second point y.
+   QLabel*             lb_p2_y;          //!< label for the third point y.
+   QLabel*             lb_p3_y;          //!< label for the fourth point y.
+   QLabel*             lb_p4_y;          //!< label for the fifth point y.
+   QLabel*             lb_p5_y;          //!< label for the sixth point y.
+   QLabel*             lb_c0;            //!< label for the first coefficient.
+   QLabel*             lb_c1;            //!< label for the second coefficient.
+   QLabel*             lb_c2;            //!< label for the third coefficient.
+   QLabel*             lb_c3;            //!< label for the fourth coefficient.
+   QLabel*             lb_c4;            //!< label for the fifth coefficient.
+   QLabel*             lb_c5;            //!< label for the sixth coefficient.
+   QLabel*             lb_p0;            //!< label for the first point.
+   QLabel*             lb_p1;            //!< label for the second point.
+   QLabel*             lb_p2;            //!< label for the third point.
+   QLabel*             lb_p3;            //!< label for the fourth point.
+   QLabel*             lb_p4;            //!< label for the fifth point.
+   QLabel*             lb_p5;            //!< label for the sixth point.
+
+   QLineEdit*          le_p0_x;          //!< input for the first point x.
+   QLineEdit*          le_p1_x;          //!< input for the second point x.
+   QLineEdit*          le_p2_x;          //!< input for the third point x.
+   QLineEdit*          le_p3_x;          //!< input for the fourth point x.
+   QLineEdit*          le_p4_x;          //!< input for the fifth point x.
+   QLineEdit*          le_p5_x;          //!< input for the sixth point x.
+   QLineEdit*          le_p0_y;          //!< input for the first point y.
+   QLineEdit*          le_p1_y;          //!< input for the second point y.
+   QLineEdit*          le_p2_y;          //!< input for the third point y.
+   QLineEdit*          le_p3_y;          //!< input for the fourth point y.
+   QLineEdit*          le_p4_y;          //!< input for the fifth point y.
+   QLineEdit*          le_p5_y;          //!< input for the sixth point y.
+   QLineEdit*          le_c0;            //!< input for the first coefficient.
+   QLineEdit*          le_c1;            //!< input for the second coefficient.
+   QLineEdit*          le_c2;            //!< input for the third coefficient.
+   QLineEdit*          le_c3;            //!< input for the fourth coefficient.
+   QLineEdit*          le_c4;            //!< input for the fifth coefficient.
+   QLineEdit*          le_c5;            //!< input for the sixth coefficient.
+   QLineEdit*          le_min;           //!< output to show minimum of the z-value.
+   QLineEdit*          le_max;           //!< output to show maximum of the z-value.
+
+   QComboBox*          cb_dependent;     //!< combo box to select the dependent parameter.
+   QComboBox*          cb_function;      //!< combo box to select the function.
+   QComboBox*          cb_order;         //!< combo box to select the polynomial order.
+   QwtPlot*            plot;             //!< data plot.
+
+   //! \brief set all GUI widgets.
+   void set_gui( const QMap< QString, QString>& );
+
+   //! \brief display the formula.
+   void show_formula( void );
+
+   //! \brief plot the curve and points.
+   void plot_data   ( void );
+
+   //! \brief make x and y points based on the function.
+   void set_points  ( int  );
+
+   //! \brief check the parameters before exporting.
+   bool check_data  ( void );
+
+   //! \brief parse the z-value expression.
+   void parse_params( const QString& );
+
+   //! \brief compute the curve and points based the functions and parameters.
+   void compute( QVector< double >&, QVector< double >& );
+
+private slots:
+   //! \brief slot to select the dependent parameter.
+   void set_dependent( int index );
+
+   //! \brief slot to select the function.
+   void set_function ( int index );
+
+   //! \brief slot to select the polynomial order.
+   void set_order( int );
+
+   //! \brief slot to set the first coefficient.
+   void set_c0  ( void );
+
+   //! \brief slot to set the second coefficient.
+   void set_c1  ( void );
+
+   //! \brief slot to set the third coefficient.
+   void set_c2  ( void );
+
+   //! \brief slot to set the fourth coefficient.
+   void set_c3  ( void );
+
+   //! \brief slot to set the fifth coefficient.
+   void set_c4  ( void );
+
+   //! \brief slot to set the sixth coefficient.
+   void set_c5  ( void );
+
+   //! \brief slot to set the first point x value.
+   void set_p0_x( void );
+
+   //! \brief slot to set the second point x value.
+   void set_p1_x( void );
+
+   //! \brief slot to set the third point x value.
+   void set_p2_x( void );
+
+   //! \brief slot to set the fourth point x value.
+   void set_p3_x( void );
+
+   //! \brief slot to set the fifth point x value.
+   void set_p4_x( void );
+
+   //! \brief slot to set the sixth point x value.
+   void set_p5_x( void );
+
+   //! \brief slot to set the first point y value.
+   void set_p0_y( void );
+
+   //! \brief slot to set the second point y value.
+   void set_p1_y( void );
+
+   //! \brief slot to set the third point y value.
+   void set_p2_y( void );
+
+   //! \brief slot to set the fourth point y value.
+   void set_p3_y( void );
+
+   //! \brief slot to set the fifth point y value.
+   void set_p4_y( void );
+
+   //! \brief slot to set the sixth point y value.
+   void set_p5_y( void );
+
+   //! \brief slot to fit the curve.
+   void fit     ( void );
+
+   //! \brief slot to return the fitted function.
+   void apply   ( void );
+};
 
 //! \class US_Grid_Editor
 //! \brief Class to handle the grid editor GUI and functionality.
@@ -276,6 +465,7 @@ private:
    QPushButton*     pb_lu_buffer;         //!< push button to update the buffer condition.
    QPushButton*     pb_save;              //!< push button to save the model.
    QPushButton*     pb_default_plot;      //!< plot grid points where x and y axis match x and y types.
+   QPushButton*     pb_z_set_func;        //!< set a function for varying z-values
 
    QwtCounter*      ct_size;              //!< to set plot symbol size.
    QwtCounter*      ct_subgrid;           //!< to set what subgrid to be plotted.
@@ -283,8 +473,10 @@ private:
 
    QCheckBox*       chkb_log;             //!< checkbox for setting x-axis logarithmic.
 
-   QButtonGroup*    bg_point_type;
+   QRadioButton*    rb_cons_z;            //!< radio button to select constant z-value
+   QRadioButton*    rb_vary_z;            //!< radio button to select varying z-value
 
+   QButtonGroup*    bg_point_type;
    QButtonGroup*    x_axis;               //!< X-axis button group.
    QButtonGroup*    y_axis;               //!< Y-axis button group.
 
@@ -298,15 +490,14 @@ private:
 
    US_Help          showHelp;              //!< Help widget.
 
-   QwtPlotCurve*             subgrid_curve;   //!< subgrid curve.
-   QList<QwtPlotCurve*>      point_curves;    //!< all grid points curves.
-   QList<QVector<GridPoint>> grid_points;     //!< array of all grids.
-   QList<GridInfo>           grid_info;       //!< array of all grid information.
-   QVector<GridPoint>        sorted_points;   //!< sorted grid points.
-   QList<QVector<int>>       final_subgrids;  //!< subgrid indexes.
+   QwtPlotCurve*             subgrid_curve;     //!< subgrid curve.
+   QList<QwtPlotCurve*>      point_curves;      //!< all grid points curves.
+   QList<QVector<GridPoint>> partial_grids;     //!< array of all grids.
+   QList<GridInfo>           partial_grid_info; //!< array of all grid information.
+   QVector<GridPoint>        sorted_points;     //!< sorted grid points.
+   QList<QVector<int>>       final_subgrids;    //!< subgrid indexes.
 
-   US_Disk_DB_Controls*      dkdb_cntrls;     //!< Disk DB controls.
-
+   US_Disk_DB_Controls*      dkdb_cntrls;       //!< Disk DB controls.
 
    //! \brief Clear set region from the data plot.
    void rm_tmp_items( void );
@@ -327,17 +518,21 @@ private:
    bool validate_int( const QString, int& );
 
    //! \brief Validate grid before adding or updating.
-   bool validate_xyz( GridInfo& );
+   bool validate_partial_grid( GridInfo& );
 
    //! \brief Check if the set region overlaps with others.
    bool check_overlap( double, double, double, double, int );
 
    //! \brief Generate evenly spaced numbers over a specified interval.
-   bool gen_points( double, double, int, bool,bool, QVector<double>& );
+   bool spaced_numbers( double, double, int, bool, bool, QVector<double>& );
+
+   //! \brief Compute a grid point
+   bool calc_xyz( double, double, const QString&, QVector<double>& );
 
    //! \brief Generate evenly spaced numbers over a specified interval.
-   bool gen_grid_points( const QVector<double>&, const QVector<double>&,
-                        double, QVector<GridPoint>& );
+   bool gen_grid_points( const GridInfo&, QVector<GridPoint>& );
+
+   bool parse_z_expression( const QString&, QString&, QString&, QVector<double>&, bool& );
 
    //! \brief Correct the unit of the parameter.
    double correct_unit( double, Attribute::Type, bool );
@@ -352,7 +547,7 @@ private:
    void clear_xyz( void );
 
    //! \brief Get input values.
-   bool get_xyz( GridInfo&, QString& );
+   bool validate_xyz( GridInfo&, QString& );
 
    //! \brief Check minimum and maximum values.
    bool check_minmax( const QString& );
@@ -360,11 +555,8 @@ private:
    //! \brief Sort grid points.
    void sort_points( void );
 
-   //! \brief Sort grid points.
-   void sort_col_val( QVector<GridPoint>& );
-
-   //! \brief Sort grid points.
-   void sort_row_idx( QVector<GridPoint>& );
+   //! \brief Sort partial grid points.
+   void sort_partial_grid_points( QVector<GridPoint>& );
 
    //! \brief Enable input widgets.
    void enable_ctrl( bool );
@@ -450,7 +642,7 @@ private slots:
    void plot_subgrid( double );
 
    //! \brief Slot to plot the selected grid.
-   void highlight( int );
+   void select_partial_grid( int );
 
    //! \brief Slot to update the symbol size.
    void set_symbol_size( double );
@@ -460,6 +652,12 @@ private slots:
 
    //! \brief Slot to load the model.
    void load( void );
+
+   //! \brief Slot to switch between the constant and varying Z-values.
+   void set_zval_type( int );
+
+   //! \brief Set a function for Z-values.
+   void set_z_function( void );
 
    // //! \brief Slot to display help information.
    // void help( void ) { showHelp.show_help( "grid_editor.html" ); };

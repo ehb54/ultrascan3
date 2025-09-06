@@ -143,12 +143,12 @@ QString US3i_Util::toISODatetimeText( QString dttext )
 // Convert a binary uuid to a QString
 QString US3i_Util::uuid_unparse( unsigned char* uu )
 {
-   return QString().sprintf(
+   return  QString::asprintf( 
          "%02hhx%02hhx%02hhx%02hhx-%02hhx%02hhx-%02hhx%02hhx-%02hhx%02hhx-"
          "%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx",
          uu[  0 ], uu[  1 ], uu[  2 ], uu[  3 ], uu[  4 ], uu[  5 ],
          uu[  6 ], uu[  7 ], uu[  8 ], uu[  9 ], uu[ 10 ], uu[ 11 ],
-         uu[ 12 ], uu[ 13 ], uu[ 14 ], uu[ 15 ] );
+         uu[ 12 ], uu[ 13 ], uu[ 14 ], uu[ 15 ]  ) ;
 }
 
 // Convert a triple string from expanded to compressed form
@@ -212,7 +212,7 @@ void US3i_Util::uuid_parse( const QString& in, unsigned char* uu )
 // in truth, that a random number over the given range has hit 1.
 bool US3i_Util::ithTime( int timeinc )
 {
-   int rannum  = qrand() % timeinc;
+   int rannum = QRandomGenerator::global()->bounded(timeinc);
    return ( rannum == 1 );
 }
 

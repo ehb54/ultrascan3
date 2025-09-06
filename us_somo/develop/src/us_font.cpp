@@ -82,7 +82,7 @@ US_Font::US_Font(QString *temp_fontFamily, int *temp_fontSize, QWidget *p, const
    
    xpos += column2 + spacing;
    
-   str.sprintf(us_trp(" %d points"), *fontSize);
+   str = QString::asprintf( us_trp(" %d points"), *fontSize );
    lbl_point2 = new QLabel(str, this);
    lbl_point2->setFrameStyle(QFrame::WinPanel|QFrame::Sunken);
    lbl_point2->setPalette( PALET_EDIT );

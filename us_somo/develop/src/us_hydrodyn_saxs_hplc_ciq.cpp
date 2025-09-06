@@ -283,6 +283,16 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
       cb_istarq->hide();
    }
 
+   le_istarq = new QLineEdit(this);
+   le_istarq->setText( parameters->count( "istarq_conc_file" ) ? (*parameters)[ "istarq_conc_file" ] : QString("") );
+   le_istarq->setReadOnly( true );
+   le_istarq->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   le_istarq->setPalette( PALET_NORMAL );
+   AUTFBACK( le_istarq );
+   if ( !parameters->count( "istarq_conc_file" ) ) {
+      le_istarq->hide();
+   }
+
    cb_I0se = new QCheckBox(this);
    cb_I0se->setText( us_tr( "Data already normalized. I0 standard experimental value (a.u.) : " ) );
    cb_I0se->setEnabled( true );
@@ -516,6 +526,7 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
 
    vbl->addWidget( cb_normalize );
    vbl->addWidget( cb_istarq );
+   vbl->addWidget( le_istarq );
 
    QGridLayout * gl = new QGridLayout( 0 ); gl->setContentsMargins( 0, 0, 0, 0 ); gl->setSpacing( 0 );
 

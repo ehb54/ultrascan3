@@ -117,6 +117,7 @@ class US_Astfem_Sim : public US_Widgets
       void   save_ultrascan ( const QString& );
       void   finish         ( void );
       void   ri_noise       ( void );
+      void   baseline       ( void );
       void   random_noise   ( void );
       void   ti_noise       ( void );
       void   plot           ( int  );
