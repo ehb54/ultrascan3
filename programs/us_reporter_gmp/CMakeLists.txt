@@ -1,9 +1,7 @@
 # us_reporter_gmp
 
 # Find required Qt components
-find_package(Qt5 REQUIRED COMPONENTS
-        Widgets Core Gui Network Sql Xml Svg OpenGL PrintSupport DataVisualization
-        )
+find_package(Qt5 REQUIRED COMPONENTS DataVisualization)
 
 # Main program sources from us_reporter_gmp directory
 set(REPORTER_GMP_SOURCES
@@ -136,8 +134,7 @@ target_include_directories(us_reporter_gmp PRIVATE
 # Link libraries
 target_link_libraries(us_reporter_gmp PRIVATE
         us_program_common
-        Qt5::DataVisualization  # Required by .pro file
-        Qt5::OpenGL            # Required by .pro file
+        Qt5::DataVisualization
         )
 
 # Install

@@ -1,9 +1,7 @@
 # us_query_rmsd
 
 # Find required Qt components
-find_package(Qt5 REQUIRED COMPONENTS
-        Widgets Core Gui Network Sql Xml Svg OpenGL PrintSupport DataVisualization
-        )
+find_package(Qt5 REQUIRED COMPONENTS DataVisualization)
 
 # Main program sources from us_query_rmsd directory
 set(QUERY_RMSD_SOURCES
@@ -146,7 +144,6 @@ target_include_directories(us_query_rmsd PRIVATE
 target_link_libraries(us_query_rmsd PRIVATE
         us_program_common
         Qt5::DataVisualization
-        Qt5::OpenGL
         )
 
 # Install

@@ -1,9 +1,7 @@
 # us_com_project_academic
 
 # Find required Qt components
-find_package(Qt5 REQUIRED COMPONENTS
-        Widgets Core Gui Network Sql Xml Svg OpenGL PrintSupport DataVisualization
-        )
+find_package(Qt5 REQUIRED COMPONENTS DataVisualization)
 
 # Main program sources from us_com_project_academic directory
 set(COM_PROJECT_ACADEMIC_SOURCES
@@ -183,7 +181,6 @@ target_include_directories(us_comproject_academic PRIVATE
 target_link_libraries(us_comproject_academic PRIVATE
         us_program_common
         Qt5::DataVisualization
-        Qt5::OpenGL
         )
 
 # Install

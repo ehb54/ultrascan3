@@ -11,21 +11,6 @@ if(US3_NO_DB)
     # list(REMOVE_ITEM UTILS_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/us_database.cpp")
 endif()
 
-# Platform-specific compile definitions for us_license_t.cpp
-if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
-    set_source_files_properties(us_license_t.cpp PROPERTIES
-            COMPILE_DEFINITIONS "TITLE=\"64-bit AMD Opteron\";OS_TITLE=\"Linux\";PLATFORM=\"opteron\";OS=\"linux\""
-            )
-elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-    set_source_files_properties(us_license_t.cpp PROPERTIES
-            COMPILE_DEFINITIONS "TITLE=\"Macintosh\";OS_TITLE=\"OSX\";PLATFORM=\"mac\";OS=\"osx\""
-            )
-elseif(WIN32)
-    set_source_files_properties(us_license_t.cpp PROPERTIES
-            COMPILE_DEFINITIONS "TITLE=\"Intel\";OS_TITLE=\"Windows\";PLATFORM=\"intel\";OS=\"win32\""
-            )
-endif()
-
 # Create the utils library
 add_library(us_utils ${UTILS_SOURCES} ${UTILS_HEADERS})
 

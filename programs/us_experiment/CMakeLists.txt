@@ -1,10 +1,5 @@
 # us_experiment
 
-# Find required Qt components based on .pro file
-find_package(Qt5 REQUIRED COMPONENTS
-        Widgets Core Gui Network Sql Xml PrintSupport
-        )
-
 # Main program sources from us_experiment directory
 set(EXPERIMENT_SOURCES
         us_experiment_main.cpp

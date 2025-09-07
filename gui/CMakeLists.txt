@@ -21,6 +21,7 @@ set_target_properties(us_gui PROPERTIES
         OUTPUT_NAME "us_gui${US3_VERSION_MAJOR}"  # Matches qmake VER = 10
         )
 
+# Platform-specific sources and linking
 if (WIN32)
     target_sources(us_gui PRIVATE ${CMAKE_CURRENT_LIST_DIR}/us_win_utils.cpp)
     target_link_libraries(us_gui PRIVATE user32)
@@ -41,9 +42,7 @@ elseif(UNIX) # Linux
     endif()
     find_package(X11 REQUIRED)
     target_link_libraries(us_gui PRIVATE X11::X11)
-
 endif()
-
 
 # Platform-specific compile definitions for us_license_t.cpp (if exists in gui)
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/us_license_t.cpp")
@@ -62,9 +61,6 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/us_license_t.cpp")
     endif()
 endif()
 
-# Dependencies - ensure utils is built first
-add_dependencies(us_gui us_utils)
-
 # Include directories
 target_include_directories(us_gui
         PUBLIC
@@ -72,21 +68,31 @@ target_include_directories(us_gui
         ${CMAKE_CURRENT_BINARY_DIR}
         )
 
-# Link libraries - all GUI dependencies
+# UltraScan3 internal dependencies
+add_dependencies(us_gui us_utils)
+target_link_libraries(us_gui PUBLIC UltraScan3::Utils)
+
+# Qt5 dependencies
 target_link_libraries(us_gui
         PUBLIC
-        UltraScan3::Utils    # Our utils library with all its dependencies
-        qwtplot3d            # Our 3D plotting library
-        Qt5::Widgets         # Core Qt5 GUI components
+        Qt5::Widgets
         Qt5::Gui
         Qt5::Svg
         Qt5::OpenGL
         Qt5::PrintSupport
-        Qwt::Qwt            # Qwt plotting library
-        OpenGL::GL          # OpenGL
         )
 
-# Platform-specific libraries
+# Plotting libraries
+target_link_libraries(us_gui
+        PUBLIC
+        qwtplot3d            # Our 3D plotting library
+        Qwt::Qwt            # Qwt plotting library
+        )
+
+# OpenGL
+target_link_libraries(us_gui PUBLIC OpenGL::GL)
+
+# Additional platform-specific libraries
 if(UNIX AND NOT APPLE)
     # Linux-specific
     if(GLU_LIBRARY)
@@ -100,7 +106,7 @@ elseif(APPLE)
     target_link_libraries(us_gui PUBLIC "-framework QtOpenGL")
 endif()
 
-# Export this target
+# Create alias for consistent naming
 add_library(UltraScan3::Gui ALIAS us_gui)
 
 # Installation

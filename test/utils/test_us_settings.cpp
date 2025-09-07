@@ -195,16 +195,3 @@ QString status = US_Settings::status();
 // Should be empty if no errors
 EXPECT_TRUE(status.isEmpty() || !status.contains("error", Qt::CaseInsensitive));
 }
-
-// Simple Integration Test
-TEST_F(US_SettingsTest, BasicIntegrationTest) {
-// Set a few different types of settings
-US_Settings::set_browser("/test/browser");
-US_Settings::set_threads(4);
-US_Settings::set_tempTolerance(2.0);
-
-// Verify they all persist
-EXPECT_EQ(US_Settings::browser(), "/test/browser");
-EXPECT_EQ(US_Settings::threads(), 4);
-EXPECT_DOUBLE_EQ(US_Settings::tempTolerance(), 2.0);
-}

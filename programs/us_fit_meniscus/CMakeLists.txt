@@ -1,10 +1,5 @@
 # us_fit_meniscus
 
-# Find required Qt components
-find_package(Qt5 REQUIRED COMPONENTS
-        Widgets Core Gui Network Sql Xml PrintSupport
-        )
-
 # Program sources as specified in .pro file
 set(FIT_MENISCUS_MAIN us_fit_meniscus_main.cpp)
 set(FIT_MENISCUS_SOURCES us_fit_meniscus.cpp)

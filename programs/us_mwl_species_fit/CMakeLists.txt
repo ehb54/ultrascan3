@@ -1,9 +1,7 @@
 # us_mwl_species_fit
 
 # Find required Qt components
-find_package(Qt5 REQUIRED COMPONENTS
-        Widgets Core Gui Network Sql Xml Svg OpenGL PrintSupport DataVisualization
-        )
+find_package(Qt5 REQUIRED COMPONENTS DataVisualization)
 
 # Check if DataVisualization was found
 if(NOT Qt5DataVisualization_FOUND)
@@ -56,7 +54,6 @@ target_include_directories(us_mwl_species_fit PRIVATE
 target_link_libraries(us_mwl_species_fit PRIVATE
         us_program_common
         Qt5::DataVisualization
-        Qt5::OpenGL
         )
 
 # Install

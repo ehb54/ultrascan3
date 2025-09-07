@@ -1,9 +1,7 @@
 # us_autoflow_analysis
 
 # Find required Qt components based on .pro file
-find_package(Qt5 REQUIRED COMPONENTS
-        Widgets Core Gui Network Sql Xml Svg OpenGL PrintSupport DataVisualization
-        )
+find_package(Qt5 REQUIRED COMPONENTS DataVisualization)
 
 # Main program sources from us_autoflow_analysis directory
 set(AUTOFLOW_SOURCES
@@ -137,7 +135,6 @@ target_include_directories(us_autoflow_analysis PRIVATE
 target_link_libraries(us_autoflow_analysis PRIVATE
         us_program_common
         Qt5::DataVisualization
-        Qt5::OpenGL
         )
 
 # Install

@@ -1,8 +1,7 @@
 # us_fematch
 
 # Find required Qt components based on .pro file
-find_package(Qt5 REQUIRED COMPONENTS
-        Widgets Core Gui Network Sql Xml Svg OpenGL PrintSupport DataVisualization
+find_package(Qt5 REQUIRED COMPONENTS DataVisualization
         )
 
 # Main program sources from us_fematch directory
@@ -137,7 +136,6 @@ target_include_directories(us_fematch PRIVATE
 target_link_libraries(us_fematch PRIVATE
         us_program_common
         Qt5::DataVisualization
-        Qt5::OpenGL
         )
 
 # Install

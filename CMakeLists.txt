@@ -7,6 +7,14 @@ project(UltraScan3
         LANGUAGES CXX C
         )
 
+execute_process(
+        COMMAND git log --oneline
+        COMMAND wc -l
+        COMMAND tr -d '\n'
+        OUTPUT_VARIABLE GIT_HASH
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
 # =============================================================================
 # CMAKE CONFIGURATION
 # =============================================================================
