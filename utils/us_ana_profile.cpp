@@ -826,7 +826,9 @@ bool US_AnaProfile::AnaProf2DSA::toXml( QXmlStreamWriter& xmlo )
                                                     parms[ ii ].ff0_const ) );
       xmlo.writeAttribute   ( "custom_grid_guid",   parms[ ii ].cust_grid );
 
-      xmlo.writeAttribute   ( "custom_grid_id",     QString::number( parms[ ii ].cust_id ));
+      QString m_cg_id = (parms[ ii ].cust_id > 0) ?
+	QString::number( parms[ ii ].cust_id ) : "";  
+      xmlo.writeAttribute   ( "custom_grid_id", m_cg_id );
 
       xmlo.writeAttribute   ( "custom_grid_name",   parms[ ii ].cgrid_name );
 
