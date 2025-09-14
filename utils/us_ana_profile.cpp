@@ -676,7 +676,7 @@ bool US_AnaProfile::AnaProf2DSA::fromXml( QXmlStreamReader& xmli )
             QString vvflag = attr.value( "vary_vbar" ).toString();
             QString cgrid  = attr.value( "custom_grid_guid" ).toString();
 	    QString cgrid_n = attr.value( "custom_grid_name" ).toString();
-	    int cgrid_i    = attr.value( "custom_grid_id" ).toString().toInt();
+	    int cgrid_i    = attr.value( "CG_modelID" ).toString().toInt();
             double smin    = attr.value( "s_min" ).toString().toDouble();
             double smax    = attr.value( "s_max" ).toString().toDouble();
             int sgpts      = attr.value( "s_gridpoints" ).toString().toInt();
@@ -828,7 +828,7 @@ bool US_AnaProfile::AnaProf2DSA::toXml( QXmlStreamWriter& xmlo )
 
       QString m_cg_id = (parms[ ii ].cust_id > 0) ?
 	QString::number( parms[ ii ].cust_id ) : "";  
-      xmlo.writeAttribute   ( "custom_grid_id", m_cg_id );
+      xmlo.writeAttribute   ( "CG_modelID", m_cg_id );
 
       xmlo.writeAttribute   ( "custom_grid_name",   parms[ ii ].cgrid_name );
 
