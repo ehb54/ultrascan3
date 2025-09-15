@@ -1303,6 +1303,8 @@ void US_FitMeniscus::edit_update( void )
   //ALEXEY: if autoflow: check if edit profiles already updated from other FITMEN session
   if ( auto_mode )
     {
+      pb_update->setEnabled( false );
+      
       QString requestID = triple_information[ "requestID" ];
       //--- LOCK && UPDATE the autoflowStages' ANALYSIS field for the record
       int status_fitmen_unique;

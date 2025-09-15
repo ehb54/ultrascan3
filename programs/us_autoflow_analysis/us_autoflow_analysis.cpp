@@ -1483,8 +1483,17 @@ bool US_Analysis_auto::loadModel( QMap < QString, QString > & triple_information
       QDateTime date               = db->value( 2 ).toDateTime();
 
       QDateTime now = QDateTime::currentDateTime();
+
+      QStringList a_stage_types = triple_information[ "stage_name" ].split("-");
+      bool stage_identity = true;
+      for (const QString& sub : a_stage_types )
+	{
+	  if (!description.contains(sub))
+	    stage_identity = false; 
+	}
       
-      if ( description.contains( triple_information[ "stage_name" ] ) ) 
+      //if ( description.contains( triple_information[ "stage_name" ] ) )
+      if ( stage_identity )
 	{
 	  if ( triple_information[ "stage_name" ] == "2DSA" )
 	    {
