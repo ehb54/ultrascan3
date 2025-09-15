@@ -4715,7 +4715,7 @@ bool US_Analysis_auto::file_loaded_auto( QMap < QString, QString > & triple_info
   qDebug() << "Triple filename: " << triple_information[ "filename" ];
   
   QDir directory (file_directory);
-  QStringList fm_files = directory.entryList( QStringList() << "2DSA-FM*" + triple_name_cut + "*.fitmen.dat", QDir::Files | QDir::NoSymLinks);
+  QStringList fm_files = directory.entryList( QStringList() << "2DSA*FM*" + triple_name_cut + "*.fitmen.dat", QDir::Files | QDir::NoSymLinks);
 
   qDebug() << "In file_loaded_auto: 22 -- triple: " << triple_name_cut;
 
