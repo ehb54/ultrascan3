@@ -13,11 +13,11 @@ int main( int argc, char* argv[] )
 
    // License is OK.  Start up.
    
-   //US_FitMeniscus w;
+   US_FitMeniscus w;
 
    // AutoFlow DEBUG
 
-   
+   /*
    QMap < QString, QString > triple_info_map;
    // triple_info_map[ "triple_name" ]     = QString("2 / A / 259");
    // triple_info_map[ "invID" ]           = QString("3");
@@ -45,7 +45,7 @@ int main( int argc, char* argv[] )
    triple_info_map[ "filename" ]        = QString("demo1_veloc-dataDiskRun-1607");
    
    US_FitMeniscus w( triple_info_map );
-   
+   */
    
    w.show();                   //!< \memberof QWidget
    return application.exec();  //!< \memberof QApplication
