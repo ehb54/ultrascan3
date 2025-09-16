@@ -1644,6 +1644,35 @@ DbgLv(1) << " update: vbar" << vbar;
              "van Holde - Weischet analysis can proceed." ).arg( vbar ) );
       return;
    }
+   QVector<US_SimulationParameters::SpeedProfile> speed_profiles;
+   speed_profiles.clear();
+   QStringList check_results = US_AstfemMath::check_acceleration(speed_profiles, edata->scanData);
+   if ( !check_results.isEmpty() ) {
+       QMessageBox msgBox( this );
+       msgBox.setWindowTitle( tr( qPrintable( check_results[0] ) ) );
+       if ( check_results.size() > 2 ) {
+           msgBox.setTextFormat( Qt::RichText );
+           msgBox.setText( tr( qPrintable( check_results[1] ) ) );
+       }
+       if ( check_results.size() > 3 ) {
+           QString info = "";
+           for ( int i = 2; i < check_results.size(); i++ ) {
+               info += check_results[i] + "\n";
+           }
+           msgBox.setInformativeText( tr( qPrintable( info ) ) );
+       }
+       msgBox.addButton( tr( "Continue" ), QMessageBox::RejectRole );
+       QPushButton* bAbort = msgBox.addButton( tr( "Abort" ),
+                                                                                                       QMessageBox::YesRole );
+       msgBox.setDefaultButton( bAbort );
+       msgBox.exec();
+
+       if ( msgBox.clickedButton() == bAbort ) {
+           QApplication::restoreOverrideCursor();
+           qApp->processEvents();
+           return;
+       }
+   }
 
    // After triple update has completed, we can proceed with plotting
    forcePlot  = true;
