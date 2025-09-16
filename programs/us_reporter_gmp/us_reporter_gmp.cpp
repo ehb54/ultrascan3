@@ -1279,13 +1279,17 @@ void US_ReporterGMP::check_models ( int autoflowID )
 	  
 	  QDateTime now = QDateTime::currentDateTime();
 	  
-	  if ( description.contains( "2DSA-IT" ) && modelID == Triple_to_ModelsDesc[ Array_of_tripleNames[ i ] ][ "2DSA-IT" ] )
+	  // if ( description.contains( "2DSA-IT" )
+	  if ( description.contains( "2DSA" ) && description.contains( "-IT") 
+	       && modelID == Triple_to_ModelsDesc[ Array_of_tripleNames[ i ] ][ "2DSA-IT" ] )
 	    {
 	      qDebug() << "2DSA-IT Ids: modelID, read from modelLink: " << modelID << Triple_to_ModelsDesc[ Array_of_tripleNames[ i ] ][ "2DSA-IT" ];
 	      model_list << "2DSA-IT";
 	    }
 	  
-	  if ( description.contains( "2DSA-MC" ) && modelID == Triple_to_ModelsDesc[ Array_of_tripleNames[ i ] ][ "2DSA-MC" ] )
+	  //if ( description.contains( "2DSA-MC" )
+	  if ( description.contains( "2DSA" ) && description.contains( "-MC")     
+	       && modelID == Triple_to_ModelsDesc[ Array_of_tripleNames[ i ] ][ "2DSA-MC" ] )
 	    {
 	      qDebug() << "2DSA-MC Ids: modelID, read from modelLink: " << modelID << Triple_to_ModelsDesc[ Array_of_tripleNames[ i ] ][ "2DSA-MC" ];
 	      model_list << "2DSA-MC";
