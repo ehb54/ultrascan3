@@ -363,7 +363,7 @@ QStringList US_AstfemMath::check_acceleration(const QVector<US_SimulationParamet
       results << "Bad TimeState Implied - First Scan During Acceleration";
       results << QString( "The first scan of the experiment occurs before the end of the acceleration zone.<br/>"
          "The first scan time is %1 seconds, while the acceleration zone ends at %2 seconds.<br/>"
-         "This causes the meniscus to be change during the experiment and will lead to incorrect fitting results.<br/>"
+         "This causes the meniscus to change during the experiment and will lead to incorrect fitting results.<br/>"
          "Please consult the documentation for more information." )
          .arg(QString::number(first_scan_time, 'g', 1))
          .arg(QString::number(accel_end, 'g', 1));
