@@ -3,20 +3,21 @@
 #include <QtSvg>
 
 #include "us_analysis_base2.h"
-#include "us_settings.h"
-#include "us_gui_settings.h"
-#include "us_gui_util.h"
-#include "us_run_details2.h"
 #include "us_analyte_gui.h"
+#include "us_astfem_math.h"
 #include "us_buffer_gui.h"
 #include "us_data_loader.h"
-#include "us_noise_loader.h"
-#include "us_loadable_noise.h"
 #include "us_db2.h"
+#include "us_gui_settings.h"
+#include "us_gui_util.h"
+#include "us_loadable_noise.h"
+#include "us_noise_loader.h"
 #include "us_passwd.h"
-#include "us_solution_vals.h"
-#include "us_solution_gui.h"
 #include "us_report.h"
+#include "us_run_details2.h"
+#include "us_settings.h"
+#include "us_solution_gui.h"
+#include "us_solution_vals.h"
 #if QT_VERSION < 0x050000
 #define setSamples(a,b,c) setData(a,b,c)
 #define setMinimum(a)  setMinValue(a)
@@ -405,6 +406,35 @@ void US_AnalysisBase2::update( int selection )
    {
       delete dbP;
    }
+  QVector<US_SimulationParameters::SpeedProfile> speed_profiles;
+  speed_profiles.clear();
+  QStringList check_results = US_AstfemMath::check_acceleration(speed_profiles, d->scanData);
+  if ( !check_results.isEmpty() ) {
+      QMessageBox msgBox( this );
+      msgBox.setWindowTitle( tr( qPrintable( check_results[0] ) ) );
+      if ( check_results.size() > 2 ) {
+          msgBox.setTextFormat( Qt::RichText );
+          msgBox.setText( tr( qPrintable( check_results[1] ) ) );
+      }
+      if ( check_results.size() > 3 ) {
+          QString info = "";
+          for ( int i = 2; i < check_results.size(); i++ ) {
+              info += check_results[i] + "\n";
+          }
+          msgBox.setInformativeText( tr( qPrintable( info ) ) );
+      }
+      msgBox.addButton( tr( "Continue" ), QMessageBox::RejectRole );
+      QPushButton* bAbort = msgBox.addButton( tr( "Abort" ),
+                                                                                                      QMessageBox::YesRole );
+      msgBox.setDefaultButton( bAbort );
+      msgBox.exec();
+
+      if ( msgBox.clickedButton() == bAbort ) {
+          QApplication::restoreOverrideCursor();
+          qApp->processEvents();
+          return;
+      }
+  }
 
    data_plot();
 }
