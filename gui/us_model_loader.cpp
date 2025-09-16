@@ -1481,8 +1481,8 @@ void US_ModelLoader::accepted_auto( QStringList m_t_r_id )
        int     mdx     = modelIndex( mdesc, allmods );
        QString modelID = allmods.at( mdx ).DB_id;
        
-       if ( model_text.contains( model_passed ) &&
-	    model_text.contains( triple_passed ) &&
+       //if ( model_text.contains( model_passed ) &&
+       if(  model_text.contains( triple_passed ) &&
 	    model_text.contains( runid_passed ) &&
 	    modelID == modelid_passed )
 	 {
