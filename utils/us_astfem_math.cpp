@@ -278,6 +278,99 @@ DbgLv(0) << "AMATH:loac:t1 t2" << t1 << t2 << "t_acc rate" << t_acc << rate;
    return ( rate < min_accel );
 }
 
+QStringList US_AstfemMath::check_acceleration(const QVector<US_SimulationParameters::SpeedProfile> & speed_profiles,
+   const QVector<US_DataIO::Scan> & scans) {
+   QStringList results;
+   QString dbgval   = US_Settings::debug_value( "SetSpeedLowAcc" );
+   double low_acceleration_limit = dbgval.isEmpty() ? DSS_LO_ACC : dbgval.toDouble(); // low acceleration rate limit (rpm/s)
+   double accel_rate = 0.0;
+   double accel_end = 0.0;
+   double target_speed = 0.0;
+   double first_scan_time = 0.0;
+   double first_scan_omega2t = 0.0;
+
+
+   // Calculate the acceleration rate from the speed steps
+   if ( !speed_profiles.isEmpty() ) {
+      target_speed = speed_profiles[ 0 ].rotorspeed;
+      first_scan_time = speed_profiles[ 0 ].time_first;
+      first_scan_omega2t = speed_profiles[ 0 ].w2t_first;
+   }
+   // If the speed_profiles are missing use the first scan
+   else if ( !scans.isEmpty() ) {
+      for (int i = 0; i < scans.size(); i++ ) {
+         if ( i == 0 || scans[i].seconds < first_scan_time ) {
+            first_scan_time = scans[i].seconds;
+            first_scan_omega2t = scans[i].omega2t;
+            target_speed = scans[i].rpm;
+         }
+      }
+   }
+   else {
+      return results;
+   }
+
+   const double tfac = ( 3.0 / 2.0 );
+   double om1t       = target_speed * M_PI / 30.0;
+   double w2         = sq( om1t );
+   double t1w        = first_scan_omega2t / w2;
+
+   // =====================================================================
+   // For the first speed step, we compute "t1", the end of the initial
+   // acceleration zone, using
+   //   "t2"   , the time in seconds for the first scan;
+   //   "w2t"  , the omega^2_t integral for the first scan time;
+   //   "w2"   , the omega^2 value for the constant zone speed;
+   //   "tfac" , a factor (==(3/2)==1.5) derived from the following.
+   //   "acc"  , the acceleration rate in radians/s^2
+   //   "rpm"  , the target/set speed in rpm
+   // The acceleration zone begins at t0=0.0.
+   // It ends at time "t1".
+   // The time between t1 and t2 is at constant speed.
+   // The time between 0 and t1 is at changing speeds averaging (rpm/2).
+   // For I1 and I2, the omega^2t integrals at t1 and t2,
+   //                    ( I2 - I1 ) = ( t2 - t1 ) * w2       (equ.1)
+   //                             I1 = acc^2 * t1^3 / 3       (equ.2)
+   //                            rpm = acc * t1 * 30 / PI
+   //                             I1 = ( rpm * PI / 30 )^2 * t1 / 3
+   //                             w2 = ( rpm * PI / 30 )^2
+   //                             I1 = ( w2 / 3 ) * t1
+   //                             I2 = w2t
+   // Substituting into equ.1, we get:
+   //  ( w2t - ( ( w2 / 3 ) * t1 ) ) = ( t2 - t1 ) * w2
+   //  t1 * ( w2 - ( w2 / 3 ) )      = t2 * w2 - w2t
+   //  t1 * ( 2 / 3 ) * w2           = t2 * w2 - w2t
+   //                            t1  = ( 3 / 2 ) * ( t2 - ( w2t / w2 ) )
+   // =====================================================================
+
+   accel_end      = tfac * ( first_scan_time - t1w );
+   DbgLv(0) << "AMATH:loac: om1t w2 w2t" << om1t << w2 << first_scan_omega2t
+      << "t1w" << t1w << "tfac" << tfac;
+
+   accel_rate           = target_speed / accel_end;
+   DbgLv(0) << "AMATH:loac:t1 t2" << accel_end << first_scan_time << "t_acc rate" << accel_rate;
+   if ( accel_rate < low_acceleration_limit ) {
+      // low acceleration rate
+      results << "Bad TimeState Implied - Low Acceleration Rate";
+      results << QString( "The experiment has a slower acceleration rate than expected.<br/>"
+         "The rate implied for linear acceleration is %1 rpm/s, while 400 rpm/s were expected.<br/>"
+         "If the acceleration is non-linear, this may lead to incorrect fitting results.<br/>"
+         "Please consult the documentation for more information." )
+         .arg(QString::number(accel_rate));
+   }
+   else if ( first_scan_time < accel_end ) {
+      // first scan time is before the end of the acceleration zone
+      results << "Bad TimeState Implied - First Scan During Acceleration";
+      results << QString( "The first scan of the experiment occurs before the end of the acceleration zone.<br/>"
+         "The first scan time is %1 seconds, while the acceleration zone ends at %2 seconds.<br/>"
+         "This causes the meniscus to be change during the experiment and will lead to incorrect fitting results.<br/>"
+         "Please consult the documentation for more information." )
+         .arg(QString::number(first_scan_time, 'g', 1))
+         .arg(QString::number(accel_end, 'g', 1));
+   }
+   return results;
+}
+
 // Determine if a timestate file holds one-second-interval records
 bool US_AstfemMath::timestate_onesec( const QString& tmst_fpath,
                                       US_DataIO::RawData&      sim_data )

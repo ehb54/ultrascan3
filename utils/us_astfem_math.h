@@ -45,6 +45,13 @@ class US_UTIL_EXTERN US_AstfemMath
       static bool low_acceleration( const QVector< US_SimulationParameters::SpeedProfile >&,
                                     const double, double& );
 
+      //! \brief Check for linear acceleration in the experimental data
+      //! \param speed_profiles  Vector of speed steps
+      //! \param scans       Vector of scans
+      //! \returns results   QStringList for the acceleration check title, body
+      static QStringList check_acceleration( const QVector< US_SimulationParameters::SpeedProfile >& speed_profiles,
+                                             const QVector< US_DataIO::Scan >& scans);
+
       //! \brief Determine if a timestate file holds one-second-interval records
       //! \param tmst_fpath  Full path to timestate file to examine
       //! \param sim_data    Raw data with scans to examine
