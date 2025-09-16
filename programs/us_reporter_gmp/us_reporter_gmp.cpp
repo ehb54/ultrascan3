@@ -5798,10 +5798,17 @@ void US_ReporterGMP::process_combined_plots_individual ( QString triplesname_p, 
 
       qDebug() << "INDCOMBO_1: " << modelDescModified[ ii ];
       qDebug() << "INDCOMBO_2: " << triplesname << stage_model << triplesname_chann;
-          
+
+      /**/
+      QString reg_exp_sm = stage_model.replace("-","*");
+      qDebug() << "INDCOMBO_2a: reg_exp_sm -- " << reg_exp_sm;
+      QRegularExpression re_sm(reg_exp_sm);
+      /**/
+      
       //fiter by type|model
       if ( modelDescModified[ ii ].contains( triplesname_mod ) &&
-	   modelDescModified[ ii ].contains( stage_model ) &&
+	   //modelDescModified[ ii ].contains( stage_model ) &&
+	   modelDescModified[ ii ].contains( re_sm ) &&
 	   modelGuidExistsForStage_ind( triplesname, stage_model, modelDescModifiedGuid[ ii ] ) )
 	{
 	  qDebug()  << "INDCOMBO_3: YES ";
