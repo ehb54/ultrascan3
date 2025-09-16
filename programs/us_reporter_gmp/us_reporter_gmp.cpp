@@ -5800,7 +5800,8 @@ void US_ReporterGMP::process_combined_plots_individual ( QString triplesname_p, 
       qDebug() << "INDCOMBO_2: " << triplesname << stage_model << triplesname_chann;
 
       /**/
-      QString reg_exp_sm = stage_model.replace("-","*");
+      QString reg_exp_sm = stage_model;
+      reg_exp_sm = reg_exp_sm.replace("-",".*");
       qDebug() << "INDCOMBO_2a: reg_exp_sm -- " << reg_exp_sm;
       QRegularExpression re_sm(reg_exp_sm);
       /**/
