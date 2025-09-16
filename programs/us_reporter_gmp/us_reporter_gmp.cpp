@@ -6095,7 +6095,7 @@ void US_ReporterGMP::process_combined_plots ( QString filename_passed )
 
 	  //DEBUG
 	  bool b_1 = modelDescModified[ ii ].contains( reg_exp_sm );
-	  qDebug() << "b_1, reg_exp_sm  -- " << b_1 << reg_exp_sm;
+	  qDebug() << "b_1, modelDescModified[ ii ], reg_exp_sm  -- " << b_1 << modelDescModified[ ii ] << reg_exp_sm;
 	  modelGuidExistsForStage( modelNames[ m ], modelDescModifiedGuid[ ii ] );
 	  //
 	  
