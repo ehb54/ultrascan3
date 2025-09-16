@@ -5806,12 +5806,12 @@ void US_ReporterGMP::process_combined_plots_individual ( QString triplesname_p, 
       QRegularExpression re_sm(reg_exp_sm);
       /**/
 
-      //DEBUG
-      bool b_1 = modelDescModified[ ii ].contains( triplesname_mod );
-      bool b_2 =  modelDescModified[ ii ].contains( re_sm );
-      qDebug() << "b_1, b_2 -- " << b_1 << b_2;
-      modelGuidExistsForStage_ind( triplesname, stage_model, modelDescModifiedGuid[ ii ] );
-      //DEBUG
+      // //DEBUG
+      // bool b_1 = modelDescModified[ ii ].contains( triplesname_mod );
+      // bool b_2 =  modelDescModified[ ii ].contains( re_sm );
+      // qDebug() << "b_1, b_2 -- " << b_1 << b_2;
+      // modelGuidExistsForStage_ind( triplesname, stage_model, modelDescModifiedGuid[ ii ] );
+      // //DEBUG
       
       //fiter by type|model
       if ( modelDescModified[ ii ].contains( triplesname_mod ) &&
@@ -6087,7 +6087,20 @@ void US_ReporterGMP::process_combined_plots ( QString filename_passed )
       for ( int ii = 0; ii < modelDescModified.size(); ii++ )  
 	{
 	  //fiter by type|model
-	  if ( modelDescModified[ ii ].contains( modelNames[ m ] ) && modelGuidExistsForStage( modelNames[ m ], modelDescModifiedGuid[ ii ] ) )
+	  /**/
+	  QString reg_exp_sm = modelNames[ m ];
+	  reg_exp_sm = reg_exp_sm.replace("-",".*");
+	  QRegularExpression re_sm(reg_exp_sm);
+	  /**/
+
+	  //DEBUG
+	  bool b_1 = modelDescModified[ ii ].contains( reg_exp_sm );
+	  qDebug() << "b_1, reg_exp_sm  -- " << b_1 << reg_exp_sm;
+	  modelGuidExistsForStage( modelNames[ m ], modelDescModifiedGuid[ ii ] );
+	  //
+	  
+	  if ( modelDescModified[ ii ].contains( modelNames[ m ] ) &&
+	       modelGuidExistsForStage( modelNames[ m ], modelDescModifiedGuid[ ii ] ) )
 	    {
 	      isModel = true;
 
