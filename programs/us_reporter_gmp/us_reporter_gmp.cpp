@@ -9150,6 +9150,8 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
    QString model_name = mdla.split("_")[1];
    if ( model_name.contains("PCSA") )
      model_name = "PCSA";
+   if ( model_name.contains("-CG") )
+     model_name = model_name.replace("-CG", "");
    
    double tot_conc_r, tot_conc_r_factor, tot_conc_tol_r, rmsd_r, av_int_r, exp_dur_r, exp_dur_tol_r;
    double loading_volume_r, loading_volume_tol_r ;
@@ -9372,8 +9374,17 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
        QString method         = curr_item.method;
        if( method.contains ("PCSA") )
 	 method = "PCSA";
-
-       if ( mdla.contains ( method ) )
+       /* */
+       QStringList a_method_types = method.split("-");
+       bool method_identity = true;
+       for (const QString& sub : a_method_types )
+	 {
+	  if (!mdla.contains(sub) )
+	    method_identity = false; 
+	 }
+	/* */
+	 
+       if ( mdla.contains ( method ) || method_identity )
 	 method_type_combo_exists = true;
      }
    
@@ -9456,8 +9467,19 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
 	   QString tot_frac_passed = ( qAbs( frac_tot_m - frac_tot_r ) <= frac_tot_tol_r ) ? "YES" : "NO";
 
 	   double wav_variable_within_range = double( variable_val_within_range / int_val_m );
+
+	   /* */
+	   QStringList a_method_types = method.split("-");
+	   bool method_identity = true;
+	   for (const QString& sub : a_method_types )
+	     {
+	       if (!mdla.contains(sub) )
+		 method_identity = false; 
+	     }
+	   /* */
 	   
-	   if ( mdla.contains ( method ) )
+	   //if ( mdla.contains ( method ) )
+	   if ( method_identity )
 	     {
 	       // curr_item. integration_val_sim = int_val_m;
 	       // curr_item. total_percent_sim   = frac_tot_m;
