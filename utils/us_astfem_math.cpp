@@ -290,7 +290,7 @@ QStringList US_AstfemMath::check_acceleration(const QVector<US_SimulationParamet
    double first_scan_omega2t = 0.0;
 
 
-   // Calculate the acceleration rate from the speed steps
+   // Calculate the acceleration rate from the speed profiles
    if ( !speed_profiles.isEmpty() ) {
       target_speed = speed_profiles[ 0 ].rotorspeed;
       first_scan_time = speed_profiles[ 0 ].time_first;
