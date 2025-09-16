@@ -1999,8 +1999,6 @@ DbgLv(1) << "CGui:IOD:  ochx" << trx << "celchn cID" << celchn << chanID;
    int     nspeed   = US_SimulationParameters::readSpeedSteps( runID, dataType,
                                                                speedsteps );
    int     nspeedc  = 0;
-   bool low_accel   = false;
-   double rate      = 400.0;
 DbgLv(1) << "CGui:IOD:   rSS nspeed" << nspeed;
 
    if ( nspeed == 0 )
@@ -2009,60 +2007,6 @@ DbgLv(1) << "CGui:IOD:   rSS nspeed" << nspeed;
       nspeedc          = speedsteps.size();
       nspeed           = nspeedc;
 DbgLv(1) << "CGui:IOD:   cSS nspeed" << speedsteps.size();
-
-      // Check to see if implied 1st acceleration is too low
-#define DSS_LO_ACC 250.0 // default SetSpeedLowAccel
-      // if ( impType != 2 )  // Check if not imported AUC
-      // {
-      //    QString dbgval   = US_Settings::debug_value( "SetSpeedLowAcc" );
-      //    double ss_lo_acc = dbgval.isEmpty() ? DSS_LO_ACC : dbgval.toDouble();
-      //    low_accel        = US_AstfemMath::low_acceleration( speedsteps, ss_lo_acc, rate );
-      // }
-   }
-
-   // Report problematic 1st speed step
-   if ( low_accel )
-   {
-      int tf_scan      = speedsteps[ 0 ].time_first;
-      int accel1       = (int)qRound( rate );
-      int rspeed       = speedsteps[ 0 ].rotorspeed;
-      double  tf_aend   = static_cast<double>(tf_scan);
-      // prevent any division by zero
-      if (accel1 != 0)
-      {
-         tf_aend = static_cast<double>(rspeed) / static_cast<double>(accel1);
-      }
-
-      QString wmsg = tr( "The SpeedStep computed/used is likely bad:<br/>"
-                         "The acceleration implied is %1 rpm/sec.<br/>"
-                         "The acceleration zone ends at %2 seconds,<br/>"
-                         "with a first scan time of %3 seconds.<br/><br/>"
-                         "<b>You should rerun the experiment without<br/>"
-                         "any interim constant speed, and then<br/>"
-                         "you should reimport the data.</b>" )
-                     .arg( accel1 ).arg( QString::number(tf_aend) ).arg( QString::number(tf_scan) );
-
-      QMessageBox msgBox( this );
-      msgBox.setWindowTitle( tr( "Bad TimeState Implied!" ) );
-      msgBox.setTextFormat( Qt::RichText );
-      msgBox.setText( wmsg );
-      msgBox.addButton( tr( "Continue" ), QMessageBox::RejectRole );
-      QPushButton* bAbort = msgBox.addButton( tr( "Abort" ),
-            QMessageBox::YesRole    );
-      msgBox.setDefaultButton( bAbort );
-      msgBox.exec();
-      if ( msgBox.clickedButton() == bAbort )
-      {  // Abort the import of this data
-         QApplication::restoreOverrideCursor();
-         qApp->processEvents();
-         //reset();
-         return false;
-      }
-      else
-      {  // Modify times and omegas of this data, then proceed to import
-         int status = US_Convert::adjustSpeedstep( allData, speedsteps );
-DbgLv(1) << "CGui:IOD: adjSS stat" << status;
-      }
    }
 
    // MultiWaveLength if channels and triples counts differ
