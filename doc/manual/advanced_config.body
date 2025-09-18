@@ -56,7 +56,7 @@
                   <b>pcsaTiming</b> Flag to print debug timings in us_pcsa.
                </li>
                <li>
-                  <b>hsclogo</b> Flag to include the HS logo in the generated reports.
+                  <b>hsclogo</b> Flag to include the University of Texas Health Science Center logo in the generated reports.
                </li>
                <li>
                   <b>becklogo</b> Flag to include the Beckman logo in the generated reports.
