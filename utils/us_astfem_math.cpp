@@ -281,39 +281,52 @@ DbgLv(0) << "AMATH:loac:t1 t2" << t1 << t2 << "t_acc rate" << t_acc << rate;
 QStringList US_AstfemMath::check_acceleration(const QVector<US_SimulationParameters::SpeedProfile> & speed_profiles,
    const QVector<US_DataIO::Scan> & scans) {
    QStringList results;
-   QString dbgval   = US_Settings::debug_value( "SetSpeedLowAcc" );
-   double low_acceleration_limit = dbgval.isEmpty() ? DSS_LO_ACC : dbgval.toDouble(); // low acceleration rate limit (rpm/s)
-   double accel_rate = 0.0;
-   double accel_end = 0.0;
-   double target_speed = 0.0;
-   double first_scan_time = 0.0;
-   double first_scan_omega2t = 0.0;
+   // Settings and constants
+   const QString dbgval = US_Settings::debug_value( "SetSpeedLowAcc" );
+   const double lowAccelLimit = dbgval.isEmpty() ? DSS_LO_ACC : dbgval.toDouble(); // rpm/s
 
 
-   // Calculate the acceleration rate from the speed profiles
+   constexpr double kRpmToRadPerSec = M_PI / 30.0;  // convert rpm to rad/s
+   constexpr double kT1Factor       = 1.5;          // (3.0 / 2.0)
+
+   // Inputs distilled into a single "first scan" and target speed
+   double targetRpm          = 0.0;
+   double firstScanTime      = 0.0;
+   double firstScanOmega2t   = 0.0;
+
+   // Prefer speed profile when present
    if ( !speed_profiles.isEmpty() ) {
-      target_speed = speed_profiles[ 0 ].rotorspeed;
-      first_scan_time = speed_profiles[ 0 ].time_first;
-      first_scan_omega2t = speed_profiles[ 0 ].w2t_first;
+      targetRpm         = speed_profiles[ 0 ].rotorspeed;
+      firstScanTime     = speed_profiles[ 0 ].time_first;
+      firstScanOmega2t  = speed_profiles[ 0 ].w2t_first;
    }
-   // If the speed_profiles are missing use the first scan
+   // Otherwise, deduce earliest scan from data scans
    else if ( !scans.isEmpty() ) {
-      for (int i = 0; i < scans.size(); i++ ) {
-         if ( i == 0 || scans[i].seconds < first_scan_time ) {
-            first_scan_time = scans[i].seconds;
-            first_scan_omega2t = scans[i].omega2t;
-            target_speed = scans[i].rpm;
+      bool initialized = false;
+      for ( const auto& sc : scans ) {
+         if ( !initialized || sc.seconds < firstScanTime ) {
+            firstScanTime     = sc.seconds;
+            firstScanOmega2t  = sc.omega2t;
+            targetRpm         = sc.rpm;
+            initialized       = true;
          }
       }
    }
+   // No information; nothing to check
    else {
       return results;
    }
 
-   const double tfac = ( 3.0 / 2.0 );
-   double om1t       = target_speed * M_PI / 30.0;
-   double w2         = sq( om1t );
-   double t1w        = first_scan_omega2t / w2;
+   // Convert to angular speed and compute omega^2
+   const double omegaAtTarget = targetRpm * kRpmToRadPerSec; // rad/s
+   const double omegaSquared  = sq( omegaAtTarget );
+
+   if ( omegaSquared <= 0.0 ) {
+      // Guard: cannot compute with zero target speed (w^2 == 0)
+      results << "Insufficient Data - Zero Target Speed"
+              << "The target speed implies zero angular velocity; acceleration checks cannot be performed.";
+      return results;
+   }
 
    // =====================================================================
    // For the first speed step, we compute "t1", the end of the initial
@@ -342,32 +355,41 @@ QStringList US_AstfemMath::check_acceleration(const QVector<US_SimulationParamet
    //  t1 * ( 2 / 3 ) * w2           = t2 * w2 - w2t
    //                            t1  = ( 3 / 2 ) * ( t2 - ( w2t / w2 ) )
    // =====================================================================
+   const double t1w     = firstScanOmega2t / omegaSquared;
+   const double accelEnd = kT1Factor * ( firstScanTime - t1w ); // seconds
 
-   accel_end      = tfac * ( first_scan_time - t1w );
-   DbgLv(0) << "AMATH:loac: om1t w2 w2t" << om1t << w2 << first_scan_omega2t
-      << "t1w" << t1w << "tfac" << tfac;
+   if ( accelEnd <= 0.0 ) {
+      // Guard: non-positive acceleration duration not meaningful
+      results << "Bad TimeState Implied - Non-Positive Acceleration Duration";
+      results << QString( "The derived end of the acceleration period is non-positive (%1 s), "
+                          "which is inconsistent with the data and prevents a valid acceleration rate." )
+                 .arg(QString::number(accelEnd, 'g', 1));
+      return results;
+   }
 
-   accel_rate           = target_speed / accel_end;
-   DbgLv(0) << "AMATH:loac:t1 t2" << accel_end << first_scan_time << "t_acc rate" << accel_rate;
-   if ( accel_rate < low_acceleration_limit ) {
-      // low acceleration rate
+   const double accelRate = targetRpm / accelEnd; // rpm/s
+
+   if ( accelRate < lowAccelLimit ) {
+      // Low acceleration rate
       results << "Bad TimeState Implied - Low Acceleration Rate";
       results << QString( "The experiment has a slower acceleration rate than expected.<br/>"
-         "The rate implied for linear acceleration is %1 rpm/s, while 400 rpm/s were expected.<br/>"
+         "The rate implied for linear acceleration is %1 rpm/s, while %2 rpm/s or more were expected.<br/>"
          "If the acceleration is non-linear, this may lead to incorrect fitting results.<br/>"
          "Please consult the documentation for more information." )
-         .arg(QString::number(accel_rate));
+         .arg(QString::number(accelRate, 'g', 1))
+         .arg(QString::number(lowAccelLimit, 'g', 1));
    }
-   else if ( first_scan_time < accel_end ) {
-      // first scan time is before the end of the acceleration zone
+   else if ( firstScanTime < accelEnd ) {
+      // The first scan time is before the end of the acceleration zone
       results << "Bad TimeState Implied - First Scan During Acceleration";
       results << QString( "The first scan of the experiment occurs before the end of the acceleration zone.<br/>"
          "The first scan time is %1 seconds, while the acceleration zone ends at %2 seconds.<br/>"
          "This causes the meniscus to change during the experiment and will lead to incorrect fitting results.<br/>"
          "Please consult the documentation for more information." )
-         .arg(QString::number(first_scan_time, 'g', 1))
-         .arg(QString::number(accel_end, 'g', 1));
+         .arg(QString::number(firstScanTime, 'g', 1))
+         .arg(QString::number(accelEnd, 'g', 1));
    }
+
    return results;
 }
 
