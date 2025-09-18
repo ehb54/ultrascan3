@@ -50,7 +50,7 @@
                   <b>protocolFromDisk</b> Flag to load protocols from disk and not from database.
                </li>
                <li>
-                  <b>men2click</b> Flag to require user to specify right and left border of the meniscus in us_edit instead of on position.
+                  <b>men2click</b> Flag to require user to specify right and left border of the meniscus in us_edit instead of specifying one position.
                </li>
                <li>
                   <b>pcsaTiming</b> Flag to print debug timings in us_pcsa.
