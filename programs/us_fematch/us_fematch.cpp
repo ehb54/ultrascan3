@@ -2201,7 +2201,7 @@ DbgLv(1) << "SimMdl:  accel-calc:  t1 t2 w2t t_acc speed rate"
          simparams.speed_step[ 0 ].acceleration = (int)qRound( rate );
       }
    }
-   QStringList check_results = US_AstfemMath::check_acceleration(simparams.speed_step, edata.scanData);
+   QStringList check_results = US_AstfemMath::check_acceleration(simparams.speed_step, edata->scanData);
    if ( !check_results.isEmpty() ) {
        QMessageBox msgBox( this );
        msgBox.setWindowTitle( tr( qPrintable( check_results[0] ) ) );
