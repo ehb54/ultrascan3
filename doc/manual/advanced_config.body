@@ -21,6 +21,50 @@
             can be turned on or off based on a debug text phrase. One or more of
             such phrases may be entered in this list. Leading or trailing blanks
             and multiple consecutive blanks are ignored.
+            <ul>
+               <li>
+                  <b>SetSpeedResolution</b> The resolution of the speed (raw_speed/speed_resolution)*speed_resolution. Default: 100
+               </li>
+               <li>
+                  <b>SetSpeedLowAcc</b> The threshold for the acceleration rate to be considered low acceleration. Default: 250
+               </li>
+               <li>
+                  <b>SetSpeedLowR</b> The threshold for eligible experimental speed. Default: 1500
+               </li>
+               <li>
+                  <b>SpeedStepLowSec</b> Minimum time in seconds for a constant speed zone without scans to be treated as distinct speed step. Default: 20
+               </li>
+               <li>
+                  <b>normCutoff</b> The norm cut off, value for which a solute gets removed from the grid space. Default: normCutoff=1.0
+               </li>
+               <li>
+                  <b>2dsaFinalNoiseOnly</b> Flag to apply any noise correction only on the final iteration.
+               </li>
+               <li>
+                  <b>MC-GaussianSmooth</b> Flag to construct MC sigmas from residuals smoothed for each scan instead from iteration 1 residuals.
+               </li>
+               <li>
+                  <b>2dsaTiming</b> Flag to print debug timings in us_2dsa.
+               </li>
+               <li>
+                  <b>protocolFromDisk</b> Flag to load protocols from disk and not from database.
+               </li>
+               <li>
+                  <b>men2click</b> Flag to require user to specify right and left border of the meniscus in us_edit instead of on position.
+               </li>
+               <li>
+                  <b>pcsaTiming</b> Flag to print debug timings in us_pcsa.
+               </li>
+               <li>
+                  <b>hsclogo</b> Flag to include the HS logo in the generated reports.
+               </li>
+               <li>
+                  <b>becklogo</b> Flag to include the Beckman logo in the generated reports.
+               </li>
+               <li>
+                  <b>us3logo</b> Flag to include the UltraScan3 logo in the generated reports.
+               </li>
+            </ul>
         </li>
 
         <li>
