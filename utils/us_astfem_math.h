@@ -45,10 +45,12 @@ class US_UTIL_EXTERN US_AstfemMath
       static bool low_acceleration( const QVector< US_SimulationParameters::SpeedProfile >&,
                                     const double, double& );
 
-      //! \brief Check for linear acceleration in the experimental data
+      //! \brief Check for linear acceleration in the experimental data.
+      //! Returns either an empty list (no issues) or exactly two elements:
+      //! [0] = title, [1] = HTML description
       //! \param speed_profiles  Vector of speed steps
       //! \param scans       Vector of scans
-      //! \returns results   QStringList for the acceleration check title, body
+      //! \returns results   QStringList for the acceleration check
       static QStringList check_acceleration( const QVector< US_SimulationParameters::SpeedProfile >& speed_profiles,
                                              const QVector< US_DataIO::Scan >& scans);
 
