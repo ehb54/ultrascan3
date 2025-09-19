@@ -287,7 +287,7 @@ QStringList US_AstfemMath::check_acceleration(const QVector<US_SimulationParamet
 
 
    constexpr double kRpmToRadPerSec = M_PI / 30.0;  // convert rpm to rad/s
-   constexpr double kT1Factor       = 1.5;          // (3.0 / 2.0)
+   constexpr double kT1Factor       = 3.0 / 2.0;          // (3.0 / 2.0)
 
    // Inputs distilled into a single "first scan" and target speed
    double targetRpm          = 0.0;
@@ -376,8 +376,8 @@ QStringList US_AstfemMath::check_acceleration(const QVector<US_SimulationParamet
          "The rate implied for linear acceleration is %1 rpm/s, while %2 rpm/s or more were expected.<br/>"
          "If the acceleration is non-linear, this may lead to incorrect fitting results.<br/>"
          "Please consult the documentation for more information." )
-         .arg(QString::number(accelRate, 'g', 1))
-         .arg(QString::number(lowAccelLimit, 'g', 1));
+         .arg(QString::number(accelRate, 'f', 1))
+         .arg(QString::number(lowAccelLimit, 'f', 1));
    }
    else if ( firstScanTime < accelEnd ) {
       // The first scan time is before the end of the acceleration zone
@@ -386,8 +386,8 @@ QStringList US_AstfemMath::check_acceleration(const QVector<US_SimulationParamet
          "The first scan time is %1 seconds, while the acceleration zone ends at %2 seconds.<br/>"
          "This causes the meniscus to change during the experiment and will lead to incorrect fitting results.<br/>"
          "Please consult the documentation for more information." )
-         .arg(QString::number(firstScanTime, 'g', 1))
-         .arg(QString::number(accelEnd, 'g', 1));
+         .arg(QString::number(firstScanTime, 'f', 1))
+         .arg(QString::number(accelEnd, 'f', 1));
    }
 
    return results;
