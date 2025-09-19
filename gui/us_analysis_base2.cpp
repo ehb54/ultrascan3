@@ -401,42 +401,135 @@ void US_AnalysisBase2::update( int selection )
       solution_rec.commonVbar20 = vbar;
       le_solution ->setText( tr( "( ***Undefined*** )" ) );
    }
+   US_SimulationParameters simulationParameters = US_SimulationParameters();
+   QVector<US_SimulationParameters::SpeedProfile> speed_profiles;
+   speed_profiles.clear();
+   if ( disk_controls->db() )
+   {
+     QStringList query;
+     QString     expID;
+     int         idExp  = 0;
+     query << "get_experiment_info_by_runID"
+           << runID
+           << QString::number( US_Settings::us_inv_ID() );
+     dbP->query( query );
+
+     if ( dbP->lastErrno() == US_DB2::OK )
+       {
+         dbP->next();
+         idExp              = dbP->value( 1 ).toInt();
+         US_SimulationParameters::speedstepsFromDB( dbP, idExp, speed_profiles );
+
+         DbgLv(1)<< "2dsa_load: speed step count" << speed_profiles.count() << "idExp" << idExp;
+         if ( speed_profiles.count()>0 )
+           DbgLv(1) << "2dsa_load:  speed step_ w2tfirst w2tlast timefirst timelast"
+            << speed_profiles[0].w2t_first << speed_profiles[0].w2t_last
+            << speed_profiles[0].time_first << speed_profiles[0].time_last;
+
+         // Check out whether we need to read TimeState from the DB
+         QString tmst_fpath = US_Settings::resultDir() + "/" + runID + "/"
+                              + runID + ".time_state.tmst";
+
+         bool newfile       = US_TimeState::dbSyncToLF( dbP, tmst_fpath, idExp );
+         DbgLv(0) << "2DS:LD: newfile" << newfile << "idExp" << idExp
+          << "tmst_fpath" << tmst_fpath;
+       }
+     }
+   else
+   {  // Read run experiment file and parse out speed steps
+     QString expfpath = directory + "/" + runID + "."
+                      + d->dataType + ".xml";
+     DbgLv(1) << "LD: expf path" << expfpath;
+     QFile xfi( expfpath )
+        ;
+     if ( xfi.open( QIODevice::ReadOnly ) )
+       {  // Read and parse "<speedstep>" lines in the XML
+         QXmlStreamReader xmli( &xfi );
+
+         while ( ! xmli.atEnd() )
+           {
+             xmli.readNext();
+
+             if ( xmli.isStartElement()  &&  xmli.name() == "speedstep" )
+               {
+                 US_SimulationParameters::SpeedProfile  sp;
+                 US_SimulationParameters::speedstepFromXml( xmli, sp );
+                 speed_profiles << sp;
+                 DbgLv(1) << "LD:  sp: rotspeed" << sp.rotorspeed << "t1" << sp.time_first;
+               }
+           }
+
+         xfi.close();
+       }
+   }
+   simulationParameters.initFromData( dbP, *d, speed_profiles.count() == 0 );
+   if (speed_profiles.count() > 0)
+   {
+     simulationParameters.speed_step = speed_profiles;
+   }
+   simulationParameters.sim = (d->channel == "S");
+   bool need_tsfile   = true;
+   QString tmst_fpath = US_Settings::resultDir() + "/" + runID + "/"
+                        + runID + ".time_state.tmst";
+   QFileInfo check_file( tmst_fpath );
+   US_DataIO::RawData sdata;
+   US_AstfemMath::initSimData( sdata, *d, 0.0 );
+   if ( check_file.exists()  &&  check_file.isFile() )
+     {
+       bool intv_1sec  = US_AstfemMath::timestate_onesec( tmst_fpath, sdata );
+       if ( intv_1sec )
+         {
+           simulationParameters.simSpeedsFromTimeState( tmst_fpath );
+           need_tsfile             = false;
+         }
+     }
+
+   if ( need_tsfile )
+     {
+       QString temp_Id_name = ( "p" + QString::number( getpid() ) + "t" +
+            QDateTime::currentDateTime().toUTC().toString( "yyMMddhhmmss" ) );
+       QString tmst_fpath = US_Settings::tmpDir() + "/" + temp_Id_name + ".time_state.tmst";
+       US_AstfemMath::writetimestate( tmst_fpath, simulationParameters, sdata );
+
+       simulationParameters.simSpeedsFromTimeState( tmst_fpath );
+     }
+
+   // Compute speed steps from sim speed profile
+   simulationParameters.speedstepsFromSSprof();
 
    if ( dbP != NULL )
    {
       delete dbP;
    }
-  QVector<US_SimulationParameters::SpeedProfile> speed_profiles;
-  speed_profiles.clear();
-  QStringList check_results = US_AstfemMath::check_acceleration(speed_profiles, d->scanData);
-  if ( !check_results.isEmpty() ) {
-      QMessageBox msgBox( this );
-      msgBox.setWindowTitle( tr( qPrintable( check_results[0] ) ) );
-      if ( check_results.size() > 2 ) {
-          msgBox.setTextFormat( Qt::RichText );
-          msgBox.setText( tr( qPrintable( check_results[1] ) ) );
-      }
-      if ( check_results.size() > 3 ) {
-          QString info = "";
-          for ( int i = 2; i < check_results.size(); i++ ) {
-              info += check_results[i] + "\n";
-          }
-          msgBox.setInformativeText( tr( qPrintable( info ) ) );
-      }
-      msgBox.addButton( tr( "Continue" ), QMessageBox::RejectRole );
-      QPushButton* bAbort = msgBox.addButton( tr( "Abort" ),
-                                                                                                      QMessageBox::YesRole );
-      msgBox.setDefaultButton( bAbort );
-      msgBox.exec();
-
-      if ( msgBox.clickedButton() == bAbort ) {
-          QApplication::restoreOverrideCursor();
-          qApp->processEvents();
-          return;
-      }
-  }
 
    data_plot();
+
+   QStringList check_results = US_AstfemMath::check_acceleration(simulationParameters.speed_step, d->scanData);
+   if ( !check_results.isEmpty() ) {
+       QMessageBox msgBox( this );
+       msgBox.setWindowTitle( tr( qPrintable( check_results[0] ) ) );
+       if ( check_results.size() > 1 ) {
+           msgBox.setTextFormat( Qt::RichText );
+           msgBox.setText( tr( qPrintable( check_results[1] ) ) );
+       }
+       if ( check_results.size() > 2 ) {
+           QString info = "";
+           for ( int i = 2; i < check_results.size(); i++ ) {
+               info += check_results[i] + "\n";
+           }
+           msgBox.setInformativeText( tr( qPrintable( info ) ) );
+       }
+       msgBox.addButton( tr( "Continue" ), QMessageBox::RejectRole );
+       QPushButton* bAbort = msgBox.addButton( tr( "Abort" ), QMessageBox::YesRole );
+       msgBox.setDefaultButton( bAbort );
+       msgBox.exec();
+       if ( msgBox.clickedButton() == bAbort ) {
+           QApplication::restoreOverrideCursor();
+           qApp->processEvents();
+           return;
+       }
+   }
+
 }
 
 // Report data set details
