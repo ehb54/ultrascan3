@@ -2205,11 +2205,11 @@ DbgLv(1) << "SimMdl:  accel-calc:  t1 t2 w2t t_acc speed rate"
    if ( !check_results.isEmpty() ) {
        QMessageBox msgBox( this );
        msgBox.setWindowTitle( tr( qPrintable( check_results[0] ) ) );
-       if ( check_results.size() > 2 ) {
+       if ( check_results.size() > 1 ) {
            msgBox.setTextFormat( Qt::RichText );
            msgBox.setText( tr( qPrintable( check_results[1] ) ) );
        }
-       if ( check_results.size() > 3 ) {
+       if ( check_results.size() > 2 ) {
            QString info = "";
            for ( int i = 2; i < check_results.size(); i++ ) {
                info += check_results[i] + "\n";
