@@ -1152,32 +1152,6 @@ DbgLv(1)<<"2dsa : timestate newly created.  timestateobject = "
    // Compute speed steps from sim speed profile
    dset.simparams.speedstepsFromSSprof();
 
-   QStringList check_results = US_AstfemMath::check_acceleration(dset.simparams.speed_step, dset.run_data.scanData);
-   if ( !check_results.isEmpty() ) {
-      QMessageBox msgBox( this );
-      msgBox.setWindowTitle( tr( qPrintable( check_results[0] ) ) );
-      if ( check_results.size() > 2 ) {
-         msgBox.setTextFormat( Qt::RichText );
-         msgBox.setText( tr( qPrintable( check_results[1] ) ) );
-      }
-      if ( check_results.size() > 3 ) {
-         QString info = "";
-         for ( int i = 2; i < check_results.size(); i++ ) {
-            info += check_results[i] + "\n";
-         }
-         msgBox.setInformativeText( tr( qPrintable( info ) ) );
-      }
-      msgBox.addButton( tr( "Continue" ), QMessageBox::RejectRole );
-      QPushButton* bAbort = msgBox.addButton( tr( "Abort" ),
-                                          QMessageBox::YesRole );
-      msgBox.setDefaultButton( bAbort );
-      msgBox.exec();
-
-      if ( msgBox.clickedButton() == bAbort ) {
-         return;
-      }
-   }
-
    dset.run_data           = dataList[ drow ];
    dset.viscosity          = viscosity;
    dset.density            = density;
