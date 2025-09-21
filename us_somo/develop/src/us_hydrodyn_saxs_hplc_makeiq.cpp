@@ -3264,6 +3264,9 @@ bool US_Hydrodyn_Saxs_Hplc::compute_f_gaussians_trial( QString file, QWidget *hp
    QTextStream(stdout) << QString( "epsilon is %1\n" ).arg( fit->le_epsilon->text() );
 #endif
 
+   // epsilon set should be before first LM fit() call
+   fit->le_epsilon->setText( QString( "%1" ).arg( peak / 1e6 < 0.001 ? peak / 1e6 : 0.001 ) );
+
    if (
        ((US_Hydrodyn *)us_hydrodyn)->gparams.count( "hplc_cb_gg_cyclic" ) &&
        ((US_Hydrodyn *)us_hydrodyn)->gparams[ "hplc_cb_gg_cyclic" ] == "true"
@@ -3281,10 +3284,22 @@ bool US_Hydrodyn_Saxs_Hplc::compute_f_gaussians_trial( QString file, QWidget *hp
       for ( int i = 0; i < (int) fit->cb_fix_curves.size(); ++i ) {
          fit->cb_fix_curves[i]->setChecked( false );
       }
+      // now double cyclic - repeats the process when cyclic active - shown to provide a fit improvement
+      fit->lm();
+      for ( int i = 0; i < (int) fit->cb_fix_curves.size(); ++i ) {
+         for ( int j = 0; j < (int) fit->cb_fix_curves.size(); ++j ) {
+            fit->cb_fix_curves[j]->setChecked( i != j );
+         }
+#if defined(GG_DEBUG)
+         TSO << QString( "******** fit cyclic repeat  %1 fix %2\n" ).arg( file ).arg( i + 1 );
+#endif
+         fit->lm();
+      }
+      for ( int i = 0; i < (int) fit->cb_fix_curves.size(); ++i ) {
+         fit->cb_fix_curves[i]->setChecked( false );
+      }
    }
 
-   fit->le_epsilon->setText( QString( "%1" ).arg( peak / 1e6 < 0.001 ? peak / 1e6 : 0.001 ) );
-      
    // fit initial amplitudes
    // us_qdebug( "call first lm fit in compute_f_gaussians" );
 #if defined(GG_DEBUG)
