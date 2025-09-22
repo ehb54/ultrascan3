@@ -4207,7 +4207,8 @@ bool US_Edit::readAProfileBasicParms_auto( QXmlStreamReader& xmli )
 		  {
 		    QStringList scan_excl_pairs;
 		    scan_excl_pairs << attr.value( "scan_excl_begin" ).toString()
-				    << attr.value( "scan_excl_end" )  .toString();
+				    << attr.value( "scan_excl_end" )  .toString()
+				    << attr.value( "scan_excl_nth" )  .toString();
 
 		    qDebug() << "READING aprof XML, scans excl.: " << channel_name << ", " << scan_excl_pairs;
 
@@ -8960,10 +8961,12 @@ DbgLv(1) << " 2)gap_fringe" << gap_fringe << "idax" << idax;
    //Here, take into account excluded scans on per triple basis
    int scanExcl_begin_ind = editProfile_scans_excl[ cb_triple->currentText() ][0].toInt();
    int scanExcl_end_ind   = editProfile_scans_excl[ cb_triple->currentText() ][1].toInt();
+   int scanExcl_nth_ind   = editProfile_scans_excl[ cb_triple->currentText() ][2].toInt();
 
    qDebug() << "IN new_Triple_auto(): triple -- " << cb_triple->currentText()
    	    << "ScanBegin -- " << scanExcl_begin_ind
-   	    << "ScanEnd -- "   << scanExcl_end_ind ;
+   	    << "ScanEnd -- "   << scanExcl_end_ind
+	    << "ScanNth -- "   << scanExcl_nth_ind;
 
    qDebug() << "Includes size before remove: " << includes.size();
    //for ( int i = 0; i < includes.size(); ++i  )
@@ -8977,6 +8980,12 @@ DbgLv(1) << " 2)gap_fringe" << gap_fringe << "idax" << idax;
    for ( int ii = data.scanData.size() - scanExcl_end_ind; ii < data.scanData.size(); ii++ )
      {
        includes.removeLast();
+     }
+   //include only nth scan
+   for ( int ii = 0; ii < includes.size(); ii++ )
+     {
+       if ((ii + 1) % scanExcl_nth_ind != 0)
+	 includes.removeAt(ii);
      }
 
    //Also, for "ABDE", remove from includes all by manuall editing
@@ -10976,6 +10985,7 @@ void US_Edit::write_triple_auto( int trx )
 
    scanExcl_begin_ind = editProfile_scans_excl[ triple_name ][0].toInt();
    scanExcl_end_ind   = editProfile_scans_excl[ triple_name ][1].toInt();
+   scanExcl_nth_ind   = editProfile_scans_excl[ triple_name ][2].toInt();
 
    meniscus      = editProfile[ triple_name ][0].toDouble();
    range_left    = editProfile[ triple_name ][1].toDouble();
@@ -12687,6 +12697,7 @@ void US_Edit::write_mwl_auto( int trx )
 
    scanExcl_begin_ind = editProfile_scans_excl[ triple_name ][0].toInt();
    scanExcl_end_ind   = editProfile_scans_excl[ triple_name ][1].toInt();
+   scanExcl_nth_ind   = editProfile_scans_excl[ triple_name ][2].toInt();
 
    meniscus      = editProfile[ triple_name ][0].toDouble();
    range_left    = editProfile[ triple_name ][1].toDouble();
@@ -13197,6 +13208,7 @@ DbgLv(1) << "EDT:WrXml:  waveln" << waveln;
      {
         xml.writeStartElement( "excludes" );
 
+	/*
 	//beginning of the scan set
 	for ( int ii = 0; ii < scanExcl_begin_ind; ii++ )
 	  {
@@ -13204,7 +13216,6 @@ DbgLv(1) << "EDT:WrXml:  waveln" << waveln;
 	    xml.writeAttribute   ( "scan", QString::number( ii ) );
 	    xml.writeEndElement  ();
 	  }
-
 	//end of the scan set
        	for ( int ii = data.scanData.size() - scanExcl_end_ind; ii < data.scanData.size(); ii++ )
 	  {
@@ -13212,7 +13223,20 @@ DbgLv(1) << "EDT:WrXml:  waveln" << waveln;
 	    xml.writeAttribute   ( "scan", QString::number( ii ) );
 	    xml.writeEndElement  ();
 	  }
-
+	*/
+	
+	//new: begin, nth, end scan
+	for ( int ii = 0; ii < data.scanData.size(); ii++ )
+	  {
+	    if ( ( ii + 1 ) % scanExcl_nth_ind != 0 &&
+		 ii >= scanExcl_begin_ind   &&
+		 ii < data.scanData.size() - scanExcl_end_ind )
+	      {
+		xml.writeStartElement( "exclude" );
+		xml.writeAttribute   ( "scan", QString::number( ii ) );
+		xml.writeEndElement  ();
+	      }
+	  }
 
 	//Also, for ABDE, exclude what was excluded manually for each triple
 	for ( int ii = 0; ii < data.scanData.size(); ii++ )
