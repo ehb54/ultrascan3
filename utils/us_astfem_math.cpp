@@ -393,6 +393,43 @@ QStringList US_AstfemMath::check_acceleration(const QVector<US_SimulationParamet
    return results;
 }
 
+double US_AstfemMath::calc_omega2t(
+   double start_omega2t, double start_speed, double start_time, double target_speed, double accel_rate, double t) {
+   // if t is equal to start_time return the start omega2t
+   if ( qFuzzyCompare(start_time, t) ) {
+      return start_omega2t;
+   }
+   // if t is smaller than start_time, return -1.0
+   if ( t < start_time ) {
+      return -1.0;
+   }
+   constexpr double RPM2RadPS = M_PI / 30.0;  // convert rpm to rad/s
+   const double relative_time = t - start_time; // relative time in the speed step [s]
+   // if acceleration is needed, check that accel_rate is not zero
+   if ( qFuzzyCompare(target_speed, start_speed) && qFuzzyCompare(accel_rate, 0.0) ) {
+      return -1.0;
+   }
+   const double accel_duration = (target_speed - start_speed) / accel_rate; // duration of the acceleration [s]
+   double omega2t = start_omega2t;
+   // For the time T = min(accel_duration, relative_time) the omega2t can be calculated
+   // Integral from 0 to T (start_speed + accel_rate * t)^2 dt
+   // = Integral from 0 to T (start_speed)^2 dt <- Contribution of the previous speed
+   // + Integral from 0 to T (2 * start_speed * accel_rate * t) dt <- Contribution of the previous speed changing
+   // + Integral from 0 to T (accel_rate * t)^2 dt <- Contribution of the acceleration
+
+   // Add the contribution of the previous speed
+   omega2t += sq(start_speed * RPM2RadPS) * qMin(accel_duration, relative_time);
+   // Add the contribution of the previous speed changing
+   omega2t += start_speed * RPM2RadPS * accel_rate * RPM2RadPS * sq(qMin(accel_duration, relative_time));
+   // Add the contribution of the acceleration
+   omega2t += sq(accel_rate * RPM2RadPS) * pow(qMin(accel_duration, relative_time), 3) / 3.0;
+
+   // If the relative time extends beyond the acceleration duration, the omega2t can be calculated
+   // Integral from accel_duration to relative_time (target_speed)^2 dt
+   omega2t += sq(target_speed * RPM2RadPS) * qMax(0.0, relative_time - accel_duration);
+   return omega2t;
+}
+
 // Determine if a timestate file holds one-second-interval records
 bool US_AstfemMath::timestate_onesec( const QString& tmst_fpath,
                                       US_DataIO::RawData&      sim_data )
