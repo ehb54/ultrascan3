@@ -149,8 +149,8 @@ void US_ScanExclGui::build_layout ( void )
       int remaining_scans_num_nth = 0;
       QString max_scanCount;
 
-      remaining_scans_num = scanCount - ( scan_beg[ii] + scan_end[ii] );
-      for (int nt = 0; nt < remaining_scans_num; ++nt)
+      remaining_scans_num = scanCount - ( scan_end[ii] );
+      for (int nt = scan_beg[ii]; nt < remaining_scans_num; ++nt)
 	{
 	  if ((nt + 1) % scan_nth[ii] == 0)
 	    ++remaining_scans_num_nth;
@@ -163,8 +163,8 @@ void US_ScanExclGui::build_layout ( void )
 	  sb_begin            ->setMaximum( (int)( scanCount_int/2 - 5));
 	  sb_end              ->setMaximum( (int)( scanCount_int/2 - 5));
 
-	  remaining_scans_num = scanCount_int - ( scan_beg[ii] + scan_end[ii] );
-	  for (int nt = 0; nt < remaining_scans_num; ++nt)
+	  remaining_scans_num = scanCount_int - ( scan_end[ii] );
+	  for (int nt = scan_beg[ii]; nt < remaining_scans_num; ++nt)
 	    {
 	      if ((nt + 1) % scan_nth[ii] == 0)
 		++remaining_scans_num_nth;
@@ -309,10 +309,10 @@ void US_ScanExclGui::scan_excl_changed( int )
 	   << sb_beginScans->value() << sb_nthScans->value() << sb_endScans->value();
 
   //set # of remaining scans for the channel
-  int rem_scans_num = maxScans_map[ row_num ] - ( sb_beginScans->value() + sb_endScans->value() );
+  int rem_scans_num = maxScans_map[ row_num ] - ( sb_endScans->value() );
   int rem_scans_num_nth = 0;
   
-  for (int i = 0; i < rem_scans_num; ++i)
+  for (int i = sb_beginScans->value(); i < rem_scans_num; ++i)
     {
       if ((i + 1) % sb_nthScans->value() == 0)
 	++rem_scans_num_nth;
