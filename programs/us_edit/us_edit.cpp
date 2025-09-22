@@ -9004,10 +9004,10 @@ DbgLv(1) << " 2)gap_fringe" << gap_fringe << "idax" << idax;
      {
        if ( ii < scanExcl_begin_ind && !excludes_curr.contains( ii ) )
 	 excludes_curr << ii;
-       if ( ii > scanExcl_end_ind && !excludes_curr.contains( ii ) )
+       if ( (ii > data.scanData.size() - scanExcl_end_ind) && !excludes_curr.contains( ii ) )
+       	 excludes_curr << ii;
+       if ( ii % scanExcl_nth_ind != 0 && !excludes_curr.contains( ii ) )
 	 excludes_curr << ii;
-       // if ( ii % scanExcl_nth_ind != 0 && !excludes_curr.contains( ii ) )
-       // 	 excludes_curr << ii;
      }
 
    qDebug() << "includes [before] -- " << includes;
@@ -13244,7 +13244,7 @@ DbgLv(1) << "EDT:WrXml:  waveln" << waveln;
 	  {
 	    if ( ii < scanExcl_begin_ind && !excludes_curr.contains( ii ) )
 	      excludes_curr << ii;
-	    if ( ii > scanExcl_end_ind && !excludes_curr.contains( ii ) )
+	    if ( (ii > data.scanData.size() - scanExcl_end_ind) && !excludes_curr.contains( ii ) )
 	      excludes_curr << ii;
 	    if ( ii % scanExcl_nth_ind != 0 && !excludes_curr.contains( ii ) )
 	      excludes_curr << ii;
