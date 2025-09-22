@@ -13287,9 +13287,12 @@ DbgLv(1) << "EDT:WrXml:  waveln" << waveln;
 	//Also, for ABDE, exclude what was excluded manually for each triple
 	for ( int ii = 0; ii < data.scanData.size(); ii++ )
 	  {
+	    // if ( ! includes.contains( ii ) &&
+	    // 	 ii >= scanExcl_begin_ind   &&
+	    // 	 ii < data.scanData.size() - scanExcl_end_ind )
 	    if ( ! includes.contains( ii ) &&
-		 ii >= scanExcl_begin_ind   &&
-		 ii < data.scanData.size() - scanExcl_end_ind )
+		 ! excludes_curr.contains( ii )
+		 )
 	      {
 		xml.writeStartElement( "exclude" );
 		xml.writeAttribute   ( "scan", QString::number( ii ) );
