@@ -201,7 +201,8 @@ public:
 
     QList<int> scan_excl_begin;     //!< Scan exclusion begin
     QList<int> scan_excl_end;       //!< Scan exclusion end
-
+    QList<int> scan_excl_nth;       
+    
     QList<int> analysis_run;        //!< Analysis run
     QList<int> report_run;          //!< Report run
     QList<int> wvl_edit;            //!< Wavelength edit
