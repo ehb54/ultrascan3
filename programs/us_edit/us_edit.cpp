@@ -13229,8 +13229,8 @@ DbgLv(1) << "EDT:WrXml:  waveln" << waveln;
 	for ( int ii = 0; ii < data.scanData.size(); ii++ )
 	  {
 	    if ( ( ii + 1 ) % scanExcl_nth_ind != 0 &&
-		 ii >= scanExcl_begin_ind   &&
-		 ii < data.scanData.size() - scanExcl_end_ind )
+		 ii < scanExcl_begin_ind   &&
+		 ii > data.scanData.size() - scanExcl_end_ind )
 	      {
 		xml.writeStartElement( "exclude" );
 		xml.writeAttribute   ( "scan", QString::number( ii ) );
