@@ -8992,20 +8992,22 @@ DbgLv(1) << " 2)gap_fringe" << gap_fringe << "idax" << idax;
    QList<int> excludes_curr;
    for ( int ii = 0; ii < data.scanData.size(); ii++ )
      {
-       if ( ii < scanExcl_begin_ind !excludes_curr.contains( ii ) )
+       if ( ii < scanExcl_begin_ind && !excludes_curr.contains( ii ) )
 	 excludes_curr << ii;
-       if ( ii > scanExcl_end_ind !excludes_curr.contains( ii ) )
+       if ( ii > scanExcl_end_ind && !excludes_curr.contains( ii ) )
 	 excludes_curr << ii;
        if ( ii % scanExcl_nth_ind != 0 && !excludes_curr.contains( ii ) )
 	 excludes_curr << ii;
      }
 
-   qDebug() << "includes -- " << includes;
+   qDebug() << "includes [before] -- " << includes;
    qDebug() << "excludes_curr -- " << excludes_curr; 
    
    for ( int ii = 0; ii < excludes_curr.size(); ii++ )
       includes.removeAll( excludes_curr[ ii ] );
    /////
+
+   qDebug() << "includes [after] -- " << includes;
    
    //Also, for "ABDE", remove from includes all by manuall editing
    if ( autoflow_expType == "ABDE" && edited_triples_abde[ cb_triple->currentText() ] )
@@ -13230,11 +13232,11 @@ DbgLv(1) << "EDT:WrXml:  waveln" << waveln;
 	QList<int> excludes_curr;
 	for ( int ii = 0; ii < data.scanData.size(); ii++ )
 	  {
-	    if ( ii < scanExcl_begin_ind !excludes_curr.contains( ii ) )
+	    if ( ii < scanExcl_begin_ind && !excludes_curr.contains( ii ) )
 	      excludes_curr << ii;
-	    if ( ii > scanExcl_end_ind !excludes_curr.contains( ii ) )
+	    if ( ii > scanExcl_end_ind && !excludes_curr.contains( ii ) )
 	      excludes_curr << ii;
-	    if ( ii % scanExcl_nth_ind != 0 !excludes_curr.contains( ii ) )
+	    if ( ii % scanExcl_nth_ind != 0 && !excludes_curr.contains( ii ) )
 	      excludes_curr << ii;
 	  }
 
