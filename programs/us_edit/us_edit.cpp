@@ -8992,13 +8992,16 @@ DbgLv(1) << " 2)gap_fringe" << gap_fringe << "idax" << idax;
    QList<int> excludes_curr;
    for ( int ii = 0; ii < data.scanData.size(); ii++ )
      {
-       if ( ii < scanExcl_begin_ind )
+       if ( ii < scanExcl_begin_ind !excludes_curr.contains( ii ) )
 	 excludes_curr << ii;
-       if ( ii > scanExcl_end_ind )
+       if ( ii > scanExcl_end_ind !excludes_curr.contains( ii ) )
 	 excludes_curr << ii;
-       if ( ii % scanExcl_nth_ind != 0 )
+       if ( ii % scanExcl_nth_ind != 0 && !excludes_curr.contains( ii ) )
 	 excludes_curr << ii;
      }
+
+   qDebug() << "includes -- " << includes;
+   qDebug() << "excludes_curr -- " << excludes_curr; 
    
    for ( int ii = 0; ii < excludes_curr.size(); ii++ )
       includes.removeAll( excludes_curr[ ii ] );
@@ -13227,11 +13230,11 @@ DbgLv(1) << "EDT:WrXml:  waveln" << waveln;
 	QList<int> excludes_curr;
 	for ( int ii = 0; ii < data.scanData.size(); ii++ )
 	  {
-	    if ( ii < scanExcl_begin_ind )
+	    if ( ii < scanExcl_begin_ind !excludes_curr.contains( ii ) )
 	      excludes_curr << ii;
-	    if ( ii > scanExcl_end_ind )
+	    if ( ii > scanExcl_end_ind !excludes_curr.contains( ii ) )
 	      excludes_curr << ii;
-	    if ( ii % scanExcl_nth_ind != 0 )
+	    if ( ii % scanExcl_nth_ind != 0 !excludes_curr.contains( ii ) )
 	      excludes_curr << ii;
 	  }
 
