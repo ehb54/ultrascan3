@@ -5442,54 +5442,34 @@ void US_ReporterGMP::simulateModel( QMap < QString, QString> & tripleInfo )
 	  simparams.speed_step[ 0 ].acceleration = (int)qRound( rate );
 	}
     }
-  
-  // Do a quick test of the speed step implied by TimeState
-  int tf_scan   = simparams.speed_step[ 0 ].time_first;
-  int accel1    = simparams.speed_step[ 0 ].acceleration;
-  QString svalu = US_Settings::debug_value( "SetSpeedLowA" );
-  int lo_ss_acc = svalu.isEmpty() ? 250 : svalu.toInt();
-  int rspeed    = simparams.speed_step[ 0 ].rotorspeed;
-  double  tf_aend   = static_cast<double>(tf_scan);
-  // prevent any division by zero
-  if (accel1 != 0)
-  {
-    tf_aend = static_cast<double>(rspeed) / static_cast<double>(accel1);
-  }
-  
-  qDebug() << "SimMdl: ssck: rspeed accel1 lo_ss_acc"
-	   << rspeed << accel1 << lo_ss_acc << "tf_aend tf_scan"
-	   << tf_aend << tf_scan;
-  //x0  1  2  3  4  5
-  // check if the acceleration rate is low or the first scan was taken before the acceleration ended
-  // Due to older, wrong timestate calculation there might be a case, in which the calculated end of acceleration can
-  // be up to 1 second later than expected, tf_scan + 1 accounts for this.
-  if ( accel1 < lo_ss_acc  ||  tf_aend > ( tf_scan + 1 ) )
-    {
-      QString wmsg = tr( "The TimeState computed/used is likely bad:<br/>"
-			 "The acceleration implied is %1 rpm/sec.<br/>"
-			 "The acceleration zone ends at %2 seconds,<br/>"
-			 "with a first scan time of %3 seconds.<br/><br/>"
-			 "<b>You should rerun the experiment without<br/>"
-			 "any interim constant speed, and then<br/>"
-			 "you should reimport the data.</b>" )
-	.arg( accel1 ).arg( QString::number(tf_aend) ).arg( QString::number(tf_scan) );
-      
+  QStringList check_results = US_AstfemMath::check_acceleration(simparams.speed_step, edata->scanData);
+  if ( !check_results.isEmpty() ) {
       QMessageBox msgBox( this );
-      msgBox.setWindowTitle( tr( "Bad TimeState Implied!" ) );
-      msgBox.setTextFormat( Qt::RichText );
-      msgBox.setText( wmsg );
+      msgBox.setWindowTitle( tr( qPrintable( check_results[0] ) ) );
+      if ( check_results.size() > 1 ) {
+          msgBox.setTextFormat( Qt::RichText );
+          msgBox.setText( tr( qPrintable( check_results[1] ) ) );
+      }
+      if ( check_results.size() > 2 ) {
+          QString info = "";
+          for ( int i = 2; i < check_results.size(); i++ ) {
+              info += check_results[i] + "\n";
+          }
+          msgBox.setInformativeText( tr( qPrintable( info ) ) );
+      }
       msgBox.addButton( tr( "Continue" ), QMessageBox::RejectRole );
       QPushButton* bAbort = msgBox.addButton( tr( "Abort" ),
-					      QMessageBox::YesRole    );
+                                                                                                      QMessageBox::YesRole );
       msgBox.setDefaultButton( bAbort );
       msgBox.exec();
-      if ( msgBox.clickedButton() == bAbort )
-	{
-	  QApplication::restoreOverrideCursor();
-	  qApp->processEvents();
-	  return;
-	}
-    }
+
+      if ( msgBox.clickedButton() == bAbort ) {
+          QApplication::restoreOverrideCursor();
+          qApp->processEvents();
+          return;
+      }
+  }
+
   sdata->cell        = rdata->cell;
   sdata->channel     = rdata->channel;
   sdata->description = rdata->description;
