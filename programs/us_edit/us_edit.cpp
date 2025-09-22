@@ -792,7 +792,17 @@ pb_plateau->setVisible(false);
    // details[ "expType" ]      = QString("ABDE");
    // details[ "dataSource" ]   = QString("dataDiskAUC");
 
-   //load_auto( details );
+   details[ "invID_passed" ] = QString("12");
+   details[ "filename" ]     = QString("demo-dataDiskRun-1623");
+   details[ "protocolName" ] = QString("test_nth_7");
+   details[ "statusID" ]     = QString("671");
+   details[ "autoflowID" ]   = QString("1623");
+   details[ "runID" ]        = QString("");
+   details[ "OptimaName" ]   = QString("");
+   details[ "expType" ]      = QString("VELOCITY");
+   details[ "dataSource" ]   = QString("dataDiskAUC:Absorbance");
+
+   load_auto( details );
 
 }
 
@@ -8996,8 +9006,8 @@ DbgLv(1) << " 2)gap_fringe" << gap_fringe << "idax" << idax;
 	 excludes_curr << ii;
        if ( ii > scanExcl_end_ind && !excludes_curr.contains( ii ) )
 	 excludes_curr << ii;
-       if ( ii % scanExcl_nth_ind != 0 && !excludes_curr.contains( ii ) )
-	 excludes_curr << ii;
+       // if ( ii % scanExcl_nth_ind != 0 && !excludes_curr.contains( ii ) )
+       // 	 excludes_curr << ii;
      }
 
    qDebug() << "includes [before] -- " << includes;
