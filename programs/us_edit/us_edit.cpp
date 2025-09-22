@@ -8972,6 +8972,7 @@ DbgLv(1) << " 2)gap_fringe" << gap_fringe << "idax" << idax;
    //for ( int i = 0; i < includes.size(); ++i  )
    //  qDebug() << "Includes after remove: " << includes[ i ];
 
+   /*
    for ( int ii = 0; ii < scanExcl_begin_ind; ii++ )
      {
        includes.removeFirst();
@@ -8987,7 +8988,22 @@ DbgLv(1) << " 2)gap_fringe" << gap_fringe << "idax" << idax;
        if ((ii + 1) % scanExcl_nth_ind != 0)
 	 includes.removeAt(ii);
      }
-
+   */
+   QList<int> excludes_curr;
+   for ( int ii = 0; ii < data.scanData.size(); ii++ )
+     {
+       if ( ii < scanExcl_begin_ind )
+	 excludes_curr << ii;
+       if ( ii > scanExcl_end_ind )
+	 excludes_curr << ii;
+       if ( ii % scanExcl_nth_ind != 0 )
+	 excludes_curr << ii;
+     }
+   
+   for ( int ii = 0; ii < excludes_curr.size(); ii++ )
+      includes.removeAll( excludes_curr[ ii ] );
+   /////
+   
    //Also, for "ABDE", remove from includes all by manuall editing
    if ( autoflow_expType == "ABDE" && edited_triples_abde[ cb_triple->currentText() ] )
      includes = editProfile_includes[ cb_triple->currentText() ];
@@ -13208,7 +13224,24 @@ DbgLv(1) << "EDT:WrXml:  waveln" << waveln;
      {
         xml.writeStartElement( "excludes" );
 
-	
+	QList<int> excludes_curr;
+	for ( int ii = 0; ii < data.scanData.size(); ii++ )
+	  {
+	    if ( ii < scanExcl_begin_ind )
+	      excludes_curr << ii;
+	    if ( ii > scanExcl_end_ind )
+	      excludes_curr << ii;
+	    if ( ii % scanExcl_nth_ind != 0 )
+	      excludes_curr << ii;
+	  }
+
+	for( int ii = 0; ii < excludes_curr.size(); ii++ )
+	  {
+	    xml.writeStartElement( "exclude" );
+	    xml.writeAttribute   ( "scan", QString::number( excludes_curr[ ii ] ) );
+	    xml.writeEndElement  ();
+	  }
+	/*
 	//beginning of the scan set
 	for ( int ii = 0; ii < scanExcl_begin_ind; ii++ )
 	  {
@@ -13234,7 +13267,8 @@ DbgLv(1) << "EDT:WrXml:  waveln" << waveln;
 		xml.writeEndElement  ();
 	      }
 	  }
-
+	*/
+	  
 	//Also, for ABDE, exclude what was excluded manually for each triple
 	for ( int ii = 0; ii < data.scanData.size(); ii++ )
 	  {
