@@ -792,17 +792,17 @@ pb_plateau->setVisible(false);
    // details[ "expType" ]      = QString("ABDE");
    // details[ "dataSource" ]   = QString("dataDiskAUC");
 
-   details[ "invID_passed" ] = QString("12");
-   details[ "filename" ]     = QString("demo-dataDiskRun-1623");
-   details[ "protocolName" ] = QString("test_nth_7");
-   details[ "statusID" ]     = QString("671");
-   details[ "autoflowID" ]   = QString("1623");
-   details[ "runID" ]        = QString("");
-   details[ "OptimaName" ]   = QString("");
-   details[ "expType" ]      = QString("VELOCITY");
-   details[ "dataSource" ]   = QString("dataDiskAUC:Absorbance");
+   // details[ "invID_passed" ] = QString("12");
+   // details[ "filename" ]     = QString("demo-dataDiskRun-1623");
+   // details[ "protocolName" ] = QString("test_nth_7");
+   // details[ "statusID" ]     = QString("671");
+   // details[ "autoflowID" ]   = QString("1623");
+   // details[ "runID" ]        = QString("");
+   // details[ "OptimaName" ]   = QString("");
+   // details[ "expType" ]      = QString("VELOCITY");
+   // details[ "dataSource" ]   = QString("dataDiskAUC:Absorbance");
 
-   load_auto( details );
+   // load_auto( details );
 
 }
 
