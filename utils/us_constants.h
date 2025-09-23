@@ -19,7 +19,20 @@
 #define NORMAL_TEMP  20.0            //!< Normal temperature for an experiment
 #define ODLIM_PLFAC  1.2             //!< ODlimit-exceeded plot scale factor
 
+#define GSL_DBL_EPSILON        2.2204460492503131e-16
+#define GSL_SQRT_DBL_EPSILON   1.4901161193847656e-08
+#define GSL_ROOT5_DBL_EPSILON  7.4009597974140505e-04
+#define GSL_DBL_MIN        2.2250738585072014e-308
 
+#ifndef M_LN2
+#define M_LN2      0.69314718055994530941723212146      /* ln(2) */
+#endif
+#ifndef M_PI
+#define M_PI       3.14159265358979323846264338328      /* pi */
+#endif
+#ifndef M_SQRT2
+#define M_SQRT2    1.41421356237309504880168872421      /* sqrt(2) */
+#endif
 //! Define constants for amino acids.
 //! The data is primarily from:
 //! Cohn, E. J., and Edsall, J. T. (1943) Proteins, Amino Acids, and Peptides

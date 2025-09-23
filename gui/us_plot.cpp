@@ -86,6 +86,7 @@ US_Plot::US_Plot( QwtPlot*& parent_plot, const QString& title,
 
    QToolButton* btnCSV = new QToolButton( toolBar );
    btnCSV->setText( "CSV" );
+
    btnCSV->setIcon( US_Images::getIcon( US_Images::TABLE ) );
    btnCSV->setToolButtonStyle( Qt::ToolButtonTextUnderIcon );
    btnCSV->setFont( buttonFont );

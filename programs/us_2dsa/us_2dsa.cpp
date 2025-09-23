@@ -205,9 +205,11 @@ void US_2dsa::analysis_done( int updflag )
       le_rmsd->setText( QString::number( rmsd ) );
 DbgLv(0) << "Analysis Done VARI" << vari << "model,noise counts"
  << models.count() << (ti_noises.count()+ri_noises.count())
- << "menisc bott"
+      << mdesc
+ << "menisc bott angle"
  << mdesc.mid( mdesc.indexOf( "MENISCUS=" ) + 9 ).section( " ", 0, 0 )
- << mdesc.mid( mdesc.indexOf( "BOTTOM=" ) + 7 ).section( " ", 0, 0 );
+ << mdesc.mid( mdesc.indexOf( "BOTTOM=" ) + 7 ).section( " ", 0, 0 )
+       << mdesc.mid( mdesc.indexOf( "ANGLE=" ) + 6 ).section( " ", 0, 0 );
 
       qApp->processEvents();
       return;
@@ -245,12 +247,14 @@ DbgLv(1) << "  edat0 sdat0 rdat0 tnoi0"
 
    // For multiple models (e.g., Fit-Meniscus) report on best
    int nmodels     = models.count();
-   bool fitMeni    = ( model.global == US_Model::MENISCUS );
+   bool fitMeni    = ( model.global == US_Model::MENISCUS || model.global == US_Model::BOTTOM ||
+   model.global == US_Model::MENIBOTT || model.global == US_Model::ANGLE || model.global == US_Model::MENIANGLE);
    if ( nmodels > 1  &&  fitMeni )
    {
       double b_rmsd   = 1.0e+99;
       double b_meni   = 0.0;
       double b_bott   = 0.0;
+      double b_angle  = 0.0;
 
       for ( int ii = 0; ii < nmodels; ii++ )
       {
@@ -267,12 +271,14 @@ DbgLv(2) << "FitMens Done:  ii desc" << ii << mdesc;
                             .section( " ", 0, 0 ).toDouble();
             b_bott        = mdesc.mid( mdesc.indexOf( "BOTTOM=" ) + 7 )
                             .section( " ", 0, 0 ).toDouble();
-DbgLv(1) << "FitMens Done:    b_ rmsd,meni,bott" << b_rmsd << b_meni << b_bott
+            b_angle        = mdesc.mid( mdesc.indexOf( "ANGLE=" ) + 6 )
+                            .section( " ", 0, 0 ).toDouble();
+DbgLv(1) << "FitMens Done:    b_ rmsd,meni,bott,angle" << b_rmsd << b_meni << b_bott << b_angle
  << "  ix" << (ii+1);
          }
       }
-DbgLv(1) << "FitMens Done: BEST rmsd,meniscus,bottom"
- << b_rmsd << b_meni << b_bott;
+DbgLv(1) << "FitMens Done: BEST rmsd,meniscus,bottom,angle"
+ << b_rmsd << b_meni << b_bott << b_angle;
 
    }
 }
@@ -543,18 +549,20 @@ void US_2dsa::view( void )
    write_report( ts );
 
    // Create US_Editor and display report
-   if ( te_results == NULL )
+   if ( te_results.isNull() )
    {
-      te_results = new US_Editor( US_Editor::DEFAULT, true, QString(), this );
-      te_results->resize( 780, 700 );
-      QPoint p = g.global_position();
-      te_results->move( p.x() + 30, p.y() + 30 );
+      te_results = new US_Editor( US_Editor::DEFAULT, true, "HTML (*.html);;Text files (*.txt)", this );
+      te_results->setWindowTitle( tr( "Report: 2DSA Results" ) );
+      te_results->resize( 800, 700 );
       te_results->e->setFont( QFont( US_GuiSettings::fontFamily(),
                                      US_GuiSettings::fontSize() ) );
    }
 
    te_results->e->setHtml( rtext );
    te_results->show();
+   te_results->setFocus();
+   te_results->activateWindow();
+   te_results->raise();
 }
 
 // Save data (model,noise), report, and PNG image files
@@ -574,11 +582,13 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
    bool    fitMeni      = ( model.global == US_Model::MENISCUS );
    bool    fitBott      = ( model.global == US_Model::BOTTOM );
    bool    fitMeBo      = ( model.global == US_Model::MENIBOTT );
+   bool    fitAngle     = ( model.global == US_Model::ANGLE );
+   bool    fitMeAngle   = ( model.global == US_Model::MENIANGLE );
    bool    montCar      = model.monteCarlo;
    QString analysisType = QString( cusGrid ? "2DSA-CG" : "2DSA" )
                         + QString( fitMeni ? "-FM" : "" )
-                        + QString( fitBott ? "-FB" : "" )
-                        + QString( fitMeBo ? "-FMB" : "" )
+                        + QString( (fitBott || fitAngle) ? "-FB" : "" )
+                        + QString( (fitMeBo || fitMeAngle) ? "-FMB" : "" )
                         + QString( refIter ? "-IT" : "" )
                         + QString( montCar ? "-MC" : "" );
    QString requestID    = "local";
@@ -598,6 +608,7 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
    int     nnoises  = nmodels * knois;           // number of noises to save
    double  meniscus = edata->meniscus;
    double  bottom   = edata->bottom;
+   double  angle    = dset.simparams.cp_angle;
    double  dwavelen = edata->wavelength.toDouble();
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
 
@@ -646,7 +657,7 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
 
    while( indx > 0 )
    {  // build a list of available model file names
-      mname = "M" + QString().sprintf( "%07i", indx++ ) + ".xml";
+      mname = "M" + QString::asprintf( "%07i", indx++ ) + ".xml";
       if ( ! mdnams.contains( mname ) )
       {  // no name with this index exists, so add it new-name list
          mnames << mname;
@@ -659,7 +670,7 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
 
    while( indx > 0 )
    {  // build a list of available noise file names
-      nname = "N" + QString().sprintf( "%07i", indx++ ) + ".xml";
+      nname = "N" + QString::asprintf( "%07i", indx++ ) + ".xml";
       if ( ! ndnams.contains( nname ) )
       {  // add to the list of new-name noises
          nnames << nname;
@@ -679,31 +690,35 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
       QString mdesc     = model.description;    // description from processor
       double  variance  = mdesc.mid( mdesc.indexOf( "VARI=" ) + 5 )
                           .section( ' ', 0, 0 ).toDouble();
+      angle  = mdesc.mid( mdesc.indexOf( "ANGLE=" ) + 6 )
+                          .section( ' ', 0, 0 ).toDouble();
       // create the iteration part of model description:
       // e.g.,"i01" normally; "i03-m60190" for meniscus; "mc017" for monte carlo
       QString iterID    = "i01";
       int     iterNum   = jj + 1;
-
+      QStringList fitTypeAttr;
+      fitTypeAttr << "NOTHING" << "MENISCUS" << "BOTTOM" << "ANGLE" << "VOLUME" << "SIGMA" << "DELTA"
+                  << "VBAR" << "FF0" << "TEMPERATURE";
       if ( montCar )
          iterID.sprintf( "mc%04d", iterNum );
 
-      else if ( fitMeni )
+      else if ( dset.simparams.primaryFit != US_SimulationParameters::NOTHING || dset.simparams.secondaryFit != US_SimulationParameters::NOTHING )
       {
-         meniscus          = mdesc.mid( mdesc.indexOf( "MENISCUS=" ) + 9 )
+         QString prim = fitTypeAttr[dset.simparams.primaryFit] + "=";
+         QString sec = fitTypeAttr[dset.simparams.secondaryFit] + "=";
+         meniscus          = mdesc.mid( mdesc.indexOf( prim ) + prim.length() )
                              .section( ' ', 0, 0 ).toDouble();
-         bottom            = mdesc.mid( mdesc.indexOf( "BOTTOM=" ) + 7 )
+         bottom            = mdesc.mid( mdesc.indexOf( sec ) + sec.length() )
                              .section( ' ', 0, 0 ).toDouble();
          if ( bottom > 0.0 )
-            iterID.sprintf( "i%02d-m%05db%05d", iterNum, qRound( meniscus * 10000 ),
-                            qRound( bottom * 10000 ) );
+         {
+            iterID.asprintf( "i%02d-m%05db%05d", iterNum, qRound( meniscus * 10000 ),
+                             qRound( bottom * 10000 ) );
+         }
          else
-            iterID.sprintf( "i%02d-m%05d", iterNum, qRound( meniscus * 10000 ) );
-      }
-      else if ( fitBott )
-      {
-         bottom            = mdesc.mid( mdesc.indexOf( "BOTTOM=" ) + 7 )
-                             .section( ' ', 0, 0 ).toDouble();
-         iterID.sprintf( "i%02d-b%05d", iterNum, qRound( bottom * 10000 ) );
+         {
+            iterID.asprintf( "i%02d-m%05d", iterNum, qRound( meniscus * 10000 ) );
+         }
       }
 
       // fill in actual model parameters needed for output
@@ -720,10 +735,12 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
       model.meniscus    = meniscus;
       model.bottom      = bottom;
       model.wavelength  = dwavelen;
-      model.dataDescrip = edata->description;
+      model.dataDescrip = edata->description + QString("Angle %1").arg(angle);
 
       for ( int cc = 0; cc < model.components.size(); cc++ )
-         model.components[ cc ].name = QString().sprintf( "SC%04d", cc + 1 );
+      {
+         model.components[ cc ].name = QString::asprintf( "SC%04d", cc + 1 );
+      }
 
       // output the model
       if ( dbP == NULL  ||  montCar )
@@ -812,30 +829,48 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
          US_Model model2 = model;
          qDebug() << "::::: nmodel=" << model.components.size() << " nmodel2=" << model2.components.size();
          double avtemp  = dset.temperature;
-         for ( int ii = 0; ii < model2.components.size(); ii++ )
+         for (auto & ii : model2.components)
          {
-            US_Model::SimulationComponent* component = &model2.components[ ii ];
+            US_Model::SimulationComponent* component = &ii;
 
-            US_Math2::SolutionData  sd;
+            US_Math2::SolutionData  sd{};
             sd.viscosity   = dset.viscosity;
             sd.density     = dset.density;
             sd.manual      = dset.manual;
-            sd.vbar20      = model2.components[ ii ].vbar20;
+            sd.vbar20      = ii.vbar20;
             sd.vbar        = US_Math2::adjust_vbar20( sd.vbar20, avtemp );
             US_Math2::data_correction( avtemp, sd );
             double scorr   = sd.s20w_correction;
             double dcorr   = sd.D20w_correction;
-            component->s  /= scorr;
-            component->D  /= dcorr;
+            if (dset.simparams.meshType != US_SimulationParameters::ASTFVM)
+            {
+               component->s  /= scorr;
+               component->D  /= dcorr;
+            }
             if ( component->extinction > 0.0 )
+            {
                component->molar_concentration = component->signal_concentration / component->extinction;
+            }
          }
 
          SIMPARAMS simparms = dset.simparams;
          int drow = lw_triples->currentRow();
          US_AstfemMath::initSimData( sdata, dataList[ drow ], 0.0 );
-         US_Astfem_RSA* astfem_rsa = new US_Astfem_RSA( model2, simparms );
-         astfem_rsa->calculate( sdata );
+         if (dset.simparams.meshType == US_SimulationParameters::ASTFVM)
+         {
+            US_LammAstfvm* lamm = new US_LammAstfvm(model2, simparms);
+            lamm->set_buffer( dset.solution_rec.buffer, bfg, nullptr );
+            lamm->calculate(sdata);
+            delete lamm;
+         }
+         else
+         {
+            US_Astfem_RSA* astfem_rsa = new US_Astfem_RSA( model2, simparms );
+            astfem_rsa->set_debug_flag( dbg_level) ;
+            astfem_rsa->calculate( sdata );
+            delete astfem_rsa;
+         }
+
 
          int kpts = 0;
          double variance = 0.0;
@@ -875,17 +910,44 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
 
    reppath           = reppath + "/" + runID + "/";
    respath           = respath + "/" + runID + "/";
-   QString analybase = fitMeni ? "2DSA-FM" : ( montCar ? "2DSA-MC" : "2DSA" );
-   analybase         = fitBott ? "2DSA-FB" : analybase;
-   analybase         = fitMeBo ? "2DSA-FMB" : analybase;
+   QString analybase = montCar ? "2DSA-MC" : "2DSA";
+   QMap< US_SimulationParameters::FitType, QString > maDescMap;
+   maDescMap.insert( US_SimulationParameters::NOTHING, "" );
+   maDescMap.insert( US_SimulationParameters::MENISCUS, "M" );
+   maDescMap.insert( US_SimulationParameters::BOTTOM, "B" );
+   maDescMap.insert( US_SimulationParameters::ANGLE, "A" );
+   maDescMap.insert( US_SimulationParameters::BAND_VOLUME, "V" );
+   maDescMap.insert( US_SimulationParameters::SIGMA, "S" );
+   maDescMap.insert( US_SimulationParameters::DELTA, "D" );
+   maDescMap.insert( US_SimulationParameters::VBAR, "R" );
+   maDescMap.insert( US_SimulationParameters::FF0, "F" );
+   maDescMap.insert( US_SimulationParameters::TEMPERATURE, "T" );
+   bool is_param_fit = dset.simparams.primaryFit != US_SimulationParameters::NOTHING || dset.simparams.secondaryFit != US_SimulationParameters::NOTHING;
+   if (is_param_fit)
+   {
+      analybase += "-F";
+   }
+   if (dset.simparams.primaryFit != US_SimulationParameters::NOTHING)
+   {
+      analybase += maDescMap[dset.simparams.primaryFit];
+   }
+   if (dset.simparams.secondaryFit != US_SimulationParameters::NOTHING)
+   {
+      analybase += maDescMap[dset.simparams.secondaryFit];
+   }
    QString analynode = "/" + analybase + ".";
-   QString filebase  = reppath  + analybase + dext + ".";
+   QString maDesc("");
+    if ( model.description.startsWith( runID ) )
+    {  // Saved model:  get analysis description from model description
+        maDesc            = model.description.section( ".", -2, -2 ).section( "_", 1, -1 );
+    }
+   QString filebase  = reppath  + analybase + dext + "."+ maDesc + ".";
    QString htmlFile  = filebase + "report.html";
    QString plot1File = filebase + "velocity.svgz";
    QString plot2File = filebase + "residuals.png";
    QString plot3File = filebase + "rbitmap.png";
    QString plot4File = filebase + "velocity_nc.svgz";
-   QString fitFile   = filebase + ( fitBott ?
+   QString fitFile   = filebase + ( (dset.simparams.secondaryFit != US_SimulationParameters::NOTHING) ?
                                     "fitbot.dat" :
                                     "fitmen.dat" );
    QString fresFile  = respath  + QString( fitFile )
@@ -975,7 +1037,7 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
    update_filelist( repfiles, plot4File );
 
    // Add fit files if fit-meniscus or fit-bottom
-   if ( fitMeni  ||  fitBott )
+   if ( is_param_fit )
    {
       QString fitstr = fit_meniscus_data();
 
@@ -1097,6 +1159,7 @@ DbgLv(0) << "2DSA d_corr v vW vT d dW dT" << sd.viscosity << sd.viscosity_wt
    // Skip adding speed steps if this is multi-speed, initially,
    // but set speed steps to the experiment vector.
    dset.simparams.initFromData( dbP, dataList[ drow ], !exp_steps );
+   if (dataLoaded){dset.solution_rec = solution_rec;}
    edata->bottom   = ( edata->bottom > 0.0 ) ?
                      edata->bottom :
                      0.0;
@@ -1161,6 +1224,7 @@ DbgLv(1)<<"2dsa : timestate newly created.  timestateobject = "
    dset.s20w_correction    = sd.s20w_correction;
    dset.D20w_correction    = sd.D20w_correction;
    dset.manual             = manual;
+
 DbgLv(1) << "Bottom" << dset.simparams.bottom << "rotorcoeffs"
  << dset.simparams.rotorcoeffs[0] << dset.simparams.rotorcoeffs[1];
 DbgLv(1) << "SimulationParameter --";
@@ -1192,7 +1256,9 @@ QString US_2dsa::distrib_info()
    int ncomp     = model.components.size();
    
    if ( ncomp == 0 )
+   {
       return "";
+   }
 
    QString maDesc    = model.description;
    QString runID     = edata->runID;
@@ -1208,16 +1274,28 @@ QString US_2dsa::distrib_info()
                           .toString( "yyMMddhhmm" );
       bool    cusGrid   = model.description.contains( "CUSTOMGRID" );
       bool    refIter   = model.description.contains( "REFITERS" );
-      bool    fitMeni   = ( model.global == US_Model::MENISCUS );
-      bool    fitBott   = ( model.global == US_Model::BOTTOM );
-      bool    fitMeBo   = ( model.global == US_Model::MENIBOTT );
+      QMap< US_SimulationParameters::FitType, QString > maDescMap;
+      maDescMap.insert( US_SimulationParameters::NOTHING, "" );
+      maDescMap.insert( US_SimulationParameters::MENISCUS, "M" );
+      maDescMap.insert( US_SimulationParameters::BOTTOM, "B" );
+      maDescMap.insert( US_SimulationParameters::ANGLE, "A" );
+      maDescMap.insert( US_SimulationParameters::BAND_VOLUME, "V" );
+      maDescMap.insert( US_SimulationParameters::SIGMA, "S" );
+      maDescMap.insert( US_SimulationParameters::DELTA, "D" );
+      maDescMap.insert( US_SimulationParameters::VBAR, "R" );
+      maDescMap.insert( US_SimulationParameters::FF0, "F" );
+      maDescMap.insert( US_SimulationParameters::TEMPERATURE, "T" );
       bool    montCar   = model.monteCarlo;
-DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
-      QString anType    = QString( cusGrid ? "2DSA-CG" : "2DSA" )
-                        + QString( fitMeni ? "-FM" : "" )
-                        + QString( fitBott ? "-FB" : "" )
-                        + QString( fitMeBo ? "-FMB" : "" )
-                        + QString( refIter ? "-IT" : "" )
+      DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
+      QString anType    = QString( cusGrid ? "2DSA-CG" : "2DSA" );
+      if ( dset.simparams.primaryFit != US_SimulationParameters::NOTHING ||
+         dset.simparams.secondaryFit != US_SimulationParameters::NOTHING )
+      {
+         anType += "-F";
+         anType += maDescMap[dset.simparams.primaryFit];
+         anType += maDescMap[dset.simparams.secondaryFit];
+      }
+      anType           += QString( refIter ? "-IT" : "" )
                         + QString( montCar ? "-MC" : "" );
       maDesc            = adate + "_" + anType + "_local_i01";
    }
@@ -1228,14 +1306,66 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
 
    mstr += table_row( tr( "Model Analysis:" ),
                       maDesc );
+   mstr += table_row( tr( "Solution:" ),
+                      QString( dset.solution_rec.solutionDesc ) + " " + dset.solution_rec.solutionGUID );
    mstr += table_row( tr( "Number of Components:" ),
                       QString::number( ncomp ) );
    mstr += table_row( tr( "Residual RMS Deviation:" ),
                       QString::number( rmsd )  );
+   mstr += table_row( tr( "s20w correction:" ),
+                      QString::number( dset.s20w_correction )  );
+   mstr += table_row( tr( "D20w correction:" ),
+                      QString::number( dset.D20w_correction )  );
+   QStringList meshType;
+   meshType <<"ASTFEM"<< "CLAVERIE"<< "MOVING_HAT"<< "USER"<< "ASTFVM";
+   mstr += table_row( tr( "Mesh Type:" ),
+                      meshType[dset.simparams.meshType] );
+   QStringList gridType;
+   gridType << "FIXED" << "MOVING";
+   QStringList fitType;
+   fitType << "NOTHING" << "MENISCUS" << "BOTTOM" << "ANGLE" << "BAND_VOLUME" << "SIGMA" << "DELTA"
+               << "VBAR" << "FF0" << "TEMPERATURE";
+   mstr += table_row( tr( "Grid Type:" ),
+                      gridType[dset.simparams.gridType] );
+   if (dset.simparams.primaryFit != US_SimulationParameters::NOTHING)
+   {
+      mstr += table_row( tr( "Primary Fit:" ),
+                         fitType[dset.simparams.primaryFit] );
+   }
+   if (dset.simparams.secondaryFit != US_SimulationParameters::NOTHING)
+   {
+      mstr += table_row( tr( "Secondary Fit:" ),
+                         fitType[dset.simparams.secondaryFit] );
+   }
+   mstr += table_row( tr( "Simulation points:" ),
+                      QString::number( dset.simparams.simpoints )  );
+   mstr += table_row( tr( "Radial Resolution:" ),
+                      QString::number( dset.simparams.radial_resolution )  );
+   mstr += table_row( tr( "Band forming:" ),
+                      QString( dset.simparams.band_forming?(QString("Yes") + " "+ QString::number(dset.simparams.band_volume) + " mL"):"No" ));
+   mstr += table_row( tr( "Channel angle:" ),
+                      QString::number( dset.simparams.cp_angle )  );
+   mstr += table_row( tr( "Meniscus:" ),
+                      QString::number( dset.simparams.meniscus )  + " cm");
+   mstr += table_row( tr( "Bottom:" ),
+                      QString::number( dset.simparams.bottom )  );
+   mstr += table_row( tr( "Bottom Position" ),
+                      QString::number( dset.simparams.bottom_position )  + " cm");
+   if ( dset.simparams.sigma != 0.0 )
+   {
+      mstr += table_row( tr( "Sigma:" ),
+                         QString::number( dset.simparams.sigma )  );
+   }
+   if ( dset.simparams.delta != 0.0 )
+   {
+      mstr += table_row( tr( "Delta:" ),
+                         QString::number( dset.simparams.delta )  );
+   }
 
    double sum_mw  = 0.0;
    double sum_s   = 0.0;
    double sum_D   = 0.0;
+   double sum_ff0 = 0.0;
    double sum_c   = 0.0;
    double mink    = 1e+99;
    double maxk    = -1e+99;
@@ -1249,6 +1379,7 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
       sum_mw     += model.components[ ii ].mw * conc;
       sum_s      += model.components[ ii ].s  * conc;
       sum_D      += model.components[ ii ].D  * conc;
+      sum_ff0    += model.components[ ii ].f_f0 * conc;
       mink        = qMin( mink, model.components[ ii ].f_f0   );
       maxk        = qMax( maxk, model.components[ ii ].f_f0   );
       minv        = qMin( minv, model.components[ ii ].vbar20 );
@@ -1259,20 +1390,26 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
                     > ( maxv - minv ) / qAbs( maxv ) );
 
    mstr += table_row( tr( "Weight Average s20,W:" ),
-                      QString().sprintf( "%6.4e", ( sum_s  / sum_c ) ) );
+                      QString::asprintf( "%6.4e", ( sum_s  / sum_c ) ) );
    mstr += table_row( tr( "Weight Average D20,W:" ),
-                      QString().sprintf( "%6.4e", ( sum_D  / sum_c ) ) );
+                      QString::asprintf( "%6.4e", ( sum_D  / sum_c ) ) );
    mstr += table_row( tr( "W.A. Molecular Weight:" ),
-                      QString().sprintf( "%6.4e", ( sum_mw / sum_c ) ) );
+                      QString::asprintf( "%6.4e", ( sum_mw / sum_c ) ) );
+   mstr += table_row( tr( "W.A. frictional ration:" ),
+                      QString::asprintf( "%6.4e", ( sum_ff0 / sum_c ) ) );
    mstr += table_row( tr( "Total Concentration:" ),
-                      QString().sprintf( "%6.4e", sum_c ) );
+                      QString::asprintf( "%6.4e", sum_c ) );
 
    if ( cnstvb )
+   {
       mstr += table_row( tr( "Constant Vbar at 20" ) + DEGC + ":",
-                         QString().number( maxv ) );
+                         QString::number( maxv ) );
+   }
    else
+   {
       mstr += table_row( tr( "Constant f/f0:" ),
-                         QString().number( maxk ) );
+                         QString::number( maxk ) );
+   }
 
    mstr += indent( 4 ) + "</table>\n\n";
 
@@ -1280,15 +1417,19 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
       + indent( 4 ) + "<table>\n";
 
    if ( cnstvb )
+   {
       mstr += table_row( tr( "Molecular Wt." ), tr( "S Apparent" ),
                          tr( "S 20,W" ),        tr( "D Apparent" ),
                          tr( "D 20,W" ),        tr( "f / f0" ),
                          tr( "Concentration" ) );
+   }
    else
+   {
       mstr += table_row( tr( "Molecular Wt." ), tr( "S Apparent" ),
                          tr( "S 20,W" ),        tr( "D Apparent" ),
                          tr( "D 20,W" ),        tr( "Vbar20" ),
                          tr( "Concentration" ) );
+   }
 
    int    drow     = lw_triples->currentRow();
    edata           = &dataList[ drow ];
@@ -1301,8 +1442,8 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
    sd.vbar20       = vbar20;
    sd.vbar         = vbartb;
    sd.manual       = manual;
-DbgLv(1) << "Data_Corr manual" << sd.manual << "avTemp" << avTemp << "vbar20" << sd.vbar20
- << "vbart" << sd.vbar;
+   DbgLv(1) << "Data_Corr manual" << sd.manual << "avTemp" << avTemp << "vbar20" << sd.vbar20
+    << "vbart" << sd.vbar;
    US_Math2::data_correction( avTemp, sd );
 
    for ( int ii = 0; ii < ncomp; ii++ )
@@ -1326,13 +1467,13 @@ DbgLv(1) << "Data_Corr manual" << sd.manual << "avTemp" << avTemp << "vbar20" <<
       D_ap       /= sd.D20w_correction;
 
       mstr       += table_row(
-            QString().sprintf( "%10.4e", model.components[ ii ].mw ),
-            QString().sprintf( "%10.4e", s_ap                      ),
-            QString().sprintf( "%10.4e", model.components[ ii ].s  ),
-            QString().sprintf( "%10.4e", D_ap                      ),
-            QString().sprintf( "%10.4e", model.components[ ii ].D  ),
-            QString().sprintf( "%10.4e", f_f0                      ),
-            QString().sprintf( "%10.4e (%5.2f %%)", conc, perc     ) );
+            QString::asprintf( "%10.4e", model.components[ ii ].mw ),
+            QString::asprintf( "%10.4e", s_ap                      ),
+            QString::asprintf( "%10.4e", model.components[ ii ].s  ),
+            QString::asprintf( "%10.4e", D_ap                      ),
+            QString::asprintf( "%10.4e", model.components[ ii ].D  ),
+            QString::asprintf( "%10.4e", f_f0                      ),
+            QString::asprintf( "%10.4e (%5.2f %%)", conc, perc     ) );
    }
 
    mstr += indent( 4 ) + "</table>\n";
@@ -1346,10 +1487,13 @@ QString US_2dsa::iteration_info()
    int nmodels   = models.size();
    
    if ( nmodels < 2 )
+   {
       return "";
+   }
 
    model            = models[ nmodels - 1 ];
-   bool    fitMeni  = ( model.global == US_Model::MENISCUS );
+   bool fitMeni    = ( model.global == US_Model::MENISCUS || model.global == US_Model::BOTTOM ||
+model.global == US_Model::MENIBOTT || model.global == US_Model::ANGLE || model.global == US_Model::MENIANGLE);
    bool    montCar  = model.monteCarlo;
    QString anType   = montCar ? "Monte Carlo" : "Fit Meniscus";
 
@@ -1360,25 +1504,38 @@ QString US_2dsa::iteration_info()
    mstr += table_row( tr( "Number of Model Iterations:" ),
                       QString::number( nmodels ) );
    mstr += table_row( tr( "Iteration Analysis Type:" ), anType );
-
-   if ( fitMeni )
+   QStringList fitType;
+   fitType << "NOTHING" << "MENISCUS" << "BOTTOM" << "ANGLE" << "BAND_VOLUME" << "SIGMA" << "DELTA"
+               << "VBAR" << "FF0" << "TEMPERATURE";
+   if ( dset.simparams.primaryFit != US_SimulationParameters::NOTHING )
    {
-      QString mdesc    = models[ 0 ].description;
-      QString mend1    = mdesc.mid( mdesc.indexOf( "MENISCUS=" ) + 9 );
-              mdesc    = model.description;
-      QString mend2    = mdesc.mid( mdesc.indexOf( "MENISCUS=" ) + 9 );
-      double  bmenis   = edata->meniscus;
-      double  smenis   = mend1.toDouble();
-      double  emenis   = mend2.toDouble();
-      double  rmenis   = emenis - smenis;
-      mstr += table_row( tr( "Meniscus Range:" ),
-                         QString::number( rmenis ) );
-      mstr += table_row( tr( "Base Experiment Meniscus:" ),
-                         QString::number( bmenis ) );
-      mstr += table_row( tr( "Start Fit Meniscus:" ),
-                         QString::number( smenis ) );
-      mstr += table_row( tr( "End Fit Meniscus:" ),
-                         QString::number( emenis ) );
+      const US_SimulationParameters::FitType var_parm = dset.simparams.primaryFit;
+      const double var_rang = dset.simparams.primary_range;
+      const QString parm = fitType[var_parm];
+
+      mstr += table_row( tr( qPrintable( "Primary Parameter" + parm + " Range:" )  ),
+                         QString::number( var_rang ) + " (" + QString::number( dset.simparams.primary_variations) + " variations)" );
+      mstr += table_row( tr( qPrintable("Base Experiment " + parm + ":") ),
+                         QString::number( dset.simparams.get_parameter_value( var_parm ) - var_rang / 2.0 ) );
+      mstr += table_row( tr( qPrintable("Start Fit " + parm + ":") ),
+                         QString::number( dset.simparams.get_parameter_value( var_parm ) - var_rang ) );
+      mstr += table_row( tr( qPrintable("End Fit " + parm + ":") ),
+                         QString::number( dset.simparams.get_parameter_value( var_parm ) ) );
+   }
+   if ( dset.simparams.secondaryFit != US_SimulationParameters::NOTHING )
+   {
+      const US_SimulationParameters::FitType var_parm = dset.simparams.secondaryFit;
+      const double var_rang = dset.simparams.secondary_range;
+      const QString parm = fitType[var_parm];
+
+      mstr += table_row( tr( qPrintable( "Primary Parameter" + parm + " Range:" )  ),
+                         QString::number( var_rang ) + " (" + QString::number( dset.simparams.secondary_variations) + " variations)" );
+      mstr += table_row( tr( qPrintable("Base Experiment " + parm + ":") ),
+                         QString::number( dset.simparams.get_parameter_value( var_parm ) - var_rang / 2.0 ) );
+      mstr += table_row( tr( qPrintable("Start Fit " + parm + ":") ),
+                         QString::number( dset.simparams.get_parameter_value( var_parm ) - var_rang ) );
+      mstr += table_row( tr( qPrintable("End Fit " + parm + ":") ),
+                         QString::number( dset.simparams.get_parameter_value( var_parm ) ) );
    }
 
    mstr += indent( 4 ) + "</table>\n\n";
@@ -1387,37 +1544,56 @@ QString US_2dsa::iteration_info()
       + indent( 4 ) + "<table>\n";
 
    if ( montCar )
+   {
       mstr += table_row( tr( "Iteration" ),
                          tr( "Iteration ID" ),
                          tr( "RMSD" ) );
-
-   else
+   }
+   else if ( dset.simparams.primaryFit != US_SimulationParameters::NOTHING && dset.simparams.secondaryFit != US_SimulationParameters::NOTHING )
+   {
       mstr += table_row( tr( "Iteration" ),
-                         tr( "Meniscus" ),
-                         tr( "Bottom" ),
+                         tr( qPrintable(fitType[dset.simparams.primaryFit]) ),
+                         tr( qPrintable(fitType[dset.simparams.secondaryFit]) ),
                          tr( "RMSD" ) );
-
+   }
+   else if ( dset.simparams.primaryFit != US_SimulationParameters::NOTHING )
+   {
+      mstr += table_row( tr( "Iteration" ),
+                         tr( qPrintable(fitType[dset.simparams.primaryFit]) ),
+                         tr( "RMSD" ) );
+   }
+   QStringList fitTypeAttr;
+   fitTypeAttr << "NOTHING" << "MENISCUS" << "BOTTOM" << "ANGLE" << "VOLUME" << "SIGMA" << "DELTA"
+               << "VBAR" << "FF0" << "TEMPERATURE";
    for ( int ii = 0; ii < nmodels; ii++ )
    {
       QString itnum = QString::number( ii + 1 ).rightJustified( 4, '_' );
       QString mdesc = models[ ii ].description;
       QString avari = mdesc.mid( mdesc.indexOf( "VARI=" ) + 5 );
       double  rmsd  = sqrt( avari.section( " ", 0, 0 ).toDouble() );
-      QString armsd = QString().sprintf( "%10.8f", rmsd );
+      QString armsd = QString::asprintf( "%10.8f", rmsd );
 
       if ( montCar )
       {
-         QString itID  = QString().sprintf( "i%04i", ii + 1 );
+         QString itID  = QString::asprintf( "i%04i", ii + 1 );
          mstr         += table_row( itnum, itID, armsd );
       }
-
-      else
+      else if ( dset.simparams.primaryFit != US_SimulationParameters::NOTHING && dset.simparams.secondaryFit != US_SimulationParameters::NOTHING )
       {
-         QString ameni = mdesc.mid( mdesc.indexOf( "MENISCUS=" ) + 9 )
-                         .section( " ", 0, 0 );
-         QString abott = mdesc.mid( mdesc.indexOf( "BOTTOM=" ) + 7 )
+         QString prim = fitTypeAttr[dset.simparams.primaryFit] + "=";
+         QString sec  = fitTypeAttr[dset.simparams.secondaryFit] + "=";
+         QString ameni = mdesc.mid( mdesc.indexOf( prim ) + prim.length() )
+                .section( " ", 0, 0 );
+         QString abott = mdesc.mid( mdesc.indexOf( sec ) + sec.length() )
                          .section( " ", 0, 0 );
          mstr         += table_row( itnum, ameni, abott, armsd );
+      }
+      else if ( dset.simparams.primaryFit != US_SimulationParameters::NOTHING )
+      {
+         QString prim = fitTypeAttr[dset.simparams.primaryFit] + "=";
+         QString ameni = mdesc.mid( mdesc.indexOf( prim ) + prim.length() )
+                .section( " ", 0, 0 );
+         mstr         += table_row( itnum, ameni, armsd );
       }
    }
 
@@ -1492,6 +1668,37 @@ void US_2dsa::new_triple( int index )
    ti_noises  .clear();
    ri_noises  .clear();
 
+   // cleanup windows
+   if ( eplotcd  )
+   {
+      epd_pos  = eplotcd->pos();
+      eplotcd->close();
+      eplotcd.clear();
+   }
+
+   if ( resplotd  )
+   {
+      rbd_pos  = resplotd->pos();
+      resplotd->close();
+      resplotd.clear();
+   }
+   if ( analcd )
+   {
+      acd_pos  = analcd->pos();
+      analcd->close();
+      analcd.clear();
+   }
+   if ( analcd1 )
+   {
+      analcd1->close();
+      analcd1.clear();
+   }
+   if ( te_results )
+   {
+      te_results->close();
+      te_results.clear();
+   }
+
    // Temporarily restore any loaded noise vectors from triples vectors
    ti_noise           = tinoises[ index ];
    ri_noise           = rinoises[ index ];
@@ -1520,46 +1727,47 @@ QString US_2dsa::fit_meniscus_data()
    int nmodels   = models.size();
    
    if ( nmodels < 2 )
+   {
       return mstr;
+   }
 
-    bool usemen  = ( QString( models[ 0 ].description )
-                     .indexOf( "MENISCUS=" ) > 0 );
-    bool usebot  = ( QString( models[ 0 ].description )
-                     .indexOf( "BOTTOM=" ) > 0 );
+   QStringList fitTypeAttr;
+   fitTypeAttr << "NOTHING" << "MENISCUS" << "BOTTOM" << "ANGLE" << "VOLUME" << "SIGMA" << "DELTA"
+               << "VBAR" << "FF0" << "TEMPERATURE";
+   QString prim = fitTypeAttr[dset.simparams.primaryFit] + "=";
+   QString sec  = fitTypeAttr[dset.simparams.secondaryFit] + "=";
+   // create the header
+   QString mdesc = models[ 0 ].description;
+   if ( mdesc.indexOf( prim ) > 0 )
+   {
+      mstr += fitTypeAttr[dset.simparams.primaryFit] + " ";
+   }
+   if ( mdesc.indexOf( sec ) > 0 )
+   {
+      mstr += fitTypeAttr[dset.simparams.secondaryFit] + " ";
+   }
+   mstr += "RMSD\n";
 
    for ( int ii = 0; ii < nmodels; ii++ )
    {
-      QString mdesc = models[ ii ].description;
+      mdesc = models[ ii ].description;
       QString avari = mdesc.mid( mdesc.indexOf( "VARI=" ) + 5 );
       double  variv = avari.section( " ", 0, 0 ).toDouble();
       double  rmsd  = ( variv > 0.0 ) ? sqrt( variv ) : 0.0;
-      QString armsd = QString().sprintf( "%10.8f", rmsd );
-      if ( usemen && usebot )
+      QString armsd = QString::asprintf( "%10.8f", rmsd );
+      if (mdesc.indexOf( prim ) > 0)
       {
-         QString ameni = mdesc.mid( mdesc.indexOf( "MENISCUS=" ) + 9 )
-                         .section( " ", 0, 0 );
-         QString abott = mdesc.mid( mdesc.indexOf( "BOTTOM=" ) + 7 )
-                         .section( " ", 0, 0 );
-         mstr         += ( ameni + " " + abott + " " + armsd + "\n" );
-DbgLv(1) << "fitmdat:  ii" << ii << "meni bott rmsd"
- << ameni << abott << armsd;
+         QString aprim = mdesc.mid( mdesc.indexOf( prim ) + prim.length() )
+                .section( " ", 0, 0 );
+         mstr += aprim + " ";
       }
-      else if ( usemen )
+      if (mdesc.indexOf( sec ) > 0)
       {
-         QString ameni = mdesc.mid( mdesc.indexOf( "MENISCUS=" ) + 9 )
-                         .section( " ", 0, 0 );
-         mstr         += ( ameni + " " + armsd + "\n" );
-DbgLv(1) << "fitmdat:  ii" << ii << "meni rmsd"
- << ameni << armsd;
+         QString asec = mdesc.mid( mdesc.indexOf( sec ) + sec.length() )
+         .section( " ", 0, 0 );
+         mstr += asec + " ";
       }
-      else if ( usebot )
-      {
-         QString abott = mdesc.mid( mdesc.indexOf( "BOTTOM=" ) + 7 )
-                         .section( " ", 0, 0 );
-         mstr         += ( abott + " " + armsd + "\n" );
-DbgLv(1) << "fitbdat:  ii" << ii << "bott rmsd"
- << abott << armsd;
-      }
+      mstr += armsd + "\n";
    }
    
    return mstr;

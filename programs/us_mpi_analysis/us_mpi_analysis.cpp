@@ -7,11 +7,17 @@
 #include "us_util.h"
 #include "us_settings.h"
 #include "us_revision.h"
+#include "us_constants.h"
+#include "us_simparms.h"
 
 #include <QtCore/QString>
 #include <cstdio>
 #include <mpi.h>
 #include <sys/user.h>
+
+
+
+
 
 #define ELAPSED_SECS (startTime.msecsTo(QDateTime::currentDateTime())/1000.0)
 
@@ -75,7 +81,7 @@ US_MPI_Analysis::US_MPI_Analysis( int nargs, QStringList& cmdargs ) : QObject()
 
    MPI_Comm_size( MPI_COMM_WORLD, &proc_count );
    MPI_Comm_rank( MPI_COMM_WORLD, &my_rank );
-
+   bandFormingGradient = nullptr;
    dbg_level    = 0;
    dbg_timing   = false;
    maxrss       = 0L;
@@ -347,8 +353,16 @@ DbgLv(0) << "BAD DATA. ioError" << error << "rank" << my_rank << proc_count;
 
    mc_iterations   = parameters[ "mc_iterations" ].toInt();
    mc_iterations   = qMax( mc_iterations, 1 );
+   menibott_count = 1;
+
 
    // Set Fit-Meniscus/Bottom parameters
+   primaryFit    = (US_SimulationParameters::FitType)parameters[ "primary_fit" ].toInt();
+   secondaryFit  = (US_SimulationParameters::FitType)parameters[ "secondary_fit" ].toInt();
+   primary_range = parameters[ "primary_range" ].toDouble();
+   secondary_range = parameters[ "secondary_range" ].toDouble();
+   primary_variations = parameters[ "primary_variations" ].toInt();
+   secondary_variations = parameters[ "secondary_variations" ].toInt();
    fit_mb_select   = parameters[ "fit_mb_select"   ].toInt();
    meniscus_range  = parameters[ "meniscus_range"  ].toDouble();
    meniscus_points = parameters[ "meniscus_points" ].toInt();
@@ -359,38 +373,29 @@ DbgLv(0) << "BAD DATA. ioError" << error << "rank" << my_rank << proc_count;
 if (my_rank==0) {
 DbgLv(0) << "FMB: fit_mb_select" << fit_mb_select
  << "    fit_meni _bott _menbot" << fit_meni << fit_bott << fit_menbot; }
-
-   if ( fit_menbot )
-   {  // Meniscus-and-bottom fit iterations will be run
-      bottom_range    = meniscus_range;
-      bottom_points   = meniscus_points;
-      menibott_count  = meniscus_points * bottom_points;
+   if ( primaryFit != US_SimulationParameters::NOTHING)
+   {
+      meniscus_range  = primary_range;
+      meniscus_points = primary_variations;
+      menibott_count *= primary_variations;
    }
-
-   else if ( fit_meni )
-   {  // Meniscus-only fit iterations will be run
-      bottom_range    = 0.0;
-      bottom_points   = 1;
-      menibott_count  = meniscus_points;
-   }
-
-   else if ( fit_bott )
-   {  // Bottom-only fit iterations will be run
-      bottom_range    = meniscus_range;
-      bottom_points   = meniscus_points;
-      meniscus_range  = 0.0;
-      meniscus_points = 1;
-      menibott_count  = bottom_points;
-   }
-
    else
-   {  // No meniscus/bottom fit
+   {
       meniscus_range  = 0.0;
       meniscus_points = 1;
+   }
+   if ( secondaryFit != US_SimulationParameters::NOTHING)
+   {  // Meniscus-and-bottom fit iterations will be run
+      bottom_range    = secondary_range;
+      bottom_points   = secondary_variations;
+      menibott_count  *= secondary_variations;
+   }
+   else
+   {
       bottom_range    = 0.0;
       bottom_points   = 1;
-      menibott_count  = 1;
    }
+
 if (my_rank==0) {
 DbgLv(0) << "FMB: meni range points" << meniscus_range << meniscus_points
  << "  bott range points" << bottom_range << bottom_points; }
@@ -460,14 +465,19 @@ DbgLv(0) << "FMB: meni range points" << meniscus_range << meniscus_points
    {
       abort( "Global fit is not compatible with noise computation" );
    }
-
+   for ( int ee = 0; ee < data_sets.size(); ee++ )
+   {
+      data_sets[ee]->simparams.vbar = data_sets[ee]->vbar20;
+      data_sets[ee]->simparams.bottom = data_sets[ee]->run_data.bottom;
+      data_sets[ee]->simparams.meniscus = data_sets[ee]->run_data.meniscus;
+   }
    // Calculate meniscus values
    meniscus_values.resize( meniscus_points );
 
-   double meniscus_start = data_sets[ 0 ]->run_data.meniscus 
+   double meniscus_start = data_sets[0]->simparams.get_parameter_value(primaryFit)
                          - meniscus_range / 2.0;
    
-   double dmen           = fit_meni ?
+   double dmen           = primaryFit != US_SimulationParameters::NOTHING ?
                            ( meniscus_range / ( meniscus_points - 1 ) ) :
                            0.0;
 
@@ -475,36 +485,39 @@ DbgLv(0) << "FMB: meni range points" << meniscus_range << meniscus_points
    {
       meniscus_values[ ii ]  = meniscus_start + dmen * ii;
    }
-
-   // Get lower limit of data and last (largest) meniscus value
-   double start_range    = data_sets[ 0 ]->run_data.radius( 0 );
-   double last_meniscus  = meniscus_values[ meniscus_points - 1 ];
-if (my_rank==0) {
- DbgLv(0) << "FMB: meniscus:  start delta" << meniscus_start << dmen; }
-
-   if ( last_meniscus >= start_range )
+   if ( primaryFit == US_SimulationParameters::MENISCUS )
    {
-      if ( my_rank == 0 )
+      // Get lower limit of data and last (largest) meniscus value
+      double start_range    = data_sets[ 0 ]->run_data.radius( 0 );
+      double last_meniscus  = meniscus_values[ meniscus_points - 1 ];
+      if (my_rank==0) {
+         DbgLv(0) << "FMB: meniscus:  start delta" << meniscus_start << dmen; }
+
+      if ( last_meniscus >= start_range )
       {
-         qDebug() << "*ERROR* Meniscus value extends into data";
-         qDebug() << " data meniscus" << data_sets[0]->run_data.meniscus;
-         qDebug() << " meniscus_start" << meniscus_start;
-         qDebug() << " meniscus_range" << meniscus_range;
-         qDebug() << " meniscus_points" << meniscus_points;
-         qDebug() << " meniscus delta" << dmen;
-         qDebug() << " last_meniscus" << last_meniscus;
-         qDebug() << " left_data" << start_range;
+         if ( my_rank == 0 )
+         {
+            qDebug() << "*ERROR* Meniscus value extends into data";
+            qDebug() << " data meniscus" << data_sets[0]->run_data.meniscus;
+            qDebug() << " meniscus_start" << meniscus_start;
+            qDebug() << " meniscus_range" << meniscus_range;
+            qDebug() << " meniscus_points" << meniscus_points;
+            qDebug() << " meniscus delta" << dmen;
+            qDebug() << " last_meniscus" << last_meniscus;
+            qDebug() << " left_data" << start_range;
+         }
+         abort( "Meniscus value extends into data" );
       }
-      abort( "Meniscus value extends into data" );
    }
+
+
 
    // Calculate bottom values
    bottom_values.resize( bottom_points );
-
    // Use bottom from edited data if it is given
    US_SolveSim::DataSet*  ds    = data_sets[ 0 ];
-   double bottom_ds    = ds->run_data.bottom;
-   if ( bottom_ds == 0.0 )
+   double bottom_ds    = ds->simparams.get_parameter_value(secondaryFit);
+   if ( bottom_ds == 0.0 && secondaryFit == US_SimulationParameters::BOTTOM)
    {
       double rpm          = ds->run_data.scanData[ 0 ].rpm;
       bottom_ds           = US_AstfemMath::calc_bottom( rpm,
@@ -513,7 +526,7 @@ if (my_rank==0) {
    }
    double bottom_start = bottom_ds - bottom_range / 2.0;
    
-   double dbot         = fit_bott ?
+   double dbot         = secondaryFit != US_SimulationParameters::NOTHING ?
                          ( bottom_range / ( bottom_points - 1 ) ) :
                          0.0;
 
@@ -1057,7 +1070,11 @@ if (my_rank==0) DbgLv(0) << "ckGrSz: ssp count"
 
    mgroup_count = qMax( 1, mgroup_count );
    gcores_count = proc_count / mgroup_count;
-
+   DbgLv(1) << "my_rank: " << my_rank << " mgroup_count" << mgroup_count << " gcores_count" << gcores_count;
+   MPI_Barrier( MPI_COMM_WORLD ); // Sync everybody up
+   calculate_cosed();
+   MPI_Barrier( MPI_COMM_WORLD ); // Sync everybody up
+   DbgLv(1) << "my_rank: " << my_rank << " calculate_cosed done";
    if ( mgroup_count < 2 )
       start();                  // Start standard job
    
@@ -1438,11 +1455,12 @@ DbgLv(0) << "DSM:   ASIZE" << nnls_a.size() << "c_used[n]" << c_used[kc-1];
    }
 }
 
-
+
 // Calculate residuals (FE Modeling and NNLS)
 void US_MPI_Analysis::calc_residuals( int         offset,
                                       int         dataset_count,
-                                      SIMULATION& simu_values )
+                                      SIMULATION& simu_values,
+                                      int bfg_offset)
 {
    count_calc_residuals++;
 bool do_dbg=( dbg_level > 0 && ( group_rank < 2 || group_rank == (proc_count/2) ) );
@@ -1467,8 +1485,14 @@ else
 if ( do_dbg ) DbgLv(1) << "w:" << my_rank << ":nsoli" << nsoli << "nsolz" << nsolz;
 if ( do_dbg ) simu_values.dbg_level = qMax( simu_values.dbg_level, 1 );
 //*DEBUG*
-
-   solvesim.calc_residuals( offset, dataset_count, simu_values );
+   US_Math_BF::Band_Forming_Gradient* bfg = (bfg_offset!=-1)?&data_sets_bfgs[bfg_offset]: nullptr;
+   DbgLv(1) << "TEST" << bfg_offset << ((bfg_offset!=-1)?&data_sets_bfgs[bfg_offset]: nullptr) << bfg;
+   if (data_sets_bfgs.length() == 1){bfg = bandFormingGradient;}
+   DbgLv(1) << "TEST" << bfg_offset << ((bfg_offset!=-1)?&data_sets_bfgs[bfg_offset]: nullptr) << bfg;
+   if ( bfg != nullptr && my_rank > 2 ){ // copy the gradient for faster lookups
+      bfg = new US_Math_BF::Band_Forming_Gradient(*bfg);
+   }
+   solvesim.calc_residuals( offset, dataset_count, simu_values, false, nullptr, nullptr, nullptr, bfg);
 
 //*DEBUG*
 simu_values.dbg_level=dbglvsv;
@@ -2047,7 +2071,21 @@ void US_MPI_Analysis::write_model( const SIMULATION&      sim,
                                    bool                   glob_sols )
 {
    US_DataIO::EditedData* edata = &data_sets[ current_dataset ]->run_data;
-
+   US_SimulationParameters* sparms = &data_sets[ current_dataset ]->simparams;
+   QStringList fitType;
+   fitType << "NOTHING" << "MENISCUS" << "BOTTOM" << "ANGLE" << "VOLUME" << "SIGMA" << "DELTA"
+               << "VBAR" << "FF0" << "TEMPERATURE";
+   QMap< US_SimulationParameters::FitType, QString > maDescMap;
+   maDescMap.insert( US_SimulationParameters::NOTHING, "" );
+   maDescMap.insert( US_SimulationParameters::MENISCUS, "M" );
+   maDescMap.insert( US_SimulationParameters::BOTTOM, "B" );
+   maDescMap.insert( US_SimulationParameters::ANGLE, "A" );
+   maDescMap.insert( US_SimulationParameters::BAND_VOLUME, "V" );
+   maDescMap.insert( US_SimulationParameters::SIGMA, "S" );
+   maDescMap.insert( US_SimulationParameters::DELTA, "D" );
+   maDescMap.insert( US_SimulationParameters::VBAR, "R" );
+   maDescMap.insert( US_SimulationParameters::FF0, "F" );
+   maDescMap.insert( US_SimulationParameters::TEMPERATURE, "T" );
    // Fill in and write out the model file
    US_Model model;
    int subtype       = ( type == US_Model::PCSA ) ? mrecs[ 0 ].ctype : 0;
@@ -2071,34 +2109,47 @@ DbgLv(1) << "wrMo:  mc mciter mGUID" << model.monteCarlo << mc_iter
    model.editGUID    = edata->editGUID;
    model.requestGUID = requestGUID;
    model.dataDescrip = edata->description;
+   if ( primaryFit != US_SimulationParameters::NOTHING || secondaryFit != US_SimulationParameters::NOTHING )
+   {  // Meniscus (or Meniscus,Bottom)
+      model.global = US_Model::MENISCUS;
+      QString desc = QString( " MMITER=%1 VARI=%2" ).arg(menibott_ndx + 1).arg(sim.variance);
+      if ( primaryFit != US_SimulationParameters::NOTHING )
+      {
+         QString pfit = fitType[ primaryFit ];
+         desc += QString( " %1=%2" ).arg( pfit ).arg( meniscus_value );
+
+      }
+      if ( secondaryFit != US_SimulationParameters::NOTHING )
+      {
+         QString sfit = fitType[ secondaryFit ];
+         desc += QString( " %1=%2" ).arg( sfit ).arg( bottom_value );
+      }
+      if (model.dataDescrip.isEmpty())
+      {
+         model.dataDescrip = desc;
+      }
+      else
+      {
+         model.dataDescrip += desc;
+      }
+
+   }
    //model.optics      = ???  How to get this?  Is is needed?
    model.analysis    = type;
    QString runID     = edata->runID;
 
-   if ( fit_menbot )
-      model.global      = US_Model::MENIBOTT;
-
-   else if ( fit_meni )
-      model.global      = US_Model::MENISCUS;
-
-   else if ( fit_bott )
-      model.global      = US_Model::BOTTOM;
-
-   else if ( is_global_fit )
+   if ( is_global_fit )
    {
       model.global      = US_Model::GLOBAL;
       subtype          += ( glob_sols ? SUBT_SC : SUBT_VR );
       model.modelGUID   = US_Util::new_guid();
       modelGUID         = model.modelGUID;
    }
-
-   else
-      model.global      = US_Model::NONE; 
 DbgLv(0) << "wrMo:  is_glob glob_sols" << is_global_fit << glob_sols
  << "f_men f_bot f_mbo" << fit_meni << fit_bott << fit_menbot << "m.glob" << model.global;
 
-   model.meniscus    = meniscus_value;
-   model.bottom      = fit_bott ? bottom_value : 0.0;
+   model.meniscus    = data_sets[current_dataset]->simparams.meniscus;
+   model.bottom      = data_sets[current_dataset]->simparams.bottom;
    model.variance    = sim.variance;
 
    // demo1_veloc. 1A999. e201101171200_a201101171400_2DSA us3-0000003           .model
@@ -2121,16 +2172,16 @@ DbgLv(1) << "wrMo: tripleID" << tripleID << "dates" << dates;
 
    if ( mc_iterations > 1 )
       iterID.sprintf( "mc%04d", mc_iter );
-   else if ( fit_menbot )
+   else if ( primaryFit && secondaryFit )
       iterID.sprintf( "i%02d-m%05db%05d", 
               menibott_ndx + 1,
               (int)( meniscus_value * 10000 ),
               (int)( bottom_value * 10000 ) );
-   else if (  fit_meni )
+   else if (  primaryFit )
       iterID.sprintf( "i%02d-m%05d", 
               meniscus_run + 1,
               (int)( meniscus_value * 10000 ) );
-   else if (  fit_bott )
+   else if (  secondaryFit )
       iterID.sprintf( "i%02d-b%05d", 
               bottom_run + 1,
               (int)( bottom_value * 10000 ) );
@@ -2141,8 +2192,17 @@ DbgLv(1) << "wrMo: tripleID" << tripleID << "dates" << dates;
    QString id        = model.typeText( subtype );
    if ( analysis_type.contains( "CG" ) )
       id                = id.replace( "2DSA", "2DSA-CG" );
+   if ( primaryFit != US_SimulationParameters::NOTHING ||
+         secondaryFit != US_SimulationParameters::NOTHING )
+   {
+      id += "-F";
+      id += maDescMap[primaryFit];
+      id += maDescMap[secondaryFit];
+   }
+
    if ( max_iterations > 1  &&  mc_iterations == 1 )
       id               += "-IT";
+
    QString analyID   = dates + "_" + id + "_" + requestID + "_" + iterID;
    int     stype     = data_sets[ current_dataset ]->solute_type;
    double  vbar20    = data_sets[ current_dataset ]->vbar20;
@@ -2234,11 +2294,11 @@ DbgLv(1) << "wrMo: stype" << stype << QString().sprintf("0%o",stype)
 
    QString runstring = "Run: " + QString::number( run ) + " " + tripleID;
 
-   tsout << fn << ";meniscus_value=" << meniscus_value
+   tsout << fn << ";"<< fitType[primaryFit] << "=" << meniscus_value
                << ";MC_iteration="   << mc_iter
                << ";variance="       << sim.variance
                << ";run="            << runstring
-               << ";bottom_value="   << bottom_value
+   << ";"<< fitType[secondaryFit] << "=" << bottom_value
                << "\n";
    fileo.close();
 }
@@ -2530,7 +2590,7 @@ for(int jf=0;jf<files.size();jf++)
    {  // Remove the files we just put into the tar archive
 DbgLv(0) << my_rank << ": All output files except the archive are now removed.";
       QString file;
-      foreach( file, files ) odir.remove( file );
+      // foreach( file, files ) odir.remove( file );
    }
 }
 
@@ -2552,8 +2612,11 @@ double US_MPI_Analysis::rmsd_combined_mc_models( US_Model& model )
       US_Math2::data_correction( avtemp, sd );
       double scorr   = sd.s20w_correction;
       double dcorr   = sd.D20w_correction;
-      component->s  /= scorr;
-      component->D  /= dcorr;
+      if ( dset->simparams.meshType != US_SimulationParameters::ASTFVM)
+      {
+         component->s  /= scorr;
+         component->D  /= dcorr;
+      }
       if ( component->extinction > 0.0 )
          component->molar_concentration = component->signal_concentration / component->extinction;
    }
@@ -2562,9 +2625,20 @@ double US_MPI_Analysis::rmsd_combined_mc_models( US_Model& model )
    US_DataIO::RawData    sdata;
    US_DataIO::EditedData edata = dset->run_data;
    US_AstfemMath::initSimData( sdata, edata, 0.0 );
-   US_Astfem_RSA* astfem_rsa = new US_Astfem_RSA( model, simparms );
-   astfem_rsa->calculate( sdata );
-
+   if ( dset->simparams.meshType == US_SimulationParameters::ASTFVM)
+   {
+      US_LammAstfvm* astfvm = new US_LammAstfvm( model, simparms );
+      astfvm->set_buffer( dset->solution_rec.buffer,
+         (!bfgs.isEmpty())?bfgs[0]:bandFormingGradient,
+         (!csDs.isEmpty())?csDs[0]:nullptr);
+      astfvm->calculate( sdata );
+   }
+   else
+   {
+      US_Astfem_RSA* astfem_rsa = new US_Astfem_RSA( model, simparms );
+      astfem_rsa->set_debug_flag(dbg_level);
+      astfem_rsa->calculate( sdata );
+   }
    QVector< double > ti_noise = simulation_values.ti_noise;
    QVector< double > ri_noise = simulation_values.ri_noise;
    int    nscans   = edata.scanCount();
@@ -2766,3 +2840,227 @@ DbgLv(1) << "wrMo: stype" << stype << QString().sprintf("0%o",stype)
    fileo.close();
 }
 
+void US_MPI_Analysis::calculate_cosed() {
+   if (data_sets.isEmpty() || data_sets[0]->solution_rec.buffer.cosed_component.isEmpty() ||
+   data_sets[0]->simparams.meshType != US_SimulationParameters::ASTFVM){
+      return;
+   }
+
+   US_LammAstfvm::CosedData* csD = nullptr;
+   QList<US_CosedComponent> cosed_components;
+   US_Math_BF::Band_Forming_Gradient* bfg = nullptr;
+   QMap<QString, US_DataIO::RawData> cosed_comp_data;
+   bool codiff_needed = false;
+   bool cosed_needed = false;
+   // emit message_update( pmessage_head() + tr( "Calculating co-sedimenting components" ), false );
+   cosed_components = data_sets[0]->solution_rec.buffer.cosed_component;
+   cosed_components.detach();
+   US_DataIO::RawData auc_data = data_sets[0]->run_data.convert_to_raw_data();
+   US_Model cosed_model = data_sets[0]->model;
+   cosed_model.coSedSolute = -1;
+   cosed_model.components.clear();
+   US_Model cosed_model_tmp = data_sets[0]->model;
+   cosed_model_tmp.coSedSolute = -1;
+   double base_density = 0.0;
+   double base_viscosity = 0.0;
+   QMap<QString, US_CosedComponent> upper_cosed;
+   QMap<QString, US_CosedComponent> lower_cosed;
+   QList<QString> base_comps;
+   foreach (US_CosedComponent i,  cosed_components) {
+      DbgLv(1) << "buff dens_coeff" << i.dens_coeff[ 0 ] << i.dens_coeff[ 1 ] << i.dens_coeff[ 2 ]
+               << i.dens_coeff[ 3 ] << i.dens_coeff[ 4 ] << i.dens_coeff[ 5 ];
+      DbgLv(1) << "buff visc_coeff" << i.visc_coeff[ 0 ] << i.visc_coeff[ 1 ] << i.visc_coeff[ 2 ]
+               << i.visc_coeff[ 3 ] << i.visc_coeff[ 4 ] << i.visc_coeff[ 5 ];
+      if ( !i.overlaying && upper_cosed.contains(i.name)) {
+         // the current component is in the lower part, but there is another component with the same name in the
+         // overlaying section of the band forming gradient
+         US_CosedComponent j = upper_cosed[ i.name ];
+         if ( j.conc > i.conc ) {
+            // the concentration is higher in upper part, move it completely to the upper part and set the
+            // concentration to the excess concentration
+            j.conc = j.conc - i.conc;
+            j.concentration_offset = i.conc;
+            i.concentration_offset = i.conc;
+            upper_cosed[ j.name ] = j;
+            continue;
+         } else if ( fabs(j.conc - i.conc) < GSL_ROOT5_DBL_EPSILON ) {
+            // the concentration of both components is roughly equal, remove the component from the upper and lower part
+            upper_cosed.remove(j.name);
+            i.concentration_offset = i.conc;
+            continue;
+         } else {
+            j.conc = i.conc - j.conc;
+            j.concentration_offset = j.conc;
+            lower_cosed[ j.name ] = j;
+            i.concentration_offset = j.conc;
+            upper_cosed.remove(j.name);
+            continue;
+         }
+      }
+      if ( i.overlaying && lower_cosed.contains(i.name)) {
+         // the current component is in the lower part, but there is another component with the same name in the
+         // overlaying section of the band forming gradient
+         US_CosedComponent j = lower_cosed[ i.name ];
+         if ( j.conc > i.conc ) {
+            // the concentration is higher in lower part, move it completely to the lower part and set the
+            // concentration to the excess concentration
+            j.conc = j.conc - i.conc;
+            j.concentration_offset = i.conc;
+            i.concentration_offset = i.conc;
+            lower_cosed[ j.name ] = j;
+            continue;
+         } else if ( fabs(j.conc - i.conc) < GSL_ROOT5_DBL_EPSILON ) {
+            // the concentration of both components is roughly equal, remove the component from the upper and lower part
+            lower_cosed.remove(j.name);
+            i.concentration_offset = i.conc;
+            continue;
+         } else {
+            j.conc = i.conc - j.conc;
+            j.concentration_offset = j.conc;
+            i.concentration_offset = i.conc;
+            upper_cosed[ j.name ] = j;
+            lower_cosed.remove(j.name);
+            continue;
+         }
+      }
+      if ( i.overlaying )
+         upper_cosed[ i.name ] = i;
+      else
+         lower_cosed[ i.name ] = i;
+
+   }
+   // Determine the base of the buffer
+   foreach (US_CosedComponent cosed_comp, cosed_components) {
+      if ( cosed_comp.overlaying ) { continue; } // overlaying components can't be part of the base of the buffer
+      if ( lower_cosed.contains(cosed_comp.name) &&
+           (fabs(lower_cosed[ cosed_comp.name ].conc - cosed_comp.conc) < GSL_ROOT5_DBL_EPSILON) &&
+           cosed_comp.s_coeff == 0.0 && cosed_comp.d_coeff == 0.0 ) {
+         // the concentration matches the original one entered. -> part of the buffer base
+         base_comps << cosed_comp.GUID + cosed_comp.componentID;
+         base_density += cosed_comp.dens_coeff[ 0 ];
+         base_viscosity += cosed_comp.visc_coeff[ 0 ];
+      }
+      else if (!lower_cosed.contains(cosed_comp.name)) {
+         // the component is present with the same concentration in both the upper and lower part
+         base_comps << cosed_comp.GUID + cosed_comp.componentID;
+         base_density += cosed_comp.dens_coeff[0] +
+                         cosed_comp.dens_coeff[1] * sqrt(fabs(cosed_comp.conc)) +
+                         cosed_comp.dens_coeff[2] * cosed_comp.conc +
+                         cosed_comp.dens_coeff[3] * sq(cosed_comp.conc) +
+                         cosed_comp.dens_coeff[4] * pow(cosed_comp.conc, 3) +
+                         cosed_comp.dens_coeff[5] * pow(cosed_comp.conc, 4);
+         base_viscosity += cosed_comp.visc_coeff[0] +
+                           cosed_comp.visc_coeff[1] * sqrt(fabs(cosed_comp.conc)) +
+                           cosed_comp.visc_coeff[2] * cosed_comp.conc +
+                           cosed_comp.visc_coeff[3] * sq(cosed_comp.conc) +
+                           cosed_comp.visc_coeff[4] * pow(cosed_comp.conc, 3) +
+                           cosed_comp.visc_coeff[5] * pow(cosed_comp.conc, 4);
+      }
+   }
+   // make sure the selected model is adjusted for the selected temperature
+   // and buffer conditions:
+   US_Math2::SolutionData sol_data{};
+   sol_data.density = base_density;
+   sol_data.viscosity = base_viscosity;
+   sol_data.manual = true;
+   foreach(US_CosedComponent cosed_comp,  cosed_components) {
+      // get the excess concentrations
+      if ( cosed_comp.overlaying && upper_cosed.contains(cosed_comp.name)) {
+         cosed_comp = upper_cosed.value(cosed_comp.name);
+      } else if ( !cosed_comp.overlaying && lower_cosed.contains(cosed_comp.name)) {
+         cosed_comp = lower_cosed.value(cosed_comp.name);
+      } else {
+         DbgLv(1) << "nothing";
+         continue;
+      }
+      if ( cosed_comp.s_coeff == 0.0 && cosed_comp.d_coeff == 0.0 ) {
+         DbgLv(1) << "not cosedimenting";
+         continue;
+      }
+      if (cosed_comp.s_coeff == 0.0){
+         DbgLv(1) << "pure diffusive";
+         codiff_needed = true;
+         continue;
+      }
+      cosed_needed = true;
+      cosed_model_tmp.components.clear();
+      US_Model::SimulationComponent tmp = US_Model::SimulationComponent();
+      tmp.name = cosed_comp.name;
+      tmp.analyteGUID = cosed_comp.GUID;
+      tmp.molar_concentration = cosed_comp.conc;
+      tmp.signal_concentration = cosed_comp.conc;
+      tmp.vbar20 = cosed_comp.vbar;
+      if (cosed_comp_data.contains(tmp.analyteGUID)) {
+          continue;
+      }
+      sol_data.vbar20 = cosed_comp.vbar; //The assumption here is that vbar does not change with
+      sol_data.vbar = cosed_comp.vbar; //temp, so vbar correction will cancel in s correction
+      US_Math2::data_correction(data_sets[0]->simparams.temperature, sol_data);
+      tmp.s = cosed_comp.s_coeff / sol_data.s20w_correction;
+      tmp.D = cosed_comp.d_coeff / sol_data.D20w_correction;
+      tmp.f_f0 = 0.0;
+      tmp.analyte_type = 4;
+      cosed_model.components << tmp;
+      cosed_model_tmp.components << tmp;
+      cosed_model_tmp.update_coefficients();
+      csD = new US_LammAstfvm::CosedData(cosed_model_tmp, data_sets[0]->simparams, &auc_data, &cosed_components,
+                                         base_density, base_viscosity);
+      cosed_comp_data[ tmp.analyteGUID ] = csD->sa_data;
+      DbgLv(2) << "NonIdeal2: create saltdata";
+      cosed_model.update_coefficients();
+      csD->model = cosed_model;
+      csD->cosed_comp_data = cosed_comp_data;
+      csD->cosed_comp_data.detach();
+      DbgLv(1) << "CosedData: cosed_model comp" << csD->model.components.size() << "cosed_comp_data"
+               << cosed_comp_data.size() << "sa_data.scanCount()" << csD->sa_data.scanCount();
+   }
+   if (!cosed_comp_data.isEmpty()){
+      csD->sa_data= cosed_comp_data.first();
+   }
+   if ( codiff_needed ){
+      bool recalc = true;
+      if ( !bfgs.isEmpty() && bfgs.first() != nullptr &&
+            (bandFormingGradient == nullptr || bandFormingGradient->is_empty)){
+         delete bandFormingGradient;
+         bandFormingGradient = bfgs.first();
+      }
+      if ( bandFormingGradient != nullptr ){
+         // check if the band forming gradient is already calculated and fits the requirements
+         if ( bandFormingGradient->is_suitable( data_sets[0]->simparams.meniscus,
+                                                data_sets[0]->simparams.bottom,
+                                                data_sets[0]->simparams.band_volume,
+                                                data_sets[0]->simparams.cp_pathlen,
+                                                data_sets[0]->simparams.cp_angle,
+                                                data_sets[0]->solution_rec.buffer.cosed_component,
+                                                (int)data_sets[0]->run_data.scanData.last().seconds) ){
+            recalc = false;
+         }
+         if ( recalc ){
+            delete bandFormingGradient;
+            bandFormingGradient = nullptr;
+         }
+      }
+      if ( recalc ){
+         bandFormingGradient = new US_Math_BF::Band_Forming_Gradient( data_sets[0]->simparams.meniscus,
+                                                                      data_sets[0]->simparams.bottom,
+                                                                      data_sets[0]->simparams.band_volume,
+                                                                      data_sets[0]->solution_rec.buffer.cosed_component,
+                                                                      data_sets[0]->simparams.cp_pathlen,
+                                                                      data_sets[0]->simparams.cp_angle );
+         bandFormingGradient->get_eigenvalues( );
+         bandFormingGradient->calculate_gradient( data_sets[0]->simparams,&auc_data );
+      }
+
+      DbgLv(1) << "rank: " << my_rank << " bfg calc calculate_cosed" << bandFormingGradient;
+   }
+   data_sets_codiff_needed << codiff_needed;
+   data_sets_cosed_needed << cosed_needed;
+   bfgs << bandFormingGradient;
+   csDs << csD;
+   cosedcomponents << cosed_components;
+   // populate datasets list
+   data_sets_bfgs << *bfgs[0];
+   data_sets_csDs << csDs[0];
+   data_sets_cosed_components << &cosedcomponents[0];
+   DbgLv(0) << "rank: " << my_rank << " finished Calc_cosed";
+}

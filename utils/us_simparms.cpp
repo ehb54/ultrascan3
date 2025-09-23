@@ -1,4 +1,11 @@
 //! \file us_simparms.cpp
+//!< level-conditioned debug print
+#ifndef DbgLv
+#define DbgLv(a) if(dbg_level>=a)qDebug()
+#endif
+#define DSS_RESO   100   // default SetSpeedResolution
+#define DSS_LO_RPM 1500  // default SetSpeedLowRpm
+#define DSS_LO_SEC 20    // default SpeedStepLowSec
 
 #include "us_simparms.h"
 #include "us_astfem_math.h"
@@ -7,44 +14,49 @@
 #include "us_constants.h"
 #include "us_math2.h"
 
-//!< level-conditioned debug print
-#define DbgLv(a) if(dbg_level>=a)qDebug()
-#define DSS_RESO   100   // default SetSpeedResolution
-#define DSS_LO_RPM 1500  // default SetSpeedLowRpm
-#define DSS_LO_SEC 20    // default SpeedStepLowSec
-
 US_SimulationParameters::US_SimulationParameters()
+   : rotorcoeffs{0.0, 0.0}
 {
    mesh_radius.clear();
    speed_step.clear();
 
    speed_step << SpeedProfile();
    sim_speed_prof << SimSpeedProf();
-   simpoints         = 200;
-   meshType          = ASTFEM;
-   gridType          = MOVING;
-   radial_resolution = 0.001;
-   meniscus          = 5.8;
-   bottom            = 7.2;
-   rnoise            = 0.0;
-   lrnoise           = 0.0;
-   tinoise           = 0.0;
-   rinoise           = 0.0;
-   baseline          = 0.0;
-   temperature       = NORMAL_TEMP;
-   rotorCalID        = "0";
-   band_forming      = false;
-   band_volume       = 0.015;
-   bottom_position   = 7.2;
-   rotorcoeffs[ 0 ]  = 0.0;
-   rotorcoeffs[ 1 ]  = 0.0;
-   cp_sector         = 0;
-   cp_pathlen        = 1.2;
-   cp_angle          = 2.5;
-   cp_width          = 0.0;
-   sim               = false ;
-   tsobj             = NULL ;
-   firstScanIsConcentration = false;
+   simpoints                   = 200;
+   meshType                    = ASTFEM;
+   gridType                    = MOVING;
+   primaryFit                  = NOTHING;
+   secondaryFit                = NOTHING;
+   primary_range               = 0.0;
+   secondary_range             = 0.0;
+   primary_variations          = 0;
+   secondary_variations        = 0;
+   current_primary_variation   = -1;
+   current_secondary_variation = -1;
+   radial_resolution           = 0.001;
+   meniscus                    = 5.8;
+   bottom                      = 7.2;
+   rnoise                      = 0.0;
+   lrnoise                     = 0.0;
+   tinoise                     = 0.0;
+   rinoise                     = 0.0;
+   temperature                 = NORMAL_TEMP;
+   rotorCalID                  = "0";
+   band_forming                = false;
+   band_volume                 = 0.015;
+   bottom_position             = 7.2;
+   rotorcoeffs[ 0 ]            = 0.0;
+   rotorcoeffs[ 1 ]            = 0.0;
+   cp_sector                   = 0;
+   cp_pathlen                  = 1.2;
+   cp_angle                    = 2.5;
+   cp_width                    = 0.0;
+   sim                         = false ;
+   tsobj                       = nullptr ;
+   firstScanIsConcentration    = false;
+   sigma                       = 0.0;
+   delta                       = 0.0;
+   vbar                        = 0.0;
 }
 
 US_SimulationParameters::SpeedProfile::SpeedProfile()
@@ -85,6 +97,7 @@ US_SimulationParameters::SimSpeedProf::SimSpeedProf()
    time_e_accel      = 0;
    time_f_scan       = 0;
    time_l_scan       = 0;
+   time_e_step       = 0;
   // sim               = false ;
 }
 
@@ -92,13 +105,21 @@ US_SimulationParameters::SimSpeedProf::SimSpeedProf()
 void US_SimulationParameters::initFromData( US_DB2* db,
    US_DataIO::RawData& rawdata, bool incl_speed, QString runID, QString dataType )
 {
+   primaryFit                  = NOTHING;
+   secondaryFit                = NOTHING;
+   primary_range               = 0.0;
+   secondary_range             = 0.0;
+   primary_variations          = 0;
+   secondary_variations        = 0;
+   current_primary_variation   = -1;
+   current_secondary_variation = -1;
    SpeedProfile sp;
 
    int     dbg_level   = US_Settings::us_debug();
    int     cp_id       = 0;
    QString channel     = QChar(rawdata.channel);
    int     iechan      = QString( "ABCDEFGH" ).indexOf( channel );
-   int     ch          = qMax( 0, iechan ) / 2;
+   int     ch          = qMax( 0, iechan );
            iechan      = qMax( 0, iechan ) + 1;
    QString ecell       = QString::number(rawdata.cell);
    int     iecell      = ecell.toInt();
@@ -260,7 +281,14 @@ void US_SimulationParameters::initFromData( US_DB2* db,
    US_DataIO::EditedData& editdata, bool incl_speed )
 {
    SpeedProfile sp;
-
+   primaryFit                  = NOTHING;
+   secondaryFit                = NOTHING;
+   primary_range               = 0.0;
+   secondary_range             = 0.0;
+   primary_variations          = 0;
+   secondary_variations        = 0;
+   current_primary_variation   = -1;
+   current_secondary_variation = -1;
    int     dbg_level   = US_Settings::us_debug();
    int     cp_id       = 0;
    QString channel     = editdata.channel;
@@ -658,13 +686,27 @@ DbgLv(1) << "sH: cp ch cp_id" << cp << ch << cp_id;
       QStringList shapes;
       shapes << "sector" << "standard" << "rectangular" << "band forming"
              << "meniscus matching" << "circular" << "synthetic";
-      QString shape   = cp_list[ cp ].shape;
-      bottom_position = cp_list[ cp ].bottom_position[ ch ];
-      cp_pathlen      = cp_list[ cp ].path_length    [ ch ];
-      cp_angle        = cp_list[ cp ].angle;
-      cp_width        = cp_list[ cp ].width;
-      cp_sector       = qMax( 0, shapes.indexOf( shape ) );
-      band_forming    = ( shape == "band forming" );
+      US_AbstractCenterpiece centerpiece = cp_list[ cp ];
+      bool found = false;
+      if (!centerpiece.channels.isEmpty() && ch < centerpiece.channels.count()){
+            US_AbstractChannel channel = centerpiece.channels[ch];
+            bottom_position = channel.bottom_position;
+            cp_pathlen = channel.path_length;
+            cp_angle = channel.angle;
+            cp_width = channel.width;
+            cp_sector = qMax( 0, shapes.indexOf( channel.shape ) );
+            band_forming = ( channel.shape == "band forming");
+            found = true;
+         }
+      if (!found){
+         QString shape   = cp_list[ cp ].shape;
+         bottom_position = cp_list[ cp ].bottom_position[ qMin(ch, cp_list[ cp ].bottom_position.count()-1) ];
+         cp_pathlen      = cp_list[ cp ].path_length    [ qMin( ch, cp_list[ cp ].path_length.count()-1) ];
+         cp_angle        = cp_list[ cp ].angle;
+         cp_width        = cp_list[ cp ].width;
+         cp_sector       = qMax( 0, shapes.indexOf( shape ) );
+         band_forming    = ( shape == "band forming" );
+      }
 
    }
 
@@ -692,8 +734,11 @@ int US_SimulationParameters::load_simparms( QString fname )
    int kr   = 0;
    QStringList meshlist;
    QStringList gridlist;
+   QStringList fitlist;
    meshlist << "ASTFEM" << "Claverie" << "MovingHat" << "User" << "ASTFVM";
    gridlist << "Fixed" <<  "Moving";
+   fitlist << "NOTHING" << "MENISCUS" << "BOTTOM" << "ANGLE" << "BAND_VOLUME" << "SIGMA"
+            << "DELTA" << "VBAR" << "FF0" << "TEMPERATURE";
    US_SimulationParameters::SpeedProfile sp;
 
    QFile xfile( fname );
@@ -725,6 +770,18 @@ int US_SimulationParameters::load_simparms( QString fname )
             {
                kk        = gridlist.indexOf( astr );
                gridType  = (US_SimulationParameters::GridType)kk;
+            }
+            astr      = a.value( "primaryFit" ).toString();
+            if ( !astr.isEmpty() )
+            {
+               kk        = fitlist.indexOf( astr );
+               primaryFit  = (US_SimulationParameters::FitType)kk;
+            }
+            astr      = a.value( "secondaryFit" ).toString();
+            if ( !astr.isEmpty() )
+            {
+               kk        = fitlist.indexOf( astr );
+               secondaryFit  = (US_SimulationParameters::FitType)kk;
             }
             astr  = a.value( "simpoints"   ).toString();
             if ( !astr.isEmpty() )
@@ -786,6 +843,21 @@ int US_SimulationParameters::load_simparms( QString fname )
             astr  = a.value( "width"       ).toString();
             if ( !astr.isEmpty() )
                cp_width     = astr.toDouble();
+            astr  = a.value( "sigma"      ).toString();
+            if ( !astr.isEmpty() )
+            {
+               sigma = astr.toDouble();
+            }
+            astr  = a.value( "delta"      ).toString();
+            if ( !astr.isEmpty() )
+            {
+               delta = astr.toDouble();
+            }
+            astr  = a.value( "vbar"      ).toString();
+            if ( !astr.isEmpty() )
+            {
+               vbar = astr.toDouble();
+            }
          }
 
          else if ( xml.isStartElement()  &&  xml.name() == "speedstep" )
@@ -829,7 +901,8 @@ int US_SimulationParameters::save_simparms( QString fname )
    int stat = 0;
    const char* mesh[] = { "ASTFEM", "Claverie", "MovingHat", "User", "ASTFVM" };
    const char* grid[] = { "Fixed",  "Moving" };
-   US_SimulationParameters::SpeedProfile* spi;
+   const char* fit[]  = { "NOTHING", "MENISCUS", "BOTTOM", "ANGLE", "BAND_VOLUME", "SIGMA",
+                           "DELTA", "VBAR", "FF0", "TEMPERATURE" };
 
    QFile xfile( fname );
 
@@ -846,6 +919,8 @@ int US_SimulationParameters::save_simparms( QString fname )
       xml.writeStartElement( "params" );
       xml.writeAttribute   ( "meshType",    QString( mesh[ (int)meshType ] ) );
       xml.writeAttribute   ( "gridType",    QString( grid[ (int)gridType ] ) );
+      xml.writeAttribute   ( "primaryFit",  QString( fit[ (int)primaryFit ] ) );
+      xml.writeAttribute   ( "secondaryFit", QString( fit[ (int)secondaryFit ] ) );
       xml.writeAttribute   ( "simpoints",   QString::number( simpoints ) );
       xml.writeAttribute   ( "radialres", QString::number( radial_resolution ));
       xml.writeAttribute   ( "meniscus",    QString::number( meniscus ) );
@@ -856,13 +931,16 @@ int US_SimulationParameters::save_simparms( QString fname )
       xml.writeAttribute   ( "rinoise",     QString::number( rinoise ) );
       xml.writeAttribute   ( "baseline",     QString::number( baseline ) );
       xml.writeAttribute   ( "temperature", QString::number( temperature ) );
+      xml.writeAttribute   ("sigma", QString::number(sigma));
+      xml.writeAttribute   ("delta", QString::number(delta));
+
 
       if ( ! rotorCalID.isEmpty() )
          xml.writeAttribute   ( "rotorCalID", rotorCalID );
 
       if ( rotorcoeffs[ 0 ] != 0.0 )
       {
-         xml.writeAttribute   ( "rotorcoeffs", QString().sprintf( "%.3e %.3e",
+         xml.writeAttribute   ( "rotorcoeffs", QString::asprintf( "%.3e %.3e",
             rotorcoeffs[ 0 ], rotorcoeffs[ 1 ] ) );
       }
 
@@ -878,18 +956,18 @@ int US_SimulationParameters::save_simparms( QString fname )
 
       if ( meshType == US_SimulationParameters::USER )
       {
-         for ( int ii = 0; ii < mesh_radius.size(); ii++ )
+         for (double mesh_radiu : mesh_radius)
          {
             xml.writeStartElement( "usermesh" );
             xml.writeAttribute( "radius",
-               QString().sprintf( "%11.5e", mesh_radius[ ii ] ).simplified() );
+               QString::asprintf( "%11.5e", mesh_radiu ).simplified() );
             xml.writeEndElement();
          }
       }
 
-      for ( int ii = 0; ii < speed_step.size(); ii++ )
+      for (auto & ii : speed_step)
       {
-         spi = &speed_step[ ii ];
+         US_SimulationParameters::SpeedProfile* spi = &ii;
 
          speedstepToXml( xml, spi );
       }
@@ -1032,9 +1110,11 @@ int US_SimulationParameters::speedstepsFromDB( US_DB2* dbP, int expID,
    sps.clear();
 
    if ( dbP == NULL  ||  expID < 1 )
+   {
       return nspeeds;
+   }
 
-int dbg_level=US_Settings::us_debug();
+   int dbg_level=US_Settings::us_debug();
    QString idExp = QString::number( expID );
    QStringList query;
    query << "all_speedsteps" << idExp;
@@ -1062,7 +1142,7 @@ int dbg_level=US_Settings::us_debug();
       spo.speed_stddev      = dbP->value( 15 ).toDouble();;
       sps << spo;
       nspeeds++;
-DbgLv(1) << "SP:ssFromDB: speedstep" << nspeeds << "id" << sspeedID;
+      DbgLv(1) << "SP:ssFromDB: speedstep" << nspeeds << "id" << sspeedID;
    }
 
    return nspeeds;
@@ -1072,12 +1152,14 @@ DbgLv(1) << "SP:ssFromDB: speedstep" << nspeeds << "id" << sspeedID;
 int US_SimulationParameters::speedstepToDB( US_DB2* dbP, int expID,
       SpeedProfile* spi )
 {
-int dbg_level=US_Settings::us_debug();
-DbgLv(1) << "SP:ssToDB: dbP expid spi" << dbP << expID << spi;
+   int dbg_level=US_Settings::us_debug();
+   DbgLv(1) << "SP:ssToDB: dbP expid spi" << dbP << expID << spi;
    int sstepID    = -1;
 
-   if ( dbP == NULL  ||  expID < 0  ||  spi == NULL )
+   if ( dbP == nullptr  ||  expID < 0  ||  spi == nullptr )
+   {
       return sstepID;
+   }
 
    QString idExp = QString::number( expID );
    QStringList query;
@@ -1099,9 +1181,9 @@ DbgLv(1) << "SP:ssToDB: dbP expid spi" << dbP << expID << spi;
          << QString::number( spi->speed_stddev );
    dbP->statusQuery( query );
    sstepID    = dbP->lastInsertID();
-DbgLv(1) << "SP:ssToDB: speedstep" << sstepID << dbP->lastError();
-DbgLv(1) << "SP:ssToDB:  w2t" << spi->w2t_first << spi->w2t_last
- << QString::number(spi->w2t_first) << QString::number(spi->w2t_last);
+   DbgLv(1) << "SP:ssToDB: speedstep" << sstepID << dbP->lastError();
+   DbgLv(1) << "SP:ssToDB:  w2t" << spi->w2t_first << spi->w2t_last
+               << QString::number(spi->w2t_first) << QString::number(spi->w2t_last);
 
    return sstepID;
 }
@@ -1115,8 +1197,8 @@ int US_SimulationParameters::simSpeedsFromTimeState( const QString tmst_fpath )
    tsobj->open_read_data( tmst_fpath, true );    // Open with prefetch
    ssProfFromTimeState( tsobj, sim_speed_prof ); // Create SSP vector
    int dbg_level    = US_Settings::us_debug();
-DbgLv(1) << "SP: ssFts: ispeed" << sim_speed_prof[0].rotorspeed
- << "ssp count" << sim_speed_prof.count();
+   DbgLv(1) << "SP: ssFts: ispeed" << sim_speed_prof[0].rotorspeed
+               << "ssp count" << sim_speed_prof.count();
    return sim_speed_prof.count();                // Return number steps
 }
 
@@ -1128,7 +1210,7 @@ int US_SimulationParameters::ssProfFromTimeState( US_TimeState* tsobj,
    int dbg_level    = US_Settings::us_debug();
    ssps.clear();                              // Clear speed prof vector
    SimSpeedProf ssp;                          // Work sim speed profile
-DbgLv(1) << "Sim parms:ssProf: ssps.count" << ssps.count();
+   DbgLv(1) << "Sim parms:ssProf: ssps.count" << ssps.count();
 
    // Insure we have needed keys and get formats
    QStringList fkeys;
@@ -1147,9 +1229,11 @@ DbgLv(1) << "Sim parms:ssProf: ssps.count" << ssps.count();
    // Do we have the keys we need?
    bool have_keys   = ( tmkx >= 0 )  &&  ( sskx >= 0 )  &&
                       ( rskx >= 0 )  &&  ( w2kx >= 0 );
-DbgLv(1) << "Sim parms:ssProf: have_keys" << have_keys;
+   DbgLv(1) << "Sim parms:ssProf: have_keys" << have_keys;
    if ( ! have_keys )
-      return -1;                           // Do not have needed keys
+   {
+      return -1; // Do not have needed keys
+   }
 
    // If debug_text so directs, change set_speed_resolution
    //  and/or set_speed_low_rpm and/or speed_step_low_secs
@@ -1183,11 +1267,11 @@ DbgLv(1) << "Sim parms:ssProf: have_keys" << have_keys;
             cspeeds << ss3;                // Save it if first time encountered
       }
    }
-DbgLv(1) << "Sim parms:ssProf: cspeeds" << cspeeds;
+   DbgLv(1) << "Sim parms:ssProf: cspeeds" << cspeeds;
 
    // Now do a pass through records to accumulate full step records
    tsobj->read_record( 0 );                // Read the first record
-DbgLv(1) << "Sim parms:ssProf: nrec" << nrec;
+   DbgLv(1) << "Sim parms:ssProf: nrec" << nrec;
    int tm_p         = 0;                   // Previous acceleration time
    int tm_c         = tmfm == "F4" ?
          (int)qRound( tsobj->time_dvalue( "Time" ) ) :
@@ -1525,6 +1609,12 @@ void US_SimulationParameters::debug( void )
    qDebug() << "Simpoints       :" << simpoints;
    qDebug() << "Mesh Type       :" << meshType;
    qDebug() << "Grid Type       :" << gridType;
+   qDebug() << "Primary Type    :" << primaryFit;
+   qDebug() << "Secondary Type  :" << secondaryFit;
+   qDebug() << "primary range   :" << primary_range;
+   qDebug() << "secondary range :" << secondary_range;
+   qDebug() << "primary variations:" << primary_variations;
+   qDebug() << "secondary variations:" << secondary_variations;
    qDebug() << "Radial Res      :" << radial_resolution;
    qDebug() << "Meniscus        :" << meniscus;
    qDebug() << "Bottom Pos      :" << bottom_position;
@@ -1562,6 +1652,66 @@ void US_SimulationParameters::debug( void )
       qDebug() << "   Set Speed     " << speed_step[ i ].set_speed;
       qDebug() << "   Average Speed " << speed_step[ i ].avg_speed;
       qDebug() << "   Speed StdDev  " << speed_step[ i ].speed_stddev;
+   }
+}
+
+double US_SimulationParameters::get_parameter_value( const FitType param) const
+{
+   switch ( param )
+   {
+      case MENISCUS:
+         return meniscus;
+      case BOTTOM:
+         return bottom;
+      case ANGLE:
+         return cp_angle;
+      case BAND_VOLUME:
+         return band_volume;
+      case SIGMA:
+         return sigma;
+      case DELTA:
+         return delta;
+      case VBAR:
+         return vbar;
+      case FF0:
+         return 1.0;
+      case TEMPERATURE:
+         return temperature;
+      default:
+         return 0.0;
+   }
+}
+
+void US_SimulationParameters::set_parameter_value( const FitType param, const double value )
+{
+   switch ( param )
+   {
+      case MENISCUS:
+         meniscus = value;
+         break;
+      case BOTTOM:
+         bottom = value;
+         break;
+      case ANGLE:
+         cp_angle = value;
+         break;
+      case BAND_VOLUME:
+         band_volume = value;
+         break;
+      case SIGMA:
+         sigma = value;
+         break;
+      case DELTA:
+         delta = value;
+         break;
+      case VBAR:
+         vbar = value;
+         break;
+      case TEMPERATURE:
+         temperature = value;
+         break;
+      default:
+         break;
    }
 }
 

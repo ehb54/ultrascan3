@@ -10093,8 +10093,8 @@ DbgLv(1) << "CGui:IOD:   cSS nspeed" << speedsteps.size();
 
    // MultiWaveLength if channels and triples counts differ
    isMwl            = ( all_chaninfo.count() != all_tripinfo.count() );
-   if ( isMwl  &&  ( all_tripinfo.count() / all_chaninfo.count() ) < 4 )
-   {  // If less than 4 wavelengths, treat as non-MWL
+   if ( isMwl  &&  ( all_tripinfo.count() / all_chaninfo.count() ) < 3 )
+   {  // If less than 3 wavelengths, treat as non-MWL
       isMwl            = false;
       all_chaninfo     = all_tripinfo;
       out_chaninfo     = out_tripinfo;
