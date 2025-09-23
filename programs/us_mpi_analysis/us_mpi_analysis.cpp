@@ -8,13 +8,16 @@
 #include "us_settings.h"
 #include "us_revision.h"
 #include "us_constants.h"
+#include "us_simparms.h"
 
+#include <QtCore/QString>
+#include <cstdio>
 #include <mpi.h>
 #include <sys/user.h>
-#include <cstdio>
-#include <QtCore/QString>
 
-#include "../../utils/us_simparms.h"
+
+
+
 
 #define ELAPSED_SECS (startTime.msecsTo(QDateTime::currentDateTime())/1000.0)
 
@@ -885,30 +888,10 @@ if ( my_rank == 0 ) {
    for ( int ee = 0; ee < data_sets.size(); ee++ )
    {
       US_SolveSim::DataSet*  dset    = data_sets[ ee ];
-      // Do a quick test of the speed step implied by TimeState
-      int tf_scan   = dset->simparams.speed_step[ 0 ].time_first;
-      int accel1    = dset->simparams.speed_step[ 0 ].acceleration;
-      int rspeed    = dset->simparams.speed_step[ 0 ].rotorspeed;
-      int accel2    = dset->simparams.sim_speed_prof[ 0 ].acceleration;
-      double  tf_aend   = static_cast<double>(tf_scan);
-      // prevent any division by zero
-      if (accel1 != 0)
-      {
-         tf_aend = static_cast<double>(rspeed) / static_cast<double>(accel1);
-      }
-      if ( my_rank == 0 ){
-         DbgLv(1) << "DSM: ssck: rspeed accel1 tf_aend tf_scan"
-                 << rspeed << accel1 << tf_aend << tf_scan
-                 << "accel2" << accel2 << "lo_ss_acc" << lo_ss_acc;
-      }
-      // check if the acceleration rate is low or the first scan was taken before the acceleration ended
-      // Due to older, wrong timestate calculation there might be a case, in which the calculated end of acceleration
-      // can be up to 1 second later than expected, tf_scan + 1 accounts for this.
-      if ( accel1 < lo_ss_acc  ||  tf_aend > ( tf_scan + 1 ) )
-      {
-         DbgLv(0) << "rank: " << my_rank << "  Dataset " << ee << " Name: " << dset->run_data.runID <<
-                  " likely bad Timestate. Implied acceleration: " << accel1 <<
-                  " accel end: " << tf_aend << "s. First scan: " << tf_scan << "s.";
+      QStringList check_results = US_AstfemMath::check_acceleration(dset->simparams.speed_step, dset->run_data.scanData);
+      if ( !check_results.isEmpty() ) {
+          DbgLv(0) << "rank: " << my_rank << "  Dataset " << ee << " Name: "
+          << dset->run_data.runID << check_results.join(" ");
       }
    }
 
