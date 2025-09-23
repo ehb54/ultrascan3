@@ -1279,13 +1279,17 @@ void US_ReporterGMP::check_models ( int autoflowID )
 	  
 	  QDateTime now = QDateTime::currentDateTime();
 	  
-	  if ( description.contains( "2DSA-IT" ) && modelID == Triple_to_ModelsDesc[ Array_of_tripleNames[ i ] ][ "2DSA-IT" ] )
+	  // if ( description.contains( "2DSA-IT" )
+	  if ( description.contains( "2DSA" ) && description.contains( "-IT") 
+	       && modelID == Triple_to_ModelsDesc[ Array_of_tripleNames[ i ] ][ "2DSA-IT" ] )
 	    {
 	      qDebug() << "2DSA-IT Ids: modelID, read from modelLink: " << modelID << Triple_to_ModelsDesc[ Array_of_tripleNames[ i ] ][ "2DSA-IT" ];
 	      model_list << "2DSA-IT";
 	    }
 	  
-	  if ( description.contains( "2DSA-MC" ) && modelID == Triple_to_ModelsDesc[ Array_of_tripleNames[ i ] ][ "2DSA-MC" ] )
+	  //if ( description.contains( "2DSA-MC" )
+	  if ( description.contains( "2DSA" ) && description.contains( "-MC")     
+	       && modelID == Triple_to_ModelsDesc[ Array_of_tripleNames[ i ] ][ "2DSA-MC" ] )
 	    {
 	      qDebug() << "2DSA-MC Ids: modelID, read from modelLink: " << modelID << Triple_to_ModelsDesc[ Array_of_tripleNames[ i ] ][ "2DSA-MC" ];
 	      model_list << "2DSA-MC";
@@ -5774,10 +5778,25 @@ void US_ReporterGMP::process_combined_plots_individual ( QString triplesname_p, 
 
       qDebug() << "INDCOMBO_1: " << modelDescModified[ ii ];
       qDebug() << "INDCOMBO_2: " << triplesname << stage_model << triplesname_chann;
-          
+
+      /**/
+      QString reg_exp_sm = stage_model;
+      reg_exp_sm = reg_exp_sm.replace("-",".*");
+      qDebug() << "INDCOMBO_2a: reg_exp_sm -- " << reg_exp_sm;
+      QRegularExpression re_sm(reg_exp_sm);
+      /**/
+
+      // //DEBUG
+      // bool b_1 = modelDescModified[ ii ].contains( triplesname_mod );
+      // bool b_2 =  modelDescModified[ ii ].contains( re_sm );
+      // qDebug() << "b_1, b_2 -- " << b_1 << b_2;
+      // modelGuidExistsForStage_ind( triplesname, stage_model, modelDescModifiedGuid[ ii ] );
+      // //DEBUG
+      
       //fiter by type|model
       if ( modelDescModified[ ii ].contains( triplesname_mod ) &&
-	   modelDescModified[ ii ].contains( stage_model ) &&
+	   //modelDescModified[ ii ].contains( stage_model ) &&
+	   modelDescModified[ ii ].contains( re_sm ) &&
 	   modelGuidExistsForStage_ind( triplesname, stage_model, modelDescModifiedGuid[ ii ] ) )
 	{
 	  qDebug()  << "INDCOMBO_3: YES ";
@@ -6048,7 +6067,21 @@ void US_ReporterGMP::process_combined_plots ( QString filename_passed )
       for ( int ii = 0; ii < modelDescModified.size(); ii++ )  
 	{
 	  //fiter by type|model
-	  if ( modelDescModified[ ii ].contains( modelNames[ m ] ) && modelGuidExistsForStage( modelNames[ m ], modelDescModifiedGuid[ ii ] ) )
+	  /**/
+	  QString reg_exp_sm = modelNames[ m ];
+	  reg_exp_sm = reg_exp_sm.replace("-",".*");
+	  QRegularExpression re_sm(reg_exp_sm);
+	  /**/
+
+	  // //DEBUG
+	  // bool b_1 = modelDescModified[ ii ].contains( re_sm );
+	  // qDebug() << "b_1, modelDescModified[ ii ], reg_exp_sm  -- " << b_1 << modelDescModified[ ii ] << reg_exp_sm;
+	  // modelGuidExistsForStage( modelNames[ m ], modelDescModifiedGuid[ ii ] );
+	  // //
+	  
+	  if ( //modelDescModified[ ii ].contains( modelNames[ m ] )
+	       modelDescModified[ ii ].contains( re_sm ) &&
+	       modelGuidExistsForStage( modelNames[ m ], modelDescModifiedGuid[ ii ] ) )
 	    {
 	      isModel = true;
 
@@ -9126,6 +9159,8 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
    QString model_name = mdla.split("_")[1];
    if ( model_name.contains("PCSA") )
      model_name = "PCSA";
+   if ( model_name.contains("-CG") )
+     model_name = model_name.replace("-CG", "");
    
    double tot_conc_r, tot_conc_r_factor, tot_conc_tol_r, rmsd_r, av_int_r, exp_dur_r, exp_dur_tol_r;
    double loading_volume_r, loading_volume_tol_r ;
@@ -9348,8 +9383,17 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
        QString method         = curr_item.method;
        if( method.contains ("PCSA") )
 	 method = "PCSA";
-
-       if ( mdla.contains ( method ) )
+       /* */
+       QStringList a_method_types = method.split("-");
+       bool method_identity = true;
+       for (const QString& sub : a_method_types )
+	 {
+	  if (!mdla.contains(sub) )
+	    method_identity = false; 
+	 }
+	/* */
+	 
+       if ( mdla.contains ( method ) || method_identity )
 	 method_type_combo_exists = true;
      }
    
@@ -9432,8 +9476,19 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
 	   QString tot_frac_passed = ( qAbs( frac_tot_m - frac_tot_r ) <= frac_tot_tol_r ) ? "YES" : "NO";
 
 	   double wav_variable_within_range = double( variable_val_within_range / int_val_m );
+
+	   /* */
+	   QStringList a_method_types = method.split("-");
+	   bool method_identity = true;
+	   for (const QString& sub : a_method_types )
+	     {
+	       if (!mdla.contains(sub) )
+		 method_identity = false; 
+	     }
+	   /* */
 	   
-	   if ( mdla.contains ( method ) )
+	   //if ( mdla.contains ( method ) )
+	   if ( method_identity )
 	     {
 	       // curr_item. integration_val_sim = int_val_m;
 	       // curr_item. total_percent_sim   = frac_tot_m;
