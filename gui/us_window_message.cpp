@@ -83,7 +83,7 @@ int US_WindowMessage::findLiveInterps()
 
       else
       {  // Otherwise, add an identifying string to the zombie list
-         zombie_list << QString().sprintf( "%lx : ", intrp.interp_id )
+         zombie_list << QString::asprintf( "%lx : ", intrp.interp_id )
                         + intrp.interp_name;
       }
    }

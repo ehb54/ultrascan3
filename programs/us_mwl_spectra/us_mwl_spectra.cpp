@@ -1455,7 +1455,7 @@ DbgLv(1) << "Save 2D Movie";
       cb_pltrec->setCurrentIndex( prx );    // Plot each record in the range
       qApp->processEvents();
 
-      QString frm_str = QString().sprintf( "%05d", ( prx + 1 ) );
+      QString frm_str = QString::asprintf( "%05d", ( prx + 1 ) );
       QString fname   = QString( bfname ).replace( "XXXXX", frm_str );
       QString fpath   = savedir + fname;
 
@@ -1700,8 +1700,8 @@ DbgLv(1) << "SvD:  nwaveln" << nwavln << "x0, y0" << rr[0] << vv[0];
 
    for ( int ii = 0; ii < nwavln; ii++ )
    {
-      ts << dquote + QString().sprintf( "%d", (int)rr[ ii ] ) + dquote + comma
-          + dquote + QString().sprintf( "%10.4e", vv[ ii ] ) + dquote + endln;
+      ts << dquote + QString::asprintf( "%d", (int )rr[ ii ] ) + dquote + comma
+          + dquote + QString::asprintf( "%10.4e", vv[ ii ] ) + dquote + endln;
    }
 
    csvo_f.close();

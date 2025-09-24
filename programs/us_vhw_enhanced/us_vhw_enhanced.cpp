@@ -568,9 +568,9 @@ void US_vHW_Enhanced::write_report( QTextStream& ts )
       for ( int jj = 0; jj < ngrp; jj++ )
       {
          ts << table_row(
-               QString().sprintf( "%3d:", jj + 1 ),
-               QString().sprintf( "%6.2f", groupdat.at( jj ).sed ),
-               QString().sprintf( "(%5.2f %%)", groupdat.at( jj ).percent ) );
+               QString::asprintf( "%3d:", jj + 1 ),
+               QString::asprintf( "%6.2f", groupdat.at( jj ).sed ),
+               QString::asprintf( "(%5.2f %% )", groupdat.at( jj ).percent ) );
          tsed += groupdat.at( jj ).sed * groupdat.at( jj ).percent;
       }
 
@@ -1370,7 +1370,7 @@ DbgLv(1) << "WV: filename " << filename;
 
    for ( int jj = 0; jj < divsCount; jj++ )
    {
-      QString line = QString().sprintf( "\"D%03dSedCoef\"", jj + 1 );
+      QString line = QString::asprintf( "\"D%03dSedCoef\"", jj + 1 );
       ts << line << ( jj < lastDiv ? fsep : eoln );
    }
 
@@ -1380,8 +1380,8 @@ DbgLv(1) << "WV: filename " << filename;
       // Each output line begins with reciprocal square root of scan time
       int js       = liveScans[ ii ];
       control      = fsep;
-      QString dat  = QString().sprintf( "\"%11.8f\"",
-         ( 1.0 / sqrt( edata->scanData[ js ].seconds - time_correction ) ) );
+      QString dat  = QString::asprintf( "\"%11.8f\"",
+( 1.0 / sqrt( edata->scanData[ js ].seconds - time_correction ) ) );
       dat.replace( " ", "" );
       ts << dat << control;
 
@@ -1392,7 +1392,7 @@ DbgLv(1) << "WV: filename " << filename;
          sedc         = aseds[ kk++ ];
          if ( sedc > 0 )
          {
-            dat          = QString().sprintf( "\"%8.5f\"", sedc );
+            dat          = QString::asprintf( "\"%8.5f\"", sedc );
             dat.replace( " ", "" );
          }
          else
@@ -1433,7 +1433,7 @@ DbgLv(1) << "WD: filename " << filename;
    {
       bfrac     = pterm + bterm * (double)( jj );
 
-      dline.sprintf(
+      dline = QString::asprintf(
          "\"%9.2f\",\"%7d\",\"%12.6f\",\"%12.6f\",\"%12.6f\",\"%12.6f\"\n",
          bfrac, dpnts[ jj ], dslos[ jj ], dseds[ jj ],
          dsigs[ jj ], dcors[ jj ] );
@@ -1533,8 +1533,8 @@ QString US_vHW_Enhanced::text_time( double seconds, int type )
 
    if ( type == 0 )
    {  // fixed-field mins,secs text
-      QString tmin = QString().sprintf( "%4d", mins );
-      QString tsec = QString().sprintf( "%3d", secs );
+      QString tmin = QString::asprintf( "%4d", mins );
+      QString tsec = QString::asprintf( "%3d", secs );
       return  tr( "%1 min %2 sec" ).arg( tmin ).arg( tsec );
    }
 
