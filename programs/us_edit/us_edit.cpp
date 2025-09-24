@@ -9969,6 +9969,19 @@ void US_Edit::write_auto( void )
   // record_edit_status( automatic_meniscus, dataType );
   // exit(1);
 
+
+  //DEBUG write_triple_auto for non-mwl, no check!!!
+  for ( int trx = 0; trx < cb_triple->count(); trx++ )
+    {
+      qDebug() << "Writing non-MWL, channel: " << trx << ": " << cb_triple->itemText( trx );
+      write_triple_auto( trx );
+    }
+ 
+  ////
+
+  
+  
+
   /****  TEMP1 **/
   //--- Check if saving already initiated
   int status_edit_unique;
@@ -11173,6 +11186,11 @@ void US_Edit::write_triple_auto( int trx )
 
    // Output the edit XML file
    int wrstat       = write_xml_file( filename, triple, editGUID, rawGUID );
+
+   //DEBUG!!!!  Commnet!!!!!!!!!!!!!!!!!!!!!!!
+   return;
+   /////////////////////////// Commnet!!!!!!!!!!!!!!!!!!!!!!!
+   
 
    if ( wrstat != 0 )
      return;
