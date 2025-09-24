@@ -140,9 +140,12 @@ void US_ScanExclGui::build_layout ( void )
       // sb_end              ->setValue( (int)*scan_end[ii] );
 
       //set Maximum values based on type of Optics
-      sb_begin            ->setMaximum( (int)( scanCount/2 - 5));
-      sb_nth              ->setMaximum( (int)( scanCount/2 - 5));
-      sb_end              ->setMaximum( (int)( scanCount/2 - 5));
+      int scan_bound = scanCount/2 - 5;
+      scan_bound = ( scan_bound < 0 ) ? scanCount/2 : scan_bound;
+      sb_begin            ->setMaximum( (int)( scan_bound ));
+      sb_nth              ->setMaximum( (int)( scan_bound ));
+      sb_nth              ->setMinimum( (int)( 1 ));
+      sb_end              ->setMaximum( (int)( scan_bound ));
 
       //Calculate #remaining scans for a channel/triple
       int remaining_scans_num;
@@ -160,8 +163,12 @@ void US_ScanExclGui::build_layout ( void )
 
       if( chan_desc.contains("Interf.") ) 
 	{
-	  sb_begin            ->setMaximum( (int)( scanCount_int/2 - 5));
-	  sb_end              ->setMaximum( (int)( scanCount_int/2 - 5));
+	  int scan_bound_int = scanCount_int/2 - 5;
+	  scan_bound_int = ( scan_bound_int < 0 ) ? scanCount_int/2 : scan_bound_int;
+	  sb_begin            ->setMaximum( (int)( scan_bound_int ));
+	  sb_nth              ->setMaximum( (int)( scan_bound_int ));
+	  sb_nth              ->setMinimum( (int)( 1 ));
+	  sb_end              ->setMaximum( (int)( scan_bound_int ));
 
 	  remaining_scans_num = scanCount_int - ( scan_end[ii] );
 	  for (int nt = scan_beg[ii]; nt < remaining_scans_num; ++nt)
