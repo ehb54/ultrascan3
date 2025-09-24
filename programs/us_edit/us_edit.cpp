@@ -13268,66 +13268,43 @@ DbgLv(1) << "EDT:WrXml:  waveln" << waveln;
         xml.writeStartElement( "excludes" );
 
 	QList<int> excludes_curr;
-	for ( int ii = 0; ii < data.scanData.size(); ii++ )
-	  {
-	    if ( ii < scanExcl_begin_ind && !excludes_curr.contains( ii ) )
-	      excludes_curr << ii;
-	    if ( (ii > data.scanData.size() - scanExcl_end_ind) && !excludes_curr.contains( ii ) )
-	      excludes_curr << ii;
-	    if ( ii % scanExcl_nth_ind != 0 && !excludes_curr.contains( ii ) )
-	      excludes_curr << ii;
-	  }
 
-	qDebug() << "in WRITE_AUTO[], excludes_curr -- " << cell << channel << waveln << excludes_curr;
-	qDebug() << "in WRITE_AUTO[], includes -- "      << cell << channel << waveln << includes;
-	
-	for( int ii = 0; ii < excludes_curr.size(); ii++ )
+	if ( autoflow_expType != "ABDE" ) //velocity
 	  {
-	    xml.writeStartElement( "exclude" );
-	    xml.writeAttribute   ( "scan", QString::number( excludes_curr[ ii ] ) );
-	    xml.writeEndElement  ();
-	  }
-	/*
-	//beginning of the scan set
-	for ( int ii = 0; ii < scanExcl_begin_ind; ii++ )
-	  {
-	    xml.writeStartElement( "exclude" );
-	    xml.writeAttribute   ( "scan", QString::number( ii ) );
-	    xml.writeEndElement  ();
-	  }
-	//end of the scan set
-       	for ( int ii = data.scanData.size() - scanExcl_end_ind; ii < data.scanData.size(); ii++ )
-	  {
-	    xml.writeStartElement( "exclude" );
-	    xml.writeAttribute   ( "scan", QString::number( ii ) );
-	    xml.writeEndElement  ();
-	  }
-	
-	//nth scan
-	for ( int ii = scanExcl_begin_ind; ii < data.scanData.size() - scanExcl_end_ind; ii++ )
-	  {
-	    if ( ( ii + 1 ) % scanExcl_nth_ind != 0 )
+	    for ( int ii = 0; ii < data.scanData.size(); ii++ )
+	      {
+		if ( ii < scanExcl_begin_ind && !excludes_curr.contains( ii ) )
+		  excludes_curr << ii;
+		if ( (ii > data.scanData.size() - scanExcl_end_ind) && !excludes_curr.contains( ii ) )
+		  excludes_curr << ii;
+		if ( ii % scanExcl_nth_ind != 0 && !excludes_curr.contains( ii ) )
+		  excludes_curr << ii;
+	      }
+
+	    qDebug() << "VELOCITY: in WRITE_AUTO[], excludes_curr -- " << cell << channel << waveln << excludes_curr;
+	    	    
+	    for( int ii = 0; ii < excludes_curr.size(); ii++ )
 	      {
 		xml.writeStartElement( "exclude" );
-		xml.writeAttribute   ( "scan", QString::number( ii ) );
+		xml.writeAttribute   ( "scan", QString::number( excludes_curr[ ii ] ) );
 		xml.writeEndElement  ();
 	      }
 	  }
-	*/
-	  
-	//Also, for ABDE, exclude what was excluded manually for each triple
-	for ( int ii = 0; ii < data.scanData.size(); ii++ )
+	else
 	  {
-	    // if ( ! includes.contains( ii ) &&
-	    // 	 ii >= scanExcl_begin_ind   &&
-	    // 	 ii < data.scanData.size() - scanExcl_end_ind )
-	    if ( ! includes.contains( ii ) &&
-		 ! excludes_curr.contains( ii )
-		 )
+	    //For ABDE, exclude what was excluded manually for each triple!
+	    for ( int ii = 0; ii < data.scanData.size(); ii++ )
 	      {
-		xml.writeStartElement( "exclude" );
-		xml.writeAttribute   ( "scan", QString::number( ii ) );
-		xml.writeEndElement  ();
+		qDebug() << "ABDE: in WRITE_AUTO[], excludes_curr -- " << cell << channel << waveln << excludes_curr;
+		qDebug() << "ABDE: in WRITE_AUTO[], includes -- " << cell << channel << waveln << includes; 
+		if ( ! includes.contains( ii ) &&
+		     ! excludes_curr.contains( ii )
+		     )
+		  {
+		    xml.writeStartElement( "exclude" );
+		    xml.writeAttribute   ( "scan", QString::number( ii ) );
+		    xml.writeEndElement  ();
+		  }
 	      }
 	  }
 
