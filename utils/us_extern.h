@@ -6,6 +6,8 @@
 #ifndef US_EXTERN_H
 #define US_EXTERN_H
 
+#include "us_utils_qt.h"
+
 /**
  * @def US_EXPORT
  * @brief Macro for exporting symbols in a shared library.

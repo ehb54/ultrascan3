@@ -1,5 +1,4 @@
 //! \file us_hydrosim.cpp
-//
 #include "us_hydrosim.h"
 #include "us_constants.h"
 #include "us_math2.h"

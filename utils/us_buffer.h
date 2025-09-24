@@ -2,7 +2,6 @@
 #ifndef US_BUFFER_H
 #define US_BUFFER_H
 
-#include <QtCore>
 #include "us_extern.h"
 #include "us_db2.h"
 
