@@ -13260,6 +13260,9 @@ DbgLv(1) << "EDT:WrXml:  waveln" << waveln;
 	      excludes_curr << ii;
 	  }
 
+	qDebug() << "in WRITE_AUTO[], excludes_curr -- " << cell << channel << waveln << excludes_curr;
+	qDebug() << "in WRITE_AUTO[], includes -- "      << cell << channel << waveln << includes;
+	
 	for( int ii = 0; ii < excludes_curr.size(); ii++ )
 	  {
 	    xml.writeStartElement( "exclude" );
