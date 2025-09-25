@@ -23,8 +23,16 @@ set_target_properties(us_gui PROPERTIES
 
 # Platform-specific sources and linking
 if (WIN32)
-    target_sources(us_gui PRIVATE ${CMAKE_CURRENT_LIST_DIR}/us_win_utils.cpp)
+    if (EXISTS "${CMAKE_CURRENT_LIST_DIR}/us_win_utils.c")
+        target_sources(us_gui PRIVATE ${CMAKE_CURRENT_LIST_DIR}/us_win_utils.c)
+    elseif (EXISTS "${CMAKE_CURRENT_LIST_DIR}/us_win_utils.cpp")
+        target_sources(us_gui PRIVATE ${CMAKE_CURRENT_LIST_DIR}/us_win_utils.cpp)
+    else()
+        message(FATAL_ERROR "Found no us_win_utils.{c,cpp} in gui/")
+    endif()
     target_link_libraries(us_gui PRIVATE user32)
+    target_compile_definitions(us_gui PUBLIC US_MAKE_GUI_DLL QWT_DLL QT_DLL)
+    set_target_properties(us_gui PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
 elseif(APPLE)
     # choose .m or .mm depending on your file
