@@ -11850,7 +11850,7 @@ QString US_ReporterGMP::display_scan_excls( QList<int> scan_e_b, QList<int> scan
   //string
   scans_excl_str += tr(
 		       "<table style=\"margin-left:30px\">"
-		       "<tr><b><i> Channles Exclusion Profiles: </b></i></tr>"
+		       "<tr><td><b><i> Channles Exclusion Profiles: </b></i></td></tr>"
 		       "<tr>"
 		       "<td> Channel:           </td>"
 		       "<td> Scan Begin:        </td>"
