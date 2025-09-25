@@ -7,7 +7,40 @@ find_package(Qt5 REQUIRED COMPONENTS Core Network Sql Test Xml Widgets)
 # Find MySQL with better error handling
 find_package(PkgConfig QUIET)
 if(PkgConfig_FOUND)
-    pkg_check_modules(MYSQL mysqlclient)
+    pkg_search_module(MYSQL QUIET mysqlclient mariadb libmariadb)
+
+    if(MYSQL_FOUND)
+        message(STATUS "Found MySQL/MariaDB via pkg-config")
+
+        add_library(MySQL::Client INTERFACE IMPORTED)
+        set_property(TARGET MySQL::Client PROPERTY INTERFACE_INCLUDE_DIRECTORIES ${MYSQL_INCLUDE_DIRS})
+        set_property(TARGET MySQL::Client PROPERTY INTERFACE_LINK_LIBRARIES ${MYSQL_LIBRARIES})
+        set_property(TARGET MySQL::Client PROPERTY INTERFACE_COMPILE_OPTIONS ${MYSQL_CFLAGS_OTHER})
+
+        # so you can still use the same target name
+    endif()
+endif()
+
+# --- If not found, try vcpkg (Windows or fallback) ---
+if(NOT MYSQL_FOUND)
+    message(STATUS "pkg-config not found or no MySQL detected, trying vcpkg packages")
+
+    # MySQL connector (Oracle version)
+    find_package(unofficial-libmysql QUIET)
+    if(unofficial-libmysql_FOUND)
+        add_library(unofficial::libmysql::libmysql INTERFACE IMPORTED)
+        add_library(MySQL::Client ALIAS unofficial::libmysql::libmysql)
+        set(MYSQL_FOUND TRUE)
+    endif()
+
+    # MariaDB connector (alternative)
+    if(NOT MySQL::Client)
+        find_package(unofficial-mariadb QUIET CONFIG)
+        if(unofficial-mariadb_FOUND)
+            set(MySQL::Client unofficial::mariadb::libmariadb)
+            set(MYSQL_FOUND TRUE)
+        endif()
+    endif()
 endif()
 
 # Fallback MySQL detection
