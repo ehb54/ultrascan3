@@ -342,7 +342,7 @@ class US_ReporterGMP : public US_Widgets
         void write_pdf_report(void); //!< Write PDF report
         void remove_files_by_mask(QString, QStringList); //!< Remove files by mask
         void write_gmp_report_DB(QString, QString); //!< Write GMP report to DB
-        QString display_scan_excls( QList<int>, QList<int>, QList<int>, int );
+        QString display_scan_excls( QList<int>, QList<int>, QList<int>, int, QString );
         
         void assemble_user_inputs_html(void); //!< Assemble user inputs in HTML
         void user_interactions_analysis( QString, QString );

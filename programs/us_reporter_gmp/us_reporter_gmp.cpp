@@ -11133,8 +11133,9 @@ void US_ReporterGMP::assemble_pdf( QProgressDialog * progress_msg )
     ;
 
   //go over scan exclusions in UV-vis
-  html_scan_count_uv += display_scan_excls( scan_excl_beg, scan_excl_nth,
-					    scan_excl_end, scancount );
+  if ( scancount > 0 ) 
+    html_scan_count_uv += display_scan_excls( scan_excl_beg, scan_excl_nth,
+					      scan_excl_end, scancount, "UV/vis" );
   
   //Interference
   QString html_scan_count_int = tr(
@@ -11155,8 +11156,9 @@ void US_ReporterGMP::assemble_pdf( QProgressDialog * progress_msg )
     .arg( QString::number( scancount_int ) )               //2
     ;
   //go over scan exclusions in Int.
-  html_scan_count_int += display_scan_excls( scan_excl_beg, scan_excl_nth,
-					     scan_excl_end, scancount_int );
+  if ( scancount_int > 0 )
+    html_scan_count_int += display_scan_excls( scan_excl_beg, scan_excl_nth,
+					       scan_excl_end, scancount_int, "Interf" );
 
   if ( has_uvvis )
     html_scan_count += html_scan_count_uv;
@@ -11826,7 +11828,7 @@ void US_ReporterGMP::assemble_pdf( QProgressDialog * progress_msg )
 
 //scan exclusions
 QString US_ReporterGMP::display_scan_excls( QList<int> scan_e_b, QList<int> scan_e_nth,
-					    QList<int> scan_e_e, int scan_c )
+					    QList<int> scan_e_e, int scan_c, QString opt_type )
 {
   QString scans_excl_str;
   
@@ -11848,20 +11850,25 @@ QString US_ReporterGMP::display_scan_excls( QList<int> scan_e_b, QList<int> scan
   //string
   scans_excl_str += tr(
 		       "<table style=\"margin-left:30px\">"
+		       "<tr><b><i> Channles Exclusion Profiles: </b></i></tr>"
 		       "<tr>"
-		       "<td> Channel:                          </td>"
-		       "<td> Scan Exclusion from Begin:        </td>"
-		       "<td> Include every Nth:                </td>"
-		       "<td> Scan Exclusion from End:          </td>"
-		       "<td> Number of Remaining Sans:         </td>"
+		       "<td> Channel:           </td>"
+		       "<td> Scan Begin:        </td>"
+		       "<td> Include every Nth: </td>"
+		       "<td> Scan End:          </td>"
+		       "<td> # Remaining Scans: </td>"
 		       "</tr>"
 			);
   
   for (int ii=0; ii<chndescs_alt.size(); ++ii)
     {
+      if ( !chndescs_alt[ii].contains ( opt_type ) )
+	continue;
       qDebug() << "Channel: " << chndescs_alt[ii] << "; scans [beg|nth|end], remaining -- "
 	       << scan_e_b[ii] << scan_e_nth[ii] << scan_e_e[ii] << ", " << scan_e_remain[ii];
 
+      QString chan_s = chndescs_alt[ii];
+      chan_s = chan_s.split(":")[0];
       scans_excl_str += tr(
 			   "<tr>"
 			   "<td> %1 </td>"
@@ -11871,7 +11878,7 @@ QString US_ReporterGMP::display_scan_excls( QList<int> scan_e_b, QList<int> scan
 			   "<td> %5 </td>"
 			   "</tr>"
 			   )
-	.arg( chndescs_alt[ii] )                             //1
+	.arg( chan_s )                                       //1
 	.arg( QString::number( scan_e_b[ii] ) )              //2
 	.arg( QString::number( scan_e_nth[ii] ) )            //3
 	.arg( QString::number( scan_e_e[ii] ) )              //4
