@@ -11830,6 +11830,9 @@ void US_ReporterGMP::assemble_pdf( QProgressDialog * progress_msg )
 QString US_ReporterGMP::display_scan_excls( QList<int> scan_e_b, QList<int> scan_e_nth,
 					    QList<int> scan_e_e, int scan_c, QString opt_type )
 {
+  qDebug() << "[in display_scan_excls]: scans [beg|nth|end] -- "
+	   << scan_e_b << "|" << scan_e_nth << "|" << scan_e_e;
+  
   QString scans_excl_str;
   
   QList<int> scan_e_remain;
