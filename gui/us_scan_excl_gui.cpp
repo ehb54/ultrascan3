@@ -375,10 +375,11 @@ void US_ScanExclGui::gui_to_parms( void )
       //scan nth
       QSpinBox * sb_nth = containerWidget->findChild< QSpinBox *>( stchan + "nth" );
       scan_nth[ ii ] = (int)sb_nth->value();
-	
+
       qDebug() << "In gui_to_parms: scna_beg, scan_nth, scan_end -- "
 	       << scan_beg[ ii ] << scan_nth[ ii ] << scan_end[ ii ];
 
+      
       QString range_pair = QString::number( scan_beg[ ii ] ) + ":"
 	                 + QString::number( scan_end[ ii ] ) + ":"
 	                 + QString::number( scan_nth[ ii ] )
