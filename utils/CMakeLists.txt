@@ -58,6 +58,7 @@ if(UNIX AND NOT APPLE)
 elseif(WIN32)
     # Windows system libraries
     target_link_libraries(us_utils PUBLIC ${WIN32_SYSTEM_LIBS})
+    target_compile_definitions(us_utils PRIVATE US_MAKE_DLL US_MAKE_UTIL_DLL)
 elseif(APPLE)
     # macOS-specific setup
     target_include_directories(us_utils PUBLIC /usr/X11R6/include)
