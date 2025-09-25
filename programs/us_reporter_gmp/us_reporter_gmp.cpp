@@ -11832,6 +11832,13 @@ QString US_ReporterGMP::display_scan_excls( QList<int> scan_e_b, QList<int> scan
 {
   qDebug() << "[in display_scan_excls]: scans [beg|nth|end] -- "
 	   << scan_e_b << "|" << scan_e_nth << "|" << scan_e_e;
+
+  //backward compatibility
+  for (int ii=0; ii<scan_e_nth.size(); ++ii)
+    {
+      if ( scan_e_nth[ii] == 0 )
+	scan_e_nth[ii] = 1;
+    }
   
   QString scans_excl_str;
   
