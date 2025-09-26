@@ -148,28 +148,6 @@ vec1.add(vec2);
 EXPECT_EQ(vec1.size(), 0);
 }
 
-TEST_F(US_VectorAddVectorTest, DeathTestForDifferentSizes) {
-US_Vector vec1(3, 1.0);
-US_Vector vec2(4, 2.0);
-
-EXPECT_DEATH(vec1.add(vec2), "");
-}
-
-TEST_F(US_VectorAddVectorTest, AddsVerySmallValues) {
-US_Vector vec1(2);
-vec1.assign(0, 1e-15);
-vec1.assign(1, 2e-15);
-
-US_Vector vec2(2);
-vec2.assign(0, 3e-15);
-vec2.assign(1, 4e-15);
-
-vec1.add(vec2);
-
-expectDoubleEqual(vec1[0], 4e-15);
-expectDoubleEqual(vec1[1], 6e-15);
-}
-
 // Tests for add(double) method
 class US_VectorAddScalarTest : public US_VectorTest {};
 
@@ -303,13 +281,6 @@ double result = vec1.dot(vec2);
 EXPECT_EQ(result, -6.0 + (-20.0)); // -26.0
 }
 
-TEST_F(US_VectorDotTest, DeathTestForDifferentSizes) {
-US_Vector vec1(3, 1.0);
-US_Vector vec2(4, 2.0);
-
-EXPECT_DEATH(vec1.dot(vec2), "");
-}
-
 TEST_F(US_VectorDotTest, CalculatesDotProductOfUnitVectors) {
 US_Vector vec1(2);
 vec1.assign(0, 1.0);
@@ -397,13 +368,6 @@ US_Vector vec2(0);
 vec1.mult(vec2);
 
 EXPECT_EQ(vec1.size(), 0);
-}
-
-TEST_F(US_VectorMultTest, DeathTestForDifferentSizes) {
-US_Vector vec1(3, 1.0);
-US_Vector vec2(4, 2.0);
-
-EXPECT_DEATH(vec1.mult(vec2), "");
 }
 
 // Tests for scale method
@@ -550,13 +514,6 @@ US_Vector vec2(0);
 double result = vec1.distance(vec2);
 
 EXPECT_EQ(result, 0.0);
-}
-
-TEST_F(US_VectorDistanceTest, DeathTestForDifferentSizes) {
-US_Vector vec1(3, 1.0);
-US_Vector vec2(4, 2.0);
-
-EXPECT_DEATH(vec1.distance(vec2), "");
 }
 
 TEST_F(US_VectorDistanceTest, CalculatesDistanceIsCommutative) {

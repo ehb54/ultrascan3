@@ -159,20 +159,6 @@ function(add_us3_program prog_name)
         file(GLOB_RECURSE all_forms "${prog_dir}/*.ui")
         file(GLOB_RECURSE all_resources "${prog_dir}/*.qrc")
         message(STATUS "${prog_name}: Created")
-    elseif(prog_name STREQUAL "us")
-        # Main UltraScan3 launcher - single executable with 2 source files
-        set(main_source "")
-        set(all_sources
-                "${prog_dir}/us.cpp"
-                "${prog_dir}/us_win_data.cpp"
-                )
-        set(all_headers
-                "${prog_dir}/us.h"
-                "${US3_GENERATED_DIR}/us_revision.h"
-                )
-        file(GLOB_RECURSE all_forms "${prog_dir}/*.ui")
-        file(GLOB_RECURSE all_resources "${prog_dir}/*.qrc")
-        message(STATUS "${prog_name}: Created")
     elseif(prog_name STREQUAL "us_legacy_converter")
         # Based on .pro file: convert source + legacy converter source
         set(main_source "")
@@ -189,24 +175,6 @@ function(add_us3_program prog_name)
         set(create_library FALSE)  # Force executable-only
         message(STATUS "${prog_name}: Using .pro file mapping with cross-directory sources")
         message(STATUS "${prog_name}: Executable-only build with us_convert_lib dependency")
-        message(STATUS "${prog_name}: Created")
-    elseif(prog_name STREQUAL "us_2dsa")
-        # us_2dsa has NO main file - it's all one executable
-        set(main_source "")
-        set(all_sources
-                "${prog_dir}/us_2dsa.cpp"
-                "${prog_dir}/us_plot_control_2d.cpp"
-                "${prog_dir}/us_resplot_2d.cpp"
-                "${prog_dir}/us_analysis_control_2d.cpp"
-                "${prog_dir}/us_adv_analysis_2d.cpp"
-                "${prog_dir}/us_2dsa_process.cpp"
-                "${prog_dir}/us_worker_2d.cpp"
-                "${prog_dir}/us_show_norm.cpp"
-                "${prog_dir}/us_worker_calcnorm.cpp"
-                )
-        file(GLOB_RECURSE all_headers "${prog_dir}/*.h")
-        file(GLOB_RECURSE all_forms "${prog_dir}/*.ui")
-        file(GLOB_RECURSE all_resources "${prog_dir}/*.qrc")
         message(STATUS "${prog_name}: Created")
     elseif(prog_name STREQUAL "us_convert")
         set(main_source "${prog_dir}/us_convert_main.cpp")
@@ -254,16 +222,6 @@ function(add_us3_program prog_name)
         file(GLOB_RECURSE all_resources "${prog_dir}/*.qrc")
         set(create_library FALSE)  # Force executable-only
         message(STATUS "${prog_name}: Using executable-only build with cross-directory sources")
-    elseif(prog_name STREQUAL "us_buoyancy")
-        set(main_source "")
-        set(all_sources
-                "${prog_dir}/us_buoyancy_main.cpp"
-                "${prog_dir}/us_buoyancy.cpp"
-                )
-        file(GLOB_RECURSE all_headers "${prog_dir}/*.h")
-        file(GLOB_RECURSE all_forms "${prog_dir}/*.ui")
-        file(GLOB_RECURSE all_resources "${prog_dir}/*.qrc")
-        message(STATUS "${prog_name}: Created")
     elseif(prog_name STREQUAL "us_colorgradient")
         # us_colorgradient has NO main file - it's all one executable
         set(main_source "")
