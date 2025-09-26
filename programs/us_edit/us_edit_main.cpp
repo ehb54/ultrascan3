@@ -13,8 +13,8 @@ int main( int argc, char* argv[] )
 
    // License is OK.  Start up.
    
-   US_Edit w("AUTO");
-   //US_Edit w;
+   //US_Edit w("AUTO");
+   US_Edit w;
    w.show();                   //!< \memberof QWidget
    return application.exec();  //!< \memberof QApplication
 }
