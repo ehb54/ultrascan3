@@ -2,6 +2,7 @@
 
 #include "us_grid_editor.h"
 #include "us_matrix.h"
+#include "us_csv_loader.h"
 #include <cmath>
 
 // main program
@@ -42,7 +43,7 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    right->setSpacing( 0 );
    right->setContentsMargins( 0, 0, 0, 0 );
 
-   QLabel *lb_preset = us_banner( tr( "Grid Setup" ) );
+   QLabel *lb_in_out = us_banner( tr( "Input / Output Ctrl" ) );
 
    QPushButton* pb_investigator = us_pushbutton( tr( "Select Investigator" ) );
    connect( pb_investigator, &QPushButton::clicked, this, &US_Grid_Editor::sel_investigator );
@@ -59,28 +60,30 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    dkdb_cntrls   = new US_Disk_DB_Controls( US_Settings::default_data_location() );
    connect( dkdb_cntrls, &US_Disk_DB_Controls::changed, this, &US_Grid_Editor::update_disk_db );
 
-   x_param = Attribute::ATTR_S;
-   y_param = Attribute::ATTR_K;
-   z_param = Attribute::ATTR_V;
+   // select bewteen cg & csv modes
+   rb_cg_mode  = new QRadioButton();
+   rb_csv_mode = new QRadioButton();
+   QGridLayout* lyt_cg_mode  = us_radiobutton( "Create Grid", rb_cg_mode );
+   QGridLayout* lyt_csv_mode = us_radiobutton( "Load Grid", rb_csv_mode );
 
-   QLabel *lb_x_param = us_label( tr( "X-Axis" ) );
-   lb_x_param->setAlignment( Qt::AlignCenter );
+   QHBoxLayout* lyt_grid_mode = new QHBoxLayout();
+   lyt_grid_mode->setContentsMargins( 0, 0, 0, 0 );
+   lyt_grid_mode->setSpacing( 0 );
+   lyt_grid_mode->addLayout( lyt_cg_mode );
+   lyt_grid_mode->addLayout( lyt_csv_mode );
 
-   QLabel *lb_y_param = us_label( tr( "Y-Axis" ) );
-   lb_y_param->setAlignment( Qt::AlignCenter );
+   QButtonGroup* bg_mode = new QButtonGroup( this );
+   bg_mode->addButton( rb_cg_mode );
+   bg_mode->addButton( rb_csv_mode );
+   rb_cg_mode->setChecked( true );
+   connect( bg_mode, &QButtonGroup::idClicked, this, &US_Grid_Editor::set_cg_mode );
 
-   QLabel *lb_z_param = us_label( tr( "Fixed Attribute" ) );
-   lb_z_param->setAlignment( Qt::AlignCenter );
-
-   le_x_param = us_lineedit( Attribute::long_desc( x_param ), -1, true );
-   le_y_param = us_lineedit( Attribute::long_desc( y_param ), -1, true );
-   le_z_param = us_lineedit( Attribute::long_desc( z_param ), -1, true );
-
-   QPushButton *pb_grid_setup = us_pushbutton( "Grid Setting" );
-   connect ( pb_grid_setup, &QPushButton::clicked, this, &US_Grid_Editor::setup_grid );
+   pb_load_csv = us_pushbutton( "Load CSV File ");
+   // pb_load_csv->setFixedWidth( 150 );
+   connect( pb_load_csv, &QPushButton::clicked, this, &US_Grid_Editor::load_csv_file );
 
    // Experimental Space
-   QLabel *lb_experm = us_banner( tr( "Experimental Space" ) );
+   QLabel* lb_experm = us_banner( tr( "Experimental Space" ) );
 
    QLabel *lb_buffer = us_label( tr( "Description" ) );
    lb_buffer->setAlignment( Qt::AlignCenter );
@@ -119,20 +122,45 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    connect( le_temp,      &QLineEdit::editingFinished, this, &US_Grid_Editor::new_dens_visc_temp );
    connect( pb_lu_buffer, &QPushButton::clicked,       this, &US_Grid_Editor::set_buffer );
 
-   // 20,w grid control
-   QLabel *lb_20w_ctrl = us_banner( tr( "20,W Partial Grid Control" ) );
+   // Grid Setup
+   lb_grid_setup = us_banner( tr( "Grid Setup Control" ) );
+   x_param = Attribute::ATTR_S;
+   y_param = Attribute::ATTR_K;
+   z_param = Attribute::ATTR_V;
+
+   lb_x_param = us_label( tr( "X-Axis" ) );
+   lb_x_param->setAlignment( Qt::AlignCenter );
+
+   lb_y_param = us_label( tr( "Y-Axis" ) );
+   lb_y_param->setAlignment( Qt::AlignCenter );
+
+   lb_z_param = us_label( tr( "Fixed Attribute" ) );
+   lb_z_param->setAlignment( Qt::AlignCenter );
+
+   le_x_param = us_lineedit( Attribute::long_desc( x_param ), -1, true );
+   le_y_param = us_lineedit( Attribute::long_desc( y_param ), -1, true );
+   le_z_param = us_lineedit( Attribute::long_desc( z_param ), -1, true );
+
+   pb_grid_setup = us_pushbutton( "Grid Setup" );
+   connect ( pb_grid_setup, &QPushButton::clicked, this, &US_Grid_Editor::setup_grid );
+
+   // Grid Mode Control
+   lb_grid_mode = us_banner( "" );
 
    chkb_log = new QCheckBox();
-   QGridLayout* lyt_log = us_checkbox( "X-Axis Logarithmic", chkb_log );
+   lyt_log = us_checkbox( "X-Axis Logarithmic", chkb_log );
    connect( chkb_log, &QCheckBox::stateChanged, this, &US_Grid_Editor::refill_grid_points );
-
-   QPushButton* pb_load_model = us_pushbutton( "Load Model" );
-   connect( pb_load_model, &QPushButton::clicked, this, &US_Grid_Editor::load );
 
    QRadioButton* rb_exctpoints = new QRadioButton();
    QRadioButton* rb_midpoints    = new QRadioButton();
-   QGridLayout* lyt_sp = us_radiobutton( "Start / End Points", rb_exctpoints );
-   QGridLayout* lyt_mp = us_radiobutton( "Bin Centers", rb_midpoints );
+   QGridLayout* lyt_end_points = us_radiobutton( "Start / End Points", rb_exctpoints );
+   QGridLayout* lyt_mid_points = us_radiobutton( "Bin Centers", rb_midpoints );
+
+   lyt_points = new QHBoxLayout();
+   lyt_points->setContentsMargins( 0, 0, 0, 0 );
+   lyt_points->setSpacing( 0 );
+   lyt_points->addLayout( lyt_end_points );
+   lyt_points->addLayout( lyt_mid_points );
 
    bg_point_type = new QButtonGroup();
    bg_point_type->addButton( rb_midpoints, MIDPOINTS );
@@ -140,18 +168,18 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    rb_exctpoints->setChecked( true );
    connect( bg_point_type, &QButtonGroup::idClicked, this, &US_Grid_Editor::set_mid_exct_points );
 
-   QLabel *lb_grid_list = us_label( "Partial Grid List" );
+   lb_grid_list = us_label( "Partial Grid List" );
    lb_grid_list->setAlignment( Qt::AlignCenter );
 
    lw_grids = us_listwidget();
 
-   QPushButton* pb_new = us_pushbutton( "New" );
+   pb_new = us_pushbutton( "New" );
    connect( pb_new, &QPushButton::clicked, this, &US_Grid_Editor::new_grid_clicked );
 
-   QPushButton* pb_delete = us_pushbutton( "Delete" );
+   pb_delete = us_pushbutton( "Delete" );
    connect( pb_delete, &QPushButton::clicked, this, &US_Grid_Editor::delete_grid_clicked );
 
-   QPushButton* pb_update = us_pushbutton( "Update" );
+   pb_update = us_pushbutton( "Update" );
    connect( pb_update, &QPushButton::clicked, this, &US_Grid_Editor::update_grid_clicked );
 
    QHBoxLayout* lyt_1 = new QHBoxLayout();
@@ -159,15 +187,15 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    lyt_1->addWidget( pb_update );
    lyt_1->addWidget( pb_delete );
 
-   QFrame *hline1 = new QFrame();
+   hline1 = new QFrame();
    hline1->setFrameShape( QFrame::HLine );
    hline1->setFrameShadow( QFrame::Sunken );
 
-   QLabel *lb_min = us_label( "Minimum" );
+   lb_min = us_label( "Minimum" );
    lb_min->setAlignment( Qt::AlignCenter );
-   QLabel *lb_max = us_label( "Maximum" );
+   lb_max = us_label( "Maximum" );
    lb_max->setAlignment( Qt::AlignCenter );
-   QLabel *lb_res = us_label( "Resolution" );
+   lb_res = us_label( "Resolution" );
    lb_res->setAlignment( Qt::AlignCenter );
 
    lb_x_ax = us_label( Attribute::short_desc( x_param ) );
@@ -185,16 +213,17 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    le_y_res = us_lineedit();
    le_y_res->setValidator( iValid );
 
-   QFrame *hline2 = new QFrame();
-   hline2->setFrameShape( QFrame::HLine );
-   hline2->setFrameShadow( QFrame::Sunken );
-
    lb_z_ax = us_label( Attribute::short_desc( z_param ) );
    lb_z_ax->setAlignment( Qt::AlignCenter );
    le_z_val = us_lineedit();
 
-   QGridLayout  *lyt_cons_z = us_radiobutton( "Constant", rb_cons_z );
-   QGridLayout  *lyt_vary_z = us_radiobutton( "Varying" , rb_vary_z );
+   QGridLayout* lyt_cons_z = us_radiobutton( "Constant", rb_cons_z );
+   QGridLayout* lyt_vary_z = us_radiobutton( "Varying" , rb_vary_z );
+   lyt_zvalues = new QHBoxLayout();
+   lyt_zvalues->setContentsMargins( 0, 0, 0, 0 );
+   lyt_zvalues->setSpacing( 0 );
+   lyt_zvalues->addLayout( lyt_cons_z );
+   lyt_zvalues->addLayout( lyt_vary_z );
 
    QButtonGroup* z_cons_vary = new QButtonGroup( this );
    z_cons_vary->addButton( rb_cons_z, 0 );
@@ -214,6 +243,8 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
 
    pb_add_update = us_pushbutton( "Add / Update " );
    connect( pb_add_update, &QPushButton::clicked, this, &US_Grid_Editor::add_update );
+
+   lb_subgrid_ctrl = us_banner( "Subgrid Control" );
 
    QLabel *lb_nsubgrids = us_label( "Number of Subgrids" );
    lb_nsubgrids->setAlignment( Qt::AlignCenter );
@@ -257,6 +288,9 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    pb_reset->setEnabled( true );
    connect( pb_reset, &QPushButton::clicked, this, &US_Grid_Editor::reset );
 
+   QPushButton* pb_load_model = us_pushbutton( "Load Model" );
+   connect( pb_load_model, &QPushButton::clicked, this, &US_Grid_Editor::load );
+
    pb_save = us_pushbutton( tr( "Save" ) );
    pb_save->setEnabled( false );
    connect( pb_save, &QPushButton::clicked, this, &US_Grid_Editor::save );
@@ -269,24 +303,21 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    pb_close->setEnabled( true );
    connect( pb_close, &QPushButton::clicked, this, &US_Grid_Editor::close );
 
-   int row = 0;
-   left->addWidget( lb_preset,            row++, 0, 1, 4 );
+   QHBoxLayout* lyt_rsl = new QHBoxLayout();
+   lyt_rsl->setContentsMargins( 0, 0, 0, 0 );
+   lyt_rsl->setSpacing( 2 );
+   lyt_rsl->addWidget( pb_reset );
+   lyt_rsl->addWidget( pb_load_model );
+   lyt_rsl->addWidget( pb_save );
 
+   int row = 0;
+   left->addWidget( lb_in_out,            row++, 0, 1, 4 );
    left->addWidget( pb_investigator,      row,   0, 1, 2 );
    left->addWidget( le_investigator,      row++, 2, 1, 2 );
 
    left->addLayout( dkdb_cntrls,          row++, 0, 1, 4 );
 
-   left->addWidget( lb_x_param,           row,   0, 1, 2 );
-   left->addWidget( le_x_param,           row++, 2, 1, 2 );
-
-   left->addWidget( lb_y_param,           row,   0, 1, 2 );
-   left->addWidget( le_y_param,           row++, 2, 1, 2 );
-
-   left->addWidget( lb_z_param,           row,   0, 1, 2 );
-   left->addWidget( le_z_param,           row++, 2, 1, 2 );
-
-   left->addWidget( pb_grid_setup,        row++, 1, 1, 2 );
+   left->addLayout( lyt_rsl,              row++, 0, 1, 4 );
 
    left->addWidget( lb_experm,            row++, 0, 1, 4 );
 
@@ -307,14 +338,29 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    left->addWidget( lb_visc_T,            row,   2, 1, 1 );
    left->addWidget( le_visc_T,            row++, 3, 1, 1 );
 
-   left->addWidget( lb_20w_ctrl,          row++, 0, 1, 4 );
+   left->addWidget( lb_grid_setup,        row++, 0, 1, 4 );
 
-   left->addLayout( lyt_log,              row,   0, 1, 2 );
-   left->addWidget( pb_load_model,        row++, 2, 1, 2 );
+   left->addWidget( lb_x_param,           row,   0, 1, 2 );
+   left->addWidget( le_x_param,           row++, 2, 1, 2 );
 
-   left->addLayout( lyt_sp,               row,   0, 1, 2 );
-   left->addLayout( lyt_mp,               row++, 2, 1, 2 );
-   
+   left->addWidget( lb_y_param,           row,   0, 1, 2 );
+   left->addWidget( le_y_param,           row++, 2, 1, 2 );
+
+   left->addWidget( lb_z_param,           row,   0, 1, 2 );
+   left->addWidget( le_z_param,           row++, 2, 1, 2 );
+
+   left->addWidget( pb_grid_setup,        row++, 1, 1, 2 );
+
+   left->addWidget( lb_grid_mode,         row++, 0, 1, 4 );
+
+   left->addLayout( lyt_grid_mode,        row++, 0, 1, 4 );
+
+   left->addWidget( pb_load_csv,          row++, 1, 1, 2 );
+
+   left->addLayout( lyt_points,           row++, 0, 1, 4 );
+
+   left->addLayout( lyt_log,              row++, 0, 1, 4 );
+
    left->addWidget( lb_grid_list,         row++, 0, 1, 4 );
 
    left->addWidget( lw_grids,             row,   0, 1, 4 );
@@ -341,12 +387,11 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    left->addWidget( lb_z_ax,              row,   0, 1, 1 );
    left->addWidget( le_z_val,             row,   1, 1, 1 );
    left->addWidget( pb_z_set_func,        row,   1, 1, 1 );
-   left->addLayout( lyt_cons_z,           row,   2, 1, 1 );
-   left->addLayout( lyt_vary_z,           row++, 3, 1, 1 );
+   left->addLayout( lyt_zvalues,          row++, 2, 1, 2 );
 
    left->addWidget( pb_add_update,        row++, 1, 1, 2 );
 
-   left->addWidget( hline2,               row++, 0, 1, 4 );
+   left->addWidget( lb_subgrid_ctrl,    row++, 0, 1, 4 );
 
    left->addWidget( lb_subgrid,           row,   0, 1, 2 );
    left->addWidget( ct_subgrid,           row++, 2, 1, 2 );
@@ -366,10 +411,8 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    QSpacerItem *spacer = new QSpacerItem( 0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding );
    left->addItem( spacer, row++, 0, 1, 4 );
 
-   left->addWidget( pb_reset,             row,   0, 1, 1 );
-   left->addWidget( pb_save,              row,   1, 1, 1 );
-   left->addWidget( pb_help,              row,   2, 1, 1 );
-   left->addWidget( pb_close,             row++, 3, 1, 1 );
+   left->addWidget( pb_help,              row,   0, 1, 2 );
+   left->addWidget( pb_close,             row++, 2, 1, 2 );
 
    for ( int ii = 0; ii < 4; ii++ ) {
       left->setColumnStretch( ii, 1 );
@@ -507,6 +550,27 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    reset();
    select_x_axis( x_param );
    select_y_axis( y_param );
+   set_cg_mode( 0 );
+}
+
+void US_Grid_Editor::show_layout( QLayout* layout, bool show )
+{
+   if (!layout)
+      return;
+
+   for (int i = 0; i < layout->count(); ++i) {
+      QLayoutItem *item = layout->itemAt(i);
+
+      if (QWidget *widget = item->widget()) {
+         if ( show ) {
+            widget->show();
+         } else {
+            widget->hide();
+         }
+      } else if (QLayout *childLayout = item->layout()) {
+         show_layout( childLayout, show );
+      }
+   }
 }
 
 void US_Grid_Editor::reset()
@@ -1129,6 +1193,177 @@ void US_Grid_Editor::set_mid_exct_points( int id )
    }
 
    refill_grid_points();
+}
+
+void US_Grid_Editor::set_cg_mode( int )
+{
+   if( rb_cg_mode->isChecked() ) {
+      reset();
+      lb_grid_mode->setText( "Create Grid Control" );
+      pb_load_csv->hide();
+
+      lb_grid_list->show();
+      lw_grids->show();
+      lb_min->show();
+      lb_max->show();
+      lb_res->show();
+      lb_x_ax->show();
+      lb_y_ax->show();
+      lb_z_ax->show();
+      le_x_min->show();
+      le_x_max->show();
+      le_x_res->show();
+      le_y_min->show();
+      le_y_max->show();
+      le_y_res->show();
+      le_z_val->show();
+      pb_add_update->show();
+      pb_new->show();
+      pb_update->show();
+      pb_delete->show();
+      hline1->show();
+
+      show_layout( lyt_log, true );
+      show_layout( lyt_points, true );
+      show_layout( lyt_zvalues, true );
+   } else {
+      lb_grid_mode->setText( "Load Grid Control" );
+      pb_load_csv->show();
+
+      lb_grid_list->hide();
+      lw_grids->hide();
+      lb_min->hide();
+      lb_max->hide();
+      lb_res->hide();
+      lb_x_ax->hide();
+      lb_y_ax->hide();
+      lb_z_ax->hide();
+      le_x_min->hide();
+      le_x_max->hide();
+      le_x_res->hide();
+      le_y_min->hide();
+      le_y_max->hide();
+      le_y_res->hide();
+      le_z_val->hide();
+      pb_add_update->hide();
+      pb_new->hide();
+      pb_update->hide();
+      pb_delete->hide();
+      hline1->hide();
+
+      show_layout( lyt_log, false );
+      show_layout( lyt_points, false );
+      show_layout( lyt_zvalues, false );
+   }
+}
+
+void US_Grid_Editor::load_csv_file()
+{
+   QString filter = "Text Files (*.csv *.dat *.txt);; All Files (*)";
+   QString fpath = QFileDialog::getOpenFileName(this, "Load GRID FILE",
+                                                US_Settings::dataDir(), filter);
+   if (fpath.isEmpty()) {
+      return;
+   }
+
+   QString note = "Load S20W, Frictional Ratio, and Partial Specific Volume";
+   US_CSV_Loader *csv_loader = new US_CSV_Loader(fpath, note, true, this);
+   int state = csv_loader->exec();
+   if (state != QDialog::Accepted) return;
+   US_CSV_Data csv_data = csv_loader->data();
+   if (csv_data.columnCount() < 3) {
+      QMessageBox::warning( this, "Warning!", "Three columns of data needed for this program!" );
+      return;
+   }
+
+   US_WidgetsDialog* dialog = new US_WidgetsDialog( this );
+   dialog->setWindowTitle( "Set Grid Parameters" );
+   dialog->setPalette( US_GuiSettings::frameColor() );
+
+   QGridLayout *layout = new QGridLayout();
+   layout->setContentsMargins( 3, 3, 3, 3 );
+   layout->setSpacing( 2 );
+   dialog->setLayout( layout );
+
+   QLabel* lb_param  = us_banner( "Parameters" );
+   QLabel* lb_header = us_banner( "Headers" );
+   QLabel* lb_s20  = us_label( "Sedimentation Coefficient" );
+   QLabel* lb_ff0  = us_label( "Frictional Ratio" );
+   QLabel* lb_vbar = us_label( "Partial Specific Volume" );
+   QComboBox* cb_s20  = us_comboBox();
+   QComboBox* cb_ff0  = us_comboBox();
+   QComboBox* cb_vbar = us_comboBox();
+
+   cb_s20->addItems( csv_data.header() );
+   cb_ff0->addItems( csv_data.header() );
+   cb_vbar->addItems( csv_data.header() );
+
+   QPushButton* pb_apply = us_pushbutton( "Apply" );
+   QPushButton* pb_cancel = us_pushbutton( "Cancel" );
+
+   layout->addWidget( lb_param,   0, 0, 1, 2 );
+   layout->addWidget( lb_header,  0, 2, 1, 2 );
+   layout->addWidget( lb_s20,     1, 0, 1, 2 );
+   layout->addWidget( cb_s20,     1, 2, 1, 2 );
+   layout->addWidget( lb_ff0,     2, 0, 1, 2 );
+   layout->addWidget( cb_ff0,     2, 2, 1, 2 );
+   layout->addWidget( lb_vbar,    3, 0, 1, 2 );
+   layout->addWidget( cb_vbar,    3, 2, 1, 2 );
+   layout->addWidget( pb_cancel,  4, 2, 1, 1 );
+   layout->addWidget( pb_apply,   4, 3, 1, 1 );
+
+   connect( pb_cancel, &QPushButton::clicked, dialog, &QDialog::reject );
+   connect( pb_apply, &QPushButton::clicked, this, [=]() {
+      bool ok = cb_s20->currentIndex() != cb_ff0->currentIndex();
+      ok &= cb_s20->currentIndex() != cb_vbar->currentIndex();
+      ok &= cb_ff0->currentIndex() != cb_vbar->currentIndex();
+      if ( ok ) {
+         dialog->accept();
+      } else {
+         QMessageBox::warning( dialog, "Warning!", "A column is selected twice or more!" );
+      }
+   });
+
+   if ( dialog->exec() == QDialog::Accepted ) {
+      reset();
+      QVector<double> s20 = csv_data.columnAt( cb_s20->currentIndex() );
+      QVector<double> ff0 = csv_data.columnAt( cb_ff0->currentIndex() );
+      QVector<double> vbar = csv_data.columnAt( cb_vbar->currentIndex() );
+      if ( ! ( s20.size() == ff0.size() && ff0.size() == vbar.size() ) ) {
+         QMessageBox::warning( this, "Error!", "The numbers of grid points are different!" );
+         return;
+      }
+      QVector<Attribute::Type> types;
+      types << Attribute::ATTR_S << Attribute::ATTR_K << Attribute::ATTR_V;
+      QVector<double> vals;
+      QVector<GridPoint> gpoints;
+      for ( int ii = 0; ii < s20.size(); ii++ ) {
+         vals.clear();
+         vals << s20.at( ii ) << ff0.at( ii ) << vbar.at( ii );
+         GridPoint gp;
+         gp.set_dens_visc_temp( buff_dens, buff_visc, buff_temp );
+
+         if ( gp.set_param( vals, types ) ) {
+            gp.set_row_col( 0, 0 );
+            gpoints << gp;
+         } else {
+            QString h1 = csv_data.header().at( cb_s20->currentIndex() );
+            QString h2 = csv_data.header().at( cb_ff0->currentIndex() );
+            QString h3 = csv_data.header().at( cb_vbar->currentIndex() );
+            QString msg = tr( "Error found in hydrodynamic computation at \n"
+                              "row: %1 \n"
+                              "columns: %2, %3, %4").arg( ii + 1 ).arg( h1 ).arg( h2 ).arg( h3 ) ;
+            QMessageBox::warning( this, "Error!", msg );
+            return;
+         }
+      }
+      partial_grids << gpoints;
+      sorted_points << gpoints;
+      plot_points();
+      set_nsubgrids( ct_nsubgrids->value() );
+      plot_subgrid( ct_subgrid->value() );
+   }
+
 }
 
 void US_Grid_Editor::refill_grid_points()
