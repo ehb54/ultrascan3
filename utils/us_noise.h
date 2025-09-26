@@ -4,7 +4,7 @@
 
 #include <QtCore>
 #include "us_extern.h"
-#include "us_db2.h"
+#include "ius_db2.h"
 #include "us_dataIO.h"
 
 //! \brief Noise Vector object
@@ -44,14 +44,14 @@ class US_UTIL_EXTERN US_Noise
       //!                  should be searched for the noise vector
       //! \param guid      The guid of the noise vector to be loaded
       //! \param db        For DB access, pointer to an open database connection
-      //! \returns         The \ref US_DB2 return code for the operation
-      int load( bool, const QString&, US_DB2* = 0 );
+      //! \returns         The \ref IUS_DB2 return code for the operation
+      int load( bool, const QString&, IUS_DB2* = 0 );
 
       //! An overloaded function to read a noise vector from a database
       //! \param id       The DB ID of the desired Noise record
       //! \param db       A pointer to an open database connection
-      //! \returns        The \ref US_DB2 return code for the operation
-      int load( const QString&, US_DB2* ); 
+      //! \returns        The \ref IUS_DB2 return code for the operation
+      int load( const QString&, IUS_DB2* );
 
 
       //! An overloaded function to read a noise vector from the disk
@@ -72,12 +72,12 @@ class US_UTIL_EXTERN US_Noise
       //!                  to be written if disk access is specified
       //! \param db        For DB access, pointer to an open database connection
       //! \returns         The \ref US_DB2 return code for the operation
-      int write( bool, const QString&, US_DB2* = 0 );
+      int write( bool, const QString&, IUS_DB2* = 0 );
 
       //! An overloaded function to write a noise vector to the DB
       //! \param db        A pointer to an open database connection 
       //! \returns         The \ref US_DB2 return code for the operation
-      int write( US_DB2* );
+      int write( IUS_DB2* );
 
       //! An overloaded function to write a noise vector to a file on disk
       //! \param filename  The filename to write
@@ -128,7 +128,7 @@ class US_UTIL_EXTERN US_Noise
    private:
 
       int  load_disk       ( const QString& );
-      int  load_db         ( const QString&, US_DB2* );
+      int  load_db         ( const QString&, IUS_DB2* );
                            
       int  load_stream     ( QXmlStreamReader& );
       void write_stream    ( QXmlStreamWriter& );

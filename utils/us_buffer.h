@@ -4,7 +4,7 @@
 
 #include <QtCore>
 #include "us_extern.h"
-#include "us_db2.h"
+#include "ius_db2.h"
 
 //! The internal structure of a buffer component
 
@@ -33,13 +33,13 @@ class US_UTIL_EXTERN US_BufferComponent
       static void putAllToHD ( const QMap< QString, US_BufferComponent >& );
 
       //! Get the info for an individual component from the DB.
-      //! \param db A \ref US_DB2 structure to an opened connection to the DB.
-      void getInfoFromDB( US_DB2* = 0 );
+      //! \param db A \ref IUS_DB2 structure to an opened connection to the DB.
+      void getInfoFromDB( IUS_DB2* = 0 );
    
       //! \brief Write a new buffer to the DB.
       //! \param db An open database connection
       //! \return The buffercomponentID of the new buffer component
-      int saveToDB( US_DB2* = 0);
+      int saveToDB( IUS_DB2* = 0);
 
    private:
       static void component( QXmlStreamReader&, QMap< QString, US_BufferComponent >& );
@@ -107,25 +107,25 @@ class US_UTIL_EXTERN US_Buffer
       //! \param private_buffer An indication to mark the buffer 
       //!        public "0" or private "1";
       //! \return The bufferID of the new buffer
-      int saveToDB( US_DB2* = 0, const QString = "1" );
+      int saveToDB( IUS_DB2* = 0, const QString = "1" );
 
       //! \brief Read a buffer from the DB
       //! \param db  An open database connection
       //! \param bufID  ID number in string format of the buffer to be read.
       //! \return A boolean success or failure
-      bool readFromDB( US_DB2*, const QString& );
+      bool readFromDB( IUS_DB2*, const QString& );
 
       //! \brief Get spectrum data from the DB for a type
       //! \param db An open database connection
       //! \param type The type of data to retrieve.  One of:  "Extinction", 
       //!             "Refraction", or "Fluorescence"
-      void getSpectrum( US_DB2*, const QString& );
+      void getSpectrum( IUS_DB2*, const QString& );
 
       //! \brief Put spectrum data to the DB for a type
       //! \param db An open database connection
       //! \param type The type of data to put to the DB.  One of:  "Extinction",
       //!             "Refraction", or "Fluorescence"
-      void putSpectrum( US_DB2*, const QString& ) const;
+      void putSpectrum( IUS_DB2*, const QString& ) const;
 
       //! \brief Compute composite density,viscosity coefficients
       //! \param d_coeff Output array of composite density coefficients

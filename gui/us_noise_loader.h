@@ -16,17 +16,17 @@ class US_GUI_EXTERN US_NoiseLoader : public US_WidgetsDialog
    Q_OBJECT
 
    public:
-      //! \param db      Pointer to a US_DB2 object or null if from local disk.
+      //! \param db      Pointer to a US_DB2object or null if from local disk.
       //! \param mieGUIDs List of model-in-edit GUID strings.
       //! \param nieGUIDs List of noise-in-edit GUID:type:index strings.
       //! \param ti_noise Reference to a time-independent noise object loaded.
       //! \param ri_noise Reference to a radius-independent noise object loaded.
       //! \param edata    Pointer to edited experiment data for range compare.
-      US_NoiseLoader( US_DB2*, QStringList&, QStringList&,
+      US_NoiseLoader( IUS_DB2*, QStringList&, QStringList&,
                       US_Noise&, US_Noise&, US_DataIO::EditedData* = 0 );
 
    private:
-      US_DB2*       db;
+      IUS_DB2*      db;
       QStringList&  mieGUIDs;
       QStringList&  nieGUIDs;
       US_Noise&     ti_noise;

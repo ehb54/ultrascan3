@@ -678,7 +678,7 @@ int US_SoluteData::saveGAdata( QString& fname, int xtype, int ytype,
                    +  " fixed=" + cts[ ztype ] +  "="
                    + ( ( ztype == US_GA_Initialize::ATTR_V )
                    ?  "0.0=(data_set_vbar)"
-                   :  QString().sprintf( cffmt, fixval ) );
+                   :  QString::asprintf( cffmt, fixval ) );
       ts << line << endl;
 
       for ( int jj = 0; jj < nbuk; jj++ )
@@ -974,7 +974,7 @@ int US_SoluteData::reportDataMC( QString& fname, int mc_iters )
       {
          qreal pcconc = 100.0 * csums.at( jj ) / concsum;
          ts << tr( "Relative percentage of Solute " ) << ( jj + 1 )
-            << ": " << QString().sprintf( "%7.3f", pcconc ) << " %\n";
+            << ": " << QString::asprintf( "%7.3f", pcconc ) << " %\n";
       }
 
       ts << tr( "\n\nDetailed Results:\n" );

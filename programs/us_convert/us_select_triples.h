@@ -1,5 +1,5 @@
 #ifndef US_SELECT_TRIPLES_H
-#define US_SELECT_LAMBDAS_H
+#define US_SELECT_TRIPLES_H
 
 #include "us_extern.h"
 #include "us_widgets_dialog.h"

@@ -648,17 +648,17 @@ void US_ManageData::reportDataStatus()
 
    // Reformat and display report on record counts
    te_status->setText(
-      QString().sprintf( "%5d", ncrecs ) +
+      QString::asprintf( "%5d", ncrecs ) +
       tr( " Combined Total data sets;\n  "    ) +
-      QString().sprintf( "%5d", ncraws ) +
+      QString::asprintf( "%5d", ncraws ) +
       tr( " Combined RawData    records;\n  " ) +
-      QString().sprintf( "%5d", ncedts ) +
+      QString::asprintf( "%5d", ncedts ) +
       tr( " Combined EditedData records;\n  " ) +
-      QString().sprintf( "%5d", ncmods ) +
+      QString::asprintf( "%5d", ncmods ) +
       tr( " Combined Model      records;\n  " ) +
-      QString().sprintf( "%5d", ncnois ) +
+      QString::asprintf( "%5d", ncnois ) +
       tr( " Combined Noise      records.\n"   ) +
-      QString().sprintf( "%5d", ndrecs ) +
+      QString::asprintf( "%5d", ndrecs ) +
       tr( " Database Total data sets;\n  "    ) +
       QString().sprintf( "%5d", ndraws ) +
       tr( " Database RawData    records;\n  " ) +
