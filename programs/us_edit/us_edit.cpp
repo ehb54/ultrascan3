@@ -802,17 +802,17 @@ pb_plateau->setVisible(false);
    // details[ "expType" ]      = QString("VELOCITY");
    // details[ "dataSource" ]   = QString("dataDiskAUC:Absorbance");
 
-   // details[ "invID_passed" ] = QString("12");
-   // details[ "filename" ]     = QString("MartinR_pAUC-196-EcoRI_Run-1_16SEP25-run2104-dataDiskRun-1626");
-   // details[ "protocolName" ] = QString("test_nth_10");
-   // details[ "statusID" ]     = QString("674");
-   // details[ "autoflowID" ]   = QString("1626");
-   // details[ "runID" ]        = QString("");
-   // details[ "OptimaName" ]   = QString("");
-   // details[ "expType" ]      = QString("VELOCITY");
-   // details[ "dataSource" ]   = QString("dataDiskAUC");
+   details[ "invID_passed" ] = QString("12");
+   details[ "filename" ]     = QString("MartinR_pAUC-196-EcoRI_Run-1_16SEP25-run2104-dataDiskRun-1626");
+   details[ "protocolName" ] = QString("test_nth_10");
+   details[ "statusID" ]     = QString("674");
+   details[ "autoflowID" ]   = QString("1626");
+   details[ "runID" ]        = QString("");
+   details[ "OptimaName" ]   = QString("");
+   details[ "expType" ]      = QString("VELOCITY");
+   details[ "dataSource" ]   = QString("dataDiskAUC");
 
-   // load_auto( details );
+   load_auto( details );
 
 }
 
