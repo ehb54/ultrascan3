@@ -69,6 +69,7 @@ target_link_libraries(us_program_common INTERFACE
         Qt5::Svg
         Qt5::OpenGL
         Qt5::PrintSupport
+        Qwt::Qwt
         )
 
 # Platform-specific libraries
@@ -222,14 +223,6 @@ function(add_us3_program prog_name)
         file(GLOB_RECURSE all_resources "${prog_dir}/*.qrc")
         set(create_library FALSE)  # Force executable-only
         message(STATUS "${prog_name}: Using executable-only build with cross-directory sources")
-    elseif(prog_name STREQUAL "us_colorgradient")
-        # us_colorgradient has NO main file - it's all one executable
-        set(main_source "")
-        set(all_sources "${prog_dir}/us_colorgradient.cpp")
-        file(GLOB_RECURSE all_headers "${prog_dir}/*.h")
-        file(GLOB_RECURSE all_forms "${prog_dir}/*.ui")
-        file(GLOB_RECURSE all_resources "${prog_dir}/*.qrc")
-        message(STATUS "${prog_name}: Created")
     elseif(prog_name STREQUAL "us_2dplot")
         # Single-file program with main() inside
         set(main_source "")
