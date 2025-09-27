@@ -11160,9 +11160,9 @@ void US_ReporterGMP::assemble_pdf( QProgressDialog * progress_msg )
     html_scan_count_int += display_scan_excls( scan_excl_beg, scan_excl_nth,
 					       scan_excl_end, scancount_int, "Interf" );
 
-  if ( has_uvvis )
+  if ( has_uv )
     html_scan_count += html_scan_count_uv;
-  if ( has_interference )
+  if ( has_int )
     html_scan_count += html_scan_count_int;  
   
   html_scan_count += tr( "<hr>" ) ;
