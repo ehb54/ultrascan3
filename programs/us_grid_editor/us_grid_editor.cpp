@@ -78,9 +78,8 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    rb_cg_mode->setChecked( true );
    connect( bg_mode, &QButtonGroup::idClicked, this, &US_Grid_Editor::set_cg_mode );
 
-   pb_load_csv = us_pushbutton( "Load CSV File ");
-   // pb_load_csv->setFixedWidth( 150 );
-   connect( pb_load_csv, &QPushButton::clicked, this, &US_Grid_Editor::load_csv_file );
+   pb_load_csv = us_pushbutton( "Load Grid File ");
+   connect( pb_load_csv, &QPushButton::clicked, this, &US_Grid_Editor::load_grid_file );
 
    // Experimental Space
    QLabel* lb_experm = us_banner( tr( "Experimental Space" ) );
@@ -172,6 +171,18 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    lb_grid_list->setAlignment( Qt::AlignCenter );
 
    lw_grids = us_listwidget();
+
+   te_info = new QTextEdit();
+   te_info->setAcceptRichText( true );
+   te_info->setReadOnly( true );
+   QString text( "<b>Acceptable Units:</b><br/><br/>");
+   text += tr( "<b>Sedimentation Coefficient [ s ]</b><br/>" );
+   text += tr( "<b>Diffusion coefficient [ cm<sup>2</sup> / s ]</b><br/>" );
+   text += tr( "<b>Molecular weight [ Da ]</b><br/>" );
+   text += tr( "<b>Partial specific volume [ mL / g]</b><br/>" );
+   text += tr( "<b>Frictional coefficient [ g / s]</b><br/>" );
+   te_info->setText( text );
+   te_info->setStyleSheet("QTextEdit {color: blue; background-color: lightyellow;}" );
 
    pb_new = us_pushbutton( "New" );
    connect( pb_new, &QPushButton::clicked, this, &US_Grid_Editor::new_grid_clicked );
@@ -364,6 +375,7 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    left->addWidget( lb_grid_list,         row++, 0, 1, 4 );
 
    left->addWidget( lw_grids,             row,   0, 1, 4 );
+   left->addWidget( te_info,              row,   0, 1, 4 );
    left->setRowStretch( row++, 1 );
 
    left->addLayout( lyt_1,                row++, 0, 1, 4 );
@@ -1201,6 +1213,7 @@ void US_Grid_Editor::set_cg_mode( int )
       reset();
       lb_grid_mode->setText( "Create Grid Control" );
       pb_load_csv->hide();
+      te_info->hide();
 
       lb_grid_list->show();
       lw_grids->show();
@@ -1229,6 +1242,7 @@ void US_Grid_Editor::set_cg_mode( int )
    } else {
       lb_grid_mode->setText( "Load Grid Control" );
       pb_load_csv->show();
+      te_info->show();
 
       lb_grid_list->hide();
       lw_grids->hide();
@@ -1257,7 +1271,7 @@ void US_Grid_Editor::set_cg_mode( int )
    }
 }
 
-void US_Grid_Editor::load_csv_file()
+void US_Grid_Editor::load_grid_file()
 {
    QString filter = "Text Files (*.csv *.dat *.txt);; All Files (*)";
    QString fpath = QFileDialog::getOpenFileName(this, "Load GRID FILE",
@@ -1266,8 +1280,7 @@ void US_Grid_Editor::load_csv_file()
       return;
    }
 
-   QString note = "Load S20W, Frictional Ratio, and Partial Specific Volume";
-   US_CSV_Loader *csv_loader = new US_CSV_Loader(fpath, note, true, this);
+   US_CSV_Loader *csv_loader = new US_CSV_Loader(fpath, "", true, this);
    int state = csv_loader->exec();
    if (state != QDialog::Accepted) return;
    US_CSV_Data csv_data = csv_loader->data();
@@ -1287,36 +1300,36 @@ void US_Grid_Editor::load_csv_file()
 
    QLabel* lb_param  = us_banner( "Parameters" );
    QLabel* lb_header = us_banner( "Headers" );
-   QLabel* lb_s20  = us_label( "Sedimentation Coefficient" );
-   QLabel* lb_ff0  = us_label( "Frictional Ratio" );
-   QLabel* lb_vbar = us_label( "Partial Specific Volume" );
-   QComboBox* cb_s20  = us_comboBox();
-   QComboBox* cb_ff0  = us_comboBox();
-   QComboBox* cb_vbar = us_comboBox();
+   QLabel* lb_p1 = us_label( Attribute::long_desc( x_param ) );
+   QLabel* lb_p2 = us_label( Attribute::long_desc( y_param ) );
+   QLabel* lb_p3 = us_label( Attribute::long_desc( z_param ) );
+   QComboBox* cb_p1  = us_comboBox();
+   QComboBox* cb_p2  = us_comboBox();
+   QComboBox* cb_p3 = us_comboBox();
 
-   cb_s20->addItems( csv_data.header() );
-   cb_ff0->addItems( csv_data.header() );
-   cb_vbar->addItems( csv_data.header() );
+   cb_p1->addItems( csv_data.header() );
+   cb_p2->addItems( csv_data.header() );
+   cb_p3->addItems( csv_data.header() );
 
    QPushButton* pb_apply = us_pushbutton( "Apply" );
    QPushButton* pb_cancel = us_pushbutton( "Cancel" );
 
    layout->addWidget( lb_param,   0, 0, 1, 2 );
    layout->addWidget( lb_header,  0, 2, 1, 2 );
-   layout->addWidget( lb_s20,     1, 0, 1, 2 );
-   layout->addWidget( cb_s20,     1, 2, 1, 2 );
-   layout->addWidget( lb_ff0,     2, 0, 1, 2 );
-   layout->addWidget( cb_ff0,     2, 2, 1, 2 );
-   layout->addWidget( lb_vbar,    3, 0, 1, 2 );
-   layout->addWidget( cb_vbar,    3, 2, 1, 2 );
+   layout->addWidget( lb_p1,      1, 0, 1, 2 );
+   layout->addWidget( cb_p1,      1, 2, 1, 2 );
+   layout->addWidget( lb_p2,      2, 0, 1, 2 );
+   layout->addWidget( cb_p2,      2, 2, 1, 2 );
+   layout->addWidget( lb_p3,      3, 0, 1, 2 );
+   layout->addWidget( cb_p3,      3, 2, 1, 2 );
    layout->addWidget( pb_cancel,  4, 2, 1, 1 );
    layout->addWidget( pb_apply,   4, 3, 1, 1 );
 
    connect( pb_cancel, &QPushButton::clicked, dialog, &QDialog::reject );
    connect( pb_apply, &QPushButton::clicked, this, [=]() {
-      bool ok = cb_s20->currentIndex() != cb_ff0->currentIndex();
-      ok &= cb_s20->currentIndex() != cb_vbar->currentIndex();
-      ok &= cb_ff0->currentIndex() != cb_vbar->currentIndex();
+      bool ok = cb_p1->currentIndex() != cb_p2->currentIndex();
+      ok &= cb_p1->currentIndex() != cb_p3->currentIndex();
+      ok &= cb_p2->currentIndex() != cb_p3->currentIndex();
       if ( ok ) {
          dialog->accept();
       } else {
@@ -1326,20 +1339,20 @@ void US_Grid_Editor::load_csv_file()
 
    if ( dialog->exec() == QDialog::Accepted ) {
       reset();
-      QVector<double> s20 = csv_data.columnAt( cb_s20->currentIndex() );
-      QVector<double> ff0 = csv_data.columnAt( cb_ff0->currentIndex() );
-      QVector<double> vbar = csv_data.columnAt( cb_vbar->currentIndex() );
-      if ( ! ( s20.size() == ff0.size() && ff0.size() == vbar.size() ) ) {
+      QVector<double> p1_vals = csv_data.columnAt( cb_p1->currentIndex() );
+      QVector<double> p2_vals = csv_data.columnAt( cb_p2->currentIndex() );
+      QVector<double> p3_vals = csv_data.columnAt( cb_p3->currentIndex() );
+      if ( ! ( p1_vals.size() == p2_vals.size() && p2_vals.size() == p3_vals.size() ) ) {
          QMessageBox::warning( this, "Error!", "The numbers of grid points are different!" );
          return;
       }
       QVector<Attribute::Type> types;
-      types << Attribute::ATTR_S << Attribute::ATTR_K << Attribute::ATTR_V;
+      types << x_param << y_param << z_param;
       QVector<double> vals;
       QVector<GridPoint> gpoints;
-      for ( int ii = 0; ii < s20.size(); ii++ ) {
+      for ( int ii = 0; ii < p1_vals.size(); ii++ ) {
          vals.clear();
-         vals << s20.at( ii ) << ff0.at( ii ) << vbar.at( ii );
+         vals << p1_vals.at( ii ) << p2_vals.at( ii ) << p3_vals.at( ii );
          GridPoint gp;
          gp.set_dens_visc_temp( buff_dens, buff_visc, buff_temp );
 
@@ -1347,13 +1360,22 @@ void US_Grid_Editor::load_csv_file()
             gp.set_row_col( 0, 0 );
             gpoints << gp;
          } else {
-            QString h1 = csv_data.header().at( cb_s20->currentIndex() );
-            QString h2 = csv_data.header().at( cb_ff0->currentIndex() );
-            QString h3 = csv_data.header().at( cb_vbar->currentIndex() );
-            QString msg = tr( "Error found in hydrodynamic computation at \n"
-                              "row: %1 \n"
-                              "columns: %2, %3, %4").arg( ii + 1 ).arg( h1 ).arg( h2 ).arg( h3 ) ;
-            QMessageBox::warning( this, "Error!", msg );
+            QString msg = tr( "Row :%1  <br/>" ).arg( ii + 1);
+            msg += tr( "Parameter 1: %1 <br/>" ).arg( lb_p1->text() );
+            msg += tr( "Header 1: %1 <br/>" ).arg( csv_data.header().at( cb_p1->currentIndex() ) );
+            msg += tr( "Parameter 2: %1 <br/>" ).arg( lb_p2->text() );
+            msg += tr( "Header 2: %1 <br/>" ).arg( csv_data.header().at( cb_p2->currentIndex() ) );
+            msg += tr( "Parameter 3: %1 <br/>" ).arg( lb_p3->text() );
+            msg += tr( "Header 3: %1 <br/>" ).arg( csv_data.header().at( cb_p3->currentIndex() ) );
+            msg += tr( "<br/>Error: <br/>%1" ).arg( gp.error_string() );
+
+            QMessageBox msgBox( this );
+            msgBox.setIcon( QMessageBox::Warning );
+            msgBox.setWindowTitle( "Error!" );
+            msgBox.setTextFormat( Qt::RichText );
+            msgBox.setText( msg );
+            msgBox.setInformativeText("Click OK to continue.");
+            msgBox.exec();
             return;
          }
       }
@@ -2061,9 +2083,7 @@ void US_Grid_Editor::setup_grid()
 {
    if ( ! partial_grids.isEmpty() ) {
       int yes = QMessageBox::question( this, "Warning!",
-                                      tr( "Partial grid list is not empty and by changing the grid setting, it "
-                                          "will be deleted.<br/>"
-                                          "Would you like to proceed with the grid setup?" ) );
+                                      tr( "The grid points will be deleted if you proceed with the grid setup?" ) );
       if ( yes == QMessageBox::No ) return;
    }
 

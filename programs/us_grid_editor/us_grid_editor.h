@@ -447,6 +447,8 @@ private:
    QLabel*          lb_max;               //!< Label for Maximum.
    QLabel*          lb_res;               //!< Label for Reselution.
 
+   QTextEdit*       te_info;              //!< Text box for information.
+
    QFrame*          hline1;               //!< Horizontal splitter
 
    QGridLayout*     lyt_log;              //!< Layout for Log checkbox.
@@ -520,6 +522,7 @@ private:
 
    US_Disk_DB_Controls*      dkdb_cntrls;       //!< Disk DB controls.
 
+   //! \brief Show/Hide widgets of a layout.
    void show_layout(QLayout *, bool);
 
    //! \brief Clear set region from the data plot.
@@ -555,6 +558,7 @@ private:
    //! \brief Generate evenly spaced numbers over a specified interval.
    bool gen_grid_points( const GridInfo&, QVector<GridPoint>& );
 
+   //! \brief Parse the meta data expression of the Z values.
    bool parse_z_expression( const QString&, QString&, QString&, QVector<double>&, bool& );
 
    //! \brief Correct the unit of the parameter.
@@ -647,7 +651,7 @@ private slots:
    void set_cg_mode( int );
 
    //! \brief Slot to load a model from csv files.
-   void load_csv_file( void );
+   void load_grid_file( void );
 
    //! \brief Slot to set recalculate all points.
    void refill_grid_points( void );
