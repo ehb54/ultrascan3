@@ -562,7 +562,17 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    reset();
    select_x_axis( x_param );
    select_y_axis( y_param );
-   set_cg_mode( 0 );
+   set_cg_mode();
+}
+
+void US_Grid_Editor::delete_data()
+{
+   lw_grids->disconnect();
+   lw_grids->clear();
+   partial_grids.clear();
+   partial_grid_info.clear();
+   sorted_points.clear();
+   final_subgrids.clear();
 }
 
 void US_Grid_Editor::show_layout( QLayout* layout, bool show )
@@ -587,12 +597,7 @@ void US_Grid_Editor::show_layout( QLayout* layout, bool show )
 
 void US_Grid_Editor::reset()
 {
-   lw_grids->disconnect();
-   lw_grids->clear();
-   partial_grids.clear();
-   partial_grid_info.clear();
-   sorted_points.clear();
-   final_subgrids.clear();
+   delete_data();
 
    x_param = Attribute::ATTR_S;
    y_param = Attribute::ATTR_K;
@@ -1207,10 +1212,12 @@ void US_Grid_Editor::set_mid_exct_points( int id )
    refill_grid_points();
 }
 
-void US_Grid_Editor::set_cg_mode( int )
+void US_Grid_Editor::set_cg_mode()
 {
+   delete_data();
+   default_plot_ctrl();
+
    if( rb_cg_mode->isChecked() ) {
-      reset();
       lb_grid_mode->setText( "Create Grid Control" );
       pb_load_csv->hide();
       te_info->hide();
@@ -1322,8 +1329,9 @@ void US_Grid_Editor::load_grid_file()
    layout->addWidget( cb_p2,      2, 2, 1, 2 );
    layout->addWidget( lb_p3,      3, 0, 1, 2 );
    layout->addWidget( cb_p3,      3, 2, 1, 2 );
-   layout->addWidget( pb_cancel,  4, 2, 1, 1 );
-   layout->addWidget( pb_apply,   4, 3, 1, 1 );
+   layout->addItem( new QSpacerItem( 0, 30 ), 4, 0 );
+   layout->addWidget( pb_cancel,  5, 2, 1, 1 );
+   layout->addWidget( pb_apply,   5, 3, 1, 1 );
 
    connect( pb_cancel, &QPushButton::clicked, dialog, &QDialog::reject );
    connect( pb_apply, &QPushButton::clicked, this, [=]() {
@@ -1338,12 +1346,11 @@ void US_Grid_Editor::load_grid_file()
    });
 
    if ( dialog->exec() == QDialog::Accepted ) {
-      reset();
       QVector<double> p1_vals = csv_data.columnAt( cb_p1->currentIndex() );
       QVector<double> p2_vals = csv_data.columnAt( cb_p2->currentIndex() );
       QVector<double> p3_vals = csv_data.columnAt( cb_p3->currentIndex() );
       if ( ! ( p1_vals.size() == p2_vals.size() && p2_vals.size() == p3_vals.size() ) ) {
-         QMessageBox::warning( this, "Error!", "The numbers of grid points are different!" );
+         QMessageBox::warning( this, "Error!", "The number of grid points between selected parameter is different!" );
          return;
       }
       QVector<Attribute::Type> types;
@@ -2082,10 +2089,13 @@ void US_Grid_Editor::update_disk_db( bool isDB )
 void US_Grid_Editor::setup_grid()
 {
    if ( ! partial_grids.isEmpty() ) {
-      int yes = QMessageBox::question( this, "Warning!",
+      int res = QMessageBox::question( this, "Warning!",
                                       tr( "The grid points will be deleted if you proceed with the grid setup?" ) );
-      if ( yes == QMessageBox::No ) return;
+      if ( res == QMessageBox::No ) return;
    }
+
+   delete_data();
+   default_plot_ctrl();
 
    US_Grid_Preset *grid_preset = new US_Grid_Preset( this, x_param, y_param, z_param );
    if ( grid_preset->exec() != QDialog::Accepted ) return;
@@ -2106,32 +2116,11 @@ void US_Grid_Editor::setup_grid()
                arg( Attribute::symbol( y_param), Attribute::symbol( x_param ) );
    pb_default_plot->setText( s );
 
-   lw_grids->disconnect();
-   lw_grids->clear();
-   partial_grids.clear();
-   partial_grid_info.clear();
-   sorted_points.clear();
-   final_subgrids.clear();
    default_plot_ctrl();
 }
 
 void US_Grid_Editor::load()
 {
-   if ( ! partial_grids.isEmpty() ) {
-      int yes = QMessageBox::question( this, "Warning!",
-                                      tr( "Grid list is not empty and it will "
-                                         "be deleted by loading a model.<br/>To proceed with "
-                                         "loading a custom grid model, press <b>\"Yes\"</b> button." ) );
-      if ( yes == QMessageBox::No ) return;
-   }
-
-   partial_grids.clear();
-   partial_grid_info.clear();
-   sorted_points.clear();
-   final_subgrids.clear();
-   fill_list();
-   default_plot_ctrl();
-
    bool load_db = dkdb_cntrls->db();
    QString mfilter ( "CustomGrid" );
    QString mdesc;
@@ -2140,71 +2129,100 @@ void US_Grid_Editor::load()
    US_ModelLoader* mloader = new US_ModelLoader( load_db, mfilter, model, mdesc, "" );
    if ( mloader->exec() != QDialog::Accepted ) return;
 
+   if ( ! partial_grids.isEmpty() ) {
+      int yes = QMessageBox::question( this, "Warning!",
+                                      tr( "Grid list is not empty and it will "
+                                         "be deleted by loading a model.<br/>To proceed with "
+                                         "loading a custom grid model, press <b>\"Yes\"</b> button." ) );
+      if ( yes == QMessageBox::No ) return;
+   }
+
+   delete_data();
+   default_plot_ctrl();
+   check_dens_visc_temp();
+
+   int nsubgrids = model.subGrids;
+   QVector<Attribute::Type> types;
    bool cgmdata = ! model.customGridData.grids.isEmpty() &&
                   ! model.customGridData.components.isEmpty() &&
                   model.customGridData.components.size() == model.components.size();
-   if ( ! cgmdata ) {
-      QMessageBox::warning( this, "Warning!", "The following model doesn't have custom "
-                                             "grid metadata!<br/><br/><b>" + mdesc + "</b>" );
-      return;
+   if ( cgmdata ) {
+      rb_cg_mode->setChecked( true );
+      set_cg_mode();
+      partial_grid_info << model.customGridData.grids;
+      Attribute::Type xt = Attribute::from_symbol( partial_grid_info.first().xType );
+      Attribute::Type yt = Attribute::from_symbol( partial_grid_info.first().yType );
+      Attribute::Type zt = Attribute::from_symbol( partial_grid_info.first().zType );
+      if ( xt == Attribute::ATTR_NONE || yt == Attribute::ATTR_NONE || zt ==  Attribute::ATTR_NONE ) {
+         QMessageBox::warning( this, "Warning!", "Incorrect grid type!"
+                                                "<br/><br/><b>" + mdesc + "</b>" );
+         return;
+      }
+      x_param = xt;
+      y_param = yt;
+      z_param = zt;
+      types << x_param << y_param << z_param;
+
+      le_x_param->setText( Attribute::long_desc( x_param ) );
+      le_y_param->setText( Attribute::long_desc( y_param ) );
+      le_z_param->setText( Attribute::long_desc( z_param ) );
+      lb_x_ax->setText( Attribute::short_desc( x_param ) );
+      lb_y_ax->setText( Attribute::short_desc( y_param ) );
+      lb_z_ax->setText( Attribute::short_desc( z_param ) );
+
+      chkb_log->disconnect();
+      bg_point_type->disconnect();
+      chkb_log->setChecked( model.customGridData.xLogarithmic );
+      bool isMid = model.customGridData.midpointBins;
+      bg_point_type->button( MIDPOINTS )->setChecked( isMid );
+      connect( chkb_log, &QCheckBox::stateChanged, this, &US_Grid_Editor::refill_grid_points );
+      connect( bg_point_type, &QButtonGroup::idClicked, this, &US_Grid_Editor::set_mid_exct_points );
+
+      for ( int ii = 0; ii < partial_grid_info.size(); ii++ ) {
+         QVector<GridPoint> gpvec;
+         partial_grids << gpvec;
+      }
+
+      for ( int ii = 0; ii < model.components.size(); ii++ ) {
+         US_Model::SimulationComponent sc = model.components.at( ii );
+         int id  = model.customGridData.components.at( ii ).grid_id;
+         int row = model.customGridData.components.at( ii ).row;
+         int col = model.customGridData.components.at( ii ).column;
+
+         GridPoint gp;
+         gp.set_component( sc, &types );
+         gp.set_row_col( row, col );
+         gp.set_dens_visc_temp( buff_dens, buff_visc, buff_temp );
+         partial_grids[ id ] << gp;
+      }
+
+      for ( int ii = 0; ii < partial_grids.size(); ii++ ) {
+         sort_partial_grid_points( partial_grids[ii] );
+      }
+      check_grid_id();
+      fill_list();
+      sort_points();
+
+   } else {
+      rb_csv_mode->setChecked( true );
+      set_cg_mode();
+      types << x_param << y_param << z_param;
+
+      QVector<GridPoint> gpoints;
+      for ( int ii = 0; ii < model.components.size(); ii++ ) {
+         US_Model::SimulationComponent sc = model.components.at( ii );
+
+         GridPoint gp;
+         gp.set_component( sc, &types );
+         gp.set_row_col( 0, 0 );
+         gp.set_dens_visc_temp( buff_dens, buff_visc, buff_temp );
+         gpoints << gp;
+      }
+      partial_grids << gpoints;
+      sorted_points << gpoints;
    }
 
-   partial_grid_info << model.customGridData.grids;
-   Attribute::Type xt = Attribute::from_symbol( partial_grid_info.first().xType );
-   Attribute::Type yt = Attribute::from_symbol( partial_grid_info.first().yType );
-   Attribute::Type zt = Attribute::from_symbol( partial_grid_info.first().zType );
-   if ( xt == Attribute::ATTR_NONE || yt == Attribute::ATTR_NONE || zt ==  Attribute::ATTR_NONE ) {
-      QMessageBox::warning( this, "Warning!", "Incorrect grid type!"
-                                             "<br/><br/><b>" + mdesc + "</b>" );
-      return;
-   }
-   x_param = xt;
-   y_param = yt;
-   z_param = zt;
-   QVector<Attribute::Type> types;
-   types << xt << yt << zt;
-
-   le_x_param->setText( Attribute::long_desc( x_param ) );
-   le_y_param->setText( Attribute::long_desc( y_param ) );
-   le_z_param->setText( Attribute::long_desc( z_param ) );
-   lb_x_ax->setText( Attribute::short_desc( x_param ) );
-   lb_y_ax->setText( Attribute::short_desc( y_param ) );
-   lb_z_ax->setText( Attribute::short_desc( z_param ) );
-
-   chkb_log->disconnect();
-   bg_point_type->disconnect();
-   chkb_log->setChecked( model.customGridData.xLogarithmic );
-   bool isMid = model.customGridData.midpointBins;
-   bg_point_type->button( MIDPOINTS )->setChecked( isMid );
-   connect( chkb_log, &QCheckBox::stateChanged, this, &US_Grid_Editor::refill_grid_points );
-   connect( bg_point_type, &QButtonGroup::idClicked, this, &US_Grid_Editor::set_mid_exct_points );
-
-   for ( int ii = 0; ii < partial_grid_info.size(); ii++ ) {
-      QVector<GridPoint> gpvec;
-      partial_grids << gpvec;
-   }
-
-   check_dens_visc_temp();
-   for ( int ii = 0; ii < model.components.size(); ii++ ) {
-      US_Model::SimulationComponent sc = model.components.at( ii );
-      int id  = model.customGridData.components.at( ii ).grid_id;
-      int row = model.customGridData.components.at( ii ).row;
-      int col = model.customGridData.components.at( ii ).column;
-
-      GridPoint gp;
-      gp.set_component( sc, &types );
-      gp.set_row_col( row, col );
-      gp.set_dens_visc_temp( buff_dens, buff_visc, buff_temp );
-      partial_grids[ id ] << gp;
-   }
-
-   for ( int ii = 0; ii < partial_grids.size(); ii++ ) {
-      sort_partial_grid_points( partial_grids[ii] );
-   }
-   int nsubgrids = model.subGrids;
-   check_grid_id();
-   fill_list();
-   sort_points();
+   plot_points();
    set_nsubgrids( nsubgrids );
    default_plot_ctrl();
 }
@@ -2635,7 +2653,7 @@ GridPoint::GridPoint()
 }
 
 bool GridPoint::set_param( const QVector<double>& values,
-                          const QVector<Attribute::Type>& types )
+                           const QVector<Attribute::Type>& types )
 {
    if ( values.size() != 3 || types.size() != 3 ) {
       error = "Three parameters are needed to set the grid point.";
@@ -2712,7 +2730,7 @@ void GridPoint::set_dens_visc_temp( double dens, double visc, double T )
 }
 
 void GridPoint::set_component( const US_Model::SimulationComponent &sc,
-                              const QVector<Attribute::Type>* types )
+                               const QVector<Attribute::Type>* types )
 {
    if ( types != nullptr ) {
       ptypes.clear();

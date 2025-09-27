@@ -523,6 +523,9 @@ private:
    US_Disk_DB_Controls*      dkdb_cntrls;       //!< Disk DB controls.
 
    //! \brief Show/Hide widgets of a layout.
+   void delete_data( void );
+
+   //! \brief Show/Hide widgets of a layout.
    void show_layout(QLayout *, bool);
 
    //! \brief Clear set region from the data plot.
@@ -648,7 +651,7 @@ private slots:
    void set_mid_exct_points( int );
 
    //! \brief Slot to set the program mode.
-   void set_cg_mode( int );
+   void set_cg_mode( void );
 
    //! \brief Slot to load a model from csv files.
    void load_grid_file( void );
