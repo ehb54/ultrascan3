@@ -2233,9 +2233,11 @@ void US_Grid_Editor::save()
    model.customGridData.grids.clear();
    model.customGridData.components.clear();
 
-   model.customGridData.grids << partial_grid_info;
-   model.customGridData.xLogarithmic = chkb_log->isChecked();
-   model.customGridData.midpointBins = bg_point_type->checkedId() == MIDPOINTS;
+   if ( rb_cg_mode->isChecked() ) {
+      model.customGridData.grids << partial_grid_info;
+      model.customGridData.xLogarithmic = chkb_log->isChecked();
+      model.customGridData.midpointBins = bg_point_type->checkedId() == MIDPOINTS;
+   }
 
    for ( int ii = 0; ii < sorted_points.size(); ii++ )
    {
@@ -2244,15 +2246,22 @@ void US_Grid_Editor::save()
       sc.vbar20 = gp.value( Attribute::ATTR_V );
       sc.s      = gp.value( Attribute::ATTR_S );
       sc.D      = gp.value( Attribute::ATTR_D );
-      sc.f_f0   = 0.0;
-      sc.f      = 0.0;
-      sc.mw     = 0.0;
-      if ( ! US_Model::calc_coefficients( sc ) ) {
-         continue;
+      sc.f_f0   = gp.value( Attribute::ATTR_K );
+      sc.f      = gp.value( Attribute::ATTR_F );
+      sc.mw     = gp.value( Attribute::ATTR_M );
+      QString name;
+      if ( rb_cg_mode->isChecked() ) {
+         int ss = ( ii % model.subGrids ) + 1;
+         int pp = ( ii / model.subGrids ) + 1;
+         name = QString( "sg%1_p%2" )
+                   .arg( ss, 3, 10, QChar( '0' ) )
+                   .arg( pp, 3, 10, QChar( '0' ) );
+
+      } else {
+         name = tr( "P_%1" ).arg( ii + 1, 4, 10, QChar( '0' ) );
       }
-      int ss = ( ii % model.subGrids ) + 1;
-      int pp = ( ii / model.subGrids ) + 1;
-      sc.name     = QString::asprintf( "sg%03d_p%03d", ss, pp );
+
+      sc.name     = name;
       model.components << sc;
 
       CompInfo cinfo;
