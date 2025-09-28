@@ -439,6 +439,22 @@ private:
    QLabel*          lb_x_ax;              //!< X-axis plotting label.
    QLabel*          lb_y_ax;              //!< X-axis plotting label.
    QLabel*          lb_z_ax;              //!< Z-axis plotting label.
+   QLabel*          lb_grid_setup;        //!< Banner to show the mode.
+   QLabel*          lb_grid_mode;         //!< Banner to show the mode.
+   QLabel*          lb_subgrid_ctrl;      //!< Banner for subgrid control.
+   QLabel*          lb_grid_list;         //!< Label for the grid list.
+   QLabel*          lb_min;               //!< Label for Minimum.
+   QLabel*          lb_max;               //!< Label for Maximum.
+   QLabel*          lb_res;               //!< Label for Reselution.
+
+   QTextEdit*       te_info;              //!< Text box for information.
+
+   QFrame*          hline1;               //!< Horizontal splitter
+
+   QGridLayout*     lyt_log;              //!< Layout for Log checkbox.
+   QHBoxLayout*     lyt_grid_mode;        //!< Layout for the grid.
+   QHBoxLayout*     lyt_points;           //!< Layout for contant z-values radiobutton.
+   QHBoxLayout*     lyt_zvalues;          //!< Layout for contant z-values radiobutton.
 
    QLineEdit*       le_investigator;      //!< Investigator line edit.
    QLineEdit*       le_buffer;            //!< Buffer description.
@@ -465,7 +481,12 @@ private:
    QPushButton*     pb_lu_buffer;         //!< push button to update the buffer condition.
    QPushButton*     pb_save;              //!< push button to save the model.
    QPushButton*     pb_default_plot;      //!< plot grid points where x and y axis match x and y types.
-   QPushButton*     pb_z_set_func;        //!< set a function for varying z-values
+   QPushButton*     pb_z_set_func;        //!< set a function for varying z-values.
+   QPushButton*     pb_load_csv;          //!< push button to load a model from a csv file.
+   QPushButton*     pb_grid_setup;        //!< push button to setup the grid.
+   QPushButton*     pb_new;               //!< push button to make a new partial grid.
+   QPushButton*     pb_delete;            //!< push button to update a partial grid.
+   QPushButton*     pb_update;            //!< push button to deleter a partial grid.
 
    QwtCounter*      ct_size;              //!< to set plot symbol size.
    QwtCounter*      ct_subgrid;           //!< to set what subgrid to be plotted.
@@ -475,6 +496,8 @@ private:
 
    QRadioButton*    rb_cons_z;            //!< radio button to select constant z-value
    QRadioButton*    rb_vary_z;            //!< radio button to select varying z-value
+   QRadioButton*    rb_cg_mode;           //!< radio button to select constant z-value
+   QRadioButton*    rb_csv_mode;          //!< radio button to select varying z-value
 
    QButtonGroup*    bg_point_type;
    QButtonGroup*    x_axis;               //!< X-axis button group.
@@ -498,6 +521,12 @@ private:
    QList<QVector<int>>       final_subgrids;    //!< subgrid indexes.
 
    US_Disk_DB_Controls*      dkdb_cntrls;       //!< Disk DB controls.
+
+   //! \brief Show/Hide widgets of a layout.
+   void delete_data( void );
+
+   //! \brief Show/Hide widgets of a layout.
+   void show_layout(QLayout *, bool);
 
    //! \brief Clear set region from the data plot.
    void rm_tmp_items( void );
@@ -532,6 +561,7 @@ private:
    //! \brief Generate evenly spaced numbers over a specified interval.
    bool gen_grid_points( const GridInfo&, QVector<GridPoint>& );
 
+   //! \brief Parse the meta data expression of the Z values.
    bool parse_z_expression( const QString&, QString&, QString&, QVector<double>&, bool& );
 
    //! \brief Correct the unit of the parameter.
@@ -619,6 +649,12 @@ private slots:
 
    //! \brief Slot to update the way the grid points are made.
    void set_mid_exct_points( int );
+
+   //! \brief Slot to set the program mode.
+   void set_cg_mode( void );
+
+   //! \brief Slot to load a model from csv files.
+   void load_grid_file( void );
 
    //! \brief Slot to set recalculate all points.
    void refill_grid_points( void );
