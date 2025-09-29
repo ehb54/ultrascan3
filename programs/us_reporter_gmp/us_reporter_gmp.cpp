@@ -11133,9 +11133,20 @@ void US_ReporterGMP::assemble_pdf( QProgressDialog * progress_msg )
     ;
 
   //go over scan exclusions in UV-vis
-  if ( scancount > 0 ) 
-    html_scan_count_uv += display_scan_excls( scan_excl_beg, scan_excl_nth,
-					      scan_excl_end, scancount, "UV/vis" );
+  bool excl_exist = false;
+  if ( scancount > 0 )
+    {
+      if ( excl_exist )
+	html_scan_count_uv += display_scan_excls( scan_excl_beg, scan_excl_nth,
+						  scan_excl_end, scancount, excl_exist, "UV/vis" );
+      else
+	html_scan_count_uv += tr(
+				 "<table style=\"margin-left:30px\">"
+				 "<tr><td><b><i> Exclusion Profiles: </b></i></td></tr>"
+				 "<tr> No Scan Exclusions </tr>"
+				 "</table>"
+				 );
+    }
   
   //Interference
   QString html_scan_count_int = tr(
@@ -11156,10 +11167,21 @@ void US_ReporterGMP::assemble_pdf( QProgressDialog * progress_msg )
     .arg( QString::number( scancount_int ) )               //2
     ;
   //go over scan exclusions in Int.
+  bool excl_int_exist = false;
   if ( scancount_int > 0 )
-    html_scan_count_int += display_scan_excls( scan_excl_beg, scan_excl_nth,
-					       scan_excl_end, scancount_int, "Interf" );
-
+    {
+      if ( excl_int_exist )
+	html_scan_count_int += display_scan_excls( scan_excl_beg, scan_excl_nth,
+						   scan_excl_end, scancount_int, excl_int_exist, "Interf" );
+      else
+	html_scan_count_int += tr(
+				  "<table style=\"margin-left:30px\">"
+				  "<tr><td><b><i> Exclusion Profiles: </b></i></td></tr>"
+				  "<tr> No Scan Exclusions </tr>"
+				  "</table>"
+				  );
+    }
+  
   if ( has_uv )
     html_scan_count += html_scan_count_uv;
   if ( has_int )
@@ -11828,7 +11850,7 @@ void US_ReporterGMP::assemble_pdf( QProgressDialog * progress_msg )
 
 //scan exclusions
 QString US_ReporterGMP::display_scan_excls( QList<int> scan_e_b, QList<int> scan_e_nth,
-					    QList<int> scan_e_e, int scan_c, QString opt_type )
+					    QList<int> scan_e_e, int scan_c, bool& excl_yes, QString opt_type )
 {
   qDebug() << "[in display_scan_excls]: scans [beg|nth|end] -- "
 	   << scan_e_b << "|" << scan_e_nth << "|" << scan_e_e;
@@ -11894,6 +11916,9 @@ QString US_ReporterGMP::display_scan_excls( QList<int> scan_e_b, QList<int> scan
 	.arg( QString::number( scan_e_e[ii] ) )              //4
 	.arg( QString::number( scan_e_remain[ii] ) )         //5
 	;
+
+      if( scan_e_remain[ii] != scan_c )
+	excl_yes = true;
     }
   scans_excl_str += tr( "</table>" );
   
