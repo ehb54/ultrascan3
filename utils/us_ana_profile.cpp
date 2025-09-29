@@ -686,6 +686,7 @@ bool US_AnaProfile::AnaProf2DSA::fromXml( QXmlStreamReader& xmli )
             QString vvflag = attr.value( "vary_vbar" ).toString();
             QString cgrid  = attr.value( "custom_grid_guid" ).toString();
 	    QString cgrid_n = attr.value( "custom_grid_name" ).toString();
+	    int cgrid_i    = attr.value( "CG_modelID" ).toString().toInt();
             double smin    = attr.value( "s_min" ).toString().toDouble();
             double smax    = attr.value( "s_max" ).toString().toDouble();
             int sgpts      = attr.value( "s_gridpoints" ).toString().toInt();
@@ -703,6 +704,7 @@ bool US_AnaProfile::AnaProf2DSA::fromXml( QXmlStreamReader& xmli )
             parm1.gridreps   = grreps;
             parm1.cust_grid  = cgrid;
             parm1.cgrid_name = cgrid_n;
+	    parm1.cust_id    = cgrid_i;
             parm1.varyvbar   = US_Util::bool_flag( vvflag );
             parm1.have_custg = ( ! cgrid.isEmpty()  &&
                                  cgrid.length() == 36 );
@@ -834,6 +836,10 @@ bool US_AnaProfile::AnaProf2DSA::toXml( QXmlStreamWriter& xmlo )
                                                     parms[ ii ].ff0_const ) );
       xmlo.writeAttribute   ( "custom_grid_guid",   parms[ ii ].cust_grid );
 
+      QString m_cg_id = (parms[ ii ].cust_id > 0) ?
+	QString::number( parms[ ii ].cust_id ) : "";  
+      xmlo.writeAttribute   ( "CG_modelID", m_cg_id );
+
       xmlo.writeAttribute   ( "custom_grid_name",   parms[ ii ].cgrid_name );
 
       xmlo.writeEndElement  (); // channel_parms
@@ -945,6 +951,7 @@ US_AnaProfile::AnaProf2DSA::Parm2DSA::Parm2DSA()
    channel    = "1A";
    cust_grid  = "";
    cgrid_name = "";
+   cust_id    = -1;
 }
 
 // AnaProf2DSA::Parm2DSA subclass Equality operator

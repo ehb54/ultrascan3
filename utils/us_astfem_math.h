@@ -45,6 +45,26 @@ class US_UTIL_EXTERN US_AstfemMath
       static bool low_acceleration( const QVector< US_SimulationParameters::SpeedProfile >&,
                                     const double, double& );
 
+      //! \brief Check for linear acceleration in the experimental data.
+      //! Returns either an empty list (no issues) or exactly two elements:
+      //! [0] = title, [1] = HTML description
+      //! \param speed_profiles  Vector of speed steps
+      //! \param scans       Vector of scans
+      //! \returns results   QStringList for the acceleration check
+      static QStringList check_acceleration( const QVector< US_SimulationParameters::SpeedProfile >& speed_profiles,
+                                             const QVector< US_DataIO::Scan >& scans);
+
+      //! \brief Calculate omega2t
+      //! \param start_omega2t Omega2t from the previous speed step
+      //! \param start_speed   Speed in rpm from the previous speed step
+      //! \param start_time    Time the previous speed step ended and the new speed step started
+      //! \param target_speed  Speed to reach in this speed step
+      //! \param accel_rate    Acceleration rate in rpm for this speed step
+      //! \param t             Time to calculate omega2t for
+      //! \returns omega2t     Omega2t at time t
+      static double calc_omega2t( double start_omega2t, double start_speed, double start_time,
+         double target_speed, double accel_rate, double t);
+
       //! \brief Determine if a timestate file holds one-second-interval records
       //! \param tmst_fpath  Full path to timestate file to examine
       //! \param sim_data    Raw data with scans to examine

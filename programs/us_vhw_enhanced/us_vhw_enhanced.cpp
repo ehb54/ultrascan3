@@ -244,7 +244,7 @@ DbgLv(1) << "vhw:   init:   copy'd simdat (s x p)"
    connect( ck_use_fed, SIGNAL( toggled( bool ) ),
             this,       SLOT(   data_plot()     ) );
 
-   update( 0 );
+   //update( 0 );
 }
 
 // distribution plot

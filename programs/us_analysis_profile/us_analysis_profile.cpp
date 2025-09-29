@@ -3327,6 +3327,9 @@ DbgLv(1) << "2D:SL-gp: *ERROR* rowx>=kparm";
    parm1.cust_grid  = le_custmg->text();
    parm1.cgrid_name = le_custmg_name->text();
 
+   QString m_id = le_custmg_name->text().split(":")[0];
+   parm1.cust_id = m_id.toInt();
+
    currProf->ap2DSA.parms.replace( rowx, parm1 );
 }
 
@@ -3502,9 +3505,29 @@ void US_AnaprofPan2DSA::cust_grid_clicked( )
   QString m_desc = model.description;
   QString m_guid = model.modelGUID;
 
-  le_custmg       ->setText( m_guid );
-  le_custmg_name  ->setText( m_desc );
+  //also get modelID from GUID
+  US_Passwd pw;
+  US_DB2    db( pw.getPasswd() );
+  
+  if ( db.lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "Connection Problem" ),
+			    tr( "Could not connect to database \n" ) +  db.lastError() );
+      return;
+    }
+  QStringList q;
+  q << "get_modelID" << m_guid;
+  db.query( q );
+  if ( db.lastErrno() != US_DB2::OK )
+    return;
+  db.next();
+  QString m_id = db.value( 0 ).toString();
 
+  //assign
+  QString m_id_name = m_id + ":" + m_desc;  
+  le_custmg       ->setText( m_guid );
+  le_custmg_name  ->setText( m_id_name );
+  
   //hide regular grid
   set_regular_grid( false );
 }

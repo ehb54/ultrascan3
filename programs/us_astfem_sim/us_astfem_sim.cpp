@@ -837,7 +837,50 @@ DbgLv(1) << "SimPar:MAIN:SetP:  points" << points << "rad0 radn"
    double c_speed = 0.0;
    int nstep      = simparams.speed_step.count();
 
-   for ( int jd = 0; jd < nstep; jd++ )
+   double previous_speed = 0.0;
+   double previous_time  = 0.0;
+   double previous_w2t   = 0.0;
+   for ( int jj = 0; jj < nstep; jj++ ) {
+      US_SimulationParameters::SpeedProfile* sp = &simparams.speed_step[ jj ];
+      if ( nstep > 0  &&  sp->set_speed < 1.0 )
+      {  // For multi-speed, insure values for set and average speeds
+         s_speed        = qRound( sp->rotorspeed * 0.01 ) * 100.0;
+         sp->set_speed  = s_speed;
+         sp->avg_speed  = sp->rotorspeed;
+      }
+      const double target_speed = ( sp->set_speed == 0.0 ) ? sp->rotorspeed : sp->set_speed;
+      const double delay    = qRound(sp->delay_hours    * 3600.0 + sp->delay_minutes    * 60.0);
+      const double duration = qRound(sp->duration_hours * 3600.0 + sp->duration_minutes * 60.0);
+      const double scanning_time = duration - delay;
+      const double time_between_scans = scanning_time / static_cast<double>( sp->scans - 1 );
+      US_DataIO::Scan scandata;
+      scandata.temperature = simparams.temperature;
+      scandata.rpm         = target_speed;
+      scandata.wavelength  = system.wavelength;
+      scandata.plateau     = 0.0;
+      scandata.delta_r     = simparams.radial_resolution;
+      scandata.rvalues     .fill( 0.0, points   );
+      for (int s = 0; s < sp->scans; s++) {
+         scandata.seconds = static_cast<double>(qRound(previous_time + delay + time_between_scans * s));
+         scandata.omega2t = US_AstfemMath::calc_omega2t(previous_w2t, previous_speed, previous_time,
+            target_speed, sp->acceleration, scandata.seconds);
+         if (s == 0) {
+            sp->time_first = scandata.seconds;
+            sp->w2t_first  = scandata.omega2t;
+         }
+         else if ( s == sp->scans - 1) {
+            sp->time_last  = scandata.seconds;
+            sp->w2t_last   = scandata.omega2t;
+         }
+         DbgLv( 1 ) << "SimPar:MAIN:SetP: js time omega2t " << s << scandata.seconds << scandata.omega2t;
+         sim_data_all.scanData << scandata;
+      }
+      previous_speed = target_speed;
+      previous_time  = sp->time_last;
+      previous_w2t   = sp->w2t_last;
+   }
+
+   for ( int jd = 0; jd < 0; jd++ )
    {
       US_SimulationParameters::SpeedProfile* sp = &simparams.speed_step[ jd ];
       time0          = time2;
@@ -1005,7 +1048,6 @@ void US_Astfem_Sim::start_simulation( void )
    // is initialized with a time and radius grid, and all concentration points
    // need to be set to zero. Each speed is a separate mfem_data set.
    sim_datas.resize( nstep );
-
 DbgLv(1) << "start_simulation is called, steps:" << nstep;
    // Experimental grid setting starts from here
    for ( int jd = 0; jd < nstep; jd++ )
@@ -1056,12 +1098,10 @@ DbgLv(1) << "astfem_radial_ranges" << sim_datas[jd].xvalues[0] << sim_datas[jd].
 
       // For each scan set the informations for each scan on
       // the experimental grid.
+      int scan_index = 0;
       for ( int js = 0; js < nscans; js++ )
       {
-         //US_DataIO::Scan* scan = &sim_datas[ jd ].scanData[ js ];
-         sim_datas[ jd ].scanData[ js ].temperature = simparams.temperature;
-         sim_datas[ jd ].scanData[ js ].rpm         = rpm;
-         sim_datas[ jd ].scanData[ js ].omega2t     = 0.0;
+         sim_datas[ jd ].scanData[ js ] = sim_data_all.scanData[ scan_index++ ];
          sim_datas[ jd ].scanData[ js ].wavelength  = system.wavelength;
          sim_datas[ jd ].scanData[ js ].plateau     = 0.0;
          sim_datas[ jd ].scanData[ js ].delta_r     = simparams.radial_resolution;
@@ -1069,8 +1109,6 @@ DbgLv(1) << "astfem_radial_ranges" << sim_datas[jd].xvalues[0] << sim_datas[jd].
          sim_datas[ jd ].scanData[ js ].interpolated.fill( 0,   terpsize );
       }
    }
-
-   double w2t_sum      = 0.0; // Initialize omega_2_t
 
    // Initialize delay
    delay        = simparams.speed_step[ 0 ].delay_hours * 3600.0
@@ -1081,100 +1119,6 @@ DbgLv(1) << "astfem_radial_ranges" << sim_datas[jd].xvalues[0] << sim_datas[jd].
    increment           = 0.0;   // Initial increment in time
 //   int    scan_number  = 0;   // Counter for each scan and initialized to zero
    double acc_time;
-
-   // For each speed step set the experimental time grid, assign
-   // time and omega_2_t to each scan.
-   for ( int jd = 0; jd < nstep; jd++ )
-   {
-      // To get the right time, we need to take the last scan time from the
-      // previous speed step and add the delays to it
-      double rs_prev = 0.0; // Used for previous rotor speed
-
-      // Pointer for each step
-      US_SimulationParameters::SpeedProfile* sp = &simparams.speed_step[ jd ];
-
-      if ( jd > 0 )
-      {
-         rs_prev = simparams.speed_step[ jd - 1 ].rotorspeed;
-      }
-// x  x  x
-
-      int acc_steps;  // Number of time steps for acceleration
-      double rpm_inc; // Increment in rpm
-      double w2t     = sq( sp->rotorspeed * M_PI / 30.0 );
-
-      delay          = (qCeil)( sp->delay_hours * 3600. + sp->delay_minutes * 60.);
-//DbgLv(1) << "Delay_astfem_sim is: "<< delay << "step= " << jd;
-
-      acc_time       = ( sp-> rotorspeed - rs_prev  ) / (double)sp->acceleration;
-      acc_steps      = (qCeil) ( acc_time );
-//DbgLv(1) << "Delay_astfem_sim is: " << delay << "step= " << jd << acc_time << acc_steps;
-
-      rpm_inc        = (double)( sp->rotorspeed - rs_prev ) / (double) acc_steps;
-      duration       = sp->duration_hours * 3600. + sp->duration_minutes * 60.;
-      increment      = ( duration - delay ) / (double)( sp->scans - 1 );
-
-      if ( jd == 0 )
-      {
-         double rpm_current = 0.0;
-
-         for ( int jt = 0; jt < delay; jt++ )
-         {
-             rpm_current += rpm_inc;
-             w2t_sum     += sq ( rpm_current * M_PI / 30.0 );
-         }
-      }
-      else
-      {
-         double rpm_current = simparams.speed_step[ jd - 1 ].rotorspeed;
-
-         for ( int jt = 0; jt < delay; jt++ )
-         {
-             rpm_current += rpm_inc;
-             w2t_sum     += sq ( rpm_current * M_PI / 30.0 );
-         }
-      }
-
-      double w2t_inc = increment * w2t;
-
-//      w2t_sum        = ( jd == 0 ) ? ( current_time * w2t ) : w2t_sum;
-
-      // Experimental time grid is set here. Total duration is divided by
-      // number of scans and each scan is assigned with a time
-      // Hence the time grid is regular. Time and omega_2_t are assigned
-      // to each scan on the experimental grid.
-      for ( int js = 0; js < sp->scans; js++ )
-      {
-         //US_DataIO::Scan* scan = &sim_datas[jd].scanData[ scan_number ];
-
-         if ( js == 0 )
-         {
-            current_time += delay; // For first scan update time with the acceleration time
-         }
-         else
-         {
-            current_time += increment; // Update time with regular time increment
-            w2t_sum      += w2t_inc;
-
-         }
-
-         // Assign time to each scan on the experimental grid
-         sim_datas[ jd ].scanData[ js ].seconds = (qRound)( current_time );
-         sim_datas[ jd ].scanData[ js ].rpm     = sp->rotorspeed;
-         sim_datas[ jd ].scanData[ js ].omega2t = w2t_sum;
-DbgLv(1) << "scans_w2t_and time on experimental grid " << sim_datas[jd].scanData[js].seconds
- << sim_datas[jd].scanData[js].rpm << sim_datas[jd].scanData[js].omega2t;
-      }
-
-      int j1           = 0;              // Counter for first scan
-      int j2           = sp->scans - 1;  // Counter for last scan
-      sp->w2t_first    = sim_datas[ jd ].scanData[ j1 ].omega2t; // omega_2_t for first scan
-      sp->w2t_last     = sim_datas[ jd ].scanData[ j2 ].omega2t; // omega_2_t for last scan
-      sp->time_first   = sim_datas[ jd ].scanData[ j1 ].seconds; // Time for first scan
-      sp->time_last    = sim_datas[ jd ].scanData[ j2 ].seconds; // Time for last scan
-DbgLv(1) << "first_last_data for the step" << sp->time_first << sp->time_last
- << sp->w2t_first << sp->w2t_last << simparams.speed_step[jd].rotorspeed;
-   }
 //for ( int i =0; i< sim_datas.scanData.size();i++ )
 // DbgLv(1)<<"time="<<sim_datas.scanData[i].seconds<<"omega2t="<< sim_datas.scanData[i].omega2t;
 

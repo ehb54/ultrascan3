@@ -34,6 +34,7 @@ public:
             QString channel;    //!< Channel identifier
             QString cust_grid;  //!< Custom grid
             QString cgrid_name; //!< Custom grid name
+	    int cust_id;
 
             //! Constructor for Parm2DSA
             Parm2DSA();
