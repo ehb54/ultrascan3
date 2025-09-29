@@ -11143,7 +11143,7 @@ void US_ReporterGMP::assemble_pdf( QProgressDialog * progress_msg )
 	html_scan_count_uv += tr(
 				 "<table style=\"margin-left:30px\">"
 				 "<tr><td><b><i> Exclusion Profiles: </b></i></td></tr>"
-				 "<tr> No Scan Exclusions </tr>"
+				 "<tr><td> No Scan Exclusions </td></tr>"
 				 "</table>"
 				 );
     }
@@ -11177,7 +11177,7 @@ void US_ReporterGMP::assemble_pdf( QProgressDialog * progress_msg )
 	html_scan_count_int += tr(
 				  "<table style=\"margin-left:30px\">"
 				  "<tr><td><b><i> Exclusion Profiles: </b></i></td></tr>"
-				  "<tr> No Scan Exclusions </tr>"
+				  "<tr><td> No Scan Exclusions </td></tr>"
 				  "</table>"
 				  );
     }
