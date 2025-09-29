@@ -11014,7 +11014,6 @@ void US_ReporterGMP::assemble_pdf( QProgressDialog * progress_msg )
       
       if ( !scan1.isEmpty() )
 	{
-	  has_uvvis = true;
 	  html_optical += tr(
 			     "<td> %1: </td> &nbsp;&nbsp;&nbsp;&nbsp;"
 			     )
@@ -11025,7 +11024,6 @@ void US_ReporterGMP::assemble_pdf( QProgressDialog * progress_msg )
       
       if ( !scan2.isEmpty() )
 	{
-	  has_interference = true;
 	  html_optical += tr(
 			     "<td> %1: </td> &nbsp;&nbsp;&nbsp;&nbsp;"
 			     )
@@ -11036,7 +11034,6 @@ void US_ReporterGMP::assemble_pdf( QProgressDialog * progress_msg )
       
       if ( !scan3.isEmpty() )
 	{
-	  has_fluorescense = true;
 	  html_optical += tr(
 			     "<td> %1: </td> &nbsp;&nbsp;&nbsp;&nbsp;"
 			     )

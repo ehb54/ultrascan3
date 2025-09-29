@@ -301,10 +301,6 @@ class US_ReporterGMP : public US_Widgets
         int nchan_optics;                    //!< Number of optical channels
         int nchan_ranges;                    //!< Number of channel ranges
 
-        bool has_uvvis;                      //!< Flag for UVVIS
-        bool has_interference;               //!< Flag for interference
-        bool has_fluorescense;               //!< Flag for fluorescence
-
         QString editing_time_abde;
         QString analysis_time_abde;
 
