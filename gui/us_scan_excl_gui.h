@@ -29,6 +29,10 @@ class US_GUI_EXTERN US_ScanExclGui: public US_Widgets
       int scanCount_int;
       
       QMap< QString, int > maxScans_map;
+
+      int  sb_beg_prior;
+      int  sb_nth_prior;
+      int  sb_end_prior;
       
       int row;
       QVBoxLayout* main;

@@ -188,9 +188,12 @@ void US_ScanExclGui::build_layout ( void )
       sb_nth              ->setValue( (int)scan_nth[ii] );
       sb_end              ->setValue( (int)scan_end[ii] );
 
-      
       le_remaining_scans  = us_lineedit( QString::number( remaining_scans_num_nth ),  0, true  );
-	  
+
+      sb_beg_prior = sb_begin ->value();
+      sb_nth_prior = sb_nth   ->value();
+      sb_end_prior = sb_end   ->value();
+      
       QString stchan      =  QString::number( ii ) + ": ";
       le_chan_desc        -> setObjectName( stchan + "desc" );
       sb_begin            -> setObjectName( stchan + "begin" );
@@ -333,16 +336,31 @@ void US_ScanExclGui::scan_excl_changed( int )
     {
       QMessageBox::critical( this, tr( "Scan Exclusion Error" ),
 			     tr( "<font color='red'><b>ATTENTION:</b> At least 3 scans have to be included! </font><br><br>"
-				 "<br><br>"
+				 "<br>"
 				 "Exclusion Setting will be restored to a previous state...")
 			     );
-      
-      
-      sb_widget->stepDown();
+
+      int prior_val = 1;
+      if ( oname.contains("begin") )
+	prior_val = sb_beginScans->value();
+      else if ( oname.contains("nth") )
+	prior_val = sb_nthScans->value();
+      else if ( oname.contains("end") )
+	prior_val = sb_endScans->value();
+
+      sb_widget->setValue( prior_val );
+      //sb_widget->stepDown();
       return;
     }
   else
-    le_remainScans ->setText( QString::number( rem_scans_num_nth ));
+    {
+      //update
+      sb_beg_prior = sb_beginScans->value();
+      sb_nth_prior = sb_nthScans->value();
+      sb_end_prior = sb_endScans->value();
+      
+      le_remainScans ->setText( QString::number( rem_scans_num_nth ));
+    }
 }
 
 
