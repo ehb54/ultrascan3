@@ -140,8 +140,11 @@ void US_ScanExclGui::build_layout ( void )
       // sb_end              ->setValue( (int)*scan_end[ii] );
 
       //set Maximum values based on type of Optics
-      int scan_bound = scanCount/2 - 5;
-      scan_bound = ( scan_bound < 0 ) ? scanCount/2 : scan_bound;
+      //int scan_bound = scanCount/2 - 5;
+      //scan_bound = ( scan_bound < 0 ) ? scanCount/2 : scan_bound;
+      int scan_bound = scanCount - 1;
+      scan_bound = ( scan_bound < 0 ) ? scanCount : scan_bound;
+      
       sb_begin            ->setMaximum( (int)( scan_bound ));
       sb_nth              ->setMaximum( (int)( scan_bound ));
       sb_nth              ->setMinimum( (int)( 1 ));
@@ -325,7 +328,21 @@ void US_ScanExclGui::scan_excl_changed( int )
 	++rem_scans_num_nth;
     }
 
-  le_remainScans ->setText( QString::number( rem_scans_num_nth ));
+  //check if the remaining scan# less than 3
+  if ( rem_scans_num_nth < 3 )
+    {
+      QMessageBox::critical( this, tr( "Scan Exclusion Error" ),
+			     tr( "<font color='red'><b>ATTENTION:</b> At least 3 scans have to be included! </font><br><br>"
+				 "<br><br>"
+				 "Exclusion Setting will be restored to a previous state...")
+			     );
+      
+      
+      sb_widget->stepDown();
+      return;
+    }
+  else
+    le_remainScans ->setText( QString::number( rem_scans_num_nth ));
 }
 
 
