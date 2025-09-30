@@ -27,10 +27,13 @@ US_ScanExclGui::US_ScanExclGui( QStringList channels_desc, QList< int > scan_beg
   this->scanCount_int = scanCount_int;
 
   //backward compatibility
-  for (int ii=0; ii<scan_nth.size(); ++ii)
+  for (int ii=0; ii<this->scan_nth.size(); ++ii)
     {
-      if ( scan_nth[ii] == 0 )
-	scan_nth[ii] = 1;
+      if ( this->scan_nth[ii] == 0 )
+	{
+	  qDebug() << "nth resetting -- ";
+	  this->scan_nth[ii] = 1;
+	}
     }
     
   setWindowTitle( tr( "Scan Exclusion Editor"));
