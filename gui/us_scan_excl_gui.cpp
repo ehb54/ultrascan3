@@ -342,11 +342,14 @@ void US_ScanExclGui::scan_excl_changed( int )
 
       int prior_val = 1;
       if ( oname.contains("begin") )
-	prior_val = sb_beginScans->value();
+	prior_val = sb_beg_prior;
       else if ( oname.contains("nth") )
-	prior_val = sb_nthScans->value();
+	prior_val = sb_nth_prior;
       else if ( oname.contains("end") )
-	prior_val = sb_endScans->value();
+	prior_val = sb_end_prior;
+
+      qDebug() << "Setting prior value, " << prior_val
+	       << " for oname, " << oname;
 
       sb_widget->setValue( prior_val );
       //sb_widget->stepDown();
