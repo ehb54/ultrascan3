@@ -672,10 +672,20 @@ DbgLv(1) << "LD:  edata: desc run cell chan"
    tsys.label    = edata.description + " (" + efname.section(".",0,0) + " "
            + efname.section(".",-5,-2) + " " + tsys.method + ")" + "[" + QString::number( alldis.size() ) + "]";
 
+   //test
+   QString m_desc      = model.description;
+   QString m_data_desc = model.dataDescrip;
+   QString t_label_from_model = m_data_desc;
+   t_label_from_model += " (" + m_desc.section(".",0,0) + " "
+           + m_desc.section(".",-5,-2) + " " + tsys.method + ")" + "[" + QString::number( alldis.size() ) + "]"; 
+   
    qDebug() << "tsys.label from editD -- " << tsys.label;
+   qDebug() << "t_label_from_model -- " << t_label_from_model;
    qDebug() << "desc / dataDescrip from model -- "
 	    << model.description << " / "
 	    << model.dataDescrip;
+
+   
    /****/
 
    
