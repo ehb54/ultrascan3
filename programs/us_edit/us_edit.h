@@ -103,6 +103,7 @@ class US_Edit : public US_Widgets
   
       int                scanExcl_begin_ind;
       int                scanExcl_end_ind;
+      int                scanExcl_nth_ind;
 
       double             baseline_od;
       

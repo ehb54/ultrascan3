@@ -38,6 +38,7 @@ US_AnaProfile::US_AnaProfile()
 
    scan_excl_begin << 0;
    scan_excl_end   << 0;
+   scan_excl_nth   << 1;
 
    replicates  << 0;
 
@@ -222,6 +223,7 @@ bool US_AnaProfile::operator== ( const US_AnaProfile& ap ) const
 
   if ( scan_excl_begin  != ap.scan_excl_begin  )  return false;
   if ( scan_excl_end    != ap.scan_excl_end    )  return false;
+  if ( scan_excl_nth    != ap.scan_excl_nth    )  return false;
   
   if ( analysis_run    != ap.analysis_run  )  return false;
   if ( report_run      != ap.report_run    )  return false;
@@ -292,19 +294,21 @@ bool US_AnaProfile::toXml( QXmlStreamWriter& xmlo )
    //     qDebug() << "analysis_run: " << i << analysis_run[ i ];
    //   }
 
-   qDebug() << "Size: pchans(), chndescs.size(),  scan_excl_begin.size(), scan_excl_end.size()  -- "
+   qDebug() << "Size: pchans(), chndescs.size(),  scan_excl_begin.size(), scan_excl_end.size(), scan_excl_nth.size()  -- "
 	    << pchans.count()
 	    << chndescs.size()
 	    << scan_excl_begin.size()
 	    << scan_excl_end.size()
+	    << scan_excl_nth.size()
      ;
    
    for ( int ii = 0; ii < pchans.count(); ii++ )
      {
-        qDebug() << "In toXML AProfile: Ch_desc, scan_beg, scan_end -- "
+        qDebug() << "In toXML AProfile: Ch_desc, scan_beg, scan_end, scan_nth -- "
 		 << chndescs[ ii ]
 		 << scan_excl_begin[ ii ]
-		 << scan_excl_end[ ii ];
+		 << scan_excl_end[ ii ]
+		 << scan_excl_nth[ ii ];
      }
    //END of DEBUG
 
@@ -397,6 +401,7 @@ bool US_AnaProfile::toXml( QXmlStreamWriter& xmlo )
      //scan exclusions: ATTENTION -- Now use kk index, as for all other attributes
      xmlo.writeAttribute    ( "scan_excl_begin", QString::number( scan_excl_begin[ kk ] )    );
      xmlo.writeAttribute    ( "scan_excl_end",   QString::number( scan_excl_end[ kk ] ) );
+     xmlo.writeAttribute    ( "scan_excl_nth",   QString::number( scan_excl_nth[ kk ] ) );
 
      xmlo.writeAttribute    ( "replicate_group",       QString::number( replicates[ kk ] )    );
 
@@ -466,6 +471,7 @@ bool US_AnaProfile::fromXml( QXmlStreamReader& xmli )
 
    scan_excl_begin.clear(); 
    scan_excl_end.  clear();
+   scan_excl_nth.  clear();
 
    replicates. clear();
    replicates_to_channdesc_main. clear();
@@ -572,7 +578,11 @@ bool US_AnaProfile::fromXml( QXmlStreamReader& xmli )
 	      scan_excl_end   <<  attr.value( "scan_excl_end" )  .toString().toInt();
 	    else
 	      scan_excl_end   << 0;
-
+	    if ( attr.hasAttribute("scan_excl_nth") )
+	      scan_excl_nth   <<  attr.value( "scan_excl_nth" )  .toString().toInt();
+	    else
+	      scan_excl_nth   << 0;
+	    
 	    if (  attr.hasAttribute ("replicate_group") )
 	      replicates << attr.value( "replicate_group" )  .toString().toInt();
 	    else
