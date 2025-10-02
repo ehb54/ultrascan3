@@ -674,10 +674,11 @@ DbgLv(1) << "LD:  edata: desc run cell chan"
 
    //test
    QString m_desc      = model.description;
+   QStringList m_desc_list = m_desc.split(".");
    QString m_data_desc = model.dataDescrip;
    QString t_label_from_model = m_data_desc;
-   t_label_from_model += " (" + m_desc.section(".",0,0) + " "
-           + m_desc.section(".",-5,-2) + " " + tsys.method + ")" + "[" + QString::number( alldis.size() ) + "]"; 
+   t_label_from_model += " (" + m_desc_list[0] + " "
+           + m_desc_list[1] + " " + tsys.method + ")" + "[" + QString::number( alldis.size() ) + "]"; 
    
    qDebug() << "tsys.label from editD -- " << tsys.label;
    qDebug() << "t_label_from_model -- " << t_label_from_model;
