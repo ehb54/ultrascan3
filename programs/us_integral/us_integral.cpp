@@ -633,6 +633,7 @@ DbgLv(1) << "LD:  model:" << model.description;
    QString edir      = US_Settings::tmpDir();
    QString efname    = tsys.run_name + ".xml";
 
+   /****
    // Read in edit for this model
    US_DataIO::EditedData edata;
    US_DB2* dbP       = NULL;
@@ -670,7 +671,9 @@ DbgLv(1) << "LD:  edata: desc run cell chan"
  << edata.description << edata.runID << edata.cell << edata.channel;
    tsys.label    = edata.description + " (" + efname.section(".",0,0) + " "
            + efname.section(".",-5,-2) + " " + tsys.method + ")" + "[" + QString::number( alldis.size() ) + "]";
+   ****/
 
+   
    // Now, get associated solution,buffer values
    QString soluID;
    QString bvisc;
