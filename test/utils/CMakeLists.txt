@@ -29,7 +29,6 @@ else()
 endif()
 
 include_directories(
-        ${CMAKE_SOURCE_DIR}/utils
         ${CMAKE_SOURCE_DIR}/test/utils
         ${CMAKE_SOURCE_DIR}/test/utils/mock
         ${CMAKE_SOURCE_DIR}/test/common
