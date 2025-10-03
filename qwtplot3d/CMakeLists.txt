@@ -24,7 +24,10 @@ message(STATUS "QwtPlot3D headers: ${QWTPLOT3D_HEADERS}")
 
 # Create library with both sources and headers
 add_library(qwtplot3d STATIC ${QWTPLOT3D_SOURCES} ${QWTPLOT3D_HEADERS})
-
+if( WIN32 AND BUILD_SHARED_LIBS )
+    target_compile_definitions(qwtplot3d PRIVATE QT_DLL QWT3D_DLL QWT3D_MAKEDLL)
+    target_compile_definitions(qwtplot3d INTERFACE QT_DLL QWT3D_DLL QWT3D_MAKEDLL)
+endif()
 # Critical MOC settings - set these BEFORE any other target operations
 set_target_properties(qwtplot3d PROPERTIES
         AUTOMOC ON
