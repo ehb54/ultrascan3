@@ -52,7 +52,12 @@ target_link_libraries(qwtplot3d PUBLIC
         OpenGL::GL
         Qwt::Qwt
         )
-
+if (WIN32)
+    target_link_libraries(qwtplot3d PUBLIC glu32)
+elseif(UNIX AND NOT APPLE)
+    # GLU_LIBRARY is found in the top-level CMake on Linux
+    target_link_libraries(qwtplot3d PUBLIC ${GLU_LIBRARY})
+endif()
 # GL2PS if available
 if(GL2PS_FOUND)
     target_link_libraries(qwtplot3d PRIVATE GL2PS::GL2PS)
