@@ -69,7 +69,7 @@ US_LammAstfvm::Mesh::~Mesh()
 // ComputeMeshDen_D3
 //
 /////////////////////////
-void US_LammAstfvm::Mesh::ComputeMeshDen_D3( const double *u0, const double *u1 ) {
+void US_LammAstfvm::Mesh::ComputeMeshDen_D3( const double *u0, const double *u1 ) const {
    int i;
    int i2;
    double h;
@@ -351,7 +351,7 @@ void US_LammAstfvm::Mesh::Refine( double beta ) {
 /////////////////////////
 void US_LammAstfvm::Mesh::RefineMesh(double *u0, double *u1, double ErrTol) {
    const double sqrt3 = sqrt(3.0);
-   const double onethird = 1.0 / 3.0;
+   constexpr double onethird = 1.0 / 3.0;
    // refinement threshold: h*|D_3u|^(1/3) > beta
    //double beta  = pow( ErrTol * 6 / ( 2 * sqrt( 3 ) / 72 ), 1. / 3. );
    // Simplify the above:
@@ -862,66 +862,6 @@ int US_LammAstfvm::calculate( US_DataIO::RawData& sim_data )
       }
       validate_bfg();
       validate_csd();
-      //       QString visc_data = "visc_data.txt";
-      //       QString dens_data = "dens_data.txt";
-      //       {
-      //           QFile myFile(dens_data);
-      //           if (!myFile.open(QIODevice::WriteOnly)) {
-      //               qDebug() << "Could not write to file:" << dens_data << "Error string:" << myFile.errorString();
-      //               return 0;
-      //           }
-      //
-      //
-      //           QTextStream out(&myFile);
-      //           QVector<QString> radius;
-      //           Q_FOREACH (double x, bandFormingGradient->dens_bfg_data.xvalues) {
-      //               radius << QString::number(x, 'f', 4);
-      //           }
-      //           out << "radius";
-      //                   for(int i = 0; i < bandFormingGradient->dens_bfg_data.scanCount(); i++) {
-      //                   out << "; " << QString::number(i+1, 'f', 0)<< " " <<
-      //                   QString::number(bandFormingGradient->dens_bfg_data.scanData[i].seconds) << " s";
-      //               }
-      //           out << Qt::endl;
-      //           for (int r = 0; r < radius.count() - 1; r++) {
-      //               out << radius.value(r);
-      //                       for (int s = 0; s < bandFormingGradient->dens_bfg_data.scanCount(); s++) {
-      //                       out << "; " << QString::number(bandFormingGradient->dens_bfg_data.reading(s,r), 'f', 6);
-      //                   }
-      //               out << Qt::endl;
-      //           }
-      //           myFile.flush();
-      //           myFile.close();
-      //       }
-      //
-      //       {
-      //           QFile myFile(visc_data);
-      //           if (!myFile.open(QIODevice::WriteOnly)) {
-      //               qDebug() << "Could not write to file:" << visc_data << "Error string:" << myFile.errorString();
-      //               return 0;
-      //           }
-      //
-      //
-      //           QTextStream out(&myFile);
-      //           QVector<QString> radius;
-      //           Q_FOREACH (double x, bandFormingGradient->visc_bfg_data.xvalues) {
-      //                   radius << QString::number(x, 'f', 4);
-      //               }
-      //           out << "radius";
-      //           for(int i = 0; i < bandFormingGradient->visc_bfg_data.scanCount(); i++) {
-      //               out << "; " << QString::number(i+1, 'f', 0);
-      //           }
-      //           out << Qt::endl;
-      //           for (int r = 0; r < radius.count() - 1; r++) {
-      //               out << radius.value(r);
-      //               for (int s = 0; s < bandFormingGradient->visc_bfg_data.scanCount(); s++) {
-      //                   out << "; " << QString::number(bandFormingGradient->visc_bfg_data.reading(s,r), 'f', 6);
-      //               }
-      //               out << Qt::endl;
-      //           }
-      //           myFile.flush();
-      //           myFile.close();
-      //       }
    }
    // construct timestate vectors
    rpm_timestate.clear();
@@ -1038,7 +978,7 @@ int US_LammAstfvm::solve_component( int compx )
       dt = true_dt_min / 1.5;
    }
 
-   double solut_t = af_data.scan[nts - 1].time;         // true total time
+   double solut_t = af_data.scan.last().time;         // true total time
    int    ntc     = static_cast<int>(solut_t / dt) + 1; // nbr. times in calculations
 
    QVector<double> conc0;
@@ -1253,54 +1193,8 @@ int US_LammAstfvm::solve_component( int compx )
    {
       DbgLv( 2 ) << "---------------------------------------";
       timer.restart();
-      if ( NonIdealCaseNo == 2 )
-      {
-         if ( t0 > af_data.scan.last().time && !break_switch )
-         {
-            break_switch = true;
-         }
-         else if ( t0 > af_data.scan.last().time && break_switch )
-         {
-            break;
-         }
-         //else if ( true )
-         //{
-         //   dt_scaling = 0.0;
-         //}
-         else if ( runtime > 5000 )
-         {
-            dt_scaling *= 1.05;
-         }
-         else if ( runtime > 4000 )
-         {
-            dt_scaling *= 1.01;
-         }
-         else if ( runtime > 3600 )
-         {
-            dt_scaling *= 1.005;
-         }
-         else if ( runtime > 1800 )
-         {
-            dt_scaling *= 1.001;
-         }
-         else if ( runtime > 1000 )
-         {
-            dt_scaling += original_dt * 0.1;
-         }
-         else if ( runtime > 300 )
-         {
-            dt_scaling += original_dt * 0.05;
-         }
-         t0 = runtime;
-         runtime += qMin( ( original_dt + dt_scaling ), dt_old );
-         t1 = runtime;
-         dt = t1 - t0;
-      }
-      else
-      {
-         t0 = dt * static_cast<double>(jt);
-         t1 = t0 + dt;
-      }
+      t0 = dt * static_cast<double>(jt);
+      t1 = t0 + dt;
       ts = af_data.scan[kt].time; // time at output scan
       while ( ts < t0 && kt < af_data.scan.size() - 1 )
       {
@@ -1317,9 +1211,6 @@ int US_LammAstfvm::solve_component( int compx )
          ts = tmp;
       }
       // calculate the param_w2_t0 and param_w2_t0dt
-      bool found_t0 = false;
-      bool found_t0dt = false;
-      int sim_speed_prof_idx = 0;
       // move through all the sim_speed_prof
       const int tmst_size = rpm_timestate.size();
       const int time_index_t0 = qMax(qMin(static_cast<int>(t0), tmst_size - 1), 0);
@@ -2801,6 +2692,7 @@ void US_LammAstfvm::store_mfem_data( US_DataIO::RawData& edata, US_AstfemMath::M
    edata.xvalues     = fdata.radius;
    if ( e_scan != n_scan )
    {
+      qDebug() << "Lamm: store_mfem_data: resizing edata.scanData from" << e_scan << "to" << n_scan;
       edata.scanData.resize( n_scan ); // mirror number of scans
    }
 
@@ -2954,9 +2846,6 @@ void US_LammAstfvm::validate_bfg()
          QVector<QVector<double>> visc_data( auc_data->scanCount() );
          QVector<QVector<double>> conc_data( auc_data->scanCount() );
 
-
-         int  scan      = 2;
-         int* scan_hint = &scan;
          for ( int i = 0; i < auc_data->scanCount(); i++ )
          {
             double          time = auc_data->scanData[i].seconds;

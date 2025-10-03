@@ -68,7 +68,7 @@ class US_UTIL_EXTERN US_LammAstfvm : public QObject
             int*    Mark;     // ref/unref marker
 
             // private functions
-            void ComputeMeshDen_D3( const double*, const double* );
+            void ComputeMeshDen_D3( const double*, const double* ) const;
             static void Smoothing( int, double*, double, int );
             void Unrefine(  double );
             void Refine(    double );
