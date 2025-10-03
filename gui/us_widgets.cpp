@@ -625,7 +625,7 @@ QHBoxLayout* US_Widgets::us_ddhhmmsslay(
    if ( hh != NULL )
    {
       *hh              = new QSpinBox( this );
-      (*hh)->setRange(0, 24);
+      (*hh)->setRange(0, 23);
       (*hh)->setPalette( pal );
       (*hh)->setAutoFillBackground( true );
       (*hh)->setFont( font );
@@ -645,7 +645,7 @@ QHBoxLayout* US_Widgets::us_ddhhmmsslay(
    if ( mm != NULL )
    {
       *mm              = new QSpinBox( this );
-      (*mm)->setRange(0, 60);
+      (*mm)->setRange(0, 59);
       (*mm)->setPalette( pal );
       (*mm)->setAutoFillBackground( true );
       (*mm)->setFont( font );
@@ -665,7 +665,7 @@ QHBoxLayout* US_Widgets::us_ddhhmmsslay(
    if ( ss != NULL )
    {
       *ss              = new QSpinBox( this );
-      (*ss)->setRange(0, 60);
+      (*ss)->setRange(0, 59);
       (*ss)->setPalette( pal );
       (*ss)->setAutoFillBackground( true );
       (*ss)->setFont( font );
