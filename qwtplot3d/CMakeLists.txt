@@ -3,10 +3,6 @@ find_package(OpenGL REQUIRED)
 
 
 # If Windows system and building shared, then output dll
-if( WIN32 AND BUILD_SHARED_LIBS )
-    target_compile_definitions(qwtplot3d PRIVATE QT_DLL QWT3D_DLL QWT3D_MAKEDLL)
-    target_compile_definitions(qwtplot3d INTERFACE QT_DLL QWT3D_DLL QWT3D_MAKEDLL)
-endif()
 
 # Get source files manually to ensure we catch everything
 file(GLOB QWTPLOT3D_SOURCES
