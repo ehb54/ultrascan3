@@ -1,9 +1,6 @@
 # Find OpenGL
 find_package(OpenGL REQUIRED)
 
-
-# If Windows system and building shared, then output dll
-
 # Get source files manually to ensure we catch everything
 file(GLOB QWTPLOT3D_SOURCES
         "src/*.cpp"
@@ -20,10 +17,12 @@ message(STATUS "QwtPlot3D headers: ${QWTPLOT3D_HEADERS}")
 
 # Create library with both sources and headers
 add_library(qwtplot3d STATIC ${QWTPLOT3D_SOURCES} ${QWTPLOT3D_HEADERS})
+
 if( WIN32 AND BUILD_SHARED_LIBS )
     target_compile_definitions(qwtplot3d PRIVATE QT_DLL QWT3D_DLL QWT3D_MAKEDLL)
     target_compile_definitions(qwtplot3d INTERFACE QT_DLL QWT3D_DLL QWT3D_MAKEDLL)
 endif()
+
 # Critical MOC settings - set these BEFORE any other target operations
 set_target_properties(qwtplot3d PROPERTIES
         AUTOMOC ON
@@ -48,12 +47,14 @@ target_link_libraries(qwtplot3d PUBLIC
         OpenGL::GL
         Qwt::Qwt
         )
+
 if (WIN32)
     target_link_libraries(qwtplot3d PUBLIC glu32)
 elseif(UNIX AND NOT APPLE)
     # GLU_LIBRARY is found in the top-level CMake on Linux
     target_link_libraries(qwtplot3d PUBLIC ${GLU_LIBRARY})
 endif()
+
 # GL2PS if available
 if(GL2PS_FOUND)
     target_link_libraries(qwtplot3d PRIVATE GL2PS::GL2PS)

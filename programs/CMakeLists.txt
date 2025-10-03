@@ -223,80 +223,6 @@ function(add_us3_program prog_name)
         file(GLOB_RECURSE all_resources "${prog_dir}/*.qrc")
         set(create_library FALSE)  # Force executable-only
         message(STATUS "${prog_name}: Using executable-only build with cross-directory sources")
-    elseif(prog_name STREQUAL "us_2dplot")
-        # Single-file program with main() inside
-        set(main_source "")
-        set(all_sources "${prog_dir}/us_2dplot.cpp")
-        file(GLOB_RECURSE all_headers "${prog_dir}/*.h")
-        file(GLOB_RECURSE all_forms "${prog_dir}/*.ui")
-        file(GLOB_RECURSE all_resources "${prog_dir}/*.qrc")
-        message(STATUS "${prog_name}: Created")
-    elseif(prog_name STREQUAL "us_combine_models")
-        # Single-file program with main() inside
-        set(main_source "")
-        set(all_sources "${prog_dir}/us_combine_models.cpp")
-        file(GLOB_RECURSE all_headers "${prog_dir}/*.h")
-        file(GLOB_RECURSE all_forms "${prog_dir}/*.ui")
-        file(GLOB_RECURSE all_resources "${prog_dir}/*.qrc")
-        message(STATUS "${prog_name}: Created")
-    elseif(prog_name STREQUAL "us_audit_trail_gmp")
-        # Build as single executable - don't split main and sources
-        set(main_source "")
-        set(all_sources
-                "${prog_dir}/us_audit_trail_gmp_main.cpp"
-                "${prog_dir}/us_audit_trail_gmp.cpp"
-                )
-        file(GLOB_RECURSE all_headers "${prog_dir}/*.h")
-        file(GLOB_RECURSE all_forms "${prog_dir}/*.ui")
-        file(GLOB_RECURSE all_resources "${prog_dir}/*.qrc")
-        message(STATUS "${prog_name}: Created")
-    elseif(prog_name STREQUAL "us_abde")
-        # us_abde should be executable-only - it has missing method implementations
-        # when split into library + executable
-        set(main_source "")
-        set(all_sources
-                "${prog_dir}/us_abde_main.cpp"  # Include main directly in executable
-                "${prog_dir}/../us_buoyancy/us_buoyancy.cpp"
-                "${prog_dir}/us_norm_profile.cpp"
-                )
-        # Include headers from both directories
-        set(all_headers
-                "${prog_dir}/us_abde_main.h"
-                "${prog_dir}/../us_buoyancy/us_buoyancy.h"
-                "${prog_dir}/us_norm_profile.h"
-                )
-        file(GLOB_RECURSE all_forms "${prog_dir}/*.ui")
-        file(GLOB_RECURSE all_resources "${prog_dir}/*.qrc")
-        message(STATUS "${prog_name}: Using executable-only build with cross-directory sources")
-    elseif(prog_name STREQUAL "us_astfem_sim")
-        # Single-file program with main() inside
-        set(main_source "")
-        set(all_sources
-                "${prog_dir}/us_astfem_sim.cpp"
-                "${prog_dir}/us_clipdata.cpp"
-                )
-        file(GLOB_RECURSE all_headers "${prog_dir}/*.h")
-        file(GLOB_RECURSE all_forms "${prog_dir}/*.ui")
-        file(GLOB_RECURSE all_resources "${prog_dir}/*.qrc")
-        message(STATUS "${prog_name}: Created")
-    elseif(prog_name STREQUAL "us_config")
-        # Single-file program with main() inside
-        set(main_source "")
-        set(all_sources
-                "${prog_dir}/us_config.cpp"
-                "${prog_dir}/us_admin.cpp"
-                "${prog_dir}/us_color.cpp"
-                "${prog_dir}/us_database.cpp"
-                "${prog_dir}/us_advanced.cpp"
-                "${prog_dir}/us_font.cpp"
-                "${prog_dir}/us_xpnhost.cpp"
-                "${prog_dir}/us_xpnhost_db.cpp"
-                "${prog_dir}/us_newxpnhost_db.cpp"
-                )
-        file(GLOB_RECURSE all_headers "${prog_dir}/*.h")
-        file(GLOB_RECURSE all_forms "${prog_dir}/*.ui")
-        file(GLOB_RECURSE all_resources "${prog_dir}/*.qrc")
-        message(STATUS "${prog_name}: Created")
     else()
         # Standard file discovery for other programs
         file(GLOB_RECURSE all_sources "${prog_dir}/*.cpp")
@@ -335,23 +261,11 @@ function(add_us3_program prog_name)
             set(create_library FALSE)
         endif()
 
-        # Check if main file contains Q_OBJECT
-        if(main_source AND create_library)
-            file(READ ${main_source} main_content)
-            if(main_content MATCHES "Q_OBJECT")
-                message(STATUS "${prog_name}: Main file contains Q_OBJECT, using executable-only build")
-                set(create_library FALSE)
-            endif()
-        endif()
-
         # Separate main from library sources (only if creating library)
         if(create_library)
             list(REMOVE_ITEM all_sources ${main_source})
             # Ensure we still have sources for the library after removing main
             list(LENGTH all_sources remaining_sources)
-            if(remaining_sources EQUAL 0)
-                set(create_library FALSE)
-            endif()
         endif()
     endif()
 
