@@ -106,6 +106,7 @@ find_package(Qt5 REQUIRED COMPONENTS
         Svg
         OpenGL
         PrintSupport
+        DataVisualization
         )
 
 if(US3_BUILD_TESTS)
