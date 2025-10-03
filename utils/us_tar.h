@@ -2,7 +2,6 @@
 #ifndef US_TAR_H
 #define US_TAR_H
 
-#include <QtCore>
 #include "us_extern.h"
 
 // Error codes

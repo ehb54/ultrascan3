@@ -1,5 +1,4 @@
 //! \file us_pcsa_modelrec.cpp
-
 #include "us_pcsa_modelrec.h"
 #include "us_solute.h"
 #include "us_settings.h"
@@ -1087,7 +1086,7 @@ QString US_ModelRecord::stype_text( const int i_stype )
    int ixv         = ( i_stype >> 6 ) & 7;
    int iyv         = ( i_stype >> 3 ) & 7;
    int izv         =   i_stype        & 7;
-   QString s_stype = QString().sprintf( "%03o", i_stype ) + "."
+   QString s_stype = QString( "%1." ).arg( i_stype, 3, 8, QChar( '0' ) )
                    + QString( atyp[ ixv ] )
                    + QString( atyp[ iyv ] )
                    + QString( atyp[ izv ] );

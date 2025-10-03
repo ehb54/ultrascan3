@@ -1,5 +1,4 @@
 //! \file us_rotor_gui.cpp
-
 #include "us_rotor.h"
 #include "us_settings.h"
 #include "us_util.h"
@@ -670,7 +669,7 @@ QString US_Rotor::get_filename(
    int number = ( f_names.size() > 0 ) ? f_names.last().mid( 1, 7 ).toInt() : 0;
 
    QString startName = "/" + fileMask.left( 1 );  // for instance "/R" for rotors
-   return path + startName + QString().sprintf( "%07i", number + 1 ) + ".xml";
+   return path + startName + QString( "%1" ).arg( number + 1, 7, 10, QChar( '0' ) ) + ".xml";
 }
 
 US_Rotor::Lab::Lab()
@@ -939,9 +938,9 @@ int US_Rotor::Rotor::deleteRotorDB( int rotorID, US_DB2* db )
 void US_Rotor::Rotor::saveDisk( void )
 {
    // First make sure we have a GUID
-   QRegExp rx( "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" );
+   static const QRegularExpression rx( "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", QRegularExpression::CaseInsensitiveOption );
 
-   if ( ! rx.exactMatch( GUID ) )
+   if ( ! rx.match( GUID ).hasMatch() )
       GUID = US_Util::new_guid();
 
    // Get a path and file name for the rotor
@@ -1203,9 +1202,9 @@ int US_Rotor::RotorCalibration::replaceDummyDB( int& oldCalibrationID, US_DB2* d
 void US_Rotor::RotorCalibration::saveDisk( void )
 {
    // First make sure we have a GUID
-   QRegExp rx( "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" );
+   static const QRegularExpression rx( "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" );
 
-   if ( ! rx.exactMatch( GUID ) )
+   if ( ! rx.match( GUID ).hasMatch() )
       GUID = US_Util::new_guid();
 
    // Get a path and file name for the calibration

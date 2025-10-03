@@ -1,3 +1,4 @@
+//! \file us_crc.cpp
 #include "us_crc.h"
 
 quint32 US_Crc::crc32( 
