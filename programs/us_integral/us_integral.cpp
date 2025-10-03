@@ -1202,8 +1202,7 @@ DbgLv(1) << "WrCsv: fpath" << fpath;
    // Write data lines
    for ( int jj = 0; jj < vals1.size(); jj++ )
    {
-      QString line  = QString().sprintf(
-         "\"%9.6e\",\"%6.4f\"\n", vals1[ jj ], vals2[ jj ] );
+      QString line  = QString::asprintf( "\"%9.6e\",\"%6.4f\"\n", vals1[ jj ], vals2[ jj ] );
       line.replace( " ","" );
       ts << line;
    }

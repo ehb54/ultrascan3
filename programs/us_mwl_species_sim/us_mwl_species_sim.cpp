@@ -176,9 +176,9 @@ DbgLv(1) << "PlotData1: tripx" << tripx << "have" << have_p1[tripx];
 
 DbgLv(1) << "PlotData1:  tripx" << tripx;
    US_DataIO::RawData*     rdata = &synData[ tripx ];
-   QString cell   = QString().sprintf( "%d", rdata->cell );
-   QString wavl   = QString().sprintf( "%d",
-                       (int)rdata->scanData[ 0 ].wavelength );
+   QString cell   = QString::asprintf( "%d", rdata->cell );
+   QString wavl   = QString::asprintf( "%d",
+(int )rdata->scanData[ 0 ].wavelength );
    QString mdesc  = models[ tripx ].description;
    QString triple = QString( mdesc ).section( ".", -3, -3 );
    QString chani  = QString( triple ).left( 2 );

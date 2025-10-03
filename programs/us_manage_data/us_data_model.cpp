@@ -1765,7 +1765,7 @@ DbgLv(2) << "(1) orphan: N size M size" << orphn.size() << orphm.size();
       cdesc.lastmodDate = cdesc.filemodDate;
 
       dlabel = dlabel.section( ".", 0, 0 );
-      dindex = QString().sprintf( "%4.4d", kndx++ );
+      dindex = QString::asprintf( "%4.4d", kndx++ );
       ddGUID = cdesc.dataGUID;
       dpGUID = cdesc.parentGUID;
       dsorts = dlabel + ":" + dindex + ":" + ddGUID + ":" + dpGUID;
@@ -1843,7 +1843,7 @@ DbgLv(2) << "SrtD:  Orph(N)" << nowTime();
       cdesc.filemodDate = cdesc.lastmodDate;
 
       dlabel = dlabel.section( ".", 0, 0 );
-      dindex = QString().sprintf( "%4.4d", kndx++ );
+      dindex = QString::asprintf( "%4.4d", kndx++ );
       ddGUID = cdesc.dataGUID;
       dpGUID = cdesc.parentGUID;
       dsorts = dlabel + ":" + dindex + ":" + ddGUID + ":" + dpGUID;
@@ -1922,7 +1922,7 @@ DbgLv(2) << "(4) orphan: M size E size" << orphm.size() << orphe.size();
       cdesc.filemodDate = cdesc.lastmodDate;
 
       dlabel = dlabel.section( ".", 0, 0 );
-      dindex = QString().sprintf( "%4.4d", kndx++ );
+      dindex = QString::asprintf( "%4.4d", kndx++ );
       ddGUID = cdesc.dataGUID;
       dpGUID = cdesc.parentGUID;
       dsorts = dlabel + ":" + dindex + ":" + ddGUID + ":" + dpGUID;
@@ -2315,7 +2315,7 @@ QString US_DataModel::sort_string( DataDesc ddesc, int indx )
       label = label.leftJustified( maxdlen, ' ' );
 
    QString ostr  = label                              // label to sort on
-      + ":"      + QString().sprintf( "%4.4d", indx ) // index in desc. vector
+      + ":"      + QString::asprintf( "%4.4d", indx ) // index in desc. vector
       + ":"      + ddesc.dataGUID                     // data GUID
       + ":"      + ddesc.parentGUID;                  // parent GUID
    return ostr;

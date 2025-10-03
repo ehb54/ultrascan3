@@ -839,7 +839,7 @@ void US_DataTree::action_result( int stat, QString item_act )
 // compose string describing record state
 QString US_DataTree::record_state( int istate )
 {
-   QString hexn    = QString().sprintf( "0x%3.3x", istate );
+   QString hexn    = QString::asprintf( "0x%3.3x", istate );
 
    QString flags   = "NOSTAT";         // by default, no state
 
