@@ -431,6 +431,7 @@ DbgLv(1) << "APG: ipro:    o.jj" << jj << "chentr" << chentr;
 
 	       currProf.scan_excl_begin  << currProf.scan_excl_begin[ chx ];
 	       currProf.scan_excl_end    << currProf.scan_excl_end[ chx ];
+	       currProf.scan_excl_nth    << currProf.scan_excl_nth[ chx ];
 	       
 	       currProf.replicates << currProf.replicates[ chx ];
 	      }
@@ -438,7 +439,8 @@ DbgLv(1) << "APG: ipro:     chx nchn dae" << chx << nchn
 	 << "dae size" << currProf.data_ends.count() << "chentr" << chentr
 	 << "currProf.analysis_run[ chx ]" << currProf.analysis_run[ chx ]
 	 << "currProf.scan_excl_begin[ chx ]" << currProf.scan_excl_begin[ chx ]
-	 << "currProf.scan_excl_end[ chx ]" << currProf.scan_excl_end[ chx ];
+	 << "currProf.scan_excl_end[ chx ]" << currProf.scan_excl_end[ chx ]
+	 << "currProf.scan_excl_nth[ chx ]" << currProf.scan_excl_nth[ chx ];
 
 
          }
@@ -532,6 +534,7 @@ DbgLv(1) << "APG: ipro:     chx nchn dae" << chx << nchn
 
 	    currProf.scan_excl_begin  << currProf.scan_excl_begin[ lch ];
 	    currProf.scan_excl_end    << currProf.scan_excl_end[ lch ];
+	    currProf.scan_excl_nth    << currProf.scan_excl_nth[ lch ];
 	    
 	    currProf.replicates << currProf.replicates[ lch ];
 	    	    
@@ -540,7 +543,8 @@ DbgLv(1) << "APG: ipro:     chx nchn dae" << chx << nchn
 		     << "dae size" << currProf.data_ends.count()
 		     << "currProf.analysis_run[ lch ]" << currProf.analysis_run[ lch ]
 		     << "currProf.scan_excl_begin[ lch ]" << currProf.scan_excl_begin[ lch ]
-		     << "currProf.scan_excl_end[ lch ]" << currProf.scan_excl_end[ lch ];
+		     << "currProf.scan_excl_end[ lch ]" << currProf.scan_excl_end[ lch ]
+		     << "currProf.scan_excl_nth[ lch ]" << currProf.scan_excl_nth[ lch ];
 
          }
          nchn++;
@@ -587,6 +591,7 @@ DbgLv(1) << "APG: ipro:     chx nchn dae" << chx << nchn
 	 
 	 currProf.scan_excl_begin .removeLast();
 	 currProf.scan_excl_end   .removeLast();
+	 currProf.scan_excl_nth   .removeLast();
 
 	 qDebug() << "In inherit 4: ii, nchn, kchn " << ii << nchn << kchn;
 	 currProf.replicates   .removeLast();
@@ -2791,19 +2796,26 @@ void US_AnaprofPanGen::set_scan_ranges()
 	   << mainw->scanCount << " && "
 	   << mainw->scanCount_int;
 
-  qDebug() << "Set_scan_ranges: SIZES:  currProf->chndescs, currProf->scan_excl_begin, currProf->scan_excl_end -- "
+  qDebug() << "Set_scan_ranges: SIZES:  currProf->chndescs, currProf->scan_excl_begin, "
+	   << "currProf->scan_excl_end, currProf->scan_excl_nth -- "
 	   << currProf->chndescs.size()
 	   << currProf->scan_excl_begin.size()
-	   << currProf->scan_excl_end.size();
+	   << currProf->scan_excl_end.size()
+	   << currProf->scan_excl_nth.size();
 
   //debug
   for ( int i=0; i < currProf->chndescs.size(); ++i  )
-    qDebug() << "Ch_desc, scan_beg, scan_end -- " << currProf->chndescs[i] << currProf->scan_excl_begin[i] << currProf->scan_excl_end[i];
+    qDebug() << "Ch_desc, scan_beg, scan_end, scan_nth -- "
+	     << currProf->chndescs[i] << currProf->scan_excl_begin[i]
+	     << currProf->scan_excl_end[i] << currProf->scan_excl_nth[i];
   for ( int i=0; i < currProf->scan_excl_begin.size(); ++i ) 
-    qDebug() << "scan_beg, scan_end -- " << currProf->scan_excl_begin[i] << currProf->scan_excl_end[i];
+    qDebug() << "scan_beg, scan_end, scan_nth -- "
+	     << currProf->scan_excl_begin[i] << currProf->scan_excl_end[i]
+	     << currProf->scan_excl_nth[i];
   
   //scanExclGui = new US_ScanExclGui( currProf->chndescs, currProf->scan_excl_begin, currProf->scan_excl_end, mainw->scanCount, mainw->scanCount_int );
-  scanExclGui = new US_ScanExclGui( sl_chnsel, currProf->scan_excl_begin, currProf->scan_excl_end, mainw->scanCount, mainw->scanCount_int );
+  scanExclGui = new US_ScanExclGui( sl_chnsel, currProf->scan_excl_begin, currProf->scan_excl_end,
+				    currProf->scan_excl_nth, mainw->scanCount, mainw->scanCount_int );
   scanExclGui->setWindowFlags( Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint);
   scanExclGui->setWindowModality(Qt::ApplicationModal);
   
@@ -2817,34 +2829,31 @@ void US_AnaprofPanGen::update_excl_scans( QStringList& scan_ranges_list )
 {
   currProf->scan_excl_begin.clear();
   currProf->scan_excl_end.clear();
+  currProf->scan_excl_nth.clear();
 
-  qDebug() << "Scan update: init sizes scan_excl_beginn, scan_excl_end -- "
+  qDebug() << "Scan update: init sizes scan_excl_begin, scan_excl_end, scan_excl_nth -- "
 	   << currProf->scan_excl_begin.size()
-	   << currProf->scan_excl_end.size();
-
-  // QMap< int, int >::iterator ri;
-  // for ( ri = scan_ranges_pairs.begin(); ri != scan_ranges_pairs.end(); ++ri )
-  //   {
-  //     currProf->scan_excl_begin << ri.key();
-  //     currProf->scan_excl_end   << ri.value();
-
-  //     qDebug() << "in QMap update: " << ri.key() << ri.value();
-  //   }
+	   << currProf->scan_excl_end.size()
+	   << currProf->scan_excl_nth.size();
 
   for ( int i=0; i < scan_ranges_list.size(); ++i )
     {
-      QString s_b = scan_ranges_list[ i ].split(":")[0];
-      QString s_e = scan_ranges_list[ i ].split(":")[1];
+      QString s_b   = scan_ranges_list[ i ].split(":")[0];
+      QString s_e   = scan_ranges_list[ i ].split(":")[1];
+      QString s_nth = scan_ranges_list[ i ].split(":")[2];
       
       currProf->scan_excl_begin << s_b.toInt();
       currProf->scan_excl_end   << s_e.toInt();
+      currProf->scan_excl_nth   << s_nth.toInt();
 
-      qDebug() << "in scan_list update: " << s_b.toInt() << s_e.toInt();
+      qDebug() << "in scan_list update [b, e, nth]: "
+	       << s_b.toInt() << s_e.toInt() << s_nth.toInt();
     }
 
-  qDebug() << "Scan update: final sizes scan_excl_beginn, scan_excl_end -- "
+  qDebug() << "Scan update: final sizes scan_excl_beginn, scan_excl_end, scan_excl_nth -- "
 	   << currProf->scan_excl_begin.size()
-	   << currProf->scan_excl_end.size();
+	   << currProf->scan_excl_end.size()
+	   << currProf->scan_excl_nth.size();
 }
 
 // Protocol button clicked
@@ -3318,6 +3327,9 @@ DbgLv(1) << "2D:SL-gp: *ERROR* rowx>=kparm";
    parm1.cust_grid  = le_custmg->text();
    parm1.cgrid_name = le_custmg_name->text();
 
+   QString m_id = le_custmg_name->text().split(":")[0];
+   parm1.cust_id = m_id.toInt();
+
    currProf->ap2DSA.parms.replace( rowx, parm1 );
 }
 
@@ -3493,9 +3505,29 @@ void US_AnaprofPan2DSA::cust_grid_clicked( )
   QString m_desc = model.description;
   QString m_guid = model.modelGUID;
 
-  le_custmg       ->setText( m_guid );
-  le_custmg_name  ->setText( m_desc );
+  //also get modelID from GUID
+  US_Passwd pw;
+  US_DB2    db( pw.getPasswd() );
+  
+  if ( db.lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "Connection Problem" ),
+			    tr( "Could not connect to database \n" ) +  db.lastError() );
+      return;
+    }
+  QStringList q;
+  q << "get_modelID" << m_guid;
+  db.query( q );
+  if ( db.lastErrno() != US_DB2::OK )
+    return;
+  db.next();
+  QString m_id = db.value( 0 ).toString();
 
+  //assign
+  QString m_id_name = m_id + ":" + m_desc;  
+  le_custmg       ->setText( m_guid );
+  le_custmg_name  ->setText( m_id_name );
+  
   //hide regular grid
   set_regular_grid( false );
 }

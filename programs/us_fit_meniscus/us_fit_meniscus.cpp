@@ -1352,6 +1352,8 @@ void US_FitMeniscus::edit_update( void )
   //ALEXEY: if autoflow: check if edit profiles already updated from other FITMEN session
   if ( auto_mode )
     {
+      pb_update->setEnabled( false );
+      
       QString requestID = triple_information[ "requestID" ];
       //--- LOCK && UPDATE the autoflowStages' ANALYSIS field for the record
       int status_fitmen_unique;
@@ -2268,7 +2270,7 @@ bool US_FitMeniscus::file_loaded_auto( QMap < QString, QString > & triple_inform
   qDebug() << "Triple filename: " << triple_information[ "filename" ];
   
   QDir directory (file_directory);
-  QStringList fm_files = directory.entryList( QStringList() << "2DSA-FM*" + triple_name_cut + "*.fitmen.dat", QDir::Files | QDir::NoSymLinks);
+  QStringList fm_files = directory.entryList( QStringList() << "2DSA*FM*" + triple_name_cut + "*.fitmen.dat", QDir::Files | QDir::NoSymLinks);
 
   qDebug() << "In file_loaded_auto: 22";
 

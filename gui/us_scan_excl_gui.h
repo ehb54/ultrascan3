@@ -13,7 +13,7 @@ class US_GUI_EXTERN US_ScanExclGui: public US_Widgets
 
   public:
 
-      US_ScanExclGui( QStringList, QList< int > , QList< int >, int, int  );
+      US_ScanExclGui( QStringList, QList< int > , QList< int >, QList< int >, int, int  );
       ~US_ScanExclGui() {};
 
    signals:
@@ -24,10 +24,15 @@ class US_GUI_EXTERN US_ScanExclGui: public US_Widgets
       QStringList channels_desc;
       QList < int >  scan_beg;
       QList < int >  scan_end;
+      QList < int >  scan_nth;
       int scanCount;
       int scanCount_int;
       
       QMap< QString, int > maxScans_map;
+
+      int  sb_beg_prior;
+      int  sb_nth_prior;
+      int  sb_end_prior;
       
       int row;
       QVBoxLayout* main;

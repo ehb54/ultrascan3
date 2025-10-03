@@ -40,9 +40,9 @@ int main( int argc, char* argv[] )
    // triple_info_map[ "filename" ]        = QString("YeQ_Calpain3-lowTCEP_052721-run1464");
 
 
-   triple_info_map[ "triple_name" ]     = QString("3 / B / 235");
-   triple_info_map[ "invID" ]           = QString("143");
-   triple_info_map[ "filename" ]        = QString("DicksionC_SDS-1_032122-run1281");
+   triple_info_map[ "triple_name" ]     = QString("2 / A / 259");
+   triple_info_map[ "invID" ]           = QString("2");
+   triple_info_map[ "filename" ]        = QString("demo1_veloc-dataDiskRun-1607");
    
    US_FitMeniscus w( triple_info_map );
    */
