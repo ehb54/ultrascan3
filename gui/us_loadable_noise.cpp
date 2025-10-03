@@ -283,7 +283,7 @@ int US_LoadableNoise::id_list_db( QString daEditGUID )
    US_Passwd pw;
    US_DB2    db( pw.getPasswd() );
 
-   if ( db.lastErrno() != US_DB2::OK )
+   if ( db.lastErrno() != IUS_DB2::OK )
       return 0;
 
    query.clear();
