@@ -160,7 +160,6 @@ endif()
 
 # Find MySQL/MariaDB (only if not NO_DB)
 if(NOT US3_NO_DB)
-    find_package(PkgConfig REQUIRED)
     if(PkgConfig_FOUND)
         pkg_search_module(MYSQL QUIET mysqlclient mariadb libmariadb mysql libmysql)
 
