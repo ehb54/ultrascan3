@@ -1193,8 +1193,54 @@ int US_LammAstfvm::solve_component( int compx )
    {
       DbgLv( 2 ) << "---------------------------------------";
       timer.restart();
-      t0 = dt * static_cast<double>(jt);
-      t1 = t0 + dt;
+      if ( NonIdealCaseNo == 2 )
+      {
+         if ( t0 > af_data.scan.last().time && !break_switch )
+         {
+            break_switch = true;
+         }
+         else if ( t0 > af_data.scan.last().time && break_switch )
+         {
+            break;
+         }
+         //else if ( true )
+         //{
+         //   dt_scaling = 0.0;
+         //}
+         else if ( runtime > 5000 )
+         {
+            dt_scaling *= 1.01;
+         }
+         else if ( runtime > 4000 )
+         {
+            dt_scaling *= 1.005;
+         }
+         else if ( runtime > 3600 )
+         {
+            dt_scaling *= 1.001;
+         }
+         else if ( runtime > 2000 )
+         {
+            dt_scaling += original_dt * 0.05;
+         }
+         //else if ( runtime > 1000 )
+         //{
+         //   dt_scaling += original_dt * 0.1;
+         //}
+         //else if ( runtime > 300 )
+         //{
+         //   dt_scaling += original_dt * 0.05;
+         //}
+         t0 = runtime;
+         runtime += qMin( ( original_dt + dt_scaling ), dt_old );
+         t1 = runtime;
+         dt = t1 - t0;
+      }
+      else
+      {
+         t0 = dt * static_cast<double>(jt);
+         t1 = t0 + dt;
+      }
       ts = af_data.scan[kt].time; // time at output scan
       while ( ts < t0 && kt < af_data.scan.size() - 1 )
       {
