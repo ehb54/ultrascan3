@@ -562,7 +562,16 @@ pb_plateau->setVisible(false);
        pb_exclusion   ->hide();
        pb_edit1       ->hide();
        pb_include     ->hide();
-       pb_pass        ->hide();
+
+       pb_removeAllbutLast ->hide();
+       pb_baseline_correct ->hide();
+       pb_bll_modify       ->hide();
+       lb_baseline_correct ->hide();
+       lb_bll_slope        ->hide();
+       le_bll_slope        ->hide();
+       lb_bll_intercept    ->hide();
+       le_bll_intercept    ->hide();
+       pb_pass             ->hide();
 
        pb_meniscus    ->hide();
        pb_dataRange   ->hide();
@@ -2416,8 +2425,18 @@ pb_plateau->setVisible(false);
    main->setStretchFactor( plot, 3 );
    top ->addLayout( main );
 
+   //hide abde base line corr. for now
    pb_pass->setVisible( false );
-
+   pb_removeAllbutLast ->hide();
+   pb_baseline_correct ->hide();
+   pb_bll_modify       ->hide();
+   lb_baseline_correct ->hide();
+   lb_bll_slope        ->hide();
+   le_bll_slope        ->hide();
+   lb_bll_intercept    ->hide();
+   le_bll_intercept    ->hide();
+   pb_pass             ->hide();
+   
    reset();
 }
 
