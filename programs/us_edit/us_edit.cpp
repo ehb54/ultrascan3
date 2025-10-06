@@ -562,6 +562,7 @@ pb_plateau->setVisible(false);
        pb_exclusion   ->hide();
        pb_edit1       ->hide();
        pb_include     ->hide();
+       pb_pass        ->hide();
 
        pb_meniscus    ->hide();
        pb_dataRange   ->hide();
@@ -829,7 +830,7 @@ US_Edit::US_Edit( QVector< US_DataIO::RawData > allData, QStringList  triples,
    le_bll_slope        = us_lineedit( "", 1, true );
    lb_bll_intercept    = us_label( tr( "Y-intercept:" ), -1 );
    le_bll_intercept    = us_lineedit( "", 1, true );
-   pb_pass             = us_pushbutton( tr( "Accept Changes for a Channel" ), false );
+   //pb_pass             = us_pushbutton( tr( "Accept Changes for a Channel" ), false );
    check        = US_Images::getIcon( US_Images::CHECK );
    invert       = 1.0;
    all_edits    = false;
@@ -1395,7 +1396,7 @@ US_Edit::US_Edit( QVector< US_DataIO::RawData > allData, QStringList  triples,
    le_bll_slope        = us_lineedit( "", 1, true );
    lb_bll_intercept    = us_label( tr( "Y-intercept:" ), -1 );
    le_bll_intercept    = us_lineedit( "", 1, true );
-   pb_pass             = us_pushbutton( tr( "Accept Changes for a Channel" ), false );
+   //pb_pass             = us_pushbutton( tr( "Accept Changes for a Channel" ), false );
    check        = US_Images::getIcon( US_Images::CHECK );
    invert       = 1.0;
    all_edits    = false;
@@ -2414,6 +2415,8 @@ pb_plateau->setVisible(false);
    main->setStretchFactor( left, 2 );
    main->setStretchFactor( plot, 3 );
    top ->addLayout( main );
+
+   pb_pass->setVisible( false );
 
    reset();
 }
