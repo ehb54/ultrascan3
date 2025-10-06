@@ -204,6 +204,7 @@ class US_ExperGuiRotor : public US_WidgetsDialog
       QStringList  sl_optimas;
   QCheckBox* ck_disksource;
   QCheckBox* ck_absorbance_t;
+  QCheckBox* ck_absorbance_pa;
   QPushButton* pb_importDisk;
   QLineEdit *  le_dataDiskPath;
       
@@ -284,6 +285,7 @@ class US_ExperGuiRotor : public US_WidgetsDialog
   void importDisk( void );
   void importDiskChecked( bool );
   void dataDiskAbsChecked( bool );
+  void dataDiskPseudoAbsChecked( bool );
   QMap<QString,QStringList> build_protocol_for_data_import( QMap< QString, QStringList > );
   void importDisk_cleanProto( void );
   bool init_output_data  ( void );

@@ -9354,7 +9354,9 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
        // Show only if not Absorbance || not Interference
        qDebug() << "Show_INTENSITY: dataSource -- " << dataSource;
        qDebug() << "Show_INTENSITY: tripleInfo[ \"triple_name\" ] -- " << tripleInfo[ "triple_name" ];
-       bool RIdata = ( dataSource. contains( "DiskAUC:Absorbance" ) || tripleInfo[ "triple_name" ].contains("Interference") ) ?
+       bool RIdata = ( dataSource. contains( "DiskAUC:Absorbance" ) ||
+		       dataSource. contains( "DiskAUC:PseudoAbsorbance" ) ||
+		       tripleInfo[ "triple_name" ].contains("Interference") ) ?
 	 false : true;
        qDebug() << "Show_INTENSITY: RIdata ? " << RIdata;
        if ( show_min_int && RIdata )  
