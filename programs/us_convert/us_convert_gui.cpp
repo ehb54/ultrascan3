@@ -2946,6 +2946,15 @@ DbgLv(1) << " enabCtl: tLx infsz" << tripListx << out_chaninfo.count();
       }
    }
 
+   //enable save if gebuine "RA" type, or PseudoAbsorbance (when dataDisk read)
+   if ( dataSource == "dataDiskAUC:Absorbance" || dataSource == "dataDiskAUC:PseudoAbsorbance" )
+     {
+       //also disable ref. scan do/undo
+       pb_reference  ->setEnabled( false );
+       referenceDefined = true;
+       completed = true;
+     }
+   
    // If we made it here, user can save
    pb_saveUS3 ->setEnabled( completed );
 }
