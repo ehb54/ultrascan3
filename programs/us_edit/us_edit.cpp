@@ -1386,15 +1386,9 @@ US_Edit::US_Edit( QVector< US_DataIO::RawData > allData, QStringList  triples,
 		  QString  workingDir, int currenChtInd, int plotind, QString exptype,
 		  QStringList editParams, QList<int> editParams_includes ) : US_Widgets()
 {
-   pb_removeAllbutLast = us_pushbutton( tr( "Remove All but Last" ), true );
-   pb_baseline_correct = us_pushbutton( tr( "Correct Baseline" ), false );
    pb_bll_modify       = us_pushbutton( tr( "Modify Baseline Correction for Selected Triple" ), false );
-   lb_baseline_correct = us_banner( tr( "Linear Baseline Correction" ) );
-   lb_bll_slope        = us_label( tr( "Slope:" ), -1 );
-   le_bll_slope        = us_lineedit( "", 1, true );
-   lb_bll_intercept    = us_label( tr( "Y-intercept:" ), -1 );
-   le_bll_intercept    = us_lineedit( "", 1, true );
-   //pb_pass             = us_pushbutton( tr( "Accept Changes for a Channel" ), false );
+   pb_bll_modify -> setVisible( false );
+       
    check        = US_Images::getIcon( US_Images::CHECK );
    invert       = 1.0;
    all_edits    = false;
