@@ -1,8 +1,5 @@
 # us_autoflow_analysis
 
-# Find required Qt components based on .pro file
-find_package(Qt5 REQUIRED COMPONENTS DataVisualization)
-
 # Main program sources from us_autoflow_analysis directory
 set(AUTOFLOW_SOURCES
         us_autoflow_analysis_main.cpp

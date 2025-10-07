@@ -21,6 +21,7 @@ execute_process(
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+set(BUILD_SHARED_LIBS ON)
 
 # suppress deprecated warnings
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
@@ -85,7 +86,7 @@ if(UNIX AND NOT APPLE)
     add_definitions(-DLINUX -DPLATFORM="intel" -DTITLE="Intel")
 elseif(WIN32)
     add_definitions(-DUS_MAKE_DLL -D__LCC__ -DPLATFORM="intel" -DTITLE="Intel")
-    add_definitions(-DQT_SHAREDMEMORY -DQT_SYSTEMSEMAPHORE)
+    add_definitions(-DQT_SHAREDMEMORY -DQT_SYSTEMSEMAPHORE -DWIN32)
 elseif(APPLE)
     add_definitions(-DMAC -DOSX -DPLATFORM="mac" -DTITLE="Mac")
 endif()
@@ -105,6 +106,7 @@ find_package(Qt5 REQUIRED COMPONENTS
         Svg
         OpenGL
         PrintSupport
+        DataVisualization
         )
 
 if(US3_BUILD_TESTS)
@@ -158,17 +160,44 @@ endif()
 
 # Find MySQL/MariaDB (only if not NO_DB)
 if(NOT US3_NO_DB)
-    find_package(PkgConfig REQUIRED)
-    pkg_search_module(MYSQL REQUIRED mysqlclient mariadb)
+    if(PkgConfig_FOUND)
+        pkg_search_module(MYSQL QUIET mysqlclient mariadb libmariadb mysql libmysql)
 
-    if(MYSQL_FOUND)
-        add_library(MySQL::Client INTERFACE IMPORTED)
-        set_property(TARGET MySQL::Client PROPERTY INTERFACE_INCLUDE_DIRECTORIES ${MYSQL_INCLUDE_DIRS})
-        set_property(TARGET MySQL::Client PROPERTY INTERFACE_LINK_LIBRARIES ${MYSQL_LIBRARIES})
-        set_property(TARGET MySQL::Client PROPERTY INTERFACE_COMPILE_OPTIONS ${MYSQL_CFLAGS_OTHER})
+        if(MYSQL_FOUND)
+            message(STATUS "Found MySQL/MariaDB via pkg-config")
 
-        # Add library directories for MySQL
-        link_directories(${MYSQL_LIBRARY_DIRS})
+            add_library(MySQL::Client INTERFACE IMPORTED)
+            set_property(TARGET MySQL::Client PROPERTY INTERFACE_INCLUDE_DIRECTORIES ${MYSQL_INCLUDE_DIRS})
+            set_property(TARGET MySQL::Client PROPERTY INTERFACE_LINK_LIBRARIES ${MYSQL_LIBRARIES})
+            set_property(TARGET MySQL::Client PROPERTY INTERFACE_COMPILE_OPTIONS ${MYSQL_CFLAGS_OTHER})
+
+            # so you can still use the same target name
+        endif()
+    endif()
+
+    # --- If not found, try vcpkg (Windows or fallback) ---
+    if(NOT MYSQL_FOUND)
+        message(STATUS "pkg-config not found or no MySQL detected, trying vcpkg packages")
+
+        # MySQL connector (Oracle version)
+        find_package(unofficial-libmysql QUIET)
+        if(unofficial-libmysql_FOUND)
+            add_library(unofficial::libmysql::libmysql INTERFACE IMPORTED)
+            add_library(MySQL::Client ALIAS unofficial::libmysql::libmysql)
+            set(MYSQL_FOUND TRUE)
+        endif()
+
+        # MariaDB connector (alternative)
+        if(NOT MySQL::Client)
+            find_package(unofficial-mariadb QUIET CONFIG)
+            if(unofficial-mariadb_FOUND)
+                set(MySQL::Client unofficial::mariadb::libmariadb)
+                set(MYSQL_FOUND TRUE)
+            endif()
+        endif()
+    endif()
+    if(NOT MYSQL_FOUND)
+        message(FATAL_ERROR "Could not find MySQL/MariaDB client library")
     endif()
 endif()
 

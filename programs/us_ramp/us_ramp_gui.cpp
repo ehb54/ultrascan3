@@ -306,7 +306,7 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    // Plot layout for the right side of window
    QBoxLayout* plot = new US_Plot( data_plot,
                                    tr( "Ramp Data" ),
-                                   tr( "w�t (/ s��)" ), 
+                                   tr( "w²t (/ s¯¹)" ),
                                    tr( "Intensity (/AU)" ) );
 
    data_plot->setMinimumSize( 500, 300 );

@@ -1,4 +1,4 @@
-// test_us_astfem_math.cpp - Simple working unit tests
+// test_us_astfem_math.cpp
 #include "qt_test_base.h"
 #include "us_astfem_math.h"
 #include "us_model.h"

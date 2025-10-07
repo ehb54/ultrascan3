@@ -660,23 +660,23 @@ void US_ManageData::reportDataStatus()
       tr( " Combined Noise      records.\n"   ) +
       QString::asprintf( "%5d", ndrecs ) +
       tr( " Database Total data sets;\n  "    ) +
-      QString().sprintf( "%5d", ndraws ) +
+      QString::asprintf( "%5d", ndraws ) +
       tr( " Database RawData    records;\n  " ) +
-      QString().sprintf( "%5d", ndedts ) +
+      QString::asprintf( "%5d", ndedts ) +
       tr( " Database EditedData records;\n  " ) +
-      QString().sprintf( "%5d", ndmods ) +
+      QString::asprintf( "%5d", ndmods ) +
       tr( " Database Model      records;\n  " ) +
-      QString().sprintf( "%5d", ndnois ) +
+      QString::asprintf( "%5d", ndnois ) +
       tr( " Database Noise      records.\n"   ) +
-      QString().sprintf( "%5d", nlrecs ) +
+      QString::asprintf( "%5d", nlrecs ) +
       tr( " Local    Total data sets;\n  "    ) +
-      QString().sprintf( "%5d", nlraws ) +
+      QString::asprintf( "%5d", nlraws ) +
       tr( " Local    RawData    records;\n  " ) +
-      QString().sprintf( "%5d", nledts ) +
+      QString::asprintf( "%5d", nledts ) +
       tr( " Local    EditedData records;\n  " ) +
-      QString().sprintf( "%5d", nlmods ) +
+      QString::asprintf( "%5d", nlmods ) +
       tr( " Local    Model      records;\n  " ) +
-      QString().sprintf( "%5d", nlnois ) +
+      QString::asprintf( "%5d", nlnois ) +
       tr( " Local    Noise      records.\n"   ) );
 }
 

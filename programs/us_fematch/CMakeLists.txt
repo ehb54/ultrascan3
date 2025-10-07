@@ -1,9 +1,5 @@
 # us_fematch
 
-# Find required Qt components based on .pro file
-find_package(Qt5 REQUIRED COMPONENTS DataVisualization
-        )
-
 # Main program sources from us_fematch directory
 set(FEMATCH_SOURCES
         us_fematch_main.cpp
