@@ -42,7 +42,7 @@
   *  
   *  See: 
   *   - <a href="modules.html" >C++ API organized by modules</a>
-  *   - <a href="https://github.com/jlblancoc/nanoflann" >Online README</a>
+  *   - <a href="https://github.com/jlblancoc/nanoflann" >Online README.md</a>
   */
 
 #ifndef  NANOFLANN_HPP_
@@ -410,7 +410,7 @@ namespace nanoflann
 	/** @addtogroup param_grp Parameter structs
 	  * @{ */
 
-	/**  Parameters (see README.md) */
+	/**  Parameters (see README.md.md) */
 	struct KDTreeSingleIndexAdaptorParams
 	{
 		KDTreeSingleIndexAdaptorParams(size_t _leaf_max_size = 10) :
@@ -827,7 +827,7 @@ namespace nanoflann
 		/**
 		 * KDTree constructor
 		 *
-		 * Refer to docs in README.md or online in https://github.com/jlblancoc/nanoflann
+		 * Refer to docs in README.md.md or online in https://github.com/jlblancoc/nanoflann
 		 *
 		 * The KD-Tree point dimension (the length of each point in the datase, e.g. 3 for 3D points)
 		 * is determined by means of:

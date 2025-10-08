@@ -1898,7 +1898,7 @@ void US_ExperGuiRotor::importDisk( void )
   int  rd_hours     = (int)qFloor( run_duration / 3600.0 );
   int  rd_mins      = (int)qRound( ( run_duration - rd_hours * 3600.0 ) / 60.0 );
   QString hh        = "h";
-  QString rd_str    = QString().sprintf( "%d %s %02d m", rd_hours, hh.toLatin1().data(), rd_mins );
+  QString rd_str    = QString::asprintf( "%d %s %02d m", rd_hours, hh.toLatin1().data(), rd_mins );
   msg_run_details  += rd_str + "; ";
   QString scanCount = run_details["ScanCount"];
   msg_run_details  += scanCount;

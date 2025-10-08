@@ -204,7 +204,7 @@ void US_MwlRun::populate_list()
       item->setFlags( item->flags() ^ Qt::ItemIsEditable );
       tw  ->setItem(  ii, 1, item );
 
-      item = new QTableWidgetItem( QString().sprintf( "%6d", rr.nfiles ) );
+      item = new QTableWidgetItem( QString::asprintf( "%6d", rr.nfiles ) );
       item->setFlags( item->flags() ^ Qt::ItemIsEditable );
       tw  ->setItem(  ii, 2, item );
 //qDebug() << "setItems ii" << ii << "ID date runID label"
@@ -251,7 +251,7 @@ qDebug() << "LimData: sfilt" << sfilt;
       item->setFlags( item->flags() ^ Qt::ItemIsEditable );
       tw  ->setItem(  ii, 1, item );
 
-      item = new QTableWidgetItem( QString().sprintf( "%5d", rr.nfiles ) );
+      item = new QTableWidgetItem( QString::asprintf( "%5d", rr.nfiles ) );
       item->setFlags( item->flags() ^ Qt::ItemIsEditable );
       tw  ->setItem(  ii, 2, item );
 //qDebug() << "setItems ii" << ii << "ID date runID label"

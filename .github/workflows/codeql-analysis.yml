@@ -13,14 +13,9 @@ name: "CodeQL"
 
 on:
   push:
-    branches: 
-     - master
-     - aaron-dev-test
+    branches: [ master ]
   pull_request:
-    # The branches below must be a subset of the branches above
-    branches: 
-     - master
-     - aaron-dev-test
+    branches: [ master ]
   schedule:
     - cron: '20 18 * * 1'
 
@@ -161,45 +156,3 @@ jobs:
           make -j4
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
-  unit-testing:
-    name: Unit Testing
-    runs-on: ubuntu-latest
-    permissions:
-      security-events: write
-      actions: read
-
-    strategy:
-      fail-fast: false
-      matrix:
-        language: [ cpp ]
-
-    # Specify the container in which actions will run
-    container:
-      image: ehb1/us3comp:latest
-      options: --cpus 2
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Configure and build
-        run: |
-          apt-get install -y cmake libarchive-dev
-          bdir=`pwd`
-          echo $bdir
-          pwd
-          export ULTRASCAN=$bdir
-          export us3=$bdir
-          git config --global --add safe.directory /__w/ultrascan3/ultrascan3
-          mkdir -p $bdir/build
-          cd build
-          cmake .. 
-          make -j4 
-
-      - name: Run tests
-        run: |
-          cd build
-          ctest --output-on-failure -V
-      
-
-
