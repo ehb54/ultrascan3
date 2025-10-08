@@ -1279,13 +1279,17 @@ void US_ReporterGMP::check_models ( int autoflowID )
 	  
 	  QDateTime now = QDateTime::currentDateTime();
 	  
-	  if ( description.contains( "2DSA-IT" ) && modelID == Triple_to_ModelsDesc[ Array_of_tripleNames[ i ] ][ "2DSA-IT" ] )
+	  // if ( description.contains( "2DSA-IT" )
+	  if ( description.contains( "2DSA" ) && description.contains( "-IT") 
+	       && modelID == Triple_to_ModelsDesc[ Array_of_tripleNames[ i ] ][ "2DSA-IT" ] )
 	    {
 	      qDebug() << "2DSA-IT Ids: modelID, read from modelLink: " << modelID << Triple_to_ModelsDesc[ Array_of_tripleNames[ i ] ][ "2DSA-IT" ];
 	      model_list << "2DSA-IT";
 	    }
 	  
-	  if ( description.contains( "2DSA-MC" ) && modelID == Triple_to_ModelsDesc[ Array_of_tripleNames[ i ] ][ "2DSA-MC" ] )
+	  //if ( description.contains( "2DSA-MC" )
+	  if ( description.contains( "2DSA" ) && description.contains( "-MC")     
+	       && modelID == Triple_to_ModelsDesc[ Array_of_tripleNames[ i ] ][ "2DSA-MC" ] )
 	    {
 	      qDebug() << "2DSA-MC Ids: modelID, read from modelLink: " << modelID << Triple_to_ModelsDesc[ Array_of_tripleNames[ i ] ][ "2DSA-MC" ];
 	      model_list << "2DSA-MC";
@@ -2079,6 +2083,11 @@ void US_ReporterGMP::read_protocol_and_reportMasks( void )
   replicates_to_channdesc      = currAProf. replicates_to_channdesc_main; //Empty ? (not needed?)
   //channdesc_to_overlapping_wvls
   channdesc_to_overlapping_wvls = currAProf. channdesc_to_overlapping_wvls_main;
+
+  //Scan exclusions
+  scan_excl_beg = currAProf.scan_excl_begin;
+  scan_excl_nth = currAProf.scan_excl_nth;
+  scan_excl_end = currAProf.scan_excl_end;
   
   //Debug: AProfile
   qDebug() << "chndescs_alt QStringList -- " <<  chndescs_alt;
@@ -5442,54 +5451,34 @@ void US_ReporterGMP::simulateModel( QMap < QString, QString> & tripleInfo )
 	  simparams.speed_step[ 0 ].acceleration = (int)qRound( rate );
 	}
     }
-  
-  // Do a quick test of the speed step implied by TimeState
-  int tf_scan   = simparams.speed_step[ 0 ].time_first;
-  int accel1    = simparams.speed_step[ 0 ].acceleration;
-  QString svalu = US_Settings::debug_value( "SetSpeedLowA" );
-  int lo_ss_acc = svalu.isEmpty() ? 250 : svalu.toInt();
-  int rspeed    = simparams.speed_step[ 0 ].rotorspeed;
-  double  tf_aend   = static_cast<double>(tf_scan);
-  // prevent any division by zero
-  if (accel1 != 0)
-  {
-    tf_aend = static_cast<double>(rspeed) / static_cast<double>(accel1);
-  }
-  
-  qDebug() << "SimMdl: ssck: rspeed accel1 lo_ss_acc"
-	   << rspeed << accel1 << lo_ss_acc << "tf_aend tf_scan"
-	   << tf_aend << tf_scan;
-  //x0  1  2  3  4  5
-  // check if the acceleration rate is low or the first scan was taken before the acceleration ended
-  // Due to older, wrong timestate calculation there might be a case, in which the calculated end of acceleration can
-  // be up to 1 second later than expected, tf_scan + 1 accounts for this.
-  if ( accel1 < lo_ss_acc  ||  tf_aend > ( tf_scan + 1 ) )
-    {
-      QString wmsg = tr( "The TimeState computed/used is likely bad:<br/>"
-			 "The acceleration implied is %1 rpm/sec.<br/>"
-			 "The acceleration zone ends at %2 seconds,<br/>"
-			 "with a first scan time of %3 seconds.<br/><br/>"
-			 "<b>You should rerun the experiment without<br/>"
-			 "any interim constant speed, and then<br/>"
-			 "you should reimport the data.</b>" )
-	.arg( accel1 ).arg( QString::number(tf_aend) ).arg( QString::number(tf_scan) );
-      
+  QStringList check_results = US_AstfemMath::check_acceleration(simparams.speed_step, edata->scanData);
+  if ( !check_results.isEmpty() ) {
       QMessageBox msgBox( this );
-      msgBox.setWindowTitle( tr( "Bad TimeState Implied!" ) );
-      msgBox.setTextFormat( Qt::RichText );
-      msgBox.setText( wmsg );
+      msgBox.setWindowTitle( tr( qPrintable( check_results[0] ) ) );
+      if ( check_results.size() > 1 ) {
+          msgBox.setTextFormat( Qt::RichText );
+          msgBox.setText( tr( qPrintable( check_results[1] ) ) );
+      }
+      if ( check_results.size() > 2 ) {
+          QString info = "";
+          for ( int i = 2; i < check_results.size(); i++ ) {
+              info += check_results[i] + "\n";
+          }
+          msgBox.setInformativeText( tr( qPrintable( info ) ) );
+      }
       msgBox.addButton( tr( "Continue" ), QMessageBox::RejectRole );
       QPushButton* bAbort = msgBox.addButton( tr( "Abort" ),
-					      QMessageBox::YesRole    );
+                                                                                                      QMessageBox::YesRole );
       msgBox.setDefaultButton( bAbort );
       msgBox.exec();
-      if ( msgBox.clickedButton() == bAbort )
-	{
-	  QApplication::restoreOverrideCursor();
-	  qApp->processEvents();
-	  return;
-	}
-    }
+
+      if ( msgBox.clickedButton() == bAbort ) {
+          QApplication::restoreOverrideCursor();
+          qApp->processEvents();
+          return;
+      }
+  }
+
   sdata->cell        = rdata->cell;
   sdata->channel     = rdata->channel;
   sdata->description = rdata->description;
@@ -5794,10 +5783,25 @@ void US_ReporterGMP::process_combined_plots_individual ( QString triplesname_p, 
 
       qDebug() << "INDCOMBO_1: " << modelDescModified[ ii ];
       qDebug() << "INDCOMBO_2: " << triplesname << stage_model << triplesname_chann;
-          
+
+      /**/
+      QString reg_exp_sm = stage_model;
+      reg_exp_sm = reg_exp_sm.replace("-",".*");
+      qDebug() << "INDCOMBO_2a: reg_exp_sm -- " << reg_exp_sm;
+      QRegularExpression re_sm(reg_exp_sm);
+      /**/
+
+      // //DEBUG
+      // bool b_1 = modelDescModified[ ii ].contains( triplesname_mod );
+      // bool b_2 =  modelDescModified[ ii ].contains( re_sm );
+      // qDebug() << "b_1, b_2 -- " << b_1 << b_2;
+      // modelGuidExistsForStage_ind( triplesname, stage_model, modelDescModifiedGuid[ ii ] );
+      // //DEBUG
+      
       //fiter by type|model
       if ( modelDescModified[ ii ].contains( triplesname_mod ) &&
-	   modelDescModified[ ii ].contains( stage_model ) &&
+	   //modelDescModified[ ii ].contains( stage_model ) &&
+	   modelDescModified[ ii ].contains( re_sm ) &&
 	   modelGuidExistsForStage_ind( triplesname, stage_model, modelDescModifiedGuid[ ii ] ) )
 	{
 	  qDebug()  << "INDCOMBO_3: YES ";
@@ -6068,7 +6072,21 @@ void US_ReporterGMP::process_combined_plots ( QString filename_passed )
       for ( int ii = 0; ii < modelDescModified.size(); ii++ )  
 	{
 	  //fiter by type|model
-	  if ( modelDescModified[ ii ].contains( modelNames[ m ] ) && modelGuidExistsForStage( modelNames[ m ], modelDescModifiedGuid[ ii ] ) )
+	  /**/
+	  QString reg_exp_sm = modelNames[ m ];
+	  reg_exp_sm = reg_exp_sm.replace("-",".*");
+	  QRegularExpression re_sm(reg_exp_sm);
+	  /**/
+
+	  // //DEBUG
+	  // bool b_1 = modelDescModified[ ii ].contains( re_sm );
+	  // qDebug() << "b_1, modelDescModified[ ii ], reg_exp_sm  -- " << b_1 << modelDescModified[ ii ] << reg_exp_sm;
+	  // modelGuidExistsForStage( modelNames[ m ], modelDescModifiedGuid[ ii ] );
+	  // //
+	  
+	  if ( //modelDescModified[ ii ].contains( modelNames[ m ] )
+	       modelDescModified[ ii ].contains( re_sm ) &&
+	       modelGuidExistsForStage( modelNames[ m ], modelDescModifiedGuid[ ii ] ) )
 	    {
 	      isModel = true;
 
@@ -9146,6 +9164,8 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
    QString model_name = mdla.split("_")[1];
    if ( model_name.contains("PCSA") )
      model_name = "PCSA";
+   if ( model_name.contains("-CG") )
+     model_name = model_name.replace("-CG", "");
    
    double tot_conc_r, tot_conc_r_factor, tot_conc_tol_r, rmsd_r, av_int_r, exp_dur_r, exp_dur_tol_r;
    double loading_volume_r, loading_volume_tol_r ;
@@ -9368,8 +9388,17 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
        QString method         = curr_item.method;
        if( method.contains ("PCSA") )
 	 method = "PCSA";
-
-       if ( mdla.contains ( method ) )
+       /* */
+       QStringList a_method_types = method.split("-");
+       bool method_identity = true;
+       for (const QString& sub : a_method_types )
+	 {
+	  if (!mdla.contains(sub) )
+	    method_identity = false; 
+	 }
+	/* */
+	 
+       if ( mdla.contains ( method ) || method_identity )
 	 method_type_combo_exists = true;
      }
    
@@ -9452,8 +9481,19 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
 	   QString tot_frac_passed = ( qAbs( frac_tot_m - frac_tot_r ) <= frac_tot_tol_r ) ? "YES" : "NO";
 
 	   double wav_variable_within_range = double( variable_val_within_range / int_val_m );
+
+	   /* */
+	   QStringList a_method_types = method.split("-");
+	   bool method_identity = true;
+	   for (const QString& sub : a_method_types )
+	     {
+	       if (!mdla.contains(sub) )
+		 method_identity = false; 
+	     }
+	   /* */
 	   
-	   if ( mdla.contains ( method ) )
+	   //if ( mdla.contains ( method ) )
+	   if ( method_identity )
 	     {
 	       // curr_item. integration_val_sim = int_val_m;
 	       // curr_item. total_percent_sim   = frac_tot_m;
@@ -10974,7 +11014,6 @@ void US_ReporterGMP::assemble_pdf( QProgressDialog * progress_msg )
       
       if ( !scan1.isEmpty() )
 	{
-	  has_uvvis = true;
 	  html_optical += tr(
 			     "<td> %1: </td> &nbsp;&nbsp;&nbsp;&nbsp;"
 			     )
@@ -10985,7 +11024,6 @@ void US_ReporterGMP::assemble_pdf( QProgressDialog * progress_msg )
       
       if ( !scan2.isEmpty() )
 	{
-	  has_interference = true;
 	  html_optical += tr(
 			     "<td> %1: </td> &nbsp;&nbsp;&nbsp;&nbsp;"
 			     )
@@ -10996,7 +11034,6 @@ void US_ReporterGMP::assemble_pdf( QProgressDialog * progress_msg )
       
       if ( !scan3.isEmpty() )
 	{
-	  has_fluorescense = true;
 	  html_optical += tr(
 			     "<td> %1: </td> &nbsp;&nbsp;&nbsp;&nbsp;"
 			     )
@@ -11098,7 +11135,7 @@ void US_ReporterGMP::assemble_pdf( QProgressDialog * progress_msg )
   
   //SCAN_COUNT: begin
   html_scan_count = tr(
-		       "<h3 align=left> Scan Counts and Scan Intervals For Optics in Use </h3>"
+		       "<h3 align=left> Scan Counts, Intervals, and Exclusions For Optics in Use </h3>"
 		       "&nbsp;&nbsp;<br>"
 		       )
     ;
@@ -11126,6 +11163,22 @@ void US_ReporterGMP::assemble_pdf( QProgressDialog * progress_msg )
     .arg( scanint_uvvis_str )                             //1
     .arg( QString::number( scancount ) )                  //2
     ;
+
+  //go over scan exclusions in UV-vis
+  bool excl_exist = false;
+  if ( scancount > 0 )
+    {
+      if ( excl_exist )
+	html_scan_count_uv += display_scan_excls( scan_excl_beg, scan_excl_nth,
+						  scan_excl_end, scancount, excl_exist, "UV/vis" );
+      else
+	html_scan_count_uv += tr(
+				 "<table style=\"margin-left:30px\">"
+				 "<tr><td><b><i> Exclusion Profiles: </b></i></td></tr>"
+				 "<tr><td> No Scan Exclusions </td></tr>"
+				 "</table>"
+				 );
+    }
   
   //Interference
   QString html_scan_count_int = tr(
@@ -11145,11 +11198,25 @@ void US_ReporterGMP::assemble_pdf( QProgressDialog * progress_msg )
     .arg( scanint_int_str )                                //1
     .arg( QString::number( scancount_int ) )               //2
     ;
-
-
-  if ( has_uvvis )
+  //go over scan exclusions in Int.
+  bool excl_int_exist = false;
+  if ( scancount_int > 0 )
+    {
+      if ( excl_int_exist )
+	html_scan_count_int += display_scan_excls( scan_excl_beg, scan_excl_nth,
+						   scan_excl_end, scancount_int, excl_int_exist, "Interf" );
+      else
+	html_scan_count_int += tr(
+				  "<table style=\"margin-left:30px\">"
+				  "<tr><td><b><i> Exclusion Profiles: </b></i></td></tr>"
+				  "<tr><td> No Scan Exclusions </td></tr>"
+				  "</table>"
+				  );
+    }
+  
+  if ( has_uv )
     html_scan_count += html_scan_count_uv;
-  if ( has_interference )
+  if ( has_int )
     html_scan_count += html_scan_count_int;  
   
   html_scan_count += tr( "<hr>" ) ;
@@ -11813,6 +11880,82 @@ void US_ReporterGMP::assemble_pdf( QProgressDialog * progress_msg )
   
 }
 
+//scan exclusions
+QString US_ReporterGMP::display_scan_excls( QList<int> scan_e_b, QList<int> scan_e_nth,
+					    QList<int> scan_e_e, int scan_c, bool& excl_yes, QString opt_type )
+{
+  qDebug() << "[in display_scan_excls]: scans [beg|nth|end] -- "
+	   << scan_e_b << "|" << scan_e_nth << "|" << scan_e_e;
+
+  //backward compatibility
+  for (int ii=0; ii<scan_e_nth.size(); ++ii)
+    {
+      if ( scan_e_nth[ii] == 0 )
+	scan_e_nth[ii] = 1;
+    }
+  
+  QString scans_excl_str;
+  
+  QList<int> scan_e_remain;
+  for (int ii=0; ii<scan_e_b.size(); ++ii)
+    {
+      int remaining_scans_num;
+      int remaining_scans_num_nth = 0;
+      
+      remaining_scans_num = scan_c - ( scan_e_e[ii] );
+      for (int nt = scan_e_b[ii]; nt < remaining_scans_num; ++nt)
+	{
+	  if ((nt + 1) % scan_e_nth[ii] == 0)
+	    ++remaining_scans_num_nth;
+	}
+      scan_e_remain << remaining_scans_num_nth;
+    }
+
+  //string
+  scans_excl_str += tr(
+		       "<table style=\"margin-left:30px\">"
+		       "<tr><td><b><i> Exclusion Profiles: </b></i></td></tr>"
+		       "<tr>"
+		       "<td> Channel:           </td>"
+		       "<td> Scan Begin:        </td>"
+		       "<td> Include every Nth: </td>"
+		       "<td> Scan End:          </td>"
+		       "<td> # Remaining Scans: </td>"
+		       "</tr>"
+			);
+  
+  for (int ii=0; ii<chndescs_alt.size(); ++ii)
+    {
+      if ( !chndescs_alt[ii].contains ( opt_type ) )
+	continue;
+      qDebug() << "Channel: " << chndescs_alt[ii] << "; scans [beg|nth|end], remaining -- "
+	       << scan_e_b[ii] << scan_e_nth[ii] << scan_e_e[ii] << ", " << scan_e_remain[ii];
+
+      QString chan_s = chndescs_alt[ii];
+      chan_s = chan_s.split(":")[0];
+      scans_excl_str += tr(
+			   "<tr>"
+			   "<td> %1 </td>"
+			   "<td> %2 </td>"
+			   "<td> %3 </td>"
+			   "<td> %4 </td>"
+			   "<td> %5 </td>"
+			   "</tr>"
+			   )
+	.arg( chan_s )                                       //1
+	.arg( QString::number( scan_e_b[ii] ) )              //2
+	.arg( QString::number( scan_e_nth[ii] ) )            //3
+	.arg( QString::number( scan_e_e[ii] ) )              //4
+	.arg( QString::number( scan_e_remain[ii] ) )         //5
+	;
+
+      if( scan_e_remain[ii] != scan_c )
+	excl_yes = true;
+    }
+  scans_excl_str += tr( "</table>" );
+  
+  return scans_excl_str; 
+}
 
 //write PDF Report
 void US_ReporterGMP::write_pdf_report( void )
