@@ -262,7 +262,7 @@ bool US_ModelGui::load_model( const QString& load_init, US_Model& modelIn )
                US_Passwd pw;
                US_DB2    db( pw.getPasswd() );
 
-               if ( db.lastErrno() != US_DB2::OK )
+               if ( db.lastErrno() != IUS_DB2::OK )
                {
                   connect_error( db.lastError() );
                   return false;
@@ -296,7 +296,7 @@ bool US_ModelGui::load_model( const QString& load_init, US_Model& modelIn )
                      US_Passwd pw;
                      US_DB2    db( pw.getPasswd() );
 
-                     if ( db.lastErrno() != US_DB2::OK )
+                     if ( db.lastErrno() != IUS_DB2::OK )
                      {
                         connect_error( db.lastError() );
                         return false;
@@ -489,7 +489,7 @@ qDebug() << "SelMdl:  index modlx" << index << modlx << "mdesc" << mdesc;
       US_Passwd pw;
       US_DB2    db( pw.getPasswd() );
 
-      if ( db.lastErrno() != US_DB2::OK )
+      if ( db.lastErrno() != IUS_DB2::OK )
       {
          connect_error( db.lastError() );
          return;
@@ -723,7 +723,7 @@ void US_ModelGui::connect_error( const QString& error )
       tr( "Could not connect to database\n" ) + error );
 }
 
-bool US_ModelGui::database_ok( US_DB2& db )
+bool US_ModelGui::database_ok( IUS_DB2& db )
 {
    if ( db.lastErrno() == US_DB2::OK ) return true;
 
