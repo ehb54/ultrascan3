@@ -1304,6 +1304,7 @@ void US_FitMeniscus::edit_update( void )
   if ( auto_mode )
     {
       pb_update->setEnabled( false );
+      qApp->processEvents();
       
       QString requestID = triple_information[ "requestID" ];
       //--- LOCK && UPDATE the autoflowStages' ANALYSIS field for the record
