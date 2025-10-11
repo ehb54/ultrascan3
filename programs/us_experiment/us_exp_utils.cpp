@@ -3871,9 +3871,16 @@ DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
 
    if ( mainw->automode )
      {
+       bool connectivity_s = ( rpRotor->importData && !rpRotor->importDataDisk.isEmpty() ) ?
+	 true : mainw->connection_status;
+       
+       // subm_enab         = ( have_run    &&  have_proj  &&  proto_ena  &&
+       // 			     mainw->connection_status &&                // ALEXEY: use top-level connection boolean!
+       // 			     !currProto->exp_label.isEmpty() );         // ALEXEY: and label is present
+
        subm_enab         = ( have_run    &&  have_proj  &&  proto_ena  &&
-			     mainw->connection_status &&                // ALEXEY: use top-level connection boolean!
-			     !currProto->exp_label.isEmpty() );         // ALEXEY: and label is present
+       			     connectivity_s &&                    // ALEXEY: use top-level connection boolean!
+			     !currProto->exp_label.isEmpty() );   // ALEXEY: and label is present
 
        //add cond. for data from disk:
        if ( rpRotor->importData && rpRotor->importDataDisk.isEmpty() )
