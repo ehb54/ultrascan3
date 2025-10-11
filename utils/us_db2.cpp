@@ -60,6 +60,14 @@ US_DB2::~US_DB2()
 #endif
 }
 
+QString US_DB2::lastError() {
+    return error;
+}
+
+int US_DB2::lastErrno() {
+    return db_errno;
+}
+
 #ifdef NO_DB
 bool US_DB2::test_db_connection( const QString&, const QString&,
       const QString&, const QString&, QString& ) { return false; }

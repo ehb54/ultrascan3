@@ -1,67 +1,86 @@
-# Specify the library
-add_library(utils SHARED
-        us_ana_profile.cpp us_ana_profile.h
-        us_analyte.cpp us_analyte.h
-        us_archive.cpp us_archive.h
-        us_astfem_math.cpp us_astfem_math.h
-        us_astfem_rsa.cpp us_astfem_rsa.h
-        us_buffer.cpp us_buffer.h
-        us_cfa_data.cpp us_cfa_data.h
-        us_constants.cpp us_constants.h
-        us_crc.cpp us_crc.h
-        us_csv_data.cpp us_csv_data.h
-        us_dataIO.cpp us_dataIO.h
-        us_datafiles.cpp us_datafiles.h
-        us_db2.cpp us_db2.h
-        us_dmga_constr.cpp us_dmga_constr.h
-        us_eprofile.cpp us_eprofile.h
-        us_geturl.cpp us_geturl.h
-        us_global.cpp us_global.h
-        us_gzip.cpp us_gzip.h
-        us_hardware.cpp us_hardware.h
-        us_http_post.cpp us_http_post.h
-        us_hydrosim.cpp us_hydrosim.h
-        us_lamm_astfvm.cpp us_lamm_astfvm.h
-        us_link_ssl.cpp us_link_ssl.h
-        us_lm.cpp us_lm.h
-        us_local_server.cpp us_local_server.h
-        us_math2.cpp us_math2.h
-        us_matrix.cpp us_matrix.h
-        us_memory.cpp us_memory.h
-        us_model.cpp us_model.h
-        us_noise.cpp us_noise.h
-        us_pcsa_modelrec.cpp us_pcsa_modelrec.h
-        us_project.cpp us_project.h
-        us_protocol_util.cpp us_protocol_util.h
-        us_report.cpp us_report.h
-        us_report_gmp.cpp us_report_gmp.h
-        us_rotor.cpp us_rotor.h
-        us_run_protocol.cpp us_run_protocol.h
-        us_settings.cpp us_settings.h
-        us_simparms.cpp us_simparms.h
-        us_solute.cpp us_solute.h
-        us_solution.cpp us_solution.h
-        us_solution_vals.cpp us_solution_vals.h
-        us_solve_sim.cpp us_solve_sim.h
-        us_stiffbase.cpp us_stiffbase.h
-        us_tar.cpp us_tar.h
-        us_time_state.cpp us_time_state.h
-        us_timer.cpp us_timer.h
-        us_util.cpp us_util.h
-        us_vector.cpp us_vector.h
-        us_xpn_data.cpp us_xpn_data.h
-        us_zsolute.cpp us_zsolute.h
+# UltraScan3 Utils Library
+# Based on library.pri configuration
+
+# Auto-discover source files
+file(GLOB UTILS_SOURCES "*.cpp")
+file(GLOB UTILS_HEADERS "*.h")
+
+# Remove any sources that shouldn't be compiled based on configuration
+if(US3_NO_DB)
+    # For supercomputer backends, exclude database-related files if needed
+    # list(REMOVE_ITEM UTILS_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/us_database.cpp")
+endif()
+
+# Create the utils library
+add_library(us_utils ${UTILS_SOURCES} ${UTILS_HEADERS})
+
+# Set library properties (version from qmake VERSION = 10.0)
+set_target_properties(us_utils PROPERTIES
+        VERSION ${US3_VERSION}
+        SOVERSION ${US3_VERSION_MAJOR}
+        OUTPUT_NAME "us_utils${US3_VERSION_MAJOR}"  # Matches qmake VER = 10
         )
 
-# Ensure debug information is included
-target_compile_options(utils PRIVATE -g -O0)
+# Include directories
+target_include_directories(us_utils
+        PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}
+        ${CMAKE_CURRENT_BINARY_DIR}  # For generated headers
+        )
 
-# Link Qt libraries to the utils library
-target_link_libraries(utils Qt5::Core Qt5::Sql Qt5::Network Qt5::Xml)
+# Core Qt libraries (always needed)
+target_link_libraries(us_utils
+        PUBLIC
+        Qt5::Core
+        Qt5::Xml
+        Qt5::Network
+        OpenSSL::SSL
+        OpenSSL::Crypto
+        LibArchive::LibArchive
+        )
 
-target_link_libraries(utils archive)
+# Optional database support
+if(NOT US3_NO_DB)
+    target_link_libraries(us_utils
+            PUBLIC
+            Qt5::Sql
+            MySQL::Client
+            )
+endif()
 
-# Specify include directories for utils
-target_include_directories(utils PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-target_include_directories(utils PUBLIC /usr/include)
-target_include_directories(utils PUBLIC /usr/include/mysql)
+# Platform-specific libraries
+if(UNIX AND NOT APPLE)
+    # Linux-specific libraries
+    if(X11_FOUND)
+        target_link_libraries(us_utils PUBLIC ${X11_LIBRARIES})
+        target_include_directories(us_utils PUBLIC ${X11_INCLUDE_DIR})
+    endif()
+elseif(WIN32)
+    # Windows system libraries
+    target_link_libraries(us_utils PUBLIC ${WIN32_SYSTEM_LIBS})
+    target_compile_definitions(us_utils PRIVATE US_MAKE_DLL US_MAKE_UTIL_DLL)
+elseif(APPLE)
+    # macOS-specific setup
+    target_include_directories(us_utils PUBLIC /usr/X11R6/include)
+    find_library(X11_LIB X11 PATHS /usr/X11R6/lib)
+    find_library(XAU_LIB Xau PATHS /usr/X11R6/lib)
+    if(X11_LIB AND XAU_LIB)
+        target_link_libraries(us_utils PUBLIC ${X11_LIB} ${XAU_LIB})
+    endif()
+endif()
+
+# Compiler-specific options for debugging
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    target_compile_options(us_utils PRIVATE -g -O0)
+endif()
+
+# Export this target for use by other parts of the project
+add_library(UltraScan3::Utils ALIAS us_utils)
+
+# Installation
+install(TARGETS us_utils
+        EXPORT UltraScan3Targets
+        LIBRARY DESTINATION lib
+        ARCHIVE DESTINATION lib
+        RUNTIME DESTINATION bin
+        )

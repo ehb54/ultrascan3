@@ -86,6 +86,9 @@ class US_ReporterGMP : public US_Widgets
         QMap<QString, QMap<QString, US_ReportGMP>> ch_reports; //!< Channel reports
         QMap<QString, QMap<QString, US_ReportGMP>> ch_reports_internal; //!< Internal channel reports
         QMap<QString, QList<double>> ch_wvls; //!< Channel wavelengths
+        QList<int> scan_excl_beg;
+        QList<int> scan_excl_nth;
+        QList<int> scan_excl_end;
 
         QList<int> replicates;              //!< Replicate list
         QMap<int, QStringList> replicates_to_channdesc; //!< Replicate to channel descriptions map
@@ -298,10 +301,6 @@ class US_ReporterGMP : public US_Widgets
         int nchan_optics;                    //!< Number of optical channels
         int nchan_ranges;                    //!< Number of channel ranges
 
-        bool has_uvvis;                      //!< Flag for UVVIS
-        bool has_interference;               //!< Flag for interference
-        bool has_fluorescense;               //!< Flag for fluorescence
-
         QString editing_time_abde;
         QString analysis_time_abde;
 
@@ -339,6 +338,7 @@ class US_ReporterGMP : public US_Widgets
         void write_pdf_report(void); //!< Write PDF report
         void remove_files_by_mask(QString, QStringList); //!< Remove files by mask
         void write_gmp_report_DB(QString, QString); //!< Write GMP report to DB
+        QString display_scan_excls( QList<int>, QList<int>, QList<int>, int, bool&, QString );
         
         void assemble_user_inputs_html(void); //!< Assemble user inputs in HTML
         void user_interactions_analysis( QString, QString );

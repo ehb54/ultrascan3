@@ -468,7 +468,7 @@ qDebug() << "LdEd: selsz" << selections.size() << "dlabsz" << dlabels.size();
       US_Passwd   pw;
       US_DB2      db( pw.getPasswd() );
 
-      if ( db.lastErrno() != US_DB2::OK )
+      if ( db.lastErrno() != IUS_DB2::OK )
       {
          QApplication::restoreOverrideCursor();
          QMessageBox::information( this,
@@ -554,7 +554,7 @@ qDebug() << "LdEd: was-empty, aucID" << aucID << idAUC;
                db.query( query );
 qDebug() << "LdEd: w-e, num_rows" << db.numRows();
                db.next();
-qDebug() << "LdEd: w-e, dberr" << db.lastErrno() << US_DB2::OK;
+qDebug() << "LdEd: w-e, dberr" << db.lastErrno() << IUS_DB2::OK;
                ddesc.acheck     = db.value( 8 ).toString() + " " +
                                   db.value( 9 ).toString();
 qDebug() << "LdEd: was-empty, now acheck" << ddesc.acheck;

@@ -1,55 +1,38 @@
-// Include the necessary Qt headers for a Qt application and testing framework
+// test_us_utils_main.cpp - Google Test
+#include "qt_test_base.h"
 #include <QCoreApplication>
-#include <QtTest>
+#include <QApplication>
 
-// Include the headers for the test classes
-#include "test_us_util.h"
-#include "test_us_datafiles.h"
-#include "test_us_simparams.h"
+// Qt Test Environment for Google Test
+class QtTestEnvironment : public ::testing::Environment {
+public:
+    void SetUp() override {
+        if (!QCoreApplication::instance()) {
+            static int argc = 1;
+            static char* argv[] = {const_cast<char*>("test")};
+            app_ = new QCoreApplication(argc, argv);
+        }
+        qputenv("QT_QPA_PLATFORM", "offscreen");
 
-// Main function: entry point for the test application
-int main(int argc, char *argv[])
-{
-    // Create a QCoreApplication object to manage application-wide resources
-    QCoreApplication app(argc, argv);
-
-    // Variable to keep track of the overall status of all test executions
-    int status = 0;
-
-    // Run the tests for the TestUSUtil class
-    {
-        // Create an instance of the TestUSUtil class
-        TestUSUtil testUSUtil;
-
-        // Execute the tests in the TestUSUtil class
-        // qExec returns the status of the test execution
-        // Combine the status with the overall status using the bitwise OR operator
-        status |= QTest::qExec(&testUSUtil, argc, argv);
+        // Optional: Suppress Qt debug output during tests
+        qputenv("QT_LOGGING_RULES", "*.debug=false");
     }
 
-    // Run the tests for the TestUSDataFiles class
-    {
-        // Create an instance of the TestUSDataFiles class
-        TestUSDataFiles testUSDatafiles;
-
-        // Execute the tests in the TestUSDataFiles class
-        // qExec returns the status of the test execution
-        // Combine the status with the overall status using the bitwise OR operator
-        status |= QTest::qExec(&testUSDatafiles, argc, argv);
+    void TearDown() override {
+        // Cleanup handled automatically
     }
 
-    // Run the tests for the TestUS_SimulationParameters class
-    {
-        // Create an instance of the TestUS_SimulationParameters class
-        TestUS_SimulationParameters test_SimulationParameters;
+private:
+    QCoreApplication* app_ = nullptr;
+};
 
-        // Execute the tests in the TestUSDataFiles class
-        // qExec returns the status of the test execution
-        // Combine the status with the overall status using the bitwise OR operator
-        status |= QTest::qExec(&test_SimulationParameters, argc, argv);
-    }
+int main(int argc, char **argv) {
+    // Initialize Google Test
+    ::testing::InitGoogleTest(&argc, argv);
 
-    // Return the overall status of all test executions
-    // A non-zero value indicates that one or more tests failed
-    return status;
+    // Add Qt environment
+    ::testing::AddGlobalTestEnvironment(new QtTestEnvironment);
+
+    // Run all tests - Google Test automatically discovers them!
+    return RUN_ALL_TESTS();
 }

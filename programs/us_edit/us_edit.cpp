@@ -792,7 +792,27 @@ pb_plateau->setVisible(false);
    // details[ "expType" ]      = QString("ABDE");
    // details[ "dataSource" ]   = QString("dataDiskAUC");
 
-   //load_auto( details );
+   // details[ "invID_passed" ] = QString("12");
+   // details[ "filename" ]     = QString("demo-dataDiskRun-1623");
+   // details[ "protocolName" ] = QString("test_nth_7");
+   // details[ "statusID" ]     = QString("671");
+   // details[ "autoflowID" ]   = QString("1623");
+   // details[ "runID" ]        = QString("");
+   // details[ "OptimaName" ]   = QString("");
+   // details[ "expType" ]      = QString("VELOCITY");
+   // details[ "dataSource" ]   = QString("dataDiskAUC:Absorbance");
+
+   // details[ "invID_passed" ] = QString("12");
+   // details[ "filename" ]     = QString("MartinR_pAUC-196-EcoRI_Run-1_16SEP25-run2104-dataDiskRun-1626");
+   // details[ "protocolName" ] = QString("test_nth_10");
+   // details[ "statusID" ]     = QString("674");
+   // details[ "autoflowID" ]   = QString("1626");
+   // details[ "runID" ]        = QString("");
+   // details[ "OptimaName" ]   = QString("");
+   // details[ "expType" ]      = QString("VELOCITY");
+   // details[ "dataSource" ]   = QString("dataDiskAUC");
+
+   // load_auto( details );
 
 }
 
@@ -4207,7 +4227,8 @@ bool US_Edit::readAProfileBasicParms_auto( QXmlStreamReader& xmli )
 		  {
 		    QStringList scan_excl_pairs;
 		    scan_excl_pairs << attr.value( "scan_excl_begin" ).toString()
-				    << attr.value( "scan_excl_end" )  .toString();
+				    << attr.value( "scan_excl_end" )  .toString()
+				    << attr.value( "scan_excl_nth" )  .toString();
 
 		    qDebug() << "READING aprof XML, scans excl.: " << channel_name << ", " << scan_excl_pairs;
 
@@ -8960,15 +8981,18 @@ DbgLv(1) << " 2)gap_fringe" << gap_fringe << "idax" << idax;
    //Here, take into account excluded scans on per triple basis
    int scanExcl_begin_ind = editProfile_scans_excl[ cb_triple->currentText() ][0].toInt();
    int scanExcl_end_ind   = editProfile_scans_excl[ cb_triple->currentText() ][1].toInt();
+   int scanExcl_nth_ind   = editProfile_scans_excl[ cb_triple->currentText() ][2].toInt();
 
    qDebug() << "IN new_Triple_auto(): triple -- " << cb_triple->currentText()
    	    << "ScanBegin -- " << scanExcl_begin_ind
-   	    << "ScanEnd -- "   << scanExcl_end_ind ;
+   	    << "ScanEnd -- "   << scanExcl_end_ind
+	    << "ScanNth -- "   << scanExcl_nth_ind;
 
    qDebug() << "Includes size before remove: " << includes.size();
    //for ( int i = 0; i < includes.size(); ++i  )
    //  qDebug() << "Includes after remove: " << includes[ i ];
 
+   /*
    for ( int ii = 0; ii < scanExcl_begin_ind; ii++ )
      {
        includes.removeFirst();
@@ -8978,7 +9002,33 @@ DbgLv(1) << " 2)gap_fringe" << gap_fringe << "idax" << idax;
      {
        includes.removeLast();
      }
+   //include only nth scan
+   for ( int ii = 0; ii < includes.size(); ii++ )
+     {
+       if ((ii + 1) % scanExcl_nth_ind != 0)
+	 includes.removeAt(ii);
+     }
+   */
+   QList<int> excludes_curr;
+   for ( int ii = 0; ii < data.scanData.size(); ii++ )
+     {
+       if ( ii < scanExcl_begin_ind && !excludes_curr.contains( ii ) )
+	 excludes_curr << ii;
+       if ( (ii > data.scanData.size() - scanExcl_end_ind) && !excludes_curr.contains( ii ) )
+       	 excludes_curr << ii;
+       if ( ii % scanExcl_nth_ind != 0 && !excludes_curr.contains( ii ) )
+	 excludes_curr << ii;
+     }
 
+   qDebug() << "includes [before] -- " << includes;
+   qDebug() << "excludes_curr -- " << excludes_curr; 
+   
+   for ( int ii = 0; ii < excludes_curr.size(); ii++ )
+      includes.removeAll( excludes_curr[ ii ] );
+   /////
+
+   qDebug() << "includes [after] -- " << includes;
+   
    //Also, for "ABDE", remove from includes all by manuall editing
    if ( autoflow_expType == "ABDE" && edited_triples_abde[ cb_triple->currentText() ] )
      includes = editProfile_includes[ cb_triple->currentText() ];
@@ -9919,6 +9969,19 @@ void US_Edit::write_auto( void )
   // record_edit_status( automatic_meniscus, dataType );
   // exit(1);
 
+
+  // //DEBUG write_triple_auto for non-mwl, no check!!!
+  // for ( int trx = 0; trx < cb_triple->count(); trx++ )
+  //   {
+  //     qDebug() << "Writing non-MWL, channel: " << trx << ": " << cb_triple->itemText( trx );
+  //     write_triple_auto( trx );
+  //   }
+ 
+  // ////
+
+  
+  
+
   /****  TEMP1 **/
   //--- Check if saving already initiated
   int status_edit_unique;
@@ -10816,7 +10879,7 @@ QString US_Edit::compose_json( bool fm_stage )
 }
 
 // Set Autoflow record to REPORT (for ABDE)
-void US_Edit::update_autoflow_record_atEditData_abde( US_DB2* db )
+void US_Edit::update_autoflow_record_atEditData_abde( IUS_DB2* db )
 {
   QStringList qry;
 
@@ -10837,7 +10900,7 @@ void US_Edit::update_autoflow_record_atEditData_abde( US_DB2* db )
 }
 
 // Set Autoflow record to ANALSYIS && set analysises ID(s)
-void US_Edit::update_autoflow_record_atEditData( US_DB2* db,  QString& AnalysisIDsString )
+void US_Edit::update_autoflow_record_atEditData( IUS_DB2* db,  QString& AnalysisIDsString )
 {
    QString runID_numeric     = details_at_editing_local[ "runID" ];
    QString OptimaName        = details_at_editing_local[ "OptimaName" ];
@@ -10883,7 +10946,7 @@ void US_Edit::update_autoflow_record_atEditData( US_DB2* db,  QString& AnalysisI
 
 
 // Function to create a single autoflowAnalysis record: Pass some fields from autoflow table (set analysises IDs, filename etc.)
-int US_Edit::create_autoflowAnalysis_record( US_DB2* db, QString& tripleName, QString& status_json )
+int US_Edit::create_autoflowAnalysis_record( IUS_DB2* db, QString& tripleName, QString& status_json )
 {
   //create single record in autoflowAnalysis: return ID (auto-incremented), && update/push
 
@@ -10936,7 +10999,7 @@ int US_Edit::create_autoflowAnalysis_record( US_DB2* db, QString& tripleName, QS
 }
 
 // Function to create a single autoflowAnalysisStages record:
-void US_Edit::create_autoflowAnalysisStages_record( US_DB2* db, int ID )
+void US_Edit::create_autoflowAnalysisStages_record( IUS_DB2* db, int ID )
 {
   QStringList qry;
   qry << "new_autoflow_analysis_stages_record"
@@ -10976,6 +11039,7 @@ void US_Edit::write_triple_auto( int trx )
 
    scanExcl_begin_ind = editProfile_scans_excl[ triple_name ][0].toInt();
    scanExcl_end_ind   = editProfile_scans_excl[ triple_name ][1].toInt();
+   scanExcl_nth_ind   = editProfile_scans_excl[ triple_name ][2].toInt();
 
    meniscus      = editProfile[ triple_name ][0].toDouble();
    range_left    = editProfile[ triple_name ][1].toDouble();
@@ -11122,6 +11186,11 @@ void US_Edit::write_triple_auto( int trx )
 
    // Output the edit XML file
    int wrstat       = write_xml_file( filename, triple, editGUID, rawGUID );
+
+   // //DEBUG!!!!  Commnet!!!!!!!!!!!!!!!!!!!!!!!
+   // return;
+   // /////////////////////////// Commnet!!!!!!!!!!!!!!!!!!!!!!!
+   
 
    if ( wrstat != 0 )
      return;
@@ -12687,6 +12756,7 @@ void US_Edit::write_mwl_auto( int trx )
 
    scanExcl_begin_ind = editProfile_scans_excl[ triple_name ][0].toInt();
    scanExcl_end_ind   = editProfile_scans_excl[ triple_name ][1].toInt();
+   scanExcl_nth_ind   = editProfile_scans_excl[ triple_name ][2].toInt();
 
    meniscus      = editProfile[ triple_name ][0].toDouble();
    range_left    = editProfile[ triple_name ][1].toDouble();
@@ -12909,7 +12979,7 @@ DbgLv(1) << "EDT:WrMwl:  dax fname" << idax << filename << "wrstat" << wrstat;
 }
 
 //get rawDataGUID based on filebase && triple names
-QString US_Edit::get_rawDataGUID( US_DB2* db, QString filebase_qry, QString triplename_qry )
+QString US_Edit::get_rawDataGUID( IUS_DB2* db, QString filebase_qry, QString triplename_qry )
 {
 
   QString rawID   = QString("");
@@ -13197,33 +13267,44 @@ DbgLv(1) << "EDT:WrXml:  waveln" << waveln;
      {
         xml.writeStartElement( "excludes" );
 
-	//beginning of the scan set
-	for ( int ii = 0; ii < scanExcl_begin_ind; ii++ )
-	  {
-	    xml.writeStartElement( "exclude" );
-	    xml.writeAttribute   ( "scan", QString::number( ii ) );
-	    xml.writeEndElement  ();
-	  }
+	QList<int> excludes_curr;
 
-	//end of the scan set
-       	for ( int ii = data.scanData.size() - scanExcl_end_ind; ii < data.scanData.size(); ii++ )
+	if ( autoflow_expType != "ABDE" ) //velocity
 	  {
-	    xml.writeStartElement( "exclude" );
-	    xml.writeAttribute   ( "scan", QString::number( ii ) );
-	    xml.writeEndElement  ();
-	  }
+	    for ( int ii = 0; ii < data.scanData.size(); ii++ )
+	      {
+		if ( ii < scanExcl_begin_ind && !excludes_curr.contains( ii ) )
+		  excludes_curr << ii;
+		if ( (ii > data.scanData.size() - scanExcl_end_ind) && !excludes_curr.contains( ii ) )
+		  excludes_curr << ii;
+		if ( ii % scanExcl_nth_ind != 0 && !excludes_curr.contains( ii ) )
+		  excludes_curr << ii;
+	      }
 
-
-	//Also, for ABDE, exclude what was excluded manually for each triple
-	for ( int ii = 0; ii < data.scanData.size(); ii++ )
-	  {
-	    if ( ! includes.contains( ii ) &&
-		 ii >= scanExcl_begin_ind   &&
-		 ii < data.scanData.size() - scanExcl_end_ind )
+	    qDebug() << "VELOCITY: in WRITE_AUTO[], excludes_curr -- " << cell << channel << waveln << excludes_curr;
+	    	    
+	    for( int ii = 0; ii < excludes_curr.size(); ii++ )
 	      {
 		xml.writeStartElement( "exclude" );
-		xml.writeAttribute   ( "scan", QString::number( ii ) );
+		xml.writeAttribute   ( "scan", QString::number( excludes_curr[ ii ] ) );
 		xml.writeEndElement  ();
+	      }
+	  }
+	else
+	  {
+	    //For ABDE, exclude what was excluded manually for each triple!
+	    for ( int ii = 0; ii < data.scanData.size(); ii++ )
+	      {
+		qDebug() << "ABDE: in WRITE_AUTO[], excludes_curr -- " << cell << channel << waveln << excludes_curr;
+		qDebug() << "ABDE: in WRITE_AUTO[], includes -- " << cell << channel << waveln << includes; 
+		if ( ! includes.contains( ii ) &&
+		     ! excludes_curr.contains( ii )
+		     )
+		  {
+		    xml.writeStartElement( "exclude" );
+		    xml.writeAttribute   ( "scan", QString::number( ii ) );
+		    xml.writeEndElement  ();
+		  }
 	      }
 	  }
 
@@ -13440,7 +13521,7 @@ DbgLv(1) << "EDT:WrXml:  waveln" << waveln;
 }
 
 // Write edit database record
-int US_Edit::write_edit_db( US_DB2* dbP, QString& fname, QString& editGUID,
+int US_Edit::write_edit_db( IUS_DB2* dbP, QString& fname, QString& editGUID,
       QString& editID, QString& rawGUID )
 {
    int idEdit;
@@ -13603,7 +13684,7 @@ DbgLv(1) << "IxDa: dx" << data_index << "plx wavl trx"
 
 // Get a list of filenames with Edit Label like a specified file name
 int US_Edit::like_edit_files( QString filename, QStringList& editfiles,
-      US_DB2* dbP )
+      IUS_DB2* dbP )
 {
    // Determine local-disk files with same edit label and cell/channel
    QString filebase = filename.section( ".", 0, -3 );

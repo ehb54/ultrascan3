@@ -633,6 +633,7 @@ DbgLv(1) << "LD:  model:" << model.description;
    QString edir      = US_Settings::tmpDir();
    QString efname    = tsys.run_name + ".xml";
 
+   /****
    // Read in edit for this model
    US_DataIO::EditedData edata;
    US_DB2* dbP       = NULL;
@@ -671,6 +672,26 @@ DbgLv(1) << "LD:  edata: desc run cell chan"
    tsys.label    = edata.description + " (" + efname.section(".",0,0) + " "
            + efname.section(".",-5,-2) + " " + tsys.method + ")" + "[" + QString::number( alldis.size() ) + "]";
 
+   ****/
+     
+   //a new label
+   QString m_desc      = model.description;
+   QStringList m_desc_list = m_desc.split(".");
+   QString m_data_desc = model.dataDescrip;
+   QString t_label_from_model = m_data_desc;
+   t_label_from_model += " (" + m_desc_list[0] + " "
+           + m_desc_list[1] + " " + tsys.method + ")" + "[" + QString::number( alldis.size() ) + "]"; 
+
+   qDebug() << "t_label_from_model -- " << t_label_from_model;
+   tsys.label    = t_label_from_model;
+   
+   // qDebug() << "tsys.label from editD -- " << tsys.label;
+   // qDebug() << "t_label_from_model -- " << t_label_from_model;
+   // qDebug() << "desc / dataDescrip from model -- "
+   // 	    << model.description << " / "
+   // 	    << model.dataDescrip;
+
+   
    // Now, get associated solution,buffer values
    QString soluID;
    QString bvisc;
@@ -1202,7 +1223,7 @@ DbgLv(1) << "WrCsv: fpath" << fpath;
    // Write data lines
    for ( int jj = 0; jj < vals1.size(); jj++ )
    {
-      QString line  = QString().sprintf(
+      QString line  = QString::asprintf(
          "\"%9.6e\",\"%6.4f\"\n", vals1[ jj ], vals2[ jj ] );
       line.replace( " ","" );
       ts << line;
