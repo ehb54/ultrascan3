@@ -793,7 +793,9 @@ void US_DataLoader::list_data()
       else if ( ctlabel != ptlabel )
       {  // New triple in same runID: add triple child of run
          twi_trip = new QTreeWidgetItem( QStringList( ctlabel ), ii );
-         twi_runi->addChild( twi_trip );
+         if ( twi_runi != nullptr ) {
+            twi_runi->addChild( twi_trip );
+         }
          ptlabel  = ctlabel;
          ndxt++;
          ndxe = 1;
@@ -807,7 +809,9 @@ void US_DataLoader::list_data()
       if ( sel_run ) 
       {
          twi_edit = new QTreeWidgetItem( QStringList( celabel ), ii );
-         twi_trip->addChild( twi_edit );
+		 if ( twi_trip != nullptr ) {
+            twi_trip->addChild( twi_edit );
+         };
       }
 
       ddesc.tripknt     = ndxt;
