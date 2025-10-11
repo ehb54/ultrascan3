@@ -809,9 +809,9 @@ void US_DataLoader::list_data()
       if ( sel_run ) 
       {
          twi_edit = new QTreeWidgetItem( QStringList( celabel ), ii );
-		 if ( twi_trip != nullptr ) {
+         if ( twi_trip != nullptr ) {
             twi_trip->addChild( twi_edit );
-         };
+         }
       }
 
       ddesc.tripknt     = ndxt;
