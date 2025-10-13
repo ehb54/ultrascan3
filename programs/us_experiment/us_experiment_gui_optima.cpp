@@ -1290,9 +1290,13 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
 		pb_importDisk   = us_pushbutton( tr( "Import .AUC Data" ) );
 		le_dataDiskPath = us_lineedit( "", 0, true );
 
-		ck_absorbance_t = new QCheckBox( tr("Absorbance Data:"), this );
+		ck_absorbance_t = new QCheckBox( tr("Absorbance Data (RA):"), this );
 		ck_absorbance_t ->setAutoFillBackground( true );
 		ck_absorbance_t ->setChecked( false );
+
+		ck_absorbance_pa = new QCheckBox( tr("Pseudo-Absorbance Data:"), this );
+		ck_absorbance_pa ->setAutoFillBackground( true );
+		ck_absorbance_pa ->setChecked( false );
 		
 		
 
@@ -1327,6 +1331,7 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
    genL->addWidget( pb_importDisk,     row,     1, 1, 1 );
    genL->addWidget( le_dataDiskPath,   row++,   2, 1, 2 );
    genL->addWidget( ck_absorbance_t,   row++,   1, 1, 1 );
+   genL->addWidget( ck_absorbance_pa,  row++,   1, 1, 1 );
 
 
    //connect checkbox & import
@@ -1336,6 +1341,8 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
 	    this,           SLOT(   importDisk()        ) );
    // connect( ck_absorbance_t, SIGNAL( toggled     ( bool ) ),
    // 	    this,           SLOT  ( dataDiskAbsChecked( bool ) ) );
+   connect( ck_absorbance_pa, SIGNAL( toggled     ( bool ) ),
+    	    this,           SLOT  ( dataDiskPseudoAbsChecked( bool ) ) );
 
    genL->addItem  ( spacer1,         row++, 0, 1, 4 );
 
@@ -1495,6 +1502,8 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
    le_dataDiskPath -> hide();
    ck_absorbance_t -> hide();
    ck_absorbance_t -> setEnabled( false );
+   ck_absorbance_pa -> hide();
+   ck_absorbance_pa -> setEnabled( false );
    importDataPath = "";
    if ( mainw->us_prot_dev_mode )
      ck_disksource->hide();
@@ -1509,8 +1518,10 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
 //
 void US_ExperGuiRotor::reset_dataSource_public( void )
 {
-  ck_disksource   ->setChecked( false );
-  ck_absorbance_t ->setChecked( false );
+  ck_disksource    ->setChecked( false );
+  ck_absorbance_t  ->setChecked( false );
+  ck_absorbance_pa ->setChecked( false );
+  ck_absorbance_pa ->setEnabled( false );
   importDataPath = "";
   ra_data_type = false;
   ra_data_sim  = false;
@@ -1522,10 +1533,12 @@ void US_ExperGuiRotor::switch_to_dataDisk_public()
   
   bool checked = true;
   
-  pb_importDisk   -> setVisible( checked );
-  le_dataDiskPath -> setVisible( checked );
-  ck_absorbance_t -> setVisible( checked );
-
+  pb_importDisk    -> setVisible( checked );
+  le_dataDiskPath  -> setVisible( checked );
+  ck_absorbance_t  -> setVisible( checked );
+  ck_absorbance_pa -> setVisible( checked );
+  ck_absorbance_pa -> setEnabled( false );
+  
   lb_instrument  -> setVisible( !checked );
   cb_optima  -> setVisible( !checked );
   lb_optima_connected -> setVisible( !checked );
@@ -1566,6 +1579,23 @@ void US_ExperGuiRotor::dataDiskAbsChecked( bool checked )
     }
 }
 
+void US_ExperGuiRotor::dataDiskPseudoAbsChecked( bool checked )
+{
+  if ( checked )
+    {
+      //issue warning to the user to verify it's Pseudo-Abs to be uploaded
+      QMessageBox::warning( this,
+			    tr( "NOTE: PseudoAbsorbance data type chosen!" ),
+			    tr( "Please make sure the RI data uploaded were \n"
+				"converted to peseudo-absorbance format. \n\n"
+				"Checking this option will prevent data conversion \n"
+				"at the stage 3. IMPORT..."
+				));
+    }
+}
+
+
+
 // Check import disk
 void US_ExperGuiRotor::importDiskChecked( bool checked )
 {
@@ -1574,9 +1604,11 @@ void US_ExperGuiRotor::importDiskChecked( bool checked )
 
   //importDisk_cleanProto();
     
-  pb_importDisk   -> setVisible( checked );
-  le_dataDiskPath -> setVisible( checked );
-  ck_absorbance_t -> setVisible( checked );
+  pb_importDisk    -> setVisible( checked );
+  le_dataDiskPath  -> setVisible( checked );
+  ck_absorbance_t  -> setVisible( checked );
+  ck_absorbance_pa -> setVisible( checked );
+  ck_absorbance_pa -> setEnabled( false );
 
   lb_instrument  -> setVisible( !checked );
   cb_optima  -> setVisible( !checked );
@@ -1586,8 +1618,9 @@ void US_ExperGuiRotor::importDiskChecked( bool checked )
   if ( !checked )
     {
       importDataPath = "";
-      le_dataDiskPath -> setText("");
-      ck_absorbance_t -> setChecked( false );
+      le_dataDiskPath  -> setText("");
+      ck_absorbance_t  -> setChecked( false );
+      ck_absorbance_pa -> setChecked( false );
       ra_data_type = false;
       ra_data_sim  = false;
     }
@@ -1706,7 +1739,9 @@ void US_ExperGuiRotor::importDisk( void )
   run_details  .clear();
   ra_data_type = false;
   ra_data_sim  = false;
-  ck_absorbance_t ->setChecked( false );
+  ck_absorbance_t  ->setChecked( false );
+  ck_absorbance_pa ->setChecked( false );
+  ck_absorbance_pa ->setEnabled( true );
     
   for ( int trx = 0; trx < files.size(); trx++ )
     {
@@ -1773,7 +1808,9 @@ void US_ExperGuiRotor::importDisk( void )
   qDebug() << "unique_runTypes -- " << unique_runTypes;
   if ( unique_runTypes.size() == 1 && unique_runTypes[0] == "RA")
     {
-      ck_absorbance_t ->setChecked( true );
+      ck_absorbance_t  ->setChecked( true );
+      ck_absorbance_pa ->setChecked( false );
+      ck_absorbance_pa ->setEnabled( false );
       ra_data_type = true;
     }
   
@@ -1801,8 +1838,10 @@ void US_ExperGuiRotor::importDisk( void )
 
       //clean
       importDataPath = "";
-      le_dataDiskPath -> setText("");
-      ck_absorbance_t -> setChecked( false );
+      le_dataDiskPath  -> setText("");
+      ck_absorbance_t  -> setChecked( false );
+      ck_absorbance_pa -> setChecked( false );
+      ck_absorbance_pa -> setEnabled( false );
       ra_data_type = false;
       ra_data_sim  = false;
 
@@ -2661,8 +2700,10 @@ DbgLv(1) << "EGR: chgRotor calibs count" << calibs.count();
       if (ck_disksource->isChecked())
 	{
 	  importDataPath = "";
-	  le_dataDiskPath -> setText("");
-	  ck_absorbance_t -> setChecked( false );
+	  le_dataDiskPath  -> setText("");
+	  ck_absorbance_t  -> setChecked( false );
+	  ck_absorbance_pa -> setChecked( false );
+	  ck_absorbance_pa -> setEnabled( false);
 	  ra_data_type = false;
 	  ra_data_sim  = false;
 
@@ -8143,7 +8184,8 @@ void US_ExperGuiUpload::submitExperiment_dataDisk()
   protocol_details[ "OptimaName" ]     = "dataDisk";  // <--- OR NULL???
   //protocol_details[ "OptimaName" ]     = rpRotor->instrname;         // NULL
 
-  QString dataSourceType = ( !rpRotor->importData_absorbance_t ) ? "dataDiskAUC" : "dataDiskAUC:Absorbance"; 
+  QString dataSourceType = ( !rpRotor->importData_absorbance_t ) ? "dataDiskAUC" : "dataDiskAUC:Absorbance";
+  dataSourceType = ( rpRotor->importData_absorbance_pa ) ? "dataDiskAUC:PseudoAbsorbance" : dataSourceType;
   protocol_details[ "dataSource" ]     = dataSourceType;  //<-- for now
   
   protocol_details[ "protocolName" ]   = currProto->protoname;

@@ -1034,7 +1034,8 @@ DbgLv(1) << "EGRo: inP: calib_entr" << cal_entr;
    //import Data Disk
    rpRotor->importData  = ck_disksource->isChecked();
    le_dataDiskPath ->setText( rpRotor->importDataDisk );
-   rpRotor->importData_absorbance_t = ck_absorbance_t->isChecked();
+   rpRotor->importData_absorbance_t  = ck_absorbance_t->isChecked();
+   rpRotor->importData_absorbance_pa = ck_absorbance_pa->isChecked();
    
 
    //Show current oper(s) & rev(s)
@@ -1092,12 +1093,14 @@ DbgLv(1) << "EGRo: inP: calib_entr" << cal_entr;
        cb_operator -> setVisible(true);
 
        //Hide data disk upload
-       pb_importDisk   -> hide();
-       le_dataDiskPath -> hide();
-       ck_disksource   -> hide();
-       ck_absorbance_t -> hide();
+       pb_importDisk    -> hide();
+       le_dataDiskPath  -> hide();
+       ck_disksource    -> hide();
+       ck_absorbance_t  -> hide();
+       ck_absorbance_pa -> hide();
        rpRotor->importData = false;
-       rpRotor->importData_absorbance_t = false;
+       rpRotor->importData_absorbance_t  = false;
+       rpRotor->importData_absorbance_pa = false;
        rpRotor->importDataDisk = "";
      }
 
@@ -1532,8 +1535,9 @@ qDebug() << "NAME OF THE ROTOR IN SAVE: rot, rpRotor->rotor: " << rot << ", "  <
 
    //dataDisk
    rpRotor->importDataDisk            = importDataPath;
-   rpRotor->importData                = ck_disksource->isChecked();
-   rpRotor->importData_absorbance_t   = ck_absorbance_t->isChecked();
+   rpRotor->importData                = ck_disksource    ->isChecked();
+   rpRotor->importData_absorbance_t   = ck_absorbance_t  ->isChecked();
+   rpRotor->importData_absorbance_pa  = ck_absorbance_pa ->isChecked();
 
    
 qDebug() << "OPERATORID / INSTRUMENT / ExpType in SAVE: "
@@ -3884,6 +3888,7 @@ DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
 	   qDebug() << "Data Disk ? " << rpRotor->importData;
 	   qDebug() << "Data Disk Path -- " << rpRotor->importDataDisk;
 	   qDebug() << "Data Disk: Absorbance ? " << rpRotor->importData_absorbance_t;
+	   qDebug() << "Data Disk: Pseuso-Absorbance ? " << rpRotor->importData_absorbance_pa;
 	   subm_enab = false;
 	 }
      }
@@ -4116,6 +4121,7 @@ DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
    qDebug() << "Data Disk Path -- " << rpRotor->importDataDisk;
    qDebug() << "Data Disk: Absorbance ? " << rpRotor->importData_absorbance_t;
    QString dataSourceType = ( !rpRotor->importData_absorbance_t ) ? "dataDiskAUC" : "dataDiskAUC:Absorbance";
+   dataSourceType = ( rpRotor->importData_absorbance_pa ) ? "dataDiskAUC:PseudoAbsorbance" : dataSourceType;
    qDebug() << "dataSourceType -- " << dataSourceType;
 }
 

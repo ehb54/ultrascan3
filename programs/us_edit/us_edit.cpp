@@ -47,13 +47,8 @@ US_Edit::US_Edit( QString auto_mode ) : US_Widgets()
 {
    pb_removeAllbutLast = us_pushbutton( tr( "Remove All but Last" ), true );
    pb_baseline_correct = us_pushbutton( tr( "Correct Baseline" ), false );
-   pb_bll_modify       = us_pushbutton( tr( "Modify Baseline Correction for Selected Triple" ), false );
-   lb_baseline_correct = us_banner( tr( "Linear Baseline Correction" ) );
-   lb_bll_slope        = us_label( tr( "Slope:" ), -1 );
-   le_bll_slope        = us_lineedit( "", 1, true );
-   lb_bll_intercept    = us_label( tr( "Y-intercept:" ), -1 );
-   le_bll_intercept    = us_lineedit( "", 1, true );
    pb_pass             = us_pushbutton( tr( "Accept Changes for a Channel" ), false );
+   
    check        = US_Images::getIcon( US_Images::CHECK );
    invert       = 1.0;
    all_edits    = false;
@@ -552,7 +547,6 @@ pb_plateau->setVisible(false);
        lb_gaps        ->hide();
        ct_gaps        ->hide();
 
-
        lb_scan        ->hide();
        lb_from        ->hide();
        lb_to          ->hide();
@@ -562,6 +556,10 @@ pb_plateau->setVisible(false);
        pb_exclusion   ->hide();
        pb_edit1       ->hide();
        pb_include     ->hide();
+
+       pb_removeAllbutLast  ->hide();
+       pb_baseline_correct  ->hide();
+       pb_pass              ->hide();
 
        pb_meniscus    ->hide();
        pb_dataRange   ->hide();
@@ -573,7 +571,6 @@ pb_plateau->setVisible(false);
        pb_invert      ->hide();
        pb_priorEdits  ->hide();
        pb_float       ->hide();
-
 
        pb_reset       ->hide();
        pb_help        ->hide();
@@ -821,15 +818,9 @@ pb_plateau->setVisible(false);
 US_Edit::US_Edit( QVector< US_DataIO::RawData > allData, QStringList  triples,
 		  QString  workingDir, int currenChtInd, int plotind, QString exptype ) : US_Widgets()
 {
-   pb_removeAllbutLast = us_pushbutton( tr( "Remove All but Last" ), true );
-   pb_baseline_correct = us_pushbutton( tr( "Correct Baseline" ), false );
    pb_bll_modify       = us_pushbutton( tr( "Modify Baseline Correction for Selected Triple" ), false );
-   lb_baseline_correct = us_banner( tr( "Linear Baseline Correction" ) );
-   lb_bll_slope        = us_label( tr( "Slope:" ), -1 );
-   le_bll_slope        = us_lineedit( "", 1, true );
-   lb_bll_intercept    = us_label( tr( "Y-intercept:" ), -1 );
-   le_bll_intercept    = us_lineedit( "", 1, true );
-   pb_pass             = us_pushbutton( tr( "Accept Changes for a Channel" ), false );
+   pb_bll_modify -> setVisible( false );
+   
    check        = US_Images::getIcon( US_Images::CHECK );
    invert       = 1.0;
    all_edits    = false;
@@ -1299,6 +1290,8 @@ pb_plateau->setVisible(false);
        le_bll_slope        ->hide();
        lb_bll_intercept    ->hide();
        le_bll_intercept    ->hide();
+       pb_removeAllbutLast ->hide();
+       
      }
 
    // pb_meniscus    ->hide();
@@ -1387,15 +1380,9 @@ US_Edit::US_Edit( QVector< US_DataIO::RawData > allData, QStringList  triples,
 		  QString  workingDir, int currenChtInd, int plotind, QString exptype,
 		  QStringList editParams, QList<int> editParams_includes ) : US_Widgets()
 {
-   pb_removeAllbutLast = us_pushbutton( tr( "Remove All but Last" ), true );
-   pb_baseline_correct = us_pushbutton( tr( "Correct Baseline" ), false );
    pb_bll_modify       = us_pushbutton( tr( "Modify Baseline Correction for Selected Triple" ), false );
-   lb_baseline_correct = us_banner( tr( "Linear Baseline Correction" ) );
-   lb_bll_slope        = us_label( tr( "Slope:" ), -1 );
-   le_bll_slope        = us_lineedit( "", 1, true );
-   lb_bll_intercept    = us_label( tr( "Y-intercept:" ), -1 );
-   le_bll_intercept    = us_lineedit( "", 1, true );
-   pb_pass             = us_pushbutton( tr( "Accept Changes for a Channel" ), false );
+   pb_bll_modify -> setVisible( false );
+       
    check        = US_Images::getIcon( US_Images::CHECK );
    invert       = 1.0;
    all_edits    = false;
@@ -2415,6 +2402,18 @@ pb_plateau->setVisible(false);
    main->setStretchFactor( plot, 3 );
    top ->addLayout( main );
 
+   //hide abde base line corr. for now
+   pb_pass->setVisible( false );
+   pb_removeAllbutLast ->hide();
+   pb_baseline_correct ->hide();
+   pb_bll_modify       ->hide();
+   lb_baseline_correct ->hide();
+   lb_bll_slope        ->hide();
+   le_bll_slope        ->hide();
+   lb_bll_intercept    ->hide();
+   le_bll_intercept    ->hide();
+   pb_pass             ->hide();
+   
    reset();
 }
 
@@ -2967,6 +2966,17 @@ void US_Edit::load_auto( QMap < QString, QString > & details_at_editing )
       le_bll_slope        -> setVisible( true );
       le_bll_intercept    -> setVisible( true );
     }
+  else
+    {
+      //linear baseline correction
+      lb_baseline_correct -> setVisible( false );
+      pb_bll_modify       -> setVisible( false );
+      lb_bll_slope        -> setVisible( false );
+      lb_bll_intercept    -> setVisible( false );
+      le_bll_slope        -> setVisible( false );
+      le_bll_intercept    -> setVisible( false );
+    }
+   
 
 }
 
