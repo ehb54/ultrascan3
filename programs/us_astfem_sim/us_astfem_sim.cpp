@@ -323,22 +323,27 @@ US_Astfem_Sim::US_Astfem_Sim( QWidget* p, Qt::WindowFlags f )
    us_grid  ( moviePlot );
    moviePlot->setMinimumSize( 600, 275);
    moviePlot->setAxisScale( QwtPlot::yLeft, 0.0, 2.0 );
-   moviePlot->setAxisScale( QwtPlot::xBottom, 5.8, 7.2 );
+   moviePlot->setAxisScale( QwtPlot::xBottom, simparams.meniscus, simparams.bottom );
 
    plot->addLayout( plot1 );
 
 
-   QLabel* lb_time  = us_label( tr( "Time( in seconds):" ) );
-   lcd_time         = us_lcd( 6, 0 );
-   QLabel* lb_speed = us_label( tr( "Current Speed:" ) );
-   lcd_speed        = us_lcd( 5, 0 );
+   QLabel* lb_time  = us_label( tr( "Time [s]:" ) );
+   lcd_time         = us_lcd( 7, 0 );
+   QLabel* lb_speed = us_label( tr( "Current Speed [rpm]:" ) );
+   lcd_speed        = us_lcd( 6, 0 );
+   QLabel* lb_scan = us_label( tr( "Current Scan:" ) );
+   lcd_scan        = us_lcd( 5, 0 );
    lb_time->setAlignment ( Qt::AlignCenter );
    lb_speed->setAlignment( Qt::AlignCenter );
+   lb_scan->setAlignment(Qt::AlignCenter);
 
    timeSpeed->addWidget( lb_time );
    timeSpeed->addWidget( lcd_time );
    timeSpeed->addWidget( lb_speed );
    timeSpeed->addWidget( lcd_speed );
+   timeSpeed->addWidget( lb_scan );
+   timeSpeed->addWidget( lcd_scan );
 
    // Saved Scans
    plot2              = new US_Plot( scanPlot,
@@ -351,7 +356,7 @@ US_Astfem_Sim::US_Astfem_Sim( QWidget* p, Qt::WindowFlags f )
    grid2->enableY(    true );
    scanPlot->setMinimumSize( 600, 275);
    scanPlot->setAxisScale( QwtPlot::yLeft,   0.0, 2.0 );
-   scanPlot->setAxisScale( QwtPlot::xBottom, 5.8, 7.2 );
+   scanPlot->setAxisScale( QwtPlot::xBottom, simparams.meniscus, simparams.bottom );
 
    lb_component  = us_label( tr( "Component:" ) );
    lcd_component = us_lcd  ( 7, 0 );
@@ -718,13 +723,13 @@ void US_Astfem_Sim::change_status()
       dmns    -= ( khrs * 60.0 );
       dhrs    += khrs;
    }
-
+   total_scans  = scns;
    times_comp   = dhrs * 3600.0 + dmns * 60.0;
    ncomponent   = system.components.size();
 DbgLv(1) << "ASIM: chg_stat: ncomponent" << ncomponent << "times_comp" << times_comp;
    times_comp   = qMax( 100.0, times_comp );
    ncomponent   = qMax( 1, ncomponent );
-   int maxts    = ncomponent * 100;
+   int maxts    = ncomponent * scns;
 DbgLv(1) << "ASIM: chg_stat:  times_comp" << times_comp << "maxts" << maxts;
    progress->setRange( 1, maxts );
 DbgLv(1) << "ASIM: chg_stat:  times_comp" << times_comp << "maxts" << maxts;
@@ -909,26 +914,24 @@ DbgLv(1) << "SimPar:MAIN:SetP:   sset" << jd << "time1 time2" << time1 << time2;
 DbgLv(1) << "SimPar:MAIN:SetP:   sset" << jd << "time1 time2" << time1 << time2
  << "timeinc" << timeinc << "scans" << sp->scans << " c,s speed" << c_speed << s_speed;
 
-      while ( c_speed < s_speed )
-      {  // Walk through acceleration zone building omega2t sum
-         w2tsum         = sq( accel * M_PI / 30.0 * c_time ) * c_time;
-         c_speed       += accel;
-         c_time        += 1.0;
-DbgLv(1) << "SimPar:MAIN:SetP:   accel speed w2t time" << c_speed << w2tsum << c_time;
-      }
 DbgLv(1) << "SimPar:MAIN:SetP: accel-end:  time omega2t" << c_time << w2tsum;
+      double w2tinc  = sq( s_speed * M_PI / 30.0 );
+      double accel_time = 0.0;
+      if ( sp->acceleration_flag && sp->acceleration != 0 )
+      {
+         accel_time = (s_speed - p_speed) / accel;
+         double angular_accel = accel * M_PI / 30.0;
 
-      c_speed        = s_speed;
-      double w2tinc  = sq( c_speed * M_PI / 30.0 );
-      // reset the w2tsum value at the end of the acceleration for the constant speed iteration
-      w2tsum         = w2tinc * c_speed / accel + w2tinc * ( c_time - c_speed / accel );
-      while ( c_time < time1 )
-      {  // Walk up to the first scan time, accumulating omega2t sum
-         c_time        += 1.0;
-         w2tsum        += w2tinc;
+         double angular_previous_speed = p_speed * M_PI / 30.0;
+         // add contribution of acceleration to w2tsum
+         w2tsum += sq( angular_accel * accel_time ) * accel_time +
+            angular_accel * angular_previous_speed * sq(accel_time) +
+               sq(angular_previous_speed) * accel_time;
       }
+      // add the contribution between end of acceleration and first scan
+      w2tsum += w2tinc * (time1-time0-accel_time);
       DbgLv(1) << "SimPar:MAIN:SetP: 1st scan:   time omega2t" << c_time << w2tsum << "w2tinc" << w2tinc;
-
+      c_speed = s_speed;
       sp->time_first = static_cast<int>(time1);
       sp->w2t_first  = w2tsum;
       w2tinc         = timeinc * sq( c_speed * M_PI / 30.0 );
@@ -1037,7 +1040,7 @@ void US_Astfem_Sim::start_simulation( void )
    int nstep      = simparams.speed_step.size();
    double rpm     = simparams.speed_step[ 0 ].rotorspeed; // Rotor speed for first speed step
    dataPlotClear( scanPlot );
-   scanPlot ->setAxisAutoScale( QwtPlot::xBottom );
+   scanPlot ->setAxisScale( QwtPlot::xBottom, simparams.meniscus, simparams.bottom );
    scanPlot ->replot();
 
    pb_stop   ->setEnabled( true  );
@@ -1126,7 +1129,7 @@ DbgLv(1) << "astfem_radial_ranges" << sim_datas[jd].xvalues[0] << sim_datas[jd].
 //   progress->setRange( 1, system.components.size() );
    progress->reset();
    lcd_component->display( 0 );
-
+   lcd_scan->display(0);
    stopFlag         = false;
 
    simparams.mesh_radius.clear();
@@ -1253,11 +1256,22 @@ DbgLv(1) << "out:astfem_radial_ranges" << sim_datas[jd].xvalues[0] << sim_datas[
    }
    else
    {
-      astfvm = new US_LammAstfvm( system, simparams );
+      if ( system.associations.size() > 0 )
+         lb_component->setText( tr( "RA Step:"   ) );
+      else
+         lb_component->setText( tr( "Component:" ) );
 
+      if ( astfvm )
+      {
+         astfvm->disconnect();
+         delete( astfvm );
+      }
+
+      astfvm = new US_LammAstfvm( system, simparams );
+      astfvm->set_buffer(buffer);
       connect( astfvm, SIGNAL( new_scan( QVector< double >*, double* ) ),
                        SLOT( update_movie_plot( QVector< double >*, double* ) ) );
-      connect( astfvm, SIGNAL( current_component( int ) ),
+      connect( astfvm, SIGNAL( comp_progress( int ) ),
                        SLOT  ( update_progress  ( int ) ) );
       connect( astfvm, SIGNAL( new_time   ( double ) ),
                        SLOT  ( update_time( double ) ) );
@@ -1267,7 +1281,56 @@ DbgLv(1) << "out:astfem_radial_ranges" << sim_datas[jd].xvalues[0] << sim_datas[
                        SLOT  ( show_progress( int ) ) );
       connect( astfvm, SIGNAL( calc_done( void ) ),
                        SLOT  ( calc_over( void ) ) );
-      astfvm->calculate( sim_datas[ 0 ] );
+      double bottom_ar    = simparams.bottom_position;
+      simparams.meniscus  = meniscus_ar;
+      simparams.bottom    = bottom_ar;
+      int kscan           = sim_data_all.scanCount();
+      int kpoint          = sim_data_all.pointCount();
+
+      // Initialize reading values to zero for all scans (all speeds)
+      for ( int js = 0; js < kscan; js++ )
+         sim_data_all.scanData[ js ].rvalues.fill( 0.0, kpoint );
+
+      // Set the radius values in data sets
+      int points          = qRound( ( simparams.bottom - simparams.meniscus ) /
+                                  simparams.radial_resolution ) + 1;
+      //int points          = qCeil( ( simparams.bottom - simparams.meniscus ) /
+      //                             simparams.radial_resolution ) + 1;
+      sim_data_all.xvalues.resize( points );
+      for ( int jd = 0; jd < nstep; jd++ )
+      {  // Set radius values for current speed's dataset
+         double stretch_fac  = stretch( simparams.rotorcoeffs,
+                                        simparams.speed_step[ jd ].rotorspeed );
+         simparams.meniscus  = meniscus_ar + stretch_fac;
+         simparams.bottom    = bottom_ar   + stretch_fac;
+         double radval       = simparams.meniscus;
+         for ( int jp = 0; jp < points; jp++ )
+         {
+            sim_datas[ jd ].xvalues[ jp ] = radval;
+            // Set radius value in composite dataset (for multi-speed)
+            if ( jd == 0 )
+               sim_data_all.xvalues[ jp ] = radval;
+            radval                       += simparams.radial_resolution;
+         }
+         DbgLv(1) << "out:astfem_radial_ranges" << sim_datas[jd].xvalues[0] << sim_datas[jd].xvalues[points-1]
+                  << af_params.current_meniscus << af_params.current_bottom << jd;
+      }
+
+      // Set meniscus and bottom for (composite?) dataset to 1st speed range
+      simparams.meniscus  = sim_data_all.xvalues[ 0 ];
+      simparams.bottom    = sim_data_all.xvalues[ points - 1 ];
+      astfvm->calculate( sim_data_all );
+      calc_over();
+      int ks              = 0;
+      // Copy generated simulation dataset to any separate speed datasets
+      for ( int jd = 0; jd < nstep; jd++ )
+      {
+         int nscans          = sim_datas[ jd ].scanCount();
+         for ( int js = 0; js < nscans; js++, ks++ )
+         {
+            sim_datas[ jd ].scanData[ js ] = sim_data_all.scanData[ ks ];
+         }
+      }
    }
 
    finish();
@@ -1302,6 +1365,7 @@ DbgLv(1) << "FIN:  progress maxsize" << progress->maximum();
    update_speed( (int)simparams.speed_step[ jex ].rotorspeed );
 
    stopFlag = false;
+   if (movieFlag){scanPlot->detachItems();scanPlot->replot();}
    for ( int  i = 0; i < simparams.speed_step.size(); i++ )
    plot(i);
 
@@ -1864,6 +1928,9 @@ void US_Astfem_Sim::update_progress( int component )
       icomponent         = component;
       lcd_component->setMode( QLCDNumber::Dec );
       lcd_component->display( icomponent );
+      scanPlot->detachItems();
+      scanPlot->replot();
+      curve_count = 0;
    }
 }
 
@@ -1954,7 +2021,7 @@ DbgLv(1) << "Sim:SV: reset s1plat" << s1plat;
       }
    } else
    {
-      dthresh = total_conc * 2.0;
+      dthresh = total_conc * 100.0;
    }
 
 
@@ -1989,13 +2056,16 @@ DbgLv(1) << "Sim:SV: OD-Limit nchange nmodscn" << nchange << nmodscn
  << "maxc dthresh" << maxc << dthresh;
 
       // Report that some readings were threshold-limited
-      QMessageBox::information( this,
-            tr( "OD Values Threshold Limited" ),
-            tr( "%1 readings in %2 scans were reset\n"
-                "to a threshold value of %3 .\n"
-                "The pre-threshold-limit maximum OD\n"
-                "value was %4 ." )
-            .arg( nchange ).arg( nmodscn ).arg( dthresh ).arg( maxc ) );
+      if (!supress_dialog)
+      {
+         QMessageBox::information( this,
+      tr( "OD Values Threshold Limited" ),
+      tr( "%1 readings in %2 scans were reset\n"
+          "to a threshold value of %3 .\n"
+          "The pre-threshold-limit maximum OD\n"
+          "value was %4 ." )
+      .arg( nchange ).arg( nmodscn ).arg( dthresh ).arg( maxc ) );
+      }
    }
 
 
@@ -2075,6 +2145,7 @@ DbgLv(1) << "Sim:SV: after_write_rawdata" << ofname;
 //          points     = exp_data[speed_step].pointCount();
 void US_Astfem_Sim::plot( int step )
 {
+   if (movieFlag)scanPlot->detachItems();// remove plots from movie
    QList< QColor > mcolors;
    int nmcols     = plot2->map_colors( mcolors );
   // dataPlotClear( scanPlot );
@@ -2095,7 +2166,6 @@ void US_Astfem_Sim::plot( int step )
    // For co-sedimenting solutes axis are auto-scaled
    if ( system.coSedSolute >= 0 )
    {
-      scanPlot->setAxisAutoScale( QwtPlot::xBottom );
       scanPlot->setAxisAutoScale( QwtPlot::yLeft   );
    }
    else
@@ -2133,7 +2203,7 @@ void US_Astfem_Sim::plot( int step )
 
       for ( int j = 0; j < scan_count; j++ )
       {
-         for ( int k = 0; k < points; k++ )
+         for ( int k = 0; k < sim_datas[step].scanData[j].rvalues.size(); k++ )
             y[ j ][ k ] = sim_datas[ step ].value( j, k );
       }
 
@@ -2166,6 +2236,9 @@ void US_Astfem_Sim::update_component( int component )
 {
    lcd_component->setMode( QLCDNumber::Dec );
    lcd_component->display( component );
+   scanPlot->detachItems();
+   scanPlot->replot();
+   curve_count = 0;
 }
 
 // slot to update progress by time step
@@ -2223,10 +2296,12 @@ void US_Astfem_Sim::update_movie_plot( QVector< double >* x, double* c )
 
       yscale         = total_c * 7.0;
    }
-
-   moviePlot->setAxisScale( QwtPlot::yLeft, 0, yscale );
-   //moviePlot->setAxisAutoScale( QwtPlot::yLeft );
-   moviePlot->setAxisAutoScale( QwtPlot::xBottom );
+   QwtPlotGrid* grid2 = us_grid( moviePlot );
+   grid2->enableX(    true );
+   grid2->enableY(    true );
+   //moviePlot->setAxisScale( QwtPlot::yLeft, 0, yscale );
+   moviePlot->setAxisAutoScale( QwtPlot::yLeft );
+   moviePlot->setAxisScale( QwtPlot::xBottom, simparams.meniscus, simparams.bottom );
 
    double* r = new double [ x->size() ];
 
@@ -2235,7 +2310,7 @@ void US_Astfem_Sim::update_movie_plot( QVector< double >* x, double* c )
    QwtPlotCurve* curve =
       new QwtPlotCurve( "Scan Number " + QString::number( ++curve_count ) );
 
-   curve->setPen    ( QPen( Qt::yellow, 3 ) );
+   curve->setPen    ( QPen( US_GuiSettings::plotCurve(), 3 ) );
    curve->setSamples(r, c, x->size() );
    curve->attach ( moviePlot );
 
@@ -2248,7 +2323,50 @@ void US_Astfem_Sim::update_movie_plot( QVector< double >* x, double* c )
       imageName = imagedir + QString::asprintf( "frame%05d.png", image_count );
       US_GuiUtil::save_png( imageName, moviePlot );
    }
+   if(dbg_level>0){
+      bool x_needed = sim_datas[ 0 ].xvalues.isEmpty();
+      // dataPlotClear( scanPlot );
+      QList< QColor > mcolors;
+      int nmcols     = plot2->map_colors( mcolors );
 
+
+
+      // Set plot scale
+      if ( simparams.band_forming ) {
+          scanPlot->setAxisAutoScale(QwtPlot::yLeft);
+      }
+      else if ( system.coSedSolute >= 0 )
+      {
+         scanPlot->setAxisAutoScale( QwtPlot::yLeft );
+      }
+
+      else
+      {
+         scanPlot->setAxisAutoScale( QwtPlot::yLeft );
+      }
+
+      QwtPlotGrid* grid2 = us_grid( scanPlot );
+      grid2->enableX(    true );
+      grid2->enableY(    true );
+
+
+      // Walk scan index through previous steps
+      int scanx        = curve_count;
+
+
+      // Plot the simulation scan
+      QString title = "Concentration" + QString::number( scanx );
+      QwtPlotCurve* plotCurve = new QwtPlotCurve( title );
+
+      if ( nmcols > 0 )
+         plotCurve->setPen ( QPen( mcolors[ scanx % nmcols ] ) );
+      else
+         plotCurve->setPen ( QPen( Qt::yellow ) );
+      plotCurve->setSamples( r, c, x->size() );
+      plotCurve->attach    ( scanPlot );
+      scanPlot->replot();
+      scanPlot->detachItems();
+   }
    qApp->processEvents();
 //int k=x->size()-1;
 //int h=x->size()/2;
@@ -2287,15 +2405,16 @@ void US_Astfem_Sim::update_time( double time )
    static int kstep = 0;
    double dtime = qRound( time );
    lcd_time ->display( dtime );
-
+   curve_count++;
+   lcd_scan->display(curve_count);
    int tstep    = (int)qRound( dtime * 100.0 / times_comp );
-   tstep        = ( icomponent - 1 ) * 100 + tstep;
-   if ( tstep != kstep )
-   {
-      show_progress( tstep );
-DbgLv(1) << "ASIM: upd_tm: tstep" << tstep << "dtime" << dtime << "icomponent" << icomponent
- << "times_comp" << times_comp;
-   }
+//   tstep        = ( icomponent - 1 ) * 100 + tstep;
+//   if ( tstep != kstep )
+//   {
+//      show_progress( tstep );
+//DbgLv(1) << "ASIM: upd_tm: tstep" << tstep << "dtime" << dtime << "icomponent" << icomponent
+// << "times_comp" << times_comp;
+//   }
    kstep        = tstep;
 }
 

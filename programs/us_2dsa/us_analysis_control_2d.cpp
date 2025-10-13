@@ -43,11 +43,12 @@ US_AnalysisControl2D::US_AnalysisControl2D( QList< SS_DATASET* >& dsets,
    bool& loadDB, QWidget* p ) : US_WidgetsDialog( p, 0 ),
    dsets( dsets ), loadDB( loadDB )
 {
-   parentw        = p;
-   processor      = 0;
-   dbg_level      = US_Settings::us_debug();
-   grtype         = US_2dsaProcess::UGRID;
-   baserss        = 0;
+   parentw   = p;
+   sparms    = &dsets[0]->simparams;
+   processor = nullptr;
+   dbg_level = US_Settings::us_debug();
+   grtype    = US_2dsaProcess::UGRID;
+   baserss   = 0;
 
    setObjectName( "US_AnalysisControl2D" );
    setAttribute( Qt::WA_DeleteOnClose, true );
@@ -86,8 +87,10 @@ US_AnalysisControl2D::US_AnalysisControl2D( QList< SS_DATASET* >& dsets,
    QLabel* lb_optimiz      = us_banner( tr( "Optimization Methods:" ) );
    QLabel* lb_gridreps     = us_label(  tr( "Grid Repetitions:" ) );
 //   QLabel* lb_menisrng     = us_label(  tr( "Meniscus Fit Range (cm):" ) );
-   QLabel* lb_menisrng     = us_label(  tr( "Fit Range (cm):" ) );
-   QLabel* lb_menispts     = us_label(  tr( "Fit Grid Points:" ) );
+   QLabel* lb_menisrng     = us_label(  tr( "Range Primary Parameter:" ) );
+   QLabel* lb_angle_range  = us_label(  tr( "Range Secondary Parameter:" ) );
+   QLabel* lb_menispts     = us_label(  tr( "Fit Primary Points:" ) );
+   QLabel* lb_angle_points = us_label(  tr( "Fit Secondary Points:" ) );
    QLabel* lb_mciters      = us_label(  tr( "Monte Carlo Iterations:" ) );
    QLabel* lb_iters        = us_label(  tr( "Maximum Iterations:" ) );
    QLabel* lb_statinfo     = us_banner( tr( "Status Information:" ) );
@@ -152,12 +155,18 @@ DbgLv(1) << "idealThrCout" << nthr;
       us_checkbox( tr( "Uniform Grid"            ), ck_unifgr, true  );
    QLayout*  lo_custgr  =
       us_checkbox( tr( "Custom Grid"             ), ck_custgr, false );
-   QLayout*  lo_menisc  =
-      us_checkbox( tr( "Float Meniscus"          ), ck_menisc, false );
-   QLayout*  lo_bottom  =
-      us_checkbox( tr( "Float Bottom"            ), ck_bottom, false );
    QLayout*  lo_mcarlo  =
       us_checkbox( tr( "Monte Carlo Iterations"  ), ck_mcarlo, false );
+
+   QStringList fitType;
+   fitType << "" << "MENISCUS" << "BOTTOM" << "ANGLE" << "BAND VOLUME" << "SIGMA" << "DELTA" << "VBAR";
+   cmb_primary = us_comboBox(  );
+   cmb_secondary = us_comboBox(  );
+   for ( int i = 0; i < fitType.size(); i++ )
+   {
+      cmb_primary->addItem( fitType[i] );
+      cmb_secondary->addItem( fitType[i] );
+   }
 
 
    ct_iters     = us_counter( 2,    1,   16,    1 );
@@ -171,11 +180,19 @@ DbgLv(1) << "idealThrCout" << nthr;
 
    ct_menisrng  = us_counter( 3, 0.01, 0.65, 0.03 );
    ct_menispts  = us_counter( 2,    3,   51,   11 );
+   ct_angle_range = us_counter( 3, 0.001, 1, 0.005 );
+   ct_angle_points  = us_counter( 2,    3,   51,   11 );
    ct_mciters   = us_counter( 3,    3, 2000,   20 );
    ct_menisrng ->setSingleStep( 0.001 );
    ct_menispts ->setSingleStep(    1 );
+   ct_angle_range ->setSingleStep( 0.001 );
+   ct_angle_points ->setSingleStep(     1 );
    ct_mciters  ->setSingleStep(    1 );
    ct_iters    ->setSingleStep(    1 );
+   ct_menisrng->setEnabled( false );
+   ct_menispts->setEnabled( false );
+   ct_angle_range->setEnabled( false );
+   ct_angle_points->setEnabled( false );
    QLabel* lb_optspace1    = us_banner( "" );
 
    int row       = 0;
@@ -219,7 +236,7 @@ DbgLv(1) << "idealThrCout" << nthr;
    controlsLayout->addWidget( lb_status,     row,   0, 1, 1 );
    controlsLayout->addWidget( b_progress,    row++, 1, 1, 3 );
    controlsLayout->addWidget( lb_optspace1,  row,   0, 1, 4 );
-   controlsLayout->setRowStretch( row, 2 );
+   controlsLayout->setRowStretch( row, 5 );
 
    row           = 0;
    optimizeLayout->addWidget( lb_optimiz,    row++, 0, 1, 4 );
@@ -228,15 +245,16 @@ DbgLv(1) << "idealThrCout" << nthr;
    optimizeLayout->addWidget( le_gridreps,   row++, 1, 1, 3 );
    optimizeLayout->addLayout( lo_custgr,     row,   0, 1, 2 );
    optimizeLayout->addWidget( pb_ldmodel,    row++, 2, 1, 2 );
-//   optimizeLayout->addLayout( lo_menisc,     row++, 0, 1, 4 );
-   optimizeLayout->addLayout( lo_menisc,     row,   0, 1, 2 );
-   optimizeLayout->addLayout( lo_bottom,     row++, 2, 1, 2 );
-//   optimizeLayout->addWidget( lb_menisrng,   row,   0, 1, 2 );
-//   optimizeLayout->addWidget( ct_menisrng,   row++, 2, 1, 2 );
+   optimizeLayout->addWidget( cmb_primary,     row++,   0, 1, 4 );
    optimizeLayout->addWidget( lb_menisrng,   row,   0, 1, 1 );
    optimizeLayout->addWidget( ct_menisrng,   row++, 1, 1, 3 );
    optimizeLayout->addWidget( lb_menispts,   row,   0, 1, 2 );
    optimizeLayout->addWidget( ct_menispts,   row++, 2, 1, 2 );
+   optimizeLayout->addWidget( cmb_secondary,     row++, 0, 1, 4 );
+   optimizeLayout->addWidget( lb_angle_range,   row,   0, 1, 1 );
+   optimizeLayout->addWidget( ct_angle_range,   row++, 1, 1, 3 );
+   optimizeLayout->addWidget( lb_angle_points,   row,   0, 1, 2 );
+   optimizeLayout->addWidget( ct_angle_points,   row++, 2, 1, 2 );
    optimizeLayout->addLayout( lo_mcarlo,     row++, 0, 1, 4 );
    optimizeLayout->addWidget( lb_mciters,    row,   0, 1, 2 );
    optimizeLayout->addWidget( ct_mciters,    row++, 2, 1, 2 );
@@ -270,10 +288,6 @@ DbgLv(1) << "idealThrCout" << nthr;
             this,  SLOT( checkUniGrid(  bool ) ) );
    connect( ck_custgr, SIGNAL( toggled( bool ) ),
             this,  SLOT( checkCusGrid(  bool ) ) );
-   connect( ck_menisc, SIGNAL( toggled( bool ) ),
-            this,  SLOT( checkMeniscus( bool ) ) );
-   connect( ck_bottom, SIGNAL( toggled( bool ) ),
-            this,  SLOT( checkMeniscus( bool ) ) );
    connect( ck_mcarlo, SIGNAL( toggled( bool ) ),
             this,  SLOT( checkMonteCar( bool ) ) );
    connect( ck_iters,  SIGNAL( toggled( bool ) ),
@@ -314,6 +328,14 @@ DbgLv(1) << "idealThrCout" << nthr;
             this,       SLOT(   advanced()  ) );
    connect( pb_anorm,   SIGNAL( clicked()          ),
             this,       SLOT(   calculate_norms( ) ) );
+   connect( cmb_primary, SIGNAL( currentIndexChanged( int ) ),
+            this, SLOT(checkPrimary( int )));
+   connect( cmb_secondary, SIGNAL( currentIndexChanged( int ) ),
+            this, SLOT( checkSecondary( int )));
+   connect( ct_menisrng, SLOT( valueChanged( double ) ),
+            this, SIGNAL( primary_range_changed( double )));
+   connect( ct_angle_range, SLOT( valueChanged( double ) ),
+            this, SIGNAL( secondary_range_changed(double)));
 
    edata          = &dsets[ 0 ]->run_data;
 
@@ -325,10 +347,10 @@ DbgLv(1) << "idealThrCout" << nthr;
 // enable/disable optimize counters based on chosen method
 void US_AnalysisControl2D::optimize_options()
 {
-   ct_menisrng->setEnabled( ck_menisc->isChecked() ||
-                            ck_bottom->isChecked() );
-   ct_menispts->setEnabled( ck_menisc->isChecked() ||
-                            ck_bottom->isChecked() );
+   ct_menisrng->setEnabled( sparms->primaryFit != US_SimulationParameters::NOTHING );
+   ct_menispts->setEnabled( sparms->primaryFit != US_SimulationParameters::NOTHING );
+   ct_angle_range->setEnabled( sparms->secondaryFit != US_SimulationParameters::NOTHING );
+   ct_angle_points->setEnabled( sparms->secondaryFit != US_SimulationParameters::NOTHING );
 //   ck_bottom  ->setEnabled( ck_menisc->isChecked() );
    ct_mciters ->setEnabled( ck_mcarlo->isChecked() );
 
@@ -348,9 +370,20 @@ void US_AnalysisControl2D::optimize_options()
 // uncheck optimize options other than one just checked
 void US_AnalysisControl2D::uncheck_optimize( int ckflag )
 {
-   if ( ckflag >  3 ) ck_unifgr->setChecked( false );
-   if ( ckflag == 3 ) ck_menisc->setChecked( false );
-   if ( ckflag == 2 ) ck_mcarlo->setChecked( false );
+   if ( ckflag >  3 )
+   {
+      ck_unifgr->setChecked( false );
+   }
+   if ( ckflag == 3 )
+   {
+      ck_menisc->setChecked( false );
+      cmb_primary->setCurrentIndex( 0 );
+      cmb_secondary->setCurrentIndex( 0 );
+   }
+   if ( ckflag == 2 )
+   {
+      ck_mcarlo->setChecked( false );
+   }
 }
 
 // handle uniform grid checked
@@ -404,6 +437,15 @@ void US_AnalysisControl2D::checkCusGrid(  bool checked )
 
 // handle float meniscus position checkec
 void US_AnalysisControl2D::checkMeniscus( bool checked )
+{
+   if ( checked )
+      uncheck_optimize( 2 );
+
+   optimize_options();
+}
+
+// handle float angle position checkec
+void US_AnalysisControl2D::checkAngle( bool checked )
 {
    if ( checked )
       uncheck_optimize( 2 );
@@ -573,26 +615,14 @@ DbgLv(1) << "AnaC: edata" << edata;
          return;
       }
    }
-
-   // Make sure that any fit-meniscus is reasonable
-   if ( ck_menisc->isChecked() )
+   US_SimulationParameters* sparms = &dsets[ 0 ]->simparams;
+   if (sparms->primaryFit != US_SimulationParameters::NOTHING)
    {
-      double menrng = ct_menisrng->value();
-      double bmenis = edata->meniscus;
-      double hmenis = bmenis + menrng * 0.5;
-      double lrdata = edata->xvalues[ 0 ];
-
-      if ( hmenis >= lrdata )
-      {
-         QMessageBox::critical( this, tr( "Meniscus-Data Overlap!" ),
-            tr( "The highest meniscus (%1), implied in the range given,\n"
-                "equals or exceeds the low data range radius (%2).\n\n"
-                "You must either quit this program and re-edit the data\n"
-                "to have a low radius value farther from the meniscus;\n"
-                "or change the fit-meniscus range given here." )
-                .arg( hmenis ).arg( lrdata ) );
-         return;
-      }
+      sparms->primary_variations = ct_menispts->value();
+   }
+   if (sparms->secondaryFit != US_SimulationParameters::NOTHING)
+   {
+      sparms->secondary_variations = ct_angle_points->value();
    }
 
    // Insure that max RPM and S-value imply a reasonable grid size
@@ -609,8 +639,10 @@ DbgLv(1) << "AnaC: edata" << edata;
 
 DbgLv(1) << "AnaC:St:MEM (1)rssnow,proc" << US_Memory::rss_now() << processor;
    // Start a processing object if need be
-   if ( processor == 0 )
+   if ( processor == nullptr )
+   {
       processor   = new US_2dsaProcess( dsets, this );
+   }
 
    else
    {
@@ -658,12 +690,13 @@ DbgLv(1) << "AnaC:St:MEM (2)rssnow" << US_Memory::rss_now();
             this,      SLOT(   completed_process( int  ) ) );
 
    int mxiter    = (int)ct_iters->value();
-   int mniter    = ( ck_menisc->isChecked() ||
-                     ck_bottom->isChecked() ) ?
-                   (int)ct_menispts->value() : 0;
-   int fittype   = 0;
-   fittype      |= ( ck_menisc->isChecked() ? 1 : 0 );
-   fittype      |= ( ck_bottom->isChecked() ? 2 : 0 );
+   //int mniter    = ( ck_menisc->isChecked() ||
+   //                  ck_bottom->isChecked() ) ?
+   //                (int)ct_menispts->value() : 0;
+   //int fittype   = 0;
+   //fittype      |= ( ck_menisc->isChecked() ? 1 : 0 );
+   //fittype      |= ( ck_bottom->isChecked() ? 2 : 0 );
+   //fittype      |= ( ck_angle->isChecked() ? 4 : 0 );
    int mciter    = ck_mcarlo->isChecked() ?
                    (int)ct_mciters ->value() : 0;
    double vtoler = 1.0e-12;
@@ -676,8 +709,7 @@ DbgLv(1) << "AnaC:St:MEM (2)rssnow" << US_Memory::rss_now();
       return;
 
    // Begin the fit
-   processor->set_iters( mxiter, mciter, mniter, vtoler, menrng,
-                         cff0, ngrr, fittype );
+   processor->set_iters( mxiter, mciter, vtoler, cff0, ngrr );
 
    processor->start_fit( slo, sup, nss, klo, kup, nks,
          ngrr, nthr, noif );
@@ -1024,7 +1056,7 @@ DbgLv(1) << "AC:cs: CC";
 void US_AnalysisControl2D::completed_process( int stage )
 {
    bool alldone = ( stage == 9 );
-DbgLv(1) << "AC:cp: stage alldone" << stage << alldone;
+   DbgLv(1) << "AC:cp: stage alldone" << stage << alldone;
 
    b_progress->setValue( nctotal );
    qApp->processEvents();
@@ -1037,46 +1069,59 @@ DbgLv(1) << "AC:cp: stage alldone" << stage << alldone;
 
    QMap< QString, QString >  rval_map;
    processor->get_results( sdata, rdata, model, ti_noise, ri_noise );
-DbgLv(1) << "norm_size_anal_control" << ti_noise->count << ri_noise->count ;
+   DbgLv(1) << "norm_size_anal_control" << ti_noise->count << ri_noise->count ;
    processor->get_values( rval_map );
-//DBG-DATA
-if (dbg_level>0)
-{
- double dtot=0.0;
- double ntot=0.0;
- double stot=0.0;
- int nnoi=ti_noise->count;
- int knoi=ti_noise->values.count();
- for (int ii=0; ii<edata->scanCount(); ii++ )
-  for (int jj=0; jj<edata->pointCount(); jj++ )
-  {
-   dtot += edata->value(ii,jj);
-   stot += sdata->value(ii,jj);
-  }
- for (int jj=0; jj<knoi; jj++ )
-  ntot += ti_noise->values[jj];
- DbgLv(1) << "AC:cp DTOT" << dtot << "edata" << edata << "NTOT" << ntot
-  << "nnoi knoi" << nnoi << knoi << "STOT" << stot;
-}
-//DBG-DATA
+   //DBG-DATA
+   if (dbg_level>0)
+   {
+      double dtot=0.0;
+      double ntot=0.0;
+      double stot=0.0;
+      int nnoi=ti_noise->count;
+      int knoi=ti_noise->values.count();
+      for (int ii=0; ii<edata->scanCount(); ii++ )
+      {
+         for (int jj=0; jj<edata->pointCount(); jj++ )
+         {
+            dtot += edata->value(ii,jj);
+            stot += sdata->value(ii,jj);
+         }
+      }
+      for (int jj=0; jj<knoi; jj++ )
+      {
+         ntot += ti_noise->values[jj];
+      }
+      DbgLv( 1 ) << "AC:cp DTOT" << dtot << "edata" << edata << "NTOT" << ntot
+                     << "nnoi knoi" << nnoi << knoi << "STOT" << stot;
+   }
+   //DBG-DATA
 
    QString s_inum  = rval_map[ "rf_iteration" ];
    QString s_mmit  = rval_map[ "mm_iteration" ];
    QString s_vari  = rval_map[ "variance" ];
    QString s_meni  = rval_map[ "meniscus" ];
    QString s_bott  = rval_map[ "bottom" ];
+   QString s_angle = rval_map[ "angle" ];
+   QString s_primary = rval_map[ "primary" ];
+   QString s_secondary = rval_map[ "secondary" ];
    int    iternum  = s_inum.toInt();
    int    mmitnum  = s_mmit.toInt();
    double varinew  = s_vari.toDouble();
    double meniscus = s_meni.toDouble();
    double bottom   = s_bott.toDouble();
+   double angle    = s_angle.toDouble();
+   double primary  = s_primary.toDouble();
+   double secondary= s_secondary.toDouble();
    double variold  = le_newvari  ->text().toDouble();
    double vimprov  = variold - varinew;
-DbgLv(1) << "AC:cp inum mmit vari meni bott"
- << iternum << mmitnum << varinew << meniscus << bottom;
+   DbgLv(1) << "AC:cp inum mmit vari meni bott angle"
+    << iternum << mmitnum << varinew << primary << secondary;
    le_oldvari  ->setText( QString::number( variold ) );
    le_newvari  ->setText( s_vari );
    le_improve  ->setText( QString::number( vimprov ) );
+   QStringList fitType;
+   fitType << "NOTHING" << "MENISCUS" << "BOTTOM" << "ANGLE" << "VOLUME" << "SIGMA" << "DELTA"
+               << "VBAR" << "FF0" << "TEMPERATURE";
 
    if ( mmitnum == 0 )
    {  // simple refinement iteration (no MC/Meniscus)
@@ -1085,38 +1130,26 @@ DbgLv(1) << "AC:cp inum mmit vari meni bott"
                            .arg( mmitnum ).arg( varinew );
    }
 
-   else if ( ck_menisc->isChecked() )
+   else if ( sparms->primaryFit != US_SimulationParameters::NOTHING || sparms->secondaryFit != US_SimulationParameters::NOTHING )
    {  // Meniscus (or Meniscus,Bottom)
-      model->global      = US_Model::MENISCUS;
-      if ( ck_bottom->isChecked() )
-      {  // Meniscus,Bottom-fit
-         model->description = QString( "MMITER=%1 VARI=%2 MENISCUS=%3 BOTTOM=%4" )
-                              .arg( mmitnum ).arg( varinew ).arg( meniscus ).arg( bottom );
-         le_iteration->setText( QString::number( iternum  ) + " , Model " +
-                                QString::number( mmitnum  ) + " , Meniscus " +
-                                QString::number( meniscus ) + " , Bottom " +
-                                QString::number( bottom ) );
+      model->global = US_Model::MENISCUS;
+      QString desc = QString( "MMITER=%1 VARI=%2" ).arg(mmitnum).arg(varinew);
+      QString text = QString::number( iternum  ) + " , Model " + QString::number( mmitnum  );
+      if ( sparms->primaryFit != US_SimulationParameters::NOTHING )
+      {
+         QString pfit = fitType[ sparms->primaryFit ];
+         desc += QString( " %1=%2" ).arg( pfit ).arg( primary );
+         text += QString( ", %1=%2" ).arg( pfit ).arg( primary );
       }
-      else
-      {  // Meniscus-fit
-         model->description = QString( "MMITER=%1 VARI=%2 MENISCUS=%3" )
-                              .arg( mmitnum ).arg( varinew ).arg( meniscus );
-         le_iteration->setText( QString::number( iternum  ) + " , Model " +
-                                QString::number( mmitnum  ) + " , Meniscus " +
-                                QString::number( meniscus ) );
+      if ( sparms->secondaryFit != US_SimulationParameters::NOTHING )
+      {
+         QString sfit = fitType[ sparms->secondaryFit ];
+         desc += QString( " %1=%2" ).arg( sfit ).arg( secondary );
+         text += QString( ", %1=%2" ).arg( sfit ).arg( secondary );
       }
+      model->description = desc;
+      le_iteration->setText( text );
    }
-
-   else if ( ck_bottom->isChecked() )
-   {  // Bottom-fit (only)
-      model->global      = US_Model::BOTTOM;
-      model->description = QString( "MMITER=%1 VARI=%2 BOTTOM=%4" )
-                           .arg( mmitnum ).arg( varinew ).arg( bottom );
-      le_iteration->setText( QString::number( iternum  ) + " , Model " +
-                             QString::number( mmitnum  ) + " , Bottom " +
-                             QString::number( bottom ) );
-   }
-
    else
    {  // Monte Carlo
       model->monteCarlo  = true;
@@ -1259,17 +1292,25 @@ DbgLv(1) << "aac2:define_work" << workin.thrn << workin.nthrd;
 void US_AnalysisControl2D::advanced()
 {
    US_SimulationParameters* sparms = &dsets[ 0 ]->simparams;
+   if (!dsets[0]->solution_rec.buffer.cosed_component.isEmpty()){
+       sparms->meshType = US_SimulationParameters::ASTFVM;
+   }
+
+   double grpar1 = 0.0;
+   double grpar2 = 0.0;
+   double grpar3 = 0.0;
+   bool   reg    = false;
+   double repar1 = 0.0;
+   US_Model modpar;
+   modpar = dsets[0]->model;
+
 DbgLv(1) << "Adv sparms.bf sect" << sparms->band_forming << sparms->cp_sector;
    US_AdvAnalysis2D* aadiag = new US_AdvAnalysis2D( sparms, loadDB, this );
+   aadiag->set_parameters( grtype, grpar1, grpar2, grpar3,
+                              modpar, reg,    repar1 );
    if ( aadiag->exec() == QDialog::Accepted )
    {
-             grtype = US_2dsaProcess::UGRID;
-      double grpar1 = 0.0;
-      double grpar2 = 0.0;
-      double grpar3 = 0.0;
-      bool   reg    = false;
-      double repar1 = 0.0;
-      US_Model modpar;
+
 
       aadiag->get_parameters( grtype, grpar1, grpar2, grpar3,
                               modpar, reg,    repar1 );
@@ -1385,6 +1426,440 @@ int US_AnalysisControl2D::memory_check( )
    }
 
    return status;
+}
+
+void US_AnalysisControl2D::checkPrimary( int kk )
+{
+   US_SimulationParameters* sparms = &dsets[ 0 ]->simparams;
+   US_SimulationParameters::FitType fit = static_cast<US_SimulationParameters::FitType>(kk);
+   // prepare the range and points counters
+   switch ( fit )
+   {
+      case (US_SimulationParameters::NOTHING):
+         {
+            ct_menisrng->setEnabled( false );
+            ct_menispts->setEnabled( false );
+            connect(ct_menisrng, SIGNAL(valueChanged(double)), this, SLOT(primary_range_changed( double )));
+            sparms->primaryFit = fit;
+            sparms->primary_variations = 0;
+            sparms->primary_range = 0.0;
+            break;
+         }
+      case (US_SimulationParameters::MENISCUS):
+         {
+            ct_menisrng->setEnabled( true );
+            ct_menispts->setEnabled( true );
+            ct_menisrng->disconnect(  );
+            ct_menisrng->setValue( 0.03 );
+            ct_menisrng->setMinimum( 0.01 );
+            ct_menisrng->setMaximum( 0.65 );
+            connect(ct_menisrng, SIGNAL(valueChanged(double)), this, SLOT(primary_range_changed( double )));
+            sparms->primaryFit = fit;
+            sparms->primary_variations = 11;
+            sparms->primary_range = ct_menisrng->value();
+            break;
+         }
+      case (US_SimulationParameters::BOTTOM):
+         {
+            ct_menisrng->setEnabled( true );
+            ct_menispts->setEnabled( true );
+            ct_menisrng->disconnect(  );
+            ct_menisrng->setValue( 0.03 );
+            ct_menisrng->setMinimum( 0.01 );
+            ct_menisrng->setMaximum( 0.65 );
+            connect(ct_menisrng, SIGNAL(valueChanged(double)), this, SLOT(primary_range_changed( double )));
+            sparms->primaryFit = fit;
+            sparms->primary_variations = 11;
+            sparms->primary_range = ct_menisrng->value();
+            break;
+         }
+      case (US_SimulationParameters::ANGLE):
+         {
+            ct_menisrng->setEnabled( true );
+            ct_menispts->setEnabled( true );
+            ct_menisrng->disconnect(  );
+            ct_menisrng->setValue( 0.5 );
+            ct_menisrng->setMinimum( 0.1 );
+            ct_menisrng->setMaximum( 2.0 );
+            connect(ct_menisrng, SIGNAL(valueChanged(double)), this, SLOT(primary_range_changed( double )));
+            sparms->primaryFit = fit;
+            sparms->primary_variations = 11;
+            sparms->primary_range = ct_menisrng->value();
+            break;
+         }
+      case (US_SimulationParameters::BAND_VOLUME):
+         {
+            ct_menisrng->setEnabled( true );
+            ct_menispts->setEnabled( true );
+            ct_menisrng->disconnect(  );
+            ct_menisrng->setValue( 0.015 );
+            ct_menisrng->setMinimum( 0.001 );
+            ct_menisrng->setMaximum( 0.1 );
+            connect(ct_menisrng, SIGNAL(valueChanged(double)), this, SLOT(primary_range_changed( double )));
+            sparms->primaryFit = fit;
+            sparms->primary_variations = 11;
+            sparms->primary_range = ct_menisrng->value();
+            break;
+         }
+      case (US_SimulationParameters::SIGMA):
+         {
+            ct_menisrng->setEnabled( true );
+            ct_menispts->setEnabled( true );
+            ct_menisrng->disconnect(  );
+            ct_menisrng->setValue( 0.5 );
+            ct_menisrng->setMinimum( 0.1 );
+            ct_menisrng->setMaximum( 2.0 );
+            connect(ct_menisrng, SIGNAL(valueChanged(double)), this, SLOT(primary_range_changed( double )));
+            sparms->primaryFit = fit;
+            sparms->primary_variations = 11;
+            sparms->primary_range = ct_menisrng->value();
+            break;
+         }
+      case (US_SimulationParameters::DELTA):
+         {
+            ct_menisrng->setEnabled( true );
+            ct_menispts->setEnabled( true );
+            ct_menisrng->disconnect(  );
+            ct_menisrng->setValue( 0.5 );
+            ct_menisrng->setMinimum( 0.1 );
+            ct_menisrng->setMaximum( 2.0 );
+            connect(ct_menisrng, SIGNAL(valueChanged(double)), this, SLOT(primary_range_changed( double )));
+            sparms->primaryFit = fit;
+            sparms->primary_variations = 11;
+            sparms->primary_range = ct_menisrng->value();
+            break;
+         }
+      case (US_SimulationParameters::VBAR):
+         {
+            ct_menisrng->setEnabled( true );
+            ct_menispts->setEnabled( true );
+            ct_menisrng->disconnect(  );
+            ct_menisrng->setValue( 0.01 );
+            ct_menisrng->setMinimum( 0.001 );
+            ct_menisrng->setMaximum( 2.0 );
+            connect(ct_menisrng, SIGNAL(valueChanged(double)), this, SLOT(primary_range_changed( double )));
+            sparms->primaryFit = fit;
+            sparms->primary_variations = 11;
+            sparms->primary_range = ct_menisrng->value();
+            break;
+         }
+   }
+}
+
+void US_AnalysisControl2D::checkSecondary( int kk )
+{
+   US_SimulationParameters* sparms = &dsets[ 0 ]->simparams;
+   US_SimulationParameters::FitType fit = static_cast<US_SimulationParameters::FitType>(kk);
+   if ( sparms->primaryFit == US_SimulationParameters::NOTHING && fit != US_SimulationParameters::NOTHING )
+   {
+      // redirect selection to the primary value
+      cmb_primary->setCurrentIndex( kk );
+      cmb_secondary->disconnect(  );
+      cmb_secondary->setCurrentIndex( 0 );
+      connect(cmb_secondary, SIGNAL(currentIndexChanged(int)), this, SLOT(checkSecondary( int )));
+      return;
+   }
+   // prepare the range and points counters
+   switch ( fit )
+   {
+      case (US_SimulationParameters::NOTHING):
+         {
+            ct_angle_range->setEnabled( false );
+            ct_angle_points->setEnabled( false );
+            connect(ct_angle_range, SIGNAL(valueChanged(double)), this, SLOT(secondary_range_changed( double )));
+            sparms->secondaryFit = fit;
+            sparms->secondary_variations = 0;
+            sparms->secondary_range = 0.0;
+            break;
+         }
+      case (US_SimulationParameters::MENISCUS):
+         {
+            ct_angle_range->setEnabled( true );
+            ct_angle_points->setEnabled( true );
+            ct_angle_range->disconnect(  );
+            ct_angle_range->setValue( 0.03 );
+            ct_angle_range->setMinimum( 0.01 );
+            ct_angle_range->setMaximum( 0.65 );
+            connect(ct_angle_range, SIGNAL(valueChanged(double)), this, SLOT(secondary_range_changed( double )));
+            sparms->secondaryFit = fit;
+            sparms->secondary_variations = 11;
+            sparms->secondary_range = ct_angle_range->value();
+            break;
+         }
+      case (US_SimulationParameters::BOTTOM):
+         {
+            ct_angle_range->setEnabled( true );
+            ct_angle_points->setEnabled( true );
+            ct_angle_range->disconnect(  );
+            ct_angle_range->setValue( 0.03 );
+            ct_angle_range->setMinimum( 0.01 );
+            ct_angle_range->setMaximum( 0.65 );
+            connect(ct_angle_range, SIGNAL(valueChanged(double)), this, SLOT(secondary_range_changed( double )));
+            sparms->secondaryFit = fit;
+            sparms->secondary_variations = 11;
+            sparms->secondary_range = ct_angle_range->value();
+            break;
+         }
+      case (US_SimulationParameters::ANGLE):
+         {
+            ct_angle_range->setEnabled( true );
+            ct_angle_points->setEnabled( true );
+            ct_angle_range->disconnect(  );
+            ct_angle_range->setValue( 0.5 );
+            ct_angle_range->setMinimum( 0.1 );
+            ct_angle_range->setMaximum( 2.0 );
+            connect(ct_angle_range, SIGNAL(valueChanged(double)), this, SLOT(secondary_range_changed( double )));
+            sparms->secondaryFit = fit;
+            sparms->secondary_variations = 11;
+            sparms->secondary_range = ct_angle_range->value();
+            break;
+         }
+      case (US_SimulationParameters::BAND_VOLUME):
+         {
+            ct_angle_range->setEnabled( true );
+            ct_angle_points->setEnabled( true );
+            ct_angle_range->disconnect(  );
+            ct_angle_range->setValue( 0.015 );
+            ct_angle_range->setMinimum( 0.001 );
+            ct_angle_range->setMaximum( 0.1 );
+            connect(ct_angle_range, SIGNAL(valueChanged(double)), this, SLOT(secondary_range_changed( double )));
+            sparms->secondaryFit = fit;
+            sparms->secondary_variations = 11;
+            sparms->secondary_range = ct_angle_range->value();
+            break;
+         }
+      case (US_SimulationParameters::SIGMA):
+         {
+            ct_angle_range->setEnabled( true );
+            ct_angle_points->setEnabled( true );
+            ct_angle_range->disconnect(  );
+            ct_angle_range->setValue( 0.5 );
+            ct_angle_range->setMinimum( 0.1 );
+            ct_angle_range->setMaximum( 2.0 );
+            connect(ct_angle_range, SIGNAL(valueChanged(double)), this, SLOT(secondary_range_changed( double )));
+            sparms->secondaryFit = fit;
+            sparms->secondary_variations = 11;
+            sparms->secondary_range = ct_angle_range->value();
+            break;
+         }
+      case (US_SimulationParameters::DELTA):
+         {
+            ct_angle_range->setEnabled( true );
+            ct_angle_points->setEnabled( true );
+            ct_angle_range->disconnect(  );
+            ct_angle_range->setValue( 0.5 );
+            ct_angle_range->setMinimum( 0.1 );
+            ct_angle_range->setMaximum( 2.0 );
+            connect(ct_angle_range, SIGNAL(valueChanged(double)), this, SLOT(secondary_range_changed( double )));
+            sparms->secondaryFit = fit;
+            sparms->secondary_variations = 11;
+            sparms->secondary_range = ct_angle_range->value();
+            break;
+         }
+      case (US_SimulationParameters::VBAR):
+         {
+            ct_angle_range->setEnabled( true );
+            ct_angle_points->setEnabled( true );
+            ct_angle_range->disconnect(  );
+            ct_angle_range->setValue( 0.01 );
+            ct_angle_range->setMinimum( 0.001 );
+            ct_angle_range->setMaximum( 2.0 );
+            connect(ct_angle_range, SIGNAL(valueChanged(double)), this, SLOT(secondary_range_changed( double )));
+            sparms->secondaryFit = fit;
+            sparms->secondary_variations = 11;
+            sparms->secondary_range = ct_angle_range->value();
+            break;
+         }
+   }
+
+}
+
+void US_AnalysisControl2D::primary_range_changed(double range)
+{
+
+   US_SimulationParameters* sparms = &dsets[ 0 ]->simparams;
+   US_SimulationParameters::FitType fit = sparms->primaryFit;
+   switch (fit)
+   {
+      case (US_SimulationParameters::MENISCUS):
+         {
+            // check for a reasonable meniscus range
+            double bmenis = edata->meniscus;
+            double hmenis = bmenis + range * 0.5;
+            double lrdata = edata->xvalues[ 0 ];
+            if ( hmenis >= lrdata )
+            {
+               ct_menisrng->disconnect(  );
+               ct_menisrng->setValue( sparms->primary_range );
+               connect(ct_menisrng, SIGNAL(valueChanged(double)), this, SLOT(primary_range_changed( double )));
+               QMessageBox::critical( this, tr( "Meniscus-Data Overlap!" ),
+                  tr( "The highest meniscus (%1), implied in the range given,\n"
+                      "equals or exceeds the low data range radius (%2).\n\n"
+                      "You must either quit this program and re-edit the data\n"
+                      "to have a low radius value farther from the meniscus;\n"
+                      "or change the fit-meniscus range given here." )
+                      .arg( hmenis ).arg( lrdata ) );
+               return;
+            }
+            break;
+         }
+      case (US_SimulationParameters::BOTTOM):
+         {
+            // check for a reasonable meniscus range
+            double bmenis = edata->bottom;
+            double hmenis = bmenis - range * 0.5;
+            double lrdata = edata->xvalues.last();
+            if ( hmenis <= lrdata )
+            {
+               ct_menisrng->disconnect(  );
+               ct_menisrng->setValue( sparms->primary_range );
+               connect(ct_menisrng, SIGNAL(valueChanged(double)), this, SLOT(primary_range_changed( double )));
+               QMessageBox::critical( this, tr( "Bottom-Data Overlap!" ),
+                  tr( "The lowest bottom (%1), implied in the range given,\n"
+                      "equals or exceeds the high data range radius (%2).\n\n"
+                      "You must either quit this program and re-edit the data\n"
+                      "to have a high radius value closer to the meniscus;\n"
+                      "or change the fit-bottom range given here." )
+                      .arg( hmenis ).arg( lrdata ) );
+               return;
+            }
+            break;
+         }
+      case (US_SimulationParameters::ANGLE):
+         {
+            // check for a reasonable meniscus range
+            double bmenis = sparms->cp_angle;
+            double hmenis = bmenis - range * 0.5;
+            if ( hmenis <= 0.01 )
+            {
+               ct_menisrng->disconnect(  );
+               ct_menisrng->setValue( sparms->primary_range );
+               connect(ct_menisrng, SIGNAL(valueChanged(double)), this, SLOT(primary_range_changed( double )));
+               QMessageBox::critical( this, tr( "Angle-Data Overlap!" ),
+                  tr( "The lowest angle (%1), implied in the range given,\n"
+                      "is smaller than 0.01.\n\n"
+                      "You must change the fit-angle range given here." )
+                      .arg( hmenis ) );
+               return;
+            }
+            break;
+         }
+      case (US_SimulationParameters::BAND_VOLUME):
+         {
+            // check for a reasonable meniscus range
+            double bmenis = sparms->band_volume;
+            double hmenis = bmenis - range * 0.5;
+            if ( hmenis <= 0.001 ||  hmenis >= 0.1 )
+            {
+               ct_menisrng->disconnect(  );
+               ct_menisrng->setValue( sparms->primary_range );
+               connect(ct_menisrng, SIGNAL(valueChanged(double)), this, SLOT(primary_range_changed( double )));
+               QMessageBox::critical( this, tr( "Band volume-Data Overlap!" ),
+                  tr( "The lowest band volume (%1), implied in the range given,\n"
+                      "is smaller than 0.001 mL, or the highest band volume (%2), is greater than 0.1 mL.\n\n"
+                      "You must change the fit-volume range given here." )
+                      .arg( hmenis ).arg(hmenis + range) );
+               return;
+            }
+            break;
+         }
+      default: break;
+   }
+   sparms->primary_range = range;
+}
+
+void US_AnalysisControl2D::secondary_range_changed(double range)
+{
+
+   US_SimulationParameters* sparms = &dsets[ 0 ]->simparams;
+   US_SimulationParameters::FitType fit = sparms->secondaryFit;
+   switch (fit)
+   {
+      case (US_SimulationParameters::MENISCUS):
+         {
+            // check for a reasonable meniscus range
+            double bmenis = edata->meniscus;
+            double hmenis = bmenis + range * 0.5;
+            double lrdata = edata->xvalues[ 0 ];
+            if ( hmenis >= lrdata )
+            {
+               ct_angle_range->disconnect(  );
+               ct_angle_range->setValue( sparms->secondary_range );
+               connect(ct_angle_range, SIGNAL(valueChanged(double)), this, SLOT(secondary_range_changed( double )));
+               QMessageBox::critical( this, tr( "Meniscus-Data Overlap!" ),
+                  tr( "The highest meniscus (%1), implied in the range given,\n"
+                      "equals or exceeds the low data range radius (%2).\n\n"
+                      "You must either quit this program and re-edit the data\n"
+                      "to have a low radius value farther from the meniscus;\n"
+                      "or change the fit-meniscus range given here." )
+                      .arg( hmenis ).arg( lrdata ) );
+               return;
+            }
+            break;
+         }
+      case (US_SimulationParameters::BOTTOM):
+         {
+            // check for a reasonable meniscus range
+            double bmenis = edata->bottom;
+            double hmenis = bmenis - range * 0.5;
+            double lrdata = edata->xvalues.last();
+            if ( hmenis <= lrdata )
+            {
+               ct_angle_range->disconnect(  );
+               ct_angle_range->setValue( sparms->secondary_range );
+               connect(ct_angle_range, SIGNAL(valueChanged(double)), this, SLOT(secondary_range_changed( double )));
+               QMessageBox::critical( this, tr( "Bottom-Data Overlap!" ),
+                  tr( "The lowest bottom (%1), implied in the range given,\n"
+                      "equals or exceeds the high data range radius (%2).\n\n"
+                      "You must either quit this program and re-edit the data\n"
+                      "to have a high radius value closer to the meniscus;\n"
+                      "or change the fit-bottom range given here." )
+                      .arg( hmenis ).arg( lrdata ) );
+               return;
+            }
+            break;
+         }
+      case (US_SimulationParameters::ANGLE):
+         {
+            // check for a reasonable meniscus range
+            double bmenis = sparms->cp_angle;
+            double hmenis = bmenis - range * 0.5;
+            if ( hmenis <= 0.01 )
+            {
+               ct_angle_range->disconnect(  );
+               ct_angle_range->setValue( sparms->secondary_range );
+               connect(ct_angle_range, SIGNAL(valueChanged(double)), this, SLOT(secondary_range_changed( double )));
+               QMessageBox::critical( this, tr( "Angle-Data Overlap!" ),
+                  tr( "The lowest angle (%1), implied in the range given,\n"
+                      "is smaller than 0.01.\n\n"
+                      "You must change the fit-angle range given here." )
+                      .arg( hmenis ) );
+               return;
+            }
+            break;
+         }
+      case (US_SimulationParameters::BAND_VOLUME):
+         {
+            // check for a reasonable meniscus range
+            double bmenis = sparms->band_volume;
+            double hmenis = bmenis - range * 0.5;
+            if ( hmenis <= 0.001 ||  hmenis >= 0.1 )
+            {
+               ct_angle_range->disconnect(  );
+               ct_angle_range->setValue( sparms->secondary_range );
+               connect(ct_angle_range, SIGNAL(valueChanged(double)), this, SLOT(secondary_range_changed( double )));
+               QMessageBox::critical( this, tr( "Band volume-Data Overlap!" ),
+                  tr( "The lowest band volume (%1), implied in the range given,\n"
+                      "is smaller than 0.001 mL, or the highest band volume (%2), is greater than 0.1 mL.\n\n"
+                      "You must change the fit-volume range given here." )
+                      .arg( hmenis ).arg(hmenis + range) );
+               return;
+            }
+            break;
+         }
+      default: break;
+   }
+   sparms->secondary_range = range;
 }
 
 // Set component attribute from a solute parameter

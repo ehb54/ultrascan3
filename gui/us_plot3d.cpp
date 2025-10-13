@@ -2273,9 +2273,8 @@ void US_Plot3D::dump_contents()
    QString reportDir = US_Settings::reportDir();
    if ( ! dir.exists( reportDir ) ) dir.mkpath( reportDir );
 
-   QString ofname     = US_Settings::reportDir() + "/" + modldesc
+   QString ofname     = US_Settings::reportDir() + "/"  +modldesc
       + "_" + datetime + "_plot3d." + fileext;
-
    bool ok           = false;
    if (fileext == "csv")
    {

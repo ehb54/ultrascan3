@@ -93,6 +93,9 @@ class US_AnalysisControl2D : public US_WidgetsDialog
       QLabel*       lb_nstepsk;
       QLabel*       lb_constff0;
 
+      QComboBox*    cmb_primary;
+      QComboBox*    cmb_secondary;
+
       QwtCounter*   ct_lolimits;
       QwtCounter*   ct_uplimits;
       QwtCounter*   ct_nstepss;
@@ -101,7 +104,9 @@ class US_AnalysisControl2D : public US_WidgetsDialog
       QwtCounter*   ct_nstepsk;
       QwtCounter*   ct_thrdcnt;
       QwtCounter*   ct_menisrng;
+      QwtCounter*   ct_angle_range;
       QwtCounter*   ct_menispts;
+      QwtCounter*   ct_angle_points;
       QwtCounter*   ct_repetloc;
       QwtCounter*   ct_scfactor;
       QwtCounter*   ct_scfact2;
@@ -121,6 +126,7 @@ class US_AnalysisControl2D : public US_WidgetsDialog
       QCheckBox*    ck_custgr;
       QCheckBox*    ck_menisc;
       QCheckBox*    ck_bottom;
+      QCheckBox*    ck_angle;
       QCheckBox*    ck_ranlgr;
       QCheckBox*    ck_soluco;
       QCheckBox*    ck_clipcs;
@@ -156,6 +162,7 @@ class US_AnalysisControl2D : public US_WidgetsDialog
       void checkUniGrid (    bool );
       void checkCusGrid (    bool );
       void checkMeniscus(    bool );
+      void checkAngle   (    bool );
       void checkIterate (    bool );
       void checkLocalUni(    bool );
       void checkRandLoc (    bool );
@@ -176,6 +183,10 @@ class US_AnalysisControl2D : public US_WidgetsDialog
       void advanced(         void );
       void load_model(       void );
       int  memory_check(     void );
+      void checkPrimary( int kk );
+      void checkSecondary( int kk );
+      void primary_range_changed( double range );
+      void secondary_range_changed( double range );
       void help     ( void )
       { showHelp.show_help( "2dsa_analys.html" ); };
 };

@@ -202,11 +202,24 @@ US_SimParamsGui::US_SimParamsGui(
    cmb_mesh->addItem( "Specified file (mesh.dat)" );
    cmb_mesh->addItem( "AST Finite Volume Method (ASTFVM)" );
    cmb_mesh->setCurrentIndex( (int)simparams.meshType );
+   cmb_mesh->setCurrentText(cmb_mesh->itemData(cmb_mesh->currentIndex()).toString());
    
    main->addWidget( cmb_mesh, row++, 0, 1, 4 );
 
    connect( cmb_mesh, SIGNAL( activated  ( int ) ), 
                       SLOT  ( update_mesh( int ) ) );
+
+   // Moving Grid Combo Box
+   cmb_moving = us_comboBox();
+   cmb_moving->setMaxVisibleItems( 5 );
+   cmb_moving->addItem( "Constant Time Grid (Claverie/Acceleration)" );
+   cmb_moving->addItem( "Moving Time Grid (ASTFEM/Moving Hat)" );
+   cmb_moving->setCurrentIndex( (int)simparams.gridType );
+   cmb_moving->setCurrentText(cmb_moving->itemData(cmb_moving->currentIndex()).toString());
+   connect( cmb_moving, SIGNAL( activated    ( int ) ),
+            SLOT  ( update_moving( int ) ) );
+
+   main->addWidget( cmb_moving, row++, 0, 1, 4 );
 
    // Right Column
    row = 1;
@@ -225,20 +238,35 @@ US_SimParamsGui::US_SimParamsGui(
    connect( rb_standard, SIGNAL( toggled           ( bool ) ), 
                          SLOT  ( select_centerpiece( bool ) ) );
 
+
    // Band loading
    QLabel* lb_lamella = us_label( tr( "Band loading volume (" )
          + QString( QChar( 181 ) ) + "l):" );
    main->addWidget( lb_lamella, row, 4, 1, 3 );
 
-   cnt_lamella = us_counter( 3, 1, 20, 15 );
+   cnt_lamella = us_counter( 3, 1, 20, simparams.band_forming?simparams.band_volume*1000:15 );
    cnt_lamella->setSingleStep    ( 0.1 );
    cnt_lamella->setIncSteps( QwtCounter::Button1,   1 );
    cnt_lamella->setIncSteps( QwtCounter::Button2,  10 );
-   cnt_lamella->setEnabled( false );
+   cnt_lamella->setEnabled( simparams.band_forming );
 
    main->addWidget( cnt_lamella, row++, 7, 1, 1 );
-   connect( cnt_lamella, SIGNAL( valueChanged  ( double ) ), 
+   connect( cnt_lamella, SIGNAL( valueChanged  ( double ) ),
                          SLOT  ( update_lamella( double ) ) );
+
+   // Cell angle
+   QLabel* lb_angle = us_label( tr( "Cell angle:" ) );
+   main->addWidget( lb_angle, row, 4, 1, 3 );
+
+   cnt_angle = us_counter( 3, 0.1, 45, simparams.cp_angle );
+   cnt_angle->setSingleStep    ( 0.1 );
+   cnt_angle->setIncSteps( QwtCounter::Button1,   1 );
+   cnt_angle->setIncSteps( QwtCounter::Button2,  5 );
+   cnt_angle->setEnabled(true );
+
+   main->addWidget( cnt_angle, row++, 7, 1, 1 );
+   connect( cnt_angle, SIGNAL( valueChanged  ( double ) ),
+                         SLOT  ( update_cell_angle( double ) ) );
 
    // Meniscus position 
    QLabel* lb_meniscus = us_label( tr( "Meniscus Position (cm):" ) );
@@ -381,16 +409,7 @@ US_SimParamsGui::US_SimParamsGui(
    connect( cnt_temperature, SIGNAL( valueChanged( double ) ), 
                              SLOT  ( update_temp(  double ) ) );
 
-   // Moving Grid Combo Box
-   cmb_moving = us_comboBox();
-   cmb_moving->setMaxVisibleItems( 5 );
-   cmb_moving->addItem( "Constant Time Grid (Claverie/Acceleration)" );
-   cmb_moving->addItem( "Moving Time Grid (ASTFEM/Moving Hat)" );
-   cmb_moving->setCurrentIndex( (int)simparams.gridType );
-   connect( cmb_moving, SIGNAL( activated    ( int ) ), 
-                        SLOT  ( update_moving( int ) ) );
-   
-   main->addWidget( cmb_moving, row++, 4, 1, 4 );
+   row++;
 
    // Status box
    le_status       = us_lineedit();
@@ -1059,6 +1078,12 @@ void US_SimParamsGui::update_mesh( int mesh )
 void US_SimParamsGui::update_lamella       ( double lamella )
 {
    simparams.band_volume = lamella / 1000.0;
+   report_mods();
+}
+
+void US_SimParamsGui::update_cell_angle      ( double angle )
+{
+   simparams.cp_angle = angle;
    report_mods();
 }
 

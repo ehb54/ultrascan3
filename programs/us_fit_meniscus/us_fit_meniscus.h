@@ -89,6 +89,10 @@ class US_FitMeniscus : public US_Widgets
         };
 
     private:
+        QString x_axis_type; //!< X-axis type.
+        QString y_axis_type; //!< Y-axis type.
+        QString z_axis_type; //!< Z-axis type.
+
         QLabel* lb_men_lor; //!< Label for meniscus Lorentzian.
         QLabel* lb_bot_lor; //!< Label for bottom Lorentzian.
         QLabel* lb_men_fit; //!< Label for meniscus fit.
