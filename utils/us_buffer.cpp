@@ -234,7 +234,6 @@ int US_BufferComponent::saveToDB(IUS_DB2 * db) {
    }
 
    int idBufferComponent = db->lastInsertID();
-   //qDebug() << "new_buffer-idBuffer" << idBuffer;
 
    qDebug() << "buffer_component_ID for new buffer component: " << idBufferComponent;
    componentID = QString::number(idBufferComponent);
@@ -539,9 +538,9 @@ int US_Buffer::saveToDB( IUS_DB2* db, const QString private_buffer )
    else { 
 	  // The buffer exists, so update it
       db->next();            // Get the ID of the existing buffer record
-      QString bufID   = db->value( 0 ).toString();
-      idBuffer        = bufID.toInt();
-      bufferID        = QString::number( idBuffer );
+      QString bufID   = db->value( 0 ).toString(); // The local buffer id from the database as string
+      idBuffer        = bufID.toInt(); // numeric buffer id
+      bufferID        = QString::number( idBuffer ); // class variable string buffer id
 	  
       qDebug() << "BufferID in saveToDB(): " << bufferID;
       q.clear();
@@ -584,7 +583,6 @@ int US_Buffer::saveToDB( IUS_DB2* db, const QString private_buffer )
         << component[ i ].componentID
         << QString::number( concentration[ i ], 'f', 5 );
       db->statusQuery( q );
-      //qDebug() << "add_buffer_components-status=" << db->lastErrno();
 
       if ( db->lastErrno() != IUS_DB2::OK )
       {
