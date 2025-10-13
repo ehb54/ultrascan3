@@ -2106,7 +2106,7 @@ DbgLv(1) << "SimMdl: speed_steps:" << simparams.speed_step.size();
       simparams.meshType = US_SimulationParameters::ASTFVM;
       qDebug() << "meshtype= fvm";
    }
-   else if ( gtyp.contains( "Constant" ) )
+   if ( gtyp.contains( "Constant" ) )
       simparams.gridType = US_SimulationParameters::FIXED;
 
    simparams.firstScanIsConcentration = false;
@@ -2304,12 +2304,15 @@ DbgLv(1) << "SimMdl: (1)trmsd" << trmsd;
       else
       {
 DbgLv(1) << "SimMdl: (fematch:)Finite Volume Solver is called";
+         model = model_used;
          US_LammAstfvm *astfvm     = new US_LammAstfvm( model, simparams );
          connect( astfvm,  SIGNAL( comp_progress( int ) ), this,  SLOT(   update_progress(   int ) ) );
          //solution_rec.buffer.compressibility = compress;
          //solution_rec.buffer.manual          = manual;
          astfvm->set_buffer( solution_rec.buffer );
          astfvm->calculate(     *sdata );
+         // free memory stuff
+         delete astfvm;
       }
       //-----------------------
       //Simulation part is over
