@@ -510,13 +510,13 @@ int US_Astfem_Sim::init_from_args( const QMap<QString, QString>& flags ) {
    }
 
    // set movie flag if needed
-   if ( flags.contains("movie") )
+   if ( flags.contains("movie") && ck_movie != nullptr )
    {
       ck_movie->setChecked( true );
       movieFlag = true;
    }
    // set timecorr flag if needed
-   if ( flags.contains("timecorr") )
+   if ( flags.contains("timecorr") && ck_timeCorr != nullptr )
    {
       ck_timeCorr->setChecked( true );
       time_correctionFlag = true;
