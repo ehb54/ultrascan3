@@ -358,8 +358,7 @@ void US_Hydrodyn_Saxs_Hplc_Nth::setupGUI()
    background->addSpacing( 4 );
    background->addLayout ( hbl_bottom );
 
-   if ( !ggaussian_last_pfit_map->size() ||
-        !started_in_expert_mode ) {
+   if ( !ggaussian_last_pfit_map->size() ) {
       lbl_pvalue        ->hide();
       cb_pvalues_green  ->hide();
       cb_pvalues_yellow ->hide();
