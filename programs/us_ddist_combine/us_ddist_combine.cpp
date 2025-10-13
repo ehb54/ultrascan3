@@ -2181,7 +2181,7 @@ DbgLv(1) << "WrDa: maxnvl" << maxnvl << "nplots" << nplots;
 
 // Save report documents from files
 int US_DDistr_Combine::reportDocsFromFiles( QString& runID, QString& fdir,
-   QStringList& files, US_DB2* db, int& idEdit, QString& trdesc )
+   QStringList& files, IUS_DB2* db, int& idEdit, QString& trdesc )
 {
  DbgLv(1) << "rDFF: runID fdir files0" << runID << fdir << files[0];
  DbgLv(1) << "rDFF:  idEdit trdesc" << idEdit << trdesc;

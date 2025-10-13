@@ -98,6 +98,19 @@ class US_UTIL_EXTERN US_DataIO
 
          int    pointCount  ( void );        //!< Number of readings points
          int    scanCount   ( void );        //!< Number of scans
+
+         //! Find the nearest lower bound index for a given x-value.
+         //! Returns the index of the largest xvalue that is <= the search value.
+         //! Always returns a valid index (never -1). For values below range returns 0,
+         //! for values above range returns the last index.
+         //! \param value The x-value to search for
+         //! \return Valid array index (0 to pointCount()-1)
+         //! \warning Requires non-empty xvalues array (no bounds checking performed)
+         //!
+         //! Examples for array [1.0, 2.0, 3.0]:
+         //! xindex(1.5) = 0 (between elements → lower bound)
+         //! xindex(4.0) = 2 (above range → last index)
+         //! xindex(0.5) = 0 (below range → first index)
          int    xindex      ( double );      //!< Get index of X (radius) value
          double radius      ( int );         //!< Get radius value at index
          double scWavelength( int );         //!< Get wavelength value at index
@@ -216,7 +229,7 @@ class US_UTIL_EXTERN US_DataIO
          QVector< double > xvalues;  //!< Wavelength or radius information
          QVector< Scan >   scanData; //!< The actual data. Interpolated omitted
 
-	 double             bl_corr_slope;
+	     double             bl_corr_slope;
          double             bl_corr_yintercept; 
 
          int    pointCount  ( void );        //!< Number of readings points

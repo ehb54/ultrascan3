@@ -3,7 +3,7 @@
 #define US_ROTOR_H
 
 #include "us_extern.h"
-#include "us_db2.h"
+#include "ius_db2.h"
 
 /*! \class US_Rotor
    This class provides a low-level interface to the Rotor tables, allowing
@@ -48,19 +48,19 @@ class US_UTIL_EXTERN US_Rotor
          int       ID;        //!< The database ID of the instrument
          QString   name;      //!< The name of the instrument
          QString   serial;    //!< The serial number of the instrument
-	 int       radialCalID;
-	 QString   optimaHost;
-	 int       optimaPort;
-	 QString   optimaDBname;
-	 QString   optimaDBusername;
-	 QString   optimaDBpassw;
-	 int       selected;
-	 QString   os1;
-	 QString   os2;
-	 QString   os3;
-	 
-	 QString   radcalwvl;
-	 QString   chromoab;
+         int       radialCalID;
+         QString   optimaHost;
+         int       optimaPort;
+         QString   optimaDBname;
+         QString   optimaDBusername;
+         QString   optimaDBpassw;
+         int       selected;
+         QString   os1;
+         QString   os2;
+         QString   os3;
+
+         QString   radcalwvl;
+         QString   chromoab;
 	 
          QList< Operator > operators;  //!< A list of people authorized to use the instrument
       };
@@ -86,7 +86,7 @@ class US_UTIL_EXTERN US_Rotor
                        desired abstract rotor
              \param    db For database access, an open database connection
          */
-         Status readDB        ( int, US_DB2* = 0 );
+         Status readDB        ( int, IUS_DB2* = 0 );
 
          //! \brief Resets the class variables to default values
          void      reset( void );
@@ -119,7 +119,7 @@ class US_UTIL_EXTERN US_Rotor
                        desired abstract rotor
              \param    db For database access, an open database connection
          */
-         Status readDB        ( int, US_DB2* = 0 );
+         Status readDB        ( int, IUS_DB2* = 0 );
 
          //! \brief Resets the class variables to default values
          void      reset( void );
@@ -147,21 +147,21 @@ class US_UTIL_EXTERN US_Rotor
 
              \param    db For database access, an open database connection
          */
-         int    addRotorDB( US_DB2* = 0 );
+         int    addRotorDB( IUS_DB2* = 0 );
 
          /*! \brief    Function to read an entire rotor structure from the DB
          
              \param    rotorID The database rotorID of the desired rotor
              \param    db For database access, an open database connection
          */
-         Status readDB        ( int, US_DB2* = 0 );
+         Status readDB        ( int, IUS_DB2* = 0 );
 
          /*! \brief    Function to delete the specified rotor from the DB
 
              \param    rotorID The database rotorID of the rotor to delete
              \param    db For database access, an open database connection
          */
-         static int    deleteRotorDB( int, US_DB2* = 0 );
+         static int    deleteRotorDB( int, IUS_DB2* = 0 );
 
          //! \brief    Method to save the current rotor to disk
          void          saveDisk( void );
@@ -205,21 +205,21 @@ class US_UTIL_EXTERN US_Rotor
              \param    rotorID The ID of the rotor this calibration is associated with
              \param    db For database access, an open database connection
          */
-         int    saveDB( int, US_DB2* = 0 );
+         int    saveDB( int, IUS_DB2* = 0 );
 
          /*! \brief    Function to read an entire rotor calibration structure from the DB
          
              \param    calibrationID The database rotorCalibrationID of the desired calibration
              \param    db For database access, an open database connection
          */
-         Status readDB( int, US_DB2* = 0 );
+         Status readDB( int, IUS_DB2* = 0 );
 
          /*! \brief    Function to delete the specified rotor calibration from the DB
 
              \param    calibrationID The database calibrationID of the rotor calibration to delete
              \param    db For database access, an open database connection
          */
-         static int    deleteCalibrationDB( int, US_DB2* = 0 );
+         static int    deleteCalibrationDB( int, IUS_DB2* = 0 );
 
          /*! \brief    Function to find the dummy calibration for the current rotor in the DB,
                        and to replace it in all experiments with this one if it exists.
@@ -229,7 +229,7 @@ class US_UTIL_EXTERN US_Rotor
              \param    oldCalibrationID Returns the database ID of the old dummy calibration here
              \param    db For database access, an open database connection
          */
-         int           replaceDummyDB( int&, US_DB2* = 0 );
+         int           replaceDummyDB( int&, IUS_DB2* = 0 );
 
          //! \brief    Method to save the current rotor calibration to disk
          void          saveDisk( void );
@@ -271,7 +271,7 @@ class US_UTIL_EXTERN US_Rotor
                          or will contain, the list of available labs
           \param    db   For database access, an open database connection
       */
-      static Status readLabsDB( QVector< US_Rotor::Lab >&, US_DB2* db );
+      static Status readLabsDB( QVector< US_Rotor::Lab >&, IUS_DB2* db );
 
       /*! \brief A function to read information about all labs from disk
 
@@ -286,7 +286,7 @@ class US_UTIL_EXTERN US_Rotor
                         or will contain, the list of available abstract rotors
           \param    db  For database access, an open database connection
       */
-      static Status readAbstractRotorsDB( QVector< US_Rotor::AbstractRotor >&, US_DB2* db );
+      static Status readAbstractRotorsDB( QVector< US_Rotor::AbstractRotor >&, IUS_DB2* db );
 
       /*! \brief A function to read information about all abstract rotors from disk
 
@@ -301,7 +301,7 @@ class US_UTIL_EXTERN US_Rotor
           \param    labID The ID of the lab where the rotors are located
           \param    db  For database access, an open database connection
       */
-      static Status readRotorsFromDB( QVector< US_Rotor::Rotor >&, int, US_DB2* db );
+      static Status readRotorsFromDB( QVector< US_Rotor::Rotor >&, int, IUS_DB2* db );
 
       /*! \brief    Function to retrieve all the rotors in a particular lab from disk
 
@@ -319,7 +319,7 @@ class US_UTIL_EXTERN US_Rotor
           \param    db  For database access, an open database connection
       */
       static Status readCalibrationProfilesDB( QVector< US_Rotor::RotorCalibration >&, int,
-                                               US_DB2* db );
+                                               IUS_DB2* db );
 
       /*! \brief    Function to retrieve all the calibration profiles about a
                     particular rotor from disk

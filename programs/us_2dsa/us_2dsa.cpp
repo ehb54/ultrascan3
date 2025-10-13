@@ -304,7 +304,7 @@ void US_2dsa::load( void )
    if ( loadDB )
    {  // Fetch the speed steps for the experiment from the database
       US_Passwd   pw;
-      US_DB2*     dbP    = new US_DB2( pw.getPasswd() );
+      IUS_DB2*    dbP    = new US_DB2( pw.getPasswd() );
       QStringList query;
       QString     expID;
       int         idExp  = 0;
@@ -313,7 +313,7 @@ void US_2dsa::load( void )
             << QString::number( US_Settings::us_inv_ID() );
       dbP->query( query );
 
-      if ( dbP->lastErrno() == US_DB2::OK )
+      if ( dbP->lastErrno() == IUS_DB2::OK )
       {
          dbP->next();
          idExp              = dbP->value( 1 ).toInt();
@@ -634,7 +634,7 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
    // Save the model and any noise file(s)
 
    US_Passwd   pw;
-   US_DB2*     dbP      = loadDB ? new US_DB2( pw.getPasswd() ): NULL;
+   IUS_DB2*    dbP      = loadDB ? new US_DB2( pw.getPasswd() ): NULL;
    QDir        dirm( mdlpath );
    QDir        dirn( noipath );
    mdlpath             += "/";

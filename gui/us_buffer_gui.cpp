@@ -343,7 +343,7 @@ void US_BufferGuiSelect::read_from_db( const QString& bufferID )
    US_DB2    db( pw.getPasswd() );
 
    // Get the buffer data from the database
-   if ( db.lastErrno() != US_DB2::OK )
+   if ( db.lastErrno() != IUS_DB2::OK )
    {
       connect_error( db.lastError() );
       return;
@@ -773,7 +773,7 @@ void US_BufferGuiSelect::delete_db( void )
    US_Passwd pw;
    US_DB2    db( pw.getPasswd() );
 
-   if ( db.lastErrno() != US_DB2::OK )
+   if ( db.lastErrno() != IUS_DB2::OK )
    {
       connect_error( db.lastError() );
       return;
@@ -786,7 +786,7 @@ void US_BufferGuiSelect::delete_db( void )
 
    int status = db.lastErrno();
 
-   if (  status == US_DB2::OK )
+   if (  status == IUS_DB2::OK )
    {
       db.next();
       QString bufferID = db.value( 0 ).toString();
@@ -798,7 +798,7 @@ void US_BufferGuiSelect::delete_db( void )
       QString compType("Buffer");
    }
 
-   if ( status == US_DB2::BUFFR_IN_USE )
+   if ( status == IUS_DB2::BUFFR_IN_USE )
    {
       QMessageBox::warning( this,
                             tr( "Buffer Not Deleted" ),
@@ -807,7 +807,7 @@ void US_BufferGuiSelect::delete_db( void )
       return;
    }
 
-   if ( status != US_DB2::OK )
+   if ( status != IUS_DB2::OK )
    {
       QMessageBox::warning( this,
                             tr( "Attention" ),
@@ -896,7 +896,7 @@ void US_BufferGuiSelect::read_db( void )
    US_Passwd pw;
    US_DB2 db( pw.getPasswd() );
 
-   if ( db.lastErrno() != US_DB2::OK )
+   if ( db.lastErrno() != IUS_DB2::OK )
    {
       connect_error( db.lastError() );
       return;
@@ -1758,7 +1758,7 @@ void US_BufferGuiNew::create_new_buffer_component() {
    US_Passwd   pw;
    US_DB2      db( pw.getPasswd() );
 
-   if ( db.lastErrno() != US_DB2::OK )
+   if ( db.lastErrno() != IUS_DB2::OK )
    {
 //qDebug() << "USCFG: UpdInv: ERROR connect";
       QMessageBox::information( this,

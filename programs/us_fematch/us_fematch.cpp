@@ -3101,7 +3101,7 @@ QString US_FeMatch::distrib_info()
    }
 
    mstr += table_row( tr( "Weight Average s20,W:" ),
-                      QString().sprintf( "%6.4e", ( sum_s  / sum_c ) ) );
+                      QString::asprintf( "%6.4e", ( sum_s  / sum_c ) ) );
    mstr += table_row( tr( "Weight Average D20,W:" ),
                       QString().sprintf( "%6.4e", ( sum_D  / sum_c ) ) );
    mstr += table_row( tr( "W.A. Molecular Weight:" ),

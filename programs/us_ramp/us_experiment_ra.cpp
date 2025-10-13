@@ -20,7 +20,7 @@ US_ExperimentRa::US_ExperimentRa( void )
 }
 
 // Function to see if the current runID already exists in the database
-int US_ExperimentRa::checkRunID( US_DB2* db )
+int US_ExperimentRa::checkRunID( IUS_DB2* db )
 {
    // Let's see if we can find the run ID
    expID = 0;
@@ -28,23 +28,23 @@ int US_ExperimentRa::checkRunID( US_DB2* db )
    q << runID
      << QString::number( US_Settings::us_inv_ID() );
    db->query( q );
-   if ( db->lastErrno() == US_DB2::NOROWS )
-      return US_DB2::NOROWS;
+   if ( db->lastErrno() == IUS_DB2::NOROWS )
+      return IUS_DB2::NOROWS;
    
    // Ok, let's update the experiment ID
    db->next();
    expID = db->value( 1 ).toString().toInt();
-   return US_DB2::OK;
+   return IUS_DB2::OK;
 }
 
-int US_ExperimentRa::saveToDB( bool update, US_DB2* db )
+int US_ExperimentRa::saveToDB( bool update, IUS_DB2* db )
 {
    // Let's see if the project is in the db already
    int status = project.saveToDB( db );
-   if ( status == US_DB2::NO_PROJECT )
+   if ( status == IUS_DB2::NO_PROJECT )
       return status;
 
-   else if ( status != US_DB2::OK )
+   else if ( status != IUS_DB2::OK )
       return status;
 
  
@@ -52,13 +52,13 @@ int US_ExperimentRa::saveToDB( bool update, US_DB2* db )
    int saveStatus = 0;
    QStringList q;
    status = checkRunID( db );
-   if ( status == US_DB2::OK && ! update )
+   if ( status == IUS_DB2::OK && ! update )
    {
       // Then the runID exists already, and we're not updating
-      return US_DB2::DUPFIELD;
+      return IUS_DB2::DUPFIELD;
    }
 
-   if ( status == US_DB2::OK )
+   if ( status == IUS_DB2::OK )
    {
       // It's ok to update the existing experiment entry
       q.clear();
@@ -82,7 +82,7 @@ int US_ExperimentRa::saveToDB( bool update, US_DB2* db )
       saveStatus = db->statusQuery( q );
    }
 
-   else if ( status == US_DB2::NOROWS )
+   else if ( status == IUS_DB2::NOROWS )
    {
       // Create new experiment entry
       q.clear();
@@ -123,12 +123,12 @@ int US_ExperimentRa::saveToDB( bool update, US_DB2* db )
 
    date = db->value( 12 ).toString();
 
-   return US_DB2::OK;
+   return IUS_DB2::OK;
 }
 
 // Function to read an experiment from DB
 int US_ExperimentRa::readFromDB( QString runID, 
-                               US_DB2* db )
+                               IUS_DB2* db )
 {
    QStringList q( "get_experiment_info_by_runID" );
    q << runID
@@ -159,8 +159,8 @@ int US_ExperimentRa::readFromDB( QString runID,
       xmlFile            = db->value( 16 ).toString().toLatin1();
    }
 
-   else if ( db->lastErrno() == US_DB2::NOROWS )
-      return US_DB2::NO_EXPERIMENT;
+   else if ( db->lastErrno() == IUS_DB2::NOROWS )
+      return IUS_DB2::NO_EXPERIMENT;
 
    else
       return( db->lastErrno() );
@@ -228,7 +228,7 @@ int US_ExperimentRa::readFromDB( QString runID,
    }
 
        
-   return US_DB2::OK;
+   return IUS_DB2::OK;
 }
 
 int US_ExperimentRa::saveToDisk(

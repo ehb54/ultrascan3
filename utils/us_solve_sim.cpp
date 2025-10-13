@@ -309,17 +309,17 @@ US_Settings::set_us_debug( dbg_level );
    simulations.reserve(nsolutes * dataset_count);
 
    // Simulate data using models, each with a single s,f/f0 component
-   int increp = nsolutes / 10;                 // Progress report increment
-   increp = (increp < 10) ? 10 : increp;
-   int kstep = 0;                             // Progress step count
-   int ka = 0;                             // nnls_a output index
-   int ksols = 0;
-   int stype = data_sets[offset]->solute_type;
+   int increp    = nsolutes / 10;                 // Progress report increment
+       increp    = ( increp < 10 ) ? 10 : increp;
+   int kstep     = 0;                             // Progress step count
+   int ka        = 0;                             // nnls_a output index
+   int ksols     = 0;
+   int stype     = data_sets[ offset ]->solute_type;
 
-   if (use_zsol)
-      qSort(sim_vals.zsolutes);
+   if ( use_zsol )
+       std::sort(sim_vals.zsolutes.begin(), sim_vals.zsolutes.end());
    else
-      qSort(sim_vals.solutes);
+       std::sort(sim_vals.solutes.begin(), sim_vals.solutes.end());
 
    int count_cut = 0;         // Count of A columns cut by norm tolerance
    int ksolutes = nsolutes;  // Saved original number of solutes (columns)

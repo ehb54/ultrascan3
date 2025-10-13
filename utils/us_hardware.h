@@ -5,7 +5,7 @@
 #include <QtCore>
 #include "us_extern.h"
 #include "us_util.h"
-#include "us_db2.h"
+#include "ius_db2.h"
 
 //! \brief A set of static functions to handle hardware data
 class US_UTIL_EXTERN US_Hardware
@@ -19,7 +19,7 @@ class US_UTIL_EXTERN US_Hardware
    //! \brief Read rotor information from the database to a QMap
    //! \param db        Pointer to opened database connection
    //! \param rotor_map Reference of QMap into which to place data
-   static bool readRotorMap( US_DB2*, QMap< QString, QString >& );
+   static bool readRotorMap( IUS_DB2*, QMap< QString, QString >& );
 
    //! \brief Get coefficient values for a specified rotor
    //! \param rCalID    Rotor calibration ID for which to get values
@@ -81,7 +81,7 @@ class US_UTIL_EXTERN US_AbstractCenterpiece
       //!  \param db           Pointer to database connection (NULL for local)
       //!  \param centerpieces A list of centerpiece data
       //!  \return A boolean indicating success 
-      static bool read_centerpieces( US_DB2*, QList< US_AbstractCenterpiece >& );
+      static bool read_centerpieces( IUS_DB2*, QList< US_AbstractCenterpiece >& );
 
       //!  Read centerpieces from local disk
       //!  \param centerpieces A list of centerpiece data

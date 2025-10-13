@@ -102,7 +102,7 @@ US_SimulationParameters::SimSpeedProf::SimSpeedProf()
 }
 
 // Set simulation parameter values from an experimental RawData set.
-void US_SimulationParameters::initFromData( US_DB2* db,
+void US_SimulationParameters::initFromData( IUS_DB2* db,
    US_DataIO::RawData& rawdata, bool incl_speed, QString runID, QString dataType )
 {
    primaryFit                  = NOTHING;
@@ -201,7 +201,7 @@ DbgLv(1) << "SP:iFD:    cp_id" << cp_id;
       db->query( query );
       stat_db = db->lastErrno();
 //DbgLv(2) << "Sim parms:query() stat" << stat_db;
-      if ( stat_db != US_DB2::NOROWS )
+      if ( stat_db != IUS_DB2::NOROWS )
       {  // Info by runID:  experiment and calibration IDs
          ok_db      = db->next();
 //DbgLv(2) << "Sim parms: next() ok_db" << ok_db;
@@ -221,7 +221,7 @@ DbgLv(1) << "SP:iFD:    cp_id" << cp_id;
             query << "get_experiment_info" << expID;
             db->query( query );
             stat_db = db->lastErrno();
-            if ( stat_db != US_DB2::NOROWS  &&  db->next() )
+            if ( stat_db != IUS_DB2::NOROWS  &&  db->next() )
             {
                rotorCalID = db->value( 7 ).toString();
 //DbgLv(2) << "Sim parms(2):     rotorCalID" << rotorCalID;
@@ -277,7 +277,7 @@ DbgLv(2) << "SP:iFD: bottom" << bottom;
 }
 
 // Set simulation parameter values from an experimental EditedData set.
-void US_SimulationParameters::initFromData( US_DB2* db,
+void US_SimulationParameters::initFromData( IUS_DB2* db,
    US_DataIO::EditedData& editdata, bool incl_speed )
 {
    SpeedProfile sp;
@@ -377,7 +377,7 @@ DbgLv(1) << "SP:iFD:    cp_id" << cp_id;
       db->query( query );
       stat_db = db->lastErrno();
 //DbgLv(2) << "Sim parms:query() stat" << stat_db;
-      if ( stat_db != US_DB2::NOROWS )
+      if ( stat_db != IUS_DB2::NOROWS )
       {  // Info by runID:  experiment and calibration IDs
          ok_db      = db->next();
 //DbgLv(2) << "Sim parms: next() ok_db" << ok_db;
@@ -397,7 +397,7 @@ DbgLv(1) << "SP:iFD:    cp_id" << cp_id;
             query << "get_experiment_info" << expID;
             db->query( query );
             stat_db = db->lastErrno();
-            if ( stat_db != US_DB2::NOROWS  &&  db->next() )
+            if ( stat_db != IUS_DB2::NOROWS  &&  db->next() )
             {
                rotorCalID = db->value( 7 ).toString();
 //DbgLv(2) << "Sim parms(2):     rotorCalID" << rotorCalID;
@@ -652,7 +652,7 @@ void US_SimulationParameters::computeSpeedSteps(
 }
 
 // Set parameters from hardware files, related to rotor and centerpiece
-void US_SimulationParameters::setHardware( US_DB2* db, QString rCalID,
+void US_SimulationParameters::setHardware( IUS_DB2* db, QString rCalID,
       int cp, int ch )
 {
    int dbg_level    = US_Settings::us_debug();
@@ -1103,7 +1103,7 @@ void US_SimulationParameters::speedstepToXml( QXmlStreamWriter& xmlo,
 }
 
 // Get all speed steps for an experiment from the database
-int US_SimulationParameters::speedstepsFromDB( US_DB2* dbP, int expID,
+int US_SimulationParameters::speedstepsFromDB( IUS_DB2* dbP, int expID,
       QVector< SpeedProfile >& sps )
 {
    int nspeeds    = 0;
@@ -1149,7 +1149,7 @@ int US_SimulationParameters::speedstepsFromDB( US_DB2* dbP, int expID,
 }
 
 // Upload a speed step for an experiment to the database
-int US_SimulationParameters::speedstepToDB( US_DB2* dbP, int expID,
+int US_SimulationParameters::speedstepToDB( IUS_DB2* dbP, int expID,
       SpeedProfile* spi )
 {
    int dbg_level=US_Settings::us_debug();

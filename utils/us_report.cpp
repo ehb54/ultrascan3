@@ -3,7 +3,6 @@
 #include "us_report.h"
 #include "us_settings.h"
 #include "us_util.h"
-#include "us_db2.h"
 
 // Report types
 US_Report::ReportTypes::ReportTypes()
@@ -82,7 +81,7 @@ US_Report::ReportDocument::ReportDocument()
 
 // Saves a report document record to DB
 US_Report::Status US_Report::ReportDocument::saveDB( 
-           int tripleID, QString dir, US_DB2* db )
+           int tripleID, QString dir, IUS_DB2* db )
 {
    QRegExp rx( "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" );
    int status;
@@ -99,7 +98,7 @@ DbgLv(1) << "Doc::saveDB - GUID" << this->documentGUID;
    
    status = db->lastErrno();
 
-   if ( status == US_DB2::OK )
+   if ( status == IUS_DB2::OK )
    {
 DbgLv(1) << "Doc::saveDB - UPD ID(old)" << this->documentID;
       db->next();
@@ -119,7 +118,7 @@ DbgLv(1) << "Doc::saveDB - UPD ID" << this->documentID;
 
       int updateStatus = db->lastErrno();
 
-      if ( updateStatus != US_DB2::OK )
+      if ( updateStatus != IUS_DB2::OK )
       {
          qDebug() << "update_reportDocument error"
                   << updateStatus;
@@ -127,7 +126,7 @@ DbgLv(1) << "Doc::saveDB - UPD ID" << this->documentID;
       }
    }
 
-   else if ( status == US_DB2::NOROWS )
+   else if ( status == IUS_DB2::NOROWS )
    {
 DbgLv(1) << "Doc::saveDB - NEW ID" << this->documentID << "tripID" << tripleID;
 DbgLv(1) << "Doc::saveDB -  NEW editID" << this->editedDataID;
@@ -145,7 +144,7 @@ DbgLv(1) << "Doc::saveDB -  NEW editID" << this->editedDataID;
 
       int newStatus = db->lastErrno();
 
-      if ( newStatus != US_DB2::OK )
+      if ( newStatus != IUS_DB2::OK )
       {
          qDebug() << "new_reportDocument error"
                   << newStatus << db->lastError();
@@ -167,7 +166,7 @@ DbgLv(1) << "Doc::saveDB -  NEW editID" << this->editedDataID;
    int writeStatus = db->writeBlobToDB( fpath,
                      QString( "upload_reportContents" ), this->documentID );
 
-   if ( writeStatus != US_DB2::OK )
+   if ( writeStatus != IUS_DB2::OK )
    {
       qDebug() << "upload_reportContents error"
                << writeStatus << db->lastError();
@@ -179,7 +178,7 @@ DbgLv(1) << "Doc::saveDB -  NEW editID" << this->editedDataID;
 
 // Function to read a document from the DB, including document content,
 // into the local data structure
-US_Report::Status US_Report::ReportDocument::readDB( QString dir, US_DB2* db )
+US_Report::Status US_Report::ReportDocument::readDB( QString dir, IUS_DB2* db )
 {
    QStringList q( "get_reportDocument_info" );
    q << QString::number( this->documentID );
@@ -187,13 +186,13 @@ US_Report::Status US_Report::ReportDocument::readDB( QString dir, US_DB2* db )
 
    int status = db->lastErrno();
 
-   if ( status == US_DB2::NOROWS )
+   if ( status == IUS_DB2::NOROWS )
    {
       qDebug() << "get_reportDocument_info NOT_FOUND error" << status;
       return NOT_FOUND;
    }
 
-   else if ( status != US_DB2::OK )
+   else if ( status != IUS_DB2::OK )
    {
       qDebug() << "get_reportDocument_info error" << status;
       return DB_ERROR;
@@ -217,7 +216,7 @@ US_Report::Status US_Report::ReportDocument::readDB( QString dir, US_DB2* db )
    int readStatus = db->readBlobFromDB( fpath,
                     QString( "download_reportContents" ), this->documentID );
 
-   if ( readStatus != US_DB2::OK )
+   if ( readStatus != IUS_DB2::OK )
    {
       qDebug() << "download_reportContents error"
                << readStatus;
@@ -263,7 +262,7 @@ US_Report::ReportTriple::ReportTriple()
 }
 
 // Saves a report triple record to DB
-US_Report::Status US_Report::ReportTriple::saveDB( int reportID, US_DB2* db )
+US_Report::Status US_Report::ReportTriple::saveDB( int reportID, IUS_DB2* db )
 {
    QRegExp rx( "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" );
    int status;
@@ -279,7 +278,7 @@ US_Report::Status US_Report::ReportTriple::saveDB( int reportID, US_DB2* db )
 
    status = db->lastErrno();
 
-   if ( status == US_DB2::OK )
+   if ( status == IUS_DB2::OK )
    {
       // Update the existing report triple record in the DB
       QStringList q( "update_reportTriple" );
@@ -291,7 +290,7 @@ US_Report::Status US_Report::ReportTriple::saveDB( int reportID, US_DB2* db )
 
       int updateStatus = db->lastErrno();
 
-      if ( updateStatus != US_DB2::OK )
+      if ( updateStatus != IUS_DB2::OK )
       {
          qDebug() << "update_reportTriple error"
                   << updateStatus;
@@ -299,7 +298,7 @@ US_Report::Status US_Report::ReportTriple::saveDB( int reportID, US_DB2* db )
       }
    }
 
-   else if ( status == US_DB2::NOROWS )
+   else if ( status == IUS_DB2::NOROWS )
    {
       // Create a new report triple record in the DB
       QStringList q( "new_reportTriple" );
@@ -312,7 +311,7 @@ US_Report::Status US_Report::ReportTriple::saveDB( int reportID, US_DB2* db )
 
       int newStatus = db->lastErrno();
 
-      if ( newStatus != US_DB2::OK )
+      if ( newStatus != IUS_DB2::OK )
       {
          qDebug() << "new_reportTriple error"
                   << newStatus;
@@ -333,7 +332,7 @@ US_Report::Status US_Report::ReportTriple::saveDB( int reportID, US_DB2* db )
 }
 
 // Reads all the documents for the current triple, except document content
-US_Report::Status US_Report::ReportTriple::readDocsDB( US_DB2* db )
+US_Report::Status US_Report::ReportTriple::readDocsDB( IUS_DB2* db )
 {
    docs.clear();
    QStringList q( "get_reportDocument_desc" );
@@ -341,7 +340,7 @@ US_Report::Status US_Report::ReportTriple::readDocsDB( US_DB2* db )
    db->query( q );
 
    int status = db->lastErrno();
-   if ( status == US_DB2::OK )
+   if ( status == IUS_DB2::OK )
    {
       while ( db->next() )
       {
@@ -360,7 +359,7 @@ US_Report::Status US_Report::ReportTriple::readDocsDB( US_DB2* db )
       }
    }
 
-   else if ( status != US_DB2::NOROWS )
+   else if ( status != IUS_DB2::NOROWS )
      return DB_ERROR;
 
    return REPORT_OK;
@@ -375,7 +374,7 @@ US_Report::Status US_Report::ReportTriple::addDocument(
    QString analysis,
    QString subAnalysis,
    QString documentType,
-   US_DB2* db )
+   IUS_DB2* db )
 {
    US_Report::ReportDocument d;
 
@@ -393,7 +392,7 @@ US_Report::Status US_Report::ReportTriple::addDocument(
 US_Report::Status US_Report::ReportTriple::addDocument(
    US_Report::ReportDocument d,
    QString dir,
-   US_DB2* db )
+   IUS_DB2* db )
 {
    int ndx = this->findDocument( d.analysis, d.subAnalysis, d.documentType );
 DbgLv(1) << "Trip::addDoc - ndx" << ndx << "ana,subA,Type"
@@ -418,7 +417,7 @@ DbgLv(1) << "Trip::addDoc - ndx aft list add" << ndx;
 
 US_Report::Status US_Report::ReportTriple::removeDocument(
    int     ndx,
-   US_DB2* db )
+   IUS_DB2* db )
 {
    QStringList q( "delete_reportDocument" );
    q  << QString::number( this->docs[ndx].documentID );
@@ -426,7 +425,7 @@ US_Report::Status US_Report::ReportTriple::removeDocument(
 
    int status = db->lastErrno();
 
-   if ( status != US_DB2::OK )
+   if ( status != IUS_DB2::OK )
       return DB_ERROR;
 
    this->docs.remove( ndx );
@@ -489,7 +488,7 @@ US_Report::US_Report()
 }
 
 // Reads all the report information from DB, except document content
-US_Report::Status US_Report::readDB( QString new_runID, US_DB2* db,
+US_Report::Status US_Report::readDB( QString new_runID, IUS_DB2* db,
                                      QString new_triple )
 {
    QStringList q( "get_report_info_by_runID" );
@@ -499,10 +498,10 @@ US_Report::Status US_Report::readDB( QString new_runID, US_DB2* db,
 
    int status = db->lastErrno();
 
-   if ( status == US_DB2::NOROWS )
+   if ( status == IUS_DB2::NOROWS )
       return NOT_FOUND;
 
-   else if ( status != US_DB2::OK )
+   else if ( status != IUS_DB2::OK )
       return DB_ERROR;
 
    this->reset();
@@ -524,7 +523,7 @@ US_Report::Status US_Report::readDB( QString new_runID, US_DB2* db,
    db->query( q );
 
    status = db->lastErrno();
-   if ( status == US_DB2::OK )
+   if ( status == IUS_DB2::OK )
    {
       while ( db->next() )
       {
@@ -543,7 +542,7 @@ US_Report::Status US_Report::readDB( QString new_runID, US_DB2* db,
       }
    }
 
-   else if ( status != US_DB2::NOROWS )
+   else if ( status != IUS_DB2::NOROWS )
       return DB_ERROR;
 
    // Now cycle through and load all the document metadata
@@ -558,7 +557,7 @@ US_Report::Status US_Report::readDB( QString new_runID, US_DB2* db,
 }
 
 // COPY for autoflow: Reads all the report information from DB, except document content
-US_Report::Status US_Report::readDB_auto( int invID_passed, QString new_runID, US_DB2* db,
+US_Report::Status US_Report::readDB_auto( int invID_passed, QString new_runID, IUS_DB2* db,
                                           QString new_triple )
 {
    // Find out if the runID is in the DB already
@@ -571,10 +570,10 @@ US_Report::Status US_Report::readDB_auto( int invID_passed, QString new_runID, U
 
    int status = db->lastErrno();
 
-   if ( status == US_DB2::NOROWS )
+   if ( status == IUS_DB2::NOROWS )
       return NOT_FOUND;
 
-   else if ( status != US_DB2::OK )
+   else if ( status != IUS_DB2::OK )
       return DB_ERROR;
 
    this->reset();
@@ -596,7 +595,7 @@ US_Report::Status US_Report::readDB_auto( int invID_passed, QString new_runID, U
    db->query( q );
 
    status = db->lastErrno();
-   if ( status == US_DB2::OK )
+   if ( status == IUS_DB2::OK )
    {
       while ( db->next() )
       {
@@ -615,7 +614,7 @@ US_Report::Status US_Report::readDB_auto( int invID_passed, QString new_runID, U
       }
    }
 
-   else if ( status != US_DB2::NOROWS )
+   else if ( status != IUS_DB2::NOROWS )
       return DB_ERROR;
 
    // Now cycle through and load all the document metadata
@@ -633,7 +632,7 @@ US_Report::Status US_Report::readDB_auto( int invID_passed, QString new_runID, U
 
 
 // Saves the global report information to DB
-US_Report::Status US_Report::saveDB( US_DB2* db )
+US_Report::Status US_Report::saveDB( IUS_DB2* db )
 {
    QRegExp rx( "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" );
    int status;
@@ -657,7 +656,7 @@ US_Report::Status US_Report::saveDB( US_DB2* db )
 
    status = db->lastErrno();
 
-   if ( status == US_DB2::OK )
+   if ( status == IUS_DB2::OK )
    {
       // Update existing global report structure in the DB
       db->next();
@@ -673,7 +672,7 @@ US_Report::Status US_Report::saveDB( US_DB2* db )
 
       int updateStatus = db->lastErrno();
 
-      if ( updateStatus != US_DB2::OK )
+      if ( updateStatus != IUS_DB2::OK )
       {
          qDebug() << "update_report error"
                   << updateStatus;
@@ -681,7 +680,7 @@ US_Report::Status US_Report::saveDB( US_DB2* db )
       }
    }
 
-   else if ( status == US_DB2::NOROWS )
+   else if ( status == IUS_DB2::NOROWS )
    {
       // Create a new global report structure in the DB
       this->html    = "<p>Report created " + now + "</p>";
@@ -697,7 +696,7 @@ US_Report::Status US_Report::saveDB( US_DB2* db )
 
       int newStatus = db->lastErrno();
 
-      if ( newStatus != US_DB2::OK )
+      if ( newStatus != IUS_DB2::OK )
       {
          qDebug() << "new_report error"
                   << newStatus;
@@ -728,7 +727,7 @@ US_Report::Status US_Report::saveDB( US_DB2* db )
 
 
 // COPY for autoflow - with invID passed 
-US_Report::Status US_Report::saveDB_auto( int invID_passed, US_DB2* db )
+US_Report::Status US_Report::saveDB_auto( int invID_passed, IUS_DB2* db )
 {
    QRegExp rx( "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" );
    int status;
@@ -752,7 +751,7 @@ US_Report::Status US_Report::saveDB_auto( int invID_passed, US_DB2* db )
 
    status = db->lastErrno();
 
-   if ( status == US_DB2::OK )
+   if ( status == IUS_DB2::OK )
    {
       // Update existing global report structure in the DB
       db->next();
@@ -768,7 +767,7 @@ US_Report::Status US_Report::saveDB_auto( int invID_passed, US_DB2* db )
 
       int updateStatus = db->lastErrno();
 
-      if ( updateStatus != US_DB2::OK )
+      if ( updateStatus != IUS_DB2::OK )
       {
          qDebug() << "update_report error"
                   << updateStatus;
@@ -776,7 +775,7 @@ US_Report::Status US_Report::saveDB_auto( int invID_passed, US_DB2* db )
       }
    }
 
-   else if ( status == US_DB2::NOROWS )
+   else if ( status == IUS_DB2::NOROWS )
    {
       // Create a new global report structure in the DB
       this->html    = "<p>Report created " + now + "</p>";
@@ -792,7 +791,7 @@ US_Report::Status US_Report::saveDB_auto( int invID_passed, US_DB2* db )
 
       int newStatus = db->lastErrno();
 
-      if ( newStatus != US_DB2::OK )
+      if ( newStatus != IUS_DB2::OK )
       {
          qDebug() << "new_report error"
                   << newStatus;
@@ -826,7 +825,7 @@ US_Report::Status US_Report::saveDB_auto( int invID_passed, US_DB2* db )
 US_Report::Status US_Report::addTriple(
    QString triple, 
    QString dataDescription,
-   US_DB2* db )
+   IUS_DB2* db )
 {
    US_Report::ReportTriple d;
 
@@ -839,7 +838,7 @@ US_Report::Status US_Report::addTriple(
 // Function to add or replace an entire triple
 US_Report::Status US_Report::addTriple(
    US_Report::ReportTriple t,
-   US_DB2* db )
+   IUS_DB2* db )
 {
    int ndx = this->findTriple( t.triple );
 
@@ -858,7 +857,7 @@ US_Report::Status US_Report::addTriple(
 // Function to remove a triple record, and all the documents
 US_Report::Status US_Report::removeTriple(
    int     ndx,
-   US_DB2* db )
+   IUS_DB2* db )
 {
    QStringList q( "delete_reportTriple" );
    q  << QString::number( this->triples[ ndx ].tripleID );
@@ -866,7 +865,7 @@ US_Report::Status US_Report::removeTriple(
 
    int status = db->lastErrno();
 
-   if ( status != US_DB2::OK )
+   if ( status != IUS_DB2::OK )
       return DB_ERROR;
 
    this->triples.remove( ndx );
@@ -892,7 +891,7 @@ int US_Report::findTriple( QString searchTriple )
 // For example, dir = /home/user/ultrascan/reports/demo1_veloc
 //     and filename = 2dsa.2A260.tinoise.svg
 US_Report::Status US_Report::saveDocumentFromFile( const QString& dir,
-      const QString& filename, US_DB2* db, int idEdit,
+      const QString& filename, IUS_DB2* db, int idEdit,
       const QString dataDescription )
 {
    // Parse the directory for the runID
@@ -1023,7 +1022,7 @@ DbgLv(1) << "Doc::saveDB: Replace ndx label" << docNdx << newLabel;
 
 // COPY for autoflow - with invID passed  
 US_Report::Status US_Report::saveDocumentFromFile_auto( int invID, const QString& dir,
-							const QString& filename, US_DB2* db, int idEdit,
+							const QString& filename, IUS_DB2* db, int idEdit,
 							const QString dataDescription  )
 {
    // Parse the directory for the runID
@@ -1154,7 +1153,7 @@ DbgLv(1) << "Doc::saveDB: Replace ndx label" << docNdx << newLabel;
 
 // Saves a list of report document records to DB
 US_Report::Status US_Report::saveFileDocuments( const QString& dir,
-      const QStringList& filepaths, US_DB2* db, int idEdit,
+      const QStringList& filepaths, IUS_DB2* db, int idEdit,
       const QString dataDescription )
 {
    // Get the runID by parsing the directory
@@ -1307,7 +1306,7 @@ qDebug() << "rpt:svFD:    NEW to triple doc";
             db->query( qry );
 
             int ndstat = db->lastErrno();
-            if ( ndstat != US_DB2::OK )
+            if ( ndstat != IUS_DB2::OK )
             {
                qDebug() << "new_reportDocument error"
                         << ndstat << db->lastError();
@@ -1349,7 +1348,7 @@ qDebug() << "rpt:svFD:    *TDNAMX err* filename" << filename;
 qDebug() << "rpt:svFD:    upld contents size" << QFileInfo(filepath).size()
  << "filepath" << filepath << "idDoc" << idDoc;
 
-      if ( wrstat != US_DB2::OK )
+      if ( wrstat != IUS_DB2::OK )
       {
 qDebug() << "rpt:svFD:    *wrBlob err* wrstat" << wrstat << db->lastError();
          qDebug() << "upload_reportContents error"
@@ -1363,7 +1362,7 @@ qDebug() << "rpt:svFD:    *wrBlob err* wrstat" << wrstat << db->lastError();
 
 // Saves a list of report document records to DB
 US_Report::Status US_Report::saveFileDocuments_auto( int invID_passed, const QString& dir,
-						     const QStringList& filepaths, US_DB2* db, int idEdit,
+						     const QStringList& filepaths, IUS_DB2* db, int idEdit,
 						     const QString dataDescription )
 {
    // Get the runID by parsing the directory
@@ -1501,7 +1500,7 @@ qDebug() << "rpt:svFD:    NEW to triple doc";
             db->query( qry );
 
             int ndstat = db->lastErrno();
-            if ( ndstat != US_DB2::OK )
+            if ( ndstat != IUS_DB2::OK )
             {
                qDebug() << "new_reportDocument error"
                         << ndstat << db->lastError();
@@ -1543,7 +1542,7 @@ qDebug() << "rpt:svFD:    *TDNAMX err* filename" << filename;
 qDebug() << "rpt:svFD:    upld contents size" << QFileInfo(filepath).size()
  << "filepath" << filepath << "idDoc" << idDoc;
 
-      if ( wrstat != US_DB2::OK )
+      if ( wrstat != IUS_DB2::OK )
       {
 qDebug() << "rpt:svFD:    *wrBlob err* wrstat" << wrstat << db->lastError();
          qDebug() << "upload_reportContents error"
@@ -1558,7 +1557,7 @@ qDebug() << "rpt:svFD:    *wrBlob err* wrstat" << wrstat << db->lastError();
 // Function to remove an entire report structure, all the triples, and all the documents
 US_Report::Status US_Report::removeReport(
    int     reportID,
-   US_DB2* db )
+   IUS_DB2* db )
 {
    QStringList q( "delete_report" );
    q  << QString::number( reportID );
@@ -1566,7 +1565,7 @@ US_Report::Status US_Report::removeReport(
 
    int status = db->lastErrno();
 
-   if ( status != US_DB2::OK )
+   if ( status != IUS_DB2::OK )
       return DB_ERROR;
 
    this->reset();
@@ -1574,7 +1573,7 @@ US_Report::Status US_Report::removeReport(
 }
 
 // Saves an entire report structure to DB
-US_Report::Status US_Report::saveAllToDB( QString dir, US_DB2* db )
+US_Report::Status US_Report::saveAllToDB( QString dir, IUS_DB2* db )
 {
   US_Report::Status status = this->saveDB( db );                   // ALEXEY <- pass invID when autoflow; this func. not used anywhere...
    if ( status != US_Report::REPORT_OK ) 
