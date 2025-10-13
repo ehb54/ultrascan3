@@ -68,20 +68,20 @@ public:
     inline bool operator!= ( const US_CosedComponent& c) const {return ! operator==(c);};
     //! Get the info for an individual component from the DB.
     //! \param db A \ref US_DB2 structure to an opened connection to the DB.
-    void getInfoFromDB( US_DB2* = 0 );
+    void getInfoFromDB( IUS_DB2* = 0 );
 
     //! \brief Read a cosed component from the DB
     //! \param db  An open database connection
     //! \param cosed_componentID  ID number in string format of the cosed component to be read.
     //! \return A boolean success or failure
-    bool readFromDB ( US_DB2* db, const QString&  cosed_componentID);
+    bool readFromDB ( IUS_DB2* db, const QString&  cosed_componentID);
 
 
     //! \brief Write a new buffer to the DB.  
     //! \param db An open database connection
     //! \param buffer_ID The buffer_id the cosedimenting component belongs too
     //! \return The cosed_componentID of the new cosed component
-    int saveToDB( US_DB2* = 0, const int = 0);
+    int saveToDB( IUS_DB2* = 0, const int = 0);
 
     // Is this function really needed? Can't tell with my c++ skills
     US_CosedComponent clone( void );

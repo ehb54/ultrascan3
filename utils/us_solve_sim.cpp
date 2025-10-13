@@ -461,11 +461,16 @@ US_Settings::set_us_debug( dbg_level );
             }
 //DebugTime("END: clcr-NA-astfem");
             DbgLv(2) << "   CR:114  rss now" << US_Memory::rss_now() << "cc" << cc;
-            if (abort) return;
+            if (abort)
+            {
+               return;
+            }
 
             if (banddthr) {  // If band forming, hold data within thresholds; skip if all-zero
                if (data_threshold(&simdat, zerothr, linethr, maxod, mfactor))
+               {
                   continue;
+               }
 
                ksols++;
             }
@@ -1121,28 +1126,38 @@ DbgLv(1) << "CR: sdat:"
 
       // Compute a_tilde, the average experiment signal at each time
       if (calc_ri)
+      {
          compute_a_tilde(a_tilde, nnls_b);
+      }
 
       // Compute a_bar, the average experiment signal at each radius
       compute_a_bar(a_bar, a_tilde, nnls_b);
 
       // Compute L_tildes, the average signal at each radius (if RI noise)
       if (calc_ri)
+      {
          compute_L_tildes(nrinois, nsolutes, L_tildes, nnls_a);
+      }
 
-      // Compute L_bars
+      // Compute L_bars, the average simulated signal at each radius
       compute_L_bars(nsolutes, nrinois, ntinois, ntotal, L_bars, nnls_a, L_tildes);
 
       // Set up small_a, small_b for alternate nnls
       DbgLv(1) << "  set SMALL_A+B";
       ti_small_a_and_b(nsolutes, ntotal, ntinois, small_a, small_b, a_bar, L_bars, nnls_a, nnls_b);
-      if (abort) return;
+      if (abort)
+      {
+         return;
+      }
 
       // Do NNLS to compute concentrations (nnls_x)
       DbgLv(1) << "  noise small NNLS";
       US_Math2::nnls(small_a.data(), nsolutes, nsolutes, nsolutes, small_b.data(), nnls_x.data());
 
-      if (abort) return;
+      if (abort)
+      {
+         return;
+      }
 
       // This is Sum( concentration * Lamm ) for the models after NNLS
       compute_L(ntotal, nsolutes, L, nnls_a, nnls_x);
@@ -1151,22 +1166,30 @@ DbgLv(1) << "CR: sdat:"
       // Compute L_tilde, the average model signal at each radius
 
       if (calc_ri)
+      {
          compute_L_tilde(L_tilde, L);
+      }
 
       // Compute L_bar, the average model signal at each radius
       compute_L_bar(L_bar, L, L_tilde);
 
       // Compute ti noise
       for (int ii = 0; ii < ntinois; ii++)
+      {
          tinvec[ii] = a_bar[ii] - L_bar[ii];
+      }
 
       if (calc_ri) {  // Compute RI_noise
          for (int ii = 0; ii < nrinois; ii++)
+         {
             rinvec[ii] = a_tilde[ii] - L_tilde[ii];
+         }
       }
 
       if (signal_wanted)
-              emit work_progress(kstodo);  // Report noise NNLS steps done
+      {
+         emit work_progress(kstodo); // Report noise NNLS steps done
+      }
    }  // End tinoise and optional rinoise calculation
 
    else if (calc_ri) {  // Compute RI noise (when RI only)

@@ -120,7 +120,7 @@ class US_UTIL_EXTERN US_Math_BF  : public QObject {
 
             void load_data( const US_DataIO::RawData* dens, const US_DataIO::RawData* visc, const US_DataIO::RawData* conc);
 
-            bool save_data(const QString& folder, const QString& key, US_DB2* db);
+            bool save_data(const QString& folder, const QString& key, IUS_DB2* db);
 
             //! \brief Check if the band forming gradient is suitable for the simulation
             //! \param n_menisicus The double value representing the new meniscus
@@ -139,7 +139,7 @@ class US_UTIL_EXTERN US_Math_BF  : public QObject {
                              const QList<US_CosedComponent>& n_cosed_component,
                              int n_maxTime);
 
-            QString readGradientDataFromDB(const QString& load_key, QString &dir, US_DB2 *db) const;
+            QString readGradientDataFromDB(const QString& load_key, QString &dir, IUS_DB2 *db) const;
 
             Band_Forming_Gradient(const US_SimulationParameters& sim_params, US_DataIO::EditedData* editedData, US_Buffer* buffer);
 

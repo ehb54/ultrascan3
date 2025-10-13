@@ -245,7 +245,7 @@ bool US_AbstractCenterpiece::read_centerpieces( IUS_DB2* db,
          query.clear();
          query << "get_abstractChannel_info" << cpid;
          db->query( query );
-         if ( db->lastErrno() == US_DB2::OK )
+         if ( db->lastErrno() == IUS_DB2::OK )
          {
             while (db->next()){
                US_AbstractChannel channel = US_AbstractChannel();

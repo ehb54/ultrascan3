@@ -7,14 +7,14 @@
 #include "us_util.h"
 #include "us_eprofile.h"
 
-void US_BufferComponent::getAllFromDB( const QString& masterPW, 
+void US_BufferComponent::getAllFromDB( const QString& masterPW,
          QMap< QString, US_BufferComponent >& componentList )
 {
    US_DB2 db( masterPW );
-   
+
    if ( db.lastErrno() != IUS_DB2::OK )
    {
-      qDebug() << "Database Error" 
+      qDebug() << "Database Error"
                << "US_BufferComponent ::connectDB: Could not open DB\n"
                << db.lastError();
       return;
@@ -223,7 +223,7 @@ int US_BufferComponent::saveToDB(IUS_DB2 * db) {
 }
 
 
-bool US_CosedComponent::readFromDB(US_DB2 *db, const QString &cosed_compID) {
+bool US_CosedComponent::readFromDB( IUS_DB2 *db, const QString &cosed_compID) {
    QStringList q("get_cosed_component_info");
    q << cosed_compID;   // cosed_componentID from list widget entry
 
@@ -256,7 +256,7 @@ bool US_CosedComponent::readFromDB(US_DB2 *db, const QString &cosed_compID) {
    return true;
 }
 
-void US_CosedComponent::getInfoFromDB(US_DB2 *db) {
+void US_CosedComponent::getInfoFromDB(IUS_DB2 *db) {
    QStringList q("get_cosed_component_info");
    q << componentID;
 
@@ -381,7 +381,7 @@ void US_CosedComponent::component(QXmlStreamReader &xml, QList<US_CosedComponent
    }
 }
 
-int US_CosedComponent::saveToDB(US_DB2 *db, const int buffer_ID) {
+int US_CosedComponent::saveToDB(IUS_DB2 *db, const int buffer_ID) {
    int idCosedComponent = 0;
    QStringList q;
    q << "get_cosed_componentID" << GUID;
@@ -826,7 +826,7 @@ int US_Buffer::saveToDB( IUS_DB2* db, const QString private_buffer )
       return idBuffer;
    }
 
-   } else {  // The buffer exists, so update it
+   else {  // The buffer exists, so update it
       db->next();            // Get the ID of the existing buffer record
       QString bufID = db->value(0).toString();
       idBuffer = bufID.toInt();

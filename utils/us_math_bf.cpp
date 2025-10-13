@@ -326,7 +326,7 @@ US_Math_BF::Band_Forming_Gradient::Band_Forming_Gradient(const US_SimulationPara
 
 QString US_Math_BF::Band_Forming_Gradient::readGradientDataFromDB(const QString& load_key,
                                                                   QString& dir,
-                                                                  US_DB2* db ) const
+                                                                  IUS_DB2* db ) const
 {
    QString runID = load_key.split('.')[0];
    QString p_cell = load_key.split('.')[1];
@@ -387,10 +387,10 @@ QString US_Math_BF::Band_Forming_Gradient::readGradientDataFromDB(const QString&
             const int readStatus = db->readBlobFromDB(f, QString("download_gradientData"),
                                                 rawDataIDs[i].toInt());
 
-            if (readStatus == US_DB2::DBERROR) {
+            if (readStatus == IUS_DB2::DBERROR) {
                error += "Error processing file: " + f + "\n" +
                         "Could not open file or no data \n";
-            } else if (readStatus != US_DB2::OK) {
+            } else if (readStatus != IUS_DB2::OK) {
                error += "Error returned processing file: " + f + "\n" +
                         db->lastError() + "\n";
             }
@@ -1042,7 +1042,7 @@ bool US_Math_BF::Band_Forming_Gradient::operator==(const US_Math_BF::Band_Formin
    return true;
 }
 
-bool US_Math_BF::Band_Forming_Gradient::save_data(const QString& folder, const QString& key, US_DB2* db ) {
+bool US_Math_BF::Band_Forming_Gradient::save_data(const QString& folder, const QString& key, IUS_DB2* db ) {
    // first save local
    QStringList file_types;
    const QDir d( folder );
@@ -1150,7 +1150,7 @@ bool US_Math_BF::Band_Forming_Gradient::save_data(const QString& folder, const Q
 //qDebug() << "cvio:WrRDB:  rawDataID" << rawDataID << "status" << status
 // << "===" << stat_error << "===";
 
-            if ( status == US_DB2::OK )
+            if ( status == IUS_DB2::OK )
             {
 
 
@@ -1159,7 +1159,7 @@ bool US_Math_BF::Band_Forming_Gradient::save_data(const QString& folder, const Q
                                                     QString( "upload_gradientData" ), rawDataID );
 //qDebug() << "cvio:WrRDB:   wrStat" << writeStatus;
 
-               if ( writeStatus == US_DB2::DBERROR )
+               if ( writeStatus == IUS_DB2::DBERROR )
                {
                   error += "Error processing file:\n" +
                            folder + filename + "\n" +
@@ -1167,7 +1167,7 @@ bool US_Math_BF::Band_Forming_Gradient::save_data(const QString& folder, const Q
                            "Could not open file or no data \n";
                }
 
-               else if ( writeStatus != US_DB2::OK )
+               else if ( writeStatus != IUS_DB2::OK )
                {
                   error += "Error returned processing file:\n" +
                            folder + filename + "\n" +
