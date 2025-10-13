@@ -397,6 +397,16 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    ti_noise.count = 0;
    ri_noise.count = 0;
 
+   initialize_adv_vals();
+
+   sdata          = &wsdata;
+
+   setMaximumSize( qApp->desktop()->size() - QSize( 40, 40 ) );
+   data_plot2->replot();
+}
+
+void US_FeMatch::initialize_adv_vals()
+{
    adv_vals[ "simpoints"  ] = "200";
    adv_vals[ "bandvolume" ] = "0.015";
    adv_vals[ "parameter"  ] = "0";
@@ -404,11 +414,6 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    adv_vals[ "meshtype"   ] = "ASTFEM";
    adv_vals[ "gridtype"   ] = "Moving";
    adv_vals[ "modelsim"   ] = "mean";
-
-   sdata          = &wsdata;
-
-   setMaximumSize( qApp->desktop()->size() - QSize( 40, 40 ) );
-   data_plot2->replot();
 }
 
 // public function to get pointer to edit data
@@ -761,6 +766,10 @@ DbgLv(1) << "Fem:Upd: (0)svbar" << svbar;
             errmsg );
       solution_rec.commonVbar20 = vbar;
       le_solution ->setText( tr( "( ***Undefined*** )" ) );
+   }
+   // if the buffer has cosedimenting components, default to ASTFVM
+   if (!solution_rec.buffer.cosed_component.isEmpty()){
+      adv_vals["meshtype"] = "ASTFVM";
    }
 
    ti_noise.count = 0;
@@ -2104,7 +2113,6 @@ DbgLv(1) << "SimMdl: speed_steps:" << simparams.speed_step.size();
    else if ( mtyp.contains( "ASTFVM"     ) )
    {
       simparams.meshType = US_SimulationParameters::ASTFVM;
-      qDebug() << "meshtype= fvm";
    }
    if ( gtyp.contains( "Constant" ) )
       simparams.gridType = US_SimulationParameters::FIXED;
@@ -3590,7 +3598,7 @@ bool US_FeMatch::mkdir( const QString& baseDir, const QString& subdir )
 void US_FeMatch::new_triple( int trow )
 {
    haveSim    = false;
-
+   initialize_adv_vals();
    update( trow );
 
    data_plot();

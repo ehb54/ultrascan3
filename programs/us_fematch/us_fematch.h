@@ -80,6 +80,9 @@ class US_FeMatch : public US_Widgets
         //! \param point_param A point parameter.
         void auto_load_simulate(US_DataIO::RawData rawData, US_DataIO::EditedData editedData, US_Model model, int int_param, QPoint point_param);
 
+        //! \brief Initalize adv_vals with the default values
+        void initialize_adv_vals();
+
         signals:
                 //! \brief Signal for ASTFEM comparison.
                 //! \param int_param An integer parameter.
