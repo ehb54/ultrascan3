@@ -805,6 +805,10 @@ DbgLv(1) << "APG: ipro:  ap_xml length" << ap_xml.length();
       }
    }
 
+   //DEBUG: check currProf.ch_reports map
+   
+   //END debug
+
    apanGeneral->initPanel();
 
    // If currProf purely from upstream profile, insure proper channel descriptions

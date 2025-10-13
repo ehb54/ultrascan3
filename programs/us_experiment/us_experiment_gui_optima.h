@@ -92,8 +92,11 @@ class US_ExperGuiGeneral : public US_WidgetsDialog
       QLineEdit*   le_project;          // Project name line edit
       QLineEdit*   le_investigator;     // Investigator line edit
 
-      QwtCounter*  ct_tempera;          // Temperature counter
-      QwtCounter*  ct_tedelay;          // Temp-equil-delay counter
+  //QwtCounter*  ct_tempera;          // Temperature counter
+  QSpinBox*    ct_tempera;
+  
+  //QwtCounter*  ct_tedelay;          // Temp-equil-delay counter
+  QSpinBox*    ct_tedelay;
 
       int          dbg_level;
       bool         use_db;              // Using the LIMS database?
@@ -342,9 +345,12 @@ class US_ExperGuiSpeeds : public US_WidgetsDialog
       US_Help      showHelp;
 
       QComboBox*   cb_prof;      // Choice: current speed step
-      QwtCounter*  ct_speed;     // Counter: step's rotor speed
-      QwtCounter*  ct_accel;     // Counter: step's acceleration
 
+  //QwtCounter*  ct_speed;     // Counter: step's rotor speed
+  QSpinBox*    ct_speed;
+
+  //QwtCounter*  ct_accel;     // Counter: step's acceleration
+  QSpinBox*    ct_accel;
       QLineEdit*   le_maxrpm;    // Text line: max speed for current rotor
 
       
@@ -692,8 +698,13 @@ class US_ExperGuiRanges : public US_WidgetsDialog
       QList< QLabel* >         cc_labls;   // Pointers to channel labels
       QList< QPushButton* >    cc_wavls;   // Pointers to wavelength buttons
       QList< QLabel* >         cc_lrngs;   // Pointers to wl range labels
-      QList< QwtCounter* >     cc_lrads;   // Pointers to Radial Low counters
-      QList< QwtCounter* >     cc_hrads;   // Pointers to Radial High counters
+  
+  //QList< QwtCounter* >     cc_lrads;   // Pointers to Radial Low counters
+  QList< QDoubleSpinBox* >   cc_lrads;
+
+  //QList< QwtCounter* >     cc_hrads;   // Pointers to Radial High counters
+  QList< QDoubleSpinBox* >   cc_hrads;
+
       QList< QLabel* >         cc_lbtos;   // Pointers to "to" labels
       QList< QWidget* >        cc_buff_sp;
       QList< QCheckBox* >      cc_buff_sp_ck;
