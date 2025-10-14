@@ -35,6 +35,9 @@ class US_MwlSpeciesFit : public US_AnalysisBase2
         QStringList chndescs;               //!< Channel descriptions
         QStringList chndescs_alt;           //!< Alternative channel descriptions
         QMap<QString, QList<double>> ch_wvls; //!< Channel wavelengths
+        QList<int> analysis_runs;           //!< Analysis runs  
+        QList<int> report_runs;             //!< Report runs
+  
   //QMap< QString, QString> channels_to_radial_ranges;
         QMap< QString, QMap <QString, QStringList>> editProfile_blc;
         QMap< QString, QMap< QString, QMap< double, double > > > extinction_profiles_per_channel;
