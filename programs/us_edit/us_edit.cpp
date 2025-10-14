@@ -11014,6 +11014,22 @@ void US_Edit::create_autoflowAnalysisStages_record( IUS_DB2* db, int ID )
 // Save edits for a triple
 void US_Edit::write_triple_auto( int trx )
 {
+
+  if ( disk_controls->db() )
+    {
+      if ( dbP == NULL )
+	{
+	  US_Passwd pw;
+	  dbP          = new US_DB2( pw.getPasswd() );
+	  if ( dbP == NULL  ||  dbP->lastErrno() != US_DB2::OK )
+	    {
+	      QMessageBox::warning( this, tr( "Connection Problem" ),
+				     tr( "Could not connect to database \n" ) + dbP->lastError() );
+	      return;
+	    }
+	}
+    }
+
    triple_index = trx;
 
    index_data_auto( trx );
@@ -11080,12 +11096,16 @@ void US_Edit::write_triple_auto( int trx )
 	 is_spike_auto = false;
      }
 
-   // ALEXEY: the bottom value affected by rotor stretch - time consuming !!! Do we need it ?
-   // US_SimulationParameters simparams;
-   // simparams.initFromData( dbP, data, false, runID, dataType );
-   // bottom         = simparams.bottom;
+   //old way: just read form centerpiece
+   double bottom_cent = centerpieceParameters[ trx ][1].toDouble();  //Should be from centerpiece info from protocol
+   
+   US_SimulationParameters simparams;
+   simparams.initFromData( dbP, data, idInv_auto.toInt(), false, runID, dataType );
+   bottom         = simparams.bottom;
 
-   bottom = centerpieceParameters[ trx ][1].toDouble();  //Should be from centerpiece info from protocol
+   qDebug() << "[in write_triple_auto()]: bottom_cent, bottom -- "
+	    << bottom_cent << ", " << bottom; 
+   
    // End of base parameters
 
 
@@ -11097,8 +11117,6 @@ void US_Edit::write_triple_auto( int trx )
       idax           = triples.indexOf( triple );
       odax           = index_data_auto( wvx );
    }
-
-
 
 
    // Do we need this ??
@@ -11197,29 +11215,14 @@ void US_Edit::write_triple_auto( int trx )
    else
      editFnames[ idax ] = filename;
 
-   if ( disk_controls->db() )
-     {
-       if ( dbP == NULL )
-	 {
-	   US_Passwd pw;
-	   dbP          = new US_DB2( pw.getPasswd() );
-	   if ( dbP == NULL  ||  dbP->lastErrno() != US_DB2::OK )
-	     {
-	       QMessageBox::warning( this, tr( "Connection Problem" ),
-				     tr( "Could not connect to database \n" ) + dbP->lastError() );
-	       return;
-	     }
-	 }
-
-       editID           = editIDs[ idax ];
-
-       // Output the edit database record
-       wrstat     = write_edit_db( dbP, filename, editGUID, editID, rawGUID );
-
-       if ( wrstat != 0 )
-         return;
-     }
-
+   editID           = editIDs[ idax ];
+   
+   // Output the edit database record
+   wrstat     = write_edit_db( dbP, filename, editGUID, editID, rawGUID );
+   
+   if ( wrstat != 0 )
+     return;
+   
    // Output the Data Set Information report
    QString rtext;
    tpart            = filename.section( ".", -4, -2 ).replace( ".", "" );
@@ -12780,7 +12783,15 @@ void US_Edit::write_mwl_auto( int trx )
 	 is_spike_auto = false;
      }
 
-   bottom = centerpieceParameters[ trx ][1].toDouble();  //Should be from centerpiece info from protocol
+   //old way: just read form centerpiece
+   double bottom_cent = centerpieceParameters[ trx ][1].toDouble();  //Should be from centerpiece info from protocol
+   
+   US_SimulationParameters simparams;
+   simparams.initFromData( dbP, data, idInv_auto.toInt(), false, runID, dataType );
+   bottom         = simparams.bottom;
+
+   qDebug() << "[in write_mwl_auto()]: bottom_cent, bottom -- "
+	    << bottom_cent << ", " << bottom; 
    // End of base parameters
 
    //Is this needed ?
