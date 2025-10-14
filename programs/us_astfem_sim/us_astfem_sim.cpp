@@ -22,6 +22,7 @@
 #include "us_astfem_rsa.h"
 #include "us_lamm_astfvm.h"
 #include "us_time_state.h"
+#include "us_csv_data.h"
 
 #if QT_VERSION < 0x050000
 #define setSamples(a,b,c)  setData(a,b,c)
@@ -1326,18 +1327,40 @@ void US_Astfem_Sim::ri_noise( void )
 {
    if ( simparams.rinoise == 0.0 ) return;
 
+   QVector<QVector<double>> csv_data;
    // Add radially invariant noise
    for ( int jd = 0; jd < simparams.speed_step.size(); jd++ )
    {
-       for ( int ks = 0; ks < sim_datas[ jd ].scanData.size(); ks++ )
-       {
-           double rinoise =
-           US_Math2::box_muller( 0, total_conc * simparams.rinoise / 100 );
+      QVector<double> v;
+      if ( jd == 0 )
+      {
+         for ( int ks = 0; ks < sim_datas[ jd ].scanData.size(); ks++ )
+         {
+            v << sim_datas[ jd ].scanData[ ks ].seconds;
+         }
+         csv_data << v;
+      }
 
-           for ( int mp = 0; mp < sim_datas[ jd ].pointCount(); mp++ )
-              sim_datas[ jd ].scanData[ ks ].rvalues[ mp ] += rinoise;
-       }
+      v.clear();
+      for ( int ks = 0; ks < sim_datas[ jd ].scanData.size(); ks++ )
+      {
+         double rinoise = US_Math2::box_muller( 0, total_conc * simparams.rinoise / 100 );
+         v << rinoise;
+
+         for ( int mp = 0; mp < sim_datas[ jd ].pointCount(); mp++ )
+         {
+            sim_datas[ jd ].scanData[ ks ].rvalues[ mp ] += rinoise;
+         }
+      }
+      csv_data << v;
    }
+
+   // save the RI into a csv file
+   QDir dir( US_Settings::resultDir() );
+   QStringList header{"Time (s)", "RI noise (OD)"};
+   US_CSV_Data csv;
+   csv.setData( dir.absoluteFilePath( "ASTFEM_SIM_RI.csv"), header, csv_data );
+   csv.writeFile( "," );
 }
 
 void US_Astfem_Sim::baseline( void )
@@ -1406,25 +1429,41 @@ void US_Astfem_Sim::ti_noise( void )
 {
    if ( simparams.tinoise == 0.0 ) return;
 
+   QVector< double > tinoise;
+   // all speed steps are assumed to have the same number of the radial points of a single scan
+   int points = sim_datas[0].pointCount();
+   tinoise.resize( points );
+
+   double val = US_Math2::box_muller( 0, total_conc * simparams.tinoise / 100 );
+   for ( int mp = 0; mp < points; mp++ )
+   {
+      val += US_Math2::box_muller( 0, total_conc * simparams.tinoise / 100 );
+      tinoise[ mp ] = val;
+   }
+
    // Add time invariant noise
    for ( int jd = 0; jd < simparams.speed_step.size(); jd++ )
    {
-      int points = sim_datas[ jd ].pointCount();
-      QVector< double > tinoise;
-      tinoise.resize( points );
-      double val = US_Math2::box_muller( 0, total_conc * simparams.tinoise / 100 );
-
-      for ( int mp = 0; mp < points; mp++ )
-      {
-         val += US_Math2::box_muller( 0, total_conc * simparams.tinoise / 100 );
-         tinoise[ mp ] = val;
-      }
+      // int points = sim_datas[ jd ].pointCount();
       for ( int ks = 0; ks < sim_datas[ jd ].scanData.size(); ks++ )
       {
          for ( int mp = 0; mp < points; mp++ )
+         {
             sim_datas[ jd ].scanData[ ks ].rvalues[ mp ] += tinoise[ mp ];
+         }
       }
    }
+
+   // save the TI into a csv file
+   QDir dir( US_Settings::resultDir() );
+   QStringList header{"Radial Points (cm)", "TI noise (OD)"};
+   QVector<QVector<double>> csv_data;
+   csv_data << sim_datas[0].xvalues;
+   csv_data << tinoise;
+
+   US_CSV_Data csv;
+   csv.setData( dir.absoluteFilePath( "ASTFEM_SIM_TI.csv"), header, csv_data );
+   csv.writeFile( "," );
 }
 
 void US_Astfem_Sim::save_scans( void )
