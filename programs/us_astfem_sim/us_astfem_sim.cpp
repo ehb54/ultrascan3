@@ -1328,36 +1328,38 @@ void US_Astfem_Sim::ri_noise( void )
    if ( simparams.rinoise == 0.0 ) return;
 
    QVector<QVector<double>> csv_data;
+   QStringList header;
+   bool mspeed = simparams.speed_step.size() > 1;
    // Add radially invariant noise
    for ( int jd = 0; jd < simparams.speed_step.size(); jd++ )
    {
-      QVector<double> v;
-      if ( jd == 0 )
+      if ( mspeed )
       {
-         for ( int ks = 0; ks < sim_datas[ jd ].scanData.size(); ks++ )
-         {
-            v << sim_datas[ jd ].scanData[ ks ].seconds;
-         }
-         csv_data << v;
+         header << tr( "Speed (%1) Time (s)" ).arg( jd + 1 );
+         header << tr( "Speed (%1) RI noise (OD)" ).arg( jd + 1 );
+      } else {
+         header << "Time (s)" << "RI noise (OD)";
       }
 
-      v.clear();
+      QVector<double> tv;
+      QVector<double> rv;
       for ( int ks = 0; ks < sim_datas[ jd ].scanData.size(); ks++ )
       {
          double rinoise = US_Math2::box_muller( 0, total_conc * simparams.rinoise / 100 );
-         v << rinoise;
+         tv << sim_datas[ jd ].scanData[ ks ].seconds;
+         rv << rinoise;
 
          for ( int mp = 0; mp < sim_datas[ jd ].pointCount(); mp++ )
          {
             sim_datas[ jd ].scanData[ ks ].rvalues[ mp ] += rinoise;
          }
       }
-      csv_data << v;
+      csv_data << tv;
+      csv_data << rv;
    }
 
    // save the RI into a csv file
    QDir dir( US_Settings::resultDir() );
-   QStringList header{"Time (s)", "RI noise (OD)"};
    US_CSV_Data csv;
    csv.setData( dir.absoluteFilePath( "ASTFEM_SIM_RI.csv"), header, csv_data );
    csv.writeFile( "," );
