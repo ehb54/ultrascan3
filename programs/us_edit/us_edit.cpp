@@ -9970,14 +9970,14 @@ void US_Edit::write_auto( void )
   // exit(1);
 
 
-  // //DEBUG write_triple_auto for non-mwl, no check!!!
-  // for ( int trx = 0; trx < cb_triple->count(); trx++ )
-  //   {
-  //     qDebug() << "Writing non-MWL, channel: " << trx << ": " << cb_triple->itemText( trx );
-  //     write_triple_auto( trx );
-  //   }
+  //DEBUG write_triple_auto for non-mwl, no check!!!
+  for ( int trx = 0; trx < cb_triple->count(); trx++ )
+    {
+      qDebug() << "Writing non-MWL, channel: " << trx << ": " << cb_triple->itemText( trx );
+      write_triple_auto( trx );
+    }
  
-  // ////
+  ////
 
   
   
@@ -11096,6 +11096,8 @@ void US_Edit::write_triple_auto( int trx )
 	 is_spike_auto = false;
      }
 
+   qDebug() << "[in write_triple_auto()]: workingDir -- " << workingDir;
+   
    //old way: just read form centerpiece
    double bottom_cent = centerpieceParameters[ trx ][1].toDouble();  //Should be from centerpiece info from protocol
    
@@ -11104,8 +11106,7 @@ void US_Edit::write_triple_auto( int trx )
    bottom         = simparams.bottom;
 
    qDebug() << "[in write_triple_auto()]: bottom_cent, bottom -- "
-	    << bottom_cent << ", " << bottom; 
-   
+	    << bottom_cent << ", " << bottom;
    // End of base parameters
 
 
@@ -11203,11 +11204,12 @@ void US_Edit::write_triple_auto( int trx )
    triple           = triples.at( idax );
 
    // Output the edit XML file
+   qDebug() << "[in write_triple_auto()]: filename -- " << filename;
    int wrstat       = write_xml_file( filename, triple, editGUID, rawGUID );
 
-   // //DEBUG!!!!  Commnet!!!!!!!!!!!!!!!!!!!!!!!
-   // return;
-   // /////////////////////////// Commnet!!!!!!!!!!!!!!!!!!!!!!!
+   //DEBUG!!!!  Commnet!!!!!!!!!!!!!!!!!!!!!!!
+   return;
+   /////////////////////////// Commnet!!!!!!!!!!!!!!!!!!!!!!!
    
 
    if ( wrstat != 0 )
@@ -13219,6 +13221,9 @@ DbgLv(1) << "EDT:WrMwl: DONE";
 int US_Edit::write_xml_file( QString& fname, QString& triple,
       QString& editGUID, QString& rawGUID )
 {
+  qDebug() << "[in write_xml_file() ] : workingDir + fname -- "
+	   << workingDir <<  " + "  << fname;
+  
    QFile efo( workingDir + fname );
 
    if ( ! efo.open( QFile::WriteOnly | QFile::Text ) )
