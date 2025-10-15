@@ -1324,19 +1324,35 @@ DbgLv(1) << "FIN:  progress maxsize" << progress->maximum();
 
 void US_Astfem_Sim::ri_noise( void )
 {
+   csv_data_ri.clear();
    if ( simparams.rinoise == 0.0 ) return;
+
+
+   QStringList header;
+   header << "Time (s)" << "RI noise (OD)";
 
    // Add radially invariant noise
    for ( int jd = 0; jd < simparams.speed_step.size(); jd++ )
    {
-       for ( int ks = 0; ks < sim_datas[ jd ].scanData.size(); ks++ )
-       {
-           double rinoise =
-           US_Math2::box_muller( 0, total_conc * simparams.rinoise / 100 );
+      QVector<QVector<double>> csv_data;
+      QVector<double> tv;
+      QVector<double> rv;
+      for ( int ks = 0; ks < sim_datas[ jd ].scanData.size(); ks++ )
+      {
+         double rinoise = US_Math2::box_muller( 0, total_conc * simparams.rinoise / 100 );
+         tv << sim_datas[ jd ].scanData[ ks ].seconds;
+         rv << rinoise;
 
-           for ( int mp = 0; mp < sim_datas[ jd ].pointCount(); mp++ )
-              sim_datas[ jd ].scanData[ ks ].rvalues[ mp ] += rinoise;
-       }
+         for ( int mp = 0; mp < sim_datas[ jd ].pointCount(); mp++ )
+         {
+            sim_datas[ jd ].scanData[ ks ].rvalues[ mp ] += rinoise;
+         }
+      }
+      csv_data << tv;
+      csv_data << rv;
+      US_CSV_Data csv;
+      csv.setData( header, csv_data );
+      csv_data_ri << csv;
    }
 }
 
@@ -1404,27 +1420,41 @@ void US_Astfem_Sim::random_noise( void )
 
 void US_Astfem_Sim::ti_noise( void )
 {
+   csv_data_ti.clear();
    if ( simparams.tinoise == 0.0 ) return;
+
+   QVector< double > tinoise;
+   // all speed steps are assumed to have the same number of the radial points of a single scan
+   int points = sim_datas[0].pointCount();
+   tinoise.resize( points );
+
+   double val = US_Math2::box_muller( 0, total_conc * simparams.tinoise / 100 );
+   for ( int mp = 0; mp < points; mp++ )
+   {
+      val += US_Math2::box_muller( 0, total_conc * simparams.tinoise / 100 );
+      tinoise[ mp ] = val;
+   }
 
    // Add time invariant noise
    for ( int jd = 0; jd < simparams.speed_step.size(); jd++ )
    {
-      int points = sim_datas[ jd ].pointCount();
-      QVector< double > tinoise;
-      tinoise.resize( points );
-      double val = US_Math2::box_muller( 0, total_conc * simparams.tinoise / 100 );
-
-      for ( int mp = 0; mp < points; mp++ )
-      {
-         val += US_Math2::box_muller( 0, total_conc * simparams.tinoise / 100 );
-         tinoise[ mp ] = val;
-      }
+      // int points = sim_datas[ jd ].pointCount();
       for ( int ks = 0; ks < sim_datas[ jd ].scanData.size(); ks++ )
       {
          for ( int mp = 0; mp < points; mp++ )
+         {
             sim_datas[ jd ].scanData[ ks ].rvalues[ mp ] += tinoise[ mp ];
+         }
       }
    }
+
+   // save the TI into a csv file
+   QDir dir( US_Settings::resultDir() );
+   QStringList header{"Radial Points (cm)", "TI noise (OD)"};
+   QVector<QVector<double>> csv_data;
+   csv_data << sim_datas[0].xvalues;
+   csv_data << tinoise;
+   csv_data_ti.setData( header, csv_data );
 }
 
 void US_Astfem_Sim::save_scans( void )
@@ -1433,6 +1463,9 @@ DbgLv(1) << "ASIM:svscn: IN";
    QString odir        = QFileDialog::getExistingDirectory( this,
          tr( "Select a directory for the simulated data:" ),
          US_Settings::importDir() );
+   if ( odir.isEmpty() ) {
+      return;
+   }
    save_simulation( odir );
 }
 
@@ -1451,6 +1484,13 @@ bool US_Astfem_Sim::save_simulation( QString odir, bool supress_dialog )
 
       if ( nstep == 1 )
       {  // Single-speed case
+         QDir dir ( odir );
+         if ( dir.exists() )
+         {
+            dir.removeRecursively();
+         }
+         dir.mkpath( dir.absolutePath() );
+
          save_xla( odir, sim_datas[ 0 ], 0, supress_dialog );
 
          // Create a timestate in the same directory
@@ -1471,6 +1511,14 @@ DbgLv(1) << "ASIM:svscn: 1-speed file paths"  << odir << tmst_fpath;
          {  // Create timestate file pair in imports subdirectory
             US_AstfemMath::writetimestate( tmst_fpath, simparams, sim_datas[ 0 ] );
          }
+
+         // Save TI, RI noises
+
+         csv_data_ti.setFilePath( dir.absoluteFilePath( "ASTFEM_TI_NOISE.csv" ) );
+         csv_data_ri[ 0 ].setFilePath( dir.absoluteFilePath( "ASTFEM_RI_NOISE.csv" ) );
+         save_csv_noise( csv_data_ti );
+         save_csv_noise( csv_data_ri[ 0 ] );
+
       }  // End:  single-speed case
 
       else
@@ -1535,6 +1583,21 @@ DbgLv(1) << "ASIM:svscn: m-speed  have_tmst" << have_tmst;
                }
             }
          }
+
+         // Save TI, RI noises
+
+         for ( int ii = 0; ii < nstep; ii++ )
+         {
+            int ispeed          = simparams.speed_step[ ii ].rotorspeed;
+            QString spsufx      = QString::asprintf( "-%05d", ispeed );
+            QString odir1       =  odir   + spsufx;
+            QDir dir ( odir1 );
+            csv_data_ti.setFilePath( dir.absoluteFilePath( "ASTFEM_TI_NOISE.csv" ) );
+            csv_data_ri[ ii ].setFilePath( dir.absoluteFilePath( "ASTFEM_RI_NOISE.csv" ) );
+            save_csv_noise( csv_data_ti );
+            save_csv_noise( csv_data_ri[ ii ] );
+         }
+
 //*DEBUG*
 int kscn=sim_data_all.scanCount();
 DbgLv(1) << "ASIM:svscn:  all_data scan count" << kscn << sim_data_all.scanData.count();
@@ -1839,6 +1902,12 @@ DbgLv(1) << "EDT:WrXml:  waveln" << wl;
    efo.close();
 
    return true;
+}
+
+void US_Astfem_Sim::save_csv_noise( US_CSV_Data &csv )
+{
+   if ( csv.columnCount() != 2 ) return;
+   csv.writeFile( "," );
 }
 
 // slot to update progress and lcd based on current component
