@@ -552,7 +552,7 @@ bool US_Model::is_product( const int compx )
 }
 
 // Load a model from DB or local file
-int US_Model::load( bool db_access, const QString& guid, US_DB2* db )
+int US_Model::load( bool db_access, const QString& guid, IUS_DB2* db )
 {
    if ( db_access ) return load_db  ( guid, db );
    else             return load_disk( guid );
@@ -561,7 +561,7 @@ int US_Model::load( bool db_access, const QString& guid, US_DB2* db )
 // Load model from local disk
 int US_Model::load_disk( const QString& guid )
 {
-   int error = US_DB2::DBERROR;  // Error by default
+   int error = IUS_DB2::DBERROR;  // Error by default
 
    QString path;
 
@@ -618,13 +618,13 @@ int US_Model::load( const QString& filename )
    QFile file( filename );
 
    if ( ! file.open( QIODevice::ReadOnly | QIODevice::Text) )
-      return US_DB2::DBERROR;
+      return IUS_DB2::DBERROR;
 
    QXmlStreamReader xml( &file );
    
    int result = load_stream( xml );
 
-   if ( result == US_DB2::NO_MODEL  &&  monteCarlo )
+   if ( result == IUS_DB2::NO_MODEL  &&  monteCarlo )
    {  // Handle a multi-model stream
       file.close();
       file.open( QIODevice::ReadOnly | QIODevice::Text );
@@ -676,7 +676,7 @@ int US_Model::load_stream( QXmlStreamReader& xml )
             if ( nmtag > 1 )
             {  // A second model tag:  return to handle multi-model stream
                monteCarlo     = true;
-               return US_DB2::NO_MODEL;
+               return IUS_DB2::NO_MODEL;
             }
 
             a = xml.attributes();
@@ -815,13 +815,13 @@ int US_Model::load_stream( QXmlStreamReader& xml )
       }
    }
 
-   return US_DB2::OK;
+   return IUS_DB2::OK;
 }
 
 // Load from a multiple-model stream and create an MC composite model
 int US_Model::load_multi_model( QTextStream& tsi )
 {
-   int result    = US_DB2::OK;
+   int result    = IUS_DB2::OK;
    QString mline, mdesc, mcont;
    nmcixs        = 0;
    mcixmls.clear();
@@ -894,7 +894,7 @@ int US_Model::load_multi_model( QTextStream& tsi )
    {  // Build list of solute point strings and list of unique ones
       double sval   = mmcomps[ ii ].s * 1.0e+13;
       double kval   = cnst_vb ? mmcomps[ ii ].f_f0 : mmcomps[ ii ].vbar20;
-      QString skval = QString().sprintf( "%10.4f %8.5f", sval, kval );
+      QString skval = QString::asprintf( "%10.4f %8.5f", sval, kval );
       sklist << skval; 
       if ( ! skvals.contains( skval ) )
          skvals << skval;
@@ -919,7 +919,7 @@ int US_Model::load_multi_model( QTextStream& tsi )
          }
       }
 
-      scomp.name                 = QString().sprintf( "SC%04d", ii + 1 );
+      scomp.name                 = QString::asprintf( "SC%04d", ii + 1 );
       scomp.signal_concentration = conc * sclnrm;
       components << scomp;
    }
@@ -931,7 +931,7 @@ int US_Model::load_multi_model( QTextStream& tsi )
    QString mdsc2 = QString( mdesc ).section( ".", -2, -2 )
                                    .section( "_",  0, -2 );
    QString mdsc3 = QString( mdesc ).section( ".", -1, -1 );
-   QString miter = QString().sprintf( "_mcN%03i", nmcixs );
+   QString miter = QString::asprintf( "_mcN%03i", nmcixs );
    description   = mdsc1 + "." + mdsc2 + miter + "." + mdsc3;
 qDebug() << "MDL:LMM: miter" << miter << "desc" << description << mdesc;
 
@@ -1087,7 +1087,7 @@ void US_Model::get_metadata( QXmlStreamReader &xml )
                   ginfo.yRes  = a.value( "yRes"  ).toInt();
 
                   ginfo.zType = a.value( "zType" ).toString();
-                  ginfo.zVal  = a.value( "zVal"  ).toDouble();
+                  ginfo.zVal  = a.value( "zVal"  ).toString();
 
                   ginfo_list.insert( id, ginfo );
                   counter++;
@@ -1110,14 +1110,14 @@ void US_Model::get_metadata( QXmlStreamReader &xml )
 }
 
 // Load a model from DB (by GUID)
-int US_Model::load_db( const QString& guid, US_DB2* db )
+int US_Model::load_db( const QString& guid, IUS_DB2* db )
 {
    QStringList q;
 
    q << "get_modelID" << guid;
    db->query( q );
 
-   if ( db->lastErrno() != US_DB2::OK ) return db->lastErrno();
+   if ( db->lastErrno() != IUS_DB2::OK ) return db->lastErrno();
    
    db->next();
    QString id = db->value( 0 ).toString();
@@ -1125,14 +1125,14 @@ int US_Model::load_db( const QString& guid, US_DB2* db )
 }
 
 // Load a model from DB (by DB id)
-int US_Model::load( const QString& id, US_DB2* db )
+int US_Model::load( const QString& id, IUS_DB2* db )
 {
    QStringList q;
 
    q << "get_model_info" << id;
    db->query( q );
    
-   if ( db->lastErrno() != US_DB2::OK ) return db->lastErrno();
+   if ( db->lastErrno() != IUS_DB2::OK ) return db->lastErrno();
 
    db->next();
    QByteArray contents  = db->value( 2 ).toString().toLatin1();
@@ -1143,7 +1143,7 @@ int US_Model::load( const QString& id, US_DB2* db )
    
    int result = load_stream( xml );
 
-   if ( result == US_DB2::NO_MODEL  &&  monteCarlo )
+   if ( result == IUS_DB2::NO_MODEL  &&  monteCarlo )
    {  // Handle a multi-model stream
       QTextStream tsi( contents );
 
@@ -1155,14 +1155,14 @@ int US_Model::load( const QString& id, US_DB2* db )
 }
 
 // Write a model to DB or local file
-int US_Model::write( bool db_access, const QString& filename, US_DB2* db )
+int US_Model::write( bool db_access, const QString& filename, IUS_DB2* db )
 {
    if ( db_access ) return write( db );
    else             return write( filename );
 }
 
 // Write a model DB record
-int US_Model::write( US_DB2* db )
+int US_Model::write( IUS_DB2* db )
 {
    // Create the model xml file in a stream
    QByteArray temporary;
@@ -1196,7 +1196,7 @@ qDebug() << "model writedb contsize tempsize" << contents.size() << temporary.si
    QString meni = QString::number( meniscus );
    QString vari = QString::number( variance );
      
-   if ( db->lastErrno() != US_DB2::OK )
+   if ( db->lastErrno() != IUS_DB2::OK )
    {
       q.clear();
       q << "new_model" << modelGUID << description << contents
@@ -1231,7 +1231,7 @@ int US_Model::write( const QString& filename )
    QFile file( filename );
 
    if ( ! file.open( QIODevice::WriteOnly | QIODevice::Text) )
-      return US_DB2::DBERROR;
+      return IUS_DB2::DBERROR;
 
    if ( ! monteCarlo  ||  nmcixs < 1 )
    {
@@ -1247,7 +1247,7 @@ int US_Model::write( const QString& filename )
 
    file.close();
 
-   return US_DB2::OK;
+   return IUS_DB2::OK;
 }
 
 // Write to an XML stream
@@ -1328,7 +1328,7 @@ void US_Model::write_stream( QXmlStreamWriter& xml )
          xml.writeAttribute( "yRes",  QString::number( ginfo.yRes ) );
 
          xml.writeAttribute( "zType", ginfo.zType );
-         xml.writeAttribute( "zVal",  QString::number( ginfo.zVal ) );
+         xml.writeAttribute( "zVal",  ginfo.zVal );
          xml.writeEndElement();
       }
       xml.writeEndElement();
@@ -1493,7 +1493,7 @@ QString US_Model::get_filename( const QString& path, const QString& guid,
 
       for ( int ii = 0; ii < number; ii++ )
       {
-         QString fnamck = "M" + QString().sprintf( "%07i", ii + 1 ) + ".xml";
+         QString fnamck = "M" + QString::asprintf( "%07i", ii + 1 ) + ".xml";
 
          if ( ! f_names.contains( fnamck ) )
          {  // There is a hole in the sequence, so re-use this number
@@ -1503,7 +1503,7 @@ QString US_Model::get_filename( const QString& path, const QString& guid,
       }
 
       // File name uses a break in the sequence or one past last used.
-      fnamo = path + "/M" + QString().sprintf( "%07i", number + 1 ) + ".xml";
+      fnamo = path + "/M" + QString::asprintf( "%07i", number + 1 ) + ".xml";
    }
 
    return fnamo;
@@ -1589,7 +1589,7 @@ QString US_Model::composite_mc_file( QStringList& mcfiles, const bool rmvi )
                                         return empty_str;
    }
 
-   QString mditer1  = QString().sprintf( ".mcN%03i", mc_iters );
+   QString mditer1  = QString::asprintf( ".mcN%03i", mc_iters );
    QString mditer2  = QString( mditer1 ).replace( ".mcN", "_mcN" );
    QString mditer   = mditer1;
 //qDebug() << "MDL:CMF: mditer1 mditer2" << mditer1 << mditer2;
@@ -1701,7 +1701,7 @@ QString US_Model::composite_mc_file( QStringList& mcfiles, const bool rmvi )
          QString moiter   = QString( cmfname ).mid( moix, 7 );
          int mc_ittot     = QString( moiter ).mid( 4 ).toInt() + mc_iters;
          mditer           = ( ( moix1 > 0 ) ? "." : "_" )
-                            + QString().sprintf( "mcN%03i", mc_ittot );
+                            + QString::asprintf( "mcN%03i", mc_ittot );
 //qDebug() << "MDL:CMF: (B)moix1 moix2 moiter mditer" << moix1 << moix2 << moiter << mditer;
 
          if ( moiter != mditer )

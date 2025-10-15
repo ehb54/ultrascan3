@@ -102,6 +102,8 @@
 #include <list>
 #include <map>
 
+#define ZENO_GRPY_CORRECTION_BEAD_COUNT_THRESHOLD 1000
+
 #define START_RASMOL
 using namespace std;
 
@@ -380,6 +382,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
 
       // info routines (in us_hydrodyn_info.cpp
 
+      void info_bead_model( const QString & msg, const vector < PDB_atom > & b_model );
       void info_bead_models_mw( const QString & msg, const vector < vector < PDB_atom > > & b_models );
       void info_bead_models_mw( const QString & msg, const vector < PDB_atom > & b_model );
       void info_model_vector( const QString & msg, const vector <struct PDB_model> & models, const set < QString > only_atoms = {} );
@@ -1145,7 +1148,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
    public slots:
       void update_progress( int, int );
       void show_zeno_options();
-      void display_default_differences();
+      void display_default_differences( bool update_bead_model_suffix = true );
       void clear_display();
       void reload_pdb();
       int  calc_somo( bool no_ovlp_removal = false );     // compute asa and then refine bead_model
@@ -1279,6 +1282,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void write_bead_spt( QString, vector <PDB_atom> *, bool movie_frame = false, float scale = 1, bool black_background = false );
       void write_bead_model( QString, vector <PDB_atom> *, QString extra_text = "" );
       void write_bead_model( QString, vector <PDB_atom> *, int bead_model_output, QString extra_text = "" );
+      bool write_bead_xyzr( const QString &, const vector <PDB_atom> & );
       void write_corr( QString, vector <PDB_atom> * );
       bool read_corr( QString, vector <PDB_atom> * );
       void printError(const QString &);

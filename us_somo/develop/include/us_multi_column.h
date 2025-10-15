@@ -141,7 +141,7 @@ class US_Multi_Column
          while ( !ts.atEnd() )
          {
             QString     qs  = ts.readLine();
-            QStringList qsl = qs.split( QRegExp( is_csv ? "," : "\\s+" ), QString::SkipEmptyParts );
+            QStringList qsl = qs.split( QRegularExpression( is_csv ? "," : "\\s+" ), Qt::SkipEmptyParts );
             if ( !pos &&
                  qsl.size() &&
                  qsl[ 0 ].contains( QRegExp( "^\\D" ) ) )
@@ -334,7 +334,7 @@ class US_Multi_Column
                }
                ts << header[ i ];
             }
-            ts << endl;
+            ts << Qt::endl;
          }
 
          for ( unsigned int i = 0; i < data.size(); i++ )
@@ -347,7 +347,7 @@ class US_Multi_Column
                }
                ts << data[ i ][ j ];
             }
-            ts << endl;
+            ts << Qt::endl;
          }
          f.close();
          return true;

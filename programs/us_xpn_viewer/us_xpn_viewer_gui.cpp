@@ -2655,6 +2655,15 @@ void US_XpnDataViewer::check_for_sysdata( void )
 
   bool o_connection = true;
   int exp_status = CheckExpComplete_auto( RunID_to_retrieve, o_connection  );
+
+  //likely here...
+   if ( exp_status == 0 && !o_connection )
+     {
+       qDebug() << "Status 0 && no_connection... Exiting sys_data early...";
+       in_reload_check_sysdata   = false;
+       
+       return;
+     }
    
   if ( exp_status == 5 || exp_status == 0 )
     {
@@ -2846,13 +2855,48 @@ void US_XpnDataViewer::check_for_data( QMap < QString, QString > & protocol_deta
   //link->connectToServer( xpnhost, xpnmsgPort.toInt() );
   link = new Link( OptimaName );
 
-  //check connection to Optima server: if no -- reset all & go back to run manager
+  // //check connection to Optima server: if no -- reset all & go back to run manager
+  // if ( !check_sysdata_connection( ) )
+  //   {
+  //     reset_auto();
+  //     emit close_program(); 
+  //     return;
+  //   }
+  // If above socket conn. check does not work fof some reason:
+  bool o_connectivity = true;
+  int exp_status = CheckExpComplete_auto( RunID_to_retrieve, o_connectivity  );
+  qDebug() << "ENTRY POINT: Optims DB connection, exp_status, xpndesc: "
+	   << o_connectivity << exp_status << xpndesc;
   if ( !check_sysdata_connection( ) )
     {
+      qDebug() << "No connection, exit!";
+      QMessageBox msgBox_sys_data;
+      msgBox_sys_data.setIcon(QMessageBox::Critical);
+      msgBox_sys_data.setWindowFlags ( Qt::CustomizeWindowHint | Qt::WindowTitleHint);
+      msgBox_sys_data.setWindowTitle(tr("Optima System Data Server Connection Problem!"));
+      
+      QString msg_sys_text = QString(tr("Attention! UltraScan GMP is not able to communicate with the data acquisition server on the %1.\n\n "))
+	.arg(xpndesc);
+      QString msg_sys_text_info = QString(tr("The program will <b>Return</b> to \"Manage Optima Runs\" "
+					     "where you can re-attach to this run later "
+					     "by clicking \"Select Optima Run to follow\" once the network "
+					     "issue is resolved. UltraScan will then resume data acquisition.\n\n"
+					     "NOTE: If the network connection cannot be re-established to the ongoing run, " 
+					     "you can delete this run from the Run Manager (\"Delete Record\" button). "
+					     "The data will still be collected on the %1, "
+					     "but will need to be imported and processed manually at the end of the experiment."))
+	.arg(xpndesc);
+      
+      QPushButton *Accept_sys  = msgBox_sys_data.addButton(tr("Return"), QMessageBox::YesRole);
+      msgBox_sys_data.setText( msg_sys_text );
+      msgBox_sys_data.setInformativeText( msg_sys_text_info );
+      msgBox_sys_data.exec();
+      
       reset_auto();
       emit close_program(); 
       return;
     }
+
   
   //link = new Link();
   
@@ -3305,6 +3349,11 @@ DbgLv(1) << "RDa:      knt(triple)   " << xpn_data->countOf( "triple"    );
 
 	  if ( o_connection )
 	    experimentAborted  = true;
+	  else  //likely here...
+	    {
+	      in_reload_all_data   = false;  
+	      return;
+	    }
 	  
 	  timer_all_data_avail->stop();
 	  disconnect(timer_all_data_avail, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
@@ -5418,6 +5467,13 @@ DbgLv(1) << "RLd:       NO CHANGE";
 
 	  if ( statusExp == 0 && o_connection )
 	    experimentAborted  = true;
+
+	  //likely here...
+	  if ( statusExp == 0 && !o_connection )
+	    {
+	      in_reload_auto   = false; 
+	      return;
+	    }
 	  
 	  // if ( statusExp == 0 ) // If there is still connection, then exp. is truly aborted!!
 	  //   {

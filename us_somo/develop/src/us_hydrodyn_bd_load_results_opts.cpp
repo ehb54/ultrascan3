@@ -143,14 +143,14 @@ void US_Hydrodyn_BD_Load_Results_Opts::setupGUI()
    AUTFBACK( lbl_temperature );
    lbl_temperature->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   lbl_browflex_temperature = new QLabel(QString("").sprintf("%4.2f",browflex_temperature), this);
+   lbl_browflex_temperature = new QLabel( QString::asprintf( "%4.2f",browflex_temperature ) , this);
    lbl_browflex_temperature->setAlignment(Qt::AlignCenter | Qt::AlignVCenter);
    lbl_browflex_temperature->setPalette( PALET_NORMAL );
    AUTFBACK( lbl_browflex_temperature );
    lbl_browflex_temperature->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 
    le_temperature = new QLineEdit( this );    le_temperature->setObjectName( "Temperature Line Edit" );
-   le_temperature->setText(QString("").sprintf("%4.2f",*temperature));
+   le_temperature->setText( QString::asprintf( "%4.2f",*temperature ) );
    le_temperature->setAlignment(Qt::AlignCenter | Qt::AlignVCenter);
    le_temperature->setPalette( PALET_NORMAL );
    AUTFBACK( le_temperature );
@@ -165,14 +165,14 @@ void US_Hydrodyn_BD_Load_Results_Opts::setupGUI()
    AUTFBACK( lbl_solvent_viscosity );
    lbl_solvent_viscosity->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   lbl_browflex_solvent_viscosity = new QLabel(QString("").sprintf("%f",browflex_solvent_viscosity), this);
+   lbl_browflex_solvent_viscosity = new QLabel( QString::asprintf( "%f",browflex_solvent_viscosity ) , this);
    lbl_browflex_solvent_viscosity->setAlignment(Qt::AlignCenter | Qt::AlignVCenter);
    lbl_browflex_solvent_viscosity->setPalette( PALET_NORMAL );
    AUTFBACK( lbl_browflex_solvent_viscosity );
    lbl_browflex_solvent_viscosity->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 
    le_solvent_viscosity = new QLineEdit( this );    le_solvent_viscosity->setObjectName( "Solvent_Viscosity Line Edit" );
-   le_solvent_viscosity->setText(QString("").sprintf("%f",*solvent_viscosity));
+   le_solvent_viscosity->setText( QString::asprintf( "%f",*solvent_viscosity ) );
    le_solvent_viscosity->setAlignment(Qt::AlignCenter | Qt::AlignVCenter);
    le_solvent_viscosity->setPalette( PALET_NORMAL );
    AUTFBACK( le_solvent_viscosity );
@@ -188,7 +188,7 @@ void US_Hydrodyn_BD_Load_Results_Opts::setupGUI()
    lbl_solvent_density->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_solvent_density = new QLineEdit( this );    le_solvent_density->setObjectName( "Solvent_Density Line Edit" );
-   le_solvent_density->setText(QString("").sprintf("%f",*solvent_density));
+   le_solvent_density->setText( QString::asprintf( "%f",*solvent_density ) );
    le_solvent_density->setAlignment(Qt::AlignCenter | Qt::AlignVCenter);
    le_solvent_density->setPalette( PALET_NORMAL );
    AUTFBACK( le_solvent_density );
@@ -203,7 +203,7 @@ void US_Hydrodyn_BD_Load_Results_Opts::setupGUI()
    lbl_psv->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_psv = new QLineEdit( this );    le_psv->setObjectName( "psv Line Edit" );
-   le_psv->setText(QString("").sprintf("%5.3f", *psv));
+   le_psv->setText( QString::asprintf( "%5.3f", *psv ) );
    le_psv->setReadOnly(false);
    le_psv->setMinimumWidth(100);
    le_psv->setMinimumHeight(minHeight2);
@@ -301,14 +301,14 @@ void US_Hydrodyn_BD_Load_Results_Opts::update_temperature(const QString &str)
 void US_Hydrodyn_BD_Load_Results_Opts::update_solvent_viscosity(const QString &str)
 {
    *solvent_viscosity = str.toDouble();
-   // le_solvent_viscosity->setText(QString("").sprintf("%f",*solvent_viscosity));
+   // le_solvent_viscosity->setText( QString::asprintf( "%f",*solvent_viscosity ) );
    check_solvent_browflex_defaults();
 }
 
 void US_Hydrodyn_BD_Load_Results_Opts::update_solvent_density(const QString &str)
 {
    *solvent_density = str.toDouble();
-   // le_solvent_density->setText(QString("").sprintf("%f",*solvent_density));
+   // le_solvent_density->setText( QString::asprintf( "%f",*solvent_density ) );
    check_solvent_browflex_defaults();
 }
 
@@ -328,9 +328,9 @@ void US_Hydrodyn_BD_Load_Results_Opts::set_solvent_defaults()
       *solvent_density = DENS_20W;
       le_solvent_name->setText(*solvent_name);
       le_solvent_acronym->setText(*solvent_acronym);
-      le_temperature->setText(QString("").sprintf("%4.2f",*temperature));
-      le_solvent_viscosity->setText(QString("").sprintf("%f",*solvent_viscosity));
-      le_solvent_density->setText(QString("").sprintf("%f",*solvent_density));
+      le_temperature->setText( QString::asprintf( "%4.2f",*temperature ) );
+      le_solvent_viscosity->setText( QString::asprintf( "%f",*solvent_viscosity ) );
+      le_solvent_density->setText( QString::asprintf( "%f",*solvent_density ) );
    }
 }
 
@@ -345,8 +345,8 @@ void US_Hydrodyn_BD_Load_Results_Opts::set_to_browflex()
    {
       *temperature = browflex_temperature;
       *solvent_viscosity = browflex_solvent_viscosity;
-      le_temperature->setText(QString("").sprintf("%4.2f",*temperature));
-      le_solvent_viscosity->setText(QString("").sprintf("%f",*solvent_viscosity));
+      le_temperature->setText( QString::asprintf( "%4.2f",*temperature ) );
+      le_solvent_viscosity->setText( QString::asprintf( "%f",*solvent_viscosity ) );
    }
    check_solvent_browflex_defaults();
 }
@@ -361,10 +361,10 @@ void US_Hydrodyn_BD_Load_Results_Opts::check_solvent_browflex_defaults()
                                    *solvent_density == DENS_20W
                                    );
    cb_set_to_browflex->setChecked(
-                                  QString("").sprintf("%4.2f",*temperature) == 
-                                  QString("").sprintf("%4.2f",browflex_temperature) &&
-                                  QString("").sprintf("%f",*solvent_viscosity) == 
-                                  QString("").sprintf("%f",browflex_solvent_viscosity)
+                                   QString::asprintf( "%4.2f",*temperature )  == 
+                                   QString::asprintf( "%4.2f",browflex_temperature )  &&
+                                   QString::asprintf( "%f",*solvent_viscosity )  == 
+                                   QString::asprintf( "%f",browflex_solvent_viscosity ) 
                                   );
 }
       

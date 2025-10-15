@@ -254,14 +254,14 @@ void US_ExperimentGuiRa::reset( void )
          QString masterPW = pw.getPasswd();
          US_DB2 db( masterPW );
          
-         int runIDStatus = US_DB2::NO_EXPERIMENT;
-         if ( db.lastErrno() == US_DB2::OK )
+         int runIDStatus = IUS_DB2::NO_EXPERIMENT;
+         if ( db.lastErrno() == IUS_DB2::OK )
             runIDStatus = expInfo.checkRunID( &db );
         
          if ( expInfo.expID > 0 )
             pb_accept       ->setEnabled( true );
         
-         else if ( runIDStatus != US_DB2::OK )
+         else if ( runIDStatus != IUS_DB2::OK )
          {
             // Then an investigator has been chosen, and 
             //  the current runID doesn't exist in the db
@@ -324,7 +324,7 @@ bool US_ExperimentGuiRa::load( void )
       QString masterPW = pw.getPasswd();
       US_DB2 db( masterPW );
    
-      if ( db.lastErrno() == US_DB2::OK )
+      if ( db.lastErrno() == IUS_DB2::OK )
          US_Rotor::readLabsDB( labList, &db );
 
       if ( labList.size() > 0  &&  labList[ 0 ].instruments.size() == 0 )
@@ -437,7 +437,7 @@ void US_ExperimentGuiRa::getInvestigatorInfo( void )
       QString masterPW = pw.getPasswd();
       US_DB2 db( masterPW );
    
-      if ( db.lastErrno() == US_DB2::OK )
+      if ( db.lastErrno() == IUS_DB2::OK )
       {
          QStringList q( "get_person_info" );
          q << QString::number( expInfo.invID );
@@ -743,7 +743,7 @@ void US_ExperimentGuiRa::accept( void )
       QString masterPW = pw.getPasswd();
       US_DB2 db( masterPW );
       
-      if ( db.lastErrno() == US_DB2::OK )
+      if ( db.lastErrno() == IUS_DB2::OK )
       {
          QStringList q( "get_instrument_info" );
          q  << QString::number( expInfo.instrumentID );

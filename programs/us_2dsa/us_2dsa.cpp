@@ -298,7 +298,7 @@ void US_2dsa::load( void )
    if ( loadDB )
    {  // Fetch the speed steps for the experiment from the database
       US_Passwd   pw;
-      US_DB2*     dbP    = new US_DB2( pw.getPasswd() );
+      IUS_DB2*    dbP    = new US_DB2( pw.getPasswd() );
       QStringList query;
       QString     expID;
       int         idExp  = 0;
@@ -307,7 +307,7 @@ void US_2dsa::load( void )
             << QString::number( US_Settings::us_inv_ID() );
       dbP->query( query );
 
-      if ( dbP->lastErrno() == US_DB2::OK )
+      if ( dbP->lastErrno() == IUS_DB2::OK )
       {
          dbP->next();
          idExp              = dbP->value( 1 ).toInt();
@@ -623,7 +623,7 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
    // Save the model and any noise file(s)
 
    US_Passwd   pw;
-   US_DB2*     dbP      = loadDB ? new US_DB2( pw.getPasswd() ): NULL;
+   IUS_DB2*    dbP      = loadDB ? new US_DB2( pw.getPasswd() ): NULL;
    QDir        dirm( mdlpath );
    QDir        dirn( noipath );
    mdlpath             += "/";
@@ -1152,49 +1152,6 @@ DbgLv(1)<<"2dsa : timestate newly created.  timestateobject = "
    // Compute speed steps from sim speed profile
    dset.simparams.speedstepsFromSSprof();
 
-   // Do a quick test of the speed step implied by TimeState
-   int     tf_scan   = dset.simparams.speed_step[ 0 ].time_first;
-   int     accel1    = dset.simparams.speed_step[ 0 ].acceleration;
-   QString svalu     = US_Settings::debug_value( "SetSpeedLowA" );
-   int     lo_ss_acc = svalu.isEmpty() ? 250 : svalu.toInt();
-   int     rspeed    = dset.simparams.speed_step[ 0 ].rotorspeed;
-   int     accel2    = dset.simparams.sim_speed_prof[ 0 ].acceleration;
-   double  tf_aend   = static_cast<double>(tf_scan);
-   // prevent any division by zero
-   if (accel1 != 0)
-   {
-      tf_aend = static_cast<double>(rspeed) / static_cast<double>(accel1);
-   }
-
-DbgLv(1)<<"2dsa : ssck: rspeed accel1 tf_aend tf_scan"
- << rspeed << accel1 << tf_aend << tf_scan
- << "accel2" << accel2 << "lo_ss_acc" << lo_ss_acc;
-//x0  1  2  3  4  5
-   if ( accel1 < lo_ss_acc  ||  tf_aend > ( tf_scan - 3 ) )
-   {
-      QString wmsg = tr( "The TimeState used is likely bad:<br/>"
-                         "The acceleration implied is %1 rpm/sec.<br/>"
-                         "The acceleration zone ends at %2 seconds,<br/>"
-                         "with a first scan time of %3 seconds.<br/><br/>"
-                         "<b>You should rerun the experiment without<br/>"
-                         "any interim constant speed, and then<br/>"
-                         "you should reimport the data.</b>" )
-                     .arg( accel1 ).arg( QString::number(tf_aend) ).arg( QString::number(tf_scan) );
-
-      QMessageBox msgBox( this );
-      msgBox.setWindowTitle( tr( "Bad TimeState Implied!" ) );
-      msgBox.setTextFormat( Qt::RichText );
-      msgBox.setText( wmsg );
-      msgBox.addButton( tr( "Continue" ), QMessageBox::RejectRole );
-      QPushButton* bAbort = msgBox.addButton( tr( "Abort" ),
-                                          QMessageBox::YesRole );
-      msgBox.setDefaultButton( bAbort );
-      msgBox.exec();
-
-      if ( msgBox.clickedButton() == bAbort )
-         return;
-   }
-
    dset.run_data           = dataList[ drow ];
    dset.viscosity          = viscosity;
    dset.density            = density;
@@ -1370,12 +1327,12 @@ DbgLv(1) << "Data_Corr manual" << sd.manual << "avTemp" << avTemp << "vbar20" <<
 
       mstr       += table_row(
             QString::asprintf( "%10.4e", model.components[ ii ].mw ),
-            QString::asprintf( "%10.4e", s_ap ),
-            QString::asprintf( "%10.4e", model.components[ ii ].s ),
-            QString::asprintf( "%10.4e", D_ap ),
-            QString::asprintf( "%10.4e", model.components[ ii ].D ),
-            QString::asprintf( "%10.4e", f_f0 ),
-            QString::asprintf( "%10.4e (%5.2f %% )", conc, perc     ) );
+            QString::asprintf( "%10.4e", s_ap                      ),
+            QString::asprintf( "%10.4e", model.components[ ii ].s  ),
+            QString::asprintf( "%10.4e", D_ap                      ),
+            QString::asprintf( "%10.4e", model.components[ ii ].D  ),
+            QString::asprintf( "%10.4e", f_f0                      ),
+            QString::asprintf( "%10.4e (%5.2f %%)", conc, perc     ) );
    }
 
    mstr += indent( 4 ) + "</table>\n";

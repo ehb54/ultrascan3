@@ -1363,7 +1363,7 @@ DbgLv(1) << "==montecarlo_done()==";
          double  sol_z    = csolutes[ cc ].z;
          double  sol_c    = csolutes[ cc ].c;
          QString sol_id   = QString::asprintf( "%.4f:%.4f:%d",
-sol_x * 1.e13, sol_y, nccsol++ );
+            sol_x * 1.e13, sol_y, nccsol++ );
 DbgLv(1) << "MCD: cc" << cc << "sol_id" << sol_id;
 
          // Save unsorted/summed solute and sorting string
@@ -1727,7 +1727,7 @@ void US_AdvAnalysisPc::bfm_model( void )
       {  // If possible, load the model referred to in best model record
          US_Passwd pw;
          bool loadDB    = dset0->requestID.contains( "DB" );
-         US_DB2* dbP    = loadDB ? new US_DB2( pw.getPasswd() ) : NULL;
+         IUS_DB2* dbP    = loadDB ? new US_DB2( pw.getPasswd() ) : NULL;
 
          model.load( loadDB, mrec.modelGUID, dbP );
 

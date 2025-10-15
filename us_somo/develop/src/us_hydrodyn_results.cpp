@@ -106,9 +106,9 @@ void US_Hydrodyn_Results::setupGUI()
    }
    else
    {
-      le_total_beads->setText(QString("").sprintf("%u (%4.2e)",
-                                                  (int)(results->total_beads + .5),
-                                                  results->total_beads_sd));
+      le_total_beads->setText(QString::asprintf( "%u (%4.2e )",
+                                                 (int)(results->total_beads + .5),
+                                                 results->total_beads_sd));
    }
 
       
@@ -133,9 +133,9 @@ void US_Hydrodyn_Results::setupGUI()
    }
    else
    {
-      le_used_beads->setText(QString("").sprintf("%u (%4.2e)",
-                                                  (int)(results->used_beads + .5),
-                                                  results->used_beads_sd));
+      le_used_beads->setText(QString::asprintf( "%u (%4.2e )",
+                                                (int)(results->used_beads + .5),
+                                                results->used_beads_sd));
    }
    le_used_beads->setReadOnly(true);
    le_used_beads->setAlignment(Qt::AlignVCenter);
@@ -151,7 +151,7 @@ void US_Hydrodyn_Results::setupGUI()
    lbl_mass->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_mass = new QLineEdit( this );    le_mass->setObjectName( "mass Line Edit" );
-   le_mass->setText(str.sprintf("%6.4e Da", (*results).mass));
+   le_mass->setText( QString::asprintf( "%6.4e Da", (*results).mass ) );
    le_mass->setReadOnly(true);
    le_mass->setAlignment(Qt::AlignVCenter);
    le_mass->setPalette( PALET_NORMAL );
@@ -166,7 +166,7 @@ void US_Hydrodyn_Results::setupGUI()
    lbl_vbar->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_vbar = new QLineEdit( this );    le_vbar->setObjectName( "vbar Line Edit" );
-   le_vbar->setText(str.sprintf("%5.3f cm^3/g", (*results).vbar));
+   le_vbar->setText( QString::asprintf( "%5.3f cm^3/g", (*results).vbar ) );
    le_vbar->setReadOnly(true);
    le_vbar->setAlignment(Qt::AlignVCenter);
    le_vbar->setPalette( PALET_NORMAL );
@@ -183,11 +183,11 @@ void US_Hydrodyn_Results::setupGUI()
    le_s20w = new QLineEdit( this );    le_s20w->setObjectName( "s20w Line Edit" );
    if (fabs((*results).s20w_sd) <= 1e-100)
    {
-      le_s20w->setText(str.sprintf("%4.2e S", (*results).s20w));
+      le_s20w->setText( QString::asprintf( "%4.2e S", (*results).s20w ) );
    }
    else
    {
-      le_s20w->setText(str.sprintf("%4.2e S (%4.2e)", (*results).s20w, (*results).s20w_sd));
+      le_s20w->setText( QString::asprintf( "%4.2e S (%4.2e)", (*results).s20w, (*results).s20w_sd ) );
    }
    le_s20w->setReadOnly(true);
    le_s20w->setAlignment(Qt::AlignVCenter);
@@ -205,11 +205,11 @@ void US_Hydrodyn_Results::setupGUI()
    le_D20w = new QLineEdit( this );    le_D20w->setObjectName( "D20w Line Edit" );
    if (fabs((*results).D20w_sd) <= 1e-100)
    {
-      le_D20w->setText(str.sprintf("%4.2e cm^2/sec", (*results).D20w));
+      le_D20w->setText( QString::asprintf( "%4.2e cm^2/sec", (*results).D20w ) );
    }
    else
    {
-      le_D20w->setText(str.sprintf("%4.2e cm^2/sec (%4.2e)", (*results).D20w, (*results).D20w_sd));
+      le_D20w->setText( QString::asprintf( "%4.2e cm^2/sec (%4.2e)", (*results).D20w, (*results).D20w_sd ) );
    }
    le_D20w->setReadOnly(true);
    le_D20w->setAlignment(Qt::AlignVCenter);
@@ -232,9 +232,9 @@ void US_Hydrodyn_Results::setupGUI()
    } else {
       if (fabs((*results).tau_sd) <= 1e-100)
       {
-         le_tau->setText(str.sprintf("%4.2e ns", (*results).tau));
+         le_tau->setText( QString::asprintf( "%4.2e ns", (*results).tau ) );
       } else {
-         le_tau->setText(str.sprintf("%4.2e ns (%4.2e)", (*results).tau, (*results).tau_sd));
+         le_tau->setText( QString::asprintf( "%4.2e ns (%4.2e)", (*results).tau, (*results).tau_sd ) );
       }
    }
    le_tau->setReadOnly(true);
@@ -253,11 +253,11 @@ void US_Hydrodyn_Results::setupGUI()
    le_viscosity = new QLineEdit( this );    le_viscosity->setObjectName( "viscosity Line Edit" );
    if (fabs((*results).viscosity_sd) <= 1e-100)
    {
-      le_viscosity->setText(str.sprintf("%4.2e cm^3/g", (*results).viscosity));
+      le_viscosity->setText( QString::asprintf( "%4.2e cm^3/g", (*results).viscosity ) );
    }
    else
    {
-      le_viscosity->setText(str.sprintf("%4.2e cm^3/g (%4.2e)", (*results).viscosity, (*results).viscosity_sd));
+      le_viscosity->setText( QString::asprintf( "%4.2e cm^3/g (%4.2e)", (*results).viscosity, (*results).viscosity_sd ) );
    }
    le_viscosity->setReadOnly(true);
    le_viscosity->setAlignment(Qt::AlignVCenter);
@@ -278,11 +278,11 @@ void US_Hydrodyn_Results::setupGUI()
    le_rs = new QLineEdit( this );    le_rs->setObjectName( "rs Line Edit" );
    if (fabs((*results).rs_sd) <= 1e-100)
    {
-      le_rs->setText(str.sprintf("%4.2e nm", (*results).rs));
+      le_rs->setText( QString::asprintf( "%4.2e nm", (*results).rs ) );
    }
    else
    {
-      le_rs->setText(str.sprintf("%4.2e nm (%4.2e)", (*results).rs, (*results).rs_sd));
+      le_rs->setText( QString::asprintf( "%4.2e nm (%4.2e)", (*results).rs, (*results).rs_sd ) );
    }
    le_rs->setReadOnly(true);
    le_rs->setAlignment(Qt::AlignVCenter);
@@ -300,11 +300,11 @@ void US_Hydrodyn_Results::setupGUI()
    le_ff0 = new QLineEdit( this );    le_ff0->setObjectName( "ff0 Line Edit" );
    if (fabs((*results).ff0_sd) <= 1e-100)
    {
-      le_ff0->setText(str.sprintf("%3.2f", (*results).ff0));
+      le_ff0->setText( QString::asprintf( "%3.2f", (*results).ff0 ) );
    }
    else
    {
-      le_ff0->setText(str.sprintf("%3.2f nm (%3.2e)", (*results).ff0, (*results).ff0_sd));
+      le_ff0->setText( QString::asprintf( "%3.2f nm (%3.2e)", (*results).ff0, (*results).ff0_sd ) );
    }
    le_ff0->setReadOnly(true);
    le_ff0->setAlignment(Qt::AlignVCenter);
@@ -322,11 +322,11 @@ void US_Hydrodyn_Results::setupGUI()
    le_rg = new QLineEdit( this );    le_rg->setObjectName( "rg Line Edit" );
    if (fabs((*results).rg_sd) <= 1e-100)
    {
-      le_rg->setText(str.sprintf("%4.2e nm", (*results).rg));
+      le_rg->setText( QString::asprintf( "%4.2e nm", (*results).rg ) );
    }
    else
    {
-      le_rg->setText(str.sprintf("%4.2e nm (%4.2e)", (*results).rg, (*results).rg_sd));
+      le_rg->setText( QString::asprintf( "%4.2e nm (%4.2e)", (*results).rg, (*results).rg_sd ) );
    }
    le_rg->setReadOnly(true);
    le_rg->setAlignment(Qt::AlignVCenter);

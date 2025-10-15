@@ -1091,6 +1091,7 @@ void US_SoluteData::outputStats( QTextStream& ts, QList< qreal >& vals,
    qreal   vm3        = 0.0;
    qreal   vm4        = 0.0;
    qreal   vmean;
+   qreal   vctot_square = 0.0;
    qreal   mode_cen;
    qreal   mode_lo;
    qreal   mode_hi;
@@ -1135,16 +1136,18 @@ void US_SoluteData::outputStats( QTextStream& ts, QList< qreal >& vals,
    for ( int jj = 0; jj < nvals; jj++ )
    {
       val       = vals.at( jj );
+      conc      = concs.at( jj );
       qreal dif = val - vmean;
       qreal dsq = dif * dif;
-      vm2      += dsq;           // diff squared
-      vm3      += ( dsq * dif ); // cubed
-      vm4      += ( dsq * dsq ); // to the 4th
+      vm2      += dsq * conc;           // diff squared
+      vm3      += ( dsq * dif ) * conc; // cubed
+      vm4      += ( dsq * dsq ) * conc; // to the 4th
+      vctot_square += conc * conc;
    }
 
-   vm2      /= vsiz;
-   vm3      /= vsiz;
-   vm4      /= vsiz;
+   vm2      *= vctot_square / (vctot*vctot - vctot_square);
+   vm3      *= vctot_square / (vctot*vctot - vctot_square);
+   vm4      *= vctot_square / (vctot*vctot - vctot_square);
    skew      = vm3 / pow( vm2, 1.5 );
    kurto     = vm4 / pow( vm2, 2.0 ) - 3.0;
    vmedi     = ( vlo + vhi ) / 2.0;

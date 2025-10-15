@@ -104,7 +104,7 @@ US_Color::US_Color(QWidget *p, const char* ) : QFrame( p )
   QString str_number;
   for (int i=1; i<=15; i++)   //plot margin range from 2 to 30
   {  
-    str_number.sprintf("%d  pixel", i*2);
+    str_number = QString::asprintf( "%d  pixel", i*2 );
     cmbb_margin->addItem(str_number);
   }
   cmbb_margin->setCurrentIndex(current_index);

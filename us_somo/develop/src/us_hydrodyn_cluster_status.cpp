@@ -153,7 +153,7 @@ unsigned int US_Hydrodyn_Cluster_Status::update_files( bool set_lv_files )
                                                         << files[ i ]
                                                         << "unknown"
                                                         << ""
-                                                        << QFileInfo( files[ i ] ).birthTime().toString()
+                                                        << QFileInfo( files[ i ] ).lastModified().toString()
                                                         ) );
       }
    }

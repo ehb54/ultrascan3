@@ -633,8 +633,17 @@ US_ExperGuiGeneral::US_ExperGuiGeneral( QWidget* topw )
                 le_runid        = us_lineedit( "", 0, false );
                 le_protocol     = us_lineedit( "", 0, false );
                 le_project      = us_lineedit( "", 0, true  );
-                ct_tempera      = us_counter ( 2, 0,  40, 20 );
-                ct_tedelay      = us_counter ( 2, 0, 120, 10 );
+
+		//ct_tempera      = us_counter ( 2, 0,  40, 20 );
+		ct_tempera      = us_spinbox();
+		ct_tempera      ->setRange(0, 40);
+		ct_tempera      ->setValue(20);  
+		
+		//ct_tedelay      = us_counter ( 2, 0, 120, 10 );
+		ct_tedelay      = us_spinbox();
+		ct_tedelay      ->setRange(0, 120);
+		ct_tedelay      ->setValue(10);  
+		
    int          ihgt            = pb_protocol->height();
    QSpacerItem* spacer1         = new QSpacerItem( 20, ihgt );
    QSpacerItem* spacer2         = new QSpacerItem( 20, ihgt );
@@ -647,9 +656,12 @@ US_ExperGuiGeneral::US_ExperGuiGeneral( QWidget* topw )
    le_runid->setPlaceholderText("Enter Run ID to continue");
    le_project->setPlaceholderText("Select Project to continue");
 
+   //temperature
    ct_tempera->setSingleStep( 1 );
    ct_tempera->setValue     ( 20 );
    ct_tempera->adjustSize   ();
+
+   //delay
    ct_tedelay->setSingleStep( 1 );
    ct_tedelay->setValue     ( 10 );
    ct_tedelay->adjustSize   ();
@@ -1290,9 +1302,13 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
 		pb_importDisk   = us_pushbutton( tr( "Import .AUC Data" ) );
 		le_dataDiskPath = us_lineedit( "", 0, true );
 
-		ck_absorbance_t = new QCheckBox( tr("Absorbance Data:"), this );
+		ck_absorbance_t = new QCheckBox( tr("Absorbance Data (RA):"), this );
 		ck_absorbance_t ->setAutoFillBackground( true );
 		ck_absorbance_t ->setChecked( false );
+
+		ck_absorbance_pa = new QCheckBox( tr("Pseudo-Absorbance Data:"), this );
+		ck_absorbance_pa ->setAutoFillBackground( true );
+		ck_absorbance_pa ->setChecked( false );
 		
 		
 
@@ -1327,6 +1343,7 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
    genL->addWidget( pb_importDisk,     row,     1, 1, 1 );
    genL->addWidget( le_dataDiskPath,   row++,   2, 1, 2 );
    genL->addWidget( ck_absorbance_t,   row++,   1, 1, 1 );
+   genL->addWidget( ck_absorbance_pa,  row++,   1, 1, 1 );
 
 
    //connect checkbox & import
@@ -1336,6 +1353,8 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
 	    this,           SLOT(   importDisk()        ) );
    // connect( ck_absorbance_t, SIGNAL( toggled     ( bool ) ),
    // 	    this,           SLOT  ( dataDiskAbsChecked( bool ) ) );
+   connect( ck_absorbance_pa, SIGNAL( toggled     ( bool ) ),
+    	    this,           SLOT  ( dataDiskPseudoAbsChecked( bool ) ) );
 
    genL->addItem  ( spacer1,         row++, 0, 1, 4 );
 
@@ -1495,6 +1514,8 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
    le_dataDiskPath -> hide();
    ck_absorbance_t -> hide();
    ck_absorbance_t -> setEnabled( false );
+   ck_absorbance_pa -> hide();
+   ck_absorbance_pa -> setEnabled( false );
    importDataPath = "";
    if ( mainw->us_prot_dev_mode )
      ck_disksource->hide();
@@ -1509,8 +1530,10 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
 //
 void US_ExperGuiRotor::reset_dataSource_public( void )
 {
-  ck_disksource   ->setChecked( false );
-  ck_absorbance_t ->setChecked( false );
+  ck_disksource    ->setChecked( false );
+  ck_absorbance_t  ->setChecked( false );
+  ck_absorbance_pa ->setChecked( false );
+  ck_absorbance_pa ->setEnabled( false );
   importDataPath = "";
   ra_data_type = false;
   ra_data_sim  = false;
@@ -1522,10 +1545,12 @@ void US_ExperGuiRotor::switch_to_dataDisk_public()
   
   bool checked = true;
   
-  pb_importDisk   -> setVisible( checked );
-  le_dataDiskPath -> setVisible( checked );
-  ck_absorbance_t -> setVisible( checked );
-
+  pb_importDisk    -> setVisible( checked );
+  le_dataDiskPath  -> setVisible( checked );
+  ck_absorbance_t  -> setVisible( checked );
+  ck_absorbance_pa -> setVisible( checked );
+  ck_absorbance_pa -> setEnabled( false );
+  
   lb_instrument  -> setVisible( !checked );
   cb_optima  -> setVisible( !checked );
   lb_optima_connected -> setVisible( !checked );
@@ -1566,6 +1591,23 @@ void US_ExperGuiRotor::dataDiskAbsChecked( bool checked )
     }
 }
 
+void US_ExperGuiRotor::dataDiskPseudoAbsChecked( bool checked )
+{
+  if ( checked )
+    {
+      //issue warning to the user to verify it's Pseudo-Abs to be uploaded
+      QMessageBox::warning( this,
+			    tr( "NOTE: PseudoAbsorbance data type chosen!" ),
+			    tr( "Please make sure the RI data uploaded were \n"
+				"converted to peseudo-absorbance format. \n\n"
+				"Checking this option will prevent data conversion \n"
+				"at the stage 3. IMPORT..."
+				));
+    }
+}
+
+
+
 // Check import disk
 void US_ExperGuiRotor::importDiskChecked( bool checked )
 {
@@ -1574,9 +1616,11 @@ void US_ExperGuiRotor::importDiskChecked( bool checked )
 
   //importDisk_cleanProto();
     
-  pb_importDisk   -> setVisible( checked );
-  le_dataDiskPath -> setVisible( checked );
-  ck_absorbance_t -> setVisible( checked );
+  pb_importDisk    -> setVisible( checked );
+  le_dataDiskPath  -> setVisible( checked );
+  ck_absorbance_t  -> setVisible( checked );
+  ck_absorbance_pa -> setVisible( checked );
+  ck_absorbance_pa -> setEnabled( false );
 
   lb_instrument  -> setVisible( !checked );
   cb_optima  -> setVisible( !checked );
@@ -1586,8 +1630,9 @@ void US_ExperGuiRotor::importDiskChecked( bool checked )
   if ( !checked )
     {
       importDataPath = "";
-      le_dataDiskPath -> setText("");
-      ck_absorbance_t -> setChecked( false );
+      le_dataDiskPath  -> setText("");
+      ck_absorbance_t  -> setChecked( false );
+      ck_absorbance_pa -> setChecked( false );
       ra_data_type = false;
       ra_data_sim  = false;
     }
@@ -1706,7 +1751,9 @@ void US_ExperGuiRotor::importDisk( void )
   run_details  .clear();
   ra_data_type = false;
   ra_data_sim  = false;
-  ck_absorbance_t ->setChecked( false );
+  ck_absorbance_t  ->setChecked( false );
+  ck_absorbance_pa ->setChecked( false );
+  ck_absorbance_pa ->setEnabled( true );
     
   for ( int trx = 0; trx < files.size(); trx++ )
     {
@@ -1773,7 +1820,9 @@ void US_ExperGuiRotor::importDisk( void )
   qDebug() << "unique_runTypes -- " << unique_runTypes;
   if ( unique_runTypes.size() == 1 && unique_runTypes[0] == "RA")
     {
-      ck_absorbance_t ->setChecked( true );
+      ck_absorbance_t  ->setChecked( true );
+      ck_absorbance_pa ->setChecked( false );
+      ck_absorbance_pa ->setEnabled( false );
       ra_data_type = true;
     }
   
@@ -1801,8 +1850,10 @@ void US_ExperGuiRotor::importDisk( void )
 
       //clean
       importDataPath = "";
-      le_dataDiskPath -> setText("");
-      ck_absorbance_t -> setChecked( false );
+      le_dataDiskPath  -> setText("");
+      ck_absorbance_t  -> setChecked( false );
+      ck_absorbance_pa -> setChecked( false );
+      ck_absorbance_pa -> setEnabled( false );
       ra_data_type = false;
       ra_data_sim  = false;
 
@@ -1859,7 +1910,7 @@ void US_ExperGuiRotor::importDisk( void )
   int  rd_hours     = (int)qFloor( run_duration / 3600.0 );
   int  rd_mins      = (int)qRound( ( run_duration - rd_hours * 3600.0 ) / 60.0 );
   QString hh        = "h";
-  QString rd_str    = QString::asprintf( "%d %s %02d m", rd_hours, hh.toLatin1( ).data(), rd_mins );
+  QString rd_str    = QString::asprintf( "%d %s %02d m", rd_hours, hh.toLatin1().data(), rd_mins );
   msg_run_details  += rd_str + "; ";
   QString scanCount = run_details["ScanCount"];
   msg_run_details  += scanCount;
@@ -1999,8 +2050,6 @@ DbgLv(1) << "CGui:IOD:  ochx" << trx << "celchn cID" << celchn << chanID;
    int     nspeed   = US_SimulationParameters::readSpeedSteps( runID, dataType,
                                                                speedsteps );
    int     nspeedc  = 0;
-   bool low_accel   = false;
-   double rate      = 400.0;
 DbgLv(1) << "CGui:IOD:   rSS nspeed" << nspeed;
 
    if ( nspeed == 0 )
@@ -2009,60 +2058,6 @@ DbgLv(1) << "CGui:IOD:   rSS nspeed" << nspeed;
       nspeedc          = speedsteps.size();
       nspeed           = nspeedc;
 DbgLv(1) << "CGui:IOD:   cSS nspeed" << speedsteps.size();
-
-      // Check to see if implied 1st acceleration is too low
-#define DSS_LO_ACC 250.0 // default SetSpeedLowAccel
-      // if ( impType != 2 )  // Check if not imported AUC
-      // {
-      //    QString dbgval   = US_Settings::debug_value( "SetSpeedLowAcc" );
-      //    double ss_lo_acc = dbgval.isEmpty() ? DSS_LO_ACC : dbgval.toDouble();
-      //    low_accel        = US_AstfemMath::low_acceleration( speedsteps, ss_lo_acc, rate );
-      // }
-   }
-
-   // Report problematic 1st speed step
-   if ( low_accel )
-   {
-      int tf_scan      = speedsteps[ 0 ].time_first;
-      int accel1       = (int)qRound( rate );
-      int rspeed       = speedsteps[ 0 ].rotorspeed;
-      double  tf_aend   = static_cast<double>(tf_scan);
-      // prevent any division by zero
-      if (accel1 != 0)
-      {
-         tf_aend = static_cast<double>(rspeed) / static_cast<double>(accel1);
-      }
-
-      QString wmsg = tr( "The SpeedStep computed/used is likely bad:<br/>"
-                         "The acceleration implied is %1 rpm/sec.<br/>"
-                         "The acceleration zone ends at %2 seconds,<br/>"
-                         "with a first scan time of %3 seconds.<br/><br/>"
-                         "<b>You should rerun the experiment without<br/>"
-                         "any interim constant speed, and then<br/>"
-                         "you should reimport the data.</b>" )
-                     .arg( accel1 ).arg( QString::number(tf_aend) ).arg( QString::number(tf_scan) );
-
-      QMessageBox msgBox( this );
-      msgBox.setWindowTitle( tr( "Bad TimeState Implied!" ) );
-      msgBox.setTextFormat( Qt::RichText );
-      msgBox.setText( wmsg );
-      msgBox.addButton( tr( "Continue" ), QMessageBox::RejectRole );
-      QPushButton* bAbort = msgBox.addButton( tr( "Abort" ),
-            QMessageBox::YesRole    );
-      msgBox.setDefaultButton( bAbort );
-      msgBox.exec();
-      if ( msgBox.clickedButton() == bAbort )
-      {  // Abort the import of this data
-         QApplication::restoreOverrideCursor();
-         qApp->processEvents();
-         //reset();
-         return false;
-      }
-      else
-      {  // Modify times and omegas of this data, then proceed to import
-         int status = US_Convert::adjustSpeedstep( allData, speedsteps );
-DbgLv(1) << "CGui:IOD: adjSS stat" << status;
-      }
    }
 
    // MultiWaveLength if channels and triples counts differ
@@ -2717,8 +2712,10 @@ DbgLv(1) << "EGR: chgRotor calibs count" << calibs.count();
       if (ck_disksource->isChecked())
 	{
 	  importDataPath = "";
-	  le_dataDiskPath -> setText("");
-	  ck_absorbance_t -> setChecked( false );
+	  le_dataDiskPath  -> setText("");
+	  ck_absorbance_t  -> setChecked( false );
+	  ck_absorbance_pa -> setChecked( false );
+	  ck_absorbance_pa -> setEnabled( false);
 	  ra_data_type = false;
 	  ra_data_sim  = false;
 
@@ -2892,8 +2889,18 @@ US_ExperGuiSpeeds::US_ExperGuiSpeeds( QWidget* topw )
      sb_count            ->setEnabled( false );
    
    cb_prof             = new QComboBox( this );
-   ct_speed            = us_counter( 2, 1000,  80000, 100 );
-   ct_accel            = us_counter( 2,   50,   1000,  50 );
+   
+   // ct_speed            = us_counter( 2, 1000,  80000, 100 );
+   // ct_accel            = us_counter( 2,   50,   1000,  50 );
+   ct_speed            = us_spinbox();
+   ct_accel            = us_spinbox();
+
+   ct_speed ->setRange(1000,  80000);
+   ct_speed ->setValue(100);
+   ct_accel ->setRange(50, 100);
+   ct_accel ->setValue(50);
+   
+   
     // QHBoxLayout* lo_durat                                             // ALEXEY
     //                       = us_timeedit( tm_durat,  0, &sb_durat  );
     // QHBoxLayout* lo_delay
@@ -8199,7 +8206,8 @@ void US_ExperGuiUpload::submitExperiment_dataDisk()
   protocol_details[ "OptimaName" ]     = "dataDisk";  // <--- OR NULL???
   //protocol_details[ "OptimaName" ]     = rpRotor->instrname;         // NULL
 
-  QString dataSourceType = ( !rpRotor->importData_absorbance_t ) ? "dataDiskAUC" : "dataDiskAUC:Absorbance"; 
+  QString dataSourceType = ( !rpRotor->importData_absorbance_t ) ? "dataDiskAUC" : "dataDiskAUC:Absorbance";
+  dataSourceType = ( rpRotor->importData_absorbance_pa ) ? "dataDiskAUC:PseudoAbsorbance" : dataSourceType;
   protocol_details[ "dataSource" ]     = dataSourceType;  //<-- for now
   
   protocol_details[ "protocolName" ]   = currProto->protoname;

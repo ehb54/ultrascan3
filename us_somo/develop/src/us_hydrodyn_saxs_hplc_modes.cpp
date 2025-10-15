@@ -1259,9 +1259,9 @@ void US_Hydrodyn_Saxs_Hplc::guinier()
    guinier_scroll_pos = -1;
    mode_select( MODE_GUINIER );
    plot_dist->hide();
-   ShowHide::hide_widgets( guinier_errors_widgets );
-   ShowHide::hide_widgets( guinier_rg_widgets );
-   ShowHide::hide_widgets( guinier_mw_widgets );
+   ShowHide::hide_widgets( guinier_errors_widgets, always_hide_widgets );
+   ShowHide::hide_widgets( guinier_rg_widgets, always_hide_widgets );
+   ShowHide::hide_widgets( guinier_mw_widgets, always_hide_widgets );
    
    running       = true;
 
@@ -1580,7 +1580,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_scroll()
 
    if ( cb_guinier_scroll->isChecked() )
    {
-      ShowHide::hide_widgets( wheel_below_widgets, false );
+      ShowHide::hide_widgets( wheel_below_widgets, always_hide_widgets, false );
       //      us_qdebug( "--- guinier_scroll():isChecked ---" );
       le_last_focus = ( mQLineEdit * )0;
       wheel_enables( false );
@@ -1655,7 +1655,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_scroll()
       wheel_enables();
       guinier_scroll_highlight( guinier_scroll_pos );
    } else {
-      ShowHide::hide_widgets( wheel_below_widgets );
+      ShowHide::hide_widgets( wheel_below_widgets, always_hide_widgets );
       // go thru all displayed curves, turn on
       le_last_focus = ( mQLineEdit * )0;
       wheel_enables( false );
@@ -1816,13 +1816,13 @@ void US_Hydrodyn_Saxs_Hplc::guinier_plot_rg_toggle()
 {
    if ( guinier_rg_widgets[ 0 ]->isVisible() )
    {
-      ShowHide::hide_widgets( guinier_rg_widgets );
+      ShowHide::hide_widgets( guinier_rg_widgets, always_hide_widgets );
    } else {
       US_Plot_Util::align_plot_extents( { guinier_plot_rg, guinier_plot_mw } );
       connect(((QObject*)guinier_plot_rg->axisWidget(QwtPlot::xBottom)) , SIGNAL(scaleDivChanged () ), usp_guinier_plot_mw, SLOT(scaleDivChangedXSlot () ), Qt::UniqueConnection );
       connect(((QObject*)guinier_plot_mw->axisWidget(QwtPlot::xBottom)) , SIGNAL(scaleDivChanged () ), usp_guinier_plot_rg, SLOT(scaleDivChangedXSlot () ), Qt::UniqueConnection );
 
-      ShowHide::hide_widgets( guinier_rg_widgets, false );
+      ShowHide::hide_widgets( guinier_rg_widgets, always_hide_widgets, false );
       guinier_plot_rg->enableAxis( QwtPlot::xBottom, !guinier_plot_mw->isVisible() );
    }
 }
@@ -1831,13 +1831,13 @@ void US_Hydrodyn_Saxs_Hplc::guinier_plot_mw_toggle()
 {
    if ( guinier_mw_widgets[ 0 ]->isVisible() )
    {
-      ShowHide::hide_widgets( guinier_mw_widgets );
+      ShowHide::hide_widgets( guinier_mw_widgets, always_hide_widgets );
    } else {
       US_Plot_Util::align_plot_extents( { guinier_plot_rg, guinier_plot_mw } );
       connect(((QObject*)guinier_plot_rg->axisWidget(QwtPlot::xBottom)) , SIGNAL(scaleDivChanged () ), usp_guinier_plot_mw, SLOT(scaleDivChangedXSlot () ), Qt::UniqueConnection );
       connect(((QObject*)guinier_plot_mw->axisWidget(QwtPlot::xBottom)) , SIGNAL(scaleDivChanged () ), usp_guinier_plot_rg, SLOT(scaleDivChangedXSlot () ), Qt::UniqueConnection );
 
-      ShowHide::hide_widgets( guinier_mw_widgets, false );
+      ShowHide::hide_widgets( guinier_mw_widgets, always_hide_widgets, false );
    }
    guinier_plot_rg->enableAxis( QwtPlot::xBottom, !guinier_plot_mw->isVisible() );
 }
@@ -2422,19 +2422,17 @@ void US_Hydrodyn_Saxs_Hplc::guinier_analysis()
 
          QString report =
             QString("%1:%2 ").arg( pos ).arg( this_name ) +
-            QString( "" )
-            .sprintf(
-                     "Rg %.1f (%.1f) (A) I(0) %.2e (%.2e) qRg [%.3f,%.3f] pts %u chi^2 %.2e r-chi %.2e\n"
-                     , Rg
-                     , sigb
-                     , I0
-                     , siga
-                     , sRgmin
-                     , sRgmax
-                     , (unsigned int) usu->wave[ "hplc" ].q.size()
-                     , chi2
-                     , sqrt( chi2 / usu->wave[ "hplc" ].q.size() )
-                     ) +
+            QString::asprintf( "Rg %.1f (%.1f ) (A) I(0) %.2e (%.2e) qRg [%.3f,%.3f] pts %u chi^2 %.2e r-chi %.2e\n"
+                               , Rg
+                               , sigb
+                               , I0
+                               , siga
+                               , sRgmin
+                               , sRgmax
+                               , (unsigned int) usu->wave[ "hplc" ].q.size()
+                               , chi2
+                               , sqrt( chi2 / usu->wave[ "hplc" ].q.size() )
+                               ) +
             us_tr( use_SD_weighting ? "SD  on" : "SD OFF" )
             ;
 
@@ -2461,13 +2459,10 @@ void US_Hydrodyn_Saxs_Hplc::guinier_analysis()
               !us_isnan( mwt ) )
          {
             report += 
-               QString("")
-               .sprintf( 
-                        " Vc[T] %.1e Qr[T] %.2e MW[RT] %.2e ",
-                        Vct,
-                        Qrt,
-                        mwt
-                         ) + notest;
+               QString::asprintf( " Vc[T] %.1e Qr[T] %.2e MW[RT] %.2e ",
+                                  Vct,
+                                  Qrt,
+                                  mwt ) + notest;
             if ( mw_min > mwt )
             {
                mw_min = mwt;
@@ -2519,14 +2514,11 @@ void US_Hydrodyn_Saxs_Hplc::guinier_analysis()
                  !us_isnan( mwc ) )
             {
                report += 
-                  QString("")
-                  .sprintf( 
-                           " Vc[%.3f,C] %.1e Qr[C] %.2e MW[C] %.2e ",
-                           qm,
-                           Vcc,
-                           Qrc,
-                           mwc
-                            ) + notesc;
+                  QString::asprintf( " Vc[%.3f,C] %.1e Qr[C] %.2e MW[C] %.2e ",
+                                     qm,
+                                     Vcc,
+                                     Qrc,
+                                     mwc ) + notesc;
                mwc_x  .push_back( pos );
                mwc_y  .push_back( mwc );
                mwc_sds.push_back( mwc_sd );
@@ -2817,21 +2809,19 @@ void US_Hydrodyn_Saxs_Hplc::guinier_analysis()
 
             msg += QString( "of %1 " ).arg( guinier_q2.size() );
          }
-         msg += QString( "" )
-            .sprintf(
-                     "curves  qmax*Rg %.3f [%.3f:%.3f]  Rg %.1f (%.1f) [%.1f:%.1f]\nI0 %.2e (%.2e) [%.2e:%.2e]"
-                     , qrg_avg
-                     , qrg_min
-                     , qrg_max
-                     , rg_avg
-                     , rg_sd
-                     , rg_min
-                     , rg_max
-                     , i0_avg
-                     , i0_sd
-                     , i0_min
-                     , i0_max
-                     )
+         msg += QString::asprintf( "curves  qmax*Rg %.3f [%.3f:%.3f]  Rg %.1f (%.1f ) [%.1f:%.1f]\nI0 %.2e (%.2e) [%.2e:%.2e]"
+                                   , qrg_avg
+                                   , qrg_min
+                                   , qrg_max
+                                   , rg_avg
+                                   , rg_sd
+                                   , rg_min
+                                   , rg_max
+                                   , i0_avg
+                                   , i0_sd
+                                   , i0_min
+                                   , i0_max
+                                   )
             ;
       }
       break;
@@ -2856,19 +2846,15 @@ void US_Hydrodyn_Saxs_Hplc::guinier_analysis()
             double countm1inv = 1e0 / (count - 1e0 );
             double mwt_sd = sqrt( countm1inv * ( mwt_sum2 - count * mwt_avg * mwt_avg ) );
 
-            msg += QString( "" )
-               .sprintf(
-                        " %.4g (%.4g) [%.4g:%.4g]"
-                        , mwt_avg
-                        , mwt_sd
-                        , mwt_min
-                        , mwt_max
-                        );
+            msg += QString::asprintf( " %.4g (%.4g ) [%.4g:%.4g]"
+                                      , mwt_avg
+                                      , mwt_sd
+                                      , mwt_min
+                                      , mwt_max
+                                      );
          } else {
-            msg += QString( "" )
-               .sprintf(
-                        " %.4g "
-                        , mwt_avg );
+            msg += QString::asprintf( " %.4g "
+                                      , mwt_avg );
          }
          if ( mwc_x.size() )
          {
@@ -2892,19 +2878,15 @@ void US_Hydrodyn_Saxs_Hplc::guinier_analysis()
             double countm1inv = 1e0 / (count - 1e0 );
             double mwc_sd = sqrt( countm1inv * ( mwc_sum2 - count * mwc_avg * mwc_avg ) );
 
-            msg += QString( "" )
-               .sprintf(
-                        " %.4g (%.4g) [%.4g:%.4g]"
-                        , mwc_avg
-                        , mwc_sd
-                        , mwc_min
-                        , mwc_max
-                        );
+            msg += QString::asprintf( " %.4g (%.4g ) [%.4g:%.4g]"
+                                      , mwc_avg
+                                      , mwc_sd
+                                      , mwc_min
+                                      , mwc_max
+                                      );
          } else {
-            msg += QString( "" )
-               .sprintf(
-                        " %.4g "
-                        , mwc_avg );
+            msg += QString::asprintf( " %.4g "
+                                      , mwc_avg );
          }
          if ( mwc_x.size() )
          {
@@ -3762,7 +3744,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_enables()
    pb_rescale             -> setEnabled( true );
    pb_rescale_y           -> setEnabled( true );
 
-   ShowHide::hide_widgets( wheel_below_widgets, !cb_guinier_scroll->isChecked() );
+   ShowHide::hide_widgets( wheel_below_widgets, always_hide_widgets, !cb_guinier_scroll->isChecked() );
 }
 
 bool US_Hydrodyn_Saxs_Hplc::guinier_check_qmax( bool show_message )
@@ -5195,7 +5177,7 @@ void US_Hydrodyn_Saxs_Hplc::scale_scroll()
 
    if ( cb_scale_scroll->isChecked() )
    {
-      ShowHide::hide_widgets( wheel_below_widgets, false );
+      ShowHide::hide_widgets( wheel_below_widgets, always_hide_widgets, false );
       le_last_focus = ( mQLineEdit * )0;
       scale_scroll_selected.clear( );
       for ( set < QString >::iterator it = scale_selected.begin();
@@ -5232,7 +5214,7 @@ void US_Hydrodyn_Saxs_Hplc::scale_scroll()
       wheel_enables();
       scale_scroll_highlight( scale_scroll_pos );
    } else {
-      ShowHide::hide_widgets( wheel_below_widgets );
+      ShowHide::hide_widgets( wheel_below_widgets, always_hide_widgets );
       // go thru all displayed curves, turn on
       for ( set < QString >::iterator it = scale_selected.begin();
             it != scale_selected.end();
@@ -5408,7 +5390,7 @@ void US_Hydrodyn_Saxs_Hplc::scale_enables()
    pb_axis_y             ->setEnabled( true );
    pb_pp                 ->setEnabled( true );
 
-   ShowHide::hide_widgets( wheel_below_widgets, !cb_scale_scroll->isChecked() );
+   ShowHide::hide_widgets( wheel_below_widgets, always_hide_widgets, !cb_scale_scroll->isChecked() );
 }
 
 QString US_Hydrodyn_Saxs_Hplc::scale_get_target( bool do_msg )
@@ -6244,7 +6226,7 @@ void US_Hydrodyn_Saxs_Hplc::ggauss_start()
 
    // ggaussian_mode = true;
    mode_select( MODE_GGAUSSIAN );
-   ShowHide::hide_widgets( ggqfit_widgets );
+   ShowHide::hide_widgets( ggqfit_widgets, always_hide_widgets );
    cb_ggauss_scroll->setChecked( false );
 
    lbl_gauss_fit->setText( QString( "%1" ).arg( ggaussian_rmsd(), 0, 'g', 5 ) );
@@ -6913,7 +6895,7 @@ void US_Hydrodyn_Saxs_Hplc::ggaussian_enables()
       cb_eb               ->setEnabled( true );
       pb_line_width       ->setEnabled( true );
       pb_color_rotate     ->setEnabled( true );
-      ShowHide::hide_widgets( wheel_below_widgets, false );
+      ShowHide::hide_widgets( wheel_below_widgets, always_hide_widgets, false );
    } else {
       cb_eb               ->setEnabled( false );
       pb_line_width       ->setEnabled( false );
@@ -6934,7 +6916,7 @@ void US_Hydrodyn_Saxs_Hplc::ggaussian_enables()
       pb_ggauss_as_curves ->setEnabled( unified_ggaussian_ok );
       pb_view             ->setEnabled( unified_ggaussian_curves <= 10 );
       pb_cormap           ->setEnabled( unified_ggaussian_ok );
-      ShowHide::hide_widgets( wheel_below_widgets );
+      ShowHide::hide_widgets( wheel_below_widgets, always_hide_widgets );
       // if ( le_last_focus && qwtw_wheel->isEnabled() ) {
       //    le_last_focus->setFocus();
       // }
@@ -7022,6 +7004,16 @@ void US_Hydrodyn_Saxs_Hplc::timeshift()
 
       double minq_ref  = f_qs[ selected_files[ 0 ] ][ 0 ];
       double maxq_ref  = f_qs[ selected_files[ 0 ] ].back();
+
+      for ( auto file : selected_files ) {
+         if ( minq_ref > f_qs[ file ][ 0 ] ) {
+            minq_ref = f_qs[ file ][ 0 ];
+         }
+         if ( maxq_ref < f_qs[ file ].back() ) {
+            maxq_ref = f_qs[ file ].back();
+         }
+      }
+
       double range_ref  = maxq_ref  - minq_ref;
 
       // double minq_w    = minq_ref - maxq_conc;
@@ -7098,5 +7090,5 @@ void US_Hydrodyn_Saxs_Hplc::timescale( const QStringList & files )
 
 void US_Hydrodyn_Saxs_Hplc::ggqfit()
 {
-   ShowHide::hide_widgets( ggqfit_widgets, ggqfit_widgets[ 0 ]->isVisible() );
+   ShowHide::hide_widgets( ggqfit_widgets, always_hide_widgets, ggqfit_widgets[ 0 ]->isVisible() );
 }

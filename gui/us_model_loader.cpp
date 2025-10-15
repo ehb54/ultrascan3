@@ -419,7 +419,7 @@ int US_ModelLoader::load_model( US_Model& model, int index )
          US_Passwd pw;
          dbP         = new US_DB2( pw.getPasswd() );
 
-         if ( ( rc = dbP->lastErrno() ) != US_DB2::OK )
+         if ( ( rc = dbP->lastErrno() ) != IUS_DB2::OK )
          {
             QMessageBox::information( this,
                   tr( "DB Connection Problem" ),
@@ -595,7 +595,7 @@ qDebug() << "  listdesc listedit listsing" << listdesc << listedit << listsing;
          US_Passwd   pw;
          dbP         = new US_DB2( pw.getPasswd() );
 
-         if ( dbP->lastErrno() != US_DB2::OK )
+         if ( dbP->lastErrno() != IUS_DB2::OK )
          {
             QMessageBox::information( this,
                   tr( "DB Connection Problem" ),
@@ -1105,7 +1105,7 @@ qDebug() << "  listdesc listedit listsing" << listdesc << listedit << listsing;
          US_Passwd   pw;
          dbP         = new US_DB2( pw.getPasswd() );
 
-         if ( dbP->lastErrno() != US_DB2::OK )
+         if ( dbP->lastErrno() != IUS_DB2::OK )
          {
             QMessageBox::information( this,
                   tr( "DB Connection Problem" ),
@@ -1481,8 +1481,8 @@ void US_ModelLoader::accepted_auto( QStringList m_t_r_id )
        int     mdx     = modelIndex( mdesc, allmods );
        QString modelID = allmods.at( mdx ).DB_id;
        
-       if ( model_text.contains( model_passed ) &&
-	    model_text.contains( triple_passed ) &&
+       //if ( model_text.contains( model_passed ) &&
+       if(  model_text.contains( triple_passed ) &&
 	    model_text.contains( runid_passed ) &&
 	    modelID == modelid_passed )
 	 {

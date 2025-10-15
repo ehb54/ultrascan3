@@ -57,7 +57,7 @@ void US_Hydrodyn_Dammin_Opts::setupGUI()
    lbl_psv->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
 
    le_psv = new QLineEdit( this );    le_psv->setObjectName( "psv Line Edit" );
-   le_psv->setText(QString("").sprintf("%5.3f", *psv));
+   le_psv->setText(QString::asprintf( "%5.3f", *psv ));
    le_psv->setReadOnly(false);
    le_psv->setMinimumWidth(100);
    le_psv->setMinimumHeight(minHeight2);
@@ -75,7 +75,7 @@ void US_Hydrodyn_Dammin_Opts::setupGUI()
    lbl_mw->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
 
    le_mw = new QLineEdit( this );    le_mw->setObjectName( "mw Line Edit" );
-   le_mw->setText(QString("").sprintf("%5.3f", *mw));
+   le_mw->setText(QString::asprintf( "%5.3f", *mw ));
    le_mw->setReadOnly(false);
    le_mw->setMinimumWidth(100);
    le_mw->setMinimumHeight(minHeight2);

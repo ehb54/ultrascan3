@@ -306,7 +306,7 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    // Plot layout for the right side of window
    QBoxLayout* plot = new US_Plot( data_plot,
                                    tr( "Ramp Data" ),
-                                   tr( "w²t (/ s¯¹)" ), 
+                                   tr( "wÂ²t (/ sÂ¯Â¹)" ),
                                    tr( "Intensity (/AU)" ) );
 
    data_plot->setMinimumSize( 500, 300 );
@@ -815,7 +815,7 @@ DbgLv(1) << " enabCtl: tLx infsz" << cellchan << all_chaninfo.count();
       QString masterPW = pw.getPasswd();
       US_DB2 db( masterPW );
    
-      if ( db.lastErrno() != US_DB2::OK )
+      if ( db.lastErrno() != IUS_DB2::OK )
       {
          count++;
          lw_todoinfo->addItem( QString::number( count ) +
@@ -829,7 +829,7 @@ DbgLv(1) << " enabCtl: tLx infsz" << cellchan << all_chaninfo.count();
    
       // if a record is found but saveStatus==BOTH,
       //  then we are editing that record
-      if ( ( recStatus == US_DB2::OK ) && ( saveStatus != BOTH ) ) // ||
+      if ( ( recStatus == IUS_DB2::OK ) && ( saveStatus != BOTH ) ) // ||
            // ( ! ExpData.syncOK ) ) 
       {
          count++;
@@ -1060,7 +1060,7 @@ DbgLv(1) << "CGui: ldUS3Dk: call prj-rDk";
    status = ExpData.project.readFromDisk( ExpData.project.projectGUID );
 
    // Error reporting 
-   if ( status == US_DB2::NO_PROJECT ) 
+   if ( status == IUS_DB2::NO_PROJECT )
    { 
       QMessageBox::information( this, 
             tr( "Attention" ), 
@@ -1068,7 +1068,7 @@ DbgLv(1) << "CGui: ldUS3Dk: call prj-rDk";
                 "Please select an existing project and try again.\n" ) ); 
    } 
    
-   else if ( status != US_DB2::OK ) 
+   else if ( status != IUS_DB2::OK )
    { 
       QMessageBox::information( this, 
             tr( "Disk Read Problem" ), 
@@ -1077,7 +1077,7 @@ DbgLv(1) << "CGui: ldUS3Dk: call prj-rDk";
    }
 
    // and clear it out
-   if ( status != US_DB2::OK )
+   if ( status != IUS_DB2::OK )
       ExpData.project.clear();
 
    le_status->setText( tr( "Project and experiment are loaded." ) );
@@ -1095,7 +1095,7 @@ DbgLv(1) << "CGui: SOLCHK:loop";
       {
 	qDebug()<<"bla";
          all_chaninfo[ ii ].solution = all_chaninfo[ ii - 1 ].solution;
-         status   = US_DB2::OK;
+         status   = IUS_DB2::OK;
          continue;
       }
       else
@@ -1118,7 +1118,7 @@ DbgLv(1) << "SOLCHK:  ii csolGUID EMPTY" << ii << csolGUID;
       }
 
       // Error reporting
-      if ( status == US_DB2::NO_SOLUTION )
+      if ( status == IUS_DB2::NO_SOLUTION )
       {
          QMessageBox::information( this,
             tr( "Attention" ),
@@ -1128,7 +1128,7 @@ DbgLv(1) << "SOLCHK:  ii csolGUID EMPTY" << ii << csolGUID;
 DbgLv(1) << "SOLERR: ii psolGUID csolGUI" << ii << psolGUID << csolGUID;
       }
       
-      else if ( status == US_DB2::NO_BUFFER )
+      else if ( status == IUS_DB2::NO_BUFFER )
       {
          QMessageBox::information( this,
             tr( "Attention" ),
@@ -1136,7 +1136,7 @@ DbgLv(1) << "SOLERR: ii psolGUID csolGUI" << ii << psolGUID << csolGUID;
                 "Please restore and try again.\n" ) );
       }
       
-      else if ( status == US_DB2::NO_ANALYTE )
+      else if ( status == IUS_DB2::NO_ANALYTE )
       {
          QMessageBox::information( this,
             tr( "Attention" ),
@@ -1144,7 +1144,7 @@ DbgLv(1) << "SOLERR: ii psolGUID csolGUI" << ii << psolGUID << csolGUID;
                 "Please restore and try again.\n" ) );
       }
       
-      else if ( status != US_DB2::OK )
+      else if ( status != IUS_DB2::OK )
       {
          QMessageBox::information( this, 
             tr( "Disk Read Problem" ), 
@@ -1153,7 +1153,7 @@ DbgLv(1) << "SOLERR: ii psolGUID csolGUI" << ii << psolGUID << csolGUID;
       }
    qDebug()<<"all_chaninfo[ ii ].solutionDesc0"<<all_chaninfo[ ii ].solution.solutionDesc;
       // Just clear it out
-      if ( status != US_DB2::OK )
+      if ( status != IUS_DB2::OK )
          all_chaninfo[ ii ].solution.clear();
    qDebug()<<"all_chaninfo[ ii ].solutionDesc1"<<all_chaninfo[ ii ].solution.solutionDesc;
    }
@@ -1239,9 +1239,9 @@ DbgLv(1) << "CGui: ldUS3Dk: RTN";
 //    // Verify connectivity
 //    US_Passwd pw;
 //    QString masterPW = pw.getPasswd();
-//    US_DB2 db( masterPW );
+//    IUS_DB2 db( masterPW );
 // 
-//    if ( db.lastErrno() != US_DB2::OK )
+//    if ( db.lastErrno() != IUS_DB2::OK )
 //    {
 //       QMessageBox::information( this,
 //           tr( "Error" ),

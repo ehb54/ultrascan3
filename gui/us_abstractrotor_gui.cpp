@@ -143,7 +143,7 @@ bool US_AbstractRotorGui::loadAbstractRotors( void )
       QString masterPW = pw.getPasswd();
       US_DB2 db( masterPW );
      
-      if ( db.lastErrno() != US_DB2::OK )
+      if ( db.lastErrno() != IUS_DB2::OK )
       {
          connect_error( db.lastError() );
          return( false );

@@ -130,6 +130,12 @@ US_ReportGui::US_ReportGui( QMap < QString, US_ReportGMP* > report_map ) : US_Wi
   connect( sb_durat_ss,  SIGNAL( valueChanged   ( int ) ),
 	   this,         SLOT  ( ssChgDuratTime_ss ( int ) ) );
 
+  //set Exp. Duration counters to read-only
+  sb_durat_dd -> setReadOnly(true);
+  sb_durat_hh -> setReadOnly(true);
+  sb_durat_mm -> setReadOnly(true);
+  sb_durat_ss -> setReadOnly(true);
+
   //ALEXEY_NEW_REPORT: wvl
   cb_wvl =  us_comboBox();
   cb_wvl -> addItems( wvl_passed );

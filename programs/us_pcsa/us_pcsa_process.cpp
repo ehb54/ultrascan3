@@ -1048,10 +1048,10 @@ DbgLv(1) << "PC:MS: nmtasks mrssiz nbmods" << nmtasks << mrecs.size() << nbmods;
       double yincr  = ( yuplim - ylolim ) / (double)( qMax( 1, (nypts - 1) ) );
       modstats << tr( "Y Range + delta:" )
                << QString::asprintf( "%10.4f  %10.4f  %10.4f",
-ylolim, yuplim, yincr );
+                     ylolim, yuplim, yincr );
       modstats << tr( "Best curve Y end points + slope:" )
                << QString::asprintf( "%10.4f  %10.4f  %10.4f",
-str_y, end_y, slope );
+                     str_y, end_y, slope );
 DbgLv(1) << "PC:MS:  best str_y,end_y" << str_y << end_y;
    }
    else if ( curvtype == CTYPE_IS  ||  curvtype == CTYPE_DS )
@@ -1069,7 +1069,7 @@ DbgLv(1) << "PC:MS:  best str_y,end_y" << str_y << end_y;
                << QString::asprintf( "%10.4f  %10.4f", par1, par2 );
       modstats << tr( "Best curve Y end points:" )
                << QString::asprintf( "%10.4f  %10.4f",
-mrecs[ 0 ].str_y, mrecs[ 0 ].end_y );
+                     mrecs[ 0 ].str_y, mrecs[ 0 ].end_y );
    }
    else if ( curvtype == CTYPE_2O )
    {
@@ -1077,10 +1077,10 @@ mrecs[ 0 ].str_y, mrecs[ 0 ].end_y );
                << QString::asprintf( "%10.4f  %10.4f", ylolim, yuplim );
       modstats << tr( "Best curve A, B, C:" )
                << QString::asprintf( "%10.4f  %10.4f  %10.4f",
-mrecs[ 0 ].par1, mrecs[ 0 ].par2, mrecs[ 0 ].par3 );
+                     mrecs[ 0 ].par1, mrecs[ 0 ].par2, mrecs[ 0 ].par3 );
       modstats << tr( "Best curve Y end points:" )
                << QString::asprintf( "%10.4f  %10.4f",
-mrecs[ 0 ].str_y, mrecs[ 0 ].end_y );
+                     mrecs[ 0 ].str_y, mrecs[ 0 ].end_y );
    }
    else
    {
@@ -1088,10 +1088,10 @@ mrecs[ 0 ].str_y, mrecs[ 0 ].end_y );
                << QString::asprintf( "%10.4f  %10.4f", ylolim, yuplim );
       modstats << tr( "Best curve par1 and par2:" )
                << QString::asprintf( "%10.4f  %10.4f",
-mrecs[ 0 ].par1, mrecs[ 0 ].par2 );
+                     mrecs[ 0 ].par1, mrecs[ 0 ].par2 );
       modstats << tr( "Best curve Y end points:" )
                << QString::asprintf( "%10.4f  %10.4f",
-mrecs[ 0 ].str_y, mrecs[ 0 ].end_y );
+                     mrecs[ 0 ].str_y, mrecs[ 0 ].end_y );
    }
    modstats << tr( "Number of models:" )
             << QString::asprintf( "%5d", nmtasks );
@@ -1105,7 +1105,7 @@ mrecs[ 0 ].str_y, mrecs[ 0 ].end_y );
    modstats << tr( "Index of best model:" )
             << QString::asprintf( "%5d", mrecs[ 0 ].taskx );
    modstats << tr( "Best curve calculated solutes:" )
-            << QString::asprintf( "%5d", mrecs[ 0 ].csolutes.size( ) );
+            << QString::asprintf( "%5d", mrecs[ 0 ].csolutes.size() );
    modstats << tr( "Minimum, Maximum calculated solutes:" )
             << QString::asprintf( "%5d  %5d", nsolmin, nsolmax );
    modstats << tr( "Average calculated solutes:" )

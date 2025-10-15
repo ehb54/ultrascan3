@@ -152,8 +152,8 @@ class ata_d_thr_t : public QThread
   vector <vector <dpairs> > *dataarray;
 
   int thread;
-  unsigned int i;
-  unsigned int j;
+  // unsigned int i;
+  // unsigned int j;
   QMutex work_mutex;
   int work_to_do;
   QWaitCondition cond_work_to_do;

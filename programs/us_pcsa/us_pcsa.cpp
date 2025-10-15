@@ -250,7 +250,7 @@ void US_pcsa::load( void )
             << QString::number( US_Settings::us_inv_ID() );
       dbP->query( query );
 
-      if ( dbP->lastErrno() == US_DB2::OK )
+      if ( dbP->lastErrno() == IUS_DB2::OK )
       {
         dbP->next();
         idExp              = dbP->value( 1 ).toInt();
@@ -554,7 +554,7 @@ DbgLv(1) << "SV: analysisType" << analysisType;
    // Save the model and any noise file(s)
 
    US_Passwd   pw;
-   US_DB2*     dbP      = def_local ? NULL : new US_DB2( pw.getPasswd() );
+   IUS_DB2*     dbP      = def_local ? NULL : new US_DB2( pw.getPasswd() );
    QDir        dirm( mdlpath );
    QDir        dirn( noipath );
    mdlpath             += "/";
@@ -703,13 +703,13 @@ DbgLv(1) << "SV: Pre-sum tno tni"
 DbgLv(1) << "SV:  Post-sum tno" << ti_noise.values[0];
 
       err = ti_noise.write( nname );
-      if ( err != US_DB2::OK )
+      if ( err != IUS_DB2::OK )
          qDebug() << "*ERROR* writing noise" << nname;
 
       if ( dbP != NULL )
       {
          err = ti_noise.write( dbP );
-         if ( err != US_DB2::OK )
+         if ( err != IUS_DB2::OK )
             qDebug() << "*ERROR* writing noise to DB" << ti_noise.description;
       }
 
@@ -739,13 +739,13 @@ DbgLv(1) << "SV:  RI nicount" << nicount;
 DbgLv(1) << "SV:  Post-sum rno" << ri_noise.values[0];
 
       err = ri_noise.write( nname );
-      if ( err != US_DB2::OK )
+      if ( err != IUS_DB2::OK )
          qDebug() << "*ERROR* writing noise" << nname;
 
       if ( dbP != NULL )
       {
          err = ri_noise.write( dbP );
-         if ( err != US_DB2::OK )
+         if ( err != IUS_DB2::OK )
             qDebug() << "*ERROR* writing noise to DB" << ri_noise.description;
       }
 
@@ -954,7 +954,7 @@ void US_pcsa::open_fitcntl()
    US_Math2::data_correction( avTemp, sd );
 
    US_Passwd pw;
-   US_DB2* dbP     = disk_controls->db() ? new US_DB2( pw.getPasswd() ) : NULL;
+   IUS_DB2* dbP     = disk_controls->db() ? new US_DB2( pw.getPasswd() ) : NULL;
 
    dset.simparams.initFromData( dbP, dataList[ drow ], dat_steps );
 
@@ -1124,12 +1124,12 @@ DbgLv(1) << "distrinfo: ncomp" << ncomp;
 
       mstr       += table_row(
             QString::asprintf( "%10.4e", model.components[ ii ].mw ),
-            QString::asprintf( "%10.4e", s_ap ),
-            QString::asprintf( "%10.4e", model.components[ ii ].s ),
-            QString::asprintf( "%10.4e", D_ap ),
-            QString::asprintf( "%10.4e", model.components[ ii ].D ),
-            QString::asprintf( "%10.4e", f_f0 ),
-            QString::asprintf( "%10.4e (%5.2f %% )", conc, perc     ) );
+            QString::asprintf( "%10.4e", s_ap                      ),
+            QString::asprintf( "%10.4e", model.components[ ii ].s  ),
+            QString::asprintf( "%10.4e", D_ap                      ),
+            QString::asprintf( "%10.4e", model.components[ ii ].D  ),
+            QString::asprintf( "%10.4e", f_f0                      ),
+            QString::asprintf( "%10.4e (%5.2f %%)", conc, perc     ) );
    }
 
    mstr += indent( 4 ) + "</table>\n";

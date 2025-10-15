@@ -87,7 +87,7 @@ qDebug() << "XRR:l_r:  ii rDesc" << ii << rDesc << "lD count" << lDesc.count();
       rirec.inscnf        = ( lDesc[ 8 ] == "1" );
       rirec.wascnf        = ( lDesc[ 9 ] == "1" );
       rirec.runID         = QString::asprintf( "%s-run%d",
-rirec.expname.toLatin1( ).data(), rirec.dbId );
+                               rirec.expname.toLatin1().data(), rirec.dbId );
 qDebug() << "XRR:l_r:    runID" << rirec.runID;
 
       runInfo << rirec;
@@ -175,7 +175,7 @@ void US_XpnRunRaw::populate_list()
    {
       QTableWidgetItem* item;
       RunInfo rr     = runInfo[ ii ];
-      QString sRunId = QString::asprintf( "%7d", rr.dbId );
+      QString sRunId = QString::asprintf( "%7d", rr.dbId  );
       QString sExpId = QString::asprintf( "%7d", rr.expId );
       QString sDknt  = QString::asprintf( "%7d", rr.dcount );
 
@@ -267,7 +267,7 @@ qDebug() << "LimData:    krow" << krow;
    {
       QTableWidgetItem* item;
       RunInfo rr     = runInfo[ ii ];
-      QString sRunId = QString::asprintf( "%7d", rr.dbId );
+      QString sRunId = QString::asprintf( "%7d", rr.dbId  );
       QString sExpId = QString::asprintf( "%7d", rr.expId );
       QString sDknt  = QString::asprintf( "%7d", rr.dcount );
 qDebug() << "LimData:    ii" << ii << "runID" << rr.runID;

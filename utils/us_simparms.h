@@ -5,7 +5,7 @@
 #include <QtCore>
 #include "us_extern.h"
 #include "us_dataIO.h"
-#include "us_db2.h"
+#include "ius_db2.h"
 #include "us_time_state.h"
 
 //! A class to hold parameters of a run for simulation purposes.
@@ -32,15 +32,18 @@ class US_UTIL_EXTERN US_SimulationParameters
    //! \param incl_speed Flag to include speed steps in update
    //! \param runID      Run ID string
    //! \param dataType   Data type string ("RA", "RI", ...)
-   void initFromData( US_DB2*, US_DataIO::RawData&, bool = true, 
+   void initFromData( IUS_DB2*, US_DataIO::RawData&, bool = true,
 		   QString = "",  QString = "");
+
+   void initFromData( IUS_DB2*, US_DataIO::RawData&, int,  bool = true,
+		      QString = "",  QString = "");
 
    //! \brief A function to update the simulation parameters to match 
    //! an experiment's edited data.
    //! \param db         Pointer to opened database connection or NULL
    //! \param editdata   Data structure of edited data that contains run info.
    //! \param incl_speed Flag to include speed steps in update
-   void initFromData( US_DB2*, US_DataIO::EditedData&, bool = true );
+   void initFromData( IUS_DB2*, US_DataIO::EditedData&, bool = true );
 
    //! \brief Read hardware files to update bottom and rotor coefficients array
    //! \param db     Pointer to opened database connection or NULL
@@ -48,7 +51,7 @@ class US_UTIL_EXTERN US_SimulationParameters
    //!               coefficients (default = "0")
    //! \param cp     Centerpiece index (default = 0)
    //! \param ch     Index to channel in centerpiece (default = 0) 
-   void setHardware( US_DB2* = NULL, QString = "0", int = 0, int = 0 );
+   void setHardware( IUS_DB2* = NULL, QString = "0", int = 0, int = 0 );
 
    //! \brief Read hardware files to update bottom and rotor coefficients array
    //! \param rCalID New rotor calibration identifier to set and use for
@@ -115,14 +118,14 @@ class US_UTIL_EXTERN US_SimulationParameters
    //! \param expID  ID of experiment for which to fetch speed steps
    //! \param sps    Reference to vector of speed profiles to populate
    //! \returns      The number of speed steps found for experiment
-   static int speedstepsFromDB( US_DB2*, int, QVector< SpeedProfile >& );
+   static int speedstepsFromDB( IUS_DB2*, int, QVector< SpeedProfile >& );
 
    //! \brief Static function to write a speed step profile to an xml portion
    //! \param dbP    Pointer to opened database connection
    //! \param expID  ID of experiment for which to upload a speed step
    //! \param spi    Pointer to speed profile to upload to the database
    //! \returns      The speedstep DB ID number (<1 if error)
-   static int speedstepToDB( US_DB2*, int, SpeedProfile* );
+   static int speedstepToDB( IUS_DB2*, int, SpeedProfile* );
 
    //! \brief Static function to build a simulation speed step profile
    //!        from a TimeState object.

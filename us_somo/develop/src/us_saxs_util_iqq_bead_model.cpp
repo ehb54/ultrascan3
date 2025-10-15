@@ -261,7 +261,7 @@ bool US_Saxs_Util::calc_saxs_iq_native_debye_bead_model()
 
    for ( unsigned int i = 0; i < bead_models.size(); i++ )
    {
-      double tot_excl_vol = 0e0;
+      // double tot_excl_vol = 0e0;
       current_model = i;
       noticemsg += QString("Preparing model %1 for SAXS plot.\n").arg(current_model + 1);
          
@@ -283,7 +283,7 @@ bool US_Saxs_Util::calc_saxs_iq_native_debye_bead_model()
          new_atom.excl_vol = ( 4.0 / 3.0 ) * M_PI * pow(this_atom->bead_computed_radius, 3);
          new_atom.srv = sqrt( new_atom.excl_vol / this_atom->saxs_data.volume );
          new_atom.saxs_data = this_atom->saxs_data;
-         tot_excl_vol += new_atom.excl_vol;
+         // tot_excl_vol += new_atom.excl_vol;
          atoms.push_back(new_atom);
       }
       
@@ -493,7 +493,7 @@ bool US_Saxs_Util::calc_saxs_iq_native_hybrid_bead_model()
 
    for ( unsigned int i = 0; i < bead_models.size(); i++ )
    {
-      double tot_excl_vol = 0e0;
+      // double tot_excl_vol = 0e0;
       current_model = i;
 
       noticemsg += QString("Preparing model %1 for SAXS plot.\n").arg(current_model + 1);
@@ -516,7 +516,7 @@ bool US_Saxs_Util::calc_saxs_iq_native_hybrid_bead_model()
          new_atom.excl_vol = ( 4.0 / 3.0 ) * M_PI * pow(this_atom->bead_computed_radius, 3);
          new_atom.srv = sqrt( new_atom.excl_vol / this_atom->saxs_data.volume );
          new_atom.saxs_data = this_atom->saxs_data;
-         tot_excl_vol += new_atom.excl_vol;
+         // tot_excl_vol += new_atom.excl_vol;
          atoms.push_back(new_atom);
       }
       
