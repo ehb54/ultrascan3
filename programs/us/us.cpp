@@ -55,7 +55,7 @@ int main( int argc, char* argv[] )
 #else
   qputenv("QT_ENABLE_HIGHDPI_SCALING",QByteArray("1"));
   QApplication application( argc, argv );
-  application.setApplicationDisplayName( "UltraScan III" );
+  QApplication::setApplicationDisplayName( "UltraScan III" );
 #endif
 
   // Set up language localization
@@ -63,7 +63,7 @@ int main( int argc, char* argv[] )
 
   QTranslator translator;
   translator.load( QString( "us_" ) + locale );
-  application.installTranslator( &translator );
+  QApplication::installTranslator( &translator );
     
   // See if we need to update the license
   QString ErrorMessage;
@@ -90,7 +90,7 @@ int main( int argc, char* argv[] )
 #if QT_VERSION < 0x050000
     application.setActivationWindow( license );
 #endif
-    return application.exec();
+    return QApplication::exec();
   }
 
   // License is OK.  Start up.
@@ -99,7 +99,7 @@ int main( int argc, char* argv[] )
   //If DB set ?
   QList<QStringList> DB_list = US_Settings::databases();
   QStringList defaultDB      = US_Settings::defaultDB();
-  if ( DB_list.size() > 0 && defaultDB.size() > 0 )
+  if ( !DB_list.empty() && !defaultDB.empty() )
     {
       qDebug() << "defaultDB -- " << defaultDB.at( 2 );
             
@@ -144,7 +144,7 @@ int main( int argc, char* argv[] )
 #if QT_VERSION < 0x050000
   application.setActivationWindow( &w );
 #endif
-  return application.exec();
+  return QApplication::exec();
 }
 
 //////////////US_Action
@@ -545,17 +545,16 @@ void US_Win::launch( int index )
       tr( "Loading " ) + p[ index ].runningMsg + "..." );
 
   auto* process = new QProcess( 0 );
-  //process->closeReadChannel( QProcess::StandardOutput );
-  //process->closeReadChannel( QProcess::StandardError );
+  process->closeReadChannel( QProcess::StandardOutput );
+  process->closeReadChannel( QProcess::StandardError );
   connect ( process, SIGNAL( finished  ( int, QProcess::ExitStatus ) ),
             this   , SLOT  ( terminated( int, QProcess::ExitStatus ) ) );
 
 #ifndef Q_OS_MAC
-  process->setProcessChannelMode( QProcess::MergedChannels );
   // prefix pname with the location of this executable
   pname = US_Settings::appBaseDir() + "/bin/" + pname;
-  process->start( pname );
-  qDebug() << pname;
+  const QStringList args;
+  process->start( pname, args);
 #else
    QString procbin = US_Settings::appBaseDir() + "/bin/" + pname;
   qDebug() << procbin;
@@ -567,7 +566,7 @@ void US_Win::launch( int index )
    process->start( "open", QStringList(procapp) );
 #endif
 
-  if ( ! process->waitForStarted(  ) ) // 10 second timeout
+  if ( ! process->waitForStarted( 10000 ) ) // 10 second timeout
   {
     QMessageBox::information( this,
       tr( "Error" ),
@@ -651,14 +650,14 @@ void US_Win::closeEvent( QCloseEvent* e )
 
 void US_Win::splash( void )
 {
-  int y =           menuBar  ()->size().rheight();
-  int h = 532 - y - statusBar()->size().rheight();
-  int w = 710;
+  const int y =           menuBar  ()->size().rheight();
+  const int height = 532 - y - statusBar()->size().rheight();
+  const int w = 710;
 
   bigframe = new QLabel( this );
   bigframe->setFrameStyle        ( QFrame::Box | QFrame::Raised);
   bigframe->setPalette           ( US_GuiSettings::frameColor() );
-  bigframe->setGeometry          ( 0, y, w, h );
+  bigframe->setGeometry          ( 0, y, w, height );
   bigframe->setAutoFillBackground( true );
 
   splash_shadow = new QLabel( this );
