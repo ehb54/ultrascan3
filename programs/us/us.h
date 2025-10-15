@@ -42,6 +42,7 @@ private:
   void logo   ( int );
   void help   ( int );
   void launch ( int );
+  void debug_positions ( void );
   void apply_prefs ( void );
 
   struct procData

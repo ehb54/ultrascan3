@@ -231,6 +231,7 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   //addMenu(  P_ADMIN , tr( "&Administrator" ), file );
   //file->addSeparator();
   addMenu(  P_EXIT, tr( "E&xit"          ), file );
+  addMenu( -3, tr("Debug positions"), file );
 
   //QMenu* type1 = new QMenu( tr( "&Velocity Data" ), file );
   //addMenu( 21, tr( "&Absorbance Data"     ), type1 );
@@ -431,7 +432,7 @@ void US_Win::addMenu( int index, const QString& label, QMenu* menu )
 void US_Win::onIndexTriggered( int index )
 {
   if ( index == 4 )         close();
-
+  if ( index == -3 ) debug_positions();
 //qDebug() << index << P_CONFIG << P_END;
   if ( index >= P_CONFIG && index < P_END    ) launch( index );
   if ( index >= HELP     && index < HELP_END ) help  ( index );
@@ -543,10 +544,11 @@ void US_Win::launch( int index )
 
   statusBar()->showMessage( 
       tr( "Loading " ) + p[ index ].runningMsg + "..." );
-
+  QPoint poit = g.global_position();
   auto* process = new QProcess( 0 );
-  process->closeReadChannel( QProcess::StandardOutput );
-  process->closeReadChannel( QProcess::StandardError );
+  //process->closeReadChannel( QProcess::StandardOutput );
+  //process->closeReadChannel( QProcess::StandardError );
+  process->setProcessChannelMode( QProcess::ForwardedChannels );
   connect ( process, SIGNAL( finished  ( int, QProcess::ExitStatus ) ),
             this   , SLOT  ( terminated( int, QProcess::ExitStatus ) ) );
 
@@ -582,9 +584,20 @@ void US_Win::launch( int index )
 
     procs << pr;
   }
-
+  QPoint poit2 = g.global_position();
+  qDebug() << "us: global_position" << poit << poit2;
   statusBar()->showMessage( 
       tr( "Loaded " ) + p[ index ].runningMsg + "..." );
+}
+
+void US_Win::debug_positions()
+{
+  for (int i = 0; i < 40; i++)
+  {
+    launch(P_FEMA);
+    // sleep for a second
+    US_Sleep::msleep(1000);
+  }
 }
 
 void US_Win::closeProcs( void )
