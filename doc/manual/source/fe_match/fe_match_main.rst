@@ -11,9 +11,8 @@ Finite Element (FE) Model Viewer
 
 This module is used to display, and export FE solutions fitted to velocity experiments by various methods. The program can import models from *finite element nonlinear fitting sessions*, from *2-dimensional spectrum analysis* fits, from *genetic algorithm* fits, and from *C(s)* fits. The program will then compare the fitted model to the experimental data and display residual plots, sedimentation and diffusion coefficent distributions, as well as molecular weight distributions. The model can be displayed as a 3-dimensional plot showing the partial concentrations mapped onto a 2-dimensional grid of any two of the following parameters: s, D, f, f/f :sub:`0` , and MW. Residual plots including deconvoluted time- and radially-invariant noise plots can also be displayed. The results can be saved for inclusion into a velocity result report.
 
-The main **Compare Experiment to Finite Element Solution** window may need additional controls  when the model loaded includes Reversible Associations (RA). These controls can be revealed using the :ref:`Advanced Analysis Controls <fematch_adv>` button to invoke a separate dialog.
 
-.. image:: /_static/images/fe_match.png
+.. image:: ../_static/images/fe_match.png
   :align: center
 
 .. rst-class:: center
@@ -21,20 +20,7 @@ The main **Compare Experiment to Finite Element Solution** window may need addit
     **Compare Experiment to Finite Element Solution**
 
 
-Steps to compare Experiment to FE models: 
-=============================================
-
-*  **Step 1:** *Load experimental velocity data.* Click on `Load Data <common_dialogs.html#data-loader>`_ to select an edited velocity data set from the database or from local disk.
-
-*  **Step 2:** *Select a model from database or disk.* Simply click on `Load Model <common_dialogs.html#load-distribution-model>`_ and choose a model in the resulting dialog. If they exist, you will be given the choice of also loading noise vectors.
-
-*  **Step 3:** *Simulate a model.* Simulate the loaded model with a finite element solution by clicking **Simulate Model**.
-
-*  **Step 4:** *Examine the results.* After simulation, a variety of options are available for displaying `simulation results <fe_match_simulate.html>`_, residuals, and distributions. Report text files and graphics plot files can also be generated.
-
-|
-
-.. image:: /_static/images/fe_match_simulated.png
+.. image:: ../_static/images/fe_match_simulated.png
   :align: center
 
 .. rst-class:: center
@@ -85,11 +71,11 @@ Functions
   :align: center
 
 
-  .. image:: _static/images/residuals.png
+  .. image:: ../_static/images/residuals.png
     :align: left
     :width: 100%
 
-  .. image:: _static/images/s20W_bar.png
+  .. image:: ../_static/images/s20W_bar.png
     :width: 100%
     :align: right 
 
@@ -110,17 +96,13 @@ Functions
   :align: center
 
 
-  .. image:: _static/images/MW-bar.png
+  .. image:: ../_static/images/MW-bar.png
     :align: left
     :width: 100%
 
-  .. image:: _static/images/D20W_bar.png
+  .. image:: ../_static/images/D20W_bar.png
     :width: 100%
     :align: right
-
-
-
-
 
 
 
@@ -160,7 +142,7 @@ Functions
   * - **RMSD:**
     - Root-Mean-Square-of-Differences for residuals.
   * - **Advanced Analysis Controls**
-    - Click to reveal an :ref:`Advanced Analysis Dialog <fematch_adv>`, with options to set parameters related to Reversible Associations (RA) models or to show details on model components.
+    - Click to reveal an `Advanced Analysis Controls <fe_match_adv.html>`_, with options to set parameters related to Reversible Associations (RA) models or to show details on model components.
   * - **3D Plot**
     - Show a dialog of plot controls for a 3-dimensional model plot. See `3-Dimensional Plot Controls Details <3d_plot.html>`_.
   * - **Residual Plot**
@@ -182,47 +164,10 @@ Functions
     - Close all windows and exit.
 
 
-.. _fematch_adv:
-
-Advanced Analysis Dialog
-===================================
-
-This dialog may be invoked from US_FeMatch in order to set advanced control parameters. 
-
-.. image:: /_static/images/fe_match_adv.png
-    :align: center
+The main **Compare Experiment to Finite Element Solution** window may need additional controls  when the model loaded includes Reversible Associations (RA). These controls can be revealed using the `Advanced Analysis Controls <fe_match_adv.html>`_ button to invoke a separate dialog.
 
 
-.. rst-class::
-    :align: center
 
-**FEMatch Advanced Controls Dialog**
-
-Advanced Control Functions
----------------------------------
-
-.. list-table::
-  :widths: 20 50
-  :header-rows: 0 
-
-    
-  * - **Simulation Points:**
-    -  Specify simulation points.
-  * - **Band-loading Volume:**
-    -  Specify a band-loading volume value.
-  * - **Parameter:**
-    -  Choose a parameter value.
-  * - **(mesh type)**
-    -  Select from one of several mesh types, including Adaptive Space Time (ASTFEM), Claverie, Moving Hat, user File, or Adaptive Space Volume (ASVFEM).
-  * - **(grid type)**
-    -  Select a moving-time or constant-time grid type.
-  * - **Help**
-    -  Display this and other documentation. 
-  * - **Cancel**
-    -  Close this dialog and exit with no selections made.
-  * - **Accept**
-    -  Close the dialog and communicate selections made here to the calling dialog.
- 
 
 Related
 ====================

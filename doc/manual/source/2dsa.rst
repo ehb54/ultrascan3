@@ -35,7 +35,7 @@ Each refinement iteration proceeds over a defined grid of s and f/f :sub:`0` val
 ================
 
 *  **Step 1:** First, load experimental velocity data. Click on `Load Data <common_dialogs.html#data-loader>`_ to select an edited velocity data set from the database or from local disk.
-*  **Step 2:** Secondly, open an analysis control window by clicking on `Fit Control <2dsa_simulated.html>`_. Within that dialog, define the grids and iterations that comprise the analysis.
+*  **Step 2:** Secondly, open an analysis control window by clicking on `Fit Control <2dsa_analysd.html>`_. Within that dialog, define the grids and iterations that comprise the analysis.
 *  **Step 3:** Next, after having specified analysis parameters, begin the fit analysis by clicking "Start Fit".
 *  **Step 4:** Display and Save Results: After simulation, a variety of options are available for displaying simulation results, residuals, and distributions. Report text files and graphics plot files can also be generated.
 
@@ -101,11 +101,11 @@ Once an analysis is complete, the main window will appear similar to this:
   * - **Reset Scan Range**
     - Reset to the full range of scans.
   * - **Fit Control**
-    - Open a dialog to set analysis parameters and start a fit run. For details on the results of clicking this button, see `2DSA Analysis Control <2dsa_simulate.html>`_.
+    - Open a dialog to set analysis parameters and start a fit run. For details on the results of clicking this button, see `2DSA Analysis Control <2dsa_analys.html>`_.
   * - **3-D Plot**
     - After a 2DSA model is fitted, open a control window for a `3-Dimensional plot <3d_plot.html>`_ of the final computed model. 
   * - **Residual Plot**
-    - After a 2DSA model is fitted, open a plot dialog for a far more detailed set of result plots. See `2DSA Residual Plot Dialog <2dsa_simulated.html>`_ for further details.
+    - After a 2DSA model is fitted, open a plot dialog for a far more detailed set of result plots. See `2DSA Residual Plot Dialog <2dsa_analysd.html>`_ for further details.
   * - **Status Info:**
     - This text window displays continually updated summaries of computational activity and results.
   * - **(upper right side plot)**
@@ -135,6 +135,6 @@ Related
 
 `Fit Meniscus <fit_meniscus.html>`_
 
-`2-Dimensional Spectrum Analysis Process <2dsa_simulate.html>`_
+`2-Dimensional Spectrum Analysis Process <2dsa_analys.html>`_
 
 `2-Dimensional Spectrum Analysis Result <2dsa_analsy.html>`_

@@ -125,6 +125,8 @@ Control dialog parameters differ slightly in interpretation, based on whether th
      * Fixed+LM -- where the final LM model is the desired overall final model. 
 
 
+A detailed explanation of the results can be found in `Parametrically Constrained Spectrum Analysis Results <pcsa_results.html>`_
+
 Functions
 ============
 
@@ -236,11 +238,59 @@ intro
 Advance Controls Functions
 ------------------------------
 
+**Fitting Controls**
 
 .. list-table::
   :widths: 20 50
   :header-rows: 0
 
+  * - **Curve Type:**
+    - 
+  * - **X Range**
+    - 
+  * - **Y Range**
+    - 
+  * - **Par1**
+    - 
+  * - **Curve Resolution Points**
+    - 
+  * - **Monte Carlo Iterations:**
+    - 
+  * - (Best Final Model Status)
+    - 
+
+**Final and Model Records Controls**
+
+.. list-table::
+  :widths: 20 50
+  :header-rows: 0
+
+  * - **Load Model Records**
+    -
+  * - **Load Final Model**
+    - 
+  * - **Reset Final Model**
+    - 
+  * - **Build Final Model**
+    - 
+  * - **Store Model Records** 
+    - 
+  * - **Store Final Model**
+    - 
+  * - **Reset Model Records** 
+    - 
+  * - **Start Monte Carlo**
+    - 
+  * - (Model Record Status)
+    - 
+  * - **Progress** 
+    - 
+  * - **Help** 
+    - Display this detailed help.
+  * - **Cancel**
+    - Close the dialog window and exit.
+  * - **Accept**
+    - Close the dialog window, communicate the current Alpha value to the caller, and exit.
 
 .. _regular_para:
 
@@ -318,6 +368,6 @@ Related
 
 `Fit Meniscus <fit_meniscus.html>`_
 
-`2-Dimensional Spectrum Analysis Process <2dsa_simulate.html>`_
+`2-Dimensional Spectrum Analysis Process <2dsa_analys.html>`_
 
 `2-Dimensional Spectrum Analysis Result <2dsa_analsy.html>`_

@@ -24,17 +24,15 @@ Welcome to UltraScan III's Documentation and Resource!
 
 .. toctree::
    :maxdepth: 1
-   :caption: summary Index :
+   :caption: Analysis Protocols:
 
-   index_index
+   start_page
 
 .. toctree::
    :maxdepth: 1
    :caption: Table of Content:
    
-   start_page
    config
-
    common_dialogs
    run_details
    3d_plot
@@ -79,15 +77,11 @@ Welcome to UltraScan III's Documentation and Resource!
    :caption: Analysis: 
 
    2dsa
-   2dsa_simulate
-
+   2dsa_analys
    pcsa
    pcsa_analys
    pcsa_results
-
-   fe_match
-   fe_match_simulate
-
+   fe_match/index
    ga_initialize
 
 .. toctree::
@@ -115,7 +109,8 @@ Welcome to UltraScan III's Documentation and Resource!
    :caption: User Utilities
 
    us_investigator
-   buffer
+   buffer/index
+   
    analyte
 
 

@@ -121,12 +121,42 @@ Fitting Analysis Process:
   * - **Status Information:**
     - The text box here is continually updated with summaries of analysis activity and iteration results.
 
+Fit Controls for Varying Vbar 2DSA:
+====================================    
+
+This variation of the 2DSA Analysis Control presents controls for varying vbar while holding frictional ratio constant.
+
+.. image:: /_static/images/2dsa_analvv.png
+    :align: center
+
+.. rst-class::
+    :align: center
+
+    **2DSA Fit Controls with Varying VBar**
+
+Functions Specific to Varying Vbar
+-------------------------------------
+
+.. list-table::
+  :widths: 20 50
+  :header-rows: 0
+
+  * - **Lower Limit (vbar):**
+    - Set a lower limit of vbar values to scan. The default is a little below the current experiment vbar value.
+  * - **Upper Limit (vbar):**
+    - Set an upper limit of vbar values to scan. The default is a little above the current experiment vbar value.
+  * - **Number Grid Points (vbar):**
+    - Set the total grid count of vbar points.
+  * - **Constant f/f0:**
+    - Specify by counter the constant frictional ratio to use while varying the vbar values.
+
+
 .. _2dsa-advanced-analysis-control:
 
 2DSA Advanced Analysis Control
 ==============================
 
-This dialog provides for definition of an analysis run with parameters not normally of interest to the typical user. 
+This dialog provides for definition of an analysis run with parameters not normally of interest to the typical user including use of band-forming centerpieces for Band sedimentation experiments. 
 The advanced analysis choices presented in this dialog fall into three categories. 
 
 

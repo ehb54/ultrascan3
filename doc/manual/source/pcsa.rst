@@ -133,7 +133,7 @@ Related
 
 `Parametrically Constrained Spectrum Fitting Controls <pcsa_analys.html>`_
 
-`2-Dimensional Spectrum Analysis Process <2dsa_simulate.html>`_
+`2-Dimensional Spectrum Analysis Process <2dsa_analys.html>`_
 
 `Finite Element (FE) Model Viewer <fe_match.html>`_
 

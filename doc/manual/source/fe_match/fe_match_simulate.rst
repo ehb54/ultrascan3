@@ -18,7 +18,7 @@ When the **Simulate Model** button is clicked in the **Finite Element Model View
  * `3-Dimensional Plot Controls <3d_plot.html>`_ - 3D plots of the simulated data
  * **Data report File** - Generate a Simulated model Report file and view it in a dialog.
 
-.. image:: _static/images/fe_match_allct.png
+.. image:: ../_static/images/fe_match_allct.png
     :align: center
 
 .. rst-class:: 
@@ -30,7 +30,7 @@ Finite Element Viewer
 -----------------------
 The simulation creates a data set with the same ranges as the edit experimental data set. The actual values for scan readings vectors are synthetically produced, as illustrated by the plot below.
 
-.. image:: _static/images/fe_match_viewer.png
+.. image:: ../_static/images/fe_match_viewer.png
   :align: center
 
 .. rst-class:: 
@@ -102,11 +102,11 @@ Noise Data analysis:
   :align: center
 
 
-  .. image:: _static/images/fe_sim-1.png
+  .. image:: ../_static/images/fe_sim-1.png
     :align: left
     :width: 100%
 
-  .. image:: _static/images/fe_sim-2.png
+  .. image:: ../_static/images/fe_sim-2.png
     :width: 100%
     :align: right
 
@@ -134,15 +134,15 @@ Noise Data analysis:
   :align: center
 
 
-  .. image:: _static/images/add_TIN.png
+  .. image:: ../_static/images/add_TIN.png
     :align: left
     :width: 100%
 
-  .. image:: _static/images/add_RIN.png
+  .. image:: ../_static/images/add_RIN.png
     :width: 100%
     :align: left
 
-  .. image:: _static/images/add_RIN-TIN.png
+  .. image:: ../_static/images/add_RIN-TIN.png
     :width: 100%
     :align: right 
 
@@ -164,15 +164,15 @@ Noise Data analysis:
   :align: center
 
 
-  .. image:: _static/images/TINplot.png
+  .. image:: ../_static/images/TINplot.png
     :align: left
     :width: 100%
 
-  .. image:: _static/images/RINplot.png
+  .. image:: ../_static/images/RINplot.png
     :width: 100%
     :align: left
 
-  .. image:: _static/images/residualplot.png
+  .. image:: ../_static/images/residualplot.png
     :width: 100%
     :align: right 
 
@@ -181,7 +181,7 @@ Resideul Bit Map
 -----------------
 Experimental-Simulation residuals are plotted in another way in a bit map. This small window represents each residual #Scans x #Readings point as a color: green where simulation is greater than experimental; red where experimental is greater. A random distribution of colors throughout the bit map is indication of a good model fit. 
 
-.. image:: _static/images/bitmap.png
+.. image:: ../_static/images/bitmap.png
     :align: center
 
 .. rst-class:: 
@@ -193,7 +193,7 @@ Report: FE Match Model Simulation
 -----------------------------------
 The "Save Data" button produces a set of report files. One of these is displayable via the "View Report" button, which produces a dialog that shows the contents of a report. A dialog sample follows. 
 
-.. image:: _static/images/simulatedReport.png
+.. image:: ../_static/images/simulatedReport.png
   :align: center
 
 
@@ -201,7 +201,18 @@ The "Save Data" button produces a set of report files. One of these is displayab
    :align: center
 
   **Detailed 2DSA Report**
- 
+
+   - Heading 1: Analysis type
+   - Heading 2: Data report of the "dataset named in the Import module", the cell number, channel, and wavelength triplicate, the edit profile processed in the Edit data module,  
+   - Model Analysis: The analysis number_the type of analysis completed_the database request number_number of models in the analysis cohort
+   - Number of components: number of components with unique s, and D values. 
+   - Residual RMS Deviation: MPI (message passing interface) determined RMSD  
+   - Model-reported RMSD: model determined RMSD,
+
+.. note:: 
+   Difference between the Residual RMSD and model-reported RMSD should be within 3 significant figures. Greater then 3 significant figures indicates an error in analysis. 
+
+   - Weight Averaged s20,W, D20,W, Molecular weight, and f/f0: 
 
 Related
 ====================

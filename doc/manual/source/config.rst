@@ -307,18 +307,19 @@ When Add *New Entry* or *Edit Current Entry* is selected, one of the following d
   * - * UV/visible
       * Rayleigh interference
       * Fluorescence
-      * (not installed)
+      * (not install) - Availbale optical slot
     -
 
 **Installed Optical Systems**: 
-text description of which optical system is installed (Uv/visible, Rayleigh Interference, Fluorescence or not installed)
+Text description of which optical system is installed (Uv/visible, Rayleigh Interference, Fluorescence or available slot)
 
 Test the connection to the new or modified instrument by clicking *Test Connectivity*
 
 
 For appropriate Optima Host values, consult with your administrator or with the authors of this software.
 
-To delete an entry, select it and click on Delete Current Entry.
+.. note::
+    To delete an entry, select it and click on Delete Current Entry.
 
 
 
