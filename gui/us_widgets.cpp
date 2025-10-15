@@ -19,7 +19,16 @@ US_Widgets::US_Widgets( bool set_position, QWidget* w, Qt::WindowFlags f ) : QFr
   }
 
 #ifndef Q_OS_WIN
-  if ( set_position )
+  QString auto_positioning = US_Settings::debug_value("auto_positioning");
+  if ( !auto_positioning.isEmpty() && auto_positioning.toLower() == "true" )
+  {
+     global_positioning = set_position;
+  }
+  else
+  {
+     global_positioning = false;
+  }
+  if ( global_positioning && !auto_positioning.isEmpty() && auto_positioning.toLower() == "true" )
   {
     QPoint p = g.global_position();
     g.set_global_position( p + QPoint( 30, 30 ) );
@@ -37,8 +46,12 @@ US_Widgets::US_Widgets( bool set_position, QWidget* w, Qt::WindowFlags f ) : QFr
 US_Widgets::~US_Widgets()
 {
 #ifndef Q_OS_WIN
-  QPoint p = g.global_position();
-  g.set_global_position( p - QPoint( 30, 30 ) );
+   QString auto_positioning = US_Settings::debug_value("auto_positioning");
+   if ( global_positioning && !auto_positioning.isEmpty() && auto_positioning.toLower() == "true" )
+   {
+      QPoint p = g.global_position();
+      g.set_global_position( p - QPoint( 30, 30 ) );
+   }
 #endif
 }
 

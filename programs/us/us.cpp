@@ -204,10 +204,19 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   }
 
   g.set_global_position( QPoint( 50, 50 ) ); // Ensure initialization
-  QPoint p = g.global_position();
-  setGeometry( QRect( p, p + QPoint( 710, 532 ) ) );
-  g.set_global_position( p + QPoint( 30, 30 ) );
-
+  QString auto_positioning = US_Settings::debug_value("auto_positioning");
+  if ( !auto_positioning.isEmpty() && auto_positioning.toLower() == "true" )
+  {
+    QPoint point = g.global_position();
+    setGeometry( QRect( point, point + QPoint( 710, 532 ) ) );
+    g.set_global_position( point + QPoint( 30, 30 ) );
+  }
+  else
+  {
+    setBaseSize(QSize(710, 532));
+    setMinimumWidth(710);
+    setMinimumHeight(532);
+  }
   setWindowTitle( "UltraScan III" );
 
   QIcon us3_icon = US_Images::getIcon( US_Images::US3_ICON );
@@ -394,8 +403,12 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
 
 US_Win::~US_Win()
 {
-    QPoint p = g.global_position();
-    g.set_global_position( p - QPoint( 30, 30 ) );
+  QString auto_positioning = US_Settings::debug_value("auto_positioning");
+  if ( !auto_positioning.isEmpty() && auto_positioning.toLower() == "true" )
+  {
+    QPoint point = g.global_position();
+    g.set_global_position( point - QPoint( 30, 30 ) );
+  }
 }
   
 void US_Win::addMenu( int index, const QString& label, QMenu* menu )
@@ -531,16 +544,21 @@ void US_Win::launch( int index )
   statusBar()->showMessage( 
       tr( "Loading " ) + p[ index ].runningMsg + "..." );
 
-  QProcess* process = new QProcess( 0 );
-  process->closeReadChannel( QProcess::StandardOutput );
-  process->closeReadChannel( QProcess::StandardError );
+  auto* process = new QProcess( 0 );
+  //process->closeReadChannel( QProcess::StandardOutput );
+  //process->closeReadChannel( QProcess::StandardError );
   connect ( process, SIGNAL( finished  ( int, QProcess::ExitStatus ) ),
             this   , SLOT  ( terminated( int, QProcess::ExitStatus ) ) );
 
 #ifndef Q_OS_MAC
+  process->setProcessChannelMode( QProcess::MergedChannels );
+  // prefix pname with the location of this executable
+  pname = US_Settings::appBaseDir() + "/bin/" + pname;
   process->start( pname );
+  qDebug() << pname;
 #else
    QString procbin = US_Settings::appBaseDir() + "/bin/" + pname;
+  qDebug() << procbin;
    QString procapp = procbin + ".app";
 
    if ( !QFile( procapp ).exists() )
@@ -549,7 +567,7 @@ void US_Win::launch( int index )
    process->start( "open", QStringList(procapp) );
 #endif
 
-  if ( ! process->waitForStarted( 10000 ) ) // 10 second timeout
+  if ( ! process->waitForStarted(  ) ) // 10 second timeout
   {
     QMessageBox::information( this,
       tr( "Error" ),
@@ -573,16 +591,14 @@ void US_Win::launch( int index )
 void US_Win::closeProcs( void )
 {
   QString                    names;
-  QList<procData*>::iterator p;
-  
-  for ( p = procs.begin(); p != procs.end(); p++ )
+
+  for (const auto d : procs)
   {
-    procData* d  = *p;
     names       += d->name + "\n";
   }
 
-  QString isAre  = ( procs.size() > 1 ) ? "es are" : " is";
-  QString itThem = ( procs.size() > 1 ) ? "them"   : "it";
+  const QString isAre  = ( procs.size() > 1 ) ? "es are" : " is";
+  const QString itThem = ( procs.size() > 1 ) ? "them"   : "it";
   
   QMessageBox box;
   box.setWindowTitle( tr( "Attention" ) );
@@ -609,9 +625,9 @@ void US_Win::closeProcs( void )
 
   if ( box.clickedButton() == leave ) return;
 
-  for ( p = procs.begin(); p != procs.end(); p++ )
+  for (const auto proc: procs )
   {
-    procData* d       = *p;
+    procData* d       = proc;
     QProcess* process = d->proc;
     
     if ( box.clickedButton() == kill )
