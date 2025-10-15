@@ -994,13 +994,13 @@ DbgLv(2) << "LAsc:    jt,kt,t0=" << jt << kt << t0 << " Nv=" << N0
    << "u_ttl=" << u_ttl;
 DbgLv(2) << "LAsc:  u0 0,1,2...,N" << u0[0] << u0[1] << u0[2]
    << u0[N0u-3] << u0[N0u-2] << u0[N0u-1];
-         tso << QString().sprintf( "%12.5e %d %12.5e\n", t0, N0, u_ttl );
+         tso << QString::asprintf( "%12.5e %d %12.5e\n", t0, N0, u_ttl );
          for ( int j=0; j<N0; j++ )
-            tso << QString().sprintf( "%10.6e \n", x0[j] );
-         tso << QString().sprintf( "\n" );
+            tso << QString::asprintf( "%10.6e \n", x0[j] );
+         tso << QString::asprintf( "\n" );
          for ( int j=0; j<N0u; j++ )
-            tso << QString().sprintf( "%15.7e \n", u0[j] );
-         tso << QString().sprintf( "\n\n" );
+            tso << QString::asprintf( "%15.7e \n", u0[j] );
+         tso << QString::asprintf( "\n\n" );
       }
 ktime1+=timer.restart();
 
