@@ -228,6 +228,9 @@ class US_GUI_EXTERN US_Widgets : public QFrame
     //! \param report Optional flag to report any file mods
     //! \return       Number of install-etc files modified
     int  clean_etc_dir( bool = false );
+private:
+    void showEvent(QShowEvent* event) override;
+    void moveEvent(QMoveEvent* event) override;
 };
 
 //! \brief Set a custom list widget that can override the default size

@@ -17,7 +17,7 @@ US_Widgets::US_Widgets( bool set_position, QWidget* w, Qt::WindowFlags f ) : QFr
     // Do something for invalid global memory
    qDebug( "us_win: invalid global memory" );
   }
-
+  QPoint poit = g.global_position();
 #ifndef Q_OS_WIN
   QString auto_positioning = US_Settings::debug_value("auto_positioning");
   if ( !auto_positioning.isEmpty() && auto_positioning.toLower() == "true" )
@@ -41,10 +41,15 @@ US_Widgets::US_Widgets( bool set_position, QWidget* w, Qt::WindowFlags f ) : QFr
 
   QIcon us3_icon = US_Images::getIcon( US_Images::US3_ICON );
   setWindowIcon( us3_icon );
+   QPoint poit2 = g.global_position();
+   qCritical() << "us_win: global_position" << poit << poit2 << windowType() << frameGeometry() << mapToGlobal(pos());
 }
+
+
 
 US_Widgets::~US_Widgets()
 {
+   QPoint poit = g.global_position();
 #ifndef Q_OS_WIN
    QString auto_positioning = US_Settings::debug_value("auto_positioning");
    if ( global_positioning && !auto_positioning.isEmpty() && auto_positioning.toLower() == "true" )
@@ -53,6 +58,8 @@ US_Widgets::~US_Widgets()
       g.set_global_position( p - QPoint( 30, 30 ) );
    }
 #endif
+   QPoint poit2 = g.global_position();
+   qCritical() << "us_win: global_position" << poit << poit2 << pos();
 }
 
 // label
@@ -918,6 +925,17 @@ qDebug() << "niefs nwefs" << niefs << nwefs << "nkeep/copy/link/dirf"
    return nfmods;
 }
 
+void US_Widgets::showEvent(QShowEvent* event)
+{
+   QFrame::showEvent(event);
+   qDebug() << "showEvent" << windowType() << frameGeometry() << mapToGlobal(pos()) << pos();
+}
+
+void US_Widgets::moveEvent(QMoveEvent* event)
+{
+   QFrame::moveEvent(event);
+   qDebug() << "moveEvent" << windowType() << frameGeometry() << mapToGlobal(pos()) << pos();
+}
 //////////////////  New class
 
 US_Disk_DB_Controls::US_Disk_DB_Controls( int state )
