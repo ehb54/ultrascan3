@@ -13,6 +13,7 @@
 #include "us_buffer.h"
 #include "us_dataIO.h"
 #include "us_astfem_math.h"
+#include "us_csv_data.h"
 #include <qwt_plot.h>
 #include <qwt_counter.h>
 
@@ -107,6 +108,8 @@ class US_Astfem_Sim : public US_Widgets
       US_AstfemMath::AstFemParameters  af_params; //!< Fixed grid simulation parameters used for exporting
       QVector<US_DataIO::RawData>      sim_datas; //!< Vector of simulated data for each speedstep
       US_DataIO::RawData               sim_data_all; //!< Overall simulated data
+      US_CSV_Data                      csv_data_ti;
+      QVector<US_CSV_Data>             csv_data_ri;
 
       void   init_simparams ( void );
       void   adjust_limits  ( double );
@@ -128,7 +131,8 @@ class US_Astfem_Sim : public US_Widgets
       void dump_mfem_initial( US_Model::MfemInitial& );
       void dump_ss          ( US_SimulationParameters::SpeedProfile& );
       void dump_mfem_scan   ( US_DataIO::Scan& );
-      bool save_simulation ( QString odir, bool supress_dialog = false );
+      bool save_simulation  ( QString odir, bool supress_dialog = false );
+      void save_csv_noise   ( US_CSV_Data& );
 
    private slots:
 
