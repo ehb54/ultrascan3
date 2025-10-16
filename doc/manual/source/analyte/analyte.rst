@@ -2,8 +2,16 @@
 Manage Analyte Information
 ===========================
 
-.. toctree:: 
-  :maxdepth: 3
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Table of Content:
+   
+   analyte
+   buffer_new
+   buffer_edit
+   buffer_settings
+
 
 .. contents:: Index
   :local: 

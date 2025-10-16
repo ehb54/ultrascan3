@@ -9,9 +9,6 @@
   :local: 
 
 
-This module enables you to perform 2-dimensional spectrum analysis on a chosen experimental data set. Upon completion of an analysis fit, plots available include: experiment; simulation; overlayed experiment and simulation; residuals; time-invariant noise; radially-invariant noise; 3-d model. Final outputs may include one or more models and noises.
-
-
 The 2DSA method is used for composition analysis of sedimentation velocity experiments. It can generate sedimentation coefficient, diffusion coefficient, frictional coefficient, f/f :sub:`0` ratio, and molecular weight distributions. The distributions can be plotted as 3-dimensional plots (2 parameters from the above list against each other), with the third dimension representing the concentration of the solute found in the composition analysis. The set of all such final calculated solutes form a model which are used to generate a simulation via Lamm equations. The simulation is plotted overlaying a plot of experimental data.
 
 
@@ -22,7 +19,7 @@ Each refinement iteration proceeds over a defined grid of s and f/f :sub:`0` val
 
 |
 
-.. image:: /_static/images/2dsa_main-o.png
+.. image:: ../_static/images/2dsa_main-o.png
     :align: center
 
 .. rst-class::
@@ -34,14 +31,14 @@ Each refinement iteration proceeds over a defined grid of s and f/f :sub:`0` val
 2DSA Process
 ================
 
-*  **Step 1:** First, load experimental velocity data. Click on `Load Data <common_dialogs.html#data-loader>`_ to select an edited velocity data set from the database or from local disk.
-*  **Step 2:** Secondly, open an analysis control window by clicking on `Fit Control <2dsa_analysd.html>`_. Within that dialog, define the grids and iterations that comprise the analysis.
+*  **Step 1:** First, load experimental velocity data. Click on `Load Data <../common_dialogs.html#data-loader>`_ to select an edited velocity data set from the database or from local disk.
+*  **Step 2:** Secondly, open an analysis control window by clicking on `Fit Control <2dsa_analys.html>`_. Within that dialog, define the grids and iterations that comprise the analysis.
 *  **Step 3:** Next, after having specified analysis parameters, begin the fit analysis by clicking "Start Fit".
 *  **Step 4:** Display and Save Results: After simulation, a variety of options are available for displaying simulation results, residuals, and distributions. Report text files and graphics plot files can also be generated.
 
 Once an analysis is complete, the main window will appear similar to this:
 
-.. image:: /_static/images/2dsa_main-c.png
+.. image:: ../_static/images/2dsa_main-c.png
     :align: center
 
 .. rst-class::
@@ -57,9 +54,9 @@ Once an analysis is complete, the main window will appear similar to this:
   :header-rows: 0 
   
   * - **Load Experiment**
-    - Click here and, in the resulting `Load Run Data Dialog <common_dialogs.html#data-loader>`_, select an edited data set to load.
+    - Click here and, in the resulting `Load Run Data Dialog <../common_dialogs.html#data-loader>`_, select an edited data set to load.
   * - **Run Details**
-    - Pop up a dialog showing `Run Details Dialog <run_details.html>`_.
+    - Pop up a dialog showing `Run Details Dialog <../run_details.html>`_.
   * - **Latest Data Edit**
     - Uncheck to allow choosing an edit other than the latest one for the raw experimental data.
   * - **Database**
@@ -79,7 +76,7 @@ Once an analysis is complete, the main window will appear similar to this:
   * - **Cell / Channel / Wavelength**
     - One or more rows of data edit triples. If more than one, click on a row to select it as the data of interest.
   * - **Solution**
-    - Click this button to open a `Solution Management dialog <us_solution.html>`_ that allows changes to buffer and analyte characteristics of the data set. 
+    - Click this button to open a `Solution Management dialog <../solution/index.html>`_ that allows changes to buffer and analyte characteristics of the data set. 
   * - **Density (20°C)**
     - Shows the density value for the loaded experiment. Click the Solution button to open a dialog in which density and other values may be changed.
   * - **Viscosity (20°C)**
@@ -103,9 +100,9 @@ Once an analysis is complete, the main window will appear similar to this:
   * - **Fit Control**
     - Open a dialog to set analysis parameters and start a fit run. For details on the results of clicking this button, see `2DSA Analysis Control <2dsa_analys.html>`_.
   * - **3-D Plot**
-    - After a 2DSA model is fitted, open a control window for a `3-Dimensional plot <3d_plot.html>`_ of the final computed model. 
+    - After a 2DSA model is fitted, open a control window for a `3-Dimensional plot <../3d_plot.html>`_ of the final computed model. 
   * - **Residual Plot**
-    - After a 2DSA model is fitted, open a plot dialog for a far more detailed set of result plots. See `2DSA Residual Plot Dialog <2dsa_analysd.html>`_ for further details.
+    - After a 2DSA model is fitted, open a plot dialog for a far more detailed set of result plots. See `Finite Element Viewer/Residual Plot Dialog <../fe_match/fe_match_simulate.html>`_ or `2-D Analysis Controls <2dsa_analys.html#residual-plot-dialog>`_ for further details.
   * - **Status Info:**
     - This text window displays continually updated summaries of computational activity and results.
   * - **(upper right side plot)**
@@ -128,13 +125,12 @@ Once an analysis is complete, the main window will appear similar to this:
   * - **Close** 
     - Close all windows and exit.
 
-.. _2dsa-analysis-control-window:
 
 Related
 ====================
 
-`Fit Meniscus <fit_meniscus.html>`_
+`Fit Meniscus <../fit_meniscus.html>`_
 
 `2-Dimensional Spectrum Analysis Process <2dsa_analys.html>`_
 
-`2-Dimensional Spectrum Analysis Result <2dsa_analsy.html>`_
+`Finite Element Model Viewer <../fe_match/index.html>`_

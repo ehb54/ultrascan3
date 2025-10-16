@@ -8,7 +8,7 @@ Parametrically Constrained Spectrum Analysis
 .. contents:: Index
   :local: 
 
-This module enables you to perform parametrically constrained spectrum analysis on a chosen experimental data set. 
+
 The PCSA method is used for **composition analysis** of sedimentation velocity experiments. It can generate *sedimentation coefficient*, *diffusion coefficient*, *frictional coefficient*, *f/f0 ratio*, and *molecular weight distributions*. The distributions can be plotted as `3-dimensional plots <3d_plot.html>`_ (2 parameters from the above list against each other), with the third dimension representing the concentration of the solute found in the composition analysis. The set of all such final calculated solutes form a model which is used to generate a simulation via Lamm equations. The simulation is plotted overlaying a plot of experimental data.
 
 The PCSA pass proceeds for a set of models each of which consists of the solute points along a curve in s,f/f0 space. The model whose RMSD of the resulting residuals (simulation-experimental difference) is the lowest forms the starting point for a second phase which uses Levenberg-Marquardt to refine the model to a final output model. The set of initial curves is specified by a s and f/f0 ranges and a direct or implied number of variations in f/f0 end-points or sigmoid par1, par2 values. The type of curve used may be any of the following. 
@@ -133,7 +133,7 @@ Related
 
 `Parametrically Constrained Spectrum Fitting Controls <pcsa_analys.html>`_
 
-`2-Dimensional Spectrum Analysis Process <2dsa_analys.html>`_
+`2-Dimensional Spectrum Analysis <../2dsa/index.html>`_
 
-`Finite Element (FE) Model Viewer <fe_match.html>`_
+`Finite Element (FE) Model Viewer <../fe_match/index.html>`_
 

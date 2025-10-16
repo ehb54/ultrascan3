@@ -35,9 +35,9 @@ Functions
   :header-rows: 0
 
   * - **Load Experiment** 
-    - Click here and, in the resulting `Load Data Dialog <common_dialogs.html#data-loader>`_, select an edited data set to load.
+    - Click here and, in the resulting `Load Data Dialog <../common_dialogs.html#data-loader>`_, select an edited data set to load.
   * - **Run Details**
-    - Pop up a dialog showing `Run details <run_details.html>`_.	
+    - Pop up a dialog showing `Run details <../run_details.html>`_.	
   * - **Latest Data Edit** 
     - Uncheck to allow choosing an edit other than the latest one for the raw experimental data.
   * - **Database**
@@ -45,13 +45,13 @@ Functions
   * - **Local Disk** 
     - Select to specify data input from local disk.			
   * - **Load Model**
-    - Load model data, choosing a model in a `Model Loader dialog <common_dialogs.html#load-distribution-model>`_. **If appropriate noise exists, you may also be presented with a `Noise Loader dialog <load_noise.html>`_ to select time-invariant and/or radially-invariant noise vector(s) to load.**
+    - Load model data, choosing a model in a `Model Loader dialog <../common_dialogs.html#load-distribution-model>`_. If appropriate noise exists, you may also be presented with a `Noise Loader dialog <../manage_data.html>`_ to select time-invariant and/or radially-invariant noise vector(s) to load.
   * - **Simulate Model** 
     -  Run a simulation and display results. For details on the results of clicking this button, see `Simulate Model Results <fe_match_simulate.html>`_.
   * - **View Data Report**
     - Generate a report file and view it in a dialog.	
   * - **Save Data**
-    - Generate reports and save to file.	
+    - Generate reports and save to file.
 
 
 **Simulation Plot**: Bar plot of the selected distributions. The choices are as follows:
@@ -128,7 +128,7 @@ Functions
   :header-rows: 0
 
   * - **Solution**
-    - Click this button to open a `Solution Management <us_solution.html>`_ that allows changes to buffer and analyte characteristics of the data set.
+    - Click this button to open a `Solution Management <../us_solution.html>`_ that allows changes to buffer and analyte characteristics of the data set.
   * - **Density**
     - Shows the density value for the loaded experiment. Click the Solution button to open a dialog in which density and other values may be changed.
   * - **Viscosity**
@@ -173,7 +173,7 @@ Related
 ====================
 `Simulated Finite Element Model Viewer <fe_match_simulate.html>`_
 
-`2-Dimensional Spectrum Analysis <2dsa.html>`_
+`2-Dimensional Spectrum Analysis <../2dsa.html>`_
 
-`Initialize Genetic Algorithm <ga_initialize.html>`_
+`Initialize Genetic Algorithm <../ga_initialize.html>`_
 

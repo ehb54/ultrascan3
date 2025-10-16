@@ -76,11 +76,8 @@ Welcome to UltraScan III's Documentation and Resource!
    :maxdepth: 1
    :caption: Analysis: 
 
-   2dsa
-   2dsa_analys
-   pcsa
-   pcsa_analys
-   pcsa_results
+   2dsa/index
+   pcsa/index
    fe_match/index
    ga_initialize
 
@@ -94,7 +91,7 @@ Welcome to UltraScan III's Documentation and Resource!
    :maxdepth: 1
    :caption: GMP:     
 
-   gmp
+   gmp/index
 
 .. toctree::
    :maxdepth: 1
@@ -110,13 +107,13 @@ Welcome to UltraScan III's Documentation and Resource!
 
    us_investigator
    buffer/index
-   
-   analyte
+   analyte/index
+   manage_model
+   manage_data
+   solutions/index
+   projects/index
+   rotor
 
-
-
- 
-   
 
 
 
