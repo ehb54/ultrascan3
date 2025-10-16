@@ -85,9 +85,9 @@ int US_License_t::isValid( QString& ErrorMessage, const QStringList& newLicense 
 
   QString license_string = expiration + email;
   QString calculation = "";
-  QString str;
-  for ( int i = 0; i < license_string.size(); i++ )
-    calculation += str.sprintf( "%X", license_string[ i ].unicode() );
+  for ( int i = 0; i < license_string.size(); i++ ) {
+     calculation += QString::asprintf( "%X", license_string[ i ].unicode() );
+  }
 
   calculation.truncate(24);
 

@@ -84,7 +84,7 @@ US_NoiseLoader::US_NoiseLoader( IUS_DB2* db, QStringList& mieGUIDs,
 
    for ( int ii = 1; ii < mieGUIDs.size(); ii++ )
    {  // complete models list for top level
-      mititle    = QString().sprintf( "Model Sibling %4.4d", ii );
+      mititle    = QString::asprintf( "Model Sibling %4.4d", ii );
       twi_curr   = new QTreeWidgetItem( twi_null, QStringList( mititle ) );
       items.append( twi_curr );   // other top-level items are model siblings
    }

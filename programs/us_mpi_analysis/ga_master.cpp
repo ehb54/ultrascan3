@@ -291,7 +291,7 @@ DbgLv(1) << "  MAST: work" << worker << "fit msg,round,bestw,besto"
                best_fitness[ worker ].fitness = fitness_round;
 g = "";
 for ( int i = 0; i < buckets.size(); i++ )
-  g += s.sprintf( "(%.3f,%.3f)", best_genes[ worker ][ i ].s, best_genes[ worker ][ i ].k);
+   g += QString::asprintf( "(%.3f,%.3f)", best_genes[ worker ][ i ].s, best_genes[ worker ][ i ].k);
 DbgLv(1) << "master: worker/fitness/best gene" << worker <<  msg.fitness << g;
 
             if ( ! early_termination )

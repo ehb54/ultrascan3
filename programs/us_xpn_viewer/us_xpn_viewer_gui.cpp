@@ -1646,7 +1646,7 @@ DbgLv(1) << "ec: ntriple" << ntriple << "trpsize" << triples.count() << "ktrip" 
    QStringList plrecs;
 
    for ( int jj = 0; jj < npoint; jj++ )
-      slrads << QString().sprintf( "%.3f", r_radii[ jj ] );
+      slrads << QString::asprintf( "%.3f", r_radii[ jj ] );
 
    for ( int jj = 0; jj < nlambda; jj++ )
       sllmbs << QString::number( lambdas[ jj ] );
@@ -6180,7 +6180,7 @@ DbgLv(1) << "  wavelen/speed/radpos:  " << wavelen
 
          for ( int jq = 0; jq < nwvlen; jq++, jv += nspeed )
          {  // append meniscus values for each column
-            outline       += "," + QString().sprintf( "%.3f", menrads[ jv ] );
+            outline       += "," + QString::asprintf( "%.3f", menrads[ jv ] );
          }
          outline       += "\n";
          datxto2 << outline;

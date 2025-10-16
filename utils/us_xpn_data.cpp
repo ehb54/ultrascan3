@@ -2450,7 +2450,7 @@ DbgLv(1) << "expA: ntrips" << ntrips << "ktnodes" << trnodes.count();
 #if 0
       QString trnode    = QString::number( rdata->cell ) + "." +
                           QString( rdata->channel ) + "." +
-                          QString().sprintf( "%03d",
+                          QString::asprintf( "%03d",
                                 qRound( rdata->scanData[ 0 ].wavelength ) );
 #endif
       QString trnode    = trnodes[ ii ];
@@ -2828,7 +2828,7 @@ DbgLv(1) << "expA: ntrips" << ntrips << "ktnodes" << trnodes.count();
 #if 0
       QString trnode    = QString::number( rdata->cell ) + "." +
                           QString( rdata->channel ) + "." +
-                          QString().sprintf( "%03d",
+                          QString::asprintf( "%03d",
                                 qRound( rdata->scanData[ 0 ].wavelength ) );
 #endif
       QString trnode    = trnodes[ ii ];
@@ -3930,7 +3930,7 @@ DbgLv(1) << "XpDa:b_i:   csdrec count" << sdknt;
       QString tripl = cechn + " / " + swavl;
       QString tnode = scell + "." + schan + "." + swavl;
       QString darec = tnode + "."
-                    + QString().sprintf( "%05i.%05i", stage, scnnbr );
+                    + QString::asprintf( "%05i.%05i", stage, scnnbr );
 DbgLv(1) << "XpDa:b_i: ii" << ii << "schan cechn"
  << schan << cechn << "darec" << darec
  << "rad0 rad1" << csdrec.rads->at(0) << csdrec.rads->at(1);
@@ -4141,7 +4141,7 @@ DbgLv(1) << "XpDa:rb_i:   csdrec count" << sdknt << "nscno" << nscno << "nstgo" 
       QString tnode = scell + "." + schan + "." + swavl;
 
       QString darec = tnode + "."
-                    + QString().sprintf( "%05i.%05i", stage, scnnbr );
+                    + QString::asprintf( "%05i.%05i", stage, scnnbr );
 DbgLv(1) << "XpDa:b_i: ii" << ii << "scnnbr" << scnnbr
  << "darec" << darec;
 

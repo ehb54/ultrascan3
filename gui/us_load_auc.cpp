@@ -723,7 +723,7 @@ qDebug() << "Ed:Ptree: sel_run" << sel_run;
       QStringList topItem;
       topItem << ddesc.runID
               << QString( ddesc.date ).section( " ", 0, 0 )
-              << QString().sprintf( "%6d", ddesc.DB_id )
+              << QString::asprintf( "%6d", ddesc.DB_id )
               << ddesc.label;
 
       if ( ! runIDs.contains( ddesc.runID ) )
