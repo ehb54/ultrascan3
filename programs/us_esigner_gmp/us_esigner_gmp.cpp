@@ -4475,7 +4475,7 @@ void US_eSignaturesGMP::printDocument(QPrinter& printer, QTextDocument* doc, QMa
   progress_msg->setWindowTitle(tr("Printing..."));
   QFont font_d  = progress_msg->property("font").value<QFont>();
   QFontMetrics fm(font_d);
-  int pixelsWide = fm.width( progress_msg->windowTitle() );
+  int pixelsWide = fm.horizontalAdvance( progress_msg->windowTitle() );
   qDebug() << "Progress_msg: pixelsWide -- " << pixelsWide;
   progress_msg ->setMinimumWidth( pixelsWide*2 );
   progress_msg->adjustSize();

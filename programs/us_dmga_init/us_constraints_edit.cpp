@@ -445,7 +445,7 @@ DbgLv(1) << "cnG:main:  bmodel load rtn";
    QFont font( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() );
    QFontMetrics fm( font );
    int fhigh = fm.lineSpacing();
-   int fwide = fm.width( QChar( '6' ) );
+   int fwide = fm.horizontalAdvance( QChar( '6' ) );
    int chigh = fhigh * 3 + 12;
    int ahigh = fhigh * 2 + 12;
    int lwide = width() - 10;

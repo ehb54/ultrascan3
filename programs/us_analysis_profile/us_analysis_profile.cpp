@@ -1619,7 +1619,7 @@ DbgLv(1) << "Ge:SL:  ii" << ii << "schan" << schan;
       
       QFont font   = le_chann->property("font").value<QFont>();
       QFontMetrics fm(font);
-      int pixelsWide = fm.width( le_chann->text() );
+      int pixelsWide = fm.horizontalAdvance( le_chann->text() );
       //int pixelsHigh = fm.height();
       //pb_aproname->setMinimumWidth( pixelsWide );
       le_chann->setMinimumWidth( pixelsWide*1.1 );
@@ -1888,19 +1888,19 @@ QGroupBox * US_AnaprofPanGen::createGroup( QString & triple_name, QList< double 
   QLabel*     lb_wvl     = us_label( tr( "Wvl" ) );
   QFont font_w   = lb_wvl->property("font").value<QFont>();
   QFontMetrics fm_w(font_w);
-  pixelsWide_w = fm_w.width( lb_wvl->text() );
+  pixelsWide_w = fm_w.horizontalAdvance( lb_wvl->text() );
   
   QLabel*     lb_edit    = us_label( tr( "FitMen" ) );
   QFont font_e   = lb_edit->property("font").value<QFont>();
   QFontMetrics fm_e(font_e);
-  pixelsWide_e = fm_e.width( lb_edit->text() );
+  pixelsWide_e = fm_e.horizontalAdvance( lb_edit->text() );
   // lb_edit->setMaximumWidth( pixelsWide_e*1.1 );
   // lb_edit->adjustSize();
 
   QLabel*     lb_run     = us_label( tr( "Run" ) );
   QFont font_r   = lb_run->property("font").value<QFont>();
   QFontMetrics fm_r(font_r);
-  pixelsWide_r = fm_r.width( lb_run->text() );
+  pixelsWide_r = fm_r.horizontalAdvance( lb_run->text() );
   // lb_run->setMaximumWidth( pixelsWide_r*1.1 );
   // lb_run->adjustSize();
 
@@ -1926,7 +1926,7 @@ QGroupBox * US_AnaprofPanGen::createGroup( QString & triple_name, QList< double 
       le_wvl ->setReadOnly(true);
       QFont font   = le_wvl->property("font").value<QFont>();
       QFontMetrics fm(font);
-      int pixelsWide = fm.width( le_wvl->placeholderText() );
+      int pixelsWide = fm.horizontalAdvance( le_wvl->placeholderText() );
       le_wvl->setMaximumWidth( pixelsWide*3 );
       le_wvl->adjustSize();
       

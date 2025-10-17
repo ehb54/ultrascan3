@@ -129,7 +129,7 @@ US_ProtocolDevMain::US_ProtocolDevMain() : US_Widgets()
   QFont font_t = tabWidget->property("font").value<QFont>();
   qDebug() << font_t.family() << font_t.pointSize();
   QFontMetrics fm_t(font_t);
-  int pixelsWide = fm_t.width("Manage Optima Runs");
+  int pixelsWide = fm_t.horizontalAdvance("Manage Optima Runs");
   
   qDebug() << "FONT_T: fm_t.width() -- " <<  pixelsWide;
   cornerWidget->setMinimumWidth( pixelsWide );
@@ -142,7 +142,7 @@ US_ProtocolDevMain::US_ProtocolDevMain() : US_Widgets()
   qDebug() << "TabWidget->tabBar position: " << tabWidget->tabBar()->x() << tabWidget->tabBar()->y();
   qDebug() << "TabWidget->tabBar size    : " << tabWidget->tabBar()->width() << tabWidget->tabBar()->height();
   
-  int pos_x_offset = fm_t.width("M");
+  int pos_x_offset = fm_t.horizontalAdvance("M");
   int pos_x = tabWidget->tabBar()->x() + pos_x_offset*1.2;
   //int pos_x = (tabWidget->tabBar()->width())/4;
   int pos_y = (tabWidget->tabBar()->height())*1.12;

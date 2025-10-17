@@ -424,7 +424,7 @@ void US_auditTrailGMP::initPanel_auto( QMap < QString, QString > & protocol_deta
   esigntItem -> addChild( eSignItem_childItem );
   eSignTree  -> setItemWidget( eSignItem_childItem, 1, groupBox_esign );
 
-  int max_width = fmet.width( esignItemName );
+  int max_width = fmet.horizontalAdvance( esignItemName );
   max_width *= 2;
   eSignTree->header()->resizeSection(0, max_width );
   
