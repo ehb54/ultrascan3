@@ -2536,7 +2536,7 @@ void US_Hydrodyn::pdb_visualization()
 
 void US_Hydrodyn::load_config()
 {
-   QString fname = QFileDialog::getOpenFileName( 0 , "Please select a SOMO configuration file..." , US_Config::get_home_dir() + "/etc", "*.config" , 0 );
+   QString fname = QFileDialog::getOpenFileName( 0 , "Please select a SOMO configuration file..." , US_Config::get_home_dir() + "/etc", "*.config" );
    if ( fname == QString() )
    {
       QColor save_color = editor->textColor();
@@ -2576,7 +2576,7 @@ void US_Hydrodyn::write_config()
    case QMessageBox::Yes : 
       break;
    case QMessageBox::No : 
-      fname = QFileDialog::getSaveFileName( 0 , "Please name your SOMO configuration file..." , US_Config::get_home_dir() + "etc" , "*.config" , 0 );
+      fname = QFileDialog::getSaveFileName( 0 , "Please name your SOMO configuration file..." , US_Config::get_home_dir() + "etc" , "*.config" );
       break;
    default :
       return;

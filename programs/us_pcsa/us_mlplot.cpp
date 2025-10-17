@@ -22,7 +22,7 @@
 // constructor:  model lines plot widget
 US_MLinesPlot::US_MLinesPlot( double& ylo, double& yhi, double& xlo,
       double& xhi, int& typ, int& nkp, int& nlp, int& bmx )
-   : US_WidgetsDialog( 0, 0 ), ymin( ylo ), ymax( yhi ), xmin( xlo ),
+   : US_WidgetsDialog( nullptr, Qt::WindowFlags() ), ymin( ylo ), ymax( yhi ), xmin( xlo ),
    xmax( xhi ), ctype( typ ), nkpts( nkp ), nlpts( nlp ), bmndx( bmx )
 {
    // lay out the GUI
@@ -627,7 +627,7 @@ void US_MLinesPlot::selectColorMap( void )
    // get an xml file name for the color map
    QString fname = QFileDialog::getOpenFileName( this,
        tr( "Load Color Map File" ),
-       US_Settings::etcDir(), filter, 0, 0 );
+       US_Settings::etcDir(), filter );
 
    if ( fname.isEmpty() )
         return;

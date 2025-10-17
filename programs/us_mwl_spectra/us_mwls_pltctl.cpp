@@ -16,7 +16,7 @@
 
 // Constructor:  enhanced spectra plot control widget
 US_MwlSPlotControl::US_MwlSPlotControl( QWidget* p, QVector< QVector3D >* d )
-   : US_WidgetsDialog( 0, 0 )
+   : US_WidgetsDialog( nullptr, Qt::WindowFlags() )
 {
 qDebug() << "PCtrl: IN";
    wparent        = p;

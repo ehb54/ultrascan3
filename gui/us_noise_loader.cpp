@@ -11,7 +11,7 @@
 US_NoiseLoader::US_NoiseLoader( IUS_DB2* db, QStringList& mieGUIDs,
    QStringList& nieGUIDs, US_Noise& ti_noise, US_Noise& ri_noise,
    US_DataIO::EditedData* edata )
-   : US_WidgetsDialog( 0, 0 ), db( db ), mieGUIDs( mieGUIDs ),
+   : US_WidgetsDialog( nullptr, Qt::WindowFlags() ), db( db ), mieGUIDs( mieGUIDs ),
    nieGUIDs( nieGUIDs ), ti_noise( ti_noise ), ri_noise( ri_noise )
 {
    setWindowTitle( ( db == (US_DB2*) 0 ?

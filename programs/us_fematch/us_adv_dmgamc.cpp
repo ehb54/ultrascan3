@@ -15,7 +15,7 @@
 US_AdvDmgaMc::US_AdvDmgaMc( US_Model* amodel,
    QVector< US_Model >& aimodels,
    QMap< QString, QString >& adv_vals, QWidget* p ) :
-   US_WidgetsDialog( p, 0 ), imodels( aimodels ), parmap( adv_vals )
+   US_WidgetsDialog( p, Qt::WindowFlags() ), imodels( aimodels ), parmap( adv_vals )
 {
    model          = amodel;
    parentw        = p;

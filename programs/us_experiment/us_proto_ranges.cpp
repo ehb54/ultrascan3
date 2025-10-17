@@ -21,7 +21,7 @@
 
 // Panel for Ranges parameters
 US_ExperGuiRanges::US_ExperGuiRanges( QWidget* topw )
-   : US_WidgetsDialog( topw, 0 )
+   : US_WidgetsDialog( topw, Qt::WindowFlags() )
 {
    mainw               = (US_ExperimentMain*)topw;
    rpRange             = &(mainw->currProto.rpRange);
@@ -1712,7 +1712,7 @@ DbgLv(1) << "buffSpec: val" << checked << "row" << chrow;
 
 US_SelectWavelengths::US_SelectWavelengths(
    QStringList& orig_wavls, QStringList& select_wavls )
-   : US_WidgetsDialog( 0, 0 ), orig_wavls( orig_wavls ),
+   : US_WidgetsDialog( nullptr, Qt::WindowFlags() ), orig_wavls( orig_wavls ),
    select_wavls ( select_wavls )
 {
    nbr_poten   = orig_wavls  .count();
@@ -1856,7 +1856,7 @@ DbgLv(1) << "SelWl: layout complete";
 
 US_SelectWavelengths_manual::US_SelectWavelengths_manual(
    QStringList& orig_wavls, QStringList& select_wavls )
-   : US_WidgetsDialog( 0, 0 ), orig_wavls( orig_wavls ),
+   : US_WidgetsDialog( nullptr, Qt::WindowFlags() ), orig_wavls( orig_wavls ),
    select_wavls ( select_wavls )
 {
    nbr_poten   = orig_wavls  .count();

@@ -7,7 +7,7 @@
 
 // Primary constructor to establish the dialog
 US_XpnRunAuc::US_XpnRunAuc( QString& runID ) 
-: US_WidgetsDialog( 0, 0 ), runID( runID )
+: US_WidgetsDialog( nullptr, Qt::WindowFlags() ), runID( runID )
 {
    setWindowTitle( tr( "US3 Directories with Optima-derived .auc Files" ) );
 

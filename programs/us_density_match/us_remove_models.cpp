@@ -5,7 +5,7 @@
 
 // Constructor:  remove-distributions dialog widget
 US_RemoveModels::US_RemoveModels( QVector< DisSys >& adistros,
-    QWidget* p ) : US_WidgetsDialog( p, 0 ), distros( adistros )
+    QWidget* p ) : US_WidgetsDialog( p, Qt::WindowFlags() ), distros( adistros )
 {
    setObjectName( "US_RemoveModels" );
    setPalette( US_GuiSettings::frameColor() );

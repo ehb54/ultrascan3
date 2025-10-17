@@ -17,7 +17,7 @@
 
 // constructor:  residuals plot widget
 US_TmstPlot::US_TmstPlot( QWidget* parent, const QString tspath )
-   : US_WidgetsDialog( parent, 0 )
+   : US_WidgetsDialog( parent, Qt::WindowFlags() )
 {
    // Begin laying out the GUI
    setObjectName( "US_TmstPlot" );

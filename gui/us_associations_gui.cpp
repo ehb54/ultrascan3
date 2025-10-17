@@ -22,7 +22,7 @@ void US_PushButton::mousePressEvent( QMouseEvent* e )
 }
 
 US_AssociationsGui::US_AssociationsGui( US_Model& current_model )
-   : US_WidgetsDialog( 0, 0 ), model( current_model )
+   : US_WidgetsDialog( nullptr, Qt::WindowFlags() ), model( current_model )
 {
    setWindowTitle   ( "UltraScan Model Associations" );
    setPalette       ( US_GuiSettings::frameColor() );
@@ -275,7 +275,7 @@ void US_AssociationsGui::complete( void )
       QwtCounter* c;
       int         index;
       int         count;
-      int         koligo;
+      int         koligo = 0;
       
       US_Model::Association association;
       QTableWidgetItem*     item;

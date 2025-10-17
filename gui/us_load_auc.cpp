@@ -10,7 +10,7 @@
 
 
 US_LoadAUC::US_LoadAUC( bool local, QMap<QString,QString>& prot_det, QVector< US_DataIO::RawData >& rData,
-   QStringList& trips, QString& wdir ) : US_WidgetsDialog( 0, 0 ),
+   QStringList& trips, QString& wdir ) : US_WidgetsDialog( nullptr, Qt::WindowFlags() ),
    protocol_details( prot_det ),rawList( rData ), triples( trips ), workingDir( wdir )
 {
    int ddstate;
@@ -141,7 +141,7 @@ US_LoadAUC::US_LoadAUC( bool local, QMap<QString,QString>& prot_det, QVector< US
 }
 
 US_LoadAUC::US_LoadAUC( bool local, QString auto_mode, QVector< US_DataIO::RawData >& rData,
-   QStringList& trips, QString& wdir ) : US_WidgetsDialog( 0, 0 ),
+   QStringList& trips, QString& wdir ) : US_WidgetsDialog( nullptr, Qt::WindowFlags() ),
    rawList( rData ), triples( trips ), workingDir( wdir )
 {
    int ddstate;
@@ -269,7 +269,7 @@ US_LoadAUC::US_LoadAUC( bool local, QString auto_mode, QVector< US_DataIO::RawDa
 
 
 US_LoadAUC::US_LoadAUC( bool local, QVector< US_DataIO::RawData >& rData,
-   QStringList& trips, QString& wdir ) : US_WidgetsDialog( 0, 0 ),
+   QStringList& trips, QString& wdir ) : US_WidgetsDialog( nullptr, Qt::WindowFlags() ),
    rawList( rData ), triples( trips ), workingDir( wdir )
 {
    int ddstate;

@@ -36,9 +36,10 @@ class US_GUI_EXTERN US_Sassoc : public US_Widgets
          \param parent  Parent window, normally 0
          \param flags   Window flags, normally 0 (default)
       */
-      US_Sassoc( double, double, double, double, 
-                 const QString&, int, bool, 
-                 bool = true, QWidget* = 0, Qt::WindowFlags = 0 );
+      US_Sassoc( double eq0, double eq1, double stoich1, double stoich2,
+                 const QString& t_project, int t_model, bool status,
+                 bool position_win = true,
+                 QWidget* parent = nullptr, Qt::WindowFlags flags = Qt::WindowFlags() );
       
    private:
       double         eq    [ 2 ];
