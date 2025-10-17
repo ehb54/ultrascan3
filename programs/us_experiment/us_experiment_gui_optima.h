@@ -437,9 +437,9 @@ class US_ExperGuiSpeeds : public US_WidgetsDialog
       //! \brief Slot for SS change in profile index
       void    ssChangeProfx ( int    );
       //! \brief Slot for SS change in speed
-      void    ssChangeSpeed ( double );
+      void    ssChangeSpeed ( int );
       //! \brief Slot for SS change in acceleration
-      void    ssChangeAccel ( double );
+      void    ssChangeAccel ( int );
       //! \brief Slot for SS change in duration day
       void    ssChgDuratDay ( int );
       //! \brief Slot for SS change in Scan Int

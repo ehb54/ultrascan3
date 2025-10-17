@@ -2897,7 +2897,7 @@ US_ExperGuiSpeeds::US_ExperGuiSpeeds( QWidget* topw )
 
    ct_speed ->setRange(1000,  80000);
    ct_speed ->setValue(100);
-   ct_accel ->setRange(50, 100);
+   ct_accel ->setRange(50, 1000);
    ct_accel ->setValue(50);
    
    
@@ -3212,10 +3212,10 @@ DbgLv(1) << "EGSp: addWidg/Layo II";
             this,      SLOT  ( ssChangeCount ( int )  ) );
    connect( cb_prof,   SIGNAL( activated     ( int    ) ),
             this,      SLOT  ( ssChangeProfx ( int    ) ) );
-   connect( ct_speed,  SIGNAL( valueChanged  ( double ) ),
-            this,      SLOT  ( ssChangeSpeed ( double ) ) );
-   connect( ct_accel,  SIGNAL( valueChanged  ( double ) ),
-            this,      SLOT  ( ssChangeAccel ( double ) ) );
+   connect( ct_speed,  SIGNAL( valueChanged  ( int ) ),
+            this,      SLOT  ( ssChangeSpeed ( int ) ) );
+   connect( ct_accel,  SIGNAL( valueChanged  ( int ) ),
+            this,      SLOT  ( ssChangeAccel ( int ) ) );
 
    // connect( sb_durat,  SIGNAL( valueChanged   ( int ) ),               \\ALEXEY
    //          this,      SLOT  ( ssChgDuratDay  ( int ) ) );
@@ -3572,12 +3572,13 @@ DbgLv(1) << "EGSp: chgPfx:    speedmax" << speedmax;
 }
 
 // Slot for change in speed value
-void US_ExperGuiSpeeds::ssChangeSpeed( double val )
+void US_ExperGuiSpeeds::ssChangeSpeed( int val )
 {
 DbgLv(1) << "EGSp: chgSpe: val" << val << "ssx" << curssx;
-   ssvals  [ curssx ][ "speed" ] = val;  // Set Speed in step vals vector
+   double val_d = (double)val; 
+   ssvals  [ curssx ][ "speed" ] = val_d;  // Set Speed in step vals vector
 
-   ssChangeScInt(val, curssx);
+   ssChangeScInt(val_d, curssx);
 
    //Uv-vis
    sb_scnint_hh ->setMinimum( scanint_hh_min[curssx] );
@@ -3664,10 +3665,12 @@ void US_ExperGuiSpeeds::ssChangeScInt( double val, int row )
 
 
 // Slot for change in acceleration value
-void US_ExperGuiSpeeds::ssChangeAccel( double val )
+void US_ExperGuiSpeeds::ssChangeAccel( int val )
 {
 DbgLv(1) << "EGSp: chgAcc: val" << val << "ssx" << curssx;
-   ssvals[ curssx ][ "accel" ] = val;  // Set Acceleration in step vals vector
+
+   double val_d = (double)val; 
+   ssvals[ curssx ][ "accel" ] = val_d;  // Set Acceleration in step vals vector
 
    // Set minimum delay time based on speed and new acceleration
    changed          = false;             // Flag so delay set to minimum
