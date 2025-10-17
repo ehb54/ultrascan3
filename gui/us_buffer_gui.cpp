@@ -554,7 +554,7 @@ DbgLv(1) << "BufS-info:  ii" << ii << "waveln extinc" << waveln << extinc;
    }
 
    // Build and show the buffer details dialog
-   int iwid     = fmet.width( big_line ) + 40;
+   int iwid     = fmet.horizontalAdvance( big_line ) + 40;
    int ihgt     = fmet.lineSpacing() * qMin( 22, nlines ) + 80;
 
    US_Editor* buf_info = new US_Editor( US_Editor::DEFAULT, true,

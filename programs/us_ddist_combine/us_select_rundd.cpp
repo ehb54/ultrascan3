@@ -97,7 +97,7 @@ DbgLv(1) << "SE:sel_db" << sel_db;
    // Status Row
    QFontMetrics fm( font );
    int fhigh = fm.lineSpacing();
-   int fwide = fm.width( QChar( '6' ) );
+   int fwide = fm.horizontalAdvance( QChar( '6' ) );
    int lhigh = fhigh * 4 + 12;
    int lwide = fwide * 32;
 

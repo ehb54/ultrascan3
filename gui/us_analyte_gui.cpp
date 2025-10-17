@@ -50,7 +50,7 @@ US_SequenceEditor::US_SequenceEditor( const QString& sequence )
    connect( pb_accept, SIGNAL( clicked() ), SLOT( accept() ) );
 
    QFontMetrics fm( font );
-   resize( fm.width( 'W' ) * 80, fm.height() * 20 );
+   resize( fm.horizontalAdvance( 'W' ) * 80, fm.height() * 20 );
 }
 
 void US_SequenceEditor::accept( void ) 
@@ -567,7 +567,7 @@ void US_AnalyteMgrSelect::sequence( void )
   big_line += QString( 70, ' ' );
 
   // Build and show the analyte sequence
-   int iwid     = fmet.width( big_line ) + 40;
+   int iwid     = fmet.horizontalAdvance( big_line ) + 40;
    int ihgt     = fmet.lineSpacing() * qMin( 22, nlines ) + 80;
 
    US_Editor* ana_info = new US_Editor( US_Editor::DEFAULT, true,
@@ -744,7 +744,7 @@ DbgLv(1) << "Tot AAs: " << all_abs;
    }
 
    // Build and show the analyte details dialog
-   int iwid     = fmet.width( big_line ) + 40;
+   int iwid     = fmet.horizontalAdvance( big_line ) + 40;
    int ihgt     = fmet.lineSpacing() * qMin( 22, nlines ) + 80;
 
    US_Editor* ana_info = new US_Editor( US_Editor::DEFAULT, true,

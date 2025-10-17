@@ -82,7 +82,7 @@ US_RemoveModels::US_RemoveModels( QVector< DisSys >& adistros,
    QFont font( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() );
    QFontMetrics fm( font );
    int fhigh = fm.lineSpacing();
-   int fwide = fm.width( QChar( '6' ) );
+   int fwide = fm.horizontalAdvance( QChar( '6' ) );
    int lhigh = fhigh * 10 + 12;
    int lwide = fwide * ( maxdlen + 2 );
 

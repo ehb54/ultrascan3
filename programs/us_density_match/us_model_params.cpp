@@ -165,7 +165,7 @@ DbgLv(1) << "MP:main: sTO: ll i1" << ll << ii+1;
    QFontMetrics fm( font );
 //   int fhigh = fm.lineSpacing();
 //   int lhigh = fhigh * 10 + 12;
-   int fwide = fm.width( QChar( '6' ) );
+   int fwide = fm.horizontalAdvance( QChar( '6' ) );
    int lwide = fwide * ( maxdlen + 2 );
 DbgLv(1) << "MP:main: fwide lwide" << fwide << lwide;
 
