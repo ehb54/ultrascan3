@@ -275,7 +275,7 @@ void US_AssociationsGui::complete( void )
       QwtCounter* c;
       int         index;
       int         count;
-      int         koligo;
+      int         koligo = 0;
       
       US_Model::Association association;
       QTableWidgetItem*     item;
