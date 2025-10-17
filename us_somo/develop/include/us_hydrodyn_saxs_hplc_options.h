@@ -96,6 +96,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Options : public QDialog
       QLabel *                                lbl_ampl_width_min;
       QLineEdit *                             le_ampl_width_min;
 
+      QLabel *                                lbl_ampl_min;
+      QLineEdit *                             le_ampl_min;
+
       QCheckBox *                             cb_lock_min_retry;
       QLineEdit *                             le_lock_min_retry_mult;
 

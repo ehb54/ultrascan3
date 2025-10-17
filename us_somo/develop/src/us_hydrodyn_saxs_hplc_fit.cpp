@@ -45,6 +45,7 @@ US_Hydrodyn_Saxs_Hplc_Fit::US_Hydrodyn_Saxs_Hplc_Fit(
    gaussian_type_size = hplc_win->gaussian_type_size;
 
    hplc_ampl_width_min       = ( ( US_Hydrodyn * ) ( hplc_win->us_hydrodyn ) )->gparams[ "hplc_ampl_width_min"        ].toDouble();
+   hplc_ampl_min             = ( ( US_Hydrodyn * ) ( hplc_win->us_hydrodyn ) )->gparams[ "hplc_ampl_min"              ].toDouble();
    hplc_lock_min_retry       = ( ( US_Hydrodyn * ) ( hplc_win->us_hydrodyn ) )->gparams[ "hplc_lock_min_retry"        ] == "true" ? true : false;
    hplc_lock_min_retry_mult  = ( ( US_Hydrodyn * ) ( hplc_win->us_hydrodyn ) )->gparams[ "hplc_lock_min_retry_mult"   ].toDouble();
    hplc_maxfpk_restart       = ( ( US_Hydrodyn * ) ( hplc_win->us_hydrodyn ) )->gparams[ "hplc_maxfpk_restart"        ] == "true" ? true : false;
@@ -1620,7 +1621,7 @@ bool US_Hydrodyn_Saxs_Hplc_Fit::setup_run()
          HFIT::param_fixed .push_back( false );
 
          double ofs;
-         double min = hplc_ampl_width_min;
+         double min = hplc_ampl_min;
          double max = hplc_win->gauss_max_height;
          // qDebug() << "hplc_fit:: gauss_max_height " << max;
          if ( cb_pct_amplitude->isChecked() )
@@ -1629,9 +1630,9 @@ bool US_Hydrodyn_Saxs_Hplc_Fit::setup_run()
             min = base_val - ofs;
             max = base_val + ofs;
          }
-         if ( min < hplc_ampl_width_min )
+         if ( min < hplc_ampl_min )
          {
-            min = hplc_ampl_width_min;
+            min = hplc_ampl_min;
          }
          if ( max > hplc_win->gauss_max_height )
          {
@@ -1969,7 +1970,7 @@ bool US_Hydrodyn_Saxs_Hplc_Fit::lock_zeros( vector < double > & par )
       if ( !cb_fix_curves[ pos ]->isChecked() ) {
 
          if ( !cb_fix_amplitude->isChecked() ) {
-            if ( tmp_gaussians[ 0 + i ] <= hplc_ampl_width_min * hplc_lock_min_retry_mult ) {
+            if ( tmp_gaussians[ 0 + i ] <= hplc_ampl_min * hplc_lock_min_retry_mult ) {
                to_lock.insert( pos + 1 );
                continue;
             }

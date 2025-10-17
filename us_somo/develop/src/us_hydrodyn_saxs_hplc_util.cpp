@@ -2432,6 +2432,7 @@ void US_Hydrodyn_Saxs_Hplc::options()
    parameters[ "hplc_csv_transposed"        ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_csv_transposed" ];
 
    parameters[ "hplc_ampl_width_min"        ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_ampl_width_min"           ];
+   parameters[ "hplc_ampl_min"              ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_ampl_min"                 ];
    parameters[ "hplc_lock_min_retry"        ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_lock_min_retry"           ];
    parameters[ "hplc_lock_min_retry_mult"   ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_lock_min_retry_mult"      ];
    parameters[ "hplc_maxfpk_restart"        ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_maxfpk_restart"           ];
@@ -2496,6 +2497,7 @@ void US_Hydrodyn_Saxs_Hplc::options()
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_csv_transposed"        ] = parameters[ "hplc_csv_transposed"           ];
 
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_ampl_width_min"        ] = parameters[ "hplc_ampl_width_min"           ];
+   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_ampl_min"              ] = parameters[ "hplc_ampl_min"                 ];
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_lock_min_retry"        ] = parameters[ "hplc_lock_min_retry"           ];
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_lock_min_retry_mult"   ] = parameters[ "hplc_lock_min_retry_mult"      ];
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_maxfpk_restart"        ] = parameters[ "hplc_maxfpk_restart"           ];
