@@ -2718,7 +2718,8 @@ void US_Astfem_RSA::initialize_conc( int kk, US_AstfemMath::MfemInitial& CT0, bo
     {
         double mxct = 0.0;
         nval        = CT0.concentration.size();
-        if  ( simparams.band_forming )
+        QString debug_text_key = "ASTFEM_BFE_OLD_CONC_INIT";
+        if  ( simparams.band_forming && !US_Settings::debug_match( debug_text_key ))
         {
             // Calculate the width of the lamella
             double angl = simparams.cp_angle   != 0.0 ? simparams.cp_angle   : 2.5;
@@ -2743,6 +2744,24 @@ if(mxct<CT0.concentration[j]) {mxct=CT0.concentration[j];}
            }
 DbgLv(1) << "RSA:BF:  mxct" << mxct << "lamella_width" << lamella_width;
         }
+       else if  ( simparams.band_forming && US_Settings::debug_match( debug_text_key ))
+       {
+          // Calculate the width of the lamella
+          double angl = simparams.cp_angle   != 0.0 ? simparams.cp_angle   : 2.5;
+          double plen = simparams.cp_pathlen != 0.0 ? simparams.cp_pathlen : 1.2;
+          double base = sq( af_params.current_meniscus )+ simparams.band_volume * 360.0 / ( angl * plen * M_PI );
+          double lamella_width = sqrt( base ) - af_params.current_meniscus;
+          // Calculate the spread of the lamella:
+          for ( int j = 0; j < nval; j++ )
+          {
+             base = ( CT0.radius[ j ] - af_params.current_meniscus ) / lamella_width;
+             CT0.concentration[ j ] += sc->signal_concentration * exp( -pow( base, 4.0 ) );
+             if (  j<2||j>(CT0.concentration.size()-3)||j==(CT0.concentration.size()/40))
+                DbgLv(2) << "RSA:  j base conc" << j << base << CT0.concentration[j];
+             if(mxct<CT0.concentration[j]) {mxct=CT0.concentration[j];}
+          }
+          DbgLv(1) << "RSA:BF:  mxct" << mxct << "lamella_width" << lamella_width;
+       }
         else  // !simparams.band_forming
         {
             for ( int j = 0; j < nval; j++ )
