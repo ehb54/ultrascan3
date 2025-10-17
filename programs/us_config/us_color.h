@@ -24,7 +24,7 @@ class US_Color : public US_Widgets
   public:
     //! Construct the window to manage the user's color choices.
     //! The settings are saved for each user via \ref US_Settings.
-    US_Color( QWidget* = 0, Qt::WindowFlags = 0 );
+    US_Color( QWidget* w = nullptr, Qt::WindowFlags flags= Qt::WindowFlags() );
     //! A destructor to clean up 
     //~US_Color();
 

@@ -11,7 +11,7 @@
 #include "us_associations_gui.h"
 
 US_ModelGui::US_ModelGui( US_Model& current_model )
-   : US_WidgetsDialog( 0, 0 ), model( current_model )
+   : US_WidgetsDialog( nullptr, Qt::WindowFlags() ), model( current_model )
 {
    setWindowTitle   ( "UltraScan Model Editor" );
    setPalette       ( US_GuiSettings::frameColor() );

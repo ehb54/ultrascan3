@@ -603,7 +603,7 @@ DbgLv(1) << " CkScFit: modelx crit" << modelx << crit;
 void US_GlobalEquil::conc_histogram( void )
 {
 DbgLv(1) << "CONC_HISTOGRAM()";
-   ehisto = new US_EqHistogram( od_limit, scanfits, this, 0 );
+   ehisto = new US_EqHistogram( od_limit, scanfits, this, Qt::WindowFlags() );
    ehisto->show();
 }
 

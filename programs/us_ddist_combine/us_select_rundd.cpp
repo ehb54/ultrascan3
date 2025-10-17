@@ -16,7 +16,7 @@
 // Main constructor with flags for select-runID dialog
 
 US_SelectRunDD::US_SelectRunDD( bool dbase, QStringList& runIDs,
-   QStringList& mdescrs ) : US_WidgetsDialog( 0, 0 ),
+   QStringList& mdescrs ) : US_WidgetsDialog( nullptr, Qt::WindowFlags() ),
    runIDs( runIDs ), mDescrs( mdescrs )
 {
    sel_db        = dbase;

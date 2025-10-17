@@ -1083,7 +1083,7 @@ void US_Pseudo3D_Combine::load_color()
    // get an xml file name for the color map
    QString fname = QFileDialog::getOpenFileName( this,
       tr( "Load Color Map File" ),
-      US_Settings::etcDir(), filter, 0, 0 );
+      US_Settings::etcDir(), filter );
 
    if ( fname.isEmpty() )
       return;

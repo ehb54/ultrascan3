@@ -1735,7 +1735,7 @@ US_SolutionGui::US_SolutionGui(
       int   select_db_disk,
       const US_Solution dataIn,
       bool  auto_save
-      ) : US_WidgetsDialog( 0, 0 ), experimentID( expID ), channelID( chID ),
+      ) : US_WidgetsDialog( nullptr, Qt::WindowFlags() ), experimentID( expID ), channelID( chID ),
         signal( signal_wanted )
 
 {

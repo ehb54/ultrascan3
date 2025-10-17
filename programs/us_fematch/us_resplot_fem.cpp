@@ -17,9 +17,9 @@
 
 // constructor:  residuals plot widget
 // US_ResidPlotFem::US_ResidPlotFem( QWidget* parent, const bool auto_mode )
-//    : US_WidgetsDialog( 0, 0 )
+//    : US_WidgetsDialog( nullptr, Qt::WindowFlags() )
 US_ResidPlotFem::US_ResidPlotFem( QWidget* parent, const QString auto_mode )
-   : US_WidgetsDialog( 0, 0 )
+   : US_WidgetsDialog( nullptr, Qt::WindowFlags() )
 {
    // this->a_mode = auto_mode;
    this->a_mode = auto_mode;

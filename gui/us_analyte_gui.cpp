@@ -23,7 +23,7 @@
 
 /*  Class US_SequenceEditor */
 US_SequenceEditor::US_SequenceEditor( const QString& sequence ) 
-   : US_WidgetsDialog( 0, 0 )
+   : US_WidgetsDialog( nullptr, Qt::WindowFlags() )
 {
    setWindowTitle( tr( "Sequence Management" ) );
    setPalette( US_GuiSettings::frameColor() );
@@ -3035,7 +3035,7 @@ US_AnalyteGui::US_AnalyteGui( bool           signal,
                               const QString& GUID,
                               int            accessf, 
                               double         temper ) 
-   : US_WidgetsDialog( 0, 0 ),
+   : US_WidgetsDialog( nullptr, Qt::WindowFlags() ),
      signal( signal ), guid( GUID ), temperature( temper )
 {
    personID     = US_Settings::us_inv_ID();

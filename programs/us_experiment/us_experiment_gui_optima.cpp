@@ -609,7 +609,7 @@ void US_ExperimentMain::submitted_dataDisk( QMap < QString, QString > &protocol_
 
 // Panel for run and other general parameters
 US_ExperGuiGeneral::US_ExperGuiGeneral( QWidget* topw )
-   : US_WidgetsDialog( topw, 0 )
+   : US_WidgetsDialog( topw, Qt::WindowFlags() )
 {
    mainw               = (US_ExperimentMain*)topw;
    dbg_level           = US_Settings::us_debug();
@@ -1246,7 +1246,7 @@ void US_ExperGuiGeneral::centerpieceInfo( void )
 
 // Panel for Lab/Rotor parameters
 US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
-   : US_WidgetsDialog( topw, 0 )
+   : US_WidgetsDialog( topw, Qt::WindowFlags() )
 {
    mainw               = (US_ExperimentMain*)topw;
    rpRotor             = &(mainw->currProto.rpRotor);
@@ -2832,7 +2832,7 @@ DbgLv(1) << "EGR:  absR:   ii" << ii << "rID" << arotors[ii].ID;
 
 // Panel for Speed step parameters
 US_ExperGuiSpeeds::US_ExperGuiSpeeds( QWidget* topw )
-   : US_WidgetsDialog( topw, 0 )
+   : US_WidgetsDialog( topw, Qt::WindowFlags() )
 {
    mainw               = (US_ExperimentMain*)topw;
    rpSpeed             = &(mainw->currProto.rpSpeed);
@@ -4367,7 +4367,7 @@ void US_ExperGuiSpeeds::adjustDelay( void )
 
 // Panel for Cells parameters
 US_ExperGuiCells::US_ExperGuiCells( QWidget* topw )
-   : US_WidgetsDialog( topw, 0 )
+   : US_WidgetsDialog( topw, Qt::WindowFlags() )
 {
 DbgLv(1) << "EGCe: IN";
    mainw               = (US_ExperimentMain*)topw;
@@ -4591,7 +4591,7 @@ DbgLv(1) << "EGCe:wiChg:  sname irow" << sname << irow;
 
 // Panel for Solutions parameters
 US_ExperGuiSolutions::US_ExperGuiSolutions( QWidget* topw )
-   : US_WidgetsDialog( topw, 0 )
+   : US_WidgetsDialog( topw, Qt::WindowFlags() )
 {
    mainw               = (US_ExperimentMain*)topw;
    rpSolut             = &(mainw->currProto.rpSolut);
@@ -5420,7 +5420,7 @@ void US_ExperGuiSolutions::commentStrings( const QString solname,
 
 // Panel for Optical Systems parameters
 US_ExperGuiOptical::US_ExperGuiOptical( QWidget* topw )
-   : US_WidgetsDialog( topw, 0 )
+   : US_WidgetsDialog( topw, Qt::WindowFlags() )
 {
    mainw               = (US_ExperimentMain*)topw;
    rpOptic             = &(mainw->currProto.rpOptic);
@@ -5768,7 +5768,7 @@ DbgLv(1) << "EGOp: oCk: ccrows" << ccrows;
 
 // Panel for Analysis Profile parameters to Optima DB
 US_ExperGuiAProfile::US_ExperGuiAProfile( QWidget* topw )
-   : US_WidgetsDialog( topw, 0 )
+   : US_WidgetsDialog( topw, Qt::WindowFlags() )
 {
    mainw               = (US_ExperimentMain*)topw;
    rpRotor             = &(mainw->currProto.rpRotor);
@@ -5869,7 +5869,7 @@ DbgLv(1) << "EGAp:detE: ufont" << ufont.family();
 
 // Panel for Uploading parameters to Optima DB
 US_ExperGuiUpload::US_ExperGuiUpload( QWidget* topw )
-   : US_WidgetsDialog( topw, 0 )
+   : US_WidgetsDialog( topw, Qt::WindowFlags() )
 {
    mainw               = (US_ExperimentMain*)topw;
    rpRotor             = &(mainw->currProto.rpRotor);

@@ -7,7 +7,7 @@
 //! Class to present a pair of lists (included, excluded) to allow the
 //!  user to select triples to be excluded (deleted)
 US_SelectTriples::US_SelectTriples( QStringList& triples )
-   : US_WidgetsDialog( 0, 0 ), triples( triples )
+   : US_WidgetsDialog( nullptr, Qt::WindowFlags() ), triples( triples )
 {
    original    = triples;                 // List of original includes
    nbr_select  = 0;

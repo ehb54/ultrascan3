@@ -13,7 +13,7 @@
 // Main constructor for loading a single model
 US_ModelLoader::US_ModelLoader( bool dbSrc, QString& search,
       US_Model& amodel, QString& adescr, const QString eGUID )
-  :US_WidgetsDialog( 0, 0 ), loadDB( dbSrc ), dsearch( search ),
+  :US_WidgetsDialog( nullptr, Qt::WindowFlags() ), loadDB( dbSrc ), dsearch( search ),
    omodel( amodel ), odescr( adescr ), omodels( wmodels ), odescrs( mdescrs ),
    runIDs( wrunIDs )
 {
@@ -26,7 +26,7 @@ US_ModelLoader::US_ModelLoader( bool dbSrc, QString& search,
 // Alternate constructor for loading a single model (with runIDs)
 US_ModelLoader::US_ModelLoader( bool dbSrc, QString& search,
       US_Model& amodel, QString& adescr, QStringList& arunIDs )
-  :US_WidgetsDialog( 0, 0 ), loadDB( dbSrc ), dsearch( search ),
+  :US_WidgetsDialog( nullptr, Qt::WindowFlags() ), loadDB( dbSrc ), dsearch( search ),
    omodel( amodel ), odescr( adescr ), omodels( wmodels ), odescrs( mdescrs ),
    runIDs( arunIDs )
 {
@@ -40,7 +40,7 @@ US_ModelLoader::US_ModelLoader( bool dbSrc, QString& search,
 US_ModelLoader::US_ModelLoader( bool dbSrc, QString& search,
    QList< US_Model >& amodels, QStringList& adescrs,
    QStringList& arunIDs )
-   :US_WidgetsDialog( 0, 0 ), loadDB( dbSrc ), dsearch( search ),
+   :US_WidgetsDialog( nullptr, Qt::WindowFlags() ), loadDB( dbSrc ), dsearch( search ),
    omodel( model ), odescr( search ), omodels( amodels ), odescrs( adescrs ),
    runIDs( arunIDs )
 {
@@ -55,7 +55,7 @@ US_ModelLoader::US_ModelLoader( bool dbSrc, QString& search,
 US_ModelLoader::US_ModelLoader( bool dbSrc, QString& search,
 				QList< US_Model >& amodels, QStringList& adescrs,
 				QStringList& arunIDs, QString invID_passed )
-   :US_WidgetsDialog( 0, 0 ), loadDB( dbSrc ), dsearch( search ),
+   :US_WidgetsDialog( nullptr, Qt::WindowFlags() ), loadDB( dbSrc ), dsearch( search ),
    omodel( model ), odescr( search ), omodels( amodels ), odescrs( adescrs ),
    runIDs( arunIDs )
 {
@@ -69,7 +69,7 @@ US_ModelLoader::US_ModelLoader( bool dbSrc, QString& search,
 // Alternate constructor that allows loading multiple models (no runIDs list)
 US_ModelLoader::US_ModelLoader( bool dbSrc, QString& search,
    QList< US_Model >& amodels, QStringList& adescrs )
-   :US_WidgetsDialog( 0, 0 ), loadDB( dbSrc ), dsearch( search ),
+   :US_WidgetsDialog( nullptr, Qt::WindowFlags() ), loadDB( dbSrc ), dsearch( search ),
    omodel( model ), odescr( search ), omodels( amodels ), odescrs( adescrs ),
    runIDs( wrunIDs )
 {

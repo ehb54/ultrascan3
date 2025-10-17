@@ -10,7 +10,7 @@
 
 // constructor:  enhanced plot control widget
 US_PlotControlPc::US_PlotControlPc( QWidget* p, US_Model* amodel )
-   : US_WidgetsDialog( p, 0 )
+   : US_WidgetsDialog( p, Qt::WindowFlags() )
 {
    model          = amodel;
 

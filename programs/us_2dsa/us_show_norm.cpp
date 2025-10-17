@@ -45,7 +45,7 @@ bool distro_lessthan( const S_Solute &solu1, const S_Solute &solu2 )
 // US_Pseudo3D_Combine class constructor
 
 US_show_norm::US_show_norm(  US_Model* model, bool& cnst_vbar, QWidget* p )
-   : US_WidgetsDialog( p, 0 ), cnst_vbar( cnst_vbar )
+   : US_WidgetsDialog( p, Qt::WindowFlags() ), cnst_vbar( cnst_vbar )
 
 {
    // set up the GUI
@@ -610,7 +610,7 @@ void US_show_norm::load_color()
    // get an xml file name for the color map
    QString fname = QFileDialog::getOpenFileName( this,
       tr( "Load Color Map File" ),
-      US_Settings::etcDir(), filter, 0, 0 );
+      US_Settings::etcDir(), filter );
 
    if ( fname.isEmpty() )
       return;

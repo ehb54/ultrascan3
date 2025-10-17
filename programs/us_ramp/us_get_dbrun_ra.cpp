@@ -8,7 +8,7 @@
 
 // Primary constructor to establish the dialog
 US_GetDBRunRa::US_GetDBRunRa( QString& r ) 
-: US_WidgetsDialog( 0, 0 ), runID( r )
+: US_WidgetsDialog( nullptr, Qt::WindowFlags() ), runID( r )
 {
    setWindowTitle( tr( "Available US3 Runs..." ) );
    setPalette( US_GuiSettings::frameColor() );

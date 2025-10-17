@@ -14,7 +14,7 @@
 
 US_DistribPlot::US_DistribPlot( QVector< double >& divfracs,
    QVector< double >& divsedcs, const double tconc )
-   : US_WidgetsDialog( 0, 0 ), bfracs( divfracs ), dsedcs( divsedcs )
+   : US_WidgetsDialog( nullptr, Qt::WindowFlags() ), bfracs( divfracs ), dsedcs( divsedcs )
 {
 
    setWindowTitle( tr( "van Holde - Weischet Distribution Plot" ) );

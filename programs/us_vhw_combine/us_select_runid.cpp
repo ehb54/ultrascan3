@@ -15,7 +15,7 @@
 // Main constructor with flags for edit, latest-edit and local-data
 
 US_SelectRunid::US_SelectRunid( bool dbase, QStringList& runIDs )
- : US_WidgetsDialog( 0, 0 ),
+ : US_WidgetsDialog( nullptr, Qt::WindowFlags() ),
    runIDs     ( runIDs )
 {
    sel_db        = dbase;

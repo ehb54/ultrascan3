@@ -2040,7 +2040,7 @@ DbgLv(1) << "setB:synchc   synch complete:  components:"
 // Main Buffer window with panels
 US_BufferGui::US_BufferGui( bool signal_wanted, const US_Buffer& buf,
       int select_db_disk )
-   : US_WidgetsDialog( 0, 0 ), signal( signal_wanted ), buffer( buf )
+   : US_WidgetsDialog( nullptr, Qt::WindowFlags() ), signal( signal_wanted ), buffer( buf )
 {
    personID    = US_Settings::us_inv_ID();
    buffer      = buf;
@@ -2190,8 +2190,9 @@ void US_BufferGui::bufferRejected( void )
    reject();
 }
 
-US_BufferComponentRequerster::US_BufferComponentRequerster(US_BufferComponent* comp_, QMap<QString,US_BufferComponent>& list_) : US_WidgetsDialog(nullptr, nullptr),
-                                                                                   comp(comp_), component_list(list_) {
+US_BufferComponentRequerster::US_BufferComponentRequerster(
+   US_BufferComponent* comp_, QMap<QString,US_BufferComponent>& list_)
+: US_WidgetsDialog(nullptr, Qt::WindowFlags() ), comp(comp_), component_list(list_) {
    setWindowTitle(tr("Buffer component creator"));
    setPalette(US_GuiSettings::frameColor());
 

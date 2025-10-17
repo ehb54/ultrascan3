@@ -40,7 +40,7 @@ class US_GUI_EXTERN US_License : public US_Widgets
         \param flags  An enum value that describes the window properties.  This 
                       normally can be left as 0 (Qt::Widget).
     */
-    US_License( QWidget* parent = 0, Qt::WindowFlags flags = 0 );
+    US_License( QWidget* parent = nullptr, Qt::WindowFlags flags = Qt::WindowFlags() );
 
     //! \brief A null destructor.
     ~US_License() {};

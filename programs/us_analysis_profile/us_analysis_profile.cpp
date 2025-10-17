@@ -1157,7 +1157,7 @@ void US_AnalysisProfileGui::setColumnStretches( QGridLayout* genL )
 
 // Panel for run and other general parameters
 US_AnaprofPanGen::US_AnaprofPanGen( QWidget* topw )
-   : US_WidgetsDialog( topw, 0 )
+   : US_WidgetsDialog( topw, Qt::WindowFlags() )
 {
    mainw               = (US_AnalysisProfileGui*)topw;
    dbg_level           = US_Settings::us_debug();
@@ -2987,7 +2987,7 @@ DbgLv(1) << "GP:SL: APPLIED ALL";
 
 // Panel for 2DSA parameters
 US_AnaprofPan2DSA::US_AnaprofPan2DSA( QWidget* topw )
-   : US_WidgetsDialog( topw, 0 )
+   : US_WidgetsDialog( topw, Qt::WindowFlags() )
 {
    mainw               = (US_AnalysisProfileGui*)topw;
    dbg_level           = US_Settings::us_debug();
@@ -3664,7 +3664,7 @@ DbgLv(1) << "2D:SL: J5_MCITER_CHG";
 
 // Panel for PCSA parameters
 US_AnaprofPanPCSA::US_AnaprofPanPCSA( QWidget* topw )
-   : US_WidgetsDialog( topw, 0 )
+   : US_WidgetsDialog( topw, Qt::WindowFlags() )
 {
 DbgLv(1) << "APpc: IN";
    mainw               = (US_AnalysisProfileGui*)topw;

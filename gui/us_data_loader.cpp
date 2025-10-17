@@ -22,7 +22,7 @@ US_DataLoader::US_DataLoader(
       QString&                          desc,
       QMap<QString,QString>&		prot_det,
       QString                           tfilt )
- : US_WidgetsDialog( 0, 0 ),
+ : US_WidgetsDialog( nullptr, Qt::WindowFlags() ),
    latest     ( late ),
    rawData    ( rData ),
    editedData ( eData ),
@@ -143,7 +143,7 @@ US_DataLoader::US_DataLoader(
       QStringList&                      trips,
       QString&                          desc,
       QString                           tfilt )
- : US_WidgetsDialog( 0, 0 ),
+ : US_WidgetsDialog( nullptr, Qt::WindowFlags() ),
    latest     ( late ),
    rawData    ( rData ),
    editedData ( eData ),

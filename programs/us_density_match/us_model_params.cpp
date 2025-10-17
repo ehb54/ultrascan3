@@ -7,7 +7,7 @@
 
 // Constructor:  remove-distributions dialog widget
 US_ModelParams::US_ModelParams( QVector< DisSys >& adistros,
-    QWidget* p ) : US_WidgetsDialog( p, 0 ), distros( adistros )
+    QWidget* p ) : US_WidgetsDialog( p, Qt::WindowFlags() ), distros( adistros )
 {
    dbg_level       = US_Settings::us_debug();
    mainLayout      = new QGridLayout( this );

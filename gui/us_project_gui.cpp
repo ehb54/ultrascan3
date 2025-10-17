@@ -12,7 +12,7 @@ US_ProjectGui::US_ProjectGui(
       bool  signal_wanted,
       int   select_db_disk,
       const US_Project& dataIn 
-      ) : US_WidgetsDialog( 0, 0 ), project( dataIn )
+      ) : US_WidgetsDialog( nullptr, Qt::WindowFlags() ), project( dataIn )
 {
    signal         = signal_wanted;
    investigatorID = US_Settings::us_inv_ID();

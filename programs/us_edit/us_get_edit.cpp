@@ -6,7 +6,7 @@
 #include "us_gui_settings.h"
 
 US_GetEdit::US_GetEdit( int& i, QStringList& filenames ) 
-: US_WidgetsDialog( 0, 0 ), index( i )
+: US_WidgetsDialog( nullptr, Qt::WindowFlags() ), index( i )
 {
    setWindowTitle( tr( "Load Edits From DB" ) );
    setPalette( US_GuiSettings::frameColor() );

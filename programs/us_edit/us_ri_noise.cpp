@@ -15,7 +15,7 @@ US_RiNoise::US_RiNoise( const US_DataIO::RawData& raw,
                         const QString&            dataType,
                         int&                      initial_order, 
                         QList< double >&          r )
-  : US_WidgetsDialog( 0, 0 ), 
+  : US_WidgetsDialog( nullptr, Qt::WindowFlags() ),
     data( raw ), includes( Includes ), range_left( left ), 
     range_right( right ), order( initial_order ), residuals( r )
 {

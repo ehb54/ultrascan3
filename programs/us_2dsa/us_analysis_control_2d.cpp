@@ -40,7 +40,7 @@
 
 // constructor:  2dsa analysis controls widget
 US_AnalysisControl2D::US_AnalysisControl2D( QList< SS_DATASET* >& dsets,
-   bool& loadDB, QWidget* p ) : US_WidgetsDialog( p, 0 ),
+   bool& loadDB, QWidget* p ) : US_WidgetsDialog( p, Qt::WindowFlags() ),
    dsets( dsets ), loadDB( loadDB )
 {
    parentw        = p;
