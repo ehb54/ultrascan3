@@ -41,6 +41,7 @@ class US_UTIL_EXTERN US_RunProtocol
 	    QString     importDataDisk;
 	    bool        importData;
 	    bool        importData_absorbance_t;
+	    bool        importData_absorbance_pa;
 	    
             QString     labGUID;       //!< Laboratory GUID
             QString     rotGUID;       //!< Rotor GUID

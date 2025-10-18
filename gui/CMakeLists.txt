@@ -3,9 +3,11 @@
 # Auto-discover GUI source files
 file(GLOB GUI_SOURCES "*.cpp")
 file(GLOB GUI_HEADERS "*.h")
+file(GLOB GUI_RESOURCES "*.qrc")
+file(GLOB GUI_FORMS "*.ui")
 
 # Create GUI library
-add_library(us_gui ${GUI_SOURCES} ${GUI_HEADERS})
+add_library(us_gui ${GUI_SOURCES} ${GUI_HEADERS} ${GUI_FORMS} ${GUI_RESOURCES})
 
 if(APPLE)
     # Force all symbols to be exported at link time

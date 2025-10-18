@@ -16,7 +16,7 @@ class US_Advanced : public US_Widgets
   public:
     
     //!  Construct the window to manage advanced parameters.
-    US_Advanced( QWidget* w = 0, Qt::WindowFlags flags = 0 );
+    US_Advanced( QWidget* w = nullptr, Qt::WindowFlags flags = Qt::WindowFlags() );
     
   private:
 

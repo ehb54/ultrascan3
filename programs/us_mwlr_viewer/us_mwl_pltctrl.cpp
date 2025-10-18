@@ -16,7 +16,7 @@
 
 // constructor:  enhanced plot control widget
 US_MwlPlotControl::US_MwlPlotControl( QWidget* p, QVector< QVector3D >* d )
-   : US_WidgetsDialog( 0, 0 )
+   : US_WidgetsDialog( nullptr, Qt::WindowFlags() )
 {
 qDebug() << "PCtrl: IN";
    wparent        = p;

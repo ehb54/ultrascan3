@@ -9,7 +9,7 @@
 
 // constructor:  enhanced plot control widget
 US_AdvAnalysis2D::US_AdvAnalysis2D( US_SimulationParameters* sim_par,
-    bool& loadDB, QWidget* p ) : US_WidgetsDialog( p, 0 ), loadDB( loadDB )
+    bool& loadDB, QWidget* p ) : US_WidgetsDialog( p, Qt::WindowFlags() ), loadDB( loadDB )
 {
    sparms         = sim_par;
    parentw        = p;

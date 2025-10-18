@@ -7,7 +7,7 @@
 
 // Primary constructor to establish the dialog
 US_MwlRun::US_MwlRun( QString& runID, bool isRawMwl ) 
-: US_WidgetsDialog( 0, 0 ), runID( runID ), isRawMwl( isRawMwl )
+: US_WidgetsDialog( nullptr, Qt::WindowFlags() ), runID( runID ), isRawMwl( isRawMwl )
 {
    if ( isRawMwl )
    {

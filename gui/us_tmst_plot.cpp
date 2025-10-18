@@ -17,7 +17,7 @@
 
 // constructor:  residuals plot widget
 US_TmstPlot::US_TmstPlot( QWidget* parent, const QString tspath )
-   : US_WidgetsDialog( parent, 0 )
+   : US_WidgetsDialog( parent, Qt::WindowFlags() )
 {
    // Begin laying out the GUI
    setObjectName( "US_TmstPlot" );
@@ -584,9 +584,9 @@ DbgLv(1) << "TP: det: lostep histep nstep" << lostep << histep << nstep
    {
       int stepnum    = lostep + js;
       int ispeed     = stspeeds[ js ];
-      dtext += QString().sprintf( "%5d   %5d %5d to %5d  %9.3f to %9.3f\n",
-                  stepnum, ispeed, stsscans[ js ], stescans[js],
-                  ststimes[ js ], stetimes[ js ] );
+      dtext += QString::asprintf( "%5d   %5d %5d to %5d  %9.3f to %9.3f\n",
+stepnum, ispeed, stsscans[ js ], stescans[js],
+ststimes[ js ], stetimes[ js ] );
 DbgLv(1) << "TP: det: step speed" << stepnum << ispeed
  << "scan_0 time_0 scan_n time_n"
  << stsscans[js] << ststimes[js] << stescans[js] << stetimes[js];

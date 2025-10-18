@@ -90,7 +90,7 @@ void CSVTableView::delete_columns()
 }
 
 US_CSV_Loader::US_CSV_Loader(const QString &filePath, const QString &note,
-                             bool editable, QWidget *parent) : US_WidgetsDialog(parent, 0)
+                             bool editable, QWidget *parent) : US_WidgetsDialog( parent, Qt::WindowFlags() )
 {
     QApplication::setOverrideCursor(Qt::WaitCursor);
     if (!parse_file(filePath))

@@ -10,7 +10,7 @@
 
 // constructor:  enhanced plot control widget
 US_PlotControl2D::US_PlotControl2D( QWidget* p, US_Model* amodel )
-   : US_WidgetsDialog( p, 0 )
+   : US_WidgetsDialog( p, Qt::WindowFlags() )
 {
    model          = amodel;
 

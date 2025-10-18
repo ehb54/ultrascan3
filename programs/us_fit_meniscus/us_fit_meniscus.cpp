@@ -674,7 +674,7 @@ DbgLv(1) << "LD:  ii" << ii << "valsize" << valsize;
          v_bott << rbott;
          v_rmsd << rmsdv;
 
-         parsed << QString().sprintf( "%3d : ", count ) +
+         parsed << QString::asprintf( "%3d : ", count ) +
                    QString::number( rmeni, 'f', 5 ) + ", " +
                    QString::number( rbott, 'f', 5 ) + ", " +
                    QString::number( rmsdv, 'f', 8 ); 
@@ -686,7 +686,7 @@ DbgLv(1) << "LD:  ii" << ii << "valsize" << valsize;
          v_meni << rmeni;
          v_rmsd << rmsdv;
 
-         parsed << QString().sprintf( "%3d : ", count ) +
+         parsed << QString::asprintf( "%3d : ", count ) +
                    QString::number( rmeni, 'f', 5 ) + ", " +
                    QString::number( rmsdv, 'f', 8 ); 
       }
@@ -1304,6 +1304,7 @@ void US_FitMeniscus::edit_update( void )
   if ( auto_mode )
     {
       pb_update->setEnabled( false );
+      qApp->processEvents();
       
       QString requestID = triple_information[ "requestID" ];
       //--- LOCK && UPDATE the autoflowStages' ANALYSIS field for the record
@@ -1475,8 +1476,8 @@ DbgLv(1) << " eupd:  fn" << fn;
       botnew         = le_men_sel->text().toDouble();
    }
 
-   QString s_meni = QString().sprintf( "%.5f", mennew );
-   QString s_bott = QString().sprintf( "%.5f", botnew );
+   QString s_meni = QString::asprintf( "%.5f", mennew );
+   QString s_bott = QString::asprintf( "%.5f", botnew );
 DbgLv(1) << " eupd:  s_meni s_bott" << s_meni << s_bott;
    QString mmsg   = "";
    QString mhdr   = "";

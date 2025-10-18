@@ -1761,11 +1761,14 @@ void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_liv
      getLabInstrumentOperatorInfo_auto();
 
      //Auto-process reference scans
-     if ( dataType == "IP" || dataSource == "dataDiskAUC:Absorbance" )
+     if ( dataType == "IP" || dataSource == "dataDiskAUC:Absorbance"  ||
+	  dataSource == "dataDiskAUC:PseudoAbsorbance" )
        auto_ref_scan = false;
 
      //TEMPORARY !!!!
-     if ( dataType == "RI" && expType != "ABDE" && dataSource != "dataDiskAUC:Absorbance" )
+     if ( dataType == "RI" && expType != "ABDE" &&
+	  dataSource != "dataDiskAUC:Absorbance" &&
+	  dataSource != "dataDiskAUC:PseudoAbsorbance"  )
        {
      	 // double low_ref  = 5.87 - 0.005;
      	 // double high_ref = 5.87 + 0.005;
@@ -1910,10 +1913,13 @@ void US_ConvertGui::process_optics()
      getLabInstrumentOperatorInfo_auto();
 
      //Auto-process reference scans
-     if ( dataType == "IP" || dataSource == "dataDiskAUC:Absorbance" )
+     if ( dataType == "IP" || dataSource == "dataDiskAUC:Absorbance" ||
+	  dataSource == "dataDiskAUC:PseudoAbsorbance" )
        auto_ref_scan = false;
      
-     if ( dataType == "RI" && expType != "ABDE" && dataSource != "dataDiskAUC:Absorbance")
+     if ( dataType == "RI" && expType != "ABDE" &&
+	  dataSource != "dataDiskAUC:Absorbance" &&
+	  dataSource != "dataDiskAUC:PseudoAbsorbance" )
        {
 	 // double low_ref  = 5.87 - 0.005;
 	 // double high_ref = 5.87 + 0.005;
@@ -2940,6 +2946,15 @@ DbgLv(1) << " enabCtl: tLx infsz" << tripListx << out_chaninfo.count();
       }
    }
 
+   //enable save if gebuine "RA" type, or PseudoAbsorbance (when dataDisk read)
+   if ( dataSource == "dataDiskAUC:Absorbance" || dataSource == "dataDiskAUC:PseudoAbsorbance" )
+     {
+       //also disable ref. scan do/undo
+       pb_reference  ->setEnabled( false );
+       referenceDefined = true;
+       completed = true;
+     }
+   
    // If we made it here, user can save
    pb_saveUS3 ->setEnabled( completed );
 }
@@ -7596,7 +7611,7 @@ DbgLv(1) << "nspeeds=" << nspeeds << "nripro=" << nripro;
       {
          int ispeed        = speeds[ spx ];
 DbgLv(1) << "us_convert: ispeed=" << ispeed << "spx=" << spx << "nspeeds=" << nspeeds;
-         runID             = runIDbase + QString().sprintf( "%05d", ispeed );
+         runID             = runIDbase + QString::asprintf( "%05d", ispeed );
          double speed      = (double)ispeed;
          ExpData.runID     = runID;
          ExpData.expGUID.clear();

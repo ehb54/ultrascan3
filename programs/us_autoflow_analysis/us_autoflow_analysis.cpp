@@ -1845,7 +1845,7 @@ int US_Analysis_auto::count_noise_auto( US_DataIO::EditedData* edata,
    for ( int ii = 1; ii < nemods; ii++ )
    {  // Search through models in edit
       lmodlGUID  = mieGUIDs[ ii ];                    // this model's GUID
-      modelIndx  = QString().sprintf( "%4.4d", kk );  // models-in-edit index
+      modelIndx  = QString::asprintf( "%4.4d", kk );  // models-in-edit index
 
       // Find the noises tied to this model
       int kenois = noises_in_model_auto( lmodlGUID, tmpGUIDs );
@@ -4900,7 +4900,7 @@ DbgLv(1) << "LD:  ii" << ii << "valsize" << valsize;
          v_bott << rbott;
          v_rmsd << rmsdv;
 
-         parsed << QString().sprintf( "%3d : ", count ) +
+         parsed << QString::asprintf( "%3d : ", count ) +
                    QString::number( rmeni, 'f', 5 ) + ", " +
                    QString::number( rbott, 'f', 5 ) + ", " +
                    QString::number( rmsdv, 'f', 8 ); 
@@ -4912,7 +4912,7 @@ DbgLv(1) << "LD:  ii" << ii << "valsize" << valsize;
          v_meni << rmeni;
          v_rmsd << rmsdv;
 
-         parsed << QString().sprintf( "%3d : ", count ) +
+         parsed << QString::asprintf( "%3d : ", count ) +
                    QString::number( rmeni, 'f', 5 ) + ", " +
                    QString::number( rmsdv, 'f', 8 ); 
       }
@@ -5393,8 +5393,8 @@ DbgLv(1) << " eupd:  fn" << fn;
      botnew = fit_xvl;
    }
 
-   QString s_meni = QString().sprintf( "%.5f", mennew );
-   QString s_bott = QString().sprintf( "%.5f", botnew );
+   QString s_meni = QString::asprintf( "%.5f", mennew );
+   QString s_bott = QString::asprintf( "%.5f", botnew );
 DbgLv(1) << " eupd:  s_meni s_bott" << s_meni << s_bott;
    QString mmsg   = "";
    QString mhdr   = "";

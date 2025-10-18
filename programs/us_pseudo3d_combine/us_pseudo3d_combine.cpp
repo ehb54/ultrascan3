@@ -279,7 +279,7 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
 
    QFontMetrics fm( ct_plt_smax->font() );
    ct_plt_smax->adjustSize();
-   ct_plt_smax->setMinimumWidth( ct_plt_smax->width() + fm.width( "ABC" ) );
+   ct_plt_smax->setMinimumWidth( ct_plt_smax->width() + fm.horizontalAdvance( "ABC" ) );
 
    // Order plot components on the left side
    spec->addWidget( lb_info1,      s_row++, 0, 1, 8 );
@@ -1083,7 +1083,7 @@ void US_Pseudo3D_Combine::load_color()
    // get an xml file name for the color map
    QString fname = QFileDialog::getOpenFileName( this,
       tr( "Load Color Map File" ),
-      US_Settings::etcDir(), filter, 0, 0 );
+      US_Settings::etcDir(), filter );
 
    if ( fname.isEmpty() )
       return;

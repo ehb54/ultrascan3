@@ -13,7 +13,7 @@ US_RotorGui::US_RotorGui(
      bool                        new_calibration,
      bool                        signal_wanted,
      int                         select_db_disk
-     ) : US_WidgetsDialog( 0, 0 ), currentCalibration( calibration )
+     ) : US_WidgetsDialog( nullptr, Qt::WindowFlags() ), currentCalibration( calibration )
 {
    this->savingCalibration = new_calibration;
    this->signal            = signal_wanted;

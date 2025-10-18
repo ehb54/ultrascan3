@@ -47,13 +47,8 @@ US_Edit::US_Edit( QString auto_mode ) : US_Widgets()
 {
    pb_removeAllbutLast = us_pushbutton( tr( "Remove All but Last" ), true );
    pb_baseline_correct = us_pushbutton( tr( "Correct Baseline" ), false );
-   pb_bll_modify       = us_pushbutton( tr( "Modify Baseline Correction for Selected Triple" ), false );
-   lb_baseline_correct = us_banner( tr( "Linear Baseline Correction" ) );
-   lb_bll_slope        = us_label( tr( "Slope:" ), -1 );
-   le_bll_slope        = us_lineedit( "", 1, true );
-   lb_bll_intercept    = us_label( tr( "Y-intercept:" ), -1 );
-   le_bll_intercept    = us_lineedit( "", 1, true );
    pb_pass             = us_pushbutton( tr( "Accept Changes for a Channel" ), false );
+   
    check        = US_Images::getIcon( US_Images::CHECK );
    invert       = 1.0;
    all_edits    = false;
@@ -552,7 +547,6 @@ pb_plateau->setVisible(false);
        lb_gaps        ->hide();
        ct_gaps        ->hide();
 
-
        lb_scan        ->hide();
        lb_from        ->hide();
        lb_to          ->hide();
@@ -562,6 +556,10 @@ pb_plateau->setVisible(false);
        pb_exclusion   ->hide();
        pb_edit1       ->hide();
        pb_include     ->hide();
+
+       pb_removeAllbutLast  ->hide();
+       pb_baseline_correct  ->hide();
+       pb_pass              ->hide();
 
        pb_meniscus    ->hide();
        pb_dataRange   ->hide();
@@ -573,7 +571,6 @@ pb_plateau->setVisible(false);
        pb_invert      ->hide();
        pb_priorEdits  ->hide();
        pb_float       ->hide();
-
 
        pb_reset       ->hide();
        pb_help        ->hide();
@@ -821,15 +818,9 @@ pb_plateau->setVisible(false);
 US_Edit::US_Edit( QVector< US_DataIO::RawData > allData, QStringList  triples,
 		  QString  workingDir, int currenChtInd, int plotind, QString exptype ) : US_Widgets()
 {
-   pb_removeAllbutLast = us_pushbutton( tr( "Remove All but Last" ), true );
-   pb_baseline_correct = us_pushbutton( tr( "Correct Baseline" ), false );
    pb_bll_modify       = us_pushbutton( tr( "Modify Baseline Correction for Selected Triple" ), false );
-   lb_baseline_correct = us_banner( tr( "Linear Baseline Correction" ) );
-   lb_bll_slope        = us_label( tr( "Slope:" ), -1 );
-   le_bll_slope        = us_lineedit( "", 1, true );
-   lb_bll_intercept    = us_label( tr( "Y-intercept:" ), -1 );
-   le_bll_intercept    = us_lineedit( "", 1, true );
-   pb_pass             = us_pushbutton( tr( "Accept Changes for a Channel" ), false );
+   pb_bll_modify -> setVisible( false );
+   
    check        = US_Images::getIcon( US_Images::CHECK );
    invert       = 1.0;
    all_edits    = false;
@@ -1299,6 +1290,8 @@ pb_plateau->setVisible(false);
        le_bll_slope        ->hide();
        lb_bll_intercept    ->hide();
        le_bll_intercept    ->hide();
+       pb_removeAllbutLast ->hide();
+       
      }
 
    // pb_meniscus    ->hide();
@@ -1387,15 +1380,9 @@ US_Edit::US_Edit( QVector< US_DataIO::RawData > allData, QStringList  triples,
 		  QString  workingDir, int currenChtInd, int plotind, QString exptype,
 		  QStringList editParams, QList<int> editParams_includes ) : US_Widgets()
 {
-   pb_removeAllbutLast = us_pushbutton( tr( "Remove All but Last" ), true );
-   pb_baseline_correct = us_pushbutton( tr( "Correct Baseline" ), false );
    pb_bll_modify       = us_pushbutton( tr( "Modify Baseline Correction for Selected Triple" ), false );
-   lb_baseline_correct = us_banner( tr( "Linear Baseline Correction" ) );
-   lb_bll_slope        = us_label( tr( "Slope:" ), -1 );
-   le_bll_slope        = us_lineedit( "", 1, true );
-   lb_bll_intercept    = us_label( tr( "Y-intercept:" ), -1 );
-   le_bll_intercept    = us_lineedit( "", 1, true );
-   pb_pass             = us_pushbutton( tr( "Accept Changes for a Channel" ), false );
+   pb_bll_modify -> setVisible( false );
+       
    check        = US_Images::getIcon( US_Images::CHECK );
    invert       = 1.0;
    all_edits    = false;
@@ -2415,6 +2402,18 @@ pb_plateau->setVisible(false);
    main->setStretchFactor( plot, 3 );
    top ->addLayout( main );
 
+   //hide abde base line corr. for now
+   pb_pass->setVisible( false );
+   pb_removeAllbutLast ->hide();
+   pb_baseline_correct ->hide();
+   pb_bll_modify       ->hide();
+   lb_baseline_correct ->hide();
+   lb_bll_slope        ->hide();
+   le_bll_slope        ->hide();
+   lb_bll_intercept    ->hide();
+   le_bll_intercept    ->hide();
+   pb_pass             ->hide();
+   
    reset();
 }
 
@@ -2967,6 +2966,17 @@ void US_Edit::load_auto( QMap < QString, QString > & details_at_editing )
       le_bll_slope        -> setVisible( true );
       le_bll_intercept    -> setVisible( true );
     }
+  else
+    {
+      //linear baseline correction
+      lb_baseline_correct -> setVisible( false );
+      pb_bll_modify       -> setVisible( false );
+      lb_bll_slope        -> setVisible( false );
+      lb_bll_intercept    -> setVisible( false );
+      le_bll_slope        -> setVisible( false );
+      le_bll_intercept    -> setVisible( false );
+    }
+   
 
 }
 
@@ -3445,7 +3455,7 @@ DbgLv(1) << "IS-MWL:  expi_wvlns size" << expi_wvlns.size() << nwaveln;
 //       for ( int ii = 0; ii < nrpoint; ii++ )
 //       {  // Update the list of radii that may be plotted
 //          expd_radii << data.xvalues[ ii ];
-//          expc_radii << QString().sprintf( "%.3f", data.xvalues[ ii ] );
+//          expc_radii << QString::asprintf( "%.3f", data.xvalues[ ii ] );
 //       }
 // DbgLv(1) << "IS-MWL:  expd_radii size" << expd_radii.size() << nrpoint;
 
@@ -3846,9 +3856,9 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
 	     plot->btnZoom->setChecked( false );
 
 	   // Display the data
-	   QString wkstr;
-	   le_airGap->setText( wkstr.sprintf( "%.3f - %.3f",
-					      airGap_left, airGap_right ) );
+
+	   le_airGap->setText( QString::asprintf( "%.3f - %.3f",
+                                                  airGap_left, airGap_right ) );
 
 	   step          = RANGE;
 	   range_left    = meniscus + _RNGLEFT_OFFSET_;
@@ -5377,7 +5387,7 @@ DbgLv(1) << "IS-MWL:  expi_wvlns size" << expi_wvlns.size() << nwaveln;
 //       for ( int ii = 0; ii < nrpoint; ii++ )
 //       {  // Update the list of radii that may be plotted
 //          expd_radii << data.xvalues[ ii ];
-//          expc_radii << QString().sprintf( "%.3f", data.xvalues[ ii ] );
+//          expc_radii << QString::asprintf( "%.3f", data.xvalues[ ii ] );
 //       }
 // DbgLv(1) << "IS-MWL:  expd_radii size" << expd_radii.size() << nrpoint;
 
@@ -5994,7 +6004,7 @@ DbgLv(1) << "IS-MWL:  expi_wvlns size" << expi_wvlns.size() << nwaveln;
 //       for ( int ii = 0; ii < nrpoint; ii++ )
 //       {  // Update the list of radii that may be plotted
 //          expd_radii << data.xvalues[ ii ];
-//          expc_radii << QString().sprintf( "%.3f", data.xvalues[ ii ] );
+//          expc_radii << QString::asprintf( "%.3f", data.xvalues[ ii ] );
 //       }
 // DbgLv(1) << "IS-MWL:  expd_radii size" << expd_radii.size() << nrpoint;
 
@@ -6478,9 +6488,8 @@ DbgLv(1) << "AGap: L R" << airGap_left << airGap_right << " AdjIntf";
                plot->btnZoom->setChecked( false );
 
             // Display the data
-            QString wkstr;
-            le_airGap->setText( wkstr.sprintf( "%.3f - %.3f",
-                     airGap_left, airGap_right ) );
+            le_airGap->setText( QString::asprintf( "%.3f - %.3f",
+                                                   airGap_left, airGap_right ) );
 
             step          = RANGE;
             range_left    = meniscus + _RNGLEFT_OFFSET_;
@@ -6590,8 +6599,7 @@ DbgLv(1) << "AGap:  plot_range()";
             }
 
             // Display the data
-            QString wkstr;
-//            le_dataRange->setText( wkstr.sprintf( "%.3f - %.3f",
+//            le_dataRange->setText( QString::asprintf( "%.3f - %.3f",
 //                     range_left, range_right ) );
             le_dataStart->setText( QString::number( range_left,  'f', 8 ) );
             le_dataEnd  ->setText( QString::number( range_right, 'f', 8 ) );
@@ -6773,8 +6781,7 @@ DbgLv(1) << "AGap:  plot_range()";
             plateau   = ( plateau > 0.0 ) ? plateau
                                           : ( range_right - _PLATEAU_OFFSET_ );
 
-            QString wkstr;
-            le_baseline->setText( wkstr.sprintf( "%.3f (%.3e)", baseline, bl ) );
+            le_baseline->setText( QString::asprintf( "%.3f (%.3e)", baseline, bl ) );
 DbgLv(1) << "BL: AA : baseline bl" << baseline << bl;
             le_plateau ->setText( QString::number( plateau,     'f', 8 ) );
             plot_range();
@@ -6965,8 +6972,7 @@ void US_Edit::next_step( void )
 
          double bl = sum / 11.0;
 
-         QString str;
-         le_baseline->setText( str.sprintf( "%.3f (%.3e)", baseline, bl ) );
+         le_baseline->setText( QString::asprintf( "%.3f (%.3e)", baseline, bl ) );
 	 DbgLv(1) << "BL: BB : baseline bl" << baseline << bl;
 
 	 baseline_od = bl;
@@ -8444,17 +8450,15 @@ void US_Edit::remove_spikes_auto( void )
 	   airGap_left   = editProfile[ cb_triple->currentText() ][7].toDouble();
 	   airGap_right  = editProfile[ cb_triple->currentText() ][8].toDouble();
 
-	   QString wkstr;
-	   le_airGap->setText( wkstr.sprintf( "%.3f - %.3f",
-					      airGap_left, airGap_right ) );
+	   le_airGap->setText( QString::asprintf( "%.3f - %.3f",
+                                                  airGap_left, airGap_right ) );
 	 }
 
        if ( isMwl )
 	 le_baseline ->setText( QString::number( baseline,     'f', 3 ) );
        else
 	 {
-	   QString str;
-	   le_baseline->setText( str.sprintf( "%.3f (%.3e)", baseline, baseline_od ) );
+            le_baseline->setText( QString::asprintf( "%.3f (%.3e)", baseline, baseline_od ) );
 	 }
 
        if ( autoflow_expType == "ABDE" )
@@ -8524,9 +8528,8 @@ void US_Edit::undo_auto( void )
 	   airGap_left   = editProfile[ cb_triple->currentText() ][7].toDouble();
 	   airGap_right  = editProfile[ cb_triple->currentText() ][8].toDouble();
 
-	   QString wkstr;
-	   le_airGap->setText( wkstr.sprintf( "%.3f - %.3f",
-					      airGap_left, airGap_right ) );
+	   le_airGap->setText( QString::asprintf( "%.3f - %.3f",
+                                                  airGap_left, airGap_right ) );
 	 }
 
 
@@ -8534,8 +8537,7 @@ void US_Edit::undo_auto( void )
 	 le_baseline ->setText( QString::number( baseline,     'f', 3 ) );
        else
 	 {
-	   QString str;
-	   le_baseline->setText( str.sprintf( "%.3f (%.3e)", baseline, baseline_od ) );
+            le_baseline->setText( QString::asprintf( "%.3f (%.3e)", baseline, baseline_od ) );
 	 }
 
        if ( autoflow_expType == "ABDE" )
@@ -9119,8 +9121,7 @@ DbgLv(1) << "EDT:NewTr: DONE";
        le_baseline ->setText( QString::number( baseline,     'f', 3 ) );
      else
        {
-	 QString str;
-	 le_baseline->setText( str.sprintf( "%.3f (%.3e)", baseline, baseline_od ) );
+          le_baseline->setText( QString::asprintf( "%.3f (%.3e)", baseline, baseline_od ) );
        }
 
      qDebug() << "NEW_TRIPLE_AUTO: 3";
@@ -9149,9 +9150,8 @@ DbgLv(1) << "EDT:NewTr: DONE";
 	 airGap_left   = editProfile[ cb_triple->currentText() ][7].toDouble();
 	 airGap_right  = editProfile[ cb_triple->currentText() ][8].toDouble();
 
-	 QString wkstr;
-	 le_airGap->setText( wkstr.sprintf( "%.3f - %.3f",
-					    airGap_left, airGap_right ) );
+	 le_airGap->setText( QString::asprintf( "%.3f - %.3f",
+                                                airGap_left, airGap_right ) );
 
 	 US_DataIO::EditValues  edits;
 	 edits.airGapLeft  = airGap_left;
@@ -10285,6 +10285,7 @@ void US_Edit::write_auto( void )
 
          write_triple_auto( triple_index );
       }
+      
    }
 
 
@@ -11014,6 +11015,22 @@ void US_Edit::create_autoflowAnalysisStages_record( IUS_DB2* db, int ID )
 // Save edits for a triple
 void US_Edit::write_triple_auto( int trx )
 {
+
+  if ( disk_controls->db() )
+    {
+      if ( dbP == NULL )
+	{
+	  US_Passwd pw;
+	  dbP          = new US_DB2( pw.getPasswd() );
+	  if ( dbP == NULL  ||  dbP->lastErrno() != US_DB2::OK )
+	    {
+	      QMessageBox::warning( this, tr( "Connection Problem" ),
+				     tr( "Could not connect to database \n" ) + dbP->lastError() );
+	      return;
+	    }
+	}
+    }
+
    triple_index = trx;
 
    index_data_auto( trx );
@@ -11080,12 +11097,17 @@ void US_Edit::write_triple_auto( int trx )
 	 is_spike_auto = false;
      }
 
-   // ALEXEY: the bottom value affected by rotor stretch - time consuming !!! Do we need it ?
-   // US_SimulationParameters simparams;
-   // simparams.initFromData( dbP, data, false, runID, dataType );
-   // bottom         = simparams.bottom;
+   qDebug() << "[in write_triple_auto()]: workingDir -- " << workingDir;
+   
+   //old way: just read form centerpiece
+   double bottom_cent = centerpieceParameters[ trx ][1].toDouble();  //Should be from centerpiece info from protocol
+   
+   US_SimulationParameters simparams;
+   simparams.initFromData( dbP, data, idInv_auto.toInt(), false, runID, dataType );
+   bottom         = simparams.bottom;
 
-   bottom = centerpieceParameters[ trx ][1].toDouble();  //Should be from centerpiece info from protocol
+   qDebug() << "[in write_triple_auto()]: bottom_cent, bottom -- "
+	    << bottom_cent << ", " << bottom;
    // End of base parameters
 
 
@@ -11097,8 +11119,6 @@ void US_Edit::write_triple_auto( int trx )
       idax           = triples.indexOf( triple );
       odax           = index_data_auto( wvx );
    }
-
-
 
 
    // Do we need this ??
@@ -11185,6 +11205,7 @@ void US_Edit::write_triple_auto( int trx )
    triple           = triples.at( idax );
 
    // Output the edit XML file
+   qDebug() << "[in write_triple_auto()]: filename -- " << filename;
    int wrstat       = write_xml_file( filename, triple, editGUID, rawGUID );
 
    // //DEBUG!!!!  Commnet!!!!!!!!!!!!!!!!!!!!!!!
@@ -11197,29 +11218,14 @@ void US_Edit::write_triple_auto( int trx )
    else
      editFnames[ idax ] = filename;
 
-   if ( disk_controls->db() )
-     {
-       if ( dbP == NULL )
-	 {
-	   US_Passwd pw;
-	   dbP          = new US_DB2( pw.getPasswd() );
-	   if ( dbP == NULL  ||  dbP->lastErrno() != US_DB2::OK )
-	     {
-	       QMessageBox::warning( this, tr( "Connection Problem" ),
-				     tr( "Could not connect to database \n" ) + dbP->lastError() );
-	       return;
-	     }
-	 }
-
-       editID           = editIDs[ idax ];
-
-       // Output the edit database record
-       wrstat     = write_edit_db( dbP, filename, editGUID, editID, rawGUID );
-
-       if ( wrstat != 0 )
-         return;
-     }
-
+   editID           = editIDs[ idax ];
+   
+   // Output the edit database record
+   wrstat     = write_edit_db( dbP, filename, editGUID, editID, rawGUID );
+   
+   if ( wrstat != 0 )
+     return;
+   
    // Output the Data Set Information report
    QString rtext;
    tpart            = filename.section( ".", -4, -2 ).replace( ".", "" );
@@ -11840,7 +11846,6 @@ void US_Edit::prior_equil( void )
       }
 
       // Apply the edits
-      QString wkstr;
 
       meniscus    = parameters.meniscus;
       range_left  = parameters.rangeLeft;
@@ -11862,7 +11867,7 @@ void US_Edit::prior_equil( void )
             sData[ jsd++ ] = parameters.speedData[ jj ];
       }
 
-      le_meniscus->setText( wkstr.sprintf( "%.3f", meniscus ) );
+      le_meniscus->setText( QString::asprintf( "%.3f", meniscus ) );
       pb_meniscus->setIcon( check );
       pb_meniscus->setEnabled( true );
 
@@ -11873,14 +11878,14 @@ void US_Edit::prior_equil( void )
       {
          US_DataIO::adjust_interference( data, parameters );
          US_DataIO::calc_integral      ( data, parameters );
-         le_airGap->setText( wkstr.sprintf( "%.3f - %.3f",
-                  airGap_left, airGap_right ) );
+         le_airGap->setText( QString::asprintf( "%.3f - %.3f",
+                                                airGap_left, airGap_right ) );
          pb_airGap->setIcon( check );
          pb_airGap->setEnabled( true );
       }
 
-      le_dataRange->setText( wkstr.sprintf( "%.3f - %.3f",
-              range_left, range_right ) );
+      le_dataRange->setText( QString::asprintf( "%.3f - %.3f",
+                                                range_left, range_right ) );
       le_dataStart->setText( QString::number( range_left,  'f', 8 ) );
       le_dataEnd  ->setText( QString::number( range_right, 'f', 8 ) );
       pb_dataEnd  ->setIcon( check );
@@ -12780,7 +12785,15 @@ void US_Edit::write_mwl_auto( int trx )
 	 is_spike_auto = false;
      }
 
-   bottom = centerpieceParameters[ trx ][1].toDouble();  //Should be from centerpiece info from protocol
+   //old way: just read form centerpiece
+   double bottom_cent = centerpieceParameters[ trx ][1].toDouble();  //Should be from centerpiece info from protocol
+   
+   US_SimulationParameters simparams;
+   simparams.initFromData( dbP, data, idInv_auto.toInt(), false, runID, dataType );
+   bottom         = simparams.bottom;
+
+   qDebug() << "[in write_mwl_auto()]: bottom_cent, bottom -- "
+	    << bottom_cent << ", " << bottom; 
    // End of base parameters
 
    //Is this needed ?
@@ -13208,6 +13221,9 @@ DbgLv(1) << "EDT:WrMwl: DONE";
 int US_Edit::write_xml_file( QString& fname, QString& triple,
       QString& editGUID, QString& rawGUID )
 {
+  qDebug() << "[in write_xml_file() ] : workingDir + fname -- "
+	   << workingDir <<  " + "  << fname;
+  
    QFile efo( workingDir + fname );
 
    if ( ! efo.open( QFile::WriteOnly | QFile::Text ) )
@@ -13784,7 +13800,6 @@ int US_Edit::apply_edits( US_DataIO::EditValues parameters )
    int status = 0;
 
    // Apply the edits with specified parameters
-   QString wkstr;
 
    meniscus    = parameters.meniscus;
    range_left  = parameters.rangeLeft;
@@ -13793,7 +13808,7 @@ int US_Edit::apply_edits( US_DataIO::EditValues parameters )
    baseline    = parameters.baseline;
    odlimit     = parameters.ODlimit;
 
-   le_meniscus->setText( wkstr.sprintf( "%.3f", meniscus ) );
+   le_meniscus->setText( QString::asprintf( "%.3f", meniscus ) );
    pb_meniscus->setIcon( check );
    pb_meniscus->setEnabled( true );
 
@@ -13804,7 +13819,7 @@ int US_Edit::apply_edits( US_DataIO::EditValues parameters )
    {
       US_DataIO::adjust_interference( data, parameters );
       US_DataIO::calc_integral      ( data, parameters );
-      le_airGap->setText( wkstr.sprintf( "%.3f - %.3f",
+      le_airGap->setText( QString::asprintf( "%.3f - %.3f",
                airGap_left, airGap_right ) );
       pb_airGap->setIcon( check );
       pb_airGap->setEnabled( true );
@@ -13828,7 +13843,7 @@ int US_Edit::apply_edits( US_DataIO::EditValues parameters )
 double bl=sum/11.0;
 DbgLv(1) << "BL: DD : baseline bl" << baseline << bl;
 
-   le_baseline->setText( wkstr.sprintf( "%.3f (%.3e)", baseline, sum / 11.0 ) );
+       le_baseline->setText( QString::asprintf( "%.3f (%.3e)", baseline, sum / 11.0 ) );
 
    // Invert
    invert = parameters.invert;
@@ -14469,12 +14484,12 @@ QString US_Edit::scan_info( void )
       int    platx = US_DataIO::index( dd->xvalues, plateau );
       double od    = dd->scanData[ ii ].rvalues[ platx ];
 
-      s1 = s1.sprintf( "%4d",             ii + 1 );
-      s2 = s2.sprintf( "%4d min %2d sec", ctime / 60, ctime % 60 );
-      s3 = s3.sprintf( "%.6f OD",         od );
-      s4 = s4.sprintf( "%5d",             (int)time );
-      s5 = s5.sprintf( "%.5e",            omg2t );
-      s6 = s6.sprintf( "%.1f",            speed );
+      s1 = QString::asprintf( "%4d",             ii + 1 );
+      s2 = QString::asprintf( "%4d min %2d sec", ctime / 60, ctime % 60 );
+      s3 = QString::asprintf( "%.6f OD",         od );
+      s4 = QString::asprintf( "%5d",             (int)time );
+      s5 = QString::asprintf( "%.5e",            omg2t );
+      s6 = QString::asprintf( "%.1f",            speed );
 
       ss += table_row( s1, s2, s3, s4, s5, s6 );
    }
@@ -14512,12 +14527,12 @@ QString US_Edit::scan_info_auto( int trx )
       int    platx = US_DataIO::index( dd->xvalues, plateau );
       double od    = dd->scanData[ ii ].rvalues[ platx ];
 
-      s1 = s1.sprintf( "%4d",             ii + 1 );
-      s2 = s2.sprintf( "%4d min %2d sec", ctime / 60, ctime % 60 );
-      s3 = s3.sprintf( "%.6f OD",         od );
-      s4 = s4.sprintf( "%5d",             (int)time );
-      s5 = s5.sprintf( "%.5e",            omg2t );
-      s6 = s6.sprintf( "%.1f",            speed );
+      s1 = QString::asprintf( "%4d",             ii + 1 );
+      s2 = QString::asprintf( "%4d min %2d sec", ctime / 60, ctime % 60 );
+      s3 = QString::asprintf( "%.6f OD",         od );
+      s4 = QString::asprintf( "%5d",             (int)time );
+      s5 = QString::asprintf( "%.5e",            omg2t );
+      s6 = QString::asprintf( "%.1f",            speed );
 
       ss += table_row( s1, s2, s3, s4, s5, s6 );
    }

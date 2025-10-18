@@ -427,7 +427,7 @@ void US_MwlRawViewer::enableControls( void )
    QStringList sllmbs;
 
    for ( int jj = 0; jj < npoint; jj++ )
-      slrads << QString().sprintf( "%.5f", radii[ jj ] );
+      slrads << QString::asprintf( "%.5f", radii[ jj ] );
 
    for ( int jj = 0; jj < nlambda; jj++ )
       sllmbs << QString::number( lambdas[ jj ] );
@@ -1219,7 +1219,7 @@ DbgLv(1) << "chgRadius";
 
       for ( int rdx = radxs; rdx < radxe; rdx++ )
       {  // Build the list of radii that are within range
-         QString citem    = QString().sprintf( "%.3f", radii[ rdx ] );
+         QString citem    = QString::asprintf( "%.3f", radii[ rdx ] );
 
          cb_pltrec->addItem( citem );
       }
@@ -1848,7 +1848,7 @@ DbgLv(1) << "Save Plot";
       }
 
       p3d_pltw->replot();                // Do the plot
-      QString s_scan  = QString().sprintf( "%04d", scan_nbr );
+      QString s_scan  = QString::asprintf( "%04d", scan_nbr );
       fname3d         = fname3d.replace( "SSSS", s_scan  );
       QString fpath3d = savedir + fname3d;
 
@@ -1938,7 +1938,7 @@ DbgLv(1) << "Save 2D Movie";
       qApp->processEvents();
 
       QString rec_str = ccr + cb_pltrec->currentText().remove( "." );
-      QString frm_str = QString().sprintf( "%05d", ( prx + 1 ) );
+      QString frm_str = QString::asprintf( "%05d", ( prx + 1 ) );
       QString fname   = QString( bfname ).replace( "RRRRR", rec_str )
                                          .replace( "XXXXX", frm_str );
       QString fpath   = savedir + fname;
@@ -2026,8 +2026,8 @@ DbgLv(1) << "Save 3-D Movie";
       qApp->processEvents();
 
       // Create a frame file for just-completed plot and save its name
-      QString s_scan   = QString().sprintf( "%04d", scan_nbr );
-      QString s_frame  = QString().sprintf( "%04d", kframe   );
+      QString s_scan   = QString::asprintf( "%04d", scan_nbr );
+      QString s_frame  = QString::asprintf( "%04d", kframe );
       QString fname    = QString( bfname ).replace( "SSSS", s_scan  )
                                           .replace( "XXXX", s_frame );
       QString fpath    = savedir + fname;

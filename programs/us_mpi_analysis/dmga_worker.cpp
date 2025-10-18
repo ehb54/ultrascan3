@@ -1121,11 +1121,10 @@ QString US_MPI_Analysis::dgene_key( DGene& dgene )
    marker_from_dgene( dgmarker, dgene );
 
    // Compose a key string that is a concatenation of marker value strings
-   QString str;
-   QString fkey = str.sprintf( "%.5e", dgmarker[ 0 ] );
+   QString fkey = QString::asprintf( "%.5e", dgmarker[ 0 ] );
 
    for ( int ii = 1; ii < nfloatc; ii++ )
-      fkey += str.sprintf( " %.5e", dgmarker[ ii ] );
+      fkey += QString::asprintf( " %.5e", dgmarker[ ii ] );
 
 DbgLv(1) << my_rank << "dg:dgkey" << fkey << "mv0 mvn" << dgmarker[0] << dgmarker[nfloatc-1];
    return fkey;

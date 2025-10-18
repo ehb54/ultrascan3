@@ -1564,7 +1564,7 @@ void US_GA_Initialize::load_color()
    // get an xml file name for the color map
    QString fname = QFileDialog::getOpenFileName( this,
       tr( "Load Color Map File" ),
-      US_Settings::etcDir(), filter, 0, 0 );
+      US_Settings::etcDir(), filter, nullptr );
 
    if ( fname.isEmpty() )
       return;
@@ -2421,7 +2421,7 @@ DbgLv(1) << "gain: load_bins()";
          + tr( "Any files (*)" );
    QString fname  = QFileDialog::getOpenFileName( this,
       tr( "Load Solute Bin (GaDistro) File" ),
-      binfpath, filter, 0, 0 );
+      binfpath, filter );
 
    if ( fname.isEmpty() )
       return;

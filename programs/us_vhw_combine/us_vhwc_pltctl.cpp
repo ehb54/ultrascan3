@@ -26,7 +26,7 @@
 // Constructor:  enhanced spectra plot control widget
 US_VhwCPlotControl::US_VhwCPlotControl( QWidget* p, QVector< QVector3D >* d,
       int a_ptype )
-   : US_WidgetsDialog( 0, 0 )
+   : US_WidgetsDialog( nullptr, Qt::WindowFlags() )
 {
 qDebug() << "PCtrl: IN";
    wparent        = p;

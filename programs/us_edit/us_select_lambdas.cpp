@@ -6,7 +6,7 @@
 
 
 US_SelectLambdas::US_SelectLambdas( QVector< int > lambdas )
-   : US_WidgetsDialog( 0, 0 )
+   : US_WidgetsDialog( nullptr, Qt::WindowFlags() )
 {
    original    = lambdas;
    nbr_select  = 0;

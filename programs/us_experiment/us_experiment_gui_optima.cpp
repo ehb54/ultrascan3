@@ -609,7 +609,7 @@ void US_ExperimentMain::submitted_dataDisk( QMap < QString, QString > &protocol_
 
 // Panel for run and other general parameters
 US_ExperGuiGeneral::US_ExperGuiGeneral( QWidget* topw )
-   : US_WidgetsDialog( topw, 0 )
+   : US_WidgetsDialog( topw, Qt::WindowFlags() )
 {
    mainw               = (US_ExperimentMain*)topw;
    dbg_level           = US_Settings::us_debug();
@@ -633,8 +633,17 @@ US_ExperGuiGeneral::US_ExperGuiGeneral( QWidget* topw )
                 le_runid        = us_lineedit( "", 0, false );
                 le_protocol     = us_lineedit( "", 0, false );
                 le_project      = us_lineedit( "", 0, true  );
-                ct_tempera      = us_counter ( 2, 0,  40, 20 );
-                ct_tedelay      = us_counter ( 2, 0, 120, 10 );
+
+		//ct_tempera      = us_counter ( 2, 0,  40, 20 );
+		ct_tempera      = us_spinbox();
+		ct_tempera      ->setRange(0, 40);
+		ct_tempera      ->setValue(20);  
+		
+		//ct_tedelay      = us_counter ( 2, 0, 120, 10 );
+		ct_tedelay      = us_spinbox();
+		ct_tedelay      ->setRange(0, 120);
+		ct_tedelay      ->setValue(10);  
+		
    int          ihgt            = pb_protocol->height();
    QSpacerItem* spacer1         = new QSpacerItem( 20, ihgt );
    QSpacerItem* spacer2         = new QSpacerItem( 20, ihgt );
@@ -647,9 +656,12 @@ US_ExperGuiGeneral::US_ExperGuiGeneral( QWidget* topw )
    le_runid->setPlaceholderText("Enter Run ID to continue");
    le_project->setPlaceholderText("Select Project to continue");
 
+   //temperature
    ct_tempera->setSingleStep( 1 );
    ct_tempera->setValue     ( 20 );
    ct_tempera->adjustSize   ();
+
+   //delay
    ct_tedelay->setSingleStep( 1 );
    ct_tedelay->setValue     ( 10 );
    ct_tedelay->adjustSize   ();
@@ -1234,7 +1246,7 @@ void US_ExperGuiGeneral::centerpieceInfo( void )
 
 // Panel for Lab/Rotor parameters
 US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
-   : US_WidgetsDialog( topw, 0 )
+   : US_WidgetsDialog( topw, Qt::WindowFlags() )
 {
    mainw               = (US_ExperimentMain*)topw;
    rpRotor             = &(mainw->currProto.rpRotor);
@@ -1290,9 +1302,13 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
 		pb_importDisk   = us_pushbutton( tr( "Import .AUC Data" ) );
 		le_dataDiskPath = us_lineedit( "", 0, true );
 
-		ck_absorbance_t = new QCheckBox( tr("Absorbance Data:"), this );
+		ck_absorbance_t = new QCheckBox( tr("Absorbance Data (RA):"), this );
 		ck_absorbance_t ->setAutoFillBackground( true );
 		ck_absorbance_t ->setChecked( false );
+
+		ck_absorbance_pa = new QCheckBox( tr("Pseudo-Absorbance Data:"), this );
+		ck_absorbance_pa ->setAutoFillBackground( true );
+		ck_absorbance_pa ->setChecked( false );
 		
 		
 
@@ -1327,6 +1343,7 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
    genL->addWidget( pb_importDisk,     row,     1, 1, 1 );
    genL->addWidget( le_dataDiskPath,   row++,   2, 1, 2 );
    genL->addWidget( ck_absorbance_t,   row++,   1, 1, 1 );
+   genL->addWidget( ck_absorbance_pa,  row++,   1, 1, 1 );
 
 
    //connect checkbox & import
@@ -1336,6 +1353,8 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
 	    this,           SLOT(   importDisk()        ) );
    // connect( ck_absorbance_t, SIGNAL( toggled     ( bool ) ),
    // 	    this,           SLOT  ( dataDiskAbsChecked( bool ) ) );
+   connect( ck_absorbance_pa, SIGNAL( toggled     ( bool ) ),
+    	    this,           SLOT  ( dataDiskPseudoAbsChecked( bool ) ) );
 
    genL->addItem  ( spacer1,         row++, 0, 1, 4 );
 
@@ -1495,6 +1514,8 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
    le_dataDiskPath -> hide();
    ck_absorbance_t -> hide();
    ck_absorbance_t -> setEnabled( false );
+   ck_absorbance_pa -> hide();
+   ck_absorbance_pa -> setEnabled( false );
    importDataPath = "";
    if ( mainw->us_prot_dev_mode )
      ck_disksource->hide();
@@ -1509,8 +1530,10 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
 //
 void US_ExperGuiRotor::reset_dataSource_public( void )
 {
-  ck_disksource   ->setChecked( false );
-  ck_absorbance_t ->setChecked( false );
+  ck_disksource    ->setChecked( false );
+  ck_absorbance_t  ->setChecked( false );
+  ck_absorbance_pa ->setChecked( false );
+  ck_absorbance_pa ->setEnabled( false );
   importDataPath = "";
   ra_data_type = false;
   ra_data_sim  = false;
@@ -1522,10 +1545,12 @@ void US_ExperGuiRotor::switch_to_dataDisk_public()
   
   bool checked = true;
   
-  pb_importDisk   -> setVisible( checked );
-  le_dataDiskPath -> setVisible( checked );
-  ck_absorbance_t -> setVisible( checked );
-
+  pb_importDisk    -> setVisible( checked );
+  le_dataDiskPath  -> setVisible( checked );
+  ck_absorbance_t  -> setVisible( checked );
+  ck_absorbance_pa -> setVisible( checked );
+  ck_absorbance_pa -> setEnabled( false );
+  
   lb_instrument  -> setVisible( !checked );
   cb_optima  -> setVisible( !checked );
   lb_optima_connected -> setVisible( !checked );
@@ -1566,6 +1591,23 @@ void US_ExperGuiRotor::dataDiskAbsChecked( bool checked )
     }
 }
 
+void US_ExperGuiRotor::dataDiskPseudoAbsChecked( bool checked )
+{
+  if ( checked )
+    {
+      //issue warning to the user to verify it's Pseudo-Abs to be uploaded
+      QMessageBox::warning( this,
+			    tr( "NOTE: PseudoAbsorbance data type chosen!" ),
+			    tr( "Please make sure the RI data uploaded were \n"
+				"converted to peseudo-absorbance format. \n\n"
+				"Checking this option will prevent data conversion \n"
+				"at the stage 3. IMPORT..."
+				));
+    }
+}
+
+
+
 // Check import disk
 void US_ExperGuiRotor::importDiskChecked( bool checked )
 {
@@ -1574,9 +1616,11 @@ void US_ExperGuiRotor::importDiskChecked( bool checked )
 
   //importDisk_cleanProto();
     
-  pb_importDisk   -> setVisible( checked );
-  le_dataDiskPath -> setVisible( checked );
-  ck_absorbance_t -> setVisible( checked );
+  pb_importDisk    -> setVisible( checked );
+  le_dataDiskPath  -> setVisible( checked );
+  ck_absorbance_t  -> setVisible( checked );
+  ck_absorbance_pa -> setVisible( checked );
+  ck_absorbance_pa -> setEnabled( false );
 
   lb_instrument  -> setVisible( !checked );
   cb_optima  -> setVisible( !checked );
@@ -1586,8 +1630,9 @@ void US_ExperGuiRotor::importDiskChecked( bool checked )
   if ( !checked )
     {
       importDataPath = "";
-      le_dataDiskPath -> setText("");
-      ck_absorbance_t -> setChecked( false );
+      le_dataDiskPath  -> setText("");
+      ck_absorbance_t  -> setChecked( false );
+      ck_absorbance_pa -> setChecked( false );
       ra_data_type = false;
       ra_data_sim  = false;
     }
@@ -1706,7 +1751,9 @@ void US_ExperGuiRotor::importDisk( void )
   run_details  .clear();
   ra_data_type = false;
   ra_data_sim  = false;
-  ck_absorbance_t ->setChecked( false );
+  ck_absorbance_t  ->setChecked( false );
+  ck_absorbance_pa ->setChecked( false );
+  ck_absorbance_pa ->setEnabled( true );
     
   for ( int trx = 0; trx < files.size(); trx++ )
     {
@@ -1773,7 +1820,9 @@ void US_ExperGuiRotor::importDisk( void )
   qDebug() << "unique_runTypes -- " << unique_runTypes;
   if ( unique_runTypes.size() == 1 && unique_runTypes[0] == "RA")
     {
-      ck_absorbance_t ->setChecked( true );
+      ck_absorbance_t  ->setChecked( true );
+      ck_absorbance_pa ->setChecked( false );
+      ck_absorbance_pa ->setEnabled( false );
       ra_data_type = true;
     }
   
@@ -1801,8 +1850,10 @@ void US_ExperGuiRotor::importDisk( void )
 
       //clean
       importDataPath = "";
-      le_dataDiskPath -> setText("");
-      ck_absorbance_t -> setChecked( false );
+      le_dataDiskPath  -> setText("");
+      ck_absorbance_t  -> setChecked( false );
+      ck_absorbance_pa -> setChecked( false );
+      ck_absorbance_pa -> setEnabled( false );
       ra_data_type = false;
       ra_data_sim  = false;
 
@@ -2661,8 +2712,10 @@ DbgLv(1) << "EGR: chgRotor calibs count" << calibs.count();
       if (ck_disksource->isChecked())
 	{
 	  importDataPath = "";
-	  le_dataDiskPath -> setText("");
-	  ck_absorbance_t -> setChecked( false );
+	  le_dataDiskPath  -> setText("");
+	  ck_absorbance_t  -> setChecked( false );
+	  ck_absorbance_pa -> setChecked( false );
+	  ck_absorbance_pa -> setEnabled( false);
 	  ra_data_type = false;
 	  ra_data_sim  = false;
 
@@ -2779,7 +2832,7 @@ DbgLv(1) << "EGR:  absR:   ii" << ii << "rID" << arotors[ii].ID;
 
 // Panel for Speed step parameters
 US_ExperGuiSpeeds::US_ExperGuiSpeeds( QWidget* topw )
-   : US_WidgetsDialog( topw, 0 )
+   : US_WidgetsDialog( topw, Qt::WindowFlags() )
 {
    mainw               = (US_ExperimentMain*)topw;
    rpSpeed             = &(mainw->currProto.rpSpeed);
@@ -2836,8 +2889,18 @@ US_ExperGuiSpeeds::US_ExperGuiSpeeds( QWidget* topw )
      sb_count            ->setEnabled( false );
    
    cb_prof             = new QComboBox( this );
-   ct_speed            = us_counter( 2, 1000,  80000, 100 );
-   ct_accel            = us_counter( 2,   50,   1000,  50 );
+   
+   // ct_speed            = us_counter( 2, 1000,  80000, 100 );
+   // ct_accel            = us_counter( 2,   50,   1000,  50 );
+   ct_speed            = us_spinbox();
+   ct_accel            = us_spinbox();
+
+   ct_speed ->setRange(1000,  80000);
+   ct_speed ->setValue(100);
+   ct_accel ->setRange(50, 1000);
+   ct_accel ->setValue(50);
+   
+   
     // QHBoxLayout* lo_durat                                             // ALEXEY
     //                       = us_timeedit( tm_durat,  0, &sb_durat  );
     // QHBoxLayout* lo_delay
@@ -3149,10 +3212,10 @@ DbgLv(1) << "EGSp: addWidg/Layo II";
             this,      SLOT  ( ssChangeCount ( int )  ) );
    connect( cb_prof,   SIGNAL( activated     ( int    ) ),
             this,      SLOT  ( ssChangeProfx ( int    ) ) );
-   connect( ct_speed,  SIGNAL( valueChanged  ( double ) ),
-            this,      SLOT  ( ssChangeSpeed ( double ) ) );
-   connect( ct_accel,  SIGNAL( valueChanged  ( double ) ),
-            this,      SLOT  ( ssChangeAccel ( double ) ) );
+   connect( ct_speed,  SIGNAL( valueChanged  ( int ) ),
+            this,      SLOT  ( ssChangeSpeed ( int ) ) );
+   connect( ct_accel,  SIGNAL( valueChanged  ( int ) ),
+            this,      SLOT  ( ssChangeAccel ( int ) ) );
 
    // connect( sb_durat,  SIGNAL( valueChanged   ( int ) ),               \\ALEXEY
    //          this,      SLOT  ( ssChgDuratDay  ( int ) ) );
@@ -3509,12 +3572,13 @@ DbgLv(1) << "EGSp: chgPfx:    speedmax" << speedmax;
 }
 
 // Slot for change in speed value
-void US_ExperGuiSpeeds::ssChangeSpeed( double val )
+void US_ExperGuiSpeeds::ssChangeSpeed( int val )
 {
 DbgLv(1) << "EGSp: chgSpe: val" << val << "ssx" << curssx;
-   ssvals  [ curssx ][ "speed" ] = val;  // Set Speed in step vals vector
+   double val_d = (double)val; 
+   ssvals  [ curssx ][ "speed" ] = val_d;  // Set Speed in step vals vector
 
-   ssChangeScInt(val, curssx);
+   ssChangeScInt(val_d, curssx);
 
    //Uv-vis
    sb_scnint_hh ->setMinimum( scanint_hh_min[curssx] );
@@ -3601,10 +3665,12 @@ void US_ExperGuiSpeeds::ssChangeScInt( double val, int row )
 
 
 // Slot for change in acceleration value
-void US_ExperGuiSpeeds::ssChangeAccel( double val )
+void US_ExperGuiSpeeds::ssChangeAccel( int val )
 {
 DbgLv(1) << "EGSp: chgAcc: val" << val << "ssx" << curssx;
-   ssvals[ curssx ][ "accel" ] = val;  // Set Acceleration in step vals vector
+
+   double val_d = (double)val; 
+   ssvals[ curssx ][ "accel" ] = val_d;  // Set Acceleration in step vals vector
 
    // Set minimum delay time based on speed and new acceleration
    changed          = false;             // Flag so delay set to minimum
@@ -4304,7 +4370,7 @@ void US_ExperGuiSpeeds::adjustDelay( void )
 
 // Panel for Cells parameters
 US_ExperGuiCells::US_ExperGuiCells( QWidget* topw )
-   : US_WidgetsDialog( topw, 0 )
+   : US_WidgetsDialog( topw, Qt::WindowFlags() )
 {
 DbgLv(1) << "EGCe: IN";
    mainw               = (US_ExperimentMain*)topw;
@@ -4528,7 +4594,7 @@ DbgLv(1) << "EGCe:wiChg:  sname irow" << sname << irow;
 
 // Panel for Solutions parameters
 US_ExperGuiSolutions::US_ExperGuiSolutions( QWidget* topw )
-   : US_WidgetsDialog( topw, 0 )
+   : US_WidgetsDialog( topw, Qt::WindowFlags() )
 {
    mainw               = (US_ExperimentMain*)topw;
    rpSolut             = &(mainw->currProto.rpSolut);
@@ -5134,7 +5200,7 @@ DbgLv(1) << "EGSo: allSo:      desc" << descr << "solID" << solID;
          ndup++;
          QString snbase     = sname;
          int kk             = 1;
-         sname              = snbase + QString().sprintf( "  (%d)", kk );
+         sname              = snbase + QString::asprintf( "  (%d )", kk );
          sonames.replace( ii, sname );        // Replace 1st of duplicates
          for ( int jj = ii + 1; jj <= lstx; jj++ )
          {
@@ -5143,7 +5209,7 @@ DbgLv(1) << "EGSo: allSo:      desc" << descr << "solID" << solID;
             if ( sname == snbase )
             {  // This is a duplicate
                kk++;
-               sname              = snbase + QString().sprintf( "  (%d)", kk );
+               sname              = snbase + QString::asprintf( "  (%d )", kk );
                sonames.replace( jj, sname );  // Replace each of duplicates
             }
          }
@@ -5357,7 +5423,7 @@ void US_ExperGuiSolutions::commentStrings( const QString solname,
 
 // Panel for Optical Systems parameters
 US_ExperGuiOptical::US_ExperGuiOptical( QWidget* topw )
-   : US_WidgetsDialog( topw, 0 )
+   : US_WidgetsDialog( topw, Qt::WindowFlags() )
 {
    mainw               = (US_ExperimentMain*)topw;
    rpOptic             = &(mainw->currProto.rpOptic);
@@ -5705,7 +5771,7 @@ DbgLv(1) << "EGOp: oCk: ccrows" << ccrows;
 
 // Panel for Analysis Profile parameters to Optima DB
 US_ExperGuiAProfile::US_ExperGuiAProfile( QWidget* topw )
-   : US_WidgetsDialog( topw, 0 )
+   : US_WidgetsDialog( topw, Qt::WindowFlags() )
 {
    mainw               = (US_ExperimentMain*)topw;
    rpRotor             = &(mainw->currProto.rpRotor);
@@ -5806,7 +5872,7 @@ DbgLv(1) << "EGAp:detE: ufont" << ufont.family();
 
 // Panel for Uploading parameters to Optima DB
 US_ExperGuiUpload::US_ExperGuiUpload( QWidget* topw )
-   : US_WidgetsDialog( topw, 0 )
+   : US_WidgetsDialog( topw, Qt::WindowFlags() )
 {
    mainw               = (US_ExperimentMain*)topw;
    rpRotor             = &(mainw->currProto.rpRotor);
@@ -7003,7 +7069,7 @@ DbgLv(1) << "EGUp:svRP:   dbP" << dbP;
    // small bug fix above (UTC format, to be consistent with the format of existing records)
 
    QString protid      = ( dbP != NULL ) ? QString::number( idProt )
-                         : "R" + QString().sprintf( "%7d", idProt ) + ".xml";
+                         : "R" + QString::asprintf( "%7d", idProt ) + ".xml";
    QString pguid       = currProto->protoGUID;
    prentry << protoname << pdate << protid << pguid;
 
@@ -8143,7 +8209,8 @@ void US_ExperGuiUpload::submitExperiment_dataDisk()
   protocol_details[ "OptimaName" ]     = "dataDisk";  // <--- OR NULL???
   //protocol_details[ "OptimaName" ]     = rpRotor->instrname;         // NULL
 
-  QString dataSourceType = ( !rpRotor->importData_absorbance_t ) ? "dataDiskAUC" : "dataDiskAUC:Absorbance"; 
+  QString dataSourceType = ( !rpRotor->importData_absorbance_t ) ? "dataDiskAUC" : "dataDiskAUC:Absorbance";
+  dataSourceType = ( rpRotor->importData_absorbance_pa ) ? "dataDiskAUC:PseudoAbsorbance" : dataSourceType;
   protocol_details[ "dataSource" ]     = dataSourceType;  //<-- for now
   
   protocol_details[ "protocolName" ]   = currProto->protoname;

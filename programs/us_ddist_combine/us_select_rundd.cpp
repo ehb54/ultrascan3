@@ -16,7 +16,7 @@
 // Main constructor with flags for select-runID dialog
 
 US_SelectRunDD::US_SelectRunDD( bool dbase, QStringList& runIDs,
-   QStringList& mdescrs ) : US_WidgetsDialog( 0, 0 ),
+   QStringList& mdescrs ) : US_WidgetsDialog( nullptr, Qt::WindowFlags() ),
    runIDs( runIDs ), mDescrs( mdescrs )
 {
    sel_db        = dbase;
@@ -97,7 +97,7 @@ DbgLv(1) << "SE:sel_db" << sel_db;
    // Status Row
    QFontMetrics fm( font );
    int fhigh = fm.lineSpacing();
-   int fwide = fm.width( QChar( '6' ) );
+   int fwide = fm.horizontalAdvance( QChar( '6' ) );
    int lhigh = fhigh * 4 + 12;
    int lwide = fwide * 32;
 
@@ -361,7 +361,7 @@ timer.start();
                      int niters    = attr.value( "MCIteration" ).toString()
                                                                 .toInt();
                      mdesc         = QString( mdesc ).left( kk ) +
-                                     QString().sprintf( "_mcN%03d", niters ) +
+                                     QString::asprintf( "_mcN%03d", niters ) +
                                      QString( mdesc ).mid( kk + 7 );
                   }
                }

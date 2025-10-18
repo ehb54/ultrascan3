@@ -1388,7 +1388,7 @@ int US_TimeState::key_parameters( const QString key,
    {
       status       = 901;
       set_error( status );
-      error_msg   += key + QString().sprintf( " %d %d %d", rfmt, rlen, roff );
+      error_msg   += key + QString::asprintf( " %d %d %d", rfmt, rlen, roff );
 DbgLv(1) << "DtsF:       message" << error_msg;
 DbgLv(1) << "DtsF: keyx" << keyx << "fmt" << fmt << "ftst" << ftst
  << "keys sz" << keys.count() << "fmts sz" << fmts.count();
