@@ -5,21 +5,62 @@
 file(GLOB UTILS_SOURCES "*.cpp")
 file(GLOB UTILS_HEADERS "*.h")
 
-# Remove any sources that shouldn't be compiled based on configuration
-if(US3_NO_DB)
-    # For supercomputer backends, exclude database-related files if needed
-    # list(REMOVE_ITEM UTILS_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/us_database.cpp")
-endif()
-
 # Create the utils library
 add_library(us_utils ${UTILS_SOURCES} ${UTILS_HEADERS})
 
-# Set library properties (version from qmake VERSION = 10.0)
+if(APPLE)
+    # Force all symbols to be exported at link time
+    target_link_options(us_utils PRIVATE
+            "LINKER:-export_dynamic"
+            "LINKER:-all_load"
+            )
+    # Override any inherited visibility settings
+    target_compile_options(us_utils PRIVATE -fvisibility=default)
+endif()
+
+# Set library properties - MERGED with visibility settings
 set_target_properties(us_utils PROPERTIES
-        VERSION ${US3_VERSION}
-        SOVERSION ${US3_VERSION_MAJOR}
-        OUTPUT_NAME "us_utils${US3_VERSION_MAJOR}"  # Matches qmake VER = 10
+        VERSION ${PROJECT_VERSION}
+        SOVERSION ${PROJECT_VERSION_MAJOR}
+        OUTPUT_NAME "us_utils${PROJECT_VERSION_MAJOR}"
+        CXX_VISIBILITY_PRESET default
+        C_VISIBILITY_PRESET default
+        VISIBILITY_INLINES_HIDDEN OFF
+        POSITION_INDEPENDENT_CODE ON
         )
+
+# Platform-specific properties
+if(APPLE)
+    set_target_properties(us_utils PROPERTIES
+            MACOSX_RPATH ON
+            INSTALL_RPATH "@loader_path;@loader_path/../lib"
+            )
+elseif(UNIX)
+    set_target_properties(us_utils PROPERTIES
+            INSTALL_RPATH "$ORIGIN:$ORIGIN/../lib"
+            )
+elseif(WIN32)
+    # Windows handles DLLs differently
+    set_target_properties(us_utils PROPERTIES
+            WINDOWS_EXPORT_ALL_SYMBOLS OFF  # We'll use explicit exports
+            )
+endif()
+
+# Ensure dynamic Qt linking - ALL PLATFORMS
+target_compile_definitions(us_utils
+        PUBLIC
+        QT_SHARED
+        PRIVATE
+        QT_PLUGIN
+        )
+
+## Symbol visibility flags for GCC/Clang (Linux, macOS)
+#if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+#    target_compile_options(us_utils PRIVATE
+#            -fvisibility=hidden
+#            -fvisibility-inlines-hidden
+#            )
+#endif()
 
 # Include directories
 target_include_directories(us_utils
@@ -59,14 +100,6 @@ elseif(WIN32)
     # Windows system libraries
     target_link_libraries(us_utils PUBLIC ${WIN32_SYSTEM_LIBS})
     target_compile_definitions(us_utils PRIVATE US_MAKE_DLL US_MAKE_UTIL_DLL)
-elseif(APPLE)
-    # macOS-specific setup
-    target_include_directories(us_utils PUBLIC /usr/X11R6/include)
-    find_library(X11_LIB X11 PATHS /usr/X11R6/lib)
-    find_library(XAU_LIB Xau PATHS /usr/X11R6/lib)
-    if(X11_LIB AND XAU_LIB)
-        target_link_libraries(us_utils PUBLIC ${X11_LIB} ${XAU_LIB})
-    endif()
 endif()
 
 # Compiler-specific options for debugging

@@ -34,10 +34,6 @@ include_directories(
         ${CMAKE_SOURCE_DIR}/test/common
         )
 
-if(MYSQL_FOUND)
-    include_directories(${MYSQL_INCLUDE_DIRS})
-endif()
-
 # AUTO-DISCOVERY - Find all test files automatically
 file(GLOB_RECURSE AUTO_TEST_SOURCES "test_us_*.cpp" "test_mock_*.cpp")
 file(GLOB_RECURSE AUTO_TEST_HEADERS "test_us_*.h" "test_mock_*.h")
@@ -72,9 +68,9 @@ target_link_libraries(test_us_utils
         ${GTEST_LIBRARIES}
         )
 
-# Link MySQL if found
-if(MYSQL_FOUND)
-    target_link_libraries(test_us_utils PRIVATE ${MYSQL_LIBRARIES})
+# Link MySQL if available (check for the target, not the variable)
+if(TARGET MySQL::Client AND NOT US3_NO_DB)
+    target_link_libraries(test_us_utils PRIVATE MySQL::Client)
     message(STATUS "MySQL found and linked")
 else()
     message(WARNING "MySQL not found - database tests may not work")

@@ -19,6 +19,19 @@
 
 #define MIN_NTC   25
 
+// Macro stringification helpers
+#define STRINGIFY(x) #x
+#define TOSTRING(x) STRINGIFY(x)
+
+// Provide defaults if not defined by build system
+#ifndef REVISION
+#define REVISION "unknown"
+#endif
+
+#ifndef OS_TITLE
+#define OS_TITLE "Unknown OS"
+#endif
+
 // Test case(s): Constructor
 US_ReporterGMP::US_ReporterGMP( QMap< QString, QString> t_c ) : US_Widgets()
 {
@@ -10667,7 +10680,10 @@ void US_ReporterGMP::assemble_pdf( QProgressDialog * progress_msg )
   
   
   //HEADER: begin
-  QString us_version = "Version " + US_Version + " ( " REVISION " ) for " OS_TITLE;
+  QString us_version = QString("Version %1 ( %2 ) for %3")
+          .arg(US_Version)
+          .arg(TOSTRING(REVISION))
+          .arg(TOSTRING(OS_TITLE));
   QString html_header = QString("");
   html_header += rptpage;
   html_header += tr( 

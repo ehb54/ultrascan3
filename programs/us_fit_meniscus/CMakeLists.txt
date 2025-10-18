@@ -26,6 +26,21 @@ set_target_properties(us_fit_meniscus_lib PROPERTIES
         AUTOMOC_MOC_OPTIONS "--no-notes"
         )
 
+# Apple-specific: Force symbol export
+if(APPLE)
+    target_link_options(us_fit_meniscus_lib PRIVATE
+            "LINKER:-export_dynamic"
+            "LINKER:-all_load"
+            )
+    target_compile_options(us_fit_meniscus_lib PRIVATE -fvisibility=default)
+
+    set_target_properties(us_fit_meniscus_lib PROPERTIES
+            CXX_VISIBILITY_PRESET default
+            C_VISIBILITY_PRESET default
+            VISIBILITY_INLINES_HIDDEN OFF
+            )
+endif()
+
 # Include directories for library
 target_include_directories(us_fit_meniscus_lib
         PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
