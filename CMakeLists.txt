@@ -2,18 +2,23 @@ cmake_minimum_required(VERSION 3.21)
 
 # Project definition
 project(UltraScan3
-        VERSION 4.0.0
+        VERSION 4.1.0
         DESCRIPTION "UltraScan3 - Advanced analysis of analytical ultracentrifugation experiments"
         LANGUAGES CXX C
         )
 
-execute_process(
-        COMMAND git log --oneline
-        COMMAND wc -l
-        COMMAND tr -d '\n'
-        OUTPUT_VARIABLE GIT_HASH
-        OUTPUT_STRIP_TRAILING_WHITESPACE
-)
+# =============================================================================
+# VERSION GENERATION
+# =============================================================================
+# Execute version generation script immediately
+include(${CMAKE_SOURCE_DIR}/admin/cmake/GenerateVersion.cmake)
+
+include_directories(${CMAKE_BINARY_DIR})
+
+# Set minimum macOS version - binaries will work on this version and newer
+if(NOT CMAKE_OSX_DEPLOYMENT_TARGET)
+    set(CMAKE_OSX_DEPLOYMENT_TARGET "11.0" CACHE STRING "Minimum macOS version" FORCE)
+endif()
 
 # =============================================================================
 # CMAKE CONFIGURATION
@@ -88,12 +93,20 @@ elseif(WIN32)
     add_definitions(-DUS_MAKE_DLL -D__LCC__ -DPLATFORM="intel" -DTITLE="Intel")
     add_definitions(-DQT_SHAREDMEMORY -DQT_SYSTEMSEMAPHORE -DWIN32)
 elseif(APPLE)
-    add_definitions(-DMAC -DOSX -DPLATFORM="mac" -DTITLE="Mac")
+    add_definitions(-DMAC -DOSX -DPLATFORM="mac")
 endif()
+
+# Platform configuratin
+include(${CMAKE_SOURCE_DIR}/admin/cmake/platform-config.cmake)
 
 # =============================================================================
 # DEPENDENCY MANAGEMENT
 # =============================================================================
+# Platform-specific Qt5 handling
+if(UNIX AND NOT APPLE)
+    # Linux: prefer system Qt5
+    list(APPEND CMAKE_PREFIX_PATH "/usr/lib/x86_64-linux-gnu/cmake")
+endif()
 
 # Find Qt5
 find_package(Qt5 REQUIRED COMPONENTS
@@ -109,6 +122,73 @@ find_package(Qt5 REQUIRED COMPONENTS
         DataVisualization
         )
 
+# ============================================================================
+# Qt Dynamic Linking Configuration - ALL PLATFORMS
+# ============================================================================
+
+# Verify Qt is not static (with proper error handling)
+if(TARGET Qt5::Core)
+    get_target_property(QT_CORE_TYPE Qt5::Core TYPE)
+    get_target_property(QT_CORE_LOCATION Qt5::Core LOCATION)
+
+    message(STATUS "Qt5::Core type: ${QT_CORE_TYPE}")
+    message(STATUS "Qt5::Core location: ${QT_CORE_LOCATION}")
+
+    # Only fail if it's explicitly a STATIC_LIBRARY
+    # SHARED_LIBRARY, MODULE_LIBRARY, or UNKNOWN_LIBRARY are all OK
+    if(QT_CORE_TYPE STREQUAL "STATIC_LIBRARY")
+        message(FATAL_ERROR "Qt5 must be built as shared libraries")
+    elseif(QT_CORE_TYPE MATCHES "SHARED|MODULE|INTERFACE")
+        message(STATUS "Qt5 is using dynamic/shared libraries - OK")
+    else()
+        # For UNKNOWN or IMPORTED types, check the actual file
+        if(QT_CORE_LOCATION)
+            if(QT_CORE_LOCATION MATCHES "\\.(dylib|so|dll)$")
+                message(STATUS "Qt5 appears to be dynamic (based on file extension) - OK")
+            else()
+                message(WARNING "Qt5::Core type is ${QT_CORE_TYPE}, location: ${QT_CORE_LOCATION}")
+                message(WARNING "Cannot definitively determine if Qt is static or dynamic - proceeding anyway")
+            endif()
+        endif()
+    endif()
+else()
+    message(WARNING "Qt5::Core target not found - skipping static/dynamic check")
+endif()
+
+add_definitions(-DQT_SHARED)
+set(QT_STATICPLUGIN 0 CACHE BOOL "Disable static Qt plugins" FORCE)
+
+# Platform-specific Qt configuration
+if(APPLE)
+    message(STATUS "Configured Qt for dynamic linking on macOS")
+
+    # Ensure all Qt modules have proper linking
+    foreach(QT_MODULE Core Widgets Gui Network Sql Xml Svg OpenGL PrintSupport DataVisualization)
+        if(TARGET Qt5::${QT_MODULE})
+            get_target_property(QT_MOD_TYPE Qt5::${QT_MODULE} TYPE)
+            message(STATUS "  Qt5::${QT_MODULE} type: ${QT_MOD_TYPE}")
+        endif()
+    endforeach()
+
+elseif(UNIX)
+    message(STATUS "Configured Qt for dynamic linking on Linux")
+
+    # Linux-specific: ensure RPATH is set
+    set(CMAKE_INSTALL_RPATH "$ORIGIN:$ORIGIN/../lib")
+
+elseif(WIN32)
+    message(STATUS "Configured Qt for dynamic linking on Windows")
+
+    # Windows: Qt DLLs need to be in PATH or copied to exe directory
+    # This is handled by vcpkg or windeployqt typically
+endif()
+
+message(STATUS "Qt dynamic linking configured for all platforms")
+
+# ============================================================================
+# Find Dependencies
+# ============================================================================
+
 if(US3_BUILD_TESTS)
     find_package(Qt5 REQUIRED COMPONENTS Test)
 endif()
@@ -119,19 +199,31 @@ find_package(OpenGL REQUIRED)
 # Find OpenSSL
 find_package(OpenSSL REQUIRED)
 
-# Find Qwt
-find_package(Qwt REQUIRED)
-
-# Find libarchive
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(LIBARCHIVE REQUIRED libarchive)
-
-if(LIBARCHIVE_FOUND)
-    add_library(LibArchive::LibArchive INTERFACE IMPORTED)
-    set_property(TARGET LibArchive::LibArchive PROPERTY INTERFACE_INCLUDE_DIRECTORIES ${LIBARCHIVE_INCLUDE_DIRS})
-    set_property(TARGET LibArchive::LibArchive PROPERTY INTERFACE_LINK_LIBRARIES ${LIBARCHIVE_LIBRARIES})
-    set_property(TARGET LibArchive::LibArchive PROPERTY INTERFACE_COMPILE_OPTIONS ${LIBARCHIVE_CFLAGS_OTHER})
+# Find Qwt - vcpkg provides CONFIG mode
+find_package(unofficial-qwt CONFIG REQUIRED)
+# Create alias for backward compatibility
+if(NOT TARGET Qwt::Qwt)
+    add_library(Qwt::Qwt ALIAS unofficial::qwt::qwt)
 endif()
+
+# Find QwtPlot3D
+option(US3_USE_VCPKG_QWTPLOT3D "Use qwtplot3d from vcpkg overlay" ON)
+
+if(US3_USE_VCPKG_QWTPLOT3D)
+    find_package(qwtplot3d CONFIG REQUIRED)
+    message(STATUS "QwtPlot3D found via vcpkg overlay")
+
+    # Verify the target was created
+    if(NOT TARGET qwtplot3d::qwtplot3d)
+        message(FATAL_ERROR "qwtplot3d::qwtplot3d target not created by find_package")
+    endif()
+else()
+    # Use in-tree build
+    add_subdirectory(qwtplot3d)
+endif()
+
+# Find libarchive - vcpkg provides a proper CMake target
+find_package(LibArchive REQUIRED)
 
 # Find GL2PS directly (no pkg-config file available)
 find_path(GL2PS_INCLUDE_DIR
@@ -160,45 +252,15 @@ endif()
 
 # Find MySQL/MariaDB (only if not NO_DB)
 if(NOT US3_NO_DB)
-    if(PkgConfig_FOUND)
-        pkg_search_module(MYSQL QUIET mysqlclient mariadb libmariadb mysql libmysql)
+    # Use vcpkg's unofficial-libmariadb package
+    find_package(unofficial-libmariadb CONFIG REQUIRED)
 
-        if(MYSQL_FOUND)
-            message(STATUS "Found MySQL/MariaDB via pkg-config")
-
-            add_library(MySQL::Client INTERFACE IMPORTED)
-            set_property(TARGET MySQL::Client PROPERTY INTERFACE_INCLUDE_DIRECTORIES ${MYSQL_INCLUDE_DIRS})
-            set_property(TARGET MySQL::Client PROPERTY INTERFACE_LINK_LIBRARIES ${MYSQL_LIBRARIES})
-            set_property(TARGET MySQL::Client PROPERTY INTERFACE_COMPILE_OPTIONS ${MYSQL_CFLAGS_OTHER})
-
-            # so you can still use the same target name
-        endif()
+    # Create alias for backward compatibility with your existing code
+    if(NOT TARGET MySQL::Client)
+        add_library(MySQL::Client ALIAS unofficial::libmariadb)
     endif()
 
-    # --- If not found, try vcpkg (Windows or fallback) ---
-    if(NOT MYSQL_FOUND)
-        message(STATUS "pkg-config not found or no MySQL detected, trying vcpkg packages")
-
-        # MySQL connector (Oracle version)
-        find_package(unofficial-libmysql QUIET)
-        if(unofficial-libmysql_FOUND)
-            add_library(unofficial::libmysql::libmysql INTERFACE IMPORTED)
-            add_library(MySQL::Client ALIAS unofficial::libmysql::libmysql)
-            set(MYSQL_FOUND TRUE)
-        endif()
-
-        # MariaDB connector (alternative)
-        if(NOT MySQL::Client)
-            find_package(unofficial-mariadb QUIET CONFIG)
-            if(unofficial-mariadb_FOUND)
-                set(MySQL::Client unofficial::mariadb::libmariadb)
-                set(MYSQL_FOUND TRUE)
-            endif()
-        endif()
-    endif()
-    if(NOT MYSQL_FOUND)
-        message(FATAL_ERROR "Could not find MySQL/MariaDB client library")
-    endif()
+    message(STATUS "Found MariaDB via vcpkg: unofficial::libmariadb")
 endif()
 
 # Platform-specific libraries
@@ -212,38 +274,32 @@ endif()
 
 # GoogleTest for unit testing
 if(US3_BUILD_TESTS)
-    include(FetchContent)
-    FetchContent_Declare(
-            googletest
-            GIT_REPOSITORY https://github.com/google/googletest.git
-            GIT_TAG        release-1.12.1
-    )
-    FetchContent_MakeAvailable(googletest)
+    find_package(GTest CONFIG REQUIRED)
 
-    # Disable Qt AUTOMOC for GoogleTest
-    set_target_properties(gmock gtest PROPERTIES AUTOMOC OFF AUTOUIC OFF AUTORCC OFF)
+    # Create aliases for consistency if needed
+    if(NOT TARGET gtest)
+        add_library(gtest ALIAS GTest::gtest)
+    endif()
+    if(NOT TARGET gtest_main)
+        add_library(gtest_main ALIAS GTest::gtest_main)
+    endif()
+    if(NOT TARGET gmock)
+        add_library(gmock ALIAS GTest::gmock)
+    endif()
+    if(NOT TARGET gmock_main)
+        add_library(gmock_main ALIAS GTest::gmock_main)
+    endif()
+
+    # Disable Qt AUTOMOC for GoogleTest (if the targets exist without aliases)
+    if(TARGET GTest::gtest)
+        set_target_properties(GTest::gtest GTest::gmock PROPERTIES AUTOMOC OFF AUTOUIC OFF AUTORCC OFF)
+    endif()
 endif()
-
-# =============================================================================
-# PROJECT VERSION AND BUILD INFO
-# =============================================================================
-set(US3_VERSION_MAJOR 10)
-set(US3_VERSION_MINOR 0)
-set(US3_VERSION_PATCH 0)
-set(US3_VERSION ${US3_VERSION_MAJOR}.${US3_VERSION_MINOR}.${US3_VERSION_PATCH})
-
-# Generate version header
-configure_file(
-        ${CMAKE_CURRENT_SOURCE_DIR}/admin/cmake/us_version.h.in
-        ${CMAKE_CURRENT_BINARY_DIR}/us_version.h
-        @ONLY
-)
 
 # =============================================================================
 # SUBDIRECTORIES
 # =============================================================================
 add_subdirectory(utils)
-add_subdirectory(qwtplot3d)
 
 if(NOT US3_NO_DB)
     add_subdirectory(gui)
@@ -314,7 +370,7 @@ add_custom_target(distclean
 # Print configuration summary
 message(STATUS "")
 message(STATUS "UltraScan3 Configuration Summary:")
-message(STATUS "  Version: ${US3_VERSION}")
+message(STATUS "  Version: ${PROJECT_VERSION}")
 message(STATUS "  Build type: ${CMAKE_BUILD_TYPE}")
 message(STATUS "  Install prefix: ${CMAKE_INSTALL_PREFIX}")
 message(STATUS "")

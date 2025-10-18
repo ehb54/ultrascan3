@@ -5,7 +5,7 @@
 
 //! The version of UltraScan
 #if QT_VERSION > 0x050000
-#define US_Version QString("4.0")
+#define US_Version QString("4.1.0-dev")
 #else
 #define US_Version QString("3.3")
 #endif
@@ -26,8 +26,13 @@
 #endif
 
 #ifdef MAC
-  #define PLATFORM "mac"
-  #define TITLE    "Macintosh"
+#define PLATFORM "mac"
+  #ifndef OS_TITLE
+    #define OS_TITLE "Macintosh"
+  #endif
+  #ifndef TITLE
+    #define TITLE OS_TITLE
+  #endif
 #endif
 
 #ifdef OPTERON
@@ -67,8 +72,10 @@
 #endif
 
 #ifdef OSX
-  #define OS "osx"
-  #define OS_TITLE "OS-X"
+#define OS "osx"
+  #ifndef OS_TITLE
+    #define OS_TITLE "macOS"  // Don't redefine if already set
+  #endif
 #endif
 
 #ifdef IRIX

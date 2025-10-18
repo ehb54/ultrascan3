@@ -1,4 +1,3 @@
-//! \file us.cpp
 #include <QtCore>
 #include <QTcpSocket>
 #if QT_VERSION < 0x050000
@@ -14,11 +13,33 @@
 #include "us_gui_settings.h"
 #include "us_win_data.cpp"
 #include "us_defines.h"
-#include "us_revision.h"
 #include "us_sleep.h"
 #include "us_images.h"
 #include "us_passwd.h"
 #include "us_db2.h"
+
+// Version information: CMake creates us_version.h, legacy build creates us_revision.h
+#if __has_include("us_version.h")
+// CMake build
+  #include "us_version.h"
+#else
+// Legacy Makefile build
+#include "us_revision.h"
+// Map old names to new names for compatibility
+#ifndef BUILD_NUMBER
+#define BUILD_NUMBER BUILDNUM
+#endif
+#ifndef BUILD_DATE
+#define BUILD_DATE "unknown"
+#endif
+#ifndef BUILD_TIME
+#define BUILD_TIME "unknown"
+#endif
+#endif
+
+#ifndef US_Version
+#define US_Version "4.5"
+#endif
 
 #if 0
 #define EQUI_MENU
@@ -669,41 +690,72 @@ void US_Win::logo( int width )
   painter.drawPixmap( 0, 0, rawpix );
   painter.setPen    ( QPen( Qt::white, 3 ) );
 
-  QString version = "Version " + US_Version + " ( " REVISION
-  " ) for " OS_TITLE;  // REVISION is #define "Revision: xxx"
+  // Strings
+  const QString version = QString("Version %1 (Build %2) for %3")
+          .arg(US_Version)
+          .arg(BUILD_NUMBER)
+          .arg(OS_TITLE);
+  const QString builtOn = QString("Built on %1 at %2")
+          .arg(BUILD_DATE)
+          .arg(BUILD_TIME);
 
-  QFont font( "Arial" );
-  font.setWeight( QFont::DemiBold );
-  font.setPixelSize( 16 );
-  painter.setFont( font );
-  QFontMetrics metrics( font );
+    // Fonts
+    QFont versionFont(QStringLiteral("Arial"));
+    versionFont.setWeight(QFont::DemiBold);
+    versionFont.setPixelSize(16);
 
-  int sWidth = metrics.boundingRect( version ).width();
-  int x      = ( pw - sWidth ) / 2;
+    QFont builtFont(QStringLiteral("Arial"));
+    builtFont.setWeight(QFont::Normal);
+    builtFont.setPixelSize(13);
 
-  painter.drawLine( 0, 106, pw, 106 );
-  painter.drawText( x, 132, version );
-  painter.drawLine( 0, 144, pw, 144 );
+// Metrics
+    QFontMetrics fmVersion(versionFont);
+    QFontMetrics fmBuilt(builtFont);
 
-  QString s = "Authors:";
-  sWidth    = metrics.boundingRect( s ).width();
-  painter.drawText( ( pw - sWidth ) / 2, 166, s );
-  s      = "Borries Demeler";
-  sWidth = metrics.boundingRect( s ).width();
-  painter.drawText( ( pw - sWidth ) / 2, 190, s );
-  s      = "Emre Brookes";
-  sWidth = metrics.boundingRect( s ).width();
-  painter.drawText( ( pw - sWidth ) / 2, 208, s );
-  s      = "Alexey Savelyev";
-  sWidth = metrics.boundingRect( s ).width();
-  painter.drawText( ( pw - sWidth ) / 2, 226, s );
-  s      = "Gary Gorbet";
-  sWidth = metrics.boundingRect( s ).width();
-  painter.drawText( ( pw - sWidth ) / 2, 244, s );
-  
-  smallframe = new QLabel(this);
-  smallframe->setPixmap(pixmap);
-  smallframe->setGeometry( (unsigned int)( (width / 2) - 230 ), 110, 460, 276);
+// Lay out
+    int y = 106;                      // top separator (unchanged)
+    painter.drawLine(0, y, pw, y);
+
+    y += 12;                          // spacing before version line
+    painter.setFont(versionFont);
+    painter.drawText(QRect(0, y, pw, fmVersion.height()),
+                     Qt::AlignHCenter | Qt::AlignVCenter,
+                     version);
+
+    y += fmVersion.height() + 4;      // small gap between version and builtOn
+    painter.setFont(builtFont);
+    painter.drawText(QRect(0, y, pw, fmBuilt.height()),
+                     Qt::AlignHCenter | Qt::AlignVCenter,
+                     builtOn);
+
+    y += fmBuilt.height() + 12;       // spacing before bottom separator
+    painter.drawLine(0, y, pw, y);
+
+// Authors
+    y += 14;                          // spacing before "Authors:"
+    painter.setFont(versionFont);     // reuse the bold 16px for headings
+    QString s = QStringLiteral("Authors:");
+    painter.drawText(QRect(0, y, pw, fmVersion.height()),
+                     Qt::AlignHCenter | Qt::AlignVCenter, s);
+
+    y += fmVersion.height() + 12;
+    painter.setFont(builtFont);       // names in regular weight
+    auto drawCentered = [&](const QString& t){
+        painter.drawText(QRect(0, y, pw, fmBuilt.height()),
+                         Qt::AlignHCenter | Qt::AlignVCenter, t);
+        y += fmBuilt.height() + 8;
+    };
+
+    drawCentered(QStringLiteral("Borries Demeler"));
+    drawCentered(QStringLiteral("Emre Brookes"));
+    drawCentered(QStringLiteral("Alexey Savelyev"));
+    drawCentered(QStringLiteral("Gary Gorbet"));
+
+// Existing smallframe placement (unchanged)
+    smallframe = new QLabel(this);
+    smallframe->setPixmap(pixmap);
+    smallframe->setGeometry(static_cast<unsigned int>((width / 2) - 230), 110, 460, 276);
+
 }
 
 void US_Win::closeSplash( void )
@@ -762,9 +814,9 @@ void US_Win::help( int index )
       QMessageBox::information( this,
         tr( "About UltraScan..." ),
         tr( "UltraScan III version %1\n"
-            "%2\n"
-            "Copyright 1989 - 2021\n"
-            "Borries Demeler and the University of Texas System\n\n"
+            "( build %2 )\n"
+            "Copyright 1989 - 2025\n"
+            "Borries Demeler\n\n"
             "For more information, please visit:\n"
             "http://www.ultrascan.aucsolutions.com/\n\n"
             "The author can be reached at:\n"
@@ -773,7 +825,7 @@ void US_Win::help( int index )
             "32 Campus Drive\n"
             "Missoula, Montana  59812\n"
             "Phone:  (406) 285-1935\n"
-            "E-mail: borries.demeler@umontana.edu" ).arg( US_Version ).arg( REVISION ) );
+            "E-mail: borries.demeler@umontana.edu" ).arg( US_Version ).arg( BUILD_NUMBER ) );
 
       statusBar()->showMessage( tr( "Ready" ) );
       break;
@@ -1106,7 +1158,7 @@ void US_Win::notices_ready() {
    bool empty_msg    = true;
 
    double sys_version  = US_Version.toDouble();
-   int    sys_revision = QString( REVISION ).toInt();
+   int    sys_revision = QString( BUILD_NUMBER ).toInt();
    
    for ( int ii = 0; ii < (int) msgs.size(); ++ii )
    {

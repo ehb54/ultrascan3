@@ -7,54 +7,14 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
 
-# --- Generated headers setup ---
-set(US3_GENERATED_DIR ${CMAKE_CURRENT_BINARY_DIR}/generated)
-file(MAKE_DIRECTORY ${US3_GENERATED_DIR})
-
-# Version configuration
-set(US3_VERSION_MAJOR 0 CACHE STRING "")
-set(US3_VERSION_MINOR 0 CACHE STRING "")
-set(US3_VERSION_PATCH 0 CACHE STRING "")
-set(US3_VERSION_STRING "${US3_VERSION_MAJOR}.${US3_VERSION_MINOR}.${US3_VERSION_PATCH}")
-set(US3_GIT_COMMIT_HASH "nogit" CACHE STRING "")
-set(US3_GIT_BRANCH "nogit" CACHE STRING "")
-set(US3_GIT_TAG "none" CACHE STRING "")
-set(US3_BUILD_NUMBER 0 CACHE STRING "")
-string(TIMESTAMP BUILD_TIMESTAMP "%Y-%m-%d %H:%M:%S %z")
-
-configure_file(
-        ${CMAKE_SOURCE_DIR}/admin/cmake/us_version.h.in
-        ${US3_GENERATED_DIR}/us_version.h
-        @ONLY
-)
-
-file(WRITE ${US3_GENERATED_DIR}/us_revision.h
-        "#pragma once\n#include \"us_version.h\"\n#ifndef REVISION\n#define REVISION \"${US3_BUILD_NUMBER}\"\n#endif\n"
-        )
-
-# Create us/ directory in build root and copy generated headers there for legacy compatibility
-set(US_LEGACY_DIR ${CMAKE_CURRENT_BINARY_DIR}/../us)
-file(MAKE_DIRECTORY ${US_LEGACY_DIR})
-
-# Copy generated headers to legacy location
-configure_file(
-        ${US3_GENERATED_DIR}/us_revision.h
-        ${US_LEGACY_DIR}/us_revision.h
-        COPYONLY
-)
-
-configure_file(
-        ${US3_GENERATED_DIR}/us_version.h
-        ${US_LEGACY_DIR}/us_version.h
-        COPYONLY
-)
+include_directories(${CMAKE_BINARY_DIR})
 
 # Create interface library for common program settings
 add_library(us_program_common INTERFACE)
 
 target_include_directories(us_program_common INTERFACE
-        ${CMAKE_CURRENT_SOURCE_DIR}
-        ${US3_GENERATED_DIR}
+        ${CMAKE_BINARY_DIR}            # Root build dir
+        ${CMAKE_CURRENT_SOURCE_DIR}    # Programs source dir
         )
 
 target_link_libraries(us_program_common INTERFACE
@@ -75,8 +35,6 @@ target_link_libraries(us_program_common INTERFACE
 # Platform-specific libraries
 if(UNIX AND NOT APPLE)
     target_link_libraries(us_program_common INTERFACE OpenSSL::Crypto)
-elseif(APPLE)
-    target_link_libraries(us_program_common INTERFACE "-framework QtOpenGL")
 endif()
 
 # Programs that should be executable-only (no separate library)
@@ -153,13 +111,18 @@ function(add_us3_program prog_name)
         message(STATUS "${prog_name}: Executable-only build")
 
         # Handle special programs explicitly based on their .pro files - ONLY if not executable-only
+
     elseif(prog_name STREQUAL "us_analysis_profile")
+        message(STATUS "${prog_name}: CUSTOM us_analysis_profile branch")
         set(main_source "${prog_dir}/us_anapro_main.cpp")
         set(all_sources "${prog_dir}/us_analysis_profile.cpp" "${prog_dir}/us_anapro_utils.cpp")
         file(GLOB_RECURSE all_headers "${prog_dir}/*.h")
         file(GLOB_RECURSE all_forms "${prog_dir}/*.ui")
         file(GLOB_RECURSE all_resources "${prog_dir}/*.qrc")
-        message(STATUS "${prog_name}: Created")
+        set(create_library TRUE)
+        message(STATUS "${prog_name}: all_sources = ${all_sources}")
+        message(STATUS "${prog_name}: main_source = ${main_source}")
+        message(STATUS "${prog_name}: create_library = ${create_library}")
     elseif(prog_name STREQUAL "us_legacy_converter")
         # Based on .pro file: convert source + legacy converter source
         set(main_source "")
@@ -287,6 +250,21 @@ function(add_us3_program prog_name)
                 AUTOMOC_MOC_OPTIONS "--no-notes"
                 AUTOUIC_SEARCH_PATHS "${prog_dir}"
                 )
+
+        # Apple-specific: Force symbol export (like us_gui and us_utils)
+        if(APPLE)
+            target_link_options(${prog_name}_lib PRIVATE
+                    "LINKER:-export_dynamic"
+                    "LINKER:-all_load"
+                    )
+            target_compile_options(${prog_name}_lib PRIVATE -fvisibility=default)
+
+            set_target_properties(${prog_name}_lib PROPERTIES
+                    CXX_VISIBILITY_PRESET default
+                    C_VISIBILITY_PRESET default
+                    VISIBILITY_INLINES_HIDDEN OFF
+                    )
+        endif()
 
         # Include directories
         target_include_directories(${prog_name}_lib

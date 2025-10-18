@@ -1,0 +1,21 @@
+{
+  "name": "qwt",
+  "version": "6.1.6",
+  "port-version": 1,
+  "description": "Qwt is a graphics extension to the Qt GUI application framework (Qt5 version)",
+  "homepage": "https://qwt.sourceforge.io/",
+  "license": "LGPL-2.1-only WITH Qwt-exception-1.0",
+  "dependencies": [
+    {
+      "name": "vcpkg-cmake",
+      "host": true
+    },
+    {
+      "name": "vcpkg-cmake-config",
+      "host": true
+    },
+    "qt5-base",
+    "qt5-svg",
+    "qt5-tools"
+  ]
+}
