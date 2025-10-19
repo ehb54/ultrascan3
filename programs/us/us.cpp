@@ -182,7 +182,10 @@ void US_Action::onTriggered( bool )
 }
 /////////////US_Win
 US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
-  : QMainWindow( parent, flags )
+  : QMainWindow(parent, flags)
+  , bigframe(nullptr)
+  , smallframe(nullptr)
+  , splash_shadow(nullptr)
 {
   // We need to handle US_Global::g here becuse US_Widgets is not a parent
   if ( ! g.isValid() ) 
@@ -656,113 +659,202 @@ void US_Win::closeEvent( QCloseEvent* e )
 
 void US_Win::splash( void )
 {
-  int y =           menuBar  ()->size().rheight();
-  int h = 532 - y - statusBar()->size().rheight();
-  int w = 710;
+    const int y = menuBar()->size().rheight();
+    const int h = 532 - y - statusBar()->size().rheight();
+    const int w = 710;
 
-  bigframe = new QLabel( this );
-  bigframe->setFrameStyle        ( QFrame::Box | QFrame::Raised);
-  bigframe->setPalette           ( US_GuiSettings::frameColor() );
-  bigframe->setGeometry          ( 0, y, w, h );
-  bigframe->setAutoFillBackground( true );
+    if (!bigframe) bigframe = new QLabel(this);
+    Q_ASSERT(bigframe);
+    bigframe->setGeometry(0, y, w, h);
+    bigframe->setFrameStyle(QFrame::NoFrame);
+    bigframe->setAutoFillBackground(false); // image covers all
 
-  splash_shadow = new QLabel( this );
-  splash_shadow->setGeometry( (unsigned int)( ( w / 2 ) - 210 ) , 130, 460, 276 );
-  splash_shadow->setPalette( QPalette( Qt::black, Qt::cyan ) );
-  splash_shadow->setAutoFillBackground ( true );
+    if (splash_shadow) { splash_shadow->hide(); splash_shadow->deleteLater(); splash_shadow = nullptr; }
 
-  logo( w );
+    logo(w);
+}
 
-  //QTimer::singleShot( 6000, this, SLOT( closeSplash() ) );
+// Full-bleed splash with tuned font scaling and balanced spacing
+static QPixmap makeSplashCanvas(const QPixmap& rawSplash,
+                                const QString& versionLine,
+                                const QString& builtLine,
+                                const QStringList& authors,
+                                int maxW, int maxH, int marginPx)
+{
+    const int canvasW = qMax(1, maxW);
+    const int canvasH = qMax(1, maxH);
+    const int margin  = qMax(4, marginPx);
+
+    // ---- Typography ---------------------------------------------------------
+    QFont versionFont = qApp->font();
+    versionFont.setWeight(QFont::DemiBold);
+    versionFont.setPointSizeF(versionFont.pointSizeF() * 1.2);   // larger version line
+
+    QFont builtFont   = qApp->font();
+    builtFont.setWeight(QFont::Normal);
+    builtFont.setPointSizeF(builtFont.pointSizeF() * 1.1);       // slightly larger build line
+
+    QFontMetrics fmV(versionFont), fmB(builtFont);
+
+    // Spacing constants (small nudges are enough)
+    const int lineGapSmall = 2;   // Version -> Built
+    const int blockGap     = 10;  // Built  -> Authors (before the “lift”)
+    const int authorsGap   = 6;   // “Authors:” -> first name
+    const int namesGap     = 4;   // between names
+    const int authorsLift  = 24;  // visual lift before authors block
+
+    // Heights
+    const int hVersion = fmV.height();
+    const int hBuilt   = fmB.height();
+    const int hAuthorsHdr = fmV.height();
+    const int hNames =
+            (authors.size() * fmB.height()) +
+            (qMax(0, authors.size() - 1) * namesGap);
+
+    const int hVB   = hVersion + lineGapSmall + hBuilt;
+    const int hAUTH = hAuthorsHdr + authorsGap + hNames;
+
+    // ---- Canvas & background -----------------------------------------------
+    QPixmap canvas(canvasW, canvasH);
+    canvas.fill(Qt::transparent);
+    QPainter p(&canvas);
+    p.setRenderHint(QPainter::Antialiasing, true);
+    p.setRenderHint(QPainter::TextAntialiasing, true);
+    p.setRenderHint(QPainter::SmoothPixmapTransform, true);
+
+    QPixmap bg = rawSplash;
+    if (bg.isNull()) {
+        bg = QPixmap(canvasW, canvasH);
+        bg.fill(QColor("#0B173D"));
+    } else {
+        bg = bg.scaled(canvasW, canvasH,
+                       Qt::KeepAspectRatioByExpanding,
+                       Qt::SmoothTransformation);
+    }
+    const int xImg = (canvasW - bg.width())  / 2;
+    const int yImg = (canvasH - bg.height()) / 2;
+    p.drawPixmap(xImg, yImg, bg);
+
+    // Lift the entire text block a bit from the bottom
+    const double kLiftRatio = 0.10; // ~14% of height
+    const int    liftPx     = qRound(canvasH * kLiftRatio);
+
+    // Reserve space below for the authors block
+    const int baselineReserve = authorsLift + hAUTH;
+
+    // Top of the Version/Build block
+    int yVB = canvasH - margin - liftPx - baselineReserve - hVB;
+    if (yVB < margin) yVB = margin;
+
+    // Gradient backdrop for text readability
+    {
+        const int pad   = margin;
+        const int top   = qMax(0, yVB - pad);
+        const int bot   = qMin(canvasH, yVB + hVB + blockGap + authorsLift + hAUTH + pad);
+        QRect gradRect(0, top, canvasW, bot - top);
+
+        QLinearGradient g(gradRect.topLeft(), gradRect.bottomLeft());
+        g.setColorAt(0.00, QColor(0,  0,  0,  0));
+        g.setColorAt(0.25, QColor(0,  0, 20, 70));
+        g.setColorAt(0.55, QColor(0,  0, 30,110));
+        g.setColorAt(1.00, QColor(0,  0, 40,130));
+        p.fillRect(gradRect, g);
+    }
+
+    // Muted palette (less teal)
+    const QColor textHi(230,236,240);
+    const QColor textLo(200,210,220);
+    const QColor hdrMain = textHi;        // same as Version line
+    const QColor hdrGlow(0,0,0,0);
+
+    // ---- Draw Version/Build -------------------------------------------------
+    int y = yVB;
+
+    p.setPen(textHi);
+    p.setFont(versionFont);
+    p.drawText(QRect(margin, y, canvasW - 2*margin, hVersion),
+               Qt::AlignHCenter | Qt::AlignTop, versionLine);
+    y += hVersion + lineGapSmall;
+
+    p.setPen(textLo);
+    p.setFont(builtFont);
+    p.drawText(QRect(margin, y, canvasW - 2*margin, hBuilt),
+               Qt::AlignHCenter | Qt::AlignTop, builtLine);
+
+    // ---- Authors block ------------------------------------------------------
+    // Start below the version/build block with a visual "lift"
+    y = yVB + hVB + blockGap + authorsLift;
+
+    // Draw “Authors:” (subtle glow, then main)
+    p.setFont(versionFont);
+    p.setPen(hdrGlow);
+    p.drawText(QRect(margin, y, canvasW - 2*margin, hAuthorsHdr),
+               Qt::AlignHCenter | Qt::AlignTop, QObject::tr("Authors:"));
+
+    p.setPen(hdrMain);
+    p.drawText(QRect(margin, y, canvasW - 2*margin, hAuthorsHdr),
+               Qt::AlignHCenter | Qt::AlignTop, QObject::tr("Authors:"));
+
+    // >>> IMPORTANT: advance y past the header before names <<<
+    y += hAuthorsHdr + authorsGap;
+
+    // List of names (no overlap, consistent spacing)
+    p.setPen(textLo);
+    p.setFont(builtFont);
+    for (int i = 0; i < authors.size(); ++i) {
+        p.drawText(QRect(margin, y, canvasW - 2*margin, fmB.height()),
+                   Qt::AlignHCenter | Qt::AlignTop, authors.at(i));
+        y += fmB.height();
+        if (i + 1 < authors.size()) y += namesGap;
+    }
+
+    p.end();
+    return canvas;
 }
 
 void US_Win::logo( int width )
 {
-  // Splash image
-  QPixmap rawpix = US_Images::getImage( US_Images::US3_SPLASH );
+    // Splash (from resources via US_Images)
+    QPixmap raw = US_Images::getImage(US_Images::US3_SPLASH);
 
-  int ph = rawpix.height();
-  int pw = rawpix.width();
+    // Available area in central window (keeps your 710x532 layout)
+    const int yTop   = menuBar()->size().rheight();
+    const int availH = 532 - yTop - statusBar()->size().rheight();
+    const int availW = 710;
+    const int margin = 16;
 
-  QPixmap  pixmap( pw, ph );
-  QPainter painter( &pixmap );
+    // Strings (keep your existing content)
+    const QString version = QString("Version %1 (build %2) for %3")
+            .arg(US_Version).arg(BUILD_NUMBER).arg(OS_TITLE);
+    const QString builtOn = QString("Built on %1 at %2")
+            .arg(BUILD_DATE).arg(BUILD_TIME);
 
-  painter.drawPixmap( 0, 0, rawpix );
-  painter.setPen    ( QPen( Qt::white, 3 ) );
-
-  // Strings
-  const QString version = QString("Version %1 (Build %2) for %3")
-          .arg(US_Version)
-          .arg(BUILD_NUMBER)
-          .arg(OS_TITLE);
-  const QString builtOn = QString("Built on %1 at %2")
-          .arg(BUILD_DATE)
-          .arg(BUILD_TIME);
-
-    // Fonts
-    QFont versionFont(QStringLiteral("Arial"));
-    versionFont.setWeight(QFont::DemiBold);
-    versionFont.setPixelSize(16);
-
-    QFont builtFont(QStringLiteral("Arial"));
-    builtFont.setWeight(QFont::Normal);
-    builtFont.setPixelSize(13);
-
-// Metrics
-    QFontMetrics fmVersion(versionFont);
-    QFontMetrics fmBuilt(builtFont);
-
-// Lay out
-    int y = 106;                      // top separator (unchanged)
-    painter.drawLine(0, y, pw, y);
-
-    y += 12;                          // spacing before version line
-    painter.setFont(versionFont);
-    painter.drawText(QRect(0, y, pw, fmVersion.height()),
-                     Qt::AlignHCenter | Qt::AlignVCenter,
-                     version);
-
-    y += fmVersion.height() + 4;      // small gap between version and builtOn
-    painter.setFont(builtFont);
-    painter.drawText(QRect(0, y, pw, fmBuilt.height()),
-                     Qt::AlignHCenter | Qt::AlignVCenter,
-                     builtOn);
-
-    y += fmBuilt.height() + 12;       // spacing before bottom separator
-    painter.drawLine(0, y, pw, y);
-
-// Authors
-    y += 14;                          // spacing before "Authors:"
-    painter.setFont(versionFont);     // reuse the bold 16px for headings
-    QString s = QStringLiteral("Authors:");
-    painter.drawText(QRect(0, y, pw, fmVersion.height()),
-                     Qt::AlignHCenter | Qt::AlignVCenter, s);
-
-    y += fmVersion.height() + 12;
-    painter.setFont(builtFont);       // names in regular weight
-    auto drawCentered = [&](const QString& t){
-        painter.drawText(QRect(0, y, pw, fmBuilt.height()),
-                         Qt::AlignHCenter | Qt::AlignVCenter, t);
-        y += fmBuilt.height() + 8;
+    // Authors (same four as before; easy to extend)
+    const QStringList authors = {
+            QStringLiteral("Borries Demeler"),
+            QStringLiteral("Emre Brookes"),
+            QStringLiteral("Alexey Savelyev"),
+            QStringLiteral("Gary Gorbet")
     };
 
-    drawCentered(QStringLiteral("Borries Demeler"));
-    drawCentered(QStringLiteral("Emre Brookes"));
-    drawCentered(QStringLiteral("Alexey Savelyev"));
-    drawCentered(QStringLiteral("Gary Gorbet"));
+    // Build single canvas to exactly fill the available area
+    QPixmap canvas = makeSplashCanvas(raw, version, builtOn, authors,
+                                      availW, availH, /*margin*/16);
 
-// Existing smallframe placement (unchanged)
-    smallframe = new QLabel(this);
-    smallframe->setPixmap(pixmap);
-    smallframe->setGeometry(static_cast<unsigned int>((width / 2) - 230), 110, 460, 276);
-
+    // Use the whole area under the menubar
+    if (!smallframe) smallframe = new QLabel(this);
+    Q_ASSERT(smallframe);
+    smallframe->setPixmap(canvas);
+    smallframe->setGeometry(0, yTop, availW, availH);
+    smallframe->setScaledContents(false);  // we already sized the pixmap
+    smallframe->show();
 }
 
 void US_Win::closeSplash( void )
 {
-   delete smallframe;
-   delete splash_shadow;
-   bigframe->show();
+    if (smallframe) { smallframe->deleteLater(); smallframe = nullptr; }
+    if (splash_shadow) { splash_shadow->deleteLater(); splash_shadow = nullptr; }
+    if (bigframe) bigframe->show();
 }
 
 void US_Win::help( int index )

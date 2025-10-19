@@ -30,6 +30,7 @@ target_link_libraries(us_program_common INTERFACE
         Qt5::OpenGL
         Qt5::PrintSupport
         Qwt::Qwt
+        UltraScan3::Resources
         )
 
 # Platform-specific libraries

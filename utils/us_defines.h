@@ -28,7 +28,7 @@
 #ifdef MAC
 #define PLATFORM "mac"
   #ifndef OS_TITLE
-    #define OS_TITLE "Macintosh"
+    #define OS_TITLE "macOS"
   #endif
   #ifndef TITLE
     #define TITLE OS_TITLE

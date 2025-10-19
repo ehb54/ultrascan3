@@ -6,8 +6,32 @@ file(GLOB GUI_HEADERS "*.h")
 file(GLOB GUI_RESOURCES "*.qrc")
 file(GLOB GUI_FORMS "*.ui")
 
+# Exclude legacy image qrcs; we use the auto-generated one instead
+list(FILTER GUI_RESOURCES EXCLUDE REGEX "(^|/)images\\.qrc$")
+list(FILTER GUI_RESOURCES EXCLUDE REGEX "gui_images_auto\\.qrc$")
+
 # Create GUI library
 add_library(us_gui ${GUI_SOURCES} ${GUI_HEADERS} ${GUI_FORMS} ${GUI_RESOURCES})
+
+# --- Auto-embed GUI images via QRC (absolute paths + aliases) ----------------
+file(GLOB_RECURSE US3_GUI_IMAGES CONFIGURE_DEPENDS
+        "${CMAKE_SOURCE_DIR}/gui/images/*.png"
+        "${CMAKE_SOURCE_DIR}/gui/images/*.svg"
+        "${CMAKE_SOURCE_DIR}/gui/images/*.xpm"
+        "${CMAKE_SOURCE_DIR}/gui/images/*.ico")
+
+set(US3_GUI_QRC "${CMAKE_BINARY_DIR}/us3_gui_images_auto.qrc")
+file(WRITE  "${US3_GUI_QRC}" "<RCC>\n  <qresource prefix=\"/images\">\n")
+foreach(img IN LISTS US3_GUI_IMAGES)
+    # rel will be "foo.png", "icons/bar.svg", etc., relative to gui/images
+    file(RELATIVE_PATH rel "${CMAKE_SOURCE_DIR}/gui/images" "${img}")
+    # Use ABSOLUTE disk path so rcc finds it from the build dir, but keep a clean runtime name via alias
+    file(APPEND "${US3_GUI_QRC}" "    <file alias=\"${rel}\">${img}</file>\n")
+endforeach()
+file(APPEND "${US3_GUI_QRC}" "  </qresource>\n</RCC>\n")
+
+qt5_add_resources(US3_GUI_RES "${US3_GUI_QRC}")
+target_sources(us_gui PRIVATE ${US3_GUI_RES})
 
 if(APPLE)
     # Force all symbols to be exported at link time

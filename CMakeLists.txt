@@ -186,6 +186,84 @@ endif()
 message(STATUS "Qt dynamic linking configured for all platforms")
 
 # ============================================================================
+# Resources
+# ============================================================================
+include(GNUInstallDirs)
+include(${CMAKE_SOURCE_DIR}/admin/cmake/Us3Resources.cmake)
+
+set(US3_ETC_DIR "${CMAKE_SOURCE_DIR}/etc")
+
+# Re-run CMake when any file in etc/ changes (including deletes/creates)
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
+        "${US3_ETC_DIR}/*"
+        "${US3_ETC_DIR}/*/*"
+        "${US3_ETC_DIR}/*/*/*"
+        )
+
+
+# Subfolders you want to keep editable on disk (not embedded in the binary)
+set(US3_ETC_EXCLUDE_DIRS
+        rotors
+        dmd
+        mysql
+        somo.cromer68.saxs_atoms
+        )
+
+# Individual files you want to keep editable on disk
+set(US3_ETC_EXCLUDE_FILES
+        cluster.config
+        )
+
+# Outputs
+set(US3_QRC_XML "${CMAKE_BINARY_DIR}/us3_xml_auto.qrc")
+
+us3_generate_qrc_from_dir(
+        OUT_QRC "${US3_QRC_XML}" PREFIX "/us3"
+        BASE "${US3_ETC_DIR}"
+        GLOBS "*.xml"
+        EXCLUDE_DIRS ${US3_ETC_EXCLUDE_DIRS}
+        EXCLUDE_FILES ${US3_ETC_EXCLUDE_FILES}
+        USE_ABSOLUTE
+)
+
+# Validation/target now only for XML
+add_custom_command(
+        OUTPUT "${US3_QRC_XML}.checked"
+        COMMAND ${CMAKE_COMMAND}
+        -DUS3_QRC="${US3_QRC_XML}"
+        -DUS3_BASE="${US3_ETC_DIR}"
+        -P "${CMAKE_SOURCE_DIR}/admin/cmake/Us3QrcCheck.cmake"
+        COMMAND ${CMAKE_COMMAND} -E touch "${US3_QRC_XML}.checked"
+        DEPENDS "${US3_QRC_XML}"
+        COMMENT "Validating XML QRC references"
+)
+
+add_custom_target(us3_validate_qrc ALL
+        DEPENDS "${US3_QRC_XML}.checked"
+        )
+
+# Resources library now only includes XML
+add_library(us3_resources STATIC "${US3_QRC_XML}")
+set_target_properties(us3_resources PROPERTIES AUTOMOC OFF)
+add_dependencies(us3_resources us3_validate_qrc)
+target_link_libraries(us3_resources PRIVATE Qt5::Core Qt5::Gui)
+add_library(UltraScan3::Resources ALIAS us3_resources)
+
+# Install editable trees/files we excluded from the QRC
+foreach(d IN LISTS US3_ETC_EXCLUDE_DIRS)
+    if(EXISTS "${US3_ETC_DIR}/${d}")
+        install(DIRECTORY "${US3_ETC_DIR}/${d}/"
+                DESTINATION "${CMAKE_INSTALL_DATADIR}/ultrascan/${d}")
+    endif()
+endforeach()
+foreach(f IN LISTS US3_ETC_EXCLUDE_FILES)
+    if(EXISTS "${US3_ETC_DIR}/${f}")
+        install(FILES "${US3_ETC_DIR}/${f}"
+                DESTINATION "${CMAKE_INSTALL_DATADIR}/ultrascan")
+    endif()
+endforeach()
+
+# ============================================================================
 # Find Dependencies
 # ============================================================================
 
