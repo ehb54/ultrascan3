@@ -1,22 +1,38 @@
 #include <QtCore>
 #include <QTcpSocket>
-#if QT_VERSION < 0x050000
-#include <QtSingleApplication>
-#else
-#include <QtWidgets/QApplication>
-#endif
+#include <QApplication>
+#include <QStyleFactory>
+#include <QGuiApplication>
+#include <QFont>
+#include <QFile>
+#include <QMap>
+#include <QTranslator>
+#include <QLocale>
+#include <QMessageBox>
+#include <QPushButton>
 
-#include "us.h"
-#include "us_license_t.h"
-#include "us_license.h"
-#include "us_settings.h"
-#include "us_gui_settings.h"
-#include "us_win_data.cpp"
+// ----------------------------------------------------------------------------
+// UltraScan Core Headers
+// ----------------------------------------------------------------------------
 #include "us_defines.h"
 #include "us_sleep.h"
 #include "us_images.h"
+#include "us_gui_settings.h"
+#include "us_settings.h"
+
+// ----------------------------------------------------------------------------
+// Database & Licensing
+// ----------------------------------------------------------------------------
 #include "us_passwd.h"
 #include "us_db2.h"
+#include "us_license_t.h"
+#include "us_license.h"
+
+// ----------------------------------------------------------------------------
+// Application Core
+// ----------------------------------------------------------------------------
+#include "us.h"
+#include "us_win_data.cpp"
 
 // Version information: CMake creates us_version.h, legacy build creates us_revision.h
 #if __has_include("us_version.h")
@@ -59,114 +75,108 @@ using namespace US_WinData;
   a license.  If a valid license is not found, it launches the
   \ref US_License window.
 */
-int main( int argc, char* argv[] )
+int main(int argc, char* argv[])
 {
-  QString options( getenv( "ULTRASCAN_OPTIONS" ) );
-#if QT_VERSION < 0x050000
-  QtSingleApplication application( "UltraScan III", argc, argv );
-  
-  // If environment variable ULTRASCAN_OPTIONS contains the 
-  // word 'multiple', then we don't try to limit to one instance
-  if ( ! options.contains( "multiple" ) )
-  {
-    if ( application.sendMessage( "Wake up" ) ) return 0;
-  }
+    // Optional env flags kept from your code
+    QString options(getenv("ULTRASCAN_OPTIONS"));
 
-  application.initialize();
-#else
-  qputenv("QT_ENABLE_HIGHDPI_SCALING",QByteArray("1"));
-  QApplication application( argc, argv );
-  application.setApplicationDisplayName( "UltraScan III" );
-#endif
+    // HiDPI: must be set BEFORE QApplication is constructed
+    QCoreApplication::setAttribute(Qt::AA_UseHighDpiPixmaps, true);
 
-  // Set up language localization
-  QString locale = QLocale::system().name();
+    // 1) Create the app
+    QApplication application(argc, argv);
+    application.setApplicationDisplayName("UltraScan III");
 
-  QTranslator translator;
-  translator.load( QString( "us_" ) + locale );
-  application.installTranslator( &translator );
-    
-  // See if we need to update the license
-  QString ErrorMessage;
+    // 2) Set stype
+    // QApplication::setStyle(QStyleFactory::create("Fusion"));
 
-  int result = US_License_t::isValid( ErrorMessage );
-  if ( result != US_License_t::OK )
-  {
-    QMessageBox mBox;
+    // Apply global palette (base colors)
+    application.setPalette(US_GuiSettings::frameColorDefault());
 
-    QPushButton* cancel   = mBox.addButton( QMessageBox::Cancel );
-    QPushButton* Register = mBox.addButton( qApp->translate( "UltraScan III", "Register"), 
-        QMessageBox::ActionRole);
-    
-    mBox.setDefaultButton( Register );
-    mBox.setWindowTitle  ( qApp->translate( "UltraScan III", "UltraScan License Problem" ) );
-    mBox.setText         ( ErrorMessage );
-    mBox.setIcon         ( QMessageBox::Critical );
-    mBox.exec();
-
-    if ( mBox.clickedButton() == cancel )  exit( -1 ); 
-    
-    US_License* license = new US_License();
-    license->show();
-#if QT_VERSION < 0x050000
-    application.setActivationWindow( license );
-#endif
-    return application.exec();
-  }
-
-  // License is OK.  Start up.
-  
-  //Sync User-level with that set in DB //////////////////////////////////////////
-  //If DB set ?
-  QList<QStringList> DB_list = US_Settings::databases();
-  QStringList defaultDB      = US_Settings::defaultDB();
-  if ( DB_list.size() > 0 && defaultDB.size() > 0 )
+    // 3) Font
     {
-      qDebug() << "defaultDB -- " << defaultDB.at( 2 );
-            
-      US_Passwd   pw;
-      US_DB2      db( pw.getPasswd() );
-      
-      if ( db.lastErrno() != IUS_DB2::OK )
-        {
-	  QMessageBox msgBox;
-          msgBox.setWindowTitle ("ERROR: User Level Synchronization");
-          msgBox.setText("Error making the DB connection! User-level cannot be synchronized.");
-          msgBox.setIcon  ( QMessageBox::Critical );
-          msgBox.exec();
-      
-          //exit( -1 );
-        }
-      else
-	{
-      
-	  QStringList q( "get_user_info" );
-	  db.query( q );
-	  db.next();
-	  
-	  int ID        = db.value( 0 ).toInt();
-	  QString fname = db.value( 1 ).toString();
-	  QString lname = db.value( 2 ).toString();
-	  int     level = db.value( 5 ).toInt();
-	  
-	  qDebug() << "USCFG: UpdInv: ID,name,lev" << ID << fname << lname << level;
-	  //if(ID<1) return;
-	  
-	  US_Settings::set_us_inv_name ( lname + ", " + fname );
-	  US_Settings::set_us_inv_ID   ( ID );
-	  US_Settings::set_us_inv_level( level );
-	}
+        QFont f = QApplication::font();
+        f.setFamily("Helvetica Neue");
+        f.setPointSizeF(f.pointSizeF() + 1.0);
+        QApplication::setFont(f);
     }
-  
-  //END OF user-level sync//////////////////////////////////////
-  
-  US_Win w;
-  w.show();
-#if QT_VERSION < 0x050000
-  application.setActivationWindow( &w );
-#endif
-  return application.exec();
+
+    // 4) i18n: install before creating/showing UI
+    {
+        const QString locale = QLocale::system().name();
+        static QTranslator translator;                 // keep alive for app lifetime
+        if (translator.load(QStringLiteral("us_") + locale))
+            application.installTranslator(&translator);
+    }
+
+    // 5) License check (dialogs benefit from theme already applied)
+    {
+        QString ErrorMessage;
+        const int result = US_License_t::isValid(ErrorMessage);
+        if (result != US_License_t::OK) {
+            QMessageBox mBox;
+            QPushButton* cancel   = mBox.addButton(QMessageBox::Cancel);
+            QPushButton* Register = mBox.addButton(
+                    qApp->translate("UltraScan III", "Register"),
+                    QMessageBox::ActionRole);
+
+            mBox.setDefaultButton(Register);
+            mBox.setWindowTitle(qApp->translate("UltraScan III", "UltraScan License Problem"));
+            mBox.setText(ErrorMessage);
+            mBox.setIcon(QMessageBox::Critical);
+            mBox.exec();
+
+            if (mBox.clickedButton() == cancel)
+                return -1;
+
+            auto* license = new US_License();
+            license->show();
+            return application.exec();  // stay in license UI loop
+        }
+    }
+
+    // 6) Sync user-level with DB
+    {
+        QList<QStringList> DB_list = US_Settings::databases();
+        QStringList defaultDB      = US_Settings::defaultDB();
+
+        if (DB_list.size() > 0 && defaultDB.size() > 0) {
+            qDebug() << "defaultDB -- " << defaultDB.at(2);
+
+            US_Passwd pw;
+            US_DB2 db(pw.getPasswd());
+
+            if (db.lastErrno() != IUS_DB2::OK) {
+                QMessageBox msgBox;
+                msgBox.setWindowTitle("ERROR: User Level Synchronization");
+                msgBox.setText("Error making the DB connection! User-level cannot be synchronized.");
+                msgBox.setIcon(QMessageBox::Critical);
+                msgBox.exec();
+            } else {
+                QStringList q("get_user_info");
+                db.query(q);
+                db.next();
+
+                int ID        = db.value(0).toInt();
+                QString fname = db.value(1).toString();
+                QString lname = db.value(2).toString();
+                int level     = db.value(5).toInt();
+
+                qDebug() << "USCFG: UpdInv: ID,name,lev" << ID << fname << lname << level;
+                US_Settings::set_us_inv_name (lname + ", " + fname);
+                US_Settings::set_us_inv_ID   (ID);
+                US_Settings::set_us_inv_level(level);
+            }
+        }
+    }
+
+    // 7) Create and show the main window
+    US_Win w;
+    w.show();
+
+    return application.exec();
 }
+
 
 //////////////US_Action
 US_Action::US_Action( int i, const QString& text, QObject* parent) 

@@ -378,6 +378,7 @@ endif()
 # SUBDIRECTORIES
 # =============================================================================
 add_subdirectory(utils)
+add_subdirectory(doc/manual)
 
 if(NOT US3_NO_DB)
     add_subdirectory(gui)
