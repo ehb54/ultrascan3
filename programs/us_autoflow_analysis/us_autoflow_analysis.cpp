@@ -382,8 +382,7 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
       if ( json.contains("PCSA") )
 	job6run_pcsa = true;
           
-      triple_name_width = fmet.width( triple_curr );
-      //triple_name_width = fmet.horizontalAdvance( triple_curr );
+      triple_name_width = fmet.horizontalAdvance( triple_curr );
       
       qDebug() << "Triple,  width:  " << triple_curr << ", " << triple_name_width;
       qDebug() << "GUI: job1run, job2run, job3run, job4run, job5run -- "
@@ -4459,7 +4458,7 @@ DbgLv(1) << "Number of FM models found: " << nfmods;
 if(nfmods>0) {
 DbgLv(1) << " pre:D0" <<  mDescrs[0].description;
 DbgLv(1) << " pre:Dn" <<  mDescrs[nfmods-1].description; }
-   qSort( mDescrs );
+   std::sort( mDescrs.begin(), mDescrs.end() );
 if(nfmods>0) {
 DbgLv(1) << " sorted:D0" <<  mDescrs[0].description;
 DbgLv(1) << " sorted:Dn" <<  mDescrs[nfmods-1].description; }
@@ -5601,7 +5600,7 @@ DbgLv(1) << " eupd:   ixmlin ixblin" << ixmlin << ixblin << "ncmlin ncblin" << n
      progress_msg_fmb->setWindowTitle( QString( tr("Updating Edit Profiles: %1")).arg( triple_information[ "triple_name" ] ));
      QFont font_d  = progress_msg_fmb->property("font").value<QFont>();
      QFontMetrics fm(font_d);
-     int pixelsWide = fm.width( progress_msg_fmb->windowTitle() );
+     int pixelsWide = fm.horizontalAdvance( progress_msg_fmb->windowTitle() );
      qDebug() << "Progress_msg_fmb: pixelsWide -- " << pixelsWide;
      progress_msg_fmb ->setMinimumWidth( pixelsWide*2 );
      progress_msg_fmb->adjustSize();
@@ -5953,7 +5952,7 @@ DbgLv(1) << "RmvMod:    arTime lArTime" << arTime << lArTime;
    }
 
    nlmods         = lMDescrs.size();
-   qSort( lMDescrs );
+   std::sort( lMDescrs.begin(), lMDescrs.end() );
 DbgLv(1) << "RmvMod: nlmods" << nlmods << "msetBase" << msetBase;
 
    for ( int ii = 0; ii < nlmods; ii++ )
@@ -6098,7 +6097,7 @@ DbgLv(1) << "RmvMod:  scn2 ii dmodDesc" << descript;
       }
 
       ndmods         = dMDescrs.size();
-      qSort( dMDescrs );
+      std::sort( dMDescrs.begin(), dMDescrs.end() );
 
       if ( dArTime > lArTime )      // Don't count any older group
          nlmods         = 0;

@@ -33,14 +33,14 @@ int US_SoluteData::clearBuckets()
 int US_SoluteData::sortBuckets( QList< bucket >* buks )
 {
    int rc = 0;
-   qSort( buks->begin(), buks->end() );
+   std::sort( buks->begin(), buks->end() );
    return rc;
 }
 
 int US_SoluteData::sortBuckets()
 {
    int rc = 0;
-   qSort( allbucks.begin(), allbucks.end() );
+   std::sort( allbucks.begin(), allbucks.end() );
    return rc;
 }
 
@@ -364,7 +364,7 @@ int US_SoluteData::autoCalcBins( int mxsols, qreal wsbuck, qreal hfbuck )
    }
 
    // sort the concentrate values to find cut-off values
-   qSort( cvals.begin(), cvals.end() );
+   std::sort( cvals.begin(), cvals.end() );
 
    // (possibly) pare down the list based on cut-off C values
    cutlo       = cvals.at( nisols - ntsols ); // low val in sorted concen vals
@@ -620,7 +620,7 @@ else DbgLv(2) << "BUCKET TOO THIN H,V " << horzr << "," << vertr;
 
       if ( novls > 0 )
       {  // if there were overlaps, re-sort buckets by vertex for next pass
-         qSort( buks1->begin(), buks1->end(), buck_vx_lessthan );
+         std::sort( buks1->begin(), buks1->end(), buck_vx_lessthan );
       }
 
       else if ( tstat == 1 )
@@ -635,7 +635,7 @@ else DbgLv(2) << "BUCKET TOO THIN H,V " << horzr << "," << vertr;
    }
 
    // do a re-sort based on center point
-   qSort( buks1->begin(), buks1->end() );
+   std::sort( buks1->begin(), buks1->end() );
 
    // copy the final bucket list to the master
 

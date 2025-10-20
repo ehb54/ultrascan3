@@ -1405,7 +1405,7 @@ DbgLv(1) << "MCD: cc" << cc << "sol_id" << sol_id;
 
    // Now sort the solute id strings to create sorted composite
 #if 0
-   qSort( sortlst );
+   std::sort( sortlst.begin(), sortlst.end() );
    US_ZSolute pcompsol;
    US_ZSolute ccompsol;
    QString pskmatch  = QString();

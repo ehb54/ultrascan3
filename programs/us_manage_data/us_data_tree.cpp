@@ -1182,7 +1182,7 @@ int US_DataTree::action_rows( )
    for ( int ii = 0; ii < nsrows; ii++ )
       selrows << selitems[ ii ]->type() - (int)QTreeWidgetItem::UserType;
 
-   qSort( selrows );
+   std::sort( selrows.begin(), selrows.end() );
 DbgLv(1) << "acrow: nsrows" << nsrows;
 
    // Build up the list of action rows; include descendants, exclude Raw

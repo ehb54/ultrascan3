@@ -102,7 +102,7 @@ DbgLv(0) << "AddSelections";
          selected << lambda;
    }
 
-   qSort( selected );
+   std::sort( selected.begin(), selected.end() );
    nbr_select   = selected.size();
    lw_selected->clear();
 

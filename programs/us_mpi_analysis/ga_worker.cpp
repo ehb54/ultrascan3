@@ -213,7 +213,7 @@ DbTimMsg("Worker start rank/generation/elapsed-secs");
       }
 
       // Sort fitness
-      qSort( fitness );
+      std::sort( fitness.begin(), fitness.end() );
 DbTimMsg("Worker after get_fitness loop + sort");
 
       // Refine with gradient search method (gsm) on last generation
@@ -338,7 +338,7 @@ DbgLv(1) << "gw:" << my_rank << ":  Dup cleaned: f0 f1 fit0 fit1"
       }
 
       // Re-sort
-      qSort( fitness );
+      std::sort( fitness.begin(), fitness.end() );
       
       QList< Gene > old_genes = genes;
 
@@ -424,7 +424,7 @@ double US_MPI_Analysis::get_fitness( const Gene& gene )
    US_SolveSim::Simulation sim = simulation_values;
 sim.dbg_level = qMax(0,dbg_level-1);
    sim.solutes = gene;
-   qSort( sim.solutes );
+   std::sort( sim.solutes.begin(), sim.solutes.end() );
 
    fitness_count++;
    int     nisols = gene.size();

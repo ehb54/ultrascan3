@@ -4185,8 +4185,8 @@ bool US_ExperGuiUpload::protocolToDataDisk( QStringList& msg_to_user )
 	r_types << "IP";
 
       QStringList r_types_fromDisk = runTypes_from_dataDisk[ ch_num ];
-      qSort( r_types );
-      qSort( r_types_fromDisk );
+      std::sort( r_types.begin(), r_types.end() );
+      std::sort( r_types_fromDisk.begin(), r_types_fromDisk.end() );
       qDebug() << "DataDisk OptSys for chann: " << ch_num << r_types_fromDisk;
       qDebug() << "Protocol OptSys for chann: " << ch_num << r_types;
       if ( r_types != r_types_fromDisk )

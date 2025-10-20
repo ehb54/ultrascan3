@@ -177,7 +177,7 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    le_rmsd      = us_lineedit( "0.0", -1, true );
    le_variance  = us_lineedit( "0.0", -1, true );
    QFontMetrics fme( lb_compress->font() );
-   int pwid = fme.width( lb_compress->text() + 6 );
+   int pwid = fme.horizontalAdvance( lb_compress->text() + 6 );
    int lwid = pwid * 3 / 4;
    pb_solution->setEnabled( false );
    lb_vbar    ->setMinimumWidth( pwid );

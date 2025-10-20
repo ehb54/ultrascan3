@@ -1642,7 +1642,7 @@ void US_MwlRawViewer::exclude_scans()
       scan_knt++;
    }
 
-   qSort( excludes );
+   std::sort( excludes.begin(), excludes.end() );
    curr_cdata.clear();
    prev_cdata.clear();
    curr_recxs.clear();
@@ -2089,7 +2089,7 @@ int US_MwlRawViewer::build_xyz_data( QVector< QVector3D >& xyzd, int scan )
    scan_fr      = ( scan_to < 1 ) ?     1 : scan_fr;
    scan_to      = ( scan_to < 1 ) ? kscan : scan_to;
    int scan_knt = 1;
-   if ( excludes.count() > 0 )  qSort( excludes );
+   if ( excludes.count() > 0 )  std::sort( excludes.begin(), excludes.end() );
 
    // Get index of scan for which to build
    if ( scan < 0 )

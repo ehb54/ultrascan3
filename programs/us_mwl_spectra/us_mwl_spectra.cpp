@@ -501,8 +501,8 @@ void US_MwlSpectra::load_distro( )
 
    // Sort points and build normalized concentrations
 
-   qSort( sedcoes );
-   qSort( lambdas );
+   std::sort( sedcoes.begin(), sedcoes.end() );
+   std::sort( lambdas.begin(), lambdas.end() );
    nsedcos       = sedcoes.count();
    nlambda       = lambdas.count();
    nipoint       = mdlxyz .count();
@@ -1577,9 +1577,9 @@ void US_MwlSpectra::final_stats( QVector< int >& istats,
    dstats[ 6 ]       /= ctot;
 
    // Sort value lists and compute medians
-   qSort( lwlns );
-   qSort( lseds );
-   qSort( lcons );
+   std::sort( lwlns.begin(), lwlns.end() );
+   std::sort( lseds.begin(), lseds.end() );
+   std::sort( lcons.begin(), lcons.end() );
    dstats[ 7 ]        = lwlns[ lwlns.count() / 2 ];
    dstats[ 8 ]        = lseds[ lseds.count() / 2 ];
    dstats[ 9 ]        = lcons[ lcons.count() / 2 ];
@@ -1816,8 +1816,8 @@ void US_MwlSpectra::changedPlotX( bool on_state ) {
 
     // Sort points and build normalized concentrations
 
-    qSort( sedcoes );
-    qSort( lambdas );
+    std::sort( sedcoes.begin(), sedcoes.end() );
+    std::sort( lambdas.begin(), lambdas.end() );
     nsedcos       = sedcoes.count();
     nlambda       = lambdas.count();
     nipoint       = mdlxyz .count();

@@ -5207,7 +5207,7 @@ void US_XpnDataViewer::exclude_scans()
       scan_knt++;
    }
 
-   qSort( excludes );
+   std::sort( excludes.begin(), excludes.end() );
    kscan      = nscan - excludes.count();
 DbgLv(1) << "Excl: kscan" << kscan;
    ct_from   ->disconnect();

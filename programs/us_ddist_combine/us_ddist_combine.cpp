@@ -2315,7 +2315,7 @@ void US_DDistr_Combine::update_distros()
       distros << dd;
    }
 
-   qSort( distros );
+   std::sort( distros.begin(), distros.end() );
 
    return;
 }

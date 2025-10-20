@@ -11902,7 +11902,7 @@ void US_Edit::prior_equil( void )
       // Excluded scans
       init_includes();
       reset_excludes(); // Zero exclude combo boxes
-      qSort( parameters.excludes );
+      std::sort( parameters.excludes.begin(), parameters.excludes.end() );
 
       for ( int i = parameters.excludes.size(); i > 0; i-- )
          includes.removeAt( parameters.excludes[ i - 1 ] );
@@ -13854,7 +13854,7 @@ DbgLv(1) << "BL: DD : baseline bl" << baseline << bl;
    // Excluded scans
    init_includes();
    reset_excludes(); // Zero exclude combo boxes
-   qSort( parameters.excludes );
+   std::sort( parameters.excludes.begin(), parameters.excludes.end() );
 
    for ( int ii = parameters.excludes.size(); ii > 0; ii-- )
       includes.removeAt( parameters.excludes[ ii - 1 ] );

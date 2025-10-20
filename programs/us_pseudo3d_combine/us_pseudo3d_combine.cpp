@@ -28,7 +28,7 @@
 
 
 
-// qSort LessThan method for S_Solute sort
+// LessThan method for S_Solute sort
 bool distro_lessthan( const S_Solute &solu1, const S_Solute &solu2 )
 {  // TRUE iff  (s1<s2) || (s1==s2 && k1<k2)
    return ( solu1.s < solu2.s ) ||
@@ -1238,7 +1238,7 @@ void US_Pseudo3D_Combine::sort_distro( QList< S_Solute >& listsols,
 
    // sort distro solute list by s,k values
 
-   qSort( listsols.begin(), listsols.end(), distro_lessthan );
+   std::sort( listsols.begin(), listsols.end(), distro_lessthan );
 
    // check reduce flag
 
