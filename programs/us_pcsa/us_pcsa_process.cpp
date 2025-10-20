@@ -341,7 +341,7 @@ DbgLv(1) << "FIN_FIN:    ti,ri counts" << ti_noise.count << ri_noise.count;
    int    nsolutes    = mrec.csolutes.size();
    //double vbar20      = dset->vbar20;
    model.components.resize( nsolutes );
-   qSort( mrec.csolutes );
+   std::sort( mrec.csolutes.begin(), mrec.csolutes.end() );
 
    // build the final model
    for ( int cc = 0; cc < nsolutes; cc++ )
@@ -776,7 +776,7 @@ DbgLv(1) << "THR_FIN: thrn" << thrn << " taskx orecx" << taskx << orecx
    else
    { // We have done the last computation, so determine the low-rmsd result
 
-      qSort( mrecs );                    // Sort model records by variance
+      std::sort( mrecs.begin(), mrecs.end() );                    // Sort model records by variance
 
 DbgLv(1) << "THR_FIN: thrn" << thrn << " mrecs size" << mrecs.size()
  << "mrec0 taskx,vari" << mrecs[0].taskx << mrecs[0].variance;

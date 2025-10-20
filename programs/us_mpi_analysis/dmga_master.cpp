@@ -213,7 +213,7 @@ DbgLv(0) << " wmodel as1 K_d k_off" << wmodel.associations[0].k_d
 
       // Get the best-fit gene
 
-      qSort( best_fitness );
+      std::sort( best_fitness.begin(), best_fitness.end() );
 DbgLv(1) << "GaMast: EOML: fitness sorted  bfx" << best_fitness[0].index
          << "bestdg size" << best_dgenes.size();
 

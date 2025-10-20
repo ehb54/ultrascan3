@@ -255,7 +255,7 @@ DbgLv(1) << my_rank << "dg:getf:  ii" << ii << "  fitness"
       }
 
       // Sort fitness
-      qSort( fitness );
+      std::sort( fitness.begin(), fitness.end() );
 DbTimMsg("Worker after get_fitness loop + sort");
 
       // Refine with gradient search method (gsm) on last generation
@@ -392,7 +392,7 @@ DbgLv(1) << "gw:" << my_rank << ":  Dup cleaned: f0 f1 fit0 fit1"
       }
 
       // Re-sort
-      qSort( fitness );
+      std::sort( fitness.begin(), fitness.end() );
 DbgLv(1) << "gw:" << my_rank << ": fitness sorted";
 
       QList< DGene > old_genes = dgenes;

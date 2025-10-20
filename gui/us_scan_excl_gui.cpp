@@ -229,7 +229,7 @@ void US_ScanExclGui::build_layout ( void )
       
       QFont font   = le_chan_desc->property("font").value<QFont>();
       QFontMetrics fm(font);
-      int pixelsWide = fm.width( le_chan_desc->text() );
+      int pixelsWide = fm.horizontalAdvance( le_chan_desc->text() );
       le_chan_desc->setMinimumWidth( pixelsWide*1.1 );
       le_chan_desc->adjustSize();
       

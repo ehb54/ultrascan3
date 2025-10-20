@@ -4090,9 +4090,9 @@ DbgLv(1) << "XpDa:b_i:       kstgn " << stgnbrs.count()
  << "stg0 stgn" << stgnbrs[0] << stgnbrs[stgnbrs.count()-1];
 DbgLv(1) << "XpDa:b_i:       kscnn " << scnnbrs.count()
  << "scn0 scnn" << scnnbrs[0] << scnnbrs[scnnbrs.count()-1];
-qSort(datrecs);
-qSort(stgnbrs);
-qSort(scnnbrs);
+std::sort( datrecs.begin(), datrecs.end() );
+std::sort( stgnbrs.begin(), stgnbrs.end() );
+std::sort( scnnbrs.begin(), scnnbrs.end() );
 DbgLv(1) << "XpDa:b_i:       kdarec" << datrecs.count()
  << "da0 dan" << datrecs[0] << datrecs[datrecs.count()-1];
 DbgLv(1) << "XpDa:b_i:       kstgn " << stgnbrs.count()
@@ -4170,8 +4170,8 @@ DbgLv(1) << "XpDa:b_i:    scnnbrs count" << scnnbrs.count();
 
 DbgLv(1) << "XpDa:b_i:       kdarec" << datrecs.count()
  << "da0 dan" << datrecs[0] << datrecs[datrecs.count()-1];
-qSort(datrecs);
-qSort(scnnbrs);
+std::sort( datrecs.begin(), datrecs.end() );
+std::sort( scnnbrs.begin(), scnnbrs.end() );
 DbgLv(1) << "XpDa:b_i:       kdarec" << datrecs.count()
  << "da0 dan" << datrecs[0] << datrecs[datrecs.count()-1];
 DbgLv(1) << "XpDa:b_i:       kstgn " << stgnbrs.count()

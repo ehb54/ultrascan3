@@ -834,7 +834,7 @@ void US_SelectRunDD::sort_rlabels( const QStringList rlabs )
    }
 
    // Sort combined values into date order
-   qSort( svals );
+   std::sort( svals.begin(), svals.end() );
 
    for ( int ii = svals.count() - 1; ii >= 0; ii-- )
    {  // Create the sorted labels list (reverse date order)

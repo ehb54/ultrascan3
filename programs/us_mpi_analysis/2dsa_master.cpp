@@ -1113,7 +1113,7 @@ DbgLv(1) << "Mast:    process_solutes:      worker" << worker
       job.mpi_job.depth          = next_depth;
       job.mpi_job.dataset_offset = current_dataset;
       job.mpi_job.dataset_count  = datasets_to_process;
-      qSort( job.solutes );
+      std::sort( job.solutes.begin(), job.solutes.end() );
       add_to_queue( job );
 
 DbgLv(1) << "Mast:   queue NEW DEPTH sols" << job.solutes.size() << " d="
@@ -1176,7 +1176,7 @@ DbgLv(1) << "Mast:    NEW max_exp_size" << max_experiment_size
          job.mpi_job.dataset_offset = current_dataset;
          job.mpi_job.dataset_count  = datasets_to_process;
          max_depth                  = qMax( next_d, max_depth );
-         qSort( job.solutes );
+         std::sort( job.solutes.begin(), job.solutes.end() );
          add_to_queue( job );
 DbgLv(1) << "Mast:   queue REMAINDER" << remainder << " d=" << d+1;
 
@@ -1215,7 +1215,7 @@ DbgLv(1) << "Mast:   queue REMAINDER" << remainder << " d=" << d+1;
       bottom_value         = ( bottom_points == 1 )
                            ? data_sets[ current_dataset ]->run_data.bottom
                            : bottom_values  [ bottom_run   ];
-      qSort( job.solutes );
+      std::sort( job.solutes.begin(), job.solutes.end() );
 DbgLv(1) << "Mast:   queue LAST ns=" << job.solutes.size() << "  d=" << depth+1
  << max_depth << "  nsvs=" << simulation_values.solutes.size();
 

@@ -1266,7 +1266,7 @@ QVector<QPair<US_Model::SimulationComponent, double> > US_ModelBuilder::calculat
       }
 
       //sort differences list, and store
-      qSort(currentDifferences);
+      std::sort( currentDifferences.begin(), currentDifferences.end() );
 
       //average numNeighbors nearest points to the current point, and store
       double average = 0.0;

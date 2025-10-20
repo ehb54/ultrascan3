@@ -332,7 +332,7 @@ void US_AdvDmgaMc::plot_distrib()
    }
 
    // Sort the X values
-   qSort( xvec_in );
+   std::sort( xvec_in.begin(), xvec_in.end() );
    double* xvi     = xvec_in.data();
 
    // Build unique X's and their frequencies (Y's)

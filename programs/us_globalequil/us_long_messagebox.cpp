@@ -96,7 +96,7 @@ void US_LongMessageBox::adjustSize()
 
    // Determine the size needed for current text in current font
    QFontMetrics fm( textbox->font() );
-   int fontw = fm.width( alltext[ longx ] ) + fm.width( "WW" );
+   int fontw = fm.horizontalAdvance( alltext[ longx ] ) + fm.horizontalAdvance( "WW" );
    int fonth = fm.lineSpacing() * ( nline + 3 );
    fontw     = ( ( fontw / 20 + 1 ) * 20 );
    fonth     = ( ( fonth / 20 + 1 ) * 20 );

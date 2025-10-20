@@ -26,7 +26,7 @@ int main( int argc, char* argv[] )
    return application.exec();  //!< \memberof QApplication
 }
 
-// qSort LessThan method for S_Solute sort
+// LessThan method for S_Solute sort
 bool distro_lessthan( const S_Solute &solu1, const S_Solute &solu2 )
 {  // TRUE iff  (s1<s2) || (s1==s2 && k1<k2)
    return ( solu1.s < solu2.s ) ||
@@ -658,7 +658,7 @@ void US_ModelMetrics::sort_distro( QList< S_Solute >& listsols,
 
    // sort distro solute list by s,k values
 
-   qSort( listsols.begin(), listsols.end(), distro_lessthan );
+   std::sort( listsols.begin(), listsols.end(), distro_lessthan );
 
    // check reduce flag
 
@@ -825,7 +825,7 @@ void US_ModelMetrics::calc()
       xmax = rmax;
    }
    DbgLv(2) << "In calc: xmin: " << xmin << "xmax" << xmax;
-   qSort(temp_list.begin(), temp_list.end()); // sort the list so reduction works.
+   std::sort( temp_list.begin(), temp_list.end() ); // sort the list so reduction works.
    tc = 0.0;
    val1.parm = temp_list[0].parm;
    val1.conc = temp_list[0].conc;

@@ -60,7 +60,7 @@ class bucket
       }
 };
 
-//! \brief Bucket vertex less than routine for qSort.
+//! \brief Bucket vertex less than routine.
 bool buck_vx_lessthan( const bucket&, const bucket& );
 
 /*! \class US_SoluteData

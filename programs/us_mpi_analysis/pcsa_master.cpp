@@ -68,7 +68,7 @@ if(jql>=0) {
       {  // No jobs left in the queue and no workers still busy
 DbgLv(1) << "pcsa_mast:   END PASS mrecs size" << mrecs.size();
          kcurve           = 0;
-         qSort( mrecs );                      // Sort curve model records
+         std::sort( mrecs.begin(), mrecs.end() );                      // Sort curve model records
          edata            = &data_sets[ current_dataset ]->run_data;
          QString tripleID = edata->cell + edata->channel + edata->wavelength;
 
