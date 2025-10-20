@@ -55,7 +55,7 @@ US_Config::US_Config( QWidget* parent, Qt::WindowFlags flags )
   QFont*        f  = new QFont( US_GuiSettings::fontFamily(), 
                                 US_GuiSettings::fontSize() );
   QFontMetrics* fm = new QFontMetrics ( *f );
-  int w = fm->width( tr( "Temporary Directory:" ) ) + 20;
+  int w = fm->horizontalAdvance( tr( "Temporary Directory:" ) ) + 20;
 
   // Browser
   pb_browser = us_pushbutton( tr("WWW Browser:" ) );
@@ -65,7 +65,7 @@ US_Config::US_Config( QWidget* parent, Qt::WindowFlags flags )
 
   // Calculate the minimum width of all the le boxes
   QString browser = US_Settings::browser();
-  int le_w = fm->width( browser ) + 20;
+  int le_w = fm->horizontalAdvance( browser ) + 20;
   
   le_browser = us_lineedit( browser, 0 );
   directories->addWidget( le_browser, row++, 1 );
@@ -77,7 +77,7 @@ US_Config::US_Config( QWidget* parent, Qt::WindowFlags flags )
   connect( pb_workDir, SIGNAL( clicked() ), this, SLOT( open_workDir() ) );
 
   QString workDir = US_Settings::workBaseDir();
-  le_w = qMax( fm->width( workDir ) + 20, le_w );
+  le_w = qMax( fm->horizontalAdvance( workDir ) + 20, le_w );
 
   le_workDir = us_lineedit( workDir, 0 );
   directories->addWidget( le_workDir, row++, 1 );
@@ -91,7 +91,7 @@ US_Config::US_Config( QWidget* parent, Qt::WindowFlags flags )
   connect( pb_importDir, SIGNAL( clicked() ), this, SLOT( open_importDir() ) );
 
   QString importDir = US_Settings::importDir();
-  le_w = qMax( fm->width( importDir ) + 20, le_w );
+  le_w = qMax( fm->horizontalAdvance( importDir ) + 20, le_w );
 
   le_importDir = us_lineedit( importDir, 0 );
   directories->addWidget( le_importDir, row++, 1 );
@@ -105,7 +105,7 @@ US_Config::US_Config( QWidget* parent, Qt::WindowFlags flags )
   connect( pb_tmpDir, SIGNAL( clicked() ), this, SLOT( open_tmpDir() ) );
 
   QString tmpDir = US_Settings::tmpDir();
-  le_w = qMax( fm->width( tmpDir ) + 20, le_w );
+  le_w = qMax( fm->horizontalAdvance( tmpDir ) + 20, le_w );
 
   le_tmpDir = us_lineedit( tmpDir, 0 );
   directories->addWidget( le_tmpDir, row++, 1 );
