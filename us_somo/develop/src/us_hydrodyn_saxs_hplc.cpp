@@ -17,6 +17,9 @@
 #include <QCloseEvent>
 #include "../include/us_plot_zoom.h"
 
+#define COLOR_GAUSS_MARKER_ACTIVE_CURVE Qt::magenta
+#define COLOR_GAUSS_MARKER_INACTIVE_CURVE Qt::cyan
+
 // #define JAC_VERSION
 
 #define SLASH QDir::separator()
@@ -6520,9 +6523,10 @@ void US_Hydrodyn_Saxs_Hplc::update_gauss_pos()
          {
             if ( gaussian_pos + 2 == i && !le_gauss_fit_start->hasFocus() && !le_gauss_fit_end->hasFocus() )
             {
-               plotted_markers[ i ]->setLinePen( QPen( Qt::magenta, 2, Qt::DashDotDotLine ) );
+               plotted_markers[ i ]->setLinePen( QPen( COLOR_GAUSS_MARKER_ACTIVE_CURVE, 2, Qt::DashDotDotLine));
+
             } else {
-               plotted_markers[ i ]->setLinePen( QPen( Qt::blue, 2, Qt::DashDotDotLine ) );
+               plotted_markers[ i ]->setLinePen( QPen( COLOR_GAUSS_MARKER_INACTIVE_CURVE, 2, Qt::DashDotDotLine));
             }
          }
          if ( !suppress_replot )
@@ -6614,9 +6618,9 @@ void US_Hydrodyn_Saxs_Hplc::update_gauss_pos()
          {
             if ( gaussian_pos + 2 == i && !le_gauss_fit_start->hasFocus() && !le_gauss_fit_end->hasFocus() )
             {
-               plotted_markers[ i ]->setLinePen( QPen( Qt::magenta, 2, Qt::DashDotDotLine));
+               plotted_markers[ i ]->setLinePen( QPen( COLOR_GAUSS_MARKER_ACTIVE_CURVE, 2, Qt::DashDotDotLine));
             } else {
-               plotted_markers[ i ]->setLinePen( QPen( Qt::blue, 2, Qt::DashDotDotLine));
+               plotted_markers[ i ]->setLinePen( QPen( COLOR_GAUSS_MARKER_INACTIVE_CURVE, 2, Qt::DashDotDotLine));
             }
          }
          if ( !suppress_replot )
