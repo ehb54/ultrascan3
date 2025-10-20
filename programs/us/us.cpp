@@ -834,8 +834,8 @@ void US_Win::logo( int width )
     const int margin = 16;
 
     // Strings (keep your existing content)
-    const QString version = QString("Version %1 (build %2) for %3")
-            .arg(US_Version).arg(BUILD_NUMBER).arg(OS_TITLE);
+    const QString version = QString("Version %1 (build %2)")
+            .arg(US_Version).arg(BUILD_NUMBER);
     const QString builtOn = QString("Built on %1 at %2")
             .arg(BUILD_DATE).arg(BUILD_TIME);
 
