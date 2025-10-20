@@ -1,14 +1,30 @@
 cmake_minimum_required(VERSION 3.21)
 
-# Project definition
+# =============================================================================
+# VERSION EXTRACTION FROM us_defines.h
+# =============================================================================
+# Extract version before project() call
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/admin/cmake")
+include(UsDefinesParser)
+
+# Extract version and description from us_defines.h
+parse_header("${CMAKE_CURRENT_SOURCE_DIR}/utils/us_defines.h")
+
+# Project definition with extracted version and description
 project(UltraScan3
-        VERSION 4.1.0
-        DESCRIPTION "UltraScan3 - Advanced analysis of analytical ultracentrifugation experiments"
+        VERSION ${US3_VERSION_MAJOR}.${US3_VERSION_MINOR}.${US3_VERSION_PATCH}
+        DESCRIPTION "${US3_DESCRIPTION}"
         LANGUAGES CXX C
         )
 
+# Make full version string available (including -dev suffix if present)
+set(US3_VERSION_STRING ${US3_VERSION})
+
+message(STATUS "UltraScan3 version: ${US3_VERSION_STRING}")
+message(STATUS "UltraScan3 description: ${US3_DESCRIPTION}")
+
 # =============================================================================
-# VERSION GENERATION
+# VERSION HEADER GENERATION
 # =============================================================================
 # Execute version generation script immediately
 include(${CMAKE_SOURCE_DIR}/admin/cmake/GenerateVersion.cmake)

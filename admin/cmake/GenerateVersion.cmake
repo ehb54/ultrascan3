@@ -1,10 +1,19 @@
 # admin/cmake/GenerateVersion.cmake
 # Generates version and build metadata
 
-# Get version from CMake project
+# Get version from CMake project (numeric only)
 set(VERSION_MAJOR ${PROJECT_VERSION_MAJOR})
 set(VERSION_MINOR ${PROJECT_VERSION_MINOR})
 set(VERSION_PATCH ${PROJECT_VERSION_PATCH})
+
+# Get full version string with suffix from US3_VERSION (extracted from us_defines.h)
+# US3_VERSION contains the full version including any suffix like -dev
+if(US3_VERSION)
+    set(VERSION_STRING "${US3_VERSION}")
+else()
+    # Fallback if US3_VERSION is not set
+    set(VERSION_STRING "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}")
+endif()
 
 # Get git commit count as build number
 execute_process(
@@ -64,8 +73,7 @@ string(TIMESTAMP BUILD_DATE "%Y-%m-%d" UTC)
 string(TIMESTAMP BUILD_TIME "%H:%M:%S UTC" UTC)
 string(TIMESTAMP BUILD_TIMESTAMP "%Y%m%d%H%M%S" UTC)
 
-# Construct full version string
-set(VERSION_STRING "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}")
+# Construct full version string with build number
 set(VERSION_FULL "${VERSION_STRING}+${BUILD_NUMBER}")
 
 # Determine OS title
@@ -95,11 +103,11 @@ file(WRITE ${CMAKE_BINARY_DIR}/us_version.h
 #define VERSION_PATCH      ${VERSION_PATCH}
 #define BUILD_NUMBER       \"${BUILD_NUMBER}\"
 
-// Full version strings
+// Full version strings (includes -dev suffix if present)
 #define VERSION_STRING     \"${VERSION_STRING}\"
 #define VERSION_FULL       \"${VERSION_FULL}\"
 
-// Override US_Version from us_defines.h with actual version
+// Override US_Version from us_defines.h with actual version (includes suffix)
 #ifdef US_Version
 #undef US_Version
 #endif

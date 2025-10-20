@@ -4,12 +4,8 @@
 #define US_DEFINES_H
 
 //! The version of UltraScan
-#if QT_VERSION > 0x050000
 #define US_Version QString("4.1.0-dev")
-#else
-#define US_Version QString("3.3")
-#endif
-
+#define US_Description "UltraScan3 - Advanced analysis of analytical ultracentrifugation experiments"
 
 //! The directory/key for US_Settings storage
 #define US3 QString( "UltraScan3" )
