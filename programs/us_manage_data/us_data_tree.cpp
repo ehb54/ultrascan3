@@ -1133,8 +1133,8 @@ DbgLv(1) << "RMV_REC:   karows stat1" << karows << stat1;
 
    if ( dnLoad )            
    {                                  // DOWNLOAD to LOCAL
-QTime timer;
-timer.start();
+      QElapsedTimer timer;
+      timer.start();
       stlabel->setText( tr( "Downloading records to local disk..." ) );
       progress->setMaximum( narows );
       progress->setValue  ( 0 );

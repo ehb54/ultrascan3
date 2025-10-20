@@ -4056,8 +4056,8 @@ DbgLv(1) << "ScMd: UNASSGN:  ++USED++";
    }
 DbgLv(1) << "ScMd: runid UNASGN editId 1   nmodel" << nmodel;
 
-QTime timer;
-timer.start();
+   QElapsedTimer timer;
+   timer.start();
    // Accumulate model information for runs present
    for ( int rr = 0; rr < runIDs.count(); rr++ )
    {

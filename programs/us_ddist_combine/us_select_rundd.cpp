@@ -268,8 +268,8 @@ void US_SelectRunDD::scan_dbase_runs()
 
    QStringList  query;
    QString invID    = QString::number( US_Settings::us_inv_ID() );
-QTime timer;
-timer.start();
+   QElapsedTimer timer;
+   timer.start();
 
    // Scan experiments. getting run and experiment IDs
    query.clear();
@@ -302,8 +302,8 @@ DbgLv(1) << "ScDB:scan time(9)" << timer.elapsed();
 // Scan local disk for edit sets
 void US_SelectRunDD::scan_local_runs( void )
 {
-QTime timer;
-timer.start();
+   QElapsedTimer timer;
+   timer.start();
    mRDates.clear();
    QMap< QString, QString > ddmap;
    QStringList mEdtIDs;
@@ -579,8 +579,8 @@ DbgLv(1) << "ScMd: UNASSGN:  ++USED++";
    }
 DbgLv(1) << "ScMd: runid UNASGN editId 1   nmodel" << nmodel;
 
-QTime timer;
-timer.start();
+   QElapsedTimer timer;
+   timer.start();
    // Accumulate model information for runs present
    for ( int rr = 0; rr < runIDs.count(); rr++ )
    {
@@ -743,8 +743,8 @@ void US_SelectRunDD::count_models()
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
    te_status->setText( tr( "Scanning runs for model counts..." ) );
    qApp->processEvents();
-QTime timer;
-timer.start();
+   QElapsedTimer timer;
+   timer.start();
 
    // Build run edit and run model counts lists
    for ( int rr = 0; rr < runIDs.count(); rr++ )

@@ -1150,7 +1150,7 @@ double US_pcsaProcess::fit_function_SL( double t, double* par )
       return 0.0;
    }
 
-   QTime ftimer;
+   QElapsedTimer ftimer;
    ftimer.start();
    QList< US_SolveSim::DataSet* > dsets;
    void** iparP  = (void**)par;
@@ -1276,7 +1276,7 @@ double US_pcsaProcess::fit_function_IS( double t, double* par )
       return 0.0;
    }
 
-   QTime ftimer;
+   QElapsedTimer ftimer;
    ftimer.start();
    QList< US_SolveSim::DataSet* > dsets;
    void** iparP  = (void**)par;
@@ -1406,7 +1406,7 @@ double US_pcsaProcess::fit_function_DS( double t, double* par )
       ffcall = 0;
       return 0.0;
    }
-   QTime ftimer;
+   QElapsedTimer ftimer;
    ftimer.start();
    QList< US_SolveSim::DataSet* > dsets;
    void** iparP  = (void**)par;
@@ -1537,7 +1537,7 @@ double US_pcsaProcess::fit_function_HL( double t, double* par )
       return 0.0;
    }
 
-   QTime ftimer;
+   QElapsedTimer ftimer;
    ftimer.start();
    QList< US_SolveSim::DataSet* > dsets;
    void** iparP  = (void**)par;
@@ -2236,7 +2236,7 @@ void US_pcsaProcess::compute_final()
 {
 DbgLv(1) << "CFin: alpha" << alpha << "mrecs size" << mrecs.size();
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
-   QTime ftimer;
+   QElapsedTimer ftimer;
    ftimer.start();
    US_ModelRecord mrec   = mrecs[ 0 ];
    model              = mrec.model;
