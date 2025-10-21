@@ -211,7 +211,7 @@ void US_RpScan::accept_it()
 // Scan alphas
 void US_RpScan::scan()
 {
-   QTime  timer;
+   QElapsedTimer  timer;
    int    time_sc;
    double calpha = ct_stralpha->value();
    double ealpha = ct_endalpha->value();

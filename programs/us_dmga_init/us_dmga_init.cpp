@@ -475,7 +475,7 @@ DbgLv(1) << "dGA:tmEv: tm_id" << tm_id << sctm_id;
    QString atypeDga = QString::number( US_Model::DMGA_CONSTR );
 DbgLv(1) << "  Atype Man Cgr Dga" << atypeMan << atypeCgr << atypeDga;
    qApp->processEvents();
-   QTime       timer;
+   QElapsedTimer       timer;
    QStringList mdlIDs;
    QString     invID    = QString::number( US_Settings::us_inv_ID() );
    timer.start();

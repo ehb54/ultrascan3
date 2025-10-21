@@ -1242,7 +1242,7 @@ QVector<QPair<US_Model::SimulationComponent, double> > US_ModelBuilder::calculat
    differences.fill(tempDiff, simulations.size());
 
    //Profiling
-   QTime timer;
+   QElapsedTimer timer;
    qDebug() << "starting timer...";
    timer.start();
 

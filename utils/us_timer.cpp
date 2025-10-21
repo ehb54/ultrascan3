@@ -1,5 +1,5 @@
 #include "us_timer.h"
-#include <math.h>
+#include <cmath>
  
 US_Timer::US_Timer()
 {
@@ -9,17 +9,16 @@ US_Timer::US_Timer()
 }
 
 US_Timer::~US_Timer()
-{
-}
+= default;
 
-void US_Timer::init_timer( QString qs )
+void US_Timer::init_timer( const QString& qs )
 {
-   timers[ qs ] = QTime();
+   timers[ qs ] = QElapsedTimer();
    counts[ qs ] = 0;
    times [ qs ] = 0l;
 }
 
-bool US_Timer::start_timer( QString qs )
+bool US_Timer::start_timer( const QString& qs )
 {
    if ( !timers.count( qs ) )
    {
@@ -30,7 +29,7 @@ bool US_Timer::start_timer( QString qs )
    return true;
 }
 
-bool US_Timer::end_timer( QString qs )
+bool US_Timer::end_timer( const QString& qs )
 {
    if ( !timers.count( qs ) )
    {
@@ -38,13 +37,13 @@ bool US_Timer::end_timer( QString qs )
    }
 
    counts[ qs ]++;
-   unsigned long ul = (unsigned long) timers[ qs ].elapsed();
+   const auto ul = static_cast<unsigned long>( timers[ qs ].elapsed() );
    times [ qs ] += ul;
    times2[ qs ] += ul * ul;
    return true;
 }
 
-QString US_Timer::list_time( QString qs )
+QString US_Timer::list_time( const QString& qs )
 {
    if ( !timers.count( qs ) )
    {
@@ -56,7 +55,7 @@ QString US_Timer::list_time( QString qs )
       return QString("US_Timer::Error: no usage counts for timer: %1 \n").arg( qs );
    }
 
-   double avg = ( double ) times [ qs ] / counts[ qs ];
+   double avg = static_cast<double>( times[ qs ] ) / counts[ qs ];
 
    return QString("%1 %2 calls total time %3 ms avg time %4 ms sd %5 ms \n")
       .arg( qs )
@@ -70,11 +69,9 @@ QString US_Timer::list_times()
 {
 
    QString qs;
-   for ( map < QString, QTime >::iterator it = timers.begin();
-         it != timers.end();
-         it++ )
+   for (const auto & timer : timers)
    {
-      qs += list_time( it->first );
+      qs += list_time( timer.first );
    }
    return qs;
 }
