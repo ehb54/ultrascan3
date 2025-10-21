@@ -1137,8 +1137,7 @@ void US_Reporter::write_pdf()
    printer.setCreator       ( "UltraScan" );
    printer.setDocName       ( QString( "report_composite.html" ) );
    printer.setPageOrientation   ( QPageLayout::Portrait );
-   printer.setPageSize     ( QPageSize::A2 );
-//   printer.setPaperSize     ( QPrinter::Letter );
+   printer.setPageSize     ( QPageSize( QPageSize::A2 ) );
 
    QString       rpttext;
    QFile         fili( pagepath );
