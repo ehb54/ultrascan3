@@ -214,6 +214,28 @@ US_ReportGui::US_ReportGui( QMap < QString, US_ReportGMP* > report_map ) : US_Wi
   bn_report_t     = us_banner( tr( "Report Parameters: Type | Method" ) );
   bn_report_t->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
   main->addWidget( bn_report_t );
+
+  //Units info memo
+  QTextEdit*     le_info;
+  QFont le_info_font( US_Widgets::fixedFont().family(),
+		      US_GuiSettings::fontSize() );
+  le_info = us_textedit();
+  QFontMetrics m (le_info -> font()) ;
+  int RowHeight = m.lineSpacing() ;
+  le_info -> setFixedHeight  (2 * RowHeight) ;
+  
+  QPalette p = le_info->palette(); 
+  p.setColor(QPalette::Base, Qt::lightGray);
+  p.setColor(QPalette::Text, Qt::darkRed);
+  le_info->setPalette(p);
+
+  le_info->setHtml(tr( "[s,D,MW] units: "
+		       "&nbsp; s(&#215;1e+13)[sec]; D(&#215;1e+7)[cm&#178;/s]; MW(&#215;1e-3)[Dalton]"
+		       ));
+
+  le_info->setFont(le_info_font);
+  main->addWidget( le_info );
+  
   
   //Main Table
   // bn_report_t        = NULL;
