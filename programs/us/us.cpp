@@ -538,7 +538,8 @@ void US_Win::launch( int index )
             this   , SLOT  ( terminated( int, QProcess::ExitStatus ) ) );
 
 #ifndef Q_OS_MAC
-  process->start( pname );
+  QStringList args;
+  process->start( pname, args );
 #else
    QString procbin = US_Settings::appBaseDir() + "/bin/" + pname;
    QString procapp = procbin + ".app";
