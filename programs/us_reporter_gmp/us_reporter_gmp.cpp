@@ -5955,7 +5955,7 @@ void US_ReporterGMP::process_combined_plots_individual ( QString triplesname_p, 
 		}
 	      
 	      // reset plot after processign certain type {s,D,MW...}
-	      sdiag_combplot->reset_data_plot1();
+	      //sdiag_combplot->reset_data_plot1();
 	    }
 	}
     }
