@@ -2121,7 +2121,7 @@ void US_AnalyteMgrNew::reset()
        
        update_nucleotide();
        le_nucle_vbar->setText("0.5500");
-       mw = le_nucle_mw->text().split( " ", QString::SkipEmptyParts );
+       mw = le_nucle_mw->text().split( " ", Qt::SkipEmptyParts );
        analyte->description = le_descrip->text();
        analyte->mw          = mw[ 0 ].toDouble() * 1000.0;
        analyte->vbar20      = le_nucle_vbar->text().toDouble();
@@ -2145,7 +2145,7 @@ void US_AnalyteMgrNew::reset()
 
        update_nucleotide();
        le_nucle_vbar->setText("0.5500");
-       mw = le_nucle_mw->text().split( " ", QString::SkipEmptyParts );
+       mw = le_nucle_mw->text().split( " ", Qt::SkipEmptyParts );
        analyte->description = le_descrip->text();
        analyte->mw          = mw[ 0 ].toDouble() * 1000.0;
        analyte->vbar20      = le_nucle_vbar->text().toDouble();
@@ -2532,7 +2532,7 @@ DbgLv(1) << "AnaN: Analyte Type: " << analyte->type;
         analyte->type == US_Analyte::RNA  )
    {
       // Strip trailing items from the mw text box.
-      QStringList mw = le_nucle_mw->text().split( " ", QString::SkipEmptyParts );
+      QStringList mw = le_nucle_mw->text().split( " ", Qt::SkipEmptyParts );
 
       if ( mw.empty() )
       {

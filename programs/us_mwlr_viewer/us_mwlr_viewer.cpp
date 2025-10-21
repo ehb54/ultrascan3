@@ -488,7 +488,7 @@ void US_MwlRawViewer::load_mwl_raw( )
    if ( dir.right( 1 ) != "/" ) dir += "/"; // Ensure trailing /
 
    // See if we need to fix the runID
-   QStringList components = dir.split( "/", QString::SkipEmptyParts );
+   QStringList components = dir.split( "/", Qt::SkipEmptyParts );
    QString runType   = "RI";
    QString new_runID = components.last();
    QRegExp rx( "[^A-Za-z0-9_-]" );
@@ -581,7 +581,7 @@ void US_MwlRawViewer::load_auc_mwl( )
    if ( dir.right( 1 ) != "/" ) dir += "/";  // Ensure trailing '/'
    
    // Check the runID
-   QStringList components =  dir.split( "/", QString::SkipEmptyParts );  
+   QStringList components =  dir.split( "/", Qt::SkipEmptyParts );
    QString new_runID = components.last();
       
    QRegExp rx( "^[A-Za-z0-9_-]{1,80}$" );

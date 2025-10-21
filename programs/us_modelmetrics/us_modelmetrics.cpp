@@ -590,7 +590,7 @@ void US_ModelMetrics::reset( void )
    report_entry.d[1] = str.setNum(dval2, 'g', 4);
    report_entry.d[2] = str.setNum(dval3, 'g', 4);
 
-DbgLv(1) << "Dsettings: " << report_entry.d[0] <<report_entry.d[1] << report_entry.d[2] << endl;
+   DbgLv(1) << "Dsettings: " << report_entry.d[0] <<report_entry.d[1] << report_entry.d[2] << Qt::endl;
    pb_report->setEnabled( false );
    pb_write ->setEnabled( false );
    ct_dval1 ->setEnabled( false );
@@ -1264,7 +1264,7 @@ void US_ModelMetrics::addReportItem( void )
 		QTextStream ts( &csv );
 		for ( int i = 0; i < hp_distro.size(); i++ )
 		{		
-			ts << hp_distro[i].parm << ", " << hp_distro[i].conc << endl;
+			ts << hp_distro[i].parm << ", " << hp_distro[i].conc << Qt::endl;
 		}
 	}	
 	csv.close();

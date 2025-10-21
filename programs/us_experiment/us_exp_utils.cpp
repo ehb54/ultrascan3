@@ -2819,7 +2819,7 @@ DbgLv(1) << "EGOp:inP: nochan" << nochan;
      {
        QString channel     = rpOptic->chopts[ ii ].channel;
 
-       int cell_number = ((channel.split(QRegExp("\\s+"), QString::SkipEmptyParts))[0]).toInt();
+       int cell_number = ((channel.split(QRegExp("\\s+"), Qt::SkipEmptyParts))[0]).toInt();
 DbgLv(1) << "EGOp:inP: CELL #" << cell_number;
        if ( nholes == cell_number )
          ctrbal_is_centerpiece = true;

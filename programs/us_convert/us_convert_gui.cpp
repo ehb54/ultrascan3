@@ -3867,7 +3867,7 @@ void US_ConvertGui::loadUS3Disk( QString dir )
    qApp->processEvents();
 
    // Check the runID
-   QStringList components =  dir.split( "/", QString::SkipEmptyParts );
+   QStringList components =  dir.split( "/", Qt::SkipEmptyParts );
    QString new_runID      = components.last();
 
    QRegExp rx( "^[A-Za-z0-9_-]{1,80}$" );
@@ -9348,8 +9348,8 @@ DbgLv(1) << " PlAll:  nmcols" << nmcols;
             // Don't know why, but filter out for now
             if ( jj < 5  ||  ( jj + 5 ) > kcpoint )
                qDebug() << "(rr, vv) = ( " << rr[jj] << ", " << vv[jj] << ")"
-                        << " (minR, maxR) = ( " << minR << ", " << maxR << ")" << endl
-                        << " (minV, maxV) = ( " << minV << ", " << maxV << ")" << endl;
+                        << " (minR, maxR) = ( " << minR << ", " << maxR << ")" << Qt::endl
+                        << " (minV, maxV) = ( " << minV << ", " << maxV << ")" << Qt::endl;
             continue;
          }
 

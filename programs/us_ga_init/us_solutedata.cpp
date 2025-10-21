@@ -679,7 +679,7 @@ int US_SoluteData::saveGAdata( QString& fname, int xtype, int ytype,
                    + ( ( ztype == US_GA_Initialize::ATTR_V )
                    ?  "0.0=(data_set_vbar)"
                    :  QString::asprintf( cffmt, fixval ) );
-      ts << line << endl;
+      ts << line << Qt::endl;
 
       for ( int jj = 0; jj < nbuk; jj++ )
       {
@@ -688,7 +688,7 @@ int US_SoluteData::saveGAdata( QString& fname, int xtype, int ytype,
          limitBucket( buk );
 
          line = QString::asprintf( lfmt, buk.x_min, buk.x_max, buk.y_min, buk.y_max );
-         ts << line << endl;
+         ts << line << Qt::endl;
       }
       fileo.close();
    }
@@ -877,36 +877,36 @@ int US_SoluteData::reportDataMC( QString& fname, int mc_iters )
             vsum     = 0.0;
             for ( int jj = 0; jj < ksol; jj++ )
                vsum    += ( bcomp.at( jj ).w * bcomp.at( jj ).c );
-            ts << ( vsum / tconc ) << endl;
+            ts << ( vsum / tconc ) << Qt::endl;
 
             ts << tr( "Sedimentation coefficient:  " );
             vsum     = 0.0;
             for ( int jj = 0; jj < ksol; jj++ )
                vsum    += ( bcomp.at( jj ).s * bcomp.at( jj ).c );
-            ts << ( vsum / tconc ) << endl;
+            ts << ( vsum / tconc ) << Qt::endl;
 
             ts << tr( "Diffusion coefficient:      " );
             vsum     = 0.0;
             for ( int jj = 0; jj < ksol; jj++ )
                vsum    += ( bcomp.at( jj ).d * bcomp.at( jj ).c );
-            ts << ( vsum / tconc ) << endl;
+            ts << ( vsum / tconc ) << Qt::endl;
 
             ts << tr( "Frictional ratio:           " );
             vsum     = 0.0;
             for ( int jj = 0; jj < ksol; jj++ )
                vsum    += ( bcomp.at( jj ).f * bcomp.at( jj ).c );
-            ts << ( vsum / tconc ) << endl;
+            ts << ( vsum / tconc ) << Qt::endl;
 
             ts << tr( "Partial specific volume:    " );
             vsum     = 0.0;
             for ( int jj = 0; jj < ksol; jj++ )
                vsum    += ( bcomp.at( jj ).v * bcomp.at( jj ).c );
-            ts << ( vsum / tconc ) << endl;
+            ts << ( vsum / tconc ) << Qt::endl;
 
             ts << tr( "Partial concentration:      " );
 //            vsum     = tconc;
 //            ts << ( vsum / vsiz ) << endl;
-            ts << tconc << endl;
+            ts << tconc << Qt::endl;
             //csums.append( vsum );
             csums.append( tconc );
          }
@@ -995,32 +995,32 @@ int US_SoluteData::reportDataMC( QString& fname, int mc_iters )
             ts << tr( "Molecular weight:          " );
             for ( int jj = 0; jj < ksol; jj++ )
                ts << bcomp.at( jj ).w << "  ";
-            ts << endl;
+            ts << Qt::endl;
 
             ts << tr( "Sedimentation coefficient: " );
             for ( int jj = 0; jj < ksol; jj++ )
                ts << bcomp.at( jj ).s << "  ";
-            ts << endl;
+            ts << Qt::endl;
 
             ts << tr( "Diffusion coefficient:     " );
             for ( int jj = 0; jj < ksol; jj++ )
                ts << bcomp.at( jj ).d << "  ";
-            ts << endl;
+            ts << Qt::endl;
 
             ts << tr( "Frictional ratio:          " );
             for ( int jj = 0; jj < ksol; jj++ )
                ts << bcomp.at( jj ).f << "  ";
-            ts << endl;
+            ts << Qt::endl;
 
             ts << tr( "Partial specific volume:   " );
             for ( int jj = 0; jj < ksol; jj++ )
                ts << bcomp.at( jj ).v << "  ";
-            ts << endl;
+            ts << Qt::endl;
  
             ts << tr( "Concentration:             " );
             for ( int jj = 0; jj < ksol; jj++ )
                ts << bcomp.at( jj ).c << "  ";
-            ts << endl;
+            ts << Qt::endl;
          }
 
          else

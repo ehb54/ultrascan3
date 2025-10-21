@@ -493,7 +493,7 @@ qDebug() << "Cvt:  runType" << runType;
    {
       // Get the actual delta out of the header lines
       QStringList descriptionParts = rawLegacyData[ 0 ]
-            .description.split( " ", QString::SkipEmptyParts );
+            .description.split( " ", Qt::SkipEmptyParts );
       QString proto = descriptionParts[ 1 ].toLatin1();
       proto.remove( "," );
 
