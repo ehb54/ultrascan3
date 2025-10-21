@@ -1022,11 +1022,13 @@ void US_ReportGui::verify_text( const QString& text )
   //   curr_widget = le_av_intensity;
 
   //QRegExp rx_double("\\d*\\.?\\d+");
-  QRegExp rx_double("/[+\-]?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+\-]?\d+)?/");
+  //QRegExp rx_double("/[+\-]?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+\-]?\d+)?/");
+  QRegularExpression rx_double("^[-+]?(?:[0-9]*\\.)?[0-9]+(?:[eE][-+]?[0-9]+)?$");
 
   if ( curr_widget != NULL )
     {      
-      if ( !rx_double.exactMatch( text ) )
+      //if ( !rx_double.exactMatch( text ) )
+      if ( !rx_double.match( text ).hasMatch() )
 	{
 	  QPalette *palette = new QPalette();
 	  palette->setColor(QPalette::Text,Qt::white);
