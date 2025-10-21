@@ -69,11 +69,11 @@ void US_auditTrailGMP::printAPDF( void )
   
   QPrinter printer(QPrinter::PrinterResolution);
   printer.setOutputFormat(QPrinter::PdfFormat);
-  printer.setPaperSize(QPrinter::Letter);
+  printer.setPageSize( QPageSize::Letter);
 
   printer.setOutputFileName( filePath_pdf );
   printer.setFullPage(true);
-  printer.setPageMargins(0, 0, 0, 0, QPrinter::Millimeter);
+  printer.setPageMargins( QMarginsF( 0, 0, 0, 0), QPageLayout::Millimeter);
   
   document.print(&printer);
 

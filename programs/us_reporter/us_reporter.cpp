@@ -1136,8 +1136,8 @@ void US_Reporter::write_pdf()
 //   printer.setFullPage      ( true );
    printer.setCreator       ( "UltraScan" );
    printer.setDocName       ( QString( "report_composite.html" ) );
-   printer.setOrientation   ( QPrinter::Portrait );
-   printer.setPaperSize     ( QPrinter::A2 );
+   printer.setPageOrientation   ( QPageLayout::Portrait );
+   printer.setPageSize     ( QPageSize::A2 );
 //   printer.setPaperSize     ( QPrinter::Letter );
 
    QString       rpttext;
@@ -1155,7 +1155,7 @@ void US_Reporter::write_pdf()
    QDir::setCurrent( cmppath );
    QTextDocument document;
    document.setDefaultFont( QFont( "serif", 14 ) );
-   QSizeF pgsize = printer.paperSize( QPrinter::Point );
+   QSizeF pgsize = printer.pageLayout().pageSize().size( QPageSize::Point );
    document.setPageSize( pgsize );
    document.setHtml( rpttext );
    document.print( &printer );
