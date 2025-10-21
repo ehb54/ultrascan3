@@ -4252,7 +4252,7 @@ void US_eSignaturesGMP::esign_report( void )
   
   QPrinter printer(QPrinter::PrinterResolution);//(QPrinter::HighResolution);//(QPrinter::PrinterResolution);
   printer.setOutputFormat(QPrinter::PdfFormat);
-  printer.setPaperSize(QPrinter::Letter);
+  printer.setPageSize( QPageSize( QPageSize::Letter ) );
   
   printer.setOutputFileName( filePath_db );
   printer.setFullPage(true);
@@ -4458,7 +4458,7 @@ void US_eSignaturesGMP::printDocument(QPrinter& printer, QTextDocument* doc, QMa
   int textMargins = 12; // in millimeters
   
   QPainter painter( &printer );
-  QSizeF pageSize = printer.pageRect().size(); // page size in pixels
+  QSizeF pageSize = printer.pageLayout().paintRectPixels( printer.resolution() ).size(); // page size in pixels
   // Calculate the rectangle where to lay out the text
   const double tm = mmToPixels(printer, textMargins);
   const qreal footerHeight = painter.fontMetrics().height();
@@ -4506,7 +4506,7 @@ void US_eSignaturesGMP::paintPage(QPrinter& printer, int pageNumber, int pageCou
 {
   int borderMargins = 10;  // in millimeters
   qDebug() << "Printing page" << pageNumber;
-  const QSizeF pageSize = printer.paperRect().size();
+  const QSizeF pageSize = printer.pageLayout().fullRectPixels( printer.resolution() ).size();
   qDebug() << "pageSize=" << pageSize;
   qDebug() << "printerResolution=" << printer.resolution();
   
@@ -4801,13 +4801,13 @@ QString US_eSignaturesGMP::write_pdf_eSignatures( QString filePath, QString eSig
   
   QPrinter printer(QPrinter::PrinterResolution);
   printer.setOutputFormat(QPrinter::PdfFormat);
-  printer.setPaperSize(QPrinter::Letter);
+  printer.setPageSize( QPageSize( QPageSize::Letter ) );
   
   filePath_eSign  = fpath + "eSignatures.pdf";
   
   printer.setOutputFileName( filePath_eSign );
   printer.setFullPage(true);
-  printer.setPageMargins(0, 0, 0, 0, QPrinter::Millimeter);
+  printer.setPageMargins( QMarginsF(0, 0, 0, 0), QPageLayout::Millimeter );
   
   document.print(&printer);
   qApp->processEvents();

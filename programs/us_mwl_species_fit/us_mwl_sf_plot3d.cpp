@@ -1825,7 +1825,7 @@ void RunsTestWidget::showContour( bool on )
 void RunsTestWidget::printPlot()
 {
     QPrinter printer( QPrinter::HighResolution );
-    printer.setOrientation( QPrinter::Landscape );
+    printer.setPageOrientation( QPageLayout::Landscape );
     printer.setOutputFileName( "spectrogram.pdf" );
 
     QPrintDialog dialog( &printer );

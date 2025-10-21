@@ -373,7 +373,7 @@ void US_Plot::print( void )
    }
 
    printer.setCreator( "UltraScan" );
-   printer.setOrientation( QPrinter::Landscape );
+   printer.setPageOrientation( QPageLayout::Landscape );
 
    QPrintDialog dialog( &printer );
 
@@ -2970,9 +2970,9 @@ US_PlotPicker::US_PlotPicker( QwtPlot* plot )
 void US_PlotPicker::widgetMousePressEvent( QMouseEvent* e )
 {
    // Prevent spurious clicks
-   static QTime last_click;
+   static QElapsedTimer last_click;
 
-   if ( last_click.isNull() || last_click.elapsed() > 300 )
+   if ( !last_click.isValid() || last_click.elapsed() > 300 )
    {
       last_click.start();
       if ( e->button() == Qt::LeftButton ) 
@@ -2989,9 +2989,9 @@ void US_PlotPicker::widgetMousePressEvent( QMouseEvent* e )
 
 void US_PlotPicker::widgetMouseReleaseEvent( QMouseEvent* e )
 {
-   static QTime last_click;
+   static QElapsedTimer last_click;
 
-   if ( last_click.isNull() || last_click.elapsed() > 300 ) 
+   if ( !last_click.isValid() || last_click.elapsed() > 300 )
    {
       last_click.start();
       if ( e->button() == Qt::LeftButton )
@@ -3006,10 +3006,10 @@ void US_PlotPicker::widgetMouseReleaseEvent( QMouseEvent* e )
 
 void US_PlotPicker::widgetMouseMoveEvent( QMouseEvent* e )
 {
-   static QTime last_click;
+   static QElapsedTimer last_click;
 
    // Slow things down a bit
-   if ( last_click.isNull() || last_click.elapsed() > 100 )
+   if ( !last_click.isValid() || last_click.elapsed() > 100 )
    {
       last_click.start();
       if ( e->button() == Qt::LeftButton )
