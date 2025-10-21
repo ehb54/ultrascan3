@@ -361,7 +361,7 @@ void US_AddRefScan::slt_import(){
     QStringList dir_list;
     fdialog = new QFileDialog(this, Qt::Dialog);
     fdialog->setDirectory(US_Settings::importDir());
-    fdialog->setFileMode(QFileDialog::DirectoryOnly);
+    fdialog->setOption( QFileDialog::ShowDirsOnly, true );
     fdialog->setOption(QFileDialog::DontUseNativeDialog, true);
     fdialog->resize(800, 600);
     fdialog->setWindowTitle("Choose Directories Containing AUC Data");
