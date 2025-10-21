@@ -135,6 +135,11 @@ bool US_DB2::test_secure_connection(
    mysql_optionsv( db, MYSQL_OPT_SSL_CAPATH, nullptr );
    mysql_optionsv( db, MYSQL_OPT_SSL_CIPHER, CIPHER );
 
+   if ( !US_Settings::debug_match( "MYSQL_OPT_SSL_VERIFY_SERVER_CERT" ) ) {
+      // disable MYSQL_OPT_SSL_VERIFY_SERVER_CERT
+      unsigned long verify = 0; // 0 = disable, 1 = enable
+      mysql_optionsv( db, MYSQL_OPT_SSL_VERIFY_SERVER_CERT, &verify );
+   }
    QString uhost  = host.section( ":", 0, 0 ).simplified();
    int     uport  = host.section( ":", 1, 1 ).simplified().toInt();
 
@@ -205,6 +210,11 @@ bool US_DB2::connect( const QString& masterPW, QString& err )
       mysql_optionsv( db, MYSQL_OPT_SSL_CAPATH, nullptr );
       mysql_optionsv( db, MYSQL_OPT_SSL_CIPHER, CIPHER );
 
+      if ( !US_Settings::debug_match( "MYSQL_OPT_SSL_VERIFY_SERVER_CERT" ) ) {
+         // disable MYSQL_OPT_SSL_VERIFY_SERVER_CERT
+         unsigned long verify = 0; // 0 = disable, 1 = enable
+         mysql_optionsv( db, MYSQL_OPT_SSL_VERIFY_SERVER_CERT, &verify );
+      }
       // The CLIENT_MULTI_STATEMENTS flag allows for multiple queries and
       //   multiple result sets from a single stored procedure. It is required
       //   for any stored procedure that returns result sets.
@@ -307,6 +317,11 @@ bool US_DB2::connect(
       mysql_optionsv( db, MYSQL_OPT_SSL_CAPATH, nullptr );
       mysql_optionsv( db, MYSQL_OPT_SSL_CIPHER, CIPHER );
 
+      if ( !US_Settings::debug_match( "MYSQL_OPT_SSL_VERIFY_SERVER_CERT" ) ) {
+         // disable MYSQL_OPT_SSL_VERIFY_SERVER_CERT
+         unsigned long verify = 0; // 0 = disable, 1 = enable
+         mysql_optionsv( db, MYSQL_OPT_SSL_VERIFY_SERVER_CERT, &verify );
+      }
       // The CLIENT_MULTI_STATEMENTS flag allows for multiple queries and
       //   multiple result sets from a single stored procedure. It is required
       //   for any stored procedure that returns result sets.
