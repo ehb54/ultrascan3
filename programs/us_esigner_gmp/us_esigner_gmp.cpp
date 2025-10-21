@@ -4252,7 +4252,7 @@ void US_eSignaturesGMP::esign_report( void )
   
   QPrinter printer(QPrinter::PrinterResolution);//(QPrinter::HighResolution);//(QPrinter::PrinterResolution);
   printer.setOutputFormat(QPrinter::PdfFormat);
-  printer.setPageSize(QPageSize::Letter);
+  printer.setPageSize( QPageSize( QPageSize::Letter ) );
   
   printer.setOutputFileName( filePath_db );
   printer.setFullPage(true);
@@ -4801,7 +4801,7 @@ QString US_eSignaturesGMP::write_pdf_eSignatures( QString filePath, QString eSig
   
   QPrinter printer(QPrinter::PrinterResolution);
   printer.setOutputFormat(QPrinter::PdfFormat);
-  printer.setPageSize( QPageSize::Letter );
+  printer.setPageSize( QPageSize( QPageSize::Letter ) );
   
   filePath_eSign  = fpath + "eSignatures.pdf";
   

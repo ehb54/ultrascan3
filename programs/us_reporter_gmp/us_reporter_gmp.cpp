@@ -7927,7 +7927,7 @@ QString US_ReporterGMP::distrib_info_abde( QString& abde_channame  )
   
    QPrinter printer(QPrinter::PrinterResolution);
    printer.setOutputFormat(QPrinter::PdfFormat);
-   printer.setPageSize( QPageSize::Letter);
+   printer.setPageSize( QPageSize( QPageSize::Letter ) );
    
    printer.setOutputFileName( f_model_path );
    printer.setFullPage(true);
@@ -8173,7 +8173,7 @@ void  US_ReporterGMP::assemble_plots_html( QStringList PlotsFilenames, const QSt
       //QPrinter below must be the same as defined just prior painting QTextDocument in ::write_pdf
       QPrinter printer_t(QPrinter::PrinterResolution);//(QPrinter::HighResolution);//(QPrinter::PrinterResolution);
       printer_t.setOutputFormat(QPrinter::PdfFormat);
-      printer_t.setPageSize( QPageSize::Letter );
+      printer_t.setPageSize( QPageSize( QPageSize::Letter ) );
       QSizeF pageSize = printer_t.pageLayout().paintRectPixels( printer_t.resolution() ).size();
       qreal qprinters_width = pageSize.width()*0.75; //500 DEPENDS on QPrinter's constructor settings {QPrinter::PrinterResolution, 500; QPrinter::HighResolution, 9066}
       qreal qprinters_hight = pageSize.height()*0.55;
@@ -9018,7 +9018,7 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
   
    QPrinter printer(QPrinter::PrinterResolution);
    printer.setOutputFormat(QPrinter::PdfFormat);
-   printer.setPageSize( QPageSize::Letter );
+   printer.setPageSize( QPageSize( QPageSize::Letter ) );
    
    printer.setOutputFileName( f_model_path );
    printer.setFullPage(true);
@@ -12015,7 +12015,7 @@ void US_ReporterGMP::write_pdf_report( void )
   
   QPrinter printer(QPrinter::PrinterResolution);//(QPrinter::HighResolution);//(QPrinter::PrinterResolution);
   printer.setOutputFormat(QPrinter::PdfFormat);
-  printer.setPageSize( QPageSize::Letter );
+  printer.setPageSize( QPageSize( QPageSize::Letter ) );
 
   printer.setOutputFileName( filePath );
   printer.setFullPage(true);
