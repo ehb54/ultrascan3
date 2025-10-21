@@ -457,7 +457,7 @@ qDebug() << "Cvt:cnvt: IN";
       for ( int j = i + 1; j < ccwLegacyData.size(); j++ )
       {
          if ( ccwLegacyData[ j ].seconds < ccwLegacyData[ i ].seconds )
-            ccwLegacyData.swap( i, j );
+            ccwLegacyData.swapItemsAt( i, j );
       }
    }
 

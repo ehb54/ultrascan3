@@ -4417,7 +4417,7 @@ DbgLv(1) << "CGui: gExpInf: IN";
       {
          if ( ExpData.rpms[ i ] > ExpData.rpms[ i + 1 ] )
          {
-            ExpData.rpms.swap( i, i + 1 );
+            ExpData.rpms.swapItemsAt( i, i + 1 );
             done = false;
          }
       }
@@ -4539,7 +4539,7 @@ DbgLv(1) << "CGui: gExpInf: IN";
       {
          if ( ExpData.rpms[ i ] > ExpData.rpms[ i + 1 ] )
          {
-            ExpData.rpms.swap( i, i + 1 );
+            ExpData.rpms.swapItemsAt( i, i + 1 );
             done = false;
          }
       }
@@ -9194,7 +9194,7 @@ bool US_ConvertGui::centerpieceInfoDisk( void )
       for ( int i = 0; i < options.size() - 1; i++ )
          for ( int j = i + 1; j < options.size(); j++ )
             if ( options[ i ].text > options[ j ].text )
-               options.swap( i, j );
+               options.swapItemsAt( i, j );
 
       cb_centerpiece->addOptions( options );
    }
