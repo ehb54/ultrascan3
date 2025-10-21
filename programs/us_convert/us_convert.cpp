@@ -457,7 +457,7 @@ qDebug() << "Cvt:cnvt: IN";
       for ( int j = i + 1; j < ccwLegacyData.size(); j++ )
       {
          if ( ccwLegacyData[ j ].seconds < ccwLegacyData[ i ].seconds )
-            ccwLegacyData.swap( i, j );
+            ccwLegacyData.swapItemsAt( i, j );
       }
    }
 
@@ -493,7 +493,7 @@ qDebug() << "Cvt:  runType" << runType;
    {
       // Get the actual delta out of the header lines
       QStringList descriptionParts = rawLegacyData[ 0 ]
-            .description.split( " ", QString::SkipEmptyParts );
+            .description.split( " ", Qt::SkipEmptyParts );
       QString proto = descriptionParts[ 1 ].toLatin1();
       proto.remove( "," );
 

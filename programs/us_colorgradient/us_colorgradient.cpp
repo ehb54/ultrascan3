@@ -312,9 +312,9 @@ void US_ColorGradient::save_gradient( void )
       // now optionally save the color legend as a PNG file
       QString png_fname = out_filename
          .replace( QRegExp( ".xml$" ), QString( ".png" ) );
-      const QPixmap* mcolors = lb_gradient->pixmap();
-      int widp    = mcolors->width();
-      int hgtp    = mcolors->height();
+      QPixmap mcolors = lb_gradient->pixmap( Qt::ReturnByValue );
+      int widp    = mcolors.width();
+      int hgtp    = mcolors.height();
       int recx    = (int)( (qreal)widp * ( 1.0 - lgndfrac ) );
       int widl    = widp - recx - 2;
       int hgtl    = hgtp - 2;
@@ -328,7 +328,7 @@ void US_ColorGradient::save_gradient( void )
       int result  = msgBox.exec();
       if ( result == QMessageBox::Yes )
       {
-         QPixmap clegend  = mcolors->copy( recx, 0, widl, hgtl );
+         QPixmap clegend  = mcolors.copy( recx, 0, widl, hgtl );
          clegend.toImage().save( png_fname );
       }
    }

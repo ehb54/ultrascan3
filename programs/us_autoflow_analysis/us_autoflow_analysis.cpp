@@ -4861,7 +4861,7 @@ void US_Analysis_auto::load_data_auto( const QString& text_content  )
    QString contents  = text_content;
    contents.replace( QRegExp( "[^0-9eE\\.\\n\\+\\-]+" ), " " );
 
-   QStringList lines = contents.split( "\n", QString::SkipEmptyParts );
+   QStringList lines = contents.split( "\n", Qt::SkipEmptyParts );
    QStringList parsed;
    v_meni.clear();
    v_bott.clear();
@@ -4871,7 +4871,7 @@ DbgLv(1) << "LD:  bott_fit" << bott_fit << "fname_load" << fname_load;
 
    for ( int ii = 0; ii < lines.size(); ii++ )
    {
-      QStringList values = lines[ ii ].split( ' ', QString::SkipEmptyParts );
+      QStringList values = lines[ ii ].split( ' ', Qt::SkipEmptyParts );
 
       int valsize        = values.size();
 DbgLv(1) << "LD:  ii" << ii << "valsize" << valsize;

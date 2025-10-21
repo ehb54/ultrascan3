@@ -254,7 +254,7 @@ void US_Plot::zoom( bool on )
 #endif
       
       panner = new QwtPlotPanner( plot->canvas() );
-      panner->setMouseButton( Qt::MidButton );
+      panner->setMouseButton( Qt::MiddleButton );
 
 #if QT_VERSION > 0x050000
       picker = new QwtPlotPicker( QwtPlot::xBottom, QwtPlot::yLeft,

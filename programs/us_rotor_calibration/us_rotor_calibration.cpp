@@ -300,7 +300,7 @@ void US_RotorCalibration::loadDisk(void)
 
    reset();
 
-   QStringList components =  workingDir.split("/", QString::SkipEmptyParts);
+   QStringList components =  workingDir.split("/", Qt::SkipEmptyParts);
 
    runID = components.last();
 

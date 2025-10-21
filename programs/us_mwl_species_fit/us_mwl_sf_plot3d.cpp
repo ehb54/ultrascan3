@@ -1742,7 +1742,7 @@ RunsTestWidget::RunsTestWidget(QVector<double> points, QVector<double> scans,
 
     QwtPlotPanner *panner = new QwtPlotPanner( d_plot->canvas() );
     panner->setAxisEnabled( QwtPlot::yRight, false );
-    panner->setMouseButton( Qt::MidButton );
+    panner->setMouseButton( Qt::MiddleButton );
 
     // LeftButton for the zooming
     // MidButton for the panning

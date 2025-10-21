@@ -3867,7 +3867,7 @@ void US_ConvertGui::loadUS3Disk( QString dir )
    qApp->processEvents();
 
    // Check the runID
-   QStringList components =  dir.split( "/", QString::SkipEmptyParts );
+   QStringList components =  dir.split( "/", Qt::SkipEmptyParts );
    QString new_runID      = components.last();
 
    QRegExp rx( "^[A-Za-z0-9_-]{1,80}$" );
@@ -4417,7 +4417,7 @@ DbgLv(1) << "CGui: gExpInf: IN";
       {
          if ( ExpData.rpms[ i ] > ExpData.rpms[ i + 1 ] )
          {
-            ExpData.rpms.swap( i, i + 1 );
+            ExpData.rpms.swapItemsAt( i, i + 1 );
             done = false;
          }
       }
@@ -4539,7 +4539,7 @@ DbgLv(1) << "CGui: gExpInf: IN";
       {
          if ( ExpData.rpms[ i ] > ExpData.rpms[ i + 1 ] )
          {
-            ExpData.rpms.swap( i, i + 1 );
+            ExpData.rpms.swapItemsAt( i, i + 1 );
             done = false;
          }
       }
@@ -9194,7 +9194,7 @@ bool US_ConvertGui::centerpieceInfoDisk( void )
       for ( int i = 0; i < options.size() - 1; i++ )
          for ( int j = i + 1; j < options.size(); j++ )
             if ( options[ i ].text > options[ j ].text )
-               options.swap( i, j );
+               options.swapItemsAt( i, j );
 
       cb_centerpiece->addOptions( options );
    }
@@ -9348,8 +9348,8 @@ DbgLv(1) << " PlAll:  nmcols" << nmcols;
             // Don't know why, but filter out for now
             if ( jj < 5  ||  ( jj + 5 ) > kcpoint )
                qDebug() << "(rr, vv) = ( " << rr[jj] << ", " << vv[jj] << ")"
-                        << " (minR, maxR) = ( " << minR << ", " << maxR << ")" << endl
-                        << " (minV, maxV) = ( " << minV << ", " << maxV << ")" << endl;
+                        << " (minR, maxR) = ( " << minR << ", " << maxR << ")" << Qt::endl
+                        << " (minV, maxV) = ( " << minV << ", " << maxV << ")" << Qt::endl;
             continue;
          }
 

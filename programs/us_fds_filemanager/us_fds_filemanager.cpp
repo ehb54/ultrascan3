@@ -279,7 +279,7 @@ void US_FDS_FileManager::parse_files( void )
       {
          QTextStream ts(&f);
          line = ts.readLine();
-         tokens = line.split(" ", QString::SkipEmptyParts);
+         tokens = line.split(" ", Qt::SkipEmptyParts);
          tmp_scaninfo.date    = tokens.at(0);
          tmp_scaninfo.time    = tokens.at(1) + " " + tokens.at(2);
          tmp_scaninfo.voltage = tokens.at(4).toInt();
@@ -288,7 +288,7 @@ void US_FDS_FileManager::parse_files( void )
          tmp_scaninfo.include = true;
          tokens.clear();
          line = ts.readLine();
-         tokens = line.split(" ", QString::SkipEmptyParts);
+         tokens = line.split(" ", Qt::SkipEmptyParts);
          tmp_scaninfo.cell    = tokens.at(1).toInt();
          tmp_scaninfo.rpm     = tokens.at(3).toInt();
          tmp_scaninfo.seconds = tokens.at(4).toDouble();
@@ -307,7 +307,7 @@ void US_FDS_FileManager::parse_files( void )
          {
             line = ts.readLine();
             tokens.clear();
-            tokens = line.split(" ", QString::SkipEmptyParts);
+            tokens = line.split(" ", Qt::SkipEmptyParts);
             tmp_scaninfo.x.append(tokens.at(0).toDouble() );
             tmp_scaninfo.y.append(tokens.at(1).toDouble() );
          }
