@@ -1021,7 +1021,8 @@ void US_ReportGui::verify_text( const QString& text )
   // else if ( oname == "av_intensity" )
   //   curr_widget = le_av_intensity;
 
-  QRegExp rx_double("\\d*\\.?\\d+");
+  //QRegExp rx_double("\\d*\\.?\\d+");
+  QRegExp rx_double("(((\d+\.\d*|\.\d+)([eE][-+]?\d+)?)|(\d+[eE][-+]?\d+))");
 
   if ( curr_widget != NULL )
     {      
