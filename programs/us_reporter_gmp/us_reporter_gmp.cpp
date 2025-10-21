@@ -5901,7 +5901,11 @@ void US_ReporterGMP::process_combined_plots_individual ( QString triplesname_p, 
 		  t_m = "MW," + stage_model;
 		  c_parms = comboPlotsMap[ t_m ];
 		  //put ranges into c_parms:
-		  c_parms[ "Ranges" ] = ranges.join(",");
+		  QString c_ranges = convert_ranges( ranges, pow(10,3) );
+		  qDebug() << "MW ranges [before, after] -- "
+			   << ranges.join(",") << ", " << c_ranges;
+		  c_parms[ "Ranges" ] = c_ranges;
+		  //c_parms[ "Ranges" ] = ranges.join(",");
 		  
 		  plotted_ids_colors_map_s_type = sdiag_combplot-> changedPlotX_auto( 1, c_parms );
 		  
@@ -5920,7 +5924,11 @@ void US_ReporterGMP::process_combined_plots_individual ( QString triplesname_p, 
 		  t_m = "D," + stage_model;
 		  c_parms = comboPlotsMap[ t_m ];
 		  //put ranges into c_parms:
-		  c_parms[ "Ranges" ] = ranges.join(",");
+		  QString c_ranges = convert_ranges( ranges, pow(10,-7) );
+		  qDebug() << "D ranges [before, after] -- "
+			   << ranges.join(",") << ", " << c_ranges;
+		  c_parms[ "Ranges" ] = c_ranges;
+		  //c_parms[ "Ranges" ] = ranges.join(",");
 		  
 		  plotted_ids_colors_map_s_type = sdiag_combplot-> changedPlotX_auto( 2, c_parms );
 		  
@@ -5963,6 +5971,23 @@ void US_ReporterGMP::process_combined_plots_individual ( QString triplesname_p, 
   //assemble IND combined plots into html
   assemble_plots_html( CombPlotsFileNames, "CombPlots"  );
   qApp->processEvents();
+}
+
+//convert units
+QString US_ReporterGMP::convert_ranges( QStringList conv_ranges, double c_factor )
+{
+  QString c_ranges_str;
+  QStringList c_ranges;
+
+  for (int i=0; i<conv_ranges.size(); ++i)
+    {
+      QStringList c_range = conv_ranges[i].split(":");
+      c_ranges << QString::number( c_range[0].toDouble()*c_factor ) + ":" +
+	QString::number( c_range[1].toDouble()*c_factor );
+    }
+
+  c_ranges_str = c_ranges.join(",");
+  return c_ranges_str;
 }
 
 //pull s_ranges, k_ranges from AProfile
