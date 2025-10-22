@@ -1466,6 +1466,30 @@ DbgLv(1) << "ASIM:svscn: IN";
    if ( odir.isEmpty() ) {
       return;
    }
+   QDir target_dir( odir );
+   QDir parent_target_dir( odir );
+   parent_target_dir.cdUp();
+   QDir ultrascan_user_dir( US_Settings::workBaseDir() );
+   // protect all ~/ultrascan/* locations
+   if ( parent_target_dir.absolutePath() == ultrascan_user_dir.absolutePath() ) {
+      QMessageBox::critical( this, tr( "Error" ), tr( "Cannot save at this location." ) );
+      return;
+   }
+   if ( target_dir.exists() && !target_dir.isEmpty() ) {
+      // Ask the user if really everything should be deleted
+      QString text = tr( "The directory <b>%1</b> is not empty. Do you want to risk overwriting the content?" )
+                     .arg( target_dir.absolutePath() );
+      QMessageBox::StandardButton response = QMessageBox::question(
+         this,
+         tr( "Confirm" ),
+         text,
+         QMessageBox::Yes | QMessageBox::No );
+      if ( response != QMessageBox::Yes ) {
+         return;
+      }
+      target_dir.removeRecursively();
+      target_dir.mkpath( target_dir.absolutePath() );
+   }
    save_simulation( odir );
 }
 
@@ -1485,11 +1509,6 @@ bool US_Astfem_Sim::save_simulation( QString odir, bool supress_dialog )
       if ( nstep == 1 )
       {  // Single-speed case
          QDir dir ( odir );
-         if ( dir.exists() )
-         {
-            dir.removeRecursively();
-         }
-         dir.mkpath( dir.absolutePath() );
 
          save_xla( odir, sim_datas[ 0 ], 0, supress_dialog );
 
@@ -1512,12 +1531,16 @@ DbgLv(1) << "ASIM:svscn: 1-speed file paths"  << odir << tmst_fpath;
             US_AstfemMath::writetimestate( tmst_fpath, simparams, sim_datas[ 0 ] );
          }
 
-         // Save TI, RI noises
-
-         csv_data_ti.setFilePath( dir.absoluteFilePath( "ASTFEM_TI_NOISE.csv" ) );
-         csv_data_ri[ 0 ].setFilePath( dir.absoluteFilePath( "ASTFEM_RI_NOISE.csv" ) );
-         save_csv_noise( csv_data_ti );
-         save_csv_noise( csv_data_ri[ 0 ] );
+         // Save TI noises
+         if ( csv_data_ti.rowCount() > 0 ) {
+            csv_data_ti.setFilePath( dir.absoluteFilePath( "ASTFEM_TI_NOISE.csv" ) );
+            save_csv_noise( csv_data_ti );
+         }
+         // Save RI noises
+         if ( !csv_data_ri.isEmpty() ) {
+            csv_data_ri[ 0 ].setFilePath( dir.absoluteFilePath( "ASTFEM_RI_NOISE.csv" ) );
+            save_csv_noise( csv_data_ri[ 0 ] );
+         }
 
       }  // End:  single-speed case
 
