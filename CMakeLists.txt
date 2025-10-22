@@ -33,6 +33,7 @@ endif()
 
 # For Qt-specific deprecation warnings
 add_definitions(-DQT_DISABLE_DEPRECATED_BEFORE=0x000000)
+add_definitions(-DQT_DISABLE_DEPRECATED_UP_TO=0x061000)
 
 # Build type configuration
 if(NOT CMAKE_BUILD_TYPE)
