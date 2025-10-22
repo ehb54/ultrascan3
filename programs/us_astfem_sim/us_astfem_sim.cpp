@@ -2158,8 +2158,6 @@ DbgLv(1) << "Sim:SV:  run_id_from_save_xla" << run_id;
 DbgLv(1) << "Sim:SV: after_write_rawdata" << ofname;
    progress->setValue( total_scans );
    lb_progress->setText( tr( "Completed" ) );
-
-   pb_saveSim->setEnabled( false );
 }
 
 
