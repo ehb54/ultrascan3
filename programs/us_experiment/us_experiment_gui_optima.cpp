@@ -7395,7 +7395,7 @@ void US_ExperGuiUpload::submitExperiment_confirm()
   QString certPath = US_Settings::etcDir() + QString("/optima/");
 
   QString client_name = alias;
-  client_name.simplified();
+  client_name = client_name.simplified();
   client_name.replace(" ", "");
   client_name = client_name.toLower();
   

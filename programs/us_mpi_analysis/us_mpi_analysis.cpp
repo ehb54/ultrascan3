@@ -234,10 +234,8 @@ DbgLv(0) << "work_dir=" << work_dir;
    if ( parameters.keys().contains( "seed" ) ) 
    {
       seed = parameters[ "seed" ].toUInt();
-      qsrand( seed + my_rank );   // Set system random sequence
    }
-   else
-      US_Math2::randomize();
+   US_Math2::randomize( seed );
 
    QString jxmlfile  = jxmlfili;
 

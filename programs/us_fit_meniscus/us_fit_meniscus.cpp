@@ -2210,7 +2210,7 @@ bool US_FitMeniscus::file_loaded_auto( QMap < QString, QString > & triple_inform
   qDebug() << "In file_loaded_auto: ";
   QString file_directory = US_Settings::resultDir() + QString("/") + triple_information[ "filename" ];
   QString triple_name_cut = triple_information[ "triple_name" ];
-  triple_name_cut.simplified();
+  triple_name_cut = triple_name_cut.simplified();
   triple_name_cut.replace("/","");
   triple_name_cut.replace(" ","");
 

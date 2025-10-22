@@ -10,6 +10,9 @@ INCLUDEPATH       = include
 DEPENDPATH        = include src
 DESTDIR           = ../lib
 QT += opengl
+# disable all deprecated functionalities up to Qt6.9
+DEFINES += QT_DISABLE_DEPRECATED_UP_TO=0x060900
+
 
 win32:TEMPLATE        = lib
 win32:CONFIG         += dll exceptions
