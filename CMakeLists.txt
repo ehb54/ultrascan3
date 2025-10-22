@@ -23,17 +23,23 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(BUILD_SHARED_LIBS ON)
 
-# suppress deprecated warnings
+# Enable deprecation warnings and treat them as errors
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     add_compile_options(
-            -Wno-deprecated-declarations
-            -Wno-deprecated
+            -Wdeprecated
+            -Wdeprecated-declarations
+            -Werror=deprecated
+            -Werror=deprecated-declarations
+    )
+elseif(MSVC)
+    add_compile_options(
+            /W4           # Enable level 4 warnings (includes deprecation)
+            /we4996       # Treat deprecation warnings as errors
     )
 endif()
 
 # For Qt-specific deprecation warnings
-add_definitions(-DQT_DISABLE_DEPRECATED_BEFORE=0x000000)
-add_definitions(-DQT_DISABLE_DEPRECATED_UP_TO=0x061000)
+add_compile_definitions(QT_DISABLE_DEPRECATED_UP_TO=0x060900)
 
 # Build type configuration
 if(NOT CMAKE_BUILD_TYPE)
