@@ -4540,7 +4540,7 @@ bool US_ExperGuiUpload::extinctionProfilesExist( QStringList& msg_to_user )
 	      //check if not a reference channel (that one can have a single analyte)
 	      QString ch_name_m = channel.split(",")[0];
 	      ch_name_m.replace("/","");
-	      ch_name_m.simplified();
+	      ch_name_m = ch_name_m.simplified();
 	      ch_name_m.replace( " ", "" );
 	      qDebug() << "Ref_channs -- " << ref_channs
 		       << "ch_name_m -- " << ch_name_m;
