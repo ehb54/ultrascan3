@@ -6171,6 +6171,7 @@ void US_ReporterGMP::process_combined_plots ( QString filename_passed )
 		  t_m = "MW," + modelNames[ m ];
 		  c_type = "MW";
 		  c_parms = comboPlotsMap[ t_m ];
+		  qDebug() << "[MW-COMB] c_parms -- " << c_parms;
 		}
 	      
 	      else if( xtype[ xt ] == 2 )
@@ -6179,6 +6180,7 @@ void US_ReporterGMP::process_combined_plots ( QString filename_passed )
 		  t_m = "D," + modelNames[ m ];
 		  c_type = "D";
 		  c_parms = comboPlotsMap[ t_m ];
+		  qDebug() << "[D-COMB] c_parms -- " << c_parms;
 		}
 	      
 	      else if( xtype[ xt ] == 3 )
