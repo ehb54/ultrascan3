@@ -116,14 +116,7 @@ The panel allows actions beyond simple buffer selection, including getting buffe
 
 
 
-Related
-====================
 
-Analyte 0
-
-Solutions
-
-Import 
 
 
 

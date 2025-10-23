@@ -20,3 +20,7 @@ Analyte Settings Panel
 =======================
 
 .. _analyte_settings: 
+
+
+analyte_settings.png
+

@@ -20,3 +20,28 @@ Edit Existing Analyte Panel
 =============================
 
 .. _analyte_edit: 
+
+This panel allows the user to modify non-hydrodynamic characteristics. 
+
+.. image:: ../_static/images/analyte_edit.png
+    :align: center
+
+.. rst-class:: 
+    :align: center
+
+    **Edit Existing Analyte Window**
+
+Edit Analyte Spectrum 
+======================
+
+.. image:: ../_static/images/analyte_edit_spec.png
+    :align: center
+
+.. rst-class:: 
+    :align: center
+
+    **Edit Existing Analyte Window**
+
+analyte_spec-gui.png
+
+analyte_edit_spec.png

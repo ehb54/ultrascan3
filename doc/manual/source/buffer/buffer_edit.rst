@@ -20,7 +20,7 @@ Edit Existing Buffer Tab
 Edit Buffer Panel
 =======================
 
-.. _edit-buffer: 
+.. _edit_buffer: 
 
 Using this panel, you can change non-hydrodynamic characteristics of a buffer previously selected in the Select Buffer panel.
 
@@ -64,8 +64,8 @@ Functions
     To create a buffer with most characteristics similar to an existing one, the users should note those characteristics; then name and enter a new buffer in the Enter New Buffer panel, with selected parameters changed.
 
 
-Buffer Spectrum 
-===================
+Edit Buffer Spectrum 
+======================
 
 .. _edit_spectrum:
 
