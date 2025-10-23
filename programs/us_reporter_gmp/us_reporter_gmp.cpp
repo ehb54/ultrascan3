@@ -5973,6 +5973,18 @@ void US_ReporterGMP::process_combined_plots_individual ( QString triplesname_p, 
   qApp->processEvents();
 }
 
+//units conv. global settings
+void US_ReporterGMP::convert_ranges_global( QMap<QString, QString>& conv_ranges, double c_factor )
+{
+  QStringList conv_r_keys = conv_ranges.keys();
+  for (int i=0; i<conv_r_keys.size(); ++i)
+    {
+      if (conv_r_keys[i].contains("Maximum") || conv_r_keys[i].contains("Minimum"))
+	conv_ranges[ conv_r_keys[i] ] =
+	  QString::number( conv_ranges[ conv_r_keys[i] ].toDouble()*c_factor );
+    }
+}
+
 //convert units
 QString US_ReporterGMP::convert_ranges( QStringList conv_ranges, double c_factor )
 {
@@ -6171,7 +6183,10 @@ void US_ReporterGMP::process_combined_plots ( QString filename_passed )
 		  t_m = "MW," + modelNames[ m ];
 		  c_type = "MW";
 		  c_parms = comboPlotsMap[ t_m ];
-		  qDebug() << "[MW-COMB] c_parms -- " << c_parms;
+		  qDebug() << "[MW-COMB] c_parms [BEFORE]-- " << c_parms;
+		  convert_ranges_global( c_parms, pow(10,3) );
+		  qDebug() << "[MW-COMB] c_parms [AFTER]-- " << c_parms;
+		  //[MW-COMB] c_parms --  QMap(("Envelope Gaussian Sigma", "0")("Plot X Maximum", "35000")("Plot X Minimum", "0"))
 		}
 	      
 	      else if( xtype[ xt ] == 2 )
@@ -6180,7 +6195,9 @@ void US_ReporterGMP::process_combined_plots ( QString filename_passed )
 		  t_m = "D," + modelNames[ m ];
 		  c_type = "D";
 		  c_parms = comboPlotsMap[ t_m ];
-		  qDebug() << "[D-COMB] c_parms -- " << c_parms;
+		  qDebug() << "[D-COMB] c_parms [BEFORE]-- " << c_parms;
+		  convert_ranges_global( c_parms, pow(10,-7) );
+		  qDebug() << "[D-COMB] c_parms [AFTER]-- " << c_parms;
 		}
 	      
 	      else if( xtype[ xt ] == 3 )

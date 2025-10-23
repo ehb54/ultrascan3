@@ -603,6 +603,7 @@ class US_ReporterGMP : public US_Widgets
         void process_combined_plots_individual(QString, QString); //!< Process combined plots (individual)
         QMap< QString, QStringList > find_sim_ranges( QString, QString );
         QString convert_ranges( QStringList, double );
+        void convert_ranges_global( QMap<QString,QString>&, double );
         void process_abde_plots( void );
         void get_abde_channels( QStringList& );
         void get_abde_rmsds(QMap< QString, double >&);
