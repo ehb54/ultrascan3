@@ -51,8 +51,8 @@ US_CombPlotsGui::US_CombPlotsGui( QString combPlotsMask, QStringList type_method
   p.setColor(QPalette::Text, Qt::darkRed);
   le_info->setPalette(p);
 
-  le_info->setHtml(tr( "[s,D,MW] units: "
-		       "&nbsp; s(&#215;1e+13)[sec]; D(&#215;1e+7)[cm&#178;/s]; MW(&#215;1e-3)[Dalton]"
+  le_info->setHtml(tr( "[s,D20W,MW] units: "
+		       "&nbsp; s(&#215;1e+13)[sec]; D20W(&#215;1e+7)[cm&#178;/s]; MW(&#215;1e-3)[Dalton]"
 		       ));
 
   le_info->setFont(le_info_font);

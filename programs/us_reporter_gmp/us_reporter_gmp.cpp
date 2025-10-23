@@ -5900,6 +5900,9 @@ void US_ReporterGMP::process_combined_plots_individual ( QString triplesname_p, 
 		  
 		  t_m = "MW," + stage_model;
 		  c_parms = comboPlotsMap[ t_m ];
+		  qDebug() << "[MW-INDCOMB] c_parms [BEFORE]-- " << c_parms;
+		  convert_ranges_global( c_parms, pow(10,3) );
+		  qDebug() << "[MW-INDCOMB] c_parms [AFTER]-- " << c_parms;
 		  //put ranges into c_parms:
 		  QString c_ranges = convert_ranges( ranges, pow(10,3) );
 		  qDebug() << "MW ranges [before, after] -- "
@@ -5923,6 +5926,9 @@ void US_ReporterGMP::process_combined_plots_individual ( QString triplesname_p, 
 		  
 		  t_m = "D," + stage_model;
 		  c_parms = comboPlotsMap[ t_m ];
+		  qDebug() << "[D-INDCOMB] c_parms [BEFORE]-- " << c_parms;
+		  convert_ranges_global( c_parms, pow(10,-7) );
+		  qDebug() << "[D-INDCOMB] c_parms [AFTER]-- " << c_parms;
 		  //put ranges into c_parms:
 		  QString c_ranges = convert_ranges( ranges, pow(10,-7) );
 		  qDebug() << "D ranges [before, after] -- "
