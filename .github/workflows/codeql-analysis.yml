@@ -26,16 +26,6 @@ jobs:
     permissions:
       security-events: write
       actions: read
-    if: >
-      github.event_name == 'schedule' ||
-      contains(github.event.pull_request.changed_files.*.filename, 'utils/') ||
-      contains(github.event.pull_request.changed_files.*.filename, 'programs/us_mpi_analysis') ||
-      contains(github.event.head_commit.modified, 'utils/') ||
-      contains(github.event.head_commit.modified, 'programs/us_mpi_analysis') ||
-      contains(github.event.pull_request.changed_files.*.filename, '.github/workflows') ||
-      contains(github.event.head_commit.modified, '.github/workflows') ||
-      contains(github.event.pull_request.changed_files.*.filename, 'admin/') ||
-      contains(github.event.head_commit.modified, 'admin/')
 
     strategy:
       fail-fast: false
@@ -78,20 +68,6 @@ jobs:
     permissions:
       security-events: write
       actions: read
-    if: >
-      github.event_name == 'schedule' ||
-      contains(github.event.pull_request.changed_files.*.filename, 'qwtplot3d/') ||
-      contains(github.event.pull_request.changed_files.*.filename, 'utils/') ||
-      contains(github.event.pull_request.changed_files.*.filename, 'gui/') ||
-      (contains(github.event.pull_request.changed_files.*.filename, 'programs/') &&
-        !contains(github.event.pull_request.changed_files.*.filename, 'programs/us_mpi_analysis')) ||
-      contains(github.event.head_commit.modified, 'qwtplot3d/') ||
-      contains(github.event.head_commit.modified, 'utils/') ||
-      contains(github.event.head_commit.modified, 'gui/') ||
-      contains(github.event.pull_request.changed_files.*.filename, '.github/workflows') ||
-      contains(github.event.head_commit.modified, '.github/workflows') ||
-      contains(github.event.pull_request.changed_files.*.filename, 'admin/') ||
-      contains(github.event.head_commit.modified, 'admin/')
 
     strategy:
       fail-fast: false
@@ -144,16 +120,6 @@ jobs:
     permissions:
       security-events: write
       actions: read
-    if: >
-      github.event_name == 'schedule' ||
-      contains(github.event.pull_request.changed_files.*.filename, 'us_somo/') ||
-      contains(github.event.pull_request.changed_files.*.filename, 'somo/') ||
-      contains(github.event.head_commit.modified, 'us_somo/') ||
-      contains(github.event.head_commit.modified, 'somo/') ||
-      contains(github.event.pull_request.changed_files.*.filename, '.github/workflows') ||
-      contains(github.event.head_commit.modified, '.github/workflows') ||
-      contains(github.event.pull_request.changed_files.*.filename, 'admin/') ||
-      contains(github.event.head_commit.modified, 'admin/')
 
     strategy:
       fail-fast: false
