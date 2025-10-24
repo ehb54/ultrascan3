@@ -47,7 +47,7 @@ class US_GUI_EXTERN US_Widgets : public QFrame
     //! Connect to global memory and make the values accessible.
     US_Global g;
 
-    //! flag it the widget is positioned by ultrascan3 or by the OS
+    //! flag if the widget is positioned by ultrascan3 or by the OS
     bool global_positioning;
 
     //! Very light gray palette for read-only line edits
