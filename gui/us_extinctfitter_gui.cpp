@@ -609,8 +609,8 @@ void US_ExtinctFitter::plot_residuals()
          }
          point_counter++;
       }
-      xmax = max(xplot[i][points_per_dataset[i] - 1], xmax);
-      xmin = min(xplot[i][0], xmin);
+      xmax = qMax(xplot[i][points_per_dataset[i] - 1], xmax);
+      xmin = qMin(xplot[i][0], xmin);
    }
    //QwtSymbol* symbol = new QwtSymbol;
    QPen p_raw, p_zero;

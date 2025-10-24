@@ -59,8 +59,8 @@ US_EqHistogram::US_EqHistogram( double od_limit,
       if ( extincv != 1.0 )
       {
          ext_define = true;
-         min_extinc = min( min_extinc, extincv );
-         max_extinc = max( max_extinc, extincv );
+         min_extinc = qMin( min_extinc, extincv );
+         max_extinc = qMax( max_extinc, extincv );
       }
    }
 
@@ -149,7 +149,7 @@ qDebug() << "UH:  ii" << ii << " strt,stop,nx" << strtx << stopx << nx
       {  // Update histogram points for this scan
          xlast   = xpres;           // Lower limit for histogram bar
          xpres   = xplot[ jj ];     // Upper limit for histogram bar
-         xpres   = min( xpres, tmp_od_lim );
+         xpres   = qMin( xpres, tmp_od_lim );
 
          for ( int kk = strtx; kk < stopn; kk++ )  // test in radius range
          {  // Add to histogram point where Y's are within OD range

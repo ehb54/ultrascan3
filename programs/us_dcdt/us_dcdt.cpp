@@ -248,7 +248,7 @@ void US_Dcdt::data_plot( void )
             solution.s20w_correction * 1.0e13 * log( radius / meniscus ) /
             ( sq( omega ) * ( prevScan->seconds + dt / 2.0 ) );
 
-         s_max = max( s_max, sValues[ count ][ size ] );
+         s_max = qMax( s_max, sValues[ count ][ size ] );
 
          size++;
       }
@@ -282,7 +282,7 @@ void US_Dcdt::data_plot( void )
    {
       for ( int j = 0; j < arraySizes[ i ]; j++ )
       {
-         s_min = min( s_min, sValues[ i ][ j ] );
+         s_min = qMin( s_min, sValues[ i ][ j ] );
       }
    }
 

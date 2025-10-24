@@ -1,7 +1,4 @@
 //! \file us_project.cpp
-
-#include <QtCore>
-
 #include "us_settings.h"
 #include "ius_db2.h"
 #include "us_util.h"
@@ -183,9 +180,9 @@ int US_Project::readFromDB  ( int projectID, IUS_DB2* db )
 void US_Project::saveToDisk( void )
 {
    // First make sure we have a GUID
-   QRegExp rx( "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" );
+   static const QRegularExpression rx( "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", QRegularExpression::CaseInsensitiveOption );
 
-   if ( ! rx.exactMatch( projectGUID ) )
+   if ( ! rx.match( projectGUID ).hasMatch() )
       projectGUID = US_Util::new_guid();
 
    // Get a path and file name for project

@@ -1050,7 +1050,7 @@ DbgLv(1) << "EdataPlot: radl radr" << radl << radr
    double rhi  = -9e+10;
    double vlo  = 9e+10;
    double vhi  = -9e+10;
-   int    krpt = min( nrpts, scanfits[ sscanx ].stop_ndx + 1 );
+   int    krpt = qMin( nrpts, scanfits[ sscanx ].stop_ndx + 1 );
 
    for ( int jj = 0; jj < krpt; jj++ )
    {
@@ -1061,10 +1061,10 @@ DbgLv(1) << "EdataPlot: radl radr" << radl << radr
          double vv     = edata->value( isc, jj );
          ra[ count   ] = rv;
          va[ count++ ] = vv;
-         rlo           = min( rlo, rv );
-         rhi           = max( rhi, rv );
-         vlo           = min( vlo, vv );
-         vhi           = max( vhi, vv );
+         rlo           = qMin( rlo, rv );
+         rhi           = qMax( rhi, rv );
+         vlo           = qMin( vlo, vv );
+         vhi           = qMax( vhi, vv );
       }
    }
 
@@ -1241,8 +1241,8 @@ void US_GlobalEquil::assign_scanfit()
 
    EqScanFit   scanfit;
    QStringList channs;
-   int         ncomp = max( 1, runfit.nbr_comps );
-   int         mcomp = max( 4, ncomp );
+   int         ncomp = qMax( 1, runfit.nbr_comps );
+   int         mcomp = qMax( 4, ncomp );
    int         nintg = mcomp + runfit.nbr_assocs;
    
    for ( int jes = 0; jes < scedits.size(); jes++ )
@@ -1320,7 +1320,7 @@ void US_GlobalEquil::setup_runfit()
    runfit.runs_expect  = 0.0;
    runfit.runs_vari    = 0.0;
    runfit.projname     = le_prjname->text();
-   modelx              = max( modelx, 0 );
+   modelx              = qMax( modelx, 0 );
 DbgLv(1) << " sRF: modelx" << modelx;
    runfit.modlname     = models[ modelx ];
 DbgLv(1) << " sRF: modlname" << runfit.modlname;
@@ -1468,7 +1468,7 @@ int US_GlobalEquil::index_od_limit( EqScanFit& scanfit, double odlim )
    {
       if ( scanfit.yvs[ jj ] > odlim )
       {
-         stopx = max( jj - 1, scanfit.start_ndx );
+         stopx = qMax( jj - 1, scanfit.start_ndx );
          break;
       }
    }

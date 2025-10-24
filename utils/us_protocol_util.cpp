@@ -1,7 +1,5 @@
 //! \file us_protocol_util.cpp
-
 #include "us_protocol_util.h"
-
 
 // Build a list of string lists containing basic protocol
 // information for all records as needed to present a dialog list.

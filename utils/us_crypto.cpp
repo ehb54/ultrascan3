@@ -1,5 +1,4 @@
 //! \file us_crypto.cpp
-
 #include "us_crypto.h"
 #include <random>
 #include <openssl/evp.h>

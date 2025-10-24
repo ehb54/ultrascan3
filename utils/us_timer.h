@@ -6,9 +6,6 @@
 #ifndef US_TIMER_H
 #define US_TIMER_H
 
-#include <qstring.h>
-#include <qdatetime.h>
-#include <map>
 #include "us_extern.h"
 #include <QElapsedTimer>
 
