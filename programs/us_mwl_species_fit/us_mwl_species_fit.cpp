@@ -590,7 +590,7 @@ void US_MwlSpeciesFit::view( void )
    {
       te_results = new US_Editor( US_Editor::DEFAULT, true, QString(), this );
       te_results->resize( 600, 700 );
-       QString auto_positioning = US_Settings::debug_value("auto_positioning");
+     QString auto_positioning = US_Settings::debug_value("auto_positioning");
        if ( global_positioning && !auto_positioning.isEmpty() && auto_positioning.toLower() == "true" )
        {
            QPoint p = g.global_position();
