@@ -229,7 +229,7 @@ US_ReportGui::US_ReportGui( QMap < QString, US_ReportGMP* > report_map ) : US_Wi
   p.setColor(QPalette::Text, Qt::darkRed);
   le_info->setPalette(p);
 
-  le_info->setHtml(tr( "[s,D,MW] units: "
+  le_info->setHtml(tr( "[s,D20W,MW] units: "
 		       "&nbsp; s(&#215;1e+13)[sec]; D20W(&#215;1e+7)[cm&#178;/s]; MW(&#215;1e-3)[Dalton]"
 		       ));
 
