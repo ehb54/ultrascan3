@@ -22,7 +22,10 @@ class US_GUI_EXTERN US_GuiSettings
     //! \brief Null destructor.
     ~US_GuiSettings(){};
 
-    // Fonts
+    //! \brief set colors
+    static void set_GUI_Colors(QApplication* app);
+    //! \brief clear child styles
+    static void scrubChildStyleSheets(QWidget* root);
 
     //! \brief Get font family setting
     static QString  fontFamily      ( void );

@@ -1,24 +1,62 @@
-//! \file us.cpp
 #include <QtCore>
 #include <QTcpSocket>
-#if QT_VERSION < 0x050000
-#include <QtSingleApplication>
-#else
-#include <QtWidgets/QApplication>
-#endif
+#include <QApplication>
+#include <QStyleFactory>
+#include <QGuiApplication>
+#include <QFont>
+#include <QFile>
+#include <QMap>
+#include <QScreen>
+#include <QTranslator>
+#include <QLocale>
+#include <QMessageBox>
+#include <QPushButton>
 
-#include "us.h"
-#include "us_license_t.h"
-#include "us_license.h"
-#include "us_settings.h"
-#include "us_gui_settings.h"
-#include "us_win_data.cpp"
+// ----------------------------------------------------------------------------
+// UltraScan Core Headers
+// ----------------------------------------------------------------------------
 #include "us_defines.h"
-#include "us_revision.h"
 #include "us_sleep.h"
 #include "us_images.h"
+#include "us_gui_settings.h"
+#include "us_settings.h"
+
+// ----------------------------------------------------------------------------
+// Database & Licensing
+// ----------------------------------------------------------------------------
 #include "us_passwd.h"
 #include "us_db2.h"
+#include "us_license_t.h"
+#include "us_license.h"
+
+// ----------------------------------------------------------------------------
+// Application Core
+// ----------------------------------------------------------------------------
+#include "us.h"
+#include "us_win_data.cpp"
+
+// Version information: CMake creates us_version.h, legacy build creates us_revision.h
+#if __has_include("us_version.h")
+// CMake build
+  #include "us_version.h"
+#else
+// Legacy Makefile build
+#include "us_revision.h"
+// Map old names to new names for compatibility
+#ifndef BUILD_NUMBER
+#define BUILD_NUMBER BUILDNUM
+#endif
+#ifndef BUILD_DATE
+#define BUILD_DATE "unknown"
+#endif
+#ifndef BUILD_TIME
+#define BUILD_TIME "unknown"
+#endif
+#endif
+
+#ifndef US_Version
+#define US_Version "4.5"
+#endif
 
 #if 0
 #define EQUI_MENU
@@ -38,114 +76,108 @@ using namespace US_WinData;
   a license.  If a valid license is not found, it launches the
   \ref US_License window.
 */
-int main( int argc, char* argv[] )
+int main(int argc, char* argv[])
 {
-  QString options( getenv( "ULTRASCAN_OPTIONS" ) );
-#if QT_VERSION < 0x050000
-  QtSingleApplication application( "UltraScan III", argc, argv );
-  
-  // If environment variable ULTRASCAN_OPTIONS contains the 
-  // word 'multiple', then we don't try to limit to one instance
-  if ( ! options.contains( "multiple" ) )
-  {
-    if ( application.sendMessage( "Wake up" ) ) return 0;
-  }
+    // Optional env flags kept from your code
+    QString options(getenv("ULTRASCAN_OPTIONS"));
 
-  application.initialize();
-#else
-  qputenv("QT_ENABLE_HIGHDPI_SCALING",QByteArray("1"));
-  QApplication application( argc, argv );
-  application.setApplicationDisplayName( "UltraScan III" );
-#endif
+    // HiDPI: must be set BEFORE QApplication is constructed
+    QCoreApplication::setAttribute(Qt::AA_UseHighDpiPixmaps, true);
 
-  // Set up language localization
-  QString locale = QLocale::system().name();
+    // 1) Create the app
+    QApplication application(argc, argv);
+    application.setApplicationDisplayName("UltraScan III");
 
-  QTranslator translator;
-  translator.load( QString( "us_" ) + locale );
-  application.installTranslator( &translator );
-    
-  // See if we need to update the license
-  QString ErrorMessage;
+    // 2) Set stype
+    // QApplication::setStyle(QStyleFactory::create("Fusion"));
 
-  int result = US_License_t::isValid( ErrorMessage );
-  if ( result != US_License_t::OK )
-  {
-    QMessageBox mBox;
+    // Apply global palette (base colors)
+    application.setPalette(US_GuiSettings::frameColorDefault());
 
-    QPushButton* cancel   = mBox.addButton( QMessageBox::Cancel );
-    QPushButton* Register = mBox.addButton( qApp->translate( "UltraScan III", "Register"), 
-        QMessageBox::ActionRole);
-    
-    mBox.setDefaultButton( Register );
-    mBox.setWindowTitle  ( qApp->translate( "UltraScan III", "UltraScan License Problem" ) );
-    mBox.setText         ( ErrorMessage );
-    mBox.setIcon         ( QMessageBox::Critical );
-    mBox.exec();
-
-    if ( mBox.clickedButton() == cancel )  exit( -1 ); 
-    
-    US_License* license = new US_License();
-    license->show();
-#if QT_VERSION < 0x050000
-    application.setActivationWindow( license );
-#endif
-    return application.exec();
-  }
-
-  // License is OK.  Start up.
-  
-  //Sync User-level with that set in DB //////////////////////////////////////////
-  //If DB set ?
-  QList<QStringList> DB_list = US_Settings::databases();
-  QStringList defaultDB      = US_Settings::defaultDB();
-  if ( DB_list.size() > 0 && defaultDB.size() > 0 )
+    // 3) Font
     {
-      qDebug() << "defaultDB -- " << defaultDB.at( 2 );
-            
-      US_Passwd   pw;
-      US_DB2      db( pw.getPasswd() );
-      
-      if ( db.lastErrno() != IUS_DB2::OK )
-        {
-	  QMessageBox msgBox;
-          msgBox.setWindowTitle ("ERROR: User Level Synchronization");
-          msgBox.setText("Error making the DB connection! User-level cannot be synchronized.");
-          msgBox.setIcon  ( QMessageBox::Critical );
-          msgBox.exec();
-      
-          //exit( -1 );
-        }
-      else
-	{
-      
-	  QStringList q( "get_user_info" );
-	  db.query( q );
-	  db.next();
-	  
-	  int ID        = db.value( 0 ).toInt();
-	  QString fname = db.value( 1 ).toString();
-	  QString lname = db.value( 2 ).toString();
-	  int     level = db.value( 5 ).toInt();
-	  
-	  qDebug() << "USCFG: UpdInv: ID,name,lev" << ID << fname << lname << level;
-	  //if(ID<1) return;
-	  
-	  US_Settings::set_us_inv_name ( lname + ", " + fname );
-	  US_Settings::set_us_inv_ID   ( ID );
-	  US_Settings::set_us_inv_level( level );
-	}
+        QFont f = QApplication::font();
+        f.setFamily("Helvetica Neue");
+        f.setPointSizeF(f.pointSizeF() + 1.0);
+        QApplication::setFont(f);
     }
-  
-  //END OF user-level sync//////////////////////////////////////
-  
-  US_Win w;
-  w.show();
-#if QT_VERSION < 0x050000
-  application.setActivationWindow( &w );
-#endif
-  return application.exec();
+
+    // 4) i18n: install before creating/showing UI
+    {
+        const QString locale = QLocale::system().name();
+        static QTranslator translator;                 // keep alive for app lifetime
+        if (translator.load(QStringLiteral("us_") + locale))
+            application.installTranslator(&translator);
+    }
+
+    // 5) License check (dialogs benefit from theme already applied)
+    {
+        QString ErrorMessage;
+        const int result = US_License_t::isValid(ErrorMessage);
+        if (result != US_License_t::OK) {
+            QMessageBox mBox;
+            QPushButton* cancel   = mBox.addButton(QMessageBox::Cancel);
+            QPushButton* Register = mBox.addButton(
+                    qApp->translate("UltraScan III", "Register"),
+                    QMessageBox::ActionRole);
+
+            mBox.setDefaultButton(Register);
+            mBox.setWindowTitle(qApp->translate("UltraScan III", "UltraScan License Problem"));
+            mBox.setText(ErrorMessage);
+            mBox.setIcon(QMessageBox::Critical);
+            mBox.exec();
+
+            if (mBox.clickedButton() == cancel)
+                return -1;
+
+            auto* license = new US_License();
+            license->show();
+            return application.exec();  // stay in license UI loop
+        }
+    }
+
+    // 6) Sync user-level with DB
+    {
+        QList<QStringList> DB_list = US_Settings::databases();
+        QStringList defaultDB      = US_Settings::defaultDB();
+
+        if (DB_list.size() > 0 && defaultDB.size() > 0) {
+            qDebug() << "defaultDB -- " << defaultDB.at(2);
+
+            US_Passwd pw;
+            US_DB2 db(pw.getPasswd());
+
+            if (db.lastErrno() != IUS_DB2::OK) {
+                QMessageBox msgBox;
+                msgBox.setWindowTitle("ERROR: User Level Synchronization");
+                msgBox.setText("Error making the DB connection! User-level cannot be synchronized.");
+                msgBox.setIcon(QMessageBox::Critical);
+                msgBox.exec();
+            } else {
+                QStringList q("get_user_info");
+                db.query(q);
+                db.next();
+
+                int ID        = db.value(0).toInt();
+                QString fname = db.value(1).toString();
+                QString lname = db.value(2).toString();
+                int level     = db.value(5).toInt();
+
+                qDebug() << "USCFG: UpdInv: ID,name,lev" << ID << fname << lname << level;
+                US_Settings::set_us_inv_name (lname + ", " + fname);
+                US_Settings::set_us_inv_ID   (ID);
+                US_Settings::set_us_inv_level(level);
+            }
+        }
+    }
+
+    // 7) Create and show the main window
+    US_Win w;
+    w.show();
+
+    return application.exec();
 }
+
 
 //////////////US_Action
 US_Action::US_Action( int i, const QString& text, QObject* parent) 
@@ -161,7 +193,10 @@ void US_Action::onTriggered( bool )
 }
 /////////////US_Win
 US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
-  : QMainWindow( parent, flags )
+  : QMainWindow(parent, flags)
+  , bigframe(nullptr)
+  , smallframe(nullptr)
+  , splash_shadow(nullptr)
 {
   // We need to handle US_Global::g here becuse US_Widgets is not a parent
   if ( ! g.isValid() ) 
@@ -636,82 +671,217 @@ void US_Win::closeEvent( QCloseEvent* e )
 
 void US_Win::splash( void )
 {
-  int y =           menuBar  ()->size().rheight();
-  int h = 532 - y - statusBar()->size().rheight();
-  int w = 710;
+    const int y = menuBar()->size().rheight();
+    const int h = 532 - y - statusBar()->size().rheight();
+    const int w = 710;
 
-  bigframe = new QLabel( this );
-  bigframe->setFrameStyle        ( QFrame::Box | QFrame::Raised);
-  bigframe->setPalette           ( US_GuiSettings::frameColor() );
-  bigframe->setGeometry          ( 0, y, w, h );
-  bigframe->setAutoFillBackground( true );
+    if (!bigframe) bigframe = new QLabel(this);
+    Q_ASSERT(bigframe);
+    bigframe->setGeometry(0, y, w, h);
+    bigframe->setFrameStyle(QFrame::NoFrame);
+    bigframe->setAutoFillBackground(false); // image covers all
 
-  splash_shadow = new QLabel( this );
-  splash_shadow->setGeometry( (unsigned int)( ( w / 2 ) - 210 ) , 130, 460, 276 );
-  splash_shadow->setPalette( QPalette( Qt::black, Qt::cyan ) );
-  splash_shadow->setAutoFillBackground ( true );
+    if (splash_shadow) { splash_shadow->hide(); splash_shadow->deleteLater(); splash_shadow = nullptr; }
 
-  logo( w );
+    logo(w);
+}
 
-  //QTimer::singleShot( 6000, this, SLOT( closeSplash() ) );
+static QPixmap makeSplashCanvas(const QPixmap& rawSplash,
+                                const QString& versionLine,
+                                const QString& builtLine,
+                                const QStringList& authors,
+                                int maxW, int maxH, int marginPx)
+{
+    const int canvasW = qMax(1, maxW);
+    const int canvasH = qMax(1, maxH);
+    const int margin  = qMax(4, marginPx);
+
+    // HiDPI-safe canvas
+    const qreal dpr = qApp->primaryScreen()->devicePixelRatio();
+    QPixmap canvas(QSize(canvasW, canvasH) * dpr);
+    canvas.setDevicePixelRatio(dpr);
+
+    // Make the base opaque so subpixel smoothing can kick in
+    canvas.fill(QColor(8, 14, 28)); // dark navy
+
+    QPainter p(&canvas);
+    p.setRenderHint(QPainter::Antialiasing, true);
+    p.setRenderHint(QPainter::TextAntialiasing, true);
+    p.setRenderHint(QPainter::HighQualityAntialiasing, true);
+    p.setRenderHint(QPainter::LosslessImageRendering, true);
+
+
+    // Scale and draw the background image to FILL
+    QPixmap bg = rawSplash;
+    if (!bg.isNull()) {
+        // Calculate scale to FILL canvas
+        const qreal scaleW = qreal(canvasW) / bg.width();
+        const qreal scaleH = qreal(canvasH) / bg.height();
+        const qreal scale = qMax(scaleW, scaleH);
+
+        // Scale the image
+        QSize scaledSize(qRound(bg.width() * scale), qRound(bg.height() * scale));
+        bg = bg.scaled(scaledSize, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+
+        // Draw centered horizontally, aligned to top
+        const int xOffset = (bg.width() - canvasW) / 2;
+        p.drawPixmap(0, 0, bg, xOffset, 0, canvasW, canvasH);
+    }
+
+    // ---- Typography setup ---------------------------------------------------
+    QFont base = qApp->font();
+    base.setFamily(QFontInfo(base).family());
+    base.setHintingPreference(QFont::PreferFullHinting);
+    base.setKerning(true);
+
+    // Pixel sizes scale with canvas height (integer = crisper)
+    QFont versionFont = base;      // "Version ..."
+    versionFont.setWeight(QFont::DemiBold);
+    versionFont.setPixelSize(qRound(canvasH * 0.040));
+
+    QFont builtFont = base;        // "Built on ..."
+    builtFont.setWeight(QFont::Normal);
+    builtFont.setPixelSize(qRound(canvasH * 0.030));
+
+    QFont authorsHdrFont = base;   // "Authors:"
+    authorsHdrFont.setWeight(QFont::Medium);
+    authorsHdrFont.setPixelSize(qRound(canvasH * 0.030));
+
+    QFont authorsFont = base;      // author names
+    authorsFont.setWeight(QFont::Normal);
+    authorsFont.setPixelSize(qRound(canvasH * 0.027));
+
+    QFontMetrics fmV(versionFont), fmB(builtFont),
+            fmHdr(authorsHdrFont), fmA(authorsFont);
+
+    // Spacing constants
+    const int lineGapSmall = 2;
+    const int blockGap     = 10;
+    const int authorsGap   = 6;
+    const int namesGap     = 4;
+    const int authorsLift  = 28;
+
+    const int hVersion    = fmV.height();
+    const int hBuilt      = fmB.height();
+    const int hAuthorsHdr = fmHdr.height();
+    const int hNames      = (authors.size() * fmA.height())
+                            + (qMax(0, authors.size() - 1) * namesGap);
+
+    const int hVB   = hVersion + lineGapSmall + hBuilt;
+    const int hAUTH = hAuthorsHdr + authorsGap + hNames;
+
+    // ---- Positioning --------------------------------------------------------
+    const double kLiftRatio = 0.18;                  // raise whole block
+    const int    liftPx     = qRound(canvasH * kLiftRatio);
+    const int    baselineReserve = authorsLift + hAUTH;
+
+    int yVB = canvasH - margin - liftPx - baselineReserve - hVB;
+    if (yVB < margin) yVB = margin;
+
+    // Gradient backdrop for text readability
+    {
+        const int pad = margin;
+        const int top = qMax(0, yVB - pad);
+        const int bot = qMin(canvasH, yVB + hVB + blockGap + authorsLift + hAUTH + pad);
+        QRect gradRect(0, top, canvasW, bot - top);
+
+        QLinearGradient g(gradRect.topLeft(), gradRect.bottomLeft());
+        g.setColorAt(0.00, QColor(0,  0,  0,  0));
+        g.setColorAt(0.25, QColor(0,  0, 20, 70));
+        g.setColorAt(0.55, QColor(0,  0, 30,110));
+        g.setColorAt(1.00, QColor(0,  0, 40,130));
+        p.fillRect(gradRect, g);
+    }
+
+    // ---- Draw text ----------------------------------------------------------
+    const QColor textHi(230,236,240);
+    const QColor textLo(200,210,220);
+
+    int y = yVB;
+    p.setPen(textHi);
+    p.setFont(versionFont);
+    p.drawText(QRect(margin, y, canvasW - 2*margin, hVersion),
+               Qt::AlignHCenter | Qt::AlignTop, versionLine);
+    y += hVersion + lineGapSmall;
+
+    p.setPen(textLo);
+    p.setFont(builtFont);
+    p.drawText(QRect(margin, y, canvasW - 2*margin, hBuilt),
+               Qt::AlignHCenter | Qt::AlignTop, builtLine);
+
+    // ---- Authors block ------------------------------------------------------
+    y = yVB + hVB + blockGap + authorsLift;
+
+    p.setPen(textHi);
+    p.setFont(authorsHdrFont);
+    p.drawText(QRect(margin, y, canvasW - 2*margin, hAuthorsHdr),
+               Qt::AlignHCenter | Qt::AlignTop, QObject::tr("Authors:"));
+    y += hAuthorsHdr + authorsGap;
+
+    p.setPen(textLo);
+    p.setFont(authorsFont);
+    for (int i = 0; i < authors.size(); ++i) {
+        p.drawText(QRect(margin, y, canvasW - 2*margin, fmA.height()),
+                   Qt::AlignHCenter | Qt::AlignTop, authors.at(i));
+        y += fmA.height();
+        if (i + 1 < authors.size()) y += namesGap;
+    }
+
+    p.end();
+    return canvas;
 }
 
 void US_Win::logo( int width )
 {
-  // Splash image
-  QPixmap rawpix = US_Images::getImage( US_Images::US3_SPLASH );
+    // Splash (from resources via US_Images)
+    QPixmap raw = US_Images::getImage(US_Images::US3_SPLASH);
 
-  int ph = rawpix.height();
-  int pw = rawpix.width();
+    // Available area in central window (keeps your 710x532 layout)
+    const int yTop   = menuBar()->size().rheight();
+    const int availH = 532 - yTop - statusBar()->size().rheight();
+    const int availW = 710;
+    const int margin = 16;
 
-  QPixmap  pixmap( pw, ph );
-  QPainter painter( &pixmap );
+    // Strings (keep your existing content)
+    const QString version = QString("Version %1 (build %2)")
+            .arg(US_Version).arg(BUILD_NUMBER);
+    const QString builtOn = QString("Built on %1 at %2")
+            .arg(BUILD_DATE).arg(BUILD_TIME);
 
-  painter.drawPixmap( 0, 0, rawpix );
-  painter.setPen    ( QPen( Qt::white, 3 ) );
+    // Authors (same four as before; easy to extend)
+    const QStringList authors = {
+            QStringLiteral("Borries Demeler"),
+            QStringLiteral("Emre Brookes"),
+            QStringLiteral("Alexey Savelyev"),
+            QStringLiteral("Gary Gorbet")
+    };
 
-  QString version = "Version " + US_Version + " ( " REVISION
-  " ) for " OS_TITLE;  // REVISION is #define "Revision: xxx"
+    // Build single canvas to exactly fill the available area
+    QPixmap canvas = makeSplashCanvas(raw, version, builtOn, authors,
+                                      availW, availH, /*margin*/16);
 
-  QFont font( "Arial" );
-  font.setWeight( QFont::DemiBold );
-  font.setPixelSize( 16 );
-  painter.setFont( font );
-  QFontMetrics metrics( font );
+    // --- Always create smallframe first ---
+    if (!smallframe) {
+        smallframe = new QLabel(this);
+        smallframe->setAlignment(Qt::AlignCenter);
+    }
 
-  int sWidth = metrics.boundingRect( version ).width();
-  int x      = ( pw - sWidth ) / 2;
+    // --- Safe styling and display ---
+    smallframe->setFrameStyle(QFrame::NoFrame);
+    smallframe->setContentsMargins(0, 0, 0, 0);
+    smallframe->setStyleSheet("margin:0; padding:0; border:0; background:transparent;");
+    smallframe->setScaledContents(false);
 
-  painter.drawLine( 0, 106, pw, 106 );
-  painter.drawText( x, 132, version );
-  painter.drawLine( 0, 144, pw, 144 );
-
-  QString s = "Authors:";
-  sWidth    = metrics.boundingRect( s ).width();
-  painter.drawText( ( pw - sWidth ) / 2, 166, s );
-  s      = "Borries Demeler";
-  sWidth = metrics.boundingRect( s ).width();
-  painter.drawText( ( pw - sWidth ) / 2, 190, s );
-  s      = "Emre Brookes";
-  sWidth = metrics.boundingRect( s ).width();
-  painter.drawText( ( pw - sWidth ) / 2, 208, s );
-  s      = "Alexey Savelyev";
-  sWidth = metrics.boundingRect( s ).width();
-  painter.drawText( ( pw - sWidth ) / 2, 226, s );
-  s      = "Gary Gorbet";
-  sWidth = metrics.boundingRect( s ).width();
-  painter.drawText( ( pw - sWidth ) / 2, 244, s );
-  
-  smallframe = new QLabel(this);
-  smallframe->setPixmap(pixmap);
-  smallframe->setGeometry( (unsigned int)( (width / 2) - 230 ), 110, 460, 276);
+    smallframe->setPixmap(canvas);
+    smallframe->setGeometry(0, yTop, availW, availH);
+    smallframe->show();
 }
 
 void US_Win::closeSplash( void )
 {
-   delete smallframe;
-   delete splash_shadow;
-   bigframe->show();
+    if (smallframe) { smallframe->deleteLater(); smallframe = nullptr; }
+    if (splash_shadow) { splash_shadow->deleteLater(); splash_shadow = nullptr; }
+    if (bigframe) bigframe->show();
 }
 
 void US_Win::help( int index )
@@ -763,9 +933,9 @@ void US_Win::help( int index )
       QMessageBox::information( this,
         tr( "About UltraScan..." ),
         tr( "UltraScan III version %1\n"
-            "%2\n"
-            "Copyright 1989 - 2021\n"
-            "Borries Demeler and the University of Texas System\n\n"
+            "( build %2 )\n"
+            "Copyright 1989 - 2025\n"
+            "Borries Demeler\n\n"
             "For more information, please visit:\n"
             "http://www.ultrascan.aucsolutions.com/\n\n"
             "The author can be reached at:\n"
@@ -774,7 +944,7 @@ void US_Win::help( int index )
             "32 Campus Drive\n"
             "Missoula, Montana  59812\n"
             "Phone:  (406) 285-1935\n"
-            "E-mail: borries.demeler@umontana.edu" ).arg( US_Version ).arg( REVISION ) );
+            "E-mail: borries.demeler@umontana.edu" ).arg( US_Version ).arg( BUILD_NUMBER ) );
 
       statusBar()->showMessage( tr( "Ready" ) );
       break;
@@ -1107,7 +1277,7 @@ void US_Win::notices_ready() {
    bool empty_msg    = true;
 
    double sys_version  = US_Version.toDouble();
-   int    sys_revision = QString( REVISION ).toInt();
+   int    sys_revision = QString( BUILD_NUMBER ).toInt();
    
    for ( int ii = 0; ii < (int) msgs.size(); ++ii )
    {

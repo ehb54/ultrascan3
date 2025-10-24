@@ -4,12 +4,8 @@
 #define US_DEFINES_H
 
 //! The version of UltraScan
-#if QT_VERSION > 0x050000
-#define US_Version QString("4.0")
-#else
-#define US_Version QString("3.3")
-#endif
-
+#define US_Version QString("4.1.0-dev")
+#define US_Description "UltraScan3 - Advanced analysis of analytical ultracentrifugation experiments"
 
 //! The directory/key for US_Settings storage
 #define US3 QString( "UltraScan3" )
@@ -26,8 +22,13 @@
 #endif
 
 #ifdef MAC
-  #define PLATFORM "mac"
-  #define TITLE    "Macintosh"
+#define PLATFORM "mac"
+  #ifndef OS_TITLE
+    #define OS_TITLE "macOS"
+  #endif
+  #ifndef TITLE
+    #define TITLE OS_TITLE
+  #endif
 #endif
 
 #ifdef OPTERON
@@ -67,8 +68,10 @@
 #endif
 
 #ifdef OSX
-  #define OS "osx"
-  #define OS_TITLE "OS-X"
+#define OS "osx"
+  #ifndef OS_TITLE
+    #define OS_TITLE "macOS"  // Don't redefine if already set
+  #endif
 #endif
 
 #ifdef IRIX

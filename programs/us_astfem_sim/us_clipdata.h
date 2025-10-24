@@ -4,7 +4,6 @@
 
 #include "us_widgets_dialog.h"
 #include "us_help.h"
-#include "us_window_message.h"
 
 //! \brief A window for specifing the data range for a simulation
 class US_ClipData : public US_WidgetsDialog
