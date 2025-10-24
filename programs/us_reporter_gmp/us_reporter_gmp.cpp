@@ -5900,8 +5900,15 @@ void US_ReporterGMP::process_combined_plots_individual ( QString triplesname_p, 
 		  
 		  t_m = "MW," + stage_model;
 		  c_parms = comboPlotsMap[ t_m ];
+		  qDebug() << "[MW-INDCOMB] c_parms [BEFORE]-- " << c_parms;
+		  convert_ranges_global( c_parms, pow(10,3) );
+		  qDebug() << "[MW-INDCOMB] c_parms [AFTER]-- " << c_parms;
 		  //put ranges into c_parms:
-		  c_parms[ "Ranges" ] = ranges.join(",");
+		  QString c_ranges = convert_ranges( ranges, pow(10,3) );
+		  qDebug() << "MW ranges [before, after] -- "
+			   << ranges.join(",") << ", " << c_ranges;
+		  c_parms[ "Ranges" ] = c_ranges;
+		  //c_parms[ "Ranges" ] = ranges.join(",");
 		  
 		  plotted_ids_colors_map_s_type = sdiag_combplot-> changedPlotX_auto( 1, c_parms );
 		  
@@ -5919,8 +5926,15 @@ void US_ReporterGMP::process_combined_plots_individual ( QString triplesname_p, 
 		  
 		  t_m = "D," + stage_model;
 		  c_parms = comboPlotsMap[ t_m ];
+		  qDebug() << "[D-INDCOMB] c_parms [BEFORE]-- " << c_parms;
+		  convert_ranges_global( c_parms, pow(10,-7) );
+		  qDebug() << "[D-INDCOMB] c_parms [AFTER]-- " << c_parms;
 		  //put ranges into c_parms:
-		  c_parms[ "Ranges" ] = ranges.join(",");
+		  QString c_ranges = convert_ranges( ranges, pow(10,-7) );
+		  qDebug() << "D ranges [before, after] -- "
+			   << ranges.join(",") << ", " << c_ranges;
+		  c_parms[ "Ranges" ] = c_ranges;
+		  //c_parms[ "Ranges" ] = ranges.join(",");
 		  
 		  plotted_ids_colors_map_s_type = sdiag_combplot-> changedPlotX_auto( 2, c_parms );
 		  
@@ -5955,7 +5969,7 @@ void US_ReporterGMP::process_combined_plots_individual ( QString triplesname_p, 
 		}
 	      
 	      // reset plot after processign certain type {s,D,MW...}
-	      sdiag_combplot->reset_data_plot1();
+	      //sdiag_combplot->reset_data_plot1();
 	    }
 	}
     }
@@ -5963,6 +5977,35 @@ void US_ReporterGMP::process_combined_plots_individual ( QString triplesname_p, 
   //assemble IND combined plots into html
   assemble_plots_html( CombPlotsFileNames, "CombPlots"  );
   qApp->processEvents();
+}
+
+//units conv. global settings
+void US_ReporterGMP::convert_ranges_global( QMap<QString, QString>& conv_ranges, double c_factor )
+{
+  QStringList conv_r_keys = conv_ranges.keys();
+  for (int i=0; i<conv_r_keys.size(); ++i)
+    {
+      if (conv_r_keys[i].contains("Maximum") || conv_r_keys[i].contains("Minimum"))
+	conv_ranges[ conv_r_keys[i] ] =
+	  QString::number( conv_ranges[ conv_r_keys[i] ].toDouble()*c_factor );
+    }
+}
+
+//convert units
+QString US_ReporterGMP::convert_ranges( QStringList conv_ranges, double c_factor )
+{
+  QString c_ranges_str;
+  QStringList c_ranges;
+
+  for (int i=0; i<conv_ranges.size(); ++i)
+    {
+      QStringList c_range = conv_ranges[i].split(":");
+      c_ranges << QString::number( c_range[0].toDouble()*c_factor ) + ":" +
+	QString::number( c_range[1].toDouble()*c_factor );
+    }
+
+  c_ranges_str = c_ranges.join(",");
+  return c_ranges_str;
 }
 
 //pull s_ranges, k_ranges from AProfile
@@ -6146,6 +6189,10 @@ void US_ReporterGMP::process_combined_plots ( QString filename_passed )
 		  t_m = "MW," + modelNames[ m ];
 		  c_type = "MW";
 		  c_parms = comboPlotsMap[ t_m ];
+		  qDebug() << "[MW-COMB] c_parms [BEFORE]-- " << c_parms;
+		  convert_ranges_global( c_parms, pow(10,3) );
+		  qDebug() << "[MW-COMB] c_parms [AFTER]-- " << c_parms;
+		  //[MW-COMB] c_parms --  QMap(("Envelope Gaussian Sigma", "0")("Plot X Maximum", "35000")("Plot X Minimum", "0"))
 		}
 	      
 	      else if( xtype[ xt ] == 2 )
@@ -6154,6 +6201,9 @@ void US_ReporterGMP::process_combined_plots ( QString filename_passed )
 		  t_m = "D," + modelNames[ m ];
 		  c_type = "D";
 		  c_parms = comboPlotsMap[ t_m ];
+		  qDebug() << "[D-COMB] c_parms [BEFORE]-- " << c_parms;
+		  convert_ranges_global( c_parms, pow(10,-7) );
+		  qDebug() << "[D-COMB] c_parms [AFTER]-- " << c_parms;
 		}
 	      
 	      else if( xtype[ xt ] == 3 )
