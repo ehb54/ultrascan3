@@ -626,7 +626,7 @@ void US_ReporterGMP::loadRun_auto ( QMap < QString, QString > & protocol_details
   progress_msg->setWindowTitle(tr("Assessing Run's Protocol"));
   QFont font_d  = progress_msg->property("font").value<QFont>();
   QFontMetrics fm(font_d);
-  int pixelsWide = fm.width( progress_msg->windowTitle() );
+  int pixelsWide = fm.horizontalAdvance( progress_msg->windowTitle() );
   qDebug() << "Progress_msg: pixelsWide -- " << pixelsWide;
   progress_msg ->setMinimumWidth( pixelsWide*2 );
   progress_msg->adjustSize();
@@ -1279,13 +1279,17 @@ void US_ReporterGMP::check_models ( int autoflowID )
 	  
 	  QDateTime now = QDateTime::currentDateTime();
 	  
-	  if ( description.contains( "2DSA-IT" ) && modelID == Triple_to_ModelsDesc[ Array_of_tripleNames[ i ] ][ "2DSA-IT" ] )
+	  // if ( description.contains( "2DSA-IT" )
+	  if ( description.contains( "2DSA" ) && description.contains( "-IT") 
+	       && modelID == Triple_to_ModelsDesc[ Array_of_tripleNames[ i ] ][ "2DSA-IT" ] )
 	    {
 	      qDebug() << "2DSA-IT Ids: modelID, read from modelLink: " << modelID << Triple_to_ModelsDesc[ Array_of_tripleNames[ i ] ][ "2DSA-IT" ];
 	      model_list << "2DSA-IT";
 	    }
 	  
-	  if ( description.contains( "2DSA-MC" ) && modelID == Triple_to_ModelsDesc[ Array_of_tripleNames[ i ] ][ "2DSA-MC" ] )
+	  //if ( description.contains( "2DSA-MC" )
+	  if ( description.contains( "2DSA" ) && description.contains( "-MC")     
+	       && modelID == Triple_to_ModelsDesc[ Array_of_tripleNames[ i ] ][ "2DSA-MC" ] )
 	    {
 	      qDebug() << "2DSA-MC Ids: modelID, read from modelLink: " << modelID << Triple_to_ModelsDesc[ Array_of_tripleNames[ i ] ][ "2DSA-MC" ];
 	      model_list << "2DSA-MC";
@@ -1604,7 +1608,7 @@ void US_ReporterGMP::load_gmp_run ( void )
   progress_msg->setWindowTitle(tr("Assessing Run's Protocol"));
   QFont font_d  = progress_msg->property("font").value<QFont>();
   QFontMetrics fm(font_d);
-  int pixelsWide = fm.width( progress_msg->windowTitle() );
+  int pixelsWide = fm.horizontalAdvance( progress_msg->windowTitle() );
   qDebug() << "Progress_msg: pixelsWide -- " << pixelsWide;
   progress_msg ->setMinimumWidth( pixelsWide*2 );
   progress_msg->adjustSize();
@@ -2079,6 +2083,11 @@ void US_ReporterGMP::read_protocol_and_reportMasks( void )
   replicates_to_channdesc      = currAProf. replicates_to_channdesc_main; //Empty ? (not needed?)
   //channdesc_to_overlapping_wvls
   channdesc_to_overlapping_wvls = currAProf. channdesc_to_overlapping_wvls_main;
+
+  //Scan exclusions
+  scan_excl_beg = currAProf.scan_excl_begin;
+  scan_excl_nth = currAProf.scan_excl_nth;
+  scan_excl_end = currAProf.scan_excl_end;
   
   //Debug: AProfile
   qDebug() << "chndescs_alt QStringList -- " <<  chndescs_alt;
@@ -4047,8 +4056,8 @@ DbgLv(1) << "ScMd: UNASSGN:  ++USED++";
    }
 DbgLv(1) << "ScMd: runid UNASGN editId 1   nmodel" << nmodel;
 
-QTime timer;
-timer.start();
+   QElapsedTimer timer;
+   timer.start();
    // Accumulate model information for runs present
    for ( int rr = 0; rr < runIDs.count(); rr++ )
    {
@@ -5034,7 +5043,7 @@ int US_ReporterGMP::count_noise_auto( US_DataIO::EditedData* edata,
    for ( int ii = 1; ii < nemods; ii++ )
    {  // Search through models in edit
       lmodlGUID  = mieGUIDs[ ii ];                    // this model's GUID
-      modelIndx  = QString().sprintf( "%4.4d", kk );  // models-in-edit index
+      modelIndx  = QString::asprintf( "%4.4d", kk );  // models-in-edit index
 
       // Find the noises tied to this model
       int kenois = noises_in_model_auto( lmodlGUID, tmpGUIDs );
@@ -5442,54 +5451,34 @@ void US_ReporterGMP::simulateModel( QMap < QString, QString> & tripleInfo )
 	  simparams.speed_step[ 0 ].acceleration = (int)qRound( rate );
 	}
     }
-  
-  // Do a quick test of the speed step implied by TimeState
-  int tf_scan   = simparams.speed_step[ 0 ].time_first;
-  int accel1    = simparams.speed_step[ 0 ].acceleration;
-  QString svalu = US_Settings::debug_value( "SetSpeedLowA" );
-  int lo_ss_acc = svalu.isEmpty() ? 250 : svalu.toInt();
-  int rspeed    = simparams.speed_step[ 0 ].rotorspeed;
-  double  tf_aend   = static_cast<double>(tf_scan);
-  // prevent any division by zero
-  if (accel1 != 0)
-  {
-    tf_aend = static_cast<double>(rspeed) / static_cast<double>(accel1);
-  }
-  
-  qDebug() << "SimMdl: ssck: rspeed accel1 lo_ss_acc"
-	   << rspeed << accel1 << lo_ss_acc << "tf_aend tf_scan"
-	   << tf_aend << tf_scan;
-  //x0  1  2  3  4  5
-  // check if the acceleration rate is low or the first scan was taken before the acceleration ended
-  // Due to older, wrong timestate calculation there might be a case, in which the calculated end of acceleration can
-  // be up to 1 second later than expected, tf_scan + 1 accounts for this.
-  if ( accel1 < lo_ss_acc  ||  tf_aend > ( tf_scan + 1 ) )
-    {
-      QString wmsg = tr( "The TimeState computed/used is likely bad:<br/>"
-			 "The acceleration implied is %1 rpm/sec.<br/>"
-			 "The acceleration zone ends at %2 seconds,<br/>"
-			 "with a first scan time of %3 seconds.<br/><br/>"
-			 "<b>You should rerun the experiment without<br/>"
-			 "any interim constant speed, and then<br/>"
-			 "you should reimport the data.</b>" )
-	.arg( accel1 ).arg( QString::number(tf_aend) ).arg( QString::number(tf_scan) );
-      
+  QStringList check_results = US_AstfemMath::check_acceleration(simparams.speed_step, edata->scanData);
+  if ( !check_results.isEmpty() ) {
       QMessageBox msgBox( this );
-      msgBox.setWindowTitle( tr( "Bad TimeState Implied!" ) );
-      msgBox.setTextFormat( Qt::RichText );
-      msgBox.setText( wmsg );
+      msgBox.setWindowTitle( tr( qPrintable( check_results[0] ) ) );
+      if ( check_results.size() > 1 ) {
+          msgBox.setTextFormat( Qt::RichText );
+          msgBox.setText( tr( qPrintable( check_results[1] ) ) );
+      }
+      if ( check_results.size() > 2 ) {
+          QString info = "";
+          for ( int i = 2; i < check_results.size(); i++ ) {
+              info += check_results[i] + "\n";
+          }
+          msgBox.setInformativeText( tr( qPrintable( info ) ) );
+      }
       msgBox.addButton( tr( "Continue" ), QMessageBox::RejectRole );
       QPushButton* bAbort = msgBox.addButton( tr( "Abort" ),
-					      QMessageBox::YesRole    );
+                                                                                                      QMessageBox::YesRole );
       msgBox.setDefaultButton( bAbort );
       msgBox.exec();
-      if ( msgBox.clickedButton() == bAbort )
-	{
-	  QApplication::restoreOverrideCursor();
-	  qApp->processEvents();
-	  return;
-	}
-    }
+
+      if ( msgBox.clickedButton() == bAbort ) {
+          QApplication::restoreOverrideCursor();
+          qApp->processEvents();
+          return;
+      }
+  }
+
   sdata->cell        = rdata->cell;
   sdata->channel     = rdata->channel;
   sdata->description = rdata->description;
@@ -5794,10 +5783,25 @@ void US_ReporterGMP::process_combined_plots_individual ( QString triplesname_p, 
 
       qDebug() << "INDCOMBO_1: " << modelDescModified[ ii ];
       qDebug() << "INDCOMBO_2: " << triplesname << stage_model << triplesname_chann;
-          
+
+      /**/
+      QString reg_exp_sm = stage_model;
+      reg_exp_sm = reg_exp_sm.replace("-",".*");
+      qDebug() << "INDCOMBO_2a: reg_exp_sm -- " << reg_exp_sm;
+      QRegularExpression re_sm(reg_exp_sm);
+      /**/
+
+      // //DEBUG
+      // bool b_1 = modelDescModified[ ii ].contains( triplesname_mod );
+      // bool b_2 =  modelDescModified[ ii ].contains( re_sm );
+      // qDebug() << "b_1, b_2 -- " << b_1 << b_2;
+      // modelGuidExistsForStage_ind( triplesname, stage_model, modelDescModifiedGuid[ ii ] );
+      // //DEBUG
+      
       //fiter by type|model
       if ( modelDescModified[ ii ].contains( triplesname_mod ) &&
-	   modelDescModified[ ii ].contains( stage_model ) &&
+	   //modelDescModified[ ii ].contains( stage_model ) &&
+	   modelDescModified[ ii ].contains( re_sm ) &&
 	   modelGuidExistsForStage_ind( triplesname, stage_model, modelDescModifiedGuid[ ii ] ) )
 	{
 	  qDebug()  << "INDCOMBO_3: YES ";
@@ -5896,8 +5900,15 @@ void US_ReporterGMP::process_combined_plots_individual ( QString triplesname_p, 
 		  
 		  t_m = "MW," + stage_model;
 		  c_parms = comboPlotsMap[ t_m ];
+		  qDebug() << "[MW-INDCOMB] c_parms [BEFORE]-- " << c_parms;
+		  convert_ranges_global( c_parms, pow(10,3) );
+		  qDebug() << "[MW-INDCOMB] c_parms [AFTER]-- " << c_parms;
 		  //put ranges into c_parms:
-		  c_parms[ "Ranges" ] = ranges.join(",");
+		  QString c_ranges = convert_ranges( ranges, pow(10,3) );
+		  qDebug() << "MW ranges [before, after] -- "
+			   << ranges.join(",") << ", " << c_ranges;
+		  c_parms[ "Ranges" ] = c_ranges;
+		  //c_parms[ "Ranges" ] = ranges.join(",");
 		  
 		  plotted_ids_colors_map_s_type = sdiag_combplot-> changedPlotX_auto( 1, c_parms );
 		  
@@ -5915,8 +5926,15 @@ void US_ReporterGMP::process_combined_plots_individual ( QString triplesname_p, 
 		  
 		  t_m = "D," + stage_model;
 		  c_parms = comboPlotsMap[ t_m ];
+		  qDebug() << "[D-INDCOMB] c_parms [BEFORE]-- " << c_parms;
+		  convert_ranges_global( c_parms, pow(10,-7) );
+		  qDebug() << "[D-INDCOMB] c_parms [AFTER]-- " << c_parms;
 		  //put ranges into c_parms:
-		  c_parms[ "Ranges" ] = ranges.join(",");
+		  QString c_ranges = convert_ranges( ranges, pow(10,-7) );
+		  qDebug() << "D ranges [before, after] -- "
+			   << ranges.join(",") << ", " << c_ranges;
+		  c_parms[ "Ranges" ] = c_ranges;
+		  //c_parms[ "Ranges" ] = ranges.join(",");
 		  
 		  plotted_ids_colors_map_s_type = sdiag_combplot-> changedPlotX_auto( 2, c_parms );
 		  
@@ -5951,7 +5969,7 @@ void US_ReporterGMP::process_combined_plots_individual ( QString triplesname_p, 
 		}
 	      
 	      // reset plot after processign certain type {s,D,MW...}
-	      sdiag_combplot->reset_data_plot1();
+	      //sdiag_combplot->reset_data_plot1();
 	    }
 	}
     }
@@ -5959,6 +5977,35 @@ void US_ReporterGMP::process_combined_plots_individual ( QString triplesname_p, 
   //assemble IND combined plots into html
   assemble_plots_html( CombPlotsFileNames, "CombPlots"  );
   qApp->processEvents();
+}
+
+//units conv. global settings
+void US_ReporterGMP::convert_ranges_global( QMap<QString, QString>& conv_ranges, double c_factor )
+{
+  QStringList conv_r_keys = conv_ranges.keys();
+  for (int i=0; i<conv_r_keys.size(); ++i)
+    {
+      if (conv_r_keys[i].contains("Maximum") || conv_r_keys[i].contains("Minimum"))
+	conv_ranges[ conv_r_keys[i] ] =
+	  QString::number( conv_ranges[ conv_r_keys[i] ].toDouble()*c_factor );
+    }
+}
+
+//convert units
+QString US_ReporterGMP::convert_ranges( QStringList conv_ranges, double c_factor )
+{
+  QString c_ranges_str;
+  QStringList c_ranges;
+
+  for (int i=0; i<conv_ranges.size(); ++i)
+    {
+      QStringList c_range = conv_ranges[i].split(":");
+      c_ranges << QString::number( c_range[0].toDouble()*c_factor ) + ":" +
+	QString::number( c_range[1].toDouble()*c_factor );
+    }
+
+  c_ranges_str = c_ranges.join(",");
+  return c_ranges_str;
 }
 
 //pull s_ranges, k_ranges from AProfile
@@ -6068,7 +6115,21 @@ void US_ReporterGMP::process_combined_plots ( QString filename_passed )
       for ( int ii = 0; ii < modelDescModified.size(); ii++ )  
 	{
 	  //fiter by type|model
-	  if ( modelDescModified[ ii ].contains( modelNames[ m ] ) && modelGuidExistsForStage( modelNames[ m ], modelDescModifiedGuid[ ii ] ) )
+	  /**/
+	  QString reg_exp_sm = modelNames[ m ];
+	  reg_exp_sm = reg_exp_sm.replace("-",".*");
+	  QRegularExpression re_sm(reg_exp_sm);
+	  /**/
+
+	  // //DEBUG
+	  // bool b_1 = modelDescModified[ ii ].contains( re_sm );
+	  // qDebug() << "b_1, modelDescModified[ ii ], reg_exp_sm  -- " << b_1 << modelDescModified[ ii ] << reg_exp_sm;
+	  // modelGuidExistsForStage( modelNames[ m ], modelDescModifiedGuid[ ii ] );
+	  // //
+	  
+	  if ( //modelDescModified[ ii ].contains( modelNames[ m ] )
+	       modelDescModified[ ii ].contains( re_sm ) &&
+	       modelGuidExistsForStage( modelNames[ m ], modelDescModifiedGuid[ ii ] ) )
 	    {
 	      isModel = true;
 
@@ -6128,6 +6189,10 @@ void US_ReporterGMP::process_combined_plots ( QString filename_passed )
 		  t_m = "MW," + modelNames[ m ];
 		  c_type = "MW";
 		  c_parms = comboPlotsMap[ t_m ];
+		  qDebug() << "[MW-COMB] c_parms [BEFORE]-- " << c_parms;
+		  convert_ranges_global( c_parms, pow(10,3) );
+		  qDebug() << "[MW-COMB] c_parms [AFTER]-- " << c_parms;
+		  //[MW-COMB] c_parms --  QMap(("Envelope Gaussian Sigma", "0")("Plot X Maximum", "35000")("Plot X Minimum", "0"))
 		}
 	      
 	      else if( xtype[ xt ] == 2 )
@@ -6136,6 +6201,9 @@ void US_ReporterGMP::process_combined_plots ( QString filename_passed )
 		  t_m = "D," + modelNames[ m ];
 		  c_type = "D";
 		  c_parms = comboPlotsMap[ t_m ];
+		  qDebug() << "[D-COMB] c_parms [BEFORE]-- " << c_parms;
+		  convert_ranges_global( c_parms, pow(10,-7) );
+		  qDebug() << "[D-COMB] c_parms [AFTER]-- " << c_parms;
 		}
 	      
 	      else if( xtype[ xt ] == 3 )
@@ -6597,7 +6665,7 @@ void  US_ReporterGMP::assemble_run_details_html( void )
 	      int  hours_r     = (int)qFloor( val_target / 3600.0 );
 	      int  mins_r      = (int)qRound( ( val_target - hours_r * 3600.0 ) / 60.0 );
 	      QString hh_r     = "h";
-	      QString val_target_hh_mm    = QString().sprintf( "%d %s %02d m", hours_r, hh_r.toLatin1().data(), mins_r );
+	      QString val_target_hh_mm    = QString::asprintf( "%d %s %02d m", hours_r, hh_r.toLatin1( ).data(), mins_r );
 
 	      //tol: based on 1st AProfile->ReportGMP
 	      QString channel_desc_alt = chndescs_alt[ 0 ];
@@ -6610,7 +6678,7 @@ void  US_ReporterGMP::assemble_run_details_html( void )
 	      double val_measured_sec = val_measured * 60.0;
 	      hours_r     = (int)qFloor( val_measured_sec / 3600.0 );
 	      mins_r      = (int)qRound( ( val_measured_sec - hours_r * 3600.0 ) / 60.0 );
-	      QString val_measured_hh_mm   = QString().sprintf( "%d %s %02d m", hours_r, hh_r.toLatin1().data(), mins_r );
+	      QString val_measured_hh_mm   = QString::asprintf( "%d %s %02d m", hours_r, hh_r.toLatin1( ).data(), mins_r );
 
 	      val_passed  = ( val_measured_sec >= ( val_target * (1 - val_tol/100.0)  ) && val_measured_sec <= ( val_target * (1 + val_tol/100.0) ) ) ? "YES" : "NO";
 	      
@@ -7883,18 +7951,18 @@ QString US_ReporterGMP::distrib_info_abde( QString& abde_channame  )
 	   yp_int_protein_val   = yp_int_protein[ii];
 	   
 	   abde_dist_info  =
-	     QString().sprintf( "%10.4e", x_val ) + ", " + 
-	     QString().sprintf( "%10.4e", y_dna_val  ) + ", " + 
-	     QString().sprintf( "%10.4e", y_protein_val  ) + ", " + 
-	     QString().sprintf( "%10.4e", yp_int_dna_val  ) + ", " + 
-	     QString().sprintf( "%10.4e", yp_int_protein_val  );
+	     QString::asprintf( "%10.4e", x_val ) + ", " + 
+	     QString::asprintf( "%10.4e", y_dna_val ) + ", " + 
+	     QString::asprintf( "%10.4e", y_protein_val ) + ", " + 
+	     QString::asprintf( "%10.4e", yp_int_dna_val ) + ", " + 
+	     QString::asprintf( "%10.4e", yp_int_protein_val );
 	 }
        else
 	 {
 	   abde_dist_info  =
-	     QString().sprintf( "%10.4e", x_val ) + ", " + 
-	     QString().sprintf( "%10.4e", y_dna_val  ) + ", " +
-	     QString().sprintf( "%10.4e", yp_int_dna_val  );
+	     QString::asprintf( "%10.4e", x_val ) + ", " + 
+	     QString::asprintf( "%10.4e", y_dna_val ) + ", " +
+	     QString::asprintf( "%10.4e", yp_int_dna_val );
 	 }
        //qDebug() << abde_dist_info; 
        
@@ -7909,11 +7977,11 @@ QString US_ReporterGMP::distrib_info_abde( QString& abde_channame  )
   
    QPrinter printer(QPrinter::PrinterResolution);
    printer.setOutputFormat(QPrinter::PdfFormat);
-   printer.setPaperSize(QPrinter::Letter);
+   printer.setPageSize( QPageSize( QPageSize::Letter ) );
    
    printer.setOutputFileName( f_model_path );
    printer.setFullPage(true);
-   printer.setPageMargins(0, 0, 0, 0, QPrinter::Millimeter);
+   printer.setPageMargins( QMarginsF( 0, 0, 0, 0), QPageLayout::Millimeter);
   
    document.print(&printer);
    mstr += "<a href=\"./" + f_model_path_str_only + "\">View Model Distributions</a>";
@@ -8000,7 +8068,7 @@ QString US_ReporterGMP::distrib_info_abde( QString& abde_channame  )
 	   
 	   mstr += table_row( type,
 			      range,
-			  QString().sprintf( "%5.2f%%", frac_tot_m ) + " (" + QString::number( frac_tot_r ) + "%)",
+			  QString::asprintf( "%5.2f%%", frac_tot_m ) + " (" + QString::number( frac_tot_r ) + "%)",
 			      QString::number( frac_tot_tol_r ),
 			      tot_frac_passed );
 	 }
@@ -8155,8 +8223,8 @@ void  US_ReporterGMP::assemble_plots_html( QStringList PlotsFilenames, const QSt
       //QPrinter below must be the same as defined just prior painting QTextDocument in ::write_pdf
       QPrinter printer_t(QPrinter::PrinterResolution);//(QPrinter::HighResolution);//(QPrinter::PrinterResolution);
       printer_t.setOutputFormat(QPrinter::PdfFormat);
-      printer_t.setPaperSize(QPrinter::Letter);
-      QSizeF pageSize = printer_t.pageRect().size();
+      printer_t.setPageSize( QPageSize( QPageSize::Letter ) );
+      QSizeF pageSize = printer_t.pageLayout().paintRectPixels( printer_t.resolution() ).size();
       qreal qprinters_width = pageSize.width()*0.75; //500 DEPENDS on QPrinter's constructor settings {QPrinter::PrinterResolution, 500; QPrinter::HighResolution, 9066}
       qreal qprinters_hight = pageSize.height()*0.55;
       qDebug() << "qprinters_width, height [orig, scaled]: "
@@ -8620,11 +8688,11 @@ QString US_ReporterGMP::calc_replicates_averages( void )
 	      html_str_replicate_av += table_row( type,
 						  method,
 						  range,
-						  QString().sprintf( "%10.4e",  replicate_g_results["int_av"] ) + " (" + int_val_r + ")",
-						  QString().sprintf( "%10.2e",  replicate_g_results["int_st_dev"] ),
-						  QString().sprintf( "%5.2f%%", replicate_g_results["tot_percent_av"] ) +
-						                                   " (" + QString().sprintf( "%5.2f%%", frac_tot_r) + ")",
-						  QString().sprintf( "%5.2f%%",  replicate_g_results["tot_percent_st_dev"] ),
+						  QString::asprintf( "%10.4e",  replicate_g_results["int_av"] ) + " (" + int_val_r + ")",
+						  QString::asprintf( "%10.2e",  replicate_g_results["int_st_dev"] ),
+						  QString::asprintf( "%5.2f%%", replicate_g_results["tot_percent_av"] ) +
+						                                   " (" + QString::asprintf( "%5.2f%%", frac_tot_r ) + ")",
+						  QString::asprintf( "%5.2f%%",  replicate_g_results["tot_percent_st_dev"] ),
 						  QString::number( frac_tot_tol_r ),
 						  tot_av_frac_passed
 						  );
@@ -8870,11 +8938,11 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
    }
 
    mstr += table_row( tr( "Weight Average s20,W:" ),
-                      QString().sprintf( "%6.4e", ( sum_s  / sum_c ) ) );
+                      QString::asprintf( "%6.4e", ( sum_s  / sum_c ) ) );
    mstr += table_row( tr( "Weight Average D20,W:" ),
-                      QString().sprintf( "%6.4e", ( sum_D  / sum_c ) ) );
+                      QString::asprintf( "%6.4e", ( sum_D  / sum_c ) ) );
    mstr += table_row( tr( "W.A. Molecular Weight:" ),
-                      QString().sprintf( "%6.4e", ( sum_mw / sum_c ) ) );
+                      QString::asprintf( "%6.4e", ( sum_mw / sum_c ) ) );
    if ( ! cnstff )
       mstr += table_row( tr( "Weight Average f/f0:" ),
                          QString::number( ( sum_k / sum_c ) ) );
@@ -8882,7 +8950,7 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
       mstr += table_row( tr( "Weight Average vbar20:" ),
                          QString::number( ( sum_v / sum_c ) ) );
    mstr += table_row( tr( "Total Concentration:" ),
-                      QString().sprintf( "%6.4e", sum_c ) );
+                      QString::asprintf( "%6.4e", sum_c ) );
 
    if ( cnstvb )
       mstr += table_row( tr( "Constant vbar20:" ),
@@ -8925,13 +8993,13 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
          double conc = model_used.components[ ii ].signal_concentration;
          double perc = 100.0 * conc / sum_c;
          model_dist_info  =
-	   QString().sprintf( "%10.4e", model_used.components[ ii ].mw ) + ", " + 
-	   QString().sprintf( "%10.4e", model     .components[ ii ].s  ) + ", " + 
-	   QString().sprintf( "%10.4e", model_used.components[ ii ].s  ) + ", " + 
-	   QString().sprintf( "%10.4e", model     .components[ ii ].D  ) + ", " + 
-	   QString().sprintf( "%10.4e", model_used.components[ ii ].D  ) + ", " + 
-	   QString().sprintf( "%10.4e", model_used.components[ ii ].f_f0 ) + ", " + 
-	   QString().sprintf( "%10.4e (%5.2f %%)", conc, perc );
+	   QString::asprintf( "%10.4e", model_used.components[ ii ].mw ) + ", " + 
+	   QString::asprintf( "%10.4e", model     .components[ ii ].s ) + ", " + 
+	   QString::asprintf( "%10.4e", model_used.components[ ii ].s ) + ", " + 
+	   QString::asprintf( "%10.4e", model     .components[ ii ].D ) + ", " + 
+	   QString::asprintf( "%10.4e", model_used.components[ ii ].D ) + ", " + 
+	   QString::asprintf( "%10.4e", model_used.components[ ii ].f_f0 ) + ", " + 
+	   QString::asprintf( "%10.4e (%5.2f %% )", conc, perc );
 
 	 //out_model_info << model_dist_info << endl;
 	 html_model_s += model_dist_info + "<br>";
@@ -8950,13 +9018,13 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
          double conc = model_used.components[ ii ].signal_concentration;
          double perc = 100.0 * conc / sum_c;
 	 model_dist_info  =
-	   QString().sprintf( "%10.4e", model_used.components[ ii ].mw ) + ", " + 
-	   QString().sprintf( "%10.4e", model     .components[ ii ].s  ) + ", " + 
-	   QString().sprintf( "%10.4e", model_used.components[ ii ].s  ) + ", " + 
-	   QString().sprintf( "%10.4e", model     .components[ ii ].D  ) + ", " + 
-	   QString().sprintf( "%10.4e", model_used.components[ ii ].D  ) + ", " + 
-	   QString().sprintf( "%10.4e", model_used.components[ ii ].vbar20 ) + ", " + 
-	   QString().sprintf( "%10.4e (%5.2f %%)", conc, perc );
+	   QString::asprintf( "%10.4e", model_used.components[ ii ].mw ) + ", " + 
+	   QString::asprintf( "%10.4e", model     .components[ ii ].s ) + ", " + 
+	   QString::asprintf( "%10.4e", model_used.components[ ii ].s ) + ", " + 
+	   QString::asprintf( "%10.4e", model     .components[ ii ].D ) + ", " + 
+	   QString::asprintf( "%10.4e", model_used.components[ ii ].D ) + ", " + 
+	   QString::asprintf( "%10.4e", model_used.components[ ii ].vbar20 ) + ", " + 
+	   QString::asprintf( "%10.4e (%5.2f %% )", conc, perc );
 
 	 //out_model_info << model_dist_info << endl;
 	 html_model_s += model_dist_info + "<br>";
@@ -8976,13 +9044,13 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
          double conc = model_used.components[ ii ].signal_concentration;
          double perc = 100.0 * conc / sum_c;
 	 model_dist_info  =
-	   QString().sprintf( "%10.4e", model_used.components[ ii ].mw ) + ", " + 
-	   QString().sprintf( "%10.4e", model     .components[ ii ].s  ) + ", " + 
-	   QString().sprintf( "%10.4e", model_used.components[ ii ].s  ) + ", " + 
-	   QString().sprintf( "%10.4e", model     .components[ ii ].D  ) + ", " + 
-	   QString().sprintf( "%10.4e", model_used.components[ ii ].f_f0  ) + ", " + 
-	   QString().sprintf( "%10.4e", model_used.components[ ii ].vbar20 ) + ", " + 
-	   QString().sprintf( "%10.4e (%5.2f %%)", conc, perc );
+	   QString::asprintf( "%10.4e", model_used.components[ ii ].mw ) + ", " + 
+	   QString::asprintf( "%10.4e", model     .components[ ii ].s ) + ", " + 
+	   QString::asprintf( "%10.4e", model_used.components[ ii ].s ) + ", " + 
+	   QString::asprintf( "%10.4e", model     .components[ ii ].D ) + ", " + 
+	   QString::asprintf( "%10.4e", model_used.components[ ii ].f_f0 ) + ", " + 
+	   QString::asprintf( "%10.4e", model_used.components[ ii ].vbar20 ) + ", " + 
+	   QString::asprintf( "%10.4e (%5.2f %% )", conc, perc );
 	 
 	 //out_model_info << model_dist_info << endl;
 	 html_model_s += model_dist_info + "<br>";
@@ -9000,11 +9068,11 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
   
    QPrinter printer(QPrinter::PrinterResolution);
    printer.setOutputFormat(QPrinter::PdfFormat);
-   printer.setPaperSize(QPrinter::Letter);
+   printer.setPageSize( QPageSize( QPageSize::Letter ) );
    
    printer.setOutputFileName( f_model_path );
    printer.setFullPage(true);
-   printer.setPageMargins(0, 0, 0, 0, QPrinter::Millimeter);
+   printer.setPageMargins( QMarginsF( 0, 0, 0, 0), QPageLayout::Millimeter);
   
    document.print(&printer);
   
@@ -9028,19 +9096,19 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
          double conc = model_used.components[ ii ].signal_concentration;
          double perc = 100.0 * conc / sum_c;
          mstr       += table_row(
-               QString().sprintf( "%10.4e",
-                  model_used.components[ ii ].mw   ),
-               QString().sprintf( "%10.4e",
-                  model       .components[ ii ].s    ),
-               QString().sprintf( "%10.4e",
-                  model_used.components[ ii ].s    ),
-               QString().sprintf( "%10.4e",
-                  model       .components[ ii ].D    ),
-               QString().sprintf( "%10.4e",
-                  model_used.components[ ii ].D    ),
-               QString().sprintf( "%10.4e",
-                  model_used.components[ ii ].f_f0 ),
-               QString().sprintf( "%10.4e (%5.2f %%)", conc, perc ) );
+               QString::asprintf( "%10.4e",
+model_used.components[ ii ].mw ),
+               QString::asprintf( "%10.4e",
+model       .components[ ii ].s ),
+               QString::asprintf( "%10.4e",
+model_used.components[ ii ].s ),
+               QString::asprintf( "%10.4e",
+model       .components[ ii ].D ),
+               QString::asprintf( "%10.4e",
+model_used.components[ ii ].D ),
+               QString::asprintf( "%10.4e",
+model_used.components[ ii ].f_f0 ),
+               QString::asprintf( "%10.4e (%5.2f %% )", conc, perc ) );
       }
    }
 
@@ -9056,19 +9124,19 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
          double conc = model_used.components[ ii ].signal_concentration;
          double perc = 100.0 * conc / sum_c;
          mstr       += table_row(
-               QString().sprintf( "%10.4e",
-                  model_used.components[ ii ].mw     ),
-               QString().sprintf( "%10.4e",
-                  model       .components[ ii ].s      ),
-               QString().sprintf( "%10.4e",
-                  model_used.components[ ii ].s      ),
-               QString().sprintf( "%10.4e",
-                  model       .components[ ii ].D      ),
-               QString().sprintf( "%10.4e",
-                  model_used.components[ ii ].D      ),
-               QString().sprintf( "%10.4e",
-                  model_used.components[ ii ].vbar20 ),
-               QString().sprintf( "%10.4e (%5.2f %%)", conc, perc ) );
+               QString::asprintf( "%10.4e",
+model_used.components[ ii ].mw ),
+               QString::asprintf( "%10.4e",
+model       .components[ ii ].s ),
+               QString::asprintf( "%10.4e",
+model_used.components[ ii ].s ),
+               QString::asprintf( "%10.4e",
+model       .components[ ii ].D ),
+               QString::asprintf( "%10.4e",
+model_used.components[ ii ].D ),
+               QString::asprintf( "%10.4e",
+model_used.components[ ii ].vbar20 ),
+               QString::asprintf( "%10.4e (%5.2f %% )", conc, perc ) );
       }
    }
 
@@ -9084,19 +9152,19 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
          double conc = model_used.components[ ii ].signal_concentration;
          double perc = 100.0 * conc / sum_c;
          mstr       += table_row(
-               QString().sprintf( "%10.4e",
-                  model_used.components[ ii ].mw     ),
-               QString().sprintf( "%10.4e",
-                  model       .components[ ii ].s      ),
-               QString().sprintf( "%10.4e",
-                 model_used.components[ ii ].s      ),
-               QString().sprintf( "%10.4e",
-                  model_used.components[ ii ].D      ),
-               QString().sprintf( "%10.4e",
-                  model_used.components[ ii ].f_f0 ),
-               QString().sprintf( "%10.4e",
-                  model_used.components[ ii ].vbar20 ),
-               QString().sprintf( "%10.4e (%5.2f %%)", conc, perc ) );
+               QString::asprintf( "%10.4e",
+model_used.components[ ii ].mw ),
+               QString::asprintf( "%10.4e",
+model       .components[ ii ].s ),
+               QString::asprintf( "%10.4e",
+model_used.components[ ii ].s ),
+               QString::asprintf( "%10.4e",
+model_used.components[ ii ].D ),
+               QString::asprintf( "%10.4e",
+model_used.components[ ii ].f_f0 ),
+               QString::asprintf( "%10.4e",
+model_used.components[ ii ].vbar20 ),
+               QString::asprintf( "%10.4e (%5.2f %% )", conc, perc ) );
       }
    }
    */
@@ -9128,8 +9196,8 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
          }
 
          mstr       += table_row( reac1, reac2, prod,
-                                  QString().sprintf( "%10.4e", k_d   ),
-                                  QString().sprintf( "%10.4e", k_off ) );
+                                  QString::asprintf( "%10.4e", k_d ),
+                                  QString::asprintf( "%10.4e", k_off ) );
       }
    }
 
@@ -9146,6 +9214,8 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
    QString model_name = mdla.split("_")[1];
    if ( model_name.contains("PCSA") )
      model_name = "PCSA";
+   if ( model_name.contains("-CG") )
+     model_name = model_name.replace("-CG", "");
    
    double tot_conc_r, tot_conc_r_factor, tot_conc_tol_r, rmsd_r, av_int_r, exp_dur_r, exp_dur_tol_r;
    double loading_volume_r, loading_volume_tol_r ;
@@ -9157,11 +9227,11 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
    int  mins      = (int)qRound( ( last_f - hours * 3600.0 ) / 60.0 );
    QString hh     = ( hours == 1 ) ? tr( "hr" ) : tr( "hrs" );
    hh    = "h";
-   QString wks    = QString().sprintf( "%d %s %02d m", hours, hh.toLatin1().data(), mins );
+   QString wks    = QString::asprintf( "%d %s %02d m", hours, hh.toLatin1( ).data(), mins );
    int fmins     = (int)qFloor( first_f / 60.0 );
    int fsecs     = first_f - fmins * 60.0;
    QString mm    = ( fmins == 1 ) ? tr( "min" ) : tr( "mins" );
-   QString scan1time = QString().sprintf( "%d m %02d s", fmins, fsecs );
+   QString scan1time = QString::asprintf( "%d m %02d s", fmins, fsecs );
    //end of length
    
    US_ReportGMP* reportGMP;  //reference
@@ -9207,7 +9277,7 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
    int  mins_r      = (int)qRound( ( exp_dur_r - hours_r * 3600.0 ) / 60.0 );
    QString hh_r     = ( hours_r == 1 ) ? tr( "hr" ) : tr( "hrs" );
    hh_r    = "h";
-   QString exp_dur_r_hh_mm    = QString().sprintf( "%d %s %02d m", hours_r, hh_r.toLatin1().data(), mins_r );
+   QString exp_dur_r_hh_mm    = QString::asprintf( "%d %s %02d m", hours_r, hh_r.toLatin1( ).data(), mins_r );
    //end of exp_dur_r transformation
 
    //'S' data
@@ -9309,7 +9379,7 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
 	   mstr += table_row( tr( "Total Concentration" ),
 			      QString::number( tot_conc_r ) + " (factor " + QString::number( tot_conc_r_factor ) + ")",
 			      QString::number(tot_conc_tol_r) + "%",
-			      QString().sprintf( "%6.4e", sum_c ),
+			      QString::asprintf( "%6.4e", sum_c ),
 			      tot_conc_passed) ;
 	 }
        
@@ -9334,7 +9404,9 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
        // Show only if not Absorbance || not Interference
        qDebug() << "Show_INTENSITY: dataSource -- " << dataSource;
        qDebug() << "Show_INTENSITY: tripleInfo[ \"triple_name\" ] -- " << tripleInfo[ "triple_name" ];
-       bool RIdata = ( dataSource. contains( "DiskAUC:Absorbance" ) || tripleInfo[ "triple_name" ].contains("Interference") ) ?
+       bool RIdata = ( dataSource. contains( "DiskAUC:Absorbance" ) ||
+		       dataSource. contains( "DiskAUC:PseudoAbsorbance" ) ||
+		       tripleInfo[ "triple_name" ].contains("Interference") ) ?
 	 false : true;
        qDebug() << "Show_INTENSITY: RIdata ? " << RIdata;
        if ( show_min_int && RIdata )  
@@ -9368,8 +9440,17 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
        QString method         = curr_item.method;
        if( method.contains ("PCSA") )
 	 method = "PCSA";
-
-       if ( mdla.contains ( method ) )
+       /* */
+       QStringList a_method_types = method.split("-");
+       bool method_identity = true;
+       for (const QString& sub : a_method_types )
+	 {
+	  if (!mdla.contains(sub) )
+	    method_identity = false; 
+	 }
+	/* */
+	 
+       if ( mdla.contains ( method ) || method_identity )
 	 method_type_combo_exists = true;
      }
    
@@ -9452,8 +9533,19 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
 	   QString tot_frac_passed = ( qAbs( frac_tot_m - frac_tot_r ) <= frac_tot_tol_r ) ? "YES" : "NO";
 
 	   double wav_variable_within_range = double( variable_val_within_range / int_val_m );
+
+	   /* */
+	   QStringList a_method_types = method.split("-");
+	   bool method_identity = true;
+	   for (const QString& sub : a_method_types )
+	     {
+	       if (!mdla.contains(sub) )
+		 method_identity = false; 
+	     }
+	   /* */
 	   
-	   if ( mdla.contains ( method ) )
+	   //if ( mdla.contains ( method ) )
+	   if ( method_identity )
 	     {
 	       // curr_item. integration_val_sim = int_val_m;
 	       // curr_item. total_percent_sim   = frac_tot_m;
@@ -9474,9 +9566,9 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
 	       
 	       mstr += table_row( type,
 				  range,
-				  QString().sprintf( "%10.4e", wav_variable_within_range ),
-				  QString().sprintf( "%10.4e", int_val_m) + " (" + int_val_r + ")",
-				  QString().sprintf( "%5.2f%%", frac_tot_m ) + " (" + QString::number( frac_tot_r ) + "%)",
+				  QString::asprintf( "%10.4e", wav_variable_within_range ),
+				  QString::asprintf( "%10.4e", int_val_m ) + " (" + int_val_r + ")",
+				  QString::asprintf( "%5.2f%%", frac_tot_m ) + " (" + QString::number( frac_tot_r ) + "%)",
 				  QString::number( frac_tot_tol_r ),
 				  tot_frac_passed );
 	     }
@@ -9524,23 +9616,23 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
 
       // Show summary of RMSDs
       mstr += table_row( tr( "(All)" ), tr( "RMSD" ),
-                         QString().sprintf( "%10.4e", rstats[  2 ] ),
-                         QString().sprintf( "%10.4e", rstats[  9 ] ),
-                         QString().sprintf( "%10.4e", rstats[ 10 ] ) );
+                         QString::asprintf( "%10.4e", rstats[  2 ] ),
+                         QString::asprintf( "%10.4e", rstats[  9 ] ),
+                         QString::asprintf( "%10.4e", rstats[ 10 ] ) );
 
       // Show summary of component attributes
       for ( int ii = 0; ii < ncomp; ii++ )
       {
-         QString compnum = QString().sprintf( "%2d", ii + 1 );
+         QString compnum = QString::asprintf( "%2d", ii + 1 );
          for ( int jj = 0; jj < 6; jj++ )
          {
             bool is_fixed   = ( mstats[ kd ][ 0 ] == mstats[ kd ][ 1 ] );
             QString strclo  = is_fixed ? fixd :
-                              QString().sprintf( "%10.4e", mstats[ kd ][  9 ] );
+                              QString::asprintf( "%10.4e", mstats[ kd ][  9 ] );
             QString strchi  = is_fixed ? blnk :
-                              QString().sprintf( "%10.4e", mstats[ kd ][ 10 ] );
+                              QString::asprintf( "%10.4e", mstats[ kd ][ 10 ] );
             mstr += table_row( compnum, atitl[ jj ],
-                              QString().sprintf( "%10.4e", mstats[ kd ][  2 ] ),
+                              QString::asprintf( "%10.4e", mstats[ kd ][  2 ] ),
                               strclo, strchi );
             kd++;
          }
@@ -9554,23 +9646,23 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
       // Show summary of reaction attributes;
       for ( int ii = 0; ii < nreac; ii++ )
       {
-         QString reacnum = QString().sprintf( "%2d", ii + 1 );
+         QString reacnum = QString::asprintf( "%2d", ii + 1 );
          bool is_fixed   = ( mstats[ kd ][ 0 ] == mstats[ kd ][ 1 ] );
          QString strclo  = is_fixed ? fixd :
-                            QString().sprintf( "%10.4e", mstats[ kd ][  9 ] );
+                            QString::asprintf( "%10.4e", mstats[ kd ][  9 ] );
          QString strchi  = is_fixed ? blnk :
-                            QString().sprintf( "%10.4e", mstats[ kd ][ 10 ] );
+                            QString::asprintf( "%10.4e", mstats[ kd ][ 10 ] );
          mstr += table_row( reacnum, tr( "K_dissociation" ),
-                            QString().sprintf( "%10.4e", mstats[ kd ][  2 ] ),
+                            QString::asprintf( "%10.4e", mstats[ kd ][  2 ] ),
                             strclo, strchi );
          kd++;
          is_fixed        = ( mstats[ kd ][ 0 ] == mstats[ kd ][ 1 ] );
          strclo          = is_fixed ? fixd :
-                            QString().sprintf( "%10.4e", mstats[ kd ][  9 ] );
+                            QString::asprintf( "%10.4e", mstats[ kd ][  9 ] );
          strchi          = is_fixed ? blnk :
-                            QString().sprintf( "%10.4e", mstats[ kd ][ 10 ] );
+                            QString::asprintf( "%10.4e", mstats[ kd ][ 10 ] );
          mstr += table_row( reacnum, tr( "K_off Rate" ),
-                            QString().sprintf( "%10.4e", mstats[ kd ][  2 ] ),
+                            QString::asprintf( "%10.4e", mstats[ kd ][  2 ] ),
                             strclo, strchi );
          kd++;
       }
@@ -9589,51 +9681,51 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
       mstr += indent( 2 ) + tr( "<h4>Details for MC Iteration RMSDs:</h4>\n" );
       mstr += indent( 2 ) + "<table>\n";
       mstr += table_row( tr( "Minimum:" ),
-              QString().sprintf( "%10.4e", rstats[  0 ] ) );
+              QString::asprintf( "%10.4e", rstats[  0 ] ) );
       mstr += table_row( tr( "Maximum:" ),
-              QString().sprintf( "%10.4e", rstats[  1 ] ) );
+              QString::asprintf( "%10.4e", rstats[  1 ] ) );
       mstr += table_row( tr( "Mean:" ),
-              QString().sprintf( "%10.4e", rstats[  2 ] ) );
+              QString::asprintf( "%10.4e", rstats[  2 ] ) );
       mstr += table_row( tr( "Median:" ),
-              QString().sprintf( "%10.4e", rstats[  3 ] ) );
+              QString::asprintf( "%10.4e", rstats[  3 ] ) );
       mstr += table_row( tr( "Skew:" ),
-              QString().sprintf( "%10.4e", rstats[  4 ] ) );
+              QString::asprintf( "%10.4e", rstats[  4 ] ) );
       mstr += table_row( tr( "Kurtosis:" ),
-              QString().sprintf( "%10.4e", rstats[  5 ] ) );
+              QString::asprintf( "%10.4e", rstats[  5 ] ) );
       mstr += table_row( tr( "Lower Mode:" ),
-              QString().sprintf( "%10.4e", rstats[  6 ] ) );
+              QString::asprintf( "%10.4e", rstats[  6 ] ) );
       mstr += table_row( tr( "Upper Mode:" ),
-              QString().sprintf( "%10.4e", rstats[  7 ] ) );
+              QString::asprintf( "%10.4e", rstats[  7 ] ) );
       mstr += table_row( tr( "Mode Center:" ),
-              QString().sprintf( "%10.4e", rstats[  8 ] ) );
+              QString::asprintf( "%10.4e", rstats[  8 ] ) );
       mstr += table_row( tr( "95% Confidence Interval Low:" ),
-              QString().sprintf( "%10.4e", rstats[  9 ] ) );
+              QString::asprintf( "%10.4e", rstats[  9 ] ) );
       mstr += table_row( tr( "95% Confidence Interval High:" ),
-              QString().sprintf( "%10.4e", rstats[ 10 ] ) );
+              QString::asprintf( "%10.4e", rstats[ 10 ] ) );
       mstr += table_row( tr( "99% Confidence Interval Low:" ),
-              QString().sprintf( "%10.4e", rstats[ 11 ] ) );
+              QString::asprintf( "%10.4e", rstats[ 11 ] ) );
       mstr += table_row( tr( "99% Confidence Interval High:" ),
-              QString().sprintf( "%10.4e", rstats[ 12 ] ) );
+              QString::asprintf( "%10.4e", rstats[ 12 ] ) );
       mstr += table_row( tr( "Standard Deviation:" ),
-              QString().sprintf( "%10.4e", rstats[ 13 ] ) );
+              QString::asprintf( "%10.4e", rstats[ 13 ] ) );
       mstr += table_row( tr( "Standard Error:" ),
-              QString().sprintf( "%10.4e", rstats[ 14 ] ) );
+              QString::asprintf( "%10.4e", rstats[ 14 ] ) );
       mstr += table_row( tr( "Variance:" ),
-              QString().sprintf( "%10.4e", rstats[ 15 ] ) );
+              QString::asprintf( "%10.4e", rstats[ 15 ] ) );
       mstr += table_row( tr( "Correlation Coefficient:" ),
-              QString().sprintf( "%10.4e", rstats[ 16 ] ) );
+              QString::asprintf( "%10.4e", rstats[ 16 ] ) );
       mstr += table_row( tr( "Number of Bins:" ),
-              QString().sprintf( "%10.0f", rstats[ 17 ] ) );
+              QString::asprintf( "%10.0f", rstats[ 17 ] ) );
       mstr += table_row( tr( "Distribution Area:" ),
-              QString().sprintf( "%10.4e", rstats[ 18 ] ) );
+              QString::asprintf( "%10.4e", rstats[ 18 ] ) );
       mstr += table_row( tr( "95% Confidence Limit Low:" ),
-              QString().sprintf( "%10.4e", rstats[ 19 ] ) );
+              QString::asprintf( "%10.4e", rstats[ 19 ] ) );
       mstr += table_row( tr( "95% Confidence Limit High:" ),
-              QString().sprintf( "%10.4e", rstats[ 20 ] ) );
+              QString::asprintf( "%10.4e", rstats[ 20 ] ) );
       mstr += table_row( tr( "99% Confidence Limit Low:" ),
-              QString().sprintf( "%10.4e", rstats[ 21 ] ) );
+              QString::asprintf( "%10.4e", rstats[ 21 ] ) );
       mstr += table_row( tr( "99% Confidence Limit High:" ),
-              QString().sprintf( "%10.4e", rstats[ 22 ] ) );
+              QString::asprintf( "%10.4e", rstats[ 22 ] ) );
       mstr += indent( 2 ) + "</table>\n";
 
       // Then, components and attributes
@@ -9663,63 +9755,63 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
          if ( is_fixed )
          {  // Fixed has limited lines
             mstr += table_row( tr( "Minimum:" ),
-                    QString().sprintf( "%10.4e", mstats[ kd ][  0 ] ) );
+                    QString::asprintf( "%10.4e", mstats[ kd ][  0 ] ) );
             mstr += table_row( tr( "Maximum:" ),
-                    QString().sprintf( "%10.4e", mstats[ kd ][  1 ] ) );
+                    QString::asprintf( "%10.4e", mstats[ kd ][  1 ] ) );
             mstr += table_row( tr( "Mean:" ),
-                    QString().sprintf( "%10.4e", mstats[ kd ][  2 ] ) );
+                    QString::asprintf( "%10.4e", mstats[ kd ][  2 ] ) );
             mstr += table_row( tr( "Median (Fixed)" ),
-                    QString().sprintf( "%10.4e", mstats[ kd ][  3 ] ) );
+                    QString::asprintf( "%10.4e", mstats[ kd ][  3 ] ) );
          }
 
          else
          {  // Float has full set of statistics details
             mstr += table_row( tr( "Minimum:" ),
-                    QString().sprintf( "%10.4e", mstats[ kd ][  0 ] ) );
+                    QString::asprintf( "%10.4e", mstats[ kd ][  0 ] ) );
             mstr += table_row( tr( "Maximum:" ),
-                    QString().sprintf( "%10.4e", mstats[ kd ][  1 ] ) );
+                    QString::asprintf( "%10.4e", mstats[ kd ][  1 ] ) );
             mstr += table_row( tr( "Mean:" ),
-                    QString().sprintf( "%10.4e", mstats[ kd ][  2 ] ) );
+                    QString::asprintf( "%10.4e", mstats[ kd ][  2 ] ) );
             mstr += table_row( tr( "Median:" ),
-                    QString().sprintf( "%10.4e", mstats[ kd ][  3 ] ) );
+                    QString::asprintf( "%10.4e", mstats[ kd ][  3 ] ) );
             mstr += table_row( tr( "Skew:" ),
-                    QString().sprintf( "%10.4e", mstats[ kd ][  4 ] ) );
+                    QString::asprintf( "%10.4e", mstats[ kd ][  4 ] ) );
             mstr += table_row( tr( "Kurtosis:" ),
-                    QString().sprintf( "%10.4e", mstats[ kd ][  5 ] ) );
+                    QString::asprintf( "%10.4e", mstats[ kd ][  5 ] ) );
             mstr += table_row( tr( "Lower Mode:" ),
-                    QString().sprintf( "%10.4e", mstats[ kd ][  6 ] ) );
+                    QString::asprintf( "%10.4e", mstats[ kd ][  6 ] ) );
             mstr += table_row( tr( "Upper Mode:" ),
-                    QString().sprintf( "%10.4e", mstats[ kd ][  7 ] ) );
+                    QString::asprintf( "%10.4e", mstats[ kd ][  7 ] ) );
             mstr += table_row( tr( "Mode Center:" ),
-                    QString().sprintf( "%10.4e", mstats[ kd ][  8 ] ) );
+                    QString::asprintf( "%10.4e", mstats[ kd ][  8 ] ) );
             mstr += table_row( tr( "95% Confidence Interval Low:" ),
-                    QString().sprintf( "%10.4e", mstats[ kd ][  9 ] ) );
+                    QString::asprintf( "%10.4e", mstats[ kd ][  9 ] ) );
             mstr += table_row( tr( "95% Confidence Interval High:" ),
-                    QString().sprintf( "%10.4e", mstats[ kd ][ 10 ] ) );
+                    QString::asprintf( "%10.4e", mstats[ kd ][ 10 ] ) );
             mstr += table_row( tr( "99% Confidence Interval Low:" ),
-                    QString().sprintf( "%10.4e", mstats[ kd ][ 11 ] ) );
+                    QString::asprintf( "%10.4e", mstats[ kd ][ 11 ] ) );
             mstr += table_row( tr( "99% Confidence Interval High:" ),
-                    QString().sprintf( "%10.4e", mstats[ kd ][ 12 ] ) );
+                    QString::asprintf( "%10.4e", mstats[ kd ][ 12 ] ) );
             mstr += table_row( tr( "Standard Deviation:" ),
-                    QString().sprintf( "%10.4e", mstats[ kd ][ 13 ] ) );
+                    QString::asprintf( "%10.4e", mstats[ kd ][ 13 ] ) );
             mstr += table_row( tr( "Standard Error:" ),
-                    QString().sprintf( "%10.4e", mstats[ kd ][ 14 ] ) );
+                    QString::asprintf( "%10.4e", mstats[ kd ][ 14 ] ) );
             mstr += table_row( tr( "Variance:" ),
-                    QString().sprintf( "%10.4e", mstats[ kd ][ 15 ] ) );
+                    QString::asprintf( "%10.4e", mstats[ kd ][ 15 ] ) );
             mstr += table_row( tr( "Correlation Coefficient:" ),
-                    QString().sprintf( "%10.4e", mstats[ kd ][ 16 ] ) );
+                    QString::asprintf( "%10.4e", mstats[ kd ][ 16 ] ) );
             mstr += table_row( tr( "Number of Bins:" ),
-                    QString().sprintf( "%10.0f", mstats[ kd ][ 17 ] ) );
+                    QString::asprintf( "%10.0f", mstats[ kd ][ 17 ] ) );
             mstr += table_row( tr( "Distribution Area:" ),
-                    QString().sprintf( "%10.4e", mstats[ kd ][ 18 ] ) );
+                    QString::asprintf( "%10.4e", mstats[ kd ][ 18 ] ) );
             mstr += table_row( tr( "95% Confidence Limit Low:" ),
-                    QString().sprintf( "%10.4e", mstats[ kd ][ 19 ] ) );
+                    QString::asprintf( "%10.4e", mstats[ kd ][ 19 ] ) );
             mstr += table_row( tr( "95% Confidence Limit High:" ),
-                    QString().sprintf( "%10.4e", mstats[ kd ][ 20 ] ) );
+                    QString::asprintf( "%10.4e", mstats[ kd ][ 20 ] ) );
             mstr += table_row( tr( "99% Confidence Limit Low:" ),
-                    QString().sprintf( "%10.4e", mstats[ kd ][ 21 ] ) );
+                    QString::asprintf( "%10.4e", mstats[ kd ][ 21 ] ) );
             mstr += table_row( tr( "99% Confidence Limit High:" ),
-                    QString().sprintf( "%10.4e", mstats[ kd ][ 22 ] ) );
+                    QString::asprintf( "%10.4e", mstats[ kd ][ 22 ] ) );
          }
 
          mstr += indent( 2 ) + "</table>\n";
@@ -10974,7 +11066,6 @@ void US_ReporterGMP::assemble_pdf( QProgressDialog * progress_msg )
       
       if ( !scan1.isEmpty() )
 	{
-	  has_uvvis = true;
 	  html_optical += tr(
 			     "<td> %1: </td> &nbsp;&nbsp;&nbsp;&nbsp;"
 			     )
@@ -10985,7 +11076,6 @@ void US_ReporterGMP::assemble_pdf( QProgressDialog * progress_msg )
       
       if ( !scan2.isEmpty() )
 	{
-	  has_interference = true;
 	  html_optical += tr(
 			     "<td> %1: </td> &nbsp;&nbsp;&nbsp;&nbsp;"
 			     )
@@ -10996,7 +11086,6 @@ void US_ReporterGMP::assemble_pdf( QProgressDialog * progress_msg )
       
       if ( !scan3.isEmpty() )
 	{
-	  has_fluorescense = true;
 	  html_optical += tr(
 			     "<td> %1: </td> &nbsp;&nbsp;&nbsp;&nbsp;"
 			     )
@@ -11098,7 +11187,7 @@ void US_ReporterGMP::assemble_pdf( QProgressDialog * progress_msg )
   
   //SCAN_COUNT: begin
   html_scan_count = tr(
-		       "<h3 align=left> Scan Counts and Scan Intervals For Optics in Use </h3>"
+		       "<h3 align=left> Scan Counts, Intervals, and Exclusions For Optics in Use </h3>"
 		       "&nbsp;&nbsp;<br>"
 		       )
     ;
@@ -11126,6 +11215,22 @@ void US_ReporterGMP::assemble_pdf( QProgressDialog * progress_msg )
     .arg( scanint_uvvis_str )                             //1
     .arg( QString::number( scancount ) )                  //2
     ;
+
+  //go over scan exclusions in UV-vis
+  bool excl_exist = false;
+  if ( scancount > 0 )
+    {
+      if ( excl_exist )
+	html_scan_count_uv += display_scan_excls( scan_excl_beg, scan_excl_nth,
+						  scan_excl_end, scancount, excl_exist, "UV/vis" );
+      else
+	html_scan_count_uv += tr(
+				 "<table style=\"margin-left:30px\">"
+				 "<tr><td><b><i> Exclusion Profiles: </b></i></td></tr>"
+				 "<tr><td> No Scan Exclusions </td></tr>"
+				 "</table>"
+				 );
+    }
   
   //Interference
   QString html_scan_count_int = tr(
@@ -11145,11 +11250,25 @@ void US_ReporterGMP::assemble_pdf( QProgressDialog * progress_msg )
     .arg( scanint_int_str )                                //1
     .arg( QString::number( scancount_int ) )               //2
     ;
-
-
-  if ( has_uvvis )
+  //go over scan exclusions in Int.
+  bool excl_int_exist = false;
+  if ( scancount_int > 0 )
+    {
+      if ( excl_int_exist )
+	html_scan_count_int += display_scan_excls( scan_excl_beg, scan_excl_nth,
+						   scan_excl_end, scancount_int, excl_int_exist, "Interf" );
+      else
+	html_scan_count_int += tr(
+				  "<table style=\"margin-left:30px\">"
+				  "<tr><td><b><i> Exclusion Profiles: </b></i></td></tr>"
+				  "<tr><td> No Scan Exclusions </td></tr>"
+				  "</table>"
+				  );
+    }
+  
+  if ( has_uv )
     html_scan_count += html_scan_count_uv;
-  if ( has_interference )
+  if ( has_int )
     html_scan_count += html_scan_count_int;  
   
   html_scan_count += tr( "<hr>" ) ;
@@ -11661,29 +11780,46 @@ void US_ReporterGMP::assemble_pdf( QProgressDialog * progress_msg )
 
       QString grid_rep =  QString::number( cAP2.parms[ i ].gridreps );
 
-      QString custom_grid = cAP2.parms[ i ].cgrid_name;
+      QString custom_grid_n    = cAP2.parms[ i ].cgrid_name;
+
+      QString custom_grid_guid = cAP2.parms[ i ].cust_grid;
 
       QString vary_vbar = cAP2.parms[ i ].varyvbar ? tr( "YES" ) : tr( "no" );
 
       QString const_ff0 = QString::number( cAP2.parms[ i ].ff0_const );
 
-      html_analysis_profile_2dsa_per_channel += tr(
-                                       "<table style=\"margin-left:30px\">"
-                                          "<tr><td> s Min, Max, Grid Points:     </td>  <td> %1 </td> </tr>"
-                                          "<tr><td> f/f0 Min, Max, Grid Points:  </td>  <td> %2 </td> </tr>"
-                                          "<tr><td> Grid Repetitions:            </td>  <td> %3 </td> </tr>"
-                                          "<tr><td> Custom Grid:                 </td>  <td> %4 </td> </tr>"
-                                          "<tr><td> Varying Vbar:                </td>  <td> %5 </td> </tr>"
-                                          "<tr><td> Constant f/f0:               </td>  <td> %6 </td> </tr>"
-                                       "</table>"
-                                       )
-	.arg( s_data )                     //1                                                                                 
-        .arg( ff0_data )                   //2                                                                                 
-	.arg( grid_rep )                   //3                                                                                 
-        .arg( custom_grid )                //4                                                                                 
-	.arg( vary_vbar )                  //5                                                                                 
-        .arg( const_ff0 )                  //6
-	;
+      if ( custom_grid_n.isEmpty() )
+	{
+	  html_analysis_profile_2dsa_per_channel += tr(
+						       "<table style=\"margin-left:30px\">"
+						       "<tr><td> s Min, Max, Grid Points:     </td>  <td> %1 </td> </tr>"
+						       "<tr><td> f/f0 Min, Max, Grid Points:  </td>  <td> %2 </td> </tr>"
+						       "<tr><td> Grid Repetitions:            </td>  <td> %3 </td> </tr>"
+						       "<tr><td> Custom Grid:                 </td>  <td> %4 </td> </tr>"
+						       "<tr><td> Varying Vbar:                </td>  <td> %5 </td> </tr>"
+						       "<tr><td> Constant f/f0:               </td>  <td> %6 </td> </tr>"
+						       "</table>"
+						       )
+	    .arg( s_data )                     //1                                                                                 
+	    .arg( ff0_data )                   //2                                                                                 
+	    .arg( grid_rep )                   //3                                                                                 
+	    .arg( tr("N/A") )                  //4                                                                                 
+	    .arg( vary_vbar )                  //5                                                                                 
+	    .arg( const_ff0 )                  //6
+	    ;
+	}
+      else //CG
+	{
+	  html_analysis_profile_2dsa_per_channel += tr(
+						       "<table style=\"margin-left:30px\">"
+						       "<tr><td> Custom Grid Name:            </td>  <td> %1 </td> </tr>"
+						       "<tr><td> Custom Grid GUID:            </td>  <td> %2 </td> </tr>"
+						       "</table>"
+						       )
+	    .arg( custom_grid_n )              //1                                                                                 
+	    .arg( custom_grid_guid )           //2                                                                                 
+	    ;
+	}
     }
 
   if ( genMask_edited.ShowAnalysis2DSAParts[ "Per-Channel Profiles" ].toInt()  )
@@ -11796,6 +11932,82 @@ void US_ReporterGMP::assemble_pdf( QProgressDialog * progress_msg )
   
 }
 
+//scan exclusions
+QString US_ReporterGMP::display_scan_excls( QList<int> scan_e_b, QList<int> scan_e_nth,
+					    QList<int> scan_e_e, int scan_c, bool& excl_yes, QString opt_type )
+{
+  qDebug() << "[in display_scan_excls]: scans [beg|nth|end] -- "
+	   << scan_e_b << "|" << scan_e_nth << "|" << scan_e_e;
+
+  //backward compatibility
+  for (int ii=0; ii<scan_e_nth.size(); ++ii)
+    {
+      if ( scan_e_nth[ii] == 0 )
+	scan_e_nth[ii] = 1;
+    }
+  
+  QString scans_excl_str;
+  
+  QList<int> scan_e_remain;
+  for (int ii=0; ii<scan_e_b.size(); ++ii)
+    {
+      int remaining_scans_num;
+      int remaining_scans_num_nth = 0;
+      
+      remaining_scans_num = scan_c - ( scan_e_e[ii] );
+      for (int nt = scan_e_b[ii]; nt < remaining_scans_num; ++nt)
+	{
+	  if ((nt + 1) % scan_e_nth[ii] == 0)
+	    ++remaining_scans_num_nth;
+	}
+      scan_e_remain << remaining_scans_num_nth;
+    }
+
+  //string
+  scans_excl_str += tr(
+		       "<table style=\"margin-left:30px\">"
+		       "<tr><td><b><i> Exclusion Profiles: </b></i></td></tr>"
+		       "<tr>"
+		       "<td> Channel:           </td>"
+		       "<td> Scan Begin:        </td>"
+		       "<td> Include every Nth: </td>"
+		       "<td> Scan End:          </td>"
+		       "<td> # Remaining Scans: </td>"
+		       "</tr>"
+			);
+  
+  for (int ii=0; ii<chndescs_alt.size(); ++ii)
+    {
+      if ( !chndescs_alt[ii].contains ( opt_type ) )
+	continue;
+      qDebug() << "Channel: " << chndescs_alt[ii] << "; scans [beg|nth|end], remaining -- "
+	       << scan_e_b[ii] << scan_e_nth[ii] << scan_e_e[ii] << ", " << scan_e_remain[ii];
+
+      QString chan_s = chndescs_alt[ii];
+      chan_s = chan_s.split(":")[0];
+      scans_excl_str += tr(
+			   "<tr>"
+			   "<td> %1 </td>"
+			   "<td> %2 </td>"
+			   "<td> %3 </td>"
+			   "<td> %4 </td>"
+			   "<td> %5 </td>"
+			   "</tr>"
+			   )
+	.arg( chan_s )                                       //1
+	.arg( QString::number( scan_e_b[ii] ) )              //2
+	.arg( QString::number( scan_e_nth[ii] ) )            //3
+	.arg( QString::number( scan_e_e[ii] ) )              //4
+	.arg( QString::number( scan_e_remain[ii] ) )         //5
+	;
+
+      if( scan_e_remain[ii] != scan_c )
+	excl_yes = true;
+    }
+  scans_excl_str += tr( "</table>" );
+  
+  return scans_excl_str; 
+}
 
 //write PDF Report
 void US_ReporterGMP::write_pdf_report( void )
@@ -11853,7 +12065,7 @@ void US_ReporterGMP::write_pdf_report( void )
   
   QPrinter printer(QPrinter::PrinterResolution);//(QPrinter::HighResolution);//(QPrinter::PrinterResolution);
   printer.setOutputFormat(QPrinter::PdfFormat);
-  printer.setPaperSize(QPrinter::Letter);
+  printer.setPageSize( QPageSize( QPageSize::Letter ) );
 
   printer.setOutputFileName( filePath );
   printer.setFullPage(true);
@@ -12044,7 +12256,7 @@ void US_ReporterGMP::printDocument(QPrinter& printer, QTextDocument* doc) //, QW
   //int textMargins = 0; // in millimeters
   
   QPainter painter( &printer );
-  QSizeF pageSize = printer.pageRect().size(); // page size in pixels
+  QSizeF pageSize = printer.pageLayout().paintRectPixels( printer.resolution() ).size(); // page size in pixels
   // Calculate the rectangle where to lay out the text
   const double tm = mmToPixels(printer, textMargins);
   const qreal footerHeight = painter.fontMetrics().height();
@@ -12062,7 +12274,7 @@ void US_ReporterGMP::printDocument(QPrinter& printer, QTextDocument* doc) //, QW
   progress_msg->setWindowTitle(tr("Printing..."));
   QFont font_d  = progress_msg->property("font").value<QFont>();
   QFontMetrics fm(font_d);
-  int pixelsWide = fm.width( progress_msg->windowTitle() );
+  int pixelsWide = fm.horizontalAdvance( progress_msg->windowTitle() );
   qDebug() << "Progress_msg: pixelsWide -- " << pixelsWide;
   progress_msg ->setMinimumWidth( pixelsWide*2 );
   progress_msg->adjustSize();
@@ -12099,7 +12311,7 @@ void US_ReporterGMP::paintPage(QPrinter& printer, int pageNumber, int pageCount,
 {
   int borderMargins = 10;  // in millimeters
   qDebug() << "Printing page" << pageNumber;
-  const QSizeF pageSize = printer.paperRect().size();
+  const QSizeF pageSize = printer.pageLayout().fullRectPixels( printer.resolution() ).size();
   qDebug() << "pageSize=" << pageSize;
   qDebug() << "printerResolution=" << printer.resolution();
   
@@ -13185,12 +13397,12 @@ void US_ReporterGMP::add_solution_details( const QString sol_id, const QString s
 	      total          += lcount;
 	      if ( lcount > 0 )
 		{
-		  seqsmry     += QString().sprintf( "%d", lcount )
+		  seqsmry     += QString::asprintf( "%d", lcount )
 		    + " " + letter.toUpper() + ", ";
 		  //seqsmry          += "\n  ";
 		}
 	    }
-	  seqsmry     += QString().sprintf( "%d", total ) + " tot";
+	  seqsmry     += QString::asprintf( "%d", total ) + " tot";
 	}
 
       QString a_type   = tr( "Carbohydrate/Other" );
@@ -13217,17 +13429,17 @@ void US_ReporterGMP::add_solution_details( const QString sol_id, const QString s
 	{
 	  absorbing_residues = "";
 	  if ( cys > 0)
-	    absorbing_residues += QString().sprintf( "%d", cys ) + " " + "Cys"  + ", ";
+	    absorbing_residues += QString::asprintf( "%d", cys ) + " " + "Cys"  + ", ";
 	  if ( hao > 0)
-	 absorbing_residues += QString().sprintf( "%d", hao ) + " " + "Hao"  + ", ";
+	 absorbing_residues += QString::asprintf( "%d", hao ) + " " + "Hao"  + ", ";
 	  if ( orn > 0)
-	    absorbing_residues += QString().sprintf( "%d", orn ) + " " + "Orn"  + ", ";
+	    absorbing_residues += QString::asprintf( "%d", orn ) + " " + "Orn"  + ", ";
 	  if ( trp > 0)
-	    absorbing_residues += QString().sprintf( "%d", trp ) + " " + "Trp"  + ", ";
+	    absorbing_residues += QString::asprintf( "%d", trp ) + " " + "Trp"  + ", ";
 	  if ( tyr > 0)
-	    absorbing_residues += QString().sprintf( "%d", tyr ) + " " + "Tyr"  + ", ";
+	    absorbing_residues += QString::asprintf( "%d", tyr ) + " " + "Tyr"  + ", ";
 
-	  absorbing_residues += QString().sprintf( "%d", all_abs ) + " tot";
+	  absorbing_residues += QString::asprintf( "%d", all_abs ) + " tot";
 	}
 
       //remeber to exclude absorbing residues for non-protein species

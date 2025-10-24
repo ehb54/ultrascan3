@@ -95,7 +95,7 @@ void US_HelpDaemon::debug( const QString& message )
 #endif
    d.open( QIODevice::WriteOnly | QIODevice::Text | QIODevice::Append );
    QTextStream out ( &d );
-   out << message << endl;
+   out << message << Qt::endl;
    d.close();
 }
 

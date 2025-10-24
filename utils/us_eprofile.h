@@ -26,7 +26,7 @@ class US_UTIL_EXTERN US_ExtProfile
       //! \param  valType    Reference for returned value type
       //! \param  extinction Reference for returned extinction profile
       //! \return            Profile ID of fetched profile (-1 if none)
-      static int fetch_eprofile( US_DB2*, const int, QString&, QString&,
+      static int fetch_eprofile( IUS_DB2*, const int, QString&, QString&,
                                  QMap< double, double >& );
 
       //! \brief Parse an extinction profile from an XML string
@@ -48,7 +48,7 @@ class US_UTIL_EXTERN US_ExtProfile
       //!                    "massExtinction"|(other))
       //! \param  extinction Extinction profile to store
       //! \return            Profile ID of created profile record (-1 if none)
-      static int create_eprofile( US_DB2*, const int, QString&, QString&,
+      static int create_eprofile( IUS_DB2*, const int, QString&, QString&,
                                   QMap< double, double >& );
 
       //! \brief Create a new extinction profile XML string
@@ -71,7 +71,7 @@ class US_UTIL_EXTERN US_ExtProfile
       //!                    "massExtinction"|(other))
       //! \param  extinction Extinction profile to store
       //! \return            Flag of update success
-      static bool update_eprofile( US_DB2*, const int, const int, QString&,
+      static bool update_eprofile( IUS_DB2*, const int, const int, QString&,
                                    QString&, QMap< double, double >& );
 
       //! \brief Delete an extinction profile from the database
@@ -80,7 +80,7 @@ class US_UTIL_EXTERN US_ExtProfile
       //! \param  compType   Component type ("Buffer"|"Analyte"|"Sample"
       //!                    |"Profile"; "Profile" -> compID is profileID)
       //! \return            Flag of deletion success
-      static bool delete_eprofile( US_DB2*, const int, QString& );
+      static bool delete_eprofile( IUS_DB2*, const int, QString& );
 
 };
 

@@ -8,10 +8,10 @@
 #include <qwt_legend.h>
 
 // constructor:  load loader dialog
-US_NoiseLoader::US_NoiseLoader( US_DB2* db, QStringList& mieGUIDs,
+US_NoiseLoader::US_NoiseLoader( IUS_DB2* db, QStringList& mieGUIDs,
    QStringList& nieGUIDs, US_Noise& ti_noise, US_Noise& ri_noise,
    US_DataIO::EditedData* edata )
-   : US_WidgetsDialog( 0, 0 ), db( db ), mieGUIDs( mieGUIDs ),
+   : US_WidgetsDialog( nullptr, Qt::WindowFlags() ), db( db ), mieGUIDs( mieGUIDs ),
    nieGUIDs( nieGUIDs ), ti_noise( ti_noise ), ri_noise( ri_noise )
 {
    setWindowTitle( ( db == (US_DB2*) 0 ?
@@ -84,7 +84,7 @@ US_NoiseLoader::US_NoiseLoader( US_DB2* db, QStringList& mieGUIDs,
 
    for ( int ii = 1; ii < mieGUIDs.size(); ii++ )
    {  // complete models list for top level
-      mititle    = QString().sprintf( "Model Sibling %4.4d", ii );
+      mititle    = QString::asprintf( "Model Sibling %4.4d", ii );
       twi_curr   = new QTreeWidgetItem( twi_null, QStringList( mititle ) );
       items.append( twi_curr );   // other top-level items are model siblings
    }

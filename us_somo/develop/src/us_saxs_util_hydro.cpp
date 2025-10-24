@@ -352,99 +352,99 @@ bool US_Saxs_Util::run_hydro(
     results[ "model_name" ] = results_hydro.name;
     results[ "method_used" ] = method; // QString("%1").arg(method);
 
-     if (method != "None")
-      {
-	if ( fabs(results_hydro.total_beads_sd) <= 1e-100 )
-	  {
-	    results[ "total_beads" ] =  QString::number(results_hydro.total_beads);		
-	  }
-	else
-	  {
-	    results[ "total_beads" ] = (QString("").sprintf("%u (%4.2e)", 
-							(int)(results_hydro.total_beads + .5),
-							results_hydro.total_beads_sd));
-	  }
+    if (method != "None")
+    {
+       if ( fabs(results_hydro.total_beads_sd) <= 1e-100 )
+       {
+          results[ "total_beads" ] =  QString::number(results_hydro.total_beads);		
+       }
+       else
+       {
+          results[ "total_beads" ] = (QString::asprintf( "%u (%4.2e )", 
+                                                         (int)(results_hydro.total_beads + .5),
+                                                         results_hydro.total_beads_sd));
+       }
 
-	if ( fabs(results_hydro.used_beads_sd) <= 1e-100 )
-	  {
-	    results[ "used_beads" ] =  QString::number(results_hydro.used_beads);			
-	  }
-	else
-	  {
-	    results[ "used_beads" ] = (QString("").sprintf("%u (%4.2e)", 
-                                                  (int)(results_hydro.used_beads + .5),
-                                                  results_hydro.used_beads_sd));
-	  }
+       if ( fabs(results_hydro.used_beads_sd) <= 1e-100 )
+       {
+          results[ "used_beads" ] =  QString::number(results_hydro.used_beads);			
+       }
+       else
+       {
+          results[ "used_beads" ] = (QString::asprintf( "%u (%4.2e )", 
+                                                        (int)(results_hydro.used_beads + .5),
+                                                        results_hydro.used_beads_sd));
+       }
 	
-	if (fabs(results_hydro.s20w_sd) <= 1e-100)
-	  {
-	    results[ "s20w" ] =  QString::number(results_hydro.s20w, 'e', 2) + " S";				    
-	  }
-	else
-	  {
-	    results[ "s20w" ] = (QString("").sprintf("%4.2e S (%4.2e)", results_hydro.s20w, results_hydro.s20w_sd));
-	  }
+       if (fabs(results_hydro.s20w_sd) <= 1e-100)
+       {
+          results[ "s20w" ] =  QString::number(results_hydro.s20w, 'e', 2) + " S";				    
+       }
+       else
+       {
+          results[ "s20w" ] = (QString::asprintf( "%4.2e S (%4.2e )", results_hydro.s20w, results_hydro.s20w_sd));
+       }
 
-	if (fabs(results_hydro.D20w_sd) <= 1e-100)
-	  {
-	    results[ "D20w" ] =  QString::number(results_hydro.D20w, 'e', 2) + " cm^2/sec";			   
-	  }
-	else
-	  {
-	    results[ "D20w" ] = (QString("").sprintf("%4.2e cm^2/sec (%4.2e)", results_hydro.D20w, results_hydro.D20w_sd));
-	  }
+       if (fabs(results_hydro.D20w_sd) <= 1e-100)
+       {
+          results[ "D20w" ] =  QString::number(results_hydro.D20w, 'e', 2) + " cm^2/sec";			   
+       }
+       else
+       {
+          results[ "D20w" ] = (QString::asprintf( "%4.2e cm^2/sec (%4.2e )", results_hydro.D20w, results_hydro.D20w_sd));
+       }
 	
-	if (fabs(results_hydro.rs_sd) <= 1e-100)
-	  {
-	    results[ "rs" ] =  QString::number(results_hydro.rs, 'e', 2) + " nm";			
-	  }
-	else
-	  {
-	    results[ "rs" ] = (QString("").sprintf("%4.2e nm (%4.2e)", results_hydro.rs, results_hydro.rs_sd));
-	  }
+       if (fabs(results_hydro.rs_sd) <= 1e-100)
+       {
+          results[ "rs" ] =  QString::number(results_hydro.rs, 'e', 2) + " nm";			
+       }
+       else
+       {
+          results[ "rs" ] = (QString::asprintf( "%4.2e nm (%4.2e )", results_hydro.rs, results_hydro.rs_sd));
+       }
 	
-	if (fabs(results_hydro.ff0_sd) <= 1e-100)
-	  {
-	    results[ "ff0" ] =  QString::number(results_hydro.ff0, 'f', 2);			
-	  }
-	else
-	  {
-	    results[ "ff0" ] =  (QString("").sprintf("%3.2f nm (%3.2e)", results_hydro.ff0, results_hydro.ff0_sd));
-	  }
+       if (fabs(results_hydro.ff0_sd) <= 1e-100)
+       {
+          results[ "ff0" ] =  QString::number(results_hydro.ff0, 'f', 2);			
+       }
+       else
+       {
+          results[ "ff0" ] =  (QString::asprintf( "%3.2f nm (%3.2e )", results_hydro.ff0, results_hydro.ff0_sd));
+       }
 
-	if (fabs(results_hydro.rg_sd) <= 1e-100)
-	  {
-	    results[ "rg" ] =  QString::number(results_hydro.rg, 'e', 2) + " nm";			
-	  }
-	else
-	  {
-	    results[ "rg" ] =  (QString("").sprintf("%4.2e nm (%4.2e)", results_hydro.rg, results_hydro.rg_sd));
-	  }
+       if (fabs(results_hydro.rg_sd) <= 1e-100)
+       {
+          results[ "rg" ] =  QString::number(results_hydro.rg, 'e', 2) + " nm";			
+       }
+       else
+       {
+          results[ "rg" ] =  (QString::asprintf( "%4.2e nm (%4.2e )", results_hydro.rg, results_hydro.rg_sd));
+       }
 
-	if ( method == "Zeno" ) {
+       if ( method == "Zeno" ) {
 	  results[ "tau" ] = "n/a" ; 
-	} else {
+       } else {
 	  if (fabs(results_hydro.tau_sd) <= 1e-100)
-	    {
-	      results[ "tau" ] =  QString::number(results_hydro.tau, 'e', 2) + " ns";			
-	    } else {
-	    results[ "tau" ] = (QString("").sprintf("%4.2e ns (%4.2e)", results_hydro.tau, results_hydro.tau_sd));
+          {
+             results[ "tau" ] =  QString::number(results_hydro.tau, 'e', 2) + " ns";			
+          } else {
+             results[ "tau" ] = (QString::asprintf( "%4.2e ns (%4.2e )", results_hydro.tau, results_hydro.tau_sd));
 	  }
-	}
+       }
 	
 
-	if (fabs(results_hydro.viscosity_sd) <= 1e-100)
-	  {
-	    results[ "viscosity" ] = QString::number(results_hydro.viscosity, 'e', 2) + " cm^3/g";		
-	  }
-	else
-	  {
-	    results[ "viscosity" ] = (QString("").sprintf("%4.2e cm^3/g (%4.2e)", results_hydro.viscosity, results_hydro.viscosity_sd));
-	  }
+       if (fabs(results_hydro.viscosity_sd) <= 1e-100)
+       {
+          results[ "viscosity" ] = QString::number(results_hydro.viscosity, 'e', 2) + " cm^3/g";		
+       }
+       else
+       {
+          results[ "viscosity" ] = (QString::asprintf( "%4.2e cm^3/g (%4.2e )", results_hydro.viscosity, results_hydro.viscosity_sd));
+       }
 
-	results[ "mass" ] =  QString::number(results_hydro.mass, 'e', 4) + " Da";			
-	results[ "vbar" ] =  QString::number(results_hydro.vbar) + " cm^3/g";			
-	results[ "hydro_name_file" ] = hydro_name_file;
+       results[ "mass" ] =  QString::number(results_hydro.mass, 'e', 4) + " Da";			
+       results[ "vbar" ] =  QString::number(results_hydro.vbar) + " cm^3/g";			
+       results[ "hydro_name_file" ] = hydro_name_file;
 	
       }
     else 
@@ -1573,8 +1573,8 @@ int US_Saxs_Util::check_for_missing_atoms_hydro(QString *error_string, PDB_model
                      error_shown[count_idx] = true;
                   }
         
-                  // error_string->append(QString("").sprintf("%s: chain %s molecule %d atom %s residue %s %s\n",
-                  //               msg_tag.toLatin1().data(),
+                  // error_string->append(QString::asprintf( "%s: chain %s molecule %d atom %s residue %s %s\n",
+                  //               msg_tag.toLatin1( ).data(),
                   //               this_atom->chainID.toLatin1().data(),
                   //               j + 1,
                   //               this_atom->name.toLatin1().data(),
@@ -1696,8 +1696,8 @@ int US_Saxs_Util::check_for_missing_atoms_hydro(QString *error_string, PDB_model
                }
         
 
-               // error_string->append(QString("").sprintf("unknown atom chain %s molecule %d atom %s residue %s %s\n",
-               //            this_atom->chainID.toLatin1().data(),
+               // error_string->append(QString::asprintf( "unknown atom chain %s molecule %d atom %s residue %s %s\n",
+               //            this_atom->chainID.toLatin1( ).data(),
                //            j + 1,
                //            this_atom->name.toLatin1().data(),
                //            this_atom->resSeq.toLatin1().data(),
@@ -2618,7 +2618,7 @@ int US_Saxs_Util::check_for_missing_atoms_hydro(QString *error_string, PDB_model
 // 	ts << residue_list[i].comment << Qt::endl;
 //          ts << residue_list[i].name.toUpper()
 //             << "\t" << residue_list[i].type
-//             << "\t" << str1.sprintf("%7.2f", residue_list[i].molvol)
+//             << "\t" << QString::asprintf("%7.2f", residue_list[i].molvol)
 //             << "\t" << residue_list[i].asa
 //             << "\t" << residue_list[i].r_atom.size()
 //             << "\t" << residue_list[i].r_bead.size()
@@ -2643,7 +2643,7 @@ int US_Saxs_Util::check_for_missing_atoms_hydro(QString *error_string, PDB_model
 //                << "\t" << residue_list[i].r_bead[j].chain
 //                << "\t" << residue_list[i].r_bead[j].volume << Qt::endl;
 //          }
-//          str1.sprintf("%d: ", i+1);
+//          str1 = QString::asprintf( "%d: ", i+1 );
 //          str1 += residue_list[i].name.toUpper();
 //       }
 //       f.close();
@@ -3516,21 +3516,21 @@ bool US_Saxs_Util::calc_mw_hydro()
    {
      us_log->log( QString( "\nModel: %1 vbar %2 cm^3/g\n" )
                        .arg( model_vector[i].model_id )
-                       .arg( QString("").sprintf("%.3f", model_vector[i].vbar) ) );
+                       .arg( QString::asprintf( "%.3f", model_vector[i].vbar ) ) );
       
      if ( us_udp_msg )
        {
 	 map < QString, QString > msging;
 	 msging[ "_textarea" ] = QString( "\\nModel: %1 vbar %2 cm^3/g\\n" )
                        .arg( model_vector[i].model_id )
-                       .arg( QString("").sprintf("%.3f", model_vector[i].vbar) );
+                       .arg( QString::asprintf( "%.3f", model_vector[i].vbar ) );
       
 	 us_udp_msg->send_json( msging );
 	 //sleep(1);
        } 
      accumulated_msgs += QString( "\\nModel: %1 vbar %2 cm^3/g\\n" )
        .arg( model_vector[i].model_id )
-       .arg( QString("").sprintf("%.3f", model_vector[i].vbar) );
+       .arg( QString::asprintf( "%.3f", model_vector[i].vbar ) );
 
       current_model = i;
 
@@ -3561,7 +3561,7 @@ bool US_Saxs_Util::calc_mw_hydro()
             double chain_scaled_excl_vol   = 0.0;
             model_vector[i].molecule[j].mw = 0.0;
             unsigned int chain_total_e     = 0;
-            unsigned int chain_total_e_noh = 0;
+            // unsigned int chain_total_e_noh = 0;
 
             for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) 
             {
@@ -3598,7 +3598,7 @@ bool US_Saxs_Util::calc_mw_hydro()
                         chain_excl_vol        += excl_vol;
                         chain_scaled_excl_vol += scaled_excl_vol;
                         chain_total_e         += this_e;
-                        chain_total_e_noh     += this_e_noh;
+                        // chain_total_e_noh     += this_e_noh;
 
                         if ( this_atom->resName != "WAT" )
                         {
@@ -7665,128 +7665,128 @@ void US_Saxs_Util::append_options_log_atob()
 {
    QString s;
 
-   s.sprintf("Grid model built with the following options:\n");
+   s = QString::asprintf( "Grid model built with the following options:\n" );
    options_log += s;
 
-   s.sprintf(
-             "ASA Calculation:\n"
-             "  Perform ASA Calculation:    %s\n"
-             "  Recheck Bead ASA:           %s\n"
-             "  ASA Method:                 %s\n"
-             "  ASA Probe Radius (A):       %.2f\n"
-             "  Probe Recheck Radius (A):   %.2f\n"
-             "  Grid ASA Threshold (A^2):   %.1f\n"
-             "  Grid Bead ASA Threshold %%:  %.1f\n"
-             "  ASAB1 Step Size (A):        %.1f\n"
-             "\n"
+   s = QString::asprintf(
+                         "ASA Calculation:\n"
+                         "  Perform ASA Calculation:    %s\n"
+                         "  Recheck Bead ASA:           %s\n"
+                         "  ASA Method:                 %s\n"
+                         "  ASA Probe Radius (A):       %.2f\n"
+                         "  Probe Recheck Radius (A):   %.2f\n"
+                         "  Grid ASA Threshold (A^2):   %.1f\n"
+                         "  Grid Bead ASA Threshold %%:  %.1f\n"
+                         "  ASAB1 Step Size (A):        %.1f\n"
+                         "\n"
 
-             ,asa_hydro.calculation ? "On" : "Off"
-             ,asa_hydro.recheck_beads ? "On" : "Off"
-             ,asa_hydro.method ? "Rolling Sphere" : "Voronoi Tesselation"
-             ,asa_hydro.probe_radius
-             ,asa_hydro.probe_recheck_radius
-             ,asa_hydro.grid_threshold
-             ,asa_hydro.grid_threshold_percent
-             ,asa_hydro.asab1_step
-             );
+                         ,asa_hydro.calculation ? "On" : "Off"
+                         ,asa_hydro.recheck_beads ? "On" : "Off"
+                         ,asa_hydro.method ? "Rolling Sphere" : "Voronoi Tesselation"
+                         ,asa_hydro.probe_radius
+                         ,asa_hydro.probe_recheck_radius
+                         ,asa_hydro.grid_threshold
+                         ,asa_hydro.grid_threshold_percent
+                         ,asa_hydro.asab1_step
+                         );
    options_log += s;
 
-   s.sprintf(
-             "Grid Functions (AtoB):\n"
-             "  Computations Relative to:             %s\n"
-             "  Cube Side (Angstrom):                 %.1f\n"
-             "  Apply Cubic Grid:                     %s\n"
-             "  Add theoretical hydration (PDB only): %s\n"
-             "  Expand Beads to Tangency:             %s\n"
-             "  Enable ASA options:                   %s\n"
-             "\n"
+   s = QString::asprintf(
+                         "Grid Functions (AtoB):\n"
+                         "  Computations Relative to:             %s\n"
+                         "  Cube Side (Angstrom):                 %.1f\n"
+                         "  Apply Cubic Grid:                     %s\n"
+                         "  Add theoretical hydration (PDB only): %s\n"
+                         "  Expand Beads to Tangency:             %s\n"
+                         "  Enable ASA options:                   %s\n"
+                         "\n"
 
-             "Grid (AtoB) Overlap Reduction:\n"
-             "  Bead Overlap Tolerance:     %f\n"
+                         "Grid (AtoB) Overlap Reduction:\n"
+                         "  Bead Overlap Tolerance:     %f\n"
 
-             "    Exposed beads:\n"
-             "      Fuse Beads:                                 %s\n"
-             "      Fuse Beads that overlap by more than:       %.1f\n"
-             "      Remove Overlaps:                            %s\n"
-             "      Remove Overlaps synchronously:              %s\n"
-             "      Synchronous Overlap Reduction Step Size %%:  %.1f\n"
-             "      Remove Overlaps hierarchically:             %s\n"
-             "      Hierarchical Overlap Reduction Step Size %%: %.1f\n"
-             "      Outward Translation:                        %s\n"
-             "\n"
+                         "    Exposed beads:\n"
+                         "      Fuse Beads:                                 %s\n"
+                         "      Fuse Beads that overlap by more than:       %.1f\n"
+                         "      Remove Overlaps:                            %s\n"
+                         "      Remove Overlaps synchronously:              %s\n"
+                         "      Synchronous Overlap Reduction Step Size %%:  %.1f\n"
+                         "      Remove Overlaps hierarchically:             %s\n"
+                         "      Hierarchical Overlap Reduction Step Size %%: %.1f\n"
+                         "      Outward Translation:                        %s\n"
+                         "\n"
 
-             "    Buried beads:\n"
-             "      Fuse Beads:                                 %s\n"
-             "      Fuse Beads that overlap by more than:       %.1f\n"
-             "      Remove Overlaps:                            %s\n"
-             "      Remove Overlaps synchronously:              %s\n"
-             "      Synchronous Overlap Reduction Step Size %%:  %.1f\n"
-             "      Remove Overlaps hierarchically:             %s\n"
-             "      Hierarchical Overlap Reduction Step Size %%: %.1f\n"
-             "\n"
+                         "    Buried beads:\n"
+                         "      Fuse Beads:                                 %s\n"
+                         "      Fuse Beads that overlap by more than:       %.1f\n"
+                         "      Remove Overlaps:                            %s\n"
+                         "      Remove Overlaps synchronously:              %s\n"
+                         "      Synchronous Overlap Reduction Step Size %%:  %.1f\n"
+                         "      Remove Overlaps hierarchically:             %s\n"
+                         "      Hierarchical Overlap Reduction Step Size %%: %.1f\n"
+                         "\n"
 
-             "    Grid beads:\n"
-             "      Fuse Beads:                                 %s\n"
-             "      Fuse Beads that overlap by more than:       %.1f\n"
-             "      Remove Overlaps:                            %s\n"
-             "      Remove Overlaps synchronously:              %s\n"
-             "      Synchronous Overlap Reduction Step Size %%:  %.1f\n"
-             "      Remove Overlaps hierarchically:             %s\n"
-             "      Hierarchical Overlap Reduction Step Size %%: %.1f\n"
-             "\n"
+                         "    Grid beads:\n"
+                         "      Fuse Beads:                                 %s\n"
+                         "      Fuse Beads that overlap by more than:       %.1f\n"
+                         "      Remove Overlaps:                            %s\n"
+                         "      Remove Overlaps synchronously:              %s\n"
+                         "      Synchronous Overlap Reduction Step Size %%:  %.1f\n"
+                         "      Remove Overlaps hierarchically:             %s\n"
+                         "      Hierarchical Overlap Reduction Step Size %%: %.1f\n"
+                         "\n"
 
-             ,grid_hydro.center ? "Center of Mass" : ( grid_hydro.center == 2 ? "Center of Scattering Intensity" : "Center of Cubelet" )
-             ,grid_hydro.cube_side
-             ,grid_hydro.cubic ? "On" : "Off"
-             ,grid_hydro.hydrate ? "On" : "Off"
-             ,grid_hydro.tangency ? "On" : "Off"
-             ,grid_hydro.enable_asa ? "On" : "Off"
+                         ,grid_hydro.center ? "Center of Mass" : ( grid_hydro.center == 2 ? "Center of Scattering Intensity" : "Center of Cubelet" )
+                         ,grid_hydro.cube_side
+                         ,grid_hydro.cubic ? "On" : "Off"
+                         ,grid_hydro.hydrate ? "On" : "Off"
+                         ,grid_hydro.tangency ? "On" : "Off"
+                         ,grid_hydro.enable_asa ? "On" : "Off"
 
-             ,overlap_tolerance
+                         ,overlap_tolerance
 
-             ,grid_exposed_overlap.fuse_beads ? "On" : "Off"
-             ,grid_exposed_overlap.fuse_beads_percent
-             ,grid_exposed_overlap.remove_overlap ? "On" : "Off"
-             ,grid_exposed_overlap.remove_sync ? "On" : "Off"
-             ,grid_exposed_overlap.remove_sync_percent
-             ,grid_exposed_overlap.remove_hierarch ? "On" : "Off"
-             ,grid_exposed_overlap.remove_hierarch_percent
-             ,grid_exposed_overlap.translate_out ? "On" : "Off"
+                         ,grid_exposed_overlap.fuse_beads ? "On" : "Off"
+                         ,grid_exposed_overlap.fuse_beads_percent
+                         ,grid_exposed_overlap.remove_overlap ? "On" : "Off"
+                         ,grid_exposed_overlap.remove_sync ? "On" : "Off"
+                         ,grid_exposed_overlap.remove_sync_percent
+                         ,grid_exposed_overlap.remove_hierarch ? "On" : "Off"
+                         ,grid_exposed_overlap.remove_hierarch_percent
+                         ,grid_exposed_overlap.translate_out ? "On" : "Off"
 
-             ,grid_buried_overlap.fuse_beads ? "On" : "Off"
-             ,grid_buried_overlap.fuse_beads_percent
-             ,grid_buried_overlap.remove_overlap ? "On" : "Off"
-             ,grid_buried_overlap.remove_sync ? "On" : "Off"
-             ,grid_buried_overlap.remove_sync_percent
-             ,grid_buried_overlap.remove_hierarch ? "On" : "Off"
-             ,grid_buried_overlap.remove_hierarch_percent
+                         ,grid_buried_overlap.fuse_beads ? "On" : "Off"
+                         ,grid_buried_overlap.fuse_beads_percent
+                         ,grid_buried_overlap.remove_overlap ? "On" : "Off"
+                         ,grid_buried_overlap.remove_sync ? "On" : "Off"
+                         ,grid_buried_overlap.remove_sync_percent
+                         ,grid_buried_overlap.remove_hierarch ? "On" : "Off"
+                         ,grid_buried_overlap.remove_hierarch_percent
 
-             ,grid_overlap.fuse_beads ? "On" : "Off"
-             ,grid_overlap.fuse_beads_percent
-             ,grid_overlap.remove_overlap ? "On" : "Off"
-             ,grid_overlap.remove_sync ? "On" : "Off"
-             ,grid_overlap.remove_sync_percent
-             ,grid_overlap.remove_hierarch ? "On" : "Off"
-             ,grid_overlap.remove_hierarch_percent
-             );
+                         ,grid_overlap.fuse_beads ? "On" : "Off"
+                         ,grid_overlap.fuse_beads_percent
+                         ,grid_overlap.remove_overlap ? "On" : "Off"
+                         ,grid_overlap.remove_sync ? "On" : "Off"
+                         ,grid_overlap.remove_sync_percent
+                         ,grid_overlap.remove_hierarch ? "On" : "Off"
+                         ,grid_overlap.remove_hierarch_percent
+                         );
 
    options_log += s;
 
-   s.sprintf(
-             "Miscellaneous options:\n"
-             "  Calculate vbar                 %s\n"
-             ,misc.compute_vbar ? "On" : "Off"
-             );
+   s = QString::asprintf(
+                         "Miscellaneous options:\n"
+                         "  Calculate vbar                 %s\n"
+                         ,misc.compute_vbar ? "On" : "Off"
+                         );
    options_log += s;
 
    if ( !misc.compute_vbar )
    {
-      s.sprintf(
-                "  Entered vbar value             %.3f\n"
-                "  Vbar measured/computed at T=   %.2f\n"
-                ,misc.vbar
-                ,misc.vbar_temperature
-                );
+      s = QString::asprintf(
+                            "  Entered vbar value             %.3f\n"
+                            "  Vbar measured/computed at T=   %.2f\n"
+                            ,misc.vbar
+                            ,misc.vbar_temperature
+                            );
       options_log += s;
    }
 }
@@ -7796,117 +7796,117 @@ void US_Saxs_Util::append_options_log_somo()
 {
    QString s;
 
-   s.sprintf("Bead model built with the following options:\n");
+   s = QString::asprintf( "Bead model built with the following options:\n" );
    options_log += s;
 
-   s.sprintf(
-             "ASA Calculation:\n"
-             "  Perform ASA Calculation:    %s\n"
-             "  Recheck Bead ASA:           %s\n"
-             "  ASA Method:                 %s\n"
-             "  ASA Probe Radius (A):       %.2f\n"
-             "  Probe Recheck Radius (A):   %.2f\n"
-             "  SOMO ASA Threshold (A^2):   %.1f\n"
-             "  SOMO Bead ASA Threshold %%:  %.1f\n"
-             "  ASAB1 Step Size (A):        %.1f\n"
-             "\n"
+   s = QString::asprintf(
+                         "ASA Calculation:\n"
+                         "  Perform ASA Calculation:    %s\n"
+                         "  Recheck Bead ASA:           %s\n"
+                         "  ASA Method:                 %s\n"
+                         "  ASA Probe Radius (A):       %.2f\n"
+                         "  Probe Recheck Radius (A):   %.2f\n"
+                         "  SOMO ASA Threshold (A^2):   %.1f\n"
+                         "  SOMO Bead ASA Threshold %%:  %.1f\n"
+                         "  ASAB1 Step Size (A):        %.1f\n"
+                         "\n"
 
-             ,asa_hydro.calculation ? "On" : "Off"
-             ,asa_hydro.recheck_beads ? "On" : "Off"
-             ,asa_hydro.method ? "Rolling Sphere" : "Voronoi Tesselation"
-             ,asa_hydro.probe_radius
-             ,asa_hydro.probe_recheck_radius
-             ,asa_hydro.threshold
-             ,asa_hydro.threshold_percent
-             ,asa_hydro.asab1_step
-             );
+                         ,asa_hydro.calculation ? "On" : "Off"
+                         ,asa_hydro.recheck_beads ? "On" : "Off"
+                         ,asa_hydro.method ? "Rolling Sphere" : "Voronoi Tesselation"
+                         ,asa_hydro.probe_radius
+                         ,asa_hydro.probe_recheck_radius
+                         ,asa_hydro.threshold
+                         ,asa_hydro.threshold_percent
+                         ,asa_hydro.asab1_step
+                         );
    options_log += s;
 
-   s.sprintf(
-             "Overlap Reduction:\n"
-             "  Bead Overlap Tolerance:     %f\n"
-             "    Exposed Side chain beads:\n"
-             "      Fuse Beads:                                 %s\n"
-             "      Fuse Beads that overlap by more than:       %.1f\n"
-             "      Remove Overlaps:                            %s\n"
-             "      Remove Overlaps synchronously:              %s\n"
-             "      Synchronous Overlap Reduction Step Size %%:  %.1f\n"
-             "      Remove Overlaps hierarchically:             %s\n"
-             "      Hierarchical Overlap Reduction Step Size %%: %.1f\n"
-             "      Outward Translation:                        %s\n"
+   s = QString::asprintf(
+                         "Overlap Reduction:\n"
+                         "  Bead Overlap Tolerance:     %f\n"
+                         "    Exposed Side chain beads:\n"
+                         "      Fuse Beads:                                 %s\n"
+                         "      Fuse Beads that overlap by more than:       %.1f\n"
+                         "      Remove Overlaps:                            %s\n"
+                         "      Remove Overlaps synchronously:              %s\n"
+                         "      Synchronous Overlap Reduction Step Size %%:  %.1f\n"
+                         "      Remove Overlaps hierarchically:             %s\n"
+                         "      Hierarchical Overlap Reduction Step Size %%: %.1f\n"
+                         "      Outward Translation:                        %s\n"
 
-             "    Exposed Main and side chain beads:\n"
-             "      Fuse Beads:                                 %s\n"
-             "      Fuse Beads that overlap by more than:       %.1f\n"
-             "      Remove Overlaps:                            %s\n"
-             "      Remove Overlaps synchronously:              %s\n"
-             "      Synchronous Overlap Reduction Step Size %%:  %.1f\n"
-             "      Remove Overlaps hierarchically:             %s\n"
-             "      Hierarchical Overlap Reduction Step Size %%: %.1f\n"
+                         "    Exposed Main and side chain beads:\n"
+                         "      Fuse Beads:                                 %s\n"
+                         "      Fuse Beads that overlap by more than:       %.1f\n"
+                         "      Remove Overlaps:                            %s\n"
+                         "      Remove Overlaps synchronously:              %s\n"
+                         "      Synchronous Overlap Reduction Step Size %%:  %.1f\n"
+                         "      Remove Overlaps hierarchically:             %s\n"
+                         "      Hierarchical Overlap Reduction Step Size %%: %.1f\n"
 
-             "    Buried beads:\n"
-             "      Fuse Beads:                                 %s\n"
-             "      Fuse Beads that overlap by more than:       %.1f\n"
-             "      Remove Overlaps:                            %s\n"
-             "      Remove Overlaps synchronously:              %s\n"
-             "      Synchronous Overlap Reduction Step Size %%:  %.1f\n"
-             "      Remove Overlaps hierarchically:             %s\n"
-             "      Hierarchical Overlap Reduction Step Size %%: %.1f\n"
+                         "    Buried beads:\n"
+                         "      Fuse Beads:                                 %s\n"
+                         "      Fuse Beads that overlap by more than:       %.1f\n"
+                         "      Remove Overlaps:                            %s\n"
+                         "      Remove Overlaps synchronously:              %s\n"
+                         "      Synchronous Overlap Reduction Step Size %%:  %.1f\n"
+                         "      Remove Overlaps hierarchically:             %s\n"
+                         "      Hierarchical Overlap Reduction Step Size %%: %.1f\n"
 
-             "\n"
+                         "\n"
 
-             ,overlap_tolerance
+                         ,overlap_tolerance
 
-             ,sidechain_overlap.fuse_beads ? "On" : "Off"
-             ,sidechain_overlap.fuse_beads_percent
-             ,sidechain_overlap.remove_overlap ? "On" : "Off"
-             ,sidechain_overlap.remove_sync ? "On" : "Off"
-             ,sidechain_overlap.remove_sync_percent
-             ,sidechain_overlap.remove_hierarch ? "On" : "Off"
-             ,sidechain_overlap.remove_hierarch_percent
-             ,sidechain_overlap.translate_out ? "On" : "Off"
+                         ,sidechain_overlap.fuse_beads ? "On" : "Off"
+                         ,sidechain_overlap.fuse_beads_percent
+                         ,sidechain_overlap.remove_overlap ? "On" : "Off"
+                         ,sidechain_overlap.remove_sync ? "On" : "Off"
+                         ,sidechain_overlap.remove_sync_percent
+                         ,sidechain_overlap.remove_hierarch ? "On" : "Off"
+                         ,sidechain_overlap.remove_hierarch_percent
+                         ,sidechain_overlap.translate_out ? "On" : "Off"
 
-             ,mainchain_overlap.fuse_beads ? "On" : "Off"
-             ,mainchain_overlap.fuse_beads_percent
-             ,mainchain_overlap.remove_overlap ? "On" : "Off"
-             ,mainchain_overlap.remove_sync ? "On" : "Off"
-             ,mainchain_overlap.remove_sync_percent
-             ,mainchain_overlap.remove_hierarch ? "On" : "Off"
-             ,mainchain_overlap.remove_hierarch_percent
+                         ,mainchain_overlap.fuse_beads ? "On" : "Off"
+                         ,mainchain_overlap.fuse_beads_percent
+                         ,mainchain_overlap.remove_overlap ? "On" : "Off"
+                         ,mainchain_overlap.remove_sync ? "On" : "Off"
+                         ,mainchain_overlap.remove_sync_percent
+                         ,mainchain_overlap.remove_hierarch ? "On" : "Off"
+                         ,mainchain_overlap.remove_hierarch_percent
 
-             ,buried_overlap.fuse_beads ? "On" : "Off"
-             ,buried_overlap.fuse_beads_percent
-             ,buried_overlap.remove_overlap ? "On" : "Off"
-             ,buried_overlap.remove_sync ? "On" : "Off"
-             ,buried_overlap.remove_sync_percent
-             ,buried_overlap.remove_hierarch ? "On" : "Off"
-             ,buried_overlap.remove_hierarch_percent
+                         ,buried_overlap.fuse_beads ? "On" : "Off"
+                         ,buried_overlap.fuse_beads_percent
+                         ,buried_overlap.remove_overlap ? "On" : "Off"
+                         ,buried_overlap.remove_sync ? "On" : "Off"
+                         ,buried_overlap.remove_sync_percent
+                         ,buried_overlap.remove_hierarch ? "On" : "Off"
+                         ,buried_overlap.remove_hierarch_percent
 
-             );
+                         );
    options_log += s;
 
-   s.sprintf(
-             "Miscellaneous options:\n"
-             "  Calculate vbar                 %s\n"
-             ,misc.compute_vbar ? "On" : "Off"
-             );
+   s = QString::asprintf(
+                         "Miscellaneous options:\n"
+                         "  Calculate vbar                 %s\n"
+                         ,misc.compute_vbar ? "On" : "Off"
+                         );
    options_log += s;
 
    if ( !misc.compute_vbar )
    {
-      s.sprintf(
-                "  Entered vbar value             %.3f\n"
-                "  Vbar measured/computed at T=   %.2f\n"
-                ,misc.vbar
-                ,misc.vbar_temperature
-                );
+      s = QString::asprintf(
+                            "  Entered vbar value             %.3f\n"
+                            "  Vbar measured/computed at T=   %.2f\n"
+                            ,misc.vbar
+                            ,misc.vbar_temperature
+                            );
       options_log += s;
    }
 
-   s.sprintf(
-             "  Enable Peptide Bond Rule       %s\n"
-             ,misc.pb_rule_on ? "On" : "Off"
-             );
+   s = QString::asprintf(
+                         "  Enable Peptide Bond Rule       %s\n"
+                         ,misc.pb_rule_on ? "On" : "Off"
+                         );
    options_log += s;
 }
 
@@ -7914,50 +7914,50 @@ void US_Saxs_Util::append_options_log_somo_ovlp()
 {
    QString s;
 
-   s.sprintf("Bead model built with the following options:\n");
+   s = QString::asprintf( "Bead model built with the following options:\n" );
    options_log += s;
 
-   s.sprintf(
-             "ASA Calculation:\n"
-             "  Perform ASA Calculation:    %s\n"
-             "  ASA Method:                 %s\n"
-             "  ASA Probe Radius (A):       %.2f\n"
-             "  SOMO ASA Threshold (A^2):   %.1f\n"
-             "  SOMO Bead ASA Threshold %%:  %.1f\n"
-             "  ASAB1 Step Size (A):        %.1f\n"
-             "\n"
+   s = QString::asprintf(
+                         "ASA Calculation:\n"
+                         "  Perform ASA Calculation:    %s\n"
+                         "  ASA Method:                 %s\n"
+                         "  ASA Probe Radius (A):       %.2f\n"
+                         "  SOMO ASA Threshold (A^2):   %.1f\n"
+                         "  SOMO Bead ASA Threshold %%:  %.1f\n"
+                         "  ASAB1 Step Size (A):        %.1f\n"
+                         "\n"
 
-             ,asa_hydro.calculation ? "On" : "Off"
-             ,asa_hydro.method ? "Rolling Sphere" : "Voronoi Tesselation"
-             ,asa_hydro.probe_radius
-             ,asa_hydro.threshold
-             ,asa_hydro.threshold_percent
-             ,asa_hydro.asab1_step
-             );
+                         ,asa_hydro.calculation ? "On" : "Off"
+                         ,asa_hydro.method ? "Rolling Sphere" : "Voronoi Tesselation"
+                         ,asa_hydro.probe_radius
+                         ,asa_hydro.threshold
+                         ,asa_hydro.threshold_percent
+                         ,asa_hydro.asab1_step
+                         );
    options_log += s;
 
-   s.sprintf(
-             "Miscellaneous options:\n"
-             "  Calculate vbar                 %s\n"
-             ,misc.compute_vbar ? "On" : "Off"
-             );
+   s = QString::asprintf(
+                         "Miscellaneous options:\n"
+                         "  Calculate vbar                 %s\n"
+                         ,misc.compute_vbar ? "On" : "Off"
+                         );
    options_log += s;
 
    if ( !misc.compute_vbar )
    {
-      s.sprintf(
-                "  Entered vbar value             %.3f\n"
-                "  Vbar measured/computed at T=   %.2f\n"
-                ,misc.vbar
-                ,misc.vbar_temperature
-                );
+      s = QString::asprintf(
+                            "  Entered vbar value             %.3f\n"
+                            "  Vbar measured/computed at T=   %.2f\n"
+                            ,misc.vbar
+                            ,misc.vbar_temperature
+                            );
       options_log += s;
    }
 
-   s.sprintf(
-             "  Enable Peptide Bond Rule       %s\n"
-             ,misc.pb_rule_on ? "On" : "Off"
-             );
+   s = QString::asprintf(
+                         "  Enable Peptide Bond Rule       %s\n"
+                         ,misc.pb_rule_on ? "On" : "Off"
+                         );
    options_log += s;
 }
 
@@ -8239,8 +8239,8 @@ int US_Saxs_Util::calc_somo( bool no_ovlp_removal, bool parameters_set_first_mod
          
      current_model = i;
      // msg += QString( " %1" ).arg( i + 1 );
-     msg += " " + ( i + 1 );
-     msg_udp += " " + ( i + 1 );
+     msg += " " + QString::number( i + 1 );
+     msg_udp += " " + QString::number( i + 1 );
      // }
    }
    msg += "\n";
@@ -9545,7 +9545,7 @@ int US_Saxs_Util::compute_asa( bool bd_mode, bool no_ovlp_removal, bool paramete
                if(bead_mc_asa_hydro.size() < this_atom->resSeq + 1) {
                   bead_mc_asa_hydro.resize(this_atom->resSeq + 32);
                }
-#warning broken by resSeq->QString
+               // #warning broken by resSeq->QString
                bead_mc_asa[this_atom->resSeq] += this_atom->asa;
             }
          }
@@ -11886,14 +11886,12 @@ int US_Saxs_Util::write_pdb_hydro( QString fname, vector < PDB_atom > *model )
           )
       {
          ts << 
-            QString("")
-            .sprintf(     
-                     "ATOM   %4d  PB  UNK A%4d    %8.3f%8.3f%8.3f  1.00 10.00           PB  \n",
-                     i + 1, i + 1,
-                     (*model)[i].bead_coordinate.axis[0],
-                     (*model)[i].bead_coordinate.axis[1],
-                     (*model)[i].bead_coordinate.axis[2]
-                     );
+            QString::asprintf( "ATOM   %4d  PB  UNK A%4d    %8.3f%8.3f%8.3f  1.00 10.00           PB  \n",
+                               i + 1, i + 1,
+                               (*model )[i].bead_coordinate.axis[0],
+                               (*model)[i].bead_coordinate.axis[1],
+                               (*model)[i].bead_coordinate.axis[2]
+                               );
       }
    }
 
@@ -11965,7 +11963,7 @@ int US_Saxs_Util::write_pdb_hydro( QString fname, vector < PDB_atom > *model )
         ++it 
         )
    {
-      QString cbase = QString("").sprintf("CONECT%5d",it->x + 1);
+      QString cbase = QString::asprintf( "CONECT%5d",it->x + 1 );
       QString out;
       QString tmp = "";
       unsigned int j = 0;
@@ -11975,7 +11973,7 @@ int US_Saxs_Util::write_pdb_hydro( QString fname, vector < PDB_atom > *model )
            ++itj
            )
       {
-         tmp += QString("").sprintf("%5d",itj->x + 1);
+         tmp += QString::asprintf( "%5d",itj->x + 1 );
          if ( !((j + 1) % 4) )
          {
             out += cbase + tmp + "\n";
@@ -12211,10 +12209,10 @@ int US_Saxs_Util::create_beads_hydro(QString *error_string, bool quiet)
                  && this_atom->resName != "DOD"
                  && this_atom->resName != "HOH" && (this_atom->altLoc == "A" || this_atom->altLoc == " ")))
             {
-               error_string->append(QString("").sprintf("unknown residue molecule %d atom %d name %s resname %s coord [%f,%f,%f]\n",
-                                                        j + 1, k, this_atom->name.toLatin1().data(),
-                                                        this_atom->resName.toLatin1().data(),
-                                                        this_atom->coordinate.axis[0], this_atom->coordinate.axis[1], this_atom->coordinate.axis[2]));
+               error_string->append(QString::asprintf( "unknown residue molecule %d atom %d name %s resname %s coord [%f,%f,%f]\n",
+                                                       j + 1, k, this_atom->name.toLatin1( ).data(),
+                                                       this_atom->resName.toLatin1().data(),
+                                                       this_atom->coordinate.axis[0], this_atom->coordinate.axis[1], this_atom->coordinate.axis[2]));
                return (US_SURFRACER_ERR_MISSING_RESIDUE);
             }
          } 
@@ -12298,10 +12296,10 @@ int US_Saxs_Util::create_beads_hydro(QString *error_string, bool quiet)
 
             if (atompos == -1)
             {
-               error_string->append(QString("").sprintf("unknown atom molecule %d atom %d name %s resname %s coord [%f,%f,%f]\n",
-                                                        j + 1, k, this_atom->name.toLatin1().data(),
-                                                        this_atom->resName.toLatin1().data(),
-                                                        this_atom->coordinate.axis[0], this_atom->coordinate.axis[1], this_atom->coordinate.axis[2]));
+               error_string->append(QString::asprintf( "unknown atom molecule %d atom %d name %s resname %s coord [%f,%f,%f]\n",
+                                                       j + 1, k, this_atom->name.toLatin1( ).data(),
+                                                       this_atom->resName.toLatin1().data(),
+                                                       this_atom->coordinate.axis[0], this_atom->coordinate.axis[1], this_atom->coordinate.axis[2]));
             } 
             else 
             {

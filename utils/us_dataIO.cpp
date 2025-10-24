@@ -6,6 +6,9 @@
 #include "us_util.h"
 #include "us_settings.h"
 
+// Static member definition
+const uint US_DataIO::format_version;
+
 // Return the count of readings points
 int US_DataIO::RawData::pointCount( )
 {

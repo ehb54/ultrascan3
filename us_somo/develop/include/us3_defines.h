@@ -4,12 +4,8 @@
 #define US3_DEFINES_H
 
 #include <QtGlobal>
-
-#if defined(Q_OS_WIN) 
-# define DEGREE_SYMBOL QString::fromLatin1( "\u00b0" )
-#else
-# define DEGREE_SYMBOL QString::fromStdWString( L"\u00b0" )
-#endif
+#include "../include/us_unicode.h"
+#define DEGREE_SYMBOL UNICODE_DEGREE
 
 //! Color Palettes for GUI elements QT4/QT3
 #if QT_VERSION >= 0x040000

@@ -155,11 +155,11 @@ void US_Hydrodyn_Saxs_Iqq_Residuals::add(
    log_difference_pcts          [pos].resize(min_len);
 
    double area = 0e0;
-   double log_area = 0e0;
+   // double log_area = 0e0;
    for ( unsigned int i = 0; i < targets[pos].size(); i++ )
    {
       area += fabs(targets[pos][i]);
-      log_area += fabs(log_targets[pos][i]);
+      // log_area += fabs(log_targets[pos][i]);
    }
    if ( targets[pos].size() )
    {
@@ -167,7 +167,7 @@ void US_Hydrodyn_Saxs_Iqq_Residuals::add(
    }
    if ( log_targets[pos].size() )
    {
-      log_area /= log_targets[pos].size();
+      // log_area /= log_targets[pos].size();
    }
 
    for ( unsigned int i = 0; i < targets[pos].size(); i++ )

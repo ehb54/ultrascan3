@@ -10,7 +10,7 @@
 
 
 US_LoadAUC::US_LoadAUC( bool local, QMap<QString,QString>& prot_det, QVector< US_DataIO::RawData >& rData,
-   QStringList& trips, QString& wdir ) : US_WidgetsDialog( 0, 0 ),
+   QStringList& trips, QString& wdir ) : US_WidgetsDialog( nullptr, Qt::WindowFlags() ),
    protocol_details( prot_det ),rawList( rData ), triples( trips ), workingDir( wdir )
 {
    int ddstate;
@@ -141,7 +141,7 @@ US_LoadAUC::US_LoadAUC( bool local, QMap<QString,QString>& prot_det, QVector< US
 }
 
 US_LoadAUC::US_LoadAUC( bool local, QString auto_mode, QVector< US_DataIO::RawData >& rData,
-   QStringList& trips, QString& wdir ) : US_WidgetsDialog( 0, 0 ),
+   QStringList& trips, QString& wdir ) : US_WidgetsDialog( nullptr, Qt::WindowFlags() ),
    rawList( rData ), triples( trips ), workingDir( wdir )
 {
    int ddstate;
@@ -269,7 +269,7 @@ US_LoadAUC::US_LoadAUC( bool local, QString auto_mode, QVector< US_DataIO::RawDa
 
 
 US_LoadAUC::US_LoadAUC( bool local, QVector< US_DataIO::RawData >& rData,
-   QStringList& trips, QString& wdir ) : US_WidgetsDialog( 0, 0 ),
+   QStringList& trips, QString& wdir ) : US_WidgetsDialog( nullptr, Qt::WindowFlags() ),
    rawList( rData ), triples( trips ), workingDir( wdir )
 {
    int ddstate;
@@ -471,7 +471,7 @@ qDebug() << "Ed:Ld: runID_sel" << runID_sel;
 		 QString masterPW = pw.getPasswd();
 		 US_DB2 db( masterPW );
 		 
-		 if ( db.lastErrno() != US_DB2::OK )
+		 if ( db.lastErrno() != IUS_DB2::OK )
 		   {
 		     QMessageBox::warning( this, tr( "Connection Problem" ),
 					   tr( "Assessing EditedData IDs: Could not connect to database \n" ) + db.lastError() );
@@ -723,7 +723,7 @@ qDebug() << "Ed:Ptree: sel_run" << sel_run;
       QStringList topItem;
       topItem << ddesc.runID
               << QString( ddesc.date ).section( " ", 0, 0 )
-              << QString().sprintf( "%6d", ddesc.DB_id )
+              << QString::asprintf( "%6d", ddesc.DB_id )
               << ddesc.label;
 
       if ( ! runIDs.contains( ddesc.runID ) )
@@ -902,7 +902,7 @@ int US_LoadAUC::scan_db()
    US_Passwd   pw;
    US_DB2      db( pw.getPasswd() );
 
-   if ( db.lastErrno() != US_DB2::OK )
+   if ( db.lastErrno() != IUS_DB2::OK )
    {
       QMessageBox::warning( this, tr( "Connection Problem" ),
         tr( "Could not connect to database\n" ) + db.lastError() );
@@ -1073,7 +1073,7 @@ int US_LoadAUC::scan_run_db()
    US_Passwd   pw;
    US_DB2      db( pw.getPasswd() );
 
-   if ( db.lastErrno() != US_DB2::OK )
+   if ( db.lastErrno() != IUS_DB2::OK )
    {
       QMessageBox::warning( this, tr( "Connection Problem" ),
         tr( "Could not connect to database\n" ) + db.lastError() );
@@ -1322,7 +1322,7 @@ void US_LoadAUC::load_db( QList< DataDesc >& sdescs )
    US_Passwd pw;
    US_DB2 db( pw.getPasswd() );
 
-   if ( db.lastErrno() != US_DB2::OK )
+   if ( db.lastErrno() != IUS_DB2::OK )
    {
       QMessageBox::warning( this, tr( "Connection Problem" ),
          tr( "Could not connect to database\n " ) + db.lastError() );
@@ -1368,7 +1368,7 @@ void US_LoadAUC::load_db( QList< DataDesc >& sdescs )
          db.readBlobFromDB( filename, "download_aucData", idRaw );
          int stat           = db.lastErrno();
 
-         if ( stat != US_DB2::OK )
+         if ( stat != IUS_DB2::OK )
          {
             nerr++;
             emsg += tr( "Error (%1) downloading to file %2\n" )

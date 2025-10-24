@@ -1003,8 +1003,8 @@ void US_AddResidue::add()
    {
       sum += (double)new_residue.r_bead[i].volume;
    }
-   QString cmp1 = QString("").sprintf("%7.2f", new_residue.molvol);
-   QString cmp2 = QString("").sprintf("%7.2f", sum);
+   QString cmp1 =  QString::asprintf( "%7.2f", new_residue.molvol ) ;
+   QString cmp2 =  QString::asprintf( "%7.2f", sum ) ;
 
    if ( cmp1 != cmp2 )
    {
@@ -1278,7 +1278,7 @@ void US_AddResidue::read_residue_file(const QString & filename)
             str2 = ts.readLine(); // read rest of line
             line_count++;
             new_residue.r_bead.push_back(new_bead);
-            //               str1.sprintf("Bead %d: defined", j+1);
+            //               str1 = QString::asprintf( "Bead %d: defined", j+1 );
             //               cmb_r_beads->addItem(str1);
          }
          calc_bead_mw(&new_residue);
@@ -1342,7 +1342,7 @@ void US_AddResidue::read_residue_file(const QString & filename)
             }
             residue_list.push_back(new_residue);
             if ( new_residue.type < 10 ) {
-               str1.sprintf("%d: ", i);
+               str1 = QString::asprintf( "%d: ", i );
                str1 += str3 + ", ";
                if (new_residue.comment.isEmpty())
                {
@@ -1538,7 +1538,7 @@ void US_AddResidue::update_numatoms(double val)
    cmb_r_atoms->clear( );
    for (unsigned int i=0; i<(unsigned int) val; i++)
    {
-      str.sprintf("Atom %d: (undefined)", i+1);
+      str = QString::asprintf( "Atom %d: (undefined)", i+1 );
       cmb_r_atoms->addItem(str);
    }
 }
@@ -1551,7 +1551,7 @@ void US_AddResidue::update_numbeads(double val)
    cmb_r_beads->clear( );
    for (unsigned int i=0; i<(unsigned int) val; i++)
    {
-      str.sprintf("Bead %d: (undefined)", i+1);
+      str = QString::asprintf( "Bead %d: (undefined)", i+1 );
       cmb_r_beads->addItem(str);
       new_residue.r_bead[i].color = 0;
       new_residue.r_bead[i].chain = 0;
@@ -1635,17 +1635,17 @@ void US_AddResidue::select_beadatom()
    if ( new_residue.r_bead[current_bead].atom_hydration == new_residue.r_bead[current_bead].atom_hydration2 &&
         new_residue.r_bead[current_bead].mw             == new_residue.r_bead[current_bead].mw2
         ) {
-      str.sprintf("%.0f",new_residue.r_bead[current_bead].atom_hydration);
+      str = QString::asprintf( "%.0f",new_residue.r_bead[current_bead].atom_hydration );
       cnt_hydration->setEnabled( true );
       cnt_hydration->setToolTip( "" );
-      str2.sprintf("%7.2f", new_residue.r_bead[current_bead].mw);
+      str2 = QString::asprintf( "%7.2f", new_residue.r_bead[current_bead].mw );
    } else {
       new_residue.r_bead[current_bead].hydration = new_residue.r_bead[current_bead].atom_hydration;
       cnt_hydration->setValue( new_residue.r_bead[current_bead].hydration );
-      str.sprintf("[pH 0]: %.0f   [pH 14]: %.0f ", new_residue.r_bead[current_bead].atom_hydration, new_residue.r_bead[current_bead].atom_hydration2);
+      str = QString::asprintf( "[pH 0]: %.0f   [pH 14]: %.0f ", new_residue.r_bead[current_bead].atom_hydration, new_residue.r_bead[current_bead].atom_hydration2 );
       cnt_hydration->setEnabled( false );
       cnt_hydration->setToolTip( us_tr( "Disabled because pKa values exist for at least one atom in this bead<br>" ) );
-      str2.sprintf("[pH 0]: %7.2f  [pH 14]: %7.2f", new_residue.r_bead[current_bead].mw, new_residue.r_bead[current_bead].mw2 );
+      str2 = QString::asprintf( "[pH 0]: %7.2f  [pH 14]: %7.2f", new_residue.r_bead[current_bead].mw, new_residue.r_bead[current_bead].mw2 );
    }
 
    le_bead_hydro_from_atom->setText(str);
@@ -1709,26 +1709,26 @@ void US_AddResidue::select_r_bead(int val)
       cmb_bead_color->setCurrentIndex(new_residue.r_bead[current_bead].color);
       cmb_placing->setCurrentIndex(new_residue.r_bead[current_bead].placing_method);
       cnt_hydration->setValue(new_residue.r_bead[current_bead].hydration);
-      str.sprintf("%7.2f", new_residue.r_bead[current_bead].volume);
+      str = QString::asprintf( "%7.2f", new_residue.r_bead[current_bead].volume );
       le_bead_volume->setText(str);
       calc_bead_mw(&new_residue);
       if ( enable_assign_hydration ) {
          // if ( new_residue.r_bead[current_bead].atom_hydration == new_residue.r_bead[current_bead].atom_hydration2 &&
          //      new_residue.r_bead[current_bead].mw             == new_residue.r_bead[current_bead].mw2
          // ) {
-         str.sprintf("%.0f",new_residue.r_bead[current_bead].atom_hydration);
+         str = QString::asprintf( "%.0f",new_residue.r_bead[current_bead].atom_hydration );
          cnt_hydration->setEnabled( true );
          cnt_hydration->setToolTip( "" );
          cb_hydration->setToolTip( "" );
-         str2.sprintf("%7.2f", new_residue.r_bead[current_bead].mw);
+         str2 = QString::asprintf( "%7.2f", new_residue.r_bead[current_bead].mw );
       } else {
          new_residue.r_bead[current_bead].hydration = new_residue.r_bead[current_bead].atom_hydration;
          cnt_hydration->setValue( new_residue.r_bead[current_bead].hydration );
-         str.sprintf("[pH 0]: %.0f   [pH 14]: %.0f ", new_residue.r_bead[current_bead].atom_hydration, new_residue.r_bead[current_bead].atom_hydration2);
+         str = QString::asprintf( "[pH 0]: %.0f   [pH 14]: %.0f ", new_residue.r_bead[current_bead].atom_hydration, new_residue.r_bead[current_bead].atom_hydration2 );
          cnt_hydration->setEnabled( false );
          cnt_hydration->setToolTip( us_tr( "Disabled because hydration or pKa values exist for at least one atom in this residue<br>" ) );
          cb_hydration->setToolTip( us_tr( "Disabled because hydration or pKa values exist for at least one atom in this residue<br>" ) );
-         str2.sprintf("[pH 0]: %7.2f  [pH 14]: %7.2f", new_residue.r_bead[current_bead].mw, new_residue.r_bead[current_bead].mw2 );
+         str2 = QString::asprintf( "[pH 0]: %7.2f  [pH 14]: %7.2f", new_residue.r_bead[current_bead].mw, new_residue.r_bead[current_bead].mw2 );
       }
       le_bead_hydro_from_atom->setText(str);
       le_bead_mw->setText(str2);
@@ -1746,11 +1746,11 @@ void US_AddResidue::select_r_bead(int val)
       // float radius2 = pow((h_volume2 * (3.0/(4.0*M_PI))), 1.0/3.0);
       // if ( h_volume == h_volume2 &&
       //      radius == radius2 ) {
-      //    str.sprintf("%7.2f A^3", h_volume );
-      //    str2.sprintf("%7.2f A", radius );
+      //    str = QString::asprintf( "%7.2f A^3", h_volume );
+      //    str2 = QString::asprintf( "%7.2f A", radius );
       // } else {
-      //    str.sprintf("[pH 0]: %7.2f A^3  [pH14]: %7.2f A^3", h_volume, h_volume2 );
-      //    str2.sprintf("[pH 0]: %7.2f A  [pH 14]: %7.2f A", radius, radius2 );
+      //    str = QString::asprintf( "[pH 0]: %7.2f A^3  [pH14]: %7.2f A^3", h_volume, h_volume2 );
+      //    str2 = QString::asprintf( "[pH 0]: %7.2f A  [pH 14]: %7.2f A", radius, radius2 );
       // }         
       // le_bead_hydrovol->setText(str);
       // le_bead_hydrorad->setText(str2);
@@ -1782,7 +1782,7 @@ void US_AddResidue::select_r_bead(int val)
    {
       if (new_residue.r_atom[i].bead_assignment == current_bead)
       {
-         str.sprintf("Atom %d: ", new_residue.r_atom[i].serial_number + 1);
+         str = QString::asprintf( "Atom %d: ", new_residue.r_atom[i].serial_number + 1 );
          str += new_residue.r_atom[i].name;
          if (new_residue.r_atom[i].positioner)
          {
@@ -1813,11 +1813,11 @@ void US_AddResidue::update_bead_hydrated_info() {
    if ( enable_assign_hydration ||
         ( h_volume == h_volume2 &&
           radius == radius2 ) ) {
-      str.sprintf("%7.2f A^3", h_volume );
-      str2.sprintf("%7.2f A", radius );
+      str = QString::asprintf( "%7.2f A^3", h_volume );
+      str2 = QString::asprintf( "%7.2f A", radius );
    } else {
-      str.sprintf("[pH 0]: %7.2f A^3  [pH14]: %7.2f A^3", h_volume, h_volume2 );
-      str2.sprintf("[pH 0]: %7.2f A  [pH 14]: %7.2f A", radius, radius2 );
+      str = QString::asprintf( "[pH 0]: %7.2f A^3  [pH14]: %7.2f A^3", h_volume, h_volume2 );
+      str2 = QString::asprintf( "[pH 0]: %7.2f A  [pH 14]: %7.2f A", radius, radius2 );
    }         
    le_bead_hydrovol->setText(str);
    le_bead_hydrorad->setText(str2);
@@ -1854,8 +1854,9 @@ void US_AddResidue::select_r_atom(int val)
 
       // pKa enabled
       {
+         // debug code preserved for future debugging needs
          // QTextStream( stdout ) <<
-         //    QString().sprintf(
+         //     QString::asprintf( 
          //                      "select_r_atom(%d):\n"
          //                      "\tnew_residue.r_atom[%d].ionization_index  %d\n"
          //                      "\tr_atom_0.size()                         %d\n"
@@ -1864,7 +1865,7 @@ void US_AddResidue::select_r_atom(int val)
          //                      ,val, new_residue.r_atom[val].ionization_index
          //                      ,(int)new_residue.r_atom_0.size()
          //                      ,(int)new_residue.r_atom_1.size()
-         //                      );
+         //                       ) ;
 
          int index = new_residue.r_atom[val].ionization_index;
          bool has_index = index > 0;
@@ -1901,11 +1902,12 @@ void US_AddResidue::select_residue(int val)
    cnt_numatoms->setValue(residue_list[val].r_atom.size());
    cnt_numbeads->setValue(residue_list[val].r_bead.size());
    cmb_type->setCurrentIndex(residue_list[val].type);
-   le_molvol->setText(str.sprintf("%7.2f", residue_list[val].molvol));
-   le_vbar->setText(str.sprintf("%5.3f", residue_list[val].vbar));
-   // le_vbar2->setText( residue_list[val].vbar2 != 0 ? str.sprintf("%5.3f", residue_list[val].vbar2 ) : QString( "" ) );
-   // le_pKa->setText( residue_list[val].pKa != 0 ? str.sprintf("%5.3f", residue_list[val].pKa) : QString( "" ) );
-   le_asa->setText(str.sprintf("%7.2f", residue_list[val].asa));
+   le_molvol->setText( QString::asprintf( "%7.2f", residue_list[val].molvol ) );
+   le_vbar->setText( QString::asprintf( "%5.3f", residue_list[val].vbar ) );
+   // le_vbar2 & le_pKa below may be used in future when we define more complex residues
+   // le_vbar2->setText( residue_list[val].vbar2 != 0 ? QString::asprintf("%5.3f", residue_list[val].vbar2 ) : QString( "" ) );
+   // le_pKa->setText( residue_list[val].pKa != 0 ? QString::asprintf("%5.3f", residue_list[val].pKa) : QString( "" ) );
+   le_asa->setText( QString::asprintf( "%7.2f", residue_list[val].asa ) );
    new_residue = residue_list[val];
 #if defined(DEBUG_RESIDUE)
    print_residue (new_residue);
@@ -2104,7 +2106,7 @@ void US_AddResidue::accept_residue()
       cmb_r_atoms->clear( );
       for (unsigned int i=0; i<new_residue.r_atom.size(); i++)
       {
-         str.sprintf("Atom %d: ", i + 1);
+         str = QString::asprintf( "Atom %d: ", i + 1 );
          str += new_residue.r_atom[i].name;
          if (new_residue.r_atom[i].positioner)
          {
@@ -2208,7 +2210,7 @@ void US_AddResidue::atom_continue()
    {
       for (unsigned int i=0; i<new_residue.r_bead.size(); i++)
       {
-         str.sprintf("Bead %d: defined", i + 1);
+         str = QString::asprintf( "Bead %d: defined", i + 1 );
          cmb_r_beads->addItem(str);
       }
    }
@@ -2216,7 +2218,7 @@ void US_AddResidue::atom_continue()
    {
       for (unsigned int i=0; i<new_residue.r_bead.size(); i++)
       {
-         str.sprintf("Bead %d: undefined", i + 1);
+         str = QString::asprintf( "Bead %d: undefined", i + 1 );
          cmb_r_beads->addItem(str);
       }
    }
@@ -2265,7 +2267,7 @@ void US_AddResidue::atom_continue()
      cmb_r_beads->clear( );
      for (unsigned int i=0; i<new_residue.r_bead.size(); i++)
      {
-     str.sprintf("Bead %d: defined", i + 1);
+     str = QString::asprintf( "Bead %d: defined", i + 1 );
      cmb_r_beads->addItem(str);
      }
      cmb_r_beads->setCurrentIndex(0);
@@ -2288,7 +2290,7 @@ void US_AddResidue::atom_continue()
      rb_backbone->setChecked( true );
      #endif
      }
-     str.sprintf("%f", new_residue.r_bead[0].volume);
+     str = QString::asprintf( "%f", new_residue.r_bead[0].volume );
      le_bead_volume->setText(str);
      for (unsigned int i=0; i<new_residue.r_atom.size(); i++)
      {
@@ -2320,7 +2322,7 @@ void US_AddResidue::accept_bead()
    }
    
    QString str;
-   str.sprintf("Bead %d: defined", current_bead + 1);
+   str = QString::asprintf( "Bead %d: defined", current_bead + 1 );
    cmb_r_beads->setItemText( current_bead,str);
    bool flag = true;
    for (int i=0; i<cmb_r_beads->count(); i++)
@@ -2391,7 +2393,7 @@ void US_AddResidue::accept_atom()
    new_residue.r_atom[current_item1].serial_number       = current_item1;
    new_residue.r_atom[current_item1].positioner          = cb_positioning->isChecked(); // position_flag;
 
-   str.sprintf(qPrintable("Atom %d: " + atom_list[current_item2].name), current_item1+1);
+   str = QString::asprintf( qPrintable("Atom %d: " + atom_list[current_item2].name), current_item1+1 );
    str += " (" + new_residue.r_atom[current_item1].hybrid.name + ", Positioning: ";
    if (new_residue.r_atom[current_item1].positioner)
    {
@@ -2431,7 +2433,7 @@ void US_AddResidue::info_residue( const QString & msg ) {
    TSO << new_residue.comment << Qt::endl;
    TSO << new_residue.name.toUpper()
        << "\t" << new_residue.type
-       << "\t" << QString().sprintf("%7.2f", new_residue.molvol)
+       << "\t" <<  QString::asprintf( "%7.2f", new_residue.molvol ) 
        << "\t" << new_residue.asa
        << "\t" << new_residue.r_atom.size()
        << "\t" << new_residue.r_bead.size()
@@ -2862,7 +2864,7 @@ void US_AddResidue::write_residue_file()
          ts << residue_list[i].comment << Qt::endl;
          ts << residue_list[i].name.toUpper()
             << "\t" << residue_list[i].type
-            << "\t" << str1.sprintf("%7.2f", residue_list[i].molvol)
+            << "\t" << QString::asprintf("%7.2f", residue_list[i].molvol)
             << "\t" << residue_list[i].asa
             << "\t" << residue_list[i].r_atom.size()
             << "\t" << residue_list[i].r_bead.size()
@@ -2911,7 +2913,7 @@ void US_AddResidue::write_residue_file()
                << "\t" << residue_list[i].r_bead[j].chain
                << "\t" << residue_list[i].r_bead[j].volume << Qt::endl;
          }
-         str1.sprintf("%d: ", i+1);
+         str1 = QString::asprintf( "%d: ", i+1 );
 
          QString str3 ;
          switch (residue_list[i].type)
@@ -2967,7 +2969,7 @@ void US_AddResidue::write_residue_file()
                break;
             }
          }
-         str1.sprintf("%d: ", i + 1);
+         str1 = QString::asprintf( "%d: ", i + 1 );
          str1 += str3 + ", ";
          if (residue_list[i].comment.isEmpty())
          {

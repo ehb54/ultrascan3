@@ -15,7 +15,7 @@
 // Main constructor with flags for edit, latest-edit and local-data
 
 US_SelectEdits::US_SelectEdits( bool dbase, QStringList& edIDs )
- : US_WidgetsDialog( 0, 0 ), editIDs( edIDs )
+ : US_WidgetsDialog( nullptr, Qt::WindowFlags() ), editIDs( edIDs )
 {
    sel_db        = dbase;
 

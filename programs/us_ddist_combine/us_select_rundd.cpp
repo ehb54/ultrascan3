@@ -16,7 +16,7 @@
 // Main constructor with flags for select-runID dialog
 
 US_SelectRunDD::US_SelectRunDD( bool dbase, QStringList& runIDs,
-   QStringList& mdescrs ) : US_WidgetsDialog( 0, 0 ),
+   QStringList& mdescrs ) : US_WidgetsDialog( nullptr, Qt::WindowFlags() ),
    runIDs( runIDs ), mDescrs( mdescrs )
 {
    sel_db        = dbase;
@@ -97,7 +97,7 @@ DbgLv(1) << "SE:sel_db" << sel_db;
    // Status Row
    QFontMetrics fm( font );
    int fhigh = fm.lineSpacing();
-   int fwide = fm.width( QChar( '6' ) );
+   int fwide = fm.horizontalAdvance( QChar( '6' ) );
    int lhigh = fhigh * 4 + 12;
    int lwide = fwide * 32;
 
@@ -268,8 +268,8 @@ void US_SelectRunDD::scan_dbase_runs()
 
    QStringList  query;
    QString invID    = QString::number( US_Settings::us_inv_ID() );
-QTime timer;
-timer.start();
+   QElapsedTimer timer;
+   timer.start();
 
    // Scan experiments. getting run and experiment IDs
    query.clear();
@@ -302,8 +302,8 @@ DbgLv(1) << "ScDB:scan time(9)" << timer.elapsed();
 // Scan local disk for edit sets
 void US_SelectRunDD::scan_local_runs( void )
 {
-QTime timer;
-timer.start();
+   QElapsedTimer timer;
+   timer.start();
    mRDates.clear();
    QMap< QString, QString > ddmap;
    QStringList mEdtIDs;
@@ -361,7 +361,7 @@ timer.start();
                      int niters    = attr.value( "MCIteration" ).toString()
                                                                 .toInt();
                      mdesc         = QString( mdesc ).left( kk ) +
-                                     QString().sprintf( "_mcN%03d", niters ) +
+                                     QString::asprintf( "_mcN%03d", niters ) +
                                      QString( mdesc ).mid( kk + 7 );
                   }
                }
@@ -579,8 +579,8 @@ DbgLv(1) << "ScMd: UNASSGN:  ++USED++";
    }
 DbgLv(1) << "ScMd: runid UNASGN editId 1   nmodel" << nmodel;
 
-QTime timer;
-timer.start();
+   QElapsedTimer timer;
+   timer.start();
    // Accumulate model information for runs present
    for ( int rr = 0; rr < runIDs.count(); rr++ )
    {
@@ -743,8 +743,8 @@ void US_SelectRunDD::count_models()
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
    te_status->setText( tr( "Scanning runs for model counts..." ) );
    qApp->processEvents();
-QTime timer;
-timer.start();
+   QElapsedTimer timer;
+   timer.start();
 
    // Build run edit and run model counts lists
    for ( int rr = 0; rr < runIDs.count(); rr++ )
@@ -834,7 +834,7 @@ void US_SelectRunDD::sort_rlabels( const QStringList rlabs )
    }
 
    // Sort combined values into date order
-   qSort( svals );
+   std::sort( svals.begin(), svals.end() );
 
    for ( int ii = svals.count() - 1; ii >= 0; ii-- )
    {  // Create the sorted labels list (reverse date order)

@@ -118,7 +118,7 @@ QString US_FFD::list_fifj( set < QString > filter ) {
          it != fifj_map.end();
          ++it ) {
       if ( !filter.size()
-#warning list_fifj filter not properly set
+           // #warning list_fifj filter not properly set
            // || filter.count( it->first )
            ) {
 
@@ -184,7 +184,7 @@ bool US_FFD::init_fifj() {
 
    fifj_map.clear();
 
-#warning .c is wrong here, needs eV term subtracted
+   // #warning .c is wrong here, needs eV term subtracted
 
 #if defined( FFD_REMOVE_DUP_B )
    int terms_removed = 0;
@@ -333,7 +333,7 @@ bool US_FFD::test() {
 }
 
 ftype US_FFD::calc_I( const QString & name, ftype q ) {
-#warning .c is wrong here, needs eV term subtracted
+   // #warning .c is wrong here, needs eV term subtracted
    if ( saxs_coeff_map.count( name ) ) {
       ftype result = saxs_coeff_map[ name ].c;
       ftype mqq = - q * q;
@@ -370,7 +370,7 @@ void US_FFD::test_resize_saxs_coeff( int size, ftype val ) {
 
       
 bool US_FFD::calc_fq() {
-#warning .c is wrong here, needs eV term subtracted
+   // #warning .c is wrong here, needs eV term subtracted
 
    if ( !saxs_coeff_map.size() ) {
       errormsg = "US_FFD:calc_fq() : saxs_coeff_map is empty";
@@ -410,7 +410,7 @@ bool US_FFD::calc_fq() {
 }
    
 bool US_FFD::calc_fifjq() {
-#warning .c is wrong here, needs eV term subtracted
+   // #warning .c is wrong here, needs eV term subtracted
 
    if ( !saxs_coeff_map.size() ) {
       errormsg = "US_FFD:calc_fq() : saxs_coeff_map is empty";

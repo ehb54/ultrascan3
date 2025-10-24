@@ -13,7 +13,7 @@
 //
 
 // Fetch an extinction profile from the database
-int US_ExtProfile::fetch_eprofile( US_DB2* dbP, const int compID,
+int US_ExtProfile::fetch_eprofile( IUS_DB2* dbP, const int compID,
       QString& compType, QString& valType, QMap< double, double >& extinction )
 {
    int profileID    = -1;    // Default (error) profile ID
@@ -26,7 +26,7 @@ int US_ExtProfile::fetch_eprofile( US_DB2* dbP, const int compID,
    qry << "get_eprofile" << QString::number( compID ) << compType;
    dbP->query( qry );        // DB query to get a profile of given ID,type
 
-   if ( dbP->lastErrno() != US_DB2::OK )
+   if ( dbP->lastErrno() != IUS_DB2::OK )
       return profileID;
 
    dbP->next();              // Read a single record
@@ -106,7 +106,7 @@ bool US_ExtProfile::parse_eprofile( QString& epxml, int* compID,
 }
 
 // Create a new extinction profile in the database
-int US_ExtProfile::create_eprofile( US_DB2* dbP, const int compID,
+int US_ExtProfile::create_eprofile( IUS_DB2* dbP, const int compID,
       QString& compType, QString& valueType,
       QMap< double, double >& extinction )
 {
@@ -194,7 +194,7 @@ bool US_ExtProfile::xml_eprofile( const int compID, QString& compType,
 }
 
 // Update an existing extinction profile in the database
-bool US_ExtProfile::update_eprofile( US_DB2* dbP, const int profileID,
+bool US_ExtProfile::update_eprofile( IUS_DB2* dbP, const int profileID,
       const int compID, QString& compType, QString& valueType,
       QMap< double, double >& extinction )
 {
@@ -209,20 +209,20 @@ bool US_ExtProfile::update_eprofile( US_DB2* dbP, const int profileID,
    qry << "update_eprofile" << QString::number( profileID )
        << QString::number( compID ) << compType << valueType << epxml;
    dbP->statusQuery( qry );
-   bool update_ok   = ( dbP->lastErrno() == US_DB2::OK );
+   bool update_ok   = ( dbP->lastErrno() == IUS_DB2::OK );
 
    return update_ok;
 }
 
 // Delete an existing extinction profile from the database
-bool US_ExtProfile::delete_eprofile( US_DB2* dbP, const int compID,
+bool US_ExtProfile::delete_eprofile( IUS_DB2* dbP, const int compID,
       QString& compType )
 {
    QStringList qry;
    qry.clear();
    qry << "delete_eprofile" << QString::number( compID ) << compType;
    dbP->statusQuery( qry );
-   bool delete_ok   = ( dbP->lastErrno() == US_DB2::OK );
+   bool delete_ok   = ( dbP->lastErrno() == IUS_DB2::OK );
 
    return delete_ok;
 }

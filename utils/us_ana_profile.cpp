@@ -1,7 +1,6 @@
 //! \file us_ana_profile.cpp
 #include "us_ana_profile.h"
 #include "us_constants.h"
-#include "us_settings.h"
 #include "us_util.h"
 
 #ifndef _TR_
@@ -37,6 +36,7 @@ US_AnaProfile::US_AnaProfile()
 
    scan_excl_begin << 0;
    scan_excl_end   << 0;
+   scan_excl_nth   << 1;
 
    replicates  << 0;
 
@@ -125,19 +125,19 @@ US_AnaProfile::US_AnaProfile()
                "[{"
                   "\"Envelope Gaussian Sigma\":  \"0.01\","
                   "\"Plot X Minimum\":   \"0\","
-                  "\"Plot X Maximum\":    \"0.000002\""
+                  "\"Plot X Maximum\":    \"20\""
                 "}],"
       "\"D,2DSA-MC\":"
                "[{"
                   "\"Envelope Gaussian Sigma\":  \"0.01\","
                   "\"Plot X Minimum\":   \"0\","
-                  "\"Plot X Maximum\":    \"0.000002\""
+                  "\"Plot X Maximum\":    \"20\""
                 "}],"
       "\"D,PCSA\":"
                "[{"
                   "\"Envelope Gaussian Sigma\":  \"0.01\","
                   "\"Plot X Minimum\":   \"0\","
-                  "\"Plot X Maximum\":    \"0.000002\""
+                  "\"Plot X Maximum\":    \"20\""
                 "}],"
       "\"f/f0,2DSA-IT\":"
                "[{"
@@ -161,19 +161,19 @@ US_AnaProfile::US_AnaProfile()
                "[{"
                   "\"Envelope Gaussian Sigma\":  \"0.01\","
                   "\"Plot X Minimum\":   \"0\","
-                  "\"Plot X Maximum\":    \"100000\""
+                  "\"Plot X Maximum\":    \"100\""
                 "}],"
       "\"MW,2DSA-MC\":"
                "[{"
                   "\"Envelope Gaussian Sigma\":  \"0.01\","
                   "\"Plot X Minimum\":   \"1\","
-                  "\"Plot X Maximum\":    \"100000\""
+                  "\"Plot X Maximum\":    \"100\""
                 "}],"
       "\"MW,PCSA\":"
                "[{"
                   "\"Envelope Gaussian Sigma\":  \"0.01\","
                   "\"Plot X Minimum\":   \"1\","
-                  "\"Plot X Maximum\":    \"100000\""
+                  "\"Plot X Maximum\":    \"100\""
                 "}],"
       "\"Radius,raw\":"
                "[{"
@@ -221,6 +221,7 @@ bool US_AnaProfile::operator== ( const US_AnaProfile& ap ) const
 
   if ( scan_excl_begin  != ap.scan_excl_begin  )  return false;
   if ( scan_excl_end    != ap.scan_excl_end    )  return false;
+  if ( scan_excl_nth    != ap.scan_excl_nth    )  return false;
   
   if ( analysis_run    != ap.analysis_run  )  return false;
   if ( report_run      != ap.report_run    )  return false;
@@ -291,19 +292,21 @@ bool US_AnaProfile::toXml( QXmlStreamWriter& xmlo )
    //     qDebug() << "analysis_run: " << i << analysis_run[ i ];
    //   }
 
-   qDebug() << "Size: pchans(), chndescs.size(),  scan_excl_begin.size(), scan_excl_end.size()  -- "
+   qDebug() << "Size: pchans(), chndescs.size(),  scan_excl_begin.size(), scan_excl_end.size(), scan_excl_nth.size()  -- "
 	    << pchans.count()
 	    << chndescs.size()
 	    << scan_excl_begin.size()
 	    << scan_excl_end.size()
+	    << scan_excl_nth.size()
      ;
    
    for ( int ii = 0; ii < pchans.count(); ii++ )
      {
-        qDebug() << "In toXML AProfile: Ch_desc, scan_beg, scan_end -- "
+        qDebug() << "In toXML AProfile: Ch_desc, scan_beg, scan_end, scan_nth -- "
 		 << chndescs[ ii ]
 		 << scan_excl_begin[ ii ]
-		 << scan_excl_end[ ii ];
+		 << scan_excl_end[ ii ]
+		 << scan_excl_nth[ ii ];
      }
    //END of DEBUG
 
@@ -396,6 +399,7 @@ bool US_AnaProfile::toXml( QXmlStreamWriter& xmlo )
      //scan exclusions: ATTENTION -- Now use kk index, as for all other attributes
      xmlo.writeAttribute    ( "scan_excl_begin", QString::number( scan_excl_begin[ kk ] )    );
      xmlo.writeAttribute    ( "scan_excl_end",   QString::number( scan_excl_end[ kk ] ) );
+     xmlo.writeAttribute    ( "scan_excl_nth",   QString::number( scan_excl_nth[ kk ] ) );
 
      xmlo.writeAttribute    ( "replicate_group",       QString::number( replicates[ kk ] )    );
 
@@ -465,6 +469,7 @@ bool US_AnaProfile::fromXml( QXmlStreamReader& xmli )
 
    scan_excl_begin.clear(); 
    scan_excl_end.  clear();
+   scan_excl_nth.  clear();
 
    replicates. clear();
    replicates_to_channdesc_main. clear();
@@ -571,7 +576,11 @@ bool US_AnaProfile::fromXml( QXmlStreamReader& xmli )
 	      scan_excl_end   <<  attr.value( "scan_excl_end" )  .toString().toInt();
 	    else
 	      scan_excl_end   << 0;
-
+	    if ( attr.hasAttribute("scan_excl_nth") )
+	      scan_excl_nth   <<  attr.value( "scan_excl_nth" )  .toString().toInt();
+	    else
+	      scan_excl_nth   << 0;
+	    
 	    if (  attr.hasAttribute ("replicate_group") )
 	      replicates << attr.value( "replicate_group" )  .toString().toInt();
 	    else
@@ -674,6 +683,8 @@ bool US_AnaProfile::AnaProf2DSA::fromXml( QXmlStreamReader& xmli )
             QString chan   = attr.value( "channel" ).toString();
             QString vvflag = attr.value( "vary_vbar" ).toString();
             QString cgrid  = attr.value( "custom_grid_guid" ).toString();
+	    QString cgrid_n = attr.value( "custom_grid_name" ).toString();
+	    int cgrid_i    = attr.value( "CG_modelID" ).toString().toInt();
             double smin    = attr.value( "s_min" ).toString().toDouble();
             double smax    = attr.value( "s_max" ).toString().toDouble();
             int sgpts      = attr.value( "s_gridpoints" ).toString().toInt();
@@ -690,7 +701,8 @@ bool US_AnaProfile::AnaProf2DSA::fromXml( QXmlStreamReader& xmli )
             parm1.k_grpts    = kgpts;
             parm1.gridreps   = grreps;
             parm1.cust_grid  = cgrid;
-            parm1.cgrid_name = "";
+            parm1.cgrid_name = cgrid_n;
+	    parm1.cust_id    = cgrid_i;
             parm1.varyvbar   = US_Util::bool_flag( vvflag );
             parm1.have_custg = ( ! cgrid.isEmpty()  &&
                                  cgrid.length() == 36 );
@@ -841,6 +853,12 @@ bool US_AnaProfile::AnaProf2DSA::toXml( QXmlStreamWriter& xmlo )
                                                     parms[ ii ].ff0_const ) );
       xmlo.writeAttribute   ( "custom_grid_guid",   parms[ ii ].cust_grid );
 
+      QString m_cg_id = (parms[ ii ].cust_id > 0) ?
+	QString::number( parms[ ii ].cust_id ) : "";  
+      xmlo.writeAttribute   ( "CG_modelID", m_cg_id );
+
+      xmlo.writeAttribute   ( "custom_grid_name",   parms[ ii ].cgrid_name );
+
       xmlo.writeEndElement  (); // channel_parms
    }
    xmlo.writeStartElement( "job_2dsa" );
@@ -950,6 +968,7 @@ US_AnaProfile::AnaProf2DSA::Parm2DSA::Parm2DSA()
    channel    = "1A";
    cust_grid  = "";
    cgrid_name = "";
+   cust_id    = -1;
 }
 
 // AnaProf2DSA::Parm2DSA subclass Equality operator
@@ -973,7 +992,11 @@ bool US_AnaProfile::AnaProf2DSA::Parm2DSA::operator==
   if ( varyvbar  != p.varyvbar )  return false;
   
   if ( channel  != p.channel    ) return false;
-    
+
+  //also, compare in case of CG
+  if ( cust_grid != p.cust_grid ) return false;
+  if ( cgrid_name != p.cgrid_name ) return false;
+     
   return true;
 }
 

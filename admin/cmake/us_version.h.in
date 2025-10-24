@@ -1,0 +1,34 @@
+#ifndef US_VERSION_H
+#define US_VERSION_H
+
+// Auto-generated version information
+#define US3_VERSION_MAJOR @US3_VERSION_MAJOR@
+#define US3_VERSION_MINOR @US3_VERSION_MINOR@
+#define US3_VERSION_PATCH @US3_VERSION_PATCH@
+#define US3_VERSION_STRING "@US3_VERSION_STRING@"
+
+// Git information
+#define US3_GIT_COMMIT_HASH "@US3_GIT_COMMIT_HASH@"
+#define US3_GIT_BRANCH "@US3_GIT_BRANCH@"
+#define US3_GIT_TAG "@US3_GIT_TAG@"
+#define US3_BUILD_NUMBER @US3_BUILD_NUMBER@
+
+// Build information
+#define US3_BUILD_TYPE "@CMAKE_BUILD_TYPE@"
+#define US3_BUILD_TIMESTAMP "@BUILD_TIMESTAMP@"
+
+// Platform detection
+#if defined(_WIN32) || defined(_WIN64)
+    #define US3_PLATFORM "Windows"
+#elif defined(__APPLE__)
+    #define US3_PLATFORM "macOS"
+#elif defined(__linux__)
+    #define US3_PLATFORM "Linux"
+#else
+    #define US3_PLATFORM "Unknown"
+#endif
+
+// Legacy compatibility - this is what the old code expects
+#define REVISION "@US3_BUILD_NUMBER@"
+
+#endif // US_VERSION_H

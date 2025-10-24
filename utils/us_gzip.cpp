@@ -1608,7 +1608,7 @@ ulg US_Gzip::updcrc( uch* s, unsigned n )
 //uch *s;                 /* pointer to bytes to pump through */
 //unsigned n;             /* number of bytes in s[] */
 {
-  ulg c;                  /* temporary variable */
+  ulg c;         /* temporary variable */
 
   static ulg crc_internal = (ulg) 0xffffffffL; /* shift register contents */
 
@@ -1764,7 +1764,7 @@ off_t US_Gzip::deflate( void )
     IPos              prev_match;                          /* previous match */
     int               flush;         /* set if current block must be flushed */
     int               match_available = 0;   /* set if previous match exists */
-    unsigned match_length = MIN_MATCH - 1;  /* length of best match */
+    unsigned          match_length = MIN_MATCH - 1;  /* length of best match */
 
     /* Process the input block. */
     while ( lookahead != 0 ) 

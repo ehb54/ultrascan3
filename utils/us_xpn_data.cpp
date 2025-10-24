@@ -2518,7 +2518,8 @@ DbgLv(1) << "expA: ntrips" << ntrips << "ktnodes" << trnodes.count();
 #if 0
       QString trnode    = QString::number( rdata->cell ) + "." +
                           QString( rdata->channel ) + "." +
-                          QString::number( qRound( rdata->scanData[ 0 ].wavelength ) ).rightJustified( 3, '0' );
+                          QString::asprintf( "%03d",
+                                qRound( rdata->scanData[ 0 ].wavelength ) );
 #endif
       QString trnode    = trnodes[ ii ];
 //DbgLv(1) << "expA: ii" << ii << "triples[ii]" << triples[ii]
@@ -2895,7 +2896,8 @@ DbgLv(1) << "expA: ntrips" << ntrips << "ktnodes" << trnodes.count();
 #if 0
       QString trnode    = QString::number( rdata->cell ) + "." +
                           QString( rdata->channel ) + "." +
-                          QString::number( qRound( rdata->scanData[ 0 ].wavelength ) ).rightJustified( 3, '0' );
+                          QString::asprintf( "%03d",
+                                qRound( rdata->scanData[ 0 ].wavelength ) );
 #endif
       QString trnode    = trnodes[ ii ];
 //DbgLv(1) << "expA: ii" << ii << "triples[ii]" << triples[ii]
@@ -3995,9 +3997,8 @@ DbgLv(1) << "XpDa:b_i:   csdrec count" << sdknt;
       QString cechn = scell + " / " + schan;
       QString tripl = cechn + " / " + swavl;
       QString tnode = scell + "." + schan + "." + swavl;
-      QString darec = tnode + "." + QString( "%1.%2" )
-                                       .arg( stage , 5, 10, QChar( '0' ) )
-                                       .arg( scnnbr, 5, 10, QChar( '0' ) );
+      QString darec = tnode + "."
+                    + QString::asprintf( "%05i.%05i", stage, scnnbr );
 DbgLv(1) << "XpDa:b_i: ii" << ii << "schan cechn"
  << schan << cechn << "darec" << darec
  << "rad0 rad1" << csdrec.rads->at(0) << csdrec.rads->at(1);
@@ -4207,9 +4208,8 @@ DbgLv(1) << "XpDa:rb_i:   csdrec count" << sdknt << "nscno" << nscno << "nstgo" 
       // QString tripl = cechn + " / " + swavl;
       QString tnode = scell + "." + schan + "." + swavl;
 
-      QString darec = tnode + "." + QString( "%1.%2" )
-                                       .arg( stage , 5, 10, QChar( '0' ) )
-                                       .arg( scnnbr, 5, 10, QChar( '0' ) );
+      QString darec = tnode + "."
+                    + QString::asprintf( "%05i.%05i", stage, scnnbr );
 DbgLv(1) << "XpDa:b_i: ii" << ii << "scnnbr" << scnnbr
  << "darec" << darec;
 

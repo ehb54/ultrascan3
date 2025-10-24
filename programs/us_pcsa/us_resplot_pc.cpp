@@ -15,7 +15,7 @@
 
 // constructor:  residuals plot widget
 US_ResidPlotPc::US_ResidPlotPc( QWidget* parent )
-   : US_WidgetsDialog( parent, 0 )
+   : US_WidgetsDialog( parent, Qt::WindowFlags() )
 {
    // lay out the GUI
    setObjectName( "US_ResidPlotPc" );

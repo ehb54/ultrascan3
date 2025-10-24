@@ -2119,8 +2119,7 @@ DbgLv(1) << "WrDa: maxnvl" << maxnvl << "nplots" << nplots;
 
          // Get and add raw data to line
          if ( jj < xvals->size() )
-            line       += QString().sprintf(
-                             valfmt, xvals->at( jj ), yvals->at( jj ) ) + ",";
+            line       += QString::asprintf( valfmt, xvals->at( jj ), yvals->at( jj ) ) + ",";
          else
             line       += dummy_pair;
 
@@ -2129,14 +2128,14 @@ DbgLv(1) << "WrDa: maxnvl" << maxnvl << "nplots" << nplots;
 
       // Now add X for envelopes and the Y's for each plot
       if ( jj < nenvvl )
-         line       += QString().sprintf( valfmx, xenvs[ jj ] ) + ",";
+         line       += QString::asprintf( valfmx, xenvs[ jj ] ) + ",";
       else
          line       += dummy_valu + ",";
 
       for ( int ii = 0; ii < nplots; ii++ )
       {
          if ( jj < nenvvl )
-            line       += QString().sprintf( valfmy, peyvals[ ii ][ jj ] );
+            line       += QString::asprintf( valfmy, peyvals[ ii ][ jj ] );
          else
             line       += dummy_valu;
 
@@ -2171,7 +2170,7 @@ DbgLv(1) << "WrDa: maxnvl" << maxnvl << "nplots" << nplots;
 
 // Save report documents from files
 int US_DDistr_Combine::reportDocsFromFiles( QString& runID, QString& fdir,
-   QStringList& files, US_DB2* db, int& idEdit, QString& trdesc )
+   QStringList& files, IUS_DB2* db, int& idEdit, QString& trdesc )
 {
  DbgLv(1) << "rDFF: runID fdir files0" << runID << fdir << files[0];
  DbgLv(1) << "rDFF:  idEdit trdesc" << idEdit << trdesc;
@@ -2316,7 +2315,7 @@ void US_DDistr_Combine::update_distros()
       distros << dd;
    }
 
-   qSort( distros );
+   std::sort( distros.begin(), distros.end() );
 
    return;
 }

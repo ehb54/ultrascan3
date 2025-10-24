@@ -7,6 +7,7 @@
 #define US_TIMER_H
 
 #include "us_extern.h"
+#include <QElapsedTimer>
 
 using namespace std;
 
@@ -35,7 +36,7 @@ public:
      *
      * @param name The name of the timer to initialize.
      */
-    void init_timer(QString name);
+    void init_timer(const QString& name);
 
     /**
      * @brief Starts a timer with a given name.
@@ -43,7 +44,7 @@ public:
      * @param name The name of the timer to start.
      * @return True if the timer was successfully started, false otherwise.
      */
-    bool start_timer(QString name);
+    bool start_timer(const QString& name);
 
     /**
      * @brief Ends a timer with a given name.
@@ -51,7 +52,7 @@ public:
      * @param name The name of the timer to end.
      * @return True if the timer was successfully ended, false otherwise.
      */
-    bool end_timer(QString name);
+    bool end_timer(const QString& name);
 
     /**
      * @brief Lists the time recorded by a specific timer.
@@ -59,7 +60,7 @@ public:
      * @param name The name of the timer to list the time for.
      * @return The recorded time as a QString.
      */
-    QString list_time(QString name);
+    QString list_time(const QString& name);
 
     /**
      * @brief Lists the times recorded by all timers.

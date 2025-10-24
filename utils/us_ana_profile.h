@@ -31,6 +31,7 @@ public:
             QString channel;    //!< Channel identifier
             QString cust_grid;  //!< Custom grid
             QString cgrid_name; //!< Custom grid name
+	    int cust_id;
 
             //! Constructor for Parm2DSA
             Parm2DSA();
@@ -198,7 +199,8 @@ public:
 
     QList<int> scan_excl_begin;     //!< Scan exclusion begin
     QList<int> scan_excl_end;       //!< Scan exclusion end
-
+    QList<int> scan_excl_nth;       
+    
     QList<int> analysis_run;        //!< Analysis run
     QList<int> report_run;          //!< Report run
     QList<int> wvl_edit;            //!< Wavelength edit

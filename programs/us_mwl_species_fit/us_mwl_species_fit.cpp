@@ -162,6 +162,23 @@ DbgLv(1) << "  irow" << irow << "icol" << icol;
 
        //iterate over triples in lw_triples
        qDebug() << "lw_triples->count() -- " << lw_triples->count();
+
+       //pass ranges from reportItems
+       protocol_details_p["channels_to_radial_ranges"] = this->protocol_details[ "channels_to_radial_ranges" ];
+       protocol_details_p[ "directory_for_gmp" ] = this->protocol_details[ "directory_for_gmp" ];
+
+       //Identify channels to analyse
+       QStringList channels_to_analyse;
+       QString chann_to_analyse_str = protocol_details_p["channels_to_radial_ranges"];
+       QStringList chann_to_analyse_list = chann_to_analyse_str.split(";");
+       for (int i=0; i<chann_to_analyse_list.size(); ++i)
+	  {
+	    QString chann_nn = chann_to_analyse_list[i].split(":")[0];
+	    channels_to_analyse << chann_nn;
+	  }
+       qDebug() << "MWL_species_fit: channels to analyse -- " << channels_to_analyse;
+		
+       
        rmsd_for_gmp. clear();
        for( int i=0; i< lw_triples->count(); ++i )
 	 {
@@ -170,7 +187,16 @@ DbgLv(1) << "  irow" << irow << "icol" << icol;
 	   QString triple_text = lw_triples->item(i)->text();
 	   QStringList t_list = triple_text.split(" / ");
 	   triple_text = t_list[0] + " / " + t_list[1];
-	   qDebug() << "Processing chanel -- " << triple_text;
+	   QString triple_text_1 = t_list[0] + t_list[1];
+	   qDebug() << "Processing chanel: triple_text , triple_text_1 -- "
+		    << triple_text << ", " << triple_text_1;
+
+	   //
+	   if( !channels_to_analyse.contains( triple_text_1 ) )
+	     {
+	       qDebug() << "Channel " << triple_text_1 << " will NOT be analysed!";
+	       continue;
+	     }
 
 	   if ( this->protocol_details["abde_etype"] == "MWL" )
 	     {
@@ -184,9 +210,9 @@ DbgLv(1) << "  irow" << irow << "icol" << icol;
 	       protocol_details_p["ssf_dir_name"] = this->protocol_details["ssf_dir_name"];
 	     }
 	   
-	   //pass ranges from reportItems
-	   protocol_details_p["channels_to_radial_ranges"] = this->protocol_details[ "channels_to_radial_ranges" ];
-	   protocol_details_p[ "directory_for_gmp" ] = this->protocol_details[ "directory_for_gmp" ];
+	   // //pass ranges from reportItems
+	   // protocol_details_p["channels_to_radial_ranges"] = this->protocol_details[ "channels_to_radial_ranges" ];
+	   // protocol_details_p[ "directory_for_gmp" ] = this->protocol_details[ "directory_for_gmp" ];
 	 }
        rmsd_for_gmp.chop(1);
        protocol_details_p[ "rmsds_for_gmp" ] = rmsd_for_gmp;
@@ -468,8 +494,8 @@ DbgLv(1) << "PlotData1: jspec" << jspec << "have" << have_p1[jspec];
 DbgLv(1) << "PlotData1:  jspec ispec" << jspec << ispec;
    US_DataIO::RawData*     rdata = &synData[ jspec ];
 //   US_DataIO::EditedData*  edata = &dataList[ tripx ];
-   QString str_wl = QString().sprintf( "%03i", ispec );
-   QString str_ce = QString().sprintf( "%d", rdata->cell );
+   QString str_wl = QString::asprintf( "%03i", ispec );
+   QString str_ce = QString::asprintf( "%d", rdata->cell );
 
    QString                                  dataType = tr( "Absorbance" );
    if ( strcmp( rdata->type, "RI" ) == 0 )  dataType = tr( "Intensity" );
@@ -564,8 +590,12 @@ void US_MwlSpeciesFit::view( void )
    {
       te_results = new US_Editor( US_Editor::DEFAULT, true, QString(), this );
       te_results->resize( 600, 700 );
-      QPoint p = g.global_position();
-      te_results->move( p.x() + 30, p.y() + 30 );
+     QString auto_positioning = US_Settings::debug_value("auto_positioning");
+       if ( global_positioning && !auto_positioning.isEmpty() && auto_positioning.toLower() == "true" )
+       {
+           QPoint p = g.global_position();
+           te_results->move( p.x() + 30, p.y() + 30 );
+       }
       te_results->e->setFont( QFont( US_GuiSettings::fontFamily(),
                                      US_GuiSettings::fontSize() ) );
    }
@@ -952,13 +982,20 @@ bool US_MwlSpeciesFit::read_protocol(QStringList& msg_to_user)
   //Channel alt_descriptions
   chndescs_alt           = currAProf.chndescs_alt;
   //Channel wavelengths
-  ch_wvls                = currAProf.ch_wvls; 
+  ch_wvls                = currAProf.ch_wvls;
+  //Channel run/analysis_run
+  analysis_runs          = currAProf.analysis_run;
+  report_runs            = currAProf.report_run;
 
   //get reportItems info
   QString channels_to_radial_ranges;
   int nchna   = currAProf.pchans.count();
   for ( int i = 0; i < nchna; i++ )
     {
+      //Honor AProfile's settings as to ABDE channel analysis
+      if ( !analysis_runs[i] )
+	continue;
+	
       QString channel_desc_alt = chndescs_alt[ i ];
       QString channel_desc     = chndescs[ i ];
       //QString channame_short   = channel_desc_alt.section( ":", 0, 0 )[0];
@@ -1770,10 +1807,10 @@ DbgLv(1) << "sfd: (B)D1 cmn" << ms << mr << synData[1].value(ms,mr);
       if (us_gmp_auto_mode)
 	{
 	  QString solvent_name = spfiles[ ii ].section( "/", -1, -1 ).section( ".", 0, -2 );
-	  str_wl = "." + solvent_name +  QString().sprintf( "_%03i.auc", ii + 1 );
+	  str_wl = "." + solvent_name +  QString::asprintf( "_%03i.auc", ii + 1 );
 	}
       else
-	str_wl  = QString().sprintf( ".%03i.auc", ii + 1 );
+	str_wl  = QString::asprintf( ".%03i.auc", ii + 1 );
       
       QString fname   = QString( basefn ).replace( ".000.auc", str_wl );
 

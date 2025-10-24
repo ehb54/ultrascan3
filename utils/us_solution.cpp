@@ -1,6 +1,6 @@
 //! \file us_solution.cpp
 #include "us_settings.h"
-#include "us_db2.h"
+#include "ius_db2.h"
 #include "us_util.h"
 #include "us_solution.h"
 #include "us_buffer.h"
@@ -24,7 +24,7 @@ int US_Solution::readFromDisk( QString& guid )
    {
       qDebug() << "Error: solution file not found - guid "
                << guid;
-      return US_DB2::NO_SOLUTION;
+      return IUS_DB2::NO_SOLUTION;
    }
    
    QFile file( filename );
@@ -32,7 +32,7 @@ int US_Solution::readFromDisk( QString& guid )
    {
       qDebug() << "Error: can't open file for reading"
                << filename;
-      return US_DB2::NO_SOLUTION;
+      return IUS_DB2::NO_SOLUTION;
    }
 
    QXmlStreamReader xml( &file );
@@ -64,14 +64,14 @@ int US_Solution::readFromDisk( QString& guid )
    {
       qDebug() << "Error: xml error: \n"
                << xml.errorString();
-      return US_DB2::DBERROR;
+      return IUS_DB2::DBERROR;
    }
 
    // Load actual buffer and analyte files if we can find them
    US_Buffer newBuffer;
    int status = readBufferDiskGUID( newBuffer, buffer.GUID );
 
-   if ( status != US_DB2::OK )      // Probably US_DB2::NO_BUFFER
+   if ( status != IUS_DB2::OK )      // Probably IUS_DB2::NO_BUFFER
       return status;
 
    // Then we found the actual buffer.xml file
@@ -82,7 +82,7 @@ int US_Solution::readFromDisk( QString& guid )
       AnalyteInfo newInfo;
       status = newInfo.analyte.load( false, analyteInfo[ i ].analyte.analyteGUID );
 
-      if ( status != US_DB2::OK )  // Probably US_DB2::NO_ANALYTE
+      if ( status != IUS_DB2::OK )  // Probably IUS_DB2::NO_ANALYTE
          return status;       
 
       // Found the analyte.xml file
@@ -92,7 +92,7 @@ int US_Solution::readFromDisk( QString& guid )
 
    saveStatus = HD_ONLY;
 
-   return US_DB2::OK;
+   return IUS_DB2::OK;
 }
 
 void US_Solution::readSolutionInfo( QXmlStreamReader& xml )
@@ -150,7 +150,7 @@ void US_Solution::readSolutionInfo( QXmlStreamReader& xml )
 }
 
 // Function to load a solution from the db
-int US_Solution::readFromDB  ( int solutionID, US_DB2* db )
+int US_Solution::readFromDB  ( int solutionID, IUS_DB2* db )
 {
    // Try to get solution info
    QStringList q( "get_solution" );
@@ -180,7 +180,7 @@ int US_Solution::readFromDB  ( int solutionID, US_DB2* db )
       }
       
       if ( ! buffer.readFromDB( db, buffer.bufferID ) )
-         return US_DB2::NO_BUFFER;
+         return IUS_DB2::NO_BUFFER;
 
       // We need to get a list of analyteGUID's and amounts first
       q.clear();
@@ -202,8 +202,8 @@ int US_Solution::readFromDB  ( int solutionID, US_DB2* db )
          AnalyteInfo newInfo;
 
          int status = newInfo.analyte.load( true, GUIDs[ i ], db );
-         if ( status != US_DB2::OK )
-            return US_DB2::NO_ANALYTE;
+         if ( status != IUS_DB2::OK )
+            return IUS_DB2::NO_ANALYTE;
 
          newInfo.amount = amounts[ i ];
          analyteInfo << newInfo;
@@ -216,7 +216,7 @@ int US_Solution::readFromDB  ( int solutionID, US_DB2* db )
 
    saveStatus = DB_ONLY;
 
-   return US_DB2::OK;
+   return IUS_DB2::OK;
 }
 
 // Function to save solution information to disk
@@ -313,7 +313,7 @@ void US_Solution::saveToDisk( void )
 }
 
 // Function to save solution information to db
-int US_Solution::saveToDB( int expID, int channelID, US_DB2* db )
+int US_Solution::saveToDB( int expID, int channelID, IUS_DB2* db )
 {
    QStringList q;
    int status;
@@ -332,10 +332,10 @@ qDebug() << "SolSvDB: ToDisk complete" << "expID,chnID" << expID << channelID;
       status = db->lastErrno();
 qDebug() << "SolSvDB: bufID stat" << status;
 
-      if ( status == US_DB2::NOROWS )
+      if ( status == IUS_DB2::NOROWS )
          buffer.saveToDB( db, QString::number( 1 ) );      // 1 = private
 
-      else if ( status != US_DB2::OK )
+      else if ( status != IUS_DB2::OK )
          return status;
    }
 
@@ -349,10 +349,10 @@ qDebug() << "SolSvDB: bufID stat" << status;
 
       status = db->lastErrno();
 qDebug() << "SolSvDB: anaID stat" << status;
-      if ( status == US_DB2::NOROWS )
+      if ( status == IUS_DB2::NOROWS )
          newInfo.analyte.write( true, "", db );
 
-      else if ( status != US_DB2::OK )
+      else if ( status != IUS_DB2::OK )
          return status;
    }
 
@@ -371,7 +371,7 @@ qDebug() << "SolSvDB: anaID stat" << status;
 
    status = db->lastErrno();
 qDebug() << "SolSvDB: soGID stat" << status;
-   if ( status == US_DB2::OK )
+   if ( status == IUS_DB2::OK )
    {
       // Edit existing solution entry
       solutionID = db->value( 0 ).toInt();
@@ -388,7 +388,7 @@ qDebug() << "SolSvDB: soGID stat" << status;
 qDebug() << "SolSvDB: updSO solID" << solutionID << "lastErr" << db->lastError() << db->lastErrno();
    }
 
-   else if ( status == US_DB2::NOROWS  &&
+   else if ( status == IUS_DB2::NOROWS  &&
              !solutionDesc.isEmpty()  &&
              !solutionDesc.startsWith( "New Sol" ) )
    {
@@ -418,7 +418,7 @@ qDebug() << "SolSvDB: newSO q" << q;
    }
 
    if ( solutionID == 0 )        // double check
-      return US_DB2::NO_SOLUTION;
+      return IUS_DB2::NO_SOLUTION;
 
    if ( ! buffer.GUID.isEmpty() )
    {
@@ -434,7 +434,7 @@ qDebug() << "SolSvDB: newSO q" << q;
 qDebug() << "SolSvDB: soBuf stat" << status << db->lastError() << "bGID" << buffer.GUID
  << "solID" << solutionID;
 qDebug() << "SolSvDB: soBuf q=" << q;
-      if ( status != US_DB2::OK )
+      if ( status != IUS_DB2::OK )
       {
          qDebug() << "MySQL error associating buffer with solution in database:"
                   << db->lastError() << status;
@@ -448,7 +448,7 @@ qDebug() << "SolSvDB: soBuf q=" << q;
       << QString::number( solutionID );
 
    status = db->statusQuery( q );
-   if ( status != US_DB2::OK )
+   if ( status != IUS_DB2::OK )
       qDebug() << "MySQL error: " << db->lastError();
 
    // Now add zero or more analyte associations
@@ -465,7 +465,7 @@ qDebug() << "SolSvDB: soBuf q=" << q;
    
       status = db->statusQuery( q );
 qDebug() << "SolSvDB: soAna stat" << status << db->lastError();
-      if ( status != US_DB2::OK )
+      if ( status != IUS_DB2::OK )
       {
          qDebug() << "MySQL error associating analyte "
                   << newInfo.analyte.analyteGUID
@@ -511,7 +511,7 @@ qDebug() << "SolSvDB: soAna stat" << status << db->lastError();
    saveStatus = BOTH;
 qDebug() << "SolSvDB: END: svstat" << saveStatus;
 
-   return US_DB2::OK;
+   return IUS_DB2::OK;
 }
 
 int US_Solution::readBufferDiskGUID( US_Buffer& buffer, QString& GUID )
@@ -521,19 +521,19 @@ int US_Solution::readBufferDiskGUID( US_Buffer& buffer, QString& GUID )
    QString path = US_Settings::dataDir() + "/buffers";
 
    if ( ! dir.exists( path ) )
-      return US_DB2::NO_BUFFER;            // So we have some idea of what happened
+      return IUS_DB2::NO_BUFFER;            // So we have some idea of what happened
 
    // Try to find the buffer file
    bool    newFile;
    QString filename = US_Buffer::get_filename( path, GUID, newFile );
 
    if ( newFile ) 
-      return US_DB2::NO_BUFFER;
+      return IUS_DB2::NO_BUFFER;
 
    // Then we can add it
    bool diskStatus = buffer.readFromDisk( filename );   // load it from disk
 
-   return ( diskStatus ) ? US_DB2::OK : US_DB2::NO_BUFFER;
+   return ( diskStatus ) ? IUS_DB2::OK : IUS_DB2::NO_BUFFER;
 }
 
 void US_Solution::saveBufferDisk( void )
@@ -590,7 +590,7 @@ void US_Solution::saveAnalytesDisk( void )
       QString filename = US_Analyte::get_filename( path, ai.analyte.analyteGUID );
       int status = ai.analyte.write( false, filename );
       
-      if ( status != US_DB2::OK )
+      if ( status != IUS_DB2::OK )
       {
          qDebug() << "Analyte " << ai.analyte.analyteGUID
                   << " write to disk error " << status;
@@ -601,18 +601,18 @@ void US_Solution::saveAnalytesDisk( void )
 // Function to delete a solution from disk
 int US_Solution::deleteFromDisk( void )
 {
-   int status = US_DB2::OK;
+   int status = IUS_DB2::OK;
    QString filename;
    bool found = diskFilename( solutionGUID, filename );
 
    if ( ! found )
    {
       // No file to delete
-      return US_DB2::NO_SOLUTION;
+      return IUS_DB2::NO_SOLUTION;
    }
    
    if ( solutionInUse( solutionGUID ) )
-      return US_DB2::SOLUT_IN_USE;
+      return IUS_DB2::SOLUT_IN_USE;
 
    // Delete it
    QFile file( filename );
@@ -624,9 +624,9 @@ int US_Solution::deleteFromDisk( void )
 }
 
 // Function to delete a solution from db
-int US_Solution::deleteFromDB( US_DB2* db )
+int US_Solution::deleteFromDB( IUS_DB2* db )
 {
-   int status = US_DB2::OK;
+   int status = IUS_DB2::OK;
    QStringList q;
    if ( solutionID == 0 )
    {
@@ -650,10 +650,10 @@ int US_Solution::deleteFromDB( US_DB2* db )
 
       status = db->statusQuery( q );
 
-      if ( status == US_DB2::SOLUT_IN_USE )
+      if ( status == IUS_DB2::SOLUT_IN_USE )
          return status;
 
-      if ( status != US_DB2::OK )
+      if ( status != IUS_DB2::OK )
          qDebug() << "MySQL error: " << db->lastError();
 
    }
@@ -889,7 +889,7 @@ bool US_Solution::solutionInUse( QString& solutionGUID )
 }
 
 // Function to count solution occurrences in protocols
-int US_Solution::countInProtocols( US_DB2* dbP )
+int US_Solution::countInProtocols( IUS_DB2* dbP )
 {
    int kntSols      = 0;
 
@@ -899,7 +899,7 @@ int US_Solution::countInProtocols( US_DB2* dbP )
       qry << "get_protocol_desc" << QString::number( US_Settings::us_inv_ID() );
       dbP->query( qry );
 
-      if ( dbP->lastErrno() != US_DB2::OK )
+      if ( dbP->lastErrno() != IUS_DB2::OK )
          return 0;    // Error exit:  unable to read DB record
 
       while ( dbP->next() )

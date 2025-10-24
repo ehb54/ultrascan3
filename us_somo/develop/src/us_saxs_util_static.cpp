@@ -11089,7 +11089,7 @@ bool US_Saxs_Util::write_iq( QString & name, QString &msg, vector < double > &q,
 
    for ( int i = 0; i < (int) q.size(); ++i )
    {
-      ts << QString("").sprintf( "%.6e\t%.6e\n", q[ i ], I[ i ] );
+      ts << QString::asprintf( "%.6e\t%.6e\n", q[ i ], I[ i ] );
    }
    f.close();
    return true;
@@ -11159,7 +11159,7 @@ bool US_Saxs_Util::mwt(
 
    if ( fabs( q.back() - qmax ) > .01 )
    {
-      notes = QString( "" ).sprintf( "MW[RT] is calibrated for qmax %.2f and this qmax is %.3f", qmax, q.back() );
+      notes = QString::asprintf( "MW[RT] is calibrated for qmax %.2f and this qmax is %.3f", qmax, q.back( ) );
    }
 
    vector < double > dq ( q.size(), -1e0 );
@@ -11393,8 +11393,17 @@ double US_Saxs_Util::holm_bonferroni( vector < double > P, double alpha ) {
    return 1e0;
 }
 
+// Safe wrapper for QObject::tr().
+// Forces UTF-8 so Unicode survives on Windows (avoids local-8bit/codepage).
+// Keeps signature unchanged; null QStrings remain null.
+// TODO: refactor to use QStringLiteral + QT_TR_NOOP for proper lupdate support.
+// lupdate is part of Qt's Linguist tools used for translation
 US_EXPORT QString us_tr( QString qs ) {
-   return QObject::tr( qPrintable( qs ) );
+   if (qs.isNull()) {
+      return qs;
+   }
+   const QByteArray utf8 = qs.toUtf8();
+   return QObject::tr(utf8.constData(), nullptr, -1);
 }
 
 US_EXPORT const char * us_trp( QString qs ) {

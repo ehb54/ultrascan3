@@ -69,7 +69,7 @@ DbgLv(1) << "Main: AA";
    QFontMetrics fm( te_data->e->font() ); 
 
    te_data->setMinimumHeight( fm.height() * 20 );
-   te_data->setMinimumWidth ( fm.width( "123 :  6.34567, 7.34567, 0.00567890  0.012345" ) );
+   te_data->setMinimumWidth ( fm.horizontalAdvance( "123 :  6.34567, 7.34567, 0.00567890  0.012345" ) );
    te_data->e->setToolTip( tr( "Loaded, editable meniscus,rmsd table" ) );
 
    leftLayout->addWidget( te_data, 0, 0, 20, 1 );
@@ -364,7 +364,7 @@ DbgLv(1) << "Main: AA";
    QFontMetrics fm( te_data->e->font() ); 
 
    te_data->setMinimumHeight( fm.height() * 20 );
-   te_data->setMinimumWidth ( fm.width( "123 :  6.34567, 7.34567, 0.00567890  0.012345" ) );
+   te_data->setMinimumWidth ( fm.horizontalAdvance( "123 :  6.34567, 7.34567, 0.00567890  0.012345" ) );
    te_data->e->setToolTip( tr( "Loaded, editable meniscus,rmsd table" ) );
 
    leftLayout->addWidget( te_data, 0, 0, 20, 1 );
@@ -636,7 +636,7 @@ void US_FitMeniscus::load_data()
    QString contents  = te_data->e->toPlainText();
    contents.replace( QRegExp( "[^0-9eE\\.\\n\\+\\-]+" ), " " );
 
-   QStringList lines = contents.split( "\n", QString::SkipEmptyParts );
+   QStringList lines = contents.split( "\n", Qt::SkipEmptyParts );
    QStringList parsed;
    v_meni.clear();
    v_bott.clear();
@@ -646,7 +646,7 @@ DbgLv(1) << "LD:  bott_fit" << bott_fit << "fname_load" << fname_load;
 
    for ( int ii = 0; ii < lines.size(); ii++ )
    {
-      QStringList values = lines[ ii ].split( ' ', QString::SkipEmptyParts );
+      QStringList values = lines[ ii ].split( ' ', Qt::SkipEmptyParts );
 
       int valsize        = values.size();
 DbgLv(1) << "LD:  ii" << ii << "valsize" << valsize;
@@ -674,7 +674,7 @@ DbgLv(1) << "LD:  ii" << ii << "valsize" << valsize;
          v_bott << rbott;
          v_rmsd << rmsdv;
 
-         parsed << QString().sprintf( "%3d : ", count ) +
+         parsed << QString::asprintf( "%3d : ", count ) +
                    QString::number( rmeni, 'f', 5 ) + ", " +
                    QString::number( rbott, 'f', 5 ) + ", " +
                    QString::number( rmsdv, 'f', 8 ); 
@@ -686,7 +686,7 @@ DbgLv(1) << "LD:  ii" << ii << "valsize" << valsize;
          v_meni << rmeni;
          v_rmsd << rmsdv;
 
-         parsed << QString().sprintf( "%3d : ", count ) +
+         parsed << QString::asprintf( "%3d : ", count ) +
                    QString::number( rmeni, 'f', 5 ) + ", " +
                    QString::number( rmsdv, 'f', 8 ); 
       }
@@ -1303,6 +1303,9 @@ void US_FitMeniscus::edit_update( void )
   //ALEXEY: if autoflow: check if edit profiles already updated from other FITMEN session
   if ( auto_mode )
     {
+      pb_update->setEnabled( false );
+      qApp->processEvents();
+      
       QString requestID = triple_information[ "requestID" ];
       //--- LOCK && UPDATE the autoflowStages' ANALYSIS field for the record
       int status_fitmen_unique;
@@ -1473,8 +1476,8 @@ DbgLv(1) << " eupd:  fn" << fn;
       botnew         = le_men_sel->text().toDouble();
    }
 
-   QString s_meni = QString().sprintf( "%.5f", mennew );
-   QString s_bott = QString().sprintf( "%.5f", botnew );
+   QString s_meni = QString::asprintf( "%.5f", mennew );
+   QString s_bott = QString::asprintf( "%.5f", botnew );
 DbgLv(1) << " eupd:  s_meni s_bott" << s_meni << s_bott;
    QString mmsg   = "";
    QString mhdr   = "";
@@ -1751,7 +1754,7 @@ DbgLv(1) << " eupd:  s_meni s_bott" << s_meni << s_bott;
 	 progress_msg->setWindowTitle(tr("Updating Edit Profiles"));
 	 QFont font_d  = progress_msg->property("font").value<QFont>();
 	 QFontMetrics fm(font_d);
-	 int pixelsWide = fm.width( progress_msg->windowTitle() );
+	 int pixelsWide = fm.horizontalAdvance( progress_msg->windowTitle() );
 	 qDebug() << "Progress_msg: pixelsWide -- " << pixelsWide;
 	 progress_msg ->setMinimumWidth( pixelsWide*2 );
 	 progress_msg->adjustSize();
@@ -2207,7 +2210,7 @@ bool US_FitMeniscus::file_loaded_auto( QMap < QString, QString > & triple_inform
   qDebug() << "In file_loaded_auto: ";
   QString file_directory = US_Settings::resultDir() + QString("/") + triple_information[ "filename" ];
   QString triple_name_cut = triple_information[ "triple_name" ];
-  triple_name_cut.simplified();
+  triple_name_cut = triple_name_cut.simplified();
   triple_name_cut.replace("/","");
   triple_name_cut.replace(" ","");
 
@@ -2219,7 +2222,7 @@ bool US_FitMeniscus::file_loaded_auto( QMap < QString, QString > & triple_inform
   qDebug() << "Triple filename: " << triple_information[ "filename" ];
   
   QDir directory (file_directory);
-  QStringList fm_files = directory.entryList( QStringList() << "2DSA-FM*" + triple_name_cut + "*.fitmen.dat", QDir::Files | QDir::NoSymLinks);
+  QStringList fm_files = directory.entryList( QStringList() << "2DSA*FM*" + triple_name_cut + "*.fitmen.dat", QDir::Files | QDir::NoSymLinks);
 
   qDebug() << "In file_loaded_auto: 22";
 
@@ -2591,7 +2594,7 @@ DbgLv(1) << "Number of FM models found: " << nfmods;
 if(nfmods>0) {
 DbgLv(1) << " pre:D0" <<  mDescrs[0].description;
 DbgLv(1) << " pre:Dn" <<  mDescrs[nfmods-1].description; }
-   qSort( mDescrs );
+   std::sort( mDescrs.begin(), mDescrs.end() );
 if(nfmods>0) {
 DbgLv(1) << " sorted:D0" <<  mDescrs[0].description;
 DbgLv(1) << " sorted:Dn" <<  mDescrs[nfmods-1].description; }
@@ -2997,7 +3000,7 @@ DbgLv(1) << "Number of FM models found: " << nfmods;
 if(nfmods>0) {
 DbgLv(1) << " pre:D0" <<  mDescrs[0].description;
 DbgLv(1) << " pre:Dn" <<  mDescrs[nfmods-1].description; }
-   qSort( mDescrs );
+   std::sort( mDescrs.begin(), mDescrs.end() );
 if(nfmods>0) {
 DbgLv(1) << " sorted:D0" <<  mDescrs[0].description;
 DbgLv(1) << " sorted:Dn" <<  mDescrs[nfmods-1].description; }
@@ -3374,7 +3377,7 @@ DbgLv(1) << "RmvMod:    arTime lArTime" << arTime << lArTime;
    }
 
    nlmods         = lMDescrs.size();
-   qSort( lMDescrs );
+   std::sort( lMDescrs.begin(), lMDescrs.end() );
 DbgLv(1) << "RmvMod: nlmods" << nlmods << "msetBase" << msetBase;
 
    for ( int ii = 0; ii < nlmods; ii++ )
@@ -3523,7 +3526,7 @@ DbgLv(1) << "RmvMod:  scn2 ii dmodDesc" << descript;
       }
 
       ndmods         = dMDescrs.size();
-      qSort( dMDescrs );
+      std::sort( dMDescrs.begin(), dMDescrs.end() );
 
       if ( dArTime > lArTime )      // Don't count any older group
          nlmods         = 0;

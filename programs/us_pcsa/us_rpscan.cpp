@@ -18,7 +18,7 @@
 // Constructor:  Regularization Parameter Scan widget
 US_RpScan::US_RpScan( QList< US_SolveSim::DataSet* >&dsets,
       US_ModelRecord& mr, int& thr, double& alf, QWidget* p )
-   : US_WidgetsDialog( p, 0 ), dsets( dsets ), mrec( mr ), nthr( thr ),
+   : US_WidgetsDialog( p, Qt::WindowFlags() ), dsets( dsets ), mrec( mr ), nthr( thr ),
    alpha( alf )
 {
    alpha           = 0.0;
@@ -211,7 +211,7 @@ void US_RpScan::accept_it()
 // Scan alphas
 void US_RpScan::scan()
 {
-   QTime  timer;
+   QElapsedTimer  timer;
    int    time_sc;
    double calpha = ct_stralpha->value();
    double ealpha = ct_endalpha->value();
@@ -598,7 +598,7 @@ DbgLv(1) << "TRP:H3: x1,y1,x2,y2" << xl3p1 << yl3p1 << yl3p2 << yl3p2;
          alpha     = alphas[ nalpha / 2 ];
 
       // Use nearest curve point for default alpha
-      le_selalpha->setText( QString().sprintf( "%.3f", alpha ) );
+      le_selalpha->setText( QString::asprintf( "%.3f", alpha ) );
    }
 
    connect( pick, SIGNAL( cMouseUp( const QwtDoublePoint& ) ),
@@ -621,7 +621,7 @@ void US_RpScan::mouse( const QwtDoublePoint& p )
          xloc, yloc, &xcurv, &ycurv, alphas.data(), &alpha );
 
    alpha          = (double)qRound( alpha * 1000.0 ) / 1000.0;
-   QString salpha = QString().sprintf( "%.3f", alpha );
+   QString salpha = QString::asprintf( "%.3f", alpha );
    le_selalpha->setText( salpha );
 
    // Mark selected curve point and give it a label

@@ -1742,7 +1742,7 @@ RunsTestWidget::RunsTestWidget(QVector<double> points, QVector<double> scans,
 
     QwtPlotPanner *panner = new QwtPlotPanner( d_plot->canvas() );
     panner->setAxisEnabled( QwtPlot::yRight, false );
-    panner->setMouseButton( Qt::MidButton );
+    panner->setMouseButton( Qt::MiddleButton );
 
     // LeftButton for the zooming
     // MidButton for the panning
@@ -1825,7 +1825,7 @@ void RunsTestWidget::showContour( bool on )
 void RunsTestWidget::printPlot()
 {
     QPrinter printer( QPrinter::HighResolution );
-    printer.setOrientation( QPrinter::Landscape );
+    printer.setPageOrientation( QPageLayout::Landscape );
     printer.setOutputFileName( "spectrogram.pdf" );
 
     QPrintDialog dialog( &printer );

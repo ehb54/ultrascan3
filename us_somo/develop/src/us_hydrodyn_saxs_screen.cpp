@@ -2307,21 +2307,19 @@ bool US_Hydrodyn_Saxs_Screen::get_guinier_rg( QString name, double &Rg )
          return false;
       } else {
          editor_msg("blue", 
-                    QString("")
-                    .sprintf(
-                             "Guinier analysis of %s:\n"
-                             "Rg %.1f (%.1f) (A) I(0) %.2e (%.2e) qRgmin %.3f qRgmax %.3f points used %u chi^2 %.2e\n"
+                    QString::asprintf( "Guinier analysis of %s:\n"
+                                       "Rg %.1f (%.1f ) (A) I(0) %.2e (%.2e) qRgmin %.3f qRgmax %.3f points used %u chi^2 %.2e\n"
                              
-                             , name.toLatin1().data()
-                             , Rg
-                             , sqrt(3e0) * 5e-1 * (1e0/sqrt(-b)) * sigb 
-                             , Io
-                             , siga
-                             , sRgmin
-                             , sRgmax
-                             , bestend - beststart + 1
-                             , chi2
-                             ) );
+                                       , name.toLatin1().data()
+                                       , Rg
+                                       , sqrt(3e0) * 5e-1 * (1e0/sqrt(-b)) * sigb 
+                                       , Io
+                                       , siga
+                                       , sRgmin
+                                       , sRgmax
+                                       , bestend - beststart + 1
+                                       , chi2
+                                       ) );
          guinier_rgs[ name ] = Rg;
          return true;
       }

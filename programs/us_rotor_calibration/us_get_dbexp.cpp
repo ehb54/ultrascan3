@@ -8,7 +8,7 @@
 
 // Primary constructor to establish the dialog
 US_GetDBExp::US_GetDBExp( QString& eID ) 
-: US_WidgetsDialog( 0, 0 ), expID( eID )
+: US_WidgetsDialog( nullptr, Qt::WindowFlags() ), expID( eID )
 {
    setWindowTitle( tr( "Available US3 Runs..." ) );
    setPalette( US_GuiSettings::frameColor() );

@@ -401,7 +401,7 @@ class US_EXTERN US_Saxs_Util
       // build averages and wiki page for subdirectory 1d, create pngsplits # of zoom (none if 1 or less)
       bool project_1d(QString wikitag, unsigned int pngsplits);
 
-      // linear fit code, solves  y = a + bx, returing sigmas & chi2
+      // linear fit code, solves  y = a + bx, returning sigmas & chi2
       static void linear_fit( 
                              vector < double > x, 
                              vector < double > y, 
@@ -436,7 +436,7 @@ class US_EXTERN US_Saxs_Util
                               QString & error_msg
                               );
 
-      // linear fit code, solves  y = kx, returing chi2
+      // linear fit code, solves  y = kx, returning chi2
       bool scaling_fit( 
                        vector < double > x, 
                        vector < double > y, 
@@ -695,9 +695,9 @@ class US_EXTERN US_Saxs_Util
                                  );
 
       bool linear_interpolate( 
-                              vector < double >       &x1,
-                              vector < double >       &y1, 
-                              vector < double >       &x2,
+                              const vector < double >       &x1,
+                              const vector < double >       &y1, 
+                              const vector < double >       &x2,
                               vector < double >       &y2
                               );
 
@@ -1062,6 +1062,16 @@ class US_EXTERN US_Saxs_Util
                         map < QString, QString >           & results
                        );
 
+      bool run_interpolate (
+                        map < QString, QString >           & parameters,
+                        map < QString, QString >           & results
+                       );
+
+      bool run_nnls (
+                        map < QString, QString >           & parameters,
+                        map < QString, QString >           & results
+                       );
+
       //bool screen_pdb( QString, bool display_pdb = false, bool skip_clear_issue = false );
       void read_residue_file();
       bool screen_pdb(QString filename, bool  parameters_set_first_model); //, bool display_pdb, bool skipclearissue );
@@ -1162,6 +1172,18 @@ class US_EXTERN US_Saxs_Util
 
       bool run_best();
       QStringList best_output_column( QString fname );
+      bool run_best_csv(
+                        const QString & inputbase
+                        ,const QStringList & outfiles
+                        ,const QStringList & csvfiles
+                        ,const QStringList & triangles
+                        ,const vector < double > & one_over_triangles
+                        );
+                        
+      bool run_best_csv(
+                        map < QString, QString >           & parameters,
+                        map < QString, QString >           & results
+                        );
 
       void write_bead_model(QString, vector <PDB_atom> *, QString extra_text = "" );
 

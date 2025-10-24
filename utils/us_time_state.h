@@ -4,7 +4,7 @@
 
 #include "us_extern.h"
 #include "us_util.h"
-#include "us_db2.h"
+#include "ius_db2.h"
 
 #define _TMST_MAGI_ "USTS"
 #define _TMST_VERS_ "2.1"
@@ -164,13 +164,13 @@ class US_UTIL_EXTERN US_TimeState : public QObject
       //! \param expID   Experiment ID of new record
       //! \param fpath   File path of local TMST from which to create
       //! \return        New timestateID (<0 if error)
-      static int dbCreate  ( US_DB2*, const int, const QString );
+      static int dbCreate  ( IUS_DB2*, const int, const QString );
 
       //! \brief Static function to delete a TMST record from DB
       //! \param dbP     Pointer to opened DB connection
       //! \param tmstID  The timestate ID of record to delete
-      //! \return        Status of action (US_DB2::OK,...)
-      static int dbDelete  ( US_DB2*, const int );
+      //! \return        Status of action (IUS_DB2::OK,...)
+      static int dbDelete  ( IUS_DB2*, const int );
 
       //! \brief Static function to examine a TMST record in DB
       //! \param dbP      Pointer to opened DB connection
@@ -180,30 +180,30 @@ class US_UTIL_EXTERN US_TimeState : public QObject
       //! \param xdefsP   Pointer for return of .xml definitions string
       //! \param cksumP   Pointer for return of binary data cksum+size string
       //! \param lastupdP Pointer for return of last-updated datetime
-      //! \return         Status of action (US_DB2::OK,...)
-      static int dbExamine ( US_DB2*, int* = 0, int* = 0, QString* = 0,
+      //! \return         Status of action (IUS_DB2::OK,...)
+      static int dbExamine ( IUS_DB2*, int* = 0, int* = 0, QString* = 0,
                              QString* = 0, QString* = 0, QDateTime* = 0 );
 
       //! \brief Static function to download a TMST binary data record from DB
       //! \param dbP     Pointer to opened DB connection
       //! \param tmstID  The timestate ID of record to download
       //! \param fpath   Full path to local file to which to download
-      //! \return        Status of action (US_DB2::OK,...)
-      static int dbDownload( US_DB2*, const int, const QString );
+      //! \return        Status of action (IUS_DB2::OK,...)
+      static int dbDownload( IUS_DB2*, const int, const QString );
 
       //! \brief Static function to upload a TMST binary data record to DB
       //! \param dbP     Pointer to opened DB connection
       //! \param tmstID  The timestate ID of record to upload
       //! \param fpath   Full path to local file from which to upload
-      //! \return        Status of action (US_DB2::OK,...)
-      static int dbUpload  ( US_DB2*, const int, const QString );
+      //! \return        Status of action (IUS_DB2::OK,...)
+      static int dbUpload  ( IUS_DB2*, const int, const QString );
 
       //! \brief Static function to sync TMST from DB to local file
       //! \param dbP     Pointer to opened DB connection
       //! \param fpath   Full path to local file to possibly create
       //! \param expID   The experiment ID of timestate to examine
       //! \return        Flag if new file was created
-      static bool dbSyncToLF( US_DB2*, const QString, const int );
+      static bool dbSyncToLF( IUS_DB2*, const QString, const int );
 
    private:
 

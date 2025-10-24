@@ -298,7 +298,7 @@ void US_2dsa::load( void )
    if ( loadDB )
    {  // Fetch the speed steps for the experiment from the database
       US_Passwd   pw;
-      US_DB2*     dbP    = new US_DB2( pw.getPasswd() );
+      IUS_DB2*    dbP    = new US_DB2( pw.getPasswd() );
       QStringList query;
       QString     expID;
       int         idExp  = 0;
@@ -307,7 +307,7 @@ void US_2dsa::load( void )
             << QString::number( US_Settings::us_inv_ID() );
       dbP->query( query );
 
-      if ( dbP->lastErrno() == US_DB2::OK )
+      if ( dbP->lastErrno() == IUS_DB2::OK )
       {
          dbP->next();
          idExp              = dbP->value( 1 ).toInt();
@@ -547,8 +547,12 @@ void US_2dsa::view( void )
    {
       te_results = new US_Editor( US_Editor::DEFAULT, true, QString(), this );
       te_results->resize( 780, 700 );
-      QPoint p = g.global_position();
-      te_results->move( p.x() + 30, p.y() + 30 );
+      QString auto_positioning = US_Settings::debug_value("auto_positioning");
+      if ( global_positioning && !auto_positioning.isEmpty() && auto_positioning.toLower() == "true" )
+      {
+         QPoint p = g.global_position();
+         te_results->move( p.x() + 30, p.y() + 30 );
+      }
       te_results->e->setFont( QFont( US_GuiSettings::fontFamily(),
                                      US_GuiSettings::fontSize() ) );
    }
@@ -623,7 +627,7 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
    // Save the model and any noise file(s)
 
    US_Passwd   pw;
-   US_DB2*     dbP      = loadDB ? new US_DB2( pw.getPasswd() ): NULL;
+   IUS_DB2*    dbP      = loadDB ? new US_DB2( pw.getPasswd() ): NULL;
    QDir        dirm( mdlpath );
    QDir        dirn( noipath );
    mdlpath             += "/";
@@ -646,7 +650,7 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
 
    while( indx > 0 )
    {  // build a list of available model file names
-      mname = "M" + QString().sprintf( "%07i", indx++ ) + ".xml";
+      mname = "M" + QString::asprintf( "%07i", indx++ ) + ".xml";
       if ( ! mdnams.contains( mname ) )
       {  // no name with this index exists, so add it new-name list
          mnames << mname;
@@ -659,7 +663,7 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
 
    while( indx > 0 )
    {  // build a list of available noise file names
-      nname = "N" + QString().sprintf( "%07i", indx++ ) + ".xml";
+      nname = "N" + QString::asprintf( "%07i", indx++ ) + ".xml";
       if ( ! ndnams.contains( nname ) )
       {  // add to the list of new-name noises
          nnames << nname;
@@ -685,7 +689,7 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
       int     iterNum   = jj + 1;
 
       if ( montCar )
-         iterID.sprintf( "mc%04d", iterNum );
+         iterID = QString::asprintf( "mc%04d", iterNum );
 
       else if ( fitMeni )
       {
@@ -694,16 +698,16 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
          bottom            = mdesc.mid( mdesc.indexOf( "BOTTOM=" ) + 7 )
                              .section( ' ', 0, 0 ).toDouble();
          if ( bottom > 0.0 )
-            iterID.sprintf( "i%02d-m%05db%05d", iterNum, qRound( meniscus * 10000 ),
-                            qRound( bottom * 10000 ) );
+            iterID = QString::asprintf( "i%02d-m%05db%05d", iterNum, qRound( meniscus * 10000 ),
+                                        qRound( bottom * 10000 ) );
          else
-            iterID.sprintf( "i%02d-m%05d", iterNum, qRound( meniscus * 10000 ) );
+            iterID = QString::asprintf( "i%02d-m%05d", iterNum, qRound( meniscus * 10000 ) );
       }
       else if ( fitBott )
       {
          bottom            = mdesc.mid( mdesc.indexOf( "BOTTOM=" ) + 7 )
                              .section( ' ', 0, 0 ).toDouble();
-         iterID.sprintf( "i%02d-b%05d", iterNum, qRound( bottom * 10000 ) );
+         iterID = QString::asprintf( "i%02d-b%05d", iterNum, qRound( bottom * 10000 ) );
       }
 
       // fill in actual model parameters needed for output
@@ -723,7 +727,7 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
       model.dataDescrip = edata->description;
 
       for ( int cc = 0; cc < model.components.size(); cc++ )
-         model.components[ cc ].name = QString().sprintf( "SC%04d", cc + 1 );
+         model.components[ cc ].name = QString::asprintf( "SC%04d", cc + 1 );
 
       // output the model
       if ( dbP == NULL  ||  montCar )
@@ -1152,49 +1156,6 @@ DbgLv(1)<<"2dsa : timestate newly created.  timestateobject = "
    // Compute speed steps from sim speed profile
    dset.simparams.speedstepsFromSSprof();
 
-   // Do a quick test of the speed step implied by TimeState
-   int     tf_scan   = dset.simparams.speed_step[ 0 ].time_first;
-   int     accel1    = dset.simparams.speed_step[ 0 ].acceleration;
-   QString svalu     = US_Settings::debug_value( "SetSpeedLowA" );
-   int     lo_ss_acc = svalu.isEmpty() ? 250 : svalu.toInt();
-   int     rspeed    = dset.simparams.speed_step[ 0 ].rotorspeed;
-   int     accel2    = dset.simparams.sim_speed_prof[ 0 ].acceleration;
-   double  tf_aend   = static_cast<double>(tf_scan);
-   // prevent any division by zero
-   if (accel1 != 0)
-   {
-      tf_aend = static_cast<double>(rspeed) / static_cast<double>(accel1);
-   }
-
-DbgLv(1)<<"2dsa : ssck: rspeed accel1 tf_aend tf_scan"
- << rspeed << accel1 << tf_aend << tf_scan
- << "accel2" << accel2 << "lo_ss_acc" << lo_ss_acc;
-//x0  1  2  3  4  5
-   if ( accel1 < lo_ss_acc  ||  tf_aend > ( tf_scan - 3 ) )
-   {
-      QString wmsg = tr( "The TimeState used is likely bad:<br/>"
-                         "The acceleration implied is %1 rpm/sec.<br/>"
-                         "The acceleration zone ends at %2 seconds,<br/>"
-                         "with a first scan time of %3 seconds.<br/><br/>"
-                         "<b>You should rerun the experiment without<br/>"
-                         "any interim constant speed, and then<br/>"
-                         "you should reimport the data.</b>" )
-                     .arg( accel1 ).arg( QString::number(tf_aend) ).arg( QString::number(tf_scan) );
-
-      QMessageBox msgBox( this );
-      msgBox.setWindowTitle( tr( "Bad TimeState Implied!" ) );
-      msgBox.setTextFormat( Qt::RichText );
-      msgBox.setText( wmsg );
-      msgBox.addButton( tr( "Continue" ), QMessageBox::RejectRole );
-      QPushButton* bAbort = msgBox.addButton( tr( "Abort" ),
-                                          QMessageBox::YesRole );
-      msgBox.setDefaultButton( bAbort );
-      msgBox.exec();
-
-      if ( msgBox.clickedButton() == bAbort )
-         return;
-   }
-
    dset.run_data           = dataList[ drow ];
    dset.viscosity          = viscosity;
    dset.density            = density;
@@ -1302,13 +1263,13 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
                     > ( maxv - minv ) / qAbs( maxv ) );
 
    mstr += table_row( tr( "Weight Average s20,W:" ),
-                      QString().sprintf( "%6.4e", ( sum_s  / sum_c ) ) );
+                      QString::asprintf( "%6.4e", ( sum_s  / sum_c ) ) );
    mstr += table_row( tr( "Weight Average D20,W:" ),
-                      QString().sprintf( "%6.4e", ( sum_D  / sum_c ) ) );
+                      QString::asprintf( "%6.4e", ( sum_D  / sum_c ) ) );
    mstr += table_row( tr( "W.A. Molecular Weight:" ),
-                      QString().sprintf( "%6.4e", ( sum_mw / sum_c ) ) );
+                      QString::asprintf( "%6.4e", ( sum_mw / sum_c ) ) );
    mstr += table_row( tr( "Total Concentration:" ),
-                      QString().sprintf( "%6.4e", sum_c ) );
+                      QString::asprintf( "%6.4e", sum_c ) );
 
    if ( cnstvb )
       mstr += table_row( tr( "Constant Vbar at 20" ) + DEGC + ":",
@@ -1369,13 +1330,13 @@ DbgLv(1) << "Data_Corr manual" << sd.manual << "avTemp" << avTemp << "vbar20" <<
       D_ap       /= sd.D20w_correction;
 
       mstr       += table_row(
-            QString().sprintf( "%10.4e", model.components[ ii ].mw ),
-            QString().sprintf( "%10.4e", s_ap                      ),
-            QString().sprintf( "%10.4e", model.components[ ii ].s  ),
-            QString().sprintf( "%10.4e", D_ap                      ),
-            QString().sprintf( "%10.4e", model.components[ ii ].D  ),
-            QString().sprintf( "%10.4e", f_f0                      ),
-            QString().sprintf( "%10.4e (%5.2f %%)", conc, perc     ) );
+            QString::asprintf( "%10.4e", model.components[ ii ].mw ),
+            QString::asprintf( "%10.4e", s_ap                      ),
+            QString::asprintf( "%10.4e", model.components[ ii ].s  ),
+            QString::asprintf( "%10.4e", D_ap                      ),
+            QString::asprintf( "%10.4e", model.components[ ii ].D  ),
+            QString::asprintf( "%10.4e", f_f0                      ),
+            QString::asprintf( "%10.4e (%5.2f %%)", conc, perc     ) );
    }
 
    mstr += indent( 4 ) + "</table>\n";
@@ -1446,11 +1407,11 @@ QString US_2dsa::iteration_info()
       QString mdesc = models[ ii ].description;
       QString avari = mdesc.mid( mdesc.indexOf( "VARI=" ) + 5 );
       double  rmsd  = sqrt( avari.section( " ", 0, 0 ).toDouble() );
-      QString armsd = QString().sprintf( "%10.8f", rmsd );
+      QString armsd = QString::asprintf( "%10.8f", rmsd );
 
       if ( montCar )
       {
-         QString itID  = QString().sprintf( "i%04i", ii + 1 );
+         QString itID  = QString::asprintf( "i%04i", ii + 1 );
          mstr         += table_row( itnum, itID, armsd );
       }
 
@@ -1576,7 +1537,7 @@ QString US_2dsa::fit_meniscus_data()
       QString avari = mdesc.mid( mdesc.indexOf( "VARI=" ) + 5 );
       double  variv = avari.section( " ", 0, 0 ).toDouble();
       double  rmsd  = ( variv > 0.0 ) ? sqrt( variv ) : 0.0;
-      QString armsd = QString().sprintf( "%10.8f", rmsd );
+      QString armsd = QString::asprintf( "%10.8f", rmsd );
       if ( usemen && usebot )
       {
          QString ameni = mdesc.mid( mdesc.indexOf( "MENISCUS=" ) + 9 )

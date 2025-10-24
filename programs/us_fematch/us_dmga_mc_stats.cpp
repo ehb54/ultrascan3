@@ -284,7 +284,7 @@ qDebug() << "DmS:cSt:     FIXED  medi mean" << vmedi;
 
       // Sort Y values and determine median
       QVector< double > wkvls = vals;
-      qSort( wkvls );
+      std::sort( wkvls.begin(), wkvls.end() );
       int hx    = nvals / 2;
       vmedi     = wkvls[ hx ];
       if ( ( hx * 2 ) == nvals )

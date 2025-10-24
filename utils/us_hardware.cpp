@@ -54,7 +54,7 @@ bool US_Hardware::readRotorMap( QMap< QString, QString >& rotor_map )
 }
 
 // Read rotor information and generate a rotorCalID,coeffs map from DB
-bool US_Hardware::readRotorMap( US_DB2* db,
+bool US_Hardware::readRotorMap( IUS_DB2* db,
                                 QMap< QString, QString >& rotor_map )
 {
    bool    ok    = false;
@@ -73,7 +73,7 @@ bool US_Hardware::readRotorMap( US_DB2* db,
    query << "get_lab_names";
    db->query( query );
 
-   if ( db->lastErrno() != US_DB2::OK )
+   if ( db->lastErrno() != IUS_DB2::OK )
    {
       qDebug() << "*ERROR* Unable to get lab IDs";
       return ok;
@@ -92,7 +92,7 @@ bool US_Hardware::readRotorMap( US_DB2* db,
       query << "get_rotor_names" << labID;
       db->query( query );
 
-      if ( db->lastErrno() != US_DB2::OK )
+      if ( db->lastErrno() != IUS_DB2::OK )
       {
          qDebug() << "*WARNING* Unable to get rotors for lab ID" << labID;
          continue;
@@ -112,7 +112,7 @@ bool US_Hardware::readRotorMap( US_DB2* db,
       query << "get_rotor_calibration_profiles" << rotorID;
       db->query( query );
 
-      if ( db->lastErrno() != US_DB2::OK )
+      if ( db->lastErrno() != IUS_DB2::OK )
       {
          qDebug() << "*WARNING* Unable to get calIDs for rotor ID" << rotorID;
          continue;
@@ -132,7 +132,7 @@ bool US_Hardware::readRotorMap( US_DB2* db,
       query << "get_rotor_calibration_info" << calibID;
       db->query( query );
 
-      if ( db->lastErrno() != US_DB2::OK )
+      if ( db->lastErrno() != IUS_DB2::OK )
       {
          qDebug() << "*WARNING* Unable to get info for calib ID" << calibID;
          continue;
@@ -182,7 +182,7 @@ US_AbstractCenterpiece::US_AbstractCenterpiece()
 }
 
 // Read centerpiece information from database or local
-bool US_AbstractCenterpiece::read_centerpieces( US_DB2* db,
+bool US_AbstractCenterpiece::read_centerpieces( IUS_DB2* db,
       QList< US_AbstractCenterpiece >& centerpieces )
 {
    centerpieces.clear();
@@ -197,7 +197,7 @@ bool US_AbstractCenterpiece::read_centerpieces( US_DB2* db,
       query << "get_abstractCenterpiece_names";
       db->query( query );
 
-      if ( db->lastErrno() != US_DB2::OK )
+      if ( db->lastErrno() != IUS_DB2::OK )
       {
          qDebug() << "*ERROR* Unable to get centerpiece information from DB";
          break;

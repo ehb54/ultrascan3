@@ -402,7 +402,7 @@ void US_Sassoc::save( void )
          ts << x       [ i ] << "\t"
             << species1[ i ] << "\t"
             << species2[ i ] << "\t"
-            << species3[ i ] << endl;
+            << species3[ i ] << Qt::endl;
       }
    }
 

@@ -865,14 +865,13 @@ int US_Hydrodyn::write_pdb( QString fname, vector < PDB_atom > *model )
           )
       {
          ts << 
-            QString("")
-            .sprintf(     
+             QString::asprintf(      
                      "ATOM   %4d  PB  UNK A%4d    %8.3f%8.3f%8.3f  1.00 10.00           PB  \n",
                      i + 1, i + 1,
                      (*model)[i].bead_coordinate.axis[0],
                      (*model)[i].bead_coordinate.axis[1],
                      (*model)[i].bead_coordinate.axis[2]
-                     );
+                      ) ;
       }
    }
 
@@ -935,7 +934,7 @@ int US_Hydrodyn::write_pdb( QString fname, vector < PDB_atom > *model )
         ++it 
         )
    {
-      QString cbase = QString("").sprintf("CONECT%5d",it->x + 1);
+      QString cbase =  QString::asprintf( "CONECT%5d",it->x + 1 ) ;
       QString out;
       QString tmp = "";
       unsigned int j = 0;
@@ -945,7 +944,7 @@ int US_Hydrodyn::write_pdb( QString fname, vector < PDB_atom > *model )
            ++itj
            )
       {
-         tmp += QString("").sprintf("%5d",itj->x + 1);
+         tmp +=  QString::asprintf( "%5d",itj->x + 1 ) ;
          if ( !((j + 1) % 4) )
          {
             out += cbase + tmp + "\n";

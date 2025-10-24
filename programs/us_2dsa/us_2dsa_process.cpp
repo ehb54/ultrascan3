@@ -460,7 +460,7 @@ DbgLv(1) << "2P:FC:  abort" << abort;
 
    // This time, input solutes are all the subgrid-computed ones where
    // the concentration is positive.
-   qSort( c_solutes[ depth ] );
+   std::sort( c_solutes[ depth ].begin(), c_solutes[ depth ].end() );
 DbgLv(1) << "2P:FC:  szSoluC" << c_solutes[ depth ].size();
    wtask.isolutes.clear();
 
@@ -559,7 +559,7 @@ DbgLv(1) << "FIN_FIN:    wresult menisc bott"
  << dset->simparams.meniscus << dset->simparams.bottom;
    model.components.resize( nsolutes );
 
-   qSort( c_solutes[ maxdepth ] );
+   std::sort( c_solutes[ maxdepth ].begin(), c_solutes[ maxdepth ].end() );
 
    // build the final model
 
@@ -1413,7 +1413,7 @@ DbgLv(1) << "ITER: kt" << ktask << "iterate nisol o a c +"
       // Queue a subgrid task and update the maximum task solute count
       double llss = isolutes[ 0 ].s;
       double llsk = isolutes[ 0 ].k;
-      qSort( isolutes );
+      std::sort( isolutes.begin(), isolutes.end() );
       WorkPacket2D wtask;
       queue_task( wtask, llss, llsk, ktask, jdpth, jnois, isolutes );
       maxtsols       = qMax( maxtsols, isolutes.size() );

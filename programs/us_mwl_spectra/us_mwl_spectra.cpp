@@ -501,8 +501,8 @@ void US_MwlSpectra::load_distro( )
 
    // Sort points and build normalized concentrations
 
-   qSort( sedcoes );
-   qSort( lambdas );
+   std::sort( sedcoes.begin(), sedcoes.end() );
+   std::sort( lambdas.begin(), lambdas.end() );
    nsedcos       = sedcoes.count();
    nlambda       = lambdas.count();
    nipoint       = mdlxyz .count();
@@ -1455,7 +1455,7 @@ DbgLv(1) << "Save 2D Movie";
       cb_pltrec->setCurrentIndex( prx );    // Plot each record in the range
       qApp->processEvents();
 
-      QString frm_str = QString().sprintf( "%05d", ( prx + 1 ) );
+      QString frm_str = QString::asprintf( "%05d", ( prx + 1 ) );
       QString fname   = QString( bfname ).replace( "XXXXX", frm_str );
       QString fpath   = savedir + fname;
 
@@ -1577,9 +1577,9 @@ void US_MwlSpectra::final_stats( QVector< int >& istats,
    dstats[ 6 ]       /= ctot;
 
    // Sort value lists and compute medians
-   qSort( lwlns );
-   qSort( lseds );
-   qSort( lcons );
+   std::sort( lwlns.begin(), lwlns.end() );
+   std::sort( lseds.begin(), lseds.end() );
+   std::sort( lcons.begin(), lcons.end() );
    dstats[ 7 ]        = lwlns[ lwlns.count() / 2 ];
    dstats[ 8 ]        = lseds[ lseds.count() / 2 ];
    dstats[ 9 ]        = lcons[ lcons.count() / 2 ];
@@ -1700,8 +1700,8 @@ DbgLv(1) << "SvD:  nwaveln" << nwavln << "x0, y0" << rr[0] << vv[0];
 
    for ( int ii = 0; ii < nwavln; ii++ )
    {
-      ts << dquote + QString().sprintf( "%d", (int)rr[ ii ] ) + dquote + comma
-          + dquote + QString().sprintf( "%10.4e", vv[ ii ] ) + dquote + endln;
+      ts << dquote + QString::asprintf( "%d", (int )rr[ ii ] ) + dquote + comma
+          + dquote + QString::asprintf( "%10.4e", vv[ ii ] ) + dquote + endln;
    }
 
    csvo_f.close();
@@ -1816,8 +1816,8 @@ void US_MwlSpectra::changedPlotX( bool on_state ) {
 
     // Sort points and build normalized concentrations
 
-    qSort( sedcoes );
-    qSort( lambdas );
+    std::sort( sedcoes.begin(), sedcoes.end() );
+    std::sort( lambdas.begin(), lambdas.end() );
     nsedcos       = sedcoes.count();
     nlambda       = lambdas.count();
     nipoint       = mdlxyz .count();

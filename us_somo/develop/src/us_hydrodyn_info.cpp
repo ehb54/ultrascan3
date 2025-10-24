@@ -25,6 +25,25 @@ model_vector_as_loaded
 #define LBD  "--------------------------------------------------------------------------------\n"
 #define LBE  "================================================================================\n"
 
+void US_Hydrodyn::info_bead_model( const QString & msg, const vector < PDB_atom > & b_model ) {
+   TSO
+      << LBE
+      << "US_Hydrodyn::info_bead_model()" << Qt::endl
+      << msg << Qt::endl
+      ;
+   for ( auto const & bead : b_model ) {
+      TSO
+         << LBD
+         << "  bead x, y, z                : " << bead.bead_coordinate.axis[0] << "  " << bead.bead_coordinate.axis[1] << " " <<  bead.bead_coordinate.axis[2] << Qt::endl
+         << "  bead bead_computed_radius   : " << bead.bead_computed_radius << Qt::endl
+         << "  bead bead_mw                : " << bead.bead_mw << Qt::endl
+         << "  bead bead_color             : " << bead.bead_color << Qt::endl
+         << "  bead serial                 : " << bead.serial << Qt::endl
+         << "  bead bead_asa               : " << bead.bead_asa << Qt::endl
+         ;
+   }
+}
+
 void US_Hydrodyn::info_bead_models_mw( const QString & msg, const vector < vector < PDB_atom > > & b_models ) {
    int models = (int) bead_models.size();
    TSO
@@ -37,7 +56,7 @@ void US_Hydrodyn::info_bead_models_mw( const QString & msg, const vector < vecto
       info_bead_models_mw( msg + QString( "model %1" ).arg( i ), b_models[ i ] );
    }
 }
-   
+
 void US_Hydrodyn::info_bead_models_mw( const QString & msg, const vector < PDB_atom > & b_model ) {
    int beads = (int) b_model.size();
    TSO
@@ -936,6 +955,8 @@ void US_Hydrodyn::info_residue_protons_electrons_at_pH( double pH, const struct 
    double protons   = 0;
    double electrons = 0;
 
+   int p_residue_msg_count = 0;
+
    TSO
       << "pH" << "," << pH << Qt::endl
       << "resname" << ","
@@ -957,7 +978,7 @@ void US_Hydrodyn::info_residue_protons_electrons_at_pH( double pH, const struct 
       int atoms = (int) model.molecule[ j ].atom.size();
       for ( int k = 0; k < atoms; ++k ) {
          if ( !model.molecule[ j ].atom[ k ].p_residue ) {
-            qDebug() << "**** US_Hydrodyn::protons_at_pH(): p_residue not set!";
+            ++p_residue_msg_count;
             continue;
          }
          if ( !model.molecule[ j ].atom[ k ].p_atom ) {
@@ -1004,6 +1025,12 @@ void US_Hydrodyn::info_residue_protons_electrons_at_pH( double pH, const struct 
          electrons += this_electrons;
       }
    }
+
+   if ( p_residue_msg_count ) {
+      qDebug() << QString( "**** US_Hydrodyn::protons_at_pH(): p_residue not set occured %1 times!" ).arg( p_residue_msg_count );
+   };
+
+
    TSO
       << "Total" << ","
       << "" << ","
@@ -1058,6 +1085,13 @@ QString US_Hydrodyn::info_cite( const QString & package ) {
             "Juba et al., J Res Natl Inst Stand Technol. 2017;122:1–2.\n"
             "Rocco and Byron, Eur Biophys J. 2015;44:417–431.\n"
             // "Brookes and Rocco, Eur Biophys J. 2018;47:855–864.\n"
+         }
+         ,{
+            "zeno-correction",
+            "Kang et al., Phys Rev E Stat Nonlinear Soft Mater Phys. 2004;69:031918.\n"
+            "Juba et al., J Res Natl Inst Stand Technol. 2017;122:1–2.\n"
+            "Rocco and Byron, Eur Biophys J. 2015;44:417–431.\n"
+            "Brookes et al., Eur Biophys J. 2025;doi:10.1007/s00249-025-01758-8.\n"
          }
          ,{
             "grpy",
@@ -1190,7 +1224,7 @@ void US_Hydrodyn::info_residue( struct residue & r, const QString & msg ) {
    TSO << r.comment << Qt::endl;
    TSO << r.name.toUpper()
        << "\t" << r.type
-       << "\t" << QString().sprintf("%7.2f", r.molvol)
+       << "\t" << QString::asprintf( "%7.2f", r.molvol )
        << "\t" << r.asa
        << "\t" << r.r_atom.size()
        << "\t" << r.r_bead.size()

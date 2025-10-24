@@ -1034,7 +1034,8 @@ DbgLv(1) << "EGRo: inP: calib_entr" << cal_entr;
    //import Data Disk
    rpRotor->importData  = ck_disksource->isChecked();
    le_dataDiskPath ->setText( rpRotor->importDataDisk );
-   rpRotor->importData_absorbance_t = ck_absorbance_t->isChecked();
+   rpRotor->importData_absorbance_t  = ck_absorbance_t->isChecked();
+   rpRotor->importData_absorbance_pa = ck_absorbance_pa->isChecked();
    
 
    //Show current oper(s) & rev(s)
@@ -1092,12 +1093,14 @@ DbgLv(1) << "EGRo: inP: calib_entr" << cal_entr;
        cb_operator -> setVisible(true);
 
        //Hide data disk upload
-       pb_importDisk   -> hide();
-       le_dataDiskPath -> hide();
-       ck_disksource   -> hide();
-       ck_absorbance_t -> hide();
+       pb_importDisk    -> hide();
+       le_dataDiskPath  -> hide();
+       ck_disksource    -> hide();
+       ck_absorbance_t  -> hide();
+       ck_absorbance_pa -> hide();
        rpRotor->importData = false;
-       rpRotor->importData_absorbance_t = false;
+       rpRotor->importData_absorbance_t  = false;
+       rpRotor->importData_absorbance_pa = false;
        rpRotor->importDataDisk = "";
      }
 
@@ -1532,8 +1535,9 @@ qDebug() << "NAME OF THE ROTOR IN SAVE: rot, rpRotor->rotor: " << rot << ", "  <
 
    //dataDisk
    rpRotor->importDataDisk            = importDataPath;
-   rpRotor->importData                = ck_disksource->isChecked();
-   rpRotor->importData_absorbance_t   = ck_absorbance_t->isChecked();
+   rpRotor->importData                = ck_disksource    ->isChecked();
+   rpRotor->importData_absorbance_t   = ck_absorbance_t  ->isChecked();
+   rpRotor->importData_absorbance_pa  = ck_absorbance_pa ->isChecked();
 
    
 qDebug() << "OPERATORID / INSTRUMENT / ExpType in SAVE: "
@@ -2815,7 +2819,7 @@ DbgLv(1) << "EGOp:inP: nochan" << nochan;
      {
        QString channel     = rpOptic->chopts[ ii ].channel;
 
-       int cell_number = ((channel.split(QRegExp("\\s+"), QString::SkipEmptyParts))[0]).toInt();
+       int cell_number = ((channel.split(QRegExp("\\s+"), Qt::SkipEmptyParts))[0]).toInt();
 DbgLv(1) << "EGOp:inP: CELL #" << cell_number;
        if ( nholes == cell_number )
          ctrbal_is_centerpiece = true;
@@ -3867,9 +3871,16 @@ DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
 
    if ( mainw->automode )
      {
+       bool connectivity_s = ( rpRotor->importData && !rpRotor->importDataDisk.isEmpty() ) ?
+	 true : mainw->connection_status;
+       
+       // subm_enab         = ( have_run    &&  have_proj  &&  proto_ena  &&
+       // 			     mainw->connection_status &&                // ALEXEY: use top-level connection boolean!
+       // 			     !currProto->exp_label.isEmpty() );         // ALEXEY: and label is present
+
        subm_enab         = ( have_run    &&  have_proj  &&  proto_ena  &&
-			     mainw->connection_status &&                // ALEXEY: use top-level connection boolean!
-			     !currProto->exp_label.isEmpty() );         // ALEXEY: and label is present
+       			     connectivity_s &&                    // ALEXEY: use top-level connection boolean!
+			     !currProto->exp_label.isEmpty() );   // ALEXEY: and label is present
 
        //add cond. for data from disk:
        if ( rpRotor->importData && rpRotor->importDataDisk.isEmpty() )
@@ -3877,6 +3888,7 @@ DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
 	   qDebug() << "Data Disk ? " << rpRotor->importData;
 	   qDebug() << "Data Disk Path -- " << rpRotor->importDataDisk;
 	   qDebug() << "Data Disk: Absorbance ? " << rpRotor->importData_absorbance_t;
+	   qDebug() << "Data Disk: Pseuso-Absorbance ? " << rpRotor->importData_absorbance_pa;
 	   subm_enab = false;
 	 }
      }
@@ -4109,6 +4121,7 @@ DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
    qDebug() << "Data Disk Path -- " << rpRotor->importDataDisk;
    qDebug() << "Data Disk: Absorbance ? " << rpRotor->importData_absorbance_t;
    QString dataSourceType = ( !rpRotor->importData_absorbance_t ) ? "dataDiskAUC" : "dataDiskAUC:Absorbance";
+   dataSourceType = ( rpRotor->importData_absorbance_pa ) ? "dataDiskAUC:PseudoAbsorbance" : dataSourceType;
    qDebug() << "dataSourceType -- " << dataSourceType;
 }
 
@@ -4172,8 +4185,8 @@ bool US_ExperGuiUpload::protocolToDataDisk( QStringList& msg_to_user )
 	r_types << "IP";
 
       QStringList r_types_fromDisk = runTypes_from_dataDisk[ ch_num ];
-      qSort( r_types );
-      qSort( r_types_fromDisk );
+      std::sort( r_types.begin(), r_types.end() );
+      std::sort( r_types_fromDisk.begin(), r_types_fromDisk.end() );
       qDebug() << "DataDisk OptSys for chann: " << ch_num << r_types_fromDisk;
       qDebug() << "Protocol OptSys for chann: " << ch_num << r_types;
       if ( r_types != r_types_fromDisk )
@@ -4527,7 +4540,7 @@ bool US_ExperGuiUpload::extinctionProfilesExist( QStringList& msg_to_user )
 	      //check if not a reference channel (that one can have a single analyte)
 	      QString ch_name_m = channel.split(",")[0];
 	      ch_name_m.replace("/","");
-	      ch_name_m.simplified();
+	      ch_name_m = ch_name_m.simplified();
 	      ch_name_m.replace( " ", "" );
 	      qDebug() << "Ref_channs -- " << ref_channs
 		       << "ch_name_m -- " << ch_name_m;

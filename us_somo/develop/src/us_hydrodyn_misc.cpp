@@ -97,7 +97,7 @@ void US_Hydrodyn_Misc::setupGUI()
    le_vbar = new QLineEdit( this );    le_vbar->setObjectName( "vbar Line Edit" );
    le_vbar->setMinimumHeight(minHeight1);
    le_vbar->setEnabled(!(*misc).compute_vbar);
-   le_vbar->setText(str.sprintf("%5.3f", (*misc).vbar));
+   le_vbar->setText( QString::asprintf( "%5.3f", (*misc).vbar ) );
    le_vbar->setPalette( PALET_NORMAL );
    AUTFBACK( le_vbar );
    le_vbar->setFont(QFont( USglobal->config_list.fontFamily, useFontSize));
@@ -114,7 +114,7 @@ void US_Hydrodyn_Misc::setupGUI()
    le_vbar_temperature = new QLineEdit( this );    le_vbar_temperature->setObjectName( "vbar_temperature Line Edit" );
    le_vbar_temperature->setMinimumHeight(minHeight1);
    le_vbar_temperature->setEnabled(!(*misc).compute_vbar);
-   le_vbar_temperature->setText(str.sprintf("%5.2f", (*misc).vbar_temperature));
+   le_vbar_temperature->setText( QString::asprintf( "%5.2f", (*misc).vbar_temperature ) );
    le_vbar_temperature->setPalette( PALET_NORMAL );
    AUTFBACK( le_vbar_temperature );
    le_vbar_temperature->setFont(QFont( USglobal->config_list.fontFamily, useFontSize));
@@ -789,7 +789,7 @@ void US_Hydrodyn_Misc::update_vbar_signal(float /* val1 */, float val2)
    // float vbar20;
    // vbar20 = val1;
    (*misc).vbar = val2;
-   le_vbar->setText(str.sprintf("%5.3f", (*misc).vbar));
+   le_vbar->setText( QString::asprintf( "%5.3f", (*misc).vbar ) );
    emit vbar_changed();
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }

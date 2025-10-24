@@ -24,10 +24,13 @@ public:
       \param flags   An enum value that describes the window properties. 
                      This normally can be left as 0 (Qt::Widget).
   */
-  US_Win( QWidget* = 0, Qt::WindowFlags = 0 );
+  US_Win( QWidget* parent = nullptr, Qt::WindowFlags flags = Qt::WindowFlags() );
   
   //! Destructor for US_Win.  Resets position in global memory. 
   ~US_Win();
+
+  //! \brief Public function to update the user/investigator level
+  void update_user_level( void );
 
 private:
   US_Global  g;

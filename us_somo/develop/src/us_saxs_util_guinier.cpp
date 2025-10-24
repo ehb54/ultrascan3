@@ -210,20 +210,20 @@ bool US_Saxs_Util::guinier_fit(
    sRgmin = Rg * smin;
    sRgmax = Rg * smax;
 
-   log += QString("").sprintf("|| %u || %u || %g || %g || %g || %g || %g || %g || %g || %g || %g || %g || %g ||\n",
-                              startpos + 1,
-                              endpos + 1,
-                              smin,
-                              smax,
-                              sRgmin,
-                              sRgmax,
-                              Rg,
-                              I0,
-                              a,
-                              b,
-                              siga,
-                              sigb,
-                              chi2);
+   log += QString::asprintf( "|| %u || %u || %g || %g || %g || %g || %g || %g || %g || %g || %g || %g || %g ||\n",
+                             startpos + 1,
+                             endpos + 1,
+                             smin,
+                             smax,
+                             sRgmin,
+                             sRgmax,
+                             Rg,
+                             I0,
+                             a,
+                             b,
+                             siga,
+                             sigb,
+                             chi2 );
    log += QString(
 #if QT_VERSION < 0x040000
                   "pnggnuplot.pl -p 1.5 -g -l points -c %1 %1 -m %1 %1 %1 %1 %1g%1_%1.png %1g.dat\n"

@@ -20,7 +20,11 @@ class US_EqHistogram : public US_WidgetsDialog
         //! \param scan_fits Vector of scan fits.
         //! \param parent Pointer to the parent widget.
         //! \param flags Window flags.
-        US_EqHistogram(double od_limit, QVector< EqScanFit >& scan_fits, QWidget* parent = 0, Qt::WindowFlags flags = 0);
+        US_EqHistogram(
+            double od_limit,
+            QVector< EqScanFit >& scan_fits,
+            QWidget* parent = nullptr,
+            Qt::WindowFlags flags = Qt::WindowFlags());
 
     private:
         double                 od_limit;  //!< OD Limit value.

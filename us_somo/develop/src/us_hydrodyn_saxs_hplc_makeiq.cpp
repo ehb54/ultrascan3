@@ -293,10 +293,10 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q_ng( QStringList files, double t_min, d
          istarq_mode                    = ISTARQ_CONC_POINTWISE;
          parameters[ "istarq_ok" ]      = "true";
          parameters[ "istarq_message" ] =
-            QString( us_tr( "Make I*(q) using the concentration curve %1 ?" ) )
-            .arg( lbl_conc_file->text() )
-                                    ;
-         
+            QString( us_tr( "Make I*(q) using the concentration curve listed below ?" ) )
+            ;
+         parameters[ "istarq_conc_file" ] = lbl_conc_file->text();
+
          US_Hydrodyn_Saxs_Hplc_Ciq *hplc_ciq = 
             new US_Hydrodyn_Saxs_Hplc_Ciq(
                                           this,
@@ -1049,9 +1049,8 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
          istarq_mode                    = ISTARQ_CONC_POINTWISE;
          parameters[ "istarq_ok" ]      = "true";
          parameters[ "istarq_message" ] =
-            QString( us_tr( "Make I*(q) using the concentration curve %1 ?" ) )
-            .arg( lbl_conc_file->text() )
-            ;
+            QString( us_tr( "Make I*(q) using the concentration curve listed below ?" ) );
+         parameters[ "istarq_conc_file" ] = lbl_conc_file->text();
       }         
 
       parameters[ "hplc_param_I0_exp" ] = QString( "%1" ).arg( saxs_hplc_param_I0_exp );
@@ -1237,6 +1236,91 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
 
       double conc_area;
 
+      QTextStream( stdout ) << gaussian_info( ref_gaussians, "create_i_of_q(): Reference" ) << "\n";
+      editor_msg( "darkblue", gaussian_info( ref_gaussians, "Concentration " ) + "\n" );
+      QTextStream( stdout ) << gaussian_info( conc_gaussians, "create_i_of_q():, Concentration" ) << "\n";
+      editor_msg( "darkblue", gaussian_info( conc_gaussians, "Concentration " ) + "\n" );
+
+
+      // alternate test:
+      {
+         double area_uv_noroot2pi                    = 0;
+         double area_uv_broadened_noroot2pi_unscaled = 0;
+         for ( size_t i = 0; i < conv.size(); ++i ) {
+            area_uv_noroot2pi                    += conc_gaussians[ 0 + i * gaussian_type_size ] * conc_gaussians[ 2 + i * gaussian_type_size ];
+            area_uv_broadened_noroot2pi_unscaled += conc_gaussians[ 0 + i * gaussian_type_size ] * ref_gaussians[ 2 + i * gaussian_type_size ];
+         }
+
+         double scale = 1;
+         if ( area_uv_broadened_noroot2pi_unscaled != 0 ) {
+            scale = area_uv_noroot2pi / area_uv_broadened_noroot2pi_unscaled;
+         }
+
+         {
+            QString msg = 
+               QString(
+                       "Alternate adjustment scale               : %1\n"
+                       "Alternate adjustment A_uv                : %2\n"
+                       "Alternate adjustment A_uv_broad_unscaled : %3\n"
+                       "Alternate adjustment A_uv_broad          : %4\n"
+                       )
+               .arg( scale )
+               .arg( area_uv_noroot2pi * M_SQRT2PI )
+               .arg( area_uv_broadened_noroot2pi_unscaled * M_SQRT2PI )
+               .arg( area_uv_broadened_noroot2pi_unscaled * M_SQRT2PI * scale )
+               ;
+
+            QTextStream(stdout) << msg;
+            editor_msg( "darkblue", msg );
+         }
+
+         vector < double > new_conc_gaussians;
+
+         vector < double > tmp_gc( gaussian_type_size );
+         vector < double > tmp_gr( gaussian_type_size );
+         vector < double > tmp_gn( gaussian_type_size );
+
+         for ( size_t i = 0; i < conv.size(); ++i ) {
+            tmp_gc[ 0 ] = conc_gaussians[ 0 + i * gaussian_type_size ];
+            tmp_gr[ 0 ] = ref_gaussians [ 0 + i * gaussian_type_size ];
+
+            tmp_gc[ 1 ] = conc_gaussians[ 1 + i * gaussian_type_size ];
+            tmp_gr[ 1 ] = ref_gaussians [ 1 + i * gaussian_type_size ];
+
+            tmp_gc[ 2 ] = conc_gaussians[ 2 + i * gaussian_type_size ];
+            tmp_gr[ 2 ] = ref_gaussians [ 2 + i * gaussian_type_size ];
+
+            if ( dist1_active )
+            {
+               tmp_gc[ 3 ] = conc_gaussians[ 3 + i * gaussian_type_size ];
+               tmp_gr[ 3 ] = ref_gaussians [ 3 + i * gaussian_type_size ];
+               if ( dist2_active )
+               {
+                  tmp_gc[ 4 ] = conc_gaussians[ 4 + i * gaussian_type_size ];
+                  tmp_gr[ 4 ] = ref_gaussians [ 4 + i * gaussian_type_size ];
+               }
+            }
+         
+            // original params
+            tmp_gn = tmp_gr;
+
+            // compute height
+
+            tmp_gn[ 0 ] = tmp_gc[ 0 ] * scale;
+
+            for ( size_t j = 0; j < (size_t) gaussian_type_size; ++j ) {
+               new_conc_gaussians.push_back( tmp_gn[ j ] );
+            }
+
+            add_plot( QString( lbl_conc_file->text() + "_alternate_sas_adjusted_pk%1" ).arg( i + 1 ), tv, compute_gaussian( tv, tmp_gn ), true, false );
+            
+         }            
+         QTextStream( stdout ) << gaussian_info( new_conc_gaussians, "create_i_of_q():, Alternate Adjusted Concentration" ) << "\n";
+         editor_msg( "darkblue", gaussian_info( new_conc_gaussians, "Alternate Adjusted Concentration " ) + "\n" );
+
+         add_plot( lbl_conc_file->text() + "_alternate_sas_adjusted" , tv, compute_gaussian_sum( tv, new_conc_gaussians), true, false );
+      }         
+
       for ( unsigned int i = 0; i < ( unsigned int )conv.size(); i++ )
       {
          tmp_gc[ 0 ] = conc_gaussians[ 0 + i * gaussian_type_size ];
@@ -1280,6 +1364,9 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
       }
       // us_qdebug( US_Vector::qs_vector3( "conc, ref, new conc", conc_gaussians, ref_gaussians, new_conc_gaussians ) );
       conc_gaussians = new_conc_gaussians;
+      QTextStream( stdout ) << gaussian_info( conc_gaussians, "create_i_of_q():, Adjusted Concentration" ) << "\n";
+      editor_msg( "darkblue", gaussian_info( conc_gaussians, "Adjusted Concentration " ) + "\n" );
+
       add_plot( lbl_conc_file->text() + "_sas_adjusted" , tv, compute_gaussian_sum( tv, conc_gaussians), true, false );
    }
 
@@ -3314,7 +3401,7 @@ void US_Hydrodyn_Saxs_Hplc::create_ihashq()
 
 #define TSO QTextStream(stdout)
 
-bool US_Hydrodyn_Saxs_Hplc::create_ihashq( QStringList files, double t_min, double t_max ) {
+bool US_Hydrodyn_Saxs_Hplc::create_ihashq( QStringList files, double /* t_min */, double /* t_max */ ) {
 
    // reset_saxs_hplc_params();
 

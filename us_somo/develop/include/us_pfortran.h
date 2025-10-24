@@ -12388,9 +12388,9 @@
            ;
            ;------------------------------------------------------------------------*/
 
-         ChrTypeFlags['_'] = CIDENTC;
-         ChrTypeFlags[' '] |= CWSPACE;
-         ChrTypeFlags['\t'] = CWSPACE;
+         ChrTypeFlags[(unsigned char)'_'] = CIDENTC;
+         ChrTypeFlags[(unsigned char)' '] |= CWSPACE;
+         ChrTypeFlags[(unsigned char)'\t'] = CWSPACE;
 
          /*-------------------------------------------------------------------------
            ;
@@ -12398,8 +12398,8 @@
            ;
            ;------------------------------------------------------------------------*/
 
-         ChrTypeFlags['"'] |= CQUOTEC;
-         ChrTypeFlags['\''] |= CQUOTEC;
+         ChrTypeFlags[(unsigned char)'"'] |= CQUOTEC;
+         ChrTypeFlags[(unsigned char)'\''] |= CQUOTEC;
 
          /*-------------------------------------------------------------------------
            ;

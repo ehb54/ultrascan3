@@ -14,7 +14,7 @@ US_ExperimentGui::US_ExperimentGui(
       bool  signal_wanted,
       US_Experiment& dataIn,
       int   select_db_disk ) :
-   US_WidgetsDialog( 0, 0 ), expInfo( dataIn )
+   US_WidgetsDialog( nullptr, Qt::WindowFlags() ), expInfo( dataIn )
 {
    signal  = signal_wanted;
 

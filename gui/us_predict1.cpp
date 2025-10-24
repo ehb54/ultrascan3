@@ -19,7 +19,7 @@ US_Predict1::US_Predict1( US_Hydrosim&     parm,
                           const US_Analyte a_data,
                           int              disk_access,
                           bool             signal_wanted )
-   : US_WidgetsDialog( 0, 0 ), 
+   : US_WidgetsDialog( nullptr, Qt::WindowFlags() ),
      allparams   ( parm ), 
      base_analyte( a_data ),
      access      ( disk_access ),

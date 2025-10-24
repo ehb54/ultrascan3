@@ -279,6 +279,158 @@ DbgLv(0) << "AMATH:loac:t1 t2" << t1 << t2 << "t_acc rate" << t_acc << rate;
    return ( rate < min_accel );
 }
 
+QStringList US_AstfemMath::check_acceleration(const QVector<US_SimulationParameters::SpeedProfile> & speed_profiles,
+   const QVector<US_DataIO::Scan> & scans) {
+   QStringList results;
+   // Settings and constants
+   const QString dbgval = US_Settings::debug_value( "SetSpeedLowAcc" );
+   const double lowAccelLimit = dbgval.isEmpty() ? DSS_LO_ACC : dbgval.toDouble(); // rpm/s
+
+
+   constexpr double kRpmToRadPerSec = M_PI / 30.0;  // convert rpm to rad/s
+   constexpr double kT1Factor       = 3.0 / 2.0;          // (3.0 / 2.0)
+
+   // Inputs distilled into a single "first scan" and target speed
+   double targetRpm          = 0.0;
+   double firstScanTime      = 0.0;
+   double firstScanOmega2t   = 0.0;
+
+   // Prefer speed profile when present
+   if ( !speed_profiles.isEmpty() ) {
+      targetRpm         = speed_profiles[ 0 ].rotorspeed;
+      firstScanTime     = speed_profiles[ 0 ].time_first;
+      firstScanOmega2t  = speed_profiles[ 0 ].w2t_first;
+   }
+   // Otherwise, deduce earliest scan from data scans
+   else if ( !scans.isEmpty() ) {
+      bool initialized = false;
+      for ( const auto& sc : scans ) {
+         if ( !initialized || sc.seconds < firstScanTime ) {
+            firstScanTime     = sc.seconds;
+            firstScanOmega2t  = sc.omega2t;
+            targetRpm         = sc.rpm;
+            initialized       = true;
+         }
+      }
+   }
+   // No information; nothing to check
+   else {
+      return results;
+   }
+
+   // Convert to angular speed and compute omega^2
+   const double omegaAtTarget = targetRpm * kRpmToRadPerSec; // rad/s
+   const double omegaSquared  = sq( omegaAtTarget );
+
+   if ( omegaSquared <= 0.0 ) {
+      // Guard: cannot compute with zero target speed (w^2 == 0)
+      results << "Insufficient Data - Zero Target Speed"
+              << "The target speed implies zero angular velocity; acceleration checks cannot be performed.";
+      return results;
+   }
+
+   // =====================================================================
+   // For the first speed step, we compute "t1", the end of the initial
+   // acceleration zone, using
+   //   "t2"   , the time in seconds for the first scan;
+   //   "w2t"  , the omega^2_t integral for the first scan time;
+   //   "w2"   , the omega^2 value for the constant zone speed;
+   //   "tfac" , a factor (==(3/2)==1.5) derived from the following.
+   //   "acc"  , the acceleration rate in radians/s^2
+   //   "rpm"  , the target/set speed in rpm
+   // The acceleration zone begins at t0=0.0.
+   // It ends at time "t1".
+   // The time between t1 and t2 is at constant speed.
+   // The time between 0 and t1 is at changing speeds averaging (rpm/2).
+   // For I1 and I2, the omega^2t integrals at t1 and t2,
+   //                    ( I2 - I1 ) = ( t2 - t1 ) * w2       (equ.1)
+   //                             I1 = acc^2 * t1^3 / 3       (equ.2)
+   //                            rpm = acc * t1 * 30 / PI
+   //                             I1 = ( rpm * PI / 30 )^2 * t1 / 3
+   //                             w2 = ( rpm * PI / 30 )^2
+   //                             I1 = ( w2 / 3 ) * t1
+   //                             I2 = w2t
+   // Substituting into equ.1, we get:
+   //  ( w2t - ( ( w2 / 3 ) * t1 ) ) = ( t2 - t1 ) * w2
+   //  t1 * ( w2 - ( w2 / 3 ) )      = t2 * w2 - w2t
+   //  t1 * ( 2 / 3 ) * w2           = t2 * w2 - w2t
+   //                            t1  = ( 3 / 2 ) * ( t2 - ( w2t / w2 ) )
+   // =====================================================================
+   const double t1w     = firstScanOmega2t / omegaSquared;
+   const double accelEnd = kT1Factor * ( firstScanTime - t1w ); // seconds
+
+   if ( accelEnd <= 0.0 ) {
+      // Guard: non-positive acceleration duration not meaningful
+      results << "Bad TimeState Implied - Non-Positive Acceleration Duration";
+      results << QString( "The derived end of the acceleration period is non-positive (%1 s), "
+                          "which is inconsistent with the data and prevents a valid acceleration rate." )
+                 .arg(QString::number(accelEnd, 'g', 1));
+      return results;
+   }
+
+   const double accelRate = targetRpm / accelEnd; // rpm/s
+
+   if ( accelRate < lowAccelLimit ) {
+      // Low acceleration rate
+      results << "Bad TimeState Implied - Low Acceleration Rate";
+      results << QString( "The experiment has a slower acceleration rate than expected.<br/>"
+         "The rate implied for linear acceleration is %1 rpm/s, while %2 rpm/s or more were expected.<br/>"
+         "If the acceleration is non-linear, this may lead to incorrect fitting results.<br/>"
+         "Please consult the documentation for more information." )
+         .arg(QString::number(accelRate, 'f', 1))
+         .arg(QString::number(lowAccelLimit, 'f', 1));
+   }
+   else if ( firstScanTime < accelEnd ) {
+      // The first scan time is before the end of the acceleration zone
+      results << "Bad TimeState Implied - First Scan During Acceleration";
+      results << QString( "The first scan of the experiment occurs before the end of the acceleration zone.<br/>"
+         "The first scan time is %1 seconds, while the acceleration zone ends at %2 seconds.<br/>"
+         "This causes the meniscus to change during the experiment and will lead to incorrect fitting results.<br/>"
+         "Please consult the documentation for more information." )
+         .arg(QString::number(firstScanTime, 'f', 1))
+         .arg(QString::number(accelEnd, 'f', 1));
+   }
+
+   return results;
+}
+
+double US_AstfemMath::calc_omega2t(
+   double start_omega2t, double start_speed, double start_time, double target_speed, double accel_rate, double t) {
+   // if t is equal to start_time return the start omega2t
+   if ( qFuzzyCompare(start_time, t) ) {
+      return start_omega2t;
+   }
+   // if t is smaller than start_time, return -1.0
+   if ( t < start_time ) {
+      return -1.0;
+   }
+   constexpr double RPM2RadPS = M_PI / 30.0;  // convert rpm to rad/s
+   const double relative_time = t - start_time; // relative time in the speed step [s]
+   // if acceleration is needed, check that accel_rate is not zero
+   if ( qFuzzyCompare(target_speed, start_speed) && qFuzzyCompare(accel_rate, 0.0) ) {
+      return -1.0;
+   }
+   const double accel_duration = (target_speed - start_speed) / accel_rate; // duration of the acceleration [s]
+   double omega2t = start_omega2t;
+   // For the time T = min(accel_duration, relative_time) the omega2t can be calculated
+   // Integral from 0 to T (start_speed + accel_rate * t)^2 dt
+   // = Integral from 0 to T (start_speed)^2 dt <- Contribution of the previous speed
+   // + Integral from 0 to T (2 * start_speed * accel_rate * t) dt <- Contribution of the previous speed changing
+   // + Integral from 0 to T (accel_rate * t)^2 dt <- Contribution of the acceleration
+
+   // Add the contribution of the previous speed
+   omega2t += sq(start_speed * RPM2RadPS) * qMin(accel_duration, relative_time);
+   // Add the contribution of the previous speed changing
+   omega2t += start_speed * RPM2RadPS * accel_rate * RPM2RadPS * sq(qMin(accel_duration, relative_time));
+   // Add the contribution of the acceleration
+   omega2t += sq(accel_rate * RPM2RadPS) * pow(qMin(accel_duration, relative_time), 3) / 3.0;
+
+   // If the relative time extends beyond the acceleration duration, the omega2t can be calculated
+   // Integral from accel_duration to relative_time (target_speed)^2 dt
+   omega2t += sq(target_speed * RPM2RadPS) * qMax(0.0, relative_time - accel_duration);
+   return omega2t;
+}
+
 // Determine if a timestate file holds one-second-interval records
 bool US_AstfemMath::timestate_onesec( const QString& tmst_fpath,
                                       US_DataIO::RawData&      sim_data )

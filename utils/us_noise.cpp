@@ -37,21 +37,21 @@ bool US_Noise::operator== ( const US_Noise& n ) const
 }
 
 // load noise from db or local disk
-int US_Noise::load( bool db_access, const QString& guid, US_DB2* db )
+int US_Noise::load( bool db_access, const QString& guid, IUS_DB2* db )
 {
    if ( db_access ) return load_db  ( guid, db );
    else             return load_disk( guid );
 }
 
 // load noise from db
-int US_Noise::load( const QString& id, US_DB2* db )
+int US_Noise::load( const QString& id, IUS_DB2* db )
 {
    QStringList q;
 
    q << "get_noise_info" << id;
    db->query( q );
    
-   if ( db->lastErrno() != US_DB2::OK ) return db->lastErrno();
+   if ( db->lastErrno() != IUS_DB2::OK ) return db->lastErrno();
 
    db->next();
    QByteArray contents = db->value( 5 ).toString().toLatin1();
@@ -120,18 +120,18 @@ int US_Noise::load_stream( QXmlStreamReader& xml )
    if ( US_Settings::us_debug() > 2 )
       debug();
 
-   return US_DB2::OK;
+   return IUS_DB2::OK;
 }
 
 // write noise to db or local disk
-int US_Noise::write( bool db_access, const QString& filename, US_DB2* db )
+int US_Noise::write( bool db_access, const QString& filename, IUS_DB2* db )
 {
    if ( db_access ) return write( db );
    else             return write( filename );
 }
 
 // write noise to db
-int US_Noise::write( US_DB2* db )
+int US_Noise::write( IUS_DB2* db )
 {
       // Create the noise xml file in a string
       QByteArray       temp_contents;
@@ -178,7 +178,7 @@ int US_Noise::write( US_DB2* db )
       
       q.clear();
      
-      if ( db->lastErrno() != US_DB2::OK )
+      if ( db->lastErrno() != IUS_DB2::OK )
       {
          q << "new_noise" << noiseGUID << editID << modelID << modelGUID
            << typen << description << contents;
@@ -207,13 +207,13 @@ int US_Noise::write( const QString& filename )
    QFile file( filename );
 
    if ( ! file.open( QIODevice::WriteOnly | QIODevice::Text) )
-      return US_DB2::DBERROR;
+      return IUS_DB2::DBERROR;
 
    QXmlStreamWriter xml( &file );
    write_stream( xml );
    file.close();
 
-   return US_DB2::OK;
+   return IUS_DB2::OK;
 }
 
 // apply noise to EditedData by add/subtract noise values from readings
@@ -311,7 +311,7 @@ bool US_Noise::noise_path( QString& path )
 // load noise that matches guid from disk
 int US_Noise::load_disk( const QString& guid )
 {
-   int error = US_DB2::DBERROR;  // Error by default
+   int error = IUS_DB2::DBERROR;  // Error by default
 
    QString path;
 
@@ -363,14 +363,14 @@ int US_Noise::load_disk( const QString& guid )
 }
 
 // load noise that matches guid from db
-int US_Noise::load_db( const QString& guid, US_DB2* db )
+int US_Noise::load_db( const QString& guid, IUS_DB2* db )
 {
    QStringList q;
 
    q << "get_noiseID" << guid;
    db->query( q );
 
-   if ( db->lastErrno() != US_DB2::OK ) return db->lastErrno();
+   if ( db->lastErrno() != IUS_DB2::OK ) return db->lastErrno();
    
    db->next();
    QString id = db->value( 0 ).toString();

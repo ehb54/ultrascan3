@@ -553,7 +553,8 @@ int US_CfaData::export_auc( QVector< US_DataIO::RawData >& allData )
       US_DataIO::RawData* rdata = &allData[ ii ];
       QString trnode    = QString::number( rdata->cell ) + "." +
                           QString( rdata->channel ) + "." +
-                          QString( "%1" ).arg( qRound( rdata->scanData[0].wavelength ), 3, 10, QChar( '0' ) );
+                          QString::asprintf( "%03d",
+                                qRound( rdata->scanData[ 0 ].wavelength ) );
       QString fname     = fbase + trnode + ".auc";
       QString fpath     = cur_dir + fname;
 

@@ -130,6 +130,12 @@ US_ReportGui::US_ReportGui( QMap < QString, US_ReportGMP* > report_map ) : US_Wi
   connect( sb_durat_ss,  SIGNAL( valueChanged   ( int ) ),
 	   this,         SLOT  ( ssChgDuratTime_ss ( int ) ) );
 
+  //set Exp. Duration counters to read-only
+  sb_durat_dd -> setReadOnly(true);
+  sb_durat_hh -> setReadOnly(true);
+  sb_durat_mm -> setReadOnly(true);
+  sb_durat_ss -> setReadOnly(true);
+
   //ALEXEY_NEW_REPORT: wvl
   cb_wvl =  us_comboBox();
   cb_wvl -> addItems( wvl_passed );
@@ -208,6 +214,28 @@ US_ReportGui::US_ReportGui( QMap < QString, US_ReportGMP* > report_map ) : US_Wi
   bn_report_t     = us_banner( tr( "Report Parameters: Type | Method" ) );
   bn_report_t->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
   main->addWidget( bn_report_t );
+
+  //Units info memo
+  QTextEdit*     le_info;
+  QFont le_info_font( US_Widgets::fixedFont().family(),
+		      US_GuiSettings::fontSize() );
+  le_info = us_textedit();
+  QFontMetrics m (le_info -> font()) ;
+  int RowHeight = m.lineSpacing() ;
+  le_info -> setFixedHeight  (2 * RowHeight) ;
+  
+  QPalette p = le_info->palette(); 
+  p.setColor(QPalette::Base, Qt::lightGray);
+  p.setColor(QPalette::Text, Qt::darkRed);
+  le_info->setPalette(p);
+
+  le_info->setHtml(tr( "[s,D20W,MW] units: "
+		       "&nbsp; s(&#215;1e+13)[sec]; D20W(&#215;1e+7)[cm&#178;/s]; MW(&#215;1e-3)[Dalton]"
+		       ));
+
+  le_info->setFont(le_info_font);
+  main->addWidget( le_info );
+  
   
   //Main Table
   // bn_report_t        = NULL;
@@ -1015,11 +1043,14 @@ void US_ReportGui::verify_text( const QString& text )
   // else if ( oname == "av_intensity" )
   //   curr_widget = le_av_intensity;
 
-  QRegExp rx_double("\\d*\\.?\\d+");
+  //QRegExp rx_double("\\d*\\.?\\d+");
+  //QRegExp rx_double("/[+\-]?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+\-]?\d+)?/");
+  QRegularExpression rx_double("^[-+]?(?:[0-9]*\\.)?[0-9]+(?:[eE][-+]?[0-9]+)?$");
 
   if ( curr_widget != NULL )
     {      
-      if ( !rx_double.exactMatch( text ) )
+      //if ( !rx_double.exactMatch( text ) )
+      if ( !rx_double.match( text ).hasMatch() )
 	{
 	  QPalette *palette = new QPalette();
 	  palette->setColor(QPalette::Text,Qt::white);

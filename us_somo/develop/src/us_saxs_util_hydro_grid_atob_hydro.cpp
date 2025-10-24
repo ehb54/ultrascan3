@@ -625,21 +625,18 @@ AtoB(PDB * pdb,
                               if (((int) ((p->z) / dx) + (int) (npoints_z / 2)) == k)
                               {
                                  tso << 
-                                    QString("")
-                                    .sprintf(     
-                                             "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
-                                             ++atomno,
-                                             p->atnam,
-                                             p->resnam,
-                                             p->chain,
-                                             p->resnum,
-                                             p->x,
-                                             p->y,
-                                             p->z,
-                                             p->occ,
-                                             p->bval,
-                                             "  "
-                                             );
+                                    QString::asprintf( "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
+                                                       ++atomno,
+                                                       p->atnam,
+                                                       p->resnam,
+                                                       p->chain,
+                                                       p->resnum,
+                                                       p->x,
+                                                       p->y,
+                                                       p->z,
+                                                       p->occ,
+                                                       p->bval,
+                                                       "  " );
                               }
                            }
                         }

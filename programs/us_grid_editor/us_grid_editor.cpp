@@ -1,7 +1,9 @@
 //! \file us_ga_init.cpp
 
-#include <QApplication>
 #include "us_grid_editor.h"
+#include "us_matrix.h"
+#include "us_csv_loader.h"
+#include <cmath>
 
 // main program
 int main( int argc, char* argv[] )
@@ -41,7 +43,7 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    right->setSpacing( 0 );
    right->setContentsMargins( 0, 0, 0, 0 );
 
-   QLabel *lb_preset = us_banner( tr( "Grid Setup" ) );
+   QLabel *lb_in_out = us_banner( tr( "Input / Output Ctrl" ) );
 
    QPushButton* pb_investigator = us_pushbutton( tr( "Select Investigator" ) );
    connect( pb_investigator, &QPushButton::clicked, this, &US_Grid_Editor::sel_investigator );
@@ -58,28 +60,29 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    dkdb_cntrls   = new US_Disk_DB_Controls( US_Settings::default_data_location() );
    connect( dkdb_cntrls, &US_Disk_DB_Controls::changed, this, &US_Grid_Editor::update_disk_db );
 
-   x_param = Attribute::ATTR_S;
-   y_param = Attribute::ATTR_K;
-   z_param = Attribute::ATTR_V;
+   // select bewteen cg & csv modes
+   rb_cg_mode  = new QRadioButton();
+   rb_csv_mode = new QRadioButton();
+   QGridLayout* lyt_cg_mode  = us_radiobutton( "Create Grid", rb_cg_mode );
+   QGridLayout* lyt_csv_mode = us_radiobutton( "Load Grid", rb_csv_mode );
 
-   QLabel *lb_x_param = us_label( tr( "X-Axis" ) );
-   lb_x_param->setAlignment( Qt::AlignCenter );
+   QHBoxLayout* lyt_grid_mode = new QHBoxLayout();
+   lyt_grid_mode->setContentsMargins( 0, 0, 0, 0 );
+   lyt_grid_mode->setSpacing( 0 );
+   lyt_grid_mode->addLayout( lyt_cg_mode );
+   lyt_grid_mode->addLayout( lyt_csv_mode );
 
-   QLabel *lb_y_param = us_label( tr( "Y-Axis" ) );
-   lb_y_param->setAlignment( Qt::AlignCenter );
+   QButtonGroup* bg_mode = new QButtonGroup( this );
+   bg_mode->addButton( rb_cg_mode );
+   bg_mode->addButton( rb_csv_mode );
+   rb_cg_mode->setChecked( true );
+   connect( bg_mode, &QButtonGroup::idClicked, this, &US_Grid_Editor::set_cg_mode );
 
-   QLabel *lb_z_param = us_label( tr( "Fixed Attribute" ) );
-   lb_z_param->setAlignment( Qt::AlignCenter );
-
-   le_x_param = us_lineedit( Attribute::long_desc( x_param ), -1, true );
-   le_y_param = us_lineedit( Attribute::long_desc( y_param ), -1, true );
-   le_z_param = us_lineedit( Attribute::long_desc( z_param ), -1, true );
-
-   QPushButton *pb_grid_setup = us_pushbutton( "Grid Setting" );
-   connect ( pb_grid_setup, &QPushButton::clicked, this, &US_Grid_Editor::setup_grid );
+   pb_load_csv = us_pushbutton( "Load Grid File ");
+   connect( pb_load_csv, &QPushButton::clicked, this, &US_Grid_Editor::load_grid_file );
 
    // Experimental Space
-   QLabel *lb_experm = us_banner( tr( "Experimental Space" ) );
+   QLabel* lb_experm = us_banner( tr( "Experimental Space" ) );
 
    QLabel *lb_buffer = us_label( tr( "Description" ) );
    lb_buffer->setAlignment( Qt::AlignCenter );
@@ -118,20 +121,45 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    connect( le_temp,      &QLineEdit::editingFinished, this, &US_Grid_Editor::new_dens_visc_temp );
    connect( pb_lu_buffer, &QPushButton::clicked,       this, &US_Grid_Editor::set_buffer );
 
-   // 20,w grid control
-   QLabel *lb_20w_ctrl = us_banner( tr( "20,W Partial Grid Control" ) );
+   // Grid Setup
+   lb_grid_setup = us_banner( tr( "Grid Setup Control" ) );
+   x_param = Attribute::ATTR_S;
+   y_param = Attribute::ATTR_K;
+   z_param = Attribute::ATTR_V;
+
+   lb_x_param = us_label( tr( "X-Axis" ) );
+   lb_x_param->setAlignment( Qt::AlignCenter );
+
+   lb_y_param = us_label( tr( "Y-Axis" ) );
+   lb_y_param->setAlignment( Qt::AlignCenter );
+
+   lb_z_param = us_label( tr( "Fixed Attribute" ) );
+   lb_z_param->setAlignment( Qt::AlignCenter );
+
+   le_x_param = us_lineedit( Attribute::long_desc( x_param ), -1, true );
+   le_y_param = us_lineedit( Attribute::long_desc( y_param ), -1, true );
+   le_z_param = us_lineedit( Attribute::long_desc( z_param ), -1, true );
+
+   pb_grid_setup = us_pushbutton( "Grid Setup" );
+   connect ( pb_grid_setup, &QPushButton::clicked, this, &US_Grid_Editor::setup_grid );
+
+   // Grid Mode Control
+   lb_grid_mode = us_banner( "" );
 
    chkb_log = new QCheckBox();
-   QGridLayout* lyt_log = us_checkbox( "X-Axis Logarithmic", chkb_log );
+   lyt_log = us_checkbox( "X-Axis Logarithmic", chkb_log );
    connect( chkb_log, &QCheckBox::stateChanged, this, &US_Grid_Editor::refill_grid_points );
-
-   QPushButton* pb_load_model = us_pushbutton( "Load Model" );
-   connect( pb_load_model, &QPushButton::clicked, this, &US_Grid_Editor::load );
 
    QRadioButton* rb_exctpoints = new QRadioButton();
    QRadioButton* rb_midpoints    = new QRadioButton();
-   QGridLayout* lyt_sp = us_radiobutton( "Start / End Points", rb_exctpoints );
-   QGridLayout* lyt_mp = us_radiobutton( "Bin Centers", rb_midpoints );
+   QGridLayout* lyt_end_points = us_radiobutton( "Start / End Points", rb_exctpoints );
+   QGridLayout* lyt_mid_points = us_radiobutton( "Bin Centers", rb_midpoints );
+
+   lyt_points = new QHBoxLayout();
+   lyt_points->setContentsMargins( 0, 0, 0, 0 );
+   lyt_points->setSpacing( 0 );
+   lyt_points->addLayout( lyt_end_points );
+   lyt_points->addLayout( lyt_mid_points );
 
    bg_point_type = new QButtonGroup();
    bg_point_type->addButton( rb_midpoints, MIDPOINTS );
@@ -139,18 +167,30 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    rb_exctpoints->setChecked( true );
    connect( bg_point_type, &QButtonGroup::idClicked, this, &US_Grid_Editor::set_mid_exct_points );
 
-   QLabel *lb_grid_list = us_label( "Partial Grid List" );
+   lb_grid_list = us_label( "Partial Grid List" );
    lb_grid_list->setAlignment( Qt::AlignCenter );
 
    lw_grids = us_listwidget();
 
-   QPushButton* pb_new = us_pushbutton( "New" );
+   te_info = new QTextEdit();
+   te_info->setAcceptRichText( true );
+   te_info->setReadOnly( true );
+   QString text( "<b>Acceptable Units:</b><br/><br/>");
+   text += tr( "<b>Sedimentation Coefficient [ s ]</b><br/>" );
+   text += tr( "<b>Diffusion coefficient [ cm<sup>2</sup> / s ]</b><br/>" );
+   text += tr( "<b>Molecular weight [ Da ]</b><br/>" );
+   text += tr( "<b>Partial specific volume [ mL / g]</b><br/>" );
+   text += tr( "<b>Frictional coefficient [ g / s]</b><br/>" );
+   te_info->setText( text );
+   te_info->setStyleSheet("QTextEdit {color: blue; background-color: lightyellow;}" );
+
+   pb_new = us_pushbutton( "New" );
    connect( pb_new, &QPushButton::clicked, this, &US_Grid_Editor::new_grid_clicked );
 
-   QPushButton* pb_delete = us_pushbutton( "Delete" );
+   pb_delete = us_pushbutton( "Delete" );
    connect( pb_delete, &QPushButton::clicked, this, &US_Grid_Editor::delete_grid_clicked );
 
-   QPushButton* pb_update = us_pushbutton( "Update" );
+   pb_update = us_pushbutton( "Update" );
    connect( pb_update, &QPushButton::clicked, this, &US_Grid_Editor::update_grid_clicked );
 
    QHBoxLayout* lyt_1 = new QHBoxLayout();
@@ -158,15 +198,15 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    lyt_1->addWidget( pb_update );
    lyt_1->addWidget( pb_delete );
 
-   QFrame *hline1 = new QFrame();
+   hline1 = new QFrame();
    hline1->setFrameShape( QFrame::HLine );
    hline1->setFrameShadow( QFrame::Sunken );
 
-   QLabel *lb_min = us_label( "Minimum" );
+   lb_min = us_label( "Minimum" );
    lb_min->setAlignment( Qt::AlignCenter );
-   QLabel *lb_max = us_label( "Maximum" );
+   lb_max = us_label( "Maximum" );
    lb_max->setAlignment( Qt::AlignCenter );
-   QLabel *lb_res = us_label( "Resolution" );
+   lb_res = us_label( "Resolution" );
    lb_res->setAlignment( Qt::AlignCenter );
 
    lb_x_ax = us_label( Attribute::short_desc( x_param ) );
@@ -184,22 +224,38 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    le_y_res = us_lineedit();
    le_y_res->setValidator( iValid );
 
-   QFrame *hline2 = new QFrame();
-   hline2->setFrameShape( QFrame::HLine );
-   hline2->setFrameShadow( QFrame::Sunken );
-
    lb_z_ax = us_label( Attribute::short_desc( z_param ) );
    lb_z_ax->setAlignment( Qt::AlignCenter );
    le_z_val = us_lineedit();
 
-   connect( le_x_min, &QLineEdit::editingFinished, this, &US_Grid_Editor::new_xMin );
-   connect( le_x_max, &QLineEdit::editingFinished, this, &US_Grid_Editor::new_xMax );
-   connect( le_y_min, &QLineEdit::editingFinished, this, &US_Grid_Editor::new_yMin );
-   connect( le_y_max, &QLineEdit::editingFinished, this, &US_Grid_Editor::new_yMax );
-   connect( le_z_val, &QLineEdit::editingFinished, this, &US_Grid_Editor::new_zVal );
+   QGridLayout* lyt_cons_z = us_radiobutton( "Constant", rb_cons_z );
+   QGridLayout* lyt_vary_z = us_radiobutton( "Varying" , rb_vary_z );
+   lyt_zvalues = new QHBoxLayout();
+   lyt_zvalues->setContentsMargins( 0, 0, 0, 0 );
+   lyt_zvalues->setSpacing( 0 );
+   lyt_zvalues->addLayout( lyt_cons_z );
+   lyt_zvalues->addLayout( lyt_vary_z );
+
+   QButtonGroup* z_cons_vary = new QButtonGroup( this );
+   z_cons_vary->addButton( rb_cons_z, 0 );
+   z_cons_vary->addButton( rb_vary_z, 1 );
+   rb_cons_z->setChecked( true );
+
+   pb_z_set_func = us_pushbutton( "Set" );
+   set_zval_type( 0 );
+
+   connect( le_x_min,  &QLineEdit::editingFinished, this, &US_Grid_Editor::new_xMin );
+   connect( le_x_max,  &QLineEdit::editingFinished, this, &US_Grid_Editor::new_xMax );
+   connect( le_y_min,  &QLineEdit::editingFinished, this, &US_Grid_Editor::new_yMin );
+   connect( le_y_max,  &QLineEdit::editingFinished, this, &US_Grid_Editor::new_yMax );
+   connect( le_z_val,  &QLineEdit::editingFinished, this, &US_Grid_Editor::new_zVal );
+   connect( z_cons_vary  , &QButtonGroup::idClicked, this, &US_Grid_Editor::set_zval_type );
+   connect( pb_z_set_func, &QPushButton::clicked   , this, &US_Grid_Editor::set_z_function );
 
    pb_add_update = us_pushbutton( "Add / Update " );
    connect( pb_add_update, &QPushButton::clicked, this, &US_Grid_Editor::add_update );
+
+   lb_subgrid_ctrl = us_banner( "Subgrid Control" );
 
    QLabel *lb_nsubgrids = us_label( "Number of Subgrids" );
    lb_nsubgrids->setAlignment( Qt::AlignCenter );
@@ -243,6 +299,9 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    pb_reset->setEnabled( true );
    connect( pb_reset, &QPushButton::clicked, this, &US_Grid_Editor::reset );
 
+   QPushButton* pb_load_model = us_pushbutton( "Load Model" );
+   connect( pb_load_model, &QPushButton::clicked, this, &US_Grid_Editor::load );
+
    pb_save = us_pushbutton( tr( "Save" ) );
    pb_save->setEnabled( false );
    connect( pb_save, &QPushButton::clicked, this, &US_Grid_Editor::save );
@@ -255,24 +314,21 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    pb_close->setEnabled( true );
    connect( pb_close, &QPushButton::clicked, this, &US_Grid_Editor::close );
 
-   int row = 0;
-   left->addWidget( lb_preset,            row++, 0, 1, 4 );
+   QHBoxLayout* lyt_rsl = new QHBoxLayout();
+   lyt_rsl->setContentsMargins( 0, 0, 0, 0 );
+   lyt_rsl->setSpacing( 2 );
+   lyt_rsl->addWidget( pb_reset );
+   lyt_rsl->addWidget( pb_load_model );
+   lyt_rsl->addWidget( pb_save );
 
+   int row = 0;
+   left->addWidget( lb_in_out,            row++, 0, 1, 4 );
    left->addWidget( pb_investigator,      row,   0, 1, 2 );
    left->addWidget( le_investigator,      row++, 2, 1, 2 );
 
    left->addLayout( dkdb_cntrls,          row++, 0, 1, 4 );
 
-   left->addWidget( lb_x_param,           row,   0, 1, 2 );
-   left->addWidget( le_x_param,           row++, 2, 1, 2 );
-
-   left->addWidget( lb_y_param,           row,   0, 1, 2 );
-   left->addWidget( le_y_param,           row++, 2, 1, 2 );
-
-   left->addWidget( lb_z_param,           row,   0, 1, 2 );
-   left->addWidget( le_z_param,           row++, 2, 1, 2 );
-
-   left->addWidget( pb_grid_setup,        row++, 1, 1, 2 );
+   left->addLayout( lyt_rsl,              row++, 0, 1, 4 );
 
    left->addWidget( lb_experm,            row++, 0, 1, 4 );
 
@@ -293,17 +349,33 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    left->addWidget( lb_visc_T,            row,   2, 1, 1 );
    left->addWidget( le_visc_T,            row++, 3, 1, 1 );
 
-   left->addWidget( lb_20w_ctrl,          row++, 0, 1, 4 );
+   left->addWidget( lb_grid_setup,        row++, 0, 1, 4 );
 
-   left->addLayout( lyt_log,              row,   0, 1, 2 );
-   left->addWidget( pb_load_model,        row++, 2, 1, 2 );
+   left->addWidget( lb_x_param,           row,   0, 1, 2 );
+   left->addWidget( le_x_param,           row++, 2, 1, 2 );
 
-   left->addLayout( lyt_sp,               row,   0, 1, 2 );
-   left->addLayout( lyt_mp,               row++, 2, 1, 2 );
-   
+   left->addWidget( lb_y_param,           row,   0, 1, 2 );
+   left->addWidget( le_y_param,           row++, 2, 1, 2 );
+
+   left->addWidget( lb_z_param,           row,   0, 1, 2 );
+   left->addWidget( le_z_param,           row++, 2, 1, 2 );
+
+   left->addWidget( pb_grid_setup,        row++, 1, 1, 2 );
+
+   left->addWidget( lb_grid_mode,         row++, 0, 1, 4 );
+
+   left->addLayout( lyt_grid_mode,        row++, 0, 1, 4 );
+
+   left->addWidget( pb_load_csv,          row++, 1, 1, 2 );
+
+   left->addLayout( lyt_points,           row++, 0, 1, 4 );
+
+   left->addLayout( lyt_log,              row++, 0, 1, 4 );
+
    left->addWidget( lb_grid_list,         row++, 0, 1, 4 );
 
    left->addWidget( lw_grids,             row,   0, 1, 4 );
+   left->addWidget( te_info,              row,   0, 1, 4 );
    left->setRowStretch( row++, 1 );
 
    left->addLayout( lyt_1,                row++, 0, 1, 4 );
@@ -324,11 +396,14 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    left->addWidget( le_y_max,             row,   2, 1, 1 );
    left->addWidget( le_y_res,             row++, 3, 1, 1 );
 
-   left->addWidget( hline2,               row++, 0, 1, 4 );
-
    left->addWidget( lb_z_ax,              row,   0, 1, 1 );
    left->addWidget( le_z_val,             row,   1, 1, 1 );
-   left->addWidget( pb_add_update,        row++, 2, 1, 2 );
+   left->addWidget( pb_z_set_func,        row,   1, 1, 1 );
+   left->addLayout( lyt_zvalues,          row++, 2, 1, 2 );
+
+   left->addWidget( pb_add_update,        row++, 1, 1, 2 );
+
+   left->addWidget( lb_subgrid_ctrl,    row++, 0, 1, 4 );
 
    left->addWidget( lb_subgrid,           row,   0, 1, 2 );
    left->addWidget( ct_subgrid,           row++, 2, 1, 2 );
@@ -348,10 +423,8 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    QSpacerItem *spacer = new QSpacerItem( 0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding );
    left->addItem( spacer, row++, 0, 1, 4 );
 
-   left->addWidget( pb_reset,             row,   0, 1, 1 );
-   left->addWidget( pb_save,              row,   1, 1, 1 );
-   left->addWidget( pb_help,              row,   2, 1, 1 );
-   left->addWidget( pb_close,             row++, 3, 1, 1 );
+   left->addWidget( pb_help,              row,   0, 1, 2 );
+   left->addWidget( pb_close,             row++, 2, 1, 2 );
 
    for ( int ii = 0; ii < 4; ii++ ) {
       left->setColumnStretch( ii, 1 );
@@ -489,16 +562,42 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    reset();
    select_x_axis( x_param );
    select_y_axis( y_param );
+   set_cg_mode();
+}
+
+void US_Grid_Editor::delete_data()
+{
+   lw_grids->disconnect();
+   lw_grids->clear();
+   partial_grids.clear();
+   partial_grid_info.clear();
+   sorted_points.clear();
+   final_subgrids.clear();
+}
+
+void US_Grid_Editor::show_layout( QLayout* layout, bool show )
+{
+   if (!layout)
+      return;
+
+   for (int i = 0; i < layout->count(); ++i) {
+      QLayoutItem *item = layout->itemAt(i);
+
+      if (QWidget *widget = item->widget()) {
+         if ( show ) {
+            widget->show();
+         } else {
+            widget->hide();
+         }
+      } else if (QLayout *childLayout = item->layout()) {
+         show_layout( childLayout, show );
+      }
+   }
 }
 
 void US_Grid_Editor::reset()
 {
-   lw_grids->disconnect();
-   lw_grids->clear();
-   grid_points.clear();
-   grid_info.clear();
-   sorted_points.clear();
-   final_subgrids.clear();
+   delete_data();
 
    x_param = Attribute::ATTR_S;
    y_param = Attribute::ATTR_K;
@@ -569,7 +668,7 @@ void US_Grid_Editor::plot_tmp()
    bool   xMax_set = validate_double( le_x_max->text(), x2 );
    bool   yMin_set = validate_double( le_y_min->text(), y1 );
    bool   yMax_set = validate_double( le_y_max->text(), y2 );
-   bool   grid_set = ! grid_points.isEmpty();
+   bool   grid_set = ! partial_grids.isEmpty();
    double px1 = data_plot->axisScaleDiv( QwtPlot::xBottom ).lowerBound();
    double px2 = data_plot->axisScaleDiv( QwtPlot::xBottom ).upperBound();
    double py1 = data_plot->axisScaleDiv( QwtPlot::yLeft ).lowerBound();
@@ -583,13 +682,13 @@ void US_Grid_Editor::plot_tmp()
 
    if ( grid_set )
    {
-      GridInfo ginfo = grid_info.first();
+      GridInfo ginfo = partial_grid_info.first();
       px1 = correct_unit( ginfo.xMin, Attribute::from_symbol( ginfo.xType ), true );
       px2 = correct_unit( ginfo.xMax, Attribute::from_symbol( ginfo.xType ), true );
       py1 = correct_unit( ginfo.yMin, Attribute::from_symbol( ginfo.yType ), true );
       py2 = correct_unit( ginfo.yMax, Attribute::from_symbol( ginfo.yType ), true );
-      for ( int ii = 0; ii < grid_info.size(); ii++ ) {
-         GridInfo ginfo = grid_info.at( ii );
+      for ( int ii = 0; ii < partial_grid_info.size(); ii++ ) {
+         GridInfo ginfo = partial_grid_info.at( ii );
          px1 = qMin( px1, correct_unit( ginfo.xMin, Attribute::from_symbol( ginfo.xType ), true ) );
          px2 = qMax( px2, correct_unit( ginfo.xMax, Attribute::from_symbol( ginfo.xType ), true ) );
          py1 = qMin( py1, correct_unit( ginfo.yMin, Attribute::from_symbol( ginfo.yType ), true ) );
@@ -701,7 +800,7 @@ void US_Grid_Editor::plot_points()
    data_plot->setAxisScale( QwtPlot::yLeft  , 1, 10 );
    data_plot->replot();
 
-   if ( grid_points.isEmpty() ) {
+   if ( partial_grids.isEmpty() ) {
       pb_save->setDisabled( true );
       return;
    }
@@ -712,8 +811,8 @@ void US_Grid_Editor::plot_points()
    double py1 =  1e99;
    double py2 = -1e99;
    int ss = ct_size->value();
-   for ( int nn = 0; nn < grid_points.size(); nn++ ) {
-      QVector<GridPoint> gps = grid_points.at( nn );
+   for ( int nn = 0; nn < partial_grids.size(); nn++ ) {
+      QVector<GridPoint> gps = partial_grids.at( nn );
       QVector<double> xarr;
       QVector<double> yarr;
       for ( int ii = 0; ii < gps.size(); ii++ ) {
@@ -848,7 +947,7 @@ void US_Grid_Editor::plot_subgrid( double subgrid_id )
    le_npoints_last->setText( tr( "%1" ).arg( np_last ) );
 }
 
-void US_Grid_Editor::highlight( int id )
+void US_Grid_Editor::select_partial_grid( int id )
 {
    clear_xyz();
    for ( int ii = 0; ii < point_curves.size(); ii++ ) {
@@ -866,13 +965,27 @@ void US_Grid_Editor::highlight( int id )
       QwtSymbol *symbol = new QwtSymbol( QwtSymbol::Ellipse, QBrush( color_highlight ), pen, size );
       point_curves[id]->setSymbol( symbol );
 
-      GridInfo ginfo = grid_info.at( id );
+      GridInfo ginfo = partial_grid_info.at( id );
 
       double x_min = correct_unit( ginfo.xMin, Attribute::from_symbol( ginfo.xType ), true );
       double x_max = correct_unit( ginfo.xMax, Attribute::from_symbol( ginfo.xType ), true );
       double y_min = correct_unit( ginfo.yMin, Attribute::from_symbol( ginfo.yType ), true );
       double y_max = correct_unit( ginfo.yMax, Attribute::from_symbol( ginfo.yType ), true );
-      double z_val = correct_unit( ginfo.zVal, Attribute::from_symbol( ginfo.zType ), true );
+      bool constant;
+      QString type, dpnt;
+      QVector<double> prm;
+      parse_z_expression( ginfo.zVal, type, dpnt, prm, constant );
+      if ( constant ) {
+         set_zval_type( 0 );
+         rb_cons_z->setChecked( true );
+         le_z_val->setText( QString::number( prm.first() ) );
+      }
+      else {
+         set_zval_type( 1 );
+         rb_vary_z->setChecked( true );
+         le_z_val->setText( ginfo.zVal );
+      }
+
       int    x_res = ginfo.xRes;
       int    y_res = ginfo.yRes;
 
@@ -883,8 +996,6 @@ void US_Grid_Editor::highlight( int id )
       le_y_min->setText( QString::number( y_min ) );
       le_y_max->setText( QString::number( y_max ) );
       le_y_res->setText( QString::number( y_res ) );
-
-      le_z_val->setText( QString::number( z_val ) );
    }
    plot_subgrid( ct_subgrid->value() );
 }
@@ -899,6 +1010,9 @@ void US_Grid_Editor::enable_ctrl( bool state )
    le_y_res->setEnabled( state );
    le_z_val->setEnabled( state );
    pb_add_update->setEnabled( state );
+   pb_z_set_func->setEnabled( state );
+   rb_cons_z->setEnabled( state );
+   rb_vary_z->setEnabled( state );
 }
 
 void US_Grid_Editor::clear_xyz()
@@ -929,7 +1043,7 @@ void US_Grid_Editor::default_plot_ctrl()
    select_y_axis( y_param );
    plot_flag = true;
    plot_points();
-   highlight( lw_grids->currentRow() );
+   select_partial_grid( lw_grids->currentRow() );
 }
 
 void US_Grid_Editor::select_x_axis( int index )
@@ -948,7 +1062,7 @@ void US_Grid_Editor::select_x_axis( int index )
    if ( plot_flag ) {
       plot_points();
       int row = lw_grids->currentRow();
-      highlight( row );
+      select_partial_grid( row );
    }
    enable_ctrl( false );
 }
@@ -969,7 +1083,7 @@ void US_Grid_Editor::select_y_axis( int index )
    if ( plot_flag ) {
       plot_points();
       int row = lw_grids->currentRow();
-      highlight( row );
+      select_partial_grid( row );
    }
    enable_ctrl( false );
 }
@@ -977,7 +1091,7 @@ void US_Grid_Editor::select_y_axis( int index )
 void US_Grid_Editor::new_grid_clicked()
 {
    default_plot_ctrl();
-   highlight( -1 );
+   select_partial_grid( -1 );
    enable_ctrl( true );
    pb_add_update->setText( "Add" );
 }
@@ -1005,15 +1119,15 @@ void US_Grid_Editor::delete_grid_clicked()
 
    rm_point_curves();
 
-   grid_points.removeAt( row );
-   grid_info.removeAt( row );
+   partial_grids.removeAt( row );
+   partial_grid_info.removeAt( row );
    check_grid_id();
    fill_list();
    sort_points();
    set_nsubgrids( ct_nsubgrids->value() );
 
    plot_points();
-   highlight( lw_grids->currentRow() );
+   select_partial_grid( lw_grids->currentRow() );
 }
 
 void US_Grid_Editor::add_update()
@@ -1029,15 +1143,7 @@ void US_Grid_Editor::add_update()
    }
 
    GridInfo ginfo;
-   if ( ! validate_xyz( ginfo ) ) return;
-
-   bool isLog = chkb_log->isChecked();
-   bool isMid = bg_point_type->checkedId() == MIDPOINTS;
-   QVector<double> xpoints;
-   QVector<double> ypoints;
-   bool ok = gen_points( ginfo.xMin, ginfo.xMax, ginfo.xRes, isLog, isMid, xpoints );
-   ok = ok && gen_points( ginfo.yMin, ginfo.yMax, ginfo.yRes, false, isMid, ypoints );
-   if ( ! ok ) return;
+   if ( ! validate_partial_grid( ginfo ) ) return;
 
    if ( check_overlap( ginfo.xMin, ginfo.xMax,
                      ginfo.yMin, ginfo.yMax, excl ) ) {
@@ -1046,39 +1152,39 @@ void US_Grid_Editor::add_update()
    }
 
    QVector<GridPoint> gpoints;
-   if ( ! gen_grid_points( xpoints, ypoints, ginfo.zVal, gpoints ) ) {
+   if ( ! gen_grid_points( ginfo, gpoints ) ) {
       return;
    }
 
    if ( excl == -1 ) {
-      grid_points << gpoints;
-      grid_info << ginfo;
+      partial_grids << gpoints;
+      partial_grid_info << ginfo;
    } else {
-      grid_points.replace( excl, gpoints );
-      grid_info.replace( excl, ginfo );
+      partial_grids.replace( excl, gpoints );
+      partial_grid_info.replace( excl, ginfo );
    }
    check_grid_id();
    fill_list();
    sort_points();
    plot_points();
    set_nsubgrids( ct_nsubgrids->value() );
-   highlight( lw_grids->currentRow() );
+   select_partial_grid( lw_grids->currentRow() );
 }
 
 void US_Grid_Editor::set_mid_exct_points( int id )
 {
-   if ( grid_info.isEmpty() ) return;
+   if ( partial_grid_info.isEmpty() ) return;
    if ( id == EXACTPOINTS ) 
    {
-      GridInfo ginfo = grid_info.first();
+      GridInfo ginfo = partial_grid_info.first();
       double xMin = ginfo.xMin;
       double xMax = ginfo.xMax;
       double yMin = ginfo.yMin;
       double yMax = ginfo.yMax;
       bool overlap = false;
-      for (int ii = 1; ii < grid_info.size(); ii++)
+      for (int ii = 1; ii < partial_grid_info.size(); ii++)
       {
-         GridInfo ginfo = grid_info.at(ii);
+         GridInfo ginfo = partial_grid_info.at(ii);
          double x1 = ginfo.xMin;
          double x2 = ginfo.xMax;
          double y1 = ginfo.yMin;
@@ -1106,37 +1212,216 @@ void US_Grid_Editor::set_mid_exct_points( int id )
    refill_grid_points();
 }
 
+void US_Grid_Editor::set_cg_mode()
+{
+   delete_data();
+   default_plot_ctrl();
+
+   if( rb_cg_mode->isChecked() ) {
+      lb_grid_mode->setText( "Create Grid Control" );
+      pb_load_csv->hide();
+      te_info->hide();
+
+      lb_grid_list->show();
+      lw_grids->show();
+      lb_min->show();
+      lb_max->show();
+      lb_res->show();
+      lb_x_ax->show();
+      lb_y_ax->show();
+      lb_z_ax->show();
+      le_x_min->show();
+      le_x_max->show();
+      le_x_res->show();
+      le_y_min->show();
+      le_y_max->show();
+      le_y_res->show();
+      le_z_val->show();
+      pb_add_update->show();
+      pb_new->show();
+      pb_update->show();
+      pb_delete->show();
+      hline1->show();
+
+      show_layout( lyt_log, true );
+      show_layout( lyt_points, true );
+      show_layout( lyt_zvalues, true );
+   } else {
+      lb_grid_mode->setText( "Load Grid Control" );
+      pb_load_csv->show();
+      te_info->show();
+
+      lb_grid_list->hide();
+      lw_grids->hide();
+      lb_min->hide();
+      lb_max->hide();
+      lb_res->hide();
+      lb_x_ax->hide();
+      lb_y_ax->hide();
+      lb_z_ax->hide();
+      le_x_min->hide();
+      le_x_max->hide();
+      le_x_res->hide();
+      le_y_min->hide();
+      le_y_max->hide();
+      le_y_res->hide();
+      le_z_val->hide();
+      pb_add_update->hide();
+      pb_new->hide();
+      pb_update->hide();
+      pb_delete->hide();
+      hline1->hide();
+
+      show_layout( lyt_log, false );
+      show_layout( lyt_points, false );
+      show_layout( lyt_zvalues, false );
+   }
+}
+
+void US_Grid_Editor::load_grid_file()
+{
+   QString filter = "Text Files (*.csv *.dat *.txt);; All Files (*)";
+   QString fpath = QFileDialog::getOpenFileName(this, "Load GRID FILE",
+                                                US_Settings::dataDir(), filter);
+   if (fpath.isEmpty()) {
+      return;
+   }
+
+   US_CSV_Loader *csv_loader = new US_CSV_Loader(fpath, "", true, this);
+   int state = csv_loader->exec();
+   if (state != QDialog::Accepted) return;
+   US_CSV_Data csv_data = csv_loader->data();
+   if (csv_data.columnCount() < 3) {
+      QMessageBox::warning( this, "Warning!", "Three columns of data needed for this program!" );
+      return;
+   }
+
+   US_WidgetsDialog* dialog = new US_WidgetsDialog( this );
+   dialog->setWindowTitle( "Set Grid Parameters" );
+   dialog->setPalette( US_GuiSettings::frameColor() );
+
+   QGridLayout *layout = new QGridLayout();
+   layout->setContentsMargins( 3, 3, 3, 3 );
+   layout->setSpacing( 2 );
+   dialog->setLayout( layout );
+
+   QLabel* lb_param  = us_banner( "Parameters" );
+   QLabel* lb_header = us_banner( "Headers" );
+   QLabel* lb_p1 = us_label( Attribute::long_desc( x_param ) );
+   QLabel* lb_p2 = us_label( Attribute::long_desc( y_param ) );
+   QLabel* lb_p3 = us_label( Attribute::long_desc( z_param ) );
+   QComboBox* cb_p1  = us_comboBox();
+   QComboBox* cb_p2  = us_comboBox();
+   QComboBox* cb_p3 = us_comboBox();
+
+   cb_p1->addItems( csv_data.header() );
+   cb_p2->addItems( csv_data.header() );
+   cb_p3->addItems( csv_data.header() );
+
+   QPushButton* pb_apply = us_pushbutton( "Apply" );
+   QPushButton* pb_cancel = us_pushbutton( "Cancel" );
+
+   layout->addWidget( lb_param,   0, 0, 1, 2 );
+   layout->addWidget( lb_header,  0, 2, 1, 2 );
+   layout->addWidget( lb_p1,      1, 0, 1, 2 );
+   layout->addWidget( cb_p1,      1, 2, 1, 2 );
+   layout->addWidget( lb_p2,      2, 0, 1, 2 );
+   layout->addWidget( cb_p2,      2, 2, 1, 2 );
+   layout->addWidget( lb_p3,      3, 0, 1, 2 );
+   layout->addWidget( cb_p3,      3, 2, 1, 2 );
+   layout->addItem( new QSpacerItem( 0, 30 ), 4, 0 );
+   layout->addWidget( pb_cancel,  5, 2, 1, 1 );
+   layout->addWidget( pb_apply,   5, 3, 1, 1 );
+
+   connect( pb_cancel, &QPushButton::clicked, dialog, &QDialog::reject );
+   connect( pb_apply, &QPushButton::clicked, this, [=]() {
+      bool ok = cb_p1->currentIndex() != cb_p2->currentIndex();
+      ok &= cb_p1->currentIndex() != cb_p3->currentIndex();
+      ok &= cb_p2->currentIndex() != cb_p3->currentIndex();
+      if ( ok ) {
+         dialog->accept();
+      } else {
+         QMessageBox::warning( dialog, "Warning!", "A column is selected twice or more!" );
+      }
+   });
+
+   if ( dialog->exec() == QDialog::Accepted ) {
+      QVector<double> p1_vals = csv_data.columnAt( cb_p1->currentIndex() );
+      QVector<double> p2_vals = csv_data.columnAt( cb_p2->currentIndex() );
+      QVector<double> p3_vals = csv_data.columnAt( cb_p3->currentIndex() );
+      if ( ! ( p1_vals.size() == p2_vals.size() && p2_vals.size() == p3_vals.size() ) ) {
+         QMessageBox::warning( this, "Error!", "The number of grid points between selected parameter is different!" );
+         return;
+      }
+      QVector<Attribute::Type> types;
+      types << x_param << y_param << z_param;
+      QVector<double> vals;
+      QVector<GridPoint> gpoints;
+      for ( int ii = 0; ii < p1_vals.size(); ii++ ) {
+         vals.clear();
+         vals << p1_vals.at( ii ) << p2_vals.at( ii ) << p3_vals.at( ii );
+         GridPoint gp;
+         gp.set_dens_visc_temp( buff_dens, buff_visc, buff_temp );
+
+         if ( gp.set_param( vals, types ) ) {
+            gp.set_row_col( 0, 0 );
+            gpoints << gp;
+         } else {
+            QString msg = tr( "Row :%1  <br/>" ).arg( ii + 1);
+            msg += tr( "Parameter 1: %1 <br/>" ).arg( lb_p1->text() );
+            msg += tr( "Header 1: %1 <br/>" ).arg( csv_data.header().at( cb_p1->currentIndex() ) );
+            msg += tr( "Parameter 2: %1 <br/>" ).arg( lb_p2->text() );
+            msg += tr( "Header 2: %1 <br/>" ).arg( csv_data.header().at( cb_p2->currentIndex() ) );
+            msg += tr( "Parameter 3: %1 <br/>" ).arg( lb_p3->text() );
+            msg += tr( "Header 3: %1 <br/>" ).arg( csv_data.header().at( cb_p3->currentIndex() ) );
+            msg += tr( "<br/>Error: <br/>%1" ).arg( gp.error_string() );
+
+            QMessageBox msgBox( this );
+            msgBox.setIcon( QMessageBox::Warning );
+            msgBox.setWindowTitle( "Error!" );
+            msgBox.setTextFormat( Qt::RichText );
+            msgBox.setText( msg );
+            msgBox.setInformativeText("Click OK to continue.");
+            msgBox.exec();
+            return;
+         }
+      }
+      partial_grids << gpoints;
+      sorted_points << gpoints;
+      plot_points();
+      set_nsubgrids( ct_nsubgrids->value() );
+      plot_subgrid( ct_subgrid->value() );
+   }
+
+}
+
 void US_Grid_Editor::refill_grid_points()
 {
-   if ( grid_info.isEmpty() ) return;
-   bool isLog = chkb_log->isChecked();
-   bool isMid = bg_point_type->checkedId() == MIDPOINTS;
-   QList<QVector<GridPoint>> new_grid_points;
+   if ( partial_grid_info.isEmpty() ) {
+      return;
+   }
 
-   for ( int ii = 0; ii < grid_info.size(); ii++ ) {
-      GridInfo ginfo = grid_info.at( ii );
-      QVector<double> xpoints;
-      QVector<double> ypoints;
-      gen_points( ginfo.xMin, ginfo.xMax, ginfo.xRes, isLog, isMid, xpoints );
-      gen_points( ginfo.yMin, ginfo.yMax, ginfo.yRes, false, isMid, ypoints );
+   QList<QVector<GridPoint>> new_grid_points;
+   for ( int ii = 0; ii < partial_grid_info.size(); ii++ ) {
+      GridInfo ginfo = partial_grid_info.at( ii );
       QVector<GridPoint> gpoints;
-      if ( ! gen_grid_points( xpoints, ypoints, ginfo.zVal, gpoints ) ) {
+      if ( ! gen_grid_points( ginfo, gpoints ) ) {
          return;
       }
       new_grid_points << gpoints;
    }
 
-   grid_points.clear();
-   grid_points << new_grid_points;
+   partial_grids.clear();
+   partial_grids << new_grid_points;
    check_grid_id();
    fill_list();
    sort_points();
    plot_points();
    set_nsubgrids( ct_nsubgrids->value() );
-   highlight( lw_grids->currentRow() );
+   select_partial_grid( lw_grids->currentRow() );
 }
 
-bool US_Grid_Editor::gen_points( double x1, double x2, int np,
+bool US_Grid_Editor::spaced_numbers( double x1, double x2, int np,
                            bool isLog, bool isMid, QVector<double>& result )
 {
    if ( x2 <= x1 ) return false;
@@ -1177,9 +1462,83 @@ bool US_Grid_Editor::gen_points( double x1, double x2, int np,
    return true;
 }
 
-bool US_Grid_Editor::gen_grid_points( const QVector<double>& x, const QVector<double>& y,
-                                     double z, QVector<GridPoint>& gpoints )
+bool US_Grid_Editor::parse_z_expression( const QString &z_expr, QString &type, QString &dependent,
+                                         QVector<double> &parameters, bool& constant )
 {
+   type = "polynomial";
+   dependent = "x";
+   parameters.clear();
+   constant = false;
+   QStringList plist = z_expr.trimmed().split( ";" );
+   if ( z_expr.trimmed().isEmpty() ) {
+      return false;
+   }
+   else if ( plist.size() == 1 ) {
+      double cc = correct_unit( plist.first().toDouble(), z_param, true );
+      parameters << cc << 0.0;
+      constant = true;
+      return true;
+   }
+   else if ( plist.size() >= 4 ){
+      type = plist.at( 0 ).trimmed();
+      dependent = plist.at( 1 ).trimmed();
+      for ( int ii = 2; ii < plist.size(); ii++ ) {
+         parameters << plist.at( ii ).toDouble();
+      }
+      return true;
+   }
+   else {
+      return false;
+   }
+}
+
+bool US_Grid_Editor::calc_xyz( double xx, double yy , const QString &z_expr,
+                               QVector<double> &xyz )
+{
+   xyz.clear();
+   QString type, dependent;
+   QVector< double > parameters;
+   bool constant;
+   if ( ! parse_z_expression( z_expr, type, dependent, parameters, constant ) ) {
+      return false;
+   }
+   xx = correct_unit( xx, x_param, true );
+   yy = correct_unit( yy, y_param, true );
+   double dd;
+   if ( dependent == "x" ) {
+      dd = xx;
+   }
+   else {
+      dd = yy;
+   }
+   double zz = 0;
+   if ( type == "polynomial" ) {
+      for( int ii = 0; ii < parameters.size(); ii++ ) {
+         zz += parameters.at( ii ) * qPow( dd, ii );
+      }
+   }
+   else if ( type == "exponential" ) {
+      zz = parameters.at( 0 ) * qExp( parameters.at( 1 ) * dd );
+   }
+   xx = correct_unit( xx, x_param, false );
+   yy = correct_unit( yy, y_param, false );
+   zz = correct_unit( zz, z_param, false );
+   xyz << xx << yy << zz;
+   return true;
+}
+
+bool US_Grid_Editor::gen_grid_points( const GridInfo& ginfo, QVector<GridPoint>& gpoints )
+{
+   bool isLog = chkb_log->isChecked();
+   bool isMid = bg_point_type->checkedId() == MIDPOINTS;
+   QVector<double> xpoints;
+   QVector<double> ypoints;
+   bool ok =  spaced_numbers( ginfo.xMin, ginfo.xMax, ginfo.xRes, isLog, isMid, xpoints );
+   ok = ok && spaced_numbers( ginfo.yMin, ginfo.yMax, ginfo.yRes, false, isMid, ypoints );
+   if ( ! ok ) {
+      return false;
+   }
+
    QVector<Attribute::Type> types;
    types << x_param << y_param << z_param;
    gpoints.clear();
@@ -1189,14 +1548,20 @@ bool US_Grid_Editor::gen_grid_points( const QVector<double>& x, const QVector<do
    QString xs = Attribute::symbol( x_param );
    QString ys = Attribute::symbol( y_param );
    QString zs = Attribute::symbol( z_param );
-   for ( int ii = 0; ii < x.size(); ii++ ) {
-      for ( int jj = 0; jj < y.size(); jj++ ) {
+   for ( int ii = 0; ii < ypoints.size(); ii++ ) {
+      int row = ii % ginfo.yRes;
+      for ( int jj = 0; jj < xpoints.size(); jj++ ) {
+         int col = jj % ginfo.xRes;
          QVector<double> vals;
-         vals << x.at( ii ) << y.at( jj ) << z;
+         double xx = xpoints.at( jj );
+         double yy = ypoints.at( ii );
+         if ( ! calc_xyz( xx, yy, ginfo.zVal, vals ) ) {
+            return false;
+         }
          GridPoint gp;
          gp.set_dens_visc_temp( buff_dens, buff_visc, buff_temp );
          if ( gp.set_param( vals, types ) ) {
-            gp.set_row_col( jj, ii );
+            gp.set_row_col( row, col );
             gpoints << gp;
          } else {
             double x = vals.at( 0 );
@@ -1235,28 +1600,28 @@ bool US_Grid_Editor::gen_grid_points( const QVector<double>& x, const QVector<do
    }
 }
 
-double US_Grid_Editor::correct_unit( double val, Attribute::Type type, bool h_flag )
+double US_Grid_Editor::correct_unit( double val, Attribute::Type type, bool Sv_kDa )
 {
    double output = val;
    if ( type == Attribute::ATTR_S ) {
-      output = h_flag ? val * 1e13 : val * 1e-13;
+      output = Sv_kDa ? val * 1e13 : val * 1e-13;
    }
    else if ( type == Attribute::ATTR_SR ) {
-      output = h_flag ? val * 1e13 : val * 1e-13;
+      output = Sv_kDa ? val * 1e13 : val * 1e-13;
    }
    else if ( type == Attribute::ATTR_M ) {
-      output = h_flag ? val / 1000 : val * 1000;
+      output = Sv_kDa ? val / 1000 : val * 1000;
    }
    return output;
 }
 
 bool US_Grid_Editor::check_overlap( double xMin, double xMax,
-                                   double yMin, double yMax, int excl )
+                                    double yMin, double yMax, int excl )
 {
    bool isMid = bg_point_type->checkedId() == MIDPOINTS;
-   for ( int ii= 0; ii < grid_info.size(); ii++ ) {
+   for ( int ii= 0; ii < partial_grid_info.size(); ii++ ) {
       if ( ii == excl ) continue;
-      GridInfo ginfo = grid_info.at( ii );
+      GridInfo ginfo = partial_grid_info.at( ii );
       double x1 = ginfo.xMin;
       double x2 = ginfo.xMax;
       double y1 = ginfo.yMin;
@@ -1276,7 +1641,7 @@ bool US_Grid_Editor::check_overlap( double xMin, double xMax,
    return false;
 }
 
-bool US_Grid_Editor::get_xyz( GridInfo& ginfo, QString& error )
+bool US_Grid_Editor::validate_xyz( GridInfo& ginfo, QString& error )
 {
    error.clear();
 
@@ -1301,7 +1666,15 @@ bool US_Grid_Editor::get_xyz( GridInfo& ginfo, QString& error )
    error += validate_double( y_min_t, y_min ) ? "" : tr( "%1: Minimum value is not set.\n" ).arg( lb_y_ax->text() );
    error += validate_double( y_max_t, y_max ) ? "" : tr( "%1: Maximum value is not set.\n" ).arg( lb_y_ax->text() );
    error += validate_int   ( y_res_t, y_res ) ? "" : tr( "%1: Resolusion value is not set.\n" ).arg( lb_y_ax->text() );
-   error += validate_double( z_val_t, z_val ) ? "" : tr( "%1: Value is not set!" ).arg( lb_z_ax->text() );
+   if ( rb_cons_z->isChecked() ) {
+      error += validate_double( z_val_t, z_val ) ? "" : tr( "%1: Value is not set!" ).arg( lb_z_ax->text() );
+   }
+   else {
+      if ( z_val_t.isEmpty() ) {
+         error += tr( "%1: Function is not set!" ).arg( lb_z_ax->text() );
+      }
+   }
+
    if ( ! error.isEmpty() ) return false;
 
    if ( x_res == 0 || y_res == 0 ) {
@@ -1313,7 +1686,6 @@ bool US_Grid_Editor::get_xyz( GridInfo& ginfo, QString& error )
    x_max = correct_unit( x_max, x_param, false );
    y_min = correct_unit( y_min, y_param, false );
    y_max = correct_unit( y_max, y_param, false );
-   z_val = correct_unit( z_val, z_param, false );
 
    ginfo.xType = Attribute::symbol( x_param );
    ginfo.yType = Attribute::symbol( y_param );
@@ -1325,7 +1697,15 @@ bool US_Grid_Editor::get_xyz( GridInfo& ginfo, QString& error )
    ginfo.yMax = y_max;
    ginfo.xRes = x_res;
    ginfo.yRes = y_res;
-   ginfo.zVal = z_val;
+
+   if ( rb_cons_z->isChecked() ) {
+      z_val = correct_unit( z_val, z_param, false );
+      ginfo.zVal = QString::number( z_val );
+   }
+   else {
+      ginfo.zVal = z_val_t;
+   }
+
    return true;
 }
 
@@ -1345,11 +1725,11 @@ bool US_Grid_Editor::validate_int( const QString str, int& val )
    return ok;
 }
 
-bool US_Grid_Editor::validate_xyz( GridInfo& ginfo )
+bool US_Grid_Editor::validate_partial_grid( GridInfo& ginfo )
 {
    QString error;
    check_dens_visc_temp();
-   if ( ! get_xyz( ginfo, error ) ) {
+   if ( ! validate_xyz( ginfo, error ) ) {
       QMessageBox msg_box;
       msg_box.setIcon( QMessageBox::Critical );
       msg_box.setWindowTitle( "Error" );
@@ -1371,12 +1751,15 @@ bool US_Grid_Editor::validate_xyz( GridInfo& ginfo )
    QVector<Attribute::Type> types;
    types << x_param << y_param << z_param;
    QVector<double> vals;
-   vals << ginfo.xMin << ginfo.yMin << ginfo.zVal;
+   if ( ! calc_xyz( ginfo.xMin, ginfo.yMin, ginfo.zVal, vals ) ) {
+      return false;
+   }
    if ( ! gp.set_param( vals, types ) ) {
       error = gp.error_string();
    } else {
-      vals.clear();
-      vals << ginfo.xMax << ginfo.yMax << ginfo.zVal;
+      if ( ! calc_xyz( ginfo.xMax, ginfo.yMax, ginfo.zVal, vals ) ) {
+         return false;
+      }
       if ( ! gp.set_param( vals, types ) ) {
          error = gp.error_string();
       }
@@ -1397,53 +1780,92 @@ void US_Grid_Editor::fill_list()
 
    int row = lw_grids->currentRow();
    lw_grids->clear();
-   int n_grids = grid_points.size();
+   int n_grids = partial_grids.size();
    QString title = "%1 ) %2 = %3 to %4 ; %5 = %6 to %7 ; %8 = %9";
 
    for ( int ii = 0; ii < n_grids; ii++ ) {
-      GridInfo ginfo = grid_info.at( ii );
+      GridInfo ginfo = partial_grid_info.at( ii );
       double x1 = correct_unit( ginfo.xMin, Attribute::from_symbol( ginfo.xType ), true );
       double x2 = correct_unit( ginfo.xMax, Attribute::from_symbol( ginfo.xType ), true );
       double y1 = correct_unit( ginfo.yMin, Attribute::from_symbol( ginfo.yType ), true );
       double y2 = correct_unit( ginfo.yMax, Attribute::from_symbol( ginfo.yType ), true );
-      double z  = correct_unit( ginfo.zVal, Attribute::from_symbol( ginfo.zType ), true );
+      bool constant;
+      QString type, dpnt;
+      QVector<double> prm;
+      parse_z_expression( ginfo.zVal, type, dpnt, prm, constant );
+      QString z_str;
+      if ( constant ) {
+         double z  = correct_unit( prm.first(), Attribute::from_symbol( ginfo.zType ), true );
+         z_str = QString::number( z );
+      }
+      else {
+         z_str = type;
+      }
 
       QString str = title.arg( ii + 1 ).
                     arg( ginfo.xType ).arg( x1 ).arg( x2 ).
                     arg( ginfo.yType ).arg( y1 ).arg( y2 ).
-                    arg( ginfo.zType ).arg( z );
+                    arg( ginfo.zType ).arg( z_str );
       lw_grids->addItem( str );
    }
 
    if ( row == -1 || row >= lw_grids->count() ) row = 0;
    lw_grids->setCurrentRow( row );
-   connect( lw_grids, &QListWidget::currentRowChanged, this, &US_Grid_Editor::highlight );
+   connect( lw_grids, &QListWidget::currentRowChanged, this, &US_Grid_Editor::select_partial_grid );
 }
 
 void US_Grid_Editor::sort_points()
 {
    sorted_points.clear();
-   for ( int ii = 0; ii < grid_points.size(); ii++ ) {
-      sorted_points << grid_points.at( ii );
+   QVector< QMap< QString, QVariant > > data;
+   int max_rows = -1;
+   for ( int ii = 0; ii < partial_grid_info.size(); ii++ ) {
+      GridInfo ginfo = partial_grid_info.at( ii );
+      max_rows = qMax( max_rows, ginfo.yRes );
+      QMap< QString, QVariant > info;
+      info.insert( "x_min" , ginfo.xMin );
+      info.insert( "y_min" , ginfo.yMin );
+      info.insert( "n_cols", ginfo.xRes );
+      info.insert( "p_grid_id", ii );
+      info.insert( "grid_id"  , 0 );
+      data << info;
    }
-   sort_col_val( sorted_points );
-   sort_row_idx( sorted_points );
+   std::stable_sort( data.begin(), data.end(),
+                    []( const QMap< QString, QVariant >& a, const QMap< QString, QVariant >& b){
+                       return a.value( "x_min" ).toDouble() < b.value( "x_min" ).toDouble();
+                    });
+   std::stable_sort( data.begin(), data.end(),
+                    []( const QMap< QString, QVariant >& a, const QMap< QString, QVariant >& b){
+                       return a.value( "y_min" ).toDouble() < b.value( "y_min" ).toDouble();
+                    });
+   for ( int row = 0; row < max_rows; row++ ) {
+      for ( int dd = 0; dd < data.size(); dd++ ) {
+         int ii = data.at( dd ).value( "p_grid_id" ).toInt();
+         int aa = data.at( dd ).value( "grid_id" ).toInt();
+         int bb = aa + data.at( dd ).value( "n_cols" ).toInt();
+         int sz = partial_grids.at( ii ).size();
+         data[ dd ][ "grid_id" ] = bb;
+         for ( int jj = aa; jj < bb; jj++ ) {
+            if ( jj >= sz ) {
+               break;
+            }
+            sorted_points << partial_grids.at( ii ).at( jj );
+         }
+      }
+   }
 }
 
-void US_Grid_Editor::sort_col_val( QVector<GridPoint> &vec )
+void US_Grid_Editor::sort_partial_grid_points( QVector<GridPoint> &vec )
 {
    std::stable_sort( vec.begin(), vec.end(),
                     []( const GridPoint &g1, const GridPoint &g2 ) {
-                       return g1.x_value() < g2.x_value();
-                    } );
-}
-
-void US_Grid_Editor::sort_row_idx( QVector<GridPoint> &vec )
-{
-   std::stable_sort( vec.begin(), vec.end(),
-                    []( const GridPoint &g1, const GridPoint &g2 ) {
-                       return g1.get_row() < g2.get_row();
-                    } );
+                       if ( g1.get_row() != g2.get_row() ) {
+                          return g1.get_row() < g2.get_row();
+                       }
+                       else {
+                          return g1.get_col() < g2.get_col();
+                       }
+                    });
 }
 
 void US_Grid_Editor::check_dens_visc_temp()
@@ -1494,9 +1916,15 @@ void US_Grid_Editor::new_dens_visc_temp()
 
 void US_Grid_Editor::check_grid_id()
 {
-   for ( int ii = 0; ii < grid_points.size(); ii++ ) {
-      for ( int jj = 0; jj < grid_points.at( ii ).size(); jj++ ) {
-         grid_points[ ii ][ jj ].set_id( ii );
+   for ( int ii = 0; ii < partial_grids.size(); ii++ ) {
+      double xMin = partial_grid_info.at( ii ).xMin;
+      double xMax = partial_grid_info.at( ii ).xMax;
+      double yMin = partial_grid_info.at( ii ).yMin;
+      double yMax = partial_grid_info.at( ii ).yMax;
+      QPair< double, double > xrng( xMin, xMax );
+      QPair< double, double > yrng( yMin, yMax );
+      for ( int jj = 0; jj < partial_grids.at( ii ).size(); jj++ ) {
+         partial_grids[ ii ][ jj ].set_id_range( ii, xrng, yrng );
       }
    }
 }
@@ -1612,7 +2040,8 @@ void US_Grid_Editor::set_buffer()
          state = US_Disk_DB_Controls::Disk;
       }
       US_BufferGui* buffer_gui = new US_BufferGui( true, US_Buffer(), state );
-      connect( buffer_gui, SIGNAL( valueChanged( US_Buffer ) ), this, SLOT( buffer_selected( US_Buffer ) ) );
+      connect( buffer_gui, QOverload<US_Buffer>::of( &US_BufferGui::valueChanged ),
+               this      , &US_Grid_Editor::buffer_selected );
       buffer_gui->exec();
    }
 
@@ -1623,9 +2052,9 @@ void US_Grid_Editor::set_buffer()
 
    check_dens_visc_temp();
 
-   for ( int ii = 0; ii < grid_points.size(); ii++ ) {
-      for ( int jj = 0; jj < grid_points.at( ii ).size(); jj++ ) {
-         grid_points[ii][jj].set_dens_visc_temp( buff_dens, buff_visc, buff_temp );
+   for ( int ii = 0; ii < partial_grids.size(); ii++ ) {
+      for ( int jj = 0; jj < partial_grids.at( ii ).size(); jj++ ) {
+         partial_grids[ii][jj].set_dens_visc_temp( buff_dens, buff_visc, buff_temp );
       }
    }
 
@@ -1649,7 +2078,7 @@ void US_Grid_Editor::set_buffer()
    }
 
    plot_points();
-   highlight( lw_grids->currentRow() );
+   select_partial_grid( lw_grids->currentRow() );
 }
 
 void US_Grid_Editor::update_disk_db( bool isDB )
@@ -1659,13 +2088,14 @@ void US_Grid_Editor::update_disk_db( bool isDB )
 
 void US_Grid_Editor::setup_grid()
 {
-   if ( ! grid_points.isEmpty() ) {
-      int yes = QMessageBox::question( this, "Warning!",
-                                      tr( "Partial grid list is not empty and by changing the grid setting, it "
-                                          "will be deleted.<br/>"
-                                          "Would you like to proceed with the grid setup?" ) );
-      if ( yes == QMessageBox::No ) return;
+   if ( ! partial_grids.isEmpty() ) {
+      int res = QMessageBox::question( this, "Warning!",
+                                      tr( "The grid points will be deleted if you proceed with the grid setup?" ) );
+      if ( res == QMessageBox::No ) return;
    }
+
+   delete_data();
+   default_plot_ctrl();
 
    US_Grid_Preset *grid_preset = new US_Grid_Preset( this, x_param, y_param, z_param );
    if ( grid_preset->exec() != QDialog::Accepted ) return;
@@ -1686,32 +2116,11 @@ void US_Grid_Editor::setup_grid()
                arg( Attribute::symbol( y_param), Attribute::symbol( x_param ) );
    pb_default_plot->setText( s );
 
-   lw_grids->disconnect();
-   lw_grids->clear();
-   grid_points.clear();
-   grid_info.clear();
-   sorted_points.clear();
-   final_subgrids.clear();
    default_plot_ctrl();
 }
 
 void US_Grid_Editor::load()
 {
-   if ( ! grid_points.isEmpty() ) {
-      int yes = QMessageBox::question( this, "Warning!",
-                                      tr( "Grid list is not empty and it will "
-                                         "be deleted by loading a model.<br/>To proceed with "
-                                         "loading a custom grid model, press <b>\"Yes\"</b> button." ) );
-      if ( yes == QMessageBox::No ) return;
-   }
-
-   grid_points.clear();
-   grid_info.clear();
-   sorted_points.clear();
-   final_subgrids.clear();
-   fill_list();
-   default_plot_ctrl();
-
    bool load_db = dkdb_cntrls->db();
    QString mfilter ( "CustomGrid" );
    QString mdesc;
@@ -1720,72 +2129,100 @@ void US_Grid_Editor::load()
    US_ModelLoader* mloader = new US_ModelLoader( load_db, mfilter, model, mdesc, "" );
    if ( mloader->exec() != QDialog::Accepted ) return;
 
+   if ( ! partial_grids.isEmpty() ) {
+      int yes = QMessageBox::question( this, "Warning!",
+                                      tr( "Grid list is not empty and it will "
+                                         "be deleted by loading a model.<br/>To proceed with "
+                                         "loading a custom grid model, press <b>\"Yes\"</b> button." ) );
+      if ( yes == QMessageBox::No ) return;
+   }
+
+   delete_data();
+   default_plot_ctrl();
+   check_dens_visc_temp();
+
+   int nsubgrids = model.subGrids;
+   QVector<Attribute::Type> types;
    bool cgmdata = ! model.customGridData.grids.isEmpty() &&
                   ! model.customGridData.components.isEmpty() &&
                   model.customGridData.components.size() == model.components.size();
-   if ( ! cgmdata ) {
-      QMessageBox::warning( this, "Warning!", "The following model doesn't have custom "
-                                             "grid metadata!<br/><br/><b>" + mdesc + "</b>" );
-      return;
+   if ( cgmdata ) {
+      rb_cg_mode->setChecked( true );
+      set_cg_mode();
+      partial_grid_info << model.customGridData.grids;
+      Attribute::Type xt = Attribute::from_symbol( partial_grid_info.first().xType );
+      Attribute::Type yt = Attribute::from_symbol( partial_grid_info.first().yType );
+      Attribute::Type zt = Attribute::from_symbol( partial_grid_info.first().zType );
+      if ( xt == Attribute::ATTR_NONE || yt == Attribute::ATTR_NONE || zt ==  Attribute::ATTR_NONE ) {
+         QMessageBox::warning( this, "Warning!", "Incorrect grid type!"
+                                                "<br/><br/><b>" + mdesc + "</b>" );
+         return;
+      }
+      x_param = xt;
+      y_param = yt;
+      z_param = zt;
+      types << x_param << y_param << z_param;
+
+      le_x_param->setText( Attribute::long_desc( x_param ) );
+      le_y_param->setText( Attribute::long_desc( y_param ) );
+      le_z_param->setText( Attribute::long_desc( z_param ) );
+      lb_x_ax->setText( Attribute::short_desc( x_param ) );
+      lb_y_ax->setText( Attribute::short_desc( y_param ) );
+      lb_z_ax->setText( Attribute::short_desc( z_param ) );
+
+      chkb_log->disconnect();
+      bg_point_type->disconnect();
+      chkb_log->setChecked( model.customGridData.xLogarithmic );
+      bool isMid = model.customGridData.midpointBins;
+      bg_point_type->button( MIDPOINTS )->setChecked( isMid );
+      connect( chkb_log, &QCheckBox::stateChanged, this, &US_Grid_Editor::refill_grid_points );
+      connect( bg_point_type, &QButtonGroup::idClicked, this, &US_Grid_Editor::set_mid_exct_points );
+
+      for ( int ii = 0; ii < partial_grid_info.size(); ii++ ) {
+         QVector<GridPoint> gpvec;
+         partial_grids << gpvec;
+      }
+
+      for ( int ii = 0; ii < model.components.size(); ii++ ) {
+         US_Model::SimulationComponent sc = model.components.at( ii );
+         int id  = model.customGridData.components.at( ii ).grid_id;
+         int row = model.customGridData.components.at( ii ).row;
+         int col = model.customGridData.components.at( ii ).column;
+
+         GridPoint gp;
+         gp.set_component( sc, &types );
+         gp.set_row_col( row, col );
+         gp.set_dens_visc_temp( buff_dens, buff_visc, buff_temp );
+         partial_grids[ id ] << gp;
+      }
+
+      for ( int ii = 0; ii < partial_grids.size(); ii++ ) {
+         sort_partial_grid_points( partial_grids[ii] );
+      }
+      check_grid_id();
+      fill_list();
+      sort_points();
+
+   } else {
+      rb_csv_mode->setChecked( true );
+      set_cg_mode();
+      types << x_param << y_param << z_param;
+
+      QVector<GridPoint> gpoints;
+      for ( int ii = 0; ii < model.components.size(); ii++ ) {
+         US_Model::SimulationComponent sc = model.components.at( ii );
+
+         GridPoint gp;
+         gp.set_component( sc, &types );
+         gp.set_row_col( 0, 0 );
+         gp.set_dens_visc_temp( buff_dens, buff_visc, buff_temp );
+         gpoints << gp;
+      }
+      partial_grids << gpoints;
+      sorted_points << gpoints;
    }
 
-   grid_info << model.customGridData.grids;
-   Attribute::Type xt = Attribute::from_symbol( grid_info.first().xType );
-   Attribute::Type yt = Attribute::from_symbol( grid_info.first().yType );
-   Attribute::Type zt = Attribute::from_symbol( grid_info.first().zType );
-   if ( xt == Attribute::ATTR_NONE || yt == Attribute::ATTR_NONE || zt ==  Attribute::ATTR_NONE ) {
-      QMessageBox::warning( this, "Warning!", "Incorrect grid type!"
-                                             "<br/><br/><b>" + mdesc + "</b>" );
-      return;
-   }
-   x_param = xt;
-   y_param = yt;
-   z_param = zt;
-   QVector<Attribute::Type> types;
-   types << xt << yt << zt;
-
-   le_x_param->setText( Attribute::long_desc( x_param ) );
-   le_y_param->setText( Attribute::long_desc( y_param ) );
-   le_z_param->setText( Attribute::long_desc( z_param ) );
-   lb_x_ax->setText( Attribute::short_desc( x_param ) );
-   lb_y_ax->setText( Attribute::short_desc( y_param ) );
-   lb_z_ax->setText( Attribute::short_desc( z_param ) );
-
-   chkb_log->disconnect();
-   bg_point_type->disconnect();
-   chkb_log->setChecked( model.customGridData.xLogarithmic );
-   bool isMid = model.customGridData.midpointBins;
-   bg_point_type->button( MIDPOINTS )->setChecked( isMid );
-   connect( chkb_log, &QCheckBox::stateChanged, this, &US_Grid_Editor::refill_grid_points );
-   connect( bg_point_type, &QButtonGroup::idClicked, this, &US_Grid_Editor::set_mid_exct_points );
-
-   for ( int ii = 0; ii < grid_info.size(); ii++ ) {
-      QVector<GridPoint> gpvec;
-      grid_points << gpvec;
-   }
-
-   check_dens_visc_temp();
-   for ( int ii = 0; ii < model.components.size(); ii++ ) {
-      US_Model::SimulationComponent sc = model.components.at( ii );
-      int id  = model.customGridData.components.at( ii ).grid_id;
-      int row = model.customGridData.components.at( ii ).row;
-      int col = model.customGridData.components.at( ii ).column;
-
-      GridPoint gp;
-      gp.set_component( sc, &types );
-      gp.set_row_col( row, col );
-      gp.set_dens_visc_temp( buff_dens, buff_visc, buff_temp );
-      grid_points[ id ] << gp;
-   }
-
-   for ( int ii = 0; ii < grid_points.size(); ii++ ) {
-      sort_col_val( grid_points[ii] );
-      sort_row_idx( grid_points[ii] );
-   }
-   int nsubgrids = model.subGrids;
-   check_grid_id();
-   fill_list();
-   sort_points();
+   plot_points();
    set_nsubgrids( nsubgrids );
    default_plot_ctrl();
 }
@@ -1814,9 +2251,11 @@ void US_Grid_Editor::save()
    model.customGridData.grids.clear();
    model.customGridData.components.clear();
 
-   model.customGridData.grids << grid_info;
-   model.customGridData.xLogarithmic = chkb_log->isChecked();
-   model.customGridData.midpointBins = bg_point_type->checkedId() == MIDPOINTS;
+   if ( rb_cg_mode->isChecked() ) {
+      model.customGridData.grids << partial_grid_info;
+      model.customGridData.xLogarithmic = chkb_log->isChecked();
+      model.customGridData.midpointBins = bg_point_type->checkedId() == MIDPOINTS;
+   }
 
    for ( int ii = 0; ii < sorted_points.size(); ii++ )
    {
@@ -1825,15 +2264,22 @@ void US_Grid_Editor::save()
       sc.vbar20 = gp.value( Attribute::ATTR_V );
       sc.s      = gp.value( Attribute::ATTR_S );
       sc.D      = gp.value( Attribute::ATTR_D );
-      sc.f_f0   = 0.0;
-      sc.f      = 0.0;
-      sc.mw     = 0.0;
-      if ( ! US_Model::calc_coefficients( sc ) ) {
-         continue;
+      sc.f_f0   = gp.value( Attribute::ATTR_K );
+      sc.f      = gp.value( Attribute::ATTR_F );
+      sc.mw     = gp.value( Attribute::ATTR_M );
+      QString name;
+      if ( rb_cg_mode->isChecked() ) {
+         int ss = ( ii % model.subGrids ) + 1;
+         int pp = ( ii / model.subGrids ) + 1;
+         name = QString( "sg%1_p%2" )
+                   .arg( ss, 3, 10, QChar( '0' ) )
+                   .arg( pp, 3, 10, QChar( '0' ) );
+
+      } else {
+         name = tr( "P_%1" ).arg( ii + 1, 4, 10, QChar( '0' ) );
       }
-      int ss = ( ii % model.subGrids ) + 1;
-      int pp = ( ii / model.subGrids ) + 1;
-      sc.name     = QString::asprintf( "sg%03d_p%03d", ss, pp );
+
+      sc.name     = name;
       model.components << sc;
 
       CompInfo cinfo;
@@ -1946,6 +2392,67 @@ void US_Grid_Editor::sel_investigator( void )
    investigator = US_Settings::us_inv_ID();
    QString inv_text = tr( "%1: %2" ).arg( investigator ).arg( US_Settings::us_inv_name() );
    le_investigator->setText( inv_text );
+}
+
+void US_Grid_Editor::set_zval_type( int id )
+{
+   le_z_val->clear();
+   if ( id == 0 )
+   {
+      le_z_val->show();
+      pb_z_set_func->hide();
+   }
+   else
+   {
+      le_z_val->hide();
+      pb_z_set_func->show();
+   }
+}
+
+void US_Grid_Editor::set_z_function()
+{
+   QMap<QString, QString> setting;
+   setting.insert( "x_short_title", Attribute::symbol( x_param ) );
+   setting.insert( "y_short_title", Attribute::symbol( y_param ) );
+   setting.insert( "z_short_title", Attribute::symbol( z_param ) );
+   setting.insert( "x_long_title" , Attribute::short_desc( x_param ) );
+   setting.insert( "y_long_title" , Attribute::short_desc( y_param ) );
+   setting.insert( "z_long_title" , Attribute::short_desc( z_param ) );
+   setting.insert( "parameters"   , le_z_val->text() );
+
+   QString x_min_t = le_x_min->text();
+   QString x_max_t = le_x_max->text();
+   QString y_min_t = le_y_min->text();
+   QString y_max_t = le_y_max->text();
+
+   double x_min = 0;
+   double x_max = 0;
+   double y_min = 0;
+   double y_max = 0;
+   QString error;
+
+   error += validate_double( x_min_t, x_min ) ? "" : tr( "%1: Minimum value is not set.\n" ).arg( lb_x_ax->text() );
+   error += validate_double( x_max_t, x_max ) ? "" : tr( "%1: Maximum value is not set.\n" ).arg( lb_x_ax->text() );
+   error += validate_double( y_min_t, y_min ) ? "" : tr( "%1: Minimum value is not set.\n" ).arg( lb_y_ax->text() );
+   error += validate_double( y_max_t, y_max ) ? "" : tr( "%1: Maximum value is not set.\n" ).arg( lb_y_ax->text() );
+
+   if ( ! error.isEmpty() ) {
+      QMessageBox::warning( this, "Warning!", error );
+      return;
+   }
+
+   setting.insert( "x_min" , x_min_t );
+   setting.insert( "x_max" , x_max_t );
+   setting.insert( "y_min" , y_min_t );
+   setting.insert( "y_max" , y_max_t );
+
+   US_Grid_ZFunction *diag = new US_Grid_ZFunction( this, setting );
+   if ( diag->exec() == QDialog::Accepted ) {
+      le_z_val->clear();
+      QString params = diag->get_parameters();
+      qDebug() << params;
+      le_z_val->setText( params );
+   }
 }
 
 US_Grid_Preset::US_Grid_Preset( QWidget * parent, Attribute::Type x,
@@ -2146,7 +2653,7 @@ GridPoint::GridPoint()
 }
 
 bool GridPoint::set_param( const QVector<double>& values,
-                          const QVector<Attribute::Type>& types )
+                           const QVector<Attribute::Type>& types )
 {
    if ( values.size() != 3 || types.size() != 3 ) {
       error = "Three parameters are needed to set the grid point.";
@@ -2223,7 +2730,7 @@ void GridPoint::set_dens_visc_temp( double dens, double visc, double T )
 }
 
 void GridPoint::set_component( const US_Model::SimulationComponent &sc,
-                              const QVector<Attribute::Type>* types )
+                               const QVector<Attribute::Type>* types )
 {
    if ( types != nullptr ) {
       ptypes.clear();
@@ -2263,9 +2770,13 @@ double GridPoint::value( Attribute::Type type ) const
    return val;
 }
 
-void GridPoint::set_id( int i )
+void GridPoint::set_id_range( int i,
+                              const QPair< double, double >& xrng,
+                              const QPair< double, double >& yrng )
 {
    id  = i;
+   x_range = xrng;
+   y_range = yrng;
 }
 
 void GridPoint::set_row_col( int r, int c )
@@ -2282,6 +2793,16 @@ int GridPoint::get_row() const
 int GridPoint::get_col() const
 {
    return col;
+}
+
+QPair<double, double> GridPoint::get_x_range() const
+{
+   return x_range;
+}
+
+QPair<double, double> GridPoint::get_y_range() const
+{
+   return y_range;
 }
 
 int GridPoint::get_id() const
@@ -2546,3 +3067,768 @@ Attribute::Type Attribute::from_int( int id )
    else if ( id == Attribute::ATTR_DR ) t = Attribute::ATTR_DR;
    return t;
 }
+
+US_Grid_ZFunction::US_Grid_ZFunction( QWidget *parent, const QMap< QString, QString>& settings )
+                  : US_WidgetsDialog( parent )
+{
+   bool has_data = settings.contains( "x_short_title" ) &&
+                   settings.contains( "y_short_title" ) &&
+                   settings.contains( "z_short_title" ) &&
+                   settings.contains( "x_long_title"  ) &&
+                   settings.contains( "y_long_title"  ) &&
+                   settings.contains( "z_long_title"  ) &&
+                   settings.contains( "parameters"    ) &&
+                   settings.contains( "x_min"         ) &&
+                   settings.contains( "x_max"         ) &&
+                   settings.contains( "y_min"         ) &&
+                   settings.contains( "y_max"         );
+
+   if ( ! has_data ) {
+      QMessageBox::warning( this, "Warning!", "Grid parameters are not set yet!");
+      QTimer::singleShot( 10, this, [ this ]() { this->close(); } );
+   }
+   else {
+      set_gui( settings );
+   }
+}
+
+void US_Grid_ZFunction::set_gui( const QMap< QString, QString>& settings )
+{
+   setWindowTitle( tr( "Set Z-Value Function" ) );
+   setPalette( US_GuiSettings::frameColor() );
+   setWindowFlags( Qt::Window | Qt::WindowSystemMenuHint );
+
+   lb_dependent = us_label( "Dependent" );
+   lb_function  = us_label( "Function" );
+   lb_min       = us_label( "Minimum" );
+   lb_max       = us_label( "Maximum" );
+   lb_order     = us_label( "Order" );
+   lb_formula   = new QLabel();
+   lb_p0        = us_label( "1"  );
+   lb_p1        = us_label( "2"  );
+   lb_p2        = us_label( "3"  );
+   lb_p3        = us_label( "4"  );
+   lb_p4        = us_label( "5"  );
+   lb_p5        = us_label( "6"  );
+   lb_c0        = us_label( "c0" );
+   lb_c1        = us_label( "c1" );
+   lb_c2        = us_label( "c2" );
+   lb_c3        = us_label( "c3" );
+   lb_c4        = us_label( "c4" );
+   lb_c5        = us_label( "c5" );
+   lb_p0_x      = us_label( "" );
+   lb_p0_y      = us_label( "" );
+   lb_p1_x      = us_label( "" );
+   lb_p1_y      = us_label( "" );
+   lb_p2_x      = us_label( "" );
+   lb_p2_y      = us_label( "" );
+   lb_p3_x      = us_label( "" );
+   lb_p3_y      = us_label( "" );
+   lb_p4_x      = us_label( "" );
+   lb_p4_y      = us_label( "" );
+   lb_p5_x      = us_label( "" );
+   lb_p5_y      = us_label( "" );
+
+   lb_formula->setFixedHeight( 30 );
+   lb_formula->setStyleSheet( "QLabel { background-color: lightblue; color: black; }" );
+
+   lb_formula  ->setAlignment( Qt::AlignCenter );
+   lb_dependent->setAlignment( Qt::AlignCenter );
+   lb_function ->setAlignment( Qt::AlignCenter );
+   lb_order    ->setAlignment( Qt::AlignCenter );
+   lb_min      ->setAlignment( Qt::AlignCenter );
+   lb_max      ->setAlignment( Qt::AlignCenter );
+
+   list_lb << lb_p0 << lb_p0_x << lb_p0_y << lb_c0
+           << lb_p1 << lb_p1_x << lb_p1_y << lb_c1
+           << lb_p2 << lb_p2_x << lb_p2_y << lb_c2
+           << lb_p3 << lb_p3_x << lb_p3_y << lb_c3
+           << lb_p4 << lb_p4_x << lb_p4_y << lb_c4
+           << lb_p5 << lb_p5_x << lb_p5_y << lb_c5;
+
+   for ( int ii = 0; ii < list_lb.size(); ii++ ) {
+      list_lb[ ii ]->setAlignment( Qt::AlignCenter );
+      list_lb[ ii ]->setFixedWidth( 80 );
+      int mod = ii % 4;
+      if ( mod == 0 ) {
+         list_lb[ ii ]->setFixedWidth( 25 );
+      }
+   }
+
+   le_min  = us_lineedit( "", 0, true );
+   le_max  = us_lineedit( "", 0, true );
+   le_c0   = us_lineedit( "" );
+   le_c1   = us_lineedit( "" );
+   le_c2   = us_lineedit( "" );
+   le_c3   = us_lineedit( "" );
+   le_c4   = us_lineedit( "" );
+   le_c5   = us_lineedit( "" );
+   le_p0_x = us_lineedit( "" );
+   le_p1_x = us_lineedit( "" );
+   le_p2_x = us_lineedit( "" );
+   le_p3_x = us_lineedit( "" );
+   le_p4_x = us_lineedit( "" );
+   le_p5_x = us_lineedit( "" );
+   le_p0_y = us_lineedit( "" );
+   le_p1_y = us_lineedit( "" );
+   le_p2_y = us_lineedit( "" );
+   le_p3_y = us_lineedit( "" );
+   le_p4_y = us_lineedit( "" );
+   le_p5_y = us_lineedit( "" );
+
+   list_le << le_p0_x << le_p0_y << le_c0
+           << le_p1_x << le_p1_y << le_c1
+           << le_p2_x << le_p2_y << le_c2
+           << le_p3_x << le_p3_y << le_c3
+           << le_p4_x << le_p4_y << le_c4
+           << le_p5_x << le_p5_y << le_c5;
+
+   for ( int ii = 0; ii < list_le.size(); ii++ ) {
+      QDoubleValidator *validator = new QDoubleValidator( this );
+      list_le[ ii ]->setValidator( validator );
+      list_le[ ii ]->setFixedWidth( 80 );
+   }
+
+   cb_dependent = us_comboBox();
+   cb_dependent->addItem( settings.value( "x_long_title" ) );
+   cb_dependent->addItem( settings.value( "y_long_title" ) );
+   cb_dependent->setCurrentIndex( 0 );
+
+   short_title << settings.value( "x_short_title" )
+               << settings.value( "y_short_title" )
+               << settings.value( "z_short_title" );
+   long_title  << settings.value( "x_long_title" )
+               << settings.value( "y_long_title" )
+               << settings.value( "z_long_title" );
+
+   min_xy << settings.value( "x_min" ).toDouble()
+                 << settings.value( "y_min" ).toDouble();
+   max_xy << settings.value( "x_max" ).toDouble()
+                 << settings.value( "y_max" ).toDouble();
+
+   cb_function = us_comboBox();
+   cb_function->addItem( "Polynomial" );
+   cb_function->addItem( "Exponential" );
+   cb_function->setCurrentIndex( 0 );
+   if ( settings.value( "function" ) == "y_param" ) {
+      cb_function->setCurrentIndex( 1 );
+   }
+
+   cb_order = us_comboBox();
+   for ( int ii = 1; ii < 6; ii++ ) {
+      cb_order->addItem( QString::number( ii ) );
+   }
+   cb_order->setCurrentText( QString::number( 3 ) );
+
+   QPushButton *pb_fit    = us_pushbutton( "Fit" );
+   QPushButton *pb_cancel = us_pushbutton( "Cancel" );
+   QPushButton *pb_apply  = us_pushbutton( "Apply" );
+
+   plot = new QwtPlot();
+   QBoxLayout* usplot = new US_Plot( plot, "Grid Layout", "", "" );
+   plot->setCanvasBackground( QBrush( QColor( 32, 32, 32 ) ) );
+
+   // layouts
+   int row = 0;
+   QLabel *lb_points = us_banner( "Points" );
+   QGridLayout *lyt_points = new QGridLayout();
+   lyt_points->setContentsMargins( 0, 0, 0, 0 );
+   lyt_points->setSpacing( 2 );
+   lyt_points->addWidget( lb_points, row++, 0, 1, 5 );
+   lyt_points->addWidget( lb_p0,     row,   0, 1, 1 );
+   lyt_points->addWidget( lb_p0_x,   row,   1, 1, 1 );
+   lyt_points->addWidget( le_p0_x,   row,   2, 1, 1 );
+   lyt_points->addWidget( lb_p0_y,   row,   3, 1, 1 );
+   lyt_points->addWidget( le_p0_y,   row++, 4, 1, 1 );
+   lyt_points->addWidget( lb_p1,     row,   0, 1, 1 );
+   lyt_points->addWidget( lb_p1_x,   row,   1, 1, 1 );
+   lyt_points->addWidget( le_p1_x,   row,   2, 1, 1 );
+   lyt_points->addWidget( lb_p1_y,   row,   3, 1, 1 );
+   lyt_points->addWidget( le_p1_y,   row++, 4, 1, 1 );
+   lyt_points->addWidget( lb_p2,     row,   0, 1, 1 );
+   lyt_points->addWidget( lb_p2_x,   row,   1, 1, 1 );
+   lyt_points->addWidget( le_p2_x,   row,   2, 1, 1 );
+   lyt_points->addWidget( lb_p2_y,   row,   3, 1, 1 );
+   lyt_points->addWidget( le_p2_y,   row++, 4, 1, 1 );
+   lyt_points->addWidget( lb_p3,     row,   0, 1, 1 );
+   lyt_points->addWidget( lb_p3_x,   row,   1, 1, 1 );
+   lyt_points->addWidget( le_p3_x,   row,   2, 1, 1 );
+   lyt_points->addWidget( lb_p3_y,   row,   3, 1, 1 );
+   lyt_points->addWidget( le_p3_y,   row++, 4, 1, 1 );
+   lyt_points->addWidget( lb_p4,     row,   0, 1, 1 );
+   lyt_points->addWidget( lb_p4_x,   row,   1, 1, 1 );
+   lyt_points->addWidget( le_p4_x,   row,   2, 1, 1 );
+   lyt_points->addWidget( lb_p4_y,   row,   3, 1, 1 );
+   lyt_points->addWidget( le_p4_y,   row++, 4, 1, 1 );
+   lyt_points->addWidget( lb_p5,     row,   0, 1, 1 );
+   lyt_points->addWidget( lb_p5_x,   row,   1, 1, 1 );
+   lyt_points->addWidget( le_p5_x,   row,   2, 1, 1 );
+   lyt_points->addWidget( lb_p5_y,   row,   3, 1, 1 );
+   lyt_points->addWidget( le_p5_y,   row++, 4, 1, 1 );
+
+   QFrame *frm_points = new QFrame();
+   frm_points->setFrameStyle( QFrame::Panel | QFrame::Plain );
+   frm_points->setLineWidth( 1 );
+   frm_points->setMidLineWidth( 1 );
+   frm_points->setLayout( lyt_points );
+
+   row = 0;
+   QLabel *lb_params = us_banner( "Parameters" );
+   QGridLayout *lyt_params = new QGridLayout();
+   lyt_params->setContentsMargins( 0, 0, 0, 0 );
+   lyt_params->setSpacing( 2 );
+   lyt_params->addWidget( lb_params, row++ , 0, 1, 2 );
+   lyt_params->addWidget( lb_c0,     row   , 0, 1, 1 );
+   lyt_params->addWidget( le_c0,     row++ , 1, 1, 1 );
+   lyt_params->addWidget( lb_c1,     row   , 0, 1, 1 );
+   lyt_params->addWidget( le_c1,     row++ , 1, 1, 1 );
+   lyt_params->addWidget( lb_c2,     row   , 0, 1, 1 );
+   lyt_params->addWidget( le_c2,     row++ , 1, 1, 1 );
+   lyt_params->addWidget( lb_c3,     row   , 0, 1, 1 );
+   lyt_params->addWidget( le_c3,     row++ , 1, 1, 1 );
+   lyt_params->addWidget( lb_c4,     row   , 0, 1, 1 );
+   lyt_params->addWidget( le_c4,     row++ , 1, 1, 1 );
+   lyt_params->addWidget( lb_c5,     row   , 0, 1, 1 );
+   lyt_params->addWidget( le_c5,     row++ , 1, 1, 1 );
+
+   QFrame *frm_params = new QFrame();
+   frm_params->setFrameStyle( QFrame::Panel | QFrame::Plain );
+   frm_params->setLineWidth( 1 );
+   frm_params->setMidLineWidth( 1 );
+   frm_params->setLayout( lyt_params );
+
+   QHBoxLayout *lyt_pnt_prm = new QHBoxLayout();
+   lyt_pnt_prm->setContentsMargins( 0, 0, 0, 0 );
+   lyt_pnt_prm->setSpacing( 2 );
+   lyt_pnt_prm->addStretch( 1 );
+   lyt_pnt_prm->addWidget( frm_points );
+   lyt_pnt_prm->addWidget( frm_params );
+   lyt_pnt_prm->addStretch( 1 );
+
+   row = 0;
+   QGridLayout *lyt_top = new QGridLayout();
+   lyt_top->setContentsMargins( 0, 0, 0, 0 );
+   lyt_top->setSpacing( 2 );
+   lyt_top->addWidget( lb_formula    , row++ , 0, 1, 4 );
+   lyt_top->addWidget( lb_dependent  , row   , 0, 1, 1 );
+   lyt_top->addWidget( cb_dependent  , row   , 1, 1, 1 );
+   lyt_top->addWidget( lb_function   , row   , 2, 1, 1 );
+   lyt_top->addWidget( cb_function   , row++ , 3, 1, 1 );
+
+   lyt_top->addWidget( lb_min        , row   , 0, 1, 1 );
+   lyt_top->addWidget( le_min        , row   , 1, 1, 1 );
+   lyt_top->addWidget( lb_order      , row   , 2, 1, 1 );
+   lyt_top->addWidget( cb_order      , row++ , 3, 1, 1 );
+
+   lyt_top->addWidget( lb_max        , row   , 0, 1, 1 );
+   lyt_top->addWidget( le_max        , row   , 1, 1, 1 );
+   lyt_top->addWidget( pb_fit        , row++ , 2, 1, 2 );
+
+   lyt_top->addWidget( pb_cancel     , row   , 2, 1, 1 );
+   lyt_top->addWidget( pb_apply      , row++ , 3, 1, 1 );
+   lyt_top->addLayout( lyt_pnt_prm   , row++ , 0, 1, 4 );
+
+   int w = 125;
+   lb_dependent->setFixedWidth( w );
+   lb_function-> setFixedWidth( w );
+   cb_function-> setFixedWidth( w );
+   lb_order->    setFixedWidth( w );
+   cb_order->    setFixedWidth( w );
+   lb_min->      setFixedWidth( w );
+   lb_max->      setFixedWidth( w );
+
+   QGridLayout *layout = new QGridLayout();
+   layout->setContentsMargins( 2, 2, 2, 2 );
+   layout->setSpacing( 2 );
+   layout->addLayout( lyt_top, 0, 1, 1, 1 );
+   layout->addLayout( usplot,  1, 0, 1, 3 );
+   layout->setColumnStretch( 0, 1 );
+   layout->setColumnStretch( 1, 0 );
+   layout->setColumnStretch( 2, 1 );
+   layout->setRowStretch( 0, 0 );
+   layout->setRowStretch( 1, 1 );
+
+   setLayout( layout );
+
+   // parse settings
+   parse_params( settings.value( "parameters" ) );
+   set_dependent( cb_dependent->currentIndex() );
+
+   connect( cb_function,  QOverload<int>::of( &QComboBox::currentIndexChanged ), this, &US_Grid_ZFunction::set_function  );
+   connect( cb_dependent, QOverload<int>::of( &QComboBox::currentIndexChanged ), this, &US_Grid_ZFunction::set_dependent );
+   connect( cb_order    , QOverload<int>::of( &QComboBox::currentIndexChanged ), this, &US_Grid_ZFunction::set_order );
+   connect( pb_fit      , &QPushButton::clicked, this, &US_Grid_ZFunction::fit );
+   connect( pb_apply    , &QPushButton::clicked, this, &US_Grid_ZFunction::apply );
+   connect( pb_cancel   , &QPushButton::clicked, this, &US_Grid_ZFunction::reject );
+   connect( le_c0       , &QLineEdit::editingFinished, this, &US_Grid_ZFunction::set_c0 );
+   connect( le_c1       , &QLineEdit::editingFinished, this, &US_Grid_ZFunction::set_c1 );
+   connect( le_c2       , &QLineEdit::editingFinished, this, &US_Grid_ZFunction::set_c2 );
+   connect( le_c3       , &QLineEdit::editingFinished, this, &US_Grid_ZFunction::set_c3 );
+   connect( le_c4       , &QLineEdit::editingFinished, this, &US_Grid_ZFunction::set_c4 );
+   connect( le_c5       , &QLineEdit::editingFinished, this, &US_Grid_ZFunction::set_c5 );
+   connect( le_p0_x     , &QLineEdit::editingFinished, this, &US_Grid_ZFunction::set_p0_x );
+   connect( le_p1_x     , &QLineEdit::editingFinished, this, &US_Grid_ZFunction::set_p1_x );
+   connect( le_p2_x     , &QLineEdit::editingFinished, this, &US_Grid_ZFunction::set_p2_x );
+   connect( le_p3_x     , &QLineEdit::editingFinished, this, &US_Grid_ZFunction::set_p3_x );
+   connect( le_p4_x     , &QLineEdit::editingFinished, this, &US_Grid_ZFunction::set_p4_x );
+   connect( le_p5_x     , &QLineEdit::editingFinished, this, &US_Grid_ZFunction::set_p5_x );
+   connect( le_p0_y     , &QLineEdit::editingFinished, this, &US_Grid_ZFunction::set_p0_y );
+   connect( le_p1_y     , &QLineEdit::editingFinished, this, &US_Grid_ZFunction::set_p1_y );
+   connect( le_p2_y     , &QLineEdit::editingFinished, this, &US_Grid_ZFunction::set_p2_y );
+   connect( le_p3_y     , &QLineEdit::editingFinished, this, &US_Grid_ZFunction::set_p3_y );
+   connect( le_p4_y     , &QLineEdit::editingFinished, this, &US_Grid_ZFunction::set_p4_y );
+   connect( le_p5_y     , &QLineEdit::editingFinished, this, &US_Grid_ZFunction::set_p5_y );
+}
+
+void US_Grid_ZFunction::apply()
+{
+   if ( ! check_data() ) {
+      QMessageBox::warning( this, "Warning!", "Paremeters are not set yet!" );
+      return;
+   }
+   accept();
+}
+
+bool US_Grid_ZFunction::check_data()
+{
+   bool ready = false;
+   for ( int ii = 0; ii < parameters.size(); ii++ ) {
+      if ( parameters.at(ii) != 0 ) {
+         ready = true;
+         break;
+      }
+   }
+   return ready;
+}
+
+void US_Grid_ZFunction::parse_params( const QString &pstr )
+{
+   parameters.clear();
+   QVector< double > pvec;
+   QStringList plist = pstr.trimmed().split( ";" );
+   int d_id = 0;
+   int f_id = 0;
+   int o_id = 0;
+
+   if ( plist.size() >= 4 ) {
+      if ( plist.at( 0 ).trimmed() == "polynomial" ) {
+         f_id = 0;
+      }
+      else if ( plist.at( 0 ).trimmed() == "exponential" ){
+         f_id = 1;
+      }
+
+      if ( plist.at( 1 ).trimmed() == "x" ) {
+         d_id = 0;
+      }
+      else if ( plist.at( 1 ).trimmed() == "y" ){
+         d_id = 1;
+      }
+
+      for ( int ii = 2; ii < plist.size(); ii++ ) {
+         if ( ii >= 8 ) {
+            break;
+         }
+         bool ok;
+         double val = plist.at( ii ).toDouble( &ok );
+         if ( ok ) {
+            pvec << val;
+         }
+         else {
+            pvec.clear();
+            break;
+         }
+      }
+   }
+   if ( pvec.isEmpty() ) {
+      o_id = 0;
+   }
+   else {
+      parameters << pvec;
+      o_id = pvec.size() - 2;
+   }
+   cb_dependent->setCurrentIndex( d_id );
+   cb_function->setCurrentIndex( f_id );
+   cb_order->setCurrentIndex( o_id );
+}
+
+QString US_Grid_ZFunction::get_parameters()
+{
+   QString params;
+   if ( ! check_data() ) {
+      return params;
+   }
+   QString type = cb_function->currentText().toLower();
+   params += type;
+   if ( cb_dependent->currentIndex() == 0 ) {
+      params += ";x";
+   }
+   else {
+      params += ";y";
+   }
+   for ( int ii = 0; ii < parameters.size(); ii++ ) {
+      double pp = parameters.at( ii );
+      params += QString( ";%1" ).arg( pp );
+   }
+   return params;
+}
+
+void US_Grid_ZFunction::show_formula()
+{
+   lb_formula->clear();
+   QString type = cb_function->currentText().toLower();
+   QString formula = "<html><b><var>y</var> = ";
+   bool flag = true;
+   if ( type == "polynomial" ) {
+      formula += "<var>c</var><sub>0</sub>";
+      formula += " + <var>c</var><sub>1</sub><var>x</var>";
+      QString fmt = " + <var>c</var><sub>%1</sub><var>x</var><sup>%1</sup>";
+      int order = cb_order->currentText().toInt();
+      for (int ii = 1; ii < order; ii++) {
+         formula += fmt.arg( ii + 1 );
+      }
+   }
+   else if ( type == "exponential" ) {
+      formula += "<var>a</var><var>e</var><sup><var>b</var><var>x</var></sup>";
+   }
+   else {
+      flag = false;
+   }
+   formula += "</b></html>";
+   if ( flag ) {
+      lb_formula->setText( formula );
+   }
+}
+
+void US_Grid_ZFunction::set_dependent( int index )
+{
+   double min = min_xy.at( index );
+   double max = max_xy.at( index );
+   int num = 200;
+   double dx = ( max - min ) / static_cast<double>( num );
+   xvalues.clear();
+   yvalues.clear();
+   double val = min;
+   while ( val <= max ) {
+      xvalues << val;
+      val += dx;
+   }
+   yvalues.resize( xvalues.size() );
+   QString xtitle = short_title.at( index );
+   QString ytitle = short_title.last();
+   for ( int ii = 0; ii < 6; ii++ ) {
+      list_lb[ ii * 4 + 1 ]->setText( xtitle );
+      list_lb[ ii * 4 + 2 ]->setText( ytitle );
+   }
+   lb_min->setText( QString( "Min of %1" ).arg( ytitle ) );
+   lb_max->setText( QString( "Max of %1" ).arg( ytitle ) );
+   set_function( cb_function->currentIndex() );
+}
+
+void US_Grid_ZFunction::set_function( int index )
+{
+   QString type = cb_function->itemText( index ).toLower();
+   lb_order->hide();
+   cb_order->hide();
+   int size = 0;
+   if ( type == "polynomial" ) {
+      size = cb_order->currentText().toInt() + 1;
+      lb_c0->setText( QString( "c%1" ).arg( 0 ) );
+      lb_c1->setText( QString( "c%1" ).arg( 1 ) );
+      lb_order->show();
+      cb_order->show();
+   }
+   else if ( type == "exponential" ) {
+      size = 2;
+      lb_c0->setText( "a" );
+      lb_c1->setText( "b" );
+   }
+   set_points( size );
+}
+
+void US_Grid_ZFunction::set_points( int size )
+{
+   double x_min = min_xy.at( cb_dependent->currentIndex() );
+   double x_max = max_xy.at( cb_dependent->currentIndex() );
+   parameters.resize( size );
+   x_points.resize( size );
+   y_points.resize( size );
+
+   x_points[ 0 ] = x_min;
+   x_points[ size - 1 ] = x_max;
+   double dx = ( x_max - x_min ) / static_cast<double>( size - 1 );
+   double val = x_min;
+   for( int ii = 0; ii < size - 2; ii++ ) {
+      val += dx;
+      x_points[ ii + 1 ] = val;
+   }
+
+   for ( int ii = 0; ii < list_lb.size(); ii++ ) {
+      if ( ii < 4 * size ) {
+         list_lb[ ii ]->show();
+      }
+      else {
+         list_lb[ ii ]->hide();
+      }
+   }
+   for ( int ii = 0; ii < list_le.size(); ii++ ) {
+      if ( ii < 3 * size ) {
+         list_le[ ii ]->show();
+      }
+      else {
+         list_le[ ii ]->hide();
+      }
+   }
+
+   compute( x_points, y_points );
+   for ( int ii = 0; ii < size; ii++ ) {
+      list_le[ ii * 3     ]->setText( QString::number(   x_points.at( ii ) ) );
+      list_le[ ii * 3 + 1 ]->setText( QString::number(   y_points.at( ii ) ) );
+      list_le[ ii * 3 + 2 ]->setText( QString::number( parameters.at( ii ) ) );
+   }
+   plot_data();
+   show_formula();
+}
+
+void US_Grid_ZFunction::compute( QVector< double >& x_vec, QVector< double >& y_vec )
+{
+   QString type = cb_function->currentText().toLower();
+   y_vec.clear();
+   double xx;
+   double yy;
+   for ( int ii = 0; ii < x_vec.size(); ii++ ) {
+      xx = x_vec.at( ii );
+      yy = 0;
+      if ( type == "polynomial" ) {
+         for( int jj = 0; jj < parameters.size(); jj++ ) {
+            yy += parameters.at( jj ) * qPow( xx, jj );
+         }
+      }
+      else if ( type == "exponential" ) {
+         yy = parameters.at( 0 ) * qExp( parameters.at( 1 ) * xx );
+      }
+      y_vec << yy;
+   }
+}
+
+void US_Grid_ZFunction::plot_data()
+{
+   plot->detachItems(QwtPlotItem::Rtti_PlotItem, false);
+
+   compute( xvalues, yvalues );
+
+   QwtPlotCurve* curve = us_curve( plot, "Curve" );
+   curve->setSamples( xvalues.data(), yvalues.data(), xvalues.size() );
+   curve->setPen( QPen( Qt::yellow, 2 ) );
+
+   QwtSymbol *symbol = new QwtSymbol( QwtSymbol::Ellipse,
+                                     QBrush( Qt::red ),
+                                     QPen( Qt::red, 5 ), QSize( 5, 5 ) );
+   QwtPlotCurve* points = us_curve( plot, "Points" );
+   points->setSymbol( symbol );
+   points->setStyle( QwtPlotCurve::NoCurve );
+   points->setSamples( x_points.data(), y_points.data(), x_points.size() );
+
+   std::pair<double*, double*> min_max;
+   double x_min, x_max, y_min, y_max, dx, dy;
+   min_max = std::minmax_element( xvalues.begin(), xvalues.end() );
+   x_min   = *min_max.first;
+   x_max   = *min_max.second;
+
+   min_max = std::minmax_element( yvalues.begin(), yvalues.end() );
+   y_min   = *min_max.first;
+   y_max   = *min_max.second;
+
+   le_min->setText( QString::number( y_min ) );
+   le_max->setText( QString::number( y_max ) );
+
+   min_max = std::minmax_element( x_points.begin(), x_points.end() );
+   x_min   = qMin( *min_max.first, x_min );
+   x_max   = qMax( *min_max.second, x_max );
+
+   min_max = std::minmax_element( y_points.begin(), y_points.end() );
+   y_min   = qMin( *min_max.first, y_min );
+   y_max   = qMax( *min_max.second, y_max );
+
+   dx = ( x_max - x_min ) * 0.1;
+   dy = ( y_max - y_min ) * 0.1;
+   dx = qMax( dx, 0.1 );
+   dy = qMax( dy, 0.1 );
+   x_min -= dx;
+   x_max += dx;
+   y_min -= dy;
+   y_max += dy;
+   plot->setAxisTitle( QwtPlot::xBottom, long_title.at( cb_dependent->currentIndex() ) );
+   plot->setAxisTitle( QwtPlot::yLeft,   long_title.last() );
+   plot->setAxisScale( QwtPlot::xBottom, x_min, x_max );
+   plot->setAxisScale( QwtPlot::yLeft  , y_min, y_max );
+   // plot->setAxisAutoScale(QwtPlot::xBottom, true);
+   // plot->setAxisAutoScale(QwtPlot::yLeft, true);
+   // us_grid( plot );
+   plot->replot();
+}
+
+void US_Grid_ZFunction::set_order( int index )
+{
+   int size = cb_order->itemText( index ).toInt() + 1;
+   set_points( size );
+}
+
+void US_Grid_ZFunction::fit()
+{
+   QString type = cb_function->currentText().toLower();
+   QVector<double> xvec = x_points;
+   QVector<double> yvec = y_points;
+   QVector<double> pars = parameters;
+   if ( type == "exponential" ) {
+      for ( int ii = 0; ii < yvec.size(); ii++ ) {
+         yvec[ ii ] = std::log( yvec.at( ii ) );
+      }
+   }
+   double *c = pars.data();
+   double *x = xvec.data();
+   double *y = yvec.data();
+   int np    = xvec.size();
+
+   bool ok = US_Matrix::lsfit( c, x, y, np, np );
+   if ( ok ) {
+      if ( type == "exponential" ) {
+         pars [ 0 ] = std::exp( pars.first() );
+      }
+      parameters.clear();
+      parameters << pars;
+      for ( int ii = 0; ii < parameters.size(); ii++ ) {
+         QString str = QString::number( parameters.at( ii ) );
+         switch ( ii ) {
+         case 0:
+            le_c0->setText( str );
+            break;
+         case 1:
+            le_c1->setText( str );
+            break;
+         case 2:
+            le_c2->setText( str );
+            break;
+         case 3:
+            le_c3->setText( str );
+            break;
+         case 4:
+            le_c4->setText( str );
+            break;
+         case 5:
+            le_c5->setText( str );
+            break;
+         }
+      }
+      plot_data();
+   }
+}
+
+void US_Grid_ZFunction::set_c0()
+{
+   parameters[ 0 ] = le_c0->text().toDouble();
+   plot_data();
+}
+
+void US_Grid_ZFunction::set_c1()
+{
+   parameters[ 1 ] = le_c1->text().toDouble();
+   plot_data();
+}
+
+void US_Grid_ZFunction::set_c2()
+{
+   parameters[ 2 ] = le_c2->text().toDouble();
+   plot_data();
+}
+
+void US_Grid_ZFunction::set_c3()
+{
+   parameters[ 3 ] = le_c3->text().toDouble();
+   plot_data();
+}
+
+void US_Grid_ZFunction::set_c4()
+{
+   parameters[ 4 ] = le_c4->text().toDouble();
+   plot_data();
+}
+
+void US_Grid_ZFunction::set_c5()
+{
+   parameters[ 5 ] = le_c5->text().toDouble();
+   plot_data();
+}
+
+void US_Grid_ZFunction::set_p0_x()
+{
+   x_points[ 0 ] = le_p0_x->text().toDouble();
+   plot_data();
+}
+
+void US_Grid_ZFunction::set_p1_x()
+{
+   x_points[ 1 ] = le_p1_x->text().toDouble();
+   plot_data();
+}
+
+void US_Grid_ZFunction::set_p2_x()
+{
+   x_points[ 2 ] = le_p2_x->text().toDouble();
+   plot_data();
+}
+
+void US_Grid_ZFunction::set_p3_x()
+{
+   x_points[ 3 ] = le_p3_x->text().toDouble();
+   plot_data();
+}
+
+void US_Grid_ZFunction::set_p4_x()
+{
+   x_points[ 4 ] = le_p4_x->text().toDouble();
+   plot_data();
+}
+
+void US_Grid_ZFunction::set_p5_x()
+{
+   x_points[ 5 ] = le_p5_x->text().toDouble();
+   plot_data();
+}
+
+void US_Grid_ZFunction::set_p0_y()
+{
+   y_points[ 0 ] = le_p0_y->text().toDouble();
+   plot_data();
+}
+
+void US_Grid_ZFunction::set_p1_y()
+{
+   y_points[ 1 ] = le_p1_y->text().toDouble();
+   plot_data();
+}
+
+void US_Grid_ZFunction::set_p2_y()
+{
+   y_points[ 2 ] = le_p2_y->text().toDouble();
+   plot_data();
+}
+
+void US_Grid_ZFunction::set_p3_y()
+{
+   y_points[ 3 ] = le_p3_y->text().toDouble();
+   plot_data();
+}
+
+void US_Grid_ZFunction::set_p4_y()
+{
+   y_points[ 4 ] = le_p4_y->text().toDouble();
+   plot_data();
+}
+
+void US_Grid_ZFunction::set_p5_y()
+{
+   y_points[ 5 ] = le_p5_y->text().toDouble();
+   plot_data();
+}
+

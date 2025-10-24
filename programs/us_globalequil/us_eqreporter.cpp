@@ -261,7 +261,7 @@ DbgLv(1) << "SDiag:      ratio rangea" << ratio << rangea;
    ediag->e->setFont( efont );
    ediag->e->setText( rs );
    QFontMetrics fm( efont );
-   int dwid = maxLineWidth( fm, rs ) + fm.width( "WWW" );
+   int dwid = maxLineWidth( fm, rs ) + fm.horizontalAdvance( "WWW" );
 DbgLv(1) << "dwid" << dwid;
    int dhgt = fm.lineSpacing() * 50;
    dwid     = ( ( dwid / 12 + 2 ) * 12 );
@@ -548,8 +548,8 @@ DbgLv(1) << "  EqRep:CSF: test_extinc" << test_extinc;
    ediag->e->setFont( efont );
    ediag->e->setText( rs );
    QFontMetrics fm( efont );
-   int dwid = maxLineWidth( fm, rs ) + fm.width( "WWW" );
-DbgLv(1) << "  dwid" << dwid << " astw" << fm.width( asters );
+   int dwid = maxLineWidth( fm, rs ) + fm.horizontalAdvance( "WWW" );
+DbgLv(1) << "  dwid" << dwid << " astw" << fm.horizontalAdvance( asters );
    int dhgt = fm.lineSpacing() * 50;
    dwid     = ( ( dwid / 12 + 2 ) * 12 );
    dhgt     = ( ( dhgt / 12 + 2 ) * 12 );
@@ -788,7 +788,7 @@ DbgLv(1) << "  EqRep:FITREP: nfruns" << runfit.nbr_runs;
       ediag->e->setFont( efont );
       ediag->e->setText( rs );
       QFontMetrics fm( efont );
-      int dwid = maxLineWidth( fm, rs ) + fm.width( "WWW" );
+      int dwid = maxLineWidth( fm, rs ) + fm.horizontalAdvance( "WWW" );
       int dhgt = fm.lineSpacing() * 50;
       dwid     = ( ( dwid / 12 + 2 ) * 12 );
       dhgt     = ( ( dhgt / 12 + 2 ) * 12 );
@@ -884,7 +884,7 @@ int US_EqReporter::maxLineWidth( QFontMetrics& fm, const QString& repstr )
 
    for ( int ii = 0; ii < rlines.size(); ii++ )
    {
-      if ( ( lnlen = fm.width( rlines[ ii ] ) ) > mxlen )
+      if ( ( lnlen = fm.horizontalAdvance( rlines[ ii ] ) ) > mxlen )
       {
          mxlen = lnlen;
 DbgLv(1) << "  mLW: ii lnlen" << ii << lnlen << " line:" << rlines[ii];

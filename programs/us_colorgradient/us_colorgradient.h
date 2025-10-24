@@ -47,7 +47,7 @@ public:
        \param flags  An enum value that describes the window properties.
                      This normally can be left as 0 (Qt::Widget).
    */
-   US_ColorGradient( QWidget* = 0, Qt::WindowFlags = 0 );
+   US_ColorGradient( QWidget* parent = nullptr, Qt::WindowFlags flags = Qt::WindowFlags() );
   
 private:
 

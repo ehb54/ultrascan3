@@ -52,6 +52,8 @@ class US_EXTERN US_Hydrodyn_Cluster_Best : public QDialog
       QLineEdit *                             le_bestmsrprober;
       QLabel *                                lbl_bestmsrfinenessangle;
       QLineEdit *                             le_bestmsrfinenessangle;
+      QLabel *                                lbl_bestmsrminfinenessangle;
+      QLineEdit *                             le_bestmsrminfinenessangle;
       QLabel *                                lbl_bestmsrmaxtriangles;
       QLineEdit *                             le_bestmsrmaxtriangles;
       QCheckBox *                             cb_bestrcoalautominmax;
@@ -98,6 +100,7 @@ class US_EXTERN US_Hydrodyn_Cluster_Best : public QDialog
 
       void                                    update_bestmsrprober( const QString & );
       void                                    update_bestmsrfinenessangle( const QString & );
+      void                                    update_bestmsrminfinenessangle( const QString & );
       void                                    update_bestmsrmaxtriangles( const QString & );
       void                                    set_bestrcoalautominmax();
       void                                    update_bestrcoalnmin( const QString & );

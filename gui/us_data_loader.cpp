@@ -22,7 +22,7 @@ US_DataLoader::US_DataLoader(
       QString&                          desc,
       QMap<QString,QString>&		prot_det,
       QString                           tfilt )
- : US_WidgetsDialog( 0, 0 ),
+ : US_WidgetsDialog( nullptr, Qt::WindowFlags() ),
    latest     ( late ),
    rawData    ( rData ),
    editedData ( eData ),
@@ -143,7 +143,7 @@ US_DataLoader::US_DataLoader(
       QStringList&                      trips,
       QString&                          desc,
       QString                           tfilt )
- : US_WidgetsDialog( 0, 0 ),
+ : US_WidgetsDialog( nullptr, Qt::WindowFlags() ),
    latest     ( late ),
    rawData    ( rData ),
    editedData ( eData ),
@@ -468,7 +468,7 @@ qDebug() << "LdEd: selsz" << selections.size() << "dlabsz" << dlabels.size();
       US_Passwd   pw;
       US_DB2      db( pw.getPasswd() );
 
-      if ( db.lastErrno() != US_DB2::OK )
+      if ( db.lastErrno() != IUS_DB2::OK )
       {
          QApplication::restoreOverrideCursor();
          QMessageBox::information( this,
@@ -554,7 +554,7 @@ qDebug() << "LdEd: was-empty, aucID" << aucID << idAUC;
                db.query( query );
 qDebug() << "LdEd: w-e, num_rows" << db.numRows();
                db.next();
-qDebug() << "LdEd: w-e, dberr" << db.lastErrno() << US_DB2::OK;
+qDebug() << "LdEd: w-e, dberr" << db.lastErrno() << IUS_DB2::OK;
                ddesc.acheck     = db.value( 8 ).toString() + " " +
                                   db.value( 9 ).toString();
 qDebug() << "LdEd: was-empty, now acheck" << ddesc.acheck;
@@ -763,7 +763,7 @@ void US_DataLoader::list_data()
       QString  cdescr  = dlabels.at( ii );
       DataDesc ddesc   = ddescrs.at( ii );
       QString  dbID    = fromDB
-                         ? QString().sprintf( "%6d", ddesc.DB_id )
+                         ? QString::asprintf( "%6d", ddesc.DB_id )
                          : QString( "" );
       crlabels.clear();
       crlabels << ddesc.runID
@@ -793,7 +793,9 @@ void US_DataLoader::list_data()
       else if ( ctlabel != ptlabel )
       {  // New triple in same runID: add triple child of run
          twi_trip = new QTreeWidgetItem( QStringList( ctlabel ), ii );
-         twi_runi->addChild( twi_trip );
+         if ( twi_runi != nullptr ) {
+            twi_runi->addChild( twi_trip );
+         }
          ptlabel  = ctlabel;
          ndxt++;
          ndxe = 1;
@@ -807,7 +809,9 @@ void US_DataLoader::list_data()
       if ( sel_run ) 
       {
          twi_edit = new QTreeWidgetItem( QStringList( celabel ), ii );
-         twi_trip->addChild( twi_edit );
+         if ( twi_trip != nullptr ) {
+            twi_trip->addChild( twi_edit );
+         }
       }
 
       ddesc.tripknt     = ndxt;

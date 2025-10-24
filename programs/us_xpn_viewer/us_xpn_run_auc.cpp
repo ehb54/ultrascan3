@@ -7,7 +7,7 @@
 
 // Primary constructor to establish the dialog
 US_XpnRunAuc::US_XpnRunAuc( QString& runID ) 
-: US_WidgetsDialog( 0, 0 ), runID( runID )
+: US_WidgetsDialog( nullptr, Qt::WindowFlags() ), runID( runID )
 {
    setWindowTitle( tr( "US3 Directories with Optima-derived .auc Files" ) );
 
@@ -193,7 +193,7 @@ void US_XpnRunAuc::populate_list()
    {
       QTableWidgetItem* item;
       RunInfo rr     = runInfo[ ii ];
-      QString tripk  = QString().sprintf( "%5d", rr.ntriple );
+      QString tripk  = QString::asprintf( "%5d", rr.ntriple );
 
       item           = new QTableWidgetItem( rr.runID );
       item->setFlags( item->flags() ^ Qt::ItemIsEditable );
@@ -237,7 +237,7 @@ qDebug() << "LimData:   runInfo size" << runInfo.size();
    {
       QTableWidgetItem* item;
       RunInfo rr     = runInfo[ ii ];
-      QString tripk  = QString().sprintf( "%5d", rr.ntriple );
+      QString tripk  = QString::asprintf( "%5d", rr.ntriple );
 qDebug() << "LimData:    ii" << ii << "runID" << rr.runID;
 
       // Skip item if search text exists and runID does not contain it

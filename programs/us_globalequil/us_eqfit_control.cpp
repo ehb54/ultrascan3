@@ -24,7 +24,7 @@ US_EqFitControl::US_EqFitControl(
       QStringList             a_models,
       bool&                   a_fWidget,
       int&                    a_selscan )
- : US_WidgetsDialog( 0, 0 ),
+ : US_WidgetsDialog( nullptr, Qt::WindowFlags() ),
    scanfits   ( a_scanfits ),
    runfit     ( a_runfit ),
    edata      ( a_edata ),

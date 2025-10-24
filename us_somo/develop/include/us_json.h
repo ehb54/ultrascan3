@@ -23,8 +23,9 @@ class US_EXTERN US_Json
  public:
    static map < QString, QString > split( QString );
    static QString compose( map < QString, QString > & );
+   static bool decode_array_to_vector_double( const QString & str, vector < double > & resultf, QString & /* errormsg */ );
+   static QString encode_vector_double( const vector < double > & data );
 };
-
 
 class US_EXTERN US_Udp_Msg
 {

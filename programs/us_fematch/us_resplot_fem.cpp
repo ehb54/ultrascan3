@@ -17,9 +17,9 @@
 
 // constructor:  residuals plot widget
 // US_ResidPlotFem::US_ResidPlotFem( QWidget* parent, const bool auto_mode )
-//    : US_WidgetsDialog( 0, 0 )
+//    : US_WidgetsDialog( nullptr, Qt::WindowFlags() )
 US_ResidPlotFem::US_ResidPlotFem( QWidget* parent, const QString auto_mode )
-   : US_WidgetsDialog( 0, 0 )
+   : US_WidgetsDialog( nullptr, Qt::WindowFlags() )
 {
    // this->a_mode = auto_mode;
    this->a_mode = auto_mode;
@@ -253,7 +253,9 @@ US_ResidPlotFem::US_ResidPlotFem( QWidget* parent, const QString auto_mode )
 	     
 	     qDebug() << "RP:have_ti " << have_ti;
 	     qDebug() << "RP:have_ri " << have_ri;
-	     
+
+	     qDebug() << "ti_noise_guid " << ti_noise->noiseGUID;
+	     qDebug() << "ri_noise_guid " << ri_noise->noiseGUID;
 	     
 	     qDebug() << "RP:ti_noise count1" << ti_noise->count;
 	     qDebug() << "RP:ri_noise count1" << ri_noise->count;

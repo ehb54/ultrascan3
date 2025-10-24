@@ -77,22 +77,22 @@ class US_ExperimentRa
 
           \param    db For database access, an open database connection
       */
-      int checkRunID( US_DB2* = 0 );
+      int checkRunID( IUS_DB2* = 0 );
 
       /*! \brief    Function to save the experiment information to db
           \param    update Is it ok to update an existing database runID 
                            (maybe the user is updating a DB record)?
           \param    db For database access, an open database connection
       */
-      int saveToDB           ( bool = false, US_DB2* = 0 );
+      int saveToDB           ( bool = false, IUS_DB2* = 0 );
 
       /*! \brief    Reads experiment information from the db
           \param runID  The run ID of the experiment.
           \param    db For database access, an open database connection
-          \returns  One of the US_DB2 error codes
+          \returns  One of the IUS_DB2 error codes
       */
       int readFromDB( QString , 
-                      US_DB2* = 0 );
+                      IUS_DB2* = 0 );
 
       /*! \brief    Writes an xml file
           \param data    A reference to a RampRawData vector.

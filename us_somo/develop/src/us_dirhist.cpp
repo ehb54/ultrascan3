@@ -4,6 +4,7 @@
 #include <QGridLayout>
 #include <QFrame>
 #include <QLabel>
+#include <QtCore/QLocale>
 
 US_Dirhist::US_Dirhist(
                        QStringList                 & history,
@@ -73,10 +74,11 @@ void US_Dirhist::setupGUI()
       for ( int i = 0; i < (int) history->size(); ++i )
       {
          t_hist->setItem( i, 0, new QTableWidgetItem( (*history)[ i ] ) );
+         t_hist->item( i, 0 )->setTextAlignment( Qt::AlignRight | Qt::AlignVCenter );
          {
             QString toset =
                last_access->count( (*history)[ i ] )
-               ? (*last_access)[ (*history)[ i ] ].toString( Qt::LocalDate )
+               ? QLocale().toString((*last_access)[ (*history)[ i ] ], QLocale::ShortFormat )
                : "";
             t_hist->setItem( i, 1, new QTableWidgetItem( toset ) );
          }
@@ -111,6 +113,7 @@ void US_Dirhist::setupGUI()
             }
             t_hist->setItem( i, 4, new QTableWidgetItem( type + qs ) );
          }
+         t_hist->setRowHeight( i, minHeight1 * 1.4 );
       }
    }
    t_hist->setSelectionMode( QAbstractItemView::MultiSelection );t_hist->setSelectionBehavior( QAbstractItemView::SelectRows );

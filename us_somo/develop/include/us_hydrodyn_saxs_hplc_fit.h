@@ -96,6 +96,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Fit : public QDialog
       QCheckBox     *cb_conc_test;
       vector        < double > conc_ratios;
 
+      QCheckBox     *cb_fix_relative_centers;
+      vector        < double > relative_centers;
+
       QLabel        *lbl_epsilon;
       QLineEdit     *le_epsilon;
 
@@ -246,10 +249,14 @@ namespace HFIT
 
    extern map < unsigned int,  double >  conc_ratios_map;
 
+   extern map < unsigned int,  double >  relative_center_map;
+
    extern bool                    use_errors;
 
    extern vector < double       > errors;
    extern vector < unsigned int > errors_index;
+
+   extern bool                    use_relative_center;
 
    extern double (*compute_gaussian_f)( double t, const double *par );
 

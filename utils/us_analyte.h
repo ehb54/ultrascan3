@@ -3,7 +3,7 @@
 #define US_ANALYTE_H
 
 #include "us_extern.h"
-#include "us_db2.h"
+#include "ius_db2.h"
 
 //! A base  class to hold analytes
 class US_UTIL_EXTERN US_Analyte
@@ -59,8 +59,8 @@ class US_UTIL_EXTERN US_Analyte
       //!                    should be searched for the analyte
       //! \param guid      - The guid of the analyte to be loaded
       //! \param db        - For DB access, an open database connection
-      //! \returns         - The \ref US_DB2 retrun code for the operation
-      int load( bool, const QString&, US_DB2* = 0 );
+      //! \returns         - The \ref IUS_DB2 return code for the operation
+      int load( bool, const QString&, IUS_DB2* = 0 );
       
       //! Write an analyte to the disk or database
       //! \param db_access - A flag to indicate if the DB (true) or disk (false)
@@ -68,8 +68,8 @@ class US_UTIL_EXTERN US_Analyte
       //! \param filename  - The filename (with path) where the xml file 
       //!                    be written if disk access is specified
       //! \param db        - For DB access, an open database connection
-      //! \returns         - The \ref US_DB2 retrun code for the operation
-      int  write( bool, const QString&, US_DB2* = 0 );
+      //! \returns         - The \ref IUS_DB2 retrun code for the operation
+      int  write( bool, const QString&, IUS_DB2* = 0 );
       
       //! \param path - A reference where the path to ayalutes on the disk 
       //!               drive is written
@@ -87,14 +87,14 @@ class US_UTIL_EXTERN US_Analyte
       void   dump        ( void );
 
    private:
-      int    load_db     ( const QString&, US_DB2* );
+      int    load_db     ( const QString&, IUS_DB2* );
       int    load_disk   ( const QString& );
       int    read_analyte( const QString& );
       void   nucleotide  ( void );
       
       int    write_disk      ( const QString& );
-      int    write_db        ( US_DB2* );
-      void   set_spectrum    ( US_DB2* );
-      void   write_nucleotide( US_DB2* );
+      int    write_db        ( IUS_DB2* );
+      void   set_spectrum    ( IUS_DB2* );
+      void   write_nucleotide( IUS_DB2* );
 };
 #endif

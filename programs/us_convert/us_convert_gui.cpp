@@ -487,6 +487,11 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
        pb_exclude ->hide();
        pb_include ->hide();         
        
+       //hide lambda-start/end
+       lb_lambstrt ->hide();
+       lb_lambstop ->hide();
+       cb_lambstrt ->hide();
+       cb_lambstop ->hide();
      }
    
    // Now let's assemble the page
@@ -621,10 +626,10 @@ DbgLv(1) << "CGui: reset complete";
    // QString invid    = QString("12");
    // QString aprofileguid = QString("be10df3c-a567-4335-af26-59cb182c79b6");
 
-   // QString curdir   = QString("/home/alexey/ultrascan/imports/ABDE-Test-052124-run1693");
-   // QString protname = QString("ABDE-Test-052124-v2");
+   // QString curdir   = QString("/home/alexey/ultrascan/imports/AAV9_GMPABDEtest_24JUL25-run1994");
+   // QString protname = QString("AAV9_GMPABDEtest_24JUL25");
    // QString invid    = QString("165");
-   // QString aprofileguid = QString("ff68a3ec-b526-4f52-851b-b6890bfea7de");
+   // QString aprofileguid = QString("97152b36-ed61-4a56-bcc3-4a3c8c65f0c4");
    
    // QMap < QString, QString > protocol_details;
    // protocol_details[ "dataPath" ]       = curdir;
@@ -634,10 +639,11 @@ DbgLv(1) << "CGui: reset complete";
    // protocol_details[ "correctRadii" ]   = QString("YES");
    // protocol_details[ "expAborted" ]     = QString("NO");
    // //protocol_details[ "runID" ]          =  ;
-   // protocol_details[ "label" ]          = QString("Some label");
+   // protocol_details[ "label" ]          = QString("AAV9_GMPABDEtest_24JUL25");
    // protocol_details[ "aprofileguid" ]   = aprofileguid;
-   // protocol_details[ "CellChNumber" ]   = QString("6");
+   // protocol_details[ "CellChNumber" ]   = QString("2");
    // protocol_details[ "expType" ]        = QString("ABDE");
+   // protocol_details[ "dataSource" ]     = QString("INSTRUMENT");
 
    // // /*********************************************************************************/
 
@@ -1755,11 +1761,14 @@ void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_liv
      getLabInstrumentOperatorInfo_auto();
 
      //Auto-process reference scans
-     if ( dataType == "IP" || dataSource == "dataDiskAUC:Absorbance" )
+     if ( dataType == "IP" || dataSource == "dataDiskAUC:Absorbance"  ||
+	  dataSource == "dataDiskAUC:PseudoAbsorbance" )
        auto_ref_scan = false;
 
      //TEMPORARY !!!!
-     if ( dataType == "RI" && expType != "ABDE" && dataSource != "dataDiskAUC:Absorbance" )
+     if ( dataType == "RI" && expType != "ABDE" &&
+	  dataSource != "dataDiskAUC:Absorbance" &&
+	  dataSource != "dataDiskAUC:PseudoAbsorbance"  )
        {
      	 // double low_ref  = 5.87 - 0.005;
      	 // double high_ref = 5.87 + 0.005;
@@ -1904,10 +1913,13 @@ void US_ConvertGui::process_optics()
      getLabInstrumentOperatorInfo_auto();
 
      //Auto-process reference scans
-     if ( dataType == "IP" || dataSource == "dataDiskAUC:Absorbance" )
+     if ( dataType == "IP" || dataSource == "dataDiskAUC:Absorbance" ||
+	  dataSource == "dataDiskAUC:PseudoAbsorbance" )
        auto_ref_scan = false;
      
-     if ( dataType == "RI" && expType != "ABDE" && dataSource != "dataDiskAUC:Absorbance")
+     if ( dataType == "RI" && expType != "ABDE" &&
+	  dataSource != "dataDiskAUC:Absorbance" &&
+	  dataSource != "dataDiskAUC:PseudoAbsorbance" )
        {
 	 // double low_ref  = 5.87 - 0.005;
 	 // double high_ref = 5.87 + 0.005;
@@ -2934,6 +2946,15 @@ DbgLv(1) << " enabCtl: tLx infsz" << tripListx << out_chaninfo.count();
       }
    }
 
+   //enable save if gebuine "RA" type, or PseudoAbsorbance (when dataDisk read)
+   if ( dataSource == "dataDiskAUC:Absorbance" || dataSource == "dataDiskAUC:PseudoAbsorbance" )
+     {
+       //also disable ref. scan do/undo
+       pb_reference  ->setEnabled( false );
+       referenceDefined = true;
+       completed = true;
+     }
+   
    // If we made it here, user can save
    pb_saveUS3 ->setEnabled( completed );
 }
@@ -3719,7 +3740,7 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
 int US_ConvertGui::getProtSolIndex( QString channel_name, QString dtype )
 {
   int index = 0;
-  channel_name.simplified();
+  channel_name = channel_name.simplified();
   channel_name.replace( " ", "" );
 
   QStringList channelList = channel_name.split("/");
@@ -3846,7 +3867,7 @@ void US_ConvertGui::loadUS3Disk( QString dir )
    qApp->processEvents();
 
    // Check the runID
-   QStringList components =  dir.split( "/", QString::SkipEmptyParts );
+   QStringList components =  dir.split( "/", Qt::SkipEmptyParts );
    QString new_runID      = components.last();
 
    QRegExp rx( "^[A-Za-z0-9_-]{1,80}$" );
@@ -4396,7 +4417,7 @@ DbgLv(1) << "CGui: gExpInf: IN";
       {
          if ( ExpData.rpms[ i ] > ExpData.rpms[ i + 1 ] )
          {
-            ExpData.rpms.swap( i, i + 1 );
+            ExpData.rpms.swapItemsAt( i, i + 1 );
             done = false;
          }
       }
@@ -4518,7 +4539,7 @@ DbgLv(1) << "CGui: gExpInf: IN";
       {
          if ( ExpData.rpms[ i ] > ExpData.rpms[ i + 1 ] )
          {
-            ExpData.rpms.swap( i, i + 1 );
+            ExpData.rpms.swapItemsAt( i, i + 1 );
             done = false;
          }
       }
@@ -7590,7 +7611,7 @@ DbgLv(1) << "nspeeds=" << nspeeds << "nripro=" << nripro;
       {
          int ispeed        = speeds[ spx ];
 DbgLv(1) << "us_convert: ispeed=" << ispeed << "spx=" << spx << "nspeeds=" << nspeeds;
-         runID             = runIDbase + QString().sprintf( "%05d", ispeed );
+         runID             = runIDbase + QString::asprintf( "%05d", ispeed );
          double speed      = (double)ispeed;
          ExpData.runID     = runID;
          ExpData.expGUID.clear();
@@ -9173,7 +9194,7 @@ bool US_ConvertGui::centerpieceInfoDisk( void )
       for ( int i = 0; i < options.size() - 1; i++ )
          for ( int j = i + 1; j < options.size(); j++ )
             if ( options[ i ].text > options[ j ].text )
-               options.swap( i, j );
+               options.swapItemsAt( i, j );
 
       cb_centerpiece->addOptions( options );
    }
@@ -9327,8 +9348,8 @@ DbgLv(1) << " PlAll:  nmcols" << nmcols;
             // Don't know why, but filter out for now
             if ( jj < 5  ||  ( jj + 5 ) > kcpoint )
                qDebug() << "(rr, vv) = ( " << rr[jj] << ", " << vv[jj] << ")"
-                        << " (minR, maxR) = ( " << minR << ", " << maxR << ")" << endl
-                        << " (minV, maxV) = ( " << minV << ", " << maxV << ")" << endl;
+                        << " (minR, maxR) = ( " << minR << ", " << maxR << ")" << Qt::endl
+                        << " (minV, maxV) = ( " << minV << ", " << maxV << ")" << Qt::endl;
             continue;
          }
 
@@ -9585,6 +9606,14 @@ void US_ConvertGui::show_mwl_control( bool show )
    pb_exclude  ->setVisible( !show );
    pb_include  ->setVisible( !show );
 
+   if ( us_convert_auto_mode )
+     {
+       lb_lambstrt ->hide();
+       lb_lambstop ->hide();
+       cb_lambstrt ->hide();
+       cb_lambstop ->hide();
+     }
+   
    adjustSize();
 }
 
@@ -10039,52 +10068,43 @@ DbgLv(1) << "CGui:IOD:   cSS nspeed" << speedsteps.size();
          low_accel        = US_AstfemMath::low_acceleration( speedsteps, ss_lo_acc, rate );
       }
    }
+	QStringList check_results = US_AstfemMath::check_acceleration(speedsteps, allData[0].scanData);
+	if ( !check_results.isEmpty() ) {
+		// append the notice about the recalculation
+		check_results << tr( "By clicking 'Continue', the experiment will be adjusted to occur as performed with a "
+							  "linear acceleration profile with a rate of 400 rpm/s." );
+		QMessageBox msgBox( this );
+		msgBox.setWindowTitle( tr( qPrintable( check_results[0] ) ) );
+		if ( check_results.size() > 1 ) {
+			msgBox.setTextFormat( Qt::RichText );
+			msgBox.setText( tr( qPrintable( check_results[1] ) ) );
+		}
+		if ( check_results.size() > 2 ) {
+			QString info = "";
+			for ( int i = 2; i < check_results.size(); i++ ) {
+				info += check_results[i] + "\n";
+			}
+			msgBox.setInformativeText( tr( qPrintable( info ) ) );
+		}
+		msgBox.addButton( tr( "Continue" ), QMessageBox::RejectRole );
+		QPushButton* bAbort = msgBox.addButton( tr( "Abort" ),
+														QMessageBox::YesRole );
+		msgBox.setDefaultButton( bAbort );
+		msgBox.exec();
 
-   // Report problematic 1st speed step
-   if ( low_accel )
-   {
-      int tf_scan      = speedsteps[ 0 ].time_first;
-      int accel1       = (int)qRound( rate );
-      int rspeed       = speedsteps[ 0 ].rotorspeed;
-   	double  tf_aend   = static_cast<double>(tf_scan);
-   	// prevent any division by zero
-   	if (accel1 != 0)
-   	{
-   		tf_aend = static_cast<double>(rspeed) / static_cast<double>(accel1);
-   	}
-
-
-      QString wmsg = tr( "The SpeedStep computed/used is likely bad:<br/>"
-                         "The acceleration implied is %1 rpm/sec.<br/>"
-                         "The acceleration zone ends at %2 seconds,<br/>"
-                         "with a first scan time of %3 seconds.<br/><br/>"
-                         "<b>You should rerun the experiment without<br/>"
-                         "any interim constant speed, and then<br/>"
-                         "you should reimport the data.</b>" )
-                     .arg( accel1 ).arg( QString::number(tf_aend) ).arg( QString::number(tf_scan) );
-
-      QMessageBox msgBox( this );
-      msgBox.setWindowTitle( tr( "Bad TimeState Implied!" ) );
-      msgBox.setTextFormat( Qt::RichText );
-      msgBox.setText( wmsg );
-      msgBox.addButton( tr( "Continue" ), QMessageBox::RejectRole );
-      QPushButton* bAbort = msgBox.addButton( tr( "Abort" ),
-            QMessageBox::YesRole    );
-      msgBox.setDefaultButton( bAbort );
-      msgBox.exec();
-      if ( msgBox.clickedButton() == bAbort )
-      {  // Abort the import of this data
-         QApplication::restoreOverrideCursor();
-         qApp->processEvents();
-         reset();
-         return false;
-      }
-      else
-      {  // Modify times and omegas of this data, then proceed to import
-         int status = US_Convert::adjustSpeedstep( allData, speedsteps );
-DbgLv(1) << "CGui:IOD: adjSS stat" << status;
-      }
-   }
+		if ( msgBox.clickedButton() == bAbort )
+		{  // Abort the import of this data
+			QApplication::restoreOverrideCursor();
+			qApp->processEvents();
+			reset();
+			return false;
+		}
+		else
+		{  // Modify times and omegas of this data, then proceed to import
+			int status = US_Convert::adjustSpeedstep( allData, speedsteps );
+			DbgLv(1) << "CGui:IOD: adjSS stat" << status;
+		}
+	}
 
    // MultiWaveLength if channels and triples counts differ
    isMwl            = ( all_chaninfo.count() != all_tripinfo.count() );

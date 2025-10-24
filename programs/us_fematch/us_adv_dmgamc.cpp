@@ -15,7 +15,7 @@
 US_AdvDmgaMc::US_AdvDmgaMc( US_Model* amodel,
    QVector< US_Model >& aimodels,
    QMap< QString, QString >& adv_vals, QWidget* p ) :
-   US_WidgetsDialog( p, 0 ), imodels( aimodels ), parmap( adv_vals )
+   US_WidgetsDialog( p, Qt::WindowFlags() ), imodels( aimodels ), parmap( adv_vals )
 {
    model          = amodel;
    parentw        = p;
@@ -332,7 +332,7 @@ void US_AdvDmgaMc::plot_distrib()
    }
 
    // Sort the X values
-   qSort( xvec_in );
+   std::sort( xvec_in.begin(), xvec_in.end() );
    double* xvi     = xvec_in.data();
 
    // Build unique X's and their frequencies (Y's)
