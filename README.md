@@ -24,7 +24,7 @@ You will need [qt5](https://doc.qt.io/qt-5/gettingstarted.html) development and 
 
 We typically compile from source as in [ansible roles build-qt, build-qwt & build-us3](https://github.com/KJSain/us3lims-roles/tree/master/roles)
 
-One could also take hints from this [Dockerfile](https://github.com/ehb54/ultrascan3/blob/master/admin/codeql/docker/docker/Dockerfile) which uses an Ubuntu 20.04 container and qt packages.
+One could also take hints from this [Dockerfile](https://github.com/ehb54/ultrascan3/blob/main/admin/codeql/docker/docker/Dockerfile) which uses an Ubuntu 20.04 container and qt packages.
 
 Please create an issue or [contact us](https://www.ultrascan3.aucsolutions.com/contacts.php) if you have further questions.
 
