@@ -29,6 +29,9 @@ public:
   //! Destructor for US_Win.  Resets position in global memory. 
   ~US_Win();
 
+  //! \brief Public function to update the user/investigator level
+  void update_user_level( void );
+
 private:
   US_Global  g;
   QLabel*    bigframe;

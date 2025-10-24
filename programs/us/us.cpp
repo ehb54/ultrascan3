@@ -94,53 +94,9 @@ int main( int argc, char* argv[] )
   }
 
   // License is OK.  Start up.
-  
-  //Sync User-level with that set in DB //////////////////////////////////////////
-  //If DB set ?
-  QList<QStringList> DB_list = US_Settings::databases();
-  QStringList defaultDB      = US_Settings::defaultDB();
-  if ( DB_list.size() > 0 && defaultDB.size() > 0 )
-    {
-      qDebug() << "defaultDB -- " << defaultDB.at( 2 );
-            
-      US_Passwd   pw;
-      US_DB2      db( pw.getPasswd() );
-      
-      if ( db.lastErrno() != IUS_DB2::OK )
-        {
-	  QMessageBox msgBox;
-          msgBox.setWindowTitle ("ERROR: User Level Synchronization");
-          msgBox.setText("Error making the DB connection! User-level cannot be synchronized.");
-          msgBox.setIcon  ( QMessageBox::Critical );
-          msgBox.exec();
-      
-          //exit( -1 );
-        }
-      else
-	{
-      
-	  QStringList q( "get_user_info" );
-	  db.query( q );
-	  db.next();
-	  
-	  int ID        = db.value( 0 ).toInt();
-	  QString fname = db.value( 1 ).toString();
-	  QString lname = db.value( 2 ).toString();
-	  int     level = db.value( 5 ).toInt();
-	  
-	  qDebug() << "USCFG: UpdInv: ID,name,lev" << ID << fname << lname << level;
-	  //if(ID<1) return;
-	  
-	  US_Settings::set_us_inv_name ( lname + ", " + fname );
-	  US_Settings::set_us_inv_ID   ( ID );
-	  US_Settings::set_us_inv_level( level );
-	}
-    }
-  
-  //END OF user-level sync//////////////////////////////////////
-  
   US_Win w;
   w.show();
+  w.update_user_level();
 #if QT_VERSION < 0x050000
   application.setActivationWindow( &w );
 #endif
@@ -163,7 +119,7 @@ void US_Action::onTriggered( bool )
 US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   : QMainWindow( parent, flags )
 {
-  // We need to handle US_Global::g here becuse US_Widgets is not a parent
+  // We need to handle US_Global::g here because US_Widgets is not a parent
   if ( ! g.isValid() ) 
   {
     // Do something for invalid global memory
@@ -396,6 +352,47 @@ US_Win::~US_Win()
 {
     QPoint p = g.global_position();
     g.set_global_position( p - QPoint( 30, 30 ) );
+}
+
+void US_Win::update_user_level( void ) {
+   //Sync User-level with that set in DB //////////////////////////////////////////
+   //If DB set ?
+   QList<QStringList> DB_list = US_Settings::databases();
+   QStringList defaultDB      = US_Settings::defaultDB();
+   if ( !DB_list.empty() && !defaultDB.isEmpty() )
+   {
+      US_Passwd   pw;
+      US_DB2      db( pw.getPasswd() );
+      int last_error = db.lastErrno();
+
+      if ( last_error == IUS_DB2::OK ) {
+         QStringList q( "get_user_info" );
+         db.query( q );
+         db.next();
+
+         int ID        = db.value( 0 ).toInt();
+         QString fname = db.value( 1 ).toString();
+         QString lname = db.value( 2 ).toString();
+         int     level = db.value( 5 ).toInt();
+
+
+         US_Settings::set_us_inv_name ( lname + ", " + fname );
+         US_Settings::set_us_inv_ID   ( ID );
+         US_Settings::set_us_inv_level( level );
+      }
+      else
+      {
+         QString error_msg = db.lastError();
+         QMessageBox msgBox;
+         msgBox.setWindowTitle ("ERROR: User Level Synchronization");
+         msgBox.setText("Error making the DB connection! User-level cannot be synchronized.");
+         msgBox.setInformativeText( error_msg );
+         msgBox.setIcon  ( QMessageBox::Critical );
+         msgBox.exec();
+      }
+
+   }
+   //END OF user-level sync//////////////////////////////////////
 }
   
 void US_Win::addMenu( int index, const QString& label, QMenu* menu )
