@@ -2957,6 +2957,10 @@ DbgLv(1) << "GP:SL: APPLIED ALL";
    QString vbar_c   = le_vbars[ 0 ]->text();
    QString mw_c     = le_MWs[ 0 ]->text();
 
+   //run ana/reports
+   bool runs_c     = ck_runs[ 0 ]->isChecked();
+   bool rep_runs_c = ck_report_runs[ 0 ]->isChecked();
+   
    for ( int jj = 1; jj < sl_chnsel.count(); jj++ )
    {  // Replace values in all other rows where row 0 changed
       if ( le_lcrats[ jj ]->text() != lcrat )
@@ -2983,6 +2987,10 @@ DbgLv(1) << "GP:SL: APPLIED ALL";
 
       if ( le_MWs[ jj ]->text() != mw_c )
 	le_MWs[ jj ]->setText( mw_c );
+
+      //also run ana/report
+      ck_runs[ jj ]->setChecked( runs_c );
+      ck_report_runs[ jj ]->setChecked( rep_runs_c );
    }
 }
 
