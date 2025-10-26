@@ -60,17 +60,20 @@ target_include_directories(us_program_common INTERFACE
 target_link_libraries(us_program_common INTERFACE
         UltraScan3::Utils
         UltraScan3::Gui
-        Qt5::Widgets
-        Qt5::Core
-        Qt5::Gui
-        Qt5::Network
-        Qt5::Sql
-        Qt5::Xml
-        Qt5::Svg
-        Qt5::OpenGL
-        Qt5::PrintSupport
+        Qt::Widgets
+        Qt::Core
+        Qt::Gui
+        Qt::Network
+        Qt::Sql
+        Qt::Xml
+        Qt::Svg
+        Qt::OpenGL
+        Qt::PrintSupport
         Qwt::Qwt
         )
+if (USE_QT6)
+    target_link_libraries(us_program_common INTERFACE Qt::OpenGLWidgets)
+endif()
 
 # Platform-specific libraries
 if(UNIX AND NOT APPLE)
@@ -303,10 +306,7 @@ function(add_us3_program prog_name)
 
         # Add Qt DataVisualization for 3D plotting programs
         if(prog_name MATCHES ".*(mwl|3d|plot).*")
-            find_package(Qt5 COMPONENTS DataVisualization QUIET)
-            if(Qt5DataVisualization_FOUND)
-                target_link_libraries(${prog_name}_lib PUBLIC Qt5::DataVisualization)
-            endif()
+            target_link_libraries(${prog_name}_lib PUBLIC Qt::DataVisualization)
         endif()
 
         # Create alias for consistent naming
