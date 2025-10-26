@@ -146,7 +146,11 @@ void Label::update()
 #else
   buf_ = pm_.toImage();
 #endif
-	tex_ = QGLWidget::convertToGLFormat( buf_ );	  // flipped 32bit RGBA ?		
+#if QT_VERSION < 0x060000
+  tex_ = buf_.mirrored(); // flipped 32bit RGBA ?
+#else
+	tex_ = buf_.flipped();
+#endif
 }
 
 /**
