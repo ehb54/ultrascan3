@@ -1,6 +1,7 @@
 # Find OpenGL
 find_package(OpenGL REQUIRED)
-
+# Enable Position Independent Code for all targets
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 # Get source files manually to ensure we catch everything
 file(GLOB QWTPLOT3D_SOURCES
         "src/*.cpp"
@@ -40,13 +41,16 @@ target_include_directories(qwtplot3d PUBLIC
 
 # Link Qt libraries
 target_link_libraries(qwtplot3d PUBLIC
-        Qt5::Core
-        Qt5::Widgets
-        Qt5::OpenGL
-        Qt5::Gui
+        Qt::Core
+        Qt::Widgets
+        Qt::OpenGL
+        Qt::Gui
         OpenGL::GL
         Qwt::Qwt
         )
+if(USE_QT6)
+    target_link_libraries(qwtplot3d PUBLIC Qt::OpenGLWidgets)
+endif()
 
 if (WIN32)
     target_link_libraries(qwtplot3d PUBLIC glu32)

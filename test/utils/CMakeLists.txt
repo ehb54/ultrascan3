@@ -1,8 +1,6 @@
 # Project definition
 project(TestUSUtils)
 
-# Find Qt5 packages
-find_package(Qt5 REQUIRED COMPONENTS Core Network Sql Test Xml Widgets)
 
 # Google Test - Use FetchContent targets from parent
 if(TARGET gtest)
@@ -63,12 +61,12 @@ target_compile_definitions(test_us_utils PRIVATE NO_DB)
 target_link_libraries(test_us_utils
         PRIVATE
         UltraScan3::Utils
-        Qt5::Core
-        Qt5::Network
-        Qt5::Sql
-        Qt5::Test
-        Qt5::Xml
-        Qt5::Widgets
+        Qt::Core
+        Qt::Network
+        Qt::Sql
+        Qt::Test
+        Qt::Xml
+        Qt::Widgets
         ${GTEST_LIBRARIES}
         )
 

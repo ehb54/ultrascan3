@@ -18,7 +18,7 @@ execute_process(
 # =============================================================================
 # CMAKE CONFIGURATION
 # =============================================================================
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(BUILD_SHARED_LIBS ON)
@@ -82,6 +82,8 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/admin/cmake")
 option(US3_NO_DB "Build without database support (for supercomputer backends)" OFF)
 option(US3_BUILD_TESTS "Build unit tests" ON)
 option(US3_BUILD_PROGRAMS "Build application programs" ON)
+option(USE_QT6 "Use Qt6 instead of Qt5" OFF)
+option(US3_BUILD_MPI "Build us_mpi_analysis" OFF)
 
 # Configuration-based definitions
 if(US3_NO_DB)
@@ -103,21 +105,68 @@ endif()
 # =============================================================================
 
 # Find Qt5
-find_package(Qt5 REQUIRED COMPONENTS
-        Core
-        Widgets
-        Gui
-        Network
-        Sql
-        Xml
-        Svg
-        OpenGL
-        PrintSupport
-        DataVisualization
-        )
+if(USE_QT6)
+    find_package(Qt6 REQUIRED COMPONENTS
+            Core
+            Widgets
+            Gui
+            Network
+            Sql
+            Xml
+            Svg
+            OpenGL
+            PrintSupport
+            DataVisualization
+            OpenGLWidgets
+            )
+else()
+    find_package(Qt5 REQUIRED COMPONENTS
+            Core
+            Widgets
+            Gui
+            Network
+            Sql
+            Xml
+            Svg
+            OpenGL
+            PrintSupport
+            DataVisualization
+    )
+endif()
 
 if(US3_BUILD_TESTS)
-    find_package(Qt5 REQUIRED COMPONENTS Test)
+    if(USE_QT6)
+        find_package(Qt6 REQUIRED COMPONENTS Test)
+    else()
+        find_package(Qt5 REQUIRED COMPONENTS Test)
+    endif()
+endif()
+
+if(NOT TARGET Qt::Core)
+    if(USE_QT6)
+        add_library(Qt::Core ALIAS Qt6::Core)
+        add_library(Qt::Widgets ALIAS Qt6::Widgets)
+        add_library(Qt::OpenGL ALIAS Qt6::OpenGL)
+        add_library(Qt::Gui ALIAS Qt6::Gui)
+        add_library(Qt::Network ALIAS Qt6::Network)
+        add_library(Qt::Xml ALIAS Qt6::Xml)
+        add_library(Qt::Svg ALIAS Qt6::Svg)
+        add_library(Qt::Sql ALIAS Qt6::Sql)
+        add_library(Qt::PrintSupport ALIAS Qt6::PrintSupport)
+        add_library(Qt::DataVisualization ALIAS Qt6::DataVisualization)
+        add_library(Qt::OpenGLWidgets ALIAS Qt6::OpenGLWidgets)
+    else()
+        add_library(Qt::Core ALIAS Qt5::Core)
+        add_library(Qt::Widgets ALIAS Qt5::Widgets)
+        add_library(Qt::OpenGL ALIAS Qt5::OpenGL)
+        add_library(Qt::Gui ALIAS Qt5::Gui)
+        add_library(Qt::Network ALIAS Qt5::Network)
+        add_library(Qt::Xml ALIAS Qt5::Xml)
+        add_library(Qt::Svg ALIAS Qt5::Svg)
+        add_library(Qt::Sql ALIAS Qt5::Sql)
+        add_library(Qt::PrintSupport ALIAS Qt5::PrintSupport)
+        add_library(Qt::DataVisualization ALIAS Qt5::DataVisualization)
+    endif()
 endif()
 
 # Find OpenGL
@@ -331,8 +380,12 @@ message(STATUS "  Build tests: ${US3_BUILD_TESTS}")
 message(STATUS "  Build programs: ${US3_BUILD_PROGRAMS}")
 message(STATUS "")
 message(STATUS "Dependencies:")
-message(STATUS "  Qt5 version: ${Qt5_VERSION}")
-message(STATUS "  Qwt version: ${QWT_VERSION}")
+if(USE_QT6)
+    message(STATUS "  Qt version: ${Qt6_VERSION}")
+else ()
+    message(STATUS "  Qt version: ${Qt5_VERSION}")
+endif()
+message(STATUS "  Qwt version: ${QWT_VERSION} (QT ${QWT_QT_VERSION})")
 if(NOT US3_NO_DB)
     message(STATUS "  MySQL found: ${MYSQL_FOUND}")
 endif()

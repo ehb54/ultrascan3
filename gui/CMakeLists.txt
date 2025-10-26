@@ -85,12 +85,16 @@ target_link_libraries(us_gui PUBLIC UltraScan3::Utils)
 # Qt5 dependencies
 target_link_libraries(us_gui
         PUBLIC
-        Qt5::Widgets
-        Qt5::Gui
-        Qt5::Svg
-        Qt5::OpenGL
-        Qt5::PrintSupport
+        Qt::Widgets
+        Qt::Gui
+        Qt::Svg
+        Qt::OpenGL
+        Qt::PrintSupport
         )
+
+if(USE_QT6)
+    target_link_libraries(us_gui PUBLIC Qt::OpenGLWidgets)
+endif()
 
 # Plotting libraries
 target_link_libraries(us_gui

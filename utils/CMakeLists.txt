@@ -31,9 +31,9 @@ target_include_directories(us_utils
 # Core Qt libraries (always needed)
 target_link_libraries(us_utils
         PUBLIC
-        Qt5::Core
-        Qt5::Xml
-        Qt5::Network
+        Qt::Core
+        Qt::Xml
+        Qt::Network
         OpenSSL::SSL
         OpenSSL::Crypto
         LibArchive::LibArchive
@@ -43,7 +43,7 @@ target_link_libraries(us_utils
 if(NOT US3_NO_DB)
     target_link_libraries(us_utils
             PUBLIC
-            Qt5::Sql
+            Qt::Sql
             MySQL::Client
             )
 endif()
