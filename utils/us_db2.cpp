@@ -547,9 +547,9 @@ QVariant US_DB2::value( unsigned ){ return QVariant::Invalid; }
 QVariant US_DB2::value( unsigned index )
 {
    if ( row && ( index < mysql_field_count( db ) ) )
-      return row[ index ];
+      return QVariant( QString( row[ index ] ) );
 
-   return QVariant::Invalid;
+   return QVariant();
 }
 #endif
 

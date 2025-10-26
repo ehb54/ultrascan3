@@ -1,7 +1,8 @@
 //! \file us_math2.cpp
-
 #include <stdlib.h>
 #include <math.h>
+#include <chrono>
+#include <unistd.h>
 #ifdef _BF_NNLS_
 #include <dlfcn.h>
 #endif
@@ -62,6 +63,9 @@ static libnnls libnnls0;
  *  deviation weighted by a random normally distributed increment.
 
 */
+
+// Initialize static US_Math2::rng
+std::mt19937 US_Math2::rng;
 
 double US_Math2::box_muller( double m, double s )   
 {
@@ -807,15 +811,20 @@ QRandomGenerator& US_Math2::get_random_generator()
 
 uint US_Math2::randomize( void )
 {
-   QTime now = QTime::currentTime();
+   // Use random_device to get high-quality seed
+   std::random_device rd;
+   uint seed = static_cast<uint>( rd() );
 
-   uint seed = now.msec() 
-             + now.second() *    1000 
-             + now.minute() *   60000 
-             + now.hour()   * 3600000;
+   // Mix with current time to increase entropy
+   seed ^= static_cast<uint>(
+       std::chrono::duration_cast<std::chrono::milliseconds>(
+           std::chrono::system_clock::now().time_since_epoch()
+           ).count()
+       );
 
-#ifdef UNIX
-   seed -= getpid();
+   // Add process ID for uniqueness (especially helpful in parallel MPI runs)
+#if defined( Q_OS_UNIX )
+   seed ^= static_cast<uint>( getpid() );
 #endif
 
    get_random_generator().seed( seed );

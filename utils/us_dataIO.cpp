@@ -1,6 +1,4 @@
 //! \file us_dataIO.cpp
-#include <QDomDocument>
-
 #include "us_dataIO.h"
 #include "us_crc.h"
 #include "us_math2.h"

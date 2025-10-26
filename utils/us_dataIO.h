@@ -2,7 +2,6 @@
 #ifndef US_DATAIO_H
 #define US_DATAIO_H
 
-#include <QtCore>
 #include "us_extern.h"
 
 //! \brief Data structures and methods to read/write experimental data

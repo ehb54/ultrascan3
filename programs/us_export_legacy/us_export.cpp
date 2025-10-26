@@ -198,7 +198,7 @@ void US_ExportLegacy::load( void )
    QFontMetrics fm( font );
    int fontHeight = fm.lineSpacing();
    int ntriples   = triples.size();
-   lw_triples->setMaximumHeight( fontHeight * min( ntriples, 8 ) + 12 );
+   lw_triples->setMaximumHeight( fontHeight * qMin( ntriples, 8 ) + 12 );
 
    for ( int ii = 0; ii < ntriples; ii++ )
       lw_triples->addItem( triples.at( ii ) );
@@ -885,8 +885,8 @@ QString US_ExportLegacy::data_details( void )
    {
       double t = rdata->scanData[ i ].temperature;
       sum += t;
-      maxTemp = max( maxTemp, t );
-      minTemp = min( minTemp, t );
+      maxTemp = qMax( maxTemp, t );
+      minTemp = qMin( minTemp, t );
    }
 
    QString average = QString::number( sum / rdata->scanCount(), 'f', 1 );

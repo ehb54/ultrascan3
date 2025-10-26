@@ -9,7 +9,6 @@
 #ifndef NO_DB
 #include "mysql.h"
 #endif
-
 #include "us_extern.h"
 
 /*! \brief This class provides connectivity and convenience functions

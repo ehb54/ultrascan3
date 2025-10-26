@@ -143,12 +143,19 @@ QString US_Util::toISODatetimeText( QString dttext )
 // Convert a binary uuid to a QString
 QString US_Util::uuid_unparse( unsigned char* uu )
 {
-   return QString().asprintf(
-         "%02hhx%02hhx%02hhx%02hhx-%02hhx%02hhx-%02hhx%02hhx-%02hhx%02hhx-"
-         "%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx",
-         uu[  0 ], uu[  1 ], uu[  2 ], uu[  3 ], uu[  4 ], uu[  5 ],
-         uu[  6 ], uu[  7 ], uu[  8 ], uu[  9 ], uu[ 10 ], uu[ 11 ],
-         uu[ 12 ], uu[ 13 ], uu[ 14 ], uu[ 15 ] );
+   QStringList hexParts;
+   for ( int i = 0; i < 16; ++i )
+   {
+      hexParts << QString::number( uu[i], 16 ).rightJustified( 2, '0' );
+   }
+
+   // Group the UUID parts according to the standard format in groups of 4, 2, 2, 2, 6
+   return  QString( "%1-%2-%3-%4-%5" )
+              .arg( hexParts.mid(  0, 4 ).join( "" ) ,
+                    hexParts.mid(  4, 2 ).join( "" ) ,
+                    hexParts.mid(  6, 2 ).join( "" ) ,
+                    hexParts.mid(  8, 2 ).join( "" ) ,
+                    hexParts.mid( 10, 6 ).join( "" ) );
 }
 
 // Convert a triple string from expanded to compressed form

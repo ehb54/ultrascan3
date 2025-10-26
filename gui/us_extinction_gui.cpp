@@ -527,8 +527,8 @@ bool US_Extinction::loadScan(US_CSV_Data& csv_data)
          if(xt >= lambdaLimitLeft && yt <= odCutoff && xt <= lambdaLimitRight) {
             Reading r = {xt, yt};
             Wvs_to_descr_map [ key ].v_readings.push_back(r);
-            lambda_max = max(xt, lambda_max);
-            lambda_min = min (xt, lambda_min);
+            lambda_max = qMax(xt, lambda_max);
+            lambda_min = qMin(xt, lambda_min);
          }
       }
    }
@@ -607,8 +607,8 @@ void US_Extinction::plot()
    
    for(int i = 0; i < v_wavelength.size(); i++)
    {
-      xmax = max(xmax, (double) v_wavelength.at(i).v_readings.at(v_wavelength.at(i).v_readings.size() - 1).lambda);
-      xmin = min(xmin, (double) v_wavelength.at(i).v_readings.at(0).lambda);
+      xmax = qMax(xmax, (double) v_wavelength.at(i).v_readings.at(v_wavelength.at(i).v_readings.size() - 1).lambda);
+      xmin = qMin(xmin, (double) v_wavelength.at(i).v_readings.at(0).lambda);
    }
    qDebug() << "In PLOT, xmin:  " << xmin;
 
@@ -1102,8 +1102,8 @@ void US_Extinction::calc_extinction()
 
    for (int i=0; i< v_wavelength.size(); i++)
    {
-      xmax = max(xmax, v_wavelength.at(i).v_readings.at(v_wavelength.at(i).v_readings.size()-1).lambda);
-      xmin = min(xmin, v_wavelength.at(i).v_readings.at(0).lambda);
+      xmax = qMax(xmax, v_wavelength.at(i).v_readings.at(v_wavelength.at(i).v_readings.size()-1).lambda);
+      xmin = qMin(xmin, v_wavelength.at(i).v_readings.at(0).lambda);
    }
    maxrange = (unsigned int) (xmax - xmin + 0.5);
    maxrange += 1;

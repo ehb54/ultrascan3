@@ -2,13 +2,7 @@
 #ifndef US_HYDROSIM_H
 #define US_HYDROSIM_H
 
-#include <QtCore>
-
 #include "us_extern.h"
-//#include "us_math.h"
-//#include "us_buffer.h"
-//#include "us_analyte.h"
-
 
 //! A class describing the characteristics of a molecule
 class US_UTIL_EXTERN US_Hydrosim

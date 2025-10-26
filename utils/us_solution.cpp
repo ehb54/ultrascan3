@@ -1,7 +1,4 @@
 //! \file us_solution.cpp
-
-#include <QtCore>
-
 #include "us_settings.h"
 #include "ius_db2.h"
 #include "us_util.h"
@@ -9,7 +6,6 @@
 #include "us_buffer.h"
 #include "us_analyte.h"
 #include "us_datafiles.h"
-#include "us_math2.h"
 #include "us_eprofile.h"
 
 // The constructor clears out the data structure
@@ -242,9 +238,9 @@ void US_Solution::saveToDisk( void )
    }
 
    // First make sure we have a GUID
-   QRegExp rx( "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" );
+   static const QRegularExpression rx( "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" );
 
-   if ( ! rx.exactMatch( solutionGUID ) )
+   if ( ! rx.match( solutionGUID ).hasMatch() )
       solutionGUID = US_Util::new_guid();
 
    // Get a path and file name for solution
@@ -361,8 +357,8 @@ qDebug() << "SolSvDB: anaID stat" << status;
    }
 
    // Make sure we have a solutionGUID
-   QRegExp rx( "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" );
-   if ( ! rx.exactMatch( solutionGUID ) )
+   static const QRegularExpression rx( "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" );
+   if ( ! rx.match( solutionGUID ).hasMatch() )
       solutionGUID = US_Util::new_guid();
 
    // Check for solutionGUID in database

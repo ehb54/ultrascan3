@@ -522,8 +522,8 @@ DbgLv(1) << "SV: analysisType" << analysisType;
    QString tmppath  = US_Settings::tmpDir() + "/";
    QString mdlpath;
    QString noipath;
-   int     knois    = min( ti_noise.count, 1 ) 
-                    + min( ri_noise.count, 1 );  // noise files per model
+   int     knois    = qMin( ti_noise.count, 1 ) 
+                    + qMin( ri_noise.count, 1 );  // noise files per model
    double  meniscus = edata->meniscus;
    double  dwavelen = edata->wavelength.toDouble();
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );

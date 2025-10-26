@@ -1,3 +1,4 @@
+//! \file us_archive.cpp
 #include "us_archive.h"
 #include "archive_entry.h"
 #include "archive.h"

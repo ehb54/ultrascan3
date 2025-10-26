@@ -1269,7 +1269,7 @@ void US_Pseudo3D_Combine::sort_distro( QList< S_Solute >& listsols,
              sol2.s  = ( sol1.s + sol2.s ) * 0.5;  // average s,k
              sol2.k  = ( sol1.k + sol2.k ) * 0.5;
              reduced.replace( reduced.size() - 1, sol2 );
-             kdup    = max( kdup, ++jdup );
+             kdup    = qMax( kdup, ++jdup );
           }
 
           sol1    = sol2;        // save entry for next iteration

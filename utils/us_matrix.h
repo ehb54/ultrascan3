@@ -2,11 +2,7 @@
 #ifndef US_MATRIX_H
 #define US_MATRIX_H
 
-#include <QtCore>
 #include "us_extern.h"
-#include <qthread.h>
-#include <qwaitcondition.h>
-#include <qmutex.h>
 
 /*! A class of general purpose static matrix functions. The elements of all
  *  matrices and vectors are doubles. The matrix arguments are arrays of

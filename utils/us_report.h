@@ -311,7 +311,8 @@ class US_UTIL_EXTERN US_Report
       void         show ( void );
 
       private:
-      int          dbg_level;     //!< Debug level value
+      int dbg_level;                        //!< Debug level value
+      static const QRegularExpression rx;   //!< GUID regex pattern
 };
 
 #endif

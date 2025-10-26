@@ -2,7 +2,6 @@
 #ifndef US_ASTFEM_RSA_H
 #define US_ASTFEM_RSA_H
 
-#include <QtCore>
 #include "us_extern.h"
 #include "us_model.h"
 #include "us_simparms.h"
@@ -10,6 +9,7 @@
 #include "us_astfem_math.h"
 #include "us_stiffbase.h"
 #include "us_buffer.h"
+
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug() //!< debug-level-conditioned qDebug()
 #endif

@@ -1,5 +1,4 @@
 //! \file us_simparms.cpp
-
 #include "us_simparms.h"
 #include "us_astfem_math.h"
 #include "us_hardware.h"
@@ -8,8 +7,9 @@
 #include "us_math2.h"
 
 //!< level-conditioned debug print
-#undef DbgLv //us_math2.h defines, so undefine here to avoid compiler warning
-#define DbgLv(a) if(dbg_level>=a)qDebug()
+#ifndef DbgLv
+#define DbgLv(a) if(dbg_level>=a)qDebug() //!< debug-level-conditioned qDebug()
+#endif
 #define DSS_RESO   100   // default SetSpeedResolution
 #define DSS_LO_RPM 1500  // default SetSpeedLowRpm
 #define DSS_LO_SEC 20    // default SpeedStepLowSec
