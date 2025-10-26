@@ -11,6 +11,7 @@
 #  QWT_MINOR_VERSION - minor version
 #  QWT_PATCH_VERSION - patch version
 #  QWT_VERSION_STRING - version (ex. 5.2.1)
+#  QWT_VERSION - version string (ex. 5.2.1)
 #  QWT_ROOT_DIR - root dir (ex. /usr/local)
 #
 # It also defines this imported target:
@@ -47,22 +48,22 @@
 # either expressed or implied, of the FreeBSD Project.
 #=============================================================================
 
-if ($ENV{QWT_INC})
+if (NOT "$ENV{QWT_INC}" STREQUAL "")
     set(_QWT_QT_INCLUDE_DIR "$ENV{QWT_INC}")
-elseif ($ENV{QWTINC})
+elseif( NOT "$ENV{QWTINC}" STREQUAL "")
     set(_QWT_QT_INCLUDE_DIR "$ENV{QWTINC}")
-elseif($ENV{QWTPATH})
+elseif(NOT "$ENV{QWTPATH}" STREQUAL "")
     set(_QWT_QT_INCLUDE_DIR "$ENV{QWTPATH}/include")
-elseif($ENV{QWT_PATH})
+elseif(NOT "$ENV{QWT_PATH}" STREQUAL "")
     set(_QWT_QT_INCLUDE_DIR "$ENV{QWT_PATH}/include")
 endif()
-if ($ENV{QWT_LIB} )
+if( NOT "$ENV{QWT_LIB}" STREQUAL "" )
     set(_QWT_QT_LINK_DIR "$ENV{QWT_LIB}")
-elseif ($ENV{QWTLIB})
+elseif( NOT "$ENV{QWTLIB}" STREQUAL "")
     set(_QWT_QT_LINK_DIR "$ENV{QWTLIB}")
-elseif($ENV{QWTPATH})
+elseif(NOT "$ENV{QWTPATH}" STREQUAL "")
     set(_QWT_QT_LINK_DIR "$ENV{QWTPATH}/lib")
-elseif($ENV{QWT_PATH})
+elseif(NOT "$ENV{QWT_PATH}" STREQUAL "")
     set(_QWT_QT_LINK_DIR "$ENV{QWT_PATH}/lib")
 endif()
 set(_QWT_QT_VERSION "5")
@@ -147,6 +148,7 @@ find_library ( QWT_LIBRARY
         NAMES qwt-qt${_QWT_QT_VERSION} qwt
         HINTS ${_QWT_QT_LINK_DIR}
         )
+set(QWT_QT_VERSION ${_QWT_QT_VERSION})
 unset(_QWT_QT_LINK_DIR)
 unset(_QWT_QT_VERSION)
 
@@ -173,6 +175,8 @@ if (Qwt_FOUND AND NOT TARGET Qwt::Qwt)
     endif ()
 endif ()
 
+set(QWT_VERSION ${QWT_VERSION_STRING})
+
 mark_as_advanced (
         QWT_LIBRARY
         QWT_LIBRARIES
@@ -182,5 +186,7 @@ mark_as_advanced (
         QWT_MINOR_VERSION
         QWT_PATCH_VERSION
         QWT_VERSION_STRING
+        QWT_VERSION
         QWT_ROOT_DIR
+        QWT_QT_VERSION
 )
