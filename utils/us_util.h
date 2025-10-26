@@ -28,7 +28,7 @@ class US_UTIL_EXTERN US_Util
       //! \param s         String to search
       //! \param separator Delimiter to use for parsing
       //! \returns         Next token in the string (substring before delimiter)
-      static QString getToken( QString&, const QString& );
+      static QString getToken( QString& s, const QString& separator );
 
 
       //! \brief Generates and returns a new Global Identifier (guid)
@@ -48,7 +48,7 @@ class US_UTIL_EXTERN US_Util
       //!
       //! \param filename  Pull path name of file for md5 hash and size
       //! \returns         A string in the form of "hash size" for the file
-      static QString md5sum_file( QString );
+      static QString md5sum_file( const QString& filename );
 
       //! \brief Converts a DateTime string to unambiguous UTC form
       //!
@@ -67,7 +67,7 @@ class US_UTIL_EXTERN US_Util
       //! \param knownUTC  A boolean whether the input string is known to
       //!                  represent date and time in Universal Time Coordinates.
       //! \returns         A DateTime string in "yyyy-mm-dd HH:MM:SS UTC" form
-      static QString toUTCDatetimeText( QString, bool );
+      static QString toUTCDatetimeText( const QString& dttext, bool knownUTC );
 
       //! \brief Converts a DateTime string to Qt's ISODate form
       //!
@@ -79,64 +79,67 @@ class US_UTIL_EXTERN US_Util
       //!
       //! \param dttext    DateTime text string in UTC, ISO, or other form
       //! \returns         A DateTime string in ISO form ("2010-08-14T21:41:22")
-      static QString toISODatetimeText( QString );
+      static QString toISODatetimeText( const QString& dttext );
 
       //! \brief Convert a QString uuid to a 16-byte binary character array
       //!
       //! \param in Uuid string to be converted
       //! \param uu A pointer to a 16-byte character array for the 
       //!           converted data
-      static void uuid_parse( const QString&, unsigned char* );
+      static void uuid_parse( const QString& in, unsigned char* uu );
 
       //! \brief Convert a binary uuid to a QString
       //!
       //! \param uu A pointer to a 16-byte array holding a binary uuid
-      static QString uuid_unparse( unsigned char* );
+      static QString uuid_unparse(const unsigned char* uu );
 
       //! \brief Create a compressed (ccw) form of a triple (c/c/w) string.
       //!
       //! \param ccw Expanded triple string ("c/c/w" or "c / c / w")
       //! \returns   Compressed form of the triple string ("ccw")
-      static QString compressed_triple( const QString& );
+      static QString compressed_triple( const QString& ccw );
 
       //! \brief Create an expanded (c/c/w) form of a triple (ccw) string.
       //!
       //! \param ccw    Compressed triple string ("ccw")
       //! \param spaces Flag to insert spaces around slashes.
       //! \returns      Uncompressed triple string ("c/c/w" or "c / c / w")
-      static QString expanded_triple( const QString&, bool = true );
+      static QString expanded_triple( const QString& ccw, bool spaces = true );
 
       //! \brief Return a flag if this is the i'th time an error occurs.
       //!
       //! \param timeinc Incidence increment to detect (default=10000).
       //! returns        Boolean flag if this is i'th time.
-      static bool ithTime( int = 10000 );
+      static bool ithTime( int timeinc = 10000 );
 
       //! \brief Return a flag if an XML attribute string implies true/false.
       //!
       //! \param xmlattr XML attribute string ("T", "F", "1", "0").
       //! returns        Boolean flag if the implied boolean is true or false.
-      static bool bool_flag( const QString );
+      static bool bool_flag( const QString& xmlattr );
 
       //! \brief Return an XML attribute string for true or false.
       //!
       //! \param boolval Boolean value to represent as an XML attribute string.
       //! returns        XML attribute string representation ("0" or "1").
-      static QString bool_string( const bool );
+      static QString bool_string( bool boolval );
 
       //! \brief Return a string representing a QList<QStringList>.
       //!
       //! \param lsl      Input list of stringlists to represent
       //! \param llstring Output list of lists string representation
       //! returns         Count of stringlists in list
-      static int listlistBuild( QList< QStringList >&, QString& );
+      static int listlistBuild( QList< QStringList >& lsl, QString& llstring );
 
       //! \brief Return a QList<QStringList> as represented in a string.
       //!
       //! \param lsl      Output list of stringlists represented
       //! \param llstring Input list of lists string representation
-      //! returns         Count of stringlists in list
-      static int listlistParse( QList< QStringList >&, QString& );
+      //! returns         Count of stringlists in lsl
+      static int listlistParse( QList< QStringList >& lsl, QString& llstring );
+
+      //! \brief Regex expression for UUID for use
+      inline static QRegularExpression UUID_REGEX = QRegularExpression( "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", QRegularExpression::CaseInsensitiveOption );
 
    private:
       static unsigned char hex2int( unsigned char c );

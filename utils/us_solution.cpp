@@ -77,17 +77,17 @@ int US_Solution::readFromDisk( QString& guid )
    // Then we found the actual buffer.xml file
    buffer = newBuffer;
 
-   for ( int i = 0; i < analyteInfo.size(); i++ )
+   for (auto & i : analyteInfo)
    {
       AnalyteInfo newInfo;
-      status = newInfo.analyte.load( false, analyteInfo[ i ].analyte.analyteGUID );
+      status = newInfo.analyte.load( false, i.analyte.analyteGUID );
 
       if ( status != IUS_DB2::OK )  // Probably IUS_DB2::NO_ANALYTE
          return status;       
 
       // Found the analyte.xml file
-      newInfo.amount = analyteInfo[ i ].amount;
-      analyteInfo[ i ] = newInfo;
+      newInfo.amount = i.amount;
+      i = newInfo;
    }
 
    saveStatus = HD_ONLY;
@@ -237,10 +237,7 @@ void US_Solution::saveToDisk( void )
       return;
    }
 
-   // First make sure we have a GUID
-   static const QRegularExpression rx( "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" );
-
-   if ( ! rx.match( solutionGUID ).hasMatch() )
+   if ( ! US_Util::UUID_REGEX.match( solutionGUID ).hasMatch() )
       solutionGUID = US_Util::new_guid();
 
    // Get a path and file name for solution
@@ -285,10 +282,8 @@ void US_Solution::saveToDisk( void )
       xml.writeEndElement  ();
    
       // Loop through all the analytes
-      for ( int i = 0; i < analyteInfo.size(); i++ )
+      for (const auto& ai : analyteInfo)
       {
-         AnalyteInfo ai = analyteInfo[ i ];
-
          xml.writeStartElement( "analyte" );
          xml.writeAttribute   ( "id",   ai.analyte.analyteID   );
          xml.writeAttribute   ( "guid", ai.analyte.analyteGUID );
@@ -357,8 +352,7 @@ qDebug() << "SolSvDB: anaID stat" << status;
    }
 
    // Make sure we have a solutionGUID
-   static const QRegularExpression rx( "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" );
-   if ( ! rx.match( solutionGUID ).hasMatch() )
+   if ( ! US_Util::UUID_REGEX.match( solutionGUID ).hasMatch() )
       solutionGUID = US_Util::new_guid();
 
    // Check for solutionGUID in database
@@ -452,10 +446,8 @@ qDebug() << "SolSvDB: soBuf q=" << q;
       qDebug() << "MySQL error: " << db->lastError();
 
    // Now add zero or more analyte associations
-   for ( int i = 0; i < analyteInfo.size(); i++ )
+   for (const auto& newInfo : analyteInfo)
    {
-      AnalyteInfo newInfo = analyteInfo[ i ];
-
       q.clear();
       q  << "new_solutionAnalyte"
          << QString::number( solutionID )
@@ -536,7 +528,7 @@ int US_Solution::readBufferDiskGUID( US_Buffer& buffer, QString& GUID )
    return ( diskStatus ) ? IUS_DB2::OK : IUS_DB2::NO_BUFFER;
 }
 
-void US_Solution::saveBufferDisk( void )
+void US_Solution::saveBufferDisk( void ) const
 {
    if ( buffer.GUID.isEmpty() )  return;
 
@@ -703,7 +695,7 @@ bool US_Solution::diskPath( QString& path )
 
 // Function to check if filename already exists, and perhaps generate a new one
 QString US_Solution::get_filename(
-      const QString& path, bool& newFile )
+      const QString& path, bool& newFile ) const
 {
    QString filename = US_DataFiles::get_filename( path, solutionGUID,
                          "S", "solution", "guid", newFile );
@@ -738,8 +730,8 @@ US_Solution& US_Solution::operator=( const US_Solution& rhs )
       notes         = rhs.notes;
       saveStatus    = rhs.saveStatus;
 
-      for ( int i = 0; i < rhs.analyteInfo.size(); i++ )
-         analyteInfo      << rhs.analyteInfo[ i ];
+      for (const auto & i : rhs.analyteInfo)
+         analyteInfo      << i;
    }
 
    return *this;
@@ -784,10 +776,8 @@ void US_Solution::show( void )
 
    qDebug() << "Analytes...";
    qDebug() << "Analytes size = " << QString::number( analyteInfo.size() );
-   for ( int i = 0; i < analyteInfo.size(); i++ )
+   for (const auto& ai : analyteInfo)
    {
-      AnalyteInfo ai = analyteInfo[ i ];
-
       QString typetext = analyte_typetext( (int)ai.analyte.type );
 
       qDebug() << "analyteID   = " << ai.analyte.analyteID   << '\n'
@@ -800,7 +790,7 @@ void US_Solution::show( void )
    }
 }
 
-int US_Solution::analyte_type( QString antype )
+int US_Solution::analyte_type( const QString& antype )
 {
    US_Analyte::analyte_t type = US_Analyte::PROTEIN;
 
@@ -842,18 +832,18 @@ bool US_Solution::solutionInUse( QString& solutionGUID )
       .entryList( QDir::AllDirs | QDir::NoDotAndDotDot, QDir::Name );
    resdir = resdir + "/";
 
-   for ( int ii = 0; ii < expdirs.size();  ii++ )
+   for (const auto & expdir : expdirs)
    {
-      QString     subdir  = resdir + expdirs.at( ii );
+      QString     subdir  = resdir + expdir;
       QStringList expfilt;
-      expfilt << expdirs.at( ii ) + ".*.xml";
+      expfilt << expdir + ".*.xml";
       QStringList expfiles = QDir( subdir )
          .entryList( QDir::Files, QDir::Name );
       subdir = subdir + "/";
 
-      for ( int jj = 0; jj < expfiles.size(); jj++ )
+      for (const auto & expfile : expfiles)
       {
-         QString fname      = subdir + expfiles.at( jj );
+         QString fname      = subdir + expfile;
          QFile xfile( fname  );
          if ( !  xfile.open( QIODevice::ReadOnly ) )
             continue;

@@ -3,8 +3,6 @@
 #include "us_settings.h"
 #include "us_util.h"
 
-// Initialize re
-const QRegularExpression US_Report::rx( "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", QRegularExpression::CaseInsensitiveOption );
 
 // Report types
 US_Report::ReportTypes::ReportTypes()
@@ -88,7 +86,7 @@ US_Report::Status US_Report::ReportDocument::saveDB(
    int status;
 
    // First let's be sure we have a valid GUID
-   if ( ! rx.match( this->documentGUID ).hasMatch() )
+   if ( ! US_Util::UUID_REGEX.match( this->documentGUID ).hasMatch() )
       this->documentGUID = US_Util::new_guid();
 DbgLv(1) << "Doc::saveDB - GUID" << this->documentGUID;
 
@@ -268,7 +266,7 @@ US_Report::Status US_Report::ReportTriple::saveDB( int reportID, IUS_DB2* db )
    int status;
 
    // First let's be sure we have a valid GUID
-   if ( ! rx.match( this->tripleGUID ).hasMatch() )
+   if ( ! US_Util::UUID_REGEX.match( this->tripleGUID ).hasMatch() )
       this->tripleGUID = US_Util::new_guid();
 
    // Find out if this triple has been saved already or not
@@ -638,7 +636,7 @@ US_Report::Status US_Report::saveDB( IUS_DB2* db )
    QString now   = QDateTime::currentDateTime().toString();
 
    // First let's be sure we have a valid GUID
-   if ( ! rx.match( this->GUID ).hasMatch() )
+   if ( ! US_Util::UUID_REGEX.match( this->GUID ).hasMatch() )
       this->GUID    = US_Util::new_guid();
 
    // Find out if the runID is in the DB already
@@ -732,7 +730,7 @@ US_Report::Status US_Report::saveDB_auto( int invID_passed, IUS_DB2* db )
    QString now   = QDateTime::currentDateTime().toString();
 
    // First let's be sure we have a valid GUID
-   if ( ! rx.match( this->GUID ).hasMatch() )
+   if ( ! US_Util::UUID_REGEX.match( this->GUID ).hasMatch() )
       this->GUID    = US_Util::new_guid();
 
    // Find out if the runID is in the DB already

@@ -179,10 +179,7 @@ int US_Project::readFromDB  ( int projectID, IUS_DB2* db )
 // Function to save project information to disk
 void US_Project::saveToDisk( void )
 {
-   // First make sure we have a GUID
-   static const QRegularExpression rx( "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", QRegularExpression::CaseInsensitiveOption );
-
-   if ( ! rx.match( projectGUID ).hasMatch() )
+   if ( ! US_Util::UUID_REGEX.match( projectGUID ).hasMatch() )
       projectGUID = US_Util::new_guid();
 
    // Get a path and file name for project
