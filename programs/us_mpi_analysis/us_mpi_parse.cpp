@@ -361,7 +361,7 @@ void US_MPI_Analysis::parse_dataset( QXmlStreamReader& xml, DATASET* dataset )
       if ( xml.name() == "rotor_stretch" )
       {
          QStringList stretch  = 
-            a.value( "value" ).toString().split( " ", QString::SkipEmptyParts );
+            a.value( "value" ).toString().split( " ", Qt::SkipEmptyParts );
 
          dataset->rotor_stretch[ 0 ] = stretch[ 0 ].toDouble();
          dataset->rotor_stretch[ 1 ] = stretch[ 1 ].toDouble();

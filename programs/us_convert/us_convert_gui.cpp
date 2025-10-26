@@ -3740,7 +3740,7 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
 int US_ConvertGui::getProtSolIndex( QString channel_name, QString dtype )
 {
   int index = 0;
-  channel_name.simplified();
+  channel_name = channel_name.simplified();
   channel_name.replace( " ", "" );
 
   QStringList channelList = channel_name.split("/");

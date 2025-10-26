@@ -22,7 +22,7 @@ US_LongMessageBox::US_LongMessageBox( const QString& title,
 
    // Create the text box
    textbox = us_textedit();
-   textbox->setFrameStyle( QFrame::NoFrame || QFrame::Plain );
+   textbox->setFrameStyle( QFrame::NoFrame | QFrame::Plain );
    textbox->setFont( QFont( US_GuiSettings::fontFamily(),
                             US_GuiSettings::fontSize() - 2 ) );
    textbox->setPlainText( message );

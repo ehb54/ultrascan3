@@ -12,6 +12,10 @@ unix {
 #  QMAKE_CFLAGS_RELEASE   = -O3
   QMAKE_CXXFLAGS += -Wno-unused-local-typedefs
 
+  QMAKE_CFLAGS += -Wdeprecated -Werror=deprecated-declarations
+  QMAKE_CXXFLAGS += -Wdeprecated -Werror=deprecated-declarations
+  DEFINES += QT_DISABLE_DEPRECATED_UP_TO=0x060900
+
   QWTPATH     = /qwt-6.1.6
   QWTLIB      = -L../../lib -L../lib -L$$QWTPATH/lib -lqwtplot3d -lqwt -lGLU
   MYSQLDIR    = /usr/lib64/mysql

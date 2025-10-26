@@ -661,8 +661,7 @@ US_PlotConfig::US_PlotConfig( QwtPlot* current_plot, QWidget* p,
    else
    {
      QString padding_v = style.mid( kk ).split(": ")[1];
-     padding_v. simplified();
-     padding_v.indexOf( "px" ); 
+     padding_v = padding_v. simplified();
      // qDebug() << " padding_v --         " <<  padding_v.left( padding_v.indexOf( "px" ) );
      // qDebug() << " padding_v.toInt() -- " <<  padding_v.left( padding_v.indexOf( "px" ) ).toInt();
      
@@ -1554,7 +1553,7 @@ void US_PlotConfig::savePlotProfile( void )
   else
     {
       QString padding_v = style.mid( kk ).split(": ")[1];
-      padding_v.simplified();
+      padding_v = padding_v.simplified();
       padding_v.indexOf( "px" ); 
       qDebug() << " padding_v --         " <<  padding_v.left( padding_v.indexOf( "px" ) );
       qDebug() << " padding_v.toInt() -- " <<  padding_v.left( padding_v.indexOf( "px" ) ).toInt();
