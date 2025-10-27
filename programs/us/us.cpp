@@ -124,7 +124,7 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   {
     // Do something for invalid global memory
     qDebug( "US_Win: invalid global memory" );
-    QMessageBox::critical(this
+    QMessageBox::critical(parent
                           ,windowTitle()
                           ,QString(
                                    tr( 
@@ -135,15 +135,14 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
                                        )
                                    )
                           .arg( g.errorString() )
-                          ,QMessageBox::Ok
-                          ,QMessageBox::NoButton
+                          ,QMessageBox::Ok | QMessageBox::NoButton
                           ,QMessageBox::NoButton
                           );
   }
   
   if ( !US_Settings::status().isEmpty() ) {
      qDebug( "US_Win: invalid settings" );
-     QMessageBox::critical(this
+     QMessageBox::critical(parent
                            ,windowTitle()
                            ,QString(
                                     tr(
@@ -153,8 +152,7 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
                                        )
                                     )
                            .arg( US_Settings::status() )
-                           ,QMessageBox::Ok
-                           ,QMessageBox::NoButton
+                           ,QMessageBox::Ok | QMessageBox::NoButton
                            ,QMessageBox::NoButton
                            );
   }
