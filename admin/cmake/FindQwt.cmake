@@ -66,13 +66,13 @@ elseif(NOT "$ENV{QWTPATH}" STREQUAL "")
 elseif(NOT "$ENV{QWT_PATH}" STREQUAL "")
     set(_QWT_QT_LINK_DIR "$ENV{QWT_PATH}/lib")
 endif()
-set(_QWT_QT_VERSION "5")
+set(_QWT_QT_VERSION "${QT_VERSION_MAJOR}")
 
 if (NOT _QWT_QT_INCLUDE_DIR)
 
 
     # Match our searches below to the used Qt::Gui version
-    foreach (v IN ITEMS 5 6)
+    foreach (v IN ITEMS ${QT_VERSION_MAJOR})
         set(lib "Qt${v}::Gui")
         if (NOT TARGET "${lib}")
             continue ()
@@ -94,7 +94,7 @@ if (NOT _QWT_QT_INCLUDE_DIR)
                 string(REGEX REPLACE "/bin$" "/lib" libdir "${libdir}")
             endif ()
             string(TOLOWER "${loc}" loc)
-            if (loc MATCHES "qt[56]gui")
+            if (loc MATCHES "qt[${QT_VERSION_MAJOR}]gui")
                 break ()
             endif ()
         endforeach ()
@@ -113,17 +113,19 @@ if (NOT _QWT_QT_INCLUDE_DIR)
     unset(libdir)
 endif ()
 
+set(QWT_PATH_SUFFIX qwt-qt${_QWT_QT_VERSION} qwt qwt6 qwt6-qt${_QWT_QT_VERSION} qt${_QWT_QT_VERSION}/qwt qt${_QWT_QT_VERSION}/qwt6)
+
 find_path ( QWT_INCLUDE_DIR
-        NAMES qwt_plot.h
+        NAMES qwt.h
         HINTS ${_QWT_QT_INCLUDE_DIR} "${_QWT_QT_INCLUDE_DIR}/../src"
-        PATH_SUFFIXES qwt-qt${_QWT_QT_VERSION} qwt qwt6 qwt6-qt${_QWT_QT_VERSION}
+        PATH_SUFFIXES ${QWT_PATH_SUFFIX}
         NO_DEFAULT_PATH
         )
 if (NOT QWT_INCLUDE_DIR)
     find_path ( QWT_INCLUDE_DIR
-            NAMES qwt_plot.h
+            NAMES qwt.h
             HINTS ${_QWT_QT_INCLUDE_DIR} "${_QWT_QT_INCLUDE_DIR}/../src"
-            PATH_SUFFIXES qwt-qt${_QWT_QT_VERSION} qwt qwt6 qwt6-qt${_QWT_QT_VERSION}
+            PATH_SUFFIXES ${QWT_PATH_SUFFIX}
             )
 endif ()
 unset(_QWT_QT_INCLUDE_DIR)
