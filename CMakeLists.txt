@@ -18,7 +18,11 @@ execute_process(
 # =============================================================================
 # CMAKE CONFIGURATION
 # =============================================================================
-set(CMAKE_CXX_STANDARD 17)
+if(USE_QT6)
+    set(CMAKE_CXX_STANDARD 17)
+else()
+    set(CMAKE_CXX_STANDARD 14)
+endif()
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(BUILD_SHARED_LIBS ON)
@@ -119,6 +123,9 @@ if(USE_QT6)
             DataVisualization
             OpenGLWidgets
             )
+    set(QT_VERSION_MAJOR 6)
+    set(QT_VERSION_BASE "Qt6")
+    set(QT_VERSION_BASE_LOWER "qt6")
 else()
     find_package(Qt5 REQUIRED COMPONENTS
             Core
@@ -132,6 +139,9 @@ else()
             PrintSupport
             DataVisualization
     )
+    set(QT_VERSION_MAJOR 5)
+    set(QT_VERSION_BASE "Qt5")
+    set(QT_VERSION_BASE_LOWER "qt5")
 endif()
 
 if(US3_BUILD_TESTS)
@@ -226,7 +236,8 @@ if(NOT US3_NO_DB)
             set_property(TARGET MySQL::Client PROPERTY INTERFACE_INCLUDE_DIRECTORIES ${MYSQL_INCLUDE_DIRS})
             set_property(TARGET MySQL::Client PROPERTY INTERFACE_LINK_LIBRARIES ${MYSQL_LIBRARIES})
             set_property(TARGET MySQL::Client PROPERTY INTERFACE_COMPILE_OPTIONS ${MYSQL_CFLAGS_OTHER})
-
+            set(MYSQL_MARIADB_VERSION "${MYSQL_VERSION}")
+            set(MYSQL_MARIADB_MODULE "${MYSQL_MODULE_NAME}")
             # so you can still use the same target name
         endif()
     endif()
@@ -236,11 +247,13 @@ if(NOT US3_NO_DB)
         message(STATUS "pkg-config not found or no MySQL detected, trying vcpkg packages")
 
         # MySQL connector (Oracle version)
-        find_package(unofficial-libmysql QUIET)
+        find_package(unofficial-libmysql QUIET CONFIG)
         if(unofficial-libmysql_FOUND)
             add_library(unofficial::libmysql::libmysql INTERFACE IMPORTED)
             add_library(MySQL::Client ALIAS unofficial::libmysql::libmysql)
             set(MYSQL_FOUND TRUE)
+            set(MYSQL_MARIADB_VERSION "${unofficial-libmysql_VERSION}")
+            set(MYSQL_MARIADB_MODULE "unofficial-libmysql")
         endif()
 
         # MariaDB connector (alternative)
@@ -249,6 +262,8 @@ if(NOT US3_NO_DB)
             if(unofficial-mariadb_FOUND)
                 set(MySQL::Client unofficial::mariadb::libmariadb)
                 set(MYSQL_FOUND TRUE)
+                set(MYSQL_MARIADB_VERSION "${unofficial-libmariadb_VERSION}")
+                set(MYSQL_MARIADB_MODULE "unofficial-libmariadb")
             endif()
         endif()
     endif()
@@ -272,7 +287,7 @@ if(US3_BUILD_TESTS)
     FetchContent_Declare(
             googletest
             GIT_REPOSITORY https://github.com/google/googletest.git
-            GIT_TAG        release-1.12.1
+            GIT_TAG        v1.16.0
     )
     FetchContent_MakeAvailable(googletest)
 
@@ -385,9 +400,9 @@ if(USE_QT6)
 else ()
     message(STATUS "  Qt version: ${Qt5_VERSION}")
 endif()
-message(STATUS "  Qwt version: ${QWT_VERSION} (QT ${QWT_QT_VERSION})")
+message(STATUS "  Qwt version: ${QWT_VERSION} (QT${QWT_QT_VERSION})")
 if(NOT US3_NO_DB)
-    message(STATUS "  MySQL found: ${MYSQL_FOUND}")
+    message(STATUS "  MySQL found: ${MYSQL_MARIADB_VERSION} ${MYSQL_MARIADB_MODULE}")
 endif()
 message(STATUS "  LibArchive found: ${LIBARCHIVE_FOUND}")
 message(STATUS "  OpenSSL  found: ${OPENSSL_FOUND} (${OPENSSL_VERSION})")
