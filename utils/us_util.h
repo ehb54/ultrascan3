@@ -137,9 +137,7 @@ class US_UTIL_EXTERN US_Util
       //! \param llstring Input list of lists string representation
       //! returns         Count of stringlists in lsl
       static int listlistParse( QList< QStringList >& lsl, QString& llstring );
-
-      //! \brief Regex expression for UUID for use
-      inline static QRegularExpression UUID_REGEX = QRegularExpression( "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", QRegularExpression::CaseInsensitiveOption );
+      static QRegularExpression UUID_REGEX;
 
    private:
       static unsigned char hex2int( unsigned char c );
