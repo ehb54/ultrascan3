@@ -150,14 +150,14 @@ US_Sassoc::US_Sassoc( double eq0, double eq1, double stoich1, double stoich2,
 #endif
    pick = new US_PlotPicker( plot );
    pick->setRubberBand( QwtPicker::VLineRubberBand );
-   connect( pick, SIGNAL( selected ( const QwtDoublePoint& ) ),
-                  SLOT  ( new_value( const QwtDoublePoint& ) ) );
-   connect( pick, SIGNAL( moved    ( const QwtDoublePoint& ) ),
-                  SLOT  ( new_value( const QwtDoublePoint& ) ) );
-   connect( pick, SIGNAL( mouseDown( const QwtDoublePoint& ) ),
-                  SLOT  ( mouseD   ( const QwtDoublePoint& ) ) );
-   connect( pick, SIGNAL( mouseUp  ( const QwtDoublePoint& ) ),
-                  SLOT  ( mouseU   ( const QwtDoublePoint& ) ) );
+   connect( pick, SIGNAL( selected ( const QPointF& ) ),
+                  SLOT  ( new_value( const QPointF& ) ) );
+   connect( pick, SIGNAL( moved    ( const QPointF& ) ),
+                  SLOT  ( new_value( const QPointF& ) ) );
+   connect( pick, SIGNAL( mouseDown( const QPointF& ) ),
+                  SLOT  ( mouseD   ( const QPointF& ) ) );
+   connect( pick, SIGNAL( mouseUp  ( const QPointF& ) ),
+                  SLOT  ( mouseU   ( const QPointF& ) ) );
 
    // Initialize x
    double       c   = 1.0e-10;  // Lower concentration range limit
@@ -279,17 +279,17 @@ double US_Sassoc::polynomial( double monomer, double total )
           total;
 }
 
-void US_Sassoc::new_value( const QwtDoublePoint& p )
+void US_Sassoc::new_value( const QPointF& p )
 {
    update_legend( p.x() );
 }
 
-void US_Sassoc::mouseU( const QwtDoublePoint& /* p */)
+void US_Sassoc::mouseU( const QPointF& /* p */)
 {
    update_legend( -1.0 );
 }
 
-void US_Sassoc::mouseD( const QwtDoublePoint& p )
+void US_Sassoc::mouseD( const QPointF& p )
 {
    updating = true;
    update_legend( p.x() );

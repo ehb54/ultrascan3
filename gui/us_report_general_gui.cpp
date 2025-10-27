@@ -9,12 +9,6 @@
 #include "us_images.h"
 
 
-#if QT_VERSION < 0x050000
-#define setSymbol(a)      setSymbol(*a)
-#define setSamples(a,b,c) setData(a,b,c)
-#define QRegularExpression(a)  QRegExp(a)
-#endif
-
 US_ReportGenGui::US_ReportGenGui( QString reportMask ) : US_Widgets()
 {
   this->reportMask = reportMask;

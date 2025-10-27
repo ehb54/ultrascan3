@@ -56,19 +56,19 @@ qDebug() << "specDat: initRas: rsiz" << rsiz;
 }
 
 // Get x range
-QwtInterval US_SpectrogramData::xrange()
+QwtInterval US_SpectrogramData::xrange() const
 {
    return QwtInterval( xmin, xmax );
 }
 
 // Get y range
-QwtInterval US_SpectrogramData::yrange()
+QwtInterval US_SpectrogramData::yrange() const
 {
    return QwtInterval( ymin, ymax );
 }
 
 // Get x or y or z interval
-QwtInterval US_SpectrogramData::interval( Qt::Axis axis )
+QwtInterval US_SpectrogramData::interval( Qt::Axis axis ) const
 {
    QwtInterval arange = QwtInterval( zmin, zmax );
 
@@ -108,9 +108,6 @@ void US_SpectrogramData::setZRange( double a_zmin, double a_zmax )
    zmin     = a_zmin;
    zmax     = a_zmax;
    zminr    = zmin - ( ( zmax - zmin ) * zfloor );
-#if QT_VERSION > 0x050000
-   setInterval( Qt::ZAxis, QwtInterval( zmin, zmax ) );
-#endif
 }
 
 // Method called by QwtPlotSpectrogram for each raster point.
@@ -239,9 +236,6 @@ zmin=0.0;
 qDebug() << "sRaDa: setBounding... xmin xmax" << xmin << xmax;
 qDebug() << "sRaDa: setBounding... ymin ymax" << ymin << ymax;
 qDebug() << "sRaDa: setBounding... zminr zmax" << zminr << zmax;
-   setInterval( Qt::XAxis, QwtInterval( xmin, xmax ) );
-   setInterval( Qt::YAxis, QwtInterval( ymin, ymax ) );
-   setInterval( Qt::ZAxis, QwtInterval( zmin, zmax ) );
 #endif
 
    // Initialize raster to zmin (zero)
@@ -387,3 +381,14 @@ void US_SpectrogramData::value( int x, int y, double &x_out, double &y_out, doub
    z_out = rdata.at( jr1 );       // possible output value
 }
 
+#if QT_VERSION>QT_VERSION_CHECK(6,0,0)
+// Provide bounding rectangle for Qwt 6 so the class is not abstract
+QRectF US_SpectrogramData::boundingRect( void ) const
+{
+   // xmin,ymin are lower-left; xrng,yrng are widths computed in setRaster()
+   // Guard against uninitialized sizes
+   if ( xrng <= 0.0 || yrng <= 0.0 )
+      return QRectF();  // invalid -> Qwt will ask again after init
+   return QRectF( xmin, ymin, xrng, yrng );
+}
+#endif

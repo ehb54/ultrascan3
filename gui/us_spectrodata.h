@@ -21,6 +21,7 @@
 #include <qwt_plot_zoomer.h>
 #include <qwt_plot_panner.h>
 #include <qwt_plot_layout.h>
+#include <qwt_interval.h>
 
 #define DbgLv(a) if(dbg_level>=a)qDebug()  //!< debug-level-conditioned qDebug()
 
@@ -66,15 +67,15 @@ public:
 
    //! \brief Fetch the X data range
    //! \return Interval( x-min, x-max )
-   QwtInterval xrange();
+   QwtInterval xrange() const;
 
    //! \brief Fetch the Y data range
    //! \return Interval( y-min, y-max )
-   QwtInterval yrange();
+   QwtInterval yrange() const;
 
    //! \brief Fetch the X/Y/Z range
    //~ \return Interval( min, max )
-   virtual QwtInterval interval( Qt::Axis );
+   QwtInterval interval( Qt::Axis ) const;
 
    //! \brief Sets up ranges and controls for the raster data to come
    //! \param a_xres   X resolution, the real X extent in pixels.
@@ -102,6 +103,10 @@ public:
    //! \param y_out  The real Y value for raster location XY
    //! \param z_out  The real Z value for raster location XY
    void value( int, int, double&, double&, double& ) const;
+
+#if QT_VERSION>QT_VERSION_CHECK(6,0,0)
+   QRectF boundingRect() const;
+#endif
 
    //! \brief Sets up the internal raster, based on a set of Solute points.
    //! \param solu  Pointer to list of solution points for the current distribution.

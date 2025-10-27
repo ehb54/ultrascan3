@@ -202,12 +202,12 @@ US_Predict1::US_Predict1( US_Hydrosim&     parm,
 
    pick = new US_PlotPicker( plot );
    pick->setRubberBand( QwtPicker::VLineRubberBand );
-   connect( pick, SIGNAL( moved    ( const QwtDoublePoint& ) ),
-                  SLOT  ( new_value( const QwtDoublePoint& ) ) );
-   connect( pick, SIGNAL( mouseDown( const QwtDoublePoint& ) ),
-                  SLOT  ( new_value( const QwtDoublePoint& ) ) );
-   connect( pick, SIGNAL( mouseUp  ( const QwtDoublePoint& ) ),
-                  SLOT  ( mouseU   ( const QwtDoublePoint& ) ) );
+   connect( pick, SIGNAL( moved    ( const QPointF& ) ),
+                  SLOT  ( new_value( const QPointF& ) ) );
+   connect( pick, SIGNAL( mouseDown( const QPointF& ) ),
+                  SLOT  ( new_value( const QPointF& ) ) );
+   connect( pick, SIGNAL( mouseUp  ( const QPointF& ) ),
+                  SLOT  ( mouseU   ( const QPointF& ) ) );
 
    QwtPlotGrid* grid = us_grid( plot );
    grid->attach( plot );
@@ -349,7 +349,7 @@ void US_Predict1::complete( void )
 
 void US_Predict1::update_ratio( void )
 {
-   QwtDoublePoint p( le_axial->text().toDouble(), 0.0 );
+   QPointF p( le_axial->text().toDouble(), 0.0 );
    mouseU( p );
 }
 
@@ -453,7 +453,7 @@ void US_Predict1::vbar( const QString& s )
    update();
 }
 
-void US_Predict1::new_value( const QwtDoublePoint& p )
+void US_Predict1::new_value( const QPointF& p )
 {
    ratio = p.x();
 
@@ -465,7 +465,7 @@ void US_Predict1::new_value( const QwtDoublePoint& p )
    update();
 }
 
-void US_Predict1::mouseU( const QwtDoublePoint& p )
+void US_Predict1::mouseU( const QPointF& p )
 {
    ratio = p.x();
 

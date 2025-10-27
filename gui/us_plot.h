@@ -6,9 +6,6 @@
 #include "us_widgets.h"
 #include "us_extern.h"
 
-#if QT_VERSION > 0x050000
-#include "qwt_compat.h"
-#endif
 #include "qwt_plot.h"
 #include "qwt_plot_grid.h"
 #include "qwt_plot_picker.h"
@@ -17,6 +14,7 @@
 #include "qwt_plot_curve.h"
 #include "qwt_plot_canvas.h"
 #include "qwt_symbol.h"
+#include "qwt_text.h"
 #include <QMetaEnum>
 #include <QJsonDocument>
 #include <QJsonParseError>
@@ -382,19 +380,19 @@ class US_GUI_EXTERN US_PlotPicker : public QwtPlotPicker
 
    signals:
       //! \brief Signal mouse down (unmodified)
-      void mouseDown    ( const QwtDoublePoint& );
+      void mouseDown    ( const QPointF& );
       //! \brief Signal mouse down (modified with control key)
-      void cMouseDown   ( const QwtDoublePoint& );
+      void cMouseDown   ( const QPointF& );
       //! \brief Signal mouse down (modified with control key, raw event)
       void cMouseDownRaw( QMouseEvent* );
       //! \brief Signal mouse up (unmodified)
-      void mouseUp      ( const QwtDoublePoint& );
+      void mouseUp      ( const QPointF& );
       //! \brief Signal mouse up (modified with control key)
-      void cMouseUp     ( const QwtDoublePoint& );
+      void cMouseUp     ( const QPointF& );
       //! \brief Signal mouse drag (unmodified)
-      void mouseDrag    ( const QwtDoublePoint& );
+      void mouseDrag    ( const QPointF& );
       //! \brief Signal mouse drag (modified with control key)
-      void cMouseDrag   ( const QwtDoublePoint& );
+      void cMouseDrag   ( const QPointF& );
 
    protected:
       //! \brief Slot to handle mouse press event

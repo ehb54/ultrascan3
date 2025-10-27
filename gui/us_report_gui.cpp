@@ -11,13 +11,6 @@
 //#include "us_report_gmp.h"
 
 
-#if QT_VERSION < 0x050000
-#define setSymbol(a)      setSymbol(*a)
-#define setSamples(a,b,c) setData(a,b,c)
-#define QRegularExpression(a)  QRegExp(a)
-#endif
-
-
 // Report GUI
 //ALEXEY_NEW_REPORT: an arg now is QMap < QString( wvl ), US_ReportGMP > ?  
 //US_ReportGui::US_ReportGui( US_ReportGMP *tmp_report ) : US_Widgets()

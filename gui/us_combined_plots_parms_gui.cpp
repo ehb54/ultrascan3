@@ -9,12 +9,6 @@
 #include "us_images.h"
 
 
-#if QT_VERSION < 0x050000
-#define setSymbol(a)      setSymbol(*a)
-#define setSamples(a,b,c) setData(a,b,c)
-#define QRegularExpression(a)  QRegExp(a)
-#endif
-
 US_CombPlotsGui::US_CombPlotsGui( QString combPlotsMask, QStringList type_method_list ) : US_Widgets()
 {
   this->combPlotsMask    = combPlotsMask;
