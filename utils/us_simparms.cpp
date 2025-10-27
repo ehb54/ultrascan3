@@ -276,6 +276,177 @@ DbgLv(2) << "SP:iFD: db" << db;
 DbgLv(2) << "SP:iFD: bottom" << bottom;
 }
 
+
+// Set simulation parameter values from an experimental RawData set.
+void US_SimulationParameters::initFromData( IUS_DB2* db,
+					    US_DataIO::RawData& rawdata,
+					    int invID_passed,
+					    bool incl_speed, QString runID,
+					    QString dataType )
+{
+   SpeedProfile sp;
+
+   int     dbg_level   = US_Settings::us_debug();
+   int     cp_id       = 0;
+   QString channel     = QChar(rawdata.channel);
+   int     iechan      = QString( "ABCDEFGH" ).indexOf( channel );
+   int     ch          = qMax( 0, iechan ) / 2;
+           iechan      = qMax( 0, iechan ) + 1;
+   QString ecell       = QString::number(rawdata.cell);
+   int     iecell      = ecell.toInt();
+
+DbgLv(1) << "SP:iFD: cell chan ch" << ecell << channel << ch
+ << rawdata.channel << (ch+1);
+
+   rotorCalID          = "0";
+   QString fn          = US_Settings::resultDir() + "/" + runID + "/"
+                         + runID + "." + dataType + ".xml";
+   QFile file( fn );
+
+   if ( file.open( QIODevice::ReadOnly | QIODevice::Text ) )
+   {  // If experiment/run file exists, get calibration,centerpiece IDs from it
+      QXmlStreamReader xml( &file );
+      int dcp_id       = 0;
+      int dcell        = 0;
+      QString dchan    = "";
+
+      while ( ! xml.atEnd() )
+      {
+         xml.readNext();
+
+         if ( xml.isStartElement()  &&  xml.name() == "calibration" )
+         {  // Pick up rotor calibration ID from  <calibration ... id=...
+            QXmlStreamAttributes a = xml.attributes();
+            rotorCalID       = a.value( "id"      ).toString();
+            rotorcoeffs[ 0 ] = a.value( "coeff1"  ).toString().toDouble();
+            rotorcoeffs[ 1 ] = a.value( "coeff2"  ).toString().toDouble();
+         }
+
+         if ( xml.isStartElement()  &&  xml.name() == "dataset" )
+         {  // Pick up cell and channel for comparison
+            QXmlStreamAttributes a = xml.attributes();
+            dcell            = a.value( "cell"    ).toString().toInt();
+            dchan            = a.value( "channel" ).toString();
+         }
+
+         if ( xml.isStartElement()  &&  xml.name() == "centerpiece" )
+         {  // Pick up centerpiece ID from  <centerpiece ... id=...
+            QXmlStreamAttributes a = xml.attributes();
+            dcp_id           = a.value( "id"      ).toString().toInt();
+DbgLv(1) << "SP:iFD:  dcell dchan" << dcell << dchan;
+            if ( dcell == iecell  &&  dchan == channel )
+            { // If cell,channel match edit, pick up CpID
+               cp_id            = dcp_id;
+DbgLv(1) << "SP:iFD:    cp_id" << cp_id;
+            }
+         }
+      }
+
+      file.close();
+
+      if ( cp_id == 0 )    // If no cell,chan match; use last CP ID
+         cp_id            = dcp_id;
+   }
+//DbgLv(2) << "SP:iFD: cp_id ch" << cp_id << ch;
+
+   bottom_position     = 7.2;
+
+   if ( incl_speed )
+      computeSpeedSteps( &rawdata.scanData, speed_step );
+
+#ifndef NO_DB
+   double  rpm         = rawdata.scanData[ 0 ].rpm;
+   if ( db != NULL )
+   {  // If reading from the database, get rotor,centerpiece info from DB
+      int         stat_db = 0;
+      bool        ok_db;
+      QString     expID;
+      QStringList query;
+      QString     rcalIDsv = rotorCalID;  // Save IDs gotten from local file
+      int         cpIDsv   = cp_id;
+
+      qDebug() << "invID_passed -- " << invID_passed;
+      query << "get_experiment_info_by_runID"
+            << runID
+            << QString::number( invID_passed );
+      db->query( query );
+      stat_db = db->lastErrno();
+//DbgLv(2) << "Sim parms:query() stat" << stat_db;
+      if ( stat_db != IUS_DB2::NOROWS )
+      {  // Info by runID:  experiment and calibration IDs
+         ok_db      = db->next();
+//DbgLv(2) << "Sim parms: next() ok_db" << ok_db;
+         if ( ok_db )
+         {
+            expID      = db->value( 1 ).toString();
+            rotorCalID = db->value( 7 ).toString();
+//DbgLv(2) << "Sim parms: expID" << expID;
+//DbgLv(2) << "Sim parms: rotorCalID" << rotorCalID << "sv" << rcalIDsv;
+         }
+         else
+            rotorCalID = "";
+
+         if ( rotorCalID.isEmpty()  &&  ! expID.isEmpty() )
+         {  // If still no calibration ID, try it another way
+            query.clear();
+            query << "get_experiment_info" << expID;
+            db->query( query );
+            stat_db = db->lastErrno();
+            if ( stat_db != IUS_DB2::NOROWS  &&  db->next() )
+            {
+               rotorCalID = db->value( 7 ).toString();
+//DbgLv(2) << "Sim parms(2):     rotorCalID" << rotorCalID;
+            }
+         }
+
+         // If unable to get calibration ID from DB, fall back to local info
+         if ( rotorCalID.isEmpty() || rotorCalID == "0" )
+            rotorCalID = rcalIDsv;
+//DbgLv(2) << "Sim parms(3):     rotorCalID" << rotorCalID;
+
+         if ( ! expID.isEmpty() )
+         {  // Get centerpiece ID from cell records for this experiment
+            query.clear();
+            query << "all_cell_experiments" << expID;
+            db->query( query );
+            while ( db->next() )
+            {
+               int cell     = db->value( 2 ).toInt();
+               int ichan    = db->value( 3 ).toInt();
+               int cellCpId = db->value( 4 ).toInt();
+
+DbgLv(1) << "Sim parms: cell iecell ichan iechan" << cell << iecell
+   << ichan << iechan << "ccId" << cellCpId;
+               if ( cellCpId > 0  &&  cell == iecell  &&  ichan == iechan )
+               { // Valid CpID with cell,channel matching edit
+                  cp_id        = cellCpId;
+                  break;
+               }
+            }
+         }
+
+DbgLv(1) << "Sim parms:        cp_id" << cp_id << "sv" << cpIDsv;
+         // If no centerpiece ID from DB, fall back to local info
+         if ( cp_id < 1 )
+            cp_id     = cpIDsv;
+//DbgLv(2) << "Sim parms(2):     cp_id" << cp_id;
+      }
+   }
+
+   // Set rotor coefficients, channel bottom position from hardware files
+   setHardware( db, rotorCalID, -cp_id, ch );
+
+   // Calculate bottom using RPM, start bottom, and rotor coefficients
+   bottom = US_AstfemMath::calc_bottom( rpm, bottom_position, rotorcoeffs );
+#else
+   // For NO_DB (back end) the bottom needs to be set after this function
+   bottom = bottom_position;
+   db     = NULL; // Stop compiler warning
+DbgLv(2) << "SP:iFD: db" << db;
+#endif
+DbgLv(2) << "SP:iFD: bottom" << bottom;
+}
+
 // Set simulation parameter values from an experimental EditedData set.
 void US_SimulationParameters::initFromData( IUS_DB2* db,
    US_DataIO::EditedData& editdata, bool incl_speed )

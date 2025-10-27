@@ -36,25 +36,25 @@ int main( int argc, char* argv[] )
    return application.exec();  //!< \memberof QApplication
 }
 
-// qSort LessThan method for S_Solute sed
+// LessThan method for S_Solute sed
 bool distro_lessthan_s(const S_Solute &solu1, const S_Solute &solu2)
 {  // TRUE iff  (s1<s2) || (s1==s2 && d1<d2)
    return ( solu1.s < solu2.s );
 }
 
-// qSort LessThan method for S_Solute m.mass
+// LessThan method for S_Solute m.mass
 bool distro_lessthan_w(const S_Solute &solu1, const S_Solute &solu2)
 {
     return (solu1.w < solu2.w );
 }
 
-// qSort LessThan method for S_Solute frac
+// LessThan method for S_Solute frac
 bool distro_lessthan_k(const S_Solute &solu1, const S_Solute &solu2)
 {
     return (solu1.k < solu2.k );
 }
 
-// qSort LessThan method for S_Solute diff
+// LessThan method for S_Solute diff
 bool distro_lessthan_d(const S_Solute &solu1, const S_Solute &solu2)
 {
     return (solu1.d < solu2.d );
@@ -837,13 +837,13 @@ void US_Integral::sort_distro( QList< S_Solute >& listsols,
    // sort distro solute list depending on selected plot
    switch (this->plot_x)
    {
-      case ATTR_D: qSort ( listsols.begin(), listsols.end(), distro_lessthan_d);
+      case ATTR_D: std::sort ( listsols.begin(), listsols.end(), distro_lessthan_d);
          break;
-      case ATTR_W: qSort( listsols.begin(), listsols.end(), distro_lessthan_w);
+      case ATTR_W: std::sort( listsols.begin(), listsols.end(), distro_lessthan_w);
          break;
-      case ATTR_K: qSort( listsols.begin(), listsols.end(), distro_lessthan_k);
+      case ATTR_K: std::sort( listsols.begin(), listsols.end(), distro_lessthan_k);
          break;
-      case ATTR_S: qSort( listsols.begin(), listsols.end(), distro_lessthan_s);
+      case ATTR_S: std::sort( listsols.begin(), listsols.end(), distro_lessthan_s);
          break;
    }
 

@@ -16,7 +16,7 @@
 US_SelectItem::US_SelectItem( QList< QStringList >& items,
    QStringList& hdrs, const QString titl, int* aselxP,
    const int def_sort )
-   : US_WidgetsDialog( 0, 0 ), items( items ), hdrs( hdrs )
+   : US_WidgetsDialog( nullptr, Qt::WindowFlags() ), items( items ), hdrs( hdrs )
 {
    multi_sel           = false;
    deleted_button      = false;
@@ -43,7 +43,7 @@ US_SelectItem::US_SelectItem( QList< QStringList >& items,
 US_SelectItem::US_SelectItem( QList< QStringList >& items,
 			      QStringList& hdrs, const QString titl, int* aselxP, QString add_label,
 			      const int def_sort )
-  : US_WidgetsDialog( 0, 0 ), items( items ), hdrs( hdrs )
+  : US_WidgetsDialog( nullptr, Qt::WindowFlags() ), items( items ), hdrs( hdrs )
 {
    multi_sel         = false;
    deleted_button    = false;
@@ -106,7 +106,7 @@ US_SelectItem::US_SelectItem( QList< QStringList >& items,
 US_SelectItem::US_SelectItem( QList< QStringList >& items,
    QStringList& hdrs, const QString titl, QList< int >* aselxsP,
    const int def_sort )
-   : US_WidgetsDialog( 0, 0 ), items( items ), hdrs( hdrs )
+   : US_WidgetsDialog( nullptr, Qt::WindowFlags() ), items( items ), hdrs( hdrs )
 {
    multi_sel         = true;
    deleted_button    = false;

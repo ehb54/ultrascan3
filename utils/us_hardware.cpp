@@ -209,7 +209,7 @@ bool US_AbstractCenterpiece::read_centerpieces( IUS_DB2* db,
          cpids   << db->value( 0 ).toString().toInt();
       }
 
-      qSort( cpids );
+      std::sort( cpids.begin(), cpids.end() );
 
       for ( int ii = 0; ii < cpids.size(); ii++ )
       {

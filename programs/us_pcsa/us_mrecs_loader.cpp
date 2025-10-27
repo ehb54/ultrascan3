@@ -14,7 +14,7 @@
 US_MrecsLoader::US_MrecsLoader( bool dbSrc, QString& search,
       VEC_MRECS& amrecs, QString& adescr,
       const QString eGUID, const QString arunID )
-  :US_WidgetsDialog( 0, 0 ), loadDB( dbSrc ), dsearch( search ),
+  :US_WidgetsDialog( nullptr, Qt::WindowFlags() ), loadDB( dbSrc ), dsearch( search ),
    omrecs( amrecs ), odescr( adescr )
 {
    editGUID = eGUID;

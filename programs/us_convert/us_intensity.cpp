@@ -15,7 +15,7 @@ US_Intensity::US_Intensity(
       const QString triple, 
       const QVector< double >& data,
       const QVector< double >& scan ) 
-    : US_WidgetsDialog( 0, 0 ), dataIn( data ), scanIn( scan )
+    : US_WidgetsDialog( nullptr, Qt::WindowFlags() ), dataIn( data ), scanIn( scan )
 {
    setWindowTitle( tr( "Details for Average Intensity Values" ) );
    setPalette( US_GuiSettings::frameColor() );

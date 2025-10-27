@@ -24,8 +24,8 @@ class US_GUI_EXTERN US_Table : public US_WidgetsDialog
       //! \param f      - The Qt window flags of this class.  This value is
       //!                 normally not specified.
 
-		US_Table( QMap< double, double >&, const QString&, bool&, 
-            QWidget* = 0, Qt::WindowFlags = 0 );
+		US_Table( QMap< double, double >& map, const QString& type, bool& change,
+            QWidget* parent = nullptr, Qt::WindowFlags f = Qt::WindowFlags() );
 
    private:
       QMap< double, double >& values;

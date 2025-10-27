@@ -341,7 +341,7 @@ DbgLv(1) << "FIN_FIN:    ti,ri counts" << ti_noise.count << ri_noise.count;
    int    nsolutes    = mrec.csolutes.size();
    //double vbar20      = dset->vbar20;
    model.components.resize( nsolutes );
-   qSort( mrec.csolutes );
+   std::sort( mrec.csolutes.begin(), mrec.csolutes.end() );
 
    // build the final model
    for ( int cc = 0; cc < nsolutes; cc++ )
@@ -776,7 +776,7 @@ DbgLv(1) << "THR_FIN: thrn" << thrn << " taskx orecx" << taskx << orecx
    else
    { // We have done the last computation, so determine the low-rmsd result
 
-      qSort( mrecs );                    // Sort model records by variance
+      std::sort( mrecs.begin(), mrecs.end() );                    // Sort model records by variance
 
 DbgLv(1) << "THR_FIN: thrn" << thrn << " mrecs size" << mrecs.size()
  << "mrec0 taskx,vari" << mrecs[0].taskx << mrecs[0].variance;
@@ -1150,7 +1150,7 @@ double US_pcsaProcess::fit_function_SL( double t, double* par )
       return 0.0;
    }
 
-   QTime ftimer;
+   QElapsedTimer ftimer;
    ftimer.start();
    QList< US_SolveSim::DataSet* > dsets;
    void** iparP  = (void**)par;
@@ -1276,7 +1276,7 @@ double US_pcsaProcess::fit_function_IS( double t, double* par )
       return 0.0;
    }
 
-   QTime ftimer;
+   QElapsedTimer ftimer;
    ftimer.start();
    QList< US_SolveSim::DataSet* > dsets;
    void** iparP  = (void**)par;
@@ -1406,7 +1406,7 @@ double US_pcsaProcess::fit_function_DS( double t, double* par )
       ffcall = 0;
       return 0.0;
    }
-   QTime ftimer;
+   QElapsedTimer ftimer;
    ftimer.start();
    QList< US_SolveSim::DataSet* > dsets;
    void** iparP  = (void**)par;
@@ -1537,7 +1537,7 @@ double US_pcsaProcess::fit_function_HL( double t, double* par )
       return 0.0;
    }
 
-   QTime ftimer;
+   QElapsedTimer ftimer;
    ftimer.start();
    QList< US_SolveSim::DataSet* > dsets;
    void** iparP  = (void**)par;
@@ -2236,7 +2236,7 @@ void US_pcsaProcess::compute_final()
 {
 DbgLv(1) << "CFin: alpha" << alpha << "mrecs size" << mrecs.size();
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
-   QTime ftimer;
+   QElapsedTimer ftimer;
    ftimer.start();
    US_ModelRecord mrec   = mrecs[ 0 ];
    model              = mrec.model;

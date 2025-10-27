@@ -9,7 +9,7 @@
 // constructor:  residuals bitmap widget
 US_ResidsBitmap::US_ResidsBitmap( QVector< QVector< double > >& resids,
    QWidget* wparent )
-   : US_WidgetsDialog( wparent, 0 )
+   : US_WidgetsDialog( wparent, Qt::WindowFlags() )
 {
 
    setWindowTitle( tr( "Residuals Pixel Map" ) );

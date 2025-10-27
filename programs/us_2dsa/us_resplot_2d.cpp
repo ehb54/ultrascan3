@@ -15,7 +15,7 @@
 
 // constructor:  residuals plot widget
 US_ResidPlot2D::US_ResidPlot2D( QWidget* parent )
-   : US_WidgetsDialog( 0, 0 )
+   : US_WidgetsDialog( nullptr, Qt::WindowFlags() )
 {
    // lay out the GUI
    setWindowTitle( tr( "2-D Spectrum Analysis Data/Residuals Viewer" ) );

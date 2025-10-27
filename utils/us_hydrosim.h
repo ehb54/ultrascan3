@@ -1,5 +1,5 @@
 //! \file us_hydrosim.h
-#ifndef US_HTDROSIM_H
+#ifndef US_HYDROSIM_H
 #define US_HYDROSIM_H
 
 #include <QtCore>

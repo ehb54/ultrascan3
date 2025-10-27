@@ -37,6 +37,27 @@ US_CombPlotsGui::US_CombPlotsGui( QString combPlotsMask, QStringList type_method
   bn_excl_scans->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
   main->addWidget( bn_excl_scans );
 
+  //Units info memo
+  QTextEdit*     le_info;
+  QFont le_info_font( US_Widgets::fixedFont().family(),
+		      US_GuiSettings::fontSize() );
+  le_info = us_textedit();
+  QFontMetrics m (le_info -> font()) ;
+  int RowHeight = m.lineSpacing() ;
+  le_info -> setFixedHeight  (2 * RowHeight) ;
+  
+  QPalette p = le_info->palette(); 
+  p.setColor(QPalette::Base, Qt::lightGray);
+  p.setColor(QPalette::Text, Qt::darkRed);
+  le_info->setPalette(p);
+
+  le_info->setHtml(tr( "[s,D20W,MW] units: "
+		       "&nbsp; s(&#215;1e+13)[sec]; D20W(&#215;1e+7)[cm&#178;/s]; MW(&#215;1e-3)[Dalton]"
+		       ));
+
+  le_info->setFont(le_info_font);
+  main->addWidget( le_info );
+  
   row = 0;
   //Main Table
   genL           = NULL;

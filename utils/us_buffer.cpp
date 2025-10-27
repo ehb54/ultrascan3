@@ -214,7 +214,6 @@ int US_BufferComponent::saveToDB(IUS_DB2 * db) {
    }
 
    int idBufferComponent = db->lastInsertID();
-   //qDebug() << "new_buffer-idBuffer" << idBuffer;
 
    qDebug() << "buffer_component_ID for new buffer component: " << idBufferComponent;
    componentID = QString::number(idBufferComponent);
@@ -784,7 +783,7 @@ int US_Buffer::saveToDB( IUS_DB2* db, const QString private_buffer )
    int idBuffer = 0;
    QStringList q;
    q << "get_bufferID" << GUID;
-   db->query(q);
+   db->query( q );
 
    int ncomp = component.size();
    int ncomp_cosed = cosed_component.size();
@@ -792,9 +791,9 @@ int US_Buffer::saveToDB( IUS_DB2* db, const QString private_buffer )
    QString descrip = description;
    int manx = descrip.indexOf("  [M]");
 
-   if (manx > 0)
-      descrip = descrip.left(manx).simplified();
-//qDebug() << "get_bufferID-stat" << status;
+   if ( manx > 0 ) {
+	  descrip       = descrip.left( manx ).simplified();
+   }
 
    if ( status != IUS_DB2::OK  &&  status != IUS_DB2::NOROWS )
    {
@@ -819,29 +818,30 @@ int US_Buffer::saveToDB( IUS_DB2* db, const QString private_buffer )
       }
 
       idBuffer    = db->lastInsertID();
-
-      qDebug() << "bufferID for new buffer: " << idBuffer;
-      bufferID = QString::number(idBuffer);
-
-      return idBuffer;
+	  bufferID = QString::number( idBuffer );
+      qDebug() << "bufferID for new buffer: " << bufferID;
    }
 
-   else {  // The buffer exists, so update it
+   else { 
+	  // The buffer exists, so update it
       db->next();            // Get the ID of the existing buffer record
-      QString bufID = db->value(0).toString();
-      idBuffer = bufID.toInt();
-      //bufferID        = QString::number(idBuffer);
-      bufferID = bufID;
+      QString bufID   = db->value( 0 ).toString(); // The local buffer id from the database as string
+      idBuffer        = bufID.toInt(); // numeric buffer id
+      bufferID        = QString::number( idBuffer ); // class variable string buffer id
+	  
       qDebug() << "BufferID in saveToDB(): " << bufferID;
-//qDebug() << "old_buffer-idBuffer" << idBuffer;
       q.clear();
-      q << "update_buffer" << bufID << descrip << QString::number(compressibility, 'e', 4)
-        << QString::number(pH, 'f', 4) << QString::number(density, 'f', 6) << QString::number(viscosity, 'f', 5)
-        << US_Util::bool_string(manual) << private_buffer;                             // Private
+      q << "update_buffer"
+        << bufferID
+        << descrip
+        << QString::number( compressibility, 'e', 4 )
+        << QString::number( pH             , 'f', 4 )
+        << QString::number( density        , 'f', 6 )
+        << QString::number( viscosity      , 'f', 5 )
+        << US_Util::bool_string( manual )
+        << private_buffer;                             // Private
+      db->statusQuery( q );
 
-      db->statusQuery(q);
-
-//qDebug() << "update_stat" << db->lastErrno();
       if ( db->lastErrno() != IUS_DB2::OK )
       {
          qDebug() << "update_buffer error=" << db->lastErrno();
@@ -850,10 +850,9 @@ int US_Buffer::saveToDB( IUS_DB2* db, const QString private_buffer )
 
       // Delete any components, so any given are a new list
       q.clear();
-      q << "delete_buffer_components" << bufID;
+      q << "delete_buffer_components" << bufferID;
       db->statusQuery( q );
       status    = db->lastErrno();
-//qDebug() << "delete_buffer_components status=" << status << IUS_DB2::NOROWS;
       if ( status != IUS_DB2::OK   &&  status != IUS_DB2::NOROWS )
       {
          qDebug() << "delete_buffer_components error=" << db->lastErrno();
@@ -861,14 +860,15 @@ int US_Buffer::saveToDB( IUS_DB2* db, const QString private_buffer )
       }
    }
 
-   qDebug() << "bufferID before adding components called: " << idBuffer;
+   qDebug() << "bufferID before adding components called: " << bufferID;
 
    for (int i = 0; i < ncomp; i++) {
       q.clear();
-      q << "add_buffer_component" << QString::number(idBuffer) << component[i].componentID
-        << QString::number(concentration[i], 'f', 5);
-      db->statusQuery(q);
-//qDebug() << "add_buffer_components-status=" << db->lastErrno();
+      q << "add_buffer_component"
+        << bufferID
+        << component[ i ].componentID
+        << QString::number( concentration[ i ], 'f', 5 );
+      db->statusQuery( q );
 
       if ( db->lastErrno() != IUS_DB2::OK )
       {
@@ -877,31 +877,32 @@ int US_Buffer::saveToDB( IUS_DB2* db, const QString private_buffer )
       }
    }
 
-   qDebug() << "bufferID before adding cosed components called: " << idBuffer;
+   qDebug() << "bufferID before adding cosed components called: " << bufferID;
 
-   for (US_CosedComponent &cc: cosed_component) {
-      int IDcosed = cc.saveToDB(db, idBuffer);
-//qDebug() << "add_buffer_components-status=" << db->lastErrno();
+   for ( US_CosedComponent &cc: cosed_component ) {
+      int IDcosed = cc.saveToDB( db, bufferID.toInt() );
 
-      if (db->lastErrno() != US_DB2::OK) {
+      if (db->lastErrno() != IUS_DB2::OK) {
          qDebug() << "add_cosed_component id,error=" << cc.componentID << db->lastErrno();
          return -4;
       }
    }
 
-   qDebug() << "bufferID before putSpectrum() called: " << idBuffer;
+   qDebug() << "bufferID before putSpectrum() called: " << bufferID;
 
    QString compType("Buffer");
    QString valType("molarExtinction");
-   qDebug() << "bufferID for extProfile: " << bufferID.toInt();
-
-   if (!extinction.isEmpty() and new_or_changed_spectrum)
-      //if ( !extinction.isEmpty() )
+   qDebug() << "bufferID for extProfile: " << bufferID;
+   
+   if ( !extinction.isEmpty() and new_or_changed_spectrum )
    {
-      if (!replace_spectrum) {
-         qDebug() << "Creating Spectrum!!!";
-         US_ExtProfile::create_eprofile(db, bufferID.toInt(), compType, valType, extinction);
-      } else {
+     if ( !replace_spectrum )
+      {
+	     qDebug() << "Creating Spectrum!!!";
+         US_ExtProfile::create_eprofile( db, bufferID.toInt(), compType, valType, extinction);
+      }
+      else
+      {
          qDebug() << "Updating Spectrum!!!";
 
          QMap<double, double> new_extinction = extinction;
@@ -920,18 +921,14 @@ int US_Buffer::saveToDB( IUS_DB2* db, const QString private_buffer )
    //putSpectrum( db, "Fluorescence" );
 
    // Also write to to disk
-   bool newFile;
-   qDebug() << "Wrute to disk 0: ";
-   QString path = US_Settings::dataDir() + "/buffers";
-   qDebug() << "Wrute to disk 1: ";
-   QString filename = get_filename(path, GUID, newFile);
-   qDebug() << "Wrute to disk 2: ";
-   writeToDisk(filename);
-   qDebug() << "Wrute to disk 3: ";
+   bool    newFile;
+   QString path     = US_Settings::dataDir() + "/buffers";
+   QString filename = get_filename( path, GUID, newFile );
+   writeToDisk( filename );
+   
+   qDebug() << "bufferID upon saveToDB() completion: " << bufferID;
 
-   qDebug() << "bufferID upon saveToDB() completion: " << idBuffer;
-
-   return idBuffer;
+   return bufferID.toInt();
 }
 
 

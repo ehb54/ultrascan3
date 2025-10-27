@@ -4,7 +4,7 @@
 #include "us_analyte.h"
 
 US_Choice::US_Choice( const US_Solution& solution )
-   : US_WidgetsDialog( 0, 0 )
+   : US_WidgetsDialog( nullptr, Qt::WindowFlags() )
 
 {
    setPalette  ( US_GuiSettings::frameColor() );

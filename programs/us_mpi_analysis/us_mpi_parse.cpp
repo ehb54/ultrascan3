@@ -173,9 +173,8 @@ void US_MPI_Analysis::parse_job( QXmlStreamReader& xml )
 
          else if ( xname == "request" )
          {
-            QString ss;
-            requestID   = ss.sprintf( "%06d",
-                             attr.value( "id" ).toString().toInt() );
+            requestID   = QString::asprintf( "%06d",
+                                             attr.value( "id" ).toString().toInt() );
             requestGUID = attr.value( "guid" ).toString();
          }
 
@@ -374,7 +373,7 @@ void US_MPI_Analysis::parse_dataset( QXmlStreamReader& xml, DATASET* dataset )
       if ( xml.name() == "rotor_stretch" )
       {
          QStringList stretch  = 
-            a.value( "value" ).toString().split( " ", QString::SkipEmptyParts );
+            a.value( "value" ).toString().split( " ", Qt::SkipEmptyParts );
 
          dataset->rotor_stretch[ 0 ] = stretch[ 0 ].toDouble();
          dataset->rotor_stretch[ 1 ] = stretch[ 1 ].toDouble();

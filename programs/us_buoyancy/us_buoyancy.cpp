@@ -2803,7 +2803,7 @@ void US_Buoyancy::save_auto( QString triple_n )
 void US_Buoyancy::write( void )
 {
    QString str, str2;
-   te = new US_Editor( US_Editor::LOAD, false, "results/*.rpt*", 0, 0 );
+   te = new US_Editor( US_Editor::LOAD, false, "results/*.rpt*", nullptr, Qt::WindowFlags() );
    te->e->setFontFamily("Arial");
    te->e->setFontPointSize( 13 );
    te->e->append("UltraScan Buoyant Density Equilibrium Analysis Report:\n");
@@ -2823,7 +2823,7 @@ void US_Buoyancy::write( void )
       te->e->append( "Meniscus position:\t" + str.setNum( dpoint[i].meniscus ) + " cm");
       te->e->append( "Bottom of cell:\t" + str.setNum( dpoint[i].bottom ) +
       " cm (Centerpiece bottom at rest: " + str2.setNum( dpoint[i].centerpiece ) + " cm)" );
-      te->e->append( "Temperature:\t" + str.setNum( dpoint[i].temperature ) + " °C");
+      te->e->append( "Temperature:\t" + str.setNum( dpoint[i].temperature ) + " ï¿½C");
       te->e->append( "Gradient-forming\nmaterial details:");
       te->e->append( "Molecular weight:\t" + str.setNum( dpoint[i].gradientMW ) + " g/mol" );
       te->e->append( "Loading density:\t" + str.setNum( dpoint[i].gradientC0 ) + " g/mol" );
@@ -2838,7 +2838,7 @@ void US_Buoyancy::write( void )
 void US_Buoyancy::write_auto( void )
 {
    QString str, str2;
-   te = new US_Editor( US_Editor::LOAD, false, "results/*.rpt*", 0, 0 );
+   te = new US_Editor( US_Editor::LOAD, false, "results/*.rpt*", nullptr, Qt::WindowFlags() );
    te->e->setFontFamily("Arial");
    te->e->setFontPointSize( 13 );
    te->e->append("UltraScan Buoyant Density Equilibrium Analysis Report:\n");

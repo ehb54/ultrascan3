@@ -30,7 +30,7 @@ where name is one of
 
 $snames
 
-where branch is the ultrascan branch (default: master)
+where branch is the ultrascan branch (default: main)
 
 what it does:
 
@@ -43,7 +43,7 @@ then, the package is extracted from the container.
 
 $cores = shift || die $notes;
 $image = shift || die $notes;
-$branch = shift || "master";
+$branch = shift || "main";
 
 # find a container manager
 

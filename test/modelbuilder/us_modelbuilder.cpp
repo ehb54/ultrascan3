@@ -453,13 +453,13 @@ void US_ModelBuilder::runIsoRMSDTest(QVector<US_Model::SimulationComponent> poin
                                   + "_" + QString::number(points.at(i).s) + "s_" + QString::number(points.at(i).f_f0) + "k.tsv");
             outfileIsoLines.open(QFile::WriteOnly | QFile::Truncate);
             QTextStream outstreamIsoLines(&outfileIsoLines);
-            outstreamIsoLines << "#Sed. Coeff. \t Diff. Coeff. \t Frict. Ratio \t Mol. Wt." << endl;
+            outstreamIsoLines << "#Sed. Coeff. \t Diff. Coeff. \t Frict. Ratio \t Mol. Wt." << Qt::endl;
 
             //iterate over rmsd levels
             for(int k = 0; k < resultPoints.at(j).size(); k++)
             {
                US_Model::SimulationComponent currentComponent = resultPoints.at(j).at(k);
-               outstreamIsoLines << currentComponent.s << " \t" << currentComponent.D << " \t" << currentComponent.f_f0  << " \t" << currentComponent.mw << endl;
+               outstreamIsoLines << currentComponent.s << " \t" << currentComponent.D << " \t" << currentComponent.f_f0  << " \t" << currentComponent.mw << Qt::endl;
             }
 
             outfileIsoLines.close();
@@ -527,13 +527,13 @@ void US_ModelBuilder::processJsonSlopes(QVector<QVector<QVector<US_Model::Simula
                        + "_" + QString::number(centerpoint.s) + "s_" + QString::number(centerpoint.f_f0) + "k.tsv");
          outfile.open(QFile::WriteOnly | QFile::Truncate);
          QTextStream outstream(&outfile);
-         outstream << "#Sed. Coeff. \t Diff. Coeff. \t Frict. Ratio \t Mol. Wt." << endl;
+         outstream << "#Sed. Coeff. \t Diff. Coeff. \t Frict. Ratio \t Mol. Wt." << Qt::endl;
 
          //iterate over target-RMSD levelset
          QVector<US_Model::SimulationComponent> currentSet = sets.at(i).at(j);
          foreach(US_Model::SimulationComponent component, currentSet)
          {
-            outstream << component.s << " \t" << component.D << " \t" << component.f_f0  << " \t" << component.mw << endl;
+            outstream << component.s << " \t" << component.D << " \t" << component.f_f0  << " \t" << component.mw << Qt::endl;
          }
       }
    }
@@ -1242,7 +1242,7 @@ QVector<QPair<US_Model::SimulationComponent, double> > US_ModelBuilder::calculat
    differences.fill(tempDiff, simulations.size());
 
    //Profiling
-   QTime timer;
+   QElapsedTimer timer;
    qDebug() << "starting timer...";
    timer.start();
 
@@ -1266,7 +1266,7 @@ QVector<QPair<US_Model::SimulationComponent, double> > US_ModelBuilder::calculat
       }
 
       //sort differences list, and store
-      qSort(currentDifferences);
+      std::sort( currentDifferences.begin(), currentDifferences.end() );
 
       //average numNeighbors nearest points to the current point, and store
       double average = 0.0;

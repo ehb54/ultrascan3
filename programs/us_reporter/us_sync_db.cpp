@@ -12,7 +12,7 @@
 
 // Main constructor
 
-US_SyncWithDB::US_SyncWithDB() : US_WidgetsDialog( 0, 0 )
+US_SyncWithDB::US_SyncWithDB() : US_WidgetsDialog( nullptr, Qt::WindowFlags() )
 {
    setAttribute  ( Qt::WA_DeleteOnClose );
    setWindowTitle( tr( "Synchronize Reports with Database" ) );

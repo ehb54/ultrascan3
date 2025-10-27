@@ -11,7 +11,7 @@
 US_EditScan::US_EditScan( US_DataIO::Scan&         s, 
                           const QVector< double >& r,
                           double invertValue, double left, double right )
-   : US_WidgetsDialog( 0, 0 ), originalScan( s ), allRadii( r ), 
+   : US_WidgetsDialog( nullptr, Qt::WindowFlags() ), originalScan( s ), allRadii( r ),
                                invert( invertValue ), 
                                range_left( left ), range_right( right )
 {

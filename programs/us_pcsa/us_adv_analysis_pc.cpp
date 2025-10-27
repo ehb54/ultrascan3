@@ -10,7 +10,7 @@
 // constructor:  enhanced plot control widget
 US_AdvAnalysisPc::US_AdvAnalysisPc( QVector< US_ModelRecord >* p_mrs,
     const int nth, US_SolveSim::DataSet* ds0, QWidget* p )
-    : US_WidgetsDialog( p, 0 )
+    : US_WidgetsDialog( p, Qt::WindowFlags() )
 {
    p_mrecs        = p_mrs;
    nthr           = nth;
@@ -1405,7 +1405,7 @@ DbgLv(1) << "MCD: cc" << cc << "sol_id" << sol_id;
 
    // Now sort the solute id strings to create sorted composite
 #if 0
-   qSort( sortlst );
+   std::sort( sortlst.begin(), sortlst.end() );
    US_ZSolute pcompsol;
    US_ZSolute ccompsol;
    QString pskmatch  = QString();

@@ -16,7 +16,7 @@ class US_XpnHost : public US_Widgets
   public:
     
     //!  Construct the window to manage database parameters.
-    US_XpnHost( QWidget* w = 0, Qt::WindowFlags flags = 0 );
+    US_XpnHost( QWidget* w = nullptr, Qt::WindowFlags flags = Qt::WindowFlags() );
     
   private:
     QList<QStringList> dblist;

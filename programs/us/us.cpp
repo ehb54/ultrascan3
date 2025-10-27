@@ -94,53 +94,9 @@ int main( int argc, char* argv[] )
   }
 
   // License is OK.  Start up.
-  
-  //Sync User-level with that set in DB //////////////////////////////////////////
-  //If DB set ?
-  QList<QStringList> DB_list = US_Settings::databases();
-  QStringList defaultDB      = US_Settings::defaultDB();
-  if ( DB_list.size() > 0 && defaultDB.size() > 0 )
-    {
-      qDebug() << "defaultDB -- " << defaultDB.at( 2 );
-            
-      US_Passwd   pw;
-      US_DB2      db( pw.getPasswd() );
-      
-      if ( db.lastErrno() != IUS_DB2::OK )
-        {
-	  QMessageBox msgBox;
-          msgBox.setWindowTitle ("ERROR: User Level Synchronization");
-          msgBox.setText("Error making the DB connection! User-level cannot be synchronized.");
-          msgBox.setIcon  ( QMessageBox::Critical );
-          msgBox.exec();
-      
-          //exit( -1 );
-        }
-      else
-	{
-      
-	  QStringList q( "get_user_info" );
-	  db.query( q );
-	  db.next();
-	  
-	  int ID        = db.value( 0 ).toInt();
-	  QString fname = db.value( 1 ).toString();
-	  QString lname = db.value( 2 ).toString();
-	  int     level = db.value( 5 ).toInt();
-	  
-	  qDebug() << "USCFG: UpdInv: ID,name,lev" << ID << fname << lname << level;
-	  //if(ID<1) return;
-	  
-	  US_Settings::set_us_inv_name ( lname + ", " + fname );
-	  US_Settings::set_us_inv_ID   ( ID );
-	  US_Settings::set_us_inv_level( level );
-	}
-    }
-  
-  //END OF user-level sync//////////////////////////////////////
-  
   US_Win w;
   w.show();
+  w.update_user_level();
 #if QT_VERSION < 0x050000
   application.setActivationWindow( &w );
 #endif
@@ -163,7 +119,7 @@ void US_Action::onTriggered( bool )
 US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   : QMainWindow( parent, flags )
 {
-  // We need to handle US_Global::g here becuse US_Widgets is not a parent
+  // We need to handle US_Global::g here because US_Widgets is not a parent
   if ( ! g.isValid() ) 
   {
     // Do something for invalid global memory
@@ -204,10 +160,19 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   }
 
   g.set_global_position( QPoint( 50, 50 ) ); // Ensure initialization
-  QPoint p = g.global_position();
-  setGeometry( QRect( p, p + QPoint( 710, 532 ) ) );
-  g.set_global_position( p + QPoint( 30, 30 ) );
-
+  QString auto_positioning = US_Settings::debug_value("auto_positioning");
+  if ( !auto_positioning.isEmpty() && auto_positioning.toLower() == "true" )
+  {
+    QPoint point = g.global_position();
+    setGeometry( QRect( point, point + QPoint( 710, 532 ) ) );
+    g.set_global_position( point + QPoint( 30, 30 ) );
+  }
+  else
+  {
+    setBaseSize(QSize(710, 532));
+    setMinimumWidth(710);
+    setMinimumHeight(532);
+  }
   setWindowTitle( "UltraScan III" );
 
   QIcon us3_icon = US_Images::getIcon( US_Images::US3_ICON );
@@ -394,8 +359,53 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
 
 US_Win::~US_Win()
 {
-    QPoint p = g.global_position();
-    g.set_global_position( p - QPoint( 30, 30 ) );
+   QString auto_positioning = US_Settings::debug_value("auto_positioning");
+   if ( !auto_positioning.isEmpty() && auto_positioning.toLower() == "true" )
+   {
+      QPoint point = g.global_position();
+      g.set_global_position( point - QPoint( 30, 30 ) );
+   }
+}
+
+void US_Win::update_user_level( void ) {
+   //Sync User-level with that set in DB //////////////////////////////////////////
+   //If DB set ?
+   QList<QStringList> DB_list = US_Settings::databases();
+   QStringList defaultDB      = US_Settings::defaultDB();
+   if ( !DB_list.empty() && !defaultDB.isEmpty() )
+   {
+      US_Passwd   pw;
+      US_DB2      db( pw.getPasswd() );
+      int last_error = db.lastErrno();
+
+      if ( last_error == IUS_DB2::OK ) {
+         QStringList q( "get_user_info" );
+         db.query( q );
+         db.next();
+
+         int ID        = db.value( 0 ).toInt();
+         QString fname = db.value( 1 ).toString();
+         QString lname = db.value( 2 ).toString();
+         int     level = db.value( 5 ).toInt();
+
+
+         US_Settings::set_us_inv_name ( lname + ", " + fname );
+         US_Settings::set_us_inv_ID   ( ID );
+         US_Settings::set_us_inv_level( level );
+      }
+      else
+      {
+         QString error_msg = db.lastError();
+         QMessageBox msgBox;
+         msgBox.setWindowTitle ("ERROR: User Level Synchronization");
+         msgBox.setText("Error making the DB connection! User-level cannot be synchronized.");
+         msgBox.setInformativeText( error_msg );
+         msgBox.setIcon  ( QMessageBox::Critical );
+         msgBox.exec();
+      }
+
+   }
+   //END OF user-level sync//////////////////////////////////////
 }
   
 void US_Win::addMenu( int index, const QString& label, QMenu* menu )
@@ -538,7 +548,8 @@ void US_Win::launch( int index )
             this   , SLOT  ( terminated( int, QProcess::ExitStatus ) ) );
 
 #ifndef Q_OS_MAC
-  process->start( pname );
+  QStringList args;
+  process->start( pname, args );
 #else
    QString procbin = US_Settings::appBaseDir() + "/bin/" + pname;
    QString procapp = procbin + ".app";
@@ -573,11 +584,9 @@ void US_Win::launch( int index )
 void US_Win::closeProcs( void )
 {
   QString                    names;
-  QList<procData*>::iterator p;
-  
-  for ( p = procs.begin(); p != procs.end(); p++ )
+
+  for (const auto d : procs)
   {
-    procData* d  = *p;
     names       += d->name + "\n";
   }
 
@@ -609,9 +618,9 @@ void US_Win::closeProcs( void )
 
   if ( box.clickedButton() == leave ) return;
 
-  for ( p = procs.begin(); p != procs.end(); p++ )
+  for (const auto proc: procs )
   {
-    procData* d       = *p;
+    procData* d       = proc;
     QProcess* process = d->proc;
     
     if ( box.clickedButton() == kill )
@@ -635,14 +644,14 @@ void US_Win::closeEvent( QCloseEvent* e )
 
 void US_Win::splash( void )
 {
-  int y =           menuBar  ()->size().rheight();
-  int h = 532 - y - statusBar()->size().rheight();
-  int w = 710;
+  const int y =           menuBar  ()->size().rheight();
+  const int height = 532 - y - statusBar()->size().rheight();
+  const int w = 710;
 
   bigframe = new QLabel( this );
   bigframe->setFrameStyle        ( QFrame::Box | QFrame::Raised);
   bigframe->setPalette           ( US_GuiSettings::frameColor() );
-  bigframe->setGeometry          ( 0, y, w, h );
+  bigframe->setGeometry          ( 0, y, w, height );
   bigframe->setAutoFillBackground( true );
 
   splash_shadow = new QLabel( this );

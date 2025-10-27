@@ -553,7 +553,14 @@ void US_2dsa::view( void )
    {
       te_results = new US_Editor( US_Editor::DEFAULT, true, "HTML (*.html);;Text files (*.txt)", this );
       te_results->setWindowTitle( tr( "Report: 2DSA Results" ) );
-      te_results->resize( 800, 700 );
+      te_results->resize( 780, 700 );
+      QString auto_positioning = US_Settings::debug_value("auto_positioning");
+      if ( global_positioning && !auto_positioning.isEmpty() && auto_positioning.toLower() == "true" )
+      {
+         QPoint p = g.global_position();
+         te_results->move( p.x() + 30, p.y() + 30 );
+      }
+
       te_results->e->setFont( QFont( US_GuiSettings::fontFamily(),
                                      US_GuiSettings::fontSize() ) );
    }
@@ -700,7 +707,7 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
       fitTypeAttr << "NOTHING" << "MENISCUS" << "BOTTOM" << "ANGLE" << "VOLUME" << "SIGMA" << "DELTA"
                   << "VBAR" << "FF0" << "TEMPERATURE";
       if ( montCar )
-         iterID.sprintf( "mc%04d", iterNum );
+         iterID = QString::asprintf( "mc%04d", iterNum );
 
       else if ( dset.simparams.primaryFit != US_SimulationParameters::NOTHING || dset.simparams.secondaryFit != US_SimulationParameters::NOTHING )
       {

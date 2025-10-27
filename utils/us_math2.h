@@ -328,7 +328,7 @@ class US_UTIL_EXTERN US_Math2
       //! \return        The root X for Y virtually equal to goal
       static double find_root ( const double goal );
       private:
-
+      static QRandomGenerator& get_random_generator();
       static void _nnls_g1 ( double a, double b, double*, double*, double* );
       static int  _nnls_h12( int, int, int, int m, double*, int,
                              double*, double *, int, int, int );

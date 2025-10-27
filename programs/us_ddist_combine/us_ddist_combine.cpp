@@ -2129,8 +2129,7 @@ DbgLv(1) << "WrDa: maxnvl" << maxnvl << "nplots" << nplots;
 
          // Get and add raw data to line
          if ( jj < xvals->size() )
-            line       += QString().sprintf(
-                             valfmt, xvals->at( jj ), yvals->at( jj ) ) + ",";
+            line       += QString::asprintf( valfmt, xvals->at( jj ), yvals->at( jj ) ) + ",";
          else
             line       += dummy_pair;
 
@@ -2139,14 +2138,14 @@ DbgLv(1) << "WrDa: maxnvl" << maxnvl << "nplots" << nplots;
 
       // Now add X for envelopes and the Y's for each plot
       if ( jj < nenvvl )
-         line       += QString().sprintf( valfmx, xenvs[ jj ] ) + ",";
+         line       += QString::asprintf( valfmx, xenvs[ jj ] ) + ",";
       else
          line       += dummy_valu + ",";
 
       for ( int ii = 0; ii < nplots; ii++ )
       {
          if ( jj < nenvvl )
-            line       += QString().sprintf( valfmy, peyvals[ ii ][ jj ] );
+            line       += QString::asprintf( valfmy, peyvals[ ii ][ jj ] );
          else
             line       += dummy_valu;
 
@@ -2326,7 +2325,7 @@ void US_DDistr_Combine::update_distros()
       distros << dd;
    }
 
-   qSort( distros );
+   std::sort( distros.begin(), distros.end() );
 
    return;
 }

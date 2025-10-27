@@ -40,7 +40,7 @@ int main( int argc, char* argv[] )
    return application.exec();  //!< \memberof QApplication
 }
 
-// qSort LessThan method for S_Solute sort
+// LessThan method for S_Solute sort
 bool distro_lessthan( const S_Solute &solu1, const S_Solute &solu2 )
 {  // TRUE iff  (s1<s2) || (s1==s2 && k1<k2)
    return ( solu1.s < solu2.s ) ||
@@ -1564,7 +1564,7 @@ void US_GA_Initialize::load_color()
    // get an xml file name for the color map
    QString fname = QFileDialog::getOpenFileName( this,
       tr( "Load Color Map File" ),
-      US_Settings::etcDir(), filter, 0, 0 );
+      US_Settings::etcDir(), filter, nullptr );
 
    if ( fname.isEmpty() )
       return;
@@ -1759,7 +1759,7 @@ void US_GA_Initialize::sort_distro( QList< S_Solute >& listsols,
 
    // sort distro solute list by s,k values
 
-   qSort( listsols.begin(), listsols.end(), distro_lessthan );
+   std::sort( listsols.begin(), listsols.end(), distro_lessthan );
 
    // check reduce flag
 
@@ -2421,7 +2421,7 @@ DbgLv(1) << "gain: load_bins()";
          + tr( "Any files (*)" );
    QString fname  = QFileDialog::getOpenFileName( this,
       tr( "Load Solute Bin (GaDistro) File" ),
-      binfpath, filter, 0, 0 );
+      binfpath, filter );
 
    if ( fname.isEmpty() )
       return;

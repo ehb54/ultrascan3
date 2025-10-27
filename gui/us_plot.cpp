@@ -255,7 +255,7 @@ void US_Plot::zoom( bool on )
 #endif
       
       panner = new QwtPlotPanner( plot->canvas() );
-      panner->setMouseButton( Qt::MidButton );
+      panner->setMouseButton( Qt::MiddleButton );
 
 #if QT_VERSION > 0x050000
       picker = new QwtPlotPicker( QwtPlot::xBottom, QwtPlot::yLeft,
@@ -374,7 +374,7 @@ void US_Plot::print( void )
    }
 
    printer.setCreator( "UltraScan" );
-   printer.setOrientation( QPrinter::Landscape );
+   printer.setPageOrientation( QPageLayout::Landscape );
 
    QPrintDialog dialog( &printer );
 
@@ -423,7 +423,7 @@ qDebug() << "UP:CM: colorMap chosen";
 
    cmfpath        = QFileDialog::getOpenFileName( (QWidget*)plot,
       tr( "Load Color Map File" ),
-      US_Settings::etcDir(), filter, 0, 0 );
+      US_Settings::etcDir(), filter, nullptr );
 qDebug() << "UP:CM: post-dialog cmfpath" << cmfpath;
 
    // Get the color gradient from the file
@@ -662,8 +662,7 @@ US_PlotConfig::US_PlotConfig( QwtPlot* current_plot, QWidget* p,
    else
    {
      QString padding_v = style.mid( kk ).split(": ")[1];
-     padding_v. simplified();
-     padding_v.indexOf( "px" ); 
+     padding_v = padding_v. simplified();
      // qDebug() << " padding_v --         " <<  padding_v.left( padding_v.indexOf( "px" ) );
      // qDebug() << " padding_v.toInt() -- " <<  padding_v.left( padding_v.indexOf( "px" ) ).toInt();
      
@@ -839,7 +838,7 @@ void US_PlotConfig::updateTitleFont( void )
    bool ok;
    QFont currentFont = plot->title().font();
    QFont newFont     = QFontDialog::getFont( &ok, currentFont, this,
-                          tr( "Set Title Font" ), 0 );
+                          tr( "Set Title Font" ) );
 
    if ( ok )
    {
@@ -985,7 +984,7 @@ void US_PlotConfig::updateLegendFont( void )
 
    bool ok;
    QFont newFont = QFontDialog::getFont( &ok, font, this,
-                       tr( "Set Legend Font" ), 0 );
+                       tr( "Set Legend Font" ) );
 
    if ( ok )
    {
@@ -1555,7 +1554,7 @@ void US_PlotConfig::savePlotProfile( void )
   else
     {
       QString padding_v = style.mid( kk ).split(": ")[1];
-      padding_v.simplified();
+      padding_v = padding_v.simplified();
       padding_v.indexOf( "px" ); 
       qDebug() << " padding_v --         " <<  padding_v.left( padding_v.indexOf( "px" ) );
       qDebug() << " padding_v.toInt() -- " <<  padding_v.left( padding_v.indexOf( "px" ) ).toInt();
@@ -2532,7 +2531,7 @@ void US_PlotAxisConfig::selectTitleFont( void )
    bool ok;
    QFont currentFont = plot->axisTitle( axis ).font();
    QFont newFont     = QFontDialog::getFont( &ok, currentFont, this,
-                          tr( "Set Axis Title Font" ), 0 );
+                          tr( "Set Axis Title Font" ) );
 
    if ( ok )
    {
@@ -2561,7 +2560,7 @@ void US_PlotAxisConfig::selectScaleFont( void )
    bool ok;
    QFont currentFont = plot->axisFont( axis );
    QFont newFont     = QFontDialog::getFont( &ok, currentFont, this,
-                          tr( "Set Axis Scale Font" ), 0 );
+                          tr( "Set Axis Scale Font" ) );
 
    if ( ok )
    {
@@ -2971,9 +2970,9 @@ US_PlotPicker::US_PlotPicker( QwtPlot* plot )
 void US_PlotPicker::widgetMousePressEvent( QMouseEvent* e )
 {
    // Prevent spurious clicks
-   static QTime last_click;
+   static QElapsedTimer last_click;
 
-   if ( last_click.isNull() || last_click.elapsed() > 300 )
+   if ( !last_click.isValid() || last_click.elapsed() > 300 )
    {
       last_click.start();
       if ( e->button() == Qt::LeftButton ) 
@@ -2990,9 +2989,9 @@ void US_PlotPicker::widgetMousePressEvent( QMouseEvent* e )
 
 void US_PlotPicker::widgetMouseReleaseEvent( QMouseEvent* e )
 {
-   static QTime last_click;
+   static QElapsedTimer last_click;
 
-   if ( last_click.isNull() || last_click.elapsed() > 300 ) 
+   if ( !last_click.isValid() || last_click.elapsed() > 300 )
    {
       last_click.start();
       if ( e->button() == Qt::LeftButton )
@@ -3007,10 +3006,10 @@ void US_PlotPicker::widgetMouseReleaseEvent( QMouseEvent* e )
 
 void US_PlotPicker::widgetMouseMoveEvent( QMouseEvent* e )
 {
-   static QTime last_click;
+   static QElapsedTimer last_click;
 
    // Slow things down a bit
-   if ( last_click.isNull() || last_click.elapsed() > 100 )
+   if ( !last_click.isValid() || last_click.elapsed() > 100 )
    {
       last_click.start();
       if ( e->button() == Qt::LeftButton )

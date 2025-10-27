@@ -22,7 +22,7 @@ void US_PushButton::mousePressEvent( QMouseEvent* e )
 }
 
 US_AssociationsGui::US_AssociationsGui( US_Model& current_model )
-   : US_WidgetsDialog( 0, 0 ), model( current_model )
+   : US_WidgetsDialog( nullptr, Qt::WindowFlags() ), model( current_model )
 {
    setWindowTitle   ( "UltraScan Model Associations" );
    setPalette       ( US_GuiSettings::frameColor() );
@@ -67,13 +67,13 @@ US_AssociationsGui::US_AssociationsGui( US_Model& current_model )
    QStringList headers;
    headers << "" << "Analyte 1" << "Analyte 2" << "<==>" << "Product" 
            << "K_dissociation\n(molar units)" << "K_off Rate\n(1/sec)";
-   int flwidth = fm->width( "8888.3456e+00" );
+   int flwidth = fm->horizontalAdvance( "8888.3456e+00" );
    tw->setMinimumWidth( flwidth * 5 + 100 );
    tw->setRowHeight(   0, fm->height() + 4 );
-   tw->setColumnWidth( 0, fm->width( "D" ) + 6 );
+   tw->setColumnWidth( 0, fm->horizontalAdvance( "D" ) + 6 );
    tw->setColumnWidth( 1, flwidth );
    tw->setColumnWidth( 2, flwidth );
-   tw->setColumnWidth( 3, fm->width( "<==>" ) - 2 );
+   tw->setColumnWidth( 3, fm->horizontalAdvance( "<==>" ) - 2 );
    tw->setColumnWidth( 4, flwidth );
    tw->setColumnWidth( 5, flwidth );
    tw->setColumnWidth( 6, flwidth );
@@ -241,7 +241,7 @@ void US_AssociationsGui::new_row( void )
    tw->setRowHeight( count, fm->height() + 4 );
 
    QPushButton* pb = new US_PushButton( "D", count );
-   pb->setMaximumWidth( fm->width( "D" ) + 6 );
+   pb->setMaximumWidth( fm->horizontalAdvance( "D" ) + 6 );
    connect( pb, SIGNAL( pushed( int ) ), SLOT( del( int ) ) );
 
    tw->setCellWidget( count, 0, pb );
@@ -275,7 +275,7 @@ void US_AssociationsGui::complete( void )
       QwtCounter* c;
       int         index;
       int         count;
-      int         koligo;
+      int         koligo = 0;
       
       US_Model::Association association;
       QTableWidgetItem*     item;

@@ -1761,11 +1761,14 @@ void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_liv
      getLabInstrumentOperatorInfo_auto();
 
      //Auto-process reference scans
-     if ( dataType == "IP" || dataSource == "dataDiskAUC:Absorbance" )
+     if ( dataType == "IP" || dataSource == "dataDiskAUC:Absorbance"  ||
+	  dataSource == "dataDiskAUC:PseudoAbsorbance" )
        auto_ref_scan = false;
 
      //TEMPORARY !!!!
-     if ( dataType == "RI" && expType != "ABDE" && dataSource != "dataDiskAUC:Absorbance" )
+     if ( dataType == "RI" && expType != "ABDE" &&
+	  dataSource != "dataDiskAUC:Absorbance" &&
+	  dataSource != "dataDiskAUC:PseudoAbsorbance"  )
        {
      	 // double low_ref  = 5.87 - 0.005;
      	 // double high_ref = 5.87 + 0.005;
@@ -1910,10 +1913,13 @@ void US_ConvertGui::process_optics()
      getLabInstrumentOperatorInfo_auto();
 
      //Auto-process reference scans
-     if ( dataType == "IP" || dataSource == "dataDiskAUC:Absorbance" )
+     if ( dataType == "IP" || dataSource == "dataDiskAUC:Absorbance" ||
+	  dataSource == "dataDiskAUC:PseudoAbsorbance" )
        auto_ref_scan = false;
      
-     if ( dataType == "RI" && expType != "ABDE" && dataSource != "dataDiskAUC:Absorbance")
+     if ( dataType == "RI" && expType != "ABDE" &&
+	  dataSource != "dataDiskAUC:Absorbance" &&
+	  dataSource != "dataDiskAUC:PseudoAbsorbance" )
        {
 	 // double low_ref  = 5.87 - 0.005;
 	 // double high_ref = 5.87 + 0.005;
@@ -2940,6 +2946,15 @@ DbgLv(1) << " enabCtl: tLx infsz" << tripListx << out_chaninfo.count();
       }
    }
 
+   //enable save if gebuine "RA" type, or PseudoAbsorbance (when dataDisk read)
+   if ( dataSource == "dataDiskAUC:Absorbance" || dataSource == "dataDiskAUC:PseudoAbsorbance" )
+     {
+       //also disable ref. scan do/undo
+       pb_reference  ->setEnabled( false );
+       referenceDefined = true;
+       completed = true;
+     }
+   
    // If we made it here, user can save
    pb_saveUS3 ->setEnabled( completed );
 }
@@ -3725,7 +3740,7 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
 int US_ConvertGui::getProtSolIndex( QString channel_name, QString dtype )
 {
   int index = 0;
-  channel_name.simplified();
+  channel_name = channel_name.simplified();
   channel_name.replace( " ", "" );
 
   QStringList channelList = channel_name.split("/");
@@ -3852,7 +3867,7 @@ void US_ConvertGui::loadUS3Disk( QString dir )
    qApp->processEvents();
 
    // Check the runID
-   QStringList components =  dir.split( "/", QString::SkipEmptyParts );
+   QStringList components =  dir.split( "/", Qt::SkipEmptyParts );
    QString new_runID      = components.last();
 
    QRegExp rx( "^[A-Za-z0-9_-]{1,80}$" );
@@ -4402,7 +4417,7 @@ DbgLv(1) << "CGui: gExpInf: IN";
       {
          if ( ExpData.rpms[ i ] > ExpData.rpms[ i + 1 ] )
          {
-            ExpData.rpms.swap( i, i + 1 );
+            ExpData.rpms.swapItemsAt( i, i + 1 );
             done = false;
          }
       }
@@ -4524,7 +4539,7 @@ DbgLv(1) << "CGui: gExpInf: IN";
       {
          if ( ExpData.rpms[ i ] > ExpData.rpms[ i + 1 ] )
          {
-            ExpData.rpms.swap( i, i + 1 );
+            ExpData.rpms.swapItemsAt( i, i + 1 );
             done = false;
          }
       }
@@ -7596,7 +7611,7 @@ DbgLv(1) << "nspeeds=" << nspeeds << "nripro=" << nripro;
       {
          int ispeed        = speeds[ spx ];
 DbgLv(1) << "us_convert: ispeed=" << ispeed << "spx=" << spx << "nspeeds=" << nspeeds;
-         runID             = runIDbase + QString().sprintf( "%05d", ispeed );
+         runID             = runIDbase + QString::asprintf( "%05d", ispeed );
          double speed      = (double)ispeed;
          ExpData.runID     = runID;
          ExpData.expGUID.clear();
@@ -9179,7 +9194,7 @@ bool US_ConvertGui::centerpieceInfoDisk( void )
       for ( int i = 0; i < options.size() - 1; i++ )
          for ( int j = i + 1; j < options.size(); j++ )
             if ( options[ i ].text > options[ j ].text )
-               options.swap( i, j );
+               options.swapItemsAt( i, j );
 
       cb_centerpiece->addOptions( options );
    }
@@ -9333,8 +9348,8 @@ DbgLv(1) << " PlAll:  nmcols" << nmcols;
             // Don't know why, but filter out for now
             if ( jj < 5  ||  ( jj + 5 ) > kcpoint )
                qDebug() << "(rr, vv) = ( " << rr[jj] << ", " << vv[jj] << ")"
-                        << " (minR, maxR) = ( " << minR << ", " << maxR << ")" << endl
-                        << " (minV, maxV) = ( " << minV << ", " << maxV << ")" << endl;
+                        << " (minR, maxR) = ( " << minR << ", " << maxR << ")" << Qt::endl
+                        << " (minV, maxV) = ( " << minV << ", " << maxV << ")" << Qt::endl;
             continue;
          }
 

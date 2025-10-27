@@ -19,7 +19,7 @@ const QString notapl = QObject::tr( "" );
 
 // Constructor of dialog for editing discreteGA constraints
 US_ConstraintsEdit::US_ConstraintsEdit( US_Model& current_model )
-   : US_WidgetsDialog( 0, 0 ), cmodel( current_model )
+   : US_WidgetsDialog( nullptr, Qt::WindowFlags() ), cmodel( current_model )
 {
    setWindowTitle   ( "Discrete Model GA Constraints Editor" );
    setPalette       ( US_GuiSettings::frameColor() );
@@ -445,7 +445,7 @@ DbgLv(1) << "cnG:main:  bmodel load rtn";
    QFont font( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() );
    QFontMetrics fm( font );
    int fhigh = fm.lineSpacing();
-   int fwide = fm.width( QChar( '6' ) );
+   int fwide = fm.horizontalAdvance( QChar( '6' ) );
    int chigh = fhigh * 3 + 12;
    int ahigh = fhigh * 2 + 12;
    int lwide = width() - 10;

@@ -4,6 +4,7 @@
 #include <QGridLayout>
 #include <QFrame>
 #include <QLabel>
+#include <QtCore/QLocale>
 
 US_Dirhist::US_Dirhist(
                        QStringList                 & history,
@@ -77,7 +78,7 @@ void US_Dirhist::setupGUI()
          {
             QString toset =
                last_access->count( (*history)[ i ] )
-               ? (*last_access)[ (*history)[ i ] ].toString( Qt::LocalDate )
+               ? QLocale().toString((*last_access)[ (*history)[ i ] ], QLocale::ShortFormat )
                : "";
             t_hist->setItem( i, 1, new QTableWidgetItem( toset ) );
          }

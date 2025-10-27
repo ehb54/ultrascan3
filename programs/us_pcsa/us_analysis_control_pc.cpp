@@ -14,7 +14,7 @@
 // constructor:  pcsa analysis controls widget
 US_AnalysisControlPc::US_AnalysisControlPc(
    QList< US_SolveSim::DataSet* >& dsets, QWidget* p )
-   : US_WidgetsDialog( p, 0 ), dsets( dsets )
+   : US_WidgetsDialog( p, Qt::WindowFlags() ), dsets( dsets )
 {
    parentw        = p;
    processor      = 0;

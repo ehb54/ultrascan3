@@ -963,7 +963,7 @@ void US_RampGui::loadUS3Disk( QString dir )
    qApp->processEvents();
 
    // Check the runID
-   QStringList components =  dir.split( "/", QString::SkipEmptyParts );  
+   QStringList components =  dir.split( "/", Qt::SkipEmptyParts );
    QString new_runID = components.last();
       
    QRegExp rx( "^[A-Za-z0-9_-]{1,80}$" );
@@ -2495,7 +2495,7 @@ bool US_RampGui::centerpieceInfoDisk( void )
       for ( int i = 0; i < options.size() - 1; i++ )
          for ( int j = i + 1; j < options.size(); j++ )
             if ( options[ i ].text > options[ j ].text )
-               options.swap( i, j );
+               options.swapItemsAt( i, j );
 
       cb_centerpiece->addOptions( options );
    }

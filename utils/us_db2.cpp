@@ -129,13 +129,22 @@ bool US_DB2::test_secure_connection(
    }
 
    // Set connection to use ssl encryption
-   mysql_ssl_set( db,
-                  keyFile .toLatin1(),
-                  certFile.toLatin1(),
-                  caFile  .toLatin1(),
-                  NULL,
-                  CIPHER );
+   mysql_options( db, MYSQL_OPT_SSL_KEY, keyFile.toLatin1().constData() );
+   mysql_options( db, MYSQL_OPT_SSL_CERT, certFile.toLatin1().constData() );
+   mysql_options( db, MYSQL_OPT_SSL_CA, caFile.toLatin1().constData() );
+   mysql_options( db, MYSQL_OPT_SSL_CAPATH, nullptr );
+   mysql_options( db, MYSQL_OPT_SSL_CIPHER, CIPHER );
 
+   if ( !US_Settings::debug_match( "MYSQL_OPT_SSL_VERIFY_SERVER_CERT" ) ) {
+      // disable MYSQL_OPT_SSL_VERIFY_SERVER_CERT
+#if defined(MYSQL_OPT_SSL_VERIFY_SERVER_CERT)
+      unsigned long verify = 0; // 0 = disable, 1 = enable
+      mysql_options( db, MYSQL_OPT_SSL_VERIFY_SERVER_CERT, &verify );
+#elif defined(MYSQL_OPT_SSL_MODE)
+      unsigned int ssl_mode = SSL_MODE_REQUIRED; // SSL on, but no CA/hostname verification
+      mysql_options( db, MYSQL_OPT_SSL_MODE, &ssl_mode );
+#endif
+   }
    QString uhost  = host.section( ":", 0, 0 ).simplified();
    int     uport  = host.section( ":", 1, 1 ).simplified().toInt();
 
@@ -200,13 +209,22 @@ bool US_DB2::connect( const QString& masterPW, QString& err )
    try
    {
       // Set connection to use ssl encryption
-      mysql_ssl_set( db,
-                     keyFile .toLatin1(),
-                     certFile.toLatin1(),
-                     caFile  .toLatin1(),
-                     NULL,
-                     CIPHER );
+      mysql_options( db, MYSQL_OPT_SSL_KEY, keyFile.toLatin1().constData() );
+      mysql_options( db, MYSQL_OPT_SSL_CERT, certFile.toLatin1().constData() );
+      mysql_options( db, MYSQL_OPT_SSL_CA, caFile.toLatin1().constData() );
+      mysql_options( db, MYSQL_OPT_SSL_CAPATH, nullptr );
+      mysql_options( db, MYSQL_OPT_SSL_CIPHER, CIPHER );
 
+      if ( !US_Settings::debug_match( "MYSQL_OPT_SSL_VERIFY_SERVER_CERT" ) ) {
+         // disable MYSQL_OPT_SSL_VERIFY_SERVER_CERT
+#if defined(MYSQL_OPT_SSL_VERIFY_SERVER_CERT)
+         unsigned long verify = 0; // 0 = disable, 1 = enable
+         mysql_options( db, MYSQL_OPT_SSL_VERIFY_SERVER_CERT, &verify );
+#elif defined(MYSQL_OPT_SSL_MODE)
+         unsigned int ssl_mode = SSL_MODE_REQUIRED; // SSL on, but no CA/hostname verification
+         mysql_options( db, MYSQL_OPT_SSL_MODE, &ssl_mode );
+#endif
+      }
       // The CLIENT_MULTI_STATEMENTS flag allows for multiple queries and
       //   multiple result sets from a single stored procedure. It is required
       //   for any stored procedure that returns result sets.
@@ -303,13 +321,22 @@ bool US_DB2::connect(
    try
    {
       // Set connection to use ssl encryption
-      mysql_ssl_set( db,
-                     keyFile .toLatin1(),
-                     certFile.toLatin1(),
-                     caFile  .toLatin1(),
-                     NULL,
-                     CIPHER );
+      mysql_options( db, MYSQL_OPT_SSL_KEY, keyFile.toLatin1().constData() );
+      mysql_options( db, MYSQL_OPT_SSL_CERT, certFile.toLatin1().constData() );
+      mysql_options( db, MYSQL_OPT_SSL_CA, caFile.toLatin1().constData() );
+      mysql_options( db, MYSQL_OPT_SSL_CAPATH, nullptr );
+      mysql_options( db, MYSQL_OPT_SSL_CIPHER, CIPHER );
 
+      if ( !US_Settings::debug_match( "MYSQL_OPT_SSL_VERIFY_SERVER_CERT" ) ) {
+         // disable MYSQL_OPT_SSL_VERIFY_SERVER_CERT
+#if defined(MYSQL_OPT_SSL_VERIFY_SERVER_CERT)
+         unsigned long verify = 0; // 0 = disable, 1 = enable
+         mysql_options( db, MYSQL_OPT_SSL_VERIFY_SERVER_CERT, &verify );
+#elif defined(MYSQL_OPT_SSL_MODE)
+         unsigned int ssl_mode = SSL_MODE_REQUIRED; // SSL on, but no CA/hostname verification
+         mysql_options( db, MYSQL_OPT_SSL_MODE, &ssl_mode );
+#endif
+      }
       // The CLIENT_MULTI_STATEMENTS flag allows for multiple queries and
       //   multiple result sets from a single stored procedure. It is required
       //   for any stored procedure that returns result sets.

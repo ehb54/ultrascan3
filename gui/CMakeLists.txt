@@ -3,6 +3,8 @@
 # Auto-discover GUI source files
 file(GLOB GUI_SOURCES "*.cpp")
 file(GLOB GUI_HEADERS "*.h")
+file(GLOB GUI_RESOURCES "*.qrc")
+file(GLOB GUI_FORMS "*.ui")
 
 # Platform-specific source filtering
 if(NOT WIN32)
@@ -12,7 +14,7 @@ if(NOT WIN32)
 endif()
 
 # Create GUI library
-add_library(us_gui ${GUI_SOURCES} ${GUI_HEADERS})
+add_library(us_gui ${GUI_SOURCES} ${GUI_HEADERS} ${GUI_FORMS} ${GUI_RESOURCES})
 
 # Set library properties (matching qmake configuration)
 set_target_properties(us_gui PROPERTIES

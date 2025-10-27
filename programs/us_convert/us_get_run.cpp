@@ -11,7 +11,7 @@
 
 // Primary constructor to establish the dialog
 US_GetRun::US_GetRun( QString& run, bool inDB ) 
-: US_WidgetsDialog( 0, 0 ), runID( run )
+: US_WidgetsDialog( nullptr, Qt::WindowFlags() ), runID( run )
 {
    int ddstate;
    if ( inDB )

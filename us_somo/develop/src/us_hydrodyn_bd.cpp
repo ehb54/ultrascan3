@@ -401,7 +401,7 @@ void US_Hydrodyn_BD::closeEvent(QCloseEvent *e)
 // void US_Hydrodyn_BD::print()
 // {
 //    const int MARGIN = 10;
-//    printer.setPageSize(QPrinter::Letter);
+//    printer.setPageSize( QPageSize( QPageSize::Letter ) );
 // 
 //    if ( printer.setup(this) ) {      // opens printer dialog
 //       QPainter p;

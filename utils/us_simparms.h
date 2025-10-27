@@ -38,6 +38,9 @@ class US_UTIL_EXTERN US_SimulationParameters
    void initFromData( IUS_DB2*, US_DataIO::RawData&, bool = true,
 		   QString = "",  QString = "");
 
+   void initFromData( IUS_DB2*, US_DataIO::RawData&, int,  bool = true,
+		      QString = "",  QString = "");
+
    //! \brief A function to update the simulation parameters to match 
    //! an experiment's edited data.
    //! \param db         Pointer to opened database connection or NULL
