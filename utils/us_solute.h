@@ -69,10 +69,10 @@ class US_UTIL_EXTERN US_Solute
       //! A static function to initialize solutes
       //! \param s_min The minimum sedimentation value
       //! \param s_max The maximum sedimentation value
-      //! \param s_res The number of ponts to evaluate between s_min and s_max
+      //! \param s_res The number of points to evaluate between s_min and s_max
       //! \param ff0_min The minimum frictional ratio
       //! \param ff0_max The maximum frictional ratio
-      //! \param ff0_res The number of ponts to evaluate between ff0_min and 
+      //! \param ff0_res The number of points to evaluate between ff0_min and
       //!                ff0_max
       //! \param grid_reps The number of grids used to partition the data
       //! \param cnstff0   Constant f/f0 (or 0.0 if vbar is constant)

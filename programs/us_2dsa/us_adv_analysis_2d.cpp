@@ -38,7 +38,8 @@ US_AdvAnalysis2D::US_AdvAnalysis2D( US_SimulationParameters* sim_par,
          + QString( QChar( 181 ) ) + "l):" );
    QLabel* lb_spoints      = us_label(  tr( "Simulation Points:" ) );
    QLabel* lb_refopts      = us_banner( tr( "Refinement Options:" ) );
-
+   QLabel* lb_sigma     = us_label(  tr( "Sigma:" ) );
+   QLabel* lb_delta      = us_label( tr( "Delta:" ) );
    QLabel* lb_optimiz      = us_banner( tr( "Optimization Methods:" ) );
    QLabel* lb_repetloc     = us_label(  tr( "Repetitions:" ) );
    QLabel* lb_scfactor     = us_label(  tr( "Scaling Factor:" ) );
@@ -59,8 +60,13 @@ US_AdvAnalysis2D::US_AdvAnalysis2D( US_SimulationParameters* sim_par,
    QLayout* lo_bandcp      = us_radiobutton( tr( "Band-forming Centerpiece" ),
          rb_bandcp,  sparms->band_forming );
 
-   ct_bandload  = us_counter( 3,    1,    20,   1 );
+   ct_bandload  = us_counter( 3,    1,    20,   15 );
    ct_spoints   = us_counter( 3,   50, 10000,  10 );
+   ct_sigma = us_counter(3, -10.0, 10.0, 1);
+   ct_delta = us_counter(3, -10.0, 10.0, 1);
+   QLayout* lo_concd = us_checkbox( tr( "Concentration Dependent" ), ck_conc_dependent );
+   ct_sigma->setEnabled( ck_conc_dependent->isChecked() );
+   ct_delta->setEnabled( ck_conc_dependent->isChecked() );
 
    ct_bandload->setSingleStep(  0.1 );
    ct_bandload->setValue( sparms->band_volume * 1000.0 );
@@ -121,12 +127,14 @@ US_AdvAnalysis2D::US_AdvAnalysis2D( US_SimulationParameters* sim_par,
    cmb_mesh->addItem( "Specified file (mesh.dat)" );
    cmb_mesh->addItem( "AST Finite Volume Method (ASTFVM)" );
    cmb_mesh->setCurrentIndex( (int)sparms->meshType );
+   cmb_mesh->setCurrentText(cmb_mesh->itemData(cmb_mesh->currentIndex()).toString());
    
    cmb_moving = us_comboBox();
    cmb_moving->setMaxVisibleItems( 2 );
    cmb_moving->addItem( "Constant Time Grid (Claverie/Acceleration)" );
    cmb_moving->addItem( "Moving Time Grid (ASTFEM/Moving Hat)" );
    cmb_moving->setCurrentIndex( (int)sparms->gridType );
+   cmb_moving->setCurrentText(cmb_moving->itemData(cmb_moving->currentIndex()).toString());
 
    int row      = 0;
    optimizeLayout->addWidget( lb_optimiz,    row++, 0, 1, 6 );
@@ -160,6 +168,11 @@ US_AdvAnalysis2D::US_AdvAnalysis2D( US_SimulationParameters* sim_par,
    simparmsLayout->addWidget( ct_spoints,    row++, 4, 1, 2 );
    simparmsLayout->addWidget( cmb_mesh,      row++, 0, 1, 6 );
    simparmsLayout->addWidget( cmb_moving,    row++, 0, 1, 6 );
+   simparmsLayout->addLayout( lo_concd,     row++,   0, 1, 6 );
+   simparmsLayout->addWidget( lb_sigma,      row,   0, 1, 4 );
+   simparmsLayout->addWidget( ct_sigma,      row++, 4, 1, 2 );
+   simparmsLayout->addWidget( lb_delta,      row,   0, 1, 4 );
+   simparmsLayout->addWidget( ct_delta,      row++, 4, 1, 2 );
    simparmsLayout->addWidget( lb_refopts,    row++, 0, 1, 6 );
    //simparmsLayout->addLayout( lo_menisc,     row++, 0, 1, 6 );
    //simparmsLayout->addWidget( lb_menisrng,   row,   0, 1, 4 );
@@ -198,6 +211,8 @@ US_AdvAnalysis2D::US_AdvAnalysis2D( US_SimulationParameters* sim_par,
             this,  SLOT( checkSoluCoal( bool ) ) );
    connect( ck_clipcs, SIGNAL( toggled( bool ) ),
             this,  SLOT( checkClipLow(  bool ) ) );
+   connect( ck_conc_dependent, SIGNAL( toggled( bool ) ),
+      this, SLOT(checkConcDependent( bool)));
    //connect( ck_menisc, SIGNAL( toggled( bool ) ),
    //         this,  SLOT( checkMeniscus( bool ) ) );
    //connect( ck_mcarlo, SIGNAL( toggled( bool ) ),
@@ -294,6 +309,96 @@ void US_AdvAnalysis2D::get_parameters(
    repar1  = ct_regufact->value();
 }
 
+void US_AdvAnalysis2D::set_parameters(
+   int&  rtype, double& rtpar1, double& rtpar2, double& rtpar3,
+   US_Model& modpar, bool& reg, double& repar1 )
+{
+
+   if( rtype   == US_2dsaProcess::LUGRID )
+   {
+      if (!ck_locugr->isChecked())
+      {
+         ck_locugr->setChecked( true );
+      }
+      ct_repetloc->setValue( rtpar1 );
+      ct_scfactor->setValue( rtpar2 );
+      ct_scfact2 ->setValue( rtpar3 );
+   }
+   else if (ck_locugr->isChecked())
+   {
+      ck_locugr->setChecked( false );
+   }
+
+   if ( rtype == US_2dsaProcess::RLGRID )
+   {
+      if ( !ck_ranlgr->isChecked() )
+      {
+         ck_ranlgr->setChecked( true );
+      }
+      ct_repetran->setValue( rtpar1 );
+      ct_stddevia->setValue( rtpar2 );
+   }
+   else if ( ck_ranlgr->isChecked() )
+   {
+      ck_ranlgr->setChecked( false );
+   }
+
+   if ( rtype   == US_2dsaProcess::SOLCO )
+   {
+      if ( !ck_soluco->isChecked() )
+      {
+         ck_soluco->setChecked( true );
+      }
+      ct_coaldist->setValue( rtpar1 );
+   }
+   else if ( ck_soluco->isChecked() )
+   {
+      ck_soluco->setChecked( false );
+   }
+
+   if ( rtype   == US_2dsaProcess::CLIPLO )
+   {
+      if ( !ck_clipcs->isChecked() )
+      {
+         ck_clipcs->setChecked( true );
+      }
+      ct_nbrclips->setValue( rtpar1 );
+   }
+   else if ( ck_clipcs->isChecked() )
+   {
+      ck_clipcs->setChecked( false );
+   }
+
+   if ( rtype == -1 )
+   {
+      model = modpar;
+      if (!ck_mdgrid->isChecked())
+      {
+         ck_mdgrid->setChecked( true );
+      }
+   }
+   else if (ck_mdgrid->isChecked())
+   {
+      ck_mdgrid->setChecked( false );
+   }
+
+   if ( rtype == -2 )
+   {
+      model = modpar;
+      if (!ck_mdrati->isChecked())
+      {
+         ck_mdrati->setChecked( true );
+      }
+   }
+   else if (ck_mdrati->isChecked())
+   {
+      ck_mdrati->setChecked( false );
+   }
+
+   ck_regulz->setChecked( reg );
+   ct_regufact->setValue( repar1 );
+}
+
 // enable/disable optimize counters based on chosen method
 void US_AdvAnalysis2D::optimize_options()
 {
@@ -321,6 +426,12 @@ void US_AdvAnalysis2D::uncheck_optimize( int ckflag )
 void US_AdvAnalysis2D::checkBandForm( bool checked )
 {
    ct_bandload->setEnabled( checked );
+}
+
+void US_AdvAnalysis2D::checkConcDependent( bool checked )
+{
+   ct_sigma->setEnabled( checked );
+   ct_delta->setEnabled( checked );
 }
 
 // handle uniform grid checked
@@ -460,6 +571,16 @@ void US_AdvAnalysis2D::select()
 
    if ( sparms->band_forming  &&  ck_locugr->isChecked() )
       sparms->cp_width     = ct_scfactor->value();
+   if (ck_conc_dependent->isChecked())
+   {
+      sparms->sigma = ct_sigma->value();
+      sparms->delta = ct_delta->value();
+   }
+   else
+   {
+      sparms->sigma = 0.0;
+      sparms->delta = 0.0;
+   }
 
    accept();
 }

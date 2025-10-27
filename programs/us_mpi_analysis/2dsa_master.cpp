@@ -1,3 +1,5 @@
+#include <QtCore/QString>
+
 #include "us_mpi_analysis.h"
 #include "us_math2.h"
 #include "us_util.h"
@@ -5,11 +7,14 @@
 #include "us_astfem_rsa.h"
 #include "us_simparms.h"
 #include "us_constants.h"
+#include "../../utils/us_simparms.h"
 
 void US_MPI_Analysis::_2dsa_master( void )
 {
    init_solutes();
+   qDebug() << "w:" << my_rank << " Solutes initialized";
    fill_queue();
+   qDebug() << "w:" << my_rank << "Queue filled";
 
    work_rss.resize( gcores_count );
 
@@ -21,31 +26,31 @@ void US_MPI_Analysis::_2dsa_master( void )
 
    if ( mc_iterations > 1 )
       max_iterations   = max_iters_all > 1 ? max_iters_all : 5;
-
+   menibott_count = 1;
    menibott_ndx        = 0;
    meniscus_run        = 0;
    bottom_run          = 0;
-   if ( fit_mb_select == 0 )
+   if ( primaryFit != US_SimulationParameters::NOTHING)
    {
-      menibott_count      = 1;
-      meniscus_points     = 1;
-      bottom_points       = 1;
+      meniscus_points = primary_variations;
+      menibott_count *= primary_variations;
    }
-   else if ( fit_menbot )
+   else
    {
-      menibott_count      = meniscus_points * bottom_points;
+      meniscus_range  = 0.0;
+      meniscus_points = 1;
    }
-   else if ( fit_meni )
+   if ( secondaryFit != US_SimulationParameters::NOTHING)
+   {  // Meniscus-and-bottom fit iterations will be run
+      bottom_points   = secondary_variations;
+      menibott_count  *= secondary_variations;
+   }
+   else
    {
-      menibott_count      = meniscus_points;
-      bottom_points       = 1;
+      bottom_range    = 0.0;
+      bottom_points   = 1;
    }
-   else if ( fit_bott )
-   {
-      menibott_count      = bottom_points;
-      meniscus_points     = 1;
-   }
-
+   qDebug() << "w:" << my_rank << "Preparing start of queue";
    while ( true )
    {
       int worker;
@@ -77,7 +82,9 @@ void US_MPI_Analysis::_2dsa_master( void )
          QString tripleID = edata->cell + edata->channel + edata->wavelength;
          QString progress =
             "Iteration: "    + QString::number( iterations );
-
+         QStringList fitType;
+         fitType << "NOTHING" << "MENISCUS" << "BOTTOM" << "ANGLE" << "VOLUME" << "SIGMA" << "DELTA"
+                     << "VBAR" << "FF0" << "TEMPERATURE";
          if ( datasets_to_process > 1 )
             progress     += "; Datasets: "
                             + QString::number( datasets_to_process );
@@ -90,27 +97,20 @@ void US_MPI_Analysis::_2dsa_master( void )
          if ( mc_iterations > 1 )
             progress     += "; MonteCarlo: "
                             + QString::number( mc_iteration + 1 );
-
-         else if ( fit_menbot )
-            progress     += "; Meniscus: "
-               + QString::number( meniscus_value, 'f', 4 )
-               + "; Bottom: "
-               + QString::number( bottom_value,   'f', 4 )
-               + QString::asprintf( "  ( m%2d b%2d )",
-                    ( meniscus_run + 1 ), ( bottom_run + 1 ) );
-         else if ( fit_meni )
-            progress     += "; Meniscus: "
-               + QString::number( meniscus_value, 'f', 4 )
-               + tr( " (%1 of %2)" ).arg( meniscus_run + 1 )
-                                    .arg( meniscus_points );
-         else if ( fit_bott )
-            progress     += "; Bottom: "
-               + QString::number( bottom_value,   'f', 4 )
-               + tr( " (%1 of %2)" ).arg( bottom_run + 1 )
-                                    .arg( bottom_points );
-         else
-            progress     += "; RMSD: "
-               + QString::number( sqrt( simulation_values.variance ) );
+         if ( primaryFit )
+         {
+            progress += "; " + fitType[ primaryFit ] + ": " + QString::number( meniscus_values[ meniscus_run ]);
+         }
+         if ( secondaryFit )
+         {
+            progress += "; " + fitType[ secondaryFit ] + ": " + QString::number( bottom_values[ bottom_run ]);
+         }
+         if ( primaryFit || secondaryFit )
+         {
+            progress += tr( "  ( p%1 s%2 )").arg( meniscus_run + 1 ).arg( bottom_run + 1 );
+         }
+         progress     += "; RMSD: "
+            + QString::number( sqrt( simulation_values.variance ) );
 
          send_udp( progress );
 
@@ -173,8 +173,46 @@ DbgLv(1) << " master loop-BOT: GF job_queue empty" << job_queue.isEmpty();
             mc_iteration++;
             wksim_vals           = simulation_values;
             wksim_vals.solutes   = calculated_solutes[ max_depth ];
-
-            calc_residuals( 0, data_sets.size(), wksim_vals );
+            int bfg_offset = -1;
+            int csd_offset = -1;
+            if (data_sets.size() == 1){
+                if (!data_sets[current_dataset]->solution_rec.buffer.cosed_component.isEmpty()) {
+                    US_SimulationParameters simulationParameters = data_sets[current_dataset]->simparams;
+                    US_DataIO::RawData pedata = data_sets[current_dataset]->run_data.convert_to_raw_data();
+                    US_SolveSim::DataSet* dataSet = data_sets[current_dataset];
+                    // we need a
+                    for (int i = 0; i < data_sets_bfgs.length(); i++){
+                        US_Math_BF::Band_Forming_Gradient* bfg = &data_sets_bfgs[i];
+                        if (dataSet->solution_rec.buffer.cosed_component == bfg->cosed_component ||
+                            abs(simulationParameters.meniscus - bfg->meniscus) < GSL_ROOT5_DBL_EPSILON ||
+                            abs(simulationParameters.bottom - bfg->bottom) < GSL_ROOT5_DBL_EPSILON ||
+                            abs(simulationParameters.band_volume - bfg->overlay_volume) < GSL_ROOT5_DBL_EPSILON ||
+                            abs( simulationParameters.cp_pathlen - bfg->cp_pathlen) < GSL_ROOT5_DBL_EPSILON ||
+                            abs( simulationParameters.cp_angle - bfg->cp_angle) < GSL_ROOT5_DBL_EPSILON ||
+                            simulationParameters.radial_resolution == bfg->simparms.radial_resolution ||
+                            simulationParameters.temperature == bfg->simparms.temperature ||
+                            pedata.scanData.last().seconds < bfg->dens_bfg_data.scanData.last().seconds){
+                            // recalculation needed
+                            bfg_offset = i;
+                            break;
+                        }
+                    }
+                    if (bfg_offset == -1){
+                        US_Math_BF::Band_Forming_Gradient bfg = US_Math_BF::Band_Forming_Gradient(
+                                simulationParameters.meniscus,
+                                simulationParameters.bottom,
+                                simulationParameters.band_volume,
+                                dataSet->solution_rec.buffer.cosed_component,
+                                simulationParameters.cp_pathlen,
+                                simulationParameters.cp_angle);
+                       bfg.get_eigenvalues();
+                       bfg.calculate_gradient(simulationParameters, &pedata);
+                       data_sets_bfgs << bfg;
+                       bfg_offset = data_sets_bfgs.length() -1;
+                    }
+                }
+            }
+            calc_residuals( 0, data_sets.size(), wksim_vals, bfg_offset );
 
             qDebug() << "Base-Sim RMSD" << sqrt( simulation_values.variance )
                      << "  Exp-Sim RMSD" << sqrt( wksim_vals.variance )
@@ -194,7 +232,7 @@ DbgLv(1) << " master loop-BOT: GF job_queue empty" << job_queue.isEmpty();
 
          if ( is_composite_job )
          {  // Composite job:  update outputs in TAR and bump dataset count
-            QString tripleID = QString( data_sets[ current_dataset ]->model
+            QString ttripleID = QString( data_sets[ current_dataset ]->model
                                .description ).section( ".", -3, -3 );
             current_dataset++;
             dset_calc_solutes << calculated_solutes[ max_depth ];
@@ -204,13 +242,13 @@ DbgLv(1) << " master loop-BOT: GF job_queue empty" << job_queue.isEmpty();
             if ( simulation_values.noisflag == 0 )
             {
                DbgLv(0) << my_rank << ": Dataset" << current_dataset
-                        << "(" << tripleID << ")"
+                        << "(" << ttripleID << ")"
                         << " :  model was output.";
             }
             else
             {
                DbgLv(0) << my_rank << ": Dataset" << current_dataset
-                        << "(" << tripleID << ")"
+                        << "(" << ttripleID << ")"
                         << " :  model/noise(s) were output.";
             }
 
@@ -225,15 +263,15 @@ DbgLv(1) << " master loop-BOT:    cds kds" << current_dataset << count_datasets;
 
                if ( menibott_count > 1 )
                {  // Reset the range of fit-meniscus/bottom points for this data set
-                  US_DataIO::EditedData* edata
+                  US_DataIO::EditedData* EditedData
                                   = &data_sets[ current_dataset ]->run_data;
-                  double dat_str  = edata->radius( 0 );
+                  double dat_str  = EditedData->radius( 0 );
                   double men_dpt  = ( meniscus_points > 1 ) ?
                                     (double)( meniscus_points - 1 ) : 1;
                   double bot_dpt  = ( bottom_points > 1 ) ?
                                     (double)( bottom_points   - 1 ) : 1;
-                  double men_str  = edata->meniscus - ( meniscus_range * 0.5 );
-                  double bot_str  = edata->bottom   - ( bottom_range   * 0.5 );
+                  double men_str  = EditedData->meniscus - ( meniscus_range * 0.5 );
+                  double bot_str  = EditedData->bottom   - ( bottom_range   * 0.5 );
                   double men_inc  = meniscus_range / men_dpt;
                   double bot_inc  = bottom_range   / bot_dpt;
                   double men_end  = men_str + meniscus_range - men_inc;
@@ -308,7 +346,6 @@ if ( max_depth > 0 )
             abort( msg );
             break;
       }
-
       max_rss();
    }
 }
@@ -324,7 +361,7 @@ void US_MPI_Analysis::init_solutes( void )
                                      2 : 0 );
    simulation_values.dbg_level   = dbg_level;
    simulation_values.dbg_timing  = dbg_timing;
-DbgLv(0) << "DEBUG_LEVEL" << simulation_values.dbg_level;
+DbgLv(0) << "w:" << my_rank << "DEBUG_LEVEL" << simulation_values.dbg_level;
 
    // Test to see if there is a custom grid model
    QString model_filename = data_sets[ 0 ]->model_file;
@@ -357,16 +394,16 @@ DbgLv(0) << "DEBUG_LEVEL" << simulation_values.dbg_level;
       int    nsstep   = (int)( s_pts );
       int    nkstep   = (int)( ff0_pts );
 
-DbgLv(0) << "InSol: nss nks" << s_pts << ff0_pts << nsstep << nkstep << "grid_reps" << grid_reps;
+DbgLv(0) << "w:" << my_rank << "InSol: nss nks" << s_pts << ff0_pts << nsstep << nkstep << "grid_reps" << grid_reps;
       US_Solute::init_solutes( s_min,   s_max,   nsstep,
                                ff0_min, ff0_max, nkstep,
                                grid_reps, cnstff0, orig_solutes );
-DbgLv(0) << "InSol:  s range" << s_min*1.e+13 << s_max*1.e+13 << "k range"
+DbgLv(0) << "w:" << my_rank << "InSol:  s range" << s_min*1.e+13 << s_max*1.e+13 << "k range"
  << ff0_min << ff0_max;
 int j0=orig_solutes.count()-1;
 int j1=orig_solutes[0].count()-1;
 int j2=orig_solutes[j0].count()-1;
-DbgLv(0) << "orig_solutes:"
+DbgLv(0) << "w:" << my_rank << "orig_solutes:"
  << orig_solutes[ 0][ 0].s*1.e+13 << orig_solutes[ 0][ 0].k << "  "
  << orig_solutes[ 0][j1].s*1.e+13 << orig_solutes[ 0][j1].k << "  "
  << orig_solutes[j0][ 0].s*1.e+13 << orig_solutes[j0][ 0].k << "  "
@@ -421,6 +458,7 @@ DbgLv(0) << "InSol:  nsubgrid sbsize" << nsubgrid << ( ncomps / nsubgrid );
 // Fill the job queue, using the list of initial solutes
 void US_MPI_Analysis::fill_queue( void )
 {
+   DbgLv(1) << "start filling queue";
    worker_status.resize( gcores_count );
    worker_depth .resize( gcores_count );
 
@@ -441,6 +479,7 @@ void US_MPI_Analysis::fill_queue( void )
       job.solutes         = orig_solutes[ i ];
       job_queue << job;
    }
+   DbgLv(1) << "queue filled";
 }
 
 //////////////////
@@ -490,7 +529,7 @@ int ks=scan_count;
 int kp=radius_points;
 DbgLv(1) << ":gf:  ee" << current_dataset << "BB-dset(m)" << edata->value(ks/2,kp/2);
    int index         = 0;
-   QVector< double > scaled_data( scan_count * radius_points  + 1 );
+   QVector< double > pscaled_data(scan_count * radius_points + 1 );
 double isum=0.0;
 double dsum=0.0;
 
@@ -502,19 +541,19 @@ double dsum=0.0;
 double ival=edata->value(ss,rr);
 isum+=ival;
          double scaled_value    = edata->value( ss, rr ) / concentration;
-         scaled_data[ index++ ] = scaled_value;
+         pscaled_data[ index++ ] = scaled_value;
          edata->setValue( ss, rr, scaled_value );
 dsum+=scaled_value;
       }
    }
 
-   scaled_data[ index ] = edata->ODlimit;
+   pscaled_data[ index ] = edata->ODlimit;
 DbgLv(0) << "ScaledData sum" << dsum << "iSum" << isum << "concen" << concentration;
 
    // Send the scaled version of current data to the workers
    MPI_Job job;
    job.command         = MPI_Job::NEWDATA;
-   job.length          = scaled_data.size();
+   job.length          = pscaled_data.size();
    job.solution        = 1;
    job.meniscus_value  = data_sets[ current_dataset ]->run_data.meniscus;
    job.dataset_offset  = current_dataset;
@@ -537,11 +576,11 @@ DbgLv(0) << "ScaledData sum" << dsum << "iSum" << isum << "concen" << concentrat
    // Get everybody synced up
    MPI_Barrier( my_communicator );
 
-   MPI_Bcast( scaled_data.data(),
-              scaled_data.size(),
-              MPI_DOUBLE,
-              MPI_Job::MASTER,
-              my_communicator );
+   MPI_Bcast(pscaled_data.data(),
+             pscaled_data.size(),
+             MPI_DOUBLE,
+             MPI_Job::MASTER,
+             my_communicator );
 
    // Go to the next dataset
    job_queue.clear();
@@ -587,16 +626,16 @@ void US_MPI_Analysis::set_meniscus( void )
 {
    menibott_ndx++;
 
-   if ( fit_menbot )
+   if ( primaryFit != US_SimulationParameters::NOTHING && secondaryFit != US_SimulationParameters::NOTHING )
    {
-      meniscus_run   = menibott_ndx / meniscus_points;
-      bottom_run     = menibott_ndx % meniscus_points;
+      meniscus_run   = menibott_ndx / bottom_points;
+      bottom_run     = menibott_ndx % bottom_points;
    }
-   else if ( fit_meni )
+   else if ( primaryFit != US_SimulationParameters::NOTHING && secondaryFit == US_SimulationParameters::NOTHING )
    {
       meniscus_run   = menibott_ndx;
    }
-   else if ( fit_bott )
+   else if ( primaryFit == US_SimulationParameters::NOTHING && secondaryFit != US_SimulationParameters::NOTHING )
    {
       bottom_run     = menibott_ndx;
    }
@@ -643,17 +682,17 @@ DbgLv(1) << "sMC: max_depth" << max_depth << "calcsols size" << calculated_solut
    }
 
    US_DataIO::EditedData* edata = &data_sets[ current_dataset ]->run_data;
-   int ds_points     = total_points;
+   int dsPoints     = total_points;
    int ds_start      = 0;
    int ds_end        = count_datasets;
 
    if ( is_composite_job )
    {
-      ds_points         = edata->scanCount() * edata->pointCount();
+      dsPoints         = edata->scanCount() * edata->pointCount();
       ds_start          = current_dataset;
       ds_end            = ds_start + datasets_to_process;
    }
-   mc_data.resize( ds_points );
+   mc_data.resize(dsPoints );
 DbgLv(1) << "sMC: totpts" << total_points << "mc_iter" << mc_iteration;
 DbgLv(1) << "sMC:  sig-size" << sigmas.count() << "mcd-size" << mc_data.count()
  << "tot-scans" << sim_data1.scanCount();
@@ -705,7 +744,7 @@ DbgLv(1) << "sMC:  index" << index << "sdat" << sim_data1.value(scnx,rr)
    }
 DbgLv(1) << "sMC:   mcdata sum" << datasum;
 
-   varrmsd          = sqrt( varrmsd / (double)( ds_points ) );
+   varrmsd          = sqrt( varrmsd / (double)( dsPoints ) );
    qDebug() << "  Box_Muller Variation RMSD"
             << QString::number( varrmsd, 'f', 7 )
             << "  for MC_Iteration" << mc_iteration + 1;
@@ -716,7 +755,7 @@ DbgLv(1) << "sMC:   variation  sum min max" << varisum << varimin << varimax
    // Broadcast Monte Carlo data to all workers
    MPI_Job newdata;
    newdata.command        = MPI_Job::NEWDATA;
-   newdata.length         = ds_points;
+   newdata.length         = dsPoints;
    newdata.solution       = mc_iteration + 1;
    newdata.meniscus_value = data_sets[ 0 ]->run_data.meniscus;
    newdata.dataset_offset = ds_start;
@@ -740,11 +779,11 @@ DbgLv(1) << "sMC: MPI Barrier";
    MPI_Barrier( my_communicator );
 
 DbgLv(1) << "sMC: MPI Bcast";
-   MPI_Bcast( mc_data.data(),
-              ds_points,
-              MPI_DOUBLE,
-              MPI_Job::MASTER,
-              my_communicator );
+   MPI_Bcast(mc_data.data(),
+             dsPoints,
+             MPI_DOUBLE,
+             MPI_Job::MASTER,
+             my_communicator );
 
    fill_queue();
 
@@ -762,12 +801,50 @@ void US_MPI_Analysis::set_gaussians( void )
    int ds_start      = 0;
    int ds_end        = count_datasets;
    int ds_count      = count_datasets;
-
+   int bfg_offset    = -1;
+   int csd_offset = -1;
    if ( is_composite_job )
    {
       ds_start          = current_dataset;
       ds_end            = ds_start + datasets_to_process;
       ds_count          = datasets_to_process;
+   }
+   else {
+       if (!data_sets[current_dataset]->solution_rec.buffer.cosed_component.isEmpty()) {
+           US_SimulationParameters simulationParameters = data_sets[current_dataset]->simparams;
+           US_DataIO::RawData pedata = data_sets[current_dataset]->run_data.convert_to_raw_data();
+           US_SolveSim::DataSet* dataSet = data_sets[current_dataset];
+           // we need a
+           for (int i = 0; i < data_sets_bfgs.length(); i++){
+               US_Math_BF::Band_Forming_Gradient* bfg = &data_sets_bfgs[i];
+               if (dataSet->solution_rec.buffer.cosed_component == bfg->cosed_component ||
+                   abs(simulationParameters.meniscus - bfg->meniscus) < GSL_ROOT5_DBL_EPSILON ||
+                   abs(simulationParameters.bottom - bfg->bottom) < GSL_ROOT5_DBL_EPSILON ||
+                   abs(simulationParameters.band_volume - bfg->overlay_volume) < GSL_ROOT5_DBL_EPSILON ||
+                   abs( simulationParameters.cp_pathlen - bfg->cp_pathlen) < GSL_ROOT5_DBL_EPSILON ||
+                   abs( simulationParameters.cp_angle - bfg->cp_angle) < GSL_ROOT5_DBL_EPSILON ||
+                   simulationParameters.radial_resolution == bfg->simparms.radial_resolution ||
+                   simulationParameters.temperature == bfg->simparms.temperature ||
+                   pedata.scanData.last().seconds < bfg->dens_bfg_data.scanData.last().seconds){
+                   // recalculation needed
+                   bfg_offset = i;
+                   break;
+               }
+           }
+           if (bfg_offset == -1){
+               US_Math_BF::Band_Forming_Gradient bfg = US_Math_BF::Band_Forming_Gradient(
+                       simulationParameters.meniscus,
+                       simulationParameters.bottom,
+                       simulationParameters.band_volume,
+                       dataSet->solution_rec.buffer.cosed_component,
+                       simulationParameters.cp_pathlen,
+                       simulationParameters.cp_angle);
+              bfg.get_eigenvalues();
+              bfg.calculate_gradient(simulationParameters, &pedata);
+              data_sets_bfgs << bfg;
+              bfg_offset = data_sets_bfgs.length() -1;
+           }
+       }
    }
 DbgLv(1) << "sGA: calcsols size mxdpth" << calculated_solutes.size() << max_depth;
 
@@ -775,13 +852,13 @@ DbgLv(1) << "sGA: calcsols size mxdpth" << calculated_solutes.size() << max_dept
 
 int mm=simulation_values.solutes.size()-1;
 DbgLv(1) << "sGA:   sol0.s solM.s" << simulation_values.solutes[0].s
- << simulation_values.solutes[mm].s << "  M=" << mm;;
+ << simulation_values.solutes[mm].s << "  M=" << mm;
 DbgLv(1) << "sGA:     solM.k" << simulation_values.solutes[mm].k;
 DbgLv(1) << "sGA:     solM.c" << simulation_values.solutes[mm].c;
 edata = &data_sets[ds_start]->run_data;
 DbgLv(1) << "sGA:    edata scans points" << edata->scanCount() << edata->pointCount();
 
-   calc_residuals( ds_start, ds_count, simulation_values );
+   calc_residuals( ds_start, ds_count, simulation_values, bfg_offset );
 
    sigmas.clear();
    res_data          = &simulation_values.residuals;
@@ -889,13 +966,50 @@ void US_MPI_Analysis::iterate( void )
    previous_values.variances = simulation_values.variances;
    previous_values.ti_noise  = simulation_values.ti_noise;
    previous_values.ri_noise  = simulation_values.ri_noise;
-
+    int bfg_offset = -1;
+    int csd_offset = -1;
+    if (!data_sets[current_dataset]->solution_rec.buffer.cosed_component.isEmpty()) {
+        US_SimulationParameters simulationParameters = data_sets[current_dataset]->simparams;
+        US_DataIO::RawData edata = data_sets[current_dataset]->run_data.convert_to_raw_data();
+        US_SolveSim::DataSet* dataSet = data_sets[current_dataset];
+        // we need a
+        for (int i = 0; i < data_sets_bfgs.length(); i++){
+            US_Math_BF::Band_Forming_Gradient* bfg = &data_sets_bfgs[i];
+            if (dataSet->solution_rec.buffer.cosed_component == bfg->cosed_component ||
+                abs(simulationParameters.meniscus - bfg->meniscus) < GSL_ROOT5_DBL_EPSILON ||
+                abs(simulationParameters.bottom - bfg->bottom) < GSL_ROOT5_DBL_EPSILON ||
+                abs(simulationParameters.band_volume - bfg->overlay_volume) < GSL_ROOT5_DBL_EPSILON ||
+                abs( simulationParameters.cp_pathlen - bfg->cp_pathlen) < GSL_ROOT5_DBL_EPSILON ||
+                abs( simulationParameters.cp_angle - bfg->cp_angle) < GSL_ROOT5_DBL_EPSILON ||
+                simulationParameters.radial_resolution == bfg->simparms.radial_resolution ||
+                simulationParameters.temperature == bfg->simparms.temperature ||
+                edata.scanData.last().seconds < bfg->dens_bfg_data.scanData.last().seconds){
+                // recalculation needed
+                bfg_offset = i;
+                break;
+            }
+        }
+        if (bfg_offset == -1){
+            US_Math_BF::Band_Forming_Gradient bfg = US_Math_BF::Band_Forming_Gradient(
+                    simulationParameters.meniscus,
+                    simulationParameters.bottom,
+                    simulationParameters.band_volume,
+                    dataSet->solution_rec.buffer.cosed_component,
+                    simulationParameters.cp_pathlen,
+                    simulationParameters.cp_angle);
+           bfg.get_eigenvalues();
+           bfg.calculate_gradient(simulationParameters, &edata);
+           data_sets_bfgs << bfg;
+           bfg_offset = data_sets_bfgs.length() -1;
+        }
+    }
    // Set up for another round at depth 0
    Sa_Job job;
    job.mpi_job.dataset_offset = current_dataset;
    job.mpi_job.dataset_count  = datasets_to_process;
    job.mpi_job.meniscus_value = meniscus_value;
    job.mpi_job.bottom_value   = bottom_value;
+   job.mpi_job.bfg_offset     = bfg_offset;
    max_experiment_size        = min_experiment_size;
 
    QVector< US_Solute > prev_solutes = simulation_values.solutes;
@@ -933,6 +1047,48 @@ void US_MPI_Analysis::iterate( void )
 // Submit a queued job
 void US_MPI_Analysis::submit( Sa_Job& job, int worker )
 {
+   int bfg_offset = -1;
+   int csd_offset = -1;
+   if (!data_sets[current_dataset]->solution_rec.buffer.cosed_component.isEmpty() && data_sets[current_dataset]->simparams.meshType == US_SimulationParameters::ASTFVM) {
+      US_SimulationParameters simulationParameters = data_sets[current_dataset]->simparams;
+      US_DataIO::RawData edata = data_sets[current_dataset]->run_data.convert_to_raw_data();
+      US_SolveSim::DataSet* dataSet = data_sets[current_dataset];
+      // we need a
+      for (int i = 0; i < data_sets_bfgs.length(); i++){
+         US_Math_BF::Band_Forming_Gradient* bfg = &data_sets_bfgs[i];
+         if (dataSet->solution_rec.buffer.cosed_component == bfg->cosed_component ||
+             abs(simulationParameters.meniscus - bfg->meniscus) < GSL_ROOT5_DBL_EPSILON ||
+             abs(simulationParameters.bottom - bfg->bottom) < GSL_ROOT5_DBL_EPSILON ||
+             abs(simulationParameters.band_volume - bfg->overlay_volume) < GSL_ROOT5_DBL_EPSILON ||
+             abs(simulationParameters.cp_pathlen - bfg->cp_pathlen) < GSL_ROOT5_DBL_EPSILON ||
+             abs(simulationParameters.cp_angle - bfg->cp_angle) < GSL_ROOT5_DBL_EPSILON ||
+             simulationParameters.radial_resolution == bfg->simparms.radial_resolution ||
+             simulationParameters.temperature == bfg->simparms.temperature ||
+             edata.scanData.last().seconds < bfg->dens_bfg_data.scanData.last().seconds){
+            // recalculation needed
+            bfg_offset = i;
+            DbgLv(2) << "bfg found in position " << i;
+            break;
+         }
+      }
+      if (bfg_offset == -1){
+         auto bfg =  new US_Math_BF::Band_Forming_Gradient(
+                  simulationParameters.meniscus,
+                  simulationParameters.bottom,
+                  simulationParameters.band_volume,
+                  dataSet->solution_rec.buffer.cosed_component,
+                  simulationParameters.cp_pathlen,
+                  simulationParameters.cp_angle);
+         if ( !bfg-> upper_comps.isEmpty() ) {
+            bfg->get_eigenvalues();
+            bfg->calculate_gradient(simulationParameters, &edata);
+            data_sets_bfgs << *bfg;
+            bfg_offset = data_sets_bfgs.length() -1;
+            DbgLv(2) << "bfg calculated and stored in position " << bfg_offset;
+         }
+      }
+      DbgLv(1) << "bfg calculated and stored in position " << bfg_offset;
+   }
    job.mpi_job.command        = MPI_Job::PROCESS;
    job.mpi_job.length         = job.solutes.size();
    job.mpi_job.meniscus_value = meniscus_value;
@@ -940,6 +1096,9 @@ void US_MPI_Analysis::submit( Sa_Job& job, int worker )
    job.mpi_job.solution       = mc_iteration;
    job.mpi_job.dataset_offset = current_dataset;
    job.mpi_job.dataset_count  = datasets_to_process;
+   job.mpi_job.bfg_offset     = bfg_offset;
+   job.mpi_job.primary_fit = primaryFit;
+   job.mpi_job.secondary_fit = secondaryFit;
 int dd=job.mpi_job.depth;
 if (dd==0) { DbgLv(1) << "Mast: submit: worker" << worker << "  sols"
  << job.mpi_job.length << "mciter cds" << mc_iteration << current_dataset << " depth" << dd; }

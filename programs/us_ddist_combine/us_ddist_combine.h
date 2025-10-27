@@ -45,7 +45,7 @@ class US_DDistr_Combine : public US_Widgets
             QVector< double >  yvals;    // Distrib. Y values (concentrations)
             QColor             color;    // Curve color
             int                iters;    // Iterations flag (>0 means MC)
-            int                xtype;    // X type  (0-5 for x,MW,D,ff0,vb,MWl)
+            int                xtype;    // X type  (0-7 for s20w,MW,D20w,ff0,vb,MWl,s,D)
             US_Model           model;    // The model
 
             bool operator== ( const DistrDesc& ddiscr )
@@ -145,6 +145,8 @@ class US_DDistr_Combine : public US_Widgets
       QRadioButton*  rb_pltff0;
       QRadioButton*  rb_pltvb;
       QRadioButton*  rb_pltMWl;
+      QRadioButton*  rb_plts;
+      QRadioButton*  rb_pltD;
 
       QTextEdit*     te_status;
 

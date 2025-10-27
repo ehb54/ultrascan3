@@ -397,6 +397,16 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    ti_noise.count = 0;
    ri_noise.count = 0;
 
+   initialize_adv_vals();
+
+   sdata          = &wsdata;
+
+   setMaximumSize( qApp->desktop()->size() - QSize( 40, 40 ) );
+   data_plot2->replot();
+}
+
+void US_FeMatch::initialize_adv_vals()
+{
    adv_vals[ "simpoints"  ] = "200";
    adv_vals[ "bandvolume" ] = "0.015";
    adv_vals[ "parameter"  ] = "0";
@@ -404,11 +414,6 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    adv_vals[ "meshtype"   ] = "ASTFEM";
    adv_vals[ "gridtype"   ] = "Moving";
    adv_vals[ "modelsim"   ] = "mean";
-
-   sdata          = &wsdata;
-
-   setMaximumSize( qApp->desktop()->size() - QSize( 40, 40 ) );
-   data_plot2->replot();
 }
 
 // public function to get pointer to edit data
@@ -761,6 +766,10 @@ DbgLv(1) << "Fem:Upd: (0)svbar" << svbar;
             errmsg );
       solution_rec.commonVbar20 = vbar;
       le_solution ->setText( tr( "( ***Undefined*** )" ) );
+   }
+   // if the buffer has cosedimenting components, default to ASTFVM
+   if (!solution_rec.buffer.cosed_component.isEmpty()){
+      adv_vals["meshtype"] = "ASTFVM";
    }
 
    ti_noise.count = 0;
@@ -2065,20 +2074,7 @@ void US_FeMatch::simulate_model( )
    double radhi   = edata->radius( nconc - 1 );
 
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
-int lc=model_used.components.size()-1;
-DbgLv(1) << "SimMdl: 0) s D c"
- << model_used.components[ 0].s << model_used.components[ 0].D
- << model_used.components[ 0].signal_concentration << "  n" << lc;
-DbgLv(1) << "SimMdl: n) s D c"
- << model_used.components[lc].s << model_used.components[lc].D
- << model_used.components[lc].signal_concentration;
-   adjust_model();
-DbgLv(1) << "SimMdl: 0) s D c"
- << model.components[ 0].s << model.components[ 0].D
- << model.components[ 0].signal_concentration;
-DbgLv(1) << "SimMdl: n) s D c"
- << model.components[lc].s << model.components[lc].D
- << model.components[lc].signal_concentration;
+
 
    // Initialize simulation parameters using edited data information
    US_Passwd pw;
@@ -2107,7 +2103,7 @@ DbgLv(1) << "SimMdl: speed_steps:" << simparams.speed_step.size();
    QString gtyp = adv_vals[ "gridtype"   ];
    QString bvol = adv_vals[ "bandvolume" ];
 
-#if 0
+
    if ( mtyp.contains( "Claverie" ) )
       simparams.meshType = US_SimulationParameters::CLAVERIE;
    else if ( mtyp.contains( "Moving Hat" ) )
@@ -2117,30 +2113,42 @@ DbgLv(1) << "SimMdl: speed_steps:" << simparams.speed_step.size();
    else if ( mtyp.contains( "ASTFVM"     ) )
    {
       simparams.meshType = US_SimulationParameters::ASTFVM;
-      qDebug() << "meshtype= fvm";
    }
-#endif
    if ( gtyp.contains( "Constant" ) )
       simparams.gridType = US_SimulationParameters::FIXED;
-
-   if ( model.components[ 0 ].sigma == 0.0  &&
-        model.components[ 0 ].delta == 0.0)
-      simparams.meshType = US_SimulationParameters::ASTFEM;
-   else
-      simparams.meshType = US_SimulationParameters::ASTFVM;
 
    simparams.firstScanIsConcentration = false;
 
    double concval1      = 0.0;
 
-   if ( simparams.band_forming )
+   if ( simparams.band_forming && bvol.toDouble() > 0.0005)
    {
       simparams.band_volume = bvol.toDouble();
       //concval1              = 1.0;
       //simparams.firstScanIsConcentration = true;
    }
    else
+   {
       simparams.band_volume = 0.0;
+      simparams.band_forming = false;
+   }
+
+   if (simparams.meshType != US_SimulationParameters::ASTFVM){
+      int lc=model_used.components.size()-1;
+      DbgLv(1) << "SimMdl: 0) s D c"
+               << model_used.components[ 0].s << model_used.components[ 0].D
+               << model_used.components[ 0].signal_concentration << "  n" << lc;
+      DbgLv(1) << "SimMdl: n) s D c"
+               << model_used.components[lc].s << model_used.components[lc].D
+               << model_used.components[lc].signal_concentration;
+      adjust_model();
+      DbgLv(1) << "SimMdl: 0) s D c"
+               << model.components[ 0].s << model.components[ 0].D
+               << model.components[ 0].signal_concentration;
+      DbgLv(1) << "SimMdl: n) s D c"
+               << model.components[lc].s << model.components[lc].D
+               << model.components[lc].signal_concentration;
+   }
 
    // Make a simulation copy of the experimental data without actual readings
 
@@ -2252,10 +2260,7 @@ DbgLv(1) << "SimMdl: nthread" << nthread << "ncomp" << ncomp
    // Do simulation by several possible ways: 1-/Multi-thread, ASTFEM/ASTFVM
    if ( nthread < 2 )
    {
-      if ( model.components[ 0 ].sigma == 0.0  &&
-           model.components[ 0 ].delta == 0.0  &&
-           model.coSedSolute           <  0.0  &&
-           compress                    == 0.0 )
+      if ( simparams.meshType != US_SimulationParameters::ASTFVM )
       {
 DbgLv(1) << "SimMdl: (fematch:)Finite Element Solver is called";
 //*DEBUG*
@@ -2307,12 +2312,15 @@ DbgLv(1) << "SimMdl: (1)trmsd" << trmsd;
       else
       {
 DbgLv(1) << "SimMdl: (fematch:)Finite Volume Solver is called";
+         model = model_used;
          US_LammAstfvm *astfvm     = new US_LammAstfvm( model, simparams );
-         //connect( astfvm,  SIGNAL( comp_progress( int ) ), this,  SLOT(   update_progress(   int ) ) );
+         connect( astfvm,  SIGNAL( comp_progress( int ) ), this,  SLOT(   update_progress(   int ) ) );
          //solution_rec.buffer.compressibility = compress;
          //solution_rec.buffer.manual          = manual;
-         //astfvm->set_buffer( solution_rec.buffer );
+         astfvm->set_buffer( solution_rec.buffer );
          astfvm->calculate(     *sdata );
+         // free memory stuff
+         delete astfvm;
       }
       //-----------------------
       //Simulation part is over
@@ -3038,16 +3046,45 @@ QString US_FeMatch::distrib_info()
                   + indent( 4 ) + "<table>\n";
 
    mstr += table_row( tr( "Model Analysis:" ), mdla + msim );
+   mstr += table_row( tr( "Solution:" ),
+                      QString( solution_rec.solutionDesc ) + " " + solution_rec.solutionGUID );
    mstr += table_row( tr( "Number of Components:" ),
                       QString::number( ncomp ) );
    mstr += table_row( tr( "Residual RMS Deviation:" ),
                       le_rmsd->text()  );
    mstr += table_row( tr( "Model-reported RMSD:"    ),
                       ( rmsd_m > 0.0 ) ? QString::number( rmsd_m ) : "(none)" );
+   mstr += table_row( tr( "s20w correction:" ),
+                      QString::number( solution.s20w_correction )  );
+   mstr += table_row( tr( "D20w correction:" ),
+                      QString::number( solution.D20w_correction )  );
+   QStringList meshType;
+   meshType <<"ASTFEM"<< "CLAVERIE"<< "MOVING_HAT"<< "USER"<< "ASTFVM";
+   mstr += table_row( tr( "Mesh Type:" ),
+                      meshType[simparams.meshType] );
+   QStringList gridType;
+   gridType << "FIXED" << "MOVING";
+   mstr += table_row( tr( "Grid Type:" ),
+                      gridType[simparams.gridType] );
+   mstr += table_row( tr( "Simulation points:" ),
+                      QString::number( simparams.simpoints )  );
+   mstr += table_row( tr( "Radial Resolution:" ),
+                      QString::number( simparams.radial_resolution )  );
+   mstr += table_row( tr( "Band forming:" ),
+                      QString( simparams.band_forming?(QString("Yes") + " "+ QString::number(simparams.band_volume) + " mL"):"No" ));
+   mstr += table_row( tr( "Channel angle:" ),
+                      QString::number( simparams.cp_angle )  );
+   mstr += table_row( tr( "Mensicus:" ),
+                      QString::number( simparams.meniscus )  + " cm");
+   mstr += table_row( tr( "Bottom:" ),
+                      QString::number( simparams.bottom )  );
+   mstr += table_row( tr( "Bottom Position" ),
+                      QString::number( simparams.bottom_position )  + " cm");
 
    double sum_mw  = 0.0;
    double sum_s   = 0.0;
    double sum_D   = 0.0;
+   double sum_ff0 = 0.0;
    double sum_c   = 0.0;
    double sum_v   = 0.0;
    double sum_k   = 0.0;
@@ -3065,6 +3102,7 @@ QString US_FeMatch::distrib_info()
       sum_mw     += ( model_used.components[ ii ].mw * conc );
       sum_s      += ( model_used.components[ ii ].s  * conc );
       sum_D      += ( model_used.components[ ii ].D  * conc );
+      sum_ff0    += ( model_used.components[ ii ].f_f0  * conc );
       sum_v      += ( vval * conc );
       sum_k      += ( kval * conc );
       mink        = qMin( kval, mink );
@@ -3560,7 +3598,7 @@ bool US_FeMatch::mkdir( const QString& baseDir, const QString& subdir )
 void US_FeMatch::new_triple( int trow )
 {
    haveSim    = false;
-
+   initialize_adv_vals();
    update( trow );
 
    data_plot();

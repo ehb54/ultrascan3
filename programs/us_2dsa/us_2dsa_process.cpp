@@ -17,7 +17,9 @@ US_2dsaProcess::US_2dsaProcess( QList< SS_DATASET* >& dsets,
 {
    bdata            = &dsets[ 0 ]->run_data;  // pointer to base experiment data
    edata            = bdata;          // working pointer to experiment
-   parentw          = parent; 
+   parentw          = parent;
+   codiff_needed = false;
+   cosed_needed = false;
    dbg_level        = US_Settings::us_debug();
    maxrss           = 0;              // max memory
    maxdepth         = 0;              // maximum depth index of tasks
@@ -32,11 +34,15 @@ US_2dsaProcess::US_2dsaProcess( QList< SS_DATASET* >& dsets,
    mmtype           = 0;              // meniscus/montecarlo type (NONE)
    mmiters          = 0;              // meniscus/montecarlo iterations
    fnoionly         = US_Settings::debug_match( "2dsaFinalNoiseOnly" );
+   cosed_comp_data.clear();
+   cosed_components.clear();
 //   fit_bottom       = false;
   
    itvaris  .clear();                 // iteration variances
    ical_sols.clear();                 // iteration final calculated solutes
    simparms = &dsets[ 0 ]->simparams; // pointer to simulation parameters
+   bsimparms = dsets[ 0 ]->simparams; // pointer to simulation parameters
+   bsimparms.vbar = dsets[0]->vbar20;
    if ( bdata->bottom == simparms->bottom_position )
    {
       bdata->bottom    = 0.0;
@@ -47,9 +53,14 @@ US_2dsaProcess::US_2dsaProcess( QList< SS_DATASET* >& dsets,
    s_variance       = QString( "" );
    s_meniscus       = QString( "" );
    s_bottom         = QString( "" );
+   s_angle          = QString( "" );
+   s_primary        = QString( "" );
+   s_secondary      = QString( "" );
    vari_curr        = 0.0;
    nscans           = bdata->scanCount();
    npoints          = bdata->pointCount();
+   csD = nullptr;
+   bfg = nullptr;
 
    if ( ( nscans * npoints ) > 50000 )
       //mintsols         = 80;
@@ -129,23 +140,49 @@ DbgLv(1) << "2P:SF: sll sul nss" << slolim << suplim << nssteps
       wdata              = *bdata;
 
       if ( mmtype == 1 )
-      {  // if meniscus, use the start meniscus,bottom values
+      {  // if meniscus, use the start meniscus,bottom,angle values
          edata              = &wdata;
-         double bmeniscus   = bdata->meniscus;
-         double bbottom     = bdata->bottom;
-         if ( bbottom == 0.0 )
+         int k_iter         = mm_iter;
+         int primary_iter   = 0;
+         int secondary_iter = 0;
+         if ( bsimparms.primaryFit != US_SimulationParameters::NOTHING && bsimparms.secondaryFit != US_SimulationParameters::NOTHING )
          {
-            bbottom            = dsets[ 0 ]->simparams.bottom;
-            bdata->bottom      = bbottom;
+            primary_iter   = k_iter / bsimparms.secondary_variations;
+            secondary_iter = k_iter % bsimparms.secondary_variations;
          }
-         edata->meniscus    = bmeniscus - menrange * 0.5;
-         edata->bottom      = bbottom   - menrange * 0.5;
-         dsets[ 0 ]->simparams.meniscus = edata->meniscus;
-         dsets[ 0 ]->simparams.bottom   = edata->bottom;
-DbgLv(1) << "2P:SF: MENISC: mm_iter" << mm_iter
- << "bmeniscus bbottom" << bmeniscus << bbottom
- << "emeniscus ebottom" << edata->meniscus << edata->bottom;
+         else if ( bsimparms.primaryFit != US_SimulationParameters::NOTHING )
+         {
+            primary_iter   = k_iter;
+         }
+         else if ( bsimparms.secondaryFit != US_SimulationParameters::NOTHING )
+         {
+            secondary_iter = k_iter;
+         }
 
+         DbgLv( 1 ) << "SET_MEN: k_iter primary_iter secondary_iter" << k_iter << primary_iter << secondary_iter;
+         double primary_base = bsimparms.get_parameter_value( bsimparms.primaryFit );
+         double secondary_base = bsimparms.get_parameter_value( bsimparms.secondaryFit );
+         double current_primary = primary_base - bsimparms.primary_range * 0.5;
+         current_primary += (bsimparms.primary_range / (double)(bsimparms.primary_variations - 1) * (double)primary_iter);
+         double current_secondary = secondary_base - bsimparms.secondary_range * 0.5;
+         current_secondary += (bsimparms.secondary_range / (double)(bsimparms.secondary_variations - 1) * (double)secondary_iter);
+         simparms->set_parameter_value( bsimparms.primaryFit, current_primary );
+         simparms->set_parameter_value( bsimparms.secondaryFit, current_secondary );
+         simparms->current_primary_variation = primary_iter;
+         simparms->current_secondary_variation = secondary_iter;
+         edata->meniscus = simparms->meniscus;
+         edata->bottom   = simparms->bottom;
+         dsets[0]->vbar20 = simparms->vbar;
+         double avTemp = edata->average_temperature();
+         US_Math2::SolutionData sd;
+         sd.density      = dsets[0]->solution_rec.buffer.density;
+         sd.viscosity    = dsets[0]->solution_rec.buffer.viscosity;
+         sd.vbar20       = dsets[0]->vbar20;
+         sd.vbar         = US_Math2::adjust_vbar20(sd.vbar20, avTemp);
+         sd.manual       = dsets[0]->solution_rec.buffer.manual;
+         US_Math2::data_correction( avTemp, sd );
+         dsets[0]->s20w_correction = sd.s20w_correction;
+         dsets[0]->D20w_correction = sd.D20w_correction;
 //         set_meniscus();
       }
    }
@@ -211,7 +248,7 @@ DbgLv(1) << "2P:SF: (1)maxrss" << maxrss << "jgrefine" << jgrefine;
    double ssulim = suplim * 1.0e-13;
    int    ncomps = model.components.size();
    double vbar20 = dsets[ 0 ]->vbar20;
-
+   bool dens_grad = simparms->meshType == US_SimulationParameters::ASTFVM && !dsets[0]->solution_rec.buffer.cosed_component.isEmpty();
    // Generate the original sub-grid solutes list
    if ( jgrefine > 0 )
    {
@@ -250,7 +287,7 @@ DbgLv(1) << "2P:SF: (1)maxrss" << maxrss << "jgrefine" << jgrefine;
                                0.0,
                                model.components[ jj ].vbar20,
                                model.components[ jj ].D );
-               DbgLv(1) << "ii" << ii << "soli" << soli.s << soli.k << soli.c << soli.v;
+               DbgLv(1) << "ii" << ii << "soli" << soli.s << soli.k << soli.c << soli.v << soli.d;
                solvec << soli;
             }
 
@@ -267,7 +304,7 @@ DbgLv(1) << "2P:SF: (1)maxrss" << maxrss << "jgrefine" << jgrefine;
                             0.0,
                             model.components[ ii ].vbar20,
                             model.components[ ii ].D );
-            DbgLv(1) << "ii" << ii << "soli" << soli.s << soli.k << soli.c;
+            DbgLv(1) << "ii" << ii << "soli" << soli.s << soli.k << soli.c << soli.v << soli.d;
             solvec << soli;
          }
 
@@ -300,7 +337,15 @@ DbgLv(1) << "2P:SF: orig_sols: "
  << orig_sols[0][k1].s*1.e+13 << orig_sols[0][k1].k << "  "
  << orig_sols[k0][0].s*1.e+13 << orig_sols[k0][0].k << "  "
  << orig_sols[k0][k2].s*1.e+13 << orig_sols[k0][k2].k;
+   // Calculate Cosedimenting/Codiffusing stuff if needed
+   if (dens_grad)
+   {
+      calculate_cosedimenting_component();
 
+   }
+   emit message_update( pmessage_head() +
+                        tr( "Queueing depth-0 tasks \n of %1 subgrids\n using %2 threads ..." )
+                              .arg( nsubgrid ).arg( nthreads ), false );
    // Queue all the depth-0 tasks
    for ( int ktask = 0; ktask < nsubgrid; ktask++ )
    {
@@ -338,37 +383,364 @@ DbgLv(1) << "2P:SF:   kstask nthreads" << kstask << nthreads << job_queue.size()
    memory_check();
 }
 
+void US_2dsaProcess::calculate_cosedimenting_component()
+{
+      emit message_update( pmessage_head() +
+                           tr( "Calculating co-sedimenting components" ), false );
+      cosed_components = dsets[0]->solution_rec.buffer.cosed_component;
+      cosed_components.detach();
+      US_DataIO::RawData auc_data = dsets[0]->run_data.convert_to_raw_data();
+      US_Model cosed_model = model;
+      cosed_model.coSedSolute = -1;
+      cosed_model.components.clear();
+      US_Model cosed_model_tmp = model;
+      cosed_model_tmp.coSedSolute = -1;
+      double base_density = 0.0;
+      double base_viscosity = 0.0;
+      QMap<QString, US_CosedComponent> upper_cosed;
+      QMap<QString, US_CosedComponent> lower_cosed;
+      QList<QString> base_comps;
+      foreach (US_CosedComponent i,  cosed_components) {
+         DbgLv(1) << "buff dens_coeff" << i.dens_coeff[ 0 ] << i.dens_coeff[ 1 ] << i.dens_coeff[ 2 ]
+                  << i.dens_coeff[ 3 ] << i.dens_coeff[ 4 ] << i.dens_coeff[ 5 ];
+         DbgLv(1) << "buff visc_coeff" << i.visc_coeff[ 0 ] << i.visc_coeff[ 1 ] << i.visc_coeff[ 2 ]
+                  << i.visc_coeff[ 3 ] << i.visc_coeff[ 4 ] << i.visc_coeff[ 5 ];
+         if ( !i.overlaying && upper_cosed.contains(i.name)) {
+            // the current component is in the lower part, but there is another component with the same name in the
+            // overlaying section of the band forming gradient
+            US_CosedComponent j = upper_cosed[ i.name ];
+            if ( j.conc > i.conc ) {
+               // the concentration is higher in upper part, move it completely to the upper part and set the
+               // concentration to the excess concentration
+               j.conc = j.conc - i.conc;
+               upper_cosed[ j.name ] = j;
+               continue;
+            } else if ( fabs(j.conc - i.conc) < GSL_ROOT5_DBL_EPSILON ) {
+               // the concentration of both components is roughly equal, remove the component from the upper and lower part
+               upper_cosed.remove(j.name);
+               continue;
+            } else {
+               j.conc = i.conc - j.conc;
+               lower_cosed[ j.name ] = j;
+               upper_cosed.remove(j.name);
+               continue;
+            }
+         }
+         if ( i.overlaying && lower_cosed.contains(i.name)) {
+            // the current component is in the lower part, but there is another component with the same name in the
+            // overlaying section of the band forming gradient
+            US_CosedComponent j = lower_cosed[ i.name ];
+            if ( j.conc > i.conc ) {
+               // the concentration is higher in lower part, move it completely to the lower part and set the
+               // concentration to the excess concentration
+               j.conc = j.conc - i.conc;
+               lower_cosed[ j.name ] = j;
+               continue;
+            } else if ( fabs(j.conc - i.conc) < GSL_ROOT5_DBL_EPSILON ) {
+               // the concentration of both components is roughly equal, remove the component from the upper and lower part
+               lower_cosed.remove(j.name);
+               continue;
+            } else {
+               j.conc = i.conc - j.conc;
+               upper_cosed[ j.name ] = j;
+               lower_cosed.remove(j.name);
+               continue;
+            }
+         }
+         if ( i.overlaying )
+            upper_cosed[ i.name ] = i;
+         else
+            lower_cosed[ i.name ] = i;
+
+      }
+      // Determine the base of the buffer
+      foreach (US_CosedComponent cosed_comp, cosed_components) {
+         if ( cosed_comp.overlaying ) { continue; } // overlaying components can't be part of the base of the buffer
+         if ( lower_cosed.contains(cosed_comp.name) &&
+              (fabs(lower_cosed[ cosed_comp.name ].conc - cosed_comp.conc) < GSL_ROOT5_DBL_EPSILON) &&
+              cosed_comp.s_coeff == 0.0 && cosed_comp.d_coeff == 0.0 ) {
+            // the concentration matches the original one entered. -> part of the buffer base
+            base_comps << cosed_comp.GUID + cosed_comp.componentID;
+            base_density += cosed_comp.dens_coeff[ 0 ];
+            base_viscosity += cosed_comp.visc_coeff[ 0 ];
+         }
+      }
+      // make sure the selected model is adjusted for the selected temperature
+      // and buffer conditions:
+      US_Math2::SolutionData sol_data{};
+      sol_data.density = base_density;
+      sol_data.viscosity = base_viscosity;
+      sol_data.manual = true;
+      foreach(US_CosedComponent cosed_comp,  cosed_components) {
+         // get the excess concentrations
+         if ( cosed_comp.overlaying && upper_cosed.contains(cosed_comp.name)) {
+            cosed_comp = upper_cosed.value(cosed_comp.name);
+         } else if ( !cosed_comp.overlaying && lower_cosed.contains(cosed_comp.name)) {
+            cosed_comp = lower_cosed.value(cosed_comp.name);
+         } else {
+            DbgLv(1) << "nothing";
+            continue;
+         }
+         if ( cosed_comp.s_coeff == 0.0 && cosed_comp.d_coeff == 0.0 ) {
+            DbgLv(1) << "not cosedimenting";
+            continue;
+         }
+         if (cosed_comp.s_coeff == 0.0){
+            DbgLv(1) << "pure diffusive";
+            codiff_needed = true;
+            continue;
+         }
+         cosed_needed = true;
+         cosed_model_tmp.components.clear();
+         US_Model::SimulationComponent tmp = US_Model::SimulationComponent();
+         tmp.name = cosed_comp.name;
+         tmp.analyteGUID = cosed_comp.GUID;
+         tmp.molar_concentration = cosed_comp.conc;
+         tmp.signal_concentration = cosed_comp.conc;
+         tmp.vbar20 = cosed_comp.vbar;
+         if (cosed_comp_data.contains(tmp.analyteGUID)){
+            continue;}
+         sol_data.vbar20 = cosed_comp.vbar; //The assumption here is that vbar does not change with
+         sol_data.vbar = cosed_comp.vbar; //temp, so vbar correction will cancel in s correction
+         US_Math2::data_correction(simparms->temperature, sol_data);
+         tmp.s = cosed_comp.s_coeff / sol_data.s20w_correction;
+         tmp.D = cosed_comp.d_coeff / sol_data.D20w_correction;
+         tmp.f_f0 = 0.0;
+         tmp.analyte_type = 4;
+         cosed_model.components << tmp;
+         cosed_model_tmp.components << tmp;
+         cosed_model_tmp.update_coefficients();
+         emit message_update( pmessage_head() +
+                              tr( "Calculating co-sedimenting component %1 ..." )
+                                    .arg( cosed_comp.name ), false );
+         csD = new US_LammAstfvm::CosedData(cosed_model_tmp, *simparms, &auc_data, &cosed_components,
+                                             base_density, base_viscosity);
+         cosed_comp_data[ tmp.analyteGUID ] = csD->sa_data;
+         DbgLv(2) << "NonIdeal2: create saltdata";
+         cosed_model.update_coefficients();
+         csD->model = cosed_model;
+         csD->cosed_comp_data = cosed_comp_data;
+         csD->cosed_comp_data.detach();
+         DbgLv(1) << "CosedData: cosed_model comp" << csD->model.components.size() << "cosed_comp_data"
+                  << cosed_comp_data.size() << "sa_data.scanCount()" << csD->sa_data.scanCount();
+      }
+      if (!cosed_comp_data.isEmpty()){
+         csD->sa_data= cosed_comp_data.first();}
+
+      if (codiff_needed){
+         emit message_update( pmessage_head() +
+                              tr( "Calculating co-diffusing components ..." )
+                                    , false );
+         bool recalc = true;
+         if ( bfg != nullptr ){
+            // check if the band forming gradient is already calculated and fits the requirements
+            if (bfg->is_suitable(simparms->meniscus, simparms->bottom, simparms->band_volume,
+                                 simparms->cp_pathlen, simparms->cp_angle,
+                                 dsets[0]->solution_rec.buffer.cosed_component,
+                                 (int)edata->scanData.last().seconds)){
+               recalc = false;
+            }
+            if ( recalc ){
+               delete bfg;
+               bfg = nullptr;
+            }
+         }
+         if ( recalc ){
+            bfg = new US_Math_BF::Band_Forming_Gradient(simparms->meniscus,simparms->bottom,
+                                                        simparms->band_volume,
+                                                        dsets[0]->solution_rec.buffer.cosed_component,
+                                                        simparms->cp_pathlen,simparms->cp_angle);
+            bfg->get_eigenvalues();
+            bfg->calculate_gradient(*simparms,&auc_data);
+         }
+         if (dbg_level > 1 && false){
+               QString rawGUID = US_Util::uuid_unparse( (unsigned char*)auc_data.rawGUID );
+               double *Visc;
+               double *Dens;
+               double *Conc;
+               // save density and viscosity gradient to disk
+               QString dens_raw_file = "density_gradient_" + rawGUID + ".txt";
+               QString visc_raw_file = "viscosity_gradient_" + rawGUID + ".txt";
+               QString conc_raw_file = "concentration_gradient_" + rawGUID + ".txt";
+               QFile dens_raw_out(dens_raw_file);
+               QFile visc_raw_out(visc_raw_file);
+               QFile conc_raw_out(conc_raw_file);
+               if (dens_raw_out.open(QIODevice::WriteOnly | QIODevice::Text) && visc_raw_out.open(QIODevice::WriteOnly | QIODevice::Text) && conc_raw_out.open(QIODevice::WriteOnly | QIODevice::Text)){
+                  QTextStream dens_stream(&dens_raw_out);
+                  QTextStream visc_stream(&visc_raw_out);
+                  QTextStream conc_stream(&conc_raw_out);
+                  dens_stream << "radius\t";
+                  visc_stream << "radius\t";
+                  conc_stream << "radius\t";
+                  QVector<QVector<double>> dens_data(auc_data.scanCount());
+                  QVector<QVector<double>> visc_data(auc_data.scanCount());
+                  QVector<QVector<double>> conc_data(auc_data.scanCount());
+
+                  int scan = 2;
+                  int* scan_hint = &scan;
+                  for (int i = 0; i < auc_data.scanCount(); i++){
+                     double time = auc_data.scanData[i].seconds;
+                     double temp = auc_data.scanData[i].temperature + K0;
+                     QVector<double> ViscVec(auc_data.pointCount());
+                     QVector<double> DensVec(auc_data.pointCount());
+                     QVector<double> ConcVec(auc_data.pointCount());
+                     Visc = ViscVec.data();
+                     Dens = DensVec.data();
+                     Conc = ConcVec.data();
+                     for ( int j = 0; j < auc_data.pointCount(); j++ )      // loop for all x[m]
+                     {
+                        Dens[ j ] = bfg->base_density;
+                        Visc[ j ] = bfg->base_viscosity;
+                        Conc[ j ] = 0.0;
+                     }
+                     bfg->interpolateCCodiff(auc_data.pointCount(), auc_data.xvalues.data(), time, temp, Visc, Dens, Conc);
+                     dens_data[i] = DensVec;
+                     visc_data[i] = ViscVec;
+                     conc_data[i] = ConcVec;
+                  }
+                  for (int i = 0; i < auc_data.scanCount(); i++){
+                     dens_stream << "Scan " << i << "\t";
+                     dens_stream << "Scan " << i << "\t";
+                     visc_stream << "Scan " << i << "\t";
+                     visc_stream << "Scan " << i << "\t";
+                     conc_stream << "Scan " << i << "\t";
+                     conc_stream << "Scan " << i << "\t";
+                  }
+                  dens_stream << "\n";
+                  visc_stream << "\n";
+                  conc_stream << "\n";
+                  dens_stream << "\t";
+                  visc_stream << "\t";
+                  conc_stream << "\t";
+                  for (int i = 0; i < auc_data.scanCount(); i++){
+                     dens_stream << QString::number(auc_data.scanData[i].seconds,'f',2) << "\t";
+                     dens_stream << QString::number(auc_data.scanData[i].seconds,'f',2) << "\t";
+                     visc_stream << QString::number(auc_data.scanData[i].seconds,'f',2) << "\t";
+                     visc_stream << QString::number(auc_data.scanData[i].seconds,'f',2) << "\t";
+                     conc_stream << QString::number(auc_data.scanData[i].seconds,'f',2) << "\t";
+                     conc_stream << QString::number(auc_data.scanData[i].seconds,'f',2) << "\t";
+                  }
+                  dens_stream << "\n";
+                  visc_stream << "\n";
+                  conc_stream << "\n";
+                  for (int j = 0; j < auc_data.pointCount(); j++){
+                     dens_stream << QString::number(auc_data.radius(j), 'f', 4) << "\t";
+                     visc_stream << QString::number(auc_data.radius(j), 'f', 4) << "\t";
+                     conc_stream << QString::number(auc_data.radius(j), 'f', 4) << "\t";
+                     for (int i = 0; i < auc_data.scanCount(); i++){
+                        dens_stream << QString::number(auc_data.scanData[i].seconds, 'f', 2) << "\t";
+                        visc_stream << QString::number(auc_data.scanData[i].seconds, 'f', 2) << "\t";
+                        conc_stream << QString::number(auc_data.scanData[i].seconds, 'f', 2) << "\t";
+                        dens_stream << QString::number(dens_data[i][j], 'f', 6) << "\t";
+                        visc_stream << QString::number(visc_data[i][j], 'f', 6) << "\t";
+                        conc_stream << QString::number(conc_data[i][j], 'f', 6) << "\t";
+                     }
+                     dens_stream << "\n";
+                     visc_stream << "\n";
+                     conc_stream << "\n";
+                  }
+                  conc_raw_out.close();
+                  dens_raw_out.close();
+                  visc_raw_out.close();
+               }
+         }
+         if (dbg_level > 1 && false){
+            QString rawGUID = US_Util::uuid_unparse( (unsigned char*)auc_data.rawGUID );
+            double *Visc;
+            double *Dens;
+            double *Conc;
+            // save density and viscosity gradient to disk
+            QString dens_raw_file = "density_gradient_" + rawGUID + "_raw.txt";
+            QString visc_raw_file = "viscosity_gradient_" + rawGUID + "_raw.txt";
+            QString conc_raw_file = "concentration_gradient_" + rawGUID + "_raw.txt";
+            QFile dens_raw_out(dens_raw_file);
+            QFile visc_raw_out(visc_raw_file);
+            QFile conc_raw_out(conc_raw_file);
+            if (dens_raw_out.open(QIODevice::WriteOnly | QIODevice::Text) && visc_raw_out.open(QIODevice::WriteOnly | QIODevice::Text) && conc_raw_out.open(QIODevice::WriteOnly | QIODevice::Text)){
+               QTextStream dens_stream(&dens_raw_out);
+               QTextStream visc_stream(&visc_raw_out);
+               QTextStream conc_stream(&conc_raw_out);
+               dens_stream << "radius\t";
+               visc_stream << "radius\t";
+               conc_stream << "radius\t";
+               for (int i = 0; i < bfg->dens_bfg_data.scanData.size(); i++){
+                  dens_stream << bfg->dens_bfg_data.scanData[i].seconds << "\t";
+                  dens_stream << bfg->dens_bfg_data.scanData[i].seconds << "\t";
+                  visc_stream << bfg->visc_bfg_data.scanData[i].seconds << "\t";
+                  visc_stream << bfg->visc_bfg_data.scanData[i].seconds << "\t";
+                  conc_stream << bfg->conc_bfg_data.scanData[i].seconds << "\t";
+                  conc_stream << bfg->conc_bfg_data.scanData[i].seconds << "\t";
+               }
+               dens_stream << "\n";
+               visc_stream << "\n";
+               conc_stream << "\n";
+               for (int j = 0; j < bfg->dens_bfg_data.pointCount(); j++){
+                  dens_stream << QString::number(bfg->dens_bfg_data.radius(j)) << "\t";
+                  visc_stream << QString::number(bfg->visc_bfg_data.radius(j)) << "\t";
+                  conc_stream << QString::number(bfg->conc_bfg_data.radius(j)) << "\t";
+                  for (int i = 0; i < bfg->dens_bfg_data.scanData.size(); i++){
+                     dens_stream << bfg->dens_bfg_data.scanData[i].seconds << "\t";
+                     visc_stream << bfg->visc_bfg_data.scanData[i].seconds << "\t";
+                     conc_stream << bfg->conc_bfg_data.scanData[i].seconds << "\t";
+                     dens_stream << QString::number(bfg->dens_bfg_data.scanData[i].rvalues[j]) << "\t";
+                     visc_stream << QString::number(bfg->visc_bfg_data.scanData[i].rvalues[j]) << "\t";
+                     conc_stream << QString::number(bfg->conc_bfg_data.scanData[i].rvalues[j]) << "\t";
+                  }
+                  dens_stream << "\n";
+                  visc_stream << "\n";
+                  conc_stream << "\n";
+               }
+               conc_raw_out.close();
+               dens_raw_out.close();
+               visc_raw_out.close();
+            }
+         }
+      }
+
+   }
+
 // Set iteration parameters
-void US_2dsaProcess::set_iters( int    mxiter, int    mciter, int    mniter,
-                                double vtoler, double menrng, double cff0,
-                                int    jgref,  int    fittyp )
+void US_2dsaProcess::set_iters( int    mxiter, int    mciter,
+                                double vtoler, double cff0,
+                                int    jgref )
 {
    maxiters   = mxiter;
+   int mniter = 0;
+   menrange = 0.0;
+   angle_range = 0.0;
+   mendelta = 0.0;
+   angle_delta = 0.0;
+   if (bsimparms.primaryFit != US_SimulationParameters::NOTHING)
+   {
+      mniter = (mniter != 0)?mniter*bsimparms.primary_variations:bsimparms.primary_variations;
+      menrange = bsimparms.primary_range;
+      mendelta = menrange / (double)( bsimparms.primary_variations - 1 );
+   }
+   if (bsimparms.secondaryFit != US_SimulationParameters::NOTHING)
+   {
+      mniter = (mniter != 0)?mniter*bsimparms.secondary_variations:bsimparms.secondary_variations;
+      angle_range = bsimparms.secondary_range;
+      angle_delta = angle_range / (double)( bsimparms.secondary_variations - 1 );
+   }
    mmtype     = ( mciter > 1 ) ? 2 : ( ( mniter > 1 ) ? 1 : 0 );
    mmiters    = ( mmtype == 0 ) ? 0 : qMax( mciter, mniter );
-   fit_type   = fittyp;
    varitol    = vtoler;
-   menrange   = menrng;
-   mendelta   = menrange / (double)( mmiters - 1 );
    cnstff0    = cff0;
    jgrefine   = jgref;
-   ff_none    = ( fit_type == 0 );
-   ff_omeni   = ( fit_type == 1 );
-   ff_obott   = ( fit_type == 2 );
-   ff_menbot  = ( fit_type == 3 );
-   ff_meni    = ( ( fit_type & 1 ) != 0 );
-   ff_bott    = ( ( fit_type & 2 ) != 0 );
-DbgLv(1) << "2PSI: fittyp" << fit_type << "ff_omeni obott menbot meni bott"
- << ff_omeni << ff_obott << ff_menbot << ff_meni << ff_bott;
+
 
    int stype  = 0;            // Constant vbar, varying f/f0
    if ( jgrefine > 0 )
    {
       if ( cnstff0 > 0.0 )
-         stype   = 1;         // Constant f/f0, varying vbar
+      {
+         stype   = 1; // Constant f/f0, varying vbar
+      }
    }
    else
-      stype   = 2;            // Custom grid
+   {
+      stype   = 2; // Custom grid
+   }
 
    dsets[ 0 ]->solute_type = stype;   // Store solute type
 DbgLv(1) << "2PSI: cnstff0 jgrefine stype" << cnstff0 << jgrefine << stype;
@@ -484,6 +856,9 @@ DbgLv(1) << "2P:FC:  szSoluC" << c_solutes[ depth ].size();
    }
 
    wtask.thrn = thrx + 1;
+   wtask.cosedData = csD;
+
+   wtask.bandFormingGradient = bfg;
    wthr->define_work( wtask );
 
    connect( wthr, SIGNAL( work_complete( WorkerThread2D* ) ),
@@ -582,14 +957,24 @@ DbgLv(1) << "FIN_FIN: solute_type" << dset->solute_type << "nsols" << nsolutes
                       = c_solutes[ maxdepth ][ cc ].c;
 
          // Complete other coefficients in standard-space
-         model.calc_coefficients( mcomp );
+         US_Model::calc_coefficients( mcomp );
 DbgLv(1) << "FIN_FIN:  Bcc comp D" << mcomp.D << "comp ff0" << mcomp.f_f0
  << "comp vb20" << mcomp.vbar20;
 //DbgLv(1) << "norms_process_value"<< wthrd->norms [cc];
-
-         // Convert to experiment-space for simulation below
-         mcomp.s     *= sfactor;
-         mcomp.D     *= dfactor;
+        if (dset->simparams.meshType != US_SimulationParameters::ASTFVM){
+            US_Math2::SolutionData sd{};
+            sd.viscosity  = dset->viscosity;
+            sd.density    = dset->density;
+            sd.manual     = dset->manual;
+            double avtemp = dset->temperature;
+            // Convert to experiment-space for simulation below
+            sd.vbar20    = mcomp.vbar20;
+            sd.vbar      = US_Math2::adjust_vbar20( sd.vbar20, avtemp );
+            US_Math2::data_correction( avtemp, sd );
+            // Convert to experiment-space for simulation below
+            mcomp.s     /= sd.s20w_correction;
+            mcomp.D     /= sd.D20w_correction;
+        }
 DbgLv(1) << "FIN_FIN:   Bcc 20w comp D" << mcomp.D;
 
          model.components[ cc ]  = mcomp;
@@ -599,7 +984,7 @@ DbgLv(1) << "FIN_FIN:   Bcc 20w comp D" << mcomp.D;
 
    else if ( dset->solute_type == 1 )
    {  // Special case of varying vbar
-      US_Math2::SolutionData sd;
+      US_Math2::SolutionData sd{};
       sd.viscosity  = dset->viscosity;
       sd.density    = dset->density;
       sd.manual     = dset->manual;
@@ -619,16 +1004,19 @@ DbgLv(1) << "FIN_FIN:   Bcc 20w comp D" << mcomp.D;
                       = c_solutes[ maxdepth ][ cc ].c;
 
          // Complete other coefficients in standard-space
-         model.calc_coefficients( mcomp );
+         US_Model::calc_coefficients( mcomp );
 DbgLv(1) << " Bcc comp D" << mcomp.D << "comp vbar" << mcomp.vbar20;
 
-         // Convert to experiment-space for simulation below
-         sd.vbar20    = mcomp.vbar20;
-         sd.vbar      = US_Math2::adjust_vbar20( sd.vbar20, avtemp );
-         US_Math2::data_correction( avtemp, sd );
 
-         mcomp.s     /= sd.s20w_correction;
-         mcomp.D     /= sd.D20w_correction;
+          if (dset->simparams.meshType != US_SimulationParameters::ASTFVM){
+              // Convert to experiment-space for simulation below
+              sd.vbar20    = mcomp.vbar20;
+              sd.vbar      = US_Math2::adjust_vbar20( sd.vbar20, avtemp );
+              US_Math2::data_correction( avtemp, sd );
+              // Convert to experiment-space for simulation below
+              mcomp.s     /= sd.s20w_correction;
+              mcomp.D     /= sd.D20w_correction;
+          }
 DbgLv(1) << "  Bcc 20w comp D" << mcomp.D;
 
          model.components[ cc ]  = mcomp;
@@ -637,7 +1025,7 @@ DbgLv(1) << "  Bcc 20w comp D" << mcomp.D;
 
    else
    {  // Input was a custom grid
-      US_Math2::SolutionData sd;
+      US_Math2::SolutionData sd{};
       sd.viscosity  = dset->viscosity;
       sd.density    = dset->density;
       sd.manual     = dset->manual;
@@ -657,16 +1045,20 @@ DbgLv(1) << "  Bcc 20w comp D" << mcomp.D;
                       = c_solutes[ maxdepth ][ cc ].c;
 
          // Complete other coefficients in standard-space
-         model.calc_coefficients( mcomp );
+         US_Model::calc_coefficients( mcomp );
 DbgLv(1) << " Bcc 20w comp D" << mcomp.D;
 
          // Convert to experiment-space for simulation below
-         sd.vbar20    = mcomp.vbar20;
-         sd.vbar      = US_Math2::adjust_vbar20( sd.vbar20, avtemp );
-         US_Math2::data_correction( avtemp, sd );
 
-         mcomp.s     /= sd.s20w_correction;
-         mcomp.D     /= sd.D20w_correction;
+
+          if (dset->simparams.meshType != US_SimulationParameters::ASTFVM){
+              sd.vbar20    = mcomp.vbar20;
+              sd.vbar      = US_Math2::adjust_vbar20( sd.vbar20, avtemp );
+              US_Math2::data_correction( avtemp, sd );
+              // Convert to experiment-space for simulation below
+              mcomp.s     /= sd.s20w_correction;
+              mcomp.D     /= sd.D20w_correction;
+          }
 DbgLv(1) << "  Bcc  comp D" << mcomp.D;
 
          model.components[ cc ]  = mcomp;
@@ -728,8 +1120,19 @@ DbgLv(1) << "FIN_FIN:  n) s D c"
  << s_model.components[lc].s << s_model.components[lc].D
  << s_model.components[lc].signal_concentration;
 dset->simparams.debug();
-US_Astfem_RSA astfem_rsa2( s_model, dset->simparams );
-astfem_rsa2.calculate( swdat );
+    if (dset->simparams.meshType != US_SimulationParameters::ASTFVM){
+        US_Astfem_RSA astfem_rsa2( s_model, dset->simparams );
+
+        astfem_rsa2.set_debug_flag( dbg_level) ;
+
+        astfem_rsa2.calculate( swdat );
+    }
+    else{
+        US_LammAstfvm astfvm2( s_model, dset->simparams );
+        US_Buffer tmp = dset->solution_rec.buffer;
+        astfvm2.set_buffer( dset->solution_rec.buffer, bfg, csD );
+        astfvm2.calculate( swdat );
+    }
 bool have_ti=((noisflag&1)!=0);
 bool have_ri=((noisflag&2)!=0);
 for (int ss=0; ss<nscans; ss++)
@@ -776,18 +1179,37 @@ DbgLv(1) << "FIN_FIN: vari" << vari << "vari2" << vari2 << "rmsd2" << rmsd2
    s_variance         = QString::number( vari );
    s_meniscus         = QString::number( edata->meniscus );
    s_bottom           = QString::number( edata->bottom );
+   s_angle            = QString::number( simparms->cp_angle );
+   if (simparms->primaryFit != US_SimulationParameters::NOTHING)
+   {
+      s_primary          = QString::number( simparms->get_parameter_value( simparms->primaryFit ));
+   }
+   else
+   {
+      s_primary          = "";
+   }
+   if (simparms->secondaryFit != US_SimulationParameters::NOTHING)
+   {
+      s_secondary        = QString::number( simparms->get_parameter_value( simparms->secondaryFit ));
+   }
+   else
+   {
+      s_secondary        = "";
+   }
    vari_curr          = vari;
 #endif
 
 //DbgLv(1) << "FIN_FIN: vari riter miter menisc" << rscan0->delta_r
 //            << rscan0->rpm << rscan0->seconds << rscan0->plateau;
-DbgLv(1) << "FIN_FIN: vari riter miter menisc bott" << s_variance
-            << s_rfiter << s_mmiter << s_meniscus << s_bottom;
+DbgLv(1) << "FIN_FIN: vari riter miter menisc bott angle" << s_variance
+            << s_rfiter << s_mmiter << s_meniscus << s_bottom << s_angle << s_primary << s_secondary;
 
    // determine elapsed time
-   int ktimes  = ( timer.elapsed() + 500 ) / 1000;
+   int ktimes  = ((int) timer.elapsed() + 500 ) / 1000;
    int ktimeh  = ktimes / 3600;
    int ktimem  = ( ktimes - ktimeh * 3600 ) / 60;
+   int ktimed  = ktimeh / 24;
+   ktimeh = (ktimeh - ktimed * 24);
    double bvol = dsets[0]->simparams.band_volume;
    bvol        = dsets[0]->simparams.band_forming ? bvol : 0.0;
 
@@ -807,10 +1229,12 @@ DbgLv(1) << "done: vari bvol" << vari << bvol
       .arg( r_iter + 1 )
       .arg( nthreads ).arg( nsubgrid ).arg( nssteps ).arg( nksteps );
 
-   if ( ktimeh > 0 )
+   if ( ktimed > 0 )
+      pmsg += tr( "%1 days %1 hr., %2 min., %3 sec.\n" )
+            .arg( ktimed ).arg( ktimeh ).arg( ktimem ).arg( ktimes );
+   else if ( ktimeh > 0 )
       pmsg += tr( "%1 hr., %2 min., %3 sec.\n" )
          .arg( ktimeh ).arg( ktimem ).arg( ktimes );
-
    else
       pmsg += tr( "%1 min., %2 sec.\n" )
          .arg( ktimem ).arg( ktimes );
@@ -876,111 +1300,202 @@ DbgLv(1) << "FIN_FIN: neediter" << neediter << "  sdiffs" << sdiffs
       iterate();                        // reset to run another iteration
       return;
    }
+   if (dset->simparams.meshType != US_SimulationParameters::ASTFVM){
+       // Convert model components s,D back to 20,w form for output
+       if ( dset->solute_type == 0 )
+       {  // Constant vbar
+           for ( int cc = 0; cc < nsolutes; cc++ )
+           {
+               DbgLv(1) << "cc comp D" << model.components[ cc ].D;
+               model.components[ cc ].s *= dset->s20w_correction;
+               model.components[ cc ].D *= dset->D20w_correction;
+               DbgLv(1) << " cc 20w comp D" << model.components[ cc ].D;
+           }
+       }
+       else
+       {  // Varying vbar or custom
+           US_Math2::SolutionData sd{};
+           sd.viscosity  = dset->viscosity;
+           sd.density    = dset->density;
+           double avtemp = dset->temperature;
 
-   // Convert model components s,D back to 20,w form for output
-   if ( dset->solute_type == 0 )
-   {  // Constant vbar
-      for ( int cc = 0; cc < nsolutes; cc++ )
-      {
-DbgLv(1) << "cc comp D" << model.components[ cc ].D;
-         model.components[ cc ].s *= dset->s20w_correction;
-         model.components[ cc ].D *= dset->D20w_correction;
-DbgLv(1) << " cc 20w comp D" << model.components[ cc ].D;
-      }
+           for ( int cc = 0; cc < nsolutes; cc++ )
+           {
+               sd.vbar20    = model.components[ cc ].vbar20;
+               sd.vbar      = US_Math2::adjust_vbar20( sd.vbar20, avtemp );
+               US_Math2::data_correction( avtemp, sd );
+
+               model.components[ cc ].s *= sd.s20w_correction;
+               model.components[ cc ].D *= sd.D20w_correction;
+           }
+       }
    }
-   else
-   {  // Varying vbar or custom
-      US_Math2::SolutionData sd;
-      sd.viscosity  = dset->viscosity;
-      sd.density    = dset->density;
-      double avtemp = dset->temperature;
-
-      for ( int cc = 0; cc < nsolutes; cc++ )
-      {
-         sd.vbar20    = model.components[ cc ].vbar20;
-         sd.vbar      = US_Math2::adjust_vbar20( sd.vbar20, avtemp );
-         US_Math2::data_correction( avtemp, sd );
-
-         model.components[ cc ].s *= sd.s20w_correction;
-         model.components[ cc ].D *= sd.D20w_correction;
-      }
+   int mtiters = mmiters;
+   menrange = 0.0;
+   angle_range = 0.0;
+   mendelta = 0.0;
+   angle_delta = 0.0;
+   if (bsimparms.primaryFit != US_SimulationParameters::NOTHING)
+   {
+      menrange = bsimparms.primary_range;
+      mendelta = menrange / (double)( bsimparms.primary_variations - 1 );
    }
-
+   if (bsimparms.secondaryFit != US_SimulationParameters::NOTHING)
+   {
+      angle_range = bsimparms.secondary_range;
+      angle_delta = angle_range / (double)( bsimparms.secondary_variations - 1 );
+   }
    // Done with refinement iterations:   check for meniscus or MC iteration
-   int mtiters        = ff_menbot ? ( mmiters * mmiters ) : mmiters;
    int k_iter         = mm_iter;
-
+   bool dens_grad = simparms->meshType == US_SimulationParameters::ASTFVM && !dsets[0]->solution_rec.buffer.cosed_component.isEmpty();
    if ( mmtype > 0  &&  ++mm_iter < mtiters )
    {  // doing meniscus or monte carlo and more to do
-      int m_iter         = ff_menbot ? ( k_iter / mmiters ) :
-                           ( ff_meni ? k_iter : 0 );
-      int b_iter         = ff_menbot ? ( k_iter % mmiters ) :
-                           ( ff_bott ? k_iter : 0 );
-      double bmeniscus   = bdata->meniscus;
-      double bbottom     = bdata->bottom;
-      double emeniscus   = bmeniscus;
-      double ebottom     = bbottom;
-      if ( ff_meni )
+      int primary_iter   = 0;
+      int secondary_iter = 0;
+      if ( bsimparms.primaryFit != US_SimulationParameters::NOTHING && bsimparms.secondaryFit != US_SimulationParameters::NOTHING )
       {
-         emeniscus          = ( bmeniscus - menrange * 0.5 ) +
-                              ( (double)m_iter * mendelta );
+         primary_iter   = k_iter / bsimparms.secondary_variations;
+         secondary_iter = k_iter % bsimparms.secondary_variations;
       }
-      if ( ff_bott )
+      else if ( bsimparms.primaryFit != US_SimulationParameters::NOTHING )
       {
-         ebottom            = ( bbottom   - menrange * 0.5 ) +
-                              ( (double)b_iter * mendelta );
+         primary_iter   = k_iter;
       }
-      edata->meniscus    = emeniscus;
-      edata->bottom      = ebottom;
-      simparms->meniscus = emeniscus;
-      simparms->bottom   = ebottom;
+      else if ( bsimparms.secondaryFit != US_SimulationParameters::NOTHING )
+      {
+         secondary_iter = k_iter;
+      }
+
+      DbgLv( 1 ) << "SET_MEN: k_iter primary_iter secondary_iter" << k_iter << primary_iter << secondary_iter;
+      double primary_base = bsimparms.get_parameter_value( bsimparms.primaryFit );
+      double secondary_base = bsimparms.get_parameter_value( bsimparms.secondaryFit );
+      double current_primary = primary_base - bsimparms.primary_range * 0.5;
+      current_primary += (mendelta * (double)primary_iter);
+      double current_secondary = secondary_base - bsimparms.secondary_range * 0.5;
+      current_secondary += (angle_delta * (double)secondary_iter);
+      if (bsimparms.primaryFit != US_SimulationParameters::NOTHING)
+      {
+         simparms->set_parameter_value( bsimparms.primaryFit, current_primary );
+         simparms->current_primary_variation = primary_iter;
+      }
+      if (bsimparms.secondaryFit != US_SimulationParameters::NOTHING)
+      {
+         simparms->set_parameter_value( bsimparms.secondaryFit, current_secondary );
+         simparms->current_secondary_variation = secondary_iter;
+      }
+      edata->meniscus = simparms->meniscus;
+      edata->bottom   = simparms->bottom;
+      dsets[0]->vbar20 = simparms->vbar;
+      double avTemp = edata->average_temperature();
+      US_Math2::SolutionData sd;
+      sd.density      = dsets[0]->solution_rec.buffer.density;
+      sd.viscosity    = dsets[0]->solution_rec.buffer.viscosity;
+      sd.vbar20       = dsets[0]->vbar20;
+      sd.vbar         = US_Math2::adjust_vbar20(sd.vbar20, avTemp);
+      sd.manual       = dsets[0]->solution_rec.buffer.manual;
+      US_Math2::data_correction( avTemp, sd );
+      dsets[0]->s20w_correction = sd.s20w_correction;
+      dsets[0]->D20w_correction = sd.D20w_correction;
       s_rfiter           = QString::number( r_iter + 1 );
       s_mmiter           = QString::number( mm_iter );
       s_variance         = QString::number( vari_curr );
       s_meniscus         = QString::number( edata->meniscus );
       s_bottom           = QString::number( edata->bottom );
+      s_angle            = QString::number( simparms->band_volume );
+      s_primary          = QString::number( simparms->get_parameter_value( simparms->primaryFit ));
+      s_secondary        = QString::number( simparms->get_parameter_value( simparms->secondaryFit ));
 
-DbgLv(1) << "MENISC: k_iter m_iter b_iter" << k_iter << m_iter << b_iter
- << "meniscus bottom" << edata->meniscus << simparms->bottom
- << "bbottom mtiters" << bbottom << mtiters;
+DbgLv(1) << "MENISC: k_iter m_iter b_iter a_iter" << k_iter << primary_iter << secondary_iter
+ << "meniscus bottom angle" << current_primary << current_secondary
+ << "bbottom mtiters" << mtiters;
 if(mtiters>50)
  DbgLv(1) << "MENISC: mtiters mmiters" << mtiters << mmiters
   << "ff_: omeni" << ff_omeni << "obott" << ff_obott
-  << "menbot" << ff_menbot << "meni" << ff_meni << "bott" << ff_bott;
+  << "menbot" << ff_menbot << "meni" << ff_meni << "bott" << ff_bott << "angle" << ff_angle << "meniangle" << ff_meniangle;
 
       emit process_complete( mmtype );  // signal that iteration is complete
 
-      if ( mmtype == 1 )
+
+      if ( mmtype == 1 ){
          set_meniscus();
+          if (dens_grad)
+          {
+              calculate_cosedimenting_component();
+          }
+      }
 
       else if ( mmtype == 2 )
+      {
          set_monteCarlo();
+      }
 
       return;
    }
-else
-DbgLv(1) << "MENISC: k_iter mm_iter mtiter mmtype" << k_iter << mm_iter << mtiters << mmtype;
+   else{
+      DbgLv(1) << "MENISC: k_iter mm_iter mtiter mmtype" << k_iter << mm_iter << mtiters << mmtype;
+   }
+
 
    if ( mmtype == 1 )
    {
-      int m_iter         = ff_menbot ? ( k_iter / mmiters ) :
-                           ( ff_meni ? k_iter : 0 );
-      double smeniscus   = bdata->meniscus - menrange * 0.5;
-      edata->meniscus    = smeniscus + (double)m_iter * mendelta;
-      edata->bottom      = bdata->bottom;
-
-      if ( ff_bott )
+      int primary_iter   = 0;
+      int secondary_iter = 0;
+      if ( bsimparms.primaryFit != US_SimulationParameters::NOTHING && bsimparms.secondaryFit != US_SimulationParameters::NOTHING )
       {
-         int b_iter         = ff_menbot ? ( k_iter % mmiters ) :
-                              ( ff_bott ? k_iter : 0 );
-         double sbottom     = bdata->bottom   - menrange * 0.5;
-         edata->bottom      = sbottom   + (double)b_iter * mendelta;
+         primary_iter   = k_iter / bsimparms.secondary_variations;
+         secondary_iter = k_iter % bsimparms.secondary_variations;
       }
+      else if ( bsimparms.primaryFit != US_SimulationParameters::NOTHING )
+      {
+         primary_iter   = k_iter;
+      }
+      else if ( bsimparms.secondaryFit != US_SimulationParameters::NOTHING )
+      {
+         secondary_iter = k_iter;
+      }
+
+      DbgLv( 1 ) << "SET_MEN: k_iter primary_iter secondary_iter" << k_iter << primary_iter << secondary_iter;
+      double primary_base = bsimparms.get_parameter_value( bsimparms.primaryFit );
+      double secondary_base = bsimparms.get_parameter_value( bsimparms.secondaryFit );
+      double current_primary = primary_base - bsimparms.primary_range * 0.5;
+      current_primary += (mendelta * (double)primary_iter);
+      double current_secondary = secondary_base - bsimparms.secondary_range * 0.5;
+      current_secondary += (angle_delta * (double)secondary_iter);
+      if (bsimparms.primaryFit != US_SimulationParameters::NOTHING)
+      {
+         simparms->set_parameter_value( bsimparms.primaryFit, current_primary );
+         simparms->current_primary_variation = primary_iter;
+      }
+      if (bsimparms.secondaryFit != US_SimulationParameters::NOTHING)
+      {
+         simparms->set_parameter_value( bsimparms.secondaryFit, current_secondary );
+         simparms->current_secondary_variation = secondary_iter;
+      }
+      edata->meniscus = simparms->meniscus;
+      edata->bottom   = simparms->bottom;
+      dsets[0]->vbar20 = simparms->vbar;
+      double avTemp = edata->average_temperature();
+      US_Math2::SolutionData sd;
+      sd.density      = dsets[0]->solution_rec.buffer.density;
+      sd.viscosity    = dsets[0]->solution_rec.buffer.viscosity;
+      sd.vbar20       = dsets[0]->vbar20;
+      sd.vbar         = US_Math2::adjust_vbar20(sd.vbar20, avTemp);
+      sd.manual       = dsets[0]->solution_rec.buffer.manual;
+      US_Math2::data_correction( avTemp, sd );
+      dsets[0]->s20w_correction = sd.s20w_correction;
+      dsets[0]->D20w_correction = sd.D20w_correction;
+     if (dens_grad)
+         {
+            calculate_cosedimenting_component();
+         }
    }
 
    s_variance         = QString::number( vari_curr );
    s_meniscus         = QString::number( edata->meniscus );
    s_bottom           = QString::number( edata->bottom );
+   s_angle            = QString::number( simparms->band_volume );
+   s_primary          = QString::number( simparms->get_parameter_value( simparms->primaryFit ));
+   s_secondary        = QString::number( simparms->get_parameter_value( simparms->secondaryFit ));
 
    emit process_complete( 9 );     // signal that all processing is complete
 }
@@ -1030,14 +1545,20 @@ DbgLv(1) << "2P:GV: variance" << s_variance << vari_curr << "iter" << s_mmiter;
    mp_val[ "variance"     ]    = s_variance;
    mp_val[ "meniscus"     ]    = s_meniscus;
    mp_val[ "bottom"       ]    = s_bottom;
-DbgLv(1) << " GET_VAL: rfit mcit vari meni bott"
- << s_rfiter << s_mmiter << s_variance << s_meniscus << s_bottom;
+   mp_val[ "angle"        ]    = s_angle;
+   mp_val[ "primary"      ]    = s_primary;
+   mp_val[ "secondary"    ]    = s_secondary;
+DbgLv(0) << " GET_VAL: rfit mcit vari meni bott"
+ << s_rfiter << s_mmiter << s_variance << s_meniscus << s_bottom << s_angle << s_primary << s_secondary;
 
-   all_ok      = s_rfiter  .isEmpty() ? false : all_ok;
-   all_ok      = s_mmiter  .isEmpty() ? false : all_ok;
-   all_ok      = s_variance.isEmpty() ? false : all_ok;
-   all_ok      = s_meniscus.isEmpty() ? false : all_ok;
-   all_ok      = s_bottom  .isEmpty() ? false : all_ok;
+   all_ok      = s_rfiter   .isEmpty() ? false : all_ok;
+   all_ok      = s_mmiter   .isEmpty() ? false : all_ok;
+   all_ok      = s_variance .isEmpty() ? false : all_ok;
+   all_ok      = s_meniscus .isEmpty() ? false : all_ok;
+   all_ok      = s_bottom   .isEmpty() ? false : all_ok;
+   all_ok      = s_angle    .isEmpty() ? false : all_ok;
+   all_ok      = s_primary  .isEmpty() ? false : all_ok;
+   all_ok      = s_secondary.isEmpty() ? false : all_ok;
 
    return all_ok;
 }
@@ -1046,6 +1567,10 @@ DbgLv(1) << " GET_VAL: rfit mcit vari meni bott"
 void US_2dsaProcess::submit_job( WorkPacket2D& wtask, int thrx )
 {
    wtask.thrn         = thrx + 1;
+
+   wtask.cosedData = csD;
+
+   wtask.bandFormingGradient = bfg;
 
    WorkerThread2D* wthr = new WorkerThread2D( this );
    wthreads[ thrx ]   = wthr;
@@ -1382,12 +1907,14 @@ DbgLv(1) << "ITER:   r-iter1 ncto (diff)" << nctotal << kadd;
 
    int    jdpth = 0;
    int    jnois = fnoionly ? 0 : noisflag;
-//*DEBUG
-for(int jj=0; jj<ncsol; jj++ )
- DbgLv(1) << "ITER:     csol" << jj << "  s k c"
-  << csolutes[jj].s*1.e13 << csolutes[jj].k << csolutes[jj].c;
-int ktadd=0;
-//*DEBUG
+   //*DEBUG
+   for(int jj=0; jj<ncsol; jj++ )
+   {
+      DbgLv( 1 ) << "ITER:     csol" << jj << "  s k c"
+     << csolutes[jj].s*1.e13 << csolutes[jj].k << csolutes[jj].c;
+   }
+   int ktadd=0;
+   //*DEBUG
 
    // Build and queue the subgrid tasks
    for ( ktask = 0; ktask < nsubgrid; ktask++ )
@@ -1399,17 +1926,21 @@ int ktadd=0;
       for ( int cc = 0; cc < ncsol; cc++ )
       {
          if ( ! isolutes.contains( csolutes[ cc ] ) )
+         {
             isolutes << csolutes[ cc ];
+         }
       }
-//*DEBUG
-int kosz=orig_sols[ktask].size();
-int kasz=isolutes.size();
-int kadd=kasz-kosz;
-ktadd += (ncsol-kadd);
-if ( kadd < ncsol )
-DbgLv(1) << "ITER: kt" << ktask << "iterate nisol o a c +"
- << kosz << kasz << ncsol << kadd << "ktadd" << ktadd << "nsubg" << nsubgrid;
-//*DEBUG
+      //*DEBUG
+      int kosz=orig_sols[ktask].size();
+      int kasz=isolutes.size();
+      int kadd=kasz-kosz;
+      ktadd += (ncsol-kadd);
+      if ( kadd < ncsol )
+      {
+         DbgLv( 1 ) << "ITER: kt" << ktask << "iterate nisol o a c +"
+       << kosz << kasz << ncsol << kadd << "ktadd" << ktadd << "nsubg" << nsubgrid;
+      }
+      //*DEBUG
       // Queue a subgrid task and update the maximum task solute count
       double llss = isolutes[ 0 ].s;
       double llsk = isolutes[ 0 ].k;
@@ -1419,18 +1950,25 @@ DbgLv(1) << "ITER: kt" << ktask << "iterate nisol o a c +"
       maxtsols       = qMax( maxtsols, isolutes.size() );
    }
 
-//*DEBUG
-if(ktadd<ncsol) {
- for(int kt=0;kt<nsubgrid;kt++)
-  for(int cc=0;cc<orig_sols[kt].size();cc++)
-   DbgLv(1) << "ITER          kt cc" << kt << cc << " s k c"
-    << orig_sols[kt][cc].s*1.e13 << orig_sols[kt][cc].k << orig_sols[kt][cc].c;
-}
-//*DEBUG
+   //*DEBUG
+   if(ktadd<ncsol)
+   {
+      for(int kt=0;kt<nsubgrid;kt++)
+      {
+         for(int cc=0;cc<orig_sols[kt].size();cc++)
+         {
+            DbgLv( 1 ) << "ITER          kt cc" << kt << cc << " s k c"
+            << orig_sols[kt][cc].s*1.e13 << orig_sols[kt][cc].k << orig_sols[kt][cc].c;
+         }
+      }
+   }
+   //*DEBUG
 
    // Make sure calculated solutes are cleared out for new iteration
    for ( int ii = 0; ii < c_solutes.size(); ii++ )
+   {
       c_solutes[ ii ].clear();
+   }
 
    // Start the first threads. This will begin the first work units (subgrids).
    // Thereafter, work units are started in new threads when threads signal
@@ -1457,7 +1995,9 @@ void US_2dsaProcess::free_worker( int tx )
    if ( tx >= 0  &&  tx < nthreads )
    {
       if ( wthreads[ tx ] != 0 )
-         delete wthreads[ tx ];       // destroy thread
+      {
+         delete wthreads[ tx ]; // destroy thread
+      }
 
       wthreads[ tx ] = 0;             // set thread pointer to null
       wkstates[ tx ] = READY;         // mark its slot as available
@@ -1560,35 +2100,54 @@ int US_2dsaProcess::jobs_at_depth( int depth )
 void US_2dsaProcess::set_meniscus()
 {
    // Give the working data set an appropriate meniscus value
-//   int k_iter         = mm_iter - 1;
+   //   int k_iter         = mm_iter - 1;
    int k_iter         = mm_iter;
-   int m_iter         = ff_menbot ? ( k_iter / mmiters ) :
-                        ( ff_meni ? k_iter : 0 );
-   int b_iter         = ff_menbot ? ( k_iter % mmiters ) :
-                        ( ff_bott ? k_iter : 0 );
-DbgLv(1) << "SET_MEN: k_iter m_iter b_iter" << k_iter << m_iter << b_iter;
-   double bmeniscus   = bdata->meniscus;
-   double bbottom     = bdata->bottom;
-DbgLv(1) << "SET_MEN: bmeniscus bbottom" << bmeniscus << bbottom;
-   double emeniscus   = bmeniscus;
-   double ebottom     = bbottom;
-   if ( ff_meni )
+   int primary_iter   = 0;
+   int secondary_iter = 0;
+   if ( bsimparms.primaryFit != US_SimulationParameters::NOTHING && bsimparms.secondaryFit != US_SimulationParameters::NOTHING )
    {
-      emeniscus          = ( bmeniscus - menrange * 0.5 ) +
-                           ( (double)m_iter * mendelta );
+      primary_iter   = k_iter / bsimparms.secondary_variations;
+      secondary_iter = k_iter % bsimparms.secondary_variations;
    }
-   if ( ff_bott )
+   else if ( bsimparms.primaryFit != US_SimulationParameters::NOTHING )
    {
-      ebottom            = ( bbottom   - menrange * 0.5 ) +
-                           ( (double)b_iter * mendelta );
+      primary_iter   = k_iter;
    }
-   edata->meniscus    = emeniscus;
-   edata->bottom      = ebottom;
-DbgLv(1) << "SET_MEN: emeniscus ebottom" << edata->meniscus << edata->bottom;
-   simparms->meniscus = edata->meniscus;
-   simparms->bottom   = edata->bottom;
-DbgLv(1) << "SET_MEN: k_iter m_iter b_iter" << k_iter << m_iter << b_iter
- << "meniscus bottom" << edata->meniscus << simparms->bottom << "bbot" << bbottom;
+   else if ( bsimparms.secondaryFit != US_SimulationParameters::NOTHING )
+   {
+      secondary_iter = k_iter;
+   }
+
+   DbgLv( 1 ) << "SET_MEN: k_iter primary_iter secondary_iter" << k_iter << primary_iter << secondary_iter;
+   double primary_base = bsimparms.get_parameter_value( bsimparms.primaryFit );
+   double secondary_base = bsimparms.get_parameter_value( bsimparms.secondaryFit );
+   double current_primary = primary_base - bsimparms.primary_range * 0.5;
+   current_primary += (mendelta * (double)primary_iter);
+   double current_secondary = secondary_base - bsimparms.secondary_range * 0.5;
+   current_secondary += (angle_delta * (double)secondary_iter);
+   if (bsimparms.primaryFit != US_SimulationParameters::NOTHING)
+   {
+      simparms->set_parameter_value( bsimparms.primaryFit, current_primary );
+      simparms->current_primary_variation = primary_iter;
+   }
+   if (bsimparms.secondaryFit != US_SimulationParameters::NOTHING)
+   {
+      simparms->set_parameter_value( bsimparms.secondaryFit, current_secondary );
+      simparms->current_secondary_variation = secondary_iter;
+   }
+   edata->meniscus = simparms->meniscus;
+   edata->bottom   = simparms->bottom;
+   dsets[0]->vbar20 = simparms->vbar;
+   double avTemp = edata->average_temperature();
+   US_Math2::SolutionData sd;
+   sd.density      = dsets[0]->solution_rec.buffer.density;
+   sd.viscosity    = dsets[0]->solution_rec.buffer.viscosity;
+   sd.vbar20       = dsets[0]->vbar20;
+   sd.vbar         = US_Math2::adjust_vbar20(sd.vbar20, avTemp);
+   sd.manual       = dsets[0]->solution_rec.buffer.manual;
+   US_Math2::data_correction( avTemp, sd );
+   dsets[0]->s20w_correction = sd.s20w_correction;
+   dsets[0]->D20w_correction = sd.D20w_correction;
 
    // Re-queue all the original subgrid tasks
    if ( mm_iter > 0 )
@@ -1654,7 +2213,9 @@ void US_2dsaProcess::requeue_tasks()
 
    // Make sure calculated solutes are cleared out for new iteration
    for ( int ii = 0; ii < c_solutes.size(); ii++ )
+   {
       c_solutes[ ii ].clear();
+   }
 
    // Start the first threads
    for ( int ii = 0; ii < nthreads; ii++ )

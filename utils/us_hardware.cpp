@@ -173,12 +173,13 @@ US_AbstractCenterpiece::US_AbstractCenterpiece()
    guid          = "";
    name          = "";
    material      = "";
-   channels      = 1;
+   count_channels      = 1;
    shape         = "standard";
    angle         = 2.5;
    width         = 0.0;
    path_length.clear();
    bottom_position.clear();
+   channels.clear();
 }
 
 // Read centerpiece information from database or local
@@ -221,8 +222,8 @@ bool US_AbstractCenterpiece::read_centerpieces( IUS_DB2* db,
 
          cp.guid          = db->value( 0 ).toString();
          cp.name          = db->value( 1 ).toString();
-         cp.channels      = db->value( 2 ).toString().toInt();
-         cp.channels      = qMax( cp.channels, 1 );
+         cp.count_channels      = db->value(2 ).toString().toInt();
+         cp.count_channels      = qMax(cp.count_channels, 1 );
          QString bottoms  = db->value( 3 ).toString();
          cp.shape         = db->value( 4 ).toString();
          cp.shape         = cp.shape.isEmpty() ? "sector" : cp.shape;
@@ -234,12 +235,32 @@ bool US_AbstractCenterpiece::read_centerpieces( IUS_DB2* db,
 
          cp.path_length    .clear();
          cp.bottom_position.clear();
-         for ( int jj = 0; jj < cp.channels; jj++ )
+         cp.channels.clear();
+         for ( int jj = 0; jj < cp.count_channels; jj++ )
          {
             cp.bottom_position << bottoms.section( ":", jj, jj ).toDouble();
             cp.path_length     << pathlen;
          }
-
+         // query for channels
+         query.clear();
+         query << "get_abstractChannel_info" << cpid;
+         db->query( query );
+         if ( db->lastErrno() == IUS_DB2::OK )
+         {
+            while (db->next()){
+               US_AbstractChannel channel = US_AbstractChannel();
+               channel.guid = db->value(0).toString();
+               channel.name = db->value(1).toString();
+               channel.bottom_position = db->value(2).toString().toDouble();
+               channel.shape = db->value(3).toString();
+               channel.path_length = db->value(4).toString().toDouble();
+               channel.angle = db->value(5).toString().toDouble();
+               channel.width = db->value(6).toString().toDouble();
+               cp.channels << channel;
+            }
+         }
+         if (!cp.channels.isEmpty())
+            cp.count_channels = cp.channels.count() / 2;
          centerpieces << cp;       // Add centerpiece entry
       }
 
@@ -279,15 +300,15 @@ bool US_AbstractCenterpiece::read_centerpieces( IUS_DB2* db,
                cp.guid          = a.value( "guid"       ).toString();
                cp.name          = a.value( "name"       ).toString();
                cp.material      = a.value( "materialName" ).toString();
-               cp.channels      = a.value( "channels"   ).toString().toInt();
+               cp.count_channels      = a.value("channels"   ).toString().toInt();
                cp.shape         = a.value( "shape"      ).toString();
                cp.angle         = a.value( "angle"      ).toString().toDouble();
                cp.width         = a.value( "width"      ).toString().toDouble();
 
                if ( xversion == 1.0 )
                {
-                  if ( ( cp.channels % 2 ) == 0 )
-                     cp.channels--;
+                  if ( ( cp.count_channels % 2 ) == 0 )
+                     cp.count_channels--;
                   if ( cp.serial_number == 2  ||  cp.serial_number == 7 )
                      cp.maxRPM        = 42000;
                   else if ( cp.serial_number == 4 )
@@ -307,6 +328,19 @@ bool US_AbstractCenterpiece::read_centerpieces( IUS_DB2* db,
                cp.path_length     << a.value( "pathlen" ).toString().toDouble();
                cp.bottom_position << a.value( "bottom"  ).toString().toDouble();
             }
+            if ( xml.name() == "channel" ) {
+               QXmlStreamAttributes a = xml.attributes();
+               US_AbstractChannel channel = US_AbstractChannel();
+               channel.guid = QString::number(cp.channels.count()+1);
+               channel.name = a.value( "name"  ).toString();
+               channel.bottom_position = a.value( "bottom"  ).toString().toDouble();
+               channel.shape = a.value( "shape"      ).toString();
+               channel.path_length = a.value( "pathlen" ).toString().toDouble();
+               channel.angle = a.value( "angle"      ).toString().toDouble();
+               channel.width = a.value( "width"      ).toString().toDouble();
+               cp.channels << channel;
+            }
+
          }
       }
 
@@ -327,3 +361,12 @@ bool US_AbstractCenterpiece::read_centerpieces(
 }
 
 
+US_AbstractChannel::US_AbstractChannel() {
+   angle = 2.5;
+   path_length = 1.2;
+   shape = "standard";
+   width = 0.0;
+   guid = "";
+   name = "";
+   bottom_position = 7.2;
+}

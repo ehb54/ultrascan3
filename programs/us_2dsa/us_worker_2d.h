@@ -40,6 +40,8 @@ typedef struct work_packet_2d_s
 
    QList< US_SolveSim::DataSet* > dsets; //!< list of data set object pointers
    US_SolveSim::Simulation  sim_vals;  //!< simulation values
+   US_Math_BF::Band_Forming_Gradient* bandFormingGradient;
+   US_LammAstfvm::CosedData* cosedData;
 
 
 } WorkPacket2D;
@@ -54,8 +56,8 @@ class WorkerThread2D : public QThread
    Q_OBJECT
 
    public:
-      WorkerThread2D( QObject* parent = 0 );
-      ~WorkerThread2D();
+      explicit WorkerThread2D( QObject* parent = nullptr );
+      ~WorkerThread2D() override;
 
       QVector< double >        norms;
 
@@ -67,7 +69,7 @@ class WorkerThread2D : public QThread
       //! \param workout  Output work definition packet
       void get_result      ( WorkPacket2D& );
       //! \brief Run the worker thread
-      void run             ();
+      void run             () override;
       //! \brief Set a flag so a worker thread will abort as soon as possible
       void flag_abort      ();
       //! \brief Public slot to forward a progress signal
@@ -79,31 +81,30 @@ class WorkerThread2D : public QThread
 
    private:
 
-      void calc_residuals   ( void );
-      void calc_resids_ratio( void );
+      void calc_residuals   ( );
+      void calc_resids_ratio( );
 //      void calculate_norm   ( QVector< double >, QVector< double >  );
-      long int max_rss      ( void );
 
-      long int maxrss;
+      long int maxrss{};
 
-      double  llim_s;        // lower limit in s (UGRID)
-      double  llim_k;        // lower limit in k (UGRID)
+      double  llim_s{};        // lower limit in s (UGRID)
+      double  llim_k{};        // lower limit in k (UGRID)
 
       int     thrn;          // thread number (1,...)
-      int     taskx;         // grid refinement task index
-      int     depth;         // depth index
-      int     iter;          // iteration index
-      int     menmcx;        // meniscus / monte carlo index
-      int     typeref;       // type of refinement (0=UGRID, ...)
-      int     nscans;        // number of scans in experiment
-      int     npoints;       // number of radius points in experiment
-      int     nsolutes;      // number of input solutes for this task
-      int     noisflag;      // noise flag (0-3 for NONE|TI|RI|BOTH)
+      int     taskx{};         // grid refinement task index
+      int     depth{};         // depth index
+      int     iter{};          // iteration index
+      int     menmcx{};        // meniscus / monte carlo index
+      int     typeref{};       // type of refinement (0=UGRID, ...)
+      int     nscans{};        // number of scans in experiment
+      int     npoints{};       // number of radius points in experiment
+      int     nsolutes{};      // number of input solutes for this task
+      int     noisflag{};      // noise flag (0-3 for NONE|TI|RI|BOTH)
       int     dbg_level;     // debug flag
 
       bool    abort;         // should this thread be aborted?
 
-      US_DataIO::EditedData*  edata;       // experiment data (pointer)
+      US_DataIO::EditedData*  edata{};       // experiment data (pointer)
       US_DataIO::RawData      sdata;       // simulation data
       US_DataIO::RawData      rdata;       // residuals
       US_Model                model;       // output model
@@ -119,6 +120,8 @@ class WorkerThread2D : public QThread
 
       QVector< US_Solute >    solutes_i;   // solutes input
       QVector< US_Solute >    solutes_c;   // solutes computed
+      US_Math_BF::Band_Forming_Gradient* bandFormingGradient{};
+      US_LammAstfvm::CosedData* cosedData{};
 };
 
 #endif

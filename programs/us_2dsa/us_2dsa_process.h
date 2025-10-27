@@ -45,7 +45,7 @@ class US_2dsaProcess : public QObject
       //! \brief Create a 2DSA processor object
       //! \param dsets     Pointer to input experiment data
       //! \param parent    Pointer to parent object
-      US_2dsaProcess( QList< SS_DATASET* >&, QObject* = 0 );
+      US_2dsaProcess( QList< SS_DATASET* >& dsets, QObject* parent = nullptr );
 
       //! \brief Start the fit calculations
       //! \param sll     s lower limit
@@ -57,20 +57,16 @@ class US_2dsaProcess : public QObject
       //! \param ngr     number of grid refinements
       //! \param nthr    number of threads
       //! \param noif    noise flag: 0-3 for none|ti|ri|both
-      void start_fit( double, double, int, double, double, int,
-                      int, int, int );
+      void start_fit( double sll, double sul, int nss, double kll, double kul, int nks,
+                      int ngr, int nthr, int noif);
 
       //! \brief Set up iteration-related parameters for a fit
       //! \param mxiter  Maximum refinement iterations
       //! \param mciter  Number of monte carlo iterations
-      //! \param mniter  Number of meniscus iterations
       //! \param vtoler  Variance difference tolerance
-      //! \param menrng  Meniscus range
       //! \param cff0    Constant f/f0 (or 0.0)
       //! \param jgref   Flag of refine/solute type
-      //! \param fittyp  Flag of fit: 0-3 -> none,meni,bott,menbot
-      void set_iters( int, int, int, double, double, double, int,
-                      int = 0 );
+      void set_iters( int mxiter, int mciter, double vtoler, double cff0, int jgref );
 
       //! \brief Get results upon completion of all refinements
       //! \param da_sim  Calculated simulation data
@@ -79,13 +75,13 @@ class US_2dsaProcess : public QObject
       //! \param da_tin  Time-invariant noise (or null)
       //! \param da_rin  Radially-invariant noise (or null)
       //! \returns       Success flag:  true if successful
-      bool get_results( US_DataIO::RawData*, US_DataIO::RawData*,
-                        US_Model*, US_Noise*, US_Noise* );
+      bool get_results( US_DataIO::RawData* da_sim, US_DataIO::RawData* da_res,
+                        US_Model* da_mdl, US_Noise* da_tin, US_Noise* da_rin );
 
       //! \brief Get results upon completion of all refinements
       //! \param mp_val  Calculated simulation data
       //! \returns       Success flag:  true if successful
-      bool get_values( QMap< QString, QString >& );
+      bool get_values( QMap< QString, QString >& mp_val );
 
       //! \brief Stop the current fit processing
       void stop_fit(       void );
@@ -96,7 +92,9 @@ class US_2dsaProcess : public QObject
       //! \brief Estimate progress steps after depth 0
       //! \param ncsol Number of last calculated solutes
       //! \returns     Number of estimated remaining steps
-      int  estimate_steps( int  );
+      int  estimate_steps( int ncsol );
+
+      void calculate_cosedimenting_component();
 
       //! \brief Get message for last error
       //! \returns       Message about last error
@@ -150,6 +148,15 @@ private:
       US_Noise                   ri_noise;   // radially-invariant noise
       
       US_SimulationParameters*   simparms;   // simulation parameters
+      US_SimulationParameters    bsimparms;  // base simulation parameteres
+
+
+      QList<US_CosedComponent> cosed_components; // cosedimenting component
+      US_Math_BF::Band_Forming_Gradient* bfg; // band forming Gradient
+      US_LammAstfvm::CosedData* csD; // cosedimenting component simulation
+      QMap<QString, US_DataIO::RawData> cosed_comp_data; // cosedimentation component simulation data from csD
+      bool codiff_needed; // switch for band forming gradient simulation
+      bool cosed_needed; // switch for cosedimending component simulation
 
       QObject*   parentw;      // parent object
 
@@ -157,8 +164,11 @@ private:
       QString    s_rfiter;     // current process refine iteration as text
       QString    s_mmiter;     // current process mc/fit iteration as text
       QString    s_variance;   // current process variance as text
+      QString    s_primary;    // current process primary as text
+      QString    s_secondary;  // current process secondary as text
       QString    s_meniscus;   // current process meniscus as text
       QString    s_bottom;     // current process bottom as text
+      QString    s_angle;      // current process angle as text
 
       int        dbg_level;    // debug level
       int        nthreads;     // number of worker threads
@@ -184,7 +194,7 @@ private:
       int        mm_iter;      // meniscus/MC iteration index
       int        ntisols;      // number total task input solutes
       int        ntcsols;      // number total task computed solutes
-      int        fit_type;     // fit type flag: 0-3 => none,meni,bott,menbot
+      int        fit_type;     // fit type flag: 0-3 => none,meni,bott,menbot,angle,meniangle
 
       bool       abort;        // flag used with stop_fit clicked
       bool       fnoionly;     // flag to use noise flag on final call only
@@ -194,6 +204,9 @@ private:
       bool       ff_menbot;    // fit flag: fit-meniscus+bottom
       bool       ff_meni;      // fit flag: fit-meniscus (omeni or menbot)
       bool       ff_bott;      // fit flag: fit-bottom (obott or menbot)
+      bool       ff_angle;     // fit flag: fit-angle
+      bool       ff_oangle;    // fit flag: only fit-angle
+      bool       ff_meniangle; // fit flag: fit-meniscus+angle
 
       double     slolim;       // s lower limit
       double     suplim;       // s upper limit
@@ -207,6 +220,8 @@ private:
       double     vari_curr;    // current variance
       double     menrange;     // meniscus range
       double     mendelta;     // meniscus delta per iteration
+      double     angle_range;  // angle range
+      double     angle_delta;  // angle delta per iteration
       double     cnstff0;      // constant f/f0 (or 0.0)
 
       QElapsedTimer      timer;        // timer for elapsed time measure

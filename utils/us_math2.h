@@ -21,11 +21,13 @@
    #define swap_double(a,b) {double t = a; a=b; b=t;}
 #endif
 
+
 #ifndef DbgLv
 #define DbgLv(a) if(0 >= a)qDebug()
 #endif
 
 //! \brief A collecion of methematical routines.  All functions are static.
+
 class US_UTIL_EXTERN US_Math2
 {
    public:
@@ -167,7 +169,7 @@ class US_UTIL_EXTERN US_Math2
 
       //! Adjust the vbar for temperature.  The values used in the 
       //! unadjusted calculations are based on 20 degrees C.  We 
-      //! use an observed linear adjustment of 0.000425 per degreee.
+      //! use an observed linear adjustment of 0.000425 per degree.
       
       //! \param vbar The unadjusted vbar value
       //! \param degC The temperature used for the adjustment
@@ -223,7 +225,7 @@ class US_UTIL_EXTERN US_Math2
       vector end-to-end, and the parameter a_dim1 contains the length of
       each column
 
-      Function returns 0 if succesful, 1, if iteration count exceeded 3*N,
+      Function returns 0 if successful, 1, if iteration count exceeded 3*N,
       or 2 in case of invalid problem dimensions or memory allocation error.
 
       Instead of pointers for working space, NULL can be given to let this
@@ -306,7 +308,7 @@ class US_UTIL_EXTERN US_Math2
       static double norm_value( US_DataIO::RawData* );
 
       //! \brief Compute the norm value of an experiment data set
-      //! \param expdat  Pointer to an experiement data set
+      //! \param expdat  Pointer to an experiment data set
       //! \return        The norm value of the dataset values
       static double norm_value( US_DataIO::EditedData* );
 

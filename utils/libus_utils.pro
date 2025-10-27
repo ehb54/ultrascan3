@@ -49,6 +49,7 @@ HEADERS      = us_ana_profile.h   \
                us_lm.h            \
                us_local_server.h  \
                us_math2.h         \
+               us_math_bf.h       \
                us_matrix.h        \
                us_memory.h        \
                us_model.h         \
@@ -102,6 +103,7 @@ SOURCES      = us_ana_profile.cpp   \
                us_lm.cpp            \
                us_local_server.cpp  \
                us_math2.cpp         \
+               us_math_bf.cpp       \
                us_matrix.cpp        \
                us_memory.cpp        \
                us_model.cpp         \
