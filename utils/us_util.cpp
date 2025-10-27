@@ -381,3 +381,5 @@ int US_Util::listlistParse( QList< QStringList >& lsl, QString& llstring )
    return nlelem;                    // Return the count of QList elements
 }
 
+//! \brief Regex expression for UUID for use
+QRegularExpression US_Util::UUID_REGEX = QRegularExpression( "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", QRegularExpression::CaseInsensitiveOption );
