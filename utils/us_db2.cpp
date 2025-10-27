@@ -137,12 +137,14 @@ bool US_DB2::test_secure_connection(
 
    if ( !US_Settings::debug_match( "MYSQL_OPT_SSL_VERIFY_SERVER_CERT" ) ) {
       // disable MYSQL_OPT_SSL_VERIFY_SERVER_CERT
-#if defined(MYSQL_OPT_SSL_VERIFY_SERVER_CERT)
+#if defined(LIBMARIADB)
+      // for libmariadb disable MYSQL_OPT_SSL_VERIFY_SERVER_CERT
       unsigned long verify = 0; // 0 = disable, 1 = enable
-      mysql_options( db, MYSQL_OPT_SSL_VERIFY_SERVER_CERT, &verify );
-#elif defined(MYSQL_OPT_SSL_MODE)
-      unsigned int ssl_mode = SSL_MODE_REQUIRED; // SSL on, but no CA/hostname verification
-      mysql_options( db, MYSQL_OPT_SSL_MODE, &ssl_mode );
+      auto ssl_verify_server_cert = mysql_options( db, MYSQL_OPT_SSL_VERIFY_SERVER_CERT, &verify );
+#else
+      // for libmysql set MYSQL_OPT_SSL_MODE to SSL_MODE_REQUIRED
+      unsigned int ssl_mode_required = SSL_MODE_REQUIRED; // SSL on, but no CA/hostname verification
+      auto ssl_mode = mysql_options( db, MYSQL_OPT_SSL_MODE, &ssl_mode_required );
 #endif
    }
    QString uhost  = host.section( ":", 0, 0 ).simplified();
@@ -217,12 +219,14 @@ bool US_DB2::connect( const QString& masterPW, QString& err )
 
       if ( !US_Settings::debug_match( "MYSQL_OPT_SSL_VERIFY_SERVER_CERT" ) ) {
          // disable MYSQL_OPT_SSL_VERIFY_SERVER_CERT
-#if defined(MYSQL_OPT_SSL_VERIFY_SERVER_CERT)
+#if defined(LIBMARIADB)
+         // for libmariadb disable MYSQL_OPT_SSL_VERIFY_SERVER_CERT
          unsigned long verify = 0; // 0 = disable, 1 = enable
-         mysql_options( db, MYSQL_OPT_SSL_VERIFY_SERVER_CERT, &verify );
-#elif defined(MYSQL_OPT_SSL_MODE)
-         unsigned int ssl_mode = SSL_MODE_REQUIRED; // SSL on, but no CA/hostname verification
-         mysql_options( db, MYSQL_OPT_SSL_MODE, &ssl_mode );
+         auto ssl_verify_server_cert = mysql_options( db, MYSQL_OPT_SSL_VERIFY_SERVER_CERT, &verify );
+#else
+         // for libmysql set MYSQL_OPT_SSL_MODE to SSL_MODE_REQUIRED
+         unsigned int ssl_mode_required = SSL_MODE_REQUIRED; // SSL on, but no CA/hostname verification
+         auto ssl_mode = mysql_options( db, MYSQL_OPT_SSL_MODE, &ssl_mode_required );
 #endif
       }
       // The CLIENT_MULTI_STATEMENTS flag allows for multiple queries and
@@ -329,12 +333,14 @@ bool US_DB2::connect(
 
       if ( !US_Settings::debug_match( "MYSQL_OPT_SSL_VERIFY_SERVER_CERT" ) ) {
          // disable MYSQL_OPT_SSL_VERIFY_SERVER_CERT
-#if defined(MYSQL_OPT_SSL_VERIFY_SERVER_CERT)
+#if defined(LIBMARIADB)
+         // for libmariadb disable MYSQL_OPT_SSL_VERIFY_SERVER_CERT
          unsigned long verify = 0; // 0 = disable, 1 = enable
-         mysql_options( db, MYSQL_OPT_SSL_VERIFY_SERVER_CERT, &verify );
-#elif defined(MYSQL_OPT_SSL_MODE)
-         unsigned int ssl_mode = SSL_MODE_REQUIRED; // SSL on, but no CA/hostname verification
-         mysql_options( db, MYSQL_OPT_SSL_MODE, &ssl_mode );
+         auto ssl_verify_server_cert = mysql_options( db, MYSQL_OPT_SSL_VERIFY_SERVER_CERT, &verify );
+#else
+         // for libmysql set MYSQL_OPT_SSL_MODE to SSL_MODE_REQUIRED
+         unsigned int ssl_mode_required = SSL_MODE_REQUIRED; // SSL on, but no CA/hostname verification
+         auto ssl_mode = mysql_options( db, MYSQL_OPT_SSL_MODE, &ssl_mode_required );
 #endif
       }
       // The CLIENT_MULTI_STATEMENTS flag allows for multiple queries and
