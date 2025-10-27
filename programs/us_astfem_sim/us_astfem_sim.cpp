@@ -1820,8 +1820,7 @@ for(int ss=0; ss<kscn; ss++ )
    QString wl         = QString::number( sim_datas[0].scanData.first().wavelength );
    wl     = ( sim_datas[0].scanData.first().wavelength < 99 ) ? "123" : wl;
 
-   QString now  =  QDateTime::currentDateTime()
-                      .toUTC().toString( "yyMMddhhmm" );
+   QString now  =  QDateTime::currentDateTimeUtc().toString( "yyMMddhhmm" );
    QString fname = run_id + "." + now + "." + runType + "." + cell + "." + channel + "." + wl + ".xml";
    QFile efo( odir + fname );
 
