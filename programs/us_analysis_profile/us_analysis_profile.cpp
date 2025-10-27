@@ -4214,7 +4214,7 @@ void US_AnaprofPanPCSA::verify_xyz(  )
   qDebug() << "QLineEdit oname -- " << oname;
   QLineEdit * curr_widget = NULL;
 
-  QRegExp rx_double;
+  QRegularExpression rx_double;
 
   
   if ( oname.contains("xmin") )
@@ -4248,7 +4248,7 @@ void US_AnaprofPanPCSA::verify_xyz(  )
     {
       text = curr_widget->text();
       
-      if ( !rx_double.exactMatch( text ) )
+      if ( !rx_double.match( text ).hasMatch() )
 	{
 	  QPalette *palette = new QPalette();
 	  palette->setColor(QPalette::Text,Qt::white);
