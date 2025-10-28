@@ -6,7 +6,7 @@ In the van Holde - Weischet (vHW) Enhanced program, there is a Distribution Plot
 .. image:: _static/images/vhw_distribution.png
     :align: center
     
-Functions
+Functions:
 ----------
 
 .. list-table::

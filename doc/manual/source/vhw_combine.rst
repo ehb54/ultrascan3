@@ -20,7 +20,7 @@ When data are loaded, arrays of X,Y distribution and envelope values are read an
   :align: center
 
 
-Functions
+Functions:
 ===========
 
 .. list-table::

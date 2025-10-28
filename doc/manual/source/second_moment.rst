@@ -17,7 +17,7 @@ The second moment analysis will calculate weight-average sedimentation coefficie
 .. image:: _static/images/second_moment.png
     :align: center
 
-Functions
+Functions:
 ===========
 
 .. list-table::

@@ -29,7 +29,7 @@ This module enables you to modify an Edited data set's meniscus value based on m
 
 
 
-Functions
+Functions:
 ===========
 
 .. list-table::

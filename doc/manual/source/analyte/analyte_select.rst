@@ -26,7 +26,7 @@ The Select Analyte tab provides an interface for managing analytes saved in the 
 This tab also allows users to view spectral data or analyte properties and to delete analytes that are **not used** in any model.
 
 .. note:: 
-    analytes associated with models can not be deleted.
+    Analytes associated with models can not be deleted.
 
 .. image:: ../_static/images/analyte_selectp.png 
     :align: center
@@ -51,7 +51,7 @@ This tab also allows users to view spectral data or analyte properties and to de
 
     **Select Analyte Window - Carbohydrates/Other View**
 
-Functions
+Functions:
 ----------
 
 **Protein**
@@ -136,7 +136,6 @@ Functions
 
     **View Analyte Sequence file**
 
-    
 
 .. _analyte_details:
 

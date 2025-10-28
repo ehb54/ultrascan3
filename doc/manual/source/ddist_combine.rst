@@ -15,7 +15,7 @@ To combine model distributions from multiple datasets (either from different cel
 
 .. image:: _static/images/ddist_combine.png
 
-Functions
+Functions:
 ===========
 
 .. list-table::

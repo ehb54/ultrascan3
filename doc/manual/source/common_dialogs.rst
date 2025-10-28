@@ -12,7 +12,7 @@ Common Dialogs of Ultrascan III
 UltraScan III provides several dialogs for inputting data for analysis or viewing, including options to load run data or load/remove distribution/fitted model data.
 
 Data Loader 
-================================
+=============
 
 .. _fe_data_loader:
 
@@ -42,7 +42,7 @@ Similarly, in the case where Lastest Data Edit was not checked, you may select a
 
     **Select Specific Data Sets and Edits**
 
-Load Run Functions
+Load Run Functions:
 ----------------------
 
 .. list-table::
@@ -137,7 +137,7 @@ The dialog is presented when **Remove Distribution(s)** is clicked. The dialog s
 
   **Remove Distribution Model**
 
-Remove Functions
+Remove Functions:
 ------------------
 
 .. list-table::

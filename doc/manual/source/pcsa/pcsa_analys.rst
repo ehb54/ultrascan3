@@ -127,7 +127,7 @@ Control dialog parameters differ slightly in interpretation, based on whether th
 
 A detailed explanation of the results can be found in `Parametrically Constrained Spectrum Analysis Results <pcsa_results.html>`_
 
-Functions
+Functions:
 ============
 
 
@@ -235,7 +235,7 @@ intro
 .. image:: _static/images/pcsa_adv_control.png
   :align: center
 
-Advance Controls Functions
+Advance Controls Functions:
 ------------------------------
 
 **Fitting Controls**
@@ -320,7 +320,7 @@ The dialog begins with the final best model from an initial PCSA scan. The user 
     **After Regularization**
 
 
-Regularization Parameter Functions
+Regularization Parameter Functions:
 -----------------------------------
 
 
@@ -363,11 +363,3 @@ Regularization Parameter Functions
     - Close the dialog window and exit.
 
 
-Related
-====================
-
-`Fit Meniscus <fit_meniscus.html>`_
-
-`2-Dimensional Spectrum Analysis Process <2dsa_analys.html>`_
-
-`2-Dimensional Spectrum Analysis Result <2dsa_analsy.html>`_

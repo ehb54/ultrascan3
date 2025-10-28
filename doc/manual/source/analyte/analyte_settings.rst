@@ -18,9 +18,16 @@ Analyte Settings Tab
 
 Analyte Settings Panel
 =======================
+The Analyte Settings panel allows user to select the investigator, and set the data input from Database or local disk. 
 
 .. _analyte_settings: 
 
+.. image:: ../_static/images/analyte_settings.png
+    :align: center
 
-analyte_settings.png
+.. rst-class:: 
+    :align: center
+
+    **Analyte Specrum**
+
 

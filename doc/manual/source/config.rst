@@ -189,7 +189,7 @@ Advanced Configuration Panel:
 
     **Advanced Settings**
 
-Functions 
+Functions: 
 --------------
 
 .. list-table::
@@ -204,8 +204,8 @@ Functions
     - For certain applications, there are options that should only be visible and changeable by a highly knowledgeable user working in advanced mode. The level of advanced mode may be set with the counter here.
   * - **Number of Threads:** 
     - A threads count greater than one is advantageous in certain applications that are thread-aware. A number from one to ten may be set here.
-  * - **Noise Dialog Level** 
-    - **ADD DEFINITION of Function** 
+  * - **Noise Dialog Level:** 
+    - This function enables user to select from multiple noise profiles that are associated with a model. When the level flag is 1 (enabled), in `Finite Element Viewer <fe_match/fe_match_main.html#noise-vector-selection>`_, user is prompted to select from a list of noise profiles, where the earlier profiles will have higher Model Sibling 000#. See `Finite Element Viewer <fe_match/fe_match_main.html#noise-vector-selection>`_ help documentation for further instructions.
   * - **Reset to Last Saved** 
     -  All of the above settings can be made to revert to last-saved settings by clicking this button.
 
@@ -223,8 +223,6 @@ Functions
     - Display this detailed Fit Meniscus help.
   * - **Close** 
     - Close all windows and exit.
-
-
 
 
 Optima Host Configuration Panel: 

@@ -47,7 +47,7 @@ The main PCSA window is shown here in the state it appears after the completion 
 
     **Fitted PCSA Simulation**
 
-Functions
+Functions:
 ==========
 
 .. list-table::
@@ -128,12 +128,4 @@ Functions
   * - **Close** 
     - Close all windows and exit.
     
-Related
-====================
-
-`Parametrically Constrained Spectrum Fitting Controls <pcsa_analys.html>`_
-
-`2-Dimensional Spectrum Analysis <../2dsa/index.html>`_
-
-`Finite Element (FE) Model Viewer <../fe_match/index.html>`_
 

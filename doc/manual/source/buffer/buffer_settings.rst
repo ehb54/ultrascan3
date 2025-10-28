@@ -38,7 +38,7 @@ As with all panels, a set of tabs allows you to navigate to other panels in orde
 
     **Buffer Settings Window**
 
-Functions
+Functions:
 --------------
 
 .. list-table::

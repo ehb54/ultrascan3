@@ -18,7 +18,7 @@ To combine integral model distributions from multiple datasets (either from diff
 .. image:: _static/images/idist_combine.png
   :align: center
 
-Functions
+Functions:
 ===========
 
 .. list-table::

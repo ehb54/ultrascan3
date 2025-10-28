@@ -36,7 +36,7 @@ Fitting Analysis Process:
 *  **Step 6:** *Display and Save Results:* After simulation, a variety of options are available for displaying simulation results, residuals, and distributions. Report text files and graphics plot files can also be generated.
 
 
-2DSA Analysis Control Functions 
+2DSA Analysis Control Functions:
 =================================
 
 **Fitting Controls**

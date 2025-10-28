@@ -21,7 +21,7 @@ It is recommended that users of this technique measure sedimentation velocity ex
 
     **Density Matching Window**
 
-Functions
+Functions:
 ==============
 
 **Model Selection Controls**

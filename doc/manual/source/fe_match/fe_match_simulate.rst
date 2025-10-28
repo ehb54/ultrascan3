@@ -38,7 +38,7 @@ The simulation creates a data set with the same ranges as the edit experimental 
 
     **Simulated Viewer Result**
 
-Functions
+Functions:
 ^^^^^^^^^^^^
 
 **FE Analysis Data Viewer**
@@ -218,7 +218,7 @@ The "Save Data" button produces a set of report files. One of these is displayab
 |
 
 
-Distribution Information Units
+Distribution Information Units:
 -------------------------------
 
 - **Molec. Wt.:** Daltons

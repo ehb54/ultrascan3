@@ -27,7 +27,7 @@ This module is used to display, and export FE solutions fitted to velocity exper
 
     **Simulated Finite Element Solution**
 
-Functions
+Functions:
 ==============
 
 .. list-table::
@@ -45,7 +45,7 @@ Functions
   * - **Local Disk** 
     - Select to specify data input from local disk.			
   * - **Load Model**
-    - Load model data, choosing a model in a `Model Loader dialog <../common_dialogs.html#load-distribution-model>`_. If appropriate noise exists, you may also be presented with a `Noise Loader dialog <../manage_data.html>`_ to select time-invariant and/or radially-invariant noise vector(s) to load.
+    - Load model data, choosing a model in a `Model Loader dialog <../common_dialogs.html#load-distribution-model>`_. If appropriate noise exists, you may also be presented with a :ref:`Noise Loader dialog <manage_noise>` to select time-invariant and/or radially-invariant noise vector(s) to load.
   * - **Simulate Model** 
     -  Run a simulation and display results. For details on the results of clicking this button, see `Simulate Model Results <fe_match_simulate.html>`_.
   * - **View Data Report**
@@ -166,8 +166,34 @@ Functions
 
 The main **Compare Experiment to Finite Element Solution** window may need additional controls  when the model loaded includes Reversible Associations (RA). These controls can be revealed using the `Advanced Analysis Controls <fe_match_adv.html>`_ button to invoke a separate dialog.
 
+Noise Vector Selection 
+============================
+
+.. _manage_noise:
+
+When the **Noise Dialog Level** in the `Configuration and Preferences setting <../config.html#advanced-configuration-panel>`_ is enabled (1), the user can select the noise profiles to simulate the data with. 
 
 
+.. image:: ../_static/images/noise_prompt.png
+  :align: center
+
+.. rst-class:: center
+
+    **Noise Vector prompt**
+
+**No** - no noise will be selected, model will be simulated without noise correction, 
+
+**Yes** - User will be promted to select the noise vector. 
+
+.. image:: ../_static/images/noise_vec_db.png
+  :align: center
+
+.. rst-class:: center
+
+    **Noise Vector Database Load**
+
+.. note::
+  The Model siblings are in the order of latest noise fitted. The n
 
 Related
 ====================

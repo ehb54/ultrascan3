@@ -14,7 +14,7 @@ The DCDT or Time Derivative method will calculate g(S) differential sedimentatio
 
 .. image:: _static/images/time_derivative.png
 
-Functions
+Functions:
 ===========
 
 .. list-table::

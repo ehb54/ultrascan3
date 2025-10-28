@@ -43,7 +43,7 @@ The input data may come in one of two flavors, each of which is treated differen
     **Genetic Algorithm populated with Monte Carlo Model**
 
 
-Functions
+Functions:
 ==============
 
 **Genetic Algorithm Controls**

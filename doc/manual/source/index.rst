@@ -44,7 +44,6 @@ Welcome to UltraScan III's Documentation and Resource!
 
    import
    us_edit
-
    fit_meniscus
 
 
@@ -52,9 +51,9 @@ Welcome to UltraScan III's Documentation and Resource!
    :maxdepth: 1
    :caption: Viewer:  
 
+   fe_match/index
    us_modelmetrics
    rmsd_query
-
    pseudo3d
    ddist_combine
    idist_combine 
@@ -67,9 +66,10 @@ Welcome to UltraScan III's Documentation and Resource!
    :caption: Diagnostics: 
 
    time_derivative
+   second_moment
    vhw_enhanced
    vhw_distrib_plot
-   second_moment
+
 
 
 .. toctree::
@@ -78,7 +78,7 @@ Welcome to UltraScan III's Documentation and Resource!
 
    2dsa/index
    pcsa/index
-   fe_match/index
+
    ga_initialize
 
 .. toctree::

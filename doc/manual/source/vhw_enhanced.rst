@@ -1,5 +1,5 @@
 ========================================
-van Holde - Weishcet Enhanced Analysis
+van Holde - Weischet Enhanced Analysis
 ========================================
 
 .. toctree:: 
@@ -16,7 +16,7 @@ The method of van Holde and Weischet (vHW) is a versatile, model-independent app
 .. image:: _static/images/vhw_enhanced.png
   :align: center
 
-Functions
+Functions:
 ===============
 
 .. list-table::

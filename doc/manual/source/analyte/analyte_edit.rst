@@ -34,14 +34,41 @@ This panel allows the user to modify non-hydrodynamic characteristics.
 Edit Analyte Spectrum 
 ======================
 
+The **Manage Spectrum** menu window allows the user to upload from local disk, upload and fit the spectrum using **Analyte Spectrum Fitter** window to determine the extinction coefficient at a wavelength range or add manually absorbance at specific wavelength. 
+
+.. image:: ../_static/images/analyte_specmenu.png
+    :align: center
+
+.. rst-class:: 
+    :align: center
+
+    **Edit Existing Spectrum Menu**
+
+Once an analyte has an associated spectrum, the **Manage Spectrum** menu window updates to include view Spectrum  and delete spectrum buttons. 
+
 .. image:: ../_static/images/analyte_edit_spec.png
     :align: center
 
 .. rst-class:: 
     :align: center
 
-    **Edit Existing Analyte Window**
+    **Analyte Specrum Fitter**
 
-analyte_spec-gui.png
+.. image:: ../_static/images/analyte_spec-gui.png
+    :align: center
 
-analyte_edit_spec.png
+.. rst-class:: 
+    :align: center
+
+    **Analyte Specrum Fitter**
+
+.. image:: ../_static/images/analyte_spectrum.png
+    :align: center
+
+.. rst-class:: 
+    :align: center
+
+    **Analyte Specrum**
+
+
+
