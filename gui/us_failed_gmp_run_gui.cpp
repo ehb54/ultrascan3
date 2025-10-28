@@ -94,7 +94,7 @@ void US_FailedRunGui::save_new( void )
   QString f_stage  = cb_stage       -> currentText();
   QString f_reason = le_description -> text();
 
-  f_reason.simplified();
+  f_reason = f_reason.simplified();
 
   if ( f_reason.isEmpty() )
     f_reason = "Not Specified";

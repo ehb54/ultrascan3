@@ -194,7 +194,7 @@ private:
       double     rd_frac;      // RMSD-difference fraction: (p-c)/p
       double     rd_thresh;    // RMSD-difference threshold factor
 
-      QTime      timer;        // timer for elapsed time measure
+      QElapsedTimer      timer;        // timer for elapsed time measure
 
    private slots:
       void queue_task      ( WorkPacketPc&, double, double,

@@ -1,3 +1,4 @@
+//! \file us.cpp
 #include <QtCore>
 #include <QTcpSocket>
 #include <QApplication>
@@ -178,7 +179,6 @@ int main(int argc, char* argv[])
     return application.exec();
 }
 
-
 //////////////US_Action
 US_Action::US_Action( int i, const QString& text, QObject* parent) 
     : QAction( text, parent ), index( i ) 
@@ -198,7 +198,7 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   , smallframe(nullptr)
   , splash_shadow(nullptr)
 {
-  // We need to handle US_Global::g here becuse US_Widgets is not a parent
+  // We need to handle US_Global::g here because US_Widgets is not a parent
   if ( ! g.isValid() ) 
   {
     // Do something for invalid global memory
@@ -239,10 +239,19 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   }
 
   g.set_global_position( QPoint( 50, 50 ) ); // Ensure initialization
-  QPoint p = g.global_position();
-  setGeometry( QRect( p, p + QPoint( 710, 532 ) ) );
-  g.set_global_position( p + QPoint( 30, 30 ) );
-
+  QString auto_positioning = US_Settings::debug_value("auto_positioning");
+  if ( !auto_positioning.isEmpty() && auto_positioning.toLower() == "true" )
+  {
+    QPoint point = g.global_position();
+    setGeometry( QRect( point, point + QPoint( 710, 532 ) ) );
+    g.set_global_position( point + QPoint( 30, 30 ) );
+  }
+  else
+  {
+    setBaseSize(QSize(710, 532));
+    setMinimumWidth(710);
+    setMinimumHeight(532);
+  }
   setWindowTitle( "UltraScan III" );
 
   QIcon us3_icon = US_Images::getIcon( US_Images::US3_ICON );
@@ -429,8 +438,53 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
 
 US_Win::~US_Win()
 {
-    QPoint p = g.global_position();
-    g.set_global_position( p - QPoint( 30, 30 ) );
+   QString auto_positioning = US_Settings::debug_value("auto_positioning");
+   if ( !auto_positioning.isEmpty() && auto_positioning.toLower() == "true" )
+   {
+      QPoint point = g.global_position();
+      g.set_global_position( point - QPoint( 30, 30 ) );
+   }
+}
+
+void US_Win::update_user_level( void ) {
+   //Sync User-level with that set in DB //////////////////////////////////////////
+   //If DB set ?
+   QList<QStringList> DB_list = US_Settings::databases();
+   QStringList defaultDB      = US_Settings::defaultDB();
+   if ( !DB_list.empty() && !defaultDB.isEmpty() )
+   {
+      US_Passwd   pw;
+      US_DB2      db( pw.getPasswd() );
+      int last_error = db.lastErrno();
+
+      if ( last_error == IUS_DB2::OK ) {
+         QStringList q( "get_user_info" );
+         db.query( q );
+         db.next();
+
+         int ID        = db.value( 0 ).toInt();
+         QString fname = db.value( 1 ).toString();
+         QString lname = db.value( 2 ).toString();
+         int     level = db.value( 5 ).toInt();
+
+
+         US_Settings::set_us_inv_name ( lname + ", " + fname );
+         US_Settings::set_us_inv_ID   ( ID );
+         US_Settings::set_us_inv_level( level );
+      }
+      else
+      {
+         QString error_msg = db.lastError();
+         QMessageBox msgBox;
+         msgBox.setWindowTitle ("ERROR: User Level Synchronization");
+         msgBox.setText("Error making the DB connection! User-level cannot be synchronized.");
+         msgBox.setInformativeText( error_msg );
+         msgBox.setIcon  ( QMessageBox::Critical );
+         msgBox.exec();
+      }
+
+   }
+   //END OF user-level sync//////////////////////////////////////
 }
   
 void US_Win::addMenu( int index, const QString& label, QMenu* menu )
@@ -573,7 +627,8 @@ void US_Win::launch( int index )
             this   , SLOT  ( terminated( int, QProcess::ExitStatus ) ) );
 
 #ifndef Q_OS_MAC
-  process->start( pname );
+  QStringList args;
+  process->start( pname, args );
 #else
    QString procbin = US_Settings::appBaseDir() + "/bin/" + pname;
    QString procapp = procbin + ".app";
@@ -608,11 +663,9 @@ void US_Win::launch( int index )
 void US_Win::closeProcs( void )
 {
   QString                    names;
-  QList<procData*>::iterator p;
-  
-  for ( p = procs.begin(); p != procs.end(); p++ )
+
+  for (const auto d : procs)
   {
-    procData* d  = *p;
     names       += d->name + "\n";
   }
 
@@ -644,9 +697,9 @@ void US_Win::closeProcs( void )
 
   if ( box.clickedButton() == leave ) return;
 
-  for ( p = procs.begin(); p != procs.end(); p++ )
+  for (const auto proc: procs )
   {
-    procData* d       = *p;
+    procData* d       = proc;
     QProcess* process = d->proc;
     
     if ( box.clickedButton() == kill )
@@ -670,11 +723,20 @@ void US_Win::closeEvent( QCloseEvent* e )
 
 void US_Win::splash( void )
 {
-    const int y = menuBar()->size().rheight();
-    const int h = 532 - y - statusBar()->size().rheight();
-    const int w = 710;
+  const int y =           menuBar  ()->size().rheight();
+  const int height = 532 - y - statusBar()->size().rheight();
+  const int w = 710;
+  const int y = menuBar()->size().rheight();
+  const int h = 532 - y - statusBar()->size().rheight();
+  const int w = 710;
 
-    if (!bigframe) bigframe = new QLabel(this);
+  bigframe = new QLabel( this );
+  bigframe->setFrameStyle        ( QFrame::Box | QFrame::Raised);
+  bigframe->setPalette           ( US_GuiSettings::frameColor() );
+  bigframe->setGeometry          ( 0, y, w, height );
+  bigframe->setAutoFillBackground( true );
+
+  if (!bigframe) bigframe = new QLabel(this);
     Q_ASSERT(bigframe);
     bigframe->setGeometry(0, y, w, h);
     bigframe->setFrameStyle(QFrame::NoFrame);
@@ -1003,206 +1065,6 @@ void US_Win::apply_prefs()
 
    show();
 }
-
-// Deprecated, saving the code as there is some time logic
-// Check for posted US3 notices
-// bool US_Win::notice_check()
-// {
-//    bool do_abort     = false;                         // Default: no abort
-//    int  level        = 0;                             // Max level: information
-//    QDateTime pn_time = ln_time;                       // Previous check time
-//    ln_time           = QDateTime::currentDateTime();  // Reset last notice time
-
-//    if ( US_Settings::default_data_location() == 2 )
-//       return do_abort;      // If default data location is Disk, do not bother
-
-   
-
-// //do_abort=true;
-// //level=2;
-//    // Query notice table in the us3_notice database
-//    US_Passwd pw;
-//    US_DB2    db;
-//    QString   host  ( "ultrascan.aucsolutions.com" );
-//    QString   dbname( "us3_notice" );
-//    QString   user  ( "us3_notice" );
-//    QString   passwd( "us3_notice" );
-//    QString   errmsg;
-
-//    // First do a quick connection test
-//    QTcpSocket tsock;
-//    tsock.connectToHost( host, 3306 );
-//    tsock.waitForConnected( 2000 );  // Give it two seconds
-// qDebug() << "US:NOTE: socket state" << tsock.state();
-//    if ( ! tsock.isValid()  ||
-//         tsock.state() == QAbstractSocket::UnconnectedState )
-//    {  // Abort immediately if connection not possible (host? port?)
-// qDebug() << "US:NOTE: Quick test host connect FAILED";
-//       return do_abort;
-//    }
-//    else
-//    {  // Disconnect if connection possible
-//    tsock.disconnectFromHost();
-// qDebug() << "US:NOTE: Quick test host connect WORKED";
-//    }
-
-//    // Then, do the full connection
-//    if ( ! db.connect( host, dbname, user, passwd, errmsg  ) )
-//    {
-// qDebug() << "US:NOTE: Unable to connect" << errmsg;
-//       return do_abort;
-//    }
-
-//    QString query( "SELECT type, revision, message, lastUpdated"
-//                   " FROM us3_notice.notice;" );
-//    db.rawQuery( query );
-
-//    // If no notices in the database, return now with no notice pop-up
-//    if ( db.lastErrno() != IUS_DB2::OK  ||  db.numRows() == 0 )
-//    {
-// qDebug() << "US:NOTE: No DB notices" << db.lastError()
-//  << "numRows" << db.numRows();
-//       return do_abort; 
-//    }
-
-//    // Otherwise accumulate notices and associated type,revision,time
-//    QStringList  msgs;
-//    QStringList  types;
-//    QStringList  revs;
-//    QList< int > irevs;
-//    QDateTime   time_d;
-//    QMap< QString, QString > typeMap;
-//    typeMap[ "info" ] = tr( "Information" );
-//    typeMap[ "warn" ] = tr( "Warning"     );
-//    typeMap[ "crit" ] = tr( "Critical"    );
-//    QString srev     = US_Version  + "."
-//                     + QString( REVISION ).section( ":", 1, 1 ).simplified();
-// qDebug() << "US:NOTE: srev" << srev;
-//    int    nnotice   = 0;
-//    int    nn_info   = 0;
-//    int    nn_warn   = 0;
-//    int    nn_crit   = 0;
-//    int    i_rev     = 0;
-
-//    while ( db.next() )
-//    {
-//       nnotice++;
-
-//       QString type     = db.value( 0 ).toString();
-//       QString mrev     = db.value( 1 ).toString();
-//       QString msg      = db.value( 2 ).toString();
-//       QDateTime time_m = db.value( 3 ).toDateTime();
-// qDebug() << "US:NOTE: mrev(1)" << mrev;
-//       mrev             = srev.left( 3 ) + mrev.mid( 3 );
-// qDebug() << "US:NOTE: mrev(2)" << mrev;
-
-//       if ( type == "info" )       nn_info++;
-//       else if ( type == "warn" )  nn_warn++;
-//       else if ( type == "crit" )  nn_crit++;
-
-//       int    m_rev     = QString( mrev ).replace( ".", "" ).toInt();
-//       i_rev            = qMax( i_rev,  m_rev  );
-
-//       if ( nnotice == 1 )
-//       {
-//         time_d           = time_m;
-//       }
-//       else
-//       {
-//         time_d           = time_m.secsTo( time_d ) > 0
-//                            ? time_d : time_m;
-//       }
-
-// #if QT_VERSION > 0x050000
-//       if ( type == "warn"  &&  msg.contains( "revision 3.3" ) )
-//       {
-//         msg              = msg.replace( "revision 3.3", "revision 3.5" );
-//       }
-//       if ( type == "warn"  &&  msg.contains( "revision 3.5" ) )
-//       {
-//         msg              = msg.replace( "revision 3.5", "revision 4.0" );
-//       }
-// #endif
-//       types << type;
-//       revs  << mrev;
-//       irevs << m_rev;
-//       msgs  << msg;
-//    }
-
-//    // If current revision is at or beyond max in records, skip pop-up
-//    int    s_rev     = QString( srev ).replace( ".", "" ).toInt();
-
-// qDebug() << "s_rev i_rev" << s_rev << i_rev << "srev" << srev;
-//    if ( s_rev > i_rev )
-//       return do_abort;
-
-//    // If lastest message time earlier than last notice time, skip pop-up
-//    int n_dif        = (int)time_d.secsTo( pn_time );
-// qDebug() << " n_dif" << n_dif << "time_d" << time_d << "pn_time" << pn_time;
-//    if ( n_dif > 0 )
-//       return do_abort;
-
-//    // Build notice message
-//    level             = ( nn_warn > 0 ) ? 1 : level;
-//    level             = ( nn_crit > 0 ) ? 2 : level;
-//    QString msg_note  = tr( "UltraScan III notices posted  (" ) 
-//                      + time_d.toString( "yyyy/MM/dd" ) + "):\n\n";
-
-//    bool empty_msg    = true;
-
-//    double sys_version  = US_Version.toDouble();
-//    int    sys_revision = QString( REVISION ).toInt();
-   
-//    for ( int ii = 0; ii < nnotice; ii++ )
-//    {
-//       double msg_version  = QString( "%1" ).arg( revs[ii] ).replace( QRegularExpression( "\\.\\d+$" ), "" ).toDouble();
-//       double msg_revision = QString( "%1" ).arg( revs[ii] ).replace( QRegularExpression( "^[^\\.]*\\.\\d+\\." ), "" ).toDouble();
-
-//       // // Skip messages for warn/crit same revision or any earlier than current
-//       // if ( ( irevs[ ii ] == s_rev  &&  types[ ii ] != "info" )  ||
-//       //      irevs[ ii ] < s_rev )     continue;
-
-//       // Skip messages where message version.revision is less than our version.revision
-//       if ( sys_version > msg_version ||
-//            ( sys_version == msg_version &&
-//              sys_revision > msg_revision ) ) {
-//          continue;
-//       }
-
-//       // Add current message to full text
-//       msg_note         += typeMap[ types[ ii ] ] + " for release "
-//                        + revs[ ii ] + ":\n"
-//                        + msgs[ ii ] + "\n";
-
-//       empty_msg        = false;
-      
-//       // Critical from later revision than current means an abort
-//       if ( types[ ii ] == "crit" )   do_abort = true;
-//    }
-
-//    if ( do_abort )
-//    {  // Append an additional note if an abort is happening
-//       msg_note         += tr( "\n\n*** US3 Abort: UPDATE REQUIRED!!! ***\n" );
-//       empty_msg        = false;
-//    }
-
-//    if ( !empty_msg ) {
-//       // Display notices at level of highest level currently set
-//       QWidget* wthis    = (QWidget*)this;
-//       if (      level == 0 )
-//          QMessageBox::information( wthis, tr( "US3 Notices" ), msg_note );
-//       else if ( level == 1 )
-//          QMessageBox::warning    ( wthis, tr( "US3 Notices" ), msg_note );
-//       else if ( level == 2 )
-//          QMessageBox::critical   ( wthis, tr( "US3 Notices" ), msg_note );
-//    }
-
-//    // Abort if that is indicated
-//    if ( do_abort )
-//       exit( -77 );
-
-//    return do_abort;
-// }
 
 void US_Win::notices_ready() {
    qDebug() << "notices_ready()";

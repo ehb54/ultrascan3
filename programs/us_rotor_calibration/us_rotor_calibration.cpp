@@ -300,7 +300,7 @@ void US_RotorCalibration::loadDisk(void)
 
    reset();
 
-   QStringList components =  workingDir.split("/", QString::SkipEmptyParts);
+   QStringList components =  workingDir.split("/", Qt::SkipEmptyParts);
 
    runID = components.last();
 
@@ -904,7 +904,7 @@ void US_RotorCalibration::calculate()
       }
    }
 
-   qSort(speeds); // sort the speeds with the slowest being the first element
+   std::sort( speeds.begin(), speeds.end() ); // sort the speeds with the slowest being the first element
    QVector< Average > avg2;
    avg2.clear();
 
@@ -1368,7 +1368,7 @@ void US_RotorCalibration::calc_6channel(void)
          }
       }
    }
-   qSort(speeds); // sort the speeds with the slowest being the first element
+   std::sort( speeds.begin(), speeds.end() ); // sort the speeds with the slowest being the first element
    double average, sigma_sum;
    int count = 0;
    int l=0;

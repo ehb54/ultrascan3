@@ -234,10 +234,8 @@ DbgLv(0) << "work_dir=" << work_dir;
    if ( parameters.keys().contains( "seed" ) ) 
    {
       seed = parameters[ "seed" ].toUInt();
-      qsrand( seed + my_rank );   // Set system random sequence
    }
-   else
-      US_Math2::randomize();
+   US_Math2::randomize( seed );
 
    QString jxmlfile  = jxmlfili;
 
@@ -1594,7 +1592,7 @@ DbgLv(1) << "MAST: wrout: mdl_type DMGA";
    else if ( mdl_type == US_Model::PCSA )
    {  // PCSA: Order model records and pick best model
       max_depth    = 0;
-      qSort( mrecs );
+      std::sort( mrecs.begin(), mrecs.end() );
 //*DEBUG*
 DbgLv(1) << "MAST: wrout: mdl_type PCSA  mrecs size" << mrecs.size();
 if(dbg_level>0)
@@ -1647,14 +1645,14 @@ DbgLv(1) << "WrO: meniscus_run" << meniscus_run << "mvsz" << meniscus_values.siz
 
    if ( mdl_type == US_Model::PCSA )
    {
-DbgLv(1) << "WrO: qSort solutes  sssz" << sim.zsolutes.size();
-      qSort( sim.zsolutes );
+DbgLv(1) << "WrO: std::sort solutes  sssz" << sim.zsolutes.size();
+      std::sort( sim.zsolutes.begin(), sim.zsolutes.end() );
    }
 
    else if ( mdl_type != US_Model::DMGA )
    {
-DbgLv(1) << "WrO: qSort solutes  sssz" << sim.solutes.size();
-      qSort( sim.solutes );
+DbgLv(1) << "WrO: std::sort solutes  sssz" << sim.solutes.size();
+      std::sort( sim.solutes.begin(), sim.solutes.end() );
    }
 
 DbgLv(1) << "WrO: wr_model  mdl_type" << mdl_type;

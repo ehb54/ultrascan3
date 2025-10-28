@@ -1034,7 +1034,7 @@ US_BufferGuiNew::US_BufferGuiNew( int *invID, int *select_db_disk,
 
 
    QStringList keys = component_list.keys();
-   qSort( keys );
+   std::sort( keys.begin(), keys.end() );
 
 
    connect( le_descrip,  SIGNAL( editingFinished() ),
@@ -1106,7 +1106,7 @@ void US_BufferGuiNew::init_buffer( void )
    // US_BufferComponent::getAllFromHD( component_list );
 DbgLv(1) << "BufN:SL: init_buffer  comps" << component_list.size();
    QStringList keys = component_list.keys();
-   qSort( keys );
+   std::sort( keys.begin(), keys.end() );
    lw_allcomps->clear();
 
    for ( int ii = 0; ii < keys.size(); ii++ )

@@ -311,7 +311,7 @@ qDebug() << "dtails: ds 1, scan 1: secs,omg2t,rpm" << s1tim << s1omg << s1rpm;
    }
 
    QList< int > rpms = map.uniqueKeys();
-   qSort( rpms );
+   std::sort( rpms.begin(), rpms.end() );
    QStringList  s_rpms;
    int          rpm;
 
@@ -405,7 +405,7 @@ void US_RunDetails2::show_all_data( void )
       }
    }
 
-   qSort( values );
+   std::sort( values.begin(), values.end() );
          
    QVector< double > x( scanCount );
    QVector< double > t( scanCount );
@@ -650,7 +650,7 @@ qDebug() << " srd: msg" << msg;
 qDebug() << " srd: sl" << sl << "rpm" << rpm << "np" << sl.count();
 
    sl              = map.values( rpm );
-   qSort( sl ); // contains cell / channel / wavelength / scan
+   std::sort( sl.begin(), sl.end() ); // contains cell / channel / wavelength / scan
                 //  ( or cell / channel / scan  for MWL data )
 
    QString triple  = triples[ 0 ];

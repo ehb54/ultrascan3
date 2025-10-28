@@ -116,7 +116,7 @@ SpeedoMeter::SpeedoMeter( QWidget *parent ):
     
     QwtDialSimpleNeedle *needle = new QwtDialSimpleNeedle(
         QwtDialSimpleNeedle::Arrow, true, Qt::red,
-        QColor( Qt::gray ).light( 130 ) );
+        QColor( Qt::gray ).lighter( 130 ) );
     setNeedle( needle );
 }
 
@@ -5207,7 +5207,7 @@ void US_XpnDataViewer::exclude_scans()
       scan_knt++;
    }
 
-   qSort( excludes );
+   std::sort( excludes.begin(), excludes.end() );
    kscan      = nscan - excludes.count();
 DbgLv(1) << "Excl: kscan" << kscan;
    ct_from   ->disconnect();

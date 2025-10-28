@@ -37,7 +37,7 @@ int main( int argc, char* argv[] )
    return application.exec();  //!< \memberof QApplication
 }
 
-// qSort LessThan method for S_Solute sort
+// LessThan method for S_Solute sort
 bool distro_lessthan( const S_Solute &solu1, const S_Solute &solu2 )
 {  // TRUE iff  (s1<s2) || (s1==s2 && d1<d2)
    return ( solu1.s < solu2.s ) ||
@@ -832,7 +832,7 @@ void US_Density_Match::sort_distro( QList< S_Solute >& listsols,
 
    // sort distro solute list by s,k values
 
-   qSort( listsols.begin(), listsols.end(), distro_lessthan );
+   std::sort( listsols.begin(), listsols.end(), distro_lessthan );
 
    // check reduce flag
 

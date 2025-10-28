@@ -1329,7 +1329,7 @@ void US_InitDialogueGui::checkCertificates( void )
       QString certPath = US_Settings::etcDir() + QString("/optima/");
       
       QString client_name = alias;
-      client_name.simplified();
+      client_name = client_name.simplified();
       client_name.replace(" ", "");
       client_name = client_name.toLower();
       

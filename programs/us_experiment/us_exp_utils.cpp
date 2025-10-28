@@ -2819,7 +2819,7 @@ DbgLv(1) << "EGOp:inP: nochan" << nochan;
      {
        QString channel     = rpOptic->chopts[ ii ].channel;
 
-       int cell_number = ((channel.split(QRegExp("\\s+"), QString::SkipEmptyParts))[0]).toInt();
+       int cell_number = ((channel.split(QRegExp("\\s+"), Qt::SkipEmptyParts))[0]).toInt();
 DbgLv(1) << "EGOp:inP: CELL #" << cell_number;
        if ( nholes == cell_number )
          ctrbal_is_centerpiece = true;
@@ -4185,8 +4185,8 @@ bool US_ExperGuiUpload::protocolToDataDisk( QStringList& msg_to_user )
 	r_types << "IP";
 
       QStringList r_types_fromDisk = runTypes_from_dataDisk[ ch_num ];
-      qSort( r_types );
-      qSort( r_types_fromDisk );
+      std::sort( r_types.begin(), r_types.end() );
+      std::sort( r_types_fromDisk.begin(), r_types_fromDisk.end() );
       qDebug() << "DataDisk OptSys for chann: " << ch_num << r_types_fromDisk;
       qDebug() << "Protocol OptSys for chann: " << ch_num << r_types;
       if ( r_types != r_types_fromDisk )
@@ -4540,7 +4540,7 @@ bool US_ExperGuiUpload::extinctionProfilesExist( QStringList& msg_to_user )
 	      //check if not a reference channel (that one can have a single analyte)
 	      QString ch_name_m = channel.split(",")[0];
 	      ch_name_m.replace("/","");
-	      ch_name_m.simplified();
+	      ch_name_m = ch_name_m.simplified();
 	      ch_name_m.replace( " ", "" );
 	      qDebug() << "Ref_channs -- " << ref_channs
 		       << "ch_name_m -- " << ch_name_m;

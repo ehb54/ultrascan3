@@ -729,7 +729,7 @@ void US_show_norm::sort_distro( QList< S_Solute >& listsols,
 
    // sort distro solute list by s,k values
 
-   qSort( listsols.begin(), listsols.end(), distro_lessthan );
+   std::sort( listsols.begin(), listsols.end(), distro_lessthan );
 
    // check reduce flag
 

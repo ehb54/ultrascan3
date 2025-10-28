@@ -4069,8 +4069,8 @@ DbgLv(1) << "ScMd: UNASSGN:  ++USED++";
    }
 DbgLv(1) << "ScMd: runid UNASGN editId 1   nmodel" << nmodel;
 
-QTime timer;
-timer.start();
+   QElapsedTimer timer;
+   timer.start();
    // Accumulate model information for runs present
    for ( int rr = 0; rr < runIDs.count(); rr++ )
    {
@@ -5913,8 +5913,15 @@ void US_ReporterGMP::process_combined_plots_individual ( QString triplesname_p, 
 		  
 		  t_m = "MW," + stage_model;
 		  c_parms = comboPlotsMap[ t_m ];
+		  qDebug() << "[MW-INDCOMB] c_parms [BEFORE]-- " << c_parms;
+		  convert_ranges_global( c_parms, pow(10,3) );
+		  qDebug() << "[MW-INDCOMB] c_parms [AFTER]-- " << c_parms;
 		  //put ranges into c_parms:
-		  c_parms[ "Ranges" ] = ranges.join(",");
+		  QString c_ranges = convert_ranges( ranges, pow(10,3) );
+		  qDebug() << "MW ranges [before, after] -- "
+			   << ranges.join(",") << ", " << c_ranges;
+		  c_parms[ "Ranges" ] = c_ranges;
+		  //c_parms[ "Ranges" ] = ranges.join(",");
 		  
 		  plotted_ids_colors_map_s_type = sdiag_combplot-> changedPlotX_auto( 1, c_parms );
 		  
@@ -5932,8 +5939,15 @@ void US_ReporterGMP::process_combined_plots_individual ( QString triplesname_p, 
 		  
 		  t_m = "D," + stage_model;
 		  c_parms = comboPlotsMap[ t_m ];
+		  qDebug() << "[D-INDCOMB] c_parms [BEFORE]-- " << c_parms;
+		  convert_ranges_global( c_parms, pow(10,-7) );
+		  qDebug() << "[D-INDCOMB] c_parms [AFTER]-- " << c_parms;
 		  //put ranges into c_parms:
-		  c_parms[ "Ranges" ] = ranges.join(",");
+		  QString c_ranges = convert_ranges( ranges, pow(10,-7) );
+		  qDebug() << "D ranges [before, after] -- "
+			   << ranges.join(",") << ", " << c_ranges;
+		  c_parms[ "Ranges" ] = c_ranges;
+		  //c_parms[ "Ranges" ] = ranges.join(",");
 		  
 		  plotted_ids_colors_map_s_type = sdiag_combplot-> changedPlotX_auto( 2, c_parms );
 		  
@@ -5968,7 +5982,7 @@ void US_ReporterGMP::process_combined_plots_individual ( QString triplesname_p, 
 		}
 	      
 	      // reset plot after processign certain type {s,D,MW...}
-	      sdiag_combplot->reset_data_plot1();
+	      //sdiag_combplot->reset_data_plot1();
 	    }
 	}
     }
@@ -5976,6 +5990,35 @@ void US_ReporterGMP::process_combined_plots_individual ( QString triplesname_p, 
   //assemble IND combined plots into html
   assemble_plots_html( CombPlotsFileNames, "CombPlots"  );
   qApp->processEvents();
+}
+
+//units conv. global settings
+void US_ReporterGMP::convert_ranges_global( QMap<QString, QString>& conv_ranges, double c_factor )
+{
+  QStringList conv_r_keys = conv_ranges.keys();
+  for (int i=0; i<conv_r_keys.size(); ++i)
+    {
+      if (conv_r_keys[i].contains("Maximum") || conv_r_keys[i].contains("Minimum"))
+	conv_ranges[ conv_r_keys[i] ] =
+	  QString::number( conv_ranges[ conv_r_keys[i] ].toDouble()*c_factor );
+    }
+}
+
+//convert units
+QString US_ReporterGMP::convert_ranges( QStringList conv_ranges, double c_factor )
+{
+  QString c_ranges_str;
+  QStringList c_ranges;
+
+  for (int i=0; i<conv_ranges.size(); ++i)
+    {
+      QStringList c_range = conv_ranges[i].split(":");
+      c_ranges << QString::number( c_range[0].toDouble()*c_factor ) + ":" +
+	QString::number( c_range[1].toDouble()*c_factor );
+    }
+
+  c_ranges_str = c_ranges.join(",");
+  return c_ranges_str;
 }
 
 //pull s_ranges, k_ranges from AProfile
@@ -6159,6 +6202,10 @@ void US_ReporterGMP::process_combined_plots ( QString filename_passed )
 		  t_m = "MW," + modelNames[ m ];
 		  c_type = "MW";
 		  c_parms = comboPlotsMap[ t_m ];
+		  qDebug() << "[MW-COMB] c_parms [BEFORE]-- " << c_parms;
+		  convert_ranges_global( c_parms, pow(10,3) );
+		  qDebug() << "[MW-COMB] c_parms [AFTER]-- " << c_parms;
+		  //[MW-COMB] c_parms --  QMap(("Envelope Gaussian Sigma", "0")("Plot X Maximum", "35000")("Plot X Minimum", "0"))
 		}
 	      
 	      else if( xtype[ xt ] == 2 )
@@ -6167,6 +6214,9 @@ void US_ReporterGMP::process_combined_plots ( QString filename_passed )
 		  t_m = "D," + modelNames[ m ];
 		  c_type = "D";
 		  c_parms = comboPlotsMap[ t_m ];
+		  qDebug() << "[D-COMB] c_parms [BEFORE]-- " << c_parms;
+		  convert_ranges_global( c_parms, pow(10,-7) );
+		  qDebug() << "[D-COMB] c_parms [AFTER]-- " << c_parms;
 		}
 	      
 	      else if( xtype[ xt ] == 3 )
@@ -7940,11 +7990,11 @@ QString US_ReporterGMP::distrib_info_abde( QString& abde_channame  )
   
    QPrinter printer(QPrinter::PrinterResolution);
    printer.setOutputFormat(QPrinter::PdfFormat);
-   printer.setPaperSize(QPrinter::Letter);
+   printer.setPageSize( QPageSize( QPageSize::Letter ) );
    
    printer.setOutputFileName( f_model_path );
    printer.setFullPage(true);
-   printer.setPageMargins(0, 0, 0, 0, QPrinter::Millimeter);
+   printer.setPageMargins( QMarginsF( 0, 0, 0, 0), QPageLayout::Millimeter);
   
    document.print(&printer);
    mstr += "<a href=\"./" + f_model_path_str_only + "\">View Model Distributions</a>";
@@ -8186,8 +8236,8 @@ void  US_ReporterGMP::assemble_plots_html( QStringList PlotsFilenames, const QSt
       //QPrinter below must be the same as defined just prior painting QTextDocument in ::write_pdf
       QPrinter printer_t(QPrinter::PrinterResolution);//(QPrinter::HighResolution);//(QPrinter::PrinterResolution);
       printer_t.setOutputFormat(QPrinter::PdfFormat);
-      printer_t.setPaperSize(QPrinter::Letter);
-      QSizeF pageSize = printer_t.pageRect().size();
+      printer_t.setPageSize( QPageSize( QPageSize::Letter ) );
+      QSizeF pageSize = printer_t.pageLayout().paintRectPixels( printer_t.resolution() ).size();
       qreal qprinters_width = pageSize.width()*0.75; //500 DEPENDS on QPrinter's constructor settings {QPrinter::PrinterResolution, 500; QPrinter::HighResolution, 9066}
       qreal qprinters_hight = pageSize.height()*0.55;
       qDebug() << "qprinters_width, height [orig, scaled]: "
@@ -9031,11 +9081,11 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
   
    QPrinter printer(QPrinter::PrinterResolution);
    printer.setOutputFormat(QPrinter::PdfFormat);
-   printer.setPaperSize(QPrinter::Letter);
+   printer.setPageSize( QPageSize( QPageSize::Letter ) );
    
    printer.setOutputFileName( f_model_path );
    printer.setFullPage(true);
-   printer.setPageMargins(0, 0, 0, 0, QPrinter::Millimeter);
+   printer.setPageMargins( QMarginsF( 0, 0, 0, 0), QPageLayout::Millimeter);
   
    document.print(&printer);
   
@@ -12031,7 +12081,7 @@ void US_ReporterGMP::write_pdf_report( void )
   
   QPrinter printer(QPrinter::PrinterResolution);//(QPrinter::HighResolution);//(QPrinter::PrinterResolution);
   printer.setOutputFormat(QPrinter::PdfFormat);
-  printer.setPaperSize(QPrinter::Letter);
+  printer.setPageSize( QPageSize( QPageSize::Letter ) );
 
   printer.setOutputFileName( filePath );
   printer.setFullPage(true);
@@ -12222,7 +12272,7 @@ void US_ReporterGMP::printDocument(QPrinter& printer, QTextDocument* doc) //, QW
   //int textMargins = 0; // in millimeters
   
   QPainter painter( &printer );
-  QSizeF pageSize = printer.pageRect().size(); // page size in pixels
+  QSizeF pageSize = printer.pageLayout().paintRectPixels( printer.resolution() ).size(); // page size in pixels
   // Calculate the rectangle where to lay out the text
   const double tm = mmToPixels(printer, textMargins);
   const qreal footerHeight = painter.fontMetrics().height();
@@ -12277,7 +12327,7 @@ void US_ReporterGMP::paintPage(QPrinter& printer, int pageNumber, int pageCount,
 {
   int borderMargins = 10;  // in millimeters
   qDebug() << "Printing page" << pageNumber;
-  const QSizeF pageSize = printer.paperRect().size();
+  const QSizeF pageSize = printer.pageLayout().fullRectPixels( printer.resolution() ).size();
   qDebug() << "pageSize=" << pageSize;
   qDebug() << "printerResolution=" << printer.resolution();
   

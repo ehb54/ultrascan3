@@ -64,6 +64,12 @@
                <li>
                   <b>us3logo</b> Flag to include the UltraScan3 logo in the generated reports.
                </li>
+               <li>
+                  <b>MYSQL_OPT_SSL_VERIFY_SERVER_CERT</b> Flag to enable the SSL certificate verification for MySQL connections.
+               </li>
+               <li>
+                  <b>auto_positioning</b> Flag to enable the window positioning by UltraScan.
+               </li>
             </ul>
         </li>
 
