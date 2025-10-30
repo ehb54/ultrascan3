@@ -2,7 +2,8 @@
 2-Dimensional Spectrum Analysis 
 ====================================
 
-This module enables you to perform 2-dimensional spectrum analysis on a chosen experimental data set. Upon completion of an analysis fit, plots available include: experiment; simulation; overlayed experiment and simulation; residuals; time-invariant noise; radially-invariant noise; 3-d model. Final outputs may include one or more models and noises.
+This module enables you to perform 2-dimensional spectrum analysis on a chosen experimental data set. This module fits varying pairs of s and f/f0 with constant Vbar or varying pairs of s and Vbar with constant f/f0
+Upon completion of an analysis fit, plots available include: experiment; simulation; overlayed experiment and simulation; residuals; time-invariant noise; radially-invariant noise; 3-d model. Final outputs may include one or more models and noises.
 
 .. toctree::
    :maxdepth: 1

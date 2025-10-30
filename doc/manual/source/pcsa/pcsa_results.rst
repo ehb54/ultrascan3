@@ -1,14 +1,12 @@
-=======================================================
-Parametrically Constrained Spectrum Analysis Results 
-=======================================================
+=====================================================
+Parametrically Constrained Spectrum Analysis Results
+=====================================================
 
 .. toctree:: 
   :maxdepth: 3
 
 .. contents:: Index
   :local: 
-
-
 
 Upon completion of an analysis fit, plots generated include: 
 

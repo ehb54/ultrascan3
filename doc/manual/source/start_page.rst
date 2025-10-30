@@ -190,4 +190,7 @@ Step 12: Perform Parametrically Constrained Spectrum Analysis (PCSA) - (optional
 #. Optionally, regularize PCSA result either by Monte Carlo or Tikhonov regularization. 
     * Tikhonov regularization can be performed with a specified regularization level, or by asking the program to auto-compute the most appropriate regularization level based on the L-curve criterion, see:
 
+Reference
+==========
+
 Gorbet G., T. Devlin, B. Hernandez Uribe, A. K. Demeler, Z. Lindsey, S. Ganji, S. Breton, L. Weise-Cross, E.M. Lafer, E.H. Brookes, B. Demeler. `A parametrically constrained optimization method for fitting sedimentation velocity experiments. <https://www.sciencedirect.com/science/article/pii/S0006349514002288>`_ Biophys. J. (2014) vol 106, 1741-50.
