@@ -2,6 +2,7 @@
 
 #include <QApplication>
 #include <QDomDocument>
+#include <qwt_scale_div.h>
 
 #include "us_buoyancy.h"
 
@@ -1417,8 +1418,8 @@ void US_Buoyancy::load( void )
       pick     ->disconnect();
 
       if ( !us_buoyancy_auto_mode ) 
-	connect( pick, SIGNAL( cMouseUp( const QwtDoublePoint& ) ),
-		 SLOT  ( mouse   ( const QwtDoublePoint& ) ) );
+	connect( pick, SIGNAL( cMouseUp( const QPointF& ) ),
+		 SLOT  ( mouse   ( const QPointF& ) ) );
 
       plot_scan( current_scan );
             
@@ -1763,7 +1764,7 @@ QMap< QString, double > US_Buoyancy::get_data_conf_from_edit_profile ( QString r
 
 
 // Handle a mouse click according to the current pick step
-void US_Buoyancy::mouse( const QwtDoublePoint& p )
+void US_Buoyancy::mouse( const QPointF& p )
 {
    double maximum = -1.0e99;
    if ( rb_meniscus->isChecked() )
@@ -2557,13 +2558,13 @@ void US_Buoyancy::add_peak( void )
 				"please use CNTR+mouse to mark peak position." ) );
 
   pick -> setEnabled( true ); 
-  connect( pick, SIGNAL( cMouseUp     ( const QwtDoublePoint& ) ),
-		 SLOT  ( mouse_peak   ( const QwtDoublePoint& ) ) );
+  connect( pick, SIGNAL( cMouseUp     ( const QPointF& ) ),
+		 SLOT  ( mouse_peak   ( const QPointF& ) ) );
 
 }
 
 // Add additional peak with the mouse click
-void US_Buoyancy::mouse_peak( const QwtDoublePoint& p )
+void US_Buoyancy::mouse_peak( const QPointF& p )
 {
   QString triple_n = cb_triple->itemText( current_triple );
   triple_name_to_peaks_map[ triple_n ]. push_back ( p.x() );
