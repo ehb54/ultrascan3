@@ -1,5 +1,5 @@
 #include <QApplication>
-
+#include <qwt_scale_div.h>
 #include "us_license_t.h"
 #include "us_license.h"
 #include "us_util.h"
@@ -28,6 +28,7 @@
 #include "us_tmst_plot.h"
 #include "us_astfem_math.h"
 #include "us_protocol_util.h"
+
 
 #if QT_VERSION < 0x050000
 #define setSamples(a,b,c)  setData(a,b,c)
@@ -1237,17 +1238,16 @@ void US_ConvertGui::resetAll( void )
    QApplication::restoreOverrideCursor();
    QApplication::restoreOverrideCursor();
 
-   if ( allData.size() > 0 )
+   if ( !allData.empty() )
    {  // Output warning when resetting (but only if we have data)
       int status = QMessageBox::information( this,
          tr( "New Data Warning" ),
          tr( "This will erase all data currently on the screen, and "
              "reset the program to its starting condition. No hard-drive "
              "data or database information will be affected. Proceed? " ),
-         tr( "&OK" ), tr( "&Cancel" ),
-         0, 0, 1 );
+         QMessageBox::Ok | QMessageBox::Cancel, QMessageBox::Cancel );
 
-      if ( status != 0 ) return;
+      if ( status != QMessageBox::Ok ) return;
    }
 
    reset();
@@ -2530,7 +2530,7 @@ void US_ConvertGui::check_scans()
       QGridLayout* lyt = new QGridLayout();
       lyt->addWidget(msg,   0, 0, 5, 5);
       lyt->addWidget(pb_ok,    5, 2, 1, 1);
-      lyt->setMargin(2);
+      lyt->setContentsMargins( 2, 2, 2, 2 );
       error_wgt->setLayout(lyt);
       error_wgt->setMinimumSize(500, 500);
       connect(pb_ok, &QPushButton::clicked, error_wgt, &US_WidgetsDialog::accept);
@@ -2607,13 +2607,12 @@ DbgLv(1) << "CGui: enabCtl: have-data" << allData.size() << all_tripinfo.size();
       // or to save it
       // We have to check against GUID's, because solutions won't have
       // solutionID's yet if they are created as needed offline
-      QRegExp rx( "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" );
 
       pb_applyAll     -> setEnabled( false );
 //      if ( all_tripinfo.size() > 1  &&
 //           rx.exactMatch( all_tripinfo[ tripListx ].solution.solutionGUID ) )
       if ( out_chaninfo.size() > 1  &&
-           rx.exactMatch( out_chaninfo[ tripListx ].solution.solutionGUID ) )
+           US_Util::UUID_REGEX.match( out_chaninfo[ tripListx ].solution.solutionGUID ).hasMatch() )
       {
          pb_applyAll  -> setEnabled( true );
       }
@@ -2706,16 +2705,13 @@ DbgLv(1) << " enabCtl: tLx infsz" << tripListx << out_chaninfo.count();
       completed = false;
    }
 
-   // Is the run info defined?
-   QRegExp rx( "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" );
-
    // Not checking operator on disk -- defined as "Local"
    if ( ( ExpData.rotorID == 0 )              ||
         ( ExpData.calibrationID == 0 )        ||
         ( ExpData.labID == 0 )                ||
         ( ExpData.instrumentID == 0 )         ||
         ( ExpData.label.isEmpty() )           ||
-        ( ! rx.exactMatch( ExpData.project.projectGUID ) ) )
+        ( ! US_Util::is_valid_uuid( ExpData.project.projectGUID ) ) )
    {
       if ( ! referenceDefined )
       {
@@ -2733,7 +2729,7 @@ DbgLv(1) << " enabCtl: tLx infsz" << tripListx << out_chaninfo.count();
    // Check GUIDs, because solutionID's may not be present yet.
    foreach ( US_Convert::TripleInfo tripinfo, out_chaninfo )
    {
-      if ( ! rx.exactMatch( tripinfo.solution.solutionGUID ) )
+      if ( ! US_Util::is_valid_uuid( tripinfo.solution.solutionGUID ) )
       {
          count++;
          lw_todoinfo->addItem( QString::number( count ) +
@@ -2838,16 +2834,13 @@ DbgLv(1) << " enabCtl: tLx infsz" << tripListx << out_chaninfo.count();
       completed = false;
    }
 
-   // Is the run info defined?
-   QRegExp rx( "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" );
-
    // Not checking operator on disk -- defined as "Local"
    if ( ( ExpData.rotorID == 0 )              ||
         ( ExpData.calibrationID == 0 )        ||
         ( ExpData.labID == 0 )                ||
         ( ExpData.instrumentID == 0 )         ||
         ( ExpData.label.isEmpty() )           ||
-        ( ! rx.exactMatch( ExpData.project.projectGUID ) ) )
+        ( ! US_Util::is_valid_uuid( ExpData.project.projectGUID ) ) )
    {
       if ( ! referenceDefined )
       {
@@ -2865,7 +2858,7 @@ DbgLv(1) << " enabCtl: tLx infsz" << tripListx << out_chaninfo.count();
    // Check GUIDs, because solutionID's may not be present yet.
    foreach ( US_Convert::TripleInfo tripinfo, out_chaninfo )
    {
-      if ( ! rx.exactMatch( tripinfo.solution.solutionGUID ) )
+      if ( ! US_Util::is_valid_uuid( tripinfo.solution.solutionGUID ) )
       {
          count++;
          lw_todoinfo->addItem( QString::number( count ) +
@@ -3870,8 +3863,8 @@ void US_ConvertGui::loadUS3Disk( QString dir )
    QStringList components =  dir.split( "/", Qt::SkipEmptyParts );
    QString new_runID      = components.last();
 
-   QRegExp rx( "^[A-Za-z0-9_-]{1,80}$" );
-   if ( rx.indexIn( new_runID ) < 0 )
+   static const QRegularExpression rx( "^[A-Za-z0-9_-]{1,80}$" );
+   if ( rx.match( new_runID ).hasMatch() )
    {
       QMessageBox::warning( this,
             tr( "Bad runID Name" ),
@@ -3943,7 +3936,7 @@ DbgLv(1) << "CGui: ldUS3Dk: call rdExp  sz(trinfo)" << all_tripinfo.count();
    {
       QMessageBox::information( this,
          tr( "Error" ),
-         tr( "Unknown error: " ) + status );
+         tr( "Unknown error: " ) + QString::number( status ) );
    }
 
    // Now that we have the experiment, let's read the rest of the
@@ -4083,7 +4076,7 @@ DbgLv(1) << "CGui: call rdRIDk";
       {
          QMessageBox::information( this,
             tr( "Error" ),
-            tr( "Unknown error: " ) + status );
+            tr( "Unknown error: " ) + QString::number( status ) );
       }
 
       else
@@ -5161,8 +5154,8 @@ void US_ConvertGui::define_subsets( void )
    pb_define  ->setEnabled( false );
    pb_process ->setEnabled( true );
 
-   connect( picker, SIGNAL( cMouseUp( const QwtDoublePoint& ) ),
-                    SLOT  ( cClick  ( const QwtDoublePoint& ) ) );
+   connect( picker, SIGNAL( cMouseUp( const QPointF& ) ),
+                    SLOT  ( cClick  ( const QPointF& ) ) );
 
    step = SPLIT;
 }
@@ -5265,8 +5258,8 @@ DbgLv(1) << "CGui: (2)dRef:   jj wj aj kd" << jj << wvs[jj] << all_lambdas[jj]
 */
    plot_last_scans( centerpoint_ref_def );
 
-   connect( picker, SIGNAL( cMouseUp( const QwtDoublePoint& ) ),
-                    SLOT  ( cClick  ( const QwtDoublePoint& ) ) );
+   connect( picker, SIGNAL( cMouseUp( const QPointF& ) ),
+                    SLOT  ( cClick  ( const QPointF& ) ) );
 
    reference_start = 0.0;
    reference_end   = 0.0;
@@ -5362,7 +5355,7 @@ void US_ConvertGui::plot_last_scans( double cent_point )
 
 // Select starting point of reference scan in intensity data
 /*
-void US_ConvertGui::start_reference( const QwtDoublePoint& p )
+void US_ConvertGui::start_reference( const QPointF& p )
 {
    reference_start   = p.x();
 
@@ -5486,7 +5479,7 @@ void US_ConvertGui::process_reference_auto( const double centerpoint )
 
 
 // Select end point of reference scan in intensity data
-void US_ConvertGui::process_reference( const QwtDoublePoint& p )
+void US_ConvertGui::process_reference( const QPointF& p )
 {
    double dr = 0.01;
    reference_start = p.x() - dr;
@@ -5551,7 +5544,7 @@ DbgLv(1) << "CGui: (6)referDef=" << referenceDefined;
 }
 
 // Process a control-click on the plot window
-void US_ConvertGui::cClick( const QwtDoublePoint& p )
+void US_ConvertGui::cClick( const QPointF& p )
 {
    switch ( step )
    {
@@ -6417,12 +6410,12 @@ DbgLv(1) << "DelTrip: selected size" << selsiz;
 						tr( "All Data To Be Dropped" ),
 						tr( "<font color='red'><b>ATTENTION:</b> Are you sure you want to drop all data?</font><br><br>"
 						    "(At least 1 triple is required to proceed to Editing, Analysis & Report stages...)<br><br>"
-						    "If that is what you intend, click <b>\"Proceed\"</b>.<br><br>"
+						    "If that is what you intend, click <b>\"Ok\"</b>.<br><br>"
 						    "NOTE: The program will be reset; you will no longer be able to process current run "
 						    "with this program<br>"),
-						tr( "&Proceed" ), tr( "&Cancel" ) );
+						QMessageBox::Ok | QMessageBox::Cancel, QMessageBox::Cancel );
 	   
-	   if ( stat != 0 ) 
+	   if ( stat != QMessageBox::Ok )
 	     return;
 	   
 	   //delete autoflow record & return to Run Manager
@@ -6467,9 +6460,9 @@ DbgLv(1) << "DelTrip: selected size" << selsiz;
 								 " for channel \"%2\" required for subsequent EDITING and ANALYSIS stages.\n\n"
 								 "ATTENTION:  Exclusion of this triple will lead to exclusion of the"
 								 " entire channel \"%2\" from further analysis.\n\n"
-								 "If that is what you intend, click \"Proceed\".\n\n"
+								 "If that is what you intend, click \"Ok\".\n\n"
 								 "Otherwise, you should \"Cancel\".\n" ).arg( triple_name ).arg( celchn ),
-							     tr( "&Proceed" ), tr( "&Cancel" ) );
+							     QMessageBox::Ok | QMessageBox::Cancel, QMessageBox::Cancel );
 		  
 		  if ( status != 0 )
 		    {
@@ -6486,10 +6479,10 @@ DbgLv(1) << "DelTrip: selected size" << selsiz;
 							   tr( "All Data To Be Dropped" ),
 							   tr( "<font color='red'><b>ATTENTION:</b> Are you sure you want to drop all data?</font><br><br>"
 							       "(At least 1 triple is required to proceed to Editing, Analysis & Report stages...)<br><br>"
-							       "If that is what you intend, click <b>\"Proceed\"</b>.<br><br>"
+							       "If that is what you intend, click <b>\"Ok\"</b>.<br><br>"
 							       "NOTE: The program will be reset; you will no longer be able to process current run "
 							       "with this program<br>"),
-							   tr( "&Proceed" ), tr( "&Cancel" ) );
+							   QMessageBox::Ok | QMessageBox::Cancel, QMessageBox::Cancel );
 		      
 		      if ( stat != 0 )
 			{
@@ -6821,10 +6814,10 @@ void US_ConvertGui::drop_channel()
 					   tr( "All Data To Be Dropped" ),
 					   tr( "<font color='red'><b>ATTENTION:</b> Are you sure you want to drop all data?</font><br><br>"
 					       "(At least 1 triple is required to proceed to Editing, Analysis & Report stages...)<br><br>"
-					       "If that is what you intend, click <b>\"Proceed\"</b>.<br><br>"
+					       "If that is what you intend, click <b>\"Ok\"</b>.<br><br>"
 					       "NOTE: The program will be reset; you will no longer be able to process current run "
 					       "with this program<br>"),
-					   tr( "&Proceed" ), tr( "&Cancel" ) );
+					   QMessageBox::Ok | QMessageBox::Cancel, QMessageBox::Cancel );
       
       if ( stat != 0 ) 
 	return;
@@ -6841,11 +6834,11 @@ void US_ConvertGui::drop_channel()
 					     tr( "Drop Triples with Selected Channel" ),
 					     tr( "You have selected a list item that implies you wish to"
 						 " drop triples that have channel '%1'\n\n"
-						 "If that is what you intend, click \"Proceed\".\n\n"
+						 "If that is what you intend, click \"Ok\".\n\n"
 						 "Otherwise, you should \"Cancel\".\n" ).arg( chann ),
-					     tr( "&Proceed" ), tr( "&Cancel" ) );
+					     QMessageBox::Ok | QMessageBox::Cancel, QMessageBox::Cancel );
   
-  if ( status != 0 ) return;
+  if ( status != QMessageBox::Ok ) return;
 
    //identify all dropped channels
    for (int ii = 0; ii < lw_triple->count(); ii++)
@@ -6942,12 +6935,12 @@ void US_ConvertGui::drop_cellchan()
 					   tr( "All Data To Be Dropped" ),
 					   tr( "<font color='red'><b>ATTENTION:</b> Are you sure you want to drop all data?</font><br><br>"
 					       "(At least 1 triple is required to proceed to Editing, Analysis & Report stages...)<br><br>"
-					       "If that is what you intend, click <b>\"Proceed\"</b>.<br><br>"
+					       "If that is what you intend, click <b>\"Ok\"</b>.<br><br>"
 					       "NOTE: The program will be reset; you will no longer be able to process current run "
 					       "with this program<br>"),
-					   tr( "&Proceed" ), tr( "&Cancel" ) );
+					   QMessageBox::Ok | QMessageBox::Cancel, QMessageBox::Cancel );
       
-      if ( stat != 0 ) 
+      if ( stat != QMessageBox::Ok )
 	return;
 
       //delete autoflow record & return to Run Manager
@@ -6964,11 +6957,11 @@ void US_ConvertGui::drop_cellchan()
       tr( "Drop Triples of Selected Cell/Channel" ),
       tr( "You have selected a list item that implies you wish to"
           " drop all triples from cell/channel \"%1\"\n\n"
-          "If that is what you intend, click \"Proceed\".\n\n"
+          "If that is what you intend, click \"Ok\".\n\n"
           "Otherwise, you should \"Cancel\".\n" ).arg( celchn ),
-      tr( "&Proceed" ), tr( "&Cancel" ) );
+      QMessageBox::Ok | QMessageBox::Cancel, QMessageBox::Cancel );
 
-   if ( status != 0 ) return;
+   if ( status != QMessageBox::Ok ) return;
 
    //Mark channel to be dropped - for exclusion of the report
    channels_to_drop[ QString( celchn ).replace(" / ","") ] = true;
@@ -8136,7 +8129,7 @@ void US_ConvertGui::delete_autoflow_record( void )
    QString masterpw = pw.getPasswd();
    US_DB2* db = new US_DB2( masterpw );
 
-   if ( db->lastErrno() != US_DB2::OK )
+   if ( db->lastErrno() != IUS_DB2::OK )
      {
        QMessageBox::warning( this, tr( "Connection Problem" ),
 			     tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
@@ -8216,9 +8209,8 @@ int US_ConvertGui::saveUS3Disk( void )
                       " Click 'OK' to proceed anyway, or click 'Cancel'"
                       " and then click on the 'Edit Run Information'"
                       " button to enter this information first.\n" ),
-                  tr( "&OK" ), tr( "&Cancel" ),
-                  0, 0, 1 );
-      if ( status != 0 ) return US_Convert::NOT_WRITTEN;
+                  QMessageBox::Ok | QMessageBox::Cancel, QMessageBox::Cancel );
+      if ( status != QMessageBox::Ok ) return US_Convert::NOT_WRITTEN;
    }
 
    // Write the data
@@ -8282,7 +8274,7 @@ DbgLv(1) << "SV:   fileCount" << fileCount;
    {
       QMessageBox::information( this,
             tr( "Error" ),
-            tr( "Error: " ) + status );
+            tr( "Error: " ) + QString::number( status ) );
       return( status );
    }
 
@@ -8307,7 +8299,7 @@ DbgLv(1) << "SV:   fileCount" << fileCount;
          {
             QMessageBox::information( this,
                   tr( "Error" ),
-                  tr( "Error: " ) + status );
+                  tr( "Error: " ) + QString::number( status ) );
             return( status );
 
          }
@@ -8458,9 +8450,8 @@ DbgLv(1) << "DBSv:     tripleGUID       "
 						tr( "This will overwrite the raw data currently in the " ) +
 						tr( "database, and all existing edit profiles, models "  ) +
 						tr( "and noise data will be deleted too. Proceed? "      ),
-						tr( "&OK" ), tr( "&Cancel" ),
-						0, 0, 1 );
-	 if ( status != 0 ) return;
+						QMessageBox::Ok | QMessageBox::Cancel, QMessageBox::Cancel );
+	 if ( status != QMessageBox::Ok ) return;
        }
    }
 
@@ -8473,9 +8464,8 @@ DbgLv(1) << "DBSv:     tripleGUID       "
 						tr( "Once this data is written to the DB you will not "  ) +
 						tr( "be able to make changes to it without erasing the " ) +
 						tr( "edit profiles, models and noise files too. Proceed? " ),
-						tr( "&OK" ), tr( "&Cancel" ),
-						0, 0, 1 );
-	 if ( status != 0 ) return;
+						QMessageBox::Ok | QMessageBox::Cancel, QMessageBox::Cancel );
+	 if ( status != QMessageBox::Ok ) return;
        }
      else
        {
@@ -8557,7 +8547,7 @@ DbgLv(1) << "DBSv:     dset tripleID    " << out_tripinfo[0].tripleID;
       // US_DB2::OK means we're updating; US_DB2::NO_RAWDATA means it's new
       QMessageBox::information( this,
             tr( "Error" ),
-            db.lastError() + " (" + db.lastErrno() + ")\n" );
+            db.lastError() + " (" + QString::number( db.lastErrno() ) + ")\n" );
       return;
    }
 
@@ -8864,11 +8854,11 @@ int US_ConvertGui::getImports_auto( QString & CurrDir) // ALEXEY TO BE EDITED...
 
    // See if we need to fix the runID
    QString new_runID = dir.section( "/", -2, -2 );
-   QRegExp rx( "[^A-Za-z0-9_-]" );
+   QRegularExpression rx( "[^A-Za-z0-9_-]" );
 
    int pos = 0;
    bool runID_changed = false;
-   while ( ( pos = rx.indexIn( new_runID ) ) != -1 )
+   while ( ( pos = rx.match( new_runID ).capturedStart() ) != -1 )
    {
       new_runID.replace( pos, 1, "_" );      // Replace 1 char at position pos
       runID_changed = true;
@@ -8971,11 +8961,11 @@ int US_ConvertGui::getImports()
 
    // See if we need to fix the runID
    QString new_runID = dir.section( "/", -2, -2 );
-   QRegExp rx( "[^A-Za-z0-9_-]" );
+   QRegularExpression rx( "[^A-Za-z0-9_-]" );
 
    int pos = 0;
    bool runID_changed = false;
-   while ( ( pos = rx.indexIn( new_runID ) ) != -1 )
+   while ( ( pos = rx.match( new_runID ).capturedStart() ) != -1 )
    {
       new_runID.replace( pos, 1, "_" );      // Replace 1 char at position pos
       runID_changed = true;

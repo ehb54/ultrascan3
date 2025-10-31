@@ -17,7 +17,7 @@ US_ConvertIO::US_ConvertIO( void )
 
 QString US_ConvertIO::writeRawDataToDB( US_Experiment& ExpData, 
                                        QList< US_Convert::TripleInfo >& triples,
-                                       QString dir,
+                                       const QString& dir,
                                        US_DB2* db )
 {
    const int channelID = 1;
@@ -220,9 +220,9 @@ qDebug() << "cvio:WrRDB: trx" << trx << "soluGUID"
 
       // Write cell table record
       QStringList parts    = triple->tripleDesc.split(" / ");
-      QString cell         = parts[ 0 ];
+      const QString& cell         = parts[ 0 ];
       QString letters("SABCDEFGH");
-      QString channel      = parts[ 1 ];
+      const QString& channel      = parts[ 1 ];
       int     channelNum   = letters.indexOf( channel );
       QString eccc         = cell + ":" + QString::number( channelNum )
                              + ":" + QString::number( triple->centerpiece );
@@ -238,9 +238,9 @@ qDebug() << "cvio:WrRDB: trx" << trx << "soluGUID"
             << QString::number( triple->centerpiece )
             << s_expID;
          status = db->statusQuery( q );
-         if ( status != US_DB2::OK )
+         if ( status != IUS_DB2::OK )
             error += "Error returned writing cell record: " + cellGUID + "\n" +
-                     status + " " + db->lastError() + "\n";
+                     QString::number(status) + " " + db->lastError() + "\n";
       }
 
       // Associate solution in this triple with experiment
@@ -570,7 +570,7 @@ qDebug() << " rRDD: build TripleInfo";
          if ( status == US_DB2::NO_BUFFER )
          {
             // buffer wasn't found
-            triple.solution.buffer.bufferID    = -1;
+            triple.solution.buffer.bufferID    = "-1";
             triple.solution.buffer.GUID        = QString( "" );
             triple.solution.buffer.description = QString( "" );
          }
@@ -626,26 +626,23 @@ int US_ConvertIO::checkDiskData( US_Experiment& ExpData,
       ExpData.name    = db->value( 1 ).toString() + ", " + db->value( 0 ).toString();
    }
 
-   // Check all the other GUID's for format
-   QRegExp rx( "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" );
-
    // operator GUID
-   if ( ! rx.exactMatch( ExpData.operatorGUID ) )
+   if ( ! US_Util::UUID_REGEX.match( ExpData.operatorGUID ).hasMatch() )
       return US_DB2::BADGUID;
 
    // triple GUID's
-   for ( int trx = 0; trx < triples.size(); trx++ )
+   for (const auto & triple : triples)
    {
-      if ( triples[ trx ].excluded ) continue;
+      if ( triple.excluded ) continue;
 
       QString uuidc = US_Util::uuid_unparse(
-         (unsigned char*) triples[ trx ].tripleGUID );
-      if ( ! rx.exactMatch( uuidc ) )
+         (unsigned char*) triple.tripleGUID );
+      if ( ! US_Util::UUID_REGEX.match( uuidc ).hasMatch() )
          return US_DB2::BADGUID;
    }
 
    // rotor GUID
-   if ( ! rx.exactMatch( ExpData.rotorGUID ) )
+   if ( ! US_Util::UUID_REGEX.match( ExpData.rotorGUID ).hasMatch() )
       return US_DB2::BADGUID;
 
    // Ok, GUID's are ok
@@ -802,26 +799,23 @@ int US_ConvertIO::checkDiskData_auto( US_Experiment& ExpData,
       ExpData.name    = db->value( 1 ).toString() + ", " + db->value( 0 ).toString();
    }
 
-   // Check all the other GUID's for format
-   QRegExp rx( "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" );
-
    // operator GUID
-   if ( ! rx.exactMatch( ExpData.operatorGUID ) )
+   if ( ! US_Util::UUID_REGEX.match( ExpData.operatorGUID ).hasMatch() )
       return US_DB2::BADGUID;
 
    // triple GUID's
-   for ( int trx = 0; trx < triples.size(); trx++ )
+   for (const auto & triple : triples)
    {
-      if ( triples[ trx ].excluded ) continue;
+      if ( triple.excluded ) continue;
 
       QString uuidc = US_Util::uuid_unparse(
-         (unsigned char*) triples[ trx ].tripleGUID );
-      if ( ! rx.exactMatch( uuidc ) )
+         (unsigned char*) triple.tripleGUID );
+      if ( ! US_Util::UUID_REGEX.match( uuidc ).hasMatch() )
          return US_DB2::BADGUID;
    }
 
    // rotor GUID
-   if ( ! rx.exactMatch( ExpData.rotorGUID ) )
+   if ( ! US_Util::UUID_REGEX.match( ExpData.rotorGUID ).hasMatch() )
       return US_DB2::BADGUID;
 
    // Ok, GUID's are ok
