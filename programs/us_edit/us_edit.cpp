@@ -2,7 +2,7 @@
 
 //#include <QApplication>
 //#include <QDomDocument>
-
+#include <qwt_scale_div.h>
 #include "us_edit.h"
 #include "us_exclude_profile.h"
 #include "us_select_lambdas.h"
@@ -3266,8 +3266,8 @@ DbgLv(1) << " celchns    size" << celchns.size() << ncelchn;
       }
 
       pick     ->disconnect();
-      connect( pick, SIGNAL( cMouseUp( const QwtDoublePoint& ) ),
-                     SLOT  ( mouse   ( const QwtDoublePoint& ) ) );
+      connect( pick, SIGNAL( cMouseUp( const QPointF& ) ),
+                     SLOT  ( mouse   ( const QPointF& ) ) );
 
       pb_priorEdits->disconnect();
       connect( pb_priorEdits, SIGNAL( clicked() ), SLOT( prior_equil() ) );
@@ -5204,8 +5204,8 @@ DbgLv(1) << " celchns    size" << celchns.size() << ncelchn;
       }
 
       pick     ->disconnect();
-      connect( pick, SIGNAL( cMouseUp( const QwtDoublePoint& ) ),
-                     SLOT  ( mouse   ( const QwtDoublePoint& ) ) );
+      connect( pick, SIGNAL( cMouseUp( const QPointF& ) ),
+                     SLOT  ( mouse   ( const QPointF& ) ) );
 
       pb_priorEdits->disconnect();
       connect( pb_priorEdits, SIGNAL( clicked() ), SLOT( prior_equil() ) );
@@ -5819,8 +5819,8 @@ DbgLv(1) << " celchns    size" << celchns.size() << ncelchn;
       }
 
       pick     ->disconnect();
-      connect( pick, SIGNAL( cMouseUp( const QwtDoublePoint& ) ),
-                     SLOT  ( mouse   ( const QwtDoublePoint& ) ) );
+      connect( pick, SIGNAL( cMouseUp( const QPointF& ) ),
+                     SLOT  ( mouse   ( const QPointF& ) ) );
 
       pb_priorEdits->disconnect();
       connect( pb_priorEdits, SIGNAL( clicked() ), SLOT( prior_equil() ) );
@@ -6308,8 +6308,8 @@ void US_Edit::plot_current( int index )
    ct_to  ->setMaximum( data.scanData.size() );
 
    pick   ->disconnect();
-   connect( pick, SIGNAL( cMouseUp( const QwtDoublePoint& ) ),
-                  SLOT  ( mouse   ( const QwtDoublePoint& ) ) );
+   connect( pick, SIGNAL( cMouseUp( const QPointF& ) ),
+                  SLOT  ( mouse   ( const QPointF& ) ) );
 }
 
 // Re-plot
@@ -6335,7 +6335,7 @@ void US_Edit::replot( void )
 }
 
 // Handle a mouse click according to the current pick step
-void US_Edit::mouse( const QwtDoublePoint& p )
+void US_Edit::mouse( const QPointF& p )
 {
    double maximum = -1.0e99;
 
@@ -7899,8 +7899,8 @@ DbgLv(1) << "PlMwl:     ii" << ii << "NOT INCLUDED";
          cc->setSamples( rr, vv, npoint );
       }
       pick     ->disconnect();
-      connect( pick, SIGNAL( cMouseUp( const QwtDoublePoint& ) ),
-                     SLOT  ( mouse   ( const QwtDoublePoint& ) ) );
+      connect( pick, SIGNAL( cMouseUp( const QPointF& ) ),
+                     SLOT  ( mouse   ( const QPointF& ) ) );
 DbgLv(1) << "PlMwl:      END xa_RAD  kodlim odlimit" << kodlim << odlimit;
    }
 
@@ -7960,8 +7960,8 @@ DbgLv(1) << "PlMwl:  retn fr replot()";
    ct_to  ->setMaximum( data.scanData.size() );
 
    pick   ->disconnect();
-   connect( pick, SIGNAL( cMouseUp( const QwtDoublePoint& ) ),
-                  SLOT  ( mouse   ( const QwtDoublePoint& ) ) );
+   connect( pick, SIGNAL( cMouseUp( const QPointF& ) ),
+                  SLOT  ( mouse   ( const QPointF& ) ) );
 }
 
 // Set focus FROM scan value
@@ -11348,7 +11348,7 @@ DbgLv(1) << "BL: CC : baseline bl" << baseline << bl;
 
 DbgLv(1) << "EDT:WrTripl: orig sufx" << sufx;
       QString isufx = sufx;
-      sufx.replace( QRegExp( "[^\\w\\d\\-]" ), "-" );
+      sufx.replace( QRegularExpression( "[^\\w\\d\\-]" ), "-" );
       sufx.replace( '_', '-' );
 DbgLv(1) << "EDT:WrTripl:  rmvd sufx" << sufx;
       if ( sufx != isufx )
@@ -11531,7 +11531,7 @@ DbgLv(1) << "AppPri: IN  dkdb" << disk_controls->db();
       index1 = filter.indexOf( '.' ) + 1;
 
       filter = "*" + filter.mid( index1 );
-      filter.replace( QRegExp( "auc$" ), "xml" );
+      filter.replace( QRegularExpression( "auc$" ), "xml" );
       filter = tr( "Edits(" ) + filter + tr( ");;All XML (*.xml)" );
 
       // Ask for edit file
@@ -11788,7 +11788,7 @@ void US_Edit::prior_equil( void )
       index1 = filter.indexOf( '.' ) + 1;
 
       filter.insert( index1, "*." );
-      filter.replace( QRegExp( "auc$" ), "xml" );
+      filter.replace( QRegularExpression( "auc$" ), "xml" );
 
       // Ask for edit file
       filename = QFileDialog::getOpenFileName( this,
@@ -13089,7 +13089,7 @@ void US_Edit::write_mwl()
 
       if ( ! ok ) return;
 
-      sufx.remove( QRegExp( "[^\\w\\d_-]" ) );
+      sufx.remove( QRegularExpression( "[^\\w\\d_-]" ) );
       editLabel    = now + sufx;
 
       if ( editLabel.length() > 20 )
@@ -14559,10 +14559,9 @@ void US_Edit::pass_values_bll( void )
 					 tr( "New Baseline Correction Parameters" ),
 					 tr( "This will overwrite current Baseline Correction parameters. "
 					     "Do you want to proceed? " ),
-					 tr( "&OK" ), tr( "&Cancel" ),
-					 0, 0, 1 );
+					 QMessageBox::Ok | QMessageBox::Cancel, QMessageBox::Cancel );
 
-  if ( status != 0 ) return;
+  if ( status != QMessageBox::Ok ) return;
 
    emit pass_edit_params_blc( editProfile_triple_blc );
    //emit pass_edit_params_blc_plot( cb_triple->currentIndex() );
@@ -14616,10 +14615,9 @@ void US_Edit::pass_values( void )
 					 tr( "New Edit Parameters" ),
 					 tr( "This will overwrite current edit parameters. "
 					     "Do you want to proceed? " ),
-					 tr( "&OK" ), tr( "&Cancel" ),
-					 0, 0, 1 );
+					 QMessageBox::Ok | QMessageBox::Cancel, QMessageBox::Cancel );
 
-  if ( status != 0 ) return;
+  if ( status != QMessageBox::Cancel ) return;
 
   emit pass_edit_params_includes( editProfile_triple_includes );
   emit pass_edit_params_blc( editProfile_triple_blc );
