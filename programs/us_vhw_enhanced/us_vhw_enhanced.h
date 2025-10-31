@@ -175,7 +175,7 @@ class US_vHW_Enhanced : public US_AnalysisBase2
         double avg_plateau(void);              //!< Calculate average plateau
         double sedcoeff_intercept(void);       //!< Calculate sedimentation coefficient intercept
         double back_diff_coeff(double);        //!< Calculate back-diffusion coefficient
-        void groupClick(const QwtDoublePoint&); //!< Handle group click
+        void groupClick(const QPointF&); //!< Handle group click
         void add_group_info(void);             //!< Add group information
         void write_vhw(void);                  //!< Write vHW data
         void write_dis(void);                  //!< Write distribution data

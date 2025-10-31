@@ -1624,7 +1624,7 @@ DbgLv(0) << "xyzd size" << xyzdat.size();
                this,      SLOT  ( control_closed() ) ); 
 
       // Position near upper right of the desktop
-      int cx       = qApp->desktop()->width() - p3d_ctld->width() - 40;
+      int cx       = QGuiApplication::primaryScreen()->availableSize().width() - p3d_ctld->width() - 40;
       int cy       = 40;
       p3d_ctld->move( cx, cy );
       p3d_pltw     = p3d_ctld->widget_3dplot();

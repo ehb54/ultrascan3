@@ -140,9 +140,7 @@ US_vHW_Enhanced::US_vHW_Enhanced() : US_AnalysisBase2()
    rightLayout->setStretchFactor( plotLayout1, 3 );
    rightLayout->setStretchFactor( plotLayout2, 2 );
 
-   setMaximumSize( qApp->desktop()->size() - QSize( 80, 80 ) );
-   //resize( 100, 100 );
-   //resize( 900, 100 );
+   setMaximumSize( QGuiApplication::primaryScreen()->availableSize() );
    adjustSize();
 }
 
@@ -186,7 +184,7 @@ void US_vHW_Enhanced::load( void )
    data_plot1->setCanvasBackground( Qt::black );
    data_plot2->setCanvasBackground( Qt::black );
    int bord = height() - data_plot1->height() - data_plot2->height() + 12;
-   int mxht = qApp->desktop()->height() - bord;
+   int mxht = QGuiApplication::primaryScreen()->availableSize().height() - bord;
    int p1ht = ( mxht * 400 ) / 650;
    int p2ht = mxht - p1ht;
    p1ht     = qMin( p1ht, 400 );
@@ -199,8 +197,8 @@ DbgLv(1) << "vhw: mxht p1ht p2ht" << mxht << p1ht << p2ht;
 
    gpick      = new US_PlotPicker( data_plot1 );
    gpick->setStateMachine( new QwtPickerClickPointMachine() );
-   connect( gpick,    SIGNAL( mouseDown(  const QwtDoublePoint& ) ),
-            this,       SLOT( groupClick( const QwtDoublePoint& ) ) );
+   connect( gpick,    SIGNAL( mouseDown(  const QPointF& ) ),
+            this,       SLOT( groupClick( const QPointF& ) ) );
    groupstep   = NONE;
 
    pb_selegr->setEnabled( true );
@@ -1235,7 +1233,7 @@ DbgLv(1) << "  bdiff_coef" << bdcoef << " = RT/(D1*sqrt(D2/D3))";
 }
 
 // Handle mouse clicks for selecting vH-W groups
-void US_vHW_Enhanced::groupClick( const QwtDoublePoint& p )
+void US_vHW_Enhanced::groupClick( const QPointF& p )
 {
    QwtPlotMarker* marker;
    QwtText        label;
