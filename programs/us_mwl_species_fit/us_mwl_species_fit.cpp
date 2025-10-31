@@ -23,6 +23,7 @@
 #define dPlotClearAll(a) a->clear()
 #else
 #include "qwt_picker_machine.h"
+#include <qwt_scale_div.h>
 #define AXISSCALEDIV(a)    (QwtScaleDiv*)&data_plot->axisScaleDiv(a)
 #define dPlotClearAll(a) a->detachItems(QwtPlotItem::Rtti_PlotItem,true)
 #endif
@@ -1213,7 +1214,7 @@ void US_MwlSpeciesFit::loadSpecs_auto( QMap< QString, QMap< double, double > > a
   int nspecies_tmp = analytes_profs_keys.size();
   
   QStringList analytes_profs_keys_mod;
-  QRegExp rx( "[^A-Za-z0-9_-]" );
+  QRegularExpression rx( "[^A-Za-z0-9_-]" );
   for ( int i=0; i< analytes_profs_keys.size(); ++i )
     {
       QString ana_desc = analytes_profs_keys[i];
@@ -1362,7 +1363,7 @@ void US_MwlSpeciesFit::loadSpecs()
 DbgLv(1) << "SpFiles:";
    for ( int ii = 0; ii < nspecies_tmp; ii++ )
    {
-      QFileInfo finfo = data_list[ii].filePath();
+      QFileInfo finfo = QFileInfo( data_list[ii].filePath() );
       spfiles_tmp << finfo.filePath();
       QVector<double> xvals = data_list[ii].columnAt(0);
       QVector<double> yvals = data_list[ii].columnAt(1);
