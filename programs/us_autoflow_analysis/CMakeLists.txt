@@ -131,7 +131,7 @@ target_include_directories(us_autoflow_analysis PRIVATE
 # Link libraries
 target_link_libraries(us_autoflow_analysis PRIVATE
         us_program_common
-        Qt5::DataVisualization
+        Qt::DataVisualization
         )
 
 # Install
