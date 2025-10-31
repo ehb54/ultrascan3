@@ -329,7 +329,7 @@ DbgLv(1) << "RP:PD mrecs size" << mrecs.size() << nmodl;
       // Set up the right-side axis with the color map
       rightAxis->setColorBarEnabled( true );
 #if QT_VERSION < 0x050000
-      QwtDoubleInterval cdrange( rmsd_best, rmsd_elite );
+      QwtInterval cdrange( rmsd_best, rmsd_elite );
       rightAxis->setColorMap       ( cdrange, *revcmap );
 #else
       QwtInterval       cdrange( rmsd_best, rmsd_elite );
@@ -562,7 +562,7 @@ DbgLv(1) << "Color at position" << pos << positionColor( pos ); }
 QColor US_MLinesPlot::positionColor( double pos )
 {
 //DbgLv(1) << "pC: position" << pos;
-   QwtDoubleInterval colorinterv( 0.0, 1.0 );
+   QwtInterval colorinterv( 0.0, 1.0 );
    return QColor( colormap->rgb( colorinterv, pos ) );
 }
 
@@ -572,7 +572,7 @@ QwtLinearColorMap* US_MLinesPlot::reverseColorMap()
    QwtLinearColorMap* rcolmap = new QwtLinearColorMap( colormap->color2(), colormap->color1() );
 
 #if QT_VERSION < 0x050000
-   QwtDoubleInterval cinterv( 0.0, 1.0 );
+   QwtInterval cinterv( 0.0, 1.0 );
 #else
    QwtInterval cinterv( 0.0, 1.0 );
 #endif
