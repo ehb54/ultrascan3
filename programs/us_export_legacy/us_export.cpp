@@ -168,7 +168,8 @@ US_ExportLegacy::US_ExportLegacy() : US_Widgets()
    dataLoaded = false;
 
    adjustSize();
-   setMaximumSize( qApp->desktop()->size() - QSize( 40, 40 ) );
+   // get the maximum screen size available (excluding already any taskbar/headerbar)
+   setMaximumSize( QGuiApplication::primaryScreen()->availableSize() );
 }
 
 // Load data

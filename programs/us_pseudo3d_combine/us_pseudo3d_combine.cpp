@@ -543,14 +543,14 @@ void US_Pseudo3D_Combine::plot_data( void )
    d_spectrogram->setColorMap( ColorMapCopy( colormap ) );
    US_SpectrogramData& spec_dat = (US_SpectrogramData&)*(d_spectrogram->data());
 #endif
-   QwtDoubleRect drect;
+   QRectF drect;
 
    if ( auto_sxy )
-      drect = QwtDoubleRect( 0.0, 0.0, 0.0, 0.0 );
+      drect = QRectF( 0.0, 0.0, 0.0, 0.0 );
 
    else
    {
-      drect = QwtDoubleRect( plt_smin, plt_kmin,
+      drect = QRectF( plt_smin, plt_kmin,
             ( plt_smax - plt_smin ), ( plt_kmax - plt_kmin ) );
    }
 
@@ -612,7 +612,7 @@ void US_Pseudo3D_Combine::plot_data( void )
    }
 
 #if QT_VERSION < 0x050000
-   rightAxis->setColorMap( QwtDoubleInterval( 0.0, plt_zmax ),
+   rightAxis->setColorMap( QwtInterval( 0.0, plt_zmax ),
       d_spectrogram->colorMap() );
 #else
 //   rightAxis->setColorMap( QwtInterval( plt_zmin, plt_zmax ),

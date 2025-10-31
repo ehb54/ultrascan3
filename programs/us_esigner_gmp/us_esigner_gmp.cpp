@@ -1104,9 +1104,9 @@ void US_eSignaturesGMP::limit_inv_names( const QString& s )
   for ( int i = 0; i < investigators.size(); i++ )
    {
      if ( investigators[ i ].lastName.contains( 
-					       QRegExp( ".*" + s + ".*", Qt::CaseInsensitive ) ) ||
+					       QRegularExpression( ".*" + s + ".*", QRegularExpression::CaseInsensitiveOption ) ) ||
 	  investigators[ i ].firstName.contains(
-						QRegExp( ".*" + s + ".*", Qt::CaseInsensitive ) ) )
+						QRegularExpression( ".*" + s + ".*", QRegularExpression::CaseInsensitiveOption ) ) )
        lw_inv_list->addItem( new QListWidgetItem(
 						 "InvID: (" + QString::number( investigators[ i ].invID ) + "), " +
 						 investigators[ i ].lastName + ", " + 
@@ -1121,9 +1121,9 @@ void US_eSignaturesGMP::limit_grev_names( const QString& s )
   for ( int i = 0; i < g_reviewers.size(); i++ )
    {
      if ( g_reviewers[ i ].lastName.contains( 
-					       QRegExp( ".*" + s + ".*", Qt::CaseInsensitive ) ) ||
+					       QRegularExpression( ".*" + s + ".*", QRegularExpression::CaseInsensitiveOption ) ) ||
 	  g_reviewers[ i ].firstName.contains(
-						QRegExp( ".*" + s + ".*", Qt::CaseInsensitive ) ) )
+						QRegularExpression( ".*" + s + ".*", QRegularExpression::CaseInsensitiveOption ) ) )
        lw_grev_list->addItem( new QListWidgetItem(
 						 "InvID: (" + QString::number( g_reviewers[ i ].invID ) + "), " +
 						 g_reviewers[ i ].lastName + ", " + 
@@ -1138,9 +1138,9 @@ void US_eSignaturesGMP::limit_gappr_names( const QString& s )
   for ( int i = 0; i < g_apprs.size(); i++ )
    {
      if ( g_apprs[ i ].lastName.contains( 
-					       QRegExp( ".*" + s + ".*", Qt::CaseInsensitive ) ) ||
+					       QRegularExpression( ".*" + s + ".*", QRegularExpression::CaseInsensitiveOption ) ) ||
 	  g_apprs[ i ].firstName.contains(
-						QRegExp( ".*" + s + ".*", Qt::CaseInsensitive ) ) )
+						QRegularExpression( ".*" + s + ".*", QRegularExpression::CaseInsensitiveOption ) ) )
        lw_gappr_list->addItem( new QListWidgetItem(
 						 "InvID: (" + QString::number( g_apprs[ i ].invID ) + "), " +
 						 g_apprs[ i ].lastName + ", " + 
@@ -4212,14 +4212,14 @@ void US_eSignaturesGMP::esign_report( void )
   f_html.close();
 
   //Process html_assembled string: put correct images' pathnames:
-  QRegExp rx("<img src=\"(.*)png\"");
-  int pos = rx.indexIn( html_assembled );
-  qDebug() << "Captured regex, size(): " << rx.capturedTexts() << rx.capturedTexts().size();
+  QRegularExpression rx("<img src=\"(.*)png\"");
+  QRegularExpressionMatch rx_match = rx.match( html_assembled );
+  qDebug() << "Captured regex, size(): " << rx_match.capturedTexts() << rx_match.capturedTexts().size();
 
   QString old_path = QString("");
-  if ( !rx.capturedTexts()[0].isEmpty() )
+  if ( !rx_match.capturedTexts()[0].isEmpty() )
     {
-      QString path_t = rx.capturedTexts()[0].split(".png\"")[0];//.section('/', -1);
+      QString path_t = rx_match.capturedTexts()[0].split(".png\"")[0];//.section('/', -1);
       path_t. replace( path_t.section('/',-1), "" );
       old_path = path_t. split("src=\"")[1];
       old_path.chop(1);

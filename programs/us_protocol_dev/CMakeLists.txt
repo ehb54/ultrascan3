@@ -174,7 +174,7 @@ target_include_directories(us_protocoldev PRIVATE
 # Link libraries
 target_link_libraries(us_protocoldev PRIVATE
         us_program_common
-        Qt5::DataVisualization
+        Qt::DataVisualization
         )
 
 # Install
