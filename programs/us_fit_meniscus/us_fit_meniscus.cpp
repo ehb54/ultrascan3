@@ -87,14 +87,14 @@ DbgLv(1) << "Main: BB";
    QwtPlotPicker* pick = new US_PlotPicker( meniscus_plot );
    QwtPlotGrid*   grid = us_grid( meniscus_plot );
    pick->setRubberBand( QwtPicker::VLineRubberBand );
-   //connect( pick, SIGNAL( moved    ( const QwtDoublePoint& ) ),
-   //         this, SLOT(   new_value( const QwtDoublePoint& ) ) );
+   //connect( pick, SIGNAL( moved    ( const QPointF& ) ),
+   //         this, SLOT(   new_value( const QPointF& ) ) );
 
    //Mouse controls
    pick->setMousePattern( QwtEventPattern::MouseSelect1,
                           Qt::LeftButton, Qt::ControlModifier );
-   connect( pick, SIGNAL( cMouseUp( const QwtDoublePoint& ) ),
-                  SLOT  ( mouse   ( const QwtDoublePoint& ) ) );
+   connect( pick, SIGNAL( cMouseUp( const QPointF& ) ),
+                  SLOT  ( mouse   ( const QPointF& ) ) );
    
    grid->attach( meniscus_plot );
    
@@ -382,14 +382,14 @@ DbgLv(1) << "Main: BB";
    QwtPlotPicker* pick = new US_PlotPicker( meniscus_plot );
    QwtPlotGrid*   grid = us_grid( meniscus_plot );
    pick->setRubberBand( QwtPicker::VLineRubberBand );
-   //connect( pick, SIGNAL( moved    ( const QwtDoublePoint& ) ),
-   //         this, SLOT(   new_value( const QwtDoublePoint& ) ) );
+   //connect( pick, SIGNAL( moved    ( const QPointF& ) ),
+   //         this, SLOT(   new_value( const QPointF& ) ) );
 
    //Mouse controls
    pick->setMousePattern( QwtEventPattern::MouseSelect1,
                           Qt::LeftButton, Qt::ControlModifier );
-   connect( pick, SIGNAL( cMouseUp( const QwtDoublePoint& ) ),
-                  SLOT  ( mouse   ( const QwtDoublePoint& ) ) );
+   connect( pick, SIGNAL( cMouseUp( const QPointF& ) ),
+                  SLOT  ( mouse   ( const QPointF& ) ) );
    
    
    grid->attach( meniscus_plot );
@@ -634,7 +634,7 @@ void US_FitMeniscus::load_data()
 {
    int count         = 0;
    QString contents  = te_data->e->toPlainText();
-   contents.replace( QRegExp( "[^0-9eE\\.\\n\\+\\-]+" ), " " );
+   contents.replace( QRegularExpression( "[^0-9eE\\.\\n\\+\\-]+" ), " " );
 
    QStringList lines = contents.split( "\n", Qt::SkipEmptyParts );
    QStringList parsed;
@@ -705,7 +705,7 @@ DbgLv(1) << "LD:  was3val have3val" << was3val << have3val
 }
 
 // Handle a mouse click according to the current pick step
-void US_FitMeniscus::mouse( const QwtDoublePoint& p )
+void US_FitMeniscus::mouse( const QPointF& p )
 {
   double radius_min[ 2 ];
   double rmsd_min  [ 2 ];
@@ -873,21 +873,21 @@ DbgLv(1) << "pl3d:    cblack" << cblack << "cwhite" << cwhite;
    d_spectrogram->attach( meniscus_plot );
 
 #if 0
-   QwtDoubleRect drect;
+   QRectF drect;
 
    if ( auto_lim )
    {
-      drect = QwtDoubleRect( 0.0, 0.0, 0.0, 0.0 );
+      drect = QRectF( 0.0, 0.0, 0.0, 0.0 );
    }
 
    else
    {
-      drect = QwtDoubleRect( min_x, min_y,
+      drect = QRectF( min_x, min_y,
             ( max_x - min_x ), ( max_y - min_y ) );
    }
 #endif
 #if 1
-   QwtDoubleRect drect = QwtDoubleRect( 0.0, 0.0, 0.0, 0.0 );
+   QRectF drect = QRectF( 0.0, 0.0, 0.0, 0.0 );
 #endif
 
    double xreso  = 300.0;
@@ -2387,8 +2387,9 @@ void US_FitMeniscus::scan_dbase()
 
    QString invID = QString::number( US_Settings::us_inv_ID() );
 
-   QRegExp fmIter  = QRegExp( "i\?\?-[mb]*",
-         Qt::CaseSensitive, QRegExp::Wildcard );
+   QRegularExpression fmIter  = QRegularExpression(
+   	QRegularExpression::wildcardToRegularExpression( "i\?\?-[mb]*" ),
+         QRegularExpression::CaseInsensitiveOption );
 
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
 
@@ -2421,7 +2422,7 @@ DbgLv(1) << "DbSc:     TRUNC: modelID" << modelID << "descr" << descript;
       double  meniscus   = db.value( 4 ).toString().toDouble();
       double  bottom     = 0.0;
       QDateTime lmtime   = db.value( 7 ).toDateTime();
-      lmtime.setTimeSpec( Qt::UTC );
+      lmtime.setTimeZone( QTimeZone( "UTC" ) );
       QString ansysID    = descript.section( '.', -2, -2 );
       QString iterID     = ansysID .section( '_', -1, -1 );
 DbgLv(1) << "DbSc:   modelID vari meni" << modelID << variance << meniscus
@@ -2504,7 +2505,7 @@ DbgLv(1) << "DbSc: tmodels size" << tmodels.size() << "ted sizes"
       QString editID     = tedIDs [ ii ];
 
       QDateTime lmtime   = db.value( 6 ).toDateTime();
-      lmtime.setTimeSpec( Qt::UTC );
+      lmtime.setTimeZone( QTimeZone( "UTC" ) );
       QString ansysID    = descript.section( '.', -2, -2 );
       QString iterID     = ansysID .section( '_', -1, -1 );
 //DbgLv(1) << "DbSc:   dscr1" << descript1 << "dcs" << descript;
@@ -2788,8 +2789,9 @@ void US_FitMeniscus::scan_dbase_auto( QMap <QString, QString> & triple_informati
 
    QString invID = triple_information[ "invID" ];
 
-   QRegExp fmIter  = QRegExp( "i\?\?-[mb]*",
-         Qt::CaseSensitive, QRegExp::Wildcard );
+   QRegularExpression fmIter  = QRegularExpression(
+   	QRegularExpression::wildcardToRegularExpression( "i\?\?-[mb]*" ),
+         QRegularExpression::CaseInsensitiveOption );
 
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
 
@@ -2825,7 +2827,7 @@ DbgLv(1) << "DbSc:     TRUNC: modelID" << modelID << "descr" << descript;
       double  meniscus   = db.value( 4 ).toString().toDouble();
       double  bottom     = 0.0;
       QDateTime lmtime   = db.value( 7 ).toDateTime();
-      lmtime.setTimeSpec( Qt::UTC );
+      lmtime.setTimeZone( QTimeZone( "UTC" ) );
       QString ansysID    = descript.section( '.', -2, -2 );
       QString iterID     = ansysID .section( '_', -1, -1 );
 DbgLv(1) << "DbSc:   modelID vari meni" << modelID << variance << meniscus
@@ -2909,7 +2911,7 @@ DbgLv(1) << "DbSc: tmodels size" << tmodels.size() << "ted sizes"
       QString editID     = tedIDs [ ii ];
 
       QDateTime lmtime   = db.value( 6 ).toDateTime();
-      lmtime.setTimeSpec( Qt::UTC );
+      lmtime.setTimeZone( QTimeZone( "UTC" ) );
       QString ansysID    = descript.section( '.', -2, -2 );
       QString iterID     = ansysID .section( '_', -1, -1 );
 //DbgLv(1) << "DbSc:   dscr1" << descript1 << "dcs" << descript;
