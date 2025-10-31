@@ -1197,7 +1197,7 @@ void US_ReporterGMP::check_models ( int autoflowID )
 	{
 	  QString wvl            = QString::number( chann_wvls[ jj ] );
 	  
-	  QString tripleName = channel_desc_alt.section( ":", 0, 0 )[0] + "." + channel_desc_alt.section( ":", 0, 0 )[1];
+	  QString tripleName = channel_desc_alt.section( ":", 0, 0 )[0] + QString(".") + channel_desc_alt.section( ":", 0, 0 )[1];
 
 	  if ( channel_desc_alt.contains( "Interf" ) ) 
 	    tripleName += ".Interference";
@@ -2762,7 +2762,7 @@ void US_ReporterGMP::build_perChanTree ( void )
 
 	      //Push to Array_of_triples;
 	      //QString tripleName = channel_desc_alt.section( ":", 0, 0 )[0] + "." + channel_desc_alt.section( ":", 0, 0 )[1] + "." + wvl;
-	      QString tripleName = channel_desc_alt.section( ":", 0, 0 )[0] + "." + channel_desc_alt.section( ":", 0, 0 )[1];
+	      QString tripleName = channel_desc_alt.section( ":", 0, 0 )[0] + QString(".") + channel_desc_alt.section( ":", 0, 0 )[1];
 
 	      if ( channel_desc_alt.contains( "Interf" ) ) 
 		tripleName += ".Interference";
@@ -10472,9 +10472,8 @@ void US_ReporterGMP::write_plot( const QString& filename, const QwtPlot* plot )
        bool ok          = widgw->save_plot( filename, QString( "png" ) );
  #else
        qDebug() << "3D: Q_OS_LINUX || other";	  
-       QGLWidget* dataw = eplotcd->data_3dplot();
-       QPixmap pixmap   = dataw->renderPixmap( dataw->width(), dataw->height(),
-                                             true  );
+       QOpenGLWidget* dataw = eplotcd->data_3dplot();
+       QPixmap pixmap   = dataw->grab( );
        bool ok          = pixmap.save( filename );
  #endif
 
@@ -13380,7 +13379,7 @@ void US_ReporterGMP::add_solution_details( const QString sol_id, const QString s
       else
 	{
 	  seqsmry         = seqsmry.toLower()
-	    .remove( QRegExp( "[\\s0-9]" ) );
+	    .remove( QRegularExpression( "[\\s0-9]" ) );
 	  seqlen          = seqsmry.length();
 	  if ( seqlen > 25 )
 	    {

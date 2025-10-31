@@ -134,7 +134,7 @@ target_include_directories(us_reporter_gmp PRIVATE
 # Link libraries
 target_link_libraries(us_reporter_gmp PRIVATE
         us_program_common
-        Qt5::DataVisualization
+        Qt::DataVisualization
         )
 
 # Install
