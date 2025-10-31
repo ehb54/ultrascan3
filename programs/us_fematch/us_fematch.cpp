@@ -177,7 +177,7 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    le_rmsd      = us_lineedit( "0.0", -1, true );
    le_variance  = us_lineedit( "0.0", -1, true );
    QFontMetrics fme( lb_compress->font() );
-   int pwid = fme.horizontalAdvance( lb_compress->text() + 6 );
+   int pwid = fme.horizontalAdvance( lb_compress->text() ) + 6;
    int lwid = pwid * 3 / 4;
    pb_solution->setEnabled( false );
    lb_vbar    ->setMinimumWidth( pwid );
@@ -407,7 +407,7 @@ US_FeMatch::US_FeMatch() : US_Widgets()
 
    sdata          = &wsdata;
 
-   setMaximumSize( qApp->desktop()->size() - QSize( 40, 40 ) );
+   setMaximumSize( QGuiApplication::primaryScreen()->availableSize() );
    data_plot2->replot();
 }
 
@@ -3521,9 +3521,8 @@ void US_FeMatch::write_plot( const QString& filename, const QwtPlot* plot )
       US_Plot3D* widgw = eplotcd->widget_3dplot();
       bool ok          = widgw->save_plot( filename, QString( "png" ) );
 #else
-      QGLWidget* dataw = eplotcd->data_3dplot();
-      QPixmap pixmap   = dataw->renderPixmap( dataw->width(), dataw->height(),
-                                            true  );
+      QOpenGLWidget* dataw = eplotcd->data_3dplot();
+      QPixmap pixmap   = dataw->grab();
       bool ok          = pixmap.save( filename );
 #endif
 
