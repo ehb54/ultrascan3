@@ -14617,7 +14617,7 @@ void US_Edit::pass_values( void )
 					     "Do you want to proceed? " ),
 					 QMessageBox::Ok | QMessageBox::Cancel, QMessageBox::Cancel );
 
-  if ( status != QMessageBox::Cancel ) return;
+  if ( status != QMessageBox::Ok ) return;
 
   emit pass_edit_params_includes( editProfile_triple_includes );
   emit pass_edit_params_blc( editProfile_triple_blc );
