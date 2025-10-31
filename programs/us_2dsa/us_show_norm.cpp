@@ -525,7 +525,7 @@ DbgLv(1) << "colormap_before" << colormap;
    }
 
 #if QT_VERSION < 0x050000
-   rightAxis->setColorMap( QwtDoubleInterval( 0.0, plt_zmax ),
+   rightAxis->setColorMap( QwtInterval( 0.0, plt_zmax ),
       d_spectrogram->colorMap() );
 #else
    rightAxis->setColorMap( QwtInterval( 0.0, plt_zmax ),
