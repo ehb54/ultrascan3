@@ -242,10 +242,10 @@ void US_Plot::zoom( bool on )
       zoomer->setTrackerPen   ( QColor( Qt::white ) );
 
 #if QT_VERSION < 0x050000
-      connect( zoomer, SIGNAL ( zoomed(        QwtDoubleRect ) ), 
-                       SIGNAL ( zoomedCorners( QwtDoubleRect ) ) );
-      connect( zoomer, SIGNAL ( zoomed(        QwtDoubleRect ) ),
-              this  , SLOT   ( scale_yRight ( QwtDoubleRect ) ) );
+      connect( zoomer, SIGNAL ( zoomed(        QRectF ) ),
+                       SIGNAL ( zoomedCorners( QRectF ) ) );
+      connect( zoomer, SIGNAL ( zoomed(        QRectF ) ),
+              this  , SLOT   ( scale_yRight ( QRectF ) ) );
 #else
       connect( zoomer, SIGNAL ( zoomed(        QRectF        ) ), 
                        SIGNAL ( zoomedCorners( QRectF        ) ) );
@@ -510,7 +510,7 @@ void US_Plot::quit( void )
 */
 
 #if QT_VERSION < 0x050000
-void US_Plot::scale_yRight ( QwtDoubleRect ){}
+void US_Plot::scale_yRight ( QRectF ){}
 #else
 void US_Plot::scale_yRight ( QRectF rect ){
    if (! plot->axisEnabled ( QwtPlot::yRight )){

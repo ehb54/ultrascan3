@@ -78,7 +78,7 @@ class US_GUI_EXTERN US_Plot : public QHBoxLayout
    signals:
       //! \brief A signal that provides the bounding rectangle of a zoomed area
 #if QT_VERSION < 0x050000
-      void zoomedCorners( QwtDoubleRect );
+      void zoomedCorners( QRectF );
 #else
       void zoomedCorners( QRectF        );
 #endif
@@ -107,7 +107,7 @@ class US_GUI_EXTERN US_Plot : public QHBoxLayout
       void config  ( void );
       void colorMap( void );
 #if QT_VERSION < 0x050000
-      void scale_yRight ( QwtDoubleRect );
+      void scale_yRight ( QRectF );
 #else
       void scale_yRight ( QRectF );
 #endif

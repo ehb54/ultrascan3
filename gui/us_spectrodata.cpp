@@ -35,9 +35,9 @@ QwtRasterData* US_SpectrogramData::copy() const
    return newdat;
 }
 
-QwtDoubleInterval US_SpectrogramData::range() const
+QwtInterval US_SpectrogramData::range() const
 {
-   return QwtDoubleInterval( zmin, zmax );
+   return QwtInterval( zmin, zmax );
 }
 #else
 QwtInterval US_SpectrogramData::range() const

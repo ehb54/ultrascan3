@@ -23,7 +23,9 @@
 #include <qwt_plot_layout.h>
 #include <qwt_interval.h>
 
+#ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug()  //!< debug-level-conditioned qDebug()
+#endif
 
 //! \brief Simple structure for essential values of each solution distribution point
 typedef struct solute_s
@@ -54,7 +56,7 @@ public:
    virtual QwtRasterData *copy() const;
 
    //! \brief Return the Z range (minimum,maximum pair)
-   virtual QwtDoubleInterval range() const;
+   virtual QwtInterval range() const;
 #else
    //! \brief Return the Z range (minimum,maximum pair)
    virtual QwtInterval range() const;
