@@ -174,7 +174,7 @@ target_include_directories(us_com_project PRIVATE
 # Link libraries
 target_link_libraries(us_com_project PRIVATE
         us_program_common
-        Qt5::DataVisualization  # Required by .pro file
+        Qt::DataVisualization  # Required by .pro file
         )
 
 # Set the binary output name
