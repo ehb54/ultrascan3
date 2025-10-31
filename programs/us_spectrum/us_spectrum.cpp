@@ -4,7 +4,7 @@
 #include "us_math2.h"
 #include "us_settings.h"
 #include "us_csv_loader.h"
-#include <math.h>
+#include <cmath>
 #if QT_VERSION < 0x050000
 #define setSamples(a,b,c) setData(a,b,c)
 #define setSymbol(a) setSymbol(*a)
@@ -123,12 +123,12 @@ US_Spectrum::US_Spectrum() : US_Widgets()
 
    pick = new US_PlotPicker( data_plot );
    pick->setRubberBand( QwtPicker::VLineRubberBand );
-   // connect( pick, SIGNAL( moved    ( const QwtDoublePoint& ) ),
-   // 	    SLOT  ( new_value( const QwtDoublePoint& ) ) );
    // connect( pick, SIGNAL( moved    ( const QPointF& ) ),
-   // 	    SLOT  ( new_value( const QwtDoublePoint& ) ) ); 
-   connect( pick, SIGNAL( mouseDown( const QwtDoublePoint& ) ),
-                  SLOT  ( new_value( const QwtDoublePoint& ) ) );
+   // 	    SLOT  ( new_value( const QPointF& ) ) );
+   // connect( pick, SIGNAL( moved    ( const QPointF& ) ),
+   // 	    SLOT  ( new_value( const QPointF& ) ) );
+   connect( pick, SIGNAL( mouseDown( const QPointF& ) ),
+                  SLOT  ( new_value( const QPointF& ) ) );
 
    QGridLayout* plotGrid;
    plotGrid =  new QGridLayout();
@@ -271,10 +271,10 @@ void US_Spectrum::load_basis()
          for (int jj = 1; jj < data_list.at(ii).columnCount(); jj++) {
             struct WavelengthProfile wp;
             wp.wvl << xvals;
-            std::pair<double*, double*> minmax = std::minmax_element(xvals.begin(), xvals.end());
+            auto minmax = std::minmax_element(xvals.begin(), xvals.end());
             wp.extinction << data_list.at(ii).columnAt(jj);
-            wp.lambda_min = *minmax.first;
-            wp.lambda_max = *minmax.second;
+            wp.lambda_min = qRound(*minmax.first);
+            wp.lambda_max = qRound(*minmax.second);
             wp.header = data_list.at(ii).header().at(jj);
             wp.filename = finfo.fileName();
             v_basis << wp;
@@ -378,10 +378,10 @@ void US_Spectrum::load_target()
    // struct WavelengthProfile wp;
    QVector<double> xvals = csv_data.columnAt(0);
    w_target.wvl << xvals;
-   std::pair<double*, double*> minmax = std::minmax_element(xvals.begin(), xvals.end());
+   auto minmax = std::minmax_element(xvals.begin(), xvals.end());
    w_target.extinction << csv_data.columnAt(1);
-   w_target.lambda_min = *minmax.first;
-   w_target.lambda_max = *minmax.second;
+   w_target.lambda_min = qRound( *minmax.first );
+   w_target.lambda_max = qRound( *minmax.second );
    w_target.header = csv_data.header().at(1);
    w_target.filename = file_info.fileName();
    // QListWidgetItem* item = new QListWidgetItem(w_target.filenameBasis);
@@ -429,7 +429,7 @@ void US_Spectrum:: plot_target()
    pb_load_basis->setEnabled(true);
 }
 
-void US_Spectrum::new_value(const QwtDoublePoint& p)
+void US_Spectrum::new_value(const QPointF& p)
 {
    unsigned int specified_wavelength = 0;
    specified_wavelength = (unsigned int)p.x();
@@ -516,8 +516,7 @@ void US_Spectrum::fit()
    {
      if(v_basis[i].lambda_min != min_lambda || v_basis[i].lambda_max != max_lambda || v_basis[i].wvl.size() != w_target.wvl.size())
       {
-          QMessageBox::warning(this, tr("UltraScan Warning"), str,
-          QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
+          QMessageBox::warning(this, tr("UltraScan Warning"), str );
           return;
       }
    }
@@ -912,8 +911,7 @@ void US_Spectrum::findAngles()
    // If Basis vectros are of different dimensions
    if ( v_basis[indexOne].extinction.size() != v_basis[indexTwo].extinction.size() ) 
      {
-       QMessageBox::warning(this, tr("UltraScan Warning"), str,
-			    QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
+       QMessageBox::warning(this, tr("UltraScan Warning"), str );
        return;
      }
 	  
