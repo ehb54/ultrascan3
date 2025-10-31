@@ -139,6 +139,8 @@ class US_UTIL_EXTERN US_Util
       static int listlistParse( QList< QStringList >& lsl, QString& llstring );
       static QRegularExpression UUID_REGEX;
 
+      static bool is_valid_uuid( const QString& uuid );
+
    private:
       static unsigned char hex2int( unsigned char c );
 };

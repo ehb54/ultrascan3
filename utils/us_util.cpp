@@ -188,6 +188,11 @@ QString US_Util::expanded_triple( const QString& ccw, bool spaces )
    return ( cell + sep + chan + sep + wvln );
 }
 
+bool US_Util::is_valid_uuid(const QString& uuid)
+{
+   return UUID_REGEX.match(uuid).hasMatch();
+}
+
 // A helper function to convert a character hex digit to decimal
 unsigned char US_Util::hex2int( unsigned char c )
 {
