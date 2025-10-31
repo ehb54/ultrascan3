@@ -34,7 +34,7 @@
 // Application Core
 // ----------------------------------------------------------------------------
 #include "us.h"
-#include "us_win_data.cpp"
+#include "us_win_data.h"
 
 // Version information: CMake creates us_version.h, legacy build creates us_revision.h
 #if __has_include("us_version.h")
@@ -723,9 +723,6 @@ void US_Win::closeEvent( QCloseEvent* e )
 
 void US_Win::splash( void )
 {
-  const int y =           menuBar  ()->size().rheight();
-  const int height = 532 - y - statusBar()->size().rheight();
-  const int w = 710;
   const int y = menuBar()->size().rheight();
   const int h = 532 - y - statusBar()->size().rheight();
   const int w = 710;
@@ -733,7 +730,7 @@ void US_Win::splash( void )
   bigframe = new QLabel( this );
   bigframe->setFrameStyle        ( QFrame::Box | QFrame::Raised);
   bigframe->setPalette           ( US_GuiSettings::frameColor() );
-  bigframe->setGeometry          ( 0, y, w, height );
+  bigframe->setGeometry          ( 0, y, w, h );
   bigframe->setAutoFillBackground( true );
 
   if (!bigframe) bigframe = new QLabel(this);

@@ -1,4 +1,5 @@
-#pragma once
+#ifndef US_WIN_DATA_H
+#define US_WIN_DATA_H
 
 #include <QString>
 
@@ -86,3 +87,5 @@ namespace US_WinData
 
     extern help_data h[];      // sentinel-terminated (index == HELP_END)
 }
+
+#endif

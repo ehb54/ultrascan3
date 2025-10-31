@@ -110,7 +110,78 @@ endif()
 # Export this target for use by other parts of the project
 add_library(UltraScan3::Utils ALIAS us_utils)
 
-# Installation
+# =============================================================================
+# OPTIONAL: Build static library for unit testing
+# =============================================================================
+if(BUILD_TESTING OR US3_BUILD_TESTS)
+    message(STATUS "Building static utils library for testing")
+
+    # Create STATIC library specifically for testing
+    add_library(us_utils_static STATIC ${UTILS_SOURCES} ${UTILS_HEADERS})
+
+    # Set properties for STATIC library
+    set_target_properties(us_utils_static PROPERTIES
+            OUTPUT_NAME "us_utils${PROJECT_VERSION_MAJOR}_static"
+            POSITION_INDEPENDENT_CODE ON
+            )
+
+    # Apply same compile definitions
+    target_compile_definitions(us_utils_static
+            PUBLIC
+            QT_SHARED
+            )
+
+    # Apply same include directories
+    target_include_directories(us_utils_static
+            PUBLIC
+            ${CMAKE_CURRENT_SOURCE_DIR}
+            ${CMAKE_CURRENT_BINARY_DIR}
+            )
+
+    # Apply same link libraries
+    target_link_libraries(us_utils_static
+            PUBLIC
+            Qt5::Core
+            Qt5::Xml
+            Qt5::Network
+            OpenSSL::SSL
+            OpenSSL::Crypto
+            LibArchive::LibArchive
+            )
+
+    # Optional database support
+    if(NOT US3_NO_DB)
+        target_link_libraries(us_utils_static
+                PUBLIC
+                Qt5::Sql
+                MySQL::Client
+                )
+    endif()
+
+    # Platform-specific libraries
+    if(UNIX AND NOT APPLE)
+        if(X11_FOUND)
+            target_link_libraries(us_utils_static PUBLIC ${X11_LIBRARIES})
+            target_include_directories(us_utils_static PUBLIC ${X11_INCLUDE_DIR})
+        endif()
+    elseif(WIN32)
+        target_link_libraries(us_utils_static PUBLIC ${WIN32_SYSTEM_LIBS})
+    endif()
+
+    # Debug options
+    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+        target_compile_options(us_utils_static PRIVATE -g -O0)
+    endif()
+
+    # Export static library alias
+    add_library(UltraScan3::Utils_Static ALIAS us_utils_static)
+
+else()
+    message(STATUS "Skipping static utils library (testing disabled)")
+endif()
+# END: Build static library for unit testing
+
+# Installation - only install the shared library
 install(TARGETS us_utils
         EXPORT UltraScan3Targets
         LIBRARY DESTINATION lib

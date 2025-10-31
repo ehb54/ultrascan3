@@ -37,6 +37,19 @@ echo "Platform: $PLATFORM"
 echo ""
 
 # =============================================================================
+# PROFILE SELECTION
+# =============================================================================
+PROFILE="${1:-APP}"  # default to APP if not provided
+echo "Selected build profile: ${PROFILE}"
+echo ""
+
+if [[ ! "$PROFILE" =~ ^(APP|TEST|HPC)$ ]]; then
+  echo "ERROR: Invalid profile '${PROFILE}'"
+  echo "Usage: ./bootstrap.sh [APP|TEST|HPC]"
+  exit 1
+fi
+
+# =============================================================================
 # MACOS SDK DETECTION (Qt5 requires SDK 14)
 # =============================================================================
 if [[ "$PLATFORM" == "macOS" ]]; then
@@ -158,6 +171,12 @@ fi
 export VCPKG_BINARY_SOURCES="clear;files,$HOME/.vcpkg-cache,readwrite"
 mkdir -p "$HOME/.vcpkg-cache"
 
+echo "=========================================="
+echo "UltraScan3 Bootstrap Summary"
+echo "=========================================="
+echo "Platform: $PLATFORM"
+echo "Preset  : $PRESET"
+echo "Profile : $PROFILE"
 echo ""
 echo "=========================================="
 echo "Starting build with preset: $PRESET"
@@ -176,7 +195,8 @@ echo ""
 # CONFIGURE AND BUILD
 # =============================================================================
 echo "Configuring..."
-cmake --preset "$PRESET"
+cmake --preset "$PRESET" -DUS3_PROFILE="${PROFILE}"
+
 
 echo ""
 echo "Building..."

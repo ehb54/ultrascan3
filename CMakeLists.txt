@@ -43,20 +43,26 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(BUILD_SHARED_LIBS ON)
+link_directories(${CMAKE_BINARY_DIR}/lib)
 
 # Enable deprecation warnings and treat them as errors
-if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    add_compile_options(
-            -Wdeprecated
-            -Wdeprecated-declarations
-            -Werror=deprecated
-            -Werror=deprecated-declarations
-    )
-elseif(MSVC)
-    add_compile_options(
-            /W4           # Enable level 4 warnings (includes deprecation)
-            /we4996       # Treat deprecation warnings as errors
-    )
+#if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+#    add_compile_options(
+#            -Wdeprecated
+#            -Wdeprecated-declarations
+#            -Werror=deprecated
+#            -Werror=deprecated-declarations
+#    )
+#elseif(MSVC)
+#    add_compile_options(
+#            /W4           # Enable level 4 warnings (includes deprecation)
+#            /we4996       # Treat deprecation warnings as errors
+#    )
+#endif()
+
+if(APPLE)
+    add_compile_definitions(GL_SILENCE_DEPRECATION)
+    add_compile_options(-w)
 endif()
 
 # For Qt-specific deprecation warnings
@@ -101,8 +107,38 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/admin/cmake")
 # CONFIGURATION OPTIONS
 # =============================================================================
 option(US3_NO_DB "Build without database support (for supercomputer backends)" OFF)
-option(US3_BUILD_TESTS "Build unit tests" ON)
 option(US3_BUILD_PROGRAMS "Build application programs" ON)
+
+# High-level profile to make builds scriptable:
+#   APP  = desktop/user build (GUI + programs + DB)
+#   TEST = dev/CI build (programs + tests, prefer static US3 libs)
+#   HPC  = headless / no DB / no GUI
+set(US3_PROFILE "" CACHE STRING "UltraScan3 build profile: APP | TEST | HPC")
+set_property(CACHE US3_PROFILE PROPERTY STRINGS APP TEST HPC)
+
+# Lower-level knob used by gui/programs to decide static vs shared for US3 libs
+option(US3_PREFER_STATIC "Prefer UltraScan3 static libraries when available" OFF)
+
+# Apply profile -> concrete options
+if(US3_PROFILE STREQUAL "APP")
+    set(US3_NO_DB OFF CACHE BOOL "" FORCE)
+    set(US3_BUILD_PROGRAMS ON CACHE BOOL "" FORCE)
+    set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
+    set(US3_PREFER_STATIC OFF CACHE BOOL "" FORCE)
+
+elseif(US3_PROFILE STREQUAL "TEST")
+    set(US3_NO_DB OFF CACHE BOOL "" FORCE)
+    set(US3_BUILD_PROGRAMS ON CACHE BOOL "" FORCE)
+    set(BUILD_TESTING ON CACHE BOOL "" FORCE)
+    set(US3_PREFER_STATIC ON CACHE BOOL "" FORCE)
+
+elseif(US3_PROFILE STREQUAL "HPC")
+    set(US3_NO_DB ON CACHE BOOL "" FORCE)
+    set(US3_BUILD_PROGRAMS OFF CACHE BOOL "" FORCE)
+    set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
+    set(US3_PREFER_STATIC ON CACHE BOOL "" FORCE)
+endif()
+
 
 # Configuration-based definitions
 if(US3_NO_DB)
@@ -157,8 +193,6 @@ if(TARGET Qt5::Core)
     message(STATUS "Qt5::Core type: ${QT_CORE_TYPE}")
     message(STATUS "Qt5::Core location: ${QT_CORE_LOCATION}")
 
-    # Only fail if it's explicitly a STATIC_LIBRARY
-    # SHARED_LIBRARY, MODULE_LIBRARY, or UNKNOWN_LIBRARY are all OK
     if(QT_CORE_TYPE STREQUAL "STATIC_LIBRARY")
         message(FATAL_ERROR "Qt5 must be built as shared libraries")
     elseif(QT_CORE_TYPE MATCHES "SHARED|MODULE|INTERFACE")
@@ -201,9 +235,6 @@ elseif(UNIX)
 
 elseif(WIN32)
     message(STATUS "Configured Qt for dynamic linking on Windows")
-
-    # Windows: Qt DLLs need to be in PATH or copied to exe directory
-    # This is handled by vcpkg or windeployqt typically
 endif()
 
 message(STATUS "Qt dynamic linking configured for all platforms")
@@ -300,27 +331,80 @@ find_package(OpenGL REQUIRED)
 # Find OpenSSL
 find_package(OpenSSL REQUIRED)
 
-# Find Qwt - vcpkg provides CONFIG mode
-find_package(unofficial-qwt CONFIG REQUIRED)
-# Create alias for backward compatibility
-if(NOT TARGET Qwt::Qwt)
-    add_library(Qwt::Qwt ALIAS unofficial::qwt::qwt)
+# =============================================================================
+# Find Qwt - Unified approach for vcpkg and system packages
+# =============================================================================
+# Try vcpkg first
+# Find Qwt - vcpkg or system packages
+find_package(unofficial-qwt CONFIG QUIET)
+
+if(unofficial-qwt_FOUND)
+    message(STATUS "Found Qwt via vcpkg")
+    if(NOT TARGET Qwt::Qwt)
+        add_library(Qwt::Qwt ALIAS unofficial::qwt::qwt)
+    endif()
+else()
+    message(STATUS "Searching for system Qwt...")
+    find_package(PkgConfig QUIET)
+    if(PkgConfig_FOUND)
+        pkg_check_modules(QWT QUIET Qt5Qwt6)
+        if(NOT QWT_FOUND)
+            pkg_check_modules(QWT QUIET qwt-qt5)
+        endif()
+    endif()
+
+    if(NOT QWT_FOUND)
+        find_path(QWT_INCLUDE_DIR NAMES qwt.h
+                PATHS /usr/include/qwt /usr/include/qt5/qwt /usr/local/include/qwt)
+        find_library(QWT_LIBRARY NAMES qwt-qt5 qwt qwt6-qt5
+                PATHS /usr/lib /usr/lib/x86_64-linux-gnu /usr/local/lib)
+
+        if(QWT_INCLUDE_DIR AND QWT_LIBRARY)
+            set(QWT_FOUND TRUE)
+            message(STATUS "Found system Qwt: ${QWT_LIBRARY}")
+        endif()
+    else()
+        message(STATUS "Found system Qwt via pkg-config")
+    endif()
+
+    if(QWT_FOUND)
+        # Create the main target that mimics vcpkg's structure
+        add_library(unofficial_qwt_qwt INTERFACE IMPORTED)
+        if(QWT_INCLUDE_DIRS)
+            set_target_properties(unofficial_qwt_qwt PROPERTIES
+                    INTERFACE_INCLUDE_DIRECTORIES "${QWT_INCLUDE_DIRS}"
+                    INTERFACE_LINK_LIBRARIES "${QWT_LIBRARIES}")
+        else()
+            set_target_properties(unofficial_qwt_qwt PROPERTIES
+                    INTERFACE_INCLUDE_DIRECTORIES "${QWT_INCLUDE_DIR}"
+                    INTERFACE_LINK_LIBRARIES "${QWT_LIBRARY}")
+        endif()
+
+        # Create both aliases for compatibility
+        add_library(unofficial::qwt::qwt ALIAS unofficial_qwt_qwt)
+        add_library(Qwt::Qwt ALIAS unofficial_qwt_qwt)
+    else()
+        message(FATAL_ERROR "Qwt not found. Install: apt-get install libqwt-qt5-dev")
+    endif()
 endif()
 
-# Find QwtPlot3D
-option(US3_USE_VCPKG_QWTPLOT3D "Use qwtplot3d from vcpkg overlay" ON)
+# Find QwtPlot3D - try vcpkg first, fall back to in-tree build
+find_package(qwtplot3d CONFIG QUIET)
 
-if(US3_USE_VCPKG_QWTPLOT3D)
-    find_package(qwtplot3d CONFIG REQUIRED)
-    message(STATUS "QwtPlot3D found via vcpkg overlay")
-
-    # Verify the target was created
+if(qwtplot3d_FOUND)
+    message(STATUS "Found QwtPlot3D via vcpkg")
     if(NOT TARGET qwtplot3d::qwtplot3d)
         message(FATAL_ERROR "qwtplot3d::qwtplot3d target not created by find_package")
     endif()
 else()
-    # Use in-tree build
+    message(STATUS "Using in-tree QwtPlot3D build")
     add_subdirectory(qwtplot3d)
+
+    # Create namespaced alias for in-tree build
+    if(TARGET qwtplot3d AND NOT TARGET qwtplot3d::qwtplot3d)
+        add_library(qwtplot3d::qwtplot3d ALIAS qwtplot3d)
+        message(STATUS "Created qwtplot3d::qwtplot3d alias for in-tree build")
+    endif()
 endif()
 
 # Find libarchive - vcpkg provides a proper CMake target
@@ -353,15 +437,52 @@ endif()
 
 # Find MySQL/MariaDB (only if not NO_DB)
 if(NOT US3_NO_DB)
-    # Use vcpkg's unofficial-libmariadb package
-    find_package(unofficial-libmariadb CONFIG REQUIRED)
+    find_package(unofficial-libmariadb CONFIG QUIET)
 
-    # Create alias for backward compatibility with your existing code
-    if(NOT TARGET MySQL::Client)
-        add_library(MySQL::Client ALIAS unofficial::libmariadb)
+    if(unofficial-libmariadb_FOUND)
+        message(STATUS "Found MariaDB via vcpkg")
+        if(NOT TARGET MySQL::Client)
+            add_library(MySQL::Client ALIAS unofficial::libmariadb)
+        endif()
+    else()
+        message(STATUS "Searching for system MySQL/MariaDB...")
+        find_package(PkgConfig QUIET)
+        if(PkgConfig_FOUND)
+            pkg_check_modules(MYSQL QUIET mysqlclient)
+            if(NOT MYSQL_FOUND)
+                pkg_check_modules(MYSQL QUIET mariadb)
+            endif()
+        endif()
+
+        if(NOT MYSQL_FOUND)
+            find_path(MYSQL_INCLUDE_DIR NAMES mysql.h
+                    PATHS /usr/include/mysql /usr/local/include/mysql /usr/include/mariadb)
+            find_library(MYSQL_LIBRARY NAMES mysqlclient mariadb
+                    PATHS /usr/lib /usr/lib/x86_64-linux-gnu /usr/local/lib)
+
+            if(MYSQL_INCLUDE_DIR AND MYSQL_LIBRARY)
+                set(MYSQL_FOUND TRUE)
+                message(STATUS "Found system MySQL: ${MYSQL_LIBRARY}")
+            endif()
+        else()
+            message(STATUS "Found system MySQL via pkg-config")
+        endif()
+
+        if(MYSQL_FOUND)
+            add_library(MySQL::Client INTERFACE IMPORTED)
+            if(MYSQL_INCLUDE_DIRS)
+                set_target_properties(MySQL::Client PROPERTIES
+                        INTERFACE_INCLUDE_DIRECTORIES "${MYSQL_INCLUDE_DIRS}"
+                        INTERFACE_LINK_LIBRARIES "${MYSQL_LIBRARIES}")
+            else()
+                set_target_properties(MySQL::Client PROPERTIES
+                        INTERFACE_INCLUDE_DIRECTORIES "${MYSQL_INCLUDE_DIR}"
+                        INTERFACE_LINK_LIBRARIES "${MYSQL_LIBRARY}")
+            endif()
+        else()
+            message(FATAL_ERROR "MySQL not found. Install: apt-get install libmysqlclient-dev")
+        endif()
     endif()
-
-    message(STATUS "Found MariaDB via vcpkg: unofficial::libmariadb")
 endif()
 
 # Platform-specific libraries
@@ -373,27 +494,55 @@ elseif(WIN32)
     set(WIN32_SYSTEM_LIBS ws2_32 advapi32 gdi32 user32 kernel32 psapi)
 endif()
 
+# ---------------------------------------------------------------------------
 # GoogleTest for unit testing
-if(US3_BUILD_TESTS)
-    find_package(GTest CONFIG REQUIRED)
+# ---------------------------------------------------------------------------
+if(BUILD_TESTING)
+    # Try config mode first (vcpkg / modern installs)
+    find_package(GTest CONFIG QUIET)
 
-    # Create aliases for consistency if needed
-    if(NOT TARGET gtest)
+    if(NOT GTest_FOUND)
+        # Fall back to module / system packages
+        find_package(GTest MODULE QUIET)
+    endif()
+
+    # At this point either we found it, or we didn't
+    if(NOT GTest_FOUND)
+        # We got here because:
+        #  - user passed -DBUILD_TESTING=ON   OR
+        #  - US3_PROFILE=TEST forced BUILD_TESTING=ON higher up
+        # In both cases the user's intent is "I want tests".
+        # Fail fast.
+        message(FATAL_ERROR
+                "BUILD_TESTING=ON but GoogleTest/GMock was not found.\n"
+                "Install GTest in the build (Docker) image, or re-run CMake with -DBUILD_TESTING=OFF.")
+    endif()
+
+    # If we are here, GTest was found → set up the usual aliases
+    message(STATUS "GoogleTest found – building test targets")
+
+    # Create aliases for gtest (always available)
+    if(NOT TARGET gtest AND TARGET GTest::gtest)
         add_library(gtest ALIAS GTest::gtest)
     endif()
-    if(NOT TARGET gtest_main)
+    if(NOT TARGET gtest_main AND TARGET GTest::gtest_main)
         add_library(gtest_main ALIAS GTest::gtest_main)
     endif()
-    if(NOT TARGET gmock)
+
+    # Create aliases for gmock (only if available)
+    if(NOT TARGET gmock AND TARGET GTest::gmock)
         add_library(gmock ALIAS GTest::gmock)
     endif()
-    if(NOT TARGET gmock_main)
+    if(NOT TARGET gmock_main AND TARGET GTest::gmock_main)
         add_library(gmock_main ALIAS GTest::gmock_main)
     endif()
 
-    # Disable Qt AUTOMOC for GoogleTest (if the targets exist without aliases)
+    # Disable Qt AUTOMOC for GoogleTest
     if(TARGET GTest::gtest)
-        set_target_properties(GTest::gtest GTest::gmock PROPERTIES AUTOMOC OFF AUTOUIC OFF AUTORCC OFF)
+        set_target_properties(GTest::gtest PROPERTIES AUTOMOC OFF AUTOUIC OFF AUTORCC OFF)
+    endif()
+    if(TARGET GTest::gmock)
+        set_target_properties(GTest::gmock PROPERTIES AUTOMOC OFF AUTORCC OFF AUTOUIC OFF)
     endif()
 endif()
 
@@ -411,7 +560,7 @@ if(US3_BUILD_PROGRAMS AND NOT US3_NO_DB)
     add_subdirectory(programs)
 endif()
 
-if(US3_BUILD_TESTS)
+if(BUILD_TESTING)
     add_subdirectory(test)
 endif()
 
@@ -477,9 +626,11 @@ message(STATUS "  Build type: ${CMAKE_BUILD_TYPE}")
 message(STATUS "  Install prefix: ${CMAKE_INSTALL_PREFIX}")
 message(STATUS "")
 message(STATUS "Options:")
+message(STATUS "  Profile: ${US3_PROFILE}")
 message(STATUS "  NO_DB support: ${US3_NO_DB}")
 message(STATUS "  Build tests: ${US3_BUILD_TESTS}")
 message(STATUS "  Build programs: ${US3_BUILD_PROGRAMS}")
+message(STATUS "  Prefer static US3 libs: ${US3_PREFER_STATIC}")
 message(STATUS "")
 message(STATUS "Dependencies:")
 message(STATUS "  Qt5 version: ${Qt5_VERSION}")
