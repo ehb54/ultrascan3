@@ -780,31 +780,31 @@ DbgLv(1) << "IP:  points xvs0 xvsN" << scanfits[0].points
              " weight for the parameter\n"
              "initialization or calculate a newly initialized"
              " molecular weight?" ) );
-      msgBox.setStandardButtons( QMessageBox::Yes | QMessageBox::No 
-                               | QMessageBox::Cancel );
-      msgBox.setButtonText( QMessageBox::Yes,
-            tr( "New Molecular Weight" ) );
-      msgBox.setButtonText( QMessageBox::No,
-            tr( "Current Molecular Weight" ) );
-
-      switch( msgBox.exec() )
+      msgBox.setIcon( QMessageBox::Question );
+      auto apply_button = msgBox.addButton( tr( "New Molecular Weight" ), QMessageBox::ApplyRole );
+      auto reset_button  = msgBox.addButton( tr( "Current Molecular Weight" ), QMessageBox::ResetRole );
+      auto reject_button = msgBox.addButton( tr( "Cancel" ), QMessageBox::RejectRole );
+      msgBox.setDefaultButton( reject_button );
+      msgBox.exec();
+      QAbstractButton* clicked_button = msgBox.clickedButton();
+      if ( clicked_button == apply_button )
       {
-         case QMessageBox::Yes:
-         case QMessageBox::Default:
-         default:
-            runfit.mw_vals[ 0 ] = emath->linesearch();
-            runfit.mw_rngs[ 0 ] = runfit.mw_vals[ 0 ] * 0.2;
-            update_mw = true;
-            break;
-
-         case QMessageBox::No:
-            emath->calc_testParameter( runfit.mw_vals[ 0 ] );
-            runfit.mw_rngs[ 0 ] = runfit.mw_vals[ 0 ] * 0.2;
-            update_mw = false;
-            break;
-         case QMessageBox::Cancel:
-            update_mw = false;
-            break;
+         // user choose the new molecular weight button
+         runfit.mw_vals[ 0 ] = emath->linesearch();
+         runfit.mw_rngs[ 0 ] = runfit.mw_vals[ 0 ] * 0.2;
+         update_mw = true;
+      }
+      else if ( clicked_button == reset_button )
+      {
+         // user choose to keep the currrent molecular weight
+         emath->calc_testParameter( runfit.mw_vals[ 0 ] );
+         runfit.mw_rngs[ 0 ] = runfit.mw_vals[ 0 ] * 0.2;
+         update_mw = false;
+      }
+      else
+      {
+         // user clicked cancel or escaped the dialog in another way
+         update_mw = false;
       }
    }
 DbgLv(1) << "IP: update_mw" << update_mw;
@@ -1014,12 +1014,12 @@ DbgLv(1) << "EdataPlot: radl radr" << radl << radr;
    // Set up the picker for mouse down, moves and up
    QwtPlotPicker* pick = new US_PlotPicker( equil_plot );
    pick->setRubberBand( QwtPicker::CrossRubberBand );
-   connect( pick, SIGNAL( cMouseDown(   const QwtDoublePoint& ) ),
-                  SLOT(   pMouseDown(  const QwtDoublePoint& ) ) );
-   connect( pick, SIGNAL( cMouseUp(     const QwtDoublePoint& ) ),
-                  SLOT(   pMouseUp(    const QwtDoublePoint& ) ) );
-   connect( pick, SIGNAL( cMouseDrag(   const QwtDoublePoint& ) ),
-                  SLOT(   pMouseMoved( const QwtDoublePoint& ) ) );
+   connect( pick, SIGNAL( cMouseDown(   const QPointF& ) ),
+                  SLOT(   pMouseDown(  const QPointF& ) ) );
+   connect( pick, SIGNAL( cMouseUp(     const QPointF& ) ),
+                  SLOT(   pMouseUp(    const QPointF& ) ) );
+   connect( pick, SIGNAL( cMouseDrag(   const QPointF& ) ),
+                  SLOT(   pMouseMoved( const QPointF& ) ) );
 
    if ( scedits[ sscanx ].edited )
    {
@@ -1171,7 +1171,7 @@ void US_GlobalEquil::edited_plot( void )
 }
 
 // Respond to mouse button down
-void US_GlobalEquil::pMouseDown( const QwtDoublePoint& p )
+void US_GlobalEquil::pMouseDown( const QPointF& p )
 {
    mMoved = false;
    mDown  = true;
@@ -1181,7 +1181,7 @@ void US_GlobalEquil::pMouseDown( const QwtDoublePoint& p )
 }
 
 // Respond to mouse button up (after move)
-void US_GlobalEquil::pMouseUp( const QwtDoublePoint& p )
+void US_GlobalEquil::pMouseUp( const QPointF& p )
 {
    // If mouse never moved, ignore release; otherwise reset mouse condition
    if ( ! mMoved )
@@ -1219,7 +1219,7 @@ void US_GlobalEquil::pMouseUp( const QwtDoublePoint& p )
 }
 
 // Respond to mouse button being moved - redraw curve with edited points
-void US_GlobalEquil::pMouseMoved( const QwtDoublePoint& p )
+void US_GlobalEquil::pMouseMoved( const QPointF& p )
 {
    if ( ! mDown )
       return;
