@@ -690,10 +690,10 @@ DbgLv(1) << "manDr:    cblack" << cblack << "cwhite" << cwhite;
    pick->setRubberBand(    QwtPicker::RectRubberBand );
 
    // set up to capture position and dimensions of solute bin
-   connect( pick, SIGNAL(  mouseDown( const QwtDoublePoint& ) ),
-            this, SLOT( getMouseDown( const QwtDoublePoint& ) ) );
-   connect( pick, SIGNAL( mouseUp(    const QwtDoublePoint& ) ),
-            this, SLOT( getMouseUp(   const QwtDoublePoint& ) ) );
+   connect( pick, SIGNAL(  mouseDown( const QPointF& ) ),
+            this, SLOT( getMouseDown( const QPointF& ) ) );
+   connect( pick, SIGNAL( mouseUp(    const QPointF& ) ),
+            this, SLOT( getMouseUp(   const QPointF& ) ) );
 
    pb_ckovrlp->setEnabled( false );
 
@@ -1059,16 +1059,16 @@ DbgLv(1) << "pl3d:    cblack" << cblack << "cwhite" << cwhite;
 #endif
    d_spectrogram->attach( data_plot );
 
-   QwtDoubleRect drect;
+   QRectF drect;
 
    if ( auto_lim )
    {
-      drect = QwtDoubleRect( 0.0, 0.0, 0.0, 0.0 );
+      drect = QRectF( 0.0, 0.0, 0.0, 0.0 );
    }
 
    else
    {
-      drect = QwtDoubleRect( plxmin, plymin,
+      drect = QRectF( plxmin, plymin,
             ( plxmax - plxmin ), ( plymax - plymin ) );
    }
 
@@ -1854,13 +1854,13 @@ void US_GA_Initialize::highlight_solute( int sx )
 }
 
 // mouse down:  save of first point
-void US_GA_Initialize::getMouseDown( const QwtDoublePoint& p )
+void US_GA_Initialize::getMouseDown( const QPointF& p )
 {
    p1     = p;              // save the first rubberband point
 }
 
 // mouse up:  draw bucket rectangle
-void US_GA_Initialize::getMouseUp( const QwtDoublePoint& p )
+void US_GA_Initialize::getMouseUp( const QPointF& p )
 {
    double        tx[2];
    double        ty[2];
