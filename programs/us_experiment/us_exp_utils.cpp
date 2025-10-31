@@ -2474,7 +2474,7 @@ DbgLv(1) << "EGSo:inP: call rbS";
        qDebug() << "22";
 
        protocol_comment.replace(sdescr, "");
-       protocol_comment.remove( QRegExp("^[,\\s*]+") );
+       protocol_comment.remove( QRegularExpression("^[,\\s*]+") );
       
       cc_mancomms[ ii ] -> setText( protocol_comment.trimmed() );
       //end sols. comments
@@ -2596,7 +2596,7 @@ void US_ExperGuiSolutions::savePanel()
 	   //ch_comment             = rpSolut->chsols[ ii ].ch_comment;
 	   QString ch_comment_tmp = ch_comment;
 	   ch_comment_tmp.replace(solution, "");
-	   ch_comment_tmp.remove( QRegExp("^[,\\s*]+") );
+	   ch_comment_tmp.remove( QRegularExpression("^[,\\s*]+") );
 	   
 	   qDebug() << "SolInit, row: " << ii;
 	   manual_comment[ iistr ]  = ch_comment_tmp.trimmed();
@@ -2819,7 +2819,7 @@ DbgLv(1) << "EGOp:inP: nochan" << nochan;
      {
        QString channel     = rpOptic->chopts[ ii ].channel;
 
-       int cell_number = ((channel.split(QRegExp("\\s+"), Qt::SkipEmptyParts))[0]).toInt();
+       int cell_number = ((channel.split(QRegularExpression("\\s+"), Qt::SkipEmptyParts))[0]).toInt();
 DbgLv(1) << "EGOp:inP: CELL #" << cell_number;
        if ( nholes == cell_number )
          ctrbal_is_centerpiece = true;
