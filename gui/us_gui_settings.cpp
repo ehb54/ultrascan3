@@ -41,13 +41,12 @@ void US_GuiSettings::set_fontSize(int fontSize) {
 }
 
 QString US_GuiSettings::guiStyle(void) {
-    const QString defaultStyle("Fusion");
-
 #ifdef Q_OS_MAC
-    const QString defaultStyle( "Macintosh" );
-#endif
-#ifdef Q_OS_WIN
-    const QString defaultStyle( "Windows" );
+    const QString defaultStyle("Macintosh");
+#elif defined(Q_OS_WIN)
+    const QString defaultStyle("Windows");
+#else
+    const QString defaultStyle("Fusion");
 #endif
     QSettings settings(US3, "UltraScan");
 
@@ -55,15 +54,12 @@ QString US_GuiSettings::guiStyle(void) {
 }
 
 void US_GuiSettings::set_guiStyle(const QString &style) {
-#ifdef Q_OS_LINUX
-    const QString defaultStyle( "Fusion" );
-#endif
-#endif
 #ifdef Q_OS_MAC
-    const QString defaultStyle( "Macintosh" );
-#endif
-#ifdef Q_OS_WIN
-    const QString defaultStyle( "Windows" );
+    const QString defaultStyle("Macintosh");
+#elif defined(Q_OS_WIN)
+    const QString defaultStyle("Windows");
+#else
+    const QString defaultStyle("Fusion");
 #endif
     QSettings settings(US3, "UltraScan");
 

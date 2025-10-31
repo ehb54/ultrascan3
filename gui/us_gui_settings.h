@@ -4,10 +4,6 @@
 #include <QtWidgets>
 #include <QtGui>
 
-#define setSingleStep(a) setStep(a)
-#define setMinorPen(a) setMinPen(a)
-#define setMajorPen(a) setMajPen(a)
-
 #include "us_extern.h"
 
 //! \brief Fetch and set Gui values via QSettings.  All functions are static.
@@ -128,3 +124,5 @@ class US_GUI_EXTERN US_GuiSettings
                 //! \retval UltraScan default plot color palette
                 static QPalette plotColorDefault  ( void );
         };
+
+#endif
