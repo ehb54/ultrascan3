@@ -1261,7 +1261,7 @@ void US_Color::apply( void )
 void US_Color::save_as( void )
 {
   // Remove blanks from name
-  QString custom = le_save_as->text().replace( QRegExp( "[ \t/]" ), "" );
+  QString custom = le_save_as->text().replace( QRegularExpression( "[ \t/]" ), "" );
 
   if ( custom.size() == 0 )
   {
@@ -1318,15 +1318,16 @@ void US_Color::updateSchemeList( const QString& active )
 
   QSettings settings( "UTHSCSA", "UltraScan" );
   QStringList schemeList = settings.value( "schemeList" ).toStringList();
-
-  for ( int i = 0; i < schemeList.size(); i++ )
+  int row = 0;
+  for ( const QString& scheme : schemeList )
   {
-    schemes->addItem( schemeList[ i ] );
-    if ( schemeList[ i ] == active )
+    schemes->addItem( scheme );
+    if ( scheme == active )
     {
-      schemes->setCurrentRow( i + 2  );
+      schemes->setCurrentRow( row + 2  );
       pb_delete->setEnabled( true );
     }
+    row++;
   }
 }
 
