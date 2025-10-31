@@ -42,7 +42,7 @@ private slots:
     void apply_nscans();
     void save_run(void);
     void pick_region(void);
-    void mouse_click(const QwtDoublePoint&);
+    void mouse_click(const QPointF&);
     void default_region();
     void lower_scan_range(double);
     void upper_scan_range(double);
