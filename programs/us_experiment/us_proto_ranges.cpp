@@ -8,13 +8,6 @@
 #include "us_sleep.h"
 #include "us_util.h"
 
-#if QT_VERSION < 0x050000
-#define setSamples(a,b,c)  setData(a,b,c)
-#define setMinimum(a)      setMinValue(a)
-#define setMaximum(a)      setMaxValue(a)
-#define QRegularExpression(a)  QRegExp(a)
-#endif
-
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug()
 #endif

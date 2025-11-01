@@ -79,11 +79,7 @@ class US_GUI_EXTERN US_Plot : public QHBoxLayout
 
    signals:
       //! \brief A signal that provides the bounding rectangle of a zoomed area
-#if QT_VERSION < 0x050000
-      void zoomedCorners( QwtDoubleRect );
-#else
       void zoomedCorners( QRectF        );
-#endif
 
    private:
       US_PlotConfig* configWidget;
@@ -108,11 +104,7 @@ class US_GUI_EXTERN US_Plot : public QHBoxLayout
       void csv     ( void );
       void config  ( void );
       void colorMap( void );
-#if QT_VERSION < 0x050000
-      void scale_yRight ( QwtDoubleRect );
-#else
       void scale_yRight ( QRectF );
-#endif
 };
 
 //! \brief A specialized push button class for US_Plot to automatically

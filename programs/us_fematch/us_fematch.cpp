@@ -28,15 +28,8 @@
 #include "us_simparms.h"
 #include "us_colorgradIO.h"
 #include <QFileInfo>
-#if QT_VERSION < 0x050000
-#define setSamples(a,b,c)  setData(a,b,c)
-#define setMaximum(a)      setMaxValue(a)
-#define setSymbol(a)       setSymbol(*a)
-#endif
 
 #define MIN_NTC   25
-
-
 
 // US_FeMatch class constructor
 US_FeMatch::US_FeMatch() : US_Widgets()

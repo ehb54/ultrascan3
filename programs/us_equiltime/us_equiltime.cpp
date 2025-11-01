@@ -8,9 +8,6 @@
 #include "us_license_t.h"
 #include "us_license.h"
 #include "us_model_gui.h"
-#if QT_VERSION < 0x050000
-#define setSamples(a,b,c)  setData(a,b,c)
-#endif
 
 //! \brief Main program for US_Equilspeed. Loads translators and starts
 //         the class US_Equilspeed.

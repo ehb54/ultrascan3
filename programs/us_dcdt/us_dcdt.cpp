@@ -9,11 +9,6 @@
 #include "us_settings.h"
 #include "us_gui_settings.h"
 #include "us_gui_util.h"
-#if QT_VERSION < 0x050000
-#define setSamples(a,b,c)  setData(a,b,c)
-#define setMinimum(a)      setMinValue(a)
-#define setMaximum(a)      setMaxValue(a)
-#endif
 
 //! \brief Main program for us_dcdt. Loads translators and starts
 //         the class US_Dcdt.
