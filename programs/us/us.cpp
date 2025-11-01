@@ -765,7 +765,7 @@ static QPixmap makeSplashCanvas(const QPixmap& rawSplash,
     QPainter p(&canvas);
     p.setRenderHint(QPainter::Antialiasing, true);
     p.setRenderHint(QPainter::TextAntialiasing, true);
-    p.setRenderHint(QPainter::HighQualityAntialiasing, true);
+    p.setRenderHint(QPainter::Antialiasing, true);
     p.setRenderHint(QPainter::LosslessImageRendering, true);
 
 
