@@ -93,7 +93,8 @@ void US_Dirhist::setupGUI()
             QString qs = 
                QString( "%1" )
                .arg( last_access->count( (*history)[ i ] ) ?
-                     (unsigned int)(*last_access)[ (*history)[ i ] ].toTime_t() :
+                     // (unsigned int)(*last_access)[ (*history)[ i ] ].toTime_t() :
+                     (unsigned int)(*last_access)[ (*history)[ i ] ].toSecsSinceEpoch() :
                      unknowns++ );
             while ( qs.length() < 20 )
             {

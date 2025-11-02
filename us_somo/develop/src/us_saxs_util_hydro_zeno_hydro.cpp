@@ -1,4 +1,5 @@
 #include "../include/us_hydrodyn_zeno_hydro.h"
+#include <QRegularExpression>
 //Added by qt3to4:
 #include <QTextStream>
 //#include "../include/us_file_util.h"
@@ -13672,11 +13673,11 @@ bool US_Hydrodyn_Zeno::run(
    // assume overwrite, maybe check in us_hydrodyn call
 
    QString outname = filename;
-   if ( !outname.contains( QRegExp( ".bod$" ) ) )
+   if ( !outname.contains( QRegularExpression( QStringLiteral( ".bod$" ) ) ) )
    {
       outname += ".bod";
    } else {
-      filename.replace( QRegExp( ".bod$" ), "" );
+      filename.replace( QRegularExpression( QStringLiteral( ".bod$" ) ), "" );
    }
 
    QFile fout ( outname );
@@ -13743,7 +13744,7 @@ bool US_Hydrodyn_Zeno::run(
       argv[ argc++ ] = strdup( "-t" );
       argv[ argc++ ] = strdup( QString( "%1" ).arg( threads ).toLatin1().data() );
 
-      argv[ argc++ ] = strdup( QString( "--seed=%1" ).arg( QDateTime::currentDateTime().toTime_t() ).toLatin1().data() );
+      argv[ argc++ ] = strdup( QString( "--seed=%1" ).arg( QDateTime::currentSecsSinceEpoch() ).toLatin1().data() );
       //us_qdebug( QString( "current datetime %1" ).arg( argv[ argc - 1 ] ) );
 
       int progress_steps = 100;
@@ -14200,59 +14201,57 @@ bool US_Saxs_Util::calc_zeno_hydro()
                //             .arg( last_hydro_res )
                //             .arg( qsl.size() ) );
 
-	       
-
-               vector < QRegExp     > param_rx;
-               vector < QString     > param_name;
-               vector < int         > param_cap_pos;
-               vector < QStringList > param_qsl;
+               vector < QRegularExpression > param_rx;
+               vector < QString            > param_name;
+               vector < int                > param_cap_pos;
+               vector < QStringList        > param_qsl;
 
                if ( zeno_cxx ) {
 
-                  param_rx     .push_back( QRegExp( "^Capacitance:\\s+(\\S+)\\s*$" ) );
+                  param_rx     .push_back( QRegularExpression( QStringLiteral( "^Capacitance:\\s+(\\S+)\\s*$" ) ) );
                   param_name   .push_back( "results.rs" );
                   param_cap_pos.push_back( 1 );
 
-                  param_rx     .push_back( QRegExp( "^Intrinsic viscosity:\\s+(\\S+)\\s*$" ) );
+                  param_rx     .push_back( QRegularExpression( QStringLiteral( "^Intrinsic viscosity:\\s+(\\S+)\\s*$" ) ) );
                   param_name   .push_back( "results.viscosity" );
                   param_cap_pos.push_back( 1 );
 
-                  param_rx     .push_back( QRegExp( "^Volume:\\s+(\\S+)\\s*$" ) );
+                  param_rx     .push_back( QRegularExpression( QStringLiteral( "^Volume:\\s+(\\S+)\\s*$" ) ) );
                   param_name   .push_back( "used_beads_vol" );
                   param_cap_pos.push_back( 1 );
 
                } else {
 
 
-		 param_rx     .push_back( QRegExp( "^.eta..M. . . . . . . . . . . .\\s+(\\S+)\\s+" ) );
+		 param_rx     .push_back( QRegularExpression( QStringLiteral( "^.eta..M. . . . . . . . . . . .\\s+(\\S+)\\s+" ) ) );
 		 param_name   .push_back( "results.viscosity" );
 		 param_cap_pos.push_back( 1 );
 		 
-		 param_rx     .push_back( QRegExp( "^D  . . . . . . . . . . . . . .\\s+(\\S+)\\s+" ) );
+		 param_rx     .push_back( QRegularExpression( QStringLiteral( "^D  . . . . . . . . . . . . . .\\s+(\\S+)\\s+" ) ) );
 		 param_name   .push_back( "results.D20w" );
 		 param_cap_pos.push_back( 1 );
 		 
-		 param_rx     .push_back( QRegExp( "^mass . . . . . . . . . . . . .\\s+(\\S+)\\s+" ) );
+		 param_rx     .push_back( QRegularExpression( QStringLiteral( "^mass . . . . . . . . . . . . .\\s+(\\S+)\\s+" ) ) );
 		 param_name   .push_back( "results.mass" );
 		 param_cap_pos.push_back( 1 );
 		 
-		 param_rx     .push_back( QRegExp( "^Rg .interior.  . . . . . . . .\\s+(\\S+)\\s+" ) );
+		 param_rx     .push_back( QRegularExpression( QStringLiteral( "^Rg .interior.  . . . . . . . .\\s+(\\S+)\\s+" ) ) );
 		 param_name   .push_back( "results.rg" );
 		 param_cap_pos.push_back( 1 );
 		 
-		 param_rx     .push_back( QRegExp( "^surface area . . . . . . . . .\\s+(\\S+)\\s+" ) );
+		 param_rx     .push_back( QRegularExpression( QStringLiteral( "^surface area . . . . . . . . .\\s+(\\S+)\\s+" ) ) );
 		 param_name   .push_back( "tot_surf_area" );
 		 param_cap_pos.push_back( 1 );
 		 
-		 param_rx     .push_back( QRegExp( "^volume . . . . . . . . . . . .\\s+(\\S+)\\s+" ) );
+		 param_rx     .push_back( QRegularExpression( QStringLiteral( "^volume . . . . . . . . . . . .\\s+(\\S+)\\s+" ) ) );
 		 param_name   .push_back( "used_beads_vol" );
 		 param_cap_pos.push_back( 1 );
 		 
-		 param_rx     .push_back( QRegExp( "^Rh . . . . . . . . . . . . . .\\s+(\\S+)\\s+" ) );
+		 param_rx     .push_back( QRegularExpression( QStringLiteral( "^Rh . . . . . . . . . . . . . .\\s+(\\S+)\\s+" ) ) );
 		 param_name   .push_back( "results.rs" );
 		 param_cap_pos.push_back( 1 );
 		 
-		 param_rx     .push_back( QRegExp( "^f  . . . . . . . . . . . . . .\\s+(\\S+)\\s+" ) );
+		 param_rx     .push_back( QRegularExpression( QStringLiteral( "^f  . . . . . . . . . . . . . .\\s+(\\S+)\\s+" ) ) );
 		 param_name   .push_back( "tra_fric_coef" );
 		 param_cap_pos.push_back( 1 );
 	       }
@@ -14272,14 +14271,18 @@ bool US_Saxs_Util::calc_zeno_hydro()
                      {
 		       //cout << "INSIDE1 " << endl;
 
-                        param_rx[ i ].indexIn( param_qsl[ i ][ 0 ] );
-                        QString qs = param_rx[ i ].cap( param_cap_pos[ i ] );
+                        // qregularexpression way
+                        QRegularExpressionMatch m = param_rx[ i ].match( param_qsl[ i ][ 0 ] );
+                        QString qs = m.hasMatch() ? m.captured( param_cap_pos[ i ] ) : QString();
+                        // deprecated qregexp way 
+                        // param_rx[ i ].indexIn( param_qsl[ i ][ 0 ] );
+                        // QString qs = param_rx[ i ].cap( param_cap_pos[ i ] );
                         
                         // QRegExp rx( param_rx[ i ] );
                         // rx.indexIn( param_qsl[ i ][ 0 ] );                        
                         // QString qs = rx.cap( param_cap_pos[ i ] );
 
-                        qs.replace( QRegExp( "\\(\\d+\\)" ), "" );
+                        qs.replace( QRegularExpression( QStringLiteral( "\\(\\d+\\)" ) ), "" );
                         double qd = qs.toDouble();
                         // cout << QString( "zeno cap %1 as %2\n" ).arg( param_name[ i ] ).arg( qd );
 

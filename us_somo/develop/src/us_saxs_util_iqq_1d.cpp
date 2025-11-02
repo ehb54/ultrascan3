@@ -1,4 +1,5 @@
 #include "../include/us_saxs_util.h"
+#include <QRegularExpression>
 //Added by qt3to4:
 #include <QTextStream>
 
@@ -66,7 +67,7 @@ bool US_Saxs_Util::compute_1d()
       QString     qs  = control_parameters[ "1dintermediatesaves" ];
       qs.replace( ",", " " );
       qs = qs.trimmed();
-      QStringList qsl = (qs ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
+      QStringList qsl = (qs ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts );
       for ( unsigned int i = 0; i < ( unsigned int ) qsl.size(); i++ )
       {
          unsigned int pos = qsl[ i ].toUInt();
@@ -197,7 +198,7 @@ bool US_Saxs_Util::compute_1d()
             }
 
             QString use_resname = this_atom->resName;
-            use_resname.replace( QRegExp( "_.*$" ), "" );
+            use_resname.replace( QRegularExpression( QStringLiteral( "_.*$" ) ), "" );
 
             QString mapkey = QString("%1|%2")
                .arg( use_resname )
@@ -707,7 +708,7 @@ bool US_Saxs_Util::load_rotations( unsigned int number, vector < vector < double
       QString     qs  = ts.readLine();
       line++;
 
-      QStringList qsl = (qs ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
+      QStringList qsl = (qs ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts );
 
       if ( qsl.size() != 3 )
       {

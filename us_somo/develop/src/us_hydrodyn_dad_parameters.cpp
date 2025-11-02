@@ -1,4 +1,5 @@
 #include "../include/us3_defines.h"
+#include <QRegularExpression>
 #include "../include/us_hydrodyn.h"
 #include "../include/us_hydrodyn_dad_parameters.h"
 #include "../include/us_unicode.h"
@@ -490,7 +491,7 @@ void US_Hydrodyn_Dad_Parameters::save()
       return;
    }
 
-   fn = fn.replace( QRegExp( "(|_uv_vis_param)\\.(dat|DAT)$" ), "" );
+   fn = fn.replace( QRegularExpression( QStringLiteral( "(|_uv_vis_param)\\.(dat|DAT)$" ) ), "" );
    fn += "_uv_vis_param.dat";
 
    QFile f( fn );

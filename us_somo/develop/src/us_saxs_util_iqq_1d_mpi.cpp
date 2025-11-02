@@ -1,4 +1,5 @@
 #include <mpi.h>
+#include <QRegularExpression>
 #include "../include/us_saxs_util.h"
 #include "../include/us_file_util.h"
 #include "../include/us_timer.h"
@@ -51,7 +52,7 @@ bool US_Saxs_Util::run_1d_mpi( QString controlfile )
    nsa_mpi = true;
 
    errormsg = "";
-   if ( !controlfile.contains( QRegExp( "\\.(tgz|TGZ|tar|TAR)$" ) ) )
+   if ( !controlfile.contains( QRegularExpression( QStringLiteral( "\\.(tgz|TGZ|tar|TAR)$" ) ) ) )
    {
       errormsg = QString( "controlfile must be .tgz or .tar, was %1" ).arg( controlfile );
       cerr << errormsg << endl << flush;
@@ -141,12 +142,12 @@ bool US_Saxs_Util::run_1d_mpi( QString controlfile )
          .arg( dest );
       original_controlfile = dest;
 
-      if ( controlfile.contains( QRegExp( "\\.(tgz|TGZ)$" ) ) )
+      if ( controlfile.contains( QRegularExpression( QStringLiteral( "\\.(tgz|TGZ)$" ) ) ) )
       {
          // gunzip controlfile, must be renamed for us_gzip
          
          // rename
-         dest.replace( QRegExp( "\\.(tgz|TGZ)$" ), ".tar.gz" );
+         dest.replace( QRegularExpression( QStringLiteral( "\\.(tgz|TGZ)$" ) ), ".tar.gz" );
          QDir qd;
          qd.remove( dest );
          if ( !qd.rename( controlfile, dest ) )
@@ -169,7 +170,7 @@ bool US_Saxs_Util::run_1d_mpi( QString controlfile )
          }
          errorno--;
 
-         controlfile.replace( QRegExp( "\\.gz$" ), "" );
+         controlfile.replace( QRegularExpression( QStringLiteral( "\\.gz$" ) ), "" );
       }
 
       // tar open controlfile
@@ -266,7 +267,7 @@ bool US_Saxs_Util::run_1d_mpi( QString controlfile )
          QString qs   = org_output_files[ i ];
          qs.replace( "_rank0_" , "_rank%1_" );
          QString name = org_output_files[ i ];
-         name.replace( QRegExp( "^.*_rank0_" ) , "" );
+         name.replace( QRegularExpression( QStringLiteral( "^.*_rank0_" ) ) , "" );
          cout << QString( "new name <%1>\n" ).arg( name );
 
          vector < double > q;
@@ -398,7 +399,7 @@ bool US_Saxs_Util::run_1d_mpi( QString controlfile )
    if ( !myrank )
    {
       QString results_file = original_controlfile;
-      results_file.replace( QRegExp( "\\.(tgz|TGZ|tar|TGZ)$" ), "" );
+      results_file.replace( QRegularExpression( QStringLiteral( "\\.(tgz|TGZ|tar|TGZ)$" ) ), "" );
       results_file += "_out.tgz";
 
       QDir dod( outputData );
@@ -511,7 +512,7 @@ bool US_Saxs_Util::compute_1d_mpi()
       QString     qs  = control_parameters[ "1dintermediatesaves" ];
       qs.replace( ",", " " );
       qs.trimmed();
-      QStringList qsl = (qs ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
+      QStringList qsl = (qs ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts );
       for ( unsigned int i = 0; i < ( unsigned int ) qsl.size(); i++ )
       {
          unsigned int pos = npes * ( int ) ( qsl[ i ].toUInt() / npes );
@@ -657,7 +658,7 @@ bool US_Saxs_Util::compute_1d_mpi()
             }
 
             QString use_resname = this_atom->resName;
-            use_resname.replace( QRegExp( "_.*$" ), "" );
+            use_resname.replace( QRegularExpression( QStringLiteral( "_.*$" ) ), "" );
 
             QString mapkey = QString("%1|%2")
                .arg( use_resname )
@@ -1274,7 +1275,7 @@ bool US_Saxs_Util::load_rotations_mpi( unsigned int number, vector < vector < do
       QString     qs  = ts.readLine();
       line++;
 
-      QStringList qsl = (qs ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
+      QStringList qsl = (qs ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts );
 
       if ( qsl.size() != 3 )
       {

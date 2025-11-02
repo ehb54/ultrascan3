@@ -1,4 +1,5 @@
 #include "../include/us_hydrodyn_saxs.h"
+#include <QRegularExpression>
 #include "../include/us_hydrodyn.h"
 #include "../include/us_revision.h"
 #include "../include/us_saxs_util.h"
@@ -130,7 +131,7 @@ bool US_Hydrodyn_Saxs::compute_scale_excl_vol()
             PDB_atom *this_atom = &(model_vector[current_model].molecule[j].atom[k]);
 
             QString use_resname = this_atom->resName;
-            use_resname.replace( QRegExp( "_.*$" ), "" );
+            use_resname.replace( QRegularExpression( QStringLiteral( "_.*$" ) ), "" );
 
             QString mapkey = QString("%1|%2")
                .arg( use_resname )
@@ -341,7 +342,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
             }
 
             QString use_resname = this_atom->resName;
-            use_resname.replace( QRegExp( "_.*$" ), "" );
+            use_resname.replace( QRegularExpression( QStringLiteral( "_.*$" ) ), "" );
 
             QString mapkey = QString("%1|%2")
                .arg( use_resname )
@@ -761,7 +762,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
          pb_pr_contrib->setEnabled(false);
          if ( cb_pr_contrib->isChecked() &&
               !source &&
-              contrib_file.contains(QRegExp("(PDB|pdb)$")) )
+              contrib_file.contains(QRegularExpression( QStringLiteral( "(PDB|pdb)$" ) )) )
          {
             contrib_array.resize(atoms.size());
             for ( unsigned int i = 0; i < as1; i++ )
@@ -1527,7 +1528,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
             }
 
             QString use_resname = this_atom->resName;
-            use_resname.replace( QRegExp( "_.*$" ), "" );
+            use_resname.replace( QRegularExpression( QStringLiteral( "_.*$" ) ), "" );
 
             QString mapkey = QString("%1|%2")
                .arg( use_resname )
@@ -2575,7 +2576,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
             }
 
             QString use_resname = this_atom->resName;
-            use_resname.replace( QRegExp( "_.*$" ), "" );
+            use_resname.replace( QRegularExpression( QStringLiteral( "_.*$" ) ), "" );
 
             QString mapkey = QString("%1|%2")
                .arg( use_resname )
@@ -3798,7 +3799,7 @@ bool US_Hydrodyn_Saxs::load_ff_table( QString filename )
          continue;
       }
 
-      QStringList qsl = (qs ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
+      QStringList qsl = (qs ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts );
 
       // expect:
       //   residueatom (possibly multiple)
@@ -3874,7 +3875,7 @@ bool US_Hydrodyn_Saxs::load_ff_table( QString filename )
                continue;
             }
 
-            QStringList qsl = (qs ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
+            QStringList qsl = (qs ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts );
 
             if ( qsl[ 0 ] == "enddata" )
             {

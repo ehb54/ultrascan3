@@ -1,4 +1,5 @@
 #include "../include/us_hydrodyn.h"
+#include <QRegularExpression>
 #include "../include/us_revision.h"
 #include "../include/us_hydrodyn_mals.h"
 #include "../include/us_hydrodyn_mals_ciq.h"
@@ -51,8 +52,8 @@ bool US_Hydrodyn_Mals::create_i_of_q_ng( QStringList files, double t_min, double
    }
 
    QString head = qstring_common_head( files, true );
-   head = head.replace( QRegExp( "__It_q\\d*_$" ), "" );
-   head = head.replace( QRegExp( "_q\\d*_$" ), "" );
+   head = head.replace( QRegularExpression( QStringLiteral( "__It_q\\d*_$" ) ), "" );
+   head = head.replace( QRegularExpression( QStringLiteral( "_q\\d*_$" ) ), "" );
    head = head.replace( QRegularExpression( "[\\[\\]{}]" ), "" );
 
    QRegExp rx_q     ( "_q(\\d+_\\d+)" );
@@ -535,8 +536,8 @@ bool US_Hydrodyn_Mals::create_i_of_q( QStringList files, double t_min, double t_
    }
 
    QString head = qstring_common_head( files, true );
-   head = head.replace( QRegExp( "__It_q\\d*_$" ), "" );
-   head = head.replace( QRegExp( "_q\\d*_$" ), "" );
+   head = head.replace( QRegularExpression( QStringLiteral( "__It_q\\d*_$" ) ), "" );
+   head = head.replace( QRegularExpression( QStringLiteral( "_q\\d*_$" ) ), "" );
    head = head.replace( QRegularExpression( "[\\[\\]{}]" ), "" );
 
    if ( !ggaussian_compatible( false ) )

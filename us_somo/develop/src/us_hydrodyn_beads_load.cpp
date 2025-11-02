@@ -1,4 +1,5 @@
 // this is part of the class US_Hydrodyn
+#include <QRegularExpression>
 // listing of other files is in us_hydrodyn.cpp
 // (this) us_hydrodyn_beads_load.cpp contains code for reading the bead model file
 
@@ -14,8 +15,8 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
    le_pdb_file_save_text = "not selected";
    le_pdb_file->setText(us_tr( "not selected" ));
    project = filename;
-   //   project.replace(QRegExp(".*(/|\\\\)"), "");
-   //   project.replace(QRegExp("\\.(somo|SOMO)\\.(bead_model|BEAD_MODEL)$"), "");
+   //   project.replace(QRegularExpression( QStringLiteral( ".*(/|\\\\)" ) ), "");
+   //   project.replace(QRegularExpression( QStringLiteral( "\\.(somo|SOMO)\\.(bead_model|BEAD_MODEL)$" ) ), "");
    project = QFileInfo(QFileInfo(filename).fileName()).baseName();
    QString ftype = QFileInfo(filename).suffix().toLower();
    editor->setText("\n\nLoading bead model " + project + " of type " + ftype + "\n");
@@ -87,7 +88,7 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
          QTextStream ts(&f);
          QString qs = ts.readLine();
          qDebug() << "qs " << qs;
-         QStringList qsl = qs.split( QRegExp( "\\s+" ) );
+         QStringList qsl = qs.split( QRegularExpression( QStringLiteral( "\\s+" ) ) );
          if (qsl.size()) {
             bead_count = qsl.takeFirst().toInt();
          } else {
@@ -104,7 +105,7 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
          while ( !ts.atEnd() && linepos < bead_count ) {
             QString qs = ts.readLine();
             qDebug() << "qs " << qs;
-            QStringList qsl = qs.split( QRegExp( "\\s+" ) );
+            QStringList qsl = qs.split( QRegularExpression( QStringLiteral( "\\s+" ) ) );
             
             qDebug() << "qsl size " << qsl.size() << " joined - " << qsl.join( ":" );
 
@@ -174,8 +175,8 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
                QString tmp_string;
                // strip extra fields
                tmp_string = qsl.join( " " );
-               tmp_string.replace(QRegExp("^\\s*"),"");
-               tmp_string.replace(QRegExp("\\s.*"),"");
+               tmp_string.replace(QRegularExpression( QStringLiteral( "^\\s*" ) ),"");
+               tmp_string.replace(QRegularExpression( QStringLiteral( "\\s.*" ) ),"");
                tmp_atom.bead_recheck_asa = tmp_string.toFloat();
                //  } else {
                // editor->append(QString("\nError in line %1!\n").arg(linepos));
@@ -280,7 +281,7 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
                               .arg( ssaxs.size() ) );
                } else {
                   saxs tmp_saxs;
-                  QStringList qsl = (ssaxs[ 0 ] ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
+                  QStringList qsl = (ssaxs[ 0 ] ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts );
                   if ( qsl.size() != 12 )
                   {
                      editor_msg( "red", 
@@ -303,7 +304,7 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
                      tmp_saxs.volume = qsl[ 11 ].toFloat();
                      if ( ssaxs.size() == 2 )
                      {
-                        qsl = (ssaxs[ 1 ] ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
+                        qsl = (ssaxs[ 1 ] ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts );
 
                         if ( qsl.size() != 14 )
                         {
@@ -398,7 +399,7 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
                for ( unsigned int j = 0; j < ( unsigned int ) bsaxs.size(); j += 2 )
                {
                   saxs tmp_saxs;
-                  QStringList qsl = (bsaxs[ j ] ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
+                  QStringList qsl = (bsaxs[ j ] ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts );
                   if ( qsl.size() != 12 )
                   {
                      editor_msg( "red", 
@@ -421,7 +422,7 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
                      tmp_saxs.volume = qsl[ 11 ].toFloat();
                      if ( (unsigned int) bsaxs.size() > j + 1 )
                      {
-                        qsl = (bsaxs[ j + 1 ] ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
+                        qsl = (bsaxs[ j + 1 ] ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts );
                         if ( tmp_saxs.saxs_name != qsl[ 1 ].toUpper() )
                         {
                            editor_msg( "red", us_tr( "Error: bead saxs coefficients bead number inconsistancy" ) );
@@ -448,7 +449,7 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
                      tmp_saxs.vcoeff.clear( );
                      if ( do_bsaxsv )
                      {
-                        qsl = (bsaxsv[ j / 2 ] ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
+                        qsl = (bsaxsv[ j / 2 ] ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts );
                         QTextStream( stdout ) << QString( "loading: bvsaxs qsl size %1\n" ).arg( qsl.size() );
                         for ( int i = 2; i < (int) qsl.size() - 1; i++ )
                         {
@@ -824,7 +825,7 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
          // find last atom number
          QRegExp rx;
 
-         QStringList qsl_atom = qsl.filter(QRegExp("^ATOM "));
+         QStringList qsl_atom = qsl.filter(QRegularExpression( QStringLiteral( "^ATOM " ) ));
          QString last_atom = "";
          if ( !qsl_atom.empty() )
          {
@@ -848,7 +849,7 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
          printf("read bead count %d\n", tmp_bead_count);
 
          // count atom lines
-         int atom_line_count = qsl.filter(QRegExp("^ATOM ")).count();
+         int atom_line_count = qsl.filter(QRegularExpression( QStringLiteral( "^ATOM " ) )).count();
          printf("atom line count %d\n", atom_line_count);
 
          bead_count = atom_line_count;

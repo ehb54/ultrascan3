@@ -1,4 +1,5 @@
 #include "../include/us_hydrodyn.h"
+#include <QRegularExpression>
 #include "../include/us_revision.h"
 #include "../include/us_hydrodyn_saxs.h"
 #include "../include/us_hydrodyn_saxs_conc.h"
@@ -515,7 +516,7 @@ void US_Hydrodyn_Saxs_Conc::load()
    }
    f.close();
       
-   if ( QFileInfo( fname ).suffix().contains( QRegExp( "^(sxc|SXC)$" ) ) )
+   if ( QFileInfo( fname ).suffix().contains( QRegularExpression( QStringLiteral( "^(sxc|SXC)$" ) ) ) )
    {
       for ( unsigned int i = 0; i < (unsigned int) qsl_lines.size(); i++ ) 
       {

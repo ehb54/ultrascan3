@@ -1,4 +1,5 @@
 #include "../include/us3_defines.h"
+#include <QRegularExpression>
 #include "../include/us_hydrodyn_cluster.h"
 #include "../include/us_hydrodyn_cluster_dmd.h"
 #include "../include/us_hydrodyn.h"
@@ -1509,7 +1510,7 @@ bool US_Hydrodyn_Cluster_Dmd::convert_static_range( int row )
 
    QStringList qsl;
    {
-      QRegExp rx = QRegExp( "\\s*(\\s|,|;)+\\s*" );
+      QRegularExpression rx = QRegularExpression( QStringLiteral( "\\s*(\\s|,|;)+\\s*" ) );
       qsl = (static_range ).split( rx , Qt::SkipEmptyParts );
    }
 

@@ -1,4 +1,5 @@
 #include "../include/us_saxs_util.h"
+#include <QRegularExpression>
 //Added by qt3to4:
 #include <QTextStream>
 
@@ -100,7 +101,7 @@ bool US_Saxs_Util::select_residue_file( QString filename )
                   = new_atom.hybrid.name;
                new_residue.r_atom.push_back(new_atom);
                new_atoms[new_atom.bead_assignment].push_back(new_atom);
-               if ( new_residue.name.contains(QRegExp("^PBR-")) )
+               if ( new_residue.name.contains(QRegularExpression( QStringLiteral( "^PBR-" ) )) )
                {
                   pbr_override_map[ QString("%1|%2|%3|%4")
                                     .arg(new_residue.name == "PBR-P" ? "P" : "NP" )
@@ -175,7 +176,7 @@ bool US_Saxs_Util::select_residue_file( QString filename )
    {
       // only AA's
       if ( residue_list[i].type == 0 &&
-           !residue_list[i].name.contains(QRegExp("^PBR-")) )
+           !residue_list[i].name.contains(QRegularExpression( QStringLiteral( "^PBR-" ) )) )
       {
          for ( unsigned int j = 0; j < residue_list[i].r_atom.size(); j++ )
          {
@@ -360,12 +361,12 @@ bool US_Saxs_Util::select_saxs_file( QString filename )
       {
          QString    qs  = ts.readLine();
          line++;
-         if ( qs.contains( QRegExp( "^\\s+#" ) ) )
+         if ( qs.contains( QRegularExpression( QStringLiteral( "^\\s+#" ) ) ) )
          {
             continue;
          }
          qs = qs.trimmed();
-         QStringList qsl = (qs ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
+         QStringList qsl = (qs ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts );
          int pos = 0;
          if ( qsl.size() == 11 )
          {
@@ -483,7 +484,7 @@ bool US_Saxs_Util::read_pdb( QStringList &qsl )
       {
          
          QString tmp_str = str1.mid(10,62);
-         tmp_str.replace(QRegExp("\\s+")," ");
+         tmp_str.replace(QRegularExpression( QStringLiteral( "\\s+" ) )," ");
          if ( str1.left(5) == "TITLE" )
          {
             last_pdb_title << tmp_str;
@@ -697,7 +698,7 @@ bool US_Saxs_Util::read_pdb( QString filename )
          {
                
             QString tmp_str = str1.mid(10,62);
-            tmp_str.replace(QRegExp("\\s+")," ");
+            tmp_str.replace(QRegularExpression( QStringLiteral( "\\s+" ) )," ");
             if ( str1.left(5) == "TITLE" )
             {
                last_pdb_title << tmp_str;
@@ -1002,7 +1003,7 @@ bool US_Saxs_Util::assign_atom(const QString &str1, struct PDB_chain *temp_chain
 
    temp_atom.resSeq = str1.mid(22, 5);
    temp_atom.orgResSeq = str1.mid(22, 4);
-   temp_atom.resSeq.replace(QRegExp(" *"),"");
+   temp_atom.resSeq.replace(QRegularExpression( QStringLiteral( " *" ) ),"");
    if ( temp_atom.resSeq == *last_resSeq )
    {
       flag = false;

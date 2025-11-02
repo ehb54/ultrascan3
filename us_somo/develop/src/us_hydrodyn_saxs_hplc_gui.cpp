@@ -1,4 +1,5 @@
 #include "../include/us3_defines.h"
+#include <QRegularExpression>
 #include "../include/us_hydrodyn.h"
 #include "../include/us_hydrodyn_saxs_hplc.h"
 #include "../include/us_unicode.h"
@@ -5862,7 +5863,7 @@ void US_Hydrodyn_Saxs_Hplc::model_view( QStringList files )
       }
          
       {
-         QStringList qsl = (qsl0[ 0 ] ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
+         QStringList qsl = (qsl0[ 0 ] ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts );
          if ( qsl.size() < 1 )
          {
             editor_msg( "red", QString( us_tr( "Error: insufficient model info for file %1 [b]" ) ).arg( files[ i ] ) );
@@ -5887,7 +5888,7 @@ void US_Hydrodyn_Saxs_Hplc::model_view( QStringList files )
       {
          bms += "Pb ";
 
-         QStringList qsl = (qsl0[ j ] ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
+         QStringList qsl = (qsl0[ j ] ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts );
 
          if ( qsl.size() < 4 )
          {

@@ -1,4 +1,5 @@
 #include "../include/us3_defines.h"
+#include <QRegularExpression>
 #include "../include/us_hydrodyn.h"
 #include "../include/us_revision.h"
 #include "../include/us_hydrodyn_cluster.h"
@@ -96,7 +97,7 @@ US_Hydrodyn_Cluster::US_Hydrodyn_Cluster(
       !batch_window->cb_compute_iq_avg->isChecked();
    
    if ( selected_files.size()
-        && selected_files[0].contains( QRegExp( "bead_model$" ) ) ) {
+        && selected_files[0].contains( QRegularExpression( QStringLiteral( "bead_model$" ) ) ) ) {
       cluster_additional_methods_modes[ "inputfile_pat_addendum" ][ "best" ] = false;
    }
 
@@ -194,7 +195,7 @@ US_Hydrodyn_Cluster::US_Hydrodyn_Cluster(
 
       for ( unsigned int i = 0; i < (unsigned int) submitted_files.count(); i++ )
       {
-         submitted_jobs[ submitted_files[ i ].replace( QRegExp( "\\.(tar|tgz|TAR|TGZ)$" ), "" ) ] = true;
+         submitted_jobs[ submitted_files[ i ].replace( QRegularExpression( QStringLiteral( "\\.(tar|tgz|TAR|TGZ)$" ) ), "" ) ] = true;
       }
    }
 
@@ -231,7 +232,7 @@ US_Hydrodyn_Cluster::US_Hydrodyn_Cluster(
       
       for ( unsigned int i = 0; i < (unsigned int) completed_files.count(); i++ )
       {
-         completed_jobs[ completed_files[ i ].replace( QRegExp( "_(out|OUT)\\.(tar|tgz|TAR|TGZ)$" ), "" ) ] = true;
+         completed_jobs[ completed_files[ i ].replace( QRegularExpression( QStringLiteral( "_(out|OUT)\\.(tar|tgz|TAR|TGZ)$" ) ), "" ) ] = true;
       }
    }
 
@@ -251,7 +252,7 @@ US_Hydrodyn_Cluster::US_Hydrodyn_Cluster(
       QStringList results_files = qd.entryList( QStringList() << "*" );
       for ( unsigned int i = 0; i < (unsigned int)results_files.count(); i++ )
       {
-         results_jobs[ results_files[ i ].replace( QRegExp( "_(out|OUT)\\.(tar|tgz|TAR|TGZ)$" ), "" ) ] = true;
+         results_jobs[ results_files[ i ].replace( QRegularExpression( QStringLiteral( "_(out|OUT)\\.(tar|tgz|TAR|TGZ)$" ) ), "" ) ] = true;
       }
    }
 
@@ -707,7 +708,7 @@ void US_Hydrodyn_Cluster::create_pkg()
       {
          tar_filename = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( tar_filename, 0, this );
          filename = tar_filename;
-         filename.replace( QRegExp( "\\.tar$" ), "" );
+         filename.replace( QRegularExpression( QStringLiteral( "\\.tar$" ) ), "" );
          le_output_name->setText( QDir::toNativeSeparators( QFileInfo( filename ).path() ) == 
                                   QDir::toNativeSeparators( pkg_dir ) ?
                                   QFileInfo( filename ).fileName() : 
@@ -721,11 +722,11 @@ void US_Hydrodyn_Cluster::create_pkg()
          if ( QFile::exists( targz_filename ) )
          {
             QString path =  QFileInfo( targz_filename ).path() + SLASH;
-            QString name =  QFileInfo( targz_filename ).fileName().replace( QRegExp( "\\_p1.tgz$" ), "" );
+            QString name =  QFileInfo( targz_filename ).fileName().replace( QRegularExpression( QStringLiteral( "\\_p1.tgz$" ) ), "" );
             targz_filename = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( 
                                                                          &path, &name, &ext, 0, this );
             filename = targz_filename;
-            filename.replace( QRegExp( "\\_p1.tgz$" ), "" );
+            filename.replace( QRegularExpression( QStringLiteral( "\\_p1.tgz$" ) ), "" );
             le_output_name->setText( QDir::toNativeSeparators( QFileInfo( filename ).path() ) == 
                                      QDir::toNativeSeparators( pkg_dir ) ?
                                      QFileInfo( filename ).fileName() : 
@@ -737,7 +738,7 @@ void US_Hydrodyn_Cluster::create_pkg()
          {
             targz_filename = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( targz_filename, 0, this );
             filename = targz_filename;
-            filename.replace( QRegExp( "\\.tgz$" ), "" );
+            filename.replace( QRegularExpression( QStringLiteral( "\\.tgz$" ) ), "" );
             le_output_name->setText( QDir::toNativeSeparators( QFileInfo( filename ).path() ) == 
                                      QDir::toNativeSeparators( pkg_dir ) ?
                                      QFileInfo( filename ).fileName() : 
@@ -1267,7 +1268,7 @@ void US_Hydrodyn_Cluster::create_pkg()
          }
          QDir qd;
          QString use_targz_filename = tar_name;
-         use_targz_filename.replace(QRegExp("\\.tar$"), ".tgz" );
+         use_targz_filename.replace(QRegularExpression( QStringLiteral( "\\.tar$" ) ), ".tgz" );
          qd.remove( use_targz_filename );
          if ( !qd.rename( QFileInfo( tar_name + ".gz" ).fileName(), QFileInfo( use_targz_filename ).fileName() ) )
          {
@@ -1371,7 +1372,7 @@ void US_Hydrodyn_Cluster::create_pkg()
       }
       QDir qd;
       QString use_targz_filename = tar_name;
-      use_targz_filename.replace(QRegExp("\\.tar$"), ".tgz" );
+      use_targz_filename.replace(QRegularExpression( QStringLiteral( "\\.tar$" ) ), ".tgz" );
       qd.remove( use_targz_filename );
       if ( !qd.rename( QFileInfo( tar_name + ".gz" ).fileName(), QFileInfo( use_targz_filename ).fileName() ) )
       {
@@ -1435,7 +1436,7 @@ void US_Hydrodyn_Cluster::create_pkg()
 
       QDir qd;
       QString use_targz_filename = tar_name;
-      use_targz_filename.replace(QRegExp("\\.tar$"), ".tgz" );
+      use_targz_filename.replace(QRegularExpression( QStringLiteral( "\\.tar$" ) ), ".tgz" );
       qd.remove( use_targz_filename );
       if ( !qd.rename( QFileInfo( tar_name + ".gz" ).fileName(), QFileInfo( use_targz_filename ).fileName() ) )
       {
@@ -1480,8 +1481,8 @@ void US_Hydrodyn_Cluster::create_pkg()
    } else {
       editor_msg( "blue", 
                   dest_files
-                  .replaceInStrings( QRegExp( "^" ), us_tr( "Package: " ) )
-                  .replaceInStrings( QRegExp( "$" ), us_tr( " created" ) )
+                  .replaceInStrings( QRegularExpression( QStringLiteral( "^" ) ), us_tr( "Package: " ) )
+                  .replaceInStrings( QRegularExpression( QStringLiteral( "$" ) ), us_tr( " created" ) )
                   .join( "\n" ) );
    }
    editor_msg( "black", us_tr( "Package complete" ) );
@@ -1603,40 +1604,40 @@ void US_Hydrodyn_Cluster::load_results()
 
 void US_Hydrodyn_Cluster::update_output_name( const QString &cqs )
 {
-   if ( cqs.contains( QRegExp( "^common_" ) ) )
+   if ( cqs.contains( QRegularExpression( QStringLiteral( "^common_" ) ) ) )
    {
       QString qs = cqs;
-      qs.replace( QRegExp( "^common_" ), "" );
+      qs.replace( QRegularExpression( QStringLiteral( "^common_" ) ), "" );
       le_output_name->setText( qs );
    }
-   if ( cqs.contains( QRegExp( "^nsa_" ) ) )
+   if ( cqs.contains( QRegularExpression( QStringLiteral( "^nsa_" ) ) ) )
    {
       QString qs = cqs;
-      qs.replace( QRegExp( "^nsa_" ), "" );
+      qs.replace( QRegularExpression( QStringLiteral( "^nsa_" ) ), "" );
       le_output_name->setText( qs );
    }
-   if ( cqs.contains( QRegExp( "^bfnb_" ) ) )
+   if ( cqs.contains( QRegularExpression( QStringLiteral( "^bfnb_" ) ) ) )
    {
       QString qs = cqs;
-      qs.replace( QRegExp( "^bfnb_" ), "" );
+      qs.replace( QRegularExpression( QStringLiteral( "^bfnb_" ) ), "" );
       le_output_name->setText( qs );
    }
-   if ( cqs.contains( QRegExp( "^bfnbpm_" ) ) )
+   if ( cqs.contains( QRegularExpression( QStringLiteral( "^bfnbpm_" ) ) ) )
    {
       QString qs = cqs;
-      qs.replace( QRegExp( "^bfnbpm_" ), "" );
+      qs.replace( QRegularExpression( QStringLiteral( "^bfnbpm_" ) ), "" );
       le_output_name->setText( qs );
    }
-   if ( cqs.contains( QRegExp( "^oned_" ) ) )
+   if ( cqs.contains( QRegularExpression( QStringLiteral( "^oned_" ) ) ) )
    {
       QString qs = cqs;
-      qs.replace( QRegExp( "^oned_" ), "" );
+      qs.replace( QRegularExpression( QStringLiteral( "^oned_" ) ), "" );
       le_output_name->setText( qs );
    }
-   if ( cqs.contains( QRegExp( "^best_" ) ) )
+   if ( cqs.contains( QRegularExpression( QStringLiteral( "^best_" ) ) ) )
    {
       QString qs = cqs;
-      qs.replace( QRegExp( "^best_" ), "" );
+      qs.replace( QRegularExpression( QStringLiteral( "^best_" ) ), "" );
       le_output_name->setText( qs );
    }
    if ( cqs.contains( "_out", Qt::CaseInsensitive ) )
@@ -1645,16 +1646,16 @@ void US_Hydrodyn_Cluster::update_output_name( const QString &cqs )
       qs.replace( "_out", "", Qt::CaseInsensitive );
       le_output_name->setText( qs );
    }
-   if ( cqs.contains( QRegExp( "(\\s+|\\/|\\\\)" ) ) )
+   if ( cqs.contains( QRegularExpression( QStringLiteral( "(\\s+|\\/|\\\\)" ) ) ) )
    {
       QString qs = cqs;
-      qs.replace( QRegExp( "(\\s+|\\/|\\\\)" ), "" );
+      qs.replace( QRegularExpression( QStringLiteral( "(\\s+|\\/|\\\\)" ) ), "" );
       le_output_name->setText( qs );
    }
-   if ( cqs.contains( QRegExp( "^(tmp|TMP)_" ) ) )
+   if ( cqs.contains( QRegularExpression( QStringLiteral( "^(tmp|TMP)_" ) ) ) )
    {
       QString qs = cqs;
-      qs.replace( QRegExp( "^(tmp|TMP)_" ), "" );
+      qs.replace( QRegularExpression( QStringLiteral( "^(tmp|TMP)_" ) ), "" );
       le_output_name->setText( qs );
    }
 }
@@ -2071,7 +2072,7 @@ QString US_Hydrodyn_Cluster::dmd_base_addition( QStringList &base_source_files, 
          .arg( common_prefix + files[ i ] );
    }
 
-   files.replaceInStrings( QRegExp( "^" ), dmd_base_dir );
+   files.replaceInStrings( QRegularExpression( QStringLiteral( "^" ) ), dmd_base_dir );
    for ( unsigned int i = 0; i < (unsigned int)files.size(); i++ )
    {
       base_source_files << files[ i ];
@@ -2744,7 +2745,7 @@ bool US_Hydrodyn_Cluster::read_config()
          continue;
       }
 
-      QStringList qsl = (qs ).split( QRegExp("\\s+") , Qt::SkipEmptyParts );
+      QStringList qsl = (qs ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts );
 
       if ( !qsl.size() )
       {
@@ -2815,7 +2816,7 @@ bool US_Hydrodyn_Cluster::read_config()
          if ( option == "stage" )
          {
             QString system = qsl[ 0 ];
-            system.replace( QRegExp( ":.*$" ), "" );
+            system.replace( QRegularExpression( QStringLiteral( ":.*$" ) ), "" );
             cluster_stage_to_system[ system ] = last_system;
          }
          continue;
@@ -3476,7 +3477,7 @@ void US_Hydrodyn_Cluster::create_additional_methods_pkg( QString base_dir,
          }
          QDir qd;
          QString use_targz_filename = tar_name;
-         use_targz_filename.replace(QRegExp("\\.tar$"), ".tgz" );
+         use_targz_filename.replace(QRegularExpression( QStringLiteral( "\\.tar$" ) ), ".tgz" );
          qd.remove( use_targz_filename );
          if ( !qd.rename( QFileInfo( tar_name + ".gz" ).fileName(), QFileInfo( use_targz_filename ).fileName() ) )
          {
@@ -3591,7 +3592,7 @@ void US_Hydrodyn_Cluster::create_additional_methods_pkg( QString base_dir,
       }
       QDir qd;
       QString use_targz_filename = tar_name;
-      use_targz_filename.replace(QRegExp("\\.tar$"), ".tgz" );
+      use_targz_filename.replace(QRegularExpression( QStringLiteral( "\\.tar$" ) ), ".tgz" );
       qd.remove( use_targz_filename );
       if ( !qd.rename( QFileInfo( tar_name + ".gz" ).fileName(), QFileInfo( use_targz_filename ).fileName() ) )
       {
@@ -3655,7 +3656,7 @@ void US_Hydrodyn_Cluster::create_additional_methods_pkg( QString base_dir,
 
       QDir qd;
       QString use_targz_filename = tar_name;
-      use_targz_filename.replace(QRegExp("\\.tar$"), ".tgz" );
+      use_targz_filename.replace(QRegularExpression( QStringLiteral( "\\.tar$" ) ), ".tgz" );
       qd.remove( use_targz_filename );
       if ( !qd.rename( QFileInfo( tar_name + ".gz" ).fileName(), QFileInfo( use_targz_filename ).fileName() ) )
       {
@@ -3700,8 +3701,8 @@ void US_Hydrodyn_Cluster::create_additional_methods_pkg( QString base_dir,
    } else {
       editor_msg( "blue", 
                   dest_files
-                  .replaceInStrings( QRegExp( "^" ), us_tr( "Package: " ) )
-                  .replaceInStrings( QRegExp( "$" ), us_tr( " created" ) )
+                  .replaceInStrings( QRegularExpression( QStringLiteral( "^" ) ), us_tr( "Package: " ) )
+                  .replaceInStrings( QRegularExpression( QStringLiteral( "$" ) ), us_tr( " created" ) )
                   .join( "\n" ) );
    }
    editor_msg( "black", us_tr( "Package complete" ) );
@@ -4054,7 +4055,7 @@ void US_Hydrodyn_Cluster::create_additional_methods_parallel_pkg( QString /* bas
       }
       QDir qd;
       QString use_targz_filename = tar_name;
-      use_targz_filename.replace(QRegExp("\\.tar$"), ".tgz" );
+      use_targz_filename.replace(QRegularExpression( QStringLiteral( "\\.tar$" ) ), ".tgz" );
       qd.remove( use_targz_filename );
       if ( !qd.rename( QFileInfo( tar_name + ".gz" ).fileName(), QFileInfo( use_targz_filename ).fileName() ) )
       {
@@ -4084,8 +4085,8 @@ void US_Hydrodyn_Cluster::create_additional_methods_parallel_pkg( QString /* bas
    cout << "written:" << write_count << endl;
    editor_msg( "blue", 
                dest_files
-               .replaceInStrings( QRegExp( "^" ), us_tr( "Package: " ) )
-               .replaceInStrings( QRegExp( "$" ), us_tr( " created" ) )
+               .replaceInStrings( QRegularExpression( QStringLiteral( "^" ) ), us_tr( "Package: " ) )
+               .replaceInStrings( QRegularExpression( QStringLiteral( "$" ) ), us_tr( " created" ) )
                .join( "\n" ) );
    // }
    editor_msg( "black", us_tr( "Package complete" ) );
@@ -4280,7 +4281,7 @@ void US_Hydrodyn_Cluster::create_additional_methods_parallel_pkg_bfnb( QString f
    QString pmtypes = (*cluster_additional_methods_options_selected)[ methods[ 0 ] ][ "pmtypes" ];
    QStringList qsl_pmtypes;
    {
-      QRegExp rx = QRegExp( "(\\s+|(\\s*(,|:)\\s*))" );
+      QRegularExpression rx = QRegularExpression( QStringLiteral( "(\\s+|(\\s*(,|:)\\s*))" ) );
       qsl_pmtypes = (pmtypes ).split( rx , Qt::SkipEmptyParts );
    }
    for ( int i = 0; i < (int) qsl_pmtypes.size(); ++i )
@@ -4583,7 +4584,7 @@ void US_Hydrodyn_Cluster::create_additional_methods_parallel_pkg_bfnb( QString f
       }
 
       QString use_targz_filename = tar_name;
-      use_targz_filename.replace(QRegExp("\\.tar$"), ".tgz" );
+      use_targz_filename.replace(QRegularExpression( QStringLiteral( "\\.tar$" ) ), ".tgz" );
       qd.remove( use_targz_filename );
       if ( !qd.rename( QFileInfo( tar_name + ".gz" ).fileName(), QFileInfo( use_targz_filename ).fileName() ) )
       {
@@ -4598,8 +4599,8 @@ void US_Hydrodyn_Cluster::create_additional_methods_parallel_pkg_bfnb( QString f
 
    editor_msg( "blue", 
                dest_files
-               .replaceInStrings( QRegExp( "^" ), us_tr( "Package: " ) )
-               .replaceInStrings( QRegExp( "$" ), us_tr( " created" ) )
+               .replaceInStrings( QRegularExpression( QStringLiteral( "^" ) ), us_tr( "Package: " ) )
+               .replaceInStrings( QRegularExpression( QStringLiteral( "$" ) ), us_tr( " created" ) )
                .join( "\n" ) );
 
    editor_msg( "black", us_tr( "Package complete" ) );
@@ -4628,7 +4629,7 @@ bool US_Hydrodyn_Cluster::additional_processing(
                !(*cluster_additional_methods_options_selected)[ method ].count( "bestbestmw" ) )
          {
             // compute mw for file
-            if ( file.contains(QRegExp(".(pdb|PDB)$")) &&
+            if ( file.contains(QRegularExpression( QStringLiteral( ".(pdb|PDB)$" ) )) &&
                  !((US_Hydrodyn *)us_hydrodyn)->is_dammin_dammif(file) )
             {
                bool ok = true;
@@ -4668,7 +4669,7 @@ bool US_Hydrodyn_Cluster::additional_processing(
                   }
                }
             } else {
-               if ( file.contains(QRegExp(".(bead_model)$")) ) {
+               if ( file.contains(QRegularExpression( QStringLiteral( ".(bead_model)$" ) )) ) {
                   if ( batch_window->screen_bead_model( file )
                        && ((US_Hydrodyn *)us_hydrodyn)->model_vector.size() ) {
                      mw = ((US_Hydrodyn *)us_hydrodyn)->model_vector[ 0 ].mw;

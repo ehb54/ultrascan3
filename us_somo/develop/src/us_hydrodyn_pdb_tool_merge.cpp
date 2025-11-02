@@ -1,4 +1,5 @@
 #include "../include/us3_defines.h"
+#include <QRegularExpression>
 #include "../include/us_hydrodyn.h"
 #include "../include/us_hydrodyn_pdb_tool_merge.h"
 //Added by qt3to4:
@@ -658,7 +659,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::start()
          if ( qs.contains( rx_model ) )
          {
             model_count++;
-            QStringList qsl = (qs.left(20).split( QRegExp("\\s+") , Qt::SkipEmptyParts ) );
+            QStringList qsl = (qs.left(20).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts ) );
             QString model_name;
             if ( qsl.size() == 1 )
             {
@@ -3681,11 +3682,11 @@ void US_Hydrodyn_Pdb_Tool_Merge::only_closest()
          QString chain_b = chain_b_list.size() > 1 ? chain_b_list[ 1 ] : "?";
 
          // QString residue_a = chain_a_list.size() > 2 ? chain_a_list[ 2 ] : "?";
-         // residue_a.replace( QRegExp( "^\\D*" ), "" );
+         // residue_a.replace( QRegularExpression( QStringLiteral( "^\\D*" ) ), "" );
          // unsigned int residue_a_pos = residue_a.toUInt();
 
          QString residue_b = chain_b_list.size() > 2 ? chain_b_list[ 2 ] : "?";
-         residue_b.replace( QRegExp( "^\\D*" ), "" );
+         residue_b.replace( QRegularExpression( QStringLiteral( "^\\D*" ) ), "" );
          unsigned int residue_b_pos = residue_b.toUInt();
 
          if ( residue_b_pos < 2 )

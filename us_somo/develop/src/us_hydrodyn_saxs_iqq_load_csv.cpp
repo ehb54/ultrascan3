@@ -1,4 +1,5 @@
 #include "../include/us3_defines.h"
+#include <QRegularExpression>
 #include "../include/us_hydrodyn_saxs_iqq_load_csv.h"
 #include "../include/us_hydrodyn.h"
 #include "qregexp.h"
@@ -774,7 +775,7 @@ void US_Hydrodyn_Saxs_Iqq_Load_Csv::save_as_dat()
    QString save_file = sel_name;
    cout << sel_name << endl;
    save_file.replace("\"","");
-   save_file.replace(QRegExp("\\..*$"),"");
+   save_file.replace(QRegularExpression( QStringLiteral( "\\..*$" ) ),"");
    save_file += ".dat";
    save_file = QFileInfo( save_file ).fileName();
    cout << save_file << endl;

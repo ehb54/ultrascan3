@@ -1,4 +1,5 @@
 #include "../include/us_util.h"
+#include <QRegularExpression>
 #include "../include/us_write_config.h"
 #include "../include/us_version.h"
 #if QT_VERSION >= 0x040000
@@ -471,13 +472,13 @@ void US_Config::setDefault()
       config_list.system_dir = QDir::toNativeSeparators( ultrascan );
    else
    {
-      QString base = qApp->applicationDirPath().remove( QRegExp( "/bin(|64)$" ) );
+      QString base = qApp->applicationDirPath().remove( QRegularExpression( QStringLiteral( "/bin(|64)$" ) ) );
       if ( base.contains( ".app/Contents" ) )
       {
          int jj = base.lastIndexOf( "/bin/" );
          base   = ( jj > 0 ) ? base.left( jj ) : base;
       }
-      config_list.system_dir = base.remove( QRegExp( "/somo$" ) );
+      config_list.system_dir = base.remove( QRegularExpression( QStringLiteral( "/somo$" ) ) );
    }
 #endif
 #else
@@ -487,7 +488,7 @@ void US_Config::setDefault()
    // Set system directory
    if ( ultrascan == "" )
    {
-      ultrascan = qApp->applicationDirPath().remove( QRegExp( "/bin$" ) );
+      ultrascan = qApp->applicationDirPath().remove( QRegularExpression( QStringLiteral( "/bin$" ) ) );
       // QString warning = us_tr( "Error:" ), message;
       // message = us_tr( "The required environment variable ULTRASCAN is not set.\n"
       //               "Please add it and restart the program.  Exiting." );
@@ -690,7 +691,7 @@ bool US_Config::read()
 
    // compare config_list.system_dir with applicationdirpath()
 #ifndef MAC
-   QString real_ultrascan = QDir::toNativeSeparators( qApp->applicationDirPath().remove( QRegExp( "/bin(|64)$" ) ) );
+   QString real_ultrascan = QDir::toNativeSeparators( qApp->applicationDirPath().remove( QRegularExpression( QStringLiteral( "/bin(|64)$" ) ) ) );
    QString match = config_list.system_dir != real_ultrascan ? "different" : "the same";
    
    // QMessageBox::information( 0

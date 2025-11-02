@@ -1,4 +1,5 @@
 #include "../include/us_saxs_util.h"
+#include <QRegularExpression>
 #include "../include/us_saxs_util_asab1.h"
 #include "../include/us_hydrodyn_results.h"
 //Added by qt3to4:
@@ -640,7 +641,7 @@ bool US_Saxs_Util::load_rotamer( QString filename )
    while ( !ts.atEnd() )
    {
       QString qs = ts.readLine();
-      if ( qs.toLower().contains( QRegExp( "^end-file" ) ) )
+      if ( qs.toLower().contains( QRegularExpression( QStringLiteral( "^end-file" ) ) ) )
       {
          break;
       }
@@ -2238,9 +2239,9 @@ bool US_Saxs_Util::flush_pdb()
    cout << "flush_pdb\n";
    QString fname = control_parameters[ "inputfile" ];
 
-   fname = fname.replace( QRegExp( "^../common/" ), "" );
+   fname = fname.replace( QRegularExpression( QStringLiteral( "^../common/" ) ), "" );
 
-   fname = fname.replace( QRegExp( "(|-(h|H))\\.(pdb|PDB)$" ), "" ) +
+   fname = fname.replace( QRegularExpression( QStringLiteral( "(|-(h|H))\\.(pdb|PDB)$" ) ), "" ) +
       QString( "-c%1-h%2.pdb" )
       .arg( QString( "%1" ).arg( our_saxs_options.steric_clash_distance ).replace( ".", "_" ) )
       .arg( our_saxs_options.alt_hydration ? "a" : "" )
@@ -5909,7 +5910,7 @@ bool US_Saxs_Util::list_steric_clash_recheck()
    puts( "list_steric_clash_recheck()" );
    QString pdb_file = control_parameters[ "inputfile" ];
 
-   pdb_file = pdb_file.replace( QRegExp( "^../common/" ), "" );
+   pdb_file = pdb_file.replace( QRegularExpression( QStringLiteral( "^../common/" ) ), "" );
 
    unsigned int i = current_model;
    double dist_threshold = 1e0 - ( our_saxs_options.steric_clash_recheck_distance / 100e0 );

@@ -1,4 +1,5 @@
 #include "../include/us_hydrodyn.h"
+#include <QRegularExpression>
 #include "../include/us_hydrodyn_mals.h"
 #include "../include/us_hydrodyn_mals_baseline_best.h"
 //Added by qt3to4:
@@ -3094,7 +3095,7 @@ void US_Hydrodyn_Mals::baseline_best() {
             {
                QString head = qstring_common_head( baseline_selected, true );
                QString tail = qstring_common_tail( baseline_selected, true );
-               head = head.replace( QRegExp( "_q0_" ), "" );
+               head = head.replace( QRegularExpression( QStringLiteral( "_q0_" ) ), "" );
                best_parameters[ "name" ] = QString( "%1%2" )
                   .arg( head )
                   .arg( tail )

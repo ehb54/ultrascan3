@@ -1,4 +1,5 @@
 #include "../include/us_hydrodyn.h"
+#include <QRegularExpression>
 #include "../include/us_hydrodyn_pdb_tool_selres.h"
 //Added by qt3to4:
 #include <QTextStream>
@@ -614,7 +615,7 @@ void US_Hydrodyn_Pdb_Tool::naccess_finished( int, QProcess::ExitStatus )
    // naccess creates 2 files:
    // pdb_rsa
 
-   QString naccess_result_file = QString( naccess_last_pdb ).replace( QRegExp( ".pdb$" ), "" ) + ".rsa";
+   QString naccess_result_file = QString( naccess_last_pdb ).replace( QRegularExpression( QStringLiteral( ".pdb$" ) ), "" ) + ".rsa";
 
    QFile f( naccess_result_file );
 

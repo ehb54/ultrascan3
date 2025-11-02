@@ -1,4 +1,5 @@
 // us_hydrodyn.cpp contains class creation & gui connected functions
+#include <QRegularExpression>
 // us_hydrodyn_core.cpp contains the main computational routines
 // us_hydrodyn_bd_core.cpp contains the main computational routines for brownian dynamic browflex computations
 // us_hydrodyn_anaflex_core.cpp contains the main computational routines for brownian dynamic (anaflex) computations
@@ -122,7 +123,7 @@ void US_Hydrodyn::read_residue_file() {
    res_vbar.clear();
    res_mw.clear();
 
-   QRegExp rx_spaces = QRegExp( "\\s+" ); 
+   QRegularExpression rx_spaces = QRegularExpression( QStringLiteral( "\\s+" ) ); 
    // i=1;
    if (f.open(QIODevice::ReadOnly|QIODevice::Text))
    {
@@ -268,23 +269,23 @@ void US_Hydrodyn::read_residue_file() {
                
                unsigned int pos = ( unsigned int ) msroll_radii.size() + 1;
                double covalent_radius = new_atom.hybrid.radius / 2e0;
-               if ( new_atom.name.contains( QRegExp( "^C" ) ) )
+               if ( new_atom.name.contains( QRegularExpression( QStringLiteral( "^C" ) ) ) )
                {
                   covalent_radius = 0.77e0;
                }
-               if ( new_atom.name.contains( QRegExp( "^N" ) ) )
+               if ( new_atom.name.contains( QRegularExpression( QStringLiteral( "^N" ) ) ) )
                {
                   covalent_radius = 0.70e0;
                }
-               if ( new_atom.name.contains( QRegExp( "^P" ) ) )
+               if ( new_atom.name.contains( QRegularExpression( QStringLiteral( "^P" ) ) ) )
                {
                   covalent_radius = 0.95e0;
                }
-               if ( new_atom.name.contains( QRegExp( "^S" ) ) )
+               if ( new_atom.name.contains( QRegularExpression( QStringLiteral( "^S" ) ) ) )
                {
                   covalent_radius = 1.04e0;
                }
-               if ( new_atom.name.contains( QRegExp( "^O" ) ) )
+               if ( new_atom.name.contains( QRegularExpression( QStringLiteral( "^O" ) ) ) )
                {
                   covalent_radius = new_atom.hybrid.radius / 2.68e0;
                }
@@ -452,7 +453,7 @@ void US_Hydrodyn::read_residue_file() {
                residue_atom_abb_hybrid_map[ new_atom.name ] = new_atom.hybrid.name;
                new_residue.r_atom.push_back(new_atom);
                new_atoms[new_atom.bead_assignment].push_back(new_atom);
-               if ( new_residue.name.contains(QRegExp("^PBR-")) )
+               if ( new_residue.name.contains(QRegularExpression( QStringLiteral( "^PBR-" ) )) )
                {
                   pbr_override_map[ QString("%1|%2|%3|%4")
                                     .arg(new_residue.name == "PBR-P" ? "P" : "NP" )
@@ -586,7 +587,7 @@ void US_Hydrodyn::read_residue_file() {
    {
       // only AA's
       if ( residue_list[i].type == 0 &&
-           !residue_list[i].name.contains(QRegExp("^PBR-")) )
+           !residue_list[i].name.contains(QRegularExpression( QStringLiteral( "^PBR-" ) )) )
       {
          for ( unsigned int j = 0; j < residue_list[i].r_atom.size(); j++ )
          {
@@ -1099,7 +1100,7 @@ bool US_Hydrodyn::assign_atom(const QString &str1, struct PDB_chain *temp_chain,
    temp_atom.chainID = str1.mid(20, 2).trimmed();
 
    temp_atom.resSeq = str1.mid(22, 5);
-   temp_atom.resSeq.replace(QRegExp(" *"),"");
+   temp_atom.resSeq.replace(QRegularExpression( QStringLiteral( " *" ) ),"");
    if (temp_atom.resSeq == *last_resSeq)
    {
       flag = false;
@@ -1308,7 +1309,7 @@ int US_Hydrodyn::read_pdb( const QString &filename ) {
          {
                
             QString tmp_str = str1.mid(10,62);
-            tmp_str.replace(QRegExp("\\s+")," ");
+            tmp_str.replace(QRegularExpression( QStringLiteral( "\\s+" ) )," ");
             if ( str1.left(5) == "TITLE" )
             {
                last_pdb_title << tmp_str;

@@ -1,4 +1,5 @@
 #include "../include/us3_defines.h"
+#include <QRegularExpression>
 #include "../include/us_hydrodyn_mals_saxs_parameters.h"
 //Added by qt3to4:
 #include <QGridLayout>
@@ -271,7 +272,7 @@ void US_Hydrodyn_Mals_Saxs_Parameters::save()
       return;
    }
 
-   fn.replace( QRegExp( "(|_mals_saxs_param)\\.(dat|DAT)$" ), "" );
+   fn.replace( QRegularExpression( QStringLiteral( "(|_mals_saxs_param)\\.(dat|DAT)$" ) ), "" );
    fn += "_mals_saxs_param.dat";
 
    QFile f( fn );

@@ -1,4 +1,5 @@
 #include "../include/us3_defines.h"
+#include <QRegularExpression>
 // #include "../include/us_sas_dammin.h"
 #include "../include/us_hydrodyn_saxs.h"
 #include "../include/us_hydrodyn_saxs_options.h"
@@ -3622,7 +3623,7 @@ void US_Hydrodyn_Saxs::show_plot_pr()
          QTextStream(stdout) << QString( "ready to compute pr, atoms.size() %1\n" ).arg( atoms.size() );
          if ( cb_pr_contrib->isChecked() &&
               !source &&
-              contrib_file.contains(QRegExp("(PDB|pdb)$")) )
+              contrib_file.contains(QRegularExpression( QStringLiteral( "(PDB|pdb)$" ) )) )
          {
             // contrib version
             QTextStream(stdout) << "running contrib pr\n";
@@ -4491,7 +4492,7 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
             {
                continue;
             }
-            QStringList qsl = (qs ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
+            QStringList qsl = (qs ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts );
             if ( qsl[ 0 ] == "run" )
             {
                editor_msg( "blue", QString( "saxscmds: running for: %1" ).arg( specname ) );
@@ -5894,12 +5895,12 @@ void US_Hydrodyn_Saxs::select_saxs_file(const QString &filename)
       {
          QString    qs  = ts.readLine();
          line++;
-         if ( qs.contains( QRegExp( "^\\s+#" ) ) )
+         if ( qs.contains( QRegularExpression( QStringLiteral( "^\\s+#" ) ) ) )
          {
             continue;
          }
          qs = qs.trimmed();
-         QStringList qsl = (qs ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
+         QStringList qsl = (qs ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts );
          int pos = 0;
          if ( qsl.size() == 11 )
          {

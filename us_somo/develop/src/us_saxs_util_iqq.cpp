@@ -1,4 +1,5 @@
 #include "../include/us_saxs_util.h"
+#include <QRegularExpression>
 #include "../include/us_revision.h"
 //Added by qt3to4:
 #include <QTextStream>
@@ -62,13 +63,13 @@ bool US_Saxs_Util::read_control( QString controlfile )
       return false;
    }
 
-   if ( controlfile.contains( QRegExp( "\\.(tgz|TGZ)$" ) ) )
+   if ( controlfile.contains( QRegularExpression( QStringLiteral( "\\.(tgz|TGZ)$" ) ) ) )
    {
       f.close();
       US_Gzip usg;
       // rename
       QString dest = controlfile;
-      dest.replace( QRegExp( "\\.(tgz|TGZ)$" ), ".tar.gz" );
+      dest.replace( QRegularExpression( QStringLiteral( "\\.(tgz|TGZ)$" ) ), ".tar.gz" );
       QDir qd;
       qd.remove( dest );
       
@@ -80,7 +81,7 @@ bool US_Saxs_Util::read_control( QString controlfile )
          
       controlfile = dest;
       
-      qd.remove( dest.replace( QRegExp("\\.(gz|GZ)$"), "" ) );
+      qd.remove( dest.replace( QRegularExpression( QStringLiteral( "\\.(gz|GZ)$" ) ), "" ) );
       cout << "controlfile sent to gunzip: " << controlfile << endl;
       int result = usg.gunzip( controlfile );
       cout << "last_written_name from gunzip: " << usg.last_written_name << endl;
@@ -102,7 +103,7 @@ bool US_Saxs_Util::read_control( QString controlfile )
       }
    }
 
-   if ( controlfile.contains( QRegExp( "\\.(tar|TAR)$" ) ) )
+   if ( controlfile.contains( QRegularExpression( QStringLiteral( "\\.(tar|TAR)$" ) ) ) )
    {
       f.close();
       cout << "extracting tar archive\n";
@@ -545,7 +546,7 @@ bool US_Saxs_Util::read_control( QString controlfile )
          continue;
       }
 
-      QStringList qsl = (qs ).split( QRegExp("\\s+") , Qt::SkipEmptyParts );
+      QStringList qsl = (qs ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts );
 
       if ( !qsl.size() )
       {
@@ -996,7 +997,7 @@ bool US_Saxs_Util::read_control( QString controlfile )
 
       if ( option == "dmdsupportfile" ) {
          QString filename = control_parameters[ option ];
-         // static QRegExp rx_mol2 = QRegExp( "([^/ .]+)\\.mol2$" );
+         // static QRegExp rx_mol2 = QRegularExpression( QStringLiteral( "([^/ .]+)\\.mol2$" ) );
          // if ( rx_mol2.indexIn( filename, 0 ) != -1 ) {
          //    QString mol2 = rx_mol2.cap(1);
          //    dmd_mol2.insert( mol2 );
@@ -1470,17 +1471,17 @@ bool US_Saxs_Util::set_control_parameters_from_experiment_file( QString filename
       rx_ok_line.setMinimal( true );
       for ( unsigned int i = 1; i < (unsigned int) qv.size(); i++ )
       {
-         if ( qv[i].contains(QRegExp("^#")) ||
+         if ( qv[i].contains(QRegularExpression( QStringLiteral( "^#" ) )) ||
               rx_ok_line.indexIn( qv[i] ) == -1 )
          {
             continue;
          }
          
-         // QStringList tokens = (qv[i].replace(QRegExp("^\\s+").split( QRegExp("\\s+") , Qt::SkipEmptyParts ),""));
+         // QStringList tokens = (qv[i].replace(QRegularExpression( QStringLiteral( "^\\s+" ) ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts ),""));
          QStringList tokens;
          {
-            QString qs = qv[i].replace(QRegExp("^\\s+"),"");
-            tokens = (qs ).split( QRegExp("\\s+") , Qt::SkipEmptyParts );
+            QString qs = qv[i].replace(QRegularExpression( QStringLiteral( "^\\s+" ) ),"");
+            tokens = (qs ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts );
          }
 
          if ( tokens.size() > 1 )
@@ -1827,7 +1828,7 @@ bool US_Saxs_Util::create_tgz_output( QString filename )
    int result;
    QStringList list;
    QString tgz_filename = filename;
-   filename.replace( QRegExp( "\\.(tgz|TGZ))$" ), ".tar" );
+   filename.replace( QRegularExpression( QStringLiteral( "\\.(tgz|TGZ))$" ) ), ".tar" );
    QString tar_dot_gz_filename = filename + ".gz";
 
    cout << QString( "tgz output <%1><%2><%3>\n" ).arg( filename ).arg( tgz_filename ).arg( tar_dot_gz_filename ) << flush;

@@ -1,4 +1,5 @@
 #include "../include/us3_defines.h"
+#include <QRegularExpression>
 #include "../include/us_hydrodyn.h"
 #include "../include/us_revision.h"
 #include "../include/us_hydrodyn_saxs_1d.h"
@@ -1016,7 +1017,7 @@ void US_Hydrodyn_Saxs_1d::start()
             }
 
             QString use_resname = this_atom->resName;
-            use_resname.replace( QRegExp( "_.*$" ), "" );
+            use_resname.replace( QRegularExpression( QStringLiteral( "_.*$" ) ), "" );
 
             QString mapkey = QString("%1|%2")
                .arg( use_resname )
@@ -2898,7 +2899,7 @@ bool US_Hydrodyn_Saxs_1d::get_excluded_volume_map()
       {
          QString qs = ts.readLine();
          line++;
-         QStringList qsl = (qs ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
+         QStringList qsl = (qs ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts );
          if ( qsl.size() != 3 )
          {
             f.close();
@@ -3330,7 +3331,7 @@ bool US_Hydrodyn_Saxs_1d::load_rotations( int number,
       QString     qs  = ts.readLine();
       line++;
 
-      QStringList qsl = (qs ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
+      QStringList qsl = (qs ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts );
 
       if ( qsl.size() != 3 )
       {
@@ -3807,7 +3808,7 @@ void US_Hydrodyn_Saxs_1d::set_target_ev()
             }
 
             QString use_resname = this_atom->resName;
-            use_resname.replace( QRegExp( "_.*$" ), "" );
+            use_resname.replace( QRegularExpression( QStringLiteral( "_.*$" ) ), "" );
 
             QString mapkey = QString("%1|%2")
                .arg( use_resname )

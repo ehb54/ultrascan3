@@ -1,4 +1,5 @@
 #include "../include/us_hydrodyn.h"
+#include <QRegularExpression>
 #include "../include/us_revision.h"
 #include "../include/us_hydrodyn_dad.h"
 #include "../include/us_hydrodyn_dad_ciq.h"
@@ -53,8 +54,8 @@ bool US_Hydrodyn_Dad::create_i_of_q_ng( QStringList files, double t_min, double 
    }
 
    QString head = qstring_common_head( files, true );
-   head = head.replace( QRegExp( "__It_q\\d*_$" ), "" );
-   head = head.replace( QRegExp( "_q\\d*_$" ), "" );
+   head = head.replace( QRegularExpression( QStringLiteral( "__It_q\\d*_$" ) ), "" );
+   head = head.replace( QRegularExpression( QStringLiteral( "_q\\d*_$" ) ), "" );
    head = head.replace( QRegularExpression( "[\\[\\]{}]" ), "" );
    head = head.replace( QRegularExpression( "At_L" ), "AL_t" );
 
@@ -553,8 +554,8 @@ bool US_Hydrodyn_Dad::create_i_of_q( QStringList files, double t_min, double t_m
    }
 
    QString head = qstring_common_head( files, true );
-   head = head.replace( QRegExp( "__It_q\\d*_$" ), "" );
-   head = head.replace( QRegExp( "_q\\d*_$" ), "" );
+   head = head.replace( QRegularExpression( QStringLiteral( "__It_q\\d*_$" ) ), "" );
+   head = head.replace( QRegularExpression( QStringLiteral( "_q\\d*_$" ) ), "" );
    head = head.replace( QRegularExpression( "[\\[\\]{}]" ), "" );
 
    if ( !ggaussian_compatible( false ) )

@@ -1,4 +1,5 @@
 #include "../include/us3_defines.h"
+#include <QRegularExpression>
 // this is part of the class US_Hydrodyn
 // listing of other files is in us_hydrodyn.cpp
 // (this) us_hydrodyn_other.cpp contains other routines
@@ -908,7 +909,7 @@ void US_Hydrodyn::editor_msg( QString color, QString msg )
 {
    QColor save_color = Qt::black; // editor->textColor();
    editor->setTextColor(color);
-   editor->append( msg.replace( QRegExp( "\\n$" ) , "" ) );
+   editor->append( msg.replace( QRegularExpression( QStringLiteral( "\\n$" ) ) , "" ) );
    editor->setTextColor(save_color);
 }
 
@@ -918,7 +919,7 @@ void US_Hydrodyn::editor_msg( QString color, const QFont &font, QString msg )
    QColor save_color = Qt::black; // editor->textColor();
    editor->setCurrentFont(font);
    editor->setTextColor(color);
-   editor->append( msg.replace( QRegExp( "\\n$" ) , "" ) );
+   editor->append( msg.replace( QRegularExpression( QStringLiteral( "\\n$" ) ) , "" ) );
    editor->setCurrentFont(save_font);
    editor->setTextColor(save_color);
 }
@@ -961,7 +962,7 @@ bool US_Hydrodyn::is_dammin_dammif(QString filename)
       QString tmp;
       do {
          tmp = ts.readLine();
-         if ( tmp.contains(QRegExp("^ATOM ")) &&
+         if ( tmp.contains(QRegularExpression( QStringLiteral( "^ATOM " ) )) &&
               !tmp.contains("CA  ASP ") ) {
             f.close();
             return false;
@@ -991,7 +992,7 @@ bool US_Hydrodyn::is_dammin_dammif(QString filename)
       while ( !ts.atEnd() )
       {
          tmp = ts.readLine();
-         if ( tmp.contains(QRegExp("^ATOM ")) &&
+         if ( tmp.contains(QRegularExpression( QStringLiteral( "^ATOM " ) )) &&
               !tmp.contains("CA  ASP ") ) {
             f.close();
             return false;
@@ -1618,7 +1619,7 @@ void US_Hydrodyn::add_to_directory_history( QString filename, bool accessed )
 
    // us_qdebug( QString( "add to dir history %1 %2 %3 %4" ).arg( filename ).arg( dir ).arg( fi.suffix() ).arg( accessed ? "true" : "false" ) );
    if ( dir.isEmpty() ||
-        dir.contains( QRegExp( "^\\." ) ) )
+        dir.contains( QRegularExpression( QStringLiteral( "^\\." ) ) ) )
    {
       return;
    }

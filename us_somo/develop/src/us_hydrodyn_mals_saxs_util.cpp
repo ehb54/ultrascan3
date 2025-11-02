@@ -1,4 +1,5 @@
 #include "../include/us3_defines.h"
+#include <QRegularExpression>
 #include "../include/us_hydrodyn.h"
 #include "../include/us_revision.h"
 #include "../include/us_hydrodyn_mals_saxs.h"
@@ -681,7 +682,7 @@ vector < double > US_Hydrodyn_Mals_Saxs::conc_curve( vector < double > &t,
 bool US_Hydrodyn_Mals_Saxs::adjacent_ok( QString name )
 {
    if ( name.contains( "_bsub_a" ) ||
-        name.contains( QRegExp( "\\d+$" ) ) )
+        name.contains( QRegularExpression( QStringLiteral( "\\d+$" ) ) ) )
    {
 
       return true;
@@ -718,32 +719,32 @@ void US_Hydrodyn_Mals_Saxs::adjacent()
       rx.setPattern(
                     QString( "^%1" )
                     .arg( match_name )
-                    .replace( QRegExp( "_bsub_a.*$" ), "" )
-                    .replace( QRegExp( "\\d+$" ), "\\d+" )
+                    .replace( QRegularExpression( QStringLiteral( "_bsub_a.*$" ) ), "" )
+                    .replace( QRegularExpression( QStringLiteral( "\\d+$" ) ), "\\d+" )
                     + 
                     QString( "%1$" )
                     .arg( match_name )
-                    .replace( QRegExp( "^.*_bsub" ), "_bsub" ) 
+                    .replace( QRegularExpression( QStringLiteral( "^.*_bsub" ) ), "_bsub" ) 
                     );
    }
 
-   if ( !found && match_name.contains( QRegExp( "_cn\\d+.*$" ) ) )
+   if ( !found && match_name.contains( QRegularExpression( QStringLiteral( "_cn\\d+.*$" ) ) ) )
    {
       found = true;
       rx.setPattern(
                     QString( "^%1" )
                     .arg( match_name )
-                    .replace( QRegExp( "_cn\\d+.*$" ), "" )
+                    .replace( QRegularExpression( QStringLiteral( "_cn\\d+.*$" ) ), "" )
                     );
    }
 
-   if ( !found && match_name.contains( QRegExp( "\\d+$" ) ) )
+   if ( !found && match_name.contains( QRegularExpression( QStringLiteral( "\\d+$" ) ) ) )
    {
       found = true;
       rx.setPattern(
                     QString( "^%1" )
                     .arg( match_name )
-                    .replace( QRegExp( "\\d+$" ), "" ) 
+                    .replace( QRegularExpression( QStringLiteral( "\\d+$" ) ), "" ) 
                     );
    }
 
@@ -822,32 +823,32 @@ void US_Hydrodyn_Mals_Saxs::adjacent_created()
       rx.setPattern(
                     QString( "^%1" )
                     .arg( match_name )
-                    .replace( QRegExp( "_bsub_a.*$" ), "" )
-                    .replace( QRegExp( "\\d+$" ), "\\d+" )
+                    .replace( QRegularExpression( QStringLiteral( "_bsub_a.*$" ) ), "" )
+                    .replace( QRegularExpression( QStringLiteral( "\\d+$" ) ), "\\d+" )
                     + 
                     QString( "%1$" )
                     .arg( match_name )
-                    .replace( QRegExp( "^.*_bsub" ), "_bsub" ) 
+                    .replace( QRegularExpression( QStringLiteral( "^.*_bsub" ) ), "_bsub" ) 
                     );
    }
 
-   if ( !found && match_name.contains( QRegExp( "_cn\\d+.*$" ) ) )
+   if ( !found && match_name.contains( QRegularExpression( QStringLiteral( "_cn\\d+.*$" ) ) ) )
    {
       found = true;
       rx.setPattern(
                     QString( "^%1" )
                     .arg( match_name )
-                    .replace( QRegExp( "_cn\\d+.*$" ), "" )
+                    .replace( QRegularExpression( QStringLiteral( "_cn\\d+.*$" ) ), "" )
                     );
    }
 
-   if ( !found && match_name.contains( QRegExp( "\\d+$" ) ) )
+   if ( !found && match_name.contains( QRegularExpression( QStringLiteral( "\\d+$" ) ) ) )
    {
       found = true;
       rx.setPattern(
                     QString( "^%1" )
                     .arg( match_name )
-                    .replace( QRegExp( "\\d+$" ), "" ) 
+                    .replace( QRegularExpression( QStringLiteral( "\\d+$" ) ), "" ) 
                     );
    }
 
@@ -1769,12 +1770,12 @@ void US_Hydrodyn_Mals_Saxs::avg( QStringList files, QString suffix )
    int ext = 0;
 
    if ( !head.isEmpty() &&
-        !head.contains( QRegExp( "_$" ) ) )
+        !head.contains( QRegularExpression( QStringLiteral( "_$" ) ) ) )
    {
       head += "_";
    }
    if ( !tail.isEmpty() &&
-        !tail.contains( QRegExp( "^_" ) ) )
+        !tail.contains( QRegularExpression( QStringLiteral( "^_" ) ) ) )
    {
       tail = "_" + tail;
    }
@@ -2110,12 +2111,12 @@ void US_Hydrodyn_Mals_Saxs::conc_avg( QStringList files )
    unsigned int ext = 0;
 
    if ( !head.isEmpty() &&
-        !head.contains( QRegExp( "_$" ) ) )
+        !head.contains( QRegularExpression( QStringLiteral( "_$" ) ) ) )
    {
       head += "_";
    }
    if ( !tail.isEmpty() &&
-        !tail.contains( QRegExp( "^_" ) ) )
+        !tail.contains( QRegularExpression( QStringLiteral( "^_" ) ) ) )
    {
       tail = "_" + tail;
    }

@@ -95,7 +95,7 @@ void US_Hydrodyn_Saxs_Cormap::setupGUI()
    {
       f_brookesmap = new QFrame( 0 );
       QGridLayout *gl = new QGridLayout( f_brookesmap );
-      gl->setMargin( 0 );
+      gl->setContentsMargins( 0, 0, 0, 0 );
       gl->setSpacing( 0 );
    
       lbl_f_title = new QLabel( "", f_brookesmap ); 

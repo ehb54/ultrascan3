@@ -1,4 +1,5 @@
 #include "../include/us3_defines.h"
+#include <QRegularExpression>
 #include "../include/us_hydrodyn.h"
 #include "../include/us_revision.h"
 //Added by qt3to4:
@@ -1276,7 +1277,7 @@ void US_Hydrodyn_Pdb_Tool::csv_cut()
    // lv_csv_undo.push_back( *lv_csv );
    csv_undos.push_back( to_csv( lv_csv, csv1, false ) );
    csv_copy();
-   if ( !csv1.name.contains(QRegExp("^edit of")) )
+   if ( !csv1.name.contains(QRegularExpression( QStringLiteral( "^edit of" ) )) )
    {
       csv1.name = "edit of " + csv1.name;
       lbl_csv->setText( csv1.name );
@@ -1460,7 +1461,7 @@ void US_Hydrodyn_Pdb_Tool::csv2_cut()
    // lv_csv2_undo.push_back( *lv_csv2 );
    csv2_undos[ csv2_pos ].push_back( to_csv( lv_csv2, csv2[ csv2_pos ], false ) );
    csv2_copy();
-   if ( !csv2[ csv2_pos ].name.contains(QRegExp("^edit of")) )
+   if ( !csv2[ csv2_pos ].name.contains(QRegularExpression( QStringLiteral( "^edit of" ) )) )
    {
       csv2[ csv2_pos ].name = "edit of " + csv2[ csv2_pos ].name;
       lbl_csv2->setText( csv2[ csv2_pos ].name );
@@ -3922,7 +3923,7 @@ bool US_Hydrodyn_Pdb_Tool::sol2wat( QTreeWidget *lv, double use_radius, QString 
 
    csv new_csv;
 
-   QString new_name = tmp_csv.name.replace( QRegExp( "\\.(pdb|PDB)$" ), "" );
+   QString new_name = tmp_csv.name.replace( QRegularExpression( QStringLiteral( "\\.(pdb|PDB)$" ) ), "" );
    new_name += QString( "_WAT%1" ).arg( hydroradius ).replace( ".", "_" );
 
    new_csv.name     = new_name + ".pdb";
@@ -3994,7 +3995,7 @@ bool US_Hydrodyn_Pdb_Tool::sol2wat( QTreeWidget *lv, double use_radius, QString 
 
          ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
 
-         QString fn = new_name.replace(QRegExp("\\.(pdb|PDB)$"),"") + "_sol2wat_report.txt";
+         QString fn = new_name.replace(QRegularExpression( QStringLiteral( "\\.(pdb|PDB)$" ) ),"") + "_sol2wat_report.txt";
 
          filename = QFileDialog::getSaveFileName( this , us_tr("Choose a filename to save the SOL->WAT report") , use_dir + "/" + fn , "TXT (*.txt *.TXT)" );
 
@@ -4043,7 +4044,7 @@ bool US_Hydrodyn_Pdb_Tool::sol2wat( QTreeWidget *lv, double use_radius, QString 
 
          ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
 
-         QString fn = new_name.replace(QRegExp("\\.(pdb|PDB)$"),"") + "_sol2wat_detail.csv";
+         QString fn = new_name.replace(QRegularExpression( QStringLiteral( "\\.(pdb|PDB)$" ) ),"") + "_sol2wat_detail.csv";
 
          filename = QFileDialog::getSaveFileName( this , us_tr("Choose a filename to save the SOL->WAT detail csv") , use_dir + "/" + fn , "CSV (*.csv *.CSV)" );
 
@@ -4170,8 +4171,8 @@ QString US_Hydrodyn_Pdb_Tool::get_atom_name( QTreeWidgetItem *lvi )
 {
    QString atom = 
       QString( "%1" ).arg( lvi->text( 0 ) )
-      .replace( QRegExp( "^\\S+" ), "" )
-      .replace( QRegExp( "\\S+$" ), "" )
+      .replace( QRegularExpression( QStringLiteral( "^\\S+" ) ), "" )
+      .replace( QRegularExpression( QStringLiteral( "\\S+$" ) ), "" )
       .trimmed();
    // cout << QString( "text0 is <%1> atom is <%2>\n" ).arg( lvi->text( 0 ) ).arg( atom );
    return atom;
@@ -4182,7 +4183,7 @@ QString US_Hydrodyn_Pdb_Tool::get_atom_number( QTreeWidgetItem *lvi )
    QString atom = 
       QString( "%1" ).arg( lvi->text( 0 ) )
       .trimmed()
-      .replace( QRegExp( "^\\S+" ), "" )
+      .replace( QRegularExpression( QStringLiteral( "^\\S+" ) ), "" )
       .trimmed();
    // cout << QString( "text0 is <%1> atom is <%2>\n" ).arg( lvi->text( 0 ) ).arg( atom );
    return atom;
@@ -4220,7 +4221,7 @@ QString US_Hydrodyn_Pdb_Tool::get_residue_name( QTreeWidgetItem *lvi )
    {
       lvi = lvi->parent();
    }
-   return QString( "%1" ).arg( lvi->text( 0 ) ).trimmed().replace( QRegExp( "\\s*\\d+$" ), "" );
+   return QString( "%1" ).arg( lvi->text( 0 ) ).trimmed().replace( QRegularExpression( QStringLiteral( "\\s*\\d+$" ) ), "" );
 }
 
 QString US_Hydrodyn_Pdb_Tool::get_residue_number( QTreeWidgetItem *lvi )
@@ -4233,7 +4234,7 @@ QString US_Hydrodyn_Pdb_Tool::get_residue_number( QTreeWidgetItem *lvi )
    {
       lvi = lvi->parent();
    }
-   return QString( "%1" ).arg( lvi->text( 0 ) ).trimmed().replace( QRegExp( "^\\S+\\s*" ), "" ).trimmed();
+   return QString( "%1" ).arg( lvi->text( 0 ) ).trimmed().replace( QRegularExpression( QStringLiteral( "^\\S+\\s*" ) ), "" ).trimmed();
 }
 
 QStringList US_Hydrodyn_Pdb_Tool::atom_set( QTreeWidget *lv )
@@ -4396,7 +4397,7 @@ void US_Hydrodyn_Pdb_Tool::sol2wat_traj( QTreeWidget *lv ) {
       QDir dir( dirname );
       QStringList filters;
       filters << "*.pdb"; 
-      filenames = dir.entryList( filters ).replaceInStrings( QRegExp( "^" ), dirname + "/" );
+      filenames = dir.entryList( filters ).replaceInStrings( QRegularExpression( QStringLiteral( "^" ) ), dirname + "/" );
    } else {
       return;
    }
@@ -5664,11 +5665,11 @@ void US_Hydrodyn_Pdb_Tool::split_pdb()
          {
             found_model = true;
             model_count++;
-            // QStringList qsl = (qs.left(20).split( QRegExp("\\s+") , Qt::SkipEmptyParts ) );
+            // QStringList qsl = (qs.left(20).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts ) );
             QStringList qsl;
             {
                QString qs2 = qs.left( 20 );
-               qsl = (qs2 ).split( QRegExp("\\s+") , Qt::SkipEmptyParts );
+               qsl = (qs2 ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts );
             }
             QString model_name;
             if ( qsl.size() == 1 )
@@ -5773,7 +5774,7 @@ void US_Hydrodyn_Pdb_Tool::split_pdb()
    }
    ext = "-" + ext + ".pdb";
 
-   QString fn = f.fileName().replace(QRegExp("\\.(pdb|PDB)$"),"") + ext;
+   QString fn = f.fileName().replace(QRegularExpression( QStringLiteral( "\\.(pdb|PDB)$" ) ),"") + ext;
 
    fn = QFileDialog::getSaveFileName( this , "Choose a name to save the files, the X's will be replaced by the model name" , fn , "PDB (*.pdb *.PDB)" );
 
@@ -5992,7 +5993,7 @@ void US_Hydrodyn_Pdb_Tool::hybrid_split()
          QString atom_hmap   = qs.mid( 12, 3 ).trimmed();
          atom_hmap           = atom_hmap.right( atom_hmap.length() - 1 );
          QString atom_hseq   = qs.mid( 15, 1 );
-         if ( atom_hseq == " " && atom_hmap.contains( QRegExp( "^\\d$" ) ) )
+         if ( atom_hseq == " " && atom_hmap.contains( QRegularExpression( QStringLiteral( "^\\d$" ) ) ) )
          {
             atom_hseq = atom_hmap;
             atom_hmap = "";
@@ -6023,8 +6024,8 @@ void US_Hydrodyn_Pdb_Tool::hybrid_split()
                   it ++ )
             {
                QString href = it->first;
-               href.replace( QRegExp( ":.$" ), "" );
-               href.replace( QRegExp( "^\\d$" ), "" );
+               href.replace( QRegularExpression( QStringLiteral( ":.$" ) ), "" );
+               href.replace( QRegularExpression( QStringLiteral( "^\\d$" ) ), "" );
                // cout << QString( "href <%1>\n" ).arg( href );
                if ( !this_residue.count( href ) )
                {
@@ -6080,8 +6081,8 @@ void US_Hydrodyn_Pdb_Tool::hybrid_split()
             it ++ )
       {
          QString href = it->first;
-         href.replace( QRegExp( ":.$" ), "" );
-         href.replace( QRegExp( "^\\d$" ), "" );
+         href.replace( QRegularExpression( QStringLiteral( ":.$" ) ), "" );
+         href.replace( QRegularExpression( QStringLiteral( "^\\d$" ) ), "" );
          // cout << QString( "href <%1>\n" ).arg( href );
          if ( !this_residue.count( href ) )
          {
@@ -6736,24 +6737,24 @@ void US_Hydrodyn_Pdb_Tool::renum_pdb()
       parameters.count( "startresidue"        ) ? 
       parameters[ "startresidue"        ].toUInt() : 1;
    bool         chainrestartatom    = 
-      parameters.count( "chainrestartatom"    ) && parameters[ "chainrestartatom"    ].contains( QRegExp( "^(Y|y)" ) ) ? true : false;
+      parameters.count( "chainrestartatom"    ) && parameters[ "chainrestartatom"    ].contains( QRegularExpression( QStringLiteral( "^(Y|y)" ) ) ) ? true : false;
    bool         chainrestartresidue  = 
-      parameters.count( "chainrestartresidue" ) && parameters[ "chainrestartresidue" ].contains( QRegExp( "^(Y|y)" ) ) ? true : false;
+      parameters.count( "chainrestartresidue" ) && parameters[ "chainrestartresidue" ].contains( QRegularExpression( QStringLiteral( "^(Y|y)" ) ) ) ? true : false;
    QString      usechainlist = 
       parameters.count( "usechainlist"        ) ? 
       parameters[ "usechainlist"        ] : "";
    bool         modelrestartatom    = 
-      parameters.count( "modelrestartatom"    ) && parameters[ "modelrestartatom"    ].contains( QRegExp( "^(Y|y)" ) ) ? true : false;
+      parameters.count( "modelrestartatom"    ) && parameters[ "modelrestartatom"    ].contains( QRegularExpression( QStringLiteral( "^(Y|y)" ) ) ) ? true : false;
    bool         modelrestartresidue = 
-      parameters.count( "modelrestartresidue" ) && parameters[ "modelrestartresidue" ].contains( QRegExp( "^(Y|y)" ) ) ? true : false;
+      parameters.count( "modelrestartresidue" ) && parameters[ "modelrestartresidue" ].contains( QRegularExpression( QStringLiteral( "^(Y|y)" ) ) ) ? true : false;
    bool         reseqatom           = 
-      parameters.count( "reseqatom"           ) && parameters[ "reseqatom"           ].contains( QRegExp( "^(Y|y)" ) ) ? true : false;
+      parameters.count( "reseqatom"           ) && parameters[ "reseqatom"           ].contains( QRegularExpression( QStringLiteral( "^(Y|y)" ) ) ) ? true : false;
    bool         reseqresidue        = 
-      parameters.count( "reseqresidue"        ) && parameters[ "reseqresidue"        ].contains( QRegExp( "^(Y|y)" ) ) ? true : false;
+      parameters.count( "reseqresidue"        ) && parameters[ "reseqresidue"        ].contains( QRegularExpression( QStringLiteral( "^(Y|y)" ) ) ) ? true : false;
    bool         striphydrogens      =
-      parameters.count( "striphydrogens"      ) && parameters[ "striphydrogens"      ].contains( QRegExp( "^(Y|y)" ) ) ? true : false;
+      parameters.count( "striphydrogens"      ) && parameters[ "striphydrogens"      ].contains( QRegularExpression( QStringLiteral( "^(Y|y)" ) ) ) ? true : false;
    bool         itassertemplate      =
-      parameters.count( "itassertemplate"     ) && parameters[ "itassertemplate"     ].contains( QRegExp( "^(Y|y)" ) ) ? true : false;
+      parameters.count( "itassertemplate"     ) && parameters[ "itassertemplate"     ].contains( QRegularExpression( QStringLiteral( "^(Y|y)" ) ) ) ? true : false;
 
    cout << QString( "usechainlist %1\n" ).arg( usechainlist );
    cout << QString( "reseqatom %1\n" ).arg( reseqatom );
@@ -6875,7 +6876,7 @@ void US_Hydrodyn_Pdb_Tool::renum_pdb()
       }
       if ( rx_atom.indexIn( line ) != -1 )
       {
-         if ( striphydrogens && line.mid( 12, 2 ).contains( QRegExp( "^((\\d| )H|H)" ) ) )
+         if ( striphydrogens && line.mid( 12, 2 ).contains( QRegularExpression( QStringLiteral( "^((\\d| )H|H)" ) ) ) )
          {
             continue;
          }
@@ -8091,7 +8092,7 @@ void US_Hydrodyn_Pdb_Tool::split_pdb_by_residue( QFile &f )
       }
    } while( !ok );
 
-   QString fn = f.fileName().replace(QRegExp("\\.(pdb|PDB)$"),"") + QString( "_ws%1_ss%2%3%4_sr.pdb" ).arg( window_size ).arg( step_size ).arg( skip_waters ? "_nw" : "" ).arg( waters_as_onezies ? "_ww" : "" );
+   QString fn = f.fileName().replace(QRegularExpression( QStringLiteral( "\\.(pdb|PDB)$" ) ),"") + QString( "_ws%1_ss%2%3%4_sr.pdb" ).arg( window_size ).arg( step_size ).arg( skip_waters ? "_nw" : "" ).arg( waters_as_onezies ? "_ww" : "" );
 
    fn = QFileDialog::getSaveFileName( this , us_tr( "Choose a name to save the multiple model output file" ) , fn , "PDB (*.pdb *.PDB)" );
 
@@ -8297,9 +8298,9 @@ void US_Hydrodyn_Pdb_Tool::do_bm( QTreeWidget *lv )
             .arg( usu->atom_vdw[ atom ] * expansion )
             .arg( usu->atom_mw[ atom ] )
             .arg(
-                 item1->parent()->text(0).trimmed().replace( QRegExp( "\\s+" ), ":" ) + 
+                 item1->parent()->text(0).trimmed().replace( QRegularExpression( QStringLiteral( "\\s+" ) ), ":" ) + 
                  ":" + 
-                 item1->text( 0 ).trimmed().replace( QRegExp( "\\s+" ), ":" )
+                 item1->text( 0 ).trimmed().replace( QRegularExpression( QStringLiteral( "\\s+" ) ), ":" )
                  )
             ;
       }

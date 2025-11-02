@@ -1,4 +1,5 @@
 #include "../include/us3_defines.h"
+#include <QRegularExpression>
 #include "../include/us_hydrodyn.h"
 #include "../include/us_revision.h"
 #include "../include/us_hydrodyn_saxs_buffer.h"
@@ -1621,7 +1622,7 @@ void US_Hydrodyn_Saxs_Buffer::add_files()
       QString head = qstring_common_head( filenames, true );
       QString tail = qstring_common_tail( filenames, true );
 
-      bool add_dp = head.contains( QRegExp( "\\d_$" ) );
+      bool add_dp = head.contains( QRegularExpression( QStringLiteral( "\\d_$" ) ) );
 
 #ifdef DEBUG_LOAD_REORDER
       us_qdebug( QString( "sort head <%1> tail <%2>  dp %3 " ).arg( head ).arg( tail ).arg( add_dp ? "yes" : "no" ) );
@@ -2230,11 +2231,11 @@ bool US_Hydrodyn_Saxs_Buffer::load_file( QString filename )
       {
          QString unitstr = rx_unit.cap( 1 ).toLower();
          bool ok = false;
-         if ( !ok && unitstr.contains( QRegExp( "^(1/nm|nm^-1)$" ) ) ) {
+         if ( !ok && unitstr.contains( QRegularExpression( QStringLiteral( "^(1/nm|nm^-1)$" ) ) ) ) {
             use_units = 0.1;
             ok = true;
          }
-         if ( !ok && unitstr.contains( QRegExp( "^(1/a|a^-1)$" ) ) ) {
+         if ( !ok && unitstr.contains( QRegularExpression( QStringLiteral( "^(1/a|a^-1)$" ) ) ) ) {
             use_units = 1.0;
             ok = true;
          }
@@ -2274,17 +2275,17 @@ bool US_Hydrodyn_Saxs_Buffer::load_file( QString filename )
    rx_ok_line.setMinimal( true );
    for ( int i = 1; i < (int) qv.size(); i++ )
    {
-      if ( qv[i].contains(QRegExp("^#")) ||
+      if ( qv[i].contains(QRegularExpression( QStringLiteral( "^#" ) )) ||
            rx_ok_line.indexIn( qv[i] ) == -1 )
       {
          continue;
       }
       
-      // QStringList tokens = (qv[i].replace(QRegExp("^\\s+").split( QRegExp("\\s+") , Qt::SkipEmptyParts ),""));
+      // QStringList tokens = (qv[i].replace(QRegularExpression( QStringLiteral( "^\\s+" ) ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts ),""));
       QStringList tokens;
       {
-         QString qs = qv[i].replace(QRegExp("^\\s+"),"");
-         tokens = (qs ).split( QRegExp("\\s+") , Qt::SkipEmptyParts );
+         QString qs = qv[i].replace(QRegularExpression( QStringLiteral( "^\\s+" ) ),"");
+         tokens = (qs ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts );
       }
 
       if ( (int)tokens.size() > 1 + offset )
@@ -2672,12 +2673,12 @@ void US_Hydrodyn_Saxs_Buffer::avg( QStringList files )
    int ext = 0;
 
    if ( !head.isEmpty() &&
-        !head.contains( QRegExp( "_$" ) ) )
+        !head.contains( QRegularExpression( QStringLiteral( "_$" ) ) ) )
    {
       head += "_";
    }
    if ( !tail.isEmpty() &&
-        !tail.contains( QRegExp( "^_" ) ) )
+        !tail.contains( QRegularExpression( QStringLiteral( "^_" ) ) ) )
    {
       tail = "_" + tail;
    }
@@ -2758,7 +2759,7 @@ QString US_Hydrodyn_Saxs_Buffer::qstring_common_head( QStringList qsl, bool stri
 
    if ( strip_digits )
    {
-      s.replace( QRegExp( "\\d+$" ), "" );
+      s.replace( QRegularExpression( QStringLiteral( "\\d+$" ) ), "" );
    }
    return s;
 }
@@ -2780,7 +2781,7 @@ QString US_Hydrodyn_Saxs_Buffer::qstring_common_tail( QStringList qsl, bool stri
    }
    if ( strip_digits )
    {
-      s.replace( QRegExp( "^\\d+" ), "" );
+      s.replace( QRegularExpression( QStringLiteral( "^\\d+" ) ), "" );
    }
    return s;
 }
@@ -3614,12 +3615,12 @@ void US_Hydrodyn_Saxs_Buffer::conc_avg( QStringList files )
    unsigned int ext = 0;
 
    if ( !head.isEmpty() &&
-        !head.contains( QRegExp( "_$" ) ) )
+        !head.contains( QRegularExpression( QStringLiteral( "_$" ) ) ) )
    {
       head += "_";
    }
    if ( !tail.isEmpty() &&
-        !tail.contains( QRegExp( "^_" ) ) )
+        !tail.contains( QRegularExpression( QStringLiteral( "^_" ) ) ) )
    {
       tail = "_" + tail;
    }
@@ -3829,7 +3830,7 @@ void US_Hydrodyn_Saxs_Buffer::rescale()
 bool US_Hydrodyn_Saxs_Buffer::adjacent_ok( QString name )
 {
    if ( name.contains( "_bsub_a" ) ||
-        name.contains( QRegExp( "\\d+$" ) ) )
+        name.contains( QRegularExpression( QStringLiteral( "\\d+$" ) ) ) )
    {
 
       return true;
@@ -3869,34 +3870,34 @@ bool US_Hydrodyn_Saxs_Buffer::adjacent_ok( QString name )
 //       rx.setPattern(
 //                     QString( "^%1" )
 //                     .arg( match_name )
-//                     .replace( QRegExp( "_bsub_a.*$" ), "" )
-//                     .replace( QRegExp( "\\d+$" ), "\\d+" )
+//                     .replace( QRegularExpression( QStringLiteral( "_bsub_a.*$" ) ), "" )
+//                     .replace( QRegularExpression( QStringLiteral( "\\d+$" ) ), "\\d+" )
 //                     + 
 //                     QString( "%1$" )
 //                     .arg( match_name )
-//                     .replace( QRegExp( "^.*_bsub" ), "_bsub" ) 
+//                     .replace( QRegularExpression( QStringLiteral( "^.*_bsub" ) ), "_bsub" ) 
 //                     );
 //    }
 
 //    us_qdebug( "adjacent 2" );
-//    if ( !found && match_name.contains( QRegExp( "_cn\\d+.*$" ) ) )
+//    if ( !found && match_name.contains( QRegularExpression( QStringLiteral( "_cn\\d+.*$" ) ) ) )
 //    {
 //       found = true;
 //       rx.setPattern(
 //                     QString( "^%1" )
 //                     .arg( match_name )
-//                     .replace( QRegExp( "_cn\\d+.*$" ), "" )
+//                     .replace( QRegularExpression( QStringLiteral( "_cn\\d+.*$" ) ), "" )
 //                     );
 //    }
 
 //    us_qdebug( "adjacent 3" );
-//    if ( !found && match_name.contains( QRegExp( "\\d+$" ) ) )
+//    if ( !found && match_name.contains( QRegularExpression( QStringLiteral( "\\d+$" ) ) ) )
 //    {
 //       found = true;
 //       rx.setPattern(
 //                     QString( "^%1" )
 //                     .arg( match_name )
-//                     .replace( QRegExp( "\\d+$" ), "" ) 
+//                     .replace( QRegularExpression( QStringLiteral( "\\d+$" ) ), "" ) 
 //                     );
 //    }
 
@@ -3976,32 +3977,32 @@ void US_Hydrodyn_Saxs_Buffer::adjacent_created()
       rx.setPattern(
                     QString( "^%1" )
                     .arg( match_name )
-                    .replace( QRegExp( "_bsub_a.*$" ), "" )
-                    .replace( QRegExp( "\\d+$" ), "\\d+" )
+                    .replace( QRegularExpression( QStringLiteral( "_bsub_a.*$" ) ), "" )
+                    .replace( QRegularExpression( QStringLiteral( "\\d+$" ) ), "\\d+" )
                     + 
                     QString( "%1$" )
                     .arg( match_name )
-                    .replace( QRegExp( "^.*_bsub" ), "_bsub" ) 
+                    .replace( QRegularExpression( QStringLiteral( "^.*_bsub" ) ), "_bsub" ) 
                     );
    }
 
-   if ( !found && match_name.contains( QRegExp( "_cn\\d+.*$" ) ) )
+   if ( !found && match_name.contains( QRegularExpression( QStringLiteral( "_cn\\d+.*$" ) ) ) )
    {
       found = true;
       rx.setPattern(
                     QString( "^%1" )
                     .arg( match_name )
-                    .replace( QRegExp( "_cn\\d+.*$" ), "" )
+                    .replace( QRegularExpression( QStringLiteral( "_cn\\d+.*$" ) ), "" )
                     );
    }
 
-   if ( !found && match_name.contains( QRegExp( "\\d+$" ) ) )
+   if ( !found && match_name.contains( QRegularExpression( QStringLiteral( "\\d+$" ) ) ) )
    {
       found = true;
       rx.setPattern(
                     QString( "^%1" )
                     .arg( match_name )
-                    .replace( QRegExp( "\\d+$" ), "" ) 
+                    .replace( QRegularExpression( QStringLiteral( "\\d+$" ) ), "" ) 
                     );
    }
 
@@ -5557,7 +5558,7 @@ void US_Hydrodyn_Saxs_Buffer::similar_files()
    QString similar = QFileInfo( f_name[ selected[ 0 ] ] ).fileName();
    QString dir     = QFileInfo( f_name[ selected[ 0 ] ] ).path();
    QString match   = similar;
-   match.replace( QRegExp( "\\d{2,}" ), "\\d+" );
+   match.replace( QRegularExpression( QStringLiteral( "\\d{2,}" ) ), "\\d+" );
 
    cout << QString( "select to match <%1> in directory <%2> using regexp <%3>\n" )
       .arg( similar )
@@ -5587,16 +5588,16 @@ void US_Hydrodyn_Saxs_Buffer::regex_load()
    QDir qd;
 
 
-   // QStringList regexs = (le_regex->text().split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts )      );
-   // QStringList args   = (le_regex_args->text().split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts ) );
+   // QStringList regexs = (le_regex->text().split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts )      );
+   // QStringList args   = (le_regex_args->text().split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts ) );
    QStringList regexs;
    QStringList args;
 
    {
       QString qs = le_regex->text();
-      regexs = (qs ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
+      regexs = (qs ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts );
       qs = le_regex_args->text();
-      args   = (qs ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
+      args   = (qs ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts );
    }
 
    for ( int i = 0; i < (int)args.size(); i++ )
@@ -5639,7 +5640,7 @@ void US_Hydrodyn_Saxs_Buffer::rename_created( QListWidgetItem *lbi, const QPoint
                                    text, 
                                    &ok, 
                                    this );
-      text.replace( QRegExp( "\\s" ), "_" );
+      text.replace( QRegularExpression( QStringLiteral( "\\s" ) ), "_" );
       if ( ok && !text.isEmpty() )
       {
          // user entered something and pressed OK
@@ -7653,12 +7654,12 @@ void US_Hydrodyn_Saxs_Buffer::asum( QStringList files )
    int ext = 0;
 
    if ( !head.isEmpty() &&
-        !head.contains( QRegExp( "_$" ) ) )
+        !head.contains( QRegularExpression( QStringLiteral( "_$" ) ) ) )
    {
       head += "_";
    }
    if ( !tail.isEmpty() &&
-        !tail.contains( QRegExp( "^_" ) ) )
+        !tail.contains( QRegularExpression( QStringLiteral( "^_" ) ) ) )
    {
       tail = "_" + tail;
    }

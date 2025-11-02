@@ -1,4 +1,5 @@
 #include "../include/us_hydrodyn_saxs.h"
+#include <QRegularExpression>
 #include "../include/us_hydrodyn.h"
 #include "../include/us_saxs_util.h"
 #include "../include/us_hydrodyn_saxs_iqq_load_csv.h"
@@ -798,7 +799,7 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
                {
                   QString qs_tmp = *it;
                   // optionally? 
-                  if ( qs_tmp.contains(QRegExp("(Average|Standard deviation)")) )
+                  if ( qs_tmp.contains(QRegularExpression( QStringLiteral( "(Average|Standard deviation)" ) )) )
                   {
                      qs_tmp.replace(QRegExp("^\""),QString("\"%1: ").arg(QFileInfo(f2).baseName()));
                   }
@@ -834,7 +835,7 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
                   QString line = QString("%1,%2\n")
                      .arg(new_iq_fields.join(","))
                      .arg(vector_double_to_csv(niq));
-                  if ( line.contains(QRegExp("(Average|Standard deviation)")) )
+                  if ( line.contains(QRegularExpression( QStringLiteral( "(Average|Standard deviation)" ) )) )
                   {
                      line.replace(QRegExp("^\""),QString("\"%1: ").arg(QFileInfo(f2).baseName()));
                   }
@@ -864,7 +865,7 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
                      QString line = QString("%1,%2\n")
                         .arg(new_iq_errors_fields.join(","))
                         .arg(vector_double_to_csv(niq_errors));
-                     if ( line.contains(QRegExp("(Average|Standard deviation)")) )
+                     if ( line.contains(QRegularExpression( QStringLiteral( "(Average|Standard deviation)" ) )) )
                      {
                         line.replace(QRegExp("^\""),QString("\"%1: ").arg(QFileInfo(f2).baseName()));
                      }
@@ -1058,7 +1059,7 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
       for ( unsigned int i = 0; i < (unsigned int)qsl.size(); i++ )
       {
          QString qs_tmp = qsl[i];
-         if ( !qs_tmp.contains(QRegExp("(Average|Standard deviation)")) )
+         if ( !qs_tmp.contains(QRegularExpression( QStringLiteral( "(Average|Standard deviation)" ) )) )
          {
             new_qsl << qsl[i];
          }
@@ -1078,7 +1079,7 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
             qsl = new_qsl;
             break;
          case 1: // just averages
-            qsl = qsl.filter(QRegExp("(Average|Standard deviation)"));
+            qsl = qsl.filter(QRegularExpression( QStringLiteral( "(Average|Standard deviation)" ) ));
             break;
          case 2: // Cancel clicked or Escape pressed
             break;
@@ -2033,9 +2034,9 @@ void US_Hydrodyn_Saxs::load_saxs( QString filename, bool just_plotted_curves, QS
       if ( qv.size() > 3 )
       {
          QString test_line = qv[2];
-         test_line.replace(QRegExp("^\\s+"),"");
-         test_line.replace(QRegExp("\\s+$"),"");
-         QStringList test_list = (test_line).split( QRegExp("\\s+") , Qt::SkipEmptyParts );
+         test_line.replace(QRegularExpression( QStringLiteral( "^\\s+" ) ),"");
+         test_line.replace(QRegularExpression( QStringLiteral( "\\s+$" ) ),"");
+         QStringList test_list = (test_line).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts );
          number_of_fields = test_list.size();
          TSO << "number of fields: " << number_of_fields << Qt::endl;
       }
@@ -2067,19 +2068,19 @@ void US_Hydrodyn_Saxs::load_saxs( QString filename, bool just_plotted_curves, QS
             if ( ok ) {
                // user selected an item and pressed OK
                Icolumn = 0;
-               if ( res.contains(QRegExp("^I.q. ")) ) 
+               if ( res.contains(QRegularExpression( QStringLiteral( "^I.q. " ) )) ) 
                {
                   Icolumn = 1;
                } 
-               if ( res.contains(QRegExp("^Ia.q. ")) ) 
+               if ( res.contains(QRegularExpression( QStringLiteral( "^Ia.q. " ) )) ) 
                {
                   Icolumn = 2;
                } 
-               if ( res.contains(QRegExp("^Ic.q. ")) ) 
+               if ( res.contains(QRegularExpression( QStringLiteral( "^Ic.q. " ) )) ) 
                {
                   Icolumn = 3;
                } 
-               if ( res.contains(QRegExp("^Ib.q. ")) ) 
+               if ( res.contains(QRegularExpression( QStringLiteral( "^Ib.q. " ) )) ) 
                {
                   Icolumn = 4;
                } 
@@ -2167,15 +2168,15 @@ void US_Hydrodyn_Saxs::load_saxs( QString filename, bool just_plotted_curves, QS
             if ( ok ) {
                // user selected an item and pressed OK
                Icolumn = 0;
-               if ( res.contains(QRegExp("^I.q. ")) ) 
+               if ( res.contains(QRegularExpression( QStringLiteral( "^I.q. " ) )) ) 
                {
                   Icolumn = 1;
                } 
-               if ( res.contains(QRegExp("^Ia.q. ")) ) 
+               if ( res.contains(QRegularExpression( QStringLiteral( "^Ia.q. " ) )) ) 
                {
                   Icolumn = 2;
                } 
-               if ( res.contains(QRegExp("^Ic.q. ")) ) 
+               if ( res.contains(QRegularExpression( QStringLiteral( "^Ic.q. " ) )) ) 
                {
                   Icolumn = 3;
                } 
@@ -2197,7 +2198,7 @@ void US_Hydrodyn_Saxs::load_saxs( QString filename, bool just_plotted_curves, QS
       editor->append(QString("Loading SAXS data from %1 %2\n").arg(filename).arg(res));
 
       int startline;
-      if ( QRegExp( "^\\s*(\\d|.|e|E|+|-)+\\s*(\\d|.|e|E|+|-)+" ).indexIn( qv[0] ) ) {
+      if ( QRegularExpression( QStringLiteral( "^\\s*(\\d|.|e|E|+|-)+\\s*(\\d|.|e|E|+|-)+" ) ).match( qv[0] ).hasMatch() ) {
          startline = 0;
       } else {
          startline = 1;
@@ -2235,18 +2236,18 @@ void US_Hydrodyn_Saxs::load_saxs( QString filename, bool just_plotted_curves, QS
       for ( unsigned int i = startline; i < (unsigned int) qv.size(); i++ )
       {
          // QTextStream(stdout) << QString( "load line %1 : %2\n" ).arg( i ).arg( qv[i] );
-         if ( qv[i].contains(QRegExp("^#")) ||
+         if ( qv[i].contains(QRegularExpression( QStringLiteral( "^#" ) )) ||
               rx_ok_line.indexIn( qv[i] ) == -1 )
          {
             TSO << "not ok: " << qv[i] << Qt::endl; 
             continue;
          }
          
-         // QStringList tokens = (qv[i].replace(QRegExp("^\\s+").split( QRegExp("\\s+") , Qt::SkipEmptyParts ),""));
+         // QStringList tokens = (qv[i].replace(QRegularExpression( QStringLiteral( "^\\s+" ) ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts ),""));
          QStringList tokens;
          {
-            QString qs = qv[i].replace(QRegExp("^\\s+"),"");
-            tokens = (qs ).split( QRegExp("\\s+") , Qt::SkipEmptyParts );
+            QString qs = qv[i].replace(QRegularExpression( QStringLiteral( "^\\s+" ) ),"");
+            tokens = (qs ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts );
          }
          if ( (unsigned int) tokens.size() > Icolumn )
          {
@@ -2905,7 +2906,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
                      {
                         QString qs_tmp = *it;
                         // optionally? 
-                        if ( qs_tmp.contains(QRegExp("(Average|Standard deviation)")) )
+                        if ( qs_tmp.contains(QRegularExpression( QStringLiteral( "(Average|Standard deviation)" ) )) )
                         {
                            qs_tmp.replace(QRegExp("^\""),QString("\"%1: ").arg(QFileInfo(f2).baseName()));
                         }
@@ -2987,7 +2988,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
                                     // TSO << QString("r2:\n%1\n").arg(vector_double_to_csv(r2));
                                     // TSO << QString("org line:\n%1\n").arg(qs_assoc_sd);
                                     // TSO << QString("new interpolated line:\n%1\n").arg(line);
-                                    if ( line.contains(QRegExp("(Average|Standard deviation)")) )
+                                    if ( line.contains(QRegularExpression( QStringLiteral( "(Average|Standard deviation)" ) )) )
                                     {
                                        line.replace(QRegExp("^\""),QString("\"%1: ").arg(QFileInfo(f2).baseName()));
                                     }
@@ -3003,7 +3004,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
                            // TSO << QString("r2:\n%1\n").arg(vector_double_to_csv(r2));
                            // TSO << QString("org line:\n%1\n").arg(*it);
                            // TSO << QString("new interpolated line:\n%1\n").arg(line);
-                           if ( line.contains(QRegExp("(Average|Standard deviation)")) )
+                           if ( line.contains(QRegularExpression( QStringLiteral( "(Average|Standard deviation)" ) )) )
                            {
                               line.replace(QRegExp("^\""),QString("\"%1: ").arg(QFileInfo(f2).baseName()));
                            }
@@ -3071,7 +3072,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
             for ( unsigned int i = 0; i < (unsigned int)qsl.size(); i++ )
             {
                QString qs_tmp = qsl[i];
-               if ( !qs_tmp.contains(QRegExp("(Average|Standard deviation)")) )
+               if ( !qs_tmp.contains(QRegularExpression( QStringLiteral( "(Average|Standard deviation)" ) )) )
                {
                   new_qsl << qsl[i];
                }
@@ -3091,7 +3092,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
                   qsl = new_qsl;
                   break;
                case 1: // just averages
-                  qsl = qsl.filter(QRegExp("(Average|Standard deviation)"));
+                  qsl = qsl.filter(QRegularExpression( QStringLiteral( "(Average|Standard deviation)" ) ));
                   break;
                case 2: // Cancel clicked or Escape pressed
                   break;
@@ -3798,7 +3799,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
 
       float mw = 0.0;
 
-      if ( !ext.contains(QRegExp("^sprr(|_(x|n|r))")) )
+      if ( !ext.contains(QRegularExpression( QStringLiteral( "^sprr(|_(x|n|r))" ) )) )
       {
          // check for gnom output
          QTextStream ts(&f);
@@ -3849,7 +3850,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
          if ( rx.match( firstLine ).hasMatch() ) {
             // QTextStream(stdout) << "found numeric 1st line in P(r)\n" << firstLine << "\n";
             startline = 0;
-            QStringList qsl = firstLine.trimmed().split( QRegExp( "\\s+" ) );
+            QStringList qsl = firstLine.trimmed().split( QRegularExpression( QStringLiteral( "\\s+" ) ) );
             if ( qsl.size() >= 2 ) {
                r.push_back( qsl[0].toDouble() );
                pr.push_back( qsl[1].toDouble() );
@@ -4498,9 +4499,9 @@ void US_Hydrodyn_Saxs::load_sans( QString filename, bool just_plotted_curves )
       if ( qv.size() > 3 )
       {
          QString test_line = qv[2];
-         test_line.replace(QRegExp("^\\s+"),"");
-         test_line.replace(QRegExp("\\s+$"),"");
-         QStringList test_list = (test_line).split( QRegExp("\\s+") , Qt::SkipEmptyParts );
+         test_line.replace(QRegularExpression( QStringLiteral( "^\\s+" ) ),"");
+         test_line.replace(QRegularExpression( QStringLiteral( "\\s+$" ) ),"");
+         QStringList test_list = (test_line).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts );
          number_of_fields = test_list.size();
          TSO << "number of fields: " << number_of_fields << Qt::endl;
       }
@@ -4526,19 +4527,19 @@ void US_Hydrodyn_Saxs::load_sans( QString filename, bool just_plotted_curves )
             if ( ok ) {
                // user selected an item and pressed OK
                Icolumn = 0;
-               if ( res.contains(QRegExp("^I.q. ")) ) 
+               if ( res.contains(QRegularExpression( QStringLiteral( "^I.q. " ) )) ) 
                {
                   Icolumn = 1;
                } 
-               if ( res.contains(QRegExp("^Ia.q. ")) ) 
+               if ( res.contains(QRegularExpression( QStringLiteral( "^Ia.q. " ) )) ) 
                {
                   Icolumn = 2;
                } 
-               if ( res.contains(QRegExp("^Ic.q. ")) ) 
+               if ( res.contains(QRegularExpression( QStringLiteral( "^Ic.q. " ) )) ) 
                {
                   Icolumn = 3;
                } 
-               if ( res.contains(QRegExp("^Ib.q. ")) ) 
+               if ( res.contains(QRegularExpression( QStringLiteral( "^Ib.q. " ) )) ) 
                {
                   Icolumn = 4;
                } 
@@ -4626,15 +4627,15 @@ void US_Hydrodyn_Saxs::load_sans( QString filename, bool just_plotted_curves )
             if ( ok ) {
                // user selected an item and pressed OK
                Icolumn = 0;
-               if ( res.contains(QRegExp("^I.q. ")) ) 
+               if ( res.contains(QRegularExpression( QStringLiteral( "^I.q. " ) )) ) 
                {
                   Icolumn = 1;
                } 
-               if ( res.contains(QRegExp("^Ia.q. ")) ) 
+               if ( res.contains(QRegularExpression( QStringLiteral( "^Ia.q. " ) )) ) 
                {
                   Icolumn = 2;
                } 
-               if ( res.contains(QRegExp("^Ic.q. ")) ) 
+               if ( res.contains(QRegularExpression( QStringLiteral( "^Ic.q. " ) )) ) 
                {
                   Icolumn = 3;
                } 
@@ -4685,18 +4686,18 @@ void US_Hydrodyn_Saxs::load_sans( QString filename, bool just_plotted_curves )
       rx_ok_line.setMinimal( true );
       for ( unsigned int i = 1; i < (unsigned int) qv.size(); i++ )
       {
-         if ( qv[i].contains(QRegExp("^#")) ||
+         if ( qv[i].contains(QRegularExpression( QStringLiteral( "^#" ) )) ||
               rx_ok_line.indexIn( qv[i] ) == -1 )
          {
             TSO << "not ok: " << qv[i] << Qt::endl; 
             continue;
          }
          
-         // QStringList tokens = (qv[i].replace(QRegExp("^\\s+").split( QRegExp("\\s+") , Qt::SkipEmptyParts ),""));
+         // QStringList tokens = (qv[i].replace(QRegularExpression( QStringLiteral( "^\\s+" ) ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts ),""));
          QStringList tokens;
          {
-            QString qs = qv[i].replace(QRegExp("^\\s+"),"");
-            tokens = (qs ).split( QRegExp("\\s+") , Qt::SkipEmptyParts );
+            QString qs = qv[i].replace(QRegularExpression( QStringLiteral( "^\\s+" ) ),"");
+            tokens = (qs ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts );
          }
          if ( (unsigned int) tokens.size() > Icolumn )
          {

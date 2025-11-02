@@ -1,4 +1,5 @@
 #include "../include/us_pdb_util.h"
+#include <QRegularExpression>
 
 class pdb_sortable_qstring {
 public:
@@ -86,7 +87,7 @@ QString US_Pdb_Util::qstring_common_head( const QStringList & qsl, bool strip_di
 
    if ( strip_digits )
    {
-      s.replace( QRegExp( "\\d+$" ), "" );
+      s.replace( QRegularExpression( QStringLiteral( "\\d+$" ) ), "" );
    }
    return s;
 }
@@ -108,7 +109,7 @@ QString US_Pdb_Util::qstring_common_tail( const QStringList & qsl, bool strip_di
    }
    if ( strip_digits )
    {
-      s.replace( QRegExp( "^\\d+" ), "" );
+      s.replace( QRegularExpression( QStringLiteral( "^\\d+" ) ), "" );
    }
    return s;
 }
@@ -167,7 +168,7 @@ bool US_Pdb_Util::range_to_set( set < QString > & result, const QString & s )
 
    QStringList qsl;
    {
-      QRegExp rx = QRegExp( "\\s*(\\s|,|;)\\s*" );
+      QRegularExpression rx = QRegularExpression( QStringLiteral( "\\s*(\\s|,|;)\\s*" ) );
       qsl = (s ).split( rx , Qt::SkipEmptyParts );
    }
 

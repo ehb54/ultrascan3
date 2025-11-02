@@ -1,4 +1,5 @@
 #include "../include/us3_defines.h"
+#include <QRegularExpression>
 #include "../include/us_hydrodyn_mals_svd.h"
 #include "../include/us_svd.h"
 
@@ -4342,7 +4343,7 @@ void US_Hydrodyn_Mals_Svd::rmsd_save()
       out += QString( "%1,%2,%3" ).arg( rmsd_x[ i ] ).arg( rmsd_y[ i ] ).arg( last_recon_evs[ i ] ) + "\n";
    }
 
-   if ( fname.toLower().contains( QRegExp( "\\.txt$" ) ) )
+   if ( fname.toLower().contains( QRegularExpression( QStringLiteral( "\\.txt$" ) ) ) )
    {
       out.replace( "\"", "" ).replace( ",", "\t" );
    }
@@ -4375,7 +4376,7 @@ void US_Hydrodyn_Mals_Svd::svd_save()
       out += QString( "%1,%2" ).arg( i + 1 ).arg( lb_ev->item( i )->text() ) + "\n";
    }
 
-   if ( fname.toLower().contains( QRegExp( "\\.txt$" ) ) )
+   if ( fname.toLower().contains( QRegularExpression( QStringLiteral( "\\.txt$" ) ) ) )
    {
       out.replace( "\"", "" ).replace( ",", "\t" );
    }
@@ -5831,8 +5832,8 @@ bool US_Hydrodyn_Mals_Svd::convert_it_to_iq( QStringList files, QStringList & cr
 
    QString head = mals_win->qstring_common_head( files, true );
 
-   head = head.replace( QRegExp( "__It_q\\d*_$" ), "" );
-   head = head.replace( QRegExp( "_q\\d*_$" ), "" );
+   head = head.replace( QRegularExpression( QStringLiteral( "__It_q\\d*_$" ) ), "" );
+   head = head.replace( QRegularExpression( QStringLiteral( "_q\\d*_$" ) ), "" );
 
    QRegExp rx_q     ( "_q(\\d+_\\d+)" );
    QRegExp rx_bl    ( "-bl(.\\d*_\\d+(|e.\\d+))-(.\\d*_\\d+(|e.\\d+))s" );

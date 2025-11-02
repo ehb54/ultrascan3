@@ -1,4 +1,5 @@
 // us_hydrodyn.cpp contains class creation & gui connected functions
+#include <QRegularExpression>
 // us_hydrodyn_core.cpp contains the main computational routines
 // (this) us_hydrodyn_bd_core.cpp contains the main computational routines for brownian dynamic browflex computations
 // us_hydrodyn_anaflex_core.cpp contains the main computational routines for brownian dynamic (anaflex) computations
@@ -1456,7 +1457,7 @@ int US_Hydrodyn::build_pb_structures( PDB_model *model )
             lastResSeq = this_atom->resSeq;
             continue;
          }
-         if ( this_atom->name.contains(QRegExp("^(N|CA|C|O)$")) )
+         if ( this_atom->name.contains(QRegularExpression( QStringLiteral( "^(N|CA|C|O)$" ) )) )
          {
             pb_atoms[this_atom->name] = k;
          }
@@ -1841,7 +1842,7 @@ bool US_Hydrodyn::bd_valid_browflex_main( QString filename )
       {
          ts >> tmp_filename;
          ts.readLine();
-         if ( !tmp_filename.contains(QRegExp("(txt|TXT)$")) )
+         if ( !tmp_filename.contains(QRegularExpression( QStringLiteral( "(txt|TXT)$" ) )) )
          {
             f.close();
             return false;
@@ -1855,7 +1856,7 @@ bool US_Hydrodyn::bd_valid_browflex_main( QString filename )
       {
          ts >> tmp_filename;
          ts.readLine();
-         if ( !tmp_filename.contains(QRegExp("(txt|TXT)$")) )
+         if ( !tmp_filename.contains(QRegularExpression( QStringLiteral( "(txt|TXT)$" ) )) )
          {
             f.close();
             return false;
@@ -1869,7 +1870,7 @@ bool US_Hydrodyn::bd_valid_browflex_main( QString filename )
       {
          ts >> tmp_filename;
          ts.readLine();
-         if ( !tmp_filename.contains(QRegExp("(txt|TXT)$")) )
+         if ( !tmp_filename.contains(QRegularExpression( QStringLiteral( "(txt|TXT)$" ) )) )
          {
             f.close();
             return false;
@@ -1883,7 +1884,7 @@ bool US_Hydrodyn::bd_valid_browflex_main( QString filename )
       {
          ts >> tmp_filename;
          ts.readLine();
-         if ( !tmp_filename.contains(QRegExp("(txt|TXT)$")) )
+         if ( !tmp_filename.contains(QRegularExpression( QStringLiteral( "(txt|TXT)$" ) )) )
          {
             f.close();
             return false;
@@ -1898,7 +1899,7 @@ bool US_Hydrodyn::bd_valid_browflex_main( QString filename )
          ts >> tmp_filename;
          ts.readLine();
          if ( tmp_filename != "-" &&
-              !tmp_filename.contains(QRegExp("(txt|TXT)$")) )
+              !tmp_filename.contains(QRegularExpression( QStringLiteral( "(txt|TXT)$" ) )) )
          {
             f.close();
             return false;
@@ -1913,7 +1914,7 @@ bool US_Hydrodyn::bd_valid_browflex_main( QString filename )
          ts >> tmp_filename;
          ts.readLine();
          if ( tmp_filename != "-" &&
-              !tmp_filename.contains(QRegExp("(txt|TXT)$")) )
+              !tmp_filename.contains(QRegularExpression( QStringLiteral( "(txt|TXT)$" ) )) )
          {
             f.close();
             return false;
@@ -1928,7 +1929,7 @@ bool US_Hydrodyn::bd_valid_browflex_main( QString filename )
          ts >> tmp_filename;
          ts.readLine();
          if ( tmp_filename != "-" &&
-              !tmp_filename.contains(QRegExp("(txt|TXT)$")) )
+              !tmp_filename.contains(QRegularExpression( QStringLiteral( "(txt|TXT)$" ) )) )
          {
             f.close();
             return false;
@@ -1943,7 +1944,7 @@ bool US_Hydrodyn::bd_valid_browflex_main( QString filename )
          ts >> tmp_filename;
          ts.readLine();
          if ( tmp_filename != "-" &&
-              !tmp_filename.contains(QRegExp("(txt|TXT)$")) )
+              !tmp_filename.contains(QRegularExpression( QStringLiteral( "(txt|TXT)$" ) )) )
          {
             f.close();
             return false;
@@ -1957,7 +1958,7 @@ bool US_Hydrodyn::bd_valid_browflex_main( QString filename )
       {
          ts >> tmp_filename;
          ts.readLine();
-         if (!tmp_filename.contains(QRegExp("(txt|TXT)$")) )
+         if (!tmp_filename.contains(QRegularExpression( QStringLiteral( "(txt|TXT)$" ) )) )
          {
             f.close();
             return false;
@@ -2033,7 +2034,7 @@ void US_Hydrodyn::bd_load()
       {
          ts >> tmp_filename;
          ts.readLine();
-         if ( !tmp_filename.contains(QRegExp("(txt|TXT)$")) )
+         if ( !tmp_filename.contains(QRegularExpression( QStringLiteral( "(txt|TXT)$" ) )) )
          {
             bd_load_error(filename);
             f.close();
@@ -2240,7 +2241,7 @@ void US_Hydrodyn::bd_edit()
       {
          ts >> tmp_filename;
          ts.readLine();
-         if ( !tmp_filename.contains(QRegExp("(txt|TXT)$")) )
+         if ( !tmp_filename.contains(QRegularExpression( QStringLiteral( "(txt|TXT)$" ) )) )
          {
             f.close();
             return;
@@ -2620,7 +2621,7 @@ void US_Hydrodyn::bd_load_results_after_anaflex()
    }
    ts.readLine();
 
-   name.replace(QRegExp("\\.(txt|TXT)"),"");
+   name.replace(QRegularExpression( QStringLiteral( "\\.(txt|TXT)" ) ),"");
 #if defined(DEBUG_CONN)
    cout << "name " << name << endl;
 #endif

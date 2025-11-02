@@ -1,4 +1,5 @@
 #include "../include/us_saxs_util.h"
+#include <QRegularExpression>
 #include "../include/us_file_util.h"
 //Added by qt3to4:
 #include <QTextStream>
@@ -588,7 +589,7 @@ bool US_Saxs_Util::run_best()
          csvfiles  << outfiles[ i ] + expected_base + ".be";
          // us_qdebug( QString( "outfiles[ i ] '%1' inputbase '%2' inputbase23 '%3'" )
          //         .arg( outfiles[ i ] ).arg( inputbase ).arg( inputbase23 ) );
-         triangles << QString( outfiles[ i ] ).replace( QRegExp( QString( "^%1_" ).arg( inputbase23 ) ), "" ).replace( QRegExp( "^0*" ) , "" );
+         triangles << QString( outfiles[ i ] ).replace( QRegExp( QString( "^%1_" ).arg( inputbase23 ) ), "" ).replace( QRegularExpression( QStringLiteral( "^0*" ) ) , "" );
          one_over_triangles.push_back( triangles.back().toDouble() != 0e0 ?
                                        1e0 / triangles.back().toDouble() : -1e0 );
 
@@ -1002,7 +1003,7 @@ QStringList US_Saxs_Util::best_output_column( QString fname )
    }
    {
       QString qs = ts.readLine();
-      qs.replace( QRegExp( "\\s+1/s\\s*$" ), "" );
+      qs.replace( QRegularExpression( QStringLiteral( "\\s+1/s\\s*$" ) ), "" );
       if ( rx_1.indexIn( qs ) == -1 )
       {
          qsl << QString( "error in %1 could not read data pos %2" ).arg( f.fileName() ).arg( "Drr (1/s) 1/3 trace" );
@@ -1061,7 +1062,7 @@ QStringList US_Saxs_Util::best_output_column( QString fname )
    }      
    {
       QString qs = ts.readLine();
-      qs.replace( QRegExp( "\\s+cm\\^2/s\\s*$" ), "" );
+      qs.replace( QRegularExpression( QStringLiteral( "\\s+cm\\^2/s\\s*$" ) ), "" );
       qDebug() << QString( "qs dtt cm^2/s <%1>\n" ).arg( qs );
       if ( rx_1.indexIn( qs ) == -1 )
       {

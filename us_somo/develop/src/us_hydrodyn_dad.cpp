@@ -1,4 +1,5 @@
 #include "../include/us3_defines.h"
+#include <QRegularExpression>
 #include "../include/us_hydrodyn.h"
 #include "../include/us_revision.h"
 #include "../include/us_hydrodyn_dad.h"
@@ -1562,7 +1563,7 @@ void US_Hydrodyn_Dad::add_files( bool load_conc, bool from_dir ) {
          QDir dir( dirname );
          QStringList filters;
          filters << "*.dat"; 
-         filenames = dir.entryList( filters ).replaceInStrings( QRegExp( "^" ), dirname + "/" );
+         filenames = dir.entryList( filters ).replaceInStrings( QRegularExpression( QStringLiteral( "^" ) ), dirname + "/" );
       }
    } else {
       if ( load_conc )
@@ -2215,11 +2216,11 @@ bool US_Hydrodyn_Dad::load_file( QString filename, bool load_conc )
       if ( rx_unit.indexIn( qv[ 0 ] ) != -1 ) {
          QString unitstr = rx_unit.cap( 1 ).toLower();
          bool ok = false;
-         if ( !ok && unitstr.contains( QRegExp( "^(1/nm|nm^-1)$" ) ) ) {
+         if ( !ok && unitstr.contains( QRegularExpression( QStringLiteral( "^(1/nm|nm^-1)$" ) ) ) ) {
             use_units = 0.1;
             ok = true;
          }
-         if ( !ok && unitstr.contains( QRegExp( "^(1/a|a^-1)$" ) ) ) {
+         if ( !ok && unitstr.contains( QRegularExpression( QStringLiteral( "^(1/a|a^-1)$" ) ) ) ) {
             use_units = 1.0;
             ok = true;
          }
@@ -2321,7 +2322,7 @@ bool US_Hydrodyn_Dad::load_file( QString filename, bool load_conc )
    int I_offset   = 1;
    int e_offset   = 2;
    int row_offset = 1;
-   if ( ( ext == "dat" || ext == "txt" ) && qv[ 0 ].toLower().contains( QRegExp( "frame\\s*data" ) ) )
+   if ( ( ext == "dat" || ext == "txt" ) && qv[ 0 ].toLower().contains( QRegularExpression( QStringLiteral( "frame\\s*data" ) ) ) )
    {
       is_time = true;
       use_units = 1.0;
@@ -2447,11 +2448,11 @@ bool US_Hydrodyn_Dad::load_file( QString filename, bool load_conc )
 
    if ( ext == "csv" && load_conc ) {
    // load csv columns as time curves with rescaling for concentration time
-      if ( !qv[0].contains( QRegExp( "^#\\s+Time" ) ) ) {
+      if ( !qv[0].contains( QRegularExpression( QStringLiteral( "^#\\s+Time" ) ) ) ) {
          errormsg = QString( us_tr( "Error: loading %1 unrecognied header format for concentration csv: %2" ) ).arg( filename ).arg( qv[ 0 ] );
          return false;
       }
-      QRegExp rx_spaces = QRegExp( "\\s+" ); 
+      QRegularExpression rx_spaces = QRegularExpression( QStringLiteral( "\\s+" ) ); 
       QStringList headers = (qv[ 0 ] ).split( rx_spaces , Qt::SkipEmptyParts );
       int hsize = (int) headers.size();
       map < QString, vector < double > > uvs;
@@ -2685,7 +2686,7 @@ bool US_Hydrodyn_Dad::load_file( QString filename, bool load_conc )
       editor_msg( "black", QString( us_tr( "%1" ) ).arg( filename ) );
 
       // first column is time
-      qv[ 0 ].replace( "(", "" ).replace( ")", "" ).replace( "/", "_per_" ).replace( QRegExp( "\\s+" ), "_" ).replace( ":", "_" ).replace( QRegExp( "\\_+" ), "_" ) ;
+      qv[ 0 ].replace( "(", "" ).replace( ")", "" ).replace( "/", "_per_" ).replace( QRegularExpression( QStringLiteral( "\\s+" ) ), "_" ).replace( ":", "_" ).replace( QRegularExpression( QStringLiteral( "\\_+" ) ), "_" ) ;
 
       QStringList headers = (qv[ 0 ] ).split( "," , Qt::SkipEmptyParts );
       
@@ -2934,11 +2935,11 @@ bool US_Hydrodyn_Dad::load_file( QString filename, bool load_conc )
             
             gaussians.clear( );
 
-            // QStringList tokens = (qv[i].replace(QRegExp("^\\s+").split( QRegExp("\\s+") , Qt::SkipEmptyParts ),""));
+            // QStringList tokens = (qv[i].replace(QRegularExpression( QStringLiteral( "^\\s+" ) ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts ),""));
             QStringList tokens;
             {
-               QString qs = qv[i].replace(QRegExp("^\\s+"),"");
-               tokens = (qs ).split( QRegExp("\\s+") , Qt::SkipEmptyParts );
+               QString qs = qv[i].replace(QRegularExpression( QStringLiteral( "^\\s+" ) ),"");
+               tokens = (qs ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts );
             }
 
             if ( tokens.size() != 2 )
@@ -2966,10 +2967,10 @@ bool US_Hydrodyn_Dad::load_file( QString filename, bool load_conc )
             {
                if ( rx_end.indexIn( qv[ i ] ) == -1 )
                {
-                  // tokens = (qv[i].replace(QRegExp("^\\s+").split( QRegExp("\\s+") , Qt::SkipEmptyParts ),""));
+                  // tokens = (qv[i].replace(QRegularExpression( QStringLiteral( "^\\s+" ) ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts ),""));
                   {
-                     QString qs = qv[i].replace(QRegExp("^\\s+"),"");
-                     tokens = (qs ).split( QRegExp("\\s+") , Qt::SkipEmptyParts );
+                     QString qs = qv[i].replace(QRegularExpression( QStringLiteral( "^\\s+" ) ),"");
+                     tokens = (qs ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts );
                   }
 
                   if ( (int) tokens.size() != gaussian_type_size )
@@ -3010,11 +3011,11 @@ bool US_Hydrodyn_Dad::load_file( QString filename, bool load_conc )
             {
                if ( rx_end.indexIn( qv[ i ] ) == -1 )
                {
-                  // QStringList tokens = (qv[i].replace(QRegExp("^\\s+").split( QRegExp("\\s+") , Qt::SkipEmptyParts ),""));
+                  // QStringList tokens = (qv[i].replace(QRegularExpression( QStringLiteral( "^\\s+" ) ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts ),""));
                   QStringList tokens;
                   {
-                     QString qs = qv[i].replace(QRegExp("^\\s+"),"");
-                     tokens = (qs ).split( QRegExp("\\s+") , Qt::SkipEmptyParts );
+                     QString qs = qv[i].replace(QRegularExpression( QStringLiteral( "^\\s+" ) ),"");
+                     tokens = (qs ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts );
                   }
 
                   if ( (int) tokens.size() != gaussian_type_size )
@@ -3056,7 +3057,7 @@ bool US_Hydrodyn_Dad::load_file( QString filename, bool load_conc )
       return false;
    }
 
-   if ( ext == "dat" && qv[ 0 ].contains( QRegExp( " (Gauss|EMG\\+GMG|EMG|GMG)" ) ) )
+   if ( ext == "dat" && qv[ 0 ].contains( QRegularExpression( QStringLiteral( " (Gauss|EMG\\+GMG|EMG|GMG)" ) ) ) )
    {
       gaussian_types new_g = gaussian_type;
       if ( qv[ 0 ].contains( " Gauss" ) )
@@ -3089,11 +3090,11 @@ bool US_Hydrodyn_Dad::load_file( QString filename, bool load_conc )
 
       gaussians.clear( );
       int i = 1;
-      // QStringList tokens = (qv[i].replace(QRegExp("^\\s+").split( QRegExp("\\s+") , Qt::SkipEmptyParts ),""));
+      // QStringList tokens = (qv[i].replace(QRegularExpression( QStringLiteral( "^\\s+" ) ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts ),""));
       QStringList tokens;
       {
-         QString qs = qv[i].replace(QRegExp("^\\s+"),"");
-         tokens = (qs ).split( QRegExp("\\s+") , Qt::SkipEmptyParts );
+         QString qs = qv[i].replace(QRegularExpression( QStringLiteral( "^\\s+" ) ),"");
+         tokens = (qs ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts );
       }
 
       if ( tokens.size() != 2 )
@@ -3116,7 +3117,7 @@ bool US_Hydrodyn_Dad::load_file( QString filename, bool load_conc )
       connect( le_gauss_fit_end, SIGNAL( focussed ( bool ) )             , SLOT( gauss_fit_end_focus( bool ) ) );
 
 
-      if ( qv[ 0 ].contains( QRegExp( "Multiple (Gauss|EMG\\+GMG|EMG|GMG)" ) ) )
+      if ( qv[ 0 ].contains( QRegularExpression( QStringLiteral( "Multiple (Gauss|EMG\\+GMG|EMG|GMG)" ) ) ) )
       {
          // TSO << "multiple gaussians\n";
 
@@ -3168,10 +3169,10 @@ bool US_Hydrodyn_Dad::load_file( QString filename, bool load_conc )
 
             if ( !this_gaussian.isEmpty() )
             {
-               // tokens = (qv[i].replace(QRegExp("^\\s+").split( QRegExp("\\s+") , Qt::SkipEmptyParts ),""));
+               // tokens = (qv[i].replace(QRegularExpression( QStringLiteral( "^\\s+" ) ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts ),""));
                {
-                  QString qs = qv[i].replace(QRegExp("^\\s+"),"");
-                  tokens = (qs ).split( QRegExp("\\s+") , Qt::SkipEmptyParts );
+                  QString qs = qv[i].replace(QRegularExpression( QStringLiteral( "^\\s+" ) ),"");
+                  tokens = (qs ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts );
                }
          
                if ( (int) tokens.size() != gaussian_type_size )
@@ -3217,10 +3218,10 @@ bool US_Hydrodyn_Dad::load_file( QString filename, bool load_conc )
       } else {
          for ( i = 2; i < (int) qv.size(); i++ )
          {
-            // tokens = (qv[i].replace(QRegExp("^\\s+").split( QRegExp("\\s+") , Qt::SkipEmptyParts ),""));
+            // tokens = (qv[i].replace(QRegularExpression( QStringLiteral( "^\\s+" ) ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts ),""));
             {
-               QString qs = qv[i].replace(QRegExp("^\\s+"),"");
-               tokens = (qs ).split( QRegExp("\\s+") , Qt::SkipEmptyParts );
+               QString qs = qv[i].replace(QRegularExpression( QStringLiteral( "^\\s+" ) ),"");
+               tokens = (qs ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts );
             }
          
             if ( (int) tokens.size() != gaussian_type_size )
@@ -3272,7 +3273,7 @@ bool US_Hydrodyn_Dad::load_file( QString filename, bool load_conc )
    rx_ok_line.setMinimal( true );
    for ( int i = row_offset; i < (int) qv.size(); i++ )
    {
-      if ( qv[i].contains(QRegExp("^#")) ||
+      if ( qv[i].contains(QRegularExpression( QStringLiteral( "^#" ) )) ||
            rx_ok_line.indexIn( qv[i] ) == -1 )
       {
          continue;
@@ -3280,11 +3281,11 @@ bool US_Hydrodyn_Dad::load_file( QString filename, bool load_conc )
       
       // TSO << "line: <" << qv[ i ] << ">" << endl;
 
-      // QStringList tokens = (qv[i].replace(QRegExp("^\\s+").split( QRegExp("\\s+") , Qt::SkipEmptyParts ),""));
+      // QStringList tokens = (qv[i].replace(QRegularExpression( QStringLiteral( "^\\s+" ) ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts ),""));
       QStringList tokens;
       {
-         QString qs = qv[i].replace(QRegExp("^\\s+"),"");
-         tokens = (qs ).split( QRegExp("\\s+") , Qt::SkipEmptyParts );
+         QString qs = qv[i].replace(QRegularExpression( QStringLiteral( "^\\s+" ) ),"");
+         tokens = (qs ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts );
       }
 
       if ( (int)tokens.size() > I_offset )
@@ -3574,7 +3575,7 @@ QString US_Hydrodyn_Dad::qstring_common_head( QStringList qsl, bool strip_digits
 
    if ( strip_digits )
    {
-      s.replace( QRegExp( "\\d+$" ), "" );
+      s.replace( QRegularExpression( QStringLiteral( "\\d+$" ) ), "" );
    }
    return s;
 }
@@ -3596,7 +3597,7 @@ QString US_Hydrodyn_Dad::qstring_common_tail( QStringList qsl, bool strip_digits
    }
    if ( strip_digits )
    {
-      s.replace( QRegExp( "^\\d+" ), "" );
+      s.replace( QRegularExpression( QStringLiteral( "^\\d+" ) ), "" );
    }
    return s;
 }
@@ -6741,7 +6742,7 @@ void US_Hydrodyn_Dad::similar_files()
    QString similar = QFileInfo( f_name[ selected[ 0 ] ] ).fileName();
    QString dir     = QFileInfo( f_name[ selected[ 0 ] ] ).path();
    QString match   = similar;
-   match.replace( QRegExp( "\\d{2,}" ), "\\d+" );
+   match.replace( QRegularExpression( QStringLiteral( "\\d{2,}" ) ), "\\d+" );
 
    TSO << QString( "select to match <%1> in directory <%2> using regexp <%3>\n" )
       .arg( similar )
@@ -6771,16 +6772,16 @@ void US_Hydrodyn_Dad::regex_load()
    QDir qd;
 
 
-   // QStringList regexs = (le_regex->text().split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts )      );
-   // QStringList args   = (le_regex_args->text().split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts ) );
+   // QStringList regexs = (le_regex->text().split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts )      );
+   // QStringList args   = (le_regex_args->text().split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts ) );
    QStringList regexs;
    QStringList args;
 
    {
       QString qs = le_regex->text();
-      regexs = (qs ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
+      regexs = (qs ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts );
       qs = le_regex_args->text();
-      args   = (qs ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
+      args   = (qs ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts );
    }
 
    for ( int i = 0; i < (int)args.size(); i++ )
@@ -6823,7 +6824,7 @@ void US_Hydrodyn_Dad::rename_created( QListWidgetItem *lbi, const QPoint & )
                                    text, 
                                    &ok, 
                                    this );
-      text.replace( QRegExp( "\\s" ), "_" );
+      text.replace( QRegularExpression( QStringLiteral( "\\s" ) ), "_" );
       if ( ok && !text.isEmpty() )
       {
          // user entered something and pressed OK
@@ -9820,7 +9821,7 @@ void US_Hydrodyn_Dad::save_state()
       return;
    }
 
-   fn.replace( QRegExp( "(|-global-state)\\.(dat|DAT)$" ), "" );
+   fn.replace( QRegularExpression( QStringLiteral( "(|-global-state)\\.(dat|DAT)$" ) ), "" );
    fn += "-global-state.dat";
 
    if ( QFile::exists( fn ) )

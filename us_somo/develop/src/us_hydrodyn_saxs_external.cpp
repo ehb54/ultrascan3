@@ -1,4 +1,5 @@
 #include "../include/us_hydrodyn_saxs.h"
+#include <QRegularExpression>
 #include "../include/us_hydrodyn.h"
 #include "../include/us_cmdline_app.h"
 #include "../include/us_hydrodyn_saxs_ift.h"
@@ -16,7 +17,7 @@ static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const 
 
 void US_Hydrodyn_Saxs::editor_msg( QColor color, QColor bgcolor, QString msg )
 {
-   msg.replace( QRegExp( "\n*$" ), "" );
+   msg.replace( QRegularExpression( QStringLiteral( "\n*$" ) ), "" );
    msg += "\n";
    // QColor save_color_bg = editor->paragraphBackgroundColor( editor->paragraphs() - 1 );
 #if QT_VERSION < 0x040000
@@ -601,7 +602,7 @@ void US_Hydrodyn_Saxs::ift_finished( int, QProcess::ExitStatus )
    if ( files.count( caps[ 2 ] ) ) {
       // copy this to our created files
 
-      double mw = get_mw( QString( "%1" ).arg( ift_last_processed ).replace( QRegExp( "\\..*$" ), "_ift P(r)" ), false, true );
+      double mw = get_mw( QString( "%1" ).arg( ift_last_processed ).replace( QRegularExpression( QStringLiteral( "\\..*$" ) ), "_ift P(r)" ), false, true );
       cb_normalize->setChecked( mw != -1 );
 
       vector < double > r;
@@ -616,13 +617,13 @@ void US_Hydrodyn_Saxs::ift_finished( int, QProcess::ExitStatus )
       if ( !US_File_Util::getcontents( files[ caps[ 2 ] ], prcontents, error ) ) {
          editor_msg( "red", error );
       } else {
-         QStringList qsl = prcontents.split( "\n" ).replaceInStrings( QRegExp( "^\\s*" ), "" );
+         QStringList qsl = prcontents.split( "\n" ).replaceInStrings( QRegularExpression( QStringLiteral( "^\\s*" ) ), "" );
             
          // QTextStream( stdout ) << "--- pr contents ---\n";
          double min_sd = 1e99;
          double min_pr = 1e99;
          for ( int i = 0; i < qsl.size(); ++i ) {
-            QStringList line = qsl[i].split( QRegExp( "\\s+" ) );
+            QStringList line = qsl[i].split( QRegularExpression( QStringLiteral( "\\s+" ) ) );
             // QTextStream( stdout ) << line.join( " " ) << Qt::endl;
             if ( line.size() < 3 ) {
                continue;
@@ -658,7 +659,7 @@ void US_Hydrodyn_Saxs::ift_finished( int, QProcess::ExitStatus )
             QStringList newcontents;
             QStringList newcontents_normed;
             for ( int i = 0; i < qsl.size(); ++i ) {
-               QStringList line = qsl[i].split( QRegExp( "\\s+" ) );
+               QStringList line = qsl[i].split( QRegularExpression( QStringLiteral( "\\s+" ) ) );
                if ( line.size() < 3 ) {
                   continue;
                } else {
@@ -935,7 +936,7 @@ void US_Hydrodyn_Saxs::foxs_finished( int, QProcess::ExitStatus )
 
    QString created_dat = foxs_last_pdb + ".dat";
    QString created_plt = foxs_last_pdb;
-   created_plt.replace(QRegExp("\\.(pdb|PDB)$"),".plt");
+   created_plt.replace(QRegularExpression( QStringLiteral( "\\.(pdb|PDB)$" ) ),".plt");
 
    if ( !QFile::exists( created_dat ) )
    {
@@ -997,6 +998,8 @@ void US_Hydrodyn_Saxs::foxs_started()
 
 int US_Hydrodyn_Saxs::run_saxs_iq_crysol( QString pdb )
 {
+   editor_msg( "darkblue", QString( "crysol pdb is %1\n" ).arg( pdb ) );
+
    QString prog = 
       USglobal->config_list.system_dir + SLASH +
 #if defined(BIN64)
@@ -1083,9 +1086,9 @@ int US_Hydrodyn_Saxs::run_saxs_iq_crysol( QString pdb )
    crysol_last_pdb = pdb;
    if ( our_saxs_options->crysol_version_26 )
    {
-      crysol_last_pdb_base = dir + SLASH + QFileInfo(crysol_last_pdb).fileName().replace(QRegExp("\\.(pdb|PDB)$"),"").left(6) + ".pdb";
+      crysol_last_pdb_base = dir + SLASH + QFileInfo(crysol_last_pdb).fileName().replace(QRegularExpression( QStringLiteral( "\\.(pdb|PDB)$" ) ),"").left(6) + ".pdb";
    } else {
-      crysol_last_pdb_base = dir + SLASH + QFileInfo(crysol_last_pdb).fileName().replace(QRegExp("\\.(pdb|PDB)$"),"") + ".pdb";
+      crysol_last_pdb_base = dir + SLASH + QFileInfo(crysol_last_pdb).fileName().replace(QRegularExpression( QStringLiteral( "\\.(pdb|PDB)$" ) ),"") + ".pdb";
    }
       
    QString use_pdb = pdb;
@@ -1165,7 +1168,7 @@ int US_Hydrodyn_Saxs::run_saxs_iq_crysol( QString pdb )
    // clean up so we have new files
 
    {
-      QString base = crysol_last_pdb_base.replace(QRegExp("\\.(pdb|PDB)$"),"");
+      QString base = crysol_last_pdb_base.replace(QRegularExpression( QStringLiteral( "\\.(pdb|PDB)$" ) ),"");
       cout << "base: <" << base << ">\n";
 
       QString to_remove = base + "00.alm";
@@ -1470,7 +1473,7 @@ int US_Hydrodyn_Saxs::run_saxs_iq_crysol( QString pdb )
             if ( !ufu.copy( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "saxs_crysol_target" ], dir ) )
             {
                editor_msg( "red", ufu.errormsg );
-               if ( ufu.errormsg.contains( QRegExp( "exists$" ) ) )
+               if ( ufu.errormsg.contains( QRegularExpression( QStringLiteral( "exists$" ) ) ) )
                {
                   args 
                      << QFileInfo( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "saxs_crysol_target" ] ).fileName()
@@ -1691,8 +1694,8 @@ void US_Hydrodyn_Saxs::crysol_finished( int, QProcess::ExitStatus )
 
 void US_Hydrodyn_Saxs::crysol_finishup()
 {
-   QStringList intensity_lines = crysol_stdout.filter( QRegExp( "Intensities\\s+saved to file" ) );
-   QStringList fit_lines       = crysol_stdout.filter( QRegExp( "Data fit\\s+saved to file" ) );
+   QStringList intensity_lines = crysol_stdout.filter( QRegularExpression( QStringLiteral( "Intensities\\s+saved to file" ) ) );
+   QStringList fit_lines       = crysol_stdout.filter( QRegularExpression( QStringLiteral( "Data fit\\s+saved to file" ) ) );
 
    QString new_intensity_file;
    QString new_fit_file;
@@ -1727,9 +1730,9 @@ void US_Hydrodyn_Saxs::crysol_finishup()
 
    QString created_dat;
    if ( our_saxs_options->crysol_version_3 ) {
-      created_dat = crysol_last_pdb_base.replace(QRegExp("\\.(pdb|PDB)$"),"") + type;
+      created_dat = crysol_last_pdb_base.replace(QRegularExpression( QStringLiteral( "\\.(pdb|PDB)$" ) ),"") + type;
    } else {
-      created_dat = crysol_last_pdb_base.replace(QRegExp("\\.(pdb|PDB)$"),"") + "00" + type;
+      created_dat = crysol_last_pdb_base.replace(QRegularExpression( QStringLiteral( "\\.(pdb|PDB)$" ) ),"") + "00" + type;
    }
 
    // us_qdebug( "created_dat: " + created_dat );
@@ -1756,7 +1759,7 @@ void US_Hydrodyn_Saxs::crysol_finishup()
    // now move the file to the saxs directory
    QString new_created_dat = 
       ((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH + "saxs" + SLASH + 
-      QFileInfo( crysol_last_pdb.replace(QRegExp("\\.(pdb|PDB)$"),"") ).fileName() + 
+      QFileInfo( crysol_last_pdb.replace(QRegularExpression( QStringLiteral( "\\.(pdb|PDB)$" ) ),"") ).fileName() + 
       ( selected_models[ 0 ] == 0 ? QString( "" ) : QString( "_m%1" ).arg( selected_models[ 0 ] + 1 ) )
       + iqq_suffix() + type;
 
@@ -1859,7 +1862,7 @@ int US_Hydrodyn_Saxs::run_sans_iq_cryson( QString pdb )
    }
 
    cryson_last_pdb = pdb;
-   cryson_last_pdb_base = dir + SLASH + QFileInfo(cryson_last_pdb).fileName().replace(QRegExp("\\.(pdb|PDB)$"),"").left(6) + ".pdb";
+   cryson_last_pdb_base = dir + SLASH + QFileInfo(cryson_last_pdb).fileName().replace(QRegularExpression( QStringLiteral( "\\.(pdb|PDB)$" ) ),"").left(6) + ".pdb";
    QString use_pdb = pdb;
    
    // copy pdb if the name is too long
@@ -1902,7 +1905,7 @@ int US_Hydrodyn_Saxs::run_sans_iq_cryson( QString pdb )
    // clean up so we have new files
 
    // {
-   //    QString base = cryson_last_pdb_base.replace(QRegExp("\\.(pdb|PDB)$"),"");
+   //    QString base = cryson_last_pdb_base.replace(QRegularExpression( QStringLiteral( "\\.(pdb|PDB)$" ) ),"");
    //    cout << "base: <" << base << ">\n";
 
    //    QString to_remove = base + "00.alm";
@@ -2057,7 +2060,7 @@ void US_Hydrodyn_Saxs::cryson_finished( int, QProcess::ExitStatus )
 
    // we just want the .int, the rest will be removed if needed
 
-   QString created_dat = cryson_last_pdb_base.replace(QRegExp("\\.(pdb|PDB)$"),"") +  "00.int";
+   QString created_dat = cryson_last_pdb_base.replace(QRegularExpression( QStringLiteral( "\\.(pdb|PDB)$" ) ),"") +  "00.int";
 
    if ( !QFile::exists( created_dat ) )
    {
@@ -2070,7 +2073,7 @@ void US_Hydrodyn_Saxs::cryson_finished( int, QProcess::ExitStatus )
    // now move the file to the saxs directory
    QString new_created_dat = 
       ((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH + "saxs" + SLASH + 
-      QFileInfo( cryson_last_pdb.replace(QRegExp("\\.(pdb|PDB)$"),"") ).fileName() + iqq_suffix() + ".int";
+      QFileInfo( cryson_last_pdb.replace(QRegularExpression( QStringLiteral( "\\.(pdb|PDB)$" ) ),"") ).fileName() + iqq_suffix() + ".int";
 
    if ( QFile::exists(new_created_dat) )
    {

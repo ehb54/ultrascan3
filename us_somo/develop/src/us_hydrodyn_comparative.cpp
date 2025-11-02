@@ -1,4 +1,5 @@
 #include "../include/us3_defines.h"
+#include <QRegularExpression>
 #include "../include/us_hydrodyn.h"
 #include "../include/us_revision.h"
 #include "qregexp.h"
@@ -3176,8 +3177,8 @@ void US_Hydrodyn_Comparative::process_csv()
       return;
    }
 
-   csv_processed.name.replace(QRegExp("^selected_rows_from_"),"");
-   csv_processed.name.replace(QRegExp("^Processed_"),"");
+   csv_processed.name.replace(QRegularExpression( QStringLiteral( "^selected_rows_from_" ) ),"");
+   csv_processed.name.replace(QRegularExpression( QStringLiteral( "^Processed_" ) ),"");
    csv_processed.name = "Processed_" + csv_processed.name;
    if ( !csv_process(csv_processed) )
    {
@@ -4045,7 +4046,7 @@ bool US_Hydrodyn_Comparative::csv_merge_selected_selected( csv &csv_merged )
    // csv csv_merged;
 
    csv *ref_csv = &csvs[ csv_used_vector[0] ];
-   csv_merged.name.replace(QRegExp("^selected_rows_from_"),"");
+   csv_merged.name.replace(QRegularExpression( QStringLiteral( "^selected_rows_from_" ) ),"");
    csv_merged.name = "selected_rows_from_" + QFileInfo(ref_csv->name).completeBaseName();
    csv_merged.header_map = ref_csv->header_map;
    csv_merged.header = ref_csv->header;

@@ -1,4 +1,5 @@
 #include "../include/us_pm.h"
+#include <QRegularExpression>
 //Added by qt3to4:
 #include <QTextStream>
 
@@ -139,7 +140,7 @@ QString US_PM::test( QString name, QString oname )
                   {
                      break;
                   }
-                  QStringList qsl = (qs ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
+                  QStringList qsl = (qs ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts );
                   if ( qsl.size() < 2 )
                   {
                      cout << QString( "error: data has only %1 parameters\n" ).arg( qsl.size() );
@@ -1116,7 +1117,7 @@ QString US_PM::test( QString name, QString oname )
       {
          QString outfile = oname;
       
-         if ( !outfile.contains( QRegExp( "\\.bead_model$" ) ) )
+         if ( !outfile.contains( QRegularExpression( QStringLiteral( "\\.bead_model$" ) ) ) )
          {
             outfile += ".bead_model";
          }
@@ -1148,7 +1149,7 @@ QString US_PM::test( QString name, QString oname )
          }
          QString outfile = QString( "%1_sh%2" ).arg( oname ).arg( max_harmonics );
       
-         if ( !outfile.contains( QRegExp( "\\.dat$" ) ) )
+         if ( !outfile.contains( QRegularExpression( QStringLiteral( "\\.dat$" ) ) ) )
          {
             outfile += ".dat";
          }

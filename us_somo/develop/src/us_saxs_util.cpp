@@ -1,4 +1,5 @@
 #include "../include/us_saxs_util.h"
+#include <QRegularExpression>
 
 /* To do notes:
    for wiki:
@@ -3220,11 +3221,11 @@ QString US_Saxs_Util::wiki_file_name()
 
 QString US_Saxs_Util::get_file_name(QString base, QString type)
 {
-   base.replace(QRegExp("^cwave."),"");
+   base.replace(QRegularExpression( QStringLiteral( "^cwave." ) ),"");
    return
       QString("cwave%1%2_%3.dat")
       .arg(QDir::separator())
-      .arg(base.replace(QRegExp("\\.(dat|DAT)$"),""))
+      .arg(base.replace(QRegularExpression( QStringLiteral( "\\.(dat|DAT)$" ) ),""))
       .arg(type);
 }
 
@@ -3825,7 +3826,7 @@ bool US_Saxs_Util::wiki(QString &result)
          .arg(wave_concs[it->name] ? QString("%1").arg(wave_concs[it->name]) : "buffer" )
          .arg(wave_exposure_times[it->name] ? QString("%1").arg(wave_exposure_times[it->name]) : "" )
          .arg(wave_concs[it->name] ? QString("%1").arg(wave_alphas[it->name]) : "" )
-         .arg(QString("%1").arg(outfile).replace(QRegExp("^cwave."),""))
+         .arg(QString("%1").arg(outfile).replace(QRegularExpression( QStringLiteral( "^cwave." ) ),""))
          .arg(wave_comments[it->name])
          ;
    }
@@ -3868,7 +3869,7 @@ bool US_Saxs_Util::wiki(QString &result)
                   .arg(wave_concs[saxs_conc_names[j]] ? QString("%1").arg(wave_concs[saxs_conc_names[j]]) : "buffer" )
                   .arg(wave_exposure_times[saxs_conc_names[j]] ? QString("%1").arg(wave_exposure_times[saxs_conc_names[j]]) : "" )
                   .arg(wave_concs[saxs_conc_names[j]] ? QString("%1").arg(wave_alphas[saxs_conc_names[j]]) : "" )
-                  .arg(QString("%1").arg(outfile).replace(QRegExp("^cwave."),""))
+                  .arg(QString("%1").arg(outfile).replace(QRegularExpression( QStringLiteral( "^cwave." ) ),""))
                   .arg(wave_comments[saxs_conc_names[j]])
                   ;
             }
@@ -3915,7 +3916,7 @@ bool US_Saxs_Util::wiki(QString &result)
             .arg(wave_concs[it->name] ? QString("%1").arg(wave_concs[it->name]) : "buffer" )
             .arg(wave_exposure_times[it->name] ? QString("%1").arg(wave_exposure_times[it->name]) : "" )
             .arg(wave_concs[it->name] ? QString("%1").arg(wave_alphas[it->name]) : "" )
-            .arg(QString("%1").arg(outfile).replace(QRegExp("^cwave."),""))
+            .arg(QString("%1").arg(outfile).replace(QRegularExpression( QStringLiteral( "^cwave." ) ),""))
             .arg(wave_comments[it->name])
             ;
       }
@@ -3958,7 +3959,7 @@ bool US_Saxs_Util::wiki(QString &result)
                      .arg(wave_concs[saxs_exposure_time_names[j]] ? QString("%1").arg(wave_concs[saxs_exposure_time_names[j]]) : "buffer" )
                      .arg(wave_exposure_times[saxs_exposure_time_names[j]] ? QString("%1").arg(wave_exposure_times[saxs_exposure_time_names[j]]) : "" )
                      .arg(wave_concs[saxs_exposure_time_names[j]] ? QString("%1").arg(wave_alphas[saxs_exposure_time_names[j]]) : "" )
-                     .arg(QString("%1").arg(outfile).replace(QRegExp("^cwave."),""))
+                     .arg(QString("%1").arg(outfile).replace(QRegularExpression( QStringLiteral( "^cwave." ) ),""))
                      .arg(wave_comments[saxs_exposure_time_names[j]])
                      ;
                }
@@ -4076,7 +4077,7 @@ bool US_Saxs_Util::wiki(QString &result)
          .arg(wave_concs[saxs_conc_names[i]] ? QString("%1").arg(wave_concs[saxs_conc_names[i]]) : "buffer" )
          .arg(wave_exposure_times[saxs_conc_names[i]] ? QString("%1").arg(wave_exposure_times[saxs_conc_names[i]]) : "" )
          .arg(wave_concs[saxs_conc_names[i]] ? QString("%1").arg(wave_alphas[saxs_conc_names[i]]) : "" )
-         .arg(QString("%1").arg(outfile).replace(QRegExp("^cwave."),""))
+         .arg(QString("%1").arg(outfile).replace(QRegularExpression( QStringLiteral( "^cwave." ) ),""))
          .arg(wave_comments[saxs_conc_names[i]])
          .arg(Rg)
          .arg(I0)
@@ -4557,7 +4558,7 @@ bool US_Saxs_Util::wiki(QString &result)
                      .arg(wave_file_names[wave_sb[wave_names_vector[j]]])
                      .arg(wave_comments[wave_names_vector[j]])
 
-                     .arg(QString("%1").arg(outfile).replace(QRegExp("\\.dat$"),"").replace(QRegExp("^cwave."),""))
+                     .arg(QString("%1").arg(outfile).replace(QRegularExpression( QStringLiteral( "\\.dat$" ) ),"").replace(QRegularExpression( QStringLiteral( "^cwave." ) ),""))
                      .arg("saxs plus waxs")
                      .arg(wave_concs[wave_names_vector[i]] ? QString("%1").arg(wave_concs[wave_names_vector[i]]) : "buffer" )
                      .arg(wave_exposure_times[wave_names_vector[i]] ? QString("%1").arg(wave_exposure_times[wave_names_vector[i]]) : "" )
@@ -4672,7 +4673,7 @@ bool US_Saxs_Util::wiki(QString &result)
                .arg(wave_concs[saxs_conc_names[i]] ? QString("%1").arg(wave_concs[saxs_conc_names[i]]) : "buffer" )
                .arg(wave_exposure_times[saxs_conc_names[i]] ? QString("%1").arg(wave_exposure_times[saxs_conc_names[i]]) : "" )
                .arg(wave_concs[saxs_conc_names[i]] ? QString("%1").arg(wave_alphas[saxs_conc_names[i]]) : "" )
-               .arg(QString("%1").arg(outfile).replace(QRegExp("^cwave."),""))
+               .arg(QString("%1").arg(outfile).replace(QRegularExpression( QStringLiteral( "^cwave." ) ),""))
                .arg(wave_comments[saxs_conc_names[i]])
                ;
          }
@@ -4796,7 +4797,7 @@ bool US_Saxs_Util::wiki(QString &result)
                .arg(wave_concs[saxs_conc_names[i]] ? QString("%1").arg(wave_concs[saxs_conc_names[i]]) : "buffer" )
                .arg(wave_exposure_times[saxs_conc_names[i]] ? QString("%1").arg(wave_exposure_times[saxs_conc_names[i]]) : "" )
                .arg(wave_concs[saxs_conc_names[i]] ? QString("%1").arg(wave_alphas[saxs_conc_names[i]]) : "" )
-               .arg(QString("%1").arg(outfile).replace(QRegExp("^cwave."),""))
+               .arg(QString("%1").arg(outfile).replace(QRegularExpression( QStringLiteral( "^cwave." ) ),""))
                .arg(wave_comments[saxs_conc_names[i]])
                .arg(Rg)
                .arg(I0)
@@ -4862,7 +4863,7 @@ bool US_Saxs_Util::wiki(QString &result)
                .arg(wave_concs[saxs_conc_names[i]] ? QString("%1").arg(wave_concs[saxs_conc_names[i]]) : "buffer" )
                .arg(wave_exposure_times[saxs_conc_names[i]] ? QString("%1").arg(wave_exposure_times[saxs_conc_names[i]]) : "" )
                .arg(wave_concs[saxs_conc_names[i]] ? QString("%1").arg(wave_alphas[saxs_conc_names[i]]) : "" )
-               .arg(QString("%1").arg(outfile).replace(QRegExp("^cwave."),""))
+               .arg(QString("%1").arg(outfile).replace(QRegularExpression( QStringLiteral( "^cwave." ) ),""))
                .arg(wave_comments[saxs_conc_names[i]])
                ;
          }
@@ -4982,7 +4983,7 @@ bool US_Saxs_Util::wiki(QString &result)
                .arg(wave_concs[saxs_conc_names[i]] ? QString("%1").arg(wave_concs[saxs_conc_names[i]]) : "buffer" )
                .arg(wave_exposure_times[saxs_conc_names[i]] ? QString("%1").arg(wave_exposure_times[saxs_conc_names[i]]) : "" )
                .arg(wave_concs[saxs_conc_names[i]] ? QString("%1").arg(wave_alphas[saxs_conc_names[i]]) : "" )
-               .arg(QString("%1").arg(outfile).replace(QRegExp("^cwave."),""))
+               .arg(QString("%1").arg(outfile).replace(QRegularExpression( QStringLiteral( "^cwave." ) ),""))
                .arg(wave_comments[saxs_conc_names[i]])
                .arg(Rg)
                .arg(I0)
@@ -5276,7 +5277,7 @@ bool US_Saxs_Util::merge_projects(
             {
                result += line + "\n";
             } else {
-               if ( line.contains(QRegExp("^.. name ")) )
+               if ( line.contains(QRegularExpression( QStringLiteral( "^.. name " ) )) )
                {
                   result += "|| sample " + line + " computed mw (Da) ||\n";
                } else {
@@ -5339,7 +5340,7 @@ bool US_Saxs_Util::merge_projects(
                                      QString("|| [wiki:%1%2_gnom_%3_c%4-%5 %6] ||")
                                      .arg(prefix)
                                      .arg(projects[i])
-                                     .arg(QString("%1").arg(rxcapturefields.cap(6).trimmed()).replace(QRegExp("\\.(dat|DAT)$"),""))
+                                     .arg(QString("%1").arg(rxcapturefields.cap(6).trimmed()).replace(QRegularExpression( QStringLiteral( "\\.(dat|DAT)$" ) ),""))
                                      .arg(use_crop_low.back())
                                      .arg(use_crop_high.back())
                                      .arg(rxcapturefields.cap(6).trimmed()));
@@ -5711,7 +5712,7 @@ bool US_Saxs_Util::run_gnom(
 
          .arg(dir)
          .arg(QDir::separator())
-         .arg(QString("%1").arg(files[i]).replace(QRegExp("\\.(dat|DAT)$"),""))
+         .arg(QString("%1").arg(files[i]).replace(QRegularExpression( QStringLiteral( "\\.(dat|DAT)$" ) ),""))
          .arg(pdir)
          .arg(QDir::separator())
          ;

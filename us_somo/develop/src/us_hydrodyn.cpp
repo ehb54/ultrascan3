@@ -1,4 +1,5 @@
 // (this) us_hydrodyn.cpp contains class creation & gui connected functions
+#include <QRegularExpression>
 // us_hydrodyn_core.cpp contains the main computational routines
 // us_hydrodyn_bd_core.cpp contains the main computational routines for brownian dynamic browflex computations
 // us_hydrodyn_anaflex_core.cpp contains the main computational routines for brownian dynamic (anaflex) computations
@@ -5147,7 +5148,7 @@ void US_Hydrodyn::dmd_run()
       QString load_errors;
       for ( unsigned int i = 0; i < batch.file.size(); i++ ) 
       {
-         if ( batch.file[i].contains(QRegExp("(pdb|PDB|bead_model|BEAD_MODEL|beams|BEAMS)$")) )
+         if ( batch.file[i].contains(QRegularExpression( QStringLiteral( "(pdb|PDB|bead_model|BEAD_MODEL|beams|BEAMS)$" ) )) )
          {
             bool dup = false;
             if ( i ) 

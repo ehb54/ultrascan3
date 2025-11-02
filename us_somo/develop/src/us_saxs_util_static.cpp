@@ -1,4 +1,5 @@
 #include "../include/us_saxs_util.h"
+#include <QRegularExpression>
 //Added by qt3to4:
 #include <QTextStream>
 
@@ -79,17 +80,17 @@ bool US_Saxs_Util::read_sas_data(
    rx_ok_line.setMinimal( true );
    for ( int i = 1; i < (int) qv.size(); i++ )
    {
-      if ( qv[i].contains(QRegExp("^#")) ||
+      if ( qv[i].contains(QRegularExpression( QStringLiteral( "^#" ) )) ||
            rx_ok_line.indexIn( qv[i] ) == -1 )
       {
          continue;
       }
       
-      // QStringList tokens = (qv[i].replace(QRegExp("^\\s+").split( QRegExp("\\s+") , Qt::SkipEmptyParts ),""));
+      // QStringList tokens = (qv[i].replace(QRegularExpression( QStringLiteral( "^\\s+" ) ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts ),""));
       QStringList tokens;
       {
-         QString qs = qv[i].replace(QRegExp("^\\s+"),"");
-         tokens = (qs ).split( QRegExp("\\s+") , Qt::SkipEmptyParts );
+         QString qs = qv[i].replace(QRegularExpression( QStringLiteral( "^\\s+" ) ),"");
+         tokens = (qs ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts );
       }
 
       if ( (int)tokens.size() > 1 + offset )
@@ -11011,7 +11012,7 @@ bool US_Saxs_Util::pdb2fasta( QString outfile, QStringList & files, int max_line
             QStringList qsl;
             {
                QString qs2 = qs.left(20);
-               qsl = (qs2 ).split( QRegExp("\\s+") , Qt::SkipEmptyParts );
+               qsl = (qs2 ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts );
             }
             if ( qsl.size() == 1 )
             {
@@ -11455,8 +11456,8 @@ map < QString, QString > US_Saxs_Util::pdb_fields( const QString & pdb_line ) {
       result[ "remarknum" ] = pdb_line.mid(  7, 3 ).trimmed();
       result[ "contents"  ] = pdb_line.mid( 11    ).trimmed();
       if ( result[ "remarknum" ] == "766" ) {
-         if ( result[ "contents" ].contains( QRegExp( "^DMD LINK RANGE " ) ) ) {
-            QStringList dmdlinkinfo = result[ "contents" ].mid( 15 ).trimmed().split( QRegExp( " +" ) );
+         if ( result[ "contents" ].contains( QRegularExpression( QStringLiteral( "^DMD LINK RANGE " ) ) ) ) {
+            QStringList dmdlinkinfo = result[ "contents" ].mid( 15 ).trimmed().split( QRegularExpression( QStringLiteral( " +" ) ) );
             if ( dmdlinkinfo.size() == 2 ) {
                bool ok;
                if ( dmdlinkinfo[ 0 ] == "PERCENT" ) {

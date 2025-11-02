@@ -1,4 +1,5 @@
 #include "../include/us_saxs_util.h"
+#include <QRegularExpression>
 
 // note: this program uses cout and/or cerr and this should be replaced
 
@@ -68,7 +69,7 @@ bool US_Saxs_Util::calc_saxs_iq_native_fast()
             }
 
             QString use_resname = this_atom->resName;
-            use_resname.replace( QRegExp( "_.*$" ), "" );
+            use_resname.replace( QRegularExpression( QStringLiteral( "_.*$" ) ), "" );
             
             QString mapkey = QString("%1|%2")
                .arg( use_resname )
@@ -327,7 +328,7 @@ bool US_Saxs_Util::calc_saxs_iq_native_fast()
       {
          if ( cb_pr_contrib->isChecked() &&
               !source &&
-              contrib_file.contains(QRegExp("(PDB|pdb)$")) )
+              contrib_file.contains(QRegularExpression( QStringLiteral( "(PDB|pdb)$" ) )) )
          {
             contrib_array.resize(atoms.size());
             for ( unsigned int i = 0; i < as1; i++ )
@@ -728,7 +729,7 @@ bool US_Saxs_Util::calc_saxs_iq_native_debye()
             }
 
             QString use_resname = this_atom->resName;
-            use_resname.replace( QRegExp( "_.*$" ), "" );
+            use_resname.replace( QRegularExpression( QStringLiteral( "_.*$" ) ), "" );
 
             QString mapkey = QString("%1|%2")
                .arg( use_resname )
@@ -1206,7 +1207,7 @@ bool US_Saxs_Util::calc_saxs_iq_native_hybrid()
             }
 
             QString use_resname = this_atom->resName;
-            use_resname.replace( QRegExp( "_.*$" ), "" );
+            use_resname.replace( QRegularExpression( QStringLiteral( "_.*$" ) ), "" );
 
             QString mapkey = QString("%1|%2")
                .arg( use_resname )
@@ -2451,7 +2452,7 @@ bool US_Saxs_Util::load_ff_table( QString filename )
          continue;
       }
 
-      QStringList qsl = (qs ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
+      QStringList qsl = (qs ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts );
 
       // expect:
       //   residueatom (possibly multiple)
@@ -2527,7 +2528,7 @@ bool US_Saxs_Util::load_ff_table( QString filename )
                continue;
             }
 
-            QStringList qsl = (qs ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
+            QStringList qsl = (qs ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts );
 
             if ( qsl[ 0 ] == "enddata" )
             {
@@ -2635,7 +2636,7 @@ map < QString, unsigned int > US_Saxs_Util::get_atom_summary_counts( PDB_model *
          }
 
          QString use_resname = this_atom->resName;
-         use_resname.replace( QRegExp( "_.*$" ), "" );
+         use_resname.replace( QRegularExpression( QStringLiteral( "_.*$" ) ), "" );
             
          QString mapkey = QString("%1|%2")
             .arg( use_resname )
@@ -2794,7 +2795,7 @@ bool US_Saxs_Util::compute_scale_excl_vol()
             PDB_atom *this_atom = &(model_vector[current_model].molecule[j].atom[k]);
 
             QString use_resname = this_atom->resName;
-            use_resname.replace( QRegExp( "_.*$" ), "" );
+            use_resname.replace( QRegularExpression( QStringLiteral( "_.*$" ) ), "" );
 
             QString mapkey = QString("%1|%2")
                .arg( use_resname )

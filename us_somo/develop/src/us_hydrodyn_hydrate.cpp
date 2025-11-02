@@ -1,4 +1,5 @@
 #include "../include/us_hydrodyn.h"
+#include <QRegularExpression>
 #include "../include/us_hydrodyn_asab1.h"
 #include "../include/us_surfracer.h"
 #include "qmessagebox.h"
@@ -1907,7 +1908,7 @@ bool US_Hydrodyn::load_rotamer( QString &error_msg )
    while ( !ts.atEnd() )
    {
       QString qs = ts.readLine();
-      if ( qs.toLower().contains( QRegExp( "^end-file" ) ) )
+      if ( qs.toLower().contains( QRegularExpression( QStringLiteral( "^end-file" ) ) ) )
       {
          break;
       }
@@ -4057,7 +4058,7 @@ bool US_Hydrodyn::write_pdb_with_waters( QString &error_msg, bool quiet )
 #endif
 
    QString fname = pdb_file;
-   fname = fname.replace( QRegExp( "(|-(h|H))\\.(pdb|PDB)$" ), "" ) 
+   fname = fname.replace( QRegularExpression( QStringLiteral( "(|-(h|H))\\.(pdb|PDB)$" ) ), "" ) 
       + QString( "_%1-c%2-h%3.pdb" )
       .arg( current_model + 1 )
       .arg( QString( "%1" ).arg( saxs_options.steric_clash_distance ).replace( ".", "_" ) )
@@ -5098,7 +5099,7 @@ bool US_Hydrodyn::alt_write_pdb_with_waters( QString &error_msg, bool /* quiet *
    }
 
    QString fname = pdb_file;
-   fname = fname.replace( QRegExp( "(|-(h|H))\\.(pdb|PDB)$" ), "" ) 
+   fname = fname.replace( QRegularExpression( QStringLiteral( "(|-(h|H))\\.(pdb|PDB)$" ) ), "" ) 
       + QString( "_%1-c%2-h%3.pdb" )
       .arg( current_model + 1 )
       .arg( QString( "%1" ).arg( saxs_options.steric_clash_distance ).replace( ".", "_" ) )

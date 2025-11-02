@@ -1,4 +1,5 @@
 #include "../include/us_saxs_util.h"
+#include <QRegularExpression>
 #include "../include/us_revision.h"
 //Added by qt3to4:
 #include <QTextStream>
@@ -72,7 +73,7 @@ bool US_Saxs_Util::dmd_run_with_log( const QString & tag
       int last_time = 0;
       while  ( fgets(buffer.data(), 256, pipe) != NULL) {
          QString qs = QString( "%1" ).arg( buffer.data() ).trimmed();
-         QStringList qsl = qs.split( QRegExp( "\\s+" ) );
+         QStringList qsl = qs.split( QRegularExpression( QStringLiteral( "\\s+" ) ) );
          double this_time = qsl[ 0 ].toFloat();
          if ( (int) this_time != last_time ) {
             double pct = 100.0 * this_time / max_time;
@@ -410,7 +411,7 @@ bool US_Saxs_Util::input_dimensions( point &range )
 
    if ( control_parameters.count( "dmdboxspacing" ) )
    {
-      if ( control_parameters[ "dmdboxspacing" ].toLower().contains( QRegExp( "^cubic" ) ) )
+      if ( control_parameters[ "dmdboxspacing" ].toLower().contains( QRegularExpression( QStringLiteral( "^cubic" ) ) ) )
       {
          float max_range = range.axis[ 0 ];
          for ( unsigned int m = 1; m < 3; m++ ) 
@@ -503,7 +504,7 @@ bool US_Saxs_Util::dmd_strip_pdb()
    {
       QString basename = QFileInfo( pdb ).baseName();
       // could get fancier here, perhaps REMARKs could be added or incorporate condensed prior run count
-      basename.replace( QRegExp( "_s_(equi|relax_).*$" ), "" );
+      basename.replace( QRegularExpression( QStringLiteral( "_s_(equi|relax_).*$" ) ), "" );
       dmd_basename     = basename.left( DMD_MAX_BASENAME_LENGTH ) + strip_tag;
    }
 
@@ -1130,7 +1131,7 @@ bool US_Saxs_Util::dmd_run( QString run_description )
             if ( dmdmmlastout ) {
                allmodels << qs << "\n";
             }
-            if ( qs.contains( QRegExp( "^ENDMDL" ) ) &&
+            if ( qs.contains( QRegularExpression( QStringLiteral( "^ENDMDL" ) ) ) &&
                  i + 1 < qsl_pdb_size ) {
                models++;
                if ( control_parameters.count( "pdballmodels" ) ) {
@@ -1526,7 +1527,7 @@ bool US_Saxs_Util::dmd_pdb_prepare( QStringList & qsl_pdb
       map < QString, QString > fields = pdb_fields( line );
 
       // debugging
-      // if ( fields[ "recname" ].contains( QRegExp( "^HETATM" ) ) ) {
+      // if ( fields[ "recname" ].contains( QRegularExpression( QStringLiteral( "^HETATM" ) ) ) ) {
       //    map_dump( "pdb line: ", fields );
       // }
 
@@ -1583,7 +1584,7 @@ bool US_Saxs_Util::dmd_pdb_prepare( QStringList & qsl_pdb
          continue;
       }
 
-      if ( fields[ "recname" ].contains( QRegExp( "^(TER|END|ENDMDL)$" ) ) ) {
+      if ( fields[ "recname" ].contains( QRegularExpression( QStringLiteral( "^(TER|END|ENDMDL)$" ) ) ) ) {
          first_residue = true;
          last_resseq   = 0;
          last_chainid  = "";

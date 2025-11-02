@@ -1,4 +1,5 @@
 // us_hydrodyn.cpp contains class creation & gui connected functions
+#include <QRegularExpression>
 // us_hydrodyn_core.cpp contains the main computational routines
 // us_hydrodyn_bd_core.cpp contains the main computational routines for brownian dynamic browflex computations
 // us_hydrodyn_anaflex_core.cpp contains the main computational routines for brownian dynamic (anaflex) computations
@@ -2619,11 +2620,11 @@ bool US_Hydrodyn::calc_hullrad_hydro( QString filename ) {
          {
             found_model = true;
             model_count++;
-            // QStringList qsl = (qs.left(20).split( QRegExp("\\s+") , Qt::SkipEmptyParts ) );
+            // QStringList qsl = (qs.left(20).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts ) );
             QStringList qsl;
             {
                QString qs2 = qs.left( 20 );
-               qsl = (qs2 ).split( QRegExp("\\s+") , Qt::SkipEmptyParts );
+               qsl = (qs2 ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts );
             }
             QString model_name;
             if ( qsl.size() == 1 )
@@ -2703,7 +2704,7 @@ bool US_Hydrodyn::calc_hullrad_hydro( QString filename ) {
    }
    ext = "-" + ext + ".pdb";
 
-   QString fn = hullrad_tmp_path + "/" + QFileInfo( f ).fileName().replace(QRegExp("\\.(pdb|PDB)$"),"") + ext;
+   QString fn = hullrad_tmp_path + "/" + QFileInfo( f ).fileName().replace(QRegularExpression( QStringLiteral( "\\.(pdb|PDB)$" ) ),"") + ext;
 
    fn.replace(QRegExp(QString("%1$").arg(ext)), "" );
 
