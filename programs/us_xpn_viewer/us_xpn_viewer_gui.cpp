@@ -85,7 +85,12 @@ SpeedoMeter *DialBox::createDial( void ) const
 
   dial->setScaleStepSize( 5 );
   dial->setScale( 0, 60 );
+#if QWT_VERSION < QT_VERSION_CHECK(6, 2, 0)
+  dial->scaleDraw()->setPenWidth( 2 );
+#else
   dial->scaleDraw()->setPenWidthF( 2 );
+#endif
+
   dial->setValue(0);
 
   return dial;
@@ -94,7 +99,7 @@ SpeedoMeter *DialBox::createDial( void ) const
 // END of Dial box
 
 
-// Speedometer
+// Speedometer= 0x060000
 SpeedoMeter::SpeedoMeter( QWidget *parent ):
     QwtDial( parent ),
     d_label( "RPM" )
