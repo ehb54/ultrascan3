@@ -7437,7 +7437,7 @@ void US_Hydrodyn_Saxs_Hplc::gauss_init_markers()
    {
       for ( unsigned int i = 0; i < ( unsigned int ) gaussians.size() / gaussian_type_size; i++ )
       {
-         gauss_add_marker( gaussians[ 1 + gaussian_type_size * i ], Qt::blue, QString( "%1" ).arg( i + 1 ) );
+         gauss_add_marker( gaussians[ 1 + gaussian_type_size * i ], COLOR_GAUSS_MARKER_INACTIVE_CURVE, QString( "%1" ).arg( i + 1 ) );
       }
    } else {
       // global gaussian
@@ -7447,13 +7447,17 @@ void US_Hydrodyn_Saxs_Hplc::gauss_init_markers()
          {
             for ( unsigned int i = 0; i < unified_ggaussian_gaussians_size; i++ )
             {
-               gauss_add_marker( unified_ggaussian_params[ common_size * i + 0 ], Qt::blue, QString( "%1" ).arg( i + 1 ) );
+               gauss_add_marker( unified_ggaussian_params[ common_size * i + 0 ]
+                                 , ( gaussian_pos == i ? COLOR_GAUSS_MARKER_ACTIVE_CURVE : COLOR_GAUSS_MARKER_INACTIVE_CURVE )
+                                 , QString( "%1" ).arg( i + 1 ) );
                gauss_add_hline ( unified_ggaussian_params[ common_size * i + 0 ], unified_ggaussian_params[ common_size * i + 1 ] );
             }
          } else {
             for ( unsigned int i = 0; i < unified_ggaussian_gaussians_size; i++ )
             {
-               gauss_add_marker( unified_ggaussian_params[ (vector<double>::size_type) common_size * i ], Qt::blue, QString( "%1" ).arg( i + 1 ) );
+               gauss_add_marker( unified_ggaussian_params[ (vector<double>::size_type) common_size * i ]
+                                 , ( gaussian_pos == i ? COLOR_GAUSS_MARKER_ACTIVE_CURVE : COLOR_GAUSS_MARKER_INACTIVE_CURVE )
+                                 , QString( "%1" ).arg( i + 1 ) );
             }
          }
       }
