@@ -1031,12 +1031,14 @@ DbgLv(1) << "EGRo: inP: calib_entr" << cal_entr;
 	    << "cb_rotor text" << cb_rotor->currentText();
    DbgLv(1) << "EGRo: inP:   calID" << rpRotor->calID << "calib" << rpRotor->calibration;
 
-   //import Data Disk
-   rpRotor->importData  = ck_disksource->isChecked();
-   le_dataDiskPath ->setText( rpRotor->importDataDisk );
-   rpRotor->importData_absorbance_t  = ck_absorbance_t->isChecked();
-   rpRotor->importData_absorbance_pa = ck_absorbance_pa->isChecked();
-   
+   //import Data Disk: only for non-PD
+   if ( !mainw-> us_prot_dev_mode )
+     {
+       rpRotor->importData  = ck_disksource->isChecked();
+       le_dataDiskPath ->setText( rpRotor->importDataDisk );
+       rpRotor->importData_absorbance_t  = ck_absorbance_t->isChecked();
+       rpRotor->importData_absorbance_pa = ck_absorbance_pa->isChecked();
+     }
 
    //Show current oper(s) & rev(s)
    te_opers_to_assign -> setText( rpRotor->operListAssign );
@@ -1533,12 +1535,14 @@ qDebug() << "NAME OF THE ROTOR IN SAVE: rot, rpRotor->rotor: " << rot << ", "  <
 
    rpRotor->exptype     = exptype;
 
-   //dataDisk
-   rpRotor->importDataDisk            = importDataPath;
-   rpRotor->importData                = ck_disksource    ->isChecked();
-   rpRotor->importData_absorbance_t   = ck_absorbance_t  ->isChecked();
-   rpRotor->importData_absorbance_pa  = ck_absorbance_pa ->isChecked();
-
+   //dataDisk: for non-PD
+   if ( !mainw-> us_prot_dev_mode )
+     {
+       rpRotor->importDataDisk            = importDataPath;
+       rpRotor->importData                = ck_disksource    ->isChecked();
+       rpRotor->importData_absorbance_t   = ck_absorbance_t  ->isChecked();
+       rpRotor->importData_absorbance_pa  = ck_absorbance_pa ->isChecked();
+     }
    
 qDebug() << "OPERATORID / INSTRUMENT / ExpType in SAVE: "
          <<  rpRotor->operID  << ", " << rpRotor->opername << " / "
@@ -3943,7 +3947,7 @@ DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
        
 	 }
      }
-   else
+   else //PD
      {
        pb_submit -> disconnect();
        connect( pb_submit,    SIGNAL( clicked()          ),
@@ -3954,6 +3958,13 @@ DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
 
        pb_submit  ->setEnabled( false );
        pb_submit  ->setEnabled( have_run && rps_differ );
+
+       //deb
+       qDebug() << "[Submitting PD]: rpRotor->importData, rpRotor->importData_absorbance_t, "
+		<< "rpRotor->importData_absorbance_pa -- "
+		<< rpRotor->importData
+		<< rpRotor->importData_absorbance_t
+		<< rpRotor->importData_absorbance_pa;
      }
 
    //[DataFromDisk] Check that channels & ranges correspond to those is protocol:

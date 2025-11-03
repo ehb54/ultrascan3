@@ -460,7 +460,7 @@ void US_ExperimentMain::accept_passed_protocol_details(  QMap < QString, QString
   //copy protocol details params
   protocol_details_passed.clear();
   protocol_details_passed = protocol_details;
-  
+
   emit close_expsetup_msg();
 }
 
