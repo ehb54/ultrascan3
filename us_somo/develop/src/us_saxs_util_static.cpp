@@ -1,6 +1,5 @@
 #include "../include/us_saxs_util.h"
 #include <QRegularExpression>
-//Added by qt3to4:
 #include <QTextStream>
 
 // note: this program uses cout and/or cerr and this should be replaced

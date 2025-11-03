@@ -2,8 +2,6 @@
 #include <QRegularExpression>
 #include "../include/us_hydrodyn_addatom.h"
 #include <list>
-#include <qregexp.h>
-//Added by qt3to4:
 #include <QTextStream>
 #include <QCloseEvent>
 #include <QGridLayout>

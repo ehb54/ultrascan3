@@ -3,8 +3,6 @@
 #include "../include/us_hydrodyn.h"
 #include "../include/us_cmdline_app.h"
 #include "../include/us_hydrodyn_saxs_ift.h"
-#include <qregexp.h>
-//Added by qt3to4:
 #include <QTextStream>
 
 // note: this program uses cout and/or cerr and this should be replaced

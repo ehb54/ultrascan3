@@ -2,8 +2,6 @@
 #include <QRegularExpression>
 #include "../include/us_hydrodyn.h"
 #include "../include/us_revision.h"
-#include "qregexp.h"
-//Added by qt3to4:
 #include <QBoxLayout>
 #include <QLabel>
 #include <QCloseEvent>

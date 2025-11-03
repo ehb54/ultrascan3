@@ -3977,7 +3977,6 @@ void US_Hydrodyn_Dad::cormap( map < QString, QString > & parameters )
          QStringList use_blanks_created;
          // US_Vector::printvector( "blanks_created_q", blanks_created_q );
          {
-            // QRegExp rx_cap( "_It_q(\\d+_\\d+)" );
             int use_decimate = parameters.count( "decimate" ) ? parameters[ "decimate" ].toInt() : 1;
             for ( int i = 0; i < (int) use_preq_blanks_created.size(); ++i ) {
                // if ( rx_cap.indexIn( use_preq_blanks_created[ i ] ) == -1 ) {

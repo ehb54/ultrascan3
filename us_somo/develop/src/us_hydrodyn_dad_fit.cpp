@@ -418,22 +418,6 @@ void US_Hydrodyn_Dad_Fit::setupGUI()
    AUTFBACK( lbl_fix_curves );
    lbl_fix_curves->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   /* old way
-   QString qs_rx = QString( "^(|(\\d+)|(\\d+(,\\d+){0,%1}))$" ).arg( dad_win->gaussians.size() / 3 - 1 );
-   cout << "qs_rx:" << qs_rx << endl;
-   QRegExp rx_fix_curves( qs_rx );
-   QRegExpValidator *rx_val_fix_curves = new QRegExpValidator( rx_fix_curves, this );
-   le_fix_curves = new mQLineEdit( this );    le_fix_curves->setObjectName( "le_fix_curves Line Edit" );
-   le_fix_curves->setText( "" );
-   le_fix_curves->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
-   le_fix_curves->setPalette( PALET_NORMAL );
-   AUTFBACK( le_fix_curves );
-   le_fix_curves->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
-   le_fix_curves->setEnabled( false );
-   le_fix_curves->setValidator( rx_val_fix_curves );
-   connect( le_fix_curves, SIGNAL( textChanged( const QString & ) ), SLOT( update_enables() ) );
-   */
-
    for ( unsigned int i = 0; i < ( unsigned int ) dad_win->gaussians.size() / gaussian_type_size; i++ )
    {
       QCheckBox *cb_tmp;

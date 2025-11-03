@@ -9,7 +9,6 @@
 // includes and defines need cleanup
 
 #include "../include/us_hydrodyn.h"
-#include <qregexp.h>
 //Added by qt3to4:
 #include <QTextStream>
 

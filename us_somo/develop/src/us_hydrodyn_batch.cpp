@@ -4,8 +4,6 @@
 #include "../include/us_revision.h"
 #include "../include/us_hydrodyn_fractal_dimension_options.h"
 
-#include <qregexp.h>
-//Added by qt3to4:
 #include <QResizeEvent>
 #include <QLabel>
 #include <QCloseEvent>

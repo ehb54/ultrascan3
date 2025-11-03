@@ -11,7 +11,6 @@
 
 // #define DEBUG_FILES
 #include "../include/us_math.h"
-#include <qregexp.h>
 
 // #define OLD_WAY_CHECK
 // #define  PI M_PI

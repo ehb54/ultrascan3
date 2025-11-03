@@ -14,9 +14,7 @@
 #include "../include/us_hydrodyn_asab1.h"
 #include "../include/us_hydrodyn_grid_atob.h"
 #include "../include/us_vvv.h"
-#include <qregexp.h>
 #include <qfont.h>
-//Added by qt3to4:
 #include <QTextStream>
 #include <stdlib.h>
 #include <sys/types.h>

@@ -15,9 +15,7 @@
 #include "../include/us_math.h"
 #include "../include/us_dirhist.h"
 #include "../include/us_revision.h"
-#include <qregexp.h>
 #include <qfont.h>
-//Added by qt3to4:
 #include <QTextStream>
 #include <QCloseEvent>
 #include <stdlib.h>

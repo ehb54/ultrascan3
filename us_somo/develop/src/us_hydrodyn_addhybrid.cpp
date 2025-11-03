@@ -1,7 +1,6 @@
 #include "../include/us3_defines.h"
 #include <QRegularExpression>
 #include "../include/us_hydrodyn_addhybrid.h"
-#include <qregexp.h>
 //Added by qt3to4:
 #include <QTextStream>
 #include <QCloseEvent>

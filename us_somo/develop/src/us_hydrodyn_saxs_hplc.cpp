@@ -1179,7 +1179,7 @@ void US_Hydrodyn_Saxs_Hplc::add_files( bool load_conc, bool from_dir ) {
       bool reorder = true;
 
       QRegularExpression rx_cap( "(\\d+)_(\\d+)(\\D|$)" );
-      // QRegExp rx_clear_nonnumeric( "^(\\d?.?\\d+)\\D" );
+      // QRegularExpression rx_clear_nonnumeric( "^(\\d?.?\\d+)\\D" );
       QRegularExpression rx_clear_nonnumeric( "^(\\d*_?\\d+)([^0-9_]|_[a-zA-Z])" );
       // rx_cap.setPatternOptions(QRegularExpression::InvertedGreedinessOption);
 
@@ -4047,7 +4047,7 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_t( QStringList files )
    list < double >      ql;
 
    QRegularExpression rx_cap( "(\\d+)_(\\d+)" );
-   // QRegExp rx_clear_nonnumeric( "^(\\d?.?\\d+)\\D" );
+   // QRegularExpression rx_clear_nonnumeric( "^(\\d?.?\\d+)\\D" );
    QRegularExpression rx_clear_nonnumeric( "^(\\d*_?\\d+)([^0-9_]|_[a-zA-Z])" );
    // rx_cap.setPatternOptions(QRegularExpression::InvertedGreedinessOption);
 

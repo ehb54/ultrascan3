@@ -144,7 +144,7 @@ class US_Multi_Column
             QStringList qsl = qs.split( QRegularExpression( is_csv ? "," : "\\s+" ), Qt::SkipEmptyParts );
             if ( !pos &&
                  qsl.size() &&
-                 qsl[ 0 ].contains( QRegularExpression( QStringLiteral( R"(^\D)" ) ) ) )
+                 qsl[ 0 ].contains( QRegularExpression( QStringLiteral( "^\\D" ) ) ) )
             {
                // take as header;
                for ( unsigned int i = 0; i < (unsigned int) qsl.size(); i++ )

@@ -4972,18 +4972,6 @@ QString US_Hydrodyn::fileNameCheck( QString *path, QString *base, QString *ext, 
             *base += "-1";
          }
       } while ( QFile::exists(*path + *base + *ext) );
-      
-      // deprecated way - REMOVE AFTER TESTING
-      // QRegExp rx("-(\\d+)$");
-      // do 
-      // {
-      //    if ( rx.indexIn(*base) != -1 ) 
-      //    {
-      //       base->replace(rx, QString("-%1").arg(rx.cap(1).toInt() + 1));
-      //    } else {
-      //       *base += "-1";
-      //    }
-      // } while ( QFile::exists(*path + *base + *ext) );
          
       return *path + *base + *ext;
    }
@@ -5071,18 +5059,6 @@ QString US_Hydrodyn::fileNameCheck2( QString *path,
          }
       } while ( QFile::exists(*path + *base + *ext) );
 
-      // deprecated way - REMOVE AFTER TESTING
-      // QRegExp rx("-(\\d+)$");
-      // do 
-      // {
-      //    if ( rx.indexIn(*base) != -1 ) 
-      //    {
-      //       base->replace(rx, QString("-%1").arg(rx.cap(1).toInt() + 1));
-      //    } else {
-      //       *base += "-1";
-      //    }
-      // } while ( QFile::exists(*path + *base + *ext) );
-         
       return *path + *base + *ext;
    }
 

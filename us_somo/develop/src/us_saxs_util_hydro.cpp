@@ -16,9 +16,7 @@
 #include "../include/us_pm.h"
 #include "../include/us_timer.h"
 
-#include <qregexp.h>
 #include <qfont.h>
-//Added by qt3to4:
 #include <QTextStream>
 #include <stdlib.h>
 #include <sys/types.h>

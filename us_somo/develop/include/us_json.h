@@ -5,7 +5,6 @@
 #include <stdlib.h>
 #include <iostream>
 #include <qstring.h>
-#include <qregexp.h>
 #include <map>
 #include <qudpsocket.h> 
 #include "us_extern.h"

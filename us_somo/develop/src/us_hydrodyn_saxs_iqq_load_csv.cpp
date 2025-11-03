@@ -2,8 +2,6 @@
 #include <QRegularExpression>
 #include "../include/us_hydrodyn_saxs_iqq_load_csv.h"
 #include "../include/us_hydrodyn.h"
-#include "qregexp.h"
-//Added by qt3to4:
 #include <QHBoxLayout>
 #include <QFrame>
 #include <QLabel>

@@ -7,8 +7,6 @@
 #include "../include/us_timer.h"
 #include "../shd_mpi/shs_use.h"
 
-#include <qregexp.h>
-
 // note: this program uses cout and/or cerr and this should be replaced
 
 static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const QString& str) { 

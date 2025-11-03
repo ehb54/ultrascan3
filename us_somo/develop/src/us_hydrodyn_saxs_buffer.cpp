@@ -1,5 +1,4 @@
 #include "../include/us3_defines.h"
-#include <QRegularExpression>
 #include "../include/us_hydrodyn.h"
 #include "../include/us_revision.h"
 #include "../include/us_hydrodyn_saxs_buffer.h"
@@ -18,6 +17,7 @@
 #include <QCloseEvent>
 #include <QGridLayout>
 #endif
+#include <QRegularExpression>
 
 // note: this program uses cout and/or cerr and this should be replaced
 
@@ -3844,116 +3844,6 @@ bool US_Hydrodyn_Saxs_Buffer::adjacent_ok( QString name )
    }
    return false;
 }
-
-// void US_Hydrodyn_Saxs_Buffer::adjacent()
-// {
-//    us_qdebug( "adjacent" );
-//    QString match_name;
-//    int     match_pos = 0;
-//    QStringList turn_on;
-
-//    disable_all();
-
-//    us_qdebug( "adjacent 0" );
-//    for ( int i = 0; i < lb_files->count(); i++ )
-//    {
-//       if ( lb_files->item( i )->isSelected() )
-//       {
-//          match_name = lb_files->item( i )->text();
-//          turn_on << match_name;
-//          match_pos = i;
-//          break;
-//       }
-//    }
-//    us_qdebug( "adjacent 1" );
-
-//    QRegExp rx;
-
-//    bool found = false;
-//    // if we have bsub
-//    if ( match_name.contains( "_bsub_a" ) )
-//    {
-//       found = true;
-//       rx.setPattern(
-//                     QString( "^%1" )
-//                     .arg( match_name )
-//                     .replace( QRegularExpression( QStringLiteral( "_bsub_a.*$" ) ), "" )
-//                     .replace( QRegularExpression( QStringLiteral( "\\d+$" ) ), "\\d+" )
-//                     + 
-//                     QString( "%1$" )
-//                     .arg( match_name )
-//                     .replace( QRegularExpression( QStringLiteral( "^.*_bsub" ) ), "_bsub" ) 
-//                     );
-//    }
-
-//    us_qdebug( "adjacent 2" );
-//    if ( !found && match_name.contains( QRegularExpression( QStringLiteral( "_cn\\d+.*$" ) ) ) )
-//    {
-//       found = true;
-//       rx.setPattern(
-//                     QString( "^%1" )
-//                     .arg( match_name )
-//                     .replace( QRegularExpression( QStringLiteral( "_cn\\d+.*$" ) ), "" )
-//                     );
-//    }
-
-//    us_qdebug( "adjacent 3" );
-//    if ( !found && match_name.contains( QRegularExpression( QStringLiteral( "\\d+$" ) ) ) )
-//    {
-//       found = true;
-//       rx.setPattern(
-//                     QString( "^%1" )
-//                     .arg( match_name )
-//                     .replace( QRegularExpression( QStringLiteral( "\\d+$" ) ), "" ) 
-//                     );
-//    }
-
-//    // cout << "rx: " << rx.pattern() << endl;
-
-//    unsigned int newly_set = 0;
-//    us_qdebug( "adjacent 4" );
-
-//    if ( found )
-//    {
-//       disable_updates = true;
-      
-//       for ( int i = match_pos - 1; i >= 0; i-- )
-//       {
-//          if ( lb_files->item( i )->text().contains( rx ) )
-//          {
-//             if ( !lb_files->item( i )->isSelected() )
-//             {
-//                lb_files->item( i)->setSelected( true );
-//                newly_set++;
-//             }
-//          }
-//       }
-      
-//       for ( int i = match_pos + 1; i < lb_files->count(); i++ )
-//       {
-//          if ( lb_files->item( i )->text().contains( rx ) )
-//          {
-//             if ( !lb_files->item( i )->isSelected() )
-//             {
-//                lb_files->item( i)->setSelected( true );
-//                newly_set++;
-//             }
-//          }
-//       }
-      
-//       if ( !newly_set )
-//       {
-//          adjacent_select( lb_files, match_name );
-//          return;
-//       }
-//       disable_updates = false;
-//       update_files();
-//    } else {
-//       adjacent_select( lb_files, match_name );
-//       return;
-//    }      
-//    update_enables();
-// }
 
 void US_Hydrodyn_Saxs_Buffer::adjacent_created()
 {

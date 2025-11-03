@@ -1,7 +1,5 @@
 #include "../include/us_file_util.h"
 #include <QRegularExpression>
-#include <qregexp.h>
-//Added by qt3to4:
 #include <QTextStream>
 
 bool US_File_Util::copy( QString from, QString to, bool overwrite, QString qsheader )

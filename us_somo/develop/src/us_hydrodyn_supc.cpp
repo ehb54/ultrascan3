@@ -12,7 +12,6 @@
 // #define DEBUG_FILES
 // #define DEBUG_EV
 #include "../include/us_math.h"
-#include <qregexp.h>
 
 // note: this program uses cout and/or cerr and this should be replaced
 

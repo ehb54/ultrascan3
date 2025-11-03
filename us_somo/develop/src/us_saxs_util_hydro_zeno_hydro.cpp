@@ -14274,14 +14274,6 @@ bool US_Saxs_Util::calc_zeno_hydro()
                         // qregularexpression way
                         QRegularExpressionMatch m = param_rx[ i ].match( param_qsl[ i ][ 0 ] );
                         QString qs = m.hasMatch() ? m.captured( param_cap_pos[ i ] ) : QString();
-                        // deprecated qregexp way 
-                        // param_rx[ i ].indexIn( param_qsl[ i ][ 0 ] );
-                        // QString qs = param_rx[ i ].cap( param_cap_pos[ i ] );
-                        
-                        // QRegExp rx( param_rx[ i ] );
-                        // rx.indexIn( param_qsl[ i ][ 0 ] );                        
-                        // QString qs = rx_m.captured( param_cap_pos[ i ] );
-
                         qs.replace( QRegularExpression( QStringLiteral( "\\(\\d+\\)" ) ), "" );
                         double qd = qs.toDouble();
                         // cout << QString( "zeno cap %1 as %2\n" ).arg( param_name[ i ] ).arg( qd );

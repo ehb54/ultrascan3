@@ -14313,17 +14313,8 @@ bool US_Hydrodyn::calc_zeno()
                      {
                      case 1 :
                         {
-                           // qregularexpression way
                            QRegularExpressionMatch m = param_rx[ i ].match( param_qsl[ i ][ 0 ] );
                            QString qs = m.hasMatch() ? m.captured( param_cap_pos[ i ] ) : QString();
-                           // deprecated qregexp way 
-                           // param_rx[ i ].indexIn( param_qsl[ i ][ 0 ] );
-                           // QString qs = param_rx[ i ].cap( param_cap_pos[ i ] );
-                           // us_qdebug( QString( "returned searching %1 returned %2" ).arg( param_qsl[ i ][ 0 ] ).arg( qs ) );
-                        
-                           // QRegExp rx( param_rx[ i ] );
-                           // rx.indexIn( param_qsl[ i ][ 0 ] );                        
-                           // QString qs = rx_m.captured( param_cap_pos[ i ] );
 
                            qs.replace( QRegularExpression( QStringLiteral( "\\(\\d+\\)" ) ), "" );
                            double qd = qs.toDouble();
