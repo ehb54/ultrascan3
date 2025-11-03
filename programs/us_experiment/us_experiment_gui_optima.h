@@ -147,6 +147,7 @@ class US_ExperGuiRotor : public US_WidgetsDialog
       void        reset_dataSource_public( void );
       void        get_chann_ranges_public( QString, QMap <QString, QStringList>& );
       void        switch_to_dataDisk_public (void );
+      void        set_dataSource_public( QMap <QString, QString>& );
    
            
       QString     getSValue( const QString );

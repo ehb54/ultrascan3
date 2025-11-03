@@ -374,9 +374,11 @@ void US_ExperimentMain::accept_passed_protocol_details(  QMap < QString, QString
 
   QString pname     = protocol_details[ "protocolName" ];
   int invID_passed  = protocol_details[ "invID_passed" ].toInt();
+  QString dataSource_pd = protocol_details[ "dataSource" ];
 
   qDebug() << "In US_Exp: Protocol Name: "     << protocol_details[ "protocolName" ];
   qDebug() << "In US_Exp: InvID: "             << protocol_details[ "invID_passed" ];
+  qDebug() << "In US_Exp: dataSource "         << protocol_details[ "dataSource" ];
   
   //Now, load passed protocol with enabling ONLY 8. AProfile && 9. Submit tab
   US_Passwd pw;
@@ -444,6 +446,10 @@ void US_ExperimentMain::accept_passed_protocol_details(  QMap < QString, QString
   
   qDebug() << "In load_protocol: currProto.investigator 2 --  " <<  currProto.investigator;
 
+  //set dataDisk flag if protocol refers dataDisk
+  if ( dataSource_pd.contains("dataDiskAUC") )
+    epanRotor->set_dataSource_public( protocol_details );
+ 
   //SET epanAProf->sdiag->loadProf TO epanAProf->sdiag->currProf
   US_AnaProfile aprof_curr_read   = *(get_aprofile());
   set_loadAProf ( aprof_curr_read );
@@ -1537,6 +1543,28 @@ void US_ExperGuiRotor::reset_dataSource_public( void )
   importDataPath = "";
   ra_data_type = false;
   ra_data_sim  = false;
+}
+
+void US_ExperGuiRotor::set_dataSource_public( QMap <QString, QString>& pd_details )
+{
+  rpRotor->importData = false;
+  rpRotor->importData_absorbance_t  = false;
+  rpRotor->importData_absorbance_pa = false;
+  ra_data_type = false;
+  ra_data_sim  = false;
+  
+  QString dataSource_pd = pd_details["dataSource"];
+  if ( dataSource_pd.contains("dataDiskAUC") ) 
+    {
+      rpRotor->importData = true;
+      if ( dataSource_pd.contains("dataDiskAUC:Absorbance"))
+	{
+	  rpRotor->importData_absorbance_t = true;
+	  ra_data_type = true;
+	}
+      if ( dataSource_pd.contains("dataDiskAUC:PseudoAbsorbance"))
+	rpRotor->importData_absorbance_pa = true;
+    }
 }
 
 void US_ExperGuiRotor::switch_to_dataDisk_public()

@@ -1987,6 +1987,9 @@ QMap< QString, QString> US_InitDialogueGui::read_autoflow_record( int autoflowID
 
 	   protocol_details[ "gmpReviewID" ]   = db->value( 25 ).toString();
 	   protocol_details[ "expType" ]       = db->value( 26 ).toString();
+
+	   protocol_details[ "dataSource" ]    = db->value( 27 ).toString();
+	   protocol_details[ "opticsFailedType" ]    = db->value( 28 ).toString();
 	 }
      }
    else
