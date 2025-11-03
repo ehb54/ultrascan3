@@ -17,7 +17,8 @@ unix:QMAKE_EXTRA_TARGETS += revision
 mac:ICON                  = ../../etc/us3-icon.icns
 
 HEADERS      += us.h            \
-                us_revision.h
+                us_revision.h   \
+                us_win_data.h
 
 SOURCES      += us.cpp          \
                 us_win_data.cpp
