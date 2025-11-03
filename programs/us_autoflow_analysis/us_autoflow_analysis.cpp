@@ -2789,7 +2789,7 @@ void US_Analysis_auto::show_overlay( QString triple_stage )
   
   dbg_level  = US_Settings::us_debug();
 
-  adv_vals[ "simpoints"  ] = "200";
+  adv_vals[ "simpoints"  ] = "500";
   adv_vals[ "bandvolume" ] = "0.015";
   adv_vals[ "parameter"  ] = "0";
   adv_vals[ "modelnbr"   ] = "0";

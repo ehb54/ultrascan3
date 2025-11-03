@@ -4213,7 +4213,7 @@ void US_ReporterGMP::simulate_triple( const QString triplesname, QString stage_m
   
   dbg_level  = US_Settings::us_debug();
 
-  adv_vals[ "simpoints"  ] = "200";
+  adv_vals[ "simpoints"  ] = "500";
   adv_vals[ "bandvolume" ] = "0.015";
   adv_vals[ "parameter"  ] = "0";
   adv_vals[ "modelnbr"   ] = "0";

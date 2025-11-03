@@ -21,7 +21,7 @@ US_SimulationParameters::US_SimulationParameters()
 
    speed_step << SpeedProfile();
    sim_speed_prof << SimSpeedProf();
-   simpoints         = 200;
+   simpoints         = 500;
    meshType          = ASTFEM;
    gridType          = MOVING;
    radial_resolution = 0.001;

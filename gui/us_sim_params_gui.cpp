@@ -274,7 +274,7 @@ US_SimParamsGui::US_SimParamsGui(
    QLabel* lb_simpoints = us_label( tr( "Radial Discretization (points):" ) );
    main->addWidget( lb_simpoints, row, 4, 1, 3 );
 
-   cnt_simpoints = us_counter( 3, 50, 10000, 200 );
+   cnt_simpoints = us_counter( 3, 50, 10000, 500 );
    cnt_simpoints->setSingleStep    ( 10 );
    cnt_simpoints->setValue( simparams.simpoints );
 
