@@ -32,6 +32,9 @@ public:
   //! \brief Public function to update the user/investigator level
   void update_user_level( void );
 
+protected:
+    void resizeEvent(QResizeEvent* event) override;
+
 private:
   US_Global  g;
   QLabel*    bigframe;

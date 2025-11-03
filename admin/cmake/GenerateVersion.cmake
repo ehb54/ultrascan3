@@ -70,7 +70,7 @@ endif()
 
 # Get current timestamps
 string(TIMESTAMP BUILD_DATE "%Y-%m-%d" UTC)
-string(TIMESTAMP BUILD_TIME "%H:%M:%S UTC" UTC)
+string(TIMESTAMP BUILD_TIME "%H:%M:%S" UTC)
 string(TIMESTAMP BUILD_TIMESTAMP "%Y%m%d%H%M%S" UTC)
 
 # Construct full version string with build number

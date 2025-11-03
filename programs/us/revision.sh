@@ -22,8 +22,8 @@ else
 fi
 
 # --- date/time ---
-NEW_BUILD_DATE=$(date -u '+%Y-%m-%d UTC')
-NEW_BUILD_TIME=$(date -u '+%H:%M:%S UTC')
+NEW_BUILD_DATE=$(date -u '+%Y-%m-%d')
+NEW_BUILD_TIME=$(date -u '+%H:%M:%S')
 
 # --- read previous values (rev2) if header exists ---
 OLD_BUILDNUM=""
