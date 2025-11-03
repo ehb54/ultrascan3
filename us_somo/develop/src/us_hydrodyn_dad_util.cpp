@@ -181,16 +181,17 @@ void US_Hydrodyn_Dad::p3d()
    {
       list < double >      ql;
       map < double, bool > used_q;
-      QRegExp rx_q( "_q(\\d+_\\d+)" );
+      QRegularExpression rx_q( "_q(\\d+_\\d+)" );
       for ( unsigned int i = 0; i < ( unsigned int ) files.size(); i++ )
       {
-         if ( rx_q.indexIn( files[ i ] ) == -1 )
+         QRegularExpressionMatch rx_q_m = rx_q.match( files[ i ] );
+         if ( !rx_q_m.hasMatch() )
          {
             editor_msg( "red", QString( us_tr( "Error: Can not find q value in file name for %1" ) ).arg( files[ i ] ) );
             update_enables();
             return;
          }
-         ql.push_back( rx_q.cap( 1 ).replace( "_", "." ).toDouble() );
+         ql.push_back( rx_q_m.captured( 1 ).replace( "_", "." ).toDouble() );
 
          if ( used_q.count( ql.back() ) )
          {
@@ -708,7 +709,7 @@ void US_Hydrodyn_Dad::adjacent()
       }
    }
 
-   QRegExp rx;
+   QRegularExpression rx;
 
    bool found = false;
    // if we have bsub
@@ -812,7 +813,7 @@ void US_Hydrodyn_Dad::adjacent_created()
       }
    }
 
-   QRegExp rx;
+   QRegularExpression rx;
 
    bool found = false;
    // if we have bsub
@@ -947,7 +948,7 @@ bool US_Hydrodyn_Dad::adjacent_select( QListWidget *lb, QString match )
       
    last_match = match;
 
-   QRegExp rx( match );
+   QRegularExpression rx( match );
    bool any_set = false;
 
    for ( int i = 0; i < lb->count(); i++ ) {
@@ -1468,7 +1469,7 @@ QStringList US_Hydrodyn_Dad::get_frames( QStringList files, QString head, QStrin
       .arg( tail )
       ;
 #endif
-   result = files.replaceInStrings( QRegExp( "^" + QRegExp::escape( head ) ), "" ).replaceInStrings( QRegExp( QRegExp::escape( tail ) + "$" ), "" );
+   result = files.replaceInStrings( QRegularExpression( "^" + QRegularExpression::escape( head ) ), "" ).replaceInStrings( QRegularExpression( QRegularExpression::escape( tail ) + "$" ), "" );
    // us_qdebug( QString( "get frames head %1 tail %2 result %3\n" )
    //         .arg( head )
    //         .arg( tail )
@@ -3434,9 +3435,10 @@ void US_Hydrodyn_Dad::cormap( map < QString, QString > & parameters )
          vector < QString > use_scale_selected_names;
 
          if ( files_are_time ) {
-            QRegExp rx_cap( "_It_q(\\d+_\\d+)" );
+            QRegularExpression rx_cap( "_It_q(\\d+_\\d+)" );
             for ( int i = 0; i < (int) use_preq_scale_selected_names.size(); ++i ) {
-               if ( rx_cap.indexIn( use_preq_scale_selected_names[ i ] ) == -1 ) {
+               QRegularExpressionMatch rx_cap_m = rx_cap.match( use_preq_scale_selected_names[ i ] );
+               if ( !rx_cap_m.hasMatch() ) {
                   // QMessageBox::warning( this
                   //                       , windowTitle() + us_tr( " : PVP Analysis" )
                   //                       , QString( us_tr( "Could not extract q value from file name %1" ) )
@@ -3450,7 +3452,7 @@ void US_Hydrodyn_Dad::cormap( map < QString, QString > & parameters )
                   scale_enables();
                   return;
                }                  
-               double qv = rx_cap.cap( 1 ).replace( "_", "." ).toDouble();
+               double qv = rx_cap_m.captured( 1 ).replace( "_", "." ).toDouble();
                // us_qdebug( QString( "baseline cormap captured %1 from %2" ).arg( qv ).arg( use_preq_scale_selected_names[ i ] ) );
                if ( qv <= cormap_maxq && qv >= cormap_minq ) {
                   use_scale_selected_names.push_back( use_preq_scale_selected_names[ i ] );
@@ -3985,7 +3987,7 @@ void US_Hydrodyn_Dad::cormap( map < QString, QString > & parameters )
                //    baseline_enables();
                //    return;
                // }                  
-               // double qv = rx_cap.cap( 1 ).replace( "_", "." ).toDouble();
+               // double qv = rx_cap_m.captured( 1 ).replace( "_", "." ).toDouble();
                // us_qdebug( QString( "qv %1 blanks_created_q[ i ] %2" ).arg( qv ).arg( blanks_created_q[ i * use_decimate ] ) );
                
                // if ( qv <= cormap_maxq ) {
@@ -4319,9 +4321,10 @@ void US_Hydrodyn_Dad::cormap( map < QString, QString > & parameters )
 
          QStringList use_baseline_selected;
          {
-            QRegExp rx_cap( "_It_q(\\d+_\\d+)" );
+            QRegularExpression rx_cap( "_It_q(\\d+_\\d+)" );
             for ( int i = 0; i < (int) use_preq_baseline_selected.size(); ++i ) {
-               if ( rx_cap.indexIn( use_preq_baseline_selected[ i ] ) == -1 ) {
+               QRegularExpressionMatch rx_cap_m = rx_cap.match( use_preq_baseline_selected[ i ] );
+               if ( !rx_cap_m.hasMatch() ) {
                   // QMessageBox::warning( this
                   //                       , windowTitle() + us_tr( " : Baseline PVP Analysis" )
                   //                       , QString( us_tr( "Could not extract q value from file name %1" ) )
@@ -4335,7 +4338,7 @@ void US_Hydrodyn_Dad::cormap( map < QString, QString > & parameters )
                   baseline_enables();
                   return;
                }                  
-               double qv = rx_cap.cap( 1 ).replace( "_", "." ).toDouble();
+               double qv = rx_cap_m.captured( 1 ).replace( "_", "." ).toDouble();
                // us_qdebug( QString( "baseline cormap captured %1 from %2" ).arg( qv ).arg( use_preq_baseline_selected[ i ] ) );
                if ( qv <= cormap_maxq &&
                     qv >= cormap_minq ) {
@@ -4773,9 +4776,10 @@ void US_Hydrodyn_Dad::cormap( map < QString, QString > & parameters )
          vector < QString > use_selected_files;
 
          if ( files_are_time ) {
-            QRegExp rx_cap( "_It_q(\\d+_\\d+)" );
+            QRegularExpression rx_cap( "_It_q(\\d+_\\d+)" );
             for ( int i = 0; i < (int) use_preq_selected_files.size(); ++i ) {
-               if ( rx_cap.indexIn( use_preq_selected_files[ i ] ) == -1 ) {
+               QRegularExpressionMatch rx_cap_m = rx_cap.match( use_preq_selected_files[ i ] );
+               if ( !rx_cap_m.hasMatch() ) {
                   // QMessageBox::warning( this
                   //                       , windowTitle() + us_tr( " : PVP Analysis" )
                   //                       , QString( us_tr( "Could not extract q value from file name %1" ) )
@@ -4789,7 +4793,7 @@ void US_Hydrodyn_Dad::cormap( map < QString, QString > & parameters )
                   update_enables();
                   return;
                }                  
-               double qv = rx_cap.cap( 1 ).replace( "_", "." ).toDouble();
+               double qv = rx_cap_m.captured( 1 ).replace( "_", "." ).toDouble();
                // us_qdebug( QString( "baseline cormap captured %1 from %2" ).arg( qv ).arg( use_preq_selected_files[ i ] ) );
                if ( qv <= cormap_maxq && qv >= cormap_minq ) {
                   use_selected_files.push_back( use_preq_selected_files[ i ] );
@@ -5146,7 +5150,7 @@ void US_Hydrodyn_Dad::bb_cm_inc()
    QString fn = QFileDialog::getSaveFileName( this , us_tr( "Choose a file name for the images" ) , QString() , "png (*.png *.PNG)" );
 
    if ( !fn.isEmpty() ) {
-      fn = fn.replace( QRegExp( ".png$", Qt::CaseInsensitive ), "" );
+      fn = fn.replace( QRegularExpression( ".png$", QRegularExpression::CaseInsensitiveOption ), "" );
    }
    
    save_parameters[ "decimate" ] = "0";

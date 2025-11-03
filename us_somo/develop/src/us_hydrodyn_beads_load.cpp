@@ -219,7 +219,7 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
          editor->setCurrentFont(new_font);
          {
             bool units_loaded = false;
-            QRegExp rx(", where x is : (\\d+)");
+            QRegularExpression rx(", where x is : (\\d+)");
             QStringList ssaxs;
             QStringList bsaxs;
             QStringList bsaxsv;
@@ -249,10 +249,11 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
                }
 
                editor->append(str);
-               if ( rx.indexIn(str) != -1 )
+               QRegularExpressionMatch m = rx.match( str );
+               if ( m.hasMatch() )
                {
                   units_loaded = true;
-                  hydro.unit = - rx.cap(1).toInt();
+                  hydro.unit = - m.captured(1).toInt();
                   display_default_differences();
                }
             }
@@ -710,7 +711,7 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
          }               
       }
 
-      QRegExp rx_model( "^MODEL\\s+(\\S+)" );
+      QRegularExpression rx_model( "^MODEL\\s+(\\S+)" );
       model_count = 0;
       model_names.clear( );
 
@@ -719,10 +720,10 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
       if (f.open(QIODevice::ReadOnly))
       {
 
-         QRegExp rx_psv( "^REMARK\\s+PSV(\\s*:|)\\s+(\\S+)", Qt::CaseInsensitive );
-         QRegExp rx_mw ( "^REMARK\\s+MW(\\s*:|)\\s+(\\S+)", Qt::CaseInsensitive );
-         QRegExp rx_unit( "^REMARK\\s+Units exponent(\\s*:|)\\s+(\\S+)", Qt::CaseInsensitive );
-         QRegExp rx_mult( "^REMARK\\s+Units conversion factor(\\s*:|)\\s+(\\S+)", Qt::CaseInsensitive );
+         QRegularExpression rx_psv( "^REMARK\\s+PSV(\\s*:|)\\s+(\\S+)", QRegularExpression::CaseInsensitiveOption );
+         QRegularExpression rx_mw ( "^REMARK\\s+MW(\\s*:|)\\s+(\\S+)", QRegularExpression::CaseInsensitiveOption );
+         QRegularExpression rx_unit( "^REMARK\\s+Units exponent(\\s*:|)\\s+(\\S+)", QRegularExpression::CaseInsensitiveOption );
+         QRegularExpression rx_mult( "^REMARK\\s+Units conversion factor(\\s*:|)\\s+(\\S+)", QRegularExpression::CaseInsensitiveOption );
          double loaded_psv = 0e0;
          double loaded_mw  = 0e0;
          unsigned int loaded_unit = 0;
@@ -734,24 +735,28 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
             do {
                QString qs = ts.readLine();
                qsl << qs;
-               if ( rx_model.indexIn( qs ) != -1 )
+               QRegularExpressionMatch rx_model_m = rx_model.match( qs );
+               if ( rx_model_m.hasMatch() )
                {
                   model_count++;
-                  model_names.push_back( rx_model.cap( 1 ) );
+                  model_names.push_back( rx_model_m.captured( 1 ) );
                }
-               if ( rx_psv.indexIn( qs ) != -1 )
+               QRegularExpressionMatch rx_psv_m = rx_psv.match( qs );
+               if ( rx_psv_m.hasMatch() ) 
                {
-                  loaded_psv = rx_psv.cap( 2 ).toDouble();
+                  loaded_psv = rx_psv_m.captured( 2 ).toDouble();
                   editor_msg( "blue", QString( us_tr( "Found PSV %1 in PDB" ) ).arg( loaded_psv ) );
                }
-               if ( rx_mw.indexIn( qs ) != -1 )
+               QRegularExpressionMatch rx_mw_m = rx_mw.match( qs );
+               if ( rx_mw_m.hasMatch() )
                {
-                  loaded_mw = rx_mw.cap( 2 ).toDouble();
+                  loaded_mw = rx_mw_m.captured( 2 ).toDouble();
                   editor_msg( "blue", QString( us_tr( "Found MW %1 in PDB" ) ).arg( loaded_mw ) );
                }
-               if ( rx_unit.indexIn( qs ) != -1 )
+               QRegularExpressionMatch rx_unit_m = rx_unit.match( qs );
+               if ( rx_unit_m.hasMatch() )
                {
-                  loaded_unit = rx_unit.cap( 2 ).toUInt();
+                  loaded_unit = rx_unit_m.captured( 2 ).toUInt();
                   editor_msg( "blue", QString( us_tr( "Found Units exponent %1 in PDB" ) ).arg( loaded_unit ) );
                   if ( loaded_unit == 10 )
                   {
@@ -762,10 +767,11 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
                      saxs_options.dummy_atom_pdbs_in_nm = false;
                   }
                }
-               if ( rx_mult.indexIn( qs ) != -1 )
+               QRegularExpressionMatch rx_mult_m = rx_mult.match( qs );
+               if ( rx_mult_m.hasMatch() )
                {
                   loaded_mult = true;
-                  unit_mult = rx_mult.cap( 2 ).toUInt();
+                  unit_mult = rx_mult_m.captured( 2 ).toUInt();
                   editor_msg( "blue", QString( us_tr( "Found Units conversion %1 in PDB" ) ).arg( unit_mult ) );
                }
             } while (!ts.atEnd());
@@ -823,7 +829,7 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
          }
 
          // find last atom number
-         QRegExp rx;
+         QRegularExpression rx;
 
          QStringList qsl_atom = qsl.filter(QRegularExpression( QStringLiteral( "^ATOM " ) ));
          QString last_atom = "";
@@ -837,7 +843,8 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
          }
 
          rx.setPattern("^ATOM\\s*(\\d+)\\s*CA");
-         if ( rx.indexIn(last_atom) ) 
+         QRegularExpressionMatch rx_m = rx.match( last_atom );
+         if ( !rx_m.hasMatch() )
          {
             editor->append("Couldn't find a last atom number in the DAMMIN/DAMMIF/DAMAVER file\n");
             f.close();
@@ -845,7 +852,7 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
          }
          
          // determine and compare bead count
-         int tmp_bead_count = rx.cap(1).toInt();
+         int tmp_bead_count = rx_m.captured(1).toInt();
          printf("read bead count %d\n", tmp_bead_count);
 
          // count atom lines
@@ -873,14 +880,17 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
          if ( dammin ) 
          {
             puts("dammin");
-            rx.setPattern( "Number of particle atoms \\.*\\s*:\\s*(\\d+)\\s*" );
-            if ( rx.indexIn(tmp) == -1 ) 
             {
-               editor->append("Error in DAMMIN file: couldn't find number of atoms in 'Number of particle atoms' line\n");
-               f.close();
-               return 1;
+               rx.setPattern( "Number of particle atoms \\.*\\s*:\\s*(\\d+)\\s*" );
+               QRegularExpressionMatch rx_m = rx.match( tmp );
+               if ( !rx_m.hasMatch() )
+               {
+                  editor->append("Error in DAMMIN file: couldn't find number of atoms in 'Number of particle atoms' line\n");
+                  f.close();
+                  return 1;
+               }
+               bead_count = rx_m.captured(1).toInt();
             }
-            bead_count = rx.cap(1).toInt();
             // editor->append(QString("DAMMIN model has %1 beads\n").arg(bead_count));
             
             do {
@@ -896,28 +906,35 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
                return 1;
             }
             
-            rx.setPattern("DAM packing radius \\.*\\s*:\\s*(\\d+\\.\\d+)\\s*");
-            
-            if ( rx.indexIn(tmp) == -1 ) 
             {
-               editor->append("Error in DAMMIN file: couldn't find radius in 'Dummy atom radius' line\n");
-               f.close();
-               return 1;
+               rx.setPattern("DAM packing radius \\.*\\s*:\\s*(\\d+\\.\\d+)\\s*");
+               QRegularExpressionMatch rx_m = rx.match( tmp );
+            
+               if ( !rx_m.hasMatch() )
+               {
+                  editor->append("Error in DAMMIN file: couldn't find radius in 'Dummy atom radius' line\n");
+                  f.close();
+                  return 1;
+               }
+               radius = rx_m.captured(1).toFloat();
             }
-            radius = rx.cap(1).toFloat();
          } 
 
          if ( dammif ) {
             puts("dammif");
-            rx.setPattern( "Dummy atoms in output phase\\s*:\\s*(\\d+)\\s*" );
-            if ( rx.indexIn(tmp) == -1 ) 
             {
-               editor->append("Error in DAMMIF file: couldn't find number of atoms in 'Dummy atoms in output phase' line\n");
-               f.close();
-               return 1;
+               rx.setPattern( "Dummy atoms in output phase\\s*:\\s*(\\d+)\\s*" );
+               QRegularExpressionMatch rx_m = rx.match( tmp );
+            
+               if ( !rx_m.hasMatch() )
+               {
+                  editor->append("Error in DAMMIF file: couldn't find number of atoms in 'Dummy atoms in output phase' line\n");
+                  f.close();
+                  return 1;
+               }
+               bead_count = rx_m.captured(1).toInt();
+               // editor->append(QString("DAMMIF model has %1 beads\n").arg(bead_count));
             }
-            bead_count = rx.cap(1).toInt();
-            // editor->append(QString("DAMMIF model has %1 beads\n").arg(bead_count));
             
             do {
                tmp = ts.readLine();
@@ -932,15 +949,18 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
                return 1;
             }
             
-            rx.setPattern("Dummy atom radius\\s *:\\s*(\\d+\\.\\d+)\\s*");
-            
-            if ( rx.indexIn(tmp) == -1 ) 
             {
-               editor->append("Error in DAMMIF file: couldn't find radius in 'Dummy atom radius' line\n");
-               f.close();
-               return 1;
+               rx.setPattern("Dummy atom radius\\s *:\\s*(\\d+\\.\\d+)\\s*");
+               QRegularExpressionMatch rx_m = rx.match( tmp );
+            
+               if ( !rx_m.hasMatch() )
+               {
+                  editor->append("Error in DAMMIF file: couldn't find radius in 'Dummy atom radius' line\n");
+                  f.close();
+                  return 1;
+               }
+               radius = rx_m.captured(1).toFloat();
             }
-            radius = rx.cap(1).toFloat();
          }
 
          if ( damaver ) {
@@ -959,13 +979,14 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
             }
             
             rx.setPattern("DAM packing radius \\.*\\s*:\\s*(\\d+\\.\\d+)\\s*");
+            QRegularExpressionMatch rx_m = rx.match( tmp );
             
-            if ( rx.indexIn(tmp) == -1 ) 
+            if ( !rx_m.hasMatch() )
             {
                editor->append("Error in DAMAVER file: couldn't find radius in 'DAM packing radius' line\n");
                return 1;
             }
-            radius = rx.cap(1).toFloat();
+            radius = rx_m.captured(1).toFloat();
          }
 
          if ( damfilt || damfilt5 ) {
@@ -984,13 +1005,14 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
             }
             
             rx.setPattern("atomic radius \\.*\\s*:\\s*(\\d+\\.\\d+)\\s*");
+            QRegularExpressionMatch rx_m = rx.match( tmp.toLower() );
             
-            if ( rx.indexIn(tmp.toLower()) == -1 ) 
+            if ( !rx_m.hasMatch() )
             {
                editor->append("Error in DAMFILT file: couldn't find radius in 'Atomic radius' line\n");
                return 1;
             }
-            radius = rx.cap(1).toFloat();
+            radius = rx_m.captured(1).toFloat();
          }
 
          if ( em2dam ) {
@@ -1009,13 +1031,14 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
             }
             
             rx.setPattern("dummy atom radius \\.*\\s*:\\s*(\\d+\\.\\d+)\\s*");
+            QRegularExpressionMatch rx_m = rx.match( tmp.toLower() );
             
-            if ( rx.indexIn(tmp.toLower()) == -1 ) 
+            if ( !rx_m.hasMatch() )
             {
                editor->append("Error EM2DAM DAMFILT file: couldn't find radius in 'Dummy atom radius' line\n");
                return 1;
             }
-            radius = rx.cap(1).toFloat();
+            radius = rx_m.captured(1).toFloat();
          }
 
          if ( saxs_options.dummy_atom_pdbs_in_nm )

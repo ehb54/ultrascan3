@@ -1064,7 +1064,7 @@ void US_Hydrodyn_Cluster::create_pkg()
    
    QStringList use_selected_files;
 
-   QRegExp rx_dmd( "^(.*) _dmd(\\d+)$" );
+   QRegularExpression rx_dmd( "^(.*) _dmd(\\d+)$" );
 
    for ( unsigned int i = 0; i < (unsigned int)selected_files.size(); i++ )
    {
@@ -1110,10 +1110,11 @@ void US_Hydrodyn_Cluster::create_pkg()
 
       QString name    = use_selected_files[ i ];
       int     dmd_pos = -1;
-      if ( rx_dmd.indexIn( name ) != -1 )
+      QRegularExpressionMatch rx_dmd_m = rx_dmd.match( name );
+      if ( rx_dmd_m.hasMatch() )
       {
-         name    = rx_dmd.cap( 1 );
-         dmd_pos = rx_dmd.cap( 2 ).toInt();
+         name    = rx_dmd_m.captured(1);
+         dmd_pos = rx_dmd_m.captured(2).toInt();
       }
 
       QString use_file_name   = QFileInfo( name ).fileName();
@@ -2668,9 +2669,9 @@ bool US_Hydrodyn_Cluster::read_config()
    cluster_config.clear( );
    cluster_systems.clear( );
    cluster_stage_to_system.clear( );
-   QRegExp rx_blank  ( "^\\s*$" );
-   QRegExp rx_comment( "#.*$" );
-   QRegExp rx_valid  ( 
+   QRegularExpression rx_blank  ( "^\\s*$" );
+   QRegularExpression rx_comment( "#.*$" );
+   QRegularExpression rx_valid  ( 
                       "^("
                       "userid|"
                       "userpw|"
@@ -2690,7 +2691,7 @@ bool US_Hydrodyn_Cluster::read_config()
                       ")$"
                       );
 
-   QRegExp rx_req_arg  ( 
+   QRegularExpression rx_req_arg  ( 
                         "^("
                         "server|"
                         "manage|"
@@ -2706,7 +2707,7 @@ bool US_Hydrodyn_Cluster::read_config()
                         "ftp"
                         ")$"
                          );
-   QRegExp rx_config ( 
+   QRegularExpression rx_config ( 
 
                       "^("
                       "userid|"
@@ -2717,7 +2718,7 @@ bool US_Hydrodyn_Cluster::read_config()
                       ")$"
                       );
 
-   QRegExp rx_systems( 
+   QRegularExpression rx_systems( 
                       "^("
                       "type|"
                       "corespernode|"
@@ -2754,7 +2755,8 @@ bool US_Hydrodyn_Cluster::read_config()
 
       QString option = qsl[ 0 ].toLower();
 
-      if ( rx_valid.indexIn( option ) == -1 )
+      QRegularExpressionMatch rx_valid_m = rx_valid.match( option );
+      if ( !rx_valid_m.hasMatch() )
       {
          errormsg = QString( "Error reading %1 line %2 : Unrecognized token %3" )
             .arg( configfile )
@@ -2763,7 +2765,8 @@ bool US_Hydrodyn_Cluster::read_config()
          return corrupt_config();
       }
 
-      if ( rx_req_arg.indexIn( option ) != -1 && qsl.size() < 2 )
+      QRegularExpressionMatch rx_req_arg_m = rx_req_arg.match( option );
+      if ( rx_req_arg_m.hasMatch() && qsl.size() < 2 )
       {
          errormsg = QString( "Error reading %1 line %2 : Missing argument " )
             .arg( configfile )
@@ -2777,7 +2780,8 @@ bool US_Hydrodyn_Cluster::read_config()
          continue;
       }
 
-      if ( rx_config.indexIn( option ) != -1 )
+      QRegularExpressionMatch rx_config_m = rx_config.match( option );
+      if ( rx_config_m.hasMatch() )
       {
          cluster_config[ option ] = qsl[ 0 ];
          continue;
@@ -2801,7 +2805,8 @@ bool US_Hydrodyn_Cluster::read_config()
          continue;
       }
 
-      if ( rx_systems.indexIn( option ) != -1 )
+      QRegularExpressionMatch rx_systems_m = rx_systems.match( option );
+      if ( rx_systems_m.hasMatch() )
       {
          if ( last_system.isEmpty() )
          {
@@ -4741,19 +4746,20 @@ bool US_Hydrodyn_Cluster::additional_processing(
             double mult = (*cluster_additional_methods_options_selected)[ method ][ "bestexpand" ].toDouble();
             editor_msg( "dark blue", QString( us_tr( "Radii will be multiplied by %1" ) ).arg( mult ) );
             QStringList my_qsl_radii = ( ( US_Hydrodyn * ) us_hydrodyn)->msroll_radii;
-            QRegExp rx( "(^\\d+) (\\S+) (\\S+) (\\S+)" );
+            QRegularExpression rx( "(^\\d+) (\\S+) (\\S+) (\\S+)" );
             for ( int i = 0; i < (int) my_qsl_radii.size(); ++i )
             {
-               if ( rx.indexIn( my_qsl_radii[ i ] ) == -1 )
+               QRegularExpressionMatch rx_m = rx.match( my_qsl_radii[ i ] );
+               if ( !rx_m.hasMatch() )
                {
                   editor_msg( "red", us_tr( "radii multiplication failed" ) );
                   return false;
                } else {
                   my_qsl_radii[ i ] = QString( "%1 %2 %3 %4\n" )
-                     .arg( rx.cap( 1 ) )
-                     .arg( rx.cap( 2 ).toDouble() * mult )
-                     .arg( rx.cap( 3 ) )
-                     .arg( rx.cap( 4 ) );
+                     .arg( rx_m.captured( 1 ) )
+                     .arg( rx_m.captured( 2 ).toDouble() * mult )
+                     .arg( rx_m.captured( 3 ) )
+                     .arg( rx_m.captured( 4 ) );
                }
             }
             my_msroll_radii = my_qsl_radii.join( "" );
@@ -4763,8 +4769,9 @@ bool US_Hydrodyn_Cluster::additional_processing(
                (*cluster_additional_methods_options_selected)[ method ].count( "bestbestwatr" ) )
          {
             {
-               QRegExp rx( " (\\S+) (\\S)+ WATOW" );
-               if ( rx.indexIn( my_msroll_radii ) != -1 )
+               QRegularExpression rx( " (\\S+) (\\S)+ WATOW" );
+               QRegularExpressionMatch rx_m = rx.match( my_msroll_radii );
+               if ( rx_m.hasMatch() )
                {
                   my_msroll_radii.replace( rx, QString( " %1 %2 WATOW" )
                                            .arg( (*cluster_additional_methods_options_selected)[ method ][ "bestbestwatr" ] )
@@ -4773,8 +4780,9 @@ bool US_Hydrodyn_Cluster::additional_processing(
                }
             }
             {
-               QRegExp rx( " (\\S+) (\\S)+ SWHOW" );
-               if ( rx.indexIn( my_msroll_radii ) != -1 )
+               QRegularExpression rx( " (\\S+) (\\S)+ SWHOW" );
+               QRegularExpressionMatch rx_m = rx.match( my_msroll_radii );
+               if ( rx_m.hasMatch() )
                {
                   my_msroll_radii.replace( rx, QString( " %1 %2 SWHOW" )
                                            .arg( (*cluster_additional_methods_options_selected)[ method ][ "bestbestwatr" ] )

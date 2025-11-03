@@ -809,7 +809,7 @@ void US_Hydrodyn::save_pdb_csv( csv &csv1 )
       return;
    }
 
-   if ( !filename.contains(QRegExp(".pdc$", Qt::CaseInsensitive )) )
+   if ( !filename.contains(QRegularExpression(".pdc$", QRegularExpression::CaseInsensitiveOption )) )
    {
       filename += ".pdc";
    }

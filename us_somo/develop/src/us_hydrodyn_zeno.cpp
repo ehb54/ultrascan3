@@ -14323,7 +14323,7 @@ bool US_Hydrodyn::calc_zeno()
                         
                            // QRegExp rx( param_rx[ i ] );
                            // rx.indexIn( param_qsl[ i ][ 0 ] );                        
-                           // QString qs = rx.cap( param_cap_pos[ i ] );
+                           // QString qs = rx_m.captured( param_cap_pos[ i ] );
 
                            qs.replace( QRegularExpression( QStringLiteral( "\\(\\d+\\)" ) ), "" );
                            double qd = qs.toDouble();

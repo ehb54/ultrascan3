@@ -1,5 +1,4 @@
 // (this) us_hydrodyn.cpp contains class creation & gui connected functions
-#include <QRegularExpression>
 // us_hydrodyn_core.cpp contains the main computational routines
 // us_hydrodyn_bd_core.cpp contains the main computational routines for brownian dynamic browflex computations
 // us_hydrodyn_anaflex_core.cpp contains the main computational routines for brownian dynamic (anaflex) computations
@@ -27,7 +26,6 @@
 #include "../include/us_ffd.h"
 #include "../include/us_hydrodyn_vdw_overlap.h"
 // #include "../include/us_hydrodyn_saxs_hplc_options.h"
-#include <qregexp.h>
 #include <qfont.h>
 //Added by qt3to4:
 #include <QBoxLayout>
@@ -42,6 +40,8 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <qtimer.h>
+#include <QRegularExpression>
+#include <QRegularExpressionMatch>
 
 // #define NO_BD
 
@@ -4959,16 +4959,31 @@ QString US_Hydrodyn::fileNameCheck( QString *path, QString *base, QString *ext, 
    if ( mode == 1 )
    {
       // split filename into pieces, do increment until !exists
-      QRegExp rx("-(\\d+)$");
-      do 
+      QRegularExpression rx("-(\\d+)$");
+      do
       {
-         if ( rx.indexIn(*base) != -1 ) 
+         QRegularExpressionMatch m = rx.match(*base);
+         if ( m.hasMatch() )
          {
-            base->replace(rx, QString("-%1").arg(rx.cap(1).toInt() + 1));
+            const int n = m.captured(1).toInt();
+            base->replace(m.capturedStart(), m.capturedLength(),
+                          QString("-%1").arg(n + 1));
          } else {
             *base += "-1";
          }
       } while ( QFile::exists(*path + *base + *ext) );
+      
+      // deprecated way - REMOVE AFTER TESTING
+      // QRegExp rx("-(\\d+)$");
+      // do 
+      // {
+      //    if ( rx.indexIn(*base) != -1 ) 
+      //    {
+      //       base->replace(rx, QString("-%1").arg(rx.cap(1).toInt() + 1));
+      //    } else {
+      //       *base += "-1";
+      //    }
+      // } while ( QFile::exists(*path + *base + *ext) );
          
       return *path + *base + *ext;
    }
@@ -5042,16 +5057,31 @@ QString US_Hydrodyn::fileNameCheck2( QString *path,
    if ( mode == 1 )
    {
       // split filename into pieces, do increment until !exists
-      QRegExp rx("-(\\d+)$");
-      do 
+      QRegularExpression rx(QStringLiteral("-(\\d+)$"));
+      do
       {
-         if ( rx.indexIn(*base) != -1 ) 
+         QRegularExpressionMatch m = rx.match(*base);
+         if ( m.hasMatch() )
          {
-            base->replace(rx, QString("-%1").arg(rx.cap(1).toInt() + 1));
+            const int n = m.captured(1).toInt();
+            base->replace(m.capturedStart(), m.capturedLength(),
+                          QStringLiteral("-%1").arg(n + 1));
          } else {
-            *base += "-1";
+            *base += QStringLiteral("-1");
          }
       } while ( QFile::exists(*path + *base + *ext) );
+
+      // deprecated way - REMOVE AFTER TESTING
+      // QRegExp rx("-(\\d+)$");
+      // do 
+      // {
+      //    if ( rx.indexIn(*base) != -1 ) 
+      //    {
+      //       base->replace(rx, QString("-%1").arg(rx.cap(1).toInt() + 1));
+      //    } else {
+      //       *base += "-1";
+      //    }
+      // } while ( QFile::exists(*path + *base + *ext) );
          
       return *path + *base + *ext;
    }

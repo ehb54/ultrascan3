@@ -619,10 +619,11 @@ bool US_Hydrodyn_Cluster_Submit::submit_url_body( QString file, QString &url, QS
    unsigned int job_count = ( unsigned int ) tar_list.size() - common_count - 1;
    
    {
-      QRegExp rx( "^(bfnb|bfnbpm|oned|best)_p(\\d+)_" );
-      if ( rx.indexIn( file ) != -1 )
+      QRegularExpression rx( "^(bfnb|bfnbpm|oned|best)_p(\\d+)_" );
+      QRegularExpressionMatch rx_m = rx.match( file );
+      if ( rx_m.hasMatch() )
       {
-         job_count = rx.cap( 2 ).toUInt();
+         job_count = rx_m.captured(2).toUInt();
          cout << QString( "host count, %1\n" ).arg( job_count );
          if ( job_count < 2 )
          {

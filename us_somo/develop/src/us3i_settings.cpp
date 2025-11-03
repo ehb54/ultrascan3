@@ -1,5 +1,4 @@
 #include "us3i_settings.h"
-#include <QRegularExpression>
 #include "us3i_defines.h"
 
 // Programs
@@ -99,7 +98,7 @@ QString US3i_Settings::etcDir( void )
 // Base to application directory
 QString US3i_Settings::appBaseDir( void )
 {
-   QString base = qApp->applicationDirPath().remove( QRegularExpression( QStringLiteral( "/bin$" ) ) );
+   QString base = qApp->applicationDirPath().remove( QRegularExpression( "/bin$" ) );
 
    if ( base.contains( ".app/Contents" ) )
    {  // For Mac, move up path to where ./bin exists

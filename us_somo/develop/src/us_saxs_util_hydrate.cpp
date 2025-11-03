@@ -315,7 +315,7 @@ void US_Saxs_Util::build_to_hydrate()
    }
 
    // pass 2 add side chain to to_hydrate map
-   QRegExp rx_main_chain("^(N|O)$");
+   QRegularExpression rx_main_chain("^(N|O)$");
 
    for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) {
       for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) {
@@ -328,7 +328,8 @@ void US_Saxs_Util::build_to_hydrate()
             .arg( this_atom->resSeq )
             .arg( this_atom->chainID );
 
-         if ( rx_main_chain.indexIn( this_atom->resName ) == -1 
+         QRegularExpressionMatch rx_main_chain_m = rx_main_chain.match( this_atom->resName );
+         if ( !rx_main_chain_m.hasMatch() 
               && exposed_sc.count( mapkey )
               && rotamers.count( this_atom->resName )
               )
@@ -410,18 +411,19 @@ bool US_Saxs_Util::compute_to_hydrate_dihedrals()
    vector < point > p(4);
    float dihedral;
 
-   QRegExp rx_expand_mapkey("^(.+)~(.+)~(.*)$");
+   QRegularExpression rx_expand_mapkey("^(.+)~(.+)~(.*)$");
 
    for (  map < QString, map < QString, point > >::iterator it = to_hydrate.begin();
           it != to_hydrate.end();
           it++ )
    {
-      if ( rx_expand_mapkey.indexIn( it->first ) == -1 )
+      QRegularExpressionMatch rx_expand_mapkey_m = rx_expand_mapkey.match( it->first );
+      if ( !rx_expand_mapkey_m.hasMatch() )
       {
          errormsg = QString( "Internal error: could not expand mapkey %1" ).arg( it->first );
          return false;
       }
-      QString resName = rx_expand_mapkey.cap( 1 );
+      QString resName = rx_expand_mapkey_m.captured( 1 );
       // check dihedrals for this residue
       if ( !dihedral_atoms.count( resName ) )
       {
@@ -650,10 +652,10 @@ bool US_Saxs_Util::load_rotamer( QString filename )
 
    f.close();
 
-   QRegExp rx_whitespace("\\s+");
-   QRegExp rx_skip("^(#|\\s*$)");
-   QRegExp rx_main_chain("^(N|O)$");
-   QRegExp rx_atom("^ATOM");
+   QRegularExpression rx_whitespace("\\s+");
+   QRegularExpression rx_skip("^(#|\\s*$)");
+   QRegularExpression rx_main_chain("^(N|O)$");
+   QRegularExpression rx_atom("^ATOM");
 
    bool in_rotamer = false;
    bool in_rotamer_waters = false;
@@ -662,7 +664,8 @@ bool US_Saxs_Util::load_rotamer( QString filename )
 
    for ( unsigned int i = 0; i < (unsigned int) qsl.size(); i++ )
    {
-      if ( rx_skip.indexIn( qsl[ i ] ) != -1 )
+      QRegularExpressionMatch rx_skip_m = rx_skip.match( qsl[ i ] );
+      if ( rx_skip_m.hasMatch() )
       {
          continue;
       }
@@ -1248,8 +1251,9 @@ bool US_Saxs_Util::load_rotamer( QString filename )
          continue;
       }
       
+      QRegularExpressionMatch rx_main_chain_m = rx_main_chain.match( qsl_line[ 2 ] );
       if ( !in_rotamer_waters &&
-           rx_main_chain.indexIn( qsl_line[ 2 ] ) != -1 )
+           rx_main_chain_m.hasMatch() )
       {
          // skip main chain 
          continue;
@@ -1562,19 +1566,20 @@ bool US_Saxs_Util::compute_best_fit_rotamer()
 {
    best_fit_rotamer.clear( );
 
-   QRegExp rx_expand_mapkey("^(.+)~(.+)~(.*)$");
+   QRegularExpression rx_expand_mapkey("^(.+)~(.+)~(.*)$");
 
    // go through the computed dihedrals, compute sum of abs differences, choose best one
    for ( map < QString, vector < float > >::iterator it = to_hydrate_dihedrals.begin();
          it != to_hydrate_dihedrals.end();
          it++ )
    {
-      if ( rx_expand_mapkey.indexIn( it->first ) == -1 )
+      QRegularExpressionMatch rx_expand_mapkey_m = rx_expand_mapkey.match( it->first );
+      if ( !rx_expand_mapkey_m.hasMatch() )
       {
          errormsg = QString( "Internal error: could not expand mapkey %1" ).arg( it->first );
          return false;
       }
-      QString resName = rx_expand_mapkey.cap( 1 );
+      QString resName = rx_expand_mapkey_m.captured( 1 );
       // check dihedrals for this residue
       if ( !rotamers.count( resName ) )
       {
@@ -1638,18 +1643,19 @@ bool US_Saxs_Util::setup_pointmap_rotamers()
 {
    pointmap_rotamers.clear( );
 
-   QRegExp rx_expand_mapkey("^(.+)~(.+)~(.*)$");
+   QRegularExpression rx_expand_mapkey("^(.+)~(.+)~(.*)$");
 
    for ( map < QString, map < QString, point > >::iterator it = to_hydrate_pointmaps.begin();
          it != to_hydrate_pointmaps.end();
          it++ )
    {
-      if ( rx_expand_mapkey.indexIn( it->first ) == -1 )
+      QRegularExpressionMatch rx_expand_mapkey_m = rx_expand_mapkey.match( it->first );
+      if ( !rx_expand_mapkey_m.hasMatch() )
       {
          errormsg = QString( "Internal error: could not expand mapkey %1" ).arg( it->first );
          return false;
       }
-      QString resName = rx_expand_mapkey.cap( 1 );
+      QString resName = rx_expand_mapkey_m.captured( 1 );
       // for each entry in pointmap_atoms_ref_residue
       if ( !pointmap_atoms_ref_residue.count( resName ) )
       {
@@ -1846,7 +1852,7 @@ bool US_Saxs_Util::compute_waters_to_add()
    waters_to_add.clear( );
    waters_source.clear( );
 
-   QRegExp rx_expand_mapkey("^(.+)~(.+)~(.*)$");
+   QRegularExpression rx_expand_mapkey("^(.+)~(.+)~(.*)$");
 
    for ( map < QString, rotamer >::iterator it = best_fit_rotamer.begin();
          it != best_fit_rotamer.end();
@@ -1944,12 +1950,13 @@ bool US_Saxs_Util::compute_waters_to_add()
       }
 
       // add a waters for each pointmap for this residue
-      if ( rx_expand_mapkey.indexIn( it->first ) == -1 )
+      QRegularExpressionMatch rx_expand_mapkey_m = rx_expand_mapkey.match( it->first );
+      if ( !rx_expand_mapkey_m.hasMatch() )
       {
          errormsg = QString( "Internal error: could not expand mapkey %1" ).arg( it->first );
          return false;
       }
-      QString resName = rx_expand_mapkey.cap( 1 );
+      QString resName = rx_expand_mapkey_m.captured( 1 );
       if ( !pointmap_atoms.count( resName ) ||
            !pointmap_atoms_dest.count( resName ) ||
            !pointmap_atoms_ref_residue.count( resName ) )
@@ -3207,7 +3214,7 @@ bool US_Saxs_Util::create_beads()
    // #define DEBUG_MM
    get_atom_map(&model_vector[current_model]);
 
-   QRegExp count_hydrogens("H(\\d)");
+   QRegularExpression count_hydrogens("H(\\d)");
 
    for (unsigned int j = 0; j < model_vector[current_model].molecule.size(); j++)
    {
@@ -3455,9 +3462,10 @@ bool US_Saxs_Util::create_beads()
                               this_atom->saxs_name = saxs_util->hybrid_map[hybrid_name].saxs_name; 
                               this_atom->hybrid_name = hybrid_name;
                               this_atom->hydrogens = 0;
-                              if ( count_hydrogens.indexIn(hybrid_name) != -1 )
+                              QRegularExpressionMatch count_hydrogens_m = count_hydrogens.match(hybrid_name);
+                              if ( count_hydrogens_m.hasMatch() )
                               {
-                                 this_atom->hydrogens = count_hydrogens.cap(1).toInt();
+                                 this_atom->hydrogens = count_hydrogens_m.captured(1).toInt();
                               }
                               this_atom->saxs_excl_vol = saxs_util->atom_map[this_atom->name + "~" + hybrid_name].saxs_excl_vol;
                               if ( !saxs_util->saxs_map.count(saxs_util->hybrid_map[hybrid_name].saxs_name) )
@@ -5300,7 +5308,7 @@ bool US_Saxs_Util::compute_waters_to_add_alt()
    waters_to_add.clear( );
    waters_source.clear( );
 
-   QRegExp rx_expand_mapkey("^(.+)~(.+)~(.*)$");
+   QRegularExpression rx_expand_mapkey("^(.+)~(.+)~(.*)$");
 
    // phase zero: build up list in ASA order and process in that order potentially
    // doing any type of pointmap/best fit etc.
@@ -5564,12 +5572,13 @@ bool US_Saxs_Util::compute_waters_to_add_alt()
          }
 
          // add waters for each pointmap for this residue
-         if ( rx_expand_mapkey.indexIn( this_residue ) == -1 )
+         QRegularExpressionMatch rx_expand_mapkey_m = rx_expand_mapkey.match( this_residue );
+         if ( !rx_expand_mapkey_m.hasMatch() )
          {
             errormsg = QString( "Internal error: could not expand mapkey %1" ).arg( this_residue );
             return false;
          }
-         QString resName = rx_expand_mapkey.cap( 1 );
+         QString resName = rx_expand_mapkey_m.captured( 1 );
          if ( !pointmap_atoms.count( resName ) ||
               !pointmap_atoms_dest.count( resName ) ||
               !pointmap_atoms_ref_residue.count( resName ) )
@@ -5605,13 +5614,14 @@ bool US_Saxs_Util::compute_waters_to_add_alt()
             {
                // multiple rotated rotamers for pointmap
 
-               if ( rx_expand_mapkey.indexIn( this_residue ) == -1 )
+               QRegularExpressionMatch rx_expand_mapkey_m = rx_expand_mapkey.match( this_residue );
+               if ( !rx_expand_mapkey_m.hasMatch() )
                {
                   errormsg = QString( "Internal error: could not expand mapkey %1" ).arg( this_residue );
                   return false;
                }
 
-               QString resName = rx_expand_mapkey.cap( 1 );
+               QString resName = rx_expand_mapkey_m.captured( 1 );
 
                if ( !pointmap_atoms.count( resName ) ||
                     !pointmap_atoms_dest.count( resName ) ||

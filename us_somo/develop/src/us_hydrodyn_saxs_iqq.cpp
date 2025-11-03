@@ -292,7 +292,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
    pb_plot_saxs_sans->setEnabled(false);
    pb_plot_pr->setEnabled(false);
    progress_saxs->reset();
-   QRegExp count_hydrogens("H(\\d)");
+   QRegularExpression count_hydrogens("H(\\d)");
 
    if ( !compute_scale_excl_vol() )
    {
@@ -434,9 +434,10 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
             new_atom.saxs_name = hybrid_map[hybrid_name].saxs_name; 
             new_atom.hybrid_name = hybrid_name;
             new_atom.hydrogens = 0;
-            if ( count_hydrogens.indexIn(hybrid_name) != -1 )
+            QRegularExpressionMatch count_hydrogens_m = count_hydrogens.match(hybrid_name);
+            if ( count_hydrogens_m.hasMatch() )
             {
-               new_atom.hydrogens = count_hydrogens.cap(1).toInt();
+               new_atom.hydrogens = count_hydrogens_m.captured(1).toInt();
             }
             // cout << QString("in %1 hydrogens %2\n").arg( hybrid_name ).arg( new_atom.hydrogens );
             
@@ -1470,7 +1471,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
    pb_plot_saxs_sans->setEnabled(false);
    pb_plot_pr->setEnabled(false);
    progress_saxs->reset();
-   QRegExp count_hydrogens("H(\\d)");
+   QRegularExpression count_hydrogens("H(\\d)");
 
    if ( our_saxs_options->iqq_use_atomic_ff )
    {
@@ -1686,10 +1687,11 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
             new_atom.saxs_name = hybrid_map[hybrid_name].saxs_name; 
             new_atom.hybrid_name = hybrid_name;
             new_atom.hydrogens = 0;
+            QRegularExpressionMatch count_hydrogens_m = count_hydrogens.match(hybrid_name);
             if ( !our_saxs_options->iqq_use_atomic_ff &&
-                 count_hydrogens.indexIn(hybrid_name) != -1 )
+                 count_hydrogens_m.hasMatch() )
             {
-               new_atom.hydrogens = count_hydrogens.cap(1).toInt();
+               new_atom.hydrogens = count_hydrogens_m.captured(1).toInt();
             }
             // cout << QString("in %1 hydrogens %2\n").arg( hybrid_name ).arg( new_atom.hydrogens );
 
@@ -2527,7 +2529,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
    pb_plot_saxs_sans->setEnabled(false);
    pb_plot_pr->setEnabled(false);
    progress_saxs->reset();
-   QRegExp count_hydrogens("H(\\d)");
+   QRegularExpression count_hydrogens("H(\\d)");
 
    if ( !compute_scale_excl_vol() )
    {
@@ -2703,9 +2705,10 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
             new_atom.saxs_name = hybrid_map[hybrid_name].saxs_name; 
             new_atom.hybrid_name = hybrid_name;
             new_atom.hydrogens = 0;
-            if ( count_hydrogens.indexIn(hybrid_name) != -1 )
+            QRegularExpressionMatch count_hydrogens_m = count_hydrogens.match(hybrid_name);
+            if ( count_hydrogens_m.hasMatch() )
             {
-               new_atom.hydrogens = count_hydrogens.cap(1).toInt();
+               new_atom.hydrogens = count_hydrogens_m.captured(1).toInt();
             }
             // cout << QString("in %1 hydrogens %2\n").arg( hybrid_name ).arg( new_atom.hydrogens );
 
@@ -3536,7 +3539,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
 void US_Hydrodyn_Saxs::set_scaling_target( QString &scaling_target )
 {
    if ( !our_saxs_options->iqq_default_scaling_target.isEmpty() &&
-        qsl_plotted_iq_names.filter(QRegExp(QString("^%1$").arg(our_saxs_options->iqq_default_scaling_target))).size() )
+        qsl_plotted_iq_names.filter(QRegularExpression(QString("^%1$").arg(our_saxs_options->iqq_default_scaling_target))).size() )
    {
       scaling_target = our_saxs_options->iqq_default_scaling_target;
    } else {
@@ -3785,8 +3788,8 @@ bool US_Hydrodyn_Saxs::load_ff_table( QString filename )
    
    unsigned int line = 0;
 
-   QRegExp rx_blank  ( "^\\s*$" );
-   QRegExp rx_comment( "#.*$" );
+   QRegularExpression rx_blank  ( "^\\s*$" );
+   QRegularExpression rx_comment( "#.*$" );
 
    while ( !ts.atEnd() )
    {

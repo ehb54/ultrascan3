@@ -689,21 +689,23 @@ vector < QStringList > US_Hydrodyn_Pdb_Tool::separate_models( csv &ref_csv )
 
    QStringList qsl_pdb = csv_to_pdb_qsl( ref_csv );
 
-   QRegExp rx_model ( "^MODEL"  );
-   QRegExp rx_endmdl( "^ENDMDL" );
-   QRegExp rx_end   ( "^END" );
-   QRegExp rx_skip  ( "^(MODEL|ENDMDL|HEADER|REMARK)"  );
+   QRegularExpression rx_model ( "^MODEL"  );
+   QRegularExpression rx_endmdl( "^ENDMDL" );
+   QRegularExpression rx_end   ( "^END" );
+   QRegularExpression rx_skip  ( "^(MODEL|ENDMDL|HEADER|REMARK)"  );
 
    QStringList qsl_model;
 
    for ( int i = 0; i < (int) qsl_pdb.size(); i++ )
    {
-      if ( rx_model.indexIn( qsl_pdb[ i ] ) != -1 )
+      QRegularExpressionMatch rx_model_m = rx_model.match( qsl_pdb[ i ] );
+      if ( rx_model_m.hasMatch() )
       {
          // new model line
          if ( qsl_model.size() )
          {
-            if ( rx_end.indexIn( qsl_model.back() ) == -1 )
+            QRegularExpressionMatch rx_end_m = rx_end.match( qsl_model.back() );
+            if ( !rx_end_m.hasMatch() )
             {
                qsl_model << "END\n";
             }
@@ -711,14 +713,16 @@ vector < QStringList > US_Hydrodyn_Pdb_Tool::separate_models( csv &ref_csv )
             qsl_model.clear( );
          }
       }
-      if ( rx_skip.indexIn( qsl_pdb[ i ] ) == -1 )
+      QRegularExpressionMatch rx_skip_m = rx_skip.match( qsl_pdb[ i ] );
+      if ( !rx_skip_m.hasMatch() )
       {
          qsl_model.push_back( qsl_pdb[ i ] );
       }
    }
    if ( qsl_model.size() )
    {
-      if ( rx_end.indexIn( qsl_model.back() ) == -1 )
+      QRegularExpressionMatch rx_end_m = rx_end.match( qsl_model.back() );
+      if ( !rx_end_m.hasMatch() )
       {
          qsl_model << "END\n";
       }
@@ -813,14 +817,15 @@ void US_Hydrodyn_Pdb_Tool::sel( QTreeWidget *lv )
    QStringList sels = (text ).split( "," , Qt::SkipEmptyParts );
    set < int > to_sel;
 
-   QRegExp rx_range( "(\\d+)-(\\d+)" );
+   QRegularExpression rx_range( "(\\d+)-(\\d+)" );
 
    for ( int i = 0; i < (int) sels.size(); ++i )
    {
-      if ( rx_range.indexIn( sels[ i ] ) != -1 )
+      QRegularExpressionMatch rx_range_m = rx_range.match( sels[ i ] );
+      if ( rx_range_m.hasMatch() )
       {
-         int startr = rx_range.cap( 1 ).toInt();
-         int endr   = rx_range.cap( 2 ).toInt();
+         int startr = rx_range_m.captured(1).toInt();
+         int endr   = rx_range_m.captured(2).toInt();
          for ( int j = startr; j <= endr; ++j )
          {
             to_sel.insert( j );

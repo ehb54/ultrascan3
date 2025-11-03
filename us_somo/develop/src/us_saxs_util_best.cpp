@@ -424,34 +424,36 @@ bool US_Saxs_Util::run_best()
             QTextStream ts( &f );
             {
                QString qs = ts.readLine();
-               QRegExp rx_vert( "^\\s*(\\d+)\\s+" );
-               if ( rx_vert.indexIn( qs ) == -1 )
+               QRegularExpression rx_vert( "^\\s*(\\d+)\\s+" );
+               QRegularExpressionMatch rx_vert_m = rx_vert.match( qs );
+               if ( !rx_vert_m.hasMatch() )
                {
                   errormsg += QString( "Rcoal output file %1 improper format on line 1 %1 <%2>\n" ).arg( f.fileName() ).arg( qs );
                   f.close();
                   return false;
                }
             
-               vertices = rx_vert.cap( 1 ).toInt();
+               vertices = rx_vert_m.captured( 1 ).toInt();
             }
             // out += QString( "%1 %2\n" ).arg( vertices ).arg( psv );
             
             {
                set < QString > used;
-               QRegExp rx_data( "^\\s*(\\S+)\\s+(\\S+)\\s+(\\S+)\\s+" );
+               QRegularExpression rx_data( "^\\s*(\\S+)\\s+(\\S+)\\s+(\\S+)\\s+" );
                for ( int i = 0; i < vertices; ++i )
                {
                   QString qs = ts.readLine();
-                  if ( rx_data.indexIn( qs ) == -1 )
+                  QRegularExpressionMatch rx_data_m = rx_data.match( qs );
+                  if ( !rx_data_m.hasMatch() )
                   {
                      errormsg += QString( "Rcoal output file %1 improper format on line %1 %2 <%3>\n" ).arg( i + 2 ).arg( f.fileName() ).arg( qs );
                      f.close();
                      return false;
                   }
                   QString key = QString( "%1 %2 %3" )
-                     .arg( rx_data.cap( 1 ) )
-                     .arg( rx_data.cap( 2 ) )
-                     .arg( rx_data.cap( 3 ) )
+                     .arg( rx_data_m.captured( 1 ) )
+                     .arg( rx_data_m.captured( 2 ) )
+                     .arg( rx_data_m.captured( 3 ) )
                      ;
                   if ( !used.count( key ) )
                   {
@@ -589,7 +591,7 @@ bool US_Saxs_Util::run_best()
          csvfiles  << outfiles[ i ] + expected_base + ".be";
          // us_qdebug( QString( "outfiles[ i ] '%1' inputbase '%2' inputbase23 '%3'" )
          //         .arg( outfiles[ i ] ).arg( inputbase ).arg( inputbase23 ) );
-         triangles << QString( outfiles[ i ] ).replace( QRegExp( QString( "^%1_" ).arg( inputbase23 ) ), "" ).replace( QRegularExpression( QStringLiteral( "^0*" ) ) , "" );
+         triangles << QString( outfiles[ i ] ).replace( QRegularExpression( QString( "^%1_" ).arg( inputbase23 ) ), "" ).replace( QRegularExpression( QStringLiteral( "^0*" ) ) , "" );
          one_over_triangles.push_back( triangles.back().toDouble() != 0e0 ?
                                        1e0 / triangles.back().toDouble() : -1e0 );
 
@@ -894,10 +896,10 @@ QStringList US_Saxs_Util::best_output_column( QString fname )
       return qsl;
    }
 
-   QRegExp rx_skip( "^\\s*$" );
-   QRegExp rx_1 ( "\\s+([0-9.+-E]+)\\s*$" );
-   QRegExp rx_3 ( "\\s+([0-9.+-E]+)\\s+([0-9.+-E]+)\\s+([0-9.+-E]+)\\s*$" );
-   QRegExp rx_3s( "Dx =\\s+([0-9.+-E]+)\\s+Dy =\\s+([0-9.+-E]+)\\s+Dz =\\s+([0-9.+-E]+)\\s*$" );
+   QRegularExpression rx_skip( "^\\s*$" );
+   QRegularExpression rx_1 ( "\\s+([0-9.+-E]+)\\s*$" );
+   QRegularExpression rx_3 ( "\\s+([0-9.+-E]+)\\s+([0-9.+-E]+)\\s+([0-9.+-E]+)\\s*$" );
+   QRegularExpression rx_3s( "Dx =\\s+([0-9.+-E]+)\\s+Dy =\\s+([0-9.+-E]+)\\s+Dz =\\s+([0-9.+-E]+)\\s*$" );
 
    QTextStream ts( &f );
    for ( int i = 0; i < 4; ++i )
@@ -907,13 +909,14 @@ QStringList US_Saxs_Util::best_output_column( QString fname )
    for ( int i = 0; i < 8; ++i )
    {
       QString qs = ts.readLine();
-      if ( rx_1.indexIn( qs ) == -1 )
+      QRegularExpressionMatch rx_1_m = rx_1.match( qs );
+      if ( !rx_1_m.hasMatch() )
       {
          qsl << QString( "error in %1 could not read data pos %2" ).arg( f.fileName() ).arg( i + 5 );
          f.close();
          return qsl;
       }
-      qsl << rx_1.cap( 1 );
+      qsl << rx_1_m.captured( 1 );
    }
    for ( int i = 0; i < 2; ++i )
    {
@@ -923,15 +926,16 @@ QStringList US_Saxs_Util::best_output_column( QString fname )
    {
       ts.readLine();
       QString qs = ts.readLine();
-      if ( rx_3.indexIn( qs ) == -1 )
+      QRegularExpressionMatch rx_3_m = rx_3.match( qs );
+      if ( !rx_3_m.hasMatch() )
       {
          qsl << QString( "error in %1 could not read data pos %2" ).arg( f.fileName() ).arg( 2 * i + 5 + 2 + 8 );
          f.close();
          return qsl;
       }
-      qsl << rx_3.cap( 1 );
-      qsl << rx_3.cap( 2 );
-      qsl << rx_3.cap( 3 );
+      qsl << rx_3_m.captured( 1 );
+      qsl << rx_3_m.captured( 2 );
+      qsl << rx_3_m.captured( 3 );
    }   
    for ( int i = 0; i < 3; ++i )
    {
@@ -944,171 +948,185 @@ QStringList US_Saxs_Util::best_output_column( QString fname )
       for ( int j = 0; j < 3; ++j )
       {
          QString qs = ts.readLine();
-         if ( rx_3.indexIn( qs ) == -1 )
+         QRegularExpressionMatch rx_3_m = rx_3.match( qs );
+         if ( !rx_3_m.hasMatch() )
          {
             qsl << QString( "error in %1 could not read data pos %2" ).arg( f.fileName() ).arg( j + i * 5 + 2 * 3 + 5 + 2 + 8 );
             f.close();
             return qsl;
          }
-         qsl << rx_3.cap( j + 1 );
+         qsl << rx_3_m.captured( j + 1 );
       }
       ts.readLine();
    }   
    ts.readLine();
    { // eigenvalues of Drr (1/a^3)
       QString qs = ts.readLine();
-      if ( rx_3.indexIn( qs ) == -1 )
+      QRegularExpressionMatch rx_3_m = rx_3.match( qs );
+      if ( !rx_3_m.hasMatch() )
       {
          qsl << QString( "error in %1 could not read data pos %2" ).arg( f.fileName() ).arg( "eigenvalues of Drr (1/a^3)" );
          f.close();
          return qsl;
       }
-      qsl << rx_3.cap( 1 );
-      qsl << rx_3.cap( 2 );
-      qsl << rx_3.cap( 3 );
+      qsl << rx_3_m.captured( 1 );
+      qsl << rx_3_m.captured( 2 );
+      qsl << rx_3_m.captured( 3 );
    }      
    {
       QString qs = ts.readLine();
-      if ( rx_1.indexIn( qs ) == -1 )
+      QRegularExpressionMatch rx_1_m = rx_1.match( qs );
+      if ( !rx_1_m.hasMatch() )
       {
          qsl << QString( "error in %1 could not read data pos %2" ).arg( f.fileName() ).arg( "Drr (1/A^3) 1/3 trace" );
          f.close();
          return qsl;
       }
-      qsl << rx_1.cap( 1 );
+      qsl << rx_1_m.captured( 1 );
    }
    {
       QString qs = ts.readLine();
-      if ( rx_1.indexIn( qs ) == -1 )
+      QRegularExpressionMatch rx_1_m = rx_1.match( qs );
+      if ( !rx_1_m.hasMatch() )
       {
          qsl << QString( "error in %1 could not read data pos %2" ).arg( f.fileName() ).arg( "Drr (1/A^3) Anisotropy" );
          f.close();
          return qsl;
       }
-      qsl << rx_1.cap( 1 );
+      qsl << rx_1_m.captured( 1 );
    }
    ts.readLine();
    ts.readLine();
    { // eigenvalues of Drr (1/s)
       QString qs = ts.readLine();
-      if ( rx_3.indexIn( qs ) == -1 )
+      QRegularExpressionMatch rx_3_m = rx_3.match( qs );
+      if ( !rx_3_m.hasMatch() )
       {
          qsl << QString( "error in %1 could not read data pos %2" ).arg( f.fileName() ).arg( "eigenvalues of Drr (1/s)" );
          f.close();
          return qsl;
       }
-      qsl << rx_3.cap( 1 );
-      qsl << rx_3.cap( 2 );
-      qsl << rx_3.cap( 3 );
+      qsl << rx_3_m.captured( 1 );
+      qsl << rx_3_m.captured( 2 );
+      qsl << rx_3_m.captured( 3 );
    }
    {
       QString qs = ts.readLine();
       qs.replace( QRegularExpression( QStringLiteral( "\\s+1/s\\s*$" ) ), "" );
-      if ( rx_1.indexIn( qs ) == -1 )
+      QRegularExpressionMatch rx_1_m = rx_1.match( qs );
+      if ( !rx_1_m.hasMatch() )
       {
          qsl << QString( "error in %1 could not read data pos %2" ).arg( f.fileName() ).arg( "Drr (1/s) 1/3 trace" );
          f.close();
          return qsl;
       }
-      qsl << rx_1.cap( 1 );
+      qsl << rx_1_m.captured( 1 );
    }
    ts.readLine();
    ts.readLine();
    { // eigenvalues of Dtt (1/a^3)
       QString qs = ts.readLine();
-      if ( rx_3.indexIn( qs ) == -1 )
+      QRegularExpressionMatch rx_3_m = rx_3.match( qs );
+      if ( !rx_3_m.hasMatch() )
       {
          qsl << QString( "error in %1 could not read data pos %2" ).arg( f.fileName() ).arg( "eigenvalues of Dtt (1/a^3)" );
          f.close();
          return qsl;
       }
-      qsl << rx_3.cap( 1 );
-      qsl << rx_3.cap( 2 );
-      qsl << rx_3.cap( 3 );
+      qsl << rx_3_m.captured( 1 );
+      qsl << rx_3_m.captured( 2 );
+      qsl << rx_3_m.captured( 3 );
    }      
    {
       QString qs = ts.readLine();
-      if ( rx_1.indexIn( qs ) == -1 )
+      QRegularExpressionMatch rx_1_m = rx_1.match( qs );
+      if ( !rx_1_m.hasMatch() )
       {
          qsl << QString( "error in %1 could not read data pos %2" ).arg( f.fileName() ).arg( "Dtt (1/A) 1/3 trace" );
          f.close();
          return qsl;
       }
-      qsl << rx_1.cap( 1 );
+      qsl << rx_1_m.captured( 1 );
    }
    {
       QString qs = ts.readLine();
-      if ( rx_1.indexIn( qs ) == -1 )
+      QRegularExpressionMatch rx_1_m = rx_1.match( qs );
+      if ( !rx_1_m.hasMatch() )
       {
          qsl << QString( "error in %1 could not read data pos %2" ).arg( f.fileName() ).arg( "Dtt (1/A) Anisotropy" );
          f.close();
          return qsl;
       }
-      qsl << rx_1.cap( 1 );
+      qsl << rx_1_m.captured( 1 );
    }
    ts.readLine();
    ts.readLine();
    { // eigenvalues of Dtt (cm^2/s)
       QString qs = ts.readLine();
-      if ( rx_3.indexIn( qs ) == -1 )
+      QRegularExpressionMatch rx_3_m = rx_3.match( qs );
+      if ( !rx_3_m.hasMatch() )
       {
          qsl << QString( "error in %1 could not read data pos %2" ).arg( f.fileName() ).arg( "eigenvalues of Dtt (cm^2/s)" );
          f.close();
          return qsl;
       }
-      qsl << rx_3.cap( 1 );
-      qsl << rx_3.cap( 2 );
-      qsl << rx_3.cap( 3 );
+      qsl << rx_3_m.captured( 1 );
+      qsl << rx_3_m.captured( 2 );
+      qsl << rx_3_m.captured( 3 );
    }      
    {
       QString qs = ts.readLine();
       qs.replace( QRegularExpression( QStringLiteral( "\\s+cm\\^2/s\\s*$" ) ), "" );
       qDebug() << QString( "qs dtt cm^2/s <%1>\n" ).arg( qs );
-      if ( rx_1.indexIn( qs ) == -1 )
+      QRegularExpressionMatch rx_1_m = rx_1.match( qs );
+      if ( !rx_1_m.hasMatch() )
       {
          qsl << QString( "error in %1 could not read data pos %2" ).arg( f.fileName() ).arg( "Dtt (cm^2/s) 1/3 trace" );
          f.close();
          return qsl;
       }
-      qsl << rx_1.cap( 1 );
+      qsl << rx_1_m.captured( 1 );
    }
    ts.readLine();
    ts.readLine();
    ts.readLine();
    { // Vector between Center of Viscosity/Centroid
       QString qs = ts.readLine();
-      if ( rx_3s.indexIn( qs ) == -1 )
+      QRegularExpressionMatch rx_3s_m = rx_3s.match( qs );
+      if ( !rx_3s_m.hasMatch() )
       {
          qsl << QString( "error in %1 could not read data pos %2" ).arg( f.fileName() ).arg( "Vector between Center of Viscosity/Centroid" );
          f.close();
          return qsl;
       }
-      qsl << rx_3s.cap( 1 );
-      qsl << rx_3s.cap( 2 );
-      qsl << rx_3s.cap( 3 );
+      qsl << rx_3s_m.captured( 1 );
+      qsl << rx_3s_m.captured( 2 );
+      qsl << rx_3s_m.captured( 3 );
    }      
    ts.readLine();
    for ( int i = 0; i < 2; ++i )
    {
       QString qs = ts.readLine();
-      if ( rx_1.indexIn( qs ) == -1 )
+      QRegularExpressionMatch rx_1_m = rx_1.match( qs );
+      if ( !rx_1_m.hasMatch() )
       {
          qsl << QString( "error in %1 could not read data pos %2 %3" ).arg( f.fileName() ).arg( i ).arg( "CHI" );
          f.close();
          return qsl;
       }
-      qsl << rx_1.cap( 1 );
+      qsl << rx_1_m.captured( 1 );
    }
    ts.readLine();
    {
       QString qs = ts.readLine();
-      if ( rx_1.indexIn( qs ) == -1 )
+      QRegularExpressionMatch rx_1_m = rx_1.match( qs );
+      if ( !rx_1_m.hasMatch() )
       {
          qsl << QString( "error in %1 could not read data pos %2" ).arg( f.fileName() ).arg( "ETA" );
          f.close();
          return qsl;
       }
-      qsl << rx_1.cap( 1 );
+      qsl << rx_1_m.captured( 1 );
    }
    f.close();
    return qsl;
@@ -1184,9 +1202,9 @@ bool US_Saxs_Util::strip_pdb(
    QTextStream tso ( &fo );
    QTextStream tsol( &fol );
 
-   QRegExp rx_check_line( "^(ATOM|HETATM)" );
+   QRegularExpression rx_check_line( "^(ATOM|HETATM)" );
 
-   QRegExp rx_ter       ( "^(TER)" );
+   QRegularExpression rx_ter       ( "^(TER)" );
 
    unsigned int last_chain_residue_no = 0;
    QString      last_key;
@@ -1196,7 +1214,8 @@ bool US_Saxs_Util::strip_pdb(
    {
       QString qs = tsi.readLine();
       bool keep = true;
-      if ( rx_check_line.indexIn( qs ) != -1 )
+      QRegularExpressionMatch rx_check_line_m = rx_check_line.match( qs );
+      if ( rx_check_line_m.hasMatch() )
       {
          QString residue = qs.mid( 17, 3 );
          QString atom    = qs.mid( 12, 4 );
@@ -1213,13 +1232,15 @@ bool US_Saxs_Util::strip_pdb(
             }
          }
       }
-      if ( rx_ter.indexIn( qs ) != -1 )
+      QRegularExpressionMatch rx_ter_m = rx_ter.match( qs );
+      if ( rx_ter_m.hasMatch() )
       {
          keep = false;
       }
       if ( keep )
       {
-         if ( rx_check_line.indexIn( qs ) != -1 )
+         QRegularExpressionMatch rx_check_line_m = rx_check_line.match( qs );
+         if ( rx_check_line_m.hasMatch() )
          {
             QString      chain_id   = qs.mid( 21, 1 );
             unsigned int residue_no = qs.mid( 22, 4 ).trimmed().toUInt();

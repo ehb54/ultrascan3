@@ -98,24 +98,26 @@ bool US_Saxs_Util::read( QString filename, QString tag )
 
       QString firstline;
 
-      QRegExp rxskip("^#");
-      QRegExp rx3("^\\s*(\\S*)\\s+(\\S*)\\s+(\\S*)\\s*$");
+      QRegularExpression rxskip("^#");
+      QRegularExpression rx3("^\\s*(\\S*)\\s+(\\S*)\\s+(\\S*)\\s*$");
       // this next one should work, but doesn't for some reason
       //  QRegExp rxdigits("^\\s*(\\d*(|\\.\\d*)\\s+(\\d*(|\\.\\d*)\\s+(\\d*(|\\.\\d*)\\s*$");
       // just check to see if it starts with a digit
-      QRegExp rxdigits("^\\s*\\d");
+      QRegularExpression rxdigits("^\\s*\\d");
 
       while ( !ts.atEnd() )
       {
          firstline = ts.readLine();
-         if ( rxskip.indexIn(firstline) == -1 )
+         QRegularExpressionMatch rxskip_m = rxskip.match(firstline);
+         if ( !rxskip_m.hasMatch() )
          {
             break;
          }
       }
 
       wave[tag].header = firstline;
-      if ( rxdigits.indexIn(firstline) != -1 )
+      QRegularExpressionMatch rxdigits_m = rxdigits.match(firstline);
+      if ( rxdigits_m.hasMatch() )
       { 
          // line is 3 numbers force a new header
          cout << "force default header\n";
@@ -124,16 +126,17 @@ bool US_Saxs_Util::read( QString filename, QString tag )
          firstline = "";
       }
 
-      if ( rx3.indexIn(wave[tag].header) == -1 )
+      QRegularExpressionMatch rx3_m = rx3.match(wave[tag].header);
+      if ( !rx3_m.hasMatch() )
       {
          errormsg = "could not find 3 columns in file header " + filename;
          f.close();
          return false;
       }
 
-      wave[tag].header_cols.push_back(rx3.cap(1));
-      wave[tag].header_cols.push_back(rx3.cap(2));
-      wave[tag].header_cols.push_back(rx3.cap(3));
+      wave[tag].header_cols.push_back( rx3_m.captured(1) );
+      wave[tag].header_cols.push_back( rx3_m.captured(2) );
+      wave[tag].header_cols.push_back( rx3_m.captured(3) );
 
       QString line;
 
@@ -147,21 +150,23 @@ bool US_Saxs_Util::read( QString filename, QString tag )
             line = ts.readLine();
          }
 
-         if ( rxskip.indexIn(line) != -1 )
+         QRegularExpressionMatch rxskip_m = rxskip.match(line);
+         if ( rxskip_m.hasMatch() )
          {
             continue;
          }
 
-         if ( rx3.indexIn(line) == -1 )
+         QRegularExpressionMatch rx3_m = rx3.match(line);
+         if ( !rx3_m.hasMatch() )
          {
             errormsg = "could not find 3 columns in file line " + filename;
             f.close();
             return false;
          }
          
-         wave[tag].q.push_back(rx3.cap(1).toDouble());
-         wave[tag].r.push_back(rx3.cap(2).toDouble());
-         wave[tag].s.push_back(rx3.cap(3).toDouble());
+         wave[tag].q.push_back( rx3_m.captured(1).toDouble() );
+         wave[tag].r.push_back( rx3_m.captured(2).toDouble() );
+         wave[tag].s.push_back( rx3_m.captured(3).toDouble() );
       }
       f.close();
       return true;
@@ -2609,10 +2614,10 @@ bool US_Saxs_Util::read_project( QString subdir )
    clear_project();
 
    QString line;
-   QRegExp rx("^(\\S+)\\s+(\\S.*)$");
-   QRegExp rxempty("^(\\s*#|\\s*$)");
-   QRegExp rxtrailingspaces("\\s*$");
-   QRegExp rxvalid(
+   QRegularExpression rx("^(\\S+)\\s+(\\S.*)$");
+   QRegularExpression rxempty("^(\\s*#|\\s*$)");
+   QRegularExpression rxtrailingspaces("\\s*$");
+   QRegularExpression rxvalid(
                    "^("
                    "wiki|"
                    "wikiprefix|"
@@ -2659,7 +2664,7 @@ bool US_Saxs_Util::read_project( QString subdir )
                    "remark)$"
                    );
 
-   QRegExp rxvalidwavetype("^(saxs|waxs)$");
+   QRegularExpression rxvalidwavetype("^(saxs|waxs)$");
 
    unsigned int linepos = 0;
    QString last_wave_name = "";
@@ -2677,7 +2682,8 @@ bool US_Saxs_Util::read_project( QString subdir )
          continue;
       }
 
-      if ( rx.indexIn(line) == -1 )
+      QRegularExpressionMatch rx_m = rx.match(line);
+      if ( !rx_m.hasMatch() )
       {
          errormsg = QString("error in project file line %1.  At least two tokens not found <%2>\n")
             .arg(linepos)
@@ -2685,8 +2691,8 @@ bool US_Saxs_Util::read_project( QString subdir )
          return false;
       }
 
-      QString token = rx.cap(1).toLower();
-      QString data = rx.cap(2);
+      QString token = rx_m.captured(1).toLower();
+      QString data  = rx_m.captured(2);
 
       if ( !token.contains(rxvalid) )
       {
@@ -5053,65 +5059,72 @@ bool US_Saxs_Util::merge_projects(
             errormsg = "can not open merge_gnom";
             return false;
          }
-         QRegExp rxempty("^\\s*$");
-         QRegExp rxskip("^#");
+         QRegularExpression rxempty("^\\s*$");
+         QRegularExpression rxskip("^#");
 
-         QRegExp rxrmax("^\\s*rmax");
-         QRegExp rx1rmax("^\\s*rmax\\s+(\\S+)\\s*$");
-         QRegExp rx4rmax("^\\s*rmax\\s+(\\S+)\\s+(\\S+)\\s+(\\S+)\\s+(\\S+)\\s*$");
+         QRegularExpression rxrmax("^\\s*rmax");
+         QRegularExpression rx1rmax("^\\s*rmax\\s+(\\S+)\\s*$");
+         QRegularExpression rx4rmax("^\\s*rmax\\s+(\\S+)\\s+(\\S+)\\s+(\\S+)\\s+(\\S+)\\s*$");
 
-         QRegExp rxcrop("^\\s*crop");
-         QRegExp rx3crop("^\\s*crop\\s+(\\S+)\\s+(\\S+)\\s+(\\S+)\\s*$");
+         QRegularExpression rxcrop("^\\s*crop");
+         QRegularExpression rx3crop("^\\s*crop\\s+(\\S+)\\s+(\\S+)\\s+(\\S+)\\s*$");
 
          QTextStream ts(&f);
          while ( !ts.atEnd() )
          {
             QString line = ts.readLine();
-            if ( rxskip.indexIn(line) != -1 ||
-                 rxempty.indexIn(line) != -1 )
+            QRegularExpressionMatch rxskip_m = rxskip.match(line);
+            QRegularExpressionMatch rxempty_m = rxempty.match(line);
+            if ( rxskip_m.hasMatch() ||
+                 rxempty_m.hasMatch() )
             {
                continue;
             }
 
-            if ( rxrmax.indexIn(line) != -1 )
+            QRegularExpressionMatch rxrmax_m = rxrmax.match(line);
+            if ( rxrmax_m.hasMatch() )
             {
-               if ( rx4rmax.indexIn(line) == -1 &&
-                    rx1rmax.indexIn(line) == -1 )
+               QRegularExpressionMatch rx4rmax_m = rx4rmax.match(line);
+               QRegularExpressionMatch rx1rmax_m = rx1rmax.match(line);
+               if ( !rx4rmax_m.hasMatch() &&
+                    !rx1rmax_m.hasMatch() )
                {
                   errormsg = "merge_gnom rmax lines must contain either two or five columns";
                   return false;
                }
                
-               if ( rx4rmax.indexIn(line) != -1 )
+               if ( rx4rmax_m.hasMatch() )
                {
-                  gnom_file_map[rx4rmax.cap(1)] = gnom_files.size();
-                  gnom_files.push_back(rx4rmax.cap(1));
-                  gnom_files_rmax_start.push_back(rx4rmax.cap(2).toDouble());
-                  gnom_files_rmax_end.push_back(rx4rmax.cap(3).toDouble());
-                  gnom_files_rmax_inc.push_back(rx4rmax.cap(4).toDouble());
+                  gnom_file_map[rx4rmax_m.captured(1)] = gnom_files.size();
+                  gnom_files.push_back(rx4rmax_m.captured(1));
+                  gnom_files_rmax_start.push_back(rx4rmax_m.captured(2).toDouble());
+                  gnom_files_rmax_end.push_back(rx4rmax_m.captured(3).toDouble());
+                  gnom_files_rmax_inc.push_back(rx4rmax_m.captured(4).toDouble());
                   continue;
                }
                
-               gnom_file_map[rx1rmax.cap(1)] = gnom_files.size();
-               gnom_files.push_back(rx1rmax.cap(1));
+               gnom_file_map[ rx1rmax_m.captured(1) ] = gnom_files.size();
+               gnom_files.push_back( rx1rmax_m.captured(1) );
                gnom_files_rmax_start.push_back(0e0);
                gnom_files_rmax_end.push_back(0e0);
                gnom_files_rmax_inc.push_back(0e0);
                continue;
             }
 
-            if ( rxcrop.indexIn(line) != -1 )
+            QRegularExpressionMatch rxcrop_m = rxcrop.match(line);
+            if ( rxcrop_m.hasMatch() )
             {
-               if ( rx3crop.indexIn(line) == -1 )
+               QRegularExpressionMatch rx3crop_m = rx3crop.match(line);
+               if ( !rx3crop_m.hasMatch() )
                {
                   errormsg = "merge_gnom crop lines must contain four columns";
                   return false;
                }
                
-               gnom_crop_file_map[rx3crop.cap(1)] = gnom_files.size();
-               gnom_crop_files.push_back(rx3crop.cap(1));
-               gnom_crop_low.push_back(rx3crop.cap(2).toDouble());
-               gnom_crop_high.push_back(rx3crop.cap(3).toDouble());
+               gnom_crop_file_map[ rx3crop_m.captured(1) ] = gnom_files.size();
+               gnom_crop_files.push_back( rx3crop_m.captured(1) );
+               gnom_crop_low.push_back( rx3crop_m.captured(2) .toDouble());
+               gnom_crop_high.push_back( rx3crop_m.captured(3) .toDouble());
                continue;
             }
             
@@ -5130,9 +5143,9 @@ bool US_Saxs_Util::merge_projects(
       ;
    errormsg = "";
 
-   QRegExp rx("^(\\S+)\\s+(\\S.*)$");
-   QRegExp rxtrailingspaces("\\s*$");
-   QRegExp rxcapturefields(
+   QRegularExpression rx("^(\\S+)\\s+(\\S.*)$");
+   QRegularExpression rxtrailingspaces("\\s*$");
+   QRegularExpression rxcapturefields(
                            "^\\|\\|"
                            "(.*)\\|\\|"
                            "(.*)\\|\\|"
@@ -5155,7 +5168,7 @@ bool US_Saxs_Util::merge_projects(
                            "$"
                            );
 
-   QRegExp rxheadertowiki("= (.+) =");
+   QRegularExpression rxheadertowiki("= (.+) =");
 
    for ( unsigned int i = 0; i < projects.size(); i++ )
    {
@@ -5181,19 +5194,20 @@ bool US_Saxs_Util::merge_projects(
       {
          QString line = ts.readLine().replace(rxtrailingspaces,"");
 
-         if ( rx.indexIn(line) == -1 )
+         QRegularExpressionMatch rx_m = rx.match(line);
+         if ( !rx_m.hasMatch() )
          {
             continue;
          }
 
-         if ( rx.cap(1).toLower() == "wikiprefix" ) 
+         if ( rx_m.captured(1) .toLower() == "wikiprefix" ) 
          {
-            prefix = rx.cap(2);
+            prefix = rx_m.captured(2) ;
          }
 
-         if ( rx.cap(1).toLower() == "name" ) 
+         if ( rx_m.captured(1) .toLower() == "name" ) 
          {
-            name = rx.cap(2);
+            name = rx_m.captured(2) ;
          }
       }
 
@@ -5261,11 +5275,12 @@ bool US_Saxs_Util::merge_projects(
 
          if ( start_collecting < 0 )
          {
+            QRegularExpressionMatch rxheadertowiki_m = rxheadertowiki.match(line);
             if ( !link_done &&
-                 rxheadertowiki.indexIn(line) != -1 )
+                 rxheadertowiki_m.hasMatch() )
             {
                link_done = true;
-               result += QString("= [wiki:%1 %2] =\n").arg(QFileInfo(f2a.fileName()).fileName()).arg(rxheadertowiki.cap(1));
+               result += QString("= [wiki:%1 %2] =\n").arg(QFileInfo(f2a.fileName()).fileName()).arg(rxheadertowiki_m.captured(1));
             } else {
                result += line + "\n";
             }
@@ -5281,12 +5296,13 @@ bool US_Saxs_Util::merge_projects(
                {
                   result += "|| sample " + line + " computed mw (Da) ||\n";
                } else {
-                  if ( rxcapturefields.indexIn(line) == -1 )
+                  QRegularExpressionMatch rxcapturefields_m = rxcapturefields.match(line);
+                  if ( !rxcapturefields_m.hasMatch() )
                   {
                      errormsg = QString("can not find correct number of fields in line %1").arg(line);
                      return false;
                   }
-                  double estmw = rxcapturefields.cap(10).trimmed().toDouble() * reference_mw_multiplier;
+                  double estmw = rxcapturefields_m.captured(10).trimmed().toDouble() * reference_mw_multiplier;
                   if ( gnom_run )
                   {
                      bool gnom_this_file = false;
@@ -5294,17 +5310,17 @@ bool US_Saxs_Util::merge_projects(
                      {
                         for ( unsigned int g = 0; g < gnom_files.size(); g++ )
                         {
-                           if ( rxcapturefields.cap(6).contains(QRegExp(gnom_files[g])) )
+                           if (  rxcapturefields_m.captured(6) .contains(QRegularExpression(gnom_files[g])) )
                            {
                               gnom_this_file = true;
-                              files.push_back(rxcapturefields.cap(6).trimmed());
+                              files.push_back( rxcapturefields_m.captured(6).trimmed() );
                               use_rmax_start.push_back(gnom_files_rmax_start[g] ? gnom_files_rmax_start[g] : p_rmax_start);
                               use_rmax_end.push_back(gnom_files_rmax_end[g] ? gnom_files_rmax_end[g] : p_rmax_end);
                               use_rmax_inc.push_back(gnom_files_rmax_inc[g] ? gnom_files_rmax_inc[g] : p_rmax_inc);
                               bool found_crop = false;
                               for ( unsigned int c = 0; c < gnom_crop_files.size(); c++ )
                               {
-                                 if ( rxcapturefields.cap(6).contains(QRegExp(gnom_crop_files[c])) )
+                                 if (  rxcapturefields_m.captured(6) .contains(QRegularExpression(gnom_crop_files[c])) )
                                  {
                                     use_crop_low.push_back(gnom_crop_low[c]);
                                     use_crop_high.push_back(gnom_crop_high[c]);
@@ -5324,7 +5340,7 @@ bool US_Saxs_Util::merge_projects(
                         }
                      } else {
                         gnom_this_file = true;
-                        files.push_back(rxcapturefields.cap(6).trimmed());
+                        files.push_back( rxcapturefields_m.captured(6).trimmed() );
                         use_rmax_start.push_back(p_rmax_start);
                         use_rmax_end.push_back(p_rmax_end);
                         use_rmax_inc.push_back(p_rmax_inc);
@@ -5335,15 +5351,15 @@ bool US_Saxs_Util::merge_projects(
 
                      if ( gnom_this_file )
                      {
-                        // cout << "cap.6 is " + rxcapturefields.cap(6) + "\n";
-                        line.replace(QString("|| %1 ||").arg(rxcapturefields.cap(6).trimmed()),
+                        // cout << "cap.6 is " +  rxcapturefields_m.captured(6)  + "\n";
+                        line.replace(QString("|| %1 ||").arg( rxcapturefields_m.captured(6).trimmed() ),
                                      QString("|| [wiki:%1%2_gnom_%3_c%4-%5 %6] ||")
                                      .arg(prefix)
                                      .arg(projects[i])
-                                     .arg(QString("%1").arg(rxcapturefields.cap(6).trimmed()).replace(QRegularExpression( QStringLiteral( "\\.(dat|DAT)$" ) ),""))
+                                     .arg(QString("%1").arg( rxcapturefields_m.captured(6) .trimmed()).replace(QRegularExpression( QStringLiteral( "\\.(dat|DAT)$" ) ),""))
                                      .arg(use_crop_low.back())
                                      .arg(use_crop_high.back())
-                                     .arg(rxcapturefields.cap(6).trimmed()));
+                                     .arg( rxcapturefields_m.captured(6).trimmed()) );
                      }
                   }
                   
@@ -5460,7 +5476,7 @@ bool US_Saxs_Util::project_1d(
 
    // group files
 
-   QRegExp rxgetbasename("^(.*)_(\\d+)\\.(dat|DAT)");
+   QRegularExpression rxgetbasename("^(.*)_(\\d+)\\.(dat|DAT)");
    
    vector < vector < QString > > filegroups;
    vector < QString > filegroup;
@@ -5471,7 +5487,8 @@ bool US_Saxs_Util::project_1d(
    cout << "reading files:\n";
    for ( unsigned int i = 0; i < (unsigned int)files.size(); i++ )
    {
-      if ( rxgetbasename.indexIn(files[i]) == -1 )
+      QRegularExpressionMatch rxgetbasename_m = rxgetbasename.match(files[i]);
+      if ( !rxgetbasename_m.hasMatch() )
       {
          errormsg = "error parsing file name: " + files[i];
          return false;
@@ -5482,7 +5499,7 @@ bool US_Saxs_Util::project_1d(
          return false;
       }
 
-      QString base_name = rxgetbasename.cap(1);
+      QString base_name = rxgetbasename_m.captured(1) ;
 
       if ( last_base_name.isEmpty() ) 
       {

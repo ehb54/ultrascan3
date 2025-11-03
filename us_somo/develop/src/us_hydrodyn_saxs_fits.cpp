@@ -25,7 +25,7 @@ void US_Hydrodyn_Saxs::calc_iqq_nnls_fit( QString /* title */, QString csv_filen
    QString tagged_csv_filename = csv_filename;
 
    if ( !tagged_csv_filename.isEmpty() &&
-        !tagged_csv_filename.contains(QRegExp("_nnls", Qt::CaseInsensitive )) )
+        !tagged_csv_filename.contains(QRegularExpression("_nnls", QRegularExpression::CaseInsensitiveOption )) )
    {
       tagged_csv_filename += "_nnls";
    }
@@ -464,7 +464,7 @@ void US_Hydrodyn_Saxs::calc_iqq_best_fit( QString /* title */, QString csv_filen
    QString tagged_csv_filename = csv_filename;
 
    if ( !tagged_csv_filename.isEmpty() &&
-        !tagged_csv_filename.contains(QRegExp("_best_fit", Qt::CaseInsensitive )) )
+        !tagged_csv_filename.contains(QRegularExpression("_best_fit", QRegularExpression::CaseInsensitiveOption )) )
    {
       tagged_csv_filename += "_best_fit";
    }
@@ -698,7 +698,7 @@ void US_Hydrodyn_Saxs::calc_nnls_fit( QString title, QString csv_filename )
    QString tagged_csv_filename = csv_filename;
 
    if ( !tagged_csv_filename.isEmpty() &&
-        !tagged_csv_filename.contains(QRegExp("_nnls", Qt::CaseInsensitive )) )
+        !tagged_csv_filename.contains(QRegularExpression("_nnls", QRegularExpression::CaseInsensitiveOption )) )
    {
       tagged_csv_filename += "_nnls";
    }
@@ -1344,7 +1344,7 @@ void US_Hydrodyn_Saxs::calc_best_fit( QString title, QString csv_filename )
    QString tagged_csv_filename = csv_filename;
 
    if ( !tagged_csv_filename.isEmpty() &&
-        !tagged_csv_filename.contains(QRegExp("_best_fit", Qt::CaseInsensitive )) )
+        !tagged_csv_filename.contains(QRegularExpression("_best_fit", QRegularExpression::CaseInsensitiveOption )) )
    {
       tagged_csv_filename += "_best_fit";
    }

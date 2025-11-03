@@ -2687,7 +2687,7 @@ void US_Hydrodyn_Comparative::save_param()
    {
       return;
    }
-   if ( !fname.contains(QRegExp(".smp$", Qt::CaseInsensitive )) )
+   if ( !fname.contains(QRegularExpression(".smp$", QRegularExpression::CaseInsensitiveOption )) )
    {
       fname += ".smp";
    }
@@ -3271,7 +3271,7 @@ void US_Hydrodyn_Comparative::save_csv()
    }
 
    QString use_name = sel_name.isEmpty() ? "*.csv" : sel_name;
-   if ( !use_name.contains(QRegExp(".csv$", Qt::CaseInsensitive )) )
+   if ( !use_name.contains(QRegularExpression(".csv$", QRegularExpression::CaseInsensitiveOption )) )
    {
       use_name += ".csv";
    }
@@ -3289,7 +3289,7 @@ void US_Hydrodyn_Comparative::save_csv()
    {
       return;
    }
-   if ( !fname.contains(QRegExp(".csv$", Qt::CaseInsensitive )) )
+   if ( !fname.contains(QRegularExpression(".csv$", QRegularExpression::CaseInsensitiveOption )) )
    {
       fname += ".csv";
    }

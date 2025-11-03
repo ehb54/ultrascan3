@@ -955,7 +955,7 @@ void US_Hydrodyn_Saxs_1d::start()
    update_enables();
    
    // setup atoms
-   QRegExp count_hydrogens("H(\\d)");
+   QRegularExpression count_hydrogens("H(\\d)");
 
    if ( our_saxs_options->iqq_use_atomic_ff )
    {
@@ -1159,10 +1159,11 @@ void US_Hydrodyn_Saxs_1d::start()
             new_atom.saxs_name = hybrid_map[hybrid_name].saxs_name; 
             new_atom.hybrid_name = hybrid_name;
             new_atom.hydrogens = 0;
+            QRegularExpressionMatch count_hydrogens_m = count_hydrogens.match(hybrid_name);
             if ( !our_saxs_options->iqq_use_atomic_ff &&
-                 count_hydrogens.indexIn(hybrid_name) != -1 )
+                 count_hydrogens_m.hasMatch() )
             {
-               new_atom.hydrogens = count_hydrogens.cap(1).toInt();
+               new_atom.hydrogens = count_hydrogens_m.captured(1).toInt();
             }
 
             if ( !saxs_map.count(hybrid_map[hybrid_name].saxs_name) )
@@ -2734,8 +2735,8 @@ bool US_Hydrodyn_Saxs_1d::setup_excluded_volume_map()
          return false;
       }
       QTextStream ts( &f );
-      QRegExp rx_end("^END");
-      QRegExp rx_atom ("^("
+      QRegularExpression rx_end("^END");
+      QRegularExpression rx_atom ("^("
                        "ATOM|"
                        "HETATM"
                        ")" );
@@ -2743,12 +2744,14 @@ bool US_Hydrodyn_Saxs_1d::setup_excluded_volume_map()
       while ( !ts.atEnd() )
       {
          QString qs = ts.readLine();
-         if ( rx_end.indexIn( qs ) != -1 )
+         QRegularExpressionMatch rx_end_m = rx_end.match( qs );
+         if ( rx_end_m.hasMatch() )
          {
             qsl << "END\n";
             break;
          }
-         if ( rx_atom.indexIn( qs ) != -1 &&
+         QRegularExpressionMatch rx_atom_m = rx_atom.match( qs );
+         if ( rx_atom_m.hasMatch() &&
               qs.mid( 17, 3 ) == "HOH" )
          {
             continue;
@@ -3773,7 +3776,7 @@ void US_Hydrodyn_Saxs_1d::set_target_ev()
    update_enables();
 
    // setup atoms
-   QRegExp count_hydrogens("H(\\d)");
+   QRegularExpression count_hydrogens("H(\\d)");
 
    if ( our_saxs_options->iqq_use_atomic_ff )
    {
@@ -3950,10 +3953,11 @@ void US_Hydrodyn_Saxs_1d::set_target_ev()
             new_atom.saxs_name = hybrid_map[hybrid_name].saxs_name; 
             new_atom.hybrid_name = hybrid_name;
             new_atom.hydrogens = 0;
+            QRegularExpressionMatch count_hydrogens_m = count_hydrogens.match(hybrid_name);
             if ( !our_saxs_options->iqq_use_atomic_ff &&
-                 count_hydrogens.indexIn(hybrid_name) != -1 )
+                 count_hydrogens_m.hasMatch() )
             {
-               new_atom.hydrogens = count_hydrogens.cap(1).toInt();
+               new_atom.hydrogens = count_hydrogens_m.captured(1).toInt();
             }
 
             if ( !saxs_map.count(hybrid_map[hybrid_name].saxs_name) )

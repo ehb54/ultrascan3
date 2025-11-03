@@ -2299,15 +2299,16 @@ bool US_Hydrodyn::load_config_json ( QString &json )
 
    {
       gparams.clear( );
-      QRegExp rx_gparam( "^gparam:(.*)$" );
+      QRegularExpression rx_gparam( "^gparam:(.*)$" );
       
       for ( map < QString, QString >::iterator it = parameters.begin();
             it != parameters.end();
             it++ )
       {
-         if ( rx_gparam.indexIn( it->first ) != -1 )
+         QRegularExpressionMatch rx_gparam_m = rx_gparam.match( it->first );
+         if ( rx_gparam_m.hasMatch() )
          {
-            gparams[ rx_gparam.cap( 1 ) ] = it->second;
+            gparams[ rx_gparam_m.captured(1) ] = it->second;
          }
       }
    }

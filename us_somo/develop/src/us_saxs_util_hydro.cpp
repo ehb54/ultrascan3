@@ -11509,10 +11509,11 @@ bool US_Saxs_Util::read_pdb_hydro( QString filename, bool parameters_set_first_m
             model_flag = true; // we are using model descriptions (possibly multiple models)
             // str2 = str1.mid(6, 15);
             // temp_model.model_id = str2.toUInt();
-            QRegExp rx_get_model( "^MODEL\\s+(\\S+)" );
-            if ( rx_get_model.indexIn( str1 ) != -1 )
+            QRegularExpression rx_get_model( "^MODEL\\s+(\\S+)" );
+            QRegularExpressionMatch rx_get_model_m = rx_get_model.match( str1 );
+            if ( rx_get_model_m.hasMatch() )
             {
-               temp_model.model_id = rx_get_model.cap( 1 );
+               temp_model.model_id = rx_get_model_m.captured(1);
             } else {
                temp_model.model_id = str1.mid( 6, 15 );
             }
@@ -11898,7 +11899,7 @@ int US_Saxs_Util::write_pdb_hydro( QString fname, vector < PDB_atom > *model )
 
    // consolidate & symmetrize connections
 
-   QRegExp rx("^(\\d+)~(\\d+)$");
+   QRegularExpression rx("^(\\d+)~(\\d+)$");
 
    sortable_uint tmp_suint_i;
    sortable_uint tmp_suint_j;
@@ -11913,7 +11914,8 @@ int US_Saxs_Util::write_pdb_hydro( QString fname, vector < PDB_atom > *model )
    {
       if ( connection_active[it->first] ) 
       {
-         if ( rx.indexIn(it->first) == -1 ) 
+         QRegularExpressionMatch rx_m = rx.match(it->first);
+         if ( !rx_m.hasMatch() ) 
          {
 	   us_log->log("unexpected regexp extract failure (write_pdb)!\n");
 	   if ( us_udp_msg )
@@ -11927,8 +11929,8 @@ int US_Saxs_Util::write_pdb_hydro( QString fname, vector < PDB_atom > *model )
 	   accumulated_msgs += "unexpected regexp extract failure (write_pdb)!\\n"; 
 	   return -1;
          }
-         tmp_suint_i.x = rx.cap(1).toInt();
-         tmp_suint_j.x = rx.cap(2).toInt();
+         tmp_suint_i.x = rx_m.captured(1).toInt();
+         tmp_suint_j.x = rx_m.captured(2).toInt();
 
          connect_list[tmp_suint_i.x].push_back(tmp_suint_j);
          connect_list[tmp_suint_j.x].push_back(tmp_suint_i);
@@ -12098,7 +12100,7 @@ int US_Saxs_Util::create_beads_hydro(QString *error_string, bool quiet)
 #endif
    get_atom_map(&model_vector[current_model]);
 
-   QRegExp count_hydrogens("H(\\d)");
+   QRegularExpression count_hydrogens("H(\\d)");
 
    for (unsigned int j = 0; j < model_vector[current_model].molecule.size(); j++)
    {
@@ -12396,7 +12398,7 @@ int US_Saxs_Util::create_beads_hydro(QString *error_string, bool quiet)
               //                 this_atom->hydrogens = 0;
               //                 if ( count_hydrogens.indexIn(hybrid_name) != -1 )
               //                 {
-              //                    this_atom->hydrogens = count_hydrogens.cap(1).toInt();
+              //                    this_atom->hydrogens = count_hydrogens_m.captured(1).toInt();
               //                 }
               //                 this_atom->saxs_excl_vol = saxs_util->atom_map[this_atom->name + "~" + hybrid_name].saxs_excl_vol;
               //                 if ( !saxs_util->saxs_map.count(saxs_util->hybrid_map[hybrid_name].saxs_name) )

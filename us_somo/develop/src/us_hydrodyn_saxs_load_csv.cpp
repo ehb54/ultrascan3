@@ -355,7 +355,7 @@ void US_Hydrodyn_Saxs_Load_Csv::transpose()
    {
       return;
    }
-   if ( !fname.contains(QRegExp(".csv$", Qt::CaseInsensitive )) )
+   if ( !fname.contains(QRegularExpression(".csv$", QRegularExpression::CaseInsensitiveOption )) )
    {
       fname += "_t.csv";
    }
@@ -508,7 +508,7 @@ void US_Hydrodyn_Saxs_Load_Csv::save_selected()
    {
       return;
    }
-   if ( !fname.contains(QRegExp(".csv$", Qt::CaseInsensitive )) )
+   if ( !fname.contains(QRegularExpression(".csv$", QRegularExpression::CaseInsensitiveOption )) )
    {
       fname += ".csv";
    }

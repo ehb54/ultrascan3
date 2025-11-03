@@ -45,8 +45,8 @@ void US_Hydrodyn::gui_script_run() {
    QStringList scriptlines = script.split( "\n" );
    int scriptlinesc        = (int) scriptlines.count();
 
-   QRegExp rx_comment( "#.*$" );
-   QRegExp rx_empty("^\\s*$");
+   QRegularExpression rx_comment( "#.*$" );
+   QRegularExpression rx_empty("^\\s*$");
    
    for ( int i = 0; i < scriptlinesc; ++i ) {
       QString l = scriptlines[ i ];

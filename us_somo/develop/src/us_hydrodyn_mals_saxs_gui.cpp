@@ -6182,8 +6182,8 @@ void US_Hydrodyn_Mals_Saxs::fasta_file() {
    QStringList qsl;
 
    QTextStream ts( &f );
-   QRegExp rx_empty( "^\\s*$" );
-   QRegExp rx_newseq( "^\\s*>" );
+   QRegularExpression rx_empty( "^\\s*$" );
+   QRegularExpression rx_newseq( "^\\s*>" );
 
    QString seq;
    int chains = 0;
@@ -6195,11 +6195,12 @@ void US_Hydrodyn_Mals_Saxs::fasta_file() {
    while ( !ts.atEnd() ) {
       QString qs = ts.readLine().trimmed();
       
-      if ( rx_empty.exactMatch( qs ) ) {
+      if ( rx_empty.match( qs ).hasMatch() ) {
          continue;
       }
 
-      if ( rx_newseq.indexIn( qs ) > -1 ) {
+      QRegularExpressionMatch rx_newseq_m = rx_newseq.match( qs );
+      if ( rx_newseq_m.hasMatch() ) {
          seq_names += qs.replace( rx_newseq, "" ) + "\n";
          chains++;
          continue;

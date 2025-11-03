@@ -540,7 +540,7 @@ void US_Hydrodyn_Saxs_Buffer_Conc::save()
       return;
    }
 
-   if ( !fname.contains(QRegExp(".sbc$", Qt::CaseInsensitive )) )
+   if ( !fname.contains(QRegularExpression(".sbc$", QRegularExpression::CaseInsensitiveOption )) )
    {
       fname += ".sbc";
    }

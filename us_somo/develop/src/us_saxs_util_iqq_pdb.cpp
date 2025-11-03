@@ -27,7 +27,7 @@ bool US_Saxs_Util::calc_saxs_iq_native_fast()
    
    // don't forget to later merge deleted waters into model_vector
    // right now we are going with first residue map entry
-   QRegExp count_hydrogens("H(\\d)");
+   QRegularExpression count_hydrogens("H(\\d)");
    
    if ( !compute_scale_excl_vol() )
    {
@@ -125,9 +125,10 @@ bool US_Saxs_Util::calc_saxs_iq_native_fast()
             new_atom.saxs_name = hybrid_map[hybrid_name].saxs_name; 
             new_atom.hybrid_name = hybrid_name;
             new_atom.hydrogens = 0;
-            if ( count_hydrogens.indexIn(hybrid_name) != -1 )
+            QRegularExpressionMatch count_hydrogens_m = count_hydrogens.match(hybrid_name);
+            if ( count_hydrogens_m.hasMatch() )
             {
-               new_atom.hydrogens = count_hydrogens.cap(1).toInt();
+               new_atom.hydrogens = count_hydrogens_m.captured(1).toInt();
             }
             // cout << QString("in %1 hydrogens %2\n").arg( hybrid_name ).arg( new_atom.hydrogens );
             
@@ -683,7 +684,7 @@ bool US_Saxs_Util::calc_saxs_iq_native_debye()
 
    // don't forget to later merge deleted waters into model_vector
    // right now we are going with first residue map entry
-   QRegExp count_hydrogens("H(\\d)");
+   QRegularExpression count_hydrogens("H(\\d)");
 
    if ( !compute_scale_excl_vol() )
    {
@@ -823,10 +824,11 @@ bool US_Saxs_Util::calc_saxs_iq_native_debye()
             new_atom.saxs_name = hybrid_map[hybrid_name].saxs_name; 
             new_atom.hybrid_name = hybrid_name;
             new_atom.hydrogens = 0;
+            QRegularExpressionMatch count_hydrogens_m = count_hydrogens.match(hybrid_name);
             if ( !our_saxs_options.iqq_use_atomic_ff &&
-                 count_hydrogens.indexIn(hybrid_name) != -1 )
+                 count_hydrogens_m.hasMatch() )
             {
-               new_atom.hydrogens = count_hydrogens.cap(1).toInt();
+               new_atom.hydrogens = count_hydrogens_m.captured(1).toInt();
             }
 
             if ( !saxs_map.count(hybrid_map[hybrid_name].saxs_name) )
@@ -1161,7 +1163,7 @@ bool US_Saxs_Util::calc_saxs_iq_native_hybrid()
 
    // don't forget to later merge deleted waters into model_vector
    // right now we are going with first residue map entry
-   QRegExp count_hydrogens("H(\\d)");
+   QRegularExpression count_hydrogens("H(\\d)");
 
    if ( !compute_scale_excl_vol() )
    {
@@ -1293,9 +1295,10 @@ bool US_Saxs_Util::calc_saxs_iq_native_hybrid()
             new_atom.saxs_name = hybrid_map[hybrid_name].saxs_name; 
             new_atom.hybrid_name = hybrid_name;
             new_atom.hydrogens = 0;
-            if ( count_hydrogens.indexIn(hybrid_name) != -1 )
+            QRegularExpressionMatch count_hydrogens_m = count_hydrogens.match(hybrid_name);
+            if ( count_hydrogens_m.hasMatch() )
             {
-               new_atom.hydrogens = count_hydrogens.cap(1).toInt();
+               new_atom.hydrogens = count_hydrogens_m.captured(1).toInt();
             }
 
             if ( !saxs_map.count(hybrid_map[hybrid_name].saxs_name) )
@@ -2438,8 +2441,8 @@ bool US_Saxs_Util::load_ff_table( QString filename )
    
    unsigned int line = 0;
 
-   QRegExp rx_blank  ( "^\\s*$" );
-   QRegExp rx_comment( "#.*$" );
+   QRegularExpression rx_blank  ( "^\\s*$" );
+   QRegularExpression rx_comment( "#.*$" );
 
    while ( !ts.atEnd() )
    {
@@ -2623,7 +2626,7 @@ map < QString, unsigned int > US_Saxs_Util::get_atom_summary_counts( PDB_model *
 {
    map < QString, unsigned int > asc;
    
-   QRegExp count_hydrogens("H(\\d)");
+   QRegularExpression count_hydrogens("H(\\d)");
 
    for ( unsigned int j = 0; j < model->molecule.size(); j++ )
    {
@@ -2660,9 +2663,10 @@ map < QString, unsigned int > US_Saxs_Util::get_atom_summary_counts( PDB_model *
          }
             
          int hydrogens = 0;
-         if ( count_hydrogens.indexIn( hybrid_name ) != -1 )
+         QRegularExpressionMatch count_hydrogens_m = count_hydrogens.match( hybrid_name );
+         if ( count_hydrogens_m.hasMatch() )
          {
-            hydrogens = count_hydrogens.cap( 1 ).toInt();
+            hydrogens = count_hydrogens_m.captured(1).toInt();
          }
          QString atom_name = this_atom->name;
          if ( atom_name.contains( "^H" ) )
@@ -2942,11 +2946,12 @@ bool US_Saxs_Util::pdb_mw( QStringList &qsl, double & mw )
       
    map < QString, int > atom_counts;
 
-   QRegExp rx_atom( "^(HETATM|ATOM)" );
+   QRegularExpression rx_atom( "^(HETATM|ATOM)" );
 
    for ( int i = 0; i < (int) qsl.size(); ++i )
    {
-      if ( rx_atom.indexIn( qsl[ i ] ) != -1 )
+      QRegularExpressionMatch rx_atom_m = rx_atom.match( qsl[ i ] );
+      if ( rx_atom_m.hasMatch() )
       {
          QString qs = qsl[ i ].mid( 76, 2 ).trimmed();
          if ( qs.isEmpty() )

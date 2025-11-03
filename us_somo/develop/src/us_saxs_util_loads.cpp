@@ -497,12 +497,13 @@ bool US_Saxs_Util::read_pdb( QStringList &qsl )
       {
          last_was_ENDMDL = false;
          model_flag = true; // we are using model descriptions (possibly multiple models)
-         QRegExp rx_get_model( "^MODEL\\s+(\\S+)" );
+         QRegularExpression rx_get_model( "^MODEL\\s+(\\S+)" );
          // str2 = str1.mid(6, 15);
          // temp_model.model_id = str2.toUInt();
-         if ( rx_get_model.indexIn( str1 ) != -1 )
+         QRegularExpressionMatch rx_get_model_m = rx_get_model.match( str1 );
+         if ( rx_get_model_m.hasMatch() )
          {
-            temp_model.model_id = rx_get_model.cap( 1 );
+            temp_model.model_id = rx_get_model_m.captured(1);
          } else {
             temp_model.model_id = str1.mid( 6, 15 );
          }
@@ -713,10 +714,11 @@ bool US_Saxs_Util::read_pdb( QString filename )
             model_flag = true; // we are using model descriptions (possibly multiple models)
             // str2 = str1.mid(6, 15);
             // temp_model.model_id = str2.toUInt();
-            QRegExp rx_get_model( "^MODEL\\s+(\\S+)" );
-            if ( rx_get_model.indexIn( str1 ) != -1 )
+            QRegularExpression rx_get_model( "^MODEL\\s+(\\S+)" );
+            QRegularExpressionMatch rx_get_model_m = rx_get_model.match( str1 );
+            if ( rx_get_model_m.hasMatch() )
             {
-               temp_model.model_id = rx_get_model.cap( 1 );
+               temp_model.model_id = rx_get_model_m.captured(1);
             } else {
                temp_model.model_id = str1.mid( 6, 15 );
             }
@@ -875,10 +877,10 @@ bool US_Saxs_Util::dna_rna_resolve()
 {
    // check each chain of each model for DNA type AA's
 
-   QRegExp rx_dna("^T$");
-   QRegExp rx_dna_and_rna("^(A|G|C|T|U)$");
-   QRegExp rx_dna_or_rna("^(A|G|C)$");
-   QRegExp rx_rna("^U$");
+   QRegularExpression rx_dna("^T$");
+   QRegularExpression rx_dna_and_rna("^(A|G|C|T|U)$");
+   QRegularExpression rx_dna_or_rna("^(A|G|C)$");
+   QRegularExpression rx_rna("^U$");
 
    // this can cause spurious chain breaks in the load
    // work around it with a map
@@ -898,20 +900,23 @@ bool US_Saxs_Util::dna_rna_resolve()
             PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
             QString thisres = this_atom->resName.trimmed();
             chainID = this_atom->chainID;
-            if ( rx_dna_and_rna.indexIn(thisres) == -1 )
+            QRegularExpressionMatch rx_dna_and_rna_m = rx_dna_and_rna.match(thisres);
+            if ( !rx_dna_and_rna_m.hasMatch() )
             {
                // not either:
                ask_convert = false;
                break;
             }
-            if ( rx_dna.indexIn(thisres) != -1 )
+            QRegularExpressionMatch rx_dna_m = rx_dna.match(thisres);
+            if ( rx_dna_m.hasMatch() )
             {
                // we definitely have DNA, correct this residue!
                ask_convert = false;
                convert_this = true;
                break;
             }
-            if ( rx_rna.indexIn(thisres) != -1 )
+            QRegularExpressionMatch rx_rna_m = rx_rna.match(thisres);
+            if ( rx_rna_m.hasMatch() )
             {
                // we definitely have RNA, the residue is ok
                ask_convert = false;

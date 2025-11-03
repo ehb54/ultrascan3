@@ -637,75 +637,88 @@ void US_Hydrodyn_Dad_Parameters::load()
 
       if ( qv[ 0 ].contains( " UV-Vis parameter file" ) ) {
 
-         QRegExp rx_dad_param_desc              ( "^# __uv_vis_param_desc: (.*)\\s*$" );
-         QRegExp rx_dad_param_lambda            ( "^# __uv_vis_param_lambda: (\\S+)\\s*$" );
-         QRegExp rx_dad_param_n                 ( "^# __uv_vis_param_n: (\\S+)\\s*$" );
-         QRegExp rx_dad_param_g_dndc            ( "^# __uv_vis_param_g_dndc: (\\S+)\\s*$" );
-         QRegExp rx_dad_param_g_extinction_coef ( "^# __uv_vis_param_g_extinction_coef: (\\S+)\\s*$" );
-         QRegExp rx_dad_param_g_conc            ( "^# __uv_vis_param_g_conc: (\\S+)\\s*$" );
-         QRegExp rx_dad_param_DLS_detector      ( "^# __uv_vis_param_DLS_detector: (\\S+)\\s*$" );
-         QRegExp rx_dad_param_dndc2_a           ( "^# __uv_vis_param_dndc2_a: (\\S+)\\s*$" );
-         QRegExp rx_dad_param_dndc2_b           ( "^# __uv_vis_param_dndc2_b: (\\S+)\\s*$" );
-         QRegExp rx_dad_param_dndc2_c           ( "^# __uv_vis_param_dndc2_c: (\\S+)\\s*$" );
-         QRegExp rx_dad_param_n2_a              ( "^# __uv_vis_param_n2_a: (\\S+)\\s*$" );
-         QRegExp rx_dad_param_n2_b              ( "^# __uv_vis_param_n2_b: (\\S+)\\s*$" );
-         QRegExp rx_dad_param_n2_c              ( "^# __uv_vis_param_n2_c: (\\S+)\\s*$" );
+         QRegularExpression rx_dad_param_desc              ( "^# __uv_vis_param_desc: (.*)\\s*$" );
+         QRegularExpression rx_dad_param_lambda            ( "^# __uv_vis_param_lambda: (\\S+)\\s*$" );
+         QRegularExpression rx_dad_param_n                 ( "^# __uv_vis_param_n: (\\S+)\\s*$" );
+         QRegularExpression rx_dad_param_g_dndc            ( "^# __uv_vis_param_g_dndc: (\\S+)\\s*$" );
+         QRegularExpression rx_dad_param_g_extinction_coef ( "^# __uv_vis_param_g_extinction_coef: (\\S+)\\s*$" );
+         QRegularExpression rx_dad_param_g_conc            ( "^# __uv_vis_param_g_conc: (\\S+)\\s*$" );
+         QRegularExpression rx_dad_param_DLS_detector      ( "^# __uv_vis_param_DLS_detector: (\\S+)\\s*$" );
+         QRegularExpression rx_dad_param_dndc2_a           ( "^# __uv_vis_param_dndc2_a: (\\S+)\\s*$" );
+         QRegularExpression rx_dad_param_dndc2_b           ( "^# __uv_vis_param_dndc2_b: (\\S+)\\s*$" );
+         QRegularExpression rx_dad_param_dndc2_c           ( "^# __uv_vis_param_dndc2_c: (\\S+)\\s*$" );
+         QRegularExpression rx_dad_param_n2_a              ( "^# __uv_vis_param_n2_a: (\\S+)\\s*$" );
+         QRegularExpression rx_dad_param_n2_b              ( "^# __uv_vis_param_n2_b: (\\S+)\\s*$" );
+         QRegularExpression rx_dad_param_n2_c              ( "^# __uv_vis_param_n2_c: (\\S+)\\s*$" );
 
          for ( int i = 1; i < (int) qv.size(); i++ ) {
 
-            if ( rx_dad_param_desc.indexIn( qv[ i ] ) != -1 ) {
-               le_dad_param_desc->setText( rx_dad_param_desc.cap( 1 ) );
+            QRegularExpressionMatch rx_dad_param_desc_m = rx_dad_param_desc.match( qv[ i ] );
+            if ( rx_dad_param_desc_m.hasMatch() ) {
+               le_dad_param_desc->setText( rx_dad_param_desc_m.captured(1) );
                continue;
             }
 
-            if ( rx_dad_param_lambda.indexIn( qv[ i ] ) != -1 ) {
-               le_dad_param_lambda->setText( rx_dad_param_lambda.cap( 1 ) );
+            QRegularExpressionMatch rx_dad_param_lambda_m = rx_dad_param_lambda.match( qv[ i ] );
+            if ( rx_dad_param_lambda_m.hasMatch() ) {
+               le_dad_param_lambda->setText( rx_dad_param_lambda_m.captured(1) );
                continue;
             }
-            if ( rx_dad_param_n.indexIn( qv[ i ] ) != -1 ) {
-               le_dad_param_n->setText( rx_dad_param_n.cap( 1 ) );
+            QRegularExpressionMatch rx_dad_param_n_m = rx_dad_param_n.match( qv[ i ] );
+            if ( rx_dad_param_n_m.hasMatch() ) {
+               le_dad_param_n->setText( rx_dad_param_n_m.captured(1) );
                continue;
             }
-            if ( rx_dad_param_g_dndc.indexIn( qv[ i ] ) != -1 ) {
-               le_dad_param_g_dndc->setText( rx_dad_param_g_dndc.cap( 1 ) );
+            QRegularExpressionMatch rx_dad_param_g_dndc_m = rx_dad_param_g_dndc.match( qv[ i ] );
+            if ( rx_dad_param_g_dndc_m.hasMatch() ) {
+               le_dad_param_g_dndc->setText( rx_dad_param_g_dndc_m.captured(1) );
                continue;
             }
-            if ( rx_dad_param_g_extinction_coef.indexIn( qv[ i ] ) != -1 ) {
-               le_dad_param_g_extinction_coef->setText( rx_dad_param_g_extinction_coef.cap( 1 ) );
+            QRegularExpressionMatch rx_dad_param_g_extinction_coef_m = rx_dad_param_g_extinction_coef.match( qv[ i ] );
+            if ( rx_dad_param_g_extinction_coef_m.hasMatch() ) {
+               le_dad_param_g_extinction_coef->setText( rx_dad_param_g_extinction_coef_m.captured(1) );
                continue;
             }
-            if ( rx_dad_param_g_conc.indexIn( qv[ i ] ) != -1 ) {
-               le_dad_param_g_conc->setText( rx_dad_param_g_conc.cap( 1 ) );
+            QRegularExpressionMatch rx_dad_param_g_conc_m = rx_dad_param_g_conc.match( qv[ i ] );
+            if ( rx_dad_param_g_conc_m.hasMatch() ) {
+               le_dad_param_g_conc->setText( rx_dad_param_g_conc_m.captured(1) );
                continue;
             }
-            if ( rx_dad_param_DLS_detector.indexIn( qv[ i ] ) != -1 ) {
-               le_dad_param_DLS_detector->setText( rx_dad_param_DLS_detector.cap( 1 ) );
-               continue;
-            }
-
-            if ( rx_dad_param_dndc2_a.indexIn( qv[ i ] ) != -1 ) {
-               le_dad_param_dndc2_a->setText( rx_dad_param_dndc2_a.cap( 1 ) );
-               continue;
-            }
-            if ( rx_dad_param_dndc2_b.indexIn( qv[ i ] ) != -1 ) {
-               le_dad_param_dndc2_b->setText( rx_dad_param_dndc2_b.cap( 1 ) );
-               continue;
-            }
-            if ( rx_dad_param_dndc2_c.indexIn( qv[ i ] ) != -1 ) {
-               le_dad_param_dndc2_c->setText( rx_dad_param_dndc2_c.cap( 1 ) );
+            QRegularExpressionMatch rx_dad_param_DLS_detector_m = rx_dad_param_DLS_detector.match( qv[ i ] );
+            if ( rx_dad_param_DLS_detector_m.hasMatch() ) {
+               le_dad_param_DLS_detector->setText( rx_dad_param_DLS_detector_m.captured(1) );
                continue;
             }
 
-            if ( rx_dad_param_n2_a.indexIn( qv[ i ] ) != -1 ) {
-               le_dad_param_n2_a->setText( rx_dad_param_n2_a.cap( 1 ) );
+            QRegularExpressionMatch rx_dad_param_dndc2_a_m = rx_dad_param_dndc2_a.match( qv[ i ] );
+            if ( rx_dad_param_dndc2_a_m.hasMatch() ) {
+               le_dad_param_dndc2_a->setText( rx_dad_param_dndc2_a_m.captured(1) );
                continue;
             }
-            if ( rx_dad_param_n2_b.indexIn( qv[ i ] ) != -1 ) {
-               le_dad_param_n2_b->setText( rx_dad_param_n2_b.cap( 1 ) );
+            QRegularExpressionMatch rx_dad_param_dndc2_b_m = rx_dad_param_dndc2_b.match( qv[ i ] );
+            if ( rx_dad_param_dndc2_b_m.hasMatch() ) {
+               le_dad_param_dndc2_b->setText( rx_dad_param_dndc2_b_m.captured(1) );
                continue;
             }
-            if ( rx_dad_param_n2_c.indexIn( qv[ i ] ) != -1 ) {
-               le_dad_param_n2_c->setText( rx_dad_param_n2_c.cap( 1 ) );
+            QRegularExpressionMatch rx_dad_param_dndc2_c_m = rx_dad_param_dndc2_c.match( qv[ i ] );
+            if ( rx_dad_param_dndc2_c_m.hasMatch() ) {
+               le_dad_param_dndc2_c->setText( rx_dad_param_dndc2_c_m.captured(1) );
+               continue;
+            }
+
+            QRegularExpressionMatch rx_dad_param_n2_a_m = rx_dad_param_n2_a.match( qv[ i ] );
+            if ( rx_dad_param_n2_a_m.hasMatch() ) {
+               le_dad_param_n2_a->setText( rx_dad_param_n2_a_m.captured(1) );
+               continue;
+            }
+            QRegularExpressionMatch rx_dad_param_n2_b_m = rx_dad_param_n2_b.match( qv[ i ] );
+            if ( rx_dad_param_n2_b_m.hasMatch() ) {
+               le_dad_param_n2_b->setText( rx_dad_param_n2_b_m.captured(1) );
+               continue;
+            }
+            QRegularExpressionMatch rx_dad_param_n2_c_m = rx_dad_param_n2_c.match( qv[ i ] );
+            if ( rx_dad_param_n2_c_m.hasMatch() ) {
+               le_dad_param_n2_c->setText( rx_dad_param_n2_c_m.captured(1) );
                continue;
             }
 

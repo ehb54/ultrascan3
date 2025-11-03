@@ -598,9 +598,9 @@ void US_Hydrodyn_Pdb_Tool_Merge::start()
       return;
    }
 
-   QRegExp rx_model("^MODEL");
-   QRegExp rx_end("^END");
-   QRegExp rx_save_header("^("
+   QRegularExpression rx_model("^MODEL");
+   QRegularExpression rx_end("^END");
+   QRegularExpression rx_save_header("^("
                           "HEADER|"
                           "TITLE|"
                           "COMPND|"
@@ -725,7 +725,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::start()
       return;
    }
 
-   QFile ff( le_target->text().replace( QRegExp( ".pdb$", Qt::CaseInsensitive ) , "" ) + "_filtered.pdb" );
+   QFile ff( le_target->text().replace( QRegularExpression( ".pdb$", QRegularExpression::CaseInsensitiveOption ) , "" ) + "_filtered.pdb" );
    if ( cb_filter->isChecked() && !ff.open( QIODevice::WriteOnly ) )
    {
       QMessageBox::warning( this, "US-SOMO: PDB Editor : Cut/Splice",
@@ -1641,7 +1641,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::target()
    QString filename = QFileDialog::getSaveFileName( this , "Choose a name to save the result" , "" , "PDB (*.pdb *.PDB)" );
 
 
-   if ( !filename.contains( QRegExp( ".pdb$", Qt::CaseInsensitive ) ) )
+   if ( !filename.contains( QRegularExpression( ".pdb$", QRegularExpression::CaseInsensitiveOption ) ) )
    {
       filename += ".pdb";
    }
@@ -2488,7 +2488,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::csv_save()
       return;
    }
 
-   if ( !filename.contains(QRegExp(".csc$", Qt::CaseInsensitive )) )
+   if ( !filename.contains(QRegularExpression(".csc$", QRegularExpression::CaseInsensitiveOption )) )
    {
       filename += ".csc";
    }

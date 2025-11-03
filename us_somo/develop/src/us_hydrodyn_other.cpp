@@ -1359,7 +1359,7 @@ void US_Hydrodyn::pdb_tool()
 void US_Hydrodyn::make_test_set()
 {
    QTextStream( stdout ) << "make test set\n";
-   QRegExp count_hydrogens("H(\\d)");
+   QRegularExpression count_hydrogens("H(\\d)");
 
    QString test_dir = somo_dir + QDir::separator() + "testset";
    QDir dir1( test_dir );
@@ -1399,9 +1399,10 @@ void US_Hydrodyn::make_test_set()
                {
                   QString atom_name_1 = atom_name.left( 1 );
                   QString hybrid_name = residue_list[ i ].r_atom[ j ].hybrid.name;
-                  if ( count_hydrogens.indexIn( hybrid_name ) != -1 )
+                  QRegularExpressionMatch count_hydrogens_m = count_hydrogens.match( hybrid_name );
+                  if ( count_hydrogens_m.hasMatch() )
                   {
-                     hydrogens = count_hydrogens.cap( 1 ).toInt();
+                     hydrogens = count_hydrogens_m.captured(1).toInt();
                   }
 
                   QDir::setCurrent( test_dir );

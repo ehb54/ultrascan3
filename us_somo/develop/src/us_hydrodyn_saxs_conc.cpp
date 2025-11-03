@@ -552,7 +552,7 @@ void US_Hydrodyn_Saxs_Conc::save()
       return;
    }
 
-   if ( !fname.contains(QRegExp(".sxc$", Qt::CaseInsensitive )) )
+   if ( !fname.contains(QRegularExpression(".sxc$", QRegularExpression::CaseInsensitiveOption )) )
    {
       fname += ".sxc";
    }

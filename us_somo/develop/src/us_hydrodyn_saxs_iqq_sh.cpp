@@ -35,7 +35,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_sh()
    pb_plot_saxs_sans->setEnabled(false);
    pb_plot_pr->setEnabled(false);
    progress_saxs->reset();
-   QRegExp count_hydrogens("H(\\d)");
+   QRegularExpression count_hydrogens("H(\\d)");
 
    if ( our_saxs_options->iqq_use_atomic_ff )
    {
@@ -258,10 +258,11 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_sh()
             new_atom.saxs_name = hybrid_map[hybrid_name].saxs_name; 
             new_atom.hybrid_name = hybrid_name;
             new_atom.hydrogens = 0;
+            QRegularExpressionMatch count_hydrogens_m = count_hydrogens.match(hybrid_name);
             if ( !our_saxs_options->iqq_use_atomic_ff &&
-                 count_hydrogens.indexIn(hybrid_name) != -1 )
+                 count_hydrogens_m.hasMatch() )
             {
-               new_atom.hydrogens = count_hydrogens.cap(1).toInt();
+               new_atom.hydrogens = count_hydrogens_m.captured(1).toInt();
             }
 
             if ( !saxs_map.count(hybrid_map[hybrid_name].saxs_name) )

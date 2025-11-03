@@ -1,5 +1,4 @@
 // us_hydrodyn.cpp contains class creation & gui connected functions
-#include <QRegularExpression>
 // us_hydrodyn_core.cpp contains the main computational routines
 // us_hydrodyn_bd_core.cpp contains the main computational routines for brownian dynamic browflex computations
 // us_hydrodyn_anaflex_core.cpp contains the main computational routines for brownian dynamic (anaflex) computations
@@ -16,6 +15,8 @@
 #include "../include/us_hydrodyn_grid_atob.h"
 #include "../include/us_hydrodyn_pat.h"
 #include "../include/us_hydrodyn_asab1.h"
+#include <QRegularExpression>
+#include <QRegularExpressionMatch>
 
 #define SLASH        "/"
 #define DOTSOMO      ""
@@ -2116,13 +2117,13 @@ void US_Hydrodyn::hullrad_finished( int, QProcess::ExitStatus )
    map < QString, double > captures;
 
    for ( int i = 0; i < (int) caps.size(); ++i ) {
-      QRegExp rx( caps[ i ] + "\\s+:\\s*(\\S+)" );
-
-      if ( rx.indexIn( hullrad_stdout ) == -1 ) {
+      QRegularExpression rx( caps[ i ] + "\\s+:\\s*(\\S+)" );
+      QRegularExpressionMatch m = rx.match(  hullrad_stdout );
+      if ( !m.hasMatch() ) {
          editor_msg( "red", QString( us_tr( "Could not find %1 file in HULLRAD output" ) ).arg( caps[ i ].replace( "\\", "" ) ) );
          hullrad_captures[ caps[ i ] ].push_back( -9e99 );
       } else {
-         hullrad_captures[ caps[ i ] ].push_back( rx.cap( 1 ).toDouble() );
+         hullrad_captures[ caps[ i ] ].push_back( m.captured( 1 ).toDouble() );
          us_qdebug( QString( "%1 : '%2'\n" ).arg( caps[ i ] ).arg( hullrad_captures[ caps[ i ] ].back() ) );
       }
    }
@@ -2561,26 +2562,26 @@ bool US_Hydrodyn::calc_hullrad_hydro( QString filename ) {
 
    // open pdb, split, save filenames
 
-   QRegExp rx_model("^MODEL");
-   QRegExp rx_end("^END");
-   QRegExp rx_save_header("^("
-                          "HEADER|"
-                          "TITLE|"
-                          "COMPND|"
-                          "SOURCE|"
-                          "KEYWDS|"
-                          "AUTHOR|"
-                          "REVDAT|"
-                          "JRNL|"
-                          "REMARK|"
-                          "SEQRES|"
-                          "SHEET|"
-                          "HELIX|"
-                          "SSBOND|"
-                          "DBREF|"
-                          "ORIGX|"
-                          "SCALE"
-                          ")\\.*" );
+   QRegularExpression rx_model("^MODEL");
+   QRegularExpression rx_end("^END");
+   QRegularExpression rx_save_header("^("
+                                     "HEADER|"
+                                     "TITLE|"
+                                     "COMPND|"
+                                     "SOURCE|"
+                                     "KEYWDS|"
+                                     "AUTHOR|"
+                                     "REVDAT|"
+                                     "JRNL|"
+                                     "REMARK|"
+                                     "SEQRES|"
+                                     "SHEET|"
+                                     "HELIX|"
+                                     "SSBOND|"
+                                     "DBREF|"
+                                     "ORIGX|"
+                                     "SCALE"
+                                     ")\\.*" );
    
    unsigned int model_count = 0;
 
@@ -2706,7 +2707,7 @@ bool US_Hydrodyn::calc_hullrad_hydro( QString filename ) {
 
    QString fn = hullrad_tmp_path + "/" + QFileInfo( f ).fileName().replace(QRegularExpression( QStringLiteral( "\\.(pdb|PDB)$" ) ),"") + ext;
 
-   fn.replace(QRegExp(QString("%1$").arg(ext)), "" );
+   fn.replace(QRegularExpression(QString("%1$").arg(ext)), "" );
 
    if ( !f.open( QIODevice::ReadOnly ) ) {
       QMessageBox::warning( this,

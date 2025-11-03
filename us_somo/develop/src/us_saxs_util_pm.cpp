@@ -560,7 +560,7 @@ bool US_Saxs_Util::run_pm(
       return false;
    }
 
-   parameters[ "pmfiles" ].replace( "\\/", "/" ).replace( QRegExp( "^\"" ), "" ).replace( QRegExp( "\"$" ), "" );
+   parameters[ "pmfiles" ].replace( "\\/", "/" ).replace( QRegularExpression( "^\"" ), "" ).replace( QRegularExpression( "\"$" ), "" );
    QStringList files;
 
    {
@@ -1059,10 +1059,10 @@ bool US_Saxs_Util::run_pm( QStringList qsl_commands )
    vector < double >            csv_q;
    vector < vector < double > > csv_I;
 
-   QRegExp rx_blank  ( "^\\s*$" );
-   QRegExp rx_comment( "#.*$" );
+   QRegularExpression rx_blank  ( "^\\s*$" );
+   QRegularExpression rx_comment( "#.*$" );
 
-   QRegExp rx_valid  ( 
+   QRegularExpression rx_valid  ( 
                       "^("
                       "pmgridsize|"
                       "pmharmonics|"
@@ -1116,7 +1116,7 @@ bool US_Saxs_Util::run_pm( QStringList qsl_commands )
                       ")$" 
                       );
 
-   QRegExp rx_arg    ( 
+   QRegularExpression rx_arg    ( 
                       "^("
                       "pmgridsize|"
                       "pmharmonics|"
@@ -1163,7 +1163,7 @@ bool US_Saxs_Util::run_pm( QStringList qsl_commands )
                       ")$" 
                       );
 
-   QRegExp rx_vector ( 
+   QRegularExpression rx_vector ( 
                       "^("
                       "pmf|"
                       "pmq|"
@@ -1199,7 +1199,8 @@ bool US_Saxs_Util::run_pm( QStringList qsl_commands )
       QString option = qsl[ 0 ].toLower();
       qsl.pop_front();
 
-      if ( rx_valid.indexIn( option ) == -1 )
+      QRegularExpressionMatch rx_valid_m = rx_valid.match( option );
+      if ( !rx_valid_m.hasMatch() )
       {
          errormsg = QString( "Error controlfile line %1 : Unrecognized token %2" )
             .arg( i + 1 )
@@ -1207,7 +1208,8 @@ bool US_Saxs_Util::run_pm( QStringList qsl_commands )
          return false;
       }
 
-      if ( rx_arg.indexIn( option ) != -1 && 
+      QRegularExpressionMatch rx_arg_m = rx_arg.match( option );
+      if ( rx_arg_m.hasMatch() && 
            qsl.size() < 1 )
       {
          errormsg = QString( "Error reading controlfile line %1 : Missing argument " )
@@ -1215,12 +1217,13 @@ bool US_Saxs_Util::run_pm( QStringList qsl_commands )
          return false;
       }
 
-      if ( rx_arg.indexIn( option ) != -1 )
+      if ( rx_arg_m.hasMatch() )
       {
          control_parameters[ option ] = qsl.join( " " );
       }
 
-      if ( rx_vector.indexIn( option ) != -1 )
+      QRegularExpressionMatch rx_vector_m = rx_vector.match( option );
+      if ( rx_vector_m.hasMatch() )
       {
          control_vectors[ option ].clear( );
          if ( us_log )

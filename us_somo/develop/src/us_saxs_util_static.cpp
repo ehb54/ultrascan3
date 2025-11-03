@@ -26,7 +26,7 @@ bool US_Saxs_Util::read_sas_data(
    }
    QString ext = QFileInfo( filename ).suffix().toLower();
 
-   QRegExp rx_valid_ext (
+   QRegularExpression rx_valid_ext (
                          "^("
                          "dat|"
                          "int|"
@@ -34,7 +34,8 @@ bool US_Saxs_Util::read_sas_data(
                          // "out|"
                          "ssaxs)$" );
 
-   if ( rx_valid_ext.indexIn( ext ) == -1 )
+   QRegularExpressionMatch rx_valid_ext_m = rx_valid_ext.match( ext );
+   if ( !rx_valid_ext_m.hasMatch() )
    {
       error_msg = QString("Error: %1 unsupported file extension %2").arg( filename ).arg( ext );
       return false;
@@ -76,12 +77,13 @@ bool US_Saxs_Util::read_sas_data(
       offset = 1;
    }      
 
-   QRegExp rx_ok_line("^(\\s+|\\d+|\\.|\\d(E|e)(\\+|-|\\d))+$");
-   rx_ok_line.setMinimal( true );
+   QRegularExpression rx_ok_line("^(\\s+|\\d+|\\.|\\d(E|e)(\\+|-|\\d))+$");
+   rx_ok_line.setPatternOptions(QRegularExpression::InvertedGreedinessOption);
    for ( int i = 1; i < (int) qv.size(); i++ )
    {
+      QRegularExpressionMatch rx_ok_line_m = rx_ok_line.match( qv[i] );
       if ( qv[i].contains(QRegularExpression( QStringLiteral( "^#" ) )) ||
-           rx_ok_line.indexIn( qv[i] ) == -1 )
+           !rx_ok_line_m.hasMatch() )
       {
          continue;
       }
@@ -10942,9 +10944,9 @@ bool US_Saxs_Util::pdb2fasta( QString outfile, QStringList & files, int max_line
    
    QTextStream tso( &of );
 
-   QRegExp rx_atom ("^ATOM");
-   QRegExp rx_model("^MODEL");
-   QRegExp rx_end  ("^END");
+   QRegularExpression rx_atom ("^ATOM");
+   QRegularExpression rx_model("^MODEL");
+   QRegularExpression rx_end  ("^END");
    
    map < QString, QChar > residue2fasta;
    residue2fasta["GLY"] = 'G';

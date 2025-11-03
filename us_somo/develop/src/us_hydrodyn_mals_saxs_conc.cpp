@@ -538,7 +538,7 @@ void US_Hydrodyn_Mals_Saxs_Conc::save()
       return;
    }
 
-   if ( !fname.contains(QRegExp(".sbc$", Qt::CaseInsensitive )) )
+   if ( !fname.contains(QRegularExpression(".sbc$", QRegularExpression::CaseInsensitiveOption )) )
    {
       fname += ".sbc";
    }

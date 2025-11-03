@@ -48,12 +48,13 @@ static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const 
     int itemHeight = height( listBox() );
     QFontMetrics fm = painter->fontMetrics();
     int yPos = ( ( itemHeight - fm.height() ) / 2 ) + fm.ascent();
-    QRegExp rx( "^<(.*)~(.*)~(.*)>(.*)$" );
-    if ( rx.indexIn(text()) != -1 ) 
+    QRegularExpression rx(QStringLiteral("^<(.*)~(.*)~(.*)>(.*)$"));
+    QRegularExpressionMatch m = rx.match(text());
+    if ( m.hasMatch() )
     {
        bool highlighted = ( painter->backgroundColor().fileName() != "#ffffff" );
-       painter->setPen(rx.cap(highlighted ? 2 : 1));
-       painter->drawText( 3, yPos, rx.cap(3) + " " + rx.cap(4));
+       painter->setPen( m.captured( highlighted ? 2 : 1 ) );
+       painter->drawText( 3, yPos, m.captured(3) + " " + m.captured(4) );
     } else {
        painter->drawText( 3, yPos, text() );
     }
@@ -3607,9 +3608,9 @@ vector < int > US_Hydrodyn_Batch::split_if_mm( int i ) {
    // modified from us_hydrodyn_pdb_tool:split_pdb() reference
 
    {
-      QRegExp rx_model("^MODEL");
-      QRegExp rx_end("^END");
-      QRegExp rx_save_header("^("
+      QRegularExpression rx_model("^MODEL");
+      QRegularExpression rx_end("^END");
+      QRegularExpression rx_save_header("^("
                              "HEADER|"
                              "TITLE|"
                              "COMPND|"
@@ -3816,7 +3817,7 @@ QString US_Hydrodyn_Batch::get_file_name( int i, int m )
 #if defined(BW_LISTBOX)
    return
       lb_files->item(i)->text()
-      .replace(QRegExp(
+      .replace(QRegularExpression(
                        "^(File missing|"
                        "Screening|"
                        "Screen done|"
@@ -4055,10 +4056,11 @@ void US_Hydrodyn_Batch::make_movie()
    }
    QString tc_format_string = "%.0f";
    {
-      QRegExp rx("\\.(\\d*)$");
-      if ( rx.indexIn(QString("%1").arg(tc_delta)) != -1 )
+      QRegularExpression rx( QStringLiteral( "\\.(\\d*)$" ) );
+      QRegularExpressionMatch m = rx.match( QStringLiteral( "%1" ).arg( tc_delta ) );
+      if ( m.hasMatch() )
       {
-         tc_format_string = QString("%.%1f").arg(rx.cap(1).length());
+         tc_format_string = QString( "%.%1f" ).arg( m.captured( 1 ).length() );
       }
    }
    cout << "tc format: " << tc_format_string << endl;

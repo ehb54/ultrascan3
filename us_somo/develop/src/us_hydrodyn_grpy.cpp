@@ -591,21 +591,31 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
    grpy_captures     .clear();
 
    for ( int i = 0; i < (int) caps.size(); i += 3 ) {
-      QRegExp rx = QRegExp( caps[ i ] + "\\s*:\\s*(\\S+)" );
+      QRegularExpression rx( caps[ i ] + "\\s*:\\s*(\\S+)" );
       int pos = 0;
       bool found = false;
       int cappos = caps[ i + 1 ].toInt();
       int count  = 1;
-      while ( ( pos = rx.indexIn( grpy_stdout, pos ) ) != -1 ) {
+
+      while ( true ) {
+         QRegularExpressionMatch m = rx.match( grpy_stdout, pos );
+         if ( !m.hasMatch() ) {
+            break;
+         }
+
          if ( cappos == count ) {
-            grpy_captures[ caps[ i + 2 ] ].push_back( rx.cap( 1 ).toDouble() );
-            us_qdebug( QString( "%1 : '%2'\n" ).arg( caps[ i + 2 ] ).arg( grpy_captures[ caps[ i + 2 ] ].back() ) );
+            grpy_captures[ caps[ i + 2 ] ].push_back( m.captured( 1 ).toDouble() );
+            us_qdebug( QString( "%1 : '%2'\n" )
+                       .arg( caps[ i + 2 ] )
+                       .arg( grpy_captures[ caps[ i + 2 ] ].back() ) );
             found = true;
             break;
          }
-         pos += rx.matchedLength();
+
+         pos = m.capturedEnd();   // advance past this match (Qt6 replacement for matchedLength())
          ++count;
-      }         
+      }
+
       if ( !found ) {
          qDebug() << "grpy caps not found " << i << "'" << caps[ i ] << "'";
          editor_msg( "red", QString( us_tr( "Could not find '%1' in GRPY output" ) ).arg( caps[ i ].replace( "\\", "" ) ) );

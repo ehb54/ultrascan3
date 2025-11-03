@@ -2636,7 +2636,7 @@ void US_Hydrodyn_Saxs::show_pr_contrib()
    // sum up all the atoms that contrib:
    // cout << "trying to sum up\n";
    map < QString, double > contrib_sums;
-   QRegExp rx2("^(\\d+):(\\d+)$");
+   QRegularExpression rx2("^(\\d+):(\\d+)$");
 
    // compute prpos limits:
    int poslow = (unsigned int)floor(pr_contrib_low / contrib_delta);
@@ -4481,8 +4481,8 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
          editor_msg( "blue", "found somo/tmp/saxscmds" );
          QTextStream ts( &f );
          unsigned int line = 0;
-         QRegExp rx_blank  ( "^\\s*$" );
-         QRegExp rx_comment( "#.*$" );
+         QRegularExpression rx_blank  ( "^\\s*$" );
+         QRegularExpression rx_comment( "#.*$" );
 
          while ( !ts.atEnd() )
          {
@@ -5819,7 +5819,7 @@ void US_Hydrodyn_Saxs::select_hybrid_file(const QString &filename)
    QFile f(filename);
    hybrid_list.clear( );
    hybrid_map.clear( );
-   QRegExp count_hydrogens("H(\\d)");
+   QRegularExpression count_hydrogens("H(\\d)");
    if (f.open(QIODevice::ReadOnly|QIODevice::Text))
    {
       QTextStream ts(&f);
@@ -5833,9 +5833,10 @@ void US_Hydrodyn_Saxs::select_hybrid_file(const QString &filename)
          ts >> current_hybrid.exch_prot;
          ts >> current_hybrid.num_elect;
          current_hybrid.hydrogens = 0;
-         if ( count_hydrogens.indexIn( current_hybrid.name ) != -1 )
+         QRegularExpressionMatch count_hydrogens_m = count_hydrogens.match( current_hybrid.name );
+         if ( count_hydrogens_m.hasMatch() )
          {
-            current_hybrid.hydrogens = count_hydrogens.cap(1).toUInt();
+            current_hybrid.hydrogens = count_hydrogens_m.captured(1).toUInt();
          }
 
          str1 = ts.readLine(); // read rest of line
@@ -7132,20 +7133,21 @@ vector < double > US_Hydrodyn_Saxs::rescale( vector < double > x )
 
 int US_Hydrodyn_Saxs::file_curve_type(QString filename)
 {
-   QRegExp rx("sprr_(.)");
-   if ( rx.indexIn(filename) == -1 )
+   QRegularExpression rx("sprr_(.)");
+   QRegularExpressionMatch rx_m = rx.match(filename);
+   if ( !rx_m.hasMatch() )
    {
       return -1;
    }
-   if ( rx.cap(1) == "r" )
+   if ( rx_m.captured(1) == "r" )
    {
       return 0;
    }
-   if ( rx.cap(1) == "x" )
+   if ( rx_m.captured(1) == "x" )
    {
       return 1;
    }
-   if ( rx.cap(1) == "n" )
+   if ( rx_m.captured(1) == "n" )
    {
       return 2;
    }

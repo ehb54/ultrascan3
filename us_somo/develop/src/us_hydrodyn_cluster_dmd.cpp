@@ -915,7 +915,7 @@ void US_Hydrodyn_Cluster_Dmd::save_csv()
       return;
    }
 
-   if ( !fname.contains( QRegExp("\\.dmd$", Qt::CaseInsensitive ) ) )
+   if ( !fname.contains( QRegularExpression("\\.dmd$", QRegularExpression::CaseInsensitiveOption ) ) )
    {
       fname += ".dmd";
    }
@@ -1278,9 +1278,9 @@ bool US_Hydrodyn_Cluster_Dmd::setup_residues( QString filename )
 
    QTextStream ts( &f );
 
-   QRegExp rx_end ("^END");
-   QRegExp rx_atom("^(ATOM|HETATM)");
-   QRegExp rx_hetatm("^HETATM");
+   QRegularExpression rx_end ("^END");
+   QRegularExpression rx_atom("^(ATOM|HETATM)");
+   QRegularExpression rx_hetatm("^HETATM");
 
    map < QString, bool > dup_chain;
 
@@ -1296,7 +1296,7 @@ bool US_Hydrodyn_Cluster_Dmd::setup_residues( QString filename )
          it != residues_range_start.end();
          it++ )
    {
-      if ( it->first.contains( QRegExp( QString( "^%1:" ).arg( filename ) ) ) )
+      if ( it->first.contains( QRegularExpression( QString( "^%1:" ).arg( filename ) ) ) )
       {
          it->second.clear( );
       }
@@ -1306,11 +1306,13 @@ bool US_Hydrodyn_Cluster_Dmd::setup_residues( QString filename )
    {
       QString line = ts.readLine();
 
-      if ( rx_end.indexIn( line ) != -1 )
+      QRegularExpressionMatch rx_end_m = rx_end.match( line );
+      if ( rx_end_m.hasMatch() )
       {
          break;
       }
-      if ( rx_atom.indexIn( line ) != -1 )
+      QRegularExpressionMatch rx_atom_m = rx_atom.match( line );
+      if ( rx_atom_m.hasMatch() )
       {
          QString      chain_id   = line.mid( 21, 1 );
          unsigned int residue_no = line.mid( 22, 4 ).trimmed().toUInt();
@@ -1516,7 +1518,7 @@ bool US_Hydrodyn_Cluster_Dmd::convert_static_range( int row )
 
    TSO << QString( "convert_static_range qsl.size() %1\n" ).arg( qsl.size() );
 
-   QRegExp rx ( "^(|.):(\\d+)(-(\\d+)|)$" );
+   QRegularExpression rx ( "^(|.):(\\d+)(-(\\d+)|)$" );
 
    QString native_range = "";
 
@@ -1528,7 +1530,8 @@ bool US_Hydrodyn_Cluster_Dmd::convert_static_range( int row )
       {
          continue;
       }
-      if ( rx.indexIn( qsl[ i ] ) == -1 )
+      QRegularExpressionMatch rx_m = rx.match( qsl[ i ] );
+      if ( !rx_m.hasMatch() )
       {
          editor_msg( "red",
                      QString( us_tr( "Error: Static range \"%1\" has an invalid format.\n"
@@ -1538,10 +1541,10 @@ bool US_Hydrodyn_Cluster_Dmd::convert_static_range( int row )
          has_errors = true;
          continue;
       }
-      QString      chain_id      = rx.cap( 1 );
-      unsigned int start_residue = rx.cap( 2 ).toUInt();
-      unsigned int end_residue   = rx.cap( 4 ).toUInt();
-      if ( rx.cap( 4 ).isEmpty() )
+      QString      chain_id      = rx_m.captured( 1 );
+      unsigned int start_residue = rx_m.captured( 2 ).toUInt();
+      unsigned int end_residue   = rx_m.captured( 4 ).toUInt();
+      if ( rx_m.captured( 4 ).isEmpty() )
       {
          end_residue = start_residue;
       }

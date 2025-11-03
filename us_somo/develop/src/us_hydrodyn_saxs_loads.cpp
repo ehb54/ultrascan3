@@ -335,7 +335,7 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
    }
    
    QStringList qsl_headers = qsl.filter("\"Name\",\"Type; q:\"");
-   QStringList qsl_t_headers = qsl.filter( QRegExp( "^\"(Name|Type; q:)\"" ) );
+   QStringList qsl_t_headers = qsl.filter( QRegularExpression( "^\"(Name|Type; q:)\"" ) );
    if ( qsl_t_headers.size() == 2 ) {
       qsl = csv_transpose( qsl );
       qsl_headers = qsl.filter("\"Name\",\"Type; q:\"");         
@@ -801,7 +801,7 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
                   // optionally? 
                   if ( qs_tmp.contains(QRegularExpression( QStringLiteral( "(Average|Standard deviation)" ) )) )
                   {
-                     qs_tmp.replace(QRegExp("^\""),QString("\"%1: ").arg(QFileInfo(f2).baseName()));
+                     qs_tmp.replace(QRegularExpression("^\""),QString("\"%1: ").arg(QFileInfo(f2).baseName()));
                   }
                   qsl << qs_tmp;
                   // TSO << "yes, all match\nadding:" << qs_tmp << "\n";
@@ -837,7 +837,7 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
                      .arg(vector_double_to_csv(niq));
                   if ( line.contains(QRegularExpression( QStringLiteral( "(Average|Standard deviation)" ) )) )
                   {
-                     line.replace(QRegExp("^\""),QString("\"%1: ").arg(QFileInfo(f2).baseName()));
+                     line.replace(QRegularExpression("^\""),QString("\"%1: ").arg(QFileInfo(f2).baseName()));
                   }
                   qsl << line;
                   // also check to see if errors need interpolation
@@ -867,7 +867,7 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
                         .arg(vector_double_to_csv(niq_errors));
                      if ( line.contains(QRegularExpression( QStringLiteral( "(Average|Standard deviation)" ) )) )
                      {
-                        line.replace(QRegExp("^\""),QString("\"%1: ").arg(QFileInfo(f2).baseName()));
+                        line.replace(QRegularExpression("^\""),QString("\"%1: ").arg(QFileInfo(f2).baseName()));
                      }
                      qsl << line;
                   }
@@ -1041,13 +1041,13 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
          added_interpolate_msg = true;
       }
       QString line = QString("\"%1\",\"I(q)\",%2\n")
-         .arg(qsl_plotted_iq_names[i].replace( QRegExp( "(^[^\\\"]*\\\"|\\\"[^\\\"]*$)" ), "" ) )
+         .arg(qsl_plotted_iq_names[i].replace( QRegularExpression( "(^[^\\\"]*\\\"|\\\"[^\\\"]*$)" ), "" ) )
          .arg(vector_double_to_csv(nic));
       qsl << line;
       if ( is_nonzero_vector( nic_errors ) )
       {
          QString line = QString("\"%1\",\"I(q) sd\",%2\n")
-            .arg(qsl_plotted_iq_names[i].replace( QRegExp( "(^[^\\\"]*\\\"|\\\"[^\\\"]*$)" ), "" ) )
+            .arg(qsl_plotted_iq_names[i].replace( QRegularExpression( "(^[^\\\"]*\\\"|\\\"[^\\\"]*$)" ), "" ) )
             .arg(vector_double_to_csv(nic_errors));
          qsl << line;
       }
@@ -1227,7 +1227,7 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
    // setup for ift
    if ( run_ift ) {
       ift_to_process = qsl_sel_names;
-      ift_to_process.replaceInStrings( QRegExp( "^\""), "" ).replaceInStrings( QRegExp( "\"$"), "" );
+      ift_to_process.replaceInStrings( QRegularExpression( "^\""), "" ).replaceInStrings( QRegularExpression( "\"$"), "" );
       QTextStream( stdout ) << "ift_to_process:\n" << ift_to_process.join( "\n" ) << Qt::endl;
       call_ift( true );
       return;
@@ -1264,7 +1264,7 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
                editor_msg( "red", us_tr( "Canceling NNLS CSV save" ) );
                nnls_csv = false;
             }
-            if ( !nnls_csv_filename.contains(QRegExp(".csv", Qt::CaseInsensitive )) )
+            if ( !nnls_csv_filename.contains(QRegularExpression(".csv", QRegularExpression::CaseInsensitiveOption )) )
             {
                nnls_csv_filename += ".csv";
             }
@@ -1940,7 +1940,7 @@ void US_Hydrodyn_Saxs::load_saxs( QString filename, bool just_plotted_curves, QS
          // multiple files loaded
          set_scaling_target( scaleto );
 
-         if ( filenames.size() == filenames.filter( QRegExp( ".csv$", Qt::CaseInsensitive ) ).size() ) {
+         if ( filenames.size() == filenames.filter( QRegularExpression( ".csv$", QRegularExpression::CaseInsensitiveOption ) ).size() ) {
             qDebug() << "all csv\n";
             if ( load_check_csvs_compatible( filenames ) ) {
                qDebug() << "all csv compatible\n";
@@ -2231,13 +2231,14 @@ void US_Hydrodyn_Saxs::load_saxs( QString filename, bool just_plotted_curves, QS
          }
       }
 
-      QRegExp rx_ok_line("^(\\s+|-\\d+|\\d+|\\.|\\d(E|e)(\\+|-|\\d))+$");
-      rx_ok_line.setMinimal( true );
+      QRegularExpression rx_ok_line("^(\\s+|-\\d+|\\d+|\\.|\\d(E|e)(\\+|-|\\d))+$");
+      rx_ok_line.setPatternOptions(QRegularExpression::InvertedGreedinessOption);
       for ( unsigned int i = startline; i < (unsigned int) qv.size(); i++ )
       {
          // QTextStream(stdout) << QString( "load line %1 : %2\n" ).arg( i ).arg( qv[i] );
+         QRegularExpressionMatch rx_ok_line_m = rx_ok_line.match( qv[i] );
          if ( qv[i].contains(QRegularExpression( QStringLiteral( "^#" ) )) ||
-              rx_ok_line.indexIn( qv[i] ) == -1 )
+              !rx_ok_line_m.hasMatch() )
          {
             TSO << "not ok: " << qv[i] << Qt::endl; 
             continue;
@@ -2448,7 +2449,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
    }
 
    if ( filenames.size() > 1 &&
-        filenames.filter(QRegExp(".csv$", Qt::CaseInsensitive )).size() != filenames.size() )
+        filenames.filter(QRegularExpression(".csv$", QRegularExpression::CaseInsensitiveOption )).size() != filenames.size() )
    {
       QMessageBox::information( this, "UltraScan",
                                 us_tr("Multiple file load is currently only supported for csv files") );
@@ -2456,11 +2457,11 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
    }
 
    if ( filenames.size() > 1 &&
-        filenames.filter(QRegExp("_t(|-\\d+).csv$", Qt::CaseInsensitive )).size() ) 
+        filenames.filter(QRegularExpression("_t(|-\\d+).csv$", QRegularExpression::CaseInsensitiveOption )).size() ) 
    {
       QMessageBox::information( this, "UltraScan",
                                 us_tr("Can not load transposed format csv files:\n") +
-                                filenames.filter(QRegExp("_t(|-\\d+).csv$", Qt::CaseInsensitive )).join("\n")
+                                filenames.filter(QRegularExpression("_t(|-\\d+).csv$", QRegularExpression::CaseInsensitiveOption )).join("\n")
                                 ) ;
       return;
    }
@@ -2471,7 +2472,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
    {
       filename = filenames[0];
       
-      if ( filename.contains(QRegExp("_t(|-\\d+).csv$", Qt::CaseInsensitive )) )
+      if ( filename.contains(QRegularExpression("_t(|-\\d+).csv$", QRegularExpression::CaseInsensitiveOption )) )
       {
          QMessageBox::information( this, "UltraScan",
                                    us_tr("Can not load transposed format csv files") );
@@ -2552,7 +2553,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
          {
             TSO << "found old csv format, upgrading\n";
             // upgrade the csv format
-            QRegExp rx("^\"(Type; r:|P\\(r\\)|P\\(r\\) normed)\"$");
+            QRegularExpression rx("^\"(Type; r:|P\\(r\\)|P\\(r\\) normed)\"$");
             QStringList new_qsl;
             double delta_r = 0e0;
             for ( unsigned int i = 0; i < (unsigned int)qsl.size(); i++ )
@@ -2565,8 +2566,9 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
                // } else {
                // TSO << QString("line %1 size not greater than 1 value <%2>\n").arg(i).arg(qsl[i]);
                // }
+               QRegularExpressionMatch rx_m = rx.match(tmp_qsl[1]);
                if ( tmp_qsl.size() > 1 &&
-                    rx.indexIn(tmp_qsl[1]) != -1 )
+                    rx_m.hasMatch() )
                {
                   // TSO << "trying to fix\n";
                   QStringList tmp2_qsl;
@@ -2723,15 +2725,16 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
                {
                   TSO << "found old csv format, upgrading\n";
                   // upgrade the csv format
-                  QRegExp rx("^\"(Type; r:|P\\(r\\)|P\\(r\\) normed|P\\(r\\) sd|P\\(r\\) normed sd)\"$");
+                  QRegularExpression rx("^\"(Type; r:|P\\(r\\)|P\\(r\\) normed|P\\(r\\) sd|P\\(r\\) normed sd)\"$");
                   QStringList new_qsl;
                   double delta_r = 0e0;
                   for ( unsigned int i = 0; i < (unsigned int)qsl2.size(); i++ )
                   {
                      QStringList tmp2_qsl;
                      QStringList tmp_qsl = (qsl2[i]).split( "," );
+                     QRegularExpressionMatch rx_m = rx.match(tmp_qsl[1]);
                      if ( tmp_qsl.size() > 1 &&
-                          rx.indexIn(tmp_qsl[1]) != -1 )
+                          rx_m.hasMatch() )
                      {
                         // TSO << "trying to fix\n";
                         QStringList tmp2_qsl;
@@ -2908,7 +2911,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
                         // optionally? 
                         if ( qs_tmp.contains(QRegularExpression( QStringLiteral( "(Average|Standard deviation)" ) )) )
                         {
-                           qs_tmp.replace(QRegExp("^\""),QString("\"%1: ").arg(QFileInfo(f2).baseName()));
+                           qs_tmp.replace(QRegularExpression("^\""),QString("\"%1: ").arg(QFileInfo(f2).baseName()));
                         }
                         qsl << qs_tmp;
                         // TSO << "yes, all match\nadding:" << qs_tmp << Qt::endl;
@@ -2990,7 +2993,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
                                     // TSO << QString("new interpolated line:\n%1\n").arg(line);
                                     if ( line.contains(QRegularExpression( QStringLiteral( "(Average|Standard deviation)" ) )) )
                                     {
-                                       line.replace(QRegExp("^\""),QString("\"%1: ").arg(QFileInfo(f2).baseName()));
+                                       line.replace(QRegularExpression("^\""),QString("\"%1: ").arg(QFileInfo(f2).baseName()));
                                     }
                                     qsl << line;
                                  }
@@ -3006,7 +3009,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
                            // TSO << QString("new interpolated line:\n%1\n").arg(line);
                            if ( line.contains(QRegularExpression( QStringLiteral( "(Average|Standard deviation)" ) )) )
                            {
-                              line.replace(QRegExp("^\""),QString("\"%1: ").arg(QFileInfo(f2).baseName()));
+                              line.replace(QRegularExpression("^\""),QString("\"%1: ").arg(QFileInfo(f2).baseName()));
                            }
                            qsl << line;
                            {
@@ -3051,14 +3054,14 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
                added_interpolate_msg = true;
             }
             QString line = QString("\"%1\",%2,%3,\"P(r)\",%4\n")
-               .arg(qsl_plotted_pr_names[i].replace( QRegExp( "(^[^\\\"]*\\\"|\\\"[^\\\"]*$)" ), "" ) )
+               .arg(qsl_plotted_pr_names[i].replace( QRegularExpression( "(^[^\\\"]*\\\"|\\\"[^\\\"]*$)" ), "" ) )
                .arg(plotted_pr_mw[i])
                .arg(compute_pr_area(npr, r))
                .arg(vector_double_to_csv(npr));
             qsl << line;
             if ( npr_error.size() ) {
                QString line = QString("\"%1\",%2,%3,\"P(r) sd\",%4\n")
-                  .arg(qsl_plotted_pr_names[i].replace( QRegExp( "(^[^\\\"]*\\\"|\\\"[^\\\"]*$)" ), "" ) )
+                  .arg(qsl_plotted_pr_names[i].replace( QRegularExpression( "(^[^\\\"]*\\\"|\\\"[^\\\"]*$)" ), "" ) )
                   .arg(plotted_pr_mw[i])
                   .arg(compute_pr_area(npr, r))
                   .arg(vector_double_to_csv(npr_error));
@@ -3262,7 +3265,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
                   editor_msg( "red", us_tr( "Canceling NNLS CSV save" ) );
                   nnls_csv = false;
                }
-               if ( !nnls_csv_filename.contains(QRegExp(".csv", Qt::CaseInsensitive )) )
+               if ( !nnls_csv_filename.contains(QRegularExpression(".csv", QRegularExpression::CaseInsensitiveOption )) )
                {
                   nnls_csv_filename += ".csv";
                }
@@ -3805,13 +3808,14 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
          QTextStream ts(&f);
          QString tmp;
          unsigned int pos = 0;
-         QRegExp qx_mw("molecular weight (\\d+(|\\.\\d+))", Qt::CaseInsensitive );
+         QRegularExpression qx_mw("molecular weight (\\d+(|\\.\\d+))", QRegularExpression::CaseInsensitiveOption );
 
          while ( !ts.atEnd() )
          {
             tmp = ts.readLine();
-            if ( qx_mw.indexIn( tmp ) != -1 ) {
-               mw = qx_mw.cap(1).toFloat();
+            QRegularExpressionMatch qx_mw_m = qx_mw.match( tmp );
+            if ( qx_mw_m.hasMatch() ) {
+               mw = qx_mw_m.captured(1).toFloat();
                TSO <<
                   QString(
                           "load pr found gnom mw %1\n"
@@ -3837,10 +3841,11 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
       QTextStream ts(&f);
       //      editor->append(QString("\nLoading pr(r) data from %1 %2\n").arg(filename).arg(res));
       QString firstLine = ts.readLine();
-      QRegExp sprr_mw_line("mw\\s+(\\S+)\\s+Daltons");
-      if ( sprr_mw_line.indexIn(firstLine) != -1 )
+      QRegularExpression sprr_mw_line("mw\\s+(\\S+)\\s+Daltons");
+      QRegularExpressionMatch sprr_mw_line_m = sprr_mw_line.match(firstLine);
+      if ( sprr_mw_line_m.hasMatch() )
       {
-         mw = sprr_mw_line.cap(1).toFloat();
+         mw = sprr_mw_line_m.captured(1).toFloat();
          (*remember_mw)[QFileInfo(filename).fileName()] = mw;
          (*remember_mw_source)[QFileInfo(filename).fileName()] = "loaded from sprr file";
       }
@@ -4682,12 +4687,13 @@ void US_Hydrodyn_Saxs::load_sans( QString filename, bool just_plotted_curves )
          }
       }
 
-      QRegExp rx_ok_line("^(\\s+|-\\d+|\\d+|\\.|\\d(E|e)(\\+|-|\\d))+$");
-      rx_ok_line.setMinimal( true );
+      QRegularExpression rx_ok_line("^(\\s+|-\\d+|\\d+|\\.|\\d(E|e)(\\+|-|\\d))+$");
+      rx_ok_line.setPatternOptions(QRegularExpression::InvertedGreedinessOption);
       for ( unsigned int i = 1; i < (unsigned int) qv.size(); i++ )
       {
+         QRegularExpressionMatch rx_ok_line_m = rx_ok_line.match( qv[i] );
          if ( qv[i].contains(QRegularExpression( QStringLiteral( "^#" ) )) ||
-              rx_ok_line.indexIn( qv[i] ) == -1 )
+              !rx_ok_line_m.hasMatch() )
          {
             TSO << "not ok: " << qv[i] << Qt::endl; 
             continue;
@@ -4870,19 +4876,20 @@ void US_Hydrodyn_Saxs::load_gnom()
       double gnom_mw = 0e0;
 
       {
-         QRegExp qx_mw("molecular weight (\\d+(|\\.\\d+))", Qt::CaseInsensitive );
+         QRegularExpression qx_mw("molecular weight (\\d+(|\\.\\d+))", QRegularExpression::CaseInsensitiveOption );
          QStringList mwline = qsl_gnom.filter(qx_mw);
          ask_save_mw_to_gnom = !mwline.size();
 
          if ( mwline.size() ) {
 
-            if ( qx_mw.indexIn(mwline[0]) == -1 )
+            QRegularExpressionMatch qx_mw_m = qx_mw.match(mwline[0]);
+            if ( !qx_mw_m.hasMatch() )
             {
                TSO << QString("qx_mw.search of <%1> for molecular weight failed!\n").arg(mwline[0]);
                gnom_mw = 0e0;
             } else {
-               TSO << QString("mwline cap 0 <%1> cap 1 <%2>\n").arg(qx_mw.cap(0)).arg(qx_mw.cap(1));
-               gnom_mw = qx_mw.cap(1).toDouble();
+               TSO << QString("mwline cap 0 <%1> cap 1 <%2>\n").arg( qx_mw_m.captured(0) ).arg( qx_mw_m.captured(1) );
+               gnom_mw = qx_mw_m.captured(1).toDouble();
             }
             if ( mwline.size() > 1 )
             {
@@ -4929,24 +4936,26 @@ void US_Hydrodyn_Saxs::load_gnom()
       }
          
       QTextStream ts(&f);
-      QRegExp iqqh("^\\s*S\\s+J EXP\\s+ERROR\\s+J REG\\s+I REG\\s*$");
-      QRegExp prrh("^\\s*R\\s+P\\(R\\)\\s+ERROR\\s*$");
-      QRegExp rx2("^\\s*(\\S*)\\s+(\\S*)\\s*$");
-      QRegExp rx3("^\\s*(\\S*)\\s+(\\S*)\\s+(\\S*)\\s*$");
-      QRegExp rx5("^\\s*(\\S*)\\s+(\\S*)\\s+(\\S*)\\s+(\\S*)\\s+(\\S*)\\s*$");
-      QRegExp rxinputfile("Input file.s. : (\\S+)\\s*$");
+      QRegularExpression iqqh("^\\s*S\\s+J EXP\\s+ERROR\\s+J REG\\s+I REG\\s*$");
+      QRegularExpression prrh("^\\s*R\\s+P\\(R\\)\\s+ERROR\\s*$");
+      QRegularExpression rx2("^\\s*(\\S*)\\s+(\\S*)\\s*$");
+      QRegularExpression rx3("^\\s*(\\S*)\\s+(\\S*)\\s+(\\S*)\\s*$");
+      QRegularExpression rx5("^\\s*(\\S*)\\s+(\\S*)\\s+(\\S*)\\s+(\\S*)\\s+(\\S*)\\s*$");
+      QRegularExpression rxinputfile("Input file.s. : (\\S+)\\s*$");
       QString tmp;
       vector < QString > datafiles;
       bool sprr_saved = false;
       while ( !ts.atEnd() )
       {
          tmp = ts.readLine();
-         if ( rxinputfile.indexIn(tmp) != -1 ) 
+         QRegularExpressionMatch rxinputfile_m = rxinputfile.match(tmp);
+         if ( rxinputfile_m.hasMatch() ) 
          {
-            // datafiles.push_back(rxinputfile.cap(1).trimmed());
+            // datafiles.push_back( rxinputfile_m.captured(1).trimmed());
             continue;
          }
-         if ( iqqh.indexIn(tmp) != -1 )
+         QRegularExpressionMatch iqqh_m = iqqh.match(tmp);
+         if ( iqqh_m.hasMatch() )
          {
             vector < double > I_exp;
             vector < double > I_reg;
@@ -4956,15 +4965,17 @@ void US_Hydrodyn_Saxs::load_gnom()
             while ( !ts.atEnd() )
             {
                tmp = ts.readLine();
-               if ( rx5.indexIn(tmp) != -1 )
+               QRegularExpressionMatch rx5_m = rx5.match(tmp);
+               if ( rx5_m.hasMatch() )
                {
-                  q.push_back(rx5.cap(1).toDouble() * units );
-                  I_exp.push_back(rx5.cap(2).toDouble());
-                  I_reg.push_back(rx5.cap(5).toDouble());
-                  // cout << "iqq point: " << rx5.cap(1).toDouble() << " " << rx5.cap(5).toDouble() << Qt::endl;
+                  q.push_back(rx5_m.captured(1).toDouble() * units );
+                  I_exp.push_back(rx5_m.captured(2).toDouble());
+                  I_reg.push_back(rx5_m.captured(5).toDouble());
+                  // cout << "iqq point: " <<  rx5_m.captured(1).toDouble() << " " <<  rx5_m.captured(5).toDouble() << Qt::endl;
                } else {
                   // end of iqq?
-                  if ( rx2.indexIn(tmp) == -1 )
+                  QRegularExpressionMatch rx2_m = rx2.match(tmp);
+                  if ( !rx2_m.hasMatch() )
                   {
                      plot_gnom = true;
                      gnom_Iq_reg = I_reg;
@@ -4993,7 +5004,8 @@ void US_Hydrodyn_Saxs::load_gnom()
             }
             continue;
          }
-         if ( prrh.indexIn(tmp) != -1 )
+         QRegularExpressionMatch prrh_m = prrh.match(tmp);
+         if ( prrh_m.hasMatch() )
          {
             vector < double > r;
             vector < double > pr;
@@ -5002,12 +5014,13 @@ void US_Hydrodyn_Saxs::load_gnom()
             ts.readLine(); // blank line
             while ( !ts.atEnd() ) {
                tmp = ts.readLine();
-               if ( rx3.indexIn(tmp) != -1 )
+               QRegularExpressionMatch rx3_m = rx3.match(tmp);
+               if ( rx3_m.hasMatch() )
                {
-                  r  .push_back(rx3.cap(1).toDouble() / units);
-                  pr .push_back(rx3.cap(2).toDouble());
-                  pre.push_back(rx3.cap(3).toDouble());
-                  // cout << "prr point: " << rx3.cap(1).toDouble() << " " << rx3.cap(2).toDouble() << Qt::endl;
+                  r  .push_back(rx3_m.captured(1).toDouble() / units);
+                  pr .push_back(rx3_m.captured(2).toDouble());
+                  pre.push_back(rx3_m.captured(3).toDouble());
+                  // cout << "prr point: " << rx3_m.captured(1).toDouble() << " " << rx3_m.captured(2).toDouble() << Qt::endl;
                } else {
                   // end of prr
                   TSO << "end of prr\n";
@@ -5020,8 +5033,8 @@ void US_Hydrodyn_Saxs::load_gnom()
                   //       TSO << QString("qx_mw.search of <%1> for molecular weight failed!\n").arg(mwline[0]);
                   //       gnom_mw = 0e0;
                   //    } else {
-                  //       TSO << QString("mwline cap 0 <%1> cap 1 <%2>\n").arg(qx_mw.cap(0)).arg(qx_mw.cap(1));
-                  //       gnom_mw = qx_mw.cap(1).toDouble();
+                  //       TSO << QString("mwline cap 0 <%1> cap 1 <%2>\n").arg( qx_mw_m.captured(0) ).arg( qx_mw_m.captured(1) );
+                  //       gnom_mw = qx_mw_m.captured(1).toDouble();
                   //    }
                   //    if ( mwline.size() > 1 )
                   //    {
@@ -5057,7 +5070,7 @@ void US_Hydrodyn_Saxs::load_gnom()
                   if ( !sprr_saved ) {
                      sprr_saved = true;
                      QString rxstr = "\\..*$";
-                     QString dest = USglobal->config_list.root_dir + "/somo/saxs/" + QString( "%1" ).arg( QFileInfo(filename).fileName() ).replace( QRegExp( rxstr ), "_gnom.sprr" );
+                     QString dest = USglobal->config_list.root_dir + "/somo/saxs/" + QString( "%1" ).arg( QFileInfo(filename).fileName() ).replace( QRegularExpression( rxstr ), "_gnom.sprr" );
                      if ( !((US_Hydrodyn *) us_hydrodyn )->overwrite ) {
                         dest = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( dest, 0, this );
                      }
@@ -5155,7 +5168,7 @@ void US_Hydrodyn_Saxs::load_gnom()
                            //    QTextStream(stdout) << US_Vector::qs_vector4( "to_grid, ipre, iprppre-ipr, ipr-iprmpre", to_grid, ipre, iprppremipr, iprmiprmpre );
                            // }
                            // now create reinterpolated version
-                           QString dest = USglobal->config_list.root_dir + "/somo/saxs/" + QString( "%1" ).arg( QFileInfo(filename).fileName() ).replace( QRegExp( rxstr ), QString( "_gnom_bin%1.sprr" ).arg( our_saxs_options->bin_size ) );
+                           QString dest = USglobal->config_list.root_dir + "/somo/saxs/" + QString( "%1" ).arg( QFileInfo(filename).fileName() ).replace( QRegularExpression( rxstr ), QString( "_gnom_bin%1.sprr" ).arg( our_saxs_options->bin_size ) );
                            if ( !((US_Hydrodyn *) us_hydrodyn )->overwrite ) {
                               dest = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( dest, 0, this );
                            }
@@ -5212,7 +5225,7 @@ void US_Hydrodyn_Saxs::load_gnom()
                // save sprr
                if ( !sprr_saved ) {
                   QString rxstr = "\\..*$";
-                  QString dest = USglobal->config_list.root_dir + "/somo/saxs/" + QString( "%1" ).arg( QFileInfo(filename).fileName() ).replace( QRegExp( rxstr ), "_gnom.sprr" );
+                  QString dest = USglobal->config_list.root_dir + "/somo/saxs/" + QString( "%1" ).arg( QFileInfo(filename).fileName() ).replace( QRegularExpression( rxstr ), "_gnom.sprr" );
                   if ( !((US_Hydrodyn *) us_hydrodyn )->overwrite ) {
                      dest = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( dest, 0, this );
                   }
@@ -5311,7 +5324,7 @@ void US_Hydrodyn_Saxs::load_gnom()
                         // }
                         // now create reinterpolated version
 
-                        QString dest = USglobal->config_list.root_dir + "/somo/saxs/" + QString( "%1" ).arg( QFileInfo(filename).fileName() ).replace( QRegExp( rxstr ), QString( "_gnom_bin%1.sprr" ).arg( our_saxs_options->bin_size ) );
+                        QString dest = USglobal->config_list.root_dir + "/somo/saxs/" + QString( "%1" ).arg( QFileInfo(filename).fileName() ).replace( QRegularExpression( rxstr ), QString( "_gnom_bin%1.sprr" ).arg( our_saxs_options->bin_size ) );
                         if ( !((US_Hydrodyn *) us_hydrodyn )->overwrite ) {
                            dest = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( dest, 0, this );
                         }

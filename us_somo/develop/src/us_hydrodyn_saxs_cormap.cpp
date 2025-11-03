@@ -1124,7 +1124,7 @@ void US_Hydrodyn_Saxs_Cormap::save_csv()
    if ( use_filename.isEmpty() ) {
       return;
    }
-   use_filename = use_filename.replace( QRegExp( ".csv$", Qt::CaseInsensitive ), "" );
+   use_filename = use_filename.replace( QRegularExpression( ".csv$", QRegularExpression::CaseInsensitiveOption ), "" );
    use_filename += ".csv";
 
    if ( QFile::exists( use_filename ) ) {

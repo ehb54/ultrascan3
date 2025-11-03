@@ -467,12 +467,13 @@ bool US_Saxs_Util::load_saxs( QString filename  )
       }
       double units = 1.0;
 
-      QRegExp rx_ok_line("^(\\s+|\\d+|\\.|\\d(E|e)(\\+|-|\\d))+$");
-      rx_ok_line.setMinimal( true );
+      QRegularExpression rx_ok_line("^(\\s+|\\d+|\\.|\\d(E|e)(\\+|-|\\d))+$");
+      rx_ok_line.setPatternOptions(QRegularExpression::InvertedGreedinessOption);
       for ( unsigned int i = 1; i < (unsigned int) qv.size(); i++ )
       {
+         QRegularExpressionMatch rx_ok_line_m = rx_ok_line.match( qv[i] );
          if ( qv[i].contains(QRegularExpression( QStringLiteral( "^#" ) )) ||
-              rx_ok_line.indexIn( qv[i] ) == -1 )
+              !rx_ok_line_m.hasMatch() )
          {
             // cout << "not ok: " << qv[i] << endl; 
             continue;

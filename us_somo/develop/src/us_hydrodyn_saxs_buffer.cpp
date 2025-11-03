@@ -1614,8 +1614,8 @@ void US_Hydrodyn_Saxs_Buffer::add_files()
    {
       bool reorder = true;
 
-      QRegExp rx_cap( "(\\d+)_(\\d+)(\\D|$)" );
-      rx_cap.setMinimal( true );
+      QRegularExpression rx_cap( "(\\d+)_(\\d+)(\\D|$)" );
+      rx_cap.setPatternOptions(QRegularExpression::InvertedGreedinessOption);
 
       list < hplc_sortable_qstring > svals;
 
@@ -1634,12 +1634,13 @@ void US_Hydrodyn_Saxs_Buffer::add_files()
       {
          QString tmp = filenames[ i ].mid( head.length() );
          tmp = tmp.mid( 0, tmp.length() - tail.length() );
-         if ( rx_cap.indexIn( tmp ) != -1 )
+         QRegularExpressionMatch rx_cap_m = rx_cap.match( tmp );
+         if ( rx_cap_m.hasMatch() )
          {
 #ifdef DEBUG_LOAD_REORDER
             us_qdebug( QString( "rx_cap search tmp %1 found" ).arg( tmp ) );
 #endif
-            tmp = rx_cap.cap( 1 ) + "." + rx_cap.cap( 2 );
+            tmp = rx_cap_m.captured(1) + "." + rx_cap_m.captured( 2 );
 #ifdef DEBUG_LOAD_REORDER
          } else {
             us_qdebug( QString( "rx_cap search tmp %1 NOT found" ).arg( tmp ) );
@@ -2177,7 +2178,7 @@ bool US_Hydrodyn_Saxs_Buffer::load_file( QString filename )
    
    QString ext = QFileInfo( filename ).suffix().toLower();
 
-   QRegExp rx_valid_ext (
+   QRegularExpression rx_valid_ext (
                          "^("
                          "dat|"
                          "int|"
@@ -2185,7 +2186,8 @@ bool US_Hydrodyn_Saxs_Buffer::load_file( QString filename )
                          // "out|"
                          "ssaxs)$" );
 
-   if ( rx_valid_ext.indexIn( ext ) == -1 )
+   QRegularExpressionMatch rx_valid_ext_m = rx_valid_ext.match( ext );
+   if ( !rx_valid_ext_m.hasMatch() )
    {
       errormsg = QString("Error: %1 unsupported file extension %2").arg( filename ).arg( ext );
       return false;
@@ -2223,13 +2225,14 @@ bool US_Hydrodyn_Saxs_Buffer::load_file( QString filename )
 
    if ( ext == "dat" )
    {
-      QRegExp rx_conc      ( "Conc:\\s*(\\S+)(\\s|$)" );
-      QRegExp rx_psv       ( "PSV:\\s*(\\S+)(\\s|$)" );
-      QRegExp rx_I0se      ( "I0se:\\s*(\\S+)(\\s|$)" );
-      QRegExp rx_unit      ( "Units:\\s*(\\S+)(\\s|$)" );
-      if ( rx_unit.indexIn( qv[ 0 ] ) != -1 )
+      QRegularExpression rx_conc      ( "Conc:\\s*(\\S+)(\\s|$)" );
+      QRegularExpression rx_psv       ( "PSV:\\s*(\\S+)(\\s|$)" );
+      QRegularExpression rx_I0se      ( "I0se:\\s*(\\S+)(\\s|$)" );
+      QRegularExpression rx_unit      ( "Units:\\s*(\\S+)(\\s|$)" );
+      QRegularExpressionMatch rx_unit_m = rx_unit.match( qv[ 0 ] );
+      if ( rx_unit_m.hasMatch() )
       {
-         QString unitstr = rx_unit.cap( 1 ).toLower();
+         QString unitstr = rx_unit_m.captured(1).toLower();
          bool ok = false;
          if ( !ok && unitstr.contains( QRegularExpression( QStringLiteral( "^(1/nm|nm^-1)$" ) ) ) ) {
             use_units = 0.1;
@@ -2240,21 +2243,24 @@ bool US_Hydrodyn_Saxs_Buffer::load_file( QString filename )
             ok = true;
          }
          if ( !ok ) {
-            editor_msg( "black", QString( us_tr( "%1 - unknown Units: %2 specified, must be 1/A or 1/NM, using specified default conversion of %3") ).arg( filename ).arg( rx_unit.cap( 1 ) ).arg( use_units ) );
+            editor_msg( "black", QString( us_tr( "%1 - unknown Units: %2 specified, must be 1/A or 1/NM, using specified default conversion of %3") ).arg( filename ).arg( rx_unit_m.captured( 1 ) ).arg( use_units ) );
          }
       }
-      if ( rx_conc.indexIn( qv[ 0 ] ) != -1 )
+      QRegularExpressionMatch rx_conc_m = rx_conc.match( qv[ 0 ] );
+      if ( rx_conc_m.hasMatch() )
       {
-         this_conc = rx_conc.cap( 1 ).toDouble();
+         this_conc = rx_conc_m.captured(1).toDouble();
          // cout << QString( "found conc %1\n" ).arg( this_conc );
       }
-      if ( rx_psv.indexIn( qv[ 0 ] ) != -1 )
+      QRegularExpressionMatch rx_psv_m = rx_psv.match( qv[ 0 ] );
+      if ( rx_psv_m.hasMatch() )
       {
-         this_psv = rx_psv.cap( 1 ).toDouble();
+         this_psv = rx_psv_m.captured(1).toDouble();
       }
-      if ( rx_I0se.indexIn( qv[ 0 ] ) != -1 )
+      QRegularExpressionMatch rx_I0se_m = rx_I0se.match( qv[ 0 ] );
+      if ( rx_I0se_m.hasMatch() )
       {
-         this_I0se = rx_I0se.cap( 1 ).toDouble();
+         this_I0se = rx_I0se_m.captured(1).toDouble();
       }
    }
 
@@ -2271,12 +2277,13 @@ bool US_Hydrodyn_Saxs_Buffer::load_file( QString filename )
    vector < double >  I;
    vector < double >  e;
 
-   QRegExp rx_ok_line("^(\\s+(-|)|\\d+|\\.|\\d(E|e)(\\+|-|\\d))+$");
-   rx_ok_line.setMinimal( true );
+   QRegularExpression rx_ok_line("^(\\s+(-|)|\\d+|\\.|\\d(E|e)(\\+|-|\\d))+$");
+   rx_ok_line.setPatternOptions(QRegularExpression::InvertedGreedinessOption);
    for ( int i = 1; i < (int) qv.size(); i++ )
    {
+      QRegularExpressionMatch rx_ok_line_m = rx_ok_line.match( qv[i] );
       if ( qv[i].contains(QRegularExpression( QStringLiteral( "^#" ) )) ||
-           rx_ok_line.indexIn( qv[i] ) == -1 )
+           !rx_ok_line_m.hasMatch() )
       {
          continue;
       }
@@ -3967,7 +3974,7 @@ void US_Hydrodyn_Saxs_Buffer::adjacent_created()
       }
    }
 
-   QRegExp rx;
+   QRegularExpression rx;
 
    bool found = false;
    // if we have bsub
@@ -4100,7 +4107,7 @@ bool US_Hydrodyn_Saxs_Buffer::adjacent_select( QListWidget *lb, QString match )
 
    last_match = match;
       
-   QRegExp rx( match );
+   QRegularExpression rx( match );
    bool any_set = false;
 
    for ( int i = 0; i < lb->count(); i++ )
@@ -5574,7 +5581,7 @@ void US_Hydrodyn_Saxs_Buffer::similar_files()
       lbl_dir->setText( QDir::currentPath() );
    }
    QDir qd;
-   add_files( qd.entryList( QStringList() << "*" ).filter( QRegExp( match ) ) );
+   add_files( qd.entryList( QStringList() << "*" ).filter( QRegularExpression( match ) ) );
 }
 
 void US_Hydrodyn_Saxs_Buffer::regex_load()
@@ -5607,7 +5614,7 @@ void US_Hydrodyn_Saxs_Buffer::regex_load()
          QString match   = QString( regexs[ j ] ).arg( args[ i ] );
          editor_msg( "dark blue", 
                      QString( us_tr( "Load %1 using %2 " ) ).arg( args[ i ] ).arg( match ) );
-         add_files( qd.entryList( QStringList() << "*" ).filter( QRegExp( match ) ) );
+         add_files( qd.entryList( QStringList() << "*" ).filter( QRegularExpression( match ) ) );
       }
    }
 }
@@ -5806,7 +5813,7 @@ void US_Hydrodyn_Saxs_Buffer::add_plot( QString           name,
                                         vector < double > I,
                                         vector < double > errors )
 {
-   name.replace( QRegExp( "(\\s+|\"|'|\\/|\\.)" ), "_" );
+   name.replace( QRegularExpression( "(\\s+|\"|'|\\/|\\.)" ), "_" );
    
    QString bsub_name = name;
    unsigned int ext = 0;
