@@ -3898,6 +3898,7 @@ DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
 	   qDebug() << "Data Disk Path -- " << rpRotor->importDataDisk;
 	   qDebug() << "Data Disk: Absorbance ? " << rpRotor->importData_absorbance_t;
 	   qDebug() << "Data Disk: Pseuso-Absorbance ? " << rpRotor->importData_absorbance_pa;
+	   qDebug() << "dataDisk, disabling pb_submit...";
 	   subm_enab = false;
 	 }
      }
@@ -3966,14 +3967,15 @@ DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
 
        //deb
        qDebug() << "[Submitting PD]: rpRotor->importData, rpRotor->importData_absorbance_t, "
-		<< "rpRotor->importData_absorbance_pa -- "
+		<< "rpRotor->importData_absorbance_pa, have_run,  rps_differ -- "
 		<< rpRotor->importData
 		<< rpRotor->importData_absorbance_t
-		<< rpRotor->importData_absorbance_pa;
+		<< rpRotor->importData_absorbance_pa
+		<< have_run << rps_differ;
      }
 
    //[DataFromDisk] Check that channels & ranges correspond to those is protocol:
-   if ( rpRotor->importData && !rpRotor->importDataDisk.isEmpty() )
+   if ( rpRotor->importData && !rpRotor->importDataDisk.isEmpty() && !mainw-> us_prot_dev_mode )
      {
        qDebug() << "Submit::init: DataDISK ";
        QStringList msg_to_user;
