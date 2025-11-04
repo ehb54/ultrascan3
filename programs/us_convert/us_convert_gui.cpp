@@ -1405,6 +1405,42 @@ void US_ConvertGui::us_mode_passed( void )
   
 }
 
+//alt. download data from LIMS-DB (for Prot_DEV: dataDisk)
+void US_ConvertGui::download_data_auto( QMap < QString, QString > & details_at_live_update )
+{
+   runID = details_at_live_update[ "filename" ];
+
+   // Verify connectivity
+   US_Passwd pw;
+   QString masterPW = pw.getPasswd();
+   US_DB2 db( masterPW );
+
+   if ( db.lastErrno() != US_DB2::OK )
+     {
+       QMessageBox::information( this,
+				 tr( "Error" ),
+				 tr( "Error making the DB connection.\n" ) );
+       return;
+     }
+
+   // We have runID from a call to a load dialog; let's copy the DB info to HD
+   QDir        readDir( US_Settings::importDir() );
+   QString     dirname = readDir.absolutePath() + "/" + runID + "/";
+
+   qDebug() << "[Prot_DEV: download_data_auto() ], Loading data from DB (Experiment) : runID -- "
+	    << runID;
+
+   QString status = US_ConvertIO::readDBExperiment( runID, dirname, &db,
+                                                    speedsteps );
+   if ( status  != QString( "" ) )
+     {
+       QMessageBox::information( this, tr( "Error" ), status + "\n" );
+       return;
+     }
+
+   details_at_live_update[ "new_dataPath" ] = dirname;
+}
+
 //alt. import_auto_ssf (for [ABDE-MWL])
 void US_ConvertGui::import_ssf_data_auto( QMap < QString, QString > & details_at_live_update )
 {

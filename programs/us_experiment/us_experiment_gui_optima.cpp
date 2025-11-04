@@ -1725,6 +1725,28 @@ void US_ExperGuiRotor::importDisk_cleanProto()
   rpRange-> nranges   = 0;
   rpRange-> chrngs.clear();
 
+  /****************
+  //Cells
+  currProto.rpCells.ncell = 0;
+  epanCells->initPanel();
+
+  //Solutions
+  currProto.rpSolut.nschan = 0;
+  epanSolutions->initPanel();
+
+  //Optics
+  currProto.rpOptic.nochan = 0;
+  epanOptical->initPanel();
+
+  //Ranges
+  currProto.rpRange.nranges = 0;
+  epanRanges->initPanel();
+  
+  //AProfile
+  epanAProfile->reset_sdiag(); //need to reset basic AProfile's protocol to defaults
+  ***************************/
+  
+  
   //mainw->loadProto = mainw->currProto;
   // mainw->currAProf = US_AnaProfile();
   // mainw->loadAProf = US_AnaProfile();
@@ -7834,9 +7856,12 @@ void US_ExperGuiUpload::submitExperiment_confirm_protDev()
   //msgBox.setText(tr("Experiment will be submitted to the following Optima machine:"));
   msgBox.setText( message_submission );
 
+  QString data_loc = ( protocol_details[ "dataSource" ]. contains("dataDiskAUC") ) ?
+    QString("dataDisk:DB") : protocol_details[ "OptimaName" ];
+
   QString info_text = QString( tr ("<b>Dev. Run Name:</b> %1 <br> <b>Data Location:</b> %2 ")) // <br>  <b>Host:</b>  %3 <br> <b>Port:</b>  %4 ") )
     .arg( currProto->runname )
-    .arg( protocol_details[ "OptimaName" ] );
+    .arg( data_loc );
   //.arg(dbhost)
   // .arg(dbport);
   
@@ -7940,8 +7965,20 @@ void US_ExperGuiUpload::submitExperiment_confirm_protDev()
 		}
 	      else if (msgBox_f.clickedButton() == Confirm)
 		{
-		  //Clear data 
-		  clearData_protDev();
+		  mainw->protocol_details_passed[ "new_dataPath" ] = QString("");
+		  //Clear data -- for non-dataDisk (Optima) source
+		  if ( !protocol_details[ "dataSource" ]. contains("dataDiskAUC") )
+		    clearData_protDev();
+		  else
+		    {
+		      //download raw data from LIMS DB;
+		      //define mainw->protocol_details_passed[ "new_dataPath" ];
+		      sdiag_convert = new US_ConvertGui("AUTO");
+		      sdiag_convert->download_data_auto( mainw->protocol_details_passed );
+
+		      qDebug() << "PROT_DEV: new_dataPath -- "
+			       << mainw->protocol_details_passed[ "new_dataPath" ];
+		    }
 		  //qApp->processEvents();
 		  
 		  //Now procceed
@@ -8388,6 +8425,26 @@ void US_ExperGuiUpload::submitExperiment_protDev()
   protocol_details[ "gmpRun" ]         = QString("YES");              //ALEXEY: state explicitly
   protocol_details[ "aprofileguid" ]   = currProto->protoGUID;
   protocol_details[ "devRecord" ]      = QString("YES");             //ALEXEY: state explicitly
+
+  /**********
+    now, set {status, dataPath, dataSource,  expType} based on:
+     1. protocol_details[ "status" ]     =     MUST BE SET!
+                     {"LIVE_UPDATE/DEFAULT" -- when download from Optima, OR "EDITING" -- dataDisk from LIMS_DB}
+     2. protocol_details[ "dataPath" ]   =     MUST BE SET!
+                     {"NULL/DEFAULT"-- when download from Optima, OR "path-to-import-dir" -- pre-downloaded 'dataDisk' from LISM_DB }
+     3. protocol_details[ "dataSource" ] =     INHERITED !
+                     {"INSTRUMENT/DEFAULT" -- when download from Optima, OR "dataDiskAUC/dataDiskAUC:Absorbance/dataDiskAUC:PseudoAbsorbance"}
+     4. protocol_details[ "expType" ] =        INHERITED !
+                     {"VELOCITY/DEFAULT" -- non-ABDE, OR "ABDE" -- ABDE}
+  ********/
+
+  //status
+  QString r_status = ( protocol_details[ "dataSource" ].contains("dataDiskAUC") ) ?
+    QString("EDITING") : QString("LIVE_UPDATE");
+  protocol_details[ "status" ] = r_status;
+
+  //dataPath
+  protocol_details[ "dataPath" ] = mainw->protocol_details_passed[ "new_dataPath" ];
   
   qDebug() << "PROTCOL DETAILS at submission: -- "
 	   << protocol_details[ "protocolName" ]   
@@ -8413,8 +8470,13 @@ void US_ExperGuiUpload::submitExperiment_protDev()
 	   << protocol_details[ "statusID" ]      
 	   << protocol_details[ "failedID" ]                 //Attn: do NOT specify failed status: should be DEFAULT (NULL)   
 	   << protocol_details[ "operatorID" ]
-	   << protocol_details[ "devRecord" ];   
+	   << protocol_details[ "devRecord" ]
+	   << protocol_details[ "expType" ]
+	   << protocol_details[ "dataSource"];   
 
+  //TEST
+  return;
+  
   //Now add new autoflow record with the above params && flag 'DEV'!
   add_autoflow_record_protDev( protocol_details );
 
@@ -10215,6 +10277,12 @@ void US_ExperGuiUpload::add_autoflow_record_protDev( QMap< QString, QString> & p
 
 	  << protocol_details[ "aprofileguid" ]   
 	  << protocol_details[ "operatorID" ]
+
+	//new: needed to differentiate btw. INSTR. & dataDisk, && VEL. vs. ABDE
+	  << protocol_details[ "expType" ]     // inherited from parent
+	  << protocol_details[ "dataPath" ]      // generated based on downloaded form DB!!!
+	  << protocol_details[ "dataSource" ]  // inherited from parent
+	  << protocol_details[ "status" ];       // defined based on Optima OR dataDisk
 	;   
 
       qDebug() << "add_autoflow_record_protDev( ), qry -- " << qry;

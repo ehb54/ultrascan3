@@ -25,10 +25,18 @@
 #include "us_hardware.h"
 #include "us_select_runs.h"
 #include "us_link_ssl.h"
-#include "../us_convert/us_convert.h"
 #include "us_dataIO.h"
 #include "us_simparms.h"
 #include "us_mwl_data.h"
+
+#include "../us_convert/us_convert.h"
+#include "../us_convert/us_experiment.h"     
+#include "../us_convert/us_experiment_gui.h" 
+#include "../us_convert/us_convert_gui.h"    
+#include "../us_convert/us_convertio.h"      
+#include "../us_convert/us_get_run.h"        
+#include "../us_convert/us_intensity.h"      
+#include "../us_convert/us_selectbox.h"      
 
 //#include "us_license_t.h"
 //#include "us_license.h"
@@ -900,6 +908,8 @@ class US_ExperGuiUpload : public US_WidgetsDialog
       QPushButton* pb_details;
 
       QGridLayout* genL;
+
+      US_ConvertGui*    sdiag_convert;
 
    private:
       US_ExperimentMain*   mainw;
