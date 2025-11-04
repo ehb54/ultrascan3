@@ -469,7 +469,7 @@ void US_Hydrodyn_Mals_Baseline_Best::editor_ec_msg( QString msg, QTextEdit *e )
    QColor save_color = e->textColor();
    QStringList qsl = (msg ).split( "~~" , Qt::SkipEmptyParts );
 
-   QRegExp rx_color( "^_(\\S+)_$" );
+   QRegularExpression rx_color( "^_(\\S+)_$" );
 
    map < QString, QColor > colors;
    colors[ "orange"      ] = QColor( 255, 165, 0 );
@@ -482,12 +482,13 @@ void US_Hydrodyn_Mals_Baseline_Best::editor_ec_msg( QString msg, QTextEdit *e )
    colors[ "darkyellow4" ] = QColor(  51,  51, 0 );
 
    for ( int i = 0; i < (int) qsl.size(); ++i ) {
-      if ( rx_color.indexIn( qsl[ i ] ) != -1 ) {
+      QRegularExpressionMatch rx_color_m = rx_color.match( qsl[ i ] );
+      if ( rx_color_m.hasMatch() ) {
          QColor qc;
-         if ( colors.count( rx_color.cap( 1 ) ) ) {
-            qc = colors[ rx_color.cap( 1 ) ];
+         if ( colors.count( rx_color_m.captured(1) ) ) {
+            qc = colors[ rx_color_m.captured(1) ];
          } else {
-            qc = QColor( rx_color.cap( 1 ) );
+            qc = QColor( rx_color_m.captured( 1 ) );
          }
          e->setTextColor( qc );
       } else {

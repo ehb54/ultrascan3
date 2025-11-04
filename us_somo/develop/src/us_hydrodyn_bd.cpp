@@ -7,8 +7,6 @@
 #include <time.h>
 #include <qstringlist.h>
 #include <qinputdialog.h>
-#include <qregexp.h>
-//Added by qt3to4:
 #include <QGridLayout>
 #include <QLabel>
 #include <QFrame>

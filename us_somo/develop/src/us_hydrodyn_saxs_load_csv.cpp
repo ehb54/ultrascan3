@@ -1,8 +1,6 @@
 #include "../include/us3_defines.h"
 #include "../include/us_hydrodyn_saxs_load_csv.h"
 #include "../include/us_hydrodyn.h"
-#include "qregexp.h"
-//Added by qt3to4:
 #include <QHBoxLayout>
 #include <QFrame>
 #include <QLabel>
@@ -355,7 +353,7 @@ void US_Hydrodyn_Saxs_Load_Csv::transpose()
    {
       return;
    }
-   if ( !fname.contains(QRegExp(".csv$", Qt::CaseInsensitive )) )
+   if ( !fname.contains(QRegularExpression(".csv$", QRegularExpression::CaseInsensitiveOption )) )
    {
       fname += "_t.csv";
    }
@@ -508,7 +506,7 @@ void US_Hydrodyn_Saxs_Load_Csv::save_selected()
    {
       return;
    }
-   if ( !fname.contains(QRegExp(".csv$", Qt::CaseInsensitive )) )
+   if ( !fname.contains(QRegularExpression(".csv$", QRegularExpression::CaseInsensitiveOption )) )
    {
       fname += ".csv";
    }

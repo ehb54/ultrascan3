@@ -50,7 +50,7 @@ ScrollZoomer::ScrollZoomer( QWidget *canvas ):
 
     panner = new QwtPlotPanner( canvas );
     panner->setAxisEnabled( QwtPlot::yRight, false );
-    panner->setMouseButton( Qt::MidButton );
+    panner->setMouseButton( Qt::MiddleButton );
 
     d_hScrollData = new ScrollData;
     d_vScrollData = new ScrollData;

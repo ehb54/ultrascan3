@@ -26,7 +26,6 @@
 #include "../include/us_ffd.h"
 #include "../include/us_hydrodyn_vdw_overlap.h"
 // #include "../include/us_hydrodyn_saxs_hplc_options.h"
-#include <qregexp.h>
 #include <qfont.h>
 //Added by qt3to4:
 #include <QBoxLayout>
@@ -41,6 +40,8 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <qtimer.h>
+#include <QRegularExpression>
+#include <QRegularExpressionMatch>
 
 // #define NO_BD
 
@@ -4958,12 +4959,15 @@ QString US_Hydrodyn::fileNameCheck( QString *path, QString *base, QString *ext, 
    if ( mode == 1 )
    {
       // split filename into pieces, do increment until !exists
-      QRegExp rx("-(\\d+)$");
-      do 
+      QRegularExpression rx("-(\\d+)$");
+      do
       {
-         if ( rx.indexIn(*base) != -1 ) 
+         QRegularExpressionMatch m = rx.match(*base);
+         if ( m.hasMatch() )
          {
-            base->replace(rx, QString("-%1").arg(rx.cap(1).toInt() + 1));
+            const int n = m.captured(1).toInt();
+            base->replace(m.capturedStart(), m.capturedLength(),
+                          QString("-%1").arg(n + 1));
          } else {
             *base += "-1";
          }
@@ -5041,17 +5045,20 @@ QString US_Hydrodyn::fileNameCheck2( QString *path,
    if ( mode == 1 )
    {
       // split filename into pieces, do increment until !exists
-      QRegExp rx("-(\\d+)$");
-      do 
+      QRegularExpression rx(QStringLiteral("-(\\d+)$"));
+      do
       {
-         if ( rx.indexIn(*base) != -1 ) 
+         QRegularExpressionMatch m = rx.match(*base);
+         if ( m.hasMatch() )
          {
-            base->replace(rx, QString("-%1").arg(rx.cap(1).toInt() + 1));
+            const int n = m.captured(1).toInt();
+            base->replace(m.capturedStart(), m.capturedLength(),
+                          QStringLiteral("-%1").arg(n + 1));
          } else {
-            *base += "-1";
+            *base += QStringLiteral("-1");
          }
       } while ( QFile::exists(*path + *base + *ext) );
-         
+
       return *path + *base + *ext;
    }
 
@@ -5147,7 +5154,7 @@ void US_Hydrodyn::dmd_run()
       QString load_errors;
       for ( unsigned int i = 0; i < batch.file.size(); i++ ) 
       {
-         if ( batch.file[i].contains(QRegExp("(pdb|PDB|bead_model|BEAD_MODEL|beams|BEAMS)$")) )
+         if ( batch.file[i].contains(QRegularExpression( QStringLiteral( "(pdb|PDB|bead_model|BEAD_MODEL|beams|BEAMS)$" ) )) )
          {
             bool dup = false;
             if ( i ) 
