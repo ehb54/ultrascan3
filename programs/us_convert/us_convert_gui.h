@@ -51,6 +51,7 @@ class US_ConvertGui : public US_Widgets
       bool us_import_ssf_abde;
       void import_ssf_data_auto  ( QMap < QString, QString > & ) ;
       void download_data_auto ( QMap < QString, QString > & ) ;
+      bool copyDirectory(const QString &, const QString &);
 
   signals:
       void saving_complete_auto( QMap < QString, QString > &  );

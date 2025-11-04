@@ -1438,7 +1438,55 @@ void US_ConvertGui::download_data_auto( QMap < QString, QString > & details_at_l
        return;
      }
 
+   QDir      readDir_res( US_Settings::resultDir() );
+   QString   dirname_res = readDir_res.absolutePath() + "/" + runID + "/";
+      
+   if (copyDirectory(dirname_res, dirname))
+     qDebug() << "Folder copied successfully!";
+   else
+     qDebug() << "Failed to copy folder.";
+      
    details_at_live_update[ "new_dataPath" ] = dirname;
+}
+
+
+bool US_ConvertGui::copyDirectory(const QString &sourcePath, const QString &destinationPath)
+{
+    QDir sourceDir(sourcePath);
+    if (!sourceDir.exists()) {
+        qDebug() << "Source directory does not exist:" << sourcePath;
+        return false;
+    }
+
+    QDir destDir(destinationPath);
+    if (!destDir.mkpath(".")) { // Create the destination directory if it doesn't exist
+        qDebug() << "Failed to create destination directory:" << destinationPath;
+        return false;
+    }
+
+    QStringList entries = sourceDir.entryList(QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot);
+
+    for (const QString &entry : entries) {
+        QString sourceEntryPath = sourcePath + QDir::separator() + entry;
+        QString destEntryPath = destinationPath + QDir::separator() + entry;
+
+        QFileInfo entryInfo(sourceEntryPath);
+
+        if (entryInfo.isFile()) {
+            if (QFile::exists(destEntryPath)) {
+                QFile::remove(destEntryPath); // Remove existing file before copying
+            }
+            if (!QFile::copy(sourceEntryPath, destEntryPath)) {
+                qDebug() << "Failed to copy file:" << sourceEntryPath << "to" << destEntryPath;
+                return false;
+            }
+        } else if (entryInfo.isDir()) {
+            if (!copyDirectory(sourceEntryPath, destEntryPath)) { // Recursive call for subdirectories
+                return false;
+            }
+        }
+    }
+    return true;
 }
 
 //alt. import_auto_ssf (for [ABDE-MWL])
