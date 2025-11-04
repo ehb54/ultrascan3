@@ -1110,6 +1110,8 @@ DbgLv(1) << "EGRo: inP: calib_entr" << cal_entr;
    expType_old = cb_exptype ->currentText();
 
    qDebug() << "Rotor::initPanel(), expType_old -- " << expType_old;
+   qDebug() << "Rotor::initPanel(), rpRotor->importData_absorbance_t, rpRotor->importData_absorbance_pa -- "
+	    << rpRotor->importData_absorbance_t <<  rpRotor->importData_absorbance_pa;
 
 }
 
@@ -1614,6 +1616,9 @@ DbgLv(1) << "EGRo:  svP:  calndx" << ii << "calGUID" << rpRotor->calGUID;
 	     mainw-> abde_sv_mode_change_reset_reports( "ABDE" ); 
 	 }
      }
+
+   qDebug() << "Rotor::savePanel(), rpRotor->importData_absorbance_t, rpRotor->importData_absorbance_pa -- "
+	    << rpRotor->importData_absorbance_t <<  rpRotor->importData_absorbance_pa;
 }
 
 // Get a specific panel string value

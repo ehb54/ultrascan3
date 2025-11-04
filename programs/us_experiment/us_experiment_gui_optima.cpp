@@ -441,14 +441,14 @@ void US_ExperimentMain::accept_passed_protocol_details(  QMap < QString, QString
   //set runName && label straight from the autoflow record:
   currProto.runname   = protocol_details[ "experimentName" ];
   currProto.exp_label = protocol_details[ "label" ];
-  
-  initPanels();
-  
-  qDebug() << "In load_protocol: currProto.investigator 2 --  " <<  currProto.investigator;
 
   //set dataDisk flag if protocol refers dataDisk
   if ( dataSource_pd.contains("dataDiskAUC") )
     epanRotor->set_dataSource_public( protocol_details );
+  
+  initPanels();
+  
+  qDebug() << "In load_protocol: currProto.investigator 2 --  " <<  currProto.investigator;
  
   //SET epanAProf->sdiag->loadProf TO epanAProf->sdiag->currProf
   US_AnaProfile aprof_curr_read   = *(get_aprofile());
@@ -4882,6 +4882,8 @@ DbgLv(1) << "EGSo: rbS: SV_CHANS[sxx] !!!!!!!!!!!!!!!!: " << rpSolut->chsols[ ii
                                   .simplified().toInt();
             for ( int jj = 0; jj < nchan; jj++ )
             {
+	       qDebug() << "regenSol: rpRotor->importData_absorbance_t -- "
+			<< rpRotor->importData_absorbance_t;
                QString channel     = scell + " / " + QString( schans ).mid( jj, 1 );
 
                if ( (QString( schans ).mid( jj, 1 )).contains( "A" ) )                   //ALEXEY: channel lables
@@ -4902,6 +4904,9 @@ DbgLv(1) << "EGSo: rbS: SV_CHANS[sxx] !!!!!!!!!!!!!!!!: " << rpSolut->chsols[ ii
    suchans.clear();
    susolus.clear();
    QStringList un_sols;
+
+   qDebug() << "regenSols: srchans, nchans -- "
+	    << srchans << nchans; 
 
    for ( int ii = 0; ii < nchans; ii++ )
    {
