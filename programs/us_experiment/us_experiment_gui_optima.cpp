@@ -603,7 +603,11 @@ void US_ExperimentMain::optima_submitted( QMap < QString, QString > &protocol_de
 void US_ExperimentMain::submitted_protDev( QMap < QString, QString > &protocol_details )
 {
   tabWidget->setCurrentIndex( 0 );
-  emit to_live_update( protocol_details );
+
+  if( protocol_details["dataSource"].contains("dataDisk") )
+    emit to_import( protocol_details );
+  else
+    emit to_live_update( protocol_details );
 }
 
 // When run submitted for Data from Disk
@@ -8474,8 +8478,8 @@ void US_ExperGuiUpload::submitExperiment_protDev()
 	   << protocol_details[ "expType" ]
 	   << protocol_details[ "dataSource"];   
 
-  //TEST
-  return;
+  // //TEST
+  // return;
   
   //Now add new autoflow record with the above params && flag 'DEV'!
   add_autoflow_record_protDev( protocol_details );
@@ -8483,6 +8487,9 @@ void US_ExperGuiUpload::submitExperiment_protDev()
   qDebug() << "statusID, intensityID from protocol QMAp -- "
 	   << protocol_details[ "statusID" ]
 	   << protocol_details[ "intensityID" ] ;
+
+  // //TEST
+  // return;
 
   emit expdef_submitted_dev( protocol_details );
 }
