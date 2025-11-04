@@ -1,6 +1,5 @@
 #ifndef US_EXTERN_H
 #define US_EXTERN_H
-#include <QtCore5Compat>
  
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
 #define US_EXPORT       __declspec(dllexport)
