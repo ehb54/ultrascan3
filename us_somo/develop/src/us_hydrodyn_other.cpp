@@ -24,7 +24,13 @@
 #include <fcntl.h>
 #include <qsoundeffect.h>
 #include <QAudio>
-#include <QAudioDeviceInfo>
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+  #include <QMediaDevices>
+  #include <QAudioDevice>
+#else
+  #include <QAudioDeviceInfo>
+#endif
+#include <QAudioOutput>
 
 #undef DEBUG
 #ifndef WIN32
@@ -580,8 +586,14 @@ void US_Hydrodyn::append_options_log_atob_ovlp()
 // and a more through matrix of sound events
 void US_Hydrodyn::play_sounds(int type)
 {
-   if ( advanced_config.use_sounds &&
-        !QAudioDeviceInfo::availableDevices(QAudio::AudioOutput).isEmpty() )
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+   const bool haveOut = !QMediaDevices::audioOutputs().isEmpty();
+#else
+   const bool haveOut = !QAudioDeviceInfo::availableDevices(QAudio::AudioOutput).isEmpty();
+#endif
+
+   if ( advanced_config.use_sounds
+        && haveOut )
    {
       QString sound_base = USglobal->config_list.root_dir + "sounds/";
       switch (type)
