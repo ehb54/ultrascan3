@@ -6,8 +6,6 @@ cmake_minimum_required(VERSION 3.21)
 # Extract version before project() call
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/admin/cmake")
 include(UsDefinesParser)
-
-# Extract version and description from us_defines.h
 parse_header("${CMAKE_CURRENT_SOURCE_DIR}/utils/us_defines.h")
 
 # Project definition with extracted version and description
@@ -26,8 +24,18 @@ message(STATUS "UltraScan3 description: ${US3_DESCRIPTION}")
 # =============================================================================
 # VERSION HEADER GENERATION
 # =============================================================================
-# Execute version generation script immediately
-include(${CMAKE_SOURCE_DIR}/admin/cmake/GenerateVersion.cmake)
+# Generate us/us_version.h and us/us_revision.h on *every* build
+add_custom_target(us_version_headers ALL
+        COMMAND ${CMAKE_COMMAND}
+        -DPROJECT_VERSION_MAJOR=${PROJECT_VERSION_MAJOR}
+        -DPROJECT_VERSION_MINOR=${PROJECT_VERSION_MINOR}
+        -DPROJECT_VERSION_PATCH=${PROJECT_VERSION_PATCH}
+        -DUS3_VERSION=${US3_VERSION}
+        -DCMAKE_SOURCE_DIR=${CMAKE_SOURCE_DIR}
+        -DCMAKE_BINARY_DIR=${CMAKE_BINARY_DIR}
+        -P ${CMAKE_SOURCE_DIR}/admin/cmake/GenerateVersion.cmake
+        COMMENT "Regenerating UltraScan3 version headers (us_version.h / us_revision.h)"
+        )
 
 include_directories(${CMAKE_BINARY_DIR})
 
