@@ -1,8 +1,8 @@
 #include "../include/us_hydrodyn.h"
 #include "../include/us_write_config.h"
-#include <qregexp.h>
-//Added by qt3to4:
 #include <QTextStream>
+#include <QRegularExpression>
+#include <QRegularExpressionMatch>
 
 // note: this program uses cout and/or cerr and this should be replaced
 
@@ -36,9 +36,9 @@ int main (int argc, char **argv)
    argcbase     = 2;
 #endif
    while ( a.arguments().size() > argcbase &&
-      	  QString(a.arguments()[argcbase]).contains(QRegExp("^-")) )
+      	  QString(a.arguments()[argcbase]).contains(QRegularExpression("^-")) )
    {
-      if ( QString(a.arguments()[argcbase]).contains(QRegExp("^-e")) )
+      if ( QString(a.arguments()[argcbase]).contains(QRegularExpression("^-e")) )
       {
          if ( debug )
          {
@@ -48,14 +48,14 @@ int main (int argc, char **argv)
          expert = true;
          continue;
       }
-      if ( QString(a.arguments()[argcbase]).contains(QRegExp("^-d")) )
+      if ( QString(a.arguments()[argcbase]).contains(QRegularExpression("^-d")) )
       {
          puts("debug mode");
          argcbase++;
          debug = true;
          continue;
       }
-      if ( QString(a.arguments()[argcbase]).contains(QRegExp("^-r")) )
+      if ( QString(a.arguments()[argcbase]).contains(QRegularExpression("^-r")) )
       {
          if ( debug )
          {
@@ -67,7 +67,7 @@ int main (int argc, char **argv)
          argcbase++;
          continue;
       }
-      if ( QString(a.arguments()[argcbase]).contains(QRegExp("^-c")) )
+      if ( QString(a.arguments()[argcbase]).contains(QRegularExpression("^-c")) )
       {
          if ( debug )
          {
@@ -79,7 +79,7 @@ int main (int argc, char **argv)
          argcbase++;
          continue;
       }
-      if ( QString(a.arguments()[argcbase]).contains(QRegExp("^-I")) )
+      if ( QString(a.arguments()[argcbase]).contains(QRegularExpression("^-I")) )
       {
          if ( debug )
          {
@@ -89,7 +89,7 @@ int main (int argc, char **argv)
          init_configs_silently = true;
          continue;
       }
-      if ( QString(a.arguments()[argcbase]).contains(QRegExp("^-p")) )
+      if ( QString(a.arguments()[argcbase]).contains(QRegularExpression("^-p")) )
       {
          if ( debug )
          {
@@ -99,7 +99,7 @@ int main (int argc, char **argv)
          cli_progress = true;
          continue;
       }
-      if ( QString(a.arguments()[argcbase]).contains(QRegExp("^-g")) )
+      if ( QString(a.arguments()[argcbase]).contains(QRegularExpression("^-g")) )
       {
          if ( debug )
          {
@@ -178,10 +178,10 @@ void process_script(QString script_filename, US_Hydrodyn *h)
    {
       h->read_residue_file();
       QTextStream ts(&f);
-      QRegExp rx0("^(\\S+)(\\s+|$)");
-      QRegExp rx1("^(\\S+)\\s*$");
-      QRegExp rx2("^(\\S+)\\s*(\\S+)\\s*$");
-      QRegExp rx3("^(\\S+)\\s*(\\S+)\\s*(\\S+)\\s*$");
+      QRegularExpression rx0("^(\\S+)(\\s+|$)");
+      QRegularExpression rx1("^(\\S+)\\s*$");
+      QRegularExpression rx2("^(\\S+)\\s*(\\S+)\\s*$");
+      QRegularExpression rx3("^(\\S+)\\s*(\\S+)\\s*(\\S+)\\s*$");
       h->guiFlag = false;
       h->overwrite = true;
       h->setSuffix = false;
@@ -194,52 +194,47 @@ void process_script(QString script_filename, US_Hydrodyn *h)
          bool ok = false;
 
          line++;
-         rx0.indexIn(c);
-         rx1.indexIn(c);
-         rx2.indexIn(c);
-         rx3.indexIn(c);
-         //         printf("rx0.cap(1) <%s> rx1.cap(1) <%s> rx2.cap(1) <%s>\n"
-         //                ,rx0.cap(1).toLatin1().data()
-         //                ,rx1.cap(1).toLatin1().data()
-         //                ,rx2.cap(1).toLatin1().data()
-         //                );
-         if ( rx0.cap(1) == "exit" )
+         QRegularExpressionMatch rx0_m = rx0.match( c );
+         QRegularExpressionMatch rx1_m = rx1.match( c );
+         QRegularExpressionMatch rx2_m = rx2.match( c );
+         QRegularExpressionMatch rx3_m = rx3.match( c );
+         if ( rx0_m.captured(1) == "exit" )
          {
             exit(0);
          }
-         if ( rx0.cap(1) == "reset" )
+         if ( rx0_m.captured(1) == "reset" )
          {
             cout << "resetting to default configuration" << endl;
             ok = true;
          }
-         if ( rx2.cap(1) == "load" )
+         if ( rx2_m.captured(1) == "load" )
          {
-            cout << QString("loading \"%1\"\t").arg(rx2.cap(2));
+            cout << QString("loading \"%1\"\t").arg(rx2_m.captured(2));
             bool result = false;
-            if ( rx2.cap(2).toLower().contains(QRegExp("\\.config$")) ) 
+            if ( rx2_m.captured(2).toLower().contains(QRegularExpression("\\.config$")) ) 
             {
                ok = true;
-               int result2 = h->read_config(rx2.cap(2));
+               int result2 = h->read_config(rx2_m.captured(2));
                result = !result2;
             }
-            if ( rx2.cap(2).toLower().contains(QRegExp("\\.residue$")) ) 
+            if ( rx2_m.captured(2).toLower().contains(QRegularExpression("\\.residue$")) ) 
             {
                ok = true;
-               h->residue_filename = rx2.cap(2);
+               h->residue_filename = rx2_m.captured(2);
                h->read_residue_file();
-               h->lbl_table->setText( QDir::toNativeSeparators( rx2.cap(2) ) );
+               h->lbl_table->setText( QDir::toNativeSeparators( rx2_m.captured(2) ) );
             }
-            if ( rx2.cap(2).toLower().contains(QRegExp(".pdb$")) ) 
+            if ( rx2_m.captured(2).toLower().contains(QRegularExpression(".pdb$")) ) 
             {
                ok = true;
                // no save/restore settings for load into somo
-               result = h->screen_pdb(rx2.cap(2), false);
+               result = h->screen_pdb(rx2_m.captured(2), false);
                loadfiletype = "pdb";
             }
-            if ( rx2.cap(2).toLower().contains(QRegExp(".(bead_model|beams)$")) ) 
+            if ( rx2_m.captured(2).toLower().contains(QRegularExpression(".(bead_model|beams)$")) ) 
             {
                ok = true;
-               result = h->screen_bead_model(rx2.cap(2));
+               result = h->screen_bead_model(rx2_m.captured(2));
                loadfiletype = "bead_model";
             }
             if ( ok )
@@ -250,14 +245,14 @@ void process_script(QString script_filename, US_Hydrodyn *h)
                ok = true;
             }
          }
-         if ( rx0.cap(1) == "somo" )
+         if ( rx0_m.captured(1) == "somo" )
          {
             ok = true;
             cout << QString("somo\t");
             bool result = h->calc_somo() ? false : true;
             cout << QString("%1\n").arg(result ? "ok" : "not ok");
          }
-         if ( rx0.cap(1) == "grid" )
+         if ( rx0_m.captured(1) == "grid" )
          {
             ok = true;
             cout << QString("grid\t");
@@ -267,25 +262,25 @@ void process_script(QString script_filename, US_Hydrodyn *h)
                ? false : true;
             cout << QString("%1\n").arg(result ? "ok" : "not ok");
          }
-         if ( rx0.cap(1) == "hydro" )
+         if ( rx0_m.captured(1) == "hydro" )
          {
             ok = true;
             cout << QString("hydro\t");
             bool result = h->calc_hydro() ? false : true;
             cout << QString("%1\n").arg(result ? "ok" : "not ok");
          }
-         if ( rx0.cap(1) == "p(r)" )
+         if ( rx0_m.captured(1) == "p(r)" )
          {
             ok = true;
             cout << QString("p(r) not yet implemented\t");
          }
-         if ( rx0.cap(1) == "threads" )
+         if ( rx0_m.captured(1) == "threads" )
          {
             ok = true;
             cout << QString("threads\t");
             US_Config *USglobal = new US_Config();
-            cout << QString("Number of threads was %1, now %2\n").arg(USglobal->config_list.numThreads).arg(rx2.cap(2));
-            USglobal->config_list.numThreads = rx2.cap(2).toInt();
+            cout << QString("Number of threads was %1, now %2\n").arg(USglobal->config_list.numThreads).arg(rx2_m.captured(2));
+            USglobal->config_list.numThreads = rx2_m.captured(2).toInt();
             US_Write_Config *WConfig;
             WConfig = new US_Write_Config();
             bool result = WConfig->write_config(USglobal->config_list);
