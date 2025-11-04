@@ -38,22 +38,9 @@ using namespace US_WinData;
 int main( int argc, char* argv[] )
 {
   QString options( getenv( "ULTRASCAN_OPTIONS" ) );
-#if QT_VERSION < 0x050000
-  QtSingleApplication application( "UltraScan III", argc, argv );
-
-  // If environment variable ULTRASCAN_OPTIONS contains the
-  // word 'multiple', then we don't try to limit to one instance
-  if ( ! options.contains( "multiple" ) )
-  {
-    if ( application.sendMessage( "Wake up" ) ) return 0;
-  }
-
-  application.initialize();
-#else
   qputenv("QT_ENABLE_HIGHDPI_SCALING",QByteArray("1"));
   QApplication application( argc, argv );
   application.setApplicationDisplayName( "UltraScan III" );
-#endif
 
   // Set up language localization
   QString locale = QLocale::system().name();
@@ -455,7 +442,6 @@ qDebug() << "PROCESS NotRunning index" << index << "Proc name" << d->name;
                           .right( 2000 );    // End lines of STDERR
         bool    badallo = estderr.contains( "bad_alloc" );
 qDebug() << "PROCESS   status" << status << "e-stderr len" << estderr.length();
-//qDebug() << "PROCESS   bad_alloc? " << badallo;
 
         if ( badallo )
         { // It was a "bad_alloc" crash
