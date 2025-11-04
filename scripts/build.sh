@@ -44,69 +44,120 @@ echo "Selected build profile: ${PROFILE}"
 echo ""
 
 if [[ ! "$PROFILE" =~ ^(APP|TEST|HPC)$ ]]; then
-  echo "ERROR: Invalid profile '${PROFILE}'"
-  echo "Usage: ./bootstrap.sh [APP|TEST|HPC]"
+  echo "ERROR: Invalid profile: ${PROFILE}"
+  echo "Usage: $0 [APP|TEST|HPC]"
   exit 1
 fi
 
 # =============================================================================
-# MACOS SDK DETECTION (Qt5 requires SDK 14)
+# DETERMINE BUILD PARALLELISM
 # =============================================================================
+
+# Detect core count per platform
+if [ "$PLATFORM" = "macOS" ]; then
+  CORES=$(sysctl -n hw.ncpu 2>/dev/null || echo 4)
+elif [ "$PLATFORM" = "Linux" ]; then
+  CORES=$(nproc 2>/dev/null || echo 4)
+else
+  CORES=${NUMBER_OF_PROCESSORS:-4}
+fi
+
+# Allow manual override: US3_BUILD_JOBS=<N>
+if [ -n "${US3_BUILD_JOBS:-}" ]; then
+  BUILD_JOBS="$US3_BUILD_JOBS"
+else
+  # Default to ~90% of cores, but at least 1
+  BUILD_JOBS=$((CORES * 9 / 10))
+  if [ "$BUILD_JOBS" -lt 1 ]; then
+    BUILD_JOBS=1
+  fi
+fi
+
+echo "Detected $CORES cores; using $BUILD_JOBS parallel build jobs."
+echo ""
+
+# Tell vcpkg to use the same limit
+export VCPKG_MAX_CONCURRENCY="$BUILD_JOBS"
+
+# =============================================================================
+# CHECK REQUIRED TOOLS
+# =============================================================================
+REQUIRED_TOOLS=(cmake git)
+
+# Platform-specific requirements
 if [[ "$PLATFORM" == "macOS" ]]; then
-  echo "Detecting macOS SDK for Qt5 compatibility..."
+  REQUIRED_TOOLS+=(xcodebuild xcrun)
+elif [[ "$PLATFORM" == "Linux" ]]; then
+  REQUIRED_TOOLS+=(g++)
+fi
 
-  SDK_FOUND=false
+MISSING_TOOLS=()
+for tool in "${REQUIRED_TOOLS[@]}"; do
+  if ! command -v "$tool" &>/dev/null; then
+    MISSING_TOOLS+=("$tool")
+  fi
+done
 
-  # Try multiple SDK locations in order of preference
-  SDK_PATHS=(
-    "/Library/Developer/CommandLineTools/SDKs/MacOSX14.sdk"
-    "/Applications/Xcode-15.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk"
-    "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.sdk"
-    "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.5.sdk"
-  )
+if [ ${#MISSING_TOOLS[@]} -ne 0 ]; then
+  echo "ERROR: Missing required tools: ${MISSING_TOOLS[*]}"
+  echo ""
 
-  for SDK_PATH in "${SDK_PATHS[@]}"; do
-    if [ -d "$SDK_PATH" ]; then
-      echo "Found compatible SDK: $SDK_PATH"
-      export SDKROOT="$SDK_PATH"
-      export CMAKE_OSX_SYSROOT="$SDK_PATH"
-      SDK_FOUND=true
+  if [ "$PLATFORM" == "macOS" ]; then
+    echo "On macOS, install Xcode command line tools:"
+    echo "  xcode-select --install"
+  elif [ "$PLATFORM" == "Linux" ]; then
+    echo "On Debian/Ubuntu, run:"
+    echo "  sudo apt-get update && sudo apt-get install -y build-essential cmake git"
+  elif [ "$PLATFORM" == "Windows" ]; then
+    echo "On Windows (MSYS/MinGW), install cmake, git, and a compiler toolchain."
+  fi
 
-      # Switch xcode-select if using Xcode-15
-      if [[ "$SDK_PATH" == *"Xcode-15.app"* ]]; then
-        CURRENT_XCODE=$(xcode-select -p)
-        DESIRED_XCODE="/Applications/Xcode-15.app/Contents/Developer"
+  exit 1
+fi
 
-        if [[ "$CURRENT_XCODE" != "$DESIRED_XCODE" ]]; then
-          echo "Switching active Xcode to Xcode 15..."
-          if sudo xcode-select --switch "$DESIRED_XCODE" 2>/dev/null; then
-            echo "✓ Active Xcode switched to Xcode 15"
-          else
-            echo "WARNING: Could not switch Xcode (needs sudo). Trying with environment variables only..."
-          fi
+echo "All required tools are available."
+echo ""
+
+# =============================================================================
+# OPTIONAL: Xcode 15 SETUP ON macOS
+# =============================================================================
+if [ "$PLATFORM" = "macOS" ]; then
+  CURRENT_XCODE_PATH=$(xcode-select -p || echo "")
+  DESIRED_XCODE_PATH="/Applications/Xcode-15.app/Contents/Developer"
+
+  echo "Checking Xcode configuration..."
+  echo "Current Xcode path: ${CURRENT_XCODE_PATH:-<not set>}"
+  echo "Desired Xcode path: $DESIRED_XCODE_PATH"
+  echo ""
+
+  if [ -d "$DESIRED_XCODE_PATH" ]; then
+    if [ "$CURRENT_XCODE_PATH" != "$DESIRED_XCODE_PATH" ]; then
+      echo "Xcode 15 is installed but not active."
+      if [ "$NON_INTERACTIVE" = false ]; then
+        echo "About to switch Xcode to:"
+        echo "  $DESIRED_XCODE_PATH"
+        echo ""
+        read -rp "Proceed with 'sudo xcode-select --switch ...'? [y/N] " answer
+        if [[ "$answer" =~ ^[Yy]$ ]]; then
+          echo "Switching Xcode..."
+          sudo xcode-select --switch "$DESIRED_XCODE_PATH"
+          echo "Xcode is now set to: $(xcode-select -p)"
+        else
+          echo "Skipping Xcode switch. Continuing with current Xcode."
         fi
+      else
+        echo "Non-interactive mode: switching Xcode automatically..."
+        sudo xcode-select --switch "$DESIRED_XCODE_PATH"
+        echo "Xcode is now set to: $(xcode-select -p)"
       fi
-
-      break
+    else
+      echo "Xcode 15 is already active."
     fi
-  done
-
-  if [ "$SDK_FOUND" = false ]; then
-    CURRENT_SDK=$(xcrun --show-sdk-path 2>/dev/null || echo "unknown")
-    CURRENT_VERSION=$(xcrun --show-sdk-version 2>/dev/null || echo "unknown")
-
+  else
+    echo "Xcode 15 not found at:"
+    echo "  $DESIRED_XCODE_PATH"
     echo ""
-    echo "ERROR: No compatible macOS SDK found for Qt5"
-    echo ""
-    echo "Current SDK: $CURRENT_SDK (version $CURRENT_VERSION)"
-    echo ""
-    echo "Qt5 requires macOS SDK 14. Please install:"
-    echo ""
-    echo "Command Line Tools for Xcode 15.3 (~500MB)"
-    echo "  1. Download from: https://developer.apple.com/download/all/"
-    echo "  2. Search for 'Command Line Tools for Xcode 15.3'"
-    echo "  3. Install the .dmg file"
-    echo "  4. Run this script again"
+    echo "Please install Xcode 15 from the App Store or developer.apple.com."
     echo ""
     echo "Your current Xcode installation will remain untouched."
     echo ""
@@ -122,76 +173,90 @@ if [[ "$PLATFORM" == "macOS" ]]; then
 fi
 
 # =============================================================================
-# INSTALL BUILD TOOLS
+# VCPKG SETUP
 # =============================================================================
-echo "Installing build tools..."
 
-if command -v brew >/dev/null 2>&1; then
-  # macOS - Homebrew
-  if [ "$NON_INTERACTIVE" = true ]; then
-    HOMEBREW_NO_AUTO_UPDATE=1 brew install ninja autoconf autoconf-archive automake libtool pkg-config
-  else
-    brew install ninja autoconf autoconf-archive automake libtool pkg-config
-  fi
+# Allow override via US3_VCPKG_ROOT; default to a central vcpkg in the home dir
+US3_VCPKG_ROOT="${US3_VCPKG_ROOT:-$HOME/vcpkg}"
 
-elif command -v apt-get >/dev/null 2>&1; then
-  # Debian/Ubuntu
-  if [ "$NON_INTERACTIVE" = true ]; then
-    export DEBIAN_FRONTEND=noninteractive
-  fi
-  sudo apt-get update
-  sudo apt-get install -y ninja-build autoconf autoconf-archive automake \
-    libtool pkg-config build-essential
+echo ""
+echo "Using central vcpkg root: $US3_VCPKG_ROOT"
 
-elif command -v dnf >/dev/null 2>&1; then
-  # Fedora/RHEL
-  if [ "$NON_INTERACTIVE" = true ]; then
-    sudo dnf install -y --assumeyes ninja-build autoconf autoconf-archive automake \
-      libtool pkg-config gcc-c++
-  else
-    sudo dnf install -y ninja-build autoconf autoconf-archive automake \
-      libtool pkg-config gcc-c++
-  fi
-
-else
-  echo "ERROR: No supported package manager found"
+# Basic validation / clone if needed
+if [ -d "$US3_VCPKG_ROOT" ] && [ ! -d "$US3_VCPKG_ROOT/.git" ]; then
+  echo "ERROR: $US3_VCPKG_ROOT exists but is not a vcpkg git clone."
+  echo "Either set US3_VCPKG_ROOT to a different path or move/rename that directory."
   exit 1
 fi
 
-# =============================================================================
-# VCPKG SETUP
-# =============================================================================
-if [ ! -f "./vcpkg/.git" ]; then
-  echo ""
-  echo "Initializing vcpkg submodule..."
-  git submodule update --init --recursive
+if [ ! -d "$US3_VCPKG_ROOT/.git" ]; then
+  echo "vcpkg not found at $US3_VCPKG_ROOT, cloning..."
+  git clone https://github.com/microsoft/vcpkg.git "$US3_VCPKG_ROOT"
 fi
 
-# =============================================================================
-# VCPKG BOOTSTRAP
-# =============================================================================
-if [ ! -x "./vcpkg/vcpkg" ]; then
+# Bootstrap vcpkg if the executable is missing
+if [ ! -x "$US3_VCPKG_ROOT/vcpkg" ]; then
   echo ""
-  echo "Bootstrapping vcpkg..."
-  ./vcpkg/bootstrap-vcpkg.sh
+  echo "Bootstrapping vcpkg at $US3_VCPKG_ROOT..."
+  if [[ "$PLATFORM" == "Windows" ]]; then
+    ( cd "$US3_VCPKG_ROOT" && ./bootstrap-vcpkg.bat )
+  else
+    "$US3_VCPKG_ROOT/bootstrap-vcpkg.sh"
+  fi
 fi
 
 # Enable local binary caching
+export VCPKG_ROOT="$US3_VCPKG_ROOT"
 export VCPKG_BINARY_SOURCES="clear;files,$HOME/.vcpkg-cache,readwrite"
 mkdir -p "$HOME/.vcpkg-cache"
 
+# centralize installed libraries here
+export VCPKG_INSTALLED_DIR="$US3_VCPKG_ROOT/installed"
+
+# CMake will use this toolchain file
+VCPKG_TOOLCHAIN_FILE="$US3_VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
+if [ ! -f "$VCPKG_TOOLCHAIN_FILE" ]; then
+  echo "ERROR: vcpkg toolchain file not found at $VCPKG_TOOLCHAIN_FILE"
+  exit 1
+fi
+
 echo "=========================================="
-echo "UltraScan3 Bootstrap Summary"
+echo "UltraScan3 Bootstrap Steps"
 echo "=========================================="
-echo "Platform: $PLATFORM"
-echo "Preset  : $PRESET"
-echo "Profile : $PROFILE"
+echo "  1. Ensure platform toolchain is ready"
+echo "  2. Build Qt, Qwt, and other dependencies via vcpkg"
+echo "  3. Configure and build UltraScan3 via CMake preset: $PRESET"
 echo ""
-echo "=========================================="
-echo "Starting build with preset: $PRESET"
-echo "=========================================="
-echo "This will:"
-echo "  1. Download and build Qt5 (~20 min)"
+
+# =============================================================================
+# INSTALL PLATFORM-SPECIFIC BUILD TOOLS (if needed)
+# =============================================================================
+if [ "$PLATFORM" == "Linux" ]; then
+  echo "Checking for Ninja..."
+  if ! command -v ninja &>/dev/null; then
+    echo "Ninja not found. Installing..."
+    if command -v apt-get &>/dev/null; then
+      sudo apt-get update
+      sudo apt-get install -y ninja-build
+    elif command -v dnf &>/dev/null; then
+      sudo dnf install -y ninja-build
+    else
+      echo "Please install Ninja manually."
+      exit 1
+    fi
+  fi
+  echo ""
+fi
+
+# =============================================================================
+# FINAL BUILD SUMMARY
+# =============================================================================
+echo "Ready to build UltraScan3 with preset: $PRESET"
+echo "  Profile: ${PROFILE}"
+echo "  Platform: ${PLATFORM}"
+echo ""
+echo "Steps:"
+echo "  1. Configure CMake with vcpkg toolchain"
 echo "  2. Build other dependencies (~10 min)"
 echo "  3. Build UltraScan3 (~5 min)"
 echo ""
@@ -204,12 +269,15 @@ echo ""
 # CONFIGURE AND BUILD
 # =============================================================================
 echo "Configuring..."
-cmake --preset "$PRESET" -DUS3_PROFILE="${PROFILE}"
-
+cmake --preset "$PRESET" \
+  -DUS3_PROFILE="${PROFILE}" \
+  -DCMAKE_TOOLCHAIN_FILE="$VCPKG_TOOLCHAIN_FILE" \
+  -DVCPKG_ROOT="$US3_VCPKG_ROOT" \
+  -DVCPKG_INSTALLED_DIR="$VCPKG_INSTALLED_DIR"
 
 echo ""
 echo "Building..."
-cmake --build --preset "$PRESET" --parallel
+cmake --build --preset "$PRESET" --parallel "$BUILD_JOBS"
 
 echo ""
 echo "=========================================="
