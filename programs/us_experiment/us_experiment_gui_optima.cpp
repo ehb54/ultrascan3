@@ -8440,6 +8440,8 @@ void US_ExperGuiUpload::submitExperiment_protDev()
                      {"INSTRUMENT/DEFAULT" -- when download from Optima, OR "dataDiskAUC/dataDiskAUC:Absorbance/dataDiskAUC:PseudoAbsorbance"}
      4. protocol_details[ "expType" ] =        INHERITED !
                      {"VELOCITY/DEFAULT" -- non-ABDE, OR "ABDE" -- ABDE}
+     5. protocol_details[ "experimentId" ] =	MUAT BE SET!
+                     {"inherited" -- when download from Optima, OR "0/NULL" -- dataDisk }
   ********/
 
   //status
@@ -8449,6 +8451,10 @@ void US_ExperGuiUpload::submitExperiment_protDev()
 
   //dataPath
   protocol_details[ "dataPath" ] = mainw->protocol_details_passed[ "new_dataPath" ];
+
+  //expid
+  if ( protocol_details[ "dataSource" ].contains("dataDiskAUC") )
+    protocol_details[ "experimentId" ] = QString::number( 0 );
   
   qDebug() << "PROTCOL DETAILS at submission: -- "
 	   << protocol_details[ "protocolName" ]   
