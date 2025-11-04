@@ -16,11 +16,6 @@ win32 {
         # We assume QMAKE_LFLAGS += Wl,--out-implib,../lib/lib$${TARGET}$${VER}.a
 }
 
-macx {
-        LIBS   += -L../lib/ -lus_utils $${X11LIB}
-        INCLUDES += -I/opt/X11/include
-}
-
 QT          += network svg
 
 TRANSLATIONS = $${TARGET}_DE_de.ts
