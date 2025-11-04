@@ -1905,7 +1905,6 @@ QString US_Hydrodyn_Saxs::unify_csv_files( QStringList filenames ) {
    }
 }
 
-
 void US_Hydrodyn_Saxs::load_saxs( QString filename, bool just_plotted_curves, QString scaleto, bool no_scaling )
 {
    if ( just_plotted_curves )
@@ -1929,7 +1928,7 @@ void US_Hydrodyn_Saxs::load_saxs( QString filename, bool just_plotted_curves, QS
                                        "csv files (*.csv);;"
                                        "int files [crysol] (*.int);;"
                                        "dat files [foxs / other] (*.dat);;"
-                                       "fit files [crysol] (*.fit)" , &load_saxs_sans_selected_filter );
+                                       "fit files [crysol / multi-curve] (*.fit)" , &load_saxs_sans_selected_filter );
       if ( filenames.size() == 0 ) {
          return;
       }
@@ -1988,6 +1987,7 @@ void US_Hydrodyn_Saxs::load_saxs( QString filename, bool just_plotted_curves, QS
       return;
    }
 
+   // --- Standard Curve Variables ---
    vector < double > I;
    vector < double > I_error;
    vector < double > I2;
@@ -2004,6 +2004,17 @@ void US_Hydrodyn_Saxs::load_saxs( QString filename, bool just_plotted_curves, QS
    unsigned int Icolumn2 = 0;
    QString tag1;
    QString tag2;
+   
+   // --- Multi-Curve .fit Variables ---
+   // A list of all I(q) curves. Each inner vector is one curve's intensity data.
+   // all_I_curves[0] will be the main 'I'
+   std::vector<std::vector<double>> all_I_curves;
+   // List of names for all curves to be plotted
+   QStringList all_curve_names;
+   // Column indices of all I curves that need to be read (skips Q and Error columns)
+   std::vector<unsigned int> I_column_indices;
+   // Flag to indicate new multi-curve loading format
+   bool multi_curve_fit_format = false;
 
    // scaling fields
    QString scaling_target = "";
@@ -2146,10 +2157,40 @@ void US_Hydrodyn_Saxs::load_saxs( QString filename, bool just_plotted_curves, QS
       }
       if ( ext == "fit" ) 
       {
-         // do_crop = true;
-
-         Icolumn = 2;
-         I_errorcolumn = 0;
+         // Test for new multi-curve .fit format: check for leading '#' and 'I_fit_0' in the first non-empty line (qv[0])
+         QString header_line = qv[0].trimmed();
+         if (header_line.startsWith("#") && header_line.contains("I_fit_0"))
+         {
+            multi_curve_fit_format = true;
+            Icolumn = 1;      // Main I is always column 1
+            I_errorcolumn = 2; // Main error is always column 2 (q is col 0)
+            
+            // 1. Parse header to get column names
+            // Header: # q I error I_fit_0 I_fit_1 ...
+            QString header_tokens_str = header_line.mid(1).trimmed();
+            QStringList header_tokens = header_tokens_str.split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts );
+            
+            // 2. Determine I-columns and curve names
+            // Skip 'q' (index 0) and 'error' (index 2).
+            for (int k = 1; k < header_tokens.size(); ++k)
+            {
+               if (k != 2) // Skip the error column itself (we plot error on the main I curve)
+               {
+                   I_column_indices.push_back(k);
+                   all_curve_names.push_back(QFileInfo(filename).fileName() + " - " + header_tokens[k]);
+                   
+                   // Initialize storage for this curve
+                   all_I_curves.emplace_back(); 
+               }
+            }
+            editor->append(QString("Loaded multi-curve FIT format (%1 curves).\n").arg(all_I_curves.size()));
+            
+         } else {
+             // Legacy Crysol .fit format
+             // do_crop = true;
+             Icolumn = 2;
+             I_errorcolumn = 0;
+         }
       }
       if ( ext == "ssaxs" ) 
       {
@@ -2250,10 +2291,53 @@ void US_Hydrodyn_Saxs::load_saxs( QString filename, bool just_plotted_curves, QS
             QString qs = qv[i].replace(QRegularExpression( QStringLiteral( "^\\s+" ) ),"");
             tokens = (qs ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts );
          }
+         
+         // --- Multi-curve .fit format handling ---
+         if (multi_curve_fit_format)
+         {
+             if ((unsigned int) tokens.size() > 0)
+             {
+                 new_q = tokens[0].toDouble();
+                 q.push_back(QString( "%1" ).arg(new_q * units).toDouble());
+
+                 // Handle error for main curve (column 2)
+                 if ((unsigned int) tokens.size() > 2)
+                 {
+                    new_I_error = tokens[2].toDouble();
+                    if ( our_saxs_options->iqq_expt_data_contains_variances )
+                    {
+                       new_I_error = sqrt( new_I_error );
+                    }
+                    I_error.push_back(new_I_error); 
+                 } else {
+                    // Push a zero error if the column is missing to keep array sizes consistent with q.
+                    I_error.push_back(0.0);
+                 }
+                 
+                 // Push all I columns (including the main I at column 1)
+                 for (size_t k = 0; k < I_column_indices.size(); ++k)
+                 {
+                     unsigned int col_index = I_column_indices[k];
+                     if ((unsigned int)tokens.size() > col_index)
+                     {
+                         double I_val = tokens[col_index].toDouble();
+                         // Assuming no dolog10 for these fit curves as per standard SAXS processing
+                         all_I_curves[k].push_back(I_val);
+                     } else {
+                         // Push 0.0 if column is missing (should not happen)
+                         all_I_curves[k].push_back(0.0);
+                     }
+                 }
+             }
+             continue; // Skip the standard processing block below
+         }
+         
+         // --- Standard single-curve format handling (dat, txt, legacy fit, etc.) ---
          if ( (unsigned int) tokens.size() > Icolumn )
          {
             new_q = tokens[0].toDouble();
             new_I = tokens[Icolumn].toDouble();
+            
             if ( I_errorcolumn && (unsigned int) tokens.size() > I_errorcolumn )
             {
                new_I_error = tokens[I_errorcolumn].toDouble();
@@ -2327,8 +2411,53 @@ void US_Hydrodyn_Saxs::load_saxs( QString filename, bool just_plotted_curves, QS
          }
       }
 
-      if ( q.size() )
+
+      // --- PLOTTING SECTION: Conditional Multi-Curve or Single Curve ---
+
+      if (multi_curve_fit_format && q.size() && !all_I_curves.empty())
       {
+         // 1. Plot the main curve (all_I_curves[0]) with error
+         vector<double>& main_I = all_I_curves[0];
+         
+         editor_msg(
+            our_saxs_options->iqq_expt_data_contains_variances ? "red" : "dark blue", 
+            our_saxs_options->iqq_expt_data_contains_variances ? "Loaded variance data\n" : "Loaded standard deviation data\n"
+         );
+
+         // Use the single-curve vectors for the main curve data
+         // (I is only used here to store the main I for US_Hydrodyn update below)
+         I = main_I; 
+         
+         if (I_error.size() == q.size()) {
+            plot_one_iqq(q, main_I, I_error, all_curve_names[0]);
+         } else {
+            plot_one_iqq(q, main_I, all_curve_names[0]);
+         }
+
+         // 2. Store the main curve data in US_Hydrodyn
+         ((US_Hydrodyn *)us_hydrodyn)->last_saxs_q.clear( );
+         ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqq.clear( );
+         ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqa.clear( );
+         ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqc.clear( );
+         ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header =
+            QString::asprintf( "Saxs curves from %s", filename.toLatin1( ).data() );
+         for ( unsigned int i = 0; i < q.size(); i++ )
+         {
+            ((US_Hydrodyn *)us_hydrodyn)->last_saxs_q.push_back(q[i]);
+            ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqq.push_back(main_I[i]);
+         }
+         
+         // 3. Plot the secondary curves (I_fit_0, I_fit_1, etc.)
+         for (size_t i = 1; i < all_I_curves.size(); ++i)
+         {
+             vector<double>& secondary_I = all_I_curves[i];
+             plot_one_iqq(q, secondary_I, all_curve_names[i]); // No error bars for secondary
+         }
+
+      }
+      else if ( q.size() )
+      {
+         // --- Existing single curve plotting logic ---
          if ( I_error.size() )
          {
             editor_msg(
@@ -2358,6 +2487,8 @@ void US_Hydrodyn_Saxs::load_saxs( QString filename, bool just_plotted_curves, QS
             ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqq.push_back(I[i]);
          }
       }
+      // --- End of single curve plotting logic ---
+
       if ( q2.size() )
       {
          plot_one_iqq(q2, I2, QFileInfo(filename).fileName() + tag2);
