@@ -685,25 +685,22 @@ void US_Win::logo( int width )
     const QColor metaColor         ( 220, 228, 240 );
     const QColor authorsTitleColor ( 240, 245, 255 );
     const QColor authorsColor      ( 215, 225, 235 );
-    const QColor dividerColor      ( 255, 255, 255, 80 );   // thin, subtle line
+    const QColor dividerColor      ( 255, 255, 255, 80 );
 
-    // Use Qt's generic Sans Serif so it's mapped per platform
     const QString uiFontFamily = "Sans Serif";
 
-    // --- Fixed vertical layout ---
-    // Silver gradient ends ~100px;
-    const int yVersion       = 130;
-    const int versionToBuild = 18;
-    const int buildToDivider = 20;
-    const int dividerToTitle = 24;
-    const int titleToFirst   = 18;
-    const int nameStep       = 16;
+    // --- Compact vertical layout ---
+    const int yVersion       = 124;
+    const int versionToBuild = 16;
+    const int buildToDivider = 14;
+    const int dividerToTitle = 20;
+    const int titleToFirst   = 16;
+    const int nameStep       = 14;
 
     const int yBuild        = yVersion + versionToBuild;
     const int yDivider      = yBuild   + buildToDivider;
     const int yAuthorsTitle = yDivider + dividerToTitle;
     const int firstNameBase = yAuthorsTitle + titleToFirst;
-    // Names will land at 214, 230, 246, 262 on a 276px canvas → comfortable bottom margin.
 
     // --- Version line ---
     QString version = "Version " + US_Version + " (build " BUILDNUM ") for " OS_TITLE;
@@ -735,7 +732,7 @@ void US_Win::logo( int width )
     int bWidth = bMetrics.horizontalAdvance( buildLine );
     painter.drawText( ( pw - bWidth ) / 2, yBuild, buildLine );
 
-    // --- Single divider under metadata ---
+    // --- Divider ---
     painter.setPen( QPen( dividerColor, 1 ) );
     const int dividerInset = 40;
     painter.drawLine( dividerInset, yDivider, pw - dividerInset, yDivider );
@@ -748,8 +745,8 @@ void US_Win::logo( int width )
     painter.setFont( authorsTitleFont );
     painter.setPen ( authorsTitleColor );
 
-    QFontMetrics atMetrics( authorsTitleFont );
     const QString authorsTitle = "Authors";
+    QFontMetrics atMetrics( authorsTitleFont );
     int atWidth = atMetrics.horizontalAdvance( authorsTitle );
     painter.drawText( ( pw - atWidth ) / 2, yAuthorsTitle, authorsTitle );
 
@@ -777,13 +774,46 @@ void US_Win::logo( int width )
         painter.drawText( ( pw - nWidth ) / 2, y, name );
     }
 
-    // --- Display (same fixed geometry as before) ---
+    // --- Display ---
+    const int splashX = static_cast<int>( ( width / 2 ) - 230 );
+    const int splashY = 110;
+    const int splashW = 460;
+    const int splashH = 276;
+
     smallframe = new QLabel( this );
     smallframe->setPixmap( pixmap );
-    smallframe->setGeometry(
-            static_cast<unsigned int>( ( width / 2 ) - 230 ),
-            110, 460, 276
+    smallframe->setGeometry( splashX, splashY, splashW, splashH );
+
+    // --- Clickable "Additional contributors" link ---
+    QLabel* contribLabel = new QLabel( smallframe );
+    contribLabel->setText(
+            "<a style='color:#FFFFFF; text-decoration:underline;' "
+            "href=\"https://www.ultrascan.aucsolutions.com/contributors.php\">"
+            "Additional contributors</a>"
     );
+    contribLabel->setTextFormat( Qt::RichText );
+    contribLabel->setTextInteractionFlags( Qt::TextBrowserInteraction );
+    contribLabel->setOpenExternalLinks( true );
+    contribLabel->setAlignment( Qt::AlignHCenter | Qt::AlignVCenter );
+
+    QFont contribFont( uiFontFamily );
+    contribFont.setPixelSize( 10 );
+    contribLabel->setFont( contribFont );
+
+    // Make spacing: last-author → link == link → bottom
+    const int linkH = 16;  // height of the clickable label box
+    // Baseline of last author:
+    const int lastNameY = firstNameBase + ( names.size() - 1 ) * nameStep;
+    // Approximate bottom of last author text:
+    const int textBottom = lastNameY + aMetrics.descent();
+
+    // Solve: textBottom + d + linkH + d = splashH  → d = (splashH - textBottom - linkH) / 2
+    int remaining = splashH - textBottom - linkH;
+    if ( remaining < 0 ) remaining = 0;   // safety
+    int d = remaining / 2;
+
+    int yLink = textBottom + d;
+    contribLabel->setGeometry( 0, yLink, splashW, linkH );
 }
 
 void US_Win::closeSplash( void )
