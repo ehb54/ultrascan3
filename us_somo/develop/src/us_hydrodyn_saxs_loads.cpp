@@ -1926,9 +1926,9 @@ void US_Hydrodyn_Saxs::load_saxs( QString filename, bool just_plotted_curves, QS
          QFileDialog::getOpenFileNames( this , "Open" , use_dir , "All files (*);;"
                                        "ssaxs files (*.ssaxs);;"
                                        "csv files (*.csv);;"
-                                       "int files [crysol] (*.int);;"
-                                       "dat files [foxs / other] (*.dat);;"
-                                       "fit files [crysol / multi-curve] (*.fit)" , &load_saxs_sans_selected_filter );
+                                       "int files [CRYSOL] (*.int);;"
+                                       "dat files [FoXS / other] (*.dat);;"
+                                       "fit files [CRYSOL / DENSS multi-curve] (*.fit)" , &load_saxs_sans_selected_filter );
       if ( filenames.size() == 0 ) {
          return;
       }
