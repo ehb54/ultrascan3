@@ -35,10 +35,10 @@ US_AdvancedFem::US_AdvancedFem( US_Model* amodel,
    {
       ct_simpoints->setValue(parmap["simpoints"].toDouble());
    }
-   ct_bandvolume = us_counter( 3, 0,   1, 0.001 );
+   ct_bandvolume = us_counter( 3,    1,    20,   15 );
    if (parmap.contains("bandvolume"))
    {
-      ct_bandvolume->setValue(parmap["bandvolume"].toDouble());
+      ct_bandvolume->setValue(parmap["bandvolume"].toDouble()*1000.0);
    }
    ct_parameter  = us_counter( 2, 1,  50,     1 );
    if (parmap.contains("parameter"))
@@ -109,7 +109,7 @@ US_AdvancedFem::US_AdvancedFem( US_Model* amodel,
    mainLayout->addWidget( pb_accept,       row++, 4, 1, 2 );
 
    ct_simpoints ->setSingleStep(     5 );
-   ct_bandvolume->setSingleStep( 0.001 );
+   ct_bandvolume->setSingleStep(  0.1 );
    ct_parameter ->setSingleStep(     1 );
 
    connect( pb_help,    SIGNAL( clicked() ),
@@ -131,7 +131,7 @@ qDebug() << "AdvF:Post-resize size" << size();
 void US_AdvancedFem::done( void )
 {
    parmap[ "simpoints"  ] = QString::number( ct_simpoints ->value() );
-   parmap[ "bandvolume" ] = QString::number( ct_bandvolume->value() );
+   parmap[ "bandvolume" ] = QString::number( ct_bandvolume->value() / 1000.0 );
    parmap[ "parameter"  ] = QString::number( ct_parameter ->value() );
    parmap[ "meshtype"   ] = cb_mesh->currentText();
    parmap[ "gridtype"   ] = cb_grid->currentText();
