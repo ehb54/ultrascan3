@@ -31,10 +31,10 @@ add_custom_target(us_version_headers ALL
         -DPROJECT_VERSION_MINOR=${PROJECT_VERSION_MINOR}
         -DPROJECT_VERSION_PATCH=${PROJECT_VERSION_PATCH}
         -DUS3_VERSION=${US3_VERSION}
-        -DCMAKE_SOURCE_DIR=${CMAKE_SOURCE_DIR}
-        -DCMAKE_BINARY_DIR=${CMAKE_BINARY_DIR}
+        -DUS3_SOURCE_DIR=${CMAKE_SOURCE_DIR}
+        -DUS3_BINARY_DIR=${CMAKE_BINARY_DIR}
         -P ${CMAKE_SOURCE_DIR}/admin/cmake/GenerateVersion.cmake
-        COMMENT "Regenerating UltraScan3 version headers (us_version.h / us_revision.h)"
+        COMMENT "Regenerating UltraScan3 version headers (us_revision.h)"
         )
 
 include_directories(${CMAKE_BINARY_DIR})

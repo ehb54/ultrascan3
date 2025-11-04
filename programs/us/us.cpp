@@ -1,6 +1,7 @@
 //! \file us.cpp
 #include <QtCore>
 #include <QTcpSocket>
+#include <QFontDatabase>
 #if QT_VERSION < 0x050000
 #include <QtSingleApplication>
 #else
@@ -666,104 +667,123 @@ void US_Win::splash( void )
 
 void US_Win::logo( int width )
 {
-    // Splash image
+    // Splash image (fixed size asset, like before)
     QPixmap rawpix = US_Images::getImage( US_Images::US3_SPLASH );
-
-    int ph = rawpix.height();
-    int pw = rawpix.width();
+    const int ph   = rawpix.height();   // expected ~276
+    const int pw   = rawpix.width();    // expected ~460
+    Q_UNUSED(ph);
 
     QPixmap  pixmap( pw, ph );
     QPainter painter( &pixmap );
+    painter.setRenderHint( QPainter::Antialiasing,     true );
+    painter.setRenderHint( QPainter::TextAntialiasing, true );
 
     painter.drawPixmap( 0, 0, rawpix );
-    painter.setPen    ( QPen( Qt::white, 3 ) );
 
-    // Version line with "(build NNNN)"
+    // Colors (subtle, modern)
+    const QColor versionColor      ( 245, 248, 255 );
+    const QColor metaColor         ( 220, 228, 240 );
+    const QColor authorsTitleColor ( 240, 245, 255 );
+    const QColor authorsColor      ( 215, 225, 235 );
+    const QColor dividerColor      ( 255, 255, 255, 80 );   // thin, subtle line
+
+    // Use Qt's generic Sans Serif so it's mapped per platform
+    const QString uiFontFamily = "Sans Serif";
+
+    // --- Fixed vertical layout ---
+    // Silver gradient ends ~100px;
+    const int yVersion       = 130;
+    const int versionToBuild = 18;
+    const int buildToDivider = 20;
+    const int dividerToTitle = 24;
+    const int titleToFirst   = 18;
+    const int nameStep       = 16;
+
+    const int yBuild        = yVersion + versionToBuild;
+    const int yDivider      = yBuild   + buildToDivider;
+    const int yAuthorsTitle = yDivider + dividerToTitle;
+    const int firstNameBase = yAuthorsTitle + titleToFirst;
+    // Names will land at 214, 230, 246, 262 on a 276px canvas → comfortable bottom margin.
+
+    // --- Version line ---
     QString version = "Version " + US_Version + " (build " BUILDNUM ") for " OS_TITLE;
 
-    QFont font( "Arial" );
-    font.setWeight( QFont::DemiBold );
-    font.setPixelSize( 16 );
-    painter.setFont( font );
-    QFontMetrics metrics( font );
+    QFont versionFont( uiFontFamily );
+    versionFont.setWeight       ( QFont::DemiBold );
+    versionFont.setPixelSize    ( 18 );
+    versionFont.setLetterSpacing( QFont::AbsoluteSpacing, 0.4 );
 
-    int sWidth = metrics.boundingRect( version ).width();
-    int x      = ( pw - sWidth ) / 2;
+    painter.setFont( versionFont );
+    painter.setPen ( versionColor );
 
-    // Top separator + version line
-    painter.drawLine( 0, 106, pw, 106 );
-    const int yVersion = 132;
-    painter.drawText( x, yVersion, version );
+    QFontMetrics vMetrics( versionFont );
+    int vWidth = vMetrics.horizontalAdvance( version );
+    painter.drawText( ( pw - vWidth ) / 2, yVersion, version );
 
-    // --- Build line (smaller, cleaner format) ---
-    // Add comma between day and year
-    QString dateStr( __DATE__ );
-    dateStr.replace( QRegularExpression( R"((\d{1,2})\s+(\d{4}))" ), "\\1, \\2" );
+    // --- Build line ---
+    QString buildLine =
+            QString( "Built on %1 at %2 UTC" ).arg( BUILD_DATE ).arg( BUILD_TIME );
 
-    QString buildLine = QString("Built on %1 at %2 UTC")
-            .arg(BUILD_DATE)
-            .arg(BUILD_TIME);
+    QFont buildFont( uiFontFamily );
+    buildFont.setWeight   ( QFont::Normal );
+    buildFont.setPixelSize( 12 );
 
-    QFont dateFont( "Arial" );
-    dateFont.setWeight( QFont::Normal );
-    dateFont.setPixelSize( 12 );
-    painter.setFont( dateFont );
-    QFontMetrics dateMetrics( dateFont );
+    painter.setFont( buildFont );
+    painter.setPen ( metaColor );
 
-    int dWidth = dateMetrics.boundingRect( buildLine ).width();
-    int dx     = ( pw - dWidth ) / 2;
-    const int yBuild = yVersion + 20;  // balanced gap below version
-    painter.drawText( dx, yBuild, buildLine );
+    QFontMetrics bMetrics( buildFont );
+    int bWidth = bMetrics.horizontalAdvance( buildLine );
+    painter.drawText( ( pw - bWidth ) / 2, yBuild, buildLine );
 
-    // Separator below build line
-    painter.setFont( font );
-    const int yLine2 = yBuild + 14;
-    painter.drawLine( 0, yLine2, pw, yLine2 );
+    // --- Single divider under metadata ---
+    painter.setPen( QPen( dividerColor, 1 ) );
+    const int dividerInset = 40;
+    painter.drawLine( dividerInset, yDivider, pw - dividerInset, yDivider );
 
-    // --- Authors block ---
-    const int yAuthors      = yLine2 + 22;
-    const int nameStep      = 16;            // a bit tighter for smaller text
-    const int firstNameBase = yAuthors + 20;
-
-    // Title: slightly larger, bold
-    QFont authorsTitleFont( "Arial" );
-    authorsTitleFont.setWeight( QFont::Bold );
+    // --- Authors title ---
+    QFont authorsTitleFont( uiFontFamily );
+    authorsTitleFont.setWeight   ( QFont::Bold );
     authorsTitleFont.setPixelSize( 13 );
+
     painter.setFont( authorsTitleFont );
-    QFontMetrics authorsTitleMetrics( authorsTitleFont );
+    painter.setPen ( authorsTitleColor );
 
-    QString s = "Authors:";
-    sWidth    = authorsTitleMetrics.boundingRect( s ).width();
-    painter.drawText( ( pw - sWidth ) / 2, yAuthors, s );
+    QFontMetrics atMetrics( authorsTitleFont );
+    const QString authorsTitle = "Authors";
+    int atWidth = atMetrics.horizontalAdvance( authorsTitle );
+    painter.drawText( ( pw - atWidth ) / 2, yAuthorsTitle, authorsTitle );
 
-    // Names: smaller, normal weight
-    QFont authorsFont( "Arial" );
-    authorsFont.setWeight( QFont::Normal );
+    // --- Author names ---
+    QFont authorsFont( uiFontFamily );
+    authorsFont.setWeight   ( QFont::Normal );
     authorsFont.setPixelSize( 11 );
+
     painter.setFont( authorsFont );
-    QFontMetrics authorsMetrics( authorsFont );
+    painter.setPen ( authorsColor );
 
-    s      = "Borries Demeler";
-    sWidth = authorsMetrics.boundingRect( s ).width();
-    painter.drawText( ( pw - sWidth ) / 2, firstNameBase, s );
+    QFontMetrics aMetrics( authorsFont );
+    QStringList names = {
+            "Borries Demeler",
+            "Emre Brookes",
+            "Alexey Savelyev",
+            "Gary Gorbet"
+    };
 
-    s      = "Emre Brookes";
-    sWidth = authorsMetrics.boundingRect( s ).width();
-    painter.drawText( ( pw - sWidth ) / 2, firstNameBase + nameStep, s );
+    for ( int i = 0; i < names.size(); ++i )
+    {
+        const QString& name = names[i];
+        int nWidth = aMetrics.horizontalAdvance( name );
+        int y      = firstNameBase + i * nameStep;
+        painter.drawText( ( pw - nWidth ) / 2, y, name );
+    }
 
-    s      = "Alexey Savelyev";
-    sWidth = authorsMetrics.boundingRect( s ).width();
-    painter.drawText( ( pw - sWidth ) / 2, firstNameBase + 2 * nameStep, s );
-
-    s      = "Gary Gorbet";
-    sWidth = authorsMetrics.boundingRect( s ).width();
-    painter.drawText( ( pw - sWidth ) / 2, firstNameBase + 3 * nameStep, s );
-
-    // Display
+    // --- Display (same fixed geometry as before) ---
     smallframe = new QLabel( this );
     smallframe->setPixmap( pixmap );
-    smallframe->setGeometry( (unsigned int)( ( width / 2 ) - 230 ),
-                             110, 460, 276 );
+    smallframe->setGeometry(
+            static_cast<unsigned int>( ( width / 2 ) - 230 ),
+            110, 460, 276
+    );
 }
 
 void US_Win::closeSplash( void )
