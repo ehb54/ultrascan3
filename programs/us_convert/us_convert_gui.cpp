@@ -2435,7 +2435,21 @@ DbgLv(1) << "CGui:iA: CURRENT DIR_1: " << importDir;
 
    //For DataFromDisk, we need to append runID with something like "-dataDiskRun-{autoflowID_passed}"
    if ( dataSource.contains("Disk") && us_convert_auto_mode && !us_import_ssf_abde )
-     runID += QString("-dataDiskRun-") + QString::number( autoflowID_passed );
+     {
+       if ( !protDev_bool )
+	 runID += QString("-dataDiskRun-") + QString::number( autoflowID_passed );
+       else
+	 {
+	   QString runID_c = runID;
+	   QRegularExpression run_pattern("-dataDiskRun-\\d+$");
+	   QRegularExpressionMatch match = run_pattern.match( runID_c );
+	   if (match.hasMatch())
+	     {
+	       runID = runID_c.remove( run_pattern );
+	       runID += QString("-dataDiskRun-") + QString::number( autoflowID_passed );
+	     }
+	 }
+     }
    
    if ( runType_combined_IP_RI )
      {
