@@ -2441,6 +2441,7 @@ DbgLv(1) << "CGui:iA: CURRENT DIR_1: " << importDir;
        else
 	 {
 	   QString runID_c = runID;
+	   qDebug() << "dataDisk runName before -- " << runID;
 	   QRegularExpression run_pattern("-dataDiskRun-\\d+$");
 	   QRegularExpressionMatch match = run_pattern.match( runID_c );
 	   if (match.hasMatch())
@@ -2448,6 +2449,7 @@ DbgLv(1) << "CGui:iA: CURRENT DIR_1: " << importDir;
 	       runID = runID_c.remove( run_pattern );
 	       runID += QString("-dataDiskRun-") + QString::number( autoflowID_passed );
 	     }
+	   qDebug() << "dataDisk runName after -- " << runID;
 	 }
      }
    
