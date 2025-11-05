@@ -3959,6 +3959,8 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
    if ( us_edit_auto_mode )
      pick-> disconnect();
 
+   qApp->processEvents();
+
 }
 
 void US_Edit::reset_editdata_panel( void )
