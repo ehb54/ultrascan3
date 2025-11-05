@@ -1551,6 +1551,8 @@ void US_ExperGuiRotor::reset_dataSource_public( void )
 
 void US_ExperGuiRotor::set_dataSource_public( QMap <QString, QString>& pd_details )
 {
+  ck_disksource->disconnect();
+  ck_disksource->setChecked( false );
   rpRotor->importData = false;
   rpRotor->importData_absorbance_t  = false;
   rpRotor->importData_absorbance_pa = false;
@@ -1560,6 +1562,7 @@ void US_ExperGuiRotor::set_dataSource_public( QMap <QString, QString>& pd_detail
   QString dataSource_pd = pd_details["dataSource"];
   if ( dataSource_pd.contains("dataDiskAUC") ) 
     {
+      ck_disksource->setChecked(true);
       rpRotor->importData = true;
       if ( dataSource_pd.contains("dataDiskAUC:Absorbance"))
 	{
