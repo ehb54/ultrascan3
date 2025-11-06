@@ -6,10 +6,6 @@
 #include "us_gui_settings.h"
 #include "us_gui_util.h"
 #include "qwt_legend.h"
-#if QT_VERSION < 0x050000
-#define setSamples(a,b,c)  setData(a,b,c)
-#define setSymbol(a)       setSymbol(*a)
-#endif
 
 // constructor:  advanced analysis control widget
 US_AdvDmgaMc::US_AdvDmgaMc( US_Model* amodel,

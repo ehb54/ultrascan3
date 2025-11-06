@@ -18,9 +18,6 @@
 #include "us_util.h"
 #include "us_investigator.h"
 #include "us_loadable_noise.h"
-#if QT_VERSION < 0x050000
-#define setSamples(a,b,c)  setData(a,b,c)
-#endif
 
 //! \brief Main program for us_pcsa. Loads translators and starts
 //         the class US_pcsa.

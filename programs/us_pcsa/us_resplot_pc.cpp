@@ -7,10 +7,6 @@
 #include "us_gui_util.h"
 #include "us_math2.h"
 #include "us_constants.h"
-#if QT_VERSION < 0x050000
-#define setSamples(a,b,c)  setData(a,b,c)
-#endif
-
 #include <qwt_legend.h>
 
 // constructor:  residuals plot widget

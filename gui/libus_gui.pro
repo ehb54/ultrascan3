@@ -16,11 +16,6 @@ win32 {
         # We assume QMAKE_LFLAGS += Wl,--out-implib,../lib/lib$${TARGET}$${VER}.a
 }
 
-macx {
-        LIBS   += -L../lib/ -lus_utils $${X11LIB}
-        INCLUDES += -I/opt/X11/include
-}
-
 QT          += network svg
 
 TRANSLATIONS = $${TARGET}_DE_de.ts
@@ -78,8 +73,7 @@ HEADERS      = \
                us_table.h               \
                us_tmst_plot.h           \
                us_widgets.h             \
-               us_widgets_dialog.h      \
-               us_window_message.h
+               us_widgets_dialog.h
 
 SOURCES      = \
                us_abstractrotor_gui.cpp   \
@@ -134,21 +128,6 @@ SOURCES      = \
                us_table.cpp               \
                us_tmst_plot.cpp           \
                us_widgets.cpp             \
-               us_widgets_dialog.cpp      \
-               us_window_message.cpp
+               us_widgets_dialog.cpp
 
 RESOURCES     = images.qrc
-
-unix  {
-        HEADERS += us_x11_utils.h
-        SOURCES += us_x11_utils.c
-}
-mac   {
-        HEADERS += us_mac_utils.h
-        SOURCES += us_mac_utils.c
-}
-win32 {
-        HEADERS += us_win_utils.h
-        SOURCES += us_win_utils.c
-}
-

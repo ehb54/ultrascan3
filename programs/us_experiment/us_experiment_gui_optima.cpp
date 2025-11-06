@@ -19,21 +19,11 @@
 #include "us_gui_util.h"
 #include "us_run_details2.h"
 #include "../us_convert/us_convert.h"
-
 #include "../us_esigner_gmp/us_esigner_gmp.h"
-
-
-#if QT_VERSION < 0x050000
-#define setSamples(a,b,c)  setData(a,b,c)
-#define setMinimum(a)      setMinValue(a)
-#define setMaximum(a)      setMaxValue(a)
-#define QRegularExpression(a)  QRegExp(a)
-#endif
 
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug()
 #endif
-
 
 // Constructor:  build the main layout with tab widget panels
 US_ExperimentMain::US_ExperimentMain() : US_Widgets()

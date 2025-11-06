@@ -4,9 +4,6 @@
 #include "us_settings.h"
 #include "us_gui_settings.h"
 #include "us_matrix.h"
-#if QT_VERSION < 0x050000
-#define setSamples(a,b,c)  setData(a,b,c)
-#endif
 
 US_RiNoise::US_RiNoise( const US_DataIO::RawData& raw, 
                         const QList< int >&       Includes,

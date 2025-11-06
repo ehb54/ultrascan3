@@ -7,12 +7,6 @@
 #include "us_constants.h"
 #include "us_util.h"
 #include "us_gui_util.h"
-
-#if QT_VERSION < 0x050000
-#define setSamples(a,b,c) setData(a,b,c)
-#define setSymbol(a)      setSymbol(*a)
-#endif
-
 #include <qwt_legend.h>
 #include <qwt_plot_layout.h>
 #include <qwt_plot_curve.h>
@@ -550,21 +544,9 @@ void US_RunDetails2::draw_plot( const double* x, const double* t,
       data_plot->insertLegend( legend, QwtPlot::BottomLegend );
       legend->setFrameStyle( QFrame::Box | QFrame::Sunken );
 
-#if QT_VERSION < 0x050000
-      QList< QWidget* > items = legend->legendItems();
-
-      QFont font = items[ 0 ]->font();
-      font.setPointSize( US_GuiSettings::fontSize() );
-
-      QWidget* item;
-      foreach( item, items ) item->setFont( font );
-
-      data_plot->insertLegend( legend, QwtPlot::BottomLegend );
-#else
       QFont lfont( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() );
       data_plot->setFont( lfont );
       legend   ->setFont( lfont );
-#endif
    }
 
    data_plot->replot();

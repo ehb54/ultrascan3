@@ -1581,13 +1581,8 @@ void US_Norm_Profile::plotData(void){
 	    double r2[ 2 ];
 	    r2[ 0 ] = point2;
 	    r2[ 1 ] = point2;
-	    
-	   	   
-#if QT_VERSION < 0x050000
-	    QwtScaleDiv* y_axis = plot->axisScaleDiv( QwtPlot::yLeft );
-#else
+
 	    QwtScaleDiv* y_axis = (QwtScaleDiv*)&(plot->axisScaleDiv( QwtPlot::yLeft ));
-#endif
 	    
 	    double padding = ( y_axis->upperBound() - y_axis->lowerBound() ) / 30.0;
 

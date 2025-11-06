@@ -27,16 +27,9 @@
 #include "us_report.h"
 #include "us_constants.h"
 #include "us_show_norm.h"
-
-
-//#include "us_pseudo3d_combine.h"
-#if QT_VERSION < 0x050000
-#define setMinimum(a)     setMinValue(a)
-#define setMaximum(a)     setMaxValue(a)
-#endif
-#define setPBMaximum(a)   setRange(1,a)
-
 #include <qwt_legend.h>
+
+#define setPBMaximum(a)   setRange(1,a)
 
 // constructor:  2dsa analysis controls widget
 US_AnalysisControl2D::US_AnalysisControl2D( QList< SS_DATASET* >& dsets,

@@ -12,6 +12,8 @@ RUN apt-get update -qq && \
         libqwt-qt5-dev \
         libqwt-qt5-6 \
         libgl2ps-dev \
+        libgtest-dev \
+        libgmock-dev \
         git && \
     rm -rf /var/lib/apt/lists/*
 

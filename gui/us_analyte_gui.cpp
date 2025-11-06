@@ -16,11 +16,6 @@
 #include "us_new_spectrum.h"
 #include "us_edit_spectrum.h"
 
-#if QT_VERSION < 0x050000
-#define setSymbol(a)      setSymbol(*a)
-#define setSamples(a,b,c) setData(a,b,c)
-#endif
-
 /*  Class US_SequenceEditor */
 US_SequenceEditor::US_SequenceEditor( const QString& sequence ) 
    : US_WidgetsDialog( nullptr, Qt::WindowFlags() )

@@ -48,16 +48,8 @@ public:
    //! \brief SpectroGram Data constructor
    US_SpectrogramData( QRectF& );
 
-#if QT_VERSION < 0x050000
-   //! \brief Return a copy of SpectroGram Data
-   virtual QwtRasterData *copy() const;
-
-   //! \brief Return the Z range (minimum,maximum pair)
-   virtual QwtDoubleInterval range() const;
-#else
    //! \brief Return the Z range (minimum,maximum pair)
    virtual QwtInterval range() const;
-#endif
 
    //! \brief Called to get data ranges and raster size in pixels
    //! \param drect Data rectangle (x-min,y-min,x-range,y-range)
