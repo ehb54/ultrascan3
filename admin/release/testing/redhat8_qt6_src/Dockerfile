@@ -54,7 +54,7 @@ RUN set -eux; \
   dnf -y clean all; rm -rf /var/cache/dnf; \
   node -v && npm -v
 
-RUN dnf -y install gcc-toolset-13 gcc-toolset-13 && dnf clean all
+RUN dnf -y install gcc-toolset-13 && dnf clean all
 
 SHELL ["/bin/bash", "-lc"]
 
