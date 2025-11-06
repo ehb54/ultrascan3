@@ -139,6 +139,8 @@ class US_InitDialogueGui : public US_WidgetsDialog
         bool initMsgNorecOpen; //!< Flag for no record message open
         bool initMsgNorecDelOpen; //!< Flag for no record deletion message open
 
+        US_ConvertGui*    sdiag_convert;
+
     private:
         US_ProtocolDevMain* mainw; //!< Parent to all panels
         int offset; //!< Offset

@@ -1102,6 +1102,8 @@ void US_InitDialogueGui::initRecordsDialogue( void )
   QString analysisIDs  = protocol_details[ "analysisIDs" ];
   QString statusID     = protocol_details[ "statusID" ];
   QString failedID     = protocol_details[ "failedID" ];
+
+  QString dataSource   = protocol_details[ "dataSource" ];
     
   QDir directory( currDir );
   
@@ -1116,7 +1118,8 @@ void US_InitDialogueGui::initRecordsDialogue( void )
   qDebug() << "statusID: "      << protocol_details[ "statusID" ];
   qDebug() << "failedID: str, INT --  "
 	   << protocol_details[ "failedID" ]
-	   << protocol_details[ "failedID" ].toInt();  
+	   << protocol_details[ "failedID" ].toInt();
+  qDebug() << "dataSource -- " << dataSource;
 
 
   //Re-attachment to FAILED GMP run
@@ -1207,8 +1210,21 @@ void US_InitDialogueGui::initRecordsDialogue( void )
 	  
        	  if ( currDir.isEmpty() || !directory.exists() )
        	    {
-       	      //switch_to_live_update( protocol_details );
-       	      emit switch_to_live_update_init( protocol_details );
+	      if ( !dataSource. contains("dataDisk") ) 
+		emit switch_to_live_update_init( protocol_details );
+	      else
+		{
+		  //we need to re-download form LIMS DB if re-attached from other session
+		  sdiag_convert = new US_ConvertGui("AUTO");
+		  QString filename_from_dataPath = directory.dirName();
+		  QMap< QString, QString > p_det;
+		  p_det["filename"] = filename_from_dataPath;
+		  sdiag_convert->download_data_auto( p_det );
+
+		  qApp->processEvents();
+		   
+		  emit switch_to_post_processing_init( protocol_details );
+		}
        	    }
        	  else
        	    {
