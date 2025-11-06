@@ -443,8 +443,7 @@ void US_ExperimentMain::accept_passed_protocol_details(  QMap < QString, QString
   currProto.exp_label = protocol_details[ "label" ];
 
   //set dataDisk flag if protocol refers dataDisk
-  if ( dataSource_pd.contains("dataDiskAUC") )
-    epanRotor->set_dataSource_public( protocol_details );
+  epanRotor->set_dataSource_public( protocol_details );
   
   initPanels();
   
@@ -1553,6 +1552,11 @@ void US_ExperGuiRotor::set_dataSource_public( QMap <QString, QString>& pd_detail
 {
   ck_disksource->disconnect();
   ck_disksource->setChecked( false );
+  lb_instrument  -> setVisible( true );
+  cb_optima  -> setVisible( true );
+  lb_optima_connected -> setVisible( true );
+  le_optima_connected -> setVisible( true );
+  
   rpRotor->importData = false;
   rpRotor->importData_absorbance_t  = false;
   rpRotor->importData_absorbance_pa = false;
@@ -1563,6 +1567,11 @@ void US_ExperGuiRotor::set_dataSource_public( QMap <QString, QString>& pd_detail
   if ( dataSource_pd.contains("dataDiskAUC") ) 
     {
       ck_disksource->setChecked(true);
+      lb_instrument  -> setVisible( false );
+      cb_optima  -> setVisible( false );
+      lb_optima_connected -> setVisible( false );
+      le_optima_connected -> setVisible( false );
+      
       rpRotor->importData = true;
       if ( dataSource_pd.contains("dataDiskAUC:Absorbance"))
 	{
