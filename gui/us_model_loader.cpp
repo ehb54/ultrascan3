@@ -553,6 +553,7 @@ QDateTime time2=QDateTime::currentDateTime();
       if ( !mfilt.endsWith( "*" ) )
          mflt1         = mflt1 + "*";
    }
+   mflt1 = QRegularExpression::wildcardToRegularExpression( mflt1 );
    QRegularExpression mpart( mflt1, QRegularExpression::CaseInsensitiveOption );
    model_descriptions.clear();               // clear model descriptions
 qDebug() << "LM: desc single edit" << listdesc << listsing << listedit
@@ -1060,6 +1061,7 @@ QDateTime time2=QDateTime::currentDateTime();
       if ( !mfilt.endsWith( "*" ) )
          mflt1         = mflt1 + "*";
    }
+   mflt1 = QRegularExpression::wildcardToRegularExpression( mflt1 );
    QRegularExpression mpart ( mflt1, QRegularExpression::CaseInsensitiveOption );
    model_descriptions.clear();               // clear model descriptions
 qDebug() << "LM: desc single edit" << listdesc << listsing << listedit
