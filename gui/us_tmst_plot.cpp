@@ -9,10 +9,6 @@
 #include "us_constants.h"
 #include "us_images.h"
 #include "us_editor.h"
-#if QT_VERSION < 0x050000
-#define setSamples(a,b,c) setData(a,b,c)
-#endif
-
 #include <qwt_legend.h>
 
 // constructor:  residuals plot widget

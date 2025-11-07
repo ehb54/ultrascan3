@@ -15,14 +15,9 @@
 #include "us_run_details2.h"
 #include "us_passwd.h"
 #include "us_get_dbexp.h"
-#if QT_VERSION < 0x050000
-#define setSamples(a,b,c)  setData(a,b,c)
-#define setSymbol(a)       setSymbol(*a)
-#endif
 
 //! \brief Main program for US_RotorCalibration. Loads translators and starts
 //         the class US_FitMeniscus.
-
 int main(int argc, char* argv[])
 {
    QApplication application(argc, argv);
@@ -181,13 +176,8 @@ US_RotorCalibration::US_RotorCalibration() : US_Widgets()
    data_plot->setAxisAutoScale(QwtPlot::yLeft);
    data_plot->setCanvasBackground( QBrush(Qt::white) );
 
-#if QT_VERSION < 0x050000
-   connect (plot, SIGNAL (zoomed(QRectF)),
-             this, SLOT   (currentRect  (QRectF)));
-#else
    connect (plot, SIGNAL (zoomedCorners (QRectF)),
              this, SLOT   (currentRectf  (QRectF)));
-#endif
 
 
    top->addLayout(plot, 1, 1, row - 1, 1);
@@ -747,11 +737,7 @@ void US_RotorCalibration::mouse (const QPointF& p)
    r[0] = p.x();
    r[1] = p.x();
 
-#if QT_VERSION < 0x050000
-   QwtScaleDiv* y_axis = data_plot->axisScaleDiv(QwtPlot::yLeft);
-#else
    QwtScaleDiv* y_axis = (QwtScaleDiv*)&data_plot->axisScaleDiv(QwtPlot::yLeft);
-#endif
 
    //double padding = (y_axis->upperBound() - y_axis->lowerBound()) / 30.0;
 

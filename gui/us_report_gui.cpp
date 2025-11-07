@@ -8,9 +8,6 @@
 #include "us_investigator.h"
 #include "us_images.h"
 
-//#include "us_report_gmp.h"
-
-
 // Report GUI
 //ALEXEY_NEW_REPORT: an arg now is QMap < QString( wvl ), US_ReportGMP > ?  
 //US_ReportGui::US_ReportGui( US_ReportGMP *tmp_report ) : US_Widgets()

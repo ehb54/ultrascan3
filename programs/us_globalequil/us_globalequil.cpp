@@ -18,10 +18,6 @@
 #include "us_globalequil.h"
 #include "us_model_select.h"
 #include "us_eqreporter.h"
-#if QT_VERSION < 0x050000
-#define setSamples(a,b,c)  setData(a,b,c)
-#define setSymbol(a)       setSymbol(*a)
-#endif
 
 // main program
 int main( int argc, char* argv[] )

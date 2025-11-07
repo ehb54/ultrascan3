@@ -8,7 +8,6 @@
 #include "us_investigator.h"
 #include "us_images.h"
 
-
 US_CombPlotsGui::US_CombPlotsGui( QString combPlotsMask, QStringList type_method_list ) : US_Widgets()
 {
   this->combPlotsMask    = combPlotsMask;

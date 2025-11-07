@@ -15,16 +15,8 @@
 #include "us_constants.h"
 #include "us_passwd.h"
 #include "us_report.h"
-#if QT_VERSION < 0x050000
-#define setSamples(a,b,c)  setData(a,b,c)
-#define setMinimum(a)      setMinValue(a)
-#define setMaximum(a)      setMaxValue(a)
-#define setSymbol(a)       setSymbol(*a)
-#define setStateMachine(a) setSelectionFlags(QwtPicker::RectSelection|QwtPicker::DragSelection)
-#else
 #include "qwt_picker_machine.h"
 #define canvasBackground() canvasBackground().color();
-#endif
 
 // main program
 int main( int argc, char* argv[] )
@@ -1048,15 +1040,9 @@ DbgLv(1) << "pl3d:    cblack" << cblack << "cwhite" << cwhite;
 
    // set up spectrogram data
    d_spectrogram = new QwtPlotSpectrogram();
-#if QT_VERSION < 0x050000
-   d_spectrogram->setData( US_SpectrogramData() );
-   spec_dat      = (US_SpectrogramData*)&d_spectrogram->data();
-   d_spectrogram->setColorMap( *colormap );
-#else
    spec_dat      = new US_SpectrogramData();
    d_spectrogram->setColorMap( ColorMapCopy( colormap ) );
    d_spectrogram->setData    ( spec_dat );
-#endif
    d_spectrogram->attach( data_plot );
 
    QRectF drect;
@@ -1088,13 +1074,9 @@ DbgLv(1) << "pl3d:    cblack" << cblack << "cwhite" << cwhite;
    // Set color map and axis settings
    QwtScaleWidget *rightAxis = data_plot->axisWidget( QwtPlot::yRight );
    rightAxis    ->setColorBarEnabled( true );
-#if QT_VERSION < 0x050000
-   rightAxis    ->setColorMap( spec_dat->range(), d_spectrogram->colorMap() );
-#else
    rightAxis    ->setColorMap( spec_dat->range(),
                                ColorMapCopy( colormap ) );
    d_spectrogram->setColorMap( ColorMapCopy( colormap ) );
-#endif
    data_plot->setAxisTitle( QwtPlot::xBottom, xa_title );
    data_plot->setAxisTitle( QwtPlot::yLeft,   ya_title );
    data_plot->setAxisTitle( QwtPlot::yRight,  tr( "Partial Concentration" ) );

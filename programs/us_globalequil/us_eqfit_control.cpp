@@ -8,10 +8,6 @@
 #include "us_constants.h"
 #include "us_math2.h"
 #include "qwt_plot_marker.h"
-#if QT_VERSION < 0x050000
-#define setSamples(a,b,c)  setData(a,b,c)
-#define setSymbol(a)       setSymbol(*a)
-#endif
 
 // Main constructor with references to parameters from main GlobalEquil class
 US_EqFitControl::US_EqFitControl(

@@ -8,7 +8,6 @@
 #include "us_sleep.h"
 #include "us_util.h"
 
-
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug()
 #endif

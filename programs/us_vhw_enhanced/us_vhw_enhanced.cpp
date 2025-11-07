@@ -13,11 +13,6 @@
 #include "us_passwd.h"
 #include "us_constants.h"
 #include "us_astfem_rsa.h"
-#if QT_VERSION < 0x050000
-#define setSamples(a,b,c)  setData(a,b,c)
-#define setSymbol(a)       setSymbol(*a)
-#define setStateMachine(a) setSelectionFlags(QwtPicker::RectSelection|QwtPicker::DragSelection)
-#endif
 
 #define SEDC_NOVAL   -9999.0
 

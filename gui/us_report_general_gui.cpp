@@ -8,7 +8,6 @@
 #include "us_investigator.h"
 #include "us_images.h"
 
-
 US_ReportGenGui::US_ReportGenGui( QString reportMask ) : US_Widgets()
 {
   this->reportMask = reportMask;

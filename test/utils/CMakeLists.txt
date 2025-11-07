@@ -30,11 +30,7 @@ include_directories(
         ${CMAKE_SOURCE_DIR}/test/utils
         ${CMAKE_SOURCE_DIR}/test/utils/mock
         ${CMAKE_SOURCE_DIR}/test/common
-        )
-
-if(MYSQL_FOUND)
-    include_directories(${MYSQL_INCLUDE_DIRS})
-endif()
+)
 
 # AUTO-DISCOVERY - Find all test files automatically
 file(GLOB_RECURSE AUTO_TEST_SOURCES "test_us_*.cpp" "test_mock_*.cpp")
@@ -53,14 +49,27 @@ add_executable(test_us_utils
         ${AUTO_TEST_SOURCES}
         ${AUTO_TEST_HEADERS}
         ../../utils/ius_db2.h
-        ../common/qt_test_base.cpp test_us_vector.cpp test_us_timer.cpp)
+        ../common/qt_test_base.cpp
+        test_us_vector.cpp
+        test_us_timer.cpp
+        )
 
 target_compile_definitions(test_us_utils PRIVATE NO_DB)
+
+# Determine which library to link against
+# Prefer static for tests, fallback to shared if static not available
+if(TARGET UltraScan3::Utils_Static)
+    set(US_UTILS_LINK_TARGET UltraScan3::Utils_Static)
+    message(STATUS "Linking tests against static utils library")
+else()
+    set(US_UTILS_LINK_TARGET UltraScan3::Utils)
+    message(STATUS "Linking tests against shared utils library (static not available)")
+endif()
 
 # Link libraries
 target_link_libraries(test_us_utils
         PRIVATE
-        UltraScan3::Utils
+        ${US_UTILS_LINK_TARGET}
         Qt::Core
         Qt::Network
         Qt::Sql
@@ -70,9 +79,9 @@ target_link_libraries(test_us_utils
         ${GTEST_LIBRARIES}
         )
 
-# Link MySQL if found
-if(MYSQL_FOUND)
-    target_link_libraries(test_us_utils PRIVATE ${MYSQL_LIBRARIES})
+# Link MySQL if available
+if(TARGET MySQL::Client AND NOT US3_NO_DB)
+    target_link_libraries(test_us_utils PRIVATE MySQL::Client)
     message(STATUS "MySQL found and linked")
 else()
     message(WARNING "MySQL not found - database tests may not work")

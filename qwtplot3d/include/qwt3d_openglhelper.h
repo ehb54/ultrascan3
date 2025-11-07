@@ -17,7 +17,7 @@
 #include <GL/glu.h>
 #endif
 #else
-#include <GL/glu.h>
+#include <OpenGL/glu.h>  // Changed from GL/glu.h
 #endif
 
 namespace Qwt3D

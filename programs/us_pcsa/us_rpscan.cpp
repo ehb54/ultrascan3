@@ -7,13 +7,8 @@
 #include "us_gui_util.h"
 #include "us_math2.h"
 #include "us_sleep.h"
-
 #include <qwt_scale_widget.h>
 #include <qwt_scale_draw.h>
-#if QT_VERSION < 0x050000
-#define setSamples(a,b,c)  setData(a,b,c)
-#define setSymbol(a)       setSymbol(*a)
-#endif
 
 // Constructor:  Regularization Parameter Scan widget
 US_RpScan::US_RpScan( QList< US_SolveSim::DataSet* >&dsets,

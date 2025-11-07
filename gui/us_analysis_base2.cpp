@@ -18,11 +18,6 @@
 #include "us_settings.h"
 #include "us_solution_gui.h"
 #include "us_solution_vals.h"
-#if QT_VERSION < 0x050000
-#define setSamples(a,b,c) setData(a,b,c)
-#define setMinimum(a)  setMinValue(a)
-#define setMaximum(a)  setMaxValue(a)
-#endif
 
 US_AnalysisBase2::US_AnalysisBase2() : US_Widgets()
 {

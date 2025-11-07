@@ -22,20 +22,10 @@
 #include "us_images.h"
 #include "us_colorgradIO.h"
 #include "qwt_legend.h"
-
-
-#if QT_VERSION < 0x050000
-#define setSamples(a,b,c)  setData(a,b,c)
-#define setMinimum(a)      setMinValue(a)
-#define setMaximum(a)      setMaxValue(a)
-#define setSymbol(a)       setSymbol(*a)
-#define AXISSCALEDIV(a)    data_plot->axisScaleDiv(a)
-#define dPlotClearAll(a) a->clear()
-#else
 #include "qwt_picker_machine.h"
+
 #define AXISSCALEDIV(a)    (QwtScaleDiv*)&data_plot->axisScaleDiv(a)
 #define dPlotClearAll(a) a->detachItems(QwtPlotItem::Rtti_PlotItem,true)
-#endif
 
 #ifdef WIN32
 #include <float.h>

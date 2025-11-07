@@ -18,17 +18,10 @@
 #include "us_constants.h"
 #include "us_simparms.h"
 #include "us_constants.h"
-#if QT_VERSION < 0x050000
-#define setSamples(a,b,c)  setData(a,b,c)
-#define setMinimum(a)      setMinValue(a)
-#define setMaximum(a)      setMaxValue(a)
-#define setSymbol(a)       setSymbol(*a)
-#endif
 
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug()
 #endif
-
 
 // Alternative Constructor (for autoflow )
 US_Buoyancy::US_Buoyancy( QString auto_mode ) : US_Widgets()
@@ -2598,11 +2591,7 @@ void US_Buoyancy::draw_gauss_envelope  ( QMap < QString, QStringList > peak_p )
   QString triple_n = cb_triple->itemText( current_triple );
   
   
-#if QT_VERSION < 0x050000
-  QwtScaleDiv* y_axis = data_plot->axisScaleDiv( QwtPlot::yLeft );
-#else
   QwtScaleDiv* y_axis = (QwtScaleDiv*)&(data_plot->axisScaleDiv( QwtPlot::yLeft ));
-#endif
   
   double padding = ( y_axis->upperBound() - y_axis->lowerBound() ) / 30.0;
 
@@ -2674,11 +2663,7 @@ void US_Buoyancy::draw_vline_auto( double radius, QString vline_number )
    r[ 0 ] = radius;
    r[ 1 ] = radius;
 
-#if QT_VERSION < 0x050000
-   QwtScaleDiv* y_axis = data_plot->axisScaleDiv( QwtPlot::yLeft );
-#else
    QwtScaleDiv* y_axis = (QwtScaleDiv*)&(data_plot->axisScaleDiv( QwtPlot::yLeft ));
-#endif
 
    double padding = ( y_axis->upperBound() - y_axis->lowerBound() ) / 30.0;
 
@@ -2709,11 +2694,7 @@ void US_Buoyancy::draw_vline( double radius )
    r[ 0 ] = radius;
    r[ 1 ] = radius;
 
-#if QT_VERSION < 0x050000
-   QwtScaleDiv* y_axis = data_plot->axisScaleDiv( QwtPlot::yLeft );
-#else
    QwtScaleDiv* y_axis = (QwtScaleDiv*)&(data_plot->axisScaleDiv( QwtPlot::yLeft ));
-#endif
 
    double padding = ( y_axis->upperBound() - y_axis->lowerBound() ) / 30.0;
 

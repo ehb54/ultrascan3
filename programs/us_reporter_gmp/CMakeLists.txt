@@ -107,6 +107,9 @@ add_executable(us_reporter_gmp
         ${REPORTER_GMP_RESOURCES}
         )
 
+# dependency on revision.h in programs/us
+add_dependencies(us_reporter_gmp us_version_headers)
+
 # Set target properties
 set_target_properties(us_reporter_gmp PROPERTIES
         AUTOMOC ON

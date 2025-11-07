@@ -24,9 +24,6 @@
 #include "us_images.h"
 #include "us_rotor_gui.h"
 #include "qwt_scale_engine.h"
-#if QT_VERSION < 0x050000
-#define setSamples(a,b,c) setData(a,b,c)
-#endif
 
 #ifdef Q_OS_WIN
 #include <float.h>
@@ -2567,11 +2564,7 @@ void US_RampGui::plot_current( void )
    qDebug() << minw2t << maxw2t << padw2t << minw2t-padw2t<<maxw2t+padw2t;
    
    qDebug()<<QwtPlot::xBottom<<QwtPlot::yLeft;
-#if QT_VERSION < 0x050000
-   data_plot->setAxisScaleEngine(QwtPlot::xBottom, new QwtLog10ScaleEngine);
-#else
    data_plot->setAxisScaleEngine(QwtPlot::xBottom, new QwtLogScaleEngine);
-#endif
    data_plot->setAxisScale( QwtPlot::xBottom  , 100, maxw2t + padw2t );
    data_plot->setAxisScale( QwtPlot::yLeft, minint - padint, maxint + padint );
 //    data_plot->setAxisTitle( 2, "w2t");

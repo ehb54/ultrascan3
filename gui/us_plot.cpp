@@ -35,15 +35,9 @@
 US_Zoomer::US_Zoomer( int xAxis, int yAxis, QwtPlotCanvas* canvas )
    : QwtPlotZoomer( xAxis, yAxis, canvas )
 {
-#if QT_VERSION < 0x050000
-   setSelectionFlags( QwtPicker::DragSelection | QwtPicker::CornerToCorner );
-   setTrackerMode   ( QwtPicker::AlwaysOff );
-   setRubberBand    ( QwtPicker::NoRubberBand );
-#else
    setStateMachine  ( new QwtPickerDragRectMachine() );
    setTrackerMode   ( QwtPicker::ActiveOnly );
    setRubberBand    ( QwtPicker::RectRubberBand );
-#endif
 
    // RightButton: zoom out by 1
    // Ctrl+RightButton: zoom out to full size
@@ -241,17 +235,10 @@ void US_Plot::zoom( bool on )
       zoomer->setTrackerMode  ( QwtPicker::ActiveOnly );
       zoomer->setTrackerPen   ( QColor( Qt::white ) );
 
-#if QT_VERSION < 0x050000
-      connect( zoomer, SIGNAL ( zoomed(        QRectF ) ),
-                       SIGNAL ( zoomedCorners( QRectF ) ) );
-      connect( zoomer, SIGNAL ( zoomed(        QRectF ) ),
-              this  , SLOT   ( scale_yRight ( QRectF ) ) );
-#else
       connect( zoomer, SIGNAL ( zoomed(        QRectF        ) ), 
                        SIGNAL ( zoomedCorners( QRectF        ) ) );
       connect( zoomer, SIGNAL ( zoomed(        QRectF        ) ),
               this  , SLOT   ( scale_yRight ( QRectF        ) ) );
-#endif
       
       panner = new QwtPlotPanner( plot->canvas() );
       panner->setMouseButton( Qt::MiddleButton );
@@ -509,9 +496,6 @@ void US_Plot::quit( void )
 }
 */
 
-#if QT_VERSION < 0x050000
-void US_Plot::scale_yRight ( QRectF ){}
-#else
 void US_Plot::scale_yRight ( QRectF rect ){
    if (! plot->axisEnabled ( QwtPlot::yRight )){
       return;
@@ -525,7 +509,6 @@ void US_Plot::scale_yRight ( QRectF rect ){
    plot->setAxisScale( QwtPlot::yRight, y_0, y_1 );
    plot->replot();
 }
-#endif
 
 ////////////////////////////////////////
 
@@ -2953,11 +2936,7 @@ void US_PlotGridConfig::apply( void )
 US_PlotPicker::US_PlotPicker( QwtPlot* plot ) 
   : QwtPlotPicker( QwtPlot::xBottom, QwtPlot::yLeft, plot->canvas() )
 {
-#if QT_VERSION < 0x050000
-   setSelectionFlags( QwtPicker::PointSelection );
-#else
    setStateMachine ( new QwtPickerDragPointMachine() );
-#endif
    setTrackerMode  ( QwtPicker::AlwaysOn );
    setRubberBand   ( QwtPicker::CrossRubberBand );
 

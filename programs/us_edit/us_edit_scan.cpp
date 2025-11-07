@@ -3,10 +3,6 @@
 #include "us_edit_scan.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
-#if QT_VERSION < 0x050000
-#define setSamples(a,b,c)  setRawData(a,b,c)
-#define setSymbol(a)       setSymbol(*a)
-#endif
 
 US_EditScan::US_EditScan( US_DataIO::Scan&         s, 
                           const QVector< double >& r,

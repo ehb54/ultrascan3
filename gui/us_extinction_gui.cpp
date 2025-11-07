@@ -7,24 +7,16 @@
 #include "us_buffer_gui.h"
 #include "us_gui_util.h"
 
-#if QT_VERSION < 0x050000
-#define setSamples(a,b,c) setData(a,b,c)
-#define setSymbol(a) setSymbol(*a)
-#endif
-
 // Constructor
-
 US_Extinction::US_Extinction(QString buffer, const QString& text, const QString& text_e280, QWidget* parent)
  : US_Widgets(parent,0)  
 {
     
-  //mode_select(buffer);
-  buffer_temp = buffer;
+   //mode_select(buffer);
+   buffer_temp = buffer;
   
-  this->parent = parent;
+   this->parent = parent;
 
-  //connect(this, SIGNAL( get_results(QMap < double, double > & )), parent, SLOT(process_results( QMap < double, double > & ) ) );
-    
    disk_controls = new US_Disk_DB_Controls(0);
    //default values for limits on the graph
    lambdaLimitLeft = 200.0;

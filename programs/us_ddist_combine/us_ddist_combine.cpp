@@ -17,10 +17,6 @@
 #include "us_model.h"
 #include "us_math2.h"
 #include "qwt_legend.h"
-#if QT_VERSION < 0x050000
-#define setSamples(a,b,c)  setData(a,b,c)
-#endif
-
 
 const double epsilon = 0.0005;    // Equivalence magnitude ratio radius
 
@@ -1308,11 +1304,7 @@ DbgLv(1) << "pDi:  ndispt" << ndispt << "ID" << distrID.left(20);
 	   r2[ 0 ] = point2;
 	   r2[ 1 ] = point2;
 	   
-#if QT_VERSION < 0x050000
-	   QwtScaleDiv* y_axis = data_plot1->axisScaleDiv( QwtPlot::yLeft );
-#else
 	   QwtScaleDiv* y_axis = (QwtScaleDiv*)&(data_plot1->axisScaleDiv( QwtPlot::yLeft ));
-#endif
 	   
 	   double padding = ( y_axis->upperBound() - y_axis->lowerBound() ) / 30.0;
 	   

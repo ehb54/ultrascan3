@@ -23,10 +23,6 @@
 #include "us_lamm_astfvm.h"
 #include "us_time_state.h"
 
-#if QT_VERSION < 0x050000
-#define setSamples(a,b,c)  setData(a,b,c)
-#endif
-
 //! \brief Main program for US_Astfem_Sim.  Loads translators and starts
 //! the class US_Astfem_Sim.
 int main( int argc, char* argv[] )

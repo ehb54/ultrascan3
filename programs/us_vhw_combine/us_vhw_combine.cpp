@@ -15,10 +15,6 @@
 #include "us_report.h"
 #include "us_util.h"
 #include "qwt_legend.h"
-#if QT_VERSION < 0x050000
-#define setSamples(a,b,c)  setData(a,b,c)
-#define setSymbol(a)       setSymbol(*a)
-#endif
 
 // main program
 int main( int argc, char* argv[] )

@@ -8,7 +8,6 @@
 #include "us_investigator.h"
 #include "us_images.h"
 
-
 US_ScanExclGui::US_ScanExclGui( QStringList channels_desc, QList< int > scan_beg, QList< int > scan_end,
 				QList< int > scan_nth, int scanCount, int scanCount_int ) : US_Widgets()
 {

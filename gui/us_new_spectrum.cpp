@@ -13,12 +13,6 @@
 #include "us_editor_gui.h"
 #include "us_table.h"
 
-
-#if QT_VERSION < 0x050000
-#define setSamples(a,b,c) setData(a,b,c)
-#define setSymbol(a) setSymbol(*a)
-#endif
-
 US_NewSpectrum::US_NewSpectrum( QString tmp_type, const QString& tmp_text, const QString &tmp_text_e280, US_Buffer *tmp_buffer ) : US_Widgets()
 {
    buffer      = tmp_buffer;

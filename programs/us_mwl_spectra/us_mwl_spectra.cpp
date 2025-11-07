@@ -21,9 +21,6 @@
 #include "us_sleep.h"
 #include "us_editor.h"
 #include "us_images.h"
-#if QT_VERSION < 0x050000
-#define setSamples(a,b,c)  setData(a,b,c)
-#endif
 
 #ifdef Q_OS_WIN
 #include <float.h>
@@ -1072,13 +1069,8 @@ DbgLv(1) << "PltA: last_xmin" << last_xmin;
    data_plot->replot();
 
    // Pick up the actual bounds plotted (including any Config changes)
-#if QT_VERSION < 0x050000
-   QwtScaleDiv* sdx = data_plot->axisScaleDiv( QwtPlot::xBottom );
-   QwtScaleDiv* sdy = data_plot->axisScaleDiv( QwtPlot::yLeft   );
-#else
    QwtScaleDiv* sdx = (QwtScaleDiv*)&data_plot->axisScaleDiv( QwtPlot::xBottom );
    QwtScaleDiv* sdy = (QwtScaleDiv*)&data_plot->axisScaleDiv( QwtPlot::yLeft   );
-#endif
    last_xmin      = sdx->lowerBound();
    last_xmax      = sdx->upperBound();
    last_ymin      = sdy->lowerBound();
@@ -1159,13 +1151,8 @@ void US_MwlSpectra::prevPlot( void )
       pb_prev->setEnabled( false );
    }
 
-#if QT_VERSION < 0x050000
-   QwtScaleDiv* sdx = data_plot->axisScaleDiv( QwtPlot::xBottom );
-   QwtScaleDiv* sdy = data_plot->axisScaleDiv( QwtPlot::yLeft   );
-#else
    QwtScaleDiv* sdx = (QwtScaleDiv*)&data_plot->axisScaleDiv( QwtPlot::xBottom );
    QwtScaleDiv* sdy = (QwtScaleDiv*)&data_plot->axisScaleDiv( QwtPlot::yLeft   );
-#endif
    last_xmin      = sdx->lowerBound();
    last_xmax      = sdx->upperBound();
    last_ymin      = sdy->lowerBound();
@@ -1186,13 +1173,8 @@ void US_MwlSpectra::nextPlot( void )
       pb_next->setEnabled( false );
    }
 
-#if QT_VERSION < 0x050000
-   QwtScaleDiv* sdx = data_plot->axisScaleDiv( QwtPlot::xBottom );
-   QwtScaleDiv* sdy = data_plot->axisScaleDiv( QwtPlot::yLeft   );
-#else
    QwtScaleDiv* sdx = (QwtScaleDiv*)&data_plot->axisScaleDiv( QwtPlot::xBottom );
    QwtScaleDiv* sdy = (QwtScaleDiv*)&data_plot->axisScaleDiv( QwtPlot::yLeft   );
-#endif
    last_xmin      = sdx->lowerBound();
    last_xmax      = sdx->upperBound();
    last_ymin      = sdy->lowerBound();

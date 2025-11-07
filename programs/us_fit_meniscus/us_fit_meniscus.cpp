@@ -21,11 +21,6 @@
 #include "us_model.h"
 #include "us_noise.h"
 
-#if QT_VERSION < 0x050000
-#define setSamples(a,b,c)  setData(a,b,c)
-#define setSymbol(a)       setSymbol(*a)
-#endif
-
 //US_FitMeniscus::US_FitMeniscus( QString auto_mode ) : US_Widgets()
 US_FitMeniscus::US_FitMeniscus( QMap<QString, QString> triple_info_map ) : US_Widgets()
 {

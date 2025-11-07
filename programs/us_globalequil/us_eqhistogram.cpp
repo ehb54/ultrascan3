@@ -4,10 +4,6 @@
 #include "us_gui_settings.h"
 #include "us_settings.h"
 #include "us_math2.h"
-#if QT_VERSION < 0x050000
-#define setSamples(a,b,c)  setData(a,b,c)
-#define setSymbol(a)       setSymbol(*a)
-#endif
 
 #ifdef ARRAY_SIZE
 #undef ARRAY_SIZE

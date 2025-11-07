@@ -8,17 +8,9 @@
 #include "us_util.h"
 #include "us_report_gmp.h"
 
-#if QT_VERSION < 0x050000
-#define setSamples(a,b,c)  setData(a,b,c)
-#define setMinimum(a)      setMinValue(a)
-#define setMaximum(a)      setMaxValue(a)
-#define QRegularExpression(a)  QRegExp(a)
-#endif
-
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug()
 #endif
-
 
 // Constructor:  build the main layout with tab widget panels
 US_AnalysisProfileGui::US_AnalysisProfileGui() : US_Widgets()

@@ -40,15 +40,7 @@
 #include "us_crypto.h"
 #include "us_db2.h"
 
-#if QT_VERSION < 0x050000
-#define setSamples(a,b,c)  setData(a,b,c)
-#define setMinimum(a)      setMinValue(a)
-#define setMaximum(a)      setMaxValue(a)
-#define QRegularExpression(a)  QRegExp(a)
-#define setCbCurrentText(a,b)  a->setCurrentIndex(a->findText(b))
-#else
 #define setCbCurrentText(a,b)  a->setCurrentText(b)
-#endif
 
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug()
