@@ -355,7 +355,7 @@ void US_Plot::print( void )
    
    if ( ! docName.isEmpty() )
    {
-       docName.replace ( QRegularExpression( QString::fromLatin1( "\n" ) ), tr ( " -- " ) );
+       docName.replace ( QStringLiteral( "\n" ) , tr ( " -- " ) );
        printer.setDocName( docName );
    }
 
