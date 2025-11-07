@@ -2,14 +2,7 @@
 Parametrically Constrained Spectrum Analysis
 ==============================================
 
-This module enables you to perform parametrically constrained spectrum analysis on a chosen experimental data set. The PCSA module fits sedimentation velocity data using linear or sigmoidal constraints to model the relationship between the molar mass and anisotropy of heterogenous macromolecule mixtures. This module is ideal for interacting macromolecules and growing polymer chain systems. 
-
-.. image:: ../_static/images/pcsa.png
-  :align: center
-
-.. rst-class:: center
-
-    **Noise Vector prompt**
+This module enables users to perform parametrically constrained spectrum analysis on a chosen experimental data set. The PCSA module fits sedimentation velocity data using linear or sigmoidal constraints to model the relationship between the s and f/f0 of heterogenous macromolecule mixtures. This module is ideal for interacting macromolecules and growing polymer chain systems. Upon completion of an analysis fit, plots available include: model lines; experiment; simulation; overlayed experiment and simulation; residuals; time-invariant noise; radially-invariant noise; 3-d model. Final outputs may include a model and computed noises. 
 
 
 .. toctree::
@@ -19,10 +12,20 @@ This module enables you to perform parametrically constrained spectrum analysis 
    pcsa
    pcsa_analys
    pcsa_adv
+   pcsa_rpscan
+   pcsa_mlines
    pcsa_results
-   psca_rpplot
+   
 
-Reference
+
+.. image:: ../_static/images/pcsa.png
+  :align: center
+
+.. rst-class:: center
+
+    **Parametrically Constrained Spectrum Analysis window**
+
+Reference:
 ===========
 
 Gorbet G., T. Devlin, B. Hernandez Uribe, A. K. Demeler, Z. Lindsey, S. Ganji, S. Breton, L. Weise-Cross, E.M. Lafer, E.H. Brookes, B. Demeler. `A parametrically constrained optimization method for fitting sedimentation velocity experiments. <https://www.sciencedirect.com/science/article/pii/S0006349514002288>`_ Biophys. J. (2014) vol 106, 1741-50.

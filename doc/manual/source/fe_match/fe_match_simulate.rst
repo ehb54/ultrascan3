@@ -177,7 +177,7 @@ Noise Data analysis:
     :align: right 
 
 
-Resideul Bit Map
+Residual Bit Map
 -----------------
 Experimental-Simulation residuals are plotted in another way in a bit map. This small window represents each residual #Scans x #Readings point as a color: green where simulation is greater than experimental; red where experimental is greater. A random distribution of colors throughout the bit map is indication of a good model fit. 
 

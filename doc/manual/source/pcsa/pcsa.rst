@@ -3,7 +3,7 @@ Parametrically Constrained Spectrum Analysis
 ==============================================
 
 .. toctree:: 
-  :maxdepth: 3
+  :maxdepth: 2
 
 .. contents:: Index
   :local: 
@@ -20,7 +20,7 @@ The PCSA pass proceeds for a set of models each of which consists of the solute 
  * **Horizontal Line [ C(s) ]**
 
 
-.. image:: /_static/images/pcsa.png
+.. image:: ../_static/images/pcsa.png
   :align: center
 
 .. rst-class:: center
@@ -40,7 +40,7 @@ Upon completion of an analysis fit, plots available include: model lines; experi
 
 The main PCSA window is shown here in the state it appears after the completion of a fit run. 
 
-.. image:: /_static/images/pcsa_simulated.png
+.. image:: ../_static/images/pcsa_simulated.png
   :align: center
 
 .. rst-class:: center
@@ -65,7 +65,7 @@ Functions:
   * - **Local Disk**
     - Select to specify data input from local disk.
   * - **View Data Report**  
-    - Generate a report file and view it in a dialog. See the details of the report in `PDSA Process Results <pcsa_results.html#pcsa-report>`_.
+    - Generate a report file and view it in a dialog. See the details of the report in `PCSA Process Results <pcsa_results.html#pcsa-report>`_.
   * - **Save Data**
     - Save models and noises, as well as report and plot images files.
   * - **Run ID / Edit ID:**

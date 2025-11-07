@@ -94,7 +94,7 @@ PCSA Fitting Process:
 
 .. rst-class:: center
 
-    **Updated PCSA Fitting Controls**
+    **Updated PCSA Fitting Controls after Simulation completed**
 
 
 Control dialog parameters differ slightly in interpretation, based on whether the curve type is a line or a sigmoid. 
@@ -103,7 +103,7 @@ Control dialog parameters differ slightly in interpretation, based on whether th
 * If horizontal line is specified, curve variations gives the total models, since start and end points always have the same f/f0 value.
 * If one of the sigmoid types is specified, the specified number of variations is in both the par1 and par2 values of the sigmoid function: 
 
-.. image:: _static/images/pcsa_sigmoid_eq.png
+.. image:: ../_static/images/pcsa_sigmoid_eq.png
   :align: center
 
 .. note:: 
@@ -125,7 +125,7 @@ Control dialog parameters differ slightly in interpretation, based on whether th
      * Fixed+LM -- where the final LM model is the desired overall final model. 
 
 
-A detailed explanation of the results can be found in `Parametrically Constrained Spectrum Analysis Results <pcsa_results.html>`_
+A detailed explanation of the PCSA specific results can be found in `Parametrically Constrained Spectrum Analysis Results <pcsa_results.html>`_
 
 Functions:
 ============
@@ -162,7 +162,7 @@ Functions:
   * - **Stop Fit**  
     -  If something seems wrong with the progress of analysis or if you realize you have parameterized incorrectly, click this button to abort the fit run.
   * - **Perform Regularization Scan**
-    -  Once fit analysis is complete, you may optionally click here to bring up a :ref:`Regularization Parameter Scan <regular_para>` dialog that sets the best value for Regularization Parameter.
+    -  Once fit analysis is complete, you may optionally click here to bring up a `Regularization Parameter Scan <pcsa_rpscan.html>`_ dialog that sets the best value for Regularization Parameter.
   * - **Regularize Current Model**
     -  Any time you set the Regularization Parameter, either manually or through scan, you may then compute a final model, using that parameter, by clicking here. 
 
@@ -218,7 +218,7 @@ Functions:
 
 .. list-table::
   :widths: 20 50
-  :header-rows: 0 
+  :header-rows: 0
 
   * - **Reset** 
     - Indicate that window is reset and the plots are initiated.
@@ -226,140 +226,5 @@ Functions:
     - Display this detailed PCSA Fitting Controls help.
   * - **Close** 
     - Close all windows and exit.
-
-Advanced Controls 
-==================
-
-intro 
-
-.. image:: _static/images/pcsa_adv_control.png
-  :align: center
-
-Advance Controls Functions:
-------------------------------
-
-**Fitting Controls**
-
-.. list-table::
-  :widths: 20 50
-  :header-rows: 0
-
-  * - **Curve Type:**
-    - 
-  * - **X Range**
-    - 
-  * - **Y Range**
-    - 
-  * - **Par1**
-    - 
-  * - **Curve Resolution Points**
-    - 
-  * - **Monte Carlo Iterations:**
-    - 
-  * - (Best Final Model Status)
-    - 
-
-**Final and Model Records Controls**
-
-.. list-table::
-  :widths: 20 50
-  :header-rows: 0
-
-  * - **Load Model Records**
-    -
-  * - **Load Final Model**
-    - 
-  * - **Reset Final Model**
-    - 
-  * - **Build Final Model**
-    - 
-  * - **Store Model Records** 
-    - 
-  * - **Store Final Model**
-    - 
-  * - **Reset Model Records** 
-    - 
-  * - **Start Monte Carlo**
-    - 
-  * - (Model Record Status)
-    - 
-  * - **Progress** 
-    - 
-  * - **Help** 
-    - Display this detailed help.
-  * - **Cancel**
-    - Close the dialog window and exit.
-  * - **Accept**
-    - Close the dialog window, communicate the current Alpha value to the caller, and exit.
-
-.. _regular_para:
-
-Regularization Parameter Scan
-===============================
-
-This dialog provides the means to perform a scan of possible regularization parameter (alpha) values. The final selected Alpha value - a number between 0.0 and 1.0 - is passed back to the Analysis Control dialog of PCSA. A full Parametrically Constrained pass can then be performed for the constant Alpha value.
-
-The dialog begins with the final best model from an initial PCSA scan. The user chooses a range and increment of Alpha values and initiates a scan that computes models, each of which will have an associated variance and x-norm-squared value. The plot produced tracks a line through each of those points. The "elbow" of the curve is analytically determined and graphically represented. The Alpha of the elbow point may be accepted as is. Alternatively, the user may select a different point by holding down the Ctrl key and the left mouse button while positioning the resulting vertical line at the desired curve point. At mouse button release, the Alpha is displayed beneath the vertical line and in the Selected Alpha text box. Clicking the Accept button will close the dialog and communicate the Alpha in the text box to the calling PCSA Analysis Control dialog. 
-
-.. note: Note that the text box Alpha may be manually changed to refine the accepted value.
-
-
-.. image:: _static/images/pcsa_regul.png 
-  :align: center
-
-.. rst-class:: center
-
-    **Before Regularization**
-
-
-.. image:: _static/images/pcsa_regul_sim.png
-  :align: center
-
-.. rst-class:: center
-
-    **After Regularization**
-
-
-Regularization Parameter Functions:
------------------------------------
-
-
-.. list-table::
-  :widths: 20 50
-  :header-rows: 0
-
-  * - **Model Type:**
-    - Documentation of the type of curve that defines models.
-  * - **Points per Line:**
-    - Documentation of the number of solute points in input and scan models.
-  * - **Best Model Par 1:**
-    - Documentation of the par1 value of the line   that defines the input solutes of the model.
-  * - **Best Model Par 2:**
-    - Documentation of the par2 value of the line   that defines the input solutes of the model.
-  * - **Starting Alpha:**
-    - A counter by which the user can set the starting Alpha of the scan to perform.
-  * - **Ending Alpha:**
-    - A counter by which the user can set the ending Alpha of the scan to perform.
-  * - **Alpha Increment:**
-    - A counter by which the user can set the increment between test Alphas in the scan to perform.
-  * - **Selected Alpha:**
-    - A text box that is filled with the analytically determined Alpha or an Alpha associated with the curve point interactively set by the user using Ctrl-Left-Button mouse selection. This text box value can also be manually changed.
-  * - **Start Scan**
-    - Click on this button once the scan Alpha range has been set, in order to begin a scan.
-  * - **Accept**
-    - Close the dialog window, communicate the current Alpha value to the caller, and exit.
-
-**Window Controls**
-
-
-.. list-table::
-  :widths: 20 50
-  :header-rows: 0 
-
-
-  * - **Help** 
-    - Display this detailed help.
-  * - **Cancel**
-    - Close the dialog window and exit.
 
 

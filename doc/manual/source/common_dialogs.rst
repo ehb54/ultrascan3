@@ -215,4 +215,3 @@ Plot Functions
   :align: center
 
   **Local Plot Configuration Controls**
-  
