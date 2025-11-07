@@ -1408,7 +1408,12 @@ void US_ConvertGui::us_mode_passed( void )
 //alt. download data from LIMS-DB (for Prot_DEV: dataDisk)
 void US_ConvertGui::download_data_auto( QMap < QString, QString > & details_at_live_update )
 {
-   runID = details_at_live_update[ "filename" ];
+   QString filenameProtDevDataDisk = details_at_live_update[ "filenameProtDevDataDisk" ];
+   qDebug() << "[Prot_DEV: download_data_auto() ], filenameProtDevDataDisk -- "
+	    << filenameProtDevDataDisk;
+
+   runID = ( filenameProtDevDataDisk.isEmpty() ) ?
+     details_at_live_update[ "filename" ] : filenameProtDevDataDisk;
 
    // Verify connectivity
    US_Passwd pw;
@@ -8207,8 +8212,14 @@ void US_ConvertGui::update_autoflow_record_atLimsImport( void )
    //     << QString::number( autoflowIntensityID )
    //     << QString::number( autoflowStatusID );
 
-   qry << "update_autoflow_at_lims_import"
-       << filename_toDB
+   //When dataDisk-GMP only, update also "filenameProtDevDataDisk" field (with filename_toDB)
+   qry << "update_autoflow_at_lims_import";
+   if ( gmpRun_bool && !protDev_bool && dataSource.contains( "dataDiskAUC" ) )
+     {
+       qry.clear();
+       qry << "update_autoflow_at_lims_import_dataDisk";
+     }
+   qry << filename_toDB
        << QString::number( autoflowIntensityID )
        << QString::number( autoflowStatusID )
        << QString::number( autoflowID_passed );

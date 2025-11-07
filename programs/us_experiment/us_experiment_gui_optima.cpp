@@ -22,7 +22,6 @@
 
 #include "../us_esigner_gmp/us_esigner_gmp.h"
 
-
 #if QT_VERSION < 0x050000
 #define setSamples(a,b,c)  setData(a,b,c)
 #define setMinimum(a)      setMinValue(a)
@@ -375,10 +374,12 @@ void US_ExperimentMain::accept_passed_protocol_details(  QMap < QString, QString
   QString pname     = protocol_details[ "protocolName" ];
   int invID_passed  = protocol_details[ "invID_passed" ].toInt();
   QString dataSource_pd = protocol_details[ "dataSource" ];
+  QString filenameProtDev = protocol_details[ "filenameProtDevDataDisk" ];
 
   qDebug() << "In US_Exp: Protocol Name: "     << protocol_details[ "protocolName" ];
   qDebug() << "In US_Exp: InvID: "             << protocol_details[ "invID_passed" ];
   qDebug() << "In US_Exp: dataSource "         << protocol_details[ "dataSource" ];
+  qDebug() << "In US_Exp: filenameProtDev "    << protocol_details[ "filenameProtDevDataDisk" ];
   
   //Now, load passed protocol with enabling ONLY 8. AProfile && 9. Submit tab
   US_Passwd pw;
@@ -8494,7 +8495,8 @@ void US_ExperGuiUpload::submitExperiment_protDev()
 	   << protocol_details[ "operatorID" ]
 	   << protocol_details[ "devRecord" ]
 	   << protocol_details[ "expType" ]
-	   << protocol_details[ "dataSource"];   
+	   << protocol_details[ "dataSource"]
+	   << protocol_details[ "filenameProtDevDataDisk" ];   
 
   // //TEST
   // return;
@@ -9671,8 +9673,8 @@ void US_ExperGuiUpload::add_autoflow_record_dataDisk( QMap< QString, QString> & 
 
 	 << protocol_details[ "dataPath" ]
 	 << protocol_details[ "OptimaName" ]  // Optima 'name' will be set to 'dataDisk'
-	 << protocol_details[ "dataSource" ]; // will be set to 'dataDiskAUC' or other...
-
+	 << protocol_details[ "dataSource" ];  // will be set to 'dataDiskAUC' or other...
+	
          /***
 	     status    'EDITING' will be set in stored proc!
 	     corrRadii 'NO'      will be set in stored proc!
@@ -10307,7 +10309,8 @@ void US_ExperGuiUpload::add_autoflow_record_protDev( QMap< QString, QString> & p
 	  << protocol_details[ "expType" ]     // inherited from parent
 	  << protocol_details[ "dataPath" ]      // generated based on downloaded form DB!!!
 	  << protocol_details[ "dataSource" ]  // inherited from parent
-	  << protocol_details[ "status" ];       // defined based on Optima OR dataDisk
+	  << protocol_details[ "status" ]       // defined based on Optima OR dataDisk
+	  << protocol_details[ "filenameProtDevDataDisk" ]; // inherited 
 	;   
 
       qDebug() << "add_autoflow_record_protDev( ), qry -- " << qry;

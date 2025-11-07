@@ -1104,6 +1104,7 @@ void US_InitDialogueGui::initRecordsDialogue( void )
   QString failedID     = protocol_details[ "failedID" ];
 
   QString dataSource   = protocol_details[ "dataSource" ];
+  QString filenameProtDevDataDisk = protocol_details[ "filenameProtDevDataDisk" ];
     
   QDir directory( currDir );
   
@@ -1219,6 +1220,7 @@ void US_InitDialogueGui::initRecordsDialogue( void )
 		  QString filename_from_dataPath = directory.dirName();
 		  QMap< QString, QString > p_det;
 		  p_det["filename"] = filename_from_dataPath;
+		  p_det["filenameProtDevDataDisk"] = filenameProtDevDataDisk;
 		  sdiag_convert->download_data_auto( p_det );
 
 		  qApp->processEvents();
@@ -2006,7 +2008,8 @@ QMap< QString, QString> US_InitDialogueGui::read_autoflow_record( int autoflowID
 	   protocol_details[ "expType" ]       = db->value( 26 ).toString();
 
 	   protocol_details[ "dataSource" ]    = db->value( 27 ).toString();
-	   protocol_details[ "opticsFailedType" ]    = db->value( 28 ).toString();
+	   protocol_details[ "opticsFailedType" ]   = db->value( 28 ).toString();
+	   protocol_details[ "filenameProtDevDataDisk" ]    = db->value( 29 ).toString();
 	 }
      }
    else
