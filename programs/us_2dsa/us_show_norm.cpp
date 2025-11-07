@@ -461,7 +461,6 @@ DbgLv(1) << "colormap_before" << colormap;
    d_spectrogram->setColorMap( ColorMapCopy( colormap ) );
    
    US_SpectrogramData& spec_dat = (US_SpectrogramData&)*(d_spectrogram->data());
-#endif
    QRectF drect;
 
    if ( auto_sxy )
