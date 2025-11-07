@@ -2976,7 +2976,8 @@ void US_Edit::load_auto( QMap < QString, QString > & details_at_editing )
       le_bll_slope        -> setVisible( false );
       le_bll_intercept    -> setVisible( false );
     }
-   
+
+  qApp->processEvents();
 
 }
 
@@ -3960,7 +3961,6 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
      pick-> disconnect();
 
    qApp->processEvents();
-
 }
 
 void US_Edit::reset_editdata_panel( void )
@@ -9187,6 +9187,8 @@ DbgLv(1) << "EDT:NewTr: DONE";
  qDebug() << "Includes: " << includes;
  if ( us_edit_auto_mode )
    pick -> disconnect();
+
+ qApp->processEvents();
 
 }
 
