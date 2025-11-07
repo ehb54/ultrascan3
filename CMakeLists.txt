@@ -130,7 +130,8 @@ set(US3_PROFILE "" CACHE STRING "UltraScan3 build profile: APP | TEST | HPC")
 set_property(CACHE US3_PROFILE PROPERTY STRINGS APP TEST HPC)
 
 # Lower-level knob used by gui/programs to decide static vs shared for US3 libs
-option(US3_PREFER_STATIC "Prefer UltraScan3 static libraries when available" OFF)
+option(US3_PREFER_STATIC "Prefer UltraScan3 static libraries when available" ON)
+option(BUILD_TESTING "Build Testing" ON)
 
 # Apply profile -> concrete options
 if(US3_PROFILE STREQUAL "APP")
@@ -383,7 +384,7 @@ endforeach()
 # Find Dependencies
 # ============================================================================
 
-if(US3_BUILD_TESTS)
+if(BUILD_TESTING)
     if(USE_QT6)
         find_package(Qt6 REQUIRED COMPONENTS Test)
     else()
@@ -699,7 +700,7 @@ message(STATUS "")
 message(STATUS "Options:")
 message(STATUS "  Profile: ${US3_PROFILE}")
 message(STATUS "  NO_DB support: ${US3_NO_DB}")
-message(STATUS "  Build tests: ${US3_BUILD_TESTS}")
+message(STATUS "  Build tests: ${BUILD_TESTING}")
 message(STATUS "  Build programs: ${US3_BUILD_PROGRAMS}")
 message(STATUS "  Prefer static US3 libs: ${US3_PREFER_STATIC}")
 message(STATUS "")
