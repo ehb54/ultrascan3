@@ -362,7 +362,7 @@ add_custom_target(us3_validate_qrc ALL
 add_library(us3_resources STATIC "${US3_QRC_XML}")
 set_target_properties(us3_resources PROPERTIES AUTOMOC OFF)
 add_dependencies(us3_resources us3_validate_qrc)
-target_link_libraries(us3_resources PRIVATE Qt5::Core Qt5::Gui)
+target_link_libraries(us3_resources PRIVATE Qt::Core Qt::Gui)
 add_library(UltraScan3::Resources ALIAS us3_resources)
 
 # Install editable trees/files we excluded from the QRC

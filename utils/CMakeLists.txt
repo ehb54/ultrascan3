@@ -141,9 +141,9 @@ if(BUILD_TESTING OR US3_BUILD_TESTS)
     # Apply same link libraries
     target_link_libraries(us_utils_static
             PUBLIC
-            Qt5::Core
-            Qt5::Xml
-            Qt5::Network
+            Qt::Core
+            Qt::Xml
+            Qt::Network
             OpenSSL::SSL
             OpenSSL::Crypto
             LibArchive::LibArchive
@@ -153,7 +153,7 @@ if(BUILD_TESTING OR US3_BUILD_TESTS)
     if(NOT US3_NO_DB)
         target_link_libraries(us_utils_static
                 PUBLIC
-                Qt5::Sql
+                Qt::Sql
                 MySQL::Client
                 )
     endif()
