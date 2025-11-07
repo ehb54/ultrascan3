@@ -4245,7 +4245,9 @@ void US_Analysis_auto::scan_dbase_auto( QMap <QString, QString> & triple_informa
    int         nfexss = 0;         // Number of fit files left as they existed
 
    QString invID = triple_information[ "invID" ];
-   QRegularExpression fmIter( QRegularExpression::wildcardToRegularExpression( "i\?\?-[mb]*" ) );
+   // The description of models from a parameter fit always contains "i{iteration number}-"
+   // followed by the parameter value as integer with a leading m or b
+   QRegularExpression fmIter(  "i\\d*-([mb]\\d*)+" ) ;
 
    //QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
 
