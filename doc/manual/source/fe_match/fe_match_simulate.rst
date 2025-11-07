@@ -13,8 +13,8 @@ Simulation Product Output Summary:
 
 When the **Simulate Model** button is clicked in the **Finite Element Model Viewer** window, a simulation is performed using the Edit data, a Loaded Model, and simulation parameters primarily created using the edit data set. A simulation data set is created that has the same ranges as the edit set, but with readings values that are calculated and compared to the actual experimental data. The comparison spawns a number of new dialogs and options that allow the user to evaluate the quality of the model.
 
- * **Finite Element Data/Resdiuals Viewer** - Visual comparison of simulated and experimental data. Graphical display of time and radially invarient noises subtracted. 
- * **Residuals Pixal Map** - Bit map of every scan as a pixal line and the positive or negative difference of the model to the data are highlighted as red (negative) and green(postive) pixals. an Excellent residuel map will have a random distribution of red and green pixals. 
+ * **Finite Element Data/Residuals Viewer** - Visual comparison of simulated and experimental data. Graphical display of time and radially invariant noises subtracted. 
+ * **Residuals Pixel Map** - Bit map of every scan as a pixel line and the positive or negative difference of the model to the data are highlighted as red (negative) and green(positive) pixels. an Excellent residual map will have a random distribution of red and green pixels. 
  * `3-Dimensional Plot Controls <../3d_plot.html>`_ - 3D plots of the simulated data
  * **Data report File** - Generate a Simulated model Report file and view it in a dialog.
 
@@ -49,16 +49,16 @@ Functions:
       
   * - Plot Experimental Data:
     - View the experimental data in the Experimental and Simulated Data Plot. 
-  * - Subtract Time Invarient Noise:
-    - Add Time Invarient Noise to the Experimental data in the Experimental and Simulated Data Plot. 
-  * - Subtract Radially Invarient Noise:
-    - Add Radially Invarient Noise to the Experimental data in the Experimental and Simulated Data Plot. 
+  * - Subtract Time Invariant Noise:
+    - Add Time Invariant Noise to the Experimental data in the Experimental and Simulated Data Plot. 
+  * - Subtract Radially Invariant Noise:
+    - Add Radially Invariant Noise to the Experimental data in the Experimental and Simulated Data Plot. 
   * - Plot Simulated/Modeled Data:
     -  View the simulated data in the Experimental and Simulated Data Plot. 
-  * - Add Time Invarient Noise:
-    -  Add Time Invarient Noise to the Simulated data in the Experimental and Simulated Data Plot. 
-  * - Add Radially Invarient Noise:
-    - Add Radially Invarient Noise to the Simulated data in the Experimental and Simulated Data Plot. 
+  * - Add Time Invariant Noise:
+    -  Add Time Invariant Noise to the Simulated data in the Experimental and Simulated Data Plot. 
+  * - Add Radially Invariant Noise:
+    - Add Radially Invariant Noise to the Simulated data in the Experimental and Simulated Data Plot. 
 
 **FE Analysis Residual Viewer**
 
@@ -67,15 +67,15 @@ Functions:
   :header-rows: 0 
       
   * - Plot Residuals
-    - click to show the random residuels in the Residuels Plot  
-  * - Plot Time Invarient Noise
-    - click to show the time invarient noise in the Residuels Plot  
-  * - Plot Radially Invarient Noise
-    - click to show the Radially invarient noise in the Residuels Plot  
+    - click to show the random residuals in the Residuals Plot  
+  * - Plot Time Invariant Noise
+    - click to show the time invariant noise in the Residuals Plot  
+  * - Plot Radially Invariant Noise
+    - click to show the Radially invariant noise in the Residuals Plot  
   * - Plot Random Noise
-    - click to show the random residuels in the Residuels Plot 
+    - click to show the random residuals in the Residuals Plot 
   * - Show Residuals Bit map
-    - Show a plot dialog of pixalized bit map. 
+    - Show a plot dialog of pixelated bit map. 
   * - Variance:
     - Variance value (square of RMSD) for residuals. 
   * - RMSD:
@@ -94,7 +94,7 @@ Noise Data analysis:
   * - **The Simulation**
     - **Overlap Plot**
   * - The simulation creates a data set with the same ranges as the edit experimental data set. The actual values for scan readings vectors are synthetically produced, as illustrated by the plot below. 
-    - Upon completion of simulation computations the plot of experimental data (in yellow and cyan) is overlayed in the main window lower plot with the simulation data (in red), as shown in the image below. 
+    - Upon completion of simulation computations the plot of experimental data (in yellow and cyan) is overlaid in the main window lower plot with the simulation data (in red), as shown in the image below. 
   
 .. subfigure:: AB     
   :class-grid: outline 
@@ -187,7 +187,7 @@ Experimental-Simulation residuals are plotted in another way in a bit map. This 
 .. rst-class:: 
     :align: center
 
-    **Pixal Bit Map**
+    **Pixel Bit Map**
 
 Report: FE Match Model Simulation
 -----------------------------------
@@ -208,7 +208,7 @@ The "Save Data" button produces a set of report files. One of these is displayab
    - **Number of components:** Number of components with unique s, and D values. 
    - **Residual RMS Deviation:** The RMSD determined by re-simulating the model in the finite element viewer module. 
    - **Model-reported RMSD:** The RMSD of the simulated model determined by message passing interface (MPI ) or the 2DSA GUI.
-   - **Weight Averaged s20,W, D20,W, Molecular weight, and f/f0:** describe the weight averaged (using % of the total concentration) to calculate the s20,W, D20,W, Molecular weight, and f/f0 coefficents of each component at 20ºC and in water. 
+   - **Weight Averaged s20,W, D20,W, Molecular weight, and f/f0:** describe the weight averaged (using % of the total concentration) to calculate the s20,W, D20,W, Molecular weight, and f/f0 coefficients of each component at 20ºC and in water. 
    - **Total concentration:** The baseline and noise subtracted optical density at the measured wavelength of the absorbing components as a function of radius.  
    - **Constant vbar20:** The analyte vbar at 20ºC. 
 
@@ -221,7 +221,7 @@ The "Save Data" button produces a set of report files. One of these is displayab
 Distribution Information Units:
 -------------------------------
 
-- **Molec. Wt.:** Daltons
+- **Molec. Wt.:** Dalton
 - **S Apparent:** seconds
 - **S 20,W:** Seconds 
 - **D Apparent:** cm²/s

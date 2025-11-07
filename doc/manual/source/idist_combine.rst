@@ -11,9 +11,9 @@ Integral Distributions Combined Plots
 To combine integral model distributions from multiple datasets (either from different cells of the same run or from different runs), use **Combine Integral Distributions** from the *Velocity* menu. This will allow you to compare distributions from different cells to each other.
 
 .. note::
-    Distribution plots present relative concentration (Y) for X points where the "X" type may be sedimentation coefficent, molecular weight, diffusion coefficient, frictional ratio or vbar (specific density). 
+    Distribution plots present relative concentration (Y) for X points where the "X" type may be sedimentation coefficient, molecular weight, diffusion coefficient, frictional ratio or vbar (specific density). 
     
-    All distributions will be plotted relative to the boundary fraction used in analysis. The defualt analysis is set to 90%, indicating the distribution will range from 5 % to 95 %  of the total boundary, 5% from the top and bottom are excluded and the data is smoothed by 1%. 
+    All distributions will be plotted relative to the boundary fraction used in analysis. The default analysis is set to 90%, indicating the distribution will range from 5 % to 95 %  of the total boundary, 5% from the top and bottom are excluded and the data is smoothed by 1%. 
     
 .. image:: _static/images/idist_combine.png
   :align: center
@@ -36,9 +36,9 @@ Functions:
   * - **Remove Distribution(s)**
     - Open a `Remove Model Distributions <common_dialogs.html#remove-model-distributions>`_ dialog to remove selected model distributions from the loaded set.
   * - **Refresh Plot**
-    - Resets the plot to the defualt and automatic plot ranges. 
+    - Resets the plot to the default and automatic plot ranges. 
   * - **Save**
-    - Saves the intigral distributions of sedimentation coefficient, Molar mass, Fricitional ratio and diffusion coefficient distributions for every model loaded to *ultrascan/reports/experimentname* file directory in csv format. 
+    - Saves the integral distributions of sedimentation coefficient, Molar mass, Frictional ratio and diffusion coefficient distributions for every model loaded to *ultrascan/reports/experimentname* file directory in csv format. 
 
 
 
@@ -46,7 +46,7 @@ Functions:
   * **sed. coefff** (sedimentation coefficient),
   * **diff coeff** (diffusion coefficient), 
   * **m.mass** (Molar mass), 
-  * **fric. ratio** (Fricitional ratio).
+  * **fric. ratio** (Frictional ratio).
 
 
 
@@ -75,7 +75,7 @@ Functions:
   * - **Reset** 
     - Indicate that parameters are to be reset and the plots re-displayed based on original parameters. Data is still saved, so a new set of plots can be created by simply selecting runs and distributions (models).
   * - **Help** 
-    - Display this detailed Disctete Distribution Plots help.
+    - Display this detailed Discrete Distribution Plots help.
   * - **Close** 
     - Close all windows and exit.
 

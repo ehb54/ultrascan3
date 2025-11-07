@@ -6,7 +6,7 @@
 Welcome to UltraScan III's Documentation and Resource!
 ==============================================================
 
-**Ultrascan III** is a Analytical Ultracentrifugation *Data acquistion* and *analysis software*.
+**Ultrascan III** is a Analytical Ultracentrifugation *Data acquisition* and *analysis software*.
 
     
 .. note::
@@ -46,6 +46,7 @@ Welcome to UltraScan III's Documentation and Resource!
    us_edit
    fit_meniscus
    xpn_viewer
+   export_legacy
 
 
 .. toctree::
