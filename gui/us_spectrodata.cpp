@@ -212,9 +212,6 @@ zmin=0.0;
 qDebug() << "sRaDa: setBounding... xmin xmax" << xmin << xmax;
 qDebug() << "sRaDa: setBounding... ymin ymax" << ymin << ymax;
 qDebug() << "sRaDa: setBounding... zminr zmax" << zminr << zmax;
-   setInterval( Qt::XAxis, QwtInterval( xmin, xmax ) );
-   setInterval( Qt::YAxis, QwtInterval( ymin, ymax ) );
-   setInterval( Qt::ZAxis, QwtInterval( zmin, zmax ) );
 
    // Initialize raster to zmin (zero)
    rdata.clear();
