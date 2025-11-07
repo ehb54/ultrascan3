@@ -571,7 +571,7 @@ void US_AnalyteMgrSelect::sequence( void )
    ana_info->move( pos() + QPoint( 200, 200 ) );
    ana_info->resize( iwid, ihgt );
    ana_info->e->setFont( tfont );
-   if ( seqsmry.size() != 0 )
+   if ( !seqsmry.isEmpty() )
      {
        ana_info->e->setText( seqsmry );
        ana_info->show();
@@ -994,7 +994,7 @@ void US_AnalyteMgrSelect::read_analyte( void )
 
    lw_analyte_list->clear();
 
-   if ( descriptions.size() == 0 )
+   if ( descriptions.isEmpty() )
       lw_analyte_list->addItem( "No analyte files found." );
    else
    {
@@ -1078,7 +1078,7 @@ DbgLv(1) << "agS-rddb:     aID descr" << anaID << descr;
 
    lw_analyte_list->clear();
 
-   if ( descriptions.size() == 0 )
+   if ( descriptions.isEmpty() )
    {
       lw_analyte_list->addItem( "No analyte files found." );
    }
