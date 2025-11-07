@@ -918,7 +918,7 @@ int US_Experiment::readRIDisk(
       if ( xml.isStartElement() )
       {
          QXmlStreamAttributes a = xml.attributes();
-         auto xname       = xml.name().toString();
+         auto xname             = xml.name().toString();
 
          if ( xname == "RI" )
          {

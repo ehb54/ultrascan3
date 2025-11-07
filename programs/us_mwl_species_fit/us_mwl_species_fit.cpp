@@ -1354,7 +1354,7 @@ void US_MwlSpeciesFit::loadSpecs()
 DbgLv(1) << "SpFiles:";
    for ( int ii = 0; ii < nspecies_tmp; ii++ )
    {
-      QFileInfo finfo = QFileInfo( data_list[ii].filePath() );
+      QFileInfo finfo( data_list[ii].filePath() );
       spfiles_tmp << finfo.filePath();
       QVector<double> xvals = data_list[ii].columnAt(0);
       QVector<double> yvals = data_list[ii].columnAt(1);

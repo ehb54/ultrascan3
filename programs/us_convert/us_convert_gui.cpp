@@ -8842,11 +8842,11 @@ int US_ConvertGui::getImports_auto( QString & CurrDir) // ALEXEY TO BE EDITED...
 
    // See if we need to fix the runID
    QString new_runID = dir.section( "/", -2, -2 );
-   QRegularExpression rx( "[^A-Za-z0-9_-]" );
+   static QRegularExpression rx( "[^A-Za-z0-9_-]" );
 
    int pos = 0;
    bool runID_changed = false;
-   while ( ( pos = rx.match( new_runID ).capturedStart() ) != -1 )
+   while ( ( pos = new_runID.indexOf( rx ) ) != -1 )
    {
       new_runID.replace( pos, 1, "_" );      // Replace 1 char at position pos
       runID_changed = true;
@@ -8949,11 +8949,11 @@ int US_ConvertGui::getImports()
 
    // See if we need to fix the runID
    QString new_runID = dir.section( "/", -2, -2 );
-   QRegularExpression rx( "[^A-Za-z0-9_-]" );
+   static QRegularExpression rx( "[^A-Za-z0-9_-]" );
 
    int pos = 0;
    bool runID_changed = false;
-   while ( ( pos = rx.match( new_runID ).capturedStart() ) != -1 )
+   while ( ( pos = new_runID.indexOf( rx ) ) != -1 )
    {
       new_runID.replace( pos, 1, "_" );      // Replace 1 char at position pos
       runID_changed = true;

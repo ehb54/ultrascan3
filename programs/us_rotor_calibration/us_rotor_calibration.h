@@ -62,9 +62,9 @@ struct SpeedEntry
 struct Limit
 {
     QRectF  rect[2]; //!< Top and bottom of the channel
-    bool           used[2]; //!< Used flags for top and bottom
-    int            cell;    //!< Cell number
-    QString        channel; //!< Channel name
+    bool    used[2]; //!< Used flags for top and bottom
+    int     cell;    //!< Cell number
+    QString channel; //!< Channel name
 };
 
 /**

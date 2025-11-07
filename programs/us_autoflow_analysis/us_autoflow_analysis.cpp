@@ -4283,7 +4283,7 @@ DbgLv(1) << "DbSc:     TRUNC: modelID" << modelID << "descr" << descript;
       double  meniscus   = db.value( 4 ).toString().toDouble();
       double  bottom     = 0.0;
       QDateTime lmtime   = db.value( 7 ).toDateTime();
-      lmtime.setTimeZone( QTimeZone( "UTC" ) );
+      lmtime.setTimeZone( QTimeZone::utc() );
       QString ansysID    = descript.section( '.', -2, -2 );
       QString iterID     = ansysID .section( '_', -1, -1 );
 DbgLv(1) << "DbSc:   modelID vari meni" << modelID << variance << meniscus
@@ -4367,7 +4367,7 @@ DbgLv(1) << "DbSc: tmodels size" << tmodels.size() << "ted sizes"
       QString editID     = tedIDs [ ii ];
 
       QDateTime lmtime   = db.value( 6 ).toDateTime();
-      lmtime.setTimeZone( QTimeZone( "UTC" ) );
+      lmtime.setTimeZone( QTimeZone::utc() );
       QString ansysID    = descript.section( '.', -2, -2 );
       QString iterID     = ansysID .section( '_', -1, -1 );
 //DbgLv(1) << "DbSc:   dscr1" << descript1 << "dcs" << descript;

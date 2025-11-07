@@ -3228,7 +3228,7 @@ void US_XpnDataViewer::retrieve_xpn_raw_auto( void )
    QString fExpNm    = QString( drDesc ).section( delim, 5, 5 );
    QString new_runID = fExpNm + "-run" + fRunId;
    runType           = "RI";
-   QRegularExpression rx( "[^A-Za-z0-9_-]" );
+   static QRegularExpression rx( "[^A-Za-z0-9_-]" );
 
    int pos            = 0;
    //bool runID_changed = false;
@@ -3240,7 +3240,7 @@ void US_XpnDataViewer::retrieve_xpn_raw_auto( void )
       //runID_changed     = true;
    }
 
-   while ( ( pos = rx.match( new_runID ).capturedStart() ) != -1 )
+   while ( ( pos = new_runID.indexOf( rx ) ) != -1 )
    {
       new_runID.replace( pos, 1, "_" );         // Replace 1 char at pos
       //runID_changed     = true;
@@ -3986,7 +3986,7 @@ DbgLv(1) << "RDr:   drDesc" << drDesc;
    QString fExpNm    = QString( drDesc ).section( delim, 5, 5 );
    QString new_runID = fExpNm + "-run" + fRunId;
    runType           = "RI";
-   QRegularExpression rx( "[^A-Za-z0-9_-]" );
+   static QRegularExpression rx( "[^A-Za-z0-9_-]" );
 
    int pos            = 0;
    bool runID_changed = false;
@@ -3998,7 +3998,7 @@ DbgLv(1) << "RDr:   drDesc" << drDesc;
       runID_changed     = true;
    }
 
-   while ( ( pos = rx.match( new_runID ).capturedStart() ) != -1 )
+   while ( ( pos = new_runID.indexOf( rx ) ) != -1 )
    {
       new_runID.replace( pos, 1, "_" );         // Replace 1 char at pos
       runID_changed     = true;
@@ -4239,7 +4239,7 @@ void US_XpnDataViewer::load_auc_xpn( )
 DbgLv(1) << "RDa: runID" << new_runID;
 DbgLv(1) << "RDa: dir" << dir;
       
-   QRegularExpression rx( "^[A-Za-z0-9_-]{1,80}$" );
+   static QRegularExpression rx( "^[A-Za-z0-9_-]{1,80}$" );
    if ( !rx.match( new_runID ).hasMatch() )
    {
       QMessageBox::warning( this,
@@ -5075,11 +5075,11 @@ DbgLv(1) << "ExpAuc: runID" << runID;
 
    if ( runIDt != runID )
    {  // Set runID to new entry given by user
-      QRegularExpression rx( "[^A-Za-z0-9_-]" );              // Possibly modify entry
+      static QRegularExpression rx( "[^A-Za-z0-9_-]" );              // Possibly modify entry
       QString new_runID  = runIDt;
       int pos            = 0;
 
-      while ( ( pos = rx.match( new_runID ).capturedStart() ) != -1 )
+      while ( ( pos = new_runID.indexOf( rx ) ) != -1 )
       {  // Loop thru any invalid characters given (not alphanum.,'_','-')
          new_runID.replace( pos, 1, "_" );         // Replace 1 char at pos
       }

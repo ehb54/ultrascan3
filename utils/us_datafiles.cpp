@@ -66,7 +66,7 @@ QString US_DataFiles::get_filename( const QString& path, const QString& guid,
             numFile     = ii + 1;                     // Expected file numeric
 
             if ( numCurr > numFile )  // There is a gap: use missing number name
-               ofname = lfchar + QString( "%1" ).arg( numFile, 7, 10, QChar( '0' ) ) + ".xml";
+               ofname = lfchar + QString::number( numFile ).rightJustified( 7, QChar( '0' ) ) + ".xml";
          }
       }
 
