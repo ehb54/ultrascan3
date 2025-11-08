@@ -42,7 +42,7 @@ Welcome to UltraScan III's Documentation and Resource!
    :maxdepth: 1
    :caption: Edit Data:
 
-   import
+   convert
    us_edit
    fit_meniscus
    xpn_viewer

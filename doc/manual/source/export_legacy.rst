@@ -82,9 +82,11 @@ A popup dialog will appear to prompt the type the user wants to export
     :width: 100%
     :align: right 
 
-Convert Optima Data(Beckman tar.gz):
-====================================
+Beckman (tar.gz) to OpenAUC Data Converter:
+============================================
 .. _data_converter:
+
+This conversion tool allows the user to convert tar.gz archives created by the Beckman-Coulter's web-based data acquisition application into the OpenAUC format for use by UltraScan III.
 
 .. image:: _static/images/data_converter.png
   :align: center

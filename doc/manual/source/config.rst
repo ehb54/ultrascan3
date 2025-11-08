@@ -270,21 +270,21 @@ When Add *New Entry* or *Edit Current Entry* is selected, one of the following d
   :header-rows: 0
 
   * - **Instrument Host Description**
-    -  An Optima host description always given in a strict "Optima (number)" form, such as "Optima 1".
+    - An Optima host description, always given in a strict “Optima (number)” form, such as “Optima 1”.
   * - **Instrument Serial Number**
-    -  The instrument's serial number.
+    - The instrument's serial number.
   * - **Instrument DB Host Address**
-    -  IP address to the Optima, generally in a local domain.
+    - IP address to the Optima, generally in a local domain.
   * - **Instrument DB Port**
-    -  Port to the Optima; for example, 5432.
+    - Port to the Optima's Postgresql database; for example, 5432.
   * - **Instrument Status Msg Port:**
-    - Bo!!
+    - Port used for the UltraScan data acquisition software (ssl-encrypted data exchange)
   * - **Instrument DB Name**
-    -  Name of the PostGreSQL database on the Optima AUC system.
+    - Name of the PostGreSQL database on the Optima AUC system.
   * - **Instrument DB Username**
-    -  Optima database login name.
+    - Optima database login name.
   * - **Instrument DB Password**
-    -  Optima database login password. 
+    - Optima database login password.
 
 **Chromatic Aberration Information**
 
