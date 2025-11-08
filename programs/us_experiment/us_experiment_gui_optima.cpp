@@ -7874,7 +7874,7 @@ void US_ExperGuiUpload::submitExperiment_confirm_protDev()
   msgBox.setText( message_submission );
 
   QString data_loc = ( protocol_details[ "dataSource" ]. contains("dataDiskAUC") ) ?
-    QString("dataDisk:DB") : protocol_details[ "OptimaName" ];
+    QString("dataDisk:LIMS_DB") : protocol_details[ "OptimaName" ];
 
   QString info_text = QString( tr ("<b>Dev. Run Name:</b> %1 <br> <b>Data Location:</b> %2 ")) // <br>  <b>Host:</b>  %3 <br> <b>Port:</b>  %4 ") )
     .arg( currProto->runname )
@@ -7963,11 +7963,22 @@ void US_ExperGuiUpload::submitExperiment_confirm_protDev()
 			       + tr("<br>")
 			       + tr("<b>[NEW] Run Name:&emsp;</b>") + currProto->protoname
 			       + tr("<br>") );
-	      
-	      msgBox_f.setInformativeText( tr("<font color='red'><b>ATTENTION:</b></font> If you choose to Procceed, ")
-					   + tr("all existing edit profiles, models, and noises for this run will be deleted from DB, ")
-					   + tr("and the processing flow will reinitialize from the EDIT stage. ")
-					   + tr("<br><br><font color='red'><b>This action is not reversible. Proceed?</b></font>"));
+
+	      if ( !data_loc.contains("dataDisk") )
+		msgBox_f.setInformativeText( tr("<font color='red'><b>ATTENTION:</b></font> If you choose to Procceed, ")
+					     + tr("all existing edit profiles, models, and noises for this run will be deleted from DB, ")
+					     + tr("and the processing flow will be reinitialized from the 3. IMPORT stage by ")
+					     + tr("re-fetching the data from the Optima instriument.")
+					     + tr("<br><br><font color='red'><b>This action is not reversible. Proceed?</b></font>"));
+	      else
+		msgBox_f.setInformativeText( tr("<font color='red'><b>ATTENTION:</b></font> The development run ")
+					     + tr("will be based on the original data produced by the 'dataDisk-type' ")
+					     + tr("run with the GMP program; ")
+					     + tr("the data will be fetched from the respective LIMS DB;")
+					     + tr("the processing flow will be reinitialized from the 3. IMPORT stage. ")
+					     + tr("It is safe to manupulate the downloaded data (like dropping channels, or triples) - ")
+					     + tr("this will not affect the original data required for future development runs.")
+					     + tr("<br><br><font color='red'><b>Proceed?</b></font>"));
 	      
 	      msgBox_f.setWindowTitle(tr("Run Reinitialization"));
 	      QPushButton *Confirm   = msgBox_f.addButton(tr("Proceed"), QMessageBox::YesRole);
