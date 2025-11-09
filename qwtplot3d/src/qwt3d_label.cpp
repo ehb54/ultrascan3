@@ -146,7 +146,7 @@ void Label::update()
 #else
   buf_ = pm_.toImage();
 #endif
-#if QT_VERSION < 0x060000
+#if QT_VERSION < QT_VERSION_CHECK( 6, 9, 0)
   tex_ = buf_.mirrored(); // flipped 32bit RGBA ?
 #else
 	tex_ = buf_.flipped();
