@@ -16,7 +16,7 @@ win32 {
         # We assume QMAKE_LFLAGS += Wl,--out-implib,../lib/lib$${TARGET}$${VER}.a
 }
 
-QT          += network svg
+QT          += network svg openglwidgets
 
 TRANSLATIONS = $${TARGET}_DE_de.ts
 

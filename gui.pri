@@ -7,9 +7,8 @@ DESTDIR      = ../../bin
 MOC_DIR      = ./moc
 OBJECTS_DIR  = ./obj
 VER          = 10
-greaterThan( QT_VERSION, 4.99 ) {
-QT          += widgets
-}
+QT          += widgets openglwidgets
+
 
 CONFIG       += $$DEBUGORRELEASE qt thread warn widgets
 

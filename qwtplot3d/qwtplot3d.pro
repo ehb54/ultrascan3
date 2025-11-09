@@ -1,5 +1,6 @@
 # pro file for building the makefile for qwtplot3d
 #
+include ( ../library.pri)
 
 TARGET            = qwtplot3d
 TEMPLATE          = lib
@@ -9,7 +10,7 @@ OBJECTS_DIR       = tmp
 INCLUDEPATH       = include
 DEPENDPATH        = include src
 DESTDIR           = ../lib
-QT += opengl
+QT               += opengl openglwidgets
 # disable all deprecated functionalities up to Qt6.9
 DEFINES += QT_DISABLE_DEPRECATED_UP_TO=0x060900
 
