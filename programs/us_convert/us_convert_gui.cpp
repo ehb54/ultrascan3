@@ -3856,7 +3856,7 @@ void US_ConvertGui::loadUS3Disk( QString dir )
    QString new_runID      = components.last();
 
    static const QRegularExpression rx( "^[A-Za-z0-9_-]{1,80}$" );
-   if ( rx.match( new_runID ).hasMatch() )
+   if ( !rx.match( new_runID ).hasMatch() )
    {
       QMessageBox::warning( this,
             tr( "Bad runID Name" ),
