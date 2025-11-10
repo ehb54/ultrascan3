@@ -18,9 +18,9 @@ Functions:
     * - **Distribution** 
       - Click on this button to change the plot from Histogram to Distribution. This is the alternate label to the same button as above.
     * - **Hide Histogram** 
-      - Select hiding the histogram, showing only an envelope. The alternate label for this button is \* **Show Histogram**
+      - Select hiding the histogram, showing only an envelope. The alternate label for this button is **Show Histogram**
     * - **Hide Envelope** 
-      - Select hiding the envelope, showing only a histogram. The alternate label for this button is \* **Show Envelope**
+      - Select hiding the envelope, showing only a histogram. The alternate label for this button is **Show Envelope**
     * - **Sensitivity** 
       - Change the sensitivity factor up or down to primarily affect the nature of the histogram.
     * - **Smoothing** 

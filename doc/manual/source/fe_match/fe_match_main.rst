@@ -128,7 +128,7 @@ Functions:
   :header-rows: 0
 
   * - **Solution**
-    - Click this button to open a `Solution Management <../us_solution.html>`_ that allows changes to buffer and analyte characteristics of the data set.
+    - Click this button to open a `Solution Management <solution/solution_select.html>`_ that allows changes to buffer and analyte characteristics of the data set.
   * - **Density**
     - Shows the density value for the loaded experiment. Click the Solution button to open a dialog in which density and other values may be changed.
   * - **Viscosity**

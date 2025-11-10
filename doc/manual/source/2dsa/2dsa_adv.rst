@@ -42,9 +42,7 @@ Functions:
   * - **Random Local Grid**
     -
   * - **Repetitions:**
-    -
-  * - **Standard Deviation:**
-    -
+  
   * - **Solute Coalescing**
     - Select to merge solutes together. 
   * - **Coalescing Distance:**
@@ -66,11 +64,11 @@ Functions:
   * - **Band-forming Centerpiece**
     - Check to specify a band-forming centerpiece if running a band forming sedimentation velocity experiment.
   * - **Band-loading volume (µL):**
-    - Specify the volume added to the resevoir in the band-forming centerpiece in microliters (µL). 
+    - Specify the volume added to the reservoir in the band-forming centerpiece in microliters (µL). 
   * - **Band-loading Volume:**
     - Specify a band-loading volume value.
   * - **Simulation Points:**
-    - Specify the number of discretized radial positions used when numberically integrating the Lamm equation. For typical analyses, 200 simulation points provide sufficient resolution. Increasing this value improves the precision of the simulation but also increases compututational time. 
+    - Specify the number of discretized radial positions used when numerically integrating the Lamm equation. For typical analyses, 200 simulation points provide sufficient resolution. Increasing this value improves the precision of the simulation but also increases computational time. 
   * - **(mesh type)**
     - Select from one of several mesh types, including Adaptive Space Time (ASTFEM), Claverie, Moving Hat, user File, or Adaptive Space Volume (ASVFEM).
   * - **(grid type):**

@@ -52,13 +52,13 @@ Functions:
   :header-rows: 0
 
   * - **Solution** 
-    - Click this button to open a `Solution Management <us_solution.html>`_ that allows changes to buffer and analyte characteristics of the data set.
+    - Click this button to open a `Solution Management <solution/solution.html>`_ that allows changes to buffer and analyte characteristics of the data set.
   * - **Density (20°C)**
     - Shows the density value for the loaded experiment. Click the Solution button to open a dialog in which density and other values may be changed.		
   * - **Viscosity (20°C)**
-    - Shows the viscosity value for thes loaded experiment. Click the Solution button to open a dialog in which viscosity and other values may be changed.		
+    - Shows the viscosity value for the loaded experiment. Click the Solution button to open a dialog in which viscosity and other values may be changed.		
   * - **Distribution Plot**
-    - Click for a plot dialog that shows a `vHW Distribution Plot <vhw_distrib_plot.html>`_ illustrating sedimentation coefficient power related to separate species.		
+    - Click for a plot dialog that shows a `vHW Distribution Plot <vhw_distrib_plot.html>`_ illustrating sedimentation coefficient power related to separate species.
   * - **Select Groups**
     - Click on this button to begin a session of choosing vHW Extrapolation Plot division groups. As an initial pop-up dialog explains, you must click first above any group of division lines and then below it. Multiple groups may be chosen, with division line overlap between groups. 
 	.. note:: The button label becomes **Clear Groups** after selection, allowing the set of selected groups to be discarded in favor of a new set of selections. 
@@ -130,13 +130,13 @@ van Holde Wieschet Analysis Steps
 
 *  **Step 1:** First, load a velocity dataset. Click on **Load Experiment** to select an edited velocity data set from the database or from local disk.
 
-*  **Step 2:** Secondly, select a model from database or disk. Simply click on a triplicate in the Cell / Channel / Wavelegth. Enhanced van Holde - Weischet analysis is automatically applied according to the Analsys Controls
+*  **Step 2:** Secondly, select a model from database or disk. Simply click on a triplicate in the Cell / Channel / Wavelength. Enhanced van Holde - Weischet analysis is automatically applied according to the Analysis Controls
 
-*  **Step 3:** If necessary, adjust the Back Diffusion Tolarance, Divisions, % of Boundary and Boundary Position (%).
+*  **Step 3:** If necessary, adjust the Back Diffusion Tolerance, Divisions, % of Boundary and Boundary Position (%).
 
 *  **Step 4:** After analysis is complete, the resulting distribution and histogram are available for display in the Distribution Plot.
 
-*  **Step 5:** To choose the vHW Extrapolation Plot division groups, select **Select Group** and follow the prompt instructions. The vHW Extrapolation Plot will desplay the selected group.
+*  **Step 5:** To choose the vHW Extrapolation Plot division groups, select **Select Group** and follow the prompt instructions. The vHW Extrapolation Plot will display the selected group.
 
 
 

@@ -37,7 +37,7 @@ Functions:
   :header-rows: 0
 
   * - **(Meniscus-RMSD points)**
-    - The main left-side text box displays a list of meniscus-RMSD values from a selected fit output by 2DSA. The fit to display is chosen by a *File->Load* selection in a FitMen Load Dialog  that allows navigation to a ./results/runID directory and choice of a fitmen.dat file.
+    - The main left-side text box displays a list of meniscus-RMSD values from a selected fit output by 2DSA. The fit to display is chosen by a *File->Load* selection in a FitMen Load Dialog  that allows navigation to a ./results/directory and choice of a fitmen.dat file.
   * - **(right side plot)**
     - This plot shows a yellow curve connecting all fitmen radius-RMSD points; a red fitted polynomial curve; and a vertical bar with annotation delineating the meniscus value at the low point of the polynomial curve.
   * - **Status:**

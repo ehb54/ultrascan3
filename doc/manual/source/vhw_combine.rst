@@ -32,7 +32,7 @@ Functions:
   * - **Local Disk** 
     - Check this radio button to indicate that distribution data to be selected is on local disk file systems.
   * - **Load Data** 
-    - Click on this button to open :ref: RunID Select Dialog**  in which one or more run IDs may be selected from which distribution data files can be taken.
+    - Click on this button to open `Run ID Select Dialog <common_dialogs.html#load-distribution-model>`_ in which one or more run IDs may be selected from which distribution data files can be taken.
   * - **Save Data** 
     - Save combined integral distribution and envelope data to a local data file and, if input source so indicates, to the database.
   * - **Reset Data** 
@@ -56,14 +56,14 @@ Functions:
   * - **Cell/Channel/ Wavelength:** 
     - The list below shows the triples for the currently selected run. Click on a triple line to have its distribution/envelope added to the combined plot.
 
-
+.. _selrun:
 
 .. image:: _static/images/vhw_combine-selrun.png
     :align: center
 
 .. rst-class:: center
 
-    RunID Select Dialog
+    **RunID Select Dialog**
 
 
 .. subfigure:: AB     
@@ -82,7 +82,7 @@ Functions:
 
 .. rst-class:: center
 
-    Envelope and Combined Displays
+    **Envelope and Combined Displays**
 
 Besides the integral distribution plots shown above, you may display envelope plots. You may also combine both integral and envelope plots in a single plot.
 
