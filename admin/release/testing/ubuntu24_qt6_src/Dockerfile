@@ -143,15 +143,6 @@ ARG ultrascan_branch
 RUN set -eux; \
   git clone --branch "${ultrascan_branch}" https://github.com/ehb54/ultrascan3.git "${ULTRASCAN}"
 
-RUN set -eux; \
-    apt-get update; \
-
-  rm -rf /var/lib/apt/lists/*
-
-# patch
-
-RUN echo "QT += openglwidgets" >> /ultrascan3/qwtplot3d/qwtplot3d.pro
-
 # local.pri files
 ADD local.pri.somo /ultrascan3/us_somo/develop/local.pri
 ADD local.pri.gui  /ultrascan3/local.pri
@@ -165,11 +156,12 @@ WORKDIR /ultrascan3
 
 ## somehow ubuntu is not honoring /etc/profile.d/qt.sh
 
-ENV PATH="${QTDIR}/bin:${PATH}" \
-    LD_LIBRARY_PATH="${QTDIR}/lib:${LD_LIBRARY_PATH}" \
-    PKG_CONFIG_PATH="${QTDIR}/lib/pkgconfig:${PKG_CONFIG_PATH}" \
-    QT_PLUGIN_PATH="${QTDIR}/plugins:${QT_PLUGIN_PATH}" \
-    QML2_IMPORT_PATH="${QTDIR}/qml:${QML2_IMPORT_PATH}"
+ENV PATH="${QTDIR}/bin:${PATH}" 
+#    LD_LIBRARY_PATH="${QTDIR}/lib:${LD_LIBRARY_PATH}" \
+#    PKG_CONFIG_PATH="${QTDIR}/lib/pkgconfig:${PKG_CONFIG_PATH}" \
+#    QT_PLUGIN_PATH="${QTDIR}/plugins:${QT_PLUGIN_PATH}" \
+#    QML2_IMPORT_PATH="${QTDIR}/qml:${QML2_IMPORT_PATH}"
+
 
 SHELL ["/bin/bash", "-lc"]
 CMD ["/bin/bash", "-l"]

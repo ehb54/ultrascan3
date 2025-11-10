@@ -12,7 +12,7 @@ unix {
 #  QMAKE_CFLAGS_RELEASE   = -O3
   QMAKE_CXXFLAGS += -Wno-unused-local-typedefs 
 
-  QWTPATH     = /qwt-6.3
+  QWTPATH     = /qwt-6.3.0
   QWTLIB      = -L../../lib -L../lib -L$$QWTPATH/lib -lqwtplot3d -lqwt -lGLU
   MYSQLDIR    = /usr/lib64/mysql
   MYSQLPATH   = /usr/include/mysql

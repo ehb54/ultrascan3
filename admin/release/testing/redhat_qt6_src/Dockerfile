@@ -33,7 +33,7 @@ RUN set -eux; \
     libX11-devel libXext-devel libXi-devel libXrandr-devel libXrender-devel \
     libxcb-devel xcb-util*-devel libxkbcommon-devel libxkbcommon-x11-devel \
     wayland-devel wayland-protocols-devel \
-    mesa-libGL-devel mesa-libEGL-devel libdrm-devel mesa-libgbm-devel \
+    mesa-libGL-devel mesa-libEGL-devel libdrm-devel mesa-libgbm-devel mesa-libGLU-devel \
     freetype-devel harfbuzz-devel libjpeg-turbo-devel libpng-devel \
     zlib-devel brotli-devel pcre2-devel openssl-devel \
     dbus dbus-devel cups-devel glib2-devel libicu-devel \
@@ -41,6 +41,7 @@ RUN set -eux; \
     gstreamer1-devel gstreamer1-plugins-base-devel gstreamer1-plugins-bad-free-devel \
     at-spi2-core at-spi2-atk \
     mariadb-devel; \
+    libarchive-devel; \
   dnf -y clean all; rm -rf /var/cache/dnf
 
 WORKDIR /src
@@ -159,5 +160,3 @@ WORKDIR /ultrascan3
 
 SHELL ["/bin/bash", "-lc"]
 CMD ["/bin/bash", "-l"]
-
-  
