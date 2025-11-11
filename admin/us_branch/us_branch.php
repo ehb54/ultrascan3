@@ -226,14 +226,16 @@ function prompt_confirm_discard( $file_list, $count_total ) {
 {
     $cmd          = "module swap $modulename && echo \$ULTRASCAN";
     $uspath       = trim( run_cmd( $cmd ) );
-    $uspathparent = preg_replace( '/\/ultrascan3$/', "", $uspath );
+    $uspathparent = preg_replace( '/\/[^\/]+$/', '', $uspath );
+    $uspathname   = preg_replace( '/^.*\//', '', $uspath );
 
     echo "uspath       is '$uspath'\n";
     echo "uspathparent is '$uspathparent'\n";
+    echo "uspathname   is '$uspathname'\n";
 
     if ( !is_dir( $uspath ) ) {
         echo "cloning ultrascan into $uspath\n";
-        $cmd = "cd $uspathparent && git clone $repo_url";
+        $cmd = "cd $uspathparent && git clone $repo_url $uspathname";
         run_cmd( $cmd );
 
         # setup local.pri
