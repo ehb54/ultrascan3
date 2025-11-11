@@ -40,8 +40,9 @@ RUN set -eux; \
     alsa-lib-devel pipewire-devel \
     gstreamer1-devel gstreamer1-plugins-base-devel gstreamer1-plugins-bad-free-devel \
     at-spi2-core at-spi2-atk \
-    mariadb-devel; \
-    libarchive-devel; \
+    mariadb-devel \
+    libarchive-devel \
+    postgresql-devel; \
   dnf -y clean all; rm -rf /var/cache/dnf
 
 WORKDIR /src
@@ -72,7 +73,10 @@ RUN set -eux; \
     -DQT_FEATURE_optimize_size=ON \
     -DFEATURE_clang=OFF -DFEATURE_clangcpp=OFF \
     -DCMAKE_DISABLE_FIND_PACKAGE_Clang=ON \
-    -DCMAKE_DISABLE_FIND_PACKAGE_LLVM=ON; \
+    -DCMAKE_DISABLE_FIND_PACKAGE_LLVM=ON \
+    -DQT_BUILD_TOOLS=ON \
+    -DQT_BUILD_QTHELP=ON \
+    -DQT_FEATURE_sql_psql=ON; \
   ninja -C build -j ${parallel_compile}; \
   ninja -C build install; \
   # prune static/dev detritus we don't need for the toolchain itself
@@ -114,7 +118,7 @@ RUN set -eux; \
   printf '%s\n' \
     "# Qt6 environment (Docker)" \
     "export QTDIR=${QTDIR}" \
-    'export PATH=${QTDIR}/bin:$PATH' \
+    'export PATH=${QTDIR}/bin:${QTDIR}/libexec:$PATH' \
     'export LD_LIBRARY_PATH=${QTDIR}/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}' \
     'export PKG_CONFIG_PATH=${QTDIR}/lib/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}' \
     'export QT_PLUGIN_PATH=${QTDIR}/plugins${QT_PLUGIN_PATH:+:$QT_PLUGIN_PATH}' \
@@ -132,7 +136,8 @@ RUN set -eux; \
 
 RUN set -eux; \
   dnf -y install \
-    emacs-nox; \
+    emacs-nox \
+    which; \
   dnf -y clean all; rm -rf /var/cache/dnf
 
 # CHANGED: remove the extra wildcard RPM install (it bloats images)

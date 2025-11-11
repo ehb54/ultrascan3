@@ -122,5 +122,9 @@ RUN set -eux; \
   dnf -y clean all; rm -rf /var/cache/dnf; \
   node -v && npm -v
 
+WORKDIR /ultrascan3
+
+ENV PATH="${QTDIR}/bin:${QTDIR}/libexec:${PATH}" 
+
 SHELL ["/bin/bash", "-lc"]
 CMD ["/bin/bash", "-l"]
