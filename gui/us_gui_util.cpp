@@ -181,7 +181,7 @@ int US_GuiUtil::save_csv( const QString& filename, const QwtPlot* plot )
          QSize raster_size;
          QRectF rect;
          // Get the raster data from US_SpectrogramData
-         data->initRaster( rect, raster_size );
+         data->getRaster( rect, raster_size );
          QVector<QString> x_data;
          x_data.clear();
          QVector<QString> y_data;

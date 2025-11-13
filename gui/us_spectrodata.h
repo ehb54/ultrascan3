@@ -52,12 +52,12 @@ public:
    US_SpectrogramData( QRectF& );
 
    //! \brief Return the Z range (minimum,maximum pair)
-   virtual QwtInterval range() const;
+   QwtInterval range() const;
 
    //! \brief Called to get data ranges and raster size in pixels
    //! \param drect Data rectangle (x-min,y-min,x-range,y-range)
    //! \param rsiz  Raster size (nbr-x-per-scan,nbr-y-scans)
-   virtual void initRaster( QRectF&, QSize& );
+   void getRaster( QRectF& drect, QSize& rsiz ) const;
 
    //! \brief Fetch the X data range
    //! \return Interval( x-min, x-max )
@@ -68,8 +68,13 @@ public:
    QwtInterval yrange() const;
 
    //! \brief Fetch the X/Y/Z range
-   //~ \return Interval( min, max )
-   QwtInterval interval( Qt::Axis ) const;
+   //! \param axis Axis to get the interval for
+   //! \return QwtInterval( min, max ) for the axis
+#if QWT_VERSION < QT_VERSION_CHECK(6, 3, 0)
+   QwtInterval interval( Qt::Axis axis ) const;
+#else
+   QwtInterval interval( Qt::Axis axis ) const override;
+#endif
 
    //! \brief Sets up ranges and controls for the raster data to come
    //! \param a_xres   X resolution, the real X extent in pixels.
@@ -88,7 +93,7 @@ public:
    //! \param x  The real X pixel location for which to fetch Z.
    //! \param y  The real Y pixel location for which to fetch Z.
    //! \return   The real Z value for raster location X,Y.
-   virtual double value( double, double ) const;
+   double value( double x, double y ) const override;
 
    //! \brief Called by QwtPlot to get the Z-value at each X,Y pixel location
    //! \param x  The X pixel location for which to fetch Z.
@@ -98,9 +103,8 @@ public:
    //! \param z_out  The real Z value for raster location XY
    void value( int, int, double&, double&, double& ) const;
 
-#if QT_VERSION>QT_VERSION_CHECK(6,0,0)
+   //! \brief Get the bounding rectangle of the raster data
    QRectF boundingRect() const;
-#endif
 
    //! \brief Sets up the internal raster, based on a set of Solute points.
    //! \param solu  Pointer to list of solution points for the current distribution.
