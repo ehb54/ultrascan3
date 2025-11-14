@@ -660,7 +660,8 @@ class US_Analysis_auto : public US_Widgets
          * @brief Deletes the job with the given ID.
          * @param jobID The job ID.
          */
-        void delete_job ( QString );
+        //void delete_job ( QString );
+        void delete_job ( const QString& text );
 
         /**
          * @brief Deletes the jobs at the fit meniscus stage.
@@ -672,7 +673,8 @@ class US_Analysis_auto : public US_Widgets
          * @brief Shows the overlay for the given analysis.
          * @param analysisID The analysis ID.
          */
-        void show_overlay( QString );
+        //void show_overlay( QString );
+        void show_overlay( const QString& text );
 
         /**
          * @brief Shows the results.
