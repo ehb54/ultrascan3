@@ -545,9 +545,6 @@ class US_Analysis_auto : public US_Widgets
              */
             QGroupBox *createGroup( QString &);
 
-            QSignalMapper *signalMapper;                             /**< Signal mapper for signals. */
-            QSignalMapper *signalMapper_overlay;                     /**< Signal mapper for overlay signals. */
-
             // 2DSA
             bool job1run;                                            /**< Run 1 (2DSA) run flag. */
             bool job2run;                                            /**< Run 2 (2DSA-FM) run flag. */

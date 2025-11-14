@@ -3913,38 +3913,14 @@ QGroupBox * US_Analysis_auto::createGroup( QString & triple_name )
   // Disable delete btn by default
   pb_delete->setEnabled( false );
 
-  signalMapper = new QSignalMapper(this);
-
-  /**
-  //Qt5 -- obsolete
-  connect(signalMapper, SIGNAL( mapped( QString ) ), this, SLOT( delete_job( QString ) ) );
-  connect( pb_delete, SIGNAL( clicked() ), signalMapper, SLOT(map()));
-  signalMapper->setMapping ( pb_delete, triple_name );
-  **/
-
-  // Qt6 (and Qt5)
-  connect(signalMapper, &QSignalMapper::mappedString, this, &US_Analysis_auto::delete_job);
-  //connect(pb_delete, &QPushButton::clicked, signalMapper, &QSignalMapper::map);
-  connect(pb_delete, &QPushButton::clicked, signalMapper, QOverload<>::of(&QSignalMapper::map));
-  signalMapper->setMapping ( pb_delete, triple_name );
+  // Extend the parameterless default signal with the triple_name before calling delete_job slot
+  connect( pb_delete, &QPushButton::clicked, this, [this, triple_name] { delete_job( triple_name ); } );
   
   // Disable overlay btn by default
   pb_overlay->setEnabled( false );
 
-  signalMapper_overlay = new QSignalMapper(this);
-
-  /**
-  //Qt5 -- obsolete
-  connect(signalMapper_overlay, SIGNAL( mapped( QString ) ), this, SLOT( show_overlay( QString ) ) );
-  connect( pb_overlay, SIGNAL( clicked() ), signalMapper_overlay, SLOT(map()));
-  signalMapper_overlay->setMapping ( pb_overlay, triple_name );
-  **/
-  
-  // Qt6 (and Qt5)
-  connect(signalMapper_overlay, &QSignalMapper::mappedString, this, &US_Analysis_auto::show_overlay);
-  //connect(pb_overlay, &QPushButton::clicked, signalMapper_overlay, &QSignalMapper::map);
-  connect(pb_overlay, &QPushButton::clicked, signalMapper_overlay, QOverload<>::of(&QSignalMapper::map));
-  signalMapper_overlay->setMapping ( pb_overlay, triple_name );
+  // Extend the parameterless default signal with the triple_name before calling show_overlay slot
+  connect( pb_overlay, &QPushButton::clicked, this, [this, triple_name] { show_overlay( triple_name ); } );
 
   return groupBox;
 }
