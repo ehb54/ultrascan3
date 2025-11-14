@@ -4,9 +4,9 @@
    contain the root `toctree` directive.
 
 Welcome to UltraScan III's Documentation and Resource!
-==============================================================
+=========================================================
 
-**Ultrascan III** is a Analytical Ultracentrifugation *Data acquisition* and *analysis software*.
+**Ultrascan III** is a Analytical Ultra-centrifugation *Data acquisition* and *analysis software*.
 
     
 .. note::
@@ -36,6 +36,7 @@ Welcome to UltraScan III's Documentation and Resource!
    common_dialogs
    run_details
    3d_plot
+   colorgradient
 
 
 .. toctree::
@@ -45,7 +46,6 @@ Welcome to UltraScan III's Documentation and Resource!
    convert
    us_edit
    fit_meniscus
-   xpn_viewer
    export_legacy
 
 
@@ -59,7 +59,6 @@ Welcome to UltraScan III's Documentation and Resource!
    pseudo3d
    ddist_combine
    idist_combine 
-
    vhw_combine
 
 
@@ -116,6 +115,12 @@ Welcome to UltraScan III's Documentation and Resource!
    projects/index
    rotor
 
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Data Acquisition 
+
+   gmp/index
 
 
 

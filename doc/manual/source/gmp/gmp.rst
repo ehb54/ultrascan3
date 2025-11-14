@@ -1,6 +1,6 @@
-=====================================================
-UltraScanIII Good Manufacturing Practices (GMP)
-=====================================================
+==========================================
+GMP Authorized User Roles and Permissions
+==========================================
 
 
 .. toctree:: 
@@ -9,8 +9,9 @@ UltraScanIII Good Manufacturing Practices (GMP)
 .. contents:: Index
     :local: 
 
-User Roles and Permissions: 
-==============================
+
+User Roles and Permissions:
+============================
 
 .. list-table::
   :widths: 13 20 20 20 

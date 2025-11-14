@@ -14,9 +14,9 @@ Upon completion of an analysis fit, windows and plots generated include:
 
 * `PCSA Fitting Controls <pcsa_analys.html>`_ - Once the PCSA module has simulated the model with, the Status Information on the window updates to include the best model after the iterative simulations are done. the par1 and par2  for the curves updates.  
 * `PCSA model lines viewer <pcsa_rpscan.html>`_ - simulated model lines; 
-* :ref:`PCSA data/residuals viewer <pcsa_data_residuals_viewer>` - Visual comparison of simulated and experimental data. Graphical display of time and radially invarient noises subtracted; 
+* :ref:`PCSA data/residuals viewer <pcsa_data_residuals_viewer>` - Visual comparison of simulated and experimental data. Graphical display of time and radially invariant noises subtracted; 
 * :ref:`PCSA Report <pcsa_report>` - Generate a Simulated model Report file and view it in a dialog;
-* :ref:`Bit Map residuals <residual_bit_map>` Bit map of every scan as a pixal line and the positive or negative difference of the model to the data are highlighted as red (negative) and green(postive) pixals. an Excellent residuel map will have a random distribution of red and green pixals; 
+* :ref:`Bit Map residuals <residual_bit_map>` Bit map of every scan as a pixel line and the positive or negative difference of the model to the data are highlighted as red (negative) and green(positive) pixels. an Excellent residual map will have a random distribution of red and green pixels; 
 * `3-Dimensional Plot Controls <../3d_plot.html>`_ - 3D plots of the simulated data
 
 .. image:: ../_static/images/pcsa_all.png
@@ -60,7 +60,7 @@ Experimental-Simulation residuals are plotted in another way in a bit map. This 
 .. rst-class:: 
     :align: center
 
-    **Pixal Bit Map**
+    **Pixel Bit Map**
 
 
 PCSA Report
@@ -83,12 +83,12 @@ The "Save Data" button in the `PCSA Controls <pcsa_analys.html#pcsa-fitting-proc
 
    - **Heading 1:** Analysis type
    - **Heading 2:** This heading indicates the "dataset named in the Import module", the cell number, channel, and wavelength triplicate, the edit profile processed in the Edit data module,  
-    - **Model Statistis:** The settings entered to generate the models and the. The model line used by the analysis,  number_the type of analysis completed_the database request number_number of models in the analysis cohort
+   - **Model Statistics:** The settings entered to generate the models and the. The model line used by the analysis,  number_the type of analysis completed_the database request number_number of models in the analysis cohort
    - **Data Analysis Settings:** The name of the model is determined by the analysis number_the type of analysis completed_the database request number_number of models in the analysis cohort
    - **Number of components:** Number of components with unique s, and D values. 
    - **Residual RMS Deviation:** The RMSD determined by re-simulating the model in the finite element viewer module. 
    - **Model-reported RMSD:** The RMSD of the simulated model determined by message passing interface (MPI ) or the 2DSA GUI.
-   - **Weight Averaged s20,W, D20,W, Molecular weight, and f/f0:** describe the weight averaged (using % of the total concentration) to calculate the s20,W, D20,W, Molecular weight, and f/f0 coefficents of each component at 20ºC and in water. 
+   - **Weight Averaged s20,W, D20,W, Molecular weight, and f/f0:** describe the weight averaged (using % of the total concentration) to calculate the s20,W, D20,W, Molecular weight, and f/f0 coefficients of each component at 20ºC and in water. 
    - **Total concentration:** The baseline and noise subtracted optical density at the measured wavelength of the absorbing components as a function of radius.  
    - **Constant vbar20:** The analyte vbar at 20ºC. 
 
@@ -99,7 +99,7 @@ The "Save Data" button in the `PCSA Controls <pcsa_analys.html#pcsa-fitting-proc
 Distribution Information Units:
 -------------------------------
 
-- **Molec. Wt.:** Daltons
+- **Molec. Wt.:** Dalton
 - **S Apparent:** seconds
 - **S 20,W:** Seconds 
 - **D Apparent:** cm²/s
