@@ -270,7 +270,7 @@ void US_Plot::zoom( const bool on )
 
 void US_Plot::csv( void ) const
 {
-   const QDir dir;
+   QDir dir;
    const QString reportDir = US_Settings::reportDir();
    if ( ! dir.exists( reportDir ) )
    {
@@ -294,7 +294,7 @@ void US_Plot::csv( void ) const
 
 void US_Plot::svg( void ) const
 {
-   const QDir dir;
+   QDir dir;
    const QString reportDir = US_Settings::reportDir();
    if ( ! dir.exists( reportDir ) )
    {
@@ -315,7 +315,7 @@ void US_Plot::svg( void ) const
 
 void US_Plot::png( void ) const
 {
-   const QDir dir;
+   QDir dir;
    const QString reportDir = US_Settings::reportDir();
    if ( ! dir.exists( reportDir ) )
    {
@@ -336,7 +336,7 @@ void US_Plot::png( void ) const
 
 void US_Plot::print( void ) const
 {
-   const QDir dir;
+   QDir dir;
    const QString reportDir = US_Settings::reportDir();
    if ( ! dir.exists( reportDir ) )
    {
@@ -601,7 +601,7 @@ US_PlotConfig::US_PlotConfig( QwtPlot* current_plot, QWidget* p,
    lb_showCanvasColor->setPalette( palette ); 
      
    QPushButton* pb_showCanvasColor = us_pushbutton( tr( "Update Color" ) );
-   connect( pb_showFrameColor, &QPushButton::clicked, this, &US_PlotConfig::selectCanvasColor );
+   connect( pb_showCanvasColor, &QPushButton::clicked, this, &US_PlotConfig::selectCanvasColor );
 
    main->addWidget( lb_canvasColor,     row,   0 );
    main->addWidget( lb_showCanvasColor, row,   1 );
@@ -1852,8 +1852,8 @@ US_PlotCurveConfig::US_PlotCurveConfig( QwtPlot* currentPlot,
    {
      qDebug() << "Curves props constr.: nullptr ";
      cmbb_symbolStyle->setCurrentIndex( 0 );
-     selSymbol             = new QwtSymbol();
      symbolStyle           = QwtSymbol::NoSymbol;
+     selSymbol             = new QwtSymbol( symbolStyle );
    }
 
    connect( cmbb_symbolStyle, qOverload<int>( &QComboBox::currentIndexChanged ),
