@@ -70,8 +70,6 @@ class US_AnaprofPanGen : public US_WidgetsDialog
       //void inherit_protocol( US_RunProtocol* );
       QGroupBox *createGroup( QString &, QList< double > &);
 
-      QSignalMapper  *signalMapper;
-
       void set_abde_panel();
 
  

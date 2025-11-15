@@ -53,7 +53,7 @@ target_include_directories(us_mwl_species_fit PRIVATE
 # Link libraries - Qt DataVisualization is critical for this program
 target_link_libraries(us_mwl_species_fit PRIVATE
         us_program_common
-        Qt5::DataVisualization
+        Qt::DataVisualization
         )
 
 # Install

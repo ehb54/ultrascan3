@@ -888,7 +888,7 @@ void US_ExperGuiGeneral::run_name_entered( void )
 {
 DbgLv(1) << "EGGe: rchg: IN";
    // Modify run name to have only valid characters
-   QRegExp rx( "[^A-Za-z0-9_-]" );
+   QRegularExpression rx( "[^A-Za-z0-9_-]" );
    QString rname     = le_runid->text();
    QString old_rname = rname;
 DbgLv(1) << "EGGe: rchg: old_rname" << old_rname;
@@ -5274,7 +5274,7 @@ DbgLv(1) << "EGSo:addComm:  cclabl" << cclabl;
        else
 	 {
 	   protocol_comment.replace(sdescr, "");
-	   protocol_comment.remove( QRegExp("^[,\\s*]+") );
+	   protocol_comment.remove( QRegularExpression("^[,\\s*]+") );
 	   
 	   manual_comment[ row_comment ] = protocol_comment.trimmed();  // Initialize manual comment for solution from protocol
 	 }
@@ -9292,14 +9292,14 @@ void US_ExperGuiUpload::submitExperiment()
 
       QStringList researcher_split = (mainw->currProto.investigator).split(':');
       QString researcher_trimmed   = researcher_split[1].trimmed();
-      QRegExp rx( "[^A-Za-z0-9_-, ]" );
+      QRegularExpression rx( "[^A-Za-z0-9_-, ]" );
       researcher_trimmed.replace( rx,  "" );
       QString researcher           = "\'" + researcher_trimmed + "\'";
 
 
       QString name                 = "\'" + runname + "\'";
       QString project_name         = mainw->currProto.project;
-      QRegExp rx1( "[^A-Za-z0-9_-]" );
+      QRegularExpression rx1( "[^A-Za-z0-9_-]" );
       project_name.replace( rx1,  "_" );
       
       
@@ -10799,7 +10799,7 @@ if(! rdir.exists(rpath) ) rdir.mkpath(rpath);
 QFile jfile(fpath);
 if(jfile.open(QIODevice::WriteOnly|QIODevice::Text))
 {
- int flen=jb_exper.count();
+ int flen=jb_exper.length();
  QDataStream* fso = new QDataStream( &jfile );
  fso->writeRawData( jb_exper.constData(), flen );
  jfile.close();

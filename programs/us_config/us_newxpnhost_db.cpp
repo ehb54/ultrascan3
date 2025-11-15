@@ -543,7 +543,7 @@ void US_NewXpnHostDB::readingChromoArrayFile( const QString &fileName )
 
 	      //qDebug() << str1;
 	      
-	      strl = str1.split(QRegExp("[\r\n\t ,]+"));
+	      strl = str1.split(QRegularExpression("[\r\n\t ,]+"));
 	      temp_x = strl.at(0).trimmed().toFloat();
 	      temp_y = strl.at(1).trimmed().toFloat();
 
@@ -584,7 +584,7 @@ void US_NewXpnHostDB::readingChromoArrayDB( )
   QString chromoArrayString;
   QStringList strl;
   chromoArrayString = instrumentedit["chromoab"].trimmed();
-  strl = chromoArrayString.split(QRegExp("[\r\n\t ]+"));
+  strl = chromoArrayString.split(QRegularExpression("[\r\n\t ]+"));
 
   foreach (QString str, strl)
     {
@@ -733,12 +733,12 @@ void US_NewXpnHostDB::save_new( void )
   qDebug() << "Optima Msg Port : " <<  le_msgPort->text();
   
   //RegEx for Optima name:
-  QRegExp rx_desc("^(Optima)\\s[1-9]\\d*$");  // e.g. 'Optima 9'
+  QRegularExpression rx_desc("^(Optima)\\s[1-9]\\d*$");  // e.g. 'Optima 9'
   
   
   if ( !nonOptima_selected )
     {
-      if( !rx_desc.exactMatch(le_description->text() ) )
+      if( !rx_desc.match(le_description->text() ).hasMatch() )
 	{
 	  QString mtitle_error    = tr( "Error" );
 	  QString message_error   = tr( "Syntax error for Optima Host Description!\n\nThe description template is the following:\n  'Optima #' (Optima|space|number)" );

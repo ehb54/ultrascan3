@@ -31,7 +31,7 @@ class US_PlotControlFem : public US_WidgetsDialog
       void do_3dplot_auto( void );
       
       //! \brief Return 3-d plot data widget pointer
-      QGLWidget* data_3dplot( void );
+      QOpenGLWidget* data_3dplot( void );
 
       //! \brief Return 3-d plot main widget pointer
       US_Plot3D* widget_3dplot( void );

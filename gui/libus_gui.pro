@@ -17,6 +17,9 @@ win32 {
 }
 
 QT          += network svg
+greaterThan( QT_VERSION, 5.99 ) {
+QT          += openglwidgets
+}
 
 TRANSLATIONS = $${TARGET}_DE_de.ts
 

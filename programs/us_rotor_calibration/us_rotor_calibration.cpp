@@ -1,5 +1,5 @@
 //! \file us_rotor_calibration.cpp
-
+#include <qwt_scale_div.h>
 #include "us_rotor.h"
 #include "us_rotor_calibration.h"
 #include "us_rotor_gui.h"
@@ -646,7 +646,7 @@ void US_RotorCalibration::plotAll(void)
 // set the flag for this limit set to true. (disabled) Only assign rectangles that result
 // from zoom actions when newlimit is true. Set newlimit to false immediately
 // afterwards to prevent automatic zoom actions to override a zoom limit
-void US_RotorCalibration::currentRect (QwtDoubleRect rect)
+void US_RotorCalibration::currentRect (QRectF rect)
 {
    if (cb_6channel->isChecked())
    {
@@ -679,7 +679,7 @@ void US_RotorCalibration::currentRect (QwtDoubleRect rect)
 
 void US_RotorCalibration::currentRectf (QRectF rectf)
 {
-   QwtDoubleRect rect;
+   QRectF rect;
    rect.setBottom(rectf.bottom());
    rect.setTop(rectf.top());
    rect.setLeft(rectf.left());
@@ -711,17 +711,17 @@ qDebug() << "Going into currentRectf..";
    }
 }
 
-void US_RotorCalibration::divide(QwtDoubleRect rect)
+void US_RotorCalibration::divide(QRectF rect)
 {
    zoom_mask = rect;
-   QwtDoubleRect tmp_rect;
+   QRectF tmp_rect;
    if (zoomed)
    {
       le_instructions->setText(tr("Please control-left click between each vertical region, then click calculate..."));
    }
    pick->disconnect();
-   connect(pick, SIGNAL(cMouseUp(const QwtDoublePoint&)),
-   SLOT  (mouse   (const QwtDoublePoint&)));
+   connect(pick, SIGNAL(cMouseUp(const QPointF&)),
+   SLOT  (mouse   (const QPointF&)));
    bounds.clear();
    pb_accept->setEnabled(false);
 }
@@ -729,7 +729,7 @@ void US_RotorCalibration::divide(QwtDoubleRect rect)
 // takes each separator line drawn for multi-channel calibration mask
 // and plots it into the graph, and saves the separator line's radius
 // values to the array bounds.
-void US_RotorCalibration::mouse (const QwtDoublePoint& p)
+void US_RotorCalibration::mouse (const QPointF& p)
 {
    bounds.push_back(p.x());
    double r[2];
@@ -1300,7 +1300,7 @@ void US_RotorCalibration::calculate()
 
 void US_RotorCalibration::calc_6channel(void)
 {
-   QwtDoubleRect rect;
+   QRectF rect;
    int i, j, k;
    rect.setTop(zoom_mask.top());
    rect.setBottom(zoom_mask.bottom());
@@ -1639,7 +1639,7 @@ void US_RotorCalibration::calc_6channel(void)
    pb_calculate->setEnabled(false);
 }
 
-double US_RotorCalibration::findAverage(QwtDoubleRect rect,
+double US_RotorCalibration::findAverage(QRectF rect,
       US_DataIO::RawData data, int i)
 {
    double average = 0.0;

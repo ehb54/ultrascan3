@@ -352,7 +352,7 @@ void US_Plot::print( void ) const
    
    if ( ! docName.isEmpty() )
    {
-       docName.replace ( QRegExp( QString::fromLatin1( "\n" ) ), tr ( " -- " ) );
+       docName.replace ( QStringLiteral( "\n" ) , tr ( " -- " ) );
        printer.setDocName( docName );
    }
 
@@ -414,8 +414,8 @@ void US_Plot::colorMap( void )
    int ntcurv    = 0;
    int nmcurv    = 0;
    int mcolx     = 0;
-   const bool tmatch   = ! cmapMatch.isEmpty();    // Curve type filter
-   QRegExp cmMatch( cmapMatch );             // Curve title match
+   bool tmatch   = ! cmapMatch.isEmpty();    // Curve type filter
+   QRegularExpression cmMatch( cmapMatch );             // Curve title match
    qDebug() << "UP:CM: cmapMatch" << cmapMatch << "tmatch" << tmatch;
    QwtPlotItemList list = plot->itemList();  // All plot items
 
@@ -1687,7 +1687,7 @@ US_PlotCurveConfig::US_PlotCurveConfig( QwtPlot* currentPlot,
    
    // Remove passed '(number) '
    QString firstSelectedText = selected[ 0 ];
-   firstSelectedText.replace( QRegExp( "^\\(\\d+\\) " ), "" );
+   firstSelectedText.replace( QRegularExpression( "^\\(\\d+\\) " ), "" );
    
    firstSelectedCurve = nullptr;
 
@@ -2040,7 +2040,7 @@ void US_PlotCurveConfig::apply( void )
    for ( auto title : selectedItems )
    {
       // Remove Numbering from passed titles
-      title.replace( QRegExp( "^\\(\\d+\\) " ), "" );
+      title.replace( QRegularExpression( "^\\(\\d+\\) " ), "" );
 
       qDebug() << "Plot Curve Config: for selectItem -- " << title;
 

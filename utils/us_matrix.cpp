@@ -1,9 +1,6 @@
 //! \file us_matrix.cpp
-
 #include "us_matrix.h"
 #include "us_math2.h"
-
-#include <QtCore>
 
 bool US_Matrix::lsfit( double* c, double* x, double* y,
                        int N, int order )
@@ -411,8 +408,11 @@ double US_Matrix::dotproduct( double* aa, int size )
 void US_Matrix::print_vector( double* v, int n )
 {
    QString s;
-   for ( int i = 0; i < n; i++ ) s += QString::asprintf( "%.15f ", v[ i ] );
-
+   QString t;
+   for ( int i = 0; i < n; i++ )
+   {
+      s += QString::asprintf( "%.15f ", v[ i ] );
+   }
    qDebug() << s;
 }
 

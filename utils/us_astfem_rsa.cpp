@@ -1,5 +1,4 @@
 //! \file us_astfem_rsa.cpp
-
 #include "us_astfem_rsa.h"
 #include "us_astfem_math.h"
 #include "us_hardware.h"
@@ -2158,7 +2157,7 @@ void US_Astfem_RSA::mesh_gen( QVector< double >& nu, int MeshOpt )
 
       case (int)US_SimulationParameters::ASTFEM:
          // Adaptive Space Time FE Mesh without left hand refinement
-          std::sort( nu.begin(), nu.end() );  // put nu in ascending order
+         std::sort( nu.begin(), nu.end() );  // put nu in ascending order
 
          if ( nu[ 0 ] > 0 )
          {

@@ -137,12 +137,14 @@ bool US_DB2::test_secure_connection(
 
    if ( !US_Settings::debug_match( "MYSQL_OPT_SSL_VERIFY_SERVER_CERT" ) ) {
       // disable MYSQL_OPT_SSL_VERIFY_SERVER_CERT
-#if defined(MYSQL_OPT_SSL_VERIFY_SERVER_CERT)
+#if defined(LIBMARIADB)
+      // for libmariadb disable MYSQL_OPT_SSL_VERIFY_SERVER_CERT
       unsigned long verify = 0; // 0 = disable, 1 = enable
-      mysql_options( db, MYSQL_OPT_SSL_VERIFY_SERVER_CERT, &verify );
-#elif defined(MYSQL_OPT_SSL_MODE)
-      unsigned int ssl_mode = SSL_MODE_REQUIRED; // SSL on, but no CA/hostname verification
-      mysql_options( db, MYSQL_OPT_SSL_MODE, &ssl_mode );
+      auto ssl_verify_server_cert = mysql_options( db, MYSQL_OPT_SSL_VERIFY_SERVER_CERT, &verify );
+#else
+      // for libmysql set MYSQL_OPT_SSL_MODE to SSL_MODE_REQUIRED
+      unsigned int ssl_mode_required = SSL_MODE_REQUIRED; // SSL on, but no CA/hostname verification
+      auto ssl_mode = mysql_options( db, MYSQL_OPT_SSL_MODE, &ssl_mode_required );
 #endif
    }
    QString uhost  = host.section( ":", 0, 0 ).simplified();
@@ -217,12 +219,14 @@ bool US_DB2::connect( const QString& masterPW, QString& err )
 
       if ( !US_Settings::debug_match( "MYSQL_OPT_SSL_VERIFY_SERVER_CERT" ) ) {
          // disable MYSQL_OPT_SSL_VERIFY_SERVER_CERT
-#if defined(MYSQL_OPT_SSL_VERIFY_SERVER_CERT)
+#if defined(LIBMARIADB)
+         // for libmariadb disable MYSQL_OPT_SSL_VERIFY_SERVER_CERT
          unsigned long verify = 0; // 0 = disable, 1 = enable
-         mysql_options( db, MYSQL_OPT_SSL_VERIFY_SERVER_CERT, &verify );
-#elif defined(MYSQL_OPT_SSL_MODE)
-         unsigned int ssl_mode = SSL_MODE_REQUIRED; // SSL on, but no CA/hostname verification
-         mysql_options( db, MYSQL_OPT_SSL_MODE, &ssl_mode );
+         auto ssl_verify_server_cert = mysql_options( db, MYSQL_OPT_SSL_VERIFY_SERVER_CERT, &verify );
+#else
+         // for libmysql set MYSQL_OPT_SSL_MODE to SSL_MODE_REQUIRED
+         unsigned int ssl_mode_required = SSL_MODE_REQUIRED; // SSL on, but no CA/hostname verification
+         auto ssl_mode = mysql_options( db, MYSQL_OPT_SSL_MODE, &ssl_mode_required );
 #endif
       }
       // The CLIENT_MULTI_STATEMENTS flag allows for multiple queries and
@@ -329,12 +333,14 @@ bool US_DB2::connect(
 
       if ( !US_Settings::debug_match( "MYSQL_OPT_SSL_VERIFY_SERVER_CERT" ) ) {
          // disable MYSQL_OPT_SSL_VERIFY_SERVER_CERT
-#if defined(MYSQL_OPT_SSL_VERIFY_SERVER_CERT)
+#if defined(LIBMARIADB)
+         // for libmariadb disable MYSQL_OPT_SSL_VERIFY_SERVER_CERT
          unsigned long verify = 0; // 0 = disable, 1 = enable
-         mysql_options( db, MYSQL_OPT_SSL_VERIFY_SERVER_CERT, &verify );
-#elif defined(MYSQL_OPT_SSL_MODE)
-         unsigned int ssl_mode = SSL_MODE_REQUIRED; // SSL on, but no CA/hostname verification
-         mysql_options( db, MYSQL_OPT_SSL_MODE, &ssl_mode );
+         auto ssl_verify_server_cert = mysql_options( db, MYSQL_OPT_SSL_VERIFY_SERVER_CERT, &verify );
+#else
+         // for libmysql set MYSQL_OPT_SSL_MODE to SSL_MODE_REQUIRED
+         unsigned int ssl_mode_required = SSL_MODE_REQUIRED; // SSL on, but no CA/hostname verification
+         auto ssl_mode = mysql_options( db, MYSQL_OPT_SSL_MODE, &ssl_mode_required );
 #endif
       }
       // The CLIENT_MULTI_STATEMENTS flag allows for multiple queries and
@@ -547,9 +553,9 @@ QVariant US_DB2::value( unsigned ){ return QVariant::Invalid; }
 QVariant US_DB2::value( unsigned index )
 {
    if ( row && ( index < mysql_field_count( db ) ) )
-      return row[ index ];
+      return QVariant( QString( row[ index ] ) );
 
-   return QVariant::Invalid;
+   return QVariant();
 }
 #endif
 
@@ -822,19 +828,20 @@ unsigned long US_DB2::mysqlEscapeString( QByteArray& , QByteArray& , unsigned lo
 #else
 unsigned long US_DB2::mysqlEscapeString( QByteArray& to, QByteArray& from, unsigned long length )
 {
-   to.resize( length * 2 + 1 );     // Make room in advance for escaped characters
+   // Size the QByteArray properly
+   // worst case every character has to be escaped plus a trailing \0
+   to.resize( length * 2 + 1 );
 
-   const char* fromPtr = from.data();
+   const char* fromPtr = from.constData();
    char* toPtr         = to.data();
 
+   // to_length is the length of the QByteArray without the \0, but according to the docs
+   // the trailing \0 is still written for the mariadb-/mysql-connector
    ulong to_length = mysql_real_escape_string( db, toPtr, fromPtr, length );
 
-   // Add null termination to the string
-   toPtr += to_length;
-   strcpy( toPtr, "\0" );
-
    // Size string appropriately and return new length
-   to.resize( to_length + 1 );
+   // The trailing '\0' shouldn't be included in the size
+   to.resize( to_length );
    return to_length;
 }
 #endif

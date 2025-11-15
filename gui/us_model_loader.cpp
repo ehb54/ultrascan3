@@ -553,8 +553,8 @@ QDateTime time2=QDateTime::currentDateTime();
       if ( !mfilt.endsWith( "*" ) )
          mflt1         = mflt1 + "*";
    }
-
-   QRegExp mpart = QRegExp( mflt1, Qt::CaseInsensitive, QRegExp::WildcardUnix );
+   mflt1 = QRegularExpression::wildcardToRegularExpression( mflt1 );
+   QRegularExpression mpart( mflt1, QRegularExpression::CaseInsensitiveOption );
    model_descriptions.clear();               // clear model descriptions
 qDebug() << "LM: desc single edit" << listdesc << listsing << listedit
  << "editGUID" << editGUID << "nruns" << runIDs.size() << "mflt1" << mflt1;
@@ -1061,8 +1061,8 @@ QDateTime time2=QDateTime::currentDateTime();
       if ( !mfilt.endsWith( "*" ) )
          mflt1         = mflt1 + "*";
    }
-
-   QRegExp mpart = QRegExp( mflt1, Qt::CaseInsensitive, QRegExp::WildcardUnix );
+   mflt1 = QRegularExpression::wildcardToRegularExpression( mflt1 );
+   QRegularExpression mpart ( mflt1, QRegularExpression::CaseInsensitiveOption );
    model_descriptions.clear();               // clear model descriptions
 qDebug() << "LM: desc single edit" << listdesc << listsing << listedit
  << "editGUID" << editGUID << "nruns" << runIDs.size() << "mflt1" << mflt1;

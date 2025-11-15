@@ -1,5 +1,4 @@
 //! \file us_rotor_gui.cpp
-
 #include "us_rotor.h"
 #include "us_settings.h"
 #include "us_util.h"
@@ -937,10 +936,7 @@ int US_Rotor::Rotor::deleteRotorDB( int rotorID, IUS_DB2* db )
 // Function to save current rotor information to disk
 void US_Rotor::Rotor::saveDisk( void )
 {
-   // First make sure we have a GUID
-   QRegExp rx( "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" );
-
-   if ( ! rx.exactMatch( GUID ) )
+   if ( ! US_Util::UUID_REGEX.match( GUID ).hasMatch() )
       GUID = US_Util::new_guid();
 
    // Get a path and file name for the rotor
@@ -1201,11 +1197,10 @@ int US_Rotor::RotorCalibration::replaceDummyDB( int& oldCalibrationID, IUS_DB2* 
 // Function to save current calibration information to disk
 void US_Rotor::RotorCalibration::saveDisk( void )
 {
-   // First make sure we have a GUID
-   QRegExp rx( "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" );
-
-   if ( ! rx.exactMatch( GUID ) )
+   if ( ! US_Util::UUID_REGEX.match( GUID ).hasMatch() )
+   {
       GUID = US_Util::new_guid();
+   }
 
    // Get a path and file name for the calibration
    QString path;

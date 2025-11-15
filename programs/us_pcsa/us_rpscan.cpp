@@ -596,14 +596,14 @@ DbgLv(1) << "TRP:H3: x1,y1,x2,y2" << xl3p1 << yl3p1 << yl3p2 << yl3p2;
       le_selalpha->setText( QString::asprintf( "%.3f", alpha ) );
    }
 
-   connect( pick, SIGNAL( cMouseUp( const QwtDoublePoint& ) ),
-            this, SLOT  ( mouse   ( const QwtDoublePoint& ) ) );
+   connect( pick, SIGNAL( cMouseUp( const QPointF& ) ),
+            this, SLOT  ( mouse   ( const QPointF& ) ) );
 
    data_plot1->replot();
 }
 
 // Handle a mouse click near to a curve point location
-void US_RpScan::mouse( const QwtDoublePoint& p )
+void US_RpScan::mouse( const QPointF& p )
 {
    double xloc    = p.x();
    double yloc    = p.y();

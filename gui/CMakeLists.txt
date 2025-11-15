@@ -30,7 +30,8 @@ foreach(img IN LISTS US3_GUI_IMAGES)
 endforeach()
 file(APPEND "${US3_GUI_QRC}" "  </qresource>\n</RCC>\n")
 
-qt5_add_resources(US3_GUI_RES "${US3_GUI_QRC}")
+
+qt_add_resources(US3_GUI_RES "${US3_GUI_QRC}")
 
 # ============================================================================
 # COMMON CONFIGURATION FUNCTION
@@ -80,20 +81,24 @@ function(configure_us_gui_target target_name is_static)
     # UltraScan3 utils link
     add_dependencies(${target_name} us_utils)
     if(${is_static} AND TARGET UltraScan3::Utils_Static)
+        add_dependencies(${target_name} us_utils_static)
         target_link_libraries(${target_name} PUBLIC UltraScan3::Utils_Static)
     else()
         target_link_libraries(${target_name} PUBLIC UltraScan3::Utils)
     endif()
 
-    # Qt5 dependencies
+    # Qt dependencies
     target_link_libraries(${target_name}
             PUBLIC
-            Qt5::Widgets
-            Qt5::Gui
-            Qt5::Svg
-            Qt5::OpenGL
-            Qt5::PrintSupport
+            Qt::Widgets
+            Qt::Gui
+            Qt::Svg
+            Qt::OpenGL
+            Qt::PrintSupport
             )
+    if(USE_QT6)
+        target_link_libraries(us_gui PUBLIC Qt::OpenGLWidgets)
+    endif()
 
     # Plotting libraries - link AFTER Qt to avoid symbol conflicts
     target_link_libraries(${target_name}

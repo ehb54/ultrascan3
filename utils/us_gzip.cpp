@@ -10,10 +10,6 @@
  *  Univerity of Texas Health Science Center
 */
 
-#include <QFileInfo> 
-#include <QDataStream>
-#include <QDateTime>
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
@@ -42,7 +38,7 @@
 #  define O_BINARY 0
 #endif
 
-#include <iostream>
+// #include <iostream>
 using namespace std;
 
 #include "us_gzip.h"
@@ -226,7 +222,7 @@ int US_Gzip::treat_file( const QString& iname, bool decompress )
   QDateTime    lastRead   = filename.lastRead();
   QDateTime    lastMod    = filename.lastModified();
   
-  filetime = lastMod.toTime_t();
+  filetime = lastMod.toSecsSinceEpoch();
 
   ifd = open( iname.toLatin1().constData(), O_RDONLY | O_BINARY );
   if ( ifd < 0 ) return GZIP_READERROR;
@@ -290,8 +286,8 @@ int US_Gzip::treat_file( const QString& iname, bool decompress )
 
     char timestring[40];
 #ifdef WIN32
-    //ctime_s( timestring, sizeof( timestring ),  &filetime );
-    int stringCount = sprintf( timestring, "%s", ctime( &filetime ) );
+    ctime_s( timestring, sizeof( timestring ),  &filetime );
+    // int stringCount = sprintf( timestring, "%s", ctime( &filetime ) );
 #else
     ctime_r( &filetime, timestring );
 #endif
@@ -464,7 +460,7 @@ int US_Gzip::treat_file( const QString& iname, bool decompress )
       put_byte( flags );         /* general flags */
 
       /* original time stamp (modification time) */
-      time_t time_stamp = lastMod.toTime_t();  
+      time_t time_stamp = lastMod.toSecsSinceEpoch();
       put_long( (ulg) time_stamp == ( time_stamp & 0xffffffff ) ? 
           (ulg) time_stamp : (ulg) 0);
 

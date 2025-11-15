@@ -210,15 +210,15 @@ class US_GlobalEquil : public US_Widgets
 
         //! \brief Slot for mouse down event.
         //! \param point The point where the mouse was pressed.
-        void pMouseDown(const QwtDoublePoint& point);
+        void pMouseDown(const QPointF& point);
 
         //! \brief Slot for mouse up event.
         //! \param point The point where the mouse was released.
-        void pMouseUp(const QwtDoublePoint& point);
+        void pMouseUp(const QPointF& point);
 
         //! \brief Slot for mouse move event.
         //! \param point The point where the mouse moved.
-        void pMouseMoved(const QwtDoublePoint& point);
+        void pMouseMoved(const QPointF& point);
 
         //! \brief Plot the edited data.
         void edata_plot(void);

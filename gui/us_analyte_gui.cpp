@@ -492,7 +492,7 @@ DbgLv(1) << "agS: search : text" << text;
    for ( int ii = 0; ii < dsize; ii++ )
    {  // get list of filtered-description + index strings
       if ( descriptions[ ii ].contains(
-         QRegExp( ".*" + text + ".*", Qt::CaseInsensitive ) )  &&
+         QRegularExpression( ".*" + text + ".*", QRegularExpression::CaseInsensitiveOption ) )  &&
          ! descriptions[ ii].isEmpty() )
       {
          sortdesc << descriptions[ ii ] + sep + QString::number( ii );
@@ -558,7 +558,7 @@ void US_AnalyteMgrSelect::sequence( void )
   
   QString seqsmry = analyte->sequence;
   
-  int nlines = int(seqsmry.count() / 70);
+  int nlines = int(seqsmry.size() / 70);
   big_line += QString( 70, ' ' );
 
   // Build and show the analyte sequence
@@ -571,7 +571,7 @@ void US_AnalyteMgrSelect::sequence( void )
    ana_info->move( pos() + QPoint( 200, 200 ) );
    ana_info->resize( iwid, ihgt );
    ana_info->e->setFont( tfont );
-   if ( seqsmry.count() != 0 )
+   if ( !seqsmry.isEmpty() )
      {
        ana_info->e->setText( seqsmry );
        ana_info->show();
@@ -647,7 +647,7 @@ DbgLv(1) << "Tot AAs: " << all_abs;
    else
    {
       seqsmry         = seqsmry.toLower()
-                               .remove( QRegExp( "[\\s0-9]" ) );
+                               .remove( QRegularExpression( "[\\s0-9]" ) );
       seqlen          = seqsmry.length();
       if ( seqlen > 25 )
       {
@@ -994,7 +994,7 @@ void US_AnalyteMgrSelect::read_analyte( void )
 
    lw_analyte_list->clear();
 
-   if ( descriptions.size() == 0 )
+   if ( descriptions.isEmpty() )
       lw_analyte_list->addItem( "No analyte files found." );
    else
    {
@@ -1078,7 +1078,7 @@ DbgLv(1) << "agS-rddb:     aID descr" << anaID << descr;
 
    lw_analyte_list->clear();
 
-   if ( descriptions.size() == 0 )
+   if ( descriptions.isEmpty() )
    {
       lw_analyte_list->addItem( "No analyte files found." );
    }
@@ -1265,7 +1265,7 @@ DbgLv(1) << "AA absorbibg String: " << absorbing_residues;
    else
    {
       seqsmry         = seqsmry.toLower()
-                               .remove( QRegExp( "[\\s0-9]" ) );
+                               .remove( QRegularExpression( "[\\s0-9]" ) );
       seqlen          = seqsmry.length();
       if ( seqlen > 25 )
       {
@@ -1730,7 +1730,7 @@ void US_AnalyteMgrNew::manage_sequence( void )
 
 void US_AnalyteMgrNew::update_sequence( QString seq )
 {
-   seq = seq.toLower().remove( QRegExp( "[\\s0-9]" ) );
+   seq = seq.toLower().remove( QRegularExpression( "[\\s0-9]" ) );
    QString check = seq;
 
    if ( seq == analyte->sequence ) return;
@@ -1738,15 +1738,15 @@ void US_AnalyteMgrNew::update_sequence( QString seq )
    switch ( analyte->type )
    {
       case US_Analyte::PROTEIN:
-         seq.remove( QRegExp( "[^a-z\\+\\?\\@]" ) );
+         seq.remove( QRegularExpression( "[^a-z\\+\\?\\@]" ) );
          break;
 
       case US_Analyte::DNA:
-         seq.remove( QRegExp( "[^acgt]" ) );
+         seq.remove( QRegularExpression( "[^acgt]" ) );
          break;
 
       case US_Analyte::RNA:
-         seq.remove( QRegExp( "[^acgu]" ) );
+         seq.remove( QRegularExpression( "[^acgu]" ) );
          break;
 
       case US_Analyte::CARBOHYDRATE:

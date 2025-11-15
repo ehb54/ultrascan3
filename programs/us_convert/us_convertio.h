@@ -52,7 +52,7 @@ class US_ConvertIO
       static QString writeRawDataToDB(
                  US_Experiment& , 
                  QList< US_Convert::TripleInfo >& ,
-                 QString,
+                 const QString&,
                  US_DB2* = 0 );
 
       /*! \brief Checks some info that was read from disk with values from DB
