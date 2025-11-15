@@ -131,7 +131,7 @@ target_include_directories(us_fematch PRIVATE
 # Link libraries
 target_link_libraries(us_fematch PRIVATE
         us_program_common
-        Qt5::DataVisualization
+        Qt::DataVisualization
         )
 
 # Install

@@ -40,15 +40,15 @@ qDebug() << "CVT:rdLegD: runType" << runType;
    QString f;
    QString arunType = runType;
    bool mixed_type = false;
-
+   static QRegularExpression rx( "^[A-J]?\\d{4,6}\\.(?:RA|RI|IP|FI|WA|WI)\\d$" );
    foreach ( f, files )
    {
       // Look for a proper filename match:
       // Optional channel + 4 to 6 digits + dot + file type + cell number
 
-      QRegExp rx( "^[A-J]?\\d{4,6}\\.(?:RA|RI|IP|FI|WA|WI)\\d$" );
 
-      if ( rx.indexIn( f.toUpper() ) >= 0 )
+
+      if ( rx.match( f.toUpper() ).hasMatch() )
       {
          fileList << f;
 
@@ -89,27 +89,42 @@ qDebug() << "CVT:rdLegD: mixed" << mixed_type;
       else if ( arunType == "FI"  )
          arType      = QObject::tr( "Fluorensce" );
 
-      int status = QMessageBox::information( 0,
-            QObject::tr( "Mixed Import Data Types" ),
-            QObject::tr( "The Import directory holds multiple data types.\n"
-                         "Choose the type to import in this session." ),
-            prType, arType, 0, 0, 1 );
-
-      if ( status != 0 )
-         runType        = arunType;
-qDebug() << "CVT:rdLegD:  runTypes chosen" << prType << arType << runType << "status" << status;
+      QMessageBox box;
+      box.setIcon( QMessageBox::Information );
+      box.setWindowTitle( QObject::tr( "Mixed Import Data Types" ) );
+      box.setText( QObject::tr( "The Import directory holds multiple data types.\n"
+         "Choose the type to import in this session." ) );
+      QPushButton* prType_button = box.addButton( prType, QMessageBox::NoRole );
+      QPushButton* arType_button = box.addButton( arType, QMessageBox::YesRole );
+      box.setDefaultButton( prType_button );
+      // Display the box and wait for the users choice
+      box.exec();
+      QPushButton* button = static_cast<QPushButton*>(box.clickedButton());
+      if ( button == nullptr )
+      {
+         // user exited without selecting either of the buttons
+         // default to prType
+         runType = prType;
+      }
+      else if ( button == prType_button )
+      {
+         runType = prType;
+      }
+      else if ( button == arType_button )
+      {
+         runType = arType;
+      }
+qDebug() << "CVT:rdLegD:  runTypes chosen" << prType << arType << runType;
 
       fileList.clear();
       channels.clear();
-
+      static QRegularExpression rx( "^[A-J]?\\d{4,6}\\.(?:RA|RI|IP|FI|WA|WI)\\d$" );
       foreach ( f, files )
       {
          // Look for a proper filename match:
          // Optional channel + 4 to 6 digits + dot + file type + cell number
 
-         QRegExp rx( "^[A-J]?\\d{4,6}\\.(?:RA|RI|IP|FI|WA|WI)\\d$" );
-
-         if ( rx.indexIn( f.toUpper() ) >= 0 )
+         if ( rx.match( f.toUpper() ).hasMatch() )
          {
             QString frunType = f.right( 3 ).left( 2 ).toUpper();
             if ( frunType != runType )
@@ -317,9 +332,8 @@ int US_Convert::saveToDisk(
       }
 
       // Same with solutionGUID
-      QRegExp rx( "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" );
       if ( ( triples[ i ].solution.saveStatus == US_Solution::NOT_SAVED  ) ||
-           ( ! rx.exactMatch( triples[ i ].solution.solutionGUID )       ) )
+           ( ! US_Util::UUID_REGEX.match( triples[ i ].solution.solutionGUID ).hasMatch()       ) )
       {
          qDebug() << "It is not saving";
          triples[ i ].solution.solutionGUID = "";

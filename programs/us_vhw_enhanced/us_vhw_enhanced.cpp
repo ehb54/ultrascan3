@@ -135,9 +135,7 @@ US_vHW_Enhanced::US_vHW_Enhanced() : US_AnalysisBase2()
    rightLayout->setStretchFactor( plotLayout1, 3 );
    rightLayout->setStretchFactor( plotLayout2, 2 );
 
-   setMaximumSize( qApp->desktop()->size() - QSize( 80, 80 ) );
-   //resize( 100, 100 );
-   //resize( 900, 100 );
+   setMaximumSize( QGuiApplication::primaryScreen()->availableSize() );
    adjustSize();
 }
 
@@ -181,7 +179,7 @@ void US_vHW_Enhanced::load( void )
    data_plot1->setCanvasBackground( Qt::black );
    data_plot2->setCanvasBackground( Qt::black );
    int bord = height() - data_plot1->height() - data_plot2->height() + 12;
-   int mxht = qApp->desktop()->height() - bord;
+   int mxht = QGuiApplication::primaryScreen()->availableSize().height() - bord;
    int p1ht = ( mxht * 400 ) / 650;
    int p2ht = mxht - p1ht;
    p1ht     = qMin( p1ht, 400 );
@@ -194,8 +192,8 @@ DbgLv(1) << "vhw: mxht p1ht p2ht" << mxht << p1ht << p2ht;
 
    gpick      = new US_PlotPicker( data_plot1 );
    gpick->setStateMachine( new QwtPickerClickPointMachine() );
-   connect( gpick,    SIGNAL( mouseDown(  const QwtDoublePoint& ) ),
-            this,       SLOT( groupClick( const QwtDoublePoint& ) ) );
+   connect( gpick,    SIGNAL( mouseDown(  const QPointF& ) ),
+            this,       SLOT( groupClick( const QPointF& ) ) );
    groupstep   = NONE;
 
    pb_selegr->setEnabled( true );
@@ -891,8 +889,8 @@ kcalls[7]+=1;QDateTime sttime=QDateTime::currentDateTime();
 //*TIMING
    double plato  = 0.0;
    int j2  = edata->xindex( edata->plateau );      // Index plateau radius
-   int j1  = max( 0, ( j2 - PA_POINTS ) );         // Point to 20 points before
-       j2  = min( valueCount, ( j2 + PA_POINTS + 1 ) );
+   int j1  = qMax( 0, ( j2 - PA_POINTS ) );         // Point to 20 points before
+       j2  = qMin( valueCount, ( j2 + PA_POINTS + 1 ) );
                                                    //  and 20 points after
    for ( int jj = j1; jj < j2; jj++ )    // Sum 41 points centered at the
       plato += dscan->rvalues[ jj ];     //  scan plateau radial position
@@ -1230,7 +1228,7 @@ DbgLv(1) << "  bdiff_coef" << bdcoef << " = RT/(D1*sqrt(D2/D3))";
 }
 
 // Handle mouse clicks for selecting vH-W groups
-void US_vHW_Enhanced::groupClick( const QwtDoublePoint& p )
+void US_vHW_Enhanced::groupClick( const QPointF& p )
 {
    QwtPlotMarker* marker;
    QwtText        label;
@@ -1951,7 +1949,7 @@ DbgLv(1) << "    KDECR>2  jrelp prevy curry" << jrelp << prevy << curry;
 DbgLv(1) << "    JRELP" << jrelp << "KF" << kf;
    if ( jrelp < 0  ||  jrelp > ( kf - 2 ) )
    {
-      jrelp      = min( 2, ( kf - 1 ) );
+      jrelp      = qMin( 2, ( kf - 1 ) );
 DbgLv(1) << "     NO z-cross/k-decr, so default jrelp" << jrelp;
    }
 

@@ -321,9 +321,9 @@ void US_GetRun::deleteRun( void )
       tr( "Warning" ),
       tr( "Are you sure you want to delete this run from the DB? " ) +
       tr( "This action is not reversible. Proceed? "               ),
-      tr( "&OK" ), tr( "&Cancel" ),
-      0, 0, 1 );
-   if ( status != 0 ) return;
+      QMessageBox::Ok | QMessageBox::Cancel,
+      QMessageBox::Cancel );
+   if ( status != QMessageBox::Ok ) return;
 
    int ndx = tw ->currentRow();
    QString expID = tw ->item( ndx, 2 )->text().simplified();

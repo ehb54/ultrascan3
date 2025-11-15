@@ -2,6 +2,7 @@
 #include "us_load_auc.h"
 #include "us_csv_loader.h"
 #include <QGuiApplication>
+#include <qwt_scale_div.h>
 
 US_ConvertScan::US_ConvertScan() : US_Widgets()
 {
@@ -199,7 +200,7 @@ US_ConvertScan::US_ConvertScan() : US_Widgets()
     left_lyt->addLayout(status_lyt);
     left_lyt->addLayout(close_lyt);
     left_lyt->setSpacing(1);
-    left_lyt->setMargin(0);
+    left_lyt->setContentsMargins( 0, 0, 0, 0 );
 
     QFrame* frm_left = new QFrame();
     frm_left->setLayout(left_lyt);
@@ -249,7 +250,7 @@ US_ConvertScan::US_ConvertScan() : US_Widgets()
     main_lyt->addWidget(frm_left, 0);
     main_lyt->addLayout(right_lyt, 1);
     main_lyt->setSpacing(1);
-    main_lyt->setMargin(1);
+    main_lyt->setContentsMargins( 1, 1, 1, 1 );
     setLayout(main_lyt);
 
     picker_abs = new US_PlotPicker(qwtplot_abs);
@@ -272,7 +273,11 @@ US_ConvertScan::US_ConvertScan() : US_Widgets()
     connect(pb_default, &QPushButton::clicked, this, &US_ConvertScan::default_region);
     // connect(ct_smooth, &QwtCounter::valueChanged, this, &US_ConvertScan::update_scan_smooth);
     connect(ct_maxod, &QwtCounter::valueChanged, this, &US_ConvertScan::plot_absorbance);
+#if QT_VERSION < QT_VERSION_CHECK(6, 7, 0)
     connect(chkb_abs_int, &QCheckBox::stateChanged, this, &US_ConvertScan::plot_ref_state);
+#else
+    connect(chkb_abs_int, &QCheckBox::checkStateChanged, this, &US_ConvertScan::plot_ref_state);
+#endif
 }
 
 void US_ConvertScan::plot_ref_state() {
@@ -490,7 +495,7 @@ int US_ConvertScan::read_auc(QVector<US_DataIO::RawData>& rawdata,
 
     QFileInfo finfo(working_dir);
     QString run_id = finfo.baseName();
-    QRegExp re( "[^A-Za-z0-9_-]" );
+    QRegularExpression re( "[^A-Za-z0-9_-]" );
     bool run_id_changed = false;
     int reIdx = run_id.indexOf(re, 0);
     if (reIdx >=0) {
@@ -843,7 +848,7 @@ void US_ConvertScan::pick_region(){
     plot_absorbance();
 }
 
-void US_ConvertScan::mouse_click(const QwtDoublePoint& point){
+void US_ConvertScan::mouse_click(const QPointF& point){
     double x = point.x();
     int row = tb_triple->currentRow();
     double min_x = intensity_data.at(ccw_items.at(row).rawdata_ids.at(0)).xvalues.first();
@@ -894,9 +899,9 @@ bool US_ConvertScan::set_abs_runid(QString& runid) {
     lyt2->addLayout(lyt1);
     lyt2->addStretch(1);
     lyt2->addWidget(buttons);
-    lyt2->setMargin(1);
+    lyt2->setContentsMargins( 1, 1, 1, 1 );
     lyt2->setSpacing(2);
-    lyt2->setMargin(2);
+    lyt2->setContentsMargins( 2, 2, 2, 2 );
     dialog->setLayout(lyt2);
     dialog->setMinimumWidth(600);
     dialog->setFixedHeight(75);
@@ -1736,8 +1741,8 @@ bool US_ConvertScan::linear_interpolation(const QVector<double>& xt_vals,
                                           QVector<double>& x_vals,
                                           QVector<double>& y_vals) {
     if (x_vals.size() != y_vals.size()) return false;
-    const double *xtp = xt_vals.constBegin();
-    double *xp = x_vals.begin();
+    auto xtp = xt_vals.constBegin();
+    auto xp = x_vals.begin();
     if (x_vals.size() == xt_vals.size()) {
         bool eq = true;
         for (int ii = 0; ii < x_vals.size(); ii++) {
@@ -1751,7 +1756,7 @@ bool US_ConvertScan::linear_interpolation(const QVector<double>& xt_vals,
         if (eq) return true;
     }
 
-    double *yp = y_vals.begin();
+    auto yp = y_vals.begin();
     int np_x = x_vals.size();
     int np_xt = xt_vals.size();
     QVector<double> yo_vals;

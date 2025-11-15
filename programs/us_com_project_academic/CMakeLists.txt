@@ -180,7 +180,7 @@ target_include_directories(us_comproject_academic PRIVATE
 # Link libraries
 target_link_libraries(us_comproject_academic PRIVATE
         us_program_common
-        Qt5::DataVisualization
+        Qt::DataVisualization
         )
 
 # Install

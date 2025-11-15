@@ -47,7 +47,11 @@ endif()
 # =============================================================================
 # CMAKE CONFIGURATION
 # =============================================================================
-set(CMAKE_CXX_STANDARD 14)
+if(USE_QT6)
+    set(CMAKE_CXX_STANDARD 17)
+else()
+    set(CMAKE_CXX_STANDARD 14)
+endif()
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(BUILD_SHARED_LIBS ON)
@@ -116,6 +120,7 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/admin/cmake")
 # =============================================================================
 option(US3_NO_DB "Build without database support (for supercomputer backends)" OFF)
 option(US3_BUILD_PROGRAMS "Build application programs" ON)
+option(USE_QT6 "Use Qt6 instead of Qt5" OFF)
 
 # High-level profile to make builds scriptable:
 #   APP  = desktop/user build (GUI + programs + DB)
@@ -125,7 +130,8 @@ set(US3_PROFILE "" CACHE STRING "UltraScan3 build profile: APP | TEST | HPC")
 set_property(CACHE US3_PROFILE PROPERTY STRINGS APP TEST HPC)
 
 # Lower-level knob used by gui/programs to decide static vs shared for US3 libs
-option(US3_PREFER_STATIC "Prefer UltraScan3 static libraries when available" OFF)
+option(US3_PREFER_STATIC "Prefer UltraScan3 static libraries when available" ON)
+option(BUILD_TESTING "Build Testing" OFF)
 
 # Apply profile -> concrete options
 if(US3_PROFILE STREQUAL "APP")
@@ -176,48 +182,97 @@ if(UNIX AND NOT APPLE)
 endif()
 
 # Find Qt5
-find_package(Qt5 REQUIRED COMPONENTS
-        Core
-        Widgets
-        Gui
-        Network
-        Sql
-        Xml
-        Svg
-        OpenGL
-        PrintSupport
-        DataVisualization
-        )
+if(USE_QT6)
+    find_package(Qt6 REQUIRED COMPONENTS
+            Core
+            Widgets
+            Gui
+            Network
+            Sql
+            Xml
+            Svg
+            OpenGL
+            PrintSupport
+            DataVisualization
+            OpenGLWidgets
+            )
+    set(QT_VERSION_MAJOR 6)
+    set(QT_VERSION_BASE "Qt6")
+    set(QT_VERSION_BASE_LOWER "qt6")
+else()
+    find_package(Qt5 REQUIRED COMPONENTS
+            Core
+            Widgets
+            Gui
+            Network
+            Sql
+            Xml
+            Svg
+            OpenGL
+            PrintSupport
+            DataVisualization
+    )
+    set(QT_VERSION_MAJOR 5)
+    set(QT_VERSION_BASE "Qt5")
+    set(QT_VERSION_BASE_LOWER "qt5")
+endif()
+
+if(NOT TARGET Qt::Core)
+    if(USE_QT6)
+        add_library(Qt::Core ALIAS Qt6::Core)
+        add_library(Qt::Widgets ALIAS Qt6::Widgets)
+        add_library(Qt::OpenGL ALIAS Qt6::OpenGL)
+        add_library(Qt::Gui ALIAS Qt6::Gui)
+        add_library(Qt::Network ALIAS Qt6::Network)
+        add_library(Qt::Xml ALIAS Qt6::Xml)
+        add_library(Qt::Svg ALIAS Qt6::Svg)
+        add_library(Qt::Sql ALIAS Qt6::Sql)
+        add_library(Qt::PrintSupport ALIAS Qt6::PrintSupport)
+        add_library(Qt::DataVisualization ALIAS Qt6::DataVisualization)
+        add_library(Qt::OpenGLWidgets ALIAS Qt6::OpenGLWidgets)
+    else()
+        add_library(Qt::Core ALIAS Qt5::Core)
+        add_library(Qt::Widgets ALIAS Qt5::Widgets)
+        add_library(Qt::OpenGL ALIAS Qt5::OpenGL)
+        add_library(Qt::Gui ALIAS Qt5::Gui)
+        add_library(Qt::Network ALIAS Qt5::Network)
+        add_library(Qt::Xml ALIAS Qt5::Xml)
+        add_library(Qt::Svg ALIAS Qt5::Svg)
+        add_library(Qt::Sql ALIAS Qt5::Sql)
+        add_library(Qt::PrintSupport ALIAS Qt5::PrintSupport)
+        add_library(Qt::DataVisualization ALIAS Qt5::DataVisualization)
+    endif()
+endif()
 
 # ============================================================================
 # Qt Dynamic Linking Configuration - ALL PLATFORMS
 # ============================================================================
 
 # Verify Qt is not static (with proper error handling)
-if(TARGET Qt5::Core)
-    get_target_property(QT_CORE_TYPE Qt5::Core TYPE)
-    get_target_property(QT_CORE_LOCATION Qt5::Core LOCATION)
+if(TARGET Qt::Core)
+    get_target_property(QT_CORE_TYPE Qt::Core TYPE)
+    get_target_property(QT_CORE_LOCATION Qt::Core LOCATION)
 
-    message(STATUS "Qt5::Core type: ${QT_CORE_TYPE}")
-    message(STATUS "Qt5::Core location: ${QT_CORE_LOCATION}")
+    message(STATUS "Qt::Core type: ${QT_CORE_TYPE}")
+    message(STATUS "Qt::Core location: ${QT_CORE_LOCATION}")
 
     if(QT_CORE_TYPE STREQUAL "STATIC_LIBRARY")
-        message(FATAL_ERROR "Qt5 must be built as shared libraries")
+        message(FATAL_ERROR "Qt must be built as shared libraries")
     elseif(QT_CORE_TYPE MATCHES "SHARED|MODULE|INTERFACE")
-        message(STATUS "Qt5 is using dynamic/shared libraries - OK")
+        message(STATUS "Qt is using dynamic/shared libraries - OK")
     else()
         # For UNKNOWN or IMPORTED types, check the actual file
         if(QT_CORE_LOCATION)
             if(QT_CORE_LOCATION MATCHES "\\.(dylib|so|dll)$")
-                message(STATUS "Qt5 appears to be dynamic (based on file extension) - OK")
+                message(STATUS "Qt appears to be dynamic (based on file extension) - OK")
             else()
-                message(WARNING "Qt5::Core type is ${QT_CORE_TYPE}, location: ${QT_CORE_LOCATION}")
+                message(WARNING "Qt::Core type is ${QT_CORE_TYPE}, location: ${QT_CORE_LOCATION}")
                 message(WARNING "Cannot definitively determine if Qt is static or dynamic - proceeding anyway")
             endif()
         endif()
     endif()
 else()
-    message(WARNING "Qt5::Core target not found - skipping static/dynamic check")
+    message(WARNING "Qt::Core target not found - skipping static/dynamic check")
 endif()
 
 add_definitions(-DQT_SHARED)
@@ -229,9 +284,9 @@ if(APPLE)
 
     # Ensure all Qt modules have proper linking
     foreach(QT_MODULE Core Widgets Gui Network Sql Xml Svg OpenGL PrintSupport DataVisualization)
-        if(TARGET Qt5::${QT_MODULE})
-            get_target_property(QT_MOD_TYPE Qt5::${QT_MODULE} TYPE)
-            message(STATUS "  Qt5::${QT_MODULE} type: ${QT_MOD_TYPE}")
+        if(TARGET Qt::${QT_MODULE})
+            get_target_property(QT_MOD_TYPE Qt::${QT_MODULE} TYPE)
+            message(STATUS "  Qt::${QT_MODULE} type: ${QT_MOD_TYPE}")
         endif()
     endforeach()
 
@@ -308,7 +363,7 @@ add_custom_target(us3_validate_qrc ALL
 add_library(us3_resources STATIC "${US3_QRC_XML}")
 set_target_properties(us3_resources PROPERTIES AUTOMOC OFF)
 add_dependencies(us3_resources us3_validate_qrc)
-target_link_libraries(us3_resources PRIVATE Qt5::Core Qt5::Gui)
+target_link_libraries(us3_resources PRIVATE Qt::Core Qt::Gui)
 add_library(UltraScan3::Resources ALIAS us3_resources)
 
 # Install editable trees/files we excluded from the QRC
@@ -329,8 +384,12 @@ endforeach()
 # Find Dependencies
 # ============================================================================
 
-if(US3_BUILD_TESTS)
-    find_package(Qt5 REQUIRED COMPONENTS Test)
+if(BUILD_TESTING)
+    if(USE_QT6)
+        find_package(Qt6 REQUIRED COMPONENTS Test)
+    else()
+        find_package(Qt5 REQUIRED COMPONENTS Test)
+    endif()
 endif()
 
 # Find OpenGL
@@ -351,6 +410,7 @@ if(unofficial-qwt_FOUND)
     if(NOT TARGET Qwt::Qwt)
         add_library(Qwt::Qwt ALIAS unofficial::qwt::qwt)
     endif()
+    set(QWT_VERSION ${unofficial-qwt_VERSION})
 else()
     message(STATUS "Searching for system Qwt...")
     find_package(PkgConfig QUIET)
@@ -452,13 +512,15 @@ if(NOT US3_NO_DB)
         if(NOT TARGET MySQL::Client)
             add_library(MySQL::Client ALIAS unofficial::libmariadb)
         endif()
+        set(MYSQL_MARIADB_VERSION ${unofficial-libmariadb_VERSION})
+        set(MYSQL_MARIADB_MODULE "libmariadb")
     else()
         message(STATUS "Searching for system MySQL/MariaDB...")
         find_package(PkgConfig QUIET)
         if(PkgConfig_FOUND)
             pkg_check_modules(MYSQL QUIET mysqlclient)
             if(NOT MYSQL_FOUND)
-                pkg_check_modules(MYSQL QUIET mariadb)
+                pkg_check_modules(MYSQL QUIET mariadb libmariadb)
             endif()
         endif()
 
@@ -474,6 +536,8 @@ if(NOT US3_NO_DB)
             endif()
         else()
             message(STATUS "Found system MySQL via pkg-config")
+            set(MYSQL_MARIADB_VERSION ${MYSQL_VERSION})
+            set(MYSQL_MARIADB_MODULE ${MYSQL_MODULE_NAME})
         endif()
 
         if(MYSQL_FOUND)
@@ -636,16 +700,20 @@ message(STATUS "")
 message(STATUS "Options:")
 message(STATUS "  Profile: ${US3_PROFILE}")
 message(STATUS "  NO_DB support: ${US3_NO_DB}")
-message(STATUS "  Build tests: ${US3_BUILD_TESTS}")
+message(STATUS "  Build tests: ${BUILD_TESTING}")
 message(STATUS "  Build programs: ${US3_BUILD_PROGRAMS}")
 message(STATUS "  Prefer static US3 libs: ${US3_PREFER_STATIC}")
 message(STATUS "")
 message(STATUS "Dependencies:")
-message(STATUS "  Qt5 version: ${Qt5_VERSION}")
+if(USE_QT6)
+    message(STATUS "  Qt version: ${Qt6_VERSION}")
+else ()
+    message(STATUS "  Qt version: ${Qt5_VERSION}")
+endif()
 message(STATUS "  Qwt version: ${QWT_VERSION}")
 if(NOT US3_NO_DB)
-    message(STATUS "  MySQL found: ${MYSQL_FOUND}")
+    message(STATUS "  MySQL found: ${MYSQL_MARIADB_VERSION} ${MYSQL_MARIADB_MODULE}")
 endif()
-message(STATUS "  LibArchive found: ${LIBARCHIVE_FOUND}")
-message(STATUS "  OpenSSL  found: ${OPENSSL_FOUND} (${OPENSSL_VERSION})")
+message(STATUS "  LibArchive version: ${LibArchiv_VERSION}")
+message(STATUS "  OpenSSL  version: ${OPENSSL_VERSION}")
 message(STATUS "")

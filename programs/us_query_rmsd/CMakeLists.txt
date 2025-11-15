@@ -143,7 +143,7 @@ target_include_directories(us_query_rmsd PRIVATE
 # Link libraries
 target_link_libraries(us_query_rmsd PRIVATE
         us_program_common
-        Qt5::DataVisualization
+        Qt::DataVisualization
         )
 
 # Install

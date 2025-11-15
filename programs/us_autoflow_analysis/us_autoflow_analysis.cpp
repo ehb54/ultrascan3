@@ -2739,7 +2739,7 @@ double d20w=sc->D;
 
 
 //Slot to show overlay plot
-void US_Analysis_auto::show_overlay( QString triple_stage )
+void US_Analysis_auto::show_overlay( const QString& triple_stage )
 {
   /** Stop update timer for now? ***/
   if ( timer_update -> isActive() ) 
@@ -3234,7 +3234,7 @@ void US_Analysis_auto::delete_jobs_at_fitmen( QMap < QString, QString > & triple
 }
 
 //Slot to delete Job
-void US_Analysis_auto::delete_job( QString triple_stage )
+void US_Analysis_auto::delete_job( const QString& triple_stage )
 {
   QString tr_st = triple_stage.simplified();
   tr_st.replace( " ", "" );
@@ -3913,20 +3913,15 @@ QGroupBox * US_Analysis_auto::createGroup( QString & triple_name )
   // Disable delete btn by default
   pb_delete->setEnabled( false );
 
-  signalMapper = new QSignalMapper(this);
-  connect(signalMapper, SIGNAL( mapped( QString ) ), this, SLOT( delete_job( QString ) ) );
-  connect( pb_delete, SIGNAL( clicked() ), signalMapper, SLOT(map()));
-  signalMapper->setMapping ( pb_delete, triple_name );
-
-
+  // Extend the parameterless default signal with the triple_name before calling delete_job slot
+  connect( pb_delete, &QPushButton::clicked, this, [this, triple_name] { delete_job( triple_name ); } );
+  
   // Disable overlay btn by default
   pb_overlay->setEnabled( false );
 
-  signalMapper_overlay = new QSignalMapper(this);
-  connect(signalMapper_overlay, SIGNAL( mapped( QString ) ), this, SLOT( show_overlay( QString ) ) );
-  connect( pb_overlay, SIGNAL( clicked() ), signalMapper_overlay, SLOT(map()));
-  signalMapper_overlay->setMapping ( pb_overlay, triple_name );
-  
+  // Extend the parameterless default signal with the triple_name before calling show_overlay slot
+  connect( pb_overlay, &QPushButton::clicked, this, [this, triple_name] { show_overlay( triple_name ); } );
+
   return groupBox;
 }
 
@@ -4245,9 +4240,9 @@ void US_Analysis_auto::scan_dbase_auto( QMap <QString, QString> & triple_informa
    int         nfexss = 0;         // Number of fit files left as they existed
 
    QString invID = triple_information[ "invID" ];
-
-   QRegExp fmIter  = QRegExp( "i\?\?-[mb]*",
-         Qt::CaseSensitive, QRegExp::Wildcard );
+   // The description of models from a parameter fit always contains "i{iteration number}-"
+   // followed by the parameter value as integer with a leading m or b
+   QRegularExpression fmIter(  "i\\d*-([mb]\\d*)+" ) ;
 
    //QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
 
@@ -4283,7 +4278,7 @@ DbgLv(1) << "DbSc:     TRUNC: modelID" << modelID << "descr" << descript;
       double  meniscus   = db.value( 4 ).toString().toDouble();
       double  bottom     = 0.0;
       QDateTime lmtime   = db.value( 7 ).toDateTime();
-      lmtime.setTimeSpec( Qt::UTC );
+      lmtime.setTimeZone( QTimeZone::utc() );
       QString ansysID    = descript.section( '.', -2, -2 );
       QString iterID     = ansysID .section( '_', -1, -1 );
 DbgLv(1) << "DbSc:   modelID vari meni" << modelID << variance << meniscus
@@ -4367,7 +4362,7 @@ DbgLv(1) << "DbSc: tmodels size" << tmodels.size() << "ted sizes"
       QString editID     = tedIDs [ ii ];
 
       QDateTime lmtime   = db.value( 6 ).toDateTime();
-      lmtime.setTimeSpec( Qt::UTC );
+      lmtime.setTimeZone( QTimeZone::utc() );
       QString ansysID    = descript.section( '.', -2, -2 );
       QString iterID     = ansysID .section( '_', -1, -1 );
 //DbgLv(1) << "DbSc:   dscr1" << descript1 << "dcs" << descript;
@@ -4859,7 +4854,7 @@ void US_Analysis_auto::load_data_auto( const QString& text_content  )
 {
    int count         = 0;
    QString contents  = text_content;
-   contents.replace( QRegExp( "[^0-9eE\\.\\n\\+\\-]+" ), " " );
+   contents.replace( QRegularExpression( "[^0-9eE\\.\\n\\+\\-]+" ), " " );
 
    QStringList lines = contents.split( "\n", Qt::SkipEmptyParts );
    QStringList parsed;

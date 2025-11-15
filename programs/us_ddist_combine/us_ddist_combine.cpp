@@ -1,7 +1,7 @@
 //! \file us_ddist_combine.cpp
 
 #include <QApplication>
-
+#include <qwt_scale_div.h>
 #include "us_ddist_combine.h"
 #include "us_select_rundd.h"
 #include "us_license_t.h"
