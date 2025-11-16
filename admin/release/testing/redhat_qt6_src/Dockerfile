@@ -30,7 +30,7 @@ RUN set -eux; \
     git ca-certificates curl-minimal \
     cmake python3 python3-pip ninja-build \
     bison flex gperf pkgconf-pkg-config \
-    mpich \
+    mpich mpich-devel \
     libX11-devel libXext-devel libXi-devel libXrandr-devel libXrender-devel \
     libxcb-devel xcb-util*-devel libxkbcommon-devel libxkbcommon-x11-devel \
     wayland-devel wayland-protocols-devel \
@@ -152,6 +152,7 @@ RUN set -eux; \
 # local.pri files
 ADD local.pri.somo /ultrascan3/us_somo/develop/local.pri
 ADD local.pri.gui  /ultrascan3/local.pri
+ADD local.pri.mpi  /ultrascan3/local.pri.mpi
 
 # small QoL bits
 RUN set -eux; \
