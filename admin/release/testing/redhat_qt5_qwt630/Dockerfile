@@ -29,7 +29,7 @@ ENV QWTDIR=/qwt-$qwt_version
 # basic install stuff
 
 RUN dnf update -y
-RUN dnf install -y yum-utils dnf-plugins-core && dnf config-manager --set-enabled powertools && dnf groupinstall -y "Development Tools" && dnf install -y tzdata git openssl-devel bc curl wget zlib-devel pkg-config re2c vim emacs-nox xorg-x11* $apt_python_version glib2-devel postgresql-devel at-spi2-core-devel libjpeg-devel fontconfig-devel libarchive-devel && alternatives --set python /usr/bin/python3 && yum-builddep -y qt5-devel && dnf install -y libxcb* xcb-util* libX11* libxkbcommon* mesa-lib* mariadb-devel rsync && dnf -y clean all && rm -rf /var/cache/dnf
+RUN dnf install -y yum-utils dnf-plugins-core && dnf config-manager --set-enabled powertools && dnf groupinstall -y "Development Tools" && dnf install -y tzdata git openssl-devel bc curl wget zlib-devel pkg-config mpich re2c vim emacs-nox xorg-x11* $apt_python_version glib2-devel postgresql-devel at-spi2-core-devel libjpeg-devel fontconfig-devel libarchive-devel && alternatives --set python /usr/bin/python3 && yum-builddep -y qt5-devel && dnf install -y libxcb* xcb-util* libX11* libxkbcommon* mesa-lib* mariadb-devel rsync && dnf -y clean all && rm -rf /var/cache/dnf
 
 ## required for qt to find xcb-xlib deps
 # RUN ln -s /lib64/libXext.so.[0-9] /lib64/libXext.so

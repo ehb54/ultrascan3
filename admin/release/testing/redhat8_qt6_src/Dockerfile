@@ -30,6 +30,7 @@ RUN set -eux; \
     git ca-certificates curl \
     cmake python3 python3-pip ninja-build \
     bison flex gperf pkgconf-pkg-config \
+    mpich \
     libX11-devel libXext-devel libXi-devel libXrandr-devel libXrender-devel \
     libxcb-devel xcb-util*-devel libxkbcommon-devel libxkbcommon-x11-devel \
     wayland-devel wayland-protocols-devel \

@@ -26,6 +26,7 @@ RUN set -eux; \
     # essentials
     build-essential git ca-certificates curl wget xz-utils binutils file \
     cmake ninja-build python3 python3-pip pkg-config bison flex gperf \
+    mpich \
     # X11 / xcb / Wayland / GL stack
     libx11-dev libxext-dev libxi-dev libxrandr-dev libxrender-dev \
     libxcb1-dev libxkbcommon-dev libxkbcommon-x11-dev \
