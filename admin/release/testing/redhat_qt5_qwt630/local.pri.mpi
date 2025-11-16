@@ -32,7 +32,7 @@ unix {
   # MPI path and libs for comet
 ##  QMAKE_CC   = icpc
 ##  QMAKE_CXX  = icpc
-  INCLUDEPATH   += /usr/include/x86_64-linux-gnu/mpich/
-  MPILIBS    = -L/usr/lib/x86_64-linux-gnu -lmpich
+  INCLUDEPATH  += $$(MPI_INCLUDE)
+  MPILIBS      = -L$$(MPI_LIB) -lmpich
 }
 

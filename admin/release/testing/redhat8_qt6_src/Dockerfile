@@ -180,6 +180,20 @@ RUN set -eux; \
 # ADD qwt_compat.h /qwt-${qwt_version}/src/qwt_compat.h
 # RUN sed -i '3i#include <QtCore5Compat>' /ultrascan3/us_somo/develop/include/us_extern.h
 
+ENV PATH="${QTDIR}/bin:${QTDIR}/libexec:${PATH}"
+
+# Set MPI-specific environment variables
+ENV MPI_BIN "/usr/lib64/mpich/bin"
+ENV MPI_SYSCONFIG "/etc/mpich-x86_64"
+ENV MPI_INCLUDE "/usr/include/mpich-x86_64"
+ENV MPI_LIB "/usr/lib64/mpich/lib"
+ENV MPI_MAN "/usr/share/man/mpich-x86_64"
+ENV MPI_COMPILER "mpich-x86_64"
+ENV MPI_HOME "/usr/lib64/mpich"
+ENV PATH "$MPI_BIN:$PATH"
+ENV LD_LIBRARY_PATH "$MPI_LIB:$LD_LIBRARY_PATH"
+ENV PKG_CONFIG_PATH "$MPI_LIB/pkgconfig:$PKG_CONFIG_PATH"
+
 WORKDIR /ultrascan3
 
 SHELL ["/bin/bash", "-lc"]
