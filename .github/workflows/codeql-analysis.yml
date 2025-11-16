@@ -16,6 +16,11 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
+    paths:
+      - '**/*.[chiopru]+'
+      - '**/**/*.[chiopru]+'
+      - '**/**/**/*.[chiopru]+'
+      - '*.[chiopru]+'
   schedule:
     - cron: '20 18 * * 1'
 
@@ -31,10 +36,11 @@ jobs:
       fail-fast: false
       matrix:
         language: [cpp]
+        container: ["ehb1/us3comp:latest", "ehb1/usbuildtest:rh8.10-qt6.10.0-qwt6.3.0", "ehb1/usbuildtest:rh8.10-qt5.15.18-qwt6.3.0" ]
 
     # Specify the container in which actions will run
     container:
-      image: ehb1/us3comp:latest
+      image: ${{ matrix.container }}
       options: --cpus 2
 
     steps:
@@ -73,10 +79,11 @@ jobs:
       fail-fast: false
       matrix:
         language: [cpp]
+        container: ["ehb1/us3comp:latest", "ehb1/usbuildtest:rh8.10-qt6.10.0-qwt6.3.0", "ehb1/usbuildtest:rh8.10-qt5.15.18-qwt6.3.0" ]
 
     # Specify the container in which actions will run
     container:
-      image: ehb1/us3comp:latest
+      image: ${{ matrix.container }}
       options: --cpus 2
 
     steps:
@@ -125,10 +132,11 @@ jobs:
       fail-fast: false
       matrix:
         language: [cpp]
+        container: ["ehb1/us3comp:latest", "ehb1/usbuildtest:rh8.10-qt6.10.0-qwt6.3.0", "ehb1/usbuildtest:rh8.10-qt5.15.18-qwt6.3.0" ]
 
     # Specify the container in which actions will run
     container:
-      image: ehb1/us3comp:latest
+      image: ${{ matrix.container }}
       options: --cpus 2
 
     steps:
