@@ -627,7 +627,7 @@ US_PlotConfig::US_PlotConfig( QwtPlot* current_plot, QWidget* p,
      QString padding_v = style.mid( kk ).split(": ")[1];
      padding_v = padding_v. simplified();
      
-     kk            = padding_v.leftRef( padding_v.indexOf( "px" ) ).toInt();
+     kk            = padding_v.left( padding_v.indexOf( "px" ) ).toInt();
              
      // kk            = style.mid( kk ).toInt();
      kk            = qMax( 0, ( kk / 2 - 1 ) );
@@ -1500,9 +1500,9 @@ void US_PlotConfig::savePlotProfile( void )
       padding_v = padding_v.simplified();
       padding_v.indexOf( "px" ); 
       qDebug() << " padding_v --         " <<  padding_v.left( padding_v.indexOf( "px" ) );
-      qDebug() << " padding_v.toInt() -- " <<  padding_v.leftRef( padding_v.indexOf( "px" ) ).toInt();
+      qDebug() << " padding_v.toInt() -- " <<  padding_v.left( padding_v.indexOf( "px" ) ).toInt();
       
-      kk            = padding_v.leftRef( padding_v.indexOf( "px" ) ).toInt();
+      kk            = padding_v.left( padding_v.indexOf( "px" ) ).toInt();
     }
   profile_obj.insert("Border Margin", QString::number(kk));
 
