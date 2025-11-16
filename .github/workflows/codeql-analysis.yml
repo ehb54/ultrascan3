@@ -25,7 +25,46 @@ on:
     - cron: '20 18 * * 1'
 
 jobs:
+  changed-files:
+    runs-on: ubuntu-latest  # windows-latest || macos-latest
+    name: Test changed-files
+    outputs:
+      # reference: https://github.com/tj-actions/changed-files#outputs-
+      somo: ${{ steps.changed-files.outputs.somo_any_modified == 'true' }}
+      mpi: ${{ steps.changed-files.outputs.mpi_any_modified == 'true' }}
+      gui: ${{ steps.changed-files.outputs.programs_any_modified == 'true' }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Get changed files
+        id: changed-files
+        uses: tj-actions/changed-files@v41
+        with:
+          files_yaml: |
+            utils: &utils
+              - library.pri
+              - utils/**
+            qwtplot3d: &qwtplot3d
+              - library.pri
+              - qwtplot3d/**
+            gui: &gui
+              - *utils
+              - *qwtplot3d
+              - gui/**
+            programs: &programs
+              - *gui
+              - gui.pri
+              - programs/**
+            mpi: &mpi
+              - *utils
+              - gui.pri
+              - programs/*/us_mpi_analysis/**
+            somo: &somo
+              - somo/**
+              - us_somo/**
+           
   analyze-mpi:
+    needs: [ changed-files ]
+    if: ${{ needs.changed-files.outputs.mpi == 'true' }}
     name: Analyze mpi
     runs-on: ubuntu-latest
     permissions:
@@ -69,6 +108,8 @@ jobs:
         uses: github/codeql-action/analyze@v4
 
   analyze-gui:
+    needs: [ changed-files ]
+    if: ${{ needs.changed-files.outputs.gui == 'true' }}
     name: Analyze gui
     runs-on: ubuntu-latest
     permissions:
@@ -122,6 +163,8 @@ jobs:
         uses: github/codeql-action/analyze@v4
 
   analyze-somo:
+    needs: [ changed-files ]
+    if: ${{ needs.changed-files.outputs.somo == 'true' }}
     name: Analyze somo
     runs-on: ubuntu-latest
     permissions:
