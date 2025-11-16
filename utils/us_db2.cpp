@@ -548,7 +548,7 @@ bool US_DB2::next( void )
 #endif
 
 #ifdef NO_DB
-QVariant US_DB2::value( unsigned ){ return QVariant::Invalid; }
+QVariant US_DB2::value( unsigned ){ return QVariant(); }
 #else
 QVariant US_DB2::value( unsigned index )
 {
