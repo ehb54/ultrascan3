@@ -182,12 +182,6 @@ jobs:
       options: --cpus 2
 
     steps:
-#      - name:️ Clean up stale repository directory to prevent confusion
-#        run: |
-#          REPO_DIR="/ultrascan3"
-#          echo "Attempting to remove $REPO_DIR..."
-#          rm -rf "$REPO_DIR" || true
-#          echo "Cleanup complete."
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
