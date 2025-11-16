@@ -40,11 +40,14 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
       - name: Install libarchive
         run: |
           apt-get install -y libarchive-dev
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
+        uses: github/codeql-action/init@v4
         with:
           languages: ${{ matrix.language }}
       - name: Build
@@ -60,7 +63,7 @@ jobs:
           make -j4
           cd ../..
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
+        uses: github/codeql-action/analyze@v4
 
   analyze-gui:
     name: Analyze gui
@@ -82,11 +85,13 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
       - name: Install libarchive
         run: |
           apt-get install -y libarchive-dev
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
+        uses: github/codeql-action/init@v4
         with:
           languages: ${{ matrix.language }}
       - name: Build
@@ -112,7 +117,7 @@ jobs:
           ( cd $d && qmake && make -j4 )
           done
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
+        uses: github/codeql-action/analyze@v4
 
   analyze-somo:
     name: Analyze somo
@@ -134,8 +139,10 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
+        uses: github/codeql-action/init@v4
         with:
           languages: ${{ matrix.language }}
       - name: Build
@@ -155,4 +162,47 @@ jobs:
           qmake us_somo.pro
           make -j4
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
+        uses: github/codeql-action/analyze@v4
+
+  analyze-gui-qt6:
+    name: Analyze gui qt6
+    runs-on: ubuntu-24.04
+    permissions:
+      security-events: write
+      actions: read
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [cpp]
+
+    # Specify the container in which actions will run
+    container:
+      image: ehb1/usbuildtest:ubuntu24.04-qt6.9.3-qwt6.3.0
+      options: --cpus 2
+
+    steps:
+      - name:️ Clean up stale repository directory to prevent confusion
+        run: |
+          REPO_DIR="/ultrascan3"
+          echo "Attempting to remove $REPO_DIR..."
+          rm -rf "$REPO_DIR" || true
+          echo "Cleanup complete."
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v4
+        with:
+          languages: ${{ matrix.language }}
+      - name: Build
+        run: |
+          cp admin/codeql/docker/local.pri.gui-qt6 local.pri
+          git config --global --add safe.directory /__w/ultrascan3/ultrascan3
+          (cd programs/us && sh revision.sh)
+          qmake
+          make -j4
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v4
+
