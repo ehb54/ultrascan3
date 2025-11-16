@@ -50,7 +50,7 @@ jobs:
         run: |
           apt-get install -y libarchive-dev
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
+        uses: github/codeql-action/init@v4
         with:
           languages: ${{ matrix.language }}
       - name: Build
@@ -66,7 +66,7 @@ jobs:
           make -j4
           cd ../..
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
+        uses: github/codeql-action/analyze@v4
 
   analyze-gui:
     name: Analyze gui
@@ -93,7 +93,7 @@ jobs:
         run: |
           apt-get install -y libarchive-dev
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
+        uses: github/codeql-action/init@v4
         with:
           languages: ${{ matrix.language }}
       - name: Build
@@ -119,7 +119,7 @@ jobs:
           ( cd $d && qmake && make -j4 )
           done
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
+        uses: github/codeql-action/analyze@v4
 
   analyze-somo:
     name: Analyze somo
@@ -143,7 +143,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
+        uses: github/codeql-action/init@v4
         with:
           languages: ${{ matrix.language }}
       - name: Build
@@ -163,4 +163,4 @@ jobs:
           qmake us_somo.pro
           make -j4
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
+        uses: github/codeql-action/analyze@v4
