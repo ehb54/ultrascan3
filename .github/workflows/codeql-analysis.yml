@@ -17,10 +17,18 @@ on:
   pull_request:
     branches: [ main ]
     paths:
-      - '**/*.[chiopru]+'
-      - '**/**/*.[chiopru]+'
-      - '**/**/**/*.[chiopru]+'
-      - '*.[chiopru]+'
+      - '**.c'
+      - '**.cpp'
+      - '**.h'
+      - '**.hpp'
+      - '**.pro'
+      - '**.pri'
+      - 'programs/main1.inc'
+      - '**CMakeLists.txt'
+      - '**.json'
+      - '**.qrc'
+      - '**.ui'
+      - '.github/workflows/codeql-analysis.yml'
   schedule:
     - cron: '20 18 * * 1'
 
@@ -40,6 +48,8 @@ jobs:
         uses: tj-actions/changed-files@v41
         with:
           files_yaml: |
+            workflow: &workflow
+              - .github/workflows/codeql-analysis.yml
             utils: &utils
               - library.pri
               - utils/**
@@ -54,17 +64,22 @@ jobs:
               - *gui
               - gui.pri
               - programs/**
+              - admin/codeql/docker/local.pri.gui
+              - *workflow
             mpi: &mpi
               - *utils
-              - gui.pri
-              - programs/*/us_mpi_analysis/**
+              - programs/us_mpi_analysis/**
+              - admin/codeql/docker/local.pri.mpi
+              - *workflow
             somo: &somo
               - somo/**
               - us_somo/**
+              - admin/codeql/docker/local.pri.somo
+              - workflow
            
   analyze-mpi:
     needs: [ changed-files ]
-    if: ${{ needs.changed-files.outputs.mpi == 'true' }}
+    if: ${{ needs.changed-files.outputs.mpi == 'true' || github.event_name == 'schedule' }}
     name: Analyze mpi
     runs-on: ubuntu-latest
     permissions:
@@ -75,7 +90,7 @@ jobs:
       fail-fast: false
       matrix:
         language: [cpp]
-        container: ["ehb1/us3comp:latest", "ehb1/usbuildtest:rh8.10-qt6.10.0-qwt6.3.0", "ehb1/usbuildtest:rh8.10-qt5.15.18-qwt6.3.0" ]
+        container: ["ehb1/usbuildtest:rh8.10-qt5.15.10-qwt6.1.6", "ehb1/usbuildtest:rh8.10-qt6.10.0-qwt6.3.0", "ehb1/usbuildtest:rh8.10-qt5.15.18-qwt6.3.0" ]
 
     # Specify the container in which actions will run
     container:
@@ -85,9 +100,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      - name: Install libarchive
-        run: |
-          apt-get install -y libarchive-dev
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v4
         with:
@@ -109,7 +121,7 @@ jobs:
 
   analyze-gui:
     needs: [ changed-files ]
-    if: ${{ needs.changed-files.outputs.gui == 'true' }}
+    if: ${{ needs.changed-files.outputs.gui == 'true' || github.event_name == 'schedule' }}
     name: Analyze gui
     runs-on: ubuntu-latest
     permissions:
@@ -120,7 +132,7 @@ jobs:
       fail-fast: false
       matrix:
         language: [cpp]
-        container: ["ehb1/us3comp:latest", "ehb1/usbuildtest:rh8.10-qt6.10.0-qwt6.3.0", "ehb1/usbuildtest:rh8.10-qt5.15.18-qwt6.3.0" ]
+        container: ["ehb1/usbuildtest:rh8.10-qt5.15.10-qwt6.1.6", "ehb1/usbuildtest:rh8.10-qt6.10.0-qwt6.3.0", "ehb1/usbuildtest:rh8.10-qt5.15.18-qwt6.3.0" ]
 
     # Specify the container in which actions will run
     container:
@@ -130,9 +142,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      - name: Install libarchive
-        run: |
-          apt-get install -y libarchive-dev
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v4
         with:
@@ -164,7 +173,7 @@ jobs:
 
   analyze-somo:
     needs: [ changed-files ]
-    if: ${{ needs.changed-files.outputs.somo == 'true' }}
+    if: ${{ needs.changed-files.outputs.somo == 'true' || github.event_name == 'schedule' }}
     name: Analyze somo
     runs-on: ubuntu-latest
     permissions:
@@ -175,7 +184,7 @@ jobs:
       fail-fast: false
       matrix:
         language: [cpp]
-        container: ["ehb1/us3comp:latest", "ehb1/usbuildtest:rh8.10-qt6.10.0-qwt6.3.0", "ehb1/usbuildtest:rh8.10-qt5.15.18-qwt6.3.0" ]
+        container: ["ehb1/usbuildtest:rh8.10-qt5.15.10-qwt6.1.6", "ehb1/usbuildtest:rh8.10-qt6.10.0-qwt6.3.0", "ehb1/usbuildtest:rh8.10-qt5.15.18-qwt6.3.0" ]
 
     # Specify the container in which actions will run
     container:
