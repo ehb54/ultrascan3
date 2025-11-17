@@ -34,7 +34,7 @@ RUN set -eux; \
     libX11-devel libXext-devel libXi-devel libXrandr-devel libXrender-devel \
     libxcb-devel xcb-util*-devel libxkbcommon-devel libxkbcommon-x11-devel \
     wayland-devel wayland-protocols-devel \
-    mesa-libGL-devel mesa-libEGL-devel libdrm-devel mesa-libgbm-devel \
+    mesa-libGL-devel mesa-libEGL-devel libdrm-devel mesa-libgbm-devel mesa-libGLU-devel \
     freetype-devel harfbuzz-devel libjpeg-turbo-devel libpng-devel \
     zlib-devel brotli-devel pcre2-devel openssl-devel \
     dbus dbus-devel cups-devel glib2-devel libicu-devel \
