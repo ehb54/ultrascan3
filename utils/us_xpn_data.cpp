@@ -1128,7 +1128,7 @@ DbgLv(1) << "XpDa:scn:    tCrprof count" << tCrprof.count();
       }
       qrec            = dbxpn.record( qrytab );
       // Get indexes to ExperimentId and RunId
-      // cols            = column_indexes( tabname, cnames, cxs );
+      cols            = column_indexes( tabname, cnames, cxs );
       int jexpid      = cnames.indexOf( "ExperimentId" );
       int jrunid      = cnames.indexOf( "RunId" );
       while ( sqry.next() )
@@ -1148,7 +1148,7 @@ DbgLv(1) << "XpDa:scn:    tCrprof count" << tCrprof.count();
          return -1;
       }
       qrec            = dbxpn.record( qrytab );
-      // cols            = column_indexes( tabname, cnames, cxs );
+      cols            = column_indexes( tabname, cnames, cxs );
       // Get indexes to ExperimentId and FugeRunProfileId
       jexpid          = cnames.indexOf( "ExperimentId" );
       int jfruid      = cnames.indexOf( "FugeRunProfileId" );
@@ -1524,7 +1524,7 @@ DbgLv(1) << "XpDa:scn:    tCrprof count" << tCrprof.count();
       qDebug() << "[TIME 10 'C'] of scan_xpndata_auto(): " << int( elapse_t.elapsed() / 1000 ) << " sec";
       
       // Get indexes to ExperimentId and RunId
-      // cols            = column_indexes( tabname, cnames, cxs );
+      cols            = column_indexes( tabname, cnames, cxs );
       int jexpid      = cnames.indexOf( "ExperimentId" );
       int jrunid      = cnames.indexOf( "RunId" );
       while ( sqry.next() )
@@ -1555,7 +1555,7 @@ DbgLv(1) << "XpDa:scn:    tCrprof count" << tCrprof.count();
 
       qDebug() << "[TIME 14 'C'] of scan_xpndata_auto(): " << int( elapse_t.elapsed() / 1000 ) << " sec";
       
-      // cols            = column_indexes( tabname, cnames, cxs );
+      cols            = column_indexes( tabname, cnames, cxs );
       // Get indexes to ExperimentId and FugeRunProfileId
       jexpid          = cnames.indexOf( "ExperimentId" );
       int jfruid      = cnames.indexOf( "FugeRunProfileId" );
