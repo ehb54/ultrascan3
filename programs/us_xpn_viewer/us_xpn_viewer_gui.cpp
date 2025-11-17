@@ -160,6 +160,7 @@ WheelBox::WheelBox( Qt::Orientation orientation, double minv, double maxv, QStri
 
 QWidget *WheelBox::createBox( Qt::Orientation orientation, double minv, double maxv, bool log ) 
 {
+    this->log_scale = log;
     d_thermo = new QwtThermo();
     d_thermo->setOrientation( orientation );
 
@@ -203,9 +204,16 @@ QWidget *WheelBox::createBox( Qt::Orientation orientation, double minv, double m
 void WheelBox::setTemp( double v, QString label )
 {
   qDebug() << "Setting Temperature!!! Value: " << v ;
-  d_thermo->setValue( v );
+  double v_mod = v;
 
-  setNum( v, label );
+  if ( log_scale )
+    {
+      v_mod = ( v_mod > 0 ) ? v_mod : 10e-9; 
+    }
+  
+  d_thermo->setValue( v_mod );
+
+  setNum( v_mod, label );
 }
 
 void WheelBox::setNum( double v, QString label )
