@@ -1028,8 +1028,7 @@ DbgLv(1) << "EGRo: inP: calib_entr" << cal_entr;
    le_dataDiskPath ->setText( rpRotor->importDataDisk );
    rpRotor->importData_absorbance_t  = ck_absorbance_t->isChecked();
    rpRotor->importData_absorbance_pa = ck_absorbance_pa->isChecked();
-   
-
+  
    //Show current oper(s) & rev(s)
    te_opers_to_assign -> setText( rpRotor->operListAssign );
    te_revs_to_assign  -> setText( rpRotor->revListAssign );
@@ -4132,6 +4131,11 @@ bool US_ExperGuiUpload::protocolToDataDisk( QStringList& msg_to_user )
   for ( int i=0; i<chann_ranges_from_dataDisk.keys().size(); ++i )
     {
       QString channame_c = chann_ranges_from_dataDisk.keys()[i];
+
+      //check for actual consistency:
+      if (!mainw->get_all_channels_dataDisk(). contains( channame_c ) )
+	  continue;
+      
       if ( !chann_ranges_from_dataDisk[ channame_c ]. isEmpty()  )
 	channames_from_dataDisk << channame_c;
     }
@@ -4154,8 +4158,10 @@ bool US_ExperGuiUpload::protocolToDataDisk( QStringList& msg_to_user )
   //Optics
   qDebug() << "chann_numbers_from_dataDisk, rpOptic->chopts.size() -- "
 	   << chann_numbers_from_dataDisk << rpOptic->chopts.size();
-  int chopts_num = ( !rpRotor-> importData_absorbance_t) ?
-    chann_numbers_from_dataDisk.size()*2 : chann_numbers_from_dataDisk.size();
+  // int chopts_num = ( !rpRotor-> importData_absorbance_t) ?
+  //   chann_numbers_from_dataDisk.size()*2 : chann_numbers_from_dataDisk.size();
+  int chopts_num = chann_numbers_from_dataDisk.size();
+  
   if ( chopts_num != rpOptic->chopts.size() )
     {
       msg_to_user << "[Uploaded Data <-> Protocol] Numbers of Optics cahnnels are mismatched!";
