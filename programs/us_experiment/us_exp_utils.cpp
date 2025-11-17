@@ -4160,7 +4160,11 @@ bool US_ExperGuiUpload::protocolToDataDisk( QStringList& msg_to_user )
 	   << chann_numbers_from_dataDisk << rpOptic->chopts.size();
   // int chopts_num = ( !rpRotor-> importData_absorbance_t) ?
   //   chann_numbers_from_dataDisk.size()*2 : chann_numbers_from_dataDisk.size();
-  int chopts_num = chann_numbers_from_dataDisk.size();
+  //int chopts_num = chann_numbers_from_dataDisk.size();
+
+  qDebug() << "channames_from_dataDisk , rpOptic->chopts.size() -- "
+	   << channames_from_dataDisk << rpOptic->chopts.size();
+  int chopts_num = channames_from_dataDisk.size();
   
   if ( chopts_num != rpOptic->chopts.size() )
     {
@@ -4169,12 +4173,20 @@ bool US_ExperGuiUpload::protocolToDataDisk( QStringList& msg_to_user )
     }
   for ( int ii = 0; ii < rpOptic->chopts.size(); ii++ )
     {
-      QString ch_num = rpOptic->chopts[ii].channel. split(" / ")[0]. trimmed();
-      if ( !chann_numbers_from_dataDisk.contains( ch_num ) )
-	{
-	  msg_to_user << "[Uploaded Data <-> Protocol] Optics channels are mismatched!";
-	  return false;
-	}
+      QString ch_num  = rpOptic->chopts[ii].channel. split(" / ")[0]. trimmed();
+      QString ch_name = rpOptic->chopts[ii].channel. split(",")[0].replace(" / ","").trimmed();
+      if ( !channames_from_dataDisk.contains( ch_name ) )
+      	{
+      	  msg_to_user << "[Uploaded Data <-> Protocol] Optics channels are mismatched!";
+      	  return false;
+      	}
+      
+      // QString ch_num = rpOptic->chopts[ii].channel. split(" / ")[0]. trimmed();
+      // if ( !chann_numbers_from_dataDisk.contains( ch_num ) )
+      // 	{
+      // 	  msg_to_user << "[Uploaded Data <-> Protocol] Optics channels are mismatched!";
+      // 	  return false;
+      // 	}
 
       QStringList r_types;
       if ( !rpOptic->chopts[ii].scan1 . isEmpty() )
