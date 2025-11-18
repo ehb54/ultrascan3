@@ -1,0 +1,45 @@
+name: "Build Documentation"
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main, lukas/qt6-compile ]
+    paths:
+      - 'doc/manual/**'
+      - '.github/workflows/doc-build.yml'
+  schedule:
+    - cron: '20 18 * * 1'
+  workflow_dispatch:
+
+jobs:
+  build-manual:
+    name: "(${{ matrix.container }})"
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
+    strategy:
+      fail-fast: false
+      matrix:
+        container:
+          - "ehb1/usbuildtest:ubuntu22.04-qt5.15.10-qwt6.1.6"
+          - "ehb1/usbuildtest:ubuntu24.04-qt6.8.3-qwt6.3.0"
+          - "ehb1/usbuildtest:ubuntu24.04-qt6.10.0-qwt6.3.0"
+
+    # Specify the container in which actions will run
+    container:
+      image: ${{ matrix.container }}
+      options: --cpus 1
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Build Manual
+        run: |
+          cd doc/manual
+          make -j1
