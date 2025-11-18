@@ -1,4 +1,4 @@
-name: "Build Manual"
+name: "Build Documentation"
 
 on:
   push:
@@ -7,12 +7,14 @@ on:
     branches: [ main, lukas/qt6-compile ]
     paths:
       - 'doc/manual/**'
-      - '.github/workflows/manual-build.yml'
+      - '.github/workflows/doc-build.yml'
+  schedule:
+    - cron: '20 18 * * 1'
   workflow_dispatch:
 
 jobs:
   build-manual:
-    name: "Build Manual (${{ matrix.container }})"
+    name: "Build Documentation (${{ matrix.container }})"
     runs-on: ubuntu-latest
 
     permissions:
