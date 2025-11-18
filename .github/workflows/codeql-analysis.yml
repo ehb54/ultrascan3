@@ -169,7 +169,7 @@ jobs:
           git config --global --add safe.directory /__w/ultrascan3/ultrascan3
           (cd programs/us && sh revision.sh)
           cd qwtplot3d
-          cp admin/codeql/docker/local.pri.gui-qt6 local.pri
+          cp admin/codeql/docker/local.pri.gui local.pri
           git config --global --add safe.directory /__w/ultrascan3/ultrascan3
           (cd programs/us && sh revision.sh)
           qmake
