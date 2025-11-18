@@ -12021,6 +12021,8 @@ QString US_ReporterGMP::display_scan_excls( QList<int> scan_e_b, QList<int> scan
 	excl_yes = true;
     }
   scans_excl_str += tr( "</table>" );
+
+  qDebug() << "Scan exclusions: excl_yes -- " << excl_yes;
   
   return scans_excl_str; 
 }
