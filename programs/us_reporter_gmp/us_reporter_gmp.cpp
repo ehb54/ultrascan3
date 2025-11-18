@@ -5870,6 +5870,8 @@ void US_ReporterGMP::process_combined_plots_individual ( QString triplesname_p, 
 	      QStringList ranges  = i_cpt.value();
 	      
 	      QMap < QString, QString > c_parms;
+
+	      //add c_parms["CG_model"] = QString("YES"); //OR "NO"
 	      QString t_m;
 	      QString imgComb02File = basename + "Ind_combined" + "." + triplesname + "." + stage_model;
 
