@@ -171,6 +171,9 @@ class US_ExperGuiRotor : public US_WidgetsDialog
       bool ra_data_sim;
       bool isMwl;
       QMap<QString, QString> run_details;
+      QStringList channels_for_dataDisk;
+      bool check_for_channel_dataDisk( QString );
+      QStringList get_dataDiskChannels_public( void );
   
       QVector< US_DataIO::RawData >      allData;      //!< All loaded data
       QVector< US_DataIO::RawData* >     outData;      //!< Output data pointers
@@ -1182,6 +1185,7 @@ class US_ExperimentMain : public US_Widgets
       US_AnaProfile* get_aprofile_loaded( void );
       void set_loadAProf ( US_AnaProfile );
       QMap< QString, QString> get_all_solution_names( void );
+      QStringList get_all_channels_dataDisk( void );
       void get_new_solution_names(void);
       void initCells( void );
       void reset_dataDisk( void );

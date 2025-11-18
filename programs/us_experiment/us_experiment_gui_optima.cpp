@@ -263,6 +263,12 @@ QMap< QString, QString> US_ExperimentMain::get_all_solution_names()
   return epanSolutions->get_solutions_public();
 }
 
+QStringList US_ExperimentMain::get_all_channels_dataDisk()
+{
+  
+  return epanRotor->get_dataDiskChannels_public();
+}
+
 void US_ExperimentMain::get_new_solution_names()
 {
   epanSolutions->get_new_solutions_public();
@@ -1655,6 +1661,12 @@ void US_ExperGuiRotor::importDiskChecked( bool checked )
     }
 }
 
+//public method to get dataDisk channels
+QStringList US_ExperGuiRotor::get_dataDiskChannels_public()
+{
+  return channels_for_dataDisk;
+}
+
 //Clean all internals for protocol
 void US_ExperGuiRotor::importDisk_cleanProto()
 {
@@ -1736,6 +1748,7 @@ void US_ExperGuiRotor::importDisk( void )
   allData     .clear();
   all_tripinfo. clear();
   runTypes_map. clear();
+  channels_for_dataDisk. clear();
   channs_ranges.clear();
   unique_runTypes. clear();
   run_details  .clear();
@@ -1851,6 +1864,7 @@ void US_ExperGuiRotor::importDisk( void )
       allData     .clear();
       all_tripinfo. clear();
       runTypes_map. clear();
+      channels_for_dataDisk. clear();
       channs_ranges.clear();
       unique_runTypes. clear();
       run_details  .clear();
@@ -1870,6 +1884,10 @@ void US_ExperGuiRotor::importDisk( void )
   for( int i=0; i<channs_ranges.keys().size(); ++i ) 
     {
       QString ch_c    = channs_ranges.keys()[ i ];
+
+      //check if the key (channel) is in channels_for_dataDisk:
+      if ( !check_for_channel_dataDisk( ch_c ) )
+	continue;
 
       if ( ra_data_type && ch_c. contains("B") )
 	continue;
@@ -1931,6 +1949,24 @@ void US_ExperGuiRotor::importDisk( void )
   
   //set up dir path
   le_dataDiskPath   ->setText( importDataPath );
+}
+
+//
+bool US_ExperGuiRotor::check_for_channel_dataDisk( QString ch_c )
+{
+  bool isChann = false;
+  for ( int i=0; i<channels_for_dataDisk.size(); ++i)
+    {
+      QString ch_dataDisk = channels_for_dataDisk[i].replace(" / ","").simplified();
+      qDebug() << "ch_dataDisk, ch_c -- " << ch_dataDisk << ", " << ch_c;
+      if ( ch_dataDisk == ch_c )
+	{
+	  isChann = true;
+	  break;
+	}
+    }
+
+  return isChann;
 }
 
 //Check for rotor fpr uploaded data
@@ -2240,12 +2276,14 @@ QMap <QString, QStringList> US_ExperGuiRotor::build_protocol_for_data_import( QM
       qDebug() << "triple #" << i << ": " << all_tripinfo[i].tripleDesc;
       QString channumber = all_tripinfo[i].tripleDesc.split(" / ")[0].simplified();
       QString channame   = channumber  + all_tripinfo[i].tripleDesc.split(" / ")[1].simplified();
+      QString channame_1 = channumber  + QString(" / ") + all_tripinfo[i].tripleDesc.split(" / ")[1].simplified();
       QString wvl        = all_tripinfo[i].tripleDesc.split(" / ")[2].simplified();
       qDebug() << "Wvl, ra_data_sim: " << wvl << ra_data_sim;
       if ( ra_data_sim && wvl.toInt() < 200 )
 	wvl = QString::number(280);
       
       chann_list << channumber;
+      channels_for_dataDisk << channame_1;
 
       QString runType_t    = QString( all_tripinfo[i].tripleFilename ).section( ".", -5, -5 );
       if ( runType_t == "RI" || runType_t == "RA" )
@@ -2254,6 +2292,7 @@ QMap <QString, QStringList> US_ExperGuiRotor::build_protocol_for_data_import( QM
   chann_list. removeDuplicates();
   qDebug() << "List of unique channel numbers -- " << chann_list;
   qDebug() << "List of unique channel names   -- " << chann_to_wvls.keys();
+  qDebug() << "List of channels_for_dataDisk -- " <<  channels_for_dataDisk;
   
 
   //[CELLS:] Clear && Fill in
@@ -4845,6 +4884,17 @@ DbgLv(1) << "EGSo: rbS: SV_CHANS[sxx] !!!!!!!!!!!!!!!!: " << rpSolut->chsols[ ii
             for ( int jj = 0; jj < nchan; jj++ )
             {
                QString channel     = scell + " / " + QString( schans ).mid( jj, 1 );
+	       QString channel_1   = channel;
+	       channel_1 = channel_1.replace(" / ","").simplified();
+	       
+	       //for dataDisk, check if channel exists:
+	       qDebug() << "dataDisk -- " << rpRotor->importData;
+	       qDebug() << "dataDisk: isDirEmpty -- " << rpRotor->importDataDisk.isEmpty();
+	       qDebug() << "dataDisk: chann_list -- " << mainw->get_all_channels_dataDisk();
+	       qDebug() << "Current channel -- " << channel_1;
+	       if ( rpRotor->importData && !rpRotor->importDataDisk.isEmpty() &&
+		    !mainw->get_all_channels_dataDisk(). contains( channel_1 ) )
+		 continue;
 
                if ( (QString( schans ).mid( jj, 1 )).contains( "A" ) )                   //ALEXEY: channel lables
                   srchans << channel + ", sample [right]";
