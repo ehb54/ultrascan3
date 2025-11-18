@@ -4152,7 +4152,16 @@ bool US_ExperGuiUpload::protocolToDataDisk( QStringList& msg_to_user )
       QString channame_c = chann_ranges_from_dataDisk.keys()[i];
 
       //check for actual consistency:
-      if (!mainw->get_all_channels_dataDisk(). contains( channame_c ) )
+      QStringList channels_dataDisk_mod;
+      QStringList channels_dataDisk = mainw->get_all_channels_dataDisk();
+      for (int cd=0; cd<channels_dataDisk.size(); ++cd)
+	{
+	  QString cd_c = channels_dataDisk[cd];
+	  channels_dataDisk_mod << cd_c.replace(" / ","").simplified();
+	}
+      qDebug() << "[Upload:check protocolToDataDisk()] : channame_c, channels_dataDisk_mod -- "
+	       << channame_c << ", " << channels_dataDisk_mod;
+      if (!channels_dataDisk_mod. contains( channame_c ) )
 	  continue;
       
       if ( !chann_ranges_from_dataDisk[ channame_c ]. isEmpty()  )
