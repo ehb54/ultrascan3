@@ -16,9 +16,6 @@
 #include "us_license_t.h"
 #include "us_sleep.h"
 #include "us_matrix.h"
-#if QT_VERSION < 0x050000
-#define setSamples(a,b,c)  setData(a,b,c)
-#endif
 
 #define MIN_NTC   25
 

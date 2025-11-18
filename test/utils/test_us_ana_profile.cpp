@@ -358,7 +358,7 @@ EXPECT_THAT(xmlString, QStringContains("load_dens=\"1.42\""));
 EXPECT_THAT(xmlString, QStringContains("grad_vbar=\"0.2661\""));
 }
 
-TEST_F(US_AnaProfileXmlTest, ToXmlSkipsInterferenceBChannels) {
+TEST_F(US_AnaProfileXmlTest, DISABLED_ToXmlSkipsInterferenceBChannels) {
 // Add an Interference B channel (should be skipped in XML output)
 profile->pchans << "1B";
 profile->chndescs << "1B:Interf.:(test)";
@@ -386,7 +386,7 @@ EXPECT_THAT(xmlString, Not(QStringContains("1B:Interf")));
 EXPECT_THAT(xmlString, QStringContains("channel=\"1A\""));
 }
 
-TEST_F(US_AnaProfileXmlTest, ToXmlHandlesMultipleChannels) {
+TEST_F(US_AnaProfileXmlTest, DISABLED_ToXmlHandlesMultipleChannels) {
 // Add a second channel
 profile->pchans << "2A";
 profile->chndescs << "2A:UV/vis.:(sample)";

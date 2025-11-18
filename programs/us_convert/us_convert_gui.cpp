@@ -29,19 +29,12 @@
 #include "us_astfem_math.h"
 #include "us_protocol_util.h"
 
-#if QT_VERSION < 0x050000
-#define setSamples(a,b,c)  setData(a,b,c)
-#define setMinimum(a)      setMinValue(a)
-#define setMaximum(a)      setMaxValue(a)
-#endif
-
 #ifdef Q_OS_WIN
 #include <float.h>
 #ifndef isnan
 #define isnan _isnan
 #endif
 #endif
-
 
 US_ConvertGui::US_ConvertGui( QString auto_mode ) : US_Widgets()
 {
@@ -5439,11 +5432,7 @@ void US_ConvertGui::plot_last_scans( double cent_point )
        r[ 0 ] = cent_point;
        r[ 1 ] = cent_point;
        
-#if QT_VERSION < 0x050000
-       QwtScaleDiv* y_axis = data_plot->axisScaleDiv( QwtPlot::yLeft );
-#else
        QwtScaleDiv* y_axis = (QwtScaleDiv*)&(data_plot->axisScaleDiv( QwtPlot::yLeft ));
-#endif
        
        double padding = ( y_axis->upperBound() - y_axis->lowerBound() ) / 30.0;
        
@@ -9449,11 +9438,7 @@ DbgLv(1) << " PlAll:  nmcols" << nmcols;
          rr[ jj ]    = currentData->radius( jj );
          vv[ jj ]    = scan->rvalues[ jj ];
 
-#if QT_VERSION < 0x050000
-         if ( vv[ jj ] > 1.0e99 || isnan( vv[ jj ] ) )
-#else
          if ( vv[ jj ] > 1.0e99  ||  vv[ jj ] != vv[ jj ] )
-#endif
          {
             // For some reason vv[jj] is going off the scale
             // Don't know why, but filter out for now

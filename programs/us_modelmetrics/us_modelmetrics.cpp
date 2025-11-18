@@ -2,9 +2,6 @@
 
 #include "us_modelmetrics.h"
 #include "us_gui_util.h"
-#if QT_VERSION < 0x050000
-#define setSamples(a,b,c)  setData(a,b,c)
-#endif
 
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug()

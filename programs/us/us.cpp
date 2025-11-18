@@ -1,18 +1,15 @@
 //! \file us.cpp
 #include <QtCore>
 #include <QTcpSocket>
-#if QT_VERSION < 0x050000
-#include <QtSingleApplication>
-#else
+#include <QFontDatabase>
 #include <QtWidgets/QApplication>
-#endif
 
 #include "us.h"
 #include "us_license_t.h"
 #include "us_license.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
-#include "us_win_data.cpp"
+#include "us_win_data.h"
 #include "us_defines.h"
 #include "us_revision.h"
 #include "us_sleep.h"
@@ -41,22 +38,9 @@ using namespace US_WinData;
 int main( int argc, char* argv[] )
 {
   QString options( getenv( "ULTRASCAN_OPTIONS" ) );
-#if QT_VERSION < 0x050000
-  QtSingleApplication application( "UltraScan III", argc, argv );
-  
-  // If environment variable ULTRASCAN_OPTIONS contains the 
-  // word 'multiple', then we don't try to limit to one instance
-  if ( ! options.contains( "multiple" ) )
-  {
-    if ( application.sendMessage( "Wake up" ) ) return 0;
-  }
-
-  application.initialize();
-#else
   qputenv("QT_ENABLE_HIGHDPI_SCALING",QByteArray("1"));
   QApplication application( argc, argv );
   application.setApplicationDisplayName( "UltraScan III" );
-#endif
 
   // Set up language localization
   QString locale = QLocale::system().name();
@@ -64,7 +48,7 @@ int main( int argc, char* argv[] )
   QTranslator translator;
   translator.load( QString( "us_" ) + locale );
   application.installTranslator( &translator );
-    
+
   // See if we need to update the license
   QString ErrorMessage;
 
@@ -74,17 +58,17 @@ int main( int argc, char* argv[] )
     QMessageBox mBox;
 
     QPushButton* cancel   = mBox.addButton( QMessageBox::Cancel );
-    QPushButton* Register = mBox.addButton( qApp->translate( "UltraScan III", "Register"), 
+    QPushButton* Register = mBox.addButton( qApp->translate( "UltraScan III", "Register"),
         QMessageBox::ActionRole);
-    
+
     mBox.setDefaultButton( Register );
     mBox.setWindowTitle  ( qApp->translate( "UltraScan III", "UltraScan License Problem" ) );
     mBox.setText         ( ErrorMessage );
     mBox.setIcon         ( QMessageBox::Critical );
     mBox.exec();
 
-    if ( mBox.clickedButton() == cancel )  exit( -1 ); 
-    
+    if ( mBox.clickedButton() == cancel )  exit( -1 );
+
     US_License* license = new US_License();
     license->show();
 #if QT_VERSION < 0x050000
@@ -458,7 +442,6 @@ qDebug() << "PROCESS NotRunning index" << index << "Proc name" << d->name;
                           .right( 2000 );    // End lines of STDERR
         bool    badallo = estderr.contains( "bad_alloc" );
 qDebug() << "PROCESS   status" << status << "e-stderr len" << estderr.length();
-//qDebug() << "PROCESS   bad_alloc? " << badallo;
 
         if ( badallo )
         { // It was a "bad_alloc" crash
@@ -666,53 +649,153 @@ void US_Win::splash( void )
 
 void US_Win::logo( int width )
 {
-  // Splash image
-  QPixmap rawpix = US_Images::getImage( US_Images::US3_SPLASH );
+    // Splash image (fixed size asset, like before)
+    QPixmap rawpix = US_Images::getImage( US_Images::US3_SPLASH );
+    const int ph   = rawpix.height();   // expected ~276
+    const int pw   = rawpix.width();    // expected ~460
+    Q_UNUSED(ph);
 
-  int ph = rawpix.height();
-  int pw = rawpix.width();
+    QPixmap  pixmap( pw, ph );
+    QPainter painter( &pixmap );
+    painter.setRenderHint( QPainter::Antialiasing,     true );
+    painter.setRenderHint( QPainter::TextAntialiasing, true );
 
-  QPixmap  pixmap( pw, ph );
-  QPainter painter( &pixmap );
+    painter.drawPixmap( 0, 0, rawpix );
 
-  painter.drawPixmap( 0, 0, rawpix );
-  painter.setPen    ( QPen( Qt::white, 3 ) );
+    // Colors (subtle, modern)
+    const QColor versionColor      ( 245, 248, 255 );
+    const QColor metaColor         ( 220, 228, 240 );
+    const QColor authorsTitleColor ( 240, 245, 255 );
+    const QColor authorsColor      ( 215, 225, 235 );
+    const QColor dividerColor      ( 255, 255, 255, 80 );
 
-  QString version = "Version " + US_Version + " ( " REVISION
-  " ) for " OS_TITLE;  // REVISION is #define "Revision: xxx"
+    const QString uiFontFamily = "Sans Serif";
 
-  QFont font( "Arial" );
-  font.setWeight( QFont::DemiBold );
-  font.setPixelSize( 16 );
-  painter.setFont( font );
-  QFontMetrics metrics( font );
+    // --- Compact vertical layout ---
+    const int yVersion       = 124;
+    const int versionToBuild = 16;
+    const int buildToDivider = 14;
+    const int dividerToTitle = 20;
+    const int titleToFirst   = 16;
+    const int nameStep       = 14;
 
-  int sWidth = metrics.boundingRect( version ).width();
-  int x      = ( pw - sWidth ) / 2;
+    const int yBuild        = yVersion + versionToBuild;
+    const int yDivider      = yBuild   + buildToDivider;
+    const int yAuthorsTitle = yDivider + dividerToTitle;
+    const int firstNameBase = yAuthorsTitle + titleToFirst;
 
-  painter.drawLine( 0, 106, pw, 106 );
-  painter.drawText( x, 132, version );
-  painter.drawLine( 0, 144, pw, 144 );
+    // --- Version line ---
+    QString version = "Version " + US_Version + " (build " BUILDNUM ") for " OS_TITLE;
 
-  QString s = "Authors:";
-  sWidth    = metrics.boundingRect( s ).width();
-  painter.drawText( ( pw - sWidth ) / 2, 166, s );
-  s      = "Borries Demeler";
-  sWidth = metrics.boundingRect( s ).width();
-  painter.drawText( ( pw - sWidth ) / 2, 190, s );
-  s      = "Emre Brookes";
-  sWidth = metrics.boundingRect( s ).width();
-  painter.drawText( ( pw - sWidth ) / 2, 208, s );
-  s      = "Alexey Savelyev";
-  sWidth = metrics.boundingRect( s ).width();
-  painter.drawText( ( pw - sWidth ) / 2, 226, s );
-  s      = "Gary Gorbet";
-  sWidth = metrics.boundingRect( s ).width();
-  painter.drawText( ( pw - sWidth ) / 2, 244, s );
-  
-  smallframe = new QLabel(this);
-  smallframe->setPixmap(pixmap);
-  smallframe->setGeometry( (unsigned int)( (width / 2) - 230 ), 110, 460, 276);
+    QFont versionFont( uiFontFamily );
+    versionFont.setWeight       ( QFont::DemiBold );
+    versionFont.setPixelSize    ( 18 );
+    versionFont.setLetterSpacing( QFont::AbsoluteSpacing, 0.4 );
+
+    painter.setFont( versionFont );
+    painter.setPen ( versionColor );
+
+    QFontMetrics vMetrics( versionFont );
+    int vWidth = vMetrics.horizontalAdvance( version );
+    painter.drawText( ( pw - vWidth ) / 2, yVersion, version );
+
+    // --- Build line ---
+    QString buildLine =
+            QString( "Built on %1 at %2 UTC" ).arg( BUILD_DATE ).arg( BUILD_TIME );
+
+    QFont buildFont( uiFontFamily );
+    buildFont.setWeight   ( QFont::Normal );
+    buildFont.setPixelSize( 12 );
+
+    painter.setFont( buildFont );
+    painter.setPen ( metaColor );
+
+    QFontMetrics bMetrics( buildFont );
+    int bWidth = bMetrics.horizontalAdvance( buildLine );
+    painter.drawText( ( pw - bWidth ) / 2, yBuild, buildLine );
+
+    // --- Divider ---
+    painter.setPen( QPen( dividerColor, 1 ) );
+    const int dividerInset = 40;
+    painter.drawLine( dividerInset, yDivider, pw - dividerInset, yDivider );
+
+    // --- Authors title ---
+    QFont authorsTitleFont( uiFontFamily );
+    authorsTitleFont.setWeight   ( QFont::Bold );
+    authorsTitleFont.setPixelSize( 13 );
+
+    painter.setFont( authorsTitleFont );
+    painter.setPen ( authorsTitleColor );
+
+    const QString authorsTitle = "Authors";
+    QFontMetrics atMetrics( authorsTitleFont );
+    int atWidth = atMetrics.horizontalAdvance( authorsTitle );
+    painter.drawText( ( pw - atWidth ) / 2, yAuthorsTitle, authorsTitle );
+
+    // --- Author names ---
+    QFont authorsFont( uiFontFamily );
+    authorsFont.setWeight   ( QFont::Normal );
+    authorsFont.setPixelSize( 11 );
+
+    painter.setFont( authorsFont );
+    painter.setPen ( authorsColor );
+
+    QFontMetrics aMetrics( authorsFont );
+    QStringList names = {
+            "Borries Demeler",
+            "Emre Brookes",
+            "Alexey Savelyev",
+            "Gary Gorbet"
+    };
+
+    for ( int i = 0; i < names.size(); ++i )
+    {
+        const QString& name = names[i];
+        int nWidth = aMetrics.horizontalAdvance( name );
+        int y      = firstNameBase + i * nameStep;
+        painter.drawText( ( pw - nWidth ) / 2, y, name );
+    }
+
+    // --- Display ---
+    const int splashX = static_cast<int>( ( width / 2 ) - 230 );
+    const int splashY = 110;
+    const int splashW = 460;
+    const int splashH = 276;
+
+    smallframe = new QLabel( this );
+    smallframe->setPixmap( pixmap );
+    smallframe->setGeometry( splashX, splashY, splashW, splashH );
+
+    // --- Clickable "Additional contributors" link ---
+    QLabel* contribLabel = new QLabel( smallframe );
+    contribLabel->setText(
+            "<a style='color:#FFFFFF; text-decoration:underline;' "
+            "href=\"https://www.ultrascan.aucsolutions.com/contributors.php\">"
+            "Additional contributors</a>"
+    );
+    contribLabel->setTextFormat( Qt::RichText );
+    contribLabel->setTextInteractionFlags( Qt::TextBrowserInteraction );
+    contribLabel->setOpenExternalLinks( true );
+    contribLabel->setAlignment( Qt::AlignHCenter | Qt::AlignVCenter );
+
+    QFont contribFont( uiFontFamily );
+    contribFont.setPixelSize( 10 );
+    contribLabel->setFont( contribFont );
+
+    // Make spacing: last-author → link == link → bottom
+    const int linkH = 16;  // height of the clickable label box
+    // Baseline of last author:
+    const int lastNameY = firstNameBase + ( names.size() - 1 ) * nameStep;
+    // Approximate bottom of last author text:
+    const int textBottom = lastNameY + aMetrics.descent();
+
+    // Solve: textBottom + d + linkH + d = splashH  → d = (splashH - textBottom - linkH) / 2
+    int remaining = splashH - textBottom - linkH;
+    if ( remaining < 0 ) remaining = 0;   // safety
+    int d = remaining / 2;
+
+    int yLink = textBottom + d;
+    contribLabel->setGeometry( 0, yLink, splashW, linkH );
 }
 
 void US_Win::closeSplash( void )
@@ -771,18 +854,18 @@ void US_Win::help( int index )
       QMessageBox::information( this,
         tr( "About UltraScan..." ),
         tr( "UltraScan III version %1\n"
-            "%2\n"
-            "Copyright 1989 - 2021\n"
-            "Borries Demeler and the University of Texas System\n\n"
+            "( build %2 )\n"
+            "Copyright 1989 - 2025\n"
+            "Borries Demeler\n\n"
             "For more information, please visit:\n"
-            "http://www.ultrascan.aucsolutions.com/\n\n"
+            "https://www.ultrascan.aucsolutions.com/\n\n"
             "The author can be reached at:\n"
             "The University of Montana\n"
             "Department of Chemistry and Biochemistry\n"
             "32 Campus Drive\n"
             "Missoula, Montana  59812\n"
             "Phone:  (406) 285-1935\n"
-            "E-mail: borries.demeler@umontana.edu" ).arg( US_Version ).arg( REVISION ) );
+            "E-mail: borries.demeler@umontana.edu" ).arg( US_Version ).arg( BUILDNUM ) );
 
       statusBar()->showMessage( tr( "Ready" ) );
       break;
@@ -843,206 +926,6 @@ void US_Win::apply_prefs()
    show();
 }
 
-// Deprecated, saving the code as there is some time logic
-// Check for posted US3 notices
-// bool US_Win::notice_check()
-// {
-//    bool do_abort     = false;                         // Default: no abort
-//    int  level        = 0;                             // Max level: information
-//    QDateTime pn_time = ln_time;                       // Previous check time
-//    ln_time           = QDateTime::currentDateTime();  // Reset last notice time
-
-//    if ( US_Settings::default_data_location() == 2 )
-//       return do_abort;      // If default data location is Disk, do not bother
-
-   
-
-// //do_abort=true;
-// //level=2;
-//    // Query notice table in the us3_notice database
-//    US_Passwd pw;
-//    US_DB2    db;
-//    QString   host  ( "ultrascan.aucsolutions.com" );
-//    QString   dbname( "us3_notice" );
-//    QString   user  ( "us3_notice" );
-//    QString   passwd( "us3_notice" );
-//    QString   errmsg;
-
-//    // First do a quick connection test
-//    QTcpSocket tsock;
-//    tsock.connectToHost( host, 3306 );
-//    tsock.waitForConnected( 2000 );  // Give it two seconds
-// qDebug() << "US:NOTE: socket state" << tsock.state();
-//    if ( ! tsock.isValid()  ||
-//         tsock.state() == QAbstractSocket::UnconnectedState )
-//    {  // Abort immediately if connection not possible (host? port?)
-// qDebug() << "US:NOTE: Quick test host connect FAILED";
-//       return do_abort;
-//    }
-//    else
-//    {  // Disconnect if connection possible
-//    tsock.disconnectFromHost();
-// qDebug() << "US:NOTE: Quick test host connect WORKED";
-//    }
-
-//    // Then, do the full connection
-//    if ( ! db.connect( host, dbname, user, passwd, errmsg  ) )
-//    {
-// qDebug() << "US:NOTE: Unable to connect" << errmsg;
-//       return do_abort;
-//    }
-
-//    QString query( "SELECT type, revision, message, lastUpdated"
-//                   " FROM us3_notice.notice;" );
-//    db.rawQuery( query );
-
-//    // If no notices in the database, return now with no notice pop-up
-//    if ( db.lastErrno() != IUS_DB2::OK  ||  db.numRows() == 0 )
-//    {
-// qDebug() << "US:NOTE: No DB notices" << db.lastError()
-//  << "numRows" << db.numRows();
-//       return do_abort; 
-//    }
-
-//    // Otherwise accumulate notices and associated type,revision,time
-//    QStringList  msgs;
-//    QStringList  types;
-//    QStringList  revs;
-//    QList< int > irevs;
-//    QDateTime   time_d;
-//    QMap< QString, QString > typeMap;
-//    typeMap[ "info" ] = tr( "Information" );
-//    typeMap[ "warn" ] = tr( "Warning"     );
-//    typeMap[ "crit" ] = tr( "Critical"    );
-//    QString srev     = US_Version  + "."
-//                     + QString( REVISION ).section( ":", 1, 1 ).simplified();
-// qDebug() << "US:NOTE: srev" << srev;
-//    int    nnotice   = 0;
-//    int    nn_info   = 0;
-//    int    nn_warn   = 0;
-//    int    nn_crit   = 0;
-//    int    i_rev     = 0;
-
-//    while ( db.next() )
-//    {
-//       nnotice++;
-
-//       QString type     = db.value( 0 ).toString();
-//       QString mrev     = db.value( 1 ).toString();
-//       QString msg      = db.value( 2 ).toString();
-//       QDateTime time_m = db.value( 3 ).toDateTime();
-// qDebug() << "US:NOTE: mrev(1)" << mrev;
-//       mrev             = srev.left( 3 ) + mrev.mid( 3 );
-// qDebug() << "US:NOTE: mrev(2)" << mrev;
-
-//       if ( type == "info" )       nn_info++;
-//       else if ( type == "warn" )  nn_warn++;
-//       else if ( type == "crit" )  nn_crit++;
-
-//       int    m_rev     = QString( mrev ).replace( ".", "" ).toInt();
-//       i_rev            = qMax( i_rev,  m_rev  );
-
-//       if ( nnotice == 1 )
-//       {
-//         time_d           = time_m;
-//       }
-//       else
-//       {
-//         time_d           = time_m.secsTo( time_d ) > 0
-//                            ? time_d : time_m;
-//       }
-
-// #if QT_VERSION > 0x050000
-//       if ( type == "warn"  &&  msg.contains( "revision 3.3" ) )
-//       {
-//         msg              = msg.replace( "revision 3.3", "revision 3.5" );
-//       }
-//       if ( type == "warn"  &&  msg.contains( "revision 3.5" ) )
-//       {
-//         msg              = msg.replace( "revision 3.5", "revision 4.0" );
-//       }
-// #endif
-//       types << type;
-//       revs  << mrev;
-//       irevs << m_rev;
-//       msgs  << msg;
-//    }
-
-//    // If current revision is at or beyond max in records, skip pop-up
-//    int    s_rev     = QString( srev ).replace( ".", "" ).toInt();
-
-// qDebug() << "s_rev i_rev" << s_rev << i_rev << "srev" << srev;
-//    if ( s_rev > i_rev )
-//       return do_abort;
-
-//    // If lastest message time earlier than last notice time, skip pop-up
-//    int n_dif        = (int)time_d.secsTo( pn_time );
-// qDebug() << " n_dif" << n_dif << "time_d" << time_d << "pn_time" << pn_time;
-//    if ( n_dif > 0 )
-//       return do_abort;
-
-//    // Build notice message
-//    level             = ( nn_warn > 0 ) ? 1 : level;
-//    level             = ( nn_crit > 0 ) ? 2 : level;
-//    QString msg_note  = tr( "UltraScan III notices posted  (" ) 
-//                      + time_d.toString( "yyyy/MM/dd" ) + "):\n\n";
-
-//    bool empty_msg    = true;
-
-//    double sys_version  = US_Version.toDouble();
-//    int    sys_revision = QString( REVISION ).toInt();
-   
-//    for ( int ii = 0; ii < nnotice; ii++ )
-//    {
-//       double msg_version  = QString( "%1" ).arg( revs[ii] ).replace( QRegularExpression( "\\.\\d+$" ), "" ).toDouble();
-//       double msg_revision = QString( "%1" ).arg( revs[ii] ).replace( QRegularExpression( "^[^\\.]*\\.\\d+\\." ), "" ).toDouble();
-
-//       // // Skip messages for warn/crit same revision or any earlier than current
-//       // if ( ( irevs[ ii ] == s_rev  &&  types[ ii ] != "info" )  ||
-//       //      irevs[ ii ] < s_rev )     continue;
-
-//       // Skip messages where message version.revision is less than our version.revision
-//       if ( sys_version > msg_version ||
-//            ( sys_version == msg_version &&
-//              sys_revision > msg_revision ) ) {
-//          continue;
-//       }
-
-//       // Add current message to full text
-//       msg_note         += typeMap[ types[ ii ] ] + " for release "
-//                        + revs[ ii ] + ":\n"
-//                        + msgs[ ii ] + "\n";
-
-//       empty_msg        = false;
-      
-//       // Critical from later revision than current means an abort
-//       if ( types[ ii ] == "crit" )   do_abort = true;
-//    }
-
-//    if ( do_abort )
-//    {  // Append an additional note if an abort is happening
-//       msg_note         += tr( "\n\n*** US3 Abort: UPDATE REQUIRED!!! ***\n" );
-//       empty_msg        = false;
-//    }
-
-//    if ( !empty_msg ) {
-//       // Display notices at level of highest level currently set
-//       QWidget* wthis    = (QWidget*)this;
-//       if (      level == 0 )
-//          QMessageBox::information( wthis, tr( "US3 Notices" ), msg_note );
-//       else if ( level == 1 )
-//          QMessageBox::warning    ( wthis, tr( "US3 Notices" ), msg_note );
-//       else if ( level == 2 )
-//          QMessageBox::critical   ( wthis, tr( "US3 Notices" ), msg_note );
-//    }
-
-//    // Abort if that is indicated
-//    if ( do_abort )
-//       exit( -77 );
-
-//    return do_abort;
-// }
-
 void US_Win::notices_ready() {
    qDebug() << "notices_ready()";
 
@@ -1051,8 +934,6 @@ void US_Win::notices_ready() {
       qDebug() << "notices_ready(): notices are empty";
       return;
    }
-
-   // qDebug() << QString( notices_bytearray );
 
    QJsonParseError parseError;
    QJsonDocument notices_jdoc;
@@ -1115,7 +996,7 @@ void US_Win::notices_ready() {
    bool empty_msg    = true;
 
    double sys_version  = US_Version.toDouble();
-   int    sys_revision = QString( REVISION ).toInt();
+   int    sys_revision = QString( BUILDNUM ).toInt();
    
    for ( int ii = 0; ii < (int) msgs.size(); ++ii )
    {

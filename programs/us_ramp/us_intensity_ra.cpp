@@ -5,10 +5,6 @@
 #include "us_gui_settings.h"
 #include "us_util.h"
 #include "us_gui_util.h"
-#if QT_VERSION < 0x050000
-#define setSamples(a,b,c)  setData(a,b,c)
-#define setSymbol(a)       setSymbol(*a)
-#endif
 
 US_IntensityRa::US_IntensityRa( 
       const QString runID, 

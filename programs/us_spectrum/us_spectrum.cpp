@@ -5,10 +5,6 @@
 #include "us_settings.h"
 #include "us_csv_loader.h"
 #include <math.h>
-#if QT_VERSION < 0x050000
-#define setSamples(a,b,c) setData(a,b,c)
-#define setSymbol(a) setSymbol(*a)
-#endif
 
 int main (int argc, char* argv[])
 {

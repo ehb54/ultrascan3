@@ -1,0 +1,19 @@
+{
+  "name": "ultrascan3",
+  "version": "4.1.0",
+  "builtin-baseline": "69a6e3311f485ac1af362d63b2f62537c3c73134",
+  "dependencies": [
+    "libpng",
+    "qt5-base",
+    "qt5-tools",
+    "qt5-datavis3d",
+    "qt5-svg",
+    "qwt",
+    "libmariadb",
+    "openssl",
+    "libarchive",
+    "zlib",
+    "qwtplot3d",
+    "gtest"
+  ]
+}

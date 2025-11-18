@@ -12,11 +12,6 @@
 #include "us_util.h"
 #include "us_passwd.h"
 #include "us_db2.h"
-#if QT_VERSION < 0x050000
-#define setSamples(a,b,c)  setData(a,b,c)
-#define setMinimum(a)      setMinValue(a)
-#define setMaximum(a)      setMaxValue(a)
-#endif
 
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug()

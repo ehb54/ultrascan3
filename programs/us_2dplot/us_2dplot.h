@@ -7,11 +7,7 @@
 #include "us_widgets.h"
 #include "us_plot.h"
 
-#if QT_VERSION < 0x050000
-#include <QApplication>
-#else
 #include <QtWidgets/QApplication>
-#endif
 
 //! \class US_2dPlot
 //! \brief A class for creating 2D plots with user-defined parameters.

@@ -20,3 +20,7 @@ gui/qrc_images.cpp
 /build/
 /build-docker/
 /cmake-build-debug/
+
+/vcpkg/
+/.idea/
+/.vscode/

@@ -25,14 +25,9 @@
 #include "us_passwd.h"
 #include "us_report.h"
 #include "us_constants.h"
-
-#if QT_VERSION < 0x050000
-#define setMinimum(a)     setMinValue(a)
-#define setMaximum(a)     setMaxValue(a)
-#endif
-#define setPBMaximum(a)   setRange(1,a)
-
 #include <qwt_legend.h>
+
+#define setPBMaximum(a)   setRange(1,a)
 
 // Function to compare solute points for sorting
 bool distro_lessthan( const S_Solute &solu1, const S_Solute &solu2 )
@@ -460,18 +455,12 @@ void US_show_norm::plot_data( void )
    data_plot->detachItems( QwtPlotItem::Rtti_PlotSpectrogram );
 
    QwtPlotSpectrogram* d_spectrogram = new QwtPlotSpectrogram();
-#if QT_VERSION < 0x050000
-   d_spectrogram->setData( US_SpectrogramData() );
-   d_spectrogram->setColorMap( *colormap );
-   US_SpectrogramData& spec_dat = (US_SpectrogramData&)d_spectrogram->data();
-#else
    US_SpectrogramData* rdata = new US_SpectrogramData();
    d_spectrogram->setData( rdata );
 DbgLv(1) << "colormap_before" << colormap;
    d_spectrogram->setColorMap( ColorMapCopy( colormap ) );
    
    US_SpectrogramData& spec_dat = (US_SpectrogramData&)*(d_spectrogram->data());
-#endif
    QwtDoubleRect drect;
 
    if ( auto_sxy )
@@ -524,13 +513,8 @@ DbgLv(1) << "colormap_before" << colormap;
       data_plot->setAxisScale( QwtPlot::yLeft,   plt_kmin, plt_kmax, lStep );
    }
 
-#if QT_VERSION < 0x050000
-   rightAxis->setColorMap( QwtDoubleInterval( 0.0, plt_zmax ),
-      d_spectrogram->colorMap() );
-#else
    rightAxis->setColorMap( QwtInterval( 0.0, plt_zmax ),
                            ColorMapCopy( colormap ) );
-#endif
    data_plot->setAxisScale( QwtPlot::yRight,  0.0, plt_zmax );
 
    data_plot->replot();
