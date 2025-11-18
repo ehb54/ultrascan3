@@ -188,7 +188,8 @@ jobs:
         language: [cpp]
         container: 
           - "ehb1/usbuildtest:ubuntu22.04-qt5.15.10-qwt6.1.6"
-          - "ehb1/usbuildtest:ubuntu22.04-qt5.15.10-qwt6.3.0"
+# somo main not ready for qwt6.3.0
+#          - "ehb1/usbuildtest:ubuntu22.04-qt5.15.10-qwt6.3.0"
 # somo main not ready for qt6
 #          - "ehb1/usbuildtest:ubuntu24.04-qt6.8.3-qwt6.3.0"
 #          - "ehb1/usbuildtest:ubuntu24.04-qt6.10.0-qwt6.3.0"
