@@ -168,10 +168,6 @@ jobs:
           cp admin/codeql/docker/local.pri.gui local.pri
           git config --global --add safe.directory /__w/ultrascan3/ultrascan3
           (cd programs/us && sh revision.sh)
-          cd qwtplot3d
-          cp admin/codeql/docker/local.pri.gui local.pri
-          git config --global --add safe.directory /__w/ultrascan3/ultrascan3
-          (cd programs/us && sh revision.sh)
           qmake
           make -j4
       - name: Perform CodeQL Analysis
