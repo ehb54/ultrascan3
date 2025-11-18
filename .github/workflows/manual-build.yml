@@ -7,6 +7,7 @@ on:
     branches: [ main, lukas/qt6-compile ]
     paths:
       - 'doc/manual/**'
+      - '.github/workflows/manual-build.yml'
   workflow_dispatch:
 
 jobs:
