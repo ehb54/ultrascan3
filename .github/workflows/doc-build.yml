@@ -14,7 +14,7 @@ on:
 
 jobs:
   build-manual:
-    name: "Build Documentation (${{ matrix.container }})"
+    name: "(${{ matrix.container }})"
     runs-on: ubuntu-latest
 
     permissions:
