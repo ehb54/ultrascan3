@@ -16,11 +16,75 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main, lukas/qt6-compile ]
+    paths:
+      - '**.c'
+      - '**.cpp'
+      - '**.h'
+      - '**.hpp'
+      - '**.pro'
+      - '**.pri'
+      - 'programs/main1.inc'
+      - '**CMakeLists.txt'
+      - '**.json'
+      - '**.qrc'
+      - '**.ui'
+      - '.github/workflows/codeql-analysis.yml'
+      - 'admin/codeql/docker/local.**'
   schedule:
     - cron: '20 18 * * 1'
 
 jobs:
+  changed-files:
+    runs-on: ubuntu-latest  # windows-latest || macos-latest
+    name: Get changed files
+    permissions:
+      pull-requests: read
+    outputs:
+      # reference: https://github.com/tj-actions/changed-files#outputs-
+      somo: ${{ steps.changed-files.outputs.somo_any_modified == 'true' }}
+      mpi: ${{ steps.changed-files.outputs.mpi_any_modified == 'true' }}
+      gui: ${{ steps.changed-files.outputs.programs_any_modified == 'true' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Get changed files
+        if: ${{ github.event_name != 'schedule' || !env.ACT }}
+        id: changed-files
+        uses: tj-actions/changed-files@v47
+        with:
+          files_yaml: |
+            workflow: &workflow
+              - .github/workflows/codeql-analysis.yml
+            utils: &utils
+              - library.pri
+              - utils/**
+            qwtplot3d: &qwtplot3d
+              - library.pri
+              - qwtplot3d/**
+            gui: &gui
+              - *utils
+              - *qwtplot3d
+              - gui/**
+            programs: &programs
+              - *gui
+              - gui.pri
+              - programs/**
+              - admin/codeql/docker/local.pri.gui
+              - *workflow
+            mpi: &mpi
+              - *utils
+              - programs/us_mpi_analysis/**
+              - admin/codeql/docker/local.pri.mpi
+              - *workflow
+            somo: &somo
+              - somo/**
+              - us_somo/**
+              - admin/codeql/docker/local.pri.somo
+              - *workflow
   analyze-mpi:
+    needs: [ changed-files ]
+    if: ${{ needs.changed-files.outputs.mpi == 'true' || github.event_name == 'schedule' || github.event.act == 'true' }}
     name: Analyze mpi
     runs-on: ubuntu-latest
     permissions:
@@ -31,10 +95,15 @@ jobs:
       fail-fast: false
       matrix:
         language: [cpp]
+        container: 
+          - "ehb1/usbuildtest:ubuntu22.04-qt5.15.10-qwt6.1.6"
+          - "ehb1/usbuildtest:ubuntu22.04-qt5.15.10-qwt6.3.0"
+          - "ehb1/usbuildtest:ubuntu24.04-qt6.8.3-qwt6.3.0"
+          - "ehb1/usbuildtest:ubuntu24.04-qt6.10.0-qwt6.3.0"
 
     # Specify the container in which actions will run
     container:
-      image: ehb1/us3comp:latest
+      image: ${{ matrix.container }}
       options: --cpus 2
 
     steps:
@@ -42,10 +111,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
-
-      - name: Install libarchive
-        run: |
-          apt-get install -y libarchive-dev
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v4
         with:
@@ -66,6 +131,8 @@ jobs:
         uses: github/codeql-action/analyze@v4
 
   analyze-gui:
+    needs: [ changed-files ]
+    if: ${{ needs.changed-files.outputs.gui == 'true' || github.event_name == 'schedule' || github.event.act == 'true' }}
     name: Analyze gui
     runs-on: ubuntu-latest
     permissions:
@@ -76,10 +143,15 @@ jobs:
       fail-fast: false
       matrix:
         language: [cpp]
+        container: 
+          - "ehb1/usbuildtest:ubuntu22.04-qt5.15.10-qwt6.1.6"
+          - "ehb1/usbuildtest:ubuntu22.04-qt5.15.10-qwt6.3.0"
+          - "ehb1/usbuildtest:ubuntu24.04-qt6.8.3-qwt6.3.0"
+          - "ehb1/usbuildtest:ubuntu24.04-qt6.10.0-qwt6.3.0"
 
     # Specify the container in which actions will run
     container:
-      image: ehb1/us3comp:latest
+      image: ${{ matrix.container }}
       options: --cpus 2
 
     steps:
@@ -87,9 +159,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
-      - name: Install libarchive
-        run: |
-          apt-get install -y libarchive-dev
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v4
         with:
@@ -100,26 +169,17 @@ jobs:
           git config --global --add safe.directory /__w/ultrascan3/ultrascan3
           (cd programs/us && sh revision.sh)
           cd qwtplot3d
+          cp admin/codeql/docker/local.pri.gui-qt6 local.pri
+          git config --global --add safe.directory /__w/ultrascan3/ultrascan3
+          (cd programs/us && sh revision.sh)
           qmake
           make -j4
-          cd ..
-          cd utils
-          qmake
-          make -j4
-          cd ..
-          cd gui
-          qmake
-          make -j4
-          cd ..
-          for d in `find programs -type d -name "us*" | grep -v 'us_mpi_analysis'`
-          do
-          echo "*** compiling in $d ***"
-          ( cd $d && qmake && make -j4 )
-          done
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v4
 
   analyze-somo:
+    needs: [ changed-files ]
+    if: ${{ needs.changed-files.outputs.somo == 'true' || github.event_name == 'schedule' || github.event.act == 'true' }}
     name: Analyze somo
     runs-on: ubuntu-latest
     permissions:
@@ -130,10 +190,16 @@ jobs:
       fail-fast: false
       matrix:
         language: [cpp]
+        container: 
+          - "ehb1/usbuildtest:ubuntu22.04-qt5.15.10-qwt6.1.6"
+          - "ehb1/usbuildtest:ubuntu22.04-qt5.15.10-qwt6.3.0"
+# somo main not ready for qt6
+#          - "ehb1/usbuildtest:ubuntu24.04-qt6.8.3-qwt6.3.0"
+#          - "ehb1/usbuildtest:ubuntu24.04-qt6.10.0-qwt6.3.0"
 
     # Specify the container in which actions will run
     container:
-      image: ehb1/us3comp:latest
+      image: ${{ matrix.container }}
       options: --cpus 2
 
     steps:
@@ -163,40 +229,3 @@ jobs:
           make -j4
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v4
-
-  analyze-gui-qt6:
-    name: Analyze gui qt6
-    runs-on: ubuntu-24.04
-    permissions:
-      security-events: write
-      actions: read
-
-    strategy:
-      fail-fast: false
-      matrix:
-        language: [cpp]
-
-    # Specify the container in which actions will run
-    container:
-      image: ehb1/usbuildtest:ubuntu24.04-qt6.9.3-qwt6.3.0
-      options: --cpus 2
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 1
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v4
-        with:
-          languages: ${{ matrix.language }}
-      - name: Build
-        run: |
-          cp admin/codeql/docker/local.pri.gui-qt6 local.pri
-          git config --global --add safe.directory /__w/ultrascan3/ultrascan3
-          (cd programs/us && sh revision.sh)
-          qmake
-          make -j4
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v4
-
