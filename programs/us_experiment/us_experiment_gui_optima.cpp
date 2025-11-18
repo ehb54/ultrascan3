@@ -364,7 +364,7 @@ void US_ExperimentMain::exclude_used_instruments( QStringList & occupied_instrum
 void US_ExperimentMain::accept_passed_protocol_details(  QMap < QString, QString > & protocol_details )
 {
   reset();
-  
+    
   qDebug() << "PROTOCOL DEV MODE !!!: ";
   us_prot_dev_mode = true;
 
@@ -1579,6 +1579,26 @@ void US_ExperGuiRotor::set_dataSource_public( QMap <QString, QString>& pd_detail
       if ( dataSource_pd.contains("dataDiskAUC:PseudoAbsorbance"))
 	rpRotor->importData_absorbance_pa = true;
     }
+
+  //get channels as it comes from the protocol for dataDisk run
+  channels_for_dataDisk. clear();
+  qDebug() << "[PROT.DEV.]Solutions: nschan, chsols.size() -- "
+	   << rpSolut->nschan << rpSolut->chsols.size();
+
+  for (int i=0; i<rpSolut->chsols.size(); ++i)
+    {
+      US_RunProtocol::RunProtoSolutions::ChanSolu cs = rpSolut->chsols[i];
+      QString chann_name = cs.channel;
+      QString sol_name   = cs.solution;
+      QString sol_id     = cs.sol_id;
+      qDebug() << "Sol_Chanel# " << i << ": " << "Channel, Soluiton, Sol_id -- "
+	       << chann_name << ", " << sol_name << ", " << sol_id;
+
+      chann_name = chann_name.split(",")[0].simplified();
+      channels_for_dataDisk << chann_name;
+    }
+
+  qDebug() << "[PROT.DEV.]channels_for_dataDisk -- " << channels_for_dataDisk;
 }
 
 void US_ExperGuiRotor::switch_to_dataDisk_public()
@@ -2025,7 +2045,8 @@ bool US_ExperGuiRotor::check_for_channel_dataDisk( QString ch_c )
   bool isChann = false;
   for ( int i=0; i<channels_for_dataDisk.size(); ++i)
     {
-      QString ch_dataDisk = channels_for_dataDisk[i].replace(" / ","").simplified();
+      QString ch_dataDisk = channels_for_dataDisk[i];
+      ch_dataDisk = ch_dataDisk.replace(" / ","").simplified();
       qDebug() << "ch_dataDisk, ch_c -- " << ch_dataDisk << ", " << ch_c;
       if ( ch_dataDisk == ch_c )
 	{
@@ -4954,18 +4975,24 @@ DbgLv(1) << "EGSo: rbS: SV_CHANS[sxx] !!!!!!!!!!!!!!!!: " << rpSolut->chsols[ ii
 	       qDebug() << "regenSol: rpRotor->importData_absorbance_t -- "
 			<< rpRotor->importData_absorbance_t;
                QString channel     = scell + " / " + QString( schans ).mid( jj, 1 );
-	       QString channel_1   = channel;
-	       channel_1 = channel_1.replace(" / ","").simplified();
-	       
+	       	       
 	       //for dataDisk, check if channel exists:
 	       qDebug() << "dataDisk -- " << rpRotor->importData;
 	       qDebug() << "dataDisk: isDirEmpty -- " << rpRotor->importDataDisk.isEmpty();
 	       qDebug() << "dataDisk: chann_list -- " << mainw->get_all_channels_dataDisk();
-	       qDebug() << "Current channel -- " << channel_1;
-	       if ( rpRotor->importData && !rpRotor->importDataDisk.isEmpty() &&
-		    !mainw->get_all_channels_dataDisk(). contains( channel_1 ) )
-		 continue;
+	       qDebug() << "Current channel -- " << channel;
+	       // if ( rpRotor->importData && !rpRotor->importDataDisk.isEmpty() &&
+	       // 	    !mainw->get_all_channels_dataDisk(). contains( channel ) )
+	       // 	 continue;
 
+	       if ( rpRotor->importData && !mainw->get_all_channels_dataDisk(). contains( channel ) )
+		 {
+		   if ( mainw->us_prot_dev_mode )
+		     continue;
+		   else if ( !rpRotor->importDataDisk.isEmpty() )
+		     continue;
+		 }
+	       
                if ( (QString( schans ).mid( jj, 1 )).contains( "A" ) )                   //ALEXEY: channel lables
                   srchans << channel + ", sample [right]";
                else if ( (QString( schans ).mid( jj, 1 )).contains( "B" ) && !rpRotor->importData_absorbance_t )
