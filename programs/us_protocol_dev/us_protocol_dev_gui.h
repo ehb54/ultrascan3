@@ -139,6 +139,8 @@ class US_InitDialogueGui : public US_WidgetsDialog
         bool initMsgNorecOpen; //!< Flag for no record message open
         bool initMsgNorecDelOpen; //!< Flag for no record deletion message open
 
+        US_ConvertGui*    sdiag_convert;
+
     private:
         US_ProtocolDevMain* mainw; //!< Parent to all panels
         int offset; //!< Offset
@@ -321,6 +323,8 @@ class US_ExperGui : public US_WidgetsDialog
          */
         void to_live_update( QMap < QString, QString > & protocol_details );
 
+        void to_import( QMap < QString, QString > & protocol_details );
+  
         /**
          * \brief Clears the experiment.
          */
@@ -343,6 +347,8 @@ class US_ExperGui : public US_WidgetsDialog
              * \param protocol_details The protocol details.
              */
             void switch_to_live_update( QMap < QString, QString > & protocol_details );
+
+            void switch_to_import( QMap < QString, QString > & protocol_details );
 
             /**
              * \brief Signal to set auto mode.
