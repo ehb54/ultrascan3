@@ -4,7 +4,7 @@ on:
   push:
     branches: [ main ]
   pull_request:
-    branches: [ main, lukas/qt6-compile ]
+    branches: [ main ]
     paths:
       - 'doc/manual/**'
       - '.github/workflows/doc-build.yml'
