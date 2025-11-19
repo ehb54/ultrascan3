@@ -1,4 +1,4 @@
-# Formating and Linting CMake Files
+# Formatting and Linting CMake Files
 
 The `cmakelang` project provides Quality Assurance (QA) and other language tools for cmake:
 

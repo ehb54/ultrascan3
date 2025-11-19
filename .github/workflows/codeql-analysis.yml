@@ -217,7 +217,7 @@ jobs:
                 # get program name
                 prog_name=$(basename "$dir")
                 # find all programs, which contain $prog_name in the pro file
-                grep -r -l "$prog_name" programs/*/*.pro | while read dependent_pro; do
+                grep -r -l "$prog_name" programs/*/*.pro || true | while read dependent_pro; do
                   dirname "$dependent_pro" >> build_targets.txt
                 done
               fi

@@ -12,7 +12,7 @@ on:
       - 'utils/**.hpp'
       - 'utils/CMakeLists.txt'
       - 'test/**'
-      - '**.json'
+      - '**/*.json'
       - '.github/workflows/unit-tests.yml'
       - 'admin/cmake/**'
       - 'admin/test/**'
