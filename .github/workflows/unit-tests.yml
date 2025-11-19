@@ -3,19 +3,6 @@ name: "Unit Tests"
 on:
   push:
     branches: [ main ]
-    paths:
-      - 'utils/**.c'
-      - 'utils/**.cpp'
-      - 'utils/**.h'
-      - 'utils/**.hpp'
-      - 'utils/CMakeLists.txt'
-      - 'test/**'
-      - '**.json'
-      - '.github/workflows/unit-tests.yml'
-      - 'admin/cmake/**'
-      - 'admin/test/**'
-      - 'test-docker.sh'
-      - 'CMakeLists.txt'
   pull_request:
     branches: [ main ]
     paths:
