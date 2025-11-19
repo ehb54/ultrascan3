@@ -1,0 +1,57 @@
+---
+extends: default
+
+rules:
+  # The YAML is for a GitHub Actions workflow, which has its own required/recommended style
+  # The "default" preset is often too strict for workflow files.
+
+  # disables warning about the missing "---" at the start
+  document-start: disable
+
+  # Allows the use of single-line arrays/maps common in GitHub Actions 'with:'
+  # Example: with: { env: MY_VAR }
+  # Disabling this rule allows: with: | ...
+  # You can keep this disabled if you only use multi-line steps/with:
+  braces: disable
+  
+  brackets: disable
+
+  # **FIX FOR 'on:' WARNING** Disables the check that flags keys
+  # like 'on', 'off', 'yes', 'no' as ambiguous boolean values.
+  truthy: disable
+    
+  # Allows empty lines in the middle of steps/jobs for better readability
+  empty-lines:
+    max: 2
+    max-end: 1
+    max-start: 0
+
+  # This is the biggest culprit for GitHub Actions YAML.
+  # The required use of ${{ expression }} often forces lines longer than 80 chars.
+  line-length:
+    max: 200 # Increase to a more reasonable limit for workflow files
+    level: warning # Change from error to warning
+  
+  # GitHub Actions documentation often uses single quotes (') instead of double quotes (")
+  # for specific strings, which yamllint can flag.
+  # Keep this as a warning or disable it if you need the flexibility.
+  quoted-strings: disable
+    
+  # Allows strings that look like booleans (e.g., 'on', 'off', 'yes', 'no') to be unquoted.
+  # This is common in Actions where these are used as actual string values, not booleans.
+  # Note: The CodeQL workflow itself might use these as booleans, but in other parts of the
+  # workflow, you might need them as strings.
+  # Keep this disabled for YAML files that are NOT for GitHub Actions.
+  # For workflow files, it's safer to disable or quote the specific values causing the issue.
+  # Example: if: ${{ github.repository_owner == 'myorg' }}
+  # Instead of disabling it globally, you can ignore the specific files:
+  # Check if you can apply a less strict preset just for the CodeQL file.
+  # The best fix for this is quoting the offending string, e.g., `if: 'true'`
+  # You can disable it here, but I recommend fixing the values by quoting them.
+  # If you see an error like "Truthy value should be one of [true, false]...", disable it:
+  # truthy: disable 
+
+  # Allows dashes to be on the same line as the parent key, which is standard for 'steps:'
+  # - name: ...
+  # Often not an issue with the default config, but good to check if you run into one.
+  # hyphens: enable # The default is usually fine.
