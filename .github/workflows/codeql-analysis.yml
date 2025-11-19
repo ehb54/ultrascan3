@@ -45,12 +45,15 @@ jobs:
       pull-requests: read
     outputs:
       # reference: https://github.com/tj-actions/changed-files#outputs-
+      workflow: ${{ steps.changed-files.outputs.workflow_any_modified == 'true' }}
+      utils: ${{ steps.changed-files.outputs.utils_any_modified == 'true' }}
+      qwtplot3d: ${{ steps.changed-files.outputs.qwtplot3d_any_modified == 'true' }}
+      gui: ${{ steps.changed-files.outputs.gui_any_modified == 'true' }}
       somo: ${{ steps.changed-files.outputs.somo_any_modified == 'true' }}
       mpi: ${{ steps.changed-files.outputs.mpi_any_modified == 'true' }}
+      common: ${{ steps.changed-files.outputs.common_any_modified == 'true' }}
       programs: ${{ steps.changed-files.outputs.programs_any_modified == 'true' }}
-      utils: ${{ steps.changed-files.outputs.utils_any_modified == 'true' }}
-      gui: ${{ steps.changed-files.outputs.gui_any_modified == 'true' }}
-      qwtplot3d: ${{ steps.changed-files.outputs.qwtplot3d_any_modified == 'true' }}
+      changed_programs: ${{ steps.changed-programs.outputs.all_changed_files }}
       
     steps:
       - uses: actions/checkout@v5
@@ -74,12 +77,18 @@ jobs:
               - *utils
               - *qwtplot3d
               - gui/**
+            common: &common
+              - gui.pri
+              - programs/main1.inc
+              - make_all.pro
+              - admin/codeql/docker/local.pri.gui
+              - library.pri
             programs: &programs
               - *gui
               - gui.pri
               - programs/**
-              - admin/codeql/docker/local.pri.gui
               - *workflow
+              - *common
             mpi: &mpi
               - *utils
               - programs/us_mpi_analysis/**
@@ -90,6 +99,15 @@ jobs:
               - us_somo/**
               - admin/codeql/docker/local.pri.somo
               - *workflow
+      - name: Get changed programs
+        if: ${{ github.event_name != 'schedule' || !env.ACT }}
+        id: changed-programs
+        uses: tj-actions/changed-files@v47
+        with:
+          files: |
+            programs/**
+          separator: " "
+          json: false
   analyze-mpi:
     needs: [ changed-files ]
     if: ${{ needs.changed-files.outputs.mpi == 'true' || github.event_name == 'schedule' || github.event.act == 'true' }}
@@ -219,34 +237,61 @@ jobs:
             ./gui/
             ./lib/libus_gui*
           key: ${{ runner.os }}-gui-${{ matrix.container }}-${{ hashFiles('gui/**.cpp', 'gui/**.h', 'gui/**.pro', 'library.pri', 'make_all.pro', 'local.pri') }}
-      - name: Build Utils
-        if: ${{ steps.cache-utils.outputs.cache-hit != 'true' }}
-        id: build-utils
+      - name: Calculate Build Targets
+        id: calc-targets
+        env:
+          CHANGED_FILES: ${{ needs.changed-files.outputs.changed_programs }}
+          LIBS_CHANGED: ${{ needs.changed-files.outputs.utils == 'true' || needs.changed-files.outputs.qwtplot3d == 'true' || needs.changed-files.outputs.gui == 'true' }}
+          COMMON_CHANGED: ${{ needs.changed-files.outputs.workflow == 'true' || needs.changed-files.outputs.common == 'true' }}
+          FORCE_ALL: ${{ github.event_name == 'schedule' || github.event_name == 'push' || github.event.act == 'true' }}
         run: |
-          cd utils
-          qmake
-          make -j$(nproc)
-      - name: Build qwtplot3d
-        if: ${{ steps.cache-qwtplot3d.outputs.cache-hit != 'true' }}
-        id: build-qwtplot3d
-        run: |
-          cd qwtplot3d
-          qmake
-          make -j$(nproc)
-      - name: Build gui
-        if: ${{ steps.cache-gui.outputs.cache-hit != 'true' || needs.changed-files.outputs.utils == 'true' || needs.changed-files.outputs.qwtplot3d == 'true' }}
-        id: build-gui
-        run: |
-          cd gui
-          qmake
-          make -j$(nproc)
+          touch build_targets.txt
+          # if libs or common changed or it is a push to main/scheduled event, force all programs
+          if [ "$FORCE_ALL" == "true" ] || [ "$COMMON_CHANGED" == "true" ] || [ "$LIBS_CHANGED" == "true" ]; then
+            echo "Global rebuild with all programs"
+            echo "." >> build_targets.txt
+          else
+            echo "Calculate changed programs"
+            for file in $CHANGED_FILES; do
+              dir=$(echo $file | awk -F/ '{print $1"/"$2}')
+
+              if [ -d "$dir" ]; then
+                # add the directory itself
+                echo "$dir" >> build_targets.txt
+                # get program name
+                prog_name=$(basename "$dir")
+                # find all programs, which contain $prog_name in the pro file
+                grep -r -l "$prog_name" programs/*/*.pro | while read dependent_pro; do
+                  dirname "$dependent_pro" >> build_targets.txt
+                done
+              fi
+            done
+          fi
+          # sort and deduplicate
+          SORTED_TARGETS=$(cat build_targets.txt | sort -u | tr '\n' ' ')
+          # fall back to all if empty
+          if [ -z "$SORTED_TARGETS" ]; then
+            echo "No targets found. Default to all."
+            echo "." > final_targets.txt
+          else
+            echo "$SORTED_TARGETS" > final_targets.txt
+          fi
+          echo "Final Build List: $(cat final_targets.txt)"
+          # Set output for the next step
+          echo "build_list=$(cat final_targets.txt)" >> $GITHUB_OUTPUT
       
-          
       - name: Build programs
+        env:
+          TARGETS: ${{ steps.calc-targets.outputs.build_list }}
         run: |
           (cd programs/us && sh revision.sh)
           qmake
-          make -j$(nproc)
+          for dir in $TARGETS; do
+            if [ -d "$dir" ]; then
+              echo "Building: $dir"
+              (cd "$dir" && qmake && make -j$(nproc))
+            fi
+          done
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v4
 
@@ -284,20 +329,26 @@ jobs:
         uses: github/codeql-action/init@v4
         with:
           languages: ${{ matrix.language }}
-      - name: Build
+      - name: Prepare build
         run: |
           bdir=`pwd`
           echo $bdir
           pwd
           export ULTRASCAN=$bdir
           export us3=$bdir
-          cd us_somo/develop
           git config --global --add safe.directory /__w/ultrascan3/ultrascan3
+          cd us_somo/develop
           ./revision.sh
           ./version.sh
           cp $bdir/admin/codeql/docker/local.pri.somo local.pri
+      - name: Build libus_somo
+        run: |
+          cd us_somo/develop
           qmake libus_somo.pro
           make -j$(nproc)
+      - name: Build us_somo
+        run: |
+          cd us_somo/develop
           qmake us_somo.pro
           make -j$(nproc)
       - name: Perform CodeQL Analysis
