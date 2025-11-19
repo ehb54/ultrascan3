@@ -47,7 +47,11 @@ jobs:
       # reference: https://github.com/tj-actions/changed-files#outputs-
       somo: ${{ steps.changed-files.outputs.somo_any_modified == 'true' }}
       mpi: ${{ steps.changed-files.outputs.mpi_any_modified == 'true' }}
-      gui: ${{ steps.changed-files.outputs.programs_any_modified == 'true' }}
+      programs: ${{ steps.changed-files.outputs.programs_any_modified == 'true' }}
+      utils: ${{ steps.changed-files.outputs.utils_any_modified == 'true' }}
+      gui: ${{ steps.changed-files.outputs.gui_any_modified == 'true' }}
+      qwtplot3d: ${{ steps.changed-files.outputs.qwtplot3d_any_modified == 'true' }}
+      
     steps:
       - uses: actions/checkout@v5
         with:
@@ -108,7 +112,6 @@ jobs:
     # Specify the container in which actions will run
     container:
       image: ${{ matrix.container }}
-      options: --cpus 4
 
     steps:
       - name: Checkout repository
@@ -125,19 +128,19 @@ jobs:
           git config --global --add safe.directory /__w/ultrascan3/ultrascan3
           cd utils
           qmake
-          make -j8
+          make -j$(nproc)
           cd ..
           cd programs/us_mpi_analysis
           qmake
-          make -j8
+          make -j$(nproc)
           cd ../..
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v4
 
   analyze-gui:
     needs: [ changed-files ]
-    if: ${{ needs.changed-files.outputs.gui == 'true' || github.event_name == 'schedule' || github.event.act == 'true' }}
-    name: Analyze gui
+    if: ${{ needs.changed-files.outputs.programs == 'true' || github.event_name == 'schedule' || github.event.act == 'true' }}
+    name: Analyze gui programs
     runs-on: ubuntu-latest
     permissions:
       security-events: write
@@ -157,24 +160,99 @@ jobs:
     # Specify the container in which actions will run
     container:
       image: ${{ matrix.container }}
-      options: --cpus 4
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
         with:
           fetch-depth: 1
+      - name: Install ccache
+        if: ${{ github.event_name != 'schedule' }}
+        run: |
+          apt-get update && apt-get install -y ccache
+          # Prepend ccache to PATH so it intercepts gcc/g++ calls
+          echo "/usr/lib/ccache" >> $GITHUB_PATH
+      - name: Cache build files
+        if: ${{ github.event_name != 'schedule' }}
+        uses: actions/cache@v4
+        with:
+          path: ~/.ccache
+          key: ${{ runner.os }}-ccache-${{ matrix.container }}-${{ github.ref }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-ccache-${{ matrix.container }}-${{ github.ref }}
+            ${{ runner.os }}-ccache-${{ matrix.container }}
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v4
         with:
           languages: ${{ matrix.language }}
-      - name: Build
+      - name: Prepare build
         run: |
+          export CCACHE_DIR=/root/.ccache
+          ccache -M 2G
+          ccache -s
+          cp admin/codeql/docker/local.pri.gui local.pri
+          git config --global --add safe.directory /__w/ultrascan3/ultrascan3
+      - name: Cache Utils
+        id: cache-utils
+        if: ${{ github.event_name != 'schedule' }}
+        uses: actions/cache@v4
+        with:
+          path: |
+            ./utils/
+            ./lib/libus_utils*
+          key: ${{ runner.os }}-utils-${{ matrix.container }}-${{ hashFiles('utils/**.cpp', 'utils/**.h', 'utils/**.pro', 'library.pri', 'make_all.pro', 'local.pri') }}
+      - name: Cache qwtplot3d
+        id: cache-qwtplot3d
+        if: ${{ github.event_name != 'schedule' }}
+        uses: actions/cache@v4
+        with:
+          path: |
+            ./qwtplot3d/
+            ./lib/libqwtplot3d*
+          key: ${{ runner.os }}-qwtplot3d-${{ matrix.container }}-${{ hashFiles('qwtplot3d/**.cpp', 'qwtplot3d/**.h', 'qwtplot3d/**.c', 'qwtplot3d/**.hpp', 'qwtplot3d/**.pro', 'library.pri', 'make_all.pro', 'local.pri') }}
+      - name: Cache gui
+        id: cache-gui
+        if: ${{ github.event_name != 'schedule' }}
+        uses: actions/cache@v4
+        with:
+          path: |
+            ./gui/
+            ./lib/libus_gui*
+          key: ${{ runner.os }}-gui-${{ matrix.container }}-${{ hashFiles('gui/**.cpp', 'gui/**.h', 'gui/**.pro', 'library.pri', 'make_all.pro', 'local.pri') }}
+      - name: Build Utils
+        if: ${{ steps.cache-utils.outputs.cache-hit != 'true' }}
+        id: build-utils
+        run: |
+          cd utils
+          qmake
+          make -j$(nproc)
+      - name: Build qwtplot3d
+        if: ${{ steps.cache-qwtplot3d.outputs.cache-hit != 'true' }}
+        id: build-qwtplot3d
+        run: |
+          cd qwtplot3d
+          qmake
+          make -j$(nproc)
+      - name: Build gui
+        if: ${{ steps.cache-gui.outputs.cache-hit != 'true' || needs.changed-files.outputs.utils == 'true' || needs.changed-files.outputs.qwtplot3d == 'true' }}
+        id: build-gui
+        run: |
+          cd gui
+          qmake
+          make -j$(nproc)
+      
+          
+      - name: Build programs
+        run: |
+          # Setup ccache
+          export CCACHE_DIR=/root/.ccache
+          ccache -M 2G
+          ccache -s
           cp admin/codeql/docker/local.pri.gui local.pri
           git config --global --add safe.directory /__w/ultrascan3/ultrascan3
           (cd programs/us && sh revision.sh)
           qmake
-          make -j8
+          make -j$(nproc)
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v4
 
@@ -202,7 +280,6 @@ jobs:
     # Specify the container in which actions will run
     container:
       image: ${{ matrix.container }}
-      options: --cpus 4
 
     steps:
       - name: Checkout repository
@@ -226,8 +303,8 @@ jobs:
           ./version.sh
           cp $bdir/admin/codeql/docker/local.pri.somo local.pri
           qmake libus_somo.pro
-          make -j8
+          make -j$(nproc)
           qmake us_somo.pro
-          make -j8
+          make -j$(nproc)
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v4
