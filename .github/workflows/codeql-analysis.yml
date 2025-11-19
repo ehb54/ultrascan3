@@ -244,12 +244,6 @@ jobs:
           
       - name: Build programs
         run: |
-          # Setup ccache
-          export CCACHE_DIR=/root/.ccache
-          ccache -M 2G
-          ccache -s
-          cp admin/codeql/docker/local.pri.gui local.pri
-          git config --global --add safe.directory /__w/ultrascan3/ultrascan3
           (cd programs/us && sh revision.sh)
           qmake
           make -j$(nproc)
