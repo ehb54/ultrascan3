@@ -15,7 +15,7 @@ on:
   push:
     branches: [ main ]
   pull_request:
-    branches: [ main, lukas/qt6-compile ]
+    branches: [ main ]
     paths:
       - '**.c'
       - '**.cpp'
@@ -146,11 +146,11 @@ jobs:
           git config --global --add safe.directory /__w/ultrascan3/ultrascan3
           cd utils
           qmake
-          make -j$(nproc)
+          make -j$(( $(nproc) + 1 ))
           cd ..
           cd programs/us_mpi_analysis
           qmake
-          make -j$(nproc)
+          make -j$(( $(nproc) + 1 ))
           cd ../..
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v4
@@ -239,17 +239,17 @@ jobs:
         run: |
           cd utils
           qmake
-          make -j$(nproc)
+          make -j$(( $(nproc) + 1 ))
       - name: Build qwtplot3d
         run: |
           cd qwtplot3d
           qmake
-          make -j$(nproc)
+          make -j$(( $(nproc) + 1 ))
       - name: Build gui
         run: |
           cd gui
           qmake
-          make -j$(nproc)
+          make -j$(( $(nproc) + 1 ))
       - name: Build programs
         env:
           TARGETS: ${{ steps.calc-targets.outputs.build_list }}
@@ -258,7 +258,7 @@ jobs:
           for dir in $TARGETS; do
             if [ -d "$dir" ]; then
               echo "Building: $dir"
-              (cd "$dir" && make -j$(nproc))
+              (cd "$dir" && make -j$(( $(nproc) + 1 )))
             fi
           done
       - name: Perform CodeQL Analysis
@@ -314,11 +314,11 @@ jobs:
         run: |
           cd us_somo/develop
           qmake libus_somo.pro
-          make -j$(nproc)
+          make -j$(( $(nproc) + 1 ))
       - name: Build us_somo
         run: |
           cd us_somo/develop
           qmake us_somo.pro
-          make -j$(nproc)
+          make -j$(( $(nproc) + 1 ))
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v4

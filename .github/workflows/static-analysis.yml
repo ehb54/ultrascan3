@@ -9,8 +9,13 @@ on:
       - 'gui/**/*.h'
       - 'programs/**/*.cpp'
       - 'programs/**/*.h'
+      - 'programs/main1.inc'
       - 'utils/**/*.cpp'
       - 'utils/**/*.h'
+      - 'qwtplot3d/**.cpp'
+      - 'qwtplot3d/**.h'
+      - 'qwtplot3d/**.hpp'
+      - 'qwtplot3d/**.c'
       - '.github/workflows/static-analysis.yml'
       - 'CMakeLists.txt'
       - '**/CMakeLists.txt'
@@ -21,8 +26,7 @@ jobs:
   static-analysis:
     runs-on: ubuntu-latest
     container:
-      image: ehb1/us3comp:latest
-      options: --cpus 2
+      image: ehb1/usbuildtest:ubuntu22.04-qt5.15.10-qwt6.1.6
 
     steps:
       - name: Checkout repository
