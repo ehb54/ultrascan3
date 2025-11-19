@@ -1,18 +1,7 @@
 name: Static Analysis (Smart & Actionable)
 on:
-  push: &trigger_config
+  push:
     branches: [ main ]
-    paths:
-      - 'gui/**/*.cpp'
-      - 'gui/**/*.h'
-      - 'programs/**/*.cpp'
-      - 'programs/**/*.h'
-      - 'utils/**/*.cpp'
-      - 'utils/**/*.h'
-      - '.github/workflows/static-analysis.yml'
-      - 'CMakeLists.txt'
-      - '**/CMakeLists.txt'
-      - '**/*.cmake'
   pull_request:
     branches: [ main ]
     paths:
