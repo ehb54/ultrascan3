@@ -184,59 +184,15 @@ jobs:
         uses: actions/checkout@v5
         with:
           fetch-depth: 1
-      - name: Install ccache
-        if: ${{ github.event_name != 'schedule' }}
-        run: |
-          apt-get update && apt-get install -y ccache
-          # Prepend ccache to PATH so it intercepts gcc/g++ calls
-          echo "/usr/lib/ccache" >> $GITHUB_PATH
-      - name: Cache build files
-        if: ${{ github.event_name != 'schedule' }}
-        uses: actions/cache@v4
-        with:
-          path: ~/.ccache
-          key: ${{ runner.os }}-ccache-${{ matrix.container }}-${{ github.ref }}-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-ccache-${{ matrix.container }}-${{ github.ref }}
-            ${{ runner.os }}-ccache-${{ matrix.container }}
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v4
         with:
           languages: ${{ matrix.language }}
       - name: Prepare build
         run: |
-          export CCACHE_DIR=/root/.ccache
-          ccache -M 2G
-          ccache -s
           cp admin/codeql/docker/local.pri.gui local.pri
           git config --global --add safe.directory /__w/ultrascan3/ultrascan3
-      - name: Cache Utils
-        id: cache-utils
-        if: ${{ github.event_name != 'schedule' }}
-        uses: actions/cache@v4
-        with:
-          path: |
-            ./utils/
-            ./lib/libus_utils*
-          key: ${{ runner.os }}-utils-${{ matrix.container }}-${{ hashFiles('utils/**.cpp', 'utils/**.h', 'utils/**.pro', 'library.pri', 'make_all.pro', 'local.pri') }}
-      - name: Cache qwtplot3d
-        id: cache-qwtplot3d
-        if: ${{ github.event_name != 'schedule' }}
-        uses: actions/cache@v4
-        with:
-          path: |
-            ./qwtplot3d/
-            ./lib/libqwtplot3d*
-          key: ${{ runner.os }}-qwtplot3d-${{ matrix.container }}-${{ hashFiles('qwtplot3d/**.cpp', 'qwtplot3d/**.h', 'qwtplot3d/**.c', 'qwtplot3d/**.hpp', 'qwtplot3d/**.pro', 'library.pri', 'make_all.pro', 'local.pri') }}
-      - name: Cache gui
-        id: cache-gui
-        if: ${{ github.event_name != 'schedule' }}
-        uses: actions/cache@v4
-        with:
-          path: |
-            ./gui/
-            ./lib/libus_gui*
-          key: ${{ runner.os }}-gui-${{ matrix.container }}-${{ hashFiles('gui/**.cpp', 'gui/**.h', 'gui/**.pro', 'library.pri', 'make_all.pro', 'local.pri') }}
+          qmake
       - name: Calculate Build Targets
         id: calc-targets
         env:
@@ -279,17 +235,30 @@ jobs:
           echo "Final Build List: $(cat final_targets.txt)"
           # Set output for the next step
           echo "build_list=$(cat final_targets.txt)" >> $GITHUB_OUTPUT
-      
+      - name: Build utils
+        run: |
+          cd utils
+          qmake
+          make -j$(nproc)
+      - name: Build qwtplot3d
+        run: |
+          cd qwtplot3d
+          qmake
+          make -j$(nproc)
+      - name: Build gui
+        run: |
+          cd gui
+          qmake
+          make -j$(nproc)
       - name: Build programs
         env:
           TARGETS: ${{ steps.calc-targets.outputs.build_list }}
         run: |
           (cd programs/us && sh revision.sh)
-          qmake
           for dir in $TARGETS; do
             if [ -d "$dir" ]; then
               echo "Building: $dir"
-              (cd "$dir" && qmake && make -j$(nproc))
+              (cd "$dir" && make -j$(nproc))
             fi
           done
       - name: Perform CodeQL Analysis
