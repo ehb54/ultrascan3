@@ -18,6 +18,7 @@
 #include "us_math2.h"
 #include "qwt_legend.h"
 
+
 const double epsilon = 0.0005;    // Equivalence magnitude ratio radius
 
 // US_DDistr_Combine class constructor
@@ -400,9 +401,9 @@ US_DDistr_Combine::US_DDistr_Combine( const QString auto_mode ) : US_Widgets()
          tr( "Signal Concentration" ) );
 
    if ( a_mode.isEmpty() )
-     data_plot1->setMinimumSize( 560, 400 );
+     data_plot1->setMinimumSize( QSize(560, 400) );
    else
-     data_plot1->setMinimumSize( 400, 400 );
+     data_plot1->setMinimumSize( QSize(400, 600) );
    
    data_plot1->setAxisScale( QwtPlot::xBottom, 1.0,  10.0 );
    data_plot1->setAxisScale( QwtPlot::yLeft,   0.0, 100.0 );
@@ -426,9 +427,16 @@ US_DDistr_Combine::US_DDistr_Combine( const QString auto_mode ) : US_Widgets()
 
    mainLayout ->addLayout( lfullLayout );
    mainLayout ->addLayout( rightLayout );
-   mainLayout ->setStretchFactor( lfullLayout, 2 );
-   mainLayout ->setStretchFactor( rightLayout, 3 );
-
+   if ( a_mode.isEmpty() )
+     {
+       mainLayout ->setStretchFactor( lfullLayout, 2 );
+       mainLayout ->setStretchFactor( rightLayout, 3 );
+     }
+   else
+     {
+       mainLayout ->setStretchFactor( lfullLayout, 1 );
+       mainLayout ->setStretchFactor( rightLayout, 10 );
+     }
    le_runid   ->setText( "(current run ID)" );
    cmb_svproj ->addItem( "(project name for plot save)" );
 
@@ -447,7 +455,11 @@ US_DDistr_Combine::US_DDistr_Combine( const QString auto_mode ) : US_Widgets()
    te_status  ->setMaximumHeight( ( hh * 3 ) / 2 );
 
    adjustSize();
-   resize( 1180, 580 );
+   if ( a_mode.isEmpty() )
+     resize( 1180, 580 );
+   else
+     resize( 1600, 580 );
+
    reset_data();
 
    // //TEST
@@ -518,6 +530,8 @@ QList< QStringList > US_DDistr_Combine::load_auto( QStringList runids_passed, QS
   return modelsList;
 }
 
+
+
 //return pointer to data_plot1
 QwtPlot* US_DDistr_Combine::rp_data_plot1()
 {
@@ -541,6 +555,8 @@ QwtPlot* US_DDistr_Combine::rp_data_plot1()
   data_plot1->setAxisTitle( QwtPlot::yRight, zTitle );
 
   data_plot1->replot();
+
+  
   
   return data_plot1;
 }

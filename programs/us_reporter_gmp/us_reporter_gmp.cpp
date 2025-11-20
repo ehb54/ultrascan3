@@ -6004,7 +6004,7 @@ void US_ReporterGMP::process_combined_plots_individual ( QString triplesname_p, 
     }
   
   //assemble IND combined plots into html
-  assemble_plots_html( CombPlotsFileNames, "CombPlots"  );
+  assemble_plots_html( CombPlotsFileNames, "IndCombPlots"  );
   qApp->processEvents();
 }
 
@@ -6310,7 +6310,10 @@ void US_ReporterGMP::process_combined_plots ( QString filename_passed )
       sdiag_combplot->reset_data_plot1();
     }
   //assemble combined plots into html
+  html_assembled += "<p class=\"pagebreak \">\n";
+  html_assembled += "<h2 align=left>Combined Distribution Plots</h2>";
   assemble_plots_html( CombPlotsFileNames, "CombPlots"  );
+  html_assembled += "</p>\n";
   
   progress_msg->setValue( progress_msg->maximum() );
   progress_msg->close();
@@ -8265,7 +8268,7 @@ void  US_ReporterGMP::assemble_plots_html( QStringList PlotsFilenames, const QSt
   qDebug() << "[in assemble_plots_html()], PlotsFilenames -- " << PlotsFilenames;  
   // Embed plots in the composite report
 
-  if ( !plot_type.isEmpty() && plot_type != "RunDetails")
+  if ( !plot_type.isEmpty() && plot_type != "RunDetails" && plot_type != "CombPlots")
     html_assembled += "<p class=\"pagebreak \">\n";
   else
      html_assembled  += "<p ><br>";
@@ -8316,7 +8319,7 @@ void  US_ReporterGMP::assemble_plots_html( QStringList PlotsFilenames, const QSt
       html_assembled   += "    <div><img src=\"" + filename 
        	+ "\" alt=\"" + label;
 
-      if ( !plot_type.isEmpty() && plot_type == "CombPlots") // For Combined plots, scale down .png 
+      if ( !plot_type.isEmpty() && plot_type.contains("CombPlots") ) // For Combined plots, scale down .png 
        	{
 	  //reduce comb. plots somewhat
 	  double i_scale_factor_h   = double( qprinters_hight / scaled_i_height );
@@ -8343,8 +8346,8 @@ void  US_ReporterGMP::assemble_plots_html( QStringList PlotsFilenames, const QSt
       
       html_assembled   += "<br>";
 
-      //add custom legen for combined plots
-      if ( !plot_type.isEmpty() && plot_type == "CombPlots" )
+      //add custom legend for combined plots
+      if ( !plot_type.isEmpty() && plot_type.contains( "CombPlots" ) )
 	{
 	  QStringList combparms            = CombPlotsParmsMap[ filename ];
 	  QList< QColor > combparms_colors = CombPlotsParmsMap_Colors[ filename ];
@@ -10551,6 +10554,7 @@ void US_ReporterGMP::write_plot( const QString& filename, const QwtPlot* plot )
 
    else if ( filename.endsWith( ".png" ) )
    {  // General case of PNG
+     qDebug() << "SAVING PNGs!!!!";
       if ( US_GuiUtil::save_png( filename, plot ) != 0 )
          QMessageBox::warning( this, tr( "File Write Error" ),
             tr( "Unable to write file" ) + filename );
