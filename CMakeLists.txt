@@ -136,7 +136,7 @@ if(US3_PROFILE STREQUAL "APP")
 
 elseif(US3_PROFILE STREQUAL "TEST")
     set(US3_NO_DB OFF CACHE BOOL "" FORCE)
-    set(US3_BUILD_PROGRAMS ON CACHE BOOL "" FORCE)
+    set(US3_BUILD_PROGRAMS OFF CACHE BOOL "" FORCE)
     set(BUILD_TESTING ON CACHE BOOL "" FORCE)
     set(US3_PREFER_STATIC ON CACHE BOOL "" FORCE)
 
@@ -329,7 +329,7 @@ endforeach()
 # Find Dependencies
 # ============================================================================
 
-if(US3_BUILD_TESTS)
+if(BUILD_TESTING)
     find_package(Qt5 REQUIRED COMPONENTS Test)
 endif()
 
@@ -636,7 +636,7 @@ message(STATUS "")
 message(STATUS "Options:")
 message(STATUS "  Profile: ${US3_PROFILE}")
 message(STATUS "  NO_DB support: ${US3_NO_DB}")
-message(STATUS "  Build tests: ${US3_BUILD_TESTS}")
+message(STATUS "  Build tests: ${BUILD_TESTING}")
 message(STATUS "  Build programs: ${US3_BUILD_PROGRAMS}")
 message(STATUS "  Prefer static US3 libs: ${US3_PREFER_STATIC}")
 message(STATUS "")

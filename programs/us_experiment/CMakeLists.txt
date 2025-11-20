@@ -20,16 +20,12 @@ set(CROSS_DIR_SOURCES
 
         # us_esigner_gmp
         ../us_esigner_gmp/us_esigner_gmp.cpp
-
-        # us_convert
-        ../us_convert/us_convert.cpp
         )
 
 # Cross-directory headers from .pro file
 set(CROSS_DIR_HEADERS
         ../us_analysis_profile/us_analysis_profile.h
         ../us_esigner_gmp/us_esigner_gmp.h
-        ../us_convert/us_convert.h
         )
 
 # Find UI and resource files
@@ -61,7 +57,6 @@ target_include_directories(us_experiment PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/../us_analysis_profile
         ${CMAKE_CURRENT_SOURCE_DIR}/../us_esigner_gmp
-        ${CMAKE_CURRENT_SOURCE_DIR}/../us_convert
         )
 
 # Link libraries
