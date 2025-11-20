@@ -346,7 +346,7 @@ if [ ! -f CMakeCache.txt ] || [ "$REBUILD" = "true" ]; then
             -DCMAKE_BUILD_TYPE=Debug \
             -DUS3_PROFILE=TEST \
             -DBUILD_TESTING=ON \
-            -DUS3_BUILD_PROGRAMS=OFF
+            -DUS3_BUILD_PROGRAMS=OFF \
             -DCMAKE_MODULE_PATH=/ultrascan3/admin/cmake \
             | tee configure.log
 

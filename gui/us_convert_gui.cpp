@@ -9177,7 +9177,7 @@ DbgLv(1) << "CGui:RD:  rdLegDat CALL";
 		box.setIcon( QMessageBox::Information );
 		box.setWindowTitle( QObject::tr( "Mixed Import Data Types" ) );
 		box.setText( QObject::tr( "The Import directory holds multiple data types.\n"
-								  "Choose the type to import in this seesion." ));
+								  "Choose the type to import in this session." ));
 		QMap<QPushButton*, QString> buttons;
 		for ( QMap<QString, QString>::const_iterator it = leg_types.begin(); it != leg_types.end(); ++it )
 		{
