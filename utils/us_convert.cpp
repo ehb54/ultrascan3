@@ -39,7 +39,6 @@ qDebug() << "CVT:rdLegD: dir" << dir << "f sz" << files.size();
    QStringList fileList;
    QStringList channels;
    QString f;
-   bool mixed_type = false;
 
    foreach ( f, files )
    {
@@ -67,7 +66,6 @@ qDebug() << "CVT:rdLegD:    f" << f << "frunType" << frunType << "c" << c;
          }
       }
    }
-qDebug() << "CVT:rdLegD: mixed" << mixed_type;
    for ( const auto &runType: runTypes )
    {
       if ( runType == "RI" || runType == "WI" )
@@ -93,7 +91,7 @@ qDebug() << "CVT:rdLegD: mixed" << mixed_type;
 
 void US_Convert::readLegacyData(
      QString                              dir,
-     QString                              runType,
+     const QString&                       runType,
      QList< US_DataIO::BeckmanRawScan >&  rawLegacyData )
 {
    if ( dir.isEmpty() ) return;
@@ -109,7 +107,6 @@ qDebug() << "CVT:rdLegD: dir" << dir << "f sz" << files.size();
    // Maybe dir had only directories ( i.e., not empty )
    if ( files.size() < 1 ) return;
 
-   runType = files[ 0 ].right( 3 ).left( 2 ).toUpper(); // 1st 2 chars of extention
 qDebug() << "CVT:rdLegD: runType" << runType;
    QStringList fileList;
    QStringList channels;

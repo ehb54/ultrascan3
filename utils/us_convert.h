@@ -84,7 +84,7 @@ class US_Convert
       //!               imported raw data.
       static void   readLegacyData( 
                     QString dir,
-                    QString runType,
+                    const QString& runType,
                     QList< US_DataIO::BeckmanRawScan >& rawLegacyData);
 
       static QMap<QString,QString> exploreLegacyData( QString dir );
