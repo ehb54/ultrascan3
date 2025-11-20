@@ -6,6 +6,8 @@
 #ifndef US_EXTERN_H
 #define US_EXTERN_H
 
+# a comment to force compile 1
+
 /**
  * @def US_EXPORT
  * @brief Macro for exporting symbols in a shared library.
