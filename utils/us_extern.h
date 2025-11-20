@@ -6,7 +6,7 @@
 #ifndef US_EXTERN_H
 #define US_EXTERN_H
 
-# a comment to force compile 1
+// a comment to force compile 2
 
 /**
  * @def US_EXPORT
