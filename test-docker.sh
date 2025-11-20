@@ -346,6 +346,7 @@ if [ ! -f CMakeCache.txt ] || [ "$REBUILD" = "true" ]; then
             -DCMAKE_BUILD_TYPE=Debug \
             -DUS3_PROFILE=TEST \
             -DBUILD_TESTING=ON \
+            -DUS3_BUILD_PROGRAMS=OFF
             -DCMAKE_MODULE_PATH=/ultrascan3/admin/cmake \
             | tee configure.log
 
@@ -362,10 +363,10 @@ fi
 
 if [ "$QUICK_MODE" = "false" ]; then
     echo "Building project with $PARALLEL_JOBS parallel jobs..."
-    cmake --build . -j $PARALLEL_JOBS
+    cmake --build . -j $PARALLEL_JOBS | tee build.log
 else
     echo 'Building project (this may take a few minutes)...'
-    cmake --build . -j $PARALLEL_JOBS > build.log 2>&1
+    cmake --build . -j $PARALLEL_JOBS | tee build.log
     echo 'Build complete'
 fi
 
