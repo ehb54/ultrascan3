@@ -10,7 +10,7 @@ file(GLOB FIT_MENISCUS_FORMS "*.ui")
 file(GLOB FIT_MENISCUS_RESOURCES "*.qrc")
 
 # Determine which library types to build
-if(BUILD_TESTING OR US3_BUILD_TESTS)
+if(BUILD_TESTING)
     set(build_shared_lib FALSE)  # Skip shared lib in testing mode
     set(build_static_lib TRUE)   # Only build static for testing
 else()
