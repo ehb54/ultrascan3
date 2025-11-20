@@ -1253,7 +1253,7 @@ DbgLv(1) << "pDi:  ndispt" << ndispt << "ID" << distrID.left(20);
 	    ndispt    = envel_data_auto ( ddesc.xvals, ddesc.yvals, xenv, yenv, sigma_p, xmin_p, xmax_p );
 	}
       ****/
-
+      /***
       if ( ind_distro ) //ind. 
 	{
 	  if ( c_parms["CG_model"] == "NO")
@@ -1265,6 +1265,10 @@ DbgLv(1) << "pDi:  ndispt" << ndispt << "ID" << distrID.left(20);
 	{
 	  ndispt    = envel_data_auto ( ddesc.xvals, ddesc.yvals, xenv, yenv, sigma_p, xmin_p, xmax_p, true );
 	}
+      ****/
+
+      //Ok, just use model's min/max instead
+      ndispt    = envel_data_auto ( ddesc.xvals, ddesc.yvals, xenv, yenv, sigma_p, xmin_p, xmax_p, true );
       
       xx        = xenv.data();
       yy        = yenv.data();
