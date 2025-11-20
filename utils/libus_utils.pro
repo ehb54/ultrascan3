@@ -31,6 +31,8 @@ HEADERS      = us_ana_profile.h   \
                us_buffer.h        \
                us_cfa_data.h      \
                us_constants.h     \
+               us_convert.h       \
+               us_convertio.h     \
                us_crc.h           \
                us_csv_data.h      \
                us_dataIO.h        \
@@ -38,6 +40,7 @@ HEADERS      = us_ana_profile.h   \
                us_db2.h           \
                us_dmga_constr.h   \
                us_eprofile.h      \
+               us_experiment.h  \
                us_global.h        \
                us_gzip.h          \
                us_hardware.h      \
@@ -84,6 +87,8 @@ SOURCES      = us_ana_profile.cpp   \
                us_buffer.cpp        \
                us_cfa_data.cpp      \
                us_constants.cpp     \
+               us_convert.cpp       \
+               us_convertio.cpp     \
                us_crc.cpp           \
                us_csv_data.cpp      \
                us_dataIO.cpp        \
@@ -91,6 +96,7 @@ SOURCES      = us_ana_profile.cpp   \
                us_db2.cpp           \
                us_dmga_constr.cpp   \
                us_eprofile.cpp      \
+               us_experiment.cpp  \
                us_global.cpp        \
                us_gzip.cpp          \
                us_hardware.cpp      \

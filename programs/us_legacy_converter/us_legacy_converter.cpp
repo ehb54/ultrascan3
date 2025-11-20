@@ -387,7 +387,41 @@ bool US_LegacyConverter::read_beckman_files(const QString& path, QString& status
    foreach (QString path, subdirs) {
       QList<US_DataIO::BeckmanRawScan> rawscan;
       QString runtype;
-      US_Convert::readLegacyData(dir.absoluteFilePath(path), rawscan, runtype);
+      QMap<QString, QString> leg_types = US_Convert::exploreLegacyData( dir.absoluteFilePath(path) );
+      if ( leg_types.isEmpty() )
+      {
+         continue;
+      }
+      if ( leg_types.size() == 1 )
+      {
+         runtype = leg_types.values().first();
+      }
+      else
+      {
+         QMessageBox box;
+         box.setIcon( QMessageBox::Information );
+         box.setWindowTitle( QObject::tr( "Mixed Import Data Types" ) );
+         box.setText( QObject::tr( "The Import directory holds multiple data types.\n"
+                                   "Choose the type to import in this seesion." ));
+         QMap<QPushButton*, QString> buttons;
+         for ( QMap<QString, QString>::const_iterator it = leg_types.begin(); it != leg_types.end(); ++it )
+         {
+            QPushButton* prType = box.addButton( it.value(), QMessageBox::ActionRole );
+            buttons.insert( prType, it.key() );
+         }
+         box.setDefaultButton( buttons.keys().first() );
+         box.exec();
+         QPushButton* button = static_cast<QPushButton*>(box.clickedButton());
+         if ( buttons.contains( button ) )
+         {
+            runtype = buttons.value( button );
+         }
+         else
+         {
+            runtype = leg_types.values().first();
+         }
+      }
+      US_Convert::readLegacyData(dir.absoluteFilePath(path), runtype, rawscan);
       if (rawscan.size() == 0) {
          continue;
       }

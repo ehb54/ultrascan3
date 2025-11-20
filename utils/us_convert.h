@@ -76,18 +76,18 @@ class US_Convert
       //! \brief Reads the legacy raw data from disk into the program. 
       //! \param dir           The directory in which the program will look for
       //!               the raw data files.
+      //! \param runType       A string containing the
+      //!               type of data that is being read ( "RA", "IP", "RI",
+      //!               "FI", "WA", or "WI"). Other data will be ignored.
       //! \param rawLegacyData A reference to a structure provided by the
       //!               calling function that will be used to store the
       //!               imported raw data.
-      //! \param runType       A reference to a variable that will contain the
-      //!               type of data that is being read ( "RA", "IP", "RI",
-      //!               "FI", "WA", or "WI"). This determination already
-      //!               affects how some data is handled when read.
       static void   readLegacyData( 
-                    QString ,
-                    QList< US_DataIO::BeckmanRawScan >& ,
-                    QString& );
+                    QString dir,
+                    QString runType,
+                    QList< US_DataIO::BeckmanRawScan >& rawLegacyData);
 
+      static QMap<QString,QString> exploreLegacyData( QString dir );
       //! \brief Converts legacy raw data into US3 data. 
       //!        This function will convert existing datapoints and
       //!        cell/channel/wavelength combinations in the data.

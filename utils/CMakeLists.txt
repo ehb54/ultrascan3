@@ -113,7 +113,7 @@ add_library(UltraScan3::Utils ALIAS us_utils)
 # =============================================================================
 # OPTIONAL: Build static library for unit testing
 # =============================================================================
-if(BUILD_TESTING OR US3_BUILD_TESTS)
+if(BUILD_TESTING OR US3_BUILD_TESTS OR US3_PREFER_STATIC)
     message(STATUS "Building static utils library for testing")
 
     # Create STATIC library specifically for testing
