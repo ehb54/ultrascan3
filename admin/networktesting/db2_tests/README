@@ -1,0 +1,4 @@
+db2_tests
+
+tests us_db2 database connectivity with and without linking to libus_utils.so
+
