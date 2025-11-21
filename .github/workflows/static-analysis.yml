@@ -4,26 +4,54 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
-    paths:
-      - 'gui/**/*.cpp'
-      - 'gui/**/*.h'
-      - 'programs/**/*.cpp'
-      - 'programs/**/*.h'
-      - 'programs/main1.inc'
-      - 'utils/**/*.cpp'
-      - 'utils/**/*.h'
-      - 'qwtplot3d/**.cpp'
-      - 'qwtplot3d/**.h'
-      - 'qwtplot3d/**.hpp'
-      - 'qwtplot3d/**.c'
-      - '.github/workflows/static-analysis.yml'
-      - 'CMakeLists.txt'
-      - '**/CMakeLists.txt'
-      - '**/*.cmake'
+  schedule:
+    - cron: '20 18 * * 1'
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref_name || github.run_id }}
+  cancel-in-progress: true
+
 jobs:
+  changed-files:
+    runs-on: ubuntu-latest
+    name: Get changed files
+    permissions:
+      pull-requests: read
+    outputs:
+      # reference: https://github.com/tj-actions/changed-files#outputs-
+      relevant: ${{ steps.changed-files.outputs.relevant_any_modified == 'true' }}
+
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
+      - name: Get changed files
+        if: ${{ !( github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' ) || !env.ACT }}
+        id: changed-files
+        uses: tj-actions/changed-files@v47
+        with:
+          files_yaml: |
+            relevant:
+              - .github/workflows/static-analysis.yml
+              - gui/**/*.cpp
+              - gui/**/*.h
+              - programs/**/*.cpp
+              - programs/**/*.h
+              - programs/main1.inc
+              - utils/**/*.cpp
+              - utils/**/*.h
+              - qwtplot3d/**.cpp
+              - qwtplot3d/**.h
+              - qwtplot3d/**.hpp
+              - qwtplot3d/**.c
+              - CMakeLists.txt
+              - **/CMakeLists.txt
+              - **/*.cmake
   static-analysis:
+    name: Static Analysis
+    needs: [ changed-files ]
+    if: ${{ needs.changed-files.outputs.relevant == 'true' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event.act == 'true' }}
     runs-on: ubuntu-latest
     container:
       image: ehb1/usbuildtest:ubuntu22.04-qt5.15.10-qwt6.1.6
@@ -32,7 +60,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v5
         with:
-          fetch-depth: 0
+          fetch-depth: 1
 
       - name: Allow CI to access repo directory
         run: git config --global --add safe.directory /__w/ultrascan3/ultrascan3
@@ -118,7 +146,7 @@ jobs:
         run: |
           echo "Configuring build with CMake..."
           # Clean any existing build cache to avoid path conflicts
-          rm -rf build CMakeCache.txt
+          rm -rf build CMakeCache.txt CMakeFiles
           mkdir -p build
           cd build
           
@@ -337,6 +365,7 @@ jobs:
           
           # Generate summary using printf (safer than heredoc in YAML)
           printf "## Static Analysis Results\n\n" > pr-comment.md
+          printf "**Container:** %s\n" "${{ matrix.container }}" >> pr-comment.md
           printf "**Files analyzed:** %s changed files\n\n" "$CHANGED_FILE_COUNT" >> pr-comment.md
           printf "### Summary\n" >> pr-comment.md
           printf "| Tool | Critical Issues | Status |\n" >> pr-comment.md
@@ -487,3 +516,25 @@ jobs:
           fi
           
           echo "Critical security analysis completed - all findings are informational only"
+
+  check-status:
+    if: always()
+    needs: [ static-analysis ]
+    name: Check Static analysis statuses
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check statuses
+        run: |
+          RESULTS='${{ toJson(needs) }}'
+          # Check for failures
+          if echo $RESULTS | grep -q '"result": "failure"'; then
+            echo "At least one Static analysis job failed."
+            exit 1
+          fi
+          # Check for cancelled jobs
+          if echo $RESULTS | grep -q '"result": "cancelled"'; then
+            echo "At least one Static analysis job was cancelled."
+            exit 1
+          fi
+          echo "All Static analysis jobs completed successfully or were skipped."
+          exit 0
