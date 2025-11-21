@@ -65,7 +65,7 @@ jobs:
     if: ${{ needs.changed-files.outputs.relevant == 'true' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event.act == 'true' }}
     runs-on: ubuntu-latest
     container:
-      image: ehb1/usbuildtest:ubuntu22.04-qt5.15.10-qwt6.1.6
+      image: ehb1/us3comp:latest
 
     env:
       CHANGED_FILES: ${{ needs.changed-files.outputs.cpp_files }}
