@@ -1,6 +1,6 @@
 //! \file us_convert.cpp
 
-#include "us_gui_settings.h"
+
 #include "us_math2.h"
 #include "us_util.h"
 #include "us_convert.h"
@@ -15,13 +15,16 @@ US_Convert::US_Convert( void )
 {
 }
 
-void US_Convert::readLegacyData(
-     QString                              dir,
-     QList< US_DataIO::BeckmanRawScan >&  rawLegacyData,
-     QString&                             runType )
+QMap<QString, QString> US_Convert::exploreLegacyData(
+   QString                              dir
+   )
 {
-   if ( dir.isEmpty() ) return;
-
+   QStringList runTypes;
+   runTypes.clear();
+   QMap<QString, QString> runTypeMap;
+   runTypeMap.clear();
+   if ( dir.isEmpty() ) return runTypeMap;
+   
    // Get legacy file names and set channels
    QDir d( dir, "*", QDir::Name, QDir::Files | QDir::Readable );
    d.makeAbsolute();
@@ -31,15 +34,11 @@ void US_Convert::readLegacyData(
 qDebug() << "CVT:rdLegD: dir" << dir << "f sz" << files.size();
 
    // Maybe dir had only directories ( i.e., not empty )
-   if ( files.size() < 1 ) return;
-
-   runType = files[ 0 ].right( 3 ).left( 2 ).toUpper(); // 1st 2 chars of extention
-qDebug() << "CVT:rdLegD: runType" << runType;
+   if ( files.size() < 1 ) return runTypeMap;
+   
    QStringList fileList;
    QStringList channels;
    QString f;
-   QString arunType = runType;
-   bool mixed_type = false;
 
    foreach ( f, files )
    {
@@ -60,68 +59,79 @@ qDebug() << "CVT:rdLegD: runType" << runType;
          // Test to see if the directory holds mixed types
          QString frunType = f.right( 3 ).left( 2 ).toUpper();
 qDebug() << "CVT:rdLegD:    f" << f << "frunType" << frunType << "c" << c;
-         if ( frunType != runType )
+         if ( !runTypes.contains( frunType ) )
          {
-            mixed_type     = true;
-            arunType       = frunType;
+            runTypes << frunType;
 //qDebug() << "CVT: MIXED : runType frunType" << runType << frunType;
          }
       }
    }
-qDebug() << "CVT:rdLegD: mixed" << mixed_type;
-
-   if ( mixed_type )
-   {  // If mixed type, have user select one type and rebuild appropriate lists
-      QString prType = QObject::tr( "Absorbance" );
-      QString arType = QObject::tr( "Absorbance" );
-
-      if ( runType == "RI"  ||  runType == "WI" )
-         prType      = QObject::tr( "Intensity" );
-      else if ( runType == "IP" )
-         prType      = QObject::tr( "Interference" );
-      else if ( runType == "FI"  )
-         prType      = QObject::tr( "Fluorensce" );
-
-      if ( arunType == "RI"  ||  arunType == "WI" )
-         arType      = QObject::tr( "Intensity" );
-      else if ( arunType == "IP" )
-         arType      = QObject::tr( "Interference" );
-      else if ( arunType == "FI"  )
-         arType      = QObject::tr( "Fluorensce" );
-
-      int status = QMessageBox::information( 0,
-            QObject::tr( "Mixed Import Data Types" ),
-            QObject::tr( "The Import directory holds multiple data types.\n"
-                         "Choose the type to import in this session." ),
-            prType, arType, 0, 0, 1 );
-
-      if ( status != 0 )
-         runType        = arunType;
-qDebug() << "CVT:rdLegD:  runTypes chosen" << prType << arType << runType << "status" << status;
-
-      fileList.clear();
-      channels.clear();
-
-      foreach ( f, files )
+   for ( const auto &runType: runTypes )
+   {
+      if ( runType == "RI" || runType == "WI" )
       {
-         // Look for a proper filename match:
-         // Optional channel + 4 to 6 digits + dot + file type + cell number
+         runTypeMap.insert(runType, QObject::tr( "Intensity" ) );
+      }
+      else if ( runType == "IP" )
+      {
+         runTypeMap.insert( runType, QObject::tr( "Interference" ) );
+      }
+      else if ( runType == "FI" )
+      {
+         runTypeMap.insert( runType, QObject::tr( "Fluoresce" ) );
+      }
+      else
+      {
+         runTypeMap.insert( runType, QObject::tr( "Absorbance" ) );
+      }
+   }
 
-         QRegExp rx( "^[A-J]?\\d{4,6}\\.(?:RA|RI|IP|FI|WA|WI)\\d$" );
+   return runTypeMap;
+}
 
-         if ( rx.indexIn( f.toUpper() ) >= 0 )
-         {
-            QString frunType = f.right( 3 ).left( 2 ).toUpper();
-            if ( frunType != runType )
-               continue;
+void US_Convert::readLegacyData(
+     QString                              dir,
+     const QString&                       runType,
+     QList< US_DataIO::BeckmanRawScan >&  rawLegacyData )
+{
+   if ( dir.isEmpty() ) return;
 
-            fileList << f;
+   // Get legacy file names and set channels
+   QDir d( dir, "*", QDir::Name, QDir::Files | QDir::Readable );
+   d.makeAbsolute();
+   if ( dir.right( 1 ) != "/" ) dir += "/"; // Ensure trailing /
 
-            // Parse the filtered file list to determine cells and channels
-            QChar c = f.at( 0 ).toUpper();
-            if ( c.isLetter() && ! channels.contains( c ) )
-               channels << c;
-         }
+   QStringList files = d.entryList( QDir::Files );
+qDebug() << "CVT:rdLegD: dir" << dir << "f sz" << files.size();
+
+   // Maybe dir had only directories ( i.e., not empty )
+   if ( files.size() < 1 ) return;
+
+qDebug() << "CVT:rdLegD: runType" << runType;
+   QStringList fileList;
+   QStringList channels;
+   QString f;
+
+
+   foreach ( f, files )
+   {
+      // Look for a proper filename match:
+      // Optional channel + 4 to 6 digits + dot + file type + cell number
+
+      QRegExp rx( "^[A-J]?\\d{4,6}\\.(?:RA|RI|IP|FI|WA|WI)\\d$" );
+
+      if ( rx.indexIn( f.toUpper() ) >= 0 )
+      {
+         QString frunType = f.right( 3 ).left( 2 ).toUpper();
+         if ( frunType != runType )
+            continue;
+
+         fileList << f;
+
+         // Parse the filtered file list to determine cells and channels
+         QChar c = f.at( 0 ).toUpper();
+         if ( c.isLetter() && ! channels.contains( c ) )
+            channels << c;
       }
    }
 

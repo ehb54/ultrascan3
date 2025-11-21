@@ -9162,7 +9162,41 @@ bool US_ConvertGui::read( void )
    // Read the legacy data
 DbgLv(1) << "CGui:RD:  rdLegDat CALL";
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
-   US_Convert::readLegacyData( currentDir, legacyData, runType );
+	QMap<QString, QString> leg_types = US_Convert::exploreLegacyData( currentDir );
+	if ( leg_types.isEmpty() )
+	{
+		return false;
+	}
+	if ( leg_types.size() == 1 )
+	{
+		runType = leg_types.values().first();
+	}
+	else
+	{
+		QMessageBox box;
+		box.setIcon( QMessageBox::Information );
+		box.setWindowTitle( QObject::tr( "Mixed Import Data Types" ) );
+		box.setText( QObject::tr( "The Import directory holds multiple data types.\n"
+								  "Choose the type to import in this session." ));
+		QMap<QPushButton*, QString> buttons;
+		for ( QMap<QString, QString>::const_iterator it = leg_types.begin(); it != leg_types.end(); ++it )
+		{
+			QPushButton* prType = box.addButton( it.value(), QMessageBox::ActionRole );
+			buttons.insert( prType, it.key() );
+		}
+		box.setDefaultButton( buttons.keys().first() );
+		box.exec();
+		QPushButton* button = static_cast<QPushButton*>(box.clickedButton());
+		if ( buttons.contains( button ) )
+		{
+			runType = buttons.value( button );
+		}
+		else
+		{
+			runType = leg_types.values().first();
+		}
+	}
+	US_Convert::readLegacyData( currentDir, runType, legacyData );
    QApplication::restoreOverrideCursor();
 DbgLv(1) << "CGui:RD:   rdLegDat RTN  lDsz" << legacyData.size();
 
