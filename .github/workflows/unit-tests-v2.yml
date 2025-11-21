@@ -48,7 +48,7 @@ jobs:
               - utils/**.hpp
               - utils/CMakeLists.txt
               - test/**
-              - **/*.json
+              - '**/*.json'
               - admin/cmake/**
               - admin/test/**
               - test-docker.sh
