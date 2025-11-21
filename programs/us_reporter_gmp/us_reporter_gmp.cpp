@@ -11293,9 +11293,10 @@ void US_ReporterGMP::assemble_pdf( QProgressDialog * progress_msg )
   bool excl_exist = false;
   if ( scancount > 0 )
     {
-      if ( excl_exist )
-	html_scan_count_uv += display_scan_excls( scan_excl_beg, scan_excl_nth,
+      QString scan_excl_str = display_scan_excls( scan_excl_beg, scan_excl_nth,
 						  scan_excl_end, scancount, excl_exist, "UV/vis" );
+      if ( excl_exist )
+	html_scan_count_uv += scan_excl_str;
       else
 	html_scan_count_uv += tr(
 				 "<table style=\"margin-left:30px\">"
@@ -11327,9 +11328,10 @@ void US_ReporterGMP::assemble_pdf( QProgressDialog * progress_msg )
   bool excl_int_exist = false;
   if ( scancount_int > 0 )
     {
+      QString scan_excl_int_str = display_scan_excls( scan_excl_beg, scan_excl_nth,
+						      scan_excl_end, scancount_int, excl_int_exist, "Interf" );
       if ( excl_int_exist )
-	html_scan_count_int += display_scan_excls( scan_excl_beg, scan_excl_nth,
-						   scan_excl_end, scancount_int, excl_int_exist, "Interf" );
+	html_scan_count_int += scan_excl_int_str;
       else
 	html_scan_count_int += tr(
 				  "<table style=\"margin-left:30px\">"
@@ -12078,6 +12080,8 @@ QString US_ReporterGMP::display_scan_excls( QList<int> scan_e_b, QList<int> scan
 	excl_yes = true;
     }
   scans_excl_str += tr( "</table>" );
+
+  qDebug() << "Scan exclusions: excl_yes -- " << excl_yes;
   
   return scans_excl_str; 
 }
