@@ -2666,6 +2666,13 @@ int US_DDistr_Combine::envel_data(
    qDebug() << "[in envel_data:] min_xval, max_xval, rng_xval -- "
 	    << min_xval << max_xval << rng_xval;
 
+   if ( rng_xval == 0 || min_xval == max_xval )
+     {
+       min_xval -= min_xval*0.1;
+       max_xval += max_xval*0.1;
+       rng_xval = max_xval - min_xval;
+     }
+
    // Initialize envelope arrays
    xenvs.fill( 0.0, arrsize );
    yenvs.fill( 0.0, arrsize );
