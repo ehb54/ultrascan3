@@ -1231,7 +1231,9 @@ void US_DDistr_Combine::plot_distr_auto( DistrDesc ddesc, QString distrID, QMap<
    QString str;
    double minx=1e99, maxx=-1e99;
    double miny=1e99, maxy=-1e99;
-DbgLv(1) << "pDi:  ndispt" << ndispt << "ID" << distrID.left(20);
+   qDebug() << "Desc: triple, xtype, ndispt"
+	    << ddesc.ddescr << ddesc.xtype
+	    << ndispt << "ID" << distrID.left(20);
 
    QwtPlotCurve* data_curv = us_curve( data_plot1, distrID );
 
@@ -2749,6 +2751,9 @@ int US_DDistr_Combine::envel_data_auto(
    min_xval         = ( minx != 0.0 ) ? minx : min_xval;
    max_xval         = ( maxx != 0.0 ) ? maxx : max_xval;
    rng_xval         = max_xval - min_xval;
+
+   qDebug() << "[in envel_data_auto:] min_xval, max_xval, rng_xval -- "
+	    << min_xval << max_xval << rng_xval;
 
    //Use passed xmin/xmax values:           //ALEXEY <----------- here, use pre-defined parms!!!
    if ( !cg_m )
