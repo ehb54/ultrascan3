@@ -1113,8 +1113,11 @@ void US_DDistr_Combine::plot_distr( DistrDesc ddesc, QString distrID )
    QVector< double > yenv;
    QString str;
    double minx=1e99, maxx=-1e99;
-DbgLv(1) << "pDi:  ndispt" << ndispt << "ID" << distrID.left(20);
-
+   //DbgLv(1) << "pDi:  ndispt" << ndispt << "ID" << distrID.left(20);
+   qDebug() << "[plot_distr()]Desc: triple, xtype, ndispt"
+	    << ddesc.ddescr << ddesc.xtype
+	    << ndispt << "ID" << distrID.left(20);
+  
    QwtPlotCurve* data_curv = us_curve( data_plot1, distrID );
 
    if ( ct_sigma->value() > 0.0 )
@@ -1231,7 +1234,7 @@ void US_DDistr_Combine::plot_distr_auto( DistrDesc ddesc, QString distrID, QMap<
    QString str;
    double minx=1e99, maxx=-1e99;
    double miny=1e99, maxy=-1e99;
-   qDebug() << "Desc: triple, xtype, ndispt"
+   qDebug() << "[plot_distr_auto]Desc: triple, xtype, ndispt"
 	    << ddesc.ddescr << ddesc.xtype
 	    << ndispt << "ID" << distrID.left(20);
 
@@ -2656,6 +2659,9 @@ int US_DDistr_Combine::envel_data(
    min_xval         = ( minx != 0.0 ) ? minx : min_xval;
    max_xval         = ( maxx != 0.0 ) ? maxx : max_xval;
    rng_xval         = max_xval - min_xval;
+
+   qDebug() << "[in envel_data:] min_xval, max_xval, rng_xval -- "
+	    << min_xval << max_xval << rng_xval;
 
    // Initialize envelope arrays
    xenvs.fill( 0.0, arrsize );
