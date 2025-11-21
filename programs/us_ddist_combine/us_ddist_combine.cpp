@@ -2671,6 +2671,10 @@ int US_DDistr_Combine::envel_data(
        min_xval -= min_xval*0.1;
        max_xval += max_xval*0.1;
        rng_xval = max_xval - min_xval;
+
+       //update gui
+       le_plxmin->setText( QString::number(min_xval) );
+       le_plxmax->setText( QString::number(max_xval) );
      }
 
    // Initialize envelope arrays
