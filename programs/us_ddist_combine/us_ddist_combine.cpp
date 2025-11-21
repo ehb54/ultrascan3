@@ -1273,7 +1273,10 @@ void US_DDistr_Combine::plot_distr_auto( DistrDesc ddesc, QString distrID, QMap<
       ****/
 
       //Ok, just use model's min/max instead
-      ndispt    = envel_data_auto ( ddesc.xvals, ddesc.yvals, xenv, yenv, sigma_p, xmin_p, xmax_p, true );
+      if ( ndispt == 1 ) 
+	ndispt    = envel_data_auto ( ddesc.xvals, ddesc.yvals, xenv, yenv, sigma_p, xmin_p, xmax_p, false );
+      else
+	ndispt    = envel_data_auto ( ddesc.xvals, ddesc.yvals, xenv, yenv, sigma_p, xmin_p, xmax_p, true );
       
       xx        = xenv.data();
       yy        = yenv.data();
@@ -2764,8 +2767,10 @@ int US_DDistr_Combine::envel_data_auto(
    //Use passed xmin/xmax values:           //ALEXEY <----------- here, use pre-defined parms!!!
    if ( !cg_m )
      {
-       min_xval = xmin_passed;
-       max_xval = xmax_passed;
+       // min_xval = xmin_passed;
+       // max_xval = xmax_passed;
+       min_xval -= min_xval*0.1;
+       max_xval += max_xval*0.1;
        rng_xval = max_xval - min_xval;
      }
    
