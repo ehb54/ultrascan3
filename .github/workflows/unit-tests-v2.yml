@@ -1,0 +1,287 @@
+name: "Unit Tests v2"
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      test_filter:
+        description: 'Test filter pattern (optional)'
+        required: false
+        default: ''
+      debug_mode:
+        description: 'Enable debug mode'
+        required: false
+        default: false
+        type: boolean
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref_name || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  changed-files:
+    runs-on: ubuntu-latest  # windows-latest || macos-latest
+    name: Get changed files
+    permissions:
+      pull-requests: read
+    outputs:
+      # reference: https://github.com/tj-actions/changed-files#outputs-
+      relevant: ${{ steps.changed-files.outputs.relevant_any_modified == 'true' }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
+      - name: Get changed files
+        if: ${{ !( github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' ) || !env.ACT }}
+        id: changed-files
+        uses: tj-actions/changed-files@v47
+        with:
+          files_yaml: |
+            relevant:
+              - .github/workflows/unit-tests.yml
+              - utils/**.c
+              - utils/**.cpp
+              - utils/**.h
+              - utils/**.hpp
+              - utils/CMakeLists.txt
+              - test/**
+              - **/*.json
+              - admin/cmake/**
+              - admin/test/**
+              - test-docker.sh
+              - CMakeLists.txt
+  
+
+  unit-testing:
+    needs: changed-files
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'  || github.event.act == 'true' || needs.changed-files.outputs.relevant == 'true' }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y \
+              cmake \
+              libmysqlclient-dev \
+              libarchive-dev \
+              pkg-config \
+              build-essential \
+              libqwt-qt5-dev \
+              libqwt-qt5-6 \
+              libgl2ps-dev \
+              libgtest-dev \
+              libgmock-dev \
+              git \
+              libqt5datavisualization5-dev \
+              libqt5svg5-dev
+
+      - name: Prepare build
+        run: |
+          TEST_FILTER=""
+          SPECIFIC_TEST=""
+          PARALLEL_JOBS=$(nproc 2>/dev/null || echo 4)
+          VERBOSE=false
+          DEBUG_MODE=false
+          INTERACTIVE=false
+          GDB=false
+          VALGRIND=false
+          REBUILD=false
+          LIST_TESTS=false
+          FAILED_ONLY=false
+          TIMEOUT=""
+          REPEAT=1
+          SEARCH_TESTS=""
+          SHOW_STATS=true
+          QUICK_MODE=true
+          SAVE_LOGS=true
+          STOP_ON_FIRST_FAILURE=false
+          PROFILE="TEST"
+          TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+          export QT_QPA_PLATFORM=offscreen
+          if [ "${{ github.event.inputs.debug_mode }}" == "true" ]; then
+            ARGS="$ARGS --debug"
+            DEBUG_MODE=true
+          fi
+          if [ -n "${{ github.event.inputs.test_filter }}" ]; then
+            ARGS="$ARGS --filter '${{ github.event.inputs.test_filter }}'"
+            TEST_FILTER='${{ github.event.inputs.test_filter }}'
+          fi
+          
+          if [ "$DEBUG_MODE" = "true" ] && [ "$QUICK_MODE" = "false" ]; then
+            echo '=== System Information ===' | tee test-log-$TIMESTAMP.txt
+            gcc --version | head -1 | tee test-log-$TIMESTAMP.txt
+            cmake --version | head -1 | tee test-log-$TIMESTAMP.txt
+            cat /etc/os-release | grep PRETTY_NAME | tee test-log-$TIMESTAMP.txt
+            echo "Available CPU cores: $(nproc)" | tee test-log-$TIMESTAMP.txt
+            echo "Available memory: $(free -h | grep Mem | awk '{print $2}')" | tee test-log-$TIMESTAMP.txt
+            echo '===========================' | tee test-log-$TIMESTAMP.txt
+          fi
+          mkdir build-docker
+          cd build-docker
+          if [ "$QUICK_MODE" = "false" ]; then
+            echo 'Configuring with CMake...' | tee test-log-$TIMESTAMP.txt
+          else
+            echo 'Configuring project...' | tee test-log-$TIMESTAMP.txt
+          fi
+          
+          if [ ! -f CMakeCache.txt ] || [ "$REBUILD" = "true" ]; then
+            echo 'Running CMake configuration...' | tee test-log-$TIMESTAMP.txt
+            # Always capture the full configure output so we can see the *first* real error
+            # Select a generator based on what is available in the container
+            GEN_ARGS=()
+            if command -v ninja >/dev/null 2>&1; then
+              GEN_ARGS=(-G Ninja)
+            elif command -v make >/dev/null 2>&1; then
+              GEN_ARGS=(-G "Unix Makefiles")
+            elif command -v gmake >/dev/null 2>&1; then
+              # Some distros have gmake only
+              GEN_ARGS=(-G "Unix Makefiles" -DCMAKE_MAKE_PROGRAM="$(command -v gmake)")
+            else
+              echo "No build tool found (ninja, make, or gmake). Install one in the container and retry." >&2
+            fi
+          
+            #    Enable testing to build static library
+            cmake -S .. -B . \
+            "${GEN_ARGS[@]}" \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DUS3_PROFILE=TEST \
+            -DUS3_BUILD_TESTS=ON \
+            -DUS3_PREFER_STATIC=ON \
+            -DUS3_BUILD_PROGRAMS=OFF \
+            -DCMAKE_MODULE_PATH=../admin/cmake \
+            | tee configure.log | tee test-log-$TIMESTAMP.txt
+          
+            # Point directly to the first configure error if there was one
+            if grep -q 'CMake Error' configure.log; then
+              echo '---- First CMake Error ----' | tee test-log-$TIMESTAMP.txt
+              grep -n 'CMake Error' configure.log | head -1 | tee test-log-$TIMESTAMP.txt
+              exit 1
+            fi
+            echo 'CMake configuration complete' | tee test-log-$TIMESTAMP.txt
+          else
+            echo 'Using existing CMake configuration (incremental build)' | tee test-log-$TIMESTAMP.txt
+          fi
+          
+          if [ "$QUICK_MODE" = "false" ]; then
+            echo "Building project with $PARALLEL_JOBS parallel jobs..." | tee test-log-$TIMESTAMP.txt
+            cmake --build . -j $PARALLEL_JOBS | tee build.log | tee test-log-$TIMESTAMP.txt
+          else
+            echo 'Building project (this may take a few minutes)...' | tee test-log-$TIMESTAMP.txt
+            cmake --build . -j $PARALLEL_JOBS | tee build.log | tee test-log-$TIMESTAMP.txt
+            echo 'Build complete' | tee test-log-$TIMESTAMP.txt
+          fi
+          
+          # Show statistics
+          if [ "$SHOW_STATS" = "true" ]; then
+            echo '' | tee test-log-$TIMESTAMP.txt
+            echo '=== TEST SUITE STATISTICS ===' | tee test-log-$TIMESTAMP.txt
+            echo "Total CTest cases: $(ctest -N 2>/dev/null | grep -c 'Test #' || echo 'Unknown')" | tee test-log-$TIMESTAMP.txt
+            if [ -f ./test/utils/test_us_utils ]; then
+              GTEST_COUNT=$(./test/utils/test_us_utils --gtest_list_tests 2>/dev/null | grep -c '\.' || echo 'Unknown')
+              echo "Total GTest cases: $GTEST_COUNT" | tee test-log-$TIMESTAMP.txt
+            fi
+            echo "Build directory size: $(du -sh . | cut -f1)" | tee test-log-$TIMESTAMP.txt
+            echo "Parallel jobs: $PARALLEL_JOBS" | tee test-log-$TIMESTAMP.txt
+            echo '=============================' | tee test-log-$TIMESTAMP.txt
+            echo '' | tee test-log-$TIMESTAMP.txt
+          fi
+          # Run tests with CTest
+          CTEST_ARGS="--output-on-failure"
+          
+          [ "$PARALLEL_JOBS" -gt 1 ] && CTEST_ARGS="$CTEST_ARGS --parallel $PARALLEL_JOBS"
+          [ "$VERBOSE" = "true" ] && CTEST_ARGS="$CTEST_ARGS --verbose"
+          [ "$STOP_ON_FIRST_FAILURE" = "true" ] && CTEST_ARGS="$CTEST_ARGS --stop-on-failure"
+          [ -n "$TEST_FILTER" ] && CTEST_ARGS="$CTEST_ARGS -L $TEST_FILTER"
+          [ -n "$TIMEOUT" ] && CTEST_ARGS="$CTEST_ARGS --timeout $TIMEOUT"
+          [ "$FAILED_ONLY" = "true" ] && CTEST_ARGS="$CTEST_ARGS --rerun-failed"
+          if [ "$DEBUG_MODE" = "true" ]; then
+            echo "Executing: ctest $CTEST_ARGS" | tee test-log-$TIMESTAMP.txt
+          fi
+          
+          START_TIME=$(date +%s)
+          
+          if [ "$SAVE_LOGS" = "true" ]; then
+            ctest $CTEST_ARGS 2>&1 | tee test_output.log | tee test-log-$TIMESTAMP.txt
+            RESULT=${PIPESTATUS[0]}
+          else
+            ctest $CTEST_ARGS | tee test-log-$TIMESTAMP.txt
+            RESULT=$?
+          fi
+          
+          END_TIME=$(date +%s)
+          DURATION=$((END_TIME - START_TIME))
+          
+          if [ $RESULT -eq 0 ]; then
+            echo '' | tee test-log-$TIMESTAMP.txt
+            echo '=== TEST SUMMARY ===' | tee test-log-$TIMESTAMP.txt
+            echo "All tests passed! (Duration: ${DURATION}s)" | tee test-log-$TIMESTAMP.txt
+            [ "$SHOW_STATS" = "true" ] && echo "Used $PARALLEL_JOBS parallel jobs" | tee test-log-$TIMESTAMP.txt
+          else
+            echo '' | tee test-log-$TIMESTAMP.txt
+            echo '=== FAILURE ANALYSIS ===' | tee test-log-$TIMESTAMP.txt
+            echo "Tests failed! (Duration: ${DURATION}s)" | tee test-log-$TIMESTAMP.txt
+            echo '' | tee test-log-$TIMESTAMP.txt
+            echo 'Next steps for debugging:' | tee test-log-$TIMESTAMP.txt
+            echo '  ./test-docker.sh --failed-only -v        # Rerun failed tests with details' | tee test-log-$TIMESTAMP.txt
+            echo '  ./test-docker.sh -s "keyword"             # Search for specific tests' | tee test-log-$TIMESTAMP.txt
+            echo '  ./test-docker.sh -t "SpecificTest" -g     # Debug with GDB' | tee test-log-$TIMESTAMP.txt
+            echo '  ./test-docker.sh -i                      # Interactive debugging' | tee test-log-$TIMESTAMP.txt
+            echo '' | tee test-log-$TIMESTAMP.txt
+          
+            # Show failed test details
+            echo 'Failed tests summary:' | tee test-log-$TIMESTAMP.txt
+            ctest --rerun-failed -N 2>/dev/null | grep 'Test #' || echo 'Unable to get failed test list' | tee test-log-$TIMESTAMP.txt
+          fi
+          
+          exit $RESULT
+
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ github.run_number }}
+          path: |
+            build-docker/Testing/
+            build-docker/test_output.log
+            build-docker/configure.log
+            build-docker/build.log
+            build-docker/test-log-*.txt
+            test-log-*.txt
+            build.log
+            configure.log
+            test_output.log
+          retention-days: 7
+          if-no-files-found: ignore
+
+  check-status:
+    if: always()
+    needs: [ unit-testing ]
+    name: Check Unit testing job statuses
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check statuses
+        run: |
+          RESULTS='${{ toJson(needs) }}'
+          # Check for failures
+          if echo $RESULTS | grep -q '"result": "failure"'; then
+            echo "At least one Unit testing job failed."
+            exit 1
+          fi
+          # Check for cancelled jobs
+          if echo $RESULTS | grep -q '"result": "cancelled"'; then
+            echo "At least one Unit testing job was cancelled."
+            exit 1
+          fi
+          echo "All Unit testing jobs completed successfully or were skipped."
+          exit 0
