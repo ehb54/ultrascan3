@@ -7,7 +7,7 @@
 #define US_EXTERN_H
 
 
-## a comment to force compile error
+// a comment to recompile 4
 
 /**
  * @def US_EXPORT
