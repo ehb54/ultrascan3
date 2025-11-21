@@ -835,7 +835,7 @@ void US_InitDialogueGui::load_autoflowHistory_dialog( void )
   
   QString autoflow_btn = "AUTOFLOW_GMP_REPORT";
 
-  pdiag_autoflowHistory = new US_SelectItem( autoflowdataHistory, hdrs, pdtitle, &prx, autoflow_btn, -3 );
+  pdiag_autoflowHistory = new US_SelectItem( autoflowdataHistory, hdrs, pdtitle, &prx, autoflow_btn, -4 );
   
   QString autoflow_id_selected("");
   if ( pdiag_autoflowHistory->exec() == QDialog::Accepted )
