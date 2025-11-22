@@ -92,6 +92,8 @@ jobs:
         with:
           files: |
             programs/**
+          files_ignore: |
+            programs/us_mpi_analysis/**
           separator: " "
           json: false
   analyze-mpi:
@@ -247,8 +249,9 @@ jobs:
           (cd programs/us && sh revision.sh)
           for dir in $TARGETS; do
             if [ -d "$dir" ]; then
-              echo "Building: $dir"
-              (cd "$dir" && make -j$(( $(nproc) + 1 )))
+              echo "::group::Building: $dir"
+              (cd "$dir" && qmake *.pro && make -j$(( $(nproc) + 1 )))
+              echo "::endgroup::"
             fi
           done
       - name: Perform CodeQL Analysis
