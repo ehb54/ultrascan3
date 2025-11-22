@@ -5870,6 +5870,11 @@ void US_ReporterGMP::process_combined_plots_individual ( QString triplesname_p, 
 	      QStringList ranges  = i_cpt.value();
 	      
 	      QMap < QString, QString > c_parms;
+
+	      //check if CG-model-based
+	      QString isCGM = ( isCustomGidModel( triplesname_chann ) ) ?
+		QString("YES") : QString("NO");
+	      
 	      QString t_m;
 	      QString imgComb02File = basename + "Ind_combined" + "." + triplesname + "." + stage_model;
 
@@ -5893,6 +5898,8 @@ void US_ReporterGMP::process_combined_plots_individual ( QString triplesname_p, 
 			       << sim_ranges.keys()
 			       << sim_ranges["s_ranges"];
 		    }
+		  //add c_parms["CG_model"] = QString("YES"); //OR "NO"
+		  c_parms["CG_model"] = isCGM; 
 		  
 		  //qDebug() << "over models: c_params -- " << c_params;
 		  
@@ -5922,6 +5929,9 @@ void US_ReporterGMP::process_combined_plots_individual ( QString triplesname_p, 
 			   << ranges.join(",") << ", " << c_ranges;
 		  c_parms[ "Ranges" ] = c_ranges;
 		  //c_parms[ "Ranges" ] = ranges.join(",");
+
+		  //add c_parms["CG_model"] = QString("YES"); //OR "NO"
+		  c_parms["CG_model"] = isCGM; 
 		  
 		  plotted_ids_colors_map_s_type = sdiag_combplot-> changedPlotX_auto( 1, c_parms );
 		  
@@ -5948,6 +5958,9 @@ void US_ReporterGMP::process_combined_plots_individual ( QString triplesname_p, 
 			   << ranges.join(",") << ", " << c_ranges;
 		  c_parms[ "Ranges" ] = c_ranges;
 		  //c_parms[ "Ranges" ] = ranges.join(",");
+
+		  //add c_parms["CG_model"] = QString("YES"); //OR "NO"
+		  c_parms["CG_model"] = isCGM; 
 		  
 		  plotted_ids_colors_map_s_type = sdiag_combplot-> changedPlotX_auto( 2, c_parms );
 		  
@@ -5970,6 +5983,9 @@ void US_ReporterGMP::process_combined_plots_individual ( QString triplesname_p, 
 
 		  if ( sim_ranges. contains("k_ranges") )
 		    c_parms[ "k_ranges" ] = sim_ranges["k_ranges"].join(",");
+
+		  //add c_parms["CG_model"] = QString("YES"); //OR "NO"
+		  c_parms["CG_model"] = isCGM; 
 		  
 		  plotted_ids_colors_map_s_type = sdiag_combplot-> changedPlotX_auto( 3, c_parms );
 		  
@@ -5988,7 +6004,7 @@ void US_ReporterGMP::process_combined_plots_individual ( QString triplesname_p, 
     }
   
   //assemble IND combined plots into html
-  assemble_plots_html( CombPlotsFileNames, "CombPlots"  );
+  assemble_plots_html( CombPlotsFileNames, "IndCombPlots"  );
   qApp->processEvents();
 }
 
@@ -6019,6 +6035,32 @@ QString US_ReporterGMP::convert_ranges( QStringList conv_ranges, double c_factor
 
   c_ranges_str = c_ranges.join(",");
   return c_ranges_str;
+}
+
+//determine if triple CG-model-based
+bool US_ReporterGMP::isCustomGidModel( QString chann_desc )
+{
+  bool isCG = false;
+  for (int i=0; i<cAP2.parms.size(); ++i )
+    {
+      QString channame = cAP2.parms[i].channel;
+      qDebug() << "[isCustomGidModel-2DSA]channame -- " << channame;
+      if ( channame. contains( chann_desc ) )
+	{
+	  QString cust_grid  = cAP2.parms[i].cust_grid;  
+	  QString cgrid_name = cAP2.parms[i].cgrid_name; 
+	  int cust_id        = cAP2.parms[i].cust_id;
+
+	  qDebug() << "[isCustomGidModel-2DSA] cust_grid, cgrid_name, cust_id -- "
+		   << cust_grid << cgrid_name << cust_id;
+
+	  if ( !cust_grid.isEmpty() && !cgrid_name.isEmpty() )
+	    isCG = true;
+	}
+    }
+
+  qDebug() << "isCustomGidModel for chann " << chann_desc << "? " << isCG;
+  return isCG; 
 }
 
 //pull s_ranges, k_ranges from AProfile
@@ -6113,7 +6155,7 @@ void US_ReporterGMP::process_combined_plots ( QString filename_passed )
   QStringList modelNames;
   modelNames << "2DSA-IT" << "2DSA-MC" << "PCSA";
   QList< int > xtype;
-  xtype <<  1 << 2 << 3; //ALEXEY: 0: s20; 1: MW; 2: D; 3: f/f0
+  xtype <<  0 << 1 << 2 << 3; //ALEXEY: 0: s20; 1: MW; 2: D; 3: f/f0
                          //Note: xtype==0 (s20) is the default, so iterate later starting from 1... 
   QStringList CombPlotsFileNames;
   QStringList plottedIDs_s, plottedIDs_other_type;
@@ -6173,6 +6215,8 @@ void US_ReporterGMP::process_combined_plots ( QString filename_passed )
 	  //here writes a 's'-type IF it's to be included:
 	  // QString t_m = "s," + modelNames[ m ];
 	  // if ( comboPlotsMapTypes.contains( t_m ) && comboPlotsMapTypes[ t_m ] != 0  )
+
+	  /** not needed -- will be replotted below!!!!
 	  if ( show_combo_s ) 
 	    {
 	      qDebug() << "PLOTTED_IDs_S_type -- " << plottedIDs_s;
@@ -6185,18 +6229,27 @@ void US_ReporterGMP::process_combined_plots ( QString filename_passed )
 	      CombPlotsParmsMap       [ imgComb01File ] = plotted_ids_colors_map_s_type. firstKey();
 	      CombPlotsParmsMap_Colors[ imgComb01File ] = plotted_ids_colors_map_s_type[ plotted_ids_colors_map_s_type. firstKey() ];
 	    }
+	  **/
 
 	  ++pr_cp_val;
 	  progress_msg->setValue( pr_cp_val );
 	  
-	  //Now that we have s20 plotted, plot other types [ MW, D, f/f0 ]
+	  //Now that we have s20 plotted, plot other types [ MW, D, f/f0 ] && replot [ s ]!!!
 	  for ( int xt= 0; xt < xtype.size(); ++xt )
 	    {
 	      QString imgComb02File = basename + "combined" + "." + modelNames[ m ];
 	      QMap < QString, QString > c_parms;
 	      QString t_m, c_type;
+
+	      if( xtype[ xt ] == 0 )
+		{
+		  imgComb02File += ".s" + svgext;
+		  t_m = "s," + modelNames[ m ];
+		  c_type = "s";
+		  c_parms = comboPlotsMap[ t_m ];
+		}
 	      
-	      if( xtype[ xt ] == 1 )
+	      else if( xtype[ xt ] == 1 )
 		{
 		  imgComb02File += ".MW" + svgext;
 		  t_m = "MW," + modelNames[ m ];
@@ -6236,7 +6289,7 @@ void US_ReporterGMP::process_combined_plots ( QString filename_passed )
 		  //plottedIDs_other_type = sdiag_combplot-> changedPlotX_auto( xtype[ xt ], c_parms );
 		  plotted_ids_colors_map_s_type = sdiag_combplot-> changedPlotX_auto( xtype[ xt ], c_parms );
 		    
-		  //qDebug() << "PLOTTED_IDs_" << c_type << "_type -- " << plottedIDs_other_type;
+		  qDebug() << "PLOTTED_IDs_" << c_type << "_type -- " << plottedIDs_other_type;
 		  
 		  
 		  write_plot( imgComb02File, sdiag_combplot->rp_data_plot1() );              //<-- rp_data_plot1() gives combined plot
@@ -6257,7 +6310,10 @@ void US_ReporterGMP::process_combined_plots ( QString filename_passed )
       sdiag_combplot->reset_data_plot1();
     }
   //assemble combined plots into html
+  html_assembled += "<p class=\"pagebreak \">\n";
+  html_assembled += "<h2 align=left>Combined Distribution Plots</h2>";
   assemble_plots_html( CombPlotsFileNames, "CombPlots"  );
+  html_assembled += "</p>\n";
   
   progress_msg->setValue( progress_msg->maximum() );
   progress_msg->close();
@@ -8212,7 +8268,7 @@ void  US_ReporterGMP::assemble_plots_html( QStringList PlotsFilenames, const QSt
   qDebug() << "[in assemble_plots_html()], PlotsFilenames -- " << PlotsFilenames;  
   // Embed plots in the composite report
 
-  if ( !plot_type.isEmpty() && plot_type != "RunDetails")
+  if ( !plot_type.isEmpty() && plot_type != "RunDetails" && plot_type != "CombPlots")
     html_assembled += "<p class=\"pagebreak \">\n";
   else
      html_assembled  += "<p ><br>";
@@ -8263,7 +8319,7 @@ void  US_ReporterGMP::assemble_plots_html( QStringList PlotsFilenames, const QSt
       html_assembled   += "    <div><img src=\"" + filename 
        	+ "\" alt=\"" + label;
 
-      if ( !plot_type.isEmpty() && plot_type == "CombPlots") // For Combined plots, scale down .png 
+      if ( !plot_type.isEmpty() && plot_type.contains("CombPlots") ) // For Combined plots, scale down .png 
        	{
 	  //reduce comb. plots somewhat
 	  double i_scale_factor_h   = double( qprinters_hight / scaled_i_height );
@@ -8290,8 +8346,8 @@ void  US_ReporterGMP::assemble_plots_html( QStringList PlotsFilenames, const QSt
       
       html_assembled   += "<br>";
 
-      //add custom legen for combined plots
-      if ( !plot_type.isEmpty() && plot_type == "CombPlots" )
+      //add custom legend for combined plots
+      if ( !plot_type.isEmpty() && plot_type.contains( "CombPlots" ) )
 	{
 	  QStringList combparms            = CombPlotsParmsMap[ filename ];
 	  QList< QColor > combparms_colors = CombPlotsParmsMap_Colors[ filename ];
@@ -10498,6 +10554,7 @@ void US_ReporterGMP::write_plot( const QString& filename, const QwtPlot* plot )
 
    else if ( filename.endsWith( ".png" ) )
    {  // General case of PNG
+     qDebug() << "SAVING PNGs!!!!";
       if ( US_GuiUtil::save_png( filename, plot ) != 0 )
          QMessageBox::warning( this, tr( "File Write Error" ),
             tr( "Unable to write file" ) + filename );
