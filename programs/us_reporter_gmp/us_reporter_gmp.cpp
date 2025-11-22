@@ -24,8 +24,8 @@
 #define TOSTRING(x) STRINGIFY(x)
 
 // Provide defaults if not defined by build system
-#ifndef REVISION
-#define REVISION "unknown"
+#ifndef BUILDNUM
+#define BUILDNUM "unknown"
 #endif
 
 #ifndef OS_TITLE
@@ -10791,7 +10791,7 @@ void US_ReporterGMP::assemble_pdf( QProgressDialog * progress_msg )
   //HEADER: begin
   QString us_version = QString("Version %1 ( %2 ) for %3")
           .arg(US_Version)
-          .arg(TOSTRING(REVISION))
+          .arg(TOSTRING(BUILDNUM))
           .arg(TOSTRING(OS_TITLE));
   QString html_header = QString("");
   html_header += rptpage;
