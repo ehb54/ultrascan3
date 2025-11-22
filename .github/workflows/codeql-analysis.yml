@@ -73,7 +73,7 @@ jobs:
               - *gui
               - gui.pri
               - programs/**
-              - !programs/us_mpi_analysis/**
+              - '!programs/us_mpi_analysis/**'
               - *workflow
               - *common
             mpi: &mpi
