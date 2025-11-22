@@ -37,15 +37,15 @@ jobs:
               - .github/workflows/static-analysis.yml
               - gui/**.cpp
               - gui/**.h
-              - programs/**.cpp
-              - programs/**.h
+              - programs/**/*.cpp
+              - programs/**/*.h
               - programs/main1.inc
               - utils/**.cpp
               - utils/**.h
-              - qwtplot3d/**.cpp
-              - qwtplot3d/**.h
-              - qwtplot3d/**.hpp
-              - qwtplot3d/**.c
+              - qwtplot3d/**/*.cpp
+              - qwtplot3d/**/*.h
+              - qwtplot3d/**/*.hpp
+              - qwtplot3d/**/*.c
               - CMakeLists.txt
               - '**/CMakeLists.txt'
               - '**/*.cmake'
@@ -53,8 +53,8 @@ jobs:
             cpp_files:
               - gui/**.cpp
               - gui/**.h
-              - programs/**.cpp
-              - programs/**.h
+              - programs/**/*.cpp
+              - programs/**/*.h
               - utils/**.cpp
               - utils/**.h
           separator: "\n"
