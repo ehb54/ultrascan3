@@ -15,26 +15,12 @@ on:
   push:
     branches: [ main ]
   pull_request:
-    branches: [ main, lukas/qt6-compile ]
-    paths:
-      - '**.c'
-      - '**.cpp'
-      - '**.h'
-      - '**.hpp'
-      - '**.pro'
-      - '**.pri'
-      - 'programs/main1.inc'
-      - '**CMakeLists.txt'
-      - '**.json'
-      - '**.qrc'
-      - '**.ui'
-      - '.github/workflows/codeql-analysis.yml'
-      - 'admin/codeql/docker/local.**'
+    branches: [ main ]
   schedule:
     - cron: '20 18 * * 1'
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref_name  || github.run_id }}
   cancel-in-progress: true
 
 jobs:
@@ -45,9 +31,16 @@ jobs:
       pull-requests: read
     outputs:
       # reference: https://github.com/tj-actions/changed-files#outputs-
+      workflow: ${{ steps.changed-files.outputs.workflow_any_modified == 'true' }}
+      utils: ${{ steps.changed-files.outputs.utils_any_modified == 'true' }}
+      qwtplot3d: ${{ steps.changed-files.outputs.qwtplot3d_any_modified == 'true' }}
+      gui: ${{ steps.changed-files.outputs.gui_any_modified == 'true' }}
       somo: ${{ steps.changed-files.outputs.somo_any_modified == 'true' }}
       mpi: ${{ steps.changed-files.outputs.mpi_any_modified == 'true' }}
-      gui: ${{ steps.changed-files.outputs.programs_any_modified == 'true' }}
+      common: ${{ steps.changed-files.outputs.common_any_modified == 'true' }}
+      programs: ${{ steps.changed-files.outputs.programs_any_modified == 'true' }}
+      changed_programs: ${{ steps.changed-programs.outputs.all_changed_files }}
+
     steps:
       - uses: actions/checkout@v5
         with:
@@ -70,12 +63,19 @@ jobs:
               - *utils
               - *qwtplot3d
               - gui/**
+            common: &common
+              - gui.pri
+              - programs/main1.inc
+              - make_all.pro
+              - admin/codeql/docker/local.pri.gui
+              - library.pri
             programs: &programs
               - *gui
               - gui.pri
               - programs/**
-              - admin/codeql/docker/local.pri.gui
+              - '!programs/us_mpi_analysis/**'
               - *workflow
+              - *common
             mpi: &mpi
               - *utils
               - programs/us_mpi_analysis/**
@@ -86,19 +86,31 @@ jobs:
               - us_somo/**
               - admin/codeql/docker/local.pri.somo
               - *workflow
+      - name: Get changed programs
+        if: ${{ github.event_name != 'schedule' || !env.ACT }}
+        id: changed-programs
+        uses: tj-actions/changed-files@v47
+        with:
+          files: |
+            programs/**
+          files_ignore: |
+            programs/us_mpi_analysis/**
+          separator: " "
+          json: false
   analyze-mpi:
     needs: [ changed-files ]
-    if: ${{ needs.changed-files.outputs.mpi == 'true' || github.event_name == 'schedule' || github.event.act == 'true' }}
     name: Analyze mpi
     runs-on: ubuntu-latest
     permissions:
       security-events: write
       actions: read
 
+    if: ${{ needs.changed-files.outputs.mpi == 'true' || github.event_name == 'schedule' || github.event.act == 'true' }}
+
     strategy:
       fail-fast: false
       matrix:
-        language: [cpp]
+        language: [ cpp ]
         container:
           - "ehb1/usbuildtest:ubuntu22.04-qt5.15.10-qwt6.1.6"
           # enable qt6 after pr 300 merged
@@ -108,45 +120,46 @@ jobs:
     # Specify the container in which actions will run
     container:
       image: ${{ matrix.container }}
-      options: --cpus 4
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
         with:
           fetch-depth: 1
+      - name: Allow CI to access repo directory
+        run: git config --global --add safe.directory /__w/ultrascan3/ultrascan3
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v4
         with:
           languages: ${{ matrix.language }}
       - name: Build
+        if: ${{ needs.changed-files.outputs.mpi == 'true' || github.event_name == 'schedule' || github.event.act == 'true' }}
         run: |
           cp admin/codeql/docker/local.pri.mpi local.pri
-          git config --global --add safe.directory /__w/ultrascan3/ultrascan3
           cd utils
           qmake
-          make -j8
+          make -j$(( $(nproc) + 1 ))
           cd ..
           cd programs/us_mpi_analysis
           qmake
-          make -j8
+          make -j$(( $(nproc) + 1 ))
           cd ../..
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v4
 
   analyze-gui:
     needs: [ changed-files ]
-    if: ${{ needs.changed-files.outputs.gui == 'true' || github.event_name == 'schedule' || github.event.act == 'true' }}
     name: Analyze gui
     runs-on: ubuntu-latest
     permissions:
       security-events: write
       actions: read
 
+    if: ${{ needs.changed-files.outputs.programs == 'true' || github.event_name == 'schedule' || github.event.act == 'true' }}  
     strategy:
       fail-fast: false
       matrix:
-        language: [cpp]
+        language: [ cpp ]
         container:
           - "ehb1/usbuildtest:ubuntu22.04-qt5.15.10-qwt6.1.6"
           # enable qt6 & qwt630 after pr 300 merged
@@ -157,40 +170,108 @@ jobs:
     # Specify the container in which actions will run
     container:
       image: ${{ matrix.container }}
-      options: --cpus 4
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
         with:
           fetch-depth: 1
+      - name: Allow CI to access repo directory
+        run: git config --global --add safe.directory /__w/ultrascan3/ultrascan3
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v4
         with:
           languages: ${{ matrix.language }}
-      - name: Build
+      - name: Prepare build
         run: |
           cp admin/codeql/docker/local.pri.gui local.pri
-          git config --global --add safe.directory /__w/ultrascan3/ultrascan3
-          (cd programs/us && sh revision.sh)
           qmake
-          make -j8
+      - name: Calculate Build Targets
+        id: calc-targets
+        env:
+          CHANGED_FILES: ${{ needs.changed-files.outputs.changed_programs }}
+          LIBS_CHANGED: ${{ needs.changed-files.outputs.utils == 'true' || needs.changed-files.outputs.qwtplot3d == 'true' || needs.changed-files.outputs.gui == 'true' }}
+          COMMON_CHANGED: ${{ needs.changed-files.outputs.workflow == 'true' || needs.changed-files.outputs.common == 'true' }}
+          FORCE_ALL: ${{ github.event_name == 'schedule' || github.event_name == 'push' || github.event.act == 'true' }}
+        run: |
+          touch build_targets.txt
+          # if libs or common changed or it is a push to main/scheduled event, force all programs
+          if [ "$FORCE_ALL" == "true" ] || [ "$COMMON_CHANGED" == "true" ] || [ "$LIBS_CHANGED" == "true" ]; then
+            echo "Global rebuild with all programs"
+            echo "." >> build_targets.txt
+          else
+            echo "Calculate changed programs"
+            for file in $CHANGED_FILES; do
+              dir=$(echo $file | awk -F/ '{print $1"/"$2}')
+
+              if [ -d "$dir" ]; then
+                # add the directory itself
+                echo "$dir" >> build_targets.txt
+                # get program name
+                prog_name=$(basename "$dir")
+                # find all programs, which contain $prog_name in the pro file
+                grep -r -l "$prog_name" programs/*/*.pro || true | while read dependent_pro; do
+                  dirname "$dependent_pro" >> build_targets.txt
+                done
+              fi
+            done
+          fi
+          # sort and deduplicate
+          SORTED_TARGETS=$(cat build_targets.txt | sort -u | tr '\n' ' ')
+          # fall back to all if empty
+          if [ -z "$SORTED_TARGETS" ]; then
+            echo "No targets found. Default to all."
+            echo "." > final_targets.txt
+          else
+            echo "$SORTED_TARGETS" > final_targets.txt
+          fi
+          echo "Final Build List: $(cat final_targets.txt)"
+          # Set output for the next step
+          echo "build_list=$(cat final_targets.txt)" >> $GITHUB_OUTPUT
+      - name: Build utils
+        run: |
+          cd utils
+          qmake
+          make -j$(( $(nproc) + 1 ))
+      - name: Build qwtplot3d
+        run: |
+          cd qwtplot3d
+          qmake
+          make -j$(( $(nproc) + 1 ))
+      - name: Build gui
+        run: |
+          cd gui
+          qmake
+          make -j$(( $(nproc) + 1 ))
+      - name: Build programs
+        env:
+          TARGETS: ${{ steps.calc-targets.outputs.build_list }}
+        run: |
+          (cd programs/us && sh revision.sh)
+          for dir in $TARGETS; do
+            if [ -d "$dir" ]; then
+              echo "::group::Building: $dir"
+              (cd "$dir" && qmake *.pro && make -j$(( $(nproc) + 1 )))
+              echo "::endgroup::"
+            fi
+          done
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v4
 
   analyze-somo:
     needs: [ changed-files ]
-    if: ${{ needs.changed-files.outputs.somo == 'true' || github.event_name == 'schedule' || github.event.act == 'true' }}
     name: Analyze somo
     runs-on: ubuntu-latest
     permissions:
       security-events: write
       actions: read
+    
+    if: ${{ needs.changed-files.outputs.somo == 'true' || github.event_name == 'schedule' || github.event.act == 'true' }}
 
     strategy:
       fail-fast: false
       matrix:
-        language: [cpp]
+        language: [ cpp ]
         container:
           - "ehb1/usbuildtest:ubuntu22.04-qt5.15.10-qwt6.1.6"
           # somo main not ready for qwt6.3.0
@@ -202,18 +283,19 @@ jobs:
     # Specify the container in which actions will run
     container:
       image: ${{ matrix.container }}
-      options: --cpus 4
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
         with:
           fetch-depth: 1
+      - name: Allow CI to access repo directory
+        run: git config --global --add safe.directory /__w/ultrascan3/ultrascan3
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v4
         with:
           languages: ${{ matrix.language }}
-      - name: Build
+      - name: Prepare build
         run: |
           bdir=`pwd`
           echo $bdir
@@ -221,13 +303,43 @@ jobs:
           export ULTRASCAN=$bdir
           export us3=$bdir
           cd us_somo/develop
-          git config --global --add safe.directory /__w/ultrascan3/ultrascan3
           ./revision.sh
           ./version.sh
           cp $bdir/admin/codeql/docker/local.pri.somo local.pri
+      - name: Build libus_somo
+        run: |
+          cd us_somo/develop
           qmake libus_somo.pro
-          make -j8
+          make -j$(( $(nproc) + 1 ))
+      - name: Build us_somo
+        run: |
+          cd us_somo/develop
           qmake us_somo.pro
-          make -j8
+          make -j$(( $(nproc) + 1 ))
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v4
+
+  check-status:
+    if: always()
+    needs: [ analyze-mpi, analyze-gui, analyze-somo ]
+    name: Check CodeQL job statuses
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check statuses
+        run: |
+          echo "Analyze MPI job status: ${{ needs.analyze-mpi.result }}"
+          echo "Analyze GUI job status: ${{ needs.analyze-gui.result }}"
+          echo "Analyze SOMO job status: ${{ needs.analyze-somo.result }}"
+          RESULTS='${{ toJson(needs) }}'
+          # Check for failures
+          if echo $RESULTS | grep -q '"result": "failure"'; then
+            echo "At least one CodeQL analysis job failed."
+            exit 1
+          fi
+          # Check for cancelled jobs
+          if echo $RESULTS | grep -q '"result": "cancelled"'; then
+            echo "At least one CodeQL analysis job was cancelled."
+            exit 1
+          fi
+          echo "All CodeQL analysis jobs completed successfully or were skipped."
+          exit 0
