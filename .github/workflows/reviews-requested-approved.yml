@@ -31,56 +31,109 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            // NOTE: `core`, `github`, and `context` are provided by github-script.
-            const pr = context.payload.pull_request;
-            const prNumber = pr ? pr.number : context.issue.number;
-            const { owner, repo } = context.repo;
+            // core, github, context are injected by actions/github-script
 
-            core.info(`Checking requested reviewers for #${prNumber} in ${owner}/${repo}…`);
+            const pr = context.payload.pull_request;
+            if (!pr) {
+              core.setFailed("This workflow must be run on pull_request events.");
+              return;
+            }
+
+            const prNumber = pr.number;
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            core.info(`Checking requested reviewers for #${prNumber} in ${owner}/${repo}...`);
 
             // 1. Get requested reviewers (users + teams)
             const requested = await github.rest.pulls.listRequestedReviewers({
-              owner,
-              repo,
-              pull_number: prNumber,
+              owner: owner,
+              repo: repo,
+              pull_number: prNumber
             });
 
-            const requestedUsers = requested.data.users.map(u => u.login);
-            const requestedTeams = requested.data.teams.map(t => t.slug);
+            const requestedUsers = requested.data.users.map(function (u) { return u.login; });
+            const requestedTeams = requested.data.teams.map(function (t) { return t.slug; });
 
-            core.info(`Requested user reviewers: ${requestedUsers.join(", ") || "(none)"}`);
-            core.info(`Requested team reviewers: ${requestedTeams.join(", ") || "(none)"}`);
+            core.info(
+              "Requested user reviewers: " +
+              (requestedUsers.length ? requestedUsers.join(", ") : "(none)")
+            );
+            core.info(
+              "Requested team reviewers: " +
+              (requestedTeams.length ? requestedTeams.join(", ") : "(none)")
+            );
 
-            // If GitHub shows no outstanding requested reviewers, we're done.
+            // If no outstanding requested reviewers, we're done.
             if (requestedUsers.length === 0 && requestedTeams.length === 0) {
               core.info("No outstanding requested reviewers. Passing check.");
               return;
             }
 
-            // 2. Get all reviews and compute each reviewer's *latest* state
+            // 2. Get all reviews on this PR
             const reviews = await github.paginate(
               github.rest.pulls.listReviews,
               {
-                owner,
-                repo,
-                pull_number: prNumber,
-                per_page: 100,
+                owner: owner,
+                repo: repo,
+                pull_number: prNumber
               }
             );
 
-            // Map: login -> { state, submitted_at }
-            const latestReviewByUser = new Map();
+            // 3. Build "latest review by user" map
+            const latestReviewByUser = {}; // login -> { state, submitted_at }
 
             for (const r of reviews) {
               if (!r.user || !r.user.login) continue;
-              const login = r.user.login;
 
-              const prev = latestReviewByUser.get(login);
-              const currentTime = r.submitted_at ? new Date(r.submitted_at) : null;
+              const login = r.user.login;
+              const prev = latestReviewByUser[login];
+
+              const thisTime = r.submitted_at ? new Date(r.submitted_at) : null;
               const prevTime = prev && prev.submitted_at ? new Date(prev.submitted_at) : null;
 
-              if (!prev || (currentTime && (!prevTime || currentTime > prevTime))) {
-                latestReviewByUser.set(login, {
+              if (!prev || (thisTime && (!prevTime || thisTime > prevTime))) {
+                latestReviewByUser[login] = {
                   state: r.state,
-                  submitted_at: r.submitted_at,
-                });
+                  submitted_at: r.submitted_at
+                };
+              }
+            }
+
+            core.info("Latest review states by user:");
+            Object.keys(latestReviewByUser).forEach(function (login) {
+              const info = latestReviewByUser[login];
+              core.info("- " + login + ": " + info.state + " at " + info.submitted_at);
+            });
+
+            // 4. Each requested *user* must have latest state == APPROVED
+            const missingApprovals = [];
+            for (const login of requestedUsers) {
+              const info = latestReviewByUser[login];
+              if (!info || info.state !== "APPROVED") {
+                missingApprovals.push(login);
+              }
+            }
+
+            // 5. Teams: if still listed as requested, treat as pending
+            const pendingTeams = requestedTeams.slice();
+
+            const problems = [];
+            if (missingApprovals.length > 0) {
+              problems.push(
+                "Requested users whose latest review is not APPROVED: " +
+                missingApprovals.join(", ")
+              );
+            }
+            if (pendingTeams.length > 0) {
+              problems.push("Requested teams still pending: " + pendingTeams.join(", "));
+            }
+
+            if (problems.length > 0) {
+              core.setFailed(
+                "Not all requested reviewers have APPROVED this PR.\n" +
+                problems.join("\n")
+              );
+            } else {
+              core.info("All requested reviewers have latest state APPROVED. Passing check.");
+            }
