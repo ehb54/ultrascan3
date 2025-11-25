@@ -2835,6 +2835,7 @@ void US_Analysis_auto::show_overlay( const QString& triple_stage )
   
   loadData( triple_info_map );
   progress_msg->setValue( 1 );
+  qApp->processEvents();
   
   triple_info_map[ "eID" ]        = QString::number( eID_global );
   // Assign edata && rdata
@@ -2945,7 +2946,8 @@ void US_Analysis_auto::show_overlay( const QString& triple_stage )
   bufvl = US_SolutionVals::values( dbP, edata, solID, svbar, bdens,
 				   bvisc, bcomp, bmanu, errmsg );
   progress_msg->setValue( 3 );
-
+  qApp->processEvents();
+  
   //Hardwire compressibility to zero, for now
   bcomp="0.0";
   if ( bufvl )
@@ -3010,7 +3012,8 @@ void US_Analysis_auto::show_overlay( const QString& triple_stage )
   qDebug() << "Closing sim_msg-- ";
   //msg_sim->accept();
   progress_msg->close();
-
+  qApp->processEvents();
+  
   /*
   // Show plot
   resplotd = new US_ResidPlotFem( this, true );
@@ -5744,6 +5747,7 @@ DbgLv(1) << " eupd:  write: fn" << fn;
 	   if (progress_msg_fmb != NULL )
 	     {
 	       progress_msg_fmb->setValue( jj );
+	       qApp->processEvents();
 	     }
 	     
 DbgLv(1) << " eupd:       call upd_db_ed";
@@ -5779,6 +5783,7 @@ DbgLv(1) << " eupd:       idEdit" << idEdit;
      {
        progress_msg_fmb->setValue( progress_msg_fmb->maximum() );  //ALEXEY -- bug fixed..
        progress_msg_fmb->close();
+       qApp->processEvents();
      }
 
    update_autoflowAnalysis_statuses( triple_information );

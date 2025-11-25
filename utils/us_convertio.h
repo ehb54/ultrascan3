@@ -5,7 +5,6 @@
 #include <QtCore>
 
 #include "us_extern.h"
-#include "us_help.h"
 #include "us_convert.h"
 #include "us_experiment.h"
 #include "us_db2.h"

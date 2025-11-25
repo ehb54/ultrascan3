@@ -185,6 +185,7 @@ US_ProtocolDevMain::US_ProtocolDevMain() : US_Widgets()
   //connect( epanExp, SIGNAL( switch_to_editing( QMap < QString, QString > & ) ),  this, SLOT( switch_to_editing ( QMap < QString, QString > & )  ) );
   
   connect( epanExp, SIGNAL( switch_to_live_update( QMap < QString, QString > &) ), this, SLOT( switch_to_live_update( QMap < QString, QString > & )  ) );
+  connect( epanExp, SIGNAL( switch_to_import( QMap < QString, QString > &) ), this, SLOT( switch_to_post_processing( QMap < QString, QString > & )  ) );
   connect( this   , SIGNAL( pass_to_live_update( QMap < QString, QString > &) ),   epanObserv, SLOT( process_protocol_details( QMap < QString, QString > & )  ) );
   connect( epanExp, SIGNAL( to_autoflow_records( ) ), this, SLOT( to_autoflow_records( ) ) );
   
@@ -834,7 +835,7 @@ void US_InitDialogueGui::load_autoflowHistory_dialog( void )
   
   QString autoflow_btn = "AUTOFLOW_GMP_REPORT";
 
-  pdiag_autoflowHistory = new US_SelectItem( autoflowdataHistory, hdrs, pdtitle, &prx, autoflow_btn, -3 );
+  pdiag_autoflowHistory = new US_SelectItem( autoflowdataHistory, hdrs, pdtitle, &prx, autoflow_btn, -4 );
   
   QString autoflow_id_selected("");
   if ( pdiag_autoflowHistory->exec() == QDialog::Accepted )
@@ -1093,6 +1094,9 @@ void US_InitDialogueGui::initRecordsDialogue( void )
   QString analysisIDs  = protocol_details[ "analysisIDs" ];
   QString statusID     = protocol_details[ "statusID" ];
   QString failedID     = protocol_details[ "failedID" ];
+
+  QString dataSource   = protocol_details[ "dataSource" ];
+  QString filenameProtDevDataDisk = protocol_details[ "filenameProtDevDataDisk" ];
     
   QDir directory( currDir );
   
@@ -1107,7 +1111,8 @@ void US_InitDialogueGui::initRecordsDialogue( void )
   qDebug() << "statusID: "      << protocol_details[ "statusID" ];
   qDebug() << "failedID: str, INT --  "
 	   << protocol_details[ "failedID" ]
-	   << protocol_details[ "failedID" ].toInt();  
+	   << protocol_details[ "failedID" ].toInt();
+  qDebug() << "dataSource -- " << dataSource;
 
 
   //Re-attachment to FAILED GMP run
@@ -1198,8 +1203,22 @@ void US_InitDialogueGui::initRecordsDialogue( void )
 	  
        	  if ( currDir.isEmpty() || !directory.exists() )
        	    {
-       	      //switch_to_live_update( protocol_details );
-       	      emit switch_to_live_update_init( protocol_details );
+	      if ( !dataSource. contains("dataDisk") ) 
+		emit switch_to_live_update_init( protocol_details );
+	      else
+		{
+		  //we need to re-download form LIMS DB if re-attached from other session
+		  sdiag_convert = new US_ConvertGui("AUTO");
+		  QString filename_from_dataPath = directory.dirName();
+		  QMap< QString, QString > p_det;
+		  p_det["filename"] = filename_from_dataPath;
+		  p_det["filenameProtDevDataDisk"] = filenameProtDevDataDisk;
+		  sdiag_convert->download_data_auto( p_det );
+
+		  qApp->processEvents();
+		   
+		  emit switch_to_post_processing_init( protocol_details );
+		}
        	    }
        	  else
        	    {
@@ -1979,6 +1998,10 @@ QMap< QString, QString> US_InitDialogueGui::read_autoflow_record( int autoflowID
 
 	   protocol_details[ "gmpReviewID" ]   = db->value( 25 ).toString();
 	   protocol_details[ "expType" ]       = db->value( 26 ).toString();
+
+	   protocol_details[ "dataSource" ]    = db->value( 27 ).toString();
+	   protocol_details[ "opticsFailedType" ]   = db->value( 28 ).toString();
+	   protocol_details[ "filenameProtDevDataDisk" ]    = db->value( 29 ).toString();
 	 }
      }
    else
@@ -2094,6 +2117,9 @@ US_ExperGui::US_ExperGui( QWidget* topw )
    connect( sdiag, SIGNAL( to_live_update( QMap < QString, QString > & ) ),
    	    this,  SLOT( to_live_update( QMap < QString, QString > & ) ) );
 
+   connect( sdiag, SIGNAL( to_import( QMap < QString, QString > & ) ),
+   	    this,  SLOT( to_import( QMap < QString, QString > & ) ) );
+
    connect( this, SIGNAL( reset_experiment( QString & ) ), sdiag, SLOT( us_exp_clear( QString & ) ) );
    
    connect( sdiag, SIGNAL( exp_cleared( ) ), this, SLOT( exp_cleared( ) ) );
@@ -2158,6 +2184,12 @@ void US_ExperGui::pass_used_instruments( QMap < QString, QString > & protocol_de
 void US_ExperGui::to_live_update( QMap < QString, QString > & protocol_details)
 {
   emit switch_to_live_update( protocol_details );
+}
+
+//When run is submitted to Optima & protocol details are passed .. 
+void US_ExperGui::to_import( QMap < QString, QString > & protocol_details)
+{
+  emit switch_to_import( protocol_details );
 }
 
 //When US_Experiment is closed

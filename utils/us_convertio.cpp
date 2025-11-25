@@ -4,7 +4,6 @@
 
 #include "us_settings.h"
 #include "us_db2.h"
-#include "us_passwd.h"
 #include "us_convert.h"
 #include "us_convertio.h"
 #include "us_experiment.h"

@@ -1397,6 +1397,95 @@ void US_ConvertGui::us_mode_passed( void )
   
 }
 
+//alt. download data from LIMS-DB (for Prot_DEV: dataDisk)
+void US_ConvertGui::download_data_auto( QMap < QString, QString > & details_at_live_update )
+{
+   QString filenameProtDevDataDisk = details_at_live_update[ "filenameProtDevDataDisk" ];
+   qDebug() << "[Prot_DEV: download_data_auto() ], filenameProtDevDataDisk -- "
+	    << filenameProtDevDataDisk;
+
+   runID = ( filenameProtDevDataDisk.isEmpty() ) ?
+     details_at_live_update[ "filename" ] : filenameProtDevDataDisk;
+
+   // Verify connectivity
+   US_Passwd pw;
+   QString masterPW = pw.getPasswd();
+   US_DB2 db( masterPW );
+
+   if ( db.lastErrno() != US_DB2::OK )
+     {
+       QMessageBox::information( this,
+				 tr( "Error" ),
+				 tr( "Error making the DB connection.\n" ) );
+       return;
+     }
+
+   // We have runID from a call to a load dialog; let's copy the DB info to HD
+   QDir        readDir( US_Settings::importDir() );
+   QString     dirname = readDir.absolutePath() + "/" + runID + "/";
+
+   qDebug() << "[Prot_DEV: download_data_auto() ], Loading data from DB (Experiment) : runID -- "
+	    << runID;
+
+   QString status = US_ConvertIO::readDBExperiment( runID, dirname, &db,
+                                                    speedsteps );
+   if ( status  != QString( "" ) )
+     {
+       QMessageBox::information( this, tr( "Error" ), status + "\n" );
+       return;
+     }
+
+   QDir      readDir_res( US_Settings::resultDir() );
+   QString   dirname_res = readDir_res.absolutePath() + "/" + runID + "/";
+      
+   if (copyDirectory(dirname_res, dirname))
+     qDebug() << "Folder copied successfully!";
+   else
+     qDebug() << "Failed to copy folder.";
+      
+   details_at_live_update[ "new_dataPath" ] = dirname;
+}
+
+
+bool US_ConvertGui::copyDirectory(const QString &sourcePath, const QString &destinationPath)
+{
+    QDir sourceDir(sourcePath);
+    if (!sourceDir.exists()) {
+        qDebug() << "Source directory does not exist:" << sourcePath;
+        return false;
+    }
+
+    QDir destDir(destinationPath);
+    if (!destDir.mkpath(".")) { // Create the destination directory if it doesn't exist
+        qDebug() << "Failed to create destination directory:" << destinationPath;
+        return false;
+    }
+
+    QStringList entries = sourceDir.entryList(QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot);
+
+    for (const QString &entry : entries) {
+        QString sourceEntryPath = sourcePath + QDir::separator() + entry;
+        QString destEntryPath = destinationPath + QDir::separator() + entry;
+
+        QFileInfo entryInfo(sourceEntryPath);
+
+        if (entryInfo.isFile()) {
+            if (QFile::exists(destEntryPath)) {
+                QFile::remove(destEntryPath); // Remove existing file before copying
+            }
+            if (!QFile::copy(sourceEntryPath, destEntryPath)) {
+                qDebug() << "Failed to copy file:" << sourceEntryPath << "to" << destEntryPath;
+                return false;
+            }
+        } else if (entryInfo.isDir()) {
+            if (!copyDirectory(sourceEntryPath, destEntryPath)) { // Recursive call for subdirectories
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
 //alt. import_auto_ssf (for [ABDE-MWL])
 void US_ConvertGui::import_ssf_data_auto( QMap < QString, QString > & details_at_live_update )
 {
@@ -2343,7 +2432,23 @@ DbgLv(1) << "CGui:iA: CURRENT DIR_1: " << importDir;
 
    //For DataFromDisk, we need to append runID with something like "-dataDiskRun-{autoflowID_passed}"
    if ( dataSource.contains("Disk") && us_convert_auto_mode && !us_import_ssf_abde )
-     runID += QString("-dataDiskRun-") + QString::number( autoflowID_passed );
+     {
+       if ( !protDev_bool )
+	 runID += QString("-dataDiskRun-") + QString::number( autoflowID_passed );
+       else
+	 {
+	   QString runID_c = runID;
+	   qDebug() << "dataDisk runName before -- " << runID;
+	   QRegularExpression run_pattern("(-dataDiskRun-\\d+)+$");
+	   QRegularExpressionMatch match = run_pattern.match( runID_c );
+	   if (match.hasMatch())
+	     {
+	       runID = runID_c.remove( run_pattern );
+	       runID += QString("-dataDiskRun-") + QString::number( autoflowID_passed );
+	     }
+	   qDebug() << "dataDisk runName after -- " << runID;
+	 }
+     }
    
    if ( runType_combined_IP_RI )
      {
@@ -8088,8 +8193,14 @@ void US_ConvertGui::update_autoflow_record_atLimsImport( void )
    //     << QString::number( autoflowIntensityID )
    //     << QString::number( autoflowStatusID );
 
-   qry << "update_autoflow_at_lims_import"
-       << filename_toDB
+   //When dataDisk-GMP only, update also "filenameProtDevDataDisk" field (with filename_toDB)
+   qry << "update_autoflow_at_lims_import";
+   if ( gmpRun_bool && !protDev_bool && dataSource.contains( "dataDiskAUC" ) )
+     {
+       qry.clear();
+       qry << "update_autoflow_at_lims_import_dataDisk";
+     }
+   qry << filename_toDB
        << QString::number( autoflowIntensityID )
        << QString::number( autoflowStatusID )
        << QString::number( autoflowID_passed );
@@ -9040,7 +9151,41 @@ bool US_ConvertGui::read( void )
    // Read the legacy data
 DbgLv(1) << "CGui:RD:  rdLegDat CALL";
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
-   US_Convert::readLegacyData( currentDir, legacyData, runType );
+	QMap<QString, QString> leg_types = US_Convert::exploreLegacyData( currentDir );
+	if ( leg_types.isEmpty() )
+	{
+		return false;
+	}
+	if ( leg_types.size() == 1 )
+	{
+		runType = leg_types.values().first();
+	}
+	else
+	{
+		QMessageBox box;
+		box.setIcon( QMessageBox::Information );
+		box.setWindowTitle( QObject::tr( "Mixed Import Data Types" ) );
+		box.setText( QObject::tr( "The Import directory holds multiple data types.\n"
+								  "Choose the type to import in this session." ));
+		QMap<QPushButton*, QString> buttons;
+		for ( QMap<QString, QString>::const_iterator it = leg_types.begin(); it != leg_types.end(); ++it )
+		{
+			QPushButton* prType = box.addButton( it.value(), QMessageBox::ActionRole );
+			buttons.insert( prType, it.key() );
+		}
+		box.setDefaultButton( buttons.keys().first() );
+		box.exec();
+		QPushButton* button = static_cast<QPushButton*>(box.clickedButton());
+		if ( buttons.contains( button ) )
+		{
+			runType = buttons.value( button );
+		}
+		else
+		{
+			runType = leg_types.values().first();
+		}
+	}
+	US_Convert::readLegacyData( currentDir, runType, legacyData );
    QApplication::restoreOverrideCursor();
 DbgLv(1) << "CGui:RD:   rdLegDat RTN  lDsz" << legacyData.size();
 
