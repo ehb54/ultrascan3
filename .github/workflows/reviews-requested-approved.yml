@@ -1,0 +1,124 @@
+name: Enforce approvals from all requested reviewers
+
+on:
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
+      - review_requested
+      - review_request_removed
+      - edited
+  pull_request_review:
+    types:
+      - submitted
+      - dismissed
+  workflow_dispatch:
+
+jobs:
+  requested-reviewers-must-approve:
+    name: Requested reviewers must approve
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      pull-requests: read
+
+    steps:
+      - name: Check that all requested reviewers have approved
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const core = require("@actions/core");
+
+            const pr = context.payload.pull_request;
+            const prNumber = pr ? pr.number : context.issue.number;
+            const { owner, repo } = context.repo;
+
+            core.info(`Checking requested reviewers for #${prNumber} in ${owner}/${repo}…`);
+
+            // 1. Get requested reviewers (users + teams)
+            const requested = await github.rest.pulls.listRequestedReviewers({
+              owner,
+              repo,
+              pull_number: prNumber,
+            });
+
+            const requestedUsers = requested.data.users.map(u => u.login);
+            const requestedTeams = requested.data.teams.map(t => t.slug);
+
+            core.info(`Requested user reviewers: ${requestedUsers.join(", ") || "(none)"}`);
+            core.info(`Requested team reviewers: ${requestedTeams.join(", ") || "(none)"}`);
+
+            // If GitHub shows no outstanding requested reviewers, we're done.
+            if (requestedUsers.length === 0 && requestedTeams.length === 0) {
+              core.info("No outstanding requested reviewers. Passing check.");
+              return;
+            }
+
+            // 2. Get all reviews and compute each reviewer's *latest* state
+            const reviews = await github.paginate(
+              github.rest.pulls.listReviews,
+              {
+                owner,
+                repo,
+                pull_number: prNumber,
+                per_page: 100,
+              }
+            );
+
+            // Map: login -> { state, submitted_at }
+            const latestReviewByUser = new Map();
+
+            for (const r of reviews) {
+              if (!r.user || !r.user.login) continue;
+              const login = r.user.login;
+
+              const prev = latestReviewByUser.get(login);
+              if (
+                !prev ||
+                (r.submitted_at && new Date(r.submitted_at) > new Date(prev.submitted_at || 0))
+              ) {
+                latestReviewByUser.set(login, {
+                  state: r.state,
+                  submitted_at: r.submitted_at,
+                });
+              }
+            }
+
+            core.info("Latest review states by user:");
+            for (const [login, info] of latestReviewByUser.entries()) {
+              core.info(`- ${login}: ${info.state} at ${info.submitted_at}`);
+            }
+
+            // 3. Each requested user must have latest state == APPROVED
+            const missingApprovals = requestedUsers.filter(login => {
+              const info = latestReviewByUser.get(login);
+              // No review at all OR last review is not APPROVED => missing
+              return !info || info.state !== "APPROVED";
+            });
+
+            // 4. Teams: if the team is still in requested list, consider pending
+            // (You can relax this later if you want team approvals to be optional.)
+            const pendingTeams = requestedTeams.slice();
+
+            const problems = [];
+            if (missingApprovals.length > 0) {
+              problems.push(
+                `Requested users whose latest review is not APPROVED: ${missingApprovals.join(", ")}`
+              );
+            }
+            if (pendingTeams.length > 0) {
+              problems.push(`Requested teams still pending: ${pendingTeams.join(", ")}`);
+            }
+
+            if (problems.length > 0) {
+              core.setFailed(
+                "Not all requested reviewers have APPROVED this PR.\n" +
+                problems.join("\n")
+              );
+            } else {
+              core.info("All requested reviewers have latest state APPROVED. Passing check.");
+            }
