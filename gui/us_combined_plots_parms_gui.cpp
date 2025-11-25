@@ -201,6 +201,11 @@ void US_CombPlotsGui::build_layout ( void )
 	  le_xmin   -> setVisible( false );
 	  le_xmax   -> setVisible( false );
 	}
+
+      //hide x_min/max
+      le_xmin   -> setVisible( false );
+      le_xmax   -> setVisible( false );
+	
     }
   
   int ihgt        = le_type->height();
@@ -243,6 +248,11 @@ void US_CombPlotsGui::build_layout ( void )
   lower_buttons->addWidget( pb_accept );
    
   main->addLayout( lower_buttons );
+
+  //hide x_min/max labels
+  lb_xmin   -> hide();
+  lb_xmax   -> hide();
+  
 
   setMinimumSize( 850, 450 );
   
