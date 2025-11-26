@@ -14,13 +14,9 @@ Welcome to UltraScan III's Documentation and Resource!
    For more information on AUC and how to install UltrascanIII visit `Ultrascan III website <https://uslims.uleth.ca>`_.
    
 
-.. youtube:: TWYU9kQxz8k
-   :align: center
-
-.. rst-class::
+.. image:: /_static/images/UltraScan-logo.png
     :align: center
 
-    **Jet Boating on the Waimakariri**
 
 .. toctree::
    :maxdepth: 1

@@ -31,18 +31,6 @@ Functions:
   
   * - **Uniform Grid**
     - Use a uniform grid of the simulation parameter pairs.  
-  * - **Local Uniform Grid**
-    -
-  * - **Repetition:**
-    -
-  * - **Scaling Factor:**
-    -
-  * - **Scaling Factor 2:**
-    -
-  * - **Random Local Grid**
-    -
-  * - **Repetitions:**
-  
   * - **Solute Coalescing**
     - Select to merge solutes together. 
   * - **Coalescing Distance:**
