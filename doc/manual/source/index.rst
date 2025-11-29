@@ -6,7 +6,7 @@
 Welcome to UltraScan III's Documentation and Resource!
 =========================================================
 
-**Ultrascan III** is a Analytical Ultra-centrifugation *Data acquisition* and *analysis software*.
+**Ultrascan III** is a Analytical Ultracentrifugation *Data acquisition* and *analysis software*.
 
     
 .. note::
@@ -17,6 +17,11 @@ Welcome to UltraScan III's Documentation and Resource!
 .. image:: /_static/images/UltraScan-logo.png
     :align: center
 
+.. toctree::
+   :maxdepth: 1
+   :caption: Data Acquisition 
+
+   #gmp/index
 
 .. toctree::
    :maxdepth: 1
@@ -47,7 +52,7 @@ Welcome to UltraScan III's Documentation and Resource!
 
 .. toctree::
    :maxdepth: 1
-   :caption: Viewer:  
+   :caption: Report and Data Viewers:  
 
    fe_match/index
    us_modelmetrics
@@ -75,7 +80,6 @@ Welcome to UltraScan III's Documentation and Resource!
 
    2dsa/index
    pcsa/index
-
    ga_initialize
 
 .. toctree::
@@ -94,8 +98,12 @@ Welcome to UltraScan III's Documentation and Resource!
    :maxdepth: 1
    :caption: Utilities
 
-   custom_grid
+   #custom_grid
    combine_models
+   model_editor
+   components
+   associations
+   predict1
 
 
 .. toctree::
@@ -105,18 +113,13 @@ Welcome to UltraScan III's Documentation and Resource!
    us_investigator
    buffer/index
    analyte/index
-   manage_model
    manage_data
    solutions/index
    projects/index
    rotor
 
 
-.. toctree::
-   :maxdepth: 1
-   :caption: Data Acquisition 
 
-   gmp/index
 
 
 

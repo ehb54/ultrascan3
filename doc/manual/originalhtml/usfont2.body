@@ -1,7 +1,0 @@
-[% INCLUDE header.us3
-   title = 'UltraScan III Font Selection'
-%]
-    <p> <img src="images/usfont-2.png" alt="Font Selection Window"/> </p>
-    <!-- Qt's assistant does not like to display raw png files -->
-
-[% INCLUDE footer.us3 %]

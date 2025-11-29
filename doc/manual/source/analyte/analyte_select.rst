@@ -12,7 +12,7 @@ Select Analyte Tab
 **Panel Tab Options:**
 
 * :ref:`Select Analyte <select_analyte>` - A panel whose primary purpose is to select an analyte to return to the caller.
-* `Enter New Analyte <analyte_new.html>`_ - A panel whose primary purpose is to enter a brand new analyte, defined by specifying sequence for protein and nucliec components or manually enter the molecular weight (Da), Vbar and other required parameters of proteins, RNA, DNA, Carbohydrate/other analytes. 
+* `Enter New Analyte <analyte_new.html>`_ - A panel whose primary purpose is to enter a brand new analyte, defined by specifying sequence for protein and nucleic components or manually enter the molecular weight (Da), Vbar and other required parameters of proteins, RNA, DNA, Carbohydrate/other analytes. 
 * `Edit Existing Analyte <analyte_edit.html>`_ - A panel whose primary purpose is to add spectral characteristics of an already existing analyte.
 * `Analyte Settings <analyte_settings.html>`_ - A panel whose primary purpose is to set Database-or-Disk input, the investigator; or to synchronize the local analyte components file from the database.
 
@@ -65,14 +65,14 @@ Functions:
       - The view on the right side is the details of the currently selected analyte. 
     * - **Search:**
       - Enter a partial description to search for a specific analyte. Clear the text to expand to the full list.
-    * - **MW (Daltons):**
-      - The molecular weight in Daltons of the currently selected analyte.
+    * - **MW (Dalton):**
+      - The molecular weight in Dalton of the currently selected analyte.
     * - **Vbar (cm³/g at 20°C):**
       - The Vbar of the currently selected analyte.
     * - **Residue Count:**
       - The protein residue count of the currently selected analyte.
     * - **E280 (OD/(mol*cm)):**
-      - The extinction coeffient of the currently selected analyte at 280 nm in optical density/(mole*cm).
+      - The extinction coefficient of the currently selected analyte at 280 nm in optical density/(mole*cm).
     * - **Help**
       - Show this documentation.
     * - **Cancel**
