@@ -4,8 +4,6 @@
 
 #include "us_settings.h"
 #include "us_db2.h"
-#include "us_passwd.h"
-#include "us_investigator.h"
 #include "us_util.h"
 #include "us_simparms.h"
 #include "us_experiment.h"

@@ -25,10 +25,18 @@
 #include "us_hardware.h"
 #include "us_select_runs.h"
 #include "us_link_ssl.h"
-#include "../us_convert/us_convert.h"
 #include "us_dataIO.h"
 #include "us_simparms.h"
 #include "us_mwl_data.h"
+
+#include "us_convert.h"
+#include "us_experiment.h"
+#include "us_experiment_gui.h"
+#include "us_convert_gui.h"
+#include "us_convertio.h"
+#include "us_get_run.h"
+#include "us_intensity.h"
+#include "us_selectbox.h"
 
 //#include "us_license_t.h"
 //#include "us_license.h"
@@ -147,6 +155,7 @@ class US_ExperGuiRotor : public US_WidgetsDialog
       void        reset_dataSource_public( void );
       void        get_chann_ranges_public( QString, QMap <QString, QStringList>& );
       void        switch_to_dataDisk_public (void );
+      void        set_dataSource_public( QMap <QString, QString>& );
    
            
       QString     getSValue( const QString );
@@ -171,6 +180,9 @@ class US_ExperGuiRotor : public US_WidgetsDialog
       bool ra_data_sim;
       bool isMwl;
       QMap<QString, QString> run_details;
+      QStringList channels_for_dataDisk;
+      bool check_for_channel_dataDisk( QString );
+      QStringList get_dataDiskChannels_public( void );
   
       QVector< US_DataIO::RawData >      allData;      //!< All loaded data
       QVector< US_DataIO::RawData* >     outData;      //!< Output data pointers
@@ -900,6 +912,8 @@ class US_ExperGuiUpload : public US_WidgetsDialog
 
       QGridLayout* genL;
 
+      US_ConvertGui*    sdiag_convert;
+
    private:
       US_ExperimentMain*   mainw;
       US_RunProtocol*       loadProto;  // Loaded RunProtocol controls pointer
@@ -1182,6 +1196,7 @@ class US_ExperimentMain : public US_Widgets
       US_AnaProfile* get_aprofile_loaded( void );
       void set_loadAProf ( US_AnaProfile );
       QMap< QString, QString> get_all_solution_names( void );
+      QStringList get_all_channels_dataDisk( void );
       void get_new_solution_names(void);
       void initCells( void );
       void reset_dataDisk( void );

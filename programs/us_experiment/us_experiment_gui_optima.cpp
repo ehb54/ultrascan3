@@ -18,7 +18,7 @@
 #include "us_select_item.h"
 #include "us_gui_util.h"
 #include "us_run_details2.h"
-#include "../us_convert/us_convert.h"
+#include "../../utils/us_convert.h"
 #include "../us_esigner_gmp/us_esigner_gmp.h"
 
 #ifndef DbgLv
@@ -263,6 +263,12 @@ QMap< QString, QString> US_ExperimentMain::get_all_solution_names()
   return epanSolutions->get_solutions_public();
 }
 
+QStringList US_ExperimentMain::get_all_channels_dataDisk()
+{
+  
+  return epanRotor->get_dataDiskChannels_public();
+}
+
 void US_ExperimentMain::get_new_solution_names()
 {
   epanSolutions->get_new_solutions_public();
@@ -358,15 +364,19 @@ void US_ExperimentMain::exclude_used_instruments( QStringList & occupied_instrum
 void US_ExperimentMain::accept_passed_protocol_details(  QMap < QString, QString > & protocol_details )
 {
   reset();
-  
+    
   qDebug() << "PROTOCOL DEV MODE !!!: ";
   us_prot_dev_mode = true;
 
   QString pname     = protocol_details[ "protocolName" ];
   int invID_passed  = protocol_details[ "invID_passed" ].toInt();
+  QString dataSource_pd = protocol_details[ "dataSource" ];
+  QString filenameProtDev = protocol_details[ "filenameProtDevDataDisk" ];
 
   qDebug() << "In US_Exp: Protocol Name: "     << protocol_details[ "protocolName" ];
   qDebug() << "In US_Exp: InvID: "             << protocol_details[ "invID_passed" ];
+  qDebug() << "In US_Exp: dataSource "         << protocol_details[ "dataSource" ];
+  qDebug() << "In US_Exp: filenameProtDev "    << protocol_details[ "filenameProtDevDataDisk" ];
   
   //Now, load passed protocol with enabling ONLY 8. AProfile && 9. Submit tab
   US_Passwd pw;
@@ -429,11 +439,14 @@ void US_ExperimentMain::accept_passed_protocol_details(  QMap < QString, QString
   //set runName && label straight from the autoflow record:
   currProto.runname   = protocol_details[ "experimentName" ];
   currProto.exp_label = protocol_details[ "label" ];
+
+  //set dataDisk flag if protocol refers dataDisk
+  epanRotor->set_dataSource_public( protocol_details );
   
   initPanels();
   
   qDebug() << "In load_protocol: currProto.investigator 2 --  " <<  currProto.investigator;
-
+ 
   //SET epanAProf->sdiag->loadProf TO epanAProf->sdiag->currProf
   US_AnaProfile aprof_curr_read   = *(get_aprofile());
   set_loadAProf ( aprof_curr_read );
@@ -444,7 +457,7 @@ void US_ExperimentMain::accept_passed_protocol_details(  QMap < QString, QString
   //copy protocol details params
   protocol_details_passed.clear();
   protocol_details_passed = protocol_details;
-  
+
   emit close_expsetup_msg();
 }
 
@@ -587,7 +600,11 @@ void US_ExperimentMain::optima_submitted( QMap < QString, QString > &protocol_de
 void US_ExperimentMain::submitted_protDev( QMap < QString, QString > &protocol_details )
 {
   tabWidget->setCurrentIndex( 0 );
-  emit to_live_update( protocol_details );
+
+  if( protocol_details["dataSource"].contains("dataDisk") )
+    emit to_import( protocol_details );
+  else
+    emit to_live_update( protocol_details );
 }
 
 // When run submitted for Data from Disk
@@ -1529,6 +1546,61 @@ void US_ExperGuiRotor::reset_dataSource_public( void )
   ra_data_sim  = false;
 }
 
+void US_ExperGuiRotor::set_dataSource_public( QMap <QString, QString>& pd_details )
+{
+  ck_disksource->disconnect();
+  ck_disksource->setChecked( false );
+  lb_instrument  -> setVisible( true );
+  cb_optima  -> setVisible( true );
+  lb_optima_connected -> setVisible( true );
+  le_optima_connected -> setVisible( true );
+  
+  rpRotor->importData = false;
+  rpRotor->importData_absorbance_t  = false;
+  rpRotor->importData_absorbance_pa = false;
+  ra_data_type = false;
+  ra_data_sim  = false;
+  
+  QString dataSource_pd = pd_details["dataSource"];
+  if ( dataSource_pd.contains("dataDiskAUC") ) 
+    {
+      ck_disksource->setChecked(true);
+      lb_instrument  -> setVisible( false );
+      cb_optima  -> setVisible( false );
+      lb_optima_connected -> setVisible( false );
+      le_optima_connected -> setVisible( false );
+      
+      rpRotor->importData = true;
+      if ( dataSource_pd.contains("dataDiskAUC:Absorbance"))
+	{
+	  rpRotor->importData_absorbance_t = true;
+	  ra_data_type = true;
+	}
+      if ( dataSource_pd.contains("dataDiskAUC:PseudoAbsorbance"))
+	rpRotor->importData_absorbance_pa = true;
+    }
+
+  //get channels as it comes from the protocol for dataDisk run
+  channels_for_dataDisk. clear();
+  qDebug() << "[PROT.DEV.]Solutions: nschan, chsols.size() -- "
+	   << rpSolut->nschan << rpSolut->chsols.size();
+
+  for (int i=0; i<rpSolut->chsols.size(); ++i)
+    {
+      US_RunProtocol::RunProtoSolutions::ChanSolu cs = rpSolut->chsols[i];
+      QString chann_name = cs.channel;
+      QString sol_name   = cs.solution;
+      QString sol_id     = cs.sol_id;
+      qDebug() << "Sol_Chanel# " << i << ": " << "Channel, Soluiton, Sol_id -- "
+	       << chann_name << ", " << sol_name << ", " << sol_id;
+
+      chann_name = chann_name.split(",")[0].simplified();
+      channels_for_dataDisk << chann_name;
+    }
+
+  qDebug() << "[PROT.DEV.]channels_for_dataDisk -- " << channels_for_dataDisk;
+}
+
 void US_ExperGuiRotor::switch_to_dataDisk_public()
 {
   ck_disksource-> disconnect();
@@ -1655,6 +1727,12 @@ void US_ExperGuiRotor::importDiskChecked( bool checked )
     }
 }
 
+//public method to get dataDisk channels
+QStringList US_ExperGuiRotor::get_dataDiskChannels_public()
+{
+  return channels_for_dataDisk;
+}
+
 //Clean all internals for protocol
 void US_ExperGuiRotor::importDisk_cleanProto()
 {
@@ -1687,6 +1765,28 @@ void US_ExperGuiRotor::importDisk_cleanProto()
   rpRange-> nranges   = 0;
   rpRange-> chrngs.clear();
 
+  /****************
+  //Cells
+  currProto.rpCells.ncell = 0;
+  epanCells->initPanel();
+
+  //Solutions
+  currProto.rpSolut.nschan = 0;
+  epanSolutions->initPanel();
+
+  //Optics
+  currProto.rpOptic.nochan = 0;
+  epanOptical->initPanel();
+
+  //Ranges
+  currProto.rpRange.nranges = 0;
+  epanRanges->initPanel();
+  
+  //AProfile
+  epanAProfile->reset_sdiag(); //need to reset basic AProfile's protocol to defaults
+  ***************************/
+  
+  
   //mainw->loadProto = mainw->currProto;
   // mainw->currAProf = US_AnaProfile();
   // mainw->loadAProf = US_AnaProfile();
@@ -1736,6 +1836,7 @@ void US_ExperGuiRotor::importDisk( void )
   allData     .clear();
   all_tripinfo. clear();
   runTypes_map. clear();
+  channels_for_dataDisk. clear();
   channs_ranges.clear();
   unique_runTypes. clear();
   run_details  .clear();
@@ -1851,6 +1952,7 @@ void US_ExperGuiRotor::importDisk( void )
       allData     .clear();
       all_tripinfo. clear();
       runTypes_map. clear();
+      channels_for_dataDisk. clear();
       channs_ranges.clear();
       unique_runTypes. clear();
       run_details  .clear();
@@ -1870,6 +1972,10 @@ void US_ExperGuiRotor::importDisk( void )
   for( int i=0; i<channs_ranges.keys().size(); ++i ) 
     {
       QString ch_c    = channs_ranges.keys()[ i ];
+
+      //check if the key (channel) is in channels_for_dataDisk:
+      if ( !check_for_channel_dataDisk( ch_c ) )
+	continue;
 
       if ( ra_data_type && ch_c. contains("B") )
 	continue;
@@ -1931,6 +2037,25 @@ void US_ExperGuiRotor::importDisk( void )
   
   //set up dir path
   le_dataDiskPath   ->setText( importDataPath );
+}
+
+//
+bool US_ExperGuiRotor::check_for_channel_dataDisk( QString ch_c )
+{
+  bool isChann = false;
+  for ( int i=0; i<channels_for_dataDisk.size(); ++i)
+    {
+      QString ch_dataDisk = channels_for_dataDisk[i];
+      ch_dataDisk = ch_dataDisk.replace(" / ","").simplified();
+      qDebug() << "ch_dataDisk, ch_c -- " << ch_dataDisk << ", " << ch_c;
+      if ( ch_dataDisk == ch_c )
+	{
+	  isChann = true;
+	  break;
+	}
+    }
+
+  return isChann;
 }
 
 //Check for rotor fpr uploaded data
@@ -2240,12 +2365,14 @@ QMap <QString, QStringList> US_ExperGuiRotor::build_protocol_for_data_import( QM
       qDebug() << "triple #" << i << ": " << all_tripinfo[i].tripleDesc;
       QString channumber = all_tripinfo[i].tripleDesc.split(" / ")[0].simplified();
       QString channame   = channumber  + all_tripinfo[i].tripleDesc.split(" / ")[1].simplified();
+      QString channame_1 = channumber  + QString(" / ") + all_tripinfo[i].tripleDesc.split(" / ")[1].simplified();
       QString wvl        = all_tripinfo[i].tripleDesc.split(" / ")[2].simplified();
       qDebug() << "Wvl, ra_data_sim: " << wvl << ra_data_sim;
       if ( ra_data_sim && wvl.toInt() < 200 )
 	wvl = QString::number(280);
       
       chann_list << channumber;
+      channels_for_dataDisk << channame_1;
 
       QString runType_t    = QString( all_tripinfo[i].tripleFilename ).section( ".", -5, -5 );
       if ( runType_t == "RI" || runType_t == "RA" )
@@ -2254,6 +2381,7 @@ QMap <QString, QStringList> US_ExperGuiRotor::build_protocol_for_data_import( QM
   chann_list. removeDuplicates();
   qDebug() << "List of unique channel numbers -- " << chann_list;
   qDebug() << "List of unique channel names   -- " << chann_to_wvls.keys();
+  qDebug() << "List of channels_for_dataDisk -- " <<  channels_for_dataDisk;
   
 
   //[CELLS:] Clear && Fill in
@@ -4844,8 +4972,27 @@ DbgLv(1) << "EGSo: rbS: SV_CHANS[sxx] !!!!!!!!!!!!!!!!: " << rpSolut->chsols[ ii
                                   .simplified().toInt();
             for ( int jj = 0; jj < nchan; jj++ )
             {
+	       qDebug() << "regenSol: rpRotor->importData_absorbance_t -- "
+			<< rpRotor->importData_absorbance_t;
                QString channel     = scell + " / " + QString( schans ).mid( jj, 1 );
+	       	       
+	       //for dataDisk, check if channel exists:
+	       qDebug() << "dataDisk -- " << rpRotor->importData;
+	       qDebug() << "dataDisk: isDirEmpty -- " << rpRotor->importDataDisk.isEmpty();
+	       qDebug() << "dataDisk: chann_list -- " << mainw->get_all_channels_dataDisk();
+	       qDebug() << "Current channel -- " << channel;
+	       // if ( rpRotor->importData && !rpRotor->importDataDisk.isEmpty() &&
+	       // 	    !mainw->get_all_channels_dataDisk(). contains( channel ) )
+	       // 	 continue;
 
+	       if ( rpRotor->importData && !mainw->get_all_channels_dataDisk(). contains( channel ) )
+		 {
+		   if ( mainw->us_prot_dev_mode )
+		     continue;
+		   else if ( !rpRotor->importDataDisk.isEmpty() )
+		     continue;
+		 }
+	       
                if ( (QString( schans ).mid( jj, 1 )).contains( "A" ) )                   //ALEXEY: channel lables
                   srchans << channel + ", sample [right]";
                else if ( (QString( schans ).mid( jj, 1 )).contains( "B" ) && !rpRotor->importData_absorbance_t )
@@ -4864,6 +5011,9 @@ DbgLv(1) << "EGSo: rbS: SV_CHANS[sxx] !!!!!!!!!!!!!!!!: " << rpSolut->chsols[ ii
    suchans.clear();
    susolus.clear();
    QStringList un_sols;
+
+   qDebug() << "regenSols: srchans, nchans -- "
+	    << srchans << nchans; 
 
    for ( int ii = 0; ii < nchans; ii++ )
    {
@@ -7791,9 +7941,12 @@ void US_ExperGuiUpload::submitExperiment_confirm_protDev()
   //msgBox.setText(tr("Experiment will be submitted to the following Optima machine:"));
   msgBox.setText( message_submission );
 
+  QString data_loc = ( protocol_details[ "dataSource" ]. contains("dataDiskAUC") ) ?
+    QString("dataDisk:LIMS_DB") : protocol_details[ "OptimaName" ];
+
   QString info_text = QString( tr ("<b>Dev. Run Name:</b> %1 <br> <b>Data Location:</b> %2 ")) // <br>  <b>Host:</b>  %3 <br> <b>Port:</b>  %4 ") )
     .arg( currProto->runname )
-    .arg( protocol_details[ "OptimaName" ] );
+    .arg( data_loc );
   //.arg(dbhost)
   // .arg(dbport);
   
@@ -7878,11 +8031,22 @@ void US_ExperGuiUpload::submitExperiment_confirm_protDev()
 			       + tr("<br>")
 			       + tr("<b>[NEW] Run Name:&emsp;</b>") + currProto->protoname
 			       + tr("<br>") );
-	      
-	      msgBox_f.setInformativeText( tr("<font color='red'><b>ATTENTION:</b></font> If you choose to Procceed, ")
-					   + tr("all existing edit profiles, models, and noises for this run will be deleted from DB, ")
-					   + tr("and the processing flow will reinitialize from the EDIT stage. ")
-					   + tr("<br><br><font color='red'><b>This action is not reversible. Proceed?</b></font>"));
+
+	      if ( !data_loc.contains("dataDisk") )
+		msgBox_f.setInformativeText( tr("<font color='red'><b>ATTENTION:</b></font> If you choose to Procceed, ")
+					     + tr("all existing edit profiles, models, and noises for this run will be deleted from DB, ")
+					     + tr("and the processing flow will be reinitialized from the 3. IMPORT stage by ")
+					     + tr("re-fetching the data from the Optima instriument.")
+					     + tr("<br><br><font color='red'><b>This action is not reversible. Proceed?</b></font>"));
+	      else
+		msgBox_f.setInformativeText( tr("<font color='red'><b>ATTENTION:</b></font> The development run ")
+					     + tr("will be based on the original data produced by the 'dataDisk-type' ")
+					     + tr("run with the GMP program; ")
+					     + tr("the data will be fetched from the respective LIMS DB;")
+					     + tr("the processing flow will be reinitialized from the 3. IMPORT stage. ")
+					     + tr("It is safe to manupulate the downloaded data (like dropping channels, or triples) - ")
+					     + tr("this will not affect the original data required for future development runs.")
+					     + tr("<br><br><font color='red'><b>Proceed?</b></font>"));
 	      
 	      msgBox_f.setWindowTitle(tr("Run Reinitialization"));
 	      QPushButton *Confirm   = msgBox_f.addButton(tr("Proceed"), QMessageBox::YesRole);
@@ -7897,8 +8061,20 @@ void US_ExperGuiUpload::submitExperiment_confirm_protDev()
 		}
 	      else if (msgBox_f.clickedButton() == Confirm)
 		{
-		  //Clear data 
-		  clearData_protDev();
+		  mainw->protocol_details_passed[ "new_dataPath" ] = QString("");
+		  //Clear data -- for non-dataDisk (Optima) source
+		  if ( !protocol_details[ "dataSource" ]. contains("dataDiskAUC") )
+		    clearData_protDev();
+		  else
+		    {
+		      //download raw data from LIMS DB;
+		      //define mainw->protocol_details_passed[ "new_dataPath" ];
+		      sdiag_convert = new US_ConvertGui("AUTO");
+		      sdiag_convert->download_data_auto( mainw->protocol_details_passed );
+
+		      qDebug() << "PROT_DEV: new_dataPath -- "
+			       << mainw->protocol_details_passed[ "new_dataPath" ];
+		    }
 		  //qApp->processEvents();
 		  
 		  //Now procceed
@@ -8345,6 +8521,32 @@ void US_ExperGuiUpload::submitExperiment_protDev()
   protocol_details[ "gmpRun" ]         = QString("YES");              //ALEXEY: state explicitly
   protocol_details[ "aprofileguid" ]   = currProto->protoGUID;
   protocol_details[ "devRecord" ]      = QString("YES");             //ALEXEY: state explicitly
+
+  /**********
+    now, set {status, dataPath, dataSource,  expType} based on:
+     1. protocol_details[ "status" ]     =     MUST BE SET!
+                     {"LIVE_UPDATE/DEFAULT" -- when download from Optima, OR "EDITING" -- dataDisk from LIMS_DB}
+     2. protocol_details[ "dataPath" ]   =     MUST BE SET!
+                     {"NULL/DEFAULT"-- when download from Optima, OR "path-to-import-dir" -- pre-downloaded 'dataDisk' from LISM_DB }
+     3. protocol_details[ "dataSource" ] =     INHERITED !
+                     {"INSTRUMENT/DEFAULT" -- when download from Optima, OR "dataDiskAUC/dataDiskAUC:Absorbance/dataDiskAUC:PseudoAbsorbance"}
+     4. protocol_details[ "expType" ] =        INHERITED !
+                     {"VELOCITY/DEFAULT" -- non-ABDE, OR "ABDE" -- ABDE}
+     5. protocol_details[ "experimentId" ] =	MUAT BE SET!
+                     {"inherited" -- when download from Optima, OR "0/NULL" -- dataDisk }
+  ********/
+
+  //status
+  QString r_status = ( protocol_details[ "dataSource" ].contains("dataDiskAUC") ) ?
+    QString("EDITING") : QString("LIVE_UPDATE");
+  protocol_details[ "status" ] = r_status;
+
+  //dataPath
+  protocol_details[ "dataPath" ] = mainw->protocol_details_passed[ "new_dataPath" ];
+
+  //expid
+  if ( protocol_details[ "dataSource" ].contains("dataDiskAUC") )
+    protocol_details[ "experimentId" ] = QString::number( 0 );
   
   qDebug() << "PROTCOL DETAILS at submission: -- "
 	   << protocol_details[ "protocolName" ]   
@@ -8370,14 +8572,23 @@ void US_ExperGuiUpload::submitExperiment_protDev()
 	   << protocol_details[ "statusID" ]      
 	   << protocol_details[ "failedID" ]                 //Attn: do NOT specify failed status: should be DEFAULT (NULL)   
 	   << protocol_details[ "operatorID" ]
-	   << protocol_details[ "devRecord" ];   
+	   << protocol_details[ "devRecord" ]
+	   << protocol_details[ "expType" ]
+	   << protocol_details[ "dataSource"]
+	   << protocol_details[ "filenameProtDevDataDisk" ];   
 
+  // //TEST
+  // return;
+  
   //Now add new autoflow record with the above params && flag 'DEV'!
   add_autoflow_record_protDev( protocol_details );
 
   qDebug() << "statusID, intensityID from protocol QMAp -- "
 	   << protocol_details[ "statusID" ]
 	   << protocol_details[ "intensityID" ] ;
+
+  // //TEST
+  // return;
 
   emit expdef_submitted_dev( protocol_details );
 }
@@ -9541,8 +9752,8 @@ void US_ExperGuiUpload::add_autoflow_record_dataDisk( QMap< QString, QString> & 
 
 	 << protocol_details[ "dataPath" ]
 	 << protocol_details[ "OptimaName" ]  // Optima 'name' will be set to 'dataDisk'
-	 << protocol_details[ "dataSource" ]; // will be set to 'dataDiskAUC' or other...
-
+	 << protocol_details[ "dataSource" ];  // will be set to 'dataDiskAUC' or other...
+	
          /***
 	     status    'EDITING' will be set in stored proc!
 	     corrRadii 'NO'      will be set in stored proc!
@@ -10172,6 +10383,13 @@ void US_ExperGuiUpload::add_autoflow_record_protDev( QMap< QString, QString> & p
 
 	  << protocol_details[ "aprofileguid" ]   
 	  << protocol_details[ "operatorID" ]
+
+	//new: needed to differentiate btw. INSTR. & dataDisk, && VEL. vs. ABDE
+	  << protocol_details[ "expType" ]     // inherited from parent
+	  << protocol_details[ "dataPath" ]      // generated based on downloaded form DB!!!
+	  << protocol_details[ "dataSource" ]  // inherited from parent
+	  << protocol_details[ "status" ]       // defined based on Optima OR dataDisk
+	  << protocol_details[ "filenameProtDevDataDisk" ]; // inherited 
 	;   
 
       qDebug() << "add_autoflow_record_protDev( ), qry -- " << qry;

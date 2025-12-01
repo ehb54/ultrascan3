@@ -204,7 +204,7 @@ class US_DDistr_Combine : public US_Widgets
                        QVector< double >&, QVector< double >& );
       int  envel_data_auto( QVector< double >&, QVector< double >&,
 			    QVector< double >&, QVector< double >&,
-			    double, double, double );
+			    double, double, double, bool );
 
       void help(      void )
       { showHelp.show_help( "ddist_combine.html" ); };
