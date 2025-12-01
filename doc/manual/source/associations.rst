@@ -52,7 +52,7 @@ Functions:
     - Close the dialog and do not return association specifications to the caller.
   * - **Accept**
     - Close the dialog and return association specifications to the caller.
-
+  
 
 .. note:: 
     If you click on the **Accept** button and any equation does not balance, a dialog informing you of the imbalance will pop up. You then have the opportunity to correct the equation and **Accept** again or to click on the **Cancel** button.
