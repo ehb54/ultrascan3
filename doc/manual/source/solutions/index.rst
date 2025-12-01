@@ -10,11 +10,12 @@ In each panel, tabs are visible at the top of the window to enable the user to m
 .. toctree::
    :maxdepth: 1
    :caption: Table of Content:
+   
+   solution_select
+   solution_new
+   solution_edit
+   solution_settings 
 
-    solution_select
-    solution_new
-    solution_edit
-    solution_settings
 
 .. image:: ../_static/images/solution_select.png
     :align: center

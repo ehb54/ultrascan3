@@ -47,9 +47,9 @@ Functions:
       - The items listed on the right side are the components added so far to the buffer. An item may be removed by double-clicking on it.
     * - **Manual unadjusted Density and Viscosity**
       - Check this box to allow entry of Density and Viscosity values that override any values computed for the sum of buffer components or that define the values for a buffer with no components, such as water only.
-    * - **Density Density value set by components choice.** 
+    * - **Density value set by components choice.** 
       - It is also editable here (if "Manual..." is checked).
-    * - **Viscosity Viscosity value set by components choice.** 
+    * - **Viscosity value set by components choice.** 
       - It is also editable here (if "Manual..." is checked).
     * - **pH** 
       - pH value for the new buffer. It may be modified here.

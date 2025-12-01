@@ -99,10 +99,9 @@ The panel allows actions beyond simple buffer selection, including getting buffe
 
     **View Buffer Spectrum**
 
-.. rst-class:: 
-    :align: center
     
-    Buffer spectra can be added either by `creating a new buffer <buffer_new.html#add-buffer-spectrum>`_ or by `editing an existing one <buffer_edit.html#add-buffer-spectrum>`_.
+.. note::
+  Buffer spectra can be added **Managae Spectrum** button found in either the `New Buffer <analyte_new.html#add-analyte-spectrum>`_ tab or the `Edit Analyte <buffer_edit.html#edit-buffer-spectrum>`_ tab.
     
 .. _buffer_details:
 

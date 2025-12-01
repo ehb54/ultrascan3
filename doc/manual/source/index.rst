@@ -113,10 +113,11 @@ Welcome to UltraScan III's Documentation and Resource!
    us_investigator
    buffer/index
    analyte/index
-   manage_data
    solutions/index
-   projects/index
+   us_project
+   manage_data
    rotor
+   rotor_calibration
 
 
 
