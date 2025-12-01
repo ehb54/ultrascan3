@@ -13,7 +13,7 @@ How to Manage Rotors and Rotor Calibration files
 =======================================================
 
 Using this window, you can manage rotor information on your local disk or in the current database. 
-.. image:: ../_static/images/rotor.png
+.. image:: _static/images/rotor.png
   :align: center
 
 .. rst-class:: 

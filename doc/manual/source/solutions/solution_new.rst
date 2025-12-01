@@ -37,7 +37,7 @@ Functions:
 ============
 
 .. list-table::
-    :widths: 20 50
+  :widths: 20 50
 
   * - **Search**
     - use to search by enter all or portion of the title. 

@@ -22,12 +22,17 @@ Welcome to UltraScan III's Documentation and Resource!
    :caption: Data Acquisition 
 
    #gmp/index
+   #experiment/index
 
 .. toctree::
    :maxdepth: 1
    :caption: Analysis Protocols:
 
+   #installation 
+   #process
    start_page
+   #interacting
+   #reporting
 
 .. toctree::
    :maxdepth: 1
@@ -55,12 +60,14 @@ Welcome to UltraScan III's Documentation and Resource!
    :caption: Report and Data Viewers:  
 
    fe_match/index
+   reporter
    us_modelmetrics
    rmsd_query
    pseudo3d
    ddist_combine
    idist_combine 
    vhw_combine
+   
 
 
 .. toctree::
@@ -71,7 +78,6 @@ Welcome to UltraScan III's Documentation and Resource!
    second_moment
    vhw_enhanced
    vhw_distrib_plot
-
 
 
 .. toctree::
@@ -103,6 +109,7 @@ Welcome to UltraScan III's Documentation and Resource!
    model_editor
    components
    associations
+   astfem_sim
    predict1
 
 
