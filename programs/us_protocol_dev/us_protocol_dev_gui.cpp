@@ -1829,17 +1829,24 @@ int US_InitDialogueGui::list_all_autoflow_records( QList< QStringList >& autoflo
       QString failedID           = dbP->value( 17 ).toString();
 
       QString devRecord          = dbP->value( 18 ).toString();
-      
+
+      QString dataSource         = dbP->value( 19 ).toString();
+      QString filenameProtDevDataDisk   = dbP->value( 20 ).toString();
 
       qDebug() << "OperatorID -- " << operatorID;
       qDebug() << "failedID -- "   << failedID;
       qDebug() << "DevRecod -- "   << devRecord;
+      qDebug() << "dataSource, filenameProtDevDataDisk -- "
+	       << dataSource << filenameProtDevDataDisk;
            
       QDateTime local(QDateTime::currentDateTime());
 
       if ( type == "HISTORY" )
 	{
 	  if ( devRecord == "Processed" )
+	    continue;
+
+	  if ( dataSource. contains("dataDiskAUC") && filenameProtDevDataDisk.isEmpty() )
 	    continue;
 	    
 	  QString history_runname = runname;
