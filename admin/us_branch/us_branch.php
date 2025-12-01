@@ -348,6 +348,43 @@ if ( $build ) {
 
 if ( $run ) {
     echo "running ultrascan3 from $uspath/bin\n";
-    $cmd = "module swap $modulename && $uspath/bin/us";
-    print run_cmd( $cmd );
+    $cmd = "module swap $modulename && stdbuf -oL $uspath/bin/us";
+    print "command is: $cmd\n";
+
+    $descriptorspec = array(
+        0 => array("pipe", "r"),  ## stdin is a pipe
+        1 => array("pipe", "w"),  ## stdout is a pipe
+        2 => array("pipe", "w")   ## stderr is a pipe
+        );
+
+    $pipes = [];
+    $process = proc_open($cmd, $descriptorspec, $pipes);
+
+    if (is_resource($process)) {
+        ## Make stdout pipe non-blocking
+        stream_set_blocking($pipes[1], 0);
+
+        while (!feof($pipes[1])) {
+            ## Read the output chunk-by-chunk
+            $chunk = fread($pipes[1], 8192);
+
+            if ( $chunk ) {
+                ## Process the chunk immediately (e.g., echo to browser or log)
+                echo $chunk;
+
+                ## This is crucial: flush PHP and web server output buffers
+                if (ob_get_level() > 0) {
+                    ob_flush();
+                }
+                flush();
+            }
+
+            ## Short sleep to prevent CPU hogging
+            usleep(500000); ## 500 milliseconds
+        }
+
+        fclose($pipes[1]);
+        fclose($pipes[2]);
+        proc_close($process);
+    }
 }
