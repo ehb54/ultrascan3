@@ -312,6 +312,8 @@ int US_Experiment::readFromDB( QString runID, US_DB2* db,
      << QString::number( US_Settings::us_inv_ID() );
    db->query( q );
 
+   qDebug() << "US_Experiment::readFromDB: q -- " << q;
+   
    QByteArray xmlFile;
 
    if ( db->next() )
