@@ -67,67 +67,26 @@ Functions:
   :widths: 20 50
   :header-rows: 0
 
-* - 
-<b>Investigator:</b> Often the investigator text field will already
-be correctly filled out if your home directory name is the same as
-the first or last of your investigator name. If not, you may enter
-all or a portion of the first or last name and hit the <I>Enter</I>
-key to have the investigator found. If that, too, fails, you may
-click the button to enter a full
-<a href="us_investigator.html">Investigator dialog</a>.
-</li>
-
-* - 
-<b>Reset</b> Reset the tree to the default sample data.
-</li>
-
-* - 
-<b>Scan Data</b> Click this button to initiate a full scan of all
-your data in the database and on local disk. You should re-initiate
-a scan after any series of processes (upload|download|remove) on
-the data.
-</li>
-
-* - 
-<b>Show All Edits</b> Expand the tree view to insure all rows at
-the level of Edited data are revealed. The button will then be
-relabelled <b>Collapse All</b> so you can hide edits and their
-descendants.
-</li>
-* - 
-<b>Show All Models</b> Expand the tree view to insure all rows at
-the level of Model data are revealed. The button will then be
-relabelled <b>Hide All Models</b> so you can hide models and their
-descendants.
-</li>
-* - 
-<b>Expand All</b> Expand the tree view to insure all rows at
-the level of Noise data and their ancestors are revealed.
-The button will then be relabelled <b>Hide All Noises</b> so you
-can hide noise record rows.
-</li>
-
-* - 
-<b>Data Tree Help</b> This button lets you pop up a
-<a href="manage_data_thelp.html">Tree Help Text Window</a>
-with some helpful notes on use of the tree view and on the color
-legend for its rows.
-</li>
-
-* - 
-<b>Tree Navigation and Context Menus</b> Individual rows in the
-tree view may be expanded ("+") to show children and other
-descendants or may be collapsed ("-"). A right-mouse-button click
-on any row brings up a
-<a href="manage_data_cmenu.html">Context Menu</a> that allows you
-to perform processes on the data record or show details about it.
-</li>
-
-* - 
-<b>Help</b> Display this and other documentation.
-</li>
-
-* - 
-<b>Close</b> Close all windows and exit.
+  * - **Investigator:**
+    - Often the investigator text field will already be correctly filled out if your home directory name is the same as
+  the first or last of your investigator name. If not, you may enter all or a portion of the first or last name and hit the **Enter** key to have the investigator found. If that, too, fails, you may click the button to enter a full `Investigator dialog <us_investigator.html>`_.
+  * - **Reset**
+    - Reset the tree to the default sample data.
+  * - **Scan Data**
+    - Click this button to initiate a full scan of all your data in the database and on local disk. You should re-initiate a scan after any series of processes (upload|download|remove) on the data.
+  * - **Show All Edits**
+    - Expand the tree view to insure all rows at the level of Edited data are revealed. The button will then be relabelled **Collapse All** so you can hide edits and their descendants.
+  * - **Show All Models**
+    - Expand the tree view to insure all rows at the level of Model data are revealed. The button will then be relabelled **Hide All Models** so you can hide models and their descendants.
+  * - **Expand All**  
+  - Expand the tree view to insure all rows at the level of Noise data and their ancestors are revealed. The button will then be relabelled **Hide All Noises** so you can hide noise record rows.
+  * - **Data Tree Help**
+    - This button lets you pop up a `Tree Help Text <manage_data_thelp.html>`_ Window with some helpful notes on use of the tree view and on the color legend for its rows.
+  * - **Tree Navigation and Context Menus**
+    - Individual rows in the tree view may be expanded ("+") to show children and other descendants or may be collapsed ("-"). A right-mouse-button click on any row brings up a `Manage Data Context Menu <manage_data_cmenu.html>`_ </a> that allows you to perform processes on the data record or show details about it.
+  * - **Help**
+    - Display this and other documentation.
+  * - **Close**
+    - Close all windows and exit.
 
 
