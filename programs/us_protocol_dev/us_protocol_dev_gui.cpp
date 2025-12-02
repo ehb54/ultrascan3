@@ -1213,6 +1213,7 @@ void US_InitDialogueGui::initRecordsDialogue( void )
 		  QMap< QString, QString > p_det;
 		  p_det["filename"] = filename_from_dataPath;
 		  p_det["filenameProtDevDataDisk"] = filenameProtDevDataDisk;
+		  p_det["invID_passed"] = invID_passed;
 		  sdiag_convert->download_data_auto( p_det );
 
 		  qApp->processEvents();
