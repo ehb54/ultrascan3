@@ -42,12 +42,12 @@ US_ResidPlotFem::US_ResidPlotFem( QWidget* parent, const QString auto_mode )
    mainLayout->setSpacing        ( 2 );
    mainLayout->setContentsMargins( 2, 2, 2, 2 );
 
-   QLabel* lb_datctrls    = us_banner( tr( "FE Analysis Data Viewer" ) );
-   QLabel* lb_resctrls    = us_banner( tr( "FE Analysis Residuals Viewer" ) );
-   QLabel* lb_vari        = us_label(  tr( "Variance:" ) );
-   QLabel* lb_rmsd        = us_label(  tr( "RMSD:" ) );
-
-   QPushButton* pb_close  = us_pushbutton( tr( "Close" ) );
+   QLabel* lb_datctrls      = us_banner( tr( "FE Analysis Data Viewer" ) );
+   QLabel* lb_resctrls      = us_banner( tr( "FE Analysis Residuals Viewer" ) );
+   QLabel* lb_vari          = us_label(  tr( "Variance:" ) );
+   QLabel* lb_rmsd          = us_label(  tr( "RMSD:" ) );
+   QPushButton* pb_save_all = us_pushbutton( tr( "Save All" ) );
+   QPushButton* pb_close    = us_pushbutton( tr( "Close" ) );
 
    QLayout* lo_plteda =
       us_checkbox( tr( "Plot Experimental Data" ),            ck_plteda, true );
@@ -93,7 +93,7 @@ US_ResidPlotFem::US_ResidPlotFem( QWidget* parent, const QString auto_mode )
    resctrlsLayout->addWidget( le_vari,     6, 3, 1, 5 );
    resctrlsLayout->addWidget( lb_rmsd,     7, 0, 1, 3 );
    resctrlsLayout->addWidget( le_rmsd,     7, 3, 1, 5 );
-
+   buttonsLayout ->addWidget( pb_save_all );
    buttonsLayout ->addWidget( pb_close );
 
    plotLayout1 = new US_Plot( data_plot1,
@@ -158,6 +158,9 @@ US_ResidPlotFem::US_ResidPlotFem( QWidget* parent, const QString auto_mode )
 
    connect( pb_close,  SIGNAL( clicked()   ),
             this,      SLOT( close_all()   ) );
+
+   connect( pb_save_all,  SIGNAL( clicked()   ),
+      this, SLOT(save_all()));
 
    have_ed   = false;
    have_sd   = false;
@@ -1165,4 +1168,88 @@ void US_ResidPlotFem::closeEvent( QCloseEvent* event )
   
   emit on_close();
   event->accept();
+}
+
+void US_ResidPlotFem::save_all( void )
+{
+   // get the directory and name base for saving everything
+   QString name = QFileDialog::getSaveFileName( this, tr( "Save Directory - Name" ) );
+   // save data plot
+   if ( have_ed && have_sd )
+   {
+      US_GuiUtil::save_csv( name + "-data_sim.csv", data_plot1 );
+   }
+   // save residuals plot
+   if ( have_ed && have_sd )
+   {
+      // ensure we are plotting residuals
+      ck_pltres->setChecked( true );
+      plot_rdata();
+      US_GuiUtil::save_csv( name + "-residuals.csv", data_plot2 );
+   }
+   // save TI noise plot
+   if ( have_ti )
+   {
+      // ensure we are plotting time-invariant noise
+      ck_plttin->setChecked( true );
+      plot_rdata();
+      US_GuiUtil::save_csv( name + "-TI_Noise.csv", data_plot2 );
+   }
+   // save RI NOISE plot
+   if ( have_ri )
+   {
+      // ensure we are plotting radially-invariant noise
+      ck_pltrin->setChecked( true );
+      plot_rdata();
+      US_GuiUtil::save_csv( name + "-RI_Noise.csv", data_plot2 );
+   }
+   // check that all files exist
+   QString errors = "";
+   QString success = "";
+   {
+      QFileInfo info( name + "-data_sim.csv" );
+      if ( have_ed && have_sd && !info.exists() )
+      {
+         errors += tr( "Data plot not saved\n" );
+      }
+      else
+      {
+         success += tr( "Data plot saved\n" );
+      }
+      info.setFile( name + "-residuals.csv" );
+      if ( have_ed && have_sd && !info.exists() )
+      {
+         errors += tr( "Residuals not saved\n" );
+      }
+      else
+      {
+         success += tr( "Residuals saved\n" );
+      }
+      info.setFile( name + "-TI_Noise.csv" );
+      if ( have_ti && !info.exists() )
+      {
+         errors += tr( "TI Noise not saved\n" );
+      }
+      else
+      {
+         success += tr( "TI Noise saved\n" );
+      }
+      info.setFile( name + "-RI_Noise.csv" );
+      if ( have_ri && !info.exists() )
+      {
+         errors += tr( "RI Noise not saved\n" );
+      }
+      else
+      {
+         success += tr( "RI Noise saved\n" );
+      }
+      if ( !errors.isEmpty() )
+      {
+         QMessageBox::critical( this, tr( "Error" ), errors );
+      }
+      else
+      {
+         QMessageBox::information( this, tr( "Success" ), success );
+      }
+   }
 }
