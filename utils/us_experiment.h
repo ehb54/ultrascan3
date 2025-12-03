@@ -103,7 +103,7 @@ class US_Experiment
           \param    speedsteps Reference to vector of experiment speed steps
           \returns  One of the US_DB2 error codes
       */
-      int readFromDB( QString, US_DB2*, QVector< SP_SPEEDPROFILE >& );
+      int readFromDB( QString, US_DB2*, QVector< SP_SPEEDPROFILE >&, const QString = QString("")  );
 
       /*! \brief    Writes an xml file
 

@@ -1402,8 +1402,9 @@ void US_ConvertGui::us_mode_passed( void )
 void US_ConvertGui::download_data_auto( QMap < QString, QString > & details_at_live_update )
 {
    QString filenameProtDevDataDisk = details_at_live_update[ "filenameProtDevDataDisk" ];
-   qDebug() << "[Prot_DEV: download_data_auto() ], filenameProtDevDataDisk -- "
-	    << filenameProtDevDataDisk;
+   QString invID_fromProt = details_at_live_update[ "invID_passed" ];
+   qDebug() << "[Prot_DEV: download_data_auto() ], filenameProtDevDataDisk, invID -- "
+	    << filenameProtDevDataDisk << ", " << invID_fromProt;
 
    runID = ( filenameProtDevDataDisk.isEmpty() ) ?
      details_at_live_update[ "filename" ] : filenameProtDevDataDisk;
@@ -1429,7 +1430,7 @@ void US_ConvertGui::download_data_auto( QMap < QString, QString > & details_at_l
 	    << runID;
 
    QString status = US_ConvertIO::readDBExperiment( runID, dirname, &db,
-                                                    speedsteps );
+                                                    speedsteps, invID_fromProt );
    if ( status  != QString( "" ) )
      {
        QMessageBox::information( this, tr( "Error" ), status + "\n" );
