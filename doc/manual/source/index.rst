@@ -19,14 +19,7 @@ Welcome to UltraScan III's Documentation and Resource!
 
 .. toctree::
    :maxdepth: 1
-   :caption: Data Acquisition 
-
-   #gmp/index
-   #experiment/index
-
-.. toctree::
-   :maxdepth: 1
-   :caption: Analysis Protocols:
+   :caption: UltrascanIII Protocols:
 
    #installation 
    #process
@@ -36,39 +29,33 @@ Welcome to UltraScan III's Documentation and Resource!
 
 .. toctree::
    :maxdepth: 1
-   :caption: Table of Content:
-   
+   :caption: Ultrascan III Installation and Customization:
+
    config
-   common_dialogs
-   run_details
-   3d_plot
    colorgradient
 
 
 .. toctree::
    :maxdepth: 1
-   :caption: Edit Data:
+   :caption: Import, Edit and Export Raw Data: 
 
    convert
+   xpn_viewer
    us_edit
-   fit_meniscus
+   us_fds_filemanager
+   beckman_openauc
    export_legacy
-
+   fit_meniscus
+   mwlr_viewer
+   mwl_spectra
+   
 
 .. toctree::
    :maxdepth: 1
-   :caption: Report and Data Viewers:  
+   :caption: Data Acquisition: 
 
-   fe_match/index
-   reporter
-   us_modelmetrics
-   rmsd_query
-   pseudo3d
-   ddist_combine
-   idist_combine 
-   vhw_combine
-   
-
+   gmp/index
+   #experiment/index
 
 .. toctree::
    :maxdepth: 1
@@ -79,43 +66,65 @@ Welcome to UltraScan III's Documentation and Resource!
    vhw_enhanced
    vhw_distrib_plot
 
-
 .. toctree::
    :maxdepth: 1
-   :caption: Analysis: 
+   :caption: ASTFAM Analysis: 
 
    2dsa/index
    pcsa/index
    ga_initialize
 
+
 .. toctree::
    :maxdepth: 1
    :caption: Advanced Analysis:     
 
+   mwl_species_fit
    dens_match
+   us_buoyancy
+   buoyancy_editor
 
+   
 .. toctree::
    :maxdepth: 1
-   :caption: GMP:     
+   :caption: Analysis Utilities:
 
-   gmp/index
-
-.. toctree::
-   :maxdepth: 1
-   :caption: Utilities
-
-   #custom_grid
+   grid_editor
    combine_models
    model_editor
    components
    associations
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Simulation:
+
    astfem_sim
    predict1
+   predict2
+   simparams
+   mwl_species_sim
+   us_equiltime
+   sassoc
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Reports and Data Viewers:
+
+   fe_match/index
+   reporter
+   us_modelmetrics
+   rmsd_query
+   pseudo3d
+   ddist_combine
+   idist_combine 
+   vhw_combine
+
 
 
 .. toctree::
    :maxdepth: 1
-   :caption: User Utilities
+   :caption: Data Management: 
 
    us_investigator
    buffer/index
@@ -126,7 +135,13 @@ Welcome to UltraScan III's Documentation and Resource!
    rotor
    rotor_calibration
 
+.. toctree::
+   :maxdepth: 1
+   :caption: Common Dialogs: 
 
+   common_dialogs
+   run_details
+   3d_plot
 
 
 
