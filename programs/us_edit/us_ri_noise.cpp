@@ -4,9 +4,6 @@
 #include "us_settings.h"
 #include "us_gui_settings.h"
 #include "us_matrix.h"
-#if QT_VERSION < 0x050000
-#define setSamples(a,b,c)  setData(a,b,c)
-#endif
 
 US_RiNoise::US_RiNoise( const US_DataIO::RawData& raw, 
                         const QList< int >&       Includes,
@@ -15,7 +12,7 @@ US_RiNoise::US_RiNoise( const US_DataIO::RawData& raw,
                         const QString&            dataType,
                         int&                      initial_order, 
                         QList< double >&          r )
-  : US_WidgetsDialog( 0, 0 ), 
+  : US_WidgetsDialog( nullptr, Qt::WindowFlags() ),
     data( raw ), includes( Includes ), range_left( left ), 
     range_right( right ), order( initial_order ), residuals( r )
 {

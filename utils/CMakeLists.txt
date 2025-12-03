@@ -1,67 +1,190 @@
-# Specify the library
-add_library(utils SHARED
-        us_ana_profile.cpp us_ana_profile.h
-        us_analyte.cpp us_analyte.h
-        us_archive.cpp us_archive.h
-        us_astfem_math.cpp us_astfem_math.h
-        us_astfem_rsa.cpp us_astfem_rsa.h
-        us_buffer.cpp us_buffer.h
-        us_cfa_data.cpp us_cfa_data.h
-        us_constants.cpp us_constants.h
-        us_crc.cpp us_crc.h
-        us_csv_data.cpp us_csv_data.h
-        us_dataIO.cpp us_dataIO.h
-        us_datafiles.cpp us_datafiles.h
-        us_db2.cpp us_db2.h
-        us_dmga_constr.cpp us_dmga_constr.h
-        us_eprofile.cpp us_eprofile.h
-        us_geturl.cpp us_geturl.h
-        us_global.cpp us_global.h
-        us_gzip.cpp us_gzip.h
-        us_hardware.cpp us_hardware.h
-        us_http_post.cpp us_http_post.h
-        us_hydrosim.cpp us_hydrosim.h
-        us_lamm_astfvm.cpp us_lamm_astfvm.h
-        us_link_ssl.cpp us_link_ssl.h
-        us_lm.cpp us_lm.h
-        us_local_server.cpp us_local_server.h
-        us_math2.cpp us_math2.h
-        us_matrix.cpp us_matrix.h
-        us_memory.cpp us_memory.h
-        us_model.cpp us_model.h
-        us_noise.cpp us_noise.h
-        us_pcsa_modelrec.cpp us_pcsa_modelrec.h
-        us_project.cpp us_project.h
-        us_protocol_util.cpp us_protocol_util.h
-        us_report.cpp us_report.h
-        us_report_gmp.cpp us_report_gmp.h
-        us_rotor.cpp us_rotor.h
-        us_run_protocol.cpp us_run_protocol.h
-        us_settings.cpp us_settings.h
-        us_simparms.cpp us_simparms.h
-        us_solute.cpp us_solute.h
-        us_solution.cpp us_solution.h
-        us_solution_vals.cpp us_solution_vals.h
-        us_solve_sim.cpp us_solve_sim.h
-        us_stiffbase.cpp us_stiffbase.h
-        us_tar.cpp us_tar.h
-        us_time_state.cpp us_time_state.h
-        us_timer.cpp us_timer.h
-        us_util.cpp us_util.h
-        us_vector.cpp us_vector.h
-        us_xpn_data.cpp us_xpn_data.h
-        us_zsolute.cpp us_zsolute.h
+# UltraScan3 Utils Library
+# Based on library.pri configuration
+
+# Auto-discover source files
+file(GLOB UTILS_SOURCES "*.cpp")
+file(GLOB UTILS_HEADERS "*.h")
+
+# Create the utils library
+add_library(us_utils ${UTILS_SOURCES} ${UTILS_HEADERS})
+
+if(APPLE)
+    # Force all symbols to be exported at link time
+    target_link_options(us_utils PRIVATE
+            "LINKER:-export_dynamic"
+            "LINKER:-all_load"
+            )
+    # Override any inherited visibility settings
+    target_compile_options(us_utils PRIVATE -fvisibility=default)
+endif()
+
+# Set library properties - MERGED with visibility settings
+set_target_properties(us_utils PROPERTIES
+        VERSION ${PROJECT_VERSION}
+        SOVERSION ${PROJECT_VERSION_MAJOR}
+        OUTPUT_NAME "us_utils${PROJECT_VERSION_MAJOR}"
+        CXX_VISIBILITY_PRESET default
+        C_VISIBILITY_PRESET default
+        VISIBILITY_INLINES_HIDDEN OFF
+        POSITION_INDEPENDENT_CODE ON
         )
 
-# Ensure debug information is included
-target_compile_options(utils PRIVATE -g -O0)
+# Platform-specific properties
+if(APPLE)
+    set_target_properties(us_utils PROPERTIES
+            MACOSX_RPATH ON
+            INSTALL_RPATH "@loader_path;@loader_path/../lib"
+            )
+elseif(UNIX)
+    set_target_properties(us_utils PROPERTIES
+            INSTALL_RPATH "$ORIGIN:$ORIGIN/../lib"
+            )
+elseif(WIN32)
+    # Windows handles DLLs differently
+    set_target_properties(us_utils PROPERTIES
+            WINDOWS_EXPORT_ALL_SYMBOLS OFF  # We'll use explicit exports
+            )
+endif()
 
-# Link Qt libraries to the utils library
-target_link_libraries(utils Qt5::Core Qt5::Sql Qt5::Network Qt5::Xml)
+# Ensure dynamic Qt linking - ALL PLATFORMS
+target_compile_definitions(us_utils
+        PUBLIC
+        QT_SHARED
+        PRIVATE
+        QT_PLUGIN
+        )
 
-target_link_libraries(utils archive)
+## Symbol visibility flags for GCC/Clang (Linux, macOS)
+#if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+#    target_compile_options(us_utils PRIVATE
+#            -fvisibility=hidden
+#            -fvisibility-inlines-hidden
+#            )
+#endif()
 
-# Specify include directories for utils
-target_include_directories(utils PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-target_include_directories(utils PUBLIC /usr/include)
-target_include_directories(utils PUBLIC /usr/include/mysql)
+# Include directories
+target_include_directories(us_utils
+        PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}
+        ${CMAKE_CURRENT_BINARY_DIR}  # For generated headers
+        )
+
+# Core Qt libraries (always needed)
+target_link_libraries(us_utils
+        PUBLIC
+        Qt5::Core
+        Qt5::Xml
+        Qt5::Network
+        OpenSSL::SSL
+        OpenSSL::Crypto
+        LibArchive::LibArchive
+        )
+
+# Optional database support
+if(NOT US3_NO_DB)
+    target_link_libraries(us_utils
+            PUBLIC
+            Qt5::Sql
+            MySQL::Client
+            )
+endif()
+
+# Platform-specific libraries
+if(UNIX AND NOT APPLE)
+    # Linux-specific libraries
+    if(X11_FOUND)
+        target_link_libraries(us_utils PUBLIC ${X11_LIBRARIES})
+        target_include_directories(us_utils PUBLIC ${X11_INCLUDE_DIR})
+    endif()
+elseif(WIN32)
+    # Windows system libraries
+    target_link_libraries(us_utils PUBLIC ${WIN32_SYSTEM_LIBS})
+    target_compile_definitions(us_utils PRIVATE US_MAKE_DLL US_MAKE_UTIL_DLL)
+endif()
+
+# Compiler-specific options for debugging
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    target_compile_options(us_utils PRIVATE -g -O0)
+endif()
+
+# Export this target for use by other parts of the project
+add_library(UltraScan3::Utils ALIAS us_utils)
+
+# =============================================================================
+# OPTIONAL: Build static library for unit testing
+# =============================================================================
+if(BUILD_TESTING OR US3_PREFER_STATIC)
+    message(STATUS "Building static utils library for testing")
+
+    # Create STATIC library specifically for testing
+    add_library(us_utils_static STATIC ${UTILS_SOURCES} ${UTILS_HEADERS})
+
+    # Set properties for STATIC library
+    set_target_properties(us_utils_static PROPERTIES
+            OUTPUT_NAME "us_utils${PROJECT_VERSION_MAJOR}_static"
+            POSITION_INDEPENDENT_CODE ON
+            )
+
+    # Apply same compile definitions
+    target_compile_definitions(us_utils_static
+            PUBLIC
+            QT_SHARED
+            )
+
+    # Apply same include directories
+    target_include_directories(us_utils_static
+            PUBLIC
+            ${CMAKE_CURRENT_SOURCE_DIR}
+            ${CMAKE_CURRENT_BINARY_DIR}
+            )
+
+    # Apply same link libraries
+    target_link_libraries(us_utils_static
+            PUBLIC
+            Qt5::Core
+            Qt5::Xml
+            Qt5::Network
+            OpenSSL::SSL
+            OpenSSL::Crypto
+            LibArchive::LibArchive
+            )
+
+    # Optional database support
+    if(NOT US3_NO_DB)
+        target_link_libraries(us_utils_static
+                PUBLIC
+                Qt5::Sql
+                MySQL::Client
+                )
+    endif()
+
+    # Platform-specific libraries
+    if(UNIX AND NOT APPLE)
+        if(X11_FOUND)
+            target_link_libraries(us_utils_static PUBLIC ${X11_LIBRARIES})
+            target_include_directories(us_utils_static PUBLIC ${X11_INCLUDE_DIR})
+        endif()
+    elseif(WIN32)
+        target_link_libraries(us_utils_static PUBLIC ${WIN32_SYSTEM_LIBS})
+    endif()
+
+    # Debug options
+    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+        target_compile_options(us_utils_static PRIVATE -g -O0)
+    endif()
+
+    # Export static library alias
+    add_library(UltraScan3::Utils_Static ALIAS us_utils_static)
+
+else()
+    message(STATUS "Skipping static utils library (testing disabled)")
+endif()
+# END: Build static library for unit testing
+
+# Installation - only install the shared library
+install(TARGETS us_utils
+        EXPORT UltraScan3Targets
+        LIBRARY DESTINATION lib
+        ARCHIVE DESTINATION lib
+        RUNTIME DESTINATION bin
+        )

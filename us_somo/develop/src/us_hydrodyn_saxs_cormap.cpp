@@ -946,7 +946,7 @@ bool US_Hydrodyn_Saxs_Cormap_Cluster_Analysis::run(
       }
    }
 
-   csv_report[ "% red pairs" ] = QString( "" ).sprintf( "%.2f", hb_count_points ? 100.0 * ( (double) hb_count_red / (double) hb_count_points ) : 0e0 );
+   csv_report[ "% red pairs" ] = QString::asprintf( "%.2f", hb_count_points ? 100.0 * ( (double ) hb_count_red / (double) hb_count_points ) : 0e0 );
 
    // map < int, int >            cluster_size_histogram;
    cluster_size_histogram.clear( );
@@ -1038,13 +1038,13 @@ bool US_Hydrodyn_Saxs_Cormap_Cluster_Analysis::run(
 #endif
                       "Red cluster maximum size %7 (%8\%)%9.\n" ) )
          .arg( cluster_sizes.size() )
-         .arg( QString( "" ).sprintf( "%.2f", avg_cluster_size ) )
-         .arg( QString( "" ).sprintf( "%.2f", avg_cluster_size_sd ) )
-         .arg( avg_cluster_size > 0 ? QString( "" ).sprintf( "(%.1f%%)", avg_cluster_size_sd_as_pct ) : QString( "" ) )
-         .arg( QString( "" ).sprintf( "%.1f", avg_cluster_size_pct ) )
-         .arg( QString( "" ).sprintf( "%.1f", avg_cluster_size_pct_sd ) )
+         .arg( QString::asprintf( "%.2f", avg_cluster_size ) )
+         .arg( QString::asprintf( "%.2f", avg_cluster_size_sd ) )
+         .arg( avg_cluster_size > 0 ? QString::asprintf( "(%.1f%% )", avg_cluster_size_sd_as_pct ) : QString( "" ) )
+         .arg( QString::asprintf( "%.1f", avg_cluster_size_pct ) )
+         .arg( QString::asprintf( "%.1f", avg_cluster_size_pct_sd ) )
          .arg( max_cluster_size )
-         .arg( QString( "" ).sprintf( "%3.1f", max_cluster_size_pct ) )
+         .arg( QString::asprintf( "%3.1f", max_cluster_size_pct ) )
          .arg( max_cluster_size && cluster_size_to_pos.count( max_cluster_size ) 
                ?
                QString( us_tr( " has %1 occurrence%2 and %3begins at [%4,%5]" ) )
@@ -1059,13 +1059,13 @@ bool US_Hydrodyn_Saxs_Cormap_Cluster_Analysis::run(
          QString(  us_tr( "No red clusters found.\n" ) )
          ;
       
-      csv_report[ "Red cluster size average"                         ] = QString( "" ).sprintf( "%.3f", avg_cluster_size );
-      csv_report[ "Red cluster size average sd"                      ] = QString( "" ).sprintf( "%.3f", avg_cluster_size_sd );
-      csv_report[ "Red cluster size average sd as pct"               ] = QString( "" ).sprintf( "%.3f", avg_cluster_size_sd_as_pct );
-      csv_report[ "Red cluster size average as pct of total area"    ] = QString( "" ).sprintf( "%.3f", avg_cluster_size_pct );
-      csv_report[ "Red cluster size average as pct of total area sd" ] = QString( "" ).sprintf( "%.3f", avg_cluster_size_pct_sd );
+      csv_report[ "Red cluster size average"                         ] = QString::asprintf( "%.3f", avg_cluster_size );
+      csv_report[ "Red cluster size average sd"                      ] = QString::asprintf( "%.3f", avg_cluster_size_sd );
+      csv_report[ "Red cluster size average sd as pct"               ] = QString::asprintf( "%.3f", avg_cluster_size_sd_as_pct );
+      csv_report[ "Red cluster size average as pct of total area"    ] = QString::asprintf( "%.3f", avg_cluster_size_pct );
+      csv_report[ "Red cluster size average as pct of total area sd" ] = QString::asprintf( "%.3f", avg_cluster_size_pct_sd );
       csv_report[ "Red cluster size maximum size"                    ] = QString( "%1" ).arg( max_cluster_size );
-      csv_report[ "Red cluster size maximum size as pct"             ] = QString( "" ).sprintf( "%.3f", max_cluster_size_pct );
+      csv_report[ "Red cluster size maximum size as pct"             ] = QString::asprintf( "%.3f", max_cluster_size_pct );
    }
 
    // cout << "\nCluster sizes:\n";
@@ -1559,9 +1559,8 @@ void US_Hydrodyn_Saxs_Cormap::displayData() {
 
       msg += pvdefmsg;
 
-      msg += QString("").sprintf(
-                                "P values:\n"
-                                " %5.1f%% green (%.1f%%) + yellow (%.1f%%) pairs\n"
+      msg += QString::asprintf( "P values:\n"
+" %5.1f%% green (%.1f%% ) + yellow (%.1f%%) pairs\n"
                                 " %5.1f%% red pairs\n"
                                 ,tot_c_pct * (double) (green_c + yellow_c )
                                 ,tot_c_pct * (double) green_c
@@ -1571,9 +1570,8 @@ void US_Hydrodyn_Saxs_Cormap::displayData() {
          ;
 
       msg_headers += pvdefmsg;
-      msg_headers += QString("").sprintf(
-                                         "P values:\n"
-                                         " %5.1f%% green (%.1f%%) + yellow (%.1f%%) pairs\n"
+      msg_headers += QString::asprintf( "P values:\n"
+" %5.1f%% green (%.1f%% ) + yellow (%.1f%%) pairs\n"
                                          " %5.1f%% red pairs\n"
                                          ,tot_c_pct * (double) (green_c + yellow_c )
                                          ,tot_c_pct * (double) green_c
@@ -1583,7 +1581,7 @@ void US_Hydrodyn_Saxs_Cormap::displayData() {
          ;
 
       msg_headers += "\n";
-      csv_report[ "Red points pct" ] = QString( "" ).sprintf( "%.2f", tot_c_pct * (double) red_c );
+      csv_report[ "Red points pct" ] = QString::asprintf( "%.2f", tot_c_pct * (double ) red_c );
    } else {
       int green_c  = 0;
       int yellow_c = 0;
@@ -1704,10 +1702,10 @@ void US_Hydrodyn_Saxs_Cormap::displayData() {
                     "  Red corresponds to    %5 > P\n"
                      )
             .arg( alpha_over_5 )
-            .arg( QString("").sprintf( "%6.4g", hb_alpha ) )
-            .arg( QString("").sprintf( "%6.4g", hb_alpha ) )
-            .arg( QString("").sprintf( "%6.4g", hb_alpha_over_5 ) )
-            .arg( QString("").sprintf( "%6.4g", hb_alpha_over_5 ) )
+            .arg( QString::asprintf( "%6.4g", hb_alpha ) )
+            .arg( QString::asprintf( "%6.4g", hb_alpha ) )
+            .arg( QString::asprintf( "%6.4g", hb_alpha_over_5 ) )
+            .arg( QString::asprintf( "%6.4g", hb_alpha_over_5 ) )
             ;
 
          pvdefmsg += "Axes ticks correspond to Ref. as listed below\n";
@@ -1716,9 +1714,8 @@ void US_Hydrodyn_Saxs_Cormap::displayData() {
       
       msg += pvdefmsg;
       if ( !parameters.count( "hb" ) ) {
-         msg += QString("").sprintf(
-                                    "P values:\n"
-                                    " %5.1f%% green (%.1f%%) + yellow (%.1f%%) pairs\n"
+         msg += QString::asprintf( "P values:\n"
+" %5.1f%% green (%.1f%% ) + yellow (%.1f%%) pairs\n"
                                     " %5.1f%% red pairs\n"
                                     ,tot_c_pct * (double) (green_c + yellow_c )
                                     ,tot_c_pct * (double) green_c
@@ -1731,9 +1728,8 @@ void US_Hydrodyn_Saxs_Cormap::displayData() {
       msg_headers += pvdefmsg;
       
       if ( !parameters.count( "hb" ) ) {
-         msg_headers += QString("").sprintf(
-                                            "P values:\n"
-                                            " %5.1f%% green (%.1f%%) + yellow (%.1f%%) pairs\n"
+         msg_headers += QString::asprintf( "P values:\n"
+" %5.1f%% green (%.1f%% ) + yellow (%.1f%%) pairs\n"
                                             " %5.1f%% red pairs\n"
                                             ,tot_c_pct * (double) (green_c + yellow_c )
                                             ,tot_c_pct * (double) green_c
@@ -1743,12 +1739,11 @@ void US_Hydrodyn_Saxs_Cormap::displayData() {
             ;
       }
 
-      csv_report[ "Red points pct" ] = QString( "" ).sprintf( "%.2f", tot_c_pct * (double) red_c );
+      csv_report[ "Red points pct" ] = QString::asprintf( "%.2f", tot_c_pct * (double ) red_c );
 
       if ( !parameters.count( "hide_adjpvalues" ) ) {
-         msg += QString("").sprintf(
-                                    "Adjusted P values:\n"
-                                    " %5.1f%% green (%.1f%%) + yellow (%.1f%%) pairs\n"
+         msg += QString::asprintf( "Adjusted P values:\n"
+" %5.1f%% green (%.1f%% ) + yellow (%.1f%%) pairs\n"
                                     " %5.1f%% red pairs\n"
                                     ,tot_c_pct * (double) (adj_green_c + adj_yellow_c )
                                     ,tot_c_pct * (double) adj_green_c
@@ -1764,10 +1759,9 @@ void US_Hydrodyn_Saxs_Cormap::displayData() {
 
       if ( !parameters.count( "hide_hb_pvalues" ) ) {
          if ( parameters.count( "hb" ) ) {
-            msg += QString("").sprintf(
-                                       "Holm-Bonferroni adjusted P values:\n"
-                                       // "Yellow HB P value cutoff %.3g Red HB P value cutoff %.3g\n"
-                                       " %5.1f%% green (%.1f%%) + yellow (%.1f%%) pairs\n"
+            msg += QString::asprintf( "Holm-Bonferroni adjusted P values:\n"
+// "Yellow HB P value cutoff %.3g Red HB P value cutoff %.3g\n"
+" %5.1f%% green (%.1f%% ) + yellow (%.1f%%) pairs\n"
                                        " %5.1f%% red pairs\n"
                                        // ,hb_alpha
                                        // ,hb_alpha_over_5
@@ -1871,7 +1865,7 @@ void US_Hydrodyn_Saxs_Cormap::displayData() {
             //    .arg( N, 6 )
             //    .arg( S, 6 )
             //    .arg( C, 6 )
-            //    .arg( QString( "" ).sprintf( "%.4g", P ).leftJustified( 12 ) )
+            //    .arg( QString::asprintf( "%.4g", P ).leftJustified( 12 ) )
             //    ;
 
             double red_pct = 100e0 * ( double ) C / ( double ) N;
@@ -1886,9 +1880,9 @@ void US_Hydrodyn_Saxs_Cormap::displayData() {
 
             cobreport += QString( "%1\t %2\t %2\t %4\%\n" )
                .arg( i + 1, -7 )
-               .arg( QString( "" ).sprintf( "%.4f", P ).rightJustified( 12 ) )
+               .arg( QString::asprintf( "%.4f", P ).rightJustified( 12 ) )
                .arg( C, 6 )
-               .arg( QString( "" ).sprintf( "%3.2f", red_pct ).rightJustified( 12 ) )
+               .arg( QString::asprintf( "%3.2f", red_pct ).rightJustified( 12 ) )
                ;
          }
 
@@ -1906,8 +1900,8 @@ void US_Hydrodyn_Saxs_Cormap::displayData() {
 #else
             cobheader += QString( "Contiguous red points P value average %1 \u00b1%2\n" )
 #endif
-               .arg( QString( "" ).sprintf( "%.4f", avg_P ) )
-               .arg( QString( "" ).sprintf( "%.4f", P_sd ) )
+               .arg( QString::asprintf( "%.4f", avg_P ) )
+               .arg( QString::asprintf( "%.4f", P_sd ) )
                ;
                
 #if QT_VERSION < 0x050000
@@ -1915,17 +1909,17 @@ void US_Hydrodyn_Saxs_Cormap::displayData() {
 #else
             cobheader += QString( "Contiguous red points average %1\% \u00b1%2 %3 maximum %4\%\n" )
 #endif
-               .arg( QString( "" ).sprintf( "%4.2f", avg_pctred ) )
-               .arg( QString( "" ).sprintf( "%4.2f", pct_red_sd ) )
-               .arg( avg_pctred > 0 ? QString( "" ).sprintf( "(%.1f%%)", 100.0 * pct_red_sd / avg_pctred ) : QString( "" ) )
-               .arg( QString( "" ).sprintf( "%4.2f", max_pctred ) )
+               .arg( QString::asprintf( "%4.2f", avg_pctred ) )
+               .arg( QString::asprintf( "%4.2f", pct_red_sd ) )
+               .arg( avg_pctred > 0 ? QString::asprintf( "(%.1f%% )", 100.0 * pct_red_sd / avg_pctred ) : QString( "" ) )
+               .arg( QString::asprintf( "%4.2f", max_pctred ) )
                ;
 
-            csv_report[ "Red contiguous points average P value" ] = QString( "" ).sprintf( "%.6f", avg_P );
-            csv_report[ "Red contiguous points average P value sd" ] = QString( "" ).sprintf( "%.6f", P_sd );
+            csv_report[ "Red contiguous points average P value" ] = QString::asprintf( "%.6f", avg_P );
+            csv_report[ "Red contiguous points average P value sd" ] = QString::asprintf( "%.6f", P_sd );
 
-            csv_report[ "Red contiguous points average pct" ] = QString( "" ).sprintf( "%.2f", avg_pctred );
-            csv_report[ "Red contiguous points maximum pct" ] = QString( "" ).sprintf( "%.2f", max_pctred );
+            csv_report[ "Red contiguous points average pct" ] = QString::asprintf( "%.2f", avg_pctred );
+            csv_report[ "Red contiguous points maximum pct" ] = QString::asprintf( "%.2f", max_pctred );
          }
       }
    }
@@ -1992,9 +1986,9 @@ void US_Hydrodyn_Saxs_Cormap::displayData() {
                QString( "%1 : %2     %3    %4    %5\%\n" )
                .arg( i + 1, 5 )
                .arg( selected_files[ i ], -max_file_name_len )
-               .arg( QString( "" ).sprintf( "%.4g", avgP ).leftJustified( 12 ) )
-               .arg( QString( "" ).sprintf( "%.4g", minP ).leftJustified( 12 ) )
-               .arg( QString( "" ).sprintf( "%3.1f", pct_red ), 5 )
+               .arg( QString::asprintf( "%.4g", avgP ).leftJustified( 12 ) )
+               .arg( QString::asprintf( "%.4g", minP ).leftJustified( 12 ) )
+               .arg( QString::asprintf( "%3.1f", pct_red ), 5 )
                ;
 
             plot_pos   .push_back( (double) ( i + 1 ) );
@@ -2024,12 +2018,12 @@ void US_Hydrodyn_Saxs_Cormap::displayData() {
 #else
             msg += QString( "\nAverage one-to-all P value %1 \u00b1%2 %3 \% red %4\% \u00b1%5 %6\n" )
 #endif
-               .arg( QString( "" ).sprintf( "%.4g", avg_avgP ) )
-               .arg( QString( "" ).sprintf( "%.4g", avgP_sd ) )
-               .arg( avg_avgP > 0 ? QString( "" ).sprintf( "(%.1f%%)", 100.0 * avgP_sd / avg_avgP ) : QString( "" ) )
-               .arg( QString( "" ).sprintf( "%3.1f", avg_pct_red ) )
-               .arg( QString( "" ).sprintf( "%3.1f", pct_red_sd ) )
-               .arg( avg_pct_red > 0 ? QString( "" ).sprintf( "(%.1f%%)", 100.0 * pct_red_sd / avg_pct_red ) : QString( "" ) )
+               .arg( QString::asprintf( "%.4g", avg_avgP ) )
+               .arg( QString::asprintf( "%.4g", avgP_sd ) )
+               .arg( avg_avgP > 0 ? QString::asprintf( "(%.1f%% )", 100.0 * avgP_sd / avg_avgP ) : QString( "" ) )
+               .arg( QString::asprintf( "%3.1f", avg_pct_red ) )
+               .arg( QString::asprintf( "%3.1f", pct_red_sd ) )
+               .arg( avg_pct_red > 0 ? QString::asprintf( "(%.1f%% )", 100.0 * pct_red_sd / avg_pct_red ) : QString( "" ) )
                + cobheader
                + ( parameters.count( "clusterheader" ) ? parameters[ "clusterheader" ] : "" )
                + cobreport
@@ -2041,26 +2035,26 @@ void US_Hydrodyn_Saxs_Cormap::displayData() {
 #else
                QString( "\nAverage one-to-all P value %1 \u00b1%2 %3 \% red %4\% \u00b1%5 %6\n" )
 #endif
-               .arg( QString( "" ).sprintf( "%.4g", avg_avgP ) )
-               .arg( QString( "" ).sprintf( "%.4g", avgP_sd ) )
-               .arg( avg_avgP > 0 ? QString( "" ).sprintf( "(%.1f%%)", 100.0 * avgP_sd / avg_avgP ) : QString( "" ) )
-               .arg( QString( "" ).sprintf( "%3.1f", avg_pct_red ) )
-               .arg( QString( "" ).sprintf( "%3.1f", pct_red_sd ) )
-               .arg( avg_pct_red > 0 ? QString( "" ).sprintf( "(%.1f%%)", 100.0 * pct_red_sd / avg_pct_red ) : QString( "" ) )
+               .arg( QString::asprintf( "%.4g", avg_avgP ) )
+               .arg( QString::asprintf( "%.4g", avgP_sd ) )
+               .arg( avg_avgP > 0 ? QString::asprintf( "(%.1f%% )", 100.0 * avgP_sd / avg_avgP ) : QString( "" ) )
+               .arg( QString::asprintf( "%3.1f", avg_pct_red ) )
+               .arg( QString::asprintf( "%3.1f", pct_red_sd ) )
+               .arg( avg_pct_red > 0 ? QString::asprintf( "(%.1f%% )", 100.0 * pct_red_sd / avg_pct_red ) : QString( "" ) )
                + cobheader
                + ( parameters.count( "clusterheader" ) ? parameters[ "clusterheader" ] : "" )
                ;
 
-            csv_report[ "Average one-to-all P value" ]    = QString( "" ).sprintf( "%.4g", avg_avgP );
-            csv_report[ "Average one-to-all P value sd" ] = QString( "" ).sprintf( "%.4g", avgP_sd );
+            csv_report[ "Average one-to-all P value" ]    = QString::asprintf( "%.4g", avg_avgP );
+            csv_report[ "Average one-to-all P value sd" ] = QString::asprintf( "%.4g", avgP_sd );
 
          } else {
             avg_avgP    *= countinv;
             avg_pct_red *= countinv;
 
             msg += QString( "   average one-to-all P %1 red %2\%\n" )
-               .arg( QString( "" ).sprintf( "%.4g", avg_avgP ) )
-               .arg( QString( "" ).sprintf( "%3.1f", avg_pct_red ) )
+               .arg( QString::asprintf( "%.4g", avg_avgP ) )
+               .arg( QString::asprintf( "%3.1f", avg_pct_red ) )
                + cobheader
                + ( parameters.count( "clusterheader" ) ? parameters[ "clusterheader" ] : "" )
                + cobreport
@@ -2068,12 +2062,12 @@ void US_Hydrodyn_Saxs_Cormap::displayData() {
 
             msg_headers += 
                QString( "   average one-to-all P %1 red %2\%\n" )
-               .arg( QString( "" ).sprintf( "%.4g", avg_avgP ) )
-               .arg( QString( "" ).sprintf( "%3.1f", avg_pct_red ) )
+               .arg( QString::asprintf( "%.4g", avg_avgP ) )
+               .arg( QString::asprintf( "%3.1f", avg_pct_red ) )
                + cobheader
                + ( parameters.count( "clusterheader" ) ? parameters[ "clusterheader" ] : "" );
 
-            csv_report[ "Average one-to-all P value" ]    = QString( "" ).sprintf( "%.4g", avg_avgP );
+            csv_report[ "Average one-to-all P value" ]    = QString::asprintf( "%.4g", avg_avgP );
          }
 
          // plot data

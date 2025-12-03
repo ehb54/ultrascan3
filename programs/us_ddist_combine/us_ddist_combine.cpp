@@ -17,9 +17,6 @@
 #include "us_model.h"
 #include "us_math2.h"
 #include "qwt_legend.h"
-#if QT_VERSION < 0x050000
-#define setSamples(a,b,c)  setData(a,b,c)
-#endif
 
 
 const double epsilon = 0.0005;    // Equivalence magnitude ratio radius
@@ -404,9 +401,9 @@ US_DDistr_Combine::US_DDistr_Combine( const QString auto_mode ) : US_Widgets()
          tr( "Signal Concentration" ) );
 
    if ( a_mode.isEmpty() )
-     data_plot1->setMinimumSize( 560, 400 );
+     data_plot1->setMinimumSize( QSize(560, 400) );
    else
-     data_plot1->setMinimumSize( 400, 400 );
+     data_plot1->setMinimumSize( QSize(400, 600) );
    
    data_plot1->setAxisScale( QwtPlot::xBottom, 1.0,  10.0 );
    data_plot1->setAxisScale( QwtPlot::yLeft,   0.0, 100.0 );
@@ -430,9 +427,16 @@ US_DDistr_Combine::US_DDistr_Combine( const QString auto_mode ) : US_Widgets()
 
    mainLayout ->addLayout( lfullLayout );
    mainLayout ->addLayout( rightLayout );
-   mainLayout ->setStretchFactor( lfullLayout, 2 );
-   mainLayout ->setStretchFactor( rightLayout, 3 );
-
+   if ( a_mode.isEmpty() )
+     {
+       mainLayout ->setStretchFactor( lfullLayout, 2 );
+       mainLayout ->setStretchFactor( rightLayout, 3 );
+     }
+   else
+     {
+       mainLayout ->setStretchFactor( lfullLayout, 1 );
+       mainLayout ->setStretchFactor( rightLayout, 10 );
+     }
    le_runid   ->setText( "(current run ID)" );
    cmb_svproj ->addItem( "(project name for plot save)" );
 
@@ -451,8 +455,15 @@ US_DDistr_Combine::US_DDistr_Combine( const QString auto_mode ) : US_Widgets()
    te_status  ->setMaximumHeight( ( hh * 3 ) / 2 );
 
    adjustSize();
-   resize( 1180, 580 );
+   if ( a_mode.isEmpty() )
+     resize( 1180, 580 );
+   else
+     resize( 1600, 580 );
+
    reset_data();
+
+   // //TEST
+   // setStyleSheet("QWidget {font-size: 2pt};");
 
 }
 
@@ -519,9 +530,34 @@ QList< QStringList > US_DDistr_Combine::load_auto( QStringList runids_passed, QS
   return modelsList;
 }
 
+
+
 //return pointer to data_plot1
 QwtPlot* US_DDistr_Combine::rp_data_plot1()
 {
+  //reset fonts for title, axis titles
+  setStyleSheet("QWidget {font-size: 12pt};");
+  QFont font_c("Arial", 12);
+  QwtText p_title = data_plot1->title();
+  p_title.setFont( font_c );
+  data_plot1->setTitle( p_title );
+
+  QwtText xTitle = data_plot1->axisTitle(QwtPlot::xBottom);
+  xTitle.setFont( font_c );
+  data_plot1->setAxisTitle( QwtPlot::xBottom, xTitle );
+
+  QwtText yTitle = data_plot1->axisTitle(QwtPlot::yLeft);
+  yTitle.setFont( font_c );
+  data_plot1->setAxisTitle( QwtPlot::yLeft, yTitle );
+
+  QwtText zTitle = data_plot1->axisTitle(QwtPlot::yRight);
+  zTitle.setFont( font_c );
+  data_plot1->setAxisTitle( QwtPlot::yRight, zTitle );
+
+  data_plot1->replot();
+
+  
+  
   return data_plot1;
 }
 
@@ -913,6 +949,8 @@ void US_DDistr_Combine::reset_plot( void )
 // Plot all data: for GMP Report
 void US_DDistr_Combine::plot_data_auto( QMap < QString, QString> c_parms )
 {
+
+  qDebug() << "[plot_data_auto]: c_parms.keys() -- " << c_parms.keys();
   
 DbgLv(1) << "pDa:  xtype" << xtype;
    dataPlotClear( data_plot1 );
@@ -1075,8 +1113,11 @@ void US_DDistr_Combine::plot_distr( DistrDesc ddesc, QString distrID )
    QVector< double > yenv;
    QString str;
    double minx=1e99, maxx=-1e99;
-DbgLv(1) << "pDi:  ndispt" << ndispt << "ID" << distrID.left(20);
-
+   //DbgLv(1) << "pDi:  ndispt" << ndispt << "ID" << distrID.left(20);
+   qDebug() << "[plot_distr()]Desc: triple, xtype, ndispt"
+	    << ddesc.ddescr << ddesc.xtype
+	    << ndispt << "ID" << distrID.left(20);
+  
    QwtPlotCurve* data_curv = us_curve( data_plot1, distrID );
 
    if ( ct_sigma->value() > 0.0 )
@@ -1148,6 +1189,7 @@ void US_DDistr_Combine::plot_distr_auto( DistrDesc ddesc, QString distrID, QMap<
   if ( c_parms.keys().contains( "Ranges" ) )
     qDebug() << "c_ranges, begin -- " <<  c_parms[ "Ranges" ];
   qDebug() << "c_parms.keys() -- " << c_parms.keys();
+  qDebug() << "c_parms[\"CG_model\"] -- " << c_parms["CG_model"];
   
   QMap<QString, QString >::iterator jj;
   for ( jj = c_parms.begin(); jj != c_parms.end(); ++jj )
@@ -1191,7 +1233,10 @@ void US_DDistr_Combine::plot_distr_auto( DistrDesc ddesc, QString distrID, QMap<
    QVector< double > yenv;
    QString str;
    double minx=1e99, maxx=-1e99;
-DbgLv(1) << "pDi:  ndispt" << ndispt << "ID" << distrID.left(20);
+   double miny=1e99, maxy=-1e99;
+   qDebug() << "[plot_distr_auto]Desc: triple, xtype, ndispt"
+	    << ddesc.ddescr << ddesc.xtype
+	    << ndispt << "ID" << distrID.left(20);
 
    QwtPlotCurve* data_curv = us_curve( data_plot1, distrID );
 
@@ -1201,7 +1246,8 @@ DbgLv(1) << "pDi:  ndispt" << ndispt << "ID" << distrID.left(20);
       data_curv->setStyle( QwtPlotCurve::Lines );
 
       qDebug() << "in [COMBO2] ind_distro -- " << ind_distro;
-      
+
+      /***
       if ( ind_distro )
       	ndispt    = envel_data_auto ( ddesc.xvals, ddesc.yvals, xenv, yenv, sigma_p, xmin_p, xmax_p );
       else //overall comb. plots
@@ -1211,6 +1257,26 @@ DbgLv(1) << "pDi:  ndispt" << ndispt << "ID" << distrID.left(20);
 	  else
 	    ndispt    = envel_data_auto ( ddesc.xvals, ddesc.yvals, xenv, yenv, sigma_p, xmin_p, xmax_p );
 	}
+      ****/
+      /***
+      if ( ind_distro ) //ind. 
+	{
+	  if ( c_parms["CG_model"] == "NO")
+	    ndispt    = envel_data_auto ( ddesc.xvals, ddesc.yvals, xenv, yenv, sigma_p, xmin_p, xmax_p, false );
+	  else if ( c_parms["CG_model"] == "YES" )
+	    ndispt    = envel_data_auto ( ddesc.xvals, ddesc.yvals, xenv, yenv, sigma_p, xmin_p, xmax_p, true );
+	}
+      else //combined, use auto-defined min/max ranges
+	{
+	  ndispt    = envel_data_auto ( ddesc.xvals, ddesc.yvals, xenv, yenv, sigma_p, xmin_p, xmax_p, true );
+	}
+      ****/
+
+      //Ok, just use model's min/max instead
+      if ( ndispt == 1 ) 
+	ndispt    = envel_data_auto ( ddesc.xvals, ddesc.yvals, xenv, yenv, sigma_p, xmin_p, xmax_p, false );
+      else
+	ndispt    = envel_data_auto ( ddesc.xvals, ddesc.yvals, xenv, yenv, sigma_p, xmin_p, xmax_p, true );
       
       xx        = xenv.data();
       yy        = yenv.data();
@@ -1218,6 +1284,11 @@ DbgLv(1) << "pDi:  ndispt" << ndispt << "ID" << distrID.left(20);
       {
          minx = qMin(minx, xenv[i]);
          maxx = qMax(maxx, xenv[i]);
+      }
+      for (int i=0; i<yenv.size(); i++)
+      {
+         miny = qMin(miny, yenv[i]);
+         maxy = qMax(maxy, yenv[i]);
       }
    }
    else
@@ -1229,8 +1300,16 @@ DbgLv(1) << "pDi:  ndispt" << ndispt << "ID" << distrID.left(20);
          minx = qMin(minx, ddesc.xvals[i]);
          maxx = qMax(maxx, ddesc.xvals[i]);
       }
+      for (int i=0; i<ddesc.yvals.size(); i++)
+      {
+         miny = qMin(miny, ddesc.yvals[i]);
+         maxy = qMax(maxy, ddesc.yvals[i]);
+      }
    }
 
+   qDebug() << "minx, maxx; miny, maxy -- "
+	    << minx << maxx << "; " << miny << maxy;
+   
    data_curv->setSamples( xx, yy, ndispt );
    data_curv->setItemAttribute( QwtPlotItem::Legend, true ); 
 
@@ -1256,6 +1335,7 @@ DbgLv(1) << "pDi:  ndispt" << ndispt << "ID" << distrID.left(20);
 
    data_plot1->setAxisScale( QwtPlot::xBottom, minx, maxx );
    data_plot1->setAxisAutoScale( QwtPlot::yLeft );
+   //data_plot1->setAxisScale( QwtPlot::yLeft, miny, maxy );
    data_plot1->enableAxis      ( QwtPlot::xBottom, true );
    data_plot1->enableAxis      ( QwtPlot::yLeft,   true );
    data_plot1->setCanvasBackground( QBrush(Qt::white) );
@@ -1284,17 +1364,19 @@ DbgLv(1) << "pDi:  ndispt" << ndispt << "ID" << distrID.left(20);
 	   r2[ 0 ] = point2;
 	   r2[ 1 ] = point2;
 	   
-#if QT_VERSION < 0x050000
-	   QwtScaleDiv* y_axis = data_plot1->axisScaleDiv( QwtPlot::yLeft );
-#else
-	   QwtScaleDiv* y_axis = (QwtScaleDiv*)&(data_plot1->axisScaleDiv( QwtPlot::yLeft ));
-#endif
-	   
-	   double padding = ( y_axis->upperBound() - y_axis->lowerBound() ) / 30.0;
-	   
+	   // QwtScaleDiv* y_axis = (QwtScaleDiv*)&(data_plot1->axisScaleDiv( QwtPlot::yLeft ));
+	   // double padding = ( y_axis->upperBound() - y_axis->lowerBound() ) / 30.0;
+	   // double v[ 2 ];
+	   // v [ 0 ] = y_axis->upperBound() - padding;
+	   // v [ 1 ] = y_axis->lowerBound();// + padding;
+
+	   double padding = (maxy-miny)*0.01;
 	   double v[ 2 ];
-	   v [ 0 ] = y_axis->upperBound() - padding;
-	   v [ 1 ] = y_axis->lowerBound();// + padding;
+	   v [ 0 ] = maxy;
+	   v [ 1 ] = miny;
+
+	   qDebug() << "padding, v[0], v[1] -- "
+		    << padding << v[0] << v[1];
 	   
 	   QString vline_name1 = "Low"  + QString::number( i );
 	   QString vline_name2 = "High" + QString::number( i );
@@ -2095,8 +2177,7 @@ DbgLv(1) << "WrDa: maxnvl" << maxnvl << "nplots" << nplots;
 
          // Get and add raw data to line
          if ( jj < xvals->size() )
-            line       += QString().sprintf(
-                             valfmt, xvals->at( jj ), yvals->at( jj ) ) + ",";
+            line       += QString::asprintf( valfmt, xvals->at( jj ), yvals->at( jj ) ) + ",";
          else
             line       += dummy_pair;
 
@@ -2105,14 +2186,14 @@ DbgLv(1) << "WrDa: maxnvl" << maxnvl << "nplots" << nplots;
 
       // Now add X for envelopes and the Y's for each plot
       if ( jj < nenvvl )
-         line       += QString().sprintf( valfmx, xenvs[ jj ] ) + ",";
+         line       += QString::asprintf( valfmx, xenvs[ jj ] ) + ",";
       else
          line       += dummy_valu + ",";
 
       for ( int ii = 0; ii < nplots; ii++ )
       {
          if ( jj < nenvvl )
-            line       += QString().sprintf( valfmy, peyvals[ ii ][ jj ] );
+            line       += QString::asprintf( valfmy, peyvals[ ii ][ jj ] );
          else
             line       += dummy_valu;
 
@@ -2147,7 +2228,7 @@ DbgLv(1) << "WrDa: maxnvl" << maxnvl << "nplots" << nplots;
 
 // Save report documents from files
 int US_DDistr_Combine::reportDocsFromFiles( QString& runID, QString& fdir,
-   QStringList& files, US_DB2* db, int& idEdit, QString& trdesc )
+   QStringList& files, IUS_DB2* db, int& idEdit, QString& trdesc )
 {
  DbgLv(1) << "rDFF: runID fdir files0" << runID << fdir << files[0];
  DbgLv(1) << "rDFF:  idEdit trdesc" << idEdit << trdesc;
@@ -2292,7 +2373,7 @@ void US_DDistr_Combine::update_distros()
       distros << dd;
    }
 
-   qSort( distros );
+   std::sort( distros.begin(), distros.end() );
 
    return;
 }
@@ -2460,6 +2541,8 @@ DbgLv(1) << "  PX=Molec.Wt.log";
 // React to a change in the X type of plots
 QMap< QStringList, QList< QColor> > US_DDistr_Combine::changedPlotX_auto( int type, QMap< QString, QString > c_parms )
 {
+  qDebug() << "[changedPlotX_auto]: c_parms.keys() -- " << c_parms.keys();
+  
    xtype      = type;
 
    QList< QColor >  pdistrs_colors;
@@ -2580,6 +2663,20 @@ int US_DDistr_Combine::envel_data(
    max_xval         = ( maxx != 0.0 ) ? maxx : max_xval;
    rng_xval         = max_xval - min_xval;
 
+   qDebug() << "[in envel_data:] min_xval, max_xval, rng_xval -- "
+	    << min_xval << max_xval << rng_xval;
+
+   if ( rng_xval == 0 || min_xval == max_xval )
+     {
+       min_xval -= min_xval*0.1;
+       max_xval += max_xval*0.1;
+       rng_xval = max_xval - min_xval;
+
+       //update gui
+       le_plxmin->setText( QString::number(min_xval) );
+       le_plxmax->setText( QString::number(max_xval) );
+     }
+
    // Initialize envelope arrays
    xenvs.fill( 0.0, arrsize );
    yenvs.fill( 0.0, arrsize );
@@ -2643,7 +2740,7 @@ DbgLv(1) << "ED: Final esum" << env_sum << "csum" << con_sum
 int US_DDistr_Combine::envel_data_auto( 
 				       QVector< double >& xvals, QVector< double >& yvals,
 				       QVector< double >& xenvs, QVector< double >& yenvs,
-				       double sigma_passed, double xmin_passed, double xmax_passed )
+				       double sigma_passed, double xmin_passed, double xmax_passed, bool cg_m )
 {
    int     arrsize  = 300;
    int     vCount   = xvals.size();
@@ -2675,11 +2772,19 @@ int US_DDistr_Combine::envel_data_auto(
    max_xval         = ( maxx != 0.0 ) ? maxx : max_xval;
    rng_xval         = max_xval - min_xval;
 
-   //Use passed xmin/xmax values:           //ALEXEY <----------- here, use pre-defined parms!!!
-   min_xval = xmin_passed;
-   max_xval = xmax_passed;
-   rng_xval = max_xval - min_xval;
+   qDebug() << "[in envel_data_auto:] min_xval, max_xval, rng_xval -- "
+	    << min_xval << max_xval << rng_xval;
 
+   //Use passed xmin/xmax values:           //ALEXEY <----------- here, use pre-defined parms!!!
+   if ( !cg_m )
+     {
+       // min_xval = xmin_passed;
+       // max_xval = xmax_passed;
+       min_xval -= min_xval*0.1;
+       max_xval += max_xval*0.1;
+       rng_xval = max_xval - min_xval;
+     }
+   
    // Initialize envelope arrays
    xenvs.fill( 0.0, arrsize );
    yenvs.fill( 0.0, arrsize );

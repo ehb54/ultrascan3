@@ -2,6 +2,7 @@
 #ifndef US_DDIST_COMBO_H
 #define US_DDIST_COMBO_H
 
+#include "ius_db2.h"
 #include "us_widgets.h"
 #include "us_plot.h"
 #include "us_model.h"
@@ -191,7 +192,7 @@ class US_DDistr_Combine : public US_Widgets
       void write_data     ( QString&, QString&, int& );
       QString distribID   ( QString, QString );
       int  reportDocsFromFiles( QString&, QString&, QStringList&,
-                                US_DB2*, int&, QString& );
+                                IUS_DB2*, int&, QString& );
       void allMethodChanged  ( int );
       void methodChanged     ( int );
       void list_distributions( void );
@@ -203,7 +204,7 @@ class US_DDistr_Combine : public US_Widgets
                        QVector< double >&, QVector< double >& );
       int  envel_data_auto( QVector< double >&, QVector< double >&,
 			    QVector< double >&, QVector< double >&,
-			    double, double, double );
+			    double, double, double, bool );
 
       void help(      void )
       { showHelp.show_help( "ddist_combine.html" ); };

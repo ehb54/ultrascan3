@@ -13,16 +13,11 @@
 #include <qwt_scale_widget.h>
 #include <qwt_color_map.h>
 #include <qwt_scale_draw.h>
-#if QT_VERSION < 0x050000
-#define setSamples(a,b,c)  setData(a,b,c)
-#define setSymbol(a)       setSymbol(*a)
-#include <qwt_double_interval.h>
-#endif
 
 // constructor:  model lines plot widget
 US_MLinesPlot::US_MLinesPlot( double& ylo, double& yhi, double& xlo,
       double& xhi, int& typ, int& nkp, int& nlp, int& bmx )
-   : US_WidgetsDialog( 0, 0 ), ymin( ylo ), ymax( yhi ), xmin( xlo ),
+   : US_WidgetsDialog( nullptr, Qt::WindowFlags() ), ymin( ylo ), ymax( yhi ), xmin( xlo ),
    xmax( xhi ), ctype( typ ), nkpts( nkp ), nlpts( nlp ), bmndx( bmx )
 {
    // lay out the GUI
@@ -328,13 +323,8 @@ DbgLv(1) << "RP:PD mrecs size" << mrecs.size() << nmodl;
 
       // Set up the right-side axis with the color map
       rightAxis->setColorBarEnabled( true );
-#if QT_VERSION < 0x050000
-      QwtDoubleInterval cdrange( rmsd_best, rmsd_elite );
-      rightAxis->setColorMap       ( cdrange, *revcmap );
-#else
       QwtInterval       cdrange( rmsd_best, rmsd_elite );
       rightAxis->setColorMap       ( cdrange, revcmap );
-#endif
       data_plot1->enableAxis  ( QwtPlot::yRight, true );
       data_plot1->axisTitle   ( QwtPlot::yRight ).setFont( afont );
       data_plot1->setAxisTitle( QwtPlot::yRight, tr( "RMSD" ) );
@@ -571,11 +561,7 @@ QwtLinearColorMap* US_MLinesPlot::reverseColorMap()
 {
    QwtLinearColorMap* rcolmap = new QwtLinearColorMap( colormap->color2(), colormap->color1() );
 
-#if QT_VERSION < 0x050000
-   QwtDoubleInterval cinterv( 0.0, 1.0 );
-#else
    QwtInterval cinterv( 0.0, 1.0 );
-#endif
    QVector< double > cstops = colormap->colorStops();
    int kstops = cstops.size() - 1;
 
@@ -627,7 +613,7 @@ void US_MLinesPlot::selectColorMap( void )
    // get an xml file name for the color map
    QString fname = QFileDialog::getOpenFileName( this,
        tr( "Load Color Map File" ),
-       US_Settings::etcDir(), filter, 0, 0 );
+       US_Settings::etcDir(), filter );
 
    if ( fname.isEmpty() )
         return;

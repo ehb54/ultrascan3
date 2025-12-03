@@ -14,7 +14,9 @@ class US_Admin : public US_Widgets
     //! When setting the password, it is saved in global memory. See \ref US_Global.
     //! A cryptographic hash of the password is saved in the user's
     //! settings. See \ref US_Settings.
-    US_Admin( QWidget* = 0, Qt::WindowFlags = 0 );
+    //! \param w Pointer to the parent widget, defaults to nullptr
+    //! \param flags Qt::WindowFlags, defaults to Qt::WindowFlags()
+    US_Admin( QWidget* w = nullptr, Qt::WindowFlags flags = Qt::WindowFlags() );
     //! A null destructor. 
     ~US_Admin() {};
     

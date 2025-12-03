@@ -2,6 +2,7 @@
 #include <QJsonValue>
 #include <QJsonArray>
 #include <QJsonObject>
+#include <QtNumeric>
 
 #include "us_autoflow_analysis.h"
 #include "us_settings.h"
@@ -11,6 +12,7 @@
 #include "us_solution_vals.h"
 #include "us_lamm_astfvm.h"
 #include "../us_fematch/us_thread_worker.h"
+#include "../us_mwl_species_fit/us_mwl_species_fit.h"
 
 #define MIN_NTC   25
 
@@ -31,7 +33,8 @@ US_Analysis_auto::US_Analysis_auto() : US_Widgets()
   panel->setSpacing        ( 2 );
   panel->setContentsMargins( 2, 2, 2, 2 );
 
-  QLabel* lb_hdr1          = us_banner( tr( "Analysis Stages for All Triples" ) );
+  //QLabel* lb_hdr1          = us_banner( tr( "Analysis Stages for All Triples" ) );
+  lb_hdr1          = us_banner( tr( "Analysis Stages for All Triples" ) );
   panel->addWidget(lb_hdr1);
 
   QHBoxLayout* buttons     = new QHBoxLayout();
@@ -60,6 +63,17 @@ US_Analysis_auto::US_Analysis_auto() : US_Widgets()
   //QScroller *scroller = QScroller::scroller(treeWidget->viewport());
   //scroller->grabGesture(treeWidget, QScroller::MiddleMouseButtonGesture);
   treeWidget->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
+
+  //for (SSF-)ABDE
+  sdiag_norm_profile = new US_Norm_Profile("AUTO");
+  connect( this, SIGNAL( process_abde( QMap < QString, QString > & ) ),
+	   sdiag_norm_profile, SLOT( load_data_auto ( QMap < QString, QString > & )  ) );
+  connect( sdiag_norm_profile, SIGNAL( abde_to_report( QMap < QString, QString > &) ),
+	   this, SLOT( proceed_abde_to_report( QMap < QString, QString > &) ) );
+  connect( sdiag_norm_profile, SIGNAL( back_to_runManager( ) ),
+	   this, SLOT( back_to_initAutoflow() ));
+  panel->addWidget( sdiag_norm_profile );
+  sdiag_norm_profile->hide();
   
   setMinimumSize( 950, 450 );
   adjustSize();
@@ -68,8 +82,8 @@ US_Analysis_auto::US_Analysis_auto() : US_Widgets()
   in_reload_end_process = false;
   all_processed = true;
   
-  // // // // // // ---- Testing ----
-  // QMap < QString, QString > protocol_details;
+  // // // // // ---- Testing ----
+  QMap < QString, QString > protocol_details;
 
 
   // protocol_details[ "invID_passed" ] = QString("95");
@@ -78,20 +92,44 @@ US_Analysis_auto::US_Analysis_auto() : US_Widgets()
   // protocol_details[ "filename" ]     = QString("MartinR_RP12_EcoRI_Digest_Optima1_24823-v3-run1963");
   // protocol_details[ "analysisIDs"  ] = QString( "3657,3658");
 
-  // // //What's needed ////////////////////////////////////////////////////////
-  // AProfileGUID       = protocol_details[ "aprofileguid" ];
-  // ProtocolName_auto  = protocol_details[ "protocolName" ];
-  // invID              = protocol_details[ "invID_passed" ].toInt();
+  // //ABDE-MWL
+  // protocol_details[ "invID_passed" ] = QString("165");
+  // protocol_details[ "protocolName" ] = QString("GMP-test-ABDE-fromDisk");
+  // protocol_details[ "aprofileguid" ] = QString("6c376179-6eda-47e9-b699-3eef63c6fe6e");
+  // protocol_details[ "filename" ]     = QString("AAV_GMP_test_030325-run2366-dataDiskRun-1515");
+  // protocol_details[ "analysisIDs"  ] = QString("");
+  // protocol_details[ "expType" ]      = QString("ABDE");
+  // protocol_details[ "dataSource" ]   = QString("dataDiskAUC");
+  // protocol_details[ "statusID" ]     = QString("588");
+  // protocol_details[ "autoflowID" ]   = QString("1515");
 
-  // FileName           = protocol_details[ "filename" ];
+  // //VELOCITY: failed JSON (bad fitmen-auto, "NAN")
+  // protocol_details[ "invID_passed" ] = QString("11");
+  // protocol_details[ "protocolName" ] = QString("MartinR_alexey-dev-issue425-SWL-RI-T3_21JUN25");
+  // protocol_details[ "aprofileguid" ] = QString("bc5641b1-27f2-4604-a3e2-5d24196fc9de");
+  // protocol_details[ "filename" ]     = QString("MartinR_alexey-dev-issue425-SWL-RI-T3_21JUN25-run2395");
+  // protocol_details[ "analysisIDs"  ] = QString("61,62");
+  // protocol_details[ "expType" ]      = QString("VELOCITY");
+  // protocol_details[ "dataSource" ]   = QString("INSTRUMENT");
+  // protocol_details[ "statusID" ]     = QString("53");
+  // protocol_details[ "autoflowID" ]   = QString("78");
   
-  // analysisIDs        = protocol_details[ "analysisIDs" ];
-  // /////////////////////////////////////////////////////////////////////
 
+  // // // //What's needed ////////////////////////////////////////////////////////
+  // // AProfileGUID       = protocol_details[ "aprofileguid" ];
+  // // ProtocolName_auto  = protocol_details[ "protocolName" ];
+  // // invID              = protocol_details[ "invID_passed" ].toInt();
+  // // FileName           = protocol_details[ "filename" ];
+  // // analysisIDs        = protocol_details[ "analysisIDs" ];
+  // // autoflow_expType   = protocol_details[ "expType" ];
+  // // dataSource         = protocol_details[ "dataSource" ];
+  // // autoflowStatusID   = protocol_details[ "statusID" ].toInt();
+  // // autoflowID_passed  = protocol_details[ "autoflowID" ].toInt();
+  // // /////////////////////////////////////////////////////////////////////
   
   // initPanel( protocol_details );
 
-  // // -----------------
+  // -----------------
 
 }
 
@@ -127,10 +165,28 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
   sim_msg_pos_x      = protocol_details[ "sim_msg_pos_x" ].toInt();
   sim_msg_pos_y      = protocol_details[ "sim_msg_pos_y" ].toInt();
 
+  autoflow_expType   = protocol_details[ "expType" ];
+  dataSource         = protocol_details[ "dataSource" ];
+
+  //hide if ABDE, close message
+  if ( autoflow_expType == "ABDE")
+    {
+      qDebug() << "[ABDE] - ANALYSIS!";
+      //emit close_analysissetup_msg();
+
+      lb_hdr1     ->hide();
+      pb_show_all ->hide();
+      pb_hide_all ->hide();
+      treeWidget  ->hide();
+    }
+  else
+    {
+      sdiag_norm_profile->hide();
+    }
+  
+
   //Copy protocol details
   protocol_details_at_analysis = protocol_details;
-
-  QStringList analysisIDs_list = analysisIDs.split(",");
 
   US_Passwd pw;
   US_DB2    db( pw.getPasswd() );
@@ -156,7 +212,61 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
       qDebug() << "defaultDB -- " << defaultDB;
     }
 
+  // IF ABDE:
+  if ( autoflow_expType == "ABDE")
+    {
+      qDebug() << "[ABDE] - ANALYSIS!";
+
+      //close sdiag_norm_profile if left open:
+      bool norm_abde_open = sdiag_norm_profile->isVisible();
+      qDebug() << "[in autoflow_analysis: ] norm_abde_open? " << norm_abde_open;
+      if ( norm_abde_open )
+	{
+	  qDebug() << "Closing/deleting ABDE-norm widget!";
+	  sdiag_norm_profile->close();
+	}
+
+      //check if MWL or SWL
+      QMap<QString, QString> abde_analysis_details = get_abdeAnalysis_info( &db, QString::number(autoflowID_passed));
+      QString abde_etype = abde_analysis_details["etype"];
+      qDebug() << "ABDE_exp_type: " << abde_etype;
+
+      if ( abde_etype == "MWL" )
+	{
+	  protocol_details_at_analysis["abde_etype"] = "MWL";
+	  
+	  //Pre-process data (decomposition for MWL); build alt. GUI (to integrate and manually normalize);
+	  sdiag = new US_MwlSpeciesFit( protocol_details_at_analysis );
+	  //sdiag -> show(); //for debug
+	  
+	  qDebug() << "SSF-Dir: " << protocol_details_at_analysis["ssf_dir_name"];
+	  
+	  //now save ssf-produced-data to DB
+	  sdiag_convert = new US_ConvertGui("AUTO");
+	  sdiag_convert->import_ssf_data_auto( protocol_details_at_analysis );
+	  //sdiag_convert -> show(); //for debug
+	}
+      else if ( abde_etype == "SWL" )
+	{
+	  protocol_details_at_analysis["abde_etype"] = "SWL";
+	  sdiag = new US_MwlSpeciesFit( protocol_details_at_analysis );
+
+	  qDebug() << "Dir for GMP: " << protocol_details_at_analysis["directory_for_gmp"];
+	}
+      
+      emit close_analysissetup_msg();
+
+      //call abde normalizer
+      emit process_abde( protocol_details_at_analysis );
+      sdiag_norm_profile->show();
+      
+      return;
+    }
+  // END for ABDE
+  
+  
   //retrieve AutoflowAnalysis records, build autoflowAnalysis objects:
+  QStringList analysisIDs_list = analysisIDs.split(",");
   for( int i=0; i < analysisIDs_list.size(); ++i )
     {
       QMap <QString, QString> analysis_details;
@@ -271,11 +381,8 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
 	job5run = true;
       if ( json.contains("PCSA") )
 	job6run_pcsa = true;
-    
-      
-      
-      triple_name_width = fmet.width( triple_curr );
-      //triple_name_width = fmet.horizontalAdvance( triple_curr );
+          
+      triple_name_width = fmet.horizontalAdvance( triple_curr );
       
       qDebug() << "Triple,  width:  " << triple_curr << ", " << triple_name_width;
       qDebug() << "GUI: job1run, job2run, job3run, job4run, job5run -- "
@@ -1375,8 +1482,17 @@ bool US_Analysis_auto::loadModel( QMap < QString, QString > & triple_information
       QDateTime date               = db->value( 2 ).toDateTime();
 
       QDateTime now = QDateTime::currentDateTime();
+
+      QStringList a_stage_types = triple_information[ "stage_name" ].split("-");
+      bool stage_identity = true;
+      for (const QString& sub : a_stage_types )
+	{
+	  if (!description.contains(sub))
+	    stage_identity = false; 
+	}
       
-      if ( description.contains( triple_information[ "stage_name" ] ) ) 
+      //if ( description.contains( triple_information[ "stage_name" ] ) )
+      if ( stage_identity )
 	{
 	  if ( triple_information[ "stage_name" ] == "2DSA" )
 	    {
@@ -1728,7 +1844,7 @@ int US_Analysis_auto::count_noise_auto( US_DataIO::EditedData* edata,
    for ( int ii = 1; ii < nemods; ii++ )
    {  // Search through models in edit
       lmodlGUID  = mieGUIDs[ ii ];                    // this model's GUID
-      modelIndx  = QString().sprintf( "%4.4d", kk );  // models-in-edit index
+      modelIndx  = QString::asprintf( "%4.4d", kk );  // models-in-edit index
 
       // Find the noises tied to this model
       int kenois = noises_in_model_auto( lmodlGUID, tmpGUIDs );
@@ -2131,54 +2247,33 @@ void US_Analysis_auto::simulateModel( )
 	  simparams.speed_step[ 0 ].acceleration = (int)qRound( rate );
 	}
     }
-  
-  // Do a quick test of the speed step implied by TimeState
-  int tf_scan   = simparams.speed_step[ 0 ].time_first;
-  int accel1    = simparams.speed_step[ 0 ].acceleration;
-  QString svalu = US_Settings::debug_value( "SetSpeedLowA" );
-  int lo_ss_acc = svalu.isEmpty() ? 250 : svalu.toInt();
-  int rspeed    = simparams.speed_step[ 0 ].rotorspeed;
-  double  tf_aend   = static_cast<double>(tf_scan);
-  // prevent any division by zero
-  if (accel1 != 0)
-  {
-    tf_aend = static_cast<double>(rspeed) / static_cast<double>(accel1);
-  }
-  
-  qDebug() << "SimMdl: ssck: rspeed accel1 lo_ss_acc"
-	   << rspeed << accel1 << lo_ss_acc << "tf_aend tf_scan"
-	   << tf_aend << tf_scan;
-  //x0  1  2  3  4  5
-  // check if the acceleration rate is low or the first scan was taken before the acceleration ended
-  // Due to older, wrong timestate calculation there might be a case, in which the calculated end of acceleration can
-  // be up to 1 second later than expected, tf_scan + 1 accounts for this.
-  if ( accel1 < lo_ss_acc  ||  tf_aend > ( tf_scan + 1 ) )
-    {
-      QString wmsg = tr( "The TimeState computed/used is likely bad:<br/>"
-			 "The acceleration implied is %1 rpm/sec.<br/>"
-			 "The acceleration zone ends at %2 seconds,<br/>"
-			 "with a first scan time of %3 seconds.<br/><br/>"
-			 "<b>You should rerun the experiment without<br/>"
-			 "any interim constant speed, and then<br/>"
-			 "you should reimport the data.</b>" )
-	.arg( accel1 ).arg( QString::number(tf_aend) ).arg( QString::number(tf_scan) );
-      
-      QMessageBox msgBox( this );
-      msgBox.setWindowTitle( tr( "Bad TimeState Implied!" ) );
-      msgBox.setTextFormat( Qt::RichText );
-      msgBox.setText( wmsg );
-      msgBox.addButton( tr( "Continue" ), QMessageBox::RejectRole );
-      QPushButton* bAbort = msgBox.addButton( tr( "Abort" ),
-					      QMessageBox::YesRole    );
-      msgBox.setDefaultButton( bAbort );
-      msgBox.exec();
-      if ( msgBox.clickedButton() == bAbort )
-	{
-	  QApplication::restoreOverrideCursor();
-	  qApp->processEvents();
-	  return;
+	QStringList check_results = US_AstfemMath::check_acceleration(simparams.speed_step, edata->scanData);
+	if ( !check_results.isEmpty() ) {
+		QMessageBox msgBox( this );
+		msgBox.setWindowTitle( tr( qPrintable( check_results[0] ) ) );
+		if ( check_results.size() > 1 ) {
+			msgBox.setTextFormat( Qt::RichText );
+			msgBox.setText( tr( qPrintable( check_results[1] ) ) );
+		}
+		if ( check_results.size() > 2 ) {
+			QString info = "";
+			for ( int i = 2; i < check_results.size(); i++ ) {
+				info += check_results[i] + "\n";
+			}
+			msgBox.setInformativeText( tr( qPrintable( info ) ) );
+		}
+		msgBox.addButton( tr( "Continue" ), QMessageBox::RejectRole );
+		QPushButton* bAbort = msgBox.addButton( tr( "Abort" ),
+														QMessageBox::YesRole );
+		msgBox.setDefaultButton( bAbort );
+		msgBox.exec();
+
+		if ( msgBox.clickedButton() == bAbort ) {
+			QApplication::restoreOverrideCursor();
+			qApp->processEvents();
+			return;
+		}
 	}
-    }
   sdata->cell        = rdata->cell;
   sdata->channel     = rdata->channel;
   sdata->description = rdata->description;
@@ -2740,6 +2835,7 @@ void US_Analysis_auto::show_overlay( QString triple_stage )
   
   loadData( triple_info_map );
   progress_msg->setValue( 1 );
+  qApp->processEvents();
   
   triple_info_map[ "eID" ]        = QString::number( eID_global );
   // Assign edata && rdata
@@ -2850,7 +2946,8 @@ void US_Analysis_auto::show_overlay( QString triple_stage )
   bufvl = US_SolutionVals::values( dbP, edata, solID, svbar, bdens,
 				   bvisc, bcomp, bmanu, errmsg );
   progress_msg->setValue( 3 );
-
+  qApp->processEvents();
+  
   //Hardwire compressibility to zero, for now
   bcomp="0.0";
   if ( bufvl )
@@ -2915,7 +3012,8 @@ void US_Analysis_auto::show_overlay( QString triple_stage )
   qDebug() << "Closing sim_msg-- ";
   //msg_sim->accept();
   progress_msg->close();
-
+  qApp->processEvents();
+  
   /*
   // Show plot
   resplotd = new US_ResidPlotFem( this, true );
@@ -2929,7 +3027,7 @@ void US_Analysis_auto::show_overlay( QString triple_stage )
 //Cancel all jobs if FITMEN for a channel was processed by other means: NO FM modles
 void US_Analysis_auto::delete_jobs_at_fitmen( QMap < QString, QString > & triple_info )
 {
-
+  
   qDebug() << "At delete_jobs_at_fitmen: triple_name: " << triple_info[ "triple_name_key" ];
 
   QString triple_name   = triple_info[ "triple_name_key" ];
@@ -2944,6 +3042,12 @@ void US_Analysis_auto::delete_jobs_at_fitmen( QMap < QString, QString > & triple
   QString requestID = ana_details["requestID"];
   qDebug() << "RequestID -- " << requestID;
 
+  
+  //First, revert unique status, so it does not block execution:
+  revert_autoflow_analysis_stages_record( requestID );
+  //////////////
+
+  
   bool mwl_channel = false;
   QStringList triple_list_affected;
   
@@ -3007,6 +3111,29 @@ void US_Analysis_auto::delete_jobs_at_fitmen( QMap < QString, QString > & triple
 				    tr( "Could not connect to database \n" ) +  db.lastError() );
 	      return;
 	    }
+
+	  //block triple processing again:
+	  int status_fitmen_unique;
+	  status_fitmen_unique = read_autoflowAnalysisStages( requestID );
+  
+	  qDebug() << "[in delete_fitmen_job(no fitmen_bad_vals)] status_fitmen_unique -- " << status_fitmen_unique ;
+  
+	  if ( !status_fitmen_unique )
+	    {
+	      QMessageBox::information( this,
+					tr( "FITMEN | Triple Analysis already processed" ),
+					tr( "It appears that FITMEN stage has already been OR being processed by "
+					    "a different user from different session. \n\n"
+					    "The program will return to the autoflow runs dialog where "
+					    "you can re-attach to the actual current stage of the run. "));
+	      
+	      
+	      emit analysis_back_to_initAutoflow( );
+	      //emit triple_analysis_processed( );
+	      //close();
+	      return;
+	    }
+	  /****/
 	  
 	  
 	  /** DEBUG **/
@@ -3018,6 +3145,7 @@ void US_Analysis_auto::delete_jobs_at_fitmen( QMap < QString, QString > & triple
 	  /* **********/
 	  
 	  update_autoflowAnalysis_uponDeletion( &db, requestID );
+	  //maybe if mwl_channel=true?
 	  update_autoflowAnalysis_uponDeletion_other_wvl( &db, requestID_list );
 	  
 	}
@@ -3070,8 +3198,33 @@ void US_Analysis_auto::delete_jobs_at_fitmen( QMap < QString, QString > & triple
 				    tr( "Could not connect to database \n" ) +  db.lastError() );
 	      return;
 	    }
+
+	  //block triple processing again:
+	  int status_fitmen_unique;
+	  status_fitmen_unique = read_autoflowAnalysisStages( requestID );
+  
+	  qDebug() << "[in delete_fitmen_job(yes fitmen_bad_vals)] status_fitmen_unique -- " << status_fitmen_unique ;
+  
+	  if ( !status_fitmen_unique )
+	    {
+	      QMessageBox::information( this,
+					tr( "FITMEN | Triple Analysis already processed" ),
+					tr( "It appears that FITMEN stage has already been OR being processed by "
+					    "a different user from different session. \n\n"
+					    "The program will return to the autoflow runs dialog where "
+					    "you can re-attach to the actual current stage of the run. "));
+	      
+	      
+	      emit analysis_back_to_initAutoflow( );
+	      //emit triple_analysis_processed( );
+	      //close();
+	      return;
+	    }
+	  /****/
+	  
 	  
 	  update_autoflowAnalysis_uponDeletion( &db, requestID );
+	  //maybe if mwl_channel=true?
 	  update_autoflowAnalysis_uponDeletion_other_wvl( &db, requestID_list );
 	}
     }
@@ -3582,18 +3735,29 @@ bool US_Analysis_auto::check_fitmen_status( const QString& requestID, const QStr
 //reset Analysis GUI: stopping all update processes
 void US_Analysis_auto::reset_analysis_panel( )
 {
-  //Stop  timer if active
-  if ( timer_update -> isActive() ) 
+  if ( autoflow_expType != "ABDE" || autoflow_expType == "VELOCITY" )
     {
-      timer_update -> stop();
-      disconnect(timer_update, SIGNAL(timeout()), 0, 0);
-
-      qDebug() << "Stopping timer_update !!!!";
+      //Stop  timer if active
+      if ( timer_update -> isActive() ) 
+	{
+	  timer_update -> stop();
+	  disconnect(timer_update, SIGNAL(timeout()), 0, 0);
+	  
+	  qDebug() << "Stopping timer_update !!!!";
+	}
+      
+      //ALEXEY: now we should wait for completion of the last timer_update shot...
+      connect(timer_end_process, SIGNAL(timeout()), this, SLOT( end_process ( ) ));
+      timer_end_process->start(1000);     // 5 sec
     }
-
-  //ALEXEY: now we should wait for completion of the last timer_update shot...
-  connect(timer_end_process, SIGNAL(timeout()), this, SLOT( end_process ( ) ));
-  timer_end_process->start(1000);     // 5 sec
+  else
+    {
+      //add clearing ABDE-norm. GUI when switching btw. runs
+      
+      
+      sdiag_norm_profile->hide();
+      emit analysis_update_process_stopped();
+    }
 }
 
 //Periodically check for ended processes
@@ -3879,6 +4043,27 @@ QMap< QString, QString> US_Analysis_auto::read_autoflowAnalysisHistory_record( U
 }
 
 
+QMap< QString, QString> US_Analysis_auto::get_abdeAnalysis_info( US_DB2* db, const QString& ID )
+{
+  QMap<QString, QString> abdeAnalysis_details;
+  
+  QStringList qry;
+  qry << "read_autoflowAnalysisABDE_record"
+      << ID;
+  
+  db->query( qry );
+
+  if ( db->lastErrno() == US_DB2::OK )    
+    {
+      while ( db->next() )
+	{
+	  abdeAnalysis_details["ID"]             = db->value( 0 ).toString();
+	  abdeAnalysis_details["etype"]          = db->value( 1 ).toString();
+	  abdeAnalysis_details["xnorm_percents"] = db->value( 2 ).toString();
+	}
+    }
+  return abdeAnalysis_details;
+}
 
 QMap< QString, QString> US_Analysis_auto::get_investigator_info( US_DB2* db, const QString& ID )
 {
@@ -4276,7 +4461,7 @@ DbgLv(1) << "Number of FM models found: " << nfmods;
 if(nfmods>0) {
 DbgLv(1) << " pre:D0" <<  mDescrs[0].description;
 DbgLv(1) << " pre:Dn" <<  mDescrs[nfmods-1].description; }
-   qSort( mDescrs );
+   std::sort( mDescrs.begin(), mDescrs.end() );
 if(nfmods>0) {
 DbgLv(1) << " sorted:D0" <<  mDescrs[0].description;
 DbgLv(1) << " sorted:Dn" <<  mDescrs[nfmods-1].description; }
@@ -4508,7 +4693,7 @@ bool US_Analysis_auto::file_loaded_auto( QMap < QString, QString > & triple_info
   qDebug() << "In file_loaded_auto: ";
   QString file_directory = US_Settings::resultDir() + QString("/") + triple_information[ "filename" ];
   QString triple_name_cut = triple_information[ "triple_name" ];
-  triple_name_cut.simplified();
+  triple_name_cut = triple_name_cut.simplified();
   triple_name_cut.replace("/","");
   triple_name_cut.replace(" ","");
 
@@ -4520,7 +4705,7 @@ bool US_Analysis_auto::file_loaded_auto( QMap < QString, QString > & triple_info
   qDebug() << "Triple filename: " << triple_information[ "filename" ];
   
   QDir directory (file_directory);
-  QStringList fm_files = directory.entryList( QStringList() << "2DSA-FM*" + triple_name_cut + "*.fitmen.dat", QDir::Files | QDir::NoSymLinks);
+  QStringList fm_files = directory.entryList( QStringList() << "2DSA*FM*" + triple_name_cut + "*.fitmen.dat", QDir::Files | QDir::NoSymLinks);
 
   qDebug() << "In file_loaded_auto: 22 -- triple: " << triple_name_cut;
 
@@ -4679,7 +4864,7 @@ void US_Analysis_auto::load_data_auto( const QString& text_content  )
    QString contents  = text_content;
    contents.replace( QRegExp( "[^0-9eE\\.\\n\\+\\-]+" ), " " );
 
-   QStringList lines = contents.split( "\n", QString::SkipEmptyParts );
+   QStringList lines = contents.split( "\n", Qt::SkipEmptyParts );
    QStringList parsed;
    v_meni.clear();
    v_bott.clear();
@@ -4689,7 +4874,7 @@ DbgLv(1) << "LD:  bott_fit" << bott_fit << "fname_load" << fname_load;
 
    for ( int ii = 0; ii < lines.size(); ii++ )
    {
-      QStringList values = lines[ ii ].split( ' ', QString::SkipEmptyParts );
+      QStringList values = lines[ ii ].split( ' ', Qt::SkipEmptyParts );
 
       int valsize        = values.size();
 DbgLv(1) << "LD:  ii" << ii << "valsize" << valsize;
@@ -4717,7 +4902,7 @@ DbgLv(1) << "LD:  ii" << ii << "valsize" << valsize;
          v_bott << rbott;
          v_rmsd << rmsdv;
 
-         parsed << QString().sprintf( "%3d : ", count ) +
+         parsed << QString::asprintf( "%3d : ", count ) +
                    QString::number( rmeni, 'f', 5 ) + ", " +
                    QString::number( rbott, 'f', 5 ) + ", " +
                    QString::number( rmsdv, 'f', 8 ); 
@@ -4729,7 +4914,7 @@ DbgLv(1) << "LD:  ii" << ii << "valsize" << valsize;
          v_meni << rmeni;
          v_rmsd << rmsdv;
 
-         parsed << QString().sprintf( "%3d : ", count ) +
+         parsed << QString::asprintf( "%3d : ", count ) +
                    QString::number( rmeni, 'f', 5 ) + ", " +
                    QString::number( rmsdv, 'f', 8 ); 
       }
@@ -5119,9 +5304,9 @@ void US_Analysis_auto::revert_autoflow_analysis_stages_record( const QString& re
 // Update an edit file with a new meniscus and/or bottom radius value
 void US_Analysis_auto::edit_update_auto( QMap < QString, QString > & triple_information )
 {
+
   /***/
   //ALEXEY: if autoflow: check if edit profiles already updated from other FITMEN session
-  
   QString requestID = triple_information[ "requestID" ];
   //--- LOCK && UPDATE the autoflowStages' ANALYSIS field for the record
   int status_fitmen_unique;
@@ -5133,12 +5318,12 @@ void US_Analysis_auto::edit_update_auto( QMap < QString, QString > & triple_info
     {
       QMessageBox::information( this,
 				tr( "FITMEN | Triple Analysis already processed" ),
-				tr( "It appears that FITMEN stage has already been processed by "
+				tr( "It appears that FITMEN stage has already been OR being processed by "
 				    "a different user from different session. \n\n"
 				    "The program will return to the autoflow runs dialog where "
 				    "you can re-attach to the actual current stage of the run. "));
       
-
+      
       emit analysis_back_to_initAutoflow( );
       //emit triple_analysis_processed( );
       //close();
@@ -5146,6 +5331,7 @@ void US_Analysis_auto::edit_update_auto( QMap < QString, QString > & triple_info
     }
   /****/
 
+  
 #define MENI_HIGHVAL 7.0
 #define BOTT_LOWVAL 7.0
    QString fn = filedir + "/" + fname_edit;
@@ -5209,8 +5395,8 @@ DbgLv(1) << " eupd:  fn" << fn;
      botnew = fit_xvl;
    }
 
-   QString s_meni = QString().sprintf( "%.5f", mennew );
-   QString s_bott = QString().sprintf( "%.5f", botnew );
+   QString s_meni = QString::asprintf( "%.5f", mennew );
+   QString s_bott = QString::asprintf( "%.5f", botnew );
 DbgLv(1) << " eupd:  s_meni s_bott" << s_meni << s_bott;
    QString mmsg   = "";
    QString mhdr   = "";
@@ -5263,6 +5449,17 @@ DbgLv(1) << " eupd:  s_meni s_bott" << s_meni << s_bott;
 
      return;
    }
+   
+   //Capture, when fit_men = NAN, for both SWL && MWL
+   if ( qIsNaN(mennew) )
+     {
+       fitmen_bad_vals = true;
+        QString reason_for_failure = "NaN meniscus position!";
+       triple_information[ "failed" ] = reason_for_failure;
+       delete_jobs_at_fitmen( triple_information );
+       return;
+     }
+   
    
    mmsg           = "";
 
@@ -5384,6 +5581,8 @@ DbgLv(1) << " eupd:   ixmlin ixblin" << ixmlin << ixblin << "ncmlin ncblin" << n
       tso << edtext;
       fileo.close();
 
+
+     
       // If using DB, update the edit record there
 
       if ( db_upd )
@@ -5404,7 +5603,7 @@ DbgLv(1) << " eupd:   ixmlin ixblin" << ixmlin << ixblin << "ncmlin ncblin" << n
      progress_msg_fmb->setWindowTitle( QString( tr("Updating Edit Profiles: %1")).arg( triple_information[ "triple_name" ] ));
      QFont font_d  = progress_msg_fmb->property("font").value<QFont>();
      QFontMetrics fm(font_d);
-     int pixelsWide = fm.width( progress_msg_fmb->windowTitle() );
+     int pixelsWide = fm.horizontalAdvance( progress_msg_fmb->windowTitle() );
      qDebug() << "Progress_msg_fmb: pixelsWide -- " << pixelsWide;
      progress_msg_fmb ->setMinimumWidth( pixelsWide*2 );
      progress_msg_fmb->adjustSize();
@@ -5553,6 +5752,7 @@ DbgLv(1) << " eupd:  write: fn" << fn;
 	   if (progress_msg_fmb != NULL )
 	     {
 	       progress_msg_fmb->setValue( jj );
+	       qApp->processEvents();
 	     }
 	     
 DbgLv(1) << " eupd:       call upd_db_ed";
@@ -5588,6 +5788,7 @@ DbgLv(1) << " eupd:       idEdit" << idEdit;
      {
        progress_msg_fmb->setValue( progress_msg_fmb->maximum() );  //ALEXEY -- bug fixed..
        progress_msg_fmb->close();
+       qApp->processEvents();
      }
 
    update_autoflowAnalysis_statuses( triple_information );
@@ -5756,7 +5957,7 @@ DbgLv(1) << "RmvMod:    arTime lArTime" << arTime << lArTime;
    }
 
    nlmods         = lMDescrs.size();
-   qSort( lMDescrs );
+   std::sort( lMDescrs.begin(), lMDescrs.end() );
 DbgLv(1) << "RmvMod: nlmods" << nlmods << "msetBase" << msetBase;
 
    for ( int ii = 0; ii < nlmods; ii++ )
@@ -5901,7 +6102,7 @@ DbgLv(1) << "RmvMod:  scn2 ii dmodDesc" << descript;
       }
 
       ndmods         = dMDescrs.size();
-      qSort( dMDescrs );
+      std::sort( dMDescrs.begin(), dMDescrs.end() );
 
       if ( dArTime > lArTime )      // Don't count any older group
          nlmods         = 0;
@@ -6403,4 +6604,14 @@ DbgLv(1) << "NIE: db_upd" << db_upd << "nlnois" << nlnois
  << "nieDescs-size" << nieDescs.size() << "nieIDs-size" << nieIDs.size();
 
    return;
+}
+
+void US_Analysis_auto::proceed_abde_to_report( QMap< QString, QString > & protocol_details_at_analysis )
+{
+  emit analysis_complete_auto( protocol_details_at_analysis );  
+}
+
+void US_Analysis_auto::back_to_initAutoflow( void )
+{
+  emit analysis_back_to_initAutoflow( );
 }

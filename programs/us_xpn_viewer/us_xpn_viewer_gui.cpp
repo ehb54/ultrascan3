@@ -22,20 +22,10 @@
 #include "us_images.h"
 #include "us_colorgradIO.h"
 #include "qwt_legend.h"
-
-
-#if QT_VERSION < 0x050000
-#define setSamples(a,b,c)  setData(a,b,c)
-#define setMinimum(a)      setMinValue(a)
-#define setMaximum(a)      setMaxValue(a)
-#define setSymbol(a)       setSymbol(*a)
-#define AXISSCALEDIV(a)    data_plot->axisScaleDiv(a)
-#define dPlotClearAll(a) a->clear()
-#else
 #include "qwt_picker_machine.h"
+
 #define AXISSCALEDIV(a)    (QwtScaleDiv*)&data_plot->axisScaleDiv(a)
 #define dPlotClearAll(a) a->detachItems(QwtPlotItem::Rtti_PlotItem,true)
-#endif
 
 #ifdef WIN32
 #include <float.h>
@@ -116,7 +106,7 @@ SpeedoMeter::SpeedoMeter( QWidget *parent ):
     
     QwtDialSimpleNeedle *needle = new QwtDialSimpleNeedle(
         QwtDialSimpleNeedle::Arrow, true, Qt::red,
-        QColor( Qt::gray ).light( 130 ) );
+        QColor( Qt::gray ).lighter( 130 ) );
     setNeedle( needle );
 }
 
@@ -1263,7 +1253,10 @@ void US_XpnDataViewer::reset_auto( void )
    cb_cellchn ->disconnect();
    cb_cellchn ->clear();
    le_dir     ->setText( currentDir );
-   le_runID   ->setText( runID );
+
+   //le_runID   ->setText( runID );
+   le_runID  ->setText_auto( runID );
+   
    //le_dbhost  ->setText( xpnhost + ":" + xpnport + "   (" + xpndesc + ")" );       //New
 
    //Also clear Wavelengths && Lambda ranges:
@@ -1643,7 +1636,7 @@ DbgLv(1) << "ec: ntriple" << ntriple << "trpsize" << triples.count() << "ktrip" 
    QStringList plrecs;
 
    for ( int jj = 0; jj < npoint; jj++ )
-      slrads << QString().sprintf( "%.3f", r_radii[ jj ] );
+      slrads << QString::asprintf( "%.3f", r_radii[ jj ] );
 
    for ( int jj = 0; jj < nlambda; jj++ )
       sllmbs << QString::number( lambdas[ jj ] );
@@ -2652,6 +2645,15 @@ void US_XpnDataViewer::check_for_sysdata( void )
 
   bool o_connection = true;
   int exp_status = CheckExpComplete_auto( RunID_to_retrieve, o_connection  );
+
+  //likely here...
+   if ( exp_status == 0 && !o_connection )
+     {
+       qDebug() << "Status 0 && no_connection... Exiting sys_data early...";
+       in_reload_check_sysdata   = false;
+       
+       return;
+     }
    
   if ( exp_status == 5 || exp_status == 0 )
     {
@@ -2843,13 +2845,48 @@ void US_XpnDataViewer::check_for_data( QMap < QString, QString > & protocol_deta
   //link->connectToServer( xpnhost, xpnmsgPort.toInt() );
   link = new Link( OptimaName );
 
-  //check connection to Optima server: if no -- reset all & go back to run manager
+  // //check connection to Optima server: if no -- reset all & go back to run manager
+  // if ( !check_sysdata_connection( ) )
+  //   {
+  //     reset_auto();
+  //     emit close_program(); 
+  //     return;
+  //   }
+  // If above socket conn. check does not work fof some reason:
+  bool o_connectivity = true;
+  int exp_status = CheckExpComplete_auto( RunID_to_retrieve, o_connectivity  );
+  qDebug() << "ENTRY POINT: Optims DB connection, exp_status, xpndesc: "
+	   << o_connectivity << exp_status << xpndesc;
   if ( !check_sysdata_connection( ) )
     {
+      qDebug() << "No connection, exit!";
+      QMessageBox msgBox_sys_data;
+      msgBox_sys_data.setIcon(QMessageBox::Critical);
+      msgBox_sys_data.setWindowFlags ( Qt::CustomizeWindowHint | Qt::WindowTitleHint);
+      msgBox_sys_data.setWindowTitle(tr("Optima System Data Server Connection Problem!"));
+      
+      QString msg_sys_text = QString(tr("Attention! UltraScan GMP is not able to communicate with the data acquisition server on the %1.\n\n "))
+	.arg(xpndesc);
+      QString msg_sys_text_info = QString(tr("The program will <b>Return</b> to \"Manage Optima Runs\" "
+					     "where you can re-attach to this run later "
+					     "by clicking \"Select Optima Run to follow\" once the network "
+					     "issue is resolved. UltraScan will then resume data acquisition.\n\n"
+					     "NOTE: If the network connection cannot be re-established to the ongoing run, " 
+					     "you can delete this run from the Run Manager (\"Delete Record\" button). "
+					     "The data will still be collected on the %1, "
+					     "but will need to be imported and processed manually at the end of the experiment."))
+	.arg(xpndesc);
+      
+      QPushButton *Accept_sys  = msgBox_sys_data.addButton(tr("Return"), QMessageBox::YesRole);
+      msgBox_sys_data.setText( msg_sys_text );
+      msgBox_sys_data.setInformativeText( msg_sys_text_info );
+      msgBox_sys_data.exec();
+      
       reset_auto();
       emit close_program(); 
       return;
     }
+
   
   //link = new Link();
   
@@ -3218,7 +3255,10 @@ void US_XpnDataViewer::retrieve_xpn_raw_auto( void )
 
    // Set the runID and directory
    runID       = new_runID;
-   le_runID->setText( runID );
+   
+   // le_runID->setText( runID );
+   le_runID->setText_auto ( runID );
+
    currentDir  = US_Settings::importDir() + "/" + runID;
    le_dir  ->setText( currentDir );
    qApp->processEvents();
@@ -3299,6 +3339,11 @@ DbgLv(1) << "RDa:      knt(triple)   " << xpn_data->countOf( "triple"    );
 
 	  if ( o_connection )
 	    experimentAborted  = true;
+	  else  //likely here...
+	    {
+	      in_reload_all_data   = false;  
+	      return;
+	    }
 	  
 	  timer_all_data_avail->stop();
 	  disconnect(timer_all_data_avail, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
@@ -5152,7 +5197,7 @@ void US_XpnDataViewer::exclude_scans()
       scan_knt++;
    }
 
-   qSort( excludes );
+   std::sort( excludes.begin(), excludes.end() );
    kscan      = nscan - excludes.count();
 DbgLv(1) << "Excl: kscan" << kscan;
    ct_from   ->disconnect();
@@ -5412,6 +5457,13 @@ DbgLv(1) << "RLd:       NO CHANGE";
 
 	  if ( statusExp == 0 && o_connection )
 	    experimentAborted  = true;
+
+	  //likely here...
+	  if ( statusExp == 0 && !o_connection )
+	    {
+	      in_reload_auto   = false; 
+	      return;
+	    }
 	  
 	  // if ( statusExp == 0 ) // If there is still connection, then exp. is truly aborted!!
 	  //   {
@@ -5633,7 +5685,7 @@ void US_XpnDataViewer::selectColorMap()
    // get an xml file name for the color map
    QString cmfpath = QFileDialog::getOpenFileName( this,
        tr( "Load Color Map File" ),
-       US_Settings::etcDir(), filter, 0, 0 );
+       US_Settings::etcDir(), filter );
 
    if ( cmfpath.isEmpty() )
         return;
@@ -6118,7 +6170,7 @@ DbgLv(1) << "  wavelen/speed/radpos:  " << wavelen
 
          for ( int jq = 0; jq < nwvlen; jq++, jv += nspeed )
          {  // append meniscus values for each column
-            outline       += "," + QString().sprintf( "%.3f", menrads[ jv ] );
+            outline       += "," + QString::asprintf( "%.3f", menrads[ jv ] );
          }
          outline       += "\n";
          datxto2 << outline;

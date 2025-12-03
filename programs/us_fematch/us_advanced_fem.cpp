@@ -8,7 +8,7 @@
 // constructor:  advanced analysis control widget
 US_AdvancedFem::US_AdvancedFem( US_Model* amodel,
    QMap< QString, QString >& adv_vals, QWidget* p ) :
-   US_WidgetsDialog( p, 0 ), parmap( adv_vals )
+   US_WidgetsDialog( p, Qt::WindowFlags() ), parmap( adv_vals )
 {
    model          = amodel;
    parentw        = p;

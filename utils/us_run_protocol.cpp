@@ -200,14 +200,14 @@ void US_RunProtocol::timeToString( double& sectime, QString& strtime )
    // timeToList( sectime, dhms );         //ALEXEY: bug!!!
    double sectime_to_list = sectime;
    timeToList( sectime_to_list, dhms );
-   strtime          = QString().sprintf( "%dd %02d:%02d:%02d",
+   strtime          = QString::asprintf( "%dd %02d:%02d:%02d",
                          dhms[ 0 ], dhms[ 1 ], dhms[ 2 ], dhms[ 3 ] );
 }
 
 // Function to convert from a time to "0d 00:06:30" type string
 void US_RunProtocol::timeToString( QTime& timeobj, int& days, QString& strtime )
 {
-   strtime          = QString().sprintf( "%dd %02d:%02d:%02d", days,
+   strtime          = QString::asprintf( "%dd %02d:%02d:%02d", days,
                          timeobj.hour(), timeobj.minute(), timeobj.second()  );
 }
 

@@ -36,25 +36,25 @@ int main( int argc, char* argv[] )
    return application.exec();  //!< \memberof QApplication
 }
 
-// qSort LessThan method for S_Solute sed
+// LessThan method for S_Solute sed
 bool distro_lessthan_s(const S_Solute &solu1, const S_Solute &solu2)
 {  // TRUE iff  (s1<s2) || (s1==s2 && d1<d2)
    return ( solu1.s < solu2.s );
 }
 
-// qSort LessThan method for S_Solute m.mass
+// LessThan method for S_Solute m.mass
 bool distro_lessthan_w(const S_Solute &solu1, const S_Solute &solu2)
 {
     return (solu1.w < solu2.w );
 }
 
-// qSort LessThan method for S_Solute frac
+// LessThan method for S_Solute frac
 bool distro_lessthan_k(const S_Solute &solu1, const S_Solute &solu2)
 {
     return (solu1.k < solu2.k );
 }
 
-// qSort LessThan method for S_Solute diff
+// LessThan method for S_Solute diff
 bool distro_lessthan_d(const S_Solute &solu1, const S_Solute &solu2)
 {
     return (solu1.d < solu2.d );
@@ -633,6 +633,7 @@ DbgLv(1) << "LD:  model:" << model.description;
    QString edir      = US_Settings::tmpDir();
    QString efname    = tsys.run_name + ".xml";
 
+   /****
    // Read in edit for this model
    US_DataIO::EditedData edata;
    US_DB2* dbP       = NULL;
@@ -671,6 +672,26 @@ DbgLv(1) << "LD:  edata: desc run cell chan"
    tsys.label    = edata.description + " (" + efname.section(".",0,0) + " "
            + efname.section(".",-5,-2) + " " + tsys.method + ")" + "[" + QString::number( alldis.size() ) + "]";
 
+   ****/
+     
+   //a new label
+   QString m_desc      = model.description;
+   QStringList m_desc_list = m_desc.split(".");
+   QString m_data_desc = model.dataDescrip;
+   QString t_label_from_model = m_data_desc;
+   t_label_from_model += " (" + m_desc_list[0] + " "
+           + m_desc_list[1] + " " + tsys.method + ")" + "[" + QString::number( alldis.size() ) + "]"; 
+
+   qDebug() << "t_label_from_model -- " << t_label_from_model;
+   tsys.label    = t_label_from_model;
+   
+   // qDebug() << "tsys.label from editD -- " << tsys.label;
+   // qDebug() << "t_label_from_model -- " << t_label_from_model;
+   // qDebug() << "desc / dataDescrip from model -- "
+   // 	    << model.description << " / "
+   // 	    << model.dataDescrip;
+
+   
    // Now, get associated solution,buffer values
    QString soluID;
    QString bvisc;
@@ -816,13 +837,13 @@ void US_Integral::sort_distro( QList< S_Solute >& listsols,
    // sort distro solute list depending on selected plot
    switch (this->plot_x)
    {
-      case ATTR_D: qSort ( listsols.begin(), listsols.end(), distro_lessthan_d);
+      case ATTR_D: std::sort ( listsols.begin(), listsols.end(), distro_lessthan_d);
          break;
-      case ATTR_W: qSort( listsols.begin(), listsols.end(), distro_lessthan_w);
+      case ATTR_W: std::sort( listsols.begin(), listsols.end(), distro_lessthan_w);
          break;
-      case ATTR_K: qSort( listsols.begin(), listsols.end(), distro_lessthan_k);
+      case ATTR_K: std::sort( listsols.begin(), listsols.end(), distro_lessthan_k);
          break;
-      case ATTR_S: qSort( listsols.begin(), listsols.end(), distro_lessthan_s);
+      case ATTR_S: std::sort( listsols.begin(), listsols.end(), distro_lessthan_s);
          break;
    }
 
@@ -1202,7 +1223,7 @@ DbgLv(1) << "WrCsv: fpath" << fpath;
    // Write data lines
    for ( int jj = 0; jj < vals1.size(); jj++ )
    {
-      QString line  = QString().sprintf(
+      QString line  = QString::asprintf(
          "\"%9.6e\",\"%6.4f\"\n", vals1[ jj ], vals2[ jj ] );
       line.replace( " ","" );
       ts << line;

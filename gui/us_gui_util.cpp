@@ -51,21 +51,9 @@ int US_GuiUtil::save_svg( const QString& filename, const QwtPlot* plot )
       int    res = qRound( px / in );
 
       // Generate the SVG file
-#if QT_VERSION < 0x050000
-      int    pw  = plot->width()  + res;
-      int    ph  = plot->height() + res;
-      QSvgGenerator generator;
-      generator.setResolution( res );
-      generator.setFileName  ( fnsvg );
-      generator.setSize      ( plot->size() );
-      generator.setViewBox   ( QRect( QPoint( 0, 0 ), QPoint( pw, ph ) ) );
-
-      plot->print( generator );
-#else
       QwtPlotRenderer pltrend;
       QSizeF psize   = plot->size();
       pltrend.renderDocument( (QwtPlot*)plot, fnsvg, psize, res );
-#endif
 
       // Compress it and save SVGZ file
       US_Gzip gz;

@@ -15,7 +15,6 @@
 //#include "us_license_t.h"
 //#include "us_license.h"
 
-
 class US_Edit : public US_Widgets
 {
    Q_OBJECT
@@ -27,22 +26,33 @@ class US_Edit : public US_Widgets
 	 US_Edit(QString auto_mode);
 
 	 US_Edit( QVector< US_DataIO::RawData > allData, QStringList  triples,
-		  QString  workingDir, int currChInd, int plotind );
+		  QString  workingDir, int currChInd, int plotind, QString exptype );
+
+         US_Edit( QVector< US_DataIO::RawData > allData, QStringList  triples,
+		  QString  workingDir, int currChInd, int plotind, QString exptype,
+		  QStringList editParms, QList<int> editParms_includes );
+
 
 	 //void us_mode_passed  ( void );
 	 //bool usmode;
 
 	 bool us_edit_auto_mode;
 	 bool us_edit_auto_mode_manual;
+         bool us_edit_auto_mode_manual_bll;
 	 bool all_loaded;
 	 bool is_spike_auto;
 	  
 
       private:
-	 US_Edit*              sdiag;
-	 
+	 US_Edit*       sdiag;
+         US_Edit*       sdiag_bll;
+         QWidget* upperWidget;
+         QWidget* leftWidget;
+         QWidget* rightWidget;	 
 
-      enum { MENISCUS, AIRGAP, RANGE, PLATEAU, BASELINE, FINISHED } step;
+         QPointF fixedPoint;
+         
+      enum { MENISCUS, AIRGAP, RANGE, PLATEAU, BASELINE, BASELINE_LINEAR_CORR, FINISHED } step;
 
       class Edits
       {
@@ -84,9 +94,16 @@ class US_Edit : public US_Widgets
       double             range_left;
       double             range_right;
       double             baseline;
-
+      double             bl_corr_left_x;
+      double             bl_corr_right_x;
+      double             bl_corr_left_y;
+      double             bl_corr_right_y;
+      double             bl_corr_slope;
+      double             bl_corr_yintercept; 
+  
       int                scanExcl_begin_ind;
       int                scanExcl_end_ind;
+      int                scanExcl_nth_ind;
 
       double             baseline_od;
       
@@ -98,6 +115,8 @@ class US_Edit : public US_Widgets
 
       QStringList        triple_info;
       QMap< QString, QStringList> editProfile;
+      QMap< QString, QMap <QString, QStringList>> editProfile_blc;
+      QMap< QString, QList<int>> editProfile_includes;
       QMap< QString, QStringList> editProfile_scans_excl;
       QMap< QString, bool> automatic_meniscus;
       QMap< QString, QString> manual_edit_comments;
@@ -177,6 +196,7 @@ class US_Edit : public US_Widgets
       QwtPlotCurve*      raw_curve;
       QwtPlotCurve*      fit_curve;
       QwtPlotCurve*      v_line;
+      QwtPlotCurve*      line_to_mouse;
       QwtPlotCurve*      minimum_curve;
       QwtPlotGrid*       grid;
       QwtPlotMarker*     marker;
@@ -193,7 +213,10 @@ class US_Edit : public US_Widgets
       QLabel*            lb_dataEnd;
       QLabel*            lb_meniscus;
       QLabel*            lb_airGap;
-
+      QLabel*            lb_baseline_correct;
+      QLabel*            lb_bll_slope;
+      QLabel*            lb_bll_intercept;
+  
       QLineEdit*         le_status;
       QLineEdit*         le_investigator;
       QLineEdit*         le_info;
@@ -205,7 +228,9 @@ class US_Edit : public US_Widgets
       QLineEdit*         le_plateau;
       QLineEdit*         le_baseline;
       QLineEdit*         le_edtrsp;
-                        
+      QLineEdit*         le_bll_slope;
+      QLineEdit*         le_bll_intercept;
+       
       QPushButton*       pb_details;
       QPushButton*       pb_report;
       QPushButton*       pb_exclude;
@@ -213,6 +238,7 @@ class US_Edit : public US_Widgets
       QPushButton*       pb_exclusion;
       QPushButton*       pb_include;
       QPushButton*       pb_edit1;
+      QPushButton*       pb_removeAllbutLast;
       QPushButton*       pb_meniscus;
       QPushButton*       pb_airGap;
       QPushButton*       pb_dataRange;
@@ -222,6 +248,8 @@ class US_Edit : public US_Widgets
       QPushButton*       pb_spikes;
       QPushButton*       pb_invert;
       QPushButton*       pb_write;
+      QPushButton*       pb_baseline_correct;
+      QPushButton*       pb_bll_modify;
 
       QPushButton*       pb_pass;
       QPushButton*       pb_emanual;
@@ -302,7 +330,7 @@ class US_Edit : public US_Widgets
 
       double             odlimit;
 
-      US_DB2*            dbP;
+      IUS_DB2*           dbP;
 
       QVector< double >  expd_radii;
       QVector< int >     expi_wvlns;
@@ -357,6 +385,7 @@ class US_Edit : public US_Widgets
       void plot_current      ( void );
       void plot_all          ( void );
       void plot_range        ( void );
+      void plot_range_and_blc( void );
       void plot_last         ( void );
       void plot_current      ( int  );
       void plot_scan         ( void );
@@ -386,9 +415,10 @@ class US_Edit : public US_Widgets
 
       static bool bool_flag( const QString );
       
-      void update_autoflow_record_atEditData( US_DB2*, QString& );
-      int  create_autoflowAnalysis_record( US_DB2*, QString&,  QString& );
-      void create_autoflowAnalysisStages_record( US_DB2*, int ); 
+      void update_autoflow_record_atEditData( IUS_DB2*, QString& );
+      void update_autoflow_record_atEditData_abde( IUS_DB2* );
+      int  create_autoflowAnalysis_record( IUS_DB2*, QString&,  QString& );
+      void create_autoflowAnalysisStages_record( IUS_DB2*, int );
       QString compose_json( bool );
 
       void delete_autoflow_record ( void );
@@ -401,12 +431,17 @@ class US_Edit : public US_Widgets
       bool isSet_edit_info_for_channel( QString, QString );
       void set_data_over_lamda();
       void xaxis_wavl_wgts_on( bool );
-      
+
+ // protected:
+ //    void resizeEvent(QResizeEvent *event) override;	
+						  
+
    private slots:         
       void load              ( void );
       void load_auto         ( QMap < QString, QString > & );
       void load_manual_auto  ( void );
-      
+      void onMouseMoved(const QPointF& mousePos);
+  
       void process_optics_auto ( void );
       
       QMap< QString, QString> read_autoflow_record( int );
@@ -429,6 +464,7 @@ class US_Edit : public US_Widgets
       void focus             ( int, int );
       
       void exclude_range     ( void );
+      void exclude_all_but_last( void );
       void exclusion         ( void );
       void update_excludes   ( QList< int > );
       void finish_excludes   ( QList< int > );
@@ -445,6 +481,7 @@ class US_Edit : public US_Widgets
       void set_airGap        ( void );
       void set_dataRange     ( void );
       void set_plateau       ( void );
+      void set_linear_baseline_corr( void );
       void mouse             ( const QwtDoublePoint& );
 
       void noise             ( void );
@@ -466,10 +503,11 @@ class US_Edit : public US_Widgets
       void setUnsetSaveBttn_abde( void );
   
       void manual_edit_auto  ( void );
+      void correct_bll_for_triple_auto( void );
       void write_auto        ( void );
       void write_triple_auto ( int );
       void write_mwl_auto    ( int );
-  QString get_rawDataGUID( US_DB2*, QString, QString );
+      QString get_rawDataGUID( IUS_DB2*, QString, QString );
       
       void review_edits      ( void );
       
@@ -499,12 +537,12 @@ class US_Edit : public US_Widgets
       void od_radius_limit   ( double );
       void progress_load     ( QString );
       int  write_xml_file    ( QString&, QString&, QString&, QString& );
-      int  write_edit_db     ( US_DB2*,
+      int  write_edit_db     ( IUS_DB2*,
                                QString&, QString&, QString&, QString& );
       int  index_data        ( int = -1 );
       int  index_data_auto   ( int, int = -1 );
       
-      int  like_edit_files   ( QString, QStringList&, US_DB2* );
+      int  like_edit_files   ( QString, QStringList&, IUS_DB2* );
       int  apply_edits       ( US_DataIO::EditValues parameters );
       int  lambdas_by_cell   ( int = -1 );
       double radius_indexed  ( const double );
@@ -543,8 +581,19 @@ class US_Edit : public US_Widgets
       void reset_outData     ( void );
       void close_edit        ( void );
       void pass_values       ( void );
-
+      void close_manual_edit ( void );
+      void pass_values_bll       ( void );
+      
       void update_triple_edit_params (  QMap < QString, QStringList > & );
+      void update_triple_edit_params_includes (  QMap< QString, QList<int> >  & );
+      void update_triple_edit_params_blc (  QMap < QString, QStringList > & );
+      void update_triple_edit_params_blc_modified (  QMap < QString, QStringList > & );
+  //void update_triple_edit_params_blc_modified_plot ( int  );
+      void restore_view( void );
+      void set_current_bll_abde( QString, QString );
+
+      // void resize_main( void );
+      // void trigger_resize(void);
       
       void help              ( void )
       { showHelp.show_help( "manual/us_edit.html" ); };
@@ -552,11 +601,18 @@ class US_Edit : public US_Widgets
  signals:
       void data_loaded( void );
       void edit_complete_auto( QMap< QString, QString> & );
+      void edit_complete_auto_abde( QMap< QString, QString> & );
       void back_to_initAutoflow( void );
 
       void pass_edit_params( QMap< QString, QStringList> & );
+      void pass_edit_params_includes( QMap< QString, QList<int> > & );
+      void pass_edit_params_blc( QMap< QString, QStringList> & );
+  //void pass_edit_params_blc_plot( int );
+      void restore_main_view( void );
       
       void process_next_optics( void );
+  //void man_data_loaded(void);
 };
 #endif
 
+ 

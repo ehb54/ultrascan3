@@ -2,10 +2,7 @@
 #include "us_constants.h"
 #include "us_gui_settings.h"
 #include "us_settings.h"
-#if QT_VERSION < 0x050000
-#define setMinimum(a)      setMinValue(a)
-#define setMaximum(a)      setMaxValue(a)
-#endif
+
 //!< level-conditioned debug print
 #define DbgLv(a) if(dbg_level>=a)qDebug()
 
@@ -351,6 +348,20 @@ US_SimParamsGui::US_SimParamsGui(
    main->addWidget( cnt_rinoise, row++, 7, 1, 1 );
    connect( cnt_rinoise, SIGNAL( valueChanged  ( double ) ), 
                          SLOT  ( update_rinoise( double ) ) );
+   
+   // constant baseline offset
+   QLabel* lb_baseline = us_label( tr( "Constant Baseline (Conc.):" ) );
+   main->addWidget( lb_baseline, row, 4, 1, 3 );
+
+   cnt_baseline = us_counter( 3, -10, 10, simparams.baseline );
+   cnt_baseline->setSingleStep    ( 0.01 );
+   cnt_baseline->setIncSteps( QwtCounter::Button1,   1 );
+   cnt_baseline->setIncSteps( QwtCounter::Button2,  10 );
+   cnt_baseline->setIncSteps( QwtCounter::Button3, 100 );
+
+   main->addWidget( cnt_baseline, row++, 7, 1, 1 );
+   connect( cnt_baseline, SIGNAL( valueChanged  ( double ) ), 
+                         SLOT  ( update_baseline( double ) ) );
   
    // Temperature
    QLabel* lb_temperature  = us_label( tr( "Temperature (%1):" )
@@ -489,6 +500,7 @@ void US_SimParamsGui::backup_parms( void )
    simparams_backup.rnoise            = simparams.rnoise;
    simparams_backup.tinoise           = simparams.tinoise;
    simparams_backup.rinoise           = simparams.rinoise;
+   simparams_backup.baseline          = simparams.baseline;
 }
 
 void US_SimParamsGui::revert( void )
@@ -524,6 +536,7 @@ void US_SimParamsGui::revert( void )
    simparams.lrnoise           = simparams_backup.lrnoise;
    simparams.tinoise           = simparams_backup.tinoise;
    simparams.rinoise           = simparams_backup.rinoise;
+   simparams.baseline          = simparams_backup.baseline;
    simparams.bottom_position   = simparams_backup.bottom_position;
 DbgLv(1) << "SPG: revert==";
 if(dbg_level>0)
@@ -920,6 +933,7 @@ void US_SimParamsGui::load( void )
       cnt_lrnoise         ->setValue( simparams.lrnoise           );
       cnt_tinoise         ->setValue( simparams.tinoise           );
       cnt_rinoise         ->setValue( simparams.rinoise           );
+      cnt_baseline        ->setValue( simparams.baseline          );
       cnt_temperature     ->setValue( simparams.temperature       );
 
       cmb_mesh            ->setCurrentIndex( (int)simparams.meshType );
@@ -1098,6 +1112,12 @@ void US_SimParamsGui::update_rinoise       ( double rinoise )
    report_mods();
 }
       
+void US_SimParamsGui::update_baseline       ( double baseline )
+{
+   simparams.baseline   = baseline;
+   report_mods();
+}
+      
 void US_SimParamsGui::update_moving        ( int grid )
 {
    simparams.gridType  = (US_SimulationParameters::GridType) grid;
@@ -1139,6 +1159,7 @@ void US_SimParamsGui::disconnect_all( )
    cnt_lrnoise         ->disconnect();
    cnt_tinoise         ->disconnect();
    cnt_rinoise         ->disconnect();
+   cnt_baseline        ->disconnect();
    cmb_mesh            ->disconnect();
    cmb_moving          ->disconnect();
 }
@@ -1185,6 +1206,8 @@ void US_SimParamsGui::reconnect_all( )
                                   SLOT  ( update_tinoise(        double ) ) );
    connect( cnt_rinoise,          SIGNAL( valueChanged  (        double ) ), 
                                   SLOT  ( update_rinoise(        double ) ) );
+   connect( cnt_baseline,         SIGNAL( valueChanged  (        double ) ), 
+                                  SLOT  ( update_baseline(       double ) ) );
    connect( cmb_mesh,             SIGNAL( activated  (           int ) ), 
                                   SLOT  ( update_mesh(           int ) ) );
    connect( cmb_moving,           SIGNAL( activated    (         int ) ), 

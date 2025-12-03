@@ -15,16 +15,8 @@
 #include "us_constants.h"
 #include "us_passwd.h"
 #include "us_report.h"
-#if QT_VERSION < 0x050000
-#define setSamples(a,b,c)  setData(a,b,c)
-#define setMinimum(a)      setMinValue(a)
-#define setMaximum(a)      setMaxValue(a)
-#define setSymbol(a)       setSymbol(*a)
-#define setStateMachine(a) setSelectionFlags(QwtPicker::RectSelection|QwtPicker::DragSelection)
-#else
 #include "qwt_picker_machine.h"
 #define canvasBackground() canvasBackground().color();
-#endif
 
 // main program
 int main( int argc, char* argv[] )
@@ -40,7 +32,7 @@ int main( int argc, char* argv[] )
    return application.exec();  //!< \memberof QApplication
 }
 
-// qSort LessThan method for S_Solute sort
+// LessThan method for S_Solute sort
 bool distro_lessthan( const S_Solute &solu1, const S_Solute &solu2 )
 {  // TRUE iff  (s1<s2) || (s1==s2 && k1<k2)
    return ( solu1.s < solu2.s ) ||
@@ -1048,15 +1040,9 @@ DbgLv(1) << "pl3d:    cblack" << cblack << "cwhite" << cwhite;
 
    // set up spectrogram data
    d_spectrogram = new QwtPlotSpectrogram();
-#if QT_VERSION < 0x050000
-   d_spectrogram->setData( US_SpectrogramData() );
-   spec_dat      = (US_SpectrogramData*)&d_spectrogram->data();
-   d_spectrogram->setColorMap( *colormap );
-#else
    spec_dat      = new US_SpectrogramData();
    d_spectrogram->setColorMap( ColorMapCopy( colormap ) );
    d_spectrogram->setData    ( spec_dat );
-#endif
    d_spectrogram->attach( data_plot );
 
    QwtDoubleRect drect;
@@ -1088,13 +1074,9 @@ DbgLv(1) << "pl3d:    cblack" << cblack << "cwhite" << cwhite;
    // Set color map and axis settings
    QwtScaleWidget *rightAxis = data_plot->axisWidget( QwtPlot::yRight );
    rightAxis    ->setColorBarEnabled( true );
-#if QT_VERSION < 0x050000
-   rightAxis    ->setColorMap( spec_dat->range(), d_spectrogram->colorMap() );
-#else
    rightAxis    ->setColorMap( spec_dat->range(),
                                ColorMapCopy( colormap ) );
    d_spectrogram->setColorMap( ColorMapCopy( colormap ) );
-#endif
    data_plot->setAxisTitle( QwtPlot::xBottom, xa_title );
    data_plot->setAxisTitle( QwtPlot::yLeft,   ya_title );
    data_plot->setAxisTitle( QwtPlot::yRight,  tr( "Partial Concentration" ) );
@@ -1564,7 +1546,7 @@ void US_GA_Initialize::load_color()
    // get an xml file name for the color map
    QString fname = QFileDialog::getOpenFileName( this,
       tr( "Load Color Map File" ),
-      US_Settings::etcDir(), filter, 0, 0 );
+      US_Settings::etcDir(), filter, nullptr );
 
    if ( fname.isEmpty() )
       return;
@@ -1759,7 +1741,7 @@ void US_GA_Initialize::sort_distro( QList< S_Solute >& listsols,
 
    // sort distro solute list by s,k values
 
-   qSort( listsols.begin(), listsols.end(), distro_lessthan );
+   std::sort( listsols.begin(), listsols.end(), distro_lessthan );
 
    // check reduce flag
 
@@ -2421,7 +2403,7 @@ DbgLv(1) << "gain: load_bins()";
          + tr( "Any files (*)" );
    QString fname  = QFileDialog::getOpenFileName( this,
       tr( "Load Solute Bin (GaDistro) File" ),
-      binfpath, filter, 0, 0 );
+      binfpath, filter );
 
    if ( fname.isEmpty() )
       return;

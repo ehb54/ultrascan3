@@ -14,7 +14,7 @@ US_AbstractRotorGui::US_AbstractRotorGui(
      bool signal_wanted,
      int  select_db_disk,
      US_Rotor::Rotor* dataIn 
-     ) : US_WidgetsDialog(0, 0), currentRotor( dataIn )
+     ) : US_WidgetsDialog(nullptr, Qt::WindowFlags()), currentRotor( dataIn )
 {
    this->setModal(true);
    this->signal = signal_wanted;
@@ -143,7 +143,7 @@ bool US_AbstractRotorGui::loadAbstractRotors( void )
       QString masterPW = pw.getPasswd();
       US_DB2 db( masterPW );
      
-      if ( db.lastErrno() != US_DB2::OK )
+      if ( db.lastErrno() != IUS_DB2::OK )
       {
          connect_error( db.lastError() );
          return( false );

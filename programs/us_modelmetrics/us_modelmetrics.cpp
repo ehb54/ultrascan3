@@ -2,9 +2,6 @@
 
 #include "us_modelmetrics.h"
 #include "us_gui_util.h"
-#if QT_VERSION < 0x050000
-#define setSamples(a,b,c)  setData(a,b,c)
-#endif
 
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug()
@@ -26,7 +23,7 @@ int main( int argc, char* argv[] )
    return application.exec();  //!< \memberof QApplication
 }
 
-// qSort LessThan method for S_Solute sort
+// LessThan method for S_Solute sort
 bool distro_lessthan( const S_Solute &solu1, const S_Solute &solu2 )
 {  // TRUE iff  (s1<s2) || (s1==s2 && k1<k2)
    return ( solu1.s < solu2.s ) ||
@@ -590,7 +587,7 @@ void US_ModelMetrics::reset( void )
    report_entry.d[1] = str.setNum(dval2, 'g', 4);
    report_entry.d[2] = str.setNum(dval3, 'g', 4);
 
-DbgLv(1) << "Dsettings: " << report_entry.d[0] <<report_entry.d[1] << report_entry.d[2] << endl;
+   DbgLv(1) << "Dsettings: " << report_entry.d[0] <<report_entry.d[1] << report_entry.d[2] << Qt::endl;
    pb_report->setEnabled( false );
    pb_write ->setEnabled( false );
    ct_dval1 ->setEnabled( false );
@@ -658,7 +655,7 @@ void US_ModelMetrics::sort_distro( QList< S_Solute >& listsols,
 
    // sort distro solute list by s,k values
 
-   qSort( listsols.begin(), listsols.end(), distro_lessthan );
+   std::sort( listsols.begin(), listsols.end(), distro_lessthan );
 
    // check reduce flag
 
@@ -825,7 +822,7 @@ void US_ModelMetrics::calc()
       xmax = rmax;
    }
    DbgLv(2) << "In calc: xmin: " << xmin << "xmax" << xmax;
-   qSort(temp_list.begin(), temp_list.end()); // sort the list so reduction works.
+   std::sort( temp_list.begin(), temp_list.end() ); // sort the list so reduction works.
    tc = 0.0;
    val1.parm = temp_list[0].parm;
    val1.conc = temp_list[0].conc;
@@ -1264,7 +1261,7 @@ void US_ModelMetrics::addReportItem( void )
 		QTextStream ts( &csv );
 		for ( int i = 0; i < hp_distro.size(); i++ )
 		{		
-			ts << hp_distro[i].parm << ", " << hp_distro[i].conc << endl;
+			ts << hp_distro[i].parm << ", " << hp_distro[i].conc << Qt::endl;
 		}
 	}	
 	csv.close();

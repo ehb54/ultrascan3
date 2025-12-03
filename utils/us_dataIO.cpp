@@ -8,6 +8,9 @@
 #include "us_util.h"
 #include "us_settings.h"
 
+// Static member definition
+const uint US_DataIO::format_version;
+
 // Return the count of readings points
 int US_DataIO::RawData::pointCount( )
 {
@@ -214,7 +217,7 @@ bool US_DataIO::readLegacyFile( const QString&  file,
 
    // Read scan parameters
    QString     sc = ts.readLine();
-   QStringList pp = sc.split( " ", QString::SkipEmptyParts );
+   QStringList pp = sc.split( " ", Qt::SkipEmptyParts );
 
    if ( pp.size() < 8 ) return false;
 
@@ -242,9 +245,9 @@ bool US_DataIO::readLegacyFile( const QString&  file,
    {
       sc = ts.readLine();
 
-      pp = sc.split( " ", QString::SkipEmptyParts );
+      pp = sc.split( " ", Qt::SkipEmptyParts );
       if ( pp.size() == 1 )
-         pp = sc.split( "\t", QString::SkipEmptyParts );
+         pp = sc.split( "\t", Qt::SkipEmptyParts );
       if ( pp.size() < 2 )
          break;
 
@@ -949,6 +952,13 @@ void US_DataIO::params( QXmlStreamReader& xml, EditValues& parameters )
          }
       }
 
+      else if ( xml.name() == "linear_baseline_correction" )
+	{
+	  QXmlStreamAttributes a = xml.attributes();
+	  parameters.bl_corr_slope      = a.value( "slope"  ).toString().toDouble();
+	  parameters.bl_corr_yintercept = a.value( "y_intercept" ).toString().toDouble();
+	}
+
       else if ( xml.name() == "od_limit" )
       {
          QXmlStreamAttributes a = xml.attributes();
@@ -1121,6 +1131,9 @@ int US_DataIO::loadData( const QString&         directory,
    ed.ODlimit     = ( ed.dataType == "RA"  ||  ed.dataType == "RI" ) ?
                     ev.ODlimit : 1e+99;
    ed.floatingData = ev.floatingData;
+
+   ed.bl_corr_slope = ev.bl_corr_slope;
+   ed.bl_corr_yintercept = ev.bl_corr_yintercept;
 //qDebug() << "dIO:ldEd: ed.descr" << ed.description
 // << "ed.wavelength" << ed.wavelength << "ed.dataType ed.ODlimit"
 // << ed.dataType << ed.ODlimit;

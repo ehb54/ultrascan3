@@ -100,7 +100,7 @@ double US_Math2::box_muller( double m, double s )
 //  such that 0.0 <= R < 1.0
 double US_Math2::ranf( void )
 {
-   return  (double)qrand() / ( (double)RAND_MAX + 1.0 );
+   return get_random_generator().generateDouble();
 }
 
 
@@ -799,6 +799,12 @@ double US_Math2::time_correction(
    return cc[ 0 ]; // Return the time value corresponding to zero omega2t
 }
 
+QRandomGenerator& US_Math2::get_random_generator()
+{
+   static QRandomGenerator randomGenerator;
+   return randomGenerator;
+}
+
 uint US_Math2::randomize( void )
 {
    QTime now = QTime::currentTime();
@@ -812,16 +818,20 @@ uint US_Math2::randomize( void )
    seed -= getpid();
 #endif
 
-   qsrand( seed );
+   get_random_generator().seed( seed );
    return seed;
 }
 
 uint US_Math2::randomize( uint seed )
 {
-   if ( seed == 0 ) 
+   if ( seed == 0 )
+   {
       seed = randomize();
+   }
    else
-      qsrand( seed );
+   {
+      get_random_generator().seed( seed );
+   }
 
    return seed;
 }

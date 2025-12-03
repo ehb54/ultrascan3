@@ -4,7 +4,7 @@
 
 #include <QtCore>
 #include "us_extern.h"
-#include "us_db2.h"
+#include "ius_db2.h"
 
 #define SUBT_SL   1
 #define SUBT_IS   2
@@ -47,11 +47,11 @@ class US_UTIL_EXTERN US_Model
             QString  xType;
             QString  yType;
             QString  zType;
+            QString  zVal;
             double   xMin;
             double   xMax;
             double   yMin;
             double   yMax;
-            double   zVal;
             int      xRes;
             int      yRes;
          };
@@ -111,13 +111,13 @@ class US_UTIL_EXTERN US_Model
       //! \param guid      - The guid of the model to be loaded
       //! \param db        - For DB access, pointer to open database connection
       //! \returns         - The \ref US_DB2 return code for the operation
-      int load( bool, const QString&, US_DB2* = 0 );
+      int load( bool, const QString&, IUS_DB2* = 0 );
 
       //! \brief An overloaded function to read a model from a database
       //! \param id        - Database ModelID
       //! \param db        - For DB access, pointer to open database connection
       //! \returns         - The \ref US_DB2 return code for the operation
-      int load( const QString&, US_DB2* ); 
+      int load( const QString&, IUS_DB2* );
 
 
       //! \brief An overloaded function to read a model from the disk
@@ -144,12 +144,12 @@ class US_UTIL_EXTERN US_Model
       //!                    be written if disk access is specified
       //! \param db        - For DB access, pointer to open database connection
       //! \returns         - The \ref US_DB2 return code for the operation
-      int write( bool, const QString&, US_DB2* = 0 );
+      int write( bool, const QString&, IUS_DB2* = 0 );
 
       //! \brief An overloaded function to write a model to the DB
       //! \param db        - A pointer to an open database connection 
       //! \returns         - The \ref US_DB2 return code for the operation
-      int write( US_DB2* );
+      int write( IUS_DB2* );
 
       //! \brief An overloaded function to write a model to a file on disk
       //! \param filename  - The filename to write
@@ -293,7 +293,7 @@ class US_UTIL_EXTERN US_Model
    private:
 
       //! \brief Load a model from the database
-      int  load_db         ( const QString&, US_DB2* );
+      int  load_db         ( const QString&, IUS_DB2* );
       //! \brief Load a model from a local disk file
       int  load_disk       ( const QString& );
       //! \brief Parse and load an initial concentration vector

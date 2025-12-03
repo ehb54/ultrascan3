@@ -21,10 +21,10 @@ US_ClipData::US_ClipData( double& concentration, double& radius,
    QLabel* lb_conc    = us_label ( tr( "Maximum Concentration:" ) );
 
    QString s;
-   s.sprintf( "%4.2f", loading );
+   s = QString::asprintf( "%4.2f", loading );
 
    QLabel* lb_loading = us_label( tr( "( Loading concentration: " )
-                        + QString().sprintf( "%4.2f" , loading ) + " )" );
+                        + QString::asprintf( "%4.2f" , loading ) + " )" );
 
    ct_conc = us_counter( 2, loading, conc, loading * 2 );
    ct_conc->setSingleStep( 0.1 );

@@ -72,15 +72,15 @@ bool US_Analyte::operator== ( const US_Analyte& a ) const
 int US_Analyte::load( 
       bool           db_access, 
       const QString& guid,
-      US_DB2*        db )
+      IUS_DB2*        db )
 {
    if ( db_access ) return load_db  ( guid, db );
    else             return load_disk( guid );
 }
 
-int US_Analyte::load_db( const QString& load_guid, US_DB2* db )
+int US_Analyte::load_db( const QString& load_guid, IUS_DB2* db )
 {
-   int error = US_DB2::OK;
+   int error = IUS_DB2::OK;
 
    // Get analyteID
    QStringList q( "get_analyteID" );
@@ -90,7 +90,7 @@ int US_Analyte::load_db( const QString& load_guid, US_DB2* db )
 DEBUG_QUERY;
    error = db->lastErrno();
   
-   if ( error != US_DB2::OK ) 
+   if ( error != IUS_DB2::OK )
    {
       message = QObject::tr( "Could not get analyteID" );    
       return error;
@@ -107,7 +107,7 @@ DEBUG_QUERY;
 DEBUG_QUERY;
    error = db->lastErrno();
 
-   if ( error != US_DB2::OK )
+   if ( error != IUS_DB2::OK )
    {
       message = QObject::tr( "Could not get analyte info" );
       return error;
@@ -189,12 +189,12 @@ DEBUG_QUERY;
    US_ExtProfile::fetch_eprofile( db, analyteID.toInt(), compType, valType, extinction );
    
    
-   return US_DB2::OK;
+   return IUS_DB2::OK;
 }
 
 int US_Analyte::load_disk( const QString& guid )
 {
-   int error = US_DB2::NO_ANALYTE;  // Error by default
+   int error = IUS_DB2::NO_ANALYTE;  // Error by default
    
    QString path;
 
@@ -253,7 +253,7 @@ int US_Analyte::read_analyte( const QString& filename )
    {
       qDebug() << "Cannot open file " << filename;
       message = QObject::tr( "Could not open analyte file for reading" );
-      return US_DB2::DBERROR;
+      return IUS_DB2::DBERROR;
    }
 
    double               freq;
@@ -365,12 +365,12 @@ int US_Analyte::read_analyte( const QString& filename )
       }
    }
 
-   return US_DB2::OK;
+   return IUS_DB2::OK;
 }
 
 void US_Analyte::nucleotide( void )
 {
-   sequence.toLower();
+   sequence = sequence.toLower();
 
    uint A = sequence.count( "a" );
    uint C = sequence.count( "c" );
@@ -493,7 +493,7 @@ bool US_Analyte::analyte_path( QString& path )
 int US_Analyte::write( 
       bool           db_access, 
       const QString& filename,
-      US_DB2*        db )
+      IUS_DB2*        db )
 {
    if ( db_access ) return write_db  ( db );
    else             return write_disk( filename );
@@ -507,7 +507,7 @@ int US_Analyte::write_disk( const QString& filename )
    {
       qDebug() << "Cannot open file for writing: " << filename;
       message = QObject::tr( "Cannot open file for writing" );
-      return US_DB2::DBERROR;
+      return IUS_DB2::DBERROR;
    }
 
    QXmlStreamWriter xml( &file );
@@ -638,10 +638,10 @@ int US_Analyte::write_disk( const QString& filename )
 
    file.close();
 
-   return US_DB2::OK;
+   return IUS_DB2::OK;
 }
 
-void US_Analyte::set_spectrum( US_DB2* db )
+void US_Analyte::set_spectrum( IUS_DB2* db )
 {
    QStringList q;
 
@@ -734,7 +734,7 @@ DEBUG_QUERY;
    }
 }
 
-int US_Analyte::write_db( US_DB2* db )
+int US_Analyte::write_db( IUS_DB2* db )
 {
 
    qDebug() << "Extinciton 1 : " << extinction.count();
@@ -747,7 +747,7 @@ int US_Analyte::write_db( US_DB2* db )
    if ( analyteGUID.size() != 36 ) 
    {
       message = QObject::tr ( "The analyte GUID is invalid" );  
-      return US_DB2::BADGUID;
+      return IUS_DB2::BADGUID;
    }
    
    q << "new_analyte" << analyteGUID;
@@ -760,7 +760,7 @@ int US_Analyte::write_db( US_DB2* db )
    db->query( q2 );
 DEBUG_QUERY;
 
-   if ( db->lastErrno() == US_DB2::OK )
+   if ( db->lastErrno() == IUS_DB2::OK )
    {
       db->next();
       analyteID = db->value( 0 ).toString();
@@ -817,7 +817,7 @@ DEBUG_QUERY;
 DEBUG_QUERY;
 
    int error = db->lastErrno();
-   if ( error != US_DB2::OK ) 
+   if ( error != IUS_DB2::OK )
    {
       message = QObject::tr ( "Could not update the DB" );
       return error;
@@ -881,7 +881,7 @@ DEBUG_QUERY;
    QString filename = get_filename( path, analyteGUID );
    write_disk( filename );
 
-   return US_DB2::OK;
+   return IUS_DB2::OK;
 }
 
 QString US_Analyte::get_filename( const QString& path, const QString& guid )
@@ -890,7 +890,7 @@ QString US_Analyte::get_filename( const QString& path, const QString& guid )
       US_DataFiles::get_filename( path, guid, "A", "analyte", "analyteGUID" );
 }
 
-void US_Analyte::write_nucleotide( US_DB2* db )
+void US_Analyte::write_nucleotide( IUS_DB2* db )
 {
    QStringList q;
    q << "set_nucleotide_info" << analyteID;
@@ -906,7 +906,7 @@ void US_Analyte::write_nucleotide( US_DB2* db )
 
    db->statusQuery( q );
 
-   if ( db->lastErrno() != US_DB2::OK ) 
+   if ( db->lastErrno() != IUS_DB2::OK )
       message = QObject::tr ( "Could not update nucleotide info" );
 }
 

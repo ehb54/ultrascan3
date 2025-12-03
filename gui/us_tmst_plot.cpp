@@ -9,15 +9,11 @@
 #include "us_constants.h"
 #include "us_images.h"
 #include "us_editor.h"
-#if QT_VERSION < 0x050000
-#define setSamples(a,b,c) setData(a,b,c)
-#endif
-
 #include <qwt_legend.h>
 
 // constructor:  residuals plot widget
 US_TmstPlot::US_TmstPlot( QWidget* parent, const QString tspath )
-   : US_WidgetsDialog( parent, 0 )
+   : US_WidgetsDialog( parent, Qt::WindowFlags() )
 {
    // Begin laying out the GUI
    setObjectName( "US_TmstPlot" );
@@ -361,6 +357,29 @@ QwtPlot* US_TmstPlot::rp_data_plot1( QString p_type )
 {
   //set to Temp. OR any other type
   cb_pltkey -> setCurrentIndex(cb_pltkey->findText( p_type ));
+
+  //reset fonts for title, axis titles
+  setStyleSheet("QWidget {font-size: 10pt};");
+  QFont font_c("Arial", 12);
+  QwtText p_title = data_plot1->title();
+  p_title.setFont( font_c );
+  data_plot1->setTitle( p_title );
+
+  QwtText xTitle = data_plot1->axisTitle(QwtPlot::xBottom);
+  xTitle.setFont( font_c );
+  data_plot1->setAxisTitle( QwtPlot::xBottom, xTitle );
+
+  QwtText yTitle = data_plot1->axisTitle(QwtPlot::yLeft);
+  yTitle.setFont( font_c );
+  data_plot1->setAxisTitle( QwtPlot::yLeft, yTitle );
+
+  QwtText zTitle = data_plot1->axisTitle(QwtPlot::yRight);
+  zTitle.setFont( font_c );
+  data_plot1->setAxisTitle( QwtPlot::yRight, zTitle );
+
+  data_plot1->replot();
+
+  
   return data_plot1;
 }
 
@@ -561,9 +580,9 @@ DbgLv(1) << "TP: det: lostep histep nstep" << lostep << histep << nstep
    {
       int stepnum    = lostep + js;
       int ispeed     = stspeeds[ js ];
-      dtext += QString().sprintf( "%5d   %5d %5d to %5d  %9.3f to %9.3f\n",
-                  stepnum, ispeed, stsscans[ js ], stescans[js],
-                  ststimes[ js ], stetimes[ js ] );
+      dtext += QString::asprintf( "%5d   %5d %5d to %5d  %9.3f to %9.3f\n",
+stepnum, ispeed, stsscans[ js ], stescans[js],
+ststimes[ js ], stetimes[ js ] );
 DbgLv(1) << "TP: det: step speed" << stepnum << ispeed
  << "scan_0 time_0 scan_n time_n"
  << stsscans[js] << ststimes[js] << stescans[js] << stetimes[js];

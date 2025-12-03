@@ -528,7 +528,7 @@ DbgLv(1) << "build_map:  ttag" << ttag << " path" << path;
             QXmlStreamAttributes a = xml.attributes();
             QString name   = a.value( "name"  ).toString();
             QString label  = a.value( "label" ).toString();
-            QString anum   = QString().sprintf( "%3.3i", kmap++ );
+            QString anum   = QString::asprintf( "%3.3i", kmap++ );
             QString akey   = anum + ":" + name;
 DbgLv(1) << "     b_m: name label" << name << label;
 
@@ -1136,9 +1136,8 @@ void US_Reporter::write_pdf()
 //   printer.setFullPage      ( true );
    printer.setCreator       ( "UltraScan" );
    printer.setDocName       ( QString( "report_composite.html" ) );
-   printer.setOrientation   ( QPrinter::Portrait );
-   printer.setPaperSize     ( QPrinter::A2 );
-//   printer.setPaperSize     ( QPrinter::Letter );
+   printer.setPageOrientation   ( QPageLayout::Portrait );
+   printer.setPageSize     ( QPageSize( QPageSize::A2 ) );
 
    QString       rpttext;
    QFile         fili( pagepath );
@@ -1155,7 +1154,7 @@ void US_Reporter::write_pdf()
    QDir::setCurrent( cmppath );
    QTextDocument document;
    document.setDefaultFont( QFont( "serif", 14 ) );
-   QSizeF pgsize = printer.paperSize( QPrinter::Point );
+   QSizeF pgsize = printer.pageLayout().pageSize().size( QPageSize::Point );
    document.setPageSize( pgsize );
    document.setHtml( rpttext );
    document.print( &printer );

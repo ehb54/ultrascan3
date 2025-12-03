@@ -5,10 +5,6 @@
 #include "us_settings.h"
 #include "us_csv_loader.h"
 #include <math.h>
-#if QT_VERSION < 0x050000
-#define setSamples(a,b,c) setData(a,b,c)
-#define setSymbol(a) setSymbol(*a)
-#endif
 
 int main (int argc, char* argv[])
 {
@@ -570,7 +566,7 @@ void US_Spectrum::fit()
    for (i=0; i< (unsigned int) v_basis.size(); i++)
    {
       results.push_back(100.0 * nnls_x[i]/fval);
-      // str.sprintf((v_basis[i].filenameBasis +": %3.2f%% (%6.4e)").toLocal8Bit().data(), results[i], nnls_x[i]);
+      // str = QString::asprintf( (v_basis[i].filenameBasis +": %3.2f%% (%6.4e)").toLocal8Bit().data(), results[i], nnls_x[i] );
       // lw_basis->item((int)i)->setText(str);
       lw_basis->item((int)i)->setText(str.arg(v_basis[i].header).
                                        arg(results.at(i), 0, 'f', 2).arg(nnls_x[i], 0, 'e'));
@@ -636,7 +632,7 @@ void US_Spectrum::fit()
    fval /= points;
    str = tr (" %1");
    le_rmsd->setText(str.arg(pow(fval, (float) 0.5), 0, 'e'));
-   // le_rmsd->setText(str.sprintf(" %3.2e", pow(fval, (float) 0.5)));
+   // le_rmsd->setText(QString::asprintf(" %3.2e", pow(fval, (float) 0.5)));
    resid_curve->setSamples(x, y, points);
    pen.setColor(Qt::yellow);
    pen.setWidth(2);

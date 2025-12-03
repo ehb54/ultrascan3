@@ -2,9 +2,6 @@
 #include "us_color.h"
 #include "us_gui_settings.h"
 #include "us_plot.h"
-#if QT_VERSION < 0x050000
-#define setSamples(a,b,c)  setData(a,b,c)
-#endif
 
 US_Color::US_Color( QWidget* w, Qt::WindowFlags flags ) 
    : US_Widgets( true, w, flags )
@@ -59,7 +56,7 @@ US_Color::US_Color( QWidget* w, Qt::WindowFlags flags )
   
   for ( int i = 1; i <= 15; i++ )   //set margin range from 2 to 30
   {  
-    s.sprintf( "%d  pixels", i * 2 );
+    s = QString::asprintf( "%d  pixels", i * 2 );
     cmbb_margin->insertItem( i - 1, s );
   }
 

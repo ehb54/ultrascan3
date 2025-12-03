@@ -7,7 +7,7 @@
 
 // Primary constructor to establish the dialog
 US_XpnRunRaw::US_XpnRunRaw( QString& runDesc, QStringList& rdLists ) 
-: US_WidgetsDialog( 0, 0 ), runDesc( runDesc ), rdLists( rdLists )
+: US_WidgetsDialog( nullptr, Qt::WindowFlags() ), runDesc( runDesc ), rdLists( rdLists )
 {
    setWindowTitle( tr( "Raw Optima postgreSQL database runs" ) );
 
@@ -86,7 +86,7 @@ qDebug() << "XRR:l_r:  ii rDesc" << ii << rDesc << "lD count" << lDesc.count();
       rirec.flscnf        = ( lDesc[ 7 ] == "1" );
       rirec.inscnf        = ( lDesc[ 8 ] == "1" );
       rirec.wascnf        = ( lDesc[ 9 ] == "1" );
-      rirec.runID         = QString().sprintf( "%s-run%d",
+      rirec.runID         = QString::asprintf( "%s-run%d",
                                rirec.expname.toLatin1().data(), rirec.dbId );
 qDebug() << "XRR:l_r:    runID" << rirec.runID;
 
@@ -175,9 +175,9 @@ void US_XpnRunRaw::populate_list()
    {
       QTableWidgetItem* item;
       RunInfo rr     = runInfo[ ii ];
-      QString sRunId = QString().sprintf( "%7d", rr.dbId  );
-      QString sExpId = QString().sprintf( "%7d", rr.expId );
-      QString sDknt  = QString().sprintf( "%7d", rr.dcount );
+      QString sRunId = QString::asprintf( "%7d", rr.dbId  );
+      QString sExpId = QString::asprintf( "%7d", rr.expId );
+      QString sDknt  = QString::asprintf( "%7d", rr.dcount );
 
       item           = new QTableWidgetItem( rr.runID );
       item->setFlags( item->flags() ^ Qt::ItemIsEditable );
@@ -267,9 +267,9 @@ qDebug() << "LimData:    krow" << krow;
    {
       QTableWidgetItem* item;
       RunInfo rr     = runInfo[ ii ];
-      QString sRunId = QString().sprintf( "%7d", rr.dbId  );
-      QString sExpId = QString().sprintf( "%7d", rr.expId );
-      QString sDknt  = QString().sprintf( "%7d", rr.dcount );
+      QString sRunId = QString::asprintf( "%7d", rr.dbId  );
+      QString sExpId = QString::asprintf( "%7d", rr.expId );
+      QString sDknt  = QString::asprintf( "%7d", rr.dcount );
 qDebug() << "LimData:    ii" << ii << "runID" << rr.runID;
 
       // Skip item if search text exists and runID does not contain it

@@ -1,81 +1,16 @@
 //! \file us_win_data.cpp
 
+#include <QString>
+#include <QObject>
+#include <us_win_data.h>
 /*! This namespace is used to configure data using C mechanisms instead
     of a large C++ constructor.  It is a convenience namespace used only
     by \ref US_Win.
 */
 namespace US_WinData
 {
-  enum
-  {
-    P_EXIT   = 4,
-    P_CONFIG = 300, P_EDIT,                     // Edit Menu
-
-    P_SECOND,       P_DCDT,                     // Velocity Menu
-    P_VHWE,         P_2DSA,         P_PCSA,
-    P_GAINIT,       P_DMGAINIT,     P_FEMA,
-    P_FEMSTAT,      P_PSEUDO3D,     P_GRIDEDIT,
-    P_RAMP,
-
-    P_EQGLOBFIT,                                // Equilibrium Menu
-
-    P_GLOBFITEQ,                                // Global Fit Menu
-
-    P_ABDE_FIT,     P_GETDATA,      P_CONVERT,      P_EXPORT,       P_CEXPERI,  // Utilities Menu
-    P_FDSMAN,       P_FITMEN,       P_COLORGRAD,
-    P_RPTGEN,       P_ROTORCAL,     P_LICENSE,
-    P_VHWCOMB,      P_DDCOMB,       P_INTCOMB,      P_GLOMODL,
-    P_LEGDATA,      P_VIEWXPN,      P_VIEWTMST,
-    P_DENSMTCH,     P_SPECFIT,      P_SPECDEC, P_PSEUDO_ABS,
-
-    P_VIEWMWL,      P_VIEWMSS,      P_MWSPECF,  // MultiWavelength Menu
-    P_MWFSIMU,
-
-    P_ASTFEM,       P_EQUILTIMESIM,             // Simulation Menu
-    P_SASSOC,       P_MODEL1,       P_MODEL2,
-    P_SOMO,         P_SOMOCONFIG,
-
-    P_GMPACQ,       P_PROTOCOL,     P_GMPRPT, P_ESIGN,    // GMP Menu
-    P_AUDIT,
-
-    P_RMSD,         P_INVESTIGATOR, P_BUFFER,   // Database Menu
-    P_VBAR,         P_MODEL,        P_MANAGEDATA,
-    P_MANAGESOLN,   P_MANAGEPROJ,   P_MANAGEROTOR,
-
-    P_END
-  };
-
-  /*!  \brief A structure to control launching of external processes within the
-              main UltraScan program
-
-         The process structure is a set of constants (with the exception
-         of currentRunCount.  It provides an ability to define data
-         associated with each individual process launched by \ref US_Win.
-         The variable p[] is an array of the structures.
-
-       \note
-         The index values in p[] must be placed in the same order as
-         defined in the P_ enum list.
-  */
-  struct processes
-  {
-    int       index;           //!< This member contains a constant P_ enum
-                               //!<  value.
-    int       maxRunCount;     //!< Maximum number of this process that can run
-                               //!<  simultaneously (1, for many processes).
-                               //!< A value of 0 indicates unlimited instances
-                               //!<  are allowed this is a constant.
-    int       currentRunCount; //!< The number of instances of this process
-                               //!<  currently active. Initialized to 0.
-    QString   name;            //!< The name of the executable process.
-    QString   loadingMsg;      //!< A constant message that is displayed on the
-                               //!<  status line when loading the process.
-    QString   runningMsg;      //!< A constant string that displays after the
-                               //!<  process has loaded.
-
-  }
   //! An array of processes
-  p[] =
+  Process p[] =
   {
     { P_CONFIG, 1, 0, "us_config",
       QObject::tr( "Loading Configuration" ),
@@ -404,50 +339,8 @@ namespace US_WinData
     { P_END, 0, 0, "", "", "" }
   };
 
-  // Help Functions
-
-  enum
-  {
-    HELP = 200,
-    HELP_REG,
-    HELP_HOME,
-    HELP_UPGRADE,
-    HELP_LICENSE,
-    HELP_ABOUT,
-    HELP_CREDITS,
-    HELP_NOTICES,
-    HELP_END
-  };
-
-  //! \enum help_type  The type of a call to help.
-  enum help_type
-  {
-    PAGE,      //!< A page in the local documentation
-    URL,       //!< A WWW external link viewed through a browser.
-    METHOD     //!< An interanl method of the \ref US_Win class.
-  };
-
-  /*! \brief A structure to control calls to help within the main UltraScan
-             program
-
-              The help_data structure is a set of constants used to display
-              different help pages.
-      \note   The index values in h[] must be placed in the same order as
-              defined in the HELP_ enum list.
-  */
-  struct help_data
-  {
-    int            index;   //!< A constant HELP_ enum value.
-    enum help_type type;    //!< The type of page corresponding to the
-                            //!<  help_type enum.
-    QString        loadMsg; //!< A constant message that is displayed on the
-                            //!<  status line when loading the help.
-    QString        url;     //!< The actual page to display. It is only valid
-                            //!<  for the PAGE and URL help types.
-
-  }
   //! An array of help_data
-  h[] =
+  help_data h[] =
   {
     { HELP,         PAGE,   QObject::tr( "Help..." ),
        "manual/index.html"                 },

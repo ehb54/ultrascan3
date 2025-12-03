@@ -17,17 +17,10 @@
 #include "us_constants.h"
 #include "us_simparms.h"
 #include "us_constants.h"
-#if QT_VERSION < 0x050000
-#define setSamples(a,b,c)  setData(a,b,c)
-#define setMinimum(a)      setMinValue(a)
-#define setMaximum(a)      setMaxValue(a)
-#define setSymbol(a)       setSymbol(*a)
-#endif
 
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug()
 #endif
-
 
 // Alternative Constructor (for autoflow )
 US_Buoyancy::US_Buoyancy( QString auto_mode ) : US_Widgets()
@@ -306,7 +299,7 @@ US_Buoyancy::US_Buoyancy( QString auto_mode ) : US_Widgets()
    QLabel* lb_fit_progress_bn = us_banner( tr( "Fitting" ) );
    specs->addWidget( lb_fit_progress_bn,  s_row++, 0, 1, 4 );
 
-   us_checkbox( tr( "[AUTO] Fit All Triples" ), ck_auto_fit, true );
+   us_checkbox( tr( "[AUTO] Fit All Triples" ), ck_auto_fit, false );
    connect( ck_auto_fit, SIGNAL( toggled     ( bool ) ),
 	    this,        SLOT  ( enblFitBtn  ( bool ) ) );
    specs->addWidget( ck_auto_fit,  s_row, 0, 1, 2 );
@@ -2597,11 +2590,7 @@ void US_Buoyancy::draw_gauss_envelope  ( QMap < QString, QStringList > peak_p )
   QString triple_n = cb_triple->itemText( current_triple );
   
   
-#if QT_VERSION < 0x050000
-  QwtScaleDiv* y_axis = data_plot->axisScaleDiv( QwtPlot::yLeft );
-#else
   QwtScaleDiv* y_axis = (QwtScaleDiv*)&(data_plot->axisScaleDiv( QwtPlot::yLeft ));
-#endif
   
   double padding = ( y_axis->upperBound() - y_axis->lowerBound() ) / 30.0;
 
@@ -2673,11 +2662,7 @@ void US_Buoyancy::draw_vline_auto( double radius, QString vline_number )
    r[ 0 ] = radius;
    r[ 1 ] = radius;
 
-#if QT_VERSION < 0x050000
-   QwtScaleDiv* y_axis = data_plot->axisScaleDiv( QwtPlot::yLeft );
-#else
    QwtScaleDiv* y_axis = (QwtScaleDiv*)&(data_plot->axisScaleDiv( QwtPlot::yLeft ));
-#endif
 
    double padding = ( y_axis->upperBound() - y_axis->lowerBound() ) / 30.0;
 
@@ -2708,11 +2693,7 @@ void US_Buoyancy::draw_vline( double radius )
    r[ 0 ] = radius;
    r[ 1 ] = radius;
 
-#if QT_VERSION < 0x050000
-   QwtScaleDiv* y_axis = data_plot->axisScaleDiv( QwtPlot::yLeft );
-#else
    QwtScaleDiv* y_axis = (QwtScaleDiv*)&(data_plot->axisScaleDiv( QwtPlot::yLeft ));
-#endif
 
    double padding = ( y_axis->upperBound() - y_axis->lowerBound() ) / 30.0;
 
@@ -2803,7 +2784,7 @@ void US_Buoyancy::save_auto( QString triple_n )
 void US_Buoyancy::write( void )
 {
    QString str, str2;
-   te = new US_Editor( US_Editor::LOAD, false, "results/*.rpt*", 0, 0 );
+   te = new US_Editor( US_Editor::LOAD, false, "results/*.rpt*", nullptr, Qt::WindowFlags() );
    te->e->setFontFamily("Arial");
    te->e->setFontPointSize( 13 );
    te->e->append("UltraScan Buoyant Density Equilibrium Analysis Report:\n");
@@ -2823,7 +2804,7 @@ void US_Buoyancy::write( void )
       te->e->append( "Meniscus position:\t" + str.setNum( dpoint[i].meniscus ) + " cm");
       te->e->append( "Bottom of cell:\t" + str.setNum( dpoint[i].bottom ) +
       " cm (Centerpiece bottom at rest: " + str2.setNum( dpoint[i].centerpiece ) + " cm)" );
-      te->e->append( "Temperature:\t" + str.setNum( dpoint[i].temperature ) + " °C");
+      te->e->append( "Temperature:\t" + str.setNum( dpoint[i].temperature ) + " ï¿½C");
       te->e->append( "Gradient-forming\nmaterial details:");
       te->e->append( "Molecular weight:\t" + str.setNum( dpoint[i].gradientMW ) + " g/mol" );
       te->e->append( "Loading density:\t" + str.setNum( dpoint[i].gradientC0 ) + " g/mol" );
@@ -2838,7 +2819,7 @@ void US_Buoyancy::write( void )
 void US_Buoyancy::write_auto( void )
 {
    QString str, str2;
-   te = new US_Editor( US_Editor::LOAD, false, "results/*.rpt*", 0, 0 );
+   te = new US_Editor( US_Editor::LOAD, false, "results/*.rpt*", nullptr, Qt::WindowFlags() );
    te->e->setFontFamily("Arial");
    te->e->setFontPointSize( 13 );
    te->e->append("UltraScan Buoyant Density Equilibrium Analysis Report:\n");

@@ -2,31 +2,6 @@
 
 #include "us_extinctfitter_gui.h"
 #include "us_gui_util.h"
-#if QT_VERSION < 0x050000
-#define setSamples(a,b,c) setData(a,b,c)
-#define setSymbol(a) setSymbol(*a)
-#endif
-
-//using namespace std;
-
-/*
-US_ExtinctFitter::US_ExtinctFitter(QVector <struct WavelengthScan> *temp_wls_v, double*& temp_guess, unsigned int& temp_order, unsigned int& temp_parameters, QString& temp_projectName, bool *temp_fitting_widget, bool bufferfit) : US_Minimize(temp_fitting_widget, true)
-{
-   guess = temp_guess;
-   parameters = temp_parameters;
-   order = temp_order;
-   wls_v = temp_wls_v;
-   runs = 0;
-   runs_percent = 0;
-
-   //pb_pause->hide();                // Test - edit what to show/hide, depending on the General/Buffer/Analyte Global Fit
-   //pb_resume->hide();
-   
-   projectName = temp_projectName;
-	connect(pb_overlays, SIGNAL(clicked()), SLOT(plot_overlays()));
-   connect(pb_residuals, SIGNAL(clicked()), SLOT(plot_residuals()));
-}
-*/
 
 US_ExtinctFitter::US_ExtinctFitter(QVector <struct WavelengthScan> *temp_wls_v, double*& temp_guess, unsigned int& temp_order, unsigned int& temp_parameters, QString& temp_projectName,  bool *temp_fitting_widget) : US_Minimize(temp_fitting_widget, true)
 {
@@ -100,15 +75,14 @@ void US_ExtinctFitter::startFit()
      return_value = Fit();
      if (return_value != 0)
      {
-		 QString str;
-     	 if (GUI)
-       {
-         QMessageBox message;
-			message.setWindowTitle(tr("Extinction Fitter:"));
-			//message.setText(tr("The program exited with a return\nvalue of" + str.sprintf("%d.", return_value)));
-       }
-		}
-	}
+        if (GUI)
+        {
+           QMessageBox message;
+           message.setWindowTitle(tr("Extinction Fitter:"));
+           //message.setText(tr("The program exited with a return\nvalue of" + QString::asprintf("%d.", return_value)));
+        }
+     }
+   }
 }
 
 bool US_ExtinctFitter::fit_init()
@@ -168,7 +142,6 @@ bool US_ExtinctFitter::fit_init()
 
 int US_ExtinctFitter::calc_model(double *guess_par)
 {
-	QString str;
    unsigned int j, k, point_counter=0;
    float gaussian;
    for (int i=0; i<(*wls_v).size(); i++)
@@ -187,7 +160,7 @@ int US_ExtinctFitter::calc_model(double *guess_par)
       }
    }
    function_evaluations++;
-   le_evaluations->setText(str.sprintf(" %d", function_evaluations));
+   le_evaluations->setText(QString::asprintf(" %d", function_evaluations));
    qApp->processEvents();
    if (aborted)
    {
@@ -196,7 +169,6 @@ int US_ExtinctFitter::calc_model(double *guess_par)
    return(0);
 
    /* //Polynomial fit:
-      QString str;
       unsigned int i, j, k, point_counter=0;
       float polynomial;
       for (i=0; i<(*wls_v).size(); i++)
@@ -213,7 +185,7 @@ int US_ExtinctFitter::calc_model(double *guess_par)
       }
       }
       function_evaluations++;
-      lbl_evaluations2->setText(str.sprintf(" %d", function_evaluations));
+      lbl_evaluations2->setText(QString::asprintf(" %d", function_evaluations));
       qApp->processEvents();
       if (aborted)
       {
@@ -272,46 +244,6 @@ int US_ExtinctFitter::calc_jacobian()
       return(-1);
    }
    return(0);
-
-   /* Jacobian for polynomial fit:
-      unsigned int i, j, k, point_counter=0;
-      float polynomial;
-      for (i=0; i<points; i++)
-      {
-      for (j=0; j<parameters; j++)
-      {
-      jacobian[i][j] = 0.0;
-      }
-      }
-      // y[i][j] = guess[i] * (a[0] + a[1] * x[i][j] + a[2] * x[i][j]^2 + ... + a[n] * x[i][j]^n)
-      for (i=0; i<(*wls_v).size(); i++)
-      {
-      for (j=0; j<points_per_dataset[i]; j++)
-      {
-      polynomial = 0.0;
-      for (k=0; k<order; k++)
-      {
-      polynomial += guess[(*wls_v).size() + k] * pow((*wls_v)[i].lambda[j], k);
-      }
-      // dy/dguess[i] = (a[0] + a[1] * x[i][j] + a[2] * x[i][j]^2 + ... + a[n] * x[i][j]^n)
-      jacobian[point_counter][i] = polynomial;
-      // dy/da[n] = guess[i] * x[i][j]^n
-      jacobian[point_counter][(*wls_v).size()] = guess[i];
-      for (k=1; k<order; k++)
-      {
-      jacobian[point_counter][(*wls_v).size() + k] = guess[i] * pow((*wls_v)[i].lambda[j], k);
-      }
-      point_counter++;
-      }
-      }
-      qApp->processEvents();
-      if (aborted)
-      return(-1);
-      }
-   return(0);
-*/
-
-   delete [] term;
 }
 
 void US_ExtinctFitter::cleanup()
@@ -382,17 +314,17 @@ void US_ExtinctFitter::plot_overlays()
       if (datasets - firstScan == 0)
       {
          numScans = 1;
-         s1.sprintf((tr("Overlays for fitted Scan %ld")).toLatin1().data(), firstScan);
+         s1 = QString::asprintf( (tr("Overlays for fitted Scan %ld")).toLatin1().data(), firstScan );
       }
       else if (datasets - firstScan < 5)
       {
          numScans = datasets - firstScan + 1;
-         s1.sprintf((tr("Overlays for fitted Scans %ld - %ld")).toLatin1().data(), firstScan, firstScan + numScans - 1);
+         s1 = QString::asprintf( (tr("Overlays for fitted Scans %ld - %ld")).toLatin1().data(), firstScan, firstScan + numScans - 1 );
       }
       else
       {
          numScans = 5;
-         s1.sprintf((tr("Overlays for fitted Scans %ld - %ld")).toLatin1().data(),  firstScan, firstScan+4);
+         s1 = QString::asprintf( (tr("Overlays for fitted Scans %ld - %ld")).toLatin1().data(),  firstScan, firstScan+4 );
       }
    }
    else
@@ -402,7 +334,7 @@ void US_ExtinctFitter::plot_overlays()
 	
 	//	qDebug() << "Starting plot overlay 1: "  ;
 
-   //s2.sprintf((tr("Optical Density")).toLatin1().data());
+   //s2 = QString::asprintf( (tr("Optical Density")).toLatin1().data() );
    s2 = tr("Optical Density");
    point_counter = 0;
    for (int i=0; i<(*wls_v).size(); i++)
@@ -550,24 +482,24 @@ void US_ExtinctFitter::plot_residuals()
       if (datasets - firstScan == 0)
       {
          numScans = 1;
-         s1.sprintf((tr("Residuals from fitted Scan %ld")).toLatin1().data(), firstScan);
+         s1 = QString::asprintf( (tr("Residuals from fitted Scan %ld")).toLatin1().data(), firstScan );
      }
       else if (datasets - firstScan < 5)
       {
          numScans = datasets - firstScan + 1;
-         s1.sprintf((tr("Residuals from fitted Scans %ld - %ld")).toLatin1().data(), firstScan, firstScan + numScans - 1);
+         s1 = QString::asprintf( (tr("Residuals from fitted Scans %ld - %ld")).toLatin1().data(), firstScan, firstScan + numScans - 1 );
       }
       else
       {
          numScans = 5;
-         s1.sprintf((tr("Residuals from fitted Scans %ld - %ld")).toLatin1().data(),  firstScan, firstScan+4);
+         s1 = QString::asprintf( (tr("Residuals from fitted Scans %ld - %ld")).toLatin1().data(),  firstScan, firstScan+4 );
       }
    }
    else
    {
       s1 = tr("Residuals");
    }
-   //s2.sprintf((tr("Optical Density Difference\n")).toLatin1().data());
+   //s2 = QString::asprintf( (tr("Optical Density Difference\n")).toLatin1().data() );
    s2 = tr("Optical Density Difference\n");
    point_counter = 0;
    for (int i=0; i<(*wls_v).size(); i++)

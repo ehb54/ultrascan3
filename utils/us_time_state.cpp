@@ -892,7 +892,7 @@ QString US_TimeState::last_error_message( )
 }
 
 // Static function to create a TMST record in the DB from a local file set
-int US_TimeState::dbCreate( US_DB2* dbP,
+int US_TimeState::dbCreate( IUS_DB2* dbP,
                             const int expID, const QString fpath )
 {
 int dbg_level=US_Settings::us_debug();
@@ -935,7 +935,7 @@ DbgLv(1) << "dbCreate: dbP fn ck" << dbP << tmst_fname << tmst_cksm;
                                    &xdefs, &cksumdb );
 //DbgLv(1) << "dbCreate:  dbExam stat" << stat << "tmstID expID"
 // << tmstID << expIDdb << "cksumdb" << cksumdb;
-   if ( stat == US_DB2::OK )
+   if ( stat == IUS_DB2::OK )
    {  // We have an already existing DB record, so check how it matches local
       if ( cksumdb == tmst_cksm )
       {  // Binary data appears to match, so check xml defs
@@ -972,7 +972,7 @@ DbgLv(1) << "dbCreate: dbP fn ck" << dbP << tmst_fname << tmst_cksm;
    query << "new_timestate" << idExp << tmst_fname << defs_ld;
    stat         = dbP->statusQuery( query );
    int nsrtID   = dbP->lastInsertID();
-   tmstID       = ( stat == US_DB2::OK  ||  stat == US_DB2::NOROWS )
+   tmstID       = ( stat == IUS_DB2::OK  ||  stat == IUS_DB2::NOROWS )
                 ? nsrtID : -4;
 //DbgLv(1) << "dbCreate:  new_timestate status" << stat
 // << "idExp tmstID nsrtID dsiz" << idExp << tmstID << nsrtID << defs_da.size();
@@ -981,7 +981,7 @@ DbgLv(1) << "dbCreate: dbP fn ck" << dbP << tmst_fname << tmst_cksm;
 }
 
 // Static function to delete a TMST record from the DB
-int US_TimeState::dbDelete( US_DB2* dbP, const int tmstID )
+int US_TimeState::dbDelete( IUS_DB2* dbP, const int tmstID )
 {
 int dbg_level=US_Settings::us_debug();
 DbgLv(1) << "dbDelete: dbP tmstID" << dbP << tmstID;
@@ -993,7 +993,7 @@ DbgLv(1) << "dbDelete: dbP tmstID" << dbP << tmstID;
 }
 
 // Static function to examine a TMST record from the DB
-int US_TimeState::dbExamine( US_DB2* dbP, int* tmstIdP, int* expIdP,
+int US_TimeState::dbExamine( IUS_DB2* dbP, int* tmstIdP, int* expIdP,
       QString* fnameP, QString* xdefsP, QString* cksumP, QDateTime* lastupdP )
 {
 int dbg_level=US_Settings::us_debug();
@@ -1002,7 +1002,7 @@ DbgLv(1) << "dbExamine: dbP tmstID expID fname xdefs cksum lastupd"
    QStringList query;
    int tmstID    = ( tmstIdP == NULL ) ? 0 : *tmstIdP;
    int expID     = ( expIdP  == NULL ) ? 0 : *expIdP;
-   int status    = US_DB2::OK;
+   int status    = IUS_DB2::OK;
 DbgLv(1) << "dbExamine: tmstID expID" << tmstID << expID;
 
    if ( tmstID > 0 )
@@ -1012,7 +1012,7 @@ DbgLv(1) << "dbExamine: tmstID expID" << tmstID << expID;
       dbP->query( query );
       status        = dbP->lastErrno();
 DbgLv(1) << "dbExamine:  get_timestate tmstID" << tmstID << "status" << status;
-      if ( status != US_DB2::OK )
+      if ( status != IUS_DB2::OK )
          return status;
 
 //int nrows=dbP->numRows();
@@ -1035,7 +1035,7 @@ DbgLv(1) << "dbExamine:  get_timestate tmstID" << tmstID << "status" << status;
       dbP->query( query );
       status        = dbP->lastErrno();
 DbgLv(1) << "dbExamine:  get_experiment_timestate expID status" << expID << status;
-      if ( status != US_DB2::OK )
+      if ( status != IUS_DB2::OK )
          return status;
 
 //int nrows=dbP->numRows();
@@ -1054,7 +1054,7 @@ DbgLv(1) << "dbExamine:  get_experiment_timestate   tmstID" << tmstID
 
    else
    {  // Neither tmstID nor expID given
-      return US_DB2::NO_EXPERIMENT;
+      return IUS_DB2::NO_EXPERIMENT;
    }
 
    if ( fnameP != NULL )    // Return file name if requested
@@ -1077,7 +1077,7 @@ DbgLv(1) << "dbExamine:  get_experiment_timestate   tmstID" << tmstID
 }
 
 // Static function to download a TMST binary data record from the DB
-int US_TimeState::dbDownload( US_DB2* dbP, const int tmstID,
+int US_TimeState::dbDownload( IUS_DB2* dbP, const int tmstID,
       const QString fpath )
 {
 int dbg_level=US_Settings::us_debug();
@@ -1088,7 +1088,7 @@ DbgLv(1) << "dbDownload: dbP tmstID fpath" << dbP << tmstID << fpath;
 }
 
 // Static function to upload a TMST binary data record to the DB
-int US_TimeState::dbUpload( US_DB2* dbP, const int tmstID,
+int US_TimeState::dbUpload( IUS_DB2* dbP, const int tmstID,
       const QString fpath )
 {
 int dbg_level=US_Settings::us_debug();
@@ -1099,7 +1099,7 @@ DbgLv(1) << "dbUpload: dbP tmstID fpath" << dbP << tmstID << fpath;
 }
 
 // Static function to synchronze a TMST in the DB to a local file
-bool US_TimeState::dbSyncToLF( US_DB2* dbP, const QString fpath,
+bool US_TimeState::dbSyncToLF( IUS_DB2* dbP, const QString fpath,
                               const int expID )
 {
 int dbg_level=US_Settings::us_debug();
@@ -1128,7 +1128,7 @@ DbgLv(1) << "dbSTLF: dbExamine statD=" << statD << "tmstID=" << tmstID
  << "cksumD" << cksumD << "drecUpd" << drecUpd.toString();
    
    // Not possible to create a new file if DB record is bad or missing
-   if ( statD != US_DB2::OK  )
+   if ( statD != IUS_DB2::OK  )
       return newfile;
 
    // Now check any existing TimeState file
@@ -1164,7 +1164,7 @@ DbgLv(1) << "dbSTLF:  NEEDF=" << needF;
    if ( needF )
    {  // We need a (new) local file copy
       int stat    = dbDownload( dbP, tmstID, fpath );
-      newfile     = ( stat == US_DB2::OK );
+      newfile     = ( stat == IUS_DB2::OK );
       QString xfpath = QString( fpath ).replace( ".tmst", ".xml" );
 
       // Write the xdefs xml sibling file
@@ -1388,7 +1388,7 @@ int US_TimeState::key_parameters( const QString key,
    {
       status       = 901;
       set_error( status );
-      error_msg   += key + QString().sprintf( " %d %d %d", rfmt, rlen, roff );
+      error_msg   += key + QString::asprintf( " %d %d %d", rfmt, rlen, roff );
 DbgLv(1) << "DtsF:       message" << error_msg;
 DbgLv(1) << "DtsF: keyx" << keyx << "fmt" << fmt << "ftst" << ftst
  << "keys sz" << keys.count() << "fmts sz" << fmts.count();

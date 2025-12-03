@@ -21,7 +21,7 @@ Link::Link( QString alias )
   connected_itself    = false;
   
   QString client_name = alias;
-  client_name.simplified();
+  client_name = client_name.simplified();
   client_name.replace(" ", "");
   client_name = client_name.toLower();
   
@@ -56,6 +56,30 @@ bool Link::connectToServer( const QString& host, const int port )
       //server.write("***qsslsocket_client_example sent this nothing command***\n");
       //status_ok = true;
       status_ok = server.waitForReadyRead(30000);
+    }
+  else
+    {
+      qDebug("Unable to connect to server");
+      //exit(0);
+    }
+
+  return status_ok;
+}
+
+bool Link::connectToServer_init_check( const QString& host, const int port )
+{
+  bool status_ok = false;
+
+  // if ( !QDir( certPath ).exists() )
+  //   return status_ok;
+
+  
+  server.connectToHostEncrypted(host, port);
+  if (server.waitForEncrypted(3000))
+    {
+      //server.write("***qsslsocket_client_example sent this nothing command***\n");
+      //status_ok = true;
+      status_ok = server.waitForReadyRead(3000);
     }
   else
     {

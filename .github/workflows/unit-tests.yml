@@ -1,0 +1,147 @@
+name: "Unit Tests"
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      test_filter:
+        description: 'Test filter pattern (optional)'
+        required: false
+        default: ''
+      debug_mode:
+        description: 'Enable debug mode'
+        required: false
+        default: false
+        type: boolean
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref_name || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  changed-files:
+    runs-on: ubuntu-latest  # windows-latest || macos-latest
+    name: Get changed files
+    permissions:
+      pull-requests: read
+    outputs:
+      # reference: https://github.com/tj-actions/changed-files#outputs-
+      relevant: ${{ steps.changed-files.outputs.relevant_any_modified == 'true' }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
+      - name: Get changed files
+        if: ${{ !( github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' ) || !env.ACT }}
+        id: changed-files
+        uses: tj-actions/changed-files@v47
+        with:
+          files_yaml: |
+            relevant:
+              - .github/workflows/unit-tests.yml
+              - utils/**.c
+              - utils/**.cpp
+              - utils/**.h
+              - utils/**.hpp
+              - utils/CMakeLists.txt
+              - test/**
+              - '**/*.json'
+              - admin/cmake/**
+              - admin/test/**
+              - test-docker.sh
+              - CMakeLists.txt
+  
+
+  unit-testing:
+    needs: changed-files
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'  || github.event.act == 'true' || needs.changed-files.outputs.relevant == 'true' }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
+
+      - name: Verify Docker is available
+        run: |
+          docker --version
+          docker info
+
+      - name: Make test script executable
+        run: chmod +x test-docker.sh
+
+      - name: Run unit tests
+        run: |
+          # Use workflow inputs if provided, otherwise use defaults
+          ARGS="--quick --save-logs --stats"
+          
+          if [ "${{ github.event.inputs.debug_mode }}" == "true" ]; then
+            ARGS="$ARGS --debug"
+          fi
+          
+          if [ -n "${{ github.event.inputs.test_filter }}" ]; then
+            ARGS="$ARGS --filter '${{ github.event.inputs.test_filter }}'"
+          fi
+          
+          ./test-docker.sh $ARGS
+
+      - name: Upload test logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-logs-${{ github.run_number }}
+          path: |
+            test-log-*.txt
+            build.log
+            configure.log
+            test_output.log
+            build-docker/test-log-*.txt
+            build-docker/configure.log
+            build-docker/build.log
+            build-docker/test_output.log
+          retention-days: 14
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ github.run_number }}
+          path: |
+            build-docker/Testing/
+            build-docker/test_output.log
+            build-docker/configure.log
+            build-docker/build.log
+            build-docker/test-log-*.txt
+            test-log-*.txt
+            build.log
+            configure.log
+            test_output.log
+          retention-days: 7
+          if-no-files-found: ignore
+
+  check-status:
+    if: always()
+    needs: [ unit-testing ]
+    name: Check Unit testing job statuses
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check statuses
+        run: |
+          RESULTS='${{ toJson(needs) }}'
+          # Check for failures
+          if echo $RESULTS | grep -q '"result": "failure"'; then
+            echo "At least one Unit testing job failed."
+            exit 1
+          fi
+          # Check for cancelled jobs
+          if echo $RESULTS | grep -q '"result": "cancelled"'; then
+            echo "At least one Unit testing job was cancelled."
+            exit 1
+          fi
+          echo "All Unit testing jobs completed successfully or were skipped."
+          exit 0

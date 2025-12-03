@@ -12,14 +12,6 @@
 #include "us_crypto.h"
 #include "us_select_item.h"
 #include "us_images.h"
-//#include "us_select_item.h"
-
-#if QT_VERSION < 0x050000
-#define setSamples(a,b,c)  setData(a,b,c)
-#define setMinimum(a)      setMinValue(a)
-#define setMaximum(a)      setMaxValue(a)
-#define QRegularExpression(a)  QRegExp(a)
-#endif
 
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug()
@@ -129,7 +121,7 @@ US_ProtocolDevMain::US_ProtocolDevMain() : US_Widgets()
   QFont font_t = tabWidget->property("font").value<QFont>();
   qDebug() << font_t.family() << font_t.pointSize();
   QFontMetrics fm_t(font_t);
-  int pixelsWide = fm_t.width("Manage Optima Runs");
+  int pixelsWide = fm_t.horizontalAdvance("Manage Optima Runs");
   
   qDebug() << "FONT_T: fm_t.width() -- " <<  pixelsWide;
   cornerWidget->setMinimumWidth( pixelsWide );
@@ -142,7 +134,7 @@ US_ProtocolDevMain::US_ProtocolDevMain() : US_Widgets()
   qDebug() << "TabWidget->tabBar position: " << tabWidget->tabBar()->x() << tabWidget->tabBar()->y();
   qDebug() << "TabWidget->tabBar size    : " << tabWidget->tabBar()->width() << tabWidget->tabBar()->height();
   
-  int pos_x_offset = fm_t.width("M");
+  int pos_x_offset = fm_t.horizontalAdvance("M");
   int pos_x = tabWidget->tabBar()->x() + pos_x_offset*1.2;
   //int pos_x = (tabWidget->tabBar()->width())/4;
   int pos_y = (tabWidget->tabBar()->height())*1.12;
@@ -193,6 +185,7 @@ US_ProtocolDevMain::US_ProtocolDevMain() : US_Widgets()
   //connect( epanExp, SIGNAL( switch_to_editing( QMap < QString, QString > & ) ),  this, SLOT( switch_to_editing ( QMap < QString, QString > & )  ) );
   
   connect( epanExp, SIGNAL( switch_to_live_update( QMap < QString, QString > &) ), this, SLOT( switch_to_live_update( QMap < QString, QString > & )  ) );
+  connect( epanExp, SIGNAL( switch_to_import( QMap < QString, QString > &) ), this, SLOT( switch_to_post_processing( QMap < QString, QString > & )  ) );
   connect( this   , SIGNAL( pass_to_live_update( QMap < QString, QString > &) ),   epanObserv, SLOT( process_protocol_details( QMap < QString, QString > & )  ) );
   connect( epanExp, SIGNAL( to_autoflow_records( ) ), this, SLOT( to_autoflow_records( ) ) );
   
@@ -356,7 +349,7 @@ void US_ProtocolDevMain::show_liveupdate_finishing_msg( void )
    msg_liveupdate_finishing->setIcon(QMessageBox::Information);
   
    msg_liveupdate_finishing->setWindowFlags ( Qt::CustomizeWindowHint | Qt::WindowTitleHint | Qt::WindowStaysOnTopHint);
-   msg_liveupdate_finishing->setStandardButtons(0);
+   msg_liveupdate_finishing->setStandardButtons( QMessageBox::NoButton );
    msg_liveupdate_finishing->setWindowTitle(tr("Updating..."));
    msg_liveupdate_finishing->setText(tr( "Finishing LIVE UPDATE processes... Please wait...") );
    msg_liveupdate_finishing->setStyleSheet("background-color: #36454f; color : #D3D9DF;");
@@ -385,7 +378,7 @@ void US_ProtocolDevMain::show_analysis_update_finishing_msg( void )
    msg_analysis_update_finishing->setIcon(QMessageBox::Information);
   
    msg_analysis_update_finishing->setWindowFlags ( Qt::CustomizeWindowHint | Qt::WindowTitleHint | Qt::WindowStaysOnTopHint);
-   msg_analysis_update_finishing->setStandardButtons(0);
+   msg_analysis_update_finishing->setStandardButtons( QMessageBox::NoButton );
    msg_analysis_update_finishing->setWindowTitle(tr("Updating..."));
    msg_analysis_update_finishing->setText(tr( "Finishing ANALYSIS UPDATE processes... Please wait...") );
    msg_analysis_update_finishing->setStyleSheet("background-color: #36454f; color : #D3D9DF;");
@@ -472,7 +465,7 @@ void US_ProtocolDevMain::define_new_experiment( QMap < QString, QString > & prot
 
    
    msg_expsetup->setWindowFlags ( Qt::CustomizeWindowHint | Qt::WindowTitleHint | Qt::WindowStaysOnTopHint);
-   msg_expsetup->setStandardButtons(0);
+   msg_expsetup->setStandardButtons( QMessageBox::NoButton );
    msg_expsetup->setWindowTitle(tr("Updating..."));
    msg_expsetup->setText(tr( "Setting up EXPERIMENT panel... Please wait...") );
    msg_expsetup->setStyleSheet("background-color: #36454f; color : #D3D9DF;");
@@ -607,7 +600,7 @@ void US_ProtocolDevMain::switch_to_analysis( QMap < QString, QString > & protoco
   msg_analysissetup->setIcon(QMessageBox::Information);
 
   msg_analysissetup->setWindowFlags ( Qt::CustomizeWindowHint | Qt::WindowTitleHint | Qt::WindowStaysOnTopHint);
-  msg_analysissetup->setStandardButtons(0);
+  msg_analysissetup->setStandardButtons( QMessageBox::NoButton );
   msg_analysissetup->setWindowTitle(tr("Updating..."));
   msg_analysissetup->setText(tr( "Generating triple list for ANALYSIS... Please wait...") );
   msg_analysissetup->setStyleSheet("background-color: #36454f; color : #D3D9DF;");
@@ -681,7 +674,7 @@ void US_ProtocolDevMain::call_AutoflowDialogue( void )                          
 //////////////////////////////////////////////////////////////////////////////////////////
 //New Initial Decision-making Tab:
 US_InitDialogueGui::US_InitDialogueGui( QWidget* topw )
-   : US_WidgetsDialog( topw, 0 )
+   : US_WidgetsDialog( topw, Qt::WindowFlags() )
 {
    mainw               = (US_ProtocolDevMain*)topw;
 
@@ -842,7 +835,7 @@ void US_InitDialogueGui::load_autoflowHistory_dialog( void )
   
   QString autoflow_btn = "AUTOFLOW_GMP_REPORT";
 
-  pdiag_autoflowHistory = new US_SelectItem( autoflowdataHistory, hdrs, pdtitle, &prx, autoflow_btn, -3 );
+  pdiag_autoflowHistory = new US_SelectItem( autoflowdataHistory, hdrs, pdtitle, &prx, autoflow_btn, -4 );
   
   QString autoflow_id_selected("");
   if ( pdiag_autoflowHistory->exec() == QDialog::Accepted )
@@ -1101,6 +1094,9 @@ void US_InitDialogueGui::initRecordsDialogue( void )
   QString analysisIDs  = protocol_details[ "analysisIDs" ];
   QString statusID     = protocol_details[ "statusID" ];
   QString failedID     = protocol_details[ "failedID" ];
+
+  QString dataSource   = protocol_details[ "dataSource" ];
+  QString filenameProtDevDataDisk = protocol_details[ "filenameProtDevDataDisk" ];
     
   QDir directory( currDir );
   
@@ -1115,7 +1111,8 @@ void US_InitDialogueGui::initRecordsDialogue( void )
   qDebug() << "statusID: "      << protocol_details[ "statusID" ];
   qDebug() << "failedID: str, INT --  "
 	   << protocol_details[ "failedID" ]
-	   << protocol_details[ "failedID" ].toInt();  
+	   << protocol_details[ "failedID" ].toInt();
+  qDebug() << "dataSource -- " << dataSource;
 
 
   //Re-attachment to FAILED GMP run
@@ -1206,8 +1203,22 @@ void US_InitDialogueGui::initRecordsDialogue( void )
 	  
        	  if ( currDir.isEmpty() || !directory.exists() )
        	    {
-       	      //switch_to_live_update( protocol_details );
-       	      emit switch_to_live_update_init( protocol_details );
+	      if ( !dataSource. contains("dataDisk") ) 
+		emit switch_to_live_update_init( protocol_details );
+	      else
+		{
+		  //we need to re-download form LIMS DB if re-attached from other session
+		  sdiag_convert = new US_ConvertGui("AUTO");
+		  QString filename_from_dataPath = directory.dirName();
+		  QMap< QString, QString > p_det;
+		  p_det["filename"] = filename_from_dataPath;
+		  p_det["filenameProtDevDataDisk"] = filenameProtDevDataDisk;
+		  sdiag_convert->download_data_auto( p_det );
+
+		  qApp->processEvents();
+		   
+		  emit switch_to_post_processing_init( protocol_details );
+		}
        	    }
        	  else
        	    {
@@ -1818,17 +1829,24 @@ int US_InitDialogueGui::list_all_autoflow_records( QList< QStringList >& autoflo
       QString failedID           = dbP->value( 17 ).toString();
 
       QString devRecord          = dbP->value( 18 ).toString();
-      
+
+      QString dataSource         = dbP->value( 19 ).toString();
+      QString filenameProtDevDataDisk   = dbP->value( 20 ).toString();
 
       qDebug() << "OperatorID -- " << operatorID;
       qDebug() << "failedID -- "   << failedID;
       qDebug() << "DevRecod -- "   << devRecord;
+      qDebug() << "dataSource, filenameProtDevDataDisk -- "
+	       << dataSource << filenameProtDevDataDisk;
            
       QDateTime local(QDateTime::currentDateTime());
 
       if ( type == "HISTORY" )
 	{
 	  if ( devRecord == "Processed" )
+	    continue;
+
+	  if ( dataSource. contains("dataDiskAUC") && filenameProtDevDataDisk.isEmpty() )
 	    continue;
 	    
 	  QString history_runname = runname;
@@ -1987,6 +2005,10 @@ QMap< QString, QString> US_InitDialogueGui::read_autoflow_record( int autoflowID
 
 	   protocol_details[ "gmpReviewID" ]   = db->value( 25 ).toString();
 	   protocol_details[ "expType" ]       = db->value( 26 ).toString();
+
+	   protocol_details[ "dataSource" ]    = db->value( 27 ).toString();
+	   protocol_details[ "opticsFailedType" ]   = db->value( 28 ).toString();
+	   protocol_details[ "filenameProtDevDataDisk" ]    = db->value( 29 ).toString();
 	 }
      }
    else
@@ -2052,7 +2074,7 @@ QMap< QString, QString> US_InitDialogueGui::read_autoflow_failed_record( QString
 //////////////////////////////////////////////////////////////////////////////////
 // US_ExperGUI
 US_ExperGui::US_ExperGui( QWidget* topw )
-   : US_WidgetsDialog( topw, 0 )
+   : US_WidgetsDialog( topw, Qt::WindowFlags() )
 {
    mainw               = (US_ProtocolDevMain*)topw;
 
@@ -2101,6 +2123,9 @@ US_ExperGui::US_ExperGui( QWidget* topw )
    
    connect( sdiag, SIGNAL( to_live_update( QMap < QString, QString > & ) ),
    	    this,  SLOT( to_live_update( QMap < QString, QString > & ) ) );
+
+   connect( sdiag, SIGNAL( to_import( QMap < QString, QString > & ) ),
+   	    this,  SLOT( to_import( QMap < QString, QString > & ) ) );
 
    connect( this, SIGNAL( reset_experiment( QString & ) ), sdiag, SLOT( us_exp_clear( QString & ) ) );
    
@@ -2166,6 +2191,12 @@ void US_ExperGui::pass_used_instruments( QMap < QString, QString > & protocol_de
 void US_ExperGui::to_live_update( QMap < QString, QString > & protocol_details)
 {
   emit switch_to_live_update( protocol_details );
+}
+
+//When run is submitted to Optima & protocol details are passed .. 
+void US_ExperGui::to_import( QMap < QString, QString > & protocol_details)
+{
+  emit switch_to_import( protocol_details );
 }
 
 //When US_Experiment is closed
@@ -2241,7 +2272,7 @@ void US_ExperGui::manageExperiment()
 
 // US_Observe /////////////////////////////////////////////////////////////////////////////////
 US_ObservGui::US_ObservGui( QWidget* topw )
-   : US_WidgetsDialog( topw, 0 )
+   : US_WidgetsDialog( topw, Qt::WindowFlags() )
 {
    mainw               = (US_ProtocolDevMain*)topw;
 
@@ -2374,7 +2405,7 @@ void US_ObservGui::to_close_program( void )
 
 // US_PostProd /////////////////////////////////////////////////////////////////////////////////////////////////
 US_PostProdGui::US_PostProdGui( QWidget* topw )
-   : US_WidgetsDialog( topw, 0 )
+   : US_WidgetsDialog( topw, Qt::WindowFlags() )
 {
    mainw               = (US_ProtocolDevMain*)topw;
 
@@ -2492,7 +2523,7 @@ void US_PostProdGui::resizeEvent(QResizeEvent *event)
 
 // US_Editing /////////////////////////////////////////////////////////////////////////////
 US_EditingGui::US_EditingGui( QWidget* topw )
-   : US_WidgetsDialog( topw, 0 )
+   : US_WidgetsDialog( topw, Qt::WindowFlags() )
 {
    mainw               = (US_ProtocolDevMain*)topw;
 
@@ -2624,7 +2655,7 @@ void US_EditingGui::do_editing( QMap < QString, QString > & protocol_details )
 
 // US_Analysis
 US_AnalysisGui::US_AnalysisGui( QWidget* topw )
-   : US_WidgetsDialog( topw, 0 )
+   : US_WidgetsDialog( topw, Qt::WindowFlags() )
 {
    mainw               = (US_ProtocolDevMain*)topw;
 
@@ -2750,7 +2781,7 @@ void US_AnalysisGui::to_report( QMap < QString, QString > & protocol_details )
 
 // US_Report
 US_ReportStageGui::US_ReportStageGui( QWidget* topw )
-  : US_WidgetsDialog( topw, 0 )
+  : US_WidgetsDialog( topw, Qt::WindowFlags() )
 {
    mainw               = (US_ProtocolDevMain*)topw;
 

@@ -18,10 +18,6 @@
 #include "us_globalequil.h"
 #include "us_model_select.h"
 #include "us_eqreporter.h"
-#if QT_VERSION < 0x050000
-#define setSamples(a,b,c)  setData(a,b,c)
-#define setSymbol(a)       setSymbol(*a)
-#endif
 
 // main program
 int main( int argc, char* argv[] )
@@ -395,10 +391,10 @@ DbgLv(1) << "  jd vbar20 density" << nn << ds_vbar20s[nn] << ds_densits[nn];
    QString hdr2 = tr( "CCW Triple" );
    QString hdr3 = tr( "Speed" );
    QString hdr4 = tr( "scan of set" );
-   int     whd1 = fm.width( hdr1 + "W" );
-   int     whd2 = fm.width( hdr2 + "W" );
-   int     whd3 = fm.width( hdr3 + "W" );
-   int     whd4 = fm.width( hdr4 + "W" );
+   int     whd1 = fm.horizontalAdvance( hdr1 + "W" );
+   int     whd2 = fm.horizontalAdvance( hdr2 + "W" );
+   int     whd3 = fm.horizontalAdvance( hdr3 + "W" );
+   int     whd4 = fm.horizontalAdvance( hdr4 + "W" );
    int     whd0 = ( iconw * 3 ) / 2;
 
    headers << "" << hdr1 << hdr2 << hdr3 << hdr4;
@@ -603,7 +599,7 @@ DbgLv(1) << " CkScFit: modelx crit" << modelx << crit;
 void US_GlobalEquil::conc_histogram( void )
 {
 DbgLv(1) << "CONC_HISTOGRAM()";
-   ehisto = new US_EqHistogram( od_limit, scanfits, this, 0 );
+   ehisto = new US_EqHistogram( od_limit, scanfits, this, Qt::WindowFlags() );
    ehisto->show();
 }
 

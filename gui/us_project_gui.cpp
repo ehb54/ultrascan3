@@ -12,7 +12,7 @@ US_ProjectGui::US_ProjectGui(
       bool  signal_wanted,
       int   select_db_disk,
       const US_Project& dataIn 
-      ) : US_WidgetsDialog( 0, 0 ), project( dataIn )
+      ) : US_WidgetsDialog( nullptr, Qt::WindowFlags() ), project( dataIn )
 {
    signal         = signal_wanted;
    investigatorID = US_Settings::us_inv_ID();
@@ -395,7 +395,7 @@ void US_ProjectGui::loadDB( void )
    QString masterPW = pw.getPasswd();
    US_DB2 db( masterPW );
 
-   if ( db.lastErrno() != US_DB2::OK )
+   if ( db.lastErrno() != IUS_DB2::OK )
    {
       db_error( db.lastError() );
       return;
@@ -407,7 +407,7 @@ void US_ProjectGui::loadDB( void )
    q << QString::number( investigatorID );
    db.query( q );
 
-   if ( db.lastErrno() != US_DB2::OK ) return;
+   if ( db.lastErrno() != IUS_DB2::OK ) return;
 
    IDs.clear();
    descriptions.clear();
@@ -465,7 +465,7 @@ void US_ProjectGui::selectProject( QListWidgetItem* item )
 
    project.clear();
 
-   int status = US_DB2::OK;
+   int status = IUS_DB2::OK;
 
    if ( generalTab->disk_controls->db() )
    {
@@ -473,7 +473,7 @@ void US_ProjectGui::selectProject( QListWidgetItem* item )
       QString masterPW = pw.getPasswd();
       US_DB2 db( masterPW );
    
-      if ( db.lastErrno() != US_DB2::OK )
+      if ( db.lastErrno() != IUS_DB2::OK )
       {
          db_error( db.lastError() );
          return;
@@ -482,7 +482,7 @@ void US_ProjectGui::selectProject( QListWidgetItem* item )
       status = project.readFromDB  ( projectID, &db );
 
       // Error reporting 
-      if ( status == US_DB2::NO_PROJECT ) 
+      if ( status == IUS_DB2::NO_PROJECT )
       { 
          QMessageBox::information( this, 
                tr( "Attention" ), 
@@ -490,7 +490,7 @@ void US_ProjectGui::selectProject( QListWidgetItem* item )
                    "Please restore and try again.\n" ) ); 
       } 
       
-      else if ( status != US_DB2::OK ) 
+      else if ( status != IUS_DB2::OK )
          db_error( db.lastError() );
    }
 
@@ -499,7 +499,7 @@ void US_ProjectGui::selectProject( QListWidgetItem* item )
       status = project.readFromDisk( projectGUID );
 
       // Error reporting 
-      if ( status == US_DB2::NO_PROJECT ) 
+      if ( status == IUS_DB2::NO_PROJECT )
       { 
          QMessageBox::information( this, 
                tr( "Attention" ), 
@@ -507,7 +507,7 @@ void US_ProjectGui::selectProject( QListWidgetItem* item )
                    "Please select an existing project and try again.\n" ) ); 
       } 
       
-      else if ( status != US_DB2::OK ) 
+      else if ( status != IUS_DB2::OK )
       { 
          QMessageBox::information( this, 
                tr( "Disk Read Problem" ), 
@@ -558,7 +558,7 @@ void US_ProjectGui::saveProject( void )
       QString masterPW = pw.getPasswd();
       US_DB2 db( masterPW );
    
-      if ( db.lastErrno() != US_DB2::OK )
+      if ( db.lastErrno() != IUS_DB2::OK )
       {
          db_error( db.lastError() );
          return;
@@ -566,7 +566,7 @@ void US_ProjectGui::saveProject( void )
 
       int status = project.saveToDB( &db );
 
-      if ( status == US_DB2::NO_PROJECT )
+      if ( status == IUS_DB2::NO_PROJECT )
       {
          QMessageBox::information( this,
                tr( "Attention" ),
@@ -574,7 +574,7 @@ void US_ProjectGui::saveProject( void )
          return;
       }
 
-      else if ( status != US_DB2::OK )
+      else if ( status != IUS_DB2::OK )
       {
          db_error( db.lastError() );
          return;
@@ -614,7 +614,7 @@ void US_ProjectGui::deleteProject( void )
       QString masterPW = pw.getPasswd();
       US_DB2 db( masterPW );
    
-      if ( db.lastErrno() != US_DB2::OK )
+      if ( db.lastErrno() != IUS_DB2::OK )
       {
          db_error( db.lastError() );
          return;

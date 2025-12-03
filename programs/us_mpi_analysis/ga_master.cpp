@@ -44,7 +44,7 @@ DbgLv(0) << "DEBUG_LEVEL" << simulation_values.dbg_level;
    {
       ga_master_loop();
 
-      qSort( best_fitness );
+      std::sort( best_fitness.begin(), best_fitness.end() );
       simulation_values.solutes = best_genes[ best_fitness[ 0 ].index ];
       int nisols      = simulation_values.solutes.size();
 DbgLv(1) << "GaMast: sols size" << nisols << "buck size" << buckets.size()
@@ -66,7 +66,7 @@ DbgLv(1) << "GaMast:    csol0.s .k .v .d" << simulation_values.solutes[0].s
  << simulation_values.solutes[0].k << simulation_values.solutes[0].v
  << simulation_values.solutes[0].d;
 
-      qSort( simulation_values.solutes );
+      std::sort( simulation_values.solutes.begin(), simulation_values.solutes.end() );
 
       // Convert given solute points to s,k for model output
       double vbar20  = data_sets[ current_dataset ]->vbar20;
@@ -291,7 +291,7 @@ DbgLv(1) << "  MAST: work" << worker << "fit msg,round,bestw,besto"
                best_fitness[ worker ].fitness = fitness_round;
 g = "";
 for ( int i = 0; i < buckets.size(); i++ )
-  g += s.sprintf( "(%.3f,%.3f)", best_genes[ worker ][ i ].s, best_genes[ worker ][ i ].k);
+   g += QString::asprintf( "(%.3f,%.3f)", best_genes[ worker ][ i ].s, best_genes[ worker ][ i ].k);
 DbgLv(1) << "master: worker/fitness/best gene" << worker <<  msg.fitness << g;
 
             if ( ! early_termination )

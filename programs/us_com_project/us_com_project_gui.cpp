@@ -13,14 +13,6 @@
 #include "us_crypto.h"
 #include "us_select_item.h"
 #include "us_images.h"
-//#include "us_select_item.h"
-
-#if QT_VERSION < 0x050000
-#define setSamples(a,b,c)  setData(a,b,c)
-#define setMinimum(a)      setMinValue(a)
-#define setMaximum(a)      setMaxValue(a)
-#define QRegularExpression(a)  QRegExp(a)
-#endif
 
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug()
@@ -165,7 +157,7 @@ US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
    QFont font_t = tabWidget->property("font").value<QFont>();
    qDebug() << font_t.family() << font_t.pointSize();
    QFontMetrics fm_t(font_t);
-   int pixelsWide = fm_t.width("Manage Optima Runs");
+   int pixelsWide = fm_t.horizontalAdvance("Manage Optima Runs");
    
    qDebug() << "FONT_T: fm_t.width() -- " <<  pixelsWide;
    cornerWidget->setMinimumWidth( pixelsWide );
@@ -178,7 +170,7 @@ US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
    qDebug() << "TabWidget->tabBar position: " << tabWidget->tabBar()->x() << tabWidget->tabBar()->y();
    qDebug() << "TabWidget->tabBar size    : " << tabWidget->tabBar()->width() << tabWidget->tabBar()->height();
 
-   int pos_x_offset = fm_t.width("M");
+   int pos_x_offset = fm_t.horizontalAdvance("M");
    int pos_x = tabWidget->tabBar()->x() + pos_x_offset*1.2;
    //int pos_x = (tabWidget->tabBar()->width())/4;
    int pos_y = (tabWidget->tabBar()->height())*1.22;
@@ -228,6 +220,8 @@ US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
    connect( epanInit, SIGNAL( to_initAutoflow( ) ), this, SLOT( close_all( )  ) );
    
    connect( this, SIGNAL( pass_used_instruments( QStringList & ) ), epanExp, SLOT( pass_used_instruments( QStringList &)  ) );
+
+   connect( epanInit, SIGNAL( pass_allow_dataDisk_only( ) ), epanExp, SLOT( allow_dataDisk_only( )  ) );
    
    connect( epanExp, SIGNAL( switch_to_live_update( QMap < QString, QString > &) ), this, SLOT( switch_to_live_update( QMap < QString, QString > & )  ) );
    connect( epanExp, SIGNAL( switch_to_import( QMap < QString, QString > &) ), this, SLOT( switch_to_post_processing( QMap < QString, QString > & )  ) );
@@ -409,7 +403,7 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    QFont font_t = tabWidget->property("font").value<QFont>();
    qDebug() << font_t.family() << font_t.pointSize();
    QFontMetrics fm_t(font_t);
-   int pixelsWide = fm_t.width("Manage Optima Runs");
+   int pixelsWide = fm_t.horizontalAdvance("Manage Optima Runs");
    
    qDebug() << "FONT_T: fm_t.width() -- " <<  pixelsWide;
    cornerWidget->setMinimumWidth( pixelsWide );
@@ -422,7 +416,7 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    qDebug() << "TabWidget->tabBar position: " << tabWidget->tabBar()->x() << tabWidget->tabBar()->y();
    qDebug() << "TabWidget->tabBar size    : " << tabWidget->tabBar()->width() << tabWidget->tabBar()->height();
 
-   int pos_x_offset = fm_t.width("M");
+   int pos_x_offset = fm_t.horizontalAdvance("M");
    int pos_x = tabWidget->tabBar()->x() + pos_x_offset*1.2;
    //int pos_x = (tabWidget->tabBar()->width())/4;
    int pos_y = (tabWidget->tabBar()->height())*1.08;
@@ -478,6 +472,8 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    connect( epanInit, SIGNAL( to_initAutoflow( ) ), this, SLOT( close_all( )  ) );
          
    connect( this, SIGNAL( pass_used_instruments( QStringList & ) ), epanExp, SLOT( pass_used_instruments( QStringList &)  ) );
+
+   connect( epanInit, SIGNAL( pass_allow_dataDisk_only( ) ), epanExp, SLOT( allow_dataDisk_only( )  ) );
    
    connect( epanExp, SIGNAL( switch_to_live_update( QMap < QString, QString > &) ), this, SLOT( switch_to_live_update( QMap < QString, QString > & )  ) );
    connect( epanExp, SIGNAL( switch_to_import( QMap < QString, QString > &) ), this, SLOT( switch_to_post_processing( QMap < QString, QString > & )  ) );
@@ -499,6 +495,7 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    connect( this, SIGNAL( reset_data_editing() ),  epanEditing, SLOT( reset_data_editing( )  ) );
 
    connect( epanEditing, SIGNAL( switch_to_analysis( QMap < QString, QString > & ) ), this, SLOT( switch_to_analysis( QMap < QString, QString > & )  ) );
+   connect( epanEditing, SIGNAL( switch_to_report( QMap < QString, QString > & ) ), this, SLOT( switch_to_report( QMap < QString, QString > & )  ) );
    connect( this, SIGNAL( pass_to_analysis( QMap < QString, QString > & ) ),   epanAnalysis, SLOT( do_analysis( QMap < QString, QString > & )  ) );
    connect( epanEditing, SIGNAL( switch_to_initAutoflow( ) ), this, SLOT( close_all( )  ) );
 
@@ -660,7 +657,7 @@ void US_ComProjectMain::show_liveupdate_finishing_msg( void )
    msg_liveupdate_finishing->setIcon(QMessageBox::Information);
   
    msg_liveupdate_finishing->setWindowFlags ( Qt::CustomizeWindowHint | Qt::WindowTitleHint | Qt::WindowStaysOnTopHint);
-   msg_liveupdate_finishing->setStandardButtons(0);
+   msg_liveupdate_finishing->setStandardButtons( QMessageBox::NoButton );
    msg_liveupdate_finishing->setWindowTitle(tr("Updating..."));
    msg_liveupdate_finishing->setText(tr( "Finishing LIVE UPDATE processes... Please wait...") );
    msg_liveupdate_finishing->setStyleSheet("background-color: #36454f; color : #D3D9DF;");
@@ -688,7 +685,7 @@ void US_ComProjectMain::show_analysis_update_finishing_msg( void )
    msg_analysis_update_finishing->setIcon(QMessageBox::Information);
   
    msg_analysis_update_finishing->setWindowFlags ( Qt::CustomizeWindowHint | Qt::WindowTitleHint | Qt::WindowStaysOnTopHint);
-   msg_analysis_update_finishing->setStandardButtons(0);
+   msg_analysis_update_finishing->setStandardButtons( QMessageBox::NoButton );
    msg_analysis_update_finishing->setWindowTitle(tr("Updating..."));
    msg_analysis_update_finishing->setText(tr( "Finishing ANALYSIS UPDATE processes... Please wait...") );
    msg_analysis_update_finishing->setStyleSheet("background-color: #36454f; color : #D3D9DF;");
@@ -879,7 +876,7 @@ void US_ComProjectMain::define_new_experiment( QStringList & occupied_instrument
 
    
    msg_expsetup->setWindowFlags ( Qt::CustomizeWindowHint | Qt::WindowTitleHint | Qt::WindowStaysOnTopHint);
-   msg_expsetup->setStandardButtons(0);
+   msg_expsetup->setStandardButtons( QMessageBox::NoButton );
    msg_expsetup->setWindowTitle(tr("Updating..."));
    msg_expsetup->setText(tr( "Setting up EXPERIMENT panel... Please wait...") );
    msg_expsetup->setStyleSheet("background-color: #36454f; color : #D3D9DF;");
@@ -922,9 +919,6 @@ void US_ComProjectMain::define_new_experiment( QStringList & occupied_instrument
   emit pass_used_instruments( occupied_instruments );
 
 }
-
-
-
 
 
 // Slot to pass submitted to Optima run info to the Live Update tab
@@ -1051,7 +1045,7 @@ void US_ComProjectMain::switch_to_analysis( QMap < QString, QString > & protocol
   msg_analysissetup->setIcon(QMessageBox::Information);
 
   msg_analysissetup->setWindowFlags ( Qt::CustomizeWindowHint | Qt::WindowTitleHint | Qt::WindowStaysOnTopHint);
-  msg_analysissetup->setStandardButtons(0);
+  msg_analysissetup->setStandardButtons( QMessageBox::NoButton );
   msg_analysissetup->setWindowTitle(tr("Updating..."));
   msg_analysissetup->setText(tr( "Generating triple list for ANALYSIS... Please wait...") );
   msg_analysissetup->setStyleSheet("background-color: #36454f; color : #D3D9DF;");
@@ -1166,13 +1160,14 @@ void US_ComProjectMain::call_AutoflowDialogue( void )                           
 //////////////////////////////////////////////////////////////////////////////////////////
 //New Initial Decision-making Tab:
 US_InitDialogueGui::US_InitDialogueGui( QWidget* topw )
-   : US_WidgetsDialog( topw, 0 )
+   : US_WidgetsDialog( topw, Qt::WindowFlags() )
 {
    mainw               = (US_ComProjectMain*)topw;
 
    initDialogueOpen = false;
    initMsgNorecOpen = false;
    initMsgNorecDelOpen = false;
+   runStatesUpdated = false; 
 
    
    setPalette( US_GuiSettings::frameColor() );
@@ -1278,6 +1273,7 @@ void US_InitDialogueGui::resizeEvent(QResizeEvent *event)
 // Init Autoflow Panel
 void US_InitDialogueGui::initAutoflowPanel( void )
 {
+  runStatesUpdated = false;
   initRecords();
   initRecordsDialogue();
 }
@@ -1286,6 +1282,8 @@ void US_InitDialogueGui::initAutoflowPanel( void )
 //Check for certificates
 void US_InitDialogueGui::checkCertificates( void )
 {
+  isDataDiskOnly = false;
+  
   US_Passwd  pw;
   US_DB2* dbP  = new US_DB2( pw.getPasswd() );
 
@@ -1316,14 +1314,14 @@ void US_InitDialogueGui::checkCertificates( void )
       // Check for certificate license key and its expiraiton
       Link *link = new Link( alias );
 
-      bool status_sys_data = link->connectToServer( dbhost, optima_msgPort.toInt() );
+      bool status_sys_data = link->connectToServer_init_check( dbhost, optima_msgPort.toInt() );
       bool combined_check = status_sys_data & link->connected_itself;
       
       // Ceritificate location && check for nearing or actual expiration date ////////////////////
       QString certPath = US_Settings::etcDir() + QString("/optima/");
       
       QString client_name = alias;
-      client_name.simplified();
+      client_name = client_name.simplified();
       client_name.replace(" ", "");
       client_name = client_name.toLower();
       
@@ -1420,6 +1418,7 @@ void US_InitDialogueGui::checkCertificates( void )
 	  //Disconnect link
 	  link->disconnectFromServer();
 	}
+      //Disconnect link
       link->disconnectFromServer();
     }
   
@@ -1446,20 +1445,28 @@ void US_InitDialogueGui::checkCertificates( void )
 	}
 
       if ( Optima_names.size() > 1 )  
-	msg_sys_text_info_final += QString( tr("\n\nSubmission of the experimental protocol is suspended until at least one of these conditions is resolved."));
+	msg_sys_text_info_final += QString( tr("\n\nSubmission of the experimental protocol to the Optima instruments is suspended until at least one of these conditions is resolved."));
       else
-	msg_sys_text_info_final += QString( tr("\n\nSubmission of the experimental protocol is suspended until this condition is resolved."));
-      
-      msg_sys_text_info_final += QString( tr("\n\nThe program will be closed.") );
+	msg_sys_text_info_final += QString( tr("\n\nSubmission of the experimental protocol to the Optima instrument is suspended until this condition is resolved."));
+
+      if ( !mainw->us_mode_bool ) 
+	msg_sys_text_info_final += QString( tr("\n\nUser has an option to upload data from disk (tab 2. Lab/Rotor -> Select Data Source) and proceed with that workflow.") );
 
       msgBox_sys_data.setInformativeText( msg_sys_text_info_final );
       QPushButton *Cancel_sys    = msgBox_sys_data.addButton(tr("OK"), QMessageBox::RejectRole);
       msgBox_sys_data.exec();
 
-      exit(1);
+      //emit pass_allow_dataDisk_only();
+      isDataDiskOnly = true;
+
+      if ( mainw->us_mode_bool ) 
+	exit(1);
       return;
     }
-  
+
+  //TEST
+  //isDataDiskOnly = true;
+  //emit pass_allow_dataDisk_only();
   //  End of checkig for conneciton to Optima sys_data server ///////////////////////////////////////////////
 }
 
@@ -1571,7 +1578,9 @@ void US_InitDialogueGui::initRecordsDialogue( void )
        	{
        	  msg_norec->close();
 	  emit define_new_experiment_init( occupied_instruments );
-       	  //qApp->processEvents();
+       	  qApp->processEvents();
+	  if ( isDataDiskOnly )
+	    emit pass_allow_dataDisk_only();
        	}
 
       //emit define_new_experiment_init( occupied_instruments );
@@ -1646,13 +1655,15 @@ void US_InitDialogueGui::initRecordsDialogue( void )
       //ALEXEY: define what to do if some Optima(s) are occupied
       // should emit signal sending list of optima's in use to us_experiment.
 
-      if ( mainw-> window_closed)
+      if ( mainw-> window_closed || runStatesUpdated )
 	return;
       
       if ( occupied_instruments.size() == 0 )
 	{
 	  qDebug() << "No occuied instruments (No LIVE_UPDATE status)";
 	  emit define_new_experiment_init( occupied_instruments );
+	  if ( isDataDiskOnly )
+	    emit pass_allow_dataDisk_only();
 	  return;
 	}
       else
@@ -1671,6 +1682,8 @@ void US_InitDialogueGui::initRecordsDialogue( void )
 	  msg_instr_use->exec();
 	  
 	  emit define_new_experiment_init( occupied_instruments );
+	  if ( isDataDiskOnly )
+	    emit pass_allow_dataDisk_only();
 	  return;
 	}
     }
@@ -2287,6 +2300,7 @@ void US_InitDialogueGui::do_run_data_cleanup( QMap < QString, QString > run_deta
 void US_InitDialogueGui::refresh_optima_states( void )
 {
   initAutoflowPanel();
+  runStatesUpdated = true;
 }
 
 //Re-evaluate autoflow records & occupied instruments & if Define Another Exp. should be enabled....
@@ -2333,6 +2347,8 @@ void US_InitDialogueGui::update_autoflow_data( void )
 	{
 	  msg_norec_del->close();
 	  emit define_new_experiment_init( occupied_instruments );
+	  if ( isDataDiskOnly )
+	    emit pass_allow_dataDisk_only();
 	  
 	  //qApp->processEvents();
 	}
@@ -2869,7 +2885,7 @@ QMap< QString, QString> US_InitDialogueGui::read_autoflow_failed_record( QString
 //////////////////////////////////////////////////////////////////////////////////
 // US_ExperGUI
 US_ExperGui::US_ExperGui( QWidget* topw )
-   : US_WidgetsDialog( topw, 0 )
+   : US_WidgetsDialog( topw, Qt::WindowFlags() )
 {
    mainw               = (US_ComProjectMain*)topw;
 
@@ -2951,6 +2967,8 @@ US_ExperGui::US_ExperGui( QWidget* topw )
    
    connect( this, SIGNAL( define_used_instruments( QStringList & ) ), sdiag, SLOT( exclude_used_instruments( QStringList & ) ) );
 
+   connect( this, SIGNAL( data_disk_only( ) ), sdiag, SLOT( enable_data_disk_only(  ) ) );
+
    connect( sdiag, SIGNAL( close_expsetup_msg() ), this, SLOT ( expsetup_msg_closed() ) ); 
    
    connect( sdiag, SIGNAL( to_live_update( QMap < QString, QString > & ) ),
@@ -3020,6 +3038,11 @@ void US_ExperGui::pass_used_instruments( QStringList & occupied_instruments )
   emit define_used_instruments( occupied_instruments );
 }
 
+void US_ExperGui::allow_dataDisk_only( void )
+{
+  qDebug() << "In US_ExperGui::allowing DataDisk ONLY";
+  emit data_disk_only();
+}
 
 void US_ExperGui::to_initAutoflow( void )
 {
@@ -3122,7 +3145,7 @@ void US_ExperGui::manageExperiment()
 
 // US_Observe /////////////////////////////////////////////////////////////////////////////////
 US_ObservGui::US_ObservGui( QWidget* topw )
-   : US_WidgetsDialog( topw, 0 )
+   : US_WidgetsDialog( topw, Qt::WindowFlags() )
 {
    mainw               = (US_ComProjectMain*)topw;
 
@@ -3268,7 +3291,7 @@ void US_ObservGui::to_close_program( void )
 
 // US_PostProd
 US_PostProdGui::US_PostProdGui( QWidget* topw )
-   : US_WidgetsDialog( topw, 0 )
+   : US_WidgetsDialog( topw, Qt::WindowFlags() )
 {
    mainw               = (US_ComProjectMain*)topw;
 
@@ -3400,7 +3423,7 @@ void US_PostProdGui::resizeEvent(QResizeEvent *event)
 
 // US_Editing
 US_EditingGui::US_EditingGui( QWidget* topw )
-   : US_WidgetsDialog( topw, 0 )
+   : US_WidgetsDialog( topw, Qt::WindowFlags() )
 {
    mainw               = (US_ComProjectMain*)topw;
 
@@ -3448,9 +3471,10 @@ US_EditingGui::US_EditingGui( QWidget* topw )
    
    connect( this, SIGNAL( reset_data_editing_passed( ) ), sdiag, SLOT(  reset_editdata_panel (  )  ) );
 
-   //ALEXEY: switch to Analysis
+   //ALEXEY: switch to Analysis || REPORT (abde)
    connect( sdiag, SIGNAL( edit_complete_auto(  QMap < QString, QString > & ) ), this, SLOT( to_analysis (  QMap < QString, QString > &) ) );
-
+   connect( sdiag, SIGNAL( edit_complete_auto_abde(  QMap < QString, QString > & ) ), this, SLOT( to_report (  QMap < QString, QString > &) ) );
+   
    //ALEXEY: back to initAutoflow 
    connect( sdiag, SIGNAL( back_to_initAutoflow( ) ), this, SLOT( to_initAutoflow ( ) ) );
 
@@ -3512,6 +3536,13 @@ void US_EditingGui::to_analysis( QMap < QString, QString > & protocol_details )
   emit switch_to_analysis( protocol_details );
 }
 
+
+void US_EditingGui::to_report( QMap < QString, QString > & protocol_details )
+{
+  emit switch_to_report( protocol_details );
+}
+
+
 void US_EditingGui::to_initAutoflow( void )
 {
   emit switch_to_initAutoflow();
@@ -3532,7 +3563,7 @@ void US_EditingGui::do_editing( QMap < QString, QString > & protocol_details )
 
 // US_Analysis
 US_AnalysisGui::US_AnalysisGui( QWidget* topw )
-   : US_WidgetsDialog( topw, 0 )
+   : US_WidgetsDialog( topw, Qt::WindowFlags() )
 {
    mainw               = (US_ComProjectMain*)topw;
 
@@ -3658,7 +3689,7 @@ void US_AnalysisGui::to_report( QMap < QString, QString > & protocol_details )
 
 // US_Report
 US_ReportStageGui::US_ReportStageGui( QWidget* topw )
-  : US_WidgetsDialog( topw, 0 )
+  : US_WidgetsDialog( topw, Qt::WindowFlags() )
 {
    mainw               = (US_ComProjectMain*)topw;
 
@@ -3756,7 +3787,7 @@ void US_ReportStageGui::reset_reporting( void )
 
 //eSignatures
 US_eSignaturesGui::US_eSignaturesGui( QWidget* topw )
-  : US_WidgetsDialog( topw, 0 )
+  : US_WidgetsDialog( topw, Qt::WindowFlags() )
 {
    mainw               = (US_ComProjectMain*)topw;
 

@@ -104,7 +104,7 @@ DbgLv(2) << "LaNoi:allMod mID eID" << modIDs.at(ii) << modEdIDs.at(ii); }
    for ( int ii = 1; ii < nemods; ii++ )
    {  // Search through models in edit
       lmodlGUID  = mieGUIDs[ ii ];                    // this model's GUID
-      modelIndx  = QString().sprintf( "%4.4d", kk );  // models-in-edit index
+      modelIndx  = QString::asprintf( "%4.4d", kk );  // models-in-edit index
 
       // Find the noises tied to this model
       int kenois = noises_in_model( ondisk, lmodlGUID, tmpGUIDs );
@@ -283,7 +283,7 @@ int US_LoadableNoise::id_list_db( QString daEditGUID )
    US_Passwd pw;
    US_DB2    db( pw.getPasswd() );
 
-   if ( db.lastErrno() != US_DB2::OK )
+   if ( db.lastErrno() != IUS_DB2::OK )
       return 0;
 
    query.clear();

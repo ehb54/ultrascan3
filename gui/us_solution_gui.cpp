@@ -10,12 +10,6 @@
 #include "us_analyte_gui.h"
 #include "us_solution.h"
 
-
-#if QT_VERSION < 0x050000
-#define setSymbol(a)      setSymbol(*a)
-#define setSamples(a,b,c) setData(a,b,c)
-#endif
-
 US_SolutionMgrSelect::US_SolutionMgrSelect( int *invID, int *select_db_disk,
       US_Solution *tmp_solution, int tmp_experimentID, int tmp_channelID ) : US_Widgets()
 {
@@ -193,7 +187,7 @@ DbgLv(1) << solution->extinction;
 // Function to delete a solution from disk, db, or in the current form
 void US_SolutionMgrSelect::delete_solution( void )
 {
-   int status = US_DB2::OK;
+   int status = IUS_DB2::OK;
 
    if ( from_db )
    {
@@ -201,7 +195,7 @@ void US_SolutionMgrSelect::delete_solution( void )
       QString masterPW = pw.getPasswd();
       US_DB2 db( masterPW );
 
-      if ( db.lastErrno() != US_DB2::OK )
+      if ( db.lastErrno() != IUS_DB2::OK )
       {
          db_error( db.lastError() );
          return;
@@ -209,7 +203,7 @@ void US_SolutionMgrSelect::delete_solution( void )
 
       if ( solution->countInProtocols( &db ) > 0 )
       {
-         status = US_DB2::SOLUT_IN_USE;
+         status = IUS_DB2::SOLUT_IN_USE;
       }
       else
       {
@@ -226,7 +220,7 @@ void US_SolutionMgrSelect::delete_solution( void )
    {
       if ( solution->countInProtocols( NULL ) > 0 )
       {
-         status = US_DB2::SOLUT_IN_USE;
+         status = IUS_DB2::SOLUT_IN_USE;
       }
       else
       {
@@ -239,7 +233,7 @@ void US_SolutionMgrSelect::delete_solution( void )
       }
    }
 
-   if ( status == US_DB2::SOLUT_IN_USE )
+   if ( status == IUS_DB2::SOLUT_IN_USE )
    {
       QMessageBox::warning( this,
          tr( "Delete aborted" ),
@@ -247,7 +241,7 @@ void US_SolutionMgrSelect::delete_solution( void )
              "by one or more experiments or protocols" ) );
       return;
    }
-else if ( status != US_DB2::OK )
+else if ( status != IUS_DB2::OK )
 {
  QMessageBox::warning( this,
   tr( "Delete aborted (status=%1)" ).arg( status ),
@@ -422,7 +416,7 @@ void US_SolutionMgrSelect::loadDB( void )
    US_DB2 db( masterPW );
 DbgLv(1) << "loadDB: lasterr" << db.lastError();
 
-   if ( db.lastErrno() != US_DB2::OK )
+   if ( db.lastErrno() != IUS_DB2::OK )
    {
       db_error( db.lastError() );
       return;
@@ -451,13 +445,13 @@ DbgLv(1) << "loadDB: CC";
    le_search->   setText( "" );
    le_search->   setReadOnly( true );
 
-DbgLv(1) << "loadDB: lastErrno" << db.lastErrno() << US_DB2::OK << db.lastError();
-   if ( db.lastErrno() == US_DB2::NOROWS )
+DbgLv(1) << "loadDB: lastErrno" << db.lastErrno() << IUS_DB2::OK << db.lastError();
+   if ( db.lastErrno() == IUS_DB2::NOROWS )
    {
       lw_solutions->setSelectionMode( QAbstractItemView::NoSelection );
       lw_solutions->addItem( "No solution files found." );
    }
-   else if ( db.lastErrno() != US_DB2::OK )
+   else if ( db.lastErrno() != IUS_DB2::OK )
    {
       db_error( db.lastError() );
       return;
@@ -1735,7 +1729,7 @@ US_SolutionGui::US_SolutionGui(
       int   select_db_disk,
       const US_Solution dataIn,
       bool  auto_save
-      ) : US_WidgetsDialog( 0, 0 ), experimentID( expID ), channelID( chID ),
+      ) : US_WidgetsDialog( nullptr, Qt::WindowFlags() ), experimentID( expID ), channelID( chID ),
         signal( signal_wanted )
 
 {

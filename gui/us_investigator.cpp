@@ -11,7 +11,7 @@
 */
 
 US_Investigator::US_Investigator( bool signal, int inv )
-   : US_WidgetsDialog( 0, 0 )
+   : US_WidgetsDialog( nullptr, Qt::WindowFlags() )
 {
   us_inv_auto_mode = false;
    signal_wanted = signal;
@@ -213,7 +213,7 @@ US_Investigator::US_Investigator( bool signal, int inv )
 
 //Alternative Constructor for GMP:1.EXP.
 US_Investigator::US_Investigator( QString auto_mode, bool signal, int inv )
-   : US_WidgetsDialog( 0, 0 )
+   : US_WidgetsDialog( nullptr, Qt::WindowFlags() )
 {
   us_inv_auto_mode = true;
    

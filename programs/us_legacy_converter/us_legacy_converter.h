@@ -9,7 +9,7 @@
 #include "us_archive.h"
 // #include "us_tar.h"
 // #include "us_gzip.h"
-#include "../us_convert/us_convert.h"
+#include "us_convert.h"
 
 //! \brief Class to converte Beckman legacy data to OpenAUC
 class US_LegacyConverter : public US_Widgets

@@ -18,9 +18,6 @@
 #include "us_util.h"
 #include "us_investigator.h"
 #include "us_loadable_noise.h"
-#if QT_VERSION < 0x050000
-#define setSamples(a,b,c)  setData(a,b,c)
-#endif
 
 //! \brief Main program for us_pcsa. Loads translators and starts
 //         the class US_pcsa.
@@ -250,7 +247,7 @@ void US_pcsa::load( void )
             << QString::number( US_Settings::us_inv_ID() );
       dbP->query( query );
 
-      if ( dbP->lastErrno() == US_DB2::OK )
+      if ( dbP->lastErrno() == IUS_DB2::OK )
       {
         dbP->next();
         idExp              = dbP->value( 1 ).toInt();
@@ -462,8 +459,12 @@ void US_pcsa::view( void )
    {
       te_results = new US_Editor( US_Editor::DEFAULT, true, QString(), this );
       te_results->resize( 820, 700 );
-      QPoint p = g.global_position();
-      te_results->move( p.x() + 30, p.y() + 30 );
+      QString auto_positioning = US_Settings::debug_value("auto_positioning");
+      if ( global_positioning && !auto_positioning.isEmpty() && auto_positioning.toLower() == "true" )
+      {
+         QPoint p = g.global_position();
+         te_results->move( p.x() + 30, p.y() + 30 );
+      }
       te_results->e->setFont( QFont( US_GuiSettings::fontFamily(),
                                      US_GuiSettings::fontSize() ) );
    }
@@ -554,7 +555,7 @@ DbgLv(1) << "SV: analysisType" << analysisType;
    // Save the model and any noise file(s)
 
    US_Passwd   pw;
-   US_DB2*     dbP      = def_local ? NULL : new US_DB2( pw.getPasswd() );
+   IUS_DB2*     dbP      = def_local ? NULL : new US_DB2( pw.getPasswd() );
    QDir        dirm( mdlpath );
    QDir        dirn( noipath );
    mdlpath             += "/";
@@ -577,7 +578,7 @@ DbgLv(1) << "SV: analysisType" << analysisType;
 
    while( indx > 0 )
    {  // build a list of available model file names
-      mname = "M" + QString().sprintf( "%07i", indx++ ) + ".xml";
+      mname = "M" + QString::asprintf( "%07i", indx++ ) + ".xml";
       if ( ! mdnams.contains( mname ) )
       {  // Add to the list of new-name models
          mnames << mname;
@@ -593,7 +594,7 @@ DbgLv(1) << "SV: mnames size" << mnames.size();
 
    while( indx > 0 )
    {  // build a list of available noise file names
-      nname = "N" + QString().sprintf( "%07i", indx++ ) + ".xml";
+      nname = "N" + QString::asprintf( "%07i", indx++ ) + ".xml";
       if ( ! ndnams.contains( nname ) )
       {  // add to the list of new-name noises
          nnames << nname;
@@ -628,7 +629,7 @@ DbgLv(1) << "SV: non-MC model ncomp" << model.components.size();
       model.dataDescrip = edata->description;
 
       for ( int cc = 0; cc < model.components.size(); cc++ )
-         model.components[ cc ].name = QString().sprintf( "SC%04d", cc + 1 );
+         model.components[ cc ].name = QString::asprintf( "SC%04d", cc + 1 );
 
       // Output the model
       if ( dbP != NULL )
@@ -642,7 +643,7 @@ DbgLv(1) << "SV: non-MC model ncomp" << model.components.size();
 DbgLv(1) << "SV: MC models  mciters" << mciters;
       for ( int jmc = 0; jmc < mciters; jmc++ )
       {
-         iterID            = QString().sprintf( "mc%04d", jmc + 1 );
+         iterID            = QString::asprintf( "mc%04d", jmc + 1 );
          model             = mrecs_mc[ jmc ].model;
          model.description = descbase + iterID + ".model";
          tname             = tmppath + descbase + iterID + ".mdl.tmp";
@@ -703,13 +704,13 @@ DbgLv(1) << "SV: Pre-sum tno tni"
 DbgLv(1) << "SV:  Post-sum tno" << ti_noise.values[0];
 
       err = ti_noise.write( nname );
-      if ( err != US_DB2::OK )
+      if ( err != IUS_DB2::OK )
          qDebug() << "*ERROR* writing noise" << nname;
 
       if ( dbP != NULL )
       {
          err = ti_noise.write( dbP );
-         if ( err != US_DB2::OK )
+         if ( err != IUS_DB2::OK )
             qDebug() << "*ERROR* writing noise to DB" << ti_noise.description;
       }
 
@@ -739,13 +740,13 @@ DbgLv(1) << "SV:  RI nicount" << nicount;
 DbgLv(1) << "SV:  Post-sum rno" << ri_noise.values[0];
 
       err = ri_noise.write( nname );
-      if ( err != US_DB2::OK )
+      if ( err != IUS_DB2::OK )
          qDebug() << "*ERROR* writing noise" << nname;
 
       if ( dbP != NULL )
       {
          err = ri_noise.write( dbP );
-         if ( err != US_DB2::OK )
+         if ( err != IUS_DB2::OK )
             qDebug() << "*ERROR* writing noise to DB" << ri_noise.description;
       }
 
@@ -954,7 +955,7 @@ void US_pcsa::open_fitcntl()
    US_Math2::data_correction( avTemp, sd );
 
    US_Passwd pw;
-   US_DB2* dbP     = disk_controls->db() ? new US_DB2( pw.getPasswd() ) : NULL;
+   IUS_DB2* dbP     = disk_controls->db() ? new US_DB2( pw.getPasswd() ) : NULL;
 
    dset.simparams.initFromData( dbP, dataList[ drow ], dat_steps );
 
@@ -1058,13 +1059,13 @@ DbgLv(1) << "distrinfo: ncomp" << ncomp;
                     > ( maxv - minv ) / qAbs( maxv ) );
 
    mstr += table_row( tr( "Weight Average s20,W:" ),
-                      QString().sprintf( "%6.4e", ( sum_s  / sum_c ) ) );
+                      QString::asprintf( "%6.4e", ( sum_s  / sum_c ) ) );
    mstr += table_row( tr( "Weight Average D20,W:" ),
-                      QString().sprintf( "%6.4e", ( sum_D  / sum_c ) ) );
+                      QString::asprintf( "%6.4e", ( sum_D  / sum_c ) ) );
    mstr += table_row( tr( "W.A. Molecular Weight:" ),
-                      QString().sprintf( "%6.4e", ( sum_mw / sum_c ) ) );
+                      QString::asprintf( "%6.4e", ( sum_mw / sum_c ) ) );
    mstr += table_row( tr( "Total Concentration:" ),
-                      QString().sprintf( "%6.4e", sum_c ) );
+                      QString::asprintf( "%6.4e", sum_c ) );
 
    if ( cnstvb )
       mstr += table_row( tr( "Constant Vbar at 20" ) + DEGC + ":",
@@ -1123,13 +1124,13 @@ DbgLv(1) << "distrinfo: ncomp" << ncomp;
       D_ap       /= sd.D20w_correction;
 
       mstr       += table_row(
-            QString().sprintf( "%10.4e", model.components[ ii ].mw ),
-            QString().sprintf( "%10.4e", s_ap                      ),
-            QString().sprintf( "%10.4e", model.components[ ii ].s  ),
-            QString().sprintf( "%10.4e", D_ap                      ),
-            QString().sprintf( "%10.4e", model.components[ ii ].D  ),
-            QString().sprintf( "%10.4e", f_f0                      ),
-            QString().sprintf( "%10.4e (%5.2f %%)", conc, perc     ) );
+            QString::asprintf( "%10.4e", model.components[ ii ].mw ),
+            QString::asprintf( "%10.4e", s_ap                      ),
+            QString::asprintf( "%10.4e", model.components[ ii ].s  ),
+            QString::asprintf( "%10.4e", D_ap                      ),
+            QString::asprintf( "%10.4e", model.components[ ii ].D  ),
+            QString::asprintf( "%10.4e", f_f0                      ),
+            QString::asprintf( "%10.4e (%5.2f %%)", conc, perc     ) );
    }
 
    mstr += indent( 4 ) + "</table>\n";

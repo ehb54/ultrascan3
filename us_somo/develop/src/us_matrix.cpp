@@ -1218,10 +1218,10 @@ US_lsfit::US_lsfit(double *coeff, double *x, double *y, int ord, int n, bool mes
    {
       int i;
       QString str1, str2;
-      str1.sprintf("Coefficients for %d-order Polynomial fit:\n\n", order-1);
+      str1 = QString::asprintf( "Coefficients for %d-order Polynomial fit:\n\n", order-1 );
       for (i=0; i<order; i++)
       {
-         str2.sprintf("%d order: %e\n", i, c[i]);
+         str2 = QString::asprintf( "%d order: %e\n", i, c[i] );
          str1.append(str2);
       }
       US_Static::us_message("Coefficients: ", str1);

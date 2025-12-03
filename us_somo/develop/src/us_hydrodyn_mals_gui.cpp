@@ -103,7 +103,7 @@ void US_Hydrodyn_Mals::setupGUI()
    connect(pb_similar_files, SIGNAL(clicked()), SLOT(similar_files()));
    pb_similar_files->hide();
 
-   pb_conc = new QPushButton(us_tr("Concentrations"), this);
+   pb_conc = new QPushButton(us_tr("Concs"), this);
    pb_conc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_conc->setMinimumHeight(minHeight3);
    pb_conc->setPalette( PALET_PUSHB );
@@ -405,11 +405,23 @@ void US_Hydrodyn_Mals::setupGUI()
    pb_create_istar_q->setPalette( PALET_PUSHB );
    connect(pb_create_istar_q, SIGNAL(clicked()), SLOT(create_istar_q()));
    
-   pb_load_conc = new QPushButton(us_tr("Conc. File Load"), this);
+   pb_fitting = new QPushButton(us_tr("Fitting"), this);
+   pb_fitting->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_fitting->setMinimumHeight(minHeight1);
+   pb_fitting->setPalette( PALET_PUSHB );
+   connect(pb_fitting, SIGNAL(clicked()), SLOT(fitting()));
+   
+   pb_load_conc = new QPushButton(us_tr("Conc. File"), this);
    pb_load_conc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_load_conc->setMinimumHeight(minHeight1);
    pb_load_conc->setPalette( PALET_PUSHB );
    connect(pb_load_conc, SIGNAL(clicked()), SLOT(load_conc()));
+
+   pb_load_saxs_ref = new QPushButton(us_tr("SAXS Ref."), this);
+   pb_load_saxs_ref->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   pb_load_saxs_ref->setMinimumHeight(minHeight1);
+   pb_load_saxs_ref->setPalette( PALET_PUSHB );
+   connect(pb_load_saxs_ref, SIGNAL(clicked()), SLOT(load_saxs_ref()));
 
    pb_repeak = new QPushButton(us_tr("Repeak"), this);
    pb_repeak->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
@@ -3121,7 +3133,7 @@ void US_Hydrodyn_Mals::setupGUI()
    AUTFBACK( rb_pbmode_mals );
    connect(rb_pbmode_mals, SIGNAL(clicked( )), SLOT( set_pbmode_mals( )));
 
-   rb_pbmode_none = new QRadioButton( "None", this ); 
+   rb_pbmode_none = new QRadioButton( "Band Broad.", this ); 
    rb_pbmode_none->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    rb_pbmode_none->setMinimumHeight(minHeight3);
    rb_pbmode_none->setPalette( PALET_NORMAL );
@@ -3168,6 +3180,7 @@ void US_Hydrodyn_Mals::setupGUI()
       hbl_file_buttons_0->setContentsMargins( 0, 0, 0, 0 );
       hbl_file_buttons_0->setSpacing( 0 );
       hbl_file_buttons_0->addWidget ( pb_load_conc );
+      hbl_file_buttons_0->addWidget ( pb_load_saxs_ref );
       hbl_file_buttons_0->addWidget ( pb_conc );
       hbl_file_buttons_0->addWidget ( pb_view );
    }
@@ -3443,6 +3456,7 @@ void US_Hydrodyn_Mals::setupGUI()
    hbl_file_buttons_4->addWidget ( pb_create_i_of_q );
    hbl_file_buttons_4->addWidget ( pb_create_ihash_t );
    hbl_file_buttons_4->addWidget ( pb_create_istar_q );
+   hbl_file_buttons_4->addWidget ( pb_fitting );
 
    files_widgets.push_back ( pb_bin );
    files_widgets.push_back ( pb_smooth );
@@ -3452,6 +3466,7 @@ void US_Hydrodyn_Mals::setupGUI()
    // hidden: files_widgets.push_back ( pb_create_i_of_q );
    files_widgets.push_back ( pb_create_ihash_t );
    files_widgets.push_back ( pb_create_istar_q );
+   files_widgets.push_back ( pb_fitting );
 
    QBoxLayout * hbl_conc_file = new QHBoxLayout(); hbl_conc_file->setContentsMargins( 0, 0, 0, 0 ); hbl_conc_file->setSpacing( 0 );
    // hbl_conc_file->addWidget ( pb_repeak );
@@ -3459,6 +3474,7 @@ void US_Hydrodyn_Mals::setupGUI()
    // hbl_conc_file->addWidget ( pb_detector );
 
    files_widgets.push_back ( pb_load_conc );
+   files_widgets.push_back ( pb_load_saxs_ref );
    // files_widgets.push_back ( pb_repeak );
    // files_widgets.push_back ( pb_conc_file );
    // files_widgets.push_back ( pb_detector );
@@ -4642,7 +4658,9 @@ void US_Hydrodyn_Mals::update_enables()
    pb_create_i_of_q      ->setEnabled( files_selected_count > 1 && files_compatible && files_are_time /* && gaussians.size() */ );
    pb_create_ihash_t     ->setEnabled( files_selected_count > 1 && files_compatible && files_are_time && mals_param_n && mals_param_lambda && mals_param_g_dndc && selected_files.count() == selected_files.filter( "_Rt_" ).count() );
    pb_create_istar_q     ->setEnabled( files_selected_count > 1 && files_compatible && files_are_time && all_ihasht );
+   pb_fitting            ->setEnabled( false );
    pb_load_conc          ->setEnabled( true );
+   pb_load_saxs_ref      ->setEnabled( true );
    // pb_repeak             ->setEnabled( files_selected_count > 1 && files_compatible && files_are_time );
    pb_repeak             ->setEnabled( files_are_time && conc_files.size() &&
                                        ( ( files_selected_count == 1 && !conc_selected_count ) ||
@@ -4699,15 +4717,14 @@ void US_Hydrodyn_Mals::update_enables()
       tso << "--------------------------------------------------------------------------------\n";
       tso << "plot_dist" << "\n";
       tso << "--------------------------------------------------------------------------------\n";
-      tso << QString().sprintf(
-                               "plot_dist->axisScaleDiv( QwtPlot::xBottom ).lower,upperBound()     %g\t%g\n"
-                               "plot_dist->axisScaleDiv( QwtPlot::yLeft ).lower,upperBound()       %g\t%g\n"
+      tso << QString::asprintf( "plot_dist->axisScaleDiv( QwtPlot::xBottom ).lower,upperBound()     %g\t%g\n"
+                                "plot_dist->axisScaleDiv( QwtPlot::yLeft ).lower,upperBound()       %g\t%g\n"
 
-                               ,plot_dist->axisScaleDiv( QwtPlot::xBottom ).lowerBound()
-                               ,plot_dist->axisScaleDiv( QwtPlot::xBottom ).upperBound()
-                               ,plot_dist->axisScaleDiv( QwtPlot::yLeft ).lowerBound()
-                               ,plot_dist->axisScaleDiv( QwtPlot::yLeft ).upperBound()
-                               );
+                                ,plot_dist->axisScaleDiv( QwtPlot::xBottom ).lowerBound()
+                                ,plot_dist->axisScaleDiv( QwtPlot::xBottom ).upperBound()
+                                ,plot_dist->axisScaleDiv( QwtPlot::yLeft ).lowerBound()
+                                ,plot_dist->axisScaleDiv( QwtPlot::yLeft ).upperBound()
+                                );
 
       tso << "zoomrect "
           << plot_dist_zoomer->zoomRect().left() << " , "
@@ -4726,15 +4743,14 @@ void US_Hydrodyn_Mals::update_enables()
       tso << "--------------------------------------------------------------------------------\n";
       tso << "plot_errors" << "\n";
       tso << "--------------------------------------------------------------------------------\n";
-      tso << QString().sprintf(
-                               "plot_errors->axisScaleDiv( QwtPlot::xBottom ).lower,upperBound()     %g\t%g\n"
-                               "plot_errors->axisScaleDiv( QwtPlot::yLeft ).lower,upperBound()       %g\t%g\n"
+      tso << QString::asprintf( "plot_errors->axisScaleDiv( QwtPlot::xBottom ).lower,upperBound()     %g\t%g\n"
+                                "plot_errors->axisScaleDiv( QwtPlot::yLeft ).lower,upperBound()       %g\t%g\n"
 
-                               ,plot_errors->axisScaleDiv( QwtPlot::xBottom ).lowerBound()
-                               ,plot_errors->axisScaleDiv( QwtPlot::xBottom ).upperBound()
-                               ,plot_errors->axisScaleDiv( QwtPlot::yLeft ).lowerBound()
-                               ,plot_errors->axisScaleDiv( QwtPlot::yLeft ).upperBound()
-                               );
+                                ,plot_errors->axisScaleDiv( QwtPlot::xBottom ).lowerBound()
+                                ,plot_errors->axisScaleDiv( QwtPlot::xBottom ).upperBound()
+                                ,plot_errors->axisScaleDiv( QwtPlot::yLeft ).lowerBound()
+                                ,plot_errors->axisScaleDiv( QwtPlot::yLeft ).upperBound()
+                                );
 
 
       tso << "zoomrect "
@@ -4973,7 +4989,10 @@ void US_Hydrodyn_Mals::disable_all()
    pb_create_i_of_t      ->setEnabled( false );
    pb_create_i_of_q      ->setEnabled( false );
    pb_create_ihash_t     ->setEnabled( false );
+   pb_create_istar_q     ->setEnabled( false );
+   pb_fitting            ->setEnabled( false );
    pb_load_conc          ->setEnabled( false );
+   pb_load_saxs_ref      ->setEnabled( false );
    pb_conc_file          ->setEnabled( false );
    // pb_detector           ->setEnabled( false );
    //    pb_set_mals           ->setEnabled( false );
@@ -5748,7 +5767,7 @@ void US_Hydrodyn_Mals::fasta_file() {
                             + seq_names
                             );
 
-   le_fasta_value->setText( QString( "" ).sprintf( "%.3f", psv ) );
+   le_fasta_value->setText( QString::asprintf( "%.3f", psv ) );
    le_fasta_value->setEnabled( true );
    return;
 }

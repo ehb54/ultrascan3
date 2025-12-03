@@ -94,7 +94,7 @@ void US_FailedRunGui::save_new( void )
   QString f_stage  = cb_stage       -> currentText();
   QString f_reason = le_description -> text();
 
-  f_reason.simplified();
+  f_reason = f_reason.simplified();
 
   if ( f_reason.isEmpty() )
     f_reason = "Not Specified";
@@ -104,7 +104,7 @@ void US_FailedRunGui::save_new( void )
   int autoflowFailedID = 0;
   
   US_Passwd pw;
-  US_DB2* db = new US_DB2( pw.getPasswd() );
+  IUS_DB2* db = new US_DB2( pw.getPasswd() );
    
   QStringList qry;
   qry << "new_autoflow_failed_record"
@@ -132,7 +132,7 @@ void US_FailedRunGui::save_new( void )
     
   int status = db->statusQuery( qry );
   
-  if ( status == US_DB2::NO_AUTOFLOW_RECORD )
+  if ( status == IUS_DB2::NO_AUTOFLOW_RECORD )
     {
       QMessageBox::warning( this,
 			    tr( "Autoflow's failedID field Not Updated" ),

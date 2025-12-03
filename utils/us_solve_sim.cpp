@@ -342,9 +342,9 @@ DbgLv(1) << "   CR:B fill kodl" << kodl;
    int stype     = data_sets[ offset ]->solute_type;
 
    if ( use_zsol )
-      qSort( sim_vals.zsolutes );
+       std::sort(sim_vals.zsolutes.begin(), sim_vals.zsolutes.end());
    else
-      qSort( sim_vals.solutes );
+       std::sort(sim_vals.solutes.begin(), sim_vals.solutes.end());
 
    int count_cut  = 0;         // Count of A columns cut by norm tolerance
    int ksolutes   = nsolutes;  // Saved original number of solutes (columns)
@@ -1206,7 +1206,7 @@ DbgLv(1)<< " norm cuts for #solutes=" << ksolutes << ":  count_cut" << count_cut
       for ( int jj = 0; jj < nsolutes; jj++ )
       {  // Compose each angle value string for each column of the row
          double aval  = angles[ aa++ ] * afact;
-         arow        += QString().sprintf( "%6.1f", aval );
+         arow        += QString::asprintf( "%6.1f", aval );
       }
       qDebug() << thrnrank << "w:ANGL:" << arow;
    }

@@ -23,10 +23,6 @@
 #include "us_lamm_astfvm.h"
 #include "us_time_state.h"
 
-#if QT_VERSION < 0x050000
-#define setSamples(a,b,c)  setData(a,b,c)
-#endif
-
 //! \brief Main program for US_Astfem_Sim.  Loads translators and starts
 //! the class US_Astfem_Sim.
 int main( int argc, char* argv[] )
@@ -633,6 +629,7 @@ void US_Astfem_Sim::init_simparams( void )
    simparams.lrnoise           = 0.0;
    simparams.tinoise           = 0.0;
    simparams.rinoise           = 0.0;
+   simparams.baseline          = 0.0;
    simparams.band_volume       = 0.015;
    simparams.rotorCalID        = rotor_calibr;
    simparams.band_forming      = false;
@@ -836,7 +833,50 @@ DbgLv(1) << "SimPar:MAIN:SetP:  points" << points << "rad0 radn"
    double c_speed = 0.0;
    int nstep      = simparams.speed_step.count();
 
-   for ( int jd = 0; jd < nstep; jd++ )
+   double previous_speed = 0.0;
+   double previous_time  = 0.0;
+   double previous_w2t   = 0.0;
+   for ( int jj = 0; jj < nstep; jj++ ) {
+      US_SimulationParameters::SpeedProfile* sp = &simparams.speed_step[ jj ];
+      if ( nstep > 0  &&  sp->set_speed < 1.0 )
+      {  // For multi-speed, insure values for set and average speeds
+         s_speed        = qRound( sp->rotorspeed * 0.01 ) * 100.0;
+         sp->set_speed  = s_speed;
+         sp->avg_speed  = sp->rotorspeed;
+      }
+      const double target_speed = ( sp->set_speed == 0.0 ) ? sp->rotorspeed : sp->set_speed;
+      const double delay    = qRound(sp->delay_hours    * 3600.0 + sp->delay_minutes    * 60.0);
+      const double duration = qRound(sp->duration_hours * 3600.0 + sp->duration_minutes * 60.0);
+      const double scanning_time = duration - delay;
+      const double time_between_scans = scanning_time / static_cast<double>( sp->scans - 1 );
+      US_DataIO::Scan scandata;
+      scandata.temperature = simparams.temperature;
+      scandata.rpm         = target_speed;
+      scandata.wavelength  = system.wavelength;
+      scandata.plateau     = 0.0;
+      scandata.delta_r     = simparams.radial_resolution;
+      scandata.rvalues     .fill( 0.0, points   );
+      for (int s = 0; s < sp->scans; s++) {
+         scandata.seconds = static_cast<double>(qRound(previous_time + delay + time_between_scans * s));
+         scandata.omega2t = US_AstfemMath::calc_omega2t(previous_w2t, previous_speed, previous_time,
+            target_speed, sp->acceleration, scandata.seconds);
+         if (s == 0) {
+            sp->time_first = scandata.seconds;
+            sp->w2t_first  = scandata.omega2t;
+         }
+         else if ( s == sp->scans - 1) {
+            sp->time_last  = scandata.seconds;
+            sp->w2t_last   = scandata.omega2t;
+         }
+         DbgLv( 1 ) << "SimPar:MAIN:SetP: js time omega2t " << s << scandata.seconds << scandata.omega2t;
+         sim_data_all.scanData << scandata;
+      }
+      previous_speed = target_speed;
+      previous_time  = sp->time_last;
+      previous_w2t   = sp->w2t_last;
+   }
+
+   for ( int jd = 0; jd < 0; jd++ )
    {
       US_SimulationParameters::SpeedProfile* sp = &simparams.speed_step[ jd ];
       time0          = time2;
@@ -1004,7 +1044,6 @@ void US_Astfem_Sim::start_simulation( void )
    // is initialized with a time and radius grid, and all concentration points
    // need to be set to zero. Each speed is a separate mfem_data set.
    sim_datas.resize( nstep );
-
 DbgLv(1) << "start_simulation is called, steps:" << nstep;
    // Experimental grid setting starts from here
    for ( int jd = 0; jd < nstep; jd++ )
@@ -1055,12 +1094,10 @@ DbgLv(1) << "astfem_radial_ranges" << sim_datas[jd].xvalues[0] << sim_datas[jd].
 
       // For each scan set the informations for each scan on
       // the experimental grid.
+      int scan_index = 0;
       for ( int js = 0; js < nscans; js++ )
       {
-         //US_DataIO::Scan* scan = &sim_datas[ jd ].scanData[ js ];
-         sim_datas[ jd ].scanData[ js ].temperature = simparams.temperature;
-         sim_datas[ jd ].scanData[ js ].rpm         = rpm;
-         sim_datas[ jd ].scanData[ js ].omega2t     = 0.0;
+         sim_datas[ jd ].scanData[ js ] = sim_data_all.scanData[ scan_index++ ];
          sim_datas[ jd ].scanData[ js ].wavelength  = system.wavelength;
          sim_datas[ jd ].scanData[ js ].plateau     = 0.0;
          sim_datas[ jd ].scanData[ js ].delta_r     = simparams.radial_resolution;
@@ -1068,8 +1105,6 @@ DbgLv(1) << "astfem_radial_ranges" << sim_datas[jd].xvalues[0] << sim_datas[jd].
          sim_datas[ jd ].scanData[ js ].interpolated.fill( 0,   terpsize );
       }
    }
-
-   double w2t_sum      = 0.0; // Initialize omega_2_t
 
    // Initialize delay
    delay        = simparams.speed_step[ 0 ].delay_hours * 3600.0
@@ -1080,100 +1115,6 @@ DbgLv(1) << "astfem_radial_ranges" << sim_datas[jd].xvalues[0] << sim_datas[jd].
    increment           = 0.0;   // Initial increment in time
 //   int    scan_number  = 0;   // Counter for each scan and initialized to zero
    double acc_time;
-
-   // For each speed step set the experimental time grid, assign
-   // time and omega_2_t to each scan.
-   for ( int jd = 0; jd < nstep; jd++ )
-   {
-      // To get the right time, we need to take the last scan time from the
-      // previous speed step and add the delays to it
-      double rs_prev = 0.0; // Used for previous rotor speed
-
-      // Pointer for each step
-      US_SimulationParameters::SpeedProfile* sp = &simparams.speed_step[ jd ];
-
-      if ( jd > 0 )
-      {
-         rs_prev = simparams.speed_step[ jd - 1 ].rotorspeed;
-      }
-// x  x  x
-
-      int acc_steps;  // Number of time steps for acceleration
-      double rpm_inc; // Increment in rpm
-      double w2t     = sq( sp->rotorspeed * M_PI / 30.0 );
-
-      delay          = (qCeil)( sp->delay_hours * 3600. + sp->delay_minutes * 60.);
-//DbgLv(1) << "Delay_astfem_sim is: "<< delay << "step= " << jd;
-
-      acc_time       = ( sp-> rotorspeed - rs_prev  ) / (double)sp->acceleration;
-      acc_steps      = (qCeil) ( acc_time );
-//DbgLv(1) << "Delay_astfem_sim is: " << delay << "step= " << jd << acc_time << acc_steps;
-
-      rpm_inc        = (double)( sp->rotorspeed - rs_prev ) / (double) acc_steps;
-      duration       = sp->duration_hours * 3600. + sp->duration_minutes * 60.;
-      increment      = ( duration - delay ) / (double)( sp->scans - 1 );
-
-      if ( jd == 0 )
-      {
-         double rpm_current = 0.0;
-
-         for ( int jt = 0; jt < delay; jt++ )
-         {
-             rpm_current += rpm_inc;
-             w2t_sum     += sq ( rpm_current * M_PI / 30.0 );
-         }
-      }
-      else
-      {
-         double rpm_current = simparams.speed_step[ jd - 1 ].rotorspeed;
-
-         for ( int jt = 0; jt < delay; jt++ )
-         {
-             rpm_current += rpm_inc;
-             w2t_sum     += sq ( rpm_current * M_PI / 30.0 );
-         }
-      }
-
-      double w2t_inc = increment * w2t;
-
-//      w2t_sum        = ( jd == 0 ) ? ( current_time * w2t ) : w2t_sum;
-
-      // Experimental time grid is set here. Total duration is divided by
-      // number of scans and each scan is assigned with a time
-      // Hence the time grid is regular. Time and omega_2_t are assigned
-      // to each scan on the experimental grid.
-      for ( int js = 0; js < sp->scans; js++ )
-      {
-         //US_DataIO::Scan* scan = &sim_datas[jd].scanData[ scan_number ];
-
-         if ( js == 0 )
-         {
-            current_time += delay; // For first scan update time with the acceleration time
-         }
-         else
-         {
-            current_time += increment; // Update time with regular time increment
-            w2t_sum      += w2t_inc;
-
-         }
-
-         // Assign time to each scan on the experimental grid
-         sim_datas[ jd ].scanData[ js ].seconds = (qRound)( current_time );
-         sim_datas[ jd ].scanData[ js ].rpm     = sp->rotorspeed;
-         sim_datas[ jd ].scanData[ js ].omega2t = w2t_sum;
-DbgLv(1) << "scans_w2t_and time on experimental grid " << sim_datas[jd].scanData[js].seconds
- << sim_datas[jd].scanData[js].rpm << sim_datas[jd].scanData[js].omega2t;
-      }
-
-      int j1           = 0;              // Counter for first scan
-      int j2           = sp->scans - 1;  // Counter for last scan
-      sp->w2t_first    = sim_datas[ jd ].scanData[ j1 ].omega2t; // omega_2_t for first scan
-      sp->w2t_last     = sim_datas[ jd ].scanData[ j2 ].omega2t; // omega_2_t for last scan
-      sp->time_first   = sim_datas[ jd ].scanData[ j1 ].seconds; // Time for first scan
-      sp->time_last    = sim_datas[ jd ].scanData[ j2 ].seconds; // Time for last scan
-DbgLv(1) << "first_last_data for the step" << sp->time_first << sp->time_last
- << sp->w2t_first << sp->w2t_last << simparams.speed_step[jd].rotorspeed;
-   }
 //for ( int i =0; i< sim_datas.scanData.size();i++ )
 // DbgLv(1)<<"time="<<sim_datas.scanData[i].seconds<<"omega2t="<< sim_datas.scanData[i].omega2t;
 
@@ -1341,6 +1282,7 @@ void US_Astfem_Sim::finish( void )
 //DbgLv(1) << "FIN: comp size" << system.components.size();
 //DbgLv(1) << "FIN:  total_conc" << total_conc;
    ri_noise();
+   baseline();
    random_noise();
    ti_noise();
 
@@ -1378,18 +1320,49 @@ DbgLv(1) << "FIN:  progress maxsize" << progress->maximum();
 
 void US_Astfem_Sim::ri_noise( void )
 {
+   csv_data_ri.clear();
    if ( simparams.rinoise == 0.0 ) return;
+
+
+   QStringList header;
+   header << "Time (s)" << "RI noise (OD)";
 
    // Add radially invariant noise
    for ( int jd = 0; jd < simparams.speed_step.size(); jd++ )
    {
+      QVector<QVector<double>> csv_data;
+      QVector<double> tv;
+      QVector<double> rv;
+      for ( int ks = 0; ks < sim_datas[ jd ].scanData.size(); ks++ )
+      {
+         double rinoise = US_Math2::box_muller( 0, total_conc * simparams.rinoise / 100 );
+         tv << sim_datas[ jd ].scanData[ ks ].seconds;
+         rv << rinoise;
+
+         for ( int mp = 0; mp < sim_datas[ jd ].pointCount(); mp++ )
+         {
+            sim_datas[ jd ].scanData[ ks ].rvalues[ mp ] += rinoise;
+         }
+      }
+      csv_data << tv;
+      csv_data << rv;
+      US_CSV_Data csv;
+      csv.setData( header, csv_data );
+      csv_data_ri << csv;
+   }
+}
+
+void US_Astfem_Sim::baseline( void )
+{
+   if ( simparams.baseline == 0.0 ) return;
+
+   // Add a constant baseline offset
+   for ( int jd = 0; jd < simparams.speed_step.size(); jd++ )
+   {
        for ( int ks = 0; ks < sim_datas[ jd ].scanData.size(); ks++ )
        {
-           double rinoise =
-           US_Math2::box_muller( 0, total_conc * simparams.rinoise / 100 );
-
            for ( int mp = 0; mp < sim_datas[ jd ].pointCount(); mp++ )
-              sim_datas[ jd ].scanData[ ks ].rvalues[ mp ] += rinoise;
+              sim_datas[ jd ].scanData[ ks ].rvalues[ mp ] += simparams.baseline;
        }
    }
 }
@@ -1443,27 +1416,41 @@ void US_Astfem_Sim::random_noise( void )
 
 void US_Astfem_Sim::ti_noise( void )
 {
+   csv_data_ti.clear();
    if ( simparams.tinoise == 0.0 ) return;
+
+   QVector< double > tinoise;
+   // all speed steps are assumed to have the same number of the radial points of a single scan
+   int points = sim_datas[0].pointCount();
+   tinoise.resize( points );
+
+   double val = US_Math2::box_muller( 0, total_conc * simparams.tinoise / 100 );
+   for ( int mp = 0; mp < points; mp++ )
+   {
+      val += US_Math2::box_muller( 0, total_conc * simparams.tinoise / 100 );
+      tinoise[ mp ] = val;
+   }
 
    // Add time invariant noise
    for ( int jd = 0; jd < simparams.speed_step.size(); jd++ )
    {
-      int points = sim_datas[ jd ].pointCount();
-      QVector< double > tinoise;
-      tinoise.resize( points );
-      double val = US_Math2::box_muller( 0, total_conc * simparams.tinoise / 100 );
-
-      for ( int mp = 0; mp < points; mp++ )
-      {
-         val += US_Math2::box_muller( 0, total_conc * simparams.tinoise / 100 );
-         tinoise[ mp ] = val;
-      }
+      // int points = sim_datas[ jd ].pointCount();
       for ( int ks = 0; ks < sim_datas[ jd ].scanData.size(); ks++ )
       {
          for ( int mp = 0; mp < points; mp++ )
+         {
             sim_datas[ jd ].scanData[ ks ].rvalues[ mp ] += tinoise[ mp ];
+         }
       }
    }
+
+   // save the TI into a csv file
+   QDir dir( US_Settings::resultDir() );
+   QStringList header{"Radial Points (cm)", "TI noise (OD)"};
+   QVector<QVector<double>> csv_data;
+   csv_data << sim_datas[0].xvalues;
+   csv_data << tinoise;
+   csv_data_ti.setData( header, csv_data );
 }
 
 void US_Astfem_Sim::save_scans( void )
@@ -1472,6 +1459,33 @@ DbgLv(1) << "ASIM:svscn: IN";
    QString odir        = QFileDialog::getExistingDirectory( this,
          tr( "Select a directory for the simulated data:" ),
          US_Settings::importDir() );
+   if ( odir.isEmpty() ) {
+      return;
+   }
+   QDir target_dir( odir );
+   QDir parent_target_dir( odir );
+   parent_target_dir.cdUp();
+   QDir ultrascan_user_dir( US_Settings::workBaseDir() );
+   // protect all ~/ultrascan/* locations
+   if ( parent_target_dir.absolutePath() == ultrascan_user_dir.absolutePath() ) {
+      QMessageBox::critical( this, tr( "Error" ), tr( "Cannot save at this location." ) );
+      return;
+   }
+   if ( target_dir.exists() && !target_dir.isEmpty() ) {
+      // Ask the user if really everything should be deleted
+      QString text = tr( "The directory <b>%1</b> is not empty. Do you want to risk overwriting the content?" )
+                     .arg( target_dir.absolutePath() );
+      QMessageBox::StandardButton response = QMessageBox::question(
+         this,
+         tr( "Confirm" ),
+         text,
+         QMessageBox::Yes | QMessageBox::No );
+      if ( response != QMessageBox::Yes ) {
+         return;
+      }
+      target_dir.removeRecursively();
+      target_dir.mkpath( target_dir.absolutePath() );
+   }
    save_simulation( odir );
 }
 
@@ -1490,6 +1504,8 @@ bool US_Astfem_Sim::save_simulation( QString odir, bool supress_dialog )
 
       if ( nstep == 1 )
       {  // Single-speed case
+         QDir dir ( odir );
+
          save_xla( odir, sim_datas[ 0 ], 0, supress_dialog );
 
          // Create a timestate in the same directory
@@ -1510,6 +1526,18 @@ DbgLv(1) << "ASIM:svscn: 1-speed file paths"  << odir << tmst_fpath;
          {  // Create timestate file pair in imports subdirectory
             US_AstfemMath::writetimestate( tmst_fpath, simparams, sim_datas[ 0 ] );
          }
+
+         // Save TI noises
+         if ( csv_data_ti.rowCount() > 0 ) {
+            csv_data_ti.setFilePath( dir.absoluteFilePath( "ASTFEM_TI_NOISE.csv" ) );
+            save_csv_noise( csv_data_ti );
+         }
+         // Save RI noises
+         if ( !csv_data_ri.isEmpty() ) {
+            csv_data_ri[ 0 ].setFilePath( dir.absoluteFilePath( "ASTFEM_RI_NOISE.csv" ) );
+            save_csv_noise( csv_data_ri[ 0 ] );
+         }
+
       }  // End:  single-speed case
 
       else
@@ -1574,6 +1602,21 @@ DbgLv(1) << "ASIM:svscn: m-speed  have_tmst" << have_tmst;
                }
             }
          }
+
+         // Save TI, RI noises
+
+         for ( int ii = 0; ii < nstep; ii++ )
+         {
+            int ispeed          = simparams.speed_step[ ii ].rotorspeed;
+            QString spsufx      = QString::asprintf( "-%05d", ispeed );
+            QString odir1       =  odir   + spsufx;
+            QDir dir ( odir1 );
+            csv_data_ti.setFilePath( dir.absoluteFilePath( "ASTFEM_TI_NOISE.csv" ) );
+            csv_data_ri[ ii ].setFilePath( dir.absoluteFilePath( "ASTFEM_RI_NOISE.csv" ) );
+            save_csv_noise( csv_data_ti );
+            save_csv_noise( csv_data_ri[ ii ] );
+         }
+
 //*DEBUG*
 int kscn=sim_data_all.scanCount();
 DbgLv(1) << "ASIM:svscn:  all_data scan count" << kscn << sim_data_all.scanData.count();
@@ -1880,6 +1923,12 @@ DbgLv(1) << "EDT:WrXml:  waveln" << wl;
    return true;
 }
 
+void US_Astfem_Sim::save_csv_noise( US_CSV_Data &csv )
+{
+   if ( csv.columnCount() != 2 ) return;
+   csv.writeFile( "," );
+}
+
 // slot to update progress and lcd based on current component
 void US_Astfem_Sim::update_progress( int component )
 {
@@ -2105,8 +2154,6 @@ DbgLv(1) << "Sim:SV:  run_id_from_save_xla" << run_id;
 DbgLv(1) << "Sim:SV: after_write_rawdata" << ofname;
    progress->setValue( total_scans );
    lb_progress->setText( tr( "Completed" ) );
-
-   pb_saveSim->setEnabled( false );
 }
 
 
@@ -2117,20 +2164,29 @@ void US_Astfem_Sim::plot( int step )
    QList< QColor > mcolors;
    int nmcols     = plot2->map_colors( mcolors );
   // dataPlotClear( scanPlot );
+   double min_y_axis = 0.0;
+   double max_y_axis = total_conc * 2.0;
 
-   // Set plot scale
+   // Set plot scale for band-forming
    if ( simparams.band_forming )
-      scanPlot->setAxisScale( QwtPlot::yLeft, 0, total_conc );
-
-   else if ( system.coSedSolute >= 0 )
+   {
+      min_y_axis = total_conc;
+   }
+   // adjust the plotting for the baseline offset if defined
+   if ( simparams.baseline != 0.0)
+   {
+      min_y_axis += simparams.baseline;
+      max_y_axis += simparams.baseline;
+   }
+   // For co-sedimenting solutes axis are auto-scaled
+   if ( system.coSedSolute >= 0 )
    {
       scanPlot->setAxisAutoScale( QwtPlot::xBottom );
       scanPlot->setAxisAutoScale( QwtPlot::yLeft   );
    }
-
    else
    {
-      scanPlot->setAxisScale( QwtPlot::yLeft, 0, total_conc * 2.0 );
+      scanPlot->setAxisScale( QwtPlot::yLeft, min_y_axis, max_y_axis );
    }
 
    QwtPlotGrid* grid2 = us_grid( scanPlot );

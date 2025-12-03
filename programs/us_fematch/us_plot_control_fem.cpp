@@ -12,7 +12,7 @@ using namespace Qwt3D;
 
 // constructor:  enhanced plot control widget
 US_PlotControlFem::US_PlotControlFem( QWidget* p, US_Model* amodel )
-   : US_WidgetsDialog( 0, 0 )
+   : US_WidgetsDialog( nullptr, Qt::WindowFlags() )
 {
    wparent        = p;
    model          = amodel;

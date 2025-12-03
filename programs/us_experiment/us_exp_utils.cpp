@@ -44,15 +44,7 @@
 #include "us_crypto.h"
 #include "us_db2.h"
 
-#if QT_VERSION < 0x050000
-#define setSamples(a,b,c)  setData(a,b,c)
-#define setMinimum(a)      setMinValue(a)
-#define setMaximum(a)      setMaxValue(a)
-#define QRegularExpression(a)  QRegExp(a)
-#define setCbCurrentText(a,b)  a->setCurrentIndex(a->findText(b))
-#else
 #define setCbCurrentText(a,b)  a->setCurrentText(b)
-#endif
 
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug()
@@ -1031,11 +1023,14 @@ DbgLv(1) << "EGRo: inP: calib_entr" << cal_entr;
 	    << "cb_rotor text" << cb_rotor->currentText();
    DbgLv(1) << "EGRo: inP:   calID" << rpRotor->calID << "calib" << rpRotor->calibration;
 
-   //import Data Disk
-   rpRotor->importData  = ck_disksource->isChecked();
-   le_dataDiskPath ->setText( rpRotor->importDataDisk );
-   rpRotor->importData_absorbance_t = ck_absorbance_t->isChecked();
-   
+   //import Data Disk: only for non-PD
+   if ( !mainw-> us_prot_dev_mode )
+     {
+       rpRotor->importData  = ck_disksource->isChecked();
+       le_dataDiskPath ->setText( rpRotor->importDataDisk );
+       rpRotor->importData_absorbance_t  = ck_absorbance_t->isChecked();
+       rpRotor->importData_absorbance_pa = ck_absorbance_pa->isChecked();
+     }
 
    //Show current oper(s) & rev(s)
    te_opers_to_assign -> setText( rpRotor->operListAssign );
@@ -1092,12 +1087,14 @@ DbgLv(1) << "EGRo: inP: calib_entr" << cal_entr;
        cb_operator -> setVisible(true);
 
        //Hide data disk upload
-       pb_importDisk   -> hide();
-       le_dataDiskPath -> hide();
-       ck_disksource   -> hide();
-       ck_absorbance_t -> hide();
+       pb_importDisk    -> hide();
+       le_dataDiskPath  -> hide();
+       ck_disksource    -> hide();
+       ck_absorbance_t  -> hide();
+       ck_absorbance_pa -> hide();
        rpRotor->importData = false;
-       rpRotor->importData_absorbance_t = false;
+       rpRotor->importData_absorbance_t  = false;
+       rpRotor->importData_absorbance_pa = false;
        rpRotor->importDataDisk = "";
      }
 
@@ -1105,6 +1102,8 @@ DbgLv(1) << "EGRo: inP: calib_entr" << cal_entr;
    expType_old = cb_exptype ->currentText();
 
    qDebug() << "Rotor::initPanel(), expType_old -- " << expType_old;
+   qDebug() << "Rotor::initPanel(), rpRotor->importData_absorbance_t, rpRotor->importData_absorbance_pa -- "
+	    << rpRotor->importData_absorbance_t <<  rpRotor->importData_absorbance_pa;
 
 }
 
@@ -1530,11 +1529,14 @@ qDebug() << "NAME OF THE ROTOR IN SAVE: rot, rpRotor->rotor: " << rot << ", "  <
 
    rpRotor->exptype     = exptype;
 
-   //dataDisk
-   rpRotor->importDataDisk            = importDataPath;
-   rpRotor->importData                = ck_disksource->isChecked();
-   rpRotor->importData_absorbance_t   = ck_absorbance_t->isChecked();
-
+   //dataDisk: for non-PD
+   if ( !mainw-> us_prot_dev_mode )
+     {
+       rpRotor->importDataDisk            = importDataPath;
+       rpRotor->importData                = ck_disksource    ->isChecked();
+       rpRotor->importData_absorbance_t   = ck_absorbance_t  ->isChecked();
+       rpRotor->importData_absorbance_pa  = ck_absorbance_pa ->isChecked();
+     }
    
 qDebug() << "OPERATORID / INSTRUMENT / ExpType in SAVE: "
          <<  rpRotor->operID  << ", " << rpRotor->opername << " / "
@@ -1606,6 +1608,9 @@ DbgLv(1) << "EGRo:  svP:  calndx" << ii << "calGUID" << rpRotor->calGUID;
 	     mainw-> abde_sv_mode_change_reset_reports( "ABDE" ); 
 	 }
      }
+
+   qDebug() << "Rotor::savePanel(), rpRotor->importData_absorbance_t, rpRotor->importData_absorbance_pa -- "
+	    << rpRotor->importData_absorbance_t <<  rpRotor->importData_absorbance_pa;
 }
 
 // Get a specific panel string value
@@ -2815,7 +2820,7 @@ DbgLv(1) << "EGOp:inP: nochan" << nochan;
      {
        QString channel     = rpOptic->chopts[ ii ].channel;
 
-       int cell_number = ((channel.split(QRegExp("\\s+"), QString::SkipEmptyParts))[0]).toInt();
+       int cell_number = ((channel.split(QRegExp("\\s+"), Qt::SkipEmptyParts))[0]).toInt();
 DbgLv(1) << "EGOp:inP: CELL #" << cell_number;
        if ( nholes == cell_number )
          ctrbal_is_centerpiece = true;
@@ -3867,9 +3872,16 @@ DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
 
    if ( mainw->automode )
      {
+       bool connectivity_s = ( rpRotor->importData && !rpRotor->importDataDisk.isEmpty() ) ?
+	 true : mainw->connection_status;
+       
+       // subm_enab         = ( have_run    &&  have_proj  &&  proto_ena  &&
+       // 			     mainw->connection_status &&                // ALEXEY: use top-level connection boolean!
+       // 			     !currProto->exp_label.isEmpty() );         // ALEXEY: and label is present
+
        subm_enab         = ( have_run    &&  have_proj  &&  proto_ena  &&
-			     mainw->connection_status &&                // ALEXEY: use top-level connection boolean!
-			     !currProto->exp_label.isEmpty() );         // ALEXEY: and label is present
+       			     connectivity_s &&                    // ALEXEY: use top-level connection boolean!
+			     !currProto->exp_label.isEmpty() );   // ALEXEY: and label is present
 
        //add cond. for data from disk:
        if ( rpRotor->importData && rpRotor->importDataDisk.isEmpty() )
@@ -3877,6 +3889,8 @@ DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
 	   qDebug() << "Data Disk ? " << rpRotor->importData;
 	   qDebug() << "Data Disk Path -- " << rpRotor->importDataDisk;
 	   qDebug() << "Data Disk: Absorbance ? " << rpRotor->importData_absorbance_t;
+	   qDebug() << "Data Disk: Pseuso-Absorbance ? " << rpRotor->importData_absorbance_pa;
+	   qDebug() << "dataDisk, disabling pb_submit...";
 	   subm_enab = false;
 	 }
      }
@@ -3931,7 +3945,7 @@ DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
        
 	 }
      }
-   else
+   else //PD
      {
        pb_submit -> disconnect();
        connect( pb_submit,    SIGNAL( clicked()          ),
@@ -3942,10 +3956,18 @@ DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
 
        pb_submit  ->setEnabled( false );
        pb_submit  ->setEnabled( have_run && rps_differ );
+
+       //deb
+       qDebug() << "[Submitting PD]: rpRotor->importData, rpRotor->importData_absorbance_t, "
+		<< "rpRotor->importData_absorbance_pa, have_run,  rps_differ -- "
+		<< rpRotor->importData
+		<< rpRotor->importData_absorbance_t
+		<< rpRotor->importData_absorbance_pa
+		<< have_run << rps_differ;
      }
 
    //[DataFromDisk] Check that channels & ranges correspond to those is protocol:
-   if ( rpRotor->importData && !rpRotor->importDataDisk.isEmpty() )
+   if ( rpRotor->importData && !rpRotor->importDataDisk.isEmpty() && !mainw-> us_prot_dev_mode )
      {
        qDebug() << "Submit::init: DataDISK ";
        QStringList msg_to_user;
@@ -3966,6 +3988,7 @@ DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
 				     "Cells, Optics, and Ranges settings!\n\n"
        				     "Saving protocol and run submission are not possible "
        				     "until this problem is resolved."));
+	   return;
 	 }
      }
    
@@ -3976,7 +3999,13 @@ DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
      {
        qDebug() << "Submit::init: ABDE_MODE ";
        QStringList msg_to_user;
-       if ( !extinctionProfilesExist( msg_to_user ) )
+       
+       //first, check if this is abde-mixed (MWL & SWL) experiement
+       //disallow, and enforce to be either MWL or SWL
+       
+       //second, if MWL, enforce it to be MWL-DECONV.
+       //meaning each non-ref. channel must have solution with 2 solutes... 
+       if ( !ifMixedABDE( msg_to_user ) )
        	 {
        	   pb_submit->setEnabled( false );
        	   pb_saverp->setEnabled( false );
@@ -3984,13 +4013,50 @@ DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
        	   msg_to_user.removeDuplicates();
         
        	   QMessageBox::critical( this,
-       				  tr( "ATTENTION: Invalid Extinction Profiles (ABDE)" ),
+       				  tr( "ATTENTION: Invalid Ranges Settings (ABDE)" ),
        				  msg_to_user.join("\n") +
-       				  tr("\n\nPlease upload valid extinction profiles for above specified analytes "
-       				     "and/or buffers using following UltraScan's programs: \n\"Database:Manage Analytes\""
-       				     "\n\"Database:Manage Buffer Data\"\n\n"
-       				     "Saving protocol or run submission to the Optima are not possible "
+       				  tr("\n\nCurrent Ranges settings do not correspond to either multi-wavelength (MWL) or "
+       				     "single-wavelength (SWL) experiment."
+       				     "\nPlease modify wavelengths settings in the tab 7:Ranges, to ensure "
+				     "all channels are either MWL or SWL."
+       				     "\n\nSaving protocol or run submission to the Optima are not possible "
        				     "until this problem is resolved."));
+	   return;
+	 }
+
+             
+       if ( !extinctionProfilesExist( msg_to_user ) )
+       	 {
+       	   pb_submit->setEnabled( false );
+       	   pb_saverp->setEnabled( false );
+
+       	   msg_to_user.removeDuplicates();
+
+	   if (msg_to_user.join(",").contains("Single Analyte Defined;"))
+	     {
+	       QMessageBox::critical( this,
+				      tr( "ATTENTION: Solution with a Single Analyte (MWL-ABDE)" ),
+				      msg_to_user.join("\n") +
+				      tr("\n\nThe solution for the above specified channel has only "
+					 "one analyte. At least two analytes with valid extinction profiles "
+					 "are required for the currently defined MWL-ABDE experiment.\n"
+					 "Please modify the solution, or select a different one to satisfy these "
+					 "requirements."
+					 "\n\nSaving protocol or run submission to the Optima are not possible "
+					 "until this problem is resolved."));
+	     }
+	   else
+	     {
+	       QMessageBox::critical( this,
+				      tr( "ATTENTION: Invalid Extinction Profiles (ABDE)" ),
+				      msg_to_user.join("\n") +
+				      tr("\n\nPlease upload valid extinction profiles for above specified analytes "
+					 "and/or buffers using following UltraScan's programs: \n\"Database:Manage Analytes\""
+					 "\n\"Database:Manage Buffer Data\"\n\n"
+					 "Saving protocol or run submission to the Optima are not possible "
+					 "until this problem is resolved."));
+	     }
+	   return;
        	 }
 
        //Check for the correct settings in AProfile for 'Use Reference#'
@@ -4008,6 +4074,7 @@ DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
 				     "in the tab 8. AProfile: ABDE Settings. \n\n"
 				     "Saving protocol or run submission to the Optima are not possible "
 				     "until this problem is resolved."));
+	   return;
 	 }
 
        //Check for Matching Wvls in Refs. && Samples:
@@ -4025,6 +4092,7 @@ DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
 				     "in the tab 7:Ranges to correct the above error(s). \n\n"
 				     "Saving protocol or run submission to the Optima are not possible "
 				     "until this problem is resolved."));
+	   return;
 	 }
      }
 
@@ -4063,6 +4131,7 @@ DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
    qDebug() << "Data Disk Path -- " << rpRotor->importDataDisk;
    qDebug() << "Data Disk: Absorbance ? " << rpRotor->importData_absorbance_t;
    QString dataSourceType = ( !rpRotor->importData_absorbance_t ) ? "dataDiskAUC" : "dataDiskAUC:Absorbance";
+   dataSourceType = ( rpRotor->importData_absorbance_pa ) ? "dataDiskAUC:PseudoAbsorbance" : dataSourceType;
    qDebug() << "dataSourceType -- " << dataSourceType;
 }
 
@@ -4081,6 +4150,20 @@ bool US_ExperGuiUpload::protocolToDataDisk( QStringList& msg_to_user )
   for ( int i=0; i<chann_ranges_from_dataDisk.keys().size(); ++i )
     {
       QString channame_c = chann_ranges_from_dataDisk.keys()[i];
+
+      //check for actual consistency:
+      QStringList channels_dataDisk_mod;
+      QStringList channels_dataDisk = mainw->get_all_channels_dataDisk();
+      for (int cd=0; cd<channels_dataDisk.size(); ++cd)
+	{
+	  QString cd_c = channels_dataDisk[cd];
+	  channels_dataDisk_mod << cd_c.replace(" / ","").simplified();
+	}
+      qDebug() << "[Upload:check protocolToDataDisk()] : channame_c, channels_dataDisk_mod -- "
+	       << channame_c << ", " << channels_dataDisk_mod;
+      if (!channels_dataDisk_mod. contains( channame_c ) )
+	  continue;
+      
       if ( !chann_ranges_from_dataDisk[ channame_c ]. isEmpty()  )
 	channames_from_dataDisk << channame_c;
     }
@@ -4103,8 +4186,14 @@ bool US_ExperGuiUpload::protocolToDataDisk( QStringList& msg_to_user )
   //Optics
   qDebug() << "chann_numbers_from_dataDisk, rpOptic->chopts.size() -- "
 	   << chann_numbers_from_dataDisk << rpOptic->chopts.size();
-  int chopts_num = ( !rpRotor-> importData_absorbance_t) ?
-    chann_numbers_from_dataDisk.size()*2 : chann_numbers_from_dataDisk.size();
+  // int chopts_num = ( !rpRotor-> importData_absorbance_t) ?
+  //   chann_numbers_from_dataDisk.size()*2 : chann_numbers_from_dataDisk.size();
+  //int chopts_num = chann_numbers_from_dataDisk.size();
+
+  qDebug() << "channames_from_dataDisk , rpOptic->chopts.size() -- "
+	   << channames_from_dataDisk << rpOptic->chopts.size();
+  int chopts_num = channames_from_dataDisk.size();
+  
   if ( chopts_num != rpOptic->chopts.size() )
     {
       msg_to_user << "[Uploaded Data <-> Protocol] Numbers of Optics cahnnels are mismatched!";
@@ -4112,12 +4201,20 @@ bool US_ExperGuiUpload::protocolToDataDisk( QStringList& msg_to_user )
     }
   for ( int ii = 0; ii < rpOptic->chopts.size(); ii++ )
     {
-      QString ch_num = rpOptic->chopts[ii].channel. split(" / ")[0]. trimmed();
-      if ( !chann_numbers_from_dataDisk.contains( ch_num ) )
-	{
-	  msg_to_user << "[Uploaded Data <-> Protocol] Optics channels are mismatched!";
-	  return false;
-	}
+      QString ch_num  = rpOptic->chopts[ii].channel. split(" / ")[0]. trimmed();
+      QString ch_name = rpOptic->chopts[ii].channel. split(",")[0].replace(" / ","").trimmed();
+      if ( !channames_from_dataDisk.contains( ch_name ) )
+      	{
+      	  msg_to_user << "[Uploaded Data <-> Protocol] Optics channels are mismatched!";
+      	  return false;
+      	}
+      
+      // QString ch_num = rpOptic->chopts[ii].channel. split(" / ")[0]. trimmed();
+      // if ( !chann_numbers_from_dataDisk.contains( ch_num ) )
+      // 	{
+      // 	  msg_to_user << "[Uploaded Data <-> Protocol] Optics channels are mismatched!";
+      // 	  return false;
+      // 	}
 
       QStringList r_types;
       if ( !rpOptic->chopts[ii].scan1 . isEmpty() )
@@ -4126,8 +4223,8 @@ bool US_ExperGuiUpload::protocolToDataDisk( QStringList& msg_to_user )
 	r_types << "IP";
 
       QStringList r_types_fromDisk = runTypes_from_dataDisk[ ch_num ];
-      qSort( r_types );
-      qSort( r_types_fromDisk );
+      std::sort( r_types.begin(), r_types.end() );
+      std::sort( r_types_fromDisk.begin(), r_types_fromDisk.end() );
       qDebug() << "DataDisk OptSys for chann: " << ch_num << r_types_fromDisk;
       qDebug() << "Protocol OptSys for chann: " << ch_num << r_types;
       if ( r_types != r_types_fromDisk )
@@ -4384,6 +4481,43 @@ bool US_ExperGuiUpload::useReferenceNumbersSet( QStringList& msg_to_user )
   return all_refs_set;
 }
 
+bool US_ExperGuiUpload::ifMixedABDE( QStringList&  msg_to_user)
+{
+  bool all_chann_same_wvl_type = true;
+  msg_to_user. clear();
+  QMap<QString, QString> channel_wvl_type;
+    
+  //over channels
+  for ( int ii = 0; ii < rpRange->nranges; ii++ )
+    {
+      QString channel   = rpRange->chrngs[ ii ].channel;
+      QList< double > all_wvls = rpRange->chrngs[ ii ].wvlens;
+      int    nwavl      = all_wvls.count();
+
+      channel_wvl_type[channel] = ( nwavl > 1 ) ? "MWL" : "SWL";
+      qDebug() << "channel " << channel << ", " << channel_wvl_type[channel];
+    }
+
+  //check if all the same
+  QStringList all_wvl_types;
+  QStringList channels_list = channel_wvl_type.keys();
+  for ( int ii = 0; ii < channels_list.size(); ii++ )
+    {
+      QString chann_type = channel_wvl_type[channels_list[ii]];
+      msg_to_user << channels_list[ii] + ": " + chann_type;
+      all_wvl_types << chann_type;
+    }
+  all_wvl_types.removeDuplicates();
+
+  if ( all_wvl_types.size() != 1 )
+    all_chann_same_wvl_type = false;
+
+  qDebug() << "[in ifMixedABDE()] " <<  msg_to_user;
+  
+  return all_chann_same_wvl_type;
+}
+
+
 bool US_ExperGuiUpload::extinctionProfilesExist( QStringList& msg_to_user )
 {
   bool all_profiles_exist = true;
@@ -4391,6 +4525,29 @@ bool US_ExperGuiUpload::extinctionProfilesExist( QStringList& msg_to_user )
   qDebug() << "Size rpSolut->nschan, rpRange->nranges -- "
 	   << rpSolut->nschan
 	   << rpRange->nranges;
+
+  //AProfile
+  US_AnaProfile aprof      = *(mainw->get_aprofile());
+  QStringList chnns_names  = aprof.chndescs_alt;
+  QList<int> ref_chnns     = aprof.ref_channels;
+  QList<int> ref_use_chnns = aprof.ref_use_channels;
+
+  qDebug() << "in extinctionProfilesExist(): chnns_names.size(), ref_chnns.size(), ref_use_chnns.size(), rpRange->nranges -- "
+	   << chnns_names.size() << ref_chnns.size() << ref_use_chnns.size() << rpRange->nranges;
+
+  //Create QStringList of Reference channels
+  QStringList ref_channs;
+  for (int rn=0; rn<ref_chnns.size(); ++rn) //over refs
+    {
+      if ( ref_chnns[rn] > 0 )
+	{
+	  QString ch_name = chnns_names[rn];
+	  QString ch_name_m = ch_name.split(":")[0];
+	  ref_channs << ch_name_m;
+	}
+    }
+
+  qDebug() << "ref_channs -- " << ref_channs;
 
   //DB
   US_Passwd pw;
@@ -4414,90 +4571,108 @@ bool US_ExperGuiUpload::extinctionProfilesExist( QStringList& msg_to_user )
       bool   buff_req   = rpRange->chrngs[ ii ].abde_buffer_spectrum;
       bool   mwl_deconv = rpRange->chrngs[ ii ].abde_mwl_deconvolution;
 
-      if ( nwavl > 1 && mwl_deconv )
+      if ( nwavl > 1 )
 	{
-	  QString sol_id = rpSolut->chsols[ii].sol_id;
-	  US_Solution*   solution = new US_Solution;
-	  int solutionID = sol_id.toInt();
-
-	  int status = US_DB2::OK;
-	  status = solution->readFromDB  ( solutionID, &db );
-	  // Error reporting
-	  if ( status == US_DB2::NO_BUFFER )
+	  if ( !mwl_deconv )
 	    {
-	      QMessageBox::information( this,
-					tr( "Attention" ),
-					tr( "The buffer this solution refers to was not found.\n"
-					    "Please restore and try again.\n" ) );
-	      return false;
+	      //check if not a reference channel (that one can have a single analyte)
+	      QString ch_name_m = channel.split(",")[0];
+	      ch_name_m.replace("/","");
+	      ch_name_m = ch_name_m.simplified();
+	      ch_name_m.replace( " ", "" );
+	      qDebug() << "Ref_channs -- " << ref_channs
+		       << "ch_name_m -- " << ch_name_m;
+	      if ( !ref_channs.contains(ch_name_m) )
+		{
+		  msg_to_user << channel + ": Single Analyte Defined;";
+		  return false;
+		}
 	    }
-	  
-	  else if ( status == US_DB2::NO_ANALYTE )
+	  else
 	    {
-	      QMessageBox::information( this,
-					tr( "Attention" ),
-					tr( "One of the analytes this solution refers to was not found.\n"
-					    "Please restore and try again.\n" ) );
-	      return false;
-	    }
-	  
-	  else if ( status != US_DB2::OK )
-	    {
-	      QMessageBox::warning( this, tr( "Database Problem" ),
-				    tr( "Database returned the following error: \n" ) +  db.lastError() );
-	      return false;
-	    }
-	  //End of reading Solution:
-
-	  //Reading Analytes
-	  int num_analytes = solution->analyteInfo.size();
-	  for (int i=0; i < num_analytes; ++i )
-	    {
-	      US_Analyte analyte = solution->analyteInfo[ i ].analyte;
-	      QString a_name     = analyte.description;
-	      QString a_ID       = analyte.analyteID;
-	      QString a_GUID     = analyte.analyteGUID;
-
-	      qDebug() << "Solution "  << solution->solutionDesc
-		       << ", (GUID)Analyte " << "(" << a_GUID << ")" << a_name
-		       << ", (ID)Analyte " << "(" << a_ID << ")" << a_name;
-
-	      analyte.extinction.clear();
-	      analyte.load( true, a_GUID, &db );
-
-	      //QMap <double, double> extinction[ wavelength ] <=> value
-	      qDebug() << "[Analyte]Extinction Profile wvls: " 
-		       << analyte.extinction.keys();
-
-	      //Check if ext. profile: (1) exists; (2) in range of specs channel-wvls.
-	      QString a_desc = "ANALYTE: " + a_name;
-	      if ( !validExtinctionProfile( a_desc, all_wvls, analyte.extinction.keys(), msg_to_user ) )
-		all_profiles_exist = false;
-	    }
-	  //End of reading Analytes
-
-	  //Reading Buffers
-	  if ( buff_req ) //only if buffer spectrum required
-	    {
-	      US_Buffer buffer = solution->buffer;
-	      QString b_name   = buffer.description;
-	      QString b_ID     = buffer.bufferID;
-	      qDebug() << "Solution "  << solution->solutionDesc
-		       << ", (ID)Buffer " << "(" << b_ID << ")" << b_name;
+	      QString sol_id = rpSolut->chsols[ii].sol_id;
+	      US_Solution*   solution = new US_Solution;
+	      int solutionID = sol_id.toInt();
 	      
-	      buffer.extinction.clear();
-	      buffer.readFromDB( &db, b_ID );
+	      int status = US_DB2::OK;
+	      status = solution->readFromDB  ( solutionID, &db );
+	      // Error reporting
+	      if ( status == US_DB2::NO_BUFFER )
+		{
+		  QMessageBox::information( this,
+					    tr( "Attention" ),
+					    tr( "The buffer this solution refers to was not found.\n"
+						"Please restore and try again.\n" ) );
+		  return false;
+		}
 	      
-	      //QMap <double, double> extinction[ wavelength ] <=> value
-	      qDebug() << "[Buffer]Extinction Profile wvls: " 
-		       << buffer.extinction.keys();
-
-	      //Check if ext. profile: (1) exists; (2) in range of specs channel-wvls.
-	      QString b_desc = "BUFFER: " + b_name;
-	      if ( !validExtinctionProfile( b_desc, all_wvls, buffer.extinction.keys(), msg_to_user ) )
-		all_profiles_exist = false;
+	      else if ( status == US_DB2::NO_ANALYTE )
+		{
+		  QMessageBox::information( this,
+					    tr( "Attention" ),
+					    tr( "One of the analytes this solution refers to was not found.\n"
+						"Please restore and try again.\n" ) );
+		  return false;
+		}
+	      
+	      else if ( status != US_DB2::OK )
+		{
+		  QMessageBox::warning( this, tr( "Database Problem" ),
+					tr( "Database returned the following error: \n" ) +  db.lastError() );
+		  return false;
+		}
+	      //End of reading Solution:
+	      
+	      //Reading Analytes
+	      int num_analytes = solution->analyteInfo.size();
+	      for (int i=0; i < num_analytes; ++i )
+		{
+		  US_Analyte analyte = solution->analyteInfo[ i ].analyte;
+		  QString a_name     = analyte.description;
+		  QString a_ID       = analyte.analyteID;
+		  QString a_GUID     = analyte.analyteGUID;
+		  
+		  qDebug() << "Solution "  << solution->solutionDesc
+			   << ", (GUID)Analyte " << "(" << a_GUID << ")" << a_name
+			   << ", (ID)Analyte " << "(" << a_ID << ")" << a_name;
+		  
+		  analyte.extinction.clear();
+		  analyte.load( true, a_GUID, &db );
+		  
+		  //QMap <double, double> extinction[ wavelength ] <=> value
+		  qDebug() << "[Analyte]Extinction Profile wvls: " 
+			   << analyte.extinction.keys();
+		  
+		  //Check if ext. profile: (1) exists; (2) in range of specs channel-wvls.
+		  QString a_desc = "ANALYTE: " + a_name;
+		  if ( !validExtinctionProfile( a_desc, all_wvls, analyte.extinction.keys(), msg_to_user ) )
+		    all_profiles_exist = false;
+		}
+	      //End of reading Analytes
+	      
+	      //Reading Buffers
+	      if ( buff_req ) //only if buffer spectrum required
+		{
+		  US_Buffer buffer = solution->buffer;
+		  QString b_name   = buffer.description;
+		  QString b_ID     = buffer.bufferID;
+		  qDebug() << "Solution "  << solution->solutionDesc
+			   << ", (ID)Buffer " << "(" << b_ID << ")" << b_name;
+		  
+		  buffer.extinction.clear();
+		  buffer.readFromDB( &db, b_ID );
+		  
+		  //QMap <double, double> extinction[ wavelength ] <=> value
+		  qDebug() << "[Buffer]Extinction Profile wvls: " 
+			   << buffer.extinction.keys();
+		  
+		  //Check if ext. profile: (1) exists; (2) in range of specs channel-wvls.
+		  QString b_desc = "BUFFER: " + b_name;
+		  if ( !validExtinctionProfile( b_desc, all_wvls, buffer.extinction.keys(), msg_to_user ) )
+		    all_profiles_exist = false;
+		}
+	      //End of reading Buffers
 	    }
-	  //End of reading Buffers
 	}
     }
   return all_profiles_exist;

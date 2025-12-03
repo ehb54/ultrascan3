@@ -112,7 +112,7 @@ void US_Table::update( void )
    lw_table->clear();
 
    QList< double > keys = local.keys();
-   qSort( keys );
+   std::sort( keys.begin(), keys.end() );
 
    for ( int i = 0; i < keys.size(); i++ )
    {

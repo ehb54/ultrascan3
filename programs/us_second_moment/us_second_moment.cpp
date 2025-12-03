@@ -8,14 +8,9 @@
 #include "us_settings.h"
 #include "us_gui_settings.h"
 #include "us_gui_util.h"
-#if QT_VERSION < 0x050000
-#define setSamples(a,b,c)  setData(a,b,c)
-#define setSymbol(a)       setSymbol(*a)
-#endif
 
 //! \brief Main program. Loads translators and starts
 //         the class US_Convert.
-
 int main( int argc, char* argv[] )
 {
    QApplication application( argc, argv );
@@ -306,8 +301,12 @@ void US_SecondMoment::view( void )
    {
       te_results = new US_Editor( US_Editor::DEFAULT, true, QString(), this );
       te_results->resize( 600, 700 );
-      QPoint p = g.global_position();
-      te_results->move( p.x() + 30, p.y() + 30 );
+      QString auto_positioning = US_Settings::debug_value("auto_positioning");
+      if ( global_positioning && !auto_positioning.isEmpty() && auto_positioning.toLower() == "true" )
+      {
+         QPoint p = g.global_position();
+         te_results->move( p.x() + 30, p.y() + 30 );
+      }
       te_results->e->setFont( QFont( US_GuiSettings::fontFamily(),
                                      US_GuiSettings::fontSize() ) );
    }

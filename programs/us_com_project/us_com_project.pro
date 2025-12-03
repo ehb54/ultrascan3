@@ -7,6 +7,7 @@ QT           += xml
 QT           += network
 QT           += svg
 QT           += printsupport
+QT           += datavisualization
 
 HEADERS       = us_com_project_gui.h \
                 ../us_experiment/us_experiment_gui_optima.h  \
@@ -14,14 +15,6 @@ HEADERS       = us_com_project_gui.h \
                 ../us_xpn_viewer/us_xpn_viewer_gui.h \
                 ../us_xpn_viewer/us_xpn_run_raw.h \
                 ../us_xpn_viewer/us_xpn_run_auc.h \
-                ../us_convert/us_convert_gui.h \
-                ../us_convert/us_convertio.h \
-                ../us_convert/us_get_run.h \
-                ../us_convert/us_experiment.h \
-                ../us_convert/us_experiment_gui.h \
-                ../us_convert/us_intensity.h \
-                ../us_convert/us_selectbox.h \
-                ../us_convert/us_select_triples.h \
                 ../us_edit/us_edit.h \
                 ../us_edit/us_edit_scan.h \
                 ../us_edit/us_exclude_profile.h \
@@ -42,8 +35,11 @@ HEADERS       = us_com_project_gui.h \
                 ../us_ddist_combine/us_select_rundd.h  \
                 ../us_pseudo3d_combine/us_pseudo3d_combine.h \
                 ../us_pseudo3d_combine/us_remove_distros.h   \
-                ../us_esigner_gmp/us_esigner_gmp.h
-                
+                ../us_esigner_gmp/us_esigner_gmp.h  \
+                ../us_mwl_species_fit/us_mwl_species_fit.h \
+                ../us_mwl_species_fit/us_mwl_sf_plot3d.h \
+                ../us_mwl_species_fit/us_load_run_noise.h \
+                ../us_abde/us_norm_profile.h
                 
                 
 
@@ -57,15 +53,6 @@ SOURCES       = us_com_project_main.cpp \
                 ../us_xpn_viewer/us_xpn_viewer_gui.cpp \
                 ../us_xpn_viewer/us_xpn_run_raw.cpp \
                 ../us_xpn_viewer/us_xpn_run_auc.cpp \
-                ../us_convert/us_convert.cpp         \
-                ../us_convert/us_convert_gui.cpp     \
-                ../us_convert/us_convertio.cpp       \
-                ../us_convert/us_get_run.cpp         \
-                ../us_convert/us_experiment.cpp      \
-                ../us_convert/us_experiment_gui.cpp  \
-                ../us_convert/us_intensity.cpp       \
-                ../us_convert/us_selectbox.cpp       \
-                ../us_convert/us_select_triples.cpp  \
                 ../us_edit/us_edit.cpp \
                 ../us_edit/us_edit_scan.cpp \
                 ../us_edit/us_exclude_profile.cpp \
@@ -86,7 +73,14 @@ SOURCES       = us_com_project_main.cpp \
                 ../us_ddist_combine/us_select_rundd.cpp  \
                 ../us_pseudo3d_combine/us_pseudo3d_combine.cpp \
                 ../us_pseudo3d_combine/us_remove_distros.cpp  \
-                ../us_esigner_gmp/us_esigner_gmp.cpp
+                ../us_esigner_gmp/us_esigner_gmp.cpp  \
+                ../us_mwl_species_fit/us_mwl_species_fit.cpp \
+                ../us_mwl_species_fit/us_mwl_sf_plot3d.cpp \
+                ../us_mwl_species_fit/us_load_run_noise.cpp \
+                ../us_abde/us_norm_profile.cpp
+                
+                
+
                 
                 
                 

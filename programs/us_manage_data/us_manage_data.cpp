@@ -206,7 +206,7 @@ DbgLv(1) << "GUI setup begun";
    QFontMetrics fm( te_status->font() );
 DbgLv(1) << "te_status font family" << te_status->font().family();
    int   fontw  = fm.maxWidth();
-         fontw  = ( fontw > 0 ) ? fontw : fm.width( 'W' );
+         fontw  = ( fontw > 0 ) ? fontw : fm.horizontalAdvance( 'W' );
    int   fonth  = fm.lineSpacing();
    int   minsw  = fontw * 44 + 10;
    int   minsh  = fonth * 18 + 10;
@@ -648,35 +648,35 @@ void US_ManageData::reportDataStatus()
 
    // Reformat and display report on record counts
    te_status->setText(
-      QString().sprintf( "%5d", ncrecs ) +
+      QString::asprintf( "%5d", ncrecs ) +
       tr( " Combined Total data sets;\n  "    ) +
-      QString().sprintf( "%5d", ncraws ) +
+      QString::asprintf( "%5d", ncraws ) +
       tr( " Combined RawData    records;\n  " ) +
-      QString().sprintf( "%5d", ncedts ) +
+      QString::asprintf( "%5d", ncedts ) +
       tr( " Combined EditedData records;\n  " ) +
-      QString().sprintf( "%5d", ncmods ) +
+      QString::asprintf( "%5d", ncmods ) +
       tr( " Combined Model      records;\n  " ) +
-      QString().sprintf( "%5d", ncnois ) +
+      QString::asprintf( "%5d", ncnois ) +
       tr( " Combined Noise      records.\n"   ) +
-      QString().sprintf( "%5d", ndrecs ) +
+      QString::asprintf( "%5d", ndrecs ) +
       tr( " Database Total data sets;\n  "    ) +
-      QString().sprintf( "%5d", ndraws ) +
+      QString::asprintf( "%5d", ndraws ) +
       tr( " Database RawData    records;\n  " ) +
-      QString().sprintf( "%5d", ndedts ) +
+      QString::asprintf( "%5d", ndedts ) +
       tr( " Database EditedData records;\n  " ) +
-      QString().sprintf( "%5d", ndmods ) +
+      QString::asprintf( "%5d", ndmods ) +
       tr( " Database Model      records;\n  " ) +
-      QString().sprintf( "%5d", ndnois ) +
+      QString::asprintf( "%5d", ndnois ) +
       tr( " Database Noise      records.\n"   ) +
-      QString().sprintf( "%5d", nlrecs ) +
+      QString::asprintf( "%5d", nlrecs ) +
       tr( " Local    Total data sets;\n  "    ) +
-      QString().sprintf( "%5d", nlraws ) +
+      QString::asprintf( "%5d", nlraws ) +
       tr( " Local    RawData    records;\n  " ) +
-      QString().sprintf( "%5d", nledts ) +
+      QString::asprintf( "%5d", nledts ) +
       tr( " Local    EditedData records;\n  " ) +
-      QString().sprintf( "%5d", nlmods ) +
+      QString::asprintf( "%5d", nlmods ) +
       tr( " Local    Model      records;\n  " ) +
-      QString().sprintf( "%5d", nlnois ) +
+      QString::asprintf( "%5d", nlnois ) +
       tr( " Local    Noise      records.\n"   ) );
 }
 

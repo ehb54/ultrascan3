@@ -898,14 +898,14 @@ DbgLv(2) << "LAsc:   sigma delta" << model.components[comp_x].sigma
    // get initial concentration for this component
    double sig_conc = model.components[ comp_x ].signal_concentration;
 
-QTime timer;
-int ktime1=0;
-int ktime2=0;
-int ktime3=0;
-int ktime4=0;
-int ktime5=0;
-int ktime6=0;
-timer.start();
+   QElapsedTimer timer;
+   int ktime1=0;
+   int ktime2=0;
+   int ktime3=0;
+   int ktime4=0;
+   int ktime5=0;
+   int ktime6=0;
+   timer.start();
    // initialization
    N0    = msh->Nv;
    N0u   = N0 + N0 - 1;
@@ -994,13 +994,13 @@ DbgLv(2) << "LAsc:    jt,kt,t0=" << jt << kt << t0 << " Nv=" << N0
    << "u_ttl=" << u_ttl;
 DbgLv(2) << "LAsc:  u0 0,1,2...,N" << u0[0] << u0[1] << u0[2]
    << u0[N0u-3] << u0[N0u-2] << u0[N0u-1];
-         tso << QString().sprintf( "%12.5e %d %12.5e\n", t0, N0, u_ttl );
+         tso << QString::asprintf( "%12.5e %d %12.5e\n", t0, N0, u_ttl );
          for ( int j=0; j<N0; j++ )
-            tso << QString().sprintf( "%10.6e \n", x0[j] );
-         tso << QString().sprintf( "\n" );
+            tso << QString::asprintf( "%10.6e \n", x0[j] );
+         tso << QString::asprintf( "\n" );
          for ( int j=0; j<N0u; j++ )
-            tso << QString().sprintf( "%15.7e \n", u0[j] );
-         tso << QString().sprintf( "\n\n" );
+            tso << QString::asprintf( "%15.7e \n", u0[j] );
+         tso << QString::asprintf( "\n\n" );
       }
 ktime1+=timer.restart();
 
@@ -1287,7 +1287,7 @@ void US_LammAstfvm::LammStepSedDiff_C( double t, double dt, int M0,
    double* phi     = flux_p[ 2 ] + Ng; 
    double* phiL    = phi         + 3;
    double* phiR    = phiL        + 6; 
-QTime timer;
+QElapsedTimer timer;
 static int ktim1=0;
 static int ktim2=0;
 static int ktim3=0;
@@ -1579,9 +1579,9 @@ void US_LammAstfvm::AdjustSD( double t, int Nv, double *x, double *u,
    //double  vbar   = 0.72;      // 0.251; 
    //double  vbar   = model.components[ 0 ].vbar20;
    double  vbar   = model.components[ comp_x ].vbar20;
-QTime timer;
-static int kst1=0;
-static int kst2=0;
+   QElapsedTimer timer;
+   static int kst1=0;
+   static int kst2=0;
 
    switch ( NonIdealCaseNo )
    {

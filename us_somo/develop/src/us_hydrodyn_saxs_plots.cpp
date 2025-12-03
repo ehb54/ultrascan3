@@ -386,7 +386,7 @@ void US_Hydrodyn_Saxs::plot_one_iqq( vector < double > q,
             double            nnorm4;
             double            nnorm5;
             US_Saxs_Util usu;
-            TSO << "compute exponentials\n" << flush;
+            TSO << "compute exponentials\n" << Qt::flush;
             editor_msg( "blue", us_tr( "Computing 4 & 5 term exponentials" ) );
             QMessageBox::information( this, 
                                       us_tr( "US-SOMO: Compute structure factors : start computation" ),
@@ -406,7 +406,7 @@ void US_Hydrodyn_Saxs::plot_one_iqq( vector < double > q,
                                            ) )
             {
                editor_msg( "red", usu.errormsg );
-               TSO << usu.errormsg << endl;
+               TSO << usu.errormsg << Qt::endl;
             } else {
                nnorm4 = norm4 / q.size();
                nnorm5 = norm5 / q.size();
@@ -478,7 +478,7 @@ void US_Hydrodyn_Saxs::plot_one_iqq( vector < double > q,
                   qs4 += QString( " %1" ).arg( coeff4[ i ] );
                }
                qs4 += QString( " %1" ).arg( coeff4[ 0 ] );
-               TSO << "Terms4: " << qs4 << endl;
+               TSO << "Terms4: " << qs4 << Qt::endl;
                editor_msg( "dark blue", QString( "Exponentials 4 terms norm %1 nnorm %2 (%3): %4" )
                            .arg( norm4 )
                            .arg( nnorm4 )
@@ -492,7 +492,7 @@ void US_Hydrodyn_Saxs::plot_one_iqq( vector < double > q,
                   qs5 += QString( " %1" ).arg( coeff5[ i ] );
                }
                qs5 += QString( " %1" ).arg( coeff5[ 0 ] );
-               TSO << "Terms5: " << qs5 << endl;
+               TSO << "Terms5: " << qs5 << Qt::endl;
                editor_msg( "dark blue", QString( "Exponentials 5 terms norm %1 nnorm %2 (%3): %4" )
                            .arg( norm5 )
                            .arg( nnorm5 )

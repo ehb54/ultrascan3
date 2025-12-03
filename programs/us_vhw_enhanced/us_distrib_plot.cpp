@@ -5,16 +5,11 @@
 #include "us_gui_settings.h"
 #include "us_gui_util.h"
 #include "us_math2.h"
-
 #include <qwt_legend.h>
-#if QT_VERSION < 0x050000
-#define setSamples(a,b,c)  setData(a,b,c)
-#define setSymbol(a)       setSymbol(*a)
-#endif
 
 US_DistribPlot::US_DistribPlot( QVector< double >& divfracs,
    QVector< double >& divsedcs, const double tconc )
-   : US_WidgetsDialog( 0, 0 ), bfracs( divfracs ), dsedcs( divsedcs )
+   : US_WidgetsDialog( nullptr, Qt::WindowFlags() ), bfracs( divfracs ), dsedcs( divsedcs )
 {
 
    setWindowTitle( tr( "van Holde - Weischet Distribution Plot" ) );
@@ -691,14 +686,12 @@ DbgLv(1) << "SaveDat: file" << data2File << "nhpts nepts" << nhpts << nepts;
    {
       QString line;
       if ( ii < nhpts )
-         line = QString().sprintf(
-                   "\"%.6f\",\"%.6f\",\"%.6f\",\"%9.2f\",\"%9.4e\"\n",
-                   eseds[ ii ], efrqs[ ii ], hseds[ ii ], hfrqs[ ii ],
-                   tconc );
+         line = QString::asprintf( "\"%.6f\",\"%.6f\",\"%.6f\",\"%9.2f\",\"%9.4e\"\n",
+eseds[ ii ], efrqs[ ii ], hseds[ ii ], hfrqs[ ii ],
+tconc );
       else
-         line = QString().sprintf(
-                   "\"%.6f\",\"%.6f\",\"\",\"\",\"\"\n",
-                   eseds[ ii ], efrqs[ ii ] );
+         line = QString::asprintf( "\"%.6f\",\"%.6f\",\"\",\"\",\"\"\n",
+eseds[ ii ], efrqs[ ii ] );
 
       line.replace( " ", "" );
       ts << line;

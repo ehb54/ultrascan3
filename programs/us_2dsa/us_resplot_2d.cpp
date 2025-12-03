@@ -7,15 +7,11 @@
 #include "us_gui_util.h"
 #include "us_math2.h"
 #include "us_constants.h"
-#if QT_VERSION < 0x050000
-#define setSamples(a,b,c)  setData(a,b,c)
-#endif
-
 #include <qwt_legend.h>
 
 // constructor:  residuals plot widget
 US_ResidPlot2D::US_ResidPlot2D( QWidget* parent )
-   : US_WidgetsDialog( 0, 0 )
+   : US_WidgetsDialog( nullptr, Qt::WindowFlags() )
 {
    // lay out the GUI
    setWindowTitle( tr( "2-D Spectrum Analysis Data/Residuals Viewer" ) );

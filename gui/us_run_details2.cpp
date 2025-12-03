@@ -7,12 +7,6 @@
 #include "us_constants.h"
 #include "us_util.h"
 #include "us_gui_util.h"
-
-#if QT_VERSION < 0x050000
-#define setSamples(a,b,c) setData(a,b,c)
-#define setSymbol(a)      setSymbol(*a)
-#endif
-
 #include <qwt_legend.h>
 #include <qwt_plot_layout.h>
 #include <qwt_plot_curve.h>
@@ -22,7 +16,7 @@ US_RunDetails2::US_RunDetails2( const QVector< US_DataIO::RawData >& data,
                                 const QString&                       runID, 
                                 const QString&                       dataDir, 
                                 const QStringList&                   cell_ch_wl )
-   : US_WidgetsDialog( 0, 0 ), dataList( data ), triples( cell_ch_wl )
+   : US_WidgetsDialog( nullptr, Qt::WindowFlags() ), dataList( data ), triples( cell_ch_wl )
 {
    setWindowTitle( tr( "Details for Raw Data" ) );
    setPalette( US_GuiSettings::frameColor() );
@@ -245,12 +239,12 @@ void US_RunDetails2::setup( void )
 
    QString hh    = ( hours == 1 ) ? tr( "hr" ) : tr( "hrs" );
 	        hh    = "h";
-   QString wks   = QString().sprintf( "%d %s %02d m", hours, hh.toLatin1().data(), mins );
+   QString wks   = QString::asprintf( "%d %s %02d m", hours, hh.toLatin1( ).data(), mins );
    int fmins     = (int)qFloor( first / 60.0 );
    int fsecs     = first - fmins * 60.0;
    QString mm    = ( fmins == 1 ) ? tr( "min" ) : tr( "mins" );
 
-   QString scan1time = QString().sprintf( "%d m %02d s", fmins, fsecs );
+   QString scan1time = QString::asprintf( "%d m %02d s", fmins, fsecs );
 //*DEBUG*
 data=dataList[0];
 double s1tim=data.scanData[0].seconds;
@@ -282,7 +276,7 @@ qDebug() << "dtails: ds 1, scan 1: secs,omg2t,rpm" << s1tim << s1omg << s1rpm;
    int minutes = (int) correction / 60;
    int seconds = (int) correction % 60;
 
-   le_timeCorr->setText( wks.sprintf( "%d m %02d s", minutes, seconds ) );
+   le_timeCorr->setText( QString::asprintf( "%d m %02d s", minutes, seconds ) );
 
    int ss_reso         = 100;
    // If debug_text so directs, change set_speed_resolution
@@ -311,7 +305,7 @@ qDebug() << "dtails: ds 1, scan 1: secs,omg2t,rpm" << s1tim << s1omg << s1rpm;
    }
 
    QList< int > rpms = map.uniqueKeys();
-   qSort( rpms );
+   std::sort( rpms.begin(), rpms.end() );
    QStringList  s_rpms;
    int          rpm;
 
@@ -323,7 +317,7 @@ qDebug() << "dtails: ds 1, scan 1: secs,omg2t,rpm" << s1tim << s1omg << s1rpm;
    for ( int i = 0; i < triples.size(); i++ )
    {
       int scans = dataList[ i ].scanData.size();
-      lw_triples->addItem( triples[ i ] + wks.sprintf( " -- %d scans", scans ) );
+      lw_triples->addItem( triples[ i ] + QString::asprintf( " -- %d scans", scans ) );
 
       //determine also dataType:
       char chtype[ 3 ] = { 'R', 'A', '\0' };
@@ -341,7 +335,7 @@ qDebug() << "dtails: ds 1, scan 1: secs,omg2t,rpm" << s1tim << s1omg << s1rpm;
        qDebug() << "[US_RunDetails] dataType--scanCount: "
 		<< scanCount_per_dataType.keys()[i] << " -- " << scanCount_per_dataType[ scanCount_per_dataType.keys()[i] ];
      }
-   lw_triples->addItem( wks.sprintf( "All scans -- %d scans", scanCount ) );    
+   lw_triples->addItem( QString::asprintf( "All scans -- %d scans", scanCount ) );    
 
    // Set triple to indicate All Data
    lw_triples->setCurrentRow( triples.size() );
@@ -405,7 +399,7 @@ void US_RunDetails2::show_all_data( void )
       }
    }
 
-   qSort( values );
+   std::sort( values.begin(), values.end() );
          
    QVector< double > x( scanCount );
    QVector< double > t( scanCount );
@@ -550,21 +544,9 @@ void US_RunDetails2::draw_plot( const double* x, const double* t,
       data_plot->insertLegend( legend, QwtPlot::BottomLegend );
       legend->setFrameStyle( QFrame::Box | QFrame::Sunken );
 
-#if QT_VERSION < 0x050000
-      QList< QWidget* > items = legend->legendItems();
-
-      QFont font = items[ 0 ]->font();
-      font.setPointSize( US_GuiSettings::fontSize() );
-
-      QWidget* item;
-      foreach( item, items ) item->setFont( font );
-
-      data_plot->insertLegend( legend, QwtPlot::BottomLegend );
-#else
       QFont lfont( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() );
       data_plot->setFont( lfont );
       legend   ->setFont( lfont );
-#endif
    }
 
    data_plot->replot();
@@ -650,7 +632,7 @@ qDebug() << " srd: msg" << msg;
 qDebug() << " srd: sl" << sl << "rpm" << rpm << "np" << sl.count();
 
    sl              = map.values( rpm );
-   qSort( sl ); // contains cell / channel / wavelength / scan
+   std::sort( sl.begin(), sl.end() ); // contains cell / channel / wavelength / scan
                 //  ( or cell / channel / scan  for MWL data )
 
    QString triple  = triples[ 0 ];

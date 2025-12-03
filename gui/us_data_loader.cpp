@@ -12,6 +12,127 @@
 #include "us_editor.h"
 #include "us_constants.h"
 
+
+US_DataLoader::US_DataLoader(
+      bool                              late,
+      int                               local,
+      QVector< US_DataIO::RawData    >& rData,
+      QVector< US_DataIO::EditedData >& eData,
+      QStringList&                      trips,
+      QString&                          desc,
+      QMap<QString,QString>&		prot_det,
+      QString                           tfilt )
+ : US_WidgetsDialog( nullptr, Qt::WindowFlags() ),
+   latest     ( late ),
+   rawData    ( rData ),
+   editedData ( eData ),
+   triples    ( trips ),
+   description( desc ),
+   protocol_details( prot_det ),
+   etype_filt ( tfilt )
+{     
+   setAttribute  ( Qt::WA_DeleteOnClose );
+   setWindowTitle( tr( "Load Edited Data" ) );
+   setPalette    ( US_GuiSettings::frameColor() );
+   setMinimumSize( 320, 300 );
+
+   us_automode = true;
+   
+   // Main layout
+   QVBoxLayout* main = new QVBoxLayout( this );
+   main->setContentsMargins( 2, 2, 2, 2 );
+   main->setSpacing        ( 2 );
+
+   // Top layout: buttons and fields above list widget
+   QGridLayout* top    = new QGridLayout;
+   int row             = 0;
+
+   // Disk/ DB
+   disk_controls       = new US_Disk_DB_Controls( local );
+   connect( disk_controls, SIGNAL( changed     ( bool ) ),
+                           SLOT( update_disk_db( bool ) ) );
+   top->addLayout( disk_controls, row++, 0, 1, 2 );
+
+   // Investigator
+   // Only enable the investigator button for privileged users
+   pb_invest           = us_pushbutton( tr( "Select Investigator" ) );
+   int invlev          = US_Settings::us_inv_level();
+   pb_invest->setEnabled( ( invlev > 2 )  && disk_controls->db() );
+   connect( pb_invest, SIGNAL( clicked() ), SLOT( get_person() ) );
+   top->addWidget( pb_invest, row, 0 );
+
+   QString inv_name    = ( ( invlev > 0 )
+                         ? QString::number( US_Settings::us_inv_ID() ) + ": "
+                         : "" ) + US_Settings::us_inv_name();
+
+   le_invest           = us_lineedit( inv_name );
+   us_setReadOnly( le_invest, true );
+   top->addWidget( le_invest, row++, 1 );
+
+   // Search line
+   QLabel* lb_filtdata = us_label( tr( "Search" ) );
+   top->addWidget( lb_filtdata, row, 0 );
+
+   le_dfilter          = us_lineedit();
+   top->addWidget( le_dfilter, row++, 1 );
+
+   connect( le_dfilter,  SIGNAL( textChanged( const QString& ) ),
+                         SLOT  ( search     ( const QString& ) ) );
+
+   main->addLayout( top );
+
+   QFont tw_font( US_Widgets::fixedFont().family(),
+                  US_GuiSettings::fontSize() );
+
+   // Tree widget to show data choices
+   tw_data = new QTreeWidget( this );
+   tw_data->setFrameStyle   ( QFrame::NoFrame );
+   tw_data->setPalette      ( US_GuiSettings::editColor() );
+   tw_data->setFont         ( tw_font );
+   tw_data->setSelectionMode( QAbstractItemView::ExtendedSelection );
+   tw_data->installEventFilter( this );
+   main->addWidget( tw_data );
+
+   // Notes
+   te_notes             = new QTextEdit();
+   te_notes->setVerticalScrollBarPolicy( Qt::ScrollBarAlwaysOff );
+   te_notes->setTextColor( Qt::blue );
+   te_notes->setText( tr( "Right-mouse-button-click on a list selection"
+                          " for details." ) );
+   int font_ht          = QFontMetrics( tw_font ).lineSpacing();
+   te_notes->setMaximumHeight( font_ht * 2 + 12 );
+   main->addWidget( te_notes );
+
+   // Button Row
+   QHBoxLayout* buttons   = new QHBoxLayout;
+   QPushButton* pb_help   = us_pushbutton( tr( "Help"       ) );
+   QPushButton* pb_cancel = us_pushbutton( tr( "Cancel"     ) );
+   QPushButton* pb_shedit = us_pushbutton( tr( "Show Edits" ) );
+   QPushButton* pb_accept = us_pushbutton( tr( "Load"       ) );
+   buttons->addWidget( pb_help );
+   buttons->addWidget( pb_cancel );
+   buttons->addWidget( pb_shedit );
+   buttons->addWidget( pb_accept );
+   connect( pb_help,   SIGNAL( clicked() ), SLOT( help()      ) );
+   connect( pb_cancel, SIGNAL( clicked() ), SLOT( cancelled() ) );
+   connect( pb_shedit, SIGNAL( clicked() ), SLOT( selected()  ) );
+   connect( pb_accept, SIGNAL( clicked() ), SLOT( accepted()  ) );
+
+   main->addLayout( buttons );
+
+   // List from disk or db source
+   sel_run    = false;
+   etype_filt = etype_filt.isEmpty() ? "velocity" : etype_filt.toLower();
+
+   list_data();                // Populate an initial (runs) list
+   list_data();
+
+   accepted();
+   
+   resize( 720, 500 );
+}
+
+
 // Main constructor with flags for edit, latest-edit and local-data
 
 US_DataLoader::US_DataLoader(
@@ -22,19 +143,21 @@ US_DataLoader::US_DataLoader(
       QStringList&                      trips,
       QString&                          desc,
       QString                           tfilt )
- : US_WidgetsDialog( 0, 0 ),
+ : US_WidgetsDialog( nullptr, Qt::WindowFlags() ),
    latest     ( late ),
    rawData    ( rData ),
    editedData ( eData ),
    triples    ( trips ),
    description( desc ),
-   etype_filt ( tfilt )
+   etype_filt ( tfilt ) 
 {
    setAttribute  ( Qt::WA_DeleteOnClose );
    setWindowTitle( tr( "Load Edited Data" ) );
    setPalette    ( US_GuiSettings::frameColor() );
    setMinimumSize( 320, 300 );
 
+   us_automode = false;
+     
    // Main layout
    QVBoxLayout* main = new QVBoxLayout( this );
    main->setContentsMargins( 2, 2, 2, 2 );
@@ -146,7 +269,7 @@ bool US_DataLoader::load_edit( void )
    editedData.clear();
    rawData   .clear();
    triples   .clear();
-
+   
    QList< QTreeWidgetItem* > selections = tw_data->selectedItems();
 
    // Disallow selections from multiple RunIDs
@@ -345,7 +468,7 @@ qDebug() << "LdEd: selsz" << selections.size() << "dlabsz" << dlabels.size();
       US_Passwd   pw;
       US_DB2      db( pw.getPasswd() );
 
-      if ( db.lastErrno() != US_DB2::OK )
+      if ( db.lastErrno() != IUS_DB2::OK )
       {
          QApplication::restoreOverrideCursor();
          QMessageBox::information( this,
@@ -356,6 +479,9 @@ qDebug() << "LdEd: selsz" << selections.size() << "dlabsz" << dlabels.size();
          return false;
       }
 
+      //to pass to gmp
+      QStringList edatafiles;
+      
       QStringList query;
       QString  prvfname = "";
       QString  efn      = "";
@@ -401,7 +527,8 @@ qDebug() << "LdEd:  ii" << ii << "ndxii" << indexes[ii] << "triple" << triple;
          }
 
          QString  recID    = QString::number( idRec );
-         QString  invID    = QString::number( US_Settings::us_inv_ID() );
+         //QString  invID    = QString::number( US_Settings::us_inv_ID() );
+	 QString  invID  = ( us_automode ) ? protocol_details["invID_passed"] : QString::number( US_Settings::us_inv_ID() );
          QString  aucfn    = ddesc.runID + "."
                              + filename.section( ".", -5, -3 )
                              + "." + clambda + ".auc";
@@ -427,7 +554,7 @@ qDebug() << "LdEd: was-empty, aucID" << aucID << idAUC;
                db.query( query );
 qDebug() << "LdEd: w-e, num_rows" << db.numRows();
                db.next();
-qDebug() << "LdEd: w-e, dberr" << db.lastErrno() << US_DB2::OK;
+qDebug() << "LdEd: w-e, dberr" << db.lastErrno() << IUS_DB2::OK;
                ddesc.acheck     = db.value( 8 ).toString() + " " +
                                   db.value( 9 ).toString();
 qDebug() << "LdEd: was-empty, now acheck" << ddesc.acheck;
@@ -468,14 +595,17 @@ qDebug() << "LdEd: dnld_edt DONE";
 	 qDebug() << "In LOAD auc/edited data in fematch: uresdir, filename, afn, efn: " << uresdir << filename << afn <<  efn;
 	 qDebug() << "In LOAD auc/edited data in fematch: idRec(editID), idAUC(rawData): " << idRec << idAUC;
 
+	 edatafiles << efn;
+	 
 qDebug() << "LdEd: loadData uresdir filename" << uresdir << filename;
          US_DataIO::loadData( uresdir, filename, editedData, rawData );
 qDebug() << "LdEd: loadData DONE";
       }  // END: edits loop
 qDebug() << "LdEd:TM:11: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
 
- 
- 
+      qDebug() << "AFTER In LOAD auc/edited data: edtatafiles -- " << edatafiles;
+      QString passed_edatafiles = edatafiles.join(",");
+      
    }  // END: Load from DB
 
    QApplication::restoreOverrideCursor();
@@ -527,6 +657,8 @@ void US_DataLoader::describe( )
                     + sep + dataGUID
                     + sep + aucID
                     + sep + aucGUID;
+
+   qDebug() << "finished desc. " ;
 }
 
 // Investigator button clicked:  get investigator from dialog
@@ -550,6 +682,7 @@ void US_DataLoader::update_person( int ID )
    le_invest->setText( number + US_Settings::us_inv_name() );
    list_data();
 }
+
 
 // List data choices (from db or disk)
 void US_DataLoader::list_data()
@@ -630,7 +763,7 @@ void US_DataLoader::list_data()
       QString  cdescr  = dlabels.at( ii );
       DataDesc ddesc   = ddescrs.at( ii );
       QString  dbID    = fromDB
-                         ? QString().sprintf( "%6d", ddesc.DB_id )
+                         ? QString::asprintf( "%6d", ddesc.DB_id )
                          : QString( "" );
       crlabels.clear();
       crlabels << ddesc.runID
@@ -660,7 +793,9 @@ void US_DataLoader::list_data()
       else if ( ctlabel != ptlabel )
       {  // New triple in same runID: add triple child of run
          twi_trip = new QTreeWidgetItem( QStringList( ctlabel ), ii );
-         twi_runi->addChild( twi_trip );
+         if ( twi_runi != nullptr ) {
+            twi_runi->addChild( twi_trip );
+         }
          ptlabel  = ctlabel;
          ndxt++;
          ndxe = 1;
@@ -674,7 +809,9 @@ void US_DataLoader::list_data()
       if ( sel_run ) 
       {
          twi_edit = new QTreeWidgetItem( QStringList( celabel ), ii );
-         twi_trip->addChild( twi_edit );
+         if ( twi_trip != nullptr ) {
+            twi_trip->addChild( twi_edit );
+         }
       }
 
       ddesc.tripknt     = ndxt;
@@ -783,8 +920,17 @@ void US_DataLoader::selected()
 // Accept button:  set up to return data information
 void US_DataLoader::accepted()
 {
-   QList< QTreeWidgetItem* > selitems = tw_data->selectedItems();
-   QList< DataDesc >         ddescrs  = datamap.values();
+  if ( us_automode )
+    {
+      tw_data->setCurrentItem(
+			      tw_data->topLevelItem(0),   // item
+			      0,                          // column
+			      QItemSelectionModel::Select // command
+			      );
+    }
+    
+  QList< QTreeWidgetItem* > selitems = tw_data->selectedItems();
+  QList< DataDesc >         ddescrs  = datamap.values();
 
    if ( selitems.size() == 0 )
    {
@@ -796,9 +942,9 @@ void US_DataLoader::accepted()
 
    if ( load_edit() )
    {
-      describe();
-      accept();        // Signal that selection was accepted
-      close();
+     describe();
+     accept();        // Signal that selection was accepted
+     close();
    }
 }
 
@@ -826,8 +972,10 @@ qDebug() << "ScDB:TM:00: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
       dir.mkpath( tempdir );
    QStringList query;
    QStringList edtIDs;
-   QString     invID  = QString::number( US_Settings::us_inv_ID() );
-
+   
+   //QString     invID  = QString::number( US_Settings::us_inv_ID() );
+   QString     invID  = ( us_automode ) ? protocol_details["invID_passed"] : QString::number( US_Settings::us_inv_ID() );
+   
    setWindowTitle( tr( "Load Edited Data from DB" ) );
 
    // Accumulate a map of AUC filenames and IDs
@@ -1238,8 +1386,11 @@ qDebug() << "ScDB:TM:00: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
    }
 
    QStringList query;
-   QString     invID  = QString::number( US_Settings::us_inv_ID() );
+   //QString     invID  = QString::number( US_Settings::us_inv_ID() );
+   QString     invID  = ( us_automode ) ? protocol_details["invID_passed"] : QString::number( US_Settings::us_inv_ID() );
 
+   qDebug() << "DataLoader: invID -- " << invID;
+   
    setWindowTitle( tr( "Load Run Data from DB" ) );
 
    // Accumulate a map of runs to dates,IDs,labels
@@ -1279,7 +1430,20 @@ qDebug() << "ScDB:TM:02: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
       ddesc.DB_id      = ddesc.exp_id;
       ddesc.date       = date;
 
-      datamap[ runID ] = ddesc;
+      if ( us_automode )
+	{
+	  qDebug() << "US_DATALOADER: runD, protocol_details[filename] -- "
+		   << runID << protocol_details["filename"];
+	  if( runID == protocol_details["filename"])
+	    {
+	      datamap[ runID ] = ddesc;
+	      runID_sel = runID;
+	      sel_run   = true;
+	      break;
+	    }
+	}
+      else
+	datamap[ runID ] = ddesc;
    }
 
 qDebug() << "ScDB:TM:09: " << QTime::currentTime().toString("hh:mm:ss:zzzz");

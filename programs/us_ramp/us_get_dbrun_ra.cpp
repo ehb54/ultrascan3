@@ -8,7 +8,7 @@
 
 // Primary constructor to establish the dialog
 US_GetDBRunRa::US_GetDBRunRa( QString& r ) 
-: US_WidgetsDialog( 0, 0 ), runID( r )
+: US_WidgetsDialog( nullptr, Qt::WindowFlags() ), runID( r )
 {
    setWindowTitle( tr( "Available US3 Runs..." ) );
    setPalette( US_GuiSettings::frameColor() );
@@ -104,7 +104,7 @@ bool US_GetDBRunRa::loadData( void )
    QString masterPW = pw.getPasswd();
    US_DB2 db( masterPW );
 
-   if ( db.lastErrno() != US_DB2::OK )
+   if ( db.lastErrno() != IUS_DB2::OK )
    {
       QMessageBox::information( this,
              tr( "Error" ),
@@ -173,7 +173,7 @@ void US_GetDBRunRa::deleteRun( void )
    QString masterPW = pw.getPasswd();
    US_DB2 db( masterPW );
 
-   if ( db.lastErrno() != US_DB2::OK )
+   if ( db.lastErrno() != IUS_DB2::OK )
    {
       QMessageBox::information( this,
              tr( "Error" ),
@@ -235,7 +235,7 @@ void US_GetDBRunRa::deleteRun( void )
      << expID ;
    status = db.statusQuery( q );
 
-   if ( status != US_DB2::OK )
+   if ( status != IUS_DB2::OK )
    {
       QMessageBox::information( this,
             tr( "Error" ),

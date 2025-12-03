@@ -9,17 +9,13 @@
 #include "us_constants.h"
 #include "../us_autoflow_analysis/us_autoflow_analysis.h"
 #include "../us_reporter_gmp/us_reporter_gmp.h"
-
 #include <qwt_legend.h>
-#if QT_VERSION < 0x050000
-#define setSamples(a,b,c)  setData(a,b,c)
-#endif
 
 // constructor:  residuals plot widget
 // US_ResidPlotFem::US_ResidPlotFem( QWidget* parent, const bool auto_mode )
-//    : US_WidgetsDialog( 0, 0 )
+//    : US_WidgetsDialog( nullptr, Qt::WindowFlags() )
 US_ResidPlotFem::US_ResidPlotFem( QWidget* parent, const QString auto_mode )
-   : US_WidgetsDialog( 0, 0 )
+   : US_WidgetsDialog( nullptr, Qt::WindowFlags() )
 {
    // this->a_mode = auto_mode;
    this->a_mode = auto_mode;
@@ -256,7 +252,9 @@ US_ResidPlotFem::US_ResidPlotFem( QWidget* parent, const QString auto_mode )
 	     
 	     qDebug() << "RP:have_ti " << have_ti;
 	     qDebug() << "RP:have_ri " << have_ri;
-	     
+
+	     qDebug() << "ti_noise_guid " << ti_noise->noiseGUID;
+	     qDebug() << "ri_noise_guid " << ri_noise->noiseGUID;
 	     
 	     qDebug() << "RP:ti_noise count1" << ti_noise->count;
 	     qDebug() << "RP:ri_noise count1" << ri_noise->count;
@@ -328,13 +326,55 @@ void US_ResidPlotFem::set_plot( int plotf )
 // Return a pointer to the QwtPlot for the upper plot
 QwtPlot* US_ResidPlotFem::rp_data_plot1()
 {
+  //reset fonts for title, axis titles
+  setStyleSheet("QWidget {font-size: 10pt};");
+  QFont font_c("Arial", 12);
+  QwtText p_title = data_plot1->title();
+  p_title.setFont( font_c );
+  data_plot1->setTitle( p_title );
+
+  QwtText xTitle = data_plot1->axisTitle(QwtPlot::xBottom);
+  xTitle.setFont( font_c );
+  data_plot1->setAxisTitle( QwtPlot::xBottom, xTitle );
+
+  QwtText yTitle = data_plot1->axisTitle(QwtPlot::yLeft);
+  yTitle.setFont( font_c );
+  data_plot1->setAxisTitle( QwtPlot::yLeft, yTitle );
+
+  QwtText zTitle = data_plot1->axisTitle(QwtPlot::yRight);
+  zTitle.setFont( font_c );
+  data_plot1->setAxisTitle( QwtPlot::yRight, zTitle );
+
+  data_plot1->replot();
+  
    return data_plot1;
 }
 
 // Return a pointer to the QwtPlot for the lower plot
 QwtPlot* US_ResidPlotFem::rp_data_plot2()
 {
-   return data_plot2;
+  //reset fonts for title, axis titles
+  setStyleSheet("QWidget {font-size: 10pt};");
+  QFont font_c("Arial", 12);
+  QwtText p_title = data_plot2->title();
+  p_title.setFont( font_c );
+  data_plot2->setTitle( p_title );
+
+  QwtText xTitle = data_plot1->axisTitle(QwtPlot::xBottom);
+  xTitle.setFont( font_c );
+  data_plot2->setAxisTitle( QwtPlot::xBottom, xTitle );
+
+  QwtText yTitle = data_plot2->axisTitle(QwtPlot::yLeft);
+  yTitle.setFont( font_c );
+  data_plot2->setAxisTitle( QwtPlot::yLeft, yTitle );
+
+  QwtText zTitle = data_plot2->axisTitle(QwtPlot::yRight);
+  zTitle.setFont( font_c );
+  data_plot2->setAxisTitle( QwtPlot::yRight, zTitle );
+
+  data_plot2->replot();
+  
+  return data_plot2;
 }
 
 // plot-experimental-data box [un]checked

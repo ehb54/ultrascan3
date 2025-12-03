@@ -12,11 +12,6 @@
 #include "us_math2.h"
 #include "us_eprofile.h"
 
-#if QT_VERSION < 0x050000
-#define setSamples(a,b,c) setData(a,b,c)
-#define setSymbol(a) setSymbol(*a)
-#endif
-
 //! Tab for selection of a buffer
 US_BufferGuiSelect::US_BufferGuiSelect( int *invID, int *select_db_disk,
       US_Buffer *tmp_buffer ) : US_Widgets()
@@ -287,7 +282,7 @@ void US_BufferGuiSelect::read_from_db( const QString& bufferID )
    US_DB2    db( pw.getPasswd() );
 
    // Get the buffer data from the database
-   if ( db.lastErrno() != US_DB2::OK )
+   if ( db.lastErrno() != IUS_DB2::OK )
    {
       connect_error( db.lastError() );
       return;
@@ -554,7 +549,7 @@ DbgLv(1) << "BufS-info:  ii" << ii << "waveln extinc" << waveln << extinc;
    }
 
    // Build and show the buffer details dialog
-   int iwid     = fmet.width( big_line ) + 40;
+   int iwid     = fmet.horizontalAdvance( big_line ) + 40;
    int ihgt     = fmet.lineSpacing() * qMin( 22, nlines ) + 80;
 
    US_Editor* buf_info = new US_Editor( US_Editor::DEFAULT, true,
@@ -688,7 +683,7 @@ void US_BufferGuiSelect::delete_db( void )
    US_Passwd pw;
    US_DB2    db( pw.getPasswd() );
 
-   if ( db.lastErrno() != US_DB2::OK )
+   if ( db.lastErrno() != IUS_DB2::OK )
    {
       connect_error( db.lastError() );
       return;
@@ -701,7 +696,7 @@ void US_BufferGuiSelect::delete_db( void )
 
    int status = db.lastErrno();
 
-   if (  status == US_DB2::OK )
+   if (  status == IUS_DB2::OK )
    {
       db.next();
       QString bufferID = db.value( 0 ).toString();
@@ -713,7 +708,7 @@ void US_BufferGuiSelect::delete_db( void )
       QString compType("Buffer");
    }
 
-   if ( status == US_DB2::BUFFR_IN_USE )
+   if ( status == IUS_DB2::BUFFR_IN_USE )
    {
       QMessageBox::warning( this,
          tr( "Buffer Not Deleted" ),
@@ -722,7 +717,7 @@ void US_BufferGuiSelect::delete_db( void )
       return;
    }
 
-   if ( status != US_DB2::OK )
+   if ( status != IUS_DB2::OK )
    {
       QMessageBox::warning( this,
          tr( "Attention" ),
@@ -811,7 +806,7 @@ void US_BufferGuiSelect::read_db( void )
    US_Passwd pw;
    US_DB2 db( pw.getPasswd() );
 
-   if ( db.lastErrno() != US_DB2::OK )
+   if ( db.lastErrno() != IUS_DB2::OK )
    {
       connect_error( db.lastError() );
       return;
@@ -1034,7 +1029,7 @@ US_BufferGuiNew::US_BufferGuiNew( int *invID, int *select_db_disk,
 
 
    QStringList keys = component_list.keys();
-   qSort( keys );
+   std::sort( keys.begin(), keys.end() );
 
 
    connect( le_descrip,  SIGNAL( editingFinished() ),
@@ -1106,7 +1101,7 @@ void US_BufferGuiNew::init_buffer( void )
    // US_BufferComponent::getAllFromHD( component_list );
 DbgLv(1) << "BufN:SL: init_buffer  comps" << component_list.size();
    QStringList keys = component_list.keys();
-   qSort( keys );
+   std::sort( keys.begin(), keys.end() );
    lw_allcomps->clear();
 
    for ( int ii = 0; ii < keys.size(); ii++ )
@@ -1294,7 +1289,7 @@ void US_BufferGuiNew::create_new_buffer_component() {
    US_Passwd   pw;
    US_DB2      db( pw.getPasswd() );
 
-   if ( db.lastErrno() != US_DB2::OK )
+   if ( db.lastErrno() != IUS_DB2::OK )
    {
 //qDebug() << "USCFG: UpdInv: ERROR connect";
       QMessageBox::information( this,
@@ -2040,7 +2035,7 @@ DbgLv(1) << "setB:synchc   synch complete:  components:"
 // Main Buffer window with panels
 US_BufferGui::US_BufferGui( bool signal_wanted, const US_Buffer& buf,
       int select_db_disk )
-   : US_WidgetsDialog( 0, 0 ), signal( signal_wanted ), buffer( buf )
+   : US_WidgetsDialog( nullptr, Qt::WindowFlags() ), signal( signal_wanted ), buffer( buf )
 {
    personID    = US_Settings::us_inv_ID();
    buffer      = buf;
@@ -2190,8 +2185,9 @@ void US_BufferGui::bufferRejected( void )
    reject();
 }
 
-US_BufferComponentRequerster::US_BufferComponentRequerster(US_BufferComponent* comp_, QMap<QString,US_BufferComponent>& list_) : US_WidgetsDialog(nullptr, nullptr),
-                                                                                   comp(comp_), component_list(list_) {
+US_BufferComponentRequerster::US_BufferComponentRequerster(
+   US_BufferComponent* comp_, QMap<QString,US_BufferComponent>& list_)
+: US_WidgetsDialog(nullptr, Qt::WindowFlags() ), comp(comp_), component_list(list_) {
    setWindowTitle(tr("Buffer component creator"));
    setPalette(US_GuiSettings::frameColor());
 

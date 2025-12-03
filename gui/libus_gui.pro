@@ -16,11 +16,6 @@ win32 {
         # We assume QMAKE_LFLAGS += Wl,--out-implib,../lib/lib$${TARGET}$${VER}.a
 }
 
-macx {
-        LIBS   += -L../lib/ -lus_utils $${X11LIB}
-        INCLUDES += -I/opt/X11/include
-}
-
 QT          += network svg
 
 TRANSLATIONS = $${TARGET}_DE_de.ts
@@ -34,18 +29,22 @@ HEADERS      = \
                us_choice.h              \
                us_colorgradIO.h         \
                us_combined_plots_parms_gui.h \
+               us_convert_gui.h         \
                us_csv_loader.h \
                us_data_loader.h         \
                us_edit_spectrum.h       \
                us_editor.h              \
                us_editor_gui.h          \
+               us_experiment_gui.h      \
                us_extinction_gui.h      \
                us_extinctfitter_gui.h   \
                us_failed_gmp_run_gui.h  \
+               us_get_run.h             \
                us_gui_settings.h        \
                us_gui_util.h            \
                us_help.h                \
                us_images.h              \
+               us_intensity.h           \
                us_investigator.h        \
                us_license.h             \
                us_load_auc.h            \
@@ -72,14 +71,15 @@ HEADERS      = \
                us_select_edits.h        \
                us_select_item.h         \
                us_select_runs.h         \
+               us_select_triples.h      \
+               us_selectbox.h           \
                us_sim_params_gui.h      \
                us_solution_gui.h        \
                us_spectrodata.h         \
                us_table.h               \
                us_tmst_plot.h           \
                us_widgets.h             \
-               us_widgets_dialog.h      \
-               us_window_message.h
+               us_widgets_dialog.h
 
 SOURCES      = \
                us_abstractrotor_gui.cpp   \
@@ -90,19 +90,23 @@ SOURCES      = \
                us_choice.cpp              \
                us_colorgradIO.cpp         \
                us_combined_plots_parms_gui.cpp \
+               us_convert_gui.cpp         \
                us_csv_loader.cpp \
                us_data_loader.cpp         \
                us_edit_spectrum.cpp       \
                us_editor.cpp              \
                us_editor_gui.cpp          \
+               us_experiment_gui.cpp      \
                us_extinction_gui.cpp      \
                us_extinctfitter_gui.cpp   \
                us_failed_gmp_run_gui.cpp  \
+               us_get_run.cpp             \
                us_gui_settings.cpp        \ 
                us_gui_util.cpp            \ 
                us_help.cpp                \
                us_images.cpp              \
                us_investigator.cpp        \
+               us_intensity.cpp           \
                us_license.cpp             \
                us_load_auc.cpp            \
                us_loadable_noise.cpp      \
@@ -128,27 +132,14 @@ SOURCES      = \
                us_select_item.cpp         \
                us_select_edits.cpp        \
                us_select_runs.cpp         \
+               us_select_triples.cpp      \
+               us_selectbox.cpp           \
                us_sim_params_gui.cpp      \
                us_solution_gui.cpp        \
                us_spectrodata.cpp         \
                us_table.cpp               \
                us_tmst_plot.cpp           \
                us_widgets.cpp             \
-               us_widgets_dialog.cpp      \
-               us_window_message.cpp
+               us_widgets_dialog.cpp
 
 RESOURCES     = images.qrc
-
-unix  {
-        HEADERS += us_x11_utils.h
-        SOURCES += us_x11_utils.c
-}
-mac   {
-        HEADERS += us_mac_utils.h
-        SOURCES += us_mac_utils.c
-}
-win32 {
-        HEADERS += us_win_utils.h
-        SOURCES += us_win_utils.c
-}
-

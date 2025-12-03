@@ -18,17 +18,10 @@
 #include "us_passwd.h"
 #include "us_report.h"
 #include "us_constants.h"
-#if QT_VERSION < 0x050000
-#define setSamples(a,b,c) setData(a,b,c)
-#define setMinimum(a)     setMinValue(a)
-#define setMaximum(a)     setMaxValue(a)
-#endif
 
 #define PA_TMDIS_MS 0   // default Plotall time per distro in milliseconds
 
-
-
-// qSort LessThan method for S_Solute sort
+// LessThan method for S_Solute sort
 bool distro_lessthan( const S_Solute &solu1, const S_Solute &solu2 )
 {  // TRUE iff  (s1<s2) || (s1==s2 && k1<k2)
    return ( solu1.s < solu2.s ) ||
@@ -42,7 +35,7 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
 
    setWindowTitle( tr( "Combine Pseudo-3D Distribution Overlays" ) );
    setPalette( US_GuiSettings::frameColor() );
-
+   
    // primary layouts
    QHBoxLayout* main = new QHBoxLayout( this );
    QVBoxLayout* left = new QVBoxLayout();
@@ -279,7 +272,7 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
 
    QFontMetrics fm( ct_plt_smax->font() );
    ct_plt_smax->adjustSize();
-   ct_plt_smax->setMinimumWidth( ct_plt_smax->width() + fm.width( "ABC" ) );
+   ct_plt_smax->setMinimumWidth( ct_plt_smax->width() + fm.horizontalAdvance( "ABC" ) );
 
    // Order plot components on the left side
    spec->addWidget( lb_info1,      s_row++, 0, 1, 8 );
@@ -510,16 +503,18 @@ void US_Pseudo3D_Combine::plot_data( void )
 
    QString tstr = tsys->run_name + "\n" + tsys->analys_name
                   + "\n" + tsys->method;
-
-   QwtText p_title( tstr );
+   data_plot->setTitle( tstr );
+   
+   //TEST
+   // QwtText p_title( tstr );
+   // p_title.setFont( QFont( US_Widgets::fixedFont().family(),
+   //  			   US_GuiSettings::fontSize() + 1 ) );
    // QFont font_c("Arial", 10);
-   p_title.setFont( QFont( US_Widgets::fixedFont().family(),
-    			   US_GuiSettings::fontSize() + 1 ) );
-   //p_title.setFont( font_c );
-   //QFontInfo info(font_c);
-   //qDebug() << "Font family: " <<  info.family();
-   //data_plot->setTitle( tstr );
-   data_plot->setTitle( p_title );
+   // p_title.setFont( font_c );
+   // QFontInfo info(font_c);
+   // qDebug() << "Font family: " <<  info.family();
+   // data_plot->setTitle( p_title );
+   //END OF TEST
    
    data_plot->detachItems( QwtPlotItem::Rtti_PlotSpectrogram );
    QColor bg   = colormap->color1();
@@ -530,17 +525,11 @@ void US_Pseudo3D_Combine::plot_data( void )
 
    // Set up spectrogram data
    QwtPlotSpectrogram* d_spectrogram = new QwtPlotSpectrogram();
-#if QT_VERSION < 0x050000
-   d_spectrogram->setData( US_SpectrogramData() );
-   d_spectrogram->setColorMap( *colormap );
-   US_SpectrogramData& spec_dat = (US_SpectrogramData&)d_spectrogram->data();
-#else
    US_SpectrogramData* rdata = new US_SpectrogramData();
    d_spectrogram->setData( rdata );
 //   d_spectrogram->setColorMap( (QwtColorMap*)colormap );
    d_spectrogram->setColorMap( ColorMapCopy( colormap ) );
    US_SpectrogramData& spec_dat = (US_SpectrogramData&)*(d_spectrogram->data());
-#endif
    QwtDoubleRect drect;
 
    if ( auto_sxy )
@@ -609,15 +598,10 @@ void US_Pseudo3D_Combine::plot_data( void )
       data_plot->setAxisScale( QwtPlot::yLeft,   plt_kmin, plt_kmax, lStep );
    }
 
-#if QT_VERSION < 0x050000
-   rightAxis->setColorMap( QwtDoubleInterval( 0.0, plt_zmax ),
-      d_spectrogram->colorMap() );
-#else
 //   rightAxis->setColorMap( QwtInterval( plt_zmin, plt_zmax ),
 //      (QwtColorMap*)d_spectrogram->colorMap() );
    rightAxis->setColorMap( QwtInterval( 0.0, plt_zmax ),
                            ColorMapCopy( colormap ) );
-#endif
 //   data_plot->setAxisScale( QwtPlot::yRight,  plt_zmin, plt_zmax );
    data_plot->setAxisScale( QwtPlot::yRight,  0.0, plt_zmax );
 
@@ -864,6 +848,27 @@ void US_Pseudo3D_Combine::load_distro_auto( QString invID_passed, QStringList m_
 //return pointer to data_plot
 QwtPlot* US_Pseudo3D_Combine::rp_data_plot()
 {
+  //reset fonts for title, axis titles
+  setStyleSheet("QWidget {font-size: 10pt};");
+  QFont font_c("Arial", 12);
+  QwtText p_title = data_plot->title();
+  p_title.setFont( font_c );
+  data_plot->setTitle( p_title );
+
+  QwtText xTitle = data_plot->axisTitle(QwtPlot::xBottom);
+  xTitle.setFont( font_c );
+  data_plot->setAxisTitle( QwtPlot::xBottom, xTitle );
+
+  QwtText yTitle = data_plot->axisTitle(QwtPlot::yLeft);
+  yTitle.setFont( font_c );
+  data_plot->setAxisTitle( QwtPlot::yLeft, yTitle );
+
+  QwtText zTitle = data_plot->axisTitle(QwtPlot::yRight);
+  zTitle.setFont( font_c );
+  data_plot->setAxisTitle( QwtPlot::yRight, zTitle );
+
+  data_plot->replot();
+  
   return data_plot;
 }
 
@@ -1060,7 +1065,7 @@ void US_Pseudo3D_Combine::load_color()
    // get an xml file name for the color map
    QString fname = QFileDialog::getOpenFileName( this,
       tr( "Load Color Map File" ),
-      US_Settings::etcDir(), filter, 0, 0 );
+      US_Settings::etcDir(), filter );
 
    if ( fname.isEmpty() )
       return;
@@ -1215,7 +1220,7 @@ void US_Pseudo3D_Combine::sort_distro( QList< S_Solute >& listsols,
 
    // sort distro solute list by s,k values
 
-   qSort( listsols.begin(), listsols.end(), distro_lessthan );
+   std::sort( listsols.begin(), listsols.end(), distro_lessthan );
 
    // check reduce flag
 

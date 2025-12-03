@@ -9,14 +9,146 @@
 #include "us_editor.h"
 
 
+US_LoadAUC::US_LoadAUC( bool local, QMap<QString,QString>& prot_det, QVector< US_DataIO::RawData >& rData,
+   QStringList& trips, QString& wdir ) : US_WidgetsDialog( nullptr, Qt::WindowFlags() ),
+   protocol_details( prot_det ),rawList( rData ), triples( trips ), workingDir( wdir )
+{
+   int ddstate;
+
+   us_auto_mode      = false;
+   us_auto_mode_abde = true;
+   
+   if ( local )
+   {
+      setWindowTitle( tr( "Load AUC Data from Local Disk" ) );
+      ddstate   = US_Disk_DB_Controls::Disk;
+   }
+   else
+   {
+      setWindowTitle( tr( "Load AUC Data from DB" ) );
+      ddstate   = US_Disk_DB_Controls::DB;
+   }
+
+   setPalette( US_GuiSettings::frameColor() );
+
+   QVBoxLayout* main = new QVBoxLayout( this );
+   main->setSpacing        ( 2 );
+   main->setContentsMargins( 2, 2, 2, 2 );
+
+   dkdb_cntrls   = new US_Disk_DB_Controls( ddstate );
+   connect( dkdb_cntrls, SIGNAL( changed     ( bool ) ),
+            this,        SLOT( update_disk_db( bool ) ) );
+
+   // Investigator selection
+   //personID = US_Settings::us_inv_ID();
+   personID = protocol_details["invID_passed"].toInt();
+   QHBoxLayout* investigator = new QHBoxLayout;
+
+   pb_invest = us_pushbutton( tr( "Select Investigator" ) );
+   connect( pb_invest, SIGNAL( clicked() ), SLOT( sel_investigator() ) );
+   investigator->addWidget( pb_invest );
+   if ( US_Settings::us_inv_level() < 3 )
+      pb_invest->setEnabled( false );
+ 
+   int id = US_Settings::us_inv_ID();
+   QString number = ( id > 0 )
+      ? QString::number( personID ) + ": "
+      : "";
+
+   le_invest = us_lineedit( number + US_Settings::us_inv_name(), 1, true );
+   investigator->addWidget( le_invest );
+
+   // Search
+   QHBoxLayout* search = new QHBoxLayout;
+   QLabel* lb_search   = us_label( tr( "Search" ) );
+   search->addWidget( lb_search );
+ 
+   le_search = us_lineedit( "" );
+   connect( le_search, SIGNAL( textChanged( const QString& ) ),
+                       SLOT  ( limit_data ( const QString& ) ) );
+   search->addWidget( le_search );
+
+   // Tree
+   QFont tr_font( US_Widgets::fixedFont().family(),
+                  US_GuiSettings::fontSize() );
+   tree = new QTreeWidget;
+   tree->setFrameStyle         ( QFrame::NoFrame );
+   tree->setPalette            ( US_GuiSettings::editColor() );
+   tree->setFont               ( tr_font );
+   tree->setIndentation        ( 20 );
+   tree->setSelectionBehavior  ( QAbstractItemView::SelectRows );
+   tree->setSelectionMode      ( QAbstractItemView::ExtendedSelection );
+   tree->setAutoFillBackground ( true );
+   tree->installEventFilter    ( this );
+
+
+   QStringList headers;
+   headers << tr( "Run|Triple" )
+           << tr( "Date" )
+           << tr( "DbID" )
+           << tr( "Label" );
+   tree->setColumnCount( 4 );
+   tree->setHeaderLabels( headers );
+   tree->setSortingEnabled( false );
+
+   te_notes            = new QTextEdit();
+   te_notes->setVerticalScrollBarPolicy( Qt::ScrollBarAlwaysOff );
+   te_notes->setTextColor( Qt::blue );
+   te_notes->setText( tr( "Right-mouse-button-click on a list selection"
+                          " for details." ) );
+   int font_ht = QFontMetrics( tr_font ).lineSpacing();
+   te_notes->setMaximumHeight( font_ht * 2 + 12 );
+
+   sel_run    = false;
+   populate_tree();
+
+   // Button Row
+   QHBoxLayout* buttons = new QHBoxLayout;
+
+   QPushButton* pb_expand   = us_pushbutton( tr( "Expand All"   ) );
+   QPushButton* pb_collapse = us_pushbutton( tr( "Collapse All" ) );
+   QPushButton* pb_help     = us_pushbutton( tr( "Help"         ) );
+   QPushButton* pb_cancel   = us_pushbutton( tr( "Cancel"       ) );
+   QPushButton* pb_shedits  = us_pushbutton( tr( "Show Triples" ) );
+   QPushButton* pb_accept   = us_pushbutton( tr( "Load"         ) );
+
+   buttons->addWidget( pb_expand );
+   buttons->addWidget( pb_collapse );
+   buttons->addWidget( pb_help );
+   buttons->addWidget( pb_cancel );
+   buttons->addWidget( pb_shedits );
+   buttons->addWidget( pb_accept );
+
+   connect( pb_expand,   SIGNAL( clicked() ), SLOT( expand()   ) );
+   connect( pb_collapse, SIGNAL( clicked() ), SLOT( collapse() ) );
+   connect( pb_help,     SIGNAL( clicked() ), SLOT( help()     ) );
+   connect( pb_cancel,   SIGNAL( clicked() ), SLOT( reject()   ) );
+   connect( pb_shedits,  SIGNAL( clicked() ), SLOT( fill_in()  ) );
+   connect( pb_accept,   SIGNAL( clicked() ), SLOT( load()     ) );
+
+   main->addLayout( dkdb_cntrls );
+   main->addLayout( investigator );
+   main->addLayout( search );
+   main->addWidget( tree );
+   main->addWidget( te_notes );
+   main->addLayout( buttons );
+
+   //for GMP
+   populate_tree(); //another populate with sel_run==true;
+   load();          //in load(), specify selected items (a single top-level one)
+      
+   resize( 800, 500 );
+}
+
 US_LoadAUC::US_LoadAUC( bool local, QString auto_mode, QVector< US_DataIO::RawData >& rData,
-   QStringList& trips, QString& wdir ) : US_WidgetsDialog( 0, 0 ),
+   QStringList& trips, QString& wdir ) : US_WidgetsDialog( nullptr, Qt::WindowFlags() ),
    rawList( rData ), triples( trips ), workingDir( wdir )
 {
    int ddstate;
 
-   us_auto_mode   = true;
-
+   us_auto_mode      = true;
+   us_auto_mode_abde = false;
+   
    if ( local )
    {
       setWindowTitle( tr( "Load AUC Data from Local Disk" ) );
@@ -130,20 +262,21 @@ US_LoadAUC::US_LoadAUC( bool local, QString auto_mode, QVector< US_DataIO::RawDa
    main->addWidget( tree );
    main->addWidget( te_notes );
    main->addLayout( buttons );
-
+      
    resize( 800, 500 );
 }
 
 
 
 US_LoadAUC::US_LoadAUC( bool local, QVector< US_DataIO::RawData >& rData,
-   QStringList& trips, QString& wdir ) : US_WidgetsDialog( 0, 0 ),
+   QStringList& trips, QString& wdir ) : US_WidgetsDialog( nullptr, Qt::WindowFlags() ),
    rawList( rData ), triples( trips ), workingDir( wdir )
 {
    int ddstate;
 
-   us_auto_mode   = false;
-
+   us_auto_mode      = false;
+   us_auto_mode_abde = false;
+   
    if ( local )
    {
       setWindowTitle( tr( "Load AUC Data from Local Disk" ) );
@@ -262,12 +395,18 @@ US_LoadAUC::US_LoadAUC( bool local, QVector< US_DataIO::RawData >& rData,
 }
 
 
-
-
-
 // Load the selected raw data
 void US_LoadAUC::load( void )
 {
+  if ( us_auto_mode_abde )
+    {
+      tree->setCurrentItem(
+			   tree->topLevelItem(0),      // item
+			   0,                          // column
+			   QItemSelectionModel::Select // command
+			   );
+    }
+  
    QList< QTreeWidgetItem* > items = tree->selectedItems();
    int nitems = items.count();
    QList< DataDesc >  sdescs;
@@ -332,7 +471,7 @@ qDebug() << "Ed:Ld: runID_sel" << runID_sel;
 		 QString masterPW = pw.getPasswd();
 		 US_DB2 db( masterPW );
 		 
-		 if ( db.lastErrno() != US_DB2::OK )
+		 if ( db.lastErrno() != IUS_DB2::OK )
 		   {
 		     QMessageBox::warning( this, tr( "Connection Problem" ),
 					   tr( "Assessing EditedData IDs: Could not connect to database \n" ) + db.lastError() );
@@ -454,6 +593,8 @@ qDebug() << "Ed:Ld: ntops" << ntops << "trips" << tripls.count()
       QString runID  = sdescs.at( 0 ).runID;    // We have the first triple
       item           = items .at( 0 );
 
+      qDebug() << "[in US_LoadAUC() load() ], runID -- " << runID;
+      
       for ( int ii = 1; ii < item->childCount(); ii++ )
       {  // Save any run triples beyond first
          QString lkey   = runID + "." + item->child( ii )->text( 0 );
@@ -516,6 +657,7 @@ qDebug() << "Ed:Ptree: sel_run" << sel_run;
       if ( dkdb_cntrls->db() )
       {  // Scan database for AUC
          naucf = scan_db();
+	 qDebug() << "in populate, second scan_db(), naucf -- " << naucf;
       }
 
       else
@@ -534,6 +676,7 @@ qDebug() << "Ed:Ptree: sel_run" << sel_run;
       if ( dkdb_cntrls->db() )
       {  // Scan database for runs
          naucf = scan_run_db();
+	 qDebug() << "in populate, first scan_run_db(), naucf -- " << naucf;
       }
 
       else
@@ -580,7 +723,7 @@ qDebug() << "Ed:Ptree: sel_run" << sel_run;
       QStringList topItem;
       topItem << ddesc.runID
               << QString( ddesc.date ).section( " ", 0, 0 )
-              << QString().sprintf( "%6d", ddesc.DB_id )
+              << QString::asprintf( "%6d", ddesc.DB_id )
               << ddesc.label;
 
       if ( ! runIDs.contains( ddesc.runID ) )
@@ -759,7 +902,7 @@ int US_LoadAUC::scan_db()
    US_Passwd   pw;
    US_DB2      db( pw.getPasswd() );
 
-   if ( db.lastErrno() != US_DB2::OK )
+   if ( db.lastErrno() != IUS_DB2::OK )
    {
       QMessageBox::warning( this, tr( "Connection Problem" ),
         tr( "Could not connect to database\n" ) + db.lastError() );
@@ -930,7 +1073,7 @@ int US_LoadAUC::scan_run_db()
    US_Passwd   pw;
    US_DB2      db( pw.getPasswd() );
 
-   if ( db.lastErrno() != US_DB2::OK )
+   if ( db.lastErrno() != IUS_DB2::OK )
    {
       QMessageBox::warning( this, tr( "Connection Problem" ),
         tr( "Could not connect to database\n" ) + db.lastError() );
@@ -971,6 +1114,23 @@ int US_LoadAUC::scan_run_db()
 	      runIDs << runID;    // Save each run
 	      infoDs << idata;    // Save concatenated description string
 	      nruns++;
+
+	      
+	    }
+	}
+      else if ( us_auto_mode_abde )
+	{
+	  qDebug() << "[in US_LoadAUC: scan_run_db() ]";
+	  if( runID == protocol_details["filename_abde"])
+	    {
+	      qDebug() << "runID, protocol_details[\"filename_abde\"] "
+		       << runID << "," <<  protocol_details["filename_abde"];
+	      runIDs << runID;
+	      infoDs << idata;
+	      runID_sel = runID;
+	      sel_run = true; //!!!
+	      nruns++;
+	      break;
 	    }
 	}
       else
@@ -1162,7 +1322,7 @@ void US_LoadAUC::load_db( QList< DataDesc >& sdescs )
    US_Passwd pw;
    US_DB2 db( pw.getPasswd() );
 
-   if ( db.lastErrno() != US_DB2::OK )
+   if ( db.lastErrno() != IUS_DB2::OK )
    {
       QMessageBox::warning( this, tr( "Connection Problem" ),
          tr( "Could not connect to database\n " ) + db.lastError() );
@@ -1208,7 +1368,7 @@ void US_LoadAUC::load_db( QList< DataDesc >& sdescs )
          db.readBlobFromDB( filename, "download_aucData", idRaw );
          int stat           = db.lastErrno();
 
-         if ( stat != US_DB2::OK )
+         if ( stat != IUS_DB2::OK )
          {
             nerr++;
             emsg += tr( "Error (%1) downloading to file %2\n" )
