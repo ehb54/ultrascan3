@@ -24,17 +24,20 @@ target_include_directories(us_program_common INTERFACE
 # 1) Always-needed deps
 # --------------------------------------------------------------------------
 target_link_libraries(us_program_common INTERFACE
-        Qt5::Core
-        Qt5::Gui
-        Qt5::Widgets
-        Qt5::Network
-        Qt5::Sql
-        Qt5::Xml
-        Qt5::Svg
-        Qt5::OpenGL
-        Qt5::PrintSupport
+        Qt::Core
+        Qt::Gui
+        Qt::Widgets
+        Qt::Network
+        Qt::Sql
+        Qt::Xml
+        Qt::Svg
+        Qt::OpenGL
+        Qt::PrintSupport
         Qwt::Qwt
         )
+if (USE_QT6)
+    target_link_libraries(us_program_common INTERFACE Qt::OpenGLWidgets)
+endif()
 
 # resources are their own target at the top level
 if(TARGET UltraScan3::Resources)

@@ -115,7 +115,7 @@ class US_Spectrum : public US_Widgets
          * @brief Slot to handle new values from plot picker.
          * @param point The point picked
          */
-        void new_value(const QwtDoublePoint& point);
+        void new_value(const QPointF& point);
 
         /**
          * @brief Slot to find extinction coefficients.

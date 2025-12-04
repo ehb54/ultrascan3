@@ -379,7 +379,7 @@ void US_BufferGuiSelect::search( QString const& text )
    for ( int ii = 0; ii < descriptions.size(); ii++ )
    {  // get list of filtered-description + index strings
       if ( descriptions[ ii ].contains(
-         QRegExp( ".*" + text + ".*", Qt::CaseInsensitive ) )  &&
+         QRegularExpression( ".*" + text + ".*", QRegularExpression::CaseInsensitiveOption ) )  &&
          ! descriptions[ ii].isEmpty() )
       {
          sortdesc << descriptions[ ii ] + sep + QString::number( ii );
@@ -2316,7 +2316,7 @@ void US_BufferComponentRequerster::cancelled(void) {
 void US_BufferComponentRequerster::accept(void) {
    comp->name = le_name->text();
    comp->unit = le_unit->text();
-   comp->range = QString::number(le_lrange->text().toDouble(),'f',3)+'-'+QString::number(le_urange->text().toDouble(),'f',3)+' M';
+   comp->range = QString::number(le_lrange->text().toDouble(),'f',3)+'-'+QString::number(le_urange->text().toDouble(),'f',3)+" M";
    comp->dens_coeff[0] = le_density0->text().toDouble();
    comp->dens_coeff[1] = le_density1->text().toDouble();
    comp->dens_coeff[2] = le_density2->text().toDouble();

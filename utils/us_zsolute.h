@@ -2,10 +2,8 @@
 #ifndef US_ZSOLUTE_H
 #define US_ZSOLUTE_H
 
-#include <QtCore>
-
-#include "us_model.h"
 #include "us_extern.h"
+#include "us_model.h"
 
 //! \brief Solutes for UltraScan (XYZ form)
 //!

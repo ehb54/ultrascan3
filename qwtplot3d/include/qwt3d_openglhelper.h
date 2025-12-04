@@ -5,7 +5,8 @@
 #if QT_VERSION < 0x040000
 #include <qgl.h>
 #else
-#include <QtOpenGL/qgl.h>
+#include <QOpenGLFunctions>
+#include <QOpenGLWidget>
 #endif
 
 #ifndef Q_OS_MAC

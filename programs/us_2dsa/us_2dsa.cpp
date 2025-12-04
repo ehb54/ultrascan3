@@ -594,8 +594,8 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
    QString mdlpath;
    QString noipath;
    int     nmodels  = models.size();             // number of models to save
-   int     knois    = min( ti_noise.count, 1 ) 
-                    + min( ri_noise.count, 1 );  // noise files per model
+   int     knois    = qMin( ti_noise.count, 1 )
+                    + qMin( ri_noise.count, 1 );  // noise files per model
    int     nnoises  = nmodels * knois;           // number of noises to save
    double  meniscus = edata->meniscus;
    double  bottom   = edata->bottom;

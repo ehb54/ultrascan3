@@ -776,31 +776,31 @@ DbgLv(1) << "IP:  points xvs0 xvsN" << scanfits[0].points
              " weight for the parameter\n"
              "initialization or calculate a newly initialized"
              " molecular weight?" ) );
-      msgBox.setStandardButtons( QMessageBox::Yes | QMessageBox::No 
-                               | QMessageBox::Cancel );
-      msgBox.setButtonText( QMessageBox::Yes,
-            tr( "New Molecular Weight" ) );
-      msgBox.setButtonText( QMessageBox::No,
-            tr( "Current Molecular Weight" ) );
-
-      switch( msgBox.exec() )
+      msgBox.setIcon( QMessageBox::Question );
+      auto apply_button = msgBox.addButton( tr( "New Molecular Weight" ), QMessageBox::ApplyRole );
+      auto reset_button  = msgBox.addButton( tr( "Current Molecular Weight" ), QMessageBox::ResetRole );
+      auto reject_button = msgBox.addButton( tr( "Cancel" ), QMessageBox::RejectRole );
+      msgBox.setDefaultButton( reject_button );
+      msgBox.exec();
+      QAbstractButton* clicked_button = msgBox.clickedButton();
+      if ( clicked_button == apply_button )
       {
-         case QMessageBox::Yes:
-         case QMessageBox::Default:
-         default:
-            runfit.mw_vals[ 0 ] = emath->linesearch();
-            runfit.mw_rngs[ 0 ] = runfit.mw_vals[ 0 ] * 0.2;
-            update_mw = true;
-            break;
-
-         case QMessageBox::No:
-            emath->calc_testParameter( runfit.mw_vals[ 0 ] );
-            runfit.mw_rngs[ 0 ] = runfit.mw_vals[ 0 ] * 0.2;
-            update_mw = false;
-            break;
-         case QMessageBox::Cancel:
-            update_mw = false;
-            break;
+         // user choose the new molecular weight button
+         runfit.mw_vals[ 0 ] = emath->linesearch();
+         runfit.mw_rngs[ 0 ] = runfit.mw_vals[ 0 ] * 0.2;
+         update_mw = true;
+      }
+      else if ( clicked_button == reset_button )
+      {
+         // user choose to keep the currrent molecular weight
+         emath->calc_testParameter( runfit.mw_vals[ 0 ] );
+         runfit.mw_rngs[ 0 ] = runfit.mw_vals[ 0 ] * 0.2;
+         update_mw = false;
+      }
+      else
+      {
+         // user clicked cancel or escaped the dialog in another way
+         update_mw = false;
       }
    }
 DbgLv(1) << "IP: update_mw" << update_mw;
@@ -1010,12 +1010,12 @@ DbgLv(1) << "EdataPlot: radl radr" << radl << radr;
    // Set up the picker for mouse down, moves and up
    QwtPlotPicker* pick = new US_PlotPicker( equil_plot );
    pick->setRubberBand( QwtPicker::CrossRubberBand );
-   connect( pick, SIGNAL( cMouseDown(   const QwtDoublePoint& ) ),
-                  SLOT(   pMouseDown(  const QwtDoublePoint& ) ) );
-   connect( pick, SIGNAL( cMouseUp(     const QwtDoublePoint& ) ),
-                  SLOT(   pMouseUp(    const QwtDoublePoint& ) ) );
-   connect( pick, SIGNAL( cMouseDrag(   const QwtDoublePoint& ) ),
-                  SLOT(   pMouseMoved( const QwtDoublePoint& ) ) );
+   connect( pick, SIGNAL( cMouseDown(   const QPointF& ) ),
+                  SLOT(   pMouseDown(  const QPointF& ) ) );
+   connect( pick, SIGNAL( cMouseUp(     const QPointF& ) ),
+                  SLOT(   pMouseUp(    const QPointF& ) ) );
+   connect( pick, SIGNAL( cMouseDrag(   const QPointF& ) ),
+                  SLOT(   pMouseMoved( const QPointF& ) ) );
 
    if ( scedits[ sscanx ].edited )
    {
@@ -1046,7 +1046,7 @@ DbgLv(1) << "EdataPlot: radl radr" << radl << radr
    double rhi  = -9e+10;
    double vlo  = 9e+10;
    double vhi  = -9e+10;
-   int    krpt = min( nrpts, scanfits[ sscanx ].stop_ndx + 1 );
+   int    krpt = qMin( nrpts, scanfits[ sscanx ].stop_ndx + 1 );
 
    for ( int jj = 0; jj < krpt; jj++ )
    {
@@ -1057,10 +1057,10 @@ DbgLv(1) << "EdataPlot: radl radr" << radl << radr
          double vv     = edata->value( isc, jj );
          ra[ count   ] = rv;
          va[ count++ ] = vv;
-         rlo           = min( rlo, rv );
-         rhi           = max( rhi, rv );
-         vlo           = min( vlo, vv );
-         vhi           = max( vhi, vv );
+         rlo           = qMin( rlo, rv );
+         rhi           = qMax( rhi, rv );
+         vlo           = qMin( vlo, vv );
+         vhi           = qMax( vhi, vv );
       }
    }
 
@@ -1167,7 +1167,7 @@ void US_GlobalEquil::edited_plot( void )
 }
 
 // Respond to mouse button down
-void US_GlobalEquil::pMouseDown( const QwtDoublePoint& p )
+void US_GlobalEquil::pMouseDown( const QPointF& p )
 {
    mMoved = false;
    mDown  = true;
@@ -1177,7 +1177,7 @@ void US_GlobalEquil::pMouseDown( const QwtDoublePoint& p )
 }
 
 // Respond to mouse button up (after move)
-void US_GlobalEquil::pMouseUp( const QwtDoublePoint& p )
+void US_GlobalEquil::pMouseUp( const QPointF& p )
 {
    // If mouse never moved, ignore release; otherwise reset mouse condition
    if ( ! mMoved )
@@ -1215,7 +1215,7 @@ void US_GlobalEquil::pMouseUp( const QwtDoublePoint& p )
 }
 
 // Respond to mouse button being moved - redraw curve with edited points
-void US_GlobalEquil::pMouseMoved( const QwtDoublePoint& p )
+void US_GlobalEquil::pMouseMoved( const QPointF& p )
 {
    if ( ! mDown )
       return;
@@ -1237,8 +1237,8 @@ void US_GlobalEquil::assign_scanfit()
 
    EqScanFit   scanfit;
    QStringList channs;
-   int         ncomp = max( 1, runfit.nbr_comps );
-   int         mcomp = max( 4, ncomp );
+   int         ncomp = qMax( 1, runfit.nbr_comps );
+   int         mcomp = qMax( 4, ncomp );
    int         nintg = mcomp + runfit.nbr_assocs;
    
    for ( int jes = 0; jes < scedits.size(); jes++ )
@@ -1316,7 +1316,7 @@ void US_GlobalEquil::setup_runfit()
    runfit.runs_expect  = 0.0;
    runfit.runs_vari    = 0.0;
    runfit.projname     = le_prjname->text();
-   modelx              = max( modelx, 0 );
+   modelx              = qMax( modelx, 0 );
 DbgLv(1) << " sRF: modelx" << modelx;
    runfit.modlname     = models[ modelx ];
 DbgLv(1) << " sRF: modlname" << runfit.modlname;
@@ -1464,7 +1464,7 @@ int US_GlobalEquil::index_od_limit( EqScanFit& scanfit, double odlim )
    {
       if ( scanfit.yvs[ jj ] > odlim )
       {
-         stopx = max( jj - 1, scanfit.start_ndx );
+         stopx = qMax( jj - 1, scanfit.start_ndx );
          break;
       }
    }

@@ -229,7 +229,7 @@ US_AddRefScan::US_AddRefScan() : US_Widgets()
     tab0_lyt->addLayout(tab0_usplotR,  1, 1, 1, 1);
     tab0_lyt->addLayout(tab0_devplotL, 2, 0, 1, 1);
     tab0_lyt->addLayout(tab0_devplotR, 2, 1, 1, 1);
-    tab0_lyt->setMargin(0);
+    tab0_lyt->setContentsMargins( 0, 0, 0, 0 );
     tab0_lyt->setSpacing(1);
 
 
@@ -313,7 +313,7 @@ US_AddRefScan::US_AddRefScan() : US_Widgets()
     tab1_lyt->addLayout(tab1_plt_lyt2, 0);
     tab1_lyt->addLayout(tab1_plt_lyt3, 1);
     tab1_lyt->addLayout(tab1_plt_lyt4);
-    tab1_lyt->setMargin(0);
+    tab1_lyt->setContentsMargins( 0, 0, 0, 0 );
     tab1_lyt->setSpacing(1);
 
     //**//
@@ -333,7 +333,7 @@ US_AddRefScan::US_AddRefScan() : US_Widgets()
     main_lyt->addLayout(left_lyt, 0);
     main_lyt->addWidget(tabs, 1);
     main_lyt->setSpacing(1);
-    main_lyt->setMargin(1);
+    main_lyt->setContentsMargins( 1, 1, 1, 1 );
     setLayout(main_lyt);
 
     slt_reset();
@@ -408,7 +408,7 @@ void US_AddRefScan::slt_import(){
             QString rtp = fname.section(".", -5, -5);
             QString rid = fname.section(".", 0, -6);
             QString rido = fname.section(".", 0, -6);
-            QRegExp re( "[^A-Za-z0-9_-]" );
+            QRegularExpression re( "[^A-Za-z0-9_-]" );
             int reIdx = rid.indexOf(re, 0);
             if (reIdx >= 0) runID_changed = true;
             while (reIdx >= 0){
@@ -481,7 +481,11 @@ void US_AddRefScan::slt_import(){
     pb_reset->setEnabled(true);
     ckb_CA_state->setEnabled(true);
     ckb_CA_local->setEnabled(true);
+#if QT_VERSION < QT_VERSION_CHECK(6, 7, 0)
     emit ckb_CA_state->stateChanged(ckb_CA_state->checkState());
+#else
+    emit ckb_CA_state->checkStateChanged(ckb_CA_state->checkState());
+#endif
     this->setCursor(QCursor(Qt::ArrowCursor));
     return;
 }
@@ -1231,7 +1235,7 @@ void US_AddRefScan::slt_load_CA(){
         while (!inStream.atEnd()) {
 
           QString line = inStream.readLine();
-          QStringList lsp = line.split(QRegExp("[\r\n\t,; ]+"), Qt::SkipEmptyParts);
+          QStringList lsp = line.split(QRegularExpression("[\r\n\t,; ]+"), Qt::SkipEmptyParts);
           if (lsp.size() == 0) continue;
           if (lsp.size() != 2){
               QMessageBox::warning(this, "Error!",
@@ -2592,7 +2596,7 @@ void US_AddRefScan::get_refScanDBinfo(US_DB2* db, QVector<refScanTableInfo>& ref
 }
 
 QDate US_AddRefScan::str2date(QString date){
-    QRegExp re("\\d+:\\d+:\\d+");
+    QRegularExpression re("\\d+:\\d+:\\d+");
     QStringList match = date.remove(re).simplified().split("-");
     if (match.size() == 3) {
         int year = match.at(0).toInt();
@@ -2684,7 +2688,7 @@ void FileNameWidget::slt_edit(QString text){
     if (text.size() < base_prev.size()){
         base_prev = text;
     }else{
-        QRegExp re( "[^a-zA-Z0-9-]" );
+        QRegularExpression re( "[^a-zA-Z0-9-]" );
         int reIdx = text.indexOf(re, 0);
         if (reIdx >= 0){
             le_base->setText(base_prev);
