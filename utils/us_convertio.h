@@ -35,7 +35,7 @@ class US_ConvertIO
           \param speedsteps Reference for returned experiment speed steps vector
       */
       static QString readDBExperiment( QString, QString, US_DB2*,
-                        QVector< SP_SPEEDPROFILE >& );
+				       QVector< SP_SPEEDPROFILE >&, const QString = QString("") );
 
       /*! \brief Writes a new DB rawData record for each triple
 

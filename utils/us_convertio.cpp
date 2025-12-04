@@ -295,13 +295,17 @@ qDebug() << "cvio:WrRDB: newExp id solID chnID" << ExpData.expID
 
 // Function to read the experiment info and binary auc files to disk
 QString US_ConvertIO::readDBExperiment( QString runID, QString dir,
-          US_DB2* db, QVector< SP_SPEEDPROFILE >& speedsteps )
+					US_DB2* db, QVector< SP_SPEEDPROFILE >& speedsteps,
+					const QString invid_p )
 
 {
    US_Experiment ExpData;                    // A local copy of experiment
    QList< US_Convert::TripleInfo > triples;  // A local copy of triples
-qDebug() << "rDBE: call ExpData.readFromDB";
-   int readStatus = ExpData.readFromDB( runID, db, speedsteps );
+   qDebug() << "rDBE: call ExpData.readFromDB";
+
+   qDebug() << "US_ConvertIO::readDBExperiment, invid_p -- " << invid_p;
+   
+   int readStatus = ExpData.readFromDB( runID, db, speedsteps, invid_p );
 if(speedsteps.size()>0)
  qDebug() << "rDBE:  ss size ss0.sp ss0.avg" << speedsteps.size()
  << speedsteps[0].rotorspeed << speedsteps[0].avg_speed;
