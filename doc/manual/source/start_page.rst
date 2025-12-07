@@ -16,7 +16,7 @@ Step 1: Import Experimental data into UltraScan-III OpenAUC format
         Required for data from XLA or XLI, this step is performed automatically in the Optima AUC.
         Sedimentation velocity data should not be measured in absorbance mode, use intensity mode instead.
 
-#. Import the experimental data: Utilities: `Import Experimental Data <import.html>`_
+#. Import the experimental data: Utilities: `Import Experimental Data <convert.html>`_
 
 #. Confirm Investigator setting and local/database selection
 #.  Import Experimental Data from local disk 
@@ -42,7 +42,7 @@ Step 1: Import Experimental data into UltraScan-III OpenAUC format
 Step 2: Edit experimental data.
 --------------------------------
 
-#. Edit the data into Edit Data: `Edit Data <us_edit>`_. 
+#. Edit the data into Edit Data: `Edit Data <us_edit.html>`_. 
 #. Load data from the database or a local data directory that contains the UltraScan 3 data files previously converted from the Beckman raw data. 
 #. Select the Cell / Channel / Wavelength triple to be edited. 
 #. Specify the meniscus of the data by holding down the Control key and using the left mouse button. The meniscus value may be manually adjusted with the keyboard. 
