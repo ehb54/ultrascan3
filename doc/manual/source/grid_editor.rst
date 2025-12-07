@@ -40,7 +40,7 @@ Input/Output Controls
 
   
   * - **Select Investigator** 
-    - click here to retrieve the investigator management widget for selecting the data owner (userlevel 3 is required). 
+    - click here to retrieve the investigator management widget for selecting the data owner (user level 3 is required). 
   * - **Database/Local Disk**
     - Select the data target. If Database is selected, the model will be stored in the database. This is required if submitting a supercomputing job for the custom grid. Local Disk will only save the grid to the local disk for use in the desktop version of the 2-dimensional spectrum analysis. 
 
@@ -164,7 +164,7 @@ Partial Spec. Volume/Frictional Ratio: - this counter allows you to set the part
 
 Density and Viscosity -
 
-Add this Grid - click here to add the currently defined grid to the final grid to be saved. Each grid should only be added once. Each added grid constitutes a partial grid of the final grid. Should partia subgrids overlap, duplicate solutes will be screened out before saving the overall model including each partial grid. By adding multiple grids together it is possible to define well-defined regions as a basis for the parameter search. For example, if one were to fit a system containg monomers, dimers, and trimers, where each oligomer is increasingly anisotropic, a grid like this one could be defined. It specifies a rectangular molecular weight grid with increasing anisotropy for each oligomer. An error region should be defined that usually ranges between +/-10 % of the oligomeric size. When transformed to the sedimentation view, the looks like this. 
+Add this Grid - click here to add the currently defined grid to the final grid to be saved. Each grid should only be added once. Each added grid constitutes a partial grid of the final grid. Should partial subgrids overlap, duplicate solutes will be screened out before saving the overall model including each partial grid. By adding multiple grids together it is possible to define well-defined regions as a basis for the parameter search. For example, if one were to fit a system containing monomers, dimers, and trimers, where each oligomer is increasingly anisotropic, a grid like this one could be defined. It specifies a rectangular molecular weight grid with increasing anisotropy for each oligomer. An error region should be defined that usually ranges between +/-10 % of the oligomeric size. When transformed to the sedimentation view, the looks like this. 
 
 Show Final Grid - this checkbox allows you to view the final grid. In this mode it is not possible to make any further changes to the final grid or to add new grids, but it is possible to change the view from sedimentation to molecular weight, or vice-versa. It is also possible to delete partial grids. When clicking on Delete Partial Grid, the partial grid currently highlighted in red is removed from the final grid. The highlighted partial grid can be adjusted by changing the counter for Highlight Partial Grid #:. 
 

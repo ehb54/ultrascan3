@@ -21,18 +21,27 @@ Welcome to UltraScan III's Documentation and Resource!
    :maxdepth: 1
    :caption: UltrascanIII Protocols:
 
-   #installation 
-   #process
+   installation 
+   process
    start_page
-   #interacting
-   #reporting
+   interacting
+   reporting
+
+.. toctree::
+   :maxdepth: 1
+   :caption: SV-AUC Experimental Tips:
+
+   3000_rmp
+
 
 .. toctree::
    :maxdepth: 1
    :caption: Ultrascan III Installation and Customization:
 
+   register
    config
    colorgradient
+
 
 
 .. toctree::
@@ -55,7 +64,7 @@ Welcome to UltraScan III's Documentation and Resource!
    :caption: Data Acquisition: 
 
    gmp/index
-   #experiment/index
+   experiment/index
 
 .. toctree::
    :maxdepth: 1
@@ -94,6 +103,9 @@ Welcome to UltraScan III's Documentation and Resource!
    model_editor
    components
    associations
+   us_extinction
+   us_spectrum
+   ramp_data
 
 .. toctree::
    :maxdepth: 1
@@ -106,6 +118,7 @@ Welcome to UltraScan III's Documentation and Resource!
    predict1
    predict2
    sassoc
+   dmga_init
 
 .. toctree::
    :maxdepth: 1
@@ -119,6 +132,7 @@ Welcome to UltraScan III's Documentation and Resource!
    ddist_combine
    idist_combine 
    vhw_combine
+   tmst_viewer
 
 
 
