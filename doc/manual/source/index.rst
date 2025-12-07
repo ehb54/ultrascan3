@@ -100,11 +100,11 @@ Welcome to UltraScan III's Documentation and Resource!
    :caption: Simulation:
 
    astfem_sim
-   predict1
-   predict2
    simparams
    mwl_species_sim
    us_equiltime
+   predict1
+   predict2
    sassoc
 
 .. toctree::
