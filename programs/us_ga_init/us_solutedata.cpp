@@ -1207,16 +1207,13 @@ void US_SoluteData::outputStats( QTextStream& ts, QList< qreal >& vals,
    conf95lo  = vmean - 1.960 * sdevi;
    conf95hi  = vmean + 1.960 * sdevi;
 
-   QVector <int> idxs;
+   QVector <int> idxs(nvals, 0);
    for ( int jj = 0; jj < nvals; jj++ )
    {
-       idxs << jj;
+       idxs[jj] = jj;
    }
-   std::stable_sort(idxs.begin(), idxs.end(),
-                    [&vals](int a, int b) {
-                        return vals[a] < vals[b];
-                    }
-                    );
+   std::sort(idxs.begin(), idxs.end(),
+             [&vals](int a, int b) { return vals[a] < vals[b]; });
    QVector<qreal> vals_sorted;
    QVector<qreal> concs_sorted;
    for ( int jj = 0; jj < nvals; jj++ )
