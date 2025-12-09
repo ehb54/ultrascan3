@@ -119,6 +119,7 @@ Welcome to UltraScan III's Documentation and Resource!
    predict2
    sassoc
    dmga_init
+   dmga_init_constr
 
 .. toctree::
    :maxdepth: 1
