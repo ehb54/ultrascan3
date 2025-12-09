@@ -1207,6 +1207,63 @@ void US_SoluteData::outputStats( QTextStream& ts, QList< qreal >& vals,
    conf95lo  = vmean - 1.960 * sdevi;
    conf95hi  = vmean + 1.960 * sdevi;
 
+   QVector <int> idxs;
+   for ( int jj = 0; jj < nvals; jj++ )
+   {
+       idxs << jj;
+   }
+   std::stable_sort(idxs.begin(), idxs.end(),
+                    [&vals](int a, int b) {
+                        return vals[a] < vals[b];
+                    }
+                    );
+   QVector<qreal> vals_sorted;
+   QVector<qreal> concs_sorted;
+   for ( int jj = 0; jj < nvals; jj++ )
+   {
+       int id = idxs.at(jj);
+       vals_sorted << vals.at(id);
+       concs_sorted << concs.at(id);
+   }
+
+   qreal lo99 = vctot * 0.005;
+   qreal hi99 = vctot * 0.995;
+   qreal lo95 = vctot * 0.025;
+   qreal hi95 = vctot * 0.975;
+
+   qreal acc_conc = 0;
+   int lo99_id  = -1;
+   int hi99_id  = -1;
+   int lo95_id  = -1;
+   int hi95_id  = -1;
+
+   for ( int jj = 0; jj < nvals; jj++ )
+   {
+       acc_conc += concs_sorted.at(jj);
+       if (acc_conc >= lo99 && lo99_id == -1)
+       {
+           lo99_id = jj;
+       }
+       if (acc_conc >= lo95 && lo95_id == -1)
+       {
+           lo95_id = jj;
+       }
+
+       if (acc_conc > hi99 && hi99_id == -1)
+       {
+           hi99_id = jj - 1;
+       }
+       if (acc_conc > hi95 && hi95_id == -1)
+       {
+           hi95_id = jj - 1;
+       }
+   }
+
+   conf99lo = vals_sorted.at(lo99_id);
+   conf99hi = vals_sorted.at(hi99_id);
+   conf95lo = vals_sorted.at(lo95_id);
+   conf95hi = vals_sorted.at(hi95_id);
+
    if ( details  &&  is_constant )
    {
       ts << "\n\n" << tr( "Results for the " ) << title << ":\n\n";
