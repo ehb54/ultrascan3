@@ -9,7 +9,22 @@
       "cacheVariables": {
         "CMAKE_CXX_STANDARD": "17",
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
-        "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/vcpkg/scripts/buildsystems/vcpkg.cmake"
+        "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/vcpkg/scripts/buildsystems/vcpkg.cmake",
+        "VCPKG_MANIFEST_FEATURES": "qt5"
+      },
+      "environment": {
+        "VCPKG_DISABLE_METRICS": "1"
+      }
+    },
+    {
+      "name": "base-qt6",
+      "hidden": true,
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "cacheVariables": {
+        "CMAKE_CXX_STANDARD": "17",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/vcpkg/scripts/buildsystems/vcpkg.cmake",
+        "VCPKG_MANIFEST_FEATURES": "qt6"
       },
       "environment": {
         "VCPKG_DISABLE_METRICS": "1"
@@ -30,6 +45,12 @@
       "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Darwin" }
     },
     {
+      "name": "macos-release-qt6",
+      "displayName": "macOS Release (Qt6)",
+      "inherits": ["base-qt6", "macos-release"],
+      "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Darwin" }
+    },
+    {
       "name": "linux-release",
       "displayName": "Linux Release",
       "inherits": "base",
@@ -42,6 +63,12 @@
       "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Linux" }
     },
     {
+      "name": "linux-release-qt6",
+      "displayName": "Linux Release (Qt6)",
+      "inherits": ["base-qt6", "linux-release"],
+      "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Linux" }
+    },
+    {
       "name": "windows-release",
       "displayName": "Windows Release",
       "inherits": "base",
@@ -51,16 +78,28 @@
         "VCPKG_BUILD_TYPE": "release"
       },
       "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Windows" }
+    },
+    {
+      "name": "windows-release-qt6",
+      "displayName": "Windows Release (Qt6)",
+      "inherits": ["base-qt6", "windows-release"],
+      "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Windows" }
     }
   ],
   "buildPresets": [
     { "name": "macos-release", "configurePreset": "macos-release" },
     { "name": "linux-release", "configurePreset": "linux-release" },
-    { "name": "windows-release", "configurePreset": "windows-release" }
+    { "name": "windows-release", "configurePreset": "windows-release" },
+    { "name": "macos-release-qt6", "configurePreset": "macos-release-qt6" },
+    { "name": "linux-release-qt6", "configurePreset": "linux-release-qt6" },
+    { "name": "windows-release-qt6", "configurePreset": "windows-release-qt6" }
   ],
   "testPresets": [
     { "name": "macos-release", "configurePreset": "macos-release" },
     { "name": "linux-release", "configurePreset": "linux-release" },
-    { "name": "windows-release", "configurePreset": "windows-release" }
+    { "name": "windows-release", "configurePreset": "windows-release" },
+    { "name": "macos-release-qt6", "configurePreset": "macos-release-qt6" },
+    { "name": "linux-release-qt6", "configurePreset": "linux-release-qt6" },
+    { "name": "windows-release-qt6", "configurePreset": "windows-release-qt6" }
   ]
 }

@@ -3,17 +3,35 @@
   "version": "4.1.0",
   "builtin-baseline": "69a6e3311f485ac1af362d63b2f62537c3c73134",
   "dependencies": [
-    "libpng",
-    "qt5-base",
-    "qt5-tools",
-    "qt5-datavis3d",
-    "qt5-svg",
-    "qwt",
-    "libmariadb",
-    "openssl",
+    "gtest",
     "libarchive",
-    "zlib",
-    "qwtplot3d",
-    "gtest"
-  ]
+    "libmariadb",
+    "libpng",
+    "openssl",
+    "zlib"
+  ],
+  "features": {
+    "qt5": {
+      "description": "Build with Qt5",
+      "dependencies": [
+        "qt5-base",
+        "qt5-datavis3d",
+        "qt5-svg",
+        "qt5-tools",
+        "qwt-6-1-6",
+        "qwtplot3d"
+      ]
+    },
+    "qt6": {
+      "description": "Build with Qt6",
+      "dependencies": [
+        "qtbase",
+        "qtdatavis3d",
+        "qtsvg",
+        "qttools",
+        "qwt",
+        "qwtplot3d"
+      ]
+    }
+  }
 }
