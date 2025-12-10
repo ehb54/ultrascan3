@@ -1,6 +1,27 @@
 cmake_minimum_required(VERSION 3.21)
 
 # =============================================================================
+# VCPKG TRIPLET AUTO-DETECTION
+# =============================================================================
+# Auto-detect vcpkg triplet for macOS (only if not explicitly set)
+if(NOT DEFINED VCPKG_TARGET_TRIPLET)
+    if(APPLE)
+        execute_process(
+                COMMAND uname -m
+                OUTPUT_VARIABLE DETECTED_ARCH
+                OUTPUT_STRIP_TRAILING_WHITESPACE
+        )
+        if(DETECTED_ARCH STREQUAL "arm64")
+            set(VCPKG_TARGET_TRIPLET "arm64-osx-dynamic")
+            message(STATUS "Auto-detected Apple Silicon (arm64) - using triplet: ${VCPKG_TARGET_TRIPLET}")
+        else()
+            set(VCPKG_TARGET_TRIPLET "x64-osx-dynamic")
+            message(STATUS "Auto-detected Intel Mac (x86_64) - using triplet: ${VCPKG_TARGET_TRIPLET}")
+        endif()
+    endif()
+endif()
+
+# =============================================================================
 # VERSION EXTRACTION FROM us_defines.h
 # =============================================================================
 # Extract version before project() call

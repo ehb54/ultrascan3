@@ -3,6 +3,7 @@
 #include <QTcpSocket>
 #include <QFontDatabase>
 #include <QtWidgets/QApplication>
+#include <QVersionNumber>
 
 #include "us.h"
 #include "us_license_t.h"
@@ -995,20 +996,23 @@ void US_Win::notices_ready() {
    QString msg_note  = tr( "UltraScan III notices posted :<br><br>" );
    bool empty_msg    = true;
 
-   double sys_version  = US_Version.toDouble();
-   int    sys_revision = QString( BUILDNUM ).toInt();
-   
+   // Strips out any "-" data in version (e.g. 4.1.0-dev becomes 4.1.0)
+   QVersionNumber base_ver = QVersionNumber::fromString(US_Version);
+   int sys_revision = QString(BUILDNUM).toInt();
+
+   // add revision to end of base_ver to compare with notices
+   QVector<int> segments = base_ver.segments();  // Already a QVector<int>
+   segments.append(sys_revision);
+   QVersionNumber sys_ver(segments);
+
    for ( int ii = 0; ii < (int) msgs.size(); ++ii )
    {
-      double msg_version  = QString( "%1" ).arg( revs[ii] ).replace( QRegularExpression( "\\.\\d+$" ), "" ).toDouble();
-      double msg_revision = QString( "%1" ).arg( revs[ii] ).replace( QRegularExpression( "^[^\\.]*\\.\\d+\\." ), "" ).toDouble();
+       QVersionNumber msg_ver = QVersionNumber::fromString(revs[ii]);
 
       // Skip messages where message version.revision is less than our version.revision
-      if ( sys_version > msg_version ||
-           ( sys_version == msg_version &&
-             sys_revision > msg_revision ) ) {
-         continue;
-      }
+       if ( sys_ver > msg_ver ) {
+           continue;
+       }
 
       // Add current message to full text
       msg_note         += typeMap[ types[ ii ] ] + " for release "
