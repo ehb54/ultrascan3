@@ -1298,17 +1298,21 @@ void US_AddRefScan::write2txt(const QString& file, US_RefScanDataIO::RefData& da
     int np = data.nPoints;
     if (out_file.open(QIODevice::WriteOnly)) {
         QTextStream out_str{&out_file};
-        out_str << "Type=" << data.type << Qt::endl;
-        out_str << "nWavelength=" << nw << Qt::endl;
-        out_str << "nPoints=" << np << Qt::endl;
+        out_str << "Type=" << data.type << "\n";
+        out_str << "nWavelength=" << nw << "\n";
+        out_str << "nPoints=" << np << "\n";
         out_str << "Wavelength=";
         for (int i = 0; i < nw; ++i){
             dval = data.wavelength.at(i);
             sval = QString::number(dval, 'f', 1);
             if (i < nw - 1)
+            {
                 out_str << sval << ",";
+            }
             else
+            {
                 out_str << sval << "\n";
+            }
         }
         for (int i = 0; i < nw; ++i){
             out_str << "xValues=";
@@ -1316,9 +1320,13 @@ void US_AddRefScan::write2txt(const QString& file, US_RefScanDataIO::RefData& da
                 dval = data.xValues.at(j);
                 sval = QString::number(dval, 'f', 4);
                 if (j < np - 1)
+                {
                     out_str << sval << ",";
+                }
                 else
+                {
                     out_str << sval << "\n";
+                }
             }
         }
         for (int i = 0; i < nw; ++i){
@@ -1327,9 +1335,13 @@ void US_AddRefScan::write2txt(const QString& file, US_RefScanDataIO::RefData& da
                 dval = data.rValues.at(i).at(j);
                 sval = QString::number(dval, 'e', 6);
                 if (j < np - 1)
+                {
                     out_str << sval << ",";
+                }
                 else
+                {
                     out_str << sval << "\n";
+                }
             }
         }
         for (int i = 0; i < nw; ++i){
@@ -1338,12 +1350,18 @@ void US_AddRefScan::write2txt(const QString& file, US_RefScanDataIO::RefData& da
                 dval = data.std.at(i).at(j);
                 sval = QString::number(dval, 'e', 6);
                 if (j < np - 1)
+                {
                     out_str << sval << ",";
+                }
                 else
+                {
                     out_str << sval << "\n";
+                }
             }
         }
-        }
+        out_file.flush();
+        out_file.close();
+    }
     return;
 }
 
