@@ -28,8 +28,8 @@ class US_GUI_EXTERN US_Editor : public QMainWindow
           \param parent Parent widget.
           \param flags Standard main window flags.
       */
-      US_Editor( int, bool = false, const QString& = "Data Files (*.dat)", 
-            QWidget* = 0, Qt::WindowFlags = 0 );
+      US_Editor( int menu, bool readonly = false, const QString& extension = "Data Files (*.dat)",
+            QWidget* parent = nullptr, Qt::WindowFlags flags = Qt::WindowFlags() );
 
       enum { LOAD, DEFAULT };
 

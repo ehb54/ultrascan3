@@ -23,9 +23,6 @@
 #include "us_noise_loader.h"
 #include "us_loadable_noise.h"
 #include "us_show_norm.h"
-#if QT_VERSION < 0x050000
-#define setSamples(a,b,c)  setData(a,b,c)
-#endif
 
 //! \brief Main program for us_2dsa. Loads translators and starts
 //         the class US_2dsa.
@@ -547,8 +544,12 @@ void US_2dsa::view( void )
    {
       te_results = new US_Editor( US_Editor::DEFAULT, true, QString(), this );
       te_results->resize( 780, 700 );
-      QPoint p = g.global_position();
-      te_results->move( p.x() + 30, p.y() + 30 );
+      QString auto_positioning = US_Settings::debug_value("auto_positioning");
+      if ( global_positioning && !auto_positioning.isEmpty() && auto_positioning.toLower() == "true" )
+      {
+         QPoint p = g.global_position();
+         te_results->move( p.x() + 30, p.y() + 30 );
+      }
       te_results->e->setFont( QFont( US_GuiSettings::fontFamily(),
                                      US_GuiSettings::fontSize() ) );
    }
@@ -685,7 +686,7 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
       int     iterNum   = jj + 1;
 
       if ( montCar )
-         iterID.sprintf( "mc%04d", iterNum );
+         iterID = QString::asprintf( "mc%04d", iterNum );
 
       else if ( fitMeni )
       {
@@ -694,16 +695,16 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
          bottom            = mdesc.mid( mdesc.indexOf( "BOTTOM=" ) + 7 )
                              .section( ' ', 0, 0 ).toDouble();
          if ( bottom > 0.0 )
-            iterID.sprintf( "i%02d-m%05db%05d", iterNum, qRound( meniscus * 10000 ),
-                            qRound( bottom * 10000 ) );
+            iterID = QString::asprintf( "i%02d-m%05db%05d", iterNum, qRound( meniscus * 10000 ),
+                                        qRound( bottom * 10000 ) );
          else
-            iterID.sprintf( "i%02d-m%05d", iterNum, qRound( meniscus * 10000 ) );
+            iterID = QString::asprintf( "i%02d-m%05d", iterNum, qRound( meniscus * 10000 ) );
       }
       else if ( fitBott )
       {
          bottom            = mdesc.mid( mdesc.indexOf( "BOTTOM=" ) + 7 )
                              .section( ' ', 0, 0 ).toDouble();
-         iterID.sprintf( "i%02d-b%05d", iterNum, qRound( bottom * 10000 ) );
+         iterID = QString::asprintf( "i%02d-b%05d", iterNum, qRound( bottom * 10000 ) );
       }
 
       // fill in actual model parameters needed for output

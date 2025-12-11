@@ -8,14 +8,6 @@
 #include "us_investigator.h"
 #include "us_images.h"
 
-
-#if QT_VERSION < 0x050000
-#define setSymbol(a)      setSymbol(*a)
-#define setSamples(a,b,c) setData(a,b,c)
-#define QRegularExpression(a)  QRegExp(a)
-#endif
-
-
 US_ScanExclGui::US_ScanExclGui( QStringList channels_desc, QList< int > scan_beg, QList< int > scan_end,
 				QList< int > scan_nth, int scanCount, int scanCount_int ) : US_Widgets()
 {
@@ -229,7 +221,7 @@ void US_ScanExclGui::build_layout ( void )
       
       QFont font   = le_chan_desc->property("font").value<QFont>();
       QFontMetrics fm(font);
-      int pixelsWide = fm.width( le_chan_desc->text() );
+      int pixelsWide = fm.horizontalAdvance( le_chan_desc->text() );
       le_chan_desc->setMinimumWidth( pixelsWide*1.1 );
       le_chan_desc->adjustSize();
       

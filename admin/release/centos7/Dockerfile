@@ -8,7 +8,7 @@ FROM $image
 
 ## compile defaults
 ARG parallel_compile=64
-ARG ultrascan_branch=master
+ARG ultrascan_branch=main
 
 ## qt defaults
 ARG qt_major_version=5.14

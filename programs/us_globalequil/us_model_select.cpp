@@ -12,7 +12,7 @@ US_ModelSelect::US_ModelSelect(
       int&             a_modelx,
       QStringList&     a_models,
       QList< double >& a_udpars )
- : US_WidgetsDialog( 0, 0 ),
+ : US_WidgetsDialog( nullptr, Qt::WindowFlags() ),
    smodelx    ( a_modelx ),
    models     ( a_models ),
    aud_pars   ( a_udpars )

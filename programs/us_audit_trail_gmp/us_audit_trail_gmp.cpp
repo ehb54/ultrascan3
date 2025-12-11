@@ -69,11 +69,11 @@ void US_auditTrailGMP::printAPDF( void )
   
   QPrinter printer(QPrinter::PrinterResolution);
   printer.setOutputFormat(QPrinter::PdfFormat);
-  printer.setPaperSize(QPrinter::Letter);
+  printer.setPageSize( QPageSize( QPageSize::Letter ) );
 
   printer.setOutputFileName( filePath_pdf );
   printer.setFullPage(true);
-  printer.setPageMargins(0, 0, 0, 0, QPrinter::Millimeter);
+  printer.setPageMargins( QMarginsF( 0, 0, 0, 0), QPageLayout::Millimeter);
   
   document.print(&printer);
 
@@ -424,7 +424,7 @@ void US_auditTrailGMP::initPanel_auto( QMap < QString, QString > & protocol_deta
   esigntItem -> addChild( eSignItem_childItem );
   eSignTree  -> setItemWidget( eSignItem_childItem, 1, groupBox_esign );
 
-  int max_width = fmet.width( esignItemName );
+  int max_width = fmet.horizontalAdvance( esignItemName );
   max_width *= 2;
   eSignTree->header()->resizeSection(0, max_width );
   

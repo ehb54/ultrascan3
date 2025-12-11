@@ -21,7 +21,7 @@ Link::Link( QString alias )
   connected_itself    = false;
   
   QString client_name = alias;
-  client_name.simplified();
+  client_name = client_name.simplified();
   client_name.replace(" ", "");
   client_name = client_name.toLower();
   

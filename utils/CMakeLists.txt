@@ -5,21 +5,62 @@
 file(GLOB UTILS_SOURCES "*.cpp")
 file(GLOB UTILS_HEADERS "*.h")
 
-# Remove any sources that shouldn't be compiled based on configuration
-if(US3_NO_DB)
-    # For supercomputer backends, exclude database-related files if needed
-    # list(REMOVE_ITEM UTILS_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/us_database.cpp")
-endif()
-
 # Create the utils library
 add_library(us_utils ${UTILS_SOURCES} ${UTILS_HEADERS})
 
-# Set library properties (version from qmake VERSION = 10.0)
+if(APPLE)
+    # Force all symbols to be exported at link time
+    target_link_options(us_utils PRIVATE
+            "LINKER:-export_dynamic"
+            "LINKER:-all_load"
+            )
+    # Override any inherited visibility settings
+    target_compile_options(us_utils PRIVATE -fvisibility=default)
+endif()
+
+# Set library properties - MERGED with visibility settings
 set_target_properties(us_utils PROPERTIES
-        VERSION ${US3_VERSION}
-        SOVERSION ${US3_VERSION_MAJOR}
-        OUTPUT_NAME "us_utils${US3_VERSION_MAJOR}"  # Matches qmake VER = 10
+        VERSION ${PROJECT_VERSION}
+        SOVERSION ${PROJECT_VERSION_MAJOR}
+        OUTPUT_NAME "us_utils${PROJECT_VERSION_MAJOR}"
+        CXX_VISIBILITY_PRESET default
+        C_VISIBILITY_PRESET default
+        VISIBILITY_INLINES_HIDDEN OFF
+        POSITION_INDEPENDENT_CODE ON
         )
+
+# Platform-specific properties
+if(APPLE)
+    set_target_properties(us_utils PROPERTIES
+            MACOSX_RPATH ON
+            INSTALL_RPATH "@loader_path;@loader_path/../lib"
+            )
+elseif(UNIX)
+    set_target_properties(us_utils PROPERTIES
+            INSTALL_RPATH "$ORIGIN:$ORIGIN/../lib"
+            )
+elseif(WIN32)
+    # Windows handles DLLs differently
+    set_target_properties(us_utils PROPERTIES
+            WINDOWS_EXPORT_ALL_SYMBOLS OFF  # We'll use explicit exports
+            )
+endif()
+
+# Ensure dynamic Qt linking - ALL PLATFORMS
+target_compile_definitions(us_utils
+        PUBLIC
+        QT_SHARED
+        PRIVATE
+        QT_PLUGIN
+        )
+
+## Symbol visibility flags for GCC/Clang (Linux, macOS)
+#if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+#    target_compile_options(us_utils PRIVATE
+#            -fvisibility=hidden
+#            -fvisibility-inlines-hidden
+#            )
+#endif()
 
 # Include directories
 target_include_directories(us_utils
@@ -59,14 +100,6 @@ elseif(WIN32)
     # Windows system libraries
     target_link_libraries(us_utils PUBLIC ${WIN32_SYSTEM_LIBS})
     target_compile_definitions(us_utils PRIVATE US_MAKE_DLL US_MAKE_UTIL_DLL)
-elseif(APPLE)
-    # macOS-specific setup
-    target_include_directories(us_utils PUBLIC /usr/X11R6/include)
-    find_library(X11_LIB X11 PATHS /usr/X11R6/lib)
-    find_library(XAU_LIB Xau PATHS /usr/X11R6/lib)
-    if(X11_LIB AND XAU_LIB)
-        target_link_libraries(us_utils PUBLIC ${X11_LIB} ${XAU_LIB})
-    endif()
 endif()
 
 # Compiler-specific options for debugging
@@ -77,7 +110,78 @@ endif()
 # Export this target for use by other parts of the project
 add_library(UltraScan3::Utils ALIAS us_utils)
 
-# Installation
+# =============================================================================
+# OPTIONAL: Build static library for unit testing
+# =============================================================================
+if(BUILD_TESTING OR US3_PREFER_STATIC)
+    message(STATUS "Building static utils library for testing")
+
+    # Create STATIC library specifically for testing
+    add_library(us_utils_static STATIC ${UTILS_SOURCES} ${UTILS_HEADERS})
+
+    # Set properties for STATIC library
+    set_target_properties(us_utils_static PROPERTIES
+            OUTPUT_NAME "us_utils${PROJECT_VERSION_MAJOR}_static"
+            POSITION_INDEPENDENT_CODE ON
+            )
+
+    # Apply same compile definitions
+    target_compile_definitions(us_utils_static
+            PUBLIC
+            QT_SHARED
+            )
+
+    # Apply same include directories
+    target_include_directories(us_utils_static
+            PUBLIC
+            ${CMAKE_CURRENT_SOURCE_DIR}
+            ${CMAKE_CURRENT_BINARY_DIR}
+            )
+
+    # Apply same link libraries
+    target_link_libraries(us_utils_static
+            PUBLIC
+            Qt5::Core
+            Qt5::Xml
+            Qt5::Network
+            OpenSSL::SSL
+            OpenSSL::Crypto
+            LibArchive::LibArchive
+            )
+
+    # Optional database support
+    if(NOT US3_NO_DB)
+        target_link_libraries(us_utils_static
+                PUBLIC
+                Qt5::Sql
+                MySQL::Client
+                )
+    endif()
+
+    # Platform-specific libraries
+    if(UNIX AND NOT APPLE)
+        if(X11_FOUND)
+            target_link_libraries(us_utils_static PUBLIC ${X11_LIBRARIES})
+            target_include_directories(us_utils_static PUBLIC ${X11_INCLUDE_DIR})
+        endif()
+    elseif(WIN32)
+        target_link_libraries(us_utils_static PUBLIC ${WIN32_SYSTEM_LIBS})
+    endif()
+
+    # Debug options
+    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+        target_compile_options(us_utils_static PRIVATE -g -O0)
+    endif()
+
+    # Export static library alias
+    add_library(UltraScan3::Utils_Static ALIAS us_utils_static)
+
+else()
+    message(STATUS "Skipping static utils library (testing disabled)")
+endif()
+# END: Build static library for unit testing
+
+# Installation - only install the shared library
 install(TARGETS us_utils
         EXPORT UltraScan3Targets
         LIBRARY DESTINATION lib

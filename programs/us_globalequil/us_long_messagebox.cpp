@@ -22,7 +22,7 @@ US_LongMessageBox::US_LongMessageBox( const QString& title,
 
    // Create the text box
    textbox = us_textedit();
-   textbox->setFrameStyle( QFrame::NoFrame || QFrame::Plain );
+   textbox->setFrameStyle( QFrame::NoFrame | QFrame::Plain );
    textbox->setFont( QFont( US_GuiSettings::fontFamily(),
                             US_GuiSettings::fontSize() - 2 ) );
    textbox->setPlainText( message );
@@ -96,7 +96,7 @@ void US_LongMessageBox::adjustSize()
 
    // Determine the size needed for current text in current font
    QFontMetrics fm( textbox->font() );
-   int fontw = fm.width( alltext[ longx ] ) + fm.width( "WW" );
+   int fontw = fm.horizontalAdvance( alltext[ longx ] ) + fm.horizontalAdvance( "WW" );
    int fonth = fm.lineSpacing() * ( nline + 3 );
    fontw     = ( ( fontw / 20 + 1 ) * 20 );
    fonth     = ( ( fonth / 20 + 1 ) * 20 );

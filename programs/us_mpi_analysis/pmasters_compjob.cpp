@@ -784,7 +784,7 @@ DbgLv(1) << "  MASTER: iter" << iter << "gr" << my_group << "tag" << tag;
 
       ga_master_loop();
 
-      qSort( best_fitness );
+      std::sort( best_fitness.begin(), best_fitness.end() );
       simulation_values.solutes = best_genes[ best_fitness[ 0 ].index ];
 
       int nisols      = simulation_values.solutes.size();
@@ -805,7 +805,7 @@ DbgLv(1) << "GaMast:    calc_resids return";
 DbgLv(1) << "2dMast:    do_write" << do_write << "mc_iter" << mc_iteration
    << "variance" << simulation_values.variance << "my_group" << my_group;
 
-      qSort( simulation_values.solutes );
+      std::sort( simulation_values.solutes.begin(), simulation_values.solutes.end() );
 
       // Convert given solute points to s,k for model output
       double vbar20  = data_sets[ 0 ]->vbar20;
@@ -1015,7 +1015,7 @@ DbgLv(1) << "  MASTER: iter" << iter << "gr" << my_group << "tag" << tag;
 
       // Get the best-fit gene
 
-      qSort( best_fitness );
+      std::sort( best_fitness.begin(), best_fitness.end() );
       dgene           = best_dgenes[ best_fitness[ 0 ].index ];
 
       // Compute the variance (fitness) for the final best-fit model
@@ -1160,7 +1160,7 @@ DbgLv(1) << my_rank << ": submit worker" << worker;
       if ( job_queue.isEmpty()  &&  ! worker_status.contains( WORKING ) ) 
       {
          kcurve           = 0;
-         qSort( mrecs );
+         std::sort( mrecs.begin(), mrecs.end() );
          US_DataIO::EditedData* edata = &data_sets[ current_dataset ]->run_data;
          QString tripleID = edata->cell + edata->channel + edata->wavelength;
 

@@ -83,7 +83,7 @@ QMap < QString, QString >  US_Passwd::getPasswd_auditTrail( QString title, QStri
     dialog.setWindowTitle( title );
     QFont font_d  = dialog.property("font").value<QFont>();
     QFontMetrics fm(font_d);
-    int pixelsWide = fm.width( dialog.windowTitle() );
+    int pixelsWide = fm.horizontalAdvance( dialog.windowTitle() );
     qDebug() << "pixelsWide -- " << pixelsWide;
     dialog.setMinimumWidth( pixelsWide*3 );
     QFormLayout form(&dialog);

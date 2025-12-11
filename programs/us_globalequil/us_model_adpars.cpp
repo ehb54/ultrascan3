@@ -8,7 +8,7 @@
 US_ModelAdPars::US_ModelAdPars(
       int              a_napars,
       QList< double >& a_udpars )
- : US_WidgetsDialog( 0, 0 ),
+ : US_WidgetsDialog( nullptr, Qt::WindowFlags() ),
    napars     ( a_napars ),
    aud_pars   ( a_udpars )
 {

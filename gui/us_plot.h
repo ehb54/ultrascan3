@@ -6,9 +6,7 @@
 #include "us_widgets.h"
 #include "us_extern.h"
 
-#if QT_VERSION > 0x050000
 #include "qwt_compat.h"
-#endif
 #include "qwt_plot.h"
 #include "qwt_plot_grid.h"
 #include "qwt_plot_picker.h"
@@ -33,7 +31,7 @@ class US_Zoomer: public QwtPlotZoomer
       //! \param xAxis - The title of the x (bottom) axis
       //! \param yAxis - The title of the y (left) axis
       //! \param canvas - A pointer to the plot's canvas
-      US_Zoomer( int, int, QwtPlotCanvas* );
+      US_Zoomer( int xAxis, int yAxis, QwtPlotCanvas* canvas );
 };
 
 //! \brief Customize plot widgets
@@ -65,9 +63,9 @@ class US_GUI_EXTERN US_Plot : public QHBoxLayout
       //! \param cmMatch - Curve title pattern to match for gradient curves
       //! \param cmName  - Color map name for default gradient (e.g., "rainbow")
 
-      US_Plot( QwtPlot*& plot, const QString&, const QString&, const QString&,
-               const bool = false, const QString = QString(""),
-               const QString = QString("") );
+      US_Plot( QwtPlot*& plot, const QString& title, const QString& x_axis, const QString& y_axis,
+               bool cmEnab = false, const QString& cmMatch = QString(""),
+               const QString& cmName = QString("") );
 
       //! Make access to the zoom button public
       QToolButton* btnZoom;
@@ -75,15 +73,11 @@ class US_GUI_EXTERN US_Plot : public QHBoxLayout
       //! \brief Public method to return map colors list and count
       //! \param mcolors - Map colors reference for colors list return
       //! returns        - Count of colors in color gradient list
-      int map_colors( QList< QColor >& );
+      int map_colors( QList< QColor >& mcolors ) const;
 
    signals:
       //! \brief A signal that provides the bounding rectangle of a zoomed area
-#if QT_VERSION < 0x050000
-      void zoomedCorners( QwtDoubleRect );
-#else
       void zoomedCorners( QRectF        );
-#endif
 
    private:
       US_PlotConfig* configWidget;
@@ -102,17 +96,13 @@ class US_GUI_EXTERN US_Plot : public QHBoxLayout
 
    private slots:
       void zoom    ( bool );
-      void print   ( void );
-      void svg     ( void );
-      void png     ( void );
-      void csv     ( void );
+      void print   ( void ) const;
+      void svg     ( void ) const;
+      void png     ( void ) const;
+      void csv     ( void ) const;
       void config  ( void );
       void colorMap( void );
-#if QT_VERSION < 0x050000
-      void scale_yRight ( QwtDoubleRect );
-#else
-      void scale_yRight ( QRectF );
-#endif
+      void scale_yRight (const QRectF &) const;
 };
 
 //! \brief A specialized push button class for US_Plot to automatically
@@ -125,7 +115,7 @@ class US_PlotPushbutton : public QPushButton
       //! \param labelString -  Text in the button
       //! \param w           -  Parent widget
       //! \param index       -  Index value to pass in the signal when pushed
-      US_PlotPushbutton( const QString&, QWidget*, int );
+      US_PlotPushbutton( const QString& labelString, QWidget* w, int index);
 
    signals:
       //! \brief A signal that passes the index value when the pushbutton was
@@ -148,7 +138,7 @@ class US_PlotConfig : public US_WidgetsDialog
 
    public:
       //! \param current_plot - The plot to be configured
-      US_PlotConfig( QwtPlot*, QWidget* = 0, Qt::WindowFlags = Qt::Dialog );
+      US_PlotConfig( QwtPlot* current_plot, QWidget* = nullptr, Qt::WindowFlags = Qt::Dialog );
 
       QColor global_canvas_color;
 
@@ -179,23 +169,24 @@ class US_PlotConfig : public US_WidgetsDialog
       US_PlotGridConfig*  gridWidget;
       US_PlotCurveConfig* curveWidget;
 
-      void setLegendFontString( void );
-      QJsonObject getGridJson( void );
-      QJsonObject getAxisJson( int );
-      QJsonObject getFontJson( QFont );
-      void setTitleJson( QJsonObject );
-      QFont jsonToFont( QJsonObject );
-      QMap<QString, bool> parseGridJson( QJsonObject, QPen*);
-      void setGridJson( QJsonObject );
-      void setAxisJson( int, QJsonObject );
+      void setLegendFontString( void ) const;
+      QJsonObject getGridJson( void ) const;
+      QJsonObject getAxisJson( int ) const;
+
+      static QJsonObject getFontJson( const QFont& );
+      void setTitleJson( const QJsonObject& ) const;
+      static QFont jsonToFont( const QJsonObject& );
+      static QMap<QString, bool> parseGridJson( const QJsonObject&, QPen*);
+      void setGridJson( const QJsonObject& ) const;
+      void setAxisJson( int, const QJsonObject& ) const;
 
    private slots:
-      void updateTitleText  ( const QString& );
+      void updateTitleText  ( const QString& ) const;
       void updateTitleFont  ( void );
       void selectFrameColor ( void );
       void selectCanvasColor( void );
-      void selectMargin     ( int  );
-      void selectLegendPos  ( int  );
+      void selectMargin     ( int  ) const;
+      void selectLegendPos  ( int  ) const;
       void updateLegendFont ( void );
       void updateAxis       ( int  );
       void updateCurve      ( void );
@@ -219,7 +210,7 @@ class US_PlotCurveConfig : public US_WidgetsDialog
    friend class US_PlotLabel;
 
    public:
-      US_PlotCurveConfig( QwtPlot*, const QStringList&, QWidget* = 0, 
+      US_PlotCurveConfig( QwtPlot*, const QStringList&, QWidget* = nullptr,
             Qt::WindowFlags = Qt::Dialog );
 
    //signals:
@@ -254,7 +245,7 @@ class US_PlotCurveConfig : public US_WidgetsDialog
    private slots:
       //void closeEvent               ( QCloseEvent* );
       void curveStyleChanged        ( int  );
-      void updateSample             ( int  );
+      void updateSample             ( int  ) const;
       void selectCurveColor         ( void );
       void symbolStyleChanged       ( int  );
       void selectSymbolInteriorColor( void );
@@ -272,7 +263,7 @@ class US_PlotLabel : public QWidget
       //! \param caller - Parent configuration window
       //! \param p      - Parent widget, generally can be the default
       //! \param f      - Window flags to be passed, normally the default
-      US_PlotLabel( US_PlotCurveConfig*, QWidget* = 0, Qt::WindowFlags = Qt::Dialog );
+      US_PlotLabel( US_PlotCurveConfig* caller, QWidget* p = nullptr, Qt::WindowFlags f = Qt::Dialog );
       
    private:
       US_PlotCurveConfig* data;
@@ -288,7 +279,7 @@ class US_PlotAxisConfig : public US_WidgetsDialog
    Q_OBJECT
 
    public:
-      US_PlotAxisConfig( int axis, QwtPlot*, QWidget* = 0, Qt::WindowFlags = Qt::Dialog );
+      US_PlotAxisConfig( int axis, QwtPlot*, QWidget* = nullptr, Qt::WindowFlags = Qt::Dialog );
       
    //signals:
       //! \brief A signal to ensure the parent knows the window is closed.
@@ -330,7 +321,7 @@ class US_PlotAxisConfig : public US_WidgetsDialog
       void selectScaleFont     ( void );
       void selectScaleColor    ( void );
       void selectTickColor     ( void );
-      void apply               ( void );
+      void apply               ( void ) const;
 };
 
 //! \brief A window to customize a plot's grid
@@ -339,7 +330,7 @@ class US_PlotGridConfig : public US_WidgetsDialog
    Q_OBJECT
 
    public:
-      US_PlotGridConfig( QwtPlot*, QWidget* = 0, Qt::WindowFlags = Qt::Dialog );
+      US_PlotGridConfig( QwtPlot*, QWidget* = nullptr, Qt::WindowFlags = Qt::Dialog );
       ~US_PlotGridConfig() {};
 
    //signals:
@@ -367,7 +358,7 @@ class US_PlotGridConfig : public US_WidgetsDialog
    private slots:
       void selectMajorColor( void );
       void selectMinorColor( void );
-      void apply           ( void );
+      void apply           ( void ) const;
 };
 
 /*! \brief Customize plot picker characteristics and mouse events

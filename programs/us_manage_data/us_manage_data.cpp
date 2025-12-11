@@ -206,7 +206,7 @@ DbgLv(1) << "GUI setup begun";
    QFontMetrics fm( te_status->font() );
 DbgLv(1) << "te_status font family" << te_status->font().family();
    int   fontw  = fm.maxWidth();
-         fontw  = ( fontw > 0 ) ? fontw : fm.width( 'W' );
+         fontw  = ( fontw > 0 ) ? fontw : fm.horizontalAdvance( 'W' );
    int   fonth  = fm.lineSpacing();
    int   minsw  = fontw * 44 + 10;
    int   minsh  = fonth * 18 + 10;

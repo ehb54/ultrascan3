@@ -13,7 +13,7 @@
 // Main constructor for loading a single model
 US_ModelLoader::US_ModelLoader( bool dbSrc, QString& search,
       US_Model& amodel, QString& adescr, const QString eGUID )
-  :US_WidgetsDialog( 0, 0 ), loadDB( dbSrc ), dsearch( search ),
+  :US_WidgetsDialog( nullptr, Qt::WindowFlags() ), loadDB( dbSrc ), dsearch( search ),
    omodel( amodel ), odescr( adescr ), omodels( wmodels ), odescrs( mdescrs ),
    runIDs( wrunIDs )
 {
@@ -26,7 +26,7 @@ US_ModelLoader::US_ModelLoader( bool dbSrc, QString& search,
 // Alternate constructor for loading a single model (with runIDs)
 US_ModelLoader::US_ModelLoader( bool dbSrc, QString& search,
       US_Model& amodel, QString& adescr, QStringList& arunIDs )
-  :US_WidgetsDialog( 0, 0 ), loadDB( dbSrc ), dsearch( search ),
+  :US_WidgetsDialog( nullptr, Qt::WindowFlags() ), loadDB( dbSrc ), dsearch( search ),
    omodel( amodel ), odescr( adescr ), omodels( wmodels ), odescrs( mdescrs ),
    runIDs( arunIDs )
 {
@@ -40,7 +40,7 @@ US_ModelLoader::US_ModelLoader( bool dbSrc, QString& search,
 US_ModelLoader::US_ModelLoader( bool dbSrc, QString& search,
    QList< US_Model >& amodels, QStringList& adescrs,
    QStringList& arunIDs )
-   :US_WidgetsDialog( 0, 0 ), loadDB( dbSrc ), dsearch( search ),
+   :US_WidgetsDialog( nullptr, Qt::WindowFlags() ), loadDB( dbSrc ), dsearch( search ),
    omodel( model ), odescr( search ), omodels( amodels ), odescrs( adescrs ),
    runIDs( arunIDs )
 {
@@ -55,7 +55,7 @@ US_ModelLoader::US_ModelLoader( bool dbSrc, QString& search,
 US_ModelLoader::US_ModelLoader( bool dbSrc, QString& search,
 				QList< US_Model >& amodels, QStringList& adescrs,
 				QStringList& arunIDs, QString invID_passed )
-   :US_WidgetsDialog( 0, 0 ), loadDB( dbSrc ), dsearch( search ),
+   :US_WidgetsDialog( nullptr, Qt::WindowFlags() ), loadDB( dbSrc ), dsearch( search ),
    omodel( model ), odescr( search ), omodels( amodels ), odescrs( adescrs ),
    runIDs( arunIDs )
 {
@@ -69,7 +69,7 @@ US_ModelLoader::US_ModelLoader( bool dbSrc, QString& search,
 // Alternate constructor that allows loading multiple models (no runIDs list)
 US_ModelLoader::US_ModelLoader( bool dbSrc, QString& search,
    QList< US_Model >& amodels, QStringList& adescrs )
-   :US_WidgetsDialog( 0, 0 ), loadDB( dbSrc ), dsearch( search ),
+   :US_WidgetsDialog( nullptr, Qt::WindowFlags() ), loadDB( dbSrc ), dsearch( search ),
    omodel( model ), odescr( search ), omodels( amodels ), odescrs( adescrs ),
    runIDs( wrunIDs )
 {
@@ -897,7 +897,7 @@ qDebug() << "      kmmmod" << kmmmod << "kmmold" << kmmold;
                      int mcndx        = desc.description.indexOf( "_mc0" );
                      desc.description =
                           QString( desc.description ).left( mcndx )
-                        + QString().sprintf( "_mcN%03i", nimods )
+                        + QString::asprintf( "_mcN%03i", nimods )
                         + QString( desc.description ).mid( mcndx + 7 );
                      desc.iterations  = nimods;
 
@@ -1867,7 +1867,7 @@ qDebug() << "SL:   niters" << niters << "cmiter" << cmiter;
 
          for ( int jj = 1; jj <= niters; jj++ )
          {  // Create and append a description for each iteration model
-            QString imiter      = QString().sprintf( "_mc%04d", jj );
+            QString imiter      = QString::asprintf( "_mc%04d", jj );
             ModelDesc idesc     = mdesc;
             idesc.description   = QString( cdtext ).replace( cmiter, imiter );
 qDebug() << "SL:     jj" << jj << "imiter" << imiter;

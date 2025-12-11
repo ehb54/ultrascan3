@@ -5,17 +5,13 @@
 #include "us_gui_settings.h"
 #include "us_util.h"
 #include "us_gui_util.h"
-#if QT_VERSION < 0x050000
-#define setSamples(a,b,c)  setData(a,b,c)
-#define setSymbol(a)       setSymbol(*a)
-#endif
 
 US_IntensityRa::US_IntensityRa( 
       const QString runID, 
       const QString triple, 
       const QVector< double >& data,
       const QVector< double >& scan ) 
-    : US_WidgetsDialog( 0, 0 ), dataIn( data ), scanIn( scan )
+    : US_WidgetsDialog( nullptr, Qt::WindowFlags() ), dataIn( data ), scanIn( scan )
 {
    setWindowTitle( tr( "Details for Average Intensity Values" ) );
    setPalette( US_GuiSettings::frameColor() );

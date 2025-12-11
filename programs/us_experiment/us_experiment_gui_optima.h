@@ -25,10 +25,18 @@
 #include "us_hardware.h"
 #include "us_select_runs.h"
 #include "us_link_ssl.h"
-#include "../us_convert/us_convert.h"
 #include "us_dataIO.h"
 #include "us_simparms.h"
 #include "us_mwl_data.h"
+
+#include "us_convert.h"
+#include "us_experiment.h"
+#include "us_experiment_gui.h"
+#include "us_convert_gui.h"
+#include "us_convertio.h"
+#include "us_get_run.h"
+#include "us_intensity.h"
+#include "us_selectbox.h"
 
 //#include "us_license_t.h"
 //#include "us_license.h"
@@ -92,8 +100,11 @@ class US_ExperGuiGeneral : public US_WidgetsDialog
       QLineEdit*   le_project;          // Project name line edit
       QLineEdit*   le_investigator;     // Investigator line edit
 
-      QwtCounter*  ct_tempera;          // Temperature counter
-      QwtCounter*  ct_tedelay;          // Temp-equil-delay counter
+  //QwtCounter*  ct_tempera;          // Temperature counter
+  QSpinBox*    ct_tempera;
+  
+  //QwtCounter*  ct_tedelay;          // Temp-equil-delay counter
+  QSpinBox*    ct_tedelay;
 
       int          dbg_level;
       bool         use_db;              // Using the LIMS database?
@@ -144,6 +155,7 @@ class US_ExperGuiRotor : public US_WidgetsDialog
       void        reset_dataSource_public( void );
       void        get_chann_ranges_public( QString, QMap <QString, QStringList>& );
       void        switch_to_dataDisk_public (void );
+      void        set_dataSource_public( QMap <QString, QString>& );
    
            
       QString     getSValue( const QString );
@@ -168,6 +180,9 @@ class US_ExperGuiRotor : public US_WidgetsDialog
       bool ra_data_sim;
       bool isMwl;
       QMap<QString, QString> run_details;
+      QStringList channels_for_dataDisk;
+      bool check_for_channel_dataDisk( QString );
+      QStringList get_dataDiskChannels_public( void );
   
       QVector< US_DataIO::RawData >      allData;      //!< All loaded data
       QVector< US_DataIO::RawData* >     outData;      //!< Output data pointers
@@ -204,6 +219,7 @@ class US_ExperGuiRotor : public US_WidgetsDialog
       QStringList  sl_optimas;
   QCheckBox* ck_disksource;
   QCheckBox* ck_absorbance_t;
+  QCheckBox* ck_absorbance_pa;
   QPushButton* pb_importDisk;
   QLineEdit *  le_dataDiskPath;
       
@@ -284,6 +300,7 @@ class US_ExperGuiRotor : public US_WidgetsDialog
   void importDisk( void );
   void importDiskChecked( bool );
   void dataDiskAbsChecked( bool );
+  void dataDiskPseudoAbsChecked( bool );
   QMap<QString,QStringList> build_protocol_for_data_import( QMap< QString, QStringList > );
   void importDisk_cleanProto( void );
   bool init_output_data  ( void );
@@ -340,9 +357,12 @@ class US_ExperGuiSpeeds : public US_WidgetsDialog
       US_Help      showHelp;
 
       QComboBox*   cb_prof;      // Choice: current speed step
-      QwtCounter*  ct_speed;     // Counter: step's rotor speed
-      QwtCounter*  ct_accel;     // Counter: step's acceleration
 
+  //QwtCounter*  ct_speed;     // Counter: step's rotor speed
+  QSpinBox*    ct_speed;
+
+  //QwtCounter*  ct_accel;     // Counter: step's acceleration
+  QSpinBox*    ct_accel;
       QLineEdit*   le_maxrpm;    // Text line: max speed for current rotor
 
       
@@ -429,9 +449,9 @@ class US_ExperGuiSpeeds : public US_WidgetsDialog
       //! \brief Slot for SS change in profile index
       void    ssChangeProfx ( int    );
       //! \brief Slot for SS change in speed
-      void    ssChangeSpeed ( double );
+      void    ssChangeSpeed ( int );
       //! \brief Slot for SS change in acceleration
-      void    ssChangeAccel ( double );
+      void    ssChangeAccel ( int );
       //! \brief Slot for SS change in duration day
       void    ssChgDuratDay ( int );
       //! \brief Slot for SS change in Scan Int
@@ -690,8 +710,13 @@ class US_ExperGuiRanges : public US_WidgetsDialog
       QList< QLabel* >         cc_labls;   // Pointers to channel labels
       QList< QPushButton* >    cc_wavls;   // Pointers to wavelength buttons
       QList< QLabel* >         cc_lrngs;   // Pointers to wl range labels
-      QList< QwtCounter* >     cc_lrads;   // Pointers to Radial Low counters
-      QList< QwtCounter* >     cc_hrads;   // Pointers to Radial High counters
+  
+  //QList< QwtCounter* >     cc_lrads;   // Pointers to Radial Low counters
+  QList< QDoubleSpinBox* >   cc_lrads;
+
+  //QList< QwtCounter* >     cc_hrads;   // Pointers to Radial High counters
+  QList< QDoubleSpinBox* >   cc_hrads;
+
       QList< QLabel* >         cc_lbtos;   // Pointers to "to" labels
       QList< QWidget* >        cc_buff_sp;
       QList< QCheckBox* >      cc_buff_sp_ck;
@@ -886,6 +911,8 @@ class US_ExperGuiUpload : public US_WidgetsDialog
       QPushButton* pb_details;
 
       QGridLayout* genL;
+
+      US_ConvertGui*    sdiag_convert;
 
    private:
       US_ExperimentMain*   mainw;
@@ -1169,6 +1196,7 @@ class US_ExperimentMain : public US_Widgets
       US_AnaProfile* get_aprofile_loaded( void );
       void set_loadAProf ( US_AnaProfile );
       QMap< QString, QString> get_all_solution_names( void );
+      QStringList get_all_channels_dataDisk( void );
       void get_new_solution_names(void);
       void initCells( void );
       void reset_dataDisk( void );

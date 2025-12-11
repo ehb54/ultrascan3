@@ -1,7 +1,7 @@
 #include "us_editor_gui.h"
 #include "us_gui_settings.h"
 
-US_EditorGui::US_EditorGui() : US_WidgetsDialog( 0, 0 )
+US_EditorGui::US_EditorGui() : US_WidgetsDialog( nullptr, Qt::WindowFlags() )
 {
    setWindowTitle( tr( "Analyte Details" ) );
    setPalette( US_GuiSettings::frameColor() );

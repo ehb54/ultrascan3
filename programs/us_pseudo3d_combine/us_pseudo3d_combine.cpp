@@ -18,17 +18,10 @@
 #include "us_passwd.h"
 #include "us_report.h"
 #include "us_constants.h"
-#if QT_VERSION < 0x050000
-#define setSamples(a,b,c) setData(a,b,c)
-#define setMinimum(a)     setMinValue(a)
-#define setMaximum(a)     setMaxValue(a)
-#endif
 
 #define PA_TMDIS_MS 0   // default Plotall time per distro in milliseconds
 
-
-
-// qSort LessThan method for S_Solute sort
+// LessThan method for S_Solute sort
 bool distro_lessthan( const S_Solute &solu1, const S_Solute &solu2 )
 {  // TRUE iff  (s1<s2) || (s1==s2 && k1<k2)
    return ( solu1.s < solu2.s ) ||
@@ -279,7 +272,7 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
 
    QFontMetrics fm( ct_plt_smax->font() );
    ct_plt_smax->adjustSize();
-   ct_plt_smax->setMinimumWidth( ct_plt_smax->width() + fm.width( "ABC" ) );
+   ct_plt_smax->setMinimumWidth( ct_plt_smax->width() + fm.horizontalAdvance( "ABC" ) );
 
    // Order plot components on the left side
    spec->addWidget( lb_info1,      s_row++, 0, 1, 8 );
@@ -532,17 +525,11 @@ void US_Pseudo3D_Combine::plot_data( void )
 
    // Set up spectrogram data
    QwtPlotSpectrogram* d_spectrogram = new QwtPlotSpectrogram();
-#if QT_VERSION < 0x050000
-   d_spectrogram->setData( US_SpectrogramData() );
-   d_spectrogram->setColorMap( *colormap );
-   US_SpectrogramData& spec_dat = (US_SpectrogramData&)d_spectrogram->data();
-#else
    US_SpectrogramData* rdata = new US_SpectrogramData();
    d_spectrogram->setData( rdata );
 //   d_spectrogram->setColorMap( (QwtColorMap*)colormap );
    d_spectrogram->setColorMap( ColorMapCopy( colormap ) );
    US_SpectrogramData& spec_dat = (US_SpectrogramData&)*(d_spectrogram->data());
-#endif
    QwtDoubleRect drect;
 
    if ( auto_sxy )
@@ -611,15 +598,10 @@ void US_Pseudo3D_Combine::plot_data( void )
       data_plot->setAxisScale( QwtPlot::yLeft,   plt_kmin, plt_kmax, lStep );
    }
 
-#if QT_VERSION < 0x050000
-   rightAxis->setColorMap( QwtDoubleInterval( 0.0, plt_zmax ),
-      d_spectrogram->colorMap() );
-#else
 //   rightAxis->setColorMap( QwtInterval( plt_zmin, plt_zmax ),
 //      (QwtColorMap*)d_spectrogram->colorMap() );
    rightAxis->setColorMap( QwtInterval( 0.0, plt_zmax ),
                            ColorMapCopy( colormap ) );
-#endif
 //   data_plot->setAxisScale( QwtPlot::yRight,  plt_zmin, plt_zmax );
    data_plot->setAxisScale( QwtPlot::yRight,  0.0, plt_zmax );
 
@@ -1083,7 +1065,7 @@ void US_Pseudo3D_Combine::load_color()
    // get an xml file name for the color map
    QString fname = QFileDialog::getOpenFileName( this,
       tr( "Load Color Map File" ),
-      US_Settings::etcDir(), filter, 0, 0 );
+      US_Settings::etcDir(), filter );
 
    if ( fname.isEmpty() )
       return;
@@ -1238,7 +1220,7 @@ void US_Pseudo3D_Combine::sort_distro( QList< S_Solute >& listsols,
 
    // sort distro solute list by s,k values
 
-   qSort( listsols.begin(), listsols.end(), distro_lessthan );
+   std::sort( listsols.begin(), listsols.end(), distro_lessthan );
 
    // check reduce flag
 

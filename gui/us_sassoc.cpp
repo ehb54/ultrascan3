@@ -3,12 +3,7 @@
 #include "us_gui_settings.h"
 #include "us_settings.h"
 #include "us_constants.h"
-#if QT_VERSION < 0x050000
-#define setSamples(a,b,c) setData(a,b,c)
-#else
 #include "qwt_point_data.h"
-#endif
-
 #include "qwt_scale_engine.h"
 
 US_Sassoc::US_Sassoc( double eq0, double eq1, double stoich1, double stoich2,  
@@ -143,11 +138,7 @@ US_Sassoc::US_Sassoc( double eq0, double eq1, double stoich1, double stoich2,
          tr( "Total Concentration" ), 
          tr( "% of Total Concentration" ) );
 
-#if QT_VERSION < 0x050000
-   plot->setAxisScaleEngine( QwtPlot::xBottom, new QwtLog10ScaleEngine );
-#else
    plot->setAxisScaleEngine( QwtPlot::xBottom, new QwtLogScaleEngine );
-#endif
    pick = new US_PlotPicker( plot );
    pick->setRubberBand( QwtPicker::VLineRubberBand );
    connect( pick, SIGNAL( selected ( const QwtDoublePoint& ) ),
@@ -302,11 +293,6 @@ void US_Sassoc::update_legend( const double total )
       int i = 0;
       while ( x[ i ] < total ) i++;
 
-#if QT_VERSION < 0x050000
-      le_species1->setText( QString::number( curve1->y( i ) ) + " %" );
-      le_species2->setText( QString::number( curve2->y( i ) ) + " %" );
-      le_species3->setText( QString::number( curve3->y( i ) ) + " %" );
-#else
       QwtSeriesData< QPointF >* cdata1 = curve1->data();
       QwtSeriesData< QPointF >* cdata2 = curve2->data();
       QwtSeriesData< QPointF >* cdata3 = curve3->data();
@@ -317,7 +303,6 @@ void US_Sassoc::update_legend( const double total )
       le_species1->setText( QString::number( cdata1->sample( i ).y() ) + " %" );
       le_species2->setText( QString::number( cdata2->sample( i ).y() ) + " %" );
       le_species3->setText( QString::number( cdata3->sample( i ).y() ) + " %" );
-#endif
       le_conc    ->setText( QString::number( total          ) + " M" );
    }
    else
@@ -402,7 +387,7 @@ void US_Sassoc::save( void )
          ts << x       [ i ] << "\t"
             << species1[ i ] << "\t"
             << species2[ i ] << "\t"
-            << species3[ i ] << endl;
+            << species3[ i ] << Qt::endl;
       }
    }
 
@@ -417,11 +402,7 @@ void US_Sassoc::save( void )
               QString::number( model ) + ".distribution.png";
 
    QRect   r = QRect( 2, 2, plot->width() - 4, plot->height() - 4 );
-#if QT_VERSION < 0x050000
-   QPixmap p = QPixmap::grabWidget( plot, r );
-#else
    QPixmap p = ((QWidget*)plot)->grab( r );
-#endif
    
    p.save( filename );
 }

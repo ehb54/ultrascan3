@@ -16,9 +16,6 @@
 #include "us_license_t.h"
 #include "us_sleep.h"
 #include "us_matrix.h"
-#if QT_VERSION < 0x050000
-#define setSamples(a,b,c)  setData(a,b,c)
-#endif
 
 #define MIN_NTC   25
 
@@ -518,7 +515,7 @@ DbgLv(1) << " drow chann" << drow << chann;
       
       for ( int ii = 0; ii < nscan; ii++ )
       {  // Output a file for each scan
-         ofname = chann + QString().sprintf( "%05i", ( ii + 1 ) ) + fext;
+         ofname = chann + QString::asprintf( "%05i", ( ii + 1 ) ) + fext;
 
 	 //ofpath = odirname + ofname;            // Full path file name for scan
 	 ofpath = odirname_triple + ofname;            // Full path output file
@@ -532,12 +529,12 @@ DbgLv(1) << " drow chann" << drow << chann;
          hradi  = dscan->wavelength;            // Radius (possibly)
          // Format most of header line
          oline  = htype
-                  + QString().sprintf( "%2i%5.1f%6i %07i%11.4E",
-                  hcell, htemp, hrpm, hsecs, homeg ).replace( "E+", "E" );
+                  + QString::asprintf( "%2i%5.1f%6i %07i%11.4E",
+hcell, htemp, hrpm, hsecs, homeg ).replace( "E+", "E" );
          // Complete header line, using radius if Wavelength data
          oline  = oline + ( wldata
-                  ? QString().sprintf( "%6.3f %i\n", hradi, hcoun )
-                  : QString().sprintf( "%4i %i\n",   hwavl, hcoun ) );
+                  ? QString::asprintf( "%6.3f %i\n", hradi, hcoun )
+                  : QString::asprintf( "%4i %i\n",   hwavl, hcoun ) );
 	 DbgLv(1) << "OFNAME, ofpath " << ofname << ofpath;
 
          QFile legfile( ofpath );
@@ -562,8 +559,8 @@ DbgLv(1) << "  LINE:" << QString(oline).replace("\n","");
             double  valu  = rdata->value  ( ii, jj );
             double  stdd  = rdata->std_dev( ii, jj );
             // Format data line:  Radius Value StdDev
-            QString oline = QString().sprintf( "%9.4f %12.5E %13.5E\n",
-               radi, valu, stdd )
+            QString oline = QString::asprintf( "%9.4f %12.5E %13.5E\n",
+radi, valu, stdd )
                .replace( "E+", "E+00" ).replace( "E-", "E-00" );
 if (jj < 3  || jj > (nvalu-4))
  DbgLv(1) << "  LINE:" << QString(oline).replace("\n","");
@@ -659,7 +656,7 @@ DbgLv(1) << "rawDtype" << rawDtype << "htype" << htype;
       
       for ( int ii = 0; ii < nscan; ii++ )
       {  // Output a file for each scan
-         ofname = QString().sprintf( "%05i", ( ii + 1 ) ) + fext;
+         ofname = QString::asprintf( "%05i", ( ii + 1 ) ) + fext;
 
 	 //ofpath = odirname + ofname;            // Full path output file
 
@@ -674,12 +671,12 @@ DbgLv(1) << "rawDtype" << rawDtype << "htype" << htype;
          hradi  = dscan->wavelength;            // Radius (possibly)
          // Format most of header line
          oline  = htype
-                  + QString().sprintf( "%2i%5.1f%6i %07i%11.4E",
-                  hcell, htemp, hrpm, hsecs, homeg ).replace( "E+", "E" );
+                  + QString::asprintf( "%2i%5.1f%6i %07i%11.4E",
+hcell, htemp, hrpm, hsecs, homeg ).replace( "E+", "E" );
          // Complete header line, using radius if Wavelength data
          oline  = oline + ( wldata
-                  ? QString().sprintf( "%6.3f %i\n", hradi, hcoun )
-                  : QString().sprintf( "%4i %i\n",   hwavl, hcoun ) );
+                  ? QString::asprintf( "%6.3f %i\n", hradi, hcoun )
+                  : QString::asprintf( "%4i %i\n",   hwavl, hcoun ) );
 DbgLv(1) << "OFNAME" << ofname;
 DbgLv(1) << "Ofpath" << ofpath;
          
@@ -706,8 +703,8 @@ DbgLv(1) << "  LINE:" << QString(oline).replace("\n","");
                     stdd  = bfirst ? valu : stdd;
                     valu  = bfirst ? 0.0  : valu;
             // Format line mostly as Radius,Value-A,Value-B
-            QString oline = QString().sprintf( "%9.4f %12.5E %13.5E\n",
-               radi, valu, stdd )
+            QString oline = QString::asprintf( "%9.4f %12.5E %13.5E\n",
+radi, valu, stdd )
                .replace( "E+", "E+00" ).replace( "E-", "E-00" );
 if (jj < 3  || jj > (nvalu-4))
  DbgLv(1) << "  LINE:" << QString(oline).replace("\n","");
@@ -768,7 +765,7 @@ DbgLv(1) << "rawDtype" << rawDtype << "htype" << htype;
 
       for ( int ii = 0; ii < nscan; ii++ )
       {  // Output a file for each scan
-         ofname = QString().sprintf( "%05i", ( ii + 1 ) ) + fext;
+         ofname = QString::asprintf( "%05i", ( ii + 1 ) ) + fext;
          ofpath = odirname + ofname;            // Full path output file
          dscan  = &rdata->scanData[ ii ];       // Current scan pointer
          htemp  = dscan->temperature;           // Temperature
@@ -779,12 +776,12 @@ DbgLv(1) << "rawDtype" << rawDtype << "htype" << htype;
          hradi  = dscan->wavelength;            // Radius (possibly)
          // Format most of header line
          oline  = htype
-                  + QString().sprintf( "%2i%5.1f%6i %07i%11.4E",
-                  hcell, htemp, hrpm, hsecs, homeg ).replace( "E+", "E" );
+                  + QString::asprintf( "%2i%5.1f%6i %07i%11.4E",
+hcell, htemp, hrpm, hsecs, homeg ).replace( "E+", "E" );
          // Complete header line, using radius if Wavelength data
          oline  = oline + ( wldata
-                  ? QString().sprintf( "%6.3f %i\n", hradi, hcoun )
-                  : QString().sprintf( "%4i %i\n",   hwavl, hcoun ) );
+                  ? QString::asprintf( "%6.3f %i\n", hradi, hcoun )
+                  : QString::asprintf( "%4i %i\n",   hwavl, hcoun ) );
 DbgLv(1) << "OFNAME" << ofname;
 
          QFile legfile( ofpath );
@@ -806,7 +803,7 @@ DbgLv(1) << "  LINE:" << QString(oline).replace("\n","");
             double  radi  = rdata->radius( jj );
             double  valu  = rdata->value ( ii, jj );
             // Format the data line:  Radius Value-A
-            QString oline = QString().sprintf( "%9.4f %12.5E\n", radi, valu );
+            QString oline = QString::asprintf( "%9.4f %12.5E\n", radi, valu );
 if (jj < 3  || jj > (nvalu-4))
  DbgLv(1) << "  LINE:" << QString(oline).replace("\n","");
 

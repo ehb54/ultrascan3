@@ -1,5 +1,4 @@
-# Profile include file for local use
-#  Copy file to local.pri and change variables to match your installation
+# local.pri for codeql workflows somo qt5 & qt6
 
 # ---- user configuration area ----
 # **** make sure the following variables are set for your system ***
@@ -8,18 +7,16 @@
 # DEBUGORRELEASE = debug
 DEBUGORRELEASE = release
 
-QMAKE_CFLAGS += -Wno-deprecated -Wno-deprecated-declarations -Wno-unused-result
-QMAKE_CXXFLAGS += -Wno-deprecated -Wno-deprecated-declarations -Wno-unused-result
-
+QMAKE_CFLAGS += -Wdeprecated -Werror=deprecated-declarations -Wno-unused-result
+QMAKE_CXXFLAGS += -Wdeprecated -Werror=deprecated-declarations -Wno-unused-result
+DEFINES += QT_DISABLE_DEPRECATED_UP_TO=0x060900
 # path of US3 source base (required)
 US3PATH       = $$(ULTRASCAN)
 
-
 # path of QT (not needed mingw64)
-QTPATH        = 
+QTPATH        = $$(QTDIR)
 # path of QWT (not needed mingw64)
-QWTPATH       = /qwt-6.1.6
-
+QWTPATH       = $$(QWTDIR)
 
 # ---- these below might need to be modified in unusual circumstances ----
 # path of US3_SOMO source base

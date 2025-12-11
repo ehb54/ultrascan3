@@ -37,6 +37,8 @@ SHOW_STATS=false
 QUICK_MODE=false
 SAVE_LOGS=false
 STOP_ON_FIRST_FAILURE=false
+PROFILE="TEST"
+
 
 show_help() {
     cat << 'EOF'
@@ -68,6 +70,8 @@ Usage: ./test-docker.sh [options]
   -j, --jobs N            Parallel build jobs (default: auto-detect)
   --rebuild               Force complete rebuild
   --stats                 Show build and test statistics
+  --profile               Profile of APP, HPC, or TEST (default)
+
 
 === EXAMPLES FOR DEBUGGING WORKFLOW ===
 
@@ -164,6 +168,7 @@ while [[ $# -gt 0 ]]; do
         --valgrind) VALGRIND=true; shift ;;
         -l|--list) LIST_TESTS=true; shift ;;
         --failed-only) FAILED_ONLY=true; shift ;;
+        --profile) PROFILE="$2"; shift 2 ;;
         --rebuild) REBUILD=true; shift ;;
         --stats) SHOW_STATS=true; shift ;;
         -q|--quick) QUICK_MODE=true; shift ;;
@@ -335,11 +340,15 @@ if [ ! -f CMakeCache.txt ] || [ "$REBUILD" = "true" ]; then
         exit 1
     fi
 
-    cmake -S .. -B . \
-        "${GEN_ARGS[@]}" \
-        -DCMAKE_BUILD_TYPE=Release \
-        -DCMAKE_MODULE_PATH=/ultrascan3/admin/cmake \
-        | tee configure.log
+#    Enable testing to build static library
+        cmake -S .. -B . \
+            "${GEN_ARGS[@]}" \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DUS3_PROFILE=TEST \
+            -DBUILD_TESTING=ON \
+            -DUS3_BUILD_PROGRAMS=OFF \
+            -DCMAKE_MODULE_PATH=/ultrascan3/admin/cmake \
+            | tee configure.log
 
     # Point directly to the first configure error if there was one
     if grep -q 'CMake Error' configure.log; then
@@ -354,10 +363,10 @@ fi
 
 if [ "$QUICK_MODE" = "false" ]; then
     echo "Building project with $PARALLEL_JOBS parallel jobs..."
-    cmake --build . -j $PARALLEL_JOBS
+    cmake --build . -j $PARALLEL_JOBS | tee build.log
 else
     echo 'Building project (this may take a few minutes)...'
-    cmake --build . -j $PARALLEL_JOBS > build.log 2>&1
+    cmake --build . -j $PARALLEL_JOBS | tee build.log
     echo 'Build complete'
 fi
 

@@ -19,11 +19,6 @@
 #include "us_util.h"
 #include "us_editor.h"
 #include "us_images.h"
-#if QT_VERSION < 0x050000
-#define setSamples(a,b,c)  setData(a,b,c)
-#define setMinimum(a)      setMinValue(a)
-#define setMaximum(a)      setMaxValue(a)
-#endif
 
 #ifdef Q_OS_WIN
 #include <float.h>
@@ -427,7 +422,7 @@ void US_MwlRawViewer::enableControls( void )
    QStringList sllmbs;
 
    for ( int jj = 0; jj < npoint; jj++ )
-      slrads << QString().sprintf( "%.5f", radii[ jj ] );
+      slrads << QString::asprintf( "%.5f", radii[ jj ] );
 
    for ( int jj = 0; jj < nlambda; jj++ )
       sllmbs << QString::number( lambdas[ jj ] );
@@ -488,7 +483,7 @@ void US_MwlRawViewer::load_mwl_raw( )
    if ( dir.right( 1 ) != "/" ) dir += "/"; // Ensure trailing /
 
    // See if we need to fix the runID
-   QStringList components = dir.split( "/", QString::SkipEmptyParts );
+   QStringList components = dir.split( "/", Qt::SkipEmptyParts );
    QString runType   = "RI";
    QString new_runID = components.last();
    QRegExp rx( "[^A-Za-z0-9_-]" );
@@ -581,7 +576,7 @@ void US_MwlRawViewer::load_auc_mwl( )
    if ( dir.right( 1 ) != "/" ) dir += "/";  // Ensure trailing '/'
    
    // Check the runID
-   QStringList components =  dir.split( "/", QString::SkipEmptyParts );  
+   QStringList components =  dir.split( "/", Qt::SkipEmptyParts );
    QString new_runID = components.last();
       
    QRegExp rx( "^[A-Za-z0-9_-]{1,80}$" );
@@ -1052,13 +1047,8 @@ DbgLv(1) << "chgCC: trxs trxe" << trxs << trxe;
 
    else
    {  // After first time, detect what has been already set
-#if QT_VERSION < 0x050000
-      QwtScaleDiv* sdx = data_plot->axisScaleDiv( QwtPlot::xBottom );
-      QwtScaleDiv* sdy = data_plot->axisScaleDiv( QwtPlot::yLeft   );
-#else
       QwtScaleDiv* sdx = (QwtScaleDiv*)&data_plot->axisScaleDiv( QwtPlot::xBottom );
       QwtScaleDiv* sdy = (QwtScaleDiv*)&data_plot->axisScaleDiv( QwtPlot::yLeft   );
-#endif
       last_xmin      = sdx->lowerBound();
       last_xmax      = sdx->upperBound();
       last_ymin      = sdy->lowerBound();
@@ -1190,13 +1180,8 @@ DbgLv(1) << "PltA: last_xmin" << last_xmin;
    data_plot->replot();
 
    // Pick up the actual bounds plotted (including any Config changes)
-#if QT_VERSION < 0x050000
-   QwtScaleDiv* sdx = data_plot->axisScaleDiv( QwtPlot::xBottom );
-   QwtScaleDiv* sdy = data_plot->axisScaleDiv( QwtPlot::yLeft   );
-#else
    QwtScaleDiv* sdx = (QwtScaleDiv*)&data_plot->axisScaleDiv( QwtPlot::xBottom );
    QwtScaleDiv* sdy = (QwtScaleDiv*)&data_plot->axisScaleDiv( QwtPlot::yLeft   );
-#endif
    last_xmin      = sdx->lowerBound();
    last_xmax      = sdx->upperBound();
    last_ymin      = sdy->lowerBound();
@@ -1219,7 +1204,7 @@ DbgLv(1) << "chgRadius";
 
       for ( int rdx = radxs; rdx < radxe; rdx++ )
       {  // Build the list of radii that are within range
-         QString citem    = QString().sprintf( "%.3f", radii[ rdx ] );
+         QString citem    = QString::asprintf( "%.3f", radii[ rdx ] );
 
          cb_pltrec->addItem( citem );
       }
@@ -1327,13 +1312,8 @@ void US_MwlRawViewer::prevPlot( void )
       pb_prev->setEnabled( false );
    }
 
-#if QT_VERSION < 0x050000
-   QwtScaleDiv* sdx = data_plot->axisScaleDiv( QwtPlot::xBottom );
-   QwtScaleDiv* sdy = data_plot->axisScaleDiv( QwtPlot::yLeft   );
-#else
    QwtScaleDiv* sdx = (QwtScaleDiv*)&data_plot->axisScaleDiv( QwtPlot::xBottom );
    QwtScaleDiv* sdy = (QwtScaleDiv*)&data_plot->axisScaleDiv( QwtPlot::yLeft   );
-#endif
    last_xmin      = sdx->lowerBound();
    last_xmax      = sdx->upperBound();
    last_ymin      = sdy->lowerBound();
@@ -1354,13 +1334,8 @@ void US_MwlRawViewer::nextPlot( void )
       pb_next->setEnabled( false );
    }
 
-#if QT_VERSION < 0x050000
-   QwtScaleDiv* sdx = data_plot->axisScaleDiv( QwtPlot::xBottom );
-   QwtScaleDiv* sdy = data_plot->axisScaleDiv( QwtPlot::yLeft   );
-#else
    QwtScaleDiv* sdx = (QwtScaleDiv*)&data_plot->axisScaleDiv( QwtPlot::xBottom );
    QwtScaleDiv* sdy = (QwtScaleDiv*)&data_plot->axisScaleDiv( QwtPlot::yLeft   );
-#endif
    last_xmin      = sdx->lowerBound();
    last_xmax      = sdx->upperBound();
    last_ymin      = sdy->lowerBound();
@@ -1642,7 +1617,7 @@ void US_MwlRawViewer::exclude_scans()
       scan_knt++;
    }
 
-   qSort( excludes );
+   std::sort( excludes.begin(), excludes.end() );
    curr_cdata.clear();
    prev_cdata.clear();
    curr_recxs.clear();
@@ -1848,7 +1823,7 @@ DbgLv(1) << "Save Plot";
       }
 
       p3d_pltw->replot();                // Do the plot
-      QString s_scan  = QString().sprintf( "%04d", scan_nbr );
+      QString s_scan  = QString::asprintf( "%04d", scan_nbr );
       fname3d         = fname3d.replace( "SSSS", s_scan  );
       QString fpath3d = savedir + fname3d;
 
@@ -1938,7 +1913,7 @@ DbgLv(1) << "Save 2D Movie";
       qApp->processEvents();
 
       QString rec_str = ccr + cb_pltrec->currentText().remove( "." );
-      QString frm_str = QString().sprintf( "%05d", ( prx + 1 ) );
+      QString frm_str = QString::asprintf( "%05d", ( prx + 1 ) );
       QString fname   = QString( bfname ).replace( "RRRRR", rec_str )
                                          .replace( "XXXXX", frm_str );
       QString fpath   = savedir + fname;
@@ -2026,8 +2001,8 @@ DbgLv(1) << "Save 3-D Movie";
       qApp->processEvents();
 
       // Create a frame file for just-completed plot and save its name
-      QString s_scan   = QString().sprintf( "%04d", scan_nbr );
-      QString s_frame  = QString().sprintf( "%04d", kframe   );
+      QString s_scan   = QString::asprintf( "%04d", scan_nbr );
+      QString s_frame  = QString::asprintf( "%04d", kframe );
       QString fname    = QString( bfname ).replace( "SSSS", s_scan  )
                                           .replace( "XXXX", s_frame );
       QString fpath    = savedir + fname;
@@ -2089,7 +2064,7 @@ int US_MwlRawViewer::build_xyz_data( QVector< QVector3D >& xyzd, int scan )
    scan_fr      = ( scan_to < 1 ) ?     1 : scan_fr;
    scan_to      = ( scan_to < 1 ) ? kscan : scan_to;
    int scan_knt = 1;
-   if ( excludes.count() > 0 )  qSort( excludes );
+   if ( excludes.count() > 0 )  std::sort( excludes.begin(), excludes.end() );
 
    // Get index of scan for which to build
    if ( scan < 0 )

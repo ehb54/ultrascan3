@@ -68,7 +68,7 @@ if(jql>=0) {
       {  // No jobs left in the queue and no workers still busy
 DbgLv(1) << "pcsa_mast:   END PASS mrecs size" << mrecs.size();
          kcurve           = 0;
-         qSort( mrecs );                      // Sort curve model records
+         std::sort( mrecs.begin(), mrecs.end() );                      // Sort curve model records
          edata            = &data_sets[ current_dataset ]->run_data;
          QString tripleID = edata->cell + edata->channel + edata->wavelength;
 
@@ -1489,7 +1489,7 @@ DbgLv(1) << "wraux:      TR: mrecs size" << mrecs.size();
       atype              += "-MC";
       wmodel.monteCarlo   = true;
 DbgLv(1) << "wraux:      MC: mrecs size" << mrecs.size();
-      iterID              = QString().sprintf( "mc%04d", iter );
+      iterID              = QString::asprintf( "mc%04d", iter );
       int jj              = ( mrecs[ 2 ].taskx == mrecs[ 0 ].taskx ) ? 2 : 1;
       mrecs[ jj ].modelGUID = wmodel.modelGUID;
    }
@@ -1506,7 +1506,7 @@ DbgLv(1) << "wraux: mdesc" << mdesc;
       US_Model::SimulationComponent component;
       US_ZSolute::set_mcomp_values( component, wksim_vals.zsolutes[ ii ],
                                     stype, true );
-      component.name      = QString().sprintf( "SC%04d", ii + 1 );
+      component.name      = QString::asprintf( "SC%04d", ii + 1 );
 
       US_Model::calc_coefficients( component );
 

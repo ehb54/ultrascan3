@@ -32,8 +32,9 @@ class US_GUI_EXTERN US_WidgetsDialog : public QDialog
 {
   public:
     //! \param w - Parent widget, normally not specified
-    //! \param f - Window flags, normally not specified
-    US_WidgetsDialog( QWidget*, Qt::WindowFlags = 0, bool set_style = true );
+    //! \param f - Window flags, defaults to Qt::WindowFlags()
+	//! \param set_style - Flag for setting the style, defaults to true
+    US_WidgetsDialog( QWidget* w, Qt::WindowFlags f = Qt::WindowFlags(), bool set_style = true );
 
     //! Connect to global memory and make the values accessible.
     US_Global g;

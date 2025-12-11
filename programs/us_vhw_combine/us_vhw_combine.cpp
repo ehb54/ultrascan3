@@ -15,10 +15,6 @@
 #include "us_report.h"
 #include "us_util.h"
 #include "qwt_legend.h"
-#if QT_VERSION < 0x050000
-#define setSamples(a,b,c)  setData(a,b,c)
-#define setSymbol(a)       setSymbol(*a)
-#endif
 
 // main program
 int main( int argc, char* argv[] )
@@ -1275,8 +1271,8 @@ void US_vHW_Combine::write_data( QString& dataFile, QString& listFile,
          double boun = yy[ kk ];
          double conc = boun * bscl;
 
-         QString dat = QString().sprintf( "\"%12.5f\",\"%10.5f\",\"%12.4e\"",
-                                          sval, boun, conc );
+         QString dat = QString::asprintf( "\"%12.5f\",\"%10.5f\",\"%12.4e\"",
+sval, boun, conc );
          dat.replace( " ", "" );
          line       += dat;
 
@@ -1367,7 +1363,7 @@ void US_vHW_Combine::write_denv( QString& denvFile, int& irun )
          double sval = xx[ kk ];
          double eval = yy[ kk ];
 
-         QString dat = QString().sprintf( "\"%12.5f\",\"%10.5f\"", sval, eval );
+         QString dat = QString::asprintf( "\"%12.5f\",\"%10.5f\"", sval, eval );
          dat.replace( " ", "" );
          line       += dat;
 

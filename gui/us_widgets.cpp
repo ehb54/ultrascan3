@@ -17,9 +17,18 @@ US_Widgets::US_Widgets( bool set_position, QWidget* w, Qt::WindowFlags f ) : QFr
     // Do something for invalid global memory
    qDebug( "us_win: invalid global memory" );
   }
-
+  QPoint poit = g.global_position();
 #ifndef Q_OS_WIN
-  if ( set_position )
+  QString auto_positioning = US_Settings::debug_value("auto_positioning");
+  if ( !auto_positioning.isEmpty() && auto_positioning.toLower() == "true" )
+  {
+     global_positioning = set_position;
+  }
+  else
+  {
+     global_positioning = false;
+  }
+  if ( global_positioning && !auto_positioning.isEmpty() && auto_positioning.toLower() == "true" )
   {
     QPoint p = g.global_position();
     g.set_global_position( p + QPoint( 30, 30 ) );
@@ -36,9 +45,14 @@ US_Widgets::US_Widgets( bool set_position, QWidget* w, Qt::WindowFlags f ) : QFr
 
 US_Widgets::~US_Widgets()
 {
+   QPoint poit = g.global_position();
 #ifndef Q_OS_WIN
-  QPoint p = g.global_position();
-  g.set_global_position( p - QPoint( 30, 30 ) );
+   QString auto_positioning = US_Settings::debug_value("auto_positioning");
+   if ( global_positioning && !auto_positioning.isEmpty() && auto_positioning.toLower() == "true" )
+   {
+      QPoint p = g.global_position();
+      g.set_global_position( p - QPoint( 30, 30 ) );
+   }
 #endif
 }
 
@@ -199,7 +213,7 @@ QGridLayout* US_Widgets::us_checkbox(
   QFontMetrics fm( font );
 
   QLabel* lb_spacer = new QLabel;
-  lb_spacer->setFixedWidth        ( fm.width( "w" ) ); // Space as wide as a 'w'
+  lb_spacer->setFixedWidth        ( fm.horizontalAdvance( "w" ) ); // Space as wide as a 'w'
   lb_spacer->setAutoFillBackground( true );
   lb_spacer->setPalette           ( p );
 
@@ -231,7 +245,7 @@ QGridLayout* US_Widgets::us_radiobutton(
   QFontMetrics fm( font );
 
   QLabel* lb_spacer = new QLabel;
-  lb_spacer->setFixedWidth        ( fm.width( "w" ) ); // Space as wide as a 'w'
+  lb_spacer->setFixedWidth        ( fm.horizontalAdvance( "w" ) ); // Space as wide as a 'w'
   lb_spacer->setAutoFillBackground( true );
   lb_spacer->setPalette           ( p );
 
@@ -309,11 +323,7 @@ QwtCounter* US_Widgets::us_counter( int buttons, double low, double high,
   QList< QObject* > children = counter->children();
   int totwid          = 0;
 #ifdef Q_OS_MAC
-#if QT_VERSION < 0x050000
-  QStyle *btnstyle = new QPlastiqueStyle();
-#else
   QStyle *btnstyle = QApplication::setStyle( "fusion" );
-#endif
 
   for ( int jj = 0; jj < children.size(); jj++ )
   {
@@ -347,7 +357,7 @@ QwtCounter* US_Widgets::us_counter( int buttons, double low, double high,
   // Set min,curr width based on current value and high-value sizes
   int ncv    = int( log10( value ) ) + 1;
   ncv        = ( ncv > 0 ) ? ncv : ( 4 - ncv );
-  int widv   = fm.width( QString( "12345678901234" ).left( ncv ) );
+  int widv   = fm.horizontalAdvance( QString( "12345678901234" ).left( ncv ) );
   counter->adjustSize();
   int mwidth = widv * 2 + totwid;
   counter->setMinimumWidth( mwidth );
@@ -401,11 +411,7 @@ QwtPlotPicker* US_Widgets::us_picker( QwtPlot* plot )
   QwtPlotPicker* pick = new QwtPlotPicker( QwtPlot::xBottom, QwtPlot::yLeft,
                                            plot->canvas() ); 
 
-#if QT_VERSION < 0x050000
-  pick->setSelectionFlags( QwtPicker::PointSelection );
-#else
   pick->setStateMachine( new QwtPickerClickPointMachine() );
-#endif
   pick->setTrackerMode   ( QwtPicker::AlwaysOn );
   pick->setRubberBand    ( QwtPicker::CrossRubberBand );
 
@@ -625,7 +631,7 @@ QHBoxLayout* US_Widgets::us_ddhhmmsslay(
    if ( hh != NULL )
    {
       *hh              = new QSpinBox( this );
-      (*hh)->setRange(0, 24);
+      (*hh)->setRange(0, 23);
       (*hh)->setPalette( pal );
       (*hh)->setAutoFillBackground( true );
       (*hh)->setFont( font );
@@ -645,7 +651,7 @@ QHBoxLayout* US_Widgets::us_ddhhmmsslay(
    if ( mm != NULL )
    {
       *mm              = new QSpinBox( this );
-      (*mm)->setRange(0, 60);
+      (*mm)->setRange(0, 59);
       (*mm)->setPalette( pal );
       (*mm)->setAutoFillBackground( true );
       (*mm)->setFont( font );
@@ -665,7 +671,7 @@ QHBoxLayout* US_Widgets::us_ddhhmmsslay(
    if ( ss != NULL )
    {
       *ss              = new QSpinBox( this );
-      (*ss)->setRange(0, 60);
+      (*ss)->setRange(0, 59);
       (*ss)->setPalette( pal );
       (*ss)->setAutoFillBackground( true );
       (*ss)->setFont( font );
@@ -966,7 +972,7 @@ QGridLayout* US_Disk_DB_Controls::us_radiobutton(
   QFontMetrics fm( font );
 
   QLabel* lb_spacer = new QLabel;
-  lb_spacer->setFixedWidth        ( fm.width( "w" ) ); // Space as wide as a 'w'
+  lb_spacer->setFixedWidth        ( fm.horizontalAdvance( "w" ) ); // Space as wide as a 'w'
   lb_spacer->setAutoFillBackground( true );
   lb_spacer->setPalette           ( p );
 

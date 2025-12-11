@@ -8,9 +8,6 @@
 #include "us_license_t.h"
 #include "us_license.h"
 #include "us_model_gui.h"
-#if QT_VERSION < 0x050000
-#define setSamples(a,b,c)  setData(a,b,c)
-#endif
 
 //! \brief Main program for US_Equilspeed. Loads translators and starts
 //         the class US_Equilspeed.
@@ -689,8 +686,8 @@ void US_EquilTime::simulate( void )
       double sigma = sigmaFromRpm( rpm );
       
       QString results;
-      results.sprintf( "%6.4f  %5d   %6.2f hours    %6.2f hours", 
-            sigma, rpm, step_time / 3600.0, current_time / 3600.0 );
+      results = QString::asprintf( "%6.4f  %5d   %6.2f hours    %6.2f hours", 
+                                   sigma, rpm, step_time / 3600.0, current_time / 3600.0 );
 
       te_info->e->append( results );
    }

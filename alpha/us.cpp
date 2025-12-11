@@ -1,10 +1,6 @@
 //! \file us.cpp
 #include <QtCore>
-#if QT_VERSION < 0x050000
-#include <QtSingleApplication>
-#else
 #include <QtWidgets/QApplication>
-#endif
 
 #include "us.h"
 #include "us_license_t.h"
@@ -40,21 +36,8 @@ using namespace US_WinData;
 int main( int argc, char* argv[] )
 {
   QString options( getenv( "ULTRASCAN_OPTIONS" ) );
-#if QT_VERSION < 0x050000
-  QtSingleApplication application( "UltraScan III", argc, argv );
-  
-  // If environment variable ULTRASCAN_OPTIONS contains the 
-  // word 'multiple', then we don't try to limit to one instance
-  if ( ! options.contains( "multiple" ) )
-  {
-    if ( application.sendMessage( "Wake up" ) ) return 0;
-  }
-
-  application.initialize();
-#else
   QApplication application( argc, argv );
   application.setApplicationDisplayName( "UltraScan III" );
-#endif
 
   // Set up language localization
   QString locale = QLocale::system().name();
@@ -85,18 +68,12 @@ int main( int argc, char* argv[] )
     
     US_License* license = new US_License();
     license->show();
-#if QT_VERSION < 0x050000
-    application.setActivationWindow( license );
-#endif
     return application.exec();
   }
 
   // License is OK.  Start up.
   US_Win w;
   w.show();
-#if QT_VERSION < 0x050000
-  application.setActivationWindow( &w );
-#endif
   return application.exec();
 }
 

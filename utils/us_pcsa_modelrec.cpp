@@ -1087,7 +1087,7 @@ QString US_ModelRecord::stype_text( const int i_stype )
    int ixv         = ( i_stype >> 6 ) & 7;
    int iyv         = ( i_stype >> 3 ) & 7;
    int izv         =   i_stype        & 7;
-   QString s_stype = QString().sprintf( "%03o", i_stype ) + "."
+   QString s_stype = QString::asprintf( "%03o", i_stype ) + "."
                    + QString( atyp[ ixv ] )
                    + QString( atyp[ iyv ] )
                    + QString( atyp[ izv ] );

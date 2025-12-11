@@ -44,15 +44,7 @@
 #include "us_crypto.h"
 #include "us_db2.h"
 
-#if QT_VERSION < 0x050000
-#define setSamples(a,b,c)  setData(a,b,c)
-#define setMinimum(a)      setMinValue(a)
-#define setMaximum(a)      setMaxValue(a)
-#define QRegularExpression(a)  QRegExp(a)
-#define setCbCurrentText(a,b)  a->setCurrentIndex(a->findText(b))
-#else
 #define setCbCurrentText(a,b)  a->setCurrentText(b)
-#endif
 
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug()
@@ -1031,11 +1023,14 @@ DbgLv(1) << "EGRo: inP: calib_entr" << cal_entr;
 	    << "cb_rotor text" << cb_rotor->currentText();
    DbgLv(1) << "EGRo: inP:   calID" << rpRotor->calID << "calib" << rpRotor->calibration;
 
-   //import Data Disk
-   rpRotor->importData  = ck_disksource->isChecked();
-   le_dataDiskPath ->setText( rpRotor->importDataDisk );
-   rpRotor->importData_absorbance_t = ck_absorbance_t->isChecked();
-   
+   //import Data Disk: only for non-PD
+   if ( !mainw-> us_prot_dev_mode )
+     {
+       rpRotor->importData  = ck_disksource->isChecked();
+       le_dataDiskPath ->setText( rpRotor->importDataDisk );
+       rpRotor->importData_absorbance_t  = ck_absorbance_t->isChecked();
+       rpRotor->importData_absorbance_pa = ck_absorbance_pa->isChecked();
+     }
 
    //Show current oper(s) & rev(s)
    te_opers_to_assign -> setText( rpRotor->operListAssign );
@@ -1092,12 +1087,14 @@ DbgLv(1) << "EGRo: inP: calib_entr" << cal_entr;
        cb_operator -> setVisible(true);
 
        //Hide data disk upload
-       pb_importDisk   -> hide();
-       le_dataDiskPath -> hide();
-       ck_disksource   -> hide();
-       ck_absorbance_t -> hide();
+       pb_importDisk    -> hide();
+       le_dataDiskPath  -> hide();
+       ck_disksource    -> hide();
+       ck_absorbance_t  -> hide();
+       ck_absorbance_pa -> hide();
        rpRotor->importData = false;
-       rpRotor->importData_absorbance_t = false;
+       rpRotor->importData_absorbance_t  = false;
+       rpRotor->importData_absorbance_pa = false;
        rpRotor->importDataDisk = "";
      }
 
@@ -1105,6 +1102,8 @@ DbgLv(1) << "EGRo: inP: calib_entr" << cal_entr;
    expType_old = cb_exptype ->currentText();
 
    qDebug() << "Rotor::initPanel(), expType_old -- " << expType_old;
+   qDebug() << "Rotor::initPanel(), rpRotor->importData_absorbance_t, rpRotor->importData_absorbance_pa -- "
+	    << rpRotor->importData_absorbance_t <<  rpRotor->importData_absorbance_pa;
 
 }
 
@@ -1530,11 +1529,14 @@ qDebug() << "NAME OF THE ROTOR IN SAVE: rot, rpRotor->rotor: " << rot << ", "  <
 
    rpRotor->exptype     = exptype;
 
-   //dataDisk
-   rpRotor->importDataDisk            = importDataPath;
-   rpRotor->importData                = ck_disksource->isChecked();
-   rpRotor->importData_absorbance_t   = ck_absorbance_t->isChecked();
-
+   //dataDisk: for non-PD
+   if ( !mainw-> us_prot_dev_mode )
+     {
+       rpRotor->importDataDisk            = importDataPath;
+       rpRotor->importData                = ck_disksource    ->isChecked();
+       rpRotor->importData_absorbance_t   = ck_absorbance_t  ->isChecked();
+       rpRotor->importData_absorbance_pa  = ck_absorbance_pa ->isChecked();
+     }
    
 qDebug() << "OPERATORID / INSTRUMENT / ExpType in SAVE: "
          <<  rpRotor->operID  << ", " << rpRotor->opername << " / "
@@ -1606,6 +1608,9 @@ DbgLv(1) << "EGRo:  svP:  calndx" << ii << "calGUID" << rpRotor->calGUID;
 	     mainw-> abde_sv_mode_change_reset_reports( "ABDE" ); 
 	 }
      }
+
+   qDebug() << "Rotor::savePanel(), rpRotor->importData_absorbance_t, rpRotor->importData_absorbance_pa -- "
+	    << rpRotor->importData_absorbance_t <<  rpRotor->importData_absorbance_pa;
 }
 
 // Get a specific panel string value
@@ -2815,7 +2820,7 @@ DbgLv(1) << "EGOp:inP: nochan" << nochan;
      {
        QString channel     = rpOptic->chopts[ ii ].channel;
 
-       int cell_number = ((channel.split(QRegExp("\\s+"), QString::SkipEmptyParts))[0]).toInt();
+       int cell_number = ((channel.split(QRegExp("\\s+"), Qt::SkipEmptyParts))[0]).toInt();
 DbgLv(1) << "EGOp:inP: CELL #" << cell_number;
        if ( nholes == cell_number )
          ctrbal_is_centerpiece = true;
@@ -3884,6 +3889,8 @@ DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
 	   qDebug() << "Data Disk ? " << rpRotor->importData;
 	   qDebug() << "Data Disk Path -- " << rpRotor->importDataDisk;
 	   qDebug() << "Data Disk: Absorbance ? " << rpRotor->importData_absorbance_t;
+	   qDebug() << "Data Disk: Pseuso-Absorbance ? " << rpRotor->importData_absorbance_pa;
+	   qDebug() << "dataDisk, disabling pb_submit...";
 	   subm_enab = false;
 	 }
      }
@@ -3938,7 +3945,7 @@ DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
        
 	 }
      }
-   else
+   else //PD
      {
        pb_submit -> disconnect();
        connect( pb_submit,    SIGNAL( clicked()          ),
@@ -3949,10 +3956,18 @@ DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
 
        pb_submit  ->setEnabled( false );
        pb_submit  ->setEnabled( have_run && rps_differ );
+
+       //deb
+       qDebug() << "[Submitting PD]: rpRotor->importData, rpRotor->importData_absorbance_t, "
+		<< "rpRotor->importData_absorbance_pa, have_run,  rps_differ -- "
+		<< rpRotor->importData
+		<< rpRotor->importData_absorbance_t
+		<< rpRotor->importData_absorbance_pa
+		<< have_run << rps_differ;
      }
 
    //[DataFromDisk] Check that channels & ranges correspond to those is protocol:
-   if ( rpRotor->importData && !rpRotor->importDataDisk.isEmpty() )
+   if ( rpRotor->importData && !rpRotor->importDataDisk.isEmpty() && !mainw-> us_prot_dev_mode )
      {
        qDebug() << "Submit::init: DataDISK ";
        QStringList msg_to_user;
@@ -4116,6 +4131,7 @@ DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
    qDebug() << "Data Disk Path -- " << rpRotor->importDataDisk;
    qDebug() << "Data Disk: Absorbance ? " << rpRotor->importData_absorbance_t;
    QString dataSourceType = ( !rpRotor->importData_absorbance_t ) ? "dataDiskAUC" : "dataDiskAUC:Absorbance";
+   dataSourceType = ( rpRotor->importData_absorbance_pa ) ? "dataDiskAUC:PseudoAbsorbance" : dataSourceType;
    qDebug() << "dataSourceType -- " << dataSourceType;
 }
 
@@ -4134,6 +4150,20 @@ bool US_ExperGuiUpload::protocolToDataDisk( QStringList& msg_to_user )
   for ( int i=0; i<chann_ranges_from_dataDisk.keys().size(); ++i )
     {
       QString channame_c = chann_ranges_from_dataDisk.keys()[i];
+
+      //check for actual consistency:
+      QStringList channels_dataDisk_mod;
+      QStringList channels_dataDisk = mainw->get_all_channels_dataDisk();
+      for (int cd=0; cd<channels_dataDisk.size(); ++cd)
+	{
+	  QString cd_c = channels_dataDisk[cd];
+	  channels_dataDisk_mod << cd_c.replace(" / ","").simplified();
+	}
+      qDebug() << "[Upload:check protocolToDataDisk()] : channame_c, channels_dataDisk_mod -- "
+	       << channame_c << ", " << channels_dataDisk_mod;
+      if (!channels_dataDisk_mod. contains( channame_c ) )
+	  continue;
+      
       if ( !chann_ranges_from_dataDisk[ channame_c ]. isEmpty()  )
 	channames_from_dataDisk << channame_c;
     }
@@ -4156,8 +4186,14 @@ bool US_ExperGuiUpload::protocolToDataDisk( QStringList& msg_to_user )
   //Optics
   qDebug() << "chann_numbers_from_dataDisk, rpOptic->chopts.size() -- "
 	   << chann_numbers_from_dataDisk << rpOptic->chopts.size();
-  int chopts_num = ( !rpRotor-> importData_absorbance_t) ?
-    chann_numbers_from_dataDisk.size()*2 : chann_numbers_from_dataDisk.size();
+  // int chopts_num = ( !rpRotor-> importData_absorbance_t) ?
+  //   chann_numbers_from_dataDisk.size()*2 : chann_numbers_from_dataDisk.size();
+  //int chopts_num = chann_numbers_from_dataDisk.size();
+
+  qDebug() << "channames_from_dataDisk , rpOptic->chopts.size() -- "
+	   << channames_from_dataDisk << rpOptic->chopts.size();
+  int chopts_num = channames_from_dataDisk.size();
+  
   if ( chopts_num != rpOptic->chopts.size() )
     {
       msg_to_user << "[Uploaded Data <-> Protocol] Numbers of Optics cahnnels are mismatched!";
@@ -4165,12 +4201,20 @@ bool US_ExperGuiUpload::protocolToDataDisk( QStringList& msg_to_user )
     }
   for ( int ii = 0; ii < rpOptic->chopts.size(); ii++ )
     {
-      QString ch_num = rpOptic->chopts[ii].channel. split(" / ")[0]. trimmed();
-      if ( !chann_numbers_from_dataDisk.contains( ch_num ) )
-	{
-	  msg_to_user << "[Uploaded Data <-> Protocol] Optics channels are mismatched!";
-	  return false;
-	}
+      QString ch_num  = rpOptic->chopts[ii].channel. split(" / ")[0]. trimmed();
+      QString ch_name = rpOptic->chopts[ii].channel. split(",")[0].replace(" / ","").trimmed();
+      if ( !channames_from_dataDisk.contains( ch_name ) )
+      	{
+      	  msg_to_user << "[Uploaded Data <-> Protocol] Optics channels are mismatched!";
+      	  return false;
+      	}
+      
+      // QString ch_num = rpOptic->chopts[ii].channel. split(" / ")[0]. trimmed();
+      // if ( !chann_numbers_from_dataDisk.contains( ch_num ) )
+      // 	{
+      // 	  msg_to_user << "[Uploaded Data <-> Protocol] Optics channels are mismatched!";
+      // 	  return false;
+      // 	}
 
       QStringList r_types;
       if ( !rpOptic->chopts[ii].scan1 . isEmpty() )
@@ -4179,8 +4223,8 @@ bool US_ExperGuiUpload::protocolToDataDisk( QStringList& msg_to_user )
 	r_types << "IP";
 
       QStringList r_types_fromDisk = runTypes_from_dataDisk[ ch_num ];
-      qSort( r_types );
-      qSort( r_types_fromDisk );
+      std::sort( r_types.begin(), r_types.end() );
+      std::sort( r_types_fromDisk.begin(), r_types_fromDisk.end() );
       qDebug() << "DataDisk OptSys for chann: " << ch_num << r_types_fromDisk;
       qDebug() << "Protocol OptSys for chann: " << ch_num << r_types;
       if ( r_types != r_types_fromDisk )
@@ -4534,7 +4578,7 @@ bool US_ExperGuiUpload::extinctionProfilesExist( QStringList& msg_to_user )
 	      //check if not a reference channel (that one can have a single analyte)
 	      QString ch_name_m = channel.split(",")[0];
 	      ch_name_m.replace("/","");
-	      ch_name_m.simplified();
+	      ch_name_m = ch_name_m.simplified();
 	      ch_name_m.replace( " ", "" );
 	      qDebug() << "Ref_channs -- " << ref_channs
 		       << "ch_name_m -- " << ch_name_m;

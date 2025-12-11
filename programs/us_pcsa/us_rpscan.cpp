@@ -7,18 +7,13 @@
 #include "us_gui_util.h"
 #include "us_math2.h"
 #include "us_sleep.h"
-
 #include <qwt_scale_widget.h>
 #include <qwt_scale_draw.h>
-#if QT_VERSION < 0x050000
-#define setSamples(a,b,c)  setData(a,b,c)
-#define setSymbol(a)       setSymbol(*a)
-#endif
 
 // Constructor:  Regularization Parameter Scan widget
 US_RpScan::US_RpScan( QList< US_SolveSim::DataSet* >&dsets,
       US_ModelRecord& mr, int& thr, double& alf, QWidget* p )
-   : US_WidgetsDialog( p, 0 ), dsets( dsets ), mrec( mr ), nthr( thr ),
+   : US_WidgetsDialog( p, Qt::WindowFlags() ), dsets( dsets ), mrec( mr ), nthr( thr ),
    alpha( alf )
 {
    alpha           = 0.0;
@@ -211,7 +206,7 @@ void US_RpScan::accept_it()
 // Scan alphas
 void US_RpScan::scan()
 {
-   QTime  timer;
+   QElapsedTimer  timer;
    int    time_sc;
    double calpha = ct_stralpha->value();
    double ealpha = ct_endalpha->value();

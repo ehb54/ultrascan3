@@ -9,17 +9,13 @@
 #include "us_constants.h"
 #include "../us_autoflow_analysis/us_autoflow_analysis.h"
 #include "../us_reporter_gmp/us_reporter_gmp.h"
-
 #include <qwt_legend.h>
-#if QT_VERSION < 0x050000
-#define setSamples(a,b,c)  setData(a,b,c)
-#endif
 
 // constructor:  residuals plot widget
 // US_ResidPlotFem::US_ResidPlotFem( QWidget* parent, const bool auto_mode )
-//    : US_WidgetsDialog( 0, 0 )
+//    : US_WidgetsDialog( nullptr, Qt::WindowFlags() )
 US_ResidPlotFem::US_ResidPlotFem( QWidget* parent, const QString auto_mode )
-   : US_WidgetsDialog( 0, 0 )
+   : US_WidgetsDialog( nullptr, Qt::WindowFlags() )
 {
    // this->a_mode = auto_mode;
    this->a_mode = auto_mode;

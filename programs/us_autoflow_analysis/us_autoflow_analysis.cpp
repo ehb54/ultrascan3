@@ -382,8 +382,7 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
       if ( json.contains("PCSA") )
 	job6run_pcsa = true;
           
-      triple_name_width = fmet.width( triple_curr );
-      //triple_name_width = fmet.horizontalAdvance( triple_curr );
+      triple_name_width = fmet.horizontalAdvance( triple_curr );
       
       qDebug() << "Triple,  width:  " << triple_curr << ", " << triple_name_width;
       qDebug() << "GUI: job1run, job2run, job3run, job4run, job5run -- "
@@ -1845,7 +1844,7 @@ int US_Analysis_auto::count_noise_auto( US_DataIO::EditedData* edata,
    for ( int ii = 1; ii < nemods; ii++ )
    {  // Search through models in edit
       lmodlGUID  = mieGUIDs[ ii ];                    // this model's GUID
-      modelIndx  = QString().sprintf( "%4.4d", kk );  // models-in-edit index
+      modelIndx  = QString::asprintf( "%4.4d", kk );  // models-in-edit index
 
       // Find the noises tied to this model
       int kenois = noises_in_model_auto( lmodlGUID, tmpGUIDs );
@@ -2836,6 +2835,7 @@ void US_Analysis_auto::show_overlay( QString triple_stage )
   
   loadData( triple_info_map );
   progress_msg->setValue( 1 );
+  qApp->processEvents();
   
   triple_info_map[ "eID" ]        = QString::number( eID_global );
   // Assign edata && rdata
@@ -2946,7 +2946,8 @@ void US_Analysis_auto::show_overlay( QString triple_stage )
   bufvl = US_SolutionVals::values( dbP, edata, solID, svbar, bdens,
 				   bvisc, bcomp, bmanu, errmsg );
   progress_msg->setValue( 3 );
-
+  qApp->processEvents();
+  
   //Hardwire compressibility to zero, for now
   bcomp="0.0";
   if ( bufvl )
@@ -3011,7 +3012,8 @@ void US_Analysis_auto::show_overlay( QString triple_stage )
   qDebug() << "Closing sim_msg-- ";
   //msg_sim->accept();
   progress_msg->close();
-
+  qApp->processEvents();
+  
   /*
   // Show plot
   resplotd = new US_ResidPlotFem( this, true );
@@ -4459,7 +4461,7 @@ DbgLv(1) << "Number of FM models found: " << nfmods;
 if(nfmods>0) {
 DbgLv(1) << " pre:D0" <<  mDescrs[0].description;
 DbgLv(1) << " pre:Dn" <<  mDescrs[nfmods-1].description; }
-   qSort( mDescrs );
+   std::sort( mDescrs.begin(), mDescrs.end() );
 if(nfmods>0) {
 DbgLv(1) << " sorted:D0" <<  mDescrs[0].description;
 DbgLv(1) << " sorted:Dn" <<  mDescrs[nfmods-1].description; }
@@ -4691,7 +4693,7 @@ bool US_Analysis_auto::file_loaded_auto( QMap < QString, QString > & triple_info
   qDebug() << "In file_loaded_auto: ";
   QString file_directory = US_Settings::resultDir() + QString("/") + triple_information[ "filename" ];
   QString triple_name_cut = triple_information[ "triple_name" ];
-  triple_name_cut.simplified();
+  triple_name_cut = triple_name_cut.simplified();
   triple_name_cut.replace("/","");
   triple_name_cut.replace(" ","");
 
@@ -4862,7 +4864,7 @@ void US_Analysis_auto::load_data_auto( const QString& text_content  )
    QString contents  = text_content;
    contents.replace( QRegExp( "[^0-9eE\\.\\n\\+\\-]+" ), " " );
 
-   QStringList lines = contents.split( "\n", QString::SkipEmptyParts );
+   QStringList lines = contents.split( "\n", Qt::SkipEmptyParts );
    QStringList parsed;
    v_meni.clear();
    v_bott.clear();
@@ -4872,7 +4874,7 @@ DbgLv(1) << "LD:  bott_fit" << bott_fit << "fname_load" << fname_load;
 
    for ( int ii = 0; ii < lines.size(); ii++ )
    {
-      QStringList values = lines[ ii ].split( ' ', QString::SkipEmptyParts );
+      QStringList values = lines[ ii ].split( ' ', Qt::SkipEmptyParts );
 
       int valsize        = values.size();
 DbgLv(1) << "LD:  ii" << ii << "valsize" << valsize;
@@ -4900,7 +4902,7 @@ DbgLv(1) << "LD:  ii" << ii << "valsize" << valsize;
          v_bott << rbott;
          v_rmsd << rmsdv;
 
-         parsed << QString().sprintf( "%3d : ", count ) +
+         parsed << QString::asprintf( "%3d : ", count ) +
                    QString::number( rmeni, 'f', 5 ) + ", " +
                    QString::number( rbott, 'f', 5 ) + ", " +
                    QString::number( rmsdv, 'f', 8 ); 
@@ -4912,7 +4914,7 @@ DbgLv(1) << "LD:  ii" << ii << "valsize" << valsize;
          v_meni << rmeni;
          v_rmsd << rmsdv;
 
-         parsed << QString().sprintf( "%3d : ", count ) +
+         parsed << QString::asprintf( "%3d : ", count ) +
                    QString::number( rmeni, 'f', 5 ) + ", " +
                    QString::number( rmsdv, 'f', 8 ); 
       }
@@ -5393,8 +5395,8 @@ DbgLv(1) << " eupd:  fn" << fn;
      botnew = fit_xvl;
    }
 
-   QString s_meni = QString().sprintf( "%.5f", mennew );
-   QString s_bott = QString().sprintf( "%.5f", botnew );
+   QString s_meni = QString::asprintf( "%.5f", mennew );
+   QString s_bott = QString::asprintf( "%.5f", botnew );
 DbgLv(1) << " eupd:  s_meni s_bott" << s_meni << s_bott;
    QString mmsg   = "";
    QString mhdr   = "";
@@ -5601,7 +5603,7 @@ DbgLv(1) << " eupd:   ixmlin ixblin" << ixmlin << ixblin << "ncmlin ncblin" << n
      progress_msg_fmb->setWindowTitle( QString( tr("Updating Edit Profiles: %1")).arg( triple_information[ "triple_name" ] ));
      QFont font_d  = progress_msg_fmb->property("font").value<QFont>();
      QFontMetrics fm(font_d);
-     int pixelsWide = fm.width( progress_msg_fmb->windowTitle() );
+     int pixelsWide = fm.horizontalAdvance( progress_msg_fmb->windowTitle() );
      qDebug() << "Progress_msg_fmb: pixelsWide -- " << pixelsWide;
      progress_msg_fmb ->setMinimumWidth( pixelsWide*2 );
      progress_msg_fmb->adjustSize();
@@ -5750,6 +5752,7 @@ DbgLv(1) << " eupd:  write: fn" << fn;
 	   if (progress_msg_fmb != NULL )
 	     {
 	       progress_msg_fmb->setValue( jj );
+	       qApp->processEvents();
 	     }
 	     
 DbgLv(1) << " eupd:       call upd_db_ed";
@@ -5785,6 +5788,7 @@ DbgLv(1) << " eupd:       idEdit" << idEdit;
      {
        progress_msg_fmb->setValue( progress_msg_fmb->maximum() );  //ALEXEY -- bug fixed..
        progress_msg_fmb->close();
+       qApp->processEvents();
      }
 
    update_autoflowAnalysis_statuses( triple_information );
@@ -5953,7 +5957,7 @@ DbgLv(1) << "RmvMod:    arTime lArTime" << arTime << lArTime;
    }
 
    nlmods         = lMDescrs.size();
-   qSort( lMDescrs );
+   std::sort( lMDescrs.begin(), lMDescrs.end() );
 DbgLv(1) << "RmvMod: nlmods" << nlmods << "msetBase" << msetBase;
 
    for ( int ii = 0; ii < nlmods; ii++ )
@@ -6098,7 +6102,7 @@ DbgLv(1) << "RmvMod:  scn2 ii dmodDesc" << descript;
       }
 
       ndmods         = dMDescrs.size();
-      qSort( dMDescrs );
+      std::sort( dMDescrs.begin(), dMDescrs.end() );
 
       if ( dArTime > lArTime )      // Don't count any older group
          nlmods         = 0;

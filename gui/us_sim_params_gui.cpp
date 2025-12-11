@@ -2,10 +2,7 @@
 #include "us_constants.h"
 #include "us_gui_settings.h"
 #include "us_settings.h"
-#if QT_VERSION < 0x050000
-#define setMinimum(a)      setMinValue(a)
-#define setMaximum(a)      setMaxValue(a)
-#endif
+
 //!< level-conditioned debug print
 #define DbgLv(a) if(dbg_level>=a)qDebug()
 

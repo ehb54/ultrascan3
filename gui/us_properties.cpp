@@ -10,7 +10,7 @@
 #include "qwt_arrow_button.h"
 
 US_Properties::US_Properties( US_Model& mod, int access )
-   : US_WidgetsDialog( 0, 0 ), 
+   : US_WidgetsDialog( nullptr, Qt::WindowFlags() ),
      model       ( mod ),
      db_access   ( access )
 {

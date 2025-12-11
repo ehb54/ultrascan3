@@ -234,10 +234,8 @@ DbgLv(0) << "work_dir=" << work_dir;
    if ( parameters.keys().contains( "seed" ) ) 
    {
       seed = parameters[ "seed" ].toUInt();
-      qsrand( seed + my_rank );   // Set system random sequence
    }
-   else
-      US_Math2::randomize();
+   US_Math2::randomize( seed );
 
    QString jxmlfile  = jxmlfili;
 
@@ -931,13 +929,13 @@ if ( my_rank == 0 ) {
                   DbgLv(0) << "  Bucket j" << bucket_rects[j].topLeft()
                     << bucket_rects[j].bottomRight();
                   DbgLv(0) << "  Bucket i right "
-                    << QString().sprintf( "%22.18f", bucket_rects[i].right() );
+                    << QString::asprintf( "%22.18f", bucket_rects[i].right( ) );
                   DbgLv(0) << "  Bucket j left  "
-                    << QString().sprintf( "%22.18f", bucket_rects[j].left() );
+                    << QString::asprintf( "%22.18f", bucket_rects[j].left( ) );
                   DbgLv(0) << "  Bucket i bottom"
-                    << QString().sprintf( "%22.18f", bucket_rects[i].bottom() );
+                    << QString::asprintf( "%22.18f", bucket_rects[i].bottom( ) );
                   DbgLv(0) << "  Bucket j top   "
-                    << QString().sprintf( "%22.18f", bucket_rects[j].top() );
+                    << QString::asprintf( "%22.18f", bucket_rects[j].top( ) );
                }
 
                if ( qMin( sdif, fdif ) < 1.e-6 )
@@ -1594,7 +1592,7 @@ DbgLv(1) << "MAST: wrout: mdl_type DMGA";
    else if ( mdl_type == US_Model::PCSA )
    {  // PCSA: Order model records and pick best model
       max_depth    = 0;
-      qSort( mrecs );
+      std::sort( mrecs.begin(), mrecs.end() );
 //*DEBUG*
 DbgLv(1) << "MAST: wrout: mdl_type PCSA  mrecs size" << mrecs.size();
 if(dbg_level>0)
@@ -1647,14 +1645,14 @@ DbgLv(1) << "WrO: meniscus_run" << meniscus_run << "mvsz" << meniscus_values.siz
 
    if ( mdl_type == US_Model::PCSA )
    {
-DbgLv(1) << "WrO: qSort solutes  sssz" << sim.zsolutes.size();
-      qSort( sim.zsolutes );
+DbgLv(1) << "WrO: std::sort solutes  sssz" << sim.zsolutes.size();
+      std::sort( sim.zsolutes.begin(), sim.zsolutes.end() );
    }
 
    else if ( mdl_type != US_Model::DMGA )
    {
-DbgLv(1) << "WrO: qSort solutes  sssz" << sim.solutes.size();
-      qSort( sim.solutes );
+DbgLv(1) << "WrO: std::sort solutes  sssz" << sim.solutes.size();
+      std::sort( sim.solutes.begin(), sim.solutes.end() );
    }
 
 DbgLv(1) << "WrO: wr_model  mdl_type" << mdl_type;
@@ -2120,20 +2118,20 @@ DbgLv(1) << "wrMo: tripleID" << tripleID << "dates" << dates;
    QString iterID;
 
    if ( mc_iterations > 1 )
-      iterID.sprintf( "mc%04d", mc_iter );
+      iterID = QString::asprintf( "mc%04d", mc_iter );
    else if ( fit_menbot )
-      iterID.sprintf( "i%02d-m%05db%05d", 
-              menibott_ndx + 1,
-              (int)( meniscus_value * 10000 ),
-              (int)( bottom_value * 10000 ) );
+      iterID = QString::asprintf( "i%02d-m%05db%05d", 
+                                  menibott_ndx + 1,
+                                  (int)( meniscus_value * 10000 ),
+                                  (int)( bottom_value * 10000 ) );
    else if (  fit_meni )
-      iterID.sprintf( "i%02d-m%05d", 
-              meniscus_run + 1,
-              (int)( meniscus_value * 10000 ) );
+      iterID = QString::asprintf( "i%02d-m%05d", 
+                                  meniscus_run + 1,
+                                  (int)( meniscus_value * 10000 ) );
    else if (  fit_bott )
-      iterID.sprintf( "i%02d-b%05d", 
-              bottom_run + 1,
-              (int)( bottom_value * 10000 ) );
+      iterID = QString::asprintf( "i%02d-b%05d", 
+                                  bottom_run + 1,
+                                  (int)( bottom_value * 10000 ) );
    else
       iterID = "i01";
 
@@ -2161,7 +2159,7 @@ DbgLv(0) << "wrMo: model descr" << model.description;
 
          US_Model::SimulationComponent component;
          US_ZSolute::set_mcomp_values( component, zsolute, stype, true );
-         component.name     = QString().sprintf( "SC%04d", ii + 1 );
+         component.name     = QString::asprintf( "SC%04d", ii + 1 );
 
          US_Model::calc_coefficients( component );
          model.components << component;
@@ -2177,7 +2175,7 @@ DbgLv(0) << "wrMo: model descr" << model.description;
          US_Model::SimulationComponent component;
          component.s       = solute->s;
          component.f_f0    = solute->k;
-         component.name    = QString().sprintf( "SC%04d", ii + 1 );
+         component.name    = QString::asprintf( "SC%04d", ii + 1 );
          // component.vbar20  = (attr_z == ATTR_V) ? vbar20 : solute->v;
          if ( stype == 0) {
             component.vbar20  = vbar20;
@@ -2190,7 +2188,7 @@ DbgLv(0) << "wrMo: model descr" << model.description;
          model.components << component;
       }
    }
-DbgLv(1) << "wrMo: stype" << stype << QString().sprintf("0%o",stype)
+DbgLv(1) << "wrMo: stype" << stype << QString::asprintf( "0%o",stype )
  << "attr_z vbar20 mco0.v" << attr_z << vbar20 << model.components[0].vbar20;
 
    QString fext      = model.monteCarlo ? ".mdl.tmp" : ".model.xml";
@@ -2290,21 +2288,21 @@ void US_MPI_Analysis::write_noise( US_Noise::NoiseType      type,
    QString iterID;
 
    if ( mc_iterations > 1 )           // MonteCarlo iteration
-      iterID.sprintf( "mc%04d", mc_iteration + 1 );
+      iterID = QString::asprintf( "mc%04d", mc_iteration + 1 );
 
    else if ( fit_menbot )             // Meniscus+Bottom fit
-      iterID.sprintf( "i%02d-m%05db%05d", 
-              menibott_ndx + 1,
-              (int)( meniscus_value * 10000 ),
-              (int)( bottom_value * 10000 ) );
+      iterID = QString::asprintf( "i%02d-m%05db%05d", 
+                                  menibott_ndx + 1,
+                                  (int)( meniscus_value * 10000 ),
+                                  (int)( bottom_value * 10000 ) );
    else if (  fit_meni )              // Meniscus fit
-      iterID.sprintf( "i%02d-m%05d", 
-              meniscus_run + 1,
-              (int)( meniscus_value * 10000 ) );
+      iterID = QString::asprintf( "i%02d-m%05d", 
+                                  meniscus_run + 1,
+                                  (int)( meniscus_value * 10000 ) );
    else if (  fit_bott )              // Bottom fit
-      iterID.sprintf( "i%02d-b%05d", 
-              bottom_run + 1,
-              (int)( bottom_value * 10000 ) );
+      iterID = QString::asprintf( "i%02d-b%05d", 
+                                  bottom_run + 1,
+                                  (int)( bottom_value * 10000 ) );
 
    else                               // Non-iterative single
       iterID = "i01";
@@ -2651,20 +2649,20 @@ DbgLv(1) << "wrMo: tripleID" << tripleID << "dates" << dates;
    QString iterID;
 
    if ( mc_iterations > 1 )
-      iterID.sprintf( "mc%04d", mc_iter );
+      iterID = QString::asprintf( "mc%04d", mc_iter );
    else if ( fit_menbot )
-      iterID.sprintf( "i%02d-m%05db%05d", 
-              menibott_ndx + 1,
-              (int)( meniscus_value * 10000 ),
-              (int)( bottom_value * 10000 ) );
+      iterID = QString::asprintf( "i%02d-m%05db%05d", 
+                                  menibott_ndx + 1,
+                                  (int)( meniscus_value * 10000 ),
+                                  (int)( bottom_value * 10000 ) );
    else if (  fit_meni )
-      iterID.sprintf( "i%02d-m%05d", 
-              meniscus_run + 1,
-              (int)( meniscus_value * 10000 ) );
+      iterID = QString::asprintf( "i%02d-m%05d", 
+                                  meniscus_run + 1,
+                                  (int)( meniscus_value * 10000 ) );
    else if (  fit_bott )
-      iterID.sprintf( "i%02d-b%05d", 
-              bottom_run + 1,
-              (int)( bottom_value * 10000 ) );
+      iterID = QString::asprintf( "i%02d-b%05d", 
+                                  bottom_run + 1,
+                                  (int)( bottom_value * 10000 ) );
    else
       iterID = "i01";
 
@@ -2692,7 +2690,7 @@ DbgLv(1) << "wrMo: model descr" << model.description;
 
          US_Model::SimulationComponent component;
          US_ZSolute::set_mcomp_values( component, zsolute, stype, true );
-         component.name     = QString().sprintf( "SC%04d", ii + 1 );
+         component.name     = QString::asprintf( "SC%04d", ii + 1 );
 
          US_Model::calc_coefficients( component );
          model.components << component;
@@ -2708,7 +2706,7 @@ DbgLv(1) << "wrMo: model descr" << model.description;
          US_Model::SimulationComponent component;
          component.s       = solute->s;
          component.f_f0    = solute->k;
-         component.name    = QString().sprintf( "SC%04d", ii + 1 );
+         component.name    = QString::asprintf( "SC%04d", ii + 1 );
          component.vbar20  = (attr_z == ATTR_V) ? vbar20 : solute->v;
          component.signal_concentration = solute->c;
 
@@ -2716,7 +2714,7 @@ DbgLv(1) << "wrMo: model descr" << model.description;
          model.components << component;
       }
    }
-DbgLv(1) << "wrMo: stype" << stype << QString().sprintf("0%o",stype)
+DbgLv(1) << "wrMo: stype" << stype << QString::asprintf( "0%o",stype )
  << "attr_z vbar20 mco0.v" << attr_z << vbar20 << model.components[0].vbar20;
 
    QString fext      = model.monteCarlo ? ".mdl.tmp" : ".model.xml";

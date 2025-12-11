@@ -7,7 +7,7 @@
 
 // Primary constructor to establish the dialog
 US_XpnRunRaw::US_XpnRunRaw( QString& runDesc, QStringList& rdLists ) 
-: US_WidgetsDialog( 0, 0 ), runDesc( runDesc ), rdLists( rdLists )
+: US_WidgetsDialog( nullptr, Qt::WindowFlags() ), runDesc( runDesc ), rdLists( rdLists )
 {
    setWindowTitle( tr( "Raw Optima postgreSQL database runs" ) );
 

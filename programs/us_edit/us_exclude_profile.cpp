@@ -6,7 +6,7 @@
 
 
 US_ExcludeProfile::US_ExcludeProfile( QList< int > includes )
-   : US_WidgetsDialog( 0, 0 )
+   : US_WidgetsDialog( nullptr, Qt::WindowFlags() )
 {
    original = includes;
    finished = false;

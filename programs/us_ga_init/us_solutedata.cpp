@@ -33,14 +33,14 @@ int US_SoluteData::clearBuckets()
 int US_SoluteData::sortBuckets( QList< bucket >* buks )
 {
    int rc = 0;
-   qSort( buks->begin(), buks->end() );
+   std::sort( buks->begin(), buks->end() );
    return rc;
 }
 
 int US_SoluteData::sortBuckets()
 {
    int rc = 0;
-   qSort( allbucks.begin(), allbucks.end() );
+   std::sort( allbucks.begin(), allbucks.end() );
    return rc;
 }
 
@@ -364,7 +364,7 @@ int US_SoluteData::autoCalcBins( int mxsols, qreal wsbuck, qreal hfbuck )
    }
 
    // sort the concentrate values to find cut-off values
-   qSort( cvals.begin(), cvals.end() );
+   std::sort( cvals.begin(), cvals.end() );
 
    // (possibly) pare down the list based on cut-off C values
    cutlo       = cvals.at( nisols - ntsols ); // low val in sorted concen vals
@@ -620,7 +620,7 @@ else DbgLv(2) << "BUCKET TOO THIN H,V " << horzr << "," << vertr;
 
       if ( novls > 0 )
       {  // if there were overlaps, re-sort buckets by vertex for next pass
-         qSort( buks1->begin(), buks1->end(), buck_vx_lessthan );
+         std::sort( buks1->begin(), buks1->end(), buck_vx_lessthan );
       }
 
       else if ( tstat == 1 )
@@ -635,7 +635,7 @@ else DbgLv(2) << "BUCKET TOO THIN H,V " << horzr << "," << vertr;
    }
 
    // do a re-sort based on center point
-   qSort( buks1->begin(), buks1->end() );
+   std::sort( buks1->begin(), buks1->end() );
 
    // copy the final bucket list to the master
 
@@ -672,14 +672,14 @@ int US_SoluteData::saveGAdata( QString& fname, int xtype, int ytype,
       QTextStream ts( &fileo );
 
       // Line 1 with count,xtype,ytype,ztype,fixed
-      line.sprintf( hfmt, nbuk, xtype, ytype, ztype, fixval );
+      line = QString::asprintf( hfmt, nbuk, xtype, ytype, ztype, fixval );
       line         += " # buckets=" + QString::number( nbuk )
                    +  " x=" + cts[ xtype ] + " y=" + cts[ ytype ]
                    +  " fixed=" + cts[ ztype ] +  "="
                    + ( ( ztype == US_GA_Initialize::ATTR_V )
                    ?  "0.0=(data_set_vbar)"
                    :  QString::asprintf( cffmt, fixval ) );
-      ts << line << endl;
+      ts << line << Qt::endl;
 
       for ( int jj = 0; jj < nbuk; jj++ )
       {
@@ -687,8 +687,8 @@ int US_SoluteData::saveGAdata( QString& fname, int xtype, int ytype,
 
          limitBucket( buk );
 
-         line.sprintf( lfmt, buk.x_min, buk.x_max, buk.y_min, buk.y_max );
-         ts << line << endl;
+         line = QString::asprintf( lfmt, buk.x_min, buk.x_max, buk.y_min, buk.y_max );
+         ts << line << Qt::endl;
       }
       fileo.close();
    }
@@ -831,7 +831,6 @@ int US_SoluteData::reportDataMC( QString& fname, int mc_iters )
       QList< qreal > concs;
       QList< qreal > csums;
       QTextStream ts( &fileo );
-      QString str1;
 
       ts << "*****************************************"
          "**********************************\n\n";
@@ -878,36 +877,36 @@ int US_SoluteData::reportDataMC( QString& fname, int mc_iters )
             vsum     = 0.0;
             for ( int jj = 0; jj < ksol; jj++ )
                vsum    += ( bcomp.at( jj ).w * bcomp.at( jj ).c );
-            ts << ( vsum / tconc ) << endl;
+            ts << ( vsum / tconc ) << Qt::endl;
 
             ts << tr( "Sedimentation coefficient:  " );
             vsum     = 0.0;
             for ( int jj = 0; jj < ksol; jj++ )
                vsum    += ( bcomp.at( jj ).s * bcomp.at( jj ).c );
-            ts << ( vsum / tconc ) << endl;
+            ts << ( vsum / tconc ) << Qt::endl;
 
             ts << tr( "Diffusion coefficient:      " );
             vsum     = 0.0;
             for ( int jj = 0; jj < ksol; jj++ )
                vsum    += ( bcomp.at( jj ).d * bcomp.at( jj ).c );
-            ts << ( vsum / tconc ) << endl;
+            ts << ( vsum / tconc ) << Qt::endl;
 
             ts << tr( "Frictional ratio:           " );
             vsum     = 0.0;
             for ( int jj = 0; jj < ksol; jj++ )
                vsum    += ( bcomp.at( jj ).f * bcomp.at( jj ).c );
-            ts << ( vsum / tconc ) << endl;
+            ts << ( vsum / tconc ) << Qt::endl;
 
             ts << tr( "Partial specific volume:    " );
             vsum     = 0.0;
             for ( int jj = 0; jj < ksol; jj++ )
                vsum    += ( bcomp.at( jj ).v * bcomp.at( jj ).c );
-            ts << ( vsum / tconc ) << endl;
+            ts << ( vsum / tconc ) << Qt::endl;
 
             ts << tr( "Partial concentration:      " );
 //            vsum     = tconc;
 //            ts << ( vsum / vsiz ) << endl;
-            ts << tconc << endl;
+            ts << tconc << Qt::endl;
             //csums.append( vsum );
             csums.append( tconc );
          }
@@ -954,7 +953,7 @@ int US_SoluteData::reportDataMC( QString& fname, int mc_iters )
                vtotal    += bcomp.at( jj ).c;
             csums.append( vtotal );
             ts << tr( "Partial concentration:     " ) <<
-               str1.sprintf( " %6.4e\n", vtotal );
+               QString::asprintf( " %6.4e\n", vtotal );
 
          }
       }
@@ -996,32 +995,32 @@ int US_SoluteData::reportDataMC( QString& fname, int mc_iters )
             ts << tr( "Molecular weight:          " );
             for ( int jj = 0; jj < ksol; jj++ )
                ts << bcomp.at( jj ).w << "  ";
-            ts << endl;
+            ts << Qt::endl;
 
             ts << tr( "Sedimentation coefficient: " );
             for ( int jj = 0; jj < ksol; jj++ )
                ts << bcomp.at( jj ).s << "  ";
-            ts << endl;
+            ts << Qt::endl;
 
             ts << tr( "Diffusion coefficient:     " );
             for ( int jj = 0; jj < ksol; jj++ )
                ts << bcomp.at( jj ).d << "  ";
-            ts << endl;
+            ts << Qt::endl;
 
             ts << tr( "Frictional ratio:          " );
             for ( int jj = 0; jj < ksol; jj++ )
                ts << bcomp.at( jj ).f << "  ";
-            ts << endl;
+            ts << Qt::endl;
 
             ts << tr( "Partial specific volume:   " );
             for ( int jj = 0; jj < ksol; jj++ )
                ts << bcomp.at( jj ).v << "  ";
-            ts << endl;
+            ts << Qt::endl;
  
             ts << tr( "Concentration:             " );
             for ( int jj = 0; jj < ksol; jj++ )
                ts << bcomp.at( jj ).c << "  ";
-            ts << endl;
+            ts << Qt::endl;
          }
 
          else
@@ -1208,6 +1207,60 @@ void US_SoluteData::outputStats( QTextStream& ts, QList< qreal >& vals,
    conf95lo  = vmean - 1.960 * sdevi;
    conf95hi  = vmean + 1.960 * sdevi;
 
+   QVector <int> idxs(nvals, 0);
+   for ( int jj = 0; jj < nvals; jj++ )
+   {
+       idxs[jj] = jj;
+   }
+   std::sort(idxs.begin(), idxs.end(),
+             [&vals](int a, int b) { return vals[a] < vals[b]; });
+   QVector<qreal> vals_sorted;
+   QVector<qreal> concs_sorted;
+   for ( int jj = 0; jj < nvals; jj++ )
+   {
+       int id = idxs.at(jj);
+       vals_sorted << vals.at(id);
+       concs_sorted << concs.at(id);
+   }
+
+   qreal lo99 = vctot * 0.005;
+   qreal hi99 = vctot * 0.995;
+   qreal lo95 = vctot * 0.025;
+   qreal hi95 = vctot * 0.975;
+
+   qreal acc_conc = 0;
+   int lo99_id  = -1;
+   int hi99_id  = -1;
+   int lo95_id  = -1;
+   int hi95_id  = -1;
+
+   for ( int jj = 0; jj < nvals; jj++ )
+   {
+       acc_conc += concs_sorted.at(jj);
+       if (acc_conc >= lo99 && lo99_id == -1)
+       {
+           lo99_id = jj;
+       }
+       if (acc_conc >= lo95 && lo95_id == -1)
+       {
+           lo95_id = jj;
+       }
+
+       if (acc_conc > hi99 && hi99_id == -1)
+       {
+           hi99_id = jj - 1;
+       }
+       if (acc_conc > hi95 && hi95_id == -1)
+       {
+           hi95_id = jj - 1;
+       }
+   }
+
+   conf99lo = vals_sorted.at(lo99_id);
+   conf99hi = vals_sorted.at(hi99_id);
+   conf95lo = vals_sorted.at(lo95_id);
+   conf95hi = vals_sorted.at(hi95_id);
+
    if ( details  &&  is_constant )
    {
       ts << "\n\n" << tr( "Results for the " ) << title << ":\n\n";
@@ -1215,17 +1268,17 @@ void US_SoluteData::outputStats( QTextStream& ts, QList< qreal >& vals,
       if ( vhi == vlo )
       {
          ts << tr( "Constant Value:            " ) 
-            << str1.sprintf( "%6.4e\n", vhi   );
+            << QString::asprintf( "%6.4e\n", vhi   );
       }
 
       else
       {
          ts << tr( "Maximum Value:             " ) 
-            << str1.sprintf( "%6.4e\n", vhi   );
+            << QString::asprintf( "%6.4e\n", vhi   );
          ts << tr( "Minimum Value:             " ) 
-            << str1.sprintf( "%6.4e\n", vlo   );
+            << QString::asprintf( "%6.4e\n", vlo   );
          ts << tr( "(Nearly) Constant Value:   " ) 
-            << str1.sprintf( "%6.4e\n", vmean );
+            << QString::asprintf( "%6.4e\n", vmean );
       }
    }
 
@@ -1233,59 +1286,59 @@ void US_SoluteData::outputStats( QTextStream& ts, QList< qreal >& vals,
    {  // Details
       ts << "\n\n" << tr( "Results for the " ) << title << ":\n\n";
       ts << tr( "Maximum Value:             " ) 
-         << str1.sprintf( "%6.4e\n", vhi   );
+         << QString::asprintf( "%6.4e\n", vhi   );
       ts << tr( "Minimum Value:             " ) 
-         << str1.sprintf( "%6.4e\n", vlo   );
+         << QString::asprintf( "%6.4e\n", vlo   );
       ts << tr( "Mean Value:                " ) 
-         << str1.sprintf( "%6.4e\n", vmean );
+         << QString::asprintf( "%6.4e\n", vmean );
       ts << tr( "Median Value:              " ) 
-         << str1.sprintf( "%6.4e\n", vmedi );
+         << QString::asprintf( "%6.4e\n", vmedi );
       ts << tr( "Skew Value:                " ) 
-         << str1.sprintf( "%6.4e\n", skew  );
+         << QString::asprintf( "%6.4e\n", skew  );
       ts << tr( "Kurtosis Value:            " ) 
-         << str1.sprintf( "%6.4e\n", kurto );
+         << QString::asprintf( "%6.4e\n", kurto );
       ts << tr( "Lower Mode Value:          " ) 
-         << str1.sprintf( "%6.4e\n", mode_lo );
+         << QString::asprintf( "%6.4e\n", mode_lo );
       ts << tr( "Upper Mode Value:          " ) 
-         << str1.sprintf( "%6.4e\n", mode_hi );
+         << QString::asprintf( "%6.4e\n", mode_hi );
       ts << tr( "Mode Center:               " ) 
-         << str1.sprintf( "%6.4e\n", mode_cen );
+         << QString::asprintf( "%6.4e\n", mode_cen );
       ts << tr( "95% Confidence Limits:     " ) 
-         << str1.sprintf( "%6.4e, -%6.4e\n",
+         << QString::asprintf( "%6.4e, -%6.4e\n",
          ( conf95hi - mode_cen ), ( mode_cen - conf95lo ) );
       ts << tr( "99% Confidence Limits:     " ) 
-         << str1.sprintf( "%6.4e, -%6.4e\n",
+         << QString::asprintf( "%6.4e, -%6.4e\n",
          ( conf99hi - mode_cen ), ( mode_cen - conf99lo ) );
       ts << tr( "Standard Deviation:        " ) 
-         << str1.sprintf( "%6.4e\n", sdevi );
+         << QString::asprintf( "%6.4e\n", sdevi );
       ts << tr( "Standard Error:            " ) 
-         << str1.sprintf( "%6.4e\n", sderr );
+         << QString::asprintf( "%6.4e\n", sderr );
       ts << tr( "Variance:                  " ) 
-         << str1.sprintf( "%6.4e\n", vari );
+         << QString::asprintf( "%6.4e\n", vari );
       ts << tr( "Correlation Coefficent:    " ) 
-         << str1.sprintf( "%6.4e\n", corr );
+         << QString::asprintf( "%6.4e\n", corr );
       ts << tr( "Number of Bins:            " ) 
          << qRound( binsz ) << "\n";
       ts << tr( "Distribution Area:         " ) 
-         << str1.sprintf( "%6.4e\n", area );
+         << QString::asprintf( "%6.4e\n", area );
 
-      str1.sprintf( "%e", conf95lo ).append( tr( " (low), " ) );
-      str2.sprintf( "%e", conf95hi ).append( tr( " (high)\n" ) );
+      str1 = QString::asprintf( "%e", conf95lo ).append( tr( " (low), " ) );
+      str2 = QString::asprintf( "%e", conf95hi ).append( tr( " (high)\n" ) );
       ts << tr( "95% Confidence Interval:   " ) << str1 << str2;
 
-      str1.sprintf( "%e", conf99lo ).append( tr( " (low), " ) );
-      str2.sprintf( "%e", conf99hi ).append( tr( " (high)\n" ) );
+      str1 = QString::asprintf( "%e", conf99lo ).append( tr( " (low), " ) );
+      str2 = QString::asprintf( "%e", conf99hi ).append( tr( " (high)\n" ) );
       ts << tr( "99% Confidence Interval:   " ) << str1 << str2;
    }
 
    else if ( is_constant )
    {  // Summary (where value is constant)
-      ts << title << str1.sprintf( " %6.4e (**constant**)\n", vmean );
+      ts << title << QString::asprintf( " %6.4e (**constant**)\n", vmean );
    }
 
    else
    {  // Summary
-      ts << title << str1.sprintf( " %6.4e (%6.4e, %6.4e)\n",
+      ts << title << QString::asprintf( " %6.4e (%6.4e, %6.4e)\n",
             vmean, conf95lo, conf95hi );
    }
 }

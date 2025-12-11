@@ -8,17 +8,9 @@
 #include "us_util.h"
 #include "us_report_gmp.h"
 
-#if QT_VERSION < 0x050000
-#define setSamples(a,b,c)  setData(a,b,c)
-#define setMinimum(a)      setMinValue(a)
-#define setMaximum(a)      setMaxValue(a)
-#define QRegularExpression(a)  QRegExp(a)
-#endif
-
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug()
 #endif
-
 
 // Constructor:  build the main layout with tab widget panels
 US_AnalysisProfileGui::US_AnalysisProfileGui() : US_Widgets()
@@ -805,6 +797,10 @@ DbgLv(1) << "APG: ipro:  ap_xml length" << ap_xml.length();
       }
    }
 
+   //DEBUG: check currProf.ch_reports map
+   
+   //END debug
+
    apanGeneral->initPanel();
 
    // If currProf purely from upstream profile, insure proper channel descriptions
@@ -1153,7 +1149,7 @@ void US_AnalysisProfileGui::setColumnStretches( QGridLayout* genL )
 
 // Panel for run and other general parameters
 US_AnaprofPanGen::US_AnaprofPanGen( QWidget* topw )
-   : US_WidgetsDialog( topw, 0 )
+   : US_WidgetsDialog( topw, Qt::WindowFlags() )
 {
    mainw               = (US_AnalysisProfileGui*)topw;
    dbg_level           = US_Settings::us_debug();
@@ -1376,7 +1372,9 @@ DbgLv(1) << "APGe: bgL:    scrollArea children count ZERO";
    if ( !mainw->abde_mode_aprofile )
      genL->addWidget( pb_scan_excl,    row++,  9, 1, 3 );
    else
-     pb_scan_excl -> setVisible( false ); row++;
+   {
+	   pb_scan_excl -> setVisible( false ); row++;
+   }
 
    connect( pb_aproname, SIGNAL( clicked            ( ) ),
             this,        SLOT(   apro_button_clicked( ) ) );
@@ -1615,7 +1613,7 @@ DbgLv(1) << "Ge:SL:  ii" << ii << "schan" << schan;
       
       QFont font   = le_chann->property("font").value<QFont>();
       QFontMetrics fm(font);
-      int pixelsWide = fm.width( le_chann->text() );
+      int pixelsWide = fm.horizontalAdvance( le_chann->text() );
       //int pixelsHigh = fm.height();
       //pb_aproname->setMinimumWidth( pixelsWide );
       le_chann->setMinimumWidth( pixelsWide*1.1 );
@@ -1884,19 +1882,19 @@ QGroupBox * US_AnaprofPanGen::createGroup( QString & triple_name, QList< double 
   QLabel*     lb_wvl     = us_label( tr( "Wvl" ) );
   QFont font_w   = lb_wvl->property("font").value<QFont>();
   QFontMetrics fm_w(font_w);
-  pixelsWide_w = fm_w.width( lb_wvl->text() );
+  pixelsWide_w = fm_w.horizontalAdvance( lb_wvl->text() );
   
   QLabel*     lb_edit    = us_label( tr( "FitMen" ) );
   QFont font_e   = lb_edit->property("font").value<QFont>();
   QFontMetrics fm_e(font_e);
-  pixelsWide_e = fm_e.width( lb_edit->text() );
+  pixelsWide_e = fm_e.horizontalAdvance( lb_edit->text() );
   // lb_edit->setMaximumWidth( pixelsWide_e*1.1 );
   // lb_edit->adjustSize();
 
   QLabel*     lb_run     = us_label( tr( "Run" ) );
   QFont font_r   = lb_run->property("font").value<QFont>();
   QFontMetrics fm_r(font_r);
-  pixelsWide_r = fm_r.width( lb_run->text() );
+  pixelsWide_r = fm_r.horizontalAdvance( lb_run->text() );
   // lb_run->setMaximumWidth( pixelsWide_r*1.1 );
   // lb_run->adjustSize();
 
@@ -1922,7 +1920,7 @@ QGroupBox * US_AnaprofPanGen::createGroup( QString & triple_name, QList< double 
       le_wvl ->setReadOnly(true);
       QFont font   = le_wvl->property("font").value<QFont>();
       QFontMetrics fm(font);
-      int pixelsWide = fm.width( le_wvl->placeholderText() );
+      int pixelsWide = fm.horizontalAdvance( le_wvl->placeholderText() );
       le_wvl->setMaximumWidth( pixelsWide*3 );
       le_wvl->adjustSize();
       
@@ -2983,7 +2981,7 @@ DbgLv(1) << "GP:SL: APPLIED ALL";
 
 // Panel for 2DSA parameters
 US_AnaprofPan2DSA::US_AnaprofPan2DSA( QWidget* topw )
-   : US_WidgetsDialog( topw, 0 )
+   : US_WidgetsDialog( topw, Qt::WindowFlags() )
 {
    mainw               = (US_AnalysisProfileGui*)topw;
    dbg_level           = US_Settings::us_debug();
@@ -3660,7 +3658,7 @@ DbgLv(1) << "2D:SL: J5_MCITER_CHG";
 
 // Panel for PCSA parameters
 US_AnaprofPanPCSA::US_AnaprofPanPCSA( QWidget* topw )
-   : US_WidgetsDialog( topw, 0 )
+   : US_WidgetsDialog( topw, Qt::WindowFlags() )
 {
 DbgLv(1) << "APpc: IN";
    mainw               = (US_AnalysisProfileGui*)topw;

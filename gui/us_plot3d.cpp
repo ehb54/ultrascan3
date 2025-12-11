@@ -2118,20 +2118,11 @@ void US_Plot3D::pick_data_co()
 #ifndef Q_OS_MAC
    QString mapfname = QFileDialog::getOpenFileName( this,
       tr( "Load Color Map File" ),
-      US_Settings::etcDir(), filter, 0, 0 );
-#else
-#if QT_VERSION < 0x050000
-   QFileDialog fd( this, tr( "Load Color Map File" ) );
-   fd.selectFile( US_Settings::etcDir() + "/myFile.txt" );
-   //fd.selectFile( US_Settings::etcDir() );
-   fd.setFilter ( filter );
-   fd.setOption ( QFileDialog::DontUseNativeDialog );
-   QString mapfname = fd.getOpenFileName();
+      US_Settings::etcDir(), filter );
 #else
    QString mapfname = QFileDialog::getOpenFileName( this,
       tr( "Load Color Map File" ),
-      US_Settings::etcDir(), filter, 0, 0 );
-#endif
+      US_Settings::etcDir(), filter );
 #endif
 
    if ( mapfname.isEmpty() )

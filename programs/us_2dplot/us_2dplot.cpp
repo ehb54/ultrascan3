@@ -12,9 +12,6 @@
 #include "us_passwd.h"
 
 #include "qwt_scale_engine.h"
-#if QT_VERSION < 0x050000
-#define setSamples(a,b,c)  setData(a,b,c)
-#endif
 
 //! \brief program for plotting an arbitrary function
 

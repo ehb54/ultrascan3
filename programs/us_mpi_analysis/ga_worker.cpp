@@ -213,7 +213,7 @@ DbTimMsg("Worker start rank/generation/elapsed-secs");
       }
 
       // Sort fitness
-      qSort( fitness );
+      std::sort( fitness.begin(), fitness.end() );
 DbTimMsg("Worker after get_fitness loop + sort");
 
       // Refine with gradient search method (gsm) on last generation
@@ -338,7 +338,7 @@ DbgLv(1) << "gw:" << my_rank << ":  Dup cleaned: f0 f1 fit0 fit1"
       }
 
       // Re-sort
-      qSort( fitness );
+      std::sort( fitness.begin(), fitness.end() );
       
       QList< Gene > old_genes = genes;
 
@@ -424,17 +424,16 @@ double US_MPI_Analysis::get_fitness( const Gene& gene )
    US_SolveSim::Simulation sim = simulation_values;
 sim.dbg_level = qMax(0,dbg_level-1);
    sim.solutes = gene;
-   qSort( sim.solutes );
+   std::sort( sim.solutes.begin(), sim.solutes.end() );
 
    fitness_count++;
    int     nisols = gene.size();
    QString key    = "";
-   QString str;
 
    for ( int cc = 0; cc < nisols; cc++ )
    {  // Concatenate all solute s,k values to form fitness key
-      key += str.sprintf( "%.5f%.5f", sim.solutes[ cc ].s,
-                                      sim.solutes[ cc ].k );
+      key += QString::asprintf( "%.5f%.5f", sim.solutes[ cc ].s,
+                                sim.solutes[ cc ].k );
    }
 
 DbgLv(2) << "get_fitness: nisols" << nisols << "key" << key;
@@ -809,7 +808,7 @@ QDateTime clcSt0=QDateTime::currentDateTime();
 
 int grp_nbr  = ( my_rank / gcores_count );
 int deme_nbr = my_rank - grp_nbr * gcores_count;
-QString Phd = "MIN:" + QString().sprintf("%d:%d",grp_nbr,deme_nbr) + ":";
+QString Phd = "MIN:" + QString::asprintf( "%d:%d",grp_nbr,deme_nbr ) + ":";
 DbgLv(DL) << Phd << "vsize" << vsize << "fitness" << fitness
  << "gene0.s" << gene[0].s;
    int index = 0;
@@ -1523,8 +1522,8 @@ void US_MPI_Analysis::dump_fitness( const QList< Fitness >& fitness )
    for ( int f = 0; f < fitness.size(); f++ )
    {
 
-      s += QString().sprintf( "i, index, fitness: %3i, %3i, %.6e\n",
-               f, fitness[ f ].index, fitness[ f ].fitness );
+      s += QString::asprintf( "i, index, fitness: %3i, %3i, %.6e\n",
+f, fitness[ f ].index, fitness[ f ].fitness );
    }
 
    DbgLv(1) << s;

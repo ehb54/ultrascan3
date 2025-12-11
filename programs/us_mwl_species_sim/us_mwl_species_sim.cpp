@@ -15,16 +15,8 @@
 #include "us_passwd.h"
 #include "us_images.h"
 
-#if QT_VERSION < 0x050000
-#define setSamples(a,b,c)  setData(a,b,c)
-#define setMinimum(a)      setMinValue(a)
-#define setMaximum(a)      setMaxValue(a)
-#define setSymbol(a)       setSymbol(*a)
-#define dPlotClearAll(a) a->clear()
-#else
 #include "qwt_picker_machine.h"
 #define dPlotClearAll(a) a->detachItems(QwtPlotItem::Rtti_PlotItem,true)
-#endif
 
 //! \brief Main program. Loads translators and starts
 //         the class US_Convert.
@@ -176,9 +168,9 @@ DbgLv(1) << "PlotData1: tripx" << tripx << "have" << have_p1[tripx];
 
 DbgLv(1) << "PlotData1:  tripx" << tripx;
    US_DataIO::RawData*     rdata = &synData[ tripx ];
-   QString cell   = QString().sprintf( "%d", rdata->cell );
-   QString wavl   = QString().sprintf( "%d",
-                       (int)rdata->scanData[ 0 ].wavelength );
+   QString cell   = QString::asprintf( "%d", rdata->cell );
+   QString wavl   = QString::asprintf( "%d",
+(int )rdata->scanData[ 0 ].wavelength );
    QString mdesc  = models[ tripx ].description;
    QString triple = QString( mdesc ).section( ".", -3, -3 );
    QString chani  = QString( triple ).left( 2 );

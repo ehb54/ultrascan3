@@ -209,7 +209,7 @@ private:
       double     mendelta;     // meniscus delta per iteration
       double     cnstff0;      // constant f/f0 (or 0.0)
 
-      QTime      timer;        // timer for elapsed time measure
+      QElapsedTimer      timer;        // timer for elapsed time measure
 
    private slots:
       void queue_task( WorkPacket2D&, double, double,

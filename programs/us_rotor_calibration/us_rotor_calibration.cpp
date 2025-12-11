@@ -15,14 +15,9 @@
 #include "us_run_details2.h"
 #include "us_passwd.h"
 #include "us_get_dbexp.h"
-#if QT_VERSION < 0x050000
-#define setSamples(a,b,c)  setData(a,b,c)
-#define setSymbol(a)       setSymbol(*a)
-#endif
 
 //! \brief Main program for US_RotorCalibration. Loads translators and starts
 //         the class US_FitMeniscus.
-
 int main(int argc, char* argv[])
 {
    QApplication application(argc, argv);
@@ -181,13 +176,8 @@ US_RotorCalibration::US_RotorCalibration() : US_Widgets()
    data_plot->setAxisAutoScale(QwtPlot::yLeft);
    data_plot->setCanvasBackground( QBrush(Qt::white) );
 
-#if QT_VERSION < 0x050000
-   connect (plot, SIGNAL (zoomed(QwtDoubleRect)),
-             this, SLOT   (currentRect  (QwtDoubleRect)));
-#else
    connect (plot, SIGNAL (zoomedCorners (QRectF)),
              this, SLOT   (currentRectf  (QRectF)));
-#endif
 
 
    top->addLayout(plot, 1, 1, row - 1, 1);
@@ -300,7 +290,7 @@ void US_RotorCalibration::loadDisk(void)
 
    reset();
 
-   QStringList components =  workingDir.split("/", QString::SkipEmptyParts);
+   QStringList components =  workingDir.split("/", Qt::SkipEmptyParts);
 
    runID = components.last();
 
@@ -747,11 +737,7 @@ void US_RotorCalibration::mouse (const QwtDoublePoint& p)
    r[0] = p.x();
    r[1] = p.x();
 
-#if QT_VERSION < 0x050000
-   QwtScaleDiv* y_axis = data_plot->axisScaleDiv(QwtPlot::yLeft);
-#else
    QwtScaleDiv* y_axis = (QwtScaleDiv*)&data_plot->axisScaleDiv(QwtPlot::yLeft);
-#endif
 
    //double padding = (y_axis->upperBound() - y_axis->lowerBound()) / 30.0;
 
@@ -904,7 +890,7 @@ void US_RotorCalibration::calculate()
       }
    }
 
-   qSort(speeds); // sort the speeds with the slowest being the first element
+   std::sort( speeds.begin(), speeds.end() ); // sort the speeds with the slowest being the first element
    QVector< Average > avg2;
    avg2.clear();
 
@@ -1368,7 +1354,7 @@ void US_RotorCalibration::calc_6channel(void)
          }
       }
    }
-   qSort(speeds); // sort the speeds with the slowest being the first element
+   std::sort( speeds.begin(), speeds.end() ); // sort the speeds with the slowest being the first element
    double average, sigma_sum;
    int count = 0;
    int l=0;

@@ -10,12 +10,6 @@
 #include "us_analyte_gui.h"
 #include "us_solution.h"
 
-
-#if QT_VERSION < 0x050000
-#define setSymbol(a)      setSymbol(*a)
-#define setSamples(a,b,c) setData(a,b,c)
-#endif
-
 US_SolutionMgrSelect::US_SolutionMgrSelect( int *invID, int *select_db_disk,
       US_Solution *tmp_solution, int tmp_experimentID, int tmp_channelID ) : US_Widgets()
 {
@@ -1735,7 +1729,7 @@ US_SolutionGui::US_SolutionGui(
       int   select_db_disk,
       const US_Solution dataIn,
       bool  auto_save
-      ) : US_WidgetsDialog( 0, 0 ), experimentID( expID ), channelID( chID ),
+      ) : US_WidgetsDialog( nullptr, Qt::WindowFlags() ), experimentID( expID ), channelID( chID ),
         signal( signal_wanted )
 
 {

@@ -13,14 +13,6 @@
 #include "us_crypto.h"
 #include "us_select_item.h"
 #include "us_images.h"
-//#include "us_select_item.h"
-
-#if QT_VERSION < 0x050000
-#define setSamples(a,b,c)  setData(a,b,c)
-#define setMinimum(a)      setMinValue(a)
-#define setMaximum(a)      setMaxValue(a)
-#define QRegularExpression(a)  QRegExp(a)
-#endif
 
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug()
@@ -165,7 +157,7 @@ US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
    QFont font_t = tabWidget->property("font").value<QFont>();
    qDebug() << font_t.family() << font_t.pointSize();
    QFontMetrics fm_t(font_t);
-   int pixelsWide = fm_t.width("Manage Optima Runs");
+   int pixelsWide = fm_t.horizontalAdvance("Manage Optima Runs");
    
    qDebug() << "FONT_T: fm_t.width() -- " <<  pixelsWide;
    cornerWidget->setMinimumWidth( pixelsWide );
@@ -178,7 +170,7 @@ US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
    qDebug() << "TabWidget->tabBar position: " << tabWidget->tabBar()->x() << tabWidget->tabBar()->y();
    qDebug() << "TabWidget->tabBar size    : " << tabWidget->tabBar()->width() << tabWidget->tabBar()->height();
 
-   int pos_x_offset = fm_t.width("M");
+   int pos_x_offset = fm_t.horizontalAdvance("M");
    int pos_x = tabWidget->tabBar()->x() + pos_x_offset*1.2;
    //int pos_x = (tabWidget->tabBar()->width())/4;
    int pos_y = (tabWidget->tabBar()->height())*1.22;
@@ -411,7 +403,7 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    QFont font_t = tabWidget->property("font").value<QFont>();
    qDebug() << font_t.family() << font_t.pointSize();
    QFontMetrics fm_t(font_t);
-   int pixelsWide = fm_t.width("Manage Optima Runs");
+   int pixelsWide = fm_t.horizontalAdvance("Manage Optima Runs");
    
    qDebug() << "FONT_T: fm_t.width() -- " <<  pixelsWide;
    cornerWidget->setMinimumWidth( pixelsWide );
@@ -424,7 +416,7 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    qDebug() << "TabWidget->tabBar position: " << tabWidget->tabBar()->x() << tabWidget->tabBar()->y();
    qDebug() << "TabWidget->tabBar size    : " << tabWidget->tabBar()->width() << tabWidget->tabBar()->height();
 
-   int pos_x_offset = fm_t.width("M");
+   int pos_x_offset = fm_t.horizontalAdvance("M");
    int pos_x = tabWidget->tabBar()->x() + pos_x_offset*1.2;
    //int pos_x = (tabWidget->tabBar()->width())/4;
    int pos_y = (tabWidget->tabBar()->height())*1.08;
@@ -665,7 +657,7 @@ void US_ComProjectMain::show_liveupdate_finishing_msg( void )
    msg_liveupdate_finishing->setIcon(QMessageBox::Information);
   
    msg_liveupdate_finishing->setWindowFlags ( Qt::CustomizeWindowHint | Qt::WindowTitleHint | Qt::WindowStaysOnTopHint);
-   msg_liveupdate_finishing->setStandardButtons(0);
+   msg_liveupdate_finishing->setStandardButtons( QMessageBox::NoButton );
    msg_liveupdate_finishing->setWindowTitle(tr("Updating..."));
    msg_liveupdate_finishing->setText(tr( "Finishing LIVE UPDATE processes... Please wait...") );
    msg_liveupdate_finishing->setStyleSheet("background-color: #36454f; color : #D3D9DF;");
@@ -693,7 +685,7 @@ void US_ComProjectMain::show_analysis_update_finishing_msg( void )
    msg_analysis_update_finishing->setIcon(QMessageBox::Information);
   
    msg_analysis_update_finishing->setWindowFlags ( Qt::CustomizeWindowHint | Qt::WindowTitleHint | Qt::WindowStaysOnTopHint);
-   msg_analysis_update_finishing->setStandardButtons(0);
+   msg_analysis_update_finishing->setStandardButtons( QMessageBox::NoButton );
    msg_analysis_update_finishing->setWindowTitle(tr("Updating..."));
    msg_analysis_update_finishing->setText(tr( "Finishing ANALYSIS UPDATE processes... Please wait...") );
    msg_analysis_update_finishing->setStyleSheet("background-color: #36454f; color : #D3D9DF;");
@@ -884,7 +876,7 @@ void US_ComProjectMain::define_new_experiment( QStringList & occupied_instrument
 
    
    msg_expsetup->setWindowFlags ( Qt::CustomizeWindowHint | Qt::WindowTitleHint | Qt::WindowStaysOnTopHint);
-   msg_expsetup->setStandardButtons(0);
+   msg_expsetup->setStandardButtons( QMessageBox::NoButton );
    msg_expsetup->setWindowTitle(tr("Updating..."));
    msg_expsetup->setText(tr( "Setting up EXPERIMENT panel... Please wait...") );
    msg_expsetup->setStyleSheet("background-color: #36454f; color : #D3D9DF;");
@@ -1053,7 +1045,7 @@ void US_ComProjectMain::switch_to_analysis( QMap < QString, QString > & protocol
   msg_analysissetup->setIcon(QMessageBox::Information);
 
   msg_analysissetup->setWindowFlags ( Qt::CustomizeWindowHint | Qt::WindowTitleHint | Qt::WindowStaysOnTopHint);
-  msg_analysissetup->setStandardButtons(0);
+  msg_analysissetup->setStandardButtons( QMessageBox::NoButton );
   msg_analysissetup->setWindowTitle(tr("Updating..."));
   msg_analysissetup->setText(tr( "Generating triple list for ANALYSIS... Please wait...") );
   msg_analysissetup->setStyleSheet("background-color: #36454f; color : #D3D9DF;");
@@ -1168,7 +1160,7 @@ void US_ComProjectMain::call_AutoflowDialogue( void )                           
 //////////////////////////////////////////////////////////////////////////////////////////
 //New Initial Decision-making Tab:
 US_InitDialogueGui::US_InitDialogueGui( QWidget* topw )
-   : US_WidgetsDialog( topw, 0 )
+   : US_WidgetsDialog( topw, Qt::WindowFlags() )
 {
    mainw               = (US_ComProjectMain*)topw;
 
@@ -1329,7 +1321,7 @@ void US_InitDialogueGui::checkCertificates( void )
       QString certPath = US_Settings::etcDir() + QString("/optima/");
       
       QString client_name = alias;
-      client_name.simplified();
+      client_name = client_name.simplified();
       client_name.replace(" ", "");
       client_name = client_name.toLower();
       
@@ -2893,7 +2885,7 @@ QMap< QString, QString> US_InitDialogueGui::read_autoflow_failed_record( QString
 //////////////////////////////////////////////////////////////////////////////////
 // US_ExperGUI
 US_ExperGui::US_ExperGui( QWidget* topw )
-   : US_WidgetsDialog( topw, 0 )
+   : US_WidgetsDialog( topw, Qt::WindowFlags() )
 {
    mainw               = (US_ComProjectMain*)topw;
 
@@ -3153,7 +3145,7 @@ void US_ExperGui::manageExperiment()
 
 // US_Observe /////////////////////////////////////////////////////////////////////////////////
 US_ObservGui::US_ObservGui( QWidget* topw )
-   : US_WidgetsDialog( topw, 0 )
+   : US_WidgetsDialog( topw, Qt::WindowFlags() )
 {
    mainw               = (US_ComProjectMain*)topw;
 
@@ -3299,7 +3291,7 @@ void US_ObservGui::to_close_program( void )
 
 // US_PostProd
 US_PostProdGui::US_PostProdGui( QWidget* topw )
-   : US_WidgetsDialog( topw, 0 )
+   : US_WidgetsDialog( topw, Qt::WindowFlags() )
 {
    mainw               = (US_ComProjectMain*)topw;
 
@@ -3431,7 +3423,7 @@ void US_PostProdGui::resizeEvent(QResizeEvent *event)
 
 // US_Editing
 US_EditingGui::US_EditingGui( QWidget* topw )
-   : US_WidgetsDialog( topw, 0 )
+   : US_WidgetsDialog( topw, Qt::WindowFlags() )
 {
    mainw               = (US_ComProjectMain*)topw;
 
@@ -3571,7 +3563,7 @@ void US_EditingGui::do_editing( QMap < QString, QString > & protocol_details )
 
 // US_Analysis
 US_AnalysisGui::US_AnalysisGui( QWidget* topw )
-   : US_WidgetsDialog( topw, 0 )
+   : US_WidgetsDialog( topw, Qt::WindowFlags() )
 {
    mainw               = (US_ComProjectMain*)topw;
 
@@ -3697,7 +3689,7 @@ void US_AnalysisGui::to_report( QMap < QString, QString > & protocol_details )
 
 // US_Report
 US_ReportStageGui::US_ReportStageGui( QWidget* topw )
-  : US_WidgetsDialog( topw, 0 )
+  : US_WidgetsDialog( topw, Qt::WindowFlags() )
 {
    mainw               = (US_ComProjectMain*)topw;
 
@@ -3795,7 +3787,7 @@ void US_ReportStageGui::reset_reporting( void )
 
 //eSignatures
 US_eSignaturesGui::US_eSignaturesGui( QWidget* topw )
-  : US_WidgetsDialog( topw, 0 )
+  : US_WidgetsDialog( topw, Qt::WindowFlags() )
 {
    mainw               = (US_ComProjectMain*)topw;
 
