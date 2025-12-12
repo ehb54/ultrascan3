@@ -5,16 +5,7 @@
   "homepage": "https://sourceforge.net/projects/qwt",
   "license": null,
   "dependencies": [
-    {
-      "name": "qt5-base",
-      "default-features": false,
-      "features": [
-        "concurrent",
-        "gui",
-        "opengl",
-        "widgets"
-      ]
-    },
+    "qt5-base",
     "qt5-svg",
     {
       "name": "vcpkg-qmake",
