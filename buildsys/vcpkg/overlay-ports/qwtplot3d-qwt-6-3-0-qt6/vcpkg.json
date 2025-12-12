@@ -5,6 +5,6 @@
   "homepage": "https://github.com/ehb54/ultrascan3",
   "license": "LGPL-2.1-or-later",
   "dependencies": [
-    "qwt"
+    "qwt-6-3-0-qt6"
   ]
 }

@@ -12,6 +12,7 @@ vcpkg_configure_cmake(
         PREFER_NINJA
         OPTIONS
         -DCMAKE_POSITION_INDEPENDENT_CODE=ON
+        -DUSE_QT6=ON
 )
 
 # Build

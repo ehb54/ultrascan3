@@ -27,6 +27,6 @@ endif()
 set_target_properties(unofficial::qwtplot3d PROPERTIES
         INTERFACE_INCLUDE_DIRECTORIES "${_QWTPLOT3D_INCLUDE_DIR}")
 
- find_package(Qt5 COMPONENTS Core Gui OpenGL REQUIRED)
+ find_package(Qt6 COMPONENTS Core Gui OpenGL OpenGLWidgets Widgets REQUIRED)
 
- target_link_libraries(unofficial::qwtplot3d INTERFACE Qt5::Core Qt5::Gui Qt5::OpenGL)
+ target_link_libraries(unofficial::qwtplot3d INTERFACE Qt6::Core Qt6::Gui Qt6::OpenGL Qt6::OpenGLWidgets Qt6::Widgets)
