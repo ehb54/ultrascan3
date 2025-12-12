@@ -140,6 +140,15 @@ function(configure_us_gui_target target_name is_static)
     # OpenGL
     target_link_libraries(${target_name} PUBLIC OpenGL::GL)
 
+    # GLU (must come AFTER qwtplot3d on MinGW because of link order)
+    if(WIN32)
+        if(TARGET OpenGL::GLU)
+            target_link_libraries(${target_name} PRIVATE OpenGL::GLU)
+        else()
+            target_link_libraries(${target_name} PRIVATE glu32)
+        endif()
+    endif()
+
     # Additional platform-specific libraries
     if(UNIX AND NOT APPLE)
         # Linux-specific
