@@ -676,7 +676,7 @@ int US_EqMath::calc_jacobian()
 {
    int stat   = 0;
    int ncomps = runfit.nbr_comps;
-   int mcomp  = max( ncomps, 4 );
+   int mcomp  = qMax( ncomps, 4 );
    int jpx    = 0;
    int jdx    = 0;
    QVector< double > v_ufunc( mcomp );
@@ -1386,7 +1386,7 @@ double US_EqMath::calc_testParameter( double mwval )
 
    // Determine maximum number of points for vectors
    for ( int jes = 0; jes < scanfits.size(); jes++ )
-      points = max( points, scanfits[ jes ].xvs.size() );
+      points = qMax( points, scanfits[ jes ].xvs.size() );
 
 DbgLv(1) << "ctPar: max points" << points;
    mmat .fill( NULL, points );      // Initialize matrix (array pointers)
@@ -1726,7 +1726,7 @@ int US_EqMath::calc_model( double* guess )
    int jpx    = 0;     // Total points count
    int jlx    = 0;     // Log count
    int jdx    = 0;     // Datasets count
-   int mcomp  = max( ncomps, 4 );
+   int mcomp  = qMax( ncomps, 4 );
    QVector< double > v_vbar ( mcomp );
    QVector< double > v_buoy ( mcomp );
 

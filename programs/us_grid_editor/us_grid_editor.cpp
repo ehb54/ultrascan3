@@ -148,7 +148,12 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
 
    chkb_log = new QCheckBox();
    lyt_log = us_checkbox( "X-Axis Logarithmic", chkb_log );
+#if QT_VERSION < QT_VERSION_CHECK(6, 7, 0)
    connect( chkb_log, &QCheckBox::stateChanged, this, &US_Grid_Editor::refill_grid_points );
+#else
+   connect( chkb_log, &QCheckBox::checkStateChanged, this, &US_Grid_Editor::refill_grid_points );
+#endif
+
 
    QRadioButton* rb_exctpoints = new QRadioButton();
    QRadioButton* rb_midpoints    = new QRadioButton();
@@ -521,7 +526,7 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    connect( pb_default_plot, &QPushButton::clicked, this, &US_Grid_Editor::default_plot_ctrl );
 
    QGridLayout* lyt_r = new QGridLayout();
-   lyt_r->setMargin( 0 );
+   lyt_r->setContentsMargins( 0, 0, 0, 0 );
    int rr = 0;
    lyt_r->addWidget( lb_x_plot,       rr, 0, 1, 1 );
    lyt_r->addLayout( lyt_x_s,         rr, 1, 1, 1 );
@@ -2175,7 +2180,11 @@ void US_Grid_Editor::load()
       chkb_log->setChecked( model.customGridData.xLogarithmic );
       bool isMid = model.customGridData.midpointBins;
       bg_point_type->button( MIDPOINTS )->setChecked( isMid );
+#if QT_VERSION < QT_VERSION_CHECK(6, 7, 0)
       connect( chkb_log, &QCheckBox::stateChanged, this, &US_Grid_Editor::refill_grid_points );
+#else
+      connect( chkb_log, &QCheckBox::checkStateChanged, this, &US_Grid_Editor::refill_grid_points );
+#endif
       connect( bg_point_type, &QButtonGroup::idClicked, this, &US_Grid_Editor::set_mid_exct_points );
 
       for ( int ii = 0; ii < partial_grid_info.size(); ii++ ) {
@@ -2335,7 +2344,7 @@ void US_Grid_Editor::save()
 
       if ( !ok )  return;
 
-      newtext.remove( QRegExp( "[^\\w\\d_-]" ) );
+      newtext.remove( QRegularExpression( "[^\\w\\d_-]" ) );
 
       int     slen    = newtext.length();
       if ( slen > 40 ) newtext = newtext.left( 40 );
@@ -2512,7 +2521,7 @@ US_Grid_Preset::US_Grid_Preset( QWidget * parent, Attribute::Type x,
    hline1->setFrameShadow( QFrame::Sunken );
 
    QGridLayout* layout = new QGridLayout();
-   layout->setMargin( 2 );
+   layout->setContentsMargins( 2, 2, 2, 2 );
    layout->setSpacing( 3 );
    int row = 0;
    layout->addWidget( lb_x_axis,  row,   0, 1, 2 );
@@ -3629,9 +3638,8 @@ void US_Grid_ZFunction::plot_data()
    points->setStyle( QwtPlotCurve::NoCurve );
    points->setSamples( x_points.data(), y_points.data(), x_points.size() );
 
-   std::pair<double*, double*> min_max;
    double x_min, x_max, y_min, y_max, dx, dy;
-   min_max = std::minmax_element( xvalues.begin(), xvalues.end() );
+   auto min_max = std::minmax_element( xvalues.begin(), xvalues.end() );
    x_min   = *min_max.first;
    x_max   = *min_max.second;
 

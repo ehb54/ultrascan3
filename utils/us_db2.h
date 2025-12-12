@@ -9,7 +9,6 @@
 #ifndef NO_DB
 #include "mysql.h"
 #endif
-
 #include "us_extern.h"
 
 /*! \brief This class provides connectivity and convenience functions
@@ -162,7 +161,7 @@ public:
         the result set. This function can be called repeatedly to retrieve
         values for all columns in the row. If there are n columns in
         the row, the columns are numbered 0...n-1. Value() returns
-        the QVariant::invalid type in cases where the data type is unknown,
+        the QVariant() type in cases where the data type is unknown,
         or if the index is out of bounds. Use next() to advance the row pointer.
 
         \param index   The column number in the current row.

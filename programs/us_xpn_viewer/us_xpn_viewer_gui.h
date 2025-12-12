@@ -82,6 +82,7 @@ private:
 private:
     QwtThermo *d_thermo;
     QLabel *d_label;
+    bool log_scale;
 };
 
 
