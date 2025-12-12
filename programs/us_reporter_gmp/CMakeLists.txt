@@ -1,8 +1,5 @@
 # us_reporter_gmp
 
-# Find required Qt components
-find_package(Qt5 REQUIRED COMPONENTS DataVisualization)
-
 # Main program sources from us_reporter_gmp directory
 set(REPORTER_GMP_SOURCES
         us_reporter_gmp_main.cpp

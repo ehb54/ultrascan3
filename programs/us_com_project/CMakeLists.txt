@@ -1,8 +1,5 @@
 # us_com_project
 
-# Find required Qt components based on .pro file
-find_package(Qt5 REQUIRED COMPONENTS DataVisualization)
-
 # Main program sources from us_com_project directory
 set(COM_PROJECT_SOURCES
         us_com_project_main.cpp

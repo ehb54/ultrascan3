@@ -1,8 +1,5 @@
 # us_query_rmsd
 
-# Find required Qt components
-find_package(Qt5 REQUIRED COMPONENTS DataVisualization)
-
 # Main program sources from us_query_rmsd directory
 set(QUERY_RMSD_SOURCES
         us_query_rmsd.cpp
