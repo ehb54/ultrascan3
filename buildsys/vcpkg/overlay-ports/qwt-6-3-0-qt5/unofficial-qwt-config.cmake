@@ -1,7 +1,7 @@
 include(CMakeFindDependencyMacro)
 
 if(NOT TARGET unofficial::qwt::qwt)
-    find_dependency(Qt5 COMPONENTS Core Gui Widgets Svg OpenGL Concurrent PrintSupport OpenGLWidgets)
+    find_dependency(Qt5 COMPONENTS Core Gui Widgets Svg OpenGL Concurrent PrintSupport)
 
     find_file(qwt_LIBRARY_RELEASE_DLL NAMES qwt.dll PATHS "${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin" NO_DEFAULT_PATH)
     find_file(qwt_LIBRARY_DEBUG_DLL NAMES qwtd.dll PATHS "${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/debug/bin" NO_DEFAULT_PATH)
@@ -38,11 +38,10 @@ if(NOT TARGET unofficial::qwt::qwt)
     )
     target_link_libraries(unofficial::qwt::qwt
         INTERFACE
-        Qt::Widgets
-        Qt::Svg
-        Qt::Concurrent
-        Qt::PrintSupport
-        Qt::OpenGL
-        Qt::OpenGLWidgets
+        Qt5::Widgets
+        Qt5::Svg
+        Qt5::Concurrent
+        Qt5::PrintSupport
+        Qt5::OpenGL
     )
 endif()

@@ -8,7 +8,9 @@ vcpkg_from_sourceforge(
         config.patch
         fix_dll_install.patch
 )
-
+set(VCPKG_QMAKE_COMMAND "${CURRENT_INSTALLED_DIR}/tools/qt5/bin/qmake${VCPKG_HOST_EXECUTABLE_SUFFIX}")
+set(VCPKG_QT_CONF_RELEASE "${CURRENT_INSTALLED_DIR}/tools/qt5/qt_release.conf")
+set(VCPKG_QT_CONF_DEBUG "${CURRENT_INSTALLED_DIR}/tools/qt5/qt_debug.conf")
 string(COMPARE EQUAL "${VCPKG_LIBRARY_LINKAGE}" "dynamic" IS_DYNAMIC)
 set(OPTIONS "")
 if(IS_DYNAMIC)
@@ -24,6 +26,14 @@ vcpkg_qmake_configure(
 )
 vcpkg_qmake_install()
 vcpkg_copy_pdbs()
+
+# Force a version file
+include(CMakePackageConfigHelpers)
+write_basic_package_version_file(
+        "${CURRENT_PACKAGES_DIR}/share/unofficial-qwt/unofficial-qwt-config-version.cmake"
+        VERSION ${VERSION}
+        COMPATIBILITY AnyNewerVersion
+)
 
 # Qt6 pkg-config files not installed https://github.com/microsoft/vcpkg/issues/25988
 # vcpkg_fixup_pkgconfig()
