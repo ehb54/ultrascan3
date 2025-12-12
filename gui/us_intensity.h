@@ -8,7 +8,7 @@
 
 //! \brief A class to provide a detail plot of the intensity profile
 
-class US_Intensity : public US_WidgetsDialog
+class US_GUI_EXTERN US_Intensity : public US_WidgetsDialog
 {
    Q_OBJECT
 

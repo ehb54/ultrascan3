@@ -24,7 +24,7 @@ struct listInfo
            a logical ID rather than the list item number as in 
            ordinary combo boxes and list widgets.
 */
-class US_SelectBase
+class US_GUI_EXTERN US_SelectBase
 {
    public:
       /*! \brief Generic constructor for the US_SelectBase class. The
