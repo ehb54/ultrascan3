@@ -18,6 +18,15 @@
       }
     },
     {
+      "name": "base-qt5-qwt616",
+      "hidden": true,
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "cacheVariables": {
+        "VCPKG_MANIFEST_FEATURES": "qt5"
+      }
+    },
+    {
       "name": "base-qt6",
       "hidden": true,
       "inherits": "base",
@@ -89,13 +98,13 @@
     {
       "name": "macos-release-qt5-qwt616",
       "displayName": "macOS Release Qt5 Qwt6.1.6",
-      "inherits": ["release-base", "macos-base", "base"],
+      "inherits": ["release-base", "macos-base", "base-qt5-qwt616"],
       "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Darwin" }
     },
     {
       "name": "macos-debug-qt5-qwt616",
       "displayName": "macOS Debug Qt5 Qwt6.1.6",
-      "inherits": ["debug-base", "macos-base", "base"],
+      "inherits": ["debug-base", "macos-base", "base-qt5-qwt616"],
       "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Darwin" }
     },
     {
@@ -125,13 +134,13 @@
     {
       "name": "linux-release-qt5-qwt616",
       "displayName": "linux Release Qt5 Qwt6.1.6",
-      "inherits": ["release-base", "linux-base", "base"],
+      "inherits": ["release-base", "linux-base", "base-qt5-qwt616"],
       "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Linux" }
     },
     {
       "name": "linux-debug-qt5-qwt616",
       "displayName": "linux Debug Qt5 Qwt6.1.6",
-      "inherits": ["debug-base", "linux-base", "base"],
+      "inherits": ["debug-base", "linux-base", "base-qt5-qwt616"],
       "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Linux" }
     },
     {
@@ -161,13 +170,13 @@
     {
       "name": "windows-release-qt5-qwt616",
       "displayName": "windows Release Qt5 Qwt6.1.6",
-      "inherits": ["release-base", "windows-base", "base"],
+      "inherits": ["release-base", "windows-base", "base-qt5-qwt616"],
       "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Windows" }
     },
     {
       "name": "windows-debug-qt5-qwt616",
       "displayName": "windows Debug Qt5 Qwt6.1.6",
-      "inherits": ["debug-base", "windows-base", "base"],
+      "inherits": ["debug-base", "windows-base", "base-qt5-qwt616"],
       "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Windows" }
     },
     {
@@ -189,15 +198,21 @@
       "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Windows" }
     },
     {
+      "name": "windows-debug-qt6",
+      "displayName": "windows Debug Qt6 Qwt6.3.0",
+      "inherits": ["debug-base", "windows-base", "base-qt6"],
+      "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Windows" }
+    },
+    {
       "name": "mingw-release-qt5-qwt616",
       "displayName": "mingw Release Qt5 Qwt6.1.6",
-      "inherits": ["release-base", "mingw-base", "base"],
+      "inherits": ["release-base", "mingw-base", "base-qt5-qwt616"],
       "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "MinGW" }
     },
     {
       "name": "mingw-debug-qt5-qwt616",
       "displayName": "mingw Debug Qt5 Qwt6.1.6",
-      "inherits": ["debug-base", "mingw-base", "base"],
+      "inherits": ["debug-base", "mingw-base", "base-qt5-qwt616"],
       "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "MinGW" }
     },
     {
