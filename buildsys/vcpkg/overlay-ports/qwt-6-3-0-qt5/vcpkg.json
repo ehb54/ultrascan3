@@ -1,0 +1,25 @@
+{
+  "name": "qwt-6-3-0-qt5",
+  "version": "6.3.0",
+  "description": "Widgets library for technical applications",
+  "homepage": "https://sourceforge.net/projects/qwt",
+  "license": null,
+  "dependencies": [
+    {
+      "name": "qt5-base",
+      "default-features": false,
+      "features": [
+        "concurrent",
+        "gui",
+        "opengl",
+        "widgets"
+      ]
+    },
+    "qt5-svg",
+    {
+      "name": "vcpkg-qmake",
+      "host": true,
+      "default-features": false
+    }
+  ]
+}
