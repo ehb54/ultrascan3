@@ -12,14 +12,25 @@
   ],
   "features": {
     "qt5": {
-      "description": "Build with Qt5",
+      "description": "Build with Qt5 Qwt 6.1.6",
       "dependencies": [
         "qt5-base",
         "qt5-datavis3d",
         "qt5-svg",
         "qt5-tools",
         "qwt-6-1-6",
-        "qwtplot3d"
+        "qwtplot3d-qwt-6-1-6-qt5"
+      ]
+    },
+    "qt5-qwt630": {
+      "description": "Build with Qt5 Qwt 6.3.0",
+      "dependencies": [
+        "qt5-base",
+        "qt5-datavis3d",
+        "qt5-svg",
+        "qt5-tools",
+        "qwt-6-3-0-qt5",
+        "qwtplot3d-qwt-6-3-0-qt5"
       ]
     },
     "qt6": {
@@ -30,7 +41,7 @@
         "qtsvg",
         "qttools",
         "qwt",
-        "qwtplot3d"
+        "qwtplot3d-qwt-6-3-0-qt6"
       ]
     }
   }
