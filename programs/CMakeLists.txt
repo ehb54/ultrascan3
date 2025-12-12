@@ -90,15 +90,13 @@ if(NOT US3_NO_DB)
         if(TARGET UltraScan3::Gui)
             message(STATUS "[programs] Using SHARED GUI (APP build)")
             target_link_libraries(us_program_common INTERFACE UltraScan3::Gui)
+        # historical quirk: some code had symbols only in the static gui → pull it in if present
+        elseif(TARGET UltraScan3::Gui_Static)
+            message(STATUS "[programs] Augmenting with STATIC GUI to pick up legacy symbols")
+            target_link_libraries(us_program_common INTERFACE UltraScan3::Gui_Static)
         else()
             message(FATAL_ERROR "[programs] GUI requested but UltraScan3::Gui not found. \
 Make sure add_subdirectory(gui) is called before add_subdirectory(programs).")
-        endif()
-
-        # historical quirk: some code had symbols only in the static gui → pull it in if present
-        if(TARGET UltraScan3::Gui_Static)
-            message(STATUS "[programs] Augmenting with STATIC GUI to pick up legacy symbols")
-            target_link_libraries(us_program_common INTERFACE UltraScan3::Gui_Static)
         endif()
     endif()
 else()
