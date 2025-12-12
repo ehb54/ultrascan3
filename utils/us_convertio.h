@@ -21,7 +21,7 @@ struct cellInfo
            data to the disk and the database.
            All methods are static.
 */
-class US_ConvertIO 
+class US_UTIL_EXTERN US_ConvertIO
 {
    public:
       // \brief Generic constructor for the US_ConvertIO class.

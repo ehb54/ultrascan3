@@ -10,7 +10,7 @@
 //! \class US_Convert
 //!        This class provides the ability to convert raw data in the
 //!        Beckman format to the file format used by US3. 
-class US_Convert
+class US_UTIL_EXTERN US_Convert
 {
    public:
       //! \brief   Some status codes returned by the us_convert program
@@ -32,7 +32,7 @@ class US_Convert
 
       //! \brief Class to contain a list of scans to exclude from a data set
       //!        for a single c/c/w combination
-      class Excludes
+      class US_UTIL_EXTERN Excludes
       {
          public:
          QList< int >  excludes;   //!< list of scan indexes to exclude 
@@ -50,7 +50,7 @@ class US_Convert
 
       //! \brief  Class that contains information about relevant 
       //!         cell/channel/wavelength combinations
-      class TripleInfo
+      class US_UTIL_EXTERN TripleInfo
       {
          public:
          int         tripleID;        //!< The ID of this c/c/w combination (rawDataID)
