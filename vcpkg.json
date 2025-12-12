@@ -40,7 +40,7 @@
         "qtdatavis3d",
         "qtsvg",
         "qttools",
-        "qwt",
+        "qwt-6-3-0-qt6",
         "qwtplot3d-qwt-6-3-0-qt6"
       ]
     }

@@ -32,9 +32,7 @@
       "inherits": "base",
       "binaryDir": "${sourceDir}/build/${presetName}",
       "cacheVariables": {
-        "VCPKG_MANIFEST_FEATURES": "qt6"
-      },
-      "environment": {
+        "VCPKG_MANIFEST_FEATURES": "qt6",
         "USE_QT6": "ON"
       }
     },
