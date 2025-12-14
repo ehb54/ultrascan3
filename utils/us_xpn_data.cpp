@@ -2478,19 +2478,27 @@ DbgLv(1) << "expA:   nf" << nfiles << "fname" << fname
 
    // Create a speed step vector
    QVector< US_SimulationParameters::SpeedProfile > speedsteps;
-   US_DataIO::RawData* udata = &allData[ iiuse ];
    QVector< US_DataIO::Scan > scans;
-   scans.clear();
-   for (auto triple : allData)
+   int total_scan_count = 0;
+   for (const auto& triple : allData)
    {
-      for (int scx = 0; scx < triple.scanCount(); scx++)
+      total_scan_count += triple.scanData.size();
+   }
+   scans.reserve(total_scan_count);
+   for (const auto& triple : allData)
+   {
+      for (const auto& scan: triple.scanData)
       {
-         scans.push_back(triple.scanData[scx]);
+         scans << scan;
       }
    }
-   // Sort scans by time
+   // Sort scans by time, tiebreak by omega2t
    std::sort(scans.begin(), scans.end(), [](const US_DataIO::Scan& a, const US_DataIO::Scan& b) {
-       return a.seconds < b.seconds;
+       if ( qRound(a.seconds * 1000.0) == qRound(b.seconds * 1000.0) )
+       {
+          return a.omega2t < b.omega2t;
+       }
+      return a.seconds < b.seconds;
    });
    US_SimulationParameters::computeSpeedSteps( &scans, speedsteps );
 
@@ -2508,7 +2516,7 @@ DbgLv(1) << "expA:   nf" << nfiles << "fname" << fname
    QString tspath    = cur_dir + runID + ".time_state.tmst";
    int ntimes        = scans.count();
    int ntssda        = tSydata.count();
-   double e_utime    = scans[ ntimes - 1 ].seconds;
+   double e_utime    = ( ntimes > 0 ) ? scans[ ntimes - 1 ].seconds : 0.0;
    double e_stime    = ntssda > 0 ? tSydata[ ntssda - 1 ].exptime : 0.0;
 DbgLv(1) << "expA:   ntimes ntssda" << ntimes << ntssda
  << "e_utime e_stime" << e_utime << e_stime;
@@ -2735,7 +2743,7 @@ DbgLv(1) << "expA:   ii" << ii << "ftx" << ftx << "stage" << stage << "time_n" <
          double tempera    = tempe_p;
 DbgLv(1) << "expA:   ii" << ii << "stage" << stage << "time_n" << time_n
  << "speed_n" << speed_n << "omg2t_n" << omg2t_n;
-         // incase the time increment is one second, take the raw values directly
+         // in case the time increment is one second, take the raw values directly
          if ( timeinc == 1 ) {
             time_c++;
             // Set scan number to matching-time scan or 0
@@ -2896,19 +2904,27 @@ DbgLv(1) << "expA:   nf" << nfiles << "fname" << fname
 
    // Create a speed step vector
    QVector< US_SimulationParameters::SpeedProfile > speedsteps;
-   US_DataIO::RawData* udata = &allData[ iiuse ];
    QVector< US_DataIO::Scan > scans;
-   scans.clear();
-   for (auto triple : allData)
+   int total_scan_count = 0;
+   for (const auto& triple : allData)
    {
-       for (int scx = 0; scx < triple.scanCount(); scx++)
+      total_scan_count += triple.scanData.size();
+   }
+   scans.reserve(total_scan_count);
+   for (const auto& triple : allData)
+   {
+       for (const auto& scan: triple.scanData)
        {
-           scans.push_back(triple.scanData[scx]);
+           scans << scan;
        }
    }
-   // Sort scans by time
+   // Sort scans by time, tiebreak by omega2t
    std::sort(scans.begin(), scans.end(), [](const US_DataIO::Scan& a, const US_DataIO::Scan& b) {
-       return a.seconds < b.seconds;
+       if ( qRound(a.seconds * 1000.0) == qRound(b.seconds * 1000.0) )
+       {
+          return a.omega2t < b.omega2t;
+       }
+      return a.seconds < b.seconds;
    });
 
    US_SimulationParameters::computeSpeedSteps( &scans, speedsteps );
@@ -2927,7 +2943,7 @@ DbgLv(1) << "expA:   nf" << nfiles << "fname" << fname
    QString tspath    = cur_dir + runID + ".time_state.tmst";
    int ntimes        = scans.count();
    int ntssda        = tSydata.count();
-   double e_utime    = scans[ ntimes - 1 ].seconds;
+   double e_utime    = ntimes > 0 ? scans[ ntimes - 1 ].seconds : 0.0;
    double e_stime    = ntssda > 0 ? tSydata[ ntssda - 1 ].exptime : 0.0;
 DbgLv(1) << "expA:   ntimes ntssda" << ntimes << ntssda
  << "e_utime e_stime" << e_utime << e_stime;
@@ -3160,7 +3176,7 @@ DbgLv(1) << "expA:   ii" << ii << "ftx" << ftx << "stage" << stage << "time_n" <
          double tempera    = tempe_p;
 DbgLv(1) << "expA:   ii" << ii << "stage" << stage << "time_n" << time_n
  << "speed_n" << speed_n << "omg2t_n" << omg2t_n;
-         // incase the time increment is one second, take the raw values directly
+         // in case the time increment is one second, take the raw values directly
          if ( timeinc == 1 ) {
             time_c++;
             // Set scan number to matching-time scan or 0
