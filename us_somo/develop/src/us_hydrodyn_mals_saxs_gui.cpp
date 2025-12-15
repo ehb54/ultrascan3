@@ -1,4 +1,5 @@
 #include "../include/us3_defines.h"
+#include <QRegularExpression>
 #include "../include/us_hydrodyn.h"
 #include "../include/us_hydrodyn_mals_saxs.h"
 // #include <qsplitter.h>
@@ -5814,7 +5815,7 @@ void US_Hydrodyn_Mals_Saxs::model_view( QStringList files )
       }
          
       {
-         QStringList qsl = (qsl0[ 0 ] ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
+         QStringList qsl = (qsl0[ 0 ] ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts );
          if ( qsl.size() < 1 )
          {
             editor_msg( "red", QString( us_tr( "Error: insufficient model info for file %1 [b]" ) ).arg( files[ i ] ) );
@@ -5839,7 +5840,7 @@ void US_Hydrodyn_Mals_Saxs::model_view( QStringList files )
       {
          bms += "Pb ";
 
-         QStringList qsl = (qsl0[ j ] ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
+         QStringList qsl = (qsl0[ j ] ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts );
 
          if ( qsl.size() < 4 )
          {
@@ -6181,8 +6182,8 @@ void US_Hydrodyn_Mals_Saxs::fasta_file() {
    QStringList qsl;
 
    QTextStream ts( &f );
-   QRegExp rx_empty( "^\\s*$" );
-   QRegExp rx_newseq( "^\\s*>" );
+   QRegularExpression rx_empty( "^\\s*$" );
+   QRegularExpression rx_newseq( "^\\s*>" );
 
    QString seq;
    int chains = 0;
@@ -6194,11 +6195,12 @@ void US_Hydrodyn_Mals_Saxs::fasta_file() {
    while ( !ts.atEnd() ) {
       QString qs = ts.readLine().trimmed();
       
-      if ( rx_empty.exactMatch( qs ) ) {
+      if ( rx_empty.match( qs ).hasMatch() ) {
          continue;
       }
 
-      if ( rx_newseq.indexIn( qs ) > -1 ) {
+      QRegularExpressionMatch rx_newseq_m = rx_newseq.match( qs );
+      if ( rx_newseq_m.hasMatch() ) {
          seq_names += qs.replace( rx_newseq, "" ) + "\n";
          chains++;
          continue;

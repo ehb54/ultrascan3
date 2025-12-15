@@ -4,8 +4,9 @@
 #include "../include/us_multi_column.h"
 #include "../include/us_pm.h"
 #include "us_cuda.h"
-//Added by qt3to4:
 #include <QTextStream>
+#include <QRegularExpression>
+#include <QRegularExpressionMatch>
 
 // globals to remove dependencies on libus
 // a better job could be done
@@ -192,8 +193,8 @@ int main (int argc, char **argv)
       QString solutionfile = cmds[2];
       QString bufferfile = cmds[3];
       double alpha = cmds[4].toDouble();
-      outfile.replace(QRegExp("\\.dat$"), "");
-      outfile += "a" + QString("%1").arg(alpha).replace(QRegExp("\\."),"") + ".dat";
+      outfile.replace(QRegularExpression("\\.dat$"), "");
+      outfile += "a" + QString("%1").arg(alpha).replace(QRegularExpression("\\."),"") + ".dat";
 
       US_Saxs_Util usu;
       if ( !usu.read(solutionfile, "sol") ||
@@ -227,8 +228,8 @@ int main (int argc, char **argv)
       QString bufferfile = cmds[3];
       QString emptycellfile = cmds[4];
       double alpha = cmds[5].toDouble();
-      outfile.replace(QRegExp("\\.dat$"), "");
-      outfile += "a" + QString("%1").arg(alpha).replace(QRegExp("\\."),"") + ".dat";
+      outfile.replace(QRegularExpression("\\.dat$"), "");
+      outfile += "a" + QString("%1").arg(alpha).replace(QRegularExpression("\\."),"") + ".dat";
 
       US_Saxs_Util usu;
       if ( !usu.read(solutionfile, "sol") ||
@@ -267,11 +268,11 @@ int main (int argc, char **argv)
       double dconst = cmds[7].toDouble();
       double low = cmds[8].toDouble();
       double high = cmds[9].toDouble();
-      outfile.replace(QRegExp("\\.dat$"), "");
+      outfile.replace(QRegularExpression("\\.dat$"), "");
       outfile += 
-         "a" + QString("%1").arg(alpha).replace(QRegExp("\\."),"") +
-         "b" + QString("%1").arg(beta).replace(QRegExp("\\."),"") +
-         "c" + QString("%1").arg(dconst).replace(QRegExp("\\."),"") +
+         "a" + QString("%1").arg(alpha).replace(QRegularExpression("\\."),"") +
+         "b" + QString("%1").arg(beta).replace(QRegularExpression("\\."),"") +
+         "c" + QString("%1").arg(dconst).replace(QRegularExpression("\\."),"") +
          ".dat";
 
       US_Saxs_Util usu;
@@ -469,11 +470,11 @@ int main (int argc, char **argv)
          cout << usu.errormsg << endl;
          exit(errorbase - 1);
       }
-      outfile.replace(QRegExp("\\.dat$"), "");
+      outfile.replace(QRegularExpression("\\.dat$"), "");
       outfile += 
-         "a" + QString("%1").arg(alphainit).replace(QRegExp("\\."),"") +
-         "b" + QString("%1").arg(betainit).replace(QRegExp("\\."),"") +
-         "c" + QString("%1").arg(dconstinit).replace(QRegExp("\\."),"") +
+         "a" + QString("%1").arg(alphainit).replace(QRegularExpression("\\."),"") +
+         "b" + QString("%1").arg(betainit).replace(QRegularExpression("\\."),"") +
+         "c" + QString("%1").arg(dconstinit).replace(QRegularExpression("\\."),"") +
          ".dat";
 
       if ( !usu.write(outfile, "out") )
@@ -634,11 +635,11 @@ int main (int argc, char **argv)
          cout << usu.errormsg << endl;
          exit(errorbase - 1);
       }
-      outfile.replace(QRegExp("\\.dat$"), "");
+      outfile.replace(QRegularExpression("\\.dat$"), "");
       outfile += 
-         "a" + QString("%1").arg(alphamin).replace(QRegExp("\\."),"") +
-         "b" + QString("%1").arg(betamin).replace(QRegExp("\\."),"") +
-         "c" + QString("%1").arg(dconstmin).replace(QRegExp("\\."),"") +
+         "a" + QString("%1").arg(alphamin).replace(QRegularExpression("\\."),"") +
+         "b" + QString("%1").arg(betamin).replace(QRegularExpression("\\."),"") +
+         "c" + QString("%1").arg(dconstmin).replace(QRegularExpression("\\."),"") +
          ".dat";
 
       if ( !usu.write(outfile, "out") )
@@ -915,11 +916,11 @@ int main (int argc, char **argv)
          }
       }
 
-      outfile.replace(QRegExp("\\.dat$"), "");
+      outfile.replace(QRegularExpression("\\.dat$"), "");
       outfile += 
-         "a" + QString("%1").arg(alphamin).replace(QRegExp("\\."),"") +
-         "b" + QString("%1").arg(betamin).replace(QRegExp("\\."),"") +
-         "c" + QString("%1").arg(dconstmin).replace(QRegExp("\\."),"") +
+         "a" + QString("%1").arg(alphamin).replace(QRegularExpression("\\."),"") +
+         "b" + QString("%1").arg(betamin).replace(QRegularExpression("\\."),"") +
+         "c" + QString("%1").arg(dconstmin).replace(QRegularExpression("\\."),"") +
          ".dat";
 
          
@@ -1163,7 +1164,7 @@ int main (int argc, char **argv)
       double sRgmaxlimit = cmds[p++].toDouble();
       double pointweightpower = cmds[p++].toDouble();
       QString tag = infile;
-      tag.replace(QRegExp("\\.(dat|DAT)$"), "");
+      tag.replace(QRegularExpression("\\.(dat|DAT)$"), "");
       QString outfile = QString("%1g.dat").arg(tag);
       US_Saxs_Util usu;
 
@@ -1258,11 +1259,11 @@ int main (int argc, char **argv)
 
       QString projectdir = projectname;
 
-      projectname.replace(QRegExp("^.*((\\|/)"),"");
+      projectname.replace(QRegularExpression("^.*((\\|/)"),"");
 
       // make directory
       if ( 
-          !projectdir.contains(QRegExp("^(\\|/)")) // doesn't start at root
+          !projectdir.contains(QRegularExpression("^(\\|/)")) // doesn't start at root
           )
       {
          projectdir = QString("%1%2%3")
@@ -1679,7 +1680,7 @@ int main (int argc, char **argv)
       double  delta_delta_rho = cmds[ p++ ].toDouble();
       double  min_q           = cmds[ p++ ].toDouble();
       double  max_q           = cmds[ p++ ].toDouble();
-      bool    do_normalize    = cmds[ p++ ].contains( QRegExp("^(Y|y)") );
+      bool    do_normalize    = cmds[ p++ ].contains( QRegularExpression("^(Y|y)") );
 
       cout << ( do_normalize ? "yes, normalize\n" : "no don't normalize\n" );
 
@@ -1995,7 +1996,7 @@ int main (int argc, char **argv)
       errorbase--;
 
       US_Multi_Column result_linear_join_csv = result_linear_join;
-      result_linear_join_csv.filename.replace( QRegExp( "\\.txt$" ), ".csv" );
+      result_linear_join_csv.filename.replace( QRegularExpression( "\\.txt$" ), ".csv" );
 
       if ( 
           // !result_spline_asc.write( "", true ) ||

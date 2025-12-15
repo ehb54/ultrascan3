@@ -15,12 +15,10 @@
 #include "qfontmetrics.h"
 #include "qfile.h"
 #include "qfiledialog.h"
-//Added by qt3to4:
 #include <QCloseEvent>
 #include "us_hydrodyn.h"
 #include "qpushbutton.h"
 #include "qmessagebox.h"
-#include "qregexp.h"
 #include "us_json.h"
 
 using namespace std;

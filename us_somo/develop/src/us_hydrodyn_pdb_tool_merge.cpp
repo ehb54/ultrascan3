@@ -1,4 +1,5 @@
 #include "../include/us3_defines.h"
+#include <QRegularExpression>
 #include "../include/us_hydrodyn.h"
 #include "../include/us_hydrodyn_pdb_tool_merge.h"
 //Added by qt3to4:
@@ -597,9 +598,9 @@ void US_Hydrodyn_Pdb_Tool_Merge::start()
       return;
    }
 
-   QRegExp rx_model("^MODEL");
-   QRegExp rx_end("^END");
-   QRegExp rx_save_header("^("
+   QRegularExpression rx_model("^MODEL");
+   QRegularExpression rx_end("^END");
+   QRegularExpression rx_save_header("^("
                           "HEADER|"
                           "TITLE|"
                           "COMPND|"
@@ -658,7 +659,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::start()
          if ( qs.contains( rx_model ) )
          {
             model_count++;
-            QStringList qsl = (qs.left(20).split( QRegExp("\\s+") , Qt::SkipEmptyParts ) );
+            QStringList qsl = (qs.left(20).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts ) );
             QString model_name;
             if ( qsl.size() == 1 )
             {
@@ -724,7 +725,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::start()
       return;
    }
 
-   QFile ff( le_target->text().replace( QRegExp( ".pdb$", Qt::CaseInsensitive ) , "" ) + "_filtered.pdb" );
+   QFile ff( le_target->text().replace( QRegularExpression( ".pdb$", QRegularExpression::CaseInsensitiveOption ) , "" ) + "_filtered.pdb" );
    if ( cb_filter->isChecked() && !ff.open( QIODevice::WriteOnly ) )
    {
       QMessageBox::warning( this, "US-SOMO: PDB Editor : Cut/Splice",
@@ -1640,7 +1641,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::target()
    QString filename = QFileDialog::getSaveFileName( this , "Choose a name to save the result" , "" , "PDB (*.pdb *.PDB)" );
 
 
-   if ( !filename.contains( QRegExp( ".pdb$", Qt::CaseInsensitive ) ) )
+   if ( !filename.contains( QRegularExpression( ".pdb$", QRegularExpression::CaseInsensitiveOption ) ) )
    {
       filename += ".pdb";
    }
@@ -2487,7 +2488,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::csv_save()
       return;
    }
 
-   if ( !filename.contains(QRegExp(".csc$", Qt::CaseInsensitive )) )
+   if ( !filename.contains(QRegularExpression(".csc$", QRegularExpression::CaseInsensitiveOption )) )
    {
       filename += ".csc";
    }
@@ -3681,11 +3682,11 @@ void US_Hydrodyn_Pdb_Tool_Merge::only_closest()
          QString chain_b = chain_b_list.size() > 1 ? chain_b_list[ 1 ] : "?";
 
          // QString residue_a = chain_a_list.size() > 2 ? chain_a_list[ 2 ] : "?";
-         // residue_a.replace( QRegExp( "^\\D*" ), "" );
+         // residue_a.replace( QRegularExpression( QStringLiteral( "^\\D*" ) ), "" );
          // unsigned int residue_a_pos = residue_a.toUInt();
 
          QString residue_b = chain_b_list.size() > 2 ? chain_b_list[ 2 ] : "?";
-         residue_b.replace( QRegExp( "^\\D*" ), "" );
+         residue_b.replace( QRegularExpression( QStringLiteral( "^\\D*" ) ), "" );
          unsigned int residue_b_pos = residue_b.toUInt();
 
          if ( residue_b_pos < 2 )

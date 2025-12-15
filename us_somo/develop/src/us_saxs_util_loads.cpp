@@ -1,4 +1,5 @@
 #include "../include/us_saxs_util.h"
+#include <QRegularExpression>
 //Added by qt3to4:
 #include <QTextStream>
 
@@ -100,7 +101,7 @@ bool US_Saxs_Util::select_residue_file( QString filename )
                   = new_atom.hybrid.name;
                new_residue.r_atom.push_back(new_atom);
                new_atoms[new_atom.bead_assignment].push_back(new_atom);
-               if ( new_residue.name.contains(QRegExp("^PBR-")) )
+               if ( new_residue.name.contains(QRegularExpression( QStringLiteral( "^PBR-" ) )) )
                {
                   pbr_override_map[ QString("%1|%2|%3|%4")
                                     .arg(new_residue.name == "PBR-P" ? "P" : "NP" )
@@ -175,7 +176,7 @@ bool US_Saxs_Util::select_residue_file( QString filename )
    {
       // only AA's
       if ( residue_list[i].type == 0 &&
-           !residue_list[i].name.contains(QRegExp("^PBR-")) )
+           !residue_list[i].name.contains(QRegularExpression( QStringLiteral( "^PBR-" ) )) )
       {
          for ( unsigned int j = 0; j < residue_list[i].r_atom.size(); j++ )
          {
@@ -360,12 +361,12 @@ bool US_Saxs_Util::select_saxs_file( QString filename )
       {
          QString    qs  = ts.readLine();
          line++;
-         if ( qs.contains( QRegExp( "^\\s+#" ) ) )
+         if ( qs.contains( QRegularExpression( QStringLiteral( "^\\s+#" ) ) ) )
          {
             continue;
          }
          qs = qs.trimmed();
-         QStringList qsl = (qs ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
+         QStringList qsl = (qs ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts );
          int pos = 0;
          if ( qsl.size() == 11 )
          {
@@ -483,7 +484,7 @@ bool US_Saxs_Util::read_pdb( QStringList &qsl )
       {
          
          QString tmp_str = str1.mid(10,62);
-         tmp_str.replace(QRegExp("\\s+")," ");
+         tmp_str.replace(QRegularExpression( QStringLiteral( "\\s+" ) )," ");
          if ( str1.left(5) == "TITLE" )
          {
             last_pdb_title << tmp_str;
@@ -496,12 +497,13 @@ bool US_Saxs_Util::read_pdb( QStringList &qsl )
       {
          last_was_ENDMDL = false;
          model_flag = true; // we are using model descriptions (possibly multiple models)
-         QRegExp rx_get_model( "^MODEL\\s+(\\S+)" );
+         QRegularExpression rx_get_model( "^MODEL\\s+(\\S+)" );
          // str2 = str1.mid(6, 15);
          // temp_model.model_id = str2.toUInt();
-         if ( rx_get_model.indexIn( str1 ) != -1 )
+         QRegularExpressionMatch rx_get_model_m = rx_get_model.match( str1 );
+         if ( rx_get_model_m.hasMatch() )
          {
-            temp_model.model_id = rx_get_model.cap( 1 );
+            temp_model.model_id = rx_get_model_m.captured(1);
          } else {
             temp_model.model_id = str1.mid( 6, 15 );
          }
@@ -697,7 +699,7 @@ bool US_Saxs_Util::read_pdb( QString filename )
          {
                
             QString tmp_str = str1.mid(10,62);
-            tmp_str.replace(QRegExp("\\s+")," ");
+            tmp_str.replace(QRegularExpression( QStringLiteral( "\\s+" ) )," ");
             if ( str1.left(5) == "TITLE" )
             {
                last_pdb_title << tmp_str;
@@ -712,10 +714,11 @@ bool US_Saxs_Util::read_pdb( QString filename )
             model_flag = true; // we are using model descriptions (possibly multiple models)
             // str2 = str1.mid(6, 15);
             // temp_model.model_id = str2.toUInt();
-            QRegExp rx_get_model( "^MODEL\\s+(\\S+)" );
-            if ( rx_get_model.indexIn( str1 ) != -1 )
+            QRegularExpression rx_get_model( "^MODEL\\s+(\\S+)" );
+            QRegularExpressionMatch rx_get_model_m = rx_get_model.match( str1 );
+            if ( rx_get_model_m.hasMatch() )
             {
-               temp_model.model_id = rx_get_model.cap( 1 );
+               temp_model.model_id = rx_get_model_m.captured(1);
             } else {
                temp_model.model_id = str1.mid( 6, 15 );
             }
@@ -874,10 +877,10 @@ bool US_Saxs_Util::dna_rna_resolve()
 {
    // check each chain of each model for DNA type AA's
 
-   QRegExp rx_dna("^T$");
-   QRegExp rx_dna_and_rna("^(A|G|C|T|U)$");
-   QRegExp rx_dna_or_rna("^(A|G|C)$");
-   QRegExp rx_rna("^U$");
+   QRegularExpression rx_dna("^T$");
+   QRegularExpression rx_dna_and_rna("^(A|G|C|T|U)$");
+   QRegularExpression rx_dna_or_rna("^(A|G|C)$");
+   QRegularExpression rx_rna("^U$");
 
    // this can cause spurious chain breaks in the load
    // work around it with a map
@@ -897,20 +900,23 @@ bool US_Saxs_Util::dna_rna_resolve()
             PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
             QString thisres = this_atom->resName.trimmed();
             chainID = this_atom->chainID;
-            if ( rx_dna_and_rna.indexIn(thisres) == -1 )
+            QRegularExpressionMatch rx_dna_and_rna_m = rx_dna_and_rna.match(thisres);
+            if ( !rx_dna_and_rna_m.hasMatch() )
             {
                // not either:
                ask_convert = false;
                break;
             }
-            if ( rx_dna.indexIn(thisres) != -1 )
+            QRegularExpressionMatch rx_dna_m = rx_dna.match(thisres);
+            if ( rx_dna_m.hasMatch() )
             {
                // we definitely have DNA, correct this residue!
                ask_convert = false;
                convert_this = true;
                break;
             }
-            if ( rx_rna.indexIn(thisres) != -1 )
+            QRegularExpressionMatch rx_rna_m = rx_rna.match(thisres);
+            if ( rx_rna_m.hasMatch() )
             {
                // we definitely have RNA, the residue is ok
                ask_convert = false;
@@ -1002,7 +1008,7 @@ bool US_Saxs_Util::assign_atom(const QString &str1, struct PDB_chain *temp_chain
 
    temp_atom.resSeq = str1.mid(22, 5);
    temp_atom.orgResSeq = str1.mid(22, 4);
-   temp_atom.resSeq.replace(QRegExp(" *"),"");
+   temp_atom.resSeq.replace(QRegularExpression( QStringLiteral( " *" ) ),"");
    if ( temp_atom.resSeq == *last_resSeq )
    {
       flag = false;

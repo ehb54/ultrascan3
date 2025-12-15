@@ -1,4 +1,5 @@
 // this is part of the class US_Hydrodyn
+#include <QRegularExpression>
 // listing of other files is in us_hydrodyn.cpp
 // (this) us_hydrodyn_write.cpp contains code for writing various files
 
@@ -808,7 +809,7 @@ void US_Hydrodyn::save_pdb_csv( csv &csv1 )
       return;
    }
 
-   if ( !filename.contains(QRegExp(".pdc$", Qt::CaseInsensitive )) )
+   if ( !filename.contains(QRegularExpression(".pdc$", QRegularExpression::CaseInsensitiveOption )) )
    {
       filename += ".pdc";
    }
@@ -927,7 +928,7 @@ bool US_Hydrodyn::write_pdb_from_model(
                                        ,const QString & filename
                                        ) {
    QString fname = filename.isEmpty() ? pdb_file : filename;
-   fname = fname.replace( QRegExp( "(|-(h|H))\\.(pdb|PDB)$" ), "" );
+   fname = fname.replace( QRegularExpression( QStringLiteral( "(|-(h|H))\\.(pdb|PDB)$" ) ), "" );
    fname += suffix + ".pdb";
 
    if ( !overwrite && QFile::exists( fname ) )

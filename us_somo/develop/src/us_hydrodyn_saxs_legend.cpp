@@ -1,6 +1,6 @@
 #include "../include/us_hydrodyn_saxs.h"
 #include <qwt_legend.h>
-//Added by qt3to4:
+#include <qwt_text.h>
 #include <QFrame>
 
 void US_Hydrodyn_Saxs::plot_saxs_clicked( long 
@@ -124,24 +124,14 @@ void US_Hydrodyn_Saxs::plot_pr_clicked( long
    cout << QString( "plot_pr_clicked %1\n" ).arg( key );
 #endif
 }
+
 void US_Hydrodyn_Saxs::plot_pr_item_clicked( 
-#if QT_VERSION >= 0x050000 || QT_VERSION < 0x040000
                                             const QVariant & iteminfo,
-                                            int /* index */
-#else
-                                            QwtPlotItem*
-# if QT_VERSION >= 0x040000
-                                            pitem
-# endif
-#endif
+                                            int pitem
                                              )
 {
-#if QT_VERSION >= 0x040000
-# if QT_VERSION >= 0x050000
    QwtPlotCurve* pcurve = (QwtPlotCurve *)plot_pr->infoToItem( iteminfo );
-# else
-   QwtPlotCurve* pcurve = (QwtPlotCurve*)pitem;
-# endif
+
    int csize = pcurve->dataSize();
 
    if ( csize < 1 )
@@ -152,13 +142,12 @@ void US_Hydrodyn_Saxs::plot_pr_item_clicked(
 
    editor_msg( "black", 
                QString( us_tr( "Curve information: " 
-                            "Name: %1\n"
-                            "q: [%2:%3] [%4:%5] %6 points" ) )
+                               "Name: %1\n"
+                               "q: [%2:%3] [%4:%5] %6 points" ) )
                .arg( pcurve->title().text() )
                .arg( pcurve->minXValue() ).arg( pcurve->maxXValue() )
                .arg( pcurve->minYValue() ).arg( pcurve->maxYValue() )
                .arg( csize ) );
-#endif
 }
 
 void US_Hydrodyn_Saxs::saxs_legend()

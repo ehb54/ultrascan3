@@ -13,7 +13,6 @@
 
 #include <qfileinfo.h>
 #include <qdir.h>
-#include <qregexp.h> 
 
 #include <sys/stat.h>
 #include <fcntl.h>
