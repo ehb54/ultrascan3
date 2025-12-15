@@ -1,10 +1,9 @@
 #include "../include/us3_defines.h"
+#include <QRegularExpression>
 #include "../include/us_hydrodyn.h"
 #include "../include/us_revision.h"
 #include "../include/us_hydrodyn_fractal_dimension_options.h"
 
-#include <qregexp.h>
-//Added by qt3to4:
 #include <QResizeEvent>
 #include <QLabel>
 #include <QCloseEvent>
@@ -47,12 +46,13 @@ static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const 
     int itemHeight = height( listBox() );
     QFontMetrics fm = painter->fontMetrics();
     int yPos = ( ( itemHeight - fm.height() ) / 2 ) + fm.ascent();
-    QRegExp rx( "^<(.*)~(.*)~(.*)>(.*)$" );
-    if ( rx.indexIn(text()) != -1 ) 
+    QRegularExpression rx(QStringLiteral("^<(.*)~(.*)~(.*)>(.*)$"));
+    QRegularExpressionMatch m = rx.match(text());
+    if ( m.hasMatch() )
     {
        bool highlighted = ( painter->backgroundColor().fileName() != "#ffffff" );
-       painter->setPen(rx.cap(highlighted ? 2 : 1));
-       painter->drawText( 3, yPos, rx.cap(3) + " " + rx.cap(4));
+       painter->setPen( m.captured( highlighted ? 2 : 1 ) );
+       painter->drawText( 3, yPos, m.captured(3) + " " + m.captured(4) );
     } else {
        painter->drawText( 3, yPos, text() );
     }
@@ -172,7 +172,7 @@ void US_Hydrodyn_Batch::setupGUI()
    QString load_errors;
    for ( unsigned int i = 0; i < batch->file.size(); i++ ) 
    {
-      if ( batch->file[i].contains(QRegExp("(pdb|PDB|bead_model|BEAD_MODEL|beams|BEAMS)$")) )
+      if ( batch->file[i].contains(QRegularExpression( QStringLiteral( "(pdb|PDB|bead_model|BEAD_MODEL|beams|BEAMS)$" ) )) )
       {
          bool dup = false;
          if ( i ) 
@@ -918,7 +918,7 @@ void US_Hydrodyn_Batch::setupGUI()
    hbl_hydro_zeno->addWidget( cb_hullrad );
 
    QVBoxLayout * leftside = new QVBoxLayout(); leftside->setContentsMargins( 0, 0, 0, 0 ); leftside->setSpacing( 0 );
-   leftside->setMargin(5);
+   leftside->setContentsMargins(5, 5, 5, 5);
    leftside->addWidget(lbl_selection);
    leftside->addLayout(vbl_selection);
    leftside->addWidget(lbl_screen);
@@ -1217,7 +1217,7 @@ void US_Hydrodyn_Batch::load_somo()
    {
       if ( lb_files->item(i)->isSelected() )
       {
-         if ( lb_files->item(i)->text().contains(QRegExp("^File missing")) )
+         if ( lb_files->item(i)->text().contains(QRegularExpression( QStringLiteral( "^File missing" ) )) )
          {
             editor_msg("red", lb_files->item(i)->text() );
             break;
@@ -1225,7 +1225,7 @@ void US_Hydrodyn_Batch::load_somo()
          bool result;
          QString file = get_file_name(i);
          QColor save_color = editor->textColor();
-         if ( file.contains(QRegExp(".(pdb|PDB)$")) &&
+         if ( file.contains(QRegularExpression( QStringLiteral( ".(pdb|PDB)$" ) )) &&
               !((US_Hydrodyn *)us_hydrodyn)->is_dammin_dammif(file) )
          {
             // no save/restore settings for load into somo
@@ -1287,7 +1287,7 @@ void US_Hydrodyn_Batch::load_saxs()
    {
       if ( lb_files->item(i)->isSelected() )
       {
-         if ( lb_files->item(i)->text().contains(QRegExp("^File missing")) )
+         if ( lb_files->item(i)->text().contains(QRegularExpression( QStringLiteral( "^File missing" ) )) )
          {
             editor_msg("red", lb_files->item(i)->text() );
             break;
@@ -1295,7 +1295,7 @@ void US_Hydrodyn_Batch::load_saxs()
          bool result;
          QString file = get_file_name(i);
          QColor save_color = editor->textColor();
-         if ( file.contains(QRegExp(".(pdb|PDB)$")) &&
+         if ( file.contains(QRegularExpression( QStringLiteral( ".(pdb|PDB)$" ) )) &&
               !((US_Hydrodyn *)us_hydrodyn)->is_dammin_dammif(file) )
          {
             result = screen_pdb(file, false );
@@ -1312,7 +1312,7 @@ void US_Hydrodyn_Batch::load_saxs()
          }
          editor->setTextColor(save_color);
 
-         if ( file.contains(QRegExp(".(pdb|PDB)$")) &&
+         if ( file.contains(QRegularExpression( QStringLiteral( ".(pdb|PDB)$" ) )) &&
               !((US_Hydrodyn *)us_hydrodyn)->is_dammin_dammif(file) )
          {
             ((US_Hydrodyn *)us_hydrodyn)->pdb_saxs( true, false );
@@ -1343,7 +1343,7 @@ void US_Hydrodyn_Batch::update_enables()
       if ( lb_files->item(i)->isSelected() )
       {
          count_selected++;
-         if ( get_file_name(i).contains(QRegExp("(pdb|PDB)$")) )
+         if ( get_file_name(i).contains(QRegularExpression( QStringLiteral( "(pdb|PDB)$" ) )) )
          {
             any_pdb_in_list  = true;
             any_pdb_selected = true;
@@ -1356,7 +1356,7 @@ void US_Hydrodyn_Batch::update_enables()
             any_so_ovlp_selected    = true;
          }
       } else {
-         if ( get_file_name(i).contains(QRegExp("(pdb|PDB)$")) )
+         if ( get_file_name(i).contains(QRegularExpression( QStringLiteral( "(pdb|PDB)$" ) )) )
          {
             any_pdb_in_list = true;
          }
@@ -1875,7 +1875,7 @@ void US_Hydrodyn_Batch::screen()
          lb_files->item( i)->setText(QString("%1%2").arg(status_color[status[file]]).arg(file));
          lb_files->item(i)->setSelected( false);
          qApp->processEvents();
-         if ( file.contains(QRegExp(".(pdb|PDB)$")) ) 
+         if ( file.contains(QRegularExpression( QStringLiteral( ".(pdb|PDB)$" ) )) ) 
          {
             result = screen_pdb(file);
          } else {
@@ -2580,7 +2580,7 @@ void US_Hydrodyn_Batch::start( bool quiet )
             qApp->processEvents();
             job_timer.init_timer ( QString( "%1 screen" ).arg( get_file_name( i, m ) ) );
             job_timer.start_timer( QString( "%1 screen" ).arg( get_file_name( i, m ) ) );
-            if ( file.contains(QRegExp(".(pdb|PDB)$")) ) 
+            if ( file.contains(QRegularExpression( QStringLiteral( ".(pdb|PDB)$" ) )) ) 
             {
                result = screen_pdb(file);
             } else {
@@ -2606,7 +2606,7 @@ void US_Hydrodyn_Batch::start( bool quiet )
                   return;
                }
                bool pdb_mode =
-                  file.contains(QRegExp(".(pdb|PDB)$")) &&
+                  file.contains(QRegularExpression( QStringLiteral( ".(pdb|PDB)$" ) )) &&
                   !((US_Hydrodyn *)us_hydrodyn)->is_dammin_dammif(file);
                if ( pdb_mode )
                {
@@ -2791,7 +2791,7 @@ void US_Hydrodyn_Batch::start( bool quiet )
                                  }
 #endif
                                  saxs_header_iqq = ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header;
-                                 saxs_header_iqq.replace(QRegExp("from .* by"),"by");
+                                 saxs_header_iqq.replace(QRegularExpression( QStringLiteral( "from .* by" ) ),"by");
                                  if ( saxs_q.size() < ((US_Hydrodyn *)us_hydrodyn)->last_saxs_q.size() )
                                  {
                                     saxs_q = ((US_Hydrodyn *)us_hydrodyn)->last_saxs_q;
@@ -2809,7 +2809,7 @@ void US_Hydrodyn_Batch::start( bool quiet )
                      if ( batch->hydrate )
                      {
                         QString fname = org_pdb_file;
-                        fname = fname.replace( QRegExp( "(|-(h|H))\\.(pdb|PDB)$" ), "" ) 
+                        fname = fname.replace( QRegularExpression( QStringLiteral( "(|-(h|H))\\.(pdb|PDB)$" ) ), "" ) 
                            + "-h.pdb";
                         if ( !((US_Hydrodyn *)us_hydrodyn)->overwrite && QFile::exists( fname ) )
                         {
@@ -2919,7 +2919,7 @@ void US_Hydrodyn_Batch::start( bool quiet )
                               }
 #endif
                               saxs_header_iqq = ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header;
-                              saxs_header_iqq.replace(QRegExp("from .* by"),"by");
+                              saxs_header_iqq.replace(QRegularExpression( QStringLiteral( "from .* by" ) ),"by");
                               if ( saxs_q.size() < ((US_Hydrodyn *)us_hydrodyn)->last_saxs_q.size() )
                               {
                                  saxs_q = ((US_Hydrodyn *)us_hydrodyn)->last_saxs_q;
@@ -3040,7 +3040,7 @@ void US_Hydrodyn_Batch::start( bool quiet )
                               }
 #endif
                               saxs_header_prr = ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header;
-                              saxs_header_prr.replace(QRegExp("from .* by"),"by");
+                              saxs_header_prr.replace(QRegularExpression( QStringLiteral( "from .* by" ) ),"by");
                               if ( saxs_r.size() < ((US_Hydrodyn *)us_hydrodyn)->last_saxs_r.size() )
                               {
                                  saxs_r = ((US_Hydrodyn *)us_hydrodyn)->last_saxs_r;
@@ -3057,7 +3057,7 @@ void US_Hydrodyn_Batch::start( bool quiet )
                      if ( batch->hydrate )
                      {
                         QString fname = org_pdb_file;
-                        fname = fname.replace( QRegExp( "(|-(h|H))\\.(pdb|PDB)$" ), "" ) 
+                        fname = fname.replace( QRegularExpression( QStringLiteral( "(|-(h|H))\\.(pdb|PDB)$" ) ), "" ) 
                            + "-h.pdb";
                         if ( !((US_Hydrodyn *)us_hydrodyn)->overwrite && QFile::exists( fname ) )
                         {
@@ -3130,7 +3130,7 @@ void US_Hydrodyn_Batch::start( bool quiet )
                            }
 #endif
                            saxs_header_prr = ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header;
-                           saxs_header_prr.replace(QRegExp("from .* by"),"by");
+                           saxs_header_prr.replace(QRegularExpression( QStringLiteral( "from .* by" ) ),"by");
                            if ( saxs_r.size() < ((US_Hydrodyn *)us_hydrodyn)->last_saxs_r.size() )
                            {
                               saxs_r = ((US_Hydrodyn *)us_hydrodyn)->last_saxs_r;
@@ -3191,7 +3191,7 @@ void US_Hydrodyn_Batch::start( bool quiet )
                   restore_us_hydrodyn_settings();
                }
                if ( result && batch->hullrad ) {
-                  if ( file.contains(QRegExp(".(pdb|PDB)$")) ) {
+                  if ( file.contains(QRegularExpression( QStringLiteral( ".(pdb|PDB)$" ) )) ) {
                      save_us_hydrodyn_settings();
                      job_timer.init_timer  ( QString( "%1 hydrodynamics" ).arg( get_file_name( i, m ) ) );
                      job_timer.start_timer ( QString( "%1 hydrodynamics" ).arg( get_file_name( i, m ) ) );
@@ -3512,7 +3512,7 @@ void US_Hydrodyn_Batch::dropEvent(QDropEvent *event)
          {
             qApp->processEvents();
          }
-         if ( QString(*it).contains(QRegExp("(pdb|PDB|bead_model|BEAD_MODEL|beams|BEAMS)$")) )
+         if ( QString(*it).contains(QRegularExpression( QStringLiteral( "(pdb|PDB|bead_model|BEAD_MODEL|beams|BEAMS)$" ) )) )
          {
             bool dup = false;
             //     if ( QString(*it) == get_file_name(i) ) 
@@ -3606,9 +3606,9 @@ vector < int > US_Hydrodyn_Batch::split_if_mm( int i ) {
    // modified from us_hydrodyn_pdb_tool:split_pdb() reference
 
    {
-      QRegExp rx_model("^MODEL");
-      QRegExp rx_end("^END");
-      QRegExp rx_save_header("^("
+      QRegularExpression rx_model("^MODEL");
+      QRegularExpression rx_end("^END");
+      QRegularExpression rx_save_header("^("
                              "HEADER|"
                              "TITLE|"
                              "COMPND|"
@@ -3660,11 +3660,11 @@ vector < int > US_Hydrodyn_Batch::split_if_mm( int i ) {
             if ( qs.contains( rx_model ) ) {
                found_model = true;
                model_count++;
-               // QStringList qsl = (qs.left(20).split( QRegExp("\\s+") , Qt::SkipEmptyParts ) );
+               // QStringList qsl = (qs.left(20).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts ) );
                QStringList qsl;
                {
                   QString qs2 = qs.left( 20 );
-                  qsl = qs2.split( QRegExp("\\s+") , Qt::SkipEmptyParts );
+                  qsl = qs2.split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts );
                }
                QString model_name;
                if ( qsl.size() == 1 ) {
@@ -3815,7 +3815,7 @@ QString US_Hydrodyn_Batch::get_file_name( int i, int m )
 #if defined(BW_LISTBOX)
    return
       lb_files->item(i)->text()
-      .replace(QRegExp(
+      .replace(QRegularExpression(
                        "^(File missing|"
                        "Screening|"
                        "Screen done|"
@@ -3827,7 +3827,7 @@ QString US_Hydrodyn_Batch::get_file_name( int i, int m )
       ;
 #else
    return
-      lb_files->item(i)->text().replace(QRegExp("<.*>"),"")
+      lb_files->item(i)->text().replace(QRegularExpression( QStringLiteral( "<.*>" ) ),"")
       .append( m >= 0 ? QString( "_%1" ).arg( m ) : QString( "" ) )
       ;
 
@@ -4031,7 +4031,7 @@ void US_Hydrodyn_Batch::make_movie()
          QString file = get_file_name(i);
          QString dir = QFileInfo(file).path();
          // QColor save_color = editor->textColor();
-         if ( file.contains(QRegExp(".(pdb|PDB)$")) ) 
+         if ( file.contains(QRegularExpression( QStringLiteral( ".(pdb|PDB)$" ) )) ) 
          {
             // result = ((US_Hydrodyn *)us_hydrodyn)->screen_pdb(file, true);
             editor->setTextColor("red");
@@ -4054,10 +4054,11 @@ void US_Hydrodyn_Batch::make_movie()
    }
    QString tc_format_string = "%.0f";
    {
-      QRegExp rx("\\.(\\d*)$");
-      if ( rx.indexIn(QString("%1").arg(tc_delta)) != -1 )
+      QRegularExpression rx( QStringLiteral( "\\.(\\d*)$" ) );
+      QRegularExpressionMatch m = rx.match( QStringLiteral( "%1" ).arg( tc_delta ) );
+      if ( m.hasMatch() )
       {
-         tc_format_string = QString("%.%1f").arg(rx.cap(1).length());
+         tc_format_string = QString( "%.%1f" ).arg( m.captured( 1 ).length() );
       }
    }
    cout << "tc format: " << tc_format_string << endl;

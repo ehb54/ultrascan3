@@ -1,4 +1,5 @@
 #include "../include/us3_defines.h"
+#include <QRegularExpression>
 #include "../include/us_hydrodyn.h"
 #include "../include/us_revision.h"
 #include "../include/us_hydrodyn_saxs_hplc.h"
@@ -97,23 +98,24 @@ void US_Hydrodyn_Saxs_Hplc::add()
    QString prefix = qstring_common_head( files, true );
    {
       
-      QStringList qsl = prefix.split( QRegExp( "[^A-Za-z0-9]" ) );
+      QStringList qsl = prefix.split( QRegularExpression( QStringLiteral( "[^A-Za-z0-9]" ) ) );
       prefix = qsl[ 0 ];
    }
 
    {
-      QRegExp rx_repeak( "-rp(.\\d*(_|\\.)\\d+(|e.\\d+))" );
+      QRegularExpression rx_repeak( "-rp(.\\d*(_|\\.)\\d+(|e.\\d+))" );
       
       set < QString > rp_values;
 
       QString rp_first;
 
       for ( auto const & f : files ) {
-         if ( rx_repeak.indexIn( f ) != -1 ) {
+         QRegularExpressionMatch rx_repeak_m = rx_repeak.match( f );
+         if ( rx_repeak_m.hasMatch() ) {
             if ( !rp_values.size() ) {
-               rp_first = rx_repeak.cap( 1 );
+               rp_first = rx_repeak_m.captured(1);
             }
-            rp_values.insert( rx_repeak.cap( 1 ) );
+            rp_values.insert( rx_repeak_m.captured( 1 ) );
          }
       }
 
@@ -232,16 +234,17 @@ void US_Hydrodyn_Saxs_Hplc::p3d()
    {
       list < double >      ql;
       map < double, bool > used_q;
-      QRegExp rx_q( "_q(\\d+_\\d+)" );
+      QRegularExpression rx_q( "_q(\\d+_\\d+)" );
       for ( unsigned int i = 0; i < ( unsigned int ) files.size(); i++ )
       {
-         if ( rx_q.indexIn( files[ i ] ) == -1 )
+         QRegularExpressionMatch rx_q_m = rx_q.match( files[ i ] );
+         if ( !rx_q_m.hasMatch() )
          {
             editor_msg( "red", QString( us_tr( "Error: Can not find q value in file name for %1" ) ).arg( files[ i ] ) );
             update_enables();
             return;
          }
-         ql.push_back( rx_q.cap( 1 ).replace( "_", "." ).toDouble() );
+         ql.push_back( rx_q_m.captured( 1 ).replace( "_", "." ).toDouble() );
 
          if ( used_q.count( ql.back() ) )
          {
@@ -732,7 +735,7 @@ vector < double > US_Hydrodyn_Saxs_Hplc::conc_curve( vector < double > &t,
 bool US_Hydrodyn_Saxs_Hplc::adjacent_ok( QString name )
 {
    if ( name.contains( "_bsub_a" ) ||
-        name.contains( QRegExp( "\\d+$" ) ) )
+        name.contains( QRegularExpression( QStringLiteral( "\\d+$" ) ) ) )
    {
 
       return true;
@@ -759,7 +762,7 @@ void US_Hydrodyn_Saxs_Hplc::adjacent()
       }
    }
 
-   QRegExp rx;
+   QRegularExpression rx;
 
    bool found = false;
    // if we have bsub
@@ -769,32 +772,32 @@ void US_Hydrodyn_Saxs_Hplc::adjacent()
       rx.setPattern(
                     QString( "^%1" )
                     .arg( match_name )
-                    .replace( QRegExp( "_bsub_a.*$" ), "" )
-                    .replace( QRegExp( "\\d+$" ), "\\d+" )
+                    .replace( QRegularExpression( QStringLiteral( "_bsub_a.*$" ) ), "" )
+                    .replace( QRegularExpression( QStringLiteral( "\\d+$" ) ), "\\d+" )
                     + 
                     QString( "%1$" )
                     .arg( match_name )
-                    .replace( QRegExp( "^.*_bsub" ), "_bsub" ) 
+                    .replace( QRegularExpression( QStringLiteral( "^.*_bsub" ) ), "_bsub" ) 
                     );
    }
 
-   if ( !found && match_name.contains( QRegExp( "_cn\\d+.*$" ) ) )
+   if ( !found && match_name.contains( QRegularExpression( QStringLiteral( "_cn\\d+.*$" ) ) ) )
    {
       found = true;
       rx.setPattern(
                     QString( "^%1" )
                     .arg( match_name )
-                    .replace( QRegExp( "_cn\\d+.*$" ), "" )
+                    .replace( QRegularExpression( QStringLiteral( "_cn\\d+.*$" ) ), "" )
                     );
    }
 
-   if ( !found && match_name.contains( QRegExp( "\\d+$" ) ) )
+   if ( !found && match_name.contains( QRegularExpression( QStringLiteral( "\\d+$" ) ) ) )
    {
       found = true;
       rx.setPattern(
                     QString( "^%1" )
                     .arg( match_name )
-                    .replace( QRegExp( "\\d+$" ), "" ) 
+                    .replace( QRegularExpression( QStringLiteral( "\\d+$" ) ), "" ) 
                     );
    }
 
@@ -863,7 +866,7 @@ void US_Hydrodyn_Saxs_Hplc::adjacent_created()
       }
    }
 
-   QRegExp rx;
+   QRegularExpression rx;
 
    bool found = false;
    // if we have bsub
@@ -873,32 +876,32 @@ void US_Hydrodyn_Saxs_Hplc::adjacent_created()
       rx.setPattern(
                     QString( "^%1" )
                     .arg( match_name )
-                    .replace( QRegExp( "_bsub_a.*$" ), "" )
-                    .replace( QRegExp( "\\d+$" ), "\\d+" )
+                    .replace( QRegularExpression( QStringLiteral( "_bsub_a.*$" ) ), "" )
+                    .replace( QRegularExpression( QStringLiteral( "\\d+$" ) ), "\\d+" )
                     + 
                     QString( "%1$" )
                     .arg( match_name )
-                    .replace( QRegExp( "^.*_bsub" ), "_bsub" ) 
+                    .replace( QRegularExpression( QStringLiteral( "^.*_bsub" ) ), "_bsub" ) 
                     );
    }
 
-   if ( !found && match_name.contains( QRegExp( "_cn\\d+.*$" ) ) )
+   if ( !found && match_name.contains( QRegularExpression( QStringLiteral( "_cn\\d+.*$" ) ) ) )
    {
       found = true;
       rx.setPattern(
                     QString( "^%1" )
                     .arg( match_name )
-                    .replace( QRegExp( "_cn\\d+.*$" ), "" )
+                    .replace( QRegularExpression( QStringLiteral( "_cn\\d+.*$" ) ), "" )
                     );
    }
 
-   if ( !found && match_name.contains( QRegExp( "\\d+$" ) ) )
+   if ( !found && match_name.contains( QRegularExpression( QStringLiteral( "\\d+$" ) ) ) )
    {
       found = true;
       rx.setPattern(
                     QString( "^%1" )
                     .arg( match_name )
-                    .replace( QRegExp( "\\d+$" ), "" ) 
+                    .replace( QRegularExpression( QStringLiteral( "\\d+$" ) ), "" ) 
                     );
    }
 
@@ -998,7 +1001,7 @@ bool US_Hydrodyn_Saxs_Hplc::adjacent_select( QListWidget *lb, QString match )
       
    last_match = match;
 
-   QRegExp rx( match );
+   QRegularExpression rx( match );
    bool any_set = false;
 
    for ( int i = 0; i < lb->count(); i++ ) {
@@ -1527,9 +1530,9 @@ QStringList US_Hydrodyn_Saxs_Hplc::get_frames( QStringList files, QString head, 
       ;
 #endif
    result = files
-      .replaceInStrings( QRegExp( "^" + QRegExp::escape( head ) ), "" )
-      .replaceInStrings( QRegExp( QRegExp::escape( tail ) + "$" ), "" )
-      .replaceInStrings( QRegExp( "^(\\d*_?\\d+)([^0-9_]|_[a-zA-Z]).*$" ), "\\1" )
+      .replaceInStrings( QRegularExpression( "^" + QRegularExpression::escape( head ) ), "" )
+      .replaceInStrings( QRegularExpression( QRegularExpression::escape( tail ) + "$" ), "" )
+      .replaceInStrings( QRegularExpression( QStringLiteral( "^(\\d*_?\\d+)([^0-9_]|_[a-zA-Z]).*$" ) ), "\\1" )
       ;
    // us_qdebug( QString( "get frames head %1 tail %2 result %3\n" )
    //            .arg( head )
@@ -1833,12 +1836,12 @@ void US_Hydrodyn_Saxs_Hplc::avg( QStringList files, QString suffix )
    int ext = 0;
 
    if ( !head.isEmpty() &&
-        !head.contains( QRegExp( "_$" ) ) )
+        !head.contains( QRegularExpression( QStringLiteral( "_$" ) ) ) )
    {
       head += "_";
    }
    if ( !tail.isEmpty() &&
-        !tail.contains( QRegExp( "^_" ) ) )
+        !tail.contains( QRegularExpression( QStringLiteral( "^_" ) ) ) )
    {
       tail = "_" + tail;
    }
@@ -2174,12 +2177,12 @@ void US_Hydrodyn_Saxs_Hplc::conc_avg( QStringList files )
    unsigned int ext = 0;
 
    if ( !head.isEmpty() &&
-        !head.contains( QRegExp( "_$" ) ) )
+        !head.contains( QRegularExpression( QStringLiteral( "_$" ) ) ) )
    {
       head += "_";
    }
    if ( !tail.isEmpty() &&
-        !tail.contains( QRegExp( "^_" ) ) )
+        !tail.contains( QRegularExpression( QStringLiteral( "^_" ) ) ) )
    {
       tail = "_" + tail;
    }
@@ -3478,9 +3481,10 @@ void US_Hydrodyn_Saxs_Hplc::cormap( map < QString, QString > & parameters )
          vector < QString > use_scale_selected_names;
 
          if ( files_are_time ) {
-            QRegExp rx_cap( "_It_q(\\d+_\\d+)" );
+            QRegularExpression rx_cap( "_It_q(\\d+_\\d+)" );
             for ( int i = 0; i < (int) use_preq_scale_selected_names.size(); ++i ) {
-               if ( rx_cap.indexIn( use_preq_scale_selected_names[ i ] ) == -1 ) {
+               QRegularExpressionMatch rx_cap_m = rx_cap.match( use_preq_scale_selected_names[ i ] );
+               if ( !rx_cap_m.hasMatch() ) {
                   // QMessageBox::warning( this
                   //                       , windowTitle() + us_tr( " : PVP Analysis" )
                   //                       , QString( us_tr( "Could not extract q value from file name %1" ) )
@@ -3494,7 +3498,7 @@ void US_Hydrodyn_Saxs_Hplc::cormap( map < QString, QString > & parameters )
                   scale_enables();
                   return;
                }                  
-               double qv = rx_cap.cap( 1 ).replace( "_", "." ).toDouble();
+               double qv = rx_cap_m.captured( 1 ).replace( "_", "." ).toDouble();
                // us_qdebug( QString( "baseline cormap captured %1 from %2" ).arg( qv ).arg( use_preq_scale_selected_names[ i ] ) );
                if ( qv <= cormap_maxq && qv >= cormap_minq ) {
                   use_scale_selected_names.push_back( use_preq_scale_selected_names[ i ] );
@@ -4019,7 +4023,6 @@ void US_Hydrodyn_Saxs_Hplc::cormap( map < QString, QString > & parameters )
          QStringList use_blanks_created;
          // US_Vector::printvector( "blanks_created_q", blanks_created_q );
          {
-            // QRegExp rx_cap( "_It_q(\\d+_\\d+)" );
             int use_decimate = parameters.count( "decimate" ) ? parameters[ "decimate" ].toInt() : 1;
             for ( int i = 0; i < (int) use_preq_blanks_created.size(); ++i ) {
                // if ( rx_cap.indexIn( use_preq_blanks_created[ i ] ) == -1 ) {
@@ -4029,7 +4032,7 @@ void US_Hydrodyn_Saxs_Hplc::cormap( map < QString, QString > & parameters )
                //    baseline_enables();
                //    return;
                // }                  
-               // double qv = rx_cap.cap( 1 ).replace( "_", "." ).toDouble();
+               // double qv = rx_cap_m.captured( 1 ).replace( "_", "." ).toDouble();
                // us_qdebug( QString( "qv %1 blanks_created_q[ i ] %2" ).arg( qv ).arg( blanks_created_q[ i * use_decimate ] ) );
                
                // if ( qv <= cormap_maxq ) {
@@ -4363,9 +4366,10 @@ void US_Hydrodyn_Saxs_Hplc::cormap( map < QString, QString > & parameters )
 
          QStringList use_baseline_selected;
          {
-            QRegExp rx_cap( "_It_q(\\d+_\\d+)" );
+            QRegularExpression rx_cap( "_It_q(\\d+_\\d+)" );
             for ( int i = 0; i < (int) use_preq_baseline_selected.size(); ++i ) {
-               if ( rx_cap.indexIn( use_preq_baseline_selected[ i ] ) == -1 ) {
+               QRegularExpressionMatch rx_cap_m = rx_cap.match( use_preq_baseline_selected[ i ] );
+               if ( !rx_cap_m.hasMatch() ) {
                   // QMessageBox::warning( this
                   //                       , windowTitle() + us_tr( " : Baseline PVP Analysis" )
                   //                       , QString( us_tr( "Could not extract q value from file name %1" ) )
@@ -4379,7 +4383,7 @@ void US_Hydrodyn_Saxs_Hplc::cormap( map < QString, QString > & parameters )
                   baseline_enables();
                   return;
                }                  
-               double qv = rx_cap.cap( 1 ).replace( "_", "." ).toDouble();
+               double qv = rx_cap_m.captured( 1 ).replace( "_", "." ).toDouble();
                // us_qdebug( QString( "baseline cormap captured %1 from %2" ).arg( qv ).arg( use_preq_baseline_selected[ i ] ) );
                if ( qv <= cormap_maxq &&
                     qv >= cormap_minq ) {
@@ -4817,9 +4821,10 @@ void US_Hydrodyn_Saxs_Hplc::cormap( map < QString, QString > & parameters )
          vector < QString > use_selected_files;
 
          if ( files_are_time ) {
-            QRegExp rx_cap( "_It_q(\\d+_\\d+)" );
+            QRegularExpression rx_cap( "_It_q(\\d+_\\d+)" );
             for ( int i = 0; i < (int) use_preq_selected_files.size(); ++i ) {
-               if ( rx_cap.indexIn( use_preq_selected_files[ i ] ) == -1 ) {
+               QRegularExpressionMatch rx_cap_m = rx_cap.match( use_preq_selected_files[ i ] );
+               if ( !rx_cap_m.hasMatch() ) {
                   // QMessageBox::warning( this
                   //                       , windowTitle() + us_tr( " : PVP Analysis" )
                   //                       , QString( us_tr( "Could not extract q value from file name %1" ) )
@@ -4833,7 +4838,7 @@ void US_Hydrodyn_Saxs_Hplc::cormap( map < QString, QString > & parameters )
                   update_enables();
                   return;
                }                  
-               double qv = rx_cap.cap( 1 ).replace( "_", "." ).toDouble();
+               double qv = rx_cap_m.captured( 1 ).replace( "_", "." ).toDouble();
                // us_qdebug( QString( "baseline cormap captured %1 from %2" ).arg( qv ).arg( use_preq_selected_files[ i ] ) );
                if ( qv <= cormap_maxq && qv >= cormap_minq ) {
                   use_selected_files.push_back( use_preq_selected_files[ i ] );
@@ -5190,7 +5195,7 @@ void US_Hydrodyn_Saxs_Hplc::bb_cm_inc()
    QString fn = QFileDialog::getSaveFileName( this , us_tr( "Choose a file name for the images" ) , QString() , "png (*.png *.PNG)" );
 
    if ( !fn.isEmpty() ) {
-      fn = fn.replace( QRegExp( ".png$", Qt::CaseInsensitive ), "" );
+      fn = fn.replace( QRegularExpression( ".png$", QRegularExpression::CaseInsensitiveOption ), "" );
    }
    
    save_parameters[ "decimate" ] = "0";

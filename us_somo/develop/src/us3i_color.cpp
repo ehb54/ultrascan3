@@ -1,4 +1,5 @@
 //! \file us_color.cpp
+#include <QRegularExpression>
 #include "us3i_color.h"
 #include "us3i_gui_settings.h"
 #include "us3i_plot.h"
@@ -1264,7 +1265,7 @@ void US3i_Color::apply( void )
 void US3i_Color::save_as( void )
 {
   // Remove blanks from name
-  QString custom = le_save_as->text().replace( QRegExp( "[ \t/]" ), "" );
+  QString custom = le_save_as->text().replace( QRegularExpression( QStringLiteral( "[ \t/]" ) ), "" );
 
   if ( custom.size() == 0 )
   {

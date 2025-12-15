@@ -1,4 +1,5 @@
 #include "../include/us3_defines.h"
+#include <QRegularExpression>
 #include "../include/us_hydrodyn.h"
 #include "../include/us_revision.h"
 #include "../include/us_hydrodyn_csv_viewer.h"
@@ -187,7 +188,7 @@ void US_Hydrodyn_Csv_Viewer::numeric_sort( int section )
 
    for ( unsigned int i = 0; i < csv1.data.size(); i++ )
    {
-      if ( csv1.data[ i ][ 0 ].contains( QRegExp( "^(Average|Standard deviation): " ) ) )
+      if ( csv1.data[ i ][ 0 ].contains( QRegularExpression( QStringLiteral( "^(Average|Standard deviation): " ) ) ) )
       {
          avgstdrows.push_back( i );
       } else {

@@ -4,9 +4,7 @@
 #include "us3i_gui_util.h"
 #include "us3i_gzip.h"
 #include "us3i_settings.h"
-#if QT_VERSION > 0x050000
 #include "qwt_plot_renderer.h"
-#endif
 
 // Save SVG+PNG or PNG file
 int US3i_GuiUtil::save_plot( const QString& filename, const QwtPlot* plot )
@@ -35,48 +33,61 @@ int US3i_GuiUtil::save_plot( const QString& filename, const QwtPlot* plot )
 }
 
 // Save SVG file
-int US3i_GuiUtil::save_svg( const QString& filename, const QwtPlot* plot )
+int US3i_GuiUtil::save_svg( const QString& filename, QwtPlot* plot )
 {
    int status = 0;
 
-   if ( filename.contains( ".svg" ) )
-   {  // Save the file as SVG
-      QString fnsvg   = QString( filename ).section( ".", 0, -2 ) + ".svg";
+   if ( filename.contains( ".svg", Qt::CaseInsensitive ) ) {
+      // Normalize extension to .svg
+      const QString fnsvg = QString( filename ).section( '.', 0, -2 ) + ".svg";
 
-      // Set resolution to screen resolution
-      double px  = (double)qApp->desktop()->width();
-      double in  = (double)qApp->desktop()->widthMM() / 25.4;
-      int    res = qRound( px / in );
+      // --- Screen DPI (Qt5 & Qt6) ---
+      QScreen* screen = QGuiApplication::primaryScreen();
+      // Sensible default if no screen (headless) or info missing
+      int dpi = 96;
 
-      // Generate the SVG file
-#if QT_VERSION < 0x050000
-      int    pw  = plot->width()  + res;
-      int    ph  = plot->height() + res;
-      QSvgGenerator generator;
-      generator.setResolution( res );
-      generator.setFileName  ( fnsvg );
-      generator.setSize      ( plot->size() );
-      generator.setViewBox   ( QRect( QPoint( 0, 0 ), QPoint( pw, ph ) ) );
+      if ( screen ) {
+         // Try to reproduce the old "px / inches" logic when physical size is available
+         const double px_width = static_cast<double>( screen->geometry().width() );     // pixels
+         const double mm_width = screen->physicalSize().width();                        // millimeters
+         if ( mm_width > 0.0 ) {
+            const double inches = mm_width / 25.4;
+            if ( inches > 0.0 ) {
+               dpi = qRound( px_width / inches );
+            }
+         }
+         else
+         {
+            // Fall back to logical DPI reported by Qt
+            dpi = qRound( screen->logicalDotsPerInch() );
+         }
+      }
 
-      plot->print( generator );
-#else
-      QwtPlotRenderer pltrend;
-      QSizeF psize   = plot->size();
-      pltrend.renderDocument( (QwtPlot*)plot, fnsvg, psize, res );
-#endif
+      // Render using the current plot widget size (keeps behavior consistent with your Qt5 code)
+      const QSizeF psize = plot->size();   // widget size; Qwt scales via 'dpi' below
 
-      // Compress it and save SVGZ file
+      QwtPlotRenderer renderer;
+      renderer.renderDocument( plot, fnsvg, psize, dpi );
+
+      // Compress to SVGZ
       US3i_Gzip gz;
       gz.gzip( fnsvg );
    }
-
    else
    {
-      status = 1;
+      status = 1; // not an .svg filename
    }
 
    return status;
 }
+
+// Const-friendly wrapper to preserve existing call sites
+int US3i_GuiUtil::save_svg( const QString& filename, const QwtPlot* plot )
+{
+   return US3i_GuiUtil::save_svg( filename,
+                                  const_cast<QwtPlot*>( plot ) );
+}
+
 
 // Save PNG file
 int US3i_GuiUtil::save_png( const QString& filename, const QwtPlot* plot )
@@ -86,13 +97,7 @@ int US3i_GuiUtil::save_png( const QString& filename, const QwtPlot* plot )
 
    if ( filename.endsWith( ".png" ) )
    {  // Save the file as a PNG version
-#if QT_VERSION > 0x050000
       QPixmap pixmap = ((QWidget*)plot)->grab();
-#else
-      int pw  = plot->width();
-      int ph  = plot->height();
-      QPixmap pixmap = QPixmap::grabWidget( (QWidget*)plot, 0, 0, pw, ph );
-#endif
       if ( ! pixmap.save( filename ) )
          status = 2;
    }

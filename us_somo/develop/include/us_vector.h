@@ -5,7 +5,6 @@
 #include <stdlib.h>
 #include <iostream>
 #include <qstring.h>
-#include <qregexp.h>
 #include <map>
 #include <vector>
 #include <list>

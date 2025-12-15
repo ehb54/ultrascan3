@@ -1,4 +1,5 @@
 #include "../include/us3_defines.h"
+#include <QRegularExpression>
 #include "../include/us_hydrodyn_dad_dctr.h"
 //Added by qt3to4:
 #include <QGridLayout>
@@ -202,7 +203,7 @@ void US_Hydrodyn_Dad_Dctr::save()
       return;
    }
 
-   fn.replace( QRegExp( "(|_dctr)\\.(dat|DAT)$" ), "" );
+   fn.replace( QRegularExpression( QStringLiteral( "(|_dctr)\\.(dat|DAT)$" ) ), "" );
    fn += "_dctr.dat";
 
    QFile f( fn );
