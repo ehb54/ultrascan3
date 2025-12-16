@@ -475,7 +475,7 @@ qDebug() << "SolSvDB: soAna stat" << status << db->lastError();
    qDebug() << "SampleID for extProfile: " << solutionID;
    
    //if ( !extinction.isEmpty() )
-   if ( !extinction.isEmpty() and new_or_changed_spectrum ) 
+   if ( !extinction.isEmpty() && new_or_changed_spectrum )
    {
       if ( !replace_spectrum )
       {

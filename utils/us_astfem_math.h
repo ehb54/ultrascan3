@@ -5,7 +5,10 @@
 #include "us_extern.h"
 #include "us_model.h"
 #include "us_simparms.h"
+#if !(defined(_WIN32) || defined(_WIN64) || defined(Q_OS_WIN))
 #include <unistd.h>
+#endif
+
 
 //! \brief A group of static mathematical functions to support finite element 
 //!        calculations

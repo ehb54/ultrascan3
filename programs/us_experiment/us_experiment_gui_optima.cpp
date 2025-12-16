@@ -3739,11 +3739,11 @@ void US_ExperGuiSpeeds::ssChangeScInt( double val, int row )
   double time_scint;
   if (val <= 14999 )
     time_scint = a0[0] + qRound( a1[0]/val );
-  if (val >= 15000 and val <= 32999 )
+  if (val >= 15000 && val <= 32999 )
     time_scint = a0[1] + qRound( a1[1]/val );
-  if (val >= 33000 and val <= 50999 )
+  if (val >= 33000 && val <= 50999 )
     time_scint = a0[2] + qRound( a1[2]/val );
-  if (val >= 51000 and val <= 60000 )
+  if (val >= 51000 && val <= 60000 )
     time_scint = a0[3] + qRound( a1[3]/val );
 
   ssvals[row]["scanintv"]     = time_scint;

@@ -1505,9 +1505,8 @@ DbgLv(1) << "CR:B s k" << sim_vals.solutes[cc].s*1.0e+13
          }
       }
    }
-
-   double rmsds[ dataset_count ];
-   int    kntva[ dataset_count ];
+   QVector<double> rmsds( dataset_count );
+   QVector<int> kntva( dataset_count );
    double variance   = 0.0;
    int    tinoffs    = 0;
    int    rinoffs    = 0;

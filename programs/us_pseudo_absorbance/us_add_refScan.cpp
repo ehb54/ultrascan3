@@ -1793,9 +1793,9 @@ QMap<QString, QVector<int>> US_AddRefScan::loc_minmax(QVector<double> sdiff){
     for (i = 0; i < zc.size(); ++i){
         s1 = sdiff.at(zc.at(i));
         s2 = sdiff.at(zc.at(i) + 1);
-        if (s1 > 0 and s2 < 0)
+        if (s1 > 0 && s2 < 0)
             maxloc.append(zc.at(i));
-        else if (s1 < 0 and s2 > 0)
+        else if (s1 < 0 && s2 > 0)
             minloc.append(zc.at(i));
     }
     out["zc"] = zc;

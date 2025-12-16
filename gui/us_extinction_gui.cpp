@@ -1127,7 +1127,7 @@ qDebug() << "J:" << j << fitparameters[v_wavelength.size() + (3 * j)] << fitpara
        }
    }
    // Do not scale if buffer...
-   if (buffer_temp == "" or buffer_temp == "ANALYTE")
+   if (buffer_temp == "" || buffer_temp == "ANALYTE")
    {
        if(od_wavelength != 0 )
        {

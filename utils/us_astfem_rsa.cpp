@@ -9,9 +9,11 @@
 #include "us_sleep.h"
 #include "us_util.h"
 #include "us_time_state.h"
+#if !(defined(_WIN32) || defined(_WIN64) || defined(Q_OS_WIN))
 #include <unistd.h>
+#endif
 #include <algorithm>
-#ifdef Q_OS_WIN         // Include headers so getpid() works on Windows
+#if (defined(_WIN32) || defined(_WIN64) || defined(Q_OS_WIN))         // Include headers so getpid() works on Windows
 #include <windows.h>
 #include <psapi.h>
 #include <process.h>
@@ -590,7 +592,7 @@ totT2+=(clcSt2.msecsTo(clcSt3));
 
             if ( accel_time > duration )
             {
-               DbgErr() << "Attention: acceleration time exceeds duration - "
+               DbgErr(1) << "Attention: acceleration time exceeds duration - "
                            "please check initialization\n";
                return -1;
             }
@@ -985,7 +987,7 @@ DbgLv(1) << "RSA:emit ctime: accel:current_time" << current_time << "step" << st
 
          if ( accel_time > duration )
          {
-            DbgErr() << "Attention: acceleration time exceeds duration - "
+            DbgErr(1) << "Attention: acceleration time exceeds duration - "
                         "please check initialization\n";
             return -1;
          }
@@ -2215,20 +2217,20 @@ DbgLv(2)<< "refine in bottom"<< nu[ 0 ] ;
 
                if ( qAbs( x[ 0 ] - m ) > 1.0e7 )
                {
-                  DbgErr() << "The meniscus from the mesh file does not"
+                  DbgErr(1) << "The meniscus from the mesh file does not"
                      " match the set meniscus - using Claverie Mesh instead\n";
                }
 
                if ( qAbs( x[ x.size() - 1 ] - b ) > 1.0e7 )
                {
-                  DbgErr() << "The cell bottom from the mesh file does not"
+                  DbgErr(1) << "The cell bottom from the mesh file does not"
                      " match the set cell bottom - using Claverie Mesh"
                      " instead\n";
                }
             }
             else
             {
-               DbgErr() << "Could not read the mesh file - "
+               DbgErr(1) << "Could not read the mesh file - "
                            "using Claverie Mesh instead\n";
 
                for ( int i = 0; i < af_params.simpoints; i++ )
@@ -2524,7 +2526,7 @@ void US_Astfem_RSA::mesh_gen_s_neg( const QVector< double >& nu )
 
       xA           = x.data();
 
-      DbgErr() << "Use exponential grid only!(1/10000 reported):  Np Nf Nm"
+      DbgErr(1) << "Use exponential grid only!(1/10000 reported):  Np Nf Nm"
          << Np << Nf << Nm << "m b nu0" << m << b << nu0;
    }
    else
@@ -2627,7 +2629,7 @@ void US_Astfem_RSA::mesh_gen_RefL( int N0, int M0 )
          x .append( zA[ jp ] );
    }
    else                  // Sedimentation and floating mixed up
-      DbgErr() << "No refinement at ends since sedimentation "
+      DbgErr(1) << "No refinement at ends since sedimentation "
                   "and floating mixed ...\n" ;
 
    Nx         = x.size();
@@ -2643,7 +2645,7 @@ void US_Astfem_RSA::ComputeCoefMatrixFixedMesh(
       double D, double sw2, double** CA, double** CB )
 {
    if ( Nx != x.size()  ||  Nx < 1 )
-      DbgErr() << "***FixedMesh ERROR*** Nx x.size" << Nx << x.size()
+      DbgErr(1) << "***FixedMesh ERROR*** Nx x.size" << Nx << x.size()
          << " params.s[0] D sw2" << af_params.s[0] << D << sw2;
 
 #ifdef NO_DB
@@ -2991,7 +2993,7 @@ DbgLv(1)<<"entering polymer case" << c1  << k_d ;
          }
          else
          {
-            DbgErr() << "Warning: invalid stoichiometry in decompose()"
+            DbgErr(1) << "Warning: invalid stoichiometry in decompose()"
                      << "  st0 st1 c1" << st0 << st1 << c1;
             return;
          }
@@ -3181,7 +3183,7 @@ DbgLv(2) << "RSA:Eul: Npts timeStep" << Npts << timeStep
 
          else
          {
-            DbgErr() << "Warning: invalid stoichiometry in decompose()";
+            DbgErr(1) << "Warning: invalid stoichiometry in decompose()";
             return;
          }
 
@@ -3272,7 +3274,7 @@ DbgLv(2) << "RSA:Eul: Npts timeStep" << Npts << timeStep
 
          if ( US_AstfemMath::GaussElim( num_comp, A, b ) == -1 )
          {
-            DbgErr() << "Matrix singular in Reaction_Euler_imp: model 12";
+            DbgErr(1) << "Matrix singular in Reaction_Euler_imp: model 12";
             break;
          }
          else
@@ -3531,7 +3533,7 @@ DbgLv(1) << "RSA:_ra2: s_min s_max" << s_min << s_max << "xc xAj"
       }
       else
       {
-         DbgErr() << "Multicomponent system with sedimentation and "
+         DbgErr(1) << "Multicomponent system with sedimentation and "
                      "floating mixed, use uniform mesh";
       }
 DbgLv(1) << "RSA:_ra2:(3) Nx" << Nx << "x size" << x.size();
@@ -3634,13 +3636,13 @@ DbgLv(1) << "RSA: smin>0:GlStf: CB[i]:" << CB[i][0][0] << CB[i][1][0]
 
          else if ( s_max < 0)    // all components floating
          {
-            DbgErr() << "all components floating, not implemented yet";
+            DbgErr(1) << "all components floating, not implemented yet";
             return -1;
          }
 
          else     // sedimentation and floating mixed
          {
-            DbgErr() << "sedimentation and floating mixed, suppose use "
+            DbgErr(1) << "sedimentation and floating mixed, suppose use "
                         "fixed grid!";
             return -1;
          }

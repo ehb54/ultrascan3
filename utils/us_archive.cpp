@@ -54,7 +54,7 @@ bool US_Archive::extract(const QString& filename, const QString& path, QStringLi
 
         // mode_t entry_type = archive_entry_mode(entry);
         // entry_type = entry_type & AE_IFMT;
-        mode_t entry_type = archive_entry_filetype(entry);
+        auto entry_type = archive_entry_filetype(entry);
         //If the entry is a directory, make its absolute path
         //If the entry is a file, make its parent's absolute path
         if (entry_type == AE_IFDIR) {
