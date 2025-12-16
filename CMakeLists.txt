@@ -140,7 +140,7 @@ set(US3_PROFILE "" CACHE STRING "UltraScan3 build profile: APP | TEST | HPC")
 set_property(CACHE US3_PROFILE PROPERTY STRINGS APP TEST HPC)
 
 # Lower-level knob used by gui/programs to decide static vs shared for US3 libs
-option(US3_PREFER_STATIC "Prefer UltraScan3 static libraries when available" ON)
+option(US3_PREFER_STATIC "Prefer UltraScan3 static libraries when available" OFF)
 option(BUILD_TESTING "Build Testing" OFF)
 
 # Apply profile -> concrete options
