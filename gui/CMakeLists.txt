@@ -46,7 +46,9 @@ function(configure_us_gui_target target_name is_static)
     # Platform-specific sources and linking
     if(WIN32)
         target_link_libraries(${target_name} PRIVATE user32)
-        target_compile_definitions(${target_name} PUBLIC US_MAKE_GUI_DLL QWT_DLL QT_DLL)
+        if(NOT ${is_static})
+            target_compile_definitions(${target_name} PRIVATE US_MAKE_DLL US_MAKE_GUI_DLL QWT_DLL QT_DLL)
+        endif()
     elseif(APPLE)
         target_link_libraries(${target_name} PRIVATE "-framework Cocoa")
     elseif(UNIX) # Linux

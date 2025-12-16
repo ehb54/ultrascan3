@@ -5,6 +5,8 @@ cmake_minimum_required(VERSION 3.21)
 # =============================================================================
 # Extract version before project() call
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/admin/cmake")
+list(APPEND VCPKG_OVERLAY_TRIPLETS "${CMAKE_CURRENT_SOURCE_DIR}/admin/cmake/triplets")
+list(APPEND VCPKG_OVERLAY_PORTS "${CMAKE_CURRENT_SOURCE_DIR}/buildsys/vcpkg/overlay-ports")
 include(UsDefinesParser)
 parse_header("${CMAKE_CURRENT_SOURCE_DIR}/utils/us_defines.h")
 
@@ -87,16 +89,24 @@ endif()
 
 # Compiler flags based on qmake configuration
 if(CMAKE_BUILD_TYPE STREQUAL "Release")
-    set(CMAKE_CXX_FLAGS_RELEASE "-O3")
-    set(CMAKE_C_FLAGS_RELEASE "-O3")
+    if(MSVC)
+        add_compile_options(/O2 /Ob2 /DNDEBUG)
+    else()
+        add_compile_options(-O3 -DNDEBUG)
+    endif()
 elseif(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    set(CMAKE_CXX_FLAGS_DEBUG "-g -O0")
-    set(CMAKE_C_FLAGS_DEBUG "-g -O0")
+    if(MSVC)
+        add_compile_options(/Zi /Od /DDEBUG)
+    else()
+        add_compile_options(-g -O0 -DDEBUG)
+    endif()
 endif()
 
 # Platform-specific compiler flags
 if(UNIX AND NOT APPLE)
     add_compile_options(-Wno-unused-local-typedefs)
+elseif(MSVC)
+    add_compile_options(/wd4251 /wd4275 /wd4996 /wd4267 /wd4305 /wd4309)
 endif()
 
 # Enable Qt's MOC, RCC, and UIC
@@ -156,17 +166,20 @@ endif()
 
 # Configuration-based definitions
 if(US3_NO_DB)
-    add_definitions(-DNO_DB)
+    add_compile_definitions(NO_DB)
 endif()
 
 # Platform-specific definitions
 if(UNIX AND NOT APPLE)
-    add_definitions(-DLINUX -DPLATFORM="intel" -DTITLE="Intel")
+    add_compile_definitions(LINUX PLATFORM="intel" TITLE="Intel")
 elseif(WIN32)
-    add_definitions(-DUS_MAKE_DLL -D__LCC__ -DPLATFORM="intel" -DTITLE="Intel")
-    add_definitions(-DQT_SHAREDMEMORY -DQT_SYSTEMSEMAPHORE -DWIN32)
+    add_compile_definitions(__LCC__ PLATFORM="intel" TITLE="Intel")
+    add_compile_definitions(QT_SHAREDMEMORY QT_SYSTEMSEMAPHORE WIN32)
+    if(NOT US3_PREFER_STATIC)
+        add_compile_definitions(US_MAKE_DLL)
+    endif()
 elseif(APPLE)
-    add_definitions(-DMAC -DOSX -DPLATFORM="mac")
+    add_compile_definitions(MAC OSX PLATFORM="mac")
 endif()
 
 # Platform configuratin

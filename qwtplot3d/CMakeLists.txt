@@ -10,26 +10,36 @@ else()
 endif()
 find_package(OpenGL REQUIRED)
 
-# Find Qwt manually since vcpkg's qwt port doesn't provide CMake configs
-find_library(QWT_LIBRARY
-        NAMES qwt qwt-qt5 qwt6
-        REQUIRED
-        )
-find_path(QWT_INCLUDE_DIR
-        NAMES qwt_plot.h
-        PATH_SUFFIXES qwt qwt-qt5 qwt6
-        REQUIRED
-        )
+find_package(unofficial-qwt CONFIG QUIET)
+if(NOT unofficial-qwt_FOUND)
+    message(STATUS "unofficial-qwt not found via config, trying manual find")
 
-# Create imported target for Qwt
-if(NOT TARGET Qwt::Qwt)
-    add_library(Qwt::Qwt UNKNOWN IMPORTED)
-    set_target_properties(Qwt::Qwt PROPERTIES
-            IMPORTED_LOCATION "${QWT_LIBRARY}"
-            INTERFACE_INCLUDE_DIRECTORIES "${QWT_INCLUDE_DIR}"
+    # Find Qwt manually since vcpkg's qwt port doesn't provide CMake configs
+    find_library(QWT_LIBRARY
+            NAMES qwt qwt-qt5 qwt6
+            REQUIRED
             )
-    message(STATUS "Found Qwt: ${QWT_LIBRARY}")
-    message(STATUS "Qwt includes: ${QWT_INCLUDE_DIR}")
+    find_path(QWT_INCLUDE_DIR
+            NAMES qwt_plot.h
+            PATH_SUFFIXES qwt qwt-qt5 qwt6
+            REQUIRED
+            )
+
+    # Create imported target for Qwt
+    if(NOT TARGET Qwt::Qwt)
+        add_library(Qwt::Qwt UNKNOWN IMPORTED)
+        set_target_properties(Qwt::Qwt PROPERTIES
+                IMPORTED_LOCATION "${QWT_LIBRARY}"
+                INTERFACE_INCLUDE_DIRECTORIES "${QWT_INCLUDE_DIR}"
+                )
+        message(STATUS "Found Qwt: ${QWT_LIBRARY}")
+        message(STATUS "Qwt includes: ${QWT_INCLUDE_DIR}")
+    endif()
+else()
+    message(STATUS "Found unofficial-qwt via config")
+    if(NOT TARGET Qwt::Qwt)
+        add_library(Qwt::Qwt ALIAS unofficial::qwt::qwt)
+    endif()
 endif()
 
 # Get source files
