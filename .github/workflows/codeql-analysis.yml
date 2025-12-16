@@ -310,7 +310,7 @@ jobs:
           git status
           cksum include/*.h
           cksum src/*cpp
-          grep qwt_compat */*; true
+          ( grep qwt_compat src/*cpp include/*.h || true )
       - name: Build libus_somo
         run: |
           cd us_somo/develop
