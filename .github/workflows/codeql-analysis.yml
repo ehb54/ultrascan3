@@ -277,8 +277,8 @@ jobs:
           # somo main not ready for qwt6.3.0
           - "ehb1/usbuildtest:ubuntu22.04-qt5.15.10-qwt6.3.0"
           # somo main not ready for qt6
-          - "ehb1/usbuildtest:ubuntu24.04-qt6.8.3-qwt6.3.0"
-          - "ehb1/usbuildtest:ubuntu24.04-qt6.10.0-qwt6.3.0"
+          # - "ehb1/usbuildtest:ubuntu24.04-qt6.8.3-qwt6.3.0"
+          # - "ehb1/usbuildtest:ubuntu24.04-qt6.10.0-qwt6.3.0"
 
     # Specify the container in which actions will run
     container:
@@ -307,7 +307,10 @@ jobs:
           ./version.sh
           cp $bdir/admin/codeql/docker/local.pri.somo local.pri
           git branch -a
+          git status
           cksum include/*.h
+          cksum src/*cpp
+          grep qwt_compat */*; true
       - name: Build libus_somo
         run: |
           cd us_somo/develop
