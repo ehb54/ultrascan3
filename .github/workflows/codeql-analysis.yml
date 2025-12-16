@@ -306,6 +306,8 @@ jobs:
           ./revision.sh
           ./version.sh
           cp $bdir/admin/codeql/docker/local.pri.somo local.pri
+          git branch -a
+          cksum include/*.h
       - name: Build libus_somo
         run: |
           cd us_somo/develop
