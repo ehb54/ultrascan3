@@ -20,10 +20,10 @@ DEFINES += NO_EDITOR_PRINT
 
 TARGET  = us_somo
 
-#revision.target      = include/us_revision.h
-#revision.commands    = sh revision.sh
-#revision.depends     = FORCE
-#QMAKE_EXTRA_TARGETS += revision
+revision.target      = include/us_revision.h
+revision.commands    = sh revision.sh
+revision.depends     = FORCE
+QMAKE_EXTRA_TARGETS += revision
 
 # OSX also reports UNIX
 contains( DEFINES, "OSX" ) {
@@ -131,7 +131,7 @@ SOURCES *= \
         src/us_cmdline_app.cpp \
 #  us_cofdistro.cpp \
 #  us_cofs.cpp \ 
-        src/us_color.cpp \
+#  us_color.cpp \
 #  us_colorgradient.cpp \
 #  us_combine.cpp \
         src/us_config.cpp \
@@ -634,7 +634,7 @@ HEADERS *= \
         include/us_cmdline_app.h \
 #  us_cofdistro.h \
 #  us_cofs.h \
-        include/us_color.h \
+#  us_color.h \
 #  us_colorgradient.h \
 #  us_combine.h \
         include/us_config_gui.h \
