@@ -649,16 +649,22 @@ void US_Win::logo( int width )
 {
     // Splash image (fixed size asset, like before)
     QPixmap rawpix = US_Images::getImage( US_Images::US3_SPLASH );
-    const int ph   = rawpix.height();   // expected ~276
-    const int pw   = rawpix.width();    // expected ~460
+    // Ensure a reasonable size in case the image is missing
+    const int ph   = qMax( rawpix.height(), 276 );   // expected ~276
+    const int pw   = qMax( rawpix.width(), 460 );    // expected ~460
     Q_UNUSED(ph);
-
-    QPixmap  pixmap( pw, ph );
-    QPainter painter( &pixmap );
+    // Prepare the painting area
+    QImage canvas( pw, ph, QImage::Format_ARGB32_Premultiplied );
+    canvas.fill( Qt::transparent );
+    QPainter painter( &canvas );
     painter.setRenderHint( QPainter::Antialiasing,     true );
     painter.setRenderHint( QPainter::TextAntialiasing, true );
 
-    painter.drawPixmap( 0, 0, rawpix );
+    if ( !rawpix.isNull() )
+    {
+        // draw the pixmap if loaded
+        painter.drawPixmap( 0, 0, rawpix );
+    }
 
     // Colors (subtle, modern)
     const QColor versionColor      ( 245, 248, 255 );
@@ -753,7 +759,8 @@ void US_Win::logo( int width )
         int y      = firstNameBase + i * nameStep;
         painter.drawText( ( pw - nWidth ) / 2, y, name );
     }
-
+    // convert canvas to legacy pixmap
+    QPixmap pixmap = QPixmap::fromImage( canvas );
     // --- Display ---
     const int splashX = static_cast<int>( ( width / 2 ) - 230 );
     const int splashY = 110;
