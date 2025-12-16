@@ -313,11 +313,21 @@ jobs:
           ( grep qwt_compat src/*cpp include/*.h || true )
       - name: Build libus_somo
         run: |
+          bdir=`pwd`
+          echo $bdir
+          pwd
+          export ULTRASCAN=$bdir
+          export us3=$bdir
           cd us_somo/develop
           qmake libus_somo.pro
           make -j$(( $(nproc) + 1 ))
       - name: Build us_somo
         run: |
+          bdir=`pwd`
+          echo $bdir
+          pwd
+          export ULTRASCAN=$bdir
+          export us3=$bdir
           cd us_somo/develop
           qmake us_somo.pro
           make -j$(( $(nproc) + 1 ))
