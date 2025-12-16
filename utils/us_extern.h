@@ -80,7 +80,11 @@
  * @brief Default definition for exporting symbols if not on Windows.
  */
 #if !defined(US_EXPORT)
+#if defined(__GNUC__) || defined(__clang__)
+  #define US_EXPORT       __attribute__((visibility("default")))
+#else
   #define US_EXPORT
+#endif
 #endif
 
 /**
@@ -88,7 +92,11 @@
  * @brief Default definition for importing symbols if not on Windows.
  */
 #if !defined(US_IMPORT)
-  #define US_IMPORT
+  #if defined(__GNUC__) || defined(__clang__)
+    #define US_IMPORT __attribute__((visibility("default")))
+  #else
+    #define US_IMPORT
+  #endif
 #endif
 
 /**
@@ -96,7 +104,7 @@
  * @brief Default definition for utility symbols if not on Windows.
  */
 #if !defined(US_UTIL_EXTERN)
-  #define US_UTIL_EXTERN
+  #define US_UTIL_EXTERN US_EXPORT
 #endif
 
 /**
@@ -104,7 +112,7 @@
  * @brief Default definition for GUI symbols if not on Windows.
  */
 #if !defined(US_GUI_EXTERN)
-  #define US_GUI_EXTERN
+  #define US_GUI_EXTERN US_EXPORT
 #endif
 
 #endif // US_EXTERN_H
