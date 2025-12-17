@@ -305,13 +305,21 @@ qDebug() << "Exp:svToDB:     ssstat=" << ssstat;
 
 // Function to read an experiment from DB
 int US_Experiment::readFromDB( QString runID, US_DB2* db,
-                               QVector< SP_SPEEDPROFILE >& speedsteps )
+                               QVector< SP_SPEEDPROFILE >& speedsteps,
+			       const QString invid_p )
 {
+   qDebug() << "US_Experiment::readFromDB, invid_p -- " << invid_p;
+   
+   QString invID_to_use = ( invid_p.isEmpty() ) ?
+     QString::number( US_Settings::us_inv_ID() ) : invid_p;
    QStringList q( "get_experiment_info_by_runID" );
    q << runID
-     << QString::number( US_Settings::us_inv_ID() );
+     //<< QString::number( US_Settings::us_inv_ID() );
+     << invID_to_use;
    db->query( q );
 
+   qDebug() << "US_Experiment::readFromDB: q -- " << q;
+   
    QByteArray xmlFile;
 
    if ( db->next() )
