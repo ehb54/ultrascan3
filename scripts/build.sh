@@ -176,15 +176,32 @@ if [ "$PLATFORM" = "macOS" ]; then
   # Determine which Xcode 15 path exists (if any)
   DESIRED_XCODE_PATH=""
   if [ -d "$XCODE_15_PATH" ]; then
-    DESIRED_XCODE_PATH="$XCODE_15_PATH"
+    # Verify version by reading Info.plist
+    XCODE_APP=$(dirname "$(dirname "$XCODE_15_PATH")")
+    XCODE_PLIST="$XCODE_APP/Contents/Info.plist"
+    if [ -f "$XCODE_PLIST" ]; then
+      XCODE_VERSION=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$XCODE_PLIST" 2>/dev/null || echo "0")
+      XCODE_MAJOR=$(echo "$XCODE_VERSION" | cut -d. -f1)
+      if [ "$XCODE_MAJOR" = "15" ] || [ "$XCODE_MAJOR" = "16" ]; then
+        DESIRED_XCODE_PATH="$XCODE_15_PATH"
+        echo "Found Xcode $XCODE_VERSION at Xcode-15.app location"
+      fi
+    fi
   elif [ -d "$XCODE_DEFAULT_PATH" ]; then
-    # Verify it's actually Xcode 15.x or 16.x
-    XCODE_VERSION=$("$XCODE_DEFAULT_PATH/usr/bin/xcodebuild" -version 2>/dev/null | head -n1 | awk '{print $2}' || echo "0")
-    XCODE_MAJOR=$(echo "$XCODE_VERSION" | cut -d. -f1)
+    # Verify it's actually Xcode 15.x or 16.x by reading the Info.plist directly
+    # This avoids the xcodebuild daemon startup issues
+    XCODE_APP=$(dirname "$(dirname "$XCODE_DEFAULT_PATH")")
+    XCODE_PLIST="$XCODE_APP/Contents/Info.plist"
 
-    if [ "$XCODE_MAJOR" = "15" ] || [ "$XCODE_MAJOR" = "16" ]; then
-      DESIRED_XCODE_PATH="$XCODE_DEFAULT_PATH"
-      echo "Found Xcode $XCODE_VERSION at default location"
+    if [ -f "$XCODE_PLIST" ]; then
+      # Read version directly from Info.plist (no daemon needed!)
+      XCODE_VERSION=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$XCODE_PLIST" 2>/dev/null || echo "0")
+      XCODE_MAJOR=$(echo "$XCODE_VERSION" | cut -d. -f1)
+
+      if [ "$XCODE_MAJOR" = "15" ] || [ "$XCODE_MAJOR" = "16" ]; then
+        DESIRED_XCODE_PATH="$XCODE_DEFAULT_PATH"
+        echo "Found Xcode $XCODE_VERSION at default location"
+      fi
     fi
   fi
 

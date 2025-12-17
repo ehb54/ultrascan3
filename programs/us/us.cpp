@@ -1000,19 +1000,24 @@ void US_Win::notices_ready() {
    QVersionNumber base_ver = QVersionNumber::fromString(US_Version);
    int sys_revision = QString(BUILDNUM).toInt();
 
-   // add revision to end of base_ver to compare with notices
-   QVector<int> segments = base_ver.segments();  // Already a QVector<int>
-   segments.append(sys_revision);
-   QVersionNumber sys_ver(segments);
+   // Extract only major.minor (first 2 segments) from base_ver
+   QVector<int> base_segments = base_ver.segments();
+   double sys_version = 0.0;
+   if (base_segments.size() >= 2) {
+       sys_version = base_segments[0] + (base_segments[1] / 10.0);  // e.g., 4 + 0.1 = 4.1
+   }
 
    for ( int ii = 0; ii < (int) msgs.size(); ++ii )
    {
-       QVersionNumber msg_ver = QVersionNumber::fromString(revs[ii]);
+      double msg_version  = QString( "%1" ).arg( revs[ii] ).replace( QRegularExpression( "\\.\\d+$" ), "" ).toDouble();
+      double msg_revision = QString( "%1" ).arg( revs[ii] ).replace( QRegularExpression( "^[^\\.]*\\.\\d+\\." ), "" ).toDouble();
 
       // Skip messages where message version.revision is less than our version.revision
-       if ( sys_ver > msg_ver ) {
-           continue;
-       }
+      if ( sys_version > msg_version ||
+           ( sys_version == msg_version &&
+             sys_revision > msg_revision ) ) {
+         continue;
+      }
 
       // Add current message to full text
       msg_note         += typeMap[ types[ ii ] ] + " for release "
