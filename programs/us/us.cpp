@@ -3,6 +3,7 @@
 #include <QTcpSocket>
 #include <QFontDatabase>
 #include <QtWidgets/QApplication>
+#include <QVersionNumber>
 
 #include "us.h"
 #include "us_license_t.h"
@@ -995,9 +996,17 @@ void US_Win::notices_ready() {
    QString msg_note  = tr( "UltraScan III notices posted :<br><br>" );
    bool empty_msg    = true;
 
-   double sys_version  = US_Version.toDouble();
-   int    sys_revision = QString( BUILDNUM ).toInt();
-   
+   // Strips out any "-" data in version (e.g. 4.1.0-dev becomes 4.1.0)
+   QVersionNumber base_ver = QVersionNumber::fromString(US_Version);
+   int sys_revision = QString(BUILDNUM).toInt();
+
+   // Extract only major.minor (first 2 segments) from base_ver
+   QVector<int> base_segments = base_ver.segments();
+   double sys_version = 0.0;
+   if (base_segments.size() >= 2) {
+       sys_version = base_segments[0] + (base_segments[1] / 10.0);  // e.g., 4 + 0.1 = 4.1
+   }
+
    for ( int ii = 0; ii < (int) msgs.size(); ++ii )
    {
       double msg_version  = QString( "%1" ).arg( revs[ii] ).replace( QRegularExpression( "\\.\\d+$" ), "" ).toDouble();

@@ -17,6 +17,60 @@ else
 fi
 
 # =============================================================================
+# PARSE COMMAND LINE OPTIONS
+# =============================================================================
+CLEAN=false
+PROFILE="APP"  # default profile
+
+# Parse options
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    --clean)
+      CLEAN=true
+      shift
+      ;;
+    --help)
+      echo "Usage: $0 [OPTIONS] [PROFILE]"
+      echo ""
+      echo "OPTIONS:"
+      echo "  --clean       Clean build artifacts before building"
+      echo "  --help        Show this help message"
+      echo ""
+      echo "PROFILE:"
+      echo "  APP           Desktop/user build (GUI + programs + DB) [default]"
+      echo "  TEST          Dev/CI build (programs + tests, prefer static libs)"
+      echo "  HPC           Headless / no DB / no GUI"
+      echo ""
+      echo "EXAMPLES:"
+      echo "  $0                  # Build with APP profile"
+      echo "  $0 TEST             # Build with TEST profile"
+      echo "  $0 --clean          # Clean and build with APP profile"
+      echo "  $0 --clean TEST     # Clean and build with TEST profile"
+      echo ""
+      echo "ENVIRONMENT VARIABLES:"
+      echo "  US3_BUILD_JOBS      Override number of parallel build jobs"
+      echo "  US3_VCPKG_ROOT      Override vcpkg location (default: ./vcpkg)"
+      exit 0
+      ;;
+    APP|TEST|HPC)
+      PROFILE="$1"
+      shift
+      ;;
+    *)
+      echo "ERROR: Unknown option: $1"
+      echo "Run '$0 --help' for usage information"
+      exit 1
+      ;;
+  esac
+done
+
+echo "Selected build profile: ${PROFILE}"
+if [ "$CLEAN" = true ]; then
+  echo "Clean build requested"
+fi
+echo ""
+
+# =============================================================================
 # PLATFORM DETECTION
 # =============================================================================
 if [[ "$OSTYPE" == "darwin"* ]]; then
@@ -35,19 +89,6 @@ fi
 
 echo "Platform: $PLATFORM"
 echo ""
-
-# =============================================================================
-# PROFILE SELECTION
-# =============================================================================
-PROFILE="${1:-APP}"  # default to APP if not provided
-echo "Selected build profile: ${PROFILE}"
-echo ""
-
-if [[ ! "$PROFILE" =~ ^(APP|TEST|HPC)$ ]]; then
-  echo "ERROR: Invalid profile: ${PROFILE}"
-  echo "Usage: $0 [APP|TEST|HPC]"
-  exit 1
-fi
 
 # =============================================================================
 # DETERMINE BUILD PARALLELISM
@@ -123,16 +164,52 @@ echo ""
 # =============================================================================
 if [ "$PLATFORM" = "macOS" ]; then
   CURRENT_XCODE_PATH=$(xcode-select -p || echo "")
-  DESIRED_XCODE_PATH="/Applications/Xcode-15.app/Contents/Developer"
+
+  # Check for Xcode 15 in either location
+  XCODE_15_PATH="/Applications/Xcode-15.app/Contents/Developer"
+  XCODE_DEFAULT_PATH="/Applications/Xcode.app/Contents/Developer"
 
   echo "Checking Xcode configuration..."
   echo "Current Xcode path: ${CURRENT_XCODE_PATH:-<not set>}"
-  echo "Desired Xcode path: $DESIRED_XCODE_PATH"
   echo ""
 
-  if [ -d "$DESIRED_XCODE_PATH" ]; then
+  # Determine which Xcode 15 path exists (if any)
+  DESIRED_XCODE_PATH=""
+  if [ -d "$XCODE_15_PATH" ]; then
+    # Verify version by reading Info.plist
+    XCODE_APP=$(dirname "$(dirname "$XCODE_15_PATH")")
+    XCODE_PLIST="$XCODE_APP/Contents/Info.plist"
+    if [ -f "$XCODE_PLIST" ]; then
+      XCODE_VERSION=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$XCODE_PLIST" 2>/dev/null || echo "0")
+      XCODE_MAJOR=$(echo "$XCODE_VERSION" | cut -d. -f1)
+      if [ "$XCODE_MAJOR" = "15" ] || [ "$XCODE_MAJOR" = "16" ]; then
+        DESIRED_XCODE_PATH="$XCODE_15_PATH"
+        echo "Found Xcode $XCODE_VERSION at Xcode-15.app location"
+      fi
+    fi
+  elif [ -d "$XCODE_DEFAULT_PATH" ]; then
+    # Verify it's actually Xcode 15.x or 16.x by reading the Info.plist directly
+    # This avoids the xcodebuild daemon startup issues
+    XCODE_APP=$(dirname "$(dirname "$XCODE_DEFAULT_PATH")")
+    XCODE_PLIST="$XCODE_APP/Contents/Info.plist"
+
+    if [ -f "$XCODE_PLIST" ]; then
+      # Read version directly from Info.plist (no daemon needed!)
+      XCODE_VERSION=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$XCODE_PLIST" 2>/dev/null || echo "0")
+      XCODE_MAJOR=$(echo "$XCODE_VERSION" | cut -d. -f1)
+
+      if [ "$XCODE_MAJOR" = "15" ] || [ "$XCODE_MAJOR" = "16" ]; then
+        DESIRED_XCODE_PATH="$XCODE_DEFAULT_PATH"
+        echo "Found Xcode $XCODE_VERSION at default location"
+      fi
+    fi
+  fi
+
+  if [ -n "$DESIRED_XCODE_PATH" ]; then
+    echo "Compatible Xcode path: $DESIRED_XCODE_PATH"
+
     if [ "$CURRENT_XCODE_PATH" != "$DESIRED_XCODE_PATH" ]; then
-      echo "Xcode 15 is installed but not active."
+      echo "Xcode 15/16 is installed but not active."
       if [ "$NON_INTERACTIVE" = false ]; then
         echo "About to switch Xcode to:"
         echo "  $DESIRED_XCODE_PATH"
@@ -151,15 +228,14 @@ if [ "$PLATFORM" = "macOS" ]; then
         echo "Xcode is now set to: $(xcode-select -p)"
       fi
     else
-      echo "Xcode 15 is already active."
+      echo "Compatible Xcode is already active."
     fi
   else
-    echo "Xcode 15 not found at:"
-    echo "  $DESIRED_XCODE_PATH"
+    echo "Xcode 15 or 16 not found at either:"
+    echo "  $XCODE_15_PATH"
+    echo "  $XCODE_DEFAULT_PATH"
     echo ""
-    echo "Please install Xcode 15 from the App Store or developer.apple.com."
-    echo ""
-    echo "Your current Xcode installation will remain untouched."
+    echo "Please install Xcode 15 or 16 from the App Store or developer.apple.com."
     echo ""
 
     if [ "$NON_INTERACTIVE" = false ]; then
@@ -173,14 +249,17 @@ if [ "$PLATFORM" = "macOS" ]; then
 fi
 
 # =============================================================================
-# VCPKG SETUP
+# VCPKG SETUP - Use local vcpkg in project
 # =============================================================================
 
-# Allow override via US3_VCPKG_ROOT; default to a central vcpkg in the home dir
-US3_VCPKG_ROOT="${US3_VCPKG_ROOT:-$HOME/vcpkg}"
+# Get script directory
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Use local vcpkg by default, allow override via US3_VCPKG_ROOT
+US3_VCPKG_ROOT="${US3_VCPKG_ROOT:-$SCRIPT_DIR/vcpkg}"
 
 echo ""
-echo "Using central vcpkg root: $US3_VCPKG_ROOT"
+echo "Using vcpkg root: $US3_VCPKG_ROOT"
 
 # Basic validation / clone if needed
 if [ -d "$US3_VCPKG_ROOT" ] && [ ! -d "$US3_VCPKG_ROOT/.git" ]; then
@@ -220,6 +299,43 @@ if [ ! -f "$VCPKG_TOOLCHAIN_FILE" ]; then
   exit 1
 fi
 
+# =============================================================================
+# CLEAN BUILD ARTIFACTS (if requested)
+# =============================================================================
+if [ "$CLEAN" = true ]; then
+  echo "=========================================="
+  echo "Cleaning build artifacts..."
+  echo "=========================================="
+
+  # Clean CMake build directory
+  if [ -d "build" ]; then
+    echo "Removing build directory..."
+    rm -rf build
+  fi
+
+  # Clean vcpkg build artifacts (but keep installed packages)
+  # This allows faster rebuilds while still being "clean"
+  if [ -d "$US3_VCPKG_ROOT/buildtrees" ]; then
+    echo "Removing vcpkg build trees..."
+    rm -rf "$US3_VCPKG_ROOT/buildtrees"
+  fi
+
+  # Optionally remove installed packages for a completely clean build
+  # Uncomment if you want a full clean (slower but more thorough)
+  # if [ -d "$US3_VCPKG_ROOT/installed" ]; then
+  #   echo "Removing vcpkg installed packages..."
+  #   rm -rf "$US3_VCPKG_ROOT/installed"
+  # fi
+
+  # if [ -d "$US3_VCPKG_ROOT/packages" ]; then
+  #   echo "Removing vcpkg packages..."
+  #   rm -rf "$US3_VCPKG_ROOT/packages"
+  # fi
+
+  echo "Clean complete!"
+  echo ""
+fi
+
 echo "=========================================="
 echo "UltraScan3 Bootstrap Steps"
 echo "=========================================="
@@ -254,14 +370,20 @@ fi
 echo "Ready to build UltraScan3 with preset: $PRESET"
 echo "  Profile: ${PROFILE}"
 echo "  Platform: ${PLATFORM}"
+echo "  Clean build: ${CLEAN}"
 echo ""
 echo "Steps:"
 echo "  1. Configure CMake with vcpkg toolchain"
-echo "  2. Build other dependencies (~10 min)"
+echo "  2. Build dependencies (~10 min first time)"
 echo "  3. Build UltraScan3 (~5 min)"
 echo ""
 if [ "$NON_INTERACTIVE" = false ]; then
-  echo "Grab a coffee - this is a one-time cost!"
+  if [ "$CLEAN" = true ]; then
+    echo "Clean build - dependencies will be rebuilt if needed"
+  else
+    echo "Incremental build - only changed files will be rebuilt"
+  fi
+  echo "Grab a coffee if this is your first build!"
 fi
 echo ""
 
@@ -287,5 +409,7 @@ echo ""
 if [ "$NON_INTERACTIVE" = false ]; then
   echo "Next time you build, it will be much faster"
   echo "since dependencies are cached."
+  echo ""
+  echo "To rebuild from scratch: $0 --clean"
   echo ""
 fi
