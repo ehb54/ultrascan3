@@ -9,7 +9,6 @@ DEBUGORRELEASE = release
 
 QMAKE_CFLAGS += -Wdeprecated -Wno-unused-result
 QMAKE_CXXFLAGS += -Wdeprecated -Wno-unused-result
-DEFINES += QT_DISABLE_DEPRECATED_UP_TO=0x060000
 
 #QMAKE_CFLAGS += -Wdeprecated -Werror=deprecated-declarations -Wno-unused-result
 #QMAKE_CXXFLAGS += -Wdeprecated -Werror=deprecated-declarations -Wno-unused-result
