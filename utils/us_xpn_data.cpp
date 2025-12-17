@@ -2478,9 +2478,29 @@ DbgLv(1) << "expA:   nf" << nfiles << "fname" << fname
 
    // Create a speed step vector
    QVector< US_SimulationParameters::SpeedProfile > speedsteps;
-   US_DataIO::RawData* udata = &allData[ iiuse ];
-
-   US_SimulationParameters::computeSpeedSteps( &udata->scanData, speedsteps );
+   QVector< US_DataIO::Scan > scans;
+   int total_scan_count = 0;
+   for (const auto& triple : allData)
+   {
+      total_scan_count += triple.scanData.size();
+   }
+   scans.reserve(total_scan_count);
+   for (const auto& triple : allData)
+   {
+      for (const auto& scan: triple.scanData)
+      {
+         scans << scan;
+      }
+   }
+   // Sort scans by time, tiebreak by omega2t
+   std::sort(scans.begin(), scans.end(), [](const US_DataIO::Scan& a, const US_DataIO::Scan& b) {
+       if ( qRound(a.seconds * 1000.0) == qRound(b.seconds * 1000.0) )
+       {
+          return a.omega2t < b.omega2t;
+       }
+      return a.seconds < b.seconds;
+   });
+   US_SimulationParameters::computeSpeedSteps( &scans, speedsteps );
 
    // Output time state files
 
@@ -2494,9 +2514,9 @@ DbgLv(1) << "expA:   nf" << nfiles << "fname" << fname
    US_TimeState tsobj;
 
    QString tspath    = cur_dir + runID + ".time_state.tmst";
-   int ntimes        = udata->scanCount();
+   int ntimes        = scans.count();
    int ntssda        = tSydata.count();
-   double e_utime    = udata->scanData[ ntimes - 1 ].seconds;
+   double e_utime    = ( ntimes > 0 ) ? scans[ ntimes - 1 ].seconds : 0.0;
    double e_stime    = ntssda > 0 ? tSydata[ ntssda - 1 ].exptime : 0.0;
 DbgLv(1) << "expA:   ntimes ntssda" << ntimes << ntssda
  << "e_utime e_stime" << e_utime << e_stime;
@@ -2516,16 +2536,16 @@ QVector< double > xv_scn;
 QVector< double > yv_scn;
 QVector< double > xv_tms;
 QVector< double > yv_tms;
-double utime1=udata->scanData[0].seconds;
-double uomgt1=udata->scanData[0].omega2t;
-double utime2=udata->scanData[ntimes-1].seconds;
-double uomgt2=udata->scanData[ntimes-1].omega2t;
+double utime1=scans[0].seconds;
+double uomgt1=scans[0].omega2t;
+double utime2=scans[ntimes-1].seconds;
+double uomgt2=scans[ntimes-1].omega2t;
 double avgrpm=0.0;
 for (int jj=0; jj<ntimes; jj++)
 {
- avgrpm += udata->scanData[jj].rpm;
- xv_scn << udata->scanData[jj].seconds;
- yv_scn << udata->scanData[jj].omega2t;
+ avgrpm += scans[jj].rpm;
+ xv_scn << scans[jj].seconds;
+ yv_scn << scans[jj].omega2t;
 }
 avgrpm /= (double)ntimes;
 double delta_t = utime2 - utime1;
@@ -2607,7 +2627,7 @@ DbgLv(1) << "expA:DLT:TMS:   stddev" << sigma_t << "correlation" << corre_t;
 DbgLv(1) << "expA: ntimes" << ntimes << "tspath" << tspath;
       for ( int ii = 0;  ii < ntimes; ii++ )
       {  // Create a record for each scan
-         US_DataIO::Scan* uscan = &udata->scanData[ ii ];
+         US_DataIO::Scan* uscan = &scans[ ii ];
          int scannbr       = ii + 1;           // Scan number
          double rawSpeed   = uscan->rpm;
          double tempera    = uscan->temperature;
@@ -2663,7 +2683,7 @@ DbgLv(1) << "expA:   ii" << ii << "scan" << scannbr << "stage" << istagen
             ftx               = ii;
             stgoff            = 1 - tSydata[ ii ].stageNum;
             int jj            = ntssda - 1;
-            while ( tSydata[ jj ].speed < irSpeed  &&  jj > 1 )
+            while ( tSydata[ jj ].speed < irSpeed  &&  jj > ii )
             {
                jj--;
             }
@@ -2679,7 +2699,7 @@ DbgLv(1) << "expA: ftx" << ftx << "etimoff" << etimoff << "ntssda" << ntssda;
 
       for ( int ii = 0; ii < ntimes; ii++ )
       {  // Build a list of scan times
-         US_DataIO::Scan* uscan = &udata->scanData[ ii ];
+         US_DataIO::Scan* uscan = &scans[ ii ];
          int time          = (int)qRound( uscan->seconds );
          sctimes << time;
 DbgLv(1) << "expA:  ii" << ii << "sctime" << time;
@@ -2723,7 +2743,35 @@ DbgLv(1) << "expA:   ii" << ii << "ftx" << ftx << "stage" << stage << "time_n" <
          double tempera    = tempe_p;
 DbgLv(1) << "expA:   ii" << ii << "stage" << stage << "time_n" << time_n
  << "speed_n" << speed_n << "omg2t_n" << omg2t_n;
+         // in case the time increment is one second, take the raw values directly
+         if ( timeinc == 1 ) {
+            time_c++;
+            // Set scan number to matching-time scan or 0
+            int scannbr       = sctimes.indexOf( time_c );
+            int isSpeed       = (int)qRound( speed_n / (double)ss_reso ) * ss_reso;
+            //DbgLv(1) << "expA:                 scan" << scannbr;
+            scannbr           = ( scannbr >= 0 ) ? ( scannbr + 1 ) : 0;
+            rawSpeed         = speed_n;
+            omega2t          = omg2t_n;
+            tempera          = tempe_n;
+            omg2t_sm         = omg2t_n;
+            DbgLv(1) << "expA:      jj" << 0 << "scan" << scannbr
+             << "time_c" << time_c << "speed" << rawSpeed << isSpeed
+             << "omg2t(rec)" << omega2t << "omg2t(sum)" << omg2t_sm;
 
+            // Set values for this time
+            tsobj.set_value( fkeys[ 0 ], time_c   );  // Time in seconds
+            tsobj.set_value( fkeys[ 1 ], rawSpeed );  // Raw speed
+            tsobj.set_value( fkeys[ 2 ], isSpeed  );  // Set (stage) speed
+            tsobj.set_value( fkeys[ 3 ], omega2t  );  // Omega-Squared-T
+            tsobj.set_value( fkeys[ 4 ], tempera  );  // Temperature
+            tsobj.set_value( fkeys[ 5 ], stage    );  // Stage (speed step)
+            tsobj.set_value( fkeys[ 6 ], scannbr  );  // Scan
+
+            // Write the scan record
+            tsobj.flush_record();
+            continue;
+         }
          for ( int jj = 0; jj < timeinc; jj++ )
          {  // Expand values for each second in present range
             time_c++;                                // Bump to next second
@@ -2856,9 +2904,30 @@ DbgLv(1) << "expA:   nf" << nfiles << "fname" << fname
 
    // Create a speed step vector
    QVector< US_SimulationParameters::SpeedProfile > speedsteps;
-   US_DataIO::RawData* udata = &allData[ iiuse ];
+   QVector< US_DataIO::Scan > scans;
+   int total_scan_count = 0;
+   for (const auto& triple : allData)
+   {
+      total_scan_count += triple.scanData.size();
+   }
+   scans.reserve(total_scan_count);
+   for (const auto& triple : allData)
+   {
+       for (const auto& scan: triple.scanData)
+       {
+           scans << scan;
+       }
+   }
+   // Sort scans by time, tiebreak by omega2t
+   std::sort(scans.begin(), scans.end(), [](const US_DataIO::Scan& a, const US_DataIO::Scan& b) {
+       if ( qRound(a.seconds * 1000.0) == qRound(b.seconds * 1000.0) )
+       {
+          return a.omega2t < b.omega2t;
+       }
+      return a.seconds < b.seconds;
+   });
 
-   US_SimulationParameters::computeSpeedSteps( &udata->scanData, speedsteps );
+   US_SimulationParameters::computeSpeedSteps( &scans, speedsteps );
 
    // Output time state files
 
@@ -2872,9 +2941,9 @@ DbgLv(1) << "expA:   nf" << nfiles << "fname" << fname
    US_TimeState tsobj;
 
    QString tspath    = cur_dir + runID + ".time_state.tmst";
-   int ntimes        = udata->scanCount();
+   int ntimes        = scans.count();
    int ntssda        = tSydata.count();
-   double e_utime    = udata->scanData[ ntimes - 1 ].seconds;
+   double e_utime    = ntimes > 0 ? scans[ ntimes - 1 ].seconds : 0.0;
    double e_stime    = ntssda > 0 ? tSydata[ ntssda - 1 ].exptime : 0.0;
 DbgLv(1) << "expA:   ntimes ntssda" << ntimes << ntssda
  << "e_utime e_stime" << e_utime << e_stime;
@@ -2894,16 +2963,16 @@ QVector< double > xv_scn;
 QVector< double > yv_scn;
 QVector< double > xv_tms;
 QVector< double > yv_tms;
-double utime1=udata->scanData[0].seconds;
-double uomgt1=udata->scanData[0].omega2t;
-double utime2=udata->scanData[ntimes-1].seconds;
-double uomgt2=udata->scanData[ntimes-1].omega2t;
+double utime1=scans[0].seconds;
+double uomgt1=scans[0].omega2t;
+double utime2=scans[ntimes-1].seconds;
+double uomgt2=scans[ntimes-1].omega2t;
 double avgrpm=0.0;
 for (int jj=0; jj<ntimes; jj++)
 {
- avgrpm += udata->scanData[jj].rpm;
- xv_scn << udata->scanData[jj].seconds;
- yv_scn << udata->scanData[jj].omega2t;
+ avgrpm += scans[jj].rpm;
+ xv_scn << scans[jj].seconds;
+ yv_scn << scans[jj].omega2t;
 }
 avgrpm /= (double)ntimes;
 double delta_t = utime2 - utime1;
@@ -2985,7 +3054,7 @@ DbgLv(1) << "expA:DLT:TMS:   stddev" << sigma_t << "correlation" << corre_t;
 DbgLv(1) << "expA: ntimes" << ntimes << "tspath" << tspath;
       for ( int ii = 0;  ii < ntimes; ii++ )
       {  // Create a record for each scan
-         US_DataIO::Scan* uscan = &udata->scanData[ ii ];
+         US_DataIO::Scan* uscan = &scans[ ii ];
          int scannbr       = ii + 1;           // Scan number
          double rawSpeed   = uscan->rpm;
          double tempera    = uscan->temperature;
@@ -3041,7 +3110,7 @@ DbgLv(1) << "expA:   ii" << ii << "scan" << scannbr << "stage" << istagen
             ftx               = ii;
             stgoff            = 1 - tSydata[ ii ].stageNum;
             int jj            = ntssda - 1;
-            while ( tSydata[ jj ].speed < irSpeed  &&  jj > 1 )
+            while ( tSydata[ jj ].speed < irSpeed  &&  jj > ii )
             {
                jj--;
             }
@@ -3057,7 +3126,7 @@ DbgLv(1) << "expA: ftx" << ftx << "etimoff" << etimoff << "ntssda" << ntssda;
 
       for ( int ii = 0; ii < ntimes; ii++ )
       {  // Build a list of scan times
-         US_DataIO::Scan* uscan = &udata->scanData[ ii ];
+         US_DataIO::Scan* uscan = &scans[ ii ];
          int time          = (int)qRound( uscan->seconds );
          sctimes << time;
 DbgLv(1) << "expA:  ii" << ii << "sctime" << time;
@@ -3107,6 +3176,35 @@ DbgLv(1) << "expA:   ii" << ii << "ftx" << ftx << "stage" << stage << "time_n" <
          double tempera    = tempe_p;
 DbgLv(1) << "expA:   ii" << ii << "stage" << stage << "time_n" << time_n
  << "speed_n" << speed_n << "omg2t_n" << omg2t_n;
+         // in case the time increment is one second, take the raw values directly
+         if ( timeinc == 1 ) {
+            time_c++;
+            // Set scan number to matching-time scan or 0
+            int scannbr       = sctimes.indexOf( time_c );
+            int isSpeed       = (int)qRound( speed_n / (double)ss_reso ) * ss_reso;
+            //DbgLv(1) << "expA:                 scan" << scannbr;
+            scannbr           = ( scannbr >= 0 ) ? ( scannbr + 1 ) : 0;
+            rawSpeed         = speed_n;
+            omega2t          = omg2t_n;
+            tempera          = tempe_n;
+            omg2t_sm         = omg2t_n;
+            DbgLv(1) << "expA:      jj" << 0 << "scan" << scannbr
+             << "time_c" << time_c << "speed" << rawSpeed << isSpeed
+             << "omg2t(rec)" << omega2t << "omg2t(sum)" << omg2t_sm;
+
+            // Set values for this time
+            tsobj.set_value( fkeys[ 0 ], time_c   );  // Time in seconds
+            tsobj.set_value( fkeys[ 1 ], rawSpeed );  // Raw speed
+            tsobj.set_value( fkeys[ 2 ], isSpeed  );  // Set (stage) speed
+            tsobj.set_value( fkeys[ 3 ], omega2t  );  // Omega-Squared-T
+            tsobj.set_value( fkeys[ 4 ], tempera  );  // Temperature
+            tsobj.set_value( fkeys[ 5 ], stage    );  // Stage (speed step)
+            tsobj.set_value( fkeys[ 6 ], scannbr  );  // Scan
+
+            // Write the scan record
+            tsobj.flush_record();
+            continue;
+         }
 
          for ( int jj = 0; jj < timeinc; jj++ )
          {  // Expand values for each second in present range
