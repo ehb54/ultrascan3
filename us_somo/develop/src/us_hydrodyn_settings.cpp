@@ -1794,7 +1794,7 @@ void US_Hydrodyn::write_config(const QString& fname)
             if ( directory_last_access.count( directory_history[ i ] ) )
             { 
                qsl_tmp1 << directory_history[ i ];
-               qsl_tmp2 << QString( "%1" ).arg( (unsigned int)directory_last_access[ directory_history[ i ] ].toSecsSinceEpoch() );
+               qsl_tmp2 << QString::number( directory_last_access[ directory_history[ i ] ].toSecsSinceEpoch() );
                qsl_tmp3 << 
                   ( ( directory_last_filetype.count( directory_history[ i ] ) &&
                       !directory_last_filetype[ directory_history[ i ] ].isEmpty() )
@@ -2338,7 +2338,7 @@ bool US_Hydrodyn::load_config_json ( QString &json )
          for ( int i = 0; i < (int) qsl_tmp1.size(); ++i )
          {
             directory_history.push_back( qsl_tmp1[ i ] );
-            dt.fromSecsSinceEpoch( static_cast<qint64>( qsl_tmp2[ i ].toULongLong() ) );
+            dt = QDateTime::fromSecsSinceEpoch( static_cast<qint64>( qsl_tmp2[ i ].toULongLong() ), Qt::LocalTime );
             directory_last_access[ directory_history.back() ] = dt;
             if ( qsl_tmp3.size() )
             {
