@@ -77,7 +77,7 @@ void US_Dirhist::setupGUI()
          {
             QString toset =
                last_access->count( (*history)[ i ] )
-               ? (*last_access)[ (*history)[ i ] ].toString( QLocale::system().dateFormat( QLocale::ShortFormat ) )
+               ? QLocale::system().toString((*last_access)[(*history)[i]], QLocale::ShortFormat)
                : "";
             t_hist->setItem( i, 1, new QTableWidgetItem( toset ) );
          }
