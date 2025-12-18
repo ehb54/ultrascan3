@@ -62,20 +62,30 @@ if(NOT GIT_BRANCH)
 endif()
 
 # Check for local changes (modified, added, deleted, or untracked files)
+# Dirty = tracked changes only (ignore untracked files)
+set(GIT_DIRTY_FLAG "")
+set(LOCAL_CHANGES "")
+
+# 1) Unstaged changes to tracked files?
 execute_process(
-        COMMAND git status --porcelain
+        COMMAND git diff --quiet --exit-code
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-        OUTPUT_VARIABLE GIT_STATUS
-        OUTPUT_STRIP_TRAILING_WHITESPACE
+        RESULT_VARIABLE GIT_DIFF_WORKTREE_RC
         ERROR_QUIET
 )
 
-if(GIT_STATUS)
+# 2) Staged changes to tracked files?
+execute_process(
+        COMMAND git diff --quiet --cached --exit-code
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        RESULT_VARIABLE GIT_DIFF_INDEX_RC
+        ERROR_QUIET
+)
+
+# If either diff is non-zero, tracked content differs
+if(NOT GIT_DIFF_WORKTREE_RC EQUAL 0 OR NOT GIT_DIFF_INDEX_RC EQUAL 0)
     set(GIT_DIRTY_FLAG "-dirty")
     set(LOCAL_CHANGES " Δ")
-else()
-    set(GIT_DIRTY_FLAG "")
-    set(LOCAL_CHANGES "")
 endif()
 
 # Get commit date (last commit date) instead of current build timestamp
