@@ -91,7 +91,7 @@ endif()
 # Get commit date (last commit date) instead of current build timestamp
 execute_process(
         COMMAND env TZ=UTC0 git log -1
-        --date=format:%Y-%m-%d\ %H:%M:%S\ UTC
+        --date=format-local:%Y-%m-%d\ %H:%M:%S\ UTC
         --format=%cd
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         OUTPUT_VARIABLE REVISION_DATE
