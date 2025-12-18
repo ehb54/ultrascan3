@@ -705,7 +705,7 @@ void US_Win::logo( int width )
     painter.drawText( ( pw - vWidth ) / 2, yVersion, version );
 
     // --- Revision line (rev + date) ---
-    QString revDateLine = QString("Revision %1: %2").arg(GIT_REVISION).arg(REVISION_DATE);
+    QString revDateLine = QString("Source Identifier: %1 (%2)").arg(GIT_REVISION).arg(REVISION_DATE);
 
     QFont revDateFont( uiFontFamily );
     revDateFont.setWeight   ( QFont::Normal );

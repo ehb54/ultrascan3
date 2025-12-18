@@ -45,21 +45,12 @@ message(STATUS "UltraScan3 description: ${US3_DESCRIPTION}")
 # =============================================================================
 # VERSION HEADER GENERATION
 # =============================================================================
-# Generate us/us_version.h and us/us_revision.h on *every* build
-# =============================================================================
-# VERSION HEADER GENERATION
-# =============================================================================
 # Generate us/us_revision.h only when Git state changes (not on every build)
 set(REVISION_HEADER "${CMAKE_SOURCE_DIR}/programs/us/us_revision.h")
 
 find_package(Git)
 if(GIT_FOUND AND EXISTS "${CMAKE_SOURCE_DIR}/.git")
-    set(GIT_HEAD_FILE "${CMAKE_SOURCE_DIR}/.git/HEAD")
-    set(GIT_INDEX_FILE "${CMAKE_SOURCE_DIR}/.git/index")
-
-    # Create custom command that runs only when Git state changes
-    add_custom_command(
-            OUTPUT ${REVISION_HEADER}
+    add_custom_target(us_version_headers ALL
             COMMAND ${CMAKE_COMMAND}
             -DPROJECT_VERSION_MAJOR=${PROJECT_VERSION_MAJOR}
             -DPROJECT_VERSION_MINOR=${PROJECT_VERSION_MINOR}
@@ -68,30 +59,11 @@ if(GIT_FOUND AND EXISTS "${CMAKE_SOURCE_DIR}/.git")
             -DUS3_SOURCE_DIR=${CMAKE_SOURCE_DIR}
             -DUS3_BINARY_DIR=${CMAKE_BINARY_DIR}
             -P ${CMAKE_SOURCE_DIR}/admin/cmake/GenerateVersion.cmake
-            DEPENDS
-            ${GIT_HEAD_FILE}
-            ${GIT_INDEX_FILE}
-            ${CMAKE_SOURCE_DIR}/admin/cmake/GenerateVersion.cmake
-            COMMENT "Updating us_revision.h (Git state changed)"
+            WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+            COMMENT "Updating us_revision.h"
             VERBATIM
     )
-
-    # Create the target that depends on the generated file
-    add_custom_target(us_version_headers DEPENDS ${REVISION_HEADER})
 else()
-    # No Git available - generate once at configure time
-    execute_process(
-            COMMAND ${CMAKE_COMMAND}
-            -DPROJECT_VERSION_MAJOR=${PROJECT_VERSION_MAJOR}
-            -DPROJECT_VERSION_MINOR=${PROJECT_VERSION_MINOR}
-            -DPROJECT_VERSION_PATCH=${PROJECT_VERSION_PATCH}
-            -DUS3_VERSION=${US3_VERSION}
-            -DUS3_SOURCE_DIR=${CMAKE_SOURCE_DIR}
-            -DUS3_BINARY_DIR=${CMAKE_BINARY_DIR}
-            -P ${CMAKE_SOURCE_DIR}/admin/cmake/GenerateVersion.cmake
-    )
-
-    # Create empty target for consistency
     add_custom_target(us_version_headers)
 endif()
 
