@@ -12,7 +12,7 @@
 #include "us_gui_settings.h"
 #include "us_win_data.h"
 #include "us_defines.h"
-#include "us_revision.h"
+#include "us_revision-bash.h"
 #include "us_sleep.h"
 #include "us_images.h"
 #include "us_passwd.h"
@@ -673,20 +673,24 @@ void US_Win::logo( int width )
     const QString uiFontFamily = "Sans Serif";
 
     // --- Compact vertical layout ---
-    const int yVersion       = 124;
-    const int versionToBuild = 16;
-    const int buildToDivider = 14;
+    const int yVersion       = 120;   // Moved down for more space from silver
+    const int versionToRevDate = 16;
+    const int revDateToDivider = 14;
     const int dividerToTitle = 20;
     const int titleToFirst   = 16;
     const int nameStep       = 14;
 
-    const int yBuild        = yVersion + versionToBuild;
-    const int yDivider      = yBuild   + buildToDivider;
+    const int yRevDate      = yVersion + versionToRevDate;
+    const int yDivider      = yRevDate + revDateToDivider;
     const int yAuthorsTitle = yDivider + dividerToTitle;
     const int firstNameBase = yAuthorsTitle + titleToFirst;
 
-    // --- Version line ---
-    QString version = "Version " + US_Version + " (build " BUILDNUM ") for " OS_TITLE;
+    // --- Version line (with build and Δ if local changes) ---
+    QString version = QString("Version %1 (build %2%3) for %4")
+        .arg(US_Version)
+        .arg(BUILDNUM)
+        .arg(LOCAL_CHANGES)
+        .arg(OS_TITLE);
 
     QFont versionFont( uiFontFamily );
     versionFont.setWeight       ( QFont::DemiBold );
@@ -700,20 +704,19 @@ void US_Win::logo( int width )
     int vWidth = vMetrics.horizontalAdvance( version );
     painter.drawText( ( pw - vWidth ) / 2, yVersion, version );
 
-    // --- Build line ---
-    QString buildLine =
-            QString( "Built on %1 at %2 UTC" ).arg( BUILD_DATE ).arg( BUILD_TIME );
+    // --- Revision line (rev + date) ---
+    QString revDateLine = QString("Revision %1: %2").arg(GIT_REVISION).arg(REVISION_DATE);
 
-    QFont buildFont( uiFontFamily );
-    buildFont.setWeight   ( QFont::Normal );
-    buildFont.setPixelSize( 12 );
+    QFont revDateFont( uiFontFamily );
+    revDateFont.setWeight   ( QFont::Normal );
+    revDateFont.setPixelSize( 12 );
 
-    painter.setFont( buildFont );
+    painter.setFont( revDateFont );
     painter.setPen ( metaColor );
 
-    QFontMetrics bMetrics( buildFont );
-    int bWidth = bMetrics.horizontalAdvance( buildLine );
-    painter.drawText( ( pw - bWidth ) / 2, yBuild, buildLine );
+    QFontMetrics rdMetrics( revDateFont );
+    int rdWidth = rdMetrics.horizontalAdvance( revDateLine );
+    painter.drawText( ( pw - rdWidth ) / 2, yRevDate, revDateLine );
 
     // --- Divider ---
     painter.setPen( QPen( dividerColor, 1 ) );

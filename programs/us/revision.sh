@@ -21,10 +21,10 @@ if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   NEW_BUILDNUM=$(git rev-list --count HEAD | tr -d '[:space:]')
 
   # Get short commit hash
-  NEW_GIT_REVISION=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+  NEW_GIT_REVISION=$(git rev-parse --short=7 HEAD 2>/dev/null || echo "unknown")
 
   # Get commit date (last commit date)
-  NEW_REVISION_DATE=$(git log -1 --format=%cd --date=format:'%Y-%m-%d %H:%M:%S UTC' 2>/dev/null || echo "unknown")
+  NEW_REVISION_DATE=$(TZ=UTC0 git log -1 --format=%cd --date=format:'%Y-%m-%d %H:%M:%S UTC' 2>/dev/null || echo "unknown")
 
   # Check for local changes (any modified, added, deleted, or untracked files)
   if [ -n "$(git status --porcelain 2>/dev/null)" ]; then
