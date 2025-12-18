@@ -686,7 +686,7 @@ void US_Win::logo( int width )
     const int firstNameBase = yAuthorsTitle + titleToFirst;
 
     // --- Version line (with build and Δ if local changes) ---
-    QString version = QString("Version %1 (build %2%3) for %4")
+    QString version = QString("Version %1 (%2%3) for %4")
         .arg(US_Version)
         .arg(BUILDNUM)
         .arg(LOCAL_CHANGES)
