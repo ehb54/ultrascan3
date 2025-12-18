@@ -12,7 +12,7 @@
 #include "us_gui_settings.h"
 #include "us_win_data.h"
 #include "us_defines.h"
-#include "us_revision-bash.h"
+#include "us_revision.h"
 #include "us_sleep.h"
 #include "us_images.h"
 #include "us_passwd.h"
