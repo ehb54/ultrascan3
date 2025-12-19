@@ -857,8 +857,9 @@ void US_Win::help( int index )
     case HELP_ABOUT:
       QMessageBox::information( this,
         tr( "About UltraScan..." ),
-        tr( "UltraScan III version %1\n"
-            "( build %2 )\n"
+        tr( "UltraScan III version %1 (%2)\n"
+            "Source Identifier: %3\n"
+            "Source Date: %4\n"
             "Copyright 1989 - 2025\n"
             "Borries Demeler\n\n"
             "For more information, please visit:\n"
@@ -869,7 +870,7 @@ void US_Win::help( int index )
             "32 Campus Drive\n"
             "Missoula, Montana  59812\n"
             "Phone:  (406) 285-1935\n"
-            "E-mail: borries.demeler@umontana.edu" ).arg( US_Version ).arg( BUILDNUM ) );
+            "E-mail: borries.demeler@umontana.edu" ).arg( US_Version ).arg( BUILDNUM ).arg( GIT_REVISION ).arg( REVISION_DATE ) );
 
       statusBar()->showMessage( tr( "Ready" ) );
       break;
