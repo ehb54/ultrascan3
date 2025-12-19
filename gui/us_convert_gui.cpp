@@ -9159,7 +9159,7 @@ DbgLv(1) << "CGui:RD:  rdLegDat CALL";
 	}
 	if ( leg_types.size() == 1 )
 	{
-		runType = leg_types.values().first();
+		runType = leg_types.keys().first();
 	}
 	else
 	{
@@ -9183,7 +9183,7 @@ DbgLv(1) << "CGui:RD:  rdLegDat CALL";
 		}
 		else
 		{
-			runType = leg_types.values().first();
+			runType = leg_types.keys().first();
 		}
 	}
 	US_Convert::readLegacyData( currentDir, runType, legacyData );
