@@ -394,7 +394,7 @@ bool US_LegacyConverter::read_beckman_files(const QString& path, QString& status
       }
       if ( leg_types.size() == 1 )
       {
-         runtype = leg_types.values().first();
+         runtype = leg_types.keys().first();
       }
       else
       {
@@ -418,7 +418,7 @@ bool US_LegacyConverter::read_beckman_files(const QString& path, QString& status
          }
          else
          {
-            runtype = leg_types.values().first();
+            runtype = leg_types.keys().first();
          }
       }
       US_Convert::readLegacyData(dir.absoluteFilePath(path), runtype, rawscan);
