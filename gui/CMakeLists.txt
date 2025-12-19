@@ -20,7 +20,7 @@ foreach(img IN LISTS US3_GUI_IMAGES)
     endif()
 endforeach()
 
-set(US3_GUI_QRC "${CMAKE_BINARY_DIR}/us3_gui_images_auto.qrc")
+set(US3_GUI_QRC "${CMAKE_BINARY_DIR}/us3_gui_images.qrc")
 file(WRITE  "${US3_GUI_QRC}" "<RCC>\n  <qresource prefix=\"/images\">\n")
 foreach(img IN LISTS US3_GUI_IMAGES)
     # rel will be "foo.png", "icons/bar.svg", etc., relative to gui/images
