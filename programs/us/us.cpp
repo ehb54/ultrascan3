@@ -745,20 +745,52 @@ void US_Win::logo( int width )
     painter.setPen ( authorsColor );
 
     QFontMetrics aMetrics( authorsFont );
-    QStringList names = {
-            "Borries Demeler",
-            "Emre Brookes",
-            "Alexey Savelyev",
-            "Gary Gorbet"
+
+    // Borries Demeler spans both columns (centered)
+    QString leadAuthor = "Borries Demeler";
+    int leadWidth = aMetrics.horizontalAdvance( leadAuthor );
+    int yLead = firstNameBase;
+    painter.drawText( ( pw - leadWidth ) / 2, yLead, leadAuthor );
+
+    // Two columns for remaining authors
+    QStringList leftColumn = {
+        "Emre Brookes",
+        "Alexey Savelyev",
+        "Gary Gorbet"
     };
 
-    for ( int i = 0; i < names.size(); ++i )
+    QStringList rightColumn = {
+        "Lukas Dobler",
+        "Saeed Mortezazadeh",
+        "Haben Gabir"
+    };
+
+    const int columnSpacing = 140;  // Distance between column centers
+    const int leftColumnX = pw / 2 - columnSpacing / 2;
+    const int rightColumnX = pw / 2 + columnSpacing / 2;
+    const int ySecondRow = yLead + nameStep;  // Start below lead author
+
+    // Draw left column
+    for ( int i = 0; i < leftColumn.size(); ++i )
     {
-        const QString& name = names[i];
+        const QString& name = leftColumn[i];
         int nWidth = aMetrics.horizontalAdvance( name );
-        int y      = firstNameBase + i * nameStep;
-        painter.drawText( ( pw - nWidth ) / 2, y, name );
+        int y = ySecondRow + i * nameStep;
+        painter.drawText( leftColumnX - nWidth / 2, y, name );
     }
+
+    // Draw right column
+    for ( int i = 0; i < rightColumn.size(); ++i )
+    {
+        const QString& name = rightColumn[i];
+        int nWidth = aMetrics.horizontalAdvance( name );
+        int y = ySecondRow + i * nameStep;
+        painter.drawText( rightColumnX - nWidth / 2, y, name );
+    }
+
+    // Calculate last row position for link spacing
+    int lastRowCount = qMax( leftColumn.size(), rightColumn.size() );
+    int lastNameY = ySecondRow + ( lastRowCount - 1 ) * nameStep;
 
     // --- Display ---
     const int splashX = static_cast<int>( ( width / 2 ) - 230 );
@@ -786,16 +818,11 @@ void US_Win::logo( int width )
     contribFont.setPixelSize( 10 );
     contribLabel->setFont( contribFont );
 
-    // Make spacing: last-author → link == link → bottom
-    const int linkH = 16;  // height of the clickable label box
-    // Baseline of last author:
-    const int lastNameY = firstNameBase + ( names.size() - 1 ) * nameStep;
-    // Approximate bottom of last author text:
+    const int linkH = 16;
     const int textBottom = lastNameY + aMetrics.descent();
 
-    // Solve: textBottom + d + linkH + d = splashH  → d = (splashH - textBottom - linkH) / 2
     int remaining = splashH - textBottom - linkH;
-    if ( remaining < 0 ) remaining = 0;   // safety
+    if ( remaining < 0 ) remaining = 0;
     int d = remaining / 2;
 
     int yLink = textBottom + d;
