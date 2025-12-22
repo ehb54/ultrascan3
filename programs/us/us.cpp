@@ -673,20 +673,24 @@ void US_Win::logo( int width )
     const QString uiFontFamily = "Sans Serif";
 
     // --- Compact vertical layout ---
-    const int yVersion       = 124;
-    const int versionToBuild = 16;
-    const int buildToDivider = 14;
+    const int yVersion       = 120;   // Moved down for more space from silver
+    const int versionToRevDate = 16;
+    const int revDateToDivider = 14;
     const int dividerToTitle = 20;
     const int titleToFirst   = 16;
     const int nameStep       = 14;
 
-    const int yBuild        = yVersion + versionToBuild;
-    const int yDivider      = yBuild   + buildToDivider;
+    const int yRevDate      = yVersion + versionToRevDate;
+    const int yDivider      = yRevDate + revDateToDivider;
     const int yAuthorsTitle = yDivider + dividerToTitle;
     const int firstNameBase = yAuthorsTitle + titleToFirst;
 
-    // --- Version line ---
-    QString version = "Version " + US_Version + " (build " BUILDNUM ") for " OS_TITLE;
+    // --- Version line (with build and Δ if local changes) ---
+    QString version = QString("Version %1 (%2%3) for %4")
+        .arg(US_Version)
+        .arg(BUILDNUM)
+        .arg(LOCAL_CHANGES)
+        .arg(OS_TITLE);
 
     QFont versionFont( uiFontFamily );
     versionFont.setWeight       ( QFont::DemiBold );
@@ -700,20 +704,19 @@ void US_Win::logo( int width )
     int vWidth = vMetrics.horizontalAdvance( version );
     painter.drawText( ( pw - vWidth ) / 2, yVersion, version );
 
-    // --- Build line ---
-    QString buildLine =
-            QString( "Built on %1 at %2 UTC" ).arg( BUILD_DATE ).arg( BUILD_TIME );
+    // --- Revision line (rev + date) ---
+    QString revDateLine = QString("Source Identifier: %1 (%2)").arg(GIT_REVISION).arg(REVISION_DATE);
 
-    QFont buildFont( uiFontFamily );
-    buildFont.setWeight   ( QFont::Normal );
-    buildFont.setPixelSize( 12 );
+    QFont revDateFont( uiFontFamily );
+    revDateFont.setWeight   ( QFont::Normal );
+    revDateFont.setPixelSize( 12 );
 
-    painter.setFont( buildFont );
+    painter.setFont( revDateFont );
     painter.setPen ( metaColor );
 
-    QFontMetrics bMetrics( buildFont );
-    int bWidth = bMetrics.horizontalAdvance( buildLine );
-    painter.drawText( ( pw - bWidth ) / 2, yBuild, buildLine );
+    QFontMetrics rdMetrics( revDateFont );
+    int rdWidth = rdMetrics.horizontalAdvance( revDateLine );
+    painter.drawText( ( pw - rdWidth ) / 2, yRevDate, revDateLine );
 
     // --- Divider ---
     painter.setPen( QPen( dividerColor, 1 ) );
@@ -742,20 +745,52 @@ void US_Win::logo( int width )
     painter.setPen ( authorsColor );
 
     QFontMetrics aMetrics( authorsFont );
-    QStringList names = {
-            "Borries Demeler",
-            "Emre Brookes",
-            "Alexey Savelyev",
-            "Gary Gorbet"
+
+    // Borries Demeler spans both columns (centered)
+    QString leadAuthor = "Borries Demeler";
+    int leadWidth = aMetrics.horizontalAdvance( leadAuthor );
+    int yLead = firstNameBase;
+    painter.drawText( ( pw - leadWidth ) / 2, yLead, leadAuthor );
+
+    // Two columns for remaining authors
+    QStringList leftColumn = {
+        "Emre Brookes",
+        "Alexey Savelyev",
+        "Gary Gorbet"
     };
 
-    for ( int i = 0; i < names.size(); ++i )
+    QStringList rightColumn = {
+        "Lukas Dobler",
+        "Saeed Mortezazadeh",
+        "Haben Gabir"
+    };
+
+    const int columnSpacing = 140;  // Distance between column centers
+    const int leftColumnX = pw / 2 - columnSpacing / 2;
+    const int rightColumnX = pw / 2 + columnSpacing / 2;
+    const int ySecondRow = yLead + nameStep;  // Start below lead author
+
+    // Draw left column
+    for ( int i = 0; i < leftColumn.size(); ++i )
     {
-        const QString& name = names[i];
+        const QString& name = leftColumn[i];
         int nWidth = aMetrics.horizontalAdvance( name );
-        int y      = firstNameBase + i * nameStep;
-        painter.drawText( ( pw - nWidth ) / 2, y, name );
+        int y = ySecondRow + i * nameStep;
+        painter.drawText( leftColumnX - nWidth / 2, y, name );
     }
+
+    // Draw right column
+    for ( int i = 0; i < rightColumn.size(); ++i )
+    {
+        const QString& name = rightColumn[i];
+        int nWidth = aMetrics.horizontalAdvance( name );
+        int y = ySecondRow + i * nameStep;
+        painter.drawText( rightColumnX - nWidth / 2, y, name );
+    }
+
+    // Calculate last row position for link spacing
+    int lastRowCount = qMax( leftColumn.size(), rightColumn.size() );
+    int lastNameY = ySecondRow + ( lastRowCount - 1 ) * nameStep;
 
     // --- Display ---
     const int splashX = static_cast<int>( ( width / 2 ) - 230 );
@@ -783,16 +818,11 @@ void US_Win::logo( int width )
     contribFont.setPixelSize( 10 );
     contribLabel->setFont( contribFont );
 
-    // Make spacing: last-author → link == link → bottom
-    const int linkH = 16;  // height of the clickable label box
-    // Baseline of last author:
-    const int lastNameY = firstNameBase + ( names.size() - 1 ) * nameStep;
-    // Approximate bottom of last author text:
+    const int linkH = 16;
     const int textBottom = lastNameY + aMetrics.descent();
 
-    // Solve: textBottom + d + linkH + d = splashH  → d = (splashH - textBottom - linkH) / 2
     int remaining = splashH - textBottom - linkH;
-    if ( remaining < 0 ) remaining = 0;   // safety
+    if ( remaining < 0 ) remaining = 0;
     int d = remaining / 2;
 
     int yLink = textBottom + d;
@@ -854,8 +884,9 @@ void US_Win::help( int index )
     case HELP_ABOUT:
       QMessageBox::information( this,
         tr( "About UltraScan..." ),
-        tr( "UltraScan III version %1\n"
-            "( build %2 )\n"
+        tr( "UltraScan III version %1 (%2)\n"
+            "Source Identifier: %3\n"
+            "Source Date: %4\n"
             "Copyright 1989 - 2025\n"
             "Borries Demeler\n\n"
             "For more information, please visit:\n"
@@ -866,7 +897,7 @@ void US_Win::help( int index )
             "32 Campus Drive\n"
             "Missoula, Montana  59812\n"
             "Phone:  (406) 285-1935\n"
-            "E-mail: borries.demeler@umontana.edu" ).arg( US_Version ).arg( BUILDNUM ) );
+            "E-mail: borries.demeler@umontana.edu" ).arg( US_Version ).arg( BUILDNUM ).arg( GIT_REVISION ).arg( REVISION_DATE ) );
 
       statusBar()->showMessage( tr( "Ready" ) );
       break;
