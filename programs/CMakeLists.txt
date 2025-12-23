@@ -24,21 +24,49 @@ target_include_directories(us_program_common INTERFACE
 # 1) Always-needed deps
 # --------------------------------------------------------------------------
 target_link_libraries(us_program_common INTERFACE
-        Qt5::Core
-        Qt5::Gui
-        Qt5::Widgets
-        Qt5::Network
-        Qt5::Sql
-        Qt5::Xml
-        Qt5::Svg
-        Qt5::OpenGL
-        Qt5::PrintSupport
+        Qt::Core
+        Qt::Gui
+        Qt::Widgets
+        Qt::Network
+        Qt::Sql
+        Qt::Xml
+        Qt::Svg
+        Qt::OpenGL
+        Qt::PrintSupport
         Qwt::Qwt
         )
+if (USE_QT6)
+    target_link_libraries(us_program_common INTERFACE Qt::OpenGLWidgets)
+endif()
 
 # resources are their own target at the top level
 if(TARGET UltraScan3::Resources)
-    target_link_libraries(us_program_common INTERFACE UltraScan3::Resources)
+    if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.24)
+        # Portable: CMake translates this to --whole-archive / -force_load / /WHOLEARCHIVE as appropriate.
+        target_link_libraries(us_program_common INTERFACE
+                $<LINK_LIBRARY:WHOLE_ARCHIVE,UltraScan3::Resources>
+        )
+    else()
+        # Fallbacks for older CMake
+        if(MSVC)
+            # MSVC: force whole archive
+            target_link_options(us_program_common INTERFACE
+                    "/WHOLEARCHIVE:$<TARGET_FILE:UltraScan3::Resources>"
+            )
+            target_link_libraries(us_program_common INTERFACE UltraScan3::Resources)
+        elseif(APPLE)
+            # Apple ld64: force-load the archive
+            target_link_options(us_program_common INTERFACE
+                    "-Wl,-force_load,$<TARGET_FILE:UltraScan3::Resources>"
+            )
+            target_link_libraries(us_program_common INTERFACE UltraScan3::Resources)
+        else()
+            # GNU ld / gold / lld (Linux, MinGW, etc.)
+            target_link_libraries(us_program_common INTERFACE
+                    "-Wl,--whole-archive" UltraScan3::Resources "-Wl,--no-whole-archive"
+            )
+        endif()
+    endif()
 else()
     message(FATAL_ERROR "UltraScan3::Resources target not found – resources must be built before programs/")
 endif()
@@ -87,15 +115,13 @@ if(NOT US3_NO_DB)
         if(TARGET UltraScan3::Gui)
             message(STATUS "[programs] Using SHARED GUI (APP build)")
             target_link_libraries(us_program_common INTERFACE UltraScan3::Gui)
+        # historical quirk: some code had symbols only in the static gui → pull it in if present
+        elseif(TARGET UltraScan3::Gui_Static)
+            message(STATUS "[programs] Augmenting with STATIC GUI to pick up legacy symbols")
+            target_link_libraries(us_program_common INTERFACE UltraScan3::Gui_Static)
         else()
             message(FATAL_ERROR "[programs] GUI requested but UltraScan3::Gui not found. \
 Make sure add_subdirectory(gui) is called before add_subdirectory(programs).")
-        endif()
-
-        # historical quirk: some code had symbols only in the static gui → pull it in if present
-        if(TARGET UltraScan3::Gui_Static)
-            message(STATUS "[programs] Augmenting with STATIC GUI to pick up legacy symbols")
-            target_link_libraries(us_program_common INTERFACE UltraScan3::Gui_Static)
         endif()
     endif()
 else()

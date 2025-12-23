@@ -109,7 +109,7 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   {
     // Do something for invalid global memory
     qDebug( "US_Win: invalid global memory" );
-    QMessageBox::critical(this
+    QMessageBox::critical(parent
                           ,windowTitle()
                           ,QString(
                                    tr( 
@@ -120,15 +120,14 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
                                        )
                                    )
                           .arg( g.errorString() )
-                          ,QMessageBox::Ok
-                          ,QMessageBox::NoButton
+                          ,QMessageBox::Ok | QMessageBox::NoButton
                           ,QMessageBox::NoButton
                           );
   }
   
   if ( !US_Settings::status().isEmpty() ) {
      qDebug( "US_Win: invalid settings" );
-     QMessageBox::critical(this
+     QMessageBox::critical(parent
                            ,windowTitle()
                            ,QString(
                                     tr(
@@ -138,8 +137,7 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
                                        )
                                     )
                            .arg( US_Settings::status() )
-                           ,QMessageBox::Ok
-                           ,QMessageBox::NoButton
+                           ,QMessageBox::Ok | QMessageBox::NoButton
                            ,QMessageBox::NoButton
                            );
   }
@@ -652,16 +650,22 @@ void US_Win::logo( int width )
 {
     // Splash image (fixed size asset, like before)
     QPixmap rawpix = US_Images::getImage( US_Images::US3_SPLASH );
-    const int ph   = rawpix.height();   // expected ~276
-    const int pw   = rawpix.width();    // expected ~460
+    // Ensure a reasonable size in case the image is missing
+    const int ph   = qMax( rawpix.height(), 276 );   // expected ~276
+    const int pw   = qMax( rawpix.width(), 460 );    // expected ~460
     Q_UNUSED(ph);
-
-    QPixmap  pixmap( pw, ph );
-    QPainter painter( &pixmap );
+    // Prepare the painting area
+    QImage canvas( pw, ph, QImage::Format_ARGB32_Premultiplied );
+    canvas.fill( Qt::transparent );
+    QPainter painter( &canvas );
     painter.setRenderHint( QPainter::Antialiasing,     true );
     painter.setRenderHint( QPainter::TextAntialiasing, true );
 
-    painter.drawPixmap( 0, 0, rawpix );
+    if ( !rawpix.isNull() )
+    {
+        // draw the pixmap if loaded
+        painter.drawPixmap( 0, 0, rawpix );
+    }
 
     // Colors (subtle, modern)
     const QColor versionColor      ( 245, 248, 255 );
@@ -791,6 +795,9 @@ void US_Win::logo( int width )
     // Calculate last row position for link spacing
     int lastRowCount = qMax( leftColumn.size(), rightColumn.size() );
     int lastNameY = ySecondRow + ( lastRowCount - 1 ) * nameStep;
+
+    // convert canvas to legacy pixmap
+    QPixmap pixmap = QPixmap::fromImage( canvas );
 
     // --- Display ---
     const int splashX = static_cast<int>( ( width / 2 ) - 230 );

@@ -9,7 +9,7 @@
 #define DbgLv(a) if(dbg_level>=a)qDebug()
 #endif
 
-class US_SelectTriples : public US_WidgetsDialog
+class US_GUI_EXTERN US_SelectTriples : public US_WidgetsDialog
 {
    Q_OBJECT
 

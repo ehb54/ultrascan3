@@ -203,7 +203,7 @@ US_RemoveRI::US_RemoveRI() : US_Widgets()
 //    main_lyt->addStretch(1);
     main_lyt->addLayout(right_lyt, 1);
     main_lyt->setSpacing(1);
-    main_lyt->setMargin(1);
+    main_lyt->setContentsMargins( 1, 1, 1, 1 );
     setLayout(main_lyt);
 
     picker = new US_PlotPicker(qwtplot_data);
@@ -310,7 +310,7 @@ void US_RemoveRI::slt_import(void){
     allDataC.clear();
     QStringList allowedRunTypes;
     allowedRunTypes << "RI" << "RA";
-    QRegExp re( "[^A-Za-z0-9_-]" );
+    QRegularExpression re( "[^A-Za-z0-9_-]" );
     bool runId_changed = false;
     QString ccw_str("%1 / %2 / %3");
     for (int i = 0; i < fileList.size(); ++i){
@@ -518,8 +518,8 @@ void US_RemoveRI::slt_pick_point(){
     pb_fit_avail();
     emit sig_plot(true);
     pb_save_avail();
-    connect(picker, SIGNAL(cMouseUp(const QwtDoublePoint&)),
-            this, SLOT(slt_mouse(const QwtDoublePoint&)));
+    connect(picker, SIGNAL(cMouseUp(const QPointF&)),
+            this, SLOT(slt_mouse(const QPointF&)));
     return;
 }
 
@@ -533,7 +533,7 @@ int US_RemoveRI::get_id(QVector<double> vec, double val){
     return id;
 }
 
-void US_RemoveRI::slt_mouse(const QwtDoublePoint& point){
+void US_RemoveRI::slt_mouse(const QPointF& point){
     double x = point.x();
     int index = ccwItemList.index.at(ccw_id).at(wavl_id);
     US_DataIO::RawData data = allData.at(index);

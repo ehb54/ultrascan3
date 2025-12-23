@@ -14,7 +14,7 @@
 
 //! \class CSVTableView
 //! \brief A class to provide a custom QTableView for CSV data with context menu options for deleting rows and columns.
-class CSVTableView : public QTableView
+class US_GUI_EXTERN CSVTableView : public QTableView
 {
     Q_OBJECT
 public:

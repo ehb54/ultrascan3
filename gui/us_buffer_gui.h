@@ -22,7 +22,7 @@
 //! An application to manage buffer data.
 //! \class US_BufferGuiSelect
 //!      This class provides a tabbed entry for buffer selection
-class US_BufferGuiSelect: public US_Widgets
+class US_GUI_EXTERN US_BufferGuiSelect: public US_Widgets
 {
    Q_OBJECT
 

@@ -2,7 +2,6 @@
 #ifndef US_HARDWARE_H
 #define US_HARDWARE_H
 
-#include <QtCore>
 #include "us_extern.h"
 #include "us_util.h"
 #include "ius_db2.h"

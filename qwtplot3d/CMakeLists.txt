@@ -1,8 +1,13 @@
 cmake_minimum_required(VERSION 3.15)
 project(qwtplot3d VERSION 6.1.4 LANGUAGES CXX)
-
+# Enable Position Independent Code for all targets
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 # Find required packages
-find_package(Qt5 REQUIRED COMPONENTS Core Widgets OpenGL Gui)
+if(USE_QT6)
+  find_package(Qt6 REQUIRED COMPONENTS Core Widgets OpenGL Gui OpenGLWidgets)
+else()
+  find_package(Qt5 REQUIRED COMPONENTS Core Widgets OpenGL Gui)
+endif()
 find_package(OpenGL REQUIRED)
 
 # Find Qwt manually since vcpkg's qwt port doesn't provide CMake configs
@@ -61,13 +66,16 @@ target_include_directories(qwtplot3d PUBLIC
 
 # Link libraries
 target_link_libraries(qwtplot3d PUBLIC
-        Qt5::Core
-        Qt5::Widgets
-        Qt5::OpenGL
-        Qt5::Gui
+        Qt::Core
+        Qt::Widgets
+        Qt::OpenGL
+        Qt::Gui
         OpenGL::GL
         Qwt::Qwt
         )
+if(USE_QT6)
+    target_link_libraries(qwtplot3d PUBLIC Qt::OpenGLWidgets)
+endif()
 
 # Platform-specific OpenGL libraries
 if(WIN32)
@@ -118,7 +126,11 @@ write_basic_package_version_file(
 # Simple config file
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/qwtplot3dConfig.cmake"
         "include(CMakeFindDependencyMacro)
-find_dependency(Qt5 COMPONENTS Core Widgets OpenGL Gui)
+if(USE_QT6)
+    find_dependency(Qt6 COMPONENTS Core Widgets OpenGL Gui OpenGLWidgets)
+else()
+    find_dependency(Qt5 COMPONENTS Core Widgets OpenGL Gui)
+endif()
 find_dependency(OpenGL)
 include(\"\${CMAKE_CURRENT_LIST_DIR}/qwtplot3dTargets.cmake\")
 ")
