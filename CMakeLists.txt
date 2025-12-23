@@ -45,18 +45,27 @@ message(STATUS "UltraScan3 description: ${US3_DESCRIPTION}")
 # =============================================================================
 # VERSION HEADER GENERATION
 # =============================================================================
-# Generate us/us_version.h and us/us_revision.h on *every* build
-add_custom_target(us_version_headers ALL
-        COMMAND ${CMAKE_COMMAND}
-        -DPROJECT_VERSION_MAJOR=${PROJECT_VERSION_MAJOR}
-        -DPROJECT_VERSION_MINOR=${PROJECT_VERSION_MINOR}
-        -DPROJECT_VERSION_PATCH=${PROJECT_VERSION_PATCH}
-        -DUS3_VERSION=${US3_VERSION}
-        -DUS3_SOURCE_DIR=${CMAKE_SOURCE_DIR}
-        -DUS3_BINARY_DIR=${CMAKE_BINARY_DIR}
-        -P ${CMAKE_SOURCE_DIR}/admin/cmake/GenerateVersion.cmake
-        COMMENT "Regenerating UltraScan3 version headers (us_revision.h)"
-        )
+# Generate us/us_revision.h only when Git state changes (not on every build)
+set(REVISION_HEADER "${CMAKE_SOURCE_DIR}/programs/us/us_revision.h")
+
+find_package(Git)
+if(GIT_FOUND AND EXISTS "${CMAKE_SOURCE_DIR}/.git")
+    add_custom_target(us_version_headers ALL
+            COMMAND ${CMAKE_COMMAND}
+            -DPROJECT_VERSION_MAJOR=${PROJECT_VERSION_MAJOR}
+            -DPROJECT_VERSION_MINOR=${PROJECT_VERSION_MINOR}
+            -DPROJECT_VERSION_PATCH=${PROJECT_VERSION_PATCH}
+            -DUS3_VERSION=${US3_VERSION}
+            -DUS3_SOURCE_DIR=${CMAKE_SOURCE_DIR}
+            -DUS3_BINARY_DIR=${CMAKE_BINARY_DIR}
+            -P ${CMAKE_SOURCE_DIR}/admin/cmake/GenerateVersion.cmake
+            WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+            COMMENT "Updating us_revision.h"
+            VERBATIM
+    )
+else()
+    add_custom_target(us_version_headers)
+endif()
 
 include_directories(${CMAKE_BINARY_DIR})
 
