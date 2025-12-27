@@ -1467,11 +1467,12 @@ bool US_Saxs_Util::set_excluded_volume(
    } 
 
    scattering_intensity = 0e0;
-   QRegExp count_hydrogens("H(\\d)");
+   QRegularExpression count_hydrogens("H(\\d)");
    unsigned int hydrogens = 0;
-   if ( count_hydrogens.indexIn(hybrid_name) != -1 )
+   QRegularExpressionMatch count_hydrogens_m = count_hydrogens.match(hybrid_name);
+   if ( count_hydrogens_m.hasMatch() )
    {
-      hydrogens = count_hydrogens.cap(1).toInt();
+      hydrogens = count_hydrogens_m.captured(1).toInt();
    }
    saxs saxsH;
    if ( hydrogens && !saxs_map.count( "H" ) )

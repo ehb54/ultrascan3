@@ -7,8 +7,6 @@
 #include <time.h>
 #include <qstringlist.h>
 #include <qinputdialog.h>
-#include <qregexp.h>
-//Added by qt3to4:
 #include <QGridLayout>
 #include <QLabel>
 #include <QFrame>
@@ -401,7 +399,7 @@ void US_Hydrodyn_BD::closeEvent(QCloseEvent *e)
 // void US_Hydrodyn_BD::print()
 // {
 //    const int MARGIN = 10;
-//    printer.setPageSize( QPageSize( QPageSize::Letter ) );
+//    printer.setPageSize(QPrinter::Letter);
 // 
 //    if ( printer.setup(this) ) {      // opens printer dialog
 //       QPainter p;

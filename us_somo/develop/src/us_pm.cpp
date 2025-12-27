@@ -1,4 +1,5 @@
 #include "../include/us_pm.h"
+#include <QRegularExpression>
 //Added by qt3to4:
 #include <QTextStream>
 
@@ -566,7 +567,7 @@ bool US_PM::write_model( QString & filename, set < pm_point > & model, bool over
       filename = use_filename;
    }
 
-   if ( !filename.contains( QRegExp( "\\.bead_model$" ) ) )
+   if ( !filename.contains( QRegularExpression( QStringLiteral( "\\.bead_model$" ) ) ) )
    {
       filename += ".bead_model";
    }
@@ -581,7 +582,7 @@ bool US_PM::write_model( QString & filename, set < pm_point > & model, bool over
    QFile of( filename );
    if ( !of.open( QIODevice::WriteOnly ) )
    {
-      filename.replace( QRegExp( "\\.bead_model$" ), "" );
+      filename.replace( QRegularExpression( QStringLiteral( "\\.bead_model$" ) ), "" );
       return false;
    }
    
@@ -590,7 +591,7 @@ bool US_PM::write_model( QString & filename, set < pm_point > & model, bool over
    ts << "Model scale (10^-x m) (10 = Angstrom, 9 = nanometer), where x is : 10\n";
    ts << QString( "Rg: %1\n" ).arg( rg );
    of.close();
-   filename.replace( QRegExp( "\\.bead_model$" ), "" );
+   filename.replace( QRegularExpression( QStringLiteral( "\\.bead_model$" ) ), "" );
    return true;
 }
 
@@ -607,7 +608,7 @@ bool US_PM::write_model( QString & filename, set < pm_point > & model, vector < 
       filename = use_filename;
    }
 
-   if ( !filename.contains( QRegExp( "\\.bead_model$" ) ) )
+   if ( !filename.contains( QRegularExpression( QStringLiteral( "\\.bead_model$" ) ) ) )
    {
       filename += ".bead_model";
    }
@@ -622,7 +623,7 @@ bool US_PM::write_model( QString & filename, set < pm_point > & model, vector < 
    QFile of( filename );
    if ( !of.open( QIODevice::WriteOnly ) )
    {
-      filename.replace( QRegExp( "\\.bead_model$" ), "" );
+      filename.replace( QRegularExpression( QStringLiteral( "\\.bead_model$" ) ), "" );
       return false;
    }
    
@@ -632,7 +633,7 @@ bool US_PM::write_model( QString & filename, set < pm_point > & model, vector < 
    ts << QString( "Rg: %1\n" ).arg( rg );
    ts << list_params( params );
    of.close();
-   filename.replace( QRegExp( "\\.bead_model$" ), "" );
+   filename.replace( QRegularExpression( QStringLiteral( "\\.bead_model$" ) ), "" );
    return true;
 }
 
@@ -660,7 +661,7 @@ bool US_PM::write_I( QString & filename, set < pm_point > & model, bool overwrit
       filename = use_filename;
    }
 
-   if ( !filename.contains( QRegExp( "\\.dat$" ) ) )
+   if ( !filename.contains( QRegularExpression( QStringLiteral( "\\.dat$" ) ) ) )
    {
       filename += ".dat";
    }
@@ -673,7 +674,7 @@ bool US_PM::write_I( QString & filename, set < pm_point > & model, bool overwrit
 
    if ( !of.open( QIODevice::WriteOnly ) )
    {
-      filename.replace( QRegExp( "\\.dat$" ), "" );
+      filename.replace( QRegularExpression( QStringLiteral( "\\.dat$" ) ), "" );
       return false;
    }
    
@@ -687,7 +688,7 @@ bool US_PM::write_I( QString & filename, set < pm_point > & model, bool overwrit
    last_written_I = I_result;
 
    of.close();
-   filename.replace( QRegExp( "\\.dat$" ), "" );
+   filename.replace( QRegularExpression( QStringLiteral( "\\.dat$" ) ), "" );
    return true;
 }
 
@@ -1438,7 +1439,7 @@ bool  US_PM::expand_types(
 
    QStringList qsl_types;
    {
-      QRegExp rx = QRegExp( "(\\s+|(\\s*(,|:)\\s*))" );
+      QRegularExpression rx = QRegularExpression( QStringLiteral( "(\\s+|(\\s*(,|:)\\s*))" ) );
       qsl_types = (types ).split( rx , Qt::SkipEmptyParts );
    }
 

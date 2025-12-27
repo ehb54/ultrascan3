@@ -1,4 +1,5 @@
 #include "../include/us3_defines.h"
+#include <QRegularExpression>
 #include "../include/us_hydrodyn.h"
 #include "../include/us_revision.h"
 #include "../include/us_hydrodyn_cluster.h"
@@ -364,8 +365,8 @@ void US_Hydrodyn_Cluster_Config::save_config()
       {
          QString domain = it->second[ "stage" ];
          QString dir    = domain;
-         domain.replace( QRegExp( ":.*$" ), "" );
-         dir   .replace( QRegExp( "^.*:" ), "" );
+         domain.replace( QRegularExpression( QStringLiteral( ":.*$" ) ), "" );
+         dir   .replace( QRegularExpression( QStringLiteral( "^.*:" ) ), "" );
          if ( domain_to_dir.count( domain ) &&
               domain_to_dir[ domain ] != dir )
          {
@@ -399,7 +400,7 @@ void US_Hydrodyn_Cluster_Config::save_config()
       if ( it->second.count( "stage" ) )
       {
          QString system = it->second[ "stage" ];
-         system.replace( QRegExp( ":.*$" ), "" );
+         system.replace( QRegularExpression( QStringLiteral( ":.*$" ) ), "" );
          ((US_Hydrodyn_Cluster *)cluster_window)->cluster_stage_to_system[ system ] = it->first;
       }
    }
@@ -624,7 +625,7 @@ void US_Hydrodyn_Cluster_Config::http_finished() {
       }
 
       current_response_status = readJson.count( "info" ) ?
-         ( readJson[ "info" ].contains( QRegExp( "added$" ) ) ? QString( "Success" ) : readJson[ "info" ] )
+         ( readJson[ "info" ].contains( QRegularExpression( QStringLiteral( "added$" ) ) ) ? QString( "Success" ) : readJson[ "info" ] )
            : QString( "Error" );
    }
    http_done( false );
@@ -806,7 +807,7 @@ void US_Hydrodyn_Cluster_Config::check_user()
       return;
    }
 
-   if ( !le_cluster_email->text().contains( QRegExp( "^\\S+@\\S+\\.\\w+$" ) ) )
+   if ( !le_cluster_email->text().contains( QRegularExpression( QStringLiteral( "^\\S+@\\S+\\.\\w+$" ) ) ) )
    {
       QMessageBox::warning( this,
                             us_tr("US-SOMO: Cluster Config: Check user"), 
@@ -839,7 +840,7 @@ void US_Hydrodyn_Cluster_Config::check_user()
       return;
    }
 
-   // if ( !le_manage_url->text().contains( QRegExp( "^\\S+:\\d+/portal/app/idservice/user$" ) ) )
+   // if ( !le_manage_url->text().contains( QRegularExpression( QStringLiteral( "^\\S+:\\d+/portal/app/idservice/user$" ) ) ) )
    // {
    //    QMessageBox::warning( this,
    //                          us_tr("US-SOMO: Cluster Config: Check user"), 
@@ -850,7 +851,7 @@ void US_Hydrodyn_Cluster_Config::check_user()
    //    return;
    // }
 
-   // if ( !le_submit_url->text().contains( QRegExp( "^\\S+:\\d+$" ) ) )
+   // if ( !le_submit_url->text().contains( QRegularExpression( QStringLiteral( "^\\S+:\\d+$" ) ) ) )
    // {
    //    QMessageBox::warning( this,
    //                          us_tr("US-SOMO: Cluster Config: Check user"), 
@@ -868,9 +869,9 @@ void US_Hydrodyn_Cluster_Config::check_user()
    //    QString( "%1/%2.json" )
    //    .arg( QString( "%1" )
    //          .arg( le_manage_url->text() )
-   //          .replace( QRegExp( "^.*:(\\d+)" ), "/" ) )
+   //          .replace( QRegularExpression( QStringLiteral( "^.*:(\\d+)" ) ), "/" ) )
    //    .arg( le_cluster_id->text() )
-   //    .replace ( QRegExp( "^//" ), "/" );
+   //    .replace ( QRegularExpression( QStringLiteral( "^//" ) ), "/" );
 
    QString msg_request =
       QString( "/userstatus?user=%1" ).arg( le_cluster_id->text() );
@@ -878,13 +879,13 @@ void US_Hydrodyn_Cluster_Config::check_user()
    QString manage_url_host =
       QString( "%1" )
       .arg( le_manage_url->text() )
-      .replace( QRegExp( ":.*$" ), "" );
+      .replace( QRegularExpression( QStringLiteral( ":.*$" ) ), "" );
 
    QString manage_url_port =
       QString( "%1" )
       .arg( le_manage_url->text() )
-      .replace( QRegExp( "^.*:" ), "" )
-      .replace( QRegExp( "/.*$" ), "" );
+      .replace( QRegularExpression( QStringLiteral( "^.*:" ) ), "" )
+      .replace( QRegularExpression( QStringLiteral( "/.*$" ) ), "" );
 
    cout << "msg_request is " << msg_request << endl;
    cout << "manage_url_host is " << manage_url_host << endl;
@@ -928,7 +929,7 @@ void US_Hydrodyn_Cluster_Config::add_user()
    //    QString( "%1/newaccount" )
    //    .arg( QString( "%1" )
    //          .arg( le_manage_url->text() )
-   //          .replace( QRegExp( "^.*:(\\d+)" ), "/" ) )
+   //          .replace( QRegularExpression( QStringLiteral( "^.*:(\\d+)" ) ), "/" ) )
    //    .arg( le_cluster_id->text() );
 
    QString msg_request =
@@ -941,13 +942,13 @@ void US_Hydrodyn_Cluster_Config::add_user()
    QString manage_url_host =
       QString( "%1" )
       .arg( le_manage_url->text() )
-      .replace( QRegExp( ":.*$" ), "" );
+      .replace( QRegularExpression( QStringLiteral( ":.*$" ) ), "" );
 
    QString manage_url_port =
       QString( "%1" )
       .arg( le_manage_url->text() )
-      .replace( QRegExp( "^.*:" ), "" )
-      .replace( QRegExp( "/.*$" ), "" );
+      .replace( QRegularExpression( QStringLiteral( "^.*:" ) ), "" )
+      .replace( QRegularExpression( QStringLiteral( "/.*$" ) ), "" );
 
    cout << "msg_request is " << msg_request << endl;
    cout << "manage_url_host is " << manage_url_host << endl;
@@ -997,9 +998,9 @@ void US_Hydrodyn_Cluster_Config::update_manage_url( const QString & )
 void US_Hydrodyn_Cluster_Config::reset()
 {
    if (
-       le_manage_url->text().contains( QRegExp( "^\\S+:\\d+$" ) ) &&
-       // le_manage_url->text().contains( QRegExp( "^\\S+:\\d+/portal/app/idservice/user$" ) ) &&
-       // le_submit_url->text().contains( QRegExp( "^\\S+:\\d+$" ) ) &&
+       le_manage_url->text().contains( QRegularExpression( QStringLiteral( "^\\S+:\\d+$" ) ) ) &&
+       // le_manage_url->text().contains( QRegularExpression( QStringLiteral( "^\\S+:\\d+/portal/app/idservice/user$" ) ) ) &&
+       // le_submit_url->text().contains( QRegularExpression( QStringLiteral( "^\\S+:\\d+$" ) ) ) &&
        QMessageBox::Yes != QMessageBox::question(
                                                   this,
                                                   lbl_title->text(),

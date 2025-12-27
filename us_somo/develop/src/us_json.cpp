@@ -1,5 +1,7 @@
 #include "../include/us_json.h"
 
+#include <QRegularExpression>
+
 // #define USJ_DEBUG
 // #define USJ_DEBUG_SUMMARY
 
@@ -205,24 +207,22 @@ QString US_Json::compose( map < QString, QString > &mqq )
 {
    QString result = "{";
 
-   QRegExp rx_no_quotes( "^(\\d+|null|\\[.*\\]|\\{.*\\})$" );
+   QRegularExpression rx_no_quotes( QStringLiteral( "^(\\d+|null|\\[.*\\]|\\{.*\\})$" ) );
 
    for ( map < QString, QString >::iterator it = mqq.begin();
          it != mqq.end();
-         it++ )
-   {
-
-      result += 
-         ( rx_no_quotes.indexIn( it->first ) != -1  ?
+         ++it ) {
+      result +=
+         ( rx_no_quotes.match( it->first ).hasMatch() ?
            it->first :
            "\"" + it->first + "\"" )
-         + ":" +
-         ( rx_no_quotes.indexIn( it->second ) != -1  ?
-           it->second :
-           "\"" + it->second + "\"" )
-         + "," 
-         ;
+         + ":"
+         + ( rx_no_quotes.match( it->second ).hasMatch() ?
+             it->second :
+             "\"" + it->second + "\"" )
+         + ",";
    }
+
 #if QT_VERSION >= 0x040000
    result.chop( 1 );
    result += "}";

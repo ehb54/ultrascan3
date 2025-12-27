@@ -1,4 +1,5 @@
 #include "../include/us3_defines.h"
+#include <QRegularExpression>
 #include "../include/us_hydrodyn.h"
 #include "../include/us_revision.h"
 #include "../include/us_hydrodyn_dad.h"
@@ -487,7 +488,7 @@ void US_Hydrodyn_Dad_Conc::load()
    }
    f.close();
       
-   if ( QFileInfo( fname ).suffix().contains( QRegExp( "^(sbc|SBC)$" ) ) )
+   if ( QFileInfo( fname ).suffix().contains( QRegularExpression( QStringLiteral( "^(sbc|SBC)$" ) ) ) )
    {
       for ( unsigned int i = 0; i < (unsigned int) qsl_lines.size(); i++ ) 
       {
@@ -537,7 +538,7 @@ void US_Hydrodyn_Dad_Conc::save()
       return;
    }
 
-   if ( !fname.contains(QRegExp(".sbc$", Qt::CaseInsensitive )) )
+   if ( !fname.contains(QRegularExpression(".sbc$", QRegularExpression::CaseInsensitiveOption )) )
    {
       fname += ".sbc";
    }
