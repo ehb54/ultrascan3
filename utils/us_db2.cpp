@@ -929,6 +929,20 @@ bool US_DB2::configure_ssl( QString& err )
       err = error;
       return false;
    }
+   // force a minimum of TLS 1.2
+   const QString tls_versions ("TLSv1.2,TLSv1.3");
+#if defined(LIBMARIADB)
+   // for libmariadb it is MARIADB_OPT_TLS_VERSION
+   success = mysql_options( db, MARIADB_OPT_TLS_VERSION, tls_versions.toLatin1().constData() );
+#else
+   // for libmysql it is MYSQL_OPT_TLS_VERSION
+   success = mysql_options( db, MYSQL_OPT_TLS_VERSION, tls_versions.toLatin1().constData() );
+#endif
+   if ( success != 0 ) {
+      error = QString( "Error setting TLS version: " ) + tls_versions;
+      err = error;
+      return false;
+   }
    // disable verification of ssl server cert (hostname)
 #if defined(LIBMARIADB)
       // for libmariadb disable MYSQL_OPT_SSL_VERIFY_SERVER_CERT
