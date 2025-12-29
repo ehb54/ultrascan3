@@ -18,7 +18,7 @@
            instrument, and rotor on which the experiment was run. 
 */
            
-class US_Experiment
+class US_UTIL_EXTERN US_Experiment
 {
    public:
 
