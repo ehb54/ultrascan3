@@ -905,19 +905,19 @@ bool US_DB2::configure_ssl( QString& err )
    }
    success = mysql_options( db, MYSQL_OPT_SSL_CAPATH, nullptr );
    if ( success != 0 ) {
-      error = QString( "Error setting SSL CA path: " ) + caFile;
-      err = error;
-      return false;
-   }
-   // set default SSL ciphers
-   success = mysql_options( db, MYSQL_OPT_SSL_CIPHER, CIPHER );
-   if ( success != 0 ) {
-      error = QString( "Error setting SSL cipher: " ) + CIPHER;
+      error = QString( "Error setting SSL CA path " );
       err = error;
       return false;
    }
    // Due to legacy certs and ciphers, security policies must be relaxed
    if ( US_Settings::debug_match( "DB_ENFORCE_DEFAULT_SSL_SECURITY" ) ) {
+         // set default SSL ciphers
+         success = mysql_options( db, MYSQL_OPT_SSL_CIPHER, CIPHER );
+         if ( success != 0 ) {
+            error = QString( "Error setting SSL cipher: " ) + CIPHER;
+            err = error;
+            return false;
+         }
       // the user enforces default security
       return true;
    }
@@ -945,13 +945,13 @@ bool US_DB2::configure_ssl( QString& err )
    }
    // disable verification of ssl server cert (hostname)
 #if defined(LIBMARIADB)
-      // for libmariadb disable MYSQL_OPT_SSL_VERIFY_SERVER_CERT
-      unsigned long verify = 0; // 0 = disable, 1 = enable
-      success = mysql_options( db, MYSQL_OPT_SSL_VERIFY_SERVER_CERT, &verify );
+   // for libmariadb disable MYSQL_OPT_SSL_VERIFY_SERVER_CERT
+   unsigned long verify = 0; // 0 = disable, 1 = enable
+   success = mysql_options( db, MYSQL_OPT_SSL_VERIFY_SERVER_CERT, &verify );
 #else
-      // for libmysql set MYSQL_OPT_SSL_MODE to SSL_MODE_REQUIRED
-      unsigned int ssl_mode = SSL_MODE_REQUIRED; // SSL on, but no CA/hostname verification
-      success = mysql_options( db, MYSQL_OPT_SSL_MODE, &ssl_mode );
+   // for libmysql set MYSQL_OPT_SSL_MODE to SSL_MODE_REQUIRED
+   unsigned int ssl_mode = SSL_MODE_REQUIRED; // SSL on, but no CA/hostname verification
+   success = mysql_options( db, MYSQL_OPT_SSL_MODE, &ssl_mode );
 #endif
    if ( success != 0 ) {
       error = QString( "Error disabling SSL verify server cert." );
