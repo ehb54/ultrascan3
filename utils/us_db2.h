@@ -88,11 +88,11 @@ public:
         \param dbname   The name of the database to access.
         \param user     The user name that can access the database.
         \param password The unencrypted password for the database/user.
-        \param error    A reference to a string for error responses.
+        \param err    A reference to a string for error responses.
     */
     bool connect( const QString& host, const QString& dbname,
                   const QString& user, const QString& password,
-                  QString& error ) override;
+                  QString& err ) override;
 
     /*! \brief Implements a simple query on the active database
         connection, cleaning up any unused results from a previous query.
@@ -320,5 +320,6 @@ private:
 
     QString    buildQuery      ( const QStringList& );
     QString    buildQuerySelect( const QStringList& );
+    bool       configure_ssl   ( QString& err );
 };
 #endif
