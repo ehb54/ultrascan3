@@ -341,6 +341,13 @@ add_dependencies(us3_resources us3_validate_qrc)
 target_link_libraries(us3_resources PRIVATE Qt5::Core Qt5::Gui)
 add_library(UltraScan3::Resources ALIAS us3_resources)
 
+# Create symbolic link from source etc to build etc
+set(US3_BUILD_ETC_DIR "${CMAKE_BINARY_DIR}/etc")
+if (NOT EXISTS "${US3_BUILD_ETC_DIR}")
+    file(CREATE_LINK "${US3_ETC_DIR}" "${US3_BUILD_ETC_DIR}" SYMBOLIC)
+    message(STATUS "Created symbolic link: ${US3_BUILD_ETC_DIR} -> ${US3_ETC_DIR}")
+endif ()
+
 # Install editable trees/files we excluded from the QRC
 foreach(d IN LISTS US3_ETC_EXCLUDE_DIRS)
     if(EXISTS "${US3_ETC_DIR}/${d}")
@@ -411,10 +418,12 @@ else()
         if(QWT_INCLUDE_DIRS)
             set_target_properties(unofficial_qwt_qwt PROPERTIES
                     INTERFACE_INCLUDE_DIRECTORIES "${QWT_INCLUDE_DIRS}"
+                    INTERFACE_LINK_DIRECTORIES "${QWT_LIBRARY_DIRS}"
                     INTERFACE_LINK_LIBRARIES "${QWT_LIBRARIES}")
         else()
             set_target_properties(unofficial_qwt_qwt PROPERTIES
                     INTERFACE_INCLUDE_DIRECTORIES "${QWT_INCLUDE_DIR}"
+                    INTERFACE_LINK_DIRECTORIES "${QWT_LIBRARY_DIR}"
                     INTERFACE_LINK_LIBRARIES "${QWT_LIBRARY}")
         endif()
 
@@ -676,6 +685,6 @@ message(STATUS "  Qwt version: ${QWT_VERSION}")
 if(NOT US3_NO_DB)
     message(STATUS "  MySQL found: ${MYSQL_FOUND}")
 endif()
-message(STATUS "  LibArchive found: ${LIBARCHIVE_FOUND}")
+message(STATUS "  LibArchive found: ${LibArchive_VERSION}")
 message(STATUS "  OpenSSL  found: ${OPENSSL_FOUND} (${OPENSSL_VERSION})")
 message(STATUS "")
