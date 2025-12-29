@@ -123,6 +123,22 @@ endif()
 # Platform-specific compiler flags
 if(UNIX AND NOT APPLE)
     add_compile_options(-Wno-unused-local-typedefs)
+    # Match qmake flags for better compatibility
+    add_compile_options(-pipe -Wall -Wextra)
+    add_compile_definitions(_REENTRANT)
+
+    # Optional: Enable LTO for Release builds (matches qmake)
+    # Note: LTO can cause longer build times and may need to be disabled for debugging
+    if(CMAKE_BUILD_TYPE STREQUAL "Release")
+        include(CheckIPOSupported)
+        check_ipo_supported(RESULT IPO_SUPPORTED OUTPUT IPO_ERROR)
+        if(IPO_SUPPORTED)
+            message(STATUS "Enabling Link-Time Optimization (LTO)")
+            set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
+        else()
+            message(STATUS "LTO not supported: ${IPO_ERROR}")
+        endif()
+    endif()
 endif()
 
 # Enable Qt's MOC, RCC, and UIC
