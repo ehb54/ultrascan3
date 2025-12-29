@@ -84,7 +84,31 @@ class US_2dsa : public US_AnalysisBase2
         //! \return Pointer to US_Noise.
         US_Noise* mw_ri_noise();
 
-        //! \brief Get the normalized A values.
+        //! \brief Get the time-invariant noise going into the analysis.
+        //! \return Pointer to US_Noise.
+        US_Noise* mw_ti_noise_in();
+
+        //! \brief Get the radially invariant noise going into the analysis.
+        //! \return Pointer to US_Noise.
+        US_Noise* mw_ri_noise_in();
+
+        //! \brief Get the time-invariant noises.
+        //! \return Pointer to QVector<US_Noise>.
+        QList<US_Noise>* mw_ti_noises();
+
+        //! \brief Get the radially invariant noises.
+        //! \return Pointer to QVector<US_Noise>.
+        QList<US_Noise>* mw_ri_noises();
+
+    QVector<US_Noise> *mw_tinoises();
+
+    QVector<US_Noise> *mw_rinoises();
+
+    QVector<int> *mw_noiflags();
+
+    QVector<US_DataIO::EditedData> *mw_datalist();
+
+    //! \brief Get the normalized A values.
         //! \return Pointer to QVector of doubles.
         QVector<double>* mw_Anorm();
 

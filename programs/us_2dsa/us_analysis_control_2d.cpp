@@ -41,6 +41,8 @@ US_AnalysisControl2D::US_AnalysisControl2D( QList< SS_DATASET* >& dsets,
    dbg_level      = US_Settings::us_debug();
    grtype         = US_2dsaProcess::UGRID;
    baserss        = 0;
+   reuse_ti_noise = false;
+   reuse_ri_noise = false;
 
    setObjectName( "US_AnalysisControl2D" );
    setAttribute( Qt::WA_DeleteOnClose, true );
@@ -497,6 +499,8 @@ void US_AnalysisControl2D::checkVaryVbar(  bool checked )
 // start fit button clicked
 void US_AnalysisControl2D::start()
 {
+   reuse_ti_noise = false;
+   reuse_ri_noise = false;
    if ( parentw )
    {  // Get pointers to needed objects from the main
       US_2dsa* mainw = (US_2dsa*)parentw;
@@ -510,6 +514,53 @@ void US_AnalysisControl2D::start()
       mw_baserss     = mainw->mw_base_rss();
       baserss        = *mw_baserss;
 
+      auto ti_noises = mainw->mw_ti_noises();
+      auto ri_noises = mainw->mw_ri_noises();
+
+      if ( ( !ti_noises->empty() ) ||
+         ( !ri_noises->empty() ) ) {
+         // prior fit produced at least one noise
+         QMessageBox msgBox;
+         msgBox.setIcon( QMessageBox::Question );
+         msgBox.setWindowTitle( tr("Noise correction found.") );
+         msgBox.setText( tr("Your prior analysis fitted noise. \n"
+                            "Do you want to reuse this noise correction for this analysis? ") );
+         QVector<QPushButton*> buttons;
+         auto ignore_button = msgBox.addButton( tr("Ignore"), QMessageBox::ResetRole );
+         msgBox.setDefaultButton( ignore_button );
+         QPushButton *both_button = nullptr;
+         QPushButton *ti_button = nullptr;
+         QPushButton *ri_button = nullptr;
+         if ( !ti_noises->empty() ) {
+            ti_button = msgBox.addButton( tr("Keep TI noise"), QMessageBox::AcceptRole );
+         }
+         if ( !ri_noises->empty() ) {
+            ri_button = msgBox.addButton( tr("Keep RI noise"), QMessageBox::AcceptRole );
+         }
+         if ( ti_button && ri_button ) {
+            both_button = msgBox.addButton( tr("Keep both"), QMessageBox::ApplyRole );
+         }
+         msgBox.exec();
+         auto clicked_button = msgBox.clickedButton();
+         if ( clicked_button == ti_button ) {
+            reuse_ti_noise = true;
+            reuse_ri_noise = false;
+         }
+         else if ( clicked_button == ri_button ) {
+            reuse_ri_noise = true;
+            reuse_ti_noise = false;
+         }
+         else if ( clicked_button == both_button ) {
+            reuse_ti_noise = true;
+            reuse_ri_noise = true;
+         }
+         else {
+            reuse_ti_noise = false;
+            reuse_ri_noise = false;
+         }
+      }
+      //
+
       if ( baserss == 0 )
       {
          baserss        = qRound( (double)US_Memory::rss_now() / 1024. );
@@ -519,6 +570,71 @@ void US_AnalysisControl2D::start()
       mainw->analysis_done( -1 );   // reset counters to zero
 DbgLv(1) << "AnaC: edata scans, baserss" << edata->scanData.size() << baserss;
 DbgLv(1) << "AnaC: edata" << edata;
+   }
+   // in order to apply the previous noise, it has to be applied to the data
+   if ( reuse_ti_noise ) {
+      // previously used initial ti noise
+      US_2dsa* mainw = (US_2dsa*)parentw;
+      auto ti_noise_in = mainw->mw_ti_noise_in();
+      // add previously used initial ti noise back to the data
+      if ( ti_noise_in && ti_noise_in->count != 0 ) {
+         ti_noise_in->apply_to_data( *edata, false );
+         // combine the two noises
+         ti_noise->sum_noise( *ti_noise_in, true );
+      }
+      // apply the noise to the data
+      ti_noise->apply_to_data( *edata, true );
+      // get index for tinoises and noiflags
+      auto datalist = mainw->mw_datalist();
+      auto tinoises = mainw->mw_tinoises();
+      auto noiflags = mainw->mw_noiflags();
+      int index = -1;
+      for ( int i = 0; i < datalist->size(); i++ ) {
+         auto data = datalist->at( i );
+         if ( data.editGUID == edata->editGUID ) {
+            index = i;
+            break;
+         }
+      }
+      // update tinoises
+      tinoises->replace(index, *ti_noise);
+      // update noiflags
+      int noiflag = noiflags->at(index);
+      if ( noiflag < 2 ) {
+         noiflags->replace(index, noiflag + 2);
+      }
+   }
+   if ( reuse_ri_noise ) {
+      // previously used initial ri noise
+      US_2dsa* mainw = (US_2dsa*)parentw;
+      auto ri_noise_in = mainw->mw_ri_noise_in();
+      // add previously used initial ri noise back to the data
+      if ( ri_noise_in && ri_noise_in->count != 0 ) {
+         ri_noise_in->apply_to_data( *edata, false );
+         // combine the two noises
+         ri_noise->sum_noise( *ri_noise_in, true );
+      }
+      // apply the noise to the data
+      ri_noise->apply_to_data( *edata, true );
+      // get index for rinoises and noiflags
+      auto datalist = mainw->mw_datalist();
+      auto rinoises = mainw->mw_rinoises();
+      auto noiflags = mainw->mw_noiflags();
+      int index = -1;
+      for ( int i = 0; i < datalist->size(); i++ ) {
+         auto data = datalist->at( i );
+         if ( data.editGUID == edata->editGUID ) {
+            index = i;
+            break;
+         }
+      }
+      // update rinoises
+      rinoises->replace(index, *ri_noise);
+      // update noiflags
+      int noiflag = noiflags->at(index);
+      if ( noiflag % 2 == 0 ) {
+         noiflags->replace(index, noiflag + 1);
+      }
    }
 
    if ( grtype == US_2dsaProcess::UGRID ) {
@@ -1052,6 +1168,15 @@ if (dbg_level>0)
   << "nnoi knoi" << nnoi << knoi << "STOT" << stot;
 }
 //DBG-DATA
+   // handle special case of reused noise, but not fitted again
+   if ( reuse_ti_noise && ( ti_noise == nullptr || ti_noise->count == 0 ) ) {
+      US_2dsa* mainw = (US_2dsa*)parentw;
+      ti_noise = mainw->mw_ti_noise_in();
+   }
+   if ( reuse_ri_noise && ( ri_noise == nullptr || ri_noise->count == 0 ) ) {
+      US_2dsa* mainw = (US_2dsa*)parentw;
+      ri_noise = mainw->mw_ri_noise_in();
+   }
 
    QString s_inum  = rval_map[ "rf_iteration" ];
    QString s_mmit  = rval_map[ "mm_iteration" ];

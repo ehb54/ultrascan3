@@ -1032,6 +1032,14 @@ QList< int >*               US_2dsa::mw_excllist()     { return &excludedScans;}
 US_Model*                   US_2dsa::mw_model()        { return &model;    }
 US_Noise*                   US_2dsa::mw_ti_noise()     { return &ti_noise; }
 US_Noise*                   US_2dsa::mw_ri_noise()     { return &ri_noise; }
+US_Noise*                   US_2dsa::mw_ti_noise_in()  { return &ti_noise_in; }
+US_Noise*                   US_2dsa::mw_ri_noise_in()  { return &ri_noise_in; }
+QList<US_Noise> *           US_2dsa::mw_ti_noises()    { return &ti_noises; }
+QList<US_Noise> *           US_2dsa::mw_ri_noises()    { return &ri_noises; }
+QVector<US_Noise> *         US_2dsa::mw_tinoises()     { return &tinoises; }
+QVector<US_Noise> *         US_2dsa::mw_rinoises()     { return &rinoises; }
+QVector<int> *              US_2dsa::mw_noiflags()     { return &noiflags; }
+QVector<US_DataIO::EditedData> *US_2dsa::mw_datalist() { return &dataList;}
 QVector<double>*            US_2dsa::mw_Anorm()        { return &normvA; }
 QPointer< QTextEdit    >    US_2dsa::mw_status_text()  { return te_status;  }
 int*                        US_2dsa::mw_base_rss()     { return &baserss;  }

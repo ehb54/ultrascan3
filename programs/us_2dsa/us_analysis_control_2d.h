@@ -68,7 +68,8 @@ class US_AnalysisControl2D : public US_WidgetsDialog
       int           normstep;
       int           kthrdr;
       int           nsolutes;
-
+      bool reuse_ti_noise;
+      bool reuse_ri_noise;
       QHBoxLayout*  mainLayout;
       QGridLayout*  controlsLayout;
       QGridLayout*  optimizeLayout;
