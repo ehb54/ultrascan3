@@ -23,7 +23,7 @@
 #define DbgLv(a) if(dbg_level>=a)qDebug()
 #endif
 
-class US_Extinction;
+class US_GUI_EXTERN US_Extinction;
 
 //! A class to bring up a dialog that edits an analyte sequence
 class US_GUI_EXTERN US_SequenceEditor : public US_WidgetsDialog
@@ -49,7 +49,7 @@ class US_GUI_EXTERN US_SequenceEditor : public US_WidgetsDialog
 
 //! \class US_AnalyteMgrSelect
 //!      This class provides a tabbed entry for analyte selection
-class US_AnalyteMgrSelect: public US_Widgets
+class US_GUI_EXTERN US_AnalyteMgrSelect: public US_Widgets
 {
    Q_OBJECT
 
@@ -198,7 +198,7 @@ class US_AnalyteMgrSelect: public US_Widgets
 
 //! \class US_AnalyteMgrNew
 //!      This class provides a tabbed entry for new analyte creation
-class US_AnalyteMgrNew : public US_Widgets
+class US_GUI_EXTERN US_AnalyteMgrNew : public US_Widgets
 {
    Q_OBJECT
 
@@ -367,7 +367,7 @@ class US_AnalyteMgrNew : public US_Widgets
 
 //! \class US_AnalyteMgrEdit
 //!      This class provides a tabbed entry for non-hydrodynamic analyte mods
-class US_AnalyteMgrEdit : public US_Widgets
+class US_GUI_EXTERN US_AnalyteMgrEdit : public US_Widgets
 {
    Q_OBJECT
 
@@ -426,7 +426,7 @@ class US_AnalyteMgrEdit : public US_Widgets
 
 //! \class US_AnalyteMgrSettings
 //!      This class provides a tabbed entry for general analyte settings
-class US_AnalyteMgrSettings: public US_Widgets
+class US_GUI_EXTERN US_AnalyteMgrSettings: public US_Widgets
 {
    Q_OBJECT
 
