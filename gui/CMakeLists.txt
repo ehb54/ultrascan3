@@ -5,6 +5,9 @@ file(GLOB GUI_SOURCES "*.cpp")
 file(GLOB GUI_HEADERS "*.h")
 file(GLOB GUI_FORMS "*.ui")
 
+# Exclude qmake-generated files (qrc_images.cpp is from qmake build)
+list(FILTER GUI_SOURCES EXCLUDE REGEX "qrc_.*\\.cpp$")
+
 # --- Auto-embed GUI images via QRC (absolute paths + aliases) ----------------
 file(GLOB_RECURSE US3_GUI_IMAGES CONFIGURE_DEPENDS
         "${CMAKE_SOURCE_DIR}/gui/images/*.png"
