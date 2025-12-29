@@ -78,10 +78,12 @@ function(configure_us_gui_target target_name is_static)
             )
 
     # UltraScan3 utils link
-    add_dependencies(${target_name} us_utils)
+
     if(${is_static} AND TARGET UltraScan3::Utils_Static)
+        add_dependencies(${target_name} us_utils_static)
         target_link_libraries(${target_name} PUBLIC UltraScan3::Utils_Static)
     else()
+        add_dependencies(${target_name} us_utils)
         target_link_libraries(${target_name} PUBLIC UltraScan3::Utils)
     endif()
 
