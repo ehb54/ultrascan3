@@ -1,9 +1,9 @@
-compiler_rcc_make_all: qrc_images.cpp
-	-$(DEL_FILE) qrc_images.cpp
+compiler_rcc_make_all: qrc_us3_gui_images.cpp
+	-$(DEL_FILE) qrc_us3_gui_images.cpp
 
-qrc_images.cpp: images.qrc
-	/usr/bin/rcc -name images images.qrc -o qrc_images.cpp
+qrc_us3_gui_images.cpp: us3_gui_images.qrc
+	/usr/bin/rcc -name us3_gui_images us3_gui_images.qrc -o qrc_us3_gui_images.cpp
 
-obj/qrc_images.o: qrc_images.cpp 
-	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o obj/qrc_images.o qrc_images.cpp
+obj/qrc_us3_gui_images.o: qrc_us3_gui_images.cpp
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o obj/qrc_us3_gui_images.o qrc_us3_gui_images.cpp
 

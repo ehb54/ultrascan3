@@ -1,7 +1,7 @@
 #!/bin/sh
 #      Fix Makefile in gui for Mac  (add qrc_images lines)
 
-if [ `grep -c 'qrc_images' Makefile` -eq 0 ]; then
+if [ `grep -c 'qrc_us3_gui_images' Makefile` -eq 0 ]; then
   # This Makefile is missing qrc_images:  insert lines
 
   # Count lines to 3 insertion points
@@ -19,9 +19,9 @@ if [ `grep -c 'qrc_images' Makefile` -eq 0 ]; then
 
   # Copy lines, insert text, copy more lines, ...
   sed -n "1,${LINE1}p" Makefile >Makefile_mac
-  echo "	qrc_images.cpp \\" >>Makefile_mac
+  echo "	qrc_us3_gui_images.cpp \\" >>Makefile_mac
   sed -n "${LINE1B},${LINE2}p" Makefile >>Makefile_mac
-  echo "	obj/qrc_images.o \\" >>Makefile_mac
+  echo "	obj/qrc_us3_gui_images.o \\" >>Makefile_mac
   sed -n "${LINE2B},${LINE3}p" Makefile >>Makefile_mac
   cat qrc_make_adds.txt >> Makefile_mac
   sed -n "${LINE3B},9999p" Makefile >>Makefile_mac

@@ -130,6 +130,6 @@ void US_Images::ensure_us3_gui_images_resources()
 {
    static std::once_flag once;
    std::call_once( once, []() {
-      Q_INIT_RESOURCE(us3_gui_images_auto);
+      Q_INIT_RESOURCE(us3_gui_images);
    } );
 }
