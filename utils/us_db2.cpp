@@ -5,7 +5,31 @@
 #include "us_gzip.h"
 #include "us_util.h"
 
-#define CIPHER "AES256-GCM-SHA384:AES256-SHA:AES256-SHA256:AES256-CCM:AES256-GCM-SHA384:AES128-SHA"
+#define CIPHER \
+/* TLS 1.2 (Prioritize Galois/Counter Mode) */ \
+"ECDHE-ECDSA-AES256-GCM-SHA384:" \
+"ECDHE-RSA-AES256-GCM-SHA384:" \
+"ECDHE-ECDSA-AES128-GCM-SHA256:" \
+"ECDHE-RSA-AES128-GCM-SHA256:" \
+/* TLS 1.2 (CCM) */ \
+"AES256-CCM:" \
+"AES128-CCM:" \
+/* TLS 1.2 (CBC + Forward Secrecy) */ \
+"ECDHE-ECDSA-AES256-SHA384:" \
+"ECDHE-RSA-AES256-SHA384:" \
+"ECDHE-ECDSA-AES128-SHA256:" \
+"ECDHE-RSA-AES128-SHA256:" \
+/* LEGACY FALLBACKS (For very old servers/SHA1) */ \
+"ECDHE-ECDSA-AES256-SHA:" \
+"ECDHE-RSA-AES256-SHA:" \
+"ECDHE-ECDSA-AES128-SHA:" \
+"ECDHE-RSA-AES128-SHA:" \
+"AES256-GCM-SHA384:" \
+"AES128-GCM-SHA256:" \
+"AES256-SHA256:" \
+"AES128-SHA256:" \
+"AES256-SHA:" \
+"AES128-SHA"
 
 US_DB2::US_DB2()
 {
@@ -128,23 +152,12 @@ bool US_DB2::test_secure_connection(
       return false;
    }
 
-   // Set connection to use ssl encryption
-   mysql_options( db, MYSQL_OPT_SSL_KEY, keyFile.toLatin1().constData() );
-   mysql_options( db, MYSQL_OPT_SSL_CERT, certFile.toLatin1().constData() );
-   mysql_options( db, MYSQL_OPT_SSL_CA, caFile.toLatin1().constData() );
-   mysql_options( db, MYSQL_OPT_SSL_CAPATH, nullptr );
-   mysql_options( db, MYSQL_OPT_SSL_CIPHER, CIPHER );
-
-   if ( !US_Settings::debug_match( "MYSQL_OPT_SSL_VERIFY_SERVER_CERT" ) ) {
-      // disable MYSQL_OPT_SSL_VERIFY_SERVER_CERT
-#if defined(MYSQL_OPT_SSL_VERIFY_SERVER_CERT)
-      unsigned long verify = 0; // 0 = disable, 1 = enable
-      mysql_options( db, MYSQL_OPT_SSL_VERIFY_SERVER_CERT, &verify );
-#elif defined(MYSQL_OPT_SSL_MODE)
-      unsigned int ssl_mode = SSL_MODE_REQUIRED; // SSL on, but no CA/hostname verification
-      mysql_options( db, MYSQL_OPT_SSL_MODE, &ssl_mode );
-#endif
+   const bool config_status = configure_ssl( err );
+   if ( ! config_status ) {
+      err = error;
+      return false;
    }
+
    QString uhost  = host.section( ":", 0, 0 ).simplified();
    int     uport  = host.section( ":", 1, 1 ).simplified().toInt();
 
@@ -206,25 +219,15 @@ bool US_DB2::connect( const QString& masterPW, QString& err )
    QString iv       = defaultDB.at( 5 );  // Initialization vector
 
    QString password = US_Crypto::decrypt( cipher, masterPW, iv );
+   const bool config_status = configure_ssl( err );
+   if ( ! config_status ) {
+      db_errno = NOT_CONNECTED;
+      error = QString( "Connect open error:\n" ) + err;
+      err = error;
+      return false;
+   }
    try
    {
-      // Set connection to use ssl encryption
-      mysql_options( db, MYSQL_OPT_SSL_KEY, keyFile.toLatin1().constData() );
-      mysql_options( db, MYSQL_OPT_SSL_CERT, certFile.toLatin1().constData() );
-      mysql_options( db, MYSQL_OPT_SSL_CA, caFile.toLatin1().constData() );
-      mysql_options( db, MYSQL_OPT_SSL_CAPATH, nullptr );
-      mysql_options( db, MYSQL_OPT_SSL_CIPHER, CIPHER );
-
-      if ( !US_Settings::debug_match( "MYSQL_OPT_SSL_VERIFY_SERVER_CERT" ) ) {
-         // disable MYSQL_OPT_SSL_VERIFY_SERVER_CERT
-#if defined(MYSQL_OPT_SSL_VERIFY_SERVER_CERT)
-         unsigned long verify = 0; // 0 = disable, 1 = enable
-         mysql_options( db, MYSQL_OPT_SSL_VERIFY_SERVER_CERT, &verify );
-#elif defined(MYSQL_OPT_SSL_MODE)
-         unsigned int ssl_mode = SSL_MODE_REQUIRED; // SSL on, but no CA/hostname verification
-         mysql_options( db, MYSQL_OPT_SSL_MODE, &ssl_mode );
-#endif
-      }
       // The CLIENT_MULTI_STATEMENTS flag allows for multiple queries and
       //   multiple result sets from a single stored procedure. It is required
       //   for any stored procedure that returns result sets.
@@ -314,29 +317,19 @@ bool US_DB2::connect( const QString&, const QString&, const QString&,
 bool US_DB2::connect( 
         const QString& host,  const QString& dbname, 
         const QString& user,  const QString& password, 
-        QString& error )
+        QString& err )
 {
   if ( connected ) return true;
 
+  const bool config_status = configure_ssl( err );
+  if ( ! config_status ) {
+     db_errno = NOT_CONNECTED;
+     error = QString( "Connect open error:\n" ) + err;
+     err = error;
+     return false;
+  }
    try
    {
-      // Set connection to use ssl encryption
-      mysql_options( db, MYSQL_OPT_SSL_KEY, keyFile.toLatin1().constData() );
-      mysql_options( db, MYSQL_OPT_SSL_CERT, certFile.toLatin1().constData() );
-      mysql_options( db, MYSQL_OPT_SSL_CA, caFile.toLatin1().constData() );
-      mysql_options( db, MYSQL_OPT_SSL_CAPATH, nullptr );
-      mysql_options( db, MYSQL_OPT_SSL_CIPHER, CIPHER );
-
-      if ( !US_Settings::debug_match( "MYSQL_OPT_SSL_VERIFY_SERVER_CERT" ) ) {
-         // disable MYSQL_OPT_SSL_VERIFY_SERVER_CERT
-#if defined(MYSQL_OPT_SSL_VERIFY_SERVER_CERT)
-         unsigned long verify = 0; // 0 = disable, 1 = enable
-         mysql_options( db, MYSQL_OPT_SSL_VERIFY_SERVER_CERT, &verify );
-#elif defined(MYSQL_OPT_SSL_MODE)
-         unsigned int ssl_mode = SSL_MODE_REQUIRED; // SSL on, but no CA/hostname verification
-         mysql_options( db, MYSQL_OPT_SSL_MODE, &ssl_mode );
-#endif
-      }
       // The CLIENT_MULTI_STATEMENTS flag allows for multiple queries and
       //   multiple result sets from a single stored procedure. It is required
       //   for any stored procedure that returns result sets.
@@ -354,7 +347,10 @@ bool US_DB2::connect(
 
    catch ( std::exception &e )
    {
+      db_errno = NOT_CONNECTED;
       error = e.what();
+      err = "US_DB2: uncaught exception " + error;
+      return false;
    }
 
    db_errno = OK;
@@ -363,6 +359,8 @@ bool US_DB2::connect(
    {
       db_errno = NOT_CONNECTED;
       error = QString( "Connect open error: " ) + mysql_error( db );
+      err = error;
+      return false;
    }
 
   return connected;
@@ -894,6 +892,97 @@ int US_DB2::readAucFromDB( const QString& filename, int tableID )
    }
 
    return retCode;
+}
+#endif
+
+#ifdef NO_DB
+bool US_DB2::configure_ssl( QString& err )
+{
+   error = "";
+   err = error;
+   return true;
+}
+#else
+bool US_DB2::configure_ssl( QString& err )
+{
+   int success = -1;
+   error = "";
+   err = error;
+   // Set connection to use ssl encryption
+   success = mysql_options( db, MYSQL_OPT_SSL_KEY, keyFile.toLatin1().constData() );
+   if ( success != 0 ) {
+      error = QString( "Error setting SSL key file: " ) + keyFile;
+      err = error;
+      return false;
+   }
+   success = mysql_options( db, MYSQL_OPT_SSL_CERT, certFile.toLatin1().constData() );
+   if ( success != 0 ) {
+      error = QString( "Error setting SSL cert file: " ) + certFile;
+      err = error;
+      return false;
+   }
+   success = mysql_options( db, MYSQL_OPT_SSL_CA, caFile.toLatin1().constData() );
+   if ( success != 0 ) {
+      error = QString( "Error setting SSL CA file: " ) + caFile;
+      err = error;
+      return false;
+   }
+   success = mysql_options( db, MYSQL_OPT_SSL_CAPATH, nullptr );
+   if ( success != 0 ) {
+      error = QString( "Error setting SSL CA path " );
+      err = error;
+      return false;
+   }
+   // Due to legacy certs and ciphers, security policies must be relaxed
+   if ( US_Settings::debug_match( "DB_ENFORCE_DEFAULT_SSL_SECURITY" ) ) {
+         // set default SSL ciphers
+         success = mysql_options( db, MYSQL_OPT_SSL_CIPHER, CIPHER );
+         if ( success != 0 ) {
+            error = QString( "Error setting SSL cipher: " ) + CIPHER;
+            err = error;
+            return false;
+         }
+      // the user enforces default security
+      return true;
+   }
+   // apply :@SECLEVEL=0 to the cipher
+   const QString cipher = QString::asprintf( "%s:@SECLEVEL=0", CIPHER );
+   success = mysql_options( db, MYSQL_OPT_SSL_CIPHER, cipher.toLatin1().constData() );
+   if ( success != 0 ) {
+      error = QString( "Error setting SSL cipher: " ) + cipher;
+      err = error;
+      return false;
+   }
+   // force a minimum of TLS 1.2
+   const QString tls_versions ("TLSv1.2,TLSv1.3");
+#if defined(LIBMARIADB)
+   // for libmariadb it is MARIADB_OPT_TLS_VERSION
+   success = mysql_options( db, MARIADB_OPT_TLS_VERSION, tls_versions.toLatin1().constData() );
+#else
+   // for libmysql it is MYSQL_OPT_TLS_VERSION
+   success = mysql_options( db, MYSQL_OPT_TLS_VERSION, tls_versions.toLatin1().constData() );
+#endif
+   if ( success != 0 ) {
+      error = QString( "Error setting TLS version: " ) + tls_versions;
+      err = error;
+      return false;
+   }
+   // disable verification of ssl server cert (hostname)
+#if defined(LIBMARIADB)
+   // for libmariadb disable MYSQL_OPT_SSL_VERIFY_SERVER_CERT
+   unsigned long verify = 0; // 0 = disable, 1 = enable
+   success = mysql_options( db, MYSQL_OPT_SSL_VERIFY_SERVER_CERT, &verify );
+#else
+   // for libmysql set MYSQL_OPT_SSL_MODE to SSL_MODE_REQUIRED
+   unsigned int ssl_mode = SSL_MODE_REQUIRED; // SSL on, but no CA/hostname verification
+   success = mysql_options( db, MYSQL_OPT_SSL_MODE, &ssl_mode );
+#endif
+   if ( success != 0 ) {
+      error = QString( "Error disabling SSL verify server cert." );
+      err = error;
+      return false;
+   }
+   return true;
 }
 #endif
 

@@ -20,7 +20,7 @@
 #define DbgLv(a) if(dbg_level>=a)qDebug()  //!< debug-level-conditioned qDebug()
 #endif
 
-class US_ConvertGui : public US_Widgets
+class US_GUI_EXTERN US_ConvertGui : public US_Widgets
 {
   Q_OBJECT
 
