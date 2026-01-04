@@ -108,7 +108,7 @@ class US_GUI_EXTERN US_Sassoc : public US_Widgets
 #include "us_printfilter.h"
 
 
-class US_SassocLegend : public QFrame
+class US_GUI_EXTERN US_SassocLegend : public QFrame
 {
    Q_OBJECT
    

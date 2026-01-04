@@ -25,7 +25,7 @@
 
 //! \brief A class to implement plot zooming
 
-class US_Zoomer: public QwtPlotZoomer
+class US_GUI_EXTERN US_Zoomer: public QwtPlotZoomer
 {
    public:
       //! \param xAxis - The title of the x (bottom) axis
@@ -35,16 +35,16 @@ class US_Zoomer: public QwtPlotZoomer
 };
 
 //! \brief Customize plot widgets
-class US_PlotConfig;
+class US_GUI_EXTERN US_PlotConfig;
 
 //! \brief A class to configure the axis elements of the plot
-class US_PlotAxisConfig;
+class US_GUI_EXTERN US_PlotAxisConfig;
 
 //! \brief A class to configure the x/y grid of a plot
-class US_PlotGridConfig;
+class US_GUI_EXTERN US_PlotGridConfig;
 
 //! \brief A class to configure the appearance of a curve
-class US_PlotCurveConfig;
+class US_GUI_EXTERN US_PlotCurveConfig;
 
 //! \brief A class that provides plot widgets
 /*! \class US_Plot
@@ -107,7 +107,7 @@ class US_GUI_EXTERN US_Plot : public QHBoxLayout
 
 //! \brief A specialized push button class for US_Plot to automatically
 //!        tie a specialized signal to a push button
-class US_PlotPushbutton : public QPushButton
+class US_GUI_EXTERN US_PlotPushbutton : public QPushButton
 {
    Q_OBJECT
 
@@ -132,7 +132,7 @@ class US_PlotPushbutton : public QPushButton
 //! \brief A window to allow customization of plots initialized
 //         via US_Plot
 
-class US_PlotConfig : public US_WidgetsDialog
+class US_GUI_EXTERN US_PlotConfig : public US_WidgetsDialog
 {
    Q_OBJECT
 
@@ -199,11 +199,11 @@ class US_PlotConfig : public US_WidgetsDialog
       //void closeEvent       ( QCloseEvent* );
 };
 
-class US_PlotLabel;
+class US_GUI_EXTERN US_PlotLabel;
 
 //! \brief A window to customize plot curves
 
-class US_PlotCurveConfig : public US_WidgetsDialog
+class US_GUI_EXTERN US_PlotCurveConfig : public US_WidgetsDialog
 {
    Q_OBJECT
 
@@ -254,7 +254,7 @@ class US_PlotCurveConfig : public US_WidgetsDialog
 };
 
 //! \brief  A window to customize plot labels
-class US_PlotLabel : public QWidget
+class US_GUI_EXTERN US_PlotLabel : public QWidget
 {
    Q_OBJECT
 
@@ -274,7 +274,7 @@ class US_PlotLabel : public QWidget
 };
 
 //! \brief  A window to customize plot axes
-class US_PlotAxisConfig : public US_WidgetsDialog
+class US_GUI_EXTERN US_PlotAxisConfig : public US_WidgetsDialog
 {
    Q_OBJECT
 
@@ -325,7 +325,7 @@ class US_PlotAxisConfig : public US_WidgetsDialog
 };
 
 //! \brief A window to customize a plot's grid
-class US_PlotGridConfig : public US_WidgetsDialog
+class US_GUI_EXTERN US_PlotGridConfig : public US_WidgetsDialog
 {
    Q_OBJECT
 

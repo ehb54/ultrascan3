@@ -12,7 +12,7 @@
            This class forms the content of the general tab in the US_Project GUI.
            Most management of the information itself takes place here.
 */
-class US_ProjectGuiGeneral : public US_Widgets
+class US_GUI_EXTERN US_ProjectGuiGeneral : public US_Widgets
 {
    Q_OBJECT
 
@@ -95,7 +95,7 @@ private:
 /*! \class US_ProjectGuiGoals
     \brief This class forms the content of the Goals tab in the US_Project GUI.
 */
-class US_ProjectGuiGoals : public US_Widgets
+class US_GUI_EXTERN US_ProjectGuiGoals : public US_Widgets
 {
    Q_OBJECT
 
@@ -122,7 +122,7 @@ private:
 /*! \class US_ProjectGuiMolecules
     \brief This class forms the content of the molecules tab in the US_Project GUI.
 */
-class US_ProjectGuiMolecules : public US_Widgets
+class US_GUI_EXTERN US_ProjectGuiMolecules : public US_Widgets
 {
    Q_OBJECT
 
@@ -149,7 +149,7 @@ private:
 /*! \class US_ProjectGuiPurity
     \brief This class forms the content of the purity tab in the US_Project GUI.
 */
-class US_ProjectGuiPurity : public US_Widgets
+class US_GUI_EXTERN US_ProjectGuiPurity : public US_Widgets
 {
    Q_OBJECT
 
@@ -176,7 +176,7 @@ private:
 /*! \class US_ProjectGuiExpense
     \brief This class forms the content of the expense tab in the US_Project GUI.
 */
-class US_ProjectGuiExpense : public US_Widgets
+class US_GUI_EXTERN US_ProjectGuiExpense : public US_Widgets
 {
    Q_OBJECT
 
@@ -203,7 +203,7 @@ private:
 /*! \class US_ProjectGuiBufferComponents
     \brief This class forms the content of the buffer components tab in the US_Project GUI.
 */
-class US_ProjectGuiBufferComponents : public US_Widgets
+class US_GUI_EXTERN US_ProjectGuiBufferComponents : public US_Widgets
 {
    Q_OBJECT
 
@@ -230,7 +230,7 @@ private:
 /*! \class US_ProjectGuiSaltInformation
     \brief This class forms the content of the salt information tab in the US_Project GUI.
 */
-class US_ProjectGuiSaltInformation : public US_Widgets
+class US_GUI_EXTERN US_ProjectGuiSaltInformation : public US_Widgets
 {
    Q_OBJECT
 
@@ -257,7 +257,7 @@ private:
 /*! \class US_ProjectGuiAUC_questions
     \brief This class forms the content of the AUC_questions tab in the US_Project GUI.
 */
-class US_ProjectGuiAUC_questions : public US_Widgets
+class US_GUI_EXTERN US_ProjectGuiAUC_questions : public US_Widgets
 {
    Q_OBJECT
 
@@ -284,7 +284,7 @@ private:
 /*! \class US_ProjectGuiExpDesign
     \brief This class forms the content of the expDesign tab in the US_Project GUI.
 */
-class US_ProjectGuiExpDesign : public US_Widgets
+class US_GUI_EXTERN US_ProjectGuiExpDesign : public US_Widgets
 {
    Q_OBJECT
 
@@ -311,7 +311,7 @@ private:
 /*! \class US_ProjectGuiNotes
     \brief This class forms the content of the notes tab in the US_Project GUI.
 */
-class US_ProjectGuiNotes : public US_Widgets
+class US_GUI_EXTERN US_ProjectGuiNotes : public US_Widgets
 {
    Q_OBJECT
 

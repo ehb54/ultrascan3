@@ -127,6 +127,22 @@ endif()
 # Platform-specific compiler flags
 if(UNIX AND NOT APPLE)
     add_compile_options(-Wno-unused-local-typedefs)
+    # Match qmake flags for better compatibility
+    add_compile_options(-pipe -Wall -Wextra)
+    add_compile_definitions(_REENTRANT)
+
+    # Optional: Enable LTO for Release builds (matches qmake)
+    # Note: LTO can cause longer build times and may need to be disabled for debugging
+    if(CMAKE_BUILD_TYPE STREQUAL "Release")
+        include(CheckIPOSupported)
+        check_ipo_supported(RESULT IPO_SUPPORTED OUTPUT IPO_ERROR)
+        if(IPO_SUPPORTED)
+            message(STATUS "Enabling Link-Time Optimization (LTO)")
+            set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
+        else()
+            message(STATUS "LTO not supported: ${IPO_ERROR}")
+        endif()
+    endif()
 endif()
 
 # Enable Qt's MOC, RCC, and UIC
@@ -396,6 +412,13 @@ add_dependencies(us3_resources us3_validate_qrc)
 target_link_libraries(us3_resources PRIVATE Qt::Core Qt::Gui)
 add_library(UltraScan3::Resources ALIAS us3_resources)
 
+# Create symbolic link from source etc to build etc
+set(US3_BUILD_ETC_DIR "${CMAKE_BINARY_DIR}/etc")
+if (NOT EXISTS "${US3_BUILD_ETC_DIR}")
+    file(CREATE_LINK "${US3_ETC_DIR}" "${US3_BUILD_ETC_DIR}" SYMBOLIC)
+    message(STATUS "Created symbolic link: ${US3_BUILD_ETC_DIR} -> ${US3_ETC_DIR}")
+endif ()
+
 # Install editable trees/files we excluded from the QRC
 foreach(d IN LISTS US3_ETC_EXCLUDE_DIRS)
     if(EXISTS "${US3_ETC_DIR}/${d}")
@@ -490,10 +513,12 @@ else()
         if(QWT_INCLUDE_DIRS)
             set_target_properties(unofficial_qwt_qwt PROPERTIES
                     INTERFACE_INCLUDE_DIRECTORIES "${QWT_INCLUDE_DIRS}"
+                    INTERFACE_LINK_DIRECTORIES "${QWT_LIBRARY_DIRS}"
                     INTERFACE_LINK_LIBRARIES "${QWT_LIBRARIES}")
         else()
             set_target_properties(unofficial_qwt_qwt PROPERTIES
                     INTERFACE_INCLUDE_DIRECTORIES "${QWT_INCLUDE_DIR}"
+                    INTERFACE_LINK_DIRECTORIES "${QWT_LIBRARY_DIR}"
                     INTERFACE_LINK_LIBRARIES "${QWT_LIBRARY}")
         endif()
 
