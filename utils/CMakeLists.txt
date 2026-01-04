@@ -16,6 +16,13 @@ if(APPLE)
             )
     # Override any inherited visibility settings
     target_compile_options(us_utils PRIVATE -fvisibility=default)
+elseif(UNIX)
+    # Force all symbols to be exported at link time
+    target_link_options(us_utils PRIVATE
+            "LINKER:--export-dynamic"
+    )
+    # Override any inherited visibility settings
+    target_compile_options(us_utils PRIVATE -fvisibility=default)
 endif()
 
 # Set library properties - MERGED with visibility settings

@@ -17,7 +17,7 @@
 #include "us_new_spectrum.h"
 
 //! This class provides a tabbed entry for solution selection
-class US_SolutionMgrSelect: public US_Widgets
+class US_GUI_EXTERN US_SolutionMgrSelect: public US_Widgets
 {
    Q_OBJECT
 
@@ -149,7 +149,7 @@ class US_SolutionMgrSelect: public US_Widgets
 };
 
 //!      This class provides a tabbed entry for new solution creation
-class US_SolutionMgrNew : public US_Widgets
+class US_GUI_EXTERN US_SolutionMgrNew : public US_Widgets
 {
    Q_OBJECT
 
@@ -244,7 +244,7 @@ class US_SolutionMgrNew : public US_Widgets
 };
 
 //! This class provides a tabbed entry for non-hydrodynamic solution mods
-class US_SolutionMgrEdit : public US_Widgets
+class US_GUI_EXTERN US_SolutionMgrEdit : public US_Widgets
 {
    Q_OBJECT
 
@@ -308,7 +308,7 @@ class US_SolutionMgrEdit : public US_Widgets
 
 
 //! This class provides a tabbed entry for general solution settings
-class US_SolutionMgrSettings: public US_Widgets
+class US_GUI_EXTERN US_SolutionMgrSettings: public US_Widgets
 {
    Q_OBJECT
 
