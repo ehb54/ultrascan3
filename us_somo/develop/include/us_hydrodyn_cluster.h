@@ -146,7 +146,7 @@ class US_EXTERN US_Hydrodyn_Cluster : public QDialog
       map < QString, bool >                       cluster_additional_methods_no_tgz_output;
       map < QString, bool >                       cluster_additional_methods_must_run_alone;
       map < QString, QString >                    cluster_additional_methods_prepend;
-      map < QString, QString >                    cluster_additional_methods_add_selected_files;
+      map < QString, bool >                       cluster_additional_methods_add_selected_files;
       map < QString, unsigned int >               cluster_additional_methods_job_multiplier;
       map < QString, map < QString, bool > >      cluster_additional_methods_modes;
 

@@ -649,9 +649,10 @@ void US_Hydrodyn_Saxs_Hplc_Movie::save_plot( QPixmap & qPix, QString tag, int my
    QString curvefname = hplc_win->lb_files->item( hplc_selected_files[ mypos ] )->text();
    QString qvaluetag  = "";
 
-   static QRegExp rx_q     ( "It_q(\\d+_\\d+)" );
-   if ( rx_q.indexIn( curvefname ) != -1 ) {
-      qvaluetag = QString( "q: %1 " ).arg( rx_q.cap( 1 ).replace( "_", "." ).toDouble() );
+   static QRegularExpression rx_q     ( "It_q(\\d+_\\d+)" );
+   QRegularExpressionMatch rx_q_m = rx_q.match( curvefname );
+   if ( rx_q_m.hasMatch() ) {
+      qvaluetag = QString( "q: %1 " ).arg( rx_q_m.captured(1).replace( "_", "." ).toDouble() );
    }
 
    paint.drawText( qPix.rect(), Qt::AlignBottom | Qt::AlignLeft, QString( "%1%2" ).arg( qvaluetag ).arg( curvefname ));

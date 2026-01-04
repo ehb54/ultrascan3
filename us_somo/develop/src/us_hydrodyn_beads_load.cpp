@@ -1,4 +1,5 @@
 // this is part of the class US_Hydrodyn
+#include <QRegularExpression>
 // listing of other files is in us_hydrodyn.cpp
 // (this) us_hydrodyn_beads_load.cpp contains code for reading the bead model file
 
@@ -14,8 +15,8 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
    le_pdb_file_save_text = "not selected";
    le_pdb_file->setText(us_tr( "not selected" ));
    project = filename;
-   //   project.replace(QRegExp(".*(/|\\\\)"), "");
-   //   project.replace(QRegExp("\\.(somo|SOMO)\\.(bead_model|BEAD_MODEL)$"), "");
+   //   project.replace(QRegularExpression( QStringLiteral( ".*(/|\\\\)" ) ), "");
+   //   project.replace(QRegularExpression( QStringLiteral( "\\.(somo|SOMO)\\.(bead_model|BEAD_MODEL)$" ) ), "");
    project = QFileInfo(QFileInfo(filename).fileName()).baseName();
    QString ftype = QFileInfo(filename).suffix().toLower();
    editor->setText("\n\nLoading bead model " + project + " of type " + ftype + "\n");
@@ -87,7 +88,7 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
          QTextStream ts(&f);
          QString qs = ts.readLine();
          qDebug() << "qs " << qs;
-         QStringList qsl = qs.split( QRegExp( "\\s+" ) );
+         QStringList qsl = qs.split( QRegularExpression( QStringLiteral( "\\s+" ) ) );
          if (qsl.size()) {
             bead_count = qsl.takeFirst().toInt();
          } else {
@@ -104,7 +105,7 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
          while ( !ts.atEnd() && linepos < bead_count ) {
             QString qs = ts.readLine();
             qDebug() << "qs " << qs;
-            QStringList qsl = qs.split( QRegExp( "\\s+" ) );
+            QStringList qsl = qs.split( QRegularExpression( QStringLiteral( "\\s+" ) ) );
             
             qDebug() << "qsl size " << qsl.size() << " joined - " << qsl.join( ":" );
 
@@ -174,8 +175,8 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
                QString tmp_string;
                // strip extra fields
                tmp_string = qsl.join( " " );
-               tmp_string.replace(QRegExp("^\\s*"),"");
-               tmp_string.replace(QRegExp("\\s.*"),"");
+               tmp_string.replace(QRegularExpression( QStringLiteral( "^\\s*" ) ),"");
+               tmp_string.replace(QRegularExpression( QStringLiteral( "\\s.*" ) ),"");
                tmp_atom.bead_recheck_asa = tmp_string.toFloat();
                //  } else {
                // editor->append(QString("\nError in line %1!\n").arg(linepos));
@@ -218,7 +219,7 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
          editor->setCurrentFont(new_font);
          {
             bool units_loaded = false;
-            QRegExp rx(", where x is : (\\d+)");
+            QRegularExpression rx(", where x is : (\\d+)");
             QStringList ssaxs;
             QStringList bsaxs;
             QStringList bsaxsv;
@@ -248,10 +249,11 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
                }
 
                editor->append(str);
-               if ( rx.indexIn(str) != -1 )
+               QRegularExpressionMatch m = rx.match( str );
+               if ( m.hasMatch() )
                {
                   units_loaded = true;
-                  hydro.unit = - rx.cap(1).toInt();
+                  hydro.unit = - m.captured(1).toInt();
                   display_default_differences();
                }
             }
@@ -280,7 +282,7 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
                               .arg( ssaxs.size() ) );
                } else {
                   saxs tmp_saxs;
-                  QStringList qsl = (ssaxs[ 0 ] ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
+                  QStringList qsl = (ssaxs[ 0 ] ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts );
                   if ( qsl.size() != 12 )
                   {
                      editor_msg( "red", 
@@ -303,7 +305,7 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
                      tmp_saxs.volume = qsl[ 11 ].toFloat();
                      if ( ssaxs.size() == 2 )
                      {
-                        qsl = (ssaxs[ 1 ] ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
+                        qsl = (ssaxs[ 1 ] ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts );
 
                         if ( qsl.size() != 14 )
                         {
@@ -398,7 +400,7 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
                for ( unsigned int j = 0; j < ( unsigned int ) bsaxs.size(); j += 2 )
                {
                   saxs tmp_saxs;
-                  QStringList qsl = (bsaxs[ j ] ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
+                  QStringList qsl = (bsaxs[ j ] ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts );
                   if ( qsl.size() != 12 )
                   {
                      editor_msg( "red", 
@@ -421,7 +423,7 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
                      tmp_saxs.volume = qsl[ 11 ].toFloat();
                      if ( (unsigned int) bsaxs.size() > j + 1 )
                      {
-                        qsl = (bsaxs[ j + 1 ] ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
+                        qsl = (bsaxs[ j + 1 ] ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts );
                         if ( tmp_saxs.saxs_name != qsl[ 1 ].toUpper() )
                         {
                            editor_msg( "red", us_tr( "Error: bead saxs coefficients bead number inconsistancy" ) );
@@ -448,7 +450,7 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
                      tmp_saxs.vcoeff.clear( );
                      if ( do_bsaxsv )
                      {
-                        qsl = (bsaxsv[ j / 2 ] ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
+                        qsl = (bsaxsv[ j / 2 ] ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts );
                         QTextStream( stdout ) << QString( "loading: bvsaxs qsl size %1\n" ).arg( qsl.size() );
                         for ( int i = 2; i < (int) qsl.size() - 1; i++ )
                         {
@@ -709,7 +711,7 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
          }               
       }
 
-      QRegExp rx_model( "^MODEL\\s+(\\S+)" );
+      QRegularExpression rx_model( "^MODEL\\s+(\\S+)" );
       model_count = 0;
       model_names.clear( );
 
@@ -718,10 +720,10 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
       if (f.open(QIODevice::ReadOnly))
       {
 
-         QRegExp rx_psv( "^REMARK\\s+PSV(\\s*:|)\\s+(\\S+)", Qt::CaseInsensitive );
-         QRegExp rx_mw ( "^REMARK\\s+MW(\\s*:|)\\s+(\\S+)", Qt::CaseInsensitive );
-         QRegExp rx_unit( "^REMARK\\s+Units exponent(\\s*:|)\\s+(\\S+)", Qt::CaseInsensitive );
-         QRegExp rx_mult( "^REMARK\\s+Units conversion factor(\\s*:|)\\s+(\\S+)", Qt::CaseInsensitive );
+         QRegularExpression rx_psv( "^REMARK\\s+PSV(\\s*:|)\\s+(\\S+)", QRegularExpression::CaseInsensitiveOption );
+         QRegularExpression rx_mw ( "^REMARK\\s+MW(\\s*:|)\\s+(\\S+)", QRegularExpression::CaseInsensitiveOption );
+         QRegularExpression rx_unit( "^REMARK\\s+Units exponent(\\s*:|)\\s+(\\S+)", QRegularExpression::CaseInsensitiveOption );
+         QRegularExpression rx_mult( "^REMARK\\s+Units conversion factor(\\s*:|)\\s+(\\S+)", QRegularExpression::CaseInsensitiveOption );
          double loaded_psv = 0e0;
          double loaded_mw  = 0e0;
          unsigned int loaded_unit = 0;
@@ -733,24 +735,28 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
             do {
                QString qs = ts.readLine();
                qsl << qs;
-               if ( rx_model.indexIn( qs ) != -1 )
+               QRegularExpressionMatch rx_model_m = rx_model.match( qs );
+               if ( rx_model_m.hasMatch() )
                {
                   model_count++;
-                  model_names.push_back( rx_model.cap( 1 ) );
+                  model_names.push_back( rx_model_m.captured( 1 ) );
                }
-               if ( rx_psv.indexIn( qs ) != -1 )
+               QRegularExpressionMatch rx_psv_m = rx_psv.match( qs );
+               if ( rx_psv_m.hasMatch() ) 
                {
-                  loaded_psv = rx_psv.cap( 2 ).toDouble();
+                  loaded_psv = rx_psv_m.captured( 2 ).toDouble();
                   editor_msg( "blue", QString( us_tr( "Found PSV %1 in PDB" ) ).arg( loaded_psv ) );
                }
-               if ( rx_mw.indexIn( qs ) != -1 )
+               QRegularExpressionMatch rx_mw_m = rx_mw.match( qs );
+               if ( rx_mw_m.hasMatch() )
                {
-                  loaded_mw = rx_mw.cap( 2 ).toDouble();
+                  loaded_mw = rx_mw_m.captured( 2 ).toDouble();
                   editor_msg( "blue", QString( us_tr( "Found MW %1 in PDB" ) ).arg( loaded_mw ) );
                }
-               if ( rx_unit.indexIn( qs ) != -1 )
+               QRegularExpressionMatch rx_unit_m = rx_unit.match( qs );
+               if ( rx_unit_m.hasMatch() )
                {
-                  loaded_unit = rx_unit.cap( 2 ).toUInt();
+                  loaded_unit = rx_unit_m.captured( 2 ).toUInt();
                   editor_msg( "blue", QString( us_tr( "Found Units exponent %1 in PDB" ) ).arg( loaded_unit ) );
                   if ( loaded_unit == 10 )
                   {
@@ -761,10 +767,11 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
                      saxs_options.dummy_atom_pdbs_in_nm = false;
                   }
                }
-               if ( rx_mult.indexIn( qs ) != -1 )
+               QRegularExpressionMatch rx_mult_m = rx_mult.match( qs );
+               if ( rx_mult_m.hasMatch() )
                {
                   loaded_mult = true;
-                  unit_mult = rx_mult.cap( 2 ).toUInt();
+                  unit_mult = rx_mult_m.captured( 2 ).toUInt();
                   editor_msg( "blue", QString( us_tr( "Found Units conversion %1 in PDB" ) ).arg( unit_mult ) );
                }
             } while (!ts.atEnd());
@@ -822,9 +829,9 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
          }
 
          // find last atom number
-         QRegExp rx;
+         QRegularExpression rx;
 
-         QStringList qsl_atom = qsl.filter(QRegExp("^ATOM "));
+         QStringList qsl_atom = qsl.filter(QRegularExpression( QStringLiteral( "^ATOM " ) ));
          QString last_atom = "";
          if ( !qsl_atom.empty() )
          {
@@ -836,7 +843,8 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
          }
 
          rx.setPattern("^ATOM\\s*(\\d+)\\s*CA");
-         if ( rx.indexIn(last_atom) ) 
+         QRegularExpressionMatch rx_m = rx.match( last_atom );
+         if ( !rx_m.hasMatch() )
          {
             editor->append("Couldn't find a last atom number in the DAMMIN/DAMMIF/DAMAVER file\n");
             f.close();
@@ -844,11 +852,11 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
          }
          
          // determine and compare bead count
-         int tmp_bead_count = rx.cap(1).toInt();
+         int tmp_bead_count = rx_m.captured(1).toInt();
          printf("read bead count %d\n", tmp_bead_count);
 
          // count atom lines
-         int atom_line_count = qsl.filter(QRegExp("^ATOM ")).count();
+         int atom_line_count = qsl.filter(QRegularExpression( QStringLiteral( "^ATOM " ) )).count();
          printf("atom line count %d\n", atom_line_count);
 
          bead_count = atom_line_count;
@@ -872,14 +880,17 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
          if ( dammin ) 
          {
             puts("dammin");
-            rx.setPattern( "Number of particle atoms \\.*\\s*:\\s*(\\d+)\\s*" );
-            if ( rx.indexIn(tmp) == -1 ) 
             {
-               editor->append("Error in DAMMIN file: couldn't find number of atoms in 'Number of particle atoms' line\n");
-               f.close();
-               return 1;
+               rx.setPattern( "Number of particle atoms \\.*\\s*:\\s*(\\d+)\\s*" );
+               QRegularExpressionMatch rx_m = rx.match( tmp );
+               if ( !rx_m.hasMatch() )
+               {
+                  editor->append("Error in DAMMIN file: couldn't find number of atoms in 'Number of particle atoms' line\n");
+                  f.close();
+                  return 1;
+               }
+               bead_count = rx_m.captured(1).toInt();
             }
-            bead_count = rx.cap(1).toInt();
             // editor->append(QString("DAMMIN model has %1 beads\n").arg(bead_count));
             
             do {
@@ -895,28 +906,35 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
                return 1;
             }
             
-            rx.setPattern("DAM packing radius \\.*\\s*:\\s*(\\d+\\.\\d+)\\s*");
-            
-            if ( rx.indexIn(tmp) == -1 ) 
             {
-               editor->append("Error in DAMMIN file: couldn't find radius in 'Dummy atom radius' line\n");
-               f.close();
-               return 1;
+               rx.setPattern("DAM packing radius \\.*\\s*:\\s*(\\d+\\.\\d+)\\s*");
+               QRegularExpressionMatch rx_m = rx.match( tmp );
+            
+               if ( !rx_m.hasMatch() )
+               {
+                  editor->append("Error in DAMMIN file: couldn't find radius in 'Dummy atom radius' line\n");
+                  f.close();
+                  return 1;
+               }
+               radius = rx_m.captured(1).toFloat();
             }
-            radius = rx.cap(1).toFloat();
          } 
 
          if ( dammif ) {
             puts("dammif");
-            rx.setPattern( "Dummy atoms in output phase\\s*:\\s*(\\d+)\\s*" );
-            if ( rx.indexIn(tmp) == -1 ) 
             {
-               editor->append("Error in DAMMIF file: couldn't find number of atoms in 'Dummy atoms in output phase' line\n");
-               f.close();
-               return 1;
+               rx.setPattern( "Dummy atoms in output phase\\s*:\\s*(\\d+)\\s*" );
+               QRegularExpressionMatch rx_m = rx.match( tmp );
+            
+               if ( !rx_m.hasMatch() )
+               {
+                  editor->append("Error in DAMMIF file: couldn't find number of atoms in 'Dummy atoms in output phase' line\n");
+                  f.close();
+                  return 1;
+               }
+               bead_count = rx_m.captured(1).toInt();
+               // editor->append(QString("DAMMIF model has %1 beads\n").arg(bead_count));
             }
-            bead_count = rx.cap(1).toInt();
-            // editor->append(QString("DAMMIF model has %1 beads\n").arg(bead_count));
             
             do {
                tmp = ts.readLine();
@@ -931,15 +949,18 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
                return 1;
             }
             
-            rx.setPattern("Dummy atom radius\\s *:\\s*(\\d+\\.\\d+)\\s*");
-            
-            if ( rx.indexIn(tmp) == -1 ) 
             {
-               editor->append("Error in DAMMIF file: couldn't find radius in 'Dummy atom radius' line\n");
-               f.close();
-               return 1;
+               rx.setPattern("Dummy atom radius\\s *:\\s*(\\d+\\.\\d+)\\s*");
+               QRegularExpressionMatch rx_m = rx.match( tmp );
+            
+               if ( !rx_m.hasMatch() )
+               {
+                  editor->append("Error in DAMMIF file: couldn't find radius in 'Dummy atom radius' line\n");
+                  f.close();
+                  return 1;
+               }
+               radius = rx_m.captured(1).toFloat();
             }
-            radius = rx.cap(1).toFloat();
          }
 
          if ( damaver ) {
@@ -958,13 +979,14 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
             }
             
             rx.setPattern("DAM packing radius \\.*\\s*:\\s*(\\d+\\.\\d+)\\s*");
+            QRegularExpressionMatch rx_m = rx.match( tmp );
             
-            if ( rx.indexIn(tmp) == -1 ) 
+            if ( !rx_m.hasMatch() )
             {
                editor->append("Error in DAMAVER file: couldn't find radius in 'DAM packing radius' line\n");
                return 1;
             }
-            radius = rx.cap(1).toFloat();
+            radius = rx_m.captured(1).toFloat();
          }
 
          if ( damfilt || damfilt5 ) {
@@ -983,13 +1005,14 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
             }
             
             rx.setPattern("atomic radius \\.*\\s*:\\s*(\\d+\\.\\d+)\\s*");
+            QRegularExpressionMatch rx_m = rx.match( tmp.toLower() );
             
-            if ( rx.indexIn(tmp.toLower()) == -1 ) 
+            if ( !rx_m.hasMatch() )
             {
                editor->append("Error in DAMFILT file: couldn't find radius in 'Atomic radius' line\n");
                return 1;
             }
-            radius = rx.cap(1).toFloat();
+            radius = rx_m.captured(1).toFloat();
          }
 
          if ( em2dam ) {
@@ -1008,13 +1031,14 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
             }
             
             rx.setPattern("dummy atom radius \\.*\\s*:\\s*(\\d+\\.\\d+)\\s*");
+            QRegularExpressionMatch rx_m = rx.match( tmp.toLower() );
             
-            if ( rx.indexIn(tmp.toLower()) == -1 ) 
+            if ( !rx_m.hasMatch() )
             {
                editor->append("Error EM2DAM DAMFILT file: couldn't find radius in 'Dummy atom radius' line\n");
                return 1;
             }
-            radius = rx.cap(1).toFloat();
+            radius = rx_m.captured(1).toFloat();
          }
 
          if ( saxs_options.dummy_atom_pdbs_in_nm )

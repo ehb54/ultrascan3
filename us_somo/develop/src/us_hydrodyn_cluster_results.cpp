@@ -1,4 +1,5 @@
 #include "../include/us3_defines.h"
+#include <QRegularExpression>
 #include "../include/us_hydrodyn.h"
 #include "../include/us_revision.h"
 #include "../include/us_hydrodyn_cluster.h"
@@ -374,7 +375,7 @@ void US_Hydrodyn_Cluster_Results::purge()
                   editor_msg( "black", QString( us_tr( "Removed %1" ) ).arg( lvi->text( 0 ) ) );
                }
                QString qs = lvi->text( 0 );
-               qs.replace( QRegExp( "_out.t..$" ), "" );
+               qs.replace( QRegularExpression( QStringLiteral( "_out.t..$" ) ), "" );
                QStringList qscheck;
                qscheck 
                   <<  qs + ".tar"
@@ -411,7 +412,7 @@ void US_Hydrodyn_Cluster_Results::purge()
             editor_msg( "black", QString( us_tr( "Removed %1" ) ).arg( lvi->text( 0 ) ) );
          }
          QString qs = lvi->text( 0 );
-         qs.replace( QRegExp( "_out.t..$" ), "" );
+         qs.replace( QRegularExpression( QStringLiteral( "_out.t..$" ) ), "" );
          QStringList qscheck;
          qscheck 
             <<  qs + ".tar"
@@ -592,10 +593,10 @@ bool US_Hydrodyn_Cluster_Results::load_one_result( QString file )
    }
 
    // ungzip if needed
-   if ( file.contains( QRegExp( "\\.(tgz|TGZ)$" ) ) )
+   if ( file.contains( QRegularExpression( QStringLiteral( "\\.(tgz|TGZ)$" ) ) ) )
    {
       QString dest = file;
-      dest.replace( QRegExp( "\\.(tgz|TGZ)$" ), ".tar.gz" );
+      dest.replace( QRegularExpression( QStringLiteral( "\\.(tgz|TGZ)$" ) ), ".tar.gz" );
       QDir qd;
       qd.remove( dest );
       if ( !qd.rename( file, dest ) )
@@ -615,11 +616,11 @@ bool US_Hydrodyn_Cluster_Results::load_one_result( QString file )
       }
       file = usg.last_written_name;
 
-      if ( file.contains( QRegExp( "\\.(tgz|TGZ)$" ) ) )
+      if ( file.contains( QRegularExpression( QStringLiteral( "\\.(tgz|TGZ)$" ) ) ) )
       {
          // rename it to .tar (?) probably some error in us_gzip internal name storage
          dest = file;
-         dest.replace( QRegExp( "\\.(tgz|TGZ)$" ), ".tar" );
+         dest.replace( QRegularExpression( QStringLiteral( "\\.(tgz|TGZ)$" ) ), ".tar" );
          if ( !qd.rename( file, dest ) )
          {
             errormsg = QString( us_tr( "Error: renaming %1 to %2 " ) ).arg( file ).arg( dest );
@@ -631,7 +632,7 @@ bool US_Hydrodyn_Cluster_Results::load_one_result( QString file )
 
    // file should be .tar now
 
-   if ( !file.contains( QRegExp( "\\.(tar|TAR)$" ) ) )
+   if ( !file.contains( QRegularExpression( QStringLiteral( "\\.(tar|TAR)$" ) ) ) )
    {
       errormsg = QString( us_tr( "Error: file %1 is not .tar" ) ).arg( file );
       return false;
@@ -692,7 +693,7 @@ bool US_Hydrodyn_Cluster_Results::load_one_result( QString file )
 
    for ( unsigned int i = 0; i < (unsigned int)tar_list.size(); i++ )
    {
-      if ( tar_list[ i ].contains( QRegExp( "\\.(tgz|TGZ|tar|TAR)$" ) ) )
+      if ( tar_list[ i ].contains( QRegularExpression( QStringLiteral( "\\.(tgz|TGZ|tar|TAR)$" ) ) ) )
       {
          // further extraction needed
          further_extraction << tar_list[ i ];
@@ -715,10 +716,10 @@ bool US_Hydrodyn_Cluster_Results::load_one_result( QString file )
          }
 
          // ungzip if needed
-         if ( file.contains( QRegExp( "\\.(tgz|TGZ)$" ) ) )
+         if ( file.contains( QRegularExpression( QStringLiteral( "\\.(tgz|TGZ)$" ) ) ) )
          {
             QString dest = file;
-            dest.replace( QRegExp( "\\.(tgz|TGZ)$" ), ".tar.gz" );
+            dest.replace( QRegularExpression( QStringLiteral( "\\.(tgz|TGZ)$" ) ), ".tar.gz" );
             QDir qd;
             qd.remove( dest );
             if ( !qd.rename( file, dest ) )
@@ -739,10 +740,10 @@ bool US_Hydrodyn_Cluster_Results::load_one_result( QString file )
             file = usg.last_written_name;
             // this is a problem with gunzip, as far as I can tell
             // it is giving the file a wrong name
-            if ( file.contains( QRegExp( "\\.(tgz|TGZ)" ) ) )
+            if ( file.contains( QRegularExpression( QStringLiteral( "\\.(tgz|TGZ)" ) ) ) )
             {
                QString dest = file;
-               dest.replace( QRegExp( "\\.(tgz|TGZ)$" ), ".tar" );
+               dest.replace( QRegularExpression( QStringLiteral( "\\.(tgz|TGZ)$" ) ), ".tar" );
                QDir qd;
                qd.remove( dest );
                if ( !qd.rename( file, dest ) )
@@ -757,7 +758,7 @@ bool US_Hydrodyn_Cluster_Results::load_one_result( QString file )
 
          // file should be .tar now
          
-         if ( !file.contains( QRegExp( "\\.(tar|TAR)$" ) ) )
+         if ( !file.contains( QRegularExpression( QStringLiteral( "\\.(tar|TAR)$" ) ) ) )
          {
             errormsg = QString( us_tr( "Error: file %1 is not .tar" ) ).arg( file );
             return false;
@@ -830,7 +831,7 @@ bool US_Hydrodyn_Cluster_Results::load_one_result( QString file )
 
 bool US_Hydrodyn_Cluster_Results::merge_csvs( QStringList &final_results )
 {
-   QStringList csvs = final_results.filter( QRegExp( "\\.(csv|CSV)$" ) );
+   QStringList csvs = final_results.filter( QRegularExpression( QStringLiteral( "\\.(csv|CSV)$" ) ) );
    if ( !csvs.size() )
    {
       // no csvs
@@ -942,7 +943,7 @@ bool US_Hydrodyn_Cluster_Results::merge_this_csv( QString dest, vector < QString
 bool US_Hydrodyn_Cluster_Results::move_to_results( QString jobname, QStringList final_results )
 {
    QString output_dir = results_dir + SLASH + QString( "%1" )
-      .arg( jobname ).replace( QRegExp( "_(out|OUT).*$" ), "" );
+      .arg( jobname ).replace( QRegularExpression( QStringLiteral( "_(out|OUT).*$" ) ), "" );
    QDir qd( output_dir );
    bool overwrite = false;
    if ( qd.exists() )

@@ -274,11 +274,9 @@ jobs:
         language: [ cpp ]
         container:
           - "ehb1/usbuildtest:ubuntu22.04-qt5.15.10-qwt6.1.6"
-          # somo main not ready for qwt6.3.0
-          # - "ehb1/usbuildtest:ubuntu22.04-qt5.15.10-qwt6.3.0"
-          # somo main not ready for qt6
-          # - "ehb1/usbuildtest:ubuntu24.04-qt6.8.3-qwt6.3.0"
-          # - "ehb1/usbuildtest:ubuntu24.04-qt6.10.0-qwt6.3.0"
+          - "ehb1/usbuildtest:ubuntu22.04-qt5.15.10-qwt6.3.0"
+          - "ehb1/usbuildtest:ubuntu24.04-qt6.8.3-qwt6.3.0"
+          - "ehb1/usbuildtest:ubuntu24.04-qt6.10.0-qwt6.3.0"
 
     # Specify the container in which actions will run
     container:
@@ -297,22 +295,24 @@ jobs:
           languages: ${{ matrix.language }}
       - name: Prepare build
         run: |
-          bdir=`pwd`
-          echo $bdir
-          pwd
-          export ULTRASCAN=$bdir
-          export us3=$bdir
+          export ULTRASCAN=`pwd`
+          export us3=`pwd`
+          echo ULTRASCAN=$ULTRASCAN
           cd us_somo/develop
           ./revision.sh
           ./version.sh
-          cp $bdir/admin/codeql/docker/local.pri.somo local.pri
+          cp $ULTRASCAN/admin/codeql/docker/local.pri.somo local.pri
       - name: Build libus_somo
         run: |
+          export ULTRASCAN=`pwd`
+          export us3=`pwd`
           cd us_somo/develop
           qmake libus_somo.pro
           make -j$(( $(nproc) + 1 ))
       - name: Build us_somo
         run: |
+          export ULTRASCAN=`pwd`
+          export us3=`pwd`
           cd us_somo/develop
           qmake us_somo.pro
           make -j$(( $(nproc) + 1 ))
