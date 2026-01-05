@@ -3800,7 +3800,13 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
 	       if ( channelname_.contains(ci.key()) )
 		 {
 		   qDebug() << "Channel, AProfile SCANSS: " << channelname_ << ", " << ci.key() << ": " << ci.value();
-		   editProfile_scans_excl[ triple_name ] = ci.value();
+		   QStringList scans_set = ci.value();
+
+		   //check
+		   if (scans_set[2] == QString("0") )
+		     scans_set[2] = QString::number(1);
+		   
+		   editProfile_scans_excl[ triple_name ] = scans_set;
 		   break;
 		 }
 	       ++ci;
