@@ -4429,7 +4429,7 @@ void US_ExperGuiSpeeds::adjustDelay( void )
    double pspeed    = ( curssx > 0 ) ? ssvals[ curssx - 1 ][ "speed" ] : 0.0;
    double spdelta   = fabs(cspeed - pspeed);               // Speed delta          <-- In case there is deceleration..
    double accel     = ssvals[ curssx ][ "accel" ];   // Acceleration
-#warning "Check if this accel is guaranteed to be non-zero, inform user if it is zero?"
+// #warning "Check if this accel is guaranteed to be non-zero, inform user if it is zero?"
    double delaylow  = qCeil( spdelta / accel );      // Low seconds delay
 
    //Uv-vis
