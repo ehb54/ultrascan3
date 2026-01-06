@@ -32,11 +32,11 @@ class US_Font : public US_Widgets
     QLineEdit*   le_family;
     QLineEdit*   le_pointSize;
                 
-    QLabel*      small;
-    QLabel*      regular;
-    QLabel*      regularBold;
-    QLabel*      large;
-    QLabel*      largeBold;
+    QLabel*      lbl_small;
+    QLabel*      lbl_regular;
+    QLabel*      lbl_regularBold;
+    QLabel*      lbl_large;
+    QLabel*      lbl_largeBold;
     QLabel*      title;
     QLabel*      lbl_family;
     QLabel*      size;
