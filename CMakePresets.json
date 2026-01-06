@@ -81,7 +81,10 @@
     },
     {
       "name": "windows-base",
-      "hidden": true
+      "hidden": true,
+      "cacheVariables": {
+        "VCPKG_TARGET_TRIPLET": "x64-windows"
+      }
     },
     {
       "name": "mingw-base",
@@ -205,37 +208,37 @@
       "name": "mingw-release-qt5-qwt616",
       "displayName": "mingw Release Qt5 Qwt6.1.6",
       "inherits": ["release-base", "mingw-base", "base-qt5-qwt616"],
-      "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "MinGW" }
+      "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Windows" }
     },
     {
       "name": "mingw-debug-qt5-qwt616",
       "displayName": "mingw Debug Qt5 Qwt6.1.6",
       "inherits": ["debug-base", "mingw-base", "base-qt5-qwt616"],
-      "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "MinGW" }
+      "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Windows" }
     },
     {
       "name": "mingw-release-qt5-qwt630",
       "displayName": "mingw Release Qt5 Qwt6.3.0",
       "inherits": ["release-base", "mingw-base", "base-qt5-qwt630"],
-      "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "MinGW" }
+      "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Windows" }
     },
     {
       "name": "mingw-debug-qt5-qwt630",
       "displayName": "mingw Debug Qt5 Qwt6.3.0",
       "inherits": ["debug-base", "mingw-base", "base-qt5-qwt630"],
-      "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "MinGW" }
+      "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Windows" }
     },
     {
       "name": "mingw-release-qt6",
       "displayName": "mingw Release Qt6 Qwt6.3.0",
       "inherits": ["release-base", "mingw-base", "base-qt6"],
-      "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "MinGW" }
+      "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Windows" }
     },
     {
       "name": "mingw-debug-qt6",
       "displayName": "mingw Debug Qt6 Qwt6.3.0",
       "inherits": ["debug-base", "mingw-base", "base-qt6"],
-      "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "MinGW" }
+      "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Windows" }
     }
   ],
   "buildPresets": [
