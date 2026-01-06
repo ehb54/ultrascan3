@@ -34,6 +34,7 @@ target_link_libraries(us_program_common INTERFACE
         Qt::OpenGL
         Qt::PrintSupport
         Qwt::Qwt
+        qwtplot3d::qwtplot3d
         )
 if (USE_QT6)
     target_link_libraries(us_program_common INTERFACE Qt::OpenGLWidgets)
@@ -133,13 +134,17 @@ else()
     message(STATUS "[programs] US3_NO_DB=ON → GUI not linked into programs")
 endif()
 
+if(WIN32)
+    target_compile_definitions(us_program_common INTERFACE QWT_DLL QT_DLL)
+endif()
+
 # --------------------------------------------------------------------------
 # 4) Add all per-program subdirectories
 # --------------------------------------------------------------------------
 if(NOT ENABLE_MPI)
-    set(EXCLUDED_PROGRAMS us_mpi_analysis)
+    set(EXCLUDED_PROGRAMS us_mpi_analysis CMakeFiles generated)
 else()
-    set(EXCLUDED_PROGRAMS)
+    set(EXCLUDED_PROGRAMS CMakeFiles generated)
 endif()
 
 file(GLOB program_dirs LIST_DIRECTORIES true RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*")
