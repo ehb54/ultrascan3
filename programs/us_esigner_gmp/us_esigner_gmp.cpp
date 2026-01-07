@@ -3115,8 +3115,9 @@ bool US_eSignaturesGMP::is_eSignProcessBegan( void )
 	    {
 	      QJsonObject newObj = esigned_array[i].toObject().value(key).toObject();
 	      
-	      qDebug() << "E-Signed - " << key << ": Comment, timeDate -- "
+	      qDebug() << "E-Signed - " << key << ": Comment, Decision, timeDate -- "
 		       << newObj["Comment"]   .toString()
+		       << newObj["Desicion"]  .toString()
 		       << newObj["timeDate"]  .toString();
 	    }
 	}
@@ -3590,7 +3591,7 @@ int US_eSignaturesGMP::list_all_gmp_reports_db( QList< QStringList >& gmpReports
 }
 
 
-//Check eSign status for GMP Report fior particular reviewer: SA
+//Check eSign status for GMP Report for particular reviewer: SA
 QString US_eSignaturesGMP::check_revs_esign_status_sa( QString u_passed, QMap <QString, QString > eSign_stats )
 {
   QString eSignStatusJson   = eSign_stats[ "eSignStatusJson" ];
@@ -3639,8 +3640,9 @@ QString US_eSignaturesGMP::check_revs_esign_status_sa( QString u_passed, QMap <Q
 	    {
 	      QJsonObject newObj = esigned_array[i].toObject().value(key).toObject();
 	      
-	      qDebug() << "E-Signed - " << key << ": Comment, timeDate -- "
+	      qDebug() << "E-Signed - " << key << ": Comment, Decision, timeDate -- "
 		       << newObj["Comment"]   .toString()
+		       << newObj["Decision"]  .toString()
 		       << newObj["timeDate"]  .toString();
 
 	      QString current_reviewer = key;
@@ -3664,7 +3666,7 @@ QString US_eSignaturesGMP::check_revs_esign_status_sa( QString u_passed, QMap <Q
 }
 
 
-//Check eSign status for GMP Report fior particular reviewer:
+//Check eSign status for GMP Report for particular reviewer:
 QLineEdit* US_eSignaturesGMP::check_eSign_status_for_gmpReport_auto( QString u_passed, QMap <QString, QString > eSign_stats )
 {
   QLineEdit* le_stat = us_lineedit( "", 0, true );
@@ -3690,7 +3692,7 @@ QLineEdit* US_eSignaturesGMP::check_eSign_status_for_gmpReport_auto( QString u_p
   QJsonArray to_esign_array  = to_esign .toArray();
   QJsonArray esigned_array   = esigned  .toArray();
 
-
+  /****
   //to_sign:
   if ( to_esign.isUndefined() || to_esign_array.size() == 0
        || !to_esign_array.size() || eSignStatusAll == "YES" )
@@ -3705,6 +3707,7 @@ QLineEdit* US_eSignaturesGMP::check_eSign_status_for_gmpReport_auto( QString u_p
 
       return le_stat;
     }
+  ***/
 
   //signed:
   if ( esigned.isUndefined() || esigned_array.size() == 0 || !esigned_array.size() )
@@ -3712,7 +3715,7 @@ QLineEdit* US_eSignaturesGMP::check_eSign_status_for_gmpReport_auto( QString u_p
       qDebug() << "check_eSign_Status(): Nothing has been e-Signed yet !!!";
 
       le_stat -> setText( QString("NOT SIGNED") );
-      le_stat -> setStyleSheet( "QLineEdit { background-color:  rgb(210, 0, 0); }"); //red
+      le_stat -> setStyleSheet( "QLineEdit { background-color:  rgb((255, 255, 0); }"); //yellow
       
       // new_palette->setColor(QPalette::Base, Qt::red);
       // new_palette->setColor(QPalette::Text, Qt::black);
@@ -3725,41 +3728,43 @@ QLineEdit* US_eSignaturesGMP::check_eSign_status_for_gmpReport_auto( QString u_p
       qDebug() << "check_eSign_status(): Some parties have e-Signed already !!!";
       //DEBUG
       QStringList eSignees_current;
+      QMap< QString, QString > eSignees_current_decisions;
       for (int i=0; i < esigned_array.size(); ++i )
 	{
 	  foreach(const QString& key, esigned_array[i].toObject().keys())
 	    {
 	      QJsonObject newObj = esigned_array[i].toObject().value(key).toObject();
 	      
-	      qDebug() << "E-Signed - " << key << ": Comment, timeDate -- "
+	      qDebug() << "E-Signed - " << key << ": Comment, Decision, timeDate -- "
 		       << newObj["Comment"]   .toString()
+		       << newObj["Decision"]  .toString()
 		       << newObj["timeDate"]  .toString();
 
 	      QString current_reviewer = key;
 	      QString current_reviewer_id = current_reviewer. section( ".", 0, 0 );
 
 	      eSignees_current << key;
-	      
+	      QString c_dec = newObj["Decision"]  .toString();
+	      c_dec = ( c_dec.isEmpty() ) ? QString("Approve") : c_dec;
+	      eSignees_current_decisions[ key ] = c_dec;
 	    }
 	}
       //END DEBUG:
       qDebug() << "check_eSign_status(): so far, e-signed by: " << eSignees_current;
       if ( eSignees_current.contains( u_passed ) )
 	{
-	  le_stat -> setText( QString("SIGNED") );
-	  le_stat -> setStyleSheet( "QLineEdit { background-color:  rgb(50, 205, 50); }"); //green
-	  // new_palette->setColor(QPalette::Base, Qt::darkGreen);
-	  // new_palette->setColor(QPalette::Text, Qt::black);
-	  // le_stat->setPalette(*new_palette);
+	  QString decsion_status = QString("SIGNED: ") + eSignees_current_decisions[ u_passed ];
+	  le_stat -> setText( decsion_status );
+	  if( decsion_status. contains("Approve") )
+	    le_stat -> setStyleSheet( "QLineEdit { background-color:  rgb(50, 205, 50); }"); //green
+	  else if ( decsion_status. contains("Reject") )
+	    le_stat -> setStyleSheet( "QLineEdit { background-color:  rgb(210, 0, 0); }"); //red
 	  return le_stat;
 	}
       else
 	{
 	  le_stat -> setText( QString("NOT SIGNED") );
-	  le_stat -> setStyleSheet( "QLineEdit { background-color:  rgb(210, 0, 0); }"); //red
-	  // new_palette->setColor(QPalette::Base, Qt::red);
-	  // new_palette->setColor(QPalette::Text, Qt::black);
-	  // le_stat->setPalette(*new_palette);
+	  le_stat -> setStyleSheet( "QLineEdit { background-color:  rgb((255, 255, 0); }"); //yellow
 	  return  le_stat;
 	}
     }
@@ -3812,10 +3817,8 @@ QString  US_eSignaturesGMP::check_eSign_status_for_gmpReport( void )
       qDebug() << "check_eSign_Status(): Nothing has been e-Signed yet !!!";
 
       le_eSign_status -> setText( "NOT STARTED" );
-      le_eSign_status -> setStyleSheet( "QLineEdit { background-color:  rgb(210, 0, 0); }"); //red
-      // new_palette->setColor(QPalette::Base,Qt::red);
-      // new_palette->setColor(QPalette::Text,Qt::black);
-      // le_eSign_status->setPalette(*new_palette);
+      //le_eSign_status -> setStyleSheet( "QLineEdit { background-color:  rgb(210, 0, 0); }"); //red
+      le_eSign_status -> setStyleSheet( "QLineEdit { background-color:  rgb(255, 255, 0); }"); //yellow
       pb_view_eSigns   -> setEnabled( true );
 
       return QString("NOT STARTED");
@@ -3831,8 +3834,9 @@ QString  US_eSignaturesGMP::check_eSign_status_for_gmpReport( void )
 	    {
 	      QJsonObject newObj = esigned_array[i].toObject().value(key).toObject();
 	      
-	      qDebug() << "E-Signed - " << key << ": Comment, timeDate -- "
+	      qDebug() << "E-Signed - " << key << ": Comment, Decision, timeDate -- "
 		       << newObj["Comment"]   .toString()
+		       << newObj["Decision"]  .toString()
 		       << newObj["timeDate"]  .toString();
 
 	      QString current_reviewer = key;
@@ -4036,8 +4040,9 @@ void US_eSignaturesGMP::esign_report( void )
 	    {
 	      QJsonObject newObj = esigned_array[i].toObject().value(key).toObject();
 	      
-	      qDebug() << "E-Signed - " << key << ": Comment, timeDate -- "
+	      qDebug() << "E-Signed - " << key << ": Comment, Decision, timeDate -- "
 		       << newObj["Comment"]   .toString()
+		       << newObj["Decision"]  .toString()
 		       << newObj["timeDate"]  .toString();
 
 	      QString current_reviewer = key;
@@ -4125,7 +4130,8 @@ void US_eSignaturesGMP::esign_report( void )
 	   << gmp_esigning_map.keys().isEmpty() 
 	   << gmp_esigning_map[ "User:" ]
 	   << gmp_esigning_map[ "Comment:" ]
-	   << gmp_esigning_map[ "Master Password:" ];
+	   << gmp_esigning_map[ "Master Password:" ]
+	   << gmp_esigning_map[ "Decision:" ];
 
   if ( gmp_esigning_map_size == 0 ||  gmp_esigning_map.keys().isEmpty() ) 
     return;
@@ -4156,7 +4162,7 @@ void US_eSignaturesGMP::esign_report( void )
   //Compose/Update eSignStatusJson && eSignStatusAll:
   QString eSignStatusAll_updated;
   QString eSignStatusJson_updated = compose_updated_eSign_Json( u_ID, u_fname, u_lname, to_esign_array,
-								esigned_array, gmp_esigning_map[ "Comment:" ], eSignStatusAll_updated );
+								esigned_array, gmp_esigning_map, eSignStatusAll_updated );
   
   qry.clear();
   qry << "update_gmp_review_record_by_esigner"
@@ -4404,18 +4410,21 @@ QMap< QString, QMap< QString, QString>>  US_eSignaturesGMP::json_to_qmap( QStrin
 	  QJsonObject newObj = esigned_array[i].toObject().value(key).toObject();
 
 	  QString comment  = newObj["Comment"]   .toString();
+	  QString decision = newObj["Desicion"]  .toString();
 	  QString timeDate = newObj["timeDate"]  .toString();
 	  QString role = get_role_by_name( key );
 	  
-	  qDebug() << "E-Signed - " << key << ": Role, Comment, timeDate -- "
+	  qDebug() << "E-Signed - " << key << ": Role, Comment, Decision, timeDate -- "
 		   << role
 		   << newObj["Comment"]   .toString()
+		   << newObj["Decision"]  .toString()
 		   << newObj["timeDate"]  .toString();
 
 	  ++r_counter;
 	  QString key1 = "(" + QString::number( r_counter ) + ") " + key;
 
 	  esigners_info[ key1 ][ "Role"     ] = role;
+	  esigners_info[ key1 ][ "Decision" ] = decision;
 	  esigners_info[ key1 ][ "Comment"  ] = comment;
 	  esigners_info[ key1 ][ "timeDate" ] = timeDate;
 	}
@@ -4548,6 +4557,7 @@ void US_eSignaturesGMP::paintPage(QPrinter& printer, int pageNumber, int pageCou
     {
       QString esigner  = esigner_list[i];
       QString role     = eSigners_info[ esigner ][ "Role" ];
+      QString decision = eSigners_info[ esigner ][ "Decision" ];
       QString comment  = eSigners_info[ esigner ][ "Comment" ];
       QString timeDate = eSigners_info[ esigner ][ "timeDate" ];
 
@@ -4635,8 +4645,11 @@ QString US_eSignaturesGMP::compose_updated_eSign_Json_sa( int u_ID, QString u_fn
 //Compose /Update eSignStatusJson:
 QString US_eSignaturesGMP::compose_updated_eSign_Json( int u_ID, QString u_fname, QString u_lname,
 						       QJsonArray to_esign_array,  QJsonArray esigned_array,
-						       QString comment_esignee, QString& eSignStatusAll_updated )
+						       QMap< QString, QString > gmp_esigning_map, QString& eSignStatusAll_updated )
 {
+  QString comment_esignee  = gmp_esigning_map[ "Comment:" ];
+  QString decision_esignee = gmp_esigning_map[ "Decision:" ];
+
   QString statusJson = "{";
 
   // "to_sign" section:
@@ -4681,7 +4694,10 @@ QString US_eSignaturesGMP::compose_updated_eSign_Json( int u_ID, QString u_fname
   //Comment for current e-Signee:
   current_esignee += "{\"Comment\":\"" + comment_esignee + "\",";
 
-  //TimeDate fro current e-signee:
+  //Decision (APPROVE | REJECT)
+  current_esignee += "\"Decision\":\"" + decision_esignee + "\","; 
+  
+  //TimeDate for current e-signee:
   QDateTime date = QDateTime::currentDateTimeUtc();
   QString timedate_esignee = date.toString("MM-dd-yyyy hh:mm:ss") + " (UTC)";
   current_esignee += "\"timeDate\":\"" + timedate_esignee + "\"}}";
@@ -4700,12 +4716,14 @@ QString US_eSignaturesGMP::compose_updated_eSign_Json( int u_ID, QString u_fname
 	    {
 	      QJsonObject newObj = esigned_array[i].toObject().value(key).toObject();
 	      
-	      qDebug() << "Updating E-Signed section - " << key << ": Comment, timeDate -- "
+	      qDebug() << "Updating E-Signed section - " << key << ": Comment, Desicion, timeDate -- "
 		       << newObj["Comment"]   .toString()
+		       << newObj["Decision"]  .toString()
 		       << newObj["timeDate"]  .toString();
 
 	      
 	      existing_esignees += "{\"" + key + "\":{\"Comment\":\"" + newObj["Comment"]  .toString() + "\",";
+	      existing_esignees +=                  "\"Decision\":\"" + newObj["Decision"] .toString() + "\",";
 	      existing_esignees +=                  "\"timeDate\":\"" + newObj["timeDate"] .toString() + "\"}},";
 	    }
 	}
@@ -4768,8 +4786,9 @@ QString US_eSignaturesGMP::write_pdf_eSignatures( QString filePath, QString eSig
 	    eSigner_role = "Approver";
 	    
 	  qDebug() << "write_pdf_eSign() -- " << key
-		   << ": Comment, timeDate, eSigner_role -- "
+		   << ": Comment, Decision, timeDate, eSigner_role -- "
 		   << newObj["Comment"]   .toString()
+		   << newObj["Decision"]  .toString()
 		   << newObj["timeDate"]  .toString()
 		   << eSigner_role;
 
@@ -4783,13 +4802,15 @@ QString US_eSignaturesGMP::write_pdf_eSignatures( QString filePath, QString eSig
 	  html_assembled += tr(
 			       "<table style=\"margin-left:30px\">"
 			       "<tr><td>Role:        </td> <td> %1 </td></tr>"
-			       "<tr><td>Comment:     </td> <td> %2 </td></tr>"
-			       "<tr><td>e-Signed at: </td> <td> %3 </td></tr>"
+			       "<tr><td>Status:      </td> <td> %2 </td></tr>"
+			       "<tr><td>Comment:     </td> <td> %3 </td></tr>"
+			       "<tr><td>e-Signed at: </td> <td> %4 </td></tr>"
 			       "</table>"
 			       )
 	    .arg( eSigner_role )                                      //1
-	    .arg( newObj["Comment"]   .toString() )                   //2
-	    .arg( newObj["timeDate"]  .toString() )                   //3
+	    .arg( newObj["Decision"]  .toString() )                   //2
+	    .arg( newObj["Comment"]   .toString() )                   //3
+	    .arg( newObj["timeDate"]  .toString() )                   //4
 	    ;
 	}
     }

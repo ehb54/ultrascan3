@@ -135,7 +135,7 @@ QMap < QString, QString >  US_Passwd::getPasswd_auditTrail( QString title, QStri
 	    hLayout->addWidget(radioB);
 	    fields_radio << radioB;
 	  }
-	form.addRow( hLayout);
+	form.addRow( "DECISION:", hLayout);
       }  
     // Add some standard buttons (Cancel/Ok) at the bottom of the dialog
     QDialogButtonBox buttonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel,
@@ -164,7 +164,7 @@ QMap < QString, QString >  US_Passwd::getPasswd_auditTrail( QString title, QStri
 	    if ( radioB->isChecked() )
 	      {
 		qDebug() << "RadioB checked-- " << radioB->objectName();
-		form_map[ "Decision" ] = radioB->objectName();
+		form_map[ "Decision:" ] = radioB->objectName();
 	      }
 	  }
       }
