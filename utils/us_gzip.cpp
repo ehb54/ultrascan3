@@ -72,7 +72,7 @@ using namespace std;
 
 #include "us_gzip.h"
 
-#ifdef (defined(_WIN32) || defined(_WIN64) || defined(Q_OS_WIN))
+#if (defined(_WIN32) || defined(_WIN64) || defined(Q_OS_WIN))
 #  define ssize_t long
 #  define bzero(p, size) (void)memset((p), 0, (size))
 #endif
