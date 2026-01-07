@@ -4321,7 +4321,7 @@ void US_eSignaturesGMP::esign_report( void )
   db.query( qry );
   /**********************************************************************************************/
   
-  //update esing_status GUI elements:
+  //update esign_status GUI elements:
   QString eSign_status = check_eSign_status_for_gmpReport();
   qDebug() << "Current eSigning Status -- " << eSign_status;
 
@@ -4340,14 +4340,12 @@ void US_eSignaturesGMP::esign_report( void )
       if ( lineedit_u_status != NULL )
 	{
 	  qDebug() << "YES, identified...";
-	  lineedit_u_status-> setText( "SIGNED" );
-	  lineedit_u_status-> setStyleSheet( "QLineEdit { background-color:  rgb(50, 205, 50); }"); //green
-	  
-	  //palette
-	  // QPalette *new_palette = new QPalette();
-	  // new_palette->setColor(QPalette::Base, Qt::darkGreen);
-	  // new_palette->setColor(QPalette::Text, Qt::black);
-	  // lineedit_u_status->setPalette(*new_palette);
+	  QString l_status = QString("SIGNED: ") + gmp_esigning_map[ "Decision:" ];
+	  lineedit_u_status-> setText( l_status );
+	  if( l_status.contains("Approve"))
+	    lineedit_u_status-> setStyleSheet( "QLineEdit { background-color:  rgb(50, 205, 50); }"); //green
+	  else if (l_status.contains("Reject"))
+	    lineedit_u_status -> setStyleSheet( "QLineEdit { background-color:  rgb(210, 0, 0); }"); //red
 	}
     }
   
