@@ -3716,11 +3716,6 @@ QLineEdit* US_eSignaturesGMP::check_eSign_status_for_gmpReport_auto( QString u_p
 
       le_stat -> setText( QString("NOT SIGNED") );
       le_stat -> setStyleSheet( "QLineEdit { background-color:  rgb(255, 255, 0); }"); //yellow
-      
-      // new_palette->setColor(QPalette::Base, Qt::red);
-      // new_palette->setColor(QPalette::Text, Qt::black);
-      // le_stat->setPalette(*new_palette);
-      
       return le_stat;
     }
   else
