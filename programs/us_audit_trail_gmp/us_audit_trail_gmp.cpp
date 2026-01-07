@@ -3102,7 +3102,7 @@ void US_auditTrailGMP::assemble_esigs( QMap<QString, QString> esigs_html )
 
   QString eStatus;
   if ( esigs_html[ "Status" ].contains("NOT SIGNED") ) 
-    eStatus = "<td style=\"color:yellow;\"><b><i>" + esigs_html[ "Status" ] + "</i></b></td>";
+    eStatus = "<td style=\"color:rgb(139, 128, 0);\"><b><i>" + esigs_html[ "Status" ] + "</i></b></td>";
   else
     {
       if ( esigs_html[ "Status" ].contains("Approve"))
