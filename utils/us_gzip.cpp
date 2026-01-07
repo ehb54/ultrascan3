@@ -36,6 +36,8 @@
 #   define fstat   _fstat
 #   define stat    _stat
 #   define utimbuf _utimbuf
+#   define unlink  _unlink
+#   define chmod   _chmod
 static inline int us_open( const char* path, int oflag )
 {
    int fd = -1;
@@ -70,7 +72,7 @@ using namespace std;
 
 #include "us_gzip.h"
 
-#ifdef WIN32
+#ifdef (defined(_WIN32) || defined(_WIN64) || defined(Q_OS_WIN))
 #  define ssize_t long
 #  define bzero(p, size) (void)memset((p), 0, (size))
 #endif
@@ -390,7 +392,7 @@ int US_Gzip::treat_file( const QString& iname, bool decompress )
     {
       close( ifd );
       close( ofd );
-      _unlink( oname.toLatin1().constData() );
+      unlink( oname.toLatin1().constData() );
       return inflate_error;
     }
 
@@ -410,7 +412,7 @@ int US_Gzip::treat_file( const QString& iname, bool decompress )
     {
       close( ifd );
       close( ofd );
-      _unlink( oname.toLatin1().constData() );
+      unlink( oname.toLatin1().constData() );
       return GZIP_CRCERROR;
     }
 
@@ -424,7 +426,7 @@ int US_Gzip::treat_file( const QString& iname, bool decompress )
     {
       close( ifd );
       close( ofd );
-      _unlink( oname.toLatin1().constData() );
+      unlink( oname.toLatin1().constData() );
       return GZIP_LENGTHERROR;
     }
   }
@@ -508,7 +510,7 @@ int US_Gzip::treat_file( const QString& iname, bool decompress )
          return GZIP_FILENAMEERROR;
 
       char f[256];
-      strcpy_s( f, iname.toLatin1().constData() );
+      qstrcpy( f, iname.toLatin1().constData() );
       char* p = base_name( f ); /* Don't save the directory part. */
       do { put_byte( *p ); } while ( *p++ );
                         
@@ -542,7 +544,7 @@ int US_Gzip::treat_file( const QString& iname, bool decompress )
   close( ofd );
 
   // Set the permissions 
-  _chmod( oname.toLatin1().constData(), ifstat.st_mode & 07777 );
+  chmod( oname.toLatin1().constData(), ifstat.st_mode & 07777 );
 
   int stat = GZIP_OK;
 #ifndef Q_OS_WIN
@@ -559,7 +561,7 @@ int US_Gzip::treat_file( const QString& iname, bool decompress )
   utime( oname.toLatin1().constData(), &timep );
 
   // Now delete the input file
-  _unlink( iname.toLatin1().constData() );
+  unlink( iname.toLatin1().constData() );
 
   return stat;
 }
