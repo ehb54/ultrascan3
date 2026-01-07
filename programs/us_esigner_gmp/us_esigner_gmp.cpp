@@ -4558,7 +4558,7 @@ void US_eSignaturesGMP::paintPage(QPrinter& printer, int pageNumber, int pageCou
       // 	+ "; Role: " + role + "; e-Signed on: " + timeDate;
       QString c_es = esigner.split(".")[1].trimmed()
 	//+ "; Comment: " + comment
-	+ "; Role: " + role + "; e-Signed on: " + timeDate;
+	+ "; Role: " + role + "; e-Signed (" + decision + ") on: " + timeDate;
       esigners_footer << c_es;
     }
   QString es_footer = esigners_footer.join("\n");
