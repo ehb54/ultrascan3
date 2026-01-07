@@ -4403,7 +4403,7 @@ QMap< QString, QMap< QString, QString>>  US_eSignaturesGMP::json_to_qmap( QStrin
 	  QJsonObject newObj = esigned_array[i].toObject().value(key).toObject();
 
 	  QString comment  = newObj["Comment"]   .toString();
-	  QString decision = newObj["Desicion"]  .toString();
+	  QString decision = newObj["Decision"]  .toString();
 	  QString timeDate = newObj["timeDate"]  .toString();
 	  QString role = get_role_by_name( key );
 	  
