@@ -4790,18 +4790,29 @@ QString US_eSignaturesGMP::write_pdf_eSignatures( QString filePath, QString eSig
 	  html_assembled += tr( "<h3 style=\"margin-left:10px\">%1. %2</h3>" )
 	    .arg( QString::number( eSigner_counter ) )
 	    .arg( eSigner );
+
+	  QString eStatus;
+	  if ( newObj["Decision"].toString().contains("NOT SIGNED") ) 
+	    eStatus = "<td style=\"color:rgb(139, 128, 0);\"><b><i>" + newObj["Decision"].toString() + "</i></b></td>";
+	  else
+	    {
+	      if ( newObj["Decision"].toString().contains("Approve"))
+		eStatus = "<td style=\"color:green;\"><b><i>" + newObj["Decision"].toString() + "</i></b></td>";
+	      else if ( newObj["Decision"].toString().contains("Reject") )
+		eStatus = "<td style=\"color:red;\"><b><i>" + newObj["Decision"].toString() + "</i></b></td>";
+	    }
 	  
 	  //details
 	  html_assembled += tr(
 			       "<table style=\"margin-left:30px\">"
 			       "<tr><td>Role:        </td> <td> %1 </td></tr>"
-			       "<tr><td>Status:      </td> <td> %2 </td></tr>"
+			       "<tr><td>Status:      </td>      %2      </tr>"
 			       "<tr><td>Comment:     </td> <td> %3 </td></tr>"
 			       "<tr><td>e-Signed at: </td> <td> %4 </td></tr>"
 			       "</table>"
 			       )
 	    .arg( eSigner_role )                                      //1
-	    .arg( newObj["Decision"]  .toString() )                   //2
+	    .arg( eStatus )                                           //2
 	    .arg( newObj["Comment"]   .toString() )                   //3
 	    .arg( newObj["timeDate"]  .toString() )                   //4
 	    ;
