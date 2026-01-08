@@ -723,24 +723,48 @@ void US_ComProjectMain::analysis_update_stopped( void  )
 
 void US_ComProjectMain::closeEvent( QCloseEvent* event )
 {
-    window_closed = true;
-
-    qDebug() << "Closing 1: ";
-    qDebug() << "data_location_disk: " <<  data_location_disk;
-
-    if ( !data_location_disk )
-      {
-	qDebug() << "initDialogue: true/false 1 : " << epanInit->initDialogueOpen ;
-	emit us_comproject_closed();
-	close_initDialogue();
-	qDebug() << "initDialogue: true/false 3 : " << epanInit->initDialogueOpen ;
-
-	qApp->processEvents();
-      }
-
-    qApp->processEvents();
-    
-    event->accept();
+  qDebug() << "Closing Event..";
+  //confirm
+  QMessageBox msgBox;
+  msgBox.setIcon(QMessageBox::Critical);
+  msgBox.setWindowTitle(tr("Closing Program:"));
+      
+  QString msg_text      = QString("Confirm Exit");
+  QString msg_text_info = QString("Are you sure you want to exit? \nAll unsaved data will be lost. \n\nProceed? ");
+  
+  msgBox.setText( msg_text );
+  msgBox.setInformativeText( msg_text_info );
+  
+  QPushButton *Accept_r   = msgBox.addButton(tr("Yes"), QMessageBox::YesRole);
+  QPushButton *Cancel_r   = msgBox.addButton(tr("No"),  QMessageBox::RejectRole);
+  
+  msgBox.exec();
+  
+  if (msgBox.clickedButton() == Cancel_r)
+    {
+      qDebug () << "CANCEL Closing...";
+      event->ignore();
+    }
+  else if (msgBox.clickedButton() == Accept_r)
+    {
+      qDebug() << "Closing 1: ";
+      qDebug() << "data_location_disk: " <<  data_location_disk;
+      
+      window_closed = true;
+      
+      if ( !data_location_disk )
+	{
+	  qDebug() << "initDialogue: true/false 1 : " << epanInit->initDialogueOpen ;
+	  emit us_comproject_closed();
+	  close_initDialogue();
+	  qDebug() << "initDialogue: true/false 3 : " << epanInit->initDialogueOpen ;
+	  
+	  qApp->processEvents();
+	}
+      
+      qApp->processEvents();
+      event->accept();
+    }
 }
 
 void US_ComProjectMain::to_autoflow_records( void )
