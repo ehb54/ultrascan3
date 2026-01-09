@@ -740,31 +740,32 @@ void US_ComProjectMain::closeEvent( QCloseEvent* event )
   
   msgBox.exec();
   
-  if (msgBox.clickedButton() == Cancel_r)
+  if ( msgBox.clickedButton() != Accept_r )
     {
       qDebug () << "CANCEL Closing...";
       event->ignore();
+
+      return;
     }
-  else if (msgBox.clickedButton() == Accept_r)
+
+  //Else, continue with closure
+  qDebug() << "Closing 1: ";
+  qDebug() << "data_location_disk: " <<  data_location_disk;
+  
+  window_closed = true;
+  
+  if ( !data_location_disk )
     {
-      qDebug() << "Closing 1: ";
-      qDebug() << "data_location_disk: " <<  data_location_disk;
-      
-      window_closed = true;
-      
-      if ( !data_location_disk )
-	{
-	  qDebug() << "initDialogue: true/false 1 : " << epanInit->initDialogueOpen ;
-	  emit us_comproject_closed();
-	  close_initDialogue();
-	  qDebug() << "initDialogue: true/false 3 : " << epanInit->initDialogueOpen ;
-	  
-	  qApp->processEvents();
-	}
+      qDebug() << "initDialogue: true/false 1 : " << epanInit->initDialogueOpen ;
+      emit us_comproject_closed();
+      close_initDialogue();
+      qDebug() << "initDialogue: true/false 3 : " << epanInit->initDialogueOpen ;
       
       qApp->processEvents();
-      event->accept();
     }
+  
+  qApp->processEvents();
+  event->accept();
 }
 
 void US_ComProjectMain::to_autoflow_records( void )
