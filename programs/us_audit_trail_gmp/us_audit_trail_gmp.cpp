@@ -2366,7 +2366,7 @@ void US_auditTrailGMP::display_reviewers_auto( int& row, QMap< QString, QString>
 	  QLineEdit* le_role = us_lineedit( u_role, 0, true );
 
 	  //TimeDate && Comment
-	  QString e_date, e_comment;
+	  QString e_date, e_decision, e_comment;
 	  for (int i=0; i < esigned_array.size(); ++i )
 	    {
 	      foreach(const QString& key, esigned_array[i].toObject().keys())
@@ -2376,10 +2376,12 @@ void US_auditTrailGMP::display_reviewers_auto( int& row, QMap< QString, QString>
 		      QJsonObject newObj = esigned_array[i].toObject().value(key).toObject();
 		      
 		      e_comment  = newObj["Comment"]   .toString();
+		      e_decision = newObj["Decision"]  .toString();
 		      e_date     = newObj["timeDate"]  .toString();
 		     		      
-		      qDebug() << "E-Signed - " << key << ": Comment, timeDate -- "
+		      qDebug() << "E-Signed - " << key << ": Comment, Decision, timeDate -- "
 			       << newObj["Comment"]   .toString()
+			       << newObj["Decision"]  .toString()
 			       << newObj["timeDate"]  .toString();
 		      
 		      break;
@@ -2451,7 +2453,7 @@ QLineEdit* US_auditTrailGMP::check_eSign_status_for_gmpReport_auto( QString u_pa
   QJsonArray to_esign_array  = to_esign .toArray();
   QJsonArray esigned_array   = esigned  .toArray();
 
-
+  /****
   //to_sign:
   if ( to_esign.isUndefined() || to_esign_array.size() == 0
        || !to_esign_array.size() || eSignStatusAll == "YES" )
@@ -2466,19 +2468,15 @@ QLineEdit* US_auditTrailGMP::check_eSign_status_for_gmpReport_auto( QString u_pa
 
       return le_stat;
     }
-
+  *****/
+    
   //signed:
   if ( esigned.isUndefined() || esigned_array.size() == 0 || !esigned_array.size() )
     {
       qDebug() << "check_eSign_Status(): Nothing has been e-Signed yet !!!";
 
       le_stat -> setText( QString("NOT SIGNED") );
-      le_stat -> setStyleSheet( "QLineEdit { background-color:  rgb(210, 0, 0); }"); //red
-      
-      // new_palette->setColor(QPalette::Base, Qt::red);
-      // new_palette->setColor(QPalette::Text, Qt::black);
-      // le_stat->setPalette(*new_palette);
-      
+      le_stat -> setStyleSheet( "QLineEdit { background-color:  rgb(255, 255, 0); }"); //yellow
       return le_stat;
     }
   else
@@ -2486,41 +2484,43 @@ QLineEdit* US_auditTrailGMP::check_eSign_status_for_gmpReport_auto( QString u_pa
       qDebug() << "check_eSign_status(): Some parties have e-Signed already !!!";
       //DEBUG
       QStringList eSignees_current;
+      QMap< QString, QString > eSignees_current_decisions;
       for (int i=0; i < esigned_array.size(); ++i )
 	{
 	  foreach(const QString& key, esigned_array[i].toObject().keys())
 	    {
 	      QJsonObject newObj = esigned_array[i].toObject().value(key).toObject();
-	      
-	      qDebug() << "E-Signed - " << key << ": Comment, timeDate -- "
+
+	      qDebug() << "E-Signed - " << key << ": Comment, Decision, timeDate -- "
 		       << newObj["Comment"]   .toString()
+		       << newObj["Decision"]  .toString()
 		       << newObj["timeDate"]  .toString();
 
 	      QString current_reviewer = key;
 	      QString current_reviewer_id = current_reviewer. section( ".", 0, 0 );
 
 	      eSignees_current << key;
-	      
+	      QString c_dec = newObj["Decision"]  .toString();
+	      c_dec = ( c_dec.isEmpty() ) ? QString("Approve") : c_dec;
+	      eSignees_current_decisions[ key ] = c_dec;
 	    }
 	}
       //END DEBUG:
       qDebug() << "check_eSign_status(): so far, e-signed by: " << eSignees_current;
       if ( eSignees_current.contains( u_passed ) )
 	{
-	  le_stat -> setText( QString("SIGNED") );
-	  le_stat -> setStyleSheet( "QLineEdit { background-color:  rgb(50, 205, 50); }"); //green
-	  // new_palette->setColor(QPalette::Base, Qt::darkGreen);
-	  // new_palette->setColor(QPalette::Text, Qt::black);
-	  // le_stat->setPalette(*new_palette);
+	  QString decsion_status = QString("SIGNED: ") + eSignees_current_decisions[ u_passed ];
+	  le_stat -> setText( decsion_status );
+	  if( decsion_status. contains("Approve") )
+	    le_stat -> setStyleSheet( "QLineEdit { background-color:  rgb(50, 205, 50); }"); //green
+	  else if ( decsion_status. contains("Reject") )
+	    le_stat -> setStyleSheet( "QLineEdit { background-color:  rgb(210, 0, 0); }"); //red
 	  return le_stat;
 	}
       else
 	{
 	  le_stat -> setText( QString("NOT SIGNED") );
-	  le_stat -> setStyleSheet( "QLineEdit { background-color:  rgb(210, 0, 0); }"); //red
-	  // new_palette->setColor(QPalette::Base, Qt::red);
-	  // new_palette->setColor(QPalette::Text, Qt::black);
-	  // le_stat->setPalette(*new_palette);
+	  le_stat -> setStyleSheet( "QLineEdit { background-color:  rgb(255, 255, 0); }"); //yellow
 	  return  le_stat;
 	}
     }
@@ -3101,10 +3101,15 @@ void US_auditTrailGMP::assemble_esigs( QMap<QString, QString> esigs_html )
     .arg( name_c );
 
   QString eStatus;
-  if ( esigs_html[ "Status" ].contains("NOT") ) 
-    eStatus = "<td style=\"color:red;\"><b><i>" + esigs_html[ "Status" ] + "</i></b></td>";
+  if ( esigs_html[ "Status" ].contains("NOT SIGNED") ) 
+    eStatus = "<td style=\"color:rgb(139, 128, 0);\"><b><i>" + esigs_html[ "Status" ] + "</i></b></td>";
   else
-    eStatus = "<td style=\"color:green;\"><b><i>" + esigs_html[ "Status" ] + "</i></b></td>";
+    {
+      if ( esigs_html[ "Status" ].contains("Approve"))
+	eStatus = "<td style=\"color:green;\"><b><i>" + esigs_html[ "Status" ] + "</i></b></td>";
+      else if ( esigs_html[ "Status" ].contains("Reject") )
+	eStatus = "<td style=\"color:red;\"><b><i>" + esigs_html[ "Status" ] + "</i></b></td>";
+    }
   
   html_assembled_esigs += tr(
 			     "<table style=\"margin-left:30px\">"
