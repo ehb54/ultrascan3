@@ -1107,7 +1107,7 @@ DbgLv(1) << "EGGe:ldPro: Disk-B: load_db" << load_db;
       // Get the protocol XML that matches the selected protocol name
       protoID               = US_ProtocolUtil::read_record( pname, &xmlstr, NULL, dbP );
 DbgLv(1) << "EGGe:ldPro:  ACCEPT   read_record return len(xml)" << xmlstr.length()
- << "protoID" << protoID;
+	 << "protoID" << protoID;
 
       le_protocol->setText( pname );
       mainw->currProto.protoID = protoID;
@@ -1170,7 +1170,37 @@ DbgLv(1) << "EGGe:ldPro:    cTempe" << mainw->currProto.temperature
    qDebug() << "In load_protocol: currProto->investigator 2 --  " <<  currProto->investigator;
    
    check_runname();
+
+   //Inform user on the protocol's framework -- if it differs from the program used
+   qDebug() << "Loaded protocol framework, and GMP | R&D program used? "
+	    << mainw->currProto.framework << ", " << mainw->automode << " | " << mainw->usmode;
+   
+   if ( mainw->automode && mainw->currProto.framework == QString("RD") )
+     {
+       QMessageBox::warning( this,
+			     tr( "Warning: you are loading an R&D protocol into the GMP module! "),
+			     tr( "The protocol may be modified upon loading, "),
+			     tr( "please recheck all parameters.") );
+
+       //Now, delete all but 1st speed in speedProfile
+       if ( mainw->currProto.rpSpeed.ssteps.size() > 1 )
+	 mainw->currProto.rpSpeed.ssteps.resize(1);
+
+       return;
+     }
+
+   if ( mainw->currProto.framework. isEmpty() )
+     {
+       QMessageBox::warning( this,
+			     tr( "You are loading a legacy protocol, and UltraScan cannot determine "),
+			     tr( "if it is an R&D or GMP protocol. If it is a GMP protocol, "),
+			     tr( "you can ignore this message, otherwise, "),
+			     tr( "please check all values to make sure they are correct before submitting the protocol.") );
+
+       return;
+     }
 }
+
 
 // Update protdata when protocol deleted in pdialog...
 void US_ExperGuiGeneral::update_protdata( void )
@@ -7161,6 +7191,14 @@ DbgLv(1) << "EGUp:svRP:   currProto updated  protoname" << currProto->protoname;
    // us_xml string has to be cleared each time Protocol is saved
    rpSubmt->us_xml.clear();
 
+   //Establish framework
+   qDebug() << "In saveRunProtocol(): GMP, R&D ? "
+	    << mainw->automode << ", " << mainw->usmode;
+   if ( mainw->automode )
+     currProto->framework = "GMP";
+   else if ( mainw->usmode )
+     currProto->framework = "RD";
+   
    QXmlStreamWriter xmlo( &rpSubmt->us_xml ); // Compose XML representation
    xmlo.setAutoFormatting( true );
    currProto->toXml( xmlo );

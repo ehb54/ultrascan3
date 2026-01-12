@@ -23,6 +23,8 @@ US_RunProtocol::US_RunProtocol()
 
    scanCount       = 0;
    scanCount_int   = 0;
+
+   framework       = QString("");
 }
 
 // RunProtocol Equality operator
@@ -41,6 +43,8 @@ qDebug() << "RP: EQ oho";
 qDebug() << "RP: EQ tem";
    if ( temeq_delay  != rp.temeq_delay  )  return false;
 qDebug() << "RP: EQ dly";
+
+   if ( framework  != rp.framework  )      return false;
 
    if ( rpRotor      != rp.rpRotor      )  return false;
 qDebug() << "RP: EQ ROT";
@@ -79,7 +83,9 @@ bool US_RunProtocol::toXml( QXmlStreamWriter& xmlo )
    xmlo.writeAttribute    ( "investigator", investigator );
    xmlo.writeAttribute    ( "temperature",  QString::number( temperature ) );
    xmlo.writeAttribute    ( "temeq_delay",  QString::number( temeq_delay ) );
-
+   
+   xmlo.writeAttribute    ( "framework",  framework );
+   
    rpRotor.toXml( xmlo );
    rpSpeed.toXml( xmlo );
    rpCells.toXml( xmlo );
@@ -120,7 +126,11 @@ bool US_RunProtocol::fromXml( QXmlStreamReader& xmli )
             temperature     = attr.value( "temperature"  ).toString().toDouble();
             QString s_ted   = attr.value( "temeq_delay"  ).toString();
             temeq_delay     = s_ted.isEmpty() ? temeq_delay : s_ted.toDouble();
-         }
+
+	    //r&d vs gmp
+	    if (  attr.hasAttribute ("framework") )
+	      framework = attr.value( "framework"  ).toString();
+	 }
 
          else if ( ename == "rotor" )      { rpRotor.fromXml( xmli ); }
          else if ( ename == "speed" )      { rpSpeed.fromXml( xmli ); }
