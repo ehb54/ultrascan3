@@ -1184,9 +1184,16 @@ DbgLv(1) << "EGGe:ldPro:    cTempe" << mainw->currProto.temperature
 				 "please recheck all parameters.") );
 
        //Now, delete all but 1st speed in speedProfile
+       qDebug() << "RD[BEFORE]mainw->currProto.rpSpeed.ssteps.size(), nsteps -- "
+		<< mainw->currProto.rpSpeed.ssteps.size() << mainw->currProto.rpSpeed.nstep;
        if ( mainw->currProto.rpSpeed.ssteps.size() > 1 )
-	 mainw->currProto.rpSpeed.ssteps.resize(1);
-
+	 {
+	   mainw->currProto.rpSpeed.ssteps.resize(1);
+	   mainw->currProto.rpSpeed.nstep = 1;
+	 }
+       qDebug() << "RD[AFTER]mainw->currProto.rpSpeed.ssteps.size(), nsteps -- "
+		<< mainw->currProto.rpSpeed.ssteps.size() << mainw->currProto.rpSpeed.nstep;
+       
        mainw->initPanels();
        return;
      }
@@ -1199,9 +1206,16 @@ DbgLv(1) << "EGGe:ldPro:    cTempe" << mainw->currProto.temperature
 				 "if it is an R&D or GMP protocol. If it is a GMP protocol, \n"
 				 "you can ignore this message, otherwise, \n"
 				 "please check all values to make sure they are correct before submitting the protocol.") );
-
+       
+       qDebug() << "LEGACY[BEFORE]mainw->currProto.rpSpeed.ssteps.size(), nsteps -- "
+		<< mainw->currProto.rpSpeed.ssteps.size() << mainw->currProto.rpSpeed.nstep;
        if ( mainw->currProto.rpSpeed.ssteps.size() > 1 )
-	 mainw->currProto.rpSpeed.ssteps.resize(1);
+	 {
+	   mainw->currProto.rpSpeed.ssteps.resize(1);
+	   mainw->currProto.rpSpeed.nstep = 1;
+	 }
+       qDebug() << "LEGACY[AFTER]mainw->currProto.rpSpeed.ssteps.size(), nsteps -- "
+		<< mainw->currProto.rpSpeed.ssteps.size() << mainw->currProto.rpSpeed.nstep;
 
        mainw->initPanels();
 
