@@ -1187,6 +1187,7 @@ DbgLv(1) << "EGGe:ldPro:    cTempe" << mainw->currProto.temperature
        if ( mainw->currProto.rpSpeed.ssteps.size() > 1 )
 	 mainw->currProto.rpSpeed.ssteps.resize(1);
 
+       mainw->initPanels();
        return;
      }
 
@@ -1198,6 +1199,11 @@ DbgLv(1) << "EGGe:ldPro:    cTempe" << mainw->currProto.temperature
 				 "if it is an R&D or GMP protocol. If it is a GMP protocol, \n"
 				 "you can ignore this message, otherwise, \n"
 				 "please check all values to make sure they are correct before submitting the protocol.") );
+
+       if ( mainw->currProto.rpSpeed.ssteps.size() > 1 )
+	 mainw->currProto.rpSpeed.ssteps.resize(1);
+
+       mainw->initPanels();
 
        return;
      }
