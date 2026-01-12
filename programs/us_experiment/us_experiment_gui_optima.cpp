@@ -1178,9 +1178,10 @@ DbgLv(1) << "EGGe:ldPro:    cTempe" << mainw->currProto.temperature
    if ( mainw->automode && !mainw->usmode && mainw->currProto.framework == QString("RD") )
      {
        QMessageBox::warning( this,
-			     tr( "Warning: you are loading an R&D protocol into the GMP module! "),
-			     tr( "The protocol may be modified upon loading, "),
-			     tr( "please recheck all parameters.") );
+			     tr( "Use of R&D Protocol in GMP Framework" ),
+			     tr( "Warning: you are loading an R&D protocol into the GMP module!\n\n "
+				 "The protocol may be modified upon loading, "
+				 "please recheck all parameters.") );
 
        //Now, delete all but 1st speed in speedProfile
        if ( mainw->currProto.rpSpeed.ssteps.size() > 1 )
@@ -1192,10 +1193,11 @@ DbgLv(1) << "EGGe:ldPro:    cTempe" << mainw->currProto.temperature
    if ( mainw->currProto.framework. isEmpty() )
      {
        QMessageBox::warning( this,
-			     tr( "You are loading a legacy protocol, and UltraScan cannot determine "),
-			     tr( "if it is an R&D or GMP protocol. If it is a GMP protocol, "),
-			     tr( "you can ignore this message, otherwise, "),
-			     tr( "please check all values to make sure they are correct before submitting the protocol.") );
+			     tr( "Legacy Protocol Loaded" ),
+			     tr( "You are loading a legacy protocol, and UltraScan cannot determine\n "
+				 "if it is an R&D or GMP protocol. If it is a GMP protocol, \n"
+				 "you can ignore this message, otherwise, \n"
+				 "please check all values to make sure they are correct before submitting the protocol.") );
 
        return;
      }
