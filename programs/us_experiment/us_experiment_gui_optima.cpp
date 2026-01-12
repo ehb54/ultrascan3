@@ -1175,7 +1175,7 @@ DbgLv(1) << "EGGe:ldPro:    cTempe" << mainw->currProto.temperature
    qDebug() << "Loaded protocol framework, and GMP | R&D program used? "
 	    << mainw->currProto.framework << ", " << mainw->automode << " | " << mainw->usmode;
    
-   if ( mainw->automode && mainw->currProto.framework == QString("RD") )
+   if ( mainw->automode && !mainw->usmode && mainw->currProto.framework == QString("RD") )
      {
        QMessageBox::warning( this,
 			     tr( "Warning: you are loading an R&D protocol into the GMP module! "),
@@ -7194,7 +7194,7 @@ DbgLv(1) << "EGUp:svRP:   currProto updated  protoname" << currProto->protoname;
    //Establish framework
    qDebug() << "In saveRunProtocol(): GMP, R&D ? "
 	    << mainw->automode << ", " << mainw->usmode;
-   if ( mainw->automode )
+   if ( mainw->automode && !mainw->usmode )
      currProto->framework = "GMP";
    else if ( mainw->usmode )
      currProto->framework = "RD";

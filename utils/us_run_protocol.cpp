@@ -130,6 +130,8 @@ bool US_RunProtocol::fromXml( QXmlStreamReader& xmli )
 	    //r&d vs gmp
 	    if (  attr.hasAttribute ("framework") )
 	      framework = attr.value( "framework"  ).toString();
+	    else
+	      framework = QString("");
 	 }
 
          else if ( ename == "rotor" )      { rpRotor.fromXml( xmli ); }
