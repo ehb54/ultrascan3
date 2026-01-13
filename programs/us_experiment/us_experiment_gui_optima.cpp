@@ -1202,10 +1202,11 @@ DbgLv(1) << "EGGe:ldPro:    cTempe" << mainw->currProto.temperature
      {
        QMessageBox::warning( this,
 			     tr( "Legacy Protocol Loaded" ),
-			     tr( "You are loading a legacy protocol, and UltraScan cannot determine\n "
-				 "if it is an R&D or GMP protocol. If it is a GMP protocol, \n"
-				 "you can ignore this message, otherwise, \n"
-				 "please check all values to make sure they are correct before submitting the protocol.") );
+			     tr( "You are loading a legacy protocol, and UltraScan cannot \n"
+				 "determine if it is an R&D or GMP protocol. \n\n"
+				 "If it is a GMP protocol, you can ignore this message,\n"
+				 "otherwise, please check all values to make sure they \n"
+				 "are correct before submitting the protocol.") );
        
        qDebug() << "LEGACY[BEFORE]mainw->currProto.rpSpeed.ssteps.size(), nsteps -- "
 		<< mainw->currProto.rpSpeed.ssteps.size() << mainw->currProto.rpSpeed.nstep;
