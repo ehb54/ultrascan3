@@ -118,7 +118,25 @@ QMap < QString, QString >  US_Passwd::getPasswd_auditTrail( QString title, QStri
 	
 	fields << lineEdit;
       }
-    
+    //for e-Sigs, add RadioButtons Approve | Reject
+    QList<QRadioButton*> fields_radio;
+    QStringList form_labels_radio = { "Approve", "Reject" }; 
+    if( title.contains("GMP e-Signing Form") )
+      {
+	QHBoxLayout *hLayout = new QHBoxLayout();
+	for(int i = 0; i < form_labels_radio.size(); ++i)
+	  {
+	    QRadioButton *radioB = new QRadioButton(form_labels_radio[i]);
+	    radioB->setObjectName( form_labels_radio[i] );
+
+	    if ( form_labels_radio[i] == QString("Approve") )
+	      radioB->setChecked(true);
+	    
+	    hLayout->addWidget(radioB);
+	    fields_radio << radioB;
+	  }
+	form.addRow( "DECISION:", hLayout);
+      }  
     // Add some standard buttons (Cancel/Ok) at the bottom of the dialog
     QDialogButtonBox buttonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel,
 			       Qt::Horizontal, &dialog);
@@ -139,6 +157,15 @@ QMap < QString, QString >  US_Passwd::getPasswd_auditTrail( QString title, QStri
 	    qDebug() << lineEdit->text();
 
 	    form_map[ lineEdit->objectName() ] = lineEdit->text();
+	  }
+	//for e-Sigs, capture Approve/Reject status to form_map
+	foreach(QRadioButton * radioB, fields_radio)
+	  {
+	    if ( radioB->isChecked() )
+	      {
+		qDebug() << "RadioB checked-- " << radioB->objectName();
+		form_map[ "Decision:" ] = radioB->objectName();
+	      }
 	  }
       }
     else 
