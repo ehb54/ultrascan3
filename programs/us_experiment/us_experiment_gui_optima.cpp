@@ -1180,7 +1180,7 @@ DbgLv(1) << "EGGe:ldPro:    cTempe" << mainw->currProto.temperature
        QString msg_rd_in_gmp = QString("WARNING: you are loading an R&D protocol into the GMP module!\n\n"
 				       "The protocol may be modified upon loading, "
 				       "please recheck all parameters.");
-       QString msg_rd_mult_speeds = QString("\n\nNOTE: The loaded protocol contains two speed profiles.\n"
+       QString msg_rd_mult_speeds = QString("\n\nNOTE: The loaded protocol contains more than one speed profiles.\n"
 					    "GMP protocols are incompatible with more than one speed\n"
 					    "only the first speed protocol will be saved.");
       
