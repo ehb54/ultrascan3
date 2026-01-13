@@ -1177,12 +1177,13 @@ DbgLv(1) << "EGGe:ldPro:    cTempe" << mainw->currProto.temperature
    
    if ( mainw->automode && !mainw->usmode && mainw->currProto.framework == QString("RD") )
      {
-       QMessageBox::warning( this,
-			     tr( "Use of R&D Protocol in GMP Framework" ),
-			     tr( "Warning: you are loading an R&D protocol into the GMP module!\n\n "
-				 "The protocol may be modified upon loading, "
-				 "please recheck all parameters.") );
-
+       QString msg_rd_in_gmp = QString("WARNING: you are loading an R&D protocol into the GMP module!\n\n "
+				       "The protocol may be modified upon loading, "
+				       "please recheck all parameters.");
+       QString msg_rd_mult_speeds = QString("\n\nNOTE: The loaded protocol contains two speed profiles. \n"
+					    "GMP protocols are incompatible with more than one speed\n "
+					    "only the first speed protocol will be saved.");
+      
        //Now, delete all but 1st speed in speedProfile
        qDebug() << "RD[BEFORE]mainw->currProto.rpSpeed.ssteps.size(), nsteps -- "
 		<< mainw->currProto.rpSpeed.ssteps.size() << mainw->currProto.rpSpeed.nstep;
@@ -1190,9 +1191,14 @@ DbgLv(1) << "EGGe:ldPro:    cTempe" << mainw->currProto.temperature
 	 {
 	   mainw->currProto.rpSpeed.ssteps.resize(1);
 	   mainw->currProto.rpSpeed.nstep = 1;
+	   msg_rd_in_gmp += msg_rd_mult_speeds;
 	 }
        qDebug() << "RD[AFTER]mainw->currProto.rpSpeed.ssteps.size(), nsteps -- "
 		<< mainw->currProto.rpSpeed.ssteps.size() << mainw->currProto.rpSpeed.nstep;
+
+       QMessageBox::warning( this,
+			     tr( "Use of R&D Protocol in GMP Framework" ),
+			     msg_rd_in_gmp);
        
        mainw->initPanels();
        return;
