@@ -10812,12 +10812,19 @@ void US_ReporterGMP::assemble_pdf( QProgressDialog * progress_msg )
   //TITLE: begin
   QString report_type;
   GMP_report ? report_type = "GMP" : report_type = "Non-GMP";
+  // QString html_title = tr(
+  //   "<h1 align=center>%1 Report for Run: <br><i>%2</i></h1>"
+  //   "<hr>"
+  // 			  )
+  //   .arg( report_type )                              //1
+  //   .arg( runName )                                  //2
+  //   ;
+
   QString html_title = tr(
-    "<h1 align=center>%1 Report for Run: <br><i>%2</i></h1>"
+    "<h1 align=center>Report for Run: <br><i>%1</i></h1>"
     "<hr>"
 			  )
-    .arg( report_type )                              //1
-    .arg( runName )                                  //2
+    .arg( runName )                                  //1
     ;
   //TITLE: end
 
