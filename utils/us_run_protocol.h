@@ -423,6 +423,8 @@ class US_UTIL_EXTERN US_RunProtocol
       int          scanCount;
       int          scanCount_int;
 
+      QString      framework;
+
    private:
 };
 #endif
