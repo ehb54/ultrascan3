@@ -725,7 +725,7 @@ void US_ComProjectMain::closeEvent( QCloseEvent* event )
 {
   qDebug() << "Closing Event..";
   //confirm
-  QMessageBox msgBox;
+  QMessageBox msgBox(this);
   msgBox.setIcon(QMessageBox::Critical);
   msgBox.setWindowTitle(tr("Closing Program:"));
       
@@ -749,18 +749,15 @@ void US_ComProjectMain::closeEvent( QCloseEvent* event )
     }
 
   //Else, continue with closure
-  qDebug() << "Closing 1: ";
   qDebug() << "data_location_disk: " <<  data_location_disk;
   
   window_closed = true;
   
   if ( !data_location_disk )
     {
-      qDebug() << "initDialogue: true/false 1 : " << epanInit->initDialogueOpen ;
       emit us_comproject_closed();
       close_initDialogue();
-      qDebug() << "initDialogue: true/false 3 : " << epanInit->initDialogueOpen ;
-      
+            
       qApp->processEvents();
     }
   
@@ -1456,7 +1453,7 @@ void US_InitDialogueGui::checkCertificates( void )
       else
 	inst_names = Optima_names.join("");
       
-      QMessageBox msgBox_sys_data;
+      QMessageBox msgBox_sys_data(this);
       msgBox_sys_data.setIcon(QMessageBox::Critical);
       msgBox_sys_data.setWindowTitle(tr("Optima System Data Server Connection Problem!"));
 
