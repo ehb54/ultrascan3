@@ -32,7 +32,7 @@ class US_UTIL_EXTERN US_Convert
 
       //! \brief Class to contain a list of scans to exclude from a data set
       //!        for a single c/c/w combination
-      class Excludes
+      class US_UTIL_EXTERN Excludes
       {
          public:
          QList< int >  excludes;   //!< list of scan indexes to exclude 
@@ -50,7 +50,7 @@ class US_UTIL_EXTERN US_Convert
 
       //! \brief  Class that contains information about relevant 
       //!         cell/channel/wavelength combinations
-      class TripleInfo
+      class US_UTIL_EXTERN TripleInfo
       {
          public:
          int         tripleID;        //!< The ID of this c/c/w combination (rawDataID)

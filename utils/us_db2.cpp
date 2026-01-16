@@ -540,14 +540,14 @@ bool US_DB2::next( void )
 #endif
 
 #ifdef NO_DB
-QVariant US_DB2::value( unsigned ){ return QVariant::Invalid; }
+QVariant US_DB2::value( unsigned ){ return QVariant(); }
 #else
 QVariant US_DB2::value( unsigned index )
 {
    if ( row && ( index < mysql_field_count( db ) ) )
-      return row[ index ];
+      return QVariant( QString( row[ index ] ) );
 
-   return QVariant::Invalid;
+   return QVariant();
 }
 #endif
 
@@ -820,19 +820,20 @@ unsigned long US_DB2::mysqlEscapeString( QByteArray& , QByteArray& , unsigned lo
 #else
 unsigned long US_DB2::mysqlEscapeString( QByteArray& to, QByteArray& from, unsigned long length )
 {
-   to.resize( length * 2 + 1 );     // Make room in advance for escaped characters
+   // Size the QByteArray properly
+   // worst case every character has to be escaped plus a trailing \0
+   to.resize( length * 2 + 1 );
 
-   const char* fromPtr = from.data();
+   const char* fromPtr = from.constData();
    char* toPtr         = to.data();
 
+   // to_length is the length of the QByteArray without the \0, but according to the docs
+   // the trailing \0 is still written for the mariadb-/mysql-connector
    ulong to_length = mysql_real_escape_string( db, toPtr, fromPtr, length );
 
-   // Add null termination to the string
-   toPtr += to_length;
-   strcpy( toPtr, "\0" );
-
    // Size string appropriately and return new length
-   to.resize( to_length + 1 );
+   // The trailing '\0' shouldn't be included in the size
+   to.resize( to_length );
    return to_length;
 }
 #endif

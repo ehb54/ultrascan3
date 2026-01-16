@@ -682,7 +682,7 @@ void US_ModelMetrics::sort_distro( QList< S_Solute >& listsols,
           else
           {   // duplicate:  sum c value
  DbgLv(2) << "DUP: sval svpr jj" << sol1.s << sol2.s << jj;
-             kdup    = max( kdup, ++jdup );
+             kdup    = qMax( kdup, ++jdup );
              qreal f = (qreal)( jdup + 1 );
              sol2.c += sol1.c;   // sum c value
              sol2.s  = ( sol1.s * jdup + sol2.s ) / f;  // average s,k

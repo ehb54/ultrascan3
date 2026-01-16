@@ -32,7 +32,7 @@ bool US_mwlRamp::import_data( QString& mwldir, QLineEdit* lestat,
     cellchans.clear();
 
     QString old_runID  = runID;
-    runID.replace( QRegExp( "![A-Za-z0-9_-]" ), "_" );
+    runID.replace( QRegularExpression( "![A-Za-z0-9_-]" ), "_" );
 
     if ( runID != old_runID )
     {

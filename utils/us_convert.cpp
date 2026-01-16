@@ -39,15 +39,16 @@ qDebug() << "CVT:rdLegD: dir" << dir << "f sz" << files.size();
    QStringList fileList;
    QStringList channels;
    QString f;
+   static QRegularExpression rx( "^[A-J]?\\d{4,6}\\.(?:RA|RI|IP|FI|WA|WI)\\d$" );
 
    foreach ( f, files )
    {
       // Look for a proper filename match:
       // Optional channel + 4 to 6 digits + dot + file type + cell number
 
-      QRegExp rx( "^[A-J]?\\d{4,6}\\.(?:RA|RI|IP|FI|WA|WI)\\d$" );
 
-      if ( rx.indexIn( f.toUpper() ) >= 0 )
+
+      if ( rx.match( f.toUpper() ).hasMatch() )
       {
          fileList << f;
 
@@ -58,11 +59,11 @@ qDebug() << "CVT:rdLegD: dir" << dir << "f sz" << files.size();
 
          // Test to see if the directory holds mixed types
          QString frunType = f.right( 3 ).left( 2 ).toUpper();
-qDebug() << "CVT:rdLegD:    f" << f << "frunType" << frunType << "c" << c;
+         qDebug() << "CVT:rdLegD:    f" << f << "frunType" << frunType << "c" << c;
          if ( !runTypes.contains( frunType ) )
          {
             runTypes << frunType;
-//qDebug() << "CVT: MIXED : runType frunType" << runType << frunType;
+            //qDebug() << "CVT: MIXED : runType frunType" << runType << frunType;
          }
       }
    }
@@ -102,25 +103,24 @@ void US_Convert::readLegacyData(
    if ( dir.right( 1 ) != "/" ) dir += "/"; // Ensure trailing /
 
    QStringList files = d.entryList( QDir::Files );
-qDebug() << "CVT:rdLegD: dir" << dir << "f sz" << files.size();
+   qDebug() << "CVT:rdLegD: dir" << dir << "f sz" << files.size();
 
    // Maybe dir had only directories ( i.e., not empty )
    if ( files.size() < 1 ) return;
 
-qDebug() << "CVT:rdLegD: runType" << runType;
+   qDebug() << "CVT:rdLegD: runType" << runType;
    QStringList fileList;
    QStringList channels;
    QString f;
 
-
+   static QRegularExpression rx( "^[A-J]?\\d{4,6}\\.(?:RA|RI|IP|FI|WA|WI)\\d$" );
    foreach ( f, files )
    {
       // Look for a proper filename match:
       // Optional channel + 4 to 6 digits + dot + file type + cell number
 
-      QRegExp rx( "^[A-J]?\\d{4,6}\\.(?:RA|RI|IP|FI|WA|WI)\\d$" );
 
-      if ( rx.indexIn( f.toUpper() ) >= 0 )
+      if ( rx.match( f.toUpper() ).hasMatch() )
       {
          QString frunType = f.right( 3 ).left( 2 ).toUpper();
          if ( frunType != runType )
@@ -327,9 +327,8 @@ int US_Convert::saveToDisk(
       }
 
       // Same with solutionGUID
-      QRegExp rx( "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" );
       if ( ( triples[ i ].solution.saveStatus == US_Solution::NOT_SAVED  ) ||
-           ( ! rx.exactMatch( triples[ i ].solution.solutionGUID )       ) )
+           ( ! US_Util::UUID_REGEX.match( triples[ i ].solution.solutionGUID ).hasMatch()       ) )
       {
          qDebug() << "It is not saving";
          triples[ i ].solution.solutionGUID = "";

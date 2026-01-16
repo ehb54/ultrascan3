@@ -1,6 +1,4 @@
 //! \file us_stiffbase.cpp
-
-#include <QtCore>
 #include <math.h>
 #include "us_stiffbase.h"
 

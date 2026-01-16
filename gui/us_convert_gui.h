@@ -337,8 +337,8 @@ class US_GUI_EXTERN US_ConvertGui : public US_Widgets
       int  findTripleIndex ( void );
       void focus           ( int, int );
       void init_excludes   ( void );
-//      void start_reference  ( const QwtDoublePoint& );
-      void process_reference( const QwtDoublePoint& );
+//      void start_reference  ( const QPointF& );
+      void process_reference( const QPointF& );
   //void process_reference_auto( const double, const double );
   void process_reference_auto( const double );
   void PseudoCalcAvg   ( void );
@@ -437,7 +437,7 @@ class US_GUI_EXTERN US_ConvertGui : public US_Widgets
       void exclude_scans     ( void );
       void include           ( void );
       void define_subsets    ( void );
-      void cClick            ( const QwtDoublePoint& );
+      void cClick            ( const QPointF& );
       void process_subsets   ( void );
       void define_reference  ( void );
 

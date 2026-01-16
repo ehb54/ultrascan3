@@ -23,7 +23,7 @@ foreach(img IN LISTS US3_GUI_IMAGES)
     endif()
 endforeach()
 
-set(US3_GUI_QRC "${CMAKE_BINARY_DIR}/us3_gui_images_auto.qrc")
+set(US3_GUI_QRC "${CMAKE_BINARY_DIR}/us3_gui_images.qrc")
 file(WRITE  "${US3_GUI_QRC}" "<RCC>\n  <qresource prefix=\"/images\">\n")
 foreach(img IN LISTS US3_GUI_IMAGES)
     # rel will be "foo.png", "icons/bar.svg", etc., relative to gui/images
@@ -33,7 +33,8 @@ foreach(img IN LISTS US3_GUI_IMAGES)
 endforeach()
 file(APPEND "${US3_GUI_QRC}" "  </qresource>\n</RCC>\n")
 
-qt5_add_resources(US3_GUI_RES "${US3_GUI_QRC}")
+
+qt_add_resources(US3_GUI_RES "${US3_GUI_QRC}")
 
 # ============================================================================
 # COMMON CONFIGURATION FUNCTION
@@ -48,7 +49,9 @@ function(configure_us_gui_target target_name is_static)
     # Platform-specific sources and linking
     if(WIN32)
         target_link_libraries(${target_name} PRIVATE user32)
-        target_compile_definitions(${target_name} PUBLIC US_MAKE_GUI_DLL QWT_DLL QT_DLL)
+        if(NOT ${is_static})
+            target_compile_definitions(${target_name} PRIVATE US_MAKE_DLL US_MAKE_GUI_DLL QWT_DLL QT_DLL)
+        endif()
     elseif(APPLE)
         target_link_libraries(${target_name} PRIVATE "-framework Cocoa")
     elseif(UNIX) # Linux
@@ -90,15 +93,18 @@ function(configure_us_gui_target target_name is_static)
         target_link_libraries(${target_name} PUBLIC UltraScan3::Utils)
     endif()
 
-    # Qt5 dependencies
+    # Qt dependencies
     target_link_libraries(${target_name}
             PUBLIC
-            Qt5::Widgets
-            Qt5::Gui
-            Qt5::Svg
-            Qt5::OpenGL
-            Qt5::PrintSupport
+            Qt::Widgets
+            Qt::Gui
+            Qt::Svg
+            Qt::OpenGL
+            Qt::PrintSupport
             )
+    if(USE_QT6)
+        target_link_libraries(us_gui PUBLIC Qt::OpenGLWidgets)
+    endif()
 
     # Plotting libraries - link AFTER Qt to avoid symbol conflicts
     target_link_libraries(${target_name}
@@ -139,6 +145,15 @@ function(configure_us_gui_target target_name is_static)
 
     # OpenGL
     target_link_libraries(${target_name} PUBLIC OpenGL::GL)
+
+    # GLU (must come AFTER qwtplot3d on MinGW because of link order)
+    if(WIN32)
+        if(TARGET OpenGL::GLU)
+            target_link_libraries(${target_name} PRIVATE OpenGL::GLU)
+        else()
+            target_link_libraries(${target_name} PRIVATE glu32)
+        endif()
+    endif()
 
     # Additional platform-specific libraries
     if(UNIX AND NOT APPLE)

@@ -45,7 +45,6 @@
 
 #include <time.h>
 
-#include <vector>
 using namespace std;
 
 US_Tar::US_Tar()

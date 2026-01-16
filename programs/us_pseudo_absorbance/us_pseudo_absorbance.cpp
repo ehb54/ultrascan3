@@ -50,7 +50,7 @@ US_PseudoAbsorbance::US_PseudoAbsorbance() : US_Widgets()
     program_state = CONVERT;
     turn_on(pb_addRef, false);
     turn_on(pb_cnvtSc, true);
-    main_lyt->setMargin(1);
+    main_lyt->setContentsMargins( 1, 1, 1, 1 );
     main_lyt->setSpacing(2);
 //    main_lyt->setSizeConstraint(QLayout::SetMinimumSize);
     this->setLayout(main_lyt);

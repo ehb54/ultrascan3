@@ -26,6 +26,8 @@ endif()
 # =============================================================================
 # Extract version before project() call
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/admin/cmake")
+list(APPEND VCPKG_OVERLAY_TRIPLETS "${CMAKE_CURRENT_SOURCE_DIR}/admin/cmake/triplets")
+list(APPEND VCPKG_OVERLAY_PORTS "${CMAKE_CURRENT_SOURCE_DIR}/buildsys/vcpkg/overlay-ports")
 include(UsDefinesParser)
 parse_header("${CMAKE_CURRENT_SOURCE_DIR}/utils/us_defines.h")
 
@@ -77,7 +79,11 @@ endif()
 # =============================================================================
 # CMAKE CONFIGURATION
 # =============================================================================
-set(CMAKE_CXX_STANDARD 14)
+if(USE_QT6)
+    set(CMAKE_CXX_STANDARD 17)
+else()
+    set(CMAKE_CXX_STANDARD 14)
+endif()
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(BUILD_SHARED_LIBS ON)
@@ -113,11 +119,17 @@ endif()
 
 # Compiler flags based on qmake configuration
 if(CMAKE_BUILD_TYPE STREQUAL "Release")
-    set(CMAKE_CXX_FLAGS_RELEASE "-O3")
-    set(CMAKE_C_FLAGS_RELEASE "-O3")
+    if(MSVC)
+        add_compile_options(/O2 /Ob2 /DNDEBUG)
+    else()
+        add_compile_options(-O3 -DNDEBUG)
+    endif()
 elseif(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    set(CMAKE_CXX_FLAGS_DEBUG "-g -O0")
-    set(CMAKE_C_FLAGS_DEBUG "-g -O0")
+    if(MSVC)
+        add_compile_options(/Zi /Od /DDEBUG)
+    else()
+        add_compile_options(-g -O0 -DDEBUG)
+    endif()
 endif()
 
 # Platform-specific compiler flags
@@ -139,6 +151,8 @@ if(UNIX AND NOT APPLE)
             message(STATUS "LTO not supported: ${IPO_ERROR}")
         endif()
     endif()
+elseif(MSVC)
+    add_compile_options(/wd4251 /wd4275 /wd4996 /wd4267 /wd4305 /wd4309)
 endif()
 
 # Enable Qt's MOC, RCC, and UIC
@@ -162,6 +176,7 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/admin/cmake")
 # =============================================================================
 option(US3_NO_DB "Build without database support (for supercomputer backends)" OFF)
 option(US3_BUILD_PROGRAMS "Build application programs" ON)
+option(USE_QT6 "Use Qt6 instead of Qt5" OFF)
 
 # High-level profile to make builds scriptable:
 #   APP  = desktop/user build (GUI + programs + DB)
@@ -172,6 +187,7 @@ set_property(CACHE US3_PROFILE PROPERTY STRINGS APP TEST HPC)
 
 # Lower-level knob used by gui/programs to decide static vs shared for US3 libs
 option(US3_PREFER_STATIC "Prefer UltraScan3 static libraries when available" OFF)
+option(BUILD_TESTING "Build Testing" OFF)
 
 # Apply profile -> concrete options
 if(US3_PROFILE STREQUAL "APP")
@@ -196,17 +212,20 @@ endif()
 
 # Configuration-based definitions
 if(US3_NO_DB)
-    add_definitions(-DNO_DB)
+    add_compile_definitions(NO_DB)
 endif()
 
 # Platform-specific definitions
 if(UNIX AND NOT APPLE)
-    add_definitions(-DLINUX -DPLATFORM="intel" -DTITLE="Intel")
+    add_compile_definitions(LINUX PLATFORM="intel" TITLE="Intel")
 elseif(WIN32)
-    add_definitions(-DUS_MAKE_DLL -D__LCC__ -DPLATFORM="intel" -DTITLE="Intel")
-    add_definitions(-DQT_SHAREDMEMORY -DQT_SYSTEMSEMAPHORE -DWIN32)
+    add_compile_definitions(__LCC__ PLATFORM="intel" TITLE="Intel")
+    add_compile_definitions(QT_SHAREDMEMORY QT_SYSTEMSEMAPHORE WIN32)
+    if(NOT US3_PREFER_STATIC)
+        add_compile_definitions(US_MAKE_DLL)
+    endif()
 elseif(APPLE)
-    add_definitions(-DMAC -DOSX -DPLATFORM="mac")
+    add_compile_definitions(MAC OSX PLATFORM="mac")
 endif()
 
 # Platform configuratin
@@ -222,48 +241,97 @@ if(UNIX AND NOT APPLE)
 endif()
 
 # Find Qt5
-find_package(Qt5 REQUIRED COMPONENTS
-        Core
-        Widgets
-        Gui
-        Network
-        Sql
-        Xml
-        Svg
-        OpenGL
-        PrintSupport
-        DataVisualization
-        )
+if(USE_QT6)
+    find_package(Qt6 REQUIRED COMPONENTS
+            Core
+            Widgets
+            Gui
+            Network
+            Sql
+            Xml
+            Svg
+            OpenGL
+            PrintSupport
+            DataVisualization
+            OpenGLWidgets
+            )
+    set(QT_VERSION_MAJOR 6)
+    set(QT_VERSION_BASE "Qt6")
+    set(QT_VERSION_BASE_LOWER "qt6")
+else()
+    find_package(Qt5 REQUIRED COMPONENTS
+            Core
+            Widgets
+            Gui
+            Network
+            Sql
+            Xml
+            Svg
+            OpenGL
+            PrintSupport
+            DataVisualization
+    )
+    set(QT_VERSION_MAJOR 5)
+    set(QT_VERSION_BASE "Qt5")
+    set(QT_VERSION_BASE_LOWER "qt5")
+endif()
+
+if(NOT TARGET Qt::Core)
+    if(USE_QT6)
+        add_library(Qt::Core ALIAS Qt6::Core)
+        add_library(Qt::Widgets ALIAS Qt6::Widgets)
+        add_library(Qt::OpenGL ALIAS Qt6::OpenGL)
+        add_library(Qt::Gui ALIAS Qt6::Gui)
+        add_library(Qt::Network ALIAS Qt6::Network)
+        add_library(Qt::Xml ALIAS Qt6::Xml)
+        add_library(Qt::Svg ALIAS Qt6::Svg)
+        add_library(Qt::Sql ALIAS Qt6::Sql)
+        add_library(Qt::PrintSupport ALIAS Qt6::PrintSupport)
+        add_library(Qt::DataVisualization ALIAS Qt6::DataVisualization)
+        add_library(Qt::OpenGLWidgets ALIAS Qt6::OpenGLWidgets)
+    else()
+        add_library(Qt::Core ALIAS Qt5::Core)
+        add_library(Qt::Widgets ALIAS Qt5::Widgets)
+        add_library(Qt::OpenGL ALIAS Qt5::OpenGL)
+        add_library(Qt::Gui ALIAS Qt5::Gui)
+        add_library(Qt::Network ALIAS Qt5::Network)
+        add_library(Qt::Xml ALIAS Qt5::Xml)
+        add_library(Qt::Svg ALIAS Qt5::Svg)
+        add_library(Qt::Sql ALIAS Qt5::Sql)
+        add_library(Qt::PrintSupport ALIAS Qt5::PrintSupport)
+        add_library(Qt::DataVisualization ALIAS Qt5::DataVisualization)
+    endif()
+endif()
 
 # ============================================================================
 # Qt Dynamic Linking Configuration - ALL PLATFORMS
 # ============================================================================
 
 # Verify Qt is not static (with proper error handling)
-if(TARGET Qt5::Core)
-    get_target_property(QT_CORE_TYPE Qt5::Core TYPE)
-    get_target_property(QT_CORE_LOCATION Qt5::Core LOCATION)
+if(TARGET Qt::Core)
+    get_target_property(QT_CORE_TYPE Qt::Core TYPE)
+    get_target_property(QT_CORE_LOCATION Qt::Core LOCATION)
 
-    message(STATUS "Qt5::Core type: ${QT_CORE_TYPE}")
-    message(STATUS "Qt5::Core location: ${QT_CORE_LOCATION}")
+    message(STATUS "Qt::Core type: ${QT_CORE_TYPE}")
+    message(STATUS "Qt::Core location: ${QT_CORE_LOCATION}")
 
     if(QT_CORE_TYPE STREQUAL "STATIC_LIBRARY")
-        message(FATAL_ERROR "Qt5 must be built as shared libraries")
+        message(FATAL_ERROR "Qt must be built as shared libraries")
     elseif(QT_CORE_TYPE MATCHES "SHARED|MODULE|INTERFACE")
-        message(STATUS "Qt5 is using dynamic/shared libraries - OK")
+        message(STATUS "Qt is using dynamic/shared libraries - OK")
     else()
         # For UNKNOWN or IMPORTED types, check the actual file
         if(QT_CORE_LOCATION)
             if(QT_CORE_LOCATION MATCHES "\\.(dylib|so|dll)$")
-                message(STATUS "Qt5 appears to be dynamic (based on file extension) - OK")
+                message(STATUS "Qt appears to be dynamic (based on file extension) - OK")
             else()
-                message(WARNING "Qt5::Core type is ${QT_CORE_TYPE}, location: ${QT_CORE_LOCATION}")
+                message(WARNING "Qt::Core type is ${QT_CORE_TYPE}, location: ${QT_CORE_LOCATION}")
                 message(WARNING "Cannot definitively determine if Qt is static or dynamic - proceeding anyway")
             endif()
         endif()
     endif()
 else()
-    message(WARNING "Qt5::Core target not found - skipping static/dynamic check")
+    message(WARNING "Qt::Core target not found - skipping static/dynamic check")
 endif()
 
 add_definitions(-DQT_SHARED)
@@ -275,9 +343,9 @@ if(APPLE)
 
     # Ensure all Qt modules have proper linking
     foreach(QT_MODULE Core Widgets Gui Network Sql Xml Svg OpenGL PrintSupport DataVisualization)
-        if(TARGET Qt5::${QT_MODULE})
-            get_target_property(QT_MOD_TYPE Qt5::${QT_MODULE} TYPE)
-            message(STATUS "  Qt5::${QT_MODULE} type: ${QT_MOD_TYPE}")
+        if(TARGET Qt::${QT_MODULE})
+            get_target_property(QT_MOD_TYPE Qt::${QT_MODULE} TYPE)
+            message(STATUS "  Qt::${QT_MODULE} type: ${QT_MOD_TYPE}")
         endif()
     endforeach()
 
@@ -354,7 +422,7 @@ add_custom_target(us3_validate_qrc ALL
 add_library(us3_resources STATIC "${US3_QRC_XML}")
 set_target_properties(us3_resources PROPERTIES AUTOMOC OFF)
 add_dependencies(us3_resources us3_validate_qrc)
-target_link_libraries(us3_resources PRIVATE Qt5::Core Qt5::Gui)
+target_link_libraries(us3_resources PRIVATE Qt::Core Qt::Gui)
 add_library(UltraScan3::Resources ALIAS us3_resources)
 
 # Create symbolic link from source etc to build etc
@@ -383,7 +451,17 @@ endforeach()
 # ============================================================================
 
 if(BUILD_TESTING)
-    find_package(Qt5 REQUIRED COMPONENTS Test)
+    if(USE_QT6)
+        find_package(Qt6 REQUIRED COMPONENTS Test)
+        if(NOT TARGET Qt::Test)
+            add_library(Qt::Test ALIAS Qt6::Test)
+        endif()
+    else()
+        find_package(Qt5 REQUIRED COMPONENTS Test)
+        if(NOT TARGET Qt::Test)
+            add_library(Qt::Test ALIAS Qt5::Test)
+        endif()
+    endif()
 endif()
 
 # Find OpenGL
@@ -404,22 +482,36 @@ if(unofficial-qwt_FOUND)
     if(NOT TARGET Qwt::Qwt)
         add_library(Qwt::Qwt ALIAS unofficial::qwt::qwt)
     endif()
+    set(QWT_VERSION ${unofficial-qwt_VERSION})
 else()
     message(STATUS "Searching for system Qwt...")
     find_package(PkgConfig QUIET)
     if(PkgConfig_FOUND)
-        pkg_check_modules(QWT QUIET Qt5Qwt6)
-        if(NOT QWT_FOUND)
-            pkg_check_modules(QWT QUIET qwt-qt5)
+        if(USE_QT6)
+            pkg_check_modules(QWT QUIET Qt6Qwt6)
+            if(NOT QWT_FOUND)
+                pkg_check_modules(QWT QUIET qwt-qt6)
+            endif()
+        else()
+            pkg_check_modules(QWT QUIET Qt5Qwt6)
+            if(NOT QWT_FOUND)
+                pkg_check_modules(QWT QUIET qwt-qt5)
+            endif()
         endif()
     endif()
 
     if(NOT QWT_FOUND)
-        find_path(QWT_INCLUDE_DIR NAMES qwt.h
-                PATHS /usr/include/qwt /usr/include/qt5/qwt /usr/local/include/qwt)
-        find_library(QWT_LIBRARY NAMES qwt-qt5 qwt qwt6-qt5
-                PATHS /usr/lib /usr/lib/x86_64-linux-gnu /usr/local/lib)
-
+        if(USE_QT6)
+            find_path(QWT_INCLUDE_DIR NAMES qwt.h
+                    PATHS /usr/include/qwt /usr/include/qt6/qwt /usr/local/include/qwt)
+            find_library(QWT_LIBRARY NAMES qwt-qt6 qwt qwt6-qt6
+                    PATHS /usr/lib /usr/lib/x86_64-linux-gnu /usr/local/lib)
+        else()
+            find_path(QWT_INCLUDE_DIR NAMES qwt.h
+                    PATHS /usr/include/qwt /usr/include/qt5/qwt /usr/local/include/qwt)
+            find_library(QWT_LIBRARY NAMES qwt-qt5 qwt qwt6-qt5
+                    PATHS /usr/lib /usr/lib/x86_64-linux-gnu /usr/local/lib)
+        endif()
         if(QWT_INCLUDE_DIR AND QWT_LIBRARY)
             set(QWT_FOUND TRUE)
             message(STATUS "Found system Qwt: ${QWT_LIBRARY}")
@@ -439,7 +531,6 @@ else()
         else()
             set_target_properties(unofficial_qwt_qwt PROPERTIES
                     INTERFACE_INCLUDE_DIRECTORIES "${QWT_INCLUDE_DIR}"
-                    INTERFACE_LINK_DIRECTORIES "${QWT_LIBRARY_DIR}"
                     INTERFACE_LINK_LIBRARIES "${QWT_LIBRARY}")
         endif()
 
@@ -507,13 +598,15 @@ if(NOT US3_NO_DB)
         if(NOT TARGET MySQL::Client)
             add_library(MySQL::Client ALIAS unofficial::libmariadb)
         endif()
+        set(MYSQL_MARIADB_VERSION ${unofficial-libmariadb_VERSION})
+        set(MYSQL_MARIADB_MODULE "libmariadb")
     else()
         message(STATUS "Searching for system MySQL/MariaDB...")
         find_package(PkgConfig QUIET)
         if(PkgConfig_FOUND)
             pkg_check_modules(MYSQL QUIET mysqlclient)
             if(NOT MYSQL_FOUND)
-                pkg_check_modules(MYSQL QUIET mariadb)
+                pkg_check_modules(MYSQL QUIET mariadb libmariadb)
             endif()
         endif()
 
@@ -529,6 +622,8 @@ if(NOT US3_NO_DB)
             endif()
         else()
             message(STATUS "Found system MySQL via pkg-config")
+            set(MYSQL_MARIADB_VERSION ${MYSQL_VERSION})
+            set(MYSQL_MARIADB_MODULE ${MYSQL_MODULE_NAME})
         endif()
 
         if(MYSQL_FOUND)
@@ -696,11 +791,15 @@ message(STATUS "  Build programs: ${US3_BUILD_PROGRAMS}")
 message(STATUS "  Prefer static US3 libs: ${US3_PREFER_STATIC}")
 message(STATUS "")
 message(STATUS "Dependencies:")
-message(STATUS "  Qt5 version: ${Qt5_VERSION}")
+if(USE_QT6)
+    message(STATUS "  Qt version: ${Qt6_VERSION}")
+else ()
+    message(STATUS "  Qt version: ${Qt5_VERSION}")
+endif()
 message(STATUS "  Qwt version: ${QWT_VERSION}")
 if(NOT US3_NO_DB)
-    message(STATUS "  MySQL found: ${MYSQL_FOUND}")
+    message(STATUS "  MySQL found: ${MYSQL_MARIADB_VERSION} ${MYSQL_MARIADB_MODULE}")
 endif()
-message(STATUS "  LibArchive found: ${LibArchive_VERSION}")
-message(STATUS "  OpenSSL  found: ${OPENSSL_FOUND} (${OPENSSL_VERSION})")
+message(STATUS "  LibArchive version: ${LibArchiv_VERSION}")
+message(STATUS "  OpenSSL  version: ${OPENSSL_VERSION}")
 message(STATUS "")

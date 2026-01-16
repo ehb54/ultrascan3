@@ -1,7 +1,4 @@
 //! \file us_report_gmp.cpp
-
-#include <QtCore>
-
 #include "us_settings.h"
 #include "us_db2.h"
 #include "us_util.h"

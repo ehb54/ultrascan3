@@ -54,7 +54,7 @@ class US_RemoveRI : public US_Widgets
         void slt_rm_fit(double);
         void slt_save(void);
         void slt_pick_point(void);
-        void slt_mouse(const QwtDoublePoint&);
+        void slt_mouse(const QPointF&);
         void slt_polyfit(void);
 
     private:

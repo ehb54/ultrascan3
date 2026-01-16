@@ -445,10 +445,9 @@ void US_RampGui::importMWL( void )
       int status = QMessageBox::information( this,
          tr( "Information" ),
          tr( "The runID from xml-file doesn't match directory name." ),
-         tr( "&OK" ), tr( "&Cancel" ),
-         0, 0, 1 );
+         QMessageBox::Ok | QMessageBox::Cancel, QMessageBox::Cancel );
 
-      if ( status != 0 )
+      if ( status != QMessageBox::Ok )
       {
 	reset();
 	QApplication::restoreOverrideCursor();
@@ -577,10 +576,9 @@ void US_RampGui::resetAll( void )
          tr( "This will erase all data currently on the screen, and " 
              "reset the program to its starting condition. No hard-drive "
              "data or database information will be affected. Proceed? " ),
-         tr( "&OK" ), tr( "&Cancel" ),
-         0, 0, 1 );
+         QMessageBox::Ok | QMessageBox::Cancel, QMessageBox::Cancel );
 
-      if ( status != 0 ) return;
+      if ( status != QMessageBox::Ok ) return;
    }
 
    reset();
@@ -697,12 +695,11 @@ DbgLv(1) << "CGui: enabCtl: have-data";
       // or to save it
       // We have to check against GUID's, because solutions won't have
       // solutionID's yet if they are created as needed offline
-      QRegExp rx( "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" );
 
       pb_applyAll     -> setEnabled( false );
 
       if ( all_chaninfo.size() > 1  &&
-           rx.exactMatch( all_chaninfo[ cellchan ].solution.solutionGUID ) )
+           US_Util::is_valid_uuid( all_chaninfo[ cellchan ].solution.solutionGUID ) )
       {   
          pb_applyAll  -> setEnabled( true );
       }
@@ -761,9 +758,7 @@ DbgLv(1) << " enabCtl: tLx infsz" << cellchan << all_chaninfo.count();
             + tr( ": Load or import some AUC data" ) );
       completed = false;
    }
-   
-   // Is the run info defined?
-   QRegExp rx( "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" );
+
 
    // Not checking operator on disk -- defined as "Local"
    if ( ( ExpData.rotorID == 0 )              ||
@@ -771,7 +766,7 @@ DbgLv(1) << " enabCtl: tLx infsz" << cellchan << all_chaninfo.count();
         ( ExpData.labID == 0 )                ||
         ( ExpData.instrumentID == 0 )         ||
         ( ExpData.label.isEmpty() )           ||
-        ( ! rx.exactMatch( ExpData.project.projectGUID ) ) )
+        ( US_Util::is_valid_uuid( ExpData.project.projectGUID ) ) )
    {
       count++;
       lw_todoinfo->addItem( QString::number( count )
@@ -783,7 +778,7 @@ DbgLv(1) << " enabCtl: tLx infsz" << cellchan << all_chaninfo.count();
    // Check GUIDs, because solutionID's may not be present yet.
    foreach ( US_Ramp::TripleInfo tripinfo, all_chaninfo )
    {
-      if ( ! rx.exactMatch( tripinfo.solution.solutionGUID ) )
+      if ( ! US_Util::is_valid_uuid( tripinfo.solution.solutionGUID ) )
       {
          count++;
          lw_todoinfo->addItem( QString::number( count ) + 
@@ -862,10 +857,10 @@ DbgLv(1) << " enabCtl: tLx infsz" << cellchan << all_chaninfo.count();
 void US_RampGui::runIDChanged( void )
 {
    // See if we need to update the runID
-   QRegExp rx( "^[A-Za-z0-9_-]{1,80}$" );
+   QRegularExpression rx( "^[A-Za-z0-9_-]{1,80}$" );
    QString new_runID = le_runID2->text();
       
-   if ( rx.indexIn( new_runID ) >= 0 )
+   if ( new_runID.indexOf( rx ) >= 0 )
    {
       runID = new_runID;
       if ( runID.length() > 50 )
@@ -963,8 +958,8 @@ void US_RampGui::loadUS3Disk( QString dir )
    QStringList components =  dir.split( "/", Qt::SkipEmptyParts );
    QString new_runID = components.last();
       
-   QRegExp rx( "^[A-Za-z0-9_-]{1,80}$" );
-   if ( rx.indexIn( new_runID ) < 0 )
+   QRegularExpression rx( "^[A-Za-z0-9_-]{1,80}$" );
+   if ( new_runID.indexOf( rx ) < 0 )
    {
       QMessageBox::warning( this,
             tr( "Bad runID Name" ),
@@ -1046,7 +1041,7 @@ DbgLv(1) << "CGui: ldUS3Dk: call rdExp  sz(trinfo)" << all_chaninfo.count();
    {
       QMessageBox::information( this,
          tr( "Error" ),
-         tr( "Unknown error: " ) + status );
+         tr( "Unknown error: " ) + QString::number( status ) );
    }
 
    // Now that we have the experiment, let's read the rest of the
@@ -1665,7 +1660,7 @@ void US_RampGui::define_reference( void )
 // Example code from US_Convert left here, if functionality is needed later
 //////////////////////////////////////////////////////////////////
 // // Select starting point of reference scan in intensity data
-// void US_ConvertGui::start_reference( const QwtDoublePoint& p )
+// void US_ConvertGui::start_reference( const QPointF& p )
 // {
 //    reference_start   = p.x();
 // 
@@ -1674,7 +1669,7 @@ void US_RampGui::define_reference( void )
 // }
 // 
 // // Select end point of reference scan in intensity data
-// void US_ConvertGui::process_reference( const QwtDoublePoint& p )
+// void US_ConvertGui::process_reference( const QPointF& p )
 // {
 //    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
 // 
@@ -1723,7 +1718,7 @@ void US_RampGui::define_reference( void )
 // }
 // 
 // // Process a control-click on the plot window
-// void US_ConvertGui::cClick( const QwtDoublePoint& p )
+// void US_ConvertGui::cClick( const QPointF& p )
 // {
 //    switch ( step )
 //    {
@@ -2045,7 +2040,7 @@ DbgLv(1) << "SV:   fileCount" << fileCount;
    {
       QMessageBox::information( this,
             tr( "Error" ),
-            tr( "Error: " ) + status );
+            tr( "Error: " ) + QString::number( status ) );
       return( status );
    }
    qDebug()<<"_________________savestatus___status"<<saveStatus<<status;
