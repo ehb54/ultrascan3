@@ -501,7 +501,7 @@ private slots:
   //void switch_to_experiment( QString & protocolName );
   //void check_current_stage( void );
   void close_all( void );
-  void closeEvent      ( QCloseEvent* );
+  //void closeEvent      ( QCloseEvent* );
 
   void to_autoflow_records( void );
 
@@ -516,6 +516,9 @@ private slots:
   void analysis_update_stopped( void );
 
   void show_analysis_update_finishing_msg( void );
+
+protected:
+  void closeEvent      ( QCloseEvent* event ) override;
   
 signals:
   void pass_to_live_update( QMap < QString, QString > & protocol_details );
