@@ -58,7 +58,7 @@ class US_Integral : public US_Widgets
     private:
 
         //! \brief Enumeration for attribute types
-        enum attr_type { ATTR_S, ATTR_K, ATTR_W, ATTR_D, ATTR_F };
+        enum attr_type { ATTR_S, ATTR_K, ATTR_W, ATTR_D, ATTR_F, ATTR_V };
 
         QLabel*       lb_division;       //!< Division label
         QTextEdit*    te_distr_info;     //!< Distribution information text edit
