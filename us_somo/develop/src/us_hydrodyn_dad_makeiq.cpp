@@ -59,10 +59,10 @@ bool US_Hydrodyn_Dad::create_i_of_q_ng( QStringList files, double t_min, double 
    head = head.replace( QRegularExpression( "[\\[\\]{}]" ), "" );
    head = head.replace( QRegularExpression( "At_L" ), "AL_t" );
 
-   QRegularExpression rx_q     ( "At_L(\\d+(:?|_\\d+))" );
+   QRegularExpression rx_q     ( "At_L(\\d+(?:_\\d+)?)" );
    QRegularExpression rx_bl    ( "-bl(.\\d*_\\d+(|e.\\d+))-(.\\d*_\\d+(|e.\\d+))s" );
    QRegularExpression rx_bi    ( "-bi(.\\d*_\\d+(|e.\\d+))-(.\\d*_\\d+(|e.\\d+))s" );
-   QRegularExpression rx_blc   ( "_blc(.\\d*(:?|_\\d+))" );
+   QRegularExpression rx_blc   ( "_blc(.\\d*(?:_\\d+)?)" );
 
    vector < QString > q_string;
    vector < double  > q;
