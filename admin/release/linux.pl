@@ -135,8 +135,9 @@ sub addsyslibs {
             }
         }
         for my $s ( keys %s ) {
-            ## next if $s =~ /^libc./;
+            next if $s =~ /libc\.so/;  ## skip libc.so
             die "missing library!\n" if $s =~ /not found/;
+            die "unexpected library reference '$s'\n" if $s =~ /^not( |$)/;
             my $snp = $s;
             $snp =~ s/^.*\///;
             next if -e "lib/$snp";
