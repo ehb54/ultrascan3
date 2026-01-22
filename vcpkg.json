@@ -9,7 +9,10 @@
     "qt5-datavis3d",
     "qt5-svg",
     "qwt",
-    "libmariadb",
+    {
+      "name": "libmariadb",
+      "features": ["openssl"]
+    },
     "openssl",
     "libarchive",
     "zlib",
