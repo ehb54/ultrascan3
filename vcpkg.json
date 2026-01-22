@@ -5,7 +5,10 @@
   "dependencies": [
     "gtest",
     "libarchive",
-    "libmariadb",
+    {
+      "name": "libmariadb",
+      "features": ["openssl"]
+    },
     "libpng",
     "openssl",
     "zlib"
