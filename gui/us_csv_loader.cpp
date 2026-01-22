@@ -163,9 +163,9 @@ void US_CSV_Loader::set_UI()
     le_other->setFrame(false);
 
     QHBoxLayout *lyt_delimiter = new QHBoxLayout();
-    lyt_delimiter->setMargin(0);
+    lyt_delimiter->setContentsMargins( 0, 0, 0, 0 );
     lyt_delimiter->setSpacing(0);
-    lyt_delimiter->setMargin(0);
+    lyt_delimiter->setContentsMargins( 0, 0, 0, 0 );
     lyt_delimiter->addLayout(lyt_tab);
     lyt_delimiter->addLayout(lyt_comma);
     lyt_delimiter->addLayout(lyt_semicolon);
@@ -268,7 +268,7 @@ void US_CSV_Loader::set_UI()
     top_lyt->addWidget(pb_cancel, 3, 1, 1, 1);
     top_lyt->addWidget(pb_ok, 3, 2, 1, 1);
     top_lyt->addWidget(le_msg, 4, 0, 1, 3);
-    top_lyt->setMargin(0);
+    top_lyt->setContentsMargins( 0, 0, 0, 0 );
     top_lyt->setHorizontalSpacing(2);
     top_lyt->setVerticalSpacing(2);
 
@@ -283,7 +283,7 @@ void US_CSV_Loader::set_UI()
     QVBoxLayout *main_lyt = new QVBoxLayout();
     main_lyt->addWidget(top_frm, 0, Qt::AlignCenter);
     main_lyt->addWidget(tv_data, 1);
-    main_lyt->setMargin(2);
+    main_lyt->setContentsMargins( 2, 2, 2, 2);
     main_lyt->setSpacing(1);
 
     setLayout(main_lyt);
@@ -709,7 +709,7 @@ bool US_CSV_Loader::parse_dsp_file(const QString &filepath)
 
         if (recording)
         {
-            if (line.startsWith("#") || !line.contains(QRegExp("\\d")))
+            if (line.startsWith("#") || !line.contains(QRegularExpression("\\d")))
             {
                 if (!currentScan.isEmpty())
                 {

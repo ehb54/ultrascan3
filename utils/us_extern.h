@@ -6,6 +6,8 @@
 #ifndef US_EXTERN_H
 #define US_EXTERN_H
 
+#include "us_utils_qt.h"
+
 /**
  * @def US_EXPORT
  * @brief Macro for exporting symbols in a shared library.
@@ -20,7 +22,7 @@
  * Defined as __declspec(dllimport) on Windows.
  */
 
-#if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
+#if (defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)) && (defined(US_MAKE_DLL))
   #define US_EXPORT       __declspec(dllexport)
   #define US_IMPORT       __declspec(dllimport)
 

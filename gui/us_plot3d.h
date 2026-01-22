@@ -95,7 +95,7 @@ class US_GUI_EXTERN US_Plot3D : public QMainWindow
 
       //! \brief Public function to return the data widget pointer
       //! \return Pointer to the GL data widget
-      QGLWidget* dataWidgetP( void );
+      QOpenGLWidget* dataWidgetP( void );
       //! \brief Public function to save the plot to a file
       //! \param filename  The full path to the file to create
       //! \param imagetype The image file type ("png" or "jpg")

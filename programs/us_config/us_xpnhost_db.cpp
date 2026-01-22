@@ -798,7 +798,7 @@ void US_XpnHostDB::editDB( void )
 	   currentInstrument[ "dbname" ]  = instruments[ii].optimaDBname;
 	   currentInstrument[ "dbusername" ] = instruments[ii].optimaDBusername; 
 	   currentInstrument[ "dbpassw" ]  = instruments[ii].optimaDBpassw;   
-	   currentInstrument[ "selected" ] = instruments[ii].selected;
+	   currentInstrument[ "selected" ] = QString::number(instruments[ii].selected);
 	   currentInstrument[ "os1" ]      = instruments[ii].os1; 
 	   currentInstrument[ "os2" ]      = instruments[ii].os2;   
 	   currentInstrument[ "os3" ]      = instruments[ii].os3;
@@ -843,7 +843,7 @@ void US_XpnHostDB::editHost( QMap < QString, QString > & newInstrument  )
       QMessageBox::warning( this,
                             tr( "Database Connection Problem!" ),
                             tr( "You are not currently connected to the DB!\n"
-                                "Error: " ) + db->lastErrno() + "\n" );
+                                "Error: " ) + QString::number( db->lastErrno() ) + "\n" );
       return;
     }
 
@@ -943,7 +943,7 @@ void US_XpnHostDB::newHost( QMap < QString, QString > & newInstrument  )
       QMessageBox::warning( this,
                             tr( "Database Connection Problem!" ),
                             tr( "You are not currently connected to the DB!\n"
-                                "Error: " ) + db->lastErrno() + "\n" );
+                                "Error: " ) + QString::number( db->lastErrno() ) + "\n" );
       return;
     }
 

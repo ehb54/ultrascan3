@@ -61,10 +61,10 @@ struct SpeedEntry
  */
 struct Limit
 {
-    QwtDoubleRect  rect[2]; //!< Top and bottom of the channel
-    bool           used[2]; //!< Used flags for top and bottom
-    int            cell;    //!< Cell number
-    QString        channel; //!< Channel name
+    QRectF  rect[2]; //!< Top and bottom of the channel
+    bool    used[2]; //!< Used flags for top and bottom
+    int     cell;    //!< Cell number
+    QString channel; //!< Channel name
 };
 
 /**
@@ -153,9 +153,9 @@ class US_RotorCalibration : public US_Widgets
         QVector<double> stretch_factors, std_dev;      //!< Stretch factors and standard deviations
         QVector<Limit> limit;                          //!< Limits
         QVector<double> bounds;                        //!< X-limits for multi-channel calibration mask
-        QVector<QwtDoubleRect> bounds_rect;            //!< Limits for multi-channel calibration mask
+        QVector<QRectF> bounds_rect;            //!< Limits for multi-channel calibration mask
 
-        QwtDoubleRect zoom_mask;                       //!< Zoomed rectangle for multi-channel calibration mask
+        QRectF zoom_mask;                       //!< Zoomed rectangle for multi-channel calibration mask
         QStringList wavelengths;                       //!< List of wavelengths
         int current_wavelength;                        //!< Current wavelength
 
@@ -169,15 +169,15 @@ class US_RotorCalibration : public US_Widgets
         void loadDB(void);                             //!< Slot to load data from the database
         void loadDisk(void);                           //!< Slot to load data from disk
         void plotAll(void);                            //!< Slot to plot all data
-        void currentRect(QwtDoubleRect rect);          //!< Slot to handle current rectangle selection
+        void currentRect(QRectF rect);          //!< Slot to handle current rectangle selection
         void currentRectf(QRectF rect);                //!< Slot to handle current rectangle selection (QRectF)
-        void divide(QwtDoubleRect rect);               //!< Slot to divide the selected rectangle
-        void mouse(const QwtDoublePoint& point);       //!< Slot to handle mouse click
+        void divide(QRectF rect);               //!< Slot to divide the selected rectangle
+        void mouse(const QPointF& point);       //!< Slot to handle mouse click
         void findTriple(void);                         //!< Slot to find triple
         void next(void);                               //!< Slot to go to next item
         void calculate(void);                          //!< Slot to calculate the calibration
         void calc_6channel(void);                      //!< Slot to calculate the 6-channel calibration
-        double findAverage(QwtDoubleRect rect, US_DataIO::RawData data, int channel); //!< Find the average
+        double findAverage(QRectF rect, US_DataIO::RawData data, int channel); //!< Find the average
         void save(void);                               //!< Slot to save the calibration
         void view(void);                               //!< Slot to view the calibration
         void update_used(void);                        //!< Slot to update the used flag

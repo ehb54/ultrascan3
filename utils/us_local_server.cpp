@@ -1,3 +1,4 @@
+//! \file us_local_server.cpp
 #include "us_local_server.h"
 
 // the maximum number of instances available

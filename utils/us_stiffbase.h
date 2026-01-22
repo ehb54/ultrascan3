@@ -4,9 +4,6 @@
 
 #include "us_extern.h"
 
-//! Set a convenient shorthand
-#define uint unsigned int
-
 //! \brief Stiff Base object
 class US_UTIL_EXTERN US_StiffBase
 {

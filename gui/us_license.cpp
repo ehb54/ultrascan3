@@ -611,7 +611,7 @@ bool US_License::save( void )
 QString US_License::trim( const QString& st )
 {
    QString s = st;
-   QRegExp blanks( "(^\\s+)|(\\s+$)" );
+   QRegularExpression blanks( "(^\\s+)|(\\s+$)" );
 
    s.replace( blanks, "" );
    return s;

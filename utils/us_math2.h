@@ -2,19 +2,11 @@
 #ifndef US_MATH_H
 #define US_MATH_H
 
-#include <QtCore>
 #include "us_extern.h"
 #include "us_dataIO.h"
 #include "us_solution.h"
 
 #define sq(x) ((x) * (x))
-#ifndef max
-   #define max(a,b) (((a) > (b)) ? (a) : (b))
-#endif
-
-#ifndef min
-   #define min(a,b) (((a) < (b)) ? (a) : (b))
-#endif
 
 #ifndef swap_double
    // No need to protect a and b for swap

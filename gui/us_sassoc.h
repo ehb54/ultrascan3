@@ -84,9 +84,9 @@ class US_GUI_EXTERN US_Sassoc : public US_Widgets
       void   update_legend  ( double         );
 
    private slots:
-      void   new_value      ( const QwtDoublePoint& );
-      void   mouseD         ( const QwtDoublePoint& );
-      void   mouseU         ( const QwtDoublePoint& );
+      void   new_value      ( const QPointF& );
+      void   mouseD         ( const QPointF& );
+      void   mouseU         ( const QPointF& );
       void   update_stoich1 ( const QString&        );
       void   update_stoich2 ( const QString&        );
       void   update_eq1     ( const QString&        );

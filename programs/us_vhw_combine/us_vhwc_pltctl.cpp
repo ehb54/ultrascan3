@@ -155,9 +155,9 @@ void US_VhwCPlotControl::do_3dplot()
 }
 
 // Public slot to return a pointer to the 3D plot data widget
-QGLWidget* US_VhwCPlotControl::data_3dplot( void )
+QOpenGLWidget* US_VhwCPlotControl::data_3dplot( void )
 {
-   QGLWidget* widgP = (QGLWidget*)0;
+   QOpenGLWidget* widgP = (QOpenGLWidget*)0;
    widgP            = ( plot3d_w != 0 ) ? plot3d_w->dataWidgetP() : widgP;
 
    return widgP;
@@ -216,8 +216,8 @@ qDebug() << "PCtrl:  ncol nrow" << ncol << nrow << "gridres" << gridres;
       int cy       = y();
       int ncx      = width();
       int ncy      = height();
-      int nhdx     = qApp->desktop()->width()  / 2;
-      int nhdy     = qApp->desktop()->height() / 2;
+      int nhdx     = QGuiApplication::primaryScreen()->availableSize().width()  / 2;
+      int nhdy     = QGuiApplication::primaryScreen()->availableSize().height() / 2;
       int nwx      = plot3d_w->width();
       int nwy      = plot3d_w->height();
       int wx       = ( cx < nhdx ) ? ( cx + ncx + 20 ) : ( cx - nwx - 20 );

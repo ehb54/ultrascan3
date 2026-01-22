@@ -1,5 +1,4 @@
 //! \file us_run_protocol.cpp
-
 #include "us_run_protocol.h"
 #include "us_constants.h"
 #include "us_settings.h"

@@ -2223,7 +2223,7 @@ DbgLv(2) << "review_descs   abort flag:" << abort;
 int US_DataModel::index_substring( QString ss, int ixs, QStringList& sl )
 {
    QString sexp = "XXX";
-   QRegExp rexp;
+   QRegularExpression rexp;
 
    if ( ixs == 0 )
       sexp = ss + ":*";        // label at beginning of strings in list
@@ -2234,7 +2234,7 @@ int US_DataModel::index_substring( QString ss, int ixs, QStringList& sl )
    else if ( ixs == 3 )
       sexp = "*:" + ss;        // parentGUID at end of strings in list
 
-   rexp = QRegExp( sexp, Qt::CaseSensitive, QRegExp::Wildcard );
+   rexp = QRegularExpression( QRegularExpression::wildcardToRegularExpression( sexp ) );
 
    return sl.indexOf( rexp );
 }
@@ -2247,7 +2247,7 @@ QStringList US_DataModel::filter_substring( QString ss, int ixs,
 
    if ( ixs == 0 )
       // match label at beginning of strings in list
-      subl = sl.filter( QRegExp( "^" + ss + ":" ) );
+      subl = sl.filter( QRegularExpression( "^" + ss + ":" ) );
 
    else if ( ixs == 1  ||  ixs == 2 )
       // match RecIndex or recGUID in middle of strings in list
@@ -2255,7 +2255,7 @@ QStringList US_DataModel::filter_substring( QString ss, int ixs,
 
    else if ( ixs == 3 )
       // match parentGUID at end of strings in list
-      subl = sl.filter( QRegExp( ":" + ss + "$" ) );
+      subl = sl.filter( QRegularExpression( ":" + ss + "$" ) );
 
    return subl;
 }

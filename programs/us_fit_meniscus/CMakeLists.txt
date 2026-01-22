@@ -66,7 +66,6 @@ if(build_shared_lib)
     target_link_libraries(us_fit_meniscus_lib
             PUBLIC
             us_program_common
-            us_gui_static
             )
 
     # Create alias
@@ -111,7 +110,6 @@ if(build_static_lib)
     # Link libraries
     target_link_libraries(us_fit_meniscus_lib_static
             PUBLIC us_program_common
-            us_gui_static
             )
 
     # Create aliases

@@ -239,11 +239,11 @@ class US_Buoyancy : public US_Widgets
 
         //! \brief Handle mouse events.
         //! \param point The point clicked by the mouse.
-        void mouse(const QwtDoublePoint& point);
+        void mouse(const QPointF& point);
 
         //! \brief Handle mouse events for peaks.
         //! \param point The point clicked by the mouse.
-        void mouse_peak(const QwtDoublePoint& point);
+        void mouse_peak(const QPointF& point);
 
         //! \brief Select investigator.
         void sel_investigator();
