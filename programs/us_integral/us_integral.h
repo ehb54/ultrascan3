@@ -58,7 +58,7 @@ class US_Integral : public US_Widgets
     private:
 
         //! \brief Enumeration for attribute types
-        enum attr_type { ATTR_S, ATTR_K, ATTR_W, ATTR_D, ATTR_F, ATTR_V };
+        enum attr_type { ATTR_S, ATTR_K, ATTR_W, ATTR_D, ATTR_F, ATTR_V, ATTR_R };
 
         QLabel*       lb_division;       //!< Division label
         QTextEdit*    te_distr_info;     //!< Distribution information text edit
@@ -91,6 +91,7 @@ class US_Integral : public US_Widgets
         QRadioButton* rb_x_vbar;         //!< x-axis vbar radio button
         QRadioButton* rb_x_s;            //!< x-axis sedimentation coefficient radio button
         QRadioButton* rb_x_d;            //!< x-axis diffusion coefficient radio button
+        QRadioButton* rb_x_rh;           //!< x-axis hydrodynamic radius radio button
         QRadioButton* rb_da_n;           //!< Distribution average n radio button
         QRadioButton* rb_da_s;           //!< Distribution average s radio button
         QRadioButton* rb_da_w;           //!< Distribution average w radio button
@@ -106,6 +107,7 @@ class US_Integral : public US_Widgets
         QVector< QVector< double > >  v_frats;   //!< Vector of friction ratios per fraction
         QVector< QVector< double > >  v_sedcs;   //!< Vector of sedimentation coefficient vectors per distribution
         QVector< QVector< double > >  v_difcs;   //!< Vector of diffusion coefficient vectors per distribution
+        QVector< QVector< double > >  v_rhs;     //!< Vector of hydrodynamic radius vectors per distribution
 
         int           dbg_level;        //!< Debug level
         int           plot_x;           //!< x-axis plot selection

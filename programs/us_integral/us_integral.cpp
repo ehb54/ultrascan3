@@ -66,6 +66,7 @@ bool distro_lessthan_v(const S_Solute &solu1, const S_Solute &solu2)
     return (solu1.v < solu2.v );
 }
 
+
 // US_Integral class constructor
 US_Integral::US_Integral() : US_Widgets()
 {
@@ -103,16 +104,20 @@ US_Integral::US_Integral() : US_Widgets()
    QGridLayout*  gl_x_d    = us_radiobutton( tr( "diff coeff"   ), rb_x_d,    false );
    QGridLayout*  gl_x_mass = us_radiobutton( tr( "m.mass"   ), rb_x_mass, true  );
    QGridLayout*  gl_x_ff0  = us_radiobutton( tr( "fric. ratio" ), rb_x_ff0,  false );
-   QGridLayout*  gl_x_vbar  = us_radiobutton( tr( "vbar" ), rb_x_vbar,  false );
+   QGridLayout*  gl_x_vbar = us_radiobutton( tr( "vbar" ), rb_x_vbar,  false );
+   QGridLayout*  gl_x_rh   = us_radiobutton( tr( "R(h)" ), rb_x_rh,  false );
    bg_x_axis->addButton( rb_x_s,    ATTR_S );
    bg_x_axis->addButton( rb_x_d,    ATTR_D );
    bg_x_axis->addButton( rb_x_mass, ATTR_W );
    bg_x_axis->addButton( rb_x_ff0,  ATTR_K );
    bg_x_axis->addButton( rb_x_vbar, ATTR_V );
+   bg_x_axis->addButton( rb_x_rh,   ATTR_R );
    rb_x_s   ->setToolTip( tr( "Set X axis to Sedimentation Coefficient" ) );
    rb_x_d   ->setToolTip( tr( "Set X axis to Diffusion Coefficient"     ) );
    rb_x_mass->setToolTip( tr( "Set X axis to Molar Mass"                ) );
    rb_x_ff0 ->setToolTip( tr( "Set X axis to Frictional Ratio"          ) );
+   rb_x_vbar->setToolTip( tr( "Set X axis to Partial Specific Volume"   ) );
+   rb_x_rh  ->setToolTip( tr( "Set X axis to Hydrodynamic Radius"       ) );
    rb_x_s   ->setChecked( true );
    connect( bg_x_axis,  SIGNAL( buttonReleased( int ) ),
             this,       SLOT  ( select_x_axis ( int ) ) );
@@ -181,7 +186,8 @@ US_Integral::US_Integral() : US_Widgets()
    spec->addLayout( gl_x_d,        s_row++, 5, 1, 3 );
    spec->addLayout( gl_x_mass,     s_row,   2, 1, 3 );
    spec->addLayout( gl_x_ff0,      s_row++, 5, 1, 3 );
-   spec->addLayout( gl_x_vbar,     s_row++, 2, 1, 6 );
+   spec->addLayout( gl_x_vbar,     s_row,   2, 1, 3 );
+   spec->addLayout( gl_x_rh,       s_row++, 5, 1, 3 );
    spec->addWidget( te_distr_info, s_row,   0, 2, 8 ); s_row += 2;
 
    // Set up analysis controls
@@ -865,7 +871,7 @@ void US_Integral::sort_distro( QList< S_Solute >& listsols,
    // sort distro solute list depending on selected plot
    switch (this->plot_x)
    {
-      case ATTR_D: std::sort ( listsols.begin(), listsols.end(), distro_lessthan_d);
+      case ATTR_D: std::sort( listsols.begin(), listsols.end(), distro_lessthan_d);
          break;
       case ATTR_W: std::sort( listsols.begin(), listsols.end(), distro_lessthan_w);
          break;
@@ -874,6 +880,8 @@ void US_Integral::sort_distro( QList< S_Solute >& listsols,
       case ATTR_S: std::sort( listsols.begin(), listsols.end(), distro_lessthan_s);
          break;
       case ATTR_V: std::sort( listsols.begin(), listsols.end(), distro_lessthan_v);
+         break;
+      case ATTR_R: std::sort( listsols.begin(), listsols.end(), distro_lessthan_v);
          break;
    }
 
