@@ -1,4 +1,5 @@
 /*       PROGRAM SUPC VERSION 4.0 (Updated 31 Jan 2001)       */
+#include <QRegularExpression>
 /*                            4.1 (Updated  3 Jun 2004)       */
 /*               4.2 (Updated 14 Jun 2007) introduced overlap choice in over.c */
 /*                                    introduced version # in supc.c */
@@ -10,7 +11,6 @@
 
 // #define DEBUG_FILES
 #include "../include/us_math.h"
-#include <qregexp.h>
 
 // #define OLD_WAY_CHECK
 // #define  PI M_PI
@@ -808,8 +808,8 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
    supc_results->total_beads = nmax;
     
    supc_results->name = use_filename;
-   supc_results->name.replace(QRegExp("\\.beams$"),"");
-   supc_results->name.replace(QRegExp("_%1"),"");
+   supc_results->name.replace(QRegularExpression( QStringLiteral( "\\.beams$" ) ),"");
+   supc_results->name.replace(QRegularExpression( QStringLiteral( "_%1" ) ),"");
 
    //   if ( lb_model->count() > 1 && model_idx.size() ) 
    if ( model_vector->size() > 1 && model_idx.size() ) 

@@ -1,4 +1,5 @@
 // us_hydrodyn.cpp contains class creation & gui connected functions
+#include <QRegularExpression>
 // us_hydrodyn_core.cpp contains the main computational routines
 // us_hydrodyn_bd_core.cpp contains the main computational routines for brownian dynamic browflex computations
 // us_hydrodyn_anaflex_core.cpp contains the main computational routines for brownian dynamic (anaflex) computations
@@ -44,8 +45,8 @@ void US_Hydrodyn::gui_script_run() {
    QStringList scriptlines = script.split( "\n" );
    int scriptlinesc        = (int) scriptlines.count();
 
-   QRegExp rx_comment( "#.*$" );
-   QRegExp rx_empty("^\\s*$");
+   QRegularExpression rx_comment( "#.*$" );
+   QRegularExpression rx_empty("^\\s*$");
    
    for ( int i = 0; i < scriptlinesc; ++i ) {
       QString l = scriptlines[ i ];
@@ -55,7 +56,7 @@ void US_Hydrodyn::gui_script_run() {
          continue;
       }
            
-      QStringList ls = l.split( QRegExp( "\\s+" ) );
+      QStringList ls = l.split( QRegularExpression( QStringLiteral( "\\s+" ) ) );
       int lsc = (int)ls.count();
       if ( !lsc ) {
          // blank line?

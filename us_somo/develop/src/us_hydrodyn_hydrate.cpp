@@ -1,4 +1,5 @@
 #include "../include/us_hydrodyn.h"
+#include <QRegularExpression>
 #include "../include/us_hydrodyn_asab1.h"
 #include "../include/us_surfracer.h"
 #include "qmessagebox.h"
@@ -1502,7 +1503,7 @@ void US_Hydrodyn::build_to_hydrate()
    }
 
    // pass 2 add side chain to to_hydrate map
-   QRegExp rx_main_chain("^(N|O)$");
+   QRegularExpression rx_main_chain("^(N|O)$");
 
    for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) {
       for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) {
@@ -1515,7 +1516,8 @@ void US_Hydrodyn::build_to_hydrate()
             .arg( this_atom->resSeq )
             .arg( this_atom->chainID );
 
-         if ( rx_main_chain.indexIn( this_atom->resName ) == -1 
+         QRegularExpressionMatch rx_main_chain_m = rx_main_chain.match( this_atom->resName );
+         if ( !rx_main_chain_m.hasMatch() 
               && exposed_sc.count( mapkey )
               && rotamers.count( this_atom->resName )
               )
@@ -1597,18 +1599,19 @@ bool US_Hydrodyn::compute_to_hydrate_dihedrals( QString &error_msg )
    vector < point > p(4);
    float dihedral;
 
-   QRegExp rx_expand_mapkey("^(.+)~(.+)~(.*)$");
+   QRegularExpression rx_expand_mapkey("^(.+)~(.+)~(.*)$");
 
    for (  map < QString, map < QString, point > >::iterator it = to_hydrate.begin();
           it != to_hydrate.end();
           it++ )
    {
-      if ( rx_expand_mapkey.indexIn( it->first ) == -1 )
+      QRegularExpressionMatch rx_expand_mapkey_m = rx_expand_mapkey.match( it->first );
+      if ( !rx_expand_mapkey_m.hasMatch() )
       {
          error_msg = QString( us_tr( "Internal error: could not expand mapkey %1" ) ).arg( it->first );
          return false;
       }
-      QString resName = rx_expand_mapkey.cap( 1 );
+      QString resName = rx_expand_mapkey_m.captured( 1 );
       // check dihedrals for this residue
       if ( !dihedral_atoms.count( resName ) )
       {
@@ -1907,7 +1910,7 @@ bool US_Hydrodyn::load_rotamer( QString &error_msg )
    while ( !ts.atEnd() )
    {
       QString qs = ts.readLine();
-      if ( qs.toLower().contains( QRegExp( "^end-file" ) ) )
+      if ( qs.toLower().contains( QRegularExpression( QStringLiteral( "^end-file" ) ) ) )
       {
          break;
       }
@@ -1916,10 +1919,10 @@ bool US_Hydrodyn::load_rotamer( QString &error_msg )
 
    f.close();
 
-   QRegExp rx_whitespace("\\s+");
-   QRegExp rx_skip("^(#|\\s*$)");
-   QRegExp rx_main_chain("^(N|O)$");
-   QRegExp rx_atom("^ATOM");
+   QRegularExpression rx_whitespace("\\s+");
+   QRegularExpression rx_skip("^(#|\\s*$)");
+   QRegularExpression rx_main_chain("^(N|O)$");
+   QRegularExpression rx_atom("^ATOM");
 
    bool in_rotamer = false;
    bool in_rotamer_waters = false;
@@ -1928,7 +1931,8 @@ bool US_Hydrodyn::load_rotamer( QString &error_msg )
 
    for ( unsigned int i = 0; i < (unsigned int) qsl.size(); i++ )
    {
-      if ( rx_skip.indexIn( qsl[ i ] ) != -1 )
+      QRegularExpressionMatch rx_skip_m = rx_skip.match( qsl[ i ] );
+      if ( rx_skip_m.hasMatch() )
       {
          continue;
       }
@@ -2556,8 +2560,9 @@ bool US_Hydrodyn::load_rotamer( QString &error_msg )
          continue;
       }
       
+      QRegularExpressionMatch rx_main_chain_m = rx_main_chain.match( qsl_line[ 2 ] );
       if ( !in_rotamer_waters &&
-           rx_main_chain.indexIn( qsl_line[ 2 ] ) != -1 )
+           rx_main_chain_m.hasMatch() )
       {
          // skip main chain 
          continue;
@@ -2911,19 +2916,20 @@ bool US_Hydrodyn::compute_best_fit_rotamer( QString &error_msg )
 {
    best_fit_rotamer.clear( );
 
-   QRegExp rx_expand_mapkey("^(.+)~(.+)~(.*)$");
+   QRegularExpression rx_expand_mapkey("^(.+)~(.+)~(.*)$");
 
    // go through the computed dihedrals, compute sum of abs differences, choose best one
    for ( map < QString, vector < float > >::iterator it = to_hydrate_dihedrals.begin();
          it != to_hydrate_dihedrals.end();
          it++ )
    {
-      if ( rx_expand_mapkey.indexIn( it->first ) == -1 )
+      QRegularExpressionMatch rx_expand_mapkey_m = rx_expand_mapkey.match( it->first );
+      if ( !rx_expand_mapkey_m.hasMatch() )
       {
          error_msg = QString( us_tr( "Internal error: could not expand mapkey %1" ) ).arg( it->first );
          return false;
       }
-      QString resName = rx_expand_mapkey.cap( 1 );
+      QString resName = rx_expand_mapkey_m.captured( 1 );
       // check dihedrals for this residue
       if ( !rotamers.count( resName ) )
       {
@@ -2987,18 +2993,19 @@ bool US_Hydrodyn::setup_pointmap_rotamers( QString &error_msg )
 {
    pointmap_rotamers.clear( );
 
-   QRegExp rx_expand_mapkey("^(.+)~(.+)~(.*)$");
+   QRegularExpression rx_expand_mapkey("^(.+)~(.+)~(.*)$");
 
    for ( map < QString, map < QString, point > >::iterator it = to_hydrate_pointmaps.begin();
          it != to_hydrate_pointmaps.end();
          it++ )
    {
-      if ( rx_expand_mapkey.indexIn( it->first ) == -1 )
+      QRegularExpressionMatch rx_expand_mapkey_m = rx_expand_mapkey.match( it->first );
+      if ( !rx_expand_mapkey_m.hasMatch() )
       {
          error_msg = QString( us_tr( "Internal error: could not expand mapkey %1" ) ).arg( it->first );
          return false;
       }
-      QString resName = rx_expand_mapkey.cap( 1 );
+      QString resName = rx_expand_mapkey_m.captured( 1 );
       // for each entry in pointmap_atoms_ref_residue
       if ( !pointmap_atoms_ref_residue.count( resName ) )
       {
@@ -3206,7 +3213,7 @@ bool US_Hydrodyn::compute_waters_to_add( QString &error_msg, bool quiet )
    alt_waters_to_add.clear( );
    alt_waters_source.clear( );
 
-   QRegExp rx_expand_mapkey("^(.+)~(.+)~(.*)$");
+   QRegularExpression rx_expand_mapkey("^(.+)~(.+)~(.*)$");
 
    for ( map < QString, rotamer >::iterator it = best_fit_rotamer.begin();
           it != best_fit_rotamer.end();
@@ -3304,12 +3311,13 @@ bool US_Hydrodyn::compute_waters_to_add( QString &error_msg, bool quiet )
       }
 
       // add a waters for each pointmap for this residue
-      if ( rx_expand_mapkey.indexIn( it->first ) == -1 )
+      QRegularExpressionMatch rx_expand_mapkey_m = rx_expand_mapkey.match( it->first );
+      if ( !rx_expand_mapkey_m.hasMatch() )
       {
          error_msg = QString( us_tr( "Internal error: could not expand mapkey %1" ) ).arg( it->first );
          return false;
       }
-      QString resName = rx_expand_mapkey.cap( 1 );
+      QString resName = rx_expand_mapkey_m.captured( 1 );
       if ( !pointmap_atoms.count( resName ) ||
            !pointmap_atoms_dest.count( resName ) ||
            !pointmap_atoms_ref_residue.count( resName ) )
@@ -4057,7 +4065,7 @@ bool US_Hydrodyn::write_pdb_with_waters( QString &error_msg, bool quiet )
 #endif
 
    QString fname = pdb_file;
-   fname = fname.replace( QRegExp( "(|-(h|H))\\.(pdb|PDB)$" ), "" ) 
+   fname = fname.replace( QRegularExpression( QStringLiteral( "(|-(h|H))\\.(pdb|PDB)$" ) ), "" ) 
       + QString( "_%1-c%2-h%3.pdb" )
       .arg( current_model + 1 )
       .arg( QString( "%1" ).arg( saxs_options.steric_clash_distance ).replace( ".", "_" ) )
@@ -4371,7 +4379,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
    alt_waters_to_add.clear( );
    alt_waters_source.clear( );
 
-   QRegExp rx_expand_mapkey("^(.+)~(.+)~(.*)$");
+   QRegularExpression rx_expand_mapkey("^(.+)~(.+)~(.*)$");
 
    // best fit rotamer loop: skip those with rotated_rotamers
 
@@ -4494,12 +4502,13 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
       }
 
       // add waters for each pointmap for this residue
-      if ( rx_expand_mapkey.indexIn( it->first ) == -1 )
+      QRegularExpressionMatch rx_expand_mapkey_m = rx_expand_mapkey.match( it->first );
+      if ( !rx_expand_mapkey_m.hasMatch() )
       {
          error_msg = QString( us_tr( "Internal error: could not expand mapkey %1" ) ).arg( it->first );
          return false;
       }
-      QString resName = rx_expand_mapkey.cap( 1 );
+      QString resName = rx_expand_mapkey_m.captured( 1 );
       if ( !pointmap_atoms.count( resName ) ||
            !pointmap_atoms_dest.count( resName ) ||
            !pointmap_atoms_ref_residue.count( resName ) )
@@ -4666,12 +4675,13 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
       }
 
       // add waters for each pointmap for this residue
-      if ( rx_expand_mapkey.indexIn( it->first ) == -1 )
+      QRegularExpressionMatch rx_expand_mapkey_m = rx_expand_mapkey.match( it->first );
+      if ( !rx_expand_mapkey_m.hasMatch() )
       {
          error_msg = QString( us_tr( "Internal error: could not expand mapkey %1" ) ).arg( it->first );
          return false;
       }
-      QString resName = rx_expand_mapkey.cap( 1 );
+      QString resName = rx_expand_mapkey_m.captured( 1 );
       if ( !pointmap_atoms.count( resName ) ||
            !pointmap_atoms_dest.count( resName ) ||
            !pointmap_atoms_ref_residue.count( resName ) )
@@ -4905,18 +4915,19 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
    // linearize for loop over pointmap rotamers
    // since each residue may have multiples
 
-   QRegExp rx_split_key( "^(.+):(\\d+)$" );
+   QRegularExpression rx_split_key( "^(.+):(\\d+)$" );
 
    for ( int i = 0; i < ( int ) water_choices_v.size(); i++ )
    {
-      if ( rx_split_key.indexIn( water_choices_v[ i ] ) == -1 )
+      QRegularExpressionMatch rx_split_key_m = rx_split_key.match( water_choices_v[ i ] );
+      if ( !rx_split_key_m.hasMatch() )
       {
          error_msg = QString( "Internal error: unexpected key in water_choices_v <%1>" ).arg( water_choices_v[ i ] );
          return false;
       }
 
-      QString resname = rx_split_key.cap( 1 );
-      int     pm_rot  = rx_split_key.cap( 2 ).toInt();
+      QString resname = rx_split_key_m.captured( 1 );
+      int     pm_rot  = rx_split_key_m.captured( 2 ).toInt();
 
       // cout << QString( "key <%1>, resname <%2>, count <%3>\n" ).arg( water_choices_v[ i ] ).arg( resname ).arg( pm_rot ) << flush;
 
@@ -4938,14 +4949,15 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
       {
          int j = ( jj + i + 1 ) % ( int ) water_choices_v.size();
 
-         if ( rx_split_key.indexIn( water_choices_v[ j ] ) == -1 )
+         QRegularExpressionMatch rx_split_key_m = rx_split_key.match( water_choices_v[ j ] );
+         if ( !rx_split_key_m.hasMatch() )
          {
             error_msg = QString( "Internal error: unexpected key in water_choices_v 2 <%1>" ).arg( water_choices_v[ j ] );
             return false;
          }
 
-         QString resname = rx_split_key.cap( 1 );
-         int     pm_rot  = rx_split_key.cap( 2 ).toInt();
+         QString resname = rx_split_key_m.captured( 1 );
+         int     pm_rot  = rx_split_key_m.captured( 2 ).toInt();
 
          // cout << QString( "2: key <%1>, resname <%2>, count <%3>\n" ).arg( water_choices_v[ j ] ).arg( resname ).arg( pm_rot ) << flush;
 
@@ -5098,7 +5110,7 @@ bool US_Hydrodyn::alt_write_pdb_with_waters( QString &error_msg, bool /* quiet *
    }
 
    QString fname = pdb_file;
-   fname = fname.replace( QRegExp( "(|-(h|H))\\.(pdb|PDB)$" ), "" ) 
+   fname = fname.replace( QRegularExpression( QStringLiteral( "(|-(h|H))\\.(pdb|PDB)$" ) ), "" ) 
       + QString( "_%1-c%2-h%3.pdb" )
       .arg( current_model + 1 )
       .arg( QString( "%1" ).arg( saxs_options.steric_clash_distance ).replace( ".", "_" ) )
@@ -5330,7 +5342,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
    alt_waters_to_add.clear( );
    alt_waters_source.clear( );
 
-   QRegExp rx_expand_mapkey("^(.+)~(.+)~(.*)$");
+   QRegularExpression rx_expand_mapkey("^(.+)~(.+)~(.*)$");
 
 
    // phase zero: build up list in ASA order and process in that order potentially
@@ -5596,12 +5608,13 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
          }
 
          // add waters for each pointmap for this residue
-         if ( rx_expand_mapkey.indexIn( this_residue ) == -1 )
+         QRegularExpressionMatch rx_expand_mapkey_m = rx_expand_mapkey.match( this_residue );
+         if ( !rx_expand_mapkey_m.hasMatch() )
          {
             error_msg = QString( us_tr( "Internal error: could not expand mapkey %1" ) ).arg( this_residue );
             return false;
          }
-         QString resName = rx_expand_mapkey.cap( 1 );
+         QString resName = rx_expand_mapkey_m.captured( 1 );
          if ( !pointmap_atoms.count( resName ) ||
               !pointmap_atoms_dest.count( resName ) ||
               !pointmap_atoms_ref_residue.count( resName ) )
@@ -5637,13 +5650,14 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
             {
                // multiple rotated rotamers for pointmap
 
-               if ( rx_expand_mapkey.indexIn( this_residue ) == -1 )
+               QRegularExpressionMatch rx_expand_mapkey_m = rx_expand_mapkey.match( this_residue );
+               if ( !rx_expand_mapkey_m.hasMatch() )
                {
                   error_msg = QString( us_tr( "Internal error: could not expand mapkey %1" ) ).arg( this_residue );
                   return false;
                }
 
-               QString resName = rx_expand_mapkey.cap( 1 );
+               QString resName = rx_expand_mapkey_m.captured( 1 );
 
                if ( !pointmap_atoms.count( resName ) ||
                     !pointmap_atoms_dest.count( resName ) ||

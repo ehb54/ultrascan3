@@ -1,4 +1,5 @@
 #include "../include/us3_defines.h"
+#include <QRegularExpression>
 #include "../include/us_hydrodyn.h"
 #include "../include/us_revision.h"
 //Added by qt3to4:
@@ -1276,7 +1277,7 @@ void US_Hydrodyn_Pdb_Tool::csv_cut()
    // lv_csv_undo.push_back( *lv_csv );
    csv_undos.push_back( to_csv( lv_csv, csv1, false ) );
    csv_copy();
-   if ( !csv1.name.contains(QRegExp("^edit of")) )
+   if ( !csv1.name.contains(QRegularExpression( QStringLiteral( "^edit of" ) )) )
    {
       csv1.name = "edit of " + csv1.name;
       lbl_csv->setText( csv1.name );
@@ -1407,7 +1408,7 @@ void US_Hydrodyn_Pdb_Tool::save_csv( QTreeWidget *lv, QString filename )
          return;
       }
 
-      if ( !filename.contains(QRegExp(".pdb$", Qt::CaseInsensitive )) )
+      if ( !filename.contains(QRegularExpression(".pdb$", QRegularExpression::CaseInsensitiveOption )) )
       {
          filename += ".pdb";
       }
@@ -1460,7 +1461,7 @@ void US_Hydrodyn_Pdb_Tool::csv2_cut()
    // lv_csv2_undo.push_back( *lv_csv2 );
    csv2_undos[ csv2_pos ].push_back( to_csv( lv_csv2, csv2[ csv2_pos ], false ) );
    csv2_copy();
-   if ( !csv2[ csv2_pos ].name.contains(QRegExp("^edit of")) )
+   if ( !csv2[ csv2_pos ].name.contains(QRegularExpression( QStringLiteral( "^edit of" ) )) )
    {
       csv2[ csv2_pos ].name = "edit of " + csv2[ csv2_pos ].name;
       lbl_csv2->setText( csv2[ csv2_pos ].name );
@@ -3922,7 +3923,7 @@ bool US_Hydrodyn_Pdb_Tool::sol2wat( QTreeWidget *lv, double use_radius, QString 
 
    csv new_csv;
 
-   QString new_name = tmp_csv.name.replace( QRegExp( "\\.(pdb|PDB)$" ), "" );
+   QString new_name = tmp_csv.name.replace( QRegularExpression( QStringLiteral( "\\.(pdb|PDB)$" ) ), "" );
    new_name += QString( "_WAT%1" ).arg( hydroradius ).replace( ".", "_" );
 
    new_csv.name     = new_name + ".pdb";
@@ -3994,7 +3995,7 @@ bool US_Hydrodyn_Pdb_Tool::sol2wat( QTreeWidget *lv, double use_radius, QString 
 
          ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
 
-         QString fn = new_name.replace(QRegExp("\\.(pdb|PDB)$"),"") + "_sol2wat_report.txt";
+         QString fn = new_name.replace(QRegularExpression( QStringLiteral( "\\.(pdb|PDB)$" ) ),"") + "_sol2wat_report.txt";
 
          filename = QFileDialog::getSaveFileName( this , us_tr("Choose a filename to save the SOL->WAT report") , use_dir + "/" + fn , "TXT (*.txt *.TXT)" );
 
@@ -4043,7 +4044,7 @@ bool US_Hydrodyn_Pdb_Tool::sol2wat( QTreeWidget *lv, double use_radius, QString 
 
          ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
 
-         QString fn = new_name.replace(QRegExp("\\.(pdb|PDB)$"),"") + "_sol2wat_detail.csv";
+         QString fn = new_name.replace(QRegularExpression( QStringLiteral( "\\.(pdb|PDB)$" ) ),"") + "_sol2wat_detail.csv";
 
          filename = QFileDialog::getSaveFileName( this , us_tr("Choose a filename to save the SOL->WAT detail csv") , use_dir + "/" + fn , "CSV (*.csv *.CSV)" );
 
@@ -4170,8 +4171,8 @@ QString US_Hydrodyn_Pdb_Tool::get_atom_name( QTreeWidgetItem *lvi )
 {
    QString atom = 
       QString( "%1" ).arg( lvi->text( 0 ) )
-      .replace( QRegExp( "^\\S+" ), "" )
-      .replace( QRegExp( "\\S+$" ), "" )
+      .replace( QRegularExpression( QStringLiteral( "^\\S+" ) ), "" )
+      .replace( QRegularExpression( QStringLiteral( "\\S+$" ) ), "" )
       .trimmed();
    // cout << QString( "text0 is <%1> atom is <%2>\n" ).arg( lvi->text( 0 ) ).arg( atom );
    return atom;
@@ -4182,7 +4183,7 @@ QString US_Hydrodyn_Pdb_Tool::get_atom_number( QTreeWidgetItem *lvi )
    QString atom = 
       QString( "%1" ).arg( lvi->text( 0 ) )
       .trimmed()
-      .replace( QRegExp( "^\\S+" ), "" )
+      .replace( QRegularExpression( QStringLiteral( "^\\S+" ) ), "" )
       .trimmed();
    // cout << QString( "text0 is <%1> atom is <%2>\n" ).arg( lvi->text( 0 ) ).arg( atom );
    return atom;
@@ -4220,7 +4221,7 @@ QString US_Hydrodyn_Pdb_Tool::get_residue_name( QTreeWidgetItem *lvi )
    {
       lvi = lvi->parent();
    }
-   return QString( "%1" ).arg( lvi->text( 0 ) ).trimmed().replace( QRegExp( "\\s*\\d+$" ), "" );
+   return QString( "%1" ).arg( lvi->text( 0 ) ).trimmed().replace( QRegularExpression( QStringLiteral( "\\s*\\d+$" ) ), "" );
 }
 
 QString US_Hydrodyn_Pdb_Tool::get_residue_number( QTreeWidgetItem *lvi )
@@ -4233,7 +4234,7 @@ QString US_Hydrodyn_Pdb_Tool::get_residue_number( QTreeWidgetItem *lvi )
    {
       lvi = lvi->parent();
    }
-   return QString( "%1" ).arg( lvi->text( 0 ) ).trimmed().replace( QRegExp( "^\\S+\\s*" ), "" ).trimmed();
+   return QString( "%1" ).arg( lvi->text( 0 ) ).trimmed().replace( QRegularExpression( QStringLiteral( "^\\S+\\s*" ) ), "" ).trimmed();
 }
 
 QStringList US_Hydrodyn_Pdb_Tool::atom_set( QTreeWidget *lv )
@@ -4396,7 +4397,7 @@ void US_Hydrodyn_Pdb_Tool::sol2wat_traj( QTreeWidget *lv ) {
       QDir dir( dirname );
       QStringList filters;
       filters << "*.pdb"; 
-      filenames = dir.entryList( filters ).replaceInStrings( QRegExp( "^" ), dirname + "/" );
+      filenames = dir.entryList( filters ).replaceInStrings( QRegularExpression( QStringLiteral( "^" ) ), dirname + "/" );
    } else {
       return;
    }
@@ -5604,9 +5605,9 @@ void US_Hydrodyn_Pdb_Tool::split_pdb()
       return;
    }
 
-   QRegExp rx_model("^MODEL");
-   QRegExp rx_end("^END");
-   QRegExp rx_save_header("^("
+   QRegularExpression rx_model("^MODEL");
+   QRegularExpression rx_end("^END");
+   QRegularExpression rx_save_header("^("
                           "HEADER|"
                           "TITLE|"
                           "COMPND|"
@@ -5664,11 +5665,11 @@ void US_Hydrodyn_Pdb_Tool::split_pdb()
          {
             found_model = true;
             model_count++;
-            // QStringList qsl = (qs.left(20).split( QRegExp("\\s+") , Qt::SkipEmptyParts ) );
+            // QStringList qsl = (qs.left(20).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts ) );
             QStringList qsl;
             {
                QString qs2 = qs.left( 20 );
-               qsl = (qs2 ).split( QRegExp("\\s+") , Qt::SkipEmptyParts );
+               qsl = (qs2 ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts );
             }
             QString model_name;
             if ( qsl.size() == 1 )
@@ -5773,7 +5774,7 @@ void US_Hydrodyn_Pdb_Tool::split_pdb()
    }
    ext = "-" + ext + ".pdb";
 
-   QString fn = f.fileName().replace(QRegExp("\\.(pdb|PDB)$"),"") + ext;
+   QString fn = f.fileName().replace(QRegularExpression( QStringLiteral( "\\.(pdb|PDB)$" ) ),"") + ext;
 
    fn = QFileDialog::getSaveFileName( this , "Choose a name to save the files, the X's will be replaced by the model name" , fn , "PDB (*.pdb *.PDB)" );
 
@@ -5784,7 +5785,7 @@ void US_Hydrodyn_Pdb_Tool::split_pdb()
       return;
    }
    
-   fn.replace(QRegExp(QString("%1$").arg(ext)), "" );
+   fn.replace(QRegularExpression(QString("%1$").arg(ext)), "" );
 
    if ( !f.open( QIODevice::ReadOnly ) )
    {
@@ -5963,7 +5964,7 @@ void US_Hydrodyn_Pdb_Tool::hybrid_split()
 
    editor_msg( "dark blue", QString( us_tr( "Hybrid extract: processing file %1" ).arg( f.fileName() ) ) );
    
-   QRegExp rx_atom("^ATOM");
+   QRegularExpression rx_atom("^ATOM");
 
    QTextStream ts( &f );
    unsigned int line_count = 0;
@@ -5992,7 +5993,7 @@ void US_Hydrodyn_Pdb_Tool::hybrid_split()
          QString atom_hmap   = qs.mid( 12, 3 ).trimmed();
          atom_hmap           = atom_hmap.right( atom_hmap.length() - 1 );
          QString atom_hseq   = qs.mid( 15, 1 );
-         if ( atom_hseq == " " && atom_hmap.contains( QRegExp( "^\\d$" ) ) )
+         if ( atom_hseq == " " && atom_hmap.contains( QRegularExpression( QStringLiteral( "^\\d$" ) ) ) )
          {
             atom_hseq = atom_hmap;
             atom_hmap = "";
@@ -6023,8 +6024,8 @@ void US_Hydrodyn_Pdb_Tool::hybrid_split()
                   it ++ )
             {
                QString href = it->first;
-               href.replace( QRegExp( ":.$" ), "" );
-               href.replace( QRegExp( "^\\d$" ), "" );
+               href.replace( QRegularExpression( QStringLiteral( ":.$" ) ), "" );
+               href.replace( QRegularExpression( QStringLiteral( "^\\d$" ) ), "" );
                // cout << QString( "href <%1>\n" ).arg( href );
                if ( !this_residue.count( href ) )
                {
@@ -6080,8 +6081,8 @@ void US_Hydrodyn_Pdb_Tool::hybrid_split()
             it ++ )
       {
          QString href = it->first;
-         href.replace( QRegExp( ":.$" ), "" );
-         href.replace( QRegExp( "^\\d$" ), "" );
+         href.replace( QRegularExpression( QStringLiteral( ":.$" ) ), "" );
+         href.replace( QRegularExpression( QStringLiteral( "^\\d$" ) ), "" );
          // cout << QString( "href <%1>\n" ).arg( href );
          if ( !this_residue.count( href ) )
          {
@@ -6386,9 +6387,9 @@ void US_Hydrodyn_Pdb_Tool::h_to_chainX()
 
    editor_msg( "dark blue", QString( us_tr( "H to Chain X: processing file %1" ).arg( f.fileName() ) ) );
    
-   QRegExp rx_atom ("^(ATOM|HETATM)");
-   QRegExp rx_model("^MODEL");
-   QRegExp rx_end  ("^END");
+   QRegularExpression rx_atom ("^(ATOM|HETATM)");
+   QRegularExpression rx_model("^MODEL");
+   QRegularExpression rx_end  ("^END");
 
    QTextStream ts( &f );
    unsigned int line_count = 0;
@@ -6520,7 +6521,7 @@ void US_Hydrodyn_Pdb_Tool::join_pdbs()
       return;
    }
 
-   if ( !save_file.contains( QRegExp( "\\.pdb$", Qt::CaseInsensitive ) ) )
+   if ( !save_file.contains( QRegularExpression( "\\.pdb$", QRegularExpression::CaseInsensitiveOption ) ) )
    {
       save_file += ".pdb";
    }
@@ -6549,11 +6550,11 @@ void US_Hydrodyn_Pdb_Tool::join_pdbs()
 
    QTextStream ts_out( &f_out );
 
-   QRegExp rx_model("^MODEL");
-   QRegExp rx_get_model("^MODEL\\s+(\\S+)");
-   QRegExp rx_end("^END");
-   QRegExp rx_atom("^(ATOM|HETATM|TER)");
-   QRegExp rx_remarks("^REMARK");
+   QRegularExpression rx_model("^MODEL");
+   QRegularExpression rx_get_model("^MODEL\\s+(\\S+)");
+   QRegularExpression rx_end("^END");
+   QRegularExpression rx_atom("^(ATOM|HETATM|TER)");
+   QRegularExpression rx_remarks("^REMARK");
 
    unsigned int model    = 0;
 
@@ -6599,7 +6600,8 @@ void US_Hydrodyn_Pdb_Tool::join_pdbs()
 
          bool line_written = false;
 
-         if ( rx_remarks.indexIn( qs ) != -1 )
+         QRegularExpressionMatch rx_remarks_m = rx_remarks.match( qs );
+         if ( rx_remarks_m.hasMatch() )
          {
             if ( in_model )
             {
@@ -6609,7 +6611,8 @@ void US_Hydrodyn_Pdb_Tool::join_pdbs()
             }
          }
 
-         if ( rx_atom.indexIn( qs ) != -1 )
+         QRegularExpressionMatch rx_atom_m = rx_atom.match( qs );
+         if ( rx_atom_m.hasMatch() )
          {
             if ( !in_model )
             {
@@ -6634,13 +6637,15 @@ void US_Hydrodyn_Pdb_Tool::join_pdbs()
             ts_out << qs << "\n";
             line_written = true;
          }
-         if ( rx_model.indexIn( qs ) != -1 )
+         QRegularExpressionMatch rx_model_m = rx_model.match( qs );
+         if ( rx_model_m.hasMatch() )
          {
             atom_or_model_found = true;
             // has_model_line      = true;
-            if ( rx_get_model.indexIn( qs ) != -1 )
+            QRegularExpressionMatch rx_get_model_m = rx_get_model.match( qs );
+            if ( rx_get_model_m.hasMatch() )
             {
-               last_model = rx_get_model.cap( 1 );
+               last_model = rx_get_model_m.captured(1);
                if ( used_model.count( last_model ) )
                {
                   unsigned int ext = 0;
@@ -6666,7 +6671,8 @@ void US_Hydrodyn_Pdb_Tool::join_pdbs()
             }
             
          } 
-         if ( !line_written && atom_or_model_found && rx_end.indexIn( qs ) == -1 )
+         QRegularExpressionMatch rx_end_m = rx_end.match( qs );
+         if ( !line_written && atom_or_model_found && !rx_end_m.hasMatch() )
          {
             ts_out << qs << "\n";
          }
@@ -6736,24 +6742,24 @@ void US_Hydrodyn_Pdb_Tool::renum_pdb()
       parameters.count( "startresidue"        ) ? 
       parameters[ "startresidue"        ].toUInt() : 1;
    bool         chainrestartatom    = 
-      parameters.count( "chainrestartatom"    ) && parameters[ "chainrestartatom"    ].contains( QRegExp( "^(Y|y)" ) ) ? true : false;
+      parameters.count( "chainrestartatom"    ) && parameters[ "chainrestartatom"    ].contains( QRegularExpression( QStringLiteral( "^(Y|y)" ) ) ) ? true : false;
    bool         chainrestartresidue  = 
-      parameters.count( "chainrestartresidue" ) && parameters[ "chainrestartresidue" ].contains( QRegExp( "^(Y|y)" ) ) ? true : false;
+      parameters.count( "chainrestartresidue" ) && parameters[ "chainrestartresidue" ].contains( QRegularExpression( QStringLiteral( "^(Y|y)" ) ) ) ? true : false;
    QString      usechainlist = 
       parameters.count( "usechainlist"        ) ? 
       parameters[ "usechainlist"        ] : "";
    bool         modelrestartatom    = 
-      parameters.count( "modelrestartatom"    ) && parameters[ "modelrestartatom"    ].contains( QRegExp( "^(Y|y)" ) ) ? true : false;
+      parameters.count( "modelrestartatom"    ) && parameters[ "modelrestartatom"    ].contains( QRegularExpression( QStringLiteral( "^(Y|y)" ) ) ) ? true : false;
    bool         modelrestartresidue = 
-      parameters.count( "modelrestartresidue" ) && parameters[ "modelrestartresidue" ].contains( QRegExp( "^(Y|y)" ) ) ? true : false;
+      parameters.count( "modelrestartresidue" ) && parameters[ "modelrestartresidue" ].contains( QRegularExpression( QStringLiteral( "^(Y|y)" ) ) ) ? true : false;
    bool         reseqatom           = 
-      parameters.count( "reseqatom"           ) && parameters[ "reseqatom"           ].contains( QRegExp( "^(Y|y)" ) ) ? true : false;
+      parameters.count( "reseqatom"           ) && parameters[ "reseqatom"           ].contains( QRegularExpression( QStringLiteral( "^(Y|y)" ) ) ) ? true : false;
    bool         reseqresidue        = 
-      parameters.count( "reseqresidue"        ) && parameters[ "reseqresidue"        ].contains( QRegExp( "^(Y|y)" ) ) ? true : false;
+      parameters.count( "reseqresidue"        ) && parameters[ "reseqresidue"        ].contains( QRegularExpression( QStringLiteral( "^(Y|y)" ) ) ) ? true : false;
    bool         striphydrogens      =
-      parameters.count( "striphydrogens"      ) && parameters[ "striphydrogens"      ].contains( QRegExp( "^(Y|y)" ) ) ? true : false;
+      parameters.count( "striphydrogens"      ) && parameters[ "striphydrogens"      ].contains( QRegularExpression( QStringLiteral( "^(Y|y)" ) ) ) ? true : false;
    bool         itassertemplate      =
-      parameters.count( "itassertemplate"     ) && parameters[ "itassertemplate"     ].contains( QRegExp( "^(Y|y)" ) ) ? true : false;
+      parameters.count( "itassertemplate"     ) && parameters[ "itassertemplate"     ].contains( QRegularExpression( QStringLiteral( "^(Y|y)" ) ) ) ? true : false;
 
    cout << QString( "usechainlist %1\n" ).arg( usechainlist );
    cout << QString( "reseqatom %1\n" ).arg( reseqatom );
@@ -6815,7 +6821,7 @@ void US_Hydrodyn_Pdb_Tool::renum_pdb()
       return;
    }
       
-   if ( !foutname.contains( QRegExp( ".pdb$", Qt::CaseInsensitive ) ) )
+   if ( !foutname.contains( QRegularExpression( ".pdb$", QRegularExpression::CaseInsensitiveOption ) ) )
    {
       foutname += ".pdb";
    }
@@ -6847,9 +6853,9 @@ void US_Hydrodyn_Pdb_Tool::renum_pdb()
    QTextStream tsi( &f    );
    QTextStream tso( &fout );
 
-   QRegExp rx_end ("^END");
-   QRegExp rx_atom("^(ATOM|HETATM)");
-   QRegExp rx_hetatm("^HETATM");
+   QRegularExpression rx_end ("^END");
+   QRegularExpression rx_atom("^(ATOM|HETATM)");
+   QRegularExpression rx_hetatm("^HETATM");
 
    unsigned int atomno    = startatom;
    unsigned int residueno = startresidue;
@@ -6860,7 +6866,8 @@ void US_Hydrodyn_Pdb_Tool::renum_pdb()
    while( !tsi.atEnd() )
    {
       QString line = tsi.readLine();
-      if ( rx_end.indexIn( line ) != -1 )
+      QRegularExpressionMatch rx_end_m = rx_end.match( line );
+      if ( rx_end_m.hasMatch() )
       {
          last_chain_id = "";
          last_residue_id = "";
@@ -6873,9 +6880,10 @@ void US_Hydrodyn_Pdb_Tool::renum_pdb()
             residueno = startresidue;
          }
       }
-      if ( rx_atom.indexIn( line ) != -1 )
+      QRegularExpressionMatch rx_atom_m = rx_atom.match( line );
+      if ( rx_atom_m.hasMatch() )
       {
-         if ( striphydrogens && line.mid( 12, 2 ).contains( QRegExp( "^((\\d| )H|H)" ) ) )
+         if ( striphydrogens && line.mid( 12, 2 ).contains( QRegularExpression( QStringLiteral( "^((\\d| )H|H)" ) ) ) )
          {
             continue;
          }
@@ -6904,7 +6912,8 @@ void US_Hydrodyn_Pdb_Tool::renum_pdb()
                   atomno = 1;
                }
                line = line.replace( 6, 5, QString::asprintf( "%5d", atomno ++ ) );
-               if ( rx_hetatm.indexIn( line ) == -1 )
+               QRegularExpressionMatch rx_hetatm_m = rx_hetatm.match( line );
+               if ( !rx_hetatm_m.hasMatch() )
                {
                   line = line.replace( 5, 1, " " );
                } else {
@@ -7001,10 +7010,11 @@ QString US_Hydrodyn_Pdb_Tool::key_to_bottom_key( csv &csv1 )
    // go through all the data rows and find highest # that matches
    // (ugh, better to maintain some sort of child ref? )
 
-   QRegExp rx_ok( "^" + csv1.current_item_key );
+   QRegularExpression rx_ok( "^" + csv1.current_item_key );
    for ( int i = (int) csv1.data.size() - 1; i >= 0; i-- )
    {
-      if ( rx_ok.indexIn( data_to_key( csv1.data[ i ] ) ) != -1 )
+      QRegularExpressionMatch rx_ok_m = rx_ok.match( data_to_key( csv1.data[ i ] ) );
+      if ( rx_ok_m.hasMatch() )
       {
          return data_to_key( csv1.data[ i ] );
       }
@@ -7548,7 +7558,7 @@ void US_Hydrodyn_Pdb_Tool::replace_selected_residues( QTreeWidget *lv, csv &csv_
          item->setText( 0,
                         QString( "%1" )
                         .arg( item->text( 0 ) )
-                        .replace( QRegExp( QString( "^%1" ).arg( from ) ), to ) 
+                        .replace( QRegularExpression( QString( "^%1" ).arg( from ) ), to ) 
                         );
          if ( csv_use.nd_key.count( org_key ) )
          {
@@ -7627,7 +7637,7 @@ QString US_Hydrodyn_Pdb_Tool::check_csv_for_alt( csv &csv1, QStringList &alt_res
       return "";
    }
    // try each residue name:
-   QRegExp rx_skip(
+   QRegularExpression rx_skip(
                    "^("
                    "NPBR-OXT|"
                    "OXT-P|"
@@ -7642,7 +7652,8 @@ QString US_Hydrodyn_Pdb_Tool::check_csv_for_alt( csv &csv1, QStringList &alt_res
    map < QString, bool > residue_names;
    for ( unsigned int i = 0; i < (unsigned int)usu->residue_list.size(); i++ )
    {
-      if ( rx_skip.indexIn( usu->residue_list[ i ].name ) == -1 )
+      QRegularExpressionMatch rx_skip_m = rx_skip.match( usu->residue_list[ i ].name );
+      if ( !rx_skip_m.hasMatch() )
       {
          residue_names[ usu->residue_list[ i ].name ] = true;
          // cout << QString( "residue_list: %1 %2\n" ).arg( i ).arg( usu->residue_list[ i ].name );
@@ -7868,13 +7879,13 @@ void US_Hydrodyn_Pdb_Tool::split_pdb_by_residue( QFile &f )
    // split by residue, QFile f open;
    // build up vector of residues in 1st model
 
-   QRegExp rx_model("^MODEL");
-   QRegExp rx_end  ("^END");
-   QRegExp rx_atom ("^("
+   QRegularExpression rx_model("^MODEL");
+   QRegularExpression rx_end  ("^END");
+   QRegularExpression rx_atom ("^("
                     "ATOM|"
                     "HETATM"
                     ")" );
-   QRegExp rx_save_header("^("
+   QRegularExpression rx_save_header("^("
                           "HEADER|"
                           "TITLE|"
                           "COMPND|"
@@ -8091,7 +8102,7 @@ void US_Hydrodyn_Pdb_Tool::split_pdb_by_residue( QFile &f )
       }
    } while( !ok );
 
-   QString fn = f.fileName().replace(QRegExp("\\.(pdb|PDB)$"),"") + QString( "_ws%1_ss%2%3%4_sr.pdb" ).arg( window_size ).arg( step_size ).arg( skip_waters ? "_nw" : "" ).arg( waters_as_onezies ? "_ww" : "" );
+   QString fn = f.fileName().replace(QRegularExpression( QStringLiteral( "\\.(pdb|PDB)$" ) ),"") + QString( "_ws%1_ss%2%3%4_sr.pdb" ).arg( window_size ).arg( step_size ).arg( skip_waters ? "_nw" : "" ).arg( waters_as_onezies ? "_ww" : "" );
 
    fn = QFileDialog::getSaveFileName( this , us_tr( "Choose a name to save the multiple model output file" ) , fn , "PDB (*.pdb *.PDB)" );
 
@@ -8297,9 +8308,9 @@ void US_Hydrodyn_Pdb_Tool::do_bm( QTreeWidget *lv )
             .arg( usu->atom_vdw[ atom ] * expansion )
             .arg( usu->atom_mw[ atom ] )
             .arg(
-                 item1->parent()->text(0).trimmed().replace( QRegExp( "\\s+" ), ":" ) + 
+                 item1->parent()->text(0).trimmed().replace( QRegularExpression( QStringLiteral( "\\s+" ) ), ":" ) + 
                  ":" + 
-                 item1->text( 0 ).trimmed().replace( QRegExp( "\\s+" ), ":" )
+                 item1->text( 0 ).trimmed().replace( QRegularExpression( QStringLiteral( "\\s+" ) ), ":" )
                  )
             ;
       }
@@ -8321,7 +8332,7 @@ void US_Hydrodyn_Pdb_Tool::do_bm( QTreeWidget *lv )
       return;
    }
 
-   filename.replace( QRegExp("(_e\\d+_\\d+|)\\.bead_model$", Qt::CaseInsensitive ), "" );
+   filename.replace( QRegularExpression("(_e\\d+_\\d+|)\\.bead_model$", QRegularExpression::CaseInsensitiveOption ), "" );
    if ( expansion != 1e0 )
    {
       filename += QString( "_e%1" ).arg( expansion, 0, 'f', 4 ).replace( ".", "_" );

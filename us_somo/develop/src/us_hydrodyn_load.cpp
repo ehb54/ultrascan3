@@ -1,4 +1,5 @@
 // us_hydrodyn.cpp contains class creation & gui connected functions
+#include <QRegularExpression>
 // us_hydrodyn_core.cpp contains the main computational routines
 // us_hydrodyn_bd_core.cpp contains the main computational routines for brownian dynamic browflex computations
 // us_hydrodyn_anaflex_core.cpp contains the main computational routines for brownian dynamic (anaflex) computations
@@ -30,8 +31,8 @@ void US_Hydrodyn::read_hybrid_file( QString filename ) {
    hybrid_to_protons  .clear( );
    hybrid_to_electrons.clear( );
 
-   QRegExp count_hydrogens("H(\\d)");
-   QRegExp net_charge("((?:\\+|-)\\d*)$");
+   QRegularExpression count_hydrogens("H(\\d)");
+   QRegularExpression net_charge("((?:\\+|-)\\d*)$");
 
    if ( f.open(QIODevice::ReadOnly|QIODevice::Text ) ) {
       struct hybridization current_hybrid;
@@ -45,15 +46,17 @@ void US_Hydrodyn::read_hybrid_file( QString filename ) {
          ts >> current_hybrid.exch_prot;
          ts >> current_hybrid.num_elect;
          current_hybrid.hydrogens = 0;
-         if ( count_hydrogens.indexIn( current_hybrid.name ) != -1 )
+         QRegularExpressionMatch count_hydrogens_m = count_hydrogens.match( current_hybrid.name );
+         if ( count_hydrogens_m.hasMatch() )
          {
-            current_hybrid.hydrogens = count_hydrogens.cap(1).toUInt();
+            current_hybrid.hydrogens = count_hydrogens_m.captured(1).toUInt();
          }
          ts.readLine(); // read rest of line
 
          double protons = current_hybrid.num_elect;
-         if ( net_charge.indexIn( current_hybrid.saxs_name ) != -1 ) {
-            double delta = net_charge.cap( 1 ).toDouble();
+         QRegularExpressionMatch net_charge_m = net_charge.match( current_hybrid.saxs_name );
+         if ( net_charge_m.hasMatch() ) {
+            double delta = net_charge_m.captured(1).toDouble();
             protons += delta;
             // QTextStream( stdout ) << "saxs_name " << current_hybrid.saxs_name << " delta " << delta << Qt::endl;
             // } else {
@@ -122,7 +125,7 @@ void US_Hydrodyn::read_residue_file() {
    res_vbar.clear();
    res_mw.clear();
 
-   QRegExp rx_spaces = QRegExp( "\\s+" ); 
+   QRegularExpression rx_spaces = QRegularExpression( QStringLiteral( "\\s+" ) ); 
    // i=1;
    if (f.open(QIODevice::ReadOnly|QIODevice::Text))
    {
@@ -268,23 +271,23 @@ void US_Hydrodyn::read_residue_file() {
                
                unsigned int pos = ( unsigned int ) msroll_radii.size() + 1;
                double covalent_radius = new_atom.hybrid.radius / 2e0;
-               if ( new_atom.name.contains( QRegExp( "^C" ) ) )
+               if ( new_atom.name.contains( QRegularExpression( QStringLiteral( "^C" ) ) ) )
                {
                   covalent_radius = 0.77e0;
                }
-               if ( new_atom.name.contains( QRegExp( "^N" ) ) )
+               if ( new_atom.name.contains( QRegularExpression( QStringLiteral( "^N" ) ) ) )
                {
                   covalent_radius = 0.70e0;
                }
-               if ( new_atom.name.contains( QRegExp( "^P" ) ) )
+               if ( new_atom.name.contains( QRegularExpression( QStringLiteral( "^P" ) ) ) )
                {
                   covalent_radius = 0.95e0;
                }
-               if ( new_atom.name.contains( QRegExp( "^S" ) ) )
+               if ( new_atom.name.contains( QRegularExpression( QStringLiteral( "^S" ) ) ) )
                {
                   covalent_radius = 1.04e0;
                }
-               if ( new_atom.name.contains( QRegExp( "^O" ) ) )
+               if ( new_atom.name.contains( QRegularExpression( QStringLiteral( "^O" ) ) ) )
                {
                   covalent_radius = new_atom.hybrid.radius / 2.68e0;
                }
@@ -452,7 +455,7 @@ void US_Hydrodyn::read_residue_file() {
                residue_atom_abb_hybrid_map[ new_atom.name ] = new_atom.hybrid.name;
                new_residue.r_atom.push_back(new_atom);
                new_atoms[new_atom.bead_assignment].push_back(new_atom);
-               if ( new_residue.name.contains(QRegExp("^PBR-")) )
+               if ( new_residue.name.contains(QRegularExpression( QStringLiteral( "^PBR-" ) )) )
                {
                   pbr_override_map[ QString("%1|%2|%3|%4")
                                     .arg(new_residue.name == "PBR-P" ? "P" : "NP" )
@@ -586,7 +589,7 @@ void US_Hydrodyn::read_residue_file() {
    {
       // only AA's
       if ( residue_list[i].type == 0 &&
-           !residue_list[i].name.contains(QRegExp("^PBR-")) )
+           !residue_list[i].name.contains(QRegularExpression( QStringLiteral( "^PBR-" ) )) )
       {
          for ( unsigned int j = 0; j < residue_list[i].r_atom.size(); j++ )
          {
@@ -1099,7 +1102,7 @@ bool US_Hydrodyn::assign_atom(const QString &str1, struct PDB_chain *temp_chain,
    temp_atom.chainID = str1.mid(20, 2).trimmed();
 
    temp_atom.resSeq = str1.mid(22, 5);
-   temp_atom.resSeq.replace(QRegExp(" *"),"");
+   temp_atom.resSeq.replace(QRegularExpression( QStringLiteral( " *" ) ),"");
    if (temp_atom.resSeq == *last_resSeq)
    {
       flag = false;
@@ -1238,7 +1241,7 @@ int US_Hydrodyn::read_pdb( const QString &filename ) {
    skip_waters.insert( "SOL" );
    skip_waters.insert( "CIM" );
 
-   QRegExp rx_water_multiplier( "^REMARK Multiply water Iq by (\\d+)", Qt::CaseInsensitive );
+   QRegularExpression rx_water_multiplier( "^REMARK Multiply water Iq by (\\d+)", QRegularExpression::CaseInsensitiveOption );
    if ( f.open( QIODevice::ReadOnly ) )
    {
       multiply_iq_by_atomic_volume_last_water_multiplier = 0;      
@@ -1279,10 +1282,11 @@ int US_Hydrodyn::read_pdb( const QString &filename ) {
             }
          }
 
+         QRegularExpressionMatch rx_water_multiplier_m = rx_water_multiplier.match( str1 );
          if ( saxs_options.multiply_iq_by_atomic_volume &&
-              rx_water_multiplier.indexIn( str1 ) != -1 )
+              rx_water_multiplier_m.hasMatch() )
          {
-            multiply_iq_by_atomic_volume_last_water_multiplier = rx_water_multiplier.cap( 1 ).toUInt();
+            multiply_iq_by_atomic_volume_last_water_multiplier = rx_water_multiplier_m.captured(1).toUInt();
             QTextStream( stdout ) << QString( "found water multiplier %1 in pdb\n" ).arg( multiply_iq_by_atomic_volume_last_water_multiplier );
          }
 
@@ -1308,7 +1312,7 @@ int US_Hydrodyn::read_pdb( const QString &filename ) {
          {
                
             QString tmp_str = str1.mid(10,62);
-            tmp_str.replace(QRegExp("\\s+")," ");
+            tmp_str.replace(QRegularExpression( QStringLiteral( "\\s+" ) )," ");
             if ( str1.left(5) == "TITLE" )
             {
                last_pdb_title << tmp_str;
@@ -1329,10 +1333,11 @@ int US_Hydrodyn::read_pdb( const QString &filename ) {
             model_flag = true; // we are using model descriptions (possibly multiple models)
             // str2 = str1.mid(6, 15);
             // temp_model.model_id = str2.toUInt();
-            QRegExp rx_get_model( "^MODEL\\s+(\\S+)" );
-            if ( rx_get_model.indexIn( str1 ) != -1 )
+            QRegularExpression rx_get_model( "^MODEL\\s+(\\S+)" );
+            QRegularExpressionMatch rx_get_model_m = rx_get_model.match( str1 );
+            if ( rx_get_model_m.hasMatch() )
             {
-               temp_model.model_id = rx_get_model.cap( 1 );
+               temp_model.model_id = rx_get_model_m.captured(1);
             } else {
                temp_model.model_id = str1.mid( 6, 15 );
             }
@@ -1736,10 +1741,10 @@ void US_Hydrodyn::dna_rna_resolve()
 {
    // check each chain of each model for DNA type AA's
 
-   QRegExp rx_dna("^T$");
-   QRegExp rx_dna_and_rna("^(A|G|C|T|U)$");
-   QRegExp rx_dna_or_rna("^(A|G|C)$");
-   QRegExp rx_rna("^U$");
+   QRegularExpression rx_dna("^T$");
+   QRegularExpression rx_dna_and_rna("^(A|G|C|T|U)$");
+   QRegularExpression rx_dna_or_rna("^(A|G|C)$");
+   QRegularExpression rx_rna("^U$");
 
    // this can cause spurious chain breaks in the load
    // work around it with a map
@@ -1759,20 +1764,23 @@ void US_Hydrodyn::dna_rna_resolve()
             PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
             QString thisres = this_atom->resName.trimmed();
             chainID = this_atom->chainID;
-            if ( rx_dna_and_rna.indexIn(thisres) == -1 )
+            QRegularExpressionMatch rx_dna_and_rna_m = rx_dna_and_rna.match(thisres);
+            if ( !rx_dna_and_rna_m.hasMatch() )
             {
                // not either:
                ask_convert = false;
                break;
             }
-            if ( rx_dna.indexIn(thisres) != -1 )
+            QRegularExpressionMatch rx_dna_m = rx_dna.match(thisres);
+            if ( rx_dna_m.hasMatch() )
             {
                // we definitely have DNA, correct this residue!
                ask_convert = false;
                convert_this = true;
                break;
             }
-            if ( rx_rna.indexIn(thisres) != -1 )
+            QRegularExpressionMatch rx_rna_m = rx_rna.match(thisres);
+            if ( rx_rna_m.hasMatch() )
             {
                // we definitely have RNA, the residue is ok
                ask_convert = false;

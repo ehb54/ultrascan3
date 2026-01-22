@@ -95,7 +95,7 @@ void US_Hydrodyn_Saxs_Cormap::setupGUI()
    {
       f_brookesmap = new QFrame( 0 );
       QGridLayout *gl = new QGridLayout( f_brookesmap );
-      gl->setMargin( 0 );
+      gl->setContentsMargins( 0, 0, 0, 0 );
       gl->setSpacing( 0 );
    
       lbl_f_title = new QLabel( "", f_brookesmap ); 
@@ -1124,7 +1124,7 @@ void US_Hydrodyn_Saxs_Cormap::save_csv()
    if ( use_filename.isEmpty() ) {
       return;
    }
-   use_filename = use_filename.replace( QRegExp( ".csv$", Qt::CaseInsensitive ), "" );
+   use_filename = use_filename.replace( QRegularExpression( ".csv$", QRegularExpression::CaseInsensitiveOption ), "" );
    use_filename += ".csv";
 
    if ( QFile::exists( use_filename ) ) {

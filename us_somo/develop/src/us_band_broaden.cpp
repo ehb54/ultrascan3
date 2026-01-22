@@ -57,7 +57,7 @@ vector < double > US_Band_Broaden::convolve(
    //    out[ i ] = full_out[ i + ( ng / 2 ) ];
    // }
 
-   size_t offset;
+   ptrdiff_t offset;
    switch ( ktype ) {
    case BAND_BROADEN_KERNEL_EXPONENTIAL :
    case BAND_BROADEN_KERNEL_HALF_GAUSSIAN :
@@ -67,8 +67,8 @@ vector < double > US_Band_Broaden::convolve(
    case BAND_BROADEN_KERNEL_EMG_GMG :
       // redo out
       {
-         offset = peak_full_out - peak_f;
-         if ( offset + nf >= nfull_out ) {
+         offset = (ptrdiff_t)peak_full_out - (ptrdiff_t)peak_f;
+         if ( offset + (ptrdiff_t)nf >= (ptrdiff_t)nfull_out ) {
             qDebug() << QString(
                                 "Warning: convolution center lost, insufficient data after peak finding\n"
                                 "offset %1 nf %2 nfull_out %3"
@@ -77,7 +77,7 @@ vector < double > US_Band_Broaden::convolve(
                .arg( nf )
                .arg( nfull_out )
                ;
-            offset = nfull_out - nf - 2;
+            offset = (ptrdiff_t)nfull_out - (ptrdiff_t)nf - 2;
          }
          if ( offset < 0 ) {
             qDebug() << QString( "Error: convolution offset (%1) is less than 0!" ).arg( offset );
