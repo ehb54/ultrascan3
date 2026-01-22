@@ -3,7 +3,7 @@
 QTVERS=`qmake --version|sed -n 2,2p|awk '{print $4}'`
 echo "Make All for Qt Version ${QTVERS} ..."
 QTMAJV=`echo ${QTVERS}|cut -d. -f1`
-if [ `echo "45"|grep -ci "${QTMAJV}"` -eq 0 ]; then
+if [ `echo "56"|grep -ci "${QTMAJV}"` -eq 0 ]; then
   echo "Wrong qmake, check environment"
   echo " QT Major version must be 4 or 5; is ${QTMAJV}"
   qmake --version

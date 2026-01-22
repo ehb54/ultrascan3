@@ -840,7 +840,7 @@ DEBUG_QUERY;
    qDebug() << "Extinciton 2 : " << extinction.count();
    
 
-   if ( !extinction.isEmpty() and new_or_changed_spectrum )  
+   if ( !extinction.isEmpty() && new_or_changed_spectrum )
    {
       if ( !replace_spectrum )
       {

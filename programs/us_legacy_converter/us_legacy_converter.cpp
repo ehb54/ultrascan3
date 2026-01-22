@@ -62,7 +62,7 @@ US_LegacyConverter::US_LegacyConverter() : US_Widgets()
    layout->addWidget(le_runid,     2, 1, 1, 2);
    layout->addWidget(pb_save,      3, 1, 1, 1);
    layout->addWidget(te_info,      5, 0, 4, 3);
-   layout->setMargin(2);
+   layout->setContentsMargins( 2, 2, 2, 2 );
    layout->setSpacing(2);
    this->setLayout(layout);
 

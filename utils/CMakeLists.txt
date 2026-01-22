@@ -79,9 +79,9 @@ target_include_directories(us_utils
 # Core Qt libraries (always needed)
 target_link_libraries(us_utils
         PUBLIC
-        Qt5::Core
-        Qt5::Xml
-        Qt5::Network
+        Qt::Core
+        Qt::Xml
+        Qt::Network
         OpenSSL::SSL
         OpenSSL::Crypto
         LibArchive::LibArchive
@@ -91,7 +91,7 @@ target_link_libraries(us_utils
 if(NOT US3_NO_DB)
     target_link_libraries(us_utils
             PUBLIC
-            Qt5::Sql
+            Qt::Sql
             MySQL::Client
             )
 endif()
@@ -111,7 +111,11 @@ endif()
 
 # Compiler-specific options for debugging
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    target_compile_options(us_utils PRIVATE -g -O0)
+    if(MSVC)
+        target_compile_options(us_utils PRIVATE /Zi /Od)
+    else()
+        target_compile_options(us_utils PRIVATE -g -O0)
+    endif()
 endif()
 
 # Export this target for use by other parts of the project
@@ -148,9 +152,9 @@ if(BUILD_TESTING OR US3_PREFER_STATIC)
     # Apply same link libraries
     target_link_libraries(us_utils_static
             PUBLIC
-            Qt5::Core
-            Qt5::Xml
-            Qt5::Network
+            Qt::Core
+            Qt::Xml
+            Qt::Network
             OpenSSL::SSL
             OpenSSL::Crypto
             LibArchive::LibArchive
@@ -160,7 +164,7 @@ if(BUILD_TESTING OR US3_PREFER_STATIC)
     if(NOT US3_NO_DB)
         target_link_libraries(us_utils_static
                 PUBLIC
-                Qt5::Sql
+                Qt::Sql
                 MySQL::Client
                 )
     endif()
@@ -177,7 +181,22 @@ if(BUILD_TESTING OR US3_PREFER_STATIC)
 
     # Debug options
     if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-        target_compile_options(us_utils_static PRIVATE -g -O0)
+        if(MSVC)
+            target_compile_options(us_utils_static PRIVATE /Zi /Od)
+        else()
+            target_compile_options(us_utils_static PRIVATE -g -O0)
+        endif()
+    endif()
+    # Platform-specific libraries
+    if(UNIX AND NOT APPLE)
+        # Linux-specific libraries
+        if(X11_FOUND)
+            target_link_libraries(us_utils_static PUBLIC ${X11_LIBRARIES})
+            target_include_directories(us_utils_static PUBLIC ${X11_INCLUDE_DIR})
+        endif()
+    elseif(WIN32)
+        # Windows system libraries
+        target_link_libraries(us_utils_static PUBLIC ${WIN32_SYSTEM_LIBS})
     endif()
 
     # Export static library alias

@@ -2,7 +2,9 @@
 #define US_COMPROJECT_H
 
 #include <QApplication>
+#if !(defined(_WIN32) || defined(_WIN64) || defined(Q_OS_WIN))
 #include <unistd.h>
+#endif
 #include <fstream>
 #include <QtSql>
 

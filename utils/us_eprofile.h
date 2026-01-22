@@ -2,7 +2,6 @@
 #ifndef US_EXTPROF_H
 #define US_EXTPROF_H
 
-#include <QtCore>
 #include "us_extern.h"
 #include "us_db2.h"
 

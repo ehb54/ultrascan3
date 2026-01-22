@@ -1,30 +1,45 @@
 cmake_minimum_required(VERSION 3.15)
 project(qwtplot3d VERSION 6.1.4 LANGUAGES CXX)
-
+# Enable Position Independent Code for all targets
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 # Find required packages
-find_package(Qt5 REQUIRED COMPONENTS Core Widgets OpenGL Gui)
+if(USE_QT6)
+  find_package(Qt6 REQUIRED COMPONENTS Core Widgets OpenGL Gui OpenGLWidgets)
+else()
+  find_package(Qt5 REQUIRED COMPONENTS Core Widgets OpenGL Gui)
+endif()
 find_package(OpenGL REQUIRED)
 
-# Find Qwt manually since vcpkg's qwt port doesn't provide CMake configs
-find_library(QWT_LIBRARY
-        NAMES qwt qwt-qt5 qwt6
-        REQUIRED
-        )
-find_path(QWT_INCLUDE_DIR
-        NAMES qwt_plot.h
-        PATH_SUFFIXES qwt qwt-qt5 qwt6
-        REQUIRED
-        )
+find_package(unofficial-qwt CONFIG QUIET)
+if(NOT unofficial-qwt_FOUND)
+    message(STATUS "unofficial-qwt not found via config, trying manual find")
 
-# Create imported target for Qwt
-if(NOT TARGET Qwt::Qwt)
-    add_library(Qwt::Qwt UNKNOWN IMPORTED)
-    set_target_properties(Qwt::Qwt PROPERTIES
-            IMPORTED_LOCATION "${QWT_LIBRARY}"
-            INTERFACE_INCLUDE_DIRECTORIES "${QWT_INCLUDE_DIR}"
+    # Find Qwt manually since vcpkg's qwt port doesn't provide CMake configs
+    find_library(QWT_LIBRARY
+            NAMES qwt qwt-qt5 qwt6
+            REQUIRED
             )
-    message(STATUS "Found Qwt: ${QWT_LIBRARY}")
-    message(STATUS "Qwt includes: ${QWT_INCLUDE_DIR}")
+    find_path(QWT_INCLUDE_DIR
+            NAMES qwt_plot.h
+            PATH_SUFFIXES qwt qwt-qt5 qwt6
+            REQUIRED
+            )
+
+    # Create imported target for Qwt
+    if(NOT TARGET Qwt::Qwt)
+        add_library(Qwt::Qwt UNKNOWN IMPORTED)
+        set_target_properties(Qwt::Qwt PROPERTIES
+                IMPORTED_LOCATION "${QWT_LIBRARY}"
+                INTERFACE_INCLUDE_DIRECTORIES "${QWT_INCLUDE_DIR}"
+                )
+        message(STATUS "Found Qwt: ${QWT_LIBRARY}")
+        message(STATUS "Qwt includes: ${QWT_INCLUDE_DIR}")
+    endif()
+else()
+    message(STATUS "Found unofficial-qwt via config")
+    if(NOT TARGET Qwt::Qwt)
+        add_library(Qwt::Qwt ALIAS unofficial::qwt::qwt)
+    endif()
 endif()
 
 # Get source files
@@ -61,13 +76,16 @@ target_include_directories(qwtplot3d PUBLIC
 
 # Link libraries
 target_link_libraries(qwtplot3d PUBLIC
-        Qt5::Core
-        Qt5::Widgets
-        Qt5::OpenGL
-        Qt5::Gui
+        Qt::Core
+        Qt::Widgets
+        Qt::OpenGL
+        Qt::Gui
         OpenGL::GL
         Qwt::Qwt
         )
+if(USE_QT6)
+    target_link_libraries(qwtplot3d PUBLIC Qt::OpenGLWidgets)
+endif()
 
 # Platform-specific OpenGL libraries
 if(WIN32)
@@ -118,7 +136,11 @@ write_basic_package_version_file(
 # Simple config file
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/qwtplot3dConfig.cmake"
         "include(CMakeFindDependencyMacro)
-find_dependency(Qt5 COMPONENTS Core Widgets OpenGL Gui)
+if(USE_QT6)
+    find_dependency(Qt6 COMPONENTS Core Widgets OpenGL Gui OpenGLWidgets)
+else()
+    find_dependency(Qt5 COMPONENTS Core Widgets OpenGL Gui)
+endif()
 find_dependency(OpenGL)
 include(\"\${CMAKE_CURRENT_LIST_DIR}/qwtplot3dTargets.cmake\")
 ")

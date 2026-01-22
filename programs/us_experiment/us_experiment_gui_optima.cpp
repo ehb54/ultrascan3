@@ -905,7 +905,7 @@ void US_ExperGuiGeneral::run_name_entered( void )
 {
 DbgLv(1) << "EGGe: rchg: IN";
    // Modify run name to have only valid characters
-   QRegExp rx( "[^A-Za-z0-9_-]" );
+   QRegularExpression rx( "[^A-Za-z0-9_-]" );
    QString rname     = le_runid->text();
    QString old_rname = rname;
 DbgLv(1) << "EGGe: rchg: old_rname" << old_rname;
@@ -3798,11 +3798,11 @@ void US_ExperGuiSpeeds::ssChangeScInt( double val, int row )
   double time_scint;
   if (val <= 14999 )
     time_scint = a0[0] + qRound( a1[0]/val );
-  if (val >= 15000 and val <= 32999 )
+  if (val >= 15000 && val <= 32999 )
     time_scint = a0[1] + qRound( a1[1]/val );
-  if (val >= 33000 and val <= 50999 )
+  if (val >= 33000 && val <= 50999 )
     time_scint = a0[2] + qRound( a1[2]/val );
-  if (val >= 51000 and val <= 60000 )
+  if (val >= 51000 && val <= 60000 )
     time_scint = a0[3] + qRound( a1[3]/val );
 
   ssvals[row]["scanintv"]     = time_scint;
@@ -4488,7 +4488,7 @@ void US_ExperGuiSpeeds::adjustDelay( void )
    double pspeed    = ( curssx > 0 ) ? ssvals[ curssx - 1 ][ "speed" ] : 0.0;
    double spdelta   = fabs(cspeed - pspeed);               // Speed delta          <-- In case there is deceleration..
    double accel     = ssvals[ curssx ][ "accel" ];   // Acceleration
-#warning "Check if this accel is guaranteed to be non-zero, inform user if it is zero?"
+// #warning "Check if this accel is guaranteed to be non-zero, inform user if it is zero?"
    double delaylow  = qCeil( spdelta / accel );      // Low seconds delay
 
    //Uv-vis
@@ -5483,7 +5483,7 @@ DbgLv(1) << "EGSo:addComm:  cclabl" << cclabl;
        else
 	 {
 	   protocol_comment.replace(sdescr, "");
-	   protocol_comment.remove( QRegExp("^[,\\s*]+") );
+	   protocol_comment.remove( QRegularExpression("^[,\\s*]+") );
 	   
 	   manual_comment[ row_comment ] = protocol_comment.trimmed();  // Initialize manual comment for solution from protocol
 	 }
@@ -9570,14 +9570,14 @@ void US_ExperGuiUpload::submitExperiment()
 
       QStringList researcher_split = (mainw->currProto.investigator).split(':');
       QString researcher_trimmed   = researcher_split[1].trimmed();
-      QRegExp rx( "[^A-Za-z0-9_-, ]" );
+      QRegularExpression rx( "[^A-Za-z0-9_-, ]" );
       researcher_trimmed.replace( rx,  "" );
       QString researcher           = "\'" + researcher_trimmed + "\'";
 
 
       QString name                 = "\'" + runname + "\'";
       QString project_name         = mainw->currProto.project;
-      QRegExp rx1( "[^A-Za-z0-9_-]" );
+      QRegularExpression rx1( "[^A-Za-z0-9_-]" );
       project_name.replace( rx1,  "_" );
       
       
@@ -11084,7 +11084,7 @@ if(! rdir.exists(rpath) ) rdir.mkpath(rpath);
 QFile jfile(fpath);
 if(jfile.open(QIODevice::WriteOnly|QIODevice::Text))
 {
- int flen=jb_exper.count();
+ int flen=jb_exper.length();
  QDataStream* fso = new QDataStream( &jfile );
  fso->writeRawData( jb_exper.constData(), flen );
  jfile.close();

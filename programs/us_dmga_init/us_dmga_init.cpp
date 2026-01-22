@@ -391,7 +391,7 @@ DbgLv(1) << "dGA:save_constraints";
 
       if ( !ok )  return;
 
-      suffix.remove( QRegExp( "[^\\w\\d_-]" ) );
+      suffix.remove( QRegularExpression( "[^\\w\\d_-]" ) );
 
       if ( suffix.length() > 20 )  suffix = suffix.left( 20 );
       cmfdesc           = now + ftype + suffix + fext;

@@ -482,7 +482,7 @@ class US_Edit : public US_Widgets
       void set_dataRange     ( void );
       void set_plateau       ( void );
       void set_linear_baseline_corr( void );
-      void mouse             ( const QwtDoublePoint& );
+      void mouse             ( const QPointF& );
 
       void noise             ( void );
       void subtract_residuals( void );

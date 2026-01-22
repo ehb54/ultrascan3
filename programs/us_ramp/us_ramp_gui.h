@@ -170,8 +170,8 @@ class US_RampGui : public US_Widgets
 //       int  findTripleIndex ( void );
 //       void focus           ( int, int );
 //       void init_excludes   ( void );
-//       void start_reference  ( const QwtDoublePoint& );
-//       void process_reference( const QwtDoublePoint& );
+//       void start_reference  ( const QPointF& );
+//       void process_reference( const QPointF& );
 //       void PseudoCalcAvg   ( void );
 //       void PseudoCalcAvgMWL( void );
 //       bool read            ( void );
@@ -229,7 +229,7 @@ class US_RampGui : public US_Widgets
       void getCenterpieceIndex( int );
 //       void include           ( void );
 //       void define_subsets    ( void );
-//       void cClick            ( const QwtDoublePoint& );
+//       void cClick            ( const QPointF& );
 //       void process_subsets   ( void );
       void define_reference  ( void );
 //       void show_intensity    ( void );

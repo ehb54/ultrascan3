@@ -24,21 +24,50 @@ target_include_directories(us_program_common INTERFACE
 # 1) Always-needed deps
 # --------------------------------------------------------------------------
 target_link_libraries(us_program_common INTERFACE
-        Qt5::Core
-        Qt5::Gui
-        Qt5::Widgets
-        Qt5::Network
-        Qt5::Sql
-        Qt5::Xml
-        Qt5::Svg
-        Qt5::OpenGL
-        Qt5::PrintSupport
+        Qt::Core
+        Qt::Gui
+        Qt::Widgets
+        Qt::Network
+        Qt::Sql
+        Qt::Xml
+        Qt::Svg
+        Qt::OpenGL
+        Qt::PrintSupport
         Qwt::Qwt
+        qwtplot3d::qwtplot3d
         )
+if (USE_QT6)
+    target_link_libraries(us_program_common INTERFACE Qt::OpenGLWidgets)
+endif()
 
 # resources are their own target at the top level
 if(TARGET UltraScan3::Resources)
-    target_link_libraries(us_program_common INTERFACE UltraScan3::Resources)
+    if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.24)
+        # Portable: CMake translates this to --whole-archive / -force_load / /WHOLEARCHIVE as appropriate.
+        target_link_libraries(us_program_common INTERFACE
+                $<LINK_LIBRARY:WHOLE_ARCHIVE,UltraScan3::Resources>
+        )
+    else()
+        # Fallbacks for older CMake
+        if(MSVC)
+            # MSVC: force whole archive
+            target_link_options(us_program_common INTERFACE
+                    "/WHOLEARCHIVE:$<TARGET_FILE:UltraScan3::Resources>"
+            )
+            target_link_libraries(us_program_common INTERFACE UltraScan3::Resources)
+        elseif(APPLE)
+            # Apple ld64: force-load the archive
+            target_link_options(us_program_common INTERFACE
+                    "-Wl,-force_load,$<TARGET_FILE:UltraScan3::Resources>"
+            )
+            target_link_libraries(us_program_common INTERFACE UltraScan3::Resources)
+        else()
+            # GNU ld / gold / lld (Linux, MinGW, etc.)
+            target_link_libraries(us_program_common INTERFACE
+                    "-Wl,--whole-archive" UltraScan3::Resources "-Wl,--no-whole-archive"
+            )
+        endif()
+    endif()
 else()
     message(FATAL_ERROR "UltraScan3::Resources target not found – resources must be built before programs/")
 endif()
@@ -105,13 +134,17 @@ else()
     message(STATUS "[programs] US3_NO_DB=ON → GUI not linked into programs")
 endif()
 
+if(WIN32)
+    target_compile_definitions(us_program_common INTERFACE QWT_DLL QT_DLL)
+endif()
+
 # --------------------------------------------------------------------------
 # 4) Add all per-program subdirectories
 # --------------------------------------------------------------------------
 if(NOT ENABLE_MPI)
-    set(EXCLUDED_PROGRAMS us_mpi_analysis)
+    set(EXCLUDED_PROGRAMS us_mpi_analysis CMakeFiles generated)
 else()
-    set(EXCLUDED_PROGRAMS)
+    set(EXCLUDED_PROGRAMS CMakeFiles generated)
 endif()
 
 file(GLOB program_dirs LIST_DIRECTORIES true RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*")

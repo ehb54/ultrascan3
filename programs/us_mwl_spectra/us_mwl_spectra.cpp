@@ -1,6 +1,6 @@
 //! \file us_mwl_spectra.cpp
 #include <QApplication>
-
+#include <qwt_scale_div.h>
 #include "us_mwl_spectra.h"
 #include "us_mwls_pltctl.h"
 #include "us_license_t.h"
@@ -350,9 +350,8 @@ void US_MwlSpectra::resetAll( void )
                tr( "This will erase all data currently on the screen, and " 
                    "reset the program to its starting condition. No hard-drive "
                    "data or database information will be affected. Proceed? " ),
-               tr( "&OK" ), tr( "&Cancel" ),
-               0, 0, 1 );
-      if ( status != 0 ) return;
+               QMessageBox::Ok | QMessageBox::Cancel, QMessageBox::Cancel );
+      if ( status != QMessageBox::Ok ) return;
    }
 
    reset();
@@ -1652,7 +1651,7 @@ DbgLv(1) << "SvD: dname" << dname;
 
    if ( ok  &&  ename != dname )
    {
-      dname         = ename.remove( QRegExp( "[^\\w\\d._-]" ) );
+      dname         = ename.remove( QRegularExpression( "[^\\w\\d._-]" ) );
    }
 
    QString dpath = rdir + dname;

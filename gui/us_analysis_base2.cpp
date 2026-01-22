@@ -234,7 +234,7 @@ US_AnalysisBase2::US_AnalysisBase2() : US_Widgets()
    dfilter    = "";
    etype_filt = "velocity";
 
-   setMaximumSize( qApp->desktop()->size() - QSize( 60, 60 ) );
+   setMaximumSize( QGuiApplication::primaryScreen()->availableSize() - QSize( 60, 60 ) );
    reset();
 //qDebug() << "AB2: desktop size" << qApp->desktop()->size();
 //qDebug() << "AB2: max main size" << maximumSize();
@@ -1207,8 +1207,8 @@ QString US_AnalysisBase2::run_details( void ) const
    {
       double t = d->scanData[ i ].temperature;
       sum += t;
-      maxTemp = max( maxTemp, t );
-      minTemp = min( minTemp, t );
+      maxTemp = qMax( maxTemp, t );
+      minTemp = qMin( minTemp, t );
    }
 
    QString average = QString::number( sum / d->scanData.size(), 'f', 1 );
@@ -1533,13 +1533,13 @@ void US_AnalysisBase2::load_noise( int index )
 
       for ( int ii = 0; ii < nscans; ii++ )
       {
-         int    iin    = min( ii, ( nrinois - 1 ) );
+         int    iin    = qMin( ii, ( nrinois - 1 ) );
          double rinoi  = ( nrinois > 0 ) ? ri_noise.values[ iin ] : 0.0;
          US_DataIO::Scan*  escan = &edata->scanData[ ii ];
 
          for ( int jj = 0; jj < npoints; jj++ )
          {
-            int    jjn    = min( jj, ( ntinois - 1 ) );
+            int    jjn    = qMin( jj, ( ntinois - 1 ) );
             double tinoi  = ( ntinois > 0 ) ? ti_noise.values[ jjn ] : 0.0;
 
             escan->rvalues[ jj ] = edata->value( ii, jj ) - rinoi - tinoi;
@@ -1550,7 +1550,7 @@ void US_AnalysisBase2::load_noise( int index )
       }
 
       // Keep track of noise applied to this triple and save each
-      noiflags[ index ] = min( nrinois, 1 ) + 2 * min( ntinois, 1 );
+      noiflags[ index ] = qMin( nrinois, 1 ) + 2 * qMin( ntinois, 1 );
 
       rinoises[ index ] = nrinois > 0 ? ri_noise : US_Noise();
       tinoises[ index ] = ntinois > 0 ? ti_noise : US_Noise();

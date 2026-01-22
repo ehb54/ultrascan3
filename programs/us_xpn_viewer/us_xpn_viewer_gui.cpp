@@ -1,6 +1,6 @@
 #include <QApplication>
 #include <QtSql>
-
+#include <qwt_scale_div.h>
 #include "us_xpn_viewer_gui.h"
 #include "us_tmst_plot.h"
 #include "us_license_t.h"
@@ -75,7 +75,12 @@ SpeedoMeter *DialBox::createDial( void ) const
 
   dial->setScaleStepSize( 5 );
   dial->setScale( 0, 60 );
+#if QWT_VERSION < QT_VERSION_CHECK(6, 2, 0)
   dial->scaleDraw()->setPenWidth( 2 );
+#else
+  dial->scaleDraw()->setPenWidthF( 2 );
+#endif
+
   dial->setValue(0);
 
   return dial;
@@ -84,7 +89,7 @@ SpeedoMeter *DialBox::createDial( void ) const
 // END of Dial box
 
 
-// Speedometer
+// Speedometer= 0x060000
 SpeedoMeter::SpeedoMeter( QWidget *parent ):
     QwtDial( parent ),
     d_label( "RPM" )
@@ -155,6 +160,7 @@ WheelBox::WheelBox( Qt::Orientation orientation, double minv, double maxv, QStri
 
 QWidget *WheelBox::createBox( Qt::Orientation orientation, double minv, double maxv, bool log ) 
 {
+    this->log_scale = log;
     d_thermo = new QwtThermo();
     d_thermo->setOrientation( orientation );
 
@@ -198,9 +204,16 @@ QWidget *WheelBox::createBox( Qt::Orientation orientation, double minv, double m
 void WheelBox::setTemp( double v, QString label )
 {
   qDebug() << "Setting Temperature!!! Value: " << v ;
-  d_thermo->setValue( v );
+  double v_mod = v;
 
-  setNum( v, label );
+  if ( log_scale )
+    {
+      v_mod = ( v_mod > 0 ) ? v_mod : 10e-9; 
+    }
+  
+  d_thermo->setValue( v_mod );
+
+  setNum( v_mod, label );
 }
 
 void WheelBox::setNum( double v, QString label )
@@ -1573,9 +1586,8 @@ void US_XpnDataViewer::resetAll( void )
                tr( "This will erase all data currently on the screen, and " 
                    "reset the program to its starting condition. No hard-drive "
                    "data or database information will be affected. Proceed? " ),
-               tr( "&OK" ), tr( "&Cancel" ),
-               0, 0, 1 );
-      if ( status != 0 ) return;
+               QMessageBox::Ok | QMessageBox::Cancel, QMessageBox::Cancel );
+      if ( status != QMessageBox::Ok ) return;
    }
 
    reset();
@@ -3224,7 +3236,7 @@ void US_XpnDataViewer::retrieve_xpn_raw_auto( void )
    QString fExpNm    = QString( drDesc ).section( delim, 5, 5 );
    QString new_runID = fExpNm + "-run" + fRunId;
    runType           = "RI";
-   QRegExp rx( "[^A-Za-z0-9_-]" );
+   static QRegularExpression rx( "[^A-Za-z0-9_-]" );
 
    int pos            = 0;
    //bool runID_changed = false;
@@ -3236,7 +3248,7 @@ void US_XpnDataViewer::retrieve_xpn_raw_auto( void )
       //runID_changed     = true;
    }
 
-   while ( ( pos = rx.indexIn( new_runID ) ) != -1 )
+   while ( ( pos = new_runID.indexOf( rx ) ) != -1 )
    {
       new_runID.replace( pos, 1, "_" );         // Replace 1 char at pos
       //runID_changed     = true;
@@ -3982,7 +3994,7 @@ DbgLv(1) << "RDr:   drDesc" << drDesc;
    QString fExpNm    = QString( drDesc ).section( delim, 5, 5 );
    QString new_runID = fExpNm + "-run" + fRunId;
    runType           = "RI";
-   QRegExp rx( "[^A-Za-z0-9_-]" );
+   static QRegularExpression rx( "[^A-Za-z0-9_-]" );
 
    int pos            = 0;
    bool runID_changed = false;
@@ -3994,7 +4006,7 @@ DbgLv(1) << "RDr:   drDesc" << drDesc;
       runID_changed     = true;
    }
 
-   while ( ( pos = rx.indexIn( new_runID ) ) != -1 )
+   while ( ( pos = new_runID.indexOf( rx ) ) != -1 )
    {
       new_runID.replace( pos, 1, "_" );         // Replace 1 char at pos
       runID_changed     = true;
@@ -4235,8 +4247,8 @@ void US_XpnDataViewer::load_auc_xpn( )
 DbgLv(1) << "RDa: runID" << new_runID;
 DbgLv(1) << "RDa: dir" << dir;
       
-   QRegExp rx( "^[A-Za-z0-9_-]{1,80}$" );
-   if ( rx.indexIn( new_runID ) < 0 )
+   static QRegularExpression rx( "^[A-Za-z0-9_-]{1,80}$" );
+   if ( !rx.match( new_runID ).hasMatch() )
    {
       QMessageBox::warning( this,
             tr( "Bad runID Name" ),
@@ -5062,8 +5074,7 @@ void US_XpnDataViewer::export_auc()
       int status = QMessageBox::information( this, tr( "Data Overwrite Warning..." ),
                tr( "This operation will overwrite all data currently in"
                    "the same directory where these data were loaded from. Proceed? " ),
-               tr( "&OK" ), tr( "&Cancel" ),
-               0, 0, 1 );
+               QMessageBox::Ok | QMessageBox::Cancel, QMessageBox::Cancel );
       if ( status != 0 ) return;
    }
    QString runIDt = le_runID->text();              // User given run ID text
@@ -5072,11 +5083,11 @@ DbgLv(1) << "ExpAuc: runID" << runID;
 
    if ( runIDt != runID )
    {  // Set runID to new entry given by user
-      QRegExp rx( "[^A-Za-z0-9_-]" );              // Possibly modify entry
+      static QRegularExpression rx( "[^A-Za-z0-9_-]" );              // Possibly modify entry
       QString new_runID  = runIDt;
       int pos            = 0;
 
-      while ( ( pos = rx.indexIn( new_runID ) ) != -1 )
+      while ( ( pos = new_runID.indexOf( rx ) ) != -1 )
       {  // Loop thru any invalid characters given (not alphanum.,'_','-')
          new_runID.replace( pos, 1, "_" );         // Replace 1 char at pos
       }
@@ -5734,7 +5745,7 @@ DbgLv(0) << "NO Chromatic Aberration correction for Interference data";
 
    if ( !chromoArrayString.isEmpty() )
      {
-       strl = chromoArrayString.split(QRegExp("[\r\n\t ]+"));
+       strl = chromoArrayString.split(QRegularExpression("[\r\n\t ]+"));
        
        foreach (QString str, strl)
 	 {

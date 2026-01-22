@@ -1210,7 +1210,7 @@ void US_ReporterGMP::check_models ( int autoflowID )
 	{
 	  QString wvl            = QString::number( chann_wvls[ jj ] );
 	  
-	  QString tripleName = channel_desc_alt.section( ":", 0, 0 )[0] + "." + channel_desc_alt.section( ":", 0, 0 )[1];
+	  QString tripleName = channel_desc_alt.section( ":", 0, 0 )[0] + QString(".") + channel_desc_alt.section( ":", 0, 0 )[1];
 
 	  if ( channel_desc_alt.contains( "Interf" ) ) 
 	    tripleName += ".Interference";
@@ -2775,7 +2775,7 @@ void US_ReporterGMP::build_perChanTree ( void )
 
 	      //Push to Array_of_triples;
 	      //QString tripleName = channel_desc_alt.section( ":", 0, 0 )[0] + "." + channel_desc_alt.section( ":", 0, 0 )[1] + "." + wvl;
-	      QString tripleName = channel_desc_alt.section( ":", 0, 0 )[0] + "." + channel_desc_alt.section( ":", 0, 0 )[1];
+	      QString tripleName = channel_desc_alt.section( ":", 0, 0 )[0] + QString(".") + channel_desc_alt.section( ":", 0, 0 )[1];
 
 	      if ( channel_desc_alt.contains( "Interf" ) ) 
 		tripleName += ".Interference";
@@ -10310,10 +10310,10 @@ void US_ReporterGMP::distrib_plot_stick( int type )
       yval     = model_used.components[ jj ].signal_concentration;
       xx[ jj ] = xval;
       yy[ jj ] = yval;
-      xmin     = min( xval, xmin );
-      xmax     = max( xval, xmax );
-      ymin     = min( yval, ymin );
-      ymax     = max( yval, ymax );
+      xmin     = qMin( xval, xmin );
+      xmax     = qMax( xval, xmax );
+      ymin     = qMin( yval, ymin );
+      ymax     = qMax( yval, ymax );
    }
 
    rdif   = ( xmax - xmin ) / 20.0;
@@ -10322,8 +10322,8 @@ void US_ReporterGMP::distrib_plot_stick( int type )
    rdif   = ( ymax - ymin ) / 20.0;
    ymin  -= rdif;
    ymax  += rdif;
-   xmin   = ( type == 0 ) ? xmin : max( xmin, 0.0 );
-   ymin   = max( ymin, 0.0 );
+   xmin   = ( type == 0 ) ? xmin : qMax( xmin, 0.0 );
+   ymin   = qMax( ymin, 0.0 );
 
    data_grid->enableYMin ( true );
    data_grid->enableY    ( true );
@@ -10426,10 +10426,10 @@ void US_ReporterGMP::distrib_plot_2d( int type )
 
       xx[ jj ] = xval;
       yy[ jj ] = yval;
-      xmin     = min( xval, xmin );
-      xmax     = max( xval, xmax );
-      ymin     = min( yval, ymin );
-      ymax     = max( yval, ymax );
+      xmin     = qMin( xval, xmin );
+      xmax     = qMax( xval, xmax );
+      ymin     = qMin( yval, ymin );
+      ymax     = qMax( yval, ymax );
    }
 
    rdif   = ( xmax - xmin ) / 20.0;
@@ -10438,8 +10438,8 @@ void US_ReporterGMP::distrib_plot_2d( int type )
    rdif   = ( ymax - ymin ) / 20.0;
    ymin  -= rdif;
    ymax  += rdif;
-   xmin   = ( type & 1 ) == 1 ? xmin : max( xmin, 0.0 );
-   ymin   = max( ymin, 0.0 );
+   xmin   = ( type & 1 ) == 1 ? xmin : qMax( xmin, 0.0 );
+   ymin   = qMax( ymin, 0.0 );
 
    data_grid->enableYMin ( true );
    data_grid->enableY    ( true );
@@ -10541,9 +10541,8 @@ void US_ReporterGMP::write_plot( const QString& filename, const QwtPlot* plot )
        bool ok          = widgw->save_plot( filename, QString( "png" ) );
  #else
        qDebug() << "3D: Q_OS_LINUX || other";	  
-       QGLWidget* dataw = eplotcd->data_3dplot();
-       QPixmap pixmap   = dataw->renderPixmap( dataw->width(), dataw->height(),
-                                             true  );
+       QOpenGLWidget* dataw = eplotcd->data_3dplot();
+       QPixmap pixmap   = dataw->grab( );
        bool ok          = pixmap.save( filename );
  #endif
 
@@ -13464,7 +13463,7 @@ void US_ReporterGMP::add_solution_details( const QString sol_id, const QString s
       else
 	{
 	  seqsmry         = seqsmry.toLower()
-	    .remove( QRegExp( "[\\s0-9]" ) );
+	    .remove( QRegularExpression( "[\\s0-9]" ) );
 	  seqlen          = seqsmry.length();
 	  if ( seqlen > 25 )
 	    {

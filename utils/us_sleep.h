@@ -2,7 +2,7 @@
 #ifndef US_SLEEP_H
 #define US_SLEEP_H
 
-#include <QtCore>
+#include <QThread>
 
 //! \brief A static only class to provide sleep functions, 
 //! primarily for Windows.  Although this file is in the

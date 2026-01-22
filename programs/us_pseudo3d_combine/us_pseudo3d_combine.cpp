@@ -530,14 +530,15 @@ void US_Pseudo3D_Combine::plot_data( void )
 //   d_spectrogram->setColorMap( (QwtColorMap*)colormap );
    d_spectrogram->setColorMap( ColorMapCopy( colormap ) );
    US_SpectrogramData& spec_dat = (US_SpectrogramData&)*(d_spectrogram->data());
-   QwtDoubleRect drect;
+
+   QRectF drect;
 
    if ( auto_sxy )
-      drect = QwtDoubleRect( 0.0, 0.0, 0.0, 0.0 );
+      drect = QRectF( 0.0, 0.0, 0.0, 0.0 );
 
    else
    {
-      drect = QwtDoubleRect( plt_smin, plt_kmin,
+      drect = QRectF( plt_smin, plt_kmin,
             ( plt_smax - plt_smin ), ( plt_kmax - plt_kmin ) );
    }
 
@@ -1251,7 +1252,7 @@ void US_Pseudo3D_Combine::sort_distro( QList< S_Solute >& listsols,
              sol2.s  = ( sol1.s + sol2.s ) * 0.5;  // average s,k
              sol2.k  = ( sol1.k + sol2.k ) * 0.5;
              reduced.replace( reduced.size() - 1, sol2 );
-             kdup    = max( kdup, ++jdup );
+             kdup    = qMax( kdup, ++jdup );
           }
 
           sol1    = sol2;        // save entry for next iteration
