@@ -8,6 +8,8 @@
 
 #include <qwt_legend.h>
 
+using namespace Qwt3D;
+
 // constructor:  enhanced plot control widget
 US_PlotControlFem::US_PlotControlFem( QWidget* p, US_Model* amodel )
    : US_WidgetsDialog( nullptr, Qt::WindowFlags() )
@@ -49,6 +51,7 @@ US_PlotControlFem::US_PlotControlFem( QWidget* p, US_Model* amodel )
    QLabel* lb_ryscale     = us_label(  tr( "Relative Y Scale:" ) );
 
    QPushButton* pb_plot3d = us_pushbutton( tr( "3D Plot" ) );
+   QPushButton* pb_save_all = us_pushbutton( tr( "Save" ) );
    QPushButton* pb_help   = us_pushbutton( tr( "Help" ) );
    QPushButton* pb_close  = us_pushbutton( tr( "Close" ) );
 
@@ -121,6 +124,7 @@ US_PlotControlFem::US_PlotControlFem( QWidget* p, US_Model* amodel )
    controlsLayout->addWidget( ct_ryscale,   row++, 2, 1, 2 );
 
    buttonsLayout->addWidget( pb_plot3d );
+   buttonsLayout->addWidget( pb_save_all );
    buttonsLayout->addWidget( pb_help   );
    buttonsLayout->addWidget( pb_close  );
 
@@ -202,6 +206,8 @@ US_PlotControlFem::US_PlotControlFem( QWidget* p, US_Model* amodel )
             this,      SLOT( help()      ) );
    connect( pb_close,  SIGNAL( clicked() ),
             this,      SLOT( close_all() ) );
+   connect( pb_save_all, SIGNAL( clicked() ),
+      this, SLOT(save_all()));
 
    plot3d_w = 0;
 
@@ -444,7 +450,7 @@ void US_PlotControlFem::plot3_btn_auto()
    double ryscl  = ct_ryscale->value();
 //qDebug() << "PC: p3btn type x,y" << typex << typey;
 
-   if ( plot3d_w == 0 )
+   if ( plot3d_w == nullptr )
    {
      plot3d_w = new US_Plot3D( this, model );
      connect( plot3d_w, SIGNAL( has_closed() ),
@@ -461,8 +467,10 @@ void US_PlotControlFem::plot3_btn_auto()
 // close button clicked
 void US_PlotControlFem::close_all()
 {
-   if ( plot3d_w != 0 )
+   if ( plot3d_w != nullptr )
+   {
       plot3d_w->close();
+   }
 
    close();
 }
@@ -470,7 +478,7 @@ void US_PlotControlFem::close_all()
 // plot window close has happened
 void US_PlotControlFem::plot_close()
 {
-   plot3d_w = 0;
+   plot3d_w = nullptr;
 }
 
 int US_PlotControlFem::dimensionType( QVector< QCheckBox* >& xycheck )
@@ -489,3 +497,62 @@ int US_PlotControlFem::dimensionType( QVector< QCheckBox* >& xycheck )
    return dimType;
 }
 
+void US_PlotControlFem::save_all()
+{
+   QString filename = QFileDialog::getSaveFileName(this, tr("Save 3D plots"));
+   if (filename.isEmpty())
+   {
+      return;
+   }
+   if (plot3d_w == nullptr) {
+      // save s-D
+      plot3d_w = new US_Plot3D( this, model );
+      connect( plot3d_w, SIGNAL( has_closed() ),
+               this,     SLOT(   plot_close() )  );
+      plot3d_w->setVisible( true );
+   }
+   QMap<int,QString> name_map;
+   name_map[1] = "mw";
+   name_map[2] = "s";
+   name_map[3] = "D";
+   name_map[4] = "f";
+   name_map[5] = "ff0";
+   name_map[6] = "vbar";
+
+   for (int ii = 1; ii < 7; ii++)
+   {
+      int    typex  = 2; // s
+      int    typey  = ii; // mw 1, D 2 ff0 4
+      if (typex == typey)
+      {
+         continue;
+      }
+      QString save_path = filename + "-3D-" + name_map[typex] + "-" + name_map[typey] + ".csv";
+      int    typez  = 1;
+      double rxscl  = ct_rxscale->value();
+      double ryscl  = ct_ryscale->value();
+      plot3d_w->setTypes     ( typex, typey, typez );
+      plot3d_w->setParameters( zscale, gridres, pksmooth, pkwidth, rxscl, ryscl );
+      plot3d_w->replot       ( );
+      // save to csv located at ofname
+      plot3d_w->save_csv(save_path);
+   }
+}
+
+
+void US_PlotControlFem::closeEvent( QCloseEvent* event )
+{
+   // Make sure any open 3D plot is closed when this dialog goes away
+   close_everything();
+   US_WidgetsDialog::closeEvent( event );
+}
+
+// Actually close (and destroy) the 3D‐plot widget if it exists
+void US_PlotControlFem::close_everything()
+{
+   if ( plot3d_w )
+   {
+      plot3d_w->close();    // send close to the 3D‐plot window
+      plot3d_w.clear();     // QPointer becomes null and object is deleted
+   }
+}

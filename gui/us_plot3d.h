@@ -29,7 +29,8 @@ class US_GUI_EXTERN US_Plot3D : public QMainWindow
       //! \brief Constructor for surface plot class
       //! \param p  A pointer to the parent widget of this one
       //! \param m  A pointer to the model whose data is to be plotted
-      US_Plot3D( QWidget* = NULL, US_Model* = NULL, QVector< QVector3D >* = NULL );
+      //! \param d  A pointer to the xyz mesh whose data is to be plotted
+      US_Plot3D( QWidget* p = nullptr, US_Model* m = nullptr, QVector< QVector3D >* d = nullptr );
 
       //! \brief Public function to set plot titles
       //! \param wndt  Window title
@@ -37,20 +38,20 @@ class US_GUI_EXTERN US_Plot3D : public QMainWindow
       //! \param xat   X annotation title
       //! \param yat   Y annotation title
       //! \param zat   Z annotation title
-      void setTitles    ( QString, QString, QString, QString, QString );
+      void setTitles    ( const QString& wndt, const QString& pltt, const QString& xat, const QString& yat, const QString& zat );
 
       //! \brief Public function to set 3 coordinate type flags
       //! \param tx  The type flag for X (1=MW, 2=s, ...)
       //! \param ty  The type flag for Y
       //! \param tz  The type flag for Z
-      void setTypes     ( int, int, int );
+      void setTypes     ( int tx, int ty, int tz );
 
       //! \brief Set dimension value types and calculate data ranges
       void calculateAxes( void );
 
       //! \brief Public function to reset the plot title
       //! \param pltt  Plot title
-      void setPlotTitle ( QString );
+      void setPlotTitle ( const QString& pltt );
 
 
 
@@ -62,8 +63,8 @@ class US_GUI_EXTERN US_Plot3D : public QMainWindow
       //! \param z_scale  Z scale factor
       //! \param a_alpha  Alpha factor (0.0 to ignore and do contour)
       //! \param a_beta   Beta factor
-      void setParameters( int, int, double = 1.0, double = 1.0, double = 1.0,
-                          double = 0.0, double = 0.0 );
+      void setParameters( int a_gridx, int a_gridy, double x_scale = 1.0, double y_scale = 1.0, double z_scale = 1.0,
+                          double a_alpha = 0.0, double a_beta = 0.0 );
 
       //! \brief Public function to set plot control parameters
       //! \param z_scale  Z scale factor
@@ -72,16 +73,16 @@ class US_GUI_EXTERN US_Plot3D : public QMainWindow
       //! \param a_beta   Beta factor
       //! \param x_scale  Relative X scale factor
       //! \param y_scale  Relative Y scale factor
-      void setParameters( double, double, double, double,
-                          double = 1.0, double = 1.0 );
+      void setParameters( double z_scale, double a_gridr, double a_alpha, double a_beta,
+                          double x_scale = 1.0, double y_scale = 1.0 );
 
       //! \brief Public function to load new data
       //! \param d  A pointer to a new vector of x,y,z data to be plotted
-      void reloadData   ( QVector< QVector3D >* );
+      void reloadData   ( QVector< QVector3D >* d );
 
       //! \brief Public function to (re)calculate Z values at fixed increments
       //! \param zdat     Z data vector of vectors
-      void calculateData( QVector< QVector< double > >& );
+      void calculateData( QVector< QVector< double > >& zdat );
 
       //! \brief Public function to (re)calculate data Z values
       void calculateData( void );
@@ -91,16 +92,22 @@ class US_GUI_EXTERN US_Plot3D : public QMainWindow
 
       //! \brief Public function to replot the 3D data
       //! \param hold_color A flag of whether to hold colors constant
-      void replot       ( bool );
+      void replot       ( bool hold_color );
 
       //! \brief Public function to return the data widget pointer
       //! \return Pointer to the GL data widget
       QGLWidget* dataWidgetP( void );
+
       //! \brief Public function to save the plot to a file
       //! \param filename  The full path to the file to create
       //! \param imagetype The image file type ("png" or "jpg")
       //! \return          Flag if save was successful
-      bool save_plot( const QString, const QString );
+      bool save_plot( const QString& filename, const QString& imagetype );
+
+      //! \brief Public function to save the plot to a csv file
+      //! \param filename  The full path to the file to create
+      //! \return          Flag if save was successful
+      bool save_csv( const QString& filename);
 
    signals:
       //! \brief A signal emitted when this dialog has been closed.
@@ -307,7 +314,7 @@ class US_GUI_EXTERN US_Plot3D : public QMainWindow
       void    createActions(   void );
       void    createMenus(     void );
       void    createToolBar(   void );
-      double  comp_value( US_Model::SimulationComponent*, int, double );
+      double  comp_value( const US_Model::SimulationComponent*, int, double );
 
 };
 
