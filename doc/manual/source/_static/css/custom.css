@@ -1,0 +1,22 @@
+/* To make tables responsive and fill their container */
+table.docutils {
+    width: 100%;
+    table-layout: fixed; /* Optional: for fixed column widths based on page, for auto column widths based on content */
+}
+
+.center {
+    text-align: center;
+}
+
+.underline {
+  text-decoration: underline;
+}
+
+/* _static/custom.css */
+.side-by-side td {
+  vertical-align: middle;
+}
+.side-by-side img {
+  max-width: 100%;
+  height: auto;
+}
