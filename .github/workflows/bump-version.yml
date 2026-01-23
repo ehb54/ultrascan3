@@ -1,0 +1,23 @@
+name: Bump Version
+
+# Manually triggered workflow that initiates the bump-to PR creation process.
+# Prompts for a version number and delegates to the reusable bump-to workflow.
+# Supports standard versions (1.2.3) and pre-release versions (1.2.3-RC1).
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version number (e.g., 1.2.3 or 1.2.3-RC1)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  create-release-pr:
+    uses: ehb54/uslims_version_workflows/.github/workflows/create-bump-pr.yml@b60d3a00a06a4916e3bed2add6768cd18b25e656
+    with:
+      version: ${{ inputs.version }}
