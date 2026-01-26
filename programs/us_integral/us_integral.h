@@ -7,7 +7,6 @@
 #include "us_help.h"
 #include "us_editor.h"
 #include "us_model_loader.h"
-#include "us_solute.h"
 #include "us_spectrodata.h"
 #include "us_plot.h"
 
@@ -18,13 +17,26 @@
 #include "qwt_scale_widget.h"
 #include "qwt_scale_draw.h"
 
+struct SolParam
+{
+    double s;    //!< sedimentation coefficient (or current X)
+    double k;    //!< frictional ratio (or current Y)
+    double c;    //!< concentration (Z or Z percent)
+    double w;    //!< molecular weight
+    double v;    //!< vbar
+    double d;    //!< diffusion coefficient
+    double f;    //!< frictional coefficient
+    double r;    //!< radius of hydration
+};
+
+
 //! \brief Distribution structure
 typedef struct distro_sys
 {
-    QList< S_Solute >   in_distro;      //!< Raw input distribution
-    QList< S_Solute >   nm_distro;      //!< Normalized concentration distribution
-    QList< S_Solute >   bo_distro;      //!< Boundary distribution with original points
-    QList< S_Solute >   bf_distro;      //!< Boundary fractions distribution
+    QList< SolParam >   in_distro;      //!< Raw input distribution
+    QList< SolParam >   nm_distro;      //!< Normalized concentration distribution
+    QList< SolParam >   bo_distro;      //!< Boundary distribution with original points
+    QList< SolParam >   bf_distro;      //!< Boundary fractions distribution
     QString             run_name;       //!< Distribution run name
     QString             analys_name;    //!< Distribution analysis name
     QString             method;         //!< Model method (e.g., "2DSA")
@@ -36,11 +48,13 @@ typedef struct distro_sys
     double              tot_conc;       //!< Total concentration
 } DisSys;
 
-//! \brief Less-than function for sorting distributions by S_Solute attribute
-bool distro_lessthan_s(const S_Solute&, const S_Solute&);
-bool distro_lessthan_k(const S_Solute&, const S_Solute&);
-bool distro_lessthan_w(const S_Solute&, const S_Solute&);
-bool distro_lessthan_d(const S_Solute&, const S_Solute&);
+//! \brief Less-than function for sorting distributions by SolParam attribute
+bool distro_lessthan_s(const SolParam&, const SolParam&);
+bool distro_lessthan_k(const SolParam&, const SolParam&);
+bool distro_lessthan_w(const SolParam&, const SolParam&);
+bool distro_lessthan_d(const SolParam&, const SolParam&);
+bool distro_lessthan_v(const SolParam&, const SolParam&);
+bool distro_lessthan_r(const SolParam&, const SolParam&);
 
 //! \brief Class for displaying models in pseudo-3D
 class US_Integral : public US_Widgets
@@ -160,7 +174,7 @@ class US_Integral : public US_Widgets
         //! \brief Slot to sort distribution
         //! \param solutes List of solutes to be sorted
         //! \param ascending Whether to sort in ascending order
-        void sort_distro(QList< S_Solute >& solutes, bool ascending);
+        void sort_distro(QList< SolParam >& solutes, bool ascending);
 
         //! \brief Slot to remove distribution
         void remove_distro();
