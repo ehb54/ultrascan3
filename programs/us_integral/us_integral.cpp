@@ -770,8 +770,7 @@ DbgLv(1) << "LD:  edata: desc run cell chan"
       sol_in.v  = model.components[ jj ].vbar20;
       sol_in.d  = model.components[ jj ].D * 1.0e7;
       sol_in.f  = model.components[ jj ].f;
-      double vol = sol_in.v * sol_in.w / AVOGADRO;
-      sol_in.r  = std::pow( vol * 0.75 / M_PI, 1.0 / 3.0 );
+      sol_in.r  = sol_in.f / ( 6 * M_PI * VISC_20W ); // m
 
       tsys.in_distro << sol_in;
       wk_distro << sol_in;
