@@ -770,7 +770,7 @@ DbgLv(1) << "LD:  edata: desc run cell chan"
       sol_in.v  = model.components[ jj ].vbar20;
       sol_in.d  = model.components[ jj ].D * 1.0e7;
       sol_in.f  = model.components[ jj ].f;
-      sol_in.r  = sol_in.f / ( 6 * M_PI * VISC_20W ); // m
+      sol_in.r  = 1.0e9 * sol_in.f / ( 6 * M_PI * VISC_20W ); // nm
 
       tsys.in_distro << sol_in;
       wk_distro << sol_in;
@@ -941,7 +941,9 @@ void US_Integral::sort_distro( QList< SolParam >& listsols,
              sol2.s  = ( sol1.s + sol2.s ) * 0.5;  // average values
              sol2.d  = ( sol1.d + sol2.d ) * 0.5;
              sol2.w  = ( sol1.w + sol2.w ) * 0.5;
-             sol2.k  = ( sol2.k + sol2.k ) * 0.5;
+             sol2.k  = ( sol1.k + sol2.k ) * 0.5;
+             sol2.v  = ( sol1.v + sol2.v ) * 0.5;
+             sol2.r  = ( sol1.r + sol2.r ) * 0.5;
              reduced.replace( reduced.size() - 1, sol2 );
              kdup    = qMax( kdup, ++jdup );
           }
@@ -1225,20 +1227,20 @@ QString US_Integral::anno_title( int pltndx )
    QString a_title;
 
    if      ( pltndx == ATTR_S )
-      a_title  = tr( "Sedimentation Coefficient (1e-13)"
+      a_title  = tr( "Sedimentation Coefficient (1e-13 s)"
                      " for water at 20" ) + DEGC;
    else if ( pltndx == ATTR_K )
       a_title  = tr( "Frictional Ratio f/f0" );
    else if ( pltndx == ATTR_W )
-      a_title  = tr( "Molar Mass (Dalton)" );
+      a_title  = tr( "Molar Mass (Da)" );
    else if ( pltndx == ATTR_D )
-      a_title  = tr( "Diffusion Coefficient (1e-7)" );
+      a_title  = tr( "Diffusion Coefficient (1e-7 cm^2/s)" );
    else if ( pltndx == ATTR_F )
       a_title  = tr( "Boundary Fraction" );
    else if ( pltndx == ATTR_V )
-      a_title  = tr( "Partial Specific Volume" );
+      a_title  = tr( "Partial Specific Volume (mL/g)" );
    else if ( pltndx == ATTR_R )
-      a_title  = tr( "Hydrodynamic Radius" );
+      a_title  = tr( "Hydrodynamic Radius (nm)" );
 
    return a_title;
 }
