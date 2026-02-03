@@ -968,7 +968,7 @@ void US_ReportGui::build_report_layout( void )
    
   main->addLayout( lower_buttons );
 
-  setMinimumSize( 850, 500 );
+  setMinimumSize( 850, 600 );
   //adjustSize();
 
 }
@@ -1483,7 +1483,7 @@ void US_ReportGui::add_rows_uploaded( QMap< QString, QStringList > combo_selecti
       
       if( var_name.contains("ff"))
 	var_name_mod = QString("f/f0");
-      
+           
       QStringList var_ranges = uploaded_variable_ranges[ var_name ];
       qDebug() << "ranges for " << var_name << " -- " << var_ranges; 
       for (int vi=0; vi<var_ranges.size(); ++vi)
@@ -1493,7 +1493,7 @@ void US_ReportGui::add_rows_uploaded( QMap< QString, QStringList > combo_selecti
 	  QString r_high = var_range.split(":")[1];
 
 	  qDebug() << "Generating Report Item -- "
-		   << var_name
+		   << var_name_mod
 		   << r_low.toDouble()
 		   << r_high.toDouble()
 		   << uploaded_part_concs[vi].toDouble();
@@ -1504,7 +1504,7 @@ void US_ReportGui::add_rows_uploaded( QMap< QString, QStringList > combo_selecti
 	    {
 	      QString co_v = combo_sels[co].split("_")[0];
 	      QString co_m = combo_sels[co].split("_")[1];
-	      if ( co_v == var_name )
+	      if (co_v.compare(var_name, Qt::CaseInsensitive) == 0)
 		{
 		  QString method_c;
 		  if ( co_m == "it" )
@@ -1533,6 +1533,9 @@ void US_ReportGui::add_rows_uploaded( QMap< QString, QStringList > combo_selecti
 
   //now, put tot_conc (will recalculate percents)
   le_tot_conc -> setText( uploaded_tot_conc );
+  //IMPORTANT: manually force emit textChanged()
+  emit le_tot_conc->textChanged(le_tot_conc->text());
+
   report -> tot_conc = uploaded_tot_conc.toDouble();
 }
   
@@ -2124,7 +2127,7 @@ US_ConfirmUpload::US_ConfirmUpload(QStringList variables, QWidget *parent) : US_
       QRadioButton *radioB = new QRadioButton(form_labels_radio[i]);
       radioB->setObjectName( form_labels_radio[i] );
 
-      if ( form_labels_radio[i] == QString("Append") )
+      if ( form_labels_radio[i] == QString("Overwrite") )
 	radioB->setChecked(true);
 	    
       hLayout->addWidget(radioB);
