@@ -499,6 +499,9 @@ void US_ReportGui::build_report_layout( void )
       pb_prev_wvl  -> setVisible( false );
       pb_next_wvl  -> setVisible( false );
       pb_apply_all -> setVisible( false );
+
+      pb_upload_files->setVisible( false );
+      le_ufiles      ->setVisible( false );
     }
   
   
@@ -1202,8 +1205,6 @@ void US_ReportGui::upload_files( void )
       return;
     }
 
-  le_ufiles-> setText( fileNames.join(", ") );
-  
   //insert a dialog for variable/model combos:
   //also ask if overwrite or append rows uploaded
   QStringList variable_list = uploaded_variable_ranges.keys();
@@ -1221,6 +1222,10 @@ void US_ReportGui::upload_files( void )
 
       //generate GUI && save internals
       add_rows_uploaded( user_selections );
+
+      //show fileNames uploaded
+      QString u_mode = user_selections["mode"].first();
+      le_ufiles-> setText( fileNames.join(", ") + QString(" (Mode: ") + u_mode + QString(")"));
     }
   else
     return;
