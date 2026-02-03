@@ -1144,11 +1144,31 @@ void US_ReportGui::upload_files( void )
   QString filter = "Stats Distro (*.sol_integ.stats *.gadistro.dat)";
   QStringList files = QFileDialog::getOpenFileNames(this, caption, dir, filter );
   if (files.isEmpty())
-    {
-      qDebug() << "User cancelled file selection.";
-      return; 
-    }
+    return; 
 
+  //some simple checks
+  if (files.size() != 2)
+    {
+      QMessageBox::critical(this, tr("Wrong Number of Files"), 
+			    tr("Two files (.sol_integ.stats and .gadistro.dat) must selected!"));
+      return;
+    }
+  else
+    {
+      QStringList files_ext_list;
+      for ( int i = 0; i < files.size(); i++ )
+	files_ext_list << files[i].section('.', -2, -1);
+
+      qDebug() << "files_ext_list " << files_ext_list;
+      if ( !files_ext_list. contains("sol_integ.stats") ||
+	   !files_ext_list. contains("gadistro.dat"))
+	{
+	  QMessageBox::critical(this, tr("Wrong Types of Files"), 
+				tr("Two files (.sol_integ.stats and .gadistro.dat) must selected!"));
+	  return;
+	}
+    }
+  
   //clean
   uploaded_part_concs. clear();
   uploaded_tot_conc.clear();
@@ -1162,30 +1182,28 @@ void US_ReportGui::upload_files( void )
       parseGaStatsFile(fname);
    }
 
-  //debug
-  /**
-  qDebug() << "Partial Concentrations -- " << uploaded_part_concs;
-  qDebug() << "tot_conc uploaded -- " << uploaded_tot_conc;
-  QStringList variable_list = uploaded_variable_ranges.keys();
-  for (const QString &var_name : variable_list) 
+  //check for the same #solutes in .gadistro.dat & .sol_integ.stats
+  int Solutes_num_gadistro = 0;
+  if (!uploaded_variable_ranges.isEmpty()) 
+    Solutes_num_gadistro = uploaded_variable_ranges.first().size();
+  int Solutes_num_sol_integ = uploaded_part_concs.size();
+  qDebug() << "Solutes_num_gadistro, Solutes_num_sol_integ -- "
+	   << Solutes_num_gadistro << Solutes_num_sol_integ;
+  QStringList fileNames;
+  for (const QString &path : files) 
+    fileNames << QFileInfo(path).fileName();
+  if ( Solutes_num_gadistro != Solutes_num_sol_integ )
     {
-      qDebug() << "variables, " << variable_list;
-      qDebug() << "ranges for " << var_name << " -- " << uploaded_variable_ranges[ var_name ];
-      QStringList var_ranges = uploaded_variable_ranges[ var_name ];
-      for (int i=0; i<var_ranges.size(); ++i)
-	{
-	  QString var_range = var_ranges[i];
-	  qDebug() << "var_range " << var_range; 
-	  QString r_low  = var_range.split(":")[0];
-	  QString r_high = var_range.split(":")[1];
-
-	  qDebug() << "r_l, r_h -- " << r_low << r_high;
-	  qDebug() << "[toDouble() ]r_l, r_h -- "
-		   << r_low.toDouble() << r_high.toDouble();
-	}
+      QMessageBox::critical(this, tr("Unmatched Solutes Number"), 
+			    QString( tr("Number of solutes in the uploaded file \n\n"
+					"%1\n\n"
+					"do NOT match!")).
+			    arg(fileNames.join("\n")));
+      return;
     }
-  ***/
 
+  le_ufiles-> setText( fileNames.join(", ") );
+  
   //insert a dialog for variable/model combos:
   //also ask if overwrite or append rows uploaded
   QStringList variable_list = uploaded_variable_ranges.keys();
@@ -1480,10 +1498,15 @@ void US_ReportGui::add_rows_uploaded( QMap< QString, QStringList > combo_selecti
     {
       QString var_name = variable_list[i];
       QString var_name_mod = var_name;
+      double c_factor = 1.0;
       
-      if( var_name.contains("ff"))
+      if( var_name.contains("ff", Qt::CaseInsensitive))
 	var_name_mod = QString("f/f0");
-           
+      if( var_name.contains("D", Qt::CaseInsensitive))
+	c_factor = pow(10, 7);
+      if( var_name.contains("MW", Qt::CaseInsensitive) )
+	c_factor = pow(10, -3);
+      
       QStringList var_ranges = uploaded_variable_ranges[ var_name ];
       qDebug() << "ranges for " << var_name << " -- " << var_ranges; 
       for (int vi=0; vi<var_ranges.size(); ++vi)
@@ -1516,8 +1539,8 @@ void US_ReportGui::add_rows_uploaded( QMap< QString, QStringList > combo_selecti
 		  US_ReportGMP::ReportItem initItem;
 		  initItem.type             = var_name_mod;
 		  initItem.method           = method_c;
-		  initItem.range_low        = r_low.toDouble();
-		  initItem.range_high       = r_high.toDouble();
+		  initItem.range_low        = r_low.toDouble() * c_factor;
+		  initItem.range_high       = r_high.toDouble() * c_factor;
 		  initItem.integration_val  = uploaded_part_concs[vi].toDouble();
 		  initItem.tolerance        = 10;
 		  initItem.combined_plot    = 1;
