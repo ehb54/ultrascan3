@@ -573,7 +573,6 @@ bool US_CSV_Loader::check_file(const QString &filepath)
     }
 
     QByteArray data = file.read(1024);
-
     for (char ch : data)
     {
         uchar byte = static_cast<uchar>(ch);
@@ -585,16 +584,17 @@ bool US_CSV_Loader::check_file(const QString &filepath)
         }
     }
     file.close();
+
     return true;
 }
 
 bool US_CSV_Loader::parse_file(const QString &filepath)
 {
 
-    if (!check_file(filepath))
-    {
-        return false;
-    }
+    // if (!check_file(filepath))
+    // {
+    //     return false;
+    // }
 
     QFileInfo finfo(filepath);
     if (finfo.suffix().toLower() == "dsp")
@@ -610,32 +610,11 @@ bool US_CSV_Loader::parse_file(const QString &filepath)
     {
         file_lines.clear();
         QTextStream ts(&file);
-        bool isAscii = true;
-        while (true)
+        
+        while (!ts.atEnd())
         {
-            if (ts.atEnd())
-            {
-                file.close();
-                break;
-            }
             QString line = ts.readLine().trimmed();
             QByteArray byte_arr = line.toUtf8();
-            for (char ch : byte_arr)
-            {
-                if (ch < 0 || ch > 127)
-                {
-                    file.close();
-                    isAscii = false;
-                    break;
-                }
-            }
-            if (!isAscii)
-            {
-                file.close();
-                file_lines.clear();
-                error_msg = tr("Cannot open non-text files!\n\n%1").arg(filepath);
-                return false;
-            }
             if (!line.isEmpty())
             {
                 file_lines.append(line);

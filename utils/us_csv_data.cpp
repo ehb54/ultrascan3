@@ -92,27 +92,9 @@ bool US_CSV_Data::readFile(const QString &filePath, const QString &delimiter) {
     if(file.open(QIODevice::ReadOnly)) {
         file_lines.clear();
         QTextStream ts(&file);
-        bool isAscii = true;
-        while (true) {
-            if (ts.atEnd()) {
-                file.close();
-                break;
-            }
+        while (!ts.atEnd()) {
             QString line = ts.readLine().trimmed();
             QByteArray byte_arr = line.toUtf8();
-            for (char ch : byte_arr) {
-                if (ch < 0 || ch > 127) {
-                    file.close();
-                    isAscii = false;
-                    break;
-                }
-            }
-            if (!isAscii) {
-                file.close();
-                file_lines.clear();
-                m_error = QObject::tr("File is not a text format!");
-                return false;
-            }
             if ( !line.isEmpty() ) {
                 file_lines.append(line);
             }
