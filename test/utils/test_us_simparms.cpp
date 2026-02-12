@@ -209,9 +209,8 @@ TEST_F(US_SimulationParametersTest, SetHardware_WithoutDatabase_SetsDefaults) {
 TEST_F(US_SimulationParametersTest, SetHardware_WithDatabase_CallsCorrectly) {
     QString testCalID = "test_cal_456";
     int testCp = 2;
-    int testCh = 1;
 
-    EXPECT_NO_THROW(simparms->setHardware(mockDb.get(), testCalID, testCp, testCh));
+    EXPECT_NO_THROW(simparms->setHardware(mockDb.get(), testCalID, testCp));
     EXPECT_EQ(simparms->rotorCalID, testCalID);
 }
 

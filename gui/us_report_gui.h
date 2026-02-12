@@ -6,6 +6,7 @@
 #include "us_widgets.h"
 #include "us_run_protocol.h"
 #include "us_report_gmp.h"
+#include "us_widgets_dialog.h"
 
 //! This class provides a tabbed entry for solution selection
 class US_GUI_EXTERN US_ReportGui: public US_Widgets
@@ -39,6 +40,7 @@ class US_GUI_EXTERN US_ReportGui: public US_Widgets
       int row;
       QVBoxLayout* main;
       QGridLayout* params;
+      QGridLayout* ufiles;
       QGridLayout* genL;
       QScrollArea* scrollArea;
       QWidget*     containerWidget;
@@ -56,7 +58,8 @@ class US_GUI_EXTERN US_ReportGui: public US_Widgets
       QLabel* lb_duration;      
       QLabel* lb_duration_tol;  
       QLabel* lb_wvl;           
-      
+
+      QLineEdit*   le_ufiles;
       QLineEdit*   le_tot_conc;
       QLineEdit*   le_tot_conc_tol;
       QLineEdit*   le_rmsd_limit;
@@ -65,6 +68,8 @@ class US_GUI_EXTERN US_ReportGui: public US_Widgets
       QPushButton* pb_prev_wvl;
       QPushButton* pb_next_wvl;
       QPushButton* pb_apply_all;
+      QPushButton* pb_upload_files;
+      
 
       //report mask
       QCheckBox*   ck_tot_conc;
@@ -105,11 +110,18 @@ class US_GUI_EXTERN US_ReportGui: public US_Widgets
       QMap< QString, bool > isErrorField;
       QStringList wvl_passed;
       int init_index;
+
+      //for uploaded from files
+      QStringList uploaded_part_concs;
+      QMap <QString, QStringList> uploaded_variable_ranges;
+      QString uploaded_tot_conc;
       
       void build_report_layout( void );
       void gui_to_report( void );
       int  check_syntax( void );
       void SetComboBoxItemEnabled(QComboBox*, int, bool);
+      void parseGaStatsFile( const QString& );
+      void add_rows_uploaded( QMap< QString, QStringList> );
       
       
    private slots:
@@ -123,6 +135,7 @@ class US_GUI_EXTERN US_ReportGui: public US_Widgets
      void wvl_prev  ( void );
      void wvl_next  ( void );
      void apply_all_wvls( void );
+     void upload_files( void );
 
      void    ssChgDuratTime_dd( int );
      void    ssChgDuratTime_hh( int );
@@ -133,6 +146,46 @@ class US_GUI_EXTERN US_ReportGui: public US_Widgets
      void    method_changed   ( int );
      
    public slots:
+};
+
+// Dialog class for selecting model|vars combos from uploaded files
+class US_ConfirmUpload : public US_WidgetsDialog
+{
+   Q_OBJECT
+
+   public:
+      US_ConfirmUpload( QStringList variables, QWidget *parent = nullptr );
+      QMap< QString, QStringList> getSelections() { return upload_sel; }
+
+   private:
+      QGroupBox*   ga_upload_box;
+      QCheckBox*   ck_2dsait_s;
+      QCheckBox*   ck_2dsait_d;
+      QCheckBox*   ck_2dsait_ff0;
+      QCheckBox*   ck_2dsait_mw;
+      QCheckBox*   ck_2dsamc_s;
+      QCheckBox*   ck_2dsamc_d;
+      QCheckBox*   ck_2dsamc_ff0;
+      QCheckBox*   ck_2dsamc_mw;
+      QCheckBox*   ck_pcsa_s;
+      QCheckBox*   ck_pcsa_d;
+      QCheckBox*   ck_pcsa_ff0;
+      QCheckBox*   ck_pcsa_mw;
+
+      QPushButton* pb_reset;
+      QPushButton* pb_cancel;
+      QPushButton* pb_accept;
+
+      QList<QRadioButton*> fields_radio;
+      QMap< QString, QStringList> upload_sel;
+      QStringList vars_passed;
+      QMap< QString, QStringList> gui_to_json_upload();
+
+   private slots:
+     void do_reset();
+     void cancel_upload();
+     void accept_upload();
+      
 };
 
 #endif

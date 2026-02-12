@@ -9,7 +9,6 @@
 #ifndef NO_DB
 #include "mysql.h"
 #endif
-
 #include "us_extern.h"
 
 /*! \brief This class provides connectivity and convenience functions
@@ -88,11 +87,11 @@ public:
         \param dbname   The name of the database to access.
         \param user     The user name that can access the database.
         \param password The unencrypted password for the database/user.
-        \param error    A reference to a string for error responses.
+        \param err    A reference to a string for error responses.
     */
     bool connect( const QString& host, const QString& dbname,
                   const QString& user, const QString& password,
-                  QString& error ) override;
+                  QString& err ) override;
 
     /*! \brief Implements a simple query on the active database
         connection, cleaning up any unused results from a previous query.
@@ -162,7 +161,7 @@ public:
         the result set. This function can be called repeatedly to retrieve
         values for all columns in the row. If there are n columns in
         the row, the columns are numbered 0...n-1. Value() returns
-        the QVariant::invalid type in cases where the data type is unknown,
+        the QVariant() type in cases where the data type is unknown,
         or if the index is out of bounds. Use next() to advance the row pointer.
 
         \param index   The column number in the current row.
@@ -320,5 +319,6 @@ private:
 
     QString    buildQuery      ( const QStringList& );
     QString    buildQuerySelect( const QStringList& );
+    bool       configure_ssl   ( QString& err );
 };
 #endif

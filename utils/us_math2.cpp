@@ -1,5 +1,4 @@
 //! \file us_math2.cpp
-
 #include <stdlib.h>
 #include <math.h>
 #ifdef _BF_NNLS_
@@ -809,9 +808,9 @@ uint US_Math2::randomize( void )
 {
    QTime now = QTime::currentTime();
 
-   uint seed = now.msec() 
-             + now.second() *    1000 
-             + now.minute() *   60000 
+   uint seed = now.msec()
+             + now.second() *    1000
+             + now.minute() *   60000
              + now.hour()   * 3600000;
 
 #ifdef UNIX

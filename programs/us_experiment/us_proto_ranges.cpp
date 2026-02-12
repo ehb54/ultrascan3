@@ -1961,9 +1961,15 @@ bool US_SelectWavelengths_manual::wln_entered( void )
   //QRegExp rx9("[(\\d{3}-\\d{3}:\\d+),]+");
   //QRegExp rx_new("[\\d{3},]*[\\d{3}-\\d{3}]*[(:\\d+)]*[,(\\d{3})]*"); //working partially
 
-  QRegExp rx_new("[\\d{3},]*[\\d{3}-\\d{3},]*[\\d{3}-\\d{3}:\\d+,]*");
+  //QRegularExpression rx_new("[\\d{3},]*[\\d{3}-\\d{3},]*[\\d{3}-\\d{3}:\\d+,]*");
 
-   if ( rx_new.exactMatch(text)
+  static const QRegularExpression rx_new("^(\\d{3}(-\\d{3}(:\\d+)?)?)(,\\s*\\d{3}(-\\d{3}(:\\d+)?)?)*$");
+  //OR -- static const QRegularExpression rx_new("^(\\d{3}|\\d{3}-\\d{3}|\\d{3}-\\d{3}:\\d+)(,(\\d{3}|\\d{3}-\\d{3}|\\d{3}-\\d{3}:\\d+))*$");
+
+  if (!rx_new.isValid()) 
+    qDebug() << "Regex Error:" << rx_new.errorString();
+  
+   if ( rx_new.match( text ).hasMatch()
        //|| rx1.exactMatch(text)
        //||  rx2.exactMatch(text) || rx3.exactMatch(text)
        //|| rx4.exactMatch(text) || rx5.exactMatch(text) || rx6.exactMatch(text) ||  rx7.exactMatch(text)
@@ -1977,11 +1983,11 @@ bool US_SelectWavelengths_manual::wln_entered( void )
          return true;
       else
       {
-         QPalette *palette = new QPalette();
-         palette->setColor(QPalette::Text,Qt::red);
-         palette->setColor(QPalette::Base,Qt::white);
-         le_wrange->setPalette(*palette);
-         return false;
+	QPalette palette = le_wrange->palette();
+	palette.setColor(QPalette::Text, Qt::red);
+	palette.setColor(QPalette::Base, Qt::white);
+	le_wrange->setPalette(palette);
+	return false;
       }
    }
    else
@@ -1990,11 +1996,11 @@ bool US_SelectWavelengths_manual::wln_entered( void )
       QString message_error   = tr( "Syntax error!" );
       QMessageBox::critical( this, mtitle_error, message_error );
 
-      QPalette *palette = new QPalette();
-      palette->setColor(QPalette::Text,Qt::red);
-      palette->setColor(QPalette::Base,Qt::white);
-      le_wrange->setPalette(*palette);
-
+      QPalette palette = le_wrange->palette();
+      palette.setColor(QPalette::Text, Qt::red);
+      palette.setColor(QPalette::Base, Qt::white);
+      le_wrange->setPalette(palette);
+      
       return false;
    }
 }

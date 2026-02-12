@@ -13,6 +13,7 @@
 #include "us_dataIO.h"
 #include "us_minimize.h"
 #include "qwt_legend.h"
+#include <qwt_scale_div.h>
 
 //! \class US_Norm_Profile
 //! \brief A class for handling normalization profiles in the analysis.
@@ -195,7 +196,7 @@ class US_Norm_Profile : public US_Widgets
 
         //! \brief Slot to handle mouse events on the plot.
         //! \param point The point where the mouse event occurred.
-        void slt_mouse(const QwtDoublePoint& point);
+        void slt_mouse(const QPointF& point);
 
         //! \brief Slot to set the X range.
         //! \param state The state of the X range checkbox.

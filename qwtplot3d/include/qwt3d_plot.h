@@ -13,20 +13,16 @@ namespace Qwt3D
   handling, labeling etc.. It contains some pure virtual functions and is, in so far, an abstract base class.
 	The class provides interfaces for data handling and implements basic data controlled color allocation.
 */
-class QWT3D_EXPORT Plot3D : public QGLWidget
+class QWT3D_EXPORT Plot3D : public QOpenGLWidget
 {
     Q_OBJECT
 
 public:
 	
-#if QT_VERSION < 0x040000
-    Plot3D( QWidget* parent = 0, const char* name = 0 );
-#else
-    Plot3D ( QWidget * parent = 0, const QGLWidget * shareWidget = 0 );
-#endif
+    Plot3D ( QWidget * parent = nullptr );
+
     virtual ~Plot3D();
 
-    QPixmap renderPixmap (int w=0, int h=0, bool useContext=false);	  
     void updateData(); //!< Recalculate data
 		void createCoordinateSystem(Qwt3D::Triple beg, Qwt3D::Triple end);
 		Qwt3D::CoordinateSystem* coordinates() { return &coordinates_p; } //!< Returns pointer to CoordinateSystem object

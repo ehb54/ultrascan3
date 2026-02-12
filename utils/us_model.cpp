@@ -1,5 +1,4 @@
 //! \file us_model.cpp
-
 #include "us_model.h"
 #include "us_constants.h"
 #include "us_settings.h"

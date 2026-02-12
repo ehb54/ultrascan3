@@ -264,7 +264,7 @@ class US_FitMeniscus : public US_Widgets
 
         //! \brief Handle mouse event.
         //! \param point The point of the mouse event.
-        void mouse(const QwtDoublePoint& point);
+        void mouse(const QPointF& point);
 
         //! \brief Show help.
         void help() { showHelp.show_help("manual/fit_meniscus.html"); };

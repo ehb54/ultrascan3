@@ -126,8 +126,8 @@ class US_GA_Initialize : public US_Widgets
       QList< S_Solute >  xy_distro;
       QList< S_Solute >* sdistro;
 
-      QwtDoublePoint  p1;
-      QwtDoublePoint  p2;
+      QPointF  p1;
+      QPointF  p2;
 
       double        wxbuck;
       double        hybuck;
@@ -224,8 +224,8 @@ class US_GA_Initialize : public US_Widgets
       void setBucketPens(  void );
       void highlight_solute( QwtPlotCurve* );
       void highlight_solute( int );
-      void getMouseDown(     const QwtDoublePoint& );
-      void getMouseUp(       const QwtDoublePoint& );
+      void getMouseDown(     const QPointF& );
+      void getMouseUp(       const QPointF& );
       void sclick_sbdata(    const QModelIndex& );
       void sclick_sbdata(    const int          );
       void dclick_sbdata(    const QModelIndex& );

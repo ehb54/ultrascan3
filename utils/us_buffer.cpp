@@ -597,7 +597,7 @@ int US_Buffer::saveToDB( IUS_DB2* db, const QString private_buffer )
    QString valType("molarExtinction");
    qDebug() << "bufferID for extProfile: " << bufferID;
    
-   if ( !extinction.isEmpty() and new_or_changed_spectrum )
+   if ( !extinction.isEmpty() && new_or_changed_spectrum )
    {
      if ( !replace_spectrum )
       {

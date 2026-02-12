@@ -95,7 +95,7 @@ class US_GUI_EXTERN US_NewSpectrum : public US_Widgets
 
 //! \class US_ViewSpectrum
 //! \brief Class to view spectrum data.
-class US_ViewSpectrum : public US_Widgets
+class US_GUI_EXTERN US_ViewSpectrum : public US_Widgets
 {
     Q_OBJECT
 

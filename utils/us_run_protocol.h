@@ -2,8 +2,6 @@
 #ifndef US_RPROTOCOL_H
 #define US_RPROTOCOL_H
 
-#include <QtCore>
-
 #include "us_extern.h"
 #include "us_db2.h"
 
@@ -424,6 +422,8 @@ class US_UTIL_EXTERN US_RunProtocol
 
       int          scanCount;
       int          scanCount_int;
+
+      QString      framework;
 
    private:
 };

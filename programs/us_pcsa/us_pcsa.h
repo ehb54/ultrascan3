@@ -2,7 +2,9 @@
 #ifndef US_PCSA_H
 #define US_PCSA_H
 
+#if !(defined(_WIN32) || defined(_WIN64) || defined(Q_OS_WIN))
 #include <unistd.h>
+#endif
 #include "us_analysis_base2.h"
 #include "us_plot_control_pc.h"
 #include "us_analysis_control_pc.h"

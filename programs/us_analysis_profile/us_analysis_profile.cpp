@@ -1931,12 +1931,9 @@ QGroupBox * US_AnaprofPanGen::createGroup( QString & triple_name, QList< double 
       rb_edit -> setObjectName( strow + ":triple_edit:" + QString::number (wvls[ii]) );
       genL->addWidget( rb_edit,  row,   1, 1, 1, Qt::AlignHCenter );
       
-      //Create signalMapper, to pass argument to standard (argument-less) signals:
-      signalMapper = new QSignalMapper(this);
-      connect(signalMapper, SIGNAL( mapped( QString ) ), this, SLOT( rbEditClicked( QString ) ) );
-      connect( rb_edit, SIGNAL( clicked() ), signalMapper, SLOT(map()));
+      // Extend the argument-less standard signal with the triple information for the slot
       QString arg_passed = triple_name + "," + strow;
-      signalMapper->setMapping ( rb_edit, arg_passed );
+  	  connect( rb_edit, &QRadioButton::clicked, [this, arg_passed] { rbEditClicked( arg_passed ); } );
             
       //Run checkbox
       ck_run = new QCheckBox( tr(""), this );
@@ -4206,7 +4203,7 @@ void US_AnaprofPanPCSA::verify_xyz(  )
   qDebug() << "QLineEdit oname -- " << oname;
   QLineEdit * curr_widget = NULL;
 
-  QRegExp rx_double;
+  QRegularExpression rx_double;
 
   
   if ( oname.contains("xmin") )
@@ -4240,7 +4237,7 @@ void US_AnaprofPanPCSA::verify_xyz(  )
     {
       text = curr_widget->text();
       
-      if ( !rx_double.exactMatch( text ) )
+      if ( !rx_double.match( text ).hasMatch() )
 	{
 	  QPalette *palette = new QPalette();
 	  palette->setColor(QPalette::Text,Qt::white);

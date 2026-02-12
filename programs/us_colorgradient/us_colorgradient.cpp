@@ -311,8 +311,12 @@ void US_ColorGradient::save_gradient( void )
 
       // now optionally save the color legend as a PNG file
       QString png_fname = out_filename
-         .replace( QRegExp( ".xml$" ), QString( ".png" ) );
+         .replace( QRegularExpression( ".xml$" ), QString( ".png" ) );
+#if QT_VERSION < QT_VERSION_CHECK(6, 6, 0)
       QPixmap mcolors = lb_gradient->pixmap( Qt::ReturnByValue );
+#else
+      QPixmap mcolors = lb_gradient->pixmap( );
+#endif
       int widp    = mcolors.width();
       int hgtp    = mcolors.height();
       int recx    = (int)( (qreal)widp * ( 1.0 - lgndfrac ) );

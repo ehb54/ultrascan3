@@ -1113,7 +1113,7 @@ DbgLv(1) << "P3D:rp:  xscl yscl zscl" << x_scale << y_scale << z_scale;
    dataWidget->setScale( x_scale, y_scale, z_scale );
 
    dataWidget->updateData();
-   dataWidget->updateGL();
+   dataWidget->update();
 
    for ( int ii = 0; ii < nrows; ii++ )
    {
@@ -1365,7 +1365,7 @@ void US_Plot3D::replot( bool hold_color )
    dataWidget->setScale( x_scale, y_scale, z_scale );
 
    dataWidget->updateData();
-   dataWidget->updateGL();
+   dataWidget->update();
    DbgLv(1) << "P3D:rp:  Data/GL updated";
 
    if ( wdata != nullptr )
@@ -1393,19 +1393,19 @@ void US_Plot3D::replot( bool hold_color )
 }
 
 // Public method to return a pointer to the data widget
-QGLWidget* US_Plot3D::dataWidgetP( void )
+QOpenGLWidget* US_Plot3D::dataWidgetP( void )
 {
    dataWidget->updateData();
-   dataWidget->updateGL();
+   dataWidget->update();
 
-   return (QGLWidget*)dataWidget;
+   return (QOpenGLWidget*)dataWidget;
 }
 
 // Public method to save the plot to an image file
 bool US_Plot3D::save_plot( const QString& filename, const QString& imagetype )
 {
    dataWidget->updateData();
-   dataWidget->updateGL();
+   dataWidget->update();
 
    return IO::save( dataWidget, filename, imagetype );
 }
@@ -1793,7 +1793,7 @@ void US_Plot3D::autsc_check( int state )
 {
    DbgLv(2) << "autsc_check" << (state==Qt::Checked);
    dataWidget->coordinates()->setAutoScale( state );
-   dataWidget->updateGL();
+   dataWidget->update();
 }
 
 // mouse checked
@@ -1815,7 +1815,7 @@ void US_Plot3D::poffs_slide( int pos )
    DbgLv(2) << "poffs_slide" << pos;
    dataWidget->setPolygonOffset( (double)pos / 10.0 );
    dataWidget->updateData();
-   dataWidget->updateGL();
+   dataWidget->update();
 }
 
 // resolution slider moved
@@ -1824,7 +1824,7 @@ void US_Plot3D::resol_slide( int pos )
    DbgLv(2) << "resol_slide" << pos;
    dataWidget->setResolution( pos );
    dataWidget->updateData();
-   dataWidget->updateGL();
+   dataWidget->update();
 }
 
 // movie (animation) toggled
@@ -1916,7 +1916,7 @@ void US_Plot3D::set_grid_onoff( Qwt3D::SIDE side, bool isOn )
    sum     = isOn ? ( sum | side ) : ( sum & ~side );
 
    dataWidget->coordinates()->setGridLines( true, true, sum );
-   dataWidget->updateGL();
+   dataWidget->update();
 }
 
 // set plot data style points  
@@ -1926,7 +1926,7 @@ void US_Plot3D::data_points_on( bool isOn )
    {
       dataWidget->setPlotStyle( Qwt3D::POINTS );
       dataWidget->updateData();
-      dataWidget->updateGL();
+      dataWidget->update();
    }
 }
 
@@ -1937,7 +1937,7 @@ void US_Plot3D::data_wirefr_on( bool isOn )
    {
       dataWidget->setPlotStyle( WIREFRAME );
       dataWidget->updateData();
-      dataWidget->updateGL();
+      dataWidget->update();
    }
 }
 
@@ -1948,7 +1948,7 @@ void US_Plot3D::data_hidden_on( bool isOn )
    {
       dataWidget->setPlotStyle( HIDDENLINE );
       dataWidget->updateData();
-      dataWidget->updateGL();
+      dataWidget->update();
    }
 }
 
@@ -1959,7 +1959,7 @@ void US_Plot3D::data_polygn_on( bool isOn )
    {
       dataWidget->setPlotStyle( FILLED );
       dataWidget->updateData();
-      dataWidget->updateGL();
+      dataWidget->update();
    }
 }
 
@@ -1970,7 +1970,7 @@ void US_Plot3D::data_fimesh_on( bool isOn )
    {
       dataWidget->setPlotStyle( FILLEDMESH );
       dataWidget->updateData();
-      dataWidget->updateGL();
+      dataWidget->update();
    }
 }
 
@@ -1981,7 +1981,7 @@ void US_Plot3D::data_none_on( bool isOn )
    {
       dataWidget->setPlotStyle( NOPLOT );
       dataWidget->updateData();
-      dataWidget->updateGL();
+      dataWidget->update();
    }
 }
 
@@ -1992,7 +1992,7 @@ void US_Plot3D::floor_data_on( bool isOn )
    {
       dataWidget->setFloorStyle( FLOORDATA );
       dataWidget->updateData();
-      dataWidget->updateGL();
+      dataWidget->update();
    }
 }
 
@@ -2003,7 +2003,7 @@ void US_Plot3D::floor_isol_on(  bool isOn )
    {
       dataWidget->setFloorStyle( FLOORISO );
       dataWidget->updateData();
-      dataWidget->updateGL();
+      dataWidget->update();
    }
 }
 
@@ -2014,7 +2014,7 @@ void US_Plot3D::floor_empty_on( bool isOn )
    {
       dataWidget->setFloorStyle( NOFLOOR );
       dataWidget->updateData();
-      dataWidget->updateGL();
+      dataWidget->update();
    }
 }
 
@@ -2024,7 +2024,7 @@ void US_Plot3D::normals_on( bool isOn )
    DbgLv(2) << "normals_on" << isOn;
    dataWidget->showNormals( isOn );
    dataWidget->updateNormals();
-   dataWidget->updateGL();
+   dataWidget->update();
 }
 
 // set normal length
@@ -2033,7 +2033,7 @@ void US_Plot3D::norml_slide( int val )
    DbgLv(2) << "norml_slide" << val;
    dataWidget->setNormalLength( (double)val / 400.0 );
    dataWidget->updateNormals();
-   dataWidget->updateGL();
+   dataWidget->update();
 }
 
 // set normal quality
@@ -2042,7 +2042,7 @@ void US_Plot3D::normq_slide( int val )
    DbgLv(2) << "normq_slide" << val;
    dataWidget->setNormalQuality( val );
    dataWidget->updateNormals();
-   dataWidget->updateGL();
+   dataWidget->update();
 }
 
 // rotate 3d plot
@@ -2081,7 +2081,7 @@ void US_Plot3D::pick_axes_co()
          tr( "Select Axes Color" ) );
    Qwt3D::RGBA rgb = Qt2GL( cc );
    dataWidget->coordinates()->setAxesColor( rgb );
-   dataWidget->updateGL();
+   dataWidget->update();
 }
 
 // pick axes color
@@ -2091,7 +2091,7 @@ void US_Plot3D::pick_back_co()
          tr( "Select Background Color" ) );
    Qwt3D::RGBA rgb = Qt2GL( cc );
    dataWidget->setBackgroundColor( rgb );
-   dataWidget->updateGL();
+   dataWidget->update();
 }
 
 // pick mesh color
@@ -2102,7 +2102,7 @@ void US_Plot3D::pick_mesh_co()
    Qwt3D::RGBA rgb = Qt2GL( cc );
    dataWidget->setMeshColor( rgb );
    dataWidget->updateData();
-   dataWidget->updateGL();
+   dataWidget->update();
 }
 
 // pick number color
@@ -2112,7 +2112,7 @@ void US_Plot3D::pick_numb_co()
          tr( "Select Number Color" ) );
    Qwt3D::RGBA rgb = Qt2GL( cc );
    dataWidget->coordinates()->setNumberColor( rgb );
-   dataWidget->updateGL();
+   dataWidget->update();
 }
 
 // pick label color
@@ -2122,7 +2122,7 @@ void US_Plot3D::pick_labl_co()
          tr( "Select Label Color" ) );
    Qwt3D::RGBA rgb = Qt2GL( cc );
    dataWidget->coordinates()->setLabelColor( rgb );
-   dataWidget->updateGL();
+   dataWidget->update();
 }
 
 // pick caption color
@@ -2132,7 +2132,7 @@ void US_Plot3D::pick_capt_co()
          tr( "Select Caption Color" ) );
    Qwt3D::RGBA rgb = Qt2GL( cc );
    dataWidget->setTitleColor( rgb );
-   dataWidget->updateGL();
+   dataWidget->update();
 }
 
 // pick data color map
@@ -2177,7 +2177,7 @@ void US_Plot3D::pick_data_co()
    dataWidget->updateData();
    dataWidget->updateNormals();
    dataWidget->showColorLegend( ck_legend->isChecked() );
-   dataWidget->updateGL();
+   dataWidget->update();
 }
 
 // reset to default colors
@@ -2222,7 +2222,7 @@ void US_Plot3D::reset_colors()
    dataWidget->showColorLegend( ck_legend->isChecked() );
    dataWidget->updateData();
    dataWidget->updateNormals();
-   dataWidget->updateGL();
+   dataWidget->update();
 }
 
 // pick scale number font
@@ -2239,7 +2239,7 @@ void US_Plot3D::pick_numb_fn()
    }
 
    dataWidget->coordinates()->setNumberFont( newfont );
-   dataWidget->updateGL();
+   dataWidget->update();
 }
 
 // pick axes labels font
@@ -2256,7 +2256,7 @@ void US_Plot3D::pick_axes_fn()
    }
 
    dataWidget->coordinates()->setLabelFont( newfont );
-   dataWidget->updateGL();
+   dataWidget->update();
 }
 
 // pick title caption font
@@ -2272,8 +2272,8 @@ void US_Plot3D::pick_capt_fn()
    }
 
    dataWidget->setTitleFont( newfont.family(), newfont.pointSize(),
-                             newfont.weight() );
-   dataWidget->updateGL();
+      newfont.weight() );
+   dataWidget->update();
    titleFont = newfont;
 }
 
@@ -2287,7 +2287,7 @@ void US_Plot3D::reset_fonts()
                                             QFont::Bold );
    dataWidget->coordinates()->setNumberFont( US_GuiSettings::fontFamily(),
                                              US_GuiSettings::fontSize() );
-   dataWidget->updateGL();
+   dataWidget->update();
 }
 
 // dump plot contents to image file

@@ -2,9 +2,6 @@
 #ifndef US_XPN_DATA_H
 #define US_XPN_DATA_H
 
-#include <QtCore>
-#include <QtSql>
-
 #include "us_extern.h"
 #include "us_dataIO.h"
 #include "us_simparms.h"

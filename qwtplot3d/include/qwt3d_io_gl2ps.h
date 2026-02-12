@@ -7,7 +7,7 @@
 #include <qgl.h>
 #else
 #ifndef Q_OS_MAC
-#include <QtOpenGL/qgl.h>
+#include <QOpenGLFunctions>
 #endif
 #endif
 
