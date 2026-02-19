@@ -67,7 +67,7 @@
       "name": "macos-base",
       "hidden": true,
       "cacheVariables": {
-        "VCPKG_TARGET_TRIPLET": "x64-osx-dynamic",
+        "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/admin/cmake/toolchain-macos.cmake",
         "CMAKE_OSX_DEPLOYMENT_TARGET": "11.0"
       }
     },

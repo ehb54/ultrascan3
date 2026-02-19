@@ -1,27 +1,6 @@
 cmake_minimum_required(VERSION 3.21)
 
 # =============================================================================
-# VCPKG TRIPLET AUTO-DETECTION
-# =============================================================================
-# Auto-detect vcpkg triplet for macOS (only if not explicitly set)
-if(NOT DEFINED VCPKG_TARGET_TRIPLET)
-    if(APPLE)
-        execute_process(
-                COMMAND uname -m
-                OUTPUT_VARIABLE DETECTED_ARCH
-                OUTPUT_STRIP_TRAILING_WHITESPACE
-        )
-        if(DETECTED_ARCH STREQUAL "arm64")
-            set(VCPKG_TARGET_TRIPLET "arm64-osx-dynamic")
-            message(STATUS "Auto-detected Apple Silicon (arm64) - using triplet: ${VCPKG_TARGET_TRIPLET}")
-        else()
-            set(VCPKG_TARGET_TRIPLET "x64-osx-dynamic")
-            message(STATUS "Auto-detected Intel Mac (x86_64) - using triplet: ${VCPKG_TARGET_TRIPLET}")
-        endif()
-    endif()
-endif()
-
-# =============================================================================
 # VERSION EXTRACTION FROM us_defines.h
 # =============================================================================
 # Extract version before project() call
@@ -752,12 +731,14 @@ endif()
 set(CPACK_PACKAGE_NAME "UltraScan3")
 set(CPACK_PACKAGE_VERSION ${US3_VERSION})
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Advanced analysis of analytical ultracentrifugation experiments")
-set(CPACK_PACKAGE_VENDOR "University of Texas Health Science Center")
+set(CPACK_PACKAGE_VENDOR "AUC Solutions, LLC")
 
 if(WIN32)
     set(CPACK_GENERATOR "NSIS")
 elseif(APPLE)
     set(CPACK_GENERATOR "DragNDrop")
+    set(CPACK_DMG_VOLUME_NAME "UltraScan3")
+    set(CPACK_DMG_FORMAT "UDZO")
 else()
     set(CPACK_GENERATOR "DEB;RPM")
 endif()
