@@ -813,7 +813,7 @@ void US_ReportGui::build_report_layout( void )
   QFont sfont( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() );
   int f_size = sfont.pointSize();
   qDebug() << "Font Size -- " << f_size;
-  pseudo3d_box-> setStyleSheet( QString( "QGroupBox { font:bold; font-size: %1pt; background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #E0E0E0, stop: 1 #FFFFFF); border: 2px solid gray; border-radius: 10px; margin-top: 10px; margin-bottom: 10px; padding-top: 5px; } QGroupBox::title { subcontrol-origin: margin; subcontrol-position: top left; left: 10px; margin: 0 5px; background-color: black; color: white; padding: 0 3px;}  QGroupBox::indicator { width: 13px; height: 13px; border: 1px solid grey; background-color: rgba(204, 204, 204, 255);} QGroupBox::indicator:hover {background-color: rgba(235, 235, 235, 255);} QLabel {background-color: rgb(105,105,105);}").arg( f_size ));
+  pseudo3d_box-> setStyleSheet( QString( "QGroupBox { font:bold; font-size: %1pt; background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #E0E0E0, stop: 1 #FFFFFF); border: 2px solid gray; border-radius: 10px; margin-top: 25px; margin-bottom: 10px; padding-top: 5px; } QGroupBox::title { subcontrol-origin: margin; subcontrol-position: top left; left: 10px; margin: 0px 5px; background-color: black; color: white; padding: 0 3px;}  QGroupBox::indicator { width: 13px; height: 13px; border: 1px solid grey; background-color: rgba(204, 204, 204, 255);} QGroupBox::indicator:hover {background-color: rgba(235, 235, 235, 255);} QLabel {background-color: rgb(105,105,105);}").arg( f_size ));
 
   QLabel* xy_s_ff0     = us_label( tr("s-f/f0"), -1 );
   QLabel* xy_s_d       = us_label( tr("s-D"), -1 );
