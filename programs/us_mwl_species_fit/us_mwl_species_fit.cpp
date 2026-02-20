@@ -2013,3 +2013,61 @@ void US_MwlSpeciesFit::rmsd_3dplot(){
     US_MWL_SF_PLOT3D* plot3d = new US_MWL_SF_PLOT3D(this, sfdata[ccx]);
     plot3d->exec();
 }
+
+void US_MwlSpeciesFit::reset( void )
+{
+   US_AnalysisBase2::reset();
+   reset_data();
+   reset_gui();
+}
+
+void US_MwlSpeciesFit::reset_data( void )
+{
+   nspecies    = 0;
+   jspec       = 0;
+   synData.clear();
+   have_p1.clear();
+   celchns.clear();
+   ftndxs.clear();
+   ltndxs.clear();
+   spfiles.clear();
+   celchn_wvl.clear();
+   synFitError.clear();
+   rmsd_for_gmp.clear();
+   radii.clear();
+   spconcs.clear();
+   lambdas.clear();
+   spwavls.clear();
+   nwavls.clear();
+   editProfile_blc.clear();
+   extinction_profiles_per_channel.clear();
+   report_runs.clear();
+   analysis_runs.clear();
+   ch_wvls.clear();
+   chndescs.clear();
+   chndescs_alt.clear();
+   ch_reports.clear();
+   protocol_details.clear();
+   us_gmp_auto_mode = false;
+}
+
+void US_MwlSpeciesFit::reset_gui( void )
+{
+   if ( te_results != nullptr )
+   {
+      te_results->disconnect();
+      te_results->close();
+      te_results = nullptr;
+   }
+
+   le_fit_error->clear();
+
+   pb_loadsfit->setEnabled( false );
+   pb_sfitdata->setEnabled( false );
+   pb_prev    ->setEnabled( false );
+   pb_next    ->setEnabled( false );
+   pb_plot3d  ->setEnabled( false );
+
+   data_plot1->setTitle( tr( "Output Data Set" ) );
+   data_plot2->setTitle( tr( "Input Data Set" ) );
+}

@@ -67,15 +67,13 @@ US_2dsa::US_2dsa() : US_AnalysisBase2()
    pb_plt3d     = us_pushbutton( tr( "3-D Plot"      ) );
    pb_pltres    = us_pushbutton( tr( "Residual Plot" ) );
 
-   connect( pb_exclude, SIGNAL( clicked() ), SLOT( exclude() ) );
-   connect( pb_fitcntl, SIGNAL( clicked() ), SLOT( open_fitcntl() ) );
-   connect( pb_plt3d,   SIGNAL( clicked() ), SLOT( open_3dplot()  ) );
-   connect( pb_pltres,  SIGNAL( clicked() ), SLOT( open_resplot() ) );
-   connect( pb_close,   SIGNAL( clicked() ), SLOT( close_all()    ) );
-   connect( ct_from,    SIGNAL( valueChanged( double ) ),
-                        SLOT  ( exclude_from( double ) ) );
-   connect( ct_to,      SIGNAL( valueChanged( double ) ),
-                        SLOT  ( exclude_to  ( double ) ) );
+   connect( pb_exclude, &QPushButton::clicked,     this, &US_2dsa::exclude );
+   connect( pb_fitcntl, &QPushButton::clicked,     this, &US_2dsa::open_fitcntl );
+   connect( pb_plt3d,   &QPushButton::clicked,     this, &US_2dsa::open_3dplot );
+   connect( pb_pltres,  &QPushButton::clicked,     this, &US_2dsa::open_resplot );
+   connect( pb_close,   &QPushButton::clicked,     this, &US_2dsa::close_all );
+   connect( ct_from,    &QwtCounter::valueChanged, this, &US_2dsa::exclude_from );
+   connect( ct_to,      &QwtCounter::valueChanged, this, &US_2dsa::exclude_to );
 
    // To modify controls layout, first make Base elements invisible
    
@@ -141,9 +139,9 @@ US_2dsa::US_2dsa() : US_AnalysisBase2()
        "Iterations:  0" ) );
    us_setReadOnly( te_status, true );
 
-   connect( pb_help,  SIGNAL( clicked() ), SLOT( help() ) );
-   connect( pb_view,  SIGNAL( clicked() ), SLOT( view() ) );
-   connect( pb_save,  SIGNAL( clicked() ), SLOT( save() ) );
+   connect( pb_help, &QPushButton::clicked, this, &US_2dsa::help );
+   connect( pb_view, &QPushButton::clicked, this, &US_2dsa::view );
+   connect( pb_save, &QPushButton::clicked, this, &US_2dsa::save );
 
    pb_view   ->setEnabled( false );
    pb_save   ->setEnabled( false );
@@ -1601,3 +1599,78 @@ QString US_2dsa::temp_Id_name()
             QDateTime::currentDateTime().toUTC().toString( "yyMMddhhmmss" ) );
 }
 
+void US_2dsa::reset() {
+   US_AnalysisBase2::reset();
+   reset_data();
+   reset_gui();
+}
+
+void US_2dsa::reset_gui() {
+   // close open windows
+   if ( resplotd ) {
+      resplotd->disconnect();
+      resplotd->close();
+   }
+   if ( eplotcd )
+   {
+      eplotcd->disconnect();
+      eplotcd->close();
+   }
+   if ( analcd )
+   {
+      analcd->disconnect();
+      analcd->close();
+   }
+   if ( analcd1 )
+   {
+      analcd1->disconnect();
+      analcd1->close();
+   }
+   if ( te_results != nullptr ) {
+      te_results->disconnect();
+      te_results->close();
+      te_results = nullptr;
+   }
+
+   // Reset 2DSA specific GUI elements
+   te_status->setText( tr(
+       "Solution not initiated...\n"
+       "RMSD:  0.000000,\n"
+       "Variance: 0.000000e-05 .\n"
+       "Iterations:  0" ) );
+
+   le_vari->setText( "0.00000" );
+   le_rmsd->setText( "0.00000" );
+   ct_boundaryPercent->disconnect   ();
+   ct_boundaryPercent->setRange     ( 0.0, 300.0 );
+   ct_boundaryPercent->setSingleStep( 1.0 );
+   ct_boundaryPercent->setValue     ( 300.0 );
+   ct_boundaryPercent->setEnabled   ( false );
+   ct_boundaryPos    ->disconnect   ();
+   ct_boundaryPos    ->setRange     ( -50.0, 300.0 );
+   ct_boundaryPos    ->setSingleStep( 1.0 );
+   ct_boundaryPos    ->setValue     ( -50.0 );
+   ct_boundaryPos    ->setEnabled   ( false );
+   pb_view   ->setEnabled( false );
+   pb_save   ->setEnabled( false );
+   pb_fitcntl->setEnabled( false );
+   pb_plt3d  ->setEnabled( false );
+   pb_pltres ->setEnabled( false );
+   pb_exclude->setEnabled( false );
+   ct_from   ->setEnabled( false );
+   ct_to     ->setEnabled( false );
+}
+
+void US_2dsa::reset_data() {
+   baserss    = 0;
+   dsets.clear();
+   dset = SS_DATASET();
+   dsets << &dset;
+   speed_steps.clear();
+   normvA.clear();
+   models.clear();
+   ri_noises.clear();
+   ti_noises.clear();
+   tinoises.clear();
+   rinoises.clear();
+}

@@ -818,6 +818,10 @@ DbgLv(1) << "pl3d:  f_meni f_bott" << f_meni << f_bott;
    le_men_fit->setText( QString::number( f_meni, 'f', 5 ) );
    le_bot_fit->setText( QString::number( f_bott, 'f', 5 ) );
 
+   //save
+   Meniscus_fitted_2d_val = le_men_fit->text().toDouble();
+   Bottom_fitted_2d_val   = le_bot_fit->text().toDouble();
+
    // Start building 3-D plot
    double* a_meni = v_meni.data();
    double* a_bott = v_bott.data();
@@ -1997,7 +2001,12 @@ DbgLv(1) << " call Remove Models";
        //Identify if Meniscus || Bottom || (Meniscus && Bottom) have been changed
        if ( have3val )
 	 {  // Fit is meniscus + bottom
-	  
+	   qDebug() << "[FITMEN]: mennew, Meniscus_fitted_2d_val; botnew, Bottom_fitted_2d_val -- "
+		    <<  mennew << ", " <<  Meniscus_fitted_2d_val << "; " << botnew << ", " << Bottom_fitted_2d_val;
+	   if ( mennew != Meniscus_fitted_2d_val || botnew != Bottom_fitted_2d_val )
+	     triple_information[ "FMB_changed" ] = QString("YES");
+	   else
+	     triple_information[ "FMB_changed" ] = QString("NO");
 	 }
        else if ( !bott_fit )
 	 {  // Fit is meniscus only

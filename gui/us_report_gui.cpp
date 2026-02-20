@@ -205,6 +205,21 @@ US_ReportGui::US_ReportGui( QMap < QString, US_ReportGMP* > report_map ) : US_Wi
   bn_report_t->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
   main->addWidget( bn_report_t );
 
+  //add upload from file(s) button
+  ufiles    =  new QGridLayout();
+  ufiles    ->setSpacing         ( 2 );
+  ufiles    ->setContentsMargins ( 2, 2, 2, 2 );
+
+  pb_upload_files   = us_pushbutton(  tr( "Upload from File(s)" ), true, 0 );
+  connect( pb_upload_files, SIGNAL( clicked          () ),
+	   this,         SLOT  ( upload_files   () ) );
+
+  le_ufiles      = us_lineedit( "",  0, true  );
+  row = 0;
+  ufiles->addWidget( pb_upload_files,  row,    0, 1, 2 );
+  ufiles->addWidget( le_ufiles,        row,    2, 1, 4 );
+  main->addLayout( ufiles );
+  
   //Units info memo
   QTextEdit*     le_info;
   QFont le_info_font( US_Widgets::fixedFont().family(),
@@ -484,6 +499,9 @@ void US_ReportGui::build_report_layout( void )
       pb_prev_wvl  -> setVisible( false );
       pb_next_wvl  -> setVisible( false );
       pb_apply_all -> setVisible( false );
+
+      pb_upload_files->setVisible( false );
+      le_ufiles      ->setVisible( false );
     }
   
   
@@ -953,7 +971,7 @@ void US_ReportGui::build_report_layout( void )
    
   main->addLayout( lower_buttons );
 
-  setMinimumSize( 850, 500 );
+  setMinimumSize( 850, 600 );
   //adjustSize();
 
 }
@@ -1012,6 +1030,207 @@ void US_ReportGui::update_report( void )
   close();
 }
 
+
+void US_ReportGui::parseGaStatsFile(const QString& fileName)
+{
+  QFile file(fileName);
+  if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+    qWarning() << "Could not open file:" << fileName;
+    return;
+  }
+  
+  QString x_name, y_name;
+  QStringList x_ranges, y_ranges;
+  bool gadistro = false;
+
+  QTextStream in(&file);
+  while (!in.atEnd())
+    {
+      QString line = in.readLine();
+      
+      // Skip empty lines or comments
+      if (line.isEmpty() || line.startsWith("#") || line.startsWith("*") )
+	continue;
+           
+      // Split by whitespace (space or tab)
+      QStringList parts = line.split(QRegularExpression("\\s+"), Qt::SkipEmptyParts);
+
+      //For .Stat File
+      if ( fileName.contains(".sol_integ.stats") )
+	{
+	  bool ok;
+	  if ( parts.size() >= 3 && parts[1].compare("concentration:", Qt::CaseInsensitive) == 0 )
+	    {
+	      qDebug() << "in file, " << fileName << ", line is: " << parts;
+	      double part_c, tot_c;
+	      if ( parts[0].compare("Partial", Qt::CaseInsensitive) == 0 ) 
+		{
+		  part_c = parts[2].toDouble(&ok);
+		  if (ok)
+		    {
+		      qDebug() << "Partial conc. value: " << part_c;
+		      uploaded_part_concs << parts[2];
+		    }
+		  else
+		    qDebug() << "Found label Part. Conc., but value is not a number: " << parts[2];
+		}
+	      else if ( parts[0].compare("Total", Qt::CaseInsensitive) == 0 )
+		{
+		  tot_c = parts[2].toDouble(&ok);
+		  if (ok)
+		    {
+		      qDebug() << "Total conc. value: " << tot_c;
+		      uploaded_tot_conc = parts[2];
+		    }
+		  else
+		    qDebug() << "Found label Tot. Conc., but value is not a number: " << parts[2]; 
+		}
+	    }
+	  else
+	    continue;
+	}
+      //For .gadist File
+      else if ( fileName.contains(".gadistro.dat" ) )
+	{
+	  gadistro = true;
+	  double x_min, x_max, y_min, y_max;
+	  bool ok_xmin, ok_xmax, ok_ymin, ok_ymax;
+	  if ( parts.size() == 10 && parts[7]. contains("x=") && parts[8].contains("y=") )
+	    {
+	      qDebug() << "Variables are, " << parts[7] << parts[8];
+	      QStringList x_name_l = parts[7].split("=");
+	      QStringList y_name_l = parts[8].split("=");
+	      x_name = x_name_l.value(x_name_l.size()-1);
+	      y_name = y_name_l.value(y_name_l.size()-1);
+	    }
+	  else if ( parts.size() == 4 )
+	    {
+	      for (int i = 0; i < parts.size(); ++i) 
+		parts[i].replace(",", "");
+	      qDebug() << "Ranges are: " << parts;
+	      x_min = parts[0].toDouble(&ok_xmin);
+	      x_max = parts[1].toDouble(&ok_xmax);
+	      y_min = parts[2].toDouble(&ok_ymin);
+	      y_max = parts[3].toDouble(&ok_ymax);
+
+	      if ( ok_xmin && ok_xmax && ok_ymin && ok_ymax )
+		{
+		  //valid str can be converted to doubles later, proceed
+		  x_ranges << parts[0] + ":" + parts[1];
+		  y_ranges << parts[2] + ":" + parts[3];
+		}
+	      else
+		{
+		  qDebug() << "There are some errors in Ranges conversion from strings...";
+		}
+	    }
+	}
+    }
+  file.close();
+
+  if ( gadistro )
+    {
+      //Assemble maps
+      uploaded_variable_ranges[ x_name ] = x_ranges;
+      uploaded_variable_ranges[ y_name ] = y_ranges;
+    }
+}
+
+//upload files
+void US_ReportGui::upload_files( void )
+{
+
+  QString caption = "Select GA Files";
+  QDir resultDir( US_Settings::resultDir() );
+  QString dir = resultDir.absolutePath();
+
+  QString filter = "Stats Distro (*.sol_integ.stats *.gadistro.dat)";
+  QStringList files = QFileDialog::getOpenFileNames(this, caption, dir, filter );
+  if (files.isEmpty())
+    return; 
+
+  //some simple checks
+  if (files.size() != 2)
+    {
+      QMessageBox::critical(this, tr("Wrong Number of Files"), 
+			    tr("Two files (.sol_integ.stats and .gadistro.dat) must selected!"));
+      return;
+    }
+  else
+    {
+      QStringList files_ext_list;
+      for ( int i = 0; i < files.size(); i++ )
+	files_ext_list << files[i].section('.', -2, -1);
+
+      qDebug() << "files_ext_list " << files_ext_list;
+      if ( !files_ext_list. contains("sol_integ.stats") ||
+	   !files_ext_list. contains("gadistro.dat"))
+	{
+	  QMessageBox::critical(this, tr("Wrong Types of Files"), 
+				tr("Two files (.sol_integ.stats and .gadistro.dat) must selected!"));
+	  return;
+	}
+    }
+  
+  //clean
+  uploaded_part_concs. clear();
+  uploaded_tot_conc.clear();
+  uploaded_variable_ranges. clear();
+  
+  for ( int trx = 0; trx < files.size(); trx++ )
+   {
+      QString fname  = files[ trx ];
+
+      qDebug() << "file loaded -- " << fname;
+      parseGaStatsFile(fname);
+   }
+
+  //check for the same #solutes in .gadistro.dat & .sol_integ.stats
+  int Solutes_num_gadistro = 0;
+  if (!uploaded_variable_ranges.isEmpty()) 
+    Solutes_num_gadistro = uploaded_variable_ranges.first().size();
+  int Solutes_num_sol_integ = uploaded_part_concs.size();
+  qDebug() << "Solutes_num_gadistro, Solutes_num_sol_integ -- "
+	   << Solutes_num_gadistro << Solutes_num_sol_integ;
+  QStringList fileNames;
+  for (const QString &path : files) 
+    fileNames << QFileInfo(path).fileName();
+  if ( Solutes_num_gadistro != Solutes_num_sol_integ )
+    {
+      QMessageBox::critical(this, tr("Unmatched Solutes Number"), 
+			    QString( tr("Number of solutes in the uploaded file \n\n"
+					"%1\n\n"
+					"do NOT match!")).
+			    arg(fileNames.join("\n")));
+      return;
+    }
+
+  //insert a dialog for variable/model combos:
+  //also ask if overwrite or append rows uploaded
+  QStringList variable_list = uploaded_variable_ranges.keys();
+  US_ConfirmUpload * diag_confirm = new US_ConfirmUpload( variable_list, this );
+  diag_confirm->setWindowFlags(windowFlags() | Qt::CustomizeWindowHint);
+  diag_confirm->setWindowFlags(windowFlags() & ~Qt::WindowMinMaxButtonsHint);
+  diag_confirm->setWindowFlags(windowFlags() & ~Qt::WindowCloseButtonHint);
+  //diag_confirm->setWindowFlags( Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint);
+  diag_confirm->setWindowModality(Qt::ApplicationModal);
+
+  if (diag_confirm->exec() != QDialog::Rejected)
+    {
+      QMap< QString, QStringList > user_selections = diag_confirm->getSelections();
+      qDebug() << "user_selections -- " << user_selections;
+
+      //generate GUI && save internals
+      add_rows_uploaded( user_selections );
+
+      //show fileNames uploaded
+      QString u_mode = user_selections["mode"].first();
+      le_ufiles-> setText( fileNames.join(", ") + QString(" (Mode: ") + u_mode + QString(")"));
+    }
+  else
+    return;
+  
+}
 
 //Verify text
 void US_ReportGui::verify_text( const QString& text )
@@ -1264,6 +1483,90 @@ void US_ReportGui::cancel_update( void )
 }
 
 
+//add row from uploaded files
+void US_ReportGui::add_rows_uploaded( QMap< QString, QStringList > combo_selections )
+{
+  //Do we overwrite?
+  QString u_mode = combo_selections["mode"].first();
+  QStringList combo_sels = combo_selections["combos"];
+  qDebug() << "Do we overwrite? " << u_mode;
+  qDebug() << "What combos to generate? " << combo_sels;
+  
+  //save all existing
+  if ( u_mode == "Append")
+    gui_to_report();
+  else
+    report->reportItems.clear();
+  
+  QStringList variable_list = uploaded_variable_ranges.keys();
+  for (int i=0; i<variable_list.size(); ++i) 
+    {
+      QString var_name = variable_list[i];
+      QString var_name_mod = var_name;
+      double c_factor = 1.0;
+      
+      if( var_name.contains("ff", Qt::CaseInsensitive))
+	var_name_mod = QString("f/f0");
+      if( var_name.contains("D", Qt::CaseInsensitive))
+	c_factor = pow(10, 7);
+      if( var_name.contains("MW", Qt::CaseInsensitive) )
+	c_factor = pow(10, -3);
+      
+      QStringList var_ranges = uploaded_variable_ranges[ var_name ];
+      qDebug() << "ranges for " << var_name << " -- " << var_ranges; 
+      for (int vi=0; vi<var_ranges.size(); ++vi)
+	{
+	  QString var_range = var_ranges[vi];
+      	  QString r_low  = var_range.split(":")[0];
+	  QString r_high = var_range.split(":")[1];
+
+	  qDebug() << "Generating Report Item -- "
+		   << var_name_mod
+		   << r_low.toDouble()
+		   << r_high.toDouble()
+		   << uploaded_part_concs[vi].toDouble();
+
+	  //check if there are several models for the same var.:
+	 
+	  for (int co=0; co<combo_sels.size(); ++co)
+	    {
+	      QString co_v = combo_sels[co].split("_")[0];
+	      QString co_m = combo_sels[co].split("_")[1];
+	      if (co_v.compare(var_name, Qt::CaseInsensitive) == 0)
+		{
+		  QString method_c;
+		  if ( co_m == "it" )
+		    method_c = QString("2DSA-IT");
+		  if ( co_m == "mc" )
+		    method_c = QString("2DSA-MC");
+		  if ( co_m == "pcsa" )
+		    method_c = QString("PCSA-SL/DS/IS");
+		  US_ReportGMP::ReportItem initItem;
+		  initItem.type             = var_name_mod;
+		  initItem.method           = method_c;
+		  initItem.range_low        = r_low.toDouble() * c_factor;
+		  initItem.range_high       = r_high.toDouble() * c_factor;
+		  initItem.integration_val  = uploaded_part_concs[vi].toDouble();
+		  initItem.tolerance        = 10;
+		  initItem.combined_plot    = 1;
+		  initItem.ind_combined_plot  = 1;
+	
+		  report->reportItems.push_back( initItem );
+		}
+	    }
+	}
+    }
+  //re-build genL layout
+  build_report_layout( );
+
+  //now, put tot_conc (will recalculate percents)
+  le_tot_conc -> setText( uploaded_tot_conc );
+  //IMPORTANT: manually force emit textChanged()
+  emit le_tot_conc->textChanged(le_tot_conc->text());
+
+  report -> tot_conc = uploaded_tot_conc.toDouble();
+}
+  
 //Slot to add row
 void US_ReportGui::add_row( void )
 {
@@ -1697,4 +2000,245 @@ void US_ReportGui::SetComboBoxItemEnabled(QComboBox * comboBox, int index, bool 
 void US_ReportGui::method_changed( int m)
 {
   
+}
+
+//GA uploaded files selections:
+US_ConfirmUpload::US_ConfirmUpload(QStringList variables, QWidget *parent) : US_WidgetsDialog( parent )
+{
+  this->vars_passed = variables;
+  
+  setWindowTitle( tr( "Type | Method Selector " ) );
+  setPalette( US_GuiSettings::normalColor() );
+
+  QVBoxLayout* main    = new QVBoxLayout( this );
+  main->setSpacing        ( 2 );
+  main->setContentsMargins( 2, 2, 2, 2 );
+
+  //GroupBox for pseudo3D plots
+  ga_upload_box = new QGroupBox();
+  QFont sfont( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() );
+  int f_size = sfont.pointSize();
+  qDebug() << "Font Size -- " << f_size;
+  ga_upload_box-> setStyleSheet( QString( "QGroupBox { font:bold; font-size: %1pt; background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #E0E0E0, stop: 1 #FFFFFF); border: 2px solid gray; border-radius: 10px; margin-top: 10px; margin-bottom: 10px; padding-top: 5px; } QGroupBox::title { subcontrol-origin: margin; subcontrol-position: top left; left: 10px; margin: 0 5px; background-color: black; color: white; padding: 0 3px;}  QGroupBox::indicator { width: 13px; height: 13px; border: 1px solid grey; background-color: rgba(204, 204, 204, 255);} QGroupBox::indicator:hover {background-color: rgba(235, 235, 235, 255);} QLabel {background-color: rgb(105,105,105);}").arg( f_size ));
+  
+  QLabel* x_s     = us_label( tr("s"), -1 );
+  QLabel* x_ff0   = us_label( tr("f/f0"), -1 );
+  QLabel* x_mw    = us_label( tr("MW"), -1 );
+  QLabel* x_d     = us_label( tr("D"), -1 );
+  //x_s->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Preferred);
+
+  QLabel* model_2dsait = us_label( tr("2DSA-IT"), -1 );
+  QLabel* model_2dsamc = us_label( tr("2DSA-MC"), -1 );
+  QLabel* model_pcsa   = us_label( tr("PCSA"), -1 );
+
+  //2DSA-IT checkboxes
+  ck_2dsait_s       = new QCheckBox( tr( "" ), this );
+  ck_2dsait_s ->setPalette( US_GuiSettings::normalColor() );
+  //ck_2dsait_s ->setChecked(  );
+  ck_2dsait_s ->setObjectName("s_it");
+  ck_2dsait_s ->setAutoFillBackground( true  );
+
+  ck_2dsait_d       = new QCheckBox( tr( "" ), this );
+  ck_2dsait_d ->setPalette( US_GuiSettings::normalColor() );
+  //ck_2dsait_d ->setChecked(  );
+  ck_2dsait_d ->setObjectName("d_it");
+  ck_2dsait_d ->setAutoFillBackground( true  );
+
+  ck_2dsait_ff0       = new QCheckBox( tr( "" ), this );
+  ck_2dsait_ff0 ->setPalette( US_GuiSettings::normalColor() );
+  //ck_2dsait_ff0 ->setChecked(  );
+  ck_2dsait_ff0 ->setObjectName("ff0_it");
+  ck_2dsait_ff0 ->setAutoFillBackground( true  );
+  
+  ck_2dsait_mw       = new QCheckBox( tr( "" ), this );
+  ck_2dsait_mw ->setPalette( US_GuiSettings::normalColor() );
+  //ck_2dsait_mw ->setChecked( report -> pseudo3d_2dsait_mw_d );
+  ck_2dsait_mw ->setObjectName("mw_it");
+  ck_2dsait_mw ->setAutoFillBackground( true  );
+
+  //2DSA-MC checkboxes
+  ck_2dsamc_s       = new QCheckBox( tr( "" ), this );
+  ck_2dsamc_s ->setPalette( US_GuiSettings::normalColor() );
+  //ck_2dsamc_s ->setChecked( report -> pseudo3d_2dsamc_s_ff0 );
+  ck_2dsamc_s ->setObjectName("s_mc");
+  ck_2dsamc_s ->setAutoFillBackground( true  );
+
+  ck_2dsamc_d       = new QCheckBox( tr( "" ), this );
+  ck_2dsamc_d ->setPalette( US_GuiSettings::normalColor() );
+  //ck_2dsamc_d ->setChecked( report -> pseudo3d_2dsamc_s_d );
+  ck_2dsamc_d ->setObjectName("d_mc");
+  ck_2dsamc_d ->setAutoFillBackground( true  );
+
+  ck_2dsamc_ff0       = new QCheckBox( tr( "" ), this );
+  ck_2dsamc_ff0 ->setPalette( US_GuiSettings::normalColor() );
+  //ck_2dsamc_ff0 ->setChecked( report -> pseudo3d_2dsamc_mw_ff0 );
+  ck_2dsamc_ff0 ->setObjectName("ff0_mc");
+  ck_2dsamc_ff0 ->setAutoFillBackground( true  );
+  
+  ck_2dsamc_mw       = new QCheckBox( tr( "" ), this );
+  ck_2dsamc_mw ->setPalette( US_GuiSettings::normalColor() );
+  //ck_2dsamc_mw ->setChecked( report -> pseudo3d_2dsamc_mw_d );
+  ck_2dsamc_mw ->setObjectName("mw_mc");
+  ck_2dsamc_mw ->setAutoFillBackground( true  );
+
+  //PCSA checkboxes
+  ck_pcsa_s       = new QCheckBox( tr( "" ), this );
+  ck_pcsa_s ->setPalette( US_GuiSettings::normalColor() );
+  //ck_pcsa_s ->setChecked( report -> pseudo3d_pcsa_s_ff0 );
+  ck_pcsa_s -> setObjectName("s_pcsa");
+  ck_pcsa_s ->setAutoFillBackground( true  );
+
+  ck_pcsa_d       = new QCheckBox( tr( "" ), this );
+  ck_pcsa_d ->setPalette( US_GuiSettings::normalColor() );
+  //ck_pcsa_d ->setChecked( report -> pseudo3d_pcsa_s_d );
+  ck_pcsa_d -> setObjectName("d_pcsa");
+  ck_pcsa_d ->setAutoFillBackground( true  );
+
+  ck_pcsa_ff0       = new QCheckBox( tr( "" ), this );
+  ck_pcsa_ff0 ->setPalette( US_GuiSettings::normalColor() );
+  //ck_pcsa_ff0 ->setChecked( report -> pseudo3d_pcsa_mw_ff0 );
+  ck_pcsa_ff0 -> setObjectName("ff0_pcsa");
+  ck_pcsa_ff0 ->setAutoFillBackground( true  );
+  
+  ck_pcsa_mw       = new QCheckBox( tr( "" ), this );
+  ck_pcsa_mw ->setPalette( US_GuiSettings::normalColor() );
+  //ck_pcsa_mw ->setChecked( report -> pseudo3d_pcsa_mw_d );
+  ck_pcsa_mw -> setObjectName("mw_pcsa");
+  ck_pcsa_mw ->setAutoFillBackground( true  );  
+  
+  QGridLayout *gbox = new QGridLayout();
+  gbox              ->setSpacing         ( 1 );
+  gbox              ->setContentsMargins ( 0, 0, 0, 0 );
+  int row = 0;
+  gbox ->addWidget( x_s,         row,   2, 1, 2 );
+  gbox ->addWidget( x_ff0,       row,   4, 1, 2 );
+  gbox ->addWidget( x_mw,        row,   6, 1, 2 );
+  gbox ->addWidget( x_d,         row++, 8, 1, 2 );
+  
+  gbox ->addWidget( model_2dsait,   row,   0, 1, 2 );
+  gbox ->addWidget( ck_2dsait_s,    row,   2, 1, 2, Qt::AlignHCenter);
+  gbox ->addWidget( ck_2dsait_ff0,  row,   4, 1, 2, Qt::AlignHCenter );
+  gbox ->addWidget( ck_2dsait_d,    row,   6, 1, 2, Qt::AlignHCenter );
+  gbox ->addWidget( ck_2dsait_mw,   row++, 8, 1, 2, Qt::AlignHCenter );
+
+  gbox ->addWidget( model_2dsamc,     row,   0, 1, 2 );
+  gbox ->addWidget( ck_2dsamc_s,      row,   2, 1, 2, Qt::AlignHCenter );
+  gbox ->addWidget( ck_2dsamc_ff0,    row,   4, 1, 2, Qt::AlignHCenter );
+  gbox ->addWidget( ck_2dsamc_d,      row,   6, 1, 2, Qt::AlignHCenter );
+  gbox ->addWidget( ck_2dsamc_mw,     row++, 8, 1, 2, Qt::AlignHCenter );
+ 
+
+  gbox ->addWidget( model_pcsa,     row,   0, 1, 2 );
+  gbox ->addWidget( ck_pcsa_s,      row,   2, 1, 2, Qt::AlignHCenter );
+  gbox ->addWidget( ck_pcsa_ff0,    row,   4, 1, 2, Qt::AlignHCenter );
+  gbox ->addWidget( ck_pcsa_d,      row,   6, 1, 2, Qt::AlignHCenter );
+  gbox ->addWidget( ck_pcsa_mw,     row++, 8, 1, 2, Qt::AlignHCenter );
+    
+  ga_upload_box->setLayout( gbox );
+   
+  //assemble
+  
+  QVBoxLayout *vbox = new QVBoxLayout(this);
+  vbox->addWidget( ga_upload_box );
+  vbox->addStretch(); 
+
+  main->addLayout(vbox);
+  //main->addWidget( ga_upload_box );
+
+  //Append | overwrite
+  QFormLayout *form_r = new QFormLayout(this);
+  QHBoxLayout *hLayout = new QHBoxLayout(this);
+  QStringList form_labels_radio = { "Append", "Overwrite" };
+  fields_radio. clear();
+  for(int i = 0; i < form_labels_radio.size(); ++i)
+    {
+      QRadioButton *radioB = new QRadioButton(form_labels_radio[i]);
+      radioB->setObjectName( form_labels_radio[i] );
+
+      if ( form_labels_radio[i] == QString("Overwrite") )
+	radioB->setChecked(true);
+	    
+      hLayout->addWidget(radioB);
+      fields_radio << radioB;
+    }
+  form_r->addRow( "MODE OF UPLOAD:", hLayout);
+  main->addLayout( form_r );
+      
+  //add buttons
+  QHBoxLayout *lower_buttons     = new QHBoxLayout();
+
+  pb_reset    = us_pushbutton( tr( "Reset" ) );
+  pb_cancel   = us_pushbutton( tr( "Cancel" ) );
+  pb_accept   = us_pushbutton( tr( "Accept" ) );
+
+  connect( pb_reset,  &QPushButton::clicked, this, &US_ConfirmUpload::do_reset);
+  connect( pb_cancel, &QPushButton::clicked, this, &US_ConfirmUpload::cancel_upload);
+  connect( pb_accept, &QPushButton::clicked, this, &US_ConfirmUpload::accept_upload);
+
+  lower_buttons->addWidget( pb_reset );
+  lower_buttons->addWidget( pb_cancel );
+  lower_buttons->addWidget( pb_accept );
+   
+  main->addLayout( lower_buttons );
+
+  setMinimumSize( 400, 170 );
+
+  do_reset();
+}
+
+//reset
+void US_ConfirmUpload::do_reset()
+{
+  QList<QCheckBox *> allCheckBoxes = ga_upload_box->findChildren<QCheckBox *>();
+  for (QCheckBox *cb : allCheckBoxes)
+    {
+      QString objName = cb->objectName().split("_")[0];
+      qDebug() << "ObjName {complete, cut}:"
+	       << "{" <<  cb->objectName() << "}" << objName;
+
+      bool checked_enabled = (vars_passed.contains(objName, Qt::CaseInsensitive)) ? true : false;
+      cb->setEnabled( checked_enabled );
+      cb->setChecked( checked_enabled );
+    }
+
+  upload_sel. clear();
+}
+
+//cancel
+void US_ConfirmUpload::cancel_upload()
+{
+  close();
+}
+
+//accept
+void US_ConfirmUpload::accept_upload()
+{
+  upload_sel = gui_to_json_upload();
+  accept();
+}
+
+QMap< QString, QStringList> US_ConfirmUpload::gui_to_json_upload()
+{
+  QStringList combos_to_generate, mode;
+
+  //checks
+  QList<QCheckBox *> allCheckBoxes = ga_upload_box->findChildren<QCheckBox *>();
+  for (QCheckBox *cb : allCheckBoxes)
+    {
+      if ( cb->isChecked() )
+	combos_to_generate << cb->objectName();
+    }
+
+  //radiobtns
+  foreach(QRadioButton * rb, fields_radio)
+    {
+      if (rb->isChecked())
+	mode << rb->objectName();
+    }
+
+  //assemble
+  upload_sel["combos"] = combos_to_generate;
+  upload_sel["mode"]   = mode;
+  
+  return upload_sel;
 }

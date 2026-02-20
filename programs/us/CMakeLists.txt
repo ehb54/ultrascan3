@@ -21,7 +21,7 @@ endif()
 if(WIN32)
         # Create us.rc if it doesn't exist
         if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/us.rc")
-                file(WRITE "${CMAKE_CURRENT_SOURCE_DIR}/us.rc" "IDI_ICON1 ICON \"../../gui/images/us3-icon-256x256.png\"\n")
+                file(WRITE "${CMAKE_CURRENT_SOURCE_DIR}/us.rc" "IDI_ICON1 ICON \"../../etc/us3-icon-128x128.ico\"\n")
         endif()
         list(APPEND US_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/us.rc")
 endif()
@@ -58,3 +58,11 @@ target_include_directories(us
         PRIVATE
         ${src_dir}
 )
+
+if(APPLE)
+        add_custom_command(TARGET us POST_BUILD
+                COMMAND codesign --force --deep --sign -
+                "$<TARGET_BUNDLE_DIR:us>"
+                COMMENT "Ad-hoc code signing"
+        )
+endif()

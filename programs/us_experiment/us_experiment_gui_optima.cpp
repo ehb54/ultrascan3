@@ -1756,6 +1756,9 @@ void US_ExperGuiRotor::importDiskChecked( bool checked )
       ck_absorbance_pa -> setChecked( false );
       ra_data_type = false;
       ra_data_sim  = false;
+
+      //set tabs to read
+      mainw->set_tabs_buttons_readonly_dataDisk( false );
     }
   else
     {
@@ -1904,7 +1907,57 @@ void US_ExperGuiRotor::importDisk( void )
   ck_absorbance_t  ->setChecked( false );
   ck_absorbance_pa ->setChecked( false );
   ck_absorbance_pa ->setEnabled( true );
-    
+
+  //check if all A/B channels of the same cell have equal wvl ranges
+  QMap< QString, QMap <QString, QStringList > > cell_chann_wvls;
+  bool wvl_inconsistent = false;
+  QString cell_f, channel_f, wvl_f;
+  for ( int trx = 0; trx < files.size(); trx++ )
+    {
+      QString fname  = files[ trx ];
+      QStringList parts = fname.split(".");
+      if (parts.size() >= 5)
+	{
+	  cell_f    = parts[parts.size() - 4];
+	  channel_f = parts[parts.size() - 3];
+	  wvl_f     = parts[parts.size() - 2];
+	  cell_chann_wvls[ cell_f ][ channel_f ] << wvl_f;
+	}
+    }
+  QStringList cell_list = cell_chann_wvls.keys();
+  for ( int i=0; i<cell_list.size(); ++i )
+    {
+      cell_f = cell_list[i];
+      QMap <QString, QStringList > chan_wvls = cell_chann_wvls[ cell_f ];
+      QStringList chann_list = chan_wvls.keys();
+      if ( chann_list.size() != 2 )
+	{
+	  wvl_inconsistent = true;
+	  break;
+	}
+      else
+	{
+	  QStringList list1 = chan_wvls.value("A");
+	  QStringList list2 = chan_wvls.value("B");
+ 	  list1.sort();
+	  list2.sort();
+	  qDebug() << "cell: wvlA, wvlB" << cell_f << ": " << list1 << list2; 
+	  if (list1 != list2)
+	    {
+	      wvl_inconsistent = true;
+	      break;
+	    }
+	}
+    }
+
+  if ( wvl_inconsistent )
+    {
+      QMessageBox::critical(this, "Bad Data", "Wavelengths mistatch for one or two cell/channels...");
+      return;
+    }
+  
+  
+  //proceed
   for ( int trx = 0; trx < files.size(); trx++ )
     {
       QString fname  = files[ trx ];
@@ -2096,6 +2149,9 @@ void US_ExperGuiRotor::importDisk( void )
   
   //set up dir path
   le_dataDiskPath   ->setText( importDataPath );
+
+  //set tabs readonly
+  mainw->set_tabs_buttons_readonly_dataDisk( true );
 }
 
 //
@@ -9570,7 +9626,7 @@ void US_ExperGuiUpload::submitExperiment()
 
       QStringList researcher_split = (mainw->currProto.investigator).split(':');
       QString researcher_trimmed   = researcher_split[1].trimmed();
-      QRegularExpression rx( "[^A-Za-z0-9_-, ]" );
+      QRegularExpression rx( "[^A-Za-z0-9_\\-, ]" );
       researcher_trimmed.replace( rx,  "" );
       QString researcher           = "\'" + researcher_trimmed + "\'";
 

@@ -705,6 +705,7 @@ class US_ExperGuiRanges : public US_WidgetsDialog
    private:
       US_ExperimentMain*   mainw;
       US_RunProtocol::RunProtoRanges*  rpRange;
+      US_RunProtocol::RunProtoRotor*   rpRotor;  //!< Rotor controls
       US_RunProtocol::RunProtoSpeed*   rpSpeed;  //!< Speed controls
       US_RunProtocol::RunProtoSolutions*  rpSolut;  //!< Solutions controls
   
@@ -1186,6 +1187,7 @@ class US_ExperimentMain : public US_Widgets
       void optima_submitted( QMap < QString, QString > &protocol_details );
       void submitted_protDev( QMap < QString, QString > & );
       void submitted_dataDisk( QMap < QString, QString > & );
+      void set_tabs_buttons_readonly_dataDisk( bool );
 
       void us_exp_clear( QString &protocolName );
       //void auto_mode_passed( void ); 

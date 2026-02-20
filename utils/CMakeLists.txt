@@ -51,6 +51,12 @@ elseif(WIN32)
     set_target_properties(us_utils PROPERTIES
             WINDOWS_EXPORT_ALL_SYMBOLS OFF  # We'll use explicit exports
             )
+    # Use BigObj format for large files
+    if(MSVC)
+        target_compile_options(us_utils PRIVATE "/bigobj")
+    elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+        target_compile_options(us_utils PRIVATE "-Wa,-mbig-obj")
+    endif()
 endif()
 
 # Ensure dynamic Qt linking - ALL PLATFORMS
@@ -177,6 +183,12 @@ if(BUILD_TESTING OR US3_PREFER_STATIC)
         endif()
     elseif(WIN32)
         target_link_libraries(us_utils_static PUBLIC ${WIN32_SYSTEM_LIBS})
+        # Use BigObj format for large files
+        if(MSVC)
+            target_compile_options(us_utils_static PRIVATE "/bigobj")
+        elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+            target_compile_options(us_utils_static PRIVATE "-Wa,-mbig-obj")
+        endif()
     endif()
 
     # Debug options
@@ -186,17 +198,6 @@ if(BUILD_TESTING OR US3_PREFER_STATIC)
         else()
             target_compile_options(us_utils_static PRIVATE -g -O0)
         endif()
-    endif()
-    # Platform-specific libraries
-    if(UNIX AND NOT APPLE)
-        # Linux-specific libraries
-        if(X11_FOUND)
-            target_link_libraries(us_utils_static PUBLIC ${X11_LIBRARIES})
-            target_include_directories(us_utils_static PUBLIC ${X11_INCLUDE_DIR})
-        endif()
-    elseif(WIN32)
-        # Windows system libraries
-        target_link_libraries(us_utils_static PUBLIC ${WIN32_SYSTEM_LIBS})
     endif()
 
     # Export static library alias

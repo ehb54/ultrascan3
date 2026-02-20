@@ -148,6 +148,10 @@ class US_MwlSpeciesFit : public US_AnalysisBase2
         //! \brief Show help information
         void help(void)
         { showHelp.show_help("manual/mwl_species_fit.html"); };
+
+        void reset();
+        void reset_data();
+        void reset_gui();
 };
 
 #endif // US_MWL_SPECIES_FIT_H
