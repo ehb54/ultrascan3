@@ -72,22 +72,23 @@ Selection of the hardware and experiment type, along with the assignment of role
 
 .. _advanced-lab:
 
-5. Solutions
-==============
-
 Management of rotors and associated rotor (stretch) calibration profiles is accessed by calling the `Rotor Management <../../rotor.html>`_. 
 
-.. image:: ../../_static/images/gmp/data_acquisition/experiment/gmp_data_acquisition_experiment_15.pngManage Optima Runs:
+.. image:: ../../_static/images/gmp/data_acquisition/experiment/gmp_data_acquisition_experiment_15.png
     :align: center
-
 
 3. Speeds
 ===========
 
 Set run parameters including rotor speed, experiment duration, and scanning in interval for each optical system.
 
-Under **3: Specify speed steps**, the number of speed profiles in the GMP module is restricted to 1. The **Rotor speed** in revolutions per minute (rpm) can be set by typing the numerical value, or by using the arrows. The **Acceleration** in revolutions per minute per second (rpm/sec) can also be set. The **Active Scanning Time** can be set in terms of days, hours and minutes, while the **Stage Delay** can be set in terms of hours and minutes. The sum of these values gives the **Total Time (without equilibration)**. Under **Scan Number Estimator**, the   **Sum of all wavelengths (from all cells) to be scanned** gives the number of distinct wavelengths to be scanned. The **Total number of scans per wavelength per cell** is the number of scans for a single wavelength that will be collected for a cell (which produces data for channels A and B).
-
+    * Under the **3: Specify speed steps** subheading, the number of speed profiles in the GMP module is restricted to 1. 
+    * The **Rotor speed** in revolutions per minute (rpm) can be set by typing the numerical value, or by using the arrows. 
+    * The **Acceleration** in revolutions per minute per second (rpm/sec) can also be set. 
+    * The **Active Scanning Time** can be set in terms of days, hours and minutes, while the **Stage Delay** can be set in terms of hours and minutes. 
+    * The sum of these values gives the **Total Time (without equilibration)**. Under **Scan Number Estimator**, the   **Sum of all wavelengths (from all cells) to be scanned** gives the number of distinct wavelengths to be scanned. 
+    * The **Total number of scans per wavelength per cell** is the number of scans for a single wavelength that will be collected for a cell (which produces data for channels A and B).
+    * The remaining options should typically stay unchanged. 
 
 .. image:: ../../_static/images/gmp/data_acquisition/experiment/gmp_data_acquisition_experiment_18.png
     :align: center
@@ -106,7 +107,8 @@ Assignment of centrepiece or counterbalance type, as well as window type for eac
 
 5. Solutions
 ==============
-Define tje solutions comprised of analytes and buffers that will be measured in the experiment.
+
+Define the solutions comprised of analytes and buffers that will be measured in the experiment.
 
 .. image:: ../../_static/images/gmp/data_acquisition/experiment/gmp_data_acquisition_experiment_20.png
 

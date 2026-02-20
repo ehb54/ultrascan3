@@ -12,7 +12,7 @@ Research and Development AUC Data Acquisition Module
 
 .. toctree::
    :maxdepth: 1
-   :caption: Define an Experiment:
+   :caption: 1: Define an Experiment:
    
    general
    rotor
@@ -25,7 +25,7 @@ Research and Development AUC Data Acquisition Module
 
 .. toctree::
    :maxdepth: 1
-   :caption: Monitor an Experiment:
+   :caption: Monitor and Import an Experiment:
 
    liveupdate
    import

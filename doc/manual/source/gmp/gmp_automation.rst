@@ -84,11 +84,13 @@ In this screen **the same solution that was used for the simulation must be sele
 
 .. rst-class::
     :align: center
-<p>The 'OK' button brings up the 'Live Update' window which instructs the user to start the run from the instrument panel
-
-    Alternatively, the user can press 'Return to Managing Optima Runs?' to return to the 'Manage Optima Runs' window.</p>
 
     **Solutions**
+
+The 'OK' button brings up the 'Live Update' window which instructs the user to start the run from the instrument panel
+
+Alternatively, the user can press 'Return to Managing Optima Runs?' to return to the 'Manage Optima Runs' window.
+    
 
 Optics:
 -----------------

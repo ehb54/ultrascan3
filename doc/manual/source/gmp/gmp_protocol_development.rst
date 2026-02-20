@@ -123,7 +123,7 @@ The **Scan Exclusion Editor** allows the user to numerically define the number s
 .. image:: ../../_static/images/gmp/protocol_development/protocol_development_15.png 
     :align: center
     
-The **Report** button summons the channel-specific report settings window. The user defines the 'Total Concentration', the 'Â± %Tolerance', 'RMSD (upper limit)', the 'Â± %Tolerance', and the wavelength to extract these metrics from. The user then lists the expected 'Experiment Duration', the 'Â± %Tolerance', and 'Minimum Intensity' at the selected wavelength from the xenon flash lamp that is deemed acceptable. In the 'Report Profile (Mask) Settings' the user can select the following: 'Total Concentration', 'Minimum Intensity', 'RMSD (upper limit)', 'Integration Results', 'Experiment Duration' and relevant plots (as well as the pseudo-3D plots for each parameter and analysis type) they wish to be included in the report.
+The **Report** button summons the channel-specific report settings window. The user defines the 'Total Concentration', the 'Â ± %Tolerance', 'RMSD (upper limit)', the 'Â± %Tolerance', and the wavelength to extract these metrics from. The user then lists the expected 'Experiment Duration', the 'Â± %Tolerance', and 'Minimum Intensity' at the selected wavelength from the xenon flash lamp that is deemed acceptable. In the 'Report Profile (Mask) Settings' the user can select the following: 'Total Concentration', 'Minimum Intensity', 'RMSD (upper limit)', 'Integration Results', 'Experiment Duration' and relevant plots (as well as the pseudo-3D plots for each parameter and analysis type) they wish to be included in the report.
 
 .. image:: ../../_static/images/gmp/protocol_development/protocol_development_16.png 
     :align: center

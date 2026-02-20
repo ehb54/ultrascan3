@@ -9,7 +9,7 @@ Modeling for Shapes
   :local: 
 
 
- In this dialog, you select an axial ratio to model component parameters for 4 basic shapes.
+In this dialog, you select an axial ratio to model component parameters for 4 basic shapes.
 
 
 .. image:: _static/images/predict1.png
