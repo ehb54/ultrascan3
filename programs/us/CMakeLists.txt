@@ -58,3 +58,11 @@ target_include_directories(us
         PRIVATE
         ${src_dir}
 )
+
+if(APPLE)
+        add_custom_command(TARGET us POST_BUILD
+                COMMAND codesign --force --deep --sign -
+                "$<TARGET_BUNDLE_DIR:us>"
+                COMMENT "Ad-hoc code signing"
+        )
+endif()
