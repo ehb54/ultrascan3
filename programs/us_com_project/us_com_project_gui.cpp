@@ -525,6 +525,15 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
  }
 
 
+//help bttns
+void US_ComProjectMain::help( void )
+{
+  if ( !us_mode_bool )
+    showHelp.show_help("gmp/index.html");
+  else
+    showHelp.show_help("experiment/index.html");
+}
+
 // Check if data location set to DB
 void US_ComProjectMain::checkDataLocation( void )
 {
