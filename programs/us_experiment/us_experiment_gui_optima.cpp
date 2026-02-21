@@ -1922,6 +1922,9 @@ void US_ExperGuiRotor::importDisk( void )
 	  channel_f = parts[parts.size() - 3];
 	  wvl_f     = parts[parts.size() - 2];
 	  cell_chann_wvls[ cell_f ][ channel_f ] << wvl_f;
+
+	  if ( channel_f == "S" )
+	    ra_data_sim = true;
 	}
     }
   QStringList cell_list = cell_chann_wvls.keys();
@@ -1950,7 +1953,7 @@ void US_ExperGuiRotor::importDisk( void )
 	}
     }
 
-  if ( wvl_inconsistent )
+  if ( wvl_inconsistent && !ra_data_sim && files.size() != 1 )
     {
       QMessageBox::critical(this, "Bad Data", "Wavelengths mistatch for one or two cell/channels...");
       return;
