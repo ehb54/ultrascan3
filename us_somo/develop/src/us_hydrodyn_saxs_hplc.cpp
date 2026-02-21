@@ -211,6 +211,9 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
    if ( !( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_gg_smooth" ) ) {
       ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_gg_smooth" ] = "3";
    }
+   if ( !( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_cb_gg_cyclic" ) ) {
+      ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cb_gg_cyclic" ] = "true";
+   }
 
    baseline_ready_to_apply = false;
 
