@@ -110,7 +110,7 @@ void US_Help::register_init( )
 #ifndef Q_OS_MAC
   program += "bin/assistant";
 #else
-  program += "Developer/Applications/Qt/Assistant.app";
+  program += "bin/Assistant.app";
 #endif
   QStringList args;
   args << "-register" << US_Settings::appBaseDir() + "/bin/manual.qch";

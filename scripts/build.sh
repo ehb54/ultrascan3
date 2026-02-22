@@ -20,6 +20,7 @@ fi
 # PARSE COMMAND LINE OPTIONS
 # =============================================================================
 CLEAN=false
+INSTALL=false
 PROFILE="APP"  # default profile
 
 # Parse options
@@ -29,11 +30,16 @@ while [[ $# -gt 0 ]]; do
       CLEAN=true
       shift
       ;;
+    --install)
+      INSTALL=true
+      shift
+      ;;
     --help)
       echo "Usage: $0 [OPTIONS] [PROFILE]"
       echo ""
       echo "OPTIONS:"
       echo "  --clean       Clean build artifacts before building"
+      echo "  --install     After building, run cpack to create a distributable package (DMG/DEB/RPM/EXE)"
       echo "  --help        Show this help message"
       echo ""
       echo "PROFILE:"
@@ -87,7 +93,15 @@ else
   exit 1
 fi
 
+# Derive Qt version from preset name
+if [[ "$PRESET" == *qt6* ]]; then
+  QT_VERSION="Qt6"
+else
+  QT_VERSION="Qt5"
+fi
+
 echo "Platform: $PLATFORM"
+echo "Qt version: $QT_VERSION (preset: $PRESET)"
 echo ""
 
 # =============================================================================
@@ -368,9 +382,11 @@ fi
 # FINAL BUILD SUMMARY
 # =============================================================================
 echo "Ready to build UltraScan3 with preset: $PRESET"
-echo "  Profile: ${PROFILE}"
-echo "  Platform: ${PLATFORM}"
+echo "  Profile:     ${PROFILE}"
+echo "  Platform:    ${PLATFORM}"
+echo "  Qt version:  ${QT_VERSION}"
 echo "  Clean build: ${CLEAN}"
+echo "  Package (cpack): ${INSTALL}"
 echo ""
 echo "Steps:"
 echo "  1. Configure CMake with vcpkg toolchain"
@@ -388,12 +404,33 @@ fi
 echo ""
 
 # =============================================================================
+# SPHINX CHECK - ensure sphinx-build is on PATH
+# =============================================================================
+if ! command -v sphinx-build &>/dev/null; then
+  # macOS: pip installs to ~/Library/Python/<version>/bin which isn't on PATH by default
+  if [ "$PLATFORM" = "macOS" ]; then
+    for pyver in 3.13 3.12 3.11 3.10 3.9 3.8; do
+      candidate="$HOME/Library/Python/${pyver}/bin"
+      if [ -x "${candidate}/sphinx-build" ]; then
+        export PATH="${candidate}:$PATH"
+        echo "Found sphinx-build in ${candidate}, added to PATH"
+        break
+      fi
+    done
+  fi
+
+  if ! command -v sphinx-build &>/dev/null; then
+    echo "WARNING: sphinx-build not found - documentation will not be built"
+    echo "  Install with: pip3 install -r doc/manual/source/requirements.txt"
+  fi
+fi
+
+# =============================================================================
 # CONFIGURE AND BUILD
 # =============================================================================
 echo "Configuring..."
 cmake --preset "$PRESET" \
   -DUS3_PROFILE="${PROFILE}" \
-  -DCMAKE_TOOLCHAIN_FILE="$VCPKG_TOOLCHAIN_FILE" \
   -DVCPKG_ROOT="$US3_VCPKG_ROOT" \
   -DVCPKG_INSTALLED_DIR="$VCPKG_INSTALLED_DIR"
 
@@ -411,5 +448,35 @@ if [ "$NON_INTERACTIVE" = false ]; then
   echo "since dependencies are cached."
   echo ""
   echo "To rebuild from scratch: $0 --clean"
+  echo ""
+fi
+
+# =============================================================================
+# INSTALL AND PACKAGE (if requested)
+# =============================================================================
+if [ "$INSTALL" = true ]; then
+  BUILD_DIR="build/$PRESET"
+
+  echo "=========================================="
+  echo "Packaging..."
+  echo "=========================================="
+  ( cd "$BUILD_DIR" && cpack )
+
+  echo ""
+  echo "=========================================="
+  echo "Package complete!"
+  echo "=========================================="
+  echo ""
+  # Show what was produced
+  case "$PLATFORM" in
+    macOS)   PKG_GLOB="$BUILD_DIR/*.dmg" ;;
+    Linux)   PKG_GLOB="$BUILD_DIR/*.deb $BUILD_DIR/*.rpm" ;;
+    Windows) PKG_GLOB="$BUILD_DIR/*.exe" ;;
+  esac
+  for pkg in $PKG_GLOB; do
+    if [ -f "$pkg" ]; then
+      echo "Created: $pkg"
+    fi
+  done
   echo ""
 fi

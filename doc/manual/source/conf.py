@@ -26,7 +26,7 @@ author = 'Emre Brookes, Borries Demeler, Bruce Dubbs, Haben Gabir, Gary Gorbet, 
 # The short X.Y version
 version = ''
 # The full version, including alpha/beta/rc tags
-release = '0.0.1'
+release = '4.1.0'
 
 
 # -- General configuration ---------------------------------------------------
@@ -118,8 +118,9 @@ html_css_files = [
 # -- Options for HTMLHelp output ---------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'UltraScanIIIdoc'
-
+htmlhelp_basename = 'UltraScanIII'
+qthelp_namespace  = 'ultrascaniii'
+qthelp_basename   = 'manual'
 
 # -- Options for LaTeX output ------------------------------------------------
 

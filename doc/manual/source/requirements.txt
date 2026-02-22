@@ -7,6 +7,10 @@ sphinxcontrib-qthelp
 # Subfigure extension (LaTeX/PDF)
 sphinx-subfigure
 
+# Video and YouTube embedding
+sphinxcontrib-video
+sphinxcontrib-youtube
+
 # markdown support
 myst-parser
 

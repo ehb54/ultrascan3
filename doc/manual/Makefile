@@ -1,48 +1,47 @@
-# Build Qt Assistant files for UltraScan
+# Sphinx Makefile for UltraScan III documentation
+#
+# Targets:
+#   make html       - build HTML output
+#   make qthelp     - build qthelp output (.qhp/.qhcp)
+#   make qch        - compile qthelp output into .qch/.qhc (requires qhelpgenerator)
+#   make all        - html + qch
+#   make clean      - remove build directory
 
-INSTALL_DIR = ../../bin
-STAGING_DIR = .staging
-BODY_FILES  = $(shell find . -type d -name "$(STAGING_DIR)" -prune -o -type f -name "*.body" -print)
+SPHINXBUILD  ?= sphinx-build
+SOURCEDIR     = source
+BUILDDIR      = build
+SPHINXOPTS   ?=
+SPHINXPROJ    = manual
 
-# Main targets
-all: $(INSTALL_DIR)/manual.qch $(INSTALL_DIR)/manual.qhc
+INSTALL_DIR   = ../../bin
+QHELPGEN     ?= qhelpgenerator
 
-# Prepare staging directory with subdirectories
-prepare_staging:
-	@echo "Preparing staging directory..."
-	@rm -rf $(STAGING_DIR)
-	@mkdir -p $(STAGING_DIR)
-	@cp header.us3 footer.us3 mainstyle.css $(STAGING_DIR)/
-	@cp manual.qhp manual.qhcp $(STAGING_DIR)/
-	@cp -r images $(STAGING_DIR)/
-	@cp ultrascan3.txt $(STAGING_DIR)/ 2>/dev/null || true
-	@find . -type d -name "$(STAGING_DIR)" -prune -o -type f -name "*.body" -print | xargs -I{} cp {} $(STAGING_DIR)/
-	@cp make-html.sh $(STAGING_DIR)/
-	@chmod +x $(STAGING_DIR)/make-html.sh
-	@./make-wraps.sh
+.PHONY: help html qthelp qch all clean Makefile
 
-# Process all HTML files at once
-process_html: prepare_staging
-	@echo "Processing HTML files..."
-	@cd $(STAGING_DIR) && \
-	for file in *.body; do \
-		basename=$${file%.body}; \
-		./make-html.sh $$basename "UltraScan Documentation" -f -q; \
-	done
+help:
+	@$(SPHINXBUILD) -M help $(SOURCEDIR) $(BUILDDIR) $(SPHINXOPTS)
 
-# Generate and install Qt help files
-$(INSTALL_DIR)/manual.qch $(INSTALL_DIR)/manual.qhc: process_html
-	@echo "Generating Qt help files..."
-	@cd $(STAGING_DIR) && \
-	qhelpgenerator manual.qhp -o manual.qch && \
-	qhelpgenerator manual.qhcp -o manual.qhc
-	@echo "Installing Qt help files to $(INSTALL_DIR)..."
+html:
+	@$(SPHINXBUILD) -b html $(SOURCEDIR) $(BUILDDIR)/html $(SPHINXOPTS)
+	@echo "HTML documentation written to $(BUILDDIR)/html"
+
+qthelp:
+	@$(SPHINXBUILD) -b qthelp $(SOURCEDIR) $(BUILDDIR)/qthelp $(SPHINXOPTS)
+	@echo "Qt help source written to $(BUILDDIR)/qthelp"
+
+qch: qthelp
 	@mkdir -p $(INSTALL_DIR)
-	@cp $(STAGING_DIR)/manual.qch $(STAGING_DIR)/manual.qhc $(INSTALL_DIR)
+	$(QHELPGEN) $(BUILDDIR)/qthelp/$(SPHINXPROJ).qhp  -o $(INSTALL_DIR)/manual.qch
+	$(QHELPGEN) $(BUILDDIR)/qthelp/$(SPHINXPROJ).qhcp -o $(INSTALL_DIR)/manual.qhc
+	@echo "Installed manual.qch and manual.qhc to $(INSTALL_DIR)"
 
-# Clean everything
+all: html qch
+
 clean:
-	rm -rf $(STAGING_DIR)
-	rm -f $(INSTALL_DIR)/manual.qch $(INSTALL_DIR)/manual.qhc
+	@rm -rf $(BUILDDIR)
+	@rm -f $(INSTALL_DIR)/manual.qch $(INSTALL_DIR)/manual.qhc
+	@echo "Cleaned build directory and installed files"
 
-.PHONY: all prepare_staging process_html clean
+# Catch-all: forward anything else to sphinx-build
+%: Makefile
+	@$(SPHINXBUILD) -M $@ $(SOURCEDIR) $(BUILDDIR) $(SPHINXOPTS)
