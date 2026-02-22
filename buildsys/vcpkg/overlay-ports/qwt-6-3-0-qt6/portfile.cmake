@@ -9,8 +9,10 @@ vcpkg_from_sourceforge(
         fix_dll_install.patch
 )
 
-# Qt6 debug libraries are not available via vcpkg on macOS - release only
-set(VCPKG_BUILD_TYPE release)
+# Qt6 debug libraries are not available via vcpkg on macOS (no debug dylibs built)
+if(VCPKG_TARGET_IS_OSX)
+    set(VCPKG_BUILD_TYPE release)
+endif()
 
 string(COMPARE EQUAL "${VCPKG_LIBRARY_LINKAGE}" "dynamic" IS_DYNAMIC)
 set(OPTIONS "")
