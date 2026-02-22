@@ -419,7 +419,7 @@ void US_Hydrodyn_Dad_Options::setupGUI()
    le_guinier_qrgmax->setMinimumWidth( 60 );
 
    cb_gg_smooth = new QCheckBox(this);
-   cb_gg_smooth->setText(us_tr( "Experimental: Global Gaussian initialization smoothing. Maximum smoothing points: "));
+   cb_gg_smooth->setText(us_tr( "Global Gaussians - initialization smoothing. Maximum smoothing radius: "));
    cb_gg_smooth->setEnabled( true );
    cb_gg_smooth->setChecked( (*parameters)[ "dad_cb_gg_smooth" ] == "true" );
    cb_gg_smooth->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
@@ -441,7 +441,7 @@ void US_Hydrodyn_Dad_Options::setupGUI()
    le_gg_smooth->setMinimumWidth( 60 );
 
    cb_gg_cyclic = new QCheckBox(this);
-   cb_gg_cyclic->setText(us_tr( "Experimental: Global Gaussian Gaussian cyclic fit"));
+   cb_gg_cyclic->setText(us_tr( "Global Gaussians - cyclic fit"));
    cb_gg_cyclic->setEnabled( true );
    cb_gg_cyclic->setChecked( (*parameters)[ "dad_cb_gg_cyclic" ] == "true" );
    cb_gg_cyclic->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
@@ -450,7 +450,7 @@ void US_Hydrodyn_Dad_Options::setupGUI()
    connect( cb_gg_cyclic, SIGNAL( clicked() ), SLOT( update_enables() ) );
 
    cb_gg_oldstyle = new QCheckBox(this);
-   cb_gg_oldstyle->setText(us_tr( "Experimental: Global Gaussian - Enable old style Gaussian fit display"));
+   cb_gg_oldstyle->setText(us_tr( "Global Gaussians - Enable legacy Gaussian fit display"));
    cb_gg_oldstyle->setEnabled( true );
    cb_gg_oldstyle->setChecked( (*parameters)[ "dad_cb_gg_oldstyle" ] == "true" );
    cb_gg_oldstyle->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );

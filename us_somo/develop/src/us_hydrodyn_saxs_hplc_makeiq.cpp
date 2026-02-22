@@ -2506,7 +2506,7 @@ bool US_Hydrodyn_Saxs_Hplc::create_unified_ggaussian_target( QStringList & files
            && ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cb_gg_smooth" ] == "true"
            && ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_gg_smooth" )
            && ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_gg_smooth" ].toInt() > 0 ) {
-         editor_msg( "darkred", QString( "Experimental smoothing points %1 will be applied\n" ).arg( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_gg_smooth" ].toInt() ) );
+         editor_msg( "darkred", QString( "Smoothing radius %1 will be applied\n" ).arg( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_gg_smooth" ].toInt() ) );
       }
 
       if ( !initial_ggaussian_fit( files, only_init_unset ) )
