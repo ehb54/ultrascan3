@@ -2397,7 +2397,9 @@ DbgLv(1) << "SelWl: neww_inc: " << val;
 void US_SelectWavelengths::new_wl_range( const int wls, const int wle,
                                          const int wli )
 {
+  /****
    // Save a copy of the current potential wavelength list
+  qDebug() << "Potential 1: " << potential;
 DbgLv(1) << "SelWl: newwr: s,e,i" << wls << wle << wli;
    QStringList sv_poten = potential;
    nbr_poten            = potential.count();
@@ -2426,10 +2428,20 @@ DbgLv(1) << "SelWl: newwr:  p_strwl p_endwl" << p_strwl << p_endwl;
             potential << wavel;
       }
    }
-
+  ***/
+  potential. clear();
+  nbr_range            = ( wle - wls ) / wli + 1;
+  for ( int iwvl = wls; iwvl <= wle; iwvl += wli )
+   {
+      QString wavel        = QString::number( iwvl );
+      potential << wavel;
+   }
+  
    // Now rebuild widget lists
    lw_original->clear();
    lw_original->addItems( potential );
+
+   qDebug() << "Potential 2: " << potential;
 
    nbr_poten            = potential.count();   // Update count
 
