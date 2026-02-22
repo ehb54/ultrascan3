@@ -3946,7 +3946,7 @@ void US_Hydrodyn_Saxs_Hplc::smooth( QStringList files )
    bool ok;
    int smoothing = US_Static::getInteger(
                                             us_tr( "SOMO: HPLC enter smoothing" ),
-                                            us_tr( "Enter the number of points of smoothing:" ),
+                                            us_tr( "Enter the smoothing radius:" ),
                                             1, 
                                             1,
                                             50,
