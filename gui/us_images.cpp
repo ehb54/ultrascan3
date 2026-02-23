@@ -1,27 +1,32 @@
 //! \file us_images.cpp
 #include "us_images.h"
+#include <mutex>
 
 // Get image as a pixmap
 QPixmap US_Images::getImage( const QString& bname )
 {
+   ensure_us3_gui_images_resources();
    return QPixmap( expanded_name( bname) );
 }
 
 // Get image as a pixmap from type flag
 QPixmap US_Images::getImage( int itype )
 {
+   ensure_us3_gui_images_resources();
    return US_Images::getImage( image_name( itype ) );
 }
 
 // Get image as an icon
 QIcon US_Images::getIcon( const QString& bname )
 {
+   ensure_us3_gui_images_resources();
    return QIcon( US_Images::getImage( bname ) );
 }
 
 // Get image as an icon from type flag
 QIcon US_Images::getIcon( int itype )
 {
+   ensure_us3_gui_images_resources();
    return QIcon( US_Images::getImage( itype ) );
 }
 
@@ -121,3 +126,10 @@ const QString US_Images::expanded_name( const QString& bname )
    return iname;
 }
 
+void US_Images::ensure_us3_gui_images_resources()
+{
+   static std::once_flag once;
+   std::call_once( once, []() {
+      Q_INIT_RESOURCE(us3_gui_images);
+   } );
+}

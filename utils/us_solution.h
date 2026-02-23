@@ -132,10 +132,10 @@ class US_UTIL_EXTERN US_Solution
 
       void readSolutionInfo  ( QXmlStreamReader& xml );
       int readBufferDiskGUID ( US_Buffer& , QString& );
-      void saveBufferDisk    ( void );
+      void saveBufferDisk    ( void ) const;
       void saveAnalytesDisk  ( void );
-      QString get_filename   ( const QString&, bool& );
-      int analyte_type       ( QString );
+      QString get_filename   ( const QString&, bool& ) const;
+      int analyte_type       (const QString& antype);
       QString analyte_typetext( int );
       bool solutionInUse     ( QString& );
       bool solutionInProtocol( const QString, const bool );

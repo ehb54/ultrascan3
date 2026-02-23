@@ -905,7 +905,7 @@ void US_ExperGuiGeneral::run_name_entered( void )
 {
 DbgLv(1) << "EGGe: rchg: IN";
    // Modify run name to have only valid characters
-   QRegExp rx( "[^A-Za-z0-9_-]" );
+   QRegularExpression rx( "[^A-Za-z0-9_-]" );
    QString rname     = le_runid->text();
    QString old_rname = rname;
 DbgLv(1) << "EGGe: rchg: old_rname" << old_rname;
@@ -1107,7 +1107,7 @@ DbgLv(1) << "EGGe:ldPro: Disk-B: load_db" << load_db;
       // Get the protocol XML that matches the selected protocol name
       protoID               = US_ProtocolUtil::read_record( pname, &xmlstr, NULL, dbP );
 DbgLv(1) << "EGGe:ldPro:  ACCEPT   read_record return len(xml)" << xmlstr.length()
- << "protoID" << protoID;
+	 << "protoID" << protoID;
 
       le_protocol->setText( pname );
       mainw->currProto.protoID = protoID;
@@ -1170,7 +1170,66 @@ DbgLv(1) << "EGGe:ldPro:    cTempe" << mainw->currProto.temperature
    qDebug() << "In load_protocol: currProto->investigator 2 --  " <<  currProto->investigator;
    
    check_runname();
+
+   //Inform user on the protocol's framework -- if it differs from the program used
+   qDebug() << "Loaded protocol framework, and GMP | R&D program used? "
+	    << mainw->currProto.framework << ", " << mainw->automode << " | " << mainw->usmode;
+   
+   if ( mainw->automode && !mainw->usmode && mainw->currProto.framework == QString("RD") )
+     {
+       QString msg_rd_in_gmp = QString("WARNING: you are loading an R&D protocol into the GMP module!\n\n"
+				       "The protocol may be modified upon loading, "
+				       "please recheck all parameters.");
+       QString msg_rd_mult_speeds = QString("\n\nNOTE: The loaded protocol contains more than one speed profiles.\n"
+					    "GMP protocols are incompatible with more than one speed\n"
+					    "only the first speed protocol will be saved.");
+      
+       //Now, delete all but 1st speed in speedProfile
+       qDebug() << "RD[BEFORE]mainw->currProto.rpSpeed.ssteps.size(), nsteps -- "
+		<< mainw->currProto.rpSpeed.ssteps.size() << mainw->currProto.rpSpeed.nstep;
+       if ( mainw->currProto.rpSpeed.ssteps.size() > 1 )
+	 {
+	   mainw->currProto.rpSpeed.ssteps.resize(1);
+	   mainw->currProto.rpSpeed.nstep = 1;
+	   msg_rd_in_gmp += msg_rd_mult_speeds;
+	 }
+       qDebug() << "RD[AFTER]mainw->currProto.rpSpeed.ssteps.size(), nsteps -- "
+		<< mainw->currProto.rpSpeed.ssteps.size() << mainw->currProto.rpSpeed.nstep;
+
+       QMessageBox::warning( this,
+			     tr( "Use of R&D Protocol in GMP Framework" ),
+			     msg_rd_in_gmp);
+       
+       mainw->initPanels();
+       return;
+     }
+
+   if ( mainw->currProto.framework. isEmpty() )
+     {
+       QMessageBox::warning( this,
+			     tr( "Legacy Protocol Loaded" ),
+			     tr( "You are loading a legacy protocol, and UltraScan cannot \n"
+				 "determine if it is an R&D or GMP protocol. \n\n"
+				 "If it is a GMP protocol, you can ignore this message,\n"
+				 "otherwise, please check all values to make sure they \n"
+				 "are correct before submitting the protocol.") );
+       
+       qDebug() << "LEGACY[BEFORE]mainw->currProto.rpSpeed.ssteps.size(), nsteps -- "
+		<< mainw->currProto.rpSpeed.ssteps.size() << mainw->currProto.rpSpeed.nstep;
+       if ( mainw->currProto.rpSpeed.ssteps.size() > 1 )
+	 {
+	   mainw->currProto.rpSpeed.ssteps.resize(1);
+	   mainw->currProto.rpSpeed.nstep = 1;
+	 }
+       qDebug() << "LEGACY[AFTER]mainw->currProto.rpSpeed.ssteps.size(), nsteps -- "
+		<< mainw->currProto.rpSpeed.ssteps.size() << mainw->currProto.rpSpeed.nstep;
+
+       mainw->initPanels();
+
+       return;
+     }
 }
+
 
 // Update protdata when protocol deleted in pdialog...
 void US_ExperGuiGeneral::update_protdata( void )
@@ -1697,6 +1756,9 @@ void US_ExperGuiRotor::importDiskChecked( bool checked )
       ck_absorbance_pa -> setChecked( false );
       ra_data_type = false;
       ra_data_sim  = false;
+
+      //set tabs to read
+      mainw->set_tabs_buttons_readonly_dataDisk( false );
     }
   else
     {
@@ -1845,7 +1907,60 @@ void US_ExperGuiRotor::importDisk( void )
   ck_absorbance_t  ->setChecked( false );
   ck_absorbance_pa ->setChecked( false );
   ck_absorbance_pa ->setEnabled( true );
-    
+
+  //check if all A/B channels of the same cell have equal wvl ranges
+  QMap< QString, QMap <QString, QStringList > > cell_chann_wvls;
+  bool wvl_inconsistent = false;
+  QString cell_f, channel_f, wvl_f;
+  for ( int trx = 0; trx < files.size(); trx++ )
+    {
+      QString fname  = files[ trx ];
+      QStringList parts = fname.split(".");
+      if (parts.size() >= 5)
+	{
+	  cell_f    = parts[parts.size() - 4];
+	  channel_f = parts[parts.size() - 3];
+	  wvl_f     = parts[parts.size() - 2];
+	  cell_chann_wvls[ cell_f ][ channel_f ] << wvl_f;
+
+	  if ( channel_f == "S" )
+	    ra_data_sim = true;
+	}
+    }
+  QStringList cell_list = cell_chann_wvls.keys();
+  for ( int i=0; i<cell_list.size(); ++i )
+    {
+      cell_f = cell_list[i];
+      QMap <QString, QStringList > chan_wvls = cell_chann_wvls[ cell_f ];
+      QStringList chann_list = chan_wvls.keys();
+      if ( chann_list.size() != 2 )
+	{
+	  wvl_inconsistent = true;
+	  break;
+	}
+      else
+	{
+	  QStringList list1 = chan_wvls.value("A");
+	  QStringList list2 = chan_wvls.value("B");
+ 	  list1.sort();
+	  list2.sort();
+	  qDebug() << "cell: wvlA, wvlB" << cell_f << ": " << list1 << list2; 
+	  if (list1 != list2)
+	    {
+	      wvl_inconsistent = true;
+	      break;
+	    }
+	}
+    }
+
+  if ( wvl_inconsistent && !ra_data_sim && files.size() != 1 )
+    {
+      QMessageBox::critical(this, "Bad Data", "Wavelengths mistatch for one or two cell/channels...");
+      return;
+    }
+  
+  
+  //proceed
   for ( int trx = 0; trx < files.size(); trx++ )
     {
       QString fname  = files[ trx ];
@@ -2037,6 +2152,9 @@ void US_ExperGuiRotor::importDisk( void )
   
   //set up dir path
   le_dataDiskPath   ->setText( importDataPath );
+
+  //set tabs readonly
+  mainw->set_tabs_buttons_readonly_dataDisk( true );
 }
 
 //
@@ -3739,11 +3857,11 @@ void US_ExperGuiSpeeds::ssChangeScInt( double val, int row )
   double time_scint;
   if (val <= 14999 )
     time_scint = a0[0] + qRound( a1[0]/val );
-  if (val >= 15000 and val <= 32999 )
+  if (val >= 15000 && val <= 32999 )
     time_scint = a0[1] + qRound( a1[1]/val );
-  if (val >= 33000 and val <= 50999 )
+  if (val >= 33000 && val <= 50999 )
     time_scint = a0[2] + qRound( a1[2]/val );
-  if (val >= 51000 and val <= 60000 )
+  if (val >= 51000 && val <= 60000 )
     time_scint = a0[3] + qRound( a1[3]/val );
 
   ssvals[row]["scanintv"]     = time_scint;
@@ -4429,7 +4547,7 @@ void US_ExperGuiSpeeds::adjustDelay( void )
    double pspeed    = ( curssx > 0 ) ? ssvals[ curssx - 1 ][ "speed" ] : 0.0;
    double spdelta   = fabs(cspeed - pspeed);               // Speed delta          <-- In case there is deceleration..
    double accel     = ssvals[ curssx ][ "accel" ];   // Acceleration
-#warning "Check if this accel is guaranteed to be non-zero, inform user if it is zero?"
+// #warning "Check if this accel is guaranteed to be non-zero, inform user if it is zero?"
    double delaylow  = qCeil( spdelta / accel );      // Low seconds delay
 
    //Uv-vis
@@ -5424,7 +5542,7 @@ DbgLv(1) << "EGSo:addComm:  cclabl" << cclabl;
        else
 	 {
 	   protocol_comment.replace(sdescr, "");
-	   protocol_comment.remove( QRegExp("^[,\\s*]+") );
+	   protocol_comment.remove( QRegularExpression("^[,\\s*]+") );
 	   
 	   manual_comment[ row_comment ] = protocol_comment.trimmed();  // Initialize manual comment for solution from protocol
 	 }
@@ -7161,6 +7279,14 @@ DbgLv(1) << "EGUp:svRP:   currProto updated  protoname" << currProto->protoname;
    // us_xml string has to be cleared each time Protocol is saved
    rpSubmt->us_xml.clear();
 
+   //Establish framework
+   qDebug() << "In saveRunProtocol(): GMP, R&D ? "
+	    << mainw->automode << ", " << mainw->usmode;
+   if ( mainw->automode && !mainw->usmode )
+     currProto->framework = "GMP";
+   else if ( mainw->usmode )
+     currProto->framework = "RD";
+   
    QXmlStreamWriter xmlo( &rpSubmt->us_xml ); // Compose XML representation
    xmlo.setAutoFormatting( true );
    currProto->toXml( xmlo );
@@ -9503,14 +9629,14 @@ void US_ExperGuiUpload::submitExperiment()
 
       QStringList researcher_split = (mainw->currProto.investigator).split(':');
       QString researcher_trimmed   = researcher_split[1].trimmed();
-      QRegExp rx( "[^A-Za-z0-9_-, ]" );
+      QRegularExpression rx( "[^A-Za-z0-9_\\-, ]" );
       researcher_trimmed.replace( rx,  "" );
       QString researcher           = "\'" + researcher_trimmed + "\'";
 
 
       QString name                 = "\'" + runname + "\'";
       QString project_name         = mainw->currProto.project;
-      QRegExp rx1( "[^A-Za-z0-9_-]" );
+      QRegularExpression rx1( "[^A-Za-z0-9_-]" );
       project_name.replace( rx1,  "_" );
       
       
@@ -11017,7 +11143,7 @@ if(! rdir.exists(rpath) ) rdir.mkpath(rpath);
 QFile jfile(fpath);
 if(jfile.open(QIODevice::WriteOnly|QIODevice::Text))
 {
- int flen=jb_exper.count();
+ int flen=jb_exper.length();
  QDataStream* fso = new QDataStream( &jfile );
  fso->writeRawData( jb_exper.constData(), flen );
  jfile.close();

@@ -114,7 +114,7 @@ US_QueryRmsd::US_QueryRmsd() : US_Widgets()
    lyt_top->setColumnStretch(3, 1);
    lyt_top->setColumnStretch(4, 0);
    lyt_top->setColumnStretch(5, 1);
-   lyt_top->setMargin(0);
+   lyt_top->setContentsMargins( 0, 0, 0, 0 );
    lyt_top->setSpacing(1);
 
    QLabel *lb_file = us_label(tr("Output Filename:"));
@@ -125,7 +125,7 @@ US_QueryRmsd::US_QueryRmsd() : US_Widgets()
    lyt_bottom->addWidget(lb_file,0);
    lyt_bottom->addWidget(le_file,5);
    lyt_bottom->addWidget(pb_save,1);
-   lyt_bottom->setMargin(0);
+   lyt_bottom->setContentsMargins( 0, 0, 0, 0 );
    lyt_bottom->setSpacing(1);
 
    QLabel* lb_progress = us_label("Progress");
@@ -140,7 +140,7 @@ US_QueryRmsd::US_QueryRmsd() : US_Widgets()
    lyt_main->addWidget(tw_rmsd);
    lyt_main->addLayout(lyt_bottom);
    lyt_main->addLayout(lyt_progress);
-   lyt_main->setMargin(1);
+   lyt_main->setContentsMargins( 1, 1, 1, 1 );
    lyt_main->setSpacing(2);
 
    this->setLayout(lyt_main);

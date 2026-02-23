@@ -269,7 +269,7 @@ QDateTime time2=QDateTime::currentDateTime();
    bool listdesc = !mfilt.isEmpty();         // description filtered?
    bool listedit = do_edit;                  // edit filtered?
    bool listall  = !listdesc;                // unfiltered by description?
-   QRegExp mpart = QRegExp( ".*" + mfilt + ".*", Qt::CaseInsensitive );
+   QRegularExpression mpart( ".*" + mfilt + ".*", QRegularExpression::CaseInsensitiveOption );
    mrecs_descriptions.clear();               // clear model descriptions
 qDebug() << "LM: desc edit" << listdesc << listedit
  << "editGUID" << editGUID;

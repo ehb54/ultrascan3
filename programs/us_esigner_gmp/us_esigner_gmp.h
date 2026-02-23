@@ -397,11 +397,11 @@ class US_eSignaturesGMP : public US_Widgets
         //! \param runID The run ID.
         //! \param revIDs The reviewer IDs.
         //! \param apprIDs The approver IDs.
-        //! \param status The status.
+        //! \param gmp_esigning_map The eSign params.
         //! \param eSignData The eSign data.
         //! \return The composed JSON string.
         QString compose_updated_eSign_Json(int adminID, QString date, QString runID, QJsonArray revIDs, QJsonArray apprIDs,
-                                           QString status, QString& eSignData);
+                                            QMap< QString, QString > gmp_esigning_map, QString& eSignData);
 
         //! \brief Compose an updated eSign JSON for separate assignment.
         //! \param adminID The admin ID.

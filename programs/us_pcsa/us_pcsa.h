@@ -2,7 +2,9 @@
 #ifndef US_PCSA_H
 #define US_PCSA_H
 
+#if !(defined(_WIN32) || defined(_WIN64) || defined(Q_OS_WIN))
 #include <unistd.h>
+#endif
 #include "us_analysis_base2.h"
 #include "us_plot_control_pc.h"
 #include "us_analysis_control_pc.h"
@@ -112,7 +114,7 @@ class US_pcsa : public US_AnalysisBase2
     private:
         QGridLayout* progressLayout; //!< Layout for progress display
 
-        US_Editor* te_results; //!< Editor for displaying results
+        QPointer<US_Editor> te_results; //!< Editor for displaying results
 
         SS_DATASET dset; //!< Data set
 
@@ -189,10 +191,6 @@ class US_pcsa : public US_AnalysisBase2
         //! \param filename Name of the bitmap file
         void write_bmap(const QString filename);
 
-        //! \brief Slot to handle child closed event
-        //! \param obj Pointer to the closed child object
-        void child_closed(QObject* obj);
-
         //! \brief Loads data
         void load(void);
 
@@ -212,6 +210,10 @@ class US_pcsa : public US_AnalysisBase2
         //! \brief Shows help information
         void help(void)
         { showHelp.show_help("manual/pcsa.html"); };
+
+        void reset();
+        void reset_data();
+        void reset_gui();
 };
 
 #endif // US_PCSA_H

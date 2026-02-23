@@ -70,7 +70,7 @@ US_Plot::US_Plot( QwtPlot*& parent_plot, const QString& title,
    btnZoom->setToolButtonStyle( Qt::ToolButtonTextUnderIcon );
    btnZoom->setFont( buttonFont );
    btnZoom->setIconSize ( QSize( 20, 20 ) );
-   btnZoom->setFixedSize( QSize( 40, 50 ) );
+   btnZoom->setFixedSize( QSize( 42, 50 ) );
    connect( btnZoom, &QToolButton::toggled, this, &US_Plot::zoom );
 
    QToolButton* btnCSV = new QToolButton( toolBar );
@@ -79,7 +79,7 @@ US_Plot::US_Plot( QwtPlot*& parent_plot, const QString& title,
    btnCSV->setToolButtonStyle( Qt::ToolButtonTextUnderIcon );
    btnCSV->setFont( buttonFont );
    btnCSV->setIconSize ( QSize( 20, 20 ) );
-   btnCSV->setFixedSize( QSize( 40, 50 ) );
+   btnCSV->setFixedSize( QSize( 42, 50 ) );
    connect( btnCSV, &QToolButton::clicked, this, &US_Plot::csv );
 
    QToolButton* btnPrint = new QToolButton( toolBar );
@@ -88,7 +88,7 @@ US_Plot::US_Plot( QwtPlot*& parent_plot, const QString& title,
    btnPrint->setToolButtonStyle( Qt::ToolButtonTextUnderIcon );
    btnPrint->setFont( buttonFont );
    btnPrint->setIconSize ( QSize( 20, 20 ) );
-   btnPrint->setFixedSize( QSize( 40, 50 ) );
+   btnPrint->setFixedSize( QSize( 42, 50 ) );
    connect( btnPrint, &QToolButton::clicked, this, &US_Plot::print );
 
    QToolButton* btnSVG = new QToolButton( toolBar );
@@ -97,7 +97,7 @@ US_Plot::US_Plot( QwtPlot*& parent_plot, const QString& title,
    btnSVG->setToolButtonStyle( Qt::ToolButtonTextUnderIcon );
    btnSVG->setFont( buttonFont );
    btnSVG->setIconSize ( QSize( 20, 20 ) );
-   btnSVG->setFixedSize( QSize( 40, 50 ) );
+   btnSVG->setFixedSize( QSize( 42, 50 ) );
    connect( btnSVG, &QToolButton::clicked, this, &US_Plot::svg );
 
    QToolButton* btnPNG = new QToolButton( toolBar );
@@ -106,7 +106,7 @@ US_Plot::US_Plot( QwtPlot*& parent_plot, const QString& title,
    btnPNG->setToolButtonStyle( Qt::ToolButtonTextUnderIcon );
    btnPNG->setFont( buttonFont );
    btnPNG->setIconSize ( QSize( 20, 20 ) );
-   btnPNG->setFixedSize( QSize( 40, 50 ) );
+   btnPNG->setFixedSize( QSize( 42, 50 ) );
    connect( btnPNG, &QToolButton::clicked, this, &US_Plot::png );
 
    QToolButton* btnConfig = new QToolButton( toolBar );
@@ -115,7 +115,7 @@ US_Plot::US_Plot( QwtPlot*& parent_plot, const QString& title,
    btnConfig->setToolButtonStyle( Qt::ToolButtonTextUnderIcon );
    btnConfig->setFont( buttonFont );
    btnConfig->setIconSize ( QSize( 20, 20 ) );
-   btnConfig->setFixedSize( QSize( 40, 50 ) );
+   btnConfig->setFixedSize( QSize( 42, 50 ) );
    connect( btnConfig, &QToolButton::clicked, this, &US_Plot::config );
 
    btnCMap                = new QToolButton( toolBar );
@@ -123,6 +123,8 @@ US_Plot::US_Plot( QwtPlot*& parent_plot, const QString& title,
    btnCMap  ->setIcon( QIcon( QPixmap( cmap_xpm ) ) );
    btnCMap  ->setToolButtonStyle( Qt::ToolButtonTextUnderIcon );
    btnCMap  ->setFont( buttonFont );
+   btnCMap  ->setIconSize ( QSize( 20, 20 ) );
+   btnCMap  ->setFixedSize( QSize( 42, 50 ) );
    cmapEnab      = cmEnab;
    cmapMatch     = cmMatch;
    btnCMap  ->setVisible( cmapEnab );
@@ -352,7 +354,7 @@ void US_Plot::print( void ) const
    
    if ( ! docName.isEmpty() )
    {
-       docName.replace ( QRegExp( QString::fromLatin1( "\n" ) ), tr ( " -- " ) );
+       docName.replace ( QStringLiteral( "\n" ) , tr ( " -- " ) );
        printer.setDocName( docName );
    }
 
@@ -414,8 +416,8 @@ void US_Plot::colorMap( void )
    int ntcurv    = 0;
    int nmcurv    = 0;
    int mcolx     = 0;
-   const bool tmatch   = ! cmapMatch.isEmpty();    // Curve type filter
-   QRegExp cmMatch( cmapMatch );             // Curve title match
+   bool tmatch   = ! cmapMatch.isEmpty();    // Curve type filter
+   QRegularExpression cmMatch( cmapMatch );             // Curve title match
    qDebug() << "UP:CM: cmapMatch" << cmapMatch << "tmatch" << tmatch;
    QwtPlotItemList list = plot->itemList();  // All plot items
 
@@ -627,7 +629,7 @@ US_PlotConfig::US_PlotConfig( QwtPlot* current_plot, QWidget* p,
      QString padding_v = style.mid( kk ).split(": ")[1];
      padding_v = padding_v. simplified();
      
-     kk            = padding_v.leftRef( padding_v.indexOf( "px" ) ).toInt();
+     kk            = padding_v.left( padding_v.indexOf( "px" ) ).toInt();
              
      // kk            = style.mid( kk ).toInt();
      kk            = qMax( 0, ( kk / 2 - 1 ) );
@@ -1500,9 +1502,9 @@ void US_PlotConfig::savePlotProfile( void )
       padding_v = padding_v.simplified();
       padding_v.indexOf( "px" ); 
       qDebug() << " padding_v --         " <<  padding_v.left( padding_v.indexOf( "px" ) );
-      qDebug() << " padding_v.toInt() -- " <<  padding_v.leftRef( padding_v.indexOf( "px" ) ).toInt();
+      qDebug() << " padding_v.toInt() -- " <<  padding_v.left( padding_v.indexOf( "px" ) ).toInt();
       
-      kk            = padding_v.leftRef( padding_v.indexOf( "px" ) ).toInt();
+      kk            = padding_v.left( padding_v.indexOf( "px" ) ).toInt();
     }
   profile_obj.insert("Border Margin", QString::number(kk));
 
@@ -1687,7 +1689,7 @@ US_PlotCurveConfig::US_PlotCurveConfig( QwtPlot* currentPlot,
    
    // Remove passed '(number) '
    QString firstSelectedText = selected[ 0 ];
-   firstSelectedText.replace( QRegExp( "^\\(\\d+\\) " ), "" );
+   firstSelectedText.replace( QRegularExpression( "^\\(\\d+\\) " ), "" );
    
    firstSelectedCurve = nullptr;
 
@@ -2040,7 +2042,7 @@ void US_PlotCurveConfig::apply( void )
    for ( auto title : selectedItems )
    {
       // Remove Numbering from passed titles
-      title.replace( QRegExp( "^\\(\\d+\\) " ), "" );
+      title.replace( QRegularExpression( "^\\(\\d+\\) " ), "" );
 
       qDebug() << "Plot Curve Config: for selectItem -- " << title;
 

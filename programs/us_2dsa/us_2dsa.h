@@ -202,6 +202,11 @@ class US_2dsa : public US_AnalysisBase2
 
         //! \brief Show help documentation.
         void help(void) { showHelp.show_help("manual/2dsa.html"); };
+
+        void reset();
+
+        void reset_data();
+        void reset_gui();
 };
 
 #endif // US_2DSA_H

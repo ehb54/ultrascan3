@@ -49,7 +49,7 @@ while [[ $# -gt 0 ]]; do
       echo ""
       echo "ENVIRONMENT VARIABLES:"
       echo "  US3_BUILD_JOBS      Override number of parallel build jobs"
-      echo "  US3_VCPKG_ROOT      Override vcpkg location (default: ./vcpkg)"
+      echo "  US3_VCPKG_ROOT      Override vcpkg location (default: $HOME/vcpkg)"
       exit 0
       ;;
     APP|TEST|HPC)
@@ -74,7 +74,7 @@ echo ""
 # PLATFORM DETECTION
 # =============================================================================
 if [[ "$OSTYPE" == "darwin"* ]]; then
-  PRESET="macos-release"
+  PRESET="macos-release-qt6"
   PLATFORM="macOS"
 elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
   PRESET="linux-release"
@@ -255,8 +255,8 @@ fi
 # Get script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Use local vcpkg by default, allow override via US3_VCPKG_ROOT
-US3_VCPKG_ROOT="${US3_VCPKG_ROOT:-$SCRIPT_DIR/vcpkg}"
+# Use shared home vcpkg, allow override via US3_VCPKG_ROOT
+US3_VCPKG_ROOT="${US3_VCPKG_ROOT:-$HOME/vcpkg}"
 
 echo ""
 echo "Using vcpkg root: $US3_VCPKG_ROOT"

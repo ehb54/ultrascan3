@@ -470,11 +470,8 @@ int US_Experiment::saveToDisk(
     QString runID,
     QString dirname,
     QVector< SP_SPEEDPROFILE >& speedsteps )
-{ 
-   QRegExp rx( "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" );
-
-
-   if ( this->expGUID.isEmpty() || ! rx.exactMatch( this->expGUID ) )
+{
+   if ( this->expGUID.isEmpty() || ! US_Util::is_valid_uuid( this->expGUID ) )
       this->expGUID = US_Util::new_guid();
 
    if ( dirname.right( 1 ) != "/" ) dirname += "/"; // Ensure trailing /
@@ -927,7 +924,7 @@ int US_Experiment::readRIDisk(
       if ( xml.isStartElement() )
       {
          QXmlStreamAttributes a = xml.attributes();
-         QStringRef xname       = xml.name();
+         auto xname             = xml.name().toString();
 
          if ( xname == "RI" )
          {
@@ -1039,7 +1036,7 @@ int US_Experiment::importRIxml( QByteArray& str )
       if ( xml.isStartElement() )
       {
          QXmlStreamAttributes a = xml.attributes();
-         QStringRef xname       = xml.name();
+         auto xname       = xml.name();
 
          if ( xname == "RI" )
          {

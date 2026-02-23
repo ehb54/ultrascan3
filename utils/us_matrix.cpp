@@ -1,9 +1,6 @@
 //! \file us_matrix.cpp
-
 #include "us_matrix.h"
 #include "us_math2.h"
-
-#include <QtCore>
 
 bool US_Matrix::lsfit( double* c, double* x, double* y,
                        int N, int order )
@@ -411,8 +408,11 @@ double US_Matrix::dotproduct( double* aa, int size )
 void US_Matrix::print_vector( double* v, int n )
 {
    QString s;
-   for ( int i = 0; i < n; i++ ) s += QString::asprintf( "%.15f ", v[ i ] );
-
+   QString t;
+   for ( int i = 0; i < n; i++ )
+   {
+      s += QString::asprintf( "%.15f ", v[ i ] );
+   }
    qDebug() << s;
 }
 
@@ -874,13 +874,12 @@ void US_Matrix::calc_A_transpose_A(double ***A, double ***product, unsigned int 
      
       // create threads
       unsigned int j;
-     
-      ata_d_thr_t *ata_d_thr_threads[threads];
+      QVector< ata_d_thr_t* > ata_d_thr_threads( static_cast<int>(threads) );
       //QVector < ata_d_thr_t* > ata_d_thr_threads( threads );
      
       for(j = 0; j < threads; j++) {
-         ata_d_thr_threads[j] = new ata_d_thr_t(j);
-         ata_d_thr_threads[j]->start();
+         ata_d_thr_threads[static_cast<int>(j)] = new ata_d_thr_t(j);
+         ata_d_thr_threads[static_cast<int>(j)]->start();
       }
      
       unsigned int c_start = 0;
@@ -903,25 +902,25 @@ void US_Matrix::calc_A_transpose_A(double ***A, double ***product, unsigned int 
             }
          }
          //       cout << "thread " << j << " c range " << c_start << " - " << c_end << endl;
-         ata_d_thr_threads[j]->ata_d_thr_setup(columns, c_start, c_end, product, &dataarray);
+         ata_d_thr_threads[static_cast<int>(j)]->ata_d_thr_setup(columns, c_start, c_end, product, &dataarray);
          c_start = c_end;
       }
      
       for(j = 0; j < threads; j++) {
-         ata_d_thr_threads[j]->ata_d_thr_wait();
+         ata_d_thr_threads[static_cast<int>(j)]->ata_d_thr_wait();
       }
      
       // destroy
       for(j = 0; j < threads; j++) {
-         ata_d_thr_threads[j]->ata_d_thr_shutdown();
+         ata_d_thr_threads[static_cast<int>(j)]->ata_d_thr_shutdown();
       }
      
       for(j = 0; j < threads; j++) {
-         ata_d_thr_threads[j]->wait();
+         ata_d_thr_threads[static_cast<int>(j)]->wait();
       }
      
       for(j = 0; j < threads; j++) {
-         delete ata_d_thr_threads[j];
+         delete ata_d_thr_threads[static_cast<int>(j)];
       }
      
    } else {

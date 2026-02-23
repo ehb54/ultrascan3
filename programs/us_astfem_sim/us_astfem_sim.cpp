@@ -1630,7 +1630,6 @@ for(int ss=0; ss<kscn; ss++ )
       return true;
    }
    // write experiment file
-   QRegularExpression rx( "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" );
    if ( odir.right( 1 ) != "/" )
    {
       odir += "/"; // Ensure trailing /
@@ -1816,8 +1815,7 @@ for(int ss=0; ss<kscn; ss++ )
    QString wl         = QString::number( sim_datas[0].scanData.first().wavelength );
    wl     = ( sim_datas[0].scanData.first().wavelength < 99 ) ? "123" : wl;
 
-   QString now  =  QDateTime::currentDateTime()
-                      .toUTC().toString( "yyMMddhhmm" );
+   QString now  =  QDateTime::currentDateTimeUtc().toString( "yyMMddhhmm" );
    QString fname = run_id + "." + now + "." + runType + "." + cell + "." + channel + "." + wl + ".xml";
    QFile efo( odir + fname );
 

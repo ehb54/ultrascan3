@@ -1,11 +1,10 @@
 //! \file us_cfa_data.cpp
-
 #include "us_cfa_data.h"
 #include "us_util.h"
 #include "us_settings.h"
-#include "us_math2.h"
 #include "us_memory.h"
 #include "us_time_state.h"
+
 
 // Hold data read in and selected from a raw CFA data directory
 US_CfaData::US_CfaData( )
@@ -90,7 +89,8 @@ DbgLv(1) << "CfDa: sctype" << sctype << "is_absorb" << is_absorb;
    runID        = cur_dir.section( "/", -2, -2 );
    QString old_runID  = runID;
 
-   runID.replace( QRegExp( "![A-Za-z0-9_-]" ), "_" );
+   static const QRegularExpression re( "[^A-Za-z0-9_-]" );
+   runID.replace( re, "_" );
 
    if ( runID != old_runID )
    {
@@ -716,7 +716,7 @@ stimes.fill( time01, ntabs );
 etimes.fill( time01, ntabs );
 
    // Accumulate statistics and some values from the tables
-   QSqlQuery  sqry;
+   QSqlQuery  sqry( dbcfa );
    QSqlRecord qrec;
 
    for ( int ii = 0; ii < ntabs; ii++ )
@@ -796,7 +796,8 @@ DbgLv(1) << "CfDa:scn: ii" << ii << "cnames" << cnames;
       if ( dbtab.startsWith( "sqlite_stat" ) )
          continue;
 
-      sqry          = dbcfa.exec( "SELECT count(*) from " + dbtab );
+      QString qtxt = "SELECT count(*) from " + dbtab;
+      sqry.exec( qtxt );
 DbgLv(1) << "CfDa:scn: ii" << ii << "  sqry exec for" << dbtab;
       sqry.next();
       int rows      = sqry.value( 0 ).toInt();
@@ -819,10 +820,10 @@ DbgLv(1) << "CfDa:scn: ii" << ii << "dbtab" << dbtab << "rows" << rows
                           .arg( rows ).arg( dbtab );
       emit status_text( stat_text );
 
-      QString qtxt  = ( dbtab != "ScanMeta" ) ?
-                      QString( "SELECT * from " ) + dbtab :
-                      QString( "SELECT * from ScanMeta where"
-                               " ScanType=%1" ).arg( sctp );
+      qtxt  = ( dbtab != "ScanMeta" ) ?
+              QString( "SELECT * from " ) + dbtab :
+              QString( "SELECT * from ScanMeta where"
+                       " ScanType=%1" ).arg( sctp );
 
       if ( dbtab == "Scans" )
       {
@@ -846,8 +847,7 @@ DbgLv(1) << "CfDa:scn: ii" << ii << "  snx lsc" << snx << lsc;
 DbgLv(1) << "CfDa:scn: ii" << ii << "  qtxt" << qtxt;
       }
 
-
-      sqry          = dbcfa.exec( qtxt );
+      sqry.exec( qtxt );
       int row       = 0;
 DbgLv(1) << "CfDa:scn: ii" << ii << "dbtab" << dbtab << "rows" << rows
  << "cols" << cols << "qtxt" << qtxt;
@@ -886,7 +886,7 @@ DbgLv(1) << "CfDa:scn: ii" << ii << "dbtab" << dbtab << "rows" << rows
             datrow.wavelen   = sqry.value( jwvl ).toInt();
             datrow.scanNbr   = sqry.value( jscn ).toInt();
             datrow.triple    = QString::number( datrow.cell ) + "/"
-                             + QString( 'A' + datrow.channel ) + "/"
+                             + QString( QChar( 'A' + datrow.channel ) ) + "/"
                              + QString::number( datrow.wavelen );
 //if(row<15)
 DbgLv(1) << "CfDa:scn: scanID" << datrow.scanId << "scNbr" << datrow.scanNbr
@@ -1060,7 +1060,7 @@ DbgLv(1) << "CfDa:scn: TIMEMS total scan " << time00.msecsTo(time20);
       int scnid     = tsmetas[ ii ].scanId;
       int scnnbr    = tsmetas[ ii ].scanNbr;
       QString scell = QString::number( icell );
-      QString schan = QString( 'A' + ichan );
+      QString schan = QString( QChar( 'A' + ichan ) );
       QString swavl = QString::number( iwavl );
       QString cechn = scell + " / " + schan;
       QString tripl = cechn + " / " + swavl;
@@ -1285,13 +1285,13 @@ DbgLv(1) << "CfDa:grd: frec lrec" << frec << lrec;
    if ( !dbcfa.isOpen() )
       dbcfa.open();
 
-   QSqlQuery  sqry;
+   QSqlQuery  sqry( dbcfa );
    QSqlRecord qrec;
    QString qtxt  = QString( "SELECT * from Scans where"
                             " ID >= %1 and ID <= %2" )
                            .arg( frec ).arg( lrec );
 
-   sqry          = dbcfa.exec( qtxt );
+   sqry.exec( qtxt );
    qrec          = dbcfa.record( "Scans" );
    int cols      = qrec.count();
    QStringList cnames;
