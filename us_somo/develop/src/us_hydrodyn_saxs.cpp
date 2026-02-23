@@ -1381,7 +1381,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    pr_widgets.push_back( cnt_bin_size );
 
 
-   lbl_smooth = new QLabel(us_tr(" Smoothing: "), this);
+   lbl_smooth = new QLabel(us_tr(" Smoothing radius: "), this);
    lbl_smooth->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_smooth->setMinimumHeight(minHeight1);
    lbl_smooth->setPalette( PALET_LABEL );

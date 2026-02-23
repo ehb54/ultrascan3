@@ -100,7 +100,7 @@ void US_Hydrodyn_Mals_Saxs_Options::setupGUI()
    cb_save_bl->setPalette( PALET_NORMAL );
    AUTFBACK( cb_save_bl );
 
-   lbl_smooth =  new QLabel      ( us_tr( "Smoothing:" ), this );
+   lbl_smooth =  new QLabel      ( us_tr( "Smoothing radius:" ), this );
    lbl_smooth -> setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_smooth -> setPalette      ( PALET_LABEL );
    AUTFBACK( lbl_smooth );
