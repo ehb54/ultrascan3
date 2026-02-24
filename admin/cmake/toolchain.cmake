@@ -36,7 +36,16 @@ if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Darwin")
 
 elseif(CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux")
     if(NOT DEFINED VCPKG_TARGET_TRIPLET)
-        set(VCPKG_TARGET_TRIPLET "x64-linux-dynamic" CACHE STRING "vcpkg triplet")
+        execute_process(
+                COMMAND uname -m
+                OUTPUT_VARIABLE _HOST_ARCH
+                OUTPUT_STRIP_TRAILING_WHITESPACE
+        )
+        if(_HOST_ARCH MATCHES "^(aarch64|arm64)$")
+            set(VCPKG_TARGET_TRIPLET "arm64-linux" CACHE STRING "vcpkg triplet")
+        else()
+            set(VCPKG_TARGET_TRIPLET "x64-linux-dynamic" CACHE STRING "vcpkg triplet")
+        endif()
     endif()
 
 elseif(CMAKE_HOST_SYSTEM_NAME STREQUAL "Windows")
