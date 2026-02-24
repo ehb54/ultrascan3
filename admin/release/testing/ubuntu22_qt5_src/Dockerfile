@@ -43,7 +43,6 @@ RUN set -eux; \
     vim \
     emacs-nox \
     python3 python-is-python3 \
-    python3-sphinx \
     zlib1g-dev \
     libglib2.0-dev \
     libpq-dev \
@@ -75,6 +74,10 @@ RUN set -eux; \
     libxcb-util-dev \
     libxcb-cursor-dev \
     default-libmysqlclient-dev \
+    python3-pip \
+    python3-sphinx \
+    python3-sphinxcontrib.qthelp \
+    python3-myst-parser \
     rsync; \
   rm -rf /var/lib/apt/lists/*
 
@@ -122,6 +125,9 @@ RUN cd $ULTRASCAN && git reset --hard origin/$ultrascan_branch
 ADD local.pri.somo /ultrascan3/us_somo/develop/local.pri
 ADD local.pri.gui  /ultrascan3/local.pri
 ADD local.pri.mpi  /ultrascan3/local.pri.mpi
+
+# add python3 requirements
+RUN PIP_BREAK_SYSTEM_PACKAGES=1 pip3 install sphinx-subfigure sphinxcontrib-video sphinxcontrib-youtube
 
 # us version setup
 RUN cd /ultrascan3/programs/us && env ULTRASCAN=/ultrascan3 ./revision.sh

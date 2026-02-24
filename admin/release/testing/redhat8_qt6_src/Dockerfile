@@ -29,7 +29,6 @@ RUN set -eux; \
   dnf -y install \
     git ca-certificates curl \
     cmake python3 python3-pip ninja-build \
-    python3-sphinx \
     bison flex gperf pkgconf-pkg-config \
     mpich mpich-devel \
     libX11-devel libXext-devel libXi-devel libXrandr-devel libXrender-devel \
@@ -44,7 +43,9 @@ RUN set -eux; \
     at-spi2-core at-spi2-atk \
     mariadb-devel \
     libarchive-devel \
-    postgresql-devel; \
+    postgresql-devel \
+    python3-sphinx \
+    python3-sphinxcontrib-qthelp; \
   dnf -y clean all; rm -rf /var/cache/dnf
 
 WORKDIR /src
@@ -171,6 +172,9 @@ RUN set -eux; \
 ADD local.pri.somo /ultrascan3/us_somo/develop/local.pri
 ADD local.pri.gui  /ultrascan3/local.pri
 ADD local.pri.mpi  /ultrascan3/local.pri.mpi
+
+# add python3 requirements
+RUN PIP_BREAK_SYSTEM_PACKAGES=1 pip3 install sphinx-subfigure sphinxcontrib-video sphinxcontrib-youtube myst-parser
 
 # small QoL bits
 RUN set -eux; \

@@ -26,6 +26,9 @@ RUN set -eux; \
     # essentials
     build-essential git ca-certificates curl wget xz-utils binutils file \
     cmake ninja-build python3 python3-pip pkg-config bison flex gperf \
+    python3-sphinx \
+    python3-sphinxcontrib.qthelp \
+    python3-myst-parser \
     mpich libmpich-dev \
     # X11 / xcb / Wayland / GL stack
     libx11-dev libxext-dev libxi-dev libxrandr-dev libxrender-dev \
@@ -50,8 +53,6 @@ RUN set -eux; \
     libmariadb-dev libmariadb-dev-compat \
     libarchive-dev \
     libpq-dev \
-    # sphinx
-    python3-sphinx \
     # editors & QoL
     emacs-nox; \
   rm -rf /var/lib/apt/lists/*
@@ -154,6 +155,9 @@ RUN set -eux; \
 ADD local.pri.somo /ultrascan3/us_somo/develop/local.pri
 ADD local.pri.gui  /ultrascan3/local.pri
 ADD local.pri.mpi  /ultrascan3/local.pri.mpi
+
+# add python3 requirements
+RUN PIP_BREAK_SYSTEM_PACKAGES=1 pip3 install sphinx-subfigure sphinxcontrib-video sphinxcontrib-youtube
 
 # small QoL bits
 RUN set -eux; \

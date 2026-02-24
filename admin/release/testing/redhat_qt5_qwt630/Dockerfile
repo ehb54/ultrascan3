@@ -29,7 +29,8 @@ ENV QWTDIR=/qwt-$qwt_version
 # basic install stuff
 
 RUN dnf update -y
-RUN dnf install -y yum-utils dnf-plugins-core && dnf config-manager --set-enabled powertools && dnf groupinstall -y "Development Tools" && dnf install -y tzdata git openssl-devel bc curl wget zlib-devel pkg-config mpich mpich-devel re2c vim emacs-nox xorg-x11* $apt_python_version glib2-devel postgresql-devel at-spi2-core-devel libjpeg-devel fontconfig-devel libarchive-devel python3-sphinx && alternatives --set python /usr/bin/python3 && yum-builddep -y qt5-devel && dnf install -y libxcb* xcb-util* libX11* libxkbcommon* mesa-lib* mariadb-devel rsync && dnf -y clean all && rm -rf /var/cache/dnf
+RUN dnf install -y yum-utils dnf-plugins-core && dnf config-manager --set-enabled powertools && dnf groupinstall -y "Development Tools" && dnf install -y tzdata git openssl-devel bc curl wget zlib-devel pkg-config mpich mpich-devel re2c vim emacs-nox xorg-x11* $apt_python_version glib2-devel postgresql-devel at-spi2-core-devel libjpeg-devel fontconfig-devel libarchive-devel python3-pip python3-sphinx python3-sphinxcontrib-qthelp && alternatives --set python /usr/bin/python3 && yum-builddep -y qt5-devel && dnf install -y libxcb* xcb-util* libX11* libxkbcommon* mesa-lib* mariadb-devel rsync && dnf -y clean all && rm -rf /var/cache/dnf
+
 
 ## required for qt to find xcb-xlib deps
 # RUN ln -s /lib64/libXext.so.[0-9] /lib64/libXext.so
@@ -65,6 +66,9 @@ RUN cd $ULTRASCAN && git reset --hard origin/$ultrascan_branch
 ADD local.pri.somo /ultrascan3/us_somo/develop/local.pri
 ADD local.pri.gui  /ultrascan3/local.pri
 ADD local.pri.mpi  /ultrascan3/local.pri.mpi
+
+# add python3 requirements
+RUN PIP_BREAK_SYSTEM_PACKAGES=1 pip3 install sphinx-subfigure sphinxcontrib-video sphinxcontrib-youtube myst-parser 
 
 # us version setup
 RUN cd /ultrascan3/programs/us && env ULTRASCAN=/ultrascan3 ./revision.sh
