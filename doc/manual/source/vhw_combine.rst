@@ -66,19 +66,18 @@ Functions:
     **RunID Select Dialog**
 
 
-.. subfigure:: AB     
-  :class-grid: outline 
-  :gap: 8px
-  :align: center
+.. grid:: 2
+   :gutter: 2
 
+   .. grid-item::
 
-  .. image:: _static/images/vhw_combine-envel.png
-    :align: left
-    :width: 85%
+      .. image:: _static/images/vhw_combine-envel.png
+         :width: 85%
 
-  .. image:: _static/images/vhw_combine-combo.png
-    :width: 100%
-    :align: right
+   .. grid-item::
+
+      .. image:: _static/images/vhw_combine-combo.png
+         :width: 100%
 
 .. rst-class:: center
 

@@ -48,31 +48,33 @@ PCSA Fitting Process:
     -
     -
 
-.. subfigure:: ABCDE     
-  :class-grid: outline 
-  :gap: 8px
-  :align: center
+.. grid:: 5
+   :gutter: 2
 
+   .. grid-item::
 
-  .. image:: ../_static/images/pline_stline.png
-    :align: left
-    :width: 100%
+      .. image:: ../_static/images/pline_stline.png
+         :width: 100%
 
-  .. image:: ../_static/images/incr_sigmoid.png
-    :width: 100%
-    :align: left
+   .. grid-item::
 
-  .. image:: ../_static/images/pline_dsig.png
-    :width: 100%
-    :align: right 
+      .. image:: ../_static/images/incr_sigmoid.png
+         :width: 100%
 
-  .. image:: ../_static/images/hori_cs.png
-    :width: 100%
-    :align: right 
+   .. grid-item::
 
-  .. image:: ../_static/images/pline_power.png
-    :width: 100%
-    :align: right
+      .. image:: ../_static/images/pline_dsig.png
+         :width: 100%
+
+   .. grid-item::
+
+      .. image:: ../_static/images/hori_cs.png
+         :width: 100%
+
+   .. grid-item::
+
+      .. image:: ../_static/images/pline_power.png
+         :width: 100%
 
 .. rst-class:: center
 

@@ -245,19 +245,18 @@ The optima host configuration panel allows you to configure the connection to on
 
 When Add *New Entry* or *Edit Current Entry* is selected, one of the following dialogs is opened: 
 
-.. subfigure:: AB     
-  :class-grid: outline 
-  :gap: 8px
-  :align: center
+.. grid:: 2
+   :gutter: 2
 
+   .. grid-item::
 
-  .. image:: _static/images/optima_config_new.png
-    :align: left
-    :width: 100%
+      .. image:: _static/images/optima_config_new.png
+         :width: 100%
 
-  .. image:: _static/images/optima_config_edit.png
-    :width: 100%
-    :align: right
+   .. grid-item::
+
+      .. image:: _static/images/optima_config_edit.png
+         :width: 100%
 
 .. rst-class:: center
 

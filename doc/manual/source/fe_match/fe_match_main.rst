@@ -65,20 +65,18 @@ Functions:
   * - 
     -
 
-.. subfigure:: AB     
-  :class-grid: outline 
-  :gap: 8px
-  :align: center
+.. grid:: 2
+   :gutter: 2
 
+   .. grid-item::
 
-  .. image:: ../_static/images/residuals.png
-    :align: left
-    :width: 100%
+      .. image:: ../_static/images/residuals.png
+         :width: 100%
 
-  .. image:: ../_static/images/s20W_bar.png
-    :width: 100%
-    :align: right 
+   .. grid-item::
 
+      .. image:: ../_static/images/s20W_bar.png
+         :width: 100%
 
 .. list-table::
   :widths: 50 50 
@@ -90,21 +88,18 @@ Functions:
     -
 
 
-.. subfigure:: AB     
-  :class-grid: outline 
-  :gap: 8px
-  :align: center
+.. grid:: 2
+   :gutter: 2
 
+   .. grid-item::
 
-  .. image:: ../_static/images/MW-bar.png
-    :align: left
-    :width: 100%
+      .. image:: ../_static/images/MW-bar.png
+         :width: 100%
 
-  .. image:: ../_static/images/D20W_bar.png
-    :width: 100%
-    :align: right
+   .. grid-item::
 
-
+      .. image:: ../_static/images/D20W_bar.png
+         :width: 100%
 
 **Information for this Run:**
 

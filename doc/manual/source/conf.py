@@ -45,7 +45,7 @@ extensions = [
     'sphinx.ext.coverage',
     'sphinx.ext.mathjax',
     'sphinx.ext.autosectionlabel',
-    'sphinx_subfigure',
+    'sphinx_design',
     'sphinxcontrib.video',
     'sphinxcontrib.youtube',
     'sphinxcontrib.qthelp',

@@ -96,19 +96,18 @@ Noise Data analysis:
   * - The simulation creates a data set with the same ranges as the edit experimental data set. The actual values for scan readings vectors are synthetically produced, as illustrated by the plot below. 
     - Upon completion of simulation computations the plot of experimental data (in yellow and cyan) is overlaid in the main window lower plot with the simulation data (in red), as shown in the image below. 
   
-.. subfigure:: AB     
-  :class-grid: outline 
-  :gap: 8px
-  :align: center
+.. grid:: 2
+   :gutter: 2
 
+   .. grid-item::
 
-  .. image:: ../_static/images/fe_sim-1.png
-    :align: left
-    :width: 100%
+      .. image:: ../_static/images/fe_sim-1.png
+         :width: 100%
 
-  .. image:: ../_static/images/fe_sim-2.png
-    :width: 100%
-    :align: right
+   .. grid-item::
+
+      .. image:: ../_static/images/fe_sim-2.png
+         :width: 100%
 
 .. rst-class:: 
    :align: center
@@ -128,24 +127,23 @@ Noise Data analysis:
     -
     -
 
-.. subfigure:: ABC     
-  :class-grid: outline 
-  :gap: 8px
-  :align: center
+.. grid:: 3
+   :gutter: 2
 
+   .. grid-item::
 
-  .. image:: ../_static/images/add_TIN.png
-    :align: left
-    :width: 100%
+      .. image:: ../_static/images/add_TIN.png
+         :width: 100%
 
-  .. image:: ../_static/images/add_RIN.png
-    :width: 100%
-    :align: left
+   .. grid-item::
 
-  .. image:: ../_static/images/add_RIN-TIN.png
-    :width: 100%
-    :align: right 
+      .. image:: ../_static/images/add_RIN.png
+         :width: 100%
 
+   .. grid-item::
+
+      .. image:: ../_static/images/add_RIN-TIN.png
+         :width: 100%
 
 .. list-table::
   :widths: 50 50 50
@@ -158,24 +156,23 @@ Noise Data analysis:
     -
     -
 
-.. subfigure:: ABC     
-  :class-grid: outline 
-  :gap: 8px
-  :align: center
+.. grid:: 3
+   :gutter: 2
 
+   .. grid-item::
 
-  .. image:: ../_static/images/TINplot.png
-    :align: left
-    :width: 100%
+      .. image:: ../_static/images/TINplot.png
+         :width: 100%
 
-  .. image:: ../_static/images/RINplot.png
-    :width: 100%
-    :align: left
+   .. grid-item::
 
-  .. image:: ../_static/images/residualplot.png
-    :width: 100%
-    :align: right 
+      .. image:: ../_static/images/RINplot.png
+         :width: 100%
 
+   .. grid-item::
+
+      .. image:: ../_static/images/residualplot.png
+         :width: 100%
 
 Residual Bit Map
 -----------------

@@ -157,19 +157,18 @@ Once the bins for Genetic Algorithm analysis are selected, detailed statistical 
 
  For each selected bin, the GA statistical analysis includes the mean, along with the lower and upper 95% confidence intervals for the molecular weight, sedimentation coefficient, diffusion coefficient, and frictional ratio. The partial specific volume and partial concentration are treated as constant values. For a more detailed analysis, refer to the Detailed Results section of the report.
 
-.. subfigure:: AB     
-  :class-grid: outline 
-  :gap: 8px
-  :align: center
+.. grid:: 2
+   :gutter: 2
 
+   .. grid-item::
 
-  .. image:: _static/images/ga_report-2.png
-    :align: left
-    :width: 100%
+      .. image:: _static/images/ga_report-2.png
+         :width: 100%
 
-  .. image:: _static/images/ga_report-3.png
-    :width: 100%
-    :align: right
+   .. grid-item::
+
+      .. image:: _static/images/ga_report-3.png
+         :width: 100%
 
 .. rst-class:: center
 

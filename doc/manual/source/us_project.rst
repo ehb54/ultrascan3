@@ -80,18 +80,18 @@ An existing project can be editted or a new project created using the Project ta
 
 Supporting data or documents can be uploaded and associated with the project. 
 
-.. subfigure:: AB     
-  :class-grid: outline 
-  :gap: 8px
-  :align: center
+.. grid:: 2
+   :gutter: 2
 
-  .. image:: _static/images/us_project_add-supdata.png
-    :align: left
-    :width: 100%
+   .. grid-item::
 
-  .. image:: _static/images/us_project_edit-supdata.png
-    :width: 100%
-    :align: right
+      .. image:: _static/images/us_project_add-supdata.png
+         :width: 100%
+
+   .. grid-item::
+
+      .. image:: _static/images/us_project_edit-supdata.png
+         :width: 100%
 
 .. rst-class:: center
 

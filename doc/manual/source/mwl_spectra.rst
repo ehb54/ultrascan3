@@ -40,11 +40,8 @@ Process:
 
 
 
-.. subfigure:: AB     
-  :class-grid: outline 
-  :gap: 8px
-  :align: center
-
+.. grid:: 2
+   :gutter: 2
 
 .. image:: _static/images/mwlr_spectra_cont.png
     :align: left

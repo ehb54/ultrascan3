@@ -193,18 +193,18 @@ The parameter are required to be spaced evenly, and should not exclude major reg
     - **Bad Spacing**
 
 
-.. subfigure:: AB     
-  :class-grid: outline 
-  :gap: 8px
-  :align: center
+.. grid:: 2
+   :gutter: 2
 
-  .. image:: _static/images/good_grid.png
-    :align: left
-    :width: 100%
+   .. grid-item::
 
-  .. image:: _static/images/bad_grid.png
-    :width: 100%
-    :align: right
+      .. image:: _static/images/good_grid.png
+         :width: 100%
+
+   .. grid-item::
+
+      .. image:: _static/images/bad_grid.png
+         :width: 100%
 
 .. rst-class:: center
 

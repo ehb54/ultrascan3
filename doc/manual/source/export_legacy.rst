@@ -41,20 +41,18 @@ A popup dialog will appear to prompt the type the user wants to export
   * - 
     -
 
-.. subfigure:: AB     
-  :class-grid: outline 
-  :gap: 8px
-  :align: center
+.. grid:: 2
+   :gutter: 2
 
+   .. grid-item::
 
-  .. image:: _static/images/export_leg_RI.png
-    :align: left
-    :width: 100%
+      .. image:: _static/images/export_leg_RI.png
+         :width: 100%
 
-  .. image:: _static/images/export_leg_RA.png
-    :width: 100%
-    :align: right 
+   .. grid-item::
 
+      .. image:: _static/images/export_leg_RA.png
+         :width: 100%
 
 .. note:: 
     Legacy Beckman  and UltraScan III format are organized as in the table below, so when importing into Ultrascan III, Beckman format files have to be compressed into .tar.gz files and converted into UltraScan III format using :ref:`Beckman to OpenAUC Data Converted <data_converter>`.
@@ -68,19 +66,18 @@ A popup dialog will appear to prompt the type the user wants to export
   * - 
     -
 
-.. subfigure:: AB     
-  :class-grid: outline 
-  :gap: 8px
-  :align: center
+.. grid:: 2
+   :gutter: 2
 
+   .. grid-item::
 
-  .. image:: _static/images/export_leg_auc.png
-    :align: left
-    :width: 100%
+      .. image:: _static/images/export_leg_auc.png
+         :width: 100%
 
-  .. image:: _static/images/export_leg_beck.png
-    :width: 100%
-    :align: right 
+   .. grid-item::
+
+      .. image:: _static/images/export_leg_beck.png
+         :width: 100%
 
 Beckman (tar.gz) to OpenAUC Data Converter:
 ============================================

@@ -40,37 +40,36 @@ Example Color Schemes and Plots
 
 User generated color schemes can be applied to multiple windows and plots using **load color** or CMap buttons in applicable windows. 
 
-.. subfigure:: AB     
-  :class-grid: outline 
-  :gap: 8px
-  :align: center
+.. grid:: 2
+   :gutter: 2
 
-  .. image:: _static/images/colorgradient/col1_colgen.png
-    :align: left
-    :width: 100%
+   .. grid-item::
 
-  .. image:: _static/images/colorgradient/col1_colgen_GA.png
-    :width: 100%
-    :align: right
+      .. image:: _static/images/colorgradient/col1_colgen.png
+         :width: 100%
+
+   .. grid-item::
+
+      .. image:: _static/images/colorgradient/col1_colgen_GA.png
+         :width: 100%
 
 .. rst-class:: center
 
     **Example Color scheme applied to Pseudo3D and GA plots**
 
 
-.. subfigure:: AB     
-  :class-grid: outline 
-  :gap: 8px
-  :align: center
+.. grid:: 2
+   :gutter: 2
 
+   .. grid-item::
 
-  .. image:: _static/images/colorgradient/col2_colgen.png
-    :align: left
-    :width: 100%
+      .. image:: _static/images/colorgradient/col2_colgen.png
+         :width: 100%
 
-  .. image:: _static/images/colorgradient/col1_colgen_Fe_match.png
-    :width: 100%
-    :align: right
+   .. grid-item::
+
+      .. image:: _static/images/colorgradient/col1_colgen_Fe_match.png
+         :width: 100%
 
 .. rst-class:: center
 

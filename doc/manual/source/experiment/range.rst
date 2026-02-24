@@ -77,19 +77,18 @@ Functions:
 
 .. _selector:
 
-.. subfigure:: AB     
-  :class-grid: outline 
-  :gap: 8px
-  :align: center
+.. grid:: 2
+   :gutter: 2
 
+   .. grid-item::
 
-  .. image:: ../_static/images/experiment_range_selector.png
-    :align: left
-    :width: 100%
+      .. image:: ../_static/images/experiment_range_selector.png
+         :width: 100%
 
-  .. image:: ../_static/images/experiment_range_selmanual.png
-    :width: 100%
-    :align: right
+   .. grid-item::
+
+      .. image:: ../_static/images/experiment_range_selmanual.png
+         :width: 100%
 
 .. rst-class:: center
 

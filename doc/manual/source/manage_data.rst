@@ -43,19 +43,18 @@ Initially you are presented with a small window to enter your database password.
 
 The tree menu will expand and collapse with buttons like these.
 
-.. subfigure:: AB     
-  :class-grid: outline 
-  :gap: 8px
-  :align: center
+.. grid:: 2
+   :gutter: 2
 
+   .. grid-item::
 
-  .. image:: _static/images/manage_data_bshow.png
-    :align: left
-    :width: 100%
+      .. image:: _static/images/manage_data_bshow.png
+         :width: 100%
 
-  .. image:: _static/images/manage_data_bhide.png
-    :width: 100%
-    :align: right
+   .. grid-item::
+
+      .. image:: _static/images/manage_data_bhide.png
+         :width: 100%
 
 .. rst-class:: center
 

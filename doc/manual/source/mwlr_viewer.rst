@@ -36,19 +36,18 @@ The main MWLR_Viewer window is shown here in the state it appears after loading 
     **Main Window**
 
 
-.. subfigure:: AB     
-  :class-grid: outline 
-  :gap: 8px
-  :align: center
+.. grid:: 2
+   :gutter: 2
 
+   .. grid-item::
 
-  .. image:: _static/images/mwlr_viewer_ctl.png
-    :align: left
-    :width: 55%
+      .. image:: _static/images/mwlr_viewer_ctl.png
+         :width: 55%
 
-  .. image:: _static/images/mwlr_viewer_3d.png
-    :width: 100%
-    :align: right
+   .. grid-item::
+
+      .. image:: _static/images/mwlr_viewer_3d.png
+         :width: 100%
 
 .. rst-class:: center
 
