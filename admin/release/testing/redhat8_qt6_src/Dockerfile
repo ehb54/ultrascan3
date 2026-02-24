@@ -29,6 +29,7 @@ RUN set -eux; \
   dnf -y install \
     git ca-certificates curl \
     cmake python3 python3-pip ninja-build \
+    python3-sphinx \
     bison flex gperf pkgconf-pkg-config \
     mpich mpich-devel \
     libX11-devel libXext-devel libXi-devel libXrandr-devel libXrender-devel \

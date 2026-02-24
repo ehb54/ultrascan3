@@ -50,6 +50,8 @@ RUN set -eux; \
     libmariadb-dev libmariadb-dev-compat \
     libarchive-dev \
     libpq-dev \
+    # sphinx
+    python3-sphinx \
     # editors & QoL
     emacs-nox; \
   rm -rf /var/lib/apt/lists/*
@@ -167,7 +169,6 @@ ENV PATH="${QTDIR}/bin:${QTDIR}/libexec:${PATH}"
 #    PKG_CONFIG_PATH="${QTDIR}/lib/pkgconfig:${PKG_CONFIG_PATH}" \
 #    QT_PLUGIN_PATH="${QTDIR}/plugins:${QT_PLUGIN_PATH}" \
 #    QML2_IMPORT_PATH="${QTDIR}/qml:${QML2_IMPORT_PATH}"
-
 
 SHELL ["/bin/bash", "-lc"]
 CMD ["/bin/bash", "-l"]

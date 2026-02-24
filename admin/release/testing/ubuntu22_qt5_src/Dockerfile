@@ -43,6 +43,7 @@ RUN set -eux; \
     vim \
     emacs-nox \
     python3 python-is-python3 \
+    python3-sphinx \
     zlib1g-dev \
     libglib2.0-dev \
     libpq-dev \
@@ -103,7 +104,7 @@ RUN set -eux; \
 
 # install qwt
 RUN set -eux; \
-  wget https://versaweb.dl.sourceforge.net/project/qwt/qwt/$qwt_version/qwt-$qwt_version.tar.bz2; \
+  wget https://download.sourceforge.net/project/qwt/qwt/${qwt_version}/qwt-${qwt_version}.tar.bz2; \
   tar jxf qwt-$qwt_version.tar.bz2; \
   cd qwt-$qwt_version; \
   /qt-$qt_version/bin/qmake; \
