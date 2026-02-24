@@ -32,12 +32,6 @@ US_Spectrum::US_Spectrum() : US_Widgets()
    pb_load_basis->setEnabled(false);
    connect(pb_load_basis, SIGNAL(clicked()), SLOT(load_basis()));
      
-   pb_delete = us_pushbutton(tr("Delete Current Basis Scan"));
-   connect(pb_delete, SIGNAL(clicked()), SLOT(deleteCurrent()));
-   pb_delete->hide();  // Spurious 
-   
-  
-
    pb_overlap = us_pushbutton(tr("Find Extinction Profile Overlap"));
    connect(pb_overlap, SIGNAL(clicked()), SLOT(overlap()));
    pb_overlap->setEnabled(false);
@@ -46,22 +40,17 @@ US_Spectrum::US_Spectrum() : US_Widgets()
    connect(pb_fit, SIGNAL(clicked()), SLOT(fit()));
    pb_fit->setEnabled(false);
    
-   pb_find_angles = us_pushbutton(tr("Find Angle between Basis Vectors"));
-   connect(pb_find_angles, SIGNAL(clicked()), SLOT(findAngles()));
-   pb_find_angles->setEnabled(false);
+   pb_find_angle = us_pushbutton(tr("Find Angle between Basis Vectors"));
+   connect(pb_find_angle, SIGNAL(clicked()), SLOT(findAngles()));
+   pb_find_angle->setEnabled(false);
 
    pb_help = us_pushbutton(tr("Help"));
    pb_reset_basis = us_pushbutton(tr("Reset Basis Spectra / Reset Fit Results"));
    connect(pb_reset_basis, SIGNAL(clicked()), SLOT(resetBasis()));
    pb_reset_basis->setEnabled(false);
-
-   pb_load_fit = us_pushbutton(tr("Load Fit"));
-   connect(pb_load_fit, SIGNAL(clicked()), SLOT(load()));
-   pb_load_fit->hide();
    
    pb_save= us_pushbutton(tr("Save Fit"));
    connect(pb_save, SIGNAL(clicked()), SLOT(save()));
-   pb_load_fit->setEnabled(false);
    pb_save->setEnabled(false);
    
    pb_close = us_pushbutton(tr("Close"));
@@ -80,26 +69,6 @@ US_Spectrum::US_Spectrum() : US_Widgets()
    lbl_rmsd = us_label(tr("RMSD: "));
    lbl_angle = us_label(tr("Angle (Deg.): "));
    le_rmsd = us_lineedit("", 1, true);
-
-   //Do we need this ? (finding extinc. coeff.)
-   cb_spectrum_type = new QComboBox();
-   QStringList spectrum_types;
-   spectrum_types << "target" << "basis" << "fitted";
-   cb_spectrum_type->addItems(spectrum_types);
-   lbl_wavelength = us_label(tr("Wavelength:"));
-   lbl_extinction = us_label(tr("Extinction Coeff.:"));
-   le_wavelength = us_lineedit("", 1, false);
-   le_extinction = us_lineedit("", 1, true);
-   pb_find_extinction = us_pushbutton(tr("Find Corresponding Extin. Coeff."));
-   connect(pb_find_extinction, SIGNAL(clicked()), SLOT(findExtinction()));
-   
-   pb_find_extinction->hide();
-   cb_spectrum_type->hide();
-   lbl_wavelength->hide();
-   lbl_extinction->hide();
-   le_wavelength->hide();
-   le_extinction->hide();
-   /////////////////////
 
    cb_angle_one = new QComboBox();
    cb_angle_two = new QComboBox();
@@ -123,8 +92,8 @@ US_Spectrum::US_Spectrum() : US_Widgets()
    // 	    SLOT  ( new_value( const QPointF& ) ) );
    // connect( pick, SIGNAL( moved    ( const QPointF& ) ),
    // 	    SLOT  ( new_value( const QPointF& ) ) );
-   connect( pick, SIGNAL( mouseDown( const QPointF& ) ),
-                  SLOT  ( new_value( const QPointF& ) ) );
+   // connect( pick, SIGNAL( mouseDown( const QPointF& ) ),
+   //                SLOT  ( new_value( const QPointF& ) ) );
 
    QGridLayout* plotGrid;
    plotGrid =  new QGridLayout();
@@ -136,19 +105,12 @@ US_Spectrum::US_Spectrum() : US_Widgets()
    angles_layout->addWidget(cb_angle_one, 0, 0);
    angles_layout->addWidget(cb_angle_two, 0, 1);
    // angles_layout->addWidget(le_angle, 1, 0);
-   // angles_layout->addWidget(pb_find_angles, 2, 0);
+   // angles_layout->addWidget(pb_find_angle, 2, 0);
 
    QGridLayout* angles_layout_res;
    angles_layout_res = new QGridLayout();
    angles_layout_res->addWidget(lbl_angle, 0, 0);
    angles_layout_res->addWidget(le_angle, 0, 1);
-
-   QGridLayout* subgl1;
-   subgl1 = new QGridLayout();
-   subgl1->addWidget(lbl_wavelength, 0,0);
-   subgl1->addWidget(le_wavelength, 0,1);
-   subgl1->addWidget(lbl_extinction, 1, 0);
-   subgl1->addWidget(le_extinction, 1, 1);
 
    QGridLayout* subgl_rmsd;
    subgl_rmsd = new QGridLayout();
@@ -191,7 +153,7 @@ US_Spectrum::US_Spectrum() : US_Widgets()
 
    gl1->addWidget(lbl_correlation, row++, 0);
    gl1->addLayout(angles_layout, row++, 0);
-   gl1->addWidget(pb_find_angles, row++, 0);
+   gl1->addWidget(pb_find_angle, row++, 0);
    gl1->addLayout(angles_layout_res, row++, 0);
    
    gl1->addWidget(lbl_load_save, row++, 0);
@@ -286,7 +248,7 @@ void US_Spectrum::load_basis()
    pb_reset_basis->setEnabled(true);
    pb_overlap->setEnabled(true);
    pb_fit->setEnabled(true);
-   pb_find_angles->setEnabled(true);
+   pb_find_angle->setEnabled(true);
    pb_save->setDisabled(true);
    le_rmsd->clear();
    // overlap();
@@ -425,68 +387,6 @@ void US_Spectrum:: plot_target()
    pb_load_basis->setEnabled(true);
 }
 
-void US_Spectrum::new_value(const QPointF& p)
-{
-   unsigned int specified_wavelength = 0;
-   specified_wavelength = (unsigned int)p.x();
-   le_wavelength->setText(QString::number(specified_wavelength));
-
-   if(cb_spectrum_type->currentText().compare("basis") == 0)
-   {
-      int basisIndex = 0;
-      for(int m = 0; m < v_basis.size(); m++)
-      {
-         if(lw_basis->currentItem() == NULL)
-            return;
-         if(v_basis.at(m).header.compare(lw_basis->currentItem()->text()) == 0)
-         {
-            basisIndex = m;
-         }
-      }
-      if(specified_wavelength < v_basis.at(basisIndex).lambda_max && specified_wavelength > v_basis.at(basisIndex).lambda_min)
-         le_extinction->setText(QString::number(v_basis.at(basisIndex).extinction.at(specified_wavelength - v_basis.at(basisIndex).lambda_min)));
-   }
-   else if (cb_spectrum_type->currentText().compare("target") == 0)
-   {
-      if(specified_wavelength < w_target.lambda_max && specified_wavelength > w_target.lambda_min)
-          le_extinction->setText(QString::number(w_target.extinction.at(specified_wavelength - w_target.lambda_min)));   
-   }
-   else
-   {
-      if(specified_wavelength < w_solution.lambda_max && specified_wavelength > w_solution.lambda_min)
-         le_extinction->setText(QString::number(w_solution.extinction.at(specified_wavelength - w_solution.lambda_min)));
-
-   }
-}
-void US_Spectrum::findExtinction()
-{
-   unsigned int specified_wavelength = 0;
-   specified_wavelength = atoi(le_wavelength->text().toStdString().c_str());
-   if(cb_spectrum_type->currentText().compare("basis") == 0)
-   {
-      int basisIndex = 0;
-      for(int m = 0; m < v_basis.size(); m++)
-      {
-         if(v_basis.at(m).header.compare(lw_basis->currentItem()->text()) == 0)
-         {
-            basisIndex = m;
-         }
-      }
-      if(specified_wavelength < v_basis.at(basisIndex).lambda_max && specified_wavelength > v_basis.at(basisIndex).lambda_min)
-         le_extinction->setText(QString::number(v_basis.at(basisIndex).extinction.at(specified_wavelength - v_basis.at(basisIndex).lambda_min)));
-   }
-   else if (cb_spectrum_type->currentText().compare("target") == 0)
-   {
-      if(specified_wavelength < w_target.lambda_max && specified_wavelength > w_target.lambda_min)
-         le_extinction->setText(QString::number( w_target.extinction.at(specified_wavelength - w_target.lambda_min)));
-   }
-   else
-   {
-      if(specified_wavelength < w_solution.lambda_max && specified_wavelength > w_solution.lambda_min)
-         le_extinction->setText(QString::number(w_solution.extinction.at(specified_wavelength - w_solution.lambda_min)));
-
-   }
-}
 void US_Spectrum::fit()
 {
    unsigned int min_lambda = w_target.lambda_min;
@@ -651,22 +551,6 @@ void US_Spectrum::fit()
    delete [] y;
 }
 
-void US_Spectrum::deleteCurrent()
-{
-   int deleteIndex = 0;
-   basisIndex--;
-
-   for(int m = 0; m < v_basis.size(); m++)
-   {
-      if(v_basis.at(m).header.compare(lw_basis->currentItem()->text()) == 0)
-         deleteIndex = m;
-   }
-   v_basis[deleteIndex].matchingCurve->detach();
-   data_plot->replot();
-   v_basis.remove(deleteIndex);
-   delete lw_basis->currentItem();
-}
-
 // Delete upon double click
 bool US_Spectrum::deleteBasisCurve(void)
 {
@@ -740,7 +624,7 @@ void US_Spectrum::resetBasis()
 
    pb_overlap->setEnabled(false);
    pb_fit->setEnabled(false);
-   pb_find_angles->setEnabled(false);
+   pb_find_angle->setEnabled(false);
    pb_reset_basis->setEnabled(false);
    pb_save->setEnabled(false);
 }
@@ -1021,78 +905,4 @@ void US_Spectrum::save()
       f.close();
    }
    */
-}
-   
-void US_Spectrum::load()
-{
-   //Empty anything that may still contain information about previous curves
-   resetBasis();
-   lw_target->clear();
-   if(lw_target->count() > 0)
-   {
-      w_target.matchingCurve->detach();
-      //w_target.gaussians.clear();
-   }
-   
-   //Load the file that the user selected
-   //QString filename = QFileDialog::getOpenFileName(this, "Load File", "/home/minji/ultrascan/results", "*.spectrum_fit");
-   
-   QString filename = QFileDialog::getOpenFileName(this, "Load File", US_Settings::resultDir(), "*.spectrum_fit");
-   if(filename.isEmpty())
-      return;
-   
-   //holds the number of gaussians
-   int tempSize = 0;
-
-   //reload information for the target and basis curves
-   QFile f (filename);
-   if(f.open(QIODevice::ReadOnly))
-   {
-      QDataStream ds(&f);
-      ds >> w_target.amplitude;
-      ds >> w_target.filename;
-      ds >> w_target.header;
-      ds >> w_target.lambda_min;
-      ds >> w_target.lambda_max;
-      ds >> w_target.lambda_scale;
-      ds >> w_target.scale;
-      ds >> tempSize;
-      // w_target.gaussians.resize(tempSize);
- 
-      // for (int i=0; i< w_target.gaussians.size(); i++)
-      // {
-      //    ds >> w_target.gaussians[i].amplitude;
-      //    ds >> w_target.gaussians[i].sigma;
-      //    ds >> w_target.gaussians[i].mean;
-      // }
-
-      ds >> tempSize;
-      v_basis.resize(tempSize);
-
-      for (int j=0; j< v_basis.size(); j++)
-      {
-         ds >> v_basis[j].amplitude;
-         ds >> v_basis[j].filename;
-         ds >> v_basis[j].header;
-         ds >> v_basis[j].lambda_min;
-         ds >> v_basis[j].lambda_max;
-         ds >> v_basis[j].lambda_scale;
-         ds >> v_basis[j].scale;
-         ds >> v_basis[j].nnls_factor;
-         ds >> v_basis[j].nnls_percentage;
-         ds >> tempSize;
-         // v_basis[j].gaussians.resize(tempSize);
-
-         // for (int i=0; i< v_basis[j].gaussians.size(); i++)
-         // {
-         //    ds >> v_basis[j].gaussians[i].amplitude;
-         //    ds >> v_basis[j].gaussians[i].sigma;
-         //    ds >> v_basis[j].gaussians[i].mean;
-         // }
-      }
-      f.close();
-   }
-   plot_basis();
-   plot_target();
-   fit();
 }

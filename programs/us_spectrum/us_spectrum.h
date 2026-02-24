@@ -58,27 +58,19 @@ class US_Spectrum : public US_Widgets
 
         QPushButton* pb_load_target;  //!< Load target button
         QPushButton* pb_load_basis;   //!< Load basis button
-        QPushButton* pb_load_fit;     //!< Load fit button
         QPushButton* pb_fit;          //!< Fit button
-        QPushButton* pb_find_angles;  //!< Find angles button
         QPushButton* pb_help;         //!< Help button
         QPushButton* pb_save;         //!< Save button
         QPushButton* pb_overlap;      //!< Overlap button
         QPushButton* pb_close;        //!< Close button
         QPushButton* pb_reset_basis;  //!< Reset basis button
-        QPushButton* pb_delete;       //!< Delete button
         QPushButton* pb_find_angle;   //!< Find angle button
-        QPushButton* pb_find_extinction; //!< Find extinction button
 
         QListWidget* lw_target;       //!< Target list widget
         QListWidget* lw_basis;        //!< Basis list widget
-        QLabel* lbl_wavelength;       //!< Wavelength label
-        QLabel* lbl_extinction;       //!< Extinction label
         QLineEdit* le_angle;          //!< Angle line edit
-        QLineEdit* le_wavelength;     //!< Wavelength line edit
-        QLineEdit* le_extinction;     //!< Extinction line edit
         QLineEdit* le_rmsd;           //!< RMSD line edit
-
+        
         QLabel* lbl_wvlinfo;          //!< Wavelength info label
         QLabel* lbl_correlation;      //!< Correlation label
         QLabel* lbl_fit;              //!< Fit label
@@ -88,13 +80,12 @@ class US_Spectrum : public US_Widgets
 
         QComboBox* cb_angle_one;      //!< Angle one combo box
         QComboBox* cb_angle_two;      //!< Angle two combo box
-        QComboBox* cb_spectrum_type;  //!< Spectrum type combo box
 
     private slots:
-                /**
-                 * @brief Slot to load basis data.
-                 */
-                void load_basis();
+        /**
+         * @brief Slot to load basis data.
+         */
+        void load_basis();
 
         /**
          * @brief Slot to plot basis data.
@@ -112,25 +103,9 @@ class US_Spectrum : public US_Widgets
         void plot_target();
 
         /**
-         * @brief Slot to handle new values from plot picker.
-         * @param point The point picked
-         */
-        void new_value(const QPointF& point);
-
-        /**
-         * @brief Slot to find extinction coefficients.
-         */
-        void findExtinction();
-
-        /**
          * @brief Slot to fit the data.
          */
         void fit();
-
-        /**
-         * @brief Slot to delete the current basis data.
-         */
-        void deleteCurrent();
 
         /**
          * @brief Delete the current basis curve.
@@ -152,11 +127,6 @@ class US_Spectrum : public US_Widgets
          * @brief Slot to save the results.
          */
         void save();
-
-        /**
-         * @brief Slot to load saved results.
-         */
-        void load();
 
         /**
          * @brief Slot to overlap the plots.
