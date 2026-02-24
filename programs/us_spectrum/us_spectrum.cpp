@@ -57,17 +57,19 @@ US_Spectrum::US_Spectrum() : US_Widgets()
    connect(pb_close, SIGNAL(clicked()), SLOT(close()));
 
    //List Widgets
+
+   
    lw_target = us_listwidget();
    lw_basis = us_listwidget();
    connect(lw_basis, SIGNAL(itemDoubleClicked(QListWidgetItem*)), SLOT(deleteBasisCurve()));
 
 
-   lbl_wvlinfo = us_banner(tr("Target/Basis Spectra Information"));
-   lbl_correlation = us_banner(tr("Basis Vectors Correlation"));
-   lbl_fit = us_banner(tr("Perform Fit"));
-   lbl_load_save = us_banner(tr("Save Fitting Results"));
-   lbl_rmsd = us_label(tr("RMSD: "));
-   lbl_angle = us_label(tr("Angle (Deg.): "));
+   QLabel* lb_wvlinfo = us_banner(tr("Target/Basis Spectra Information"));
+   QLabel* lb_correlation = us_banner(tr("Basis Vectors Correlation"));
+   QLabel* lb_fit = us_banner(tr("Perform Fit"));
+   QLabel* lb_load_save = us_banner(tr("Save Fitting Results"));
+   QLabel* lb_rmsd = us_label(tr("RMSD: "));
+   QLabel* lb_angle = us_label(tr("Angle (Deg.): "));
    le_rmsd = us_lineedit("", 1, true);
 
    cb_angle_one = new QComboBox();
@@ -75,13 +77,13 @@ US_Spectrum::US_Spectrum() : US_Widgets()
    le_angle = us_lineedit("", 1, true); 
 
    data_plot = new QwtPlot();
-   plotLayout1 = new US_Plot(data_plot, tr(""), tr("Wavelength(nm)"), tr("Extinction"));
+   US_Plot* plot_layout_1 = new US_Plot(data_plot, tr(""), tr("Wavelength(nm)"), tr("Extinction"));
    data_plot->setCanvasBackground(Qt::black);
    data_plot->setTitle("Wavelength Spectrum Fit");
    data_plot->setMinimumSize(600,200);
    
    residuals_plot = new QwtPlot();
-   plotLayout2 = new US_Plot(residuals_plot, tr(""), tr("Wavelength(nm)"), tr("Extinction"));
+   US_Plot* plot_layout_2 = new US_Plot(residuals_plot, tr(""), tr("Wavelength(nm)"), tr("Extinction"));
    residuals_plot->setCanvasBackground(Qt::black);
    residuals_plot->setTitle("Fitting Residuals");
    residuals_plot->setMinimumSize(600, 200);
@@ -97,8 +99,8 @@ US_Spectrum::US_Spectrum() : US_Widgets()
 
    QGridLayout* plotGrid;
    plotGrid =  new QGridLayout();
-   plotGrid->addLayout(plotLayout1, 0, 0);
-   plotGrid->addLayout(plotLayout2, 1, 0);
+   plotGrid->addLayout(plot_layout_1, 0, 0);
+   plotGrid->addLayout(plot_layout_2, 1, 0);
    
    QGridLayout* angles_layout;
    angles_layout = new QGridLayout();
@@ -109,12 +111,12 @@ US_Spectrum::US_Spectrum() : US_Widgets()
 
    QGridLayout* angles_layout_res;
    angles_layout_res = new QGridLayout();
-   angles_layout_res->addWidget(lbl_angle, 0, 0);
+   angles_layout_res->addWidget(lb_angle, 0, 0);
    angles_layout_res->addWidget(le_angle, 0, 1);
 
    QGridLayout* subgl_rmsd;
    subgl_rmsd = new QGridLayout();
-   subgl_rmsd->addWidget(lbl_rmsd, 0, 0);
+   subgl_rmsd->addWidget(lb_rmsd, 0, 0);
    subgl_rmsd->addWidget(le_rmsd, 0, 1);
 
    QGridLayout* subgl2;
@@ -130,7 +132,7 @@ US_Spectrum::US_Spectrum() : US_Widgets()
    QGridLayout* gl1;
    gl1 = new QGridLayout();
    int row = 0;
-   gl1->addWidget(lbl_wvlinfo, row++, 0);
+   gl1->addWidget(lb_wvlinfo, row++, 0);
    gl1->addWidget(pb_load_target, row++, 0);
    gl1->addWidget(lw_target, row++, 0);
    gl1->addWidget(pb_load_basis, row++, 0);
@@ -144,19 +146,19 @@ US_Spectrum::US_Spectrum() : US_Widgets()
    
    //gl1->addWidget(pb_delete, row++, 0);
    
-   gl1->addWidget(lbl_fit, row++, 0);
+   gl1->addWidget(lb_fit, row++, 0);
    gl1->addWidget(pb_overlap, row++, 0);
    gl1->addWidget(pb_fit, row++, 0);
    gl1->addLayout(subgl_rmsd, row++, 0);
  
    //gl1->addLayout(subgl1, row++, 0);
 
-   gl1->addWidget(lbl_correlation, row++, 0);
+   gl1->addWidget(lb_correlation, row++, 0);
    gl1->addLayout(angles_layout, row++, 0);
    gl1->addWidget(pb_find_angle, row++, 0);
    gl1->addLayout(angles_layout_res, row++, 0);
    
-   gl1->addWidget(lbl_load_save, row++, 0);
+   gl1->addWidget(lb_load_save, row++, 0);
    gl1->addLayout(subgl2, row++, 0);
    
    QGridLayout *mainLayout;

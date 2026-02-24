@@ -48,8 +48,6 @@ class US_Spectrum : public US_Widgets
 
         QwtPlot* data_plot;           //!< Data plot
         QwtPlot* residuals_plot;      //!< Residuals plot
-        US_Plot* plotLayout1;         //!< Plot layout 1
-        US_Plot* plotLayout2;         //!< Plot layout 2
         WavelengthProfile w_target;   //!< Target wavelength profile
         QVector<WavelengthProfile> v_basis; //!< Vector of basis wavelength profiles
         QwtPlotCurve* solution_curve; //!< Solution curve
@@ -71,13 +69,6 @@ class US_Spectrum : public US_Widgets
         QLineEdit* le_angle;          //!< Angle line edit
         QLineEdit* le_rmsd;           //!< RMSD line edit
         
-        QLabel* lbl_wvlinfo;          //!< Wavelength info label
-        QLabel* lbl_correlation;      //!< Correlation label
-        QLabel* lbl_fit;              //!< Fit label
-        QLabel* lbl_rmsd;             //!< RMSD label
-        QLabel* lbl_angle;            //!< Angle label
-        QLabel* lbl_load_save;        //!< Load/Save label
-
         QComboBox* cb_angle_one;      //!< Angle one combo box
         QComboBox* cb_angle_two;      //!< Angle two combo box
 
