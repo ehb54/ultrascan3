@@ -71,6 +71,9 @@
       "cacheVariables": {
         "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/admin/cmake/toolchain.cmake",
         "CMAKE_POSITION_INDEPENDENT_CODE": "ON"
+      },
+      "environment": {
+        "PKG_CONFIG_PATH": "/usr/lib/aarch64-linux-gnu/pkgconfig:/usr/lib/x86_64-linux-gnu/pkgconfig:/usr/share/pkgconfig:$penv{PKG_CONFIG_PATH}"
       }
     },
     {
