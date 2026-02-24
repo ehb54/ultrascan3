@@ -192,7 +192,7 @@ Set-Location $SourceRoot
 # =============================================================================
 # BUILD PARALLELISM
 # =============================================================================
-$Cores = [int]($env:NUMBER_OF_PROCESSORS ?? 4)
+$Cores = if ($env:NUMBER_OF_PROCESSORS) { [int]$env:NUMBER_OF_PROCESSORS } else { 4 }
 if ($env:US3_BUILD_JOBS) {
     $BuildJobs = [int]$env:US3_BUILD_JOBS
 } else {
