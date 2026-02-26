@@ -67,6 +67,8 @@ QString DAD_Lambdas::summary_rich() {
 }
 
 bool DAD_Lambdas::load( const QString & filename, const QStringList & filelines, QString & errormsg ) {
+   TSO << "DAD_Lambdas::load()\n";
+   
    if ( !filelines.size() ) {
       errormsg = us_tr( "Empty file" );
       return false;
@@ -74,15 +76,45 @@ bool DAD_Lambdas::load( const QString & filename, const QStringList & filelines,
 
    QStringList use_filelines;
 
-   for ( auto l1 : filelines ) {
-      QStringList qsl = l1.split( ", " );
-      for ( auto l2 : qsl ) {
-         l2 = l2.trimmed();
-         if ( !l2.isEmpty() ) {
-            use_filelines << l2.trimmed();
+   bool use_comma_separated_format = false;
+
+   {
+      bool first = true;;
+
+      for ( auto l1 : filelines ) {
+         l1 = l1.trimmed();
+         if ( first ) {
+            first = false;
+            if ( l1.contains( QRegularExpression( "^Index\\s+" ) ) ) {
+               continue;
+            }
+         }
+
+         if ( l1.contains( QRegularExpression( "^\\d+\\.\\d+\\s+\\d+\\.\\d+$" ) ) ) {
+            QStringList qsl = l1.split( QRegularExpression( "\\s+" ) );
+            if ( qsl.size() == 2 )  {
+               use_filelines << qsl[ 1 ];
+            }
+         }
+      }
+      use_comma_separated_format = use_filelines.size() == 0;
+   }
+
+   if ( use_comma_separated_format ) {
+      for ( auto l1 : filelines ) {
+         QStringList qsl = l1.split( QRegularExpression( "\\s*,?\\s+" ) );
+         for ( auto l2 : qsl ) {
+            l2 = l2.trimmed();
+            if ( !l2.isEmpty() ) {
+               use_filelines << l2.trimmed();
+            }
          }
       }
    }
+
+   // for ( auto const & line : use_filelines ) {
+   //    TSO << "line " << line << "\n";
+   // }
 
    vector < double > new_lambdas;
 

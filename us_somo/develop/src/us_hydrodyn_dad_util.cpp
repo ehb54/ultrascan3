@@ -5374,7 +5374,35 @@ void US_Hydrodyn_Dad::gauss_mode()
 
 #define TSO QTextStream(stdout)
 
+static bool isConsecutiveIntegers( const QString& str ) {
+
+    QStringList parts = str.split( QRegularExpression( "\\s+" ), Qt::SkipEmptyParts );
+    if ( parts.isEmpty() ) {
+       return false;
+    }
+
+    bool ok;
+    int first = parts.first().toInt(&ok);
+    if ( !ok ) {
+       return false;
+    }
+
+    int expected = first;
+
+    for ( const QString& part : parts ) {
+        int val = part.toInt(&ok);
+        if ( !ok || val != expected ) {
+            return false;
+        }
+        ++expected;
+    }
+
+    return true;
+}
+
 bool US_Hydrodyn_Dad::dad_load( const QString & filename, const QStringList & qsl, QString & errormsg ) {
+   TSO << "dad_losd()\n";
+
    errormsg = "";
    
    if ( !qsl.size() ) {
@@ -5384,19 +5412,33 @@ bool US_Hydrodyn_Dad::dad_load( const QString & filename, const QStringList & qs
 
    // check if qsl is a dad data file, if not return false
 
+   TSO << "check if dad\n";
+
    vector < vector < double > > absorption_data;
 
    {
       set < size_t > row_sizes;
 
+      bool first = true;
+
       for ( auto const & line : qsl ) {
          vector < double > absorption_data_row;
-         QStringList lineqsl = line.split( QRegularExpression( "[\t ,]" ) );
+         auto tline = line.trimmed();
+         if ( first ) {
+            first = false;
+            if ( isConsecutiveIntegers( tline ) ) {
+               continue; // skip this line
+            }
+         }
+
+         QStringList lineqsl = tline.split( QRegularExpression( "[\t ,]+" ) );
+
          for ( auto const & element : lineqsl ) {
             bool isNumeric = false;
             double absorption = element.toDouble( &isNumeric );
             if ( !isNumeric ) {
                errormsg = "not a valid dad file";
+               TSO << errormsg << " 1 \n";
                return false;
             }
             absorption_data_row.push_back( absorption );
@@ -5407,6 +5449,7 @@ bool US_Hydrodyn_Dad::dad_load( const QString & filename, const QStringList & qs
 
       if ( row_sizes.size() != 1 ) {
          errormsg = "not a valid dad file";
+         TSO << errormsg << " 2 \n";
          return false;
       }
    }   
