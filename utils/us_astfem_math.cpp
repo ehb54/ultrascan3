@@ -217,6 +217,8 @@ if((scan_nbr>0)||(ii<(d1+2))||((ii>(tacc-2))&&(ii<(tacc+2)))||((ii+3)>d2))
    }
 
    timestate.close_write_data();
+   timestate.setTimeStateType( US_TimeState::TIMESTATE_TYPE::CALCULATED );
+   timestate.setImportType( US_TimeState::IMPORT_TYPE::XLA );
    timestate.write_defs( 1.0 );
 
    return timestate.time_count();
