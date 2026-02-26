@@ -281,8 +281,10 @@ DbgLv(0) << "AMATH:loac:t1 t2" << t1 << t2 << "t_acc rate" << t_acc << rate;
    return ( rate < min_accel );
 }
 
-QStringList US_AstfemMath::check_acceleration(const QVector<US_SimulationParameters::SpeedProfile> & speed_profiles,
-   const QVector<US_DataIO::Scan> & scans) {
+QStringList US_AstfemMath::check_acceleration(
+   const QVector<US_SimulationParameters::SpeedProfile> & speed_profiles,
+   const QVector<US_DataIO::Scan> & scans,
+   US_TimeState* timestate ) {
    QStringList results;
    // Settings and constants
    const QString dbgval = US_Settings::debug_value( "SetSpeedLowAcc" );
