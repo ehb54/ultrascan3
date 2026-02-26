@@ -47,10 +47,22 @@ OLD_REVISION_DATE=""
 OLD_LOCAL_CHANGES=""
 
 if [ -f "$HEADER" ]; then
-  OLD_BUILDNUM=$(sed -n 's/^#define[[:space:]]\+BUILDNUM[[:space:]]\+"\(.*\)".*$/\1/p' "$HEADER" | head -n1 || true)
-  OLD_GIT_REVISION=$(sed -n 's/^#define[[:space:]]\+GIT_REVISION[[:space:]]\+"\(.*\)".*$/\1/p' "$HEADER" | head -n1 || true)
-  OLD_REVISION_DATE=$(sed -n 's/^#define[[:space:]]\+REVISION_DATE[[:space:]]\+"\(.*\)".*$/\1/p' "$HEADER" | head -n1 || true)
-  OLD_LOCAL_CHANGES=$(sed -n 's/^#define[[:space:]]\+LOCAL_CHANGES[[:space:]]\+"\(.*\)".*$/\1/p' "$HEADER" | head -n1 || true)
+  OLD_BUILDNUM=$(
+    sed -nE 's/^[[:space:]]*#define[[:space:]]+BUILDNUM[[:space:]]+"([^"]*)".*$/\1/p' "$HEADER" \
+    | sed -E 's/\r$//' | head -n 1 
+  ) || true
+  OLD_GIT_REVISION=$(
+    sed -nE 's/^[[:space:]]*#define[[:space:]]+GIT_REVISION[[:space:]]+"([^"]*)".*$/\1/p' "$HEADER" \
+    | sed -E 's/\r$//' | head -n 1
+  ) || true
+  OLD_REVISION_DATE=$(
+    sed -nE 's/^[[:space:]]*#define[[:space:]]+REVISION_DATE[[:space:]]+"([^"]*)".*$/\1/p' "$HEADER" \
+    | sed -E 's/\r$//' | head -n 1
+  ) || true
+  OLD_LOCAL_CHANGES=$(
+    sed -nE 's/^[[:space:]]*#define[[:space:]]+LOCAL_CHANGES[[:space:]]+"([^"]*)".*$/\1/p' "$HEADER" \
+    | sed -E 's/\r$//' | head -n 1
+  ) || true
 fi
 
 # --- comparison: only rewrite when something changes ---
