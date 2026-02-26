@@ -43,7 +43,10 @@
         "qtbase",
         "qtdatavis3d",
         "qtsvg",
-        "qttools",
+        {
+          "name": "qttools",
+          "features": ["assistant"]
+        },
         "qwt-6-3-0-qt6",
         "qwtplot3d-qwt-6-3-0-qt6"
       ]

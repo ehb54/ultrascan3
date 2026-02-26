@@ -20,7 +20,8 @@ fi
 # PARSE COMMAND LINE OPTIONS
 # =============================================================================
 CLEAN=false
-PROFILE="APP"
+INSTALL=false
+PROFILE="APP"  # default profile
 QT_VERSION="qt6"
 QWT_VERSION=""
 ARCH=""
@@ -42,11 +43,16 @@ while [[ $# -gt 0 ]]; do
     --vcpkg-root)
       US3_VCPKG_ROOT="$2"; shift 2
       ;;
+    --install)
+      INSTALL=true
+      shift
+      ;;
     --help)
       echo "Usage: $0 [OPTIONS] [PROFILE]"
       echo ""
       echo "OPTIONS:"
-      echo "  --clean                Clean build artifacts before building"
+      echo "  --clean       Clean build artifacts before building"
+      echo "  --install     After building, run cpack to create a distributable package (DMG/DEB/RPM/EXE)"
       echo "  --qt6                  Build with Qt6 + Qwt6.3.0 [default]"
       echo "  --qt5-qwt616           Build with Qt5 + Qwt6.1.6"
       echo "  --qt5-qwt630           Build with Qt5 + Qwt6.3.0"
@@ -114,6 +120,15 @@ else
   exit 1
 fi
 
+# Derive Qt version from preset name
+if [[ "$PRESET" == *qt6* ]]; then
+  QT_VERSION="Qt6"
+else
+  QT_VERSION="Qt5"
+fi
+
+echo "Platform: $PLATFORM"
+echo "Qt version: $QT_VERSION (preset: $PRESET)"
 # =============================================================================
 # ARCHITECTURE DETECTION
 # =============================================================================
@@ -377,6 +392,7 @@ fi
 # =============================================================================
 # BUILD SUMMARY
 # =============================================================================
+echo ""
 echo "=========================================="
 echo "Ready to build UltraScan3"
 echo "=========================================="
@@ -384,6 +400,8 @@ echo "  Preset        : ${PRESET}"
 echo "  Profile       : ${PROFILE}"
 echo "  Qt version    : ${QT_VERSION}${QWT_VERSION}"
 echo "  Architecture  : ${ARCH}"
+echo "  Platform:    ${PLATFORM}"
+echo "  Package (cpack): ${INSTALL}"
 echo "  Clean build   : ${CLEAN}"
 echo "  vcpkg root    : ${VCPKG_ROOT}"
 echo "  Build jobs    : ${BUILD_JOBS}"
@@ -399,6 +417,28 @@ fi
 echo ""
 
 # =============================================================================
+# SPHINX CHECK - ensure sphinx-build is on PATH
+# =============================================================================
+if ! command -v sphinx-build &>/dev/null; then
+  # macOS: pip installs to ~/Library/Python/<version>/bin which isn't on PATH by default
+  if [ "$PLATFORM" = "macOS" ]; then
+    for pyver in 3.13 3.12 3.11 3.10 3.9 3.8; do
+      candidate="$HOME/Library/Python/${pyver}/bin"
+      if [ -x "${candidate}/sphinx-build" ]; then
+        export PATH="${candidate}:$PATH"
+        echo "Found sphinx-build in ${candidate}, added to PATH"
+        break
+      fi
+    done
+  fi
+
+  if ! command -v sphinx-build &>/dev/null; then
+    echo "WARNING: sphinx-build not found - documentation will not be built"
+    echo "  Install with: pip3 install -r doc/manual/source/requirements.txt"
+  fi
+fi
+
+# =============================================================================
 # CONFIGURE AND BUILD
 #
 # NOTE: Do NOT pass -DCMAKE_TOOLCHAIN_FILE here.
@@ -407,7 +447,9 @@ echo ""
 # =============================================================================
 echo "Configuring..."
 cmake --preset "$PRESET" \
-  -DUS3_PROFILE="${PROFILE}"
+  -DUS3_PROFILE="${PROFILE}" \
+  -DVCPKG_ROOT="$US3_VCPKG_ROOT" \
+  -DVCPKG_INSTALLED_DIR="$VCPKG_INSTALLED_DIR"
 
 echo ""
 echo "Building..."
@@ -425,4 +467,32 @@ if [ "$NON_INTERACTIVE" = false ]; then
   echo ""
 fi
 
+# =============================================================================
+# INSTALL AND PACKAGE (if requested)
+# =============================================================================
+if [ "$INSTALL" = true ]; then
+  BUILD_DIR="build/$PRESET"
 
+  echo "=========================================="
+  echo "Packaging..."
+  echo "=========================================="
+  ( cd "$BUILD_DIR" && cpack )
+
+  echo ""
+  echo "=========================================="
+  echo "Package complete!"
+  echo "=========================================="
+  echo ""
+  # Show what was produced
+  case "$PLATFORM" in
+    macOS)   PKG_GLOB="$BUILD_DIR/*.dmg" ;;
+    Linux)   PKG_GLOB="$BUILD_DIR/*.deb $BUILD_DIR/*.rpm" ;;
+    Windows) PKG_GLOB="$BUILD_DIR/*.exe" ;;
+  esac
+  for pkg in $PKG_GLOB; do
+    if [ -f "$pkg" ]; then
+      echo "Created: $pkg"
+    fi
+  done
+  echo ""
+fi
