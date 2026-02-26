@@ -440,6 +440,61 @@ void US_ExperimentMain::set_tabs_buttons_readonly( void )
 
 }
 
+//Set all tabs their all Widgets (but 5. Sols, 8. AProfile sections) READ-ONLY for dataDisk in GMP
+void US_ExperimentMain::set_tabs_buttons_readonly_dataDisk( bool readonly )
+{
+  pb_next   ->setEnabled(true);
+  pb_prev   ->setEnabled(true);
+
+  for (int ii=0; ii<tabWidget->count(); ii++)
+    {
+      tabWidget ->setTabEnabled( ii, true );
+      QPalette pal = tabWidget ->tabBar()->palette();
+      //DbgLv(1) << "PALETTE: " << pal.color(QPalette::WindowText);
+      tabWidget ->tabBar()->setTabTextColor( ii, pal.color(QPalette::WindowText) ); // Qt::black
+      
+      
+      if ( ( ii==0 || ii==1 || ii==4 || ii==7 ) && readonly ) //1.Gen.. 2. Labs, 5.Sols. or 8. AProfile
+	continue;
+      
+      QWidget* pWidget= tabWidget->widget(ii);
+
+      //Find all children of each Tab in QTabWidget [children of all types...]
+      QList<QPushButton *> allPButtons = pWidget->findChildren<QPushButton *>();
+      QList<QComboBox *>   allCBoxes   = pWidget->findChildren<QComboBox *>();
+      QList<QSpinBox *>    allSBoxes   = pWidget->findChildren<QSpinBox *>();
+      QList<QwtCounter *>  allCounters = pWidget->findChildren<QwtCounter *>();
+      QList<QCheckBox *>   allChBoxes  = pWidget->findChildren<QCheckBox *>();
+
+      // and so on ..
+      
+      for (int i=0; i < allPButtons.count(); i++)
+      {
+         if ( (allPButtons[i]->text()).contains("View Solution Details" ) ||
+              (allPButtons[i]->text()).contains("View Ranges" ) ||
+              (allPButtons[i]->text()).contains("View Experiment Details" ) ||
+              (allPButtons[i]->text()).contains("Test Connection" ) ||
+	      (allPButtons[i]->text()).contains("Add to List" ) ||
+	      (allPButtons[i]->text()).contains("Remove Last" )
+	      )
+            allPButtons[i]->setEnabled(true);
+         else
+            allPButtons[i]->setEnabled(!readonly);
+      }
+
+      for ( int i = 0; i < allCBoxes.count(); i++ )
+      {
+	allCBoxes[i]->setEnabled(!readonly);
+      }
+      for ( int i = 0; i < allSBoxes.count(); i++ )
+         allSBoxes[i]->setEnabled(!readonly);
+      for ( int i = 0; i < allCounters.count(); i++ )
+         allCounters[i]->setEnabled(!readonly);
+      for ( int i = 0; i < allChBoxes.count(); i++ )
+         allChBoxes[i]->setEnabled(!readonly);
+      // and so on ..
+    }
+}
 
 // Use main interface to call general utility functions
 bool US_ExperimentMain::centpInfo( const QString par1,
@@ -3500,8 +3555,9 @@ DbgLv(1) << "EGRn:inP:  #Wvl for cell: " << j << " is: " << Total_wvl[i];
    }
    // End of ScanCount listbox
 
-   //If for US_ProtocolDev mode, set all widgets in read-only mode:
-   if ( mainw->us_prot_dev_mode )
+   //If for US_ProtocolDev mode OR dataDisk in GMP, set all widgets in read-only mode:
+   if ( mainw->us_prot_dev_mode ||
+	(rpRotor->importData && !rpRotor->importDataDisk.isEmpty()) )
      {
        for ( int ii = 0; ii < nrnchan; ii++ )
 	 {

@@ -133,7 +133,9 @@ class US_ExperGuiGeneral : public US_WidgetsDialog
       void centerpieceInfo ( void );        // Function for all centerpieces
       void check_empty_runname(const QString &);
       void update_protdata( void );
+
       
+  
  signals:
       void  set_tabs_buttons_inactive ( void );
       void  set_tabs_buttons_active_readonly   ( void );
@@ -705,6 +707,7 @@ class US_ExperGuiRanges : public US_WidgetsDialog
    private:
       US_ExperimentMain*   mainw;
       US_RunProtocol::RunProtoRanges*  rpRange;
+      US_RunProtocol::RunProtoRotor*   rpRotor;  //!< Rotor controls
       US_RunProtocol::RunProtoSpeed*   rpSpeed;  //!< Speed controls
       US_RunProtocol::RunProtoSolutions*  rpSolut;  //!< Solutions controls
   
@@ -1142,7 +1145,7 @@ class US_ExperimentMain : public US_Widgets
 
       QStringList instruments_in_use;
       QStringList instruments_no_permit;
-  bool isOperatorAny;
+      bool isOperatorAny;
 
       int tabHeight;
       int buttLHeight;
@@ -1165,6 +1168,8 @@ class US_ExperimentMain : public US_Widgets
       int         dbg_level;       // Debug print flag
       int         curr_panx;       // Current panel index (0-7)
 
+  //US_Help       showHelp;              //!< Help display object			   
+
    private slots:
 
      //void reset     ( void );
@@ -1178,14 +1183,15 @@ class US_ExperimentMain : public US_Widgets
       void enable_tabs_buttons_readonly( void);  // Slot to enable Tabs and Buttons after protocol is loaded
       void enable_tabs_buttons( void);  // Slot to enable Tabs and Buttons after run_name is entered
       void set_tabs_buttons_readonly( void );
-      void switch_to_run_manager( void );					
-					    
-      
-    public slots:
+      void switch_to_run_manager( void );
+
+					
+   public slots:
       void close_program( void );
       void optima_submitted( QMap < QString, QString > &protocol_details );
       void submitted_protDev( QMap < QString, QString > & );
       void submitted_dataDisk( QMap < QString, QString > & );
+      void set_tabs_buttons_readonly_dataDisk( bool );
 
       void us_exp_clear( QString &protocolName );
       //void auto_mode_passed( void ); 

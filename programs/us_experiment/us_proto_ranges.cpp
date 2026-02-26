@@ -19,6 +19,7 @@ US_ExperGuiRanges::US_ExperGuiRanges( QWidget* topw )
    mainw               = (US_ExperimentMain*)topw;
    rpRange             = &(mainw->currProto.rpRange);
    rpSolut             = &(mainw->currProto.rpSolut);
+   rpRotor             = &(mainw->currProto.rpRotor);
    
    mxrow               = 24;     // Maximum possible rows
    nrnchan             = 0;
@@ -1961,8 +1962,12 @@ bool US_SelectWavelengths_manual::wln_entered( void )
   //QRegExp rx9("[(\\d{3}-\\d{3}:\\d+),]+");
   //QRegExp rx_new("[\\d{3},]*[\\d{3}-\\d{3}]*[(:\\d+)]*[,(\\d{3})]*"); //working partially
 
-  QRegularExpression rx_new("[\\d{3},]*[\\d{3}-\\d{3},]*[\\d{3}-\\d{3}:\\d+,]*");
+  static const QRegularExpression rx_new("^(\\d{3}(-\\d{3}(:\\d+)?)?)(,\\s*\\d{3}(-\\d{3}(:\\d+)?)?)*$");
+  //OR -- static const QRegularExpression rx_new("^(\\d{3}|\\d{3}-\\d{3}|\\d{3}-\\d{3}:\\d+)(,(\\d{3}|\\d{3}-\\d{3}|\\d{3}-\\d{3}:\\d+))*$");
 
+  if (!rx_new.isValid()) 
+    qDebug() << "Regex Error:" << rx_new.errorString();
+  
    if ( rx_new.match( text ).hasMatch()
        //|| rx1.exactMatch(text)
        //||  rx2.exactMatch(text) || rx3.exactMatch(text)
@@ -1977,11 +1982,11 @@ bool US_SelectWavelengths_manual::wln_entered( void )
          return true;
       else
       {
-         QPalette *palette = new QPalette();
-         palette->setColor(QPalette::Text,Qt::red);
-         palette->setColor(QPalette::Base,Qt::white);
-         le_wrange->setPalette(*palette);
-         return false;
+	QPalette palette = le_wrange->palette();
+	palette.setColor(QPalette::Text, Qt::red);
+	palette.setColor(QPalette::Base, Qt::white);
+	le_wrange->setPalette(palette);
+	return false;
       }
    }
    else
@@ -1990,11 +1995,11 @@ bool US_SelectWavelengths_manual::wln_entered( void )
       QString message_error   = tr( "Syntax error!" );
       QMessageBox::critical( this, mtitle_error, message_error );
 
-      QPalette *palette = new QPalette();
-      palette->setColor(QPalette::Text,Qt::red);
-      palette->setColor(QPalette::Base,Qt::white);
-      le_wrange->setPalette(*palette);
-
+      QPalette palette = le_wrange->palette();
+      palette.setColor(QPalette::Text, Qt::red);
+      palette.setColor(QPalette::Base, Qt::white);
+      le_wrange->setPalette(palette);
+      
       return false;
    }
 }
@@ -2392,7 +2397,9 @@ DbgLv(1) << "SelWl: neww_inc: " << val;
 void US_SelectWavelengths::new_wl_range( const int wls, const int wle,
                                          const int wli )
 {
+  /****
    // Save a copy of the current potential wavelength list
+  qDebug() << "Potential 1: " << potential;
 DbgLv(1) << "SelWl: newwr: s,e,i" << wls << wle << wli;
    QStringList sv_poten = potential;
    nbr_poten            = potential.count();
@@ -2421,10 +2428,20 @@ DbgLv(1) << "SelWl: newwr:  p_strwl p_endwl" << p_strwl << p_endwl;
             potential << wavel;
       }
    }
-
+  ***/
+  potential. clear();
+  nbr_range            = ( wle - wls ) / wli + 1;
+  for ( int iwvl = wls; iwvl <= wle; iwvl += wli )
+   {
+      QString wavel        = QString::number( iwvl );
+      potential << wavel;
+   }
+  
    // Now rebuild widget lists
    lw_original->clear();
    lw_original->addItems( potential );
+
+   qDebug() << "Potential 2: " << potential;
 
    nbr_poten            = potential.count();   // Update count
 

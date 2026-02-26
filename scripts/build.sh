@@ -20,41 +20,70 @@ fi
 # PARSE COMMAND LINE OPTIONS
 # =============================================================================
 CLEAN=false
-PROFILE="APP"  # default profile
+PROFILE="APP"
+QT_VERSION="qt6"
+QWT_VERSION=""
+ARCH=""
+US3_VCPKG_ROOT=""
 
-# Parse options
 while [[ $# -gt 0 ]]; do
   case $1 in
-    --clean)
-      CLEAN=true
-      shift
+    --clean)        CLEAN=true;               shift ;;
+    --qt6)          QT_VERSION="qt6";         QWT_VERSION="";        shift ;;
+    --qt5-qwt616)   QT_VERSION="qt5";         QWT_VERSION="-qwt616"; shift ;;
+    --qt5-qwt630)   QT_VERSION="qt5";         QWT_VERSION="-qwt630"; shift ;;
+    --arch)
+      ARCH="$2"; shift 2
+      if [[ "$ARCH" != "x64" && "$ARCH" != "arm64" ]]; then
+        echo "ERROR: --arch must be x64 or arm64"
+        exit 1
+      fi
+      ;;
+    --vcpkg-root)
+      US3_VCPKG_ROOT="$2"; shift 2
       ;;
     --help)
       echo "Usage: $0 [OPTIONS] [PROFILE]"
       echo ""
       echo "OPTIONS:"
-      echo "  --clean       Clean build artifacts before building"
-      echo "  --help        Show this help message"
+      echo "  --clean                Clean build artifacts before building"
+      echo "  --qt6                  Build with Qt6 + Qwt6.3.0 [default]"
+      echo "  --qt5-qwt616           Build with Qt5 + Qwt6.1.6"
+      echo "  --qt5-qwt630           Build with Qt5 + Qwt6.3.0"
+      echo "  --arch x64             Target x64 architecture [default: auto-detect]"
+      echo "  --arch arm64           Target ARM64 architecture"
+      echo "  --vcpkg-root <path>    Path to vcpkg installation"
+      echo "  --help                 Show this help message"
       echo ""
       echo "PROFILE:"
-      echo "  APP           Desktop/user build (GUI + programs + DB) [default]"
-      echo "  TEST          Dev/CI build (programs + tests, prefer static libs)"
-      echo "  HPC           Headless / no DB / no GUI"
+      echo "  APP                    Desktop/user build (GUI + programs + DB) [default]"
+      echo "  TEST                   Dev/CI build (programs + tests, prefer static libs)"
+      echo "  HPC                    Headless / no DB / no GUI"
+      echo ""
+      echo "VCPKG LOCATION (in order of priority):"
+      echo "  1. --vcpkg-root <path> argument"
+      echo "  2. US3_VCPKG_ROOT environment variable"
+      echo "  3. vcpkg/ directory inside the source tree"
+      echo "  4. \$HOME/vcpkg (default)"
       echo ""
       echo "EXAMPLES:"
-      echo "  $0                  # Build with APP profile"
-      echo "  $0 TEST             # Build with TEST profile"
-      echo "  $0 --clean          # Clean and build with APP profile"
-      echo "  $0 --clean TEST     # Clean and build with TEST profile"
+      echo "  $0                                    # Qt6, auto-detect arch, APP profile"
+      echo "  $0 --arch arm64                       # Qt6, ARM64, APP profile"
+      echo "  $0 --qt5-qwt616                       # Qt5 + Qwt6.1.6, APP profile"
+      echo "  $0 --qt6 TEST                         # Qt6, TEST profile"
+      echo "  $0 --clean                            # Clean then build Qt6, APP profile"
+      echo "  $0 --clean --qt5-qwt616               # Clean then build Qt5 + Qwt6.1.6"
+      echo "  $0 --clean --arch arm64 TEST          # Clean ARM64 Qt6 TEST build"
+      echo "  $0 --vcpkg-root /path/to/vcpkg        # Use specific vcpkg installation"
+      echo "  $0 --vcpkg-root \$(pwd)/vcpkg          # Use source-tree vcpkg"
       echo ""
       echo "ENVIRONMENT VARIABLES:"
-      echo "  US3_BUILD_JOBS      Override number of parallel build jobs"
-      echo "  US3_VCPKG_ROOT      Override vcpkg location (default: ./vcpkg)"
+      echo "  US3_BUILD_JOBS         Override number of parallel build jobs"
+      echo "  US3_VCPKG_ROOT         Override vcpkg location (see priority above)"
       exit 0
       ;;
     APP|TEST|HPC)
-      PROFILE="$1"
-      shift
+      PROFILE="$1"; shift
       ;;
     *)
       echo "ERROR: Unknown option: $1"
@@ -64,7 +93,8 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-echo "Selected build profile: ${PROFILE}"
+echo "Selected build profile : ${PROFILE}"
+echo "Selected Qt version    : ${QT_VERSION}${QWT_VERSION}"
 if [ "$CLEAN" = true ]; then
   echo "Clean build requested"
 fi
@@ -74,27 +104,57 @@ echo ""
 # PLATFORM DETECTION
 # =============================================================================
 if [[ "$OSTYPE" == "darwin"* ]]; then
-  PRESET="macos-release"
   PLATFORM="macOS"
 elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
-  PRESET="linux-release"
   PLATFORM="Linux"
 elif [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
-  PRESET="windows-release"
   PLATFORM="Windows"
 else
   echo "ERROR: Unsupported platform: $OSTYPE"
   exit 1
 fi
 
-echo "Platform: $PLATFORM"
+# =============================================================================
+# ARCHITECTURE DETECTION
+# =============================================================================
+if [ -z "$ARCH" ]; then
+  MACHINE=$(uname -m)
+  if [ "$MACHINE" = "arm64" ] || [ "$MACHINE" = "aarch64" ]; then
+    ARCH="arm64"
+  else
+    ARCH="x64"
+  fi
+  echo "Auto-detected architecture: $ARCH"
+else
+  echo "Architecture (specified)  : $ARCH"
+fi
+
+# =============================================================================
+# BUILD PRESET
+# =============================================================================
+case "$PLATFORM" in
+  macOS)
+    PRESET="macos-release-${QT_VERSION}${QWT_VERSION}"
+    ;;
+  Linux)
+    PRESET="linux-release-${QT_VERSION}${QWT_VERSION}"
+    ;;
+  Windows)
+    if [ "$ARCH" = "arm64" ]; then
+      PRESET="windows-release-${QT_VERSION}${QWT_VERSION}-arm64"
+    else
+      PRESET="windows-release-${QT_VERSION}${QWT_VERSION}"
+    fi
+    ;;
+esac
+
+echo "Platform               : $PLATFORM"
+echo "Preset                 : $PRESET"
 echo ""
 
 # =============================================================================
 # DETERMINE BUILD PARALLELISM
 # =============================================================================
-
-# Detect core count per platform
 if [ "$PLATFORM" = "macOS" ]; then
   CORES=$(sysctl -n hw.ncpu 2>/dev/null || echo 4)
 elif [ "$PLATFORM" = "Linux" ]; then
@@ -103,11 +163,9 @@ else
   CORES=${NUMBER_OF_PROCESSORS:-4}
 fi
 
-# Allow manual override: US3_BUILD_JOBS=<N>
 if [ -n "${US3_BUILD_JOBS:-}" ]; then
   BUILD_JOBS="$US3_BUILD_JOBS"
 else
-  # Default to ~90% of cores, but at least 1
   BUILD_JOBS=$((CORES * 9 / 10))
   if [ "$BUILD_JOBS" -lt 1 ]; then
     BUILD_JOBS=1
@@ -117,7 +175,6 @@ fi
 echo "Detected $CORES cores; using $BUILD_JOBS parallel build jobs."
 echo ""
 
-# Tell vcpkg to use the same limit
 export VCPKG_MAX_CONCURRENCY="$BUILD_JOBS"
 
 # =============================================================================
@@ -125,7 +182,6 @@ export VCPKG_MAX_CONCURRENCY="$BUILD_JOBS"
 # =============================================================================
 REQUIRED_TOOLS=(cmake git)
 
-# Platform-specific requirements
 if [[ "$PLATFORM" == "macOS" ]]; then
   REQUIRED_TOOLS+=(xcodebuild xcrun)
 elif [[ "$PLATFORM" == "Linux" ]]; then
@@ -142,17 +198,13 @@ done
 if [ ${#MISSING_TOOLS[@]} -ne 0 ]; then
   echo "ERROR: Missing required tools: ${MISSING_TOOLS[*]}"
   echo ""
-
   if [ "$PLATFORM" == "macOS" ]; then
     echo "On macOS, install Xcode command line tools:"
     echo "  xcode-select --install"
   elif [ "$PLATFORM" == "Linux" ]; then
     echo "On Debian/Ubuntu, run:"
     echo "  sudo apt-get update && sudo apt-get install -y build-essential cmake git"
-  elif [ "$PLATFORM" == "Windows" ]; then
-    echo "On Windows (MSYS/MinGW), install cmake, git, and a compiler toolchain."
   fi
-
   exit 1
 fi
 
@@ -160,70 +212,60 @@ echo "All required tools are available."
 echo ""
 
 # =============================================================================
-# OPTIONAL: Xcode 15 SETUP ON macOS
+# XCODE SETUP ON macOS (requires Xcode 15 or later)
 # =============================================================================
 if [ "$PLATFORM" = "macOS" ]; then
-  CURRENT_XCODE_PATH=$(xcode-select -p || echo "")
+  CURRENT_XCODE_PATH=$(xcode-select -p 2>/dev/null || echo "")
 
-  # Check for Xcode 15 in either location
-  XCODE_15_PATH="/Applications/Xcode-15.app/Contents/Developer"
+  XCODE_VERSIONED_PATH="/Applications/Xcode-15.app/Contents/Developer"
   XCODE_DEFAULT_PATH="/Applications/Xcode.app/Contents/Developer"
 
   echo "Checking Xcode configuration..."
   echo "Current Xcode path: ${CURRENT_XCODE_PATH:-<not set>}"
   echo ""
 
-  # Determine which Xcode 15 path exists (if any)
+  check_xcode_path() {
+    local xcode_developer_path="$1"
+    if [ ! -d "$xcode_developer_path" ]; then return 1; fi
+    local xcode_app
+    xcode_app=$(dirname "$(dirname "$xcode_developer_path")")
+    local plist="$xcode_app/Contents/Info.plist"
+    if [ ! -f "$plist" ]; then return 1; fi
+    local version
+    version=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$plist" 2>/dev/null || echo "0")
+    local major
+    major=$(echo "$version" | cut -d. -f1)
+    if [ "$major" -ge 15 ] 2>/dev/null; then
+      echo "$version"
+      return 0
+    fi
+    return 1
+  }
+
   DESIRED_XCODE_PATH=""
-  if [ -d "$XCODE_15_PATH" ]; then
-    # Verify version by reading Info.plist
-    XCODE_APP=$(dirname "$(dirname "$XCODE_15_PATH")")
-    XCODE_PLIST="$XCODE_APP/Contents/Info.plist"
-    if [ -f "$XCODE_PLIST" ]; then
-      XCODE_VERSION=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$XCODE_PLIST" 2>/dev/null || echo "0")
-      XCODE_MAJOR=$(echo "$XCODE_VERSION" | cut -d. -f1)
-      if [ "$XCODE_MAJOR" = "15" ] || [ "$XCODE_MAJOR" = "16" ]; then
-        DESIRED_XCODE_PATH="$XCODE_15_PATH"
-        echo "Found Xcode $XCODE_VERSION at Xcode-15.app location"
-      fi
-    fi
-  elif [ -d "$XCODE_DEFAULT_PATH" ]; then
-    # Verify it's actually Xcode 15.x or 16.x by reading the Info.plist directly
-    # This avoids the xcodebuild daemon startup issues
-    XCODE_APP=$(dirname "$(dirname "$XCODE_DEFAULT_PATH")")
-    XCODE_PLIST="$XCODE_APP/Contents/Info.plist"
+  XCODE_VERSION=""
 
-    if [ -f "$XCODE_PLIST" ]; then
-      # Read version directly from Info.plist (no daemon needed!)
-      XCODE_VERSION=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$XCODE_PLIST" 2>/dev/null || echo "0")
-      XCODE_MAJOR=$(echo "$XCODE_VERSION" | cut -d. -f1)
-
-      if [ "$XCODE_MAJOR" = "15" ] || [ "$XCODE_MAJOR" = "16" ]; then
-        DESIRED_XCODE_PATH="$XCODE_DEFAULT_PATH"
-        echo "Found Xcode $XCODE_VERSION at default location"
-      fi
-    fi
+  if XCODE_VERSION=$(check_xcode_path "$XCODE_VERSIONED_PATH"); then
+    DESIRED_XCODE_PATH="$XCODE_VERSIONED_PATH"
+    echo "Found Xcode $XCODE_VERSION at Xcode-15.app location"
+  elif XCODE_VERSION=$(check_xcode_path "$XCODE_DEFAULT_PATH"); then
+    DESIRED_XCODE_PATH="$XCODE_DEFAULT_PATH"
+    echo "Found Xcode $XCODE_VERSION at default location"
   fi
 
   if [ -n "$DESIRED_XCODE_PATH" ]; then
     echo "Compatible Xcode path: $DESIRED_XCODE_PATH"
-
     if [ "$CURRENT_XCODE_PATH" != "$DESIRED_XCODE_PATH" ]; then
-      echo "Xcode 15/16 is installed but not active."
+      echo "Xcode $XCODE_VERSION is installed but not active."
       if [ "$NON_INTERACTIVE" = false ]; then
-        echo "About to switch Xcode to:"
-        echo "  $DESIRED_XCODE_PATH"
-        echo ""
-        read -rp "Proceed with 'sudo xcode-select --switch ...'? [y/N] " answer
+        read -rp "Switch to it with 'sudo xcode-select --switch'? [y/N] " answer
         if [[ "$answer" =~ ^[Yy]$ ]]; then
-          echo "Switching Xcode..."
           sudo xcode-select --switch "$DESIRED_XCODE_PATH"
           echo "Xcode is now set to: $(xcode-select -p)"
         else
           echo "Skipping Xcode switch. Continuing with current Xcode."
         fi
       else
-        echo "Non-interactive mode: switching Xcode automatically..."
         sudo xcode-select --switch "$DESIRED_XCODE_PATH"
         echo "Xcode is now set to: $(xcode-select -p)"
       fi
@@ -231,40 +273,38 @@ if [ "$PLATFORM" = "macOS" ]; then
       echo "Compatible Xcode is already active."
     fi
   else
-    echo "Xcode 15 or 16 not found at either:"
-    echo "  $XCODE_15_PATH"
-    echo "  $XCODE_DEFAULT_PATH"
-    echo ""
-    echo "Please install Xcode 15 or 16 from the App Store or developer.apple.com."
-    echo ""
-
-    if [ "$NON_INTERACTIVE" = false ]; then
-      exit 1
-    else
-      echo "WARNING: Continuing in CI mode, build may fail..."
-    fi
+    echo "ERROR: Xcode 15 or later not found."
+    echo "Please install Xcode 15 or later from the App Store or developer.apple.com."
+    if [ "$NON_INTERACTIVE" = false ]; then exit 1; else echo "WARNING: Continuing in CI mode, build may fail..."; fi
   fi
 
   echo ""
 fi
 
 # =============================================================================
-# VCPKG SETUP - Use local vcpkg in project
+# VCPKG SETUP
+# Priority: --vcpkg-root arg > US3_VCPKG_ROOT env > source-tree vcpkg > ~/vcpkg
 # =============================================================================
-
-# Get script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SOURCE_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
-# Use local vcpkg by default, allow override via US3_VCPKG_ROOT
-US3_VCPKG_ROOT="${US3_VCPKG_ROOT:-$SCRIPT_DIR/vcpkg}"
+if [ -n "$US3_VCPKG_ROOT" ]; then
+  echo "Using vcpkg from --vcpkg-root argument: $US3_VCPKG_ROOT"
+elif [ -n "${US3_VCPKG_ROOT:-}" ]; then
+  echo "Using vcpkg from US3_VCPKG_ROOT environment variable: $US3_VCPKG_ROOT"
+elif [ -f "${SOURCE_DIR}/vcpkg/bootstrap-vcpkg.sh" ]; then
+  US3_VCPKG_ROOT="${SOURCE_DIR}/vcpkg"
+  echo "Using vcpkg from source tree: $US3_VCPKG_ROOT"
+else
+  US3_VCPKG_ROOT="$HOME/vcpkg"
+  echo "Using vcpkg from default location: $US3_VCPKG_ROOT"
+fi
 
 echo ""
-echo "Using vcpkg root: $US3_VCPKG_ROOT"
 
-# Basic validation / clone if needed
 if [ -d "$US3_VCPKG_ROOT" ] && [ ! -d "$US3_VCPKG_ROOT/.git" ]; then
   echo "ERROR: $US3_VCPKG_ROOT exists but is not a vcpkg git clone."
-  echo "Either set US3_VCPKG_ROOT to a different path or move/rename that directory."
+  echo "Set --vcpkg-root or US3_VCPKG_ROOT to a valid vcpkg path."
   exit 1
 fi
 
@@ -273,31 +313,24 @@ if [ ! -d "$US3_VCPKG_ROOT/.git" ]; then
   git clone https://github.com/microsoft/vcpkg.git "$US3_VCPKG_ROOT"
 fi
 
-# Bootstrap vcpkg if the executable is missing
 if [ ! -x "$US3_VCPKG_ROOT/vcpkg" ]; then
   echo ""
   echo "Bootstrapping vcpkg at $US3_VCPKG_ROOT..."
-  if [[ "$PLATFORM" == "Windows" ]]; then
-    ( cd "$US3_VCPKG_ROOT" && ./bootstrap-vcpkg.bat )
-  else
-    "$US3_VCPKG_ROOT/bootstrap-vcpkg.sh"
-  fi
+  ( cd "$US3_VCPKG_ROOT" && ./bootstrap-vcpkg.sh )
 fi
 
-# Enable local binary caching
 export VCPKG_ROOT="$US3_VCPKG_ROOT"
 export VCPKG_BINARY_SOURCES="clear;files,$HOME/.vcpkg-cache,readwrite"
+export VCPKG_INSTALLED_DIR="$US3_VCPKG_ROOT/installed"
 mkdir -p "$HOME/.vcpkg-cache"
 
-# centralize installed libraries here
-export VCPKG_INSTALLED_DIR="$US3_VCPKG_ROOT/installed"
-
-# CMake will use this toolchain file
-VCPKG_TOOLCHAIN_FILE="$US3_VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
-if [ ! -f "$VCPKG_TOOLCHAIN_FILE" ]; then
-  echo "ERROR: vcpkg toolchain file not found at $VCPKG_TOOLCHAIN_FILE"
+if [ ! -f "$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" ]; then
+  echo "ERROR: vcpkg toolchain file not found at $VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
   exit 1
 fi
+
+echo "vcpkg ready."
+echo ""
 
 # =============================================================================
 # CLEAN BUILD ARTIFACTS (if requested)
@@ -307,53 +340,31 @@ if [ "$CLEAN" = true ]; then
   echo "Cleaning build artifacts..."
   echo "=========================================="
 
-  # Clean CMake build directory
   if [ -d "build" ]; then
     echo "Removing build directory..."
     rm -rf build
   fi
 
-  # Clean vcpkg build artifacts (but keep installed packages)
-  # This allows faster rebuilds while still being "clean"
   if [ -d "$US3_VCPKG_ROOT/buildtrees" ]; then
     echo "Removing vcpkg build trees..."
     rm -rf "$US3_VCPKG_ROOT/buildtrees"
   fi
 
-  # Optionally remove installed packages for a completely clean build
-  # Uncomment if you want a full clean (slower but more thorough)
-  # if [ -d "$US3_VCPKG_ROOT/installed" ]; then
-  #   echo "Removing vcpkg installed packages..."
-  #   rm -rf "$US3_VCPKG_ROOT/installed"
-  # fi
-
-  # if [ -d "$US3_VCPKG_ROOT/packages" ]; then
-  #   echo "Removing vcpkg packages..."
-  #   rm -rf "$US3_VCPKG_ROOT/packages"
-  # fi
+  # Uncomment for a full dependency clean (much slower):
+  # rm -rf "$US3_VCPKG_ROOT/installed" "$US3_VCPKG_ROOT/packages"
 
   echo "Clean complete!"
   echo ""
 fi
 
-echo "=========================================="
-echo "UltraScan3 Bootstrap Steps"
-echo "=========================================="
-echo "  1. Ensure platform toolchain is ready"
-echo "  2. Build Qt, Qwt, and other dependencies via vcpkg"
-echo "  3. Configure and build UltraScan3 via CMake preset: $PRESET"
-echo ""
-
 # =============================================================================
 # INSTALL PLATFORM-SPECIFIC BUILD TOOLS (if needed)
 # =============================================================================
 if [ "$PLATFORM" == "Linux" ]; then
-  echo "Checking for Ninja..."
   if ! command -v ninja &>/dev/null; then
     echo "Ninja not found. Installing..."
     if command -v apt-get &>/dev/null; then
-      sudo apt-get update
-      sudo apt-get install -y ninja-build
+      sudo apt-get update && sudo apt-get install -y ninja-build
     elif command -v dnf &>/dev/null; then
       sudo dnf install -y ninja-build
     else
@@ -361,21 +372,21 @@ if [ "$PLATFORM" == "Linux" ]; then
       exit 1
     fi
   fi
-  echo ""
 fi
 
 # =============================================================================
-# FINAL BUILD SUMMARY
+# BUILD SUMMARY
 # =============================================================================
-echo "Ready to build UltraScan3 with preset: $PRESET"
-echo "  Profile: ${PROFILE}"
-echo "  Platform: ${PLATFORM}"
-echo "  Clean build: ${CLEAN}"
-echo ""
-echo "Steps:"
-echo "  1. Configure CMake with vcpkg toolchain"
-echo "  2. Build dependencies (~10 min first time)"
-echo "  3. Build UltraScan3 (~5 min)"
+echo "=========================================="
+echo "Ready to build UltraScan3"
+echo "=========================================="
+echo "  Preset        : ${PRESET}"
+echo "  Profile       : ${PROFILE}"
+echo "  Qt version    : ${QT_VERSION}${QWT_VERSION}"
+echo "  Architecture  : ${ARCH}"
+echo "  Clean build   : ${CLEAN}"
+echo "  vcpkg root    : ${VCPKG_ROOT}"
+echo "  Build jobs    : ${BUILD_JOBS}"
 echo ""
 if [ "$NON_INTERACTIVE" = false ]; then
   if [ "$CLEAN" = true ]; then
@@ -389,17 +400,18 @@ echo ""
 
 # =============================================================================
 # CONFIGURE AND BUILD
+#
+# NOTE: Do NOT pass -DCMAKE_TOOLCHAIN_FILE here.
+#   toolchain.cmake (set in each platform base preset) handles triplet
+#   detection and includes vcpkg via $VCPKG_ROOT which is already exported.
 # =============================================================================
 echo "Configuring..."
 cmake --preset "$PRESET" \
-  -DUS3_PROFILE="${PROFILE}" \
-  -DCMAKE_TOOLCHAIN_FILE="$VCPKG_TOOLCHAIN_FILE" \
-  -DVCPKG_ROOT="$US3_VCPKG_ROOT" \
-  -DVCPKG_INSTALLED_DIR="$VCPKG_INSTALLED_DIR"
+  -DUS3_PROFILE="${PROFILE}"
 
 echo ""
 echo "Building..."
-cmake --build --preset "$PRESET" --parallel "$BUILD_JOBS"
+cmake --build "build/$PRESET" --parallel "$BUILD_JOBS"
 
 echo ""
 echo "=========================================="
@@ -407,9 +419,10 @@ echo "Build complete!"
 echo "=========================================="
 echo ""
 if [ "$NON_INTERACTIVE" = false ]; then
-  echo "Next time you build, it will be much faster"
-  echo "since dependencies are cached."
+  echo "Next time you build it will be much faster since dependencies are cached."
   echo ""
   echo "To rebuild from scratch: $0 --clean"
   echo ""
 fi
+
+

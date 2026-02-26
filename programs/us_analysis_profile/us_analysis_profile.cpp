@@ -1529,7 +1529,10 @@ DbgLv(1) << "Ge:SL: nchn" << nchn << "sl_chnsel" << sl_chnsel;
 
    qDebug() << "Right.count(), gr_mwvbox.size() AFTER deletion -- " << right->count() << gr_mwvbox.size();
    //END clearing right
-      
+
+   
+   QDoubleValidator *validator = new QDoubleValidator(0.0, 10000.0, 4, this);
+   validator->setNotation(QDoubleValidator::StandardNotation);
    for ( int ii = 0; ii < nchn; ii++ )
    {
       QString schan( sl_chnsel[ ii ] );
@@ -1550,6 +1553,13 @@ DbgLv(1) << "Ge:SL:  ii" << ii << "schan" << schan;
       le_lvtol->setObjectName( stchan + "loadvol_tolerance" );
       le_daend->setObjectName( stchan + "dataend" );
 
+      //set Validators for fields
+      le_lcrat ->setValidator(validator);
+      le_lctol ->setValidator(validator);
+      le_ldvol ->setValidator(validator);
+      le_lvtol ->setValidator(validator);
+      le_daend ->setValidator(validator);
+
       le_channs << le_chann;
       le_lcrats << le_lcrat;
       le_lctols << le_lctol;
@@ -1561,6 +1571,11 @@ DbgLv(1) << "Ge:SL:  ii" << ii << "schan" << schan;
       QLineEdit* le_dens_0 = us_lineedit( "1.42",   0, false );
       QLineEdit* le_vbar   = us_lineedit( "0.2661", 0, false );
       QLineEdit* le_MW     = us_lineedit( "168.36", 0, false );
+      
+      //set Validators for fields
+      le_dens_0 ->setValidator(validator);
+      le_vbar   ->setValidator(validator);
+      le_MW     ->setValidator(validator);
       
       // sb_ref_ch  = us_spinbox();
       // sb_ref_ch ->setObjectName( stchan + "RefChan --chann_name--" + schan );
@@ -2522,7 +2537,11 @@ void US_AnaprofPanGen::setReport( void )
        QString wvl = ri.key();
 
        //qDebug() << "In setReport: wvl -- " << wvl;
+       qDebug() << "Selected Report, wvl, channel_name[1internal] -- " << wvl << internal_reports[ chan_desc ][ wvl].channel_name;
        channel_report_map[ wvl ] = &( internal_reports[ chan_desc ][ wvl] );
+       channel_report_map[ wvl ]->channel_name = chan_desc;
+       qDebug() << "Selected Report, wvl, channel_name -- " << wvl << channel_report_map[ wvl ]->channel_name;
+       qDebug() << "Selected Report, wvl, channel_name[2internal] -- " << wvl << internal_reports[ chan_desc ][ wvl].channel_name;
      }
          
    reportGui = new US_ReportGui(  channel_report_map );
@@ -3256,6 +3275,36 @@ DbgLv(1) << "AP2d: CALL initPanel()";
 DbgLv(1) << "AP2d:  RTN initPanel()";
 
 //qDebug() << "SCANINT: " << ssvals[ 0 ][ "scanintv" ]  << ", SCANINT FROM rpSpeed: " <<  rpSpeed->ssteps[ 0 ].scanintv;
+ lb_varyvb -> setVisible( false );
+ lb_constk -> setVisible( false );
+ ck_varyvb -> setVisible( false );
+ le_constk -> setVisible( false );
+
+ //set Validators
+ setValidators();
+}
+
+
+void US_AnaprofPan2DSA::setValidators()
+{
+  QDoubleValidator *validator1 = new QDoubleValidator(0.0, 100.0, 2, this);
+  validator1->setNotation(QDoubleValidator::StandardNotation);
+  le_smin->setValidator(validator1);
+  le_smax->setValidator(validator1);
+  le_kmin->setValidator(validator1);
+  le_kmax->setValidator(validator1);
+
+  le_j2mrng->setValidator(validator1);
+
+  QIntValidator *intValidator1 = new QIntValidator(1, 1000, this);
+  le_sgrpts->setValidator(intValidator1);
+  le_kgrpts->setValidator(intValidator1);
+  le_grreps->setValidator(intValidator1);
+
+  le_j2gpts->setValidator(intValidator1);
+  le_j2iter->setValidator(intValidator1);
+  le_j4iter->setValidator(intValidator1);
+  le_j5iter->setValidator(intValidator1);
 }
 
 // 2DSA Panel Slots
@@ -3488,14 +3537,14 @@ void US_AnaprofPan2DSA::cust_grid_clicked( )
   US_ModelLoader* mloader = new US_ModelLoader( true, mfilter, model, mdesc, "" );
   if ( mloader->exec() != QDialog::Accepted ) return;
   
-  bool cgmdata = ! model.customGridData.grids.isEmpty() &&
-    ! model.customGridData.components.isEmpty() &&
-    model.customGridData.components.size() == model.components.size();
-  if ( ! cgmdata ) {
-    QMessageBox::warning( this, "Warning!", "The following model doesn't have custom "
-			  "grid metadata!<br/><br/><b>" + mdesc + "</b>" );
-    return;
-  }
+  // bool cgmdata = ! model.customGridData.grids.isEmpty() &&
+  //   ! model.customGridData.components.isEmpty() &&
+  //   model.customGridData.components.size() == model.components.size();
+  // if ( ! cgmdata ) {
+  //   QMessageBox::warning( this, "Warning!", "The following model doesn't have custom "
+  // 			  "grid metadata!<br/><br/><b>" + mdesc + "</b>" );
+  //   return;
+  // }
 
   QString m_desc = model.description;
   QString m_guid = model.modelGUID;
@@ -3536,7 +3585,7 @@ void US_AnaprofPan2DSA::set_regular_grid( bool set )
   le_kmax    ->setVisible( set ); 
   le_kgrpts  ->setVisible( set ); 
   le_grreps  ->setVisible( set );
-  le_constk  ->setVisible( set );
+  //le_constk  ->setVisible( set );
 
   lb_smin    ->setVisible( set );   
   lb_smax    ->setVisible( set );   
@@ -3544,10 +3593,10 @@ void US_AnaprofPan2DSA::set_regular_grid( bool set )
   lb_kmin    ->setVisible( set );   
   lb_kmax    ->setVisible( set );   
   lb_kgrpts  ->setVisible( set ); 
-  lb_varyvb  ->setVisible( set ); 
-  lb_constk  ->setVisible( set ); 
+  //lb_varyvb  ->setVisible( set ); 
+  //lb_constk  ->setVisible( set ); 
   lb_grreps  ->setVisible( set ); 
-  ck_varyvb  ->setVisible( set );
+  //ck_varyvb  ->setVisible( set );
 }
 
 void US_AnaprofPan2DSA::customGridChecked( bool checked )
@@ -3911,9 +3960,31 @@ DbgLv(1) << "APpc: CALL initPanel()";
 DbgLv(1) << "APpc:  RTN initPanel()";
 QString pval1 = sibSValue( "rotor", "rotor" );
 DbgLv(1) << "APpc: rotor+rotor=" << pval1;
+
+//set validators
+ setValidators();
 }
 
 // PCSA Panel Slots
+
+void US_AnaprofPanPCSA::setValidators()
+{
+  QDoubleValidator *validator1 = new QDoubleValidator(0.0, 100.0, 2, this);
+  validator1->setNotation(QDoubleValidator::StandardNotation);
+  le_xmin->setValidator(validator1);
+  le_xmax->setValidator(validator1);
+  le_ymin->setValidator(validator1);
+  le_ymax->setValidator(validator1);
+  le_zvalue ->setValidator(validator1);
+  le_regalpha->setValidator(validator1);
+
+  QIntValidator *intValidator1 = new QIntValidator(1, 1000, this);
+  le_varcount->setValidator(intValidator1);
+  le_grfiters->setValidator(intValidator1);
+  le_crpoints->setValidator(intValidator1);
+  le_mciters ->setValidator(intValidator1);
+}
+
 
 // NO PCSA Checked
 void US_AnaprofPanPCSA::nopcsa_checked( bool chkd )

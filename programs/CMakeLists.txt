@@ -136,6 +136,13 @@ endif()
 
 if(WIN32)
     target_compile_definitions(us_program_common INTERFACE QWT_DLL QT_DLL)
+    if(CMAKE_BUILD_TYPE STREQUAL "Release")
+        if(MINGW)
+            target_link_options(us_program_common INTERFACE "-mwindows")
+        elseif(MSVC)
+            target_link_options(us_program_common INTERFACE "/SUBSYSTEM:WINDOWS" "/ENTRY:mainCRTStartup")
+        endif()
+    endif()
 endif()
 
 # --------------------------------------------------------------------------

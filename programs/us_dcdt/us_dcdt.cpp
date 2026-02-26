@@ -37,8 +37,7 @@ US_Dcdt::US_Dcdt() : US_AnalysisBase2()
    QLabel*       lb_sValue = us_label( tr( "S-value Cutoff:" ) );
    ct_sValue               = us_counter( 3, 0, 20, 20 );
    ct_sValue->setSingleStep( 0.1 );
-   connect( ct_sValue, SIGNAL( valueChanged ( double ) ), 
-                       SLOT  ( sMaxChanged  ( double ) ) );
+   connect( ct_sValue, &QwtCounter::valueChanged, this, &US_Dcdt::sMaxChanged );
    
    QLabel*       lb_graph  = us_label( tr( "Graph Selection" ) );
    lb_graph->setAlignment ( Qt::AlignCenter );
@@ -52,7 +51,7 @@ US_Dcdt::US_Dcdt() : US_AnalysisBase2()
    group->addButton( rb_sed   , 1 );
    group->addButton( rb_avg   , 2 );
    graphType = 2;
-   connect( group, SIGNAL( buttonClicked( int ) ), SLOT( set_graph( int ) ) );
+   connect( group, &QButtonGroup::idClicked, this, &US_Dcdt::set_graph );
 
    QBoxLayout* rb_layout0 = new QHBoxLayout();
    rb_layout0->addLayout( rb_layout1 );
@@ -72,9 +71,9 @@ US_Dcdt::US_Dcdt() : US_AnalysisBase2()
    controlsLayout->addWidget( lb_graph,   row++, 0, 1, 3 );
    controlsLayout->addLayout( rb_layout0, row++, 0, 1, 3 );
 
-   connect( pb_help,  SIGNAL( clicked() ), SLOT( help() ) );
-   connect( pb_view,  SIGNAL( clicked() ), SLOT( view() ) );
-   connect( pb_save,  SIGNAL( clicked() ), SLOT( save() ) );
+   connect( pb_help,  &QPushButton::clicked, this, &US_Dcdt::help );
+   connect( pb_view,  &QPushButton::clicked, this, &US_Dcdt::view );
+   connect( pb_save,  &QPushButton::clicked, this, &US_Dcdt::save );
 
    ct_boundaryPos    ->disconnect();
    ct_boundaryPos    ->setMaximum ( 90.0 );
@@ -83,10 +82,8 @@ US_Dcdt::US_Dcdt() : US_AnalysisBase2()
    ct_boundaryPercent->setValue   ( 100.0 );
    ct_boundaryPercent->setEnabled ( true  );
    ct_boundaryPercent->setVisible ( false );
-   connect( ct_boundaryPos,     SIGNAL ( valueChanged ( double ) ),
-			        SLOT   ( boundary_pos ( double ) ) );
-   connect( this,               SIGNAL ( dataAreLoaded( void   ) ),
-            this, 		SLOT   ( smooth10     ( void   ) ) );
+   connect( ct_boundaryPos, &QwtCounter::valueChanged, this, &US_Dcdt::boundary_pos );
+   connect( this,           &US_Dcdt::dataAreLoaded, this, &US_Dcdt::smooth10 );
    qApp->processEvents();
 }
 
@@ -113,16 +110,9 @@ void US_Dcdt::reset_excludes( void )
 
 void US_Dcdt::reset( void )
 {
-   if ( ! dataLoaded ) return;
-
    US_AnalysisBase2::reset();
-
-   ct_sValue->disconnect();
-   ct_sValue->setValue( sMax );
-   rb_avg   ->click();
-   connect( ct_sValue, SIGNAL( valueChanged ( double ) ), 
-                       SLOT  ( sMaxChanged  ( double ) ) );
-   qApp->processEvents();
+   reset_data();
+   reset_gui();
 }
 
 void US_Dcdt::sMaxChanged( double /* value */ )
@@ -153,8 +143,7 @@ void US_Dcdt::data_plot( void )
    ct_boundaryPercent->setMaximum ( 100.0 );
    ct_boundaryPercent->setValue   ( 100.0 - ct_boundaryPos->value() );
    ct_boundaryPos    ->setMaximum ( 100.0 );
-   connect( ct_boundaryPos, SIGNAL ( valueChanged ( double ) ),
-			                   SLOT   ( boundary_pos ( double ) ) );
+   connect( ct_boundaryPos, &QwtCounter::valueChanged, this, &US_Dcdt::boundary_pos );
 
    // Start setting up dcdt plot
    int                    index  = lw_triples->currentRow();
@@ -260,11 +249,8 @@ void US_Dcdt::data_plot( void )
    {
       if ( ct_sValue->value() > s_max )
       {
-         ct_sValue->disconnect();
+         const QSignalBlocker blocker( ct_sValue );
          ct_sValue->setValue( ceil( s_max ) );
-
-         connect( ct_sValue, SIGNAL( valueChanged ( double ) ), 
-                             SLOT  ( sMaxChanged  ( double ) ) );
          qApp->processEvents();
       }
 
@@ -317,7 +303,7 @@ void US_Dcdt::data_plot( void )
          avgDcdt[ j ] += m * avgS[ j ] + b;
       }
 
-next: avgDcdt[ j ] /= ( count - 1 ); 
+      next: avgDcdt[ j ] /= ( count - 1 );
    }
 
    // Draw plot
@@ -600,3 +586,49 @@ void US_Dcdt::save( void )
    QMessageBox::warning( this, tr( "Success" ), wmsg );
 }
 
+void US_Dcdt::reset_data( void )
+{
+   sMax              = 1000.0;
+   graphType         = 2;
+   previousScanCount = 0;
+
+   dcdt      .clear();
+   sValues   .clear();
+   arraySizes.clear();
+   arrayStart.clear();
+   avgDcdt   .clear();
+   avgS      .clear();
+}
+
+void US_Dcdt::reset_gui( void )
+{
+   if ( te_results != nullptr )
+   {
+      te_results->disconnect();
+      te_results->close();
+      te_results = nullptr;
+   }
+
+   // Reset S-Value counter
+   const QSignalBlocker b_sv( ct_sValue );
+   ct_sValue->setMaximum( 20.0 );
+   ct_sValue->setValue( 20.0 );
+
+   // Reset Graph Selection
+   const QSignalBlocker b_rb_avg( rb_avg );
+   rb_avg->setChecked( true );
+
+   // Reset Boundary Controls (overriding base class defaults)
+   // Base class sets these to 90/5; dcdt specific needs 100/0 and hidden percent
+   const QSignalBlocker b_bp( ct_boundaryPercent );
+   ct_boundaryPercent->setEnabled ( true  );
+   ct_boundaryPercent->setVisible ( false );
+   ct_boundaryPercent->setMaximum ( 100.0 );
+   ct_boundaryPercent->setValue   ( 100.0 );
+
+   const QSignalBlocker b_bpos( ct_boundaryPos );
+   ct_boundaryPos    ->setMaximum ( 90.0 );
+   ct_boundaryPos    ->setValue   ( 0.0  );
+
+   le_skipped->setText( "0" );
+}

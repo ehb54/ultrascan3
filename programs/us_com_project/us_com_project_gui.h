@@ -475,7 +475,9 @@ class US_ComProjectMain : public US_Widgets
   //static int list_all_autoflow_records( QList< QStringList >&, US_DB2* );
 
   //void read_optima_machines( US_DB2* = 0 ); 
-  //QList< QMap<QString, QString> > instruments;  
+  //QList< QMap<QString, QString> > instruments;
+  US_Help       showHelp;              //!< Help display object
+			       
   
 private slots:
   void checkDataLocation( void );
@@ -517,6 +519,8 @@ private slots:
 
   void show_analysis_update_finishing_msg( void );
 
+  void help(void);
+  
 protected:
   void closeEvent      ( QCloseEvent* event ) override;
   
@@ -537,6 +541,8 @@ signals:
   void reset_live_update( void );
   void reset_reporting( void );
   void reset_esigning( void );
+
+  
   
 };
 
