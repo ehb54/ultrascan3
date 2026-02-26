@@ -1,5 +1,5 @@
 #include <QApplication>
-
+#include <qwt_scale_div.h>
 #include "us_mwlr_viewer.h"
 #include "us_mwl_run.h"
 #include "us_mwl_pltctrl.h"
@@ -367,9 +367,8 @@ void US_MwlRawViewer::resetAll( void )
                tr( "This will erase all data currently on the screen, and " 
                    "reset the program to its starting condition. No hard-drive "
                    "data or database information will be affected. Proceed? " ),
-               tr( "&OK" ), tr( "&Cancel" ),
-               0, 0, 1 );
-      if ( status != 0 ) return;
+               QMessageBox::Ok | QMessageBox::Cancel, QMessageBox::Cancel );
+      if ( status != QMessageBox::Ok ) return;
    }
 
    reset();
@@ -486,11 +485,11 @@ void US_MwlRawViewer::load_mwl_raw( )
    QStringList components = dir.split( "/", Qt::SkipEmptyParts );
    QString runType   = "RI";
    QString new_runID = components.last();
-   QRegExp rx( "[^A-Za-z0-9_-]" );
+   QRegularExpression rx( "[^A-Za-z0-9_-]" );
 
    int pos = 0;
    bool runID_changed = false;
-   while ( ( pos = rx.indexIn( new_runID ) ) != -1 )
+   while ( ( pos = new_runID.indexOf( rx ) ) != -1 )
    {
       new_runID.replace( pos, 1, "_" );         // Replace 1 char at pos
       runID_changed = true;
@@ -579,8 +578,8 @@ void US_MwlRawViewer::load_auc_mwl( )
    QStringList components =  dir.split( "/", Qt::SkipEmptyParts );
    QString new_runID = components.last();
       
-   QRegExp rx( "^[A-Za-z0-9_-]{1,80}$" );
-   if ( rx.indexIn( new_runID ) < 0 )
+   QRegularExpression rx( "^[A-Za-z0-9_-]{1,80}$" );
+   if ( new_runID.indexOf( rx ) < 0 )
    {
       QMessageBox::warning( this,
             tr( "Bad runID Name" ),

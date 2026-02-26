@@ -42,20 +42,20 @@ US_Font::US_Font( QWidget* w, Qt::WindowFlags flags )
    samples = us_banner( tr( "Selected Font Samples:" ) );
    lineGrid->addWidget( samples, row++, 0, 1, 2 );
 
-   small = us_label( tr( "Small Font Sample" ), -1 );
-   lineGrid->addWidget( small, row++, 0, 1, 2 );
+   lbl_small = us_label( tr( "Small Font Sample" ), -1 );
+   lineGrid->addWidget( lbl_small, row++, 0, 1, 2 );
 
-   regular = us_label( tr( "Regular Font Sample" ) );
-   lineGrid->addWidget( regular, row++, 0, 1, 2 );
+   lbl_regular = us_label( tr( "Regular Font Sample" ) );
+   lineGrid->addWidget( lbl_regular, row++, 0, 1, 2 );
 
-   regularBold = us_label( tr( "Regular Font Sample, Bold" ), 0, QFont::Bold );
-   lineGrid->addWidget( regularBold, row++, 0, 1, 2 );
+   lbl_regularBold = us_label( tr( "Regular Font Sample, Bold" ), 0, QFont::Bold );
+   lineGrid->addWidget( lbl_regularBold, row++, 0, 1, 2 );
 
-   large = us_label( tr( "Large Font Sample" ), +1 );
-   lineGrid->addWidget( large, row++, 0, 1, 2 );
+   lbl_large = us_label( tr( "Large Font Sample" ), +1 );
+   lineGrid->addWidget( lbl_large, row++, 0, 1, 2 );
 
-   largeBold = us_label( tr( "Large Font Sample, Bold" ), +1, QFont::Bold );
-   lineGrid->addWidget( largeBold, row++, 0, 1, 2 );
+   lbl_largeBold = us_label( tr( "Large Font Sample, Bold" ), +1, QFont::Bold );
+   lineGrid->addWidget( lbl_largeBold, row++, 0, 1, 2 );
 
    title = us_label( tr( "Title Font Sample" ), +2, QFont::Bold );
    lineGrid->addWidget( title, row++, 0, 1, 2 );
@@ -137,11 +137,11 @@ void US_Font::redraw( void )
    size        ->setFont( QFont( family, pointSize                  ) );
    samples     ->setFont( QFont( family, pointSize                  ) );
 
-   small       ->setFont( QFont( family, pointSize - 1              ) );
-   regular     ->setFont( QFont( family, pointSize                  ) );
-   regularBold ->setFont( QFont( family, pointSize,     QFont::Bold ) );
-   large       ->setFont( QFont( family, pointSize + 1              ) );
-   largeBold   ->setFont( QFont( family, pointSize + 1, QFont::Bold ) );
+   lbl_small       ->setFont( QFont( family, pointSize - 1              ) );
+   lbl_regular     ->setFont( QFont( family, pointSize                  ) );
+   lbl_regularBold ->setFont( QFont( family, pointSize,     QFont::Bold ) );
+   lbl_large       ->setFont( QFont( family, pointSize + 1              ) );
+   lbl_largeBold   ->setFont( QFont( family, pointSize + 1, QFont::Bold ) );
    title       ->setFont( QFont( family, pointSize + 2, QFont::Bold ) );
    pb_default  ->setFont( QFont( family, pointSize + 1 ) );
    pb_save     ->setFont( QFont( family, pointSize + 1 ) );

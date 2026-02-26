@@ -22,7 +22,7 @@
 //! An application to manage buffer data.
 //! \class US_BufferGuiSelect
 //!      This class provides a tabbed entry for buffer selection
-class US_BufferGuiSelect: public US_Widgets
+class US_GUI_EXTERN US_BufferGuiSelect: public US_Widgets
 {
    Q_OBJECT
 
@@ -134,7 +134,7 @@ class US_BufferGuiSelect: public US_Widgets
 
 //! \class US_BufferGuiNew
 //!      This class provides a tabbed entry for new buffer creation
-class US_BufferGuiNew : public US_Widgets
+class US_GUI_EXTERN US_BufferGuiNew : public US_Widgets
 {
    Q_OBJECT
 
@@ -226,7 +226,7 @@ class US_BufferGuiNew : public US_Widgets
 
 //! \class US_BufferGuiEdit
 //!      This class provides a tabbed entry for non-hydrodynamic buffer mods
-class US_BufferGuiEdit : public US_Widgets
+class US_GUI_EXTERN US_BufferGuiEdit : public US_Widgets
 {
    Q_OBJECT
 
@@ -286,7 +286,7 @@ class US_BufferGuiEdit : public US_Widgets
 
 //! \class US_BufferGuiSettings
 //!      This class provides a tabbed entry for general buffer settings
-class US_BufferGuiSettings: public US_Widgets
+class US_GUI_EXTERN US_BufferGuiSettings: public US_Widgets
 {
    Q_OBJECT
 

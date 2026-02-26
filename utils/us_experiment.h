@@ -18,7 +18,7 @@
            instrument, and rotor on which the experiment was run. 
 */
            
-class US_Experiment
+class US_UTIL_EXTERN US_Experiment
 {
    public:
 
@@ -103,7 +103,7 @@ class US_Experiment
           \param    speedsteps Reference to vector of experiment speed steps
           \returns  One of the US_DB2 error codes
       */
-      int readFromDB( QString, US_DB2*, QVector< SP_SPEEDPROFILE >& );
+      int readFromDB( QString, US_DB2*, QVector< SP_SPEEDPROFILE >&, const QString = QString("")  );
 
       /*! \brief    Writes an xml file
 

@@ -100,11 +100,11 @@ US_EditScan::US_EditScan( US_DataIO::Scan&         s,
    connect( pick, SIGNAL( cMouseDownRaw( QMouseEvent* ) ),
                   SLOT  ( start_drag   ( QMouseEvent* ) ) );
 
-   connect( pick, SIGNAL( cMouseUp     ( const QwtDoublePoint& ) ),
-                  SLOT  ( end_drag     ( const QwtDoublePoint& ) ) );
+   connect( pick, SIGNAL( cMouseUp     ( const QPointF& ) ),
+                  SLOT  ( end_drag     ( const QPointF& ) ) );
    
-   connect( pick, SIGNAL( cMouseDrag   ( const QwtDoublePoint& ) ),
-                  SLOT  ( drag         ( const QwtDoublePoint& ) ) );
+   connect( pick, SIGNAL( cMouseDrag   ( const QPointF& ) ),
+                  SLOT  ( drag         ( const QPointF& ) ) );
 }
 
 void US_EditScan::done( void )
@@ -113,7 +113,7 @@ void US_EditScan::done( void )
    close();
 }
 
-void US_EditScan::drag( const QwtDoublePoint& p )
+void US_EditScan::drag( const QPointF& p )
 {
 //qDebug() << "drag() dragging" << dragging;
    // Ignore drag events after Mouse Up
@@ -135,7 +135,7 @@ void US_EditScan::start_drag( QMouseEvent* e )
 //qDebug() << " start_drag : point" << point << "v(p)" << values[point];
 }
 
-void US_EditScan::end_drag( const QwtDoublePoint& p )
+void US_EditScan::end_drag( const QPointF& p )
 {
    dragging = false;
 

@@ -113,9 +113,8 @@ jobs:
         language: [ cpp ]
         container:
           - "ehb1/usbuildtest:ubuntu22.04-qt5.15.10-qwt6.1.6"
-          # enable qt6 after pr 300 merged
-          # - "ehb1/usbuildtest:ubuntu24.04-qt6.8.3-qwt6.3.0"
-          # - "ehb1/usbuildtest:ubuntu24.04-qt6.10.0-qwt6.3.0"
+          - "ehb1/usbuildtest:ubuntu24.04-qt6.8.3-qwt6.3.0"
+          - "ehb1/usbuildtest:ubuntu24.04-qt6.10.0-qwt6.3.0"
 
     # Specify the container in which actions will run
     container:
@@ -162,10 +161,9 @@ jobs:
         language: [ cpp ]
         container:
           - "ehb1/usbuildtest:ubuntu22.04-qt5.15.10-qwt6.1.6"
-          # enable qt6 & qwt630 after pr 300 merged
-          # - "ehb1/usbuildtest:ubuntu22.04-qt5.15.10-qwt6.3.0"
-          # - "ehb1/usbuildtest:ubuntu24.04-qt6.8.3-qwt6.3.0"
-          # - "ehb1/usbuildtest:ubuntu24.04-qt6.10.0-qwt6.3.0"
+          - "ehb1/usbuildtest:ubuntu22.04-qt5.15.10-qwt6.3.0"
+          - "ehb1/usbuildtest:ubuntu24.04-qt6.8.3-qwt6.3.0"
+          - "ehb1/usbuildtest:ubuntu24.04-qt6.10.0-qwt6.3.0"
 
     # Specify the container in which actions will run
     container:

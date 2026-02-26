@@ -147,8 +147,8 @@ US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
    auto *m_help = us_pushbutton( tr( "Help" ) );
    auto *m_exit = us_pushbutton( tr( "Exit" ) );
    connect( m_exit, SIGNAL( clicked() ), this, SLOT( close()  ) );
-   //connect( m_help, SIGNAL( clicked() ), this, SLOT( help_m()  ) );
-   
+   connect( m_help, SIGNAL( clicked() ), this, SLOT( help()  ) );
+
    hbox->addWidget(m_help);
    hbox->addWidget(m_exit);
    hbox->setSpacing(1);
@@ -393,7 +393,7 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    auto *m_help = us_pushbutton( tr( "Help" ) );
    auto *m_exit = us_pushbutton( tr( "Exit" ) );
    connect( m_exit, SIGNAL( clicked() ), this, SLOT( close()  ) );
-   //connect( m_help, SIGNAL( clicked() ), this, SLOT( help_m()  ) );
+   connect( m_help, SIGNAL( clicked() ), this, SLOT( help()  ) );
    
    hbox->addWidget(m_help);
    hbox->addWidget(m_exit);
@@ -524,6 +524,15 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
 
  }
 
+
+//help bttns
+void US_ComProjectMain::help( void )
+{
+  if ( !us_mode_bool )
+    showHelp.show_help("gmp/index.html");
+  else
+    showHelp.show_help("experiment/index.html");
+}
 
 // Check if data location set to DB
 void US_ComProjectMain::checkDataLocation( void )
@@ -723,24 +732,46 @@ void US_ComProjectMain::analysis_update_stopped( void  )
 
 void US_ComProjectMain::closeEvent( QCloseEvent* event )
 {
-    window_closed = true;
+  qDebug() << "Closing Event..";
+  //confirm
+  QMessageBox msgBox(this);
+  msgBox.setIcon(QMessageBox::Critical);
+  msgBox.setWindowTitle(tr("Closing Program:"));
+      
+  QString msg_text      = QString("Confirm Exit");
+  QString msg_text_info = QString("Are you sure you want to exit? \nAll unsaved data will be lost. \n\nProceed? ");
+  
+  msgBox.setText( msg_text );
+  msgBox.setInformativeText( msg_text_info );
+  
+  QPushButton *Accept_r   = msgBox.addButton(tr("Yes"), QMessageBox::YesRole);
+  QPushButton *Cancel_r   = msgBox.addButton(tr("No"),  QMessageBox::RejectRole);
+  
+  msgBox.exec();
+  
+  if ( msgBox.clickedButton() != Accept_r )
+    {
+      qDebug () << "CANCEL Closing...";
+      event->ignore();
 
-    qDebug() << "Closing 1: ";
-    qDebug() << "data_location_disk: " <<  data_location_disk;
+      return;
+    }
 
-    if ( !data_location_disk )
-      {
-	qDebug() << "initDialogue: true/false 1 : " << epanInit->initDialogueOpen ;
-	emit us_comproject_closed();
-	close_initDialogue();
-	qDebug() << "initDialogue: true/false 3 : " << epanInit->initDialogueOpen ;
-
-	qApp->processEvents();
-      }
-
-    qApp->processEvents();
-    
-    event->accept();
+  //Else, continue with closure
+  qDebug() << "data_location_disk: " <<  data_location_disk;
+  
+  window_closed = true;
+  
+  if ( !data_location_disk )
+    {
+      emit us_comproject_closed();
+      close_initDialogue();
+            
+      qApp->processEvents();
+    }
+  
+  qApp->processEvents();
+  event->accept();
 }
 
 void US_ComProjectMain::to_autoflow_records( void )
@@ -1431,7 +1462,7 @@ void US_InitDialogueGui::checkCertificates( void )
       else
 	inst_names = Optima_names.join("");
       
-      QMessageBox msgBox_sys_data;
+      QMessageBox msgBox_sys_data(this);
       msgBox_sys_data.setIcon(QMessageBox::Critical);
       msgBox_sys_data.setWindowTitle(tr("Optima System Data Server Connection Problem!"));
 

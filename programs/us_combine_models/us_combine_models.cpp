@@ -325,7 +325,7 @@ qDebug() << "SAVE:     cmodel_name" << cmodel_name;
 
          if ( !ok )  return;
 
-         runID.remove( QRegExp( "[^\\w\\d_-]" ) );
+         runID.remove( QRegularExpression( "[^\\w\\d_-]" ) );
          int slen   = runID.length();
          getruni    = false;
 

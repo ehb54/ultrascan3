@@ -21,7 +21,7 @@ struct cellInfo
            data to the disk and the database.
            All methods are static.
 */
-class US_ConvertIO 
+class US_UTIL_EXTERN US_ConvertIO
 {
    public:
       // \brief Generic constructor for the US_ConvertIO class.
@@ -35,7 +35,7 @@ class US_ConvertIO
           \param speedsteps Reference for returned experiment speed steps vector
       */
       static QString readDBExperiment( QString, QString, US_DB2*,
-                        QVector< SP_SPEEDPROFILE >& );
+				       QVector< SP_SPEEDPROFILE >&, const QString = QString("") );
 
       /*! \brief Writes a new DB rawData record for each triple
 
@@ -51,7 +51,7 @@ class US_ConvertIO
       static QString writeRawDataToDB(
                  US_Experiment& , 
                  QList< US_Convert::TripleInfo >& ,
-                 QString,
+                 const QString&,
                  US_DB2* = 0 );
 
       /*! \brief Checks some info that was read from disk with values from DB

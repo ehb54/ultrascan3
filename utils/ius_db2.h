@@ -74,7 +74,7 @@ public:
     virtual bool connect(const QString& masterPW, QString& err) = 0;
     virtual bool connect(const QString& host, const QString& dbname,
                          const QString& user, const QString& password,
-                         QString& error) = 0;
+                         QString& err) = 0;
 
     // Query methods (used in US_Project and tests)
     virtual void query(const QString& sqlQuery) = 0;

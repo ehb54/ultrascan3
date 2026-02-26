@@ -1,0 +1,32 @@
+# Unofficial config for qwtplot3d built via vcpkg overlay
+include(CMakeFindDependencyMacro)
+
+# Headers path
+set(_QWTPLOT3D_INCLUDE_DIR "@CURRENT_PACKAGES_DIR@/include")
+
+# Library names may vary; try common patterns
+# vcpkg will place libs under lib/ and debug/lib/
+find_library(_QWTPLOT3D_LIB_RELEASE NAMES qwtplot3d qwtplot3d-qt5 qwtplot3d-qt6
+        PATHS "@CURRENT_PACKAGES_DIR@/lib" NO_DEFAULT_PATH)
+find_library(_QWTPLOT3D_LIB_DEBUG   NAMES qwtplot3d qwtplot3d-qt5 qwtplot3d-qt6
+        PATHS "@CURRENT_PACKAGES_DIR@/debug/lib" NO_DEFAULT_PATH)
+
+if(NOT _QWTPLOT3D_LIB_RELEASE AND NOT _QWTPLOT3D_LIB_DEBUG)
+    message(FATAL_ERROR "qwtplot3d library not found in vcpkg package.")
+endif()
+
+add_library(unofficial::qwtplot3d UNKNOWN IMPORTED)
+if(_QWTPLOT3D_LIB_RELEASE)
+    set_target_properties(unofficial::qwtplot3d PROPERTIES
+            IMPORTED_LOCATION_RELEASE "${_QWTPLOT3D_LIB_RELEASE}")
+endif()
+if(_QWTPLOT3D_LIB_DEBUG)
+    set_target_properties(unofficial::qwtplot3d PROPERTIES
+            IMPORTED_LOCATION_DEBUG "${_QWTPLOT3D_LIB_DEBUG}")
+endif()
+set_target_properties(unofficial::qwtplot3d PROPERTIES
+        INTERFACE_INCLUDE_DIRECTORIES "${_QWTPLOT3D_INCLUDE_DIR}")
+
+ find_package(Qt5 COMPONENTS Core Gui OpenGL REQUIRED)
+
+ target_link_libraries(unofficial::qwtplot3d INTERFACE Qt5::Core Qt5::Gui Qt5::OpenGL)

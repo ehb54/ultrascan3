@@ -3,6 +3,7 @@
 #include <QTcpSocket>
 #include <QFontDatabase>
 #include <QtWidgets/QApplication>
+#include <QVersionNumber>
 
 #include "us.h"
 #include "us_license_t.h"
@@ -108,7 +109,7 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   {
     // Do something for invalid global memory
     qDebug( "US_Win: invalid global memory" );
-    QMessageBox::critical(this
+    QMessageBox::critical(parent
                           ,windowTitle()
                           ,QString(
                                    tr( 
@@ -119,15 +120,14 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
                                        )
                                    )
                           .arg( g.errorString() )
-                          ,QMessageBox::Ok
-                          ,QMessageBox::NoButton
+                          ,QMessageBox::Ok | QMessageBox::NoButton
                           ,QMessageBox::NoButton
                           );
   }
   
   if ( !US_Settings::status().isEmpty() ) {
      qDebug( "US_Win: invalid settings" );
-     QMessageBox::critical(this
+     QMessageBox::critical(parent
                            ,windowTitle()
                            ,QString(
                                     tr(
@@ -137,8 +137,7 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
                                        )
                                     )
                            .arg( US_Settings::status() )
-                           ,QMessageBox::Ok
-                           ,QMessageBox::NoButton
+                           ,QMessageBox::Ok | QMessageBox::NoButton
                            ,QMessageBox::NoButton
                            );
   }
@@ -651,16 +650,22 @@ void US_Win::logo( int width )
 {
     // Splash image (fixed size asset, like before)
     QPixmap rawpix = US_Images::getImage( US_Images::US3_SPLASH );
-    const int ph   = rawpix.height();   // expected ~276
-    const int pw   = rawpix.width();    // expected ~460
+    // Ensure a reasonable size in case the image is missing
+    const int ph   = qMax( rawpix.height(), 276 );   // expected ~276
+    const int pw   = qMax( rawpix.width(), 460 );    // expected ~460
     Q_UNUSED(ph);
-
-    QPixmap  pixmap( pw, ph );
-    QPainter painter( &pixmap );
+    // Prepare the painting area
+    QImage canvas( pw, ph, QImage::Format_ARGB32_Premultiplied );
+    canvas.fill( Qt::transparent );
+    QPainter painter( &canvas );
     painter.setRenderHint( QPainter::Antialiasing,     true );
     painter.setRenderHint( QPainter::TextAntialiasing, true );
 
-    painter.drawPixmap( 0, 0, rawpix );
+    if ( !rawpix.isNull() )
+    {
+        // draw the pixmap if loaded
+        painter.drawPixmap( 0, 0, rawpix );
+    }
 
     // Colors (subtle, modern)
     const QColor versionColor      ( 245, 248, 255 );
@@ -672,20 +677,24 @@ void US_Win::logo( int width )
     const QString uiFontFamily = "Sans Serif";
 
     // --- Compact vertical layout ---
-    const int yVersion       = 124;
-    const int versionToBuild = 16;
-    const int buildToDivider = 14;
+    const int yVersion       = 120;   // Moved down for more space from silver
+    const int versionToRevDate = 16;
+    const int revDateToDivider = 14;
     const int dividerToTitle = 20;
     const int titleToFirst   = 16;
     const int nameStep       = 14;
 
-    const int yBuild        = yVersion + versionToBuild;
-    const int yDivider      = yBuild   + buildToDivider;
+    const int yRevDate      = yVersion + versionToRevDate;
+    const int yDivider      = yRevDate + revDateToDivider;
     const int yAuthorsTitle = yDivider + dividerToTitle;
     const int firstNameBase = yAuthorsTitle + titleToFirst;
 
-    // --- Version line ---
-    QString version = "Version " + US_Version + " (build " BUILDNUM ") for " OS_TITLE;
+    // --- Version line (with build and Δ if local changes) ---
+    QString version = QString("Version %1 (%2%3) for %4")
+        .arg(US_Version)
+        .arg(BUILDNUM)
+        .arg(LOCAL_CHANGES)
+        .arg(OS_TITLE);
 
     QFont versionFont( uiFontFamily );
     versionFont.setWeight       ( QFont::DemiBold );
@@ -699,20 +708,19 @@ void US_Win::logo( int width )
     int vWidth = vMetrics.horizontalAdvance( version );
     painter.drawText( ( pw - vWidth ) / 2, yVersion, version );
 
-    // --- Build line ---
-    QString buildLine =
-            QString( "Built on %1 at %2 UTC" ).arg( BUILD_DATE ).arg( BUILD_TIME );
+    // --- Revision line (rev + date) ---
+    QString revDateLine = QString("Source Identifier: %1 (%2)").arg(GIT_REVISION).arg(REVISION_DATE);
 
-    QFont buildFont( uiFontFamily );
-    buildFont.setWeight   ( QFont::Normal );
-    buildFont.setPixelSize( 12 );
+    QFont revDateFont( uiFontFamily );
+    revDateFont.setWeight   ( QFont::Normal );
+    revDateFont.setPixelSize( 12 );
 
-    painter.setFont( buildFont );
+    painter.setFont( revDateFont );
     painter.setPen ( metaColor );
 
-    QFontMetrics bMetrics( buildFont );
-    int bWidth = bMetrics.horizontalAdvance( buildLine );
-    painter.drawText( ( pw - bWidth ) / 2, yBuild, buildLine );
+    QFontMetrics rdMetrics( revDateFont );
+    int rdWidth = rdMetrics.horizontalAdvance( revDateLine );
+    painter.drawText( ( pw - rdWidth ) / 2, yRevDate, revDateLine );
 
     // --- Divider ---
     painter.setPen( QPen( dividerColor, 1 ) );
@@ -741,20 +749,55 @@ void US_Win::logo( int width )
     painter.setPen ( authorsColor );
 
     QFontMetrics aMetrics( authorsFont );
-    QStringList names = {
-            "Borries Demeler",
-            "Emre Brookes",
-            "Alexey Savelyev",
-            "Gary Gorbet"
+
+    // Borries Demeler spans both columns (centered)
+    QString leadAuthor = "Borries Demeler";
+    int leadWidth = aMetrics.horizontalAdvance( leadAuthor );
+    int yLead = firstNameBase;
+    painter.drawText( ( pw - leadWidth ) / 2, yLead, leadAuthor );
+
+    // Two columns for remaining authors
+    QStringList leftColumn = {
+        "Emre Brookes",
+        "Alexey Savelyev",
+        "Gary Gorbet"
     };
 
-    for ( int i = 0; i < names.size(); ++i )
+    QStringList rightColumn = {
+        "Lukas Dobler",
+        "Saeed Mortezazadeh",
+        "Haben Gabir"
+    };
+
+    const int columnSpacing = 140;  // Distance between column centers
+    const int leftColumnX = pw / 2 - columnSpacing / 2;
+    const int rightColumnX = pw / 2 + columnSpacing / 2;
+    const int ySecondRow = yLead + nameStep;  // Start below lead author
+
+    // Draw left column
+    for ( int i = 0; i < leftColumn.size(); ++i )
     {
-        const QString& name = names[i];
+        const QString& name = leftColumn[i];
         int nWidth = aMetrics.horizontalAdvance( name );
-        int y      = firstNameBase + i * nameStep;
-        painter.drawText( ( pw - nWidth ) / 2, y, name );
+        int y = ySecondRow + i * nameStep;
+        painter.drawText( leftColumnX - nWidth / 2, y, name );
     }
+
+    // Draw right column
+    for ( int i = 0; i < rightColumn.size(); ++i )
+    {
+        const QString& name = rightColumn[i];
+        int nWidth = aMetrics.horizontalAdvance( name );
+        int y = ySecondRow + i * nameStep;
+        painter.drawText( rightColumnX - nWidth / 2, y, name );
+    }
+
+    // Calculate last row position for link spacing
+    int lastRowCount = qMax( leftColumn.size(), rightColumn.size() );
+    int lastNameY = ySecondRow + ( lastRowCount - 1 ) * nameStep;
+
+    // convert canvas to legacy pixmap
+    QPixmap pixmap = QPixmap::fromImage( canvas );
 
     // --- Display ---
     const int splashX = static_cast<int>( ( width / 2 ) - 230 );
@@ -782,16 +825,11 @@ void US_Win::logo( int width )
     contribFont.setPixelSize( 10 );
     contribLabel->setFont( contribFont );
 
-    // Make spacing: last-author → link == link → bottom
-    const int linkH = 16;  // height of the clickable label box
-    // Baseline of last author:
-    const int lastNameY = firstNameBase + ( names.size() - 1 ) * nameStep;
-    // Approximate bottom of last author text:
+    const int linkH = 16;
     const int textBottom = lastNameY + aMetrics.descent();
 
-    // Solve: textBottom + d + linkH + d = splashH  → d = (splashH - textBottom - linkH) / 2
     int remaining = splashH - textBottom - linkH;
-    if ( remaining < 0 ) remaining = 0;   // safety
+    if ( remaining < 0 ) remaining = 0;
     int d = remaining / 2;
 
     int yLink = textBottom + d;
@@ -853,8 +891,9 @@ void US_Win::help( int index )
     case HELP_ABOUT:
       QMessageBox::information( this,
         tr( "About UltraScan..." ),
-        tr( "UltraScan III version %1\n"
-            "( build %2 )\n"
+        tr( "UltraScan III version %1 (%2)\n"
+            "Source Identifier: %3\n"
+            "Source Date: %4\n"
             "Copyright 1989 - 2025\n"
             "Borries Demeler\n\n"
             "For more information, please visit:\n"
@@ -865,7 +904,7 @@ void US_Win::help( int index )
             "32 Campus Drive\n"
             "Missoula, Montana  59812\n"
             "Phone:  (406) 285-1935\n"
-            "E-mail: borries.demeler@umontana.edu" ).arg( US_Version ).arg( BUILDNUM ) );
+            "E-mail: borries.demeler@umontana.edu" ).arg( US_Version ).arg( BUILDNUM ).arg( GIT_REVISION ).arg( REVISION_DATE ) );
 
       statusBar()->showMessage( tr( "Ready" ) );
       break;
@@ -995,9 +1034,17 @@ void US_Win::notices_ready() {
    QString msg_note  = tr( "UltraScan III notices posted :<br><br>" );
    bool empty_msg    = true;
 
-   double sys_version  = US_Version.toDouble();
-   int    sys_revision = QString( BUILDNUM ).toInt();
-   
+   // Strips out any "-" data in version (e.g. 4.1.0-dev becomes 4.1.0)
+   QVersionNumber base_ver = QVersionNumber::fromString(US_Version);
+   int sys_revision = QString(BUILDNUM).toInt();
+
+   // Extract only major.minor (first 2 segments) from base_ver
+   QVector<int> base_segments = base_ver.segments();
+   double sys_version = 0.0;
+   if (base_segments.size() >= 2) {
+       sys_version = base_segments[0] + (base_segments[1] / 10.0);  // e.g., 4 + 0.1 = 4.1
+   }
+
    for ( int ii = 0; ii < (int) msgs.size(); ++ii )
    {
       double msg_version  = QString( "%1" ).arg( revs[ii] ).replace( QRegularExpression( "\\.\\d+$" ), "" ).toDouble();

@@ -1,5 +1,4 @@
 //! \file us_zsolute.cpp
-
 #include "us_zsolute.h"
 #include "us_math2.h"
 

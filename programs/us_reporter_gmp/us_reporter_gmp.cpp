@@ -1205,12 +1205,21 @@ void US_ReporterGMP::check_models ( int autoflowID )
 
       QList < double > chann_wvls    = ch_wvls[ channel_desc_alt ];
       int chann_wvl_number           = chann_wvls.size();
+
+      //1. check if wvl was excluded from analysis in MWL settings:
+      QStringList wvl_not_run_for_channel = currAProf.wvl_not_run[i].split(":");
+      qDebug() << "In check_models(), wvl_not_run for channel, "
+		   << channel_desc_alt << " -- "  << wvl_not_run_for_channel;
       
       for ( int jj = 0; jj < chann_wvl_number; ++jj )
 	{
 	  QString wvl            = QString::number( chann_wvls[ jj ] );
+
+	  //2. check ir wvl was excluded from analysis in MWL settings:
+	  if ( wvl_not_run_for_channel.contains( wvl ))
+	    continue;
 	  
-	  QString tripleName = channel_desc_alt.section( ":", 0, 0 )[0] + "." + channel_desc_alt.section( ":", 0, 0 )[1];
+	  QString tripleName = channel_desc_alt.section( ":", 0, 0 )[0] + QString(".") + channel_desc_alt.section( ":", 0, 0 )[1];
 
 	  if ( channel_desc_alt.contains( "Interf" ) ) 
 	    tripleName += ".Interference";
@@ -2775,7 +2784,7 @@ void US_ReporterGMP::build_perChanTree ( void )
 
 	      //Push to Array_of_triples;
 	      //QString tripleName = channel_desc_alt.section( ":", 0, 0 )[0] + "." + channel_desc_alt.section( ":", 0, 0 )[1] + "." + wvl;
-	      QString tripleName = channel_desc_alt.section( ":", 0, 0 )[0] + "." + channel_desc_alt.section( ":", 0, 0 )[1];
+	      QString tripleName = channel_desc_alt.section( ":", 0, 0 )[0] + QString(".") + channel_desc_alt.section( ":", 0, 0 )[1];
 
 	      if ( channel_desc_alt.contains( "Interf" ) ) 
 		tripleName += ".Interference";
@@ -8675,6 +8684,10 @@ QString US_ReporterGMP::calc_replicates_averages( void )
 	  QString curr_chann  = all_wvls[ i ].split(".")[0];  
 	  QString curr_wvl    = all_wvls[ i ].split(".")[1];
 
+	  //check if actual triple is considered in MWL settings
+	  if ( !triple_exist_inMWL( curr_triple ) )
+	    continue;
+
 	  unique_wvls               << curr_wvl;
 	  unique_channels           << curr_chann;
 
@@ -8773,6 +8786,41 @@ QString US_ReporterGMP::calc_replicates_averages( void )
   
   return html_str_replicate_av;
 }
+
+bool US_ReporterGMP::triple_exist_inMWL( QString curr_triple )
+{
+  bool ex = true;
+  QString curr_chann  = curr_triple.split(".")[0];  
+  QString curr_wvl    = curr_triple.split(".")[1];
+  QString chann_desc_full;
+  QStringList wvls_not;
+  for( int i=0; i < chndescs_alt.size(); ++i)
+    {
+      QString chan_from_desc = chndescs_alt[i].split(":")[0];
+      if ( chan_from_desc == curr_chann )
+	{
+	  wvls_not = currAProf.wvl_not_run[i].split(":");
+	  chann_desc_full = chndescs_alt[i];
+	  break;
+	}
+    }
+  if ( wvls_not.contains(curr_wvl) )
+    {
+      ex = false;
+      qDebug() << "Triple: " << curr_triple << " will not be considered in replicas averaging! [MWL settings]"; 
+    }
+
+  //now, check if ReportGMP has 'Integration Results' checked (even for triple that is included)
+  US_ReportGMP report_for_triple = ch_reports[ chann_desc_full ][ curr_wvl ];
+  if ( !report_for_triple. integration_results_mask )
+    {
+      ex = false;
+      qDebug() << "Triple: " << curr_triple << " will not be considered in replicas averaging! [ReportGMP settings]"; 
+    }
+  
+  return ex;
+}
+
 
 //Get Replicate Group # from channel_desc_alt
 QString US_ReporterGMP::get_replicate_group_number( QString ch_alt_desc )
@@ -10310,10 +10358,10 @@ void US_ReporterGMP::distrib_plot_stick( int type )
       yval     = model_used.components[ jj ].signal_concentration;
       xx[ jj ] = xval;
       yy[ jj ] = yval;
-      xmin     = min( xval, xmin );
-      xmax     = max( xval, xmax );
-      ymin     = min( yval, ymin );
-      ymax     = max( yval, ymax );
+      xmin     = qMin( xval, xmin );
+      xmax     = qMax( xval, xmax );
+      ymin     = qMin( yval, ymin );
+      ymax     = qMax( yval, ymax );
    }
 
    rdif   = ( xmax - xmin ) / 20.0;
@@ -10322,8 +10370,8 @@ void US_ReporterGMP::distrib_plot_stick( int type )
    rdif   = ( ymax - ymin ) / 20.0;
    ymin  -= rdif;
    ymax  += rdif;
-   xmin   = ( type == 0 ) ? xmin : max( xmin, 0.0 );
-   ymin   = max( ymin, 0.0 );
+   xmin   = ( type == 0 ) ? xmin : qMax( xmin, 0.0 );
+   ymin   = qMax( ymin, 0.0 );
 
    data_grid->enableYMin ( true );
    data_grid->enableY    ( true );
@@ -10426,10 +10474,10 @@ void US_ReporterGMP::distrib_plot_2d( int type )
 
       xx[ jj ] = xval;
       yy[ jj ] = yval;
-      xmin     = min( xval, xmin );
-      xmax     = max( xval, xmax );
-      ymin     = min( yval, ymin );
-      ymax     = max( yval, ymax );
+      xmin     = qMin( xval, xmin );
+      xmax     = qMax( xval, xmax );
+      ymin     = qMin( yval, ymin );
+      ymax     = qMax( yval, ymax );
    }
 
    rdif   = ( xmax - xmin ) / 20.0;
@@ -10438,8 +10486,8 @@ void US_ReporterGMP::distrib_plot_2d( int type )
    rdif   = ( ymax - ymin ) / 20.0;
    ymin  -= rdif;
    ymax  += rdif;
-   xmin   = ( type & 1 ) == 1 ? xmin : max( xmin, 0.0 );
-   ymin   = max( ymin, 0.0 );
+   xmin   = ( type & 1 ) == 1 ? xmin : qMax( xmin, 0.0 );
+   ymin   = qMax( ymin, 0.0 );
 
    data_grid->enableYMin ( true );
    data_grid->enableY    ( true );
@@ -10541,9 +10589,8 @@ void US_ReporterGMP::write_plot( const QString& filename, const QwtPlot* plot )
        bool ok          = widgw->save_plot( filename, QString( "png" ) );
  #else
        qDebug() << "3D: Q_OS_LINUX || other";	  
-       QGLWidget* dataw = eplotcd->data_3dplot();
-       QPixmap pixmap   = dataw->renderPixmap( dataw->width(), dataw->height(),
-                                             true  );
+       QOpenGLWidget* dataw = eplotcd->data_3dplot();
+       QPixmap pixmap   = dataw->grab( );
        bool ok          = pixmap.save( filename );
  #endif
 
@@ -10812,12 +10859,19 @@ void US_ReporterGMP::assemble_pdf( QProgressDialog * progress_msg )
   //TITLE: begin
   QString report_type;
   GMP_report ? report_type = "GMP" : report_type = "Non-GMP";
+  // QString html_title = tr(
+  //   "<h1 align=center>%1 Report for Run: <br><i>%2</i></h1>"
+  //   "<hr>"
+  // 			  )
+  //   .arg( report_type )                              //1
+  //   .arg( runName )                                  //2
+  //   ;
+
   QString html_title = tr(
-    "<h1 align=center>%1 Report for Run: <br><i>%2</i></h1>"
+    "<h1 align=center>Report for Run: <br><i>%1</i></h1>"
     "<hr>"
 			  )
-    .arg( report_type )                              //1
-    .arg( runName )                                  //2
+    .arg( runName )                                  //1
     ;
   //TITLE: end
 
@@ -13457,7 +13511,7 @@ void US_ReporterGMP::add_solution_details( const QString sol_id, const QString s
       else
 	{
 	  seqsmry         = seqsmry.toLower()
-	    .remove( QRegExp( "[\\s0-9]" ) );
+	    .remove( QRegularExpression( "[\\s0-9]" ) );
 	  seqlen          = seqsmry.length();
 	  if ( seqlen > 25 )
 	    {

@@ -305,13 +305,21 @@ qDebug() << "Exp:svToDB:     ssstat=" << ssstat;
 
 // Function to read an experiment from DB
 int US_Experiment::readFromDB( QString runID, US_DB2* db,
-                               QVector< SP_SPEEDPROFILE >& speedsteps )
+                               QVector< SP_SPEEDPROFILE >& speedsteps,
+			       const QString invid_p )
 {
+   qDebug() << "US_Experiment::readFromDB, invid_p -- " << invid_p;
+   
+   QString invID_to_use = ( invid_p.isEmpty() ) ?
+     QString::number( US_Settings::us_inv_ID() ) : invid_p;
    QStringList q( "get_experiment_info_by_runID" );
    q << runID
-     << QString::number( US_Settings::us_inv_ID() );
+     //<< QString::number( US_Settings::us_inv_ID() );
+     << invID_to_use;
    db->query( q );
 
+   qDebug() << "US_Experiment::readFromDB: q -- " << q;
+   
    QByteArray xmlFile;
 
    if ( db->next() )
@@ -462,11 +470,8 @@ int US_Experiment::saveToDisk(
     QString runID,
     QString dirname,
     QVector< SP_SPEEDPROFILE >& speedsteps )
-{ 
-   QRegExp rx( "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" );
-
-
-   if ( this->expGUID.isEmpty() || ! rx.exactMatch( this->expGUID ) )
+{
+   if ( this->expGUID.isEmpty() || ! US_Util::is_valid_uuid( this->expGUID ) )
       this->expGUID = US_Util::new_guid();
 
    if ( dirname.right( 1 ) != "/" ) dirname += "/"; // Ensure trailing /
@@ -919,7 +924,7 @@ int US_Experiment::readRIDisk(
       if ( xml.isStartElement() )
       {
          QXmlStreamAttributes a = xml.attributes();
-         QStringRef xname       = xml.name();
+         auto xname             = xml.name().toString();
 
          if ( xname == "RI" )
          {
@@ -1031,7 +1036,7 @@ int US_Experiment::importRIxml( QByteArray& str )
       if ( xml.isStartElement() )
       {
          QXmlStreamAttributes a = xml.attributes();
-         QStringRef xname       = xml.name();
+         auto xname       = xml.name();
 
          if ( xname == "RI" )
          {

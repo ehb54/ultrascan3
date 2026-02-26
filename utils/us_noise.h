@@ -2,7 +2,6 @@
 #ifndef US_NOISE_H
 #define US_NOISE_H
 
-#include <QtCore>
 #include "us_extern.h"
 #include "ius_db2.h"
 #include "us_dataIO.h"

@@ -16,6 +16,13 @@ if(APPLE)
             )
     # Override any inherited visibility settings
     target_compile_options(us_utils PRIVATE -fvisibility=default)
+elseif(UNIX)
+    # Force all symbols to be exported at link time
+    target_link_options(us_utils PRIVATE
+            "LINKER:--export-dynamic"
+    )
+    # Override any inherited visibility settings
+    target_compile_options(us_utils PRIVATE -fvisibility=default)
 endif()
 
 # Set library properties - MERGED with visibility settings
@@ -44,6 +51,12 @@ elseif(WIN32)
     set_target_properties(us_utils PROPERTIES
             WINDOWS_EXPORT_ALL_SYMBOLS OFF  # We'll use explicit exports
             )
+    # Use BigObj format for large files
+    if(MSVC)
+        target_compile_options(us_utils PRIVATE "/bigobj")
+    elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+        target_compile_options(us_utils PRIVATE "-Wa,-mbig-obj")
+    endif()
 endif()
 
 # Ensure dynamic Qt linking - ALL PLATFORMS
@@ -72,9 +85,9 @@ target_include_directories(us_utils
 # Core Qt libraries (always needed)
 target_link_libraries(us_utils
         PUBLIC
-        Qt5::Core
-        Qt5::Xml
-        Qt5::Network
+        Qt::Core
+        Qt::Xml
+        Qt::Network
         OpenSSL::SSL
         OpenSSL::Crypto
         LibArchive::LibArchive
@@ -84,7 +97,7 @@ target_link_libraries(us_utils
 if(NOT US3_NO_DB)
     target_link_libraries(us_utils
             PUBLIC
-            Qt5::Sql
+            Qt::Sql
             MySQL::Client
             )
 endif()
@@ -104,7 +117,11 @@ endif()
 
 # Compiler-specific options for debugging
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    target_compile_options(us_utils PRIVATE -g -O0)
+    if(MSVC)
+        target_compile_options(us_utils PRIVATE /Zi /Od)
+    else()
+        target_compile_options(us_utils PRIVATE -g -O0)
+    endif()
 endif()
 
 # Export this target for use by other parts of the project
@@ -141,9 +158,9 @@ if(BUILD_TESTING OR US3_PREFER_STATIC)
     # Apply same link libraries
     target_link_libraries(us_utils_static
             PUBLIC
-            Qt5::Core
-            Qt5::Xml
-            Qt5::Network
+            Qt::Core
+            Qt::Xml
+            Qt::Network
             OpenSSL::SSL
             OpenSSL::Crypto
             LibArchive::LibArchive
@@ -153,7 +170,7 @@ if(BUILD_TESTING OR US3_PREFER_STATIC)
     if(NOT US3_NO_DB)
         target_link_libraries(us_utils_static
                 PUBLIC
-                Qt5::Sql
+                Qt::Sql
                 MySQL::Client
                 )
     endif()
@@ -166,11 +183,21 @@ if(BUILD_TESTING OR US3_PREFER_STATIC)
         endif()
     elseif(WIN32)
         target_link_libraries(us_utils_static PUBLIC ${WIN32_SYSTEM_LIBS})
+        # Use BigObj format for large files
+        if(MSVC)
+            target_compile_options(us_utils_static PRIVATE "/bigobj")
+        elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+            target_compile_options(us_utils_static PRIVATE "-Wa,-mbig-obj")
+        endif()
     endif()
 
     # Debug options
     if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-        target_compile_options(us_utils_static PRIVATE -g -O0)
+        if(MSVC)
+            target_compile_options(us_utils_static PRIVATE /Zi /Od)
+        else()
+            target_compile_options(us_utils_static PRIVATE -g -O0)
+        endif()
     endif()
 
     # Export static library alias

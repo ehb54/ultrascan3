@@ -2,21 +2,16 @@
 #define __openglhelper_2003_06_06_15_49__
 
 #include "qglobal.h"
-#if QT_VERSION < 0x040000
-#include <qgl.h>
-#else
-#include <QtOpenGL/qgl.h>
-#endif
+#include <QOpenGLFunctions>
+#include <QOpenGLWidget>
 
 #ifndef Q_OS_MAC
-#if QT_VERSION < 0x047999
-#include <GL/glu.h>
-#endif
-#if QT_VERSION > 0x050000
-#include <GL/glu.h>
-#endif
+  #if defined(_WIN32)
+    #include <windows.h>
+  #endif
+  #include <GL/glu.h>
 #else
-#include <OpenGL/glu.h>  // Changed from GL/glu.h
+  #include <OpenGL/glu.h>  // Changed from GL/glu.h
 #endif
 
 namespace Qwt3D

@@ -189,6 +189,9 @@ EXPECT_EQ(profile->scan_excl_begin[0], 0);
 EXPECT_EQ(profile->scan_excl_end.size(), 1);
 EXPECT_EQ(profile->scan_excl_end[0], 0);
 
+EXPECT_EQ(profile->scan_excl_nth.size(), 1);
+EXPECT_EQ(profile->scan_excl_nth[0], 1);
+
 EXPECT_EQ(profile->replicates.size(), 1);
 EXPECT_EQ(profile->replicates[0], 0);
 }
@@ -358,7 +361,7 @@ EXPECT_THAT(xmlString, QStringContains("load_dens=\"1.42\""));
 EXPECT_THAT(xmlString, QStringContains("grad_vbar=\"0.2661\""));
 }
 
-TEST_F(US_AnaProfileXmlTest, DISABLED_ToXmlSkipsInterferenceBChannels) {
+TEST_F(US_AnaProfileXmlTest, ToXmlSkipsInterferenceBChannels) {
 // Add an Interference B channel (should be skipped in XML output)
 profile->pchans << "1B";
 profile->chndescs << "1B:Interf.:(test)";
@@ -377,6 +380,7 @@ profile->analysis_run << 1;
 profile->report_run << 1;
 profile->scan_excl_begin << 0;
 profile->scan_excl_end << 0;
+profile->scan_excl_nth << 1;
 profile->replicates << 0;
 profile->wvl_edit << 180;
 profile->wvl_not_run << "";
@@ -386,7 +390,7 @@ EXPECT_THAT(xmlString, Not(QStringContains("1B:Interf")));
 EXPECT_THAT(xmlString, QStringContains("channel=\"1A\""));
 }
 
-TEST_F(US_AnaProfileXmlTest, DISABLED_ToXmlHandlesMultipleChannels) {
+TEST_F(US_AnaProfileXmlTest, ToXmlHandlesMultipleChannels) {
 // Add a second channel
 profile->pchans << "2A";
 profile->chndescs << "2A:UV/vis.:(sample)";
@@ -405,6 +409,7 @@ profile->analysis_run << 1;
 profile->report_run << 1;
 profile->scan_excl_begin << 0;
 profile->scan_excl_end << 0;
+profile->scan_excl_nth << 1;
 profile->replicates << 0;
 profile->wvl_edit << 200;
 profile->wvl_not_run << "";
@@ -757,6 +762,7 @@ profile->analysis_run.clear();
 profile->report_run.clear();
 profile->scan_excl_begin.clear();
 profile->scan_excl_end.clear();
+profile->scan_excl_nth.clear();
 profile->replicates.clear();
 profile->wvl_edit.clear();
 profile->wvl_not_run.clear();
