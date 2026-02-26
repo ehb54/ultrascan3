@@ -147,8 +147,8 @@ US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
    auto *m_help = us_pushbutton( tr( "Help" ) );
    auto *m_exit = us_pushbutton( tr( "Exit" ) );
    connect( m_exit, SIGNAL( clicked() ), this, SLOT( close()  ) );
-   //connect( m_help, SIGNAL( clicked() ), this, SLOT( help_m()  ) );
-   
+   connect( m_help, SIGNAL( clicked() ), this, SLOT( help()  ) );
+
    hbox->addWidget(m_help);
    hbox->addWidget(m_exit);
    hbox->setSpacing(1);
@@ -393,7 +393,7 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    auto *m_help = us_pushbutton( tr( "Help" ) );
    auto *m_exit = us_pushbutton( tr( "Exit" ) );
    connect( m_exit, SIGNAL( clicked() ), this, SLOT( close()  ) );
-   //connect( m_help, SIGNAL( clicked() ), this, SLOT( help_m()  ) );
+   connect( m_help, SIGNAL( clicked() ), this, SLOT( help()  ) );
    
    hbox->addWidget(m_help);
    hbox->addWidget(m_exit);
@@ -524,6 +524,15 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
 
  }
 
+
+//help bttns
+void US_ComProjectMain::help( void )
+{
+  if ( !us_mode_bool )
+    showHelp.show_help("gmp/index.html");
+  else
+    showHelp.show_help("experiment/index.html");
+}
 
 // Check if data location set to DB
 void US_ComProjectMain::checkDataLocation( void )
