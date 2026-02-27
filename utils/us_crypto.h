@@ -29,7 +29,28 @@ class US_UTIL_EXTERN US_Crypto
         \param  initVector An initialization string used when the string was encrypted.
         \retval plaintext  The plaintext password.
     */
-    static QString     decrypt( const QString&, const QString&, const QString& );
+    static QString     decrypt( const QString& ciphertext, const QString& pw, const QString& initVector );
+
+    //! \brief Legacy version of the decrypt function.
+    //! \deprecated
+    //! \param  ciphertext The string to be encrypted.
+    //! \param  pw         Password used to encrypt the string
+    //! \param  initVector An initialization string used when the string was encrypted.
+    //! \retval plaintext  The plaintext password.
+    static QString     decryptLegacy( const QString& ciphertext, const QString& pw, const QString& initVector );
+
+    static void fillRandomBytes( QByteArray& ba );
+
+    //! \brief A static function to derive a 32 byte key from a password and salt using PBkdf2.
+    //! \param pwUtf8 ByteArray of password in utf8
+    //! \param salt ByteArray of salt
+    //! \param key32 Key to be derived
+    static bool deriveKeyPBKDF2_32( const QByteArray& pwUtf8, const QByteArray& salt, unsigned char key32[32] );
+
+    //! \brief A static function to derive a 16 byte key from a password.
+    //! \param pw ByteArray of password
+    //! \param key16 Key to be derived
+    static bool deriveLegacyKey_16( const QString& pw, unsigned char key16[16] );
 };
 
 #endif
