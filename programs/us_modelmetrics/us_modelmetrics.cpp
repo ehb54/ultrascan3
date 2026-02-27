@@ -1,6 +1,7 @@
 //! \file us_modelmetrics.cpp
 
 #include "us_modelmetrics.h"
+#include "us_constants.h"
 #include "us_gui_util.h"
 
 #ifndef DbgLv
@@ -462,7 +463,7 @@ void US_ModelMetrics::load_model( void )
          sol_sk.v  = model.components[ jj ].vbar20;
          sol_sk.d  = model.components[ jj ].D;
          sol_sk.f  = model.components[ jj ].f;
-         tmpval1   = model.components[ jj ].f/(6.0*M_PI*1.00194);
+         tmpval1   = model.components[ jj ].f/( 6e-9 * M_PI * VISC_20W );
          total_conc += sol_sk.c;
 
          cmin      = qMin( cmin, sol_sk.c );
@@ -810,11 +811,11 @@ void US_ModelMetrics::calc()
    }
    else if (calc_val == HPr)
    {
-      report_entry.parameter = "Hydrodynamic Radius Distribution (m)";
+      report_entry.parameter = "Hydrodynamic Radius Distribution (nm)";
 		xtitle = "Hydrodynamic Radius";
       for (i=0; i<sk_distro.size(); i++)
       {
-         val1.parm = sk_distro[i].f/(6.0*M_PI*1.00194);
+         val1.parm = sk_distro[i].f/( 6e-9 * M_PI * VISC_20W );
          val1.conc = sk_distro[i].c;
          temp_list.append(val1);
       }

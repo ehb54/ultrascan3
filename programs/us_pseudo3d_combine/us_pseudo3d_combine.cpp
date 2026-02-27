@@ -175,24 +175,29 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
    QGridLayout*  gl_x_vbar = us_radiobutton( tr( "vbar"), rb_x_vbar, false );
    QGridLayout*  gl_x_D    = us_radiobutton( tr( "D"   ), rb_x_D,    false );
    QGridLayout*  gl_x_f    = us_radiobutton( tr( "f"   ), rb_x_f,    false );
+   QGridLayout*  gl_x_rh   = us_radiobutton( tr( "Rh"  ), rb_x_rh,   false );
    QGridLayout*  gl_y_s    = us_radiobutton( tr( "s"   ), rb_y_s,    false );
    QGridLayout*  gl_y_ff0  = us_radiobutton( tr( "ff0" ), rb_y_ff0,  true  );
    QGridLayout*  gl_y_mw   = us_radiobutton( tr( "mw"  ), rb_y_mw,   false );
    QGridLayout*  gl_y_vbar = us_radiobutton( tr( "vbar"), rb_y_vbar, false );
    QGridLayout*  gl_y_D    = us_radiobutton( tr( "D"   ), rb_y_D,    false );
    QGridLayout*  gl_y_f    = us_radiobutton( tr( "f"   ), rb_y_f,    false );
+   QGridLayout*  gl_y_rh   = us_radiobutton( tr( "Rh"  ), rb_y_rh,   false );
+
    bg_x_axis->addButton( rb_x_s,    ATTR_S );
    bg_x_axis->addButton( rb_x_ff0,  ATTR_K );
    bg_x_axis->addButton( rb_x_mw,   ATTR_W );
    bg_x_axis->addButton( rb_x_vbar, ATTR_V );
    bg_x_axis->addButton( rb_x_D,    ATTR_D );
    bg_x_axis->addButton( rb_x_f,    ATTR_F );
+   bg_x_axis->addButton( rb_x_rh,   ATTR_R );
    bg_y_axis->addButton( rb_y_s,    ATTR_S );
    bg_y_axis->addButton( rb_y_ff0,  ATTR_K );
    bg_y_axis->addButton( rb_y_mw,   ATTR_W );
    bg_y_axis->addButton( rb_y_vbar, ATTR_V );
    bg_y_axis->addButton( rb_y_D,    ATTR_D );
    bg_y_axis->addButton( rb_y_f,    ATTR_F );
+   bg_y_axis->addButton( rb_y_rh,   ATTR_R );
    rb_x_s   ->setChecked( true  );
    rb_y_s   ->setEnabled( false );
    rb_y_ff0 ->setChecked( true  );
@@ -203,12 +208,14 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
    rb_x_vbar->setToolTip( tr( "Set X axis to Partial Specific Volume"   ) );
    rb_x_D   ->setToolTip( tr( "Set X axis to Diffusion Coefficient"     ) );
    rb_x_f   ->setToolTip( tr( "Set X axis to Frictional Coefficient"    ) );
+   rb_x_rh  ->setToolTip( tr( "Set X axis to Hydrodynamic Radius"       ) );
    rb_y_s   ->setToolTip( tr( "Set Y axis to Sedimentation Coefficient" ) );
    rb_y_ff0 ->setToolTip( tr( "Set Y axis to Frictional Ratio"          ) );
    rb_y_mw  ->setToolTip( tr( "Set Y axis to Molecular Weight"          ) );
    rb_y_vbar->setToolTip( tr( "Set Y axis to Partial Specific Volume"   ) );
    rb_y_D   ->setToolTip( tr( "Set Y axis to Diffusion Coefficient"     ) );
    rb_y_f   ->setToolTip( tr( "Set Y axis to Frictional Coefficient"    ) );
+   rb_y_rh  ->setToolTip( tr( "Set Y axis to Hydrodynamic Radius"       ) );
    connect( bg_x_axis,  SIGNAL( buttonReleased( int ) ),
             this,       SLOT  ( select_x_axis ( int ) ) );
    connect( bg_y_axis,  SIGNAL( buttonReleased( int ) ),
@@ -304,20 +311,22 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
    spec->addWidget( ct_curr_distr, s_row++, 4, 1, 4 );
    spec->addWidget( te_distr_info, s_row,   0, 2, 8 ); s_row += 2;
    spec->addWidget( le_cmap_name,  s_row++, 0, 1, 8 );
-   spec->addWidget( lb_x_axis,     s_row,   0, 1, 2 );
-   spec->addLayout( gl_x_s,        s_row,   2, 1, 1 );
-   spec->addLayout( gl_x_ff0,      s_row,   3, 1, 1 );
-   spec->addLayout( gl_x_mw,       s_row,   4, 1, 1 );
-   spec->addLayout( gl_x_vbar,     s_row,   5, 1, 1 );
-   spec->addLayout( gl_x_D,        s_row,   6, 1, 1 );
-   spec->addLayout( gl_x_f,        s_row++, 7, 1, 1 );
-   spec->addWidget( lb_y_axis,     s_row,   0, 1, 2 );
-   spec->addLayout( gl_y_s,        s_row,   2, 1, 1 );
-   spec->addLayout( gl_y_ff0,      s_row,   3, 1, 1 );
-   spec->addLayout( gl_y_mw,       s_row,   4, 1, 1 );
-   spec->addLayout( gl_y_vbar,     s_row,   5, 1, 1 );
-   spec->addLayout( gl_y_D,        s_row,   6, 1, 1 );
-   spec->addLayout( gl_y_f,        s_row++, 7, 1, 1 );
+   spec->addWidget( lb_x_axis,     s_row,   0, 1, 1 );
+   spec->addLayout( gl_x_s,        s_row,   1, 1, 1 );
+   spec->addLayout( gl_x_ff0,      s_row,   2, 1, 1 );
+   spec->addLayout( gl_x_mw,       s_row,   3, 1, 1 );
+   spec->addLayout( gl_x_vbar,     s_row,   4, 1, 1 );
+   spec->addLayout( gl_x_D,        s_row,   5, 1, 1 );
+   spec->addLayout( gl_x_f,        s_row,   6, 1, 1 );
+   spec->addLayout( gl_x_rh,       s_row++, 7, 1, 1 );
+   spec->addWidget( lb_y_axis,     s_row,   0, 1, 1 );
+   spec->addLayout( gl_y_s,        s_row,   1, 1, 1 );
+   spec->addLayout( gl_y_ff0,      s_row,   2, 1, 1 );
+   spec->addLayout( gl_y_mw,       s_row,   3, 1, 1 );
+   spec->addLayout( gl_y_vbar,     s_row,   4, 1, 1 );
+   spec->addLayout( gl_y_D,        s_row,   5, 1, 1 );
+   spec->addLayout( gl_y_f,        s_row,   6, 1, 1 );
+   spec->addLayout( gl_y_rh,       s_row++, 7, 1, 1 );
    spec->addWidget( pb_pltall,     s_row,   0, 1, 4 );
    spec->addWidget( pb_stopplt,    s_row++, 4, 1, 4 );
    spec->addWidget( pb_refresh,    s_row,   0, 1, 4 );
@@ -952,6 +961,7 @@ DbgLv(1) << "LD:  analys_name" << tsys.analys_name;
          sol_sk.v  = model.components[ jj ].vbar20;
          sol_sk.d  = model.components[ jj ].D * 1.0e7;
          sol_sk.f  = model.components[ jj ].f;
+         sol_sk.r  = model.components[ jj ].f / ( 6e-9 * M_PI * VISC_20W );
 
          sol_xy    = sol_sk;
          sol_xy.s  = ( plot_x == ATTR_S ) ? sol_sk.s : sol_xy.s;
@@ -960,12 +970,14 @@ DbgLv(1) << "LD:  analys_name" << tsys.analys_name;
          sol_xy.s  = ( plot_x == ATTR_V ) ? sol_sk.v : sol_xy.s;
          sol_xy.s  = ( plot_x == ATTR_D ) ? sol_sk.d : sol_xy.s;
          sol_xy.s  = ( plot_x == ATTR_F ) ? sol_sk.f : sol_xy.s;
+         sol_xy.s  = ( plot_x == ATTR_R ) ? sol_sk.r : sol_xy.s;
          sol_xy.k  = ( plot_y == ATTR_S ) ? sol_sk.s : sol_xy.k;
          sol_xy.k  = ( plot_y == ATTR_K ) ? sol_sk.k : sol_xy.k;
          sol_xy.k  = ( plot_y == ATTR_W ) ? sol_sk.w : sol_xy.k;
          sol_xy.k  = ( plot_y == ATTR_V ) ? sol_sk.v : sol_xy.k;
          sol_xy.k  = ( plot_y == ATTR_D ) ? sol_sk.d : sol_xy.k;
          sol_xy.k  = ( plot_y == ATTR_F ) ? sol_sk.f : sol_xy.k;
+         sol_xy.k  = ( plot_y == ATTR_R ) ? sol_sk.r : sol_xy.k;
 
          tsys.sk_distro << sol_sk;
          tsys.xy_distro << sol_xy;
@@ -1401,12 +1413,12 @@ void US_Pseudo3D_Combine::select_y_axis_auto( int ival )
 // Select coordinate for horizontal axis
 void US_Pseudo3D_Combine::select_x_axis( int ival )
 {
-   const QString xlabs[] = {      "s", "f/f0",  "MW", "vbar", "D", "f"  };
-   const double  xvlos[] = {      1.0,   1.0,   2e+4,  0.60, 1e-8, 1e-8 };
-   const double  xvhis[] = {     10.0,   4.0,   1e+5,  0.80, 1e-7, 1e-7 };
-   const double  xmins[] = { -100000.0,  1.0,    0.0,  0.01, 1e-9, 1e-9 };
-   const double  xmaxs[] = {  100000.0, 50.0,  1e+10,  3.00, 1e-5, 1e-5 };
-   const double  xincs[] = {     0.01,  0.01, 1000.0,  0.01, 1e-9, 1e-9 };
+   const QString xlabs[] = {      "s", "f/f0",  "MW", "vbar", "D", "f",  "Rh" };
+   const double  xvlos[] = {      1.0,   1.0,   2e+4,  0.60, 1e-8, 1e-8,  1.0 };
+   const double  xvhis[] = {     10.0,   4.0,   1e+5,  0.80, 1e-7, 1e-7, 10.0 };
+   const double  xmins[] = { -100000.0,  1.0,    0.0,  0.01, 1e-9, 1e-9, -1e5 };
+   const double  xmaxs[] = {  100000.0, 50.0,  1e+10,  3.00, 1e-5, 1e-5,  1e5 };
+   const double  xincs[] = {     0.01,  0.01, 1000.0,  0.01, 1e-9, 1e-9, 0.01 };
 
    plot_x     = ival;
 
@@ -1429,6 +1441,7 @@ void US_Pseudo3D_Combine::select_x_axis( int ival )
    rb_y_vbar->setEnabled( plot_x != ATTR_V );
    rb_y_D   ->setEnabled( plot_x != ATTR_D );
    rb_y_f   ->setEnabled( plot_x != ATTR_F );
+   rb_y_rh  ->setEnabled( plot_x != ATTR_R );
 
    build_xy_distro();
 
@@ -1440,12 +1453,12 @@ void US_Pseudo3D_Combine::select_x_axis( int ival )
 // Select coordinate for vertical axis
 void US_Pseudo3D_Combine::select_y_axis( int ival )
 {
-   const QString ylabs[] = {      "s", "f/f0",  "MW", "vbar",    "D", "f"  };
-   const double  yvlos[] = {      1.0,   1.0,   2e+4,  0.60,     0.0, 1e-8 };
-   const double  yvhis[] = {     10.0,   4.0,   1e+5,  0.80,    30.0, 1e-7 };
-   const double  ymins[] = { -100000.0,  1.0,    0.0,  0.01,     0.0, 1e-9 };
-   const double  ymaxs[] = {  100000.0, 50.0,  1e+10,  3.00,100000.0, 1e-5 };
-   const double  yincs[] = {     0.01,  0.01, 1000.0,  0.01,    0.01, 1e-9 };
+   const QString ylabs[] = {      "s", "f/f0",  "MW", "vbar", "D", "f",  "Rh" };
+   const double  yvlos[] = {      1.0,   1.0,   2e+4,  0.60, 1e-8, 1e-8,  1.0 };
+   const double  yvhis[] = {     10.0,   4.0,   1e+5,  0.80, 1e-7, 1e-7, 10.0 };
+   const double  ymins[] = { -100000.0,  1.0,    0.0,  0.01, 1e-9, 1e-9, -1e5 };
+   const double  ymaxs[] = {  100000.0, 50.0,  1e+10,  3.00, 1e-5, 1e-5,  1e5 };
+   const double  yincs[] = {     0.01,  0.01, 1000.0,  0.01, 1e-9, 1e-9, 0.01 };
 
    plot_y     = ival;
 qDebug() << "select-y: plot_y" << plot_y;
@@ -1471,6 +1484,7 @@ qDebug() << "  yval-lo val-hi" << yvlos[plot_y] << yvhis[plot_y];
    rb_x_vbar->setEnabled( plot_y != ATTR_V );
    rb_x_D   ->setEnabled( plot_y != ATTR_D );
    rb_x_f   ->setEnabled( plot_y != ATTR_F );
+   rb_x_rh  ->setEnabled( plot_y != ATTR_R );
 
    build_xy_distro();
 
@@ -1506,12 +1520,14 @@ void US_Pseudo3D_Combine::build_xy_distro()
       sol_xy.s  = ( plot_x == ATTR_V ) ? sol_sk.v : sol_xy.s;
       sol_xy.s  = ( plot_x == ATTR_D ) ? sol_sk.d : sol_xy.s;
       sol_xy.s  = ( plot_x == ATTR_F ) ? sol_sk.f : sol_xy.s;
+      sol_xy.s  = ( plot_x == ATTR_R ) ? sol_sk.r : sol_xy.s;
       sol_xy.k  = ( plot_y == ATTR_S ) ? sol_sk.s : sol_xy.k;
       sol_xy.k  = ( plot_y == ATTR_K ) ? sol_sk.k : sol_xy.k;
       sol_xy.k  = ( plot_y == ATTR_W ) ? sol_sk.w : sol_xy.k;
       sol_xy.k  = ( plot_y == ATTR_V ) ? sol_sk.v : sol_xy.k;
       sol_xy.k  = ( plot_y == ATTR_D ) ? sol_sk.d : sol_xy.k;
       sol_xy.k  = ( plot_y == ATTR_F ) ? sol_sk.f : sol_xy.k;
+      sol_xy.k  = ( plot_y == ATTR_R ) ? sol_sk.r : sol_xy.k;
       tot_conc += sol_sk.c;
       tsys->xy_distro << sol_xy;
    }
@@ -1554,6 +1570,8 @@ QString US_Pseudo3D_Combine::anno_title( int pltndx )
       a_title  = tr( "Diffusion Coefficient (1e-7)" );
    else if ( pltndx == ATTR_F )
       a_title  = tr( "Frictional Coefficient" );
+   else if ( pltndx == ATTR_R )
+      a_title  = tr( "Hydrodynamic Radius (nm)" );
 
    return a_title;
 }
