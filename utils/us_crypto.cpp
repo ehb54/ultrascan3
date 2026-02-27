@@ -58,6 +58,7 @@ QStringList US_Crypto::encrypt( const QString& plain_text, const QString& pw )
    if ( pw.isEmpty() ) {
       return result;
    }
+
    const QByteArray plain_ba = plain_text.toUtf8();
    const QByteArray pw_ba    = pw.toUtf8();
 
@@ -117,8 +118,11 @@ QStringList US_Crypto::encrypt( const QString& plain_text, const QString& pw )
 
    int finalLen = 0;
    if ( ok == 1 ) {
-      unsigned char dummy[1];
-      ok &= EVP_EncryptFinal_ex( ctx.get(), dummy, &finalLen );
+      unsigned char finalBuf[EVP_MAX_BLOCK_LENGTH];
+      ok &= EVP_EncryptFinal_ex( ctx.get(), finalBuf, &finalLen );
+      if ( ok == 1 && finalLen != 0 ) {
+         ok = 0;
+      }
    }
 
    if ( ok != 1 ) {
@@ -295,12 +299,11 @@ QString US_Crypto::decrypt( const QString& ciphertext, const QString& pw,
 
    int finalLen = 0;
    if ( ok == 1 ) {
-      unsigned char dummy[1];
-      ok &= EVP_DecryptFinal_ex(
-         ctx.get(),
-         dummy,
-         &finalLen
-         );
+      unsigned char finalBuf[EVP_MAX_BLOCK_LENGTH];
+      ok &= EVP_EncryptFinal_ex( ctx.get(), finalBuf, &finalLen );
+      if ( ok == 1 && finalLen != 0 ) {
+         ok = 0;
+      }
    }
 
    OPENSSL_cleanse( key, sizeof(key) );
