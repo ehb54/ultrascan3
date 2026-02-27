@@ -293,7 +293,7 @@ QString US_Crypto::decrypt( const QString& ciphertext, const QString& pw,
          ctx.get(),
          EVP_CTRL_GCM_SET_TAG,
          tag.size(),
-         const_cast<char*>(tag.constData())
+         tag.data()
       );
    }
 
