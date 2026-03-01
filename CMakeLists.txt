@@ -233,6 +233,7 @@ if(USE_QT6)
             PrintSupport
             DataVisualization
             OpenGLWidgets
+            Multimedia
             )
     set(QT_VERSION_MAJOR 6)
     set(QT_VERSION_BASE "Qt6")
@@ -249,6 +250,7 @@ else()
             OpenGL
             PrintSupport
             DataVisualization
+            Multimedia
     )
     set(QT_VERSION_MAJOR 5)
     set(QT_VERSION_BASE "Qt5")
@@ -444,7 +446,16 @@ if(BUILD_TESTING)
 endif()
 
 # Find OpenGL
+# On macOS, temporarily prefer frameworks so we get Apple's native
+# OpenGL.framework (which includes GLU)
+if(APPLE)
+    set(_save_find_framework ${CMAKE_FIND_FRAMEWORK})
+    set(CMAKE_FIND_FRAMEWORK FIRST)
+endif()
 find_package(OpenGL REQUIRED)
+if(APPLE)
+    set(CMAKE_FIND_FRAMEWORK ${_save_find_framework})
+endif()
 
 # Find OpenSSL
 find_package(OpenSSL REQUIRED)
@@ -726,6 +737,117 @@ if(NOT US3_NO_DB)
 endif()
 
 # =============================================================================
+# SoMo BUILD (CMake native)
+# =============================================================================
+# build has errors
+# add_subdirectory(us_somo)
+
+# =============================================================================
+# macOS DEPLOYMENT (folder-based layout)
+# =============================================================================
+if(APPLE AND US3_BUILD_PROGRAMS)
+    # Find macdeployqt from the same Qt installation
+    find_program(MACDEPLOYQT_EXECUTABLE macdeployqt
+        HINTS ${Qt6_DIR}/../../../bin
+              ${Qt5_DIR}/../../../bin
+              $ENV{QTDIR}/bin
+    )
+    if(MACDEPLOYQT_EXECUTABLE)
+        message(STATUS "Found macdeployqt: ${MACDEPLOYQT_EXECUTABLE}")
+    else()
+        message(WARNING "macdeployqt not found - macOS deployment will not work")
+    endif()
+
+    # Find Assistant.app - derive from macdeployqt location (same Qt install)
+    if(MACDEPLOYQT_EXECUTABLE)
+        get_filename_component(_deploy_dir "${MACDEPLOYQT_EXECUTABLE}" DIRECTORY)
+        set(_assistant_candidates
+            "${_deploy_dir}/Assistant.app"
+            "${_deploy_dir}/../bin/Assistant.app"
+            "${_deploy_dir}/../../qt6/bin/Assistant.app"
+            "${_deploy_dir}/../../qt6-tools/bin/Assistant.app"
+            "${_deploy_dir}/../../qttools/bin/Assistant.app"
+            "${_deploy_dir}/../../qt5/bin/Assistant.app"
+            "${_deploy_dir}/../../qt5-tools/bin/Assistant.app"
+        )
+        set(ASSISTANT_APP_PATH "" CACHE FILEPATH "Path to Qt Assistant.app for packaging")
+        if(NOT ASSISTANT_APP_PATH)
+            foreach(_cand IN LISTS _assistant_candidates)
+                get_filename_component(_real "${_cand}" REALPATH)
+                if(EXISTS "${_real}")
+                    set(ASSISTANT_APP_PATH "${_real}")
+                    break()
+                endif()
+            endforeach()
+        endif()
+        if(ASSISTANT_APP_PATH)
+            message(STATUS "Assistant.app for packaging: ${ASSISTANT_APP_PATH}")
+        else()
+            message(STATUS "Assistant.app not found - help will not work in packaged DMG")
+        endif()
+    endif()
+
+    # Derive vcpkg lib/plugin dirs for MacDeploy.cmake
+    set(_VCPKG_LIB_DIR "")
+    set(_VCPKG_PLUGIN_DIR "")
+    if(DEFINED VCPKG_INSTALLED_DIR AND DEFINED VCPKG_TARGET_TRIPLET)
+        set(_VCPKG_LIB_DIR "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/lib")
+        set(_VCPKG_PLUGIN_DIR "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/plugins")
+    endif()
+
+    # Staging directory for the folder-based install
+    set(US3_STAGE_DIR "${CMAKE_BINARY_DIR}/_stage/UltraScan3" CACHE PATH
+        "Staging directory for macOS folder-based deployment")
+
+    # Create deploy_macos target — builds the folder tree in _stage/UltraScan3/
+    if(MACDEPLOYQT_EXECUTABLE AND TARGET us)
+        # Core deps only — optional targets (us3_somo, us3_config, us_admin, us_saxs_cmds_t)
+        # are NOT listed here; they are staged opportunistically by MacDeploy.cmake
+        # if their output dirs exist, but we don't hard-depend on them.
+        set(_deploy_macos_deps us documentation)
+
+        add_custom_target(deploy_macos
+            COMMAND ${CMAKE_COMMAND} -E remove_directory "${US3_STAGE_DIR}"
+            COMMAND ${CMAKE_COMMAND}
+                -DSTAGE_DIR=${US3_STAGE_DIR}
+                -DMACDEPLOYQT=${MACDEPLOYQT_EXECUTABLE}
+                -DASSISTANT_APP=${ASSISTANT_APP_PATH}
+                -DQCH_DIR=${CMAKE_BINARY_DIR}/bin
+                -DBIN_DIR=${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
+                -DLIB_DIR=${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
+                -DETC_SOURCE_DIR=${CMAKE_SOURCE_DIR}/etc
+                -DSOMO_SOURCE_DIR=${CMAKE_SOURCE_DIR}/somo
+                -DSOMO_BIN_DIR=${CMAKE_SOURCE_DIR}/bin
+                -DSOMO_LIB_DIR=${CMAKE_SOURCE_DIR}/lib
+                -DLICENSE_FILE=${CMAKE_SOURCE_DIR}/LICENSE.txt
+                -DVCPKG_LIB_DIR=${_VCPKG_LIB_DIR}
+                -DVCPKG_PLUGIN_DIR=${_VCPKG_PLUGIN_DIR}
+                -P ${CMAKE_SOURCE_DIR}/admin/cmake/MacDeploy.cmake
+            DEPENDS ${_deploy_macos_deps}
+            COMMENT "Staging macOS folder-based deployment into ${US3_STAGE_DIR}"
+            VERBATIM
+        )
+    else()
+        # Stub so --target deploy_macos gives a clear error instead of
+        # "No rule to make target deploy_macos".
+        if(NOT MACDEPLOYQT_EXECUTABLE)
+            set(_deploy_macos_reason "macdeployqt not found — install Qt Tools component")
+        elseif(NOT TARGET us)
+            set(_deploy_macos_reason "'us' target not defined (check US3_BUILD_PROGRAMS / US3_NO_DB)")
+        else()
+            set(_deploy_macos_reason "unknown reason")
+        endif()
+        add_custom_target(deploy_macos
+            COMMAND ${CMAKE_COMMAND} -E echo
+                "ERROR: deploy_macos is unavailable: ${_deploy_macos_reason}"
+            COMMAND ${CMAKE_COMMAND} -E false
+            COMMENT "deploy_macos unavailable: ${_deploy_macos_reason}"
+        )
+        message(STATUS "deploy_macos stub created (unavailable: ${_deploy_macos_reason})")
+    endif()
+endif()
+
+# =============================================================================
 # PACKAGING
 # =============================================================================
 set(CPACK_PACKAGE_NAME "UltraScan3")
@@ -739,6 +861,16 @@ elseif(APPLE)
     set(CPACK_GENERATOR "DragNDrop")
     set(CPACK_DMG_VOLUME_NAME "UltraScan3")
     set(CPACK_DMG_FORMAT "UDZO")
+
+    # Package the staged folder tree (NOT a .app bundle).
+    # The DMG will contain a top-level UltraScan3/ folder that the user
+    # drags anywhere.  Running UltraScan3/bin/us.app works from any location.
+    if(TARGET deploy_macos)
+        set(CPACK_INSTALL_CMAKE_PROJECTS "")
+        set(CPACK_INSTALLED_DIRECTORIES
+            "${CMAKE_BINARY_DIR}/_stage/UltraScan3" "UltraScan3"
+        )
+    endif()
 else()
     set(CPACK_GENERATOR "DEB;RPM")
 endif()
@@ -758,30 +890,37 @@ add_custom_target(distclean
         COMMENT "Cleaning all generated files"
         )
 
+# Resolve Qt exact version string
+if(USE_QT6)
+    set(_US3_QT_VERSION "${Qt6_VERSION}")
+else()
+    set(_US3_QT_VERSION "${Qt5_VERSION}")
+endif()
+
+# Write a small version info file for build.sh to read
+file(WRITE "${CMAKE_BINARY_DIR}/us3_build_info.sh"
+"# Auto-generated by CMake configure — do not edit\n"
+"US3_CMAKE_VERSION=\"${US3_VERSION_STRING}\"\n"
+"US3_QT_VERSION=\"${_US3_QT_VERSION}\"\n"
+"US3_QWT_VERSION=\"${QWT_VERSION}\"\n"
+"US3_QWTPLOT3D_VERSION=\"${qwtplot3d_VERSION}\"\n"
+"US3_OPENSSL_VERSION=\"${OPENSSL_VERSION}\"\n"
+"US3_MARIADB_VERSION=\"${MYSQL_MARIADB_VERSION}\"\n"
+"US3_PROFILE=\"${US3_PROFILE}\"\n"
+"US3_PRESET=\"${CMAKE_BUILD_TYPE}\"\n"
+)
+
 # Print configuration summary
 message(STATUS "")
 message(STATUS "UltraScan3 Configuration Summary:")
-message(STATUS "  Version: ${PROJECT_VERSION}")
-message(STATUS "  Build type: ${CMAKE_BUILD_TYPE}")
-message(STATUS "  Install prefix: ${CMAKE_INSTALL_PREFIX}")
-message(STATUS "")
-message(STATUS "Options:")
-message(STATUS "  Profile: ${US3_PROFILE}")
-message(STATUS "  NO_DB support: ${US3_NO_DB}")
-message(STATUS "  Build tests: ${BUILD_TESTING}")
-message(STATUS "  Build programs: ${US3_BUILD_PROGRAMS}")
-message(STATUS "  Prefer static US3 libs: ${US3_PREFER_STATIC}")
-message(STATUS "")
-message(STATUS "Dependencies:")
-if(USE_QT6)
-    message(STATUS "  Qt version: ${Qt6_VERSION}")
-else ()
-    message(STATUS "  Qt version: ${Qt5_VERSION}")
-endif()
-message(STATUS "  Qwt version: ${QWT_VERSION}")
+message(STATUS "  Version:        ${US3_VERSION_STRING}")
+message(STATUS "  Build type:     ${CMAKE_BUILD_TYPE}")
+message(STATUS "  Profile:        ${US3_PROFILE}")
+message(STATUS "  Qt version:     ${_US3_QT_VERSION}")
+message(STATUS "  Qwt version:    ${QWT_VERSION}")
+message(STATUS "  QwtPlot3D:      ${qwtplot3d_VERSION}")
+message(STATUS "  OpenSSL:        ${OPENSSL_VERSION}")
 if(NOT US3_NO_DB)
-    message(STATUS "  MySQL found: ${MYSQL_MARIADB_VERSION} ${MYSQL_MARIADB_MODULE}")
+    message(STATUS "  MariaDB:        ${MYSQL_MARIADB_VERSION}")
 endif()
-message(STATUS "  LibArchive version: ${LibArchiv_VERSION}")
-message(STATUS "  OpenSSL  version: ${OPENSSL_VERSION}")
 message(STATUS "")

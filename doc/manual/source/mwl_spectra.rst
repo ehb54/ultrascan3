@@ -40,28 +40,25 @@ Process:
 
 
 
-.. grid:: 2
-   :gutter: 2
+... grid:: 2
+    :gutter: 2
 
-.. image:: _static/images/mwlr_spectra_cont.png
-    :align: left
-    :width: 21%
+    .. grid-item::
+       .. image:: _static/images/mwlr_spectra_cont.png
+          :width: 21%
 
-.. image:: _static/images/mwlr_spectra_3d.png
-    :width: 73%
-    :align: right
+    .. grid-item::
+       .. image:: _static/images/mwlr_spectra_3d.png
+          :width: 73%
 
-.. rst-class:: center
+ .. rst-class:: center
 
     **3D-Display Control and 3-D Viewer**
 
-|
+ |
 
+ .. image:: _static/images/mwlr_spectra_save.png
 
-
-.. image:: _static/images/mwlr_spectra_save.png
-
-.. rst-class::
-    :align: center
+ .. rst-class:: center
 
     **save movie as png files**

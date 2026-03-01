@@ -24,3 +24,4 @@ gui/qrc_images.cpp
 /vcpkg/
 /.idea/
 /.vscode/
+/_CPack_Packages/
