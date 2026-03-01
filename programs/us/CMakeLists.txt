@@ -66,3 +66,18 @@ if(APPLE)
                 COMMENT "Ad-hoc code signing"
         )
 endif()
+
+if(WIN32)
+    find_program(WINDEPLOYQT windeployqt
+        HINTS "${CMAKE_PREFIX_PATH}/bin"
+              "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/tools/Qt6/bin"
+    )
+    if(WINDEPLOYQT)
+        add_custom_command(TARGET us POST_BUILD
+            COMMAND ${WINDEPLOYQT} --no-translations --no-system-d3d-compiler
+                    $<TARGET_FILE:us>
+            COMMENT "Running windeployqt..."
+        )
+    endif()
+endif()
+

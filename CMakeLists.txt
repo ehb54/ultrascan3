@@ -132,6 +132,7 @@ if(UNIX AND NOT APPLE)
     endif()
 elseif(MSVC)
     add_compile_options(/wd4251 /wd4275 /wd4996 /wd4267 /wd4305 /wd4309)
+    add_compile_definitions(WIN32_LEAN_AND_MEAN NOMINMAX)
 endif()
 
 # Enable Qt's MOC, RCC, and UIC
@@ -363,13 +364,12 @@ set(US3_ETC_EXCLUDE_DIRS
         rotors
         dmd
         mysql
-        somo.cromer68.saxs_atoms
         )
 
 # Individual files you want to keep editable on disk
 set(US3_ETC_EXCLUDE_FILES
         cluster.config
-        )
+        somo.cromer68.saxs_atoms)
 
 # Outputs
 set(US3_QRC_XML "${CMAKE_BINARY_DIR}/us3_xml_auto.qrc")

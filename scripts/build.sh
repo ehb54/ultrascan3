@@ -22,15 +22,29 @@ fi
 CLEAN=false
 INSTALL=false
 PROFILE="APP"  # default profile
+QT_VERSION="qt6"
+QWT_VERSION=""
+ARCH=""
+US3_VCPKG_ROOT=""
 QT_OVERRIDE=""  # empty = use platform default
-QWT_VERSION="616"  # default Qwt version
+
 
 # Parse options
 while [[ $# -gt 0 ]]; do
   case $1 in
-    --clean)
-      CLEAN=true
-      shift
+    --clean)        CLEAN=true;               shift ;;
+    --qt6)          QT_VERSION="qt6";         QWT_VERSION="";        shift ;;
+    --qt5-qwt616)   QT_VERSION="qt5";         QWT_VERSION="-qwt616"; shift ;;
+    --qt5-qwt630)   QT_VERSION="qt5";         QWT_VERSION="-qwt630"; shift ;;
+    --arch)
+      ARCH="$2"; shift 2
+      if [[ "$ARCH" != "x64" && "$ARCH" != "arm64" ]]; then
+        echo "ERROR: --arch must be x64 or arm64"
+        exit 1
+      fi
+      ;;
+    --vcpkg-root)
+      US3_VCPKG_ROOT="$2"; shift 2
       ;;
     --qt5)
       if [ "$QT_OVERRIDE" = "qt6" ]; then
@@ -61,33 +75,35 @@ while [[ $# -gt 0 ]]; do
       echo ""
       echo "OPTIONS:"
       echo "  --clean       Clean build artifacts before building"
-      echo "  --install     After building, stage and package a distributable artifact"
-      echo "                  macOS: runs macdeployqt, bundles Qt libs, then creates DMG"
-      echo "                  Linux: runs cpack to create DEB/RPM"
-      echo "                  Windows: runs cpack to create NSIS installer"
-      echo "  --qt5         Force Qt5 build (default on Linux and Windows)"
-      echo "  --qt6         Force Qt6 build (default on macOS)"
-      echo "  --qwt630      Use Qwt 6.3.0 instead of Qwt 6.1.6 (Qt5 only; ignored for Qt6)"
-      echo "  --help        Show this help message"
+      echo "  --install     After building, run cpack to create a distributable package (DMG/DEB/RPM/EXE)"
+      echo "  --qt6                  Build with Qt6 + Qwt6.3.0 [default]"
+      echo "  --qt5-qwt616           Build with Qt5 + Qwt6.1.6"
+      echo "  --qt5-qwt630           Build with Qt5 + Qwt6.3.0"
+      echo "  --arch x64             Target x64 architecture [default: auto-detect]"
+      echo "  --arch arm64           Target ARM64 architecture"
+      echo "  --vcpkg-root <path>    Path to vcpkg installation"
+      echo "  --help                 Show this help message"
       echo ""
-      echo "PROFILE (positional, optional):"
+      echo "PROFILE:"
       echo "  APP           Desktop/user build (GUI + programs + DB) [default]"
       echo "  TEST          Dev/CI build (programs + tests, prefer static libs)"
       echo "  HPC           Headless / no DB / no GUI"
       echo ""
+      echo "VCPKG LOCATION (in order of priority):"
+      echo "  1. --vcpkg-root <path> argument"
+      echo "  2. US3_VCPKG_ROOT environment variable"
+      echo "  3. vcpkg/ directory inside the source tree"
+      echo "  4. \$HOME/vcpkg (default)"
+      echo ""
       echo "EXAMPLES:"
-      echo "  $0                    # Dev build: Qt6 on macOS, Qt5 on Linux/Windows"
-      echo "  $0 --qt5              # Force Qt5 dev build"
-      echo "  $0 --qt5 --qwt630     # Qt5 dev build with Qwt 6.3.0"
-      echo "  $0 --qt6              # Force Qt6 dev build"
-      echo "  $0 --install          # Build then create distributable (DMG/DEB/RPM)"
-      echo "  $0 --qt5 --install    # Qt5 distributable"
-      echo "  $0 --clean            # Clean and rebuild"
-      echo "  $0 --clean TEST       # Clean and rebuild with TEST profile"
+      echo "  $0                  # Build with APP profile"
+      echo "  $0 TEST             # Build with TEST profile"
+      echo "  $0 --clean          # Clean and build with APP profile"
+      echo "  $0 --clean TEST     # Clean and build with TEST profile"
       echo ""
       echo "ENVIRONMENT VARIABLES:"
       echo "  US3_BUILD_JOBS      Override number of parallel build jobs"
-      echo "  US3_VCPKG_ROOT      Override vcpkg location (default: \$HOME/vcpkg)"
+      echo "  US3_VCPKG_ROOT      Override vcpkg location (default: $HOME/vcpkg)"
       exit 0
       ;;
     APP|TEST|HPC)
@@ -102,7 +118,8 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-echo "Selected build profile: ${PROFILE}"
+echo "Selected build profile : ${PROFILE}"
+echo "Selected Qt version    : ${QT_VERSION}${QWT_VERSION}"
 if [ "$CLEAN" = true ]; then
   echo "Clean build requested"
 fi
@@ -156,6 +173,43 @@ fi
 
 echo "Platform:    $PLATFORM"
 echo "Qt version:  $QT_VERSION_LABEL  (configure preset: $CONFIGURE_PRESET)"
+
+# =============================================================================
+# ARCHITECTURE DETECTION
+# =============================================================================
+if [ -z "$ARCH" ]; then
+  MACHINE=$(uname -m)
+  if [ "$MACHINE" = "arm64" ] || [ "$MACHINE" = "aarch64" ]; then
+    ARCH="arm64"
+  else
+    ARCH="x64"
+  fi
+  echo "Auto-detected architecture: $ARCH"
+else
+  echo "Architecture (specified)  : $ARCH"
+fi
+
+# =============================================================================
+# BUILD PRESET
+# =============================================================================
+case "$PLATFORM" in
+  macOS)
+    PRESET="macos-release-${QT_VERSION}${QWT_VERSION}"
+    ;;
+  Linux)
+    PRESET="linux-release-${QT_VERSION}${QWT_VERSION}"
+    ;;
+  Windows)
+    if [ "$ARCH" = "arm64" ]; then
+      PRESET="windows-release-${QT_VERSION}${QWT_VERSION}-arm64"
+    else
+      PRESET="windows-release-${QT_VERSION}${QWT_VERSION}"
+    fi
+    ;;
+esac
+
+echo "Platform               : $PLATFORM"
+echo "Preset                 : $PRESET"
 echo ""
 
 # =============================================================================
@@ -173,7 +227,9 @@ if [ -n "${US3_BUILD_JOBS:-}" ]; then
   BUILD_JOBS="$US3_BUILD_JOBS"
 else
   BUILD_JOBS=$((CORES * 9 / 10))
-  [ "$BUILD_JOBS" -lt 1 ] && BUILD_JOBS=1
+  if [ "$BUILD_JOBS" -lt 1 ]; then
+    BUILD_JOBS=1
+  fi
 fi
 
 echo "Detected $CORES cores; using $BUILD_JOBS parallel build jobs."
@@ -253,6 +309,7 @@ if [ "$PLATFORM" = "macOS" ]; then
 
   if [ -n "$DESIRED_XCODE_PATH" ]; then
     echo "Compatible Xcode path: $DESIRED_XCODE_PATH"
+
     if [ "$CURRENT_XCODE_PATH" != "$DESIRED_XCODE_PATH" ]; then
       echo "Xcode 15/16 is installed but not active."
       if [ "$NON_INTERACTIVE" = false ]; then
@@ -295,15 +352,28 @@ fi
 
 # =============================================================================
 # VCPKG SETUP
+# Priority: --vcpkg-root arg > US3_VCPKG_ROOT env > source-tree vcpkg > ~/vcpkg
 # =============================================================================
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SOURCE_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
-US3_VCPKG_ROOT="${US3_VCPKG_ROOT:-$HOME/vcpkg}"
-echo "Using vcpkg root: $US3_VCPKG_ROOT"
+if [ -n "$US3_VCPKG_ROOT" ]; then
+  echo "Using vcpkg from --vcpkg-root argument: $US3_VCPKG_ROOT"
+elif [ -n "${US3_VCPKG_ROOT:-}" ]; then
+  echo "Using vcpkg from US3_VCPKG_ROOT environment variable: $US3_VCPKG_ROOT"
+elif [ -f "${SOURCE_DIR}/vcpkg/bootstrap-vcpkg.sh" ]; then
+  US3_VCPKG_ROOT="${SOURCE_DIR}/vcpkg"
+  echo "Using vcpkg from source tree: $US3_VCPKG_ROOT"
+else
+  US3_VCPKG_ROOT="$HOME/vcpkg"
+  echo "Using vcpkg from default location: $US3_VCPKG_ROOT"
+fi
+
+echo ""
 
 if [ -d "$US3_VCPKG_ROOT" ] && [ ! -d "$US3_VCPKG_ROOT/.git" ]; then
   echo "ERROR: $US3_VCPKG_ROOT exists but is not a vcpkg git clone."
-  echo "Either set US3_VCPKG_ROOT to a different path or move/rename that directory."
+  echo "Set --vcpkg-root or US3_VCPKG_ROOT to a valid vcpkg path."
   exit 1
 fi
 
@@ -324,6 +394,7 @@ fi
 
 export VCPKG_ROOT="$US3_VCPKG_ROOT"
 export VCPKG_BINARY_SOURCES="clear;files,$HOME/.vcpkg-cache,readwrite"
+export VCPKG_INSTALLED_DIR="$US3_VCPKG_ROOT/installed"
 mkdir -p "$HOME/.vcpkg-cache"
 export VCPKG_INSTALLED_DIR="$US3_VCPKG_ROOT/installed"
 
@@ -332,6 +403,9 @@ if [ ! -f "$VCPKG_TOOLCHAIN_FILE" ]; then
   echo "ERROR: vcpkg toolchain file not found at $VCPKG_TOOLCHAIN_FILE"
   exit 1
 fi
+
+echo "vcpkg ready."
+echo ""
 
 # =============================================================================
 # CLEAN BUILD ARTIFACTS (if requested)
@@ -349,6 +423,8 @@ if [ "$CLEAN" = true ]; then
     echo "Build directory does not exist, nothing to clean: $BUILD_DIR"
   fi
 
+  # Clean vcpkg build artifacts (but keep installed packages)
+  # This allows faster rebuilds while still being "clean"
   if [ -d "$US3_VCPKG_ROOT/buildtrees" ]; then
     echo "Removing vcpkg build trees..."
     rm -rf "$US3_VCPKG_ROOT/buildtrees"
@@ -389,12 +465,19 @@ fi
 # =============================================================================
 # FINAL BUILD SUMMARY
 # =============================================================================
-echo "Ready to build UltraScan3 with preset: $CONFIGURE_PRESET"
-echo "  Profile:         ${PROFILE}"
-echo "  Platform:        ${PLATFORM}"
-echo "  Qt version:      ${QT_VERSION_LABEL}"
-echo "  Clean build:     ${CLEAN}"
-echo "  Create package:  ${INSTALL}"
+echo ""
+echo "=========================================="
+echo "Ready to build UltraScan3"
+echo "=========================================="
+echo "  Preset        : ${PRESET}"
+echo "  Profile       : ${PROFILE}"
+echo "  Qt version    : ${QT_VERSION}${QWT_VERSION}"
+echo "  Architecture  : ${ARCH}"
+echo "  Platform:    ${PLATFORM}"
+echo "  Package (cpack): ${INSTALL}"
+echo "  Clean build   : ${CLEAN}"
+echo "  vcpkg root    : ${VCPKG_ROOT}"
+echo "  Build jobs    : ${BUILD_JOBS}"
 echo ""
 
 if [ "$NON_INTERACTIVE" = false ]; then
