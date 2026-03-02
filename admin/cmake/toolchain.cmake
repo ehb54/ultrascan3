@@ -62,6 +62,17 @@ endif()
 message(STATUS "Platform: ${CMAKE_HOST_SYSTEM_NAME}, triplet: ${VCPKG_TARGET_TRIPLET}")
 
 # =============================================================================
+# Set shared vcpkg installed dir BEFORE including vcpkg.cmake so manifest-mode
+# doesn't default to ${CMAKE_BINARY_DIR}/vcpkg_installed.
+# Priority: explicit -DVCPKG_INSTALLED_DIR > VCPKG_ROOT/installed
+# =============================================================================
+if(NOT DEFINED VCPKG_INSTALLED_DIR OR "${VCPKG_INSTALLED_DIR}" STREQUAL "")
+    set(VCPKG_INSTALLED_DIR "${_VCPKG_ROOT}/installed" CACHE PATH
+        "vcpkg installed packages directory" FORCE)
+    message(STATUS "Set VCPKG_INSTALLED_DIR to shared dir: ${VCPKG_INSTALLED_DIR}")
+endif()
+
+# =============================================================================
 # Include vcpkg
 # =============================================================================
 include("${_VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake")

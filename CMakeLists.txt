@@ -68,6 +68,11 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(BUILD_SHARED_LIBS ON)
 link_directories(${CMAKE_BINARY_DIR}/lib)
 
+# Keep CPack working/output directories inside the build tree
+set(CPACK_OUTPUT_FILE_PREFIX "${CMAKE_BINARY_DIR}")
+set(CPACK_PACKAGE_DIRECTORY "${CMAKE_BINARY_DIR}/cpack")
+set(CPACK_TOPLEVEL_TAG "")
+
 # Enable deprecation warnings and treat them as errors
 #if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 #    add_compile_options(
@@ -318,6 +323,19 @@ endif()
 
 add_definitions(-DQT_SHARED)
 set(QT_STATICPLUGIN 0 CACHE BOOL "Disable static Qt plugins" FORCE)
+
+# vcpkg's FindWrapOpenGL.cmake on macOS spuriously adds /usr/X11R6/lib as a
+# link directory (a legacy X11 path that doesn't exist on modern macOS).
+# CMake warns about this for every target.  Suppress it by pre-emptively
+# marking that path as already handled.
+if(APPLE)
+    set_property(DIRECTORY APPEND PROPERTY LINK_DIRECTORIES "")
+    list(REMOVE_ITEM CMAKE_EXE_LINKER_FLAGS "-L/usr/X11R6/lib")
+    # The warning comes from target_link_libraries being given a directory path.
+    # We cannot silence it globally, but we can prevent it from being added
+    # by overriding the offending variable that FindWrapOpenGL.cmake reads.
+    set(X11_X11_LIB "" CACHE STRING "Suppress X11R6 link dir warning" FORCE)
+endif()
 
 # Platform-specific Qt configuration
 if(APPLE)
@@ -746,16 +764,140 @@ endif()
 # macOS DEPLOYMENT (folder-based layout)
 # =============================================================================
 if(APPLE AND US3_BUILD_PROGRAMS)
-    # Find macdeployqt from the same Qt installation
+    # Find macdeployqt from the same Qt installation.
+    #
+    # vcpkg puts macdeployqt in the *static* triplet's tools dir even when
+    # building a dynamic triplet (e.g. arm64-osx-dynamic), because qttools
+    # is only compiled once. We therefore search both the dynamic and the
+    # corresponding static triplet paths, plus the standard Qt install dirs.
+    #
+    # Derive the static-triplet tools path from VCPKG_INSTALLED_DIR:
+    #   arm64-osx-dynamic  →  arm64-osx
+    #   x64-osx-dynamic    →  x64-osx
+    if(DEFINED VCPKG_INSTALLED_DIR AND DEFINED VCPKG_TARGET_TRIPLET)
+        # Dynamic triplet tools dir
+        set(_VCPKG_TOOLS_DYN "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/tools/Qt6/bin")
+        # Derive static counterpart by stripping "-dynamic" suffix
+        string(REPLACE "-dynamic" "" _STATIC_TRIPLET "${VCPKG_TARGET_TRIPLET}")
+        set(_VCPKG_TOOLS_STA "${VCPKG_INSTALLED_DIR}/${_STATIC_TRIPLET}/tools/Qt6/bin")
+        # Also check qt5 tools subdir for Qt5 builds
+        set(_VCPKG_TOOLS_DYN5 "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/tools/qttools/bin")
+        set(_VCPKG_TOOLS_STA5 "${VCPKG_INSTALLED_DIR}/${_STATIC_TRIPLET}/tools/qttools/bin")
+    else()
+        set(_VCPKG_TOOLS_DYN "")
+        set(_VCPKG_TOOLS_STA "")
+        set(_VCPKG_TOOLS_DYN5 "")
+        set(_VCPKG_TOOLS_STA5 "")
+    endif()
+
     find_program(MACDEPLOYQT_EXECUTABLE macdeployqt
-        HINTS ${Qt6_DIR}/../../../bin
-              ${Qt5_DIR}/../../../bin
-              $ENV{QTDIR}/bin
+        HINTS
+            # vcpkg dynamic triplet (unlikely to have it, but try first)
+            "${_VCPKG_TOOLS_DYN}"
+            # vcpkg static triplet tools dir (where vcpkg actually installs it)
+            "${_VCPKG_TOOLS_STA}"
+            # Qt5 tool paths
+            "${_VCPKG_TOOLS_DYN5}"
+            "${_VCPKG_TOOLS_STA5}"
+            # Qt6_DIR / Qt5_DIR relative paths (Homebrew / official installers)
+            "${Qt6_DIR}/../../../bin"
+            "${Qt5_DIR}/../../../bin"
+            "$ENV{QTDIR}/bin"
+        NO_DEFAULT_PATH
     )
     if(MACDEPLOYQT_EXECUTABLE)
         message(STATUS "Found macdeployqt: ${MACDEPLOYQT_EXECUTABLE}")
     else()
         message(WARNING "macdeployqt not found - macOS deployment will not work")
+    endif()
+
+    # ---------------------------------------------------------------------------
+    # Option A: relocate macdeployqt into the dynamic triplet's tools dir.
+    #
+    # macdeployqt resolves its Qt prefix by walking up from its own binary path
+    # to find qt.conf.  When it lives in the static triplet (arm64-osx), its
+    # qt.conf Prefix points to arm64-osx/ which contains only .a archives —
+    # so it deploys nothing.  By copying the binary into the dynamic triplet's
+    # tools/Qt6/bin/ directory it will instead read arm64-osx-dynamic's qt.conf,
+    # whose Prefix points to the real shared .dylib files and Qt6/plugins/.
+    #
+    # We copy (not symlink) to avoid path-canonicalization surprises: macdeployqt
+    # uses argv[0] / dladdr to find itself, and a symlink could resolve back to
+    # the static triplet directory.
+    #
+    # This only applies to vcpkg Qt6 builds where the tool lives in a different
+    # triplet than the libraries.  For Homebrew/official Qt installs macdeployqt
+    # is already co-located with the dylibs, so no action is needed.
+    # ---------------------------------------------------------------------------
+    if(USE_QT6
+       AND MACDEPLOYQT_EXECUTABLE
+       AND DEFINED _VCPKG_TOOLS_STA
+       AND DEFINED _VCPKG_TOOLS_DYN)
+
+        # Always create a build-tree wrapper for macdeployqt so we can write
+        # our own qt.conf next to it.  The vcpkg dynamic triplet's qt.conf
+        # contains HostPrefix=arm64-osx/ which redirects macdeployqt's host
+        # library search back to the static triplet (.a archives only), causing
+        # it to skip all transitive deps (libb2, libicuXX, libpcre2, etc.).
+        # We own the build tree so we can write whatever qt.conf we need.
+
+        # vcpkg's installed/ tree is read-only — we cannot write into it.
+        # Instead, copy macdeployqt into the build tree and write our own
+        # qt.conf alongside it, pointing Prefix at the dynamic triplet root
+        # (absolute path) so macdeployqt finds .dylib files and Qt6/plugins/.
+        set(_MACDEPLOYQT_WRAPPER_DIR "${CMAKE_BINARY_DIR}/tools/macdeployqt-dyn")
+        set(_MACDEPLOYQT_DYN_PATH    "${_MACDEPLOYQT_WRAPPER_DIR}/macdeployqt")
+        set(_DYN_QT_CONF             "${_MACDEPLOYQT_WRAPPER_DIR}/qt.conf")
+
+        file(MAKE_DIRECTORY "${_MACDEPLOYQT_WRAPPER_DIR}")
+
+        # Copy macdeployqt binary if absent or stale
+        if(NOT EXISTS "${_MACDEPLOYQT_DYN_PATH}" OR
+           "${MACDEPLOYQT_EXECUTABLE}" IS_NEWER_THAN "${_MACDEPLOYQT_DYN_PATH}")
+            message(STATUS "Copying macdeployqt to build-tree wrapper dir...")
+            message(STATUS "  from: ${MACDEPLOYQT_EXECUTABLE}")
+            message(STATUS "  to:   ${_MACDEPLOYQT_DYN_PATH}")
+            file(COPY_FILE "${MACDEPLOYQT_EXECUTABLE}" "${_MACDEPLOYQT_DYN_PATH}"
+                 RESULT _copy_result)
+            if(NOT _copy_result EQUAL 0)
+                message(WARNING "Failed to copy macdeployqt to build tree: ${_copy_result}")
+            else()
+                file(CHMOD "${_MACDEPLOYQT_DYN_PATH}"
+                     PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE
+                                 GROUP_READ GROUP_EXECUTE
+                                 WORLD_READ WORLD_EXECUTE)
+                message(STATUS "macdeployqt copied successfully")
+            endif()
+        else()
+            message(STATUS "macdeployqt build-tree copy is up to date")
+        endif()
+
+        # Always (re)write qt.conf — we own this file entirely.
+        # Use an absolute Prefix path pointing at the dynamic triplet root so
+        # macdeployqt finds .dylib files in lib/ and plugins in Qt6/plugins/.
+        # HostPrefix is intentionally omitted so no search redirects to arm64-osx/.
+        get_filename_component(_DYN_TRIPLET_ROOT
+            "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}" ABSOLUTE)
+        file(WRITE "${_DYN_QT_CONF}"
+            "# Auto-generated by UltraScan3 CMakeLists.txt (Option A)\n"
+            "# Points macdeployqt at the dynamic triplet: ${_DYN_TRIPLET_ROOT}\n"
+            "# HostPrefix omitted — all resolution goes through dynamic triplet.\n"
+            "[Paths]\n"
+            "Prefix = ${_DYN_TRIPLET_ROOT}\n"
+            "Libraries = lib\n"
+            "Plugins = Qt6/plugins\n"
+            "Binaries = bin\n"
+            "LibraryExecutables = tools/Qt6/bin\n"
+        )
+        message(STATUS "Wrote qt.conf (build-tree): ${_DYN_QT_CONF}")
+        message(STATUS "  Qt prefix: ${_DYN_TRIPLET_ROOT}")
+
+        # Point MACDEPLOYQT_EXECUTABLE at the build-tree copy
+        if(EXISTS "${_MACDEPLOYQT_DYN_PATH}")
+            set(MACDEPLOYQT_EXECUTABLE "${_MACDEPLOYQT_DYN_PATH}" CACHE FILEPATH
+                "Path to macdeployqt" FORCE)
+            message(STATUS "macdeployqt (active): ${MACDEPLOYQT_EXECUTABLE}")
+        endif()
     endif()
 
     # Find Assistant.app - derive from macdeployqt location (same Qt install)
@@ -764,6 +906,9 @@ if(APPLE AND US3_BUILD_PROGRAMS)
         set(_assistant_candidates
             "${_deploy_dir}/Assistant.app"
             "${_deploy_dir}/../bin/Assistant.app"
+            # vcpkg static triplet tools dir (where qttools is actually installed)
+            "${_VCPKG_TOOLS_STA}/Assistant.app"
+            "${_VCPKG_TOOLS_STA5}/Assistant.app"
             "${_deploy_dir}/../../qt6/bin/Assistant.app"
             "${_deploy_dir}/../../qt6-tools/bin/Assistant.app"
             "${_deploy_dir}/../../qttools/bin/Assistant.app"
@@ -787,13 +932,55 @@ if(APPLE AND US3_BUILD_PROGRAMS)
         endif()
     endif()
 
-    # Derive vcpkg lib/plugin dirs for MacDeploy.cmake
+    # Derive vcpkg lib/plugin dirs for MacDeploy.cmake.
+    # VCPKG_INSTALLED_DIR may point to the per-build-tree vcpkg_installed/ in
+    # manifest mode. Prefer the shared installed dir under VCPKG_ROOT if the
+    # tools we need (macdeployqt) were found there instead.
     set(_VCPKG_LIB_DIR "")
     set(_VCPKG_PLUGIN_DIR "")
     if(DEFINED VCPKG_INSTALLED_DIR AND DEFINED VCPKG_TARGET_TRIPLET)
-        set(_VCPKG_LIB_DIR "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/lib")
+        set(_VCPKG_LIB_DIR    "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/lib")
         set(_VCPKG_PLUGIN_DIR "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/plugins")
     endif()
+    # Also expose the static-triplet lib/plugin dirs so MacDeploy can find
+    # things that vcpkg only installs once (e.g. sqldrivers in static triplet).
+    if(DEFINED VCPKG_INSTALLED_DIR AND DEFINED _STATIC_TRIPLET)
+        set(_VCPKG_LIB_DIR_STA    "${VCPKG_INSTALLED_DIR}/${_STATIC_TRIPLET}/lib")
+        set(_VCPKG_PLUGIN_DIR_STA "${VCPKG_INSTALLED_DIR}/${_STATIC_TRIPLET}/plugins")
+        # Fall back to static dirs if dynamic ones don't exist
+        if(NOT EXISTS "${_VCPKG_LIB_DIR}")
+            set(_VCPKG_LIB_DIR    "${_VCPKG_LIB_DIR_STA}")
+            set(_VCPKG_PLUGIN_DIR "${_VCPKG_PLUGIN_DIR_STA}")
+        endif()
+    endif()
+    # Derive the Qt6/plugins/ dir from the dynamic triplet.
+    # vcpkg Qt6 puts all plugin .dylibs under <triplet>/Qt6/plugins/ rather than
+    # the legacy <triplet>/plugins/ path.  macdeployqt from the static triplet
+    # reads its own qt.conf and won't find these unless we pass -pluginpath.
+    # Prefer the build-local vcpkg_installed dir (manifest mode) first, then
+    # fall back to the shared installed dir.
+    set(_VCPKG_QT6_PLUGIN_DIR "")
+    foreach(_SEARCH_TRIPLET_DIR IN ITEMS
+            "${CMAKE_BINARY_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}"
+            "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}")
+        if(EXISTS "${_SEARCH_TRIPLET_DIR}/Qt6/plugins")
+            set(_VCPKG_QT6_PLUGIN_DIR "${_SEARCH_TRIPLET_DIR}/Qt6/plugins")
+            break()
+        endif()
+    endforeach()
+    if(NOT _VCPKG_QT6_PLUGIN_DIR AND _STATIC_TRIPLET)
+        foreach(_SEARCH_TRIPLET_DIR IN ITEMS
+                "${CMAKE_BINARY_DIR}/vcpkg_installed/${_STATIC_TRIPLET}"
+                "${VCPKG_INSTALLED_DIR}/${_STATIC_TRIPLET}")
+            if(EXISTS "${_SEARCH_TRIPLET_DIR}/Qt6/plugins")
+                set(_VCPKG_QT6_PLUGIN_DIR "${_SEARCH_TRIPLET_DIR}/Qt6/plugins")
+                break()
+            endif()
+        endforeach()
+    endif()
+    message(STATUS "vcpkg lib dir for deploy:         ${_VCPKG_LIB_DIR}")
+    message(STATUS "vcpkg plugin dir for deploy:      ${_VCPKG_PLUGIN_DIR}")
+    message(STATUS "vcpkg Qt6 plugin dir for deploy:  ${_VCPKG_QT6_PLUGIN_DIR}")
 
     # Staging directory for the folder-based install
     set(US3_STAGE_DIR "${CMAKE_BINARY_DIR}/_stage/UltraScan3" CACHE PATH
@@ -822,7 +1009,9 @@ if(APPLE AND US3_BUILD_PROGRAMS)
                 -DLICENSE_FILE=${CMAKE_SOURCE_DIR}/LICENSE.txt
                 -DVCPKG_LIB_DIR=${_VCPKG_LIB_DIR}
                 -DVCPKG_PLUGIN_DIR=${_VCPKG_PLUGIN_DIR}
-                -P ${CMAKE_SOURCE_DIR}/admin/cmake/MacDeploy.cmake
+                -DVCPKG_PLUGIN_DIR_STA=${_VCPKG_PLUGIN_DIR_STA}
+                -DVCPKG_QT6_PLUGIN_DIR=${_VCPKG_QT6_PLUGIN_DIR}
+                -P ${CMAKE_SOURCE_DIR}/admin/cmake/packaging/macos/MacDeploy.cmake
             DEPENDS ${_deploy_macos_deps}
             COMMENT "Staging macOS folder-based deployment into ${US3_STAGE_DIR}"
             VERBATIM
@@ -848,6 +1037,16 @@ if(APPLE AND US3_BUILD_PROGRAMS)
 endif()
 
 # =============================================================================
+# macOS PKG INSTALLER
+# Provides the package_macos_pkg custom target (macOS only).
+# Requires: deploy_macos target (staged files), pkgbuild, productbuild.
+# Output  : <build-dir>/UltraScan3-<version>-macOS.pkg
+# =============================================================================
+if(APPLE AND US3_BUILD_PROGRAMS)
+    include(${CMAKE_SOURCE_DIR}/admin/cmake/packaging/macos/MacOsPkg.cmake)
+endif()
+
+# =============================================================================
 # PACKAGING
 # =============================================================================
 set(CPACK_PACKAGE_NAME "UltraScan3")
@@ -855,23 +1054,12 @@ set(CPACK_PACKAGE_VERSION ${US3_VERSION})
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Advanced analysis of analytical ultracentrifugation experiments")
 set(CPACK_PACKAGE_VENDOR "AUC Solutions, LLC")
 
+# macOS uses the package_macos_pkg CMake target (see admin/cmake/MacOsPkg.cmake)
+# which produces a proper system PKG installer with LaunchDaemon and sysctl.
+# CPack / DragNDrop is not used on macOS.
 if(WIN32)
     set(CPACK_GENERATOR "NSIS")
-elseif(APPLE)
-    set(CPACK_GENERATOR "DragNDrop")
-    set(CPACK_DMG_VOLUME_NAME "UltraScan3")
-    set(CPACK_DMG_FORMAT "UDZO")
-
-    # Package the staged folder tree (NOT a .app bundle).
-    # The DMG will contain a top-level UltraScan3/ folder that the user
-    # drags anywhere.  Running UltraScan3/bin/us.app works from any location.
-    if(TARGET deploy_macos)
-        set(CPACK_INSTALL_CMAKE_PROJECTS "")
-        set(CPACK_INSTALLED_DIRECTORIES
-            "${CMAKE_BINARY_DIR}/_stage/UltraScan3" "UltraScan3"
-        )
-    endif()
-else()
+elseif(NOT APPLE)
     set(CPACK_GENERATOR "DEB;RPM")
 endif()
 

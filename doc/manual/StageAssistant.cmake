@@ -1,232 +1,248 @@
-# StageAssistant.cmake  — called via  cmake -P  from the documentation target.
+# StageAssistant.cmake (minimal, robust)
 #
-# Inputs (passed as -D variables):
-#   ASSISTANT_SOURCE  — full path to the source Assistant.app
-#   DEST_DIR          — directory that will contain Assistant.app  (build/.../bin)
-#   MACDEPLOYQT       — full path to macdeployqt matching ASSISTANT_SOURCE's Qt build
-#   QT_LIB_DIR        — vcpkg Qt lib dir (used only in fallback path when no MACDEPLOYQT)
-#   QSQLITE_PLUGIN    — vcpkg libqsqlite.dylib (used only in fallback path)
+# Purpose:
+#   Copy a Qt Assistant.app into DEST_DIR and make it runnable in-place.
+#   For dynamic Qt builds, we run macdeployqt and then ensure the QSQLITE
+#   driver plugin (needed for QtHelp collection search/index) is present.
 #
-# Strategy A (preferred): macdeployqt available
-#   1. Deep-copy ASSISTANT_SOURCE -> DEST_DIR/Assistant.app
-#   2. Run macdeployqt to bundle Qt frameworks + plugins into the app
-#   3. Ad-hoc re-sign the entire bundle (macdeployqt invalidates the signature)
-#   Result: fully self-contained bundle, FTS indexing works with framework Qt builds.
-#
-# Strategy B (fallback): no macdeployqt
-#   1. Deep-copy ASSISTANT_SOURCE -> DEST_DIR/Assistant.app
-#   2. Patch rpath to point to QT_LIB_DIR
-#   3. Write qt.conf
-#   4. Copy QSQLITE_PLUGIN and platform plugins manually
-#   Result: depends on vcpkg tree at runtime; Qt5 flat-dylib FTS bug applies.
+# Inputs (via -D):
+#   ASSISTANT_SOURCE : path to source Assistant.app
+#   DEST_DIR         : directory to stage into (e.g. build/.../bin)
+#   MACDEPLOYQT      : path to macdeployqt (optional)
+#   QSQLITE_PLUGIN   : path to libqsqlite.dylib (optional)
+#   QT_LIB_DIR       : used only for fallback rpath mode (optional)
 
-cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.16)
 
-if(NOT ASSISTANT_SOURCE OR NOT EXISTS "${ASSISTANT_SOURCE}")
-    message(FATAL_ERROR "ASSISTANT_SOURCE not set or does not exist: '${ASSISTANT_SOURCE}'")
+if(NOT DEFINED ASSISTANT_SOURCE)
+    message(FATAL_ERROR "StageAssistant: ASSISTANT_SOURCE not set")
 endif()
-if(NOT DEST_DIR)
-    message(FATAL_ERROR "DEST_DIR not set")
+if(NOT DEFINED DEST_DIR)
+    message(FATAL_ERROR "StageAssistant: DEST_DIR not set")
 endif()
 
-set(DEST_APP "${DEST_DIR}/Assistant.app")
-set(_SRC_BIN "${ASSISTANT_SOURCE}/Contents/MacOS/Assistant")
-set(_DST_BIN "${DEST_APP}/Contents/MacOS/Assistant")
+# ---- Normalize paths ----
+get_filename_component(SRC_APP "${ASSISTANT_SOURCE}" ABSOLUTE)
+get_filename_component(DEST_DIR_ABS "${DEST_DIR}" ABSOLUTE)
+set(DEST_APP "${DEST_DIR_ABS}/Assistant.app")
+set(SRC_BIN  "${SRC_APP}/Contents/MacOS/Assistant")
+set(DST_BIN  "${DEST_APP}/Contents/MacOS/Assistant")
 
-# ---------------------------------------------------------------------------
-# 1. Deep-copy Assistant.app (only if source is newer or dest missing)
-# ---------------------------------------------------------------------------
-# Determine if we need to re-stage.
-# A bundle is considered up to date only if:
-#   1. The destination binary exists AND is not older than the source
-#   2. The bundle has a Frameworks/ directory (i.e. macdeployqt has already run)
-#      OR macdeployqt is not available (Strategy B, rpath-only path)
-set(_NEEDS_COPY TRUE)
-if(EXISTS "${_DST_BIN}")
-    file(TIMESTAMP "${_SRC_BIN}" _ts_src "%s" UTC)
-    file(TIMESTAMP "${_DST_BIN}" _ts_dst "%s" UTC)
-    if(_ts_src AND _ts_dst AND NOT _ts_src STRGREATER _ts_dst)
-        # Binary is up to date — but only skip if the bundle is also fully deployed
-        if(MACDEPLOYQT AND EXISTS "${MACDEPLOYQT}")
-            # Strategy A: only skip if Frameworks/ exists (macdeployqt has run)
-            if(EXISTS "${DEST_APP}/Contents/Frameworks")
-                set(_NEEDS_COPY FALSE)
-            else()
-                message(STATUS "StageAssistant: Frameworks/ missing, re-running macdeployqt")
-            endif()
-        else()
-            # Strategy B: no macdeployqt, just timestamp check is sufficient
-            set(_NEEDS_COPY FALSE)
-        endif()
+if(NOT EXISTS "${SRC_BIN}")
+    message(FATAL_ERROR "StageAssistant: source Assistant binary not found: ${SRC_BIN}")
+endif()
+
+# ---- Helper: create Qt soname symlinks so plugins can load (libQt6Sql.6.dylib etc) ----
+function(_stageassistant_make_qt_soname_links _fw_dir)
+    if(NOT IS_DIRECTORY "${_fw_dir}")
+        return()
     endif()
-endif()
 
-if(_NEEDS_COPY)
-    message(STATUS "StageAssistant: copying ${ASSISTANT_SOURCE} -> ${DEST_APP}")
-    file(REMOVE_RECURSE "${DEST_APP}")
-    file(COPY "${ASSISTANT_SOURCE}" DESTINATION "${DEST_DIR}")
-else()
-    message(STATUS "StageAssistant: ${DEST_APP} is up to date")
-endif()
+    file(GLOB _qt_full "${_fw_dir}/libQt6*.6.*.dylib")
+    foreach(_full IN LISTS _qt_full)
+        get_filename_component(_base "${_full}" NAME)
 
-# ---------------------------------------------------------------------------
-# Strategy A: macdeployqt available — self-contained framework bundle
-# ---------------------------------------------------------------------------
-if(MACDEPLOYQT AND EXISTS "${MACDEPLOYQT}")
+        # Derive lib name stem and major
+        # Example: libQt6Sql.6.9.1.dylib -> stem=libQt6Sql major=6
+        string(REGEX REPLACE "(libQt6[^.]+)\\.([0-9]+)\\..*" "\\1" _stem "${_base}")
+        string(REGEX REPLACE "(libQt6[^.]+)\\.([0-9]+)\\..*" "\\2" _maj  "${_base}")
 
-    if(_NEEDS_COPY)
-        message(STATUS "StageAssistant: running macdeployqt -> ${DEST_APP}")
-        execute_process(
-            COMMAND "${MACDEPLOYQT}" "${DEST_APP}"
-            RESULT_VARIABLE _DEPLOY_RESULT
-            ERROR_VARIABLE  _DEPLOY_ERR
-        )
-        if(_DEPLOY_RESULT EQUAL 0)
-            message(STATUS "StageAssistant: macdeployqt succeeded")
-        else()
-            message(WARNING "StageAssistant: macdeployqt failed: ${_DEPLOY_ERR}")
+        if(_stem STREQUAL "${_base}")
+            # regex didn't match; skip
+            continue()
         endif()
 
-        # macdeployqt copies Qt libs into Frameworks/ but may leave the binary's
-        # rpath pointing at the original vcpkg lib dir (e.g. @loader_path/../../../../../../lib).
-        # Fix: remove all non-@executable_path/@loader_path rpaths and add the
-        # correct one pointing at Contents/Frameworks/ relative to Contents/MacOS/.
-        message(STATUS "StageAssistant: fixing rpaths on Assistant binary")
-        execute_process(
-            COMMAND bash -c
-                "otool -l '${_DST_BIN}' | grep -A2 LC_RPATH | awk '/path /{print $2}'"
-            OUTPUT_VARIABLE _EXISTING_RPATHS
-            OUTPUT_STRIP_TRAILING_WHITESPACE
-        )
-        if(_EXISTING_RPATHS)
-            string(REPLACE "\n" ";" _RPATH_LIST "${_EXISTING_RPATHS}")
-            foreach(_rp IN LISTS _RPATH_LIST)
-                if(NOT _rp MATCHES "^@executable_path/../Frameworks")
-                    message(STATUS "StageAssistant:   removing rpath: ${_rp}")
-                    execute_process(
-                        COMMAND install_name_tool -delete_rpath "${_rp}" "${_DST_BIN}"
-                        ERROR_QUIET
-                    )
-                endif()
-            endforeach()
-        endif()
-        execute_process(
-            COMMAND install_name_tool -add_rpath "@executable_path/../Frameworks" "${_DST_BIN}"
-            ERROR_QUIET
-        )
-        message(STATUS "StageAssistant:   added rpath: @executable_path/../Frameworks")
+        set(_link1 "${_fw_dir}/${_stem}.${_maj}.dylib")
+        set(_link2 "${_fw_dir}/${_stem}.dylib")
 
-        # macdeployqt misses transitive dylib dependencies (e.g. libsharpyuv needed by libwebp).
-        # Scan Frameworks/ for any dylib whose own dependencies are not yet present, and copy them in.
-        file(GLOB _STAGED_FRAMEWORKS "${DEST_APP}/Contents/Frameworks/*.dylib")
-        foreach(_dylib IN LISTS _STAGED_FRAMEWORKS)
-            execute_process(
-                COMMAND otool -L "${_dylib}"
-                OUTPUT_VARIABLE _DEPS
-                ERROR_QUIET
-            )
-            # Extract @rpath deps that are not yet in Frameworks/
-            string(REGEX MATCHALL "@rpath/([^ ]+\.dylib)" _rpath_deps "${_DEPS}")
-            foreach(_dep IN LISTS _rpath_deps)
-                string(REGEX REPLACE "@rpath/" "" _depname "${_dep}")
-                if(NOT EXISTS "${DEST_APP}/Contents/Frameworks/${_depname}")
-                    # Search Homebrew lib for this dylib
-                    foreach(_hb_prefix IN ITEMS /opt/homebrew /usr/local)
-                        if(EXISTS "${_hb_prefix}/lib/${_depname}")
-                            file(COPY "${_hb_prefix}/lib/${_depname}"
-                                 DESTINATION "${DEST_APP}/Contents/Frameworks/")
-                            message(STATUS "StageAssistant: fixed missing transitive dep ${_depname}")
-                            break()
-                        endif()
-                    endforeach()
-                endif()
-            endforeach()
-        endforeach()
-
-        # macdeployqt invalidates the code signature — re-sign the whole bundle.
-        execute_process(
-            COMMAND codesign --force --deep --sign - "${DEST_APP}"
-            RESULT_VARIABLE _SIGN_RESULT
-            ERROR_VARIABLE  _SIGN_ERR
-        )
-        if(_SIGN_RESULT EQUAL 0)
-            message(STATUS "StageAssistant: ad-hoc re-signed ${DEST_APP}")
-        else()
-            message(WARNING "StageAssistant: codesign failed: ${_SIGN_ERR}")
+        if(NOT EXISTS "${_link1}")
+            execute_process(COMMAND /bin/ln -sf "${_base}" "${_link1}")
         endif()
+        if(NOT EXISTS "${_link2}")
+            execute_process(COMMAND /bin/ln -sf "${_base}" "${_link2}")
+        endif()
+    endforeach()
+endfunction()
+
+# ---- Helper: locate vcpkg Qt6 plugins dir from MACDEPLOYQT path ----
+function(_stageassistant_guess_qt6_plugins_from_macdeployqt _macdeployqt _out_plugins_root)
+    # macdeployqt typically:
+    #   .../vcpkg/installed/<triplet>/tools/Qt6/bin/macdeployqt
+    # plugins typically:
+    #   .../vcpkg/installed/<triplet>/Qt6/plugins
+    get_filename_component(_mdq_dir "${_macdeployqt}" DIRECTORY)      # .../tools/Qt6/bin
+    get_filename_component(_qt6_dir "${_mdq_dir}" DIRECTORY)          # .../tools/Qt6
+    get_filename_component(_tools_dir "${_qt6_dir}" DIRECTORY)        # .../tools
+    get_filename_component(_triplet_root "${_tools_dir}" DIRECTORY)   # .../<triplet>
+
+    set(_guess "${_triplet_root}/Qt6/plugins")
+    if(EXISTS "${_guess}")
+        set(${_out_plugins_root} "${_guess}" PARENT_SCOPE)
     else()
-        message(STATUS "StageAssistant: skipping macdeployqt (bundle up to date)")
+        set(${_out_plugins_root} "" PARENT_SCOPE)
+    endif()
+endfunction()
+
+# ---- Decide whether we need to (re)deploy ----
+set(_need_stage TRUE)
+if(EXISTS "${DST_BIN}")
+    # If source binary is newer, restage.
+    if("${DST_BIN}" IS_NEWER_THAN "${SRC_BIN}")
+        # Still need to ensure required plugins exist.
+        set(_need_stage FALSE)
+    endif()
+endif()
+
+# Required runtime pieces for working QtHelp search/index:
+#   - libqcocoa (platform)
+#   - libqsqlite (sql driver) + libsqlite3 runtime
+set(_have_qcocoa FALSE)
+set(_have_qsqlite FALSE)
+if(EXISTS "${DEST_APP}/Contents/PlugIns/platforms/libqcocoa.dylib")
+    set(_have_qcocoa TRUE)
+endif()
+if(EXISTS "${DEST_APP}/Contents/PlugIns/sqldrivers/libqsqlite.dylib")
+    set(_have_qsqlite TRUE)
+endif()
+
+if(NOT _have_qcocoa OR NOT _have_qsqlite)
+    set(_need_stage TRUE)
+endif()
+
+if(NOT _need_stage)
+    message(STATUS "StageAssistant: ${DEST_APP} binary is up to date")
+    message(STATUS "StageAssistant: required plugins already present (qcocoa + qsqlite)")
+    return()
+endif()
+
+message(STATUS "StageAssistant: staging self-contained Assistant.app into ${DEST_DIR_ABS}")
+
+# Clean destination to avoid stale mixes of static/dynamic Assistant or plugins
+if(EXISTS "${DEST_APP}")
+    file(REMOVE_RECURSE "${DEST_APP}")
+endif()
+
+# Copy Assistant.app
+file(COPY "${SRC_APP}" DESTINATION "${DEST_DIR_ABS}")
+
+if(NOT EXISTS "${DST_BIN}")
+    message(FATAL_ERROR "StageAssistant: staging failed; missing ${DST_BIN}")
+endif()
+
+# ---------------------------------------------------------------------------
+# Strategy A: macdeployqt — produce a self-contained bundle
+# ---------------------------------------------------------------------------
+if(DEFINED MACDEPLOYQT AND EXISTS "${MACDEPLOYQT}")
+    message(STATUS "StageAssistant: running macdeployqt: ${MACDEPLOYQT}")
+
+    # Ensure clean deploy targets inside the app (macdeployqt will recreate them)
+    file(REMOVE_RECURSE "${DEST_APP}/Contents/Frameworks")
+    file(REMOVE_RECURSE "${DEST_APP}/Contents/PlugIns")
+    file(REMOVE_RECURSE "${DEST_APP}/Contents/Resources/qt.conf")
+
+    execute_process(
+            COMMAND "${MACDEPLOYQT}" "${DEST_APP}" -always-overwrite -verbose=1
+            RESULT_VARIABLE _MDQ_RC
+    )
+    if(NOT _MDQ_RC EQUAL 0)
+        message(FATAL_ERROR "StageAssistant: macdeployqt failed with code ${_MDQ_RC}")
     endif()
 
-# ---------------------------------------------------------------------------
-# Strategy B: vcpkg fallback — rpath patch + manual plugin copy
-# ---------------------------------------------------------------------------
+    # Make sure Qt soname links exist (plugins often reference libQt6X.6.dylib)
+    _stageassistant_make_qt_soname_links("${DEST_APP}/Contents/Frameworks")
+
+    # Ensure QSQLITE driver exists; macdeployqt may not deploy it by default.
+    set(_qsqlite_src "")
+    if(DEFINED QSQLITE_PLUGIN AND EXISTS "${QSQLITE_PLUGIN}")
+        set(_qsqlite_src "${QSQLITE_PLUGIN}")
+    else()
+        _stageassistant_guess_qt6_plugins_from_macdeployqt("${MACDEPLOYQT}" _plugins_root)
+        if(_plugins_root)
+            if(EXISTS "${_plugins_root}/sqldrivers/libqsqlite.dylib")
+                set(_qsqlite_src "${_plugins_root}/sqldrivers/libqsqlite.dylib")
+            endif()
+        endif()
+    endif()
+
+    if(_qsqlite_src)
+        file(MAKE_DIRECTORY "${DEST_APP}/Contents/PlugIns/sqldrivers")
+        file(COPY "${_qsqlite_src}" DESTINATION "${DEST_APP}/Contents/PlugIns/sqldrivers")
+        message(STATUS "StageAssistant: staged QSQLITE plugin: ${_qsqlite_src}")
+    else()
+        message(WARNING "StageAssistant: could not locate libqsqlite.dylib; QtHelp search/index may not work")
+    endif()
+
+    # If the qsqlite plugin depends on libsqlite3.dylib, stage it into Frameworks.
+    # We copy from vcpkg if we can infer its lib dir.
+    if(EXISTS "${DEST_APP}/Contents/PlugIns/sqldrivers/libqsqlite.dylib")
+        # try: triplet_root/lib/libsqlite3*.dylib
+        set(_sqlite_src "")
+        _stageassistant_guess_qt6_plugins_from_macdeployqt("${MACDEPLOYQT}" _plugins_root2)
+        if(_plugins_root2)
+            get_filename_component(_qt6_dir2 "${_plugins_root2}" DIRECTORY) # .../Qt6
+            get_filename_component(_triplet_root2 "${_qt6_dir2}" DIRECTORY)  # .../<triplet>
+            file(GLOB _sqlite_candidates "${_triplet_root2}/lib/libsqlite3*.dylib")
+            list(LENGTH _sqlite_candidates _n_sql)
+            if(_n_sql GREATER 0)
+                list(GET _sqlite_candidates 0 _sqlite_src)
+            endif()
+        endif()
+
+        if(_sqlite_src)
+            file(MAKE_DIRECTORY "${DEST_APP}/Contents/Frameworks")
+            file(COPY "${_sqlite_src}" DESTINATION "${DEST_APP}/Contents/Frameworks")
+            message(STATUS "StageAssistant: staged sqlite runtime: ${_sqlite_src}")
+        endif()
+    endif()
+
+    # Re-run link creation (in case sqlite copy or other libs were added)
+    _stageassistant_make_qt_soname_links("${DEST_APP}/Contents/Frameworks")
+
+    # Final sanity check (non-fatal): ensure plugins exist
+    if(NOT EXISTS "${DEST_APP}/Contents/PlugIns/platforms/libqcocoa.dylib")
+        message(WARNING "StageAssistant: libqcocoa.dylib missing after macdeployqt")
+    endif()
+    if(NOT EXISTS "${DEST_APP}/Contents/PlugIns/sqldrivers/libqsqlite.dylib")
+        message(WARNING "StageAssistant: libqsqlite.dylib missing after staging")
+    endif()
+
+    message(STATUS "StageAssistant: macdeployqt deploy complete")
+
+    # ---------------------------------------------------------------------------
+    # Strategy B: vcpkg fallback — rpath patch + minimal plugin support
+    # ---------------------------------------------------------------------------
 else()
-
     message(STATUS "StageAssistant: MACDEPLOYQT not available, using vcpkg rpath fallback")
-    message(WARNING "StageAssistant: Qt5 flat-dylib builds have known FTS issues — install Homebrew qt@5 for working search")
+    message(STATUS "StageAssistant: Assistant.app will depend on vcpkg libs at runtime (not self-contained)")
 
-    if(QT_LIB_DIR AND EXISTS "${QT_LIB_DIR}")
-        execute_process(
-            COMMAND otool -l "${_DST_BIN}"
-            OUTPUT_VARIABLE _OTOOL_OUTPUT
-            ERROR_QUIET
-        )
-        if(NOT _OTOOL_OUTPUT MATCHES "${QT_LIB_DIR}")
+    if(DEFINED QT_LIB_DIR AND QT_LIB_DIR AND EXISTS "${QT_LIB_DIR}")
+        execute_process(COMMAND /usr/bin/otool -l "${DST_BIN}" OUTPUT_VARIABLE _OTOOL OUTPUT_STRIP_TRAILING_WHITESPACE)
+        if(NOT _OTOOL MATCHES "${QT_LIB_DIR}")
             execute_process(
-                COMMAND install_name_tool -add_rpath "${QT_LIB_DIR}" "${_DST_BIN}"
-                RESULT_VARIABLE _RPATH_RESULT
-                ERROR_VARIABLE  _RPATH_ERR
+                    COMMAND /usr/bin/install_name_tool -add_rpath "${QT_LIB_DIR}" "${DST_BIN}"
+                    RESULT_VARIABLE _RPATH_RC
+                    ERROR_VARIABLE  _RPATH_ERR
             )
-            if(_RPATH_RESULT EQUAL 0)
+            if(_RPATH_RC EQUAL 0)
                 message(STATUS "StageAssistant: added rpath ${QT_LIB_DIR}")
             else()
-                message(WARNING "StageAssistant: install_name_tool failed: ${_RPATH_ERR}")
+                message(WARNING "StageAssistant: failed to add rpath: ${_RPATH_ERR}")
             endif()
-            execute_process(
-                COMMAND codesign --force --sign - "${_DST_BIN}"
-                RESULT_VARIABLE _SIGN_RESULT
-                ERROR_VARIABLE  _SIGN_ERR
-            )
-            if(_SIGN_RESULT EQUAL 0)
-                message(STATUS "StageAssistant: ad-hoc re-signed ${_DST_BIN}")
-            else()
-                message(WARNING "StageAssistant: codesign failed: ${_SIGN_ERR}")
-            endif()
-        else()
-            message(STATUS "StageAssistant: rpath ${QT_LIB_DIR} already present")
         endif()
-    else()
-        message(WARNING "StageAssistant: QT_LIB_DIR not set — Assistant may fail to find Qt libs")
     endif()
 
-    # Write qt.conf
     file(MAKE_DIRECTORY "${DEST_APP}/Contents/Resources")
-    file(WRITE "${DEST_APP}/Contents/Resources/qt.conf" "[Paths]\nPlugins = PlugIns\n")
-    message(STATUS "StageAssistant: wrote qt.conf")
+    file(WRITE "${DEST_APP}/Contents/Resources/qt.conf" "[Paths]\nPlugins=PlugIns\n")
 
-    # Copy QSQLITE plugin
-    if(QSQLITE_PLUGIN AND EXISTS "${QSQLITE_PLUGIN}")
-        set(_SQLDRIVERS "${DEST_APP}/Contents/PlugIns/sqldrivers")
-        file(MAKE_DIRECTORY "${_SQLDRIVERS}")
-        file(COPY "${QSQLITE_PLUGIN}" DESTINATION "${_SQLDRIVERS}")
-        message(STATUS "StageAssistant: installed QSQLITE -> ${_SQLDRIVERS}/")
-    else()
-        message(WARNING "StageAssistant: QSQLITE_PLUGIN not provided — search may not work")
+    if(DEFINED QSQLITE_PLUGIN AND EXISTS "${QSQLITE_PLUGIN}")
+        file(MAKE_DIRECTORY "${DEST_APP}/Contents/PlugIns/sqldrivers")
+        file(COPY "${QSQLITE_PLUGIN}" DESTINATION "${DEST_APP}/Contents/PlugIns/sqldrivers")
     endif()
-
-    # Copy platform plugins
-    if(QT_LIB_DIR)
-        get_filename_component(_QT_ROOT "${QT_LIB_DIR}" DIRECTORY)
-        set(_PLATFORMS_SRC "${_QT_ROOT}/plugins/platforms")
-        if(EXISTS "${_PLATFORMS_SRC}")
-            set(_PLATFORMS_DEST "${DEST_APP}/Contents/PlugIns/platforms")
-            file(MAKE_DIRECTORY "${_PLATFORMS_DEST}")
-            file(COPY "${_PLATFORMS_SRC}/" DESTINATION "${_PLATFORMS_DEST}")
-            message(STATUS "StageAssistant: installed platform plugins -> ${_PLATFORMS_DEST}/")
-        else()
-            message(WARNING "StageAssistant: platform plugins not found at ${_PLATFORMS_SRC}")
-        endif()
-    endif()
-
 endif()
+
+execute_process(
+        COMMAND install_name_tool
+        -add_rpath "@executable_path/../Frameworks"
+        "${DEST_APP}/Contents/MacOS/Assistant"
+        ERROR_QUIET
+)

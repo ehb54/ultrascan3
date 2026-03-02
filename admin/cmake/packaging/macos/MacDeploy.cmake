@@ -390,12 +390,14 @@ foreach(dylib ${us_fw_dylibs})
     endif()
 endforeach()
 
-# Default ASSISTANT_APP to the build output Assistant.app if present
-if((NOT DEFINED ASSISTANT_APP OR ASSISTANT_APP STREQUAL "" OR NOT EXISTS "${ASSISTANT_APP}") AND
-        EXISTS "${BIN_DIR}/Assistant.app")
-    set(ASSISTANT_APP "${BIN_DIR}/Assistant.app")
-    message(STATUS "Defaulting ASSISTANT_APP to ${ASSISTANT_APP}")
+# Force use of dynamically built Assistant from build tree
+set(ASSISTANT_APP "${CMAKE_BINARY_DIR}/bin/Assistant.app")
+
+if(NOT EXISTS "${ASSISTANT_APP}")
+    message(FATAL_ERROR "Dynamic Assistant.app not found at ${ASSISTANT_APP}")
 endif()
+
+message(STATUS "Using dynamic Assistant from ${ASSISTANT_APP}")
 
 # =========================================================================
 # 9) Deploy Qt Assistant.app into staging bin/
@@ -457,72 +459,7 @@ if(ASSISTANT_APP AND EXISTS "${ASSISTANT_APP}")
         message(STATUS "  stderr: ${_e}")
     endif()
 
-    # Move frameworks from Assistant.app → top-level frameworks/
-    set(ASSIST_FW_DIR "${ASSISTANT_DEST}/Contents/Frameworks")
-    if(EXISTS "${ASSIST_FW_DIR}")
-        file(GLOB assist_libs "${ASSIST_FW_DIR}/*")
-        foreach(lib ${assist_libs})
-            get_filename_component(lib_name "${lib}" NAME)
-            if(NOT EXISTS "${S_FW}/${lib_name}")
-                message(STATUS "  Moving ${lib_name} → frameworks/")
-                file(RENAME "${lib}" "${S_FW}/${lib_name}")
-            else()
-                file(REMOVE_RECURSE "${lib}")
-            endif()
-        endforeach()
-        file(REMOVE_RECURSE "${ASSIST_FW_DIR}")
-    endif()
-
-    # Move plugins from Assistant.app → top-level plugins/
-    set(ASSIST_PLUG_DIR "${ASSISTANT_DEST}/Contents/PlugIns")
-    if(EXISTS "${ASSIST_PLUG_DIR}")
-        file(GLOB_RECURSE assist_plug_files "${ASSIST_PLUG_DIR}/*")
-        foreach(pf ${assist_plug_files})
-            file(RELATIVE_PATH rel_path "${ASSIST_PLUG_DIR}" "${pf}")
-            get_filename_component(rel_dir "${rel_path}" DIRECTORY)
-            file(MAKE_DIRECTORY "${S_PLUG}/${rel_dir}")
-            if(NOT EXISTS "${S_PLUG}/${rel_path}")
-                message(STATUS "  Moving Assistant plugin: ${rel_path}")
-                file(RENAME "${pf}" "${S_PLUG}/${rel_path}")
-            endif()
-        endforeach()
-        file(REMOVE_RECURSE "${ASSIST_PLUG_DIR}")
-    endif()
-
-    # Fix Assistant rpaths to point to top-level frameworks/
-    # Assistant binary lives at:
-    #   <STAGE>/bin/Assistant.app/Contents/MacOS/Assistant
-    # Top-level frameworks at:
-    #   <STAGE>/frameworks
-    # From @executable_path (= .../Contents/MacOS/):
-    #   ../../../.. = MacOS → Contents → Assistant.app → bin → <STAGE>
-    #   ../../../../frameworks = <STAGE>/frameworks  ✓
     set(ASSIST_BIN "${ASSISTANT_DEST}/Contents/MacOS/Assistant")
-
-    execute_process(
-        COMMAND bash -c "otool -l '${ASSIST_BIN}' | grep -A2 'LC_RPATH' | grep 'path ' | awk '{print $2}'"
-        OUTPUT_VARIABLE _existing_rpaths  OUTPUT_STRIP_TRAILING_WHITESPACE
-    )
-    if(_existing_rpaths)
-        string(REPLACE "\n" ";" _rpath_list "${_existing_rpaths}")
-        foreach(_rp IN LISTS _rpath_list)
-            message(STATUS "  Removing stale rpath from Assistant: ${_rp}")
-            execute_process(COMMAND install_name_tool -delete_rpath "${_rp}" "${ASSIST_BIN}" ERROR_QUIET)
-        endforeach()
-    endif()
-
-    message(STATUS "  Adding rpath: @executable_path/../../../../frameworks")
-    execute_process(
-        COMMAND install_name_tool -add_rpath "@executable_path/../../../../frameworks" "${ASSIST_BIN}"
-        RESULT_VARIABLE _r
-    )
-    execute_process(
-        COMMAND install_name_tool -add_rpath "@executable_path/../../../../plugins" "${ASSIST_BIN}"
-        ERROR_QUIET
-    )
-
-    # (QSQLITE and libsqlite3 are installed in section 9b below,
-    #  AFTER all plugin relocation is complete.)
 
 else()
     message(STATUS "Assistant.app not provided or not found - help system may not work")
@@ -557,24 +494,10 @@ if(NOT EXISTS "${S_PLUG}/sqldrivers/libqsqlite.dylib")
         endif()
     endforeach()
 
-    # Derive paths from VCPKG_INSTALLED_DIR + triplets directly
-    if(MACDEPLOYQT)
-        # macdeployqt is at <installed>/<static-triplet>/tools/Qt6/bin/macdeployqt
-        # Walk up to <installed>/<static-triplet>
-        get_filename_component(_MDQT_BIN      "${MACDEPLOYQT}"      DIRECTORY)
-        get_filename_component(_MDQT_TOOLS_QT "${_MDQT_BIN}"        DIRECTORY)  # tools/Qt6
-        get_filename_component(_MDQT_TOOLS    "${_MDQT_TOOLS_QT}"   DIRECTORY)  # tools
-        get_filename_component(_MDQT_TRIPLET  "${_MDQT_TOOLS}"      DIRECTORY)  # <triplet>
-        get_filename_component(_MDQT_ROOT     "${_MDQT_TRIPLET}"    DIRECTORY)  # installed/
-        get_filename_component(_MDQT_TRIPLET_NAME "${_MDQT_TRIPLET}" NAME)
-        # Derive the dynamic triplet name
-        string(REPLACE "-osx" "-osx-dynamic" _DYN_TRIPLET "${_MDQT_TRIPLET_NAME}")
-        # Add both layout variants for static and dynamic triplets
+    # Use dynamic Qt plugin directory directly
+    if(VCPKG_QT6_PLUGIN_DIR)
         list(APPEND _QSQLITE_SEARCH_DIRS
-            "${_MDQT_TRIPLET}/Qt6/plugins/sqldrivers"
-            "${_MDQT_TRIPLET}/plugins/sqldrivers"
-            "${_MDQT_ROOT}/${_DYN_TRIPLET}/Qt6/plugins/sqldrivers"
-            "${_MDQT_ROOT}/${_DYN_TRIPLET}/plugins/sqldrivers"
+                "${VCPKG_QT6_PLUGIN_DIR}/sqldrivers"
         )
     endif()
 
@@ -624,19 +547,27 @@ if(NOT EXISTS "${S_PLUG}/platforms/libqcocoa.dylib")
                 endif()
             endif()
         endforeach()
-        # Also try deriving the dynamic triplet root from macdeployqt path
-        if(NOT _PLATFORMS_SRC AND MACDEPLOYQT)
-            get_filename_component(_MQ_BIN  "${MACDEPLOYQT}"   DIRECTORY)
-            get_filename_component(_MQ_TQT  "${_MQ_BIN}"       DIRECTORY)
-            get_filename_component(_MQ_TOOL "${_MQ_TQT}"       DIRECTORY)
-            get_filename_component(_MQ_TRIP "${_MQ_TOOL}"      DIRECTORY)
-            get_filename_component(_MQ_ROOT "${_MQ_TRIP}"      DIRECTORY)
-            get_filename_component(_MQ_TNAME "${_MQ_TRIP}"     NAME)
-            string(REPLACE "-osx" "-osx-dynamic" _DYN_T "${_MQ_TNAME}")
-            if(EXISTS "${_MQ_ROOT}/${_DYN_T}/Qt6/plugins/platforms")
-                set(_PLATFORMS_SRC "${_MQ_ROOT}/${_DYN_T}/Qt6/plugins/platforms")
+        # Use dynamic Qt plugin directory directly
+        if(NOT _PLATFORMS_SRC AND VCPKG_QT6_PLUGIN_DIR)
+            if(EXISTS "${VCPKG_QT6_PLUGIN_DIR}/platforms")
+                set(_PLATFORMS_SRC "${VCPKG_QT6_PLUGIN_DIR}/platforms")
             endif()
         endif()
+
+#        This section can be deleted if script works without it
+        # Also try deriving the dynamic triplet root from macdeployqt path
+#        if(NOT _PLATFORMS_SRC AND MACDEPLOYQT)
+#            get_filename_component(_MQ_BIN  "${MACDEPLOYQT}"   DIRECTORY)
+#            get_filename_component(_MQ_TQT  "${_MQ_BIN}"       DIRECTORY)
+#            get_filename_component(_MQ_TOOL "${_MQ_TQT}"       DIRECTORY)
+#            get_filename_component(_MQ_TRIP "${_MQ_TOOL}"      DIRECTORY)
+#            get_filename_component(_MQ_ROOT "${_MQ_TRIP}"      DIRECTORY)
+#            get_filename_component(_MQ_TNAME "${_MQ_TRIP}"     NAME)
+#            string(REPLACE "-osx" "-osx-dynamic" _DYN_T "${_MQ_TNAME}")
+#            if(EXISTS "${_MQ_ROOT}/${_DYN_T}/Qt6/plugins/platforms")
+#                set(_PLATFORMS_SRC "${_MQ_ROOT}/${_DYN_T}/Qt6/plugins/platforms")
+#            endif()
+#        endif()
     endif()
 
     if(_PLATFORMS_SRC)

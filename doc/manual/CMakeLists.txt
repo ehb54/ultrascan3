@@ -227,15 +227,17 @@ if(QHELPGENERATOR_EXECUTABLE)
             OUTPUT  ${DOC_QHC_STAGE}
             # Generate the QHC normally (qcollectiongenerator always relativizes paths).
             COMMAND ${_QHC_GENERATOR} manual.qhcp -o manual.qhc
-            # Post-process: rewrite NamespaceTable to store the absolute path to the
-            # final bin/manual.qch. Qt Assistant copies the QHC to its app-data dir
-            # at runtime; an absolute path survives that copy intact, whereas a
-            # relative path gets re-resolved from the app-data dir and breaks.
+            # Post-process: rewrite NamespaceTable to store just the bare filename
+            # 'manual.qch' with no path component.  Qt Assistant resolves QCH paths
+            # relative to the QHC file's own directory at runtime, so both files
+            # must sit in the same directory (bin/).  A bare filename survives
+            # installation to any location, whereas an absolute build-tree path
+            # breaks as soon as the DMG is installed elsewhere.
             COMMAND sqlite3 manual.qhc
-                "UPDATE NamespaceTable SET FilePath='${DOC_QCH}' WHERE Name='ultrascaniii';"
+                "UPDATE NamespaceTable SET FilePath='manual.qch' WHERE Name='ultrascaniii';"
             DEPENDS ${SPHINX_QHCP} ${DOC_QCH_STAGE}
             WORKING_DIRECTORY ${DOC_QTHELP_DIR}
-            COMMENT "Compiling Qt help collection (manual.qhc) and fixing QCH path to absolute"
+            COMMENT "Compiling Qt help collection (manual.qhc) and fixing QCH path to bare filename"
             VERBATIM
     )
 
@@ -336,12 +338,17 @@ if(APPLE AND QHELPGENERATOR_EXECUTABLE)
         endforeach()
     endif()
     if(NOT _QSQLITE_PLUGIN)
-        # vcpkg fallback
+        # vcpkg fallback — Qt6 installs plugins under Qt6/plugins/, Qt5 uses plugins/ directly
         foreach(_vcpkg_dir IN ITEMS "${VCPKG_INSTALLED_DIR}" "${_VCPKG_INSTALLED_DIR}")
             if(_vcpkg_dir AND VCPKG_TARGET_TRIPLET)
-                set(_candidate "${_vcpkg_dir}/${VCPKG_TARGET_TRIPLET}/plugins/sqldrivers/libqsqlite.dylib")
-                if(EXISTS "${_candidate}")
-                    set(_QSQLITE_PLUGIN "${_candidate}")
+                foreach(_plugin_subdir IN ITEMS "Qt6/plugins" "plugins")
+                    set(_candidate "${_vcpkg_dir}/${VCPKG_TARGET_TRIPLET}/${_plugin_subdir}/sqldrivers/libqsqlite.dylib")
+                    if(EXISTS "${_candidate}")
+                        set(_QSQLITE_PLUGIN "${_candidate}")
+                        break()
+                    endif()
+                endforeach()
+                if(_QSQLITE_PLUGIN)
                     break()
                 endif()
             endif()
@@ -366,22 +373,14 @@ if(APPLE AND QHELPGENERATOR_EXECUTABLE)
                 set(_MACDEPLOYQT "/usr/local/opt/qt/bin/macdeployqt")
             endif()
         else()
-            # vcpkg Assistant — find vcpkg macdeployqt (FTS works with sqlite3[fts5])
-            foreach(_vcpkg_dir IN ITEMS "${VCPKG_INSTALLED_DIR}" "${_VCPKG_INSTALLED_DIR}")
-                if(_vcpkg_dir AND VCPKG_TARGET_TRIPLET)
-                    string(REGEX REPLACE "-dynamic$" "" _vcpkg_host_triplet "${VCPKG_TARGET_TRIPLET}")
-                    foreach(_triplet IN ITEMS "${VCPKG_TARGET_TRIPLET}" "${_vcpkg_host_triplet}")
-                        set(_candidate "${_vcpkg_dir}/${_triplet}/tools/qt5-tools/bin/macdeployqt")
-                        if(EXISTS "${_candidate}")
-                            set(_MACDEPLOYQT "${_candidate}")
-                            break()
-                        endif()
-                    endforeach()
-                    if(_MACDEPLOYQT)
-                        break()
-                    endif()
-                endif()
-            endforeach()
+            # vcpkg Assistant — use the top-level MACDEPLOYQT_EXECUTABLE which
+            # is the build-tree wrapper (Option A relocation) with a qt.conf that
+            # points at the dynamic triplet.  This is what macdeployqt needs to
+            # find .dylib files rather than .a archives from the static triplet.
+            # FTS works because sqlite3[fts5] is in vcpkg.json.
+            if(MACDEPLOYQT_EXECUTABLE AND EXISTS "${MACDEPLOYQT_EXECUTABLE}")
+                set(_MACDEPLOYQT "${MACDEPLOYQT_EXECUTABLE}")
+            endif()
         endif()
 
         if(_MACDEPLOYQT AND EXISTS "${_MACDEPLOYQT}")
@@ -392,6 +391,7 @@ if(APPLE AND QHELPGENERATOR_EXECUTABLE)
         endif()
 
         # vcpkg lib dir and QSQLITE — only needed for the rpath fallback path
+        # Qt6 vcpkg installs plugins under Qt6/plugins/, Qt5 uses plugins/ directly
         set(_QT_LIB_DIR "")
         set(_QSQLITE_PLUGIN_ARG "")
         if(NOT _MACDEPLOYQT)
@@ -401,10 +401,13 @@ if(APPLE AND QHELPGENERATOR_EXECUTABLE)
                     if(EXISTS "${_candidate}")
                         set(_QT_LIB_DIR "${_candidate}")
                     endif()
-                    set(_candidate "${_vcpkg_dir}/${VCPKG_TARGET_TRIPLET}/plugins/sqldrivers/libqsqlite.dylib")
-                    if(EXISTS "${_candidate}")
-                        set(_QSQLITE_PLUGIN_ARG "${_candidate}")
-                    endif()
+                    foreach(_plugin_subdir IN ITEMS "Qt6/plugins" "plugins")
+                        set(_candidate "${_vcpkg_dir}/${VCPKG_TARGET_TRIPLET}/${_plugin_subdir}/sqldrivers/libqsqlite.dylib")
+                        if(EXISTS "${_candidate}")
+                            set(_QSQLITE_PLUGIN_ARG "${_candidate}")
+                            break()
+                        endif()
+                    endforeach()
                 endif()
             endforeach()
         endif()
