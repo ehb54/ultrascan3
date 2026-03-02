@@ -21,21 +21,19 @@ fi
 # =============================================================================
 CLEAN=false
 INSTALL=false
-PROFILE="APP"  # default profile
-QT_VERSION="qt6"
-QWT_VERSION=""
+BUILD_PKG=false        # --pkg: build macOS PKG installer via package_macos_pkg
+PROFILE="APP"          # default profile
+QT_VARIANT="qt6"       # qt6 | qt5-qwt616 | qt5-qwt630
 ARCH=""
 US3_VCPKG_ROOT=""
-QT_OVERRIDE=""  # empty = use platform default
-
 
 # Parse options
 while [[ $# -gt 0 ]]; do
   case $1 in
-    --clean)        CLEAN=true;               shift ;;
-    --qt6)          QT_VERSION="qt6";         QWT_VERSION="";        shift ;;
-    --qt5-qwt616)   QT_VERSION="qt5";         QWT_VERSION="-qwt616"; shift ;;
-    --qt5-qwt630)   QT_VERSION="qt5";         QWT_VERSION="-qwt630"; shift ;;
+    --clean)        CLEAN=true;                 shift ;;
+    --qt6)          QT_VARIANT="qt6";           shift ;;
+    --qt5-qwt616)   QT_VARIANT="qt5-qwt616";   shift ;;
+    --qt5-qwt630)   QT_VARIANT="qt5-qwt630";   shift ;;
     --arch)
       ARCH="$2"; shift 2
       if [[ "$ARCH" != "x64" && "$ARCH" != "arm64" ]]; then
@@ -46,43 +44,39 @@ while [[ $# -gt 0 ]]; do
     --vcpkg-root)
       US3_VCPKG_ROOT="$2"; shift 2
       ;;
-    --qt5)
-      if [ "$QT_OVERRIDE" = "qt6" ]; then
-        echo "ERROR: --qt5 and --qt6 cannot both be specified"
-        exit 1
-      fi
-      QT_OVERRIDE="qt5"
-      shift
-      ;;
-    --qt6)
-      if [ "$QT_OVERRIDE" = "qt5" ]; then
-        echo "ERROR: --qt5 and --qt6 cannot both be specified"
-        exit 1
-      fi
-      QT_OVERRIDE="qt6"
-      shift
-      ;;
-    --qwt630)
-      QWT_VERSION="630"
-      shift
-      ;;
     --install)
+      # macOS packaging is done via --pkg (PKG installer with LaunchDaemon +
+      # sysctl). --install is Linux (DEB/RPM) and Windows (NSIS) only.
+      if [[ "$OSTYPE" == "darwin"* ]]; then
+        echo "ERROR: --install is not supported on macOS."
+        echo "       Use --pkg to build the macOS PKG installer instead."
+        exit 1
+      fi
       INSTALL=true
+      shift
+      ;;
+    --pkg)
+      BUILD_PKG=true
       shift
       ;;
     --help)
       echo "Usage: $0 [OPTIONS] [PROFILE]"
       echo ""
       echo "OPTIONS:"
-      echo "  --clean       Clean build artifacts before building"
-      echo "  --install     After building, run cpack to create a distributable package (DMG/DEB/RPM/EXE)"
-      echo "  --qt6                  Build with Qt6 + Qwt6.3.0 [default]"
-      echo "  --qt5-qwt616           Build with Qt5 + Qwt6.1.6"
-      echo "  --qt5-qwt630           Build with Qt5 + Qwt6.3.0"
-      echo "  --arch x64             Target x64 architecture [default: auto-detect]"
-      echo "  --arch arm64           Target ARM64 architecture"
-      echo "  --vcpkg-root <path>    Path to vcpkg installation"
-      echo "  --help                 Show this help message"
+      echo "  --clean              Clean build artifacts before building"
+      echo "  --pkg                Build macOS PKG installer (macOS only)"
+      echo "                       Installs to /Applications/UltraScan3, activates the"
+      echo "                       ultrascan_sysctl LaunchDaemon, and applies sysctl values."
+      echo "                       Output: build/<preset>/UltraScan3-<version>-macOS.pkg"
+      echo "  --install            Build platform installer: DEB+RPM on Linux, NSIS on Windows"
+      echo "                       Not supported on macOS (use --pkg)"
+      echo "  --qt6                Build with Qt6 + Qwt6.3.0 [default on macOS]"
+      echo "  --qt5-qwt616         Build with Qt5 + Qwt6.1.6 [default on Linux/Windows]"
+      echo "  --qt5-qwt630         Build with Qt5 + Qwt6.3.0"
+      echo "  --arch x64           Target x64 architecture [default: auto-detect]"
+      echo "  --arch arm64         Target ARM64 architecture"
+      echo "  --vcpkg-root <path>  Path to vcpkg installation"
+      echo "  --help               Show this help message"
       echo ""
       echo "PROFILE:"
       echo "  APP           Desktop/user build (GUI + programs + DB) [default]"
@@ -96,14 +90,17 @@ while [[ $# -gt 0 ]]; do
       echo "  4. \$HOME/vcpkg (default)"
       echo ""
       echo "EXAMPLES:"
-      echo "  $0                  # Build with APP profile"
-      echo "  $0 TEST             # Build with TEST profile"
-      echo "  $0 --clean          # Clean and build with APP profile"
-      echo "  $0 --clean TEST     # Clean and build with TEST profile"
+      echo "  $0                        # Build only"
+      echo "  $0 TEST                   # Build with TEST profile"
+      echo "  $0 --qt5-qwt616           # Build Qt5+Qwt6.1.6"
+      echo "  $0 --clean TEST           # Clean build with TEST profile"
+      echo "  $0 --pkg                  # macOS: build + PKG installer"
+      echo "  $0 --clean --pkg          # macOS: clean build + PKG installer"
+      echo "  $0 --install              # Linux/Windows: build + DEB/RPM or NSIS"
       echo ""
       echo "ENVIRONMENT VARIABLES:"
       echo "  US3_BUILD_JOBS      Override number of parallel build jobs"
-      echo "  US3_VCPKG_ROOT      Override vcpkg location (default: $HOME/vcpkg)"
+      echo "  US3_VCPKG_ROOT      Override vcpkg location (default: \$HOME/vcpkg)"
       exit 0
       ;;
     APP|TEST|HPC)
@@ -118,61 +115,45 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-echo "Selected build profile : ${PROFILE}"
-echo "Selected Qt version    : ${QT_VERSION}${QWT_VERSION}"
-if [ "$CLEAN" = true ]; then
-  echo "Clean build requested"
-fi
-echo ""
-
 # =============================================================================
 # PLATFORM DETECTION
 # =============================================================================
 if [[ "$OSTYPE" == "darwin"* ]]; then
   PLATFORM="macOS"
   PLATFORM_PREFIX="macos"
-  DEFAULT_QT="qt6"  # macOS defaults to Qt6
 elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
   PLATFORM="Linux"
   PLATFORM_PREFIX="linux"
-  DEFAULT_QT="qt5"  # Linux defaults to Qt5
 elif [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
   PLATFORM="Windows"
   PLATFORM_PREFIX="windows"
-  DEFAULT_QT="qt5"  # Windows defaults to Qt5
 else
   echo "ERROR: Unsupported platform: $OSTYPE"
   exit 1
 fi
 
-# Apply Qt override or use platform default
-RESOLVED_QT="${QT_OVERRIDE:-$DEFAULT_QT}"
-
-# --qwt630 is Qt5-only; silently ignore for Qt6 builds
-if [[ "$RESOLVED_QT" == "qt6" && "$QWT_VERSION" == "630" ]]; then
-  echo "NOTE: --qwt630 has no effect for Qt6 builds (Qwt 6.3.0 is always used with Qt6)."
-  QWT_VERSION="ignored"
+# Guard: --pkg is macOS only
+if [ "$BUILD_PKG" = true ] && [ "$PLATFORM" != "macOS" ]; then
+  echo "ERROR: --pkg is only supported on macOS."
+  exit 1
 fi
 
-# Derive preset names.
-# Configure preset names match CMakePresets.json exactly.
-# Build preset names also match CMakePresets.json exactly.
-if [[ "$RESOLVED_QT" == "qt6" ]]; then
-  CONFIGURE_PRESET="${PLATFORM_PREFIX}-release-qt6"
-  BUILD_PRESET="${PLATFORM_PREFIX}-release-qt6"
-  QT_VERSION_LABEL="Qt6"
-elif [[ "$QWT_VERSION" == "630" ]]; then
-  CONFIGURE_PRESET="${PLATFORM_PREFIX}-release-qt5-qwt630"
-  BUILD_PRESET="${PLATFORM_PREFIX}-release-qwt630"
-  QT_VERSION_LABEL="Qt5 (Qwt 6.3.0)"
-else
-  CONFIGURE_PRESET="${PLATFORM_PREFIX}-release-qt5-qwt616"
-  BUILD_PRESET="${PLATFORM_PREFIX}-release"
-  QT_VERSION_LABEL="Qt5 (Qwt 6.1.6)"
-fi
+QT_VERSION_LABEL=""
+case "$QT_VARIANT" in
+  qt6)         QT_VERSION_LABEL="Qt6 (Qwt 6.3.0)" ;;
+  qt5-qwt616)  QT_VERSION_LABEL="Qt5 (Qwt 6.1.6)" ;;
+  qt5-qwt630)  QT_VERSION_LABEL="Qt5 (Qwt 6.3.0)" ;;
+esac
 
-echo "Platform:    $PLATFORM"
-echo "Qt version:  $QT_VERSION_LABEL  (configure preset: $CONFIGURE_PRESET)"
+echo "Selected build profile : ${PROFILE}"
+echo "Selected Qt variant    : ${QT_VERSION_LABEL}"
+if [ "$CLEAN" = true ]; then
+  echo "Clean build requested"
+fi
+if [ "$BUILD_PKG" = true ]; then
+  echo "macOS PKG installer  : enabled"
+fi
+echo ""
 
 # =============================================================================
 # ARCHITECTURE DETECTION
@@ -190,26 +171,19 @@ else
 fi
 
 # =============================================================================
-# BUILD PRESET
+# DERIVE CONFIGURE AND BUILD PRESET NAMES
 # =============================================================================
-case "$PLATFORM" in
-  macOS)
-    PRESET="macos-release-${QT_VERSION}${QWT_VERSION}"
-    ;;
-  Linux)
-    PRESET="linux-release-${QT_VERSION}${QWT_VERSION}"
-    ;;
-  Windows)
-    if [ "$ARCH" = "arm64" ]; then
-      PRESET="windows-release-${QT_VERSION}${QWT_VERSION}-arm64"
-    else
-      PRESET="windows-release-${QT_VERSION}${QWT_VERSION}"
-    fi
-    ;;
-esac
+ARM64_SUFFIX=""
+if [[ "$PLATFORM" == "Windows" && "$ARCH" == "arm64" ]]; then
+  ARM64_SUFFIX="-arm64"
+fi
 
-echo "Platform               : $PLATFORM"
-echo "Preset                 : $PRESET"
+CONFIGURE_PRESET="${PLATFORM_PREFIX}-release-${QT_VARIANT}${ARM64_SUFFIX}"
+BUILD_PRESET="build-${CONFIGURE_PRESET}"
+
+echo "Platform               : $PLATFORM ($ARCH)"
+echo "Configure preset       : $CONFIGURE_PRESET"
+echo "Build preset           : $BUILD_PRESET"
 echo ""
 
 # =============================================================================
@@ -246,6 +220,10 @@ if [[ "$PLATFORM" == "macOS" ]]; then
   REQUIRED_TOOLS+=(xcodebuild xcrun)
 elif [[ "$PLATFORM" == "Linux" ]]; then
   REQUIRED_TOOLS+=(g++)
+fi
+
+if [ "$BUILD_PKG" = true ]; then
+  REQUIRED_TOOLS+=(pkgbuild productbuild rsync)
 fi
 
 MISSING_TOOLS=()
@@ -309,7 +287,6 @@ if [ "$PLATFORM" = "macOS" ]; then
 
   if [ -n "$DESIRED_XCODE_PATH" ]; then
     echo "Compatible Xcode path: $DESIRED_XCODE_PATH"
-
     if [ "$CURRENT_XCODE_PATH" != "$DESIRED_XCODE_PATH" ]; then
       echo "Xcode 15/16 is installed but not active."
       if [ "$NON_INTERACTIVE" = false ]; then
@@ -396,7 +373,6 @@ export VCPKG_ROOT="$US3_VCPKG_ROOT"
 export VCPKG_BINARY_SOURCES="clear;files,$HOME/.vcpkg-cache,readwrite"
 export VCPKG_INSTALLED_DIR="$US3_VCPKG_ROOT/installed"
 mkdir -p "$HOME/.vcpkg-cache"
-export VCPKG_INSTALLED_DIR="$US3_VCPKG_ROOT/installed"
 
 VCPKG_TOOLCHAIN_FILE="$US3_VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
 if [ ! -f "$VCPKG_TOOLCHAIN_FILE" ]; then
@@ -423,8 +399,6 @@ if [ "$CLEAN" = true ]; then
     echo "Build directory does not exist, nothing to clean: $BUILD_DIR"
   fi
 
-  # Clean vcpkg build artifacts (but keep installed packages)
-  # This allows faster rebuilds while still being "clean"
   if [ -d "$US3_VCPKG_ROOT/buildtrees" ]; then
     echo "Removing vcpkg build trees..."
     rm -rf "$US3_VCPKG_ROOT/buildtrees"
@@ -439,7 +413,9 @@ echo "UltraScan3 Bootstrap Steps"
 echo "=========================================="
 echo "  1. Ensure platform toolchain is ready"
 echo "  2. Build Qt, Qwt, and other dependencies via vcpkg"
-echo "  3. Configure and build UltraScan3 via CMake preset: $CONFIGURE_PRESET"
+echo "  3. Configure and build UltraScan3"
+echo "     Configure preset : $CONFIGURE_PRESET"
+echo "     Build preset     : $BUILD_PRESET"
 echo ""
 
 # =============================================================================
@@ -463,34 +439,6 @@ if [ "$PLATFORM" == "Linux" ]; then
 fi
 
 # =============================================================================
-# FINAL BUILD SUMMARY
-# =============================================================================
-echo ""
-echo "=========================================="
-echo "Ready to build UltraScan3"
-echo "=========================================="
-echo "  Preset        : ${PRESET}"
-echo "  Profile       : ${PROFILE}"
-echo "  Qt version    : ${QT_VERSION}${QWT_VERSION}"
-echo "  Architecture  : ${ARCH}"
-echo "  Platform:    ${PLATFORM}"
-echo "  Package (cpack): ${INSTALL}"
-echo "  Clean build   : ${CLEAN}"
-echo "  vcpkg root    : ${VCPKG_ROOT}"
-echo "  Build jobs    : ${BUILD_JOBS}"
-echo ""
-
-if [ "$NON_INTERACTIVE" = false ]; then
-  if [ "$CLEAN" = true ]; then
-    echo "Clean build - dependencies will be rebuilt if needed"
-  else
-    echo "Incremental build - only changed files will be rebuilt"
-  fi
-  echo "Grab a coffee if this is your first build!"
-fi
-echo ""
-
-# =============================================================================
 # SPHINX CHECK - ensure sphinx-build is on PATH
 # =============================================================================
 if ! command -v sphinx-build &>/dev/null; then
@@ -510,6 +458,36 @@ if ! command -v sphinx-build &>/dev/null; then
     echo "  Install with: pip3 install -r doc/manual/source/requirements.txt"
   fi
 fi
+
+# =============================================================================
+# FINAL BUILD SUMMARY
+# =============================================================================
+echo ""
+echo "=========================================="
+echo "Ready to build UltraScan3"
+echo "=========================================="
+echo "  Configure preset : ${CONFIGURE_PRESET}"
+echo "  Build preset     : ${BUILD_PRESET}"
+echo "  Profile          : ${PROFILE}"
+echo "  Qt variant       : ${QT_VERSION_LABEL}"
+echo "  Architecture     : ${ARCH}"
+echo "  Platform         : ${PLATFORM}"
+echo "  PKG installer    : ${BUILD_PKG}"
+echo "  Linux/Win pkg    : ${INSTALL}"
+echo "  Clean build      : ${CLEAN}"
+echo "  vcpkg root       : ${VCPKG_ROOT}"
+echo "  Build jobs       : ${BUILD_JOBS}"
+echo ""
+
+if [ "$NON_INTERACTIVE" = false ]; then
+  if [ "$CLEAN" = true ]; then
+    echo "Clean build - dependencies will be rebuilt if needed"
+  else
+    echo "Incremental build - only changed files will be rebuilt"
+  fi
+  echo "Grab a coffee if this is your first build!"
+fi
+echo ""
 
 # =============================================================================
 # CONFIGURE AND BUILD
@@ -568,7 +546,7 @@ echo "=========================================="
 echo "  UltraScan3 version : ${US3_VERSION_DISPLAY}"
 echo "  Platform           : ${PLATFORM} (${ARCH})"
 echo "  Profile            : ${PROFILE}"
-echo "  Preset             : ${CONFIGURE_PRESET}"
+echo "  Configure preset   : ${CONFIGURE_PRESET}"
 echo "  Qt                 : ${QT_EXACT_VERSION} (${QT_VERSION_LABEL})"
 echo "  Qwt                : ${QWT_EXACT_VERSION}"
 echo "  QwtPlot3D          : ${QWTPLOT3D_VERSION}"
@@ -585,7 +563,9 @@ if [ "$NON_INTERACTIVE" = false ]; then
 fi
 
 # =============================================================================
-# INSTALL AND PACKAGE (if requested)
+# LINUX / WINDOWS PACKAGE (--install)
+# Runs cpack to produce DEB+RPM on Linux or NSIS installer on Windows.
+# Not used on macOS — use --pkg instead.
 # =============================================================================
 if [ "$INSTALL" = true ]; then
   BUILD_DIR="build/$CONFIGURE_PRESET"
@@ -595,74 +575,9 @@ if [ "$INSTALL" = true ]; then
     exit 1
   fi
 
-  if [ "$PLATFORM" = "macOS" ]; then
-    # ------------------------------------------------------------------
-    # macOS: verify deploy_macos target exists before calling it
-    # ------------------------------------------------------------------
-    echo "=========================================="
-    echo "Staging macOS folder-based deployment..."
-    echo "=========================================="
-
-    # Check that macdeployqt was found at configure time
-    MACDEPLOYQT_CHECK=$(cmake --preset "$CONFIGURE_PRESET" -N 2>/dev/null \
-      | grep -i 'macdeployqt' | head -1 || true)
-
-    # Attempt deploy_macos target; emit a clear error if it doesn't exist
-    if ! cmake --build --preset "$BUILD_PRESET" --target deploy_macos --parallel "$BUILD_JOBS"; then
-      echo ""
-      echo "ERROR: 'deploy_macos' target failed or does not exist."
-      echo ""
-      echo "Possible causes:"
-      echo "  1. macdeployqt was not found in the Qt installation."
-      echo "     Check the configure output for 'macdeployqt not found'."
-      echo "  2. The 'us' target did not build successfully."
-      echo "  3. The Qt installation is incomplete (missing tools component)."
-      echo ""
-      echo "To diagnose: run 'cmake --preset $CONFIGURE_PRESET' and look for"
-      echo "  'Found macdeployqt' vs 'macdeployqt not found' in the output."
-      exit 1
-    fi
-
-    STAGE_DIR="$BUILD_DIR/_stage/UltraScan3"
-    if [ -d "$STAGE_DIR" ]; then
-      echo ""
-      echo "Staged folder tree: $STAGE_DIR/"
-      ls -1 "$STAGE_DIR/" | sed 's/^/    /'
-      echo ""
-      echo "  bin/ contents (first 20):"
-      ls -1 "$STAGE_DIR/bin/" 2>/dev/null | head -20 | sed 's/^/    /'
-      echo ""
-      # Verify Qt libs are bundled and not pointing to developer paths
-      echo "Verifying Qt bundling..."
-      if [ -d "$STAGE_DIR/frameworks" ]; then
-        QT_FW_COUNT=$(find "$STAGE_DIR/frameworks" -name "*.framework" -maxdepth 1 | wc -l | tr -d ' ')
-        QT_DYLIB_COUNT=$(find "$STAGE_DIR/frameworks" -name "*.dylib" -maxdepth 1 | wc -l | tr -d ' ')
-        echo "  Frameworks: ${QT_FW_COUNT} .framework bundles, ${QT_DYLIB_COUNT} .dylib files"
-      else
-        echo "  WARNING: frameworks/ directory not found in staged tree!"
-        echo "  The distributable may still depend on developer-installed Qt."
-      fi
-      # Spot-check that the main binary's rpaths are @-relative
-      US_BIN="$STAGE_DIR/bin/us.app/Contents/MacOS/us"
-      if [ -f "$US_BIN" ]; then
-        RPATH_CHECK=$(otool -l "$US_BIN" 2>/dev/null | grep -A2 LC_RPATH | grep 'path ' | awk '{print $2}' || true)
-        echo "  Rpaths in us.app/Contents/MacOS/us:"
-        echo "$RPATH_CHECK" | sed 's/^/    /'
-        if echo "$RPATH_CHECK" | grep -q "$HOME"; then
-          echo ""
-          echo "  WARNING: us binary still has rpaths pointing to $HOME."
-          echo "  macdeployqt rpath fixup may have been incomplete."
-        fi
-      fi
-    else
-      echo "ERROR: Staging directory not found after deploy_macos: $STAGE_DIR"
-      exit 1
-    fi
-  fi
-
   echo ""
   echo "=========================================="
-  echo "Packaging..."
+  echo "Packaging (cpack)..."
   echo "=========================================="
   ( cd "$BUILD_DIR" && cpack )
 
@@ -672,13 +587,7 @@ if [ "$INSTALL" = true ]; then
   echo "=========================================="
   echo ""
 
-  # Show what was produced
   case "$PLATFORM" in
-    macOS)
-      for pkg in "$BUILD_DIR"/*.dmg; do
-        [ -f "$pkg" ] && echo "Created: $pkg"
-      done
-      ;;
     Linux)
       for pkg in "$BUILD_DIR"/*.deb "$BUILD_DIR"/*.rpm; do
         [ -f "$pkg" ] && echo "Created: $pkg"
@@ -691,16 +600,67 @@ if [ "$INSTALL" = true ]; then
       ;;
   esac
   echo ""
+fi
 
-  if [ "$PLATFORM" = "macOS" ]; then
-    echo "To verify the DMG (Finder launch test):"
-    echo "  1. Double-click the .dmg to mount it"
-    echo "  2. Drag UltraScan3/ to /Applications/ (or any location)"
-    echo "  3. Right-click UltraScan3/bin/us.app → Open (first launch on unsigned app)"
-    echo "  4. Confirm UltraScan3 opens and Help → Assistant works"
-    echo ""
-    echo "To verify no developer-path dependencies remain:"
-    echo "  otool -L \$(find \"\$STAGE_DIR\" -name '*.dylib' -o -name '*/MacOS/*' | head -5)"
-    echo ""
+# =============================================================================
+# macOS PKG INSTALLER (--pkg)
+# Runs the package_macos_pkg CMake target which:
+#   1. Calls deploy_macos to stage the app tree via macdeployqt
+#   2. Builds pkgroot with the staged app + LaunchDaemon plist
+#   3. Runs pkgbuild to create the component package
+#   4. Runs productbuild to create the final installer with UI screens
+# Output: build/<preset>/UltraScan3-<version>-macOS.pkg
+# =============================================================================
+if [ "$BUILD_PKG" = true ]; then
+  BUILD_DIR="build/$CONFIGURE_PRESET"
+
+  if [ ! -d "$BUILD_DIR" ]; then
+    echo "ERROR: Build directory not found: $BUILD_DIR"
+    exit 1
   fi
+
+  echo ""
+  echo "=========================================="
+  echo "Building macOS PKG installer..."
+  echo "=========================================="
+  echo "  CMake target : package_macos_pkg"
+  echo "  Build dir    : ${BUILD_DIR}"
+  echo ""
+
+  if ! cmake --build --preset "$BUILD_PRESET" \
+             --target package_macos_pkg \
+             --parallel "$BUILD_JOBS"; then
+    echo ""
+    echo "ERROR: 'package_macos_pkg' target failed."
+    echo ""
+    echo "Common causes:"
+    echo "  1. deploy_macos failed (macdeployqt not found or 'us' target missing)."
+    echo "     Run: cmake --build --preset $BUILD_PRESET --target deploy_macos"
+    echo "  2. pkgbuild or productbuild returned an error."
+    echo "  3. pkg/macos/resources/Welcome.txt or LICENSE.txt is missing."
+    echo ""
+    exit 1
+  fi
+
+  echo ""
+  echo "=========================================="
+  echo "macOS PKG installer complete!"
+  echo "=========================================="
+  echo ""
+
+  for pkg in "$BUILD_DIR"/UltraScan3-*-macOS.pkg; do
+    if [ -f "$pkg" ]; then
+      PKG_SIZE=$(du -sh "$pkg" 2>/dev/null | cut -f1 || echo "unknown")
+      echo "  Created : $pkg"
+      echo "  Size    : ${PKG_SIZE}"
+    fi
+  done
+  echo ""
+  echo "To install (requires admin password):"
+  echo "  sudo installer -pkg <path>.pkg -target /"
+  echo ""
+  echo "To verify after install:"
+  echo "  sudo launchctl list | grep ultrascan_sysctl"
+  echo "  sysctl kern.sysv.shmmax kern.sysv.shmall"
+  echo ""
 fi

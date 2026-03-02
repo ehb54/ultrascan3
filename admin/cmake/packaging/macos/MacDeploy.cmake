@@ -23,8 +23,12 @@
 #   ETC_SOURCE_DIR      - Source etc/ directory
 #   SOMO_SOURCE_DIR     - Source somo/ directory
 #   LICENSE_FILE        - Path to LICENSE.txt
-#   VCPKG_LIB_DIR       - vcpkg lib/ dir (for libsqlite3)
-#   VCPKG_PLUGIN_DIR    - vcpkg plugins/ dir (for sqldrivers/libqsqlite)
+#   VCPKG_LIB_DIR         - vcpkg lib/ dir (for libsqlite3)
+#   VCPKG_PLUGIN_DIR      - vcpkg plugins/ dir (for sqldrivers/libqsqlite)
+#   VCPKG_QT6_PLUGIN_DIR  - vcpkg Qt6/plugins/ dir (dynamic triplet, for platforms/)
+#                           When set, passed to macdeployqt as -pluginpath so it
+#                           finds .dylib plugins from the dynamic triplet even when
+#                           macdeployqt itself comes from the static triplet.
 # =============================================================================
 
 cmake_minimum_required(VERSION 3.16)
@@ -82,6 +86,74 @@ foreach(item ${extra_items})
 endforeach()
 
 # =========================================================================
+# 2.5) packaging: wrap all bare us_* executables into .app bundles
+# =========================================================================
+message(STATUS "Wrapping staged bare us_* executables into .app bundles (Option 2)...")
+
+execute_process(
+        COMMAND bash -c
+        "set -euo pipefail
+     cd '${S_BIN}'
+
+     shopt -s nullglob
+
+     for f in us_*; do
+       # skip directories (including existing .app bundles)
+       [ -d \"\$f\" ] && continue
+
+       # skip non-executables
+       [ -x \"\$f\" ] || continue
+
+       app=\"\$f.app\"
+       exe_in_app=\"\$app/Contents/MacOS/\$f\"
+
+       echo \"  bundling \$f -> \$app\"
+
+       mkdir -p \"\$app/Contents/MacOS\" \"\$app/Contents/Resources\"
+
+       # Minimal Info.plist
+       cat > \"\$app/Contents/Info.plist\" <<PLIST
+<?xml version=\"1.0\" encoding=\"UTF-8\"?>
+<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
+<plist version=\"1.0\">
+<dict>
+  <key>CFBundleExecutable</key><string>\$f</string>
+  <key>CFBundleIdentifier</key><string>com.aucsolutions.ultrascan3.\$f</string>
+  <key>CFBundleName</key><string>\$f</string>
+  <key>CFBundlePackageType</key><string>APPL</string>
+  <key>CFBundleDevelopmentRegion</key><string>en</string>
+  <key>LSMinimumSystemVersion</key><string>11.0</string>
+  <key>NSPrincipalClass</key><string>NSApplication</string>
+  <key>NSSupportsAutomaticGraphicsSwitching</key><true/>
+</dict>
+</plist>
+PLIST
+
+       # Move executable into the bundle
+       mv \"\$f\" \"\$exe_in_app\"
+       chmod +x \"\$exe_in_app\"
+
+       # Fix rpath: bare exe used @executable_path/../frameworks; now needs 4-level up
+       install_name_tool -delete_rpath \"@executable_path/../frameworks\" \"\$exe_in_app\" 2>/dev/null || true
+       install_name_tool -add_rpath \"@executable_path/../../../../frameworks\" \"\$exe_in_app\" 2>/dev/null || true
+
+       # Provide plugin symlinks (legacy-style, robust for Qt on macOS)
+       ( cd \"\$app/Contents/MacOS\" &&
+         ln -sf ../../../../plugins/platforms platforms &&
+         ln -sf ../../../../plugins/imageformats imageformats &&
+         ln -sf ../../../../plugins/styles styles &&
+         ln -sf ../../../../plugins/iconengines iconengines &&
+         ln -sf ../../../../plugins/sqldrivers sqldrivers
+       )
+     done
+    "
+        RESULT_VARIABLE wrap_result
+)
+if(NOT wrap_result EQUAL 0)
+    message(FATAL_ERROR "Failed wrapping us_* executables into .app bundles")
+endif()
+
+# =========================================================================
 # 3) Copy UltraScan shared libraries into frameworks/
 # =========================================================================
 if(LIB_DIR AND EXISTS "${LIB_DIR}")
@@ -110,23 +182,32 @@ endif()
 message(STATUS "Running macdeployqt on us.app...")
 set(US_APP "${S_BIN}/us.app")
 
-# Build list of extra executables to fix up.
-# NOTE: Do NOT pass UltraScan dylibs (libus_*) as -executable arguments.
-# macdeployqt would rewrite their load commands using @loader_path relative
-# to frameworks/, producing broken paths.  We fix the dylibs manually in
-# section 8 after macdeployqt runs.
+# Build list
 set(EXTRA_EXEC_ARGS "")
-# Add companion bare binaries
-file(GLOB companion_bins "${S_BIN}/us_*")
-foreach(bin ${companion_bins})
-    if(NOT IS_DIRECTORY "${bin}")
-        list(APPEND EXTRA_EXEC_ARGS "-executable=${bin}")
+
+# After wrapping, all tools are .app bundles in bin/.
+# Tell macdeployqt about each tool binary so it pulls in all needed Qt deps.
+file(GLOB companion_apps "${S_BIN}/us_*.app")
+foreach(app ${companion_apps})
+    get_filename_component(app_name "${app}" NAME)
+    string(REGEX REPLACE "\\.app$" "" base "${app_name}")
+    set(app_bin "${app}/Contents/MacOS/${base}")
+    if(EXISTS "${app_bin}")
+        list(APPEND EXTRA_EXEC_ARGS "-executable=${app_bin}")
     endif()
 endforeach()
+
+# macdeployqt uses qt.conf (next to its own binary) to locate Qt libraries and
+# plugins.  Our build-tree wrapper has a qt.conf pointing Prefix at the dynamic
+# triplet root, so macdeployqt will find .dylib files in lib/ and Qt6/plugins/
+# without any -pluginpath override.  (-pluginpath is a Qt5-only flag and errors
+# in Qt6, so we must not pass it here.)
+set(_MACDEPLOYQT_DEPLOY_ARGS "")
 
 execute_process(
     COMMAND "${MACDEPLOYQT}" "${US_APP}"
             -verbose=1
+            ${_MACDEPLOYQT_DEPLOY_ARGS}
             ${EXTRA_EXEC_ARGS}
     RESULT_VARIABLE deploy_result
     OUTPUT_VARIABLE deploy_output
@@ -229,48 +310,18 @@ if(_us_libus_refs)
 endif()
 
 # =========================================================================
-# 7) Fix rpaths for bare us_* companion binaries in bin/
-#    From bin/ to frameworks/ is ../frameworks
+# 7) Fix rpaths for all bundled companion .app tools
+#    Each tool now lives at:
+#      bin/<tool>.app/Contents/MacOS/<tool>
+#
+#    From Contents/MacOS back to top-level frameworks/ is:
+#      ../../../../frameworks
+#
+#    Ensure each bundled tool has:
+#      @executable_path/../../../../frameworks
 # =========================================================================
-file(GLOB bare_bins "${S_BIN}/us_*")
-foreach(bin ${bare_bins})
-    if(IS_DIRECTORY "${bin}")
-        continue()
-    endif()
-    get_filename_component(bin_name "${bin}" NAME)
 
-    # Remove stale rpaths
-    execute_process(
-        COMMAND bash -c "otool -l '${bin}' | grep -A2 'LC_RPATH' | grep 'path ' | awk '{print $2}'"
-        OUTPUT_VARIABLE _existing OUTPUT_STRIP_TRAILING_WHITESPACE
-    )
-    if(_existing)
-        string(REPLACE "\n" ";" _rlist "${_existing}")
-        foreach(_rp IN LISTS _rlist)
-            execute_process(COMMAND install_name_tool -delete_rpath "${_rp}" "${bin}" ERROR_QUIET)
-        endforeach()
-    endif()
-
-    execute_process(COMMAND install_name_tool -add_rpath "@executable_path/../frameworks" "${bin}" ERROR_QUIET)
-
-    # Fix @loader_path/../Frameworks/libus_* references → @rpath/libus_*
-    execute_process(
-        COMMAND bash -c "otool -L '${bin}' | awk '{print $1}' | grep '@loader_path/'"
-        OUTPUT_VARIABLE _libus_refs  OUTPUT_STRIP_TRAILING_WHITESPACE
-    )
-    if(_libus_refs)
-        string(REPLACE "\n" ";" _libus_list "${_libus_refs}")
-        foreach(_ref IN LISTS _libus_list)
-            get_filename_component(_libname "${_ref}" NAME)
-            execute_process(
-                COMMAND install_name_tool -change "${_ref}" "@rpath/${_libname}" "${bin}"
-                ERROR_QUIET
-            )
-        endforeach()
-    endif()
-endforeach()
-
-# Also fix @loader_path/../Frameworks/libus_* references in all .app bundles
+# fix @loader_path/../Frameworks/libus_* references in all .app bundles
 file(GLOB _app_bundles "${S_BIN}/*.app")
 foreach(_app IN LISTS _app_bundles)
     get_filename_component(_app_name "${_app}" NAME)
@@ -339,8 +390,15 @@ foreach(dylib ${us_fw_dylibs})
     endif()
 endforeach()
 
+# Default ASSISTANT_APP to the build output Assistant.app if present
+if((NOT DEFINED ASSISTANT_APP OR ASSISTANT_APP STREQUAL "" OR NOT EXISTS "${ASSISTANT_APP}") AND
+        EXISTS "${BIN_DIR}/Assistant.app")
+    set(ASSISTANT_APP "${BIN_DIR}/Assistant.app")
+    message(STATUS "Defaulting ASSISTANT_APP to ${ASSISTANT_APP}")
+endif()
+
 # =========================================================================
-# 9) Deploy Qt Assistant.app into bin/
+# 9) Deploy Qt Assistant.app into staging bin/
 # =========================================================================
 if(ASSISTANT_APP AND EXISTS "${ASSISTANT_APP}")
     message(STATUS "Deploying Qt Assistant into bin/...")
@@ -351,10 +409,46 @@ if(ASSISTANT_APP AND EXISTS "${ASSISTANT_APP}")
     endif()
     file(COPY "${ASSISTANT_APP}" DESTINATION "${S_BIN}")
 
+    # ---- Patch Assistant.app bundle id to avoid macOS Installer relocation ----
+    set(_ASSIST_PLIST "${S_BIN}/Assistant.app/Contents/Info.plist")
+
+    if(EXISTS "${_ASSIST_PLIST}")
+        message(STATUS "Patching Qt Assistant CFBundleIdentifier to avoid Installer relocation")
+
+        execute_process(
+                COMMAND /usr/libexec/PlistBuddy
+                -c "Set :CFBundleIdentifier com.aucsolutions.ultrascan3.assistant"
+                "${_ASSIST_PLIST}"
+                RESULT_VARIABLE _pb_rc
+        )
+
+        if(NOT _pb_rc EQUAL 0)
+            execute_process(
+                    COMMAND /usr/libexec/PlistBuddy
+                    -c "Add :CFBundleIdentifier string com.aucsolutions.ultrascan3.assistant"
+                    "${_ASSIST_PLIST}"
+            )
+        endif()
+
+        # Optional cosmetics (safe to ignore failures if keys missing)
+        execute_process(COMMAND /usr/libexec/PlistBuddy
+                -c "Set :CFBundleName UltraScan3 Help"
+                "${_ASSIST_PLIST}"
+                RESULT_VARIABLE _ign1)
+        execute_process(COMMAND /usr/libexec/PlistBuddy
+                -c "Set :CFBundleDisplayName UltraScan3 Help"
+                "${_ASSIST_PLIST}"
+                RESULT_VARIABLE _ign2)
+
+        # Strip any existing signature; we ad-hoc sign later in step 16
+        file(REMOVE_RECURSE "${S_BIN}/Assistant.app/Contents/_CodeSignature")
+    endif()
+
     # Run macdeployqt on Assistant.app standalone
     message(STATUS "  Running macdeployqt on Assistant.app...")
     execute_process(
         COMMAND "${MACDEPLOYQT}" "${ASSISTANT_DEST}" -verbose=1
+                ${_MACDEPLOYQT_DEPLOY_ARGS}
         RESULT_VARIABLE _r  OUTPUT_VARIABLE _o  ERROR_VARIABLE _e
     )
     if(NOT _r EQUAL 0)
@@ -444,22 +538,156 @@ endif()
 file(MAKE_DIRECTORY "${S_PLUG}/sqldrivers")
 if(NOT EXISTS "${S_PLUG}/sqldrivers/libqsqlite.dylib")
     set(_QSQLITE_FOUND FALSE)
-    if(VCPKG_PLUGIN_DIR)
-        set(_QSQLITE_SRC "${VCPKG_PLUGIN_DIR}/sqldrivers/libqsqlite.dylib")
+
+    # Build a prioritised list of candidate directories to search.
+    # vcpkg uses a non-standard Qt6/plugins/ layout (not the standard plugins/)
+    # and the .dylib lives in the dynamic triplet, while the static triplet
+    # only has .a archives.  Search both layout variants for both triplets.
+    set(_QSQLITE_SEARCH_DIRS "")
+
+    # Derive installed root from VCPKG_PLUGIN_DIR (which is <root>/<triplet>/plugins)
+    # and also try the Qt6/plugins sub-layout used by this vcpkg Qt6 port.
+    foreach(_PLUG_DIR IN ITEMS "${VCPKG_PLUGIN_DIR}" "${VCPKG_PLUGIN_DIR_STA}")
+        if(_PLUG_DIR)
+            # Standard layout: <triplet>/plugins/sqldrivers
+            list(APPEND _QSQLITE_SEARCH_DIRS "${_PLUG_DIR}/sqldrivers")
+            # vcpkg Qt6 layout:  <triplet>/Qt6/plugins/sqldrivers
+            get_filename_component(_TRIPLET_DIR "${_PLUG_DIR}" DIRECTORY)
+            list(APPEND _QSQLITE_SEARCH_DIRS "${_TRIPLET_DIR}/Qt6/plugins/sqldrivers")
+        endif()
+    endforeach()
+
+    # Derive paths from VCPKG_INSTALLED_DIR + triplets directly
+    if(MACDEPLOYQT)
+        # macdeployqt is at <installed>/<static-triplet>/tools/Qt6/bin/macdeployqt
+        # Walk up to <installed>/<static-triplet>
+        get_filename_component(_MDQT_BIN      "${MACDEPLOYQT}"      DIRECTORY)
+        get_filename_component(_MDQT_TOOLS_QT "${_MDQT_BIN}"        DIRECTORY)  # tools/Qt6
+        get_filename_component(_MDQT_TOOLS    "${_MDQT_TOOLS_QT}"   DIRECTORY)  # tools
+        get_filename_component(_MDQT_TRIPLET  "${_MDQT_TOOLS}"      DIRECTORY)  # <triplet>
+        get_filename_component(_MDQT_ROOT     "${_MDQT_TRIPLET}"    DIRECTORY)  # installed/
+        get_filename_component(_MDQT_TRIPLET_NAME "${_MDQT_TRIPLET}" NAME)
+        # Derive the dynamic triplet name
+        string(REPLACE "-osx" "-osx-dynamic" _DYN_TRIPLET "${_MDQT_TRIPLET_NAME}")
+        # Add both layout variants for static and dynamic triplets
+        list(APPEND _QSQLITE_SEARCH_DIRS
+            "${_MDQT_TRIPLET}/Qt6/plugins/sqldrivers"
+            "${_MDQT_TRIPLET}/plugins/sqldrivers"
+            "${_MDQT_ROOT}/${_DYN_TRIPLET}/Qt6/plugins/sqldrivers"
+            "${_MDQT_ROOT}/${_DYN_TRIPLET}/plugins/sqldrivers"
+        )
+    endif()
+
+    foreach(_SEARCH_DIR IN LISTS _QSQLITE_SEARCH_DIRS)
+        set(_QSQLITE_SRC "${_SEARCH_DIR}/libqsqlite.dylib")
         if(EXISTS "${_QSQLITE_SRC}")
-            message(STATUS "Installing QSQLITE plugin → plugins/sqldrivers/ (from vcpkg)")
+            message(STATUS "Installing QSQLITE plugin → plugins/sqldrivers/ (from ${_SEARCH_DIR})")
             file(COPY "${_QSQLITE_SRC}" DESTINATION "${S_PLUG}/sqldrivers")
             set(_QSQLITE_FOUND TRUE)
+            break()
         endif()
-    endif()
+    endforeach()
+
     if(NOT _QSQLITE_FOUND)
-        message(FATAL_ERROR
-            "QSQLITE plugin (libqsqlite.dylib) not found in staged plugins/ "
-            "or VCPKG_PLUGIN_DIR (${VCPKG_PLUGIN_DIR}). "
-            "Qt Assistant cannot open .qhc files without it.")
+        message(WARNING
+            "QSQLITE plugin (libqsqlite.dylib) not found. "
+            "Searched: ${_QSQLITE_SEARCH_DIRS}. "
+            "Qt Assistant search may not work without it. "
+            "Run: ~/vcpkg/vcpkg install qt6-sql:arm64-osx-dynamic")
     endif()
 else()
     message(STATUS "QSQLITE plugin already present in plugins/sqldrivers/")
+endif()
+
+# =========================================================================
+# 9c) Guarantee platform plugins (libqcocoa.dylib) in staged tree
+#     macdeployqt should handle this, but when it comes from the static triplet
+#     it may deploy nothing.  This safety-net copies from VCPKG_QT6_PLUGIN_DIR.
+# =========================================================================
+file(MAKE_DIRECTORY "${S_PLUG}/platforms")
+if(NOT EXISTS "${S_PLUG}/platforms/libqcocoa.dylib")
+    set(_PLATFORMS_SRC "")
+    # Search VCPKG_QT6_PLUGIN_DIR first (the definitive dynamic triplet path)
+    if(VCPKG_QT6_PLUGIN_DIR AND EXISTS "${VCPKG_QT6_PLUGIN_DIR}/platforms")
+        set(_PLATFORMS_SRC "${VCPKG_QT6_PLUGIN_DIR}/platforms")
+    else()
+        # Fallback: derive from VCPKG_PLUGIN_DIR by trying Qt6/plugins sub-layout
+        foreach(_PDIR IN ITEMS "${VCPKG_PLUGIN_DIR}" "${VCPKG_PLUGIN_DIR_STA}")
+            if(_PDIR)
+                get_filename_component(_PDIR_PARENT "${_PDIR}" DIRECTORY)
+                if(EXISTS "${_PDIR_PARENT}/Qt6/plugins/platforms")
+                    set(_PLATFORMS_SRC "${_PDIR_PARENT}/Qt6/plugins/platforms")
+                    break()
+                elseif(EXISTS "${_PDIR}/platforms")
+                    set(_PLATFORMS_SRC "${_PDIR}/platforms")
+                    break()
+                endif()
+            endif()
+        endforeach()
+        # Also try deriving the dynamic triplet root from macdeployqt path
+        if(NOT _PLATFORMS_SRC AND MACDEPLOYQT)
+            get_filename_component(_MQ_BIN  "${MACDEPLOYQT}"   DIRECTORY)
+            get_filename_component(_MQ_TQT  "${_MQ_BIN}"       DIRECTORY)
+            get_filename_component(_MQ_TOOL "${_MQ_TQT}"       DIRECTORY)
+            get_filename_component(_MQ_TRIP "${_MQ_TOOL}"      DIRECTORY)
+            get_filename_component(_MQ_ROOT "${_MQ_TRIP}"      DIRECTORY)
+            get_filename_component(_MQ_TNAME "${_MQ_TRIP}"     NAME)
+            string(REPLACE "-osx" "-osx-dynamic" _DYN_T "${_MQ_TNAME}")
+            if(EXISTS "${_MQ_ROOT}/${_DYN_T}/Qt6/plugins/platforms")
+                set(_PLATFORMS_SRC "${_MQ_ROOT}/${_DYN_T}/Qt6/plugins/platforms")
+            endif()
+        endif()
+    endif()
+
+    if(_PLATFORMS_SRC)
+        message(STATUS "Installing platform plugins → plugins/platforms/ (from ${_PLATFORMS_SRC})")
+        file(GLOB _plat_dylibs "${_PLATFORMS_SRC}/*.dylib")
+        foreach(_pd ${_plat_dylibs})
+            file(COPY "${_pd}" DESTINATION "${S_PLUG}/platforms")
+        endforeach()
+    else()
+        message(WARNING
+            "Platform plugins (libqcocoa.dylib) not found. "
+            "The application will crash on launch without a platform plugin. "
+            "Set VCPKG_QT6_PLUGIN_DIR to arm64-osx-dynamic/Qt6/plugins.")
+    endif()
+else()
+    message(STATUS "Platform plugins already present in plugins/platforms/")
+endif()
+
+# =========================================================================
+# 9d) Guarantee Qt dylibs in frameworks/
+#     macdeployqt from the static triplet cannot find Qt .dylib files because
+#     its qt.conf points to arm64-osx/lib/ which contains only .a archives.
+#     There is no -libpath flag in macdeployqt to override this.
+#     We copy all Qt dylibs directly from VCPKG_LIB_DIR (the dynamic triplet
+#     lib/ directory) as a complete safety net.
+#     We skip .a archives and only copy real .dylib files (not symlinks to them
+#     as those are resolved by file(COPY ...) automatically).
+# =========================================================================
+if(VCPKG_LIB_DIR AND EXISTS "${VCPKG_LIB_DIR}")
+    file(GLOB _ALL_DYLIBS "${VCPKG_LIB_DIR}/libQt*.dylib"
+                          "${VCPKG_LIB_DIR}/libqwt*.dylib"
+                          "${VCPKG_LIB_DIR}/libQwt*.dylib")
+    set(_qt_fw_count 0)
+    foreach(_dylib ${_ALL_DYLIBS})
+        get_filename_component(_dylib_name "${_dylib}" NAME)
+        # Skip .a static archives that may glob through (shouldn't happen but safe)
+        if(_dylib_name MATCHES "\.a$")
+            continue()
+        endif()
+        if(NOT EXISTS "${S_FW}/${_dylib_name}")
+            file(COPY "${_dylib}" DESTINATION "${S_FW}")
+            math(EXPR _qt_fw_count "${_qt_fw_count} + 1")
+        endif()
+    endforeach()
+    if(_qt_fw_count GREATER 0)
+        message(STATUS "Installed ${_qt_fw_count} Qt dylibs → frameworks/ (from ${VCPKG_LIB_DIR})")
+    else()
+        message(STATUS "Qt dylibs already present in frameworks/ (or none found in ${VCPKG_LIB_DIR})")
+    endif()
+else()
+    message(WARNING "VCPKG_LIB_DIR not set -- Qt dylibs will not be deployed. App will crash.")
 endif()
 
 # libsqlite3 runtime
@@ -611,6 +839,12 @@ message(STATUS "Writing qt.conf files...")
 file(WRITE "${S_BIN}/us.app/Contents/Resources/qt.conf"
 "[Paths]\nPrefix = ../../..\nPlugins = plugins\nLibraries = frameworks\n")
 
+# -----------------------------------------------------------------------------
+# qt.conf for "loose" Qt executables in bin/ (us_2dsa, us_pcsa, etc.)
+# -----------------------------------------------------------------------------
+file(WRITE "${S_BIN}/qt.conf"
+        "[Paths]\nPrefix = ..\nPlugins = plugins\nLibraries = frameworks\n")
+
 # Assistant.app qt.conf
 if(EXISTS "${S_BIN}/Assistant.app")
     file(MAKE_DIRECTORY "${S_BIN}/Assistant.app/Contents/Resources")
@@ -626,33 +860,50 @@ if(EXISTS "${S_BIN}/us_helpdaemon.app")
 endif()
 
 # =========================================================================
-# 15) Create UltraScan.app launcher bundle in bin/
-#     This is a thin shell-script wrapper that checks for X11 before
-#     handing off to the real us binary.  No Qt involvement needed.
+# 15) Stage UltraScan3.app launcher bundle at the *root* of the install
+#     (so users can drag it to the Dock easily)
+#
+#     Source template lives in:  <repo>/pkg/macos/launcher/UltraScan3.app
+#     We copy the template, then copy the icon from the staged us.app so
+#     the launcher always matches the real app icon.
 # =========================================================================
-set(_LAUNCHER_SRC "")
-# Locate the source files relative to this cmake script
-get_filename_component(_MACDEPLY_DIR "${CMAKE_CURRENT_LIST_FILE}" DIRECTORY)
-get_filename_component(_REPO_ROOT    "${_MACDEPLY_DIR}"            DIRECTORY)  # admin/cmake -> admin
-get_filename_component(_REPO_ROOT    "${_REPO_ROOT}"                DIRECTORY)  # admin       -> repo root
-set(_LAUNCHER_DIR "${_REPO_ROOT}/admin/launcher")
 
-if(EXISTS "${_LAUNCHER_DIR}/UltraScan" AND EXISTS "${_LAUNCHER_DIR}/Info.plist")
-    message(STATUS "Creating UltraScan.app launcher bundle in bin/")
-    set(_LAPP "${S_BIN}/UltraScan.app")
-    file(MAKE_DIRECTORY "${_LAPP}/Contents/MacOS")
+# Compute repo root robustly based on this script location
+get_filename_component(_MACDEPLOY_DIR "${CMAKE_CURRENT_LIST_FILE}" DIRECTORY)
+# Expecting: <repo>/cmake/packaging/macos/MacDeploy.cmake  (or similar)
+# Go up 3 levels: macos -> packaging -> cmake -> repo
+get_filename_component(_REPO_ROOT "${_MACDEPLOY_DIR}/../../../.." ABSOLUTE)
+
+set(_LAUNCHER_TEMPLATE "${_REPO_ROOT}/pkg/macos/launcher/UltraScan3.app")
+set(_LAPP             "${STAGE_DIR}/UltraScan3.app")
+
+if(EXISTS "${_LAUNCHER_TEMPLATE}/Contents/Info.plist")
+    message(STATUS "Staging UltraScan3.app launcher at root of install")
+
+    # A) Copy launcher template into stage root
+    file(REMOVE_RECURSE "${_LAPP}")
+    file(COPY "${_LAUNCHER_TEMPLATE}" DESTINATION "${STAGE_DIR}")
+
+    # Ensure Resources exists (template may omit it)
     file(MAKE_DIRECTORY "${_LAPP}/Contents/Resources")
 
-    # Copy and make launcher executable
-    file(COPY "${_LAUNCHER_DIR}/UltraScan" DESTINATION "${_LAPP}/Contents/MacOS"
-         FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE
-                          GROUP_READ GROUP_EXECUTE
-                          WORLD_READ WORLD_EXECUTE)
+    # B/C) Copy icon from the staged us.app so it's guaranteed to match
+    set(_US_ICON "${STAGE_DIR}/bin/us.app/Contents/Resources/us3-icon.icns")
+    set(_ETC_ICON "${STAGE_DIR}/etc/us3-icon.icns")
 
-    # Info.plist
-    file(COPY "${_LAUNCHER_DIR}/Info.plist" DESTINATION "${_LAPP}/Contents")
+    if(EXISTS "${_US_ICON}")
+        file(COPY "${_US_ICON}" DESTINATION "${_LAPP}/Contents/Resources")
+    elseif(EXISTS "${_ETC_ICON}")
+        file(COPY "${_ETC_ICON}" DESTINATION "${_LAPP}/Contents/Resources")
+    else()
+        message(WARNING "Launcher icon not found (checked ${_US_ICON} and ${_ETC_ICON})")
+    endif()
+
+    # Optional: ad-hoc sign the launcher bundle (ok for local installs)
+    execute_process(COMMAND codesign --force --deep --sign - "${_LAPP}" ERROR_QUIET)
+
 else()
-    message(WARNING "UltraScan.app launcher sources not found at ${_LAUNCHER_DIR} — skipping")
+    message(WARNING "UltraScan3.app launcher template not found at ${_LAUNCHER_TEMPLATE} — skipping")
 endif()
 
 # =========================================================================
