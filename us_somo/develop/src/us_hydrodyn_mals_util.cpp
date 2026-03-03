@@ -2749,23 +2749,31 @@ double US_Hydrodyn_Mals::tot_intensity( QString &file, double q_min, double q_ma
    return tot_i;
 }
 
-void US_Hydrodyn_Mals::set_selected( set < QString > & to_select, bool do_replot )
-{
+bool US_Hydrodyn_Mals::set_selected( const QStringList & to_select_qsl, bool do_replot, bool save_zoom_state ) {
+   set < QString > to_select;
+   for ( auto name : to_select_qsl ) {
+      to_select.insert( name );
+   }
+   return set_selected( to_select, do_replot, save_zoom_state );
+}
+
+bool US_Hydrodyn_Mals::set_selected( const set < QString > & to_select, bool do_replot, bool save_zoom_state ) {
    disable_updates = true;
    lb_files->clearSelection();
-   for ( int i = 0; i < (int)lb_files->count(); i++ )
-   {
-      if ( to_select.count( lb_files->item( i )->text() ) )
-      {
+   set < QString > missing = to_select;
+   for ( int i = 0; i < (int)lb_files->count(); i++ ) {
+      if ( to_select.count( lb_files->item( i )->text() ) ) {
          lb_files->item( i)->setSelected( true );
+         missing.erase( lb_files->item( i )->text() );
+         // qDebug() << "set_selected() : to plot " << lb_files->item( i )->text();
       }
    }
 
    disable_updates = false;
-   if ( do_replot )
-   {
-      plot_files();
+   if ( do_replot ) {
+      plot_files( save_zoom_state );
    }
+   return missing.size() == 0;
 }
 
 void US_Hydrodyn_Mals::set_created_selected( set < QString > & to_select, bool do_replot )

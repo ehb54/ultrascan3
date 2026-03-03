@@ -1064,12 +1064,12 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       bool          order_ascending;
 
  public:
+
       void          editor_msg( QString color, QString msg );
       void          editor_msg_qc( QColor qcolor, QString msg );
       bool          running;
 
  private:
-
 
       US_Hydrodyn_Saxs *saxs_window;
       bool             *saxs_widget;

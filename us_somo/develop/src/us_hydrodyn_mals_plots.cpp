@@ -889,7 +889,7 @@ void US_Hydrodyn_Mals::set_eb()
    upz.restore( !suppress_replot );
 }
 
-void US_Hydrodyn_Mals::plot_files()
+void US_Hydrodyn_Mals::plot_files( bool save_zoom_state ) 
 {
    // qDebug() << "plot files";
    plot_dist->detachItems( QwtPlotItem::Rtti_PlotCurve ); plot_dist->detachItems( QwtPlotItem::Rtti_PlotMarker );;
@@ -1001,7 +1001,7 @@ void US_Hydrodyn_Mals::plot_files()
 
    // enable zooming
 
-   if ( any_selected ) {
+   if ( any_selected && !save_zoom_state ) {
       plot_dist->setAxisScale( QwtPlot::xBottom, minx, maxx );
       plot_dist->setAxisScale( QwtPlot::yLeft  , miny * 0.9e0 , maxy * 1.1e0 );
       plot_dist_zoomer->setZoomBase();
