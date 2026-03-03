@@ -17,256 +17,381 @@ int main (int argc, char* argv[])
 
 US_Spectrum::US_Spectrum() : US_Widgets()
 {
-   //Vector for basis wavelength profiles
-   v_basis.clear();
 
-   solution_curve = NULL;
+   setWindowTitle( tr( "Spectrum Decomposition" ) );
+   setPalette( US_GuiSettings::frameColor() );
 
-   //Constantly keeps track of the number of basis vectors
-   basisIndex = 0;
+   QLabel* lb_target     = us_banner( tr( "Target Spectrum" ) );
+   QLabel* lb_basis      = us_banner( tr( "Basis Spectra" ) );
+   QLabel* lb_fit        = us_banner( tr( "Fit & Basis Correlation" ) );
+   QLabel* lb_tgt_fname  = us_label ( tr( "Target Filename" ) );
+   QLabel* lb_tgt_header = us_label ( tr( "Target Header" ) );
+   QLabel* lb_tgt_minL   = us_label ( tr( "Min. %1" ).arg( QChar( 955 ) ) );
+   QLabel* lb_tgt_maxL   = us_label ( tr( "Max. %1" ).arg( QChar( 955 ) ) );
+   QLabel* lb_fit_minL   = us_label ( tr( "Min. %1" ).arg( QChar( 955 ) ) );
+   QLabel* lb_fit_maxL   = us_label ( tr( "Max. %1" ).arg( QChar( 955 ) ) );
+   QLabel* lb_basis_list = us_label ( tr( "Basis List" ) );
+   QLabel* lb_basis_1    = us_label ( tr( "Basis 1" ) );
+   QLabel* lb_basis_2    = us_label ( tr( "Basis 2" ) );
+   QLabel* lb_rmsd       = us_label ( tr( "RMSD" ) );
+   QLabel* lb_angle      = us_label ( tr( "Correlation Angle" ) );
 
-   //Push Buttons for US_Spectrum GUI
-   pb_load_target = us_pushbutton(tr("Load Target Spectrum"));
-   connect(pb_load_target, SIGNAL(clicked()), SLOT(load_target()));
-   pb_load_basis = us_pushbutton(tr("Add Basis Spectrum"));
-   pb_load_basis->setEnabled(false);
-   connect(pb_load_basis, SIGNAL(clicked()), SLOT(load_basis()));
-     
-   pb_overlap = us_pushbutton(tr("Find Extinction Profile Overlap"));
-   connect(pb_overlap, SIGNAL(clicked()), SLOT(overlap()));
-   pb_overlap->setEnabled(false);
+   lb_tgt_header->setAlignment( Qt::AlignCenter );
+   lb_basis_list->setAlignment( Qt::AlignCenter );
+   lb_tgt_fname ->setAlignment( Qt::AlignCenter );
+   lb_tgt_minL  ->setAlignment( Qt::AlignCenter );
+   lb_tgt_maxL  ->setAlignment( Qt::AlignCenter );
+   lb_fit_minL  ->setAlignment( Qt::AlignCenter );
+   lb_fit_maxL  ->setAlignment( Qt::AlignCenter );
+   lb_basis_1   ->setAlignment( Qt::AlignCenter );
+   lb_basis_2   ->setAlignment( Qt::AlignCenter );
+   lb_target    ->setAlignment( Qt::AlignCenter );
+   lb_basis     ->setAlignment( Qt::AlignCenter );
+   lb_angle     ->setAlignment( Qt::AlignCenter );
+   lb_rmsd      ->setAlignment( Qt::AlignCenter );
+   lb_fit       ->setAlignment( Qt::AlignCenter );
 
-   pb_fit = us_pushbutton(tr("Fit Data"));
-   connect(pb_fit, SIGNAL(clicked()), SLOT(fit()));
-   pb_fit->setEnabled(false);
+   le_tgt_fname  = us_lineedit( "", 1, true );
+   le_tgt_header = us_lineedit( "", 1, true );
+   le_tgt_minL   = us_lineedit( "", 1, true );
+   le_tgt_maxL   = us_lineedit( "", 1, true );
+   le_fit_minL   = us_lineedit( "", 1, true );
+   le_fit_maxL   = us_lineedit( "", 1, true );
+   le_angle      = us_lineedit( "", 1, true ); 
+   le_rmsd       = us_lineedit( "", 1, true );
+
+   QPushButton* pb_target = us_pushbutton( tr( "Load Target" ) );
+   QPushButton* pb_basis  = us_pushbutton( tr( "Add Basis" ) );
+   QPushButton* pb_fit    = us_pushbutton( tr( "Fit Data" ) );
+   QPushButton* pb_reset  = us_pushbutton( tr( "Reset" ) );
+   QPushButton* pb_help   = us_pushbutton( tr( "Help" ) );
+   QPushButton* pb_close  = us_pushbutton( tr( "Close" ) );
+   QPushButton* pb_save   = us_pushbutton( tr( "Save Fitting Data" ) );
+
+   QFont font = QFont( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() - 1 );
+   QString hl = tr( "%1 (nm)" ).arg( QChar( 955 ) );
+   tw_basis = new QTableWidget();
+   tw_basis->setRowCount( 0 );
+   tw_basis->setColumnCount( 3 );
+   tw_basis->setPalette( US_GuiSettings::normalColor() );
+   tw_basis->setFont( font );
+   tw_basis->setHorizontalHeaderLabels( QStringList{"Header", hl, "%"} );
+   tw_basis->horizontalHeader()->setSectionResizeMode( QHeaderView::Stretch );
+
+   cb_basis_1 = us_comboBox();
+   cb_basis_2 = us_comboBox();
    
-   pb_find_angle = us_pushbutton(tr("Find Angle between Basis Vectors"));
-   connect(pb_find_angle, SIGNAL(clicked()), SLOT(findAngles()));
-   pb_find_angle->setEnabled(false);
+   QGridLayout* left_lyt = new QGridLayout();
+   left_lyt->setContentsMargins( 0, 0, 0, 0 );
+   left_lyt->setSpacing( 1 );
+   left_lyt->setColumnStretch( 0, 1 );
+   left_lyt->setColumnStretch( 1, 1 );
 
-   pb_help = us_pushbutton(tr("Help"));
-   pb_reset_basis = us_pushbutton(tr("Reset Basis Spectra / Reset Fit Results"));
-   connect(pb_reset_basis, SIGNAL(clicked()), SLOT(resetBasis()));
-   pb_reset_basis->setEnabled(false);
-   
-   pb_save= us_pushbutton(tr("Save Fit"));
-   connect(pb_save, SIGNAL(clicked()), SLOT(save()));
-   pb_save->setEnabled(false);
-   
-   pb_close = us_pushbutton(tr("Close"));
-   connect(pb_close, SIGNAL(clicked()), SLOT(close()));
-
-   //List Widgets
-
-   
-   lw_target = us_listwidget();
-   lw_basis = us_listwidget();
-   connect(lw_basis, SIGNAL(itemDoubleClicked(QListWidgetItem*)), SLOT(deleteBasisCurve()));
-
-
-   QLabel* lb_wvlinfo = us_banner(tr("Target/Basis Spectra Information"));
-   QLabel* lb_correlation = us_banner(tr("Basis Vectors Correlation"));
-   QLabel* lb_fit = us_banner(tr("Perform Fit"));
-   QLabel* lb_load_save = us_banner(tr("Save Fitting Results"));
-   QLabel* lb_rmsd = us_label(tr("RMSD: "));
-   QLabel* lb_angle = us_label(tr("Angle (Deg.): "));
-   le_rmsd = us_lineedit("", 1, true);
-
-   cb_angle_one = new QComboBox();
-   cb_angle_two = new QComboBox();
-   le_angle = us_lineedit("", 1, true); 
+   int row = 0;
+   left_lyt->addWidget( lb_target,      row++, 0, 1, 2 );
+   left_lyt->addWidget( pb_target,      row++, 0, 1, 2 );
+   left_lyt->addWidget( lb_tgt_fname,   row,   0, 1, 1 );
+   left_lyt->addWidget( le_tgt_fname,   row++, 1, 1, 1 );
+   left_lyt->addWidget( lb_tgt_header,  row,   0, 1, 1 );
+   left_lyt->addWidget( le_tgt_header,  row++, 1, 1, 1 );
+   left_lyt->addWidget( lb_tgt_minL,    row,   0, 1, 1 );
+   left_lyt->addWidget( le_tgt_minL,    row++, 1, 1, 1 );
+   left_lyt->addWidget( lb_tgt_maxL,    row,   0, 1, 1 );
+   left_lyt->addWidget( le_tgt_maxL,    row++, 1, 1, 1 );
+   left_lyt->addWidget( lb_basis,       row++, 0, 1, 2 );
+   left_lyt->addWidget( pb_basis,       row,   0, 1, 1 );
+   left_lyt->addWidget( pb_reset,       row++, 1, 1, 1 );
+   left_lyt->addWidget( lb_basis_list,  row++, 0, 1, 2 );
+   left_lyt->addWidget( tw_basis,       row++, 0, 1, 2 );
+   left_lyt->addWidget( lb_fit,         row++, 0, 1, 2 );
+   left_lyt->addWidget( pb_fit,         row++, 0, 1, 2 );
+   left_lyt->addWidget( lb_fit_minL,    row,   0, 1, 1 );
+   left_lyt->addWidget( le_fit_minL,    row++, 1, 1, 1 );
+   left_lyt->addWidget( lb_fit_maxL,    row,   0, 1, 1 );
+   left_lyt->addWidget( le_fit_maxL,    row++, 1, 1, 1 );
+   left_lyt->addWidget( lb_rmsd,        row,   0, 1, 1 );
+   left_lyt->addWidget( le_rmsd,        row++, 1, 1, 1 );
+   left_lyt->addWidget( lb_basis_1,     row,   0, 1, 1 );
+   left_lyt->addWidget( cb_basis_1,     row++, 1, 1, 1 );
+   left_lyt->addWidget( lb_basis_2,     row,   0, 1, 1 );
+   left_lyt->addWidget( cb_basis_2,     row++, 1, 1, 1 );
+   left_lyt->addWidget( lb_angle,       row,   0, 1, 1 );
+   left_lyt->addWidget( le_angle,       row++, 1, 1, 1 );
+   left_lyt->addWidget( pb_save,        row++, 0, 1, 2 );
+   left_lyt->addWidget( pb_help,        row++, 0, 1, 2 );
+   left_lyt->addWidget( pb_close,       row++, 0, 1, 2 );
 
    data_plot = new QwtPlot();
-   US_Plot* plot_layout_1 = new US_Plot(data_plot, tr(""), tr("Wavelength(nm)"), tr("Extinction"));
+   US_Plot* plot_layout_1 = new US_Plot( data_plot, tr(""), tr("Wavelength(nm)"), tr("Extinction") );
    data_plot->setCanvasBackground(Qt::black);
    data_plot->setTitle("Wavelength Spectrum Fit");
-   data_plot->setMinimumSize(600,200);
+   data_plot->setMinimumSize( 600,200 );
    
-   residuals_plot = new QwtPlot();
-   US_Plot* plot_layout_2 = new US_Plot(residuals_plot, tr(""), tr("Wavelength(nm)"), tr("Extinction"));
-   residuals_plot->setCanvasBackground(Qt::black);
-   residuals_plot->setTitle("Fitting Residuals");
-   residuals_plot->setMinimumSize(600, 200);
+   error_plot = new QwtPlot();
+   US_Plot* plot_layout_2 = new US_Plot( error_plot, tr(""), tr("Wavelength(nm)"), tr("Extinction") );
+   error_plot->setCanvasBackground(Qt::black);
+   error_plot->setTitle("Fitting Residuals");
+   error_plot->setMinimumSize( 600, 200 );
 
-   pick = new US_PlotPicker( data_plot );
-   pick->setRubberBand( QwtPicker::VLineRubberBand );
-   // connect( pick, SIGNAL( moved    ( const QPointF& ) ),
-   // 	    SLOT  ( new_value( const QPointF& ) ) );
-   // connect( pick, SIGNAL( moved    ( const QPointF& ) ),
-   // 	    SLOT  ( new_value( const QPointF& ) ) );
-   // connect( pick, SIGNAL( mouseDown( const QPointF& ) ),
-   //                SLOT  ( new_value( const QPointF& ) ) );
+   QwtPlotPicker* picker = new US_PlotPicker( data_plot );
+   picker->setRubberBand( QwtPicker::VLineRubberBand );
 
-   QGridLayout* plotGrid;
-   plotGrid =  new QGridLayout();
-   plotGrid->addLayout(plot_layout_1, 0, 0);
-   plotGrid->addLayout(plot_layout_2, 1, 0);
+   QVBoxLayout* right_lyt = new QVBoxLayout();
+   right_lyt->addLayout( plot_layout_1 );
+   right_lyt->addLayout( plot_layout_2 );
+   right_lyt->setContentsMargins( 0, 0, 0, 0 );
+   right_lyt->setSpacing( 1 );
+
+   QHBoxLayout *layout = new QHBoxLayout(this);
+   layout->setSpacing( 1 );
+   layout->setContentsMargins( 2, 2, 2, 2 );
+   layout->addLayout( left_lyt,  1 );
+   layout->addLayout( right_lyt, 2 );
    
-   QGridLayout* angles_layout;
-   angles_layout = new QGridLayout();
-   angles_layout->addWidget(cb_angle_one, 0, 0);
-   angles_layout->addWidget(cb_angle_two, 0, 1);
-   // angles_layout->addWidget(le_angle, 1, 0);
-   // angles_layout->addWidget(pb_find_angle, 2, 0);
+   setLayout( layout );
 
-   QGridLayout* angles_layout_res;
-   angles_layout_res = new QGridLayout();
-   angles_layout_res->addWidget(lb_angle, 0, 0);
-   angles_layout_res->addWidget(le_angle, 0, 1);
+   connect( pb_target, &QPushButton::clicked, this, &US_Spectrum::load_target );
+   connect( pb_basis, &QPushButton::clicked, this, &US_Spectrum::load_basis );
+   connect( pb_reset, &QPushButton::clicked, this, &US_Spectrum::reset );
+   connect( pb_save, &QPushButton::clicked, this, &US_Spectrum::save );
+   connect( pb_close, &QPushButton::clicked, this, &US_Spectrum::close );
+}
 
-   QGridLayout* subgl_rmsd;
-   subgl_rmsd = new QGridLayout();
-   subgl_rmsd->addWidget(lb_rmsd, 0, 0);
-   subgl_rmsd->addWidget(le_rmsd, 0, 1);
+void US_Spectrum::DataProfile::clear( bool all )
+{
+   xvec.clear();
+   yvec.clear();
+   nnls_factor  = -1;
+   nnls_percent = -1;
+   if ( curve != nullptr ) {
+      curve->detach();
+      curve = nullptr;
+   }
+   if ( all ) {
+      lambda.clear();
+      od.clear();
+      header.clear();
+      finfo = QFileInfo();
+      highlight = false;
+   }
+}
 
-   QGridLayout* subgl2;
-   subgl2 = new QGridLayout();
-   // subgl2->addWidget(pb_load_fit, 0, 0);
-   // subgl2->addWidget(pb_save, 0, 1);
-   // subgl2->addWidget(pb_help, 1, 0);
-   // subgl2->addWidget(pb_close, 1, 1);
-   subgl2->addWidget(pb_save, 0, 0);
-   subgl2->addWidget(pb_help, 1, 0);
-   subgl2->addWidget(pb_close, 2, 0); 
+//brings in the target spectrum according to user specification
+void US_Spectrum::load_target()
+{
+   QString path = US_Settings::dataDir();
+   current_path = current_path.isEmpty() ? path : current_path;
 
-   QGridLayout* gl1;
-   gl1 = new QGridLayout();
-   int row = 0;
-   gl1->addWidget(lb_wvlinfo, row++, 0);
-   gl1->addWidget(pb_load_target, row++, 0);
-   gl1->addWidget(lw_target, row++, 0);
-   gl1->addWidget(pb_load_basis, row++, 0);
-   gl1->addWidget(lw_basis, row++, 0);
-   gl1->addWidget(pb_reset_basis, row++, 0);
-   
-   /* Do we need this ??? */
-   //gl1->addWidget(cb_spectrum_type, row++, 0);
-   //gl1->addLayout(subgl1, row++, 0);
-   //gl1->addWidget(pb_find_extinction, row++, 0);
-   
-   //gl1->addWidget(pb_delete, row++, 0);
-   
-   gl1->addWidget(lb_fit, row++, 0);
-   gl1->addWidget(pb_overlap, row++, 0);
-   gl1->addWidget(pb_fit, row++, 0);
-   gl1->addLayout(subgl_rmsd, row++, 0);
- 
-   //gl1->addLayout(subgl1, row++, 0);
+   QString filter = tr("Text Files (*.txt *.csv *.dat *.wa *.dsp);;All Files (*)");
+   QString fpath = QFileDialog::getOpenFileName(this, "Load Target Spectrum", current_path, filter);
 
-   gl1->addWidget(lb_correlation, row++, 0);
-   gl1->addLayout(angles_layout, row++, 0);
-   gl1->addWidget(pb_find_angle, row++, 0);
-   gl1->addLayout(angles_layout_res, row++, 0);
+   if (fpath.isEmpty()) {
+      return;
+   }
+   QString note = "1st Column -> WAVELENGTH ; 2nd Column -> OD";
+   US_CSV_Loader *csv_loader = new US_CSV_Loader(fpath, note, true, this);
+   int state = csv_loader->exec();
+   if (state != QDialog::Accepted) return;
+   US_CSV_Data csv_data = csv_loader->data();
+   if (csv_data.columnCount() < 2 ) {
+      QMessageBox::warning(this, "Error!", "Data files must have two columns of wavelength and OD values!");
+      return;
+   }
+
+   target.clear( true );
+   target.finfo = QFileInfo( csv_data.filePath() );
+   target.lambda << csv_data.columnAt(0);
+   target.od << csv_data.columnAt(1);
+   target.header = csv_data.header().at(1);
+
+   double min = 1e99;
+   double max = -1e99;
+   for( int ii = 0; ii < target.lambda.size(); ii++ ) {
+      min = qMin( min, target.lambda.at( ii ) );
+      max = qMax( max, target.lambda.at( ii ) );
+   }
    
-   gl1->addWidget(lb_load_save, row++, 0);
-   gl1->addLayout(subgl2, row++, 0);
-   
-   QGridLayout *mainLayout;
-   mainLayout = new QGridLayout(this);
-   mainLayout->setSpacing(2);
-   mainLayout->setContentsMargins(2,2,2,2);
-   mainLayout->addLayout(gl1, 0, 0);
-   mainLayout->addLayout(plotGrid, 0, 1);
-   mainLayout->setColumnStretch(0,2);
-   mainLayout->setColumnStretch(1,5);
+   le_tgt_fname->setText( target.finfo.fileName() );
+   le_tgt_header->setText( target.header );
+   le_tgt_minL->setText( tr( "%1 nm" ).arg( min ) );
+   le_tgt_maxL->setText( tr( "%1 nm" ).arg( max ) );
+
+   for ( int ii = 0; ii < all_basis.size(); ii++ ) {
+      all_basis[ii].clear( false );
+   }
+
+   plot();
 }
 
 //loads basis spectra according to user specification
 void US_Spectrum::load_basis()
 {
+   QString path = US_Settings::dataDir();
+   current_path = current_path.isEmpty() ? path : current_path;
+
+   QString filter = tr( "Text Files (*.txt *.csv *.dat *.wa *.dsp);;All Files (*)" );
    QStringList files;
+   files = QFileDialog::getOpenFileNames( this, "Add Basis Spectra", current_path, filter );
    
-   //struct WavelengthProfile temp_wp;
-   QFileDialog dialog (this);
+   if ( files.isEmpty() ) {
+      return;
+   }
 
-   dialog.setNameFilter(tr("Text Files (*.txt *.csv *.dat *.wa *.dsp);;All Files (*)"));
-   //dialog.setNameFilter(tr("Text files (*.[Rr][Ee][Ss]);;All files (*)"));
-   dialog.setFileMode(QFileDialog::ExistingFiles);
-   dialog.setViewMode(QFileDialog::Detail);
-   
-   QString work_dir_data  = US_Settings::dataDir();
-   
-   current_path = current_path.isEmpty() ? work_dir_data : current_path;
-   dialog.setDirectory(current_path);  
-
-   if(dialog.exec())
-   {
-      files = dialog.selectedFiles();
-      QVector<US_CSV_Data> data_list;
-      for ( int ii = 0; ii < files.size(); ii++ ) {
-         QString filepath = files.at(ii);
-         QString note = "1st Column -> WAVELENGTH ; Others -> OD";
-         bool editing = true;
-         US_CSV_Loader *csv_loader = new US_CSV_Loader(filepath, note, editing, this);
-         int state = csv_loader->exec();
-         if (state == QDialog::Rejected) {
-            int check = QMessageBox::question(this, "Warning!", "You canceled parsing a file.\n" + filepath +
-                                                                "\nDo you want to continue loading the rest of the file(s)?");
+   QVector<US_CSV_Data> data_list;
+   for ( int ii = 0; ii < files.size(); ii++ ) {
+      QString filepath = files.at(ii);
+      QString note = "1st Column -> WAVELENGTH ; Others -> OD";
+      bool editing = true;
+      US_CSV_Loader *csv_loader = new US_CSV_Loader(filepath, note, editing, this);
+      int state = csv_loader->exec();
+      if (state == QDialog::Rejected) {
+         int check = QMessageBox::question(this, "Warning!", "You canceled parsing a file.\n" + filepath +
+                                                               "\nDo you want to continue loading the rest of the file(s)?");
+         if (check == QMessageBox::No) {
+            return;
+         }
+      } else if (state == QDialog::Accepted) {
+         US_CSV_Data csv_data = csv_loader->data();
+         if (csv_data.columnCount() < 2 ) {
+            int check = QMessageBox::question(this, "Warning!", "This file does not have two data columns:\n" + filepath +
+                                                                  "\nDo you want to continue loading the rest of the file(s)?");
             if (check == QMessageBox::No) {
                return;
-            }
-         } else if (state == QDialog::Accepted) {
-            US_CSV_Data csv_data = csv_loader->data();
-            if (csv_data.columnCount() < 2 ) {
-               int check = QMessageBox::question(this, "Warning!", "This file does not have two data columns:\n" + filepath +
-                                                                   "\nDo you want to continue loading the rest of the file(s)?");
-               if (check == QMessageBox::No) {
-                  return;
-               }
-            } else {
-               data_list << csv_data;
             }
          } else {
-            int check = QMessageBox::question(this, "Warning!", "Unable to load the file!\n" + filepath +
-                                                                "\nDo you want to continue loading the rest of the file(s)?");
-            if (check == QMessageBox::No) {
-               return;
-            }
+            data_list << csv_data;
          }
-      }
-
-      for (int ii = 0; ii < data_list.size(); ii++ ) {
-         QFileInfo finfo(data_list[ii].filePath());
-         QVector<double> xvals = data_list.at(ii).columnAt(0);
-         for (int jj = 1; jj < data_list.at(ii).columnCount(); jj++) {
-            struct WavelengthProfile wp;
-            wp.wvl << xvals;
-            auto minmax = std::minmax_element(xvals.begin(), xvals.end());
-            wp.extinction << data_list.at(ii).columnAt(jj);
-            wp.lambda_min = qRound(*minmax.first);
-            wp.lambda_max = qRound(*minmax.second);
-            wp.header = data_list.at(ii).header().at(jj);
-            wp.filename = finfo.fileName();
-            v_basis << wp;
-            cb_angle_one->addItem(wp.header);
-            cb_angle_two->addItem(wp.header);
-            //basis_names.append(finfo.baseName());
+      } else {
+         int check = QMessageBox::question(this, "Warning!", "Unable to load the file!\n" + filepath +
+                                                               "\nDo you want to continue loading the rest of the file(s)?");
+         if (check == QMessageBox::No) {
+            return;
          }
       }
    }
 
-   plot_basis();
+   for ( int ii = 0; ii < all_basis.size(); ii++ ) {
+      all_basis[ii].clear(false);
+   }
+
+   solution.clear(true);
+   residual.clear(true);
+
+   for (int ii = 0; ii < data_list.size(); ii++ ) {
+      QFileInfo finfo(data_list[ii].filePath());
+      QVector<double> xvals = data_list.at(ii).columnAt(0);
+      for (int jj = 1; jj < data_list.at(ii).columnCount(); jj++) {
+         DataProfile dp;
+         dp.lambda << xvals;
+         dp.od << data_list.at(ii).columnAt(jj);
+         dp.header = data_list.at(ii).header().at(jj);
+         dp.finfo = finfo;
+         all_basis << dp;
+      }
+   }
    
-   pb_reset_basis->setEnabled(true);
-   pb_overlap->setEnabled(true);
-   pb_fit->setEnabled(true);
-   pb_find_angle->setEnabled(true);
-   pb_save->setDisabled(true);
-   le_rmsd->clear();
-   // overlap();
+   fill_table();
+   fill_combo();
+   plot();
+
+}
+
+void US_Spectrum::fill_table()
+{
+   tw_basis->disconnect();
+   int nrows = all_basis.size();
+   tw_basis->setRowCount( nrows );
+   tw_basis->setColumnCount( 3 );
+
+   for( int ii = 0; ii < nrows; ii++ ) {
+      QTableWidgetItem *item_0 = new QTableWidgetItem();
+      item_0->setFlags( Qt::ItemIsUserCheckable | Qt::ItemIsEnabled | Qt::ItemIsEditable );
+      if( all_basis.at( ii ).highlight ) {
+         item_0->setCheckState( Qt::Checked );
+      } else {
+         item_0->setCheckState( Qt::Unchecked );
+      }
+      item_0->setText( all_basis.at( ii ).header );
+      item_0->setTextAlignment( Qt::AlignLeft | Qt::AlignVCenter );
+
+      QTableWidgetItem *item_1 = new QTableWidgetItem();
+      item_1->setFlags( Qt::NoItemFlags );
+      int min = *std::min( all_basis.at( ii ).lambda.begin(), all_basis.at( ii ).lambda.end() );
+      int max = *std::max( all_basis.at( ii ).lambda.begin(), all_basis.at( ii ).lambda.end() );
+      item_1->setText( tr( "%1 - %2" ).arg( min ).arg( max ) );
+      item_1->setTextAlignment( Qt::AlignCenter );
+      
+      QTableWidgetItem *item_2 = new QTableWidgetItem();
+      item_2->setFlags( Qt::NoItemFlags );
+      item_2->setTextAlignment( Qt::AlignCenter );
+      item_2->setText( "" );
+
+      tw_basis->setItem( ii, 0, item_0 );
+      tw_basis->setItem( ii, 1, item_1 );
+      tw_basis->setItem( ii, 2, item_2 );
+   }
+
+   tw_basis->horizontalHeader()->setSectionResizeMode( 0, QHeaderView::ResizeToContents );
+   tw_basis->horizontalHeader()->setSectionResizeMode( 1, QHeaderView::Stretch );
+   tw_basis->horizontalHeader()->setSectionResizeMode( 2, QHeaderView::Stretch );
+
+   connect(tw_basis, &QTableWidget::itemChanged, this, &US_Spectrum::highlight);
+}
+
+void US_Spectrum::fill_combo()
+{
+   cb_basis_1->disconnect();
+   cb_basis_2->disconnect();
+   cb_basis_1->clear();
+   cb_basis_2->clear();
+
+   for( int ii = 0; ii < all_basis.size(); ii++ ) {
+      cb_basis_1->addItem( all_basis.at( ii ).header );
+      cb_basis_2->addItem( all_basis.at( ii ).header );
+   }
+
+   if( cb_basis_1->count() > 0 ) {
+      cb_basis_1->setCurrentIndex( 0 );
+      cb_basis_2->setCurrentIndex( 0 );
+   }
+
+   connect( cb_basis_1, qOverload<int>( &QComboBox::currentIndexChanged ), this, &US_Spectrum::find_angle );
+   connect( cb_basis_2, qOverload<int>( &QComboBox::currentIndexChanged ), this, &US_Spectrum::find_angle );
+   find_angle();
+}
+
+void US_Spectrum::plot()
+{
+
+}
+
+void US_Spectrum::highlight( QTableWidgetItem *item )
+{
+   if( item->column() != 0 ) {
+      return;
+   }
+   int id = item->row();
+   bool checked = item->checkState() == Qt::Checked;
+   if( checked == all_basis.at( id ).highlight ) {
+      all_basis[ id ].header = item->text();
+      fill_combo();
+   } else {
+      all_basis[ id ].highlight = checked;
+      plot();
+   }
 }
 
 //Takes the information in the basis vector to plot all of the curves for the basis spectrums 
 void US_Spectrum::plot_basis()
 {
   //QStringList names;
-
+   int basisIndex = 0;
    for(int m = basisIndex; m < v_basis.size(); m++)
    {
      //names.append(v_basis.at(m).filenameBasis);   
       QListWidgetItem* item = new QListWidgetItem(v_basis.at(m).header);
       item->setData(Qt::ToolTipRole, v_basis.at(m).filename);
-      lw_basis->addItem(item);
+      // tw_basis->addItem(item);
 
       double* xx = (double*)v_basis.at(m).wvl.data();
       double* yy = (double*)v_basis.at(m).extinction.data();
@@ -293,64 +418,12 @@ void US_Spectrum::plot_basis()
       v_basis[basisIndex].matchingCurve = c;
       basisIndex++;
    }
-   // cb_angle_one->addItems(names);
-   // cb_angle_two->addItems(names);
+   // cb_basis_1->addItems(names);
+   // cb_basis_2->addItems(names);
    data_plot->replot();
 }
 
-//brings in the target spectrum according to user specification
-void US_Spectrum::load_target()
-{
-   QString filter = tr("Text Files (*.txt *.csv *.dat *.wa *.dsp);;All Files (*)");
-   QString fpath = QFileDialog::getOpenFileName(this, "Load The Target Spectrum",
 
-                                                US_Settings::dataDir(), filter);
-
-   if (fpath.isEmpty()) {
-      return;
-   }
-   QString note = "1st Column -> WAVELENGTH ; 2nd Column -> OD";
-   US_CSV_Loader *csv_loader = new US_CSV_Loader(fpath, note, true, this);
-   int state = csv_loader->exec();
-   if (state != QDialog::Accepted) return;
-   US_CSV_Data csv_data = csv_loader->data();
-   if (csv_data.columnCount() < 2 ) {
-      QMessageBox::warning(this, "Error!", "Data files must have two columns of wavelength and OD values!");
-      return;
-   }
-   QFileInfo file_info(csv_data.filePath());
-
-   us_grid(data_plot);
-   
-   //reset for a new target spectrum to be loaded
-   if(lw_target->count() > 0)
-   {
-      lw_target->clear();
-      w_target.extinction.clear();
-      w_target.wvl.clear();
-      w_target.header.clear();
-      w_target.matchingCurve->detach();
-      pb_load_basis->setEnabled(false);
-      resetBasis();
-   }
-   qDebug() << "filename: " << file_info.filePath();
-
-   // struct WavelengthProfile wp;
-   QVector<double> xvals = csv_data.columnAt(0);
-   w_target.wvl << xvals;
-   auto minmax = std::minmax_element(xvals.begin(), xvals.end());
-   w_target.extinction << csv_data.columnAt(1);
-   w_target.lambda_min = qRound( *minmax.first );
-   w_target.lambda_max = qRound( *minmax.second );
-   w_target.header = csv_data.header().at(1);
-   w_target.filename = file_info.fileName();
-   // QListWidgetItem* item = new QListWidgetItem(w_target.filenameBasis);
-   // item->setData(Qt::ToolTipRole, w_target.filename);
-   // lw_target->addItem(item);
-   plot_target();
-   // if ( lw_target->count() > 0 )
-   //   pb_load_basis->setEnabled(true);
-}
 
 void US_Spectrum:: plot_target()
 {
@@ -385,8 +458,8 @@ void US_Spectrum:: plot_target()
 
    QListWidgetItem* item = new QListWidgetItem(w_target.header);
    item->setData(Qt::ToolTipRole, w_target.filename);
-   lw_target->addItem(item);
-   pb_load_basis->setEnabled(true);
+   // lw_target->addItem(item);
+   // pb_load_basis->setEnabled(true);
 }
 
 void US_Spectrum::fit()
@@ -469,8 +542,8 @@ void US_Spectrum::fit()
       results.push_back(100.0 * nnls_x[i]/fval);
       // str = QString::asprintf( (v_basis[i].filenameBasis +": %3.2f%% (%6.4e)").toLocal8Bit().data(), results[i], nnls_x[i] );
       // lw_basis->item((int)i)->setText(str);
-      lw_basis->item((int)i)->setText(str.arg(v_basis[i].header).
-                                       arg(results.at(i), 0, 'f', 2).arg(nnls_x[i], 0, 'e'));
+      // tw_basis->item((int)i)->setText(str.arg(v_basis[i].header).
+      //                                  arg(results.at(i), 0, 'f', 2).arg(nnls_x[i], 0, 'e'));
       v_basis[i].nnls_factor = nnls_x[i];
       v_basis[i].nnls_percentage = results[i];
    }
@@ -496,9 +569,9 @@ void US_Spectrum::fit()
       y[i] = solution[i];
    }
 
-   dataPlotClear( residuals_plot );
-   QwtPlotCurve *resid_curve = us_curve(residuals_plot, "Residuals");
-   QwtPlotCurve *target_curve = us_curve(residuals_plot,"Mean");
+   dataPlotClear( error_plot );
+   QwtPlotCurve *resid_curve = us_curve(error_plot, "Residuals");
+   QwtPlotCurve *target_curve = us_curve(error_plot,"Mean");
    if (solution_curve != NULL)
    {
       solution_curve->detach();
@@ -538,7 +611,7 @@ void US_Spectrum::fit()
    pen.setColor(Qt::yellow);
    pen.setWidth(2);
    resid_curve->setPen(pen);
-   residuals_plot->replot();
+   error_plot->replot();
 
    x[1] = x[points - 1];
    y[0] = 0.0;
@@ -547,8 +620,8 @@ void US_Spectrum::fit()
    pen.setColor(Qt::red);
    pen.setWidth(3);
    target_curve->setPen(pen);
-   residuals_plot->replot();
-   pb_save->setEnabled(true);
+   error_plot->replot();
+   // pb_save->setEnabled(true);
    delete [] x;
    delete [] y;
 }
@@ -563,72 +636,57 @@ bool US_Spectrum::deleteBasisCurve(void)
   
   mBox.exec();
   
-  if (mBox.clickedButton() == cancelButton)
-    {
-      return(false);
-    }
+//   if (mBox.clickedButton() == cancelButton)
+//     {
+//       return(false);
+//     }
   
-  if(v_basis.size() <= 1)
-     {
-       resetBasis();
-       return(true);
-     }
+//   if(v_basis.size() <= 1)
+//      {
+//        resetBasis();
+//        return(true);
+//      }
  
-  QString selectedName = lw_basis->currentItem()->text();
-  for(int k = 0; k < v_basis.size(); k++)
-    {
-      if(selectedName.contains(v_basis.at(k).header))
-	{
-	  v_basis[k].matchingCurve->detach();
-	  v_basis.remove(k);
-	  cb_angle_one->removeItem(k);
-	  cb_angle_two->removeItem(k);
-	  delete lw_basis->currentItem();
-	}
-    }
-  data_plot->replot();
+// //   QString selectedName = tw_basis->currentItem()->text();
+// //   for(int k = 0; k < v_basis.size(); k++)
+// //     {
+// //       if(selectedName.contains(v_basis.at(k).header))
+// // 	{
+// // 	  v_basis[k].matchingCurve->detach();
+// // 	  v_basis.remove(k);
+// // 	  cb_basis_1->removeItem(k);
+// // 	  cb_basis_2->removeItem(k);
+// // 	  delete tw_basis->currentItem();
+// // 	}
+// //     }
+//   data_plot->replot();
 
   
   
-  // v_basis[deleteIndex].matchingCurve->detach();
-  // data_plot->replot();
-  // v_basis.remove(deleteIndex);
-  // delete lw_basis->currentItem();
+//   // v_basis[deleteIndex].matchingCurve->detach();
+//   // data_plot->replot();
+//   // v_basis.remove(deleteIndex);
+//   // delete lw_basis->currentItem();
   
   return(true);
 }
 //////////////////////////////////////////////////
 
-void US_Spectrum::resetBasis()
+void US_Spectrum::reset()
 {
-   basisIndex = 0;
-   cb_angle_one->clear();
-   cb_angle_two->clear();
-   le_angle->clear();
-   for(int k = 0; k < v_basis.size(); k++)
-   {
-      v_basis[k].matchingCurve->detach();
-   }
-   v_basis.clear();
-   //delete the solution curve
-   if(solution_curve != NULL)
-   {
-      solution_curve->detach();
-      solution_curve = NULL;
-   }
-   //clear the residuals plot
-   dataPlotClear( residuals_plot );
-   residuals_plot->replot();
-   data_plot->replot();
-   lw_basis->clear();
-   le_rmsd->clear();
-   //le_rmsd->setText(QString("RMSD"));
+   target.clear( false );
+   solution.clear( true );
+   residual.clear( true );
 
-   pb_overlap->setEnabled(false);
-   pb_fit->setEnabled(false);
-   pb_find_angle->setEnabled(false);
-   pb_reset_basis->setEnabled(false);
-   pb_save->setEnabled(false);
+   for( int ii = 0; ii < all_basis.size(); ii++ ) {
+      all_basis[ ii ].clear( true );
+   }
+
+   all_basis.clear();
+   fill_table();
+   plot();
+   tw_basis->horizontalHeader()->setSectionResizeMode( QHeaderView::Stretch );
+
 }
 
 void US_Spectrum::overlap()
@@ -749,7 +807,7 @@ void US_Spectrum::overlap()
    w_target.lambda_min = highest_lambda_min;
    w_target.lambda_max = lowest_lambda_max;
 
-   lw_target->clear();
+   // lw_target->clear();
    w_target.matchingCurve->detach();
    for(int k = 0; k < v_basis.size(); k++)
      {
@@ -759,54 +817,43 @@ void US_Spectrum::overlap()
      }
    
    //Clear components of the basis so replotting will work properly
-   lw_basis->clear();
-   basisIndex = 0;
+   tw_basis->clear();
+   int basisIndex = 0;
 
    plot_basis();
    plot_target();
 }
 
-void US_Spectrum::findAngles()
+void US_Spectrum::find_angle()
 {
-   QString firstProf = cb_angle_one->currentText();
-   QString secondProf = cb_angle_two->currentText();
-   int indexOne = 0;
-   int indexTwo = 0;
-   double dotproduct = 0.0, vlength_one = 0.0, vlength_two = 0.0, angle;
-
-   //Find the two basis vectors that the user selected
-   for(int k = 0; k < v_basis.size(); k++)
-   {
-      if(firstProf.compare(v_basis[k].header) == 0)
-         indexOne = k;
-      if(secondProf.compare(v_basis[k].header) == 0)
-         indexTwo = k;
+   le_angle->clear();
+   int id_1 = cb_basis_1->currentIndex();
+   int id_2 = cb_basis_2->currentIndex();
+   if( id_1 == 0 || id_2 == 0 ) {
+      return;
    }
-   
-    QString str = "Please note:\n\n" 
-      "Selected basic spectra have different limits.\n" 
-      "These vectors need to be congruent before \n" 
-      "computing correlation among them. \n\n" 
-      "Please run \"Find Extinction Profile Overlap\"\n"
-      "first to resolve the issue.";
 
-   // If Basis vectros are of different dimensions
-   if ( v_basis[indexOne].extinction.size() != v_basis[indexTwo].extinction.size() ) 
-     {
-       QMessageBox::warning(this, tr("UltraScan Warning"), str );
-       return;
-     }
+   QVector<double> vec_1 = all_basis.at( id_1 ).yvec;
+   QVector<double> vec_2 = all_basis.at( id_2 ).yvec;
+
+   if( vec_1.isEmpty() || vec_2.isEmpty() ) {
+      return;
+   }
+
+   double dotproduct = 0.0;
+   double norm_1 = 0.0;
+   double norm_2 = 0.0;
 	  
-   //Calculate the angle measure between the two 
-   for(int i = 0; i < v_basis[indexOne].extinction.size(); i++)
-   {
-      dotproduct += v_basis[indexOne].extinction[i] * v_basis[indexTwo].extinction[i];
-      vlength_one += pow(v_basis[indexOne].extinction[i], 2);
-      vlength_two += pow(v_basis[indexTwo].extinction[i], 2);
+   for( int ii = 0; ii < vec_1.size(); ii++ ) {
+      dotproduct += vec_1.at( ii ) * vec_2.at( ii );
+      norm_1 += std::pow( vec_1.at( ii ), 2 );
+      norm_2 += std::pow( vec_2.at( ii ), 2 );
    }
-   angle = dotproduct/(pow(vlength_one, 0.5) * pow(vlength_two, 0.5));
-   angle =180 * ((acos(angle))/M_PI);
-   le_angle->setText(QString::number(angle));
+   norm_1 = std::sqrt( norm_1 );
+   norm_2 = std::sqrt( norm_2 );
+   double angle = dotproduct / ( norm_1 * norm_2 );
+   angle = 180 * std::acos( angle ) / M_PI;
+   le_angle->setText( QString::number( angle ) );
 }
 
 void US_Spectrum::save()
@@ -854,17 +901,17 @@ void US_Spectrum::save()
                                              "All such characters have been replaced with (-).");
    }
 
-   QFile f (datfile);
-   if(f.open(QIODevice::WriteOnly | QIODevice::Text))
-   {
-      QTextStream ts(&f);
-      ts << "Details of fitting for each base species\n\n";
-      for (int ii = 0; ii < lw_basis->count(); ii++) {
-         ts << lw_basis->item(ii)->data(Qt::ToolTipRole).toString() << ": ";
-         ts << lw_basis->item(ii)->text() << "\n";
-      }
-      f.close();
-   }
+   // QFile f (datfile);
+   // if(f.open(QIODevice::WriteOnly | QIODevice::Text))
+   // {
+   //    QTextStream ts(&f);
+   //    ts << "Details of fitting for each base species\n\n";
+   //    for (int ii = 0; ii < tw_basis->count(); ii++) {
+   //       ts << tw_basis->item(ii)->data(Qt::ToolTipRole).toString() << ": ";
+   //       ts << tw_basis->item(ii)->text() << "\n";
+   //    }
+   //    f.close();
+   // }
 
    /*
    if(f.open(QIODevice::WriteOnly))

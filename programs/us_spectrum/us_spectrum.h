@@ -6,6 +6,7 @@
 #include "us_plot.h"
 #include "us_math2.h"
 #include <math.h>
+#include <QFileInfo>
 
 /**
  * @struct WavelengthProfile
@@ -40,39 +41,74 @@ class US_Spectrum : public US_Widgets
          * @brief Constructor for US_Spectrum.
          */
         US_Spectrum();
-        int basisIndex;               //!< Index of the basis
-        QString current_path;         //!< Current path
+        
 
     private:
+
+        /**
+         * @class US_Spectrum::DataProfile
+         * @brief The DataProfile class provides a data structure for the basis and target spectra.
+         */
+        class DataProfile
+        {
+        public:
+            QFileInfo finfo;                //!< Filename
+            QString header;                 //!< Column header
+            QVector<double> lambda;         //!< Wavelength values
+            QVector<double> od;             //!< Extinction coefficients
+            QVector<double> xvec;           //!< Trimmed lambda vector
+            QVector<double> yvec;           //!< Trimmed Extinction coefficients vector
+            QwtPlotCurve* curve = nullptr;  //!< Attached QwtPlotCurve
+            float nnls_factor  = -1;        //!< NNLS factor
+            float nnls_percent = -1;        //!< NNLS percentage
+            bool highlight = false;
+
+            /**
+             * @brief Clear data related for fitting and plotting
+             */
+            void clear( bool );
+        };
+        
+        QString current_path;         //!< Current path
+        QList<DataProfile> all_basis;
+        DataProfile target;
+        DataProfile solution;
+        DataProfile residual;
+
+
+
+
         QVector <double> residuals;    //!< residual vector
 
         QwtPlot* data_plot;           //!< Data plot
-        QwtPlot* residuals_plot;      //!< Residuals plot
+        QwtPlot* error_plot;      //!< Residuals plot
         WavelengthProfile w_target;   //!< Target wavelength profile
         QVector<WavelengthProfile> v_basis; //!< Vector of basis wavelength profiles
         QwtPlotCurve* solution_curve; //!< Solution curve
-        QwtPlotPicker* pick;          //!< Plot picker
         WavelengthProfile w_solution; //!< Solution wavelength profile
 
-        QPushButton* pb_load_target;  //!< Load target button
-        QPushButton* pb_load_basis;   //!< Load basis button
-        QPushButton* pb_fit;          //!< Fit button
-        QPushButton* pb_help;         //!< Help button
-        QPushButton* pb_save;         //!< Save button
-        QPushButton* pb_overlap;      //!< Overlap button
-        QPushButton* pb_close;        //!< Close button
-        QPushButton* pb_reset_basis;  //!< Reset basis button
-        QPushButton* pb_find_angle;   //!< Find angle button
+        QTableWidget* tw_basis;        //!< Basis list widget
 
-        QListWidget* lw_target;       //!< Target list widget
-        QListWidget* lw_basis;        //!< Basis list widget
+        QLineEdit* le_tgt_fname;
+        QLineEdit* le_tgt_header;
+        QLineEdit* le_tgt_minL;
+        QLineEdit* le_tgt_maxL;
+        QLineEdit* le_fit_minL;
+        QLineEdit* le_fit_maxL;
+
         QLineEdit* le_angle;          //!< Angle line edit
         QLineEdit* le_rmsd;           //!< RMSD line edit
         
-        QComboBox* cb_angle_one;      //!< Angle one combo box
-        QComboBox* cb_angle_two;      //!< Angle two combo box
+        QComboBox* cb_basis_1;      //!< Angle one combo box
+        QComboBox* cb_basis_2;      //!< Angle two combo box
+
+        void fill_table();
+        void fill_combo();
+        void plot();
 
     private slots:
+
+        void highlight( QTableWidgetItem* );
         /**
          * @brief Slot to load basis data.
          */
@@ -107,12 +143,12 @@ class US_Spectrum : public US_Widgets
         /**
          * @brief Slot to reset the basis data.
          */
-        void resetBasis();
+        void reset();
 
         /**
          * @brief Slot to find angles.
          */
-        void findAngles();
+        void find_angle();
 
         /**
          * @brief Slot to save the results.
