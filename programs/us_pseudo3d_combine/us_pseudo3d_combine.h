@@ -59,7 +59,7 @@ class US_Pseudo3D_Combine : public US_Widgets
 
    private:
 
-      enum attr_type { ATTR_S, ATTR_K, ATTR_W, ATTR_V, ATTR_D, ATTR_F };
+      enum attr_type { ATTR_S, ATTR_K, ATTR_W, ATTR_V, ATTR_D, ATTR_F, ATTR_R };
 
       QLabel*       lb_plt_smin;
       QLabel*       lb_plt_smax;
@@ -120,12 +120,14 @@ class US_Pseudo3D_Combine : public US_Widgets
       QRadioButton* rb_x_vbar;
       QRadioButton* rb_x_D;
       QRadioButton* rb_x_f;
+      QRadioButton* rb_x_rh;
       QRadioButton* rb_y_s;
       QRadioButton* rb_y_ff0;
       QRadioButton* rb_y_mw;
       QRadioButton* rb_y_vbar;
       QRadioButton* rb_y_D;
       QRadioButton* rb_y_f;
+      QRadioButton* rb_y_rh;
 
       QButtonGroup* bg_x_axis;
       QButtonGroup* bg_y_axis;
@@ -217,4 +219,5 @@ class US_Pseudo3D_Combine : public US_Widgets
    protected:
       virtual void timerEvent( QTimerEvent *e );
 };
+
 #endif

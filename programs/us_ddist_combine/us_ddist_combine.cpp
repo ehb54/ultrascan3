@@ -160,12 +160,14 @@ US_DDistr_Combine::US_DDistr_Combine( const QString auto_mode ) : US_Widgets()
    QGridLayout* lo_pltff0 = us_radiobutton( tr( "f/f0"  ), rb_pltff0,   false );
    QGridLayout* lo_pltvb  = us_radiobutton( tr( "vbar"  ), rb_pltvb,    false );
    QGridLayout* lo_pltMWl = us_radiobutton( tr( "MWlog" ), rb_pltMWl,   false );
+   QGridLayout* lo_pltRh  = us_radiobutton( tr( "Rh"    ), rb_pltRh,    false );
    sel_plt->addButton( rb_pltsw,  0 );
    sel_plt->addButton( rb_pltMW,  1 );
    sel_plt->addButton( rb_pltDw,  2 );
    sel_plt->addButton( rb_pltff0, 3 );
    sel_plt->addButton( rb_pltvb,  4 );
    sel_plt->addButton( rb_pltMWl, 5 );
+   sel_plt->addButton( rb_pltRh,  6 );
    QLayout* lo_mdltype  = us_checkbox(
          tr( "Use model descriptions for list and legend" ),
          ck_mdltype,  false );
@@ -252,8 +254,9 @@ US_DDistr_Combine::US_DDistr_Combine( const QString auto_mode ) : US_Widgets()
    leftLayout->addLayout( lo_pltMW,     row,   2, 1, 2 );
    leftLayout->addLayout( lo_pltDw,     row,   4, 1, 2 );
    leftLayout->addLayout( lo_pltff0,    row++, 6, 1, 2 );
-   leftLayout->addLayout( lo_pltvb,     row,   0, 1, 8 );
-   leftLayout->addLayout( lo_pltMWl,    row++, 2, 1, 8 );
+   leftLayout->addLayout( lo_pltvb,     row,   0, 1, 2 );
+   leftLayout->addLayout( lo_pltMWl,    row,   2, 1, 2 );
+   leftLayout->addLayout( lo_pltRh,     row++, 4, 1, 4 );
 
    leftLayout->addWidget( lb_sigma,     row,   0, 1, 5 );
    leftLayout->addWidget( ct_sigma,     row++, 5, 1, 3 );
@@ -378,6 +381,8 @@ US_DDistr_Combine::US_DDistr_Combine( const QString auto_mode ) : US_Widgets()
    connect( rb_pltvb,    SIGNAL( toggled     ( bool ) ),
             this,        SLOT(   changedPlotX( bool ) ) );
    connect( rb_pltMWl,   SIGNAL( toggled     ( bool ) ),
+            this,        SLOT(   changedPlotX( bool ) ) );
+   connect( rb_pltRh,    SIGNAL( toggled     ( bool ) ),
             this,        SLOT(   changedPlotX( bool ) ) );
 
    connect( ct_sigma,    SIGNAL( valueChanged( double ) ),
@@ -990,6 +995,11 @@ DbgLv(1) << "pDa:  titleY" << titleY;
       titleP = tr( "Discrete Log of Molecular Weight Distributions" );
       titleX = tr( "Molecular Weight (Log, Dalton)" );
    }
+   else if ( xtype == 6 )
+   {
+      titleP = tr( "Discrete Hydrodynamic Radius Distributions" );
+      titleX = tr( "Hydrodynamic Radius (nm)" );
+   }
 DbgLv(1) << "pDa:  titleP" << titleP;
 DbgLv(1) << "pDa:  titleX" << titleX;
 
@@ -1073,6 +1083,11 @@ DbgLv(1) << "pDa:  titleY" << titleY;
    {
       titleP = tr( "Discrete Log of Molecular Weight Distributions" );
       titleX = tr( "Molecular Weight (Log, Dalton)" );
+   }
+   else if ( rb_pltRh->isChecked() )
+   {
+      titleP = tr( "Discrete Hydrodynamic Radius Distributions" );
+      titleX = tr( "Hydrodynamic Radius (nm)" );
    }
 DbgLv(1) << "pDa:  titleP" << titleP;
 DbgLv(1) << "pDa:  titleX" << titleX;
@@ -1449,6 +1464,12 @@ void US_DDistr_Combine::save( void )
       sanode1       = "combo-distrib-mwl";
       sanode2       = "combo-vcdat-mwl";
       sanode3       = "combo-listincl-mwl";
+   }
+   else if ( xtype == 6 )
+   {
+      sanode1       = "combo-distrib-rh";
+      sanode2       = "combo-vcdat-rh";
+      sanode3       = "combo-listincl-rh";
    }
    QString fnamsvg  = annode + "." + trnode + "." + sanode1 + ".svgz"; 
    QString fnampng  = annode + "." + trnode + "." + sanode1 + ".png"; 
@@ -1979,6 +2000,7 @@ DbgLv(1) << "FID:  (3)ncomps" << ncomps;
       else if ( xtype == 3 )  xval = ddesc.model.components[ jj ].f_f0;
       else if ( xtype == 4 )  xval = ddesc.model.components[ jj ].vbar20;
       else if ( xtype == 5 )  xval = log( ddesc.model.components[ jj ].mw );
+      else if ( xtype == 6 )  xval = ddesc.model.components[ jj ].f / ( 6e-9 * M_PI * VISC_20W );
 
       mxvals << xval;
    }
@@ -2454,6 +2476,7 @@ DbgLv(1) << "changedPlotX" << on_state;
    bool x_is_ff0   = rb_pltff0->isChecked();
    bool x_is_vb    = rb_pltvb ->isChecked();
    bool x_is_MWl   = rb_pltMWl->isChecked();
+   bool x_is_Rh    = rb_pltRh ->isChecked();
         xtype      = 0;
 
    if ( x_is_sw )
@@ -2490,6 +2513,12 @@ DbgLv(1) << "  PX=Vbar";
    {
 DbgLv(1) << "  PX=Molec.Wt.log";
       xtype           = 5;
+   }
+
+   else if ( x_is_Rh )
+   {
+DbgLv(1) << "  PX=Rh";
+      xtype           = 6;
    }
 
    int npdis    = pdistrs.size();

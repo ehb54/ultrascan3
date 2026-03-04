@@ -36,38 +36,38 @@ int main( int argc, char* argv[] )
    return application.exec();  //!< \memberof QApplication
 }
 
-// LessThan method for SolParam sed
-bool distro_lessthan_s(const SolParam &solu1, const SolParam &solu2)
+// LessThan method for S_Solute sed
+bool distro_lessthan_s(const S_Solute &solu1, const S_Solute &solu2)
 {  // TRUE iff  (s1<s2) || (s1==s2 && d1<d2)
    return ( solu1.s < solu2.s );
 }
 
-// LessThan method for SolParam m.mass
-bool distro_lessthan_w(const SolParam &solu1, const SolParam &solu2)
+// LessThan method for S_Solute m.mass
+bool distro_lessthan_w(const S_Solute &solu1, const S_Solute &solu2)
 {
     return (solu1.w < solu2.w );
 }
 
-// LessThan method for SolParam frac
-bool distro_lessthan_k(const SolParam &solu1, const SolParam &solu2)
+// LessThan method for S_Solute frac
+bool distro_lessthan_k(const S_Solute &solu1, const S_Solute &solu2)
 {
     return (solu1.k < solu2.k );
 }
 
-// LessThan method for SolParam diff
-bool distro_lessthan_d(const SolParam &solu1, const SolParam &solu2)
+// LessThan method for S_Solute diff
+bool distro_lessthan_d(const S_Solute &solu1, const S_Solute &solu2)
 {
     return (solu1.d < solu2.d );
 }
 
-// LessThan method for SolParam vbar
-bool distro_lessthan_v(const SolParam &solu1, const SolParam &solu2)
+// LessThan method for S_Solute vbar
+bool distro_lessthan_v(const S_Solute &solu1, const S_Solute &solu2)
 {
     return (solu1.v < solu2.v );
 }
 
-// LessThan method for SolParam hydrodynamic radius
-bool distro_lessthan_r(const SolParam &solu1, const SolParam &solu2)
+// LessThan method for S_Solute hydrodynamic radius
+bool distro_lessthan_r(const S_Solute &solu1, const S_Solute &solu2)
 {
     return (solu1.r < solu2.r );
 }
@@ -650,10 +650,10 @@ void US_Integral::load_distro()
 void US_Integral::load_distro( US_Model model, QString mdescr )
 {
    DisSys      tsys;
-   SolParam    sol_in;
-   SolParam    sol_nm;
-   SolParam    sol_bf;
-   QList< SolParam >   wk_distro;
+   S_Solute    sol_in;
+   S_Solute    sol_nm;
+   S_Solute    sol_bf;
+   QList< S_Solute >   wk_distro;
 
    model.update_coefficients();          // fill in any missing coefficients
 
@@ -770,7 +770,7 @@ DbgLv(1) << "LD:  edata: desc run cell chan"
       sol_in.v  = model.components[ jj ].vbar20;
       sol_in.d  = model.components[ jj ].D * 1.0e7;
       sol_in.f  = model.components[ jj ].f;
-      sol_in.r  = 1.0e9 * sol_in.f / ( 6 * M_PI * VISC_20W ); // nm
+      sol_in.r  = model.components[ jj ].f / ( 6e-9 * M_PI * VISC_20W );
 
       tsys.in_distro << sol_in;
       wk_distro << sol_in;
@@ -842,9 +842,9 @@ void US_Integral::resort_sol(QVector< DisSys>& list_dist)
    // Go through all dsitributions
    for (int jj = 0; jj < list_dist.size(); jj++)
    {
-      SolParam     sol_nm;
-      SolParam     sol_bf;
-      QList < SolParam >       wk_distro = list_dist[jj].in_distro;
+      S_Solute     sol_nm;
+      S_Solute     sol_bf;
+      QList < S_Solute >       wk_distro = list_dist[jj].in_distro;
       // Sort the distribution again
       sort_distro( wk_distro, true);
 
@@ -886,7 +886,7 @@ int US_Integral::plot_x_select()
 }
 
 // Sort distribution solute list by s,d values and optionally reduce
-void US_Integral::sort_distro( QList< SolParam >& listsols,
+void US_Integral::sort_distro( QList< S_Solute >& listsols,
       bool reduce)
 {
    int sizi = listsols.size();
@@ -915,10 +915,10 @@ void US_Integral::sort_distro( QList< SolParam >& listsols,
 
    if ( reduce )
    {     // skip any duplicates in sorted list
-      SolParam sol1;
-      SolParam sol2;
-      QList< SolParam > reduced;
-      QList< SolParam >::iterator jj = listsols.begin();
+      S_Solute sol1;
+      S_Solute sol2;
+      QList< S_Solute > reduced;
+      QList< S_Solute >::iterator jj = listsols.begin();
       sol1     = *jj;
       reduced.append( *jj );     // output first entry
       int kdup = 0;
@@ -1105,7 +1105,7 @@ DbgLv(1) << "BldBf: bfrac bfextn bfincr" << bfrac << bfextn << bfincr
       }
 
       // Set values for current output fraction
-      SolParam sol_bf  = tsys->bo_distro[ j2 ];
+      S_Solute sol_bf  = tsys->bo_distro[ j2 ];
       sol_bf.f         = bfrac;                   // Boundary fraction
 int kk2=kk*2;
 if (kk<3 || (kk+4)>nsolbf || (((kk2>(nsolbf-4))&&(kk2<nsolbf+4))))
