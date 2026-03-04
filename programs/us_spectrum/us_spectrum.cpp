@@ -5,6 +5,7 @@
 #include "us_settings.h"
 #include "us_csv_loader.h"
 #include <cmath>
+#include <algorithm>
 
 int main (int argc, char* argv[])
 {
@@ -151,10 +152,10 @@ US_Spectrum::US_Spectrum() : US_Widgets()
    setLayout( layout );
 
    connect( pb_target, &QPushButton::clicked, this, &US_Spectrum::load_target );
-   connect( pb_basis, &QPushButton::clicked, this, &US_Spectrum::load_basis );
-   connect( pb_reset, &QPushButton::clicked, this, &US_Spectrum::reset );
-   connect( pb_save, &QPushButton::clicked, this, &US_Spectrum::save );
-   connect( pb_close, &QPushButton::clicked, this, &US_Spectrum::close );
+   connect( pb_basis,  &QPushButton::clicked, this, &US_Spectrum::load_basis );
+   connect( pb_reset,  &QPushButton::clicked, this, &US_Spectrum::reset );
+   connect( pb_save,   &QPushButton::clicked, this, &US_Spectrum::save );
+   connect( pb_close,  &QPushButton::clicked, this, &US_Spectrum::close );
 }
 
 void US_Spectrum::DataProfile::clear( bool all )
@@ -194,7 +195,7 @@ void US_Spectrum::load_target()
    if (state != QDialog::Accepted) return;
    US_CSV_Data csv_data = csv_loader->data();
    if (csv_data.columnCount() < 2 ) {
-      QMessageBox::warning(this, "Error!", "Data files must have two columns of wavelength and OD values!");
+      QMessageBox::warning(this, "Error!", "The data file should have two columns of wavelength and OD values!");
       return;
    }
 
@@ -203,18 +204,12 @@ void US_Spectrum::load_target()
    target.lambda << csv_data.columnAt(0);
    target.od << csv_data.columnAt(1);
    target.header = csv_data.header().at(1);
-
-   double min = 1e99;
-   double max = -1e99;
-   for( int ii = 0; ii < target.lambda.size(); ii++ ) {
-      min = qMin( min, target.lambda.at( ii ) );
-      max = qMax( max, target.lambda.at( ii ) );
-   }
-   
+  
+   auto minmax = std::minmax_element( target.lambda.begin(), target.lambda.end() );
    le_tgt_fname->setText( target.finfo.fileName() );
    le_tgt_header->setText( target.header );
-   le_tgt_minL->setText( tr( "%1 nm" ).arg( min ) );
-   le_tgt_maxL->setText( tr( "%1 nm" ).arg( max ) );
+   le_tgt_minL->setText( tr( "%1 nm" ).arg( *minmax.first ) );
+   le_tgt_maxL->setText( tr( "%1 nm" ).arg( *minmax.second ) );
 
    for ( int ii = 0; ii < all_basis.size(); ii++ ) {
       all_basis[ii].clear( false );
@@ -316,9 +311,8 @@ void US_Spectrum::fill_table()
 
       QTableWidgetItem *item_1 = new QTableWidgetItem();
       item_1->setFlags( Qt::NoItemFlags );
-      int min = *std::min( all_basis.at( ii ).lambda.begin(), all_basis.at( ii ).lambda.end() );
-      int max = *std::max( all_basis.at( ii ).lambda.begin(), all_basis.at( ii ).lambda.end() );
-      item_1->setText( tr( "%1 - %2" ).arg( min ).arg( max ) );
+      auto minmax = std::minmax_element( all_basis.at( ii ).lambda.begin(), all_basis.at( ii ).lambda.end() );
+      item_1->setText( tr( "%1 - %2" ).arg( *minmax.first ).arg( *minmax.second ) );
       item_1->setTextAlignment( Qt::AlignCenter );
       
       QTableWidgetItem *item_2 = new QTableWidgetItem();

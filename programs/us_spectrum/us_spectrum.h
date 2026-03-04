@@ -101,7 +101,7 @@ class US_Spectrum : public US_Widgets
         
         QComboBox* cb_basis_1;      //!< Angle one combo box
         QComboBox* cb_basis_2;      //!< Angle two combo box
-
+        
         void fill_table();
         void fill_combo();
         void plot();
