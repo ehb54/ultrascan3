@@ -1047,6 +1047,158 @@ if(APPLE AND US3_BUILD_PROGRAMS)
 endif()
 
 # =============================================================================
+# WINDOWS DEPLOYMENT (flat directory layout)
+#
+# Mirrors the macOS deploy_macos / package_macos_pkg pattern:
+#   deploy_windows  → stages the install tree into _stage/UltraScan3/
+#                     by running WinDeploy.cmake as a -P script
+#   package_windows_nsis  → CPack/NSIS installer (defined by WinPkg.cmake)
+#
+# Build pipeline:
+#   cmake --build .                       (compile)
+#   cmake --install . --prefix ...        (install, if needed separately)
+#   cmake --build . --target deploy_windows
+#   cmake --build . --target package_windows_nsis
+# =============================================================================
+if(WIN32 AND US3_BUILD_PROGRAMS)
+
+    # -------------------------------------------------------------------------
+    # Locate windeployqt from the Qt installation
+    # -------------------------------------------------------------------------
+    if(DEFINED VCPKG_INSTALLED_DIR AND DEFINED VCPKG_TARGET_TRIPLET)
+        set(_WIN_VCPKG_TOOLS_DYN  "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/tools/Qt6/bin")
+        set(_WIN_VCPKG_TOOLS_STA5 "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/tools/qttools/bin")
+        string(REPLACE "-dynamic" "" _WIN_STATIC_TRIPLET "${VCPKG_TARGET_TRIPLET}")
+        set(_WIN_VCPKG_TOOLS_STA  "${VCPKG_INSTALLED_DIR}/${_WIN_STATIC_TRIPLET}/tools/Qt6/bin")
+    else()
+        set(_WIN_VCPKG_TOOLS_DYN "")
+        set(_WIN_VCPKG_TOOLS_STA "")
+        set(_WIN_VCPKG_TOOLS_STA5 "")
+    endif()
+
+    find_program(WINDEPLOYQT_EXECUTABLE windeployqt
+        HINTS
+            "${_WIN_VCPKG_TOOLS_DYN}"
+            "${_WIN_VCPKG_TOOLS_STA}"
+            "${_WIN_VCPKG_TOOLS_STA5}"
+            "${Qt6_DIR}/../../../bin"
+            "${Qt5_DIR}/../../../bin"
+            "$ENV{QTDIR}/bin"
+        NAMES windeployqt.exe windeployqt
+        DOC "Path to windeployqt"
+    )
+    if(WINDEPLOYQT_EXECUTABLE)
+        message(STATUS "Found windeployqt: ${WINDEPLOYQT_EXECUTABLE}")
+    else()
+        message(WARNING "windeployqt not found - Windows deployment will not work")
+    endif()
+
+    # -------------------------------------------------------------------------
+    # Locate Qt Assistant (assistant.exe)
+    # -------------------------------------------------------------------------
+    if(WINDEPLOYQT_EXECUTABLE)
+        get_filename_component(_win_deploy_dir "${WINDEPLOYQT_EXECUTABLE}" DIRECTORY)
+        set(_win_assistant_candidates
+            "${_win_deploy_dir}/assistant.exe"
+            "${_WIN_VCPKG_TOOLS_STA}/assistant.exe"
+            "${_WIN_VCPKG_TOOLS_STA5}/assistant.exe"
+            "${Qt6_DIR}/../../../bin/assistant.exe"
+            "${Qt5_DIR}/../../../bin/assistant.exe"
+            "$ENV{QTDIR}/bin/assistant.exe"
+        )
+        set(ASSISTANT_EXE_PATH "" CACHE FILEPATH "Path to assistant.exe for Windows packaging")
+        if(NOT ASSISTANT_EXE_PATH)
+            foreach(_cand IN LISTS _win_assistant_candidates)
+                if(EXISTS "${_cand}")
+                    set(ASSISTANT_EXE_PATH "${_cand}")
+                    break()
+                endif()
+            endforeach()
+        endif()
+        if(ASSISTANT_EXE_PATH)
+            message(STATUS "assistant.exe for packaging: ${ASSISTANT_EXE_PATH}")
+        else()
+            message(STATUS "assistant.exe not found - help will not work in packaged installer")
+        endif()
+    endif()
+
+    # -------------------------------------------------------------------------
+    # Derive vcpkg plugin dir for WinDeploy safety-net searches
+    # -------------------------------------------------------------------------
+    set(_WIN_VCPKG_PLUGIN_DIR "")
+    if(DEFINED VCPKG_INSTALLED_DIR AND DEFINED VCPKG_TARGET_TRIPLET)
+        set(_WIN_VCPKG_PLUGIN_DIR "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/plugins")
+        if(NOT EXISTS "${_WIN_VCPKG_PLUGIN_DIR}" AND DEFINED _WIN_STATIC_TRIPLET)
+            set(_WIN_VCPKG_PLUGIN_DIR "${VCPKG_INSTALLED_DIR}/${_WIN_STATIC_TRIPLET}/plugins")
+        endif()
+    endif()
+    message(STATUS "vcpkg plugin dir (Windows): ${_WIN_VCPKG_PLUGIN_DIR}")
+
+    # -------------------------------------------------------------------------
+    # Staging directory (mirrors macOS US3_STAGE_DIR)
+    # -------------------------------------------------------------------------
+    set(US3_WIN_STAGE_DIR "${CMAKE_BINARY_DIR}/_stage/UltraScan3" CACHE PATH
+        "Staging directory for Windows deployment")
+
+    # -------------------------------------------------------------------------
+    # deploy_windows target
+    #
+    # Invokes WinDeploy.cmake as a -P script (same pattern as deploy_macos).
+    # Operates on the build-tree bin/ and lib/ — windeployqt is run against
+    # executables in the staged bin/ after they are copied there by the script,
+    # so all DLLs land in the same tree that CPack will package.
+    # -------------------------------------------------------------------------
+    if(WINDEPLOYQT_EXECUTABLE AND TARGET us)
+        set(_deploy_windows_deps us documentation)
+
+        add_custom_target(deploy_windows
+            COMMAND ${CMAKE_COMMAND} -E remove_directory "${US3_WIN_STAGE_DIR}"
+            COMMAND ${CMAKE_COMMAND}
+                -DSTAGE_DIR=${US3_WIN_STAGE_DIR}
+                -DWINDEPLOYQT=${WINDEPLOYQT_EXECUTABLE}
+                -DASSISTANT_EXE=${ASSISTANT_EXE_PATH}
+                -DQCH_DIR=${CMAKE_BINARY_DIR}/bin
+                -DBIN_DIR=${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
+                -DLIB_DIR=${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
+                -DETC_SOURCE_DIR=${CMAKE_SOURCE_DIR}/etc
+                -DSOMO_SOURCE_DIR=${CMAKE_SOURCE_DIR}/somo
+                -DSOMO_BIN_DIR=${CMAKE_SOURCE_DIR}/bin
+                -DSOMO_LIB_DIR=${CMAKE_SOURCE_DIR}/lib
+                -DLICENSE_FILE=${CMAKE_SOURCE_DIR}/LICENSE.txt
+                -DVCPKG_PLUGIN_DIR=${_WIN_VCPKG_PLUGIN_DIR}
+                -P ${CMAKE_SOURCE_DIR}/admin/cmake/packaging/windows/WinDeploy.cmake
+            DEPENDS ${_deploy_windows_deps}
+            COMMENT "Staging Windows deployment into ${US3_WIN_STAGE_DIR}"
+            VERBATIM
+        )
+    else()
+        # Stub target so --target deploy_windows gives a clear error
+        if(NOT WINDEPLOYQT_EXECUTABLE)
+            set(_deploy_windows_reason "windeployqt not found — install Qt Tools component")
+        elseif(NOT TARGET us)
+            set(_deploy_windows_reason "'us' target not defined (check US3_BUILD_PROGRAMS / US3_NO_DB)")
+        else()
+            set(_deploy_windows_reason "unknown reason")
+        endif()
+        add_custom_target(deploy_windows
+            COMMAND ${CMAKE_COMMAND} -E echo
+                "ERROR: deploy_windows is unavailable: ${_deploy_windows_reason}"
+            COMMAND ${CMAKE_COMMAND} -E false
+            COMMENT "deploy_windows unavailable: ${_deploy_windows_reason}"
+        )
+        message(STATUS "deploy_windows stub created (unavailable: ${_deploy_windows_reason})")
+    endif()
+
+    # -------------------------------------------------------------------------
+    # WinPkg.cmake: sets CPACK_* variables and defines package_windows_nsis.
+    # Must be included BEFORE include(CPack) (which follows in the PACKAGING
+    # section below) so all CPACK_* variables are visible to CPack.
+    # -------------------------------------------------------------------------
+    include(${CMAKE_SOURCE_DIR}/admin/cmake/packaging/windows/WinPkg.cmake)
+
+endif() # WIN32 AND US3_BUILD_PROGRAMS
+
+# =============================================================================
 # PACKAGING
 # =============================================================================
 set(CPACK_PACKAGE_NAME "UltraScan3")
@@ -1057,13 +1209,22 @@ set(CPACK_PACKAGE_VENDOR "AUC Solutions, LLC")
 # macOS uses the package_macos_pkg CMake target (see admin/cmake/MacOsPkg.cmake)
 # which produces a proper system PKG installer with LaunchDaemon and sysctl.
 # CPack / DragNDrop is not used on macOS.
-if(WIN32)
-    set(CPACK_GENERATOR "NSIS")
-elseif(NOT APPLE)
+#
+# Windows: CPACK_GENERATOR and all NSIS options are set by WinPkg.cmake
+# (included above in the WIN32 block) before this point.
+if(NOT APPLE AND NOT WIN32)
     set(CPACK_GENERATOR "DEB;RPM")
 endif()
 
 include(CPack)
+
+# Wire the CPack 'package' target to depend on deploy_windows so that
+# 'cmake --build . --target package' always stages DLLs first.
+# The 'package' target is created by include(CPack) above.
+if(WIN32 AND US3_BUILD_PROGRAMS AND TARGET package AND TARGET deploy_windows)
+    add_dependencies(package deploy_windows)
+    message(STATUS "Wired: package depends on deploy_windows")
+endif()
 
 # =============================================================================
 # DEVELOPMENT UTILITIES
