@@ -37,6 +37,7 @@ typedef struct solute_s
    double v;    //!< vbar
    double d;    //!< diffusion coefficient
    double f;    //!< frictional coefficient
+   double r;    //!< hydrodynamic radius
    double si;   //!< saved initial s
    double ki;   //!< saved initial k
 } S_Solute;
