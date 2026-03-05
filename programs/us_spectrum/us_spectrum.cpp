@@ -11,7 +11,6 @@
 int main (int argc, char* argv[])
 {
    QApplication application (argc, argv);
-
    US_Spectrum w;
    w.show();
    return application.exec();
@@ -159,6 +158,27 @@ US_Spectrum::US_Spectrum() : US_Widgets()
    connect( pb_close,  &QPushButton::clicked, this, &US_Spectrum::close );
 }
 
+template <typename T>
+QVector<int> argsort( const QVector<T>& vec )
+{
+   QVector<int> indices( np );
+   std::iota( indices.begin(), indices.end(), 0 );
+   std::sort( indices.begin(), indices.end(),
+              [ &vec1 ]( int a, int b ) {
+                  return vec[ a ] < vec[ b ];
+              } );
+   return indices;
+}
+
+template <typename T> 
+void US_Spectrum::sort( const QVector<int>& indices, QVector<T>& vec )
+{
+   QVector<T> vec_c( vec );
+   for ( int ii = 0; ii < vec.size(); ii++ ) {
+      vec[ ii ] = vec_c [ indices.at( ii ) ];
+   }
+}
+
 void US_Spectrum::DataProfile::clear( bool all )
 {
    xvec.clear();
@@ -202,10 +222,16 @@ void US_Spectrum::load_target()
       return;
    }
 
+   QVector<double> lambda( csv_data.columnAt(0) );
+   QVector<double> od( csv_data.columnAt(1) );
+   QVector<int> indices = argsort( lambda );
+   sort( indices, lambda );
+   sort( indices, od );
+
    target.clear( true );
    target.finfo = QFileInfo( csv_data.filePath() );
-   target.lambda << csv_data.columnAt(0);
-   target.od << csv_data.columnAt(1);
+   target.lambda << lambda;
+   target.od << od;
    target.header = csv_data.header().at(1);
   
    auto minmax = std::minmax_element( target.lambda.begin(), target.lambda.end() );
@@ -278,10 +304,14 @@ void US_Spectrum::load_basis()
    for (int ii = 0; ii < data_list.size(); ii++ ) {
       QFileInfo finfo(data_list[ii].filePath());
       QVector<double> xvals = data_list.at(ii).columnAt(0);
+      QVector<int> indices = argsort( xvals );
+      sort( indices, xvals );
       for (int jj = 1; jj < data_list.at(ii).columnCount(); jj++) {
+         QVector<double> yvals( data_list.at(ii).columnAt(jj) );
+         sort( indices, yvals );
          DataProfile dp;
          dp.lambda << xvals;
-         dp.od << data_list.at(ii).columnAt(jj);
+         dp.od << yvals;
          dp.header = data_list.at(ii).header().at(jj);
          dp.finfo = finfo;
          all_basis << dp;

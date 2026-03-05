@@ -81,6 +81,12 @@ class US_Spectrum : public US_Widgets
         void overlap();
         void delete_basis( int );
 
+        template <typename T>
+        QVector<int> argsort( const QVector<T>& );
+
+        template <typename T>
+        void sort( const QVector<int>&, QVector<T>& );
+
     private slots:
         /**
          * @brief Slot to check the table item edited.
