@@ -2525,11 +2525,6 @@ DbgLv(1) << "rTS: tmsfs" << tmst_fnamei << defs_fnamei;
 DbgLv(1) << "rTS: tmst,defs fnamei" << tmst_fnamei << defs_fnamei;
    }
 
-   else  // If file does not exist, clear name
-   {
-DbgLv(1) << "rTS: NON_EXIST:" << tmst_fnamei;
-      tmst_fnamei.clear();
-   }
 
    if ( !us_convert_auto_mode )
    {
@@ -10162,7 +10157,7 @@ DbgLv(1) << "CGui:IOD:  ochx" << trx << "celchn cID" << celchn << chanID;
    }
 
    int nspeed = prepareTimeState();
-
+   pb_showTmst->setEnabled( ! tmst_fnamei.isEmpty() );
    // Save a vector of speed steps read or computed from the data scans
    char chtype[ 3 ] = { 'R', 'A', '\0' };
    strncpy( chtype, allData[ 0 ].type, 2 );
@@ -10535,16 +10530,15 @@ int US_ConvertGui::prepareTimeState() {
    QString tmst_fbase   = runID + ".time_state.tmst";
    QString defs_fbase   = runID + ".time_state.xml";
    QDir     writeDir( US_Settings::tmpDir() ); // Writes timestate to tmp directory
-   QString  dirname     = writeDir.absolutePath() + "/" + runID + "/";
+
+
+   QString  dirname     = writeDir.absolutePath() + "/";
 
    //QString tmst_fdir    = currentDir;
    QString tmst_fdir    = dirname;
 
-
-   if ( tmst_fdir.right( 1 ) != "/" )   tmst_fdir + "/";
    QString tmst_fname   = tmst_fdir + tmst_fbase;
    QString defs_fname   = tmst_fdir + defs_fbase;
-   QString defs_fnamei  = QString( tmst_fnamei ).section( ".", 0, -2 ) + ".xml";
    QVector< double > rrpms;
    int     nmscans      = isMwl ? mwl_data.raw_speeds( rrpms ) : 0;
 
@@ -10646,12 +10640,10 @@ DbgLv(1) << "wTS: use_exstsf" << use_exstsf << "ntimes nmscans nvalues"
       std::sort(scans.begin(), scans.end(), SortBySeconds());
       all_data.scanData = scans;
       const int n_times    = US_AstfemMath::writetimestate( tmst_fname, simparams, all_data );
-      if ( n_times > 0 ) {
-         return n_speedsteps;
-      }
       tmst_fnamei = tmst_fname;
       time_state.close_read_data();
       time_state.open_read_data( tmst_fnamei, true );
+
 
       return n_speedsteps;
    }
