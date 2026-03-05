@@ -28,6 +28,9 @@
 .PARAMETER clean
     Remove build artifacts before building
 
+.PARAMETER pkg
+    Build the Windows NSIS installer after compiling
+
 .PARAMETER help
     Show this help message
 
@@ -51,12 +54,17 @@
     .\build.bat --vcpkg-root C:\dev\myrepo\vcpkg
     Use a specific vcpkg installation
 
+.EXAMPLE
+    .\build.bat --pkg
+    Build and produce the Windows NSIS installer
+
 .NOTES
     Run via build.bat from any terminal - no special environment needed:
         scripts\build.bat
         scripts\build.bat --arch arm64
         scripts\build.bat --clean --qt5-qwt616 --arch arm64 TEST
         scripts\build.bat --vcpkg-root C:\dev\vcpkg
+        scripts\build.bat --pkg
 
     VCPKG LOCATION (in order of priority):
         1. --vcpkg-root argument
@@ -71,6 +79,7 @@
 
 param(
     [switch]${clean},
+    [switch]${pkg},
     [switch]${qt6},
     [switch]${qt5-qwt616},
     [switch]${qt5-qwt630},
@@ -90,6 +99,7 @@ if (${help}) {
     Write-Host ""
     Write-Host "OPTIONS:"
     Write-Host "  --clean                  Clean build artifacts before building"
+    Write-Host "  --pkg                    Build the Windows NSIS installer"
     Write-Host "  --qt6                    Build with Qt6 + Qwt6.3.0 [default]"
     Write-Host "  --qt5-qwt616             Build with Qt5 + Qwt6.1.6"
     Write-Host "  --qt5-qwt630             Build with Qt5 + Qwt6.3.0"
@@ -119,6 +129,7 @@ if (${help}) {
     Write-Host "  build.bat --clean --arch arm64 TEST        # Clean ARM64 Qt6 TEST build"
     Write-Host "  build.bat --vcpkg-root C:\dev\vcpkg        # Use specific vcpkg"
     Write-Host "  build.bat --vcpkg-root .\vcpkg             # Use source-tree vcpkg"
+    Write-Host "  build.bat --pkg                            # Build + produce NSIS installer"
     Write-Host ""
     Write-Host "ENVIRONMENT VARIABLES:"
     Write-Host "  US3_BUILD_JOBS           Override number of parallel build jobs"
@@ -180,6 +191,7 @@ Write-Host "Selected Qt version    : $QtSuffix"
 Write-Host "Architecture           : $Arch"
 Write-Host "Preset                 : $Preset"
 if (${clean}) { Write-Host "Clean build requested" -ForegroundColor Yellow }
+if (${pkg})   { Write-Host "Installer build requested" -ForegroundColor Cyan }
 Write-Host ""
 
 # =============================================================================
@@ -363,6 +375,7 @@ Write-Host "  Profile       : ${profile}"
 Write-Host "  Qt version    : $QtSuffix"
 Write-Host "  Architecture  : $Arch"
 Write-Host "  Clean build   : $(${clean}.IsPresent)"
+Write-Host "  Installer     : $(${pkg}.IsPresent)"
 Write-Host "  vcpkg root    : $VcpkgRoot"
 Write-Host "  Build jobs    : $BuildJobs"
 Write-Host ""
@@ -370,6 +383,9 @@ Write-Host "Steps:"
 Write-Host "  1. Configure CMake with vcpkg toolchain"
 Write-Host "  2. Build dependencies (~10 min first time)"
 Write-Host "  3. Build UltraScan3 (~5 min)"
+if (${pkg}) {
+    Write-Host "  4. Stage Qt DLLs and produce NSIS installer"
+}
 Write-Host ""
 if (-not $NonInteractive) {
     Write-Host "Grab a coffee if this is your first build!" -ForegroundColor Yellow
@@ -389,7 +405,12 @@ if ($LASTEXITCODE -ne 0) { Write-Host "ERROR: CMake configuration failed." -Fore
 
 Write-Host ""
 Write-Host "Building..." -ForegroundColor Cyan
-cmake --build "build/$Preset" --parallel $BuildJobs
+if (${pkg}) {
+    Write-Host "Building Windows installer..." -ForegroundColor Cyan
+    cmake --build "build/$Preset" --target package --parallel $BuildJobs
+} else {
+    cmake --build "build/$Preset" --parallel $BuildJobs
+}
 if ($LASTEXITCODE -ne 0) { Write-Host "ERROR: Build failed." -ForegroundColor Red; exit $LASTEXITCODE }
 
 Write-Host ""
@@ -397,11 +418,22 @@ Write-Host "==========================================" -ForegroundColor Green
 Write-Host "Build complete!"                           -ForegroundColor Green
 Write-Host "==========================================" -ForegroundColor Green
 Write-Host ""
+if (${pkg}) {
+    $InstallerPattern = "build/$Preset/UltraScan3-*-Windows.exe"
+    $InstallerFile = Get-ChildItem -Path $InstallerPattern -ErrorAction SilentlyContinue | Select-Object -First 1
+    if ($InstallerFile) {
+        Write-Host "Installer: $($InstallerFile.FullName)" -ForegroundColor Green
+    } else {
+        Write-Host "Installer: build/$Preset/UltraScan3-*-Windows.exe" -ForegroundColor Yellow
+    }
+    Write-Host ""
+}
 if (-not $NonInteractive) {
     Write-Host "Next time you build it will be much faster since dependencies are cached."
     Write-Host ""
     Write-Host "To rebuild from scratch: .\build.bat --clean"
+    if (-not ${pkg}) {
+        Write-Host "To build the installer:  .\build.bat --pkg"
+    }
     Write-Host ""
 }
-
-
