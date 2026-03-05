@@ -4,7 +4,6 @@ QT           += svg
 QT           += sql
 QT           += network
 TARGET        = us_config
-TRANSLATIONS += $${TARGET}_de_DE.ts
 
 HEADERS      += us_config.h   \
                 us_admin.h    \
