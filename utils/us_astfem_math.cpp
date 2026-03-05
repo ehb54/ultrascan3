@@ -379,7 +379,7 @@ QStringList US_AstfemMath::check_acceleration(
    if ( accelRate < lowAccelLimit ) {
       // If an original timestate is present, the warning is ignored
       if ( timestate_useful && timestate->getTimeStateType() == US_TimeState::TIMESTATE_TYPE::ORIGINAL ) {
-         qDebug() << "Original timestate detected, ignore warning for low acceleration rate";
+         DbgLv(1) << "Original timestate detected, ignore warning for low acceleration rate";
          return results;
       }
       // For very slow running experiments, acceleration delays (most likely gear shifting) cause an artificial low
@@ -389,7 +389,7 @@ QStringList US_AstfemMath::check_acceleration(
       const double accelRateCorrected = targetRpm / ( kT1Factor * ( firstScanTimeCorrected - t1w ) );
 
       if ( targetRpm < 15000.0 && accelRateCorrected > lowAccelLimit ) {
-         qDebug() << "Slow running experiment " << QString::number( targetRpm ) << " rpm\n"
+         DbgLv(1) << "Slow running experiment " << QString::number( targetRpm ) << " rpm\n"
                   << "Acceleration rate with correction: " << QString::number( accelRateCorrected ) << " rpm/s\n"
                   << "Acceleration rate without correction: " << QString::number( accelRate ) << " rpm/s\n"
                   << "Ignore warning for low acceleration rate";
