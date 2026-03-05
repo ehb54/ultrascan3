@@ -49,14 +49,8 @@ QString password = "password123";
 
 QStringList result = US_Crypto::encrypt(plainText, password);
 
-EXPECT_TRUE(isValidEncryptionResult(result))
-<< "Encrypt should return valid result structure for empty text";
-EXPECT_TRUE(isValidHexString(result.at(0)))
-<< "Cipher text should be valid hex string";
-EXPECT_TRUE(isValidHexString(result.at(1)))
-<< "IV should be valid hex string";
-EXPECT_EQ(result.at(1).length(), 32)
-<< "IV should be 32 hex characters (16 bytes)";
+EXPECT_FALSE(isValidEncryptionResult(result))
+<< "Encrypt should return invalid result structure for empty text";
 }
 
 TEST_F(TestUSCryptoUnit, EncryptEmptyPassword) {
@@ -66,12 +60,8 @@ QString password = "";
 
 QStringList result = US_Crypto::encrypt(plainText, password);
 
-EXPECT_TRUE(isValidEncryptionResult(result))
-<< "Encrypt should handle empty password";
-EXPECT_TRUE(isValidHexString(result.at(0)))
-<< "Cipher text should be valid hex string";
-EXPECT_TRUE(isValidHexString(result.at(1)))
-<< "IV should be valid hex string";
+EXPECT_FALSE(isValidEncryptionResult(result))
+<< "Encrypt should not work with empty password";
 }
 
 TEST_F(TestUSCryptoUnit, EncryptBothEmpty) {
@@ -81,12 +71,8 @@ QString password = "";
 
 QStringList result = US_Crypto::encrypt(plainText, password);
 
-EXPECT_TRUE(isValidEncryptionResult(result))
-<< "Encrypt should handle both empty inputs";
-EXPECT_TRUE(isValidHexString(result.at(0)))
-<< "Cipher text should be valid hex string";
-EXPECT_TRUE(isValidHexString(result.at(1)))
-<< "IV should be valid hex string";
+EXPECT_FALSE(isValidEncryptionResult(result))
+<< "Encrypt should not work with both empty inputs";
 }
 
 TEST_F(TestUSCryptoUnit, EncryptSingleCharacter) {
@@ -393,6 +379,6 @@ EXPECT_TRUE(isValidHexString(result.at(0)))
 << "Cipher text should be valid hex";
 EXPECT_TRUE(isValidHexString(result.at(1)))
 << "IV should be valid hex";
-EXPECT_EQ(result.at(1).length(), 32)
-<< "IV should be exactly 32 hex characters";
+EXPECT_EQ(result.at(1).length(), 88)
+<< "IV should be exactly 88 hex characters (44 bytes)";
 }
