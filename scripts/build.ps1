@@ -217,12 +217,47 @@ Write-Host ""
 $env:VCPKG_MAX_CONCURRENCY = "$BuildJobs"
 
 # =============================================================================
+# NSIS PATH SELF-HEAL
+# If makensis is not on PATH, check the two standard install locations and
+# add whichever one exists to the session PATH so the tool-check below passes.
+# =============================================================================
+if (-not (Get-Command makensis -ErrorAction SilentlyContinue)) {
+    $NsisPaths = @(
+        "C:\Program Files (x86)\NSIS",
+        "C:\Program Files\NSIS"
+    )
+    foreach ($NsisDir in $NsisPaths) {
+        if (Test-Path (Join-Path $NsisDir "makensis.exe")) {
+            Write-Host "Found NSIS at $NsisDir -- adding to PATH for this session." -ForegroundColor Yellow
+            $env:PATH = "$NsisDir;$env:PATH"
+            break
+        }
+    }
+}
+
+# =============================================================================
 # CHECK REQUIRED TOOLS
 # =============================================================================
 Write-Host "Checking required tools..."
 
+# Base tools required for all builds
+$RequiredTools = @("cmake", "git", "ninja")
+
+# Packaging also requires NSIS
+if (${pkg}) {
+    $RequiredTools += "makensis"
+}
+
+# Map tool name -> winget package ID for helpful error messages
+$WingetMap = @{
+    cmake    = "Kitware.CMake"
+    git      = "Git.Git"
+    ninja    = "Ninja-build.Ninja"
+    makensis = "NSIS.NSIS"
+}
+
 $MissingTools = @()
-foreach ($Tool in @("cmake", "git", "ninja")) {
+foreach ($Tool in $RequiredTools) {
     if (-not (Get-Command $Tool -ErrorAction SilentlyContinue)) {
         $MissingTools += $Tool
     }
@@ -231,10 +266,16 @@ foreach ($Tool in @("cmake", "git", "ninja")) {
 if ($MissingTools.Count -gt 0) {
     Write-Host "ERROR: Missing required tools: $($MissingTools -join ', ')" -ForegroundColor Red
     Write-Host ""
-    Write-Host "Install via winget:"
-    Write-Host "  winget install Kitware.CMake"
-    Write-Host "  winget install Git.Git"
-    Write-Host "  winget install Ninja-build.Ninja"
+    Write-Host "Install the missing tools with:" -ForegroundColor Yellow
+    Write-Host ""
+    foreach ($Tool in $MissingTools) {
+        if ($WingetMap.ContainsKey($Tool)) {
+            Write-Host "  winget install $($WingetMap[$Tool])"
+        } else {
+            Write-Host "  Install tool manually: $Tool"
+        }
+    }
+    Write-Host ""
     exit 1
 }
 
@@ -274,7 +315,7 @@ $TempFile = [System.IO.Path]::GetTempFileName()
 cmd /c "`"$VcVarsAll`" $Arch > nul 2>&1 && set" | Out-File $TempFile -Encoding ASCII
 Get-Content $TempFile | ForEach-Object {
     if ($_ -match "^([^=]+)=(.*)$") {
-        [System.Environment]::SetEnvironmentVariable($matches[1], $matches[2], "Process")
+        [System.Environment]::SetEnvironmentVariable($Matches[1], $Matches[2], "Process")
     }
 }
 Remove-Item $TempFile
@@ -407,7 +448,7 @@ Write-Host ""
 Write-Host "Building..." -ForegroundColor Cyan
 if (${pkg}) {
     Write-Host "Building Windows installer..." -ForegroundColor Cyan
-    cmake --build "build/$Preset" --target package --parallel $BuildJobs
+    cmake --build "build/$Preset" --target package_windows_nsis --parallel $BuildJobs
 } else {
     cmake --build "build/$Preset" --parallel $BuildJobs
 }

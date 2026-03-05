@@ -91,9 +91,16 @@ set(CPACK_PACKAGE_INSTALL_DIRECTORY "UltraScan3"                            CACH
 # NSIS expands $PROGRAMFILES at install time (respects 32/64-bit WoW64 redirection).
 set(CPACK_NSIS_INSTALL_ROOT      "$PROGRAMFILES64"                          CACHE STRING "" FORCE)
 
-# The tree that CPack packages is the install tree from cmake --install.
-# We use the staged directory produced by deploy_windows.
+# The tree that CPack packages is the pre-staged directory produced by
+# deploy_windows (which runs windeployqt and copies all DLLs/plugins).
+# CPACK_INSTALLED_DIRECTORIES points CPack at that tree directly.
 set(CPACK_INSTALLED_DIRECTORIES "${_STAGE_DIR};."                           CACHE STRING "" FORCE)
+
+# Disable CPack's internal cmake --install step entirely.
+# Without this, CPack runs its own install pass using only targets that have
+# explicit install() rules — which misses most programs (they have none).
+# Our staged tree from deploy_windows is fully self-contained.
+set(CPACK_INSTALL_CMAKE_PROJECTS ""                                         CACHE STRING "" FORCE)
 
 # Output filename (no path — CPack writes to CMAKE_BINARY_DIR by default)
 set(CPACK_PACKAGE_FILE_NAME "UltraScan3-${US3_VERSION_STRING}-Windows"     CACHE STRING "" FORCE)
