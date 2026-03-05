@@ -248,7 +248,8 @@ if (${pkg}) {
     $RequiredTools += "makensis"
 }
 
-# Map tool name -> winget package ID for helpful error messages
+# Map tool name -> install instructions for helpful error messages.
+# sphinx-build is listed separately below as a warning (not a hard failure).
 $WingetMap = @{
     cmake    = "Kitware.CMake"
     git      = "Git.Git"
@@ -277,6 +278,17 @@ if ($MissingTools.Count -gt 0) {
     }
     Write-Host ""
     exit 1
+}
+
+# Sphinx is required for documentation (manual.qch / manual.qhc).
+# It is not a hard build failure -- the build succeeds without it, but the
+# help system will not work in the installed application.
+if (-not (Get-Command sphinx-build -ErrorAction SilentlyContinue)) {
+    Write-Host "WARNING: sphinx-build not found -- documentation will not be built." -ForegroundColor Yellow
+    Write-Host "  The help system will not work without it. Install with:" -ForegroundColor Yellow
+    Write-Host "    winget install Python.Python.3" -ForegroundColor Yellow
+    Write-Host "    pip install sphinx sphinxcontrib-qthelp sphinx-subfigure" -ForegroundColor Yellow
+    Write-Host ""
 }
 
 Write-Host "All required tools are available." -ForegroundColor Green

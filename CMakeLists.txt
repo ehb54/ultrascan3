@@ -991,7 +991,10 @@ if(APPLE AND US3_BUILD_PROGRAMS)
         # Core deps only — optional targets (us3_somo, us3_config, us_admin, us_saxs_cmds_t)
         # are NOT listed here; they are staged opportunistically by MacDeploy.cmake
         # if their output dirs exist, but we don't hard-depend on them.
-        set(_deploy_macos_deps us documentation)
+        set(_deploy_macos_deps us)
+        if(TARGET documentation)
+            list(APPEND _deploy_macos_deps documentation)
+        endif()
 
         add_custom_target(deploy_macos
             COMMAND ${CMAKE_COMMAND} -E remove_directory "${US3_STAGE_DIR}"
@@ -1149,7 +1152,13 @@ if(WIN32 AND US3_BUILD_PROGRAMS)
     # so all DLLs land in the same tree that CPack will package.
     # -------------------------------------------------------------------------
     if(WINDEPLOYQT_EXECUTABLE AND TARGET us)
-        set(_deploy_windows_deps us documentation)
+        # Only depend on 'documentation' if Sphinx was found and the target
+        # actually exists. doc/manual/CMakeLists.txt does an early return()
+        # when sphinx-build is not installed, leaving no documentation target.
+        set(_deploy_windows_deps us)
+        if(TARGET documentation)
+            list(APPEND _deploy_windows_deps documentation)
+        endif()
 
         add_custom_target(deploy_windows
             COMMAND ${CMAKE_COMMAND} -E remove_directory "${US3_WIN_STAGE_DIR}"
