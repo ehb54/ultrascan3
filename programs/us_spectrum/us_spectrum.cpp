@@ -6,6 +6,7 @@
 #include "us_csv_loader.h"
 #include <cmath>
 #include <algorithm>
+#include <QSvgRenderer>
 
 int main (int argc, char* argv[])
 {
@@ -73,10 +74,10 @@ US_Spectrum::US_Spectrum() : US_Widgets()
    QString hl = tr( "%1 (nm)" ).arg( QChar( 955 ) );
    tw_basis = new QTableWidget();
    tw_basis->setRowCount( 0 );
-   tw_basis->setColumnCount( 3 );
+   tw_basis->setColumnCount( 4 );
    tw_basis->setPalette( US_GuiSettings::normalColor() );
    tw_basis->setFont( font );
-   tw_basis->setHorizontalHeaderLabels( QStringList{"Header", hl, "%"} );
+   tw_basis->setHorizontalHeaderLabels( QStringList{"Header", hl, "%", ""} );
    tw_basis->horizontalHeader()->setSectionResizeMode( QHeaderView::Stretch );
 
    cb_basis_1 = us_comboBox();
@@ -183,18 +184,20 @@ void US_Spectrum::load_target()
    QString path = US_Settings::dataDir();
    current_path = current_path.isEmpty() ? path : current_path;
 
-   QString filter = tr("Text Files (*.txt *.csv *.dat *.wa *.dsp);;All Files (*)");
-   QString fpath = QFileDialog::getOpenFileName(this, "Load Target Spectrum", current_path, filter);
+   QString filter = tr( "Text Files (*.txt *.csv *.dat *.wa *.dsp);;All Files (*)" );
+   QString fpath = QFileDialog::getOpenFileName( this, "Load Target Spectrum", current_path, filter );
 
-   if (fpath.isEmpty()) {
+   if ( fpath.isEmpty() ) {
       return;
    }
    QString note = "1st Column -> WAVELENGTH ; 2nd Column -> OD";
-   US_CSV_Loader *csv_loader = new US_CSV_Loader(fpath, note, true, this);
+   US_CSV_Loader *csv_loader = new US_CSV_Loader( fpath, note, true, this );
    int state = csv_loader->exec();
-   if (state != QDialog::Accepted) return;
+   if ( state != QDialog::Accepted ) {
+      return;
+   }
    US_CSV_Data csv_data = csv_loader->data();
-   if (csv_data.columnCount() < 2 ) {
+   if ( csv_data.columnCount() < 2 ) {
       QMessageBox::warning(this, "Error!", "The data file should have two columns of wavelength and OD values!");
       return;
    }
@@ -215,7 +218,7 @@ void US_Spectrum::load_target()
       all_basis[ii].clear( false );
    }
 
-   plot();
+   plot_target();
 }
 
 //loads basis spectra according to user specification
@@ -287,7 +290,7 @@ void US_Spectrum::load_basis()
    
    fill_table();
    fill_combo();
-   plot();
+   plot_basis();
 
 }
 
@@ -296,7 +299,7 @@ void US_Spectrum::fill_table()
    tw_basis->disconnect();
    int nrows = all_basis.size();
    tw_basis->setRowCount( nrows );
-   tw_basis->setColumnCount( 3 );
+   tw_basis->setColumnCount( 4 );
 
    for( int ii = 0; ii < nrows; ii++ ) {
       QTableWidgetItem *item_0 = new QTableWidgetItem();
@@ -320,16 +323,35 @@ void US_Spectrum::fill_table()
       item_2->setTextAlignment( Qt::AlignCenter );
       item_2->setText( "" );
 
+      QPushButton *btn = new QPushButton("");
+      btn->setFlat( true );
+      btn->setIcon( this->style()->standardIcon( QStyle::SP_BrowserStop ) );
+
+      connect( btn, &QPushButton::clicked, this, [=]()
+               { delete_basis( ii ); } );
+
+      QWidget *cell_3 = new QWidget();
+      QHBoxLayout *lyt = new QHBoxLayout( cell_3 );
+      lyt->setContentsMargins( 0, 0, 0, 0 );
+      lyt->addWidget( btn, 0, Qt::AlignCenter );
+      
       tw_basis->setItem( ii, 0, item_0 );
       tw_basis->setItem( ii, 1, item_1 );
       tw_basis->setItem( ii, 2, item_2 );
+      tw_basis->setCellWidget( ii, 3, cell_3 );
    }
 
    tw_basis->horizontalHeader()->setSectionResizeMode( 0, QHeaderView::ResizeToContents );
-   tw_basis->horizontalHeader()->setSectionResizeMode( 1, QHeaderView::Stretch );
-   tw_basis->horizontalHeader()->setSectionResizeMode( 2, QHeaderView::Stretch );
+   tw_basis->horizontalHeader()->setSectionResizeMode( 3, QHeaderView::ResizeToContents );
+   if( nrows == 0 ) {
+      tw_basis->horizontalHeader()->setSectionResizeMode( 1, QHeaderView::ResizeToContents );
+      tw_basis->horizontalHeader()->setSectionResizeMode( 2, QHeaderView::ResizeToContents );
+   } else {
+      tw_basis->horizontalHeader()->setSectionResizeMode( 1, QHeaderView::Stretch );
+      tw_basis->horizontalHeader()->setSectionResizeMode( 2, QHeaderView::Stretch );
+   }
 
-   connect(tw_basis, &QTableWidget::itemChanged, this, &US_Spectrum::highlight);
+   connect(tw_basis, &QTableWidget::itemChanged, this, &US_Spectrum::basis_checked);
 }
 
 void US_Spectrum::fill_combo()
@@ -354,12 +376,7 @@ void US_Spectrum::fill_combo()
    find_angle();
 }
 
-void US_Spectrum::plot()
-{
-
-}
-
-void US_Spectrum::highlight( QTableWidgetItem *item )
+void US_Spectrum::basis_checked( QTableWidgetItem *item )
 {
    if( item->column() != 0 ) {
       return;
@@ -371,300 +388,283 @@ void US_Spectrum::highlight( QTableWidgetItem *item )
       fill_combo();
    } else {
       all_basis[ id ].highlight = checked;
-      plot();
+      highlight();
    }
 }
 
 //Takes the information in the basis vector to plot all of the curves for the basis spectrums 
 void US_Spectrum::plot_basis()
 {
-  //QStringList names;
-   int basisIndex = 0;
-   for(int m = basisIndex; m < v_basis.size(); m++)
-   {
-     //names.append(v_basis.at(m).filenameBasis);   
-      QListWidgetItem* item = new QListWidgetItem(v_basis.at(m).header);
-      item->setData(Qt::ToolTipRole, v_basis.at(m).filename);
-      // tw_basis->addItem(item);
+   for( int ii = 0; ii < all_basis.size(); ii++ ) {
+      double* xx;
+      double* yy;
+      int np;
+      if( all_basis.at( ii ).xvec.isEmpty() ) {
+         xx = all_basis[ ii ].lambda.data();
+         yy = all_basis[ ii ].od.data();
+         np = all_basis[ ii ].od.size();
+      } else {
+         xx = all_basis[ ii ].xvec.data();
+         yy = all_basis[ ii ].yvec.data();
+         np = all_basis[ ii ].yvec.size();
+      }
 
-      double* xx = (double*)v_basis.at(m).wvl.data();
-      double* yy = (double*)v_basis.at(m).extinction.data();
-      int     nn = v_basis.at(m).wvl.size();
-      qDebug() << "Basis " << m << " size: " << nn;
-      qDebug() << "Basis " << m << " x[0]/y[0]: " << xx[0] << "/" << yy[0];
-      
-      QwtPlotCurve* c;
-      QwtSymbol *s = new QwtSymbol;
-      s->setStyle(QwtSymbol::Ellipse);
-      s->setPen(QPen(Qt::green));
-      s->setBrush(QBrush(Qt::blue));
-      s->setSize(3);
-   
-      // QPen p;
-      // p.setColor(Qt::green);
-      // p.setWidth(3);
-      c = us_curve(data_plot, v_basis.at(m).filename);
-      c->setSymbol(s);
-      c->setStyle(QwtPlotCurve::NoCurve);
+      QwtSymbol *symb = new QwtSymbol();
+      symb->setStyle( QwtSymbol::Ellipse );
+      symb->setPen( QPen( Qt::green ) );
+      symb->setBrush( QBrush( Qt::green ) );
+      symb->setSize( 3 );
 
-      // c->setPen(p);
-      c->setSamples( xx, yy, nn );
-      v_basis[basisIndex].matchingCurve = c;
-      basisIndex++;
+      if( all_basis[ ii ].curve != nullptr ) {
+         all_basis[ ii ].curve->detach();
+      }
+      QwtPlotCurve* curve;
+      curve = us_curve( data_plot, all_basis.at( ii ).header );
+      curve->setSymbol( symb );
+      curve->setStyle( QwtPlotCurve::NoCurve );
+      curve->setSamples( xx, yy, np );
+      all_basis[ ii ].curve = curve;
    }
-   // cb_basis_1->addItems(names);
-   // cb_basis_2->addItems(names);
+   data_plot->replot();
+   highlight();
+}
+
+void US_Spectrum::highlight()
+{
+   for( int ii = 0; ii < all_basis.size(); ii++ ) {
+
+      if( all_basis[ ii ].curve != nullptr ) {
+         if( all_basis.at( ii ).highlight ) {
+            all_basis[ ii ].curve->setStyle( QwtPlotCurve::Lines );
+            all_basis[ ii ].curve->setPen( Qt::green, 3, Qt::SolidLine );
+            all_basis[ ii ].curve->setSymbol( nullptr );
+         } else {
+            all_basis[ ii ].curve->setStyle( QwtPlotCurve::NoCurve );
+            QwtSymbol *symb = new QwtSymbol();
+            symb->setStyle( QwtSymbol::Ellipse );
+            symb->setPen( QPen( Qt::green ) );
+            symb->setBrush( QBrush( Qt::green ) );
+            symb->setSize( 3 );
+            all_basis[ ii ].curve->setSymbol( symb );
+         }
+      }
+   }
    data_plot->replot();
 }
 
-
-
-void US_Spectrum:: plot_target()
+void US_Spectrum::plot_target()
 {
-  //dataPlotClear( data_plot );
-  //us_grid(data_plot);
-   double* xx = (double*)w_target.wvl.data();
-   double* yy = (double*)w_target.extinction.data();
-   int     nn = w_target.wvl.size();
-   
-   qDebug() << "Target " << " size: " << nn;
-   qDebug() << "Target " << " x[0]/y[0]: " << xx[0] << "/" << yy[0];
-   
-   QwtPlotCurve* c;
-   
-   QwtSymbol *s = new QwtSymbol;
-   s->setStyle(QwtSymbol::Ellipse);
-   s->setPen(QPen(Qt::yellow));
-   s->setBrush(QBrush(Qt::blue));
-   s->setSize(3);
-   
-   // QPen p;
-   // p.setColor(Qt::yellow);
-   // p.setWidth(3);
-   c = us_curve(data_plot, w_target.filename);
-   c->setSymbol(s);
-   c->setStyle(QwtPlotCurve::NoCurve);
-   //c->setPen(p);
-   c->setSamples( xx, yy, nn );
-   w_target.matchingCurve = c;
-   data_plot->replot();
-   //pb_load_basis->setEnabled(true);
+   if( target.curve != nullptr ) {
+      target.curve->detach();
+   }
+   if( target.od.isEmpty() && target.xvec.isEmpty() ) {
+      return;
+   }
+   double* xx;
+   double* yy;
+   int np;
+   if( target.xvec.isEmpty() ) {
+      xx = target.lambda.data();
+      yy = target.od.data();
+      np = target.od.size();
+   } else {
+      xx = target.xvec.data();
+      yy = target.yvec.data();
+      np = target.yvec.size();
+   }
 
-   QListWidgetItem* item = new QListWidgetItem(w_target.header);
-   item->setData(Qt::ToolTipRole, w_target.filename);
-   // lw_target->addItem(item);
-   // pb_load_basis->setEnabled(true);
+   QwtPlotCurve* curve;
+   curve = us_curve( data_plot, target.header );
+   curve->setStyle( QwtPlotCurve::Lines );
+   curve->setSamples( xx, yy, np );
+   curve->setPen( Qt::yellow, 3, Qt::SolidLine );
+   target.curve = curve;
+   data_plot->replot();
 }
 
 void US_Spectrum::fit()
 {
-   unsigned int min_lambda = w_target.lambda_min;
-   unsigned int max_lambda = w_target.lambda_max;
-   unsigned int points, order, i, k, counter=0;
-   double *nnls_a, *nnls_b, *nnls_x, nnls_rnorm, *nnls_wp, *nnls_zzp, *x, *y;
-   float fval = 0.0;
-   QVector <float> solution, b;
-   QPen pen;
-   residuals.clear();
-   solution.clear();
+   // unsigned int min_lambda = w_target.lambda_min;
+   // unsigned int max_lambda = w_target.lambda_max;
+   // unsigned int points, order, i, k, counter=0;
+   // double *nnls_a, *nnls_b, *nnls_x, nnls_rnorm, *nnls_wp, *nnls_zzp, *x, *y;
+   // float fval = 0.0;
+   // QVector <float> solution, b;
+   // QPen pen;
+   // residuals.clear();
+   // solution.clear();
       
    
-   b.clear();
-   int *nnls_indexp;
+   // b.clear();
+   // int *nnls_indexp;
    QString str = "Please note:\n\n" 
       "The target and basic spectra have different limits.\n" 
       "These vectors need to be congruent before you can fit\n" 
       "the data. You can correct the problem by running\n" 
       "\"Find Extinction Profile Overlap\".";
    
-   for (i=0; i< (unsigned int) v_basis.size(); i++)
-   {
-     if(v_basis[i].lambda_min != min_lambda || v_basis[i].lambda_max != max_lambda || v_basis[i].wvl.size() != w_target.wvl.size())
-      {
-          QMessageBox::warning(this, tr("UltraScan Warning"), str );
-          return;
-      }
-   }
+   // for (i=0; i< (unsigned int) v_basis.size(); i++)
+   // {
+   //   if(v_basis[i].lambda_min != min_lambda || v_basis[i].lambda_max != max_lambda || v_basis[i].wvl.size() != w_target.wvl.size())
+   //    {
+   //        QMessageBox::warning(this, tr("UltraScan Warning"), str );
+   //        return;
+   //    }
+   // }
 
    //points = w_target.lambda_max - w_target.lambda_min + 1;
    
-   points = w_target.wvl.size();
-   x = new double [points];
-   y = new double [points];
+   // points = w_target.wvl.size();
+   // x = new double [points];
+   // y = new double [points];
 
-   order = v_basis.size(); // no baseline necessary with gaussians
-   nnls_a = new double [points * order]; // contains the model functions, end-to-end
-   nnls_b = new double [points]; // contains the experimental data
-   nnls_zzp = new double [points]; // pre-allocated working space for nnls
-   nnls_x = new double [order]; // the solution vector, pre-allocated for nnls
-   nnls_wp = new double [order]; // pre-allocated working space for nnls, On exit, wp[] will contain the dual solution vector, wp[i]=0.0 for all i in set p and wp[i]<=0.0 for all i in set z. 
+   // order = v_basis.size(); // no baseline necessary with gaussians
+   // nnls_a = new double [points * order]; // contains the model functions, end-to-end
+   // nnls_b = new double [points]; // contains the experimental data
+   // nnls_zzp = new double [points]; // pre-allocated working space for nnls
+   // nnls_x = new double [order]; // the solution vector, pre-allocated for nnls
+   // nnls_wp = new double [order]; // pre-allocated working space for nnls, On exit, wp[] will contain the dual solution vector, wp[i]=0.0 for all i in set p and wp[i]<=0.0 for all i in set z. 
 
-   nnls_indexp = new int [order];
-   //extinction
-   for (i=0; i<points; i++)
-   {
-     x[i] = w_target.wvl[i];
+   // nnls_indexp = new int [order];
+   // //extinction
+   // for (i=0; i<points; i++)
+   // {
+   //   x[i] = w_target.wvl[i];
      
-     nnls_b[i] = w_target.extinction[i];
-     b.push_back((float) nnls_b[i]);
-   }
+   //   nnls_b[i] = w_target.extinction[i];
+   //   b.push_back((float) nnls_b[i]);
+   // }
    
   
-   counter = 0;
-   //basis
-   for (k=0; k<order; k++)
-   {
-     for(i = 0; i<points; i++)
-      {
-	nnls_a[counter] = v_basis[k].extinction[i];
-	counter ++;
-      }
-   }
+   // counter = 0;
+   // //basis
+   // for (k=0; k<order; k++)
+   // {
+   //   for(i = 0; i<points; i++)
+   //    {
+	// nnls_a[counter] = v_basis[k].extinction[i];
+	// counter ++;
+   //    }
+   // }
    
-   US_Math2::nnls(nnls_a, points, points, order, nnls_b, nnls_x, &nnls_rnorm, nnls_wp, nnls_zzp, nnls_indexp);
+   // US_Math2::nnls(nnls_a, points, points, order, nnls_b, nnls_x, &nnls_rnorm, nnls_wp, nnls_zzp, nnls_indexp);
    
-   QVector <float> results;
-   results.clear();
-   fval = 0.0;
-   for (i=0; i< (unsigned int) v_basis.size(); i++)
-   {
-      fval += nnls_x[i];
-   }
-   str = tr ("%1 : %2\% (%3)");
-   for (i=0; i< (unsigned int) v_basis.size(); i++)
-   {
-      results.push_back(100.0 * nnls_x[i]/fval);
-      // str = QString::asprintf( (v_basis[i].filenameBasis +": %3.2f%% (%6.4e)").toLocal8Bit().data(), results[i], nnls_x[i] );
-      // lw_basis->item((int)i)->setText(str);
-      // tw_basis->item((int)i)->setText(str.arg(v_basis[i].header).
-      //                                  arg(results.at(i), 0, 'f', 2).arg(nnls_x[i], 0, 'e'));
-      v_basis[i].nnls_factor = nnls_x[i];
-      v_basis[i].nnls_percentage = results[i];
-   }
+   // QVector <float> results;
+   // results.clear();
+   // fval = 0.0;
+   // for (i=0; i< (unsigned int) v_basis.size(); i++)
+   // {
+   //    fval += nnls_x[i];
+   // }
+   // str = tr ("%1 : %2\% (%3)");
+   // for (i=0; i< (unsigned int) v_basis.size(); i++)
+   // {
+   //    results.push_back(100.0 * nnls_x[i]/fval);
+   //    // str = QString::asprintf( (v_basis[i].filenameBasis +": %3.2f%% (%6.4e)").toLocal8Bit().data(), results[i], nnls_x[i] );
+   //    // lw_basis->item((int)i)->setText(str);
+   //    // tw_basis->item((int)i)->setText(str.arg(v_basis[i].header).
+   //    //                                  arg(results.at(i), 0, 'f', 2).arg(nnls_x[i], 0, 'e'));
+   //    v_basis[i].nnls_factor = nnls_x[i];
+   //    v_basis[i].nnls_percentage = results[i];
+   // }
 
-   for (i=0; i<points; i++)
-   {
-      solution.push_back(0.0);
-   }
+   // for (i=0; i<points; i++)
+   // {
+   //    solution.push_back(0.0);
+   // }
 
-   // Solution
-   for (k=0; k<order; k++)
-   {
-     for (i=0; i<points; i++)
-      {
-      	solution[i] += v_basis[k].extinction[i] * nnls_x[k];
-      }
-    }
+   // // Solution
+   // for (k=0; k<order; k++)
+   // {
+   //   for (i=0; i<points; i++)
+   //    {
+   //    	solution[i] += v_basis[k].extinction[i] * nnls_x[k];
+   //    }
+   //  }
 
 
-   for (i=0; i<points; i++)
-   {
-      residuals.push_back(solution[i] - b[i]);
-      y[i] = solution[i];
-   }
+   // for (i=0; i<points; i++)
+   // {
+   //    residuals.push_back(solution[i] - b[i]);
+   //    y[i] = solution[i];
+   // }
 
-   dataPlotClear( error_plot );
-   QwtPlotCurve *resid_curve = us_curve(error_plot, "Residuals");
-   QwtPlotCurve *target_curve = us_curve(error_plot,"Mean");
-   if (solution_curve != NULL)
-   {
-      solution_curve->detach();
-   }
-   solution_curve = us_curve(data_plot, "Solution");
+   // dataPlotClear( error_plot );
+   // QwtPlotCurve *resid_curve = us_curve(error_plot, "Residuals");
+   // QwtPlotCurve *target_curve = us_curve(error_plot,"Mean");
+   // if (solution_curve != NULL)
+   // {
+   //    solution_curve->detach();
+   // }
+   // solution_curve = us_curve(data_plot, "Solution");
 
-   resid_curve->setStyle(QwtPlotCurve::Lines);
-   target_curve->setStyle(QwtPlotCurve::Lines);
-   solution_curve->setStyle(QwtPlotCurve::Lines);
+   // resid_curve->setStyle(QwtPlotCurve::Lines);
+   // target_curve->setStyle(QwtPlotCurve::Lines);
+   // solution_curve->setStyle(QwtPlotCurve::Lines);
 
-   solution_curve->setSamples(x, y, points);
-   pen.setColor(Qt::magenta);
-   pen.setWidth(3);
-   solution_curve->setPen(pen);
-   //Update w_solution's profile
-   w_solution.matchingCurve = solution_curve;
-   data_plot->replot();
+   // solution_curve->setSamples(x, y, points);
+   // pen.setColor(Qt::magenta);
+   // pen.setWidth(3);
+   // solution_curve->setPen(pen);
+   // //Update w_solution's profile
+   // w_solution.matchingCurve = solution_curve;
+   // data_plot->replot();
 
-   for(unsigned int j = 0; j < points; j++)
-   {
-     w_solution.wvl.push_back(x[j]);
-     w_solution.extinction.push_back(y[j]);
-   }
-   w_solution.lambda_min = w_target.lambda_min;
-   w_solution.lambda_max = w_target.lambda_max;
-   fval = 0.0;
-   for (i=0; i<points; i++)
-   {
-      y[i] = residuals[i];
-      fval += pow(residuals[i], (float) 2.0);
-   }
-   fval /= points;
-   str = tr (" %1");
-   le_rmsd->setText(str.arg(pow(fval, (float) 0.5), 0, 'e'));
-   // le_rmsd->setText(QString::asprintf(" %3.2e", pow(fval, (float) 0.5)));
-   resid_curve->setSamples(x, y, points);
-   pen.setColor(Qt::yellow);
-   pen.setWidth(2);
-   resid_curve->setPen(pen);
-   error_plot->replot();
+   // for(unsigned int j = 0; j < points; j++)
+   // {
+   //   w_solution.wvl.push_back(x[j]);
+   //   w_solution.extinction.push_back(y[j]);
+   // }
+   // w_solution.lambda_min = w_target.lambda_min;
+   // w_solution.lambda_max = w_target.lambda_max;
+   // fval = 0.0;
+   // for (i=0; i<points; i++)
+   // {
+   //    y[i] = residuals[i];
+   //    fval += pow(residuals[i], (float) 2.0);
+   // }
+   // fval /= points;
+   // str = tr (" %1");
+   // le_rmsd->setText(str.arg(pow(fval, (float) 0.5), 0, 'e'));
+   // // le_rmsd->setText(QString::asprintf(" %3.2e", pow(fval, (float) 0.5)));
+   // resid_curve->setSamples(x, y, points);
+   // pen.setColor(Qt::yellow);
+   // pen.setWidth(2);
+   // resid_curve->setPen(pen);
+   // error_plot->replot();
 
-   x[1] = x[points - 1];
-   y[0] = 0.0;
-   y[1] = 0.0;
-   target_curve->setSamples(x, y, 2);
-   pen.setColor(Qt::red);
-   pen.setWidth(3);
-   target_curve->setPen(pen);
-   error_plot->replot();
-   // pb_save->setEnabled(true);
-   delete [] x;
-   delete [] y;
+   // x[1] = x[points - 1];
+   // y[0] = 0.0;
+   // y[1] = 0.0;
+   // target_curve->setSamples(x, y, 2);
+   // pen.setColor(Qt::red);
+   // pen.setWidth(3);
+   // target_curve->setPen(pen);
+   // error_plot->replot();
+   // // pb_save->setEnabled(true);
+   // delete [] x;
+   // delete [] y;
 }
 
 // Delete upon double click
-bool US_Spectrum::deleteBasisCurve(void)
+void US_Spectrum::delete_basis( int row )
 {
-  QMessageBox mBox;
-  mBox.setText(tr("Are you sure you want to delete the curve you double-clicked?"));
-  mBox.addButton(tr("Yes"), QMessageBox::AcceptRole);
-  QPushButton *cancelButton = mBox.addButton(tr("Cancel"), QMessageBox::RejectRole);
-  
-  mBox.exec();
-  
-//   if (mBox.clickedButton() == cancelButton)
-//     {
-//       return(false);
-//     }
-  
-//   if(v_basis.size() <= 1)
-//      {
-//        resetBasis();
-//        return(true);
-//      }
- 
-// //   QString selectedName = tw_basis->currentItem()->text();
-// //   for(int k = 0; k < v_basis.size(); k++)
-// //     {
-// //       if(selectedName.contains(v_basis.at(k).header))
-// // 	{
-// // 	  v_basis[k].matchingCurve->detach();
-// // 	  v_basis.remove(k);
-// // 	  cb_basis_1->removeItem(k);
-// // 	  cb_basis_2->removeItem(k);
-// // 	  delete tw_basis->currentItem();
-// // 	}
-// //     }
-//   data_plot->replot();
-
-  
-  
-//   // v_basis[deleteIndex].matchingCurve->detach();
-//   // data_plot->replot();
-//   // v_basis.remove(deleteIndex);
-//   // delete lw_basis->currentItem();
-  
-  return(true);
+   qDebug() << row;
+   QString msg = tr( "Are you sure you want to delete the curve you double-clicked ?" );
+   int yes = QMessageBox::question( this, "Delete a Basis Profile", msg, QMessageBox::Yes | QMessageBox::No );
+   if( yes == QMessageBox::Yes ) {
+      for( int ii = 0; ii < all_basis.size(); ii++ ) {
+         if( ii == row ) {
+            all_basis[ ii ].clear( true );
+         } else {
+            all_basis[ ii ].clear( false );
+         }
+      }
+      all_basis.removeAt( row );
+      tw_basis->removeRow( row );
+      plot_basis();
+   }
 }
-//////////////////////////////////////////////////
 
 void US_Spectrum::reset()
 {
@@ -678,144 +678,142 @@ void US_Spectrum::reset()
 
    all_basis.clear();
    fill_table();
-   plot();
-   tw_basis->horizontalHeader()->setSectionResizeMode( QHeaderView::Stretch );
-
+   plot_basis();
 }
 
 void US_Spectrum::overlap()
 {
-   unsigned int highest_lambda_min, lowest_lambda_max, largest, smallest;
-   int exists_target, exists_basis;
+//    unsigned int highest_lambda_min, lowest_lambda_max, largest, smallest;
+//    int exists_target, exists_basis;
 
-   QVector<int> lambdaMins, lambdaMaxs;
+//    QVector<int> lambdaMins, lambdaMaxs;
 
-   lambdaMins.push_back(w_target.lambda_min);
-   lambdaMaxs.push_back(w_target.lambda_max);
-   for(int m = 0; m < v_basis.size(); m++)
-     {
-       lambdaMins.push_back(v_basis.at(m).lambda_min);
-       lambdaMaxs.push_back(v_basis.at(m).lambda_max);
-     }
+//    lambdaMins.push_back(w_target.lambda_min);
+//    lambdaMaxs.push_back(w_target.lambda_max);
+//    for(int m = 0; m < v_basis.size(); m++)
+//      {
+//        lambdaMins.push_back(v_basis.at(m).lambda_min);
+//        lambdaMaxs.push_back(v_basis.at(m).lambda_max);
+//      }
 
-   std::sort(lambdaMins.begin(), lambdaMins.end());
-   std::sort(lambdaMaxs.begin(), lambdaMaxs.end());
+//    std::sort(lambdaMins.begin(), lambdaMins.end());
+//    std::sort(lambdaMaxs.begin(), lambdaMaxs.end());
    
-   highest_lambda_min = lambdaMins.last();
-   lowest_lambda_max  = lambdaMaxs[0];
+//    highest_lambda_min = lambdaMins.last();
+//    lowest_lambda_max  = lambdaMaxs[0];
    
-   smallest = lambdaMins[0];
-   largest  = lambdaMaxs.last();
+//    smallest = lambdaMins[0];
+//    largest  = lambdaMaxs.last();
    
-   qDebug() << "Mins: " << lambdaMins << ", highest_lambda_min: " << highest_lambda_min;
-   qDebug() << "Maxs: " << lambdaMaxs << ", lowest_lambda_max : " << lowest_lambda_max ; 
+//    qDebug() << "Mins: " << lambdaMins << ", highest_lambda_min: " << highest_lambda_min;
+//    qDebug() << "Maxs: " << lambdaMaxs << ", lowest_lambda_max : " << lowest_lambda_max ; 
    
-   //we need a vector of all wavelengths which will be decimated based on overlap with target/basis
-   int allpoints = largest - smallest + 1;
-   QVector<int> allRange;
-   for (int i=0; i < allpoints; ++i)
-     {
-       allRange.push_back(smallest + i);
-     }
+//    //we need a vector of all wavelengths which will be decimated based on overlap with target/basis
+//    int allpoints = largest - smallest + 1;
+//    QVector<int> allRange;
+//    for (int i=0; i < allpoints; ++i)
+//      {
+//        allRange.push_back(smallest + i);
+//      }
 
-   qDebug() << "AllRange size_0: " << allRange.size();
-   for (int i=0; i < allRange.size(); ++i)
-     {
-       //target
-       exists_target = 0;
-       for(int j = 0; j < w_target.wvl.size(); ++j)
-	 {
-	   if (allRange[i] == w_target.wvl.at(j))
-	     exists_target = 1;
-	 }
-       if ( !exists_target )
-	 {
-	   allRange.remove(i);
-	   --i;
-	 }
-     }
-   qDebug() << "AllRange size_1: " << allRange.size();
+//    qDebug() << "AllRange size_0: " << allRange.size();
+//    for (int i=0; i < allRange.size(); ++i)
+//      {
+//        //target
+//        exists_target = 0;
+//        for(int j = 0; j < w_target.wvl.size(); ++j)
+// 	 {
+// 	   if (allRange[i] == w_target.wvl.at(j))
+// 	     exists_target = 1;
+// 	 }
+//        if ( !exists_target )
+// 	 {
+// 	   allRange.remove(i);
+// 	   --i;
+// 	 }
+//      }
+//    qDebug() << "AllRange size_1: " << allRange.size();
    
 
-   for(int j = 0; j < v_basis.size(); ++j)
-     {
-       for (int i=0; i < allRange.size(); ++i)
-	 {
-	   //basis
-	   exists_basis = 0;
-   	   for(int m = 0; m < v_basis.at(j).wvl.size(); ++m)
-   	     {
-   	       if (allRange[i] == v_basis.at(j).wvl.at(m) )
-		 exists_basis = 1;
-	     }
-   	   if ( !exists_basis )
-   	     {
-   	       allRange.remove(i);
-	       --i;
-	     }
-   	 }
-   }
+//    for(int j = 0; j < v_basis.size(); ++j)
+//      {
+//        for (int i=0; i < allRange.size(); ++i)
+// 	 {
+// 	   //basis
+// 	   exists_basis = 0;
+//    	   for(int m = 0; m < v_basis.at(j).wvl.size(); ++m)
+//    	     {
+//    	       if (allRange[i] == v_basis.at(j).wvl.at(m) )
+// 		 exists_basis = 1;
+// 	     }
+//    	   if ( !exists_basis )
+//    	     {
+//    	       allRange.remove(i);
+// 	       --i;
+// 	     }
+//    	 }
+//    }
 
-   qDebug() << "AllRange size_2: " << allRange.size();
+//    qDebug() << "AllRange size_2: " << allRange.size();
 
    
-   // basis
-   for(int i = 0; i < v_basis.size(); ++i)
-     {
-       for(int j = 0; j < v_basis.at(i).wvl.size(); ++j)
-	 {
-           // try decimating basis based on values in updated allRange
-	   exists_basis = 0;
-	   for (int m = 0; m < allRange.size(); ++m)
-	     {
-	       if(v_basis.at(i).wvl.at(j) == allRange[m])
-		 exists_basis = 1;
-	     }
-	   if ( !exists_basis )
-	     {
-	       v_basis[i].wvl.remove(j);
-	       v_basis[i].extinction.remove(j);
-	       --j;
-	     }
-	 }
-     }
+//    // basis
+//    for(int i = 0; i < v_basis.size(); ++i)
+//      {
+//        for(int j = 0; j < v_basis.at(i).wvl.size(); ++j)
+// 	 {
+//            // try decimating basis based on values in updated allRange
+// 	   exists_basis = 0;
+// 	   for (int m = 0; m < allRange.size(); ++m)
+// 	     {
+// 	       if(v_basis.at(i).wvl.at(j) == allRange[m])
+// 		 exists_basis = 1;
+// 	     }
+// 	   if ( !exists_basis )
+// 	     {
+// 	       v_basis[i].wvl.remove(j);
+// 	       v_basis[i].extinction.remove(j);
+// 	       --j;
+// 	     }
+// 	 }
+//      }
 
-   //target
-   for(int j = 0; j < w_target.wvl.size(); ++j)
-     {
-       // try decimating target based on values in updated allRange
-       exists_target = 0;
-       for (int m = 0; m < allRange.size(); ++m)
-	 {
-	   if(w_target.wvl.at(j) == allRange[m])
-	     exists_target = 1;
-	 }
-       if ( !exists_target )
-	 {
-	   w_target.wvl.remove(j);
-	   w_target.extinction.remove(j);
-	   --j;
-	 }
-     }
+//    //target
+//    for(int j = 0; j < w_target.wvl.size(); ++j)
+//      {
+//        // try decimating target based on values in updated allRange
+//        exists_target = 0;
+//        for (int m = 0; m < allRange.size(); ++m)
+// 	 {
+// 	   if(w_target.wvl.at(j) == allRange[m])
+// 	     exists_target = 1;
+// 	 }
+//        if ( !exists_target )
+// 	 {
+// 	   w_target.wvl.remove(j);
+// 	   w_target.extinction.remove(j);
+// 	   --j;
+// 	 }
+//      }
    
-   w_target.lambda_min = highest_lambda_min;
-   w_target.lambda_max = lowest_lambda_max;
+//    w_target.lambda_min = highest_lambda_min;
+//    w_target.lambda_max = lowest_lambda_max;
 
-   // lw_target->clear();
-   w_target.matchingCurve->detach();
-   for(int k = 0; k < v_basis.size(); k++)
-     {
-       v_basis[k].lambda_min = highest_lambda_min;
-       v_basis[k].lambda_max = lowest_lambda_max;
-       v_basis[k].matchingCurve->detach();
-     }
+//    // lw_target->clear();
+//    w_target.matchingCurve->detach();
+//    for(int k = 0; k < v_basis.size(); k++)
+//      {
+//        v_basis[k].lambda_min = highest_lambda_min;
+//        v_basis[k].lambda_max = lowest_lambda_max;
+//        v_basis[k].matchingCurve->detach();
+//      }
    
-   //Clear components of the basis so replotting will work properly
-   tw_basis->clear();
-   int basisIndex = 0;
+//    //Clear components of the basis so replotting will work properly
+//    tw_basis->clear();
+//    int basisIndex = 0;
 
-   plot_basis();
-   plot_target();
+//    plot_basis();
+//    plot_target();
 }
 
 void US_Spectrum::find_angle()
@@ -852,8 +850,13 @@ void US_Spectrum::find_angle()
 
 void US_Spectrum::save()
 {
-   QString basename = QFileDialog::getSaveFileName(this, "Set the Base Name for the 'CSV' and 'DAT' Files", US_Settings::resultDir(), "All Files (*)");
-   if(basename.isEmpty()) {
+   if( target.xvec.isEmpty() || solution.xvec.isEmpty() || residual.xvec.isEmpty() ) {
+      QMessageBox::warning( this, "Warning!", "Fitted Data Not Found!");
+      return;
+   }
+   QString basename = QFileDialog::getSaveFileName( this, 
+      "Set the Base Name for the 'CSV' and 'DAT' Files", US_Settings::resultDir(), "All Files (*)" );
+   if( basename.isEmpty() ) {
       return;
    }
 
@@ -862,17 +865,16 @@ void US_Spectrum::save()
 
    QVector<QVector<double>> columns;
    QStringList header;
-   columns << w_solution.wvl;
-   columns << w_solution.extinction;
-   columns << residuals;
+   columns << solution.xvec;
+   columns << solution.yvec;
+   columns << residual.yvec;
    header << "wavelength (nm)" << "Fitted Extinction" << "Residuals";
-   columns << w_target.extinction;
-   header << "Target: " + w_target.header;
-   for (int ii = 0; ii < v_basis.size(); ii++) {
-      columns << v_basis.at(ii).extinction;
-      header << "Base: " + v_basis.at(ii).header;
+   columns << target.yvec;
+   header << "Target: " + target.header;
+   for ( int ii = 0; ii < all_basis.size(); ii++ ) {
+      columns << all_basis.at( ii ).yvec;
+      header << "Base: " + all_basis.at(ii).header;
    }
-
 
    QString seprtr = ";";
    bool flag = false;
@@ -894,58 +896,4 @@ void US_Spectrum::save()
       QMessageBox::warning(this, "Warning!", "Some headers contained characters identical to the separator (;). "
                                              "All such characters have been replaced with (-).");
    }
-
-   // QFile f (datfile);
-   // if(f.open(QIODevice::WriteOnly | QIODevice::Text))
-   // {
-   //    QTextStream ts(&f);
-   //    ts << "Details of fitting for each base species\n\n";
-   //    for (int ii = 0; ii < tw_basis->count(); ii++) {
-   //       ts << tw_basis->item(ii)->data(Qt::ToolTipRole).toString() << ": ";
-   //       ts << tw_basis->item(ii)->text() << "\n";
-   //    }
-   //    f.close();
-   // }
-
-   /*
-   if(f.open(QIODevice::WriteOnly))
-   {
-      QDataStream ds(&f);
-      ds << w_target.amplitude;
-      ds << w_target.filename;
-      ds << w_target.filenameBasis;
-      ds << w_target.lambda_min;
-      ds << w_target.lambda_max;
-      ds << w_target.lambda_scale;
-      ds << w_target.scale;
-      //ds << w_target.gaussians.size();
-      // for (int i=0; i< w_target.gaussians.size(); i++)
-      // {
-      //    ds << w_target.gaussians[i].amplitude;
-      //    ds << w_target.gaussians[i].sigma;
-      //    ds << w_target.gaussians[i].mean;
-      // }
-      ds << v_basis.size();
-      for (int j=0; j< v_basis.size(); j++)
-      {
-         ds << v_basis[j].amplitude;
-         ds << v_basis[j].filename;
-         ds << v_basis[j].filenameBasis;
-         ds << v_basis[j].lambda_min;
-         ds << v_basis[j].lambda_max;
-         ds << v_basis[j].lambda_scale;
-         ds << v_basis[j].scale;
-         ds << v_basis[j].nnls_factor;
-         ds << v_basis[j].nnls_percentage;
-         //ds << v_basis[j].gaussians.size();
-         // for (int i=0; i< v_basis[j].gaussians.size(); i++)
-         // {
-         //    ds << v_basis[j].gaussians[i].amplitude;
-         //    ds << v_basis[j].gaussians[i].sigma;
-         //    ds << v_basis[j].gaussians[i].mean;
-         // }
-      }
-      f.close();
-   }
-   */
 }

@@ -9,26 +9,6 @@
 #include <QFileInfo>
 
 /**
- * @struct WavelengthProfile
- * @brief Structure to hold wavelength profile data.
- */
-struct WavelengthProfile
-{
-    QVector<double> extinction;   //!< Extinction coefficients
-    QVector<double> wvl;          //!< Wavelength values
-    QwtPlotCurve* matchingCurve;  //!< Matching plot curve
-    unsigned int lambda_scale;    //!< Lambda scale
-    unsigned int lambda_min;      //!< Minimum lambda
-    unsigned int lambda_max;      //!< Maximum lambda
-    float scale;                  //!< Scale factor
-    float amplitude;              //!< Amplitude
-    QString filename;             //!< Filename
-    QString header;               //!< Column header
-    float nnls_factor;            //!< NNLS factor
-    float nnls_percentage;        //!< NNLS percentage
-};
-
-/**
  * @class US_Spectrum
  * @brief The US_Spectrum class provides a user interface for spectrum analysis.
  */
@@ -75,17 +55,8 @@ class US_Spectrum : public US_Widgets
         DataProfile solution;
         DataProfile residual;
 
-
-
-
-        QVector <double> residuals;    //!< residual vector
-
         QwtPlot* data_plot;           //!< Data plot
-        QwtPlot* error_plot;      //!< Residuals plot
-        WavelengthProfile w_target;   //!< Target wavelength profile
-        QVector<WavelengthProfile> v_basis; //!< Vector of basis wavelength profiles
-        QwtPlotCurve* solution_curve; //!< Solution curve
-        WavelengthProfile w_solution; //!< Solution wavelength profile
+        QwtPlot* error_plot;          //!< Residuals plot
 
         QTableWidget* tw_basis;        //!< Basis list widget
 
@@ -104,20 +75,21 @@ class US_Spectrum : public US_Widgets
         
         void fill_table();
         void fill_combo();
-        void plot();
+        void plot_basis();
+        void plot_target();
+        void highlight();
+        void overlap();
+        void delete_basis( int );
 
     private slots:
-
-        void highlight( QTableWidgetItem* );
+        /**
+         * @brief Slot to check the table item edited.
+         */
+        void basis_checked( QTableWidgetItem* );
         /**
          * @brief Slot to load basis data.
          */
         void load_basis();
-
-        /**
-         * @brief Slot to plot basis data.
-         */
-        void plot_basis();
 
         /**
          * @brief Slot to load target data.
@@ -125,20 +97,9 @@ class US_Spectrum : public US_Widgets
         void load_target();
 
         /**
-         * @brief Slot to plot target data.
-         */
-        void plot_target();
-
-        /**
          * @brief Slot to fit the data.
          */
-        void fit();
-
-        /**
-         * @brief Delete the current basis curve.
-         * @return True if successful, false otherwise
-         */
-        bool deleteBasisCurve(void);
+        void fit();        
 
         /**
          * @brief Slot to reset the basis data.
@@ -155,10 +116,6 @@ class US_Spectrum : public US_Widgets
          */
         void save();
 
-        /**
-         * @brief Slot to overlap the plots.
-         */
-        void overlap();
 };
 
 #endif
