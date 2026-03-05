@@ -151,6 +151,9 @@ void US_Admin::save( void )
     // reencrypt database password
     const QString cipherHex = rec.at( 4 );
     const QString ivHex     = rec.at( 5 );
+    if ( cipherHex.isEmpty() ) {
+        return true;
+    }
 
     const QString plain = US_Crypto::decrypt( cipherHex, oldPass, ivHex );
 
@@ -205,7 +208,7 @@ void US_Admin::save( void )
 
   QList<QStringList> databases = US_Settings::databases();
 
-  for (auto database : databases)
+  for ( auto& database : databases )
   {
     if ( !reencryptRecord( database ) ) {
       QMessageBox::information(this, tr("Attention:"),
