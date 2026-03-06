@@ -89,7 +89,8 @@ param(
     [switch]${help}
 )
 
-$ErrorActionPreference = "Stop"
+$DocsBuilt = $true
+$DocsStatusMessage = ""
 
 # =============================================================================
 # HELP
@@ -144,7 +145,9 @@ $QtSuffix = "-qt6"
 if (${qt5-qwt616}.IsPresent) { $QtSuffix = "-qt5-qwt616" }
 elseif (${qt5-qwt630}.IsPresent) { $QtSuffix = "-qt5-qwt630" }
 
-if (@("APP","TEST","HPC") -notcontains ${profile}) {
+$profile = $profile.ToUpperInvariant()
+
+if (@("APP","TEST","HPC") -notcontains $profile) {
     Write-Host "ERROR: --profile must be APP, TEST, or HPC" -ForegroundColor Red
     exit 1
 }
@@ -174,9 +177,16 @@ if ($Arch -eq "arm64") {
 }
 
 # =============================================================================
+# RESOLVE SOURCE ROOT
+# =============================================================================
+$ScriptDir  = Split-Path -Parent $MyInvocation.MyCommand.Path
+$SourceRoot = (Resolve-Path (Join-Path $ScriptDir "..")).Path
+Set-Location $SourceRoot
+
+# =============================================================================
 # BUILD DIRECTORY
 # =============================================================================
-$BuildDir = Join-Path $RepoRoot "build\$Preset"
+$BuildDir = Join-Path $SourceRoot "build\$Preset"
 
 # =============================================================================
 # HEADER
@@ -198,13 +208,6 @@ Write-Host "Preset                 : $Preset"
 if (${clean}) { Write-Host "Clean build requested" -ForegroundColor Yellow }
 if (${pkg})   { Write-Host "Installer build requested" -ForegroundColor Cyan }
 Write-Host ""
-
-# =============================================================================
-# RESOLVE SOURCE ROOT
-# =============================================================================
-$ScriptDir  = Split-Path -Parent $MyInvocation.MyCommand.Path
-$SourceRoot = Resolve-Path (Join-Path $ScriptDir "..")
-Set-Location $SourceRoot
 
 # =============================================================================
 # BUILD PARALLELISM
@@ -289,10 +292,13 @@ if ($MissingTools.Count -gt 0) {
 # It is not a hard build failure -- the build succeeds without it, but the
 # help system will not work in the installed application.
 if (-not (Get-Command sphinx-build -ErrorAction SilentlyContinue)) {
-    Write-Host "WARNING: sphinx-build not found -- documentation will not be built." -ForegroundColor Yellow
-    Write-Host "  The help system will not work without it. Install with:" -ForegroundColor Yellow
-    Write-Host "    winget install Python.Python.3" -ForegroundColor Yellow
-    Write-Host "    pip install sphinx sphinxcontrib-qthelp sphinx-subfigure" -ForegroundColor Yellow
+    $DocsBuilt = $false
+    $DocsStatusMessage = "Documentation not built: sphinx-build not found."
+
+    Write-Host "  Install Python 3.x first, for example:" -ForegroundColor Yellow
+    Write-Host "    winget install -e --id Python.Python.3.13" -ForegroundColor Yellow
+    Write-Host "  Then install the documentation dependencies:" -ForegroundColor Yellow
+    Write-Host "    py -m pip install -r doc/manual/source/requirements.txt" -ForegroundColor Yellow
     Write-Host ""
 }
 
@@ -508,9 +514,9 @@ Write-Host ""
 Write-Host "Building..." -ForegroundColor Cyan
 if (${pkg}) {
     Write-Host "Building Windows installer..." -ForegroundColor Cyan
-    cmake --build "build/$Preset" --target package_windows_nsis --parallel $BuildJobs
+    cmake --build $BuildDir --target package_windows_nsis --parallel $BuildJobs
 } else {
-    cmake --build "build/$Preset" --parallel $BuildJobs
+    cmake --build $BuildDir --parallel $BuildJobs
 }
 if ($LASTEXITCODE -ne 0) { Write-Host "ERROR: Build failed." -ForegroundColor Red; exit $LASTEXITCODE }
 
@@ -530,6 +536,12 @@ if (${pkg}) {
     Write-Host ""
 }
 if (-not $NonInteractive) {
+    if (-not $DocsBuilt) {
+        Write-Host "WARNING: $DocsStatusMessage" -ForegroundColor Yellow
+        Write-Host "         Help files (manual.qch/manual.qhc) were not generated." -ForegroundColor Yellow
+        Write-Host ""
+    }
+
     Write-Host "Next time you build it will be much faster since dependencies are cached."
     Write-Host ""
     Write-Host "To rebuild from scratch: .\build.bat --clean"

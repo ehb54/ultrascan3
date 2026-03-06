@@ -161,6 +161,35 @@ set(DOC_QHC_STAGE ${DOC_QTHELP_DIR}/manual.qhc)
 set(DOC_QCH ${DOC_OUTPUT_DIR}/manual.qch)
 set(DOC_QHC ${DOC_OUTPUT_DIR}/manual.qhc)
 
+# Windows runtime environment for qhelpgenerator / qcollectiongenerator
+set(_QT_TOOL_BIN_DIR "")
+set(_QT_RUNTIME_BIN_DIR "")
+set(_QT_PLUGIN_DIR "")
+
+if(WIN32)
+    foreach(_vcpkg_dir IN ITEMS "${VCPKG_INSTALLED_DIR}" "${_VCPKG_INSTALLED_DIR}")
+        if(_vcpkg_dir AND VCPKG_TARGET_TRIPLET)
+            foreach(_triplet IN ITEMS "${VCPKG_TARGET_TRIPLET}")
+                if(NOT _QT_TOOL_BIN_DIR AND EXISTS "${_vcpkg_dir}/${_triplet}/tools/Qt6/bin/qhelpgenerator.exe")
+                    set(_QT_TOOL_BIN_DIR "${_vcpkg_dir}/${_triplet}/tools/Qt6/bin")
+                endif()
+
+                if(NOT _QT_RUNTIME_BIN_DIR AND EXISTS "${_vcpkg_dir}/${_triplet}/bin/Qt6Core.dll")
+                    set(_QT_RUNTIME_BIN_DIR "${_vcpkg_dir}/${_triplet}/bin")
+                endif()
+
+                if(NOT _QT_PLUGIN_DIR AND EXISTS "${_vcpkg_dir}/${_triplet}/plugins/sqldrivers/qsqlite.dll")
+                    set(_QT_PLUGIN_DIR "${_vcpkg_dir}/${_triplet}/plugins")
+                endif()
+            endforeach()
+        endif()
+    endforeach()
+
+    message(STATUS "  qhelpgenerator tool dir: ${_QT_TOOL_BIN_DIR}")
+    message(STATUS "  Qt runtime bin dir:      ${_QT_RUNTIME_BIN_DIR}")
+    message(STATUS "  Qt plugin dir:           ${_QT_PLUGIN_DIR}")
+endif()
+
 if(QHELPGENERATOR_EXECUTABLE)
 
     # -----------------------------------------------------------------------
@@ -169,14 +198,28 @@ if(QHELPGENERATOR_EXECUTABLE)
     # qhelpgenerator builds the compiled help file and the full-text search
     # index used by Qt Assistant.
     # -----------------------------------------------------------------------
-    add_custom_command(
-            OUTPUT  ${DOC_QCH_STAGE}
-            COMMAND ${QHELPGENERATOR_EXECUTABLE} manual.qhp -o manual.qch
-            DEPENDS ${SPHINX_QHP}
-            WORKING_DIRECTORY ${DOC_QTHELP_DIR}
-            COMMENT "Compiling Qt help file (manual.qch)"
-            VERBATIM
-    )
+    if(WIN32)
+        add_custom_command(
+                OUTPUT  ${DOC_QCH_STAGE}
+                COMMAND ${CMAKE_COMMAND} -E env
+                "PATH=${_QT_RUNTIME_BIN_DIR};${_QT_TOOL_BIN_DIR};$ENV{PATH}"
+                "QT_PLUGIN_PATH=${_QT_PLUGIN_DIR}"
+                ${QHELPGENERATOR_EXECUTABLE} manual.qhp -o manual.qch
+                DEPENDS ${SPHINX_QHP}
+                WORKING_DIRECTORY ${DOC_QTHELP_DIR}
+                COMMENT "Compiling Qt help file (manual.qch)"
+                VERBATIM
+        )
+    else()
+        add_custom_command(
+                OUTPUT  ${DOC_QCH_STAGE}
+                COMMAND ${QHELPGENERATOR_EXECUTABLE} manual.qhp -o manual.qch
+                DEPENDS ${SPHINX_QHP}
+                WORKING_DIRECTORY ${DOC_QTHELP_DIR}
+                COMMENT "Compiling Qt help file (manual.qch)"
+                VERBATIM
+        )
+    endif()
 
     # -----------------------------------------------------------------------
     # Step 2b: Compile manual.qhcp → manual.qhc
@@ -192,14 +235,28 @@ if(QHELPGENERATOR_EXECUTABLE)
         message(STATUS "  qcollectiongenerator not found — using qhelpgenerator (Qt6 merged tool)")
     endif()
 
-    add_custom_command(
-            OUTPUT  ${DOC_QHC_STAGE}
-            COMMAND ${_QHC_GENERATOR} manual.qhcp -o manual.qhc
-            DEPENDS ${SPHINX_QHCP} ${DOC_QCH_STAGE}
-            WORKING_DIRECTORY ${DOC_QTHELP_DIR}
-            COMMENT "Compiling Qt help collection (manual.qhc)"
-            VERBATIM
-    )
+    if(WIN32)
+        add_custom_command(
+                OUTPUT  ${DOC_QHC_STAGE}
+                COMMAND ${CMAKE_COMMAND} -E env
+                "PATH=${_QT_RUNTIME_BIN_DIR};${_QT_TOOL_BIN_DIR};$ENV{PATH}"
+                "QT_PLUGIN_PATH=${_QT_PLUGIN_DIR}"
+                ${_QHC_GENERATOR} manual.qhcp -o manual.qhc
+                DEPENDS ${SPHINX_QHCP} ${DOC_QCH_STAGE}
+                WORKING_DIRECTORY ${DOC_QTHELP_DIR}
+                COMMENT "Compiling Qt help collection (manual.qhc)"
+                VERBATIM
+        )
+    else()
+        add_custom_command(
+                OUTPUT  ${DOC_QHC_STAGE}
+                COMMAND ${_QHC_GENERATOR} manual.qhcp -o manual.qhc
+                DEPENDS ${SPHINX_QHCP} ${DOC_QCH_STAGE}
+                WORKING_DIRECTORY ${DOC_QTHELP_DIR}
+                COMMENT "Compiling Qt help collection (manual.qhc)"
+                VERBATIM
+        )
+    endif()
 
     # -----------------------------------------------------------------------
     # Step 2c: Copy runtime help files into bin/
@@ -207,30 +264,25 @@ if(QHELPGENERATOR_EXECUTABLE)
     # UltraScan launches Qt Assistant pointing at bin/manual.qhc, which then
     # loads the associated manual.qch from the same directory.
     # -----------------------------------------------------------------------
-    if(WIN32)
-        set(DOC_QCH ${DOC_OUTPUT_DIR}/manual.qch)
-        set(DOC_QHC ${DOC_OUTPUT_DIR}/manual.qhc)
-    else()
-        add_custom_command(
-                OUTPUT  ${DOC_QCH} ${DOC_QHC}
-                COMMAND ${CMAKE_COMMAND} -E make_directory ${DOC_OUTPUT_DIR}
-                COMMAND ${CMAKE_COMMAND} -E copy ${DOC_QCH_STAGE} ${DOC_QCH}
-                COMMAND ${CMAKE_COMMAND} -E copy ${DOC_QHC_STAGE} ${DOC_QHC}
-                DEPENDS ${DOC_QCH_STAGE} ${DOC_QHC_STAGE}
-                COMMENT "Copying Qt help files to bin/"
-                VERBATIM
-        )
-    endif()
+    # -----------------------------------------------------------------------
+    # Step 2c: Copy runtime help files into bin/
+    #
+    # UltraScan launches Qt Assistant pointing at bin/manual.qhc, which then
+    # loads the associated manual.qch from the same directory.
+    # -----------------------------------------------------------------------
+    add_custom_command(
+            OUTPUT  ${DOC_QCH} ${DOC_QHC}
+            COMMAND ${CMAKE_COMMAND} -E make_directory ${DOC_OUTPUT_DIR}
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different ${DOC_QCH_STAGE} ${DOC_QCH}
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different ${DOC_QHC_STAGE} ${DOC_QHC}
+            DEPENDS ${DOC_QCH_STAGE} ${DOC_QHC_STAGE}
+            COMMENT "Copying Qt help files to bin/"
+            VERBATIM
+    )
 
-    if(WIN32)
-        add_custom_target(documentation
-                DEPENDS ${DOC_QCH_STAGE} ${DOC_QHC_STAGE}
-        )
-    else()
-        add_custom_target(documentation ALL
-                DEPENDS ${DOC_QCH} ${DOC_QHC}
-        )
-    endif()
+    add_custom_target(documentation ALL
+            DEPENDS ${DOC_QCH} ${DOC_QHC}
+    )
 
     install(FILES ${DOC_QCH} ${DOC_QHC}
             DESTINATION bin
@@ -414,8 +466,13 @@ if(WIN32 AND QHELPGENERATOR_EXECUTABLE)
             string(REGEX REPLACE "-dynamic$" "" _vcpkg_host_triplet "${VCPKG_TARGET_TRIPLET}")
             foreach(_triplet IN ITEMS "${VCPKG_TARGET_TRIPLET}" "${_vcpkg_host_triplet}")
                 list(APPEND _ASSISTANT_CANDIDATES
+                        "${_vcpkg_dir}/${_triplet}/tools/Qt6/bin/assistant.exe"
+                        "${_vcpkg_dir}/${_triplet}/tools/Qt6/bin/Assistant.exe"
+                        "${_vcpkg_dir}/${_triplet}/tools/qttools/bin/assistant.exe"
                         "${_vcpkg_dir}/${_triplet}/tools/qttools/bin/Assistant.exe"
+                        "${_vcpkg_dir}/${_triplet}/tools/qt5-tools/bin/assistant.exe"
                         "${_vcpkg_dir}/${_triplet}/tools/qt5-tools/bin/Assistant.exe"
+                        "${_vcpkg_dir}/${_triplet}/tools/qt5/bin/assistant.exe"
                         "${_vcpkg_dir}/${_triplet}/tools/qt5/bin/Assistant.exe"
                 )
             endforeach()
@@ -423,7 +480,10 @@ if(WIN32 AND QHELPGENERATOR_EXECUTABLE)
     endforeach()
 
     if(DEFINED ENV{QTDIR})
-        list(APPEND _ASSISTANT_CANDIDATES "$ENV{QTDIR}/bin/Assistant.exe")
+        list(APPEND _ASSISTANT_CANDIDATES
+                "$ENV{QTDIR}/bin/assistant.exe"
+                "$ENV{QTDIR}/bin/Assistant.exe"
+        )
     endif()
 
     set(QT_ASSISTANT_OVERRIDE "" CACHE FILEPATH "Override path to Assistant.exe")
@@ -446,6 +506,12 @@ if(WIN32 AND QHELPGENERATOR_EXECUTABLE)
     else()
         message(WARNING "Qt Assistant not found — help viewer will not be available in bin/")
     endif()
+
+    set(WIN_ASSISTANT_SOURCE "${WIN_ASSISTANT_SOURCE}" PARENT_SCOPE)
+    set(DOC_QCH_STAGE "${DOC_QCH_STAGE}" PARENT_SCOPE)
+    set(DOC_QHC_STAGE "${DOC_QHC_STAGE}" PARENT_SCOPE)
+    set(DOC_OUTPUT_DIR "${DOC_OUTPUT_DIR}" PARENT_SCOPE)
+    set(QHELPGENERATOR_EXECUTABLE "${QHELPGENERATOR_EXECUTABLE}" PARENT_SCOPE)
 endif()
 
 # ---------------------------------------------------------------------------
