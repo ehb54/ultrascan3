@@ -1328,7 +1328,7 @@ void US_Extinction::view_result(void)
 }
 void US_Extinction::help(void)
 {
-
+   showHelp.show_help("manual/us_extinction.html");
 }
 
 bool CustomListWidgetItem::operator<(const QListWidgetItem& other) const {

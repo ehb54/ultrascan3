@@ -8,6 +8,7 @@
 #include "us_model.h"
 #include "us_dataIO.h"
 #include "us_noise.h"
+#include "us_help.h"
 #include "../us_fematch/us_fematch.h"
 
 #ifndef DbgLv
@@ -55,6 +56,7 @@ class US_QueryRmsd : public US_Widgets {
         QHeaderView *hheader;          //!< Header view for table
         US_Passwd pw;                  //!< Password object
         US_DB2* dbCon;                 //!< Database connection
+        US_Help showHelp;              //!< US_Help
         QVector<DataBundle> allData;   //!< Vector of all data bundles
         QVector<int> selIndex;         //!< Vector of selected indices
         QMap<int, US_Model> Models;    //!< Map of DB model ID to Model
@@ -130,7 +132,8 @@ class US_QueryRmsd : public US_Widgets {
         void closeEvent(QCloseEvent* event) override;
 
     private slots:
-                void load_runid(void);
+        void load_runid(void);
+        void help(void);
         void fill_table(int);
         void set_analysis(int);
         void set_method(int);

@@ -11,6 +11,7 @@
 #include "us_extinctfitter_gui.h"
 #include "us_analyte_gui.h"
 #include "us_csv_loader.h"
+#include "us_help.h"
 
 //! \class CustomListWidgetItem
 //! \brief Custom list widget item with comparison operator.
@@ -113,6 +114,7 @@ class US_GUI_EXTERN US_Extinction : public US_Widgets
         US_Plot* plotLayout; //!< Pointer to plot layout.
         QwtPlot* data_plot; //!< Pointer to data plot.
         QWidget* p; //!< Pointer to widget.
+        US_Help showHelp;  //!< US_Help
 
     private slots:
         //! \brief Slot to load scan data.
