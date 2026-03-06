@@ -98,7 +98,7 @@ if (${help}) {
     Write-Host "Usage: build.bat [OPTIONS] [PROFILE]"
     Write-Host ""
     Write-Host "OPTIONS:"
-    Write-Host "  --clean                  Clean build artifacts before building"
+    Write-Host "  --clean                  Clean the active build directory and vcpkg buildtrees before building"
     Write-Host "  --pkg                    Build the Windows NSIS installer"
     Write-Host "  --qt6                    Build with Qt6 + Qwt6.3.0 [default]"
     Write-Host "  --qt5-qwt616             Build with Qt5 + Qwt6.1.6"
@@ -393,25 +393,68 @@ Write-Host ""
 # =============================================================================
 # CLEAN (if requested)
 # =============================================================================
-if (${clean}) {
+if ($clean) {
     Write-Host "==========================================" -ForegroundColor Yellow
     Write-Host "Cleaning build artifacts..."               -ForegroundColor Yellow
     Write-Host "==========================================" -ForegroundColor Yellow
 
-    if (Test-Path "build") {
-        Write-Host "Removing build directory..."
-        Remove-Item -Recurse -Force "build"
+    # Remove only the active build tree for this invocation
+    if (Test-Path $BuildDir) {
+        Write-Host "Removing active build directory: $BuildDir"
+
+        try {
+            Remove-Item -Recurse -Force $BuildDir -ErrorAction Stop
+        }
+        catch {
+            Write-Warning "Initial removal of build directory failed:"
+            Write-Warning $_.Exception.Message
+
+            Write-Host "Stopping likely locking processes..."
+            Get-Process -ErrorAction SilentlyContinue | Where-Object {
+                $_.ProcessName -match '^(assistant|designer|linguist|qtdiag|qtplugininfo|cmake|ctest|us_.*|UltraScan.*)$'
+            } | Stop-Process -Force -ErrorAction SilentlyContinue
+
+            Start-Sleep -Seconds 2
+
+            try {
+                Remove-Item -Recurse -Force $BuildDir -ErrorAction Stop
+            }
+            catch {
+                Write-Error "Unable to remove build directory: $BuildDir"
+                Write-Error "A file is still locked. Close Explorer windows or any running UltraScan/Qt executables and retry."
+                exit 1
+            }
+        }
+    }
+    else {
+        Write-Host "Active build directory does not exist: $BuildDir"
     }
 
     $VcpkgBuildtrees = Join-Path $VcpkgRoot "buildtrees"
     if (Test-Path $VcpkgBuildtrees) {
         Write-Host "Removing vcpkg build trees..."
-        Remove-Item -Recurse -Force $VcpkgBuildtrees
+
+        try {
+            Remove-Item -Recurse -Force $VcpkgBuildtrees -ErrorAction Stop
+        }
+        catch {
+            Write-Warning "Could not fully remove vcpkg buildtrees:"
+            Write-Warning $_.Exception.Message
+        }
     }
 
     # Uncomment for a full dependency clean (much slower):
-    # Remove-Item -Recurse -Force (Join-Path $VcpkgRoot "installed")
-    # Remove-Item -Recurse -Force (Join-Path $VcpkgRoot "packages")
+    # $VcpkgInstalled = Join-Path $VcpkgRoot "installed"
+    # if (Test-Path $VcpkgInstalled) {
+    #     Write-Host "Removing vcpkg installed packages..."
+    #     Remove-Item -Recurse -Force $VcpkgInstalled
+    # }
+    #
+    # $VcpkgPackages = Join-Path $VcpkgRoot "packages"
+    # if (Test-Path $VcpkgPackages) {
+    #     Write-Host "Removing vcpkg package cache..."
+    #     Remove-Item -Recurse -Force $VcpkgPackages
+    # }
 
     Write-Host "Clean complete." -ForegroundColor Green
     Write-Host ""

@@ -69,8 +69,9 @@ endif()
 
 if(WIN32)
     find_program(WINDEPLOYQT windeployqt
-        HINTS "${CMAKE_PREFIX_PATH}/bin"
-              "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/tools/Qt6/bin"
+            HINTS "${CMAKE_PREFIX_PATH}/bin"
+            "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/tools/qttools/bin"
+            "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/tools/Qt6/bin"
     )
     if(WINDEPLOYQT)
         add_custom_command(TARGET us POST_BUILD
@@ -81,3 +82,15 @@ if(WIN32)
     endif()
 endif()
 
+if(WIN32 AND QHELPGENERATOR_EXECUTABLE AND WIN_ASSISTANT_SOURCE)
+    add_custom_command(TARGET us POST_BUILD
+            COMMAND "${CMAKE_COMMAND}"
+            -DDOC_QCH_STAGE="${DOC_QCH_STAGE}"
+            -DDOC_QHC_STAGE="${DOC_QHC_STAGE}"
+            -DDOC_OUTPUT_DIR="${DOC_OUTPUT_DIR}"
+            -DASSISTANT_SOURCE="${WIN_ASSISTANT_SOURCE}"
+            -P "${CMAKE_SOURCE_DIR}/admin/cmake/packaging/windows/WindowsDeployQtAssistant.cmake"
+            COMMENT "Staging Qt Assistant and help files into bin/"
+            VERBATIM
+    )
+endif()

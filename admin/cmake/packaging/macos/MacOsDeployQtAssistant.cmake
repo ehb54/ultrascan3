@@ -1,4 +1,4 @@
-# StageAssistant.cmake (minimal, robust)
+# MacOsDeployQtAssistant.cmake (minimal, robust)
 #
 # Purpose:
 #   Copy a Qt Assistant.app into DEST_DIR and make it runnable in-place.
@@ -153,14 +153,26 @@ if(DEFINED MACDEPLOYQT AND EXISTS "${MACDEPLOYQT}")
 
     # Ensure QSQLITE driver exists; macdeployqt may not deploy it by default.
     set(_qsqlite_src "")
+
+    # 1) Explicit plugin path
     if(DEFINED QSQLITE_PLUGIN AND EXISTS "${QSQLITE_PLUGIN}")
         set(_qsqlite_src "${QSQLITE_PLUGIN}")
-    else()
+    endif()
+
+    # 2) Try to infer from macdeployqt (vcpkg tools layout)
+    if(NOT _qsqlite_src)
         _stageassistant_guess_qt6_plugins_from_macdeployqt("${MACDEPLOYQT}" _plugins_root)
-        if(_plugins_root)
-            if(EXISTS "${_plugins_root}/sqldrivers/libqsqlite.dylib")
-                set(_qsqlite_src "${_plugins_root}/sqldrivers/libqsqlite.dylib")
-            endif()
+        if(_plugins_root AND EXISTS "${_plugins_root}/sqldrivers/libqsqlite.dylib")
+            set(_qsqlite_src "${_plugins_root}/sqldrivers/libqsqlite.dylib")
+        endif()
+    endif()
+
+    # 3) Fallback: infer from Qt install prefix (works for vcpkg, Homebrew, system Qt)
+    if(NOT _qsqlite_src AND DEFINED Qt6_DIR)
+        get_filename_component(_qt_prefix "${Qt6_DIR}/../../../" ABSOLUTE)
+        set(_candidate "${_qt_prefix}/plugins/sqldrivers/libqsqlite.dylib")
+        if(EXISTS "${_candidate}")
+            set(_qsqlite_src "${_candidate}")
         endif()
     endif()
 

@@ -89,26 +89,31 @@ foreach(exe ${extra_exes})
 endforeach()
 
 # =========================================================================
-# 3) Copy UltraScan shared libraries (DLLs) into bin/
+# 3) Copy ALL DLLs from BIN_DIR into the staged bin/
 #
-#    On Windows, DLLs must live alongside the executables that load them
-#    (i.e. in bin/) rather than in a separate lib/ directory, because the
-#    Windows DLL search path checks the application directory first.
-#    Import libraries (.lib) are build-time artifacts and are not deployed.
+#    On Windows with MSVC:
+#      - UltraScan DLLs (us_gui4.dll, us_utils4.dll) land in RUNTIME_OUTPUT_DIR (bin/)
+#      - vcpkg dependency DLLs (harfbuzz, freetype, zlib, ICU, etc.) are also
+#        copied into bin/ by windeployqt during the build as "local dependencies"
+#
+#    windeployqt during deploy (step 4) copies Qt DLLs but does NOT re-copy
+#    these already-present local dependencies into the stage.  We must copy
+#    all DLLs from BIN_DIR explicitly.
+#
+#    We copy every .dll found in BIN_DIR — windeployqt will later skip anything
+#    already present, so there is no double-copy problem.
 # =========================================================================
-if(LIB_DIR AND EXISTS "${LIB_DIR}")
-    file(GLOB us_dlls
-        "${LIB_DIR}/usutils*.dll"   "${LIB_DIR}/usgui*.dll"
-        "${LIB_DIR}/usUtils*.dll"   "${LIB_DIR}/usGui*.dll"
-        "${LIB_DIR}/libus_*.dll"    "${LIB_DIR}/us_*.dll"
-    )
-    foreach(dll ${us_dlls})
-        get_filename_component(dll_name "${dll}" NAME)
-        message(STATUS "  Copying UltraScan DLL: ${dll_name}")
-        file(COPY "${dll}" DESTINATION "${S_BIN}")
+if(BIN_DIR AND EXISTS "${BIN_DIR}")
+    file(GLOB _all_bin_dlls "${BIN_DIR}/*.dll")
+    foreach(_dll ${_all_bin_dlls})
+        get_filename_component(_dll_name "${_dll}" NAME)
+        message(STATUS "  Copying DLL from build bin/: ${_dll_name}")
+        file(COPY "${_dll}" DESTINATION "${S_BIN}")
     endforeach()
+    list(LENGTH _all_bin_dlls _dll_count)
+    message(STATUS "[WinDeploy] Copied ${_dll_count} DLLs from build bin/")
 else()
-    message(STATUS "[WinDeploy] LIB_DIR not set or missing — UltraScan DLLs not deployed")
+    message(WARNING "[WinDeploy] BIN_DIR not set or missing -- no DLLs staged from build tree")
 endif()
 
 # =========================================================================

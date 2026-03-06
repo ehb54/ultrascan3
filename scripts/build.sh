@@ -63,7 +63,7 @@ while [[ $# -gt 0 ]]; do
       echo "Usage: $0 [OPTIONS] [PROFILE]"
       echo ""
       echo "OPTIONS:"
-      echo "  --clean              Clean build artifacts before building"
+      echo "  --clean              Clean the active build directory and vcpkg buildtrees before building"
       echo "  --pkg                Build macOS PKG installer (macOS only)"
       echo "                       Installs to /Applications/UltraScan3, activates the"
       echo "                       ultrascan_sysctl LaunchDaemon, and applies sysctl values."
@@ -515,7 +515,6 @@ BUILD_DIR="build/$CONFIGURE_PRESET"
 
 QT_EXACT_VERSION="unknown"
 QWT_EXACT_VERSION="unknown"
-QWTPLOT3D_VERSION="unknown"
 OPENSSL_VERSION_DISPLAY="unknown"
 MARIADB_VERSION_DISPLAY="unknown"
 US3_VERSION_DISPLAY="unknown"
@@ -526,14 +525,17 @@ if [ -f "$_build_info" ]; then
   source "$_build_info"
   [ -n "${US3_QT_VERSION:-}" ]        && QT_EXACT_VERSION="$US3_QT_VERSION"
   [ -n "${US3_QWT_VERSION:-}" ]       && QWT_EXACT_VERSION="$US3_QWT_VERSION"
-  [ -n "${US3_QWTPLOT3D_VERSION:-}" ] && QWTPLOT3D_VERSION="$US3_QWTPLOT3D_VERSION"
   [ -n "${US3_OPENSSL_VERSION:-}" ]   && OPENSSL_VERSION_DISPLAY="$US3_OPENSSL_VERSION"
   [ -n "${US3_MARIADB_VERSION:-}" ]   && MARIADB_VERSION_DISPLAY="$US3_MARIADB_VERSION"
   [ -n "${US3_CMAKE_VERSION:-}" ]     && US3_VERSION_DISPLAY="$US3_CMAKE_VERSION"
 fi
 
-ARCH=$(uname -m 2>/dev/null || echo "unknown")
-US3_VERSION_DISPLAY=$(grep 'US_Version' utils/us_defines.h 2>/dev/null | head -1 | sed 's/.*"//;s/"//' || echo "unknown")
+if [ "$US3_VERSION_DISPLAY" = "unknown" ]; then
+  US3_VERSION_DISPLAY=$(sed -n 's/^.*US_Version[^"]*"\([^"]*\)".*$/\1/p' utils/us_defines.h 2>/dev/null | head -1)
+  if [ -z "$US3_VERSION_DISPLAY" ]; then
+    US3_VERSION_DISPLAY="unknown"
+  fi
+fi
 
 BIN_COUNT=0
 if [ -d "$BUILD_DIR/bin" ]; then
@@ -549,7 +551,6 @@ echo "  Profile            : ${PROFILE}"
 echo "  Configure preset   : ${CONFIGURE_PRESET}"
 echo "  Qt                 : ${QT_EXACT_VERSION} (${QT_VERSION_LABEL})"
 echo "  Qwt                : ${QWT_EXACT_VERSION}"
-echo "  QwtPlot3D          : ${QWTPLOT3D_VERSION}"
 echo "  Build directory    : ${BUILD_DIR}"
 echo "  Binaries           : ${BIN_COUNT} in ${BUILD_DIR}/bin/"
 echo "=========================================="
