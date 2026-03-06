@@ -13,7 +13,7 @@ In this dialog, you can enter a combination of 2 different hydrodynamic paramete
 
 
 
-.. image:: _static/images/predict2.png
+.. image:: /images/predict2.png
     :align: center
 
 .. rst-class:: 

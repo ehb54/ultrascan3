@@ -12,16 +12,14 @@ Beckman Optima Data Viewer
 
 Visualize and load raw data collected from connected Optima instruments via Data Acquisition or GMP modules and export as OpenAUC format. 
 
-.. image:: _static/images/xpn_viewer.png
-
+.. image:: /images/xpn_viewer.png
 .. rst-class::
     :align: center
 
     **Beckman Optima Data Viewer**
 
 
-.. image:: _static/images/xpn_viewer-loaded.png
-
+.. image:: /images/xpn_viewer-loaded.png
 .. rst-class::
     :align: center
 
@@ -34,7 +32,7 @@ Process:
   2. Select the instrument from the **DB Host** pulldown menu. 
   3. Click **Load Raw Optima Data** for raw optima data or **Load US3 AUC Data** to call a previously imported dataset. 
 
-.. image:: _static/images/xpn_viewer-saved.png 
+.. image:: /images/xpn_viewer-saved.png
   :align: center
 
 .. rst-class::

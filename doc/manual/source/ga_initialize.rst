@@ -12,7 +12,7 @@ Initialize Genetic Algorithm
 
 When the **Initialize Genetic Algorithm module** is opened from *Velocity*, a **Etc Dorectory Cleaned** dialog will open. Press **OK** to continue to the Genetic Algorithm Initiation Window. 
 
-.. image:: /_static/images/ga_initialize-o.png
+.. image:: /images/ga_initialize-o.png
     :align: center
 
 .. rst-class::
@@ -23,7 +23,7 @@ When the **Initialize Genetic Algorithm module** is opened from *Velocity*, a **
 Press **OK** to continue to the Genetic Algorithm Initiation Window. 
 
 
-.. image:: /_static/images/ga_initialize.png
+.. image:: /images/ga_initialize.png
     :align: center
 
 .. rst-class::
@@ -34,7 +34,7 @@ Press **OK** to continue to the Genetic Algorithm Initiation Window.
 Solute distribution data can be used to generate data for use with Genetic Algorithm analysis programs. The output data results from choosing bins (or buckets) around solute points. These buckets can be modified for better results. Once they are as desired, data for Genetic Algorithm analysis can be generated and output. 
 The input data may come in one of two flavors, each of which is treated differently. The data is either 2DSA type or Monte Carlo. The 2DSA is relatively sparse and generally requires fashioning buckets containing a single point. For a Monte Carlo distribution, buckets should contain multiple points and be constructed around clusters. 
 
-.. image:: /_static/images/ga_initialize-p.png
+.. image:: /images/ga_initialize-p.png
     :align: center
 
 .. rst-class::
@@ -147,7 +147,7 @@ Statistics File Output
 Once the bins for Genetic Algorithm analysis are selected, detailed statistical analysis can be performed on the Monte Carlo models. Click on 'View Statistics' to generate the detailed analysis.
 
 
-.. image:: /_static/images/ga_report-1.png
+.. image:: /images/ga_report-1.png
     :align: center
 
 .. rst-class::
@@ -162,12 +162,12 @@ Once the bins for Genetic Algorithm analysis are selected, detailed statistical 
 
    .. grid-item::
 
-      .. image:: _static/images/ga_report-2.png
+      .. image:: /images/ga_report-2.png
          :width: 100%
 
    .. grid-item::
 
-      .. image:: _static/images/ga_report-3.png
+      .. image:: /images/ga_report-3.png
          :width: 100%
 
 .. rst-class:: center

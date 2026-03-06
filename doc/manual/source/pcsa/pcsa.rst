@@ -20,7 +20,7 @@ The PCSA pass proceeds for a set of models each of which consists of the solute 
  * **Horizontal Line [ C(s) ]**
 
 
-.. image:: ../_static/images/pcsa.png
+.. image:: /images/pcsa.png
   :align: center
 
 .. rst-class:: center
@@ -40,7 +40,7 @@ Upon completion of an analysis fit, plots available include: model lines; experi
 
 The main PCSA window is shown here in the state it appears after the completion of a fit run. 
 
-.. image:: ../_static/images/pcsa_simulated.png
+.. image:: /images/pcsa_simulated.png
   :align: center
 
 .. rst-class:: center

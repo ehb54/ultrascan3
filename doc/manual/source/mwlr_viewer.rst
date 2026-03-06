@@ -27,7 +27,7 @@ Process:
 
 The main MWLR_Viewer window is shown here in the state it appears after loading US3 MWL data. 
 
-.. image:: _static/images/mwlr_viewer.png
+.. image:: /images/mwlr_viewer.png
     :align: center
 
 .. rst-class::
@@ -41,12 +41,12 @@ The main MWLR_Viewer window is shown here in the state it appears after loading 
 
    .. grid-item::
 
-      .. image:: _static/images/mwlr_viewer_ctl.png
+      .. image:: /images/mwlr_viewer_ctl.png
          :width: 55%
 
    .. grid-item::
 
-      .. image:: _static/images/mwlr_viewer_3d.png
+      .. image:: /images/mwlr_viewer_3d.png
          :width: 100%
 
 .. rst-class:: center
@@ -123,7 +123,7 @@ Functions:
 
 The default 2-D plot and movie frames is of wavelength records with radius as the X axis. You may change to radius records with lambda as the X axis by checking the X-axis Wavelength box. With this checked, the main window would be similar to the following. 
 
-.. image:: _static/images/mwlr_viewer_wvl.png
+.. image:: /images/mwlr_viewer_wvl.png
     :align: center
 
 .. rst-class::

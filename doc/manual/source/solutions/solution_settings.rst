@@ -15,7 +15,7 @@ Solution Settings Tab
 * `Edit Existing Solution <solution_edit.html>`_ - A panel whose primary purpose is to change non-hydrodynamic characteristics of an already existing Solution.
 * **Settings Solutions** - A panel whose primary purpose is to set Database-or-Disk input and to select the investigator. 
 
-.. image:: ../_static/images/solution_settings.png
+.. image:: /images/solution_settings.png
     :align: center
 
 .. rst-class:: 

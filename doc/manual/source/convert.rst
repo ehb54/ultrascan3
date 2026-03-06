@@ -10,7 +10,7 @@ Import Experimental Data
 
 Import and convert raw data into the UltraScan III OpenAUC format. 
 
-.. image:: /_static/images/us_convert_01.png
+.. image:: /images/us_convert_01.png
   :align: center
 
 .. rst-class::
@@ -26,7 +26,7 @@ Import and Convert Single and Multi-Wavelength Experimental Data
 
 Raw data can be loaded into the window by clicking **Import Experimental Data**. 
 
-.. image:: /_static/images/us_convert_04.png
+.. image:: /images/us_convert_04.png
   :align: center
 
 
@@ -45,7 +45,7 @@ Data can be loaded into the window using one of the following:
     * **Import Experimental Data:** Load raw data located on the local disk 
     * **Load US3 OpenAUC Run:** Load data that has already been converted to the UltraScanIII OpenAUC format using `Data load dialog <common_dialogs.html#data-loader>`_. This allows for steps 3 and 5 to be skipped as the information defined in these steps is populated based upon the experiment submission. 
 
-.. image:: /_static/images/us_convert_05.png
+.. image:: /images/us_convert_05.png
   :align: center
 
 
@@ -63,7 +63,7 @@ If the run is being reimported, the Run ID must be made unique to avoid deleting
 **STEP 3:** Edit Run Information: 
 -----------------------------------
 
-.. image:: /_static/images/us_convert_02.png
+.. image:: /images/us_convert_02.png
   :align: center
 
 
@@ -77,7 +77,7 @@ In the 'Experiment Information' window, a label can be created for the run, the 
 
     * **Select Lab/Rotor/Calibration:** Allows for the selection of the rotor and associated rotor (stretch) calibration profile. 
 
-.. image:: /_static/images/us_convert_07.png
+.. image:: /images/us_convert_07.png
   :align: center
 
 
@@ -99,7 +99,7 @@ The **Description** text box allows for notes to be assigned to each channel. Ne
 
 **Dropping Data:** 'Drop Selected Data' removes all of the wavelengths for a particular cell and channel. 'Drop All Channel 'A's removes all of the listed A channels when an 'A' channel is selected in the list. 'Drop All Channel 'B's removes all of the listed B channels when a 'B' channel is selected in the list. 'Drop Selected Triples' opens the 'Triples Selector for Deletes' window: 
 
-.. image:: /_static/images/us_convert_09.png
+.. image:: /images/us_convert_09.png
   :align: center
 
 
@@ -133,7 +133,7 @@ The **Define Reference Scans** button displays the last scan for the first wavel
  
 CTRL-clicking the centre of the air-gap region above the meniscus defines the reference scans and converts the intensity data for all channels to pseudo-absorbance data:
 
-.. image:: /_static/images/us_convert_definedscans.png
+.. image:: /images/us_convert_definedscans.png
   :align: center
 
 
@@ -143,7 +143,7 @@ CTRL-clicking the centre of the air-gap region above the meniscus defines the re
   **Last Scans of all Channel defined as Reference scans**
 
 
-.. image:: /_static/images/us_conv-RA.png
+.. image:: /images/us_conv-RA.png
   :align: center
 
 
@@ -158,7 +158,7 @@ CTRL-clicking the centre of the air-gap region above the meniscus defines the re
 
 When a 6- or 8- channel centerpiece is used, there will be multiple channels in a single measured channel that need to be separated into individual c/c/w triples. The 'Define Subsets' button allows for these c/c/w triples to be defined by CTRL-clicking at the radius that separates the channels. The starting and ending radius for the entire dataset does not be specified as these values are assumed. 
 
-.. image:: /_static/images/us_convert_13.png
+.. image:: /images/us_convert_13.png
   :align: center
 
 
@@ -169,7 +169,7 @@ When a 6- or 8- channel centerpiece is used, there will be multiple channels in 
 
 The **Process Subsets** button separates the c/c/w triples. 
 
-.. image:: /_static/images/us_convert_definesubset.png
+.. image:: /images/us_convert_definesubset.png
   :align: center
 
 
@@ -185,9 +185,7 @@ Wavelength Data:
 Wavelength scan data is listed in the Cell/Channel/radial position (c/c/r) format. 
 
 
-.. image:: /_static/images/us_convert_14.png
-
-
+.. image:: /images/us_convert_14.png
 .. rst-class::
   :align: center
   

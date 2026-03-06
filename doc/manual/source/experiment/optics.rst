@@ -33,7 +33,7 @@ Define which optical system(s) will be used to scan each cell. The 'Optical Syst
 .. note::
     The instrument collects scans on a cell-by-cell basis, so the selections for a cell apply to both of its channels. 
             
-.. image:: ../_static/images/experiment_optics.png
+.. image:: /images/experiment_optics.png
     :align: center
 
 .. rst-class::

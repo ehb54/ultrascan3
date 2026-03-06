@@ -18,7 +18,7 @@ Color gradients are specified with a start color and a number of color steps, ea
   :class: side-by-side
   :align: left
 
-  * - .. image:: /_static/images/colorgradient/colorgradient_main.png
+  * - .. image:: images/colorgradient/colorgradient_main.png
          :align: center
          :alt: Color Gradient Generator Window
         
@@ -45,12 +45,12 @@ User generated color schemes can be applied to multiple windows and plots using 
 
    .. grid-item::
 
-      .. image:: _static/images/colorgradient/col1_colgen.png
+      .. image:: /images/colorgradient/col1_colgen.png
          :width: 100%
 
    .. grid-item::
 
-      .. image:: _static/images/colorgradient/col1_colgen_GA.png
+      .. image:: /images/colorgradient/col1_colgen_GA.png
          :width: 100%
 
 .. rst-class:: center
@@ -63,12 +63,12 @@ User generated color schemes can be applied to multiple windows and plots using 
 
    .. grid-item::
 
-      .. image:: _static/images/colorgradient/col2_colgen.png
+      .. image:: /images/colorgradient/col2_colgen.png
          :width: 100%
 
    .. grid-item::
 
-      .. image:: _static/images/colorgradient/col1_colgen_Fe_match.png
+      .. image:: /images/colorgradient/col1_colgen_Fe_match.png
          :width: 100%
 
 .. rst-class:: center

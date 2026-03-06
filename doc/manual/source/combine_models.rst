@@ -14,7 +14,7 @@ This utility combines selected models into a single global model that can be use
 
 
 
-.. image:: _static/images/combine_models.png
+.. image:: /images/combine_models.png
   :align: center
 
 .. rst-class::
@@ -61,7 +61,7 @@ This utility combines selected models into a single global model that can be use
 When the Save Global Model button is clicked, a dialog reports on the combined global model to be created and allows the user options in saving it.
 
 
-.. image:: _static/images/combine_models-save.png
+.. image:: /images/combine_models-save.png
   :align: center
 
 .. rst-class::
@@ -71,7 +71,7 @@ When the Save Global Model button is clicked, a dialog reports on the combined g
 
 If the user wishes to modify the RunID part of the output model description, a click on the **Edit** button brings up a dialog for entering new ID text.
 
-.. image:: _static/images/combine_models-idedit.png
+.. image:: /images/combine_models-idedit.png
   :align: center
 
 .. rst-class::

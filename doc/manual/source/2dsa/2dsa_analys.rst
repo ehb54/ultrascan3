@@ -15,7 +15,7 @@ Each refinement iteration proceeds over a defined grid of s and f/f0 values. Tha
 A full set of analysis iterations may be repeated for either a range of meniscus points or a number of monte carlo iterations.
 
 
-.. image:: ../_static/images/2dsa_analys.png
+.. image:: /images/2dsa_analys.png
     :align: center
 
 .. rst-class::
@@ -127,7 +127,7 @@ Fitting Analysis Process:
 
 .. _norm_grid_plot:
 
-.. image:: ../_static/images/norm_gridplot.png
+.. image:: /images/norm_gridplot.png
     :align: center
 
 .. rst-class::
@@ -141,7 +141,7 @@ Fit Controls for Varying Vbar 2DSA:
 
 This variation of the 2DSA Analysis Control presents controls for varying vbar while holding frictional ratio constant.
 
-.. image:: ../_static/images/2dsa_analvv.png
+.. image:: /images/2dsa_analvv.png
     :align: center
 
 .. rst-class::
@@ -171,7 +171,7 @@ Functions Specific to Varying Vbar
 Residual Plot Dialog
 ======================
 
-.. image:: ../_static/images/2dsa_resplot.png
+.. image:: /images/2dsa_resplot.png
     :align: center
 
 .. rst-class::

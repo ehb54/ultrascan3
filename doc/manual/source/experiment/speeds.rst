@@ -28,7 +28,7 @@ Speeds Panel:
 
 .. _speeds:
 
-.. image:: ../_static/images/experiment_speeds.png
+.. image:: /images/experiment_speeds.png
     :align: center
 
 .. rst-class::

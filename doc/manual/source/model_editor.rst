@@ -10,7 +10,7 @@ UltraScan Model Editor
 
 Using this window, you choose a model to load and can create or edit a model.
 
-.. image:: _static/images/model_editor.png
+.. image:: /images/model_editor.png
     :align: center
 
 .. rst-class:: 

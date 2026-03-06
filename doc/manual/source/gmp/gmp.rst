@@ -45,7 +45,7 @@ User Roles and Permissions:
 .. note:: 
   The GMP module can be accessed using the drop-down 'GMP' menu located at the top of the UltraScan III module
 
-.. image:: /_static/images/gmp/gmp.png
+.. image:: /images/gmp/gmp.png
     :align: center
 
 .. rst-class::

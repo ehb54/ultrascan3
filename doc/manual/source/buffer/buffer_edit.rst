@@ -28,7 +28,7 @@ Once any desired modifications have been made, clicking on the Accept button wil
 
 As with all panels, a set of tabs allows you to navigate to other panels in order to perform specialized subtasks relating to buffer management. Links to and summaries of the panels are given in the final section of this page.
 
-.. image:: ../_static/images/buffer_edit.png
+.. image:: /images/buffer_edit.png
     :align: center
 
 .. rst-class:: 
@@ -69,7 +69,7 @@ Edit Buffer Spectrum
 
 .. _edit_spectrum:
 
-.. image:: ../_static/images/edit_buffer_spec_menu.png
+.. image:: /images/edit_buffer_spec_menu.png
     :align: center
 
 .. rst-class:: 

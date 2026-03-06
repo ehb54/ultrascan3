@@ -17,7 +17,7 @@ By default, the investigator should be set to the person logging into the system
 **The “Temperature-Equilibration Delay” can be set to zero minutes because no real instrument is involved. The temperature should be set to the same temperature that was used in the simulation settings.**
 
 
-.. image:: ../_static/images/gmp/automation/main_window.png
+.. image:: /images/gmp/automation/main_window.png
     :align: center
 
 .. rst-class::
@@ -37,7 +37,7 @@ The rotor setting also determines if the stretching calculation is used. If the 
 
 This value should be added to the simulated meniscus and should be recovered from the analysis as the meniscus position (available in the edit profile xml file).
 
-.. image:: ../_static/images/gmp/automation/rotor.png
+.. image:: /images/gmp/automation/rotor.png
     :align: center
 
 .. rst-class::
@@ -50,7 +50,7 @@ Speed Selection:
 
 In this screen, the rotor speed, data collection interval between successive scans, data collection duration (active scanning time), and the total number of scans in the experiment are specified. For imported data, all fields in this screen are parsed from the input data and should not be changed. 
 
-.. image:: ../_static/images/gmp/automation/speed.png
+.. image:: /images/gmp/automation/speed.png
     :align: center
 
 .. rst-class::
@@ -66,7 +66,7 @@ As in the previous screen, all settings in this screen are parsed from the impor
 .. note::
     **Leave the cell position unchanged!**
 
-.. image:: ../_static/images/gmp/automation/cells.png
+.. image:: /images/gmp/automation/cells.png
     :align: center
 
 .. rst-class::
@@ -79,7 +79,7 @@ Solutions:
 
 In this screen **the same solution that was used for the simulation must be selected.** Optionally, add some comments for the cell content description (left blank here). 
 
-.. image:: ../_static/images/gmp/automation/solutions.png
+.. image:: /images/gmp/automation/solutions.png
     :align: center
 
 .. rst-class::
@@ -98,7 +98,7 @@ Optics:
 The optical system simulated is reflected here and should not be changed.
 
 
-.. image:: ../_static/images/gmp/automation/optics.png
+.. image:: /images/gmp/automation/optics.png
     :align: center
 
 .. rst-class::
@@ -111,7 +111,7 @@ Ranges:
 
 All ranges for wavelength and radial observation are indicated on this screen. The user doesn’t have to change anything here because these details are parsed from the input data.
 
-.. image:: ../_static/images/gmp/automation/ranges.png
+.. image:: /images/gmp/automation/ranges.png
     :align: center
 
 .. rst-class::
@@ -124,7 +124,7 @@ Analysis Profile/Report Settings:
 
 In this screen the general report settings are entered, and integration limits are defined. The “Run” column needs to be checked for the dataset to be processed. A report will be generated if the “Run Report” is checked. The loading volume will be calculated based on the centerpiece geometry and the meniscus position by calculating the sector volume. This should match what was selected during the analysis. The data end is the bottom of the data range considered in the fitted data. This can be overwritten by using the manual edit function after the data import.
 
-.. image:: ../_static/images/gmp/automation/Aprofile.png
+.. image:: /images/gmp/automation/Aprofile.png
     :align: center
 
 .. rst-class::
@@ -135,7 +135,7 @@ In this screen the general report settings are entered, and integration limits a
 
 The global plot parameters can be edited for each analysis type individually. Manual x ranges can be chosen, as well as the regularization parameter for the plotting smoothness.
 
-.. image:: ../_static/images/gmp/automation/plot.png
+.. image:: /images/gmp/automation/plot.png
     :align: center
 
 .. rst-class::
@@ -157,7 +157,7 @@ Clicking the *Report* button in the previous screen brings up the integration an
 
 * 6. The report can provide differential and pseudo-3D contour plot representations for each combination listed. It is optional to provide these in the report. If multiple datasets are included in a report, overlay plots can be included as well (combined plots).
 
-.. image:: ../_static/images/gmp/automation/report_editor.png
+.. image:: /images/gmp/automation/report_editor.png
     :align: center
 
 .. rst-class::
@@ -174,7 +174,7 @@ In this screen, specify the 2DSA workflow and analysis parameters, such as s-val
 
 The recommended analysis flow chart is explained in this `Flowchart <../start_page.html>`_.
 
-.. image:: ../_static/images/gmp/automation/2dsa.png
+.. image:: /images/gmp/automation/2dsa.png
     :align: center
 
 .. rst-class::
@@ -187,7 +187,7 @@ PCSA settings:
 
 For PCSA analysis, select the appropriate fitting ranges (the same ranges as in the 2DSA analysis can be chosen), making sure the grid covers the target values. All other values should be left as default values. 
 
-.. image:: ../_static/images/gmp/automation/pcsa.png
+.. image:: /images/gmp/automation/pcsa.png
     :align: center
 
 .. rst-class::
@@ -200,7 +200,7 @@ Submitting the run:
 
 The submission screen performs a sanity check on the GMP analysis, making sure all essential parameters for the analysis have been set. A unique name for the protocol and for the runID must be chosen for each analysis by the user, although protocols can be reused as long as no changes have been made to the protocol. Submission of a run from disk prompts the data import screen to be shown as indicated on the next page.
 
-.. image:: ../_static/images/gmp/automation/submit.png
+.. image:: /images/gmp/automation/submit.png
     :align: center
 
 .. rst-class::
@@ -214,7 +214,7 @@ LIMS Import:
 
 In the LIMS import screen, the user inspects the data and saves/imports it in the LIMS database for downstream analysis.
 
-.. image:: ../_static/images/gmp/automation/lims.png
+.. image:: /images/gmp/automation/lims.png
     :align: center
 
 .. rst-class::
@@ -228,7 +228,7 @@ Edit Screen:
 In the first step after import, the data are edited, typically in an automated fashion. 
 
 
-.. image:: ../_static/images/gmp/automation/auto_edit.png
+.. image:: /images/gmp/automation/auto_edit.png
     :align: center
 
 .. rst-class::
@@ -238,7 +238,7 @@ In the first step after import, the data are edited, typically in an automated f
 
 Optionally, the manual editing option can be invoked, and new limits for the boundary conditions (meniscus position) and the data range can be specified. Any changes from the automated workflow must be documented with an electronic signature panel.
 
-.. image:: ../_static/images/gmp/automation/man_edit.png
+.. image:: /images/gmp/automation/man_edit.png
     :align: center
 
 .. rst-class::
@@ -253,7 +253,7 @@ The data analysis should commence immediately after the editing step has been el
 
 When all analysis steps are in “COMPLETE” stage, the GMP workflow will switch to the report generation and produce a GMP report. Review signatures from the operator, reviewers and approvers will be solicited via email, and added to the GMP report after signing. The electronic signature panel in the GMP menu will be used to review reports and provide the final signatures.
 
-.. image:: ../_static/images/gmp/automation/analysis.png
+.. image:: /images/gmp/automation/analysis.png
     :align: center
 
 .. rst-class::
@@ -267,7 +267,7 @@ Data validation:
 
 To validate that the software calculated the expected values, inspect the generated data by reviewing the experimental and simulated data overlays, inspect the magnitude of the RMSD, and the randomness of the residuals, and most importantly the integration results for concentration and sedimentation coefficient, or any other parameters specified in the report.
 
-.. image:: ../_static/images/gmp/automation/data_viewer_tin.png
+.. image:: /images/gmp/automation/data_viewer_tin.png
     :align: center
 
 .. rst-class::
@@ -278,7 +278,7 @@ To validate that the software calculated the expected values, inspect the genera
 Verify that the time invariant noise has been removed and the overlay appears to be smooth.
 The residuals should appear random, and the RMSD should be commensurate with the simulated stochastic noise amplitude:
 
-.. image:: ../_static/images/gmp/automation/data_viewer_rando.png
+.. image:: /images/gmp/automation/data_viewer_rando.png
     :align: center
 
 .. rst-class::
@@ -289,7 +289,7 @@ The residuals should appear random, and the RMSD should be commensurate with the
 Radially invariant noise should look random and have the simulated amplitude:
 
 
-.. image:: ../_static/images/gmp/automation/data_viewer_rin.png
+.. image:: /images/gmp/automation/data_viewer_rin.png
     :align: center
 
 .. rst-class::
@@ -299,7 +299,7 @@ Radially invariant noise should look random and have the simulated amplitude:
     
 The residual pixel map should show a mostly random pattern of a grainy red/green pattern without a visible diagonal pattern.
 
-.. image:: ../_static/images/gmp/automation/bitmap.png
+.. image:: /images/gmp/automation/bitmap.png
     :align: center
 
 .. rst-class::
@@ -312,7 +312,7 @@ Report:
 
 Quality attributes analyzed by the GMP analysis routine should faithfully reproduce the parameter values for the fitted parameters listed in model parameters, and should agree among multiple analysis types. 
 
-.. image:: ../_static/images/gmp/automation/2dsa_it.png
+.. image:: /images/gmp/automation/2dsa_it.png
     :align: center
 
 .. rst-class::
@@ -320,7 +320,7 @@ Quality attributes analyzed by the GMP analysis routine should faithfully reprod
 
     **2DSA-IT** 
 
-.. image:: ../_static/images/gmp/automation/2dsa_mc.png
+.. image:: /images/gmp/automation/2dsa_mc.png
     :align: center
 
 .. rst-class::
@@ -328,7 +328,7 @@ Quality attributes analyzed by the GMP analysis routine should faithfully reprod
 
     **2DSA-MC** 
 
-.. image:: ../_static/images/gmp/automation/pcsa_report.png
+.. image:: /images/gmp/automation/pcsa_report.png
     :align: center
 
 .. rst-class::

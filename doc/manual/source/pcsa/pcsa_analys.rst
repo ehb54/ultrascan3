@@ -17,7 +17,7 @@ For a straight line type, a specified variation count is given. Lines cover the 
 
 For sigmoid types, a variation count is directly specified. The curves cover the full s and f/f0 ranges, with "par1" and "par2" values each varying the specified number of times, yielding a number of test models equal to the square of that count. The par1 value changes logarithmically from 0.001 to 0.5; and par2 changes linearly from 0.0 to 1.0. 
 
-.. image:: /_static/images/pcsa_analys-line.png
+.. image:: /images/pcsa_analys-line.png
   :align: center
 
 .. rst-class:: center
@@ -53,27 +53,27 @@ PCSA Fitting Process:
 
    .. grid-item::
 
-      .. image:: ../_static/images/pline_stline.png
+      .. image:: /images/pline_stline.png
          :width: 100%
 
    .. grid-item::
 
-      .. image:: ../_static/images/incr_sigmoid.png
+      .. image:: /images/incr_sigmoid.png
          :width: 100%
 
    .. grid-item::
 
-      .. image:: ../_static/images/pline_dsig.png
+      .. image:: /images/pline_dsig.png
          :width: 100%
 
    .. grid-item::
 
-      .. image:: ../_static/images/hori_cs.png
+      .. image:: /images/hori_cs.png
          :width: 100%
 
    .. grid-item::
 
-      .. image:: ../_static/images/pline_power.png
+      .. image:: /images/pline_power.png
          :width: 100%
 
 .. rst-class:: center
@@ -91,7 +91,7 @@ PCSA Fitting Process:
 
 * **Regularize:** If you wish to perform Tikhonov Regularization, you can set a Regularization Parameter (Alpha) or determine a good parameter value by clicking "Perform Regularization Scan". When you have a reasonable Alpha, click on Regularize Current Model. 
 
-.. image:: /_static/images/pcsa_controls_simulated.png
+.. image:: /images/pcsa_controls_simulated.png
   :align: center
 
 .. rst-class:: center
@@ -105,7 +105,7 @@ Control dialog parameters differ slightly in interpretation, based on whether th
 * If horizontal line is specified, curve variations gives the total models, since start and end points always have the same f/f0 value.
 * If one of the sigmoid types is specified, the specified number of variations is in both the par1 and par2 values of the sigmoid function: 
 
-.. image:: ../_static/images/pcsa_sigmoid_eq.png
+.. image:: /images/pcsa_sigmoid_eq.png
   :align: center
 
 .. note:: 

@@ -19,7 +19,7 @@ Each refinement iteration proceeds over a defined grid of s and f/f :sub:`0` val
 
 |
 
-.. image:: ../_static/images/2dsa_main-o.png
+.. image:: /images/2dsa_main-o.png
     :align: center
 
 .. rst-class::
@@ -38,7 +38,7 @@ Each refinement iteration proceeds over a defined grid of s and f/f :sub:`0` val
 
 Once an analysis is complete, the main window will appear similar to this:
 
-.. image:: ../_static/images/2dsa_main-c.png
+.. image:: /images/2dsa_main-c.png
     :align: center
 
 .. rst-class::

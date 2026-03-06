@@ -24,7 +24,7 @@ Steps to compare Experiment to FE models:
 *  **Step 4:** *Examine the results.* After simulation, a variety of options are available for displaying `simulation results <fe_match_simulate.html>`_, residuals, and distributions. Report text files and graphics plot files can also be generated.
 
 
-.. image:: ../_static/images/fe_match.png
+.. image:: /images/fe_match.png
    :align: center
 
 .. rst-class:: center

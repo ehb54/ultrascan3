@@ -30,7 +30,7 @@ Using this window, you can manage settings that affect all other buffer panels. 
 
 As with all panels, a set of tabs allows you to navigate to other panels in order to perform specialized subtasks relating to buffer management. Links to and summaries of the panels are given in the final section of this page.
 
-.. image:: ../_static/images/buffer_settings.png
+.. image:: /images/buffer_settings.png
     :align: center
 
 .. rst-class:: 

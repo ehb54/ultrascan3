@@ -32,7 +32,7 @@ Using this panel, you can specify the solutions used in each channel. :ref:`Comm
 The `Solutions Management <../solutions/index.html>`_ module help page has detailed explanations of these items. 
 
 
-.. image:: ../_static/images/experiment_solutions.png
+.. image:: /images/experiment_solutions.png
     :align: center
 
 .. rst-class::
@@ -43,7 +43,7 @@ The `Solutions Management <../solutions/index.html>`_ module help page has detai
 .. _comments:
 
 
-.. image:: ../_static/images/experiment_solutions_comments.png
+.. image:: /images/experiment_solutions_comments.png
     :align: center
 
 .. rst-class::

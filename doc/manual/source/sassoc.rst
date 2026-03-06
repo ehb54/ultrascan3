@@ -11,7 +11,7 @@ Self-association Simulator
 
 This module is used to simulate binding isotherms for reversibly self-associating systems with up to three species (monomer, N-mer, M-mer). The program is started from the Simulation menu (Self-Association Equilibrium): 
 
-.. image:: _static/images/sassoc.png
+.. image:: /images/sassoc.png
   :align: center
 
 .. rst-class::

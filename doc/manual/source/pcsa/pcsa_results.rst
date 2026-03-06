@@ -19,7 +19,7 @@ Upon completion of an analysis fit, windows and plots generated include:
 * :ref:`Bit Map residuals <residual_bit_map>` Bit map of every scan as a pixel line and the positive or negative difference of the model to the data are highlighted as red (negative) and green(positive) pixels. an Excellent residual map will have a random distribution of red and green pixels; 
 * `3-Dimensional Plot Controls <../3d_plot.html>`_ - 3D plots of the simulated data
 
-.. image:: ../_static/images/pcsa_all.png
+.. image:: /images/pcsa_all.png
     :align: center
 
 .. rst-class::
@@ -36,7 +36,7 @@ PCSA Data Residuals Viewer
 The simulation creates a data set with the same ranges as the edit experimental data set. The actual values for scan readings vectors are synthetically produced, as illustrated by the plot below.
 
 
-.. image:: ../_static/images/pcsa_res_viewer.png
+.. image:: /images/pcsa_res_viewer.png
     :align: center
 
 
@@ -54,7 +54,7 @@ Residual Bit Map
 
 Experimental-Simulation residuals are plotted in another way in a bit map. This small window represents each residual #Scans x #Readings point as a color: green where simulation is greater than experimental; red where experimental is greater. A random distribution of colors throughout the bit map is indication of a good model fit. 
 
-.. image:: ../_static/images/pcsa_bitmap.png
+.. image:: /images/pcsa_bitmap.png
     :align: center
 
 .. rst-class:: 
@@ -70,7 +70,7 @@ PCSA Report
 
 The "Save Data" button in the `PCSA Controls <pcsa_analys.html#pcsa-fitting-process>`_ produces a set of report files. One of these is displayable via the "View Report" button, which produces a dialog that shows the contents of a report. A dialog sample follows. 
 
-.. image:: ../_static/images/pcsa_report.png
+.. image:: /images/pcsa_report.png
     :align: center
 
 .. rst-class:: 

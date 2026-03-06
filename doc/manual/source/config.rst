@@ -14,7 +14,7 @@ There are a number of parameters that can be set to customize UltraScan III acco
 
 
 
-.. image:: _static/images/config.png
+.. image:: /images/config.png
     :align: center
 
 .. rst-class::
@@ -68,7 +68,7 @@ Color Configuration Panel:
 
 .. _col_change:
 
-.. image:: _static/images/color-1.png
+.. image:: /images/color-1.png
     :align: center
 
 .. rst-class::
@@ -84,7 +84,7 @@ The panel has two sections, a *preview* section (on the left) and a *control* se
 
 To change a widget's color, select the widget you would like to change from the screen element listbox. All applicable colors for that widget will be shown in the Assign new Colors section. Click on the Change button for the desired color definition of the selected widget. A **Color Select** dialog will be displayed that lets you select and define custom colors for the selected color definition. After you click on the "OK" button you will be returned to the color configuration control window and the new color will be applied to the preview section of the screen. Continue to define new colors for each widget until all color changes you want to make have been applied.
 
-.. image:: _static/images/color-2.png
+.. image:: /images/color-2.png
     :align: center
 
 .. rst-class::
@@ -107,7 +107,7 @@ Font Configuration Panel:
 .. _fon_change:
 
 
-.. image:: _static/images/usfont-1.png
+.. image:: /images/usfont-1.png
     :align: center
 
 .. rst-class::
@@ -119,7 +119,7 @@ Using this dialog, you can change the default font for all of UltraScan's applic
 
 Selecting *Save* will save the currently displayed font as the UltraScan *default* font.
 
-.. image:: _static/images/usfont-2.png
+.. image:: /images/usfont-2.png
     :align: center
 
 .. rst-class::
@@ -136,7 +136,7 @@ Database Configuration Panel:
 .. note::
     Whenever UltraScan needs to use a database entry, it needs the user's master password. The first time it is needed, it will prompt for it and save it in memory, but not on disk storage. When needed again, UltraScan uses the stored password. Before this can be done, the master password needs to be set up and a cryptographic hash of the password stored. Use the Master Password panel, accessed form the main configuration panel, to set up or change the master password. 
 
-.. image:: _static/images/database.png
+.. image:: /images/database.png
     :align: center
 
 .. rst-class::
@@ -159,7 +159,7 @@ Master Password Panel:
 
 .. _mp_change:
 
-.. image:: _static/images/master-pw.png
+.. image:: /images/master-pw.png
     :align: center
 
 .. rst-class::
@@ -181,7 +181,7 @@ Advanced Configuration Panel:
 .. note:: 
     Some **UltraScan III** applications output debug text to STDOUT or a log file. Some only include certain GUI elements when in an advanced mode. Certain applications can benefit from use of more than one thread. These variations are governed by the configuration values that are set in this panel. Actual values should be set only under the guidance of software developers, since meanings of settings vary considerably from application to application.
 
-.. image:: _static/images/advanced_config.png
+.. image:: /images/advanced_config.png
     :align: center
 
 .. rst-class::
@@ -233,7 +233,7 @@ Optima Host Configuration Panel:
 .. note:: 
     Whenever UltraScan needs to use an Optima host entry, it needs the user's master password. The first time it is needed, it will prompt for it and save it in memory, but not on disk storage. When needed again, UltraScan uses the stored password. Before this can be done, the master password needs to be set up and a cryptographic hash of the password stored. Use the :ref:`Master Password <mp_change>` panel, accessed from the main configuration panel, to set up or change the master password. 
 
-.. image:: _static/images/optima_host_config.png
+.. image:: /images/optima_host_config.png
     :align: center
 
 .. rst-class::
@@ -250,12 +250,12 @@ When Add *New Entry* or *Edit Current Entry* is selected, one of the following d
 
    .. grid-item::
 
-      .. image:: _static/images/optima_config_new.png
+      .. image:: /images/optima_config_new.png
          :width: 100%
 
    .. grid-item::
 
-      .. image:: _static/images/optima_config_edit.png
+      .. image:: /images/optima_config_edit.png
          :width: 100%
 
 .. rst-class:: center

@@ -21,7 +21,7 @@ Process:
 5. **Display and/or Save Results:** After simulation, a variety of options are available for displaying simulation results and for optionally saving them to disk. 
 
 
-.. image:: _static/images/astfem_sim.png
+.. image:: /images/astfem_sim.png
     :align: center
 
 .. rst-class::

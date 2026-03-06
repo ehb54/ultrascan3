@@ -31,7 +31,7 @@ Lab/Rotor Panel:
 Using this panel, you can specify the rotor to be used on a proposed experiment. Specifications include the laboratory, the rotor type, and the calibration. 
 The `Rotor Management <../rotor.html>`_ module help page has detailed explanations of these items. 
 
-.. image:: ../_static/images/experiment_rotor.png
+.. image:: /images/experiment_rotor.png
     :align: center
 
 .. rst-class::

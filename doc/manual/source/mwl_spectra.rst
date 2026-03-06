@@ -11,7 +11,7 @@ Multi-Wavelength S Spectra Viewer
 
 This module presents options for viewing the spectrally separated sedimentation distribution.
 
-.. image:: _static/images/mwlr_spectra_o.png
+.. image:: /images/mwlr_spectra_o.png
     :align: center
 
 .. rst-class::
@@ -20,8 +20,7 @@ This module presents options for viewing the spectrally separated sedimentation 
     **Main Window**
 
 
-.. image:: _static/images/mwlr_spectra_f.png
-
+.. image:: /images/mwlr_spectra_f.png
 .. rst-class::
     :align: center
 
@@ -44,11 +43,11 @@ Process:
     :gutter: 2
 
     .. grid-item::
-       .. image:: _static/images/mwlr_spectra_cont.png
+       .. image:: /images/mwlr_spectra_cont.png
           :width: 21%
 
     .. grid-item::
-       .. image:: _static/images/mwlr_spectra_3d.png
+       .. image:: /images/mwlr_spectra_3d.png
           :width: 73%
 
  .. rst-class:: center
@@ -57,8 +56,7 @@ Process:
 
  |
 
- .. image:: _static/images/mwlr_spectra_save.png
-
+ .. image:: /images/mwlr_spectra_save.png
  .. rst-class:: center
 
     **save movie as png files**

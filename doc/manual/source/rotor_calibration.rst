@@ -8,7 +8,7 @@ Rotor Stretch Calibration Utility
 .. contents:: Index
   :local: 
 
-.. image:: _static/images/rotorstretch-0.png
+.. image:: /images/rotorstretch-0.png
   :align: center
 
 .. rst-class::
@@ -29,33 +29,33 @@ The scanning protocol prescribes to spin up the rotor to 3,000 rpm and to wait 1
 The first step in the program is to load the calibration data from a 7-channel calibration disk by clicking on the **Load Calibration Data** button. Once the data are loaded, the user can select a different cell, channel, or wavelength from this data set by manipulating the respective counters or drop-down lists. The intensity data will be shown graphically in the main window. The left half of the cell will be drawn in red, the right half in green. Make sure the checkbox **Use 7-Slot Cal. Mask** is checked!, and select the lowest speed to be included in the fit. We recommend to set the slowest speed to 10,000 rpm, because the rotor stretch below 10 krpm is less than the radial resolution of the instrument and therefore those measurements are not useful. In the status bar the message: "Please zoom all useful vertical regions..." will appear:
 
 
-.. image:: _static/images/rotorstretch-1.png
+.. image:: /images/rotorstretch-1.png
   :align: center
 
 
 In the next step, the user needs to zoom all vertical regions, marking the edge positions in the graph as shown by the green rectangle below:
 
-.. image:: _static/images/rotorstretch-2.png
+.. image:: /images/rotorstretch-2.png
   :align: center
 
 Here it is recommended to exclude the left-most vertical region since it typically is partially obliterated by the screwring of the cell housing, as well as any noisy sections of the image, because they distort the averaged data. After releasing the mouse, just the vertical regions will be shown, and need to be separated by the lines draw in blue, which can be created by clicking in the middle between each vertical region. (Windows/Linux users: Hold control key while clicking, Mac users: Hold command key):
 
-.. image:: _static/images/rotorstretch-3.png
+.. image:: /images/rotorstretch-3.png
   :align: center
 
 Next, the user should click **Calculate** to process the data. The resulting fit will be shown on the next screen:
 
-.. image:: _static/images/rotorstretch-4.png
+.. image:: /images/rotorstretch-4.png
   :align: center
 
 Absolute stretch values are plotted in blue as a function of speed, with black crosses depicting the standard deviations of each stretch value, and the blue line is a second-order polynomial fit that characterizes the stretch of the rotor as a function of rotor speed. At this point, the user can save the calibration profile by clicking on Save Rotor Calibration, which will bring up a new dialog:
 
-.. image:: _static/images/rotorstretch-5.png
+.. image:: /images/rotorstretch-5.png
   :align: center
 
 Clicking OK, the user is prompted with the `Rotor Management <rotor.html>`_ program where a new stretch profile can be stored. 
 
 It is important to note that the appropriate rotor is pre-selected, based on the rotor information used to store the data originally in the LIMS database when the data was committed to the database. The user can add a name for the calibration as well as a w2t value for the rotor, if known. The date on which the rotor data are committed is automatically added to each rotor's profile in the LIMS system. The final report can be printed out by clicking on **View Calibration Report**:
 
-.. image:: _static/images/rotorstretch_report.png
+.. image:: /images/rotorstretch_report.png
   :align: center

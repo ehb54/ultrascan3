@@ -18,7 +18,7 @@ This module enables users to perform parametrically constrained spectrum analysi
    
 
 
-.. image:: ../_static/images/pcsa.png
+.. image:: /images/pcsa.png
   :align: center
 
 .. rst-class:: center

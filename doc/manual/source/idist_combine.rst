@@ -15,7 +15,7 @@ To combine integral model distributions from multiple datasets (either from diff
     
     All distributions will be plotted relative to the boundary fraction used in analysis. The default analysis is set to 90%, indicating the distribution will range from 5 % to 95 %  of the total boundary, 5% from the top and bottom are excluded and the data is smoothed by 1%. 
     
-.. image:: _static/images/idist_combine.png
+.. image:: /images/idist_combine.png
   :align: center
 
 Functions:

@@ -29,7 +29,7 @@ Ranges Panel:
 
 .. _ranges:
 
-.. image:: ../_static/images/experiment_range.png
+.. image:: /images/experiment_range.png
     :align: center
 
 .. rst-class::
@@ -66,7 +66,7 @@ Functions:
 
 .. _details:
 
-.. image:: ../_static/images/experiment_range_details.png
+.. image:: /images/experiment_range_details.png
     :align: center
 
 .. rst-class::
@@ -82,12 +82,12 @@ Functions:
 
    .. grid-item::
 
-      .. image:: ../_static/images/experiment_range_selector.png
+      .. image:: /images/experiment_range_selector.png
          :width: 100%
 
    .. grid-item::
 
-      .. image:: ../_static/images/experiment_range_selmanual.png
+      .. image:: /images/experiment_range_selmanual.png
          :width: 100%
 
 .. rst-class:: center

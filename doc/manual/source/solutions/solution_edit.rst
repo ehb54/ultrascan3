@@ -24,7 +24,7 @@ Edit Solution Panel:
 
 Using this panel, you can add a spectrum profile, change the storage temperature and add or edit the solution comments. 
 
-.. image:: ../_static/images/solution_edit.png
+.. image:: /images/solution_edit.png
     :align: center
 
 .. rst-class:: 

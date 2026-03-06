@@ -27,7 +27,7 @@ Submit Panel:
 
 .. _submit:
 
-.. image:: ../_static/images/experiment_submit.png
+.. image:: /images/experiment_submit.png
     :align: center
 
 .. rst-class::
@@ -51,7 +51,7 @@ Functions:
 
 .. _details:
 
-.. image:: ../_static/images/experiment_submit_details
+.. image:: /images/experiment_submit_details.png
     :align: center
 
 .. rst-class::

@@ -11,7 +11,7 @@
 This dialog provides for definition of an analysis run with parameters not normally of interest to the typical user including use of band-forming centerpieces for Band sedimentation experiments. 
 The advanced analysis choices presented in this dialog fall into three categories. 
 
-.. image:: ../_static/images/2dsa_advan.png
+.. image:: /images/2dsa_advan.png
     :align: center
 
 

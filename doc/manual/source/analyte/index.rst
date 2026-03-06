@@ -11,7 +11,7 @@ Manage Analyte Information
    analyte_edit
    analyte_settings
 
-.. image:: ../_static/images/analyte_selectp.png
+.. image:: /images/analyte_selectp.png
     :align: center
 
 **Select Analyte:** A panel whose primary purpose is to select a analyte to return to the caller.

@@ -26,7 +26,7 @@ This module allows the user to select files with gainsets, speeds, and subsets o
 
 The program can also be used to merge scan files from arbitrary many directories into a single directory to create a combined run directory suitable for a single data import action in UltraScan-III. 
 
-.. image:: _static/images/us_fds_filemanager-0.png
+.. image:: /images/us_fds_filemanager-0.png
     :align: center
 
 .. rst-class::
@@ -51,7 +51,7 @@ A file manager dialog that allows user to navigate to the directory containing t
 Once loaded, the **Dataset Info** field will indicate a summary of the number scans in this directory, the number of triples, speeds and gain settings for this directory. All scans for the first triple, speed and gain setting will be plotted in the graph window: 
 
 
-.. image:: _static/images/us_fds_filemanager-1.png
+.. image:: /images/us_fds_filemanager-1.png
     :align: center
 
 .. rst-class::
@@ -61,7 +61,7 @@ Once loaded, the **Dataset Info** field will indicate a summary of the number sc
 
 Once loaded, the listboxes will be populated with all triples, speeds and gain settings. The gain settings will be listed if they differ by voltage, gain set or range: 
 
-.. image:: _static/images/us_fds_filemanager-2.png
+.. image:: /images/us_fds_filemanager-2.png
     :align: center
 
 .. rst-class::
@@ -74,7 +74,7 @@ Once loaded, the listboxes will be populated with all triples, speeds and gain s
 
 2. **File Exclusion:** There are multiple ways to exclude files before sorting all files into a single directory. For example, if the channel leaked, or the data are unusable for some other reason, **Delete Triple** will remove the entire triple from the list. Alternatively, a scan file selection allows the user to save a subset of scans. Scans marked for exclusion will be marked in red, all others in yellow. To perform the exclusion, click on **Delete marked Scan(s)**: 
 
-.. image:: _static/images/us_fds_filemanager-3.png
+.. image:: /images/us_fds_filemanager-3.png
     :align: center
 
 .. rst-class::
@@ -84,7 +84,7 @@ Once loaded, the listboxes will be populated with all triples, speeds and gain s
 
 Additional convenience functions are available to quickly delete a subset of scans. **Delete all Scans** will remove all scans for the active triple, speed, and gain setting selection, but not other scans from this triple. To save only the first scan of a selection, click on **Save first Scan**. The first scan may be needed for cases where the meniscus has to be determined visually. Similarly, **Save last Scan** will only save the last scan of the selection shown on the screen. This is useful for picking the last scan in an equilibrium experiment, which is presumably closest to equilibrium. **Save first and last Scan** will save both: 
 
-.. image:: _static/images/us_fds_filemanager-4.png
+.. image:: /images/us_fds_filemanager-4.png
     :align: center
 
 .. rst-class::

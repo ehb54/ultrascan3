@@ -1,55 +1,72 @@
-# -*- coding: utf-8 -*-
+# UltraScan III Documentation Configuration
 #
-# Configuration file for the Sphinx documentation builder.
+# Sphinx configuration file for building the UltraScan documentation.
+# See the Sphinx documentation for the full list of configuration options:
+# https://www.sphinx-doc.org/
+
+# ---------------------------------------------------------------------------
+# Path setup
 #
-# This file does only contain a selection of the most common options. For a
-# full list see the documentation:
-# http://www.sphinx-doc.org/en/master/config
-
-# -- Path setup --------------------------------------------------------------
-
-# If extensions (or modules to document with autodoc) are in another directory,
-# add these directories to sys.path here. If the directory is relative to the
-# documentation root, use os.path.abspath to make it absolute, like shown here.
+# If Python modules need to be imported for autodoc, add them to sys.path
+# here.
 #
-# import os
-# import sys
-# sys.path.insert(0, os.path.abspath('.'))
+# Example:
+#   import os
+#   import sys
+#   sys.path.insert(0, os.path.abspath('../src'))
+# ---------------------------------------------------------------------------
 
+import datetime
+import re
+from pathlib import Path
+from sphinxcontrib.qthelp import QtHelpBuilder
+
+
+# ---------------------------------------------------------------------------
+# Fix: sphinxcontrib-qthelp hardcodes "doc" as the virtualFolder in .qhp/.qhcp.
+# Subclass the builder to rewrite it to "manual" after generation.
+# ---------------------------------------------------------------------------
+class UltraScanQtHelpBuilder(QtHelpBuilder):
+    name = 'qthelp'
+
+    def build_qhp(self, outdir, outname):
+        super().build_qhp(outdir, outname)
+        for suffix in ('.qhp', '.qhcp'):
+            f = Path(outdir) / f'{outname}{suffix}'
+            if f.exists():
+                f.write_text(
+                    re.sub(r'\bdoc\b', 'manual', f.read_text(encoding='utf-8'), count=2),
+                    encoding='utf-8'
+                )
+
+
+def setup(app):
+    app.add_builder(UltraScanQtHelpBuilder, override=True)
 
 # -- Project information -----------------------------------------------------
 
-project = 'UltraScanIII'
-copyright = '2025, Emre Brookes, Borries Demeler, Bruce Dubbs, Haben Gabir, Gary Gorbet, Saeed Mortezazadeh, Alexey Savelyev, and Dan Zollars,'
-author = 'Emre Brookes, Borries Demeler, Bruce Dubbs, Haben Gabir, Gary Gorbet, Saeed Mortezazadeh, Alexey Savelyev, and Dan Zollars'
+project = 'UltraScan III'
+author = (
+    "Emre Brookes, Borries Demeler, Bruce Dubbs, "
+    "Haben Gabir, Gary Gorbet, Saeed Mortezazadeh, "
+    "Alexey Savelyev, and Dan Zollars"
+)
+
+copyright = f"{datetime.datetime.now().year}, AUC Solutions LLC"
 
 # The short X.Y version
-version = ''
+version = '4.1'
 # The full version, including alpha/beta/rc tags
 release = '4.1.0'
 
 
 # -- General configuration ---------------------------------------------------
-
-# If your documentation needs a minimal Sphinx version, state it here.
-#
-# needs_sphinx = '1.0'
-
-# Add any Sphinx extension module names here, as strings. They can be
-# extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
-# ones.
 extensions = [
     'sphinx.ext.autodoc',
-    'sphinx.ext.intersphinx',
-    'sphinx.ext.todo',
-    'sphinx.ext.coverage',
     'sphinx.ext.mathjax',
+    'sphinx.ext.graphviz',
     'sphinx.ext.autosectionlabel',
     'sphinx_design',
-    'sphinxcontrib.video',
-    'sphinxcontrib.youtube',
-    'sphinxcontrib.qthelp',
-    'sphinx.ext.graphviz',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -86,77 +103,102 @@ pygments_style = 'sphinx'
 #
 html_theme = 'haiku'
 
+html_title = f"{project} Documentation v{release}"
+
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
 #
 # html_theme_options = {}
 
-# Add any paths that contain custom static files (such as style sheets) here,
-# relative to this directory. They are copied after the builtin static files,
-# so a file named "default.css" will overwrite the builtin "default.css".
+# Custom static assets (CSS, images)
 html_static_path = ['_static']
+html_extra_path = ['images']
 
 html_css_files = [
     'custom.css',
 ]
-#def setup(app):
 
-#   app.add_stylesheet('.custom.css')
-
-# Custom sidebar templates, must be a dictionary that maps document names
-# to template names.
+# ---------------------------------------------------------------------------
+# QtHelp / Qt Assistant configuration
 #
-# The default sidebars (for documents that don't match any pattern) are
-# defined by theme itself.  Builtin themes are using these templates by
-# default: ``['localtoc.html', 'relations.html', 'sourcelink.html',
-# 'searchbox.html']``.
+# These settings control the help files used by Qt Assistant:
 #
-# html_sidebars = {}
+#   manual.qhp   (Qt help project)
+#   manual.qhcp  (Qt help collection project)
+#   manual.qch   (compiled help file)
+#   manual.qhc   (help collection database)
+#
+# The UltraScan GUI launches Assistant with:
+#
+#   Assistant -collectionFile <bin>/manual.qhc
+#
+# The QHC and QCH files must reside in the same directory at runtime.
+# ---------------------------------------------------------------------------
 
+# Namespace used by Qt Assistant URLs
+qthelp_namespace = "ultrascaniii"
 
-# -- Options for HTMLHelp output ---------------------------------------------
+# Base filename for generated help files
+qthelp_basename = "manual"
 
-# Output file base name for HTML help builder.
-htmlhelp_basename = 'UltraScanIII'
-qthelp_namespace  = 'ultrascaniii'
-qthelp_basename   = 'manual'
+# HTML help builder (Windows CHM)
+htmlhelp_basename = "UltraScanIII"
 
-# -- Options for LaTeX output ------------------------------------------------
+# Prevent Sphinx from generating empty <filterAttribute> tags in QtHelp files.
+qthelp_filters = []
+
+# ---------------------------------------------------------------------------
+# LaTeX output
+#
+# This configuration enables generation of a printable PDF manual via:
+#
+#     sphinx-build -b latex
+#
+# The LaTeX output is not used by the UltraScan GUI help system (which
+# uses QtHelp via Qt Assistant), but it allows developers or users to
+# generate a standalone PDF version of the documentation.
+# ---------------------------------------------------------------------------
+
+# Use XeLaTeX for proper Unicode support
+latex_engine = "xelatex"
 
 latex_elements = {
-    # The paper size ('letterpaper' or 'a4paper').
-    #
-    # 'papersize': 'letterpaper',
+    # Paper size for the generated PDF
+    'papersize': 'letterpaper',
 
-    # The font size ('10pt', '11pt' or '12pt').
-    #
-    # 'pointsize': '10pt',
+    # Font size
+    'pointsize': '11pt',
 
-    # Additional stuff for the LaTeX preamble.
-    #
-    # 'preamble': '',
+    # Improve figure placement for technical documentation
+    'figure_align': 'htbp',
 
-    # Latex figure (float) alignment
-    #
-    # 'figure_align': 'htbp',
+    # LaTeX preamble additions
+    'preamble': r"""
+\usepackage{graphicx}
+""",
 }
 
-# Grouping the document tree into LaTeX files. List of tuples
-# (source start file, target name, title,
-#  author, documentclass [howto, manual, or own class]).
+# Group the document tree into a LaTeX document
+#
+# (source start file, output tex file, title, author, documentclass)
+#
 latex_documents = [
-    (master_doc, 'UltraScanIII.tex', 'UltraScan III Documentation',
-     'Emre Brookes, Borries Demeler, Bruce Dubbs, Haben Gabir, Gary Gorbet, Saeed Mortezazadeh, Alexey Savelyev, and Dan Zollars', 'manual'),
+    (
+        master_doc,
+        'UltraScanIII.tex',
+        f'UltraScan III Manual',
+        author,
+        'manual',
+    ),
 ]
-
 
 # -- Options for manual page output ------------------------------------------
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'ultrascaniii', 'UltraScan III Documentation',
+    (master_doc, 'ultrascaniii', 'UltraScan III Manual',
      [author], 1)
 ]
 
@@ -167,49 +209,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'UltraScanIII', 'UltraScan III Documentation',
-     author, 'UltraScanIII', 'One line description of project.',
-     'Miscellaneous'),
+    (master_doc, 'UltraScanIII', 'UltraScan III Manual',
+     author, 'UltraScanIII',
+     'Comprehensive data analysis software for hydrodynamic data from analytical ultracentrifugation experiments.',
+     'Science'),
 ]
-
-
-# -- Options for Epub output -------------------------------------------------
-
-# Bibliographic Dublin Core info.
-epub_title = project
-epub_author = author
-epub_publisher = author
-epub_copyright = copyright
-
-# The unique identifier of the text. This can be a ISBN number
-# or the project homepage.
-#
-# epub_identifier = ''
-
-# A unique identification for the text.
-#
-# epub_uid = ''
-
-# A list of files that should not be packed into the epub file.
-epub_exclude_files = ['search.html']
-
-
-# -- Extension configuration -------------------------------------------------
-
-autosectionlabel_prefix_document = True
-
-
-# -- Options for intersphinx extension ---------------------------------------
-
-# Example configuration for intersphinx: refer to the Python standard library.
-
-intersphinx_mapping = {
-    'python': ('https://docs.python.org/3/', None),
-    'sphinx': ('https://www.sphinx-doc.org/en/master/', None),
-}
-
-
-# -- Options for todo extension ----------------------------------------------
-
-# If true, `todo` and `todoList` produce output, else they produce nothing.
-todo_include_todos = True

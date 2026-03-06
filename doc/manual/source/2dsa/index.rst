@@ -22,7 +22,7 @@ Upon completion of an analysis fit, plots available include: experiment; simulat
 *  **Step 3:** Next, after having specified analysis parameters, begin the fit analysis by clicking "Start Fit".
 *  **Step 4:** Display and Save Results: After simulation, a variety of options are available for displaying simulation results, residuals, and distributions. Report text files and graphics plot files can also be generated.
 
-.. image:: ../_static/images/2dsa_main-o.png
+.. image:: /images/2dsa_main-o.png
     :align: center
 
 .. rst-class::

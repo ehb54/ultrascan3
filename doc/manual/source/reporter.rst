@@ -11,7 +11,7 @@ Manage Data in Database and on Local Disk
 This module is launched from the US main window using the Utilities > Report Generator menu item. It enables the user to create and view a composite report generated from selections of individual analysis program reports and plots. 
 Upon launch, selection of a Run (or **all** runs) populates a data tree with reports from which to select the components of the composite report. A click on the **View** or the **Save** button generates the report, which can be viewed in a browser and printed. Both the composite report HTML and all the component reports and plots are copied to a new folder so that the page is fully self-contained, can be archived, and can be viewed in the future. 
 
-.. image:: _static/images/manage_data.png
+.. image:: /images/manage_data.png
     :align: center
 
 Functions:
@@ -38,7 +38,7 @@ Functions:
   * -  **Close** 
     - Close all windows and exit.
 
-.. image:: _static/images/reporter-view.png
+.. image:: /images/reporter-view.png
     :align: center
     
 .. _reporter-view:
@@ -49,7 +49,7 @@ Item Row Context Menu Options:
 Right-mouse-button clicking on a data tree row displays a context menu that applies to the row item.
 
 
-.. image:: _static/images/reporter-cmenu.png
+.. image:: /images/reporter-cmenu.png
   :align: center
 
 Dialog items:

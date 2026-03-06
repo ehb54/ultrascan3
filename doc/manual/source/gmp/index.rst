@@ -17,7 +17,7 @@ UltraScan III Good Manufacturing Practices (GMP)
 
 
 
-.. image:: /_static/images/gmp/gmp.png
+.. image:: /images/gmp/gmp.png
     :align: center
 
 .. rst-class::

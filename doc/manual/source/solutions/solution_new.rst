@@ -25,7 +25,7 @@ Using this panel, you can create a new solution in the current database or on th
 
 As with all panels, a set of tabs allows you to navigate to other panels in order to perform specialized subtasks relating to solution management. 
 
-.. image:: ../_static/images/solution_new.png
+.. image:: /images/solution_new.png
     :align: center
 
 .. rst-class:: 

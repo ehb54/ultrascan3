@@ -1,13 +1,13 @@
-.. image:: _static/images/vhw_combine-selrun.png
+.. image:: images/vhw_combine-selrun.png
 	:align: center
 
 .. rst-class::
 	RunID Select Dialog
 
-.. |Envelope| image:: _static/images/vhw_combine-selrun.png
+.. |Envelope| image:: images/vhw_combine-selrun.png
 	:align: center
      
-.. |Envelope2| image:: _static/images/vhw_combine-selrun.png
+.. |Envelope2| image:: images/vhw_combine-selrun.png
 	:align: center
 
 .. list-table::

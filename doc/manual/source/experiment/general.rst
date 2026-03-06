@@ -31,7 +31,7 @@ General Panel:
 Using this panel, you can define general experiment parameters, such as Run ID and Project, along with data source (database or local disk) and investigator. 
 As with all panels, a set of tabs allows you to navigate to other panels in order to perform specialized subtasks relating to experiment creation. Links to and summaries of the panels are given in the final section of this page. 
 
-.. image:: ../_static/images/experiment_general.png
+.. image:: /images/experiment_general.png
     :align: center
 
 .. rst-class::

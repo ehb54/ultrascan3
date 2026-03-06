@@ -12,7 +12,7 @@ Estimating Equilibrium Time
     Why a sedimentation velocity experiment is superior to equilibrium experiments. 
     Link to Documents!!
 
-.. image:: _static/images/us_equiltime.png
+.. image:: /images/us_equiltime.png
     :align: center
 
 

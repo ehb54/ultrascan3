@@ -12,7 +12,7 @@ Export Data in Legacy Format:
 This module enables you to load a run with one or more triplicates in UltraScan III format (.auc) and export the data to files in legacy (Beckman) format. 
 
 
-.. image:: _static/images/export_legacy.png
+.. image:: /images/export_legacy.png
     :align: center
 
 .. rst-class::
@@ -24,7 +24,7 @@ Once loaded by clicking **Load Data**, sedimentation velocity data that has been
 
 A popup dialog will appear to prompt the type the user wants to export 
 
-.. image:: _static/images/export_leg_1.png
+.. image:: /images/export_leg_1.png
     :align: center
 
 .. rst-class::
@@ -46,12 +46,12 @@ A popup dialog will appear to prompt the type the user wants to export
 
    .. grid-item::
 
-      .. image:: _static/images/export_leg_RI.png
+      .. image:: /images/export_leg_RI.png
          :width: 100%
 
    .. grid-item::
 
-      .. image:: _static/images/export_leg_RA.png
+      .. image:: /images/export_leg_RA.png
          :width: 100%
 
 .. note:: 
@@ -71,12 +71,12 @@ A popup dialog will appear to prompt the type the user wants to export
 
    .. grid-item::
 
-      .. image:: _static/images/export_leg_auc.png
+      .. image:: /images/export_leg_auc.png
          :width: 100%
 
    .. grid-item::
 
-      .. image:: _static/images/export_leg_beck.png
+      .. image:: /images/export_leg_beck.png
          :width: 100%
 
 Beckman (tar.gz) to OpenAUC Data Converter:
@@ -85,7 +85,7 @@ Beckman (tar.gz) to OpenAUC Data Converter:
 
 This conversion tool allows the user to convert tar.gz archives created by the Beckman-Coulter's web-based data acquisition application into the OpenAUC format for use by UltraScan III.
 
-.. image:: _static/images/data_converter.png
+.. image:: /images/data_converter.png
   :align: center
 
 .. rst-class:: center

@@ -24,7 +24,7 @@ Using this panel, you can create a new buffer in the current database or on the 
 
 As with all panels, a set of tabs allows you to navigate to other panels in order to perform specialized subtasks relating to buffer management. Links to and summaries of the panels are given in the final section of this page.
 
-.. image:: ../_static/images/buffer_new.png
+.. image:: /images/buffer_new.png
     :align: center
 
 .. rst-class:: 
@@ -88,7 +88,7 @@ A Spectrum of the buffer can be added to each buffer using the **Enter Spectrum*
 
 .. _manage_buffer_spectrum:
 
-.. image:: ../_static/images/buffer_new_spectrum.png
+.. image:: /images/buffer_new_spectrum.png
     :align: center
 
 .. rst-class:: 

@@ -13,7 +13,7 @@ van Holde - Weischet Enhanced Analysis
 
 The method of van Holde and Weischet (vHW) is a versatile, model-independent approach to determine sedimentation coefficient distribution by graphically analyzing sedimentation velocity experimental data. The vHW method's strength derives from its ability to differentiate boundary spreading due to diffusion from boundary spreading due to heterogeneity in the sedimentation coefficient. This program uses a number of enhanced techniques for vHW analysis.
 
-.. image:: _static/images/vhw_enhanced.png
+.. image:: /images/vhw_enhanced.png
   :align: center
 
 Functions:
@@ -140,14 +140,14 @@ van Holde Wieschet Analysis Steps
 
 
 
-.. image:: _static/images/vhw_enh_groups.png
+.. image:: /images/vhw_enh_groups.png
     :align: center
 
 .. rst-class:: center
 
     vHW Extrapolation Plot division groups
 
-.. image:: _static/images/vhw_enh_groups_res.png
+.. image:: /images/vhw_enh_groups_res.png
     :align: center
 
 .. rst-class:: center

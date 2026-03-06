@@ -12,7 +12,7 @@ Finite Element (FE) Model Viewer
 This module is used to display, and export FE solutions fitted to velocity experiments by various methods. The program can import models from *finite element nonlinear fitting sessions*, from *2-dimensional spectrum analysis* fits, from *genetic algorithm* fits, and from *C(s)* fits. The program will then compare the fitted model to the experimental data and display residual plots, sedimentation and diffusion coefficient distributions, as well as molecular weight distributions. The model can be displayed as a 3-dimensional plot showing the partial concentrations mapped onto a 2-dimensional grid of any two of the following parameters: s, D, f, f/f :sub:`0` , and MW. Residual plots including deconvoluted time- and radially-invariant noise plots can also be displayed. The results can be saved for inclusion into a velocity result report.
 
 
-.. image:: ../_static/images/fe_match.png
+.. image:: /images/fe_match.png
   :align: center
 
 .. rst-class:: center
@@ -20,7 +20,7 @@ This module is used to display, and export FE solutions fitted to velocity exper
     **Compare Experiment to Finite Element Solution**
 
 
-.. image:: ../_static/images/fe_match_simulated.png
+.. image:: /images/fe_match_simulated.png
   :align: center
 
 .. rst-class:: center
@@ -70,12 +70,12 @@ Functions:
 
    .. grid-item::
 
-      .. image:: ../_static/images/residuals.png
+      .. image:: /images/residuals.png
          :width: 100%
 
    .. grid-item::
 
-      .. image:: ../_static/images/s20W_bar.png
+      .. image:: /images/s20W_bar.png
          :width: 100%
 
 .. list-table::
@@ -93,12 +93,12 @@ Functions:
 
    .. grid-item::
 
-      .. image:: ../_static/images/MW-bar.png
+      .. image:: /images/MW-bar.png
          :width: 100%
 
    .. grid-item::
 
-      .. image:: ../_static/images/D20W_bar.png
+      .. image:: /images/D20W_bar.png
          :width: 100%
 
 **Information for this Run:**
@@ -169,7 +169,7 @@ Noise Vector Selection
 When the **Noise Dialog Level** in the `Configuration and Preferences setting <../config.html#advanced-configuration-panel>`_ is enabled (1), the user can select the noise profiles to simulate the data with. 
 
 
-.. image:: ../_static/images/noise_prompt.png
+.. image:: /images/noise_prompt.png
   :align: center
 
 .. rst-class:: center
@@ -180,7 +180,7 @@ When the **Noise Dialog Level** in the `Configuration and Preferences setting <.
 
 **Yes** - User will be prompted to select the noise vector. 
 
-.. image:: ../_static/images/noise_vec_db.png
+.. image:: /images/noise_vec_db.png
   :align: center
 
 .. rst-class:: center

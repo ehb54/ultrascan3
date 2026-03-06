@@ -22,7 +22,7 @@ Sample Regularization Parameter Scan Dialogs:
 The dialog images below show the plot results after a scan of Alpha values has completed. The yellow line connecting white dots tracks the variance, x-norm points associated with each Alpha. The red dashed lines are straight lines fitted to the first and last 5 points of the curve. The cyan line extends from the intersection of the two red lines to the point on the curve nearest to it. That nearest point is taken as the "elbow" of the curve; and its associated Alpha is the automatically determined best value. In the second image below, the user uses the Ctrl key and left mouse button to select an overriding elbow point and its associated Alpha value. 
 
 
-.. image:: ../_static/images/pcsa_rpscan.png
+.. image:: /images/pcsa_rpscan.png
   :align: center
 
 .. rst-class:: center
@@ -30,7 +30,7 @@ The dialog images below show the plot results after a scan of Alpha values has c
     **Before Regularization**
 
 
-.. image:: ../_static/images/pcsa_rpscan_sim.png
+.. image:: /images/pcsa_rpscan_sim.png
   :align: center
 
 .. rst-class:: center

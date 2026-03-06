@@ -22,7 +22,7 @@ The Analyte Settings panel allows user to select the investigator, and set the d
 
 .. _analyte_settings: 
 
-.. image:: ../_static/images/analyte_settings.png
+.. image:: /images/analyte_settings.png
     :align: center
 
 .. rst-class:: 

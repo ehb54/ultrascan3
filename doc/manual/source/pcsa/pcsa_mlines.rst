@@ -21,7 +21,7 @@ Dialog Sections:
     * **General Control:** For example, the Close button. 
     * **Model Lines Plot:** Plotted lines and axes including the color gradient. 
 
-.. image:: ../_static/images/pcsa_mline_unsim.png
+.. image:: /images/pcsa_mline_unsim.png
     :align: center
 
 .. rst-class::
@@ -34,7 +34,7 @@ Sample Model Lines Dialogs:
 
 The plot dialog differs slightly based on whether the curve type is a line or a sigmoid. Below are images for sigmoids and straight line. 
 
-.. image:: ../_static/images/pcsa_mline_sigm.png
+.. image:: /images/pcsa_mline_sigm.png
     :align: center
 
 .. rst-class::
@@ -43,7 +43,7 @@ The plot dialog differs slightly based on whether the curve type is a line or a 
     **Simulated PCSA Sigmoidal Model Lines**
 
 
-.. image:: ../_static/images/pcsa_mline_str.png
+.. image:: /images/pcsa_mline_str.png
     :align: center
 
 .. rst-class::

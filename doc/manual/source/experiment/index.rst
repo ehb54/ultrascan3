@@ -33,7 +33,7 @@ Research and Development AUC Data Acquisition Module
 Data Acquisition
 ==================
 
-.. image:: ../_static/images/experiment_overview.png
+.. image:: /images/experiment_overview.png
     :align: center
 
 .. rst-class::

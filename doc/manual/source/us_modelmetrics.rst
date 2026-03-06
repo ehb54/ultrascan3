@@ -10,7 +10,7 @@ Finite Element Model Statistics and Metrics
 
 This program allows you to obtain statistics for a model computed by any finite element analysis module in UltraScan. 
 
-.. image:: _static/images/us_modelmetrics-0.png
+.. image:: /images/us_modelmetrics-0.png
     :align: center
 
 .. rst-class::
@@ -41,7 +41,7 @@ For each model to be included in the report, **Save to Report** needs to be clic
 
 .. _us_modmet_report:
 
-.. image:: _static/images/us_modmet_report.png
+.. image:: /images/us_modmet_report.png
     :align: center
 
 .. rst-class::

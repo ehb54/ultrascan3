@@ -18,7 +18,7 @@ When the **Simulate Model** button is clicked in the **Finite Element Model View
  * `3-Dimensional Plot Controls <../3d_plot.html>`_ - 3D plots of the simulated data
  * **Data report File** - Generate a Simulated model Report file and view it in a dialog.
 
-.. image:: ../_static/images/fe_match_allct.png
+.. image:: /images/fe_match_allct.png
     :align: center
 
 .. rst-class:: 
@@ -30,7 +30,7 @@ Finite Element Viewer
 -----------------------
 The simulation creates a data set with the same ranges as the edit experimental data set. The actual values for scan readings vectors are synthetically produced, as illustrated by the plot below.
 
-.. image:: ../_static/images/fe_match_viewer.png
+.. image:: /images/fe_match_viewer.png
   :align: center
 
 .. rst-class:: 
@@ -101,12 +101,12 @@ Noise Data analysis:
 
    .. grid-item::
 
-      .. image:: ../_static/images/fe_sim-1.png
+      .. image:: /images/fe_sim-1.png
          :width: 100%
 
    .. grid-item::
 
-      .. image:: ../_static/images/fe_sim-2.png
+      .. image:: /images/fe_sim-2.png
          :width: 100%
 
 .. rst-class:: 
@@ -132,17 +132,17 @@ Noise Data analysis:
 
    .. grid-item::
 
-      .. image:: ../_static/images/add_TIN.png
+      .. image:: /images/add_TIN.png
          :width: 100%
 
    .. grid-item::
 
-      .. image:: ../_static/images/add_RIN.png
+      .. image:: /images/add_RIN.png
          :width: 100%
 
    .. grid-item::
 
-      .. image:: ../_static/images/add_RIN-TIN.png
+      .. image:: /images/add_RIN-TIN.png
          :width: 100%
 
 .. list-table::
@@ -161,24 +161,24 @@ Noise Data analysis:
 
    .. grid-item::
 
-      .. image:: ../_static/images/TINplot.png
+      .. image:: /images/TINplot.png
          :width: 100%
 
    .. grid-item::
 
-      .. image:: ../_static/images/RINplot.png
+      .. image:: /images/RINplot.png
          :width: 100%
 
    .. grid-item::
 
-      .. image:: ../_static/images/residualplot.png
+      .. image:: /images/residualplot.png
          :width: 100%
 
 Residual Bit Map
 -----------------
 Experimental-Simulation residuals are plotted in another way in a bit map. This small window represents each residual #Scans x #Readings point as a color: green where simulation is greater than experimental; red where experimental is greater. A random distribution of colors throughout the bit map is indication of a good model fit. 
 
-.. image:: ../_static/images/bitmap.png
+.. image:: /images/bitmap.png
     :align: center
 
 .. rst-class:: 
@@ -190,7 +190,7 @@ Report: FE Match Model Simulation
 -----------------------------------
 The "Save Data" button produces a set of report files. One of these is displayable via the "View Report" button, which produces a dialog that shows the contents of a report. A dialog sample follows. 
 
-.. image:: ../_static/images/simulatedReport.png
+.. image:: /images/simulatedReport.png
   :align: center
 
 

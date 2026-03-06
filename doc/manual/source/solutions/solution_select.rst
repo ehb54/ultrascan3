@@ -24,7 +24,7 @@ Select Solution Panel:
 Using this panel, you can select a solution in the current database or on the local disk. Most commonly, you select a solution in the provided list and click the **Accept** button to return it to the caller.
 
 
-.. image:: ../_static/images/solution_select.png
+.. image:: /images/solution_select.png
     :align: center
 
 .. rst-class:: 

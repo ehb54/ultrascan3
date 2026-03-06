@@ -12,7 +12,7 @@ The registration control panel allows UltraScan III registration or update of a 
 If you are registering for the first time, you will be sent an e-mail with instructions for completing the registration process. If you are simply updating information, the process is complete after Update / Renew. 
 
 
-.. image:: _static/images/register.png
+.. image:: /images/register.png
     :align: center
  
 

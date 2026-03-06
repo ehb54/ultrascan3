@@ -9,5 +9,5 @@ Beckman to OpenAUC Data Converter
 .. contents:: Index
   :local: 
 
-.. image:: _static/images/reporter-view.png
+.. image:: /images/reporter-view.png
     :align: center

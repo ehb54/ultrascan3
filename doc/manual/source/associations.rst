@@ -15,7 +15,7 @@ Each association row is built by dragging a model component in the upper list to
 
 Once all association rows have been validly built, click the Accept button to set the reversible association parameters for the model. If a row is wrong and cannot be easily corrected, click the "D" button on the left side of the row to delete that row so that it can be rebuilt.
 
-.. image:: _static/images/associations.png
+.. image:: /images/associations.png
     :align: center
 
 .. rst-class:: 

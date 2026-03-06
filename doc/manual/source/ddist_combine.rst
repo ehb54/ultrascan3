@@ -13,8 +13,7 @@ To combine model distributions from multiple datasets (either from different cel
 .. note::
     Distribution plots present relative concentration (Y) for X points where the "X" type may be sedimentation coefficent, molecular weight, diffusion coefficient, frictional ratio or vbar (specific density). Vertical bars are computed at every 2% mark of the X range. 
 
-.. image:: _static/images/ddist_combine.png
-
+.. image:: /images/ddist_combine.png
 Functions:
 ===========
 
@@ -76,7 +75,7 @@ The list below shows all runs selected in Select Run ID(s) dialogs. Click on a l
 
 .. _runid_select:
 
-.. image:: _static/images/ddist_combine-selrun.png
+.. image:: /images/ddist_combine-selrun.png
     :align: center
 
 .. rst-class:: center

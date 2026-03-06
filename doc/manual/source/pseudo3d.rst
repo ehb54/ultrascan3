@@ -11,7 +11,7 @@ Pseudo 3-Dimensional Distribution Plots
 
 Solution distribution data can be displayed in pseudo-3-dimensional form where the Z axis is simulated using colors in a color map. Data from different cells can be combined. 
 
-  .. image:: _static/images/pseudo3d_combine.png
+  .. image:: /images/pseudo3d_combine.png
     :align: center
 
 

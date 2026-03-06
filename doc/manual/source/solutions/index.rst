@@ -17,7 +17,7 @@ In each panel, tabs are visible at the top of the window to enable the user to m
    solution_settings 
 
 
-.. image:: ../_static/images/solution_select.png
+.. image:: /images/solution_select.png
     :align: center
 
 * `Select Solution <solution_select.html>`_ - A panel whose primary purpose is to select a solution to return to the caller.

@@ -28,7 +28,7 @@ Using this panel, you can select a buffer in the current database or on the loca
 As with all panels, a set of tabs allows you to navigate to other panels in order to perform specialized subtasks relating to buffer management. Links to and summaries of the panels are given in the final section of this page.
 
 
-.. image:: ../_static/images/buffer_select.png
+.. image:: /images/buffer_select.png
     :align: center
 
 .. rst-class:: 
@@ -91,7 +91,7 @@ The panel allows actions beyond simple buffer selection, including getting buffe
 
 .. _buffer_spectrum:
 
-.. image:: ../_static/images/buffer_spectrum.png
+.. image:: /images/buffer_spectrum.png
     :align: center
 
 .. rst-class:: 
@@ -105,7 +105,7 @@ The panel allows actions beyond simple buffer selection, including getting buffe
     
 .. _buffer_details:
 
-.. image:: ../_static/images/buffer_info.png
+.. image:: /images/buffer_info.png
     :align: center
 
 .. rst-class:: 

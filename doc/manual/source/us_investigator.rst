@@ -12,7 +12,7 @@ Managing Personal Information
 Using this window, you can update any personal information. Your database authorizations must allow update privileges for the record being changed.
 
 
-.. image:: /_static/images/us_investigator.png
+.. image:: /images/us_investigator.png
     :align: center
 
 .. rst-class::
@@ -30,7 +30,7 @@ Using this window, you can update any personal information. Your database author
 .. note::
     Depending upon how the window is initiated, the Cancel button may be labelled Close with no Accept button present.
 
-.. image:: /_static/images/us_investigator-2.png
+.. image:: /images/us_investigator-2.png
     :align: center
 
 .. rst-class::

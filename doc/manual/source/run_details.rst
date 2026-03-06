@@ -14,7 +14,7 @@ As raw data is collected, the temperature (°C), rotor speed (RPM), and time int
 
 .. _run_dets:
 
-.. image:: /_static/images/run_details.png
+.. image:: /images/run_details.png
     :align: center
 
 .. rst-class::

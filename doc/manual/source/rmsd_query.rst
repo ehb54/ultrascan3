@@ -13,7 +13,7 @@ RMSD Model Query
 The RMSD Model Query and Simulation module allows you to retrieve and evaluate RMSD (Root Mean Square Deviation) results for all models fitted to a selected experimental run.
 
 
-.. image:: _static/images/rmsd_query-o.png
+.. image:: /images/rmsd_query-o.png
     :align: center
 
 .. rst-class::
@@ -33,7 +33,7 @@ When you open the module, click on "Load Data" to loads the chosen experimental 
 Once parameters are selected, you can run the simulation to compute the RMSD for every combination of edit, analysis, method, and sample triplicate. RMSD results are displayed in a table, where values below the threshold are highlighted in green and values above the threshold in yellow. The table can be exported as a .dat file for further processing.
 
 
-.. image:: _static/images//rmsd_query-c.png
+.. image:: /images/rmsd_query-c.png
     :align: center
 
 .. rst-class::

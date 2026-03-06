@@ -12,8 +12,7 @@ Time Derivative (dC/dt) Data Analysis
 
 The DCDT or Time Derivative method will calculate g(S) differential sedimentation profiles by subtracting consecutive scan pairs from each other and mapping the resulting difference curves to the S domain to obtain dcdt curves. The advantage of this method is its ability to nicely subtract out time invariant noise, such as window scratches and dirt, as well as refractive index hetereogeneities in the windows. The latter is particularly important for low-concentration interference data. Unlike the `van Holde - Weischet method <vhw_enhanced.html>`_, the Time Derivative method does not correct for diffusion. In order to obtain accurate results with this method, it is important that you use only a small scan range over which diffusion has not changed significantly.
 
-.. image:: _static/images/time_derivative.png
-
+.. image:: /images/time_derivative.png
 Functions:
 ===========
 

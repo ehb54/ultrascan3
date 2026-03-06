@@ -23,7 +23,7 @@ This module enables you to create and edit custom 2-dimensional initialization g
 
 .. _create_model:
 
-.. image:: _static/images/custom_grid.png
+.. image:: /images/custom_grid.png
   :align: center
 
 .. rst-class::
@@ -32,7 +32,7 @@ This module enables you to create and edit custom 2-dimensional initialization g
     **Custom Grid Editor - Create Model**
 
 .. _load_model:
-.. image:: _static/images/custom_grid-1.png
+.. image:: /images/custom_grid-1.png
   :align: center
 
 .. rst-class::
@@ -126,7 +126,7 @@ Grid Setup Control
 
 .. _grid_setup:
 
-.. image:: _static/images/grid-setup.png
+.. image:: /images/grid-setup.png
   :align: center
 
 .. rst-class::
@@ -198,12 +198,12 @@ The parameter are required to be spaced evenly, and should not exclude major reg
 
    .. grid-item::
 
-      .. image:: _static/images/good_grid.png
+      .. image:: /images/good_grid.png
          :width: 100%
 
    .. grid-item::
 
-      .. image:: _static/images/bad_grid.png
+      .. image:: /images/bad_grid.png
          :width: 100%
 
 .. rst-class:: center
@@ -251,7 +251,7 @@ Set Z-Value Function:
 
 .. _set_zvalue:
 
-.. image:: _static/images/set-zvalue.png
+.. image:: /images/set-zvalue.png
   :align: center
 
 .. rst-class::
@@ -261,7 +261,7 @@ Set Z-Value Function:
 
 This component of the Custom grid module allows the user to vary the third variable using the Z-Value Dependency Function equation. 
 
-.. image:: _static/images/zvalue_eq.png
+.. image:: /images/zvalue_eq.png
   :align: center
 
 .. rst-class::

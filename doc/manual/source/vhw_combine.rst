@@ -16,7 +16,7 @@ To combine integral van Holde - Weischet G(s) distributions from multiple datase
 
 When data are loaded, arrays of X,Y distribution and envelope values are read and saved. These are then used to quickly display plots. If you want to change the mix of data plotted, you may click the Reset Plot button; and then quickly make new selections that are plotted without need for recalculations.
 
-.. image:: _static/images/vhw_combine.png
+.. image:: /images/vhw_combine.png
   :align: center
 
 
@@ -58,7 +58,7 @@ Functions:
 
 .. _selrun:
 
-.. image:: _static/images/vhw_combine-selrun.png
+.. image:: /images/vhw_combine-selrun.png
     :align: center
 
 .. rst-class:: center
@@ -71,12 +71,12 @@ Functions:
 
    .. grid-item::
 
-      .. image:: _static/images/vhw_combine-envel.png
+      .. image:: /images/vhw_combine-envel.png
          :width: 85%
 
    .. grid-item::
 
-      .. image:: _static/images/vhw_combine-combo.png
+      .. image:: /images/vhw_combine-combo.png
          :width: 100%
 
 .. rst-class:: center

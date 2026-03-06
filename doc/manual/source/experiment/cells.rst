@@ -30,7 +30,7 @@ Cells Panel:
 Using this panel, you can define centerpiece and windows information for each cell of a proposed experiment. 
 As with all panels, a set of tabs allows you to navigate to other panels in order to perform specialized subtasks relating to experiment creation. Links to and summaries of the panels are given in the final section of this page. 
 
-.. image:: ../_static/images/experiment_cells.png
+.. image:: /images/experiment_cells.png
     :align: center
 
 .. rst-class::

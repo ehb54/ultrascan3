@@ -28,7 +28,7 @@ This tab also allows users to view spectral data or analyte properties and to de
 .. note:: 
     Analytes associated with models can not be deleted.
 
-.. image:: ../_static/images/analyte_selectp.png 
+.. image:: /images/analyte_selectp.png
     :align: center
 
 .. rst-class:: 
@@ -36,14 +36,14 @@ This tab also allows users to view spectral data or analyte properties and to de
 
     **Select Analyte Window - Protein View**
 
-.. image:: ../_static/images/analyte_selectd.png 
+.. image:: /images/analyte_selectd.png
     :align: center
 
 .. rst-class:: 
     :align: center
 
     **Select Analyte Window - Nucliec acids View**
-.. image:: ../_static/images/analyte_selectc.png 
+.. image:: /images/analyte_selectc.png
     :align: center
 
 .. rst-class:: 
@@ -118,7 +118,7 @@ Functions:
 
 .. _analyte_spectrum:
 
-.. image:: ../_static/images/analyte_spectrum.png
+.. image:: /images/analyte_spectrum.png
     :align: center
 
 .. rst-class:: 
@@ -128,7 +128,7 @@ Functions:
 
 .. _analyte_sequence:
 
-.. image:: ../_static/images/analyte_sequence.png
+.. image:: /images/analyte_sequence.png
     :align: center
 
 .. rst-class:: 
@@ -139,7 +139,7 @@ Functions:
 
 .. _analyte_details:
 
-.. image:: ../_static/images/analyte_details.png
+.. image:: /images/analyte_details.png
     :align: center
 
 .. rst-class:: 

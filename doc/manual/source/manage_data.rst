@@ -23,7 +23,7 @@ Process:
 
 Initially you are presented with a small window to enter your database password. Then you will see the main window with a sample data tree that shows the kinds of states that data may be in (see tree help below).
 
-.. image:: _static/images/manage_data.png
+.. image:: /images/manage_data.png
     :align: center
 
 .. rst-class:: 
@@ -33,7 +33,7 @@ Initially you are presented with a small window to enter your database password.
 
  After clicking on the **Scan Data** button, the tree will be populated with your actual data. 
 
-.. image:: _static/images/manage_data_exp.png
+.. image:: /images/manage_data_exp.png
     :align: center
 
 .. rst-class:: 
@@ -48,12 +48,12 @@ The tree menu will expand and collapse with buttons like these.
 
    .. grid-item::
 
-      .. image:: _static/images/manage_data_bshow.png
+      .. image:: /images/manage_data_bshow.png
          :width: 100%
 
    .. grid-item::
 
-      .. image:: _static/images/manage_data_bhide.png
+      .. image:: /images/manage_data_bhide.png
          :width: 100%
 
 .. rst-class:: center

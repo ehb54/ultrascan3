@@ -11,7 +11,7 @@ Model Components
 
 In this dialog, you can set the properties of components of a model.
 
-.. image:: _static/images/components.png
+.. image:: /images/components.png
     :align: center
 
 .. rst-class:: 

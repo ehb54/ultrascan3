@@ -12,7 +12,7 @@ Advanced Analysis Dialog
 
 This dialog may be invoked from US_FeMatch in order to set advanced control parameters. 
 
-.. image:: ../_static/images/fe_match_adv.png
+.. image:: /images/fe_match_adv.png
     :align: center
 
 

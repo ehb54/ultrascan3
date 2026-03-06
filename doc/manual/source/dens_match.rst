@@ -13,7 +13,7 @@ Density Matching experiments are used to determine the partial specific volume o
 
 It is recommended that users of this technique measure sedimentation velocity experiments in 4-6 different D2O concentrations, including one buffer that does not have any D2O in it (just light water). Finite element models from these experiments are imported into this program to elucidate the partial specific volume distribution for the entire solution mixture. 
 
-.. image:: /_static/images/densmatch_main.png
+.. image:: /images/densmatch_main.png
     :align: center
 
 .. rst-class::

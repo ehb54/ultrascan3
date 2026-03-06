@@ -1,15 +1,7 @@
 # Core Sphinx engine
 sphinx>=7.0.0
 
-# Qt Help output support
-sphinxcontrib-qthelp
-
 # Grid/figure layout (replaces defunct sphinx-subfigure)
 sphinx-design
 
-# Video and YouTube embedding
-sphinxcontrib-video
-sphinxcontrib-youtube
 
-# markdown support
-myst-parser

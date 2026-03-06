@@ -12,7 +12,7 @@ PCSA Advanced Controls
 This dialog allows user manually adjust the Y range, par1/par2, the Curve resolution points and perform monte carlo analysis on the Best Fitted Model (BFM). 
 
 
-.. image:: ../_static/images/pcsa_adv_control.png
+.. image:: /images/pcsa_adv_control.png
   :align: center
  
 .. rst-class::

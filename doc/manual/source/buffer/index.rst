@@ -16,7 +16,7 @@ In each panel, tabs are visible at the top of the window to enable the user to m
    buffer_settings
 
 
-.. image:: ../_static/images/buffer_select.png
+.. image:: /images/buffer_select.png
     :align: center
 
 **Select buffer** A panel whose primary purpose is to select a buffer to return to the caller.

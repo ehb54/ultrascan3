@@ -23,7 +23,7 @@ Enter New Analyte Panel
 
 Using this panel, the user can create a new analyte in the current database or in the local disk. A new analyte can be entered by clicking the :ref:`Enter Sequence <analyte_sequence>` and pasting the sequence.  The MW, Vbar and E280 (for Proteins) will be automatically updated once the sequence is saved. 
 
-.. image:: ../_static/images/analyte_newp.png
+.. image:: /images/analyte_newp.png
     :align: center
 
 .. rst-class:: 
@@ -33,7 +33,7 @@ Using this panel, the user can create a new analyte in the current database or i
 
 |
 
-.. image:: ../_static/images/analyte_newd.png
+.. image:: /images/analyte_newd.png
     :align: center
 
 .. rst-class:: 
@@ -43,7 +43,7 @@ Using this panel, the user can create a new analyte in the current database or i
 
 |
 
-.. image:: ../_static/images/analyte_newc.png
+.. image:: /images/analyte_newc.png
     :align: center
 
 .. rst-class:: 
@@ -55,7 +55,7 @@ Using this panel, the user can create a new analyte in the current database or i
 
 .. _analyte_sequence:
 
-.. image:: ../_static/images/analyte_new_sequence.png 
+.. image:: /images/analyte_new_sequence.png
     :align: center
 
 .. rst-class:: 
@@ -70,7 +70,7 @@ The panel can also add a spectrum of the analyte by clicking and opening the :re
 
 .. _analyte_spec: 
 
-.. image:: ../_static/images/analyte_specmenu.png
+.. image:: /images/analyte_specmenu.png
     :align: center
 
 .. rst-class:: 
@@ -82,7 +82,7 @@ The panel can also add a spectrum of the analyte by clicking and opening the :re
 
 .. _analyte_spec_fitter: 
 
-.. image:: ../_static/images/analyte_spec-gui.png
+.. image:: /images/analyte_spec-gui.png
     :align: center
 
 .. rst-class:: 

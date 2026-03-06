@@ -18,7 +18,7 @@ Data Loader
 
 UltrascanIII modules can load models by first loading the Run as **Experiment**, **PreFilter** or **Run Data**.
 
-.. image:: /_static/images/fe_load_data.png
+.. image:: /images/fe_load_data.png
     :align: center
 
 .. rst-class::
@@ -34,7 +34,7 @@ Most often, you need not expand the list tree and need only select the top level
 You may, of course, select specific triples of a run.
 Similarly, in the case where Lastest Data Edit was not checked, you may select any edit of a triple.
 
-.. image:: /_static/images/data_loader-edits.png
+.. image:: /images/data_loader-edits.png
     :align: center
 
 .. rst-class::
@@ -96,7 +96,7 @@ Load Distribution Model
 
 After the Run has been loaded the triplicate analysis model is loaded using *Load Distribution Model*.
 
-.. image:: /_static/images/fe_load_model_distrib.png
+.. image:: /images/fe_load_model_distrib.png
     :align: center
 
 .. rst-class::
@@ -129,7 +129,7 @@ Remove Model Distributions
 The dialog is presented when **Remove Distribution(s)** is clicked. The dialog shows a list of loaded models, by selecting items in this list and clicking on a Remove button, you can remove models from the original distribution list. After all the desired removals have been performed, an Accept button passes the reduced model data to the caller. 
 
 
-.. image:: _static/images/pseudo3d_comb_rmv.png
+.. image:: /images/pseudo3d_comb_rmv.png
   :align: center
 
 .. rst-class::
@@ -166,7 +166,7 @@ Common Plot Controls
 Ultrascan III uses common functions to modify and save displayed plots.
 
 
-.. image:: _static/images/plot_controls.png
+.. image:: /images/plot_controls.png
   :align: center
 
 .. rst-class::
@@ -195,7 +195,7 @@ Plot Functions
     - The :`configuration panel <config_plot>` of the local plot. The panel is used to change the plot profile. 
 
 
-.. image:: _static/images/print.png
+.. image:: /images/print.png
   :align: center
 
 .. _print:
@@ -206,7 +206,7 @@ Plot Functions
   **Print Controls**
 
 
-.. image:: _static/images/config_plot.png
+.. image:: /images/config_plot.png
   :align: center
 
 .. _config_plot:

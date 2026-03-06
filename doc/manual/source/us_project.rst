@@ -11,7 +11,7 @@ Project Management
 
 Using this window and in the database "Project" tab accessible after you log in, you can add new project by describing the goals, experimental design and sample components of the project or editing an existing project. 
 
-.. image:: _static/images/us_project.png
+.. image:: /images/us_project.png
     :align: center
 
 .. rst-class::
@@ -70,7 +70,7 @@ Database Project tab
 
 An existing project can be editted or a new project created using the Project tab. 
 
-.. image:: _static/images/us_project_webed.png
+.. image:: /images/us_project_webed.png
     :align: center
 
 .. rst-class::
@@ -85,12 +85,12 @@ Supporting data or documents can be uploaded and associated with the project.
 
    .. grid-item::
 
-      .. image:: _static/images/us_project_add-supdata.png
+      .. image:: /images/us_project_add-supdata.png
          :width: 100%
 
    .. grid-item::
 
-      .. image:: _static/images/us_project_edit-supdata.png
+      .. image:: /images/us_project_edit-supdata.png
          :width: 100%
 
 .. rst-class:: center
