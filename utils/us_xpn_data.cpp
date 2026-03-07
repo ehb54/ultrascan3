@@ -3009,7 +3009,7 @@ DbgLv(1) << "expA:   nf" << nfiles << "fname" << fname
          << "F4"          << "I2"       << "I2";
 
    US_TimeState tsobj;
-
+   tsobj.setTimeStateType(US_TimeState::TIMESTATE_TYPE::ORIGINAL);
    QString tspath    = cur_dir + runID + ".time_state.tmst";
    int ntimes        = scans.count();
    int ntssda        = tSydata.count();
