@@ -1228,19 +1228,71 @@ if(UNIX AND NOT APPLE AND US3_BUILD_PROGRAMS)
     # -------------------------------------------------------------------------
     # Locate Qt assistant binary for the help system
     # -------------------------------------------------------------------------
-    set(_LNX_ASSISTANT_EXE "")
-    if(DEFINED VCPKG_INSTALLED_DIR AND DEFINED VCPKG_TARGET_TRIPLET)
-        # Qt6: assistant lives in tools/Qt6/bin (qttools overlay port)
-        set(_LNX_VCPKG_TOOLS_QT6  "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/tools/Qt6/bin")
-        # Qt5: upstream vcpkg qt5-tools installs assistant to tools/qt5-tools/bin
-        set(_LNX_VCPKG_TOOLS_QT5  "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/tools/qt5-tools/bin")
-        # Fallback: some vcpkg versions use tools/qttools/bin for Qt5 as well
-        set(_LNX_VCPKG_TOOLS_QT5B "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/tools/qttools/bin")
-    else()
-        set(_LNX_VCPKG_TOOLS_QT6 "")
-        set(_LNX_VCPKG_TOOLS_QT5 "")
-        set(_LNX_VCPKG_TOOLS_QT5B "")
+    # Build search paths for the Qt assistant binary.
+    # Use both the CMake cache variables (set by toolchain) and the VCPKG_ROOT
+    # environment variable (exported by build.sh) as sources for the installed dir,
+    # since DEFINED checks on toolchain-set cache variables can evaluate before
+    # the cache is fully populated on first configure.
+    # Derive the vcpkg tools directory for Qt assistant.
+    #
+    # VCPKG_INSTALLED_DIR in manifest mode points to the per-build-tree
+    # vcpkg_installed/ directory which contains only libraries — tools (like
+    # assistant) live in the *shared* vcpkg installation under ~/vcpkg/installed/.
+    #
+    # Qt6_DIR is always reliable: it points into the shared installed tree at
+    #   <vcpkg-root>/installed/<triplet>/share/Qt6/
+    # so stripping 3 components gives the triplet root, and tools/Qt6/bin
+    # from there is where assistant lives.
+    #
+    # We use Qt6_DIR (Qt6 builds) or Qt5_DIR (Qt5 builds) as the primary source,
+    # with VCPKG_INSTALLED_DIR + ENV{VCPKG_ROOT} as fallbacks.
+
+    # Determine triplet root from Qt cmake dir (most reliable)
+    set(_lnx_triplet_root "")
+    if(USE_QT6 AND Qt6_DIR)
+        # Qt6_DIR = .../installed/<triplet>/share/Qt6  (3 levels up = triplet root)
+        get_filename_component(_lnx_triplet_root "${Qt6_DIR}/../../.." ABSOLUTE)
+    elseif(Qt5_DIR)
+        # Qt5_DIR = .../installed/<triplet>/share/cmake/Qt5  (4 levels up = triplet root)
+        get_filename_component(_lnx_triplet_root "${Qt5_DIR}/../../../.." ABSOLUTE)
     endif()
+
+    # Fallback: VCPKG_INSTALLED_DIR + triplet
+    if(NOT _lnx_triplet_root)
+        set(_lnx_vcpkg_installed "")
+        if(VCPKG_INSTALLED_DIR AND EXISTS "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/lib")
+            # Only use build-tree installed dir if it actually has libraries (i.e. it's populated)
+            set(_lnx_vcpkg_installed "${VCPKG_INSTALLED_DIR}")
+        endif()
+        if(NOT _lnx_vcpkg_installed AND DEFINED ENV{VCPKG_ROOT})
+            set(_lnx_vcpkg_installed "$ENV{VCPKG_ROOT}/installed")
+        endif()
+        set(_lnx_triplet "")
+        if(VCPKG_TARGET_TRIPLET)
+            set(_lnx_triplet "${VCPKG_TARGET_TRIPLET}")
+        else()
+            execute_process(COMMAND uname -m OUTPUT_VARIABLE _lnx_uname OUTPUT_STRIP_TRAILING_WHITESPACE)
+            if(_lnx_uname MATCHES "^(aarch64|arm64)$")
+                set(_lnx_triplet "arm64-linux")
+            else()
+                set(_lnx_triplet "x64-linux-dynamic")
+            endif()
+        endif()
+        if(_lnx_vcpkg_installed AND _lnx_triplet)
+            set(_lnx_triplet_root "${_lnx_vcpkg_installed}/${_lnx_triplet}")
+        endif()
+    endif()
+
+    # Qt6: assistant lives in tools/Qt6/bin
+    set(_LNX_VCPKG_TOOLS_QT6  "${_lnx_triplet_root}/tools/Qt6/bin")
+    # Qt5: upstream vcpkg qt5-tools installs assistant to tools/qt5-tools/bin
+    set(_LNX_VCPKG_TOOLS_QT5  "${_lnx_triplet_root}/tools/qt5-tools/bin")
+    # Fallback: some vcpkg versions use tools/qttools/bin for Qt5 as well
+    set(_LNX_VCPKG_TOOLS_QT5B "${_lnx_triplet_root}/tools/qttools/bin")
+
+    message(STATUS "[Linux] assistant search paths:")
+    message(STATUS "  Qt6: ${_LNX_VCPKG_TOOLS_QT6}")
+    message(STATUS "  Qt5: ${_LNX_VCPKG_TOOLS_QT5}")
 
     find_program(_LNX_ASSISTANT_EXE assistant
         HINTS
@@ -1251,6 +1303,7 @@ if(UNIX AND NOT APPLE AND US3_BUILD_PROGRAMS)
             "${Qt5_DIR}/../../../bin"
             "$ENV{QTDIR}/bin"
         DOC "Path to Qt assistant for Linux packaging"
+        NO_CACHE
     )
     if(_LNX_ASSISTANT_EXE)
         message(STATUS "assistant for Linux packaging: ${_LNX_ASSISTANT_EXE}")
