@@ -407,8 +407,10 @@ echo ""
 # Helper: derive the vcpkg triplet for the current platform/arch combination.
 # Must match what the CMake presets pass as VCPKG_TARGET_TRIPLET.
 _derive_triplet() {
+  # These names must exactly match what toolchain.cmake sets as VCPKG_TARGET_TRIPLET.
+  # Linux arm64 uses a custom static triplet; Linux x64 uses vcpkg's built-in dynamic one.
   if [ "$PLATFORM" = "Linux" ]; then
-    [ "$ARCH" = "arm64" ] && echo "arm64-linux" || echo "x64-linux"
+    [ "$ARCH" = "arm64" ] && echo "arm64-linux" || echo "x64-linux-dynamic"
   elif [ "$PLATFORM" = "macOS" ]; then
     [ "$ARCH" = "arm64" ] && echo "arm64-osx-dynamic" || echo "x64-osx-dynamic"
   else
@@ -442,10 +444,17 @@ _remove_vcpkg_triplet() {
   if [ -d "$US3_VCPKG_ROOT/installed/$triplet" ]; then
     echo "Removing vcpkg installed packages for triplet: $triplet"
     rm -rf "$US3_VCPKG_ROOT/installed/$triplet"
-    # Remove the per-triplet .list files so vcpkg considers the packages
-    # uninstalled and picks up vcpkg.json feature changes on next run.
-    # The shared 'status' file is left intact to avoid corrupting other triplets.
-    rm -f "$US3_VCPKG_ROOT/installed/vcpkg/info/${triplet}_"*.list 2>/dev/null || true
+
+    # Wipe the entire vcpkg bookkeeping directory (status file, .list files,
+    # pending updates). This is safe because it only tracks what is in THIS
+    # installed/ tree. vcpkg regenerates it on the next install.
+    # Not doing this leaves stale 'half-installed' status entries that cause
+    # vcpkg to try reading pkgconfig files that no longer exist (e.g. the
+    # eigen3.pc-during-zstd-install failure seen after --purge-cache).
+    if [ -d "$US3_VCPKG_ROOT/installed/vcpkg" ]; then
+      echo "Removing vcpkg installed/vcpkg bookkeeping (will be regenerated)..."
+      rm -rf "$US3_VCPKG_ROOT/installed/vcpkg"
+    fi
   else
     echo "vcpkg installed/$triplet does not exist -- nothing to remove"
   fi

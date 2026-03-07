@@ -490,13 +490,16 @@ function Remove-VcpkgTriplet {
         try   { Remove-Item -Recurse -Force $TripletDir -ErrorAction Stop }
         catch { Write-Warning "Could not fully remove triplet dir: $($_.Exception.Message)" }
 
-        # Remove per-triplet .list files so vcpkg considers the packages
-        # uninstalled and picks up vcpkg.json feature changes on next run.
-        # The shared 'status' file is left intact to avoid corrupting other triplets.
-        $InfoDir = Join-Path $VcpkgRoot "installed\vcpkg\info"
-        if (Test-Path $InfoDir) {
-            Get-ChildItem -Path $InfoDir -Filter "${Triplet}_*.list" -ErrorAction SilentlyContinue |
-                Remove-Item -Force -ErrorAction SilentlyContinue
+        # Wipe the entire vcpkg bookkeeping directory (status file, .list files,
+        # pending updates). This is safe because it only tracks what is in THIS
+        # installed\ tree. vcpkg regenerates it on the next install.
+        # Not doing this leaves stale 'half-installed' status entries that cause
+        # vcpkg to try reading pkgconfig files that no longer exist.
+        $VcpkgBookkeeping = Join-Path $VcpkgRoot "installed\vcpkg"
+        if (Test-Path $VcpkgBookkeeping) {
+            Write-Host "Removing vcpkg installed\vcpkg bookkeeping (will be regenerated)..."
+            try   { Remove-Item -Recurse -Force $VcpkgBookkeeping -ErrorAction Stop }
+            catch { Write-Warning "Could not fully remove vcpkg bookkeeping: $($_.Exception.Message)" }
         }
     } else {
         Write-Host "vcpkg installed\$Triplet does not exist -- nothing to remove"
