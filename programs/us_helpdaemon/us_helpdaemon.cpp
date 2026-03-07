@@ -35,20 +35,23 @@ debug("location="+location);
        << url;
 
   debug( args.join( " " ) );
-#ifndef Q_OS_MAC
-  QString assisloc  = US_Settings::appBaseDir() + "/bin/assistant";
-#else
-  // On macOS, QProcess cannot pass arguments to a .app bundle directly.
-  // We must invoke the inner binary so that args are forwarded correctly.
+#ifdef Q_OS_MAC
   QString assisloc  = US_Settings::appBaseDir()
                       + "/bin/Assistant.app/Contents/MacOS/Assistant";
-  // Fall back to bare 'assistant' binary if the .app inner binary doesn't exist
   if ( !QFile::exists( assisloc ) )
     assisloc = US_Settings::appBaseDir() + "/bin/assistant";
+#elif defined(Q_OS_WIN)
+  QString assisloc  = US_Settings::appBaseDir() + "/bin/assistant";
+  if ( !QFile::exists( assisloc ) )
+    assisloc = US_Settings::appBaseDir() + "/bin/assistant.exe";
+  if ( !QFile::exists( assisloc ) )
+    assisloc = US_Settings::appBaseDir() + "/bin/Assistant.exe";
+#else
+  QString assisloc  = US_Settings::appBaseDir() + "/bin/assistant";
 #endif
+
   debug( "assisloc=" + assisloc );
   daemon.start( assisloc, args );
-//debug("assisloc="+assisloc);
   daemon.waitForStarted();
 
   connect( &daemon, SIGNAL( finished ( int, QProcess::ExitStatus ) ),

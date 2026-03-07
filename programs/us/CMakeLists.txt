@@ -82,13 +82,15 @@ if(WIN32)
     endif()
 endif()
 
-if(WIN32 AND QHELPGENERATOR_EXECUTABLE AND WIN_ASSISTANT_SOURCE)
+if(WIN32 AND QHELPGENERATOR_EXECUTABLE AND WIN_ASSISTANT_SOURCE AND WINDEPLOYQT)
     add_custom_command(TARGET us POST_BUILD
             COMMAND "${CMAKE_COMMAND}"
-            -DDOC_QCH_STAGE="${DOC_QCH_STAGE}"
-            -DDOC_QHC_STAGE="${DOC_QHC_STAGE}"
-            -DDOC_OUTPUT_DIR="${DOC_OUTPUT_DIR}"
-            -DASSISTANT_SOURCE="${WIN_ASSISTANT_SOURCE}"
+            -DDOC_QCH_STAGE=${DOC_QCH_STAGE}
+            -DDOC_QHC_STAGE=${DOC_QHC_STAGE}
+            -DDOC_OUTPUT_DIR=${DOC_OUTPUT_DIR}
+            -DASSISTANT_SOURCE=${WIN_ASSISTANT_SOURCE}
+            -DWINDEPLOYQT=${WINDEPLOYQT}
+            -DVCPKG_RUNTIME_BIN_DIR=${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin
             -P "${CMAKE_SOURCE_DIR}/admin/cmake/packaging/windows/WindowsDeployQtAssistant.cmake"
             COMMENT "Staging Qt Assistant and help files into bin/"
             VERBATIM

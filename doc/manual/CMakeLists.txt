@@ -75,7 +75,7 @@ find_program(QCOLLECTIONGENERATOR_EXECUTABLE NAMES qcollectiongenerator
 
 if(NOT SPHINX_EXECUTABLE)
     message(STATUS "Documentation build disabled - sphinx-build not found")
-    message(STATUS "  Install with: pip install sphinx sphinxcontrib-qthelp sphinx-subfigure")
+    message(STATUS "  Install with: pip install -r doc/manual/source/requirements.txt")
     return()
 endif()
 
@@ -161,7 +161,7 @@ set(DOC_QHC_STAGE ${DOC_QTHELP_DIR}/manual.qhc)
 set(DOC_QCH ${DOC_OUTPUT_DIR}/manual.qch)
 set(DOC_QHC ${DOC_OUTPUT_DIR}/manual.qhc)
 
-# Windows runtime environment for qhelpgenerator / qcollectiongenerator
+# Windows runtime environment for qhelpgenerator
 set(_QT_TOOL_BIN_DIR "")
 set(_QT_RUNTIME_BIN_DIR "")
 set(_QT_PLUGIN_DIR "")
