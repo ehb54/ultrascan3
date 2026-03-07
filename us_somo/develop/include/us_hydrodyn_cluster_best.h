@@ -22,7 +22,6 @@
 #include "us_hydrodyn.h"
 #include "qpushbutton.h"
 #include "qmessagebox.h"
-#include "qregexp.h"
 #include "us_json.h"
 
 using namespace std;

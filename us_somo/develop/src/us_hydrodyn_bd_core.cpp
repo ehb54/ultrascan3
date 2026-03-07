@@ -1,4 +1,5 @@
 // us_hydrodyn.cpp contains class creation & gui connected functions
+#include <QRegularExpression>
 // us_hydrodyn_core.cpp contains the main computational routines
 // (this) us_hydrodyn_bd_core.cpp contains the main computational routines for brownian dynamic browflex computations
 // us_hydrodyn_anaflex_core.cpp contains the main computational routines for brownian dynamic (anaflex) computations
@@ -8,7 +9,8 @@
 // includes and defines need cleanup
 
 #include "../include/us_hydrodyn.h"
-#include <qregexp.h>
+#include <QRegularExpression>
+#include <QRegularExpressionMatch>
 //Added by qt3to4:
 #include <QTextStream>
 
@@ -266,9 +268,9 @@ int US_Hydrodyn::create_browflex_files()
       // connectors
       unsigned int connectors = 0;
 
-      QRegExp rx("^(\\d+)~(\\d+)$");
+      QRegularExpression rx(QStringLiteral("^(\\d+)~(\\d+)$"));
 
-      for ( map < QString, bool >::iterator it = connection_active.begin();
+      for ( map<QString, bool>::iterator it = connection_active.begin();
             it != connection_active.end();
             it++ )
       {
@@ -280,19 +282,20 @@ int US_Hydrodyn::create_browflex_files()
 
       ts << QString(" %1,   Number of connectors\n").arg(connectors);
 
-      for ( map < QString, bool >::iterator it = connection_active.begin();
+      for ( map<QString, bool>::iterator it = connection_active.begin();
             it != connection_active.end();
             it++ )
       {
          if ( connection_active[it->first] )
          {
-            if ( rx.indexIn(it->first) == -1 ) 
+            QRegularExpressionMatch m = rx.match(it->first);
+            if ( !m.hasMatch() )
             {
                editor->append("unexpected regexp extract failure (write_browflex_files)!\n");
                return -1;
             }
-            int i = rx.cap(1).toInt();
-            int j = rx.cap(2).toInt();
+            int i = m.captured(1).toInt();
+            int j = m.captured(2).toInt();
             
             // determine connector type for correct bd_options
             float force_constant;
@@ -877,7 +880,7 @@ int US_Hydrodyn::write_pdb( QString fname, vector < PDB_atom > *model )
 
    // consolidate & symmetrize connections
 
-   QRegExp rx("^(\\d+)~(\\d+)$");
+   QRegularExpression rx("^(\\d+)~(\\d+)$");
 
    sortable_uint tmp_suint_i;
    sortable_uint tmp_suint_j;
@@ -892,13 +895,14 @@ int US_Hydrodyn::write_pdb( QString fname, vector < PDB_atom > *model )
    {
       if ( connection_active[it->first] ) 
       {
-         if ( rx.indexIn(it->first) == -1 ) 
+         QRegularExpressionMatch m = rx.match( it->first );
+         if ( !m.hasMatch() ) 
          {
             editor->append("unexpected regexp extract failure (write_pdb)!\n");
             return -1;
          }
-         tmp_suint_i.x = rx.cap(1).toInt();
-         tmp_suint_j.x = rx.cap(2).toInt();
+         tmp_suint_i.x = m.captured(1).toInt();
+         tmp_suint_j.x = m.captured(2).toInt();
 
          connect_list[tmp_suint_i.x].push_back(tmp_suint_j);
          connect_list[tmp_suint_j.x].push_back(tmp_suint_i);
@@ -1134,7 +1138,7 @@ int US_Hydrodyn::compute_bd_connections()
 
    // remove connection_active non-existant in subsequent models
 
-   QRegExp rx("^(\\d+)~(\\d+)$");
+   QRegularExpression rx("^(\\d+)~(\\d+)$");
 
    for ( unsigned int k = 1; k < models_to_proc.size(); k++ )
    {
@@ -1145,13 +1149,14 @@ int US_Hydrodyn::compute_bd_connections()
             it != connection_active.end();
             it++ )
       {
-         if ( rx.indexIn(it->first) == -1 ) 
+         QRegularExpressionMatch m = rx.match( it->first );
+         if ( !m.hasMatch() )
          {
             editor->append("unexpected regexp extract failure (compute_connections)!\n");
             return -1;
          }
-         int i = rx.cap(1).toInt();
-         int j = rx.cap(2).toInt();
+         int i = m.captured(1).toInt();
+         int j = m.captured(2).toInt();
 
          if ( 
              !connection_forced.count(QString("%1~%2").arg(i).arg(j)) &&
@@ -1456,7 +1461,7 @@ int US_Hydrodyn::build_pb_structures( PDB_model *model )
             lastResSeq = this_atom->resSeq;
             continue;
          }
-         if ( this_atom->name.contains(QRegExp("^(N|CA|C|O)$")) )
+         if ( this_atom->name.contains(QRegularExpression( QStringLiteral( "^(N|CA|C|O)$" ) )) )
          {
             pb_atoms[this_atom->name] = k;
          }
@@ -1841,7 +1846,7 @@ bool US_Hydrodyn::bd_valid_browflex_main( QString filename )
       {
          ts >> tmp_filename;
          ts.readLine();
-         if ( !tmp_filename.contains(QRegExp("(txt|TXT)$")) )
+         if ( !tmp_filename.contains(QRegularExpression( QStringLiteral( "(txt|TXT)$" ) )) )
          {
             f.close();
             return false;
@@ -1855,7 +1860,7 @@ bool US_Hydrodyn::bd_valid_browflex_main( QString filename )
       {
          ts >> tmp_filename;
          ts.readLine();
-         if ( !tmp_filename.contains(QRegExp("(txt|TXT)$")) )
+         if ( !tmp_filename.contains(QRegularExpression( QStringLiteral( "(txt|TXT)$" ) )) )
          {
             f.close();
             return false;
@@ -1869,7 +1874,7 @@ bool US_Hydrodyn::bd_valid_browflex_main( QString filename )
       {
          ts >> tmp_filename;
          ts.readLine();
-         if ( !tmp_filename.contains(QRegExp("(txt|TXT)$")) )
+         if ( !tmp_filename.contains(QRegularExpression( QStringLiteral( "(txt|TXT)$" ) )) )
          {
             f.close();
             return false;
@@ -1883,7 +1888,7 @@ bool US_Hydrodyn::bd_valid_browflex_main( QString filename )
       {
          ts >> tmp_filename;
          ts.readLine();
-         if ( !tmp_filename.contains(QRegExp("(txt|TXT)$")) )
+         if ( !tmp_filename.contains(QRegularExpression( QStringLiteral( "(txt|TXT)$" ) )) )
          {
             f.close();
             return false;
@@ -1898,7 +1903,7 @@ bool US_Hydrodyn::bd_valid_browflex_main( QString filename )
          ts >> tmp_filename;
          ts.readLine();
          if ( tmp_filename != "-" &&
-              !tmp_filename.contains(QRegExp("(txt|TXT)$")) )
+              !tmp_filename.contains(QRegularExpression( QStringLiteral( "(txt|TXT)$" ) )) )
          {
             f.close();
             return false;
@@ -1913,7 +1918,7 @@ bool US_Hydrodyn::bd_valid_browflex_main( QString filename )
          ts >> tmp_filename;
          ts.readLine();
          if ( tmp_filename != "-" &&
-              !tmp_filename.contains(QRegExp("(txt|TXT)$")) )
+              !tmp_filename.contains(QRegularExpression( QStringLiteral( "(txt|TXT)$" ) )) )
          {
             f.close();
             return false;
@@ -1928,7 +1933,7 @@ bool US_Hydrodyn::bd_valid_browflex_main( QString filename )
          ts >> tmp_filename;
          ts.readLine();
          if ( tmp_filename != "-" &&
-              !tmp_filename.contains(QRegExp("(txt|TXT)$")) )
+              !tmp_filename.contains(QRegularExpression( QStringLiteral( "(txt|TXT)$" ) )) )
          {
             f.close();
             return false;
@@ -1943,7 +1948,7 @@ bool US_Hydrodyn::bd_valid_browflex_main( QString filename )
          ts >> tmp_filename;
          ts.readLine();
          if ( tmp_filename != "-" &&
-              !tmp_filename.contains(QRegExp("(txt|TXT)$")) )
+              !tmp_filename.contains(QRegularExpression( QStringLiteral( "(txt|TXT)$" ) )) )
          {
             f.close();
             return false;
@@ -1957,7 +1962,7 @@ bool US_Hydrodyn::bd_valid_browflex_main( QString filename )
       {
          ts >> tmp_filename;
          ts.readLine();
-         if (!tmp_filename.contains(QRegExp("(txt|TXT)$")) )
+         if (!tmp_filename.contains(QRegularExpression( QStringLiteral( "(txt|TXT)$" ) )) )
          {
             f.close();
             return false;
@@ -2033,7 +2038,7 @@ void US_Hydrodyn::bd_load()
       {
          ts >> tmp_filename;
          ts.readLine();
-         if ( !tmp_filename.contains(QRegExp("(txt|TXT)$")) )
+         if ( !tmp_filename.contains(QRegularExpression( QStringLiteral( "(txt|TXT)$" ) )) )
          {
             bd_load_error(filename);
             f.close();
@@ -2240,7 +2245,7 @@ void US_Hydrodyn::bd_edit()
       {
          ts >> tmp_filename;
          ts.readLine();
-         if ( !tmp_filename.contains(QRegExp("(txt|TXT)$")) )
+         if ( !tmp_filename.contains(QRegularExpression( QStringLiteral( "(txt|TXT)$" ) )) )
          {
             f.close();
             return;
@@ -2538,13 +2543,14 @@ void US_Hydrodyn::bd_load_results_after_anaflex()
    {
       QString tmp;
       bool done = false;
-      QRegExp rx("^Unit of length = (.*)$");
+      QRegularExpression rx("^Unit of length = (.*)$");
       while( !done &&  !ts_out1.atEnd() )
       {
-         if ( rx.indexIn(ts_out1.readLine()) != -1 )
+         QRegularExpressionMatch m = rx.match( ts_out1.readLine() );
+         if ( !m.hasMatch() )
          {
             done = true;
-            unit_of_length = rx.cap(1).toFloat();
+            unit_of_length = m.captured(1).toFloat();
          }
       }
       f_out1.close();
@@ -2620,7 +2626,7 @@ void US_Hydrodyn::bd_load_results_after_anaflex()
    }
    ts.readLine();
 
-   name.replace(QRegExp("\\.(txt|TXT)"),"");
+   name.replace(QRegularExpression( QStringLiteral( "\\.(txt|TXT)" ) ),"");
 #if defined(DEBUG_CONN)
    cout << "name " << name << endl;
 #endif

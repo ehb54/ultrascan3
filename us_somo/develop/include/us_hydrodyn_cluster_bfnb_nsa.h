@@ -16,8 +16,6 @@
 #include "qpushbutton.h"
 #include "qfiledialog.h"
 #include "qmessagebox.h"
-#include "qregexp.h"
-//Added by qt3to4:
 #include <QCloseEvent>
 #include "us_json.h"
 #include "us_hydrodyn.h"
