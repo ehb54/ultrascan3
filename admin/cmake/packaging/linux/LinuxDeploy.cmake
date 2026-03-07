@@ -146,6 +146,21 @@ if(VCPKG_LIB_DIR AND EXISTS "${VCPKG_LIB_DIR}")
             file(COPY "${_so}" DESTINATION "${S_LIB}")
         endif()
     endforeach()
+
+    # SQLite runtime -- required by the Qt SQL driver (libqsqlite.so) which is
+    # loaded by Qt Assistant at runtime to open the .qhc collection file.
+    # Qt6 Assistant also uses SQLite FTS5 for full-text search indexing.
+    # The glob in vcpkg lib/ matches libsqlite3.so / libsqlite3.so.0 etc.
+    file(GLOB _sqlite_so
+        "${VCPKG_LIB_DIR}/libsqlite3*.so*"
+    )
+    foreach(_so ${_sqlite_so})
+        get_filename_component(_n "${_so}" NAME)
+        if(NOT EXISTS "${S_LIB}/${_n}")
+            message(STATUS "  Copying SQLite lib: ${_n}")
+            file(COPY "${_so}" DESTINATION "${S_LIB}")
+        endif()
+    endforeach()
 else()
     message(STATUS "[LinuxDeploy] VCPKG_LIB_DIR not set -- Qt .so files will not be bundled")
     message(STATUS "  The app will rely on system Qt libraries (acceptable for distro packages,")
@@ -196,12 +211,45 @@ endif()
 # =========================================================================
 # 6) Deploy Qt Assistant binary
 #    Legacy equivalent: copypkg-lnx.sh copied assistant from ${QTDIR}/bin/
+#
+#    After copying, we rewrite the RPATH so the binary finds its Qt .so
+#    files from the tarball's lib/ dir at runtime ($ORIGIN/../lib) rather
+#    than the stale absolute path into the vcpkg build tree.
+#    patchelf is the standard tool for this on Linux; if it is absent we
+#    emit a warning (the binary will work only if the vcpkg tree is present,
+#    i.e. on the build machine, but not from an installed tarball).
+#    Qt5 Assistant uses CLucene (not SQLite/FTS5) for full-text search, so
+#    the FTS5 concern that affected Qt6/macOS does not apply here.
+#    The .qhc collection file still requires the SQLite Qt driver; that is
+#    handled by the sqldrivers safety-net in section 5b above.
 # =========================================================================
 if(ASSISTANT_EXE AND EXISTS "${ASSISTANT_EXE}")
     message(STATUS "[LinuxDeploy] Copying assistant -> bin/")
     file(COPY "${ASSISTANT_EXE}" DESTINATION "${S_BIN}"
          FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE
                           GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+
+    # Patch RPATH so assistant finds Qt .so files from the tarball lib/ dir.
+    # $ORIGIN resolves to the directory containing the binary (bin/).
+    # $ORIGIN/../lib is therefore <tarball-root>/lib/ at runtime.
+    set(_ASSISTANT_STAGED "${S_BIN}/assistant")
+    find_program(_PATCHELF patchelf)
+    if(_PATCHELF AND EXISTS "${_ASSISTANT_STAGED}")
+        execute_process(
+            COMMAND "${_PATCHELF}" --set-rpath "$ORIGIN/../lib" "${_ASSISTANT_STAGED}"
+            RESULT_VARIABLE _PATCHELF_RC
+            ERROR_VARIABLE  _PATCHELF_ERR
+        )
+        if(_PATCHELF_RC EQUAL 0)
+            message(STATUS "[LinuxDeploy] Patched RPATH on assistant: $ORIGIN/../lib")
+        else()
+            message(WARNING "[LinuxDeploy] patchelf failed on assistant (rc=${_PATCHELF_RC}): ${_PATCHELF_ERR}")
+        endif()
+    elseif(NOT _PATCHELF)
+        message(WARNING "[LinuxDeploy] patchelf not found -- assistant RPATH not patched.")
+        message(WARNING "  assistant will only work on the build machine (vcpkg tree present).")
+        message(WARNING "  Install patchelf: apt-get install patchelf / dnf install patchelf")
+    endif()
 else()
     message(STATUS "[LinuxDeploy] ASSISTANT_EXE not provided -- help system may not work")
 endif()

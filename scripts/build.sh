@@ -19,7 +19,9 @@ fi
 # =============================================================================
 # PARSE COMMAND LINE OPTIONS
 # =============================================================================
-CLEAN=false
+REBUILD=false          # --rebuild: wipe build dir only (tier 1)
+CLEAN=false            # --clean:   wipe build dir + vcpkg installed/ for triplet (tier 2)
+PURGE_CACHE=false      # --purge-cache: additive to --clean, also wipes binary cache (tier 3)
 BUILD_PKG=false        # --pkg: build platform-native package
 PROFILE="APP"          # default profile
 QT_VARIANT="qt6"       # qt6 | qt5-qwt616 | qt5-qwt630
@@ -29,7 +31,9 @@ US3_VCPKG_ROOT=""
 # Parse options
 while [[ $# -gt 0 ]]; do
   case $1 in
+    --rebuild)      REBUILD=true;               shift ;;
     --clean)        CLEAN=true;                 shift ;;
+    --purge-cache)  PURGE_CACHE=true;            shift ;;
     --qt6)          QT_VARIANT="qt6";           shift ;;
     --qt5-qwt616)   QT_VARIANT="qt5-qwt616";   shift ;;
     --qt5-qwt630)   QT_VARIANT="qt5-qwt630";   shift ;;
@@ -51,7 +55,18 @@ while [[ $# -gt 0 ]]; do
       echo "Usage: $0 [OPTIONS] [PROFILE]"
       echo ""
       echo "OPTIONS:"
-      echo "  --clean              Clean the active build directory and vcpkg buildtrees before building"
+      echo "  --rebuild            Tier 1: removes the CMake build directory only."
+      echo "                         Fast - vcpkg packages are untouched and restore"
+      echo "                         from binary cache. Use when the build tree is"
+      echo "                         corrupted or you want a clean UltraScan recompile."
+      echo "  --clean              Tier 2: removes build dir + vcpkg buildtrees + the"
+      echo "                         installed packages for the active triplet."
+      echo "                         Forces vcpkg to reinstall all dependencies."
+      echo "                         Required after vcpkg.json feature changes."
+      echo "  --clean --purge-cache Tier 3: same as --clean plus wipes the binary cache"
+      echo "                         (~/.vcpkg-cache). Forces full recompile from source."
+      echo "                         Use when switching compilers or suspecting cache"
+      echo "                         corruption."
       echo "  --pkg                Build platform-native package:"
       echo "                         macOS   -> PKG installer (installs to /Applications/UltraScan3)"
       echo "                                    Output: build/<preset>/UltraScan3-<version>-macOS.pkg"
@@ -82,6 +97,9 @@ while [[ $# -gt 0 ]]; do
       echo "  $0                        # Build only"
       echo "  $0 TEST                   # Build with TEST profile"
       echo "  $0 --qt5-qwt616           # Build Qt5+Qwt6.1.6"
+      echo "  $0 --rebuild              # Wipe build dir, rebuild UltraScan only"
+      echo "  $0 --clean                # Full dep reinstall (after vcpkg.json changes)"
+      echo "  $0 --clean --purge-cache  # Nuke everything, recompile deps from source"
       echo "  $0 --clean TEST           # Clean build with TEST profile"
       echo "  $0 --pkg                  # build + platform-native package"
       echo "  $0 --clean --pkg          # clean build + platform-native package"
@@ -89,6 +107,7 @@ while [[ $# -gt 0 ]]; do
       echo "ENVIRONMENT VARIABLES:"
       echo "  US3_BUILD_JOBS      Override number of parallel build jobs"
       echo "  US3_VCPKG_ROOT      Override vcpkg location (default: \$HOME/vcpkg)"
+      echo "  US3_VCPKG_CACHE     Override binary cache path (default: \$HOME/.vcpkg-cache)"
       exit 0
       ;;
     [Aa][Pp][Pp]|[Tt][Ee][Ss][Tt]|[Hh][Pp][Cc])
@@ -109,14 +128,15 @@ done
 if [[ "$OSTYPE" == "darwin"* ]]; then
   PLATFORM="macOS"
   PLATFORM_PREFIX="macos"
-elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
+elif [[ "$OSTYPE" == "linux-gnu"* || "$(uname -s)" == "Linux" ]]; then
   PLATFORM="Linux"
   PLATFORM_PREFIX="linux"
 elif [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
   PLATFORM="Windows"
   PLATFORM_PREFIX="windows"
 else
-  echo "ERROR: Unsupported platform: $OSTYPE"
+  _UNAME=$(uname -s 2>/dev/null || echo "unknown")
+  echo "ERROR: Unsupported platform: OSTYPE=${OSTYPE:-unset}, uname=${_UNAME}"
   exit 1
 fi
 
@@ -129,11 +149,17 @@ esac
 
 echo "Selected build profile : ${PROFILE}"
 echo "Selected Qt variant    : ${QT_VERSION_LABEL}"
+if [ "$REBUILD" = true ]; then
+  echo "Rebuild requested      : --rebuild (build dir only)"
+fi
 if [ "$CLEAN" = true ]; then
-  echo "Clean build requested"
+  echo "Clean requested        : --clean (build dir + vcpkg installed/ for triplet)"
+fi
+if [ "$PURGE_CACHE" = true ]; then
+  echo "Purge cache requested  : --purge-cache (binary cache will also be wiped)"
 fi
 if [ "$BUILD_PKG" = true ]; then
-  echo "macOS PKG installer  : enabled"
+  echo "Installer requested    : --pkg"
 fi
 echo ""
 
@@ -258,7 +284,7 @@ if [ "$PLATFORM" = "macOS" ]; then
       if [ -f "$XCODE_PLIST" ]; then
         XCODE_VERSION=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$XCODE_PLIST" 2>/dev/null || echo "0")
         XCODE_MAJOR=$(echo "$XCODE_VERSION" | cut -d. -f1)
-        if [ "$XCODE_MAJOR" = "15" ] || [ "$XCODE_MAJOR" = "16" ]; then
+        if [ "$XCODE_MAJOR" -ge 15 ] 2>/dev/null; then
           DESIRED_XCODE_PATH="$XCODE_CANDIDATE"
           echo "Found Xcode $XCODE_VERSION at: $XCODE_CANDIDATE"
           break
@@ -352,9 +378,14 @@ if [ ! -x "$US3_VCPKG_ROOT/vcpkg" ]; then
 fi
 
 export VCPKG_ROOT="$US3_VCPKG_ROOT"
-export VCPKG_BINARY_SOURCES="clear;files,$HOME/.vcpkg-cache,readwrite"
 export VCPKG_INSTALLED_DIR="$US3_VCPKG_ROOT/installed"
-mkdir -p "$HOME/.vcpkg-cache"
+
+# Allow CI to override the binary cache location via env var.
+# Default to ~/.vcpkg-cache which persists across runs on self-hosted runners.
+# On ephemeral runners set US3_VCPKG_CACHE to a mounted cache volume path.
+US3_VCPKG_CACHE="${US3_VCPKG_CACHE:-$HOME/.vcpkg-cache}"
+mkdir -p "$US3_VCPKG_CACHE"
+export VCPKG_BINARY_SOURCES="clear;files,$US3_VCPKG_CACHE,readwrite"
 
 VCPKG_TOOLCHAIN_FILE="$US3_VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
 if [ ! -f "$VCPKG_TOOLCHAIN_FILE" ]; then
@@ -366,27 +397,95 @@ echo "vcpkg ready."
 echo ""
 
 # =============================================================================
-# CLEAN BUILD ARTIFACTS (if requested)
+# CLEAN / REBUILD (tiered)
+#
+#  --rebuild       Tier 1 : build dir only
+#  --clean         Tier 2 : build dir + vcpkg buildtrees + installed/ for triplet
+#  --purge-cache   Tier 3 : additive to --clean; also wipes ~/.vcpkg-cache
 # =============================================================================
-if [ "$CLEAN" = true ]; then
-  echo "=========================================="
-  echo "Cleaning build artifacts..."
-  echo "=========================================="
 
-  BUILD_DIR="build/$CONFIGURE_PRESET"
-  if [ -d "$BUILD_DIR" ]; then
-    echo "Removing build directory: $BUILD_DIR"
-    rm -rf "$BUILD_DIR"
+# Helper: derive the vcpkg triplet for the current platform/arch combination.
+# Must match what the CMake presets pass as VCPKG_TARGET_TRIPLET.
+_derive_triplet() {
+  if [ "$PLATFORM" = "Linux" ]; then
+    [ "$ARCH" = "arm64" ] && echo "arm64-linux" || echo "x64-linux"
+  elif [ "$PLATFORM" = "macOS" ]; then
+    [ "$ARCH" = "arm64" ] && echo "arm64-osx-dynamic" || echo "x64-osx-dynamic"
   else
-    echo "Build directory does not exist, nothing to clean: $BUILD_DIR"
+    echo ""
+  fi
+}
+
+_remove_build_dir() {
+  local build_dir="build/$CONFIGURE_PRESET"
+  if [ -d "$build_dir" ]; then
+    echo "Removing build directory: $build_dir"
+    rm -rf "$build_dir"
+  else
+    echo "Build directory does not exist: $build_dir"
+  fi
+}
+
+_remove_vcpkg_triplet() {
+  local triplet
+  triplet=$(_derive_triplet)
+  if [ -z "$triplet" ]; then
+    echo "(no triplet derived for $PLATFORM -- skipping vcpkg installed/ removal)"
+    return
   fi
 
   if [ -d "$US3_VCPKG_ROOT/buildtrees" ]; then
-    echo "Removing vcpkg build trees..."
+    echo "Removing vcpkg buildtrees..."
     rm -rf "$US3_VCPKG_ROOT/buildtrees"
   fi
 
-  echo "Clean complete!"
+  if [ -d "$US3_VCPKG_ROOT/installed/$triplet" ]; then
+    echo "Removing vcpkg installed packages for triplet: $triplet"
+    rm -rf "$US3_VCPKG_ROOT/installed/$triplet"
+    # Remove the per-triplet .list files so vcpkg considers the packages
+    # uninstalled and picks up vcpkg.json feature changes on next run.
+    # The shared 'status' file is left intact to avoid corrupting other triplets.
+    rm -f "$US3_VCPKG_ROOT/installed/vcpkg/info/${triplet}_"*.list 2>/dev/null || true
+  else
+    echo "vcpkg installed/$triplet does not exist -- nothing to remove"
+  fi
+}
+
+_purge_binary_cache() {
+  local cache_dir="${US3_VCPKG_CACHE:-$HOME/.vcpkg-cache}"
+  if [ -d "$cache_dir" ]; then
+    echo "Purging vcpkg binary cache: $cache_dir"
+    rm -rf "$cache_dir"
+    mkdir -p "$cache_dir"
+  else
+    echo "Binary cache does not exist: $cache_dir"
+  fi
+}
+
+if [ "$REBUILD" = true ] && [ "$CLEAN" = false ]; then
+  echo "=========================================="
+  echo "Tier 1 rebuild: removing build directory"
+  echo "=========================================="
+  _remove_build_dir
+  echo "Rebuild clean complete."
+  echo ""
+fi
+
+if [ "$CLEAN" = true ]; then
+  echo "=========================================="
+  echo "Tier 2 clean: build dir + vcpkg installed/"
+  echo "=========================================="
+  _remove_build_dir
+  _remove_vcpkg_triplet
+
+  if [ "$PURGE_CACHE" = true ]; then
+    echo "------------------------------------------"
+    echo "Tier 3: purging binary cache"
+    echo "------------------------------------------"
+    _purge_binary_cache
+  fi
+
+  echo "Clean complete."
   echo ""
 fi
 
@@ -405,6 +504,13 @@ echo ""
 # vcpkg builds everything from source but still needs system headers/tools
 # that are not part of the compiler toolchain.
 # =============================================================================
+
+# Use sudo only when not already root (CI often runs as root in Docker)
+SUDO=""
+if [ "$(id -u)" != "0" ]; then
+  SUDO="sudo"
+fi
+
 if [ "$PLATFORM" == "Linux" ]; then
   echo "Checking Linux system dependencies..."
   echo ""
@@ -419,6 +525,7 @@ if [ "$PLATFORM" == "Linux" ]; then
     "curl|curl|curl"
     "zip|zip|zip"
     "unzip|unzip|unzip"
+    "patchelf|patchelf|patchelf"
   )
 
   # Dev packages have no binary — check for a sentinel header or .pc file
@@ -468,25 +575,25 @@ if [ "$PLATFORM" == "Linux" ]; then
     echo ""
 
     if command -v apt-get &>/dev/null; then
-      APT_CMD="sudo apt-get install -y ${MISSING_APT[*]}"
+      APT_CMD="${SUDO:+$SUDO }apt-get install -y ${MISSING_APT[*]}"
       if [ "$NON_INTERACTIVE" = true ]; then
         echo "Installing missing packages..."
-        sudo apt-get update -qq
+        ${SUDO:+$SUDO }apt-get update -qq
         $APT_CMD
       else
         echo "Run the following to install them:"
-        echo "  sudo apt-get update && $APT_CMD"
+        echo "  ${SUDO:+$SUDO }apt-get update && $APT_CMD"
         echo ""
         read -rp "Install now? [y/N] " answer
         if [[ "$answer" =~ ^[Yy]$ ]]; then
-          sudo apt-get update -qq
+          ${SUDO:+$SUDO }apt-get update -qq
           $APT_CMD
         else
           echo "WARNING: Continuing without installing - build may fail."
         fi
       fi
     elif command -v dnf &>/dev/null; then
-      DNF_CMD="sudo dnf install -y ${MISSING_DNF[*]}"
+      DNF_CMD="${SUDO:+$SUDO }dnf install -y ${MISSING_DNF[*]}"
       if [ "$NON_INTERACTIVE" = true ]; then
         echo "Installing missing packages..."
         $DNF_CMD
@@ -533,56 +640,68 @@ if [ "$PLATFORM" = "macOS" ]; then
   fi
 fi
 
+# Detect whether pip supports --break-system-packages (pip >= 23.0, Ubuntu 23.04+).
+# RHEL/Fedora don't use the PEP 668 externally-managed marker so the flag is
+# not needed there and older pip versions will error on it.
+_pip_break_flag=""
+if command -v pip3 &>/dev/null; then
+  if pip3 install --break-system-packages --dry-run pip &>/dev/null 2>&1; then
+    _pip_break_flag="--break-system-packages"
+  fi
+fi
+
+# Helper: run pip install with the right flags for this system
+_pip_install() {
+  if command -v pip3 &>/dev/null; then
+    pip3 install ${_pip_break_flag:+$_pip_break_flag} --user -q "$@" 2>/dev/null || true
+  fi
+}
+
+# After a pip --user install, binaries land in ~/.local/bin (Linux) or
+# ~/Library/Python/X.Y/bin (macOS). Ensure those are on PATH so
+# sphinx-build is findable in non-interactive CI environments.
+_add_user_bin_to_path() {
+  if [ "$PLATFORM" = "Linux" ] && [ -d "$HOME/.local/bin" ]; then
+    case ":$PATH:" in
+      *":$HOME/.local/bin:"*) ;;
+      *) export PATH="$HOME/.local/bin:$PATH" ;;
+    esac
+  elif [ "$PLATFORM" = "macOS" ]; then
+    for pyver in 3.13 3.12 3.11 3.10 3.9 3.8; do
+      candidate="$HOME/Library/Python/${pyver}/bin"
+      if [ -d "$candidate" ]; then
+        case ":$PATH:" in
+          *":${candidate}:"*) ;;
+          *) export PATH="${candidate}:$PATH" ;;
+        esac
+      fi
+    done
+  fi
+}
+
+# Add user bin dirs to PATH now, before any sphinx check, so that a
+# previously installed sphinx-build is found in CI without .bash_profile.
+_add_user_bin_to_path
+
 if ! command -v sphinx-build &>/dev/null; then
   echo "sphinx-build not found - attempting to install from requirements.txt..."
-  if command -v pip3 &>/dev/null; then
-    PIP_CMD="pip3"
-  elif command -v pip &>/dev/null; then
-    PIP_CMD="pip"
-  else
-    PIP_CMD=""
-  fi
-
-  if [ -n "$PIP_CMD" ] && [ -f "$SPHINX_REQUIREMENTS" ]; then
-    if [ "$PLATFORM" = "Linux" ]; then
-      $PIP_CMD install --break-system-packages -q -r "$SPHINX_REQUIREMENTS"
-    else
-      $PIP_CMD install --user -q -r "$SPHINX_REQUIREMENTS"
-    fi
-
-    # Re-check PATH after install (macOS user bin dir)
-    if [ "$PLATFORM" = "macOS" ]; then
-      for pyver in 3.13 3.12 3.11 3.10 3.9 3.8; do
-        candidate="$HOME/Library/Python/${pyver}/bin"
-        if [ -x "${candidate}/sphinx-build" ]; then
-          export PATH="${candidate}:$PATH"
-          break
-        fi
-      done
-    fi
-
-    # On Linux, ~/.local/bin is the pip --user install location
-    if [ "$PLATFORM" = "Linux" ] && [ -d "$HOME/.local/bin" ]; then
-      export PATH="$HOME/.local/bin:$PATH"
-    fi
-
+  if [ -f "$SPHINX_REQUIREMENTS" ] && command -v pip3 &>/dev/null; then
+    _pip_install -r "$SPHINX_REQUIREMENTS"
+    _add_user_bin_to_path
     if command -v sphinx-build &>/dev/null; then
       echo "sphinx-build installed successfully."
     else
       echo "WARNING: sphinx-build still not found after install - documentation will not be built."
+      echo "  Install manually: pip3 install -r doc/manual/source/requirements.txt"
     fi
   else
-    echo "WARNING: pip not found or requirements.txt missing - documentation will not be built."
+    echo "WARNING: pip3 or requirements.txt not found - documentation will not be built."
     echo "  Install manually: pip3 install -r doc/manual/source/requirements.txt"
   fi
 else
-  # sphinx-build exists - verify requirements are satisfied
+  # sphinx-build present - silently ensure all requirements are up to date
   if [ -f "$SPHINX_REQUIREMENTS" ]; then
-    if [ "$PLATFORM" = "Linux" ]; then
-      pip3 install --break-system-packages -q -r "$SPHINX_REQUIREMENTS" 2>/dev/null || true
-    else
-      pip3 install --user -q -r "$SPHINX_REQUIREMENTS" 2>/dev/null || true
-    fi
+    _pip_install -r "$SPHINX_REQUIREMENTS"
   fi
   echo "sphinx-build is available: $(command -v sphinx-build)"
 fi
@@ -594,21 +713,25 @@ echo ""
 echo "=========================================="
 echo "Ready to build UltraScan3"
 echo "=========================================="
-echo "  Configure preset : ${CONFIGURE_PRESET}"
-echo "  Build preset     : ${BUILD_PRESET}"
+echo "  Platform         : ${PLATFORM} (${ARCH})"
+echo "  Preset           : ${CONFIGURE_PRESET}"
 echo "  Profile          : ${PROFILE}"
 echo "  Qt variant       : ${QT_VERSION_LABEL}"
-echo "  Architecture     : ${ARCH}"
-echo "  Platform         : ${PLATFORM}"
-echo "  PKG installer    : ${BUILD_PKG}"
-echo "  Clean build      : ${CLEAN}"
+echo "  Installer        : ${BUILD_PKG}"
+echo "  Rebuild          : ${REBUILD}"
+echo "  Clean            : ${CLEAN}"
+echo "  Purge cache      : ${PURGE_CACHE}"
 echo "  vcpkg root       : ${VCPKG_ROOT}"
 echo "  Build jobs       : ${BUILD_JOBS}"
 echo ""
 
 if [ "$NON_INTERACTIVE" = false ]; then
-  if [ "$CLEAN" = true ]; then
-    echo "Clean build - dependencies will be rebuilt if needed"
+  if [ "$REBUILD" = true ] && [ "$CLEAN" = false ]; then
+    echo "Tier 1 rebuild - UltraScan recompiled, vcpkg packages restored from cache"
+  elif [ "$CLEAN" = true ] && [ "$PURGE_CACHE" = false ]; then
+    echo "Tier 2 clean - dependencies will be reinstalled (binary cache still warm)"
+  elif [ "$CLEAN" = true ] && [ "$PURGE_CACHE" = true ]; then
+    echo "Tier 3 clean - full recompile from source (binary cache purged)"
   else
     echo "Incremental build - only changed files will be rebuilt"
   fi
@@ -666,7 +789,7 @@ fi
 
 BIN_COUNT=0
 if [ -d "$BUILD_DIR/bin" ]; then
-  BIN_COUNT=$(find "$BUILD_DIR/bin" -maxdepth 1 \( -name '*.app' -o \( -type f -perm +111 \) \) 2>/dev/null | wc -l | tr -d ' ')
+  BIN_COUNT=$(find "$BUILD_DIR/bin" -maxdepth 1 \( -name '*.app' -o \( -type f -perm /111 \) \) 2>/dev/null | wc -l | tr -d ' ')
 fi
 
 echo "=========================================="
@@ -683,10 +806,11 @@ echo "  Binaries           : ${BIN_COUNT} in ${BUILD_DIR}/bin/"
 echo "=========================================="
 echo ""
 if [ "$NON_INTERACTIVE" = false ]; then
-  echo "Next time you build, it will be much faster"
-  echo "since dependencies are cached."
+  echo "Next time you build it will be much faster since dependencies are cached."
   echo ""
-  echo "To rebuild from scratch: $0 --clean"
+  echo "To wipe build dir only:  $0 --rebuild"
+  echo "To reinstall vcpkg deps: $0 --clean"
+  echo "To recompile everything: $0 --clean --purge-cache"
   echo ""
 fi
 

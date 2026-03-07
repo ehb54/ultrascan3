@@ -26,7 +26,10 @@
         "qt5-base",
         "qt5-datavis3d",
         "qt5-svg",
-        "qt5-tools",
+        {
+          "name": "qt5-tools",
+          "features": ["assistant"]
+        },
         "qt5-multimedia",
         "qwt-6-1-6",
         "qwtplot3d-qwt-6-1-6-qt5"
@@ -38,7 +41,10 @@
         "qt5-base",
         "qt5-datavis3d",
         "qt5-svg",
-        "qt5-tools",
+        {
+          "name": "qt5-tools",
+          "features": ["assistant"]
+        },
         "qt5-multimedia",
         "qwt-6-3-0-qt5",
         "qwtplot3d-qwt-6-3-0-qt5"

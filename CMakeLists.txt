@@ -1230,17 +1230,23 @@ if(UNIX AND NOT APPLE AND US3_BUILD_PROGRAMS)
     # -------------------------------------------------------------------------
     set(_LNX_ASSISTANT_EXE "")
     if(DEFINED VCPKG_INSTALLED_DIR AND DEFINED VCPKG_TARGET_TRIPLET)
-        set(_LNX_VCPKG_TOOLS_QT6 "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/tools/Qt6/bin")
-        set(_LNX_VCPKG_TOOLS_QT5 "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/tools/qttools/bin")
+        # Qt6: assistant lives in tools/Qt6/bin (qttools overlay port)
+        set(_LNX_VCPKG_TOOLS_QT6  "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/tools/Qt6/bin")
+        # Qt5: upstream vcpkg qt5-tools installs assistant to tools/qt5-tools/bin
+        set(_LNX_VCPKG_TOOLS_QT5  "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/tools/qt5-tools/bin")
+        # Fallback: some vcpkg versions use tools/qttools/bin for Qt5 as well
+        set(_LNX_VCPKG_TOOLS_QT5B "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/tools/qttools/bin")
     else()
         set(_LNX_VCPKG_TOOLS_QT6 "")
         set(_LNX_VCPKG_TOOLS_QT5 "")
+        set(_LNX_VCPKG_TOOLS_QT5B "")
     endif()
 
     find_program(_LNX_ASSISTANT_EXE assistant
         HINTS
             "${_LNX_VCPKG_TOOLS_QT6}"
             "${_LNX_VCPKG_TOOLS_QT5}"
+            "${_LNX_VCPKG_TOOLS_QT5B}"
             "${Qt6_DIR}/../../../bin"
             "${Qt5_DIR}/../../../bin"
             "$ENV{QTDIR}/bin"
