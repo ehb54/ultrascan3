@@ -1250,11 +1250,11 @@ if(UNIX AND NOT APPLE AND US3_BUILD_PROGRAMS)
     # Determine triplet root from Qt cmake dir (most reliable)
     set(_lnx_triplet_root "")
     if(USE_QT6 AND Qt6_DIR)
-        # Qt6_DIR = .../installed/<triplet>/share/Qt6  (3 levels up = triplet root)
-        get_filename_component(_lnx_triplet_root "${Qt6_DIR}/../../.." ABSOLUTE)
+        # Qt6_DIR = .../installed/<triplet>/share/Qt6  -> 2 levels up = triplet root
+        get_filename_component(_lnx_triplet_root "${Qt6_DIR}/../.." ABSOLUTE)
     elseif(Qt5_DIR)
-        # Qt5_DIR = .../installed/<triplet>/share/cmake/Qt5  (4 levels up = triplet root)
-        get_filename_component(_lnx_triplet_root "${Qt5_DIR}/../../../.." ABSOLUTE)
+        # Qt5_DIR = .../installed/<triplet>/share/cmake/Qt5  -> 3 levels up = triplet root
+        get_filename_component(_lnx_triplet_root "${Qt5_DIR}/../../.." ABSOLUTE)
     endif()
 
     # Fallback: VCPKG_INSTALLED_DIR + triplet
