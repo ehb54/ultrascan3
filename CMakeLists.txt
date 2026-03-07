@@ -1208,6 +1208,115 @@ if(WIN32 AND US3_BUILD_PROGRAMS)
 endif() # WIN32 AND US3_BUILD_PROGRAMS
 
 # =============================================================================
+# LINUX DEPLOYMENT (portable tarball layout)
+#
+# Mirrors the macOS deploy_macos / package_macos_pkg pattern:
+#   deploy_linux           -> stages the install tree into _stage/UltraScan3/
+#                             by running LinuxDeploy.cmake as a -P script
+#   package_linux_tarball  -> tar.gz archive (defined by LinuxPkg.cmake)
+#
+# Legacy equivalent: copypkg-lnx.sh + make_tardistro.sh.template
+#
+# Build pipeline:
+#   cmake --build . --target deploy_linux
+#   cmake --build . --target package_linux_tarball
+# Or via build.sh:
+#   ./scripts/build.sh --pkg
+# =============================================================================
+if(UNIX AND NOT APPLE AND US3_BUILD_PROGRAMS)
+
+    # -------------------------------------------------------------------------
+    # Locate Qt assistant binary for the help system
+    # -------------------------------------------------------------------------
+    set(_LNX_ASSISTANT_EXE "")
+    if(DEFINED VCPKG_INSTALLED_DIR AND DEFINED VCPKG_TARGET_TRIPLET)
+        set(_LNX_VCPKG_TOOLS_QT6 "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/tools/Qt6/bin")
+        set(_LNX_VCPKG_TOOLS_QT5 "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/tools/qttools/bin")
+    else()
+        set(_LNX_VCPKG_TOOLS_QT6 "")
+        set(_LNX_VCPKG_TOOLS_QT5 "")
+    endif()
+
+    find_program(_LNX_ASSISTANT_EXE assistant
+        HINTS
+            "${_LNX_VCPKG_TOOLS_QT6}"
+            "${_LNX_VCPKG_TOOLS_QT5}"
+            "${Qt6_DIR}/../../../bin"
+            "${Qt5_DIR}/../../../bin"
+            "$ENV{QTDIR}/bin"
+        DOC "Path to Qt assistant for Linux packaging"
+    )
+    if(_LNX_ASSISTANT_EXE)
+        message(STATUS "assistant for Linux packaging: ${_LNX_ASSISTANT_EXE}")
+    else()
+        message(STATUS "assistant not found -- help system may not work in Linux tarball")
+    endif()
+
+    # -------------------------------------------------------------------------
+    # Derive vcpkg lib/plugin dirs for LinuxDeploy.cmake
+    # -------------------------------------------------------------------------
+    set(_LNX_VCPKG_LIB_DIR "")
+    set(_LNX_VCPKG_PLUGIN_DIR "")
+    if(DEFINED VCPKG_INSTALLED_DIR AND DEFINED VCPKG_TARGET_TRIPLET)
+        set(_LNX_VCPKG_LIB_DIR    "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/lib")
+        set(_LNX_VCPKG_PLUGIN_DIR "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/plugins")
+    endif()
+    message(STATUS "vcpkg lib dir (Linux):    ${_LNX_VCPKG_LIB_DIR}")
+    message(STATUS "vcpkg plugin dir (Linux): ${_LNX_VCPKG_PLUGIN_DIR}")
+
+    # -------------------------------------------------------------------------
+    # Staging directory
+    # -------------------------------------------------------------------------
+    set(US3_LNX_STAGE_DIR "${CMAKE_BINARY_DIR}/_stage/UltraScan3" CACHE PATH
+        "Staging directory for Linux deployment")
+
+    # -------------------------------------------------------------------------
+    # deploy_linux target
+    # -------------------------------------------------------------------------
+    if(TARGET us)
+        set(_deploy_linux_deps us)
+        if(TARGET documentation)
+            list(APPEND _deploy_linux_deps documentation)
+        endif()
+
+        add_custom_target(deploy_linux
+            COMMAND ${CMAKE_COMMAND} -E remove_directory "${US3_LNX_STAGE_DIR}"
+            COMMAND ${CMAKE_COMMAND}
+                -DSTAGE_DIR=${US3_LNX_STAGE_DIR}
+                -DBIN_DIR=${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
+                -DLIB_DIR=${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
+                -DETC_SOURCE_DIR=${CMAKE_SOURCE_DIR}/etc
+                -DSOMO_SOURCE_DIR=${CMAKE_SOURCE_DIR}/somo
+                -DSOMO_BIN_DIR=${CMAKE_SOURCE_DIR}/bin
+                -DSOMO_LIB_DIR=${CMAKE_SOURCE_DIR}/lib
+                -DLICENSE_FILE=${CMAKE_SOURCE_DIR}/LICENSE.txt
+                -DQCH_DIR=${CMAKE_BINARY_DIR}/bin
+                -DASSISTANT_EXE=${_LNX_ASSISTANT_EXE}
+                -DVCPKG_LIB_DIR=${_LNX_VCPKG_LIB_DIR}
+                -DVCPKG_PLUGIN_DIR=${_LNX_VCPKG_PLUGIN_DIR}
+                -P ${CMAKE_SOURCE_DIR}/admin/cmake/packaging/linux/LinuxDeploy.cmake
+            DEPENDS ${_deploy_linux_deps}
+            COMMENT "Staging Linux deployment into ${US3_LNX_STAGE_DIR}"
+            VERBATIM
+        )
+    else()
+        add_custom_target(deploy_linux
+            COMMAND ${CMAKE_COMMAND} -E echo
+                "ERROR: deploy_linux is unavailable: 'us' target not defined"
+            COMMAND ${CMAKE_COMMAND} -E false
+            COMMENT "deploy_linux unavailable: 'us' target not defined"
+        )
+        message(STATUS "deploy_linux stub created (unavailable: 'us' target not defined)")
+    endif()
+
+    # -------------------------------------------------------------------------
+    # LinuxPkg.cmake: defines package_linux_tarball target
+    # -------------------------------------------------------------------------
+    include(${CMAKE_SOURCE_DIR}/admin/cmake/packaging/linux/LinuxPkg.cmake)
+
+endif() # UNIX AND NOT APPLE AND US3_BUILD_PROGRAMS
+
+# =============================================================================
 # PACKAGING
 # =============================================================================
 set(CPACK_PACKAGE_NAME "UltraScan3")
@@ -1215,14 +1324,11 @@ set(CPACK_PACKAGE_VERSION ${US3_VERSION})
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Advanced analysis of analytical ultracentrifugation experiments")
 set(CPACK_PACKAGE_VENDOR "AUC Solutions, LLC")
 
-# macOS uses the package_macos_pkg CMake target (see admin/cmake/MacOsPkg.cmake)
-# which produces a proper system PKG installer with LaunchDaemon and sysctl.
-# CPack / DragNDrop is not used on macOS.
-#
-# Windows: CPACK_GENERATOR and all NSIS options are set by WinPkg.cmake
-# (included above in the WIN32 block) before this point.
+# macOS: uses package_macos_pkg target (pkgbuild + productbuild). CPack not used.
+# Windows: CPACK_GENERATOR and NSIS options set by WinPkg.cmake above.
+# Linux: uses package_linux_tarball target. CPack TGZ kept as fallback.
 if(NOT APPLE AND NOT WIN32)
-    set(CPACK_GENERATOR "DEB;RPM")
+    set(CPACK_GENERATOR "TGZ")
 endif()
 
 include(CPack)

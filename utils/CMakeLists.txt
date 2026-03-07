@@ -5,6 +5,20 @@
 file(GLOB UTILS_SOURCES "*.cpp")
 file(GLOB UTILS_HEADERS "*.h")
 
+# Exclude instrument-specific DB importers when building without database support.
+# US_CfaData (SQLite) and US_XpnData (PostgreSQL) are data-acquisition components
+# that are not needed for the HPC compute-only profile.
+if(US3_NO_DB)
+    list(REMOVE_ITEM UTILS_SOURCES
+        "${CMAKE_CURRENT_SOURCE_DIR}/us_cfa_data.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/us_xpn_data.cpp"
+    )
+    list(REMOVE_ITEM UTILS_HEADERS
+        "${CMAKE_CURRENT_SOURCE_DIR}/us_cfa_data.h"
+        "${CMAKE_CURRENT_SOURCE_DIR}/us_xpn_data.h"
+    )
+endif()
+
 # Create the utils library
 add_library(us_utils ${UTILS_SOURCES} ${UTILS_HEADERS})
 

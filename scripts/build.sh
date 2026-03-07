@@ -20,8 +20,7 @@ fi
 # PARSE COMMAND LINE OPTIONS
 # =============================================================================
 CLEAN=false
-INSTALL=false
-BUILD_PKG=false        # --pkg: build macOS PKG installer via package_macos_pkg
+BUILD_PKG=false        # --pkg: build platform-native package
 PROFILE="APP"          # default profile
 QT_VARIANT="qt6"       # qt6 | qt5-qwt616 | qt5-qwt630
 ARCH=""
@@ -44,17 +43,6 @@ while [[ $# -gt 0 ]]; do
     --vcpkg-root)
       US3_VCPKG_ROOT="$2"; shift 2
       ;;
-    --install)
-      # macOS packaging is done via --pkg (PKG installer with LaunchDaemon +
-      # sysctl). --install is Linux (DEB/RPM) and Windows (NSIS) only.
-      if [[ "$OSTYPE" == "darwin"* ]]; then
-        echo "ERROR: --install is not supported on macOS."
-        echo "       Use --pkg to build the macOS PKG installer instead."
-        exit 1
-      fi
-      INSTALL=true
-      shift
-      ;;
     --pkg)
       BUILD_PKG=true
       shift
@@ -64,12 +52,13 @@ while [[ $# -gt 0 ]]; do
       echo ""
       echo "OPTIONS:"
       echo "  --clean              Clean the active build directory and vcpkg buildtrees before building"
-      echo "  --pkg                Build macOS PKG installer (macOS only)"
-      echo "                       Installs to /Applications/UltraScan3, activates the"
-      echo "                       ultrascan_sysctl LaunchDaemon, and applies sysctl values."
-      echo "                       Output: build/<preset>/UltraScan3-<version>-macOS.pkg"
-      echo "  --install            Build platform installer: DEB+RPM on Linux, NSIS on Windows"
-      echo "                       Not supported on macOS (use --pkg)"
+      echo "  --pkg                Build platform-native package:"
+      echo "                         macOS   -> PKG installer (installs to /Applications/UltraScan3)"
+      echo "                                    Output: build/<preset>/UltraScan3-<version>-macOS.pkg"
+      echo "                         Linux   -> portable tar.gz archive"
+      echo "                                    Output: build/<preset>/UltraScan3-<version>-Linux-<arch>.tar.gz"
+      echo "                         Windows -> NSIS installer"
+      echo "                                    Output: build/<preset>/UltraScan3-<version>-Windows.exe"
       echo "  --qt6                Build with Qt6 + Qwt6.3.0 [default on macOS]"
       echo "  --qt5-qwt616         Build with Qt5 + Qwt6.1.6 [default on Linux/Windows]"
       echo "  --qt5-qwt630         Build with Qt5 + Qwt6.3.0"
@@ -94,17 +83,16 @@ while [[ $# -gt 0 ]]; do
       echo "  $0 TEST                   # Build with TEST profile"
       echo "  $0 --qt5-qwt616           # Build Qt5+Qwt6.1.6"
       echo "  $0 --clean TEST           # Clean build with TEST profile"
-      echo "  $0 --pkg                  # macOS: build + PKG installer"
-      echo "  $0 --clean --pkg          # macOS: clean build + PKG installer"
-      echo "  $0 --install              # Linux/Windows: build + DEB/RPM or NSIS"
+      echo "  $0 --pkg                  # build + platform-native package"
+      echo "  $0 --clean --pkg          # clean build + platform-native package"
       echo ""
       echo "ENVIRONMENT VARIABLES:"
       echo "  US3_BUILD_JOBS      Override number of parallel build jobs"
       echo "  US3_VCPKG_ROOT      Override vcpkg location (default: \$HOME/vcpkg)"
       exit 0
       ;;
-    APP|TEST|HPC)
-      PROFILE="$1"
+    [Aa][Pp][Pp]|[Tt][Ee][Ss][Tt]|[Hh][Pp][Cc])
+      PROFILE="$(echo "$1" | tr '[:lower:]' '[:upper:]')"
       shift
       ;;
     *)
@@ -129,12 +117,6 @@ elif [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
   PLATFORM_PREFIX="windows"
 else
   echo "ERROR: Unsupported platform: $OSTYPE"
-  exit 1
-fi
-
-# Guard: --pkg is macOS only
-if [ "$BUILD_PKG" = true ] && [ "$PLATFORM" != "macOS" ]; then
-  echo "ERROR: --pkg is only supported on macOS."
   exit 1
 fi
 
@@ -473,7 +455,6 @@ echo "  Qt variant       : ${QT_VERSION_LABEL}"
 echo "  Architecture     : ${ARCH}"
 echo "  Platform         : ${PLATFORM}"
 echo "  PKG installer    : ${BUILD_PKG}"
-echo "  Linux/Win pkg    : ${INSTALL}"
 echo "  Clean build      : ${CLEAN}"
 echo "  vcpkg root       : ${VCPKG_ROOT}"
 echo "  Build jobs       : ${BUILD_JOBS}"
@@ -564,11 +545,13 @@ if [ "$NON_INTERACTIVE" = false ]; then
 fi
 
 # =============================================================================
-# LINUX / WINDOWS PACKAGE (--install)
-# Runs cpack to produce DEB+RPM on Linux or NSIS installer on Windows.
-# Not used on macOS — use --pkg instead.
+# LINUX PACKAGE (--pkg on Linux)
+# Runs the package_linux_tarball CMake target which:
+#   1. Calls deploy_linux to stage the portable app tree
+#   2. Creates a tar.gz archive from the staged tree
+# Output: build/<preset>/UltraScan3-<version>-Linux-<arch>.tar.gz
 # =============================================================================
-if [ "$INSTALL" = true ]; then
+if [ "$BUILD_PKG" = true ] && [ "$PLATFORM" = "Linux" ]; then
   BUILD_DIR="build/$CONFIGURE_PRESET"
 
   if [ ! -d "$BUILD_DIR" ]; then
@@ -578,33 +561,44 @@ if [ "$INSTALL" = true ]; then
 
   echo ""
   echo "=========================================="
-  echo "Packaging (cpack)..."
+  echo "Building Linux tarball..."
   echo "=========================================="
-  ( cd "$BUILD_DIR" && cpack )
+  echo "  CMake target : package_linux_tarball"
+  echo "  Build dir    : ${BUILD_DIR}"
+  echo ""
+
+  if ! cmake --build --preset "$BUILD_PRESET" \
+             --target package_linux_tarball \
+             --parallel "$BUILD_JOBS"; then
+    echo ""
+    echo "ERROR: 'package_linux_tarball' target failed."
+    echo ""
+    echo "Common causes:"
+    echo "  1. deploy_linux failed ('us' target missing or BIN_DIR empty)."
+    echo "     Run: cmake --build --preset $BUILD_PRESET --target deploy_linux"
+    echo "  2. tar failed (check that _stage/UltraScan3/ was created)."
+    echo ""
+    exit 1
+  fi
 
   echo ""
   echo "=========================================="
-  echo "Package complete!"
+  echo "Linux tarball complete!"
   echo "=========================================="
   echo ""
 
-  case "$PLATFORM" in
-    Linux)
-      for pkg in "$BUILD_DIR"/*.deb "$BUILD_DIR"/*.rpm; do
-        [ -f "$pkg" ] && echo "Created: $pkg"
-      done
-      ;;
-    Windows)
-      for pkg in "$BUILD_DIR"/*.exe; do
-        [ -f "$pkg" ] && echo "Created: $pkg"
-      done
-      ;;
-  esac
+  for pkg in "$BUILD_DIR"/UltraScan3-*-Linux-*.tar.gz; do
+    if [ -f "$pkg" ]; then
+      PKG_SIZE=$(du -sh "$pkg" 2>/dev/null | cut -f1 || echo "unknown")
+      echo "  Created : $pkg"
+      echo "  Size    : ${PKG_SIZE}"
+    fi
+  done
   echo ""
 fi
 
 # =============================================================================
-# macOS PKG INSTALLER (--pkg)
+# macOS PKG INSTALLER (--pkg on macOS)
 # Runs the package_macos_pkg CMake target which:
 #   1. Calls deploy_macos to stage the app tree via macdeployqt
 #   2. Builds pkgroot with the staged app + LaunchDaemon plist
@@ -612,7 +606,7 @@ fi
 #   4. Runs productbuild to create the final installer with UI screens
 # Output: build/<preset>/UltraScan3-<version>-macOS.pkg
 # =============================================================================
-if [ "$BUILD_PKG" = true ]; then
+if [ "$BUILD_PKG" = true ] && [ "$PLATFORM" = "macOS" ]; then
   BUILD_DIR="build/$CONFIGURE_PRESET"
 
   if [ ! -d "$BUILD_DIR" ]; then
