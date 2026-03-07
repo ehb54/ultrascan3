@@ -230,7 +230,7 @@ elif [[ "$PLATFORM" == "Linux" ]]; then
   REQUIRED_TOOLS+=(g++)
 fi
 
-if [ "$BUILD_PKG" = true ]; then
+if [ "$BUILD_PKG" = true ] && [ "$PLATFORM" = "macOS" ]; then
   REQUIRED_TOOLS+=(pkgbuild productbuild rsync)
 fi
 
