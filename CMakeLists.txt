@@ -1271,6 +1271,26 @@ if(UNIX AND NOT APPLE AND US3_BUILD_PROGRAMS)
     message(STATUS "vcpkg plugin dir (Linux): ${_LNX_VCPKG_PLUGIN_DIR}")
 
     # -------------------------------------------------------------------------
+    # Copy assistant into the dev-build bin/ so us_helpdaemon can find it.
+    # us_helpdaemon looks for appBaseDir()/bin/assistant at runtime;
+    # in a dev build appBaseDir() resolves to CMAKE_BINARY_DIR, so the binary
+    # must land in ${CMAKE_BINARY_DIR}/bin/assistant.
+    # -------------------------------------------------------------------------
+    if(_LNX_ASSISTANT_EXE)
+        add_custom_target(copy_assistant_to_bin ALL
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                "${_LNX_ASSISTANT_EXE}"
+                "${CMAKE_BINARY_DIR}/bin/assistant"
+            COMMENT "Copying Qt assistant -> bin/ (dev build)"
+            VERBATIM
+        )
+        message(STATUS "assistant will be copied to bin/ at build time (dev build)")
+    else()
+        message(WARNING "assistant not found -- help system will not work in dev build")
+        message(WARNING "  Searched: ${_LNX_VCPKG_TOOLS_QT6}, ${_LNX_VCPKG_TOOLS_QT5}")
+    endif()
+
+    # -------------------------------------------------------------------------
     # Staging directory
     # -------------------------------------------------------------------------
     set(US3_LNX_STAGE_DIR "${CMAKE_BINARY_DIR}/_stage/UltraScan3" CACHE PATH
