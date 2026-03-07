@@ -1330,13 +1330,31 @@ if(UNIX AND NOT APPLE AND US3_BUILD_PROGRAMS)
     # must land in ${CMAKE_BINARY_DIR}/bin/assistant.
     # -------------------------------------------------------------------------
     if(_LNX_ASSISTANT_EXE)
-        add_custom_target(copy_assistant_to_bin ALL
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                "${_LNX_ASSISTANT_EXE}"
-                "${CMAKE_BINARY_DIR}/bin/assistant"
-            COMMENT "Copying Qt assistant -> bin/ (dev build)"
-            VERBATIM
-        )
+        # assistant needs its RPATH patched after copying so it can find Qt
+        # shared libs at runtime. Without this it has no RPATH and fails to
+        # start because libQt6Help.so.6 etc. are not on LD_LIBRARY_PATH.
+        find_program(_PATCHELF_EXE patchelf DOC "patchelf for RPATH patching")
+        if(_PATCHELF_EXE)
+            add_custom_target(copy_assistant_to_bin ALL
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                    "${_LNX_ASSISTANT_EXE}"
+                    "${CMAKE_BINARY_DIR}/bin/assistant"
+                COMMAND ${_PATCHELF_EXE} --set-rpath
+                    "$ORIGIN:$ORIGIN/../lib:${_lnx_triplet_root}/lib"
+                    "${CMAKE_BINARY_DIR}/bin/assistant"
+                COMMENT "Copying Qt assistant -> bin/ and patching RPATH (dev build)"
+                VERBATIM
+            )
+        else()
+            add_custom_target(copy_assistant_to_bin ALL
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                    "${_LNX_ASSISTANT_EXE}"
+                    "${CMAKE_BINARY_DIR}/bin/assistant"
+                COMMENT "Copying Qt assistant -> bin/ (dev build, patchelf not found - RPATH not set)"
+                VERBATIM
+            )
+            message(WARNING "patchelf not found - assistant RPATH will not be patched, help system may fail")
+        endif()
         message(STATUS "assistant will be copied to bin/ at build time (dev build)")
     else()
         message(WARNING "assistant not found -- help system will not work in dev build")
