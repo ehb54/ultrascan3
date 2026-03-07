@@ -7,7 +7,7 @@
 #include "ius_db2.h"
 
 #define _TMST_MAGI_ "USTS"
-#define _TMST_VERS_ "2.1"
+#define _TMST_VERS_ "2.2"
 #define _TMST_INOVAL_ ((1<<15)-1)
 #define _TMST_FNOVAL_ ((pow(2.0,19.0)-1.0)/4.0)
 
@@ -22,6 +22,13 @@
 class US_UTIL_EXTERN US_TimeState : public QObject
 {
    public:
+      enum class TIMESTATE_TYPE { UNKNOWN, CALCULATED, ORIGINAL };
+      enum class IMPORT_TYPE {
+         XLA, //!< Default import type
+         MWRS, //!< Imported from MWRS
+         CFA, //!< Created based on CFA Data (still needed?)
+         OPTIMA, //!< Imported from an Optima machine
+      };
 
       //! \brief Constructor for US_TimeState class.
       US_TimeState();
@@ -79,9 +86,8 @@ class US_UTIL_EXTERN US_TimeState : public QObject
 
       //! \brief Write the definitions XML file for the last opened data file.
       //! \param timeinc  Time increment (0.0 -> no time increment).
-      //! \param imptype  Import type ("XLA", "MWRS", "CFA", "OPTIMA" ).
       //! \return         Status flag (0->OK).
-      int write_defs( double = 0.0, QString = "" );
+      int write_defs( double timeinc = 0.0 );
 
       //! \brief Flush any remaining records and close the output data file.
       //! \return         Status flag (0->OK).
@@ -205,6 +211,11 @@ class US_UTIL_EXTERN US_TimeState : public QObject
       //! \return        Flag if new file was created
       static bool dbSyncToLF( IUS_DB2*, const QString, const int );
 
+      void setImportType( IMPORT_TYPE );
+      void setTimeStateType( TIMESTATE_TYPE );
+      IMPORT_TYPE getImportType( void ) const;
+      TIMESTATE_TYPE getTimeStateType( void ) const;
+
    private:
 
       QFile*       fileo;           //!< Output file pointer.
@@ -219,6 +230,8 @@ class US_UTIL_EXTERN US_TimeState : public QObject
       QString      filepath;        //!< TimeState binary full file path.
       QString      fvers;           //!< File version string.
       QString      imp_type;        //!< Import type ("XLA"|"MWRS"|"CFA"|"OPTIMA").
+      IMPORT_TYPE    import_type;
+      TIMESTATE_TYPE type;
       QString      error_msg;       //!< Current error message string.
 
       bool         lit_endian;      //!< Flag:  machine is little-endian.
