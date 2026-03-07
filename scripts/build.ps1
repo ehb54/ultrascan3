@@ -484,23 +484,22 @@ function Remove-VcpkgTriplet {
         catch { Write-Warning "Could not fully remove vcpkg buildtrees: $($_.Exception.Message)" }
     }
 
+    # Always wipe the vcpkg bookkeeping directory (status file, .list files,
+    # pending updates). Must be unconditional -- stale 'half-installed' entries
+    # survive even when the triplet dir was removed by a prior clean, causing
+    # vcpkg to fail reading pkgconfig files that no longer exist on next run.
+    $VcpkgBookkeeping = Join-Path $VcpkgRoot "installed\vcpkg"
+    if (Test-Path $VcpkgBookkeeping) {
+        Write-Host "Removing vcpkg installed\vcpkg bookkeeping (will be regenerated)..."
+        try   { Remove-Item -Recurse -Force $VcpkgBookkeeping -ErrorAction Stop }
+        catch { Write-Warning "Could not fully remove vcpkg bookkeeping: $($_.Exception.Message)" }
+    }
+
     $TripletDir = Join-Path $VcpkgRoot "installed\$Triplet"
     if (Test-Path $TripletDir) {
         Write-Host "Removing vcpkg installed packages for triplet: $Triplet"
         try   { Remove-Item -Recurse -Force $TripletDir -ErrorAction Stop }
         catch { Write-Warning "Could not fully remove triplet dir: $($_.Exception.Message)" }
-
-        # Wipe the entire vcpkg bookkeeping directory (status file, .list files,
-        # pending updates). This is safe because it only tracks what is in THIS
-        # installed\ tree. vcpkg regenerates it on the next install.
-        # Not doing this leaves stale 'half-installed' status entries that cause
-        # vcpkg to try reading pkgconfig files that no longer exist.
-        $VcpkgBookkeeping = Join-Path $VcpkgRoot "installed\vcpkg"
-        if (Test-Path $VcpkgBookkeeping) {
-            Write-Host "Removing vcpkg installed\vcpkg bookkeeping (will be regenerated)..."
-            try   { Remove-Item -Recurse -Force $VcpkgBookkeeping -ErrorAction Stop }
-            catch { Write-Warning "Could not fully remove vcpkg bookkeeping: $($_.Exception.Message)" }
-        }
     } else {
         Write-Host "vcpkg installed\$Triplet does not exist -- nothing to remove"
     }

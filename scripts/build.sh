@@ -441,20 +441,20 @@ _remove_vcpkg_triplet() {
     rm -rf "$US3_VCPKG_ROOT/buildtrees"
   fi
 
+  # Always wipe the vcpkg bookkeeping directory (status file, .list files,
+  # pending updates) when doing a clean. This is safe: it only tracks what is
+  # in THIS installed/ tree and vcpkg regenerates it on the next install.
+  # Must be done unconditionally -- stale 'half-installed' status entries
+  # survive even when the triplet dir was removed by a prior clean, causing
+  # vcpkg to fail reading pkgconfig files that no longer exist on the next run.
+  if [ -d "$US3_VCPKG_ROOT/installed/vcpkg" ]; then
+    echo "Removing vcpkg installed/vcpkg bookkeeping (will be regenerated)..."
+    rm -rf "$US3_VCPKG_ROOT/installed/vcpkg"
+  fi
+
   if [ -d "$US3_VCPKG_ROOT/installed/$triplet" ]; then
     echo "Removing vcpkg installed packages for triplet: $triplet"
     rm -rf "$US3_VCPKG_ROOT/installed/$triplet"
-
-    # Wipe the entire vcpkg bookkeeping directory (status file, .list files,
-    # pending updates). This is safe because it only tracks what is in THIS
-    # installed/ tree. vcpkg regenerates it on the next install.
-    # Not doing this leaves stale 'half-installed' status entries that cause
-    # vcpkg to try reading pkgconfig files that no longer exist (e.g. the
-    # eigen3.pc-during-zstd-install failure seen after --purge-cache).
-    if [ -d "$US3_VCPKG_ROOT/installed/vcpkg" ]; then
-      echo "Removing vcpkg installed/vcpkg bookkeeping (will be regenerated)..."
-      rm -rf "$US3_VCPKG_ROOT/installed/vcpkg"
-    fi
   else
     echo "vcpkg installed/$triplet does not exist -- nothing to remove"
   fi
