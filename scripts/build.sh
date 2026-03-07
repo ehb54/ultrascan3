@@ -401,30 +401,127 @@ echo "     Build preset     : $BUILD_PRESET"
 echo ""
 
 # =============================================================================
-# INSTALL PLATFORM-SPECIFIC BUILD TOOLS (if needed)
+# LINUX SYSTEM PACKAGE CHECK
+# vcpkg builds everything from source but still needs system headers/tools
+# that are not part of the compiler toolchain.
 # =============================================================================
 if [ "$PLATFORM" == "Linux" ]; then
-  echo "Checking for Ninja..."
-  if ! command -v ninja &>/dev/null; then
-    echo "Ninja not found. Installing..."
+  echo "Checking Linux system dependencies..."
+  echo ""
+
+  # Each entry: "binary_to_check|apt_package|dnf_package"
+  # binary_to_check: command that must be on PATH (empty = check only via dpkg/rpm)
+  LINUX_DEPS=(
+    "ninja|ninja-build|ninja-build"
+    "nasm|nasm|nasm"
+    "pkg-config|pkg-config|pkgconf"
+    "python3|python3|python3"
+    "curl|curl|curl"
+    "zip|zip|zip"
+    "unzip|unzip|unzip"
+  )
+
+  # Dev packages have no binary — check for a sentinel header or .pc file
+  # Format: "sentinel_path|apt_package|dnf_package|description"
+  LINUX_DEV_DEPS=(
+    "/usr/include/GL/gl.h|libgl-dev|mesa-libGL-devel|OpenGL headers"
+    "/usr/include/GL/glu.h|libglu1-mesa-dev|mesa-libGLU-devel|GLU headers"
+    "/usr/include/X11/Xlib.h|libx11-dev|libX11-devel|X11 headers"
+    "/usr/include/fontconfig/fontconfig.h|libfontconfig1-dev|fontconfig-devel|Fontconfig headers"
+    "/usr/include/freetype2/ft2build.h|libfreetype-dev|freetype-devel|FreeType headers"
+    "/usr/include/dbus-1.0/dbus/dbus.h|libdbus-1-dev|dbus-devel|D-Bus headers"
+    "/usr/include/xkbcommon/xkbcommon.h|libxkbcommon-dev|libxkbcommon-devel|xkbcommon headers"
+  )
+
+  MISSING_APT=()
+  MISSING_DNF=()
+  MISSING_DESCRIPTIONS=()
+
+  # Check binary tools
+  for entry in "${LINUX_DEPS[@]}"; do
+    bin="${entry%%|*}";  rest="${entry#*|}"
+    apt_pkg="${rest%%|*}"; dnf_pkg="${rest#*|}"
+    if ! command -v "$bin" &>/dev/null; then
+      MISSING_APT+=("$apt_pkg")
+      MISSING_DNF+=("$dnf_pkg")
+      MISSING_DESCRIPTIONS+=("$bin")
+    fi
+  done
+
+  # Check dev headers
+  for entry in "${LINUX_DEV_DEPS[@]}"; do
+    sentinel="${entry%%|*}"; rest="${entry#*|}"
+    apt_pkg="${rest%%|*}"; rest2="${rest#*|}"
+    dnf_pkg="${rest2%%|*}"; desc="${rest2#*|}"
+    if [ ! -f "$sentinel" ]; then
+      MISSING_APT+=("$apt_pkg")
+      MISSING_DNF+=("$dnf_pkg")
+      MISSING_DESCRIPTIONS+=("$desc")
+    fi
+  done
+
+  if [ ${#MISSING_APT[@]} -ne 0 ]; then
+    echo "Missing system dependencies:"
+    for desc in "${MISSING_DESCRIPTIONS[@]}"; do
+      echo "  - $desc"
+    done
+    echo ""
+
     if command -v apt-get &>/dev/null; then
-      sudo apt-get update
-      sudo apt-get install -y ninja-build
+      APT_CMD="sudo apt-get install -y ${MISSING_APT[*]}"
+      if [ "$NON_INTERACTIVE" = true ]; then
+        echo "Installing missing packages..."
+        sudo apt-get update -qq
+        $APT_CMD
+      else
+        echo "Run the following to install them:"
+        echo "  sudo apt-get update && $APT_CMD"
+        echo ""
+        read -rp "Install now? [y/N] " answer
+        if [[ "$answer" =~ ^[Yy]$ ]]; then
+          sudo apt-get update -qq
+          $APT_CMD
+        else
+          echo "WARNING: Continuing without installing - build may fail."
+        fi
+      fi
     elif command -v dnf &>/dev/null; then
-      sudo dnf install -y ninja-build
+      DNF_CMD="sudo dnf install -y ${MISSING_DNF[*]}"
+      if [ "$NON_INTERACTIVE" = true ]; then
+        echo "Installing missing packages..."
+        $DNF_CMD
+      else
+        echo "Run the following to install them:"
+        echo "  $DNF_CMD"
+        echo ""
+        read -rp "Install now? [y/N] " answer
+        if [[ "$answer" =~ ^[Yy]$ ]]; then
+          $DNF_CMD
+        else
+          echo "WARNING: Continuing without installing - build may fail."
+        fi
+      fi
     else
-      echo "Please install Ninja manually."
+      echo "ERROR: Cannot auto-install - no supported package manager found (apt-get/dnf)."
+      echo "Please install the missing packages manually and re-run."
       exit 1
     fi
+    echo ""
+  else
+    echo "All Linux system dependencies are present."
+    echo ""
   fi
-  echo ""
 fi
 
 # =============================================================================
-# SPHINX CHECK - ensure sphinx-build is on PATH
+# SPHINX CHECK - ensure sphinx-build is on PATH and requirements are installed
 # =============================================================================
-if ! command -v sphinx-build &>/dev/null; then
-  if [ "$PLATFORM" = "macOS" ]; then
+SPHINX_REQUIREMENTS="${SOURCE_DIR}/doc/manual/source/requirements.txt"
+
+# On macOS, pip installs user binaries to a Python-version-specific path
+# that isn't on the default PATH. Search for it and add it if found.
+if [ "$PLATFORM" = "macOS" ]; then
+  if ! command -v sphinx-build &>/dev/null; then
     for pyver in 3.13 3.12 3.11 3.10 3.9 3.8; do
       candidate="$HOME/Library/Python/${pyver}/bin"
       if [ -x "${candidate}/sphinx-build" ]; then
@@ -434,11 +531,60 @@ if ! command -v sphinx-build &>/dev/null; then
       fi
     done
   fi
+fi
 
-  if ! command -v sphinx-build &>/dev/null; then
-    echo "WARNING: sphinx-build not found - documentation will not be built"
-    echo "  Install with: pip3 install -r doc/manual/source/requirements.txt"
+if ! command -v sphinx-build &>/dev/null; then
+  echo "sphinx-build not found - attempting to install from requirements.txt..."
+  if command -v pip3 &>/dev/null; then
+    PIP_CMD="pip3"
+  elif command -v pip &>/dev/null; then
+    PIP_CMD="pip"
+  else
+    PIP_CMD=""
   fi
+
+  if [ -n "$PIP_CMD" ] && [ -f "$SPHINX_REQUIREMENTS" ]; then
+    if [ "$PLATFORM" = "Linux" ]; then
+      $PIP_CMD install --break-system-packages -q -r "$SPHINX_REQUIREMENTS"
+    else
+      $PIP_CMD install --user -q -r "$SPHINX_REQUIREMENTS"
+    fi
+
+    # Re-check PATH after install (macOS user bin dir)
+    if [ "$PLATFORM" = "macOS" ]; then
+      for pyver in 3.13 3.12 3.11 3.10 3.9 3.8; do
+        candidate="$HOME/Library/Python/${pyver}/bin"
+        if [ -x "${candidate}/sphinx-build" ]; then
+          export PATH="${candidate}:$PATH"
+          break
+        fi
+      done
+    fi
+
+    # On Linux, ~/.local/bin is the pip --user install location
+    if [ "$PLATFORM" = "Linux" ] && [ -d "$HOME/.local/bin" ]; then
+      export PATH="$HOME/.local/bin:$PATH"
+    fi
+
+    if command -v sphinx-build &>/dev/null; then
+      echo "sphinx-build installed successfully."
+    else
+      echo "WARNING: sphinx-build still not found after install - documentation will not be built."
+    fi
+  else
+    echo "WARNING: pip not found or requirements.txt missing - documentation will not be built."
+    echo "  Install manually: pip3 install -r doc/manual/source/requirements.txt"
+  fi
+else
+  # sphinx-build exists - verify requirements are satisfied
+  if [ -f "$SPHINX_REQUIREMENTS" ]; then
+    if [ "$PLATFORM" = "Linux" ]; then
+      pip3 install --break-system-packages -q -r "$SPHINX_REQUIREMENTS" 2>/dev/null || true
+    else
+      pip3 install --user -q -r "$SPHINX_REQUIREMENTS" 2>/dev/null || true
+    fi
+  fi
+  echo "sphinx-build is available: $(command -v sphinx-build)"
 fi
 
 # =============================================================================
