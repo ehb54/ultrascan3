@@ -41,7 +41,11 @@ void US_Help::show_help( const QString& helpFile )
   //    }
   // }
 
-  register_init();     // Register the QCH file path
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+  // Qt5: register the .qch file with Assistant before launching
+  register_init();
+#endif
+  // Qt6: registration is handled by the .qhc collection file
 
   assistant = new QProcess;
   QStringList args;
@@ -54,12 +58,16 @@ void US_Help::show_help( const QString& helpFile )
   QString helpbin = US_Settings::appBaseDir() + "/bin/us_helpdaemon";
   assistant->start( helpbin, args );
 #else
+  // On macOS, QProcess cannot pass arguments to a .app bundle.
+  // Prefer the bare binary; fall back to the inner binary of the .app bundle.
   QString helpbin = US_Settings::appBaseDir() + "/bin/us_helpdaemon";
-  QString helpapp = helpbin + ".app";
-  if ( QFile( helpapp ).exists() )
-    assistant->start( helpapp, args );
-  else
-    assistant->start( helpbin, args );
+  if ( !QFile::exists( helpbin ) )
+  {
+    QString helpapp_bin = helpbin + ".app/Contents/MacOS/us_helpdaemon";
+    if ( QFile::exists( helpapp_bin ) )
+      helpbin = helpapp_bin;
+  }
+  assistant->start( helpbin, args );
 #endif
   // Don't bother to wait
 }
@@ -110,7 +118,10 @@ void US_Help::register_init( )
 #ifndef Q_OS_MAC
   program += "bin/assistant";
 #else
-  program += "Developer/Applications/Qt/Assistant.app";
+  // Must invoke the inner binary to pass -register argument
+  program += "bin/Assistant.app/Contents/MacOS/Assistant";
+  if ( !QFile::exists( program ) )
+    program = US_Settings::appBaseDir() + "/bin/assistant";
 #endif
   QStringList args;
   args << "-register" << US_Settings::appBaseDir() + "/bin/manual.qch";

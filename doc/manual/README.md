@@ -1,221 +1,286 @@
 # UltraScan III Documentation
 
+Documentation is written in [reStructuredText](https://www.sphinx-doc.org/en/master/usage/restructuredtext/index.html)
+and built with [Sphinx](https://www.sphinx-doc.org/). The build produces two outputs:
+
+- **HTML** — for local browsing and review
+- **Qt help files** (`manual.qch` / `manual.qhc`) — for Qt Assistant, installed to `bin/`
+
 ## Table of Contents
 
-- [Building Documentation Files](#building-documentation-files)
+- [Prerequisites](#prerequisites)
+- [Building the Documentation](#building-the-documentation)
 - [File Organization](#file-organization)
+- [Adding New Pages](#adding-new-pages)
 - [Documentation Style Guidelines](#documentation-style-guidelines)
-- [Example Document Structure](#example-document-structure)
-- [Adding New Pages to the Documentation](#adding-new-pages-to-the-documentation)
-- [Testing Documentation with Qt Assistant](#testing-documentation-with-qt-assistant)
+- [Testing with Qt Assistant](#testing-with-qt-assistant)
 
-## Building Documentation Files
+---
 
-To build the UltraScan III documentation files for Qt Assistant, from the `ultrascan3/doc/manual` directory, simply run:
+## Prerequisites
 
-```bash
-make
-```
-
-This requires that the Qt binaries are in your PATH and the Perl tool `tpage` is available.
-
-### Installing Required Tools
-
-To get `tpage`, check your distribution for `libtemplate-perl` or install it yourself as root:
+Install Sphinx and the required extensions:
 
 ```bash
-sudo cpan -i Template::Tools
+pip3 install -r source/requirements.txt
 ```
 
-Reference: http://template-toolkit.org/docs/index.html
+For Qt help output you also need `qhelpgenerator`. Whether it is provided
+automatically or requires a manual install depends on your build system and
+Qt version:
 
-On some installations, AppConfig may also be required:
+| Build system | Qt version | `qhelpgenerator` source |
+|---|---|---|
+| CMake + vcpkg | Qt6 | **Automatic** via `qttools[assistant]` in `vcpkg.json` |
+| CMake + vcpkg | Qt5 | Manual system install (see below) |
+| Legacy qmake  | Qt6 | Manual system install (see below) |
+| Legacy qmake  | Qt5 | Manual system install (see below) |
+
+For all cases requiring a manual install:
 
 ```bash
-sudo cpan -i AppConfig
+# macOS - Qt6
+brew install qt
+
+# macOS - Qt5
+brew install qt@5
+
+# Ubuntu / Debian - Qt6
+sudo apt install qt6-tools-dev
+
+# Ubuntu / Debian - Qt5
+sudo apt install qttools5-dev-tools
 ```
 
-For doxygen documentation generation, a program called "GraphViz" is needed. It's available from:
-http://www.graphviz.org/Download_source.php
+If `qhelpgenerator` is not found the build will still succeed but Qt help
+files (`manual.qch` / `manual.qhc`) will not be produced.
+
+### macOS: making sphinx-build available
+
+On macOS, `pip3 install` places scripts under `~/Library/Python/<version>/bin/`,
+which is not on the default PATH. After installing, check which version was used:
+
+```bash
+python3 --version
+```
+
+Then add the matching bin directory to your PATH. For Python 3.9 (the macOS
+system default as of Ventura/Sonoma):
+
+```bash
+export PATH="$HOME/Library/Python/3.9/bin:$PATH"
+```
+
+Add that line to `~/.zshrc` to make it permanent:
+
+```bash
+echo 'export PATH="$HOME/Library/Python/3.9/bin:$PATH"' >> ~/.zshrc
+source ~/.zshrc
+```
+
+Verify it worked:
+
+```bash
+which sphinx-build
+```
+
+---
+
+## Building the Documentation
+
+All commands are run from the `ultrascan3/doc/manual` directory.
+
+### Full build (HTML + Qt help files)
+
+```bash
+make all
+```
+
+This builds HTML output into `build/html/` and compiles `manual.qch` / `manual.qhc`
+into `../../bin/`.
+
+### HTML only (no qhelpgenerator required)
+
+```bash
+make html
+```
+
+Output is written to `build/html/index.html`.
+
+### Qt help files only
+
+```bash
+make qch
+```
+
+Runs the `qthelp` Sphinx builder first, then compiles with `qhelpgenerator`.
+Installed files: `../../bin/manual.qch` and `../../bin/manual.qhc`.
+
+### Clean
+
+```bash
+make clean
+```
+
+Removes `build/` and the installed `.qch` / `.qhc` files.
+
+### CMake
+
+The documentation target is included in the normal CMake build when `sphinx-build`
+is found on your PATH:
+
+```bash
+cmake --build <build-dir> --target documentation
+```
+
+Pass `-DBUILD_DOCUMENTATION=OFF` to skip it entirely.
+
+---
 
 ## File Organization
 
-### Important Note on File Structure
+```
+doc/manual/
+├── CMakeLists.txt          # CMake documentation target
+├── Makefile                # Convenience make targets
+├── README.md               # This file
+└── source/                 # All documentation source lives here
+    ├── conf.py             # Sphinx configuration
+    ├── requirements.txt    # Python dependencies
+    ├── index.rst           # Root table of contents
+    ├── _static/            # CSS, images, and other static assets
+    │   └── custom.css
+    ├── <topic>.rst         # Top-level pages
+    └── <module>/           # Sub-directories for related page groups
+        └── index.rst
+```
 
-During the build process:
-- Source `.body` files are organized in directories for ease of maintenance
-- The build process flattens this structure, placing all files in a single output directory and then creates the HTML
-- Image files maintain their original folder structure under the `images/` directory
+All new content goes under `source/`. The Sphinx build preserves subdirectory
+structure, so cross-references between pages use the RST path relative to
+`source/` (e.g. `gmp/index`).
 
-Cross-referencing implications:
-- When linking to other HTML files, do not include directory paths as they won't exist in the built documentation
-- Example correct link: `<b><a href="gmp_define_experiment.html">Define Another Experiment</a></b>`
-- Incorrect link: `<a href="gmp/gmp_define_experiment.html">Define Another Experiment</a>`
-- For images, continue to include the full path with subdirectories: `<img src="images/gmp/data_acquisition/gmp_data_acquisition_01.png">`
+---
 
-This flattened structure simplifies the build process using a template engine while preserving logical organization in the source files.
+## Adding New Pages
+
+### 1. Create the RST file
+
+Add a new `.rst` file in `source/` or an appropriate subdirectory:
+
+```rst
+.. _my_new_page:
+
+My New Page
+===========
+
+Description of the topic.
+
+.. figure:: /_static/images/my_screenshot.png
+   :align: center
+   :alt: My screenshot
+
+   Caption text here.
+```
+
+### 2. Add it to the table of contents
+
+Open `source/index.rst` (or the relevant subdirectory `index.rst`) and add
+the new page to the appropriate `.. toctree::` directive:
+
+```rst
+.. toctree::
+   :maxdepth: 1
+   :caption: My Section:
+
+   my_new_page
+```
+
+The entry is the filename without the `.rst` extension. For pages in a
+subdirectory, include the relative path: `gmp/my_new_page`.
+
+### 3. Rebuild
+
+```bash
+make html
+```
+
+Open `build/html/index.html` to review, then run `make all` to produce the
+Qt help files.
+
+---
 
 ## Documentation Style Guidelines
 
-When creating or editing documentation files:
+### Images
 
-1. Image Formatting
-   - Wrap all images in a centered paragraph to prevent large spaces:
-     ```html
-     <p class="center"><img src="images/example.png" alt="Example"/></p>
-     ```
-   - Ensure all images have descriptive alt text
+Use the `.. figure::` directive with `/_static/images/` as the root:
 
-2. body Structure
-   - Follow the existing template structure with proper inclusion of header and footer elements
-   - Use semantic HTML elements appropriately
-   - Maintain consistent heading hierarchy (h1, h2, h3, etc.)
+```rst
+.. figure:: /_static/images/module/screenshot.png
+   :align: center
+   :alt: Descriptive alt text
 
-3. CSS Usage
-   - Use the provided CSS classes rather than inline styles
-   - The `center` class is particularly important for properly aligning images
-   - Refer to `mainstyle.css` for available styling options
-
-4. Content Guidelines
-   - Use consistent formatting for navigation links, examples, and code snippets
-   - Keep explanations clear and concise
-   - Organize content with appropriate headings and lists
-   - Include cross-references to related documentation pages where helpful
-
-## Example Document Structure
-
-```html
-[% INCLUDE header.us3/
-title = 'UltraScan III Component Name'
-%]
-
-<h2>Component Name</h2>
-
-<p>Description of the component and its purpose.</p>
-
-<p class="center"><img src="images/component.png" alt="Component Description"/></p>
-
-<h3>Functions:</h3>
-
-<ul>
-   <li>
-      <b>Function Name:</b> Description of what this function does.
-   </li>
-   <!-- Additional functions -->
-</ul>
-
-[% INCLUDE footer.us3 %]
+   Optional caption.
 ```
 
-## Adding New Pages to the Documentation
+For side-by-side figures, the `sphinx_subfigure` extension is available — see
+its [documentation](https://sphinx-subfigure.readthedocs.io/).
 
-To include a new help page in the UltraScan III documentation and ensure it's properly indexed and accessible in Qt Assistant, follow these steps:
+### Cross-references
 
-### 1. Create the Content File
+Link to another page using its label or document path:
 
-Create a new `.body` file in the appropriate directory (e.g., `gmp/`, `us3/`, etc.) under `ultrascan3/doc/manual`.
+```rst
+See :doc:`us_edit` for details.
 
-Use the existing template structure:
-
-```html
-[% INCLUDE header.us3
-   title = 'Your Page Title'
-%]
-
-<h2>Your Page Title</h2>
-
-<p>Description of the topic.</p>
-
-[% INCLUDE footer.us3 %]
+See :ref:`us_edit:Editing Options` for a specific section.
 ```
 
-Name it logically (e.g., `gmp_new_feature.body`).
+### Notes, warnings, and tips
 
-### 2. Add the File to `index.body`
+```rst
+.. note::
 
-To include the new page in the Table of Contents (TOC):
+   This is a note.
 
-1. Open `index.body`
-2. Find the appropriate section or create a new one using `<ul>` and `<li>` elements.
-3. Add an entry linking to your new HTML file:
+.. warning::
 
-```html
-<li><a href="gmp_new_feature.html">New Feature Title</a></li>
+   This is a warning.
+
+.. tip::
+
+   This is a tip.
 ```
 
-Use `.html` as the extension because the build process will convert `.body` files to `.html`.
+### Code blocks
 
-### 3. Understand `manual.qhp` and `manual.qhcp`
+```rst
+.. code-block:: bash
 
-#### `manual.qhp` – Qt Help Project File
-
-This file defines:
-- The help project’s name, virtual folder, namespace
-- All HTML files to be included
-- The TOC (Table of Contents) structure
-- Index keywords and search keywords
-
-When you add a new page:
-- Ensure its `.html` file is listed in the `<files>` section.
-- Add it to the `<toc>` and optionally `<keywords>` sections for visibility and searchability.
-
-Example TOC snippet:
-```xml
-<section title="GMP" ref="index.html">
-  <section title="New Feature Title" ref="gmp_new_feature.html" />
-</section>
+   make html
 ```
 
-#### `manual.qhcp` – Qt Help Collection Project File
+---
 
-This file wraps the `.qhp` into a `.qhc` collection file. It defines:
-- The help collection
-- Which `.qhp` projects to include
-- The output collection file name
+## Testing with Qt Assistant
 
-You don’t typically need to change this unless you're renaming `manual.qhp` or including multiple help projects.
-
-### 4. Rebuild the Documentation
-
-Run the following from `ultrascan3/doc/manual`:
+After running `make all`, launch Qt Assistant with the compiled collection:
 
 ```bash
-make
+assistant -collectionFile ../../bin/manual.qhc
 ```
 
-This will:
-- Convert `.body` files to `.html`
-- Generate the `.qch` and `.qhc` files needed by Qt Assistant
+On macOS, if the `assistant` symlink was created in `bin/` by the CMake build:
 
-### 5. View Changes
+```bash
+../../bin/assistant -collectionFile ../../bin/manual.qhc
+```
 
-You can use Qt Assistant to review updates locally.
+Check that:
+- All table of contents entries are present and link correctly
+- Images display at the right size and position
+- Search returns relevant results
+- No broken cross-references (Sphinx will warn about these at build time)
 
-## Testing Documentation with Qt Assistant
-
-After building your documentation, it's important to test it with Qt Assistant to ensure proper formatting and functionality:
-
-1. Launch Qt Assistant:
-   ```bash
-   assistant -collectionFile bin/manual.qhc
-   ```
-
-2. Navigation Testing:
-   - Verify all links work correctly
-   - Check that images display properly
-   - Ensure table of contents is complete and accurate
-   - Test search functionality with common terms
-
-3. Display Testing:
-   - Test documentation at different window sizes
-   - Verify that centered images remain properly aligned
-   - Check that font sizes and styles are consistent
-   - Ensure code examples are properly formatted
-
-4. Content Validation:
-   - Verify technical accuracy of all procedures
-   - Ensure screenshots match the current software version
-   - Check for any broken references or outdated information
-
-For additional help, refer to the UltraScan support resources.
-
+Sphinx itself reports broken references during the build. Treat any
+`WARNING:` lines in the build output as errors to fix before committing.

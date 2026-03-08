@@ -34,7 +34,7 @@ long int US_Memory::rss_now( void )
    QByteArray ba = f.read( 512 );
    f.close();
 
-   const static int kk = PAGE_SIZE / 1024;
+   const static long kk = sysconf( _SC_PAGESIZE ) / 1024;
 
    rssnow = QString( ba ).section( " ", 23, 23 ).toLong() * (long int)kk;
 #endif

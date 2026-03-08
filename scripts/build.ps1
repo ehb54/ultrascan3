@@ -7,13 +7,28 @@
     Configures and builds UltraScan3 using CMake presets and vcpkg.
     Uses the same arguments as build.sh on macOS/Linux.
 
+.PARAMETER rebuild
+    Tier 1: Remove the CMake build directory only. vcpkg packages are untouched
+    and restored from binary cache. Use when the build tree is corrupted or you
+    want a clean UltraScan recompile without touching dependencies.
+
+.PARAMETER clean
+    Tier 2: Remove build dir + vcpkg buildtrees + installed packages for the
+    active triplet. Forces vcpkg to reinstall all dependencies. Required after
+    vcpkg.json feature changes (e.g. adding qt5-tools[assistant]).
+
+.PARAMETER purge-cache
+    Tier 3 (additive to -clean): also wipes the binary cache, forcing a full
+    recompile from source. Use when switching compilers or suspecting cache
+    corruption. Has no effect without -clean.
+
 .PARAMETER qt6
     Build with Qt6 + Qwt6.3.0 [default]
 
-.PARAMETER qt5_qwt616
+.PARAMETER qt5-qwt616
     Build with Qt5 + Qwt6.1.6
 
-.PARAMETER qt5_qwt630
+.PARAMETER qt5-qwt630
     Build with Qt5 + Qwt6.3.0
 
 .PARAMETER arch
@@ -22,11 +37,11 @@
 .PARAMETER profile
     Build profile: APP (default), TEST, HPC
 
-.PARAMETER vcpkg_root
+.PARAMETER vcpkg-root
     Path to vcpkg installation. Priority: --vcpkg-root > US3_VCPKG_ROOT env > source-tree vcpkg > ~/vcpkg
 
-.PARAMETER clean
-    Remove build artifacts before building
+.PARAMETER pkg
+    Build the Windows NSIS installer after compiling
 
 .PARAMETER help
     Show this help message
@@ -44,19 +59,33 @@
     Qt5 + Qwt6.1.6, ARM64, TEST profile
 
 .EXAMPLE
-    .\build.bat --clean --arch arm64
-    Clean then build Qt6, ARM64, APP profile
+    .\build.bat --rebuild
+    Wipe build dir only, rebuild UltraScan (vcpkg untouched)
+
+.EXAMPLE
+    .\build.bat --clean
+    Full dep reinstall (after vcpkg.json feature changes)
+
+.EXAMPLE
+    .\build.bat --clean --purge-cache
+    Nuke everything, recompile all deps from source
 
 .EXAMPLE
     .\build.bat --vcpkg-root C:\dev\myrepo\vcpkg
     Use a specific vcpkg installation
 
+.EXAMPLE
+    .\build.bat --pkg
+    Build and produce the Windows NSIS installer
+
 .NOTES
     Run via build.bat from any terminal - no special environment needed:
         scripts\build.bat
         scripts\build.bat --arch arm64
+        scripts\build.bat --rebuild
         scripts\build.bat --clean --qt5-qwt616 --arch arm64 TEST
         scripts\build.bat --vcpkg-root C:\dev\vcpkg
+        scripts\build.bat --pkg
 
     VCPKG LOCATION (in order of priority):
         1. --vcpkg-root argument
@@ -67,10 +96,14 @@
     ENVIRONMENT VARIABLES:
         US3_BUILD_JOBS      Override number of parallel build jobs
         US3_VCPKG_ROOT      Override vcpkg location (see priority above)
+        US3_VCPKG_CACHE     Override binary cache path (default: $HOME\.vcpkg-cache)
 #>
 
 param(
+    [switch]${rebuild},
     [switch]${clean},
+    [switch]${purge-cache},
+    [switch]${pkg},
     [switch]${qt6},
     [switch]${qt5-qwt616},
     [switch]${qt5-qwt630},
@@ -80,7 +113,8 @@ param(
     [switch]${help}
 )
 
-$ErrorActionPreference = "Stop"
+$DocsBuilt = $true
+$DocsStatusMessage = ""
 
 # =============================================================================
 # HELP
@@ -89,7 +123,17 @@ if (${help}) {
     Write-Host "Usage: build.bat [OPTIONS] [PROFILE]"
     Write-Host ""
     Write-Host "OPTIONS:"
-    Write-Host "  --clean                  Clean build artifacts before building"
+    Write-Host "  --rebuild                Tier 1: removes the CMake build directory only."
+    Write-Host "                             Fast - vcpkg packages untouched, restored from binary cache."
+    Write-Host "                             Use when the build tree is corrupted or you want a"
+    Write-Host "                             clean UltraScan recompile without touching dependencies."
+    Write-Host "  --clean                  Tier 2: removes build dir + vcpkg buildtrees + installed"
+    Write-Host "                             packages for the active triplet. Forces vcpkg to reinstall"
+    Write-Host "                             all dependencies. Required after vcpkg.json feature changes."
+    Write-Host "  --clean --purge-cache    Tier 3: same as --clean plus wipes the binary cache"
+    Write-Host "                             (~/.vcpkg-cache). Forces full recompile from source."
+    Write-Host "                             Use when switching compilers or suspecting cache corruption."
+    Write-Host "  --pkg                    Build the Windows NSIS installer"
     Write-Host "  --qt6                    Build with Qt6 + Qwt6.3.0 [default]"
     Write-Host "  --qt5-qwt616             Build with Qt5 + Qwt6.1.6"
     Write-Host "  --qt5-qwt630             Build with Qt5 + Qwt6.3.0"
@@ -114,15 +158,18 @@ if (${help}) {
     Write-Host "  build.bat --arch arm64                     # Qt6, ARM64, APP"
     Write-Host "  build.bat --qt5-qwt616                     # Qt5 + Qwt6.1.6, APP"
     Write-Host "  build.bat --qt6 TEST                       # Qt6, TEST profile"
-    Write-Host "  build.bat --clean                          # Clean then build Qt6, APP"
-    Write-Host "  build.bat --clean --qt5-qwt616             # Clean Qt5 + Qwt6.1.6"
+    Write-Host "  build.bat --rebuild                        # Wipe build dir, rebuild UltraScan only"
+    Write-Host "  build.bat --clean                          # Full dep reinstall (after vcpkg.json changes)"
+    Write-Host "  build.bat --clean --purge-cache            # Nuke everything, recompile deps from source"
     Write-Host "  build.bat --clean --arch arm64 TEST        # Clean ARM64 Qt6 TEST build"
     Write-Host "  build.bat --vcpkg-root C:\dev\vcpkg        # Use specific vcpkg"
     Write-Host "  build.bat --vcpkg-root .\vcpkg             # Use source-tree vcpkg"
+    Write-Host "  build.bat --pkg                            # Build + produce NSIS installer"
     Write-Host ""
     Write-Host "ENVIRONMENT VARIABLES:"
     Write-Host "  US3_BUILD_JOBS           Override number of parallel build jobs"
     Write-Host "  US3_VCPKG_ROOT           Override vcpkg location (see priority above)"
+    Write-Host "  US3_VCPKG_CACHE          Override binary cache path (default: `$HOME\.vcpkg-cache)"
     exit 0
 }
 
@@ -133,7 +180,9 @@ $QtSuffix = "-qt6"
 if (${qt5-qwt616}.IsPresent) { $QtSuffix = "-qt5-qwt616" }
 elseif (${qt5-qwt630}.IsPresent) { $QtSuffix = "-qt5-qwt630" }
 
-if (@("APP","TEST","HPC") -notcontains ${profile}) {
+$profile = $profile.ToUpperInvariant()
+
+if (@("APP","TEST","HPC") -notcontains $profile) {
     Write-Host "ERROR: --profile must be APP, TEST, or HPC" -ForegroundColor Red
     exit 1
 }
@@ -163,6 +212,18 @@ if ($Arch -eq "arm64") {
 }
 
 # =============================================================================
+# RESOLVE SOURCE ROOT
+# =============================================================================
+$ScriptDir  = Split-Path -Parent $MyInvocation.MyCommand.Path
+$SourceRoot = (Resolve-Path (Join-Path $ScriptDir "..")).Path
+Set-Location $SourceRoot
+
+# =============================================================================
+# BUILD DIRECTORY
+# =============================================================================
+$BuildDir = Join-Path $SourceRoot "build\$Preset"
+
+# =============================================================================
 # HEADER
 # =============================================================================
 Write-Host "==========================================" -ForegroundColor Cyan
@@ -176,18 +237,20 @@ $NonInteractive = ($env:CI -eq "true")
 if ($NonInteractive) { Write-Host "Running in CI environment" -ForegroundColor Yellow }
 
 Write-Host "Selected build profile : ${profile}"
-Write-Host "Selected Qt version    : $QtSuffix"
+$QtLabel = switch ($QtSuffix) {
+    "-qt6"        { "Qt6 (Qwt 6.3.0)" }
+    "-qt5-qwt616" { "Qt5 (Qwt 6.1.6)" }
+    "-qt5-qwt630" { "Qt5 (Qwt 6.3.0)" }
+    default       { $QtSuffix }
+}
+Write-Host "Selected Qt variant    : $QtLabel"
 Write-Host "Architecture           : $Arch"
 Write-Host "Preset                 : $Preset"
-if (${clean}) { Write-Host "Clean build requested" -ForegroundColor Yellow }
+if (${rebuild} -and -not ${clean}) { Write-Host "Rebuild requested       : --rebuild (build dir only)" -ForegroundColor Yellow }
+if (${clean})       { Write-Host "Clean requested         : --clean (build dir + vcpkg installed/ for triplet)" -ForegroundColor Yellow }
+if (${purge-cache}) { Write-Host "Purge cache requested   : --purge-cache (binary cache will also be wiped)" -ForegroundColor Yellow }
+if (${pkg})         { Write-Host "Installer requested     : --pkg" -ForegroundColor Cyan }
 Write-Host ""
-
-# =============================================================================
-# RESOLVE SOURCE ROOT
-# =============================================================================
-$ScriptDir  = Split-Path -Parent $MyInvocation.MyCommand.Path
-$SourceRoot = Resolve-Path (Join-Path $ScriptDir "..")
-Set-Location $SourceRoot
 
 # =============================================================================
 # BUILD PARALLELISM
@@ -205,12 +268,41 @@ Write-Host ""
 $env:VCPKG_MAX_CONCURRENCY = "$BuildJobs"
 
 # =============================================================================
+# NSIS PATH SELF-HEAL
+# If makensis is not on PATH, check the two standard install locations and
+# add whichever one exists to the session PATH so the tool-check below passes.
+# =============================================================================
+if (-not (Get-Command makensis -ErrorAction SilentlyContinue)) {
+    $NsisPaths = @(
+        "C:\Program Files (x86)\NSIS",
+        "C:\Program Files\NSIS"
+    )
+    foreach ($NsisDir in $NsisPaths) {
+        if (Test-Path (Join-Path $NsisDir "makensis.exe")) {
+            Write-Host "Found NSIS at $NsisDir -- adding to PATH for this session." -ForegroundColor Yellow
+            $env:PATH = "$NsisDir;$env:PATH"
+            break
+        }
+    }
+}
+
+# =============================================================================
 # CHECK REQUIRED TOOLS
 # =============================================================================
 Write-Host "Checking required tools..."
 
+$RequiredTools = @("cmake", "git", "ninja")
+if (${pkg}) { $RequiredTools += "makensis" }
+
+$WingetMap = @{
+    cmake    = "Kitware.CMake"
+    git      = "Git.Git"
+    ninja    = "Ninja-build.Ninja"
+    makensis = "NSIS.NSIS"
+}
+
 $MissingTools = @()
-foreach ($Tool in @("cmake", "git", "ninja")) {
+foreach ($Tool in $RequiredTools) {
     if (-not (Get-Command $Tool -ErrorAction SilentlyContinue)) {
         $MissingTools += $Tool
     }
@@ -219,11 +311,27 @@ foreach ($Tool in @("cmake", "git", "ninja")) {
 if ($MissingTools.Count -gt 0) {
     Write-Host "ERROR: Missing required tools: $($MissingTools -join ', ')" -ForegroundColor Red
     Write-Host ""
-    Write-Host "Install via winget:"
-    Write-Host "  winget install Kitware.CMake"
-    Write-Host "  winget install Git.Git"
-    Write-Host "  winget install Ninja-build.Ninja"
+    Write-Host "Install the missing tools with:" -ForegroundColor Yellow
+    Write-Host ""
+    foreach ($Tool in $MissingTools) {
+        if ($WingetMap.ContainsKey($Tool)) {
+            Write-Host "  winget install $($WingetMap[$Tool])"
+        } else {
+            Write-Host "  Install tool manually: $Tool"
+        }
+    }
+    Write-Host ""
     exit 1
+}
+
+if (-not (Get-Command sphinx-build -ErrorAction SilentlyContinue)) {
+    $DocsBuilt = $false
+    $DocsStatusMessage = "Documentation not built: sphinx-build not found."
+    Write-Host "  Install Python 3.x first, for example:" -ForegroundColor Yellow
+    Write-Host "    winget install -e --id Python.Python.3.13" -ForegroundColor Yellow
+    Write-Host "  Then install the documentation dependencies:" -ForegroundColor Yellow
+    Write-Host "    py -m pip install -r doc/manual/source/requirements.txt" -ForegroundColor Yellow
+    Write-Host ""
 }
 
 Write-Host "All required tools are available." -ForegroundColor Green
@@ -262,7 +370,7 @@ $TempFile = [System.IO.Path]::GetTempFileName()
 cmd /c "`"$VcVarsAll`" $Arch > nul 2>&1 && set" | Out-File $TempFile -Encoding ASCII
 Get-Content $TempFile | ForEach-Object {
     if ($_ -match "^([^=]+)=(.*)$") {
-        [System.Environment]::SetEnvironmentVariable($matches[1], $matches[2], "Process")
+        [System.Environment]::SetEnvironmentVariable($Matches[1], $Matches[2], "Process")
     }
 }
 Remove-Item $TempFile
@@ -310,12 +418,13 @@ if (-not (Test-Path (Join-Path $VcpkgRoot "vcpkg.exe"))) {
     Pop-Location
 }
 
-$env:VCPKG_ROOT           = $VcpkgRoot
-$env:VCPKG_BINARY_SOURCES = "clear;files,$HOME\.vcpkg-cache,readwrite"
-$env:VCPKG_INSTALLED_DIR  = Join-Path $VcpkgRoot "installed"
-
-$VcpkgCacheDir = Join-Path $HOME ".vcpkg-cache"
+# Binary cache: honour US3_VCPKG_CACHE env var, default to $HOME\.vcpkg-cache
+$VcpkgCacheDir = if ($env:US3_VCPKG_CACHE) { $env:US3_VCPKG_CACHE } else { Join-Path $HOME ".vcpkg-cache" }
 if (-not (Test-Path $VcpkgCacheDir)) { New-Item -ItemType Directory -Path $VcpkgCacheDir | Out-Null }
+
+$env:VCPKG_ROOT           = $VcpkgRoot
+$env:VCPKG_BINARY_SOURCES = "clear;files,$VcpkgCacheDir,readwrite"
+$env:VCPKG_INSTALLED_DIR  = Join-Path $VcpkgRoot "installed"
 
 if (-not (Test-Path (Join-Path $VcpkgRoot "scripts\buildsystems\vcpkg.cmake"))) {
     Write-Host "ERROR: vcpkg toolchain not found." -ForegroundColor Red
@@ -326,27 +435,109 @@ Write-Host "vcpkg ready." -ForegroundColor Green
 Write-Host ""
 
 # =============================================================================
-# CLEAN (if requested)
+# CLEAN / REBUILD (tiered)
+#
+#  --rebuild       Tier 1 : build dir only
+#  --clean         Tier 2 : build dir + vcpkg buildtrees + installed/ for triplet
+#  --purge-cache   Tier 3 : additive to --clean; also wipes binary cache
 # =============================================================================
-if (${clean}) {
-    Write-Host "==========================================" -ForegroundColor Yellow
-    Write-Host "Cleaning build artifacts..."               -ForegroundColor Yellow
-    Write-Host "==========================================" -ForegroundColor Yellow
 
-    if (Test-Path "build") {
-        Write-Host "Removing build directory..."
-        Remove-Item -Recurse -Force "build"
+# Derive the vcpkg triplet for this build.
+# Must match what the CMake presets pass as VCPKG_TARGET_TRIPLET.
+function Get-VcpkgTriplet {
+    if ($Arch -eq "arm64") { return "arm64-windows" }
+    else                   { return "x64-windows" }
+}
+
+function Remove-BuildDir {
+    if (Test-Path $BuildDir) {
+        Write-Host "Removing build directory: $BuildDir"
+        try {
+            Remove-Item -Recurse -Force $BuildDir -ErrorAction Stop
+        } catch {
+            Write-Warning "Initial removal failed: $($_.Exception.Message)"
+            Write-Host "Stopping likely locking processes..."
+            Get-Process -ErrorAction SilentlyContinue | Where-Object {
+                $_.ProcessName -match '^(assistant|designer|linguist|qtdiag|qtplugininfo|cmake|ctest|us_.*|UltraScan.*)$'
+            } | Stop-Process -Force -ErrorAction SilentlyContinue
+            Start-Sleep -Seconds 2
+            try {
+                Remove-Item -Recurse -Force $BuildDir -ErrorAction Stop
+            } catch {
+                Write-Error "Unable to remove build directory: $BuildDir"
+                Write-Error "A file is still locked. Close any running UltraScan/Qt processes and retry."
+                exit 1
+            }
+        }
+    } else {
+        Write-Host "Build directory does not exist: $BuildDir"
     }
+}
+
+function Remove-VcpkgTriplet {
+    $Triplet = Get-VcpkgTriplet
 
     $VcpkgBuildtrees = Join-Path $VcpkgRoot "buildtrees"
     if (Test-Path $VcpkgBuildtrees) {
-        Write-Host "Removing vcpkg build trees..."
-        Remove-Item -Recurse -Force $VcpkgBuildtrees
+        Write-Host "Removing vcpkg buildtrees..."
+        try   { Remove-Item -Recurse -Force $VcpkgBuildtrees -ErrorAction Stop }
+        catch { Write-Warning "Could not fully remove vcpkg buildtrees: $($_.Exception.Message)" }
     }
 
-    # Uncomment for a full dependency clean (much slower):
-    # Remove-Item -Recurse -Force (Join-Path $VcpkgRoot "installed")
-    # Remove-Item -Recurse -Force (Join-Path $VcpkgRoot "packages")
+    # Always wipe the vcpkg bookkeeping directory (status file, .list files,
+    # pending updates). Must be unconditional -- stale 'half-installed' entries
+    # survive even when the triplet dir was removed by a prior clean, causing
+    # vcpkg to fail reading pkgconfig files that no longer exist on next run.
+    $VcpkgBookkeeping = Join-Path $VcpkgRoot "installed\vcpkg"
+    if (Test-Path $VcpkgBookkeeping) {
+        Write-Host "Removing vcpkg installed\vcpkg bookkeeping (will be regenerated)..."
+        try   { Remove-Item -Recurse -Force $VcpkgBookkeeping -ErrorAction Stop }
+        catch { Write-Warning "Could not fully remove vcpkg bookkeeping: $($_.Exception.Message)" }
+    }
+
+    $TripletDir = Join-Path $VcpkgRoot "installed\$Triplet"
+    if (Test-Path $TripletDir) {
+        Write-Host "Removing vcpkg installed packages for triplet: $Triplet"
+        try   { Remove-Item -Recurse -Force $TripletDir -ErrorAction Stop }
+        catch { Write-Warning "Could not fully remove triplet dir: $($_.Exception.Message)" }
+    } else {
+        Write-Host "vcpkg installed\$Triplet does not exist -- nothing to remove"
+    }
+}
+
+function Remove-BinaryCache {
+    if (Test-Path $VcpkgCacheDir) {
+        Write-Host "Purging vcpkg binary cache: $VcpkgCacheDir"
+        try   { Remove-Item -Recurse -Force $VcpkgCacheDir -ErrorAction Stop }
+        catch { Write-Warning "Could not fully purge binary cache: $($_.Exception.Message)" }
+        New-Item -ItemType Directory -Path $VcpkgCacheDir -Force | Out-Null
+    } else {
+        Write-Host "Binary cache does not exist: $VcpkgCacheDir"
+    }
+}
+
+if (${rebuild} -and -not ${clean}) {
+    Write-Host "==========================================" -ForegroundColor Yellow
+    Write-Host "Tier 1 rebuild: removing build directory"  -ForegroundColor Yellow
+    Write-Host "==========================================" -ForegroundColor Yellow
+    Remove-BuildDir
+    Write-Host "Rebuild clean complete." -ForegroundColor Green
+    Write-Host ""
+}
+
+if (${clean}) {
+    Write-Host "==========================================" -ForegroundColor Yellow
+    Write-Host "Tier 2 clean: build dir + vcpkg installed/" -ForegroundColor Yellow
+    Write-Host "==========================================" -ForegroundColor Yellow
+    Remove-BuildDir
+    Remove-VcpkgTriplet
+
+    if (${purge-cache}) {
+        Write-Host "------------------------------------------" -ForegroundColor Yellow
+        Write-Host "Tier 3: purging binary cache"              -ForegroundColor Yellow
+        Write-Host "------------------------------------------" -ForegroundColor Yellow
+        Remove-BinaryCache
+    }
 
     Write-Host "Clean complete." -ForegroundColor Green
     Write-Host ""
@@ -358,11 +549,14 @@ if (${clean}) {
 Write-Host "==========================================" -ForegroundColor Cyan
 Write-Host "Ready to build UltraScan3"                 -ForegroundColor Cyan
 Write-Host "==========================================" -ForegroundColor Cyan
+Write-Host "  Platform      : Windows ($Arch)"
 Write-Host "  Preset        : $Preset"
 Write-Host "  Profile       : ${profile}"
-Write-Host "  Qt version    : $QtSuffix"
-Write-Host "  Architecture  : $Arch"
-Write-Host "  Clean build   : $(${clean}.IsPresent)"
+Write-Host "  Qt variant    : $QtLabel"
+Write-Host "  Installer     : $(${pkg}.IsPresent)"
+Write-Host "  Rebuild       : $(${rebuild}.IsPresent)"
+Write-Host "  Clean         : $(${clean}.IsPresent)"
+Write-Host "  Purge cache   : $(${purge-cache}.IsPresent)"
 Write-Host "  vcpkg root    : $VcpkgRoot"
 Write-Host "  Build jobs    : $BuildJobs"
 Write-Host ""
@@ -370,8 +564,20 @@ Write-Host "Steps:"
 Write-Host "  1. Configure CMake with vcpkg toolchain"
 Write-Host "  2. Build dependencies (~10 min first time)"
 Write-Host "  3. Build UltraScan3 (~5 min)"
+if (${pkg}) {
+    Write-Host "  4. Stage Qt DLLs and produce NSIS installer"
+}
 Write-Host ""
 if (-not $NonInteractive) {
+    if (${rebuild} -and -not ${clean}) {
+        Write-Host "Tier 1 rebuild - UltraScan recompiled, vcpkg packages restored from cache" -ForegroundColor Yellow
+    } elseif (${clean} -and -not ${purge-cache}) {
+        Write-Host "Tier 2 clean - dependencies will be reinstalled (binary cache still warm)" -ForegroundColor Yellow
+    } elseif (${clean} -and ${purge-cache}) {
+        Write-Host "Tier 3 clean - full recompile from source (binary cache purged)" -ForegroundColor Yellow
+    } else {
+        Write-Host "Incremental build - only changed files will be rebuilt"
+    }
     Write-Host "Grab a coffee if this is your first build!" -ForegroundColor Yellow
     Write-Host ""
 }
@@ -389,7 +595,12 @@ if ($LASTEXITCODE -ne 0) { Write-Host "ERROR: CMake configuration failed." -Fore
 
 Write-Host ""
 Write-Host "Building..." -ForegroundColor Cyan
-cmake --build "build/$Preset" --parallel $BuildJobs
+if (${pkg}) {
+    Write-Host "Building Windows installer..." -ForegroundColor Cyan
+    cmake --build $BuildDir --target package_windows_nsis --parallel $BuildJobs
+} else {
+    cmake --build $BuildDir --parallel $BuildJobs
+}
 if ($LASTEXITCODE -ne 0) { Write-Host "ERROR: Build failed." -ForegroundColor Red; exit $LASTEXITCODE }
 
 Write-Host ""
@@ -397,11 +608,30 @@ Write-Host "==========================================" -ForegroundColor Green
 Write-Host "Build complete!"                           -ForegroundColor Green
 Write-Host "==========================================" -ForegroundColor Green
 Write-Host ""
-if (-not $NonInteractive) {
-    Write-Host "Next time you build it will be much faster since dependencies are cached."
-    Write-Host ""
-    Write-Host "To rebuild from scratch: .\build.bat --clean"
+if (${pkg}) {
+    $InstallerPattern = "build/$Preset/UltraScan3-*-Windows.exe"
+    $InstallerFile = Get-ChildItem -Path $InstallerPattern -ErrorAction SilentlyContinue | Select-Object -First 1
+    if ($InstallerFile) {
+        Write-Host "Installer: $($InstallerFile.FullName)" -ForegroundColor Green
+    } else {
+        Write-Host "Installer: build/$Preset/UltraScan3-*-Windows.exe" -ForegroundColor Yellow
+    }
     Write-Host ""
 }
+if (-not $NonInteractive) {
+    if (-not $DocsBuilt) {
+        Write-Host "WARNING: $DocsStatusMessage" -ForegroundColor Yellow
+        Write-Host "         Help files (manual.qch/manual.qhc) were not generated." -ForegroundColor Yellow
+        Write-Host ""
+    }
 
-
+    Write-Host "Next time you build it will be much faster since dependencies are cached."
+    Write-Host ""
+    Write-Host "To wipe build dir only:  .\build.bat --rebuild"
+    Write-Host "To reinstall vcpkg deps: .\build.bat --clean"
+    Write-Host "To recompile everything: .\build.bat --clean --purge-cache"
+    if (-not ${pkg}) {
+        Write-Host "To build the installer:  .\build.bat --pkg"
+    }
+    Write-Host ""
+}

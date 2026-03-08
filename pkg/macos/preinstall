@@ -1,0 +1,117 @@
+#!/bin/bash
+# =============================================================================
+# preinstall — UltraScan3 PKG pre-installation script
+# Runs as root before the payload is laid down by the Installer.
+#
+# Responsibilities:
+#   1. Create the install log (idempotent).
+#   2. Stop and unload the existing LaunchDaemon if present (upgrade-safe).
+#
+# Guarantees:
+#   - Never removes /Applications/UltraScan3 (payload handles merge/overwrite).
+#   - Fully idempotent: safe to run on a fresh install or any re-install.
+#   - Never exits non-zero for a "not found / not loaded" condition.
+# =============================================================================
+set -euo pipefail
+
+# ---------------------------------------------------------------------------
+# Constants
+# ---------------------------------------------------------------------------
+readonly LOG=/var/log/ultrascan3-install.log
+readonly DAEMON_PLIST=/Library/LaunchDaemons/ultrascan_sysctl.plist
+readonly DAEMON_LABEL=ultrascan_sysctl
+
+# ---------------------------------------------------------------------------
+# Logging
+# ---------------------------------------------------------------------------
+log() {
+    echo "$(date '+%Y-%m-%d %H:%M:%S') [preinstall] $*" | tee -a "$LOG"
+}
+
+# Ensure log file exists and is writable by root before first use.
+touch "$LOG" 2>/dev/null || true
+chmod 0640 "$LOG" 2>/dev/null || true
+
+log "============================================================"
+log "UltraScan3 pre-install starting"
+log "  macOS  : $(sw_vers -productVersion 2>/dev/null || echo unknown)"
+log "  arch   : $(uname -m 2>/dev/null || echo unknown)"
+log "  user   : $(id 2>/dev/null || echo unknown)"
+log "============================================================"
+
+# ------------------------------------------------------------
+# Require XQuartz (X11) before installation
+# ------------------------------------------------------------
+has_xquartz=0
+
+[[ -d "/Applications/Utilities/XQuartz.app" ]] && has_xquartz=1
+[[ -d "/Applications/XQuartz.app" ]] && has_xquartz=1
+[[ -x "/opt/X11/bin/xterm" ]] && has_xquartz=1
+[[ -d "/opt/X11" ]] && has_xquartz=1
+
+if [[ "$has_xquartz" -eq 0 ]]; then
+
+  # Console message (important for CLI installs)
+  echo "ERROR: XQuartz (X11) is required to install UltraScan."
+  echo "Please install XQuartz from https://www.xquartz.org/"
+  echo "Then run this installer again."
+
+  # GUI dialog (for normal double-click installs)
+  /usr/bin/osascript <<'APPLESCRIPT'
+display dialog "XQuartz (X11) is required to install UltraScan.\n\nPlease install XQuartz from xquartz.org and run this installer again." buttons {"OK"} default button "OK" with icon stop
+APPLESCRIPT
+
+  exit 1
+fi
+
+# ---------------------------------------------------------------------------
+# Guard: this script must run as root (the PKG installer always does, but
+# guard explicitly so the log reflects the failure rather than mysterious
+# permission errors later).
+# ---------------------------------------------------------------------------
+if [ "$(id -u)" -ne 0 ]; then
+    log "ERROR: preinstall must run as root (effective uid=$(id -u))"
+    exit 1
+fi
+
+# ---------------------------------------------------------------------------
+# Stop and unload the LaunchDaemon if it is already registered.
+#
+# Strategy:
+#   1. Try modern `launchctl bootout system <plist>` (macOS 10.11+).
+#      This is the correct API for the new XPC service domain model.
+#   2. Fall back to `launchctl unload -w <plist>` for macOS 10.10 and
+#      older (kept for completeness; UltraScan3 targets 10.15+).
+#   3. Both calls are best-effort — a non-zero exit means the daemon was
+#      not loaded, which is fine on a fresh install.
+#
+# We do NOT remove the plist here; that is the payload's job.
+# ---------------------------------------------------------------------------
+if [ -f "$DAEMON_PLIST" ]; then
+    log "Existing LaunchDaemon plist found: $DAEMON_PLIST"
+    log "Attempting graceful daemon shutdown before upgrade ..."
+
+    if /bin/launchctl bootout system "$DAEMON_PLIST" >>"$LOG" 2>&1; then
+        log "  launchctl bootout system — succeeded"
+    else
+        _bootout_rc=$?
+        log "  launchctl bootout returned ${_bootout_rc} (daemon may not be loaded — OK)"
+        log "  Attempting legacy fallback: launchctl unload ..."
+        /bin/launchctl unload -w "$DAEMON_PLIST" >>"$LOG" 2>&1 || true
+        log "  launchctl unload — complete (errors above are non-fatal)"
+    fi
+else
+    log "No existing LaunchDaemon plist found — this is a fresh install"
+fi
+
+# ---------------------------------------------------------------------------
+# Intentionally do NOT touch /Applications/UltraScan3.
+# The installer payload will merge/overwrite files as needed.
+# Removing the directory here would cause data loss for users who store
+# configuration files inside the application tree.
+# ---------------------------------------------------------------------------
+log "Leaving /Applications/UltraScan3 intact (payload will overwrite)"
+log "------------------------------------------------------------"
+log "preinstall complete — proceeding to payload installation"
+log "============================================================"
+exit 0
