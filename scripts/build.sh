@@ -759,6 +759,18 @@ cmake --preset "$CONFIGURE_PRESET" \
 
 echo ""
 echo "Building..."
+
+# On Linux with vcpkg Qt, build-time Qt tools (rcc, qhelpgenerator, lupdate)
+# are dynamically linked against vcpkg-built libs (libdouble-conversion, libicuXX,
+# etc.) that are NOT on the system LD_LIBRARY_PATH. Export the vcpkg lib dir so
+# these tools can find their runtime libraries when CMake invokes them.
+if [ "$PLATFORM" = "Linux" ]; then
+  _vcpkg_lib_dir="${VCPKG_INSTALLED_DIR}/$(_derive_triplet)/lib"
+  if [ -d "$_vcpkg_lib_dir" ]; then
+    export LD_LIBRARY_PATH="${_vcpkg_lib_dir}${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}"
+  fi
+fi
+
 cmake --build --preset "$BUILD_PRESET" --parallel "$BUILD_JOBS"
 
 echo ""
