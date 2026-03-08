@@ -119,20 +119,28 @@ set(NEW_CONTENT "#ifndef US_REVISION_H
 #endif /* US_REVISION_H */
 ")
 
-set(REVISION_HEADER "${US3_SOURCE_DIR}/programs/us/us_revision.h")
+# Build-tree location — found by CMake programs via include_directories(${CMAKE_BINARY_DIR})
+set(REVISION_HEADER_BUILD "${US3_BINARY_DIR}/us_revision.h")
 
-# Read existing content if file exists
+# Source-tree location — found by SOMO's qmake build and by programs/us via ${src_dir}
+set(REVISION_HEADER_SOURCE "${US3_SOURCE_DIR}/programs/us/us_revision.h")
+
+# Read existing content from source-tree copy if it exists
 set(OLD_CONTENT "")
-if(EXISTS "${REVISION_HEADER}")
-    file(READ "${REVISION_HEADER}" OLD_CONTENT)
+if(EXISTS "${REVISION_HEADER_SOURCE}")
+    file(READ "${REVISION_HEADER_SOURCE}" OLD_CONTENT)
 endif()
 
 # Only write if content has changed
 if(NOT "${OLD_CONTENT}" STREQUAL "${NEW_CONTENT}")
-    file(WRITE "${REVISION_HEADER}" "${NEW_CONTENT}")
+    file(WRITE "${REVISION_HEADER_SOURCE}" "${NEW_CONTENT}")
+    file(WRITE "${REVISION_HEADER_BUILD}" "${NEW_CONTENT}")
     message(STATUS "Updated us_revision.h: build ${BUILD_NUMBER}, rev ${GIT_REVISION}${LOCAL_CHANGES}, ${REVISION_DATE}")
 else()
-    message(STATUS "us_revision.h unchanged: build ${BUILD_NUMBER}, rev ${GIT_COMMIT_HASH}${LOCAL_CHANGES}")
+    message(STATUS "us_revision.h unchanged: build ${BUILD_NUMBER}, rev ${GIT_REVISION}${LOCAL_CHANGES}")
+    # Always keep the build-dir copy in sync (it may be absent after a clean)
+    if(NOT EXISTS "${REVISION_HEADER_BUILD}")
+        file(WRITE "${REVISION_HEADER_BUILD}" "${NEW_CONTENT}")
+        message(STATUS "Wrote missing build-dir us_revision.h")
+    endif()
 endif()
-
-message(STATUS "Generated version ${VERSION_FULL} (${GIT_COMMIT_HASH}${GIT_DIRTY_FLAG} on ${GIT_BRANCH})")

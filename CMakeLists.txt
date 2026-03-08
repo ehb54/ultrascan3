@@ -189,7 +189,7 @@ elseif(US3_PROFILE STREQUAL "TEST")
 
 elseif(US3_PROFILE STREQUAL "HPC")
     set(US3_NO_DB ON CACHE BOOL "" FORCE)
-    set(US3_BUILD_PROGRAMS OFF CACHE BOOL "" FORCE)
+    set(US3_BUILD_PROGRAMS ON CACHE BOOL "" FORCE)  # us_mpi_analysis is built
     set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
     set(US3_PREFER_STATIC ON CACHE BOOL "" FORCE)
 endif()
@@ -716,13 +716,17 @@ endif()
 # SUBDIRECTORIES
 # =============================================================================
 add_subdirectory(utils)
-add_subdirectory(doc/manual)
+if(NOT US3_PROFILE STREQUAL "HPC")
+    add_subdirectory(doc/manual)
+endif()
 
 if(NOT US3_NO_DB)
     add_subdirectory(gui)
 endif()
 
-if(US3_BUILD_PROGRAMS AND NOT US3_NO_DB)
+# APP: full programs suite (requires GUI + DB)
+# HPC: only us_mpi_analysis (NO_DB, no GUI)
+if(US3_BUILD_PROGRAMS)
     add_subdirectory(programs)
 endif()
 
@@ -763,7 +767,7 @@ endif()
 # =============================================================================
 # macOS DEPLOYMENT (folder-based layout)
 # =============================================================================
-if(APPLE AND US3_BUILD_PROGRAMS)
+if(APPLE AND US3_BUILD_PROGRAMS AND NOT US3_PROFILE STREQUAL "HPC")
     # Find macdeployqt from the same Qt installation.
     #
     # vcpkg puts macdeployqt in the *static* triplet's tools dir even when
@@ -1045,7 +1049,7 @@ endif()
 # Requires: deploy_macos target (staged files), pkgbuild, productbuild.
 # Output  : <build-dir>/UltraScan3-<version>-macOS.pkg
 # =============================================================================
-if(APPLE AND US3_BUILD_PROGRAMS)
+if(APPLE AND US3_BUILD_PROGRAMS AND NOT US3_PROFILE STREQUAL "HPC")
     include(${CMAKE_SOURCE_DIR}/admin/cmake/packaging/macos/MacOsPkg.cmake)
 endif()
 
@@ -1223,7 +1227,7 @@ endif() # WIN32 AND US3_BUILD_PROGRAMS
 # Or via build.sh:
 #   ./scripts/build.sh --pkg
 # =============================================================================
-if(UNIX AND NOT APPLE AND US3_BUILD_PROGRAMS)
+if(UNIX AND NOT APPLE AND US3_BUILD_PROGRAMS AND NOT US3_PROFILE STREQUAL "HPC")
 
     # -------------------------------------------------------------------------
     # Locate Qt assistant binary for the help system
@@ -1425,7 +1429,189 @@ if(UNIX AND NOT APPLE AND US3_BUILD_PROGRAMS)
     # -------------------------------------------------------------------------
     include(${CMAKE_SOURCE_DIR}/admin/cmake/packaging/linux/LinuxPkg.cmake)
 
-endif() # UNIX AND NOT APPLE AND US3_BUILD_PROGRAMS
+endif() # UNIX AND NOT APPLE AND US3_BUILD_PROGRAMS AND NOT HPC
+
+# =============================================================================
+# LINUX HPC DEPLOYMENT (headless tarball, no GUI, no help docs)
+#
+# Active when US3_PROFILE=HPC on Linux.  Uses a separate stage directory
+# (_hpc_stage/) so it coexists with the APP build tree without conflict.
+#
+# Build pipeline:
+#   cmake --build . --target deploy_linux_hpc
+#   cmake --build . --target package_linux_hpc_tarball
+# Or via build.sh:
+#   ./scripts/build.sh HPC --pkg
+# =============================================================================
+if(UNIX AND NOT APPLE AND US3_PROFILE STREQUAL "HPC")
+
+    # -------------------------------------------------------------------------
+    # Derive vcpkg lib/plugin dirs
+    # -------------------------------------------------------------------------
+    set(_HPC_VCPKG_LIB_DIR "")
+    set(_HPC_VCPKG_PLUGIN_DIR "")
+    set(_HPC_VCPKG_QT6_PLUGIN_DIR "")
+
+    set(_hpc_triplet_root "")
+    if(USE_QT6 AND Qt6_DIR)
+        get_filename_component(_hpc_triplet_root "${Qt6_DIR}/../.." ABSOLUTE)
+    elseif(Qt5_DIR)
+        get_filename_component(_hpc_triplet_root "${Qt5_DIR}/../../.." ABSOLUTE)
+    endif()
+
+    if(NOT _hpc_triplet_root)
+        set(_hpc_vcpkg_installed "")
+        if(VCPKG_INSTALLED_DIR AND EXISTS "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/lib")
+            set(_hpc_vcpkg_installed "${VCPKG_INSTALLED_DIR}")
+        endif()
+        if(NOT _hpc_vcpkg_installed AND DEFINED ENV{VCPKG_ROOT})
+            set(_hpc_vcpkg_installed "$ENV{VCPKG_ROOT}/installed")
+        endif()
+        set(_hpc_triplet "")
+        if(VCPKG_TARGET_TRIPLET)
+            set(_hpc_triplet "${VCPKG_TARGET_TRIPLET}")
+        else()
+            execute_process(COMMAND uname -m OUTPUT_VARIABLE _hpc_uname OUTPUT_STRIP_TRAILING_WHITESPACE)
+            if(_hpc_uname MATCHES "^(aarch64|arm64)$")
+                set(_hpc_triplet "arm64-linux")
+            else()
+                set(_hpc_triplet "x64-linux-dynamic")
+            endif()
+        endif()
+        if(_hpc_vcpkg_installed AND _hpc_triplet)
+            set(_hpc_triplet_root "${_hpc_vcpkg_installed}/${_hpc_triplet}")
+        endif()
+    endif()
+
+    if(_hpc_triplet_root)
+        set(_HPC_VCPKG_LIB_DIR    "${_hpc_triplet_root}/lib")
+        set(_HPC_VCPKG_PLUGIN_DIR "${_hpc_triplet_root}/plugins")
+        if(EXISTS "${_hpc_triplet_root}/Qt6/plugins")
+            set(_HPC_VCPKG_QT6_PLUGIN_DIR "${_hpc_triplet_root}/Qt6/plugins")
+        endif()
+    elseif(DEFINED VCPKG_INSTALLED_DIR AND DEFINED VCPKG_TARGET_TRIPLET)
+        set(_HPC_VCPKG_LIB_DIR    "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/lib")
+        set(_HPC_VCPKG_PLUGIN_DIR "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/plugins")
+    endif()
+
+    message(STATUS "[HPC] vcpkg lib dir:        ${_HPC_VCPKG_LIB_DIR}")
+    message(STATUS "[HPC] vcpkg plugin dir:     ${_HPC_VCPKG_PLUGIN_DIR}")
+    message(STATUS "[HPC] vcpkg Qt6 plugin dir: ${_HPC_VCPKG_QT6_PLUGIN_DIR}")
+
+    # -------------------------------------------------------------------------
+    # HPC stage directory (separate from APP _stage/)
+    # -------------------------------------------------------------------------
+    set(US3_HPC_STAGE_DIR "${CMAKE_BINARY_DIR}/_hpc_stage/UltraScan3-HPC" CACHE PATH
+        "Staging directory for Linux HPC deployment")
+
+    # -------------------------------------------------------------------------
+    # deploy_linux_hpc target
+    # Does NOT require 'us', 'documentation', or any GUI target.
+    # Depends on usutils so it runs after core libs are compiled.
+    # -------------------------------------------------------------------------
+    set(_deploy_hpc_deps "")
+    if(TARGET usutils)
+        list(APPEND _deploy_hpc_deps usutils)
+    endif()
+    if(TARGET us_mpi_analysis)
+        list(APPEND _deploy_hpc_deps us_mpi_analysis)
+    endif()
+
+    add_custom_target(deploy_linux_hpc
+        COMMAND ${CMAKE_COMMAND} -E remove_directory "${US3_HPC_STAGE_DIR}"
+        COMMAND ${CMAKE_COMMAND}
+            -DHPC_STAGE_DIR=${US3_HPC_STAGE_DIR}
+            -DBIN_DIR=${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
+            -DLIB_DIR=${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
+            -DLICENSE_FILE=${CMAKE_SOURCE_DIR}/LICENSE.txt
+            -DVCPKG_LIB_DIR=${_HPC_VCPKG_LIB_DIR}
+            -DUS3_VERSION_STRING=${US3_VERSION_STRING}
+            -P ${CMAKE_SOURCE_DIR}/admin/cmake/packaging/linux/LinuxHpcDeploy.cmake
+        DEPENDS ${_deploy_hpc_deps}
+        COMMENT "Staging Linux HPC deployment into ${US3_HPC_STAGE_DIR}"
+        VERBATIM
+    )
+
+    # -------------------------------------------------------------------------
+    # LinuxHpcPkg.cmake: defines package_linux_hpc_tarball target
+    # -------------------------------------------------------------------------
+    include(${CMAKE_SOURCE_DIR}/admin/cmake/packaging/linux/LinuxHpcPkg.cmake)
+
+endif() # UNIX AND NOT APPLE AND HPC
+
+# =============================================================================
+# macOS HPC DEPLOYMENT (headless tarball, no GUI launcher, no help docs)
+#
+# Active when APPLE AND US3_PROFILE=HPC.  Uses a separate stage directory
+# (_hpc_stage/) so it coexists with the APP build tree without conflict.
+#
+# Build pipeline:
+#   cmake --build . --target deploy_macos_hpc
+#   cmake --build . --target package_macos_hpc_tarball
+# Or via build.sh:
+#   ./scripts/build.sh HPC --pkg
+# =============================================================================
+if(APPLE AND US3_PROFILE STREQUAL "HPC")
+
+    # -------------------------------------------------------------------------
+    # Derive vcpkg lib dir for MacHpcDeploy.cmake
+    # Only VCPKG_LIB_DIR is needed — the new HPC deploy uses a flat lib/
+    # layout with DYLD_LIBRARY_PATH, not .app bundles or macdeployqt.
+    # -------------------------------------------------------------------------
+    set(_MAC_HPC_VCPKG_LIB_DIR "")
+    if(DEFINED VCPKG_INSTALLED_DIR AND DEFINED VCPKG_TARGET_TRIPLET)
+        set(_MAC_HPC_VCPKG_LIB_DIR "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/lib")
+        if(NOT EXISTS "${_MAC_HPC_VCPKG_LIB_DIR}")
+            string(REPLACE "-dynamic" "" _mac_hpc_static_triplet "${VCPKG_TARGET_TRIPLET}")
+            set(_MAC_HPC_VCPKG_LIB_DIR "${VCPKG_INSTALLED_DIR}/${_mac_hpc_static_triplet}/lib")
+        endif()
+    elseif(USE_QT6 AND Qt6_DIR)
+        get_filename_component(_MAC_HPC_VCPKG_LIB_DIR "${Qt6_DIR}/../../lib" ABSOLUTE)
+    elseif(Qt5_DIR)
+        get_filename_component(_MAC_HPC_VCPKG_LIB_DIR "${Qt5_DIR}/../../../lib" ABSOLUTE)
+    endif()
+    message(STATUS "[macOS HPC] vcpkg lib dir: ${_MAC_HPC_VCPKG_LIB_DIR}")
+
+    # -------------------------------------------------------------------------
+    # HPC stage directory (separate from APP _stage/)
+    # -------------------------------------------------------------------------
+    set(US3_MAC_HPC_STAGE_DIR "${CMAKE_BINARY_DIR}/_hpc_stage/UltraScan3-HPC" CACHE PATH
+        "Staging directory for macOS HPC deployment")
+
+    # -------------------------------------------------------------------------
+    # deploy_macos_hpc target
+    # Does NOT require 'us', 'documentation', or any GUI target.
+    # Depends on usutils so it runs after core libs are compiled.
+    # -------------------------------------------------------------------------
+    set(_deploy_mac_hpc_deps "")
+    if(TARGET usutils)
+        list(APPEND _deploy_mac_hpc_deps usutils)
+    endif()
+    if(TARGET us_mpi_analysis)
+        list(APPEND _deploy_mac_hpc_deps us_mpi_analysis)
+    endif()
+
+    add_custom_target(deploy_macos_hpc
+        COMMAND ${CMAKE_COMMAND} -E remove_directory "${US3_MAC_HPC_STAGE_DIR}"
+        COMMAND ${CMAKE_COMMAND}
+            -DHPC_STAGE_DIR=${US3_MAC_HPC_STAGE_DIR}
+            -DBIN_DIR=${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
+            -DLIB_DIR=${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
+            -DLICENSE_FILE=${CMAKE_SOURCE_DIR}/LICENSE.txt
+            -DVCPKG_LIB_DIR=${_MAC_HPC_VCPKG_LIB_DIR}
+            -DUS3_VERSION_STRING=${US3_VERSION_STRING}
+            -P ${CMAKE_SOURCE_DIR}/admin/cmake/packaging/macos/MacHpcDeploy.cmake
+        DEPENDS ${_deploy_mac_hpc_deps}
+        COMMENT "Staging macOS HPC deployment into ${US3_MAC_HPC_STAGE_DIR}"
+        VERBATIM
+    )
+
+    # -------------------------------------------------------------------------
+    # MacHpcPkg.cmake: defines package_macos_hpc_tarball target
+    # -------------------------------------------------------------------------
+    include(${CMAKE_SOURCE_DIR}/admin/cmake/packaging/macos/MacHpcPkg.cmake)
+
+endif() # APPLE AND HPC
 
 # =============================================================================
 # PACKAGING

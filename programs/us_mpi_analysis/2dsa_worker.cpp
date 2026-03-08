@@ -97,9 +97,9 @@ DbgLv(1) << "w:" << my_rank << ": sols size" << job.length;
                calc_residuals( offset, dataset_count, simulation_values );
 
                // Tell master we are sending back results
-               int size[ 4 ] = { simulation_values.solutes.size(),
-                                 simulation_values.ti_noise.size(),
-                                 simulation_values.ri_noise.size(),
+               int size[ 4 ] = { (int)simulation_values.solutes.size(),
+                                 (int)simulation_values.ti_noise.size(),
+                                 (int)simulation_values.ri_noise.size(),
                                  (int)max_rss() };
 
 DbgLv(1) << "w:" << my_rank << ":   result sols size" << size[0]
@@ -194,8 +194,13 @@ DbgLv(1) << "w:" << my_rank << ":   result sols size" << size[0]
                   long memavail   = pgavail * pgsize;
                   double gb_avail = (double)memavail / gb_bytes;
                   gb_avail        = qRound( gb_avail * 1000.0 ) * 0.001;
+#ifdef _SC_AVPHYS_PAGES
                   long pgcurav    = sysconf( _SC_AVPHYS_PAGES );
                   long memcurav   = pgcurav * pgsize;
+#else
+                  // _SC_AVPHYS_PAGES is Linux-only; on macOS report 0
+                  long memcurav   = 0L;
+#endif
                   double gb_curav = (double)memcurav / gb_bytes;
                   gb_curav        = qRound( gb_curav * 1000.0 ) * 0.001;
 

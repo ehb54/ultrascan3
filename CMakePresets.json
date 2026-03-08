@@ -110,12 +110,20 @@
     { "name": "macos-release-qt6",           "displayName": "macOS Release Qt6 Qwt6.3.0",          "inherits": ["release-base", "macos-base", "base-qt6"],             "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Darwin"  } },
     { "name": "macos-debug-qt6",             "displayName": "macOS Debug Qt6 Qwt6.3.0",            "inherits": ["debug-base",   "macos-base", "base-qt6"],             "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Darwin"  } },
 
+    { "name": "macos-hpc-release-qt5-qwt616", "displayName": "macOS HPC Release Qt5 Qwt6.1.6", "binaryDir": "${sourceDir}/build/${presetName}", "inherits": ["release-base", "macos-base", "base-qt5-qwt616"], "cacheVariables": { "US3_PROFILE": "HPC", "MPI_HOME": "/opt/homebrew/opt/open-mpi" }, "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Darwin" } },
+    { "name": "macos-hpc-release-qt5-qwt630", "displayName": "macOS HPC Release Qt5 Qwt6.3.0", "binaryDir": "${sourceDir}/build/${presetName}", "inherits": ["release-base", "macos-base", "base-qt5-qwt630"], "cacheVariables": { "US3_PROFILE": "HPC", "MPI_HOME": "/opt/homebrew/opt/open-mpi" }, "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Darwin" } },
+    { "name": "macos-hpc-release-qt6",        "displayName": "macOS HPC Release Qt6 Qwt6.3.0",  "binaryDir": "${sourceDir}/build/${presetName}", "inherits": ["release-base", "macos-base", "base-qt6"],        "cacheVariables": { "US3_PROFILE": "HPC", "MPI_HOME": "/opt/homebrew/opt/open-mpi" }, "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Darwin" } },
+
     { "name": "linux-release-qt5-qwt616",    "displayName": "Linux Release Qt5 Qwt6.1.6",          "inherits": ["release-base", "linux-base", "base-qt5-qwt616"],      "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Linux"   } },
     { "name": "linux-debug-qt5-qwt616",      "displayName": "Linux Debug Qt5 Qwt6.1.6",            "inherits": ["debug-base",   "linux-base", "base-qt5-qwt616"],      "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Linux"   } },
     { "name": "linux-release-qt5-qwt630",    "displayName": "Linux Release Qt5 Qwt6.3.0",          "inherits": ["release-base", "linux-base", "base-qt5-qwt630"],      "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Linux"   } },
     { "name": "linux-debug-qt5-qwt630",      "displayName": "Linux Debug Qt5 Qwt6.3.0",            "inherits": ["debug-base",   "linux-base", "base-qt5-qwt630"],      "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Linux"   } },
     { "name": "linux-release-qt6",           "displayName": "Linux Release Qt6 Qwt6.3.0",          "inherits": ["release-base", "linux-base", "base-qt6"],             "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Linux"   } },
     { "name": "linux-debug-qt6",             "displayName": "Linux Debug Qt6 Qwt6.3.0",            "inherits": ["debug-base",   "linux-base", "base-qt6"],             "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Linux"   } },
+
+    { "name": "linux-hpc-release-qt5-qwt616", "displayName": "Linux HPC Release Qt5 Qwt6.1.6", "binaryDir": "${sourceDir}/build/${presetName}", "inherits": ["release-base", "linux-base", "base-qt5-qwt616"], "cacheVariables": { "US3_PROFILE": "HPC" }, "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Linux" } },
+    { "name": "linux-hpc-release-qt5-qwt630", "displayName": "Linux HPC Release Qt5 Qwt6.3.0", "binaryDir": "${sourceDir}/build/${presetName}", "inherits": ["release-base", "linux-base", "base-qt5-qwt630"], "cacheVariables": { "US3_PROFILE": "HPC" }, "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Linux" } },
+    { "name": "linux-hpc-release-qt6",        "displayName": "Linux HPC Release Qt6 Qwt6.3.0",  "binaryDir": "${sourceDir}/build/${presetName}", "inherits": ["release-base", "linux-base", "base-qt6"],        "cacheVariables": { "US3_PROFILE": "HPC" }, "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Linux" } },
 
     { "name": "windows-release-qt5-qwt616",        "displayName": "Windows x64 Release Qt5 Qwt6.1.6",   "inherits": ["release-base", "windows-base",       "base-qt5-qwt616"], "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Windows" } },
     { "name": "windows-debug-qt5-qwt616",          "displayName": "Windows x64 Debug Qt5 Qwt6.1.6",     "inherits": ["debug-base",   "windows-base",       "base-qt5-qwt616"], "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Windows" } },
@@ -145,12 +153,20 @@
     { "name": "build-macos-release-qt6",           "configurePreset": "macos-release-qt6"          },
     { "name": "build-macos-debug-qt6",             "configurePreset": "macos-debug-qt6"            },
 
+    { "name": "build-macos-hpc-release-qt5-qwt616", "configurePreset": "macos-hpc-release-qt5-qwt616" },
+    { "name": "build-macos-hpc-release-qt5-qwt630", "configurePreset": "macos-hpc-release-qt5-qwt630" },
+    { "name": "build-macos-hpc-release-qt6",        "configurePreset": "macos-hpc-release-qt6"        },
+
     { "name": "build-linux-release-qt5-qwt616",    "configurePreset": "linux-release-qt5-qwt616"   },
     { "name": "build-linux-debug-qt5-qwt616",      "configurePreset": "linux-debug-qt5-qwt616"     },
     { "name": "build-linux-release-qt5-qwt630",    "configurePreset": "linux-release-qt5-qwt630"   },
     { "name": "build-linux-debug-qt5-qwt630",      "configurePreset": "linux-debug-qt5-qwt630"     },
     { "name": "build-linux-release-qt6",           "configurePreset": "linux-release-qt6"          },
     { "name": "build-linux-debug-qt6",             "configurePreset": "linux-debug-qt6"            },
+
+    { "name": "build-linux-hpc-release-qt5-qwt616", "configurePreset": "linux-hpc-release-qt5-qwt616" },
+    { "name": "build-linux-hpc-release-qt5-qwt630", "configurePreset": "linux-hpc-release-qt5-qwt630" },
+    { "name": "build-linux-hpc-release-qt6",        "configurePreset": "linux-hpc-release-qt6"        },
 
     { "name": "build-windows-release-qt5-qwt616",       "configurePreset": "windows-release-qt5-qwt616"       },
     { "name": "build-windows-debug-qt5-qwt616",         "configurePreset": "windows-debug-qt5-qwt616"         },

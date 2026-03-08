@@ -186,7 +186,12 @@ if [[ "$PLATFORM" == "Windows" && "$ARCH" == "arm64" ]]; then
   ARM64_SUFFIX="-arm64"
 fi
 
-CONFIGURE_PRESET="${PLATFORM_PREFIX}-release-${QT_VARIANT}${ARM64_SUFFIX}"
+# HPC on Linux and macOS uses dedicated presets (separate binary dir, no GUI)
+if [[ "$PROFILE" == "HPC" && ( "$PLATFORM" == "Linux" || "$PLATFORM" == "macOS" ) ]]; then
+  CONFIGURE_PRESET="${PLATFORM_PREFIX}-hpc-release-${QT_VARIANT}"
+else
+  CONFIGURE_PRESET="${PLATFORM_PREFIX}-release-${QT_VARIANT}${ARM64_SUFFIX}"
+fi
 BUILD_PRESET="build-${CONFIGURE_PRESET}"
 
 echo "Platform               : $PLATFORM ($ARCH)"
@@ -230,8 +235,13 @@ elif [[ "$PLATFORM" == "Linux" ]]; then
   REQUIRED_TOOLS+=(g++)
 fi
 
-if [ "$BUILD_PKG" = true ] && [ "$PLATFORM" = "macOS" ]; then
+if [ "$BUILD_PKG" = true ] && [ "$PLATFORM" = "macOS" ] && [ "$PROFILE" != "HPC" ]; then
   REQUIRED_TOOLS+=(pkgbuild productbuild rsync)
+fi
+
+# HPC profile requires an MPI implementation
+if [ "$PROFILE" = "HPC" ]; then
+  REQUIRED_TOOLS+=(mpicxx)
 fi
 
 MISSING_TOOLS=()
@@ -244,9 +254,38 @@ done
 if [ ${#MISSING_TOOLS[@]} -ne 0 ]; then
   echo "ERROR: Missing required tools: ${MISSING_TOOLS[*]}"
   echo ""
+  # Check if MPI is among the missing tools and give a targeted hint
+  for _t in "${MISSING_TOOLS[@]}"; do
+    if [ "$_t" = "mpicxx" ]; then
+      echo "MPI is required for the HPC profile."
+      if [ "$PLATFORM" == "macOS" ]; then
+        echo "  Install Open MPI via Homebrew:"
+        echo "    brew install open-mpi"
+        echo ""
+        echo "  NOTE: Open MPI's Homebrew bottle requires the Xcode Command Line Tools"
+        echo "  installed at /Library/Developer/CommandLineTools (separate from Xcode.app)."
+        echo "  If 'brew install open-mpi' fails with a GCC/CLT error, run first:"
+        echo "    xcode-select --install"
+        echo "  then re-run brew install open-mpi."
+      elif [ "$PLATFORM" == "Linux" ]; then
+        echo "  Install Open MPI (Debian/Ubuntu):"
+        echo "    sudo apt-get install -y libopenmpi-dev openmpi-bin"
+        echo "  Or MPICH:"
+        echo "    sudo apt-get install -y libmpich-dev mpich"
+        echo "  On HPC clusters, load the site MPI module instead:"
+        echo "    module load openmpi  (or: module load mpich)"
+      fi
+      echo ""
+    fi
+  done
   if [ "$PLATFORM" == "macOS" ]; then
-    echo "On macOS, install Xcode command line tools:"
-    echo "  xcode-select --install"
+    # Generic CLT hint only when MPI wasn't already the issue (it includes its own CLT note)
+    _mpi_missing=false
+    for _t2 in "${MISSING_TOOLS[@]}"; do [ "$_t2" = "mpicxx" ] && _mpi_missing=true; done
+    if [ "$_mpi_missing" = false ]; then
+      echo "On macOS, install Xcode command line tools:"
+      echo "  xcode-select --install"
+    fi
   elif [ "$PLATFORM" == "Linux" ]; then
     echo "On Debian/Ubuntu, run:"
     echo "  sudo apt-get update && sudo apt-get install -y build-essential cmake git"
@@ -837,10 +876,13 @@ fi
 
 # =============================================================================
 # LINUX PACKAGE (--pkg on Linux)
-# Runs the package_linux_tarball CMake target which:
-#   1. Calls deploy_linux to stage the portable app tree
-#   2. Creates a tar.gz archive from the staged tree
-# Output: build/<preset>/UltraScan3-<version>-Linux-<arch>.tar.gz
+#
+#   APP profile -> package_linux_tarball   (desktop, includes GUI, help, etc.)
+#   HPC profile -> package_linux_hpc_tarball (headless, no docs, no GUI)
+#
+# Output:
+#   APP: build/<preset>/UltraScan3-<version>-Linux-<arch>.tar.gz
+#   HPC: build/<preset>/UltraScan3-HPC-<version>-Linux-<arch>.tar.gz
 # =============================================================================
 if [ "$BUILD_PKG" = true ] && [ "$PLATFORM" = "Linux" ]; then
   BUILD_DIR="build/$CONFIGURE_PRESET"
@@ -850,35 +892,49 @@ if [ "$BUILD_PKG" = true ] && [ "$PLATFORM" = "Linux" ]; then
     exit 1
   fi
 
+  if [ "$PROFILE" = "HPC" ]; then
+    _PKG_TARGET="package_linux_hpc_tarball"
+    _PKG_LABEL="Linux HPC tarball"
+    _PKG_GLOB="${BUILD_DIR}/UltraScan3-HPC-*-Linux-*.tar.gz"
+    _PKG_STAGE="_hpc_stage/UltraScan3-HPC"
+    _DEPLOY_TARGET="deploy_linux_hpc"
+  else
+    _PKG_TARGET="package_linux_tarball"
+    _PKG_LABEL="Linux tarball"
+    _PKG_GLOB="${BUILD_DIR}/UltraScan3-*-Linux-*.tar.gz"
+    _PKG_STAGE="_stage/UltraScan3"
+    _DEPLOY_TARGET="deploy_linux"
+  fi
+
   echo ""
   echo "=========================================="
-  echo "Building Linux tarball..."
+  echo "Building ${_PKG_LABEL}..."
   echo "=========================================="
-  echo "  CMake target : package_linux_tarball"
+  echo "  CMake target : ${_PKG_TARGET}"
   echo "  Build dir    : ${BUILD_DIR}"
   echo ""
 
   if ! cmake --build --preset "$BUILD_PRESET" \
-             --target package_linux_tarball \
+             --target "${_PKG_TARGET}" \
              --parallel "$BUILD_JOBS"; then
     echo ""
-    echo "ERROR: 'package_linux_tarball' target failed."
+    echo "ERROR: '${_PKG_TARGET}' target failed."
     echo ""
     echo "Common causes:"
-    echo "  1. deploy_linux failed ('us' target missing or BIN_DIR empty)."
-    echo "     Run: cmake --build --preset $BUILD_PRESET --target deploy_linux"
-    echo "  2. tar failed (check that _stage/UltraScan3/ was created)."
+    echo "  1. ${_DEPLOY_TARGET} failed (BIN_DIR empty or deploy script error)."
+    echo "     Run: cmake --build --preset $BUILD_PRESET --target ${_DEPLOY_TARGET}"
+    echo "  2. tar failed (check that ${_PKG_STAGE} was created)."
     echo ""
     exit 1
   fi
 
   echo ""
   echo "=========================================="
-  echo "Linux tarball complete!"
+  echo "${_PKG_LABEL} complete!"
   echo "=========================================="
   echo ""
 
-  for pkg in "$BUILD_DIR"/UltraScan3-*-Linux-*.tar.gz; do
+  for pkg in ${_PKG_GLOB}; do
     if [ -f "$pkg" ]; then
       PKG_SIZE=$(du -sh "$pkg" 2>/dev/null | cut -f1 || echo "unknown")
       echo "  Created : $pkg"
@@ -905,48 +961,99 @@ if [ "$BUILD_PKG" = true ] && [ "$PLATFORM" = "macOS" ]; then
     exit 1
   fi
 
-  echo ""
-  echo "=========================================="
-  echo "Building macOS PKG installer..."
-  echo "=========================================="
-  echo "  CMake target : package_macos_pkg"
-  echo "  Build dir    : ${BUILD_DIR}"
-  echo ""
+  if [ "$PROFILE" = "HPC" ]; then
+    # ------------------------------------------------------------------
+    # macOS HPC: produce a portable tar.gz (no PKG installer, no GUI)
+    # ------------------------------------------------------------------
+    _MAC_PKG_TARGET="package_macos_hpc_tarball"
+    _MAC_PKG_LABEL="macOS HPC tarball"
+    _MAC_PKG_GLOB="${BUILD_DIR}/UltraScan3-HPC-*-macOS-*.tar.gz"
+    _MAC_DEPLOY_TARGET="deploy_macos_hpc"
 
-  if ! cmake --build --preset "$BUILD_PRESET" \
-             --target package_macos_pkg \
-             --parallel "$BUILD_JOBS"; then
     echo ""
-    echo "ERROR: 'package_macos_pkg' target failed."
+    echo "=========================================="
+    echo "Building ${_MAC_PKG_LABEL}..."
+    echo "=========================================="
+    echo "  CMake target : ${_MAC_PKG_TARGET}"
+    echo "  Build dir    : ${BUILD_DIR}"
     echo ""
-    echo "Common causes:"
-    echo "  1. deploy_macos failed (macdeployqt not found or 'us' target missing)."
-    echo "     Run: cmake --build --preset $BUILD_PRESET --target deploy_macos"
-    echo "  2. pkgbuild or productbuild returned an error."
-    echo "  3. pkg/macos/resources/Welcome.txt or LICENSE.txt is missing."
-    echo ""
-    exit 1
-  fi
 
-  echo ""
-  echo "=========================================="
-  echo "macOS PKG installer complete!"
-  echo "=========================================="
-  echo ""
-
-  for pkg in "$BUILD_DIR"/UltraScan3-*-macOS.pkg; do
-    if [ -f "$pkg" ]; then
-      PKG_SIZE=$(du -sh "$pkg" 2>/dev/null | cut -f1 || echo "unknown")
-      echo "  Created : $pkg"
-      echo "  Size    : ${PKG_SIZE}"
+    if ! cmake --build --preset "$BUILD_PRESET" \
+               --target "${_MAC_PKG_TARGET}" \
+               --parallel "$BUILD_JOBS"; then
+      echo ""
+      echo "ERROR: '${_MAC_PKG_TARGET}' target failed."
+      echo ""
+      echo "Common causes:"
+      echo "  1. ${_MAC_DEPLOY_TARGET} failed (macdeployqt not found or no us_* targets built)."
+      echo "     Run: cmake --build --preset $BUILD_PRESET --target ${_MAC_DEPLOY_TARGET}"
+      echo "  2. tar failed (check that _hpc_stage/UltraScan3-HPC was created)."
+      echo ""
+      exit 1
     fi
-  done
-  echo ""
-  echo "To install (requires admin password):"
-  echo "  sudo installer -pkg <path>.pkg -target /"
-  echo ""
-  echo "To verify after install:"
-  echo "  sudo launchctl list | grep ultrascan_sysctl"
-  echo "  sysctl kern.sysv.shmmax kern.sysv.shmall"
-  echo ""
+
+    echo ""
+    echo "=========================================="
+    echo "${_MAC_PKG_LABEL} complete!"
+    echo "=========================================="
+    echo ""
+
+    for pkg in ${_MAC_PKG_GLOB}; do
+      if [ -f "$pkg" ]; then
+        PKG_SIZE=$(du -sh "$pkg" 2>/dev/null | cut -f1 || echo "unknown")
+        echo "  Created : $pkg"
+        echo "  Size    : ${PKG_SIZE}"
+      fi
+    done
+    echo ""
+
+  else
+    # ------------------------------------------------------------------
+    # macOS APP: produce the PKG installer (pkgbuild + productbuild)
+    # ------------------------------------------------------------------
+    echo ""
+    echo "=========================================="
+    echo "Building macOS PKG installer..."
+    echo "=========================================="
+    echo "  CMake target : package_macos_pkg"
+    echo "  Build dir    : ${BUILD_DIR}"
+    echo ""
+
+    if ! cmake --build --preset "$BUILD_PRESET" \
+               --target package_macos_pkg \
+               --parallel "$BUILD_JOBS"; then
+      echo ""
+      echo "ERROR: 'package_macos_pkg' target failed."
+      echo ""
+      echo "Common causes:"
+      echo "  1. deploy_macos failed (macdeployqt not found or 'us' target missing)."
+      echo "     Run: cmake --build --preset $BUILD_PRESET --target deploy_macos"
+      echo "  2. pkgbuild or productbuild returned an error."
+      echo "  3. pkg/macos/resources/Welcome.txt or LICENSE.txt is missing."
+      echo ""
+      exit 1
+    fi
+
+    echo ""
+    echo "=========================================="
+    echo "macOS PKG installer complete!"
+    echo "=========================================="
+    echo ""
+
+    for pkg in "$BUILD_DIR"/UltraScan3-*-macOS.pkg; do
+      if [ -f "$pkg" ]; then
+        PKG_SIZE=$(du -sh "$pkg" 2>/dev/null | cut -f1 || echo "unknown")
+        echo "  Created : $pkg"
+        echo "  Size    : ${PKG_SIZE}"
+      fi
+    done
+    echo ""
+    echo "To install (requires admin password):"
+    echo "  sudo installer -pkg <path>.pkg -target /"
+    echo ""
+    echo "To verify after install:"
+    echo "  sudo launchctl list | grep ultrascan_sysctl"
+    echo "  sysctl kern.sysv.shmmax kern.sysv.shmall"
+    echo ""
+  fi
 fi
