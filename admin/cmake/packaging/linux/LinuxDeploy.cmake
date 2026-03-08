@@ -6,11 +6,12 @@
 #
 # Layout:
 #   <STAGE_DIR>/
-#     bin/           us, us_*, assistant, manual.qhc, manual.qch
+#     bin/           us, us.sh, us_*, assistant, manual.qhc, manual.qch
 #     lib/           UltraScan .so + Qt .so + Qwt .so + OpenSSL .so
 #     plugins/       Qt plugins (platforms/, sqldrivers/, imageformats/, ...)
 #     etc/           editable config data
 #     somo/          SOMO data files
+#     README.txt     installation and quick-start instructions
 #     license.txt
 #     bin64 -> bin   (symlink, legacy compat)
 #     lib64 -> lib   (symlink, legacy compat)
@@ -80,6 +81,76 @@ if(EXISTS "${BIN_DIR}/us")
 else()
     message(FATAL_ERROR "[LinuxDeploy] 'us' not found in ${BIN_DIR}")
 endif()
+
+# =========================================================================
+# 1b) Generate us.sh launcher script
+#
+#     Mirrors the legacy us.sh: sets LD_LIBRARY_PATH so the bundled Qt/Qwt
+#     .so files in ../lib/ are found regardless of the user's environment,
+#     then exec's the us binary.
+#
+#     us.sh is the documented entry point for UltraScan III on Linux.
+#     Users run:  /install/path/bin/us.sh
+#     The .desktop file (section 2b) also points to us.sh.
+# =========================================================================
+file(WRITE "${S_BIN}/us.sh"
+"#!/bin/bash
+DIR=\"\$( cd \"\$( dirname \"\${BASH_SOURCE[0]}\" )\" >/dev/null 2>&1 && pwd )\"
+export LD_LIBRARY_PATH=\"\$DIR/../lib\${LD_LIBRARY_PATH:+:\$LD_LIBRARY_PATH}\"
+export QT_PLUGIN_PATH=\"\$DIR/../plugins\${QT_PLUGIN_PATH:+:\$QT_PLUGIN_PATH}\"
+exec \"\$DIR/us\" \"\$@\"
+")
+execute_process(COMMAND chmod 755 "${S_BIN}/us.sh")
+message(STATUS "[LinuxDeploy] Generated us.sh launcher")
+
+# =========================================================================
+# 1c) Generate README.txt at the tarball root
+# =========================================================================
+if(NOT DEFINED US3_VERSION_STRING OR US3_VERSION_STRING STREQUAL "")
+    set(US3_VERSION_STRING "(unknown version)")
+endif()
+file(WRITE "${STAGE_DIR}/README.txt"
+"UltraScan III ${US3_VERSION_STRING} - Linux
+================================================================================
+
+WEBSITE
+  https://ultrascan.aucsolutions.com
+
+INSTALLATION
+  Extract this archive to a location of your choice, for example:
+
+    cd /usr/local
+    tar Jxf UltraScan3-${US3_VERSION_STRING}-Linux-<arch>.tar.xz
+
+  No further installation steps are required.  The package is self-contained.
+
+STARTING ULTRASCAN III
+  From a terminal, run the launcher script in the bin/ subdirectory:
+
+    /usr/local/UltraScan3/bin/us.sh
+
+  You may add the bin/ directory to your PATH for convenience:
+
+    export PATH=/usr/local/UltraScan3/bin:\$PATH
+    us.sh
+
+FILE LAYOUT
+  bin/        Executables and launcher scripts
+  lib/        Bundled shared libraries (Qt, Qwt, OpenSSL, UltraScan)
+  plugins/    Qt plugins (platform, image format, SQL drivers)
+  etc/        Configuration data, color maps, rotor definitions
+  somo/       US-SOMO supporting data files
+  license.txt LGPL license
+
+SUPPORT
+  https://ultrascan.aucsolutions.com/contacts.php
+
+LICENSE
+  UltraScan III is distributed under the GNU Lesser General Public License
+  (LGPL).  See license.txt for the full license text.
+  NIH funding: GM120600
+")
+message(STATUS "[LinuxDeploy] Generated README.txt")
 
 # =========================================================================
 # 2) Copy companion us_* executables into bin/
@@ -431,4 +502,6 @@ message(STATUS "  lib/     - UltraScan + Qt + Qwt + OpenSSL .so files")
 message(STATUS "  plugins/ - Qt plugins (platforms/, sqldrivers/, ...)")
 message(STATUS "  etc/     - Configuration data")
 message(STATUS "  somo/    - SOMO data")
+message(STATUS "  bin/us.sh    - Shell launcher (documented entry point)")
+message(STATUS "  README.txt   - Installation and quick-start instructions")
 message(STATUS "  bin64 -> bin, lib64 -> lib (legacy symlinks)")
