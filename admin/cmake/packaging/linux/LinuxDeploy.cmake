@@ -26,7 +26,9 @@
 # Optional variables:
 #   QCH_DIR             - Directory containing manual.qch / manual.qhc
 #   VCPKG_LIB_DIR       - vcpkg installed lib/ (Qt/Qwt/OpenSSL .so files)
-#   VCPKG_PLUGIN_DIR    - vcpkg installed plugins/ dir
+#   VCPKG_PLUGIN_DIR    - vcpkg installed plugins/ dir (Qt5 / legacy layout)
+#   VCPKG_QT6_PLUGIN_DIR - vcpkg Qt6/plugins/ dir (<triplet>/Qt6/plugins);
+#                          preferred over VCPKG_PLUGIN_DIR for Qt6 builds
 #   ASSISTANT_EXE       - Path to assistant binary
 #   SOMO_BIN_DIR        - SoMo bin/ directory
 #   SOMO_LIB_DIR        - SoMo lib/ directory
@@ -191,25 +193,43 @@ endif()
 # =========================================================================
 # 5) Copy Qt plugins from vcpkg into plugins/
 #    Legacy equivalent: copypkg-lnx.sh: ${RSYNC} ${QTDIR}/plugins ${PKGDIR}/lib/
+#
+#    Qt6 vcpkg installs plugins under <triplet>/Qt6/plugins/ rather than
+#    <triplet>/plugins/.  Prefer VCPKG_QT6_PLUGIN_DIR when set (Qt6 builds),
+#    fall back to the legacy VCPKG_PLUGIN_DIR path (Qt5 / older vcpkg).
 # =========================================================================
-if(VCPKG_PLUGIN_DIR AND EXISTS "${VCPKG_PLUGIN_DIR}")
+set(_effective_plugin_dir "")
+if(VCPKG_QT6_PLUGIN_DIR AND EXISTS "${VCPKG_QT6_PLUGIN_DIR}")
+    set(_effective_plugin_dir "${VCPKG_QT6_PLUGIN_DIR}")
+    message(STATUS "[LinuxDeploy] Using Qt6 plugin dir: ${VCPKG_QT6_PLUGIN_DIR}")
+elseif(VCPKG_PLUGIN_DIR AND EXISTS "${VCPKG_PLUGIN_DIR}")
+    set(_effective_plugin_dir "${VCPKG_PLUGIN_DIR}")
+    message(STATUS "[LinuxDeploy] Using legacy plugin dir: ${VCPKG_PLUGIN_DIR}")
+endif()
+
+if(_effective_plugin_dir)
     message(STATUS "[LinuxDeploy] Copying Qt plugins -> plugins/")
-    file(COPY "${VCPKG_PLUGIN_DIR}/" DESTINATION "${S_PLUG}")
+    file(COPY "${_effective_plugin_dir}/" DESTINATION "${S_PLUG}")
 else()
-    # Safety-net: platforms/libqxcb.so is required for any X11 display
-    message(STATUS "[LinuxDeploy] VCPKG_PLUGIN_DIR not set -- Qt plugins not bundled")
-    message(STATUS "  The app requires platform plugins (libqxcb.so) to run.")
+    message(STATUS "[LinuxDeploy] No Qt plugin dir found -- platform plugins not bundled")
+    message(STATUS "  Set VCPKG_QT6_PLUGIN_DIR (Qt6) or VCPKG_PLUGIN_DIR (Qt5).")
+    message(STATUS "  The app requires platform plugins (libqxcb.so / libqwayland*.so) to run.")
 endif()
 
 # =========================================================================
 # 5b) Guarantee sqldrivers/libqsqlite.so is present
-#     Qt Assistant search requires SQLite; windeployqt/linuxdeployqt equivalents
-#     don't always pull it in automatically.
+#     Qt Assistant search requires SQLite; the bulk plugin copy in section 5
+#     should have handled this, but we check explicitly as a safety-net.
+#     Qt6 vcpkg puts sqldrivers under <triplet>/Qt6/plugins/sqldrivers so we
+#     search VCPKG_QT6_PLUGIN_DIR first, then fall back to VCPKG_PLUGIN_DIR.
 # =========================================================================
 file(MAKE_DIRECTORY "${S_PLUG}/sqldrivers")
 if(NOT EXISTS "${S_PLUG}/sqldrivers/libqsqlite.so")
     set(_QSQLITE_FOUND FALSE)
     set(_QSQLITE_SEARCH_DIRS "")
+    if(VCPKG_QT6_PLUGIN_DIR)
+        list(APPEND _QSQLITE_SEARCH_DIRS "${VCPKG_QT6_PLUGIN_DIR}/sqldrivers")
+    endif()
     if(VCPKG_PLUGIN_DIR)
         list(APPEND _QSQLITE_SEARCH_DIRS "${VCPKG_PLUGIN_DIR}/sqldrivers")
     endif()

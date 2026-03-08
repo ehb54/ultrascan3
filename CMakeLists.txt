@@ -1316,12 +1316,25 @@ if(UNIX AND NOT APPLE AND US3_BUILD_PROGRAMS)
     # -------------------------------------------------------------------------
     set(_LNX_VCPKG_LIB_DIR "")
     set(_LNX_VCPKG_PLUGIN_DIR "")
+    set(_LNX_VCPKG_QT6_PLUGIN_DIR "")
     if(DEFINED VCPKG_INSTALLED_DIR AND DEFINED VCPKG_TARGET_TRIPLET)
         set(_LNX_VCPKG_LIB_DIR    "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/lib")
         set(_LNX_VCPKG_PLUGIN_DIR "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/plugins")
     endif()
-    message(STATUS "vcpkg lib dir (Linux):    ${_LNX_VCPKG_LIB_DIR}")
-    message(STATUS "vcpkg plugin dir (Linux): ${_LNX_VCPKG_PLUGIN_DIR}")
+    # Qt6 vcpkg on Linux puts plugins in <triplet>/Qt6/plugins/ rather than
+    # <triplet>/plugins/.  Search the shared installed dir (via _lnx_triplet_root,
+    # derived from Qt6_DIR above) first, then the per-build-tree dir.
+    foreach(_lnx_search_root IN ITEMS
+            "${_lnx_triplet_root}"
+            "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}")
+        if(EXISTS "${_lnx_search_root}/Qt6/plugins")
+            set(_LNX_VCPKG_QT6_PLUGIN_DIR "${_lnx_search_root}/Qt6/plugins")
+            break()
+        endif()
+    endforeach()
+    message(STATUS "vcpkg lib dir (Linux):        ${_LNX_VCPKG_LIB_DIR}")
+    message(STATUS "vcpkg plugin dir (Linux):     ${_LNX_VCPKG_PLUGIN_DIR}")
+    message(STATUS "vcpkg Qt6 plugin dir (Linux): ${_LNX_VCPKG_QT6_PLUGIN_DIR}")
 
     # -------------------------------------------------------------------------
     # Copy assistant into the dev-build bin/ so us_helpdaemon can find it.
@@ -1391,6 +1404,7 @@ if(UNIX AND NOT APPLE AND US3_BUILD_PROGRAMS)
                 -DASSISTANT_EXE=${_LNX_ASSISTANT_EXE}
                 -DVCPKG_LIB_DIR=${_LNX_VCPKG_LIB_DIR}
                 -DVCPKG_PLUGIN_DIR=${_LNX_VCPKG_PLUGIN_DIR}
+                -DVCPKG_QT6_PLUGIN_DIR=${_LNX_VCPKG_QT6_PLUGIN_DIR}
                 -P ${CMAKE_SOURCE_DIR}/admin/cmake/packaging/linux/LinuxDeploy.cmake
             DEPENDS ${_deploy_linux_deps}
             COMMENT "Staging Linux deployment into ${US3_LNX_STAGE_DIR}"
