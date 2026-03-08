@@ -147,6 +147,27 @@ if(VCPKG_LIB_DIR AND EXISTS "${VCPKG_LIB_DIR}")
         endif()
     endforeach()
 
+    # Qt transitive runtime dependencies built by vcpkg.
+    # These live alongside the Qt .so files in the same vcpkg lib/ dir and are
+    # NOT present on the target system (they are vcpkg-private builds).
+    # Examples: libdouble-conversion, libicuXX, libpcre2-*, libb2, libzstd,
+    #           libmd4c, libharfbuzz, libfreetype, libpng, libbrotli*, etc.
+    # We copy everything from vcpkg lib/ that is a shared library, skipping
+    # files already staged (Qt/Qwt/OpenSSL covered above).
+    file(GLOB _vcpkg_all_so
+        "${VCPKG_LIB_DIR}/*.so"
+        "${VCPKG_LIB_DIR}/*.so.*"
+    )
+    set(_vcpkg_deps_count 0)
+    foreach(_so ${_vcpkg_all_so})
+        get_filename_component(_n "${_so}" NAME)
+        if(NOT EXISTS "${S_LIB}/${_n}")
+            file(COPY "${_so}" DESTINATION "${S_LIB}")
+            math(EXPR _vcpkg_deps_count "${_vcpkg_deps_count} + 1")
+        endif()
+    endforeach()
+    message(STATUS "[LinuxDeploy] Staged ${_vcpkg_deps_count} additional vcpkg runtime libs -> lib/")
+
     # SQLite runtime -- required by the Qt SQL driver (libqsqlite.so) which is
     # loaded by Qt Assistant at runtime to open the .qhc collection file.
     # Qt6 Assistant also uses SQLite FTS5 for full-text search indexing.
