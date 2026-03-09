@@ -100,6 +100,10 @@
 #>
 
 param(
+    [Parameter(Position = 0)]
+    [ValidateSet("APP", "TEST", "HPC")]
+    [string]$profile = "APP",
+
     [switch]${rebuild},
     [switch]${clean},
     [switch]${purge-cache},
@@ -108,13 +112,13 @@ param(
     [switch]${qt5-qwt616},
     [switch]${qt5-qwt630},
     [string]${arch}       = "",
-    [string]${profile}    = "APP",
     [string]${vcpkg-root} = "",
     [switch]${help}
 )
 
 $DocsBuilt = $true
 $DocsStatusMessage = ""
+$profile = $profile.ToUpperInvariant()
 
 # =============================================================================
 # HELP
