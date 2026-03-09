@@ -175,31 +175,23 @@ void US_Spectrum::sort(const QVector<int> &indices, QVector<double> &vec)
     }
 }
 
-void US_Spectrum::DataProfile::clear(bool all)
+void US_Spectrum::DataProfile::clear_fit()
 {
     xvec.clear();
     yvec.clear();
     nnls_factor = -1;
     nnls_percent = -1;
-    if (all)
-    {
-        lambda.clear();
-        od.clear();
-        header.clear();
-        finfo = QFileInfo();
-        highlight = false;
-    }
 }
 
 void US_Spectrum::clear_fit()
 {
     residual.clear();
     solution.clear();
-    target.clear(false);
+    target.clear_fit();
     int nrows = tw_basis->rowCount();
     for (int ii = 0; ii < all_basis.size(); ii++)
     {
-        all_basis[ii].clear(false);
+        all_basis[ii].clear_fit();
         if (ii < nrows)
         {
             tw_basis->item(ii, 2)->text().clear();
@@ -247,6 +239,7 @@ void US_Spectrum::load_target()
         return;
     }
 
+    clear_plot();
     clear_fit();
 
     QVector<double> lambda(csv_data.columnAt(0));
@@ -256,8 +249,8 @@ void US_Spectrum::load_target()
     sort(indices, od);
 
     target.finfo = QFileInfo(csv_data.filePath());
-    target.lambda << lambda;
-    target.od << od;
+    target.lambda = lambda;
+    target.od = od;
     target.header = csv_data.header().at(1);
 
     auto minmax = std::minmax_element(target.lambda.begin(), target.lambda.end());
@@ -488,8 +481,8 @@ void US_Spectrum::plot()
 
         QwtSymbol *symb = new QwtSymbol();
         symb->setStyle(QwtSymbol::Ellipse);
-        symb->setPen(QPen(Qt::green));
-        symb->setBrush(QBrush(Qt::green));
+        symb->setPen(QPen(Qt::yellow));
+        symb->setBrush(QBrush(Qt::yellow));
         symb->setSize(3);
 
         QwtPlotCurve *curve;
@@ -522,14 +515,14 @@ void US_Spectrum::plot()
         curve = us_curve(data_plot, target.header);
         curve->setStyle(QwtPlotCurve::Lines);
         curve->setSamples(xx, yy, np);
-        curve->setPen(Qt::yellow, 3, Qt::SolidLine);
+        curve->setPen(Qt::green, 3, Qt::SolidLine);
 
         if (!solution.isEmpty())
         {
             curve = us_curve(data_plot, "Fitted Curve");
             curve->setStyle(QwtPlotCurve::Lines);
             curve->setSamples(xx, solution.data(), solution.size());
-            curve->setPen(Qt::cyan, 3, Qt::SolidLine);
+            curve->setPen(Qt::magenta, 3, Qt::SolidLine);
         }
 
         if (!residual.isEmpty())
@@ -537,7 +530,7 @@ void US_Spectrum::plot()
             curve = us_curve(error_plot, "Residual Curve");
             curve->setStyle(QwtPlotCurve::Lines);
             curve->setSamples(xx, residual.data(), residual.size());
-            curve->setPen(Qt::green, 3, Qt::SolidLine);
+            curve->setPen(Qt::red, 3, Qt::SolidLine);
 
             QwtPlotMarker *hline = new QwtPlotMarker();
             hline->setLineStyle(QwtPlotMarker::HLine);
@@ -564,7 +557,7 @@ void US_Spectrum::highlight()
         if (all_basis.at(ii).highlight)
         {
             basis_curves[ii]->setStyle(QwtPlotCurve::Lines);
-            basis_curves[ii]->setPen(Qt::green, 3, Qt::SolidLine);
+            basis_curves[ii]->setPen(Qt::yellow, 3, Qt::SolidLine);
             basis_curves[ii]->setSymbol(nullptr);
         }
         else
@@ -572,8 +565,8 @@ void US_Spectrum::highlight()
             basis_curves[ii]->setStyle(QwtPlotCurve::NoCurve);
             QwtSymbol *symb = new QwtSymbol();
             symb->setStyle(QwtSymbol::Ellipse);
-            symb->setPen(QPen(Qt::green));
-            symb->setBrush(QBrush(Qt::green));
+            symb->setPen(QPen(Qt::yellow));
+            symb->setBrush(QBrush(Qt::yellow));
             symb->setSize(3);
             basis_curves[ii]->setSymbol(symb);
         }
@@ -589,7 +582,6 @@ void US_Spectrum::overlap()
 
     for (int ii = 0; ii < all_basis.size(); ii++)
     {
-        all_basis[ii].clear(false);
         auto minmax = std::minmax_element(all_basis.at(ii).lambda.begin(), all_basis.at(ii).lambda.end());
         min = std::max(min, *minmax.first);
         max = std::min(max, *minmax.second);
@@ -617,11 +609,14 @@ void US_Spectrum::overlap()
             {
                 target.xvec << target.lambda.at(id_tgt);
                 target.yvec << target.od.at(id_tgt);
+                // qDebug() << "tgt: x:" << target.xvec.last() << " y:" << target.yvec.last();
                 for (int ii = 0; ii < all_basis.size(); ii++)
                 {
                     int id = id_base.at(ii);
                     all_basis[ii].xvec << all_basis.at(ii).lambda.at(id);
                     all_basis[ii].yvec << all_basis.at(ii).od.at(id);
+                    // qDebug() << "base" << ii << ": x:" << all_basis[ii].xvec.last()
+                            //  << " y:" << all_basis[ii].yvec.last();
                 }
             }
         }
@@ -646,6 +641,7 @@ void US_Spectrum::fit()
         QString msg = tr("The target and basic spectra do not overlap or are not aligned.\n"
                          "Please ensure that they share common wavelength values.");
         QMessageBox::warning(this, "Warning!", msg);
+        clear_fit();
         return;
     }
 
@@ -656,20 +652,15 @@ void US_Spectrum::fit()
     int order = all_basis.size();
     double nnls_rnorm;
     QVector<double> nnls_a(nwvl * order);
-    QVector<double> nnls_b(nwvl);
-    QVector<double> nnls_x(order);
-
-    for (int ii = 0; ii < nwvl; ii++)
-    {
-        nnls_b[ii] = target.yvec.at(ii);
-    }
+    QVector<double> nnls_b(target.yvec);
+    QVector<double> nnls_x(order, 0);
 
     int nn = 0;
     for (int ii = 0; ii < order; ii++)
     {
         for (int jj = 0; jj < nwvl; jj++)
         {
-            nnls_a[ii] = all_basis.at(ii).yvec.at(jj);
+            nnls_a[nn] = all_basis.at(ii).yvec.at(jj);
             nn++;
         }
     }
@@ -696,11 +687,11 @@ void US_Spectrum::fit()
     }
 
     solution.fill(0, nwvl);
-    for (int ii = 0; ii < order; ii++)
+    for (int ii = 0; ii < nwvl; ii++)
     {
-        for (int jj = 0; jj < nwvl; jj++)
+        for (int jj = 0; jj < order; jj++)
         {
-            solution[ii] += all_basis.at(ii).yvec.at(jj) * nnls_x.at(ii);
+            solution[ii] += all_basis.at(jj).yvec.at(ii) * nnls_x.at(jj);
         }
     }
 

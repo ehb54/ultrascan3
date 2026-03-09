@@ -39,7 +39,7 @@ class US_Spectrum : public US_Widgets
         float nnls_percent = -1;       //!< NNLS percentage
         bool highlight = false;
 
-        void clear(bool); //!< Clear data
+        void clear_fit();              //!< Clear fit data
     };
 
     QString current_path; //!< Current path
