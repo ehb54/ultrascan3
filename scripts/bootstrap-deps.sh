@@ -142,11 +142,17 @@ PKGS_TOOLCHAIN=(
 # Without the full autotools suite those configure scripts fail to run.
 # autoconf-archive: provides m4 macros used by some port configure.ac files
 # libtool: required by ports that build shared libraries via libtoolize
+# libltdl-dev: provides ltdl.h and m4/ltdl.m4 — a SEPARATE package from libtool.
+#              Required by ports whose configure.ac calls LT_LIB_DLLOAD or
+#              LT_INIT with dlopen support (e.g. libxcrypt): autoreconf -vfi
+#              fails with "possibly undefined macro: LT_LIB_DLLOAD" if this
+#              package is absent even when libtool itself is installed.
 PKGS_AUTOTOOLS=(
   autoconf
   autoconf-archive
   automake
   libtool
+  libltdl-dev
 )
 
 # --- Archive and download utilities -----------------------------------------

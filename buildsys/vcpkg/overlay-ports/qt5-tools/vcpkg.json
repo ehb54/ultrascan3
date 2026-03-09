@@ -1,0 +1,29 @@
+{
+  "name": "qt5-tools",
+  "version": "5.15.17",
+  "port-version": 1,
+  "description": "Qt Tools: assistant, designer, linguist, qdoc, and other utilities.",
+  "license": null,
+  "dependencies": [
+    {
+      "name": "qt5-base",
+      "default-features": false
+    }
+  ],
+  "features": {
+    "assistant": {
+      "description": "Build Qt Assistant (help browser). Qt5 builds Assistant as part of qttools by default; this feature exists so vcpkg.json feature selectors resolve correctly.",
+      "dependencies": [
+        {
+          "name": "qt5-base",
+          "default-features": false,
+          "features": [
+            "network",
+            "sql-sqlite",
+            "widgets"
+          ]
+        }
+      ]
+    }
+  }
+}
