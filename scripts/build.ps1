@@ -418,8 +418,10 @@ if (-not (Test-Path (Join-Path $VcpkgRoot ".git"))) {
 
 if (-not (Test-Path (Join-Path $VcpkgRoot "vcpkg.exe"))) {
     Write-Host "Bootstrapping vcpkg at $VcpkgRoot..."
+    # -disableMetrics suppresses the telemetry consent prompt which can
+    # stall non-interactive CI environments on first bootstrap.
     Push-Location $VcpkgRoot
-    & .\bootstrap-vcpkg.bat
+    & .\bootstrap-vcpkg.bat -disableMetrics
     Pop-Location
 }
 
