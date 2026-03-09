@@ -213,6 +213,7 @@ if ($Arch -eq "arm64") {
 
 # =============================================================================
 # RESOLVE SOURCE ROOT
+# Defined early so bootstrap-windows.ps1 can be located relative to this script.
 # =============================================================================
 $ScriptDir  = Split-Path -Parent $MyInvocation.MyCommand.Path
 $SourceRoot = (Resolve-Path (Join-Path $ScriptDir "..")).Path
@@ -273,16 +274,36 @@ Write-Host ""
 $env:VCPKG_MAX_CONCURRENCY = "$BuildJobs"
 
 # =============================================================================
+# WINDOWS BOOTSTRAP
+# Delegates to bootstrap-windows.ps1, which is the single authoritative source
+# for winget-level prerequisites (cmake, git, ninja, nasm, python, nsis) and
+# Visual Studio presence verification. It is idempotent: exits immediately with
+# no side effects when all tools are already installed (typical on repeat runs).
+# After bootstrap completes, the NSIS PATH self-heal below ensures makensis is
+# on PATH for this session even when NSIS is freshly installed.
+# =============================================================================
+$BootstrapScript = Join-Path $ScriptDir "bootstrap-windows.ps1"
+if (-not (Test-Path $BootstrapScript)) {
+    Write-Host "ERROR: bootstrap-windows.ps1 not found at $BootstrapScript" -ForegroundColor Red
+    Write-Host "Please ensure scripts\bootstrap-windows.ps1 exists in the repository."
+    exit 1
+}
+
+& $BootstrapScript
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+Write-Host ""
+
+# =============================================================================
 # NSIS PATH SELF-HEAL
-# If makensis is not on PATH, check the two standard install locations and
-# add whichever one exists to the session PATH so the tool-check below passes.
+# makensis is often installed but not on the default PATH (NSIS does not add
+# itself on all Windows versions). Check standard install locations and add
+# whichever one exists to the session PATH so downstream cmake --build can
+# find it when invoking the package_windows_nsis target.
+# bootstrap-windows.ps1 performs the same check during install; this handles
+# the case where NSIS was already installed before bootstrap ran.
 # =============================================================================
 if (-not (Get-Command makensis -ErrorAction SilentlyContinue)) {
-    $NsisPaths = @(
-        "C:\Program Files (x86)\NSIS",
-        "C:\Program Files\NSIS"
-    )
-    foreach ($NsisDir in $NsisPaths) {
+    foreach ($NsisDir in @("C:\Program Files (x86)\NSIS", "C:\Program Files\NSIS")) {
         if (Test-Path (Join-Path $NsisDir "makensis.exe")) {
             Write-Host "Found NSIS at $NsisDir -- adding to PATH for this session." -ForegroundColor Yellow
             $env:PATH = "$NsisDir;$env:PATH"
@@ -292,58 +313,55 @@ if (-not (Get-Command makensis -ErrorAction SilentlyContinue)) {
 }
 
 # =============================================================================
-# CHECK REQUIRED TOOLS
+# SPHINX CHECK
+# bootstrap-windows.ps1 ensures python is installed. Here we attempt to install
+# Sphinx via pip if sphinx-build is still absent, matching the behaviour of
+# build.sh on Linux/macOS.
 # =============================================================================
-Write-Host "Checking required tools..."
-
-$RequiredTools = @("cmake", "git", "ninja")
-if (${pkg}) { $RequiredTools += "makensis" }
-
-$WingetMap = @{
-    cmake    = "Kitware.CMake"
-    git      = "Git.Git"
-    ninja    = "Ninja-build.Ninja"
-    makensis = "NSIS.NSIS"
-}
-
-$MissingTools = @()
-foreach ($Tool in $RequiredTools) {
-    if (-not (Get-Command $Tool -ErrorAction SilentlyContinue)) {
-        $MissingTools += $Tool
-    }
-}
-
-if ($MissingTools.Count -gt 0) {
-    Write-Host "ERROR: Missing required tools: $($MissingTools -join ', ')" -ForegroundColor Red
-    Write-Host ""
-    Write-Host "Install the missing tools with:" -ForegroundColor Yellow
-    Write-Host ""
-    foreach ($Tool in $MissingTools) {
-        if ($WingetMap.ContainsKey($Tool)) {
-            Write-Host "  winget install $($WingetMap[$Tool])"
-        } else {
-            Write-Host "  Install tool manually: $Tool"
-        }
-    }
-    Write-Host ""
-    exit 1
-}
-
 if (-not (Get-Command sphinx-build -ErrorAction SilentlyContinue)) {
     $DocsBuilt = $false
-    $DocsStatusMessage = "Documentation not built: sphinx-build not found."
-    Write-Host "  Install Python 3.x first, for example:" -ForegroundColor Yellow
-    Write-Host "    winget install -e --id Python.Python.3.13" -ForegroundColor Yellow
-    Write-Host "  Then install the documentation dependencies:" -ForegroundColor Yellow
-    Write-Host "    py -m pip install -r doc/manual/source/requirements.txt" -ForegroundColor Yellow
+    $SphinxRequirements = Join-Path $SourceRoot "doc\manual\source\requirements.txt"
+    if (Test-Path $SphinxRequirements) {
+        Write-Host "sphinx-build not found -- attempting pip install from requirements.txt..." -ForegroundColor Yellow
+        $PyCmd = if (Get-Command py -ErrorAction SilentlyContinue) { "py" }
+                 elseif (Get-Command python -ErrorAction SilentlyContinue) { "python" }
+                 else { $null }
+        if ($PyCmd) {
+            & $PyCmd -m pip install -q -r $SphinxRequirements 2>$null
+            if (Get-Command sphinx-build -ErrorAction SilentlyContinue) {
+                Write-Host "sphinx-build installed successfully." -ForegroundColor Green
+                $DocsBuilt = $true
+            } else {
+                $DocsStatusMessage = "Documentation not built: sphinx-build not found after pip install."
+                Write-Host "WARNING: sphinx-build still not found. Help files will not be generated." -ForegroundColor Yellow
+            }
+        } else {
+            $DocsStatusMessage = "Documentation not built: Python not found."
+            Write-Host "WARNING: Python not found. Install Python then run:" -ForegroundColor Yellow
+            Write-Host "  py -m pip install -r doc\manual\source\requirements.txt" -ForegroundColor Yellow
+        }
+    } else {
+        $DocsStatusMessage = "Documentation not built: sphinx-build not found."
+    }
+    Write-Host ""
+} else {
+    # sphinx-build present -- silently ensure requirements are up to date
+    $SphinxRequirements = Join-Path $SourceRoot "doc\manual\source\requirements.txt"
+    if (Test-Path $SphinxRequirements) {
+        $PyCmd = if (Get-Command py -ErrorAction SilentlyContinue) { "py" }
+                 elseif (Get-Command python -ErrorAction SilentlyContinue) { "python" }
+                 else { $null }
+        if ($PyCmd) { & $PyCmd -m pip install -q -r $SphinxRequirements 2>$null }
+    }
+    Write-Host "sphinx-build is available: $(Get-Command sphinx-build | Select-Object -ExpandProperty Source)"
     Write-Host ""
 }
-
-Write-Host "All required tools are available." -ForegroundColor Green
-Write-Host ""
 
 # =============================================================================
 # VISUAL STUDIO ENVIRONMENT SETUP
+# bootstrap-windows.ps1 already verified VS is present and has the C++ workload.
+# Here we activate the compiler environment for the current session via
+# vcvarsall.bat so that cmake and the MSVC toolchain are on PATH.
 # =============================================================================
 Write-Host "Setting up Visual Studio compiler environment ($Arch)..."
 
@@ -354,11 +372,15 @@ if (-not (Test-Path $VsWhere)) {
     exit 1
 }
 
-$VsPath    = & $VsWhere -latest -property installationPath 2>$null
-$VsVersion = & $VsWhere -latest -property catalog_productDisplayVersion 2>$null
+$VsPath    = & $VsWhere -latest `
+    -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 `
+    -property installationPath 2>$null
+$VsVersion = & $VsWhere -latest `
+    -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 `
+    -property catalog_productDisplayVersion 2>$null
 
 if (-not $VsPath) {
-    Write-Host "ERROR: No Visual Studio installation found." -ForegroundColor Red
+    Write-Host "ERROR: No Visual Studio installation with C++ tools found." -ForegroundColor Red
     exit 1
 }
 

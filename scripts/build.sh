@@ -230,6 +230,13 @@ echo ""
 export VCPKG_MAX_CONCURRENCY="$BUILD_JOBS"
 
 # =============================================================================
+# SCRIPT_DIR / SOURCE_DIR
+# Defined early so bootstrap scripts can be located relative to this script.
+# =============================================================================
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SOURCE_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
+
+# =============================================================================
 # CHECK REQUIRED TOOLS
 # =============================================================================
 REQUIRED_TOOLS=(cmake git)
@@ -304,7 +311,33 @@ echo "All required tools are available."
 echo ""
 
 # =============================================================================
-# OPTIONAL: Xcode 15/16 SETUP ON macOS
+# macOS BOOTSTRAP
+# Delegates to bootstrap-macos.sh, which is the single authoritative source
+# for Homebrew-level prerequisites (cmake, ninja, nasm, pkg-config, python3,
+# and optionally open-mpi for HPC).  It is idempotent: exits immediately
+# with no side effects when all packages are already installed.
+# The HPC profile requires MPI, so --hpc is passed in that case.
+# =============================================================================
+if [ "$PLATFORM" = "macOS" ]; then
+  _BOOTSTRAP="${SCRIPT_DIR}/bootstrap-macos.sh"
+  if [ ! -f "$_BOOTSTRAP" ]; then
+    echo "ERROR: bootstrap-macos.sh not found at $_BOOTSTRAP"
+    echo "Please ensure scripts/bootstrap-macos.sh exists in the repository."
+    exit 1
+  fi
+
+  _BOOTSTRAP_ARGS=()
+  [ "$PROFILE" = "HPC" ] && _BOOTSTRAP_ARGS+=("--hpc")
+
+  bash "$_BOOTSTRAP" "${_BOOTSTRAP_ARGS[@]}"
+  echo ""
+fi
+
+# =============================================================================
+# XCODE 15/16 SETUP ON macOS
+# Runs after bootstrap so Homebrew tools are already on PATH.
+# bootstrap-macos.sh verified that the CLT exists; here we select the right
+# Xcode.app version for the build (requires sudo xcode-select --switch).
 # =============================================================================
 if [ "$PLATFORM" = "macOS" ]; then
   CURRENT_XCODE_PATH=$(xcode-select -p || echo "")
@@ -383,9 +416,6 @@ fi
 # VCPKG SETUP
 # Priority: --vcpkg-root arg > US3_VCPKG_ROOT env > source-tree vcpkg > ~/vcpkg
 # =============================================================================
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SOURCE_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
-
 if [ -n "$US3_VCPKG_ROOT" ]; then
   echo "Using vcpkg from --vcpkg-root argument: $US3_VCPKG_ROOT"
 elif [ -n "${US3_VCPKG_ROOT:-}" ]; then
@@ -556,134 +586,24 @@ echo ""
 
 # =============================================================================
 # LINUX SYSTEM PACKAGE CHECK
-# vcpkg builds everything from source but still needs system headers/tools
-# that are not part of the compiler toolchain.
+# Delegates to bootstrap-deps.sh, which is the single authoritative source
+# for the OS-level package list.  It is idempotent: exits immediately with no
+# side effects when all packages are already installed (typical on repeat runs).
+# The HPC profile requires MPI, so --hpc is passed in that case.
 # =============================================================================
-
-# Use sudo only when not already root (CI often runs as root in Docker)
-SUDO=""
-if [ "$(id -u)" != "0" ]; then
-  SUDO="sudo"
-fi
-
 if [ "$PLATFORM" == "Linux" ]; then
-  echo "Checking Linux system dependencies..."
-  echo ""
-
-  # Each entry: "binary_to_check|apt_package|dnf_package"
-  # binary_to_check: command that must be on PATH (empty = check only via dpkg/rpm)
-  LINUX_DEPS=(
-    "ninja|ninja-build|ninja-build"
-    "nasm|nasm|nasm"
-    "pkg-config|pkg-config|pkgconf"
-    "python3|python3|python3"
-    "curl|curl|curl"
-    "zip|zip|zip"
-    "unzip|unzip|unzip"
-    "patchelf|patchelf|patchelf"
-    # autotools chain: required by vcpkg ports that build with ./configure
-    # (e.g. ICU, which is a host-tool dependency pulled in by Qt)
-    # autoconf-archive has no binary; handled via apt_package alongside autoconf
-    "autoconf|autoconf autoconf-archive|autoconf autoconf-archive"
-    "automake|automake|automake"
-    "libtool|libtool|libtool"
-    # gperf: required by qtbase port for keyword hash table generation
-    "gperf|gperf|gperf"
-    # bison + flex: required by libmariadb port on Linux
-    "bison|bison|bison"
-    "flex|flex|flex"
-  )
-
-  # Dev packages have no binary — check for a sentinel header or .pc file
-  # Format: "sentinel_path|apt_package|dnf_package|description"
-  LINUX_DEV_DEPS=(
-    "/usr/include/GL/gl.h|libgl-dev|mesa-libGL-devel|OpenGL headers"
-    "/usr/include/GL/glu.h|libglu1-mesa-dev|mesa-libGLU-devel|GLU headers"
-    "/usr/include/X11/Xlib.h|libx11-dev|libX11-devel|X11 headers"
-    "/usr/include/fontconfig/fontconfig.h|libfontconfig1-dev|fontconfig-devel|Fontconfig headers"
-    "/usr/include/freetype2/ft2build.h|libfreetype-dev|freetype-devel|FreeType headers"
-    "/usr/include/dbus-1.0/dbus/dbus.h|libdbus-1-dev|dbus-devel|D-Bus headers"
-    "/usr/include/xkbcommon/xkbcommon.h|libxkbcommon-dev|libxkbcommon-devel|xkbcommon headers"
-  )
-
-  MISSING_APT=()
-  MISSING_DNF=()
-  MISSING_DESCRIPTIONS=()
-
-  # Check binary tools
-  for entry in "${LINUX_DEPS[@]}"; do
-    bin="${entry%%|*}";  rest="${entry#*|}"
-    apt_pkg="${rest%%|*}"; dnf_pkg="${rest#*|}"
-    if ! command -v "$bin" &>/dev/null; then
-      MISSING_APT+=("$apt_pkg")
-      MISSING_DNF+=("$dnf_pkg")
-      MISSING_DESCRIPTIONS+=("$bin")
-    fi
-  done
-
-  # Check dev headers
-  for entry in "${LINUX_DEV_DEPS[@]}"; do
-    sentinel="${entry%%|*}"; rest="${entry#*|}"
-    apt_pkg="${rest%%|*}"; rest2="${rest#*|}"
-    dnf_pkg="${rest2%%|*}"; desc="${rest2#*|}"
-    if [ ! -f "$sentinel" ]; then
-      MISSING_APT+=("$apt_pkg")
-      MISSING_DNF+=("$dnf_pkg")
-      MISSING_DESCRIPTIONS+=("$desc")
-    fi
-  done
-
-  if [ ${#MISSING_APT[@]} -ne 0 ]; then
-    echo "Missing system dependencies:"
-    for desc in "${MISSING_DESCRIPTIONS[@]}"; do
-      echo "  - $desc"
-    done
-    echo ""
-
-    if command -v apt-get &>/dev/null; then
-      APT_CMD="${SUDO:+$SUDO }apt-get install -y ${MISSING_APT[*]}"
-      if [ "$NON_INTERACTIVE" = true ]; then
-        echo "Installing missing packages..."
-        ${SUDO:+$SUDO }apt-get update -qq
-        $APT_CMD
-      else
-        echo "Run the following to install them:"
-        echo "  ${SUDO:+$SUDO }apt-get update && $APT_CMD"
-        echo ""
-        read -rp "Install now? [y/N] " answer
-        if [[ "$answer" =~ ^[Yy]$ ]]; then
-          ${SUDO:+$SUDO }apt-get update -qq
-          $APT_CMD
-        else
-          echo "WARNING: Continuing without installing - build may fail."
-        fi
-      fi
-    elif command -v dnf &>/dev/null; then
-      DNF_CMD="${SUDO:+$SUDO }dnf install -y ${MISSING_DNF[*]}"
-      if [ "$NON_INTERACTIVE" = true ]; then
-        echo "Installing missing packages..."
-        $DNF_CMD
-      else
-        echo "Run the following to install them:"
-        echo "  $DNF_CMD"
-        echo ""
-        read -rp "Install now? [y/N] " answer
-        if [[ "$answer" =~ ^[Yy]$ ]]; then
-          $DNF_CMD
-        else
-          echo "WARNING: Continuing without installing - build may fail."
-        fi
-      fi
-    else
-      echo "ERROR: Cannot auto-install - no supported package manager found (apt-get/dnf)."
-      echo "Please install the missing packages manually and re-run."
-      exit 1
-    fi
-    echo ""
-  else
-    echo "All Linux system dependencies are present."
-    echo ""
+  _BOOTSTRAP="${SCRIPT_DIR}/bootstrap-deps.sh"
+  if [ ! -f "$_BOOTSTRAP" ]; then
+    echo "ERROR: bootstrap-deps.sh not found at $_BOOTSTRAP"
+    echo "Please ensure scripts/bootstrap-deps.sh exists in the repository."
+    exit 1
   fi
+
+  _BOOTSTRAP_ARGS=()
+  [ "$PROFILE" = "HPC" ] && _BOOTSTRAP_ARGS+=("--hpc")
+
+  bash "$_BOOTSTRAP" "${_BOOTSTRAP_ARGS[@]}"
+  echo ""
 fi
 
 # =============================================================================
