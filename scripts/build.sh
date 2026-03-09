@@ -581,6 +581,16 @@ if [ "$PLATFORM" == "Linux" ]; then
     "zip|zip|zip"
     "unzip|unzip|unzip"
     "patchelf|patchelf|patchelf"
+    # autotools chain: required by vcpkg ports that build with ./configure
+    # (e.g. ICU, which is a host-tool dependency pulled in by Qt)
+    "autoconf|autoconf|autoconf"
+    "automake|automake|automake"
+    "libtool|libtool|libtool"
+    # gperf: required by qtbase port for keyword hash table generation
+    "gperf|gperf|gperf"
+    # bison + flex: required by libmariadb port on Linux
+    "bison|bison|bison"
+    "flex|flex|flex"
   )
 
   # Dev packages have no binary — check for a sentinel header or .pc file
