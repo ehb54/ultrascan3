@@ -257,8 +257,13 @@ Write-Host ""
 # =============================================================================
 $Cores = if ($env:NUMBER_OF_PROCESSORS) { [int]$env:NUMBER_OF_PROCESSORS } else { 4 }
 if ($env:US3_BUILD_JOBS) {
+    # Explicit override always wins
     $BuildJobs = [int]$env:US3_BUILD_JOBS
+} elseif ($env:CI -eq "true") {
+    # CI runners are dedicated -- use every core
+    $BuildJobs = $Cores
 } else {
+    # Local builds: leave ~10% headroom to keep the machine usable
     $BuildJobs = [Math]::Max(1, [Math]::Floor($Cores * 0.9))
 }
 

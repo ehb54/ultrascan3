@@ -211,8 +211,13 @@ else
 fi
 
 if [ -n "${US3_BUILD_JOBS:-}" ]; then
+  # Explicit override always wins
   BUILD_JOBS="$US3_BUILD_JOBS"
+elif [ "${CI:-false}" = "true" ]; then
+  # CI runners are dedicated -- use every core
+  BUILD_JOBS="$CORES"
 else
+  # Local builds: leave ~10% headroom to keep the machine usable
   BUILD_JOBS=$((CORES * 9 / 10))
   if [ "$BUILD_JOBS" -lt 1 ]; then
     BUILD_JOBS=1
