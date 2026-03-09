@@ -583,7 +583,8 @@ if [ "$PLATFORM" == "Linux" ]; then
     "patchelf|patchelf|patchelf"
     # autotools chain: required by vcpkg ports that build with ./configure
     # (e.g. ICU, which is a host-tool dependency pulled in by Qt)
-    "autoconf|autoconf|autoconf"
+    # autoconf-archive has no binary; handled via apt_package alongside autoconf
+    "autoconf|autoconf autoconf-archive|autoconf autoconf-archive"
     "automake|automake|automake"
     "libtool|libtool|libtool"
     # gperf: required by qtbase port for keyword hash table generation
