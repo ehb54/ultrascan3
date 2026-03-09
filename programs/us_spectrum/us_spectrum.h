@@ -75,7 +75,7 @@ class US_Spectrum : public US_Widgets
     void highlight();
     void overlap();
     void delete_basis(int);
-    int find_lambda(DataProfile&, int, double);
+    bool find_lambda(const DataProfile&, const double, int&);
 
     QVector<int> argsort(const QVector<double> &);
 

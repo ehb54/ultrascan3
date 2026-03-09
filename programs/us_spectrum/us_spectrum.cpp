@@ -574,6 +574,32 @@ void US_Spectrum::highlight()
     data_plot->replot();
 }
 
+bool US_Spectrum::find_lambda(const DataProfile &data, const double wvl, int &id)
+{
+    int np = data.lambda.size();
+    int ii = id;
+    double eps = 0.001;
+    while (ii < np)
+    {
+        double data_wvl = data.lambda.at(ii);
+        id = ii;
+        if (wvl - data_wvl > eps)
+        {
+            ii++;
+        }
+        else if (wvl - data_wvl < -eps)
+        {
+            return false;
+        }
+        else
+        {
+            return true;
+        }
+    }
+    id = np;
+    return false;
+}
+
 void US_Spectrum::overlap()
 {
     auto minmax = std::minmax_element(target.lambda.begin(), target.lambda.end());
@@ -592,14 +618,12 @@ void US_Spectrum::overlap()
     double wvl = min;
     while (wvl <= max)
     {
-        id_tgt = find_lambda(target, id_tgt, wvl);
-        if (id_tgt < target.lambda.size())
+        if (find_lambda(target, wvl, id_tgt))
         {
             bool flag = true;
             for (int ii = 0; ii < all_basis.size(); ii++)
             {
-                id_base[ii] = find_lambda(all_basis[ii], id_base.at(ii), wvl);
-                if (id_base.at(ii) == all_basis.at(ii).lambda.size())
+                if (!find_lambda(all_basis.at(ii), wvl, id_base[ii]))
                 {
                     flag = false;
                     break;
@@ -616,7 +640,7 @@ void US_Spectrum::overlap()
                     all_basis[ii].xvec << all_basis.at(ii).lambda.at(id);
                     all_basis[ii].yvec << all_basis.at(ii).od.at(id);
                     // qDebug() << "base" << ii << ": x:" << all_basis[ii].xvec.last()
-                            //  << " y:" << all_basis[ii].yvec.last();
+                    //  << " y:" << all_basis[ii].yvec.last();
                 }
             }
         }
@@ -734,22 +758,6 @@ void US_Spectrum::reset()
     fill_combo();
     fill_table();
     plot();
-}
-
-int US_Spectrum::find_lambda(DataProfile &data, int id, double wvl)
-{
-    int np = data.lambda.size();
-    int id_wvl = np;
-    while (id < np)
-    {
-        if (qFuzzyCompare(wvl, data.lambda.at(id)))
-        {
-            id_wvl = id;
-            break;
-        }
-        id++;
-    }
-    return id_wvl;
 }
 
 void US_Spectrum::find_angle()
