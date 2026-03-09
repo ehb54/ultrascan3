@@ -35,7 +35,6 @@ class US_Spectrum : public US_Widgets
         QVector<double> od;            //!< Extinction coefficients
         QVector<double> xvec;          //!< Trimmed lambda vector
         QVector<double> yvec;          //!< Trimmed Extinction coefficients vector
-        QwtPlotCurve *curve = nullptr; //!< Attached QwtPlotCurve
         float nnls_factor = -1;        //!< NNLS factor
         float nnls_percent = -1;       //!< NNLS percentage
         bool highlight = false;
@@ -46,8 +45,9 @@ class US_Spectrum : public US_Widgets
     QString current_path; //!< Current path
     QList<DataProfile> all_basis;
     DataProfile target;
-    DataProfile solution;
-    DataProfile residual;
+    QVector<double> solution;
+    QVector<double> residual;
+    QVector<QwtPlotCurve*> basis_curves;
 
     QwtPlot *data_plot;  //!< Data plot
     QwtPlot *error_plot; //!< Residuals plot
@@ -67,14 +67,15 @@ class US_Spectrum : public US_Widgets
     QComboBox *cb_basis_1; //!< Angle one combo box
     QComboBox *cb_basis_2; //!< Angle two combo box
 
+    void plot();
+    void clear_plot();
+    void clear_fit();
     void fill_table();
     void fill_combo();
-    void plot_basis();
-    void plot_target();
     void highlight();
-    void find_overlap();
-    void trim_data_profile(DataProfile&, double, double);
+    void overlap();
     void delete_basis(int);
+    int find_lambda(DataProfile&, int, double);
 
     QVector<int> argsort(const QVector<double> &);
 
