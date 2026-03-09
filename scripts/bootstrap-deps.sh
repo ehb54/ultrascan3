@@ -207,18 +207,21 @@ PKGS_OPENGL=(
 )
 
 # --- X11 / display system headers -------------------------------------------
-# Qt requires X11 headers to build the xcb platform plugin.
-# libx11-dev: core X11 (Xlib.h) — direct dependency of Qt xcb plugin
-# libxext-dev: X11 extensions, required by Qt XCB
-# libxrender-dev: XRender extension, used by Qt font rendering
-# libxi-dev: XInput extension, required by Qt input handling
-# libxrandr-dev: RandR extension, used by Qt multi-monitor support
-# libxcursor-dev: Xcursor, used by Qt cursor support
-# libxinerama-dev: Xinerama extension, used by Qt screen geometry
-# libxkbcommon-dev: keyboard handling — required by Qt xcb and Wayland
-# libxkbcommon-x11-dev: xkb-x11 integration for Qt xcb
+# Qt requires X11/XCB headers to build the xcb platform plugin.
+# libx11-dev: core X11 (Xlib.h)
+# libx11-xcb-dev: X11/XCB bridge used by Qt xcb
+# libxext-dev: X11 extensions
+# libxrender-dev: XRender extension
+# libxi-dev: XInput extension
+# libxrandr-dev: RandR extension
+# libxcursor-dev: Xcursor
+# libxinerama-dev: Xinerama extension
+# libxkbcommon-dev: keyboard handling
+# libxkbcommon-x11-dev: xkb-x11 integration
+# libxcb*-dev: XCB development headers required by vcpkg qtbase on Linux
 PKGS_X11=(
   libx11-dev
+  libx11-xcb-dev
   libxext-dev
   libxrender-dev
   libxi-dev
@@ -227,6 +230,32 @@ PKGS_X11=(
   libxinerama-dev
   libxkbcommon-dev
   libxkbcommon-x11-dev
+)
+
+# --- XCB development headers -------------------------------------------------
+# vcpkg qtbase on Ubuntu requires the XCB development family from the system
+# package manager. The vcpkg port itself recommends:
+#   '^libxcb.*-dev' libx11-xcb-dev ...
+#
+# We install the core XCB family explicitly so local Ubuntu and GitHub Ubuntu
+# runners behave the same.
+PKGS_XCB=(
+  libxcb1-dev
+  libxcb-cursor-dev
+  libxcb-glx0-dev
+  libxcb-icccm4-dev
+  libxcb-image0-dev
+  libxcb-keysyms1-dev
+  libxcb-randr0-dev
+  libxcb-render-util0-dev
+  libxcb-shape0-dev
+  libxcb-shm0-dev
+  libxcb-sync-dev
+  libxcb-util-dev
+  libxcb-xfixes0-dev
+  libxcb-xinerama0-dev
+  libxcb-xinput-dev
+  libxcb-xkb-dev
 )
 
 # --- Font and graphics library headers --------------------------------------
@@ -251,7 +280,7 @@ PKGS_DBUS=(
 # libwayland-dev: Wayland protocol — required by Qt Wayland platform plugin
 # wayland-protocols: extra Wayland protocol definitions used during Qt build
 PKGS_EGL=(
-  libegl-dev
+  libegl1-mesa-dev
   libwayland-dev
   wayland-protocols
 )
@@ -288,6 +317,7 @@ ALL_PKGS=(
   "${PKGS_PYTHON[@]}"
   "${PKGS_OPENGL[@]}"
   "${PKGS_X11[@]}"
+  "${PKGS_XCB[@]}"
   "${PKGS_FONTS[@]}"
   "${PKGS_DBUS[@]}"
   "${PKGS_EGL[@]}"

@@ -214,11 +214,19 @@ BREW_PKGS_TOOLCHAIN=(
 )
 
 # --- Assembly ---------------------------------------------------------------
-# nasm: vcpkg Qt and image format ports (libjpeg-turbo, openssl) require NASM
-#       for optimised assembly routines on both arm64 and x86_64
-BREW_PKGS_ASM=(
-  nasm
-)
+# nasm: mainly relevant for x86/x86_64 assembly-heavy paths.
+#       On Apple Silicon it is usually unnecessary, so skip it to avoid
+#       prompting developers for a tool they may never need.
+MACOS_ARCH="$(uname -m)"
+
+if [ "$MACOS_ARCH" = "x86_64" ]; then
+  BREW_PKGS_ASM=(
+    nasm
+  )
+else
+  log "Apple Silicon detected; skipping nasm."
+  BREW_PKGS_ASM=("")
+fi
 
 # --- Python (Sphinx documentation) ------------------------------------------
 # python3: Sphinx is installed via pip from doc/manual/source/requirements.txt.
@@ -250,12 +258,16 @@ BREW_PKGS_HPC=(
 # =============================================================================
 # BUILD PACKAGE LIST
 # =============================================================================
-ALL_BREW_PKGS=(
-  "${BREW_PKGS_TOOLCHAIN[@]}"
-  "${BREW_PKGS_ASM[@]}"
-  "${BREW_PKGS_PYTHON[@]}"
-  "${BREW_PKGS_ARCHIVE[@]}"
-)
+ALL_BREW_PKGS=()
+
+for pkg in \
+  "${BREW_PKGS_TOOLCHAIN[@]}" \
+  "${BREW_PKGS_ASM[@]}" \
+  "${BREW_PKGS_PYTHON[@]}" \
+  "${BREW_PKGS_ARCHIVE[@]}" \
+  "${BREW_PKGS_HPC[@]}"; do
+  [ -n "$pkg" ] && ALL_BREW_PKGS+=("$pkg")
+done
 
 if [ "$INSTALL_HPC" = true ]; then
   ALL_BREW_PKGS+=("${BREW_PKGS_HPC[@]}")
@@ -281,20 +293,80 @@ fi
 # =============================================================================
 # FILTER: ONLY INSTALL WHAT IS MISSING
 # =============================================================================
-# brew list --formula is authoritative for installed formulae.
-# We check each package individually to build the missing list.
-log "Checking which packages are already installed..."
+# Developer-friendly behavior:
+# - If a usable tool is already on PATH, do not force a Brew install just
+#   because Brew does not "own" it.
+# - Only fall back to Brew installation when the tool is actually missing.
+# - For formulas whose executable name differs from the formula name, map them
+#   explicitly (e.g. open-mpi -> mpicxx).
+#
+log "Checking which packages are already installed or otherwise available..."
 
 PKGS_TO_INSTALL=()
+
+tool_for_formula() {
+  case "$1" in
+    cmake)      echo "cmake" ;;
+    ninja)      echo "ninja" ;;
+    git)        echo "git" ;;
+    pkg-config) echo "pkg-config" ;;
+    nasm)       echo "nasm" ;;
+    python3)    echo "python3" ;;
+    curl)       echo "curl" ;;
+    open-mpi)   echo "mpicxx" ;;
+    *)          echo "$1" ;;
+  esac
+}
+
+# Return 0 if the tool is already usable enough that we should skip brew install.
+tool_is_usable() {
+  local formula="$1"
+  local tool
+  tool="$(tool_for_formula "$formula")"
+
+  case "$formula" in
+    # For these, any working command on PATH is good enough.
+    git|curl|cmake|ninja|pkg-config|nasm|open-mpi)
+      command -v "$tool" >/dev/null 2>&1
+      ;;
+
+    # python3 is special on macOS because /usr/bin/python3 may be a CLT stub.
+    python3)
+      if ! command -v python3 >/dev/null 2>&1; then
+        return 1
+      fi
+
+      # Confirm it is a real runnable interpreter, not just a stub.
+      python3 - <<'PY' >/dev/null 2>&1
+import sys
+print(sys.version)
+PY
+      ;;
+
+    *)
+      command -v "$tool" >/dev/null 2>&1
+      ;;
+  esac
+}
+
 for pkg in "${ALL_BREW_PKGS[@]}"; do
-  # brew list exits 0 if installed, non-zero if not
-  if ! brew list --formula "$pkg" &>/dev/null 2>&1; then
-    PKGS_TO_INSTALL+=("$pkg")
+  if tool_is_usable "$pkg"; then
+    log "Found usable tool for $pkg: $(command -v "$(tool_for_formula "$pkg")" 2>/dev/null || echo "<unknown>")"
+    continue
   fi
+
+  # Tool not usable on PATH; check whether Brew already has the formula.
+  if brew list --formula "$pkg" >/dev/null 2>&1; then
+    log "Homebrew formula $pkg is installed, but its tool is not currently usable on PATH."
+    log "Will not reinstall automatically; verify your PATH includes: ${BREW_PREFIX}/bin"
+    continue
+  fi
+
+  PKGS_TO_INSTALL+=("$pkg")
 done
 
 if [ ${#PKGS_TO_INSTALL[@]} -eq 0 ]; then
-  log "All required Homebrew packages are already installed. Nothing to do."
+  log "All required tools are already available. Nothing to do."
   log ""
   log "Run 'bash scripts/build.sh --help' to build UltraScan3."
   exit 0

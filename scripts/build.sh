@@ -327,9 +327,16 @@ if [ "$PLATFORM" = "macOS" ]; then
   fi
 
   _BOOTSTRAP_ARGS=()
-  [ "$PROFILE" = "HPC" ] && _BOOTSTRAP_ARGS+=("--hpc")
 
-  bash "$_BOOTSTRAP" "${_BOOTSTRAP_ARGS[@]}"
+  if [ "$PROFILE" = "HPC" ]; then
+    _BOOTSTRAP_ARGS+=("--hpc")
+  fi
+
+  if [ "${#_BOOTSTRAP_ARGS[@]}" -gt 0 ]; then
+    bash "$_BOOTSTRAP" "${_BOOTSTRAP_ARGS[@]}"
+  else
+    bash "$_BOOTSTRAP"
+  fi
   echo ""
 fi
 
