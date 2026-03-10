@@ -108,13 +108,32 @@ else {
 Log ""
 
 # =============================================================================
+# CHOCOLATEY CHECK (CI FALLBACK)
+# =============================================================================
+Log "Checking Chocolatey..."
+
+$ChocoAvailable = $false
+$ChocoCmd = Get-Command choco -ErrorAction SilentlyContinue
+
+if ($null -ne $ChocoCmd) {
+    $ChocoAvailable = $true
+    Log "Chocolatey found: $($ChocoCmd.Source)"
+}
+elseif ($NonInteractive) {
+    Log "Chocolatey not found in CI."
+}
+
+Log ""
+
+# =============================================================================
 # PACKAGE DEFINITIONS
 # =============================================================================
 # Each entry is a hashtable with:
 #   Id          winget package ID (exact, case-insensitive)
 #   Binary      executable name to check with Get-Command (empty = always install)
 #   Description human-readable name shown in output
-#   CiRequired  if $true, fail in CI when missing rather than offering to install
+#   CiRequired  marks tools that are required for a successful build.
+#               In CI, missing tools may be installed automatically if Chocolatey is available.
 #
 # Groups mirror the pattern established in bootstrap-deps.sh and
 # bootstrap-macos.sh so the three files are easy to maintain in parallel.
@@ -220,23 +239,14 @@ if ($PkgsToInstall.Count -eq 0) {
     }
     Log ""
 
-    if (-not $WingetAvailable) {
+    if (-not $WingetAvailable -and -not $ChocoAvailable) {
         if ($NonInteractive) {
-            Fatal "winget is not available in CI, and the following tools are missing:`n" +
-                  ($PkgsToInstall | ForEach-Object { "  - $($_.Description) (winget: $($_.Id))" } | Out-String) +
+            Fatal "Neither winget nor Chocolatey is available in CI, and the following tools are missing:`n" +
+                  ($PkgsToInstall | ForEach-Object { "  - $($_.Description)" } | Out-String) +
                   "`nUse a runner image with these tools preinstalled, or install them in a prior workflow step."
         } else {
-            Fatal "winget is not available, and required tools are missing.`nInstall winget/App Installer or install the missing tools manually, then re-run."
+            Fatal "Neither winget nor Chocolatey is available, and required tools are missing.`nInstall winget/App Installer or install the missing tools manually, then re-run."
         }
-    }
-
-    # In CI, CiRequired packages must already be present on the runner image.
-    # winget installs in CI are slow and may require PATH refresh / reboot.
-    $CiMissing = $PkgsToInstall | Where-Object { $_.CiRequired }
-    if ($NonInteractive -and $CiMissing.Count -gt 0) {
-        Fatal "The following required tools are missing from the CI runner image:`n" +
-              ($CiMissing | ForEach-Object { "  - $($_.Description) (winget: $($_.Id))" } | Out-String) +
-              "`nEnsure the runner image or a prior workflow step installs these tools."
     }
 
     if (-not $NonInteractive) {
@@ -248,19 +258,45 @@ if ($PkgsToInstall.Count -eq 0) {
     }
 
     foreach ($Pkg in $PkgsToInstall) {
-        Log "Installing $($Pkg.Description) ($($Pkg.Id))..."
-        $WingetArgs = @(
-            "install", "--exact", "--id", $Pkg.Id,
-            "--accept-package-agreements", "--accept-source-agreements",
-            "--silent"
-        )
-        winget @WingetArgs
-        if ($LASTEXITCODE -ne 0 -and $LASTEXITCODE -ne -1978335189) {
-            # -1978335189 (0x8A150007) = APPINSTALLER_CLI_ERROR_PACKAGE_ALREADY_INSTALLED
-            # winget returns this when a newer version is already present; treat as success.
-            Warn "$($Pkg.Description) install returned exit code $LASTEXITCODE -- may need PATH refresh or reboot."
-        } else {
-            Log "$($Pkg.Description) installed."
+        Log "Installing $($Pkg.Description)..."
+
+        if ($WingetAvailable -and -not $NonInteractive) {
+            $WingetArgs = @(
+                "install", "--exact", "--id", $Pkg.Id,
+                "--accept-package-agreements", "--accept-source-agreements",
+                "--silent"
+            )
+            winget @WingetArgs
+            if ($LASTEXITCODE -ne 0 -and $LASTEXITCODE -ne -1978335189) {
+                Warn "$($Pkg.Description) install returned exit code $LASTEXITCODE -- may need PATH refresh or reboot."
+            } else {
+                Log "$($Pkg.Description) installed via winget."
+            }
+        }
+        elseif ($ChocoAvailable) {
+            $ChocoName = switch ($Pkg.Binary) {
+                "nasm"      { "nasm" }
+                "cmake"     { "cmake" }
+                "git"       { "git" }
+                "ninja"     { "ninja" }
+                "python"    { "python" }
+                "makensis"  { "nsis" }
+                default     { $null }
+            }
+
+            if (-not $ChocoName) {
+                Fatal "No Chocolatey package mapping is defined for $($Pkg.Description)."
+            }
+
+            choco install $ChocoName -y --no-progress
+            if ($LASTEXITCODE -ne 0) {
+                Fatal "Chocolatey failed to install $($Pkg.Description)."
+            } else {
+                Log "$($Pkg.Description) installed via Chocolatey."
+            }
+        }
+        else {
+            Fatal "No package manager is available to install $($Pkg.Description)."
         }
     }
 
