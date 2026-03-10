@@ -89,15 +89,22 @@ if ($env:OS -ne "Windows_NT") {
 # =============================================================================
 # WINGET CHECK
 # =============================================================================
-# winget ships with Windows 10 1809+ / Windows 11 and all GitHub-hosted
-# Windows runners. If it is somehow absent we cannot auto-install anything,
-# so fail clearly rather than silently skipping packages.
-# =============================================================================
 Log "Checking winget..."
-if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
+
+$WingetAvailable = $false
+$WingetCmd = Get-Command winget -ErrorAction SilentlyContinue
+
+if ($null -ne $WingetCmd) {
+    $WingetAvailable = $true
+    Log "winget found: $($WingetCmd.Source)"
+}
+elseif ($NonInteractive) {
+    Log "winget not found in CI. Continuing without winget and validating preinstalled tools instead."
+}
+else {
     Fatal "winget not found. It ships with Windows 10 1809 and later.`nInstall the App Installer package from the Microsoft Store, then re-run.`nSee: https://aka.ms/getwinget"
 }
-Log "winget is available: $(winget --version)"
+
 Log ""
 
 # =============================================================================
@@ -213,6 +220,16 @@ if ($PkgsToInstall.Count -eq 0) {
     }
     Log ""
 
+    if (-not $WingetAvailable) {
+        if ($NonInteractive) {
+            Fatal "winget is not available in CI, and the following tools are missing:`n" +
+                  ($PkgsToInstall | ForEach-Object { "  - $($_.Description) (winget: $($_.Id))" } | Out-String) +
+                  "`nUse a runner image with these tools preinstalled, or install them in a prior workflow step."
+        } else {
+            Fatal "winget is not available, and required tools are missing.`nInstall winget/App Installer or install the missing tools manually, then re-run."
+        }
+    }
+
     # In CI, CiRequired packages must already be present on the runner image.
     # winget installs in CI are slow and may require PATH refresh / reboot.
     $CiMissing = $PkgsToInstall | Where-Object { $_.CiRequired }
@@ -263,6 +280,7 @@ if ($PkgsToInstall.Count -eq 0) {
     }
 
     Log ""
+
 }
 
 # =============================================================================
