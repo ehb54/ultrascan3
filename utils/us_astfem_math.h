@@ -36,25 +36,27 @@ class US_UTIL_EXTERN US_AstfemMath
       //! \param simparams   Simulation parameters, including speed steps info
       //! \param sim_data    Raw data with scans to examine
       //! \returns Flag:  0 if the file write succeeded
-      static int  writetimestate( const QString&, US_SimulationParameters&,
-                                  US_DataIO::RawData& );
+      static int  writetimestate( const QString& tmst_fpath, US_SimulationParameters& simparams,
+                                  US_DataIO::RawData& sim_data );
 
       //! \brief Determine if first time step's acceleration is too low
       //! \param speedsteps  Vector of speed steps
       //! \param min_accel   Minimum reasonable acceleration value
       //! \param rate        Returned computed first-step acceleration rate
       //! \returns Flag:     True iff acceleration rate is too low
-      static bool low_acceleration( const QVector< US_SimulationParameters::SpeedProfile >&,
-                                    const double, double& );
+      static bool low_acceleration( const QVector< US_SimulationParameters::SpeedProfile >& speedsteps,
+                                    const double min_accel, double& rate);
 
       //! \brief Check for linear acceleration in the experimental data.
       //! Returns either an empty list (no issues) or exactly two elements:
       //! [0] = title, [1] = HTML description
       //! \param speed_profiles  Vector of speed steps
       //! \param scans       Vector of scans
+      //! \param timestate   Pointer to Time state
       //! \returns results   QStringList for the acceleration check
       static QStringList check_acceleration( const QVector< US_SimulationParameters::SpeedProfile >& speed_profiles,
-                                             const QVector< US_DataIO::Scan >& scans);
+                                             const QVector< US_DataIO::Scan >& scans,
+                                             US_TimeState* timestate = nullptr );
 
       //! \brief Calculate omega2t
       //! \param start_omega2t Omega2t from the previous speed step
