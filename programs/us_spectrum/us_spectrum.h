@@ -2,7 +2,6 @@
 #ifndef US_SPECTRUM_H
 #define US_SPECTRUM_H
 
-#include "us_math2.h"
 #include "us_plot.h"
 #include "us_widgets.h"
 #include <QFileInfo>
@@ -38,7 +37,7 @@ class US_Spectrum : public US_Widgets
         float nnls_factor = -1;            //!< NNLS factor
         float nnls_percent = -1;           //!< NNLS percentage
         bool highlight = false;
-        
+
         /**
          * @brief Clear fit data.
          */
