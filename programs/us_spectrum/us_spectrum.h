@@ -29,56 +29,96 @@ class US_Spectrum : public US_Widgets
     class DataProfile
     {
       public:
-        QFileInfo finfo;               //!< Filename
-        QString header;                //!< Column header
-        QVector<double> lambda;        //!< Wavelength values
-        QVector<double> od;            //!< Extinction coefficients
-        QVector<double> xvec;          //!< Trimmed lambda vector
-        QVector<double> yvec;          //!< Trimmed Extinction coefficients vector
-        float nnls_factor = -1;        //!< NNLS factor
-        float nnls_percent = -1;       //!< NNLS percentage
+        QFileInfo finfo;         //!< Filename
+        QString header;          //!< Column header
+        QVector<double> lambda;  //!< Wavelength values
+        QVector<double> od;      //!< Extinction coefficients
+        QVector<double> xvec;    //!< Trimmed lambda vector
+        QVector<double> yvec;    //!< Trimmed Extinction coefficients vector
+        float nnls_factor = -1;  //!< NNLS factor
+        float nnls_percent = -1; //!< NNLS percentage
         bool highlight = false;
-
-        void clear_fit();              //!< Clear fit data
+        /**
+         * @brief Clear fit data.
+         */
+        void clear_fit();
     };
 
-    QString current_path; //!< Current path
-    QList<DataProfile> all_basis;
-    DataProfile target;
-    QVector<double> solution;
-    QVector<double> residual;
-    QVector<QwtPlotCurve*> basis_curves;
+    QString current_path;                 //!< Current path
+    QList<DataProfile> basis_list;        //!< Basis spectra array
+    DataProfile target;                   //!< Target profile
+    QVector<double> solution;             //!< Fitted data
+    QVector<double> residual;             //!< Residual data
+    QVector<QwtPlotCurve *> basis_curves; //!< Basis plot curves
 
     QwtPlot *data_plot;  //!< Data plot
     QwtPlot *error_plot; //!< Residuals plot
 
     QTableWidget *tw_basis; //!< Basis list widget
 
-    QLineEdit *le_tgt_fname;
-    QLineEdit *le_tgt_header;
-    QLineEdit *le_tgt_minL;
-    QLineEdit *le_tgt_maxL;
-    QLineEdit *le_fit_minL;
-    QLineEdit *le_fit_maxL;
+    QLineEdit *le_tgt_fname;  //!< Target filename
+    QLineEdit *le_tgt_header; //!< Target header
+    QLineEdit *le_tgt_wavl;   //!< Wavelength range of the target spectrum
+    QLineEdit *le_fit_wavl;   //!< Wavelength range of the fitted spectrum
+    QLineEdit *le_angle;      //!< Correlation angle value
+    QLineEdit *le_rmsd;       //!< RMSD value
 
-    QLineEdit *le_angle; //!< Angle line edit
-    QLineEdit *le_rmsd;  //!< RMSD line edit
+    QComboBox *cb_basis_1; //!< The first Basis selector for correlation angle
+    QComboBox *cb_basis_2; //!< The second Basis selector for correlation angle
 
-    QComboBox *cb_basis_1; //!< Angle one combo box
-    QComboBox *cb_basis_2; //!< Angle two combo box
-
+    /**
+     * @brief Plot data.
+     */
     void plot();
-    void clear_plot();
-    void clear_fit();
-    void fill_table();
-    void fill_combo();
-    void highlight();
-    void overlap();
-    void delete_basis(int);
-    bool find_lambda(const DataProfile&, const double, int&);
 
+    /**
+     * @brief Clear plot data.
+     */
+    void clear_plot();
+
+    /**
+     * @brief Clear fitted data.
+     */
+    void clear_fit();
+
+    /**
+     * @brief Populate the list of the basis spectra.
+     */
+    void fill_table();
+
+    /**
+     * @brief Populate the combo list for correlation angle of the basis spectra.
+     */
+    void fill_combo();
+
+    /**
+     * @brief Hightlight the checked basis spectra.
+     */
+    void highlight();
+
+    /**
+     * @brief Find overlap region between the target and basis spectra.
+     */
+    void overlap();
+
+    /**
+     * @brief Remove the basis from the list.
+     */
+    void delete_basis(int);
+
+    /**
+     * @brief Check if the wavelenght is found the basis
+     */
+    bool find_lambda(const DataProfile &, const double, int &);
+
+    /**
+     * @brief Returns the indices to sort the given array.
+     */
     QVector<int> argsort(const QVector<double> &);
 
+    /**
+     * @brief Sort an array by given indices.
+     */
     void sort(const QVector<int> &, QVector<double> &);
 
   private slots:
