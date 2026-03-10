@@ -82,13 +82,9 @@ if ($NonInteractive) { Log "Running in CI environment." }
 # =============================================================================
 # PLATFORM GUARD
 # =============================================================================
-if ($PSVersionTable.Platform -and $PSVersionTable.Platform -ne "Win32NT") {
+if ($env:OS -ne "Windows_NT") {
     Fatal "This script is for Windows only.`nFor Linux use scripts/bootstrap-deps.sh, for macOS use scripts/bootstrap-macos.sh."
 }
-
-$WinVer = [System.Environment]::OSVersion.Version
-Log "Detected: Windows $($WinVer.Major).$($WinVer.Minor) (build $($WinVer.Build))"
-Log ""
 
 # =============================================================================
 # WINGET CHECK
