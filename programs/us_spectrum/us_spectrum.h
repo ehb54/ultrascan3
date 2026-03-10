@@ -29,42 +29,43 @@ class US_Spectrum : public US_Widgets
     class DataProfile
     {
       public:
-        QFileInfo finfo;         //!< Filename
-        QString header;          //!< Column header
-        QVector<double> lambda;  //!< Wavelength values
-        QVector<double> od;      //!< Extinction coefficients
-        QVector<double> xvec;    //!< Trimmed lambda vector
-        QVector<double> yvec;    //!< Trimmed Extinction coefficients vector
-        float nnls_factor = -1;  //!< NNLS factor
-        float nnls_percent = -1; //!< NNLS percentage
+        QFileInfo finfo;                   //!< Filename
+        QString header;                    //!< Column header
+        QVector<double> lambda;            //!< Wavelength values
+        QVector<double> od;                //!< Extinction coefficients
+        QVector<double> xvec;              //!< Trimmed lambda vector
+        QVector<double> yvec;              //!< Trimmed Extinction coefficients vector
+        float nnls_factor = -1;            //!< NNLS factor
+        float nnls_percent = -1;           //!< NNLS percentage
         bool highlight = false;
+        
         /**
          * @brief Clear fit data.
          */
         void clear_fit();
     };
 
-    QString current_path;                 //!< Current path
-    QList<DataProfile> basis_list;        //!< Basis spectra array
-    DataProfile target;                   //!< Target profile
-    QVector<double> solution;             //!< Fitted data
-    QVector<double> residual;             //!< Residual data
-    QVector<QwtPlotCurve *> basis_curves; //!< Basis plot curves
+    QString current_path;                  //!< Current path
+    QList<DataProfile> basis_list;         //!< Basis spectra array
+    DataProfile target;                    //!< Target profile
+    QVector<double> solution;              //!< Fitted data
+    QVector<double> residual;              //!< Residual data
+    QVector<QwtPlotCurve *> basis_curves;  //!< Basis plot curves
 
-    QwtPlot *data_plot;  //!< Data plot
-    QwtPlot *error_plot; //!< Residuals plot
-
-    QTableWidget *tw_basis; //!< Basis list widget
-
-    QLineEdit *le_tgt_fname;  //!< Target filename
-    QLineEdit *le_tgt_header; //!< Target header
-    QLineEdit *le_tgt_wavl;   //!< Wavelength range of the target spectrum
-    QLineEdit *le_fit_wavl;   //!< Wavelength range of the fitted spectrum
-    QLineEdit *le_angle;      //!< Correlation angle value
-    QLineEdit *le_rmsd;       //!< RMSD value
-
-    QComboBox *cb_basis_1; //!< The first Basis selector for correlation angle
-    QComboBox *cb_basis_2; //!< The second Basis selector for correlation angle
+    QwtPlot *data_plot;                    //!< Data plot
+    QwtPlot *error_plot;                   //!< Residuals plot
+             
+    QTableWidget *tw_basis;                //!< Basis list widget
+             
+    QLineEdit *le_tgt_fname;               //!< Target filename
+    QLineEdit *le_tgt_header;              //!< Target header
+    QLineEdit *le_tgt_wavl;                //!< Wavelength range of the target spectrum
+    QLineEdit *le_fit_wavl;                //!< Wavelength range of the fitted spectrum
+    QLineEdit *le_angle;                   //!< Correlation angle value
+    QLineEdit *le_rmsd;                    //!< RMSD value
+             
+    QComboBox *cb_basis_1;                 //!< The first Basis selector for correlation angle
+    QComboBox *cb_basis_2;                 //!< The second Basis selector for correlation angle
 
     /**
      * @brief Plot data.
