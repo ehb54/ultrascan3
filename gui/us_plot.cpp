@@ -263,6 +263,8 @@ void US_Plot::setupCanvas()
    }
    connect(filter, &US_DoubleClickEventFilter::axisDoubleClicked, this, &US_Plot::configureAxis);
    connect(filter, &US_DoubleClickEventFilter::curvesDoubleClicked, this, &US_Plot::configureCurves);
+   connect(filter, &US_DoubleClickEventFilter::curveDoubleClicked, this, &US_Plot::curveDoubleClicked);
+   connect(filter, &US_DoubleClickEventFilter::axisDoubleClicked, this, &US_Plot::axisDoubleClicked);
 }
 
 void US_Plot::setupConnections()
@@ -321,13 +323,12 @@ CurveDistance US_Plot::findCurveAtPosition( const QPoint& pos, const double& thr
 void US_Plot::configureAxis( int axis )
 {
    if ( ! plot ) return;
-   if ( configWidget == nullptr ) {
-      configWidget = new US_PlotConfig( plot, this->parentWidget() );
-   }
+   US_PlotConfig* config_widget = new US_PlotConfig( plot, this->parentWidget() );
 
-   US_PlotAxisConfig* axisConfig = new US_PlotAxisConfig( axis, plot, configWidget );
+   US_PlotAxisConfig* axisConfig = new US_PlotAxisConfig( axis, plot, config_widget );
    axisConfig->exec();
    delete axisConfig;
+   delete config_widget;
    plot->replot();
 }
 
@@ -407,8 +408,8 @@ void US_Plot::setupZoom()
    // Create zoomer using factory method
    zoomer = createZoomer();
 
-   connect( zoomer, &US_Zoomer::zoomed, this, &US_Plot::zoomedCorners );
-   connect( zoomer, &US_Zoomer::zoomed, this, &US_Plot::scale_yRight );
+   connect( zoomer, &QwtPlotZoomer::zoomed, this, &US_Plot::zoomedCorners );
+   connect( zoomer, &QwtPlotZoomer::zoomed, this, &US_Plot::scale_yRight );
 
    // Create panner using factory method
    panner = createPanner();
@@ -440,7 +441,6 @@ void US_Plot::cleanupZoom()
 void US_Plot::setZoomEnabled( bool enable )
 {
    setupZoom();
-   if ( enable == zoomEnabled ) return;
 
    if ( enable )
    {
