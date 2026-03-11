@@ -38,7 +38,7 @@
     Build profile: APP (default), TEST, HPC
 
 .PARAMETER vcpkg-root
-    Path to vcpkg installation. Priority: --vcpkg-root > US3_VCPKG_ROOT env > source-tree vcpkg > ~/vcpkg
+    Path to vcpkg installation. Priority: --vcpkg-root > US3_VCPKG_ROOT env > source-tree vcpkg > $HOME\vcpkg
 
 .PARAMETER pkg
     Build the Windows NSIS installer after compiling
@@ -97,6 +97,7 @@
         US3_BUILD_JOBS      Override number of parallel build jobs
         US3_VCPKG_ROOT      Override vcpkg location (see priority above)
         US3_VCPKG_CACHE     Override binary cache path (default: $HOME\.vcpkg-cache)
+        US3_VCPKG_DOWNLOADS Override downloads cache path (default: $HOME\vcpkg-downloads)
 #>
 
 param(
@@ -452,16 +453,44 @@ function Test-VcpkgRoot {
     return $true
 }
 
+function Test-VcpkgDownloadsOnlyTree {
+    param([string]$Path)
+
+    if (-not (Test-Path $Path)) { return $false }
+
+    $DownloadsPath = Join-Path $Path "downloads"
+    if (-not (Test-Path $DownloadsPath)) { return $false }
+
+    $Markers = @(
+        "bootstrap-vcpkg.bat",
+        "scripts\buildsystems\vcpkg.cmake",
+        "ports",
+        "triplets",
+        ".git"
+    )
+
+    foreach ($Marker in $Markers) {
+        if (Test-Path (Join-Path $Path $Marker)) {
+            return $false
+        }
+    }
+
+    return $true
+}
+
 if (Test-Path $VcpkgRoot) {
     if (Test-VcpkgRoot $VcpkgRoot) {
         Write-Host "Found usable vcpkg root at $VcpkgRoot"
+    } elseif (Test-VcpkgDownloadsOnlyTree $VcpkgRoot) {
+        Write-Warning "$VcpkgRoot contains only a cached downloads subtree. Removing it so vcpkg can be cloned cleanly."
+        Remove-Item -Recurse -Force $VcpkgRoot
     } else {
-        Write-Host "ERROR: $VcpkgRoot exists but is not a usable vcpkg tree." -ForegroundColor Red
-        Write-Host "Expected bootstrap-vcpkg.bat, ports, triplets, and scripts\buildsystems\vcpkg.cmake."
-        Write-Host "Use --vcpkg-root or US3_VCPKG_ROOT to point to a valid vcpkg path."
-        exit 1
+        Write-Warning "$VcpkgRoot exists but is not a usable vcpkg tree. Removing it and cloning a fresh copy."
+        Remove-Item -Recurse -Force $VcpkgRoot
     }
-} else {
+}
+
+if (-not (Test-Path $VcpkgRoot)) {
     Write-Host "vcpkg not found at $VcpkgRoot, cloning..."
     git clone https://github.com/microsoft/vcpkg.git $VcpkgRoot
 }
@@ -475,11 +504,16 @@ if (-not (Test-Path (Join-Path $VcpkgRoot "vcpkg.exe"))) {
 
 # Binary cache: honour US3_VCPKG_CACHE env var, default to $HOME\.vcpkg-cache
 $VcpkgCacheDir = if ($env:US3_VCPKG_CACHE) { $env:US3_VCPKG_CACHE } else { Join-Path $HOME ".vcpkg-cache" }
-if (-not (Test-Path $VcpkgCacheDir)) { New-Item -ItemType Directory -Path $VcpkgCacheDir | Out-Null }
+if (-not (Test-Path $VcpkgCacheDir)) { New-Item -ItemType Directory -Path $VcpkgCacheDir -Force | Out-Null }
+
+# Downloads cache: honour US3_VCPKG_DOWNLOADS env var, default to $HOME\vcpkg-downloads
+$VcpkgDownloadsDir = if ($env:US3_VCPKG_DOWNLOADS) { $env:US3_VCPKG_DOWNLOADS } else { Join-Path $HOME "vcpkg-downloads" }
+if (-not (Test-Path $VcpkgDownloadsDir)) { New-Item -ItemType Directory -Path $VcpkgDownloadsDir -Force | Out-Null }
 
 $env:VCPKG_ROOT           = $VcpkgRoot
 $env:VCPKG_BINARY_SOURCES = "clear;files,$VcpkgCacheDir,readwrite"
 $env:VCPKG_INSTALLED_DIR  = Join-Path $VcpkgRoot "installed"
+$env:VCPKG_DOWNLOADS      = $VcpkgDownloadsDir
 
 if (-not (Test-Path (Join-Path $VcpkgRoot "scripts\buildsystems\vcpkg.cmake"))) {
     Write-Host "ERROR: vcpkg toolchain not found." -ForegroundColor Red
@@ -487,6 +521,9 @@ if (-not (Test-Path (Join-Path $VcpkgRoot "scripts\buildsystems\vcpkg.cmake"))) 
 }
 
 Write-Host "vcpkg ready." -ForegroundColor Green
+Write-Host "  root      : $VcpkgRoot"
+Write-Host "  cache     : $VcpkgCacheDir"
+Write-Host "  downloads : $VcpkgDownloadsDir"
 Write-Host ""
 
 # =============================================================================
