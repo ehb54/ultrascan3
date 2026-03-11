@@ -23,9 +23,9 @@
 #include <QJsonArray>
 
 struct US_GUI_EXTERN CurveDistance {
-   QwtPlotCurve* curve;
-   double distance;
-   int    closest_point_index;
+   QwtPlotCurve* curve = nullptr;
+   double distance = std::numeric_limits<double>::min();
+   int    closest_point_index = -1;
 };
 
 //! \brief A class to implement plot zooming with double-click support
