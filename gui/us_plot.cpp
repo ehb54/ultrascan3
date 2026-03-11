@@ -376,7 +376,7 @@ void US_Plot::configureCurves( const QList< QwtPlotCurve* >& curves )
 QwtPlotZoomer* US_Plot::createZoomer()
 {
    QwtPlotCanvas* canvas = qobject_cast<QwtPlotCanvas*>(plot->canvas());
-   auto* newZoomer = new US_Zoomer( QwtAxis::XBottom, QwtAxis::YLeft, canvas );
+   auto* newZoomer = new US_Zoomer( 2, 0, canvas );
 
    return newZoomer;
 }
