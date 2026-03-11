@@ -7402,7 +7402,9 @@ DbgLv(2) << " PlAll:      i" << i << "pen_plot" << pen_plot;
    // Reset colors
    focus( (int)ct_from->value(), (int)ct_to->value() );
    data_plot->replot();
-   plot->getZoomer()->setZoomBase();
+   if ( auto* z = plot->getZoomer() ) {
+      z->setZoomBase();
+   }
 }
 
 // Plot curves with linear baseline corrections
@@ -7542,7 +7544,9 @@ DbgLv(2) << " PlRng:      i" << i << "pen_plot" << pen_plot;
    // Reset colors
    focus( (int)ct_from->value(), (int)ct_to->value() );
    data_plot->replot();
-   plot->getZoomer()->setZoomBase();
+   if ( auto* z = plot->getZoomer() ) {
+      z->setZoomBase();
+   }
 
 }
 
@@ -7683,7 +7687,9 @@ DbgLv(2) << " PlRng:      i" << i << "pen_plot" << pen_plot;
    // Reset colors
    focus( (int)ct_from->value(), (int)ct_to->value() );
    data_plot->replot();
-   plot->getZoomer()->setZoomBase();
+   if ( auto* z = plot->getZoomer() ) {
+      z->setZoomBase();
+   }
 }
 
 // Plot the last picked curve
@@ -7744,7 +7750,9 @@ void US_Edit::plot_last( void )
    // Reset colors
    focus( (int)ct_from->value(), (int)ct_to->value() );
    data_plot->replot();
-   plot->getZoomer()->setZoomBase();
+   if ( auto* z = plot->getZoomer() ) {
+      z->setZoomBase();
+   }
 }
 
 // Plot a single scan curve
@@ -7809,7 +7817,9 @@ void US_Edit::plot_scan( void )
    }
 
    data_plot->replot();
-   plot->getZoomer()->setZoomBase();
+   if ( auto* z = plot->getZoomer() ) {
+      z->setZoomBase();
+   }
 }
 
 // Plot MWL curves
@@ -8069,7 +8079,9 @@ DbgLv(1) << "PlMwl:    START xa_WAV";
 
 DbgLv(1) << "PlMwl: call replot()";
    data_plot->replot();
-   plot->getZoomer()->setZoomBase();
+   if ( auto* z = plot->getZoomer() ) {
+      z->setZoomBase();
+   }
 DbgLv(1) << "PlMwl:  retn fr replot()";
 
    // Set the Scan spin boxes
