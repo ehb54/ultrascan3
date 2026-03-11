@@ -182,15 +182,19 @@ fi
 # DERIVE CONFIGURE AND BUILD PRESET NAMES
 # =============================================================================
 ARM64_SUFFIX=""
+X64_SUFFIX=""
 if [[ "$PLATFORM" == "Windows" && "$ARCH" == "arm64" ]]; then
   ARM64_SUFFIX="-arm64"
+fi
+if [[ "$PLATFORM" == "macOS" && "$ARCH" == "x64" ]]; then
+  X64_SUFFIX="-x64"
 fi
 
 # HPC on Linux and macOS uses dedicated presets (separate binary dir, no GUI)
 if [[ "$PROFILE" == "HPC" && ( "$PLATFORM" == "Linux" || "$PLATFORM" == "macOS" ) ]]; then
-  CONFIGURE_PRESET="${PLATFORM_PREFIX}-hpc-release-${QT_VARIANT}"
+  CONFIGURE_PRESET="${PLATFORM_PREFIX}-hpc-release-${QT_VARIANT}${X64_SUFFIX}"
 else
-  CONFIGURE_PRESET="${PLATFORM_PREFIX}-release-${QT_VARIANT}${ARM64_SUFFIX}"
+  CONFIGURE_PRESET="${PLATFORM_PREFIX}-release-${QT_VARIANT}${ARM64_SUFFIX}${X64_SUFFIX}"
 fi
 BUILD_PRESET="build-${CONFIGURE_PRESET}"
 

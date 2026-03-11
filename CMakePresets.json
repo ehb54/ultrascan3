@@ -66,6 +66,15 @@
       }
     },
     {
+      "name": "macos-x64-base",
+      "hidden": true,
+      "inherits": "macos-base",
+      "cacheVariables": {
+        "VCPKG_TARGET_TRIPLET": "x64-osx-dynamic",
+        "CMAKE_OSX_ARCHITECTURES": "x86_64"
+      }
+    },
+    {
       "name": "linux-base",
       "hidden": true,
       "cacheVariables": {
@@ -110,9 +119,20 @@
     { "name": "macos-release-qt6",           "displayName": "macOS Release Qt6 Qwt6.3.0",          "inherits": ["release-base", "macos-base", "base-qt6"],             "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Darwin"  } },
     { "name": "macos-debug-qt6",             "displayName": "macOS Debug Qt6 Qwt6.3.0",            "inherits": ["debug-base",   "macos-base", "base-qt6"],             "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Darwin"  } },
 
+    { "name": "macos-release-qt5-qwt616-x64", "displayName": "macOS Intel Release Qt5 Qwt6.1.6",  "inherits": ["release-base", "macos-x64-base", "base-qt5-qwt616"],  "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Darwin"  } },
+    { "name": "macos-debug-qt5-qwt616-x64",   "displayName": "macOS Intel Debug Qt5 Qwt6.1.6",    "inherits": ["debug-base",   "macos-x64-base", "base-qt5-qwt616"],  "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Darwin"  } },
+    { "name": "macos-release-qt5-qwt630-x64", "displayName": "macOS Intel Release Qt5 Qwt6.3.0",  "inherits": ["release-base", "macos-x64-base", "base-qt5-qwt630"],  "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Darwin"  } },
+    { "name": "macos-debug-qt5-qwt630-x64",   "displayName": "macOS Intel Debug Qt5 Qwt6.3.0",    "inherits": ["debug-base",   "macos-x64-base", "base-qt5-qwt630"],  "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Darwin"  } },
+    { "name": "macos-release-qt6-x64",        "displayName": "macOS Intel Release Qt6 Qwt6.3.0",  "inherits": ["release-base", "macos-x64-base", "base-qt6"],          "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Darwin"  } },
+    { "name": "macos-debug-qt6-x64",          "displayName": "macOS Intel Debug Qt6 Qwt6.3.0",    "inherits": ["debug-base",   "macos-x64-base", "base-qt6"],          "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Darwin"  } },
+
     { "name": "macos-hpc-release-qt5-qwt616", "displayName": "macOS HPC Release Qt5 Qwt6.1.6", "binaryDir": "${sourceDir}/build/${presetName}", "inherits": ["release-base", "macos-base", "base-qt5-qwt616"], "cacheVariables": { "US3_PROFILE": "HPC" }, "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Darwin" } },
     { "name": "macos-hpc-release-qt5-qwt630", "displayName": "macOS HPC Release Qt5 Qwt6.3.0", "binaryDir": "${sourceDir}/build/${presetName}", "inherits": ["release-base", "macos-base", "base-qt5-qwt630"], "cacheVariables": { "US3_PROFILE": "HPC" }, "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Darwin" } },
     { "name": "macos-hpc-release-qt6",        "displayName": "macOS HPC Release Qt6 Qwt6.3.0",  "binaryDir": "${sourceDir}/build/${presetName}", "inherits": ["release-base", "macos-base", "base-qt6"],        "cacheVariables": { "US3_PROFILE": "HPC" }, "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Darwin" } },
+
+    { "name": "macos-hpc-release-qt5-qwt616-x64", "displayName": "macOS Intel HPC Release Qt5 Qwt6.1.6", "binaryDir": "${sourceDir}/build/${presetName}", "inherits": ["release-base", "macos-x64-base", "base-qt5-qwt616"], "cacheVariables": { "US3_PROFILE": "HPC" }, "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Darwin" } },
+    { "name": "macos-hpc-release-qt5-qwt630-x64", "displayName": "macOS Intel HPC Release Qt5 Qwt6.3.0", "binaryDir": "${sourceDir}/build/${presetName}", "inherits": ["release-base", "macos-x64-base", "base-qt5-qwt630"], "cacheVariables": { "US3_PROFILE": "HPC" }, "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Darwin" } },
+    { "name": "macos-hpc-release-qt6-x64",        "displayName": "macOS Intel HPC Release Qt6 Qwt6.3.0",  "binaryDir": "${sourceDir}/build/${presetName}", "inherits": ["release-base", "macos-x64-base", "base-qt6"],        "cacheVariables": { "US3_PROFILE": "HPC" }, "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Darwin" } },
 
     { "name": "linux-release-qt5-qwt616",    "displayName": "Linux Release Qt5 Qwt6.1.6",          "inherits": ["release-base", "linux-base", "base-qt5-qwt616"],      "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Linux"   } },
     { "name": "linux-debug-qt5-qwt616",      "displayName": "Linux Debug Qt5 Qwt6.1.6",            "inherits": ["debug-base",   "linux-base", "base-qt5-qwt616"],      "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Linux"   } },
@@ -156,6 +176,17 @@
     { "name": "build-macos-hpc-release-qt5-qwt616", "configurePreset": "macos-hpc-release-qt5-qwt616" },
     { "name": "build-macos-hpc-release-qt5-qwt630", "configurePreset": "macos-hpc-release-qt5-qwt630" },
     { "name": "build-macos-hpc-release-qt6",        "configurePreset": "macos-hpc-release-qt6"        },
+
+    { "name": "build-macos-release-qt5-qwt616-x64", "configurePreset": "macos-release-qt5-qwt616-x64" },
+    { "name": "build-macos-debug-qt5-qwt616-x64",   "configurePreset": "macos-debug-qt5-qwt616-x64"   },
+    { "name": "build-macos-release-qt5-qwt630-x64", "configurePreset": "macos-release-qt5-qwt630-x64" },
+    { "name": "build-macos-debug-qt5-qwt630-x64",   "configurePreset": "macos-debug-qt5-qwt630-x64"   },
+    { "name": "build-macos-release-qt6-x64",        "configurePreset": "macos-release-qt6-x64"        },
+    { "name": "build-macos-debug-qt6-x64",          "configurePreset": "macos-debug-qt6-x64"          },
+
+    { "name": "build-macos-hpc-release-qt5-qwt616-x64", "configurePreset": "macos-hpc-release-qt5-qwt616-x64" },
+    { "name": "build-macos-hpc-release-qt5-qwt630-x64", "configurePreset": "macos-hpc-release-qt5-qwt630-x64" },
+    { "name": "build-macos-hpc-release-qt6-x64",        "configurePreset": "macos-hpc-release-qt6-x64"        },
 
     { "name": "build-linux-release-qt5-qwt616",    "configurePreset": "linux-release-qt5-qwt616"   },
     { "name": "build-linux-debug-qt5-qwt616",      "configurePreset": "linux-debug-qt5-qwt616"     },
