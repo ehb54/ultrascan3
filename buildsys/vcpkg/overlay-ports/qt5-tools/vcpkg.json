@@ -16,12 +16,7 @@
       "dependencies": [
         {
           "name": "qt5-base",
-          "default-features": false,
-          "features": [
-            "network",
-            "sql-sqlite",
-            "widgets"
-          ]
+          "default-features": false
         }
       ]
     }

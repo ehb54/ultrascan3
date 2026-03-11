@@ -431,21 +431,43 @@ if (${vcpkg-root}) {
 
 Write-Host ""
 
-if ((Test-Path $VcpkgRoot) -and (-not (Test-Path (Join-Path $VcpkgRoot ".git")))) {
-    Write-Host "ERROR: $VcpkgRoot exists but is not a vcpkg git clone." -ForegroundColor Red
-    Write-Host "Use --vcpkg-root or US3_VCPKG_ROOT to point to a valid vcpkg path."
-    exit 1
+function Test-VcpkgRoot {
+    param([string]$Path)
+
+    if (-not (Test-Path $Path)) { return $false }
+
+    $Required = @(
+        "bootstrap-vcpkg.bat",
+        "scripts\buildsystems\vcpkg.cmake",
+        "ports",
+        "triplets"
+    )
+
+    foreach ($Item in $Required) {
+        if (-not (Test-Path (Join-Path $Path $Item))) {
+            return $false
+        }
+    }
+
+    return $true
 }
 
-if (-not (Test-Path (Join-Path $VcpkgRoot ".git"))) {
+if (Test-Path $VcpkgRoot) {
+    if (Test-VcpkgRoot $VcpkgRoot) {
+        Write-Host "Found usable vcpkg root at $VcpkgRoot"
+    } else {
+        Write-Host "ERROR: $VcpkgRoot exists but is not a usable vcpkg tree." -ForegroundColor Red
+        Write-Host "Expected bootstrap-vcpkg.bat, ports, triplets, and scripts\buildsystems\vcpkg.cmake."
+        Write-Host "Use --vcpkg-root or US3_VCPKG_ROOT to point to a valid vcpkg path."
+        exit 1
+    }
+} else {
     Write-Host "vcpkg not found at $VcpkgRoot, cloning..."
     git clone https://github.com/microsoft/vcpkg.git $VcpkgRoot
 }
 
 if (-not (Test-Path (Join-Path $VcpkgRoot "vcpkg.exe"))) {
     Write-Host "Bootstrapping vcpkg at $VcpkgRoot..."
-    # -disableMetrics suppresses the telemetry consent prompt which can
-    # stall non-interactive CI environments on first bootstrap.
     Push-Location $VcpkgRoot
     & .\bootstrap-vcpkg.bat -disableMetrics
     Pop-Location
