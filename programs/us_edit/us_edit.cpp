@@ -8439,15 +8439,10 @@ void US_Edit::toggle_exclusion_click_mode( void )
    if ( exclusion_click_mode )
    {
       pb_exclusion_click->setIcon( check );
-
-      // Enable hover tooltips
-      pick->setStateMachine( new QwtPickerTrackerMachine() );
    }
    else
    {
       pb_exclusion_click->setIcon( QIcon() );
-      // Restore normal mouse behavior
-      pick->setStateMachine( new QwtPickerTrackerMachine() );
    }
 }
 
