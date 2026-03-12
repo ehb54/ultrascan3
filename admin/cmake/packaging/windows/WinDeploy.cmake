@@ -142,12 +142,14 @@ execute_process(
     OUTPUT_VARIABLE _wdq_output
     ERROR_VARIABLE  _wdq_error
 )
+
 if(NOT _wdq_result EQUAL 0)
-    message(WARNING "[WinDeploy] windeployqt exited with code ${_wdq_result}")
-    message(STATUS  "  stdout: ${_wdq_output}")
-    message(STATUS  "  stderr: ${_wdq_error}")
+    message(FATAL_ERROR
+            "[WinDeploy] windeployqt failed for us.exe with code ${_wdq_result}\n"
+            "stdout:\n${_wdq_output}\n"
+            "stderr:\n${_wdq_error}")
 else()
-    message(STATUS  "  windeployqt succeeded")
+    message(STATUS "  windeployqt succeeded")
 endif()
 
 # =========================================================================
@@ -210,11 +212,11 @@ if(NOT EXISTS "${S_PLUG}/platforms/qwindows.dll")
     endforeach()
 
     if(NOT _QWINDOWS_FOUND)
-        message(WARNING
-            "[WinDeploy] platforms/qwindows.dll not found after windeployqt. "
-            "The application will fail to start without a platform plugin. "
-            "Searched: ${_PLATFORMS_SEARCH_DIRS}. "
-            "Set VCPKG_PLUGIN_DIR to the vcpkg installed plugins/ directory.")
+        message(FATAL_ERROR
+                "[WinDeploy] platforms/qwindows.dll not found after windeployqt. "
+                "The application will fail to start without a platform plugin. "
+                "Searched: ${_PLATFORMS_SEARCH_DIRS}. "
+                "Set VCPKG_PLUGIN_DIR to the vcpkg installed plugins/ directory.")
     endif()
 else()
     message(STATUS "[WinDeploy] platforms/qwindows.dll already present")
