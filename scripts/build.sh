@@ -277,7 +277,7 @@ if [ "$PLATFORM" = "Linux" ]; then
 
   # Only create scratch directories when a scratch root is actually in use.
   if [ -n "$US3_SCRATCH_ROOT" ]; then
-    mkdir -p "$US3_SCRATCH_ROOT"/{vcpkg,vcpkg-cache,vcpkg-downloads,build}
+    mkdir -p "$US3_SCRATCH_ROOT"/{vcpkg-cache,vcpkg-downloads,build}
     echo "Using Linux scratch root: $US3_SCRATCH_ROOT"
   else
     echo "Using standard Linux home-directory paths."
