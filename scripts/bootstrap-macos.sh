@@ -306,40 +306,36 @@ fi
 log "Checking which packages are already installed or otherwise available..."
 
 PKGS_TO_INSTALL=()
-
 tool_for_formula() {
   case "$1" in
-    cmake)      echo "cmake" ;;
-    ninja)      echo "ninja" ;;
-    git)        echo "git" ;;
-    pkg-config) echo "pkg-config" ;;
-    nasm)       echo "nasm" ;;
-    python3)    echo "python3" ;;
-    curl)       echo "curl" ;;
-    open-mpi)   echo "mpicxx" ;;
-    *)          echo "$1" ;;
+    cmake)             echo "cmake" ;;
+    ninja)             echo "ninja" ;;
+    git)               echo "git" ;;
+    pkg-config)        echo "pkg-config" ;;
+    autoconf)          echo "autoconf" ;;
+    automake)          echo "automake" ;;
+    libtool)           echo "glibtoolize" ;;
+    nasm)              echo "nasm" ;;
+    python3)           echo "python3" ;;
+    curl)              echo "curl" ;;
+    open-mpi)          echo "mpicxx" ;;
+    autoconf-archive)  echo "" ;;
+    *)                 echo "$1" ;;
   esac
 }
 
-# Return 0 if the tool is already usable enough that we should skip brew install.
 tool_is_usable() {
   local formula="$1"
   local tool
   tool="$(tool_for_formula "$formula")"
 
   case "$formula" in
-    # For these, any working command on PATH is good enough.
-    git|curl|cmake|ninja|pkg-config|nasm|open-mpi)
-      command -v "$tool" >/dev/null 2>&1
+    autoconf-archive)
+      brew list --formula autoconf-archive >/dev/null 2>&1
       ;;
 
-    # python3 is special on macOS because /usr/bin/python3 may be a CLT stub.
     python3)
-      if ! command -v python3 >/dev/null 2>&1; then
-        return 1
-      fi
-
-      # Confirm it is a real runnable interpreter, not just a stub.
+      command -v python3 >/dev/null 2>&1 || return 1
       python3 - <<'PY' >/dev/null 2>&1
 import sys
 print(sys.version)
@@ -347,19 +343,27 @@ PY
       ;;
 
     *)
-      command -v "$tool" >/dev/null 2>&1
+      [ -n "$tool" ] && command -v "$tool" >/dev/null 2>&1
       ;;
   esac
 }
 
 for pkg in "${ALL_BREW_PKGS[@]}"; do
   if tool_is_usable "$pkg"; then
-    log "Found usable tool for $pkg: $(command -v "$(tool_for_formula "$pkg")" 2>/dev/null || echo "<unknown>")"
+    tool="$(tool_for_formula "$pkg")"
+    if [ -n "$tool" ]; then
+      log "Found usable tool for $pkg: $(command -v "$tool" 2>/dev/null || echo "<unknown>")"
+    else
+      log "Found usable Homebrew formula for $pkg."
+    fi
     continue
   fi
 
   # Tool not usable on PATH; check whether Brew already has the formula.
   if brew list --formula "$pkg" >/dev/null 2>&1; then
+    if [ "$NON_INTERACTIVE" = true ]; then
+      die "Homebrew formula $pkg is installed, but required tool is not usable on PATH. Expected Homebrew bin under ${BREW_PREFIX}/bin."
+    fi
     log "Homebrew formula $pkg is installed, but its tool is not currently usable on PATH."
     log "Will not reinstall automatically; verify your PATH includes: ${BREW_PREFIX}/bin"
     continue
@@ -414,7 +418,12 @@ fi
 log ""
 log "Verifying key tools..."
 
-VERIFY_TOOLS=(cmake ninja git pkg-config nasm python3)
+VERIFY_TOOLS=(cmake ninja git pkg-config autoconf automake glibtoolize python3)
+
+if [ "$MACOS_ARCH" = "x86_64" ]; then
+  VERIFY_TOOLS+=(nasm)
+fi
+
 if [ "$INSTALL_HPC" = true ]; then
   VERIFY_TOOLS+=(mpicxx)
 fi
@@ -428,6 +437,14 @@ for tool in "${VERIFY_TOOLS[@]}"; do
   fi
 done
 
+# autoconf-archive is a formula/resource package, not a normal command.
+if ! brew list --formula autoconf-archive >/dev/null 2>&1; then
+  if [ "$NON_INTERACTIVE" = true ]; then
+    die "Required formula autoconf-archive is not installed after Homebrew install."
+  fi
+  warn "Required formula autoconf-archive is not installed."
+fi
+
 if [ ${#MISSING_AFTER[@]} -ne 0 ]; then
   warn "The following tools are still not on PATH after installation:"
   for tool in "${MISSING_AFTER[@]}"; do
@@ -436,6 +453,11 @@ if [ ${#MISSING_AFTER[@]} -ne 0 ]; then
   warn ""
   warn "Ensure ${BREW_PREFIX}/bin is on your PATH. Add this to your shell profile:"
   warn "  eval \"\$(${BREW_PREFIX}/bin/brew shellenv)\""
+
+  if [ "$NON_INTERACTIVE" = true ]; then
+    die "Required tools are still missing after Homebrew installation."
+  fi
+
   warn "Build may fail. Please investigate before running build.sh."
 else
   log "All key tools verified on PATH."
