@@ -298,7 +298,7 @@ TEST_F(US_TimeStateTest, Origin) {
 
     bool hasType = timeState->origin(&version, &importType);
     EXPECT_TRUE(hasType);
-    EXPECT_EQ(version, "2.1");
+    EXPECT_EQ(version, "2.2");
     EXPECT_EQ(importType, "XLA");
 }
 

@@ -2580,7 +2580,7 @@ DbgLv(1) << "expA:   nf" << nfiles << "fname" << fname
          << "F4"          << "I2"       << "I2";
 
    US_TimeState tsobj;
-
+   tsobj.setTimeStateType(US_TimeState::TIMESTATE_TYPE::ORIGINAL);
    QString tspath    = cur_dir + runID + ".time_state.tmst";
    int ntimes        = scans.count();
    int ntssda        = tSydata.count();
@@ -2878,7 +2878,9 @@ DbgLv(1) << "expA:      jj" << jj << "scan" << scannbr
    // Complete write of TMST file and defining XML
    if ( tsobj.close_write_data() == 0 )
    {
-      tsobj.write_defs( 0.0, "Optima" );
+      tsobj.setImportType( US_TimeState::IMPORT_TYPE::OPTIMA );
+      tsobj.setTimeStateType( US_TimeState::TIMESTATE_TYPE::ORIGINAL );
+      tsobj.write_defs( 0.0 );
       nfiles        += 2;
 DbgLv(1) << "expA: TMST files written.";
    }
@@ -3007,7 +3009,7 @@ DbgLv(1) << "expA:   nf" << nfiles << "fname" << fname
          << "F4"          << "I2"       << "I2";
 
    US_TimeState tsobj;
-
+   tsobj.setTimeStateType(US_TimeState::TIMESTATE_TYPE::ORIGINAL);
    QString tspath    = cur_dir + runID + ".time_state.tmst";
    int ntimes        = scans.count();
    int ntssda        = tSydata.count();
@@ -3312,7 +3314,9 @@ DbgLv(1) << "expA:      jj" << jj << "scan" << scannbr
    // Complete write of TMST file and defining XML
    if ( tsobj.close_write_data() == 0 )
    {
-      tsobj.write_defs( 0.0, "Optima" );
+      tsobj.setImportType( US_TimeState::IMPORT_TYPE::OPTIMA );
+      tsobj.setTimeStateType( US_TimeState::TIMESTATE_TYPE::ORIGINAL );
+      tsobj.write_defs( 0.0 );
       nfiles        += 2;
 DbgLv(1) << "expA: TMST files written.";
    }
