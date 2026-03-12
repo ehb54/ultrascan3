@@ -220,8 +220,12 @@ if [ -n "${US3_BUILD_JOBS:-}" ]; then
   # Explicit override always wins
   BUILD_JOBS="$US3_BUILD_JOBS"
 elif [ "${CI:-false}" = "true" ]; then
-  # CI runners are dedicated -- use every core
-  BUILD_JOBS="$CORES"
+  # Linux Qt6 builds on GitHub runners can run out of disk at higher parallelism
+  if [ "$PLATFORM" = "Linux" ] && [ "$QT_VARIANT" = "qt6" ]; then
+    BUILD_JOBS=2
+  else
+    BUILD_JOBS="$CORES"
+  fi
 else
   # Local builds: leave ~10% headroom to keep the machine usable
   BUILD_JOBS=$((CORES * 9 / 10))
