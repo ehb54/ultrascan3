@@ -211,6 +211,10 @@ BREW_PKGS_TOOLCHAIN=(
   ninja
   git
   pkg-config
+  autoconf
+  autoconf-archive
+  automake
+  libtool
 )
 
 # --- Assembly ---------------------------------------------------------------
@@ -264,8 +268,7 @@ for pkg in \
   "${BREW_PKGS_TOOLCHAIN[@]}" \
   "${BREW_PKGS_ASM[@]}" \
   "${BREW_PKGS_PYTHON[@]}" \
-  "${BREW_PKGS_ARCHIVE[@]}" \
-  "${BREW_PKGS_HPC[@]}"; do
+  "${BREW_PKGS_ARCHIVE[@]}"; do
   [ -n "$pkg" ] && ALL_BREW_PKGS+=("$pkg")
 done
 
