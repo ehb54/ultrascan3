@@ -16,6 +16,8 @@ US_TimeState::US_TimeState() : QObject()
    filepath    = filename;
    fvers       = QString( _TMST_VERS_ );
    imp_type    = QString( "XLA" );
+   type        = TIMESTATE_TYPE::UNKNOWN;
+   import_type = IMPORT_TYPE::XLA;
    fileo       = NULL;
    filei       = NULL;
    dso         = NULL;
@@ -366,11 +368,10 @@ int US_TimeState::close_write_data()
 }
 
 // Write the definitions (XML) file for the last opened output data file
-int US_TimeState::write_defs( double timeinc, QString imptype )
+int US_TimeState::write_defs( double timeinc )
 {
    int status  = 0;
    time_inc    = timeinc < 0.0 ? time_inc : timeinc;
-   imp_type    = imptype.isEmpty() ? imp_type : imptype;
 
    QString xfname = QString( filename ).section( ".", 0, -2 ) + ".xml";
    QString xfpath = QString( filepath ).section( ".", 0, -2 ) + ".xml";
@@ -390,7 +391,8 @@ int US_TimeState::write_defs( double timeinc, QString imptype )
    xml.writeDTD              ( "<!DOCTYPE US_TimeState>" );
    xml.writeStartElement( "TimeState" );    // <TimeState version=...>
    xml.writeAttribute   ( "version",        QString( _TMST_VERS_ ) );
-   xml.writeAttribute   ( "import_type",    imp_type               );
+   xml.writeAttribute   ( "import_type",    imp_type );
+   xml.writeAttribute   ( "type",           QString::number( static_cast<int>(type) ) );
 
    xml.writeStartElement( "file" );         // <file time_count=...>
    xml.writeAttribute   ( "time_count",     QString::number( ntimes )     );
@@ -523,6 +525,25 @@ int US_TimeState::open_read_data( QString fpath, const bool pfetch )
          {  // Parse file/object version and import type
             fvers      = attr.value( "version"        ).toString();
             imp_type   = attr.value( "import_type"    ).toString();
+            // init import_type from imp_type
+            if ( imp_type == "MWRS" ) {
+               import_type = IMPORT_TYPE::MWRS;
+            }
+            else if ( imp_type == "CFA" ) {
+               import_type = IMPORT_TYPE::CFA;
+            }
+            else if ( imp_type == "OPTIMA" ) {
+               import_type = IMPORT_TYPE::OPTIMA;
+            }
+            else {
+               import_type = IMPORT_TYPE::XLA;
+            }
+            if ( QVersionNumber::fromString( fvers ).normalized() >= QVersionNumber::fromString( "2.2" ).normalized() ) {
+               type = static_cast<TIMESTATE_TYPE>(attr.value( "type" ).toInt() );
+            }
+            else {
+               type = TIMESTATE_TYPE::UNKNOWN;
+            }
          }
 
          else if ( xname == "file" )
@@ -1401,3 +1422,20 @@ DbgLv(1) << "DtsF: keyx" << keyx << "fmt" << fmt << "ftst" << ftst
    return status;
 }
 
+void US_TimeState::setImportType( const IMPORT_TYPE imptype ) {
+   import_type = imptype;
+   const QStringList import_types = { "XLA", "MWRS", "CFA", "OPTIMA" };
+   imp_type = import_types.at( static_cast<int>(imptype) );
+}
+
+void US_TimeState::setTimeStateType( const TIMESTATE_TYPE ttype) {
+   type = ttype;
+}
+
+US_TimeState::IMPORT_TYPE US_TimeState::getImportType() const {
+   return import_type;
+}
+
+US_TimeState::TIMESTATE_TYPE US_TimeState::getTimeStateType() const {
+   return type;
+}

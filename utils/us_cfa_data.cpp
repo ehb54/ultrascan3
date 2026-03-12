@@ -630,6 +630,8 @@ DbgLv(1) << "expA:  ii" << ii << "scannbr scanid" << scannbr << scanid
    // Complete write of TMST file and defining XML
    if ( tsobj.close_write_data() == 0 )
    {
+      tsobj.setImportType( US_TimeState::IMPORT_TYPE::CFA );
+      tsobj.setTimeStateType( US_TimeState::TIMESTATE_TYPE::UNKNOWN );
       tsobj.write_defs();
       nfiles        += 2;
    }
