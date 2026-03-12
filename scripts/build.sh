@@ -26,7 +26,7 @@ BUILD_PKG=false        # --pkg: build platform-native package
 PROFILE="APP"          # default profile
 QT_VARIANT="qt6"       # qt6 | qt5-qwt616 | qt5-qwt630
 ARCH=""
-US3_VCPKG_ROOT=""
+US3_VCPKG_ROOT="${US3_VCPKG_ROOT:-}"
 
 # Parse options
 while [[ $# -gt 0 ]]; do
@@ -108,6 +108,8 @@ while [[ $# -gt 0 ]]; do
       echo "  US3_BUILD_JOBS      Override number of parallel build jobs"
       echo "  US3_VCPKG_ROOT      Override vcpkg location (default: \$HOME/vcpkg)"
       echo "  US3_VCPKG_CACHE     Override binary cache path (default: \$HOME/.vcpkg-cache)"
+      echo "  US3_VCPKG_DOWNLOADS Override downloads cache path"
+      echo "  US3_SCRATCH_ROOT    Override Linux CI scratch root"
       exit 0
       ;;
     [Aa][Pp][Pp]|[Tt][Ee][Ss][Tt]|[Hh][Pp][Cc])
@@ -239,6 +241,49 @@ export VCPKG_MAX_CONCURRENCY="$BUILD_JOBS"
 # =============================================================================
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SOURCE_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
+
+# =============================================================================
+# LINUX CI SCRATCH / DISK MANAGEMENT
+# On GitHub-hosted Ubuntu runners, root disk space is tight. Put large mutable
+# build state on scratch storage in CI when possible.
+# =============================================================================
+US3_SCRATCH_ROOT="${US3_SCRATCH_ROOT:-}"
+
+if [ "$PLATFORM" = "Linux" ]; then
+  echo "=========================================="
+  echo "Linux disk preflight"
+  echo "=========================================="
+  df -h
+
+  if [ "${CI:-false}" = "true" ]; then
+    echo "Freeing large preinstalled tool stacks not needed for UltraScan..."
+    sudo rm -rf /usr/share/dotnet || true
+    sudo rm -rf /opt/ghc || true
+    sudo rm -rf /usr/local/lib/android || true
+    sudo rm -rf /opt/hostedtoolcache/CodeQL || true
+    echo ""
+    echo "Disk after cleanup:"
+    df -h
+
+    # In CI, prefer /mnt only if it is actually a different filesystem.
+    if [ -z "$US3_SCRATCH_ROOT" ]; then
+      if [ -d /mnt ] && [ "$(stat -c '%d' / 2>/dev/null || echo x)" != "$(stat -c '%d' /mnt 2>/dev/null || echo x)" ]; then
+        US3_SCRATCH_ROOT="/mnt/us3"
+      else
+        US3_SCRATCH_ROOT="$HOME/us3-scratch"
+      fi
+    fi
+  fi
+
+  # Only create scratch directories when a scratch root is actually in use.
+  if [ -n "$US3_SCRATCH_ROOT" ]; then
+    mkdir -p "$US3_SCRATCH_ROOT"/{vcpkg,vcpkg-cache,vcpkg-downloads,build}
+    echo "Using Linux scratch root: $US3_SCRATCH_ROOT"
+  else
+    echo "Using standard Linux home-directory paths."
+  fi
+  echo ""
+fi
 
 # =============================================================================
 # CHECK REQUIRED TOOLS
@@ -430,12 +475,17 @@ fi
 if [ -n "$US3_VCPKG_ROOT" ]; then
   echo "Using vcpkg from --vcpkg-root argument: $US3_VCPKG_ROOT"
 elif [ -n "${US3_VCPKG_ROOT:-}" ]; then
+  US3_VCPKG_ROOT="${US3_VCPKG_ROOT}"
   echo "Using vcpkg from US3_VCPKG_ROOT environment variable: $US3_VCPKG_ROOT"
 elif [ -f "${SOURCE_DIR}/vcpkg/bootstrap-vcpkg.sh" ]; then
   US3_VCPKG_ROOT="${SOURCE_DIR}/vcpkg"
   echo "Using vcpkg from source tree: $US3_VCPKG_ROOT"
 else
-  US3_VCPKG_ROOT="$HOME/vcpkg"
+  if [ "$PLATFORM" = "Linux" ] && [ "${CI:-false}" = "true" ] && [ -n "${US3_SCRATCH_ROOT:-}" ]; then
+    US3_VCPKG_ROOT="$US3_SCRATCH_ROOT/vcpkg"
+  else
+    US3_VCPKG_ROOT="$HOME/vcpkg"
+  fi
   echo "Using vcpkg from default location: $US3_VCPKG_ROOT"
 fi
 
@@ -467,12 +517,30 @@ fi
 export VCPKG_ROOT="$US3_VCPKG_ROOT"
 export VCPKG_INSTALLED_DIR="$US3_VCPKG_ROOT/installed"
 
-# Allow CI to override the binary cache location via env var.
-# Default to ~/.vcpkg-cache which persists across runs on self-hosted runners.
-# On ephemeral runners set US3_VCPKG_CACHE to a mounted cache volume path.
-US3_VCPKG_CACHE="${US3_VCPKG_CACHE:-$HOME/.vcpkg-cache}"
+# Allow explicit override of the binary cache location via env var.
+# In Linux CI, prefer the scratch root when available to reduce pressure on
+# the runner's root filesystem. Otherwise default to ~/.vcpkg-cache.
+if [ -n "${US3_VCPKG_CACHE:-}" ]; then
+  US3_VCPKG_CACHE="$US3_VCPKG_CACHE"
+elif [ "$PLATFORM" = "Linux" ] && [ "${CI:-false}" = "true" ] && [ -n "${US3_SCRATCH_ROOT:-}" ]; then
+  US3_VCPKG_CACHE="$US3_SCRATCH_ROOT/vcpkg-cache"
+else
+  US3_VCPKG_CACHE="$HOME/.vcpkg-cache"
+fi
+
 mkdir -p "$US3_VCPKG_CACHE"
 export VCPKG_BINARY_SOURCES="clear;files,$US3_VCPKG_CACHE,readwrite"
+
+if [ -n "${US3_VCPKG_DOWNLOADS:-}" ]; then
+  US3_VCPKG_DOWNLOADS="$US3_VCPKG_DOWNLOADS"
+elif [ "$PLATFORM" = "Linux" ] && [ "${CI:-false}" = "true" ] && [ -n "${US3_SCRATCH_ROOT:-}" ]; then
+  US3_VCPKG_DOWNLOADS="$US3_SCRATCH_ROOT/vcpkg-downloads"
+else
+  US3_VCPKG_DOWNLOADS="$HOME/vcpkg-downloads"
+fi
+
+mkdir -p "$US3_VCPKG_DOWNLOADS"
+export US3_VCPKG_DOWNLOADS
 
 VCPKG_TOOLCHAIN_FILE="$US3_VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
 if [ ! -f "$VCPKG_TOOLCHAIN_FILE" ]; then
