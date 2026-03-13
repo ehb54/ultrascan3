@@ -5,6 +5,7 @@
 #include "us_widgets.h"
 #include "us_plot.h"
 #include "us_math2.h"
+#include "us_help.h"
 #include <math.h>
 
 /**
@@ -44,8 +45,8 @@ class US_Spectrum : public US_Widgets
         QString current_path;         //!< Current path
 
     private:
-        QVector <double> residuals;    //!< residual vector
-
+        QVector <double> residuals;   //!< residual vector
+        US_Help showHelp;             //!< US_Help
         QwtPlot* data_plot;           //!< Data plot
         QwtPlot* residuals_plot;      //!< Residuals plot
         US_Plot* plotLayout1;         //!< Plot layout 1
@@ -162,6 +163,11 @@ class US_Spectrum : public US_Widgets
          * @brief Slot to overlap the plots.
          */
         void overlap();
+
+        /**
+         * @brief Slot to open help.
+         */
+        void help();
 };
 
 #endif
