@@ -3,27 +3,35 @@
   "version": "4.1.0",
   "builtin-baseline": "69a6e3311f485ac1af362d63b2f62537c3c73134",
   "dependencies": [
-    "gtest",
     "libarchive",
-    {
-      "name": "libmariadb",
-      "default-features": false,
-      "features": ["openssl"]
-    },
-    "libpng",
     "openssl",
-    {
-      "name": "sqlite3",
-      "features": ["fts5"]
-    },
     "zlib",
     "eigen3"
   ],
   "features": {
-    "qt5": {
-      "description": "Build with Qt5 Qwt 6.1.6",
+    "test": {
+      "description": "Unit testing dependencies (TEST profile only)",
       "dependencies": [
-        "qt5-base",
+        "gtest"
+      ]
+    },
+
+    "qt5-app": {
+      "description": "APP build with Qt5 + Qwt 6.1.6",
+      "dependencies": [
+        {
+          "name": "libmariadb",
+          "default-features": false,
+          "features": ["openssl"]
+        },
+        {
+          "name": "sqlite3",
+          "features": ["fts5"]
+        },
+        {
+          "name": "qt5-base",
+          "features": ["sqlite3plugin"]
+        },
         "qt5-datavis3d",
         "qt5-svg",
         {
@@ -35,10 +43,30 @@
         "qwtplot3d-qwt-6-1-6-qt5"
       ]
     },
-    "qt5-qwt630": {
-      "description": "Build with Qt5 Qwt 6.3.0",
+
+    "qt5-hpc": {
+      "description": "HPC build with minimal Qt5 (no GUI, no DB)",
       "dependencies": [
-        "qt5-base",
+        "qt5-base"
+      ]
+    },
+
+    "qt5-qwt630-app": {
+      "description": "APP build with Qt5 + Qwt 6.3.0",
+      "dependencies": [
+        {
+          "name": "libmariadb",
+          "default-features": false,
+          "features": ["openssl"]
+        },
+        {
+          "name": "sqlite3",
+          "features": ["fts5"]
+        },
+        {
+          "name": "qt5-base",
+          "features": ["sqlite3plugin"]
+        },
         "qt5-datavis3d",
         "qt5-svg",
         {
@@ -50,9 +78,19 @@
         "qwtplot3d-qwt-6-3-0-qt5"
       ]
     },
-    "qt6": {
-      "description": "Build with Qt6",
+
+    "qt6-app": {
+      "description": "APP build with Qt6",
       "dependencies": [
+        {
+          "name": "libmariadb",
+          "default-features": false,
+          "features": ["openssl"]
+        },
+        {
+          "name": "sqlite3",
+          "features": ["fts5"]
+        },
         "qtbase",
         "qtdatavis3d",
         "qtsvg",
@@ -63,6 +101,23 @@
         "qtmultimedia",
         "qwt-6-3-0-qt6",
         "qwtplot3d-qwt-6-3-0-qt6"
+      ]
+    },
+
+    "qt6-hpc": {
+      "description": "HPC build with minimal Qt6 (no GUI, no DB)",
+      "dependencies": [
+        {
+          "name": "qtbase",
+          "default-features": false,
+          "features": [
+            "network",
+            "sql",
+            "concurrent",
+            "dnslookup",
+            "openssl"
+          ]
+        }
       ]
     }
   }

@@ -134,6 +134,7 @@ execute_process(
     COMMAND "${WINDEPLOYQT}"
             "${US_EXE}"
             --release
+            --compiler-runtime
             --dir         "${S_BIN}"
             --plugindir   "${S_PLUG}"
             --no-translations
@@ -167,6 +168,7 @@ foreach(exe ${companion_exes})
         COMMAND "${WINDEPLOYQT}"
                 "${exe}"
                 --release
+                --compiler-runtime
                 --dir         "${S_BIN}"
                 --plugindir   "${S_PLUG}"
                 --no-translations
@@ -275,6 +277,7 @@ if(ASSISTANT_EXE AND EXISTS "${ASSISTANT_EXE}")
         COMMAND "${WINDEPLOYQT}"
                 "${_ASSISTANT_STAGED}"
                 --release
+                --compiler-runtime
                 --dir         "${S_BIN}"
                 --plugindir   "${S_PLUG}"
                 --no-translations

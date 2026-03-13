@@ -13,16 +13,13 @@
 # host tools (cmake, ninja, nasm, pkg-config, python3, etc.) that must be
 # present on the system PATH.  On macOS these come from Homebrew.
 #
-# Xcode version selection and switching is intentionally NOT handled here --
-# that logic already lives in build.sh (the "Xcode 15/16 SETUP" section)
-# and runs after bootstrap completes.
-#
 # USAGE
 # -----
 #   ./scripts/bootstrap-macos.sh [OPTIONS]
 #
 # OPTIONS
 #   --hpc      Also install Open MPI (required for the HPC build profile)
+#   --pkg      Also verify macOS packaging tools (required for APP --pkg builds)
 #   --dry-run  Print what would be installed without actually installing
 #   --help     Show this message and exit
 #
@@ -47,11 +44,13 @@ set -euo pipefail
 # ARGUMENT PARSING
 # =============================================================================
 INSTALL_HPC=false
+INSTALL_PKG=false
 DRY_RUN=false
 
 for arg in "$@"; do
   case "$arg" in
     --hpc)      INSTALL_HPC=true ;;
+    --pkg)      INSTALL_PKG=true ;;
     --dry-run)  DRY_RUN=true     ;;
     --help)
       sed -n '/^# USAGE/,/^# ====/p' "$0" | grep -v '^# ====' | sed 's/^# \{0,1\}//'
@@ -104,8 +103,6 @@ log ""
 #   - Homebrew itself (it checks for CLT on install)
 #   - vcpkg bootstrap (which compiles itself)
 #
-# Note: Xcode.app alone is NOT sufficient -- the CLT path must exist
-# separately. Xcode version selection/switching is handled by build.sh.
 # =============================================================================
 log "Checking Xcode Command Line Tools..."
 
@@ -136,6 +133,105 @@ fi
 
 log "Xcode Command Line Tools are present: ${CLT_PATH}"
 log ""
+
+# =============================================================================
+# XCODE 15/16 DETECTION AND SELECTION
+# This belongs in bootstrap because selecting the active developer directory is
+# part of preparing the macOS machine to build UltraScan3 successfully.
+# =============================================================================
+log "Checking Xcode configuration..."
+
+CURRENT_XCODE_PATH="$(xcode-select -p 2>/dev/null || echo "")"
+XCODE_DEFAULT_PATH="/Applications/Xcode.app/Contents/Developer"
+
+log "Current Xcode path: ${CURRENT_XCODE_PATH:-<not set>}"
+log ""
+
+DESIRED_XCODE_PATH=""
+XCODE_CANDIDATES=()
+
+for app in /Applications/Xcode-15*.app /Applications/Xcode-16*.app; do
+  [ -d "$app" ] && XCODE_CANDIDATES+=("$app/Contents/Developer")
+done
+XCODE_CANDIDATES+=("$XCODE_DEFAULT_PATH")
+
+for XCODE_CANDIDATE in "${XCODE_CANDIDATES[@]}"; do
+  if [ -d "$XCODE_CANDIDATE" ]; then
+    XCODE_APP="$(dirname "$(dirname "$XCODE_CANDIDATE")")"
+    XCODE_PLIST="${XCODE_APP}/Contents/Info.plist"
+    if [ -f "$XCODE_PLIST" ]; then
+      XCODE_VERSION=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$XCODE_PLIST" 2>/dev/null || echo "0")
+      XCODE_MAJOR="$(echo "$XCODE_VERSION" | cut -d. -f1)"
+      if [ "$XCODE_MAJOR" -ge 15 ] 2>/dev/null; then
+        DESIRED_XCODE_PATH="$XCODE_CANDIDATE"
+        log "Found Xcode ${XCODE_VERSION} at: ${XCODE_CANDIDATE}"
+        break
+      fi
+    fi
+  fi
+done
+
+if [ -n "$DESIRED_XCODE_PATH" ]; then
+  log "Compatible Xcode path: ${DESIRED_XCODE_PATH}"
+  if [ "$CURRENT_XCODE_PATH" != "$DESIRED_XCODE_PATH" ]; then
+    log "Xcode 15/16 is installed but not active."
+    if [ "$NON_INTERACTIVE" = false ]; then
+      log "About to switch Xcode to:"
+      log "  ${DESIRED_XCODE_PATH}"
+      log ""
+      read -rp "[bootstrap] Proceed with 'sudo xcode-select --switch ...'? [y/N] " answer
+      if [[ "$answer" =~ ^[Yy]$ ]]; then
+        log "Switching Xcode..."
+        sudo xcode-select --switch "$DESIRED_XCODE_PATH"
+        log "Xcode is now set to: $(xcode-select -p)"
+      else
+        warn "Skipping Xcode switch. Continuing with current Xcode."
+      fi
+    else
+      log "Non-interactive mode: switching Xcode automatically..."
+      sudo xcode-select --switch "$DESIRED_XCODE_PATH"
+      log "Xcode is now set to: $(xcode-select -p)"
+    fi
+  else
+    log "Compatible Xcode is already active."
+  fi
+else
+  die "Xcode 15 or 16 not found. Checked:
+    /Applications/Xcode-15*.app
+    /Applications/Xcode-16*.app
+    ${XCODE_DEFAULT_PATH}
+
+    Please install Xcode 15 or 16 from the App Store or developer.apple.com."
+fi
+
+log ""
+
+# =============================================================================
+# macOS PACKAGING TOOLS CHECK
+# PKG creation uses Apple packaging tools plus rsync during staging.
+# We verify them here when bootstrap is called with --pkg.
+# =============================================================================
+if [ "${INSTALL_PKG:-false}" = true ]; then
+  log "Packaging mode: verifying macOS packaging tools..."
+
+  PKG_VERIFY_TOOLS=(pkgbuild productbuild rsync)
+  PKG_MISSING_TOOLS=()
+
+  for tool in "${PKG_VERIFY_TOOLS[@]}"; do
+    if ! command -v "$tool" >/dev/null 2>&1; then
+      PKG_MISSING_TOOLS+=("$tool")
+    fi
+  done
+
+  if [ ${#PKG_MISSING_TOOLS[@]} -ne 0 ]; then
+    die "Missing required macOS packaging tools: ${PKG_MISSING_TOOLS[*]}
+These tools are required for --pkg builds on macOS.
+They normally come from Apple developer tools and the base system."
+  fi
+
+  log "macOS packaging tools are available."
+  log ""
+fi
 
 # =============================================================================
 # HOMEBREW CHECK / INSTALL
@@ -222,14 +318,12 @@ BREW_PKGS_TOOLCHAIN=(
 #       On Apple Silicon it is usually unnecessary, so skip it to avoid
 #       prompting developers for a tool they may never need.
 MACOS_ARCH="$(uname -m)"
+INSTALL_NASM=false
 
 if [ "$MACOS_ARCH" = "x86_64" ]; then
-  BREW_PKGS_ASM=(
-    nasm
-  )
+  INSTALL_NASM=true
 else
   log "Apple Silicon detected; skipping nasm."
-  BREW_PKGS_ASM=("")
 fi
 
 # --- Python (Sphinx documentation) ------------------------------------------
@@ -264,12 +358,20 @@ BREW_PKGS_HPC=(
 # =============================================================================
 ALL_BREW_PKGS=()
 
-for pkg in \
-  "${BREW_PKGS_TOOLCHAIN[@]}" \
-  "${BREW_PKGS_ASM[@]}" \
-  "${BREW_PKGS_PYTHON[@]}" \
-  "${BREW_PKGS_ARCHIVE[@]}"; do
-  [ -n "$pkg" ] && ALL_BREW_PKGS+=("$pkg")
+for pkg in "${BREW_PKGS_TOOLCHAIN[@]}"; do
+  ALL_BREW_PKGS+=("$pkg")
+done
+
+if [ "$INSTALL_NASM" = true ]; then
+  ALL_BREW_PKGS+=("nasm")
+fi
+
+for pkg in "${BREW_PKGS_PYTHON[@]}"; do
+  ALL_BREW_PKGS+=("$pkg")
+done
+
+for pkg in "${BREW_PKGS_ARCHIVE[@]}"; do
+  ALL_BREW_PKGS+=("$pkg")
 done
 
 if [ "$INSTALL_HPC" = true ]; then
@@ -373,43 +475,38 @@ for pkg in "${ALL_BREW_PKGS[@]}"; do
 done
 
 if [ ${#PKGS_TO_INSTALL[@]} -eq 0 ]; then
-  log "All required tools are already available. Nothing to do."
+  log "No Homebrew packages need installation."
+  log "Proceeding to final verification..."
   log ""
-  log "Run 'bash scripts/build.sh --help' to build UltraScan3."
-  exit 0
-fi
-
-log ""
-log "Packages to install (${#PKGS_TO_INSTALL[@]}):"
-for pkg in "${PKGS_TO_INSTALL[@]}"; do
-  echo "  $pkg"
-done
-log ""
-
-# =============================================================================
-# CONFIRMATION (interactive mode only)
-# =============================================================================
-if [ "$NON_INTERACTIVE" = false ]; then
-  read -rp "[bootstrap] Proceed with 'brew install'? [y/N] " answer
-  if [[ ! "$answer" =~ ^[Yy]$ ]]; then
-    log "Aborted. No packages were installed."
-    exit 0
-  fi
-fi
-
-# =============================================================================
-# INSTALL
-# =============================================================================
-# HOMEBREW_NO_AUTO_UPDATE: suppress automatic `brew update` before each install,
-# which can be very slow in CI and is unnecessary when the runner image is fresh.
-# HOMEBREW_NO_INSTALL_CLEANUP: suppress post-install cleanup passes in CI to
-# avoid deleting cached downloads that might be reused across steps.
-if [ "$NON_INTERACTIVE" = true ]; then
-  HOMEBREW_NO_AUTO_UPDATE=1 \
-  HOMEBREW_NO_INSTALL_CLEANUP=1 \
-  brew install "${PKGS_TO_INSTALL[@]}"
 else
-  brew install "${PKGS_TO_INSTALL[@]}"
+  log ""
+  log "Packages to install (${#PKGS_TO_INSTALL[@]}):"
+  for pkg in "${PKGS_TO_INSTALL[@]}"; do
+    echo "  $pkg"
+  done
+  log ""
+
+  # =============================================================================
+  # CONFIRMATION (interactive mode only)
+  # =============================================================================
+  if [ "$NON_INTERACTIVE" = false ]; then
+    read -rp "[bootstrap] Proceed with 'brew install'? [y/N] " answer
+    if [[ ! "$answer" =~ ^[Yy]$ ]]; then
+      log "Aborted. No packages were installed."
+      exit 0
+    fi
+  fi
+
+  # =============================================================================
+  # INSTALL
+  # =============================================================================
+  if [ "$NON_INTERACTIVE" = true ]; then
+    HOMEBREW_NO_AUTO_UPDATE=1 \
+    HOMEBREW_NO_INSTALL_CLEANUP=1 \
+    brew install "${PKGS_TO_INSTALL[@]}"
+  else
+    brew install "${PKGS_TO_INSTALL[@]}"
+  fi
 fi
 
 # =============================================================================
@@ -418,9 +515,9 @@ fi
 log ""
 log "Verifying key tools..."
 
-VERIFY_TOOLS=(cmake ninja git pkg-config autoconf automake glibtoolize python3)
+VERIFY_TOOLS=(cmake ninja git pkg-config autoconf automake glibtoolize python3 xcodebuild xcrun)
 
-if [ "$MACOS_ARCH" = "x86_64" ]; then
+if [ "$INSTALL_NASM" = true ]; then
   VERIFY_TOOLS+=(nasm)
 fi
 
@@ -428,8 +525,10 @@ if [ "$INSTALL_HPC" = true ]; then
   VERIFY_TOOLS+=(mpicxx)
 fi
 
-# Homebrew installs binaries to ${BREW_PREFIX}/bin which should already be on
-# PATH from the shellenv eval above, but confirm for diagnostics.
+if [ "$INSTALL_PKG" = true ]; then
+  VERIFY_TOOLS+=(pkgbuild productbuild rsync)
+fi
+
 MISSING_AFTER=()
 for tool in "${VERIFY_TOOLS[@]}"; do
   if ! command -v "$tool" &>/dev/null; then
@@ -437,7 +536,6 @@ for tool in "${VERIFY_TOOLS[@]}"; do
   fi
 done
 
-# autoconf-archive is a formula/resource package, not a normal command.
 if ! brew list --formula autoconf-archive >/dev/null 2>&1; then
   if [ "$NON_INTERACTIVE" = true ]; then
     die "Required formula autoconf-archive is not installed after Homebrew install."

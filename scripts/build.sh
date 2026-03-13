@@ -72,10 +72,8 @@ while [[ $# -gt 0 ]]; do
       echo "                                    Output: build/<preset>/UltraScan3-<version>-macOS.pkg"
       echo "                         Linux   -> portable tar.gz archive"
       echo "                                    Output: build/<preset>/UltraScan3-<version>-Linux-<arch>.tar.gz"
-      echo "                         Windows -> NSIS installer"
-      echo "                                    Output: build/<preset>/UltraScan3-<version>-Windows.exe"
       echo "  --qt6                Build with Qt6 + Qwt6.3.0 [default on macOS]"
-      echo "  --qt5-qwt616         Build with Qt5 + Qwt6.1.6 [default on Linux/Windows]"
+      echo "  --qt5-qwt616         Build with Qt5 + Qwt6.1.6 [default on Linux]"
       echo "  --qt5-qwt630         Build with Qt5 + Qwt6.3.0"
       echo "  --arch x64           Target x64 architecture [default: auto-detect]"
       echo "  --arch arm64         Target ARM64 architecture"
@@ -134,8 +132,8 @@ elif [[ "$OSTYPE" == "linux-gnu"* || "$(uname -s)" == "Linux" ]]; then
   PLATFORM="Linux"
   PLATFORM_PREFIX="linux"
 elif [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
-  PLATFORM="Windows"
-  PLATFORM_PREFIX="windows"
+  echo "ERROR: On Windows, use scripts/build.ps1 or scripts/build.bat instead of build.sh"
+  exit 1
 else
   _UNAME=$(uname -s 2>/dev/null || echo "unknown")
   echo "ERROR: Unsupported platform: OSTYPE=${OSTYPE:-unset}, uname=${_UNAME}"
@@ -185,9 +183,7 @@ fi
 # =============================================================================
 ARM64_SUFFIX=""
 X64_SUFFIX=""
-if [[ "$PLATFORM" == "Windows" && "$ARCH" == "arm64" ]]; then
-  ARM64_SUFFIX="-arm64"
-fi
+
 if [[ "$PLATFORM" == "macOS" && "$ARCH" == "x64" ]]; then
   X64_SUFFIX="-x64"
 fi
@@ -290,86 +286,9 @@ if [ "$PLATFORM" = "Linux" ]; then
 fi
 
 # =============================================================================
-# CHECK REQUIRED TOOLS
-# =============================================================================
-REQUIRED_TOOLS=(cmake git)
-
-if [[ "$PLATFORM" == "macOS" ]]; then
-  REQUIRED_TOOLS+=(xcodebuild xcrun)
-elif [[ "$PLATFORM" == "Linux" ]]; then
-  REQUIRED_TOOLS+=(g++)
-fi
-
-if [ "$BUILD_PKG" = true ] && [ "$PLATFORM" = "macOS" ] && [ "$PROFILE" != "HPC" ]; then
-  REQUIRED_TOOLS+=(pkgbuild productbuild rsync)
-fi
-
-# HPC profile requires an MPI implementation
-if [ "$PROFILE" = "HPC" ]; then
-  REQUIRED_TOOLS+=(mpicxx)
-fi
-
-MISSING_TOOLS=()
-for tool in "${REQUIRED_TOOLS[@]}"; do
-  if ! command -v "$tool" &>/dev/null; then
-    MISSING_TOOLS+=("$tool")
-  fi
-done
-
-if [ ${#MISSING_TOOLS[@]} -ne 0 ]; then
-  echo "ERROR: Missing required tools: ${MISSING_TOOLS[*]}"
-  echo ""
-  # Check if MPI is among the missing tools and give a targeted hint
-  for _t in "${MISSING_TOOLS[@]}"; do
-    if [ "$_t" = "mpicxx" ]; then
-      echo "MPI is required for the HPC profile."
-      if [ "$PLATFORM" == "macOS" ]; then
-        echo "  Install Open MPI via Homebrew:"
-        echo "    brew install open-mpi"
-        echo ""
-        echo "  NOTE: Open MPI's Homebrew bottle requires the Xcode Command Line Tools"
-        echo "  installed at /Library/Developer/CommandLineTools (separate from Xcode.app)."
-        echo "  If 'brew install open-mpi' fails with a GCC/CLT error, run first:"
-        echo "    xcode-select --install"
-        echo "  then re-run brew install open-mpi."
-      elif [ "$PLATFORM" == "Linux" ]; then
-        echo "  Install Open MPI (Debian/Ubuntu):"
-        echo "    sudo apt-get install -y libopenmpi-dev openmpi-bin"
-        echo "  Or MPICH:"
-        echo "    sudo apt-get install -y libmpich-dev mpich"
-        echo "  On HPC clusters, load the site MPI module instead:"
-        echo "    module load openmpi  (or: module load mpich)"
-      fi
-      echo ""
-    fi
-  done
-  if [ "$PLATFORM" == "macOS" ]; then
-    # Generic CLT hint only when MPI wasn't already the issue (it includes its own CLT note)
-    _mpi_missing=false
-    for _t2 in "${MISSING_TOOLS[@]}"; do [ "$_t2" = "mpicxx" ] && _mpi_missing=true; done
-    if [ "$_mpi_missing" = false ]; then
-      echo "On macOS, install Xcode command line tools:"
-      echo "  xcode-select --install"
-    fi
-  elif [ "$PLATFORM" == "Linux" ]; then
-    echo "On Debian/Ubuntu, run:"
-    echo "  sudo apt-get update && sudo apt-get install -y build-essential cmake git"
-  elif [ "$PLATFORM" == "Windows" ]; then
-    echo "On Windows (MSYS/MinGW), install cmake, git, and a compiler toolchain."
-  fi
-  exit 1
-fi
-
-echo "All required tools are available."
-echo ""
-
-# =============================================================================
-# macOS BOOTSTRAP
-# Delegates to bootstrap-macos.sh, which is the single authoritative source
-# for Homebrew-level prerequisites (cmake, ninja, nasm, pkg-config, python3,
-# and optionally open-mpi for HPC).  It is idempotent: exits immediately
-# with no side effects when all packages are already installed.
-# The HPC profile requires MPI, so --hpc is passed in that case.
+# PLATFORM BOOTSTRAP
+# macOS readiness is owned by bootstrap-macos.sh.
+# Linux OS/package readiness is owned by bootstrap-linux.sh.
 # =============================================================================
 if [ "$PLATFORM" = "macOS" ]; then
   _BOOTSTRAP="${SCRIPT_DIR}/bootstrap-macos.sh"
@@ -380,95 +299,33 @@ if [ "$PLATFORM" = "macOS" ]; then
   fi
 
   _BOOTSTRAP_ARGS=()
+  [ "$PROFILE" = "HPC" ] && _BOOTSTRAP_ARGS+=("--hpc")
+  [ "$BUILD_PKG" = true ] && [ "$PROFILE" != "HPC" ] && _BOOTSTRAP_ARGS+=("--pkg")
 
-  if [ "$PROFILE" = "HPC" ]; then
-    _BOOTSTRAP_ARGS+=("--hpc")
-  fi
-
-  if [ "${#_BOOTSTRAP_ARGS[@]}" -gt 0 ]; then
+  if [ ${#_BOOTSTRAP_ARGS[@]} -gt 0 ]; then
     bash "$_BOOTSTRAP" "${_BOOTSTRAP_ARGS[@]}"
   else
     bash "$_BOOTSTRAP"
   fi
   echo ""
-fi
 
-# =============================================================================
-# XCODE 15/16 SETUP ON macOS
-# Runs after bootstrap so Homebrew tools are already on PATH.
-# bootstrap-macos.sh verified that the CLT exists; here we select the right
-# Xcode.app version for the build (requires sudo xcode-select --switch).
-# =============================================================================
-if [ "$PLATFORM" = "macOS" ]; then
-  CURRENT_XCODE_PATH=$(xcode-select -p || echo "")
-  XCODE_DEFAULT_PATH="/Applications/Xcode.app/Contents/Developer"
-
-  echo "Checking Xcode configuration..."
-  echo "Current Xcode path: ${CURRENT_XCODE_PATH:-<not set>}"
-  echo ""
-
-  DESIRED_XCODE_PATH=""
-  XCODE_CANDIDATES=()
-  for app in /Applications/Xcode-15*.app /Applications/Xcode-16*.app; do
-    [ -d "$app" ] && XCODE_CANDIDATES+=("$app/Contents/Developer")
-  done
-  XCODE_CANDIDATES+=("$XCODE_DEFAULT_PATH")
-
-  for XCODE_CANDIDATE in "${XCODE_CANDIDATES[@]}"; do
-    if [ -d "$XCODE_CANDIDATE" ]; then
-      XCODE_APP=$(dirname "$(dirname "$XCODE_CANDIDATE")")
-      XCODE_PLIST="$XCODE_APP/Contents/Info.plist"
-      if [ -f "$XCODE_PLIST" ]; then
-        XCODE_VERSION=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$XCODE_PLIST" 2>/dev/null || echo "0")
-        XCODE_MAJOR=$(echo "$XCODE_VERSION" | cut -d. -f1)
-        if [ "$XCODE_MAJOR" -ge 15 ] 2>/dev/null; then
-          DESIRED_XCODE_PATH="$XCODE_CANDIDATE"
-          echo "Found Xcode $XCODE_VERSION at: $XCODE_CANDIDATE"
-          break
-        fi
-      fi
-    fi
-  done
-
-  if [ -n "$DESIRED_XCODE_PATH" ]; then
-    echo "Compatible Xcode path: $DESIRED_XCODE_PATH"
-    if [ "$CURRENT_XCODE_PATH" != "$DESIRED_XCODE_PATH" ]; then
-      echo "Xcode 15/16 is installed but not active."
-      if [ "$NON_INTERACTIVE" = false ]; then
-        echo "About to switch Xcode to:"
-        echo "  $DESIRED_XCODE_PATH"
-        echo ""
-        read -rp "Proceed with 'sudo xcode-select --switch ...'? [y/N] " answer
-        if [[ "$answer" =~ ^[Yy]$ ]]; then
-          echo "Switching Xcode..."
-          sudo xcode-select --switch "$DESIRED_XCODE_PATH"
-          echo "Xcode is now set to: $(xcode-select -p)"
-        else
-          echo "Skipping Xcode switch. Continuing with current Xcode."
-        fi
-      else
-        echo "Non-interactive mode: switching Xcode automatically..."
-        sudo xcode-select --switch "$DESIRED_XCODE_PATH"
-        echo "Xcode is now set to: $(xcode-select -p)"
-      fi
-    else
-      echo "Compatible Xcode is already active."
-    fi
-  else
-    echo "Xcode 15 or 16 not found. Checked:"
-    echo "  /Applications/Xcode-15*.app"
-    echo "  /Applications/Xcode-16*.app"
-    echo "  $XCODE_DEFAULT_PATH"
-    echo ""
-    echo "Please install Xcode 15 or 16 from the App Store or developer.apple.com."
-    echo ""
-    if [ "$NON_INTERACTIVE" = false ]; then
-      exit 1
-    else
-      echo "WARNING: Continuing in CI mode, build may fail..."
-    fi
+elif [ "$PLATFORM" = "Linux" ]; then
+  _BOOTSTRAP="${SCRIPT_DIR}/bootstrap-linux.sh"
+  if [ ! -f "$_BOOTSTRAP" ]; then
+    echo "ERROR: bootstrap-linux.sh not found at $_BOOTSTRAP"
+    echo "Please ensure scripts/bootstrap-linux.sh exists in the repository."
+    exit 1
   fi
 
+  _BOOTSTRAP_ARGS=()
+  [ "$PROFILE" = "HPC" ] && _BOOTSTRAP_ARGS+=("--hpc")
+  [ "$BUILD_PKG" = true ] && [ "$PROFILE" != "HPC" ] && _BOOTSTRAP_ARGS+=("--pkg")
+
+  if [ ${#_BOOTSTRAP_ARGS[@]} -gt 0 ]; then
+    bash "$_BOOTSTRAP" "${_BOOTSTRAP_ARGS[@]}"
+  else
+    bash "$_BOOTSTRAP"
+  fi
   echo ""
 fi
 
@@ -509,13 +366,10 @@ fi
 if [ ! -x "$US3_VCPKG_ROOT/vcpkg" ]; then
   echo ""
   echo "Bootstrapping vcpkg at $US3_VCPKG_ROOT..."
-  if [[ "$PLATFORM" == "Windows" ]]; then
-    ( cd "$US3_VCPKG_ROOT" && ./bootstrap-vcpkg.bat -disableMetrics )
-  else
-    # -disableMetrics suppresses the telemetry consent prompt which can
-    # stall non-interactive CI environments on first bootstrap.
-    "$US3_VCPKG_ROOT/bootstrap-vcpkg.sh" -disableMetrics
-  fi
+
+  # -disableMetrics suppresses the telemetry consent prompt which can
+  # stall non-interactive CI environments on first bootstrap.
+  "$US3_VCPKG_ROOT/bootstrap-vcpkg.sh" -disableMetrics
 fi
 
 export VCPKG_ROOT="$US3_VCPKG_ROOT"
@@ -666,28 +520,6 @@ echo "  3. Configure and build UltraScan3"
 echo "     Configure preset : $CONFIGURE_PRESET"
 echo "     Build preset     : $BUILD_PRESET"
 echo ""
-
-# =============================================================================
-# LINUX SYSTEM PACKAGE CHECK
-# Delegates to bootstrap-deps.sh, which is the single authoritative source
-# for the OS-level package list.  It is idempotent: exits immediately with no
-# side effects when all packages are already installed (typical on repeat runs).
-# The HPC profile requires MPI, so --hpc is passed in that case.
-# =============================================================================
-if [ "$PLATFORM" == "Linux" ]; then
-  _BOOTSTRAP="${SCRIPT_DIR}/bootstrap-deps.sh"
-  if [ ! -f "$_BOOTSTRAP" ]; then
-    echo "ERROR: bootstrap-deps.sh not found at $_BOOTSTRAP"
-    echo "Please ensure scripts/bootstrap-deps.sh exists in the repository."
-    exit 1
-  fi
-
-  _BOOTSTRAP_ARGS=()
-  [ "$PROFILE" = "HPC" ] && _BOOTSTRAP_ARGS+=("--hpc")
-
-  bash "$_BOOTSTRAP" "${_BOOTSTRAP_ARGS[@]}"
-  echo ""
-fi
 
 # =============================================================================
 # SPHINX CHECK - ensure sphinx-build is on PATH and requirements are installed

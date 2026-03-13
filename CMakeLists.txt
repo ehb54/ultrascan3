@@ -225,68 +225,152 @@ if(UNIX AND NOT APPLE)
     list(APPEND CMAKE_PREFIX_PATH "/usr/lib/x86_64-linux-gnu/cmake")
 endif()
 
-# Find Qt5
+# Find Qt
 if(USE_QT6)
-    find_package(Qt6 REQUIRED COMPONENTS
-            Core
-            Widgets
-            Gui
-            Network
-            Sql
-            Xml
-            Svg
-            OpenGL
-            PrintSupport
-            DataVisualization
-            OpenGLWidgets
-            Multimedia
-            )
+    if(US3_PROFILE STREQUAL "HPC")
+        find_package(Qt6 REQUIRED COMPONENTS
+                Core
+                Network
+                Sql
+                Xml
+        )
+    else()
+        find_package(Qt6 REQUIRED COMPONENTS
+                Core
+                Widgets
+                Gui
+                Network
+                Sql
+                Xml
+                Svg
+                OpenGL
+                PrintSupport
+                DataVisualization
+                OpenGLWidgets
+                Multimedia
+        )
+    endif()
+
     set(QT_VERSION_MAJOR 6)
     set(QT_VERSION_BASE "Qt6")
     set(QT_VERSION_BASE_LOWER "qt6")
+
 else()
-    find_package(Qt5 REQUIRED COMPONENTS
-            Core
-            Widgets
-            Gui
-            Network
-            Sql
-            Xml
-            Svg
-            OpenGL
-            PrintSupport
-            DataVisualization
-            Multimedia
-    )
+    if(US3_PROFILE STREQUAL "HPC")
+        find_package(Qt5 REQUIRED COMPONENTS
+                Core
+                Network
+                Sql
+                Xml
+        )
+    else()
+        find_package(Qt5 REQUIRED COMPONENTS
+                Core
+                Widgets
+                Gui
+                Network
+                Sql
+                Xml
+                Svg
+                OpenGL
+                PrintSupport
+                DataVisualization
+                Multimedia
+        )
+    endif()
+
     set(QT_VERSION_MAJOR 5)
     set(QT_VERSION_BASE "Qt5")
     set(QT_VERSION_BASE_LOWER "qt5")
+
+    # -------------------------------------------------------------------------
+    # Qt5 + vcpkg macOS dynamic-triplet tool fix
+    # -------------------------------------------------------------------------
+    if(APPLE AND VCPKG_INSTALLED_DIR AND VCPKG_TARGET_TRIPLET)
+        string(REPLACE "-dynamic" "" _qt5_tools_triplet "${VCPKG_TARGET_TRIPLET}")
+        set(_qt5_tools_dir "${VCPKG_INSTALLED_DIR}/${_qt5_tools_triplet}/tools/qt5/bin")
+
+        if(EXISTS "${_qt5_tools_dir}/moc")
+            message(STATUS "Qt5 tools override dir: ${_qt5_tools_dir}")
+
+            if(TARGET Qt5::moc)
+                set_target_properties(Qt5::moc PROPERTIES
+                        IMPORTED_LOCATION "${_qt5_tools_dir}/moc")
+            endif()
+
+            if(TARGET Qt5::uic)
+                set_target_properties(Qt5::uic PROPERTIES
+                        IMPORTED_LOCATION "${_qt5_tools_dir}/uic")
+            endif()
+
+            if(TARGET Qt5::rcc)
+                set_target_properties(Qt5::rcc PROPERTIES
+                        IMPORTED_LOCATION "${_qt5_tools_dir}/rcc")
+            endif()
+        else()
+            message(WARNING "Expected Qt5 tools dir not found: ${_qt5_tools_dir}")
+        endif()
+    endif()
 endif()
 
 if(NOT TARGET Qt::Core)
     if(USE_QT6)
         add_library(Qt::Core ALIAS Qt6::Core)
-        add_library(Qt::Widgets ALIAS Qt6::Widgets)
-        add_library(Qt::OpenGL ALIAS Qt6::OpenGL)
-        add_library(Qt::Gui ALIAS Qt6::Gui)
         add_library(Qt::Network ALIAS Qt6::Network)
-        add_library(Qt::Xml ALIAS Qt6::Xml)
-        add_library(Qt::Svg ALIAS Qt6::Svg)
         add_library(Qt::Sql ALIAS Qt6::Sql)
-        add_library(Qt::PrintSupport ALIAS Qt6::PrintSupport)
-        add_library(Qt::DataVisualization ALIAS Qt6::DataVisualization)
-        add_library(Qt::OpenGLWidgets ALIAS Qt6::OpenGLWidgets)
+        add_library(Qt::Xml ALIAS Qt6::Xml)
+
+        if(TARGET Qt6::Gui AND NOT TARGET Qt::Gui)
+            add_library(Qt::Gui ALIAS Qt6::Gui)
+        endif()
+        if(TARGET Qt6::Widgets AND NOT TARGET Qt::Widgets)
+            add_library(Qt::Widgets ALIAS Qt6::Widgets)
+        endif()
+        if(TARGET Qt6::Svg AND NOT TARGET Qt::Svg)
+            add_library(Qt::Svg ALIAS Qt6::Svg)
+        endif()
+        if(TARGET Qt6::OpenGL AND NOT TARGET Qt::OpenGL)
+            add_library(Qt::OpenGL ALIAS Qt6::OpenGL)
+        endif()
+        if(TARGET Qt6::PrintSupport AND NOT TARGET Qt::PrintSupport)
+            add_library(Qt::PrintSupport ALIAS Qt6::PrintSupport)
+        endif()
+        if(TARGET Qt6::DataVisualization AND NOT TARGET Qt::DataVisualization)
+            add_library(Qt::DataVisualization ALIAS Qt6::DataVisualization)
+        endif()
+        if(TARGET Qt6::OpenGLWidgets AND NOT TARGET Qt::OpenGLWidgets)
+            add_library(Qt::OpenGLWidgets ALIAS Qt6::OpenGLWidgets)
+        endif()
+        if(TARGET Qt6::Multimedia AND NOT TARGET Qt::Multimedia)
+            add_library(Qt::Multimedia ALIAS Qt6::Multimedia)
+        endif()
     else()
         add_library(Qt::Core ALIAS Qt5::Core)
-        add_library(Qt::Widgets ALIAS Qt5::Widgets)
-        add_library(Qt::OpenGL ALIAS Qt5::OpenGL)
-        add_library(Qt::Gui ALIAS Qt5::Gui)
         add_library(Qt::Network ALIAS Qt5::Network)
-        add_library(Qt::Xml ALIAS Qt5::Xml)
-        add_library(Qt::Svg ALIAS Qt5::Svg)
         add_library(Qt::Sql ALIAS Qt5::Sql)
-        add_library(Qt::PrintSupport ALIAS Qt5::PrintSupport)
-        add_library(Qt::DataVisualization ALIAS Qt5::DataVisualization)
+        add_library(Qt::Xml ALIAS Qt5::Xml)
+
+        if(TARGET Qt5::Gui AND NOT TARGET Qt::Gui)
+            add_library(Qt::Gui ALIAS Qt5::Gui)
+        endif()
+        if(TARGET Qt5::Widgets AND NOT TARGET Qt::Widgets)
+            add_library(Qt::Widgets ALIAS Qt5::Widgets)
+        endif()
+        if(TARGET Qt5::Svg AND NOT TARGET Qt::Svg)
+            add_library(Qt::Svg ALIAS Qt5::Svg)
+        endif()
+        if(TARGET Qt5::OpenGL AND NOT TARGET Qt::OpenGL)
+            add_library(Qt::OpenGL ALIAS Qt5::OpenGL)
+        endif()
+        if(TARGET Qt5::PrintSupport AND NOT TARGET Qt::PrintSupport)
+            add_library(Qt::PrintSupport ALIAS Qt5::PrintSupport)
+        endif()
+        if(TARGET Qt5::DataVisualization AND NOT TARGET Qt::DataVisualization)
+            add_library(Qt::DataVisualization ALIAS Qt5::DataVisualization)
+        endif()
+        if(TARGET Qt5::Multimedia AND NOT TARGET Qt::Multimedia)
+            add_library(Qt::Multimedia ALIAS Qt5::Multimedia)
+        endif()
     endif()
 endif()
 
@@ -341,8 +425,7 @@ endif()
 if(APPLE)
     message(STATUS "Configured Qt for dynamic linking on macOS")
 
-    # Ensure all Qt modules have proper linking
-    foreach(QT_MODULE Core Widgets Gui Network Sql Xml Svg OpenGL PrintSupport DataVisualization)
+    foreach(QT_MODULE Core Network Sql Xml Gui Widgets Svg OpenGL PrintSupport DataVisualization OpenGLWidgets Multimedia)
         if(TARGET Qt::${QT_MODULE})
             get_target_property(QT_MOD_TYPE Qt::${QT_MODULE} TYPE)
             message(STATUS "  Qt::${QT_MODULE} type: ${QT_MOD_TYPE}")
@@ -421,7 +504,13 @@ add_custom_target(us3_validate_qrc ALL
 add_library(us3_resources STATIC "${US3_QRC_XML}")
 set_target_properties(us3_resources PROPERTIES AUTOMOC OFF)
 add_dependencies(us3_resources us3_validate_qrc)
-target_link_libraries(us3_resources PRIVATE Qt::Core Qt::Gui)
+
+if(US3_PROFILE STREQUAL "HPC")
+    target_link_libraries(us3_resources PRIVATE Qt::Core)
+else()
+    target_link_libraries(us3_resources PRIVATE Qt::Core Qt::Gui)
+endif()
+
 add_library(UltraScan3::Resources ALIAS us3_resources)
 
 # Create symbolic link from source etc to build etc
@@ -480,92 +569,94 @@ find_package(OpenSSL REQUIRED)
 
 # =============================================================================
 # Find Qwt - Unified approach for vcpkg and system packages
+# Not needed for HPC builds.
 # =============================================================================
-# Try vcpkg first
-# Find Qwt - vcpkg or system packages
-find_package(unofficial-qwt CONFIG QUIET)
+if(NOT US3_PROFILE STREQUAL "HPC")
 
-if(unofficial-qwt_FOUND)
-    message(STATUS "Found Qwt via vcpkg")
-    if(NOT TARGET Qwt::Qwt)
-        add_library(Qwt::Qwt ALIAS unofficial::qwt::qwt)
-    endif()
-    set(QWT_VERSION ${unofficial-qwt_VERSION})
-else()
-    message(STATUS "Searching for system Qwt...")
-    find_package(PkgConfig QUIET)
-    if(PkgConfig_FOUND)
-        if(USE_QT6)
-            pkg_check_modules(QWT QUIET Qt6Qwt6)
-            if(NOT QWT_FOUND)
-                pkg_check_modules(QWT QUIET qwt-qt6)
+    find_package(unofficial-qwt CONFIG QUIET)
+
+    if(unofficial-qwt_FOUND)
+        message(STATUS "Found Qwt via vcpkg")
+        if(NOT TARGET Qwt::Qwt)
+            add_library(Qwt::Qwt ALIAS unofficial::qwt::qwt)
+        endif()
+        set(QWT_VERSION ${unofficial-qwt_VERSION})
+    else()
+        message(STATUS "Searching for system Qwt...")
+        find_package(PkgConfig QUIET)
+        if(PkgConfig_FOUND)
+            if(USE_QT6)
+                pkg_check_modules(QWT QUIET Qt6Qwt6)
+                if(NOT QWT_FOUND)
+                    pkg_check_modules(QWT QUIET qwt-qt6)
+                endif()
+            else()
+                pkg_check_modules(QWT QUIET Qt5Qwt6)
+                if(NOT QWT_FOUND)
+                    pkg_check_modules(QWT QUIET qwt-qt5)
+                endif()
+            endif()
+        endif()
+
+        if(NOT QWT_FOUND)
+            if(USE_QT6)
+                find_path(QWT_INCLUDE_DIR NAMES qwt.h
+                        PATHS /usr/include/qwt /usr/include/qt6/qwt /usr/local/include/qwt)
+                find_library(QWT_LIBRARY NAMES qwt-qt6 qwt qwt6-qt6
+                        PATHS /usr/lib /usr/lib/x86_64-linux-gnu /usr/local/lib)
+            else()
+                find_path(QWT_INCLUDE_DIR NAMES qwt.h
+                        PATHS /usr/include/qwt /usr/include/qt5/qwt /usr/local/include/qwt)
+                find_library(QWT_LIBRARY NAMES qwt-qt5 qwt qwt6-qt5
+                        PATHS /usr/lib /usr/lib/x86_64-linux-gnu /usr/local/lib)
+            endif()
+            if(QWT_INCLUDE_DIR AND QWT_LIBRARY)
+                set(QWT_FOUND TRUE)
+                message(STATUS "Found system Qwt: ${QWT_LIBRARY}")
             endif()
         else()
-            pkg_check_modules(QWT QUIET Qt5Qwt6)
-            if(NOT QWT_FOUND)
-                pkg_check_modules(QWT QUIET qwt-qt5)
+            message(STATUS "Found system Qwt via pkg-config")
+        endif()
+
+        if(QWT_FOUND)
+            add_library(unofficial_qwt_qwt INTERFACE IMPORTED)
+            if(QWT_INCLUDE_DIRS)
+                set_target_properties(unofficial_qwt_qwt PROPERTIES
+                        INTERFACE_INCLUDE_DIRECTORIES "${QWT_INCLUDE_DIRS}"
+                        INTERFACE_LINK_DIRECTORIES "${QWT_LIBRARY_DIRS}"
+                        INTERFACE_LINK_LIBRARIES "${QWT_LIBRARIES}")
+            else()
+                set_target_properties(unofficial_qwt_qwt PROPERTIES
+                        INTERFACE_INCLUDE_DIRECTORIES "${QWT_INCLUDE_DIR}"
+                        INTERFACE_LINK_LIBRARIES "${QWT_LIBRARY}")
             endif()
-        endif()
-    endif()
 
-    if(NOT QWT_FOUND)
-        if(USE_QT6)
-            find_path(QWT_INCLUDE_DIR NAMES qwt.h
-                    PATHS /usr/include/qwt /usr/include/qt6/qwt /usr/local/include/qwt)
-            find_library(QWT_LIBRARY NAMES qwt-qt6 qwt qwt6-qt6
-                    PATHS /usr/lib /usr/lib/x86_64-linux-gnu /usr/local/lib)
+            add_library(unofficial::qwt::qwt ALIAS unofficial_qwt_qwt)
+            add_library(Qwt::Qwt ALIAS unofficial_qwt_qwt)
         else()
-            find_path(QWT_INCLUDE_DIR NAMES qwt.h
-                    PATHS /usr/include/qwt /usr/include/qt5/qwt /usr/local/include/qwt)
-            find_library(QWT_LIBRARY NAMES qwt-qt5 qwt qwt6-qt5
-                    PATHS /usr/lib /usr/lib/x86_64-linux-gnu /usr/local/lib)
+            message(FATAL_ERROR "Qwt not found. Install: apt-get install libqwt-qt5-dev")
         endif()
-        if(QWT_INCLUDE_DIR AND QWT_LIBRARY)
-            set(QWT_FOUND TRUE)
-            message(STATUS "Found system Qwt: ${QWT_LIBRARY}")
-        endif()
-    else()
-        message(STATUS "Found system Qwt via pkg-config")
     endif()
 
-    if(QWT_FOUND)
-        # Create the main target that mimics vcpkg's structure
-        add_library(unofficial_qwt_qwt INTERFACE IMPORTED)
-        if(QWT_INCLUDE_DIRS)
-            set_target_properties(unofficial_qwt_qwt PROPERTIES
-                    INTERFACE_INCLUDE_DIRECTORIES "${QWT_INCLUDE_DIRS}"
-                    INTERFACE_LINK_DIRECTORIES "${QWT_LIBRARY_DIRS}"
-                    INTERFACE_LINK_LIBRARIES "${QWT_LIBRARIES}")
-        else()
-            set_target_properties(unofficial_qwt_qwt PROPERTIES
-                    INTERFACE_INCLUDE_DIRECTORIES "${QWT_INCLUDE_DIR}"
-                    INTERFACE_LINK_LIBRARIES "${QWT_LIBRARY}")
-        endif()
-
-        # Create both aliases for compatibility
-        add_library(unofficial::qwt::qwt ALIAS unofficial_qwt_qwt)
-        add_library(Qwt::Qwt ALIAS unofficial_qwt_qwt)
-    else()
-        message(FATAL_ERROR "Qwt not found. Install: apt-get install libqwt-qt5-dev")
-    endif()
 endif()
 
-# Find QwtPlot3D - try vcpkg first, fall back to in-tree build
-find_package(qwtplot3d CONFIG QUIET)
+# Find QwtPlot3D - not needed for HPC
+if(NOT US3_PROFILE STREQUAL "HPC")
+    find_package(qwtplot3d CONFIG QUIET)
 
-if(qwtplot3d_FOUND)
-    message(STATUS "Found QwtPlot3D via vcpkg")
-    if(NOT TARGET qwtplot3d::qwtplot3d)
-        message(FATAL_ERROR "qwtplot3d::qwtplot3d target not created by find_package")
-    endif()
-else()
-    message(STATUS "Using in-tree QwtPlot3D build")
-    add_subdirectory(qwtplot3d)
+    if(qwtplot3d_FOUND)
+        message(STATUS "Found QwtPlot3D via vcpkg")
+        if(NOT TARGET qwtplot3d::qwtplot3d)
+            message(FATAL_ERROR "qwtplot3d::qwtplot3d target not created by find_package")
+        endif()
+    else()
+        message(STATUS "Using in-tree QwtPlot3D build")
+        add_subdirectory(qwtplot3d)
 
-    # Create namespaced alias for in-tree build
-    if(TARGET qwtplot3d AND NOT TARGET qwtplot3d::qwtplot3d)
-        add_library(qwtplot3d::qwtplot3d ALIAS qwtplot3d)
-        message(STATUS "Created qwtplot3d::qwtplot3d alias for in-tree build")
+        if(TARGET qwtplot3d AND NOT TARGET qwtplot3d::qwtplot3d)
+            add_library(qwtplot3d::qwtplot3d ALIAS qwtplot3d)
+            message(STATUS "Created qwtplot3d::qwtplot3d alias for in-tree build")
+        endif()
     endif()
 endif()
 
@@ -1658,17 +1749,28 @@ else()
     set(_US3_QT_VERSION "${Qt5_VERSION}")
 endif()
 
-# Write a small version info file for build.sh to read
+if(NOT DEFINED QWT_VERSION)
+    set(QWT_VERSION "not-used")
+endif()
+
+if(NOT DEFINED qwtplot3d_VERSION)
+    set(qwtplot3d_VERSION "not-used")
+endif()
+
+if(NOT DEFINED MYSQL_MARIADB_VERSION)
+    set(MYSQL_MARIADB_VERSION "not-used")
+endif()
+
 file(WRITE "${CMAKE_BINARY_DIR}/us3_build_info.sh"
-"# Auto-generated by CMake configure — do not edit\n"
-"US3_CMAKE_VERSION=\"${US3_VERSION_STRING}\"\n"
-"US3_QT_VERSION=\"${_US3_QT_VERSION}\"\n"
-"US3_QWT_VERSION=\"${QWT_VERSION}\"\n"
-"US3_QWTPLOT3D_VERSION=\"${qwtplot3d_VERSION}\"\n"
-"US3_OPENSSL_VERSION=\"${OPENSSL_VERSION}\"\n"
-"US3_MARIADB_VERSION=\"${MYSQL_MARIADB_VERSION}\"\n"
-"US3_PROFILE=\"${US3_PROFILE}\"\n"
-"US3_PRESET=\"${CMAKE_BUILD_TYPE}\"\n"
+        "# Auto-generated by CMake configure — do not edit\n"
+        "US3_CMAKE_VERSION=\"${US3_VERSION_STRING}\"\n"
+        "US3_QT_VERSION=\"${_US3_QT_VERSION}\"\n"
+        "US3_QWT_VERSION=\"${QWT_VERSION}\"\n"
+        "US3_QWTPLOT3D_VERSION=\"${qwtplot3d_VERSION}\"\n"
+        "US3_OPENSSL_VERSION=\"${OPENSSL_VERSION}\"\n"
+        "US3_MARIADB_VERSION=\"${MYSQL_MARIADB_VERSION}\"\n"
+        "US3_PROFILE=\"${US3_PROFILE}\"\n"
+        "US3_PRESET=\"${CMAKE_BUILD_TYPE}\"\n"
 )
 
 # Print configuration summary

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # =============================================================================
-# bootstrap-deps.sh -- UltraScan3 OS-level prerequisite installer
+# bootstrap-linux.sh -- UltraScan3 Linux OS-level prerequisite installer
 #
 # PURPOSE
 # -------
@@ -11,14 +11,15 @@
 # vcpkg builds almost everything from source, but it still requires a set of
 # system-level tools (compilers, autotools, ninja, pkg-config, GL/X11 headers,
 # etc.) that are not part of the compiler toolchain itself.  This is exactly
-# what bootstrap-deps.sh installs.
+# what bootstrap-linux.sh installs.
 #
 # USAGE
 # -----
-#   ./scripts/bootstrap-deps.sh [OPTIONS]
+#   ./scripts/bootstrap-linux.sh [OPTIONS]
 #
 # OPTIONS
 #   --hpc      Also install MPI (required for the HPC build profile)
+#   --pkg      Enable Linux packaging prerequisite handling for --pkg builds
 #   --dry-run  Print what would be installed without actually installing
 #   --help     Show this message and exit
 #
@@ -45,11 +46,13 @@ set -euo pipefail
 # ARGUMENT PARSING
 # =============================================================================
 INSTALL_HPC=false
+INSTALL_PKG=false
 DRY_RUN=false
 
 for arg in "$@"; do
   case "$arg" in
     --hpc)      INSTALL_HPC=true  ;;
+    --pkg)      INSTALL_PKG=true  ;;
     --dry-run)  DRY_RUN=true      ;;
     --help)
       sed -n '/^# USAGE/,/^# ====/p' "$0" | grep -v '^# ====' | sed 's/^# \{0,1\}//'
@@ -107,11 +110,32 @@ case "$OS_ID" in
   *)
     die "Unsupported OS: '$OS_ID'. This script supports Ubuntu and Debian only.
 On macOS, build.sh handles Xcode selection and brew-based MPI hints directly.
-On RHEL/Fedora, adapt the package names listed in this script for dnf."
+On RHEL/Fedora/Rocky, a separate dnf-based bootstrap implementation is needed."
     ;;
 esac
 
 log "Detected: ${OS_ID} ${OS_VERSION_ID} (${OS_CODENAME})"
+log ""
+
+# =============================================================================
+# PRECHECK: BASE TOOLS ALREADY ON PATH
+# Diagnostic only. Missing tools will be installed below.
+# =============================================================================
+REQUIRED_TOOLS=(cmake git g++)
+MISSING_TOOLS=()
+
+for tool in "${REQUIRED_TOOLS[@]}"; do
+  if ! command -v "$tool" &>/dev/null; then
+    MISSING_TOOLS+=("$tool")
+  fi
+done
+
+if [ ${#MISSING_TOOLS[@]} -eq 0 ]; then
+  log "Base Linux build tools already present on PATH."
+else
+  log "Base Linux build tools missing from PATH: ${MISSING_TOOLS[*]}"
+  log "bootstrap will install the required packages below."
+fi
 log ""
 
 # =============================================================================
@@ -327,6 +351,10 @@ ALL_PKGS=(
 if [ "$INSTALL_HPC" = true ]; then
   ALL_PKGS+=("${PKGS_HPC[@]}")
   log "HPC mode: MPI packages will be included."
+fi
+
+if [ "$INSTALL_PKG" = true ]; then
+  log "Packaging mode: no extra Linux OS packages are currently required beyond the standard set."
 fi
 
 # =============================================================================
