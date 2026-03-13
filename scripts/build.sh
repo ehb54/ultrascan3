@@ -400,6 +400,17 @@ fi
 mkdir -p "$US3_VCPKG_DOWNLOADS"
 export US3_VCPKG_DOWNLOADS
 
+if [ "$PLATFORM" = "Linux" ] && [ "${CI:-false}" = "true" ]; then
+  echo "=========================================="
+  echo "Scratch / cache diagnostics"
+  echo "=========================================="
+  df -h
+  echo "scratch root: ${US3_SCRATCH_ROOT:-<unset>}"
+  stat -c '%d %n' / /mnt "$HOME" "${US3_SCRATCH_ROOT:-$HOME}" 2>/dev/null || true
+  du -sh "$US3_VCPKG_CACHE" "$US3_VCPKG_DOWNLOADS" 2>/dev/null || true
+  echo ""
+fi
+
 VCPKG_TOOLCHAIN_FILE="$US3_VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
 if [ ! -f "$VCPKG_TOOLCHAIN_FILE" ]; then
   echo "ERROR: vcpkg toolchain file not found at $VCPKG_TOOLCHAIN_FILE"
@@ -709,7 +720,7 @@ fi
 
 BIN_COUNT=0
 if [ -d "$BUILD_DIR/bin" ]; then
-  BIN_COUNT=$(find "$BUILD_DIR/bin" -maxdepth 1 \( -name '*.app' -o \( -type f -perm /111 \) \) 2>/dev/null | wc -l | tr -d ' ')
+  BIN_COUNT=$(find "$BUILD_DIR/bin" -maxdepth 1 \( -name '*.app' -o \( -type f -perm -111 \) \) 2>/dev/null | wc -l | tr -d ' ' || echo 0)
 fi
 
 echo "=========================================="
