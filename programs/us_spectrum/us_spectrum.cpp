@@ -35,8 +35,6 @@ US_Spectrum::US_Spectrum() : US_Widgets()
    pb_delete = us_pushbutton(tr("Delete Current Basis Scan"));
    connect(pb_delete, SIGNAL(clicked()), SLOT(deleteCurrent()));
    pb_delete->hide();  // Spurious 
-   
-  
 
    pb_overlap = us_pushbutton(tr("Find Extinction Profile Overlap"));
    connect(pb_overlap, SIGNAL(clicked()), SLOT(overlap()));
@@ -51,6 +49,7 @@ US_Spectrum::US_Spectrum() : US_Widgets()
    pb_find_angles->setEnabled(false);
 
    pb_help = us_pushbutton(tr("Help"));
+   connect(pb_help, SIGNAL(clicked()), SLOT(help()));
    pb_reset_basis = us_pushbutton(tr("Reset Basis Spectra / Reset Fit Results"));
    connect(pb_reset_basis, SIGNAL(clicked()), SLOT(resetBasis()));
    pb_reset_basis->setEnabled(false);
@@ -205,6 +204,11 @@ US_Spectrum::US_Spectrum() : US_Widgets()
    mainLayout->addLayout(plotGrid, 0, 1);
    mainLayout->setColumnStretch(0,2);
    mainLayout->setColumnStretch(1,5);
+}
+
+void US_Spectrum::help(void)
+{
+   showHelp.show_help("manual/us_spectrum.html");
 }
 
 //loads basis spectra according to user specification
