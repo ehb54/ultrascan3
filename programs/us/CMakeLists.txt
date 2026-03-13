@@ -67,17 +67,26 @@ if(APPLE)
         )
 endif()
 
-if(WIN32)
-    find_program(WINDEPLOYQT windeployqt
-        HINTS "${CMAKE_PREFIX_PATH}/bin"
-              "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/tools/Qt6/bin"
-    )
-    if(WINDEPLOYQT)
+# qt6 needs a bit post build things for it to work properly
+if(WIN32 AND USE_QT6)
+    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+        # Write a qt.conf for debug builds so plugins are found correctly
         add_custom_command(TARGET us POST_BUILD
-            COMMAND ${WINDEPLOYQT} --no-translations --no-system-d3d-compiler
-                    $<TARGET_FILE:us>
-            COMMENT "Running windeployqt..."
+            COMMAND ${CMAKE_COMMAND} -E echo "[Paths]" > "$<TARGET_FILE_DIR:us>/qt.conf"
+            COMMAND ${CMAKE_COMMAND} -E echo "Plugins=${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/debug/Qt6/plugins" >> "$<TARGET_FILE_DIR:us>/qt.conf"
+            COMMENT "Writing qt.conf for Debug build..."
         )
+    else()
+        find_program(WINDEPLOYQT windeployqt
+                HINTS "${CMAKE_PREFIX_PATH}/bin"
+                "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/tools/Qt6/bin"
+        )
+        if(WINDEPLOYQT)
+            add_custom_command(TARGET us POST_BUILD
+                COMMAND ${WINDEPLOYQT} --no-translations --no-system-d3d-compiler --ignore-library-errors --release $<TARGET_FILE:us>
+                COMMENT "Running windeployqt..."
+            )
+        endif()
     endif()
 endif()
 
