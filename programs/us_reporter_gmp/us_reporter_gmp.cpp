@@ -8656,7 +8656,7 @@ QString US_ReporterGMP::calc_replicates_averages( void )
        
        -- Iterate over ReportItems in ref_report.reportItems; 
        -- For each unique ReportItem, identify type-method, ranges, int.value;
-       -- Retrive earlier processed (in ::distrib_info() ) integration results for subgroup triples && AVERAGE
+       -- Retrieve earlier processed (in ::distrib_info() ) integration results for subgroup triples && AVERAGE
 
        -- BEFORE: in ::distrib_info() STORE integration results into respective reportItem[ kk ]. { integration_val_sim; ...}
 

@@ -974,8 +974,11 @@ DbgLv(1) << "APGe: svP:  kle cr,ct,dv,vt,de"
 	  int group_number           = rgi.key();
 	  QStringList group_channels = rgi.value();
 
-	  if( group_number == 0 || group_channels.size() == 1 )
-	    continue;
+	  // if( group_number == 0 || group_channels.size() == 1 )
+	  //   continue;
+
+	  if( group_number == 0 )
+	     continue;
 
 	  //do copying US_ReportGMPs here:
 	  // internal_reports IS map-of-maps: QMap < chann_desc, QMap< wvl_number,  US_ReportGMP >>:
