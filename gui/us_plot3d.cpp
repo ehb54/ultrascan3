@@ -1157,7 +1157,6 @@ void US_Plot3D::replot( bool hold_color )
                double yval       = ( yroff - tdata[ kk ][ jj ].y );
                double zval       = tdata[ kk ][ jj ].z;
                wdata[ ii ][ jj ] = Triple( xval, yval, zval );
-               tdata[ ii ][ jj ] = Triple( xval, yval, zval );
             }
          }
       }
