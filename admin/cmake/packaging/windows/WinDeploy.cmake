@@ -4,9 +4,9 @@
 # Stages a self-contained directory tree ready for packaging or xcopy install:
 #
 #   <STAGE_DIR>/
-#     bin/           us.exe, us_*.exe, assistant.exe, manual.qhc, ...
+#     bin/           us.exe, us_*.exe, assistant.exe, UltraScan DLLs, Qt DLLs, manual.qhc, ...
 #     etc/           editable config data
-#     lib/           UltraScan shared libraries (usutils.dll, usgui.dll, …)
+#     lib/           reserved / non-runtime library area
 #     plugins/       Qt plugins (platforms/, sqldrivers/, imageformats/, …)
 #     somo/
 #     license.txt
@@ -15,15 +15,14 @@
 #   STAGE_DIR           - Root of the staged directory tree
 #   WINDEPLOYQT         - Path to windeployqt.exe
 #   BIN_DIR             - Build-tree bin/ containing us.exe and us_*.exe
-#   LIB_DIR             - Build-tree lib/ containing usutils.dll / usgui.dll
+#   LIB_DIR             - Build-tree lib/ (currently unused by this script)
 #   ETC_SOURCE_DIR      - Source etc/ directory
 #   SOMO_SOURCE_DIR     - Source somo/ directory
 #   LICENSE_FILE        - Path to LICENSE.txt
 #   QCH_DIR             - Directory containing manual.qch / manual.qhc
-#   VCPKG_BIN_DIR       - vcpkg installed bin/ dir  (Qt DLLs, OpenSSL, etc.)
+#   VCPKG_BIN_DIR       - currently unused
 #   VCPKG_PLUGIN_DIR    - vcpkg installed plugins/ dir
-#   VCPKG_LIB_DIR       - vcpkg installed lib/ dir (import libs, not needed at run-time)
-#
+#   VCPKG_LIB_DIR       - currently unused#
 # Optional:
 #   ASSISTANT_EXE       - Path to assistant.exe from the Qt/vcpkg build tree
 #   SOMO_BIN_DIR        - Build-tree SoMo bin/ (us3_hydrodyn.exe, …)
@@ -51,6 +50,9 @@ endif()
 if(NOT WINDEPLOYQT)
     message(FATAL_ERROR "[WinDeploy] WINDEPLOYQT not set")
 endif()
+if(NOT EXISTS "${WINDEPLOYQT}")
+    message(FATAL_ERROR "[WinDeploy] WINDEPLOYQT does not exist: ${WINDEPLOYQT}")
+endif()
 if(NOT BIN_DIR OR NOT EXISTS "${BIN_DIR}")
     message(FATAL_ERROR "[WinDeploy] BIN_DIR does not exist: ${BIN_DIR}")
 endif()
@@ -63,6 +65,11 @@ set(S_LIB  "${STAGE_DIR}/lib")
 set(S_PLUG "${STAGE_DIR}/plugins")
 set(S_ETC  "${STAGE_DIR}/etc")
 set(S_SOMO "${STAGE_DIR}/somo")
+
+if(EXISTS "${STAGE_DIR}")
+    message(STATUS "[WinDeploy] Removing existing stage dir: ${STAGE_DIR}")
+    file(REMOVE_RECURSE "${STAGE_DIR}")
+endif()
 
 file(MAKE_DIRECTORY "${S_BIN}")
 file(MAKE_DIRECTORY "${S_LIB}")
@@ -89,31 +96,26 @@ foreach(exe ${extra_exes})
 endforeach()
 
 # =========================================================================
-# 3) Copy ALL DLLs from BIN_DIR into the staged bin/
+# 3) Copy ONLY UltraScan DLLs from BIN_DIR into staged bin/
 #
-#    On Windows with MSVC:
-#      - UltraScan DLLs (us_gui4.dll, us_utils4.dll) land in RUNTIME_OUTPUT_DIR (bin/)
-#      - vcpkg dependency DLLs (harfbuzz, freetype, zlib, ICU, etc.) are also
-#        copied into bin/ by windeployqt during the build as "local dependencies"
-#
-#    windeployqt during deploy (step 4) copies Qt DLLs but does NOT re-copy
-#    these already-present local dependencies into the stage.  We must copy
-#    all DLLs from BIN_DIR explicitly.
-#
-#    We copy every .dll found in BIN_DIR — windeployqt will later skip anything
-#    already present, so there is no double-copy problem.
+#    Do NOT copy every DLL from BIN_DIR. That can stage stale or mismatched
+#    Qt/runtime DLLs and break plugin loading in the final installer.
+#    Qt DLLs and plugins must come from windeployqt only.
 # =========================================================================
 if(BIN_DIR AND EXISTS "${BIN_DIR}")
-    file(GLOB _all_bin_dlls "${BIN_DIR}/*.dll")
-    foreach(_dll ${_all_bin_dlls})
+    file(GLOB _us_bin_dlls
+            "${BIN_DIR}/us*.dll"
+            "${BIN_DIR}/libus*.dll"
+    )
+    foreach(_dll ${_us_bin_dlls})
         get_filename_component(_dll_name "${_dll}" NAME)
-        message(STATUS "  Copying DLL from build bin/: ${_dll_name}")
+        message(STATUS "  Copying UltraScan DLL from build bin/: ${_dll_name}")
         file(COPY "${_dll}" DESTINATION "${S_BIN}")
     endforeach()
-    list(LENGTH _all_bin_dlls _dll_count)
-    message(STATUS "[WinDeploy] Copied ${_dll_count} DLLs from build bin/")
+    list(LENGTH _us_bin_dlls _dll_count)
+    message(STATUS "[WinDeploy] Copied ${_dll_count} UltraScan DLL(s) from build bin/")
 else()
-    message(WARNING "[WinDeploy] BIN_DIR not set or missing -- no DLLs staged from build tree")
+    message(WARNING "[WinDeploy] BIN_DIR not set or missing -- no UltraScan DLLs staged from build tree")
 endif()
 
 # =========================================================================
@@ -341,7 +343,16 @@ if(SOMO_LIB_DIR AND EXISTS "${SOMO_LIB_DIR}")
     file(GLOB _somo_dlls "${SOMO_LIB_DIR}/*.dll")
     foreach(_dll ${_somo_dlls})
         get_filename_component(_dll_name "${_dll}" NAME)
-        if(NOT EXISTS "${S_BIN}/${_dll_name}")
+
+        if(_dll_name MATCHES "^Qt[56].*\\.dll$"
+                OR _dll_name MATCHES "^qwt.*\\.dll$"
+                OR _dll_name MATCHES "^icu.*\\.dll$"
+                OR _dll_name MATCHES "^libpng.*\\.dll$"
+                OR _dll_name MATCHES "^zlib.*\\.dll$"
+                OR _dll_name MATCHES "^freetype.*\\.dll$"
+                OR _dll_name MATCHES "^harfbuzz.*\\.dll$")
+            message(STATUS "  Skipping non-SoMo runtime DLL from SoMo lib dir: ${_dll_name}")
+        elseif(NOT EXISTS "${S_BIN}/${_dll_name}")
             message(STATUS "  SoMo DLL: ${_dll_name}")
             file(COPY "${_dll}" DESTINATION "${S_BIN}")
         endif()
