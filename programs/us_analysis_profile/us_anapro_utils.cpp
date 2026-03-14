@@ -996,15 +996,17 @@ DbgLv(1) << "APGe: svP:  kle cr,ct,dv,vt,de"
 	    {
 	      US_ReportGMP reference_group_report = internal_reports[ group_channels[0] ] [ reference_ch_wvls[ rgj ] ];
 
-	      //Now, go over the reports for other channels in a group (per-triple basis)
-	      for( int i = 0; i < group_channels.size(); ++i )
+	      //When replica group contains only 1 channel
+	      if ( group_channels.size() == 1 )
 		{
-		  if ( group_channels.size() > 1 && i == 0 )
-		    {
-		      //Deal with situation when replica group consists of more that 1 channel
-		      continue;
-		    }
-		  
+		  QString ref_triple   = group_channels[ 0 ].split(":")[0] + "." + reference_ch_wvls[ rgj ];
+		  channdesc_to_overlapping_wvls[ group_channels [0] ]                << ref_triple;
+		  currProf->channdesc_to_overlapping_wvls_main [ group_channels[0] ] << ref_triple;
+		}
+	      
+	      //Now, go over the reports for other channels in a group (per-triple basis)
+	      for( int i = 1; i < group_channels.size(); ++i )
+		{
 		  QList < QString > other_group_ch_wvls = internal_reports[ group_channels[i] ].keys();
 
 		  for( int j = 0; j < other_group_ch_wvls.size(); ++j )
