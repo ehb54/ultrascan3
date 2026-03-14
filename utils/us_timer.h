@@ -8,6 +8,7 @@
 
 #include "us_extern.h"
 #include <QElapsedTimer>
+#include <map>
 
 /**
  * @class US_Timer
