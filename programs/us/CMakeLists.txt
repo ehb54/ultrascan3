@@ -69,24 +69,34 @@ endif()
 
 # qt6 needs a bit post build things for it to work properly
 if(WIN32 AND USE_QT6)
-    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-        # Write a qt.conf for debug builds so plugins are found correctly
-        add_custom_command(TARGET us POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E echo "[Paths]" > "$<TARGET_FILE_DIR:us>/qt.conf"
-            COMMAND ${CMAKE_COMMAND} -E echo "Plugins=${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/debug/Qt6/plugins" >> "$<TARGET_FILE_DIR:us>/qt.conf"
-            COMMENT "Writing qt.conf for Debug build..."
-        )
+    file(TO_CMAKE_PATH "${VCPKG_INSTALLED_DIR}" CLEAN_VCPKG_INSTALLED_DIR)
+    file(GENERATE
+            OUTPUT "$<TARGET_FILE_DIR:us>/qt.conf"
+            CONTENT "[Paths]\nPlugins=${CLEAN_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/debug/Qt6/plugins\n"
+            CONDITION "$<CONFIG:Debug>"
+    )
+    if(TARGET Qt6::windeployqt)
+        set(WINDEPLOYQT_CMD "$<TARGET_FILE:Qt6::windeployqt>")
     else()
         find_program(WINDEPLOYQT windeployqt
-                HINTS "${CMAKE_PREFIX_PATH}/bin"
+                HINTS
+                ${Qt6Core_DIR}/../../../bin
+                ${CMAKE_PREFIX_PATH}
                 "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/tools/Qt6/bin"
+                PATH_SUFFIXES bin
         )
-        if(WINDEPLOYQT)
-            add_custom_command(TARGET us POST_BUILD
-                COMMAND ${WINDEPLOYQT} --no-translations --no-system-d3d-compiler --ignore-library-errors --release $<TARGET_FILE:us>
-                COMMENT "Running windeployqt..."
-            )
-        endif()
+        set(WINDEPLOYQT_CMD "${WINDEPLOYQT}")
+    endif()
+    if(WINDEPLOYQT_CMD)
+        add_custom_command(TARGET us POST_BUILD
+                COMMAND $<$<NOT:$<CONFIG:Debug>>:${WINDEPLOYQT_CMD}>
+                $<$<NOT:$<CONFIG:Debug>>:--no-translations>
+                $<$<NOT:$<CONFIG:Debug>>:--ignore-library-errors>
+                $<$<NOT:$<CONFIG:Debug>>:--release>
+                $<$<NOT:$<CONFIG:Debug>>:$<TARGET_FILE:us>>
+                COMMENT "Running windeployqt for Release..."
+                COMMAND_EXPAND_LISTS
+        )
     endif()
 endif()
 
