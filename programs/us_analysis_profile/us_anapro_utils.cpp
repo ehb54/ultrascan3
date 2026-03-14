@@ -995,9 +995,16 @@ DbgLv(1) << "APGe: svP:  kle cr,ct,dv,vt,de"
 	  for( int rgj = 0; rgj < reference_ch_wvls.size(); ++rgj )
 	    {
 	      US_ReportGMP reference_group_report = internal_reports[ group_channels[0] ] [ reference_ch_wvls[ rgj ] ];
+
 	      //Now, go over the reports for other channels in a group (per-triple basis)
-	      for( int i = 1; i < group_channels.size(); ++i )
+	      for( int i = 0; i < group_channels.size(); ++i )
 		{
+		  if ( group_channels.size() > 1 && i == 0 )
+		    {
+		      //Deal with situation when replica group consists of more that 1 channel
+		      continue;
+		    }
+		  
 		  QList < QString > other_group_ch_wvls = internal_reports[ group_channels[i] ].keys();
 
 		  for( int j = 0; j < other_group_ch_wvls.size(); ++j )
