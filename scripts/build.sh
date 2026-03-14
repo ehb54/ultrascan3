@@ -400,6 +400,9 @@ fi
 mkdir -p "$US3_VCPKG_DOWNLOADS"
 export US3_VCPKG_DOWNLOADS
 
+# Reduce peak disk usage during vcpkg dependency builds.
+export VCPKG_INSTALL_OPTIONS="--clean-after-build"
+
 if [ "$PLATFORM" = "Linux" ] && [ "${CI:-false}" = "true" ]; then
   echo "=========================================="
   echo "Scratch / cache diagnostics"
@@ -632,16 +635,19 @@ echo ""
 echo "=========================================="
 echo "Ready to build UltraScan3"
 echo "=========================================="
-echo "  Platform         : ${PLATFORM} (${ARCH})"
-echo "  Preset           : ${CONFIGURE_PRESET}"
-echo "  Profile          : ${PROFILE}"
-echo "  Qt variant       : ${QT_VERSION_LABEL}"
-echo "  Installer        : ${BUILD_PKG}"
-echo "  Rebuild          : ${REBUILD}"
-echo "  Clean            : ${CLEAN}"
-echo "  Purge cache      : ${PURGE_CACHE}"
-echo "  vcpkg root       : ${VCPKG_ROOT}"
-echo "  Build jobs       : ${BUILD_JOBS}"
+echo "  Platform            : ${PLATFORM} (${ARCH})"
+echo "  Preset              : ${CONFIGURE_PRESET}"
+echo "  Profile             : ${PROFILE}"
+echo "  Qt variant          : ${QT_VERSION_LABEL}"
+echo "  Installer           : ${BUILD_PKG}"
+echo "  Rebuild             : ${REBUILD}"
+echo "  Clean               : ${CLEAN}"
+echo "  Purge cache         : ${PURGE_CACHE}"
+echo "  vcpkg root          : ${VCPKG_ROOT}"
+echo "  vcpkg cache         : ${US3_VCPKG_CACHE}"
+echo "  vcpkg downloads     : ${US3_VCPKG_DOWNLOADS}"
+echo "  vcpkg install opts  : ${VCPKG_INSTALL_OPTIONS:-<none>}"
+echo "  Build jobs          : ${BUILD_JOBS}"
 echo ""
 
 if [ "$NON_INTERACTIVE" = false ]; then
