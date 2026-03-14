@@ -2403,8 +2403,11 @@ void US_DDistr_Combine::update_distros()
 // Update Distributions list when a method check box is changed
 void US_DDistr_Combine::methodChanged( int state )
 {
-   if ( state == Qt::Unchecked )
+   if ( state == Qt::Unchecked ) {
+      // surpress the ck_dtall signal
+      const QSignalBlocker blocker( ck_dtall );
       ck_dtall->setChecked( false );
+   }
 
    list_distributions();
 }
@@ -2453,6 +2456,47 @@ void US_DDistr_Combine::allMethodChanged( int state )
       ck_dmgaramc->setChecked( ck_dmgaramc->isEnabled() );
       ck_dmgagl  ->setChecked( ck_dmgagl  ->isEnabled() );
       ck_dmgaglmc->setChecked( ck_dmgaglmc->isEnabled() );
+   }
+   else {
+      ck_2dsa    ->setChecked( false );
+      ck_2dsait  ->setChecked( false );
+      ck_2dsafm  ->setChecked( false );
+      ck_2dsamc  ->setChecked( false );
+      ck_2dsamw  ->setChecked( false );
+      ck_2dsamcmw->setChecked( false );
+      ck_2dsagl  ->setChecked( false );
+      ck_2dsaglmc->setChecked( false );
+      ck_2dsacg  ->setChecked( false );
+      ck_2dsacgit->setChecked( false );
+      ck_2dsacgfm->setChecked( false );
+      ck_2dsacgmc->setChecked( false );
+      ck_ga      ->setChecked( false );
+      ck_gamc    ->setChecked( false );
+      ck_gamw    ->setChecked( false );
+      ck_gamcmw  ->setChecked( false );
+      ck_gagl    ->setChecked( false );
+      ck_gaglmc  ->setChecked( false );
+      ck_pcsais  ->setChecked( false );
+      ck_pcsasl  ->setChecked( false );
+      ck_pcsads  ->setChecked( false );
+      ck_pcsahl  ->setChecked( false );
+      ck_pcsaismc->setChecked( false );
+      ck_pcsaslmc->setChecked( false );
+      ck_pcsadsmc->setChecked( false );
+      ck_pcsahlmc->setChecked( false );
+      ck_pcsaistr->setChecked( false );
+      ck_pcsasltr->setChecked( false );
+      ck_pcsadstr->setChecked( false );
+      ck_pcsahltr->setChecked( false );
+      ck_pcsa2o  ->setChecked( false );
+      ck_pcsa2omc->setChecked( false );
+      ck_pcsa2otr->setChecked( false );
+      ck_dmga    ->setChecked( false );
+      ck_dmgamc  ->setChecked( false );
+      ck_dmgara  ->setChecked( false );
+      ck_dmgaramc->setChecked( false );
+      ck_dmgagl  ->setChecked( false );
+      ck_dmgaglmc->setChecked( false );
    }
 
    list_distributions();
