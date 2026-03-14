@@ -966,6 +966,8 @@ DbgLv(1) << "APGe: svP:  kle cr,ct,dv,vt,de"
 	      replicates_to_channdesc[ replicate_group_number ] << chdesc_alt;
 
 	      currProf->replicates_to_channdesc_main [ replicate_group_number ] << chdesc_alt;
+	      qDebug() << "replicate_group_number, chdesc_alt -- "
+		       << replicate_group_number << chdesc_alt;
 	    }
 	}
       QMap< int, QStringList >::iterator rgi;
@@ -973,6 +975,9 @@ DbgLv(1) << "APGe: svP:  kle cr,ct,dv,vt,de"
 	{
 	  int group_number           = rgi.key();
 	  QStringList group_channels = rgi.value();
+
+	  qDebug() << "[1]group_number, group_channels -- "
+		   << group_number << group_channels;
 	  
 	  // if( group_number == 0 || group_channels.size() == 1 )
 	  //   continue;
@@ -980,7 +985,7 @@ DbgLv(1) << "APGe: svP:  kle cr,ct,dv,vt,de"
 	  if( group_number == 0 )
 	     continue;
 
-	  qDebug() << "group_number, group_channels -- "
+	  qDebug() << "[2]group_number, group_channels -- "
 		   << group_number << group_channels;
 
 	  //do copying US_ReportGMPs here:
