@@ -76,7 +76,7 @@ if(UNIX AND NOT APPLE)
     target_link_libraries(us_program_common INTERFACE OpenSSL::Crypto)
 endif()
 # windows with MSVC needs openssl applink shim to work properly at runtime
-if(WIN32 AND MSVC AND TARGET OpenSSL::SSL)
+if(WIN32 AND MSVC AND TARGET OpenSSL::SSL AND TARGET OpenSSL::applink)
     target_link_libraries(us_program_common INTERFACE OpenSSL::applink)
 endif()
 
