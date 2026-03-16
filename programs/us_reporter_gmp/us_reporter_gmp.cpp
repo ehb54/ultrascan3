@@ -8779,7 +8779,7 @@ QString US_ReporterGMP::calc_replicates_averages( void )
 	      if ( num_triples_in_subgroup > 1 )
 		{
 		  int_std_dev     = QString("%1").arg(replicate_g_results["int_st_dev"], 10, 'e', 2);
-		  percent_std_dev = QString("%1%").arg(replicate_g_results["tot_percent_st_dev"] * 100, 0, 'f', 2);
+		  percent_std_dev = QString("%1%").arg(replicate_g_results["tot_percent_st_dev"], 0, 'f', 2);
 		}
 	      qDebug() << "int_std_dev, percent_std_dev -- " << int_std_dev << percent_std_dev;
 	      
