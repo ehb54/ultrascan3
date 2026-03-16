@@ -114,6 +114,7 @@ param(
     [switch]${qt5-qwt630},
     [string]${arch}       = "",
     [string]${vcpkg-root} = "",
+    [switch]${repair-vcpkg},
     [switch]${help}
 )
 
@@ -145,6 +146,7 @@ if (${help}) {
     Write-Host "  --arch x64               Target x64 architecture [default: auto-detect]"
     Write-Host "  --arch arm64             Target ARM64 architecture"
     Write-Host "  --vcpkg-root <path>      Path to vcpkg installation"
+    Write-Host "  --repair-vcpkg           Reset and clean an existing vcpkg git repo before use"
     Write-Host "  --help                   Show this help message"
     Write-Host ""
     Write-Host "PROFILE:"
@@ -169,6 +171,7 @@ if (${help}) {
     Write-Host "  build.bat --clean --arch arm64 TEST        # Clean ARM64 Qt6 TEST build"
     Write-Host "  build.bat --vcpkg-root C:\dev\vcpkg        # Use specific vcpkg"
     Write-Host "  build.bat --vcpkg-root .\vcpkg             # Use source-tree vcpkg"
+    Write-Host "  build.bat --repair-vcpkg               # Reset/clean existing vcpkg repo"
     Write-Host "  build.bat --pkg                            # Build + produce NSIS installer"
     Write-Host ""
     Write-Host "ENVIRONMENT VARIABLES:"
@@ -223,6 +226,125 @@ if ($Arch -eq "arm64") {
 $ScriptDir  = Split-Path -Parent $MyInvocation.MyCommand.Path
 $SourceRoot = (Resolve-Path (Join-Path $ScriptDir "..")).Path
 Set-Location $SourceRoot
+
+function Get-BuiltinBaseline {
+    param([string]$RepoRoot)
+
+    $vcpkgJson = Join-Path $RepoRoot "vcpkg.json"
+    $vcpkgConfig = Join-Path $RepoRoot "vcpkg-configuration.json"
+
+    foreach ($file in @($vcpkgJson, $vcpkgConfig)) {
+        if (Test-Path $file) {
+            try {
+                $json = Get-Content $file -Raw | ConvertFrom-Json
+                if ($json.'builtin-baseline') {
+                    return [string]$json.'builtin-baseline'
+                }
+            } catch {
+                Write-Host "WARNING: Could not parse $file" -ForegroundColor Yellow
+            }
+        }
+    }
+
+    return $null
+}
+
+function Test-VcpkgBaselineAvailable {
+    param(
+        [string]$VcpkgRoot,
+        [string]$Baseline
+    )
+
+    if (-not $Baseline) { return $true }
+    if (-not (Test-Path $VcpkgRoot)) { return $false }
+
+    Push-Location $VcpkgRoot
+    try {
+        git cat-file -e "${Baseline}^{commit}" 2>$null
+        if ($LASTEXITCODE -ne 0) { return $false }
+
+        git show "${Baseline}:versions/baseline.json" 1>$null 2>$null
+        if ($LASTEXITCODE -ne 0) { return $false }
+
+        return $true
+    }
+    finally {
+        Pop-Location
+    }
+}
+
+function Ensure-VcpkgBaselineAvailable {
+    param(
+        [string]$RepoRoot,
+        [string]$VcpkgRoot
+    )
+
+    $baseline = Get-BuiltinBaseline -RepoRoot $RepoRoot
+    if (-not $baseline) {
+        Write-Host "No builtin-baseline found; skipping baseline validation."
+        return
+    }
+
+    Write-Host "Project builtin-baseline: $baseline"
+
+    if (Test-VcpkgBaselineAvailable -VcpkgRoot $VcpkgRoot -Baseline $baseline) {
+        Write-Host "vcpkg baseline is available locally."
+        return
+    }
+
+    Write-Host "Baseline not available locally. Fetching vcpkg history..." -ForegroundColor Yellow
+
+    Push-Location $VcpkgRoot
+    try {
+        git fetch --all --tags --prune
+        if ($LASTEXITCODE -ne 0) {
+            throw "git fetch failed in $VcpkgRoot"
+        }
+    }
+    finally {
+        Pop-Location
+    }
+
+    if (Test-VcpkgBaselineAvailable -VcpkgRoot $VcpkgRoot -Baseline $baseline) {
+        Write-Host "vcpkg baseline became available after fetch."
+        return
+    }
+
+    Write-Host ""
+    Write-Host "ERROR: The requested builtin-baseline is not available in the local vcpkg repo." -ForegroundColor Red
+    Write-Host "  Baseline : $baseline"
+    Write-Host "  vcpkg    : $VcpkgRoot"
+    Write-Host ""
+    Write-Host "This usually means the local vcpkg clone is stale, shallow, or from the wrong history." -ForegroundColor Yellow
+    Write-Host "Recommended fix:" -ForegroundColor Yellow
+    Write-Host "  1. Delete or rename $VcpkgRoot"
+    Write-Host "  2. Re-clone microsoft/vcpkg"
+    Write-Host "  3. Re-run the build"
+    exit 1
+}
+
+function Sync-VcpkgRepoToBaseline {
+    param(
+        [string]$RepoRoot,
+        [string]$VcpkgRoot
+    )
+
+    $baseline = Get-BuiltinBaseline -RepoRoot $RepoRoot
+    if (-not $baseline) { return }
+
+    Push-Location $VcpkgRoot
+    try {
+        git checkout --detach $baseline
+        if ($LASTEXITCODE -ne 0) {
+            throw "git checkout --detach $baseline failed"
+        }
+    }
+    finally {
+        Pop-Location
+    }
+
+    Write-Host "vcpkg repo synced to baseline $baseline"
+}
 
 # =============================================================================
 # BUILD DIRECTORY
@@ -478,9 +600,94 @@ function Test-VcpkgDownloadsOnlyTree {
     return $true
 }
 
+function Test-VcpkgGitRepo {
+    param([string]$Path)
+
+    return (Test-Path (Join-Path $Path ".git"))
+}
+
+function Test-VcpkgRepoClean {
+    param([string]$VcpkgRoot)
+
+    if (-not (Test-VcpkgGitRepo $VcpkgRoot)) { return $false }
+
+    Push-Location $VcpkgRoot
+    try {
+        git update-index -q --refresh 2>$null
+
+        git diff --quiet
+        if ($LASTEXITCODE -ne 0) { return $false }
+
+        git diff --cached --quiet
+        if ($LASTEXITCODE -ne 0) { return $false }
+
+        $Untracked = git ls-files --others --exclude-standard
+        if ($LASTEXITCODE -ne 0) { return $false }
+        if ($Untracked) { return $false }
+
+        return $true
+    }
+    finally {
+        Pop-Location
+    }
+}
+
+function Repair-VcpkgRepo {
+    param([string]$VcpkgRoot)
+
+    if (-not (Test-VcpkgGitRepo $VcpkgRoot)) {
+        Write-Host "ERROR: $VcpkgRoot is not a git repository, cannot repair in place." -ForegroundColor Red
+        exit 1
+    }
+
+    Write-Host "Repairing vcpkg repo at $VcpkgRoot ..." -ForegroundColor Yellow
+
+    Push-Location $VcpkgRoot
+    try {
+        git fetch --all --tags --prune
+        if ($LASTEXITCODE -ne 0) {
+            throw "git fetch failed"
+        }
+
+        git reset --hard HEAD
+        if ($LASTEXITCODE -ne 0) {
+            throw "git reset --hard failed"
+        }
+
+        git clean -xfd
+        if ($LASTEXITCODE -ne 0) {
+            throw "git clean -xfd failed"
+        }
+    }
+    catch {
+        Write-Host "ERROR: Failed to repair vcpkg repo: $($_.Exception.Message)" -ForegroundColor Red
+        exit 1
+    }
+    finally {
+        Pop-Location
+    }
+
+    Write-Host "vcpkg repo repair complete." -ForegroundColor Green
+}
+
 if (Test-Path $VcpkgRoot) {
     if (Test-VcpkgRoot $VcpkgRoot) {
         Write-Host "Found usable vcpkg root at $VcpkgRoot"
+
+        if (-not (Test-VcpkgRepoClean $VcpkgRoot)) {
+            if (${repair-vcpkg}) {
+                Write-Warning "$VcpkgRoot has local modifications or untracked files."
+                Repair-VcpkgRepo $VcpkgRoot
+            } else {
+                Write-Host "ERROR: Existing vcpkg repo is not clean." -ForegroundColor Red
+                Write-Host "  $VcpkgRoot"
+                Write-Host ""
+                Write-Host "This can cause mixed-state versioning failures." -ForegroundColor Yellow
+                Write-Host "Re-run with --repair-vcpkg to reset and clean this repo automatically," -ForegroundColor Yellow
+                Write-Host "or delete/reclone it manually." -ForegroundColor Yellow
+                exit 1
+            }
+        }
     } elseif (Test-VcpkgDownloadsOnlyTree $VcpkgRoot) {
         Write-Warning "$VcpkgRoot contains only a cached downloads subtree. Removing it so vcpkg can be cloned cleanly."
         Remove-Item -Recurse -Force $VcpkgRoot
@@ -493,13 +700,22 @@ if (Test-Path $VcpkgRoot) {
 if (-not (Test-Path $VcpkgRoot)) {
     Write-Host "vcpkg not found at $VcpkgRoot, cloning..."
     git clone https://github.com/microsoft/vcpkg.git $VcpkgRoot
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "ERROR: Failed to clone vcpkg into $VcpkgRoot" -ForegroundColor Red
+        exit $LASTEXITCODE
+    }
 }
 
 if (-not (Test-Path (Join-Path $VcpkgRoot "vcpkg.exe"))) {
     Write-Host "Bootstrapping vcpkg at $VcpkgRoot..."
     Push-Location $VcpkgRoot
     & .\bootstrap-vcpkg.bat -disableMetrics
+    $BootstrapExit = $LASTEXITCODE
     Pop-Location
+    if ($BootstrapExit -ne 0) {
+        Write-Host "ERROR: vcpkg bootstrap failed." -ForegroundColor Red
+        exit $BootstrapExit
+    }
 }
 
 # Binary cache: honour US3_VCPKG_CACHE env var, default to $HOME\.vcpkg-cache
@@ -525,6 +741,11 @@ Write-Host "  root      : $VcpkgRoot"
 Write-Host "  cache     : $VcpkgCacheDir"
 Write-Host "  downloads : $VcpkgDownloadsDir"
 Write-Host ""
+
+Ensure-VcpkgBaselineAvailable -RepoRoot $SourceRoot -VcpkgRoot $VcpkgRoot
+Sync-VcpkgRepoToBaseline -RepoRoot $SourceRoot -VcpkgRoot $VcpkgRoot
+Write-Host ""
+
 
 # =============================================================================
 # CLEAN / REBUILD (tiered)

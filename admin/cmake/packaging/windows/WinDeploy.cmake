@@ -20,9 +20,9 @@
 #   SOMO_SOURCE_DIR     - Source somo/ directory
 #   LICENSE_FILE        - Path to LICENSE.txt
 #   QCH_DIR             - Directory containing manual.qch / manual.qhc
-#   VCPKG_BIN_DIR       - currently unused
+#   VCPKG_BIN_DIR       - vcpkg installed bin/ dir for runtime DLL staging
 #   VCPKG_PLUGIN_DIR    - vcpkg installed plugins/ dir
-#   VCPKG_LIB_DIR       - currently unused#
+#   VCPKG_LIB_DIR       - currently unused
 # Optional:
 #   ASSISTANT_EXE       - Path to assistant.exe from the Qt/vcpkg build tree
 #   SOMO_BIN_DIR        - Build-tree SoMo bin/ (us3_hydrodyn.exe, …)
@@ -184,6 +184,32 @@ foreach(exe ${companion_exes})
         message(STATUS  "  stderr: ${_e}")
     endif()
 endforeach()
+
+# =========================================================================
+# 4c) Copy all non-Qt runtime DLLs from vcpkg installed/bin
+# =========================================================================
+if(VCPKG_BIN_DIR AND EXISTS "${VCPKG_BIN_DIR}")
+    message(STATUS "[WinDeploy] Copying non-Qt DLLs from ${VCPKG_BIN_DIR}")
+
+    file(GLOB _all_vcpkg_dlls "${VCPKG_BIN_DIR}/*.dll")
+
+    foreach(_dll IN LISTS _all_vcpkg_dlls)
+        get_filename_component(_name "${_dll}" NAME)
+
+        # Skip Qt DLLs; windeployqt should own those
+        if(_name MATCHES "^Qt6.*\\.dll$"
+                OR _name MATCHES "^Qt5.*\\.dll$")
+            continue()
+        endif()
+
+        if(NOT EXISTS "${S_BIN}/${_name}")
+            message(STATUS "  Copying ${_name}")
+            file(COPY "${_dll}" DESTINATION "${S_BIN}")
+        endif()
+    endforeach()
+else()
+    message(WARNING "[WinDeploy] VCPKG_BIN_DIR missing; cannot stage vcpkg runtime DLLs")
+endif()
 
 # =========================================================================
 # 5) Guarantee platforms/qwindows.dll is present

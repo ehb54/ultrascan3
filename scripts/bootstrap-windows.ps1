@@ -194,6 +194,63 @@ if (-not (Get-Command makensis -ErrorAction SilentlyContinue)) {
 }
 
 # =============================================================================
+# NASM DISCOVERY / PATH SELF-HEAL
+# nasm is sometimes installed but not visible on PATH in the current session,
+# and winget layouts can vary. Search several likely locations and add the
+# containing directory to PATH if found.
+# =============================================================================
+function Find-NasmExe {
+    $cmd = Get-Command nasm -ErrorAction SilentlyContinue
+    if ($cmd -and $cmd.Source) {
+        return $cmd.Source
+    }
+
+    $whereOut = & where.exe nasm 2>$null
+    if ($LASTEXITCODE -eq 0 -and $whereOut) {
+        return ($whereOut | Select-Object -First 1)
+    }
+
+    $candidates = @(
+        "$env:ProgramFiles\NASM\nasm.exe",
+        "${env:ProgramFiles(x86)}\NASM\nasm.exe",
+        "$env:LOCALAPPDATA\Microsoft\WinGet\Links\nasm.exe"
+    )
+
+    foreach ($p in $candidates) {
+        if ($p -and (Test-Path $p)) {
+            return $p
+        }
+    }
+
+    $wingetPkgRoot = Join-Path $env:LOCALAPPDATA "Microsoft\WinGet\Packages"
+    if (Test-Path $wingetPkgRoot) {
+        $found = Get-ChildItem -Path $wingetPkgRoot -Recurse -Filter nasm.exe -ErrorAction SilentlyContinue |
+                 Select-Object -First 1
+        if ($found) {
+            return $found.FullName
+        }
+    }
+
+    return $null
+}
+
+function Ensure-NasmOnPath {
+    $nasmExe = Find-NasmExe
+    if ($nasmExe) {
+        $nasmDir = Split-Path $nasmExe -Parent
+        $pathParts = $env:PATH -split ';'
+        if ($pathParts -notcontains $nasmDir) {
+            $env:PATH = "$nasmDir;$env:PATH"
+        }
+        Log "NASM found: $nasmExe"
+        return $true
+    }
+    return $false
+}
+
+Ensure-NasmOnPath | Out-Null
+
+# =============================================================================
 # DRY-RUN MODE
 # =============================================================================
 if ($DryRun) {
@@ -218,9 +275,14 @@ Log ""
 $PkgsToInstall = @()
 foreach ($Pkg in $AllPkgs) {
     $Found = $false
-    if ($Pkg.Binary) {
+
+    if ($Pkg.Binary -eq "nasm") {
+        $Found = Ensure-NasmOnPath
+    }
+    elseif ($Pkg.Binary) {
         $Found = [bool](Get-Command $Pkg.Binary -ErrorAction SilentlyContinue)
     }
+
     if (-not $Found) {
         $PkgsToInstall += $Pkg
     }
@@ -310,6 +372,16 @@ if ($PkgsToInstall.Count -eq 0) {
         foreach ($NsisDir in @("C:\Program Files (x86)\NSIS", "C:\Program Files\NSIS")) {
             if (Test-Path (Join-Path $NsisDir "makensis.exe")) {
                 $env:PATH = "$NsisDir;$env:PATH"
+                break
+            }
+        }
+    }
+
+    # Re-add NASM if it still isn't on the refreshed PATH
+    if (-not (Get-Command nasm -ErrorAction SilentlyContinue)) {
+        foreach ($NasmDir in @("C:\Program Files\NASM", "C:\Program Files (x86)\NASM")) {
+            if (Test-Path (Join-Path $NasmDir "nasm.exe")) {
+                $env:PATH = "$NasmDir;$env:PATH"
                 break
             }
         }
