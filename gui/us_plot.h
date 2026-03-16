@@ -40,6 +40,9 @@ class US_GUI_EXTERN US_Zoomer: public QwtPlotZoomer
       //! \param canvas - A pointer to the plot's canvas
       US_Zoomer( int xAxis, int yAxis, QwtPlotCanvas* canvas );
       static void toggle_zoom_events( QwtPlotZoomer* zoomer, bool active_zoom_button);
+      virtual void begin() override;
+   private:
+      bool zoom_base_set {false};
 };
 
 //! \brief Customize plot widgets

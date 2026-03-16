@@ -41,6 +41,34 @@ US_Zoomer::US_Zoomer( const int xAxis, const int yAxis, QwtPlotCanvas* canvas )
    toggle_zoom_events( this, false );
 }
 
+void US_Zoomer::begin(  ) {
+   if (!zoom_base_set) {
+      QwtPlot* plot = QwtPlotZoomer::plot();
+      if ( plot && plot->itemList(QwtPlotItem::Rtti_PlotCurve).count() > 0 ) {
+         // first zoom event, check if the zoomStack is properly set
+         // Get the actual axis values
+         auto xa = plot->axisScaleDiv( xAxis() );
+         auto ya = plot->axisScaleDiv( yAxis() );
+         auto x_min = xa.lowerBound();
+         auto x_max = xa.upperBound();
+         auto y_min = ya.lowerBound();
+         auto y_max = ya.upperBound();
+         auto zoom_base = zoomBase();
+         if ( !qFuzzyCompare(zoom_base.left(), x_min ) ||
+            !qFuzzyCompare(zoom_base.right(), x_max ) ||
+            !qFuzzyCompare(zoom_base.top(), y_min ) ||
+            !qFuzzyCompare(zoom_base.bottom(), y_max ) ) {
+            auto zoom_stack = QStack<QRectF>();
+            zoom_stack << QRectF( x_min, y_min, x_max - x_min, y_max - y_min );
+            const QSignalBlocker blocker(this);
+            setZoomStack(zoom_stack, -1);
+            zoom_base_set = true;
+            }
+      }
+   }
+   QwtPlotZoomer::begin();
+}
+
 void US_Zoomer::toggle_zoom_events(QwtPlotZoomer* zoomer, const bool active_zoom_button) {
    if (active_zoom_button) {
       zoomer->setMousePattern( QwtEventPattern::MouseSelect1,
@@ -60,6 +88,65 @@ void US_Zoomer::toggle_zoom_events(QwtPlotZoomer* zoomer, const bool active_zoom
       zoomer->setMousePattern( QwtEventPattern::MouseSelect3,
                        Qt::RightButton );
    }
+}
+
+US_DoubleClickEventFilter::US_DoubleClickEventFilter(QwtPlot *plot, QObject *parent, const double &threshold): QObject(parent), plot(plot), threshold(threshold) {
+}
+
+bool US_DoubleClickEventFilter::eventFilter( QObject* object, QEvent* event )
+{
+   if ( event->type() == QEvent::MouseButtonDblClick ) {
+      // Iterate through all possible axes to find the match
+      for (int axisId = 0; axisId < QwtPlot::axisCnt; ++axisId) {
+         if ( object == plot->axisWidget(axisId)) {
+            emit axisDoubleClicked(axisId);
+            return true; // Mark event as handled
+         }
+      }
+   }
+   if ( object == plot->canvas() && event->type() == QEvent::MouseButtonDblClick )
+   {
+      auto* mouseEvent = static_cast<QMouseEvent*>( event );
+      QPoint pos = mouseEvent->pos();
+      QList< CurveDistance > curves;
+
+      const QwtPlotItemList list = plot->itemList();
+
+      for ( const auto& item : list )
+      {
+         if ( item->rtti() == QwtPlotItem::Rtti_PlotCurve )
+         {
+            auto* curve = dynamic_cast<QwtPlotCurve*>( item );
+            if ( curve && curve->isVisible() )
+            {
+               double distance = 0.0;
+               const int nearest = curve->closestPoint( pos, &distance );
+
+               if ( nearest >= 0 )
+               {
+                  if ( distance < 0.0 )
+                     distance = qAbs( distance );
+
+                  if ( distance <= threshold )
+                     curves << CurveDistance{ curve, distance, nearest };
+               }
+            }
+         }
+      }
+      std::sort(curves.begin(), curves.end(), [](const CurveDistance& a, const CurveDistance& b) {
+         return a.distance < b.distance;
+      });
+      if ( !curves.isEmpty() ) {
+         emit curveDoubleClicked( curves[ 0 ].curve );
+         QList< QwtPlotCurve* > curve_pointers;
+         for ( const auto& curve : curves ) {
+            curve_pointers << curve.curve;
+         }
+         emit curvesDoubleClicked( curve_pointers );
+         return true;  // Event handled
+      }
+   }
+   return QObject::eventFilter( object, event );
 }
 
 /*********************       US_Plot Class      *************************/
@@ -377,6 +464,9 @@ QwtPlotZoomer* US_Plot::createZoomer()
 {
    QwtPlotCanvas* canvas = qobject_cast<QwtPlotCanvas*>(plot->canvas());
    auto* newZoomer = new US_Zoomer( 2, 0, canvas );
+   // apply the color settings to the zoomer
+   newZoomer->setRubberBandPen( US_GuiSettings::plotPicker() );
+   newZoomer->setTrackerPen( US_GuiSettings::plotPicker() );
 
    return newZoomer;
 }
@@ -394,9 +484,9 @@ QwtPlotPicker* US_Plot::createPicker()
                       QwtPlotPicker::CrossRubberBand, QwtPicker::AlwaysOn,
                       plot->canvas() );
    newPicker->setStateMachine( new QwtPickerTrackerMachine() );
-   newPicker->setRubberBandPen( QColor( Qt::green ) );
+   newPicker->setRubberBandPen( US_GuiSettings::plotPicker() );
    newPicker->setRubberBand( QwtPicker::CrossRubberBand );
-   newPicker->setTrackerPen( QColor( Qt::white ) );
+   newPicker->setTrackerPen( US_GuiSettings::plotPicker() );
 
    return newPicker;
 }
@@ -435,6 +525,8 @@ void US_Plot::cleanupZoom()
    if ( zoomer != nullptr )
    {
       US_Zoomer::toggle_zoom_events(zoomer, false);
+      // reset the zoom to zoomBase
+      zoomer->zoom( 0 );
    }
 }
 
@@ -471,65 +563,6 @@ void US_Plot::replot()
    {
       plot->replot();
    }
-}
-
-US_DoubleClickEventFilter::US_DoubleClickEventFilter(QwtPlot *plot, QObject *parent, const double &threshold): QObject(parent), plot(plot), threshold(threshold) {
-}
-
-bool US_DoubleClickEventFilter::eventFilter( QObject* object, QEvent* event )
-{
-   if ( event->type() == QEvent::MouseButtonDblClick ) {
-      // Iterate through all possible axes to find the match
-      for (int axisId = 0; axisId < QwtPlot::axisCnt; ++axisId) {
-         if ( object == plot->axisWidget(axisId)) {
-            emit axisDoubleClicked(axisId);
-            return true; // Mark event as handled
-         }
-      }
-   }
-   if ( object == plot->canvas() && event->type() == QEvent::MouseButtonDblClick )
-   {
-      auto* mouseEvent = static_cast<QMouseEvent*>( event );
-      QPoint pos = mouseEvent->pos();
-      QList< CurveDistance > curves;
-
-      const QwtPlotItemList list = plot->itemList();
-
-      for ( const auto& item : list )
-      {
-         if ( item->rtti() == QwtPlotItem::Rtti_PlotCurve )
-         {
-            auto* curve = dynamic_cast<QwtPlotCurve*>( item );
-            if ( curve && curve->isVisible() )
-            {
-               double distance = 0.0;
-               const int nearest = curve->closestPoint( pos, &distance );
-
-               if ( nearest >= 0 )
-               {
-                  if ( distance < 0.0 )
-                     distance = qAbs( distance );
-
-                  if ( distance <= threshold )
-                     curves << CurveDistance{ curve, distance, nearest };
-               }
-            }
-         }
-      }
-      std::sort(curves.begin(), curves.end(), [](const CurveDistance& a, const CurveDistance& b) {
-         return a.distance < b.distance;
-      });
-      if ( !curves.isEmpty() ) {
-         emit curveDoubleClicked( curves[ 0 ].curve );
-         QList< QwtPlotCurve* > curve_pointers;
-         for ( const auto& curve : curves ) {
-            curve_pointers << curve.curve;
-         }
-         emit curvesDoubleClicked( curve_pointers );
-         return true;  // Event handled
-      }
-   }
-   return QObject::eventFilter( object, event );
 }
 
 void US_Plot::zoom( const bool on )
