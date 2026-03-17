@@ -178,6 +178,9 @@ if (${help}) {
     Write-Host "  US3_BUILD_JOBS           Override number of parallel build jobs"
     Write-Host "  US3_VCPKG_ROOT           Override vcpkg location (see priority above)"
     Write-Host "  US3_VCPKG_CACHE          Override binary cache path (default: `$HOME\.vcpkg-cache)"
+    Write-Host ""
+    Write-Host "  NOTE: Qt5 on Windows ARM64 is not supported."
+    Write-Host "        Use Qt5 on x64 or Qt6 on ARM64 instead."
     exit 0
 }
 
@@ -213,20 +216,46 @@ if (-not $Arch) {
 # =============================================================================
 # BUILD PRESET
 # =============================================================================
+function Test-UnsupportedBuildMatrix {
+    param(
+        [string]$Arch,
+        [string]$QtSuffix
+    )
+
+    $IsQt5 = ($QtSuffix -like "-qt5*")
+    $IsArm64 = ($Arch -eq "arm64")
+
+    if ($IsQt5 -and $IsArm64) {
+        Write-Host "ERROR: Qt5 on Windows ARM64 is not supported in this build configuration." -ForegroundColor Red
+        Write-Host ""
+        Write-Host "Recommended alternatives:" -ForegroundColor Yellow
+        Write-Host "  --qt5-qwt630 --arch x64"
+        Write-Host "  --qt6 --arch arm64"
+        Write-Host ""
+        exit 1
+    }
+}
+
 if ($Arch -eq "arm64") {
     $Preset = "windows-release$QtSuffix-arm64"
 } else {
     $Preset = "windows-release$QtSuffix"
 }
 
+Test-UnsupportedBuildMatrix `
+    -Arch $Arch `
+    -QtSuffix $QtSuffix
+
 # =============================================================================
 # RESOLVE SOURCE ROOT
-# Defined early so bootstrap-windows.ps1 can be located relative to this script.
 # =============================================================================
 $ScriptDir  = Split-Path -Parent $MyInvocation.MyCommand.Path
 $SourceRoot = (Resolve-Path (Join-Path $ScriptDir "..")).Path
 Set-Location $SourceRoot
 
+# =============================================================================
+# HELPER FUNCTIONS
+# =============================================================================
 function Get-BuiltinBaseline {
     param([string]$RepoRoot)
 
@@ -344,6 +373,64 @@ function Sync-VcpkgRepoToBaseline {
     }
 
     Write-Host "vcpkg repo synced to baseline $baseline"
+}
+
+function Test-PathLengthRisk {
+    param(
+        [string]$RepoRoot,
+        [string]$VcpkgRoot,
+        [string]$BuildDir,
+        [string]$QtVariant,
+        [string]$Platform
+    )
+
+    if ($Platform -ne "Windows") { return }
+
+    $repoLen  = $RepoRoot.Length
+    $vcpkgLen = $VcpkgRoot.Length
+    $buildLen = $BuildDir.Length
+
+    Write-Host "=========================================="
+    Write-Host "Windows path-length preflight"
+    Write-Host "=========================================="
+    Write-Host "Repo root : $RepoRoot"
+    Write-Host "Length    : $repoLen"
+    Write-Host "vcpkg root: $VcpkgRoot"
+    Write-Host "Length    : $vcpkgLen"
+    Write-Host "Build dir : $BuildDir"
+    Write-Host "Length    : $buildLen"
+    Write-Host ""
+
+    $qt5Build = ($QtVariant -match "qt5")
+
+    if ($qt5Build) {
+        if ($repoLen -gt 30 -or $vcpkgLen -gt 15 -or $buildLen -gt 70) {
+            throw @"
+Windows Qt5 build aborted due to high path-length risk.
+
+Qt5 tools are known to fail under long paths.
+Move the repository and vcpkg to short roots such as:
+
+  C:\src\us3
+  C:\src\vcpkg
+
+or use subst, for example:
+
+  subst X: $RepoRoot
+  subst V: $VcpkgRoot
+
+Then re-run the build from the shortened path.
+"@
+        }
+    }
+    else {
+        if ($repoLen -gt 80 -or $vcpkgLen -gt 60 -or $buildLen -gt 140) {
+            Write-Warning "Windows build path is long and may cause toolchain or packaging failures."
+            Write-Warning "Recommended short roots:"
+            Write-Warning "  C:\src\us3"
+            Write-Warning "  C:\src\vcpkg"
+        }
+    }
 }
 
 # =============================================================================
@@ -894,6 +981,13 @@ if (-not $NonInteractive) {
     Write-Host "Grab a coffee if this is your first build!" -ForegroundColor Yellow
     Write-Host ""
 }
+
+Test-PathLengthRisk `
+    -RepoRoot $SourceRoot `
+    -VcpkgRoot $VcpkgRoot `
+    -BuildDir $BuildDir `
+    -QtVariant $QtSuffix `
+    -Platform "Windows"
 
 # =============================================================================
 # CONFIGURE AND BUILD
