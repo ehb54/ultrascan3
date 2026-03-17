@@ -21,13 +21,17 @@ US_Spectrum::US_Spectrum() : US_Widgets()
     setWindowTitle(tr("Spectrum Decomposition"));
     setPalette(US_GuiSettings::frameColor());
 
+    wavl_min = -1;
+    wavl_max = -1;
+
     QLabel *lb_target     = us_banner(tr("Target Spectrum"));
     QLabel *lb_basis      = us_banner(tr("Basis Spectra"));
     QLabel *lb_fit        = us_banner(tr("Fit & Basis Correlation"));
     QLabel *lb_tgt_fname  = us_label(tr("Target Filename"));
     QLabel *lb_tgt_header = us_label(tr("Target Header"));
     QLabel *lb_tgt_wavl   = us_label(tr("Target %1 (nm)").arg(QChar(955)));
-    QLabel *lb_fit_wavl   = us_label(tr("Fitted %1 (nm)").arg(QChar(955)));
+    QLabel *lb_wavl_min   = us_label(tr("Min. %1 (nm) to Fit").arg(QChar(955)));
+    QLabel *lb_wavl_max   = us_label(tr("Max. %1 (nm) to Fit").arg(QChar(955)));
     QLabel *lb_basis_list = us_label(tr("Basis List"));
     QLabel *lb_basis_1    = us_label(tr("Basis 1"));
     QLabel *lb_basis_2    = us_label(tr("Basis 2"));
@@ -37,8 +41,9 @@ US_Spectrum::US_Spectrum() : US_Widgets()
     lb_tgt_header->setAlignment(Qt::AlignCenter);
     lb_basis_list->setAlignment(Qt::AlignCenter);
     lb_tgt_fname->setAlignment(Qt::AlignCenter);
+    lb_wavl_min->setAlignment(Qt::AlignCenter);
+    lb_wavl_max->setAlignment(Qt::AlignCenter);
     lb_tgt_wavl->setAlignment(Qt::AlignCenter);
-    lb_fit_wavl->setAlignment(Qt::AlignCenter);
     lb_basis_1->setAlignment(Qt::AlignCenter);
     lb_basis_2->setAlignment(Qt::AlignCenter);
     lb_target->setAlignment(Qt::AlignCenter);
@@ -50,14 +55,18 @@ US_Spectrum::US_Spectrum() : US_Widgets()
     le_tgt_fname  = us_lineedit("", 1, true);
     le_tgt_header = us_lineedit("", 1, true);
     le_tgt_wavl   = us_lineedit("", 1, true);
-    le_fit_wavl   = us_lineedit("", 1, true);
+    le_wavl_min   = us_lineedit("", 1, false);
+    le_wavl_max   = us_lineedit("", 1, false);
     le_angle      = us_lineedit("", 1, true);
     le_rmsd       = us_lineedit("", 1, true);
+
+    QGridLayout* lyt_db_target = us_checkbox("Load from DB", chkb_db_target);
+    QGridLayout* lyt_db_basis  = us_checkbox("Load from DB", chkb_db_basis);
 
     QPushButton *pb_target = us_pushbutton(tr("Load Target"));
     QPushButton *pb_basis  = us_pushbutton(tr("Add Basis"));
     QPushButton *pb_fit    = us_pushbutton(tr("Fit Data"));
-    QPushButton *pb_reset  = us_pushbutton(tr("Reset"));
+    QPushButton *pb_reset  = us_pushbutton(tr("Reset Basis"));
     QPushButton *pb_help   = us_pushbutton(tr("Help"));
     QPushButton *pb_close  = us_pushbutton(tr("Close"));
     QPushButton *pb_save   = us_pushbutton(tr("Save Fitting Data"));
@@ -83,7 +92,8 @@ US_Spectrum::US_Spectrum() : US_Widgets()
 
     int row = 0;
     left_lyt->addWidget(lb_target,     row++, 0, 1, 2);
-    left_lyt->addWidget(pb_target,     row++, 0, 1, 2);
+    left_lyt->addLayout(lyt_db_target, row,   0, 1, 1);
+    left_lyt->addWidget(pb_target,     row++, 1, 1, 1);
     left_lyt->addWidget(lb_tgt_fname,  row,   0, 1, 1);
     left_lyt->addWidget(le_tgt_fname,  row++, 1, 1, 1);
     left_lyt->addWidget(lb_tgt_header, row,   0, 1, 1);
@@ -91,14 +101,17 @@ US_Spectrum::US_Spectrum() : US_Widgets()
     left_lyt->addWidget(lb_tgt_wavl,   row,   0, 1, 1);
     left_lyt->addWidget(le_tgt_wavl,   row++, 1, 1, 1);
     left_lyt->addWidget(lb_basis,      row++, 0, 1, 2);
-    left_lyt->addWidget(pb_basis,      row,   0, 1, 1);
-    left_lyt->addWidget(pb_reset,      row++, 1, 1, 1);
+    left_lyt->addLayout(lyt_db_basis,  row,   0, 1, 1);
+    left_lyt->addWidget(pb_basis,      row++, 1, 1, 1);
     left_lyt->addWidget(lb_basis_list, row++, 0, 1, 2);
     left_lyt->addWidget(tw_basis,      row++, 0, 1, 2);
+    left_lyt->addWidget(pb_reset,      row++, 0, 1, 2);
     left_lyt->addWidget(lb_fit,        row++, 0, 1, 2);
+    left_lyt->addWidget(lb_wavl_min,   row,   0, 1, 1);
+    left_lyt->addWidget(le_wavl_min,   row++, 1, 1, 1);
+    left_lyt->addWidget(lb_wavl_max,   row,   0, 1, 1);
+    left_lyt->addWidget(le_wavl_max,   row++, 1, 1, 1);
     left_lyt->addWidget(pb_fit,        row++, 0, 1, 2);
-    left_lyt->addWidget(lb_fit_wavl,   row,   0, 1, 1);
-    left_lyt->addWidget(le_fit_wavl,   row++, 1, 1, 1);
     left_lyt->addWidget(lb_rmsd,       row,   0, 1, 1);
     left_lyt->addWidget(le_rmsd,       row++, 1, 1, 1);
     left_lyt->addWidget(lb_basis_1,    row,   0, 1, 1);
@@ -140,6 +153,8 @@ US_Spectrum::US_Spectrum() : US_Widgets()
 
     setLayout(layout);
 
+    connect(le_wavl_min, &QLineEdit::editingFinished, this, &US_Spectrum::min_wavl_updated);
+    connect(le_wavl_max, &QLineEdit::editingFinished, this, &US_Spectrum::max_wavl_updated);
     connect(pb_target, &QPushButton::clicked, this, &US_Spectrum::load_target);
     connect(pb_basis, &QPushButton::clicked, this, &US_Spectrum::load_basis);
     connect(pb_reset, &QPushButton::clicked, this, &US_Spectrum::reset);
@@ -189,7 +204,7 @@ void US_Spectrum::clear_fit()
     }
     le_angle->clear();
     le_rmsd->clear();
-    le_fit_wavl->clear();
+    le_wavl_min->clear();
 }
 
 void US_Spectrum::clear_plot()
@@ -203,6 +218,10 @@ void US_Spectrum::clear_plot()
 
 void US_Spectrum::load_target()
 {
+    if (chkb_db_target->isChecked())
+    {
+        return;
+    }
     QString path = US_Settings::dataDir();
     current_path = current_path.isEmpty() ? path : current_path;
 
@@ -251,6 +270,10 @@ void US_Spectrum::load_target()
 
 void US_Spectrum::load_basis()
 {
+    if (chkb_db_basis->isChecked())
+    {
+        return;
+    }
     QString path = US_Settings::dataDir();
     current_path = current_path.isEmpty() ? path : current_path;
 
@@ -446,6 +469,9 @@ void US_Spectrum::plot()
 {
     clear_plot();
 
+    double min_wavl_plot;
+    double max_wavl_plot;
+
     for (int ii = 0; ii < basis_list.size(); ii++)
     {
         double *xx;
@@ -463,6 +489,9 @@ void US_Spectrum::plot()
             yy = basis_list[ii].yvec.data();
             np = basis_list[ii].yvec.size();
         }
+
+        min_wavl_plot = xx[0];
+        max_wavl_plot = xx[np - 1];
 
         QwtSymbol *symb = new QwtSymbol();
         symb->setStyle(QwtSymbol::Ellipse);
@@ -496,6 +525,9 @@ void US_Spectrum::plot()
             np = target.yvec.size();
         }
 
+        min_wavl_plot = xx[0];
+        max_wavl_plot = xx[np - 1];
+
         QwtPlotCurve *curve;
         curve = us_curve(data_plot, target.header);
         curve->setStyle(QwtPlotCurve::Lines);
@@ -523,6 +555,11 @@ void US_Spectrum::plot()
             hline->setLinePen(QPen(Qt::white, 1, Qt::DashLine));
             hline->attach(error_plot);
         }
+
+        min_wavl_plot -= 5;
+        max_wavl_plot += 5;
+        data_plot->setAxisScale( QwtPlot::xBottom, min_wavl_plot, max_wavl_plot);
+        error_plot->setAxisScale( QwtPlot::xBottom, min_wavl_plot, max_wavl_plot);
     }
 
     us_grid(data_plot);
@@ -587,9 +624,19 @@ bool US_Spectrum::find_lambda(const DataProfile &data, const double wvl, int &id
 
 void US_Spectrum::overlap()
 {
+    double min = 0;
+    double max = 10000;
+    if (wavl_min > 0)
+    {
+        min = wavl_min;
+    }
+    if (wavl_max > 0)
+    {
+        max = wavl_max;
+    }
     auto minmax = std::minmax_element(target.lambda.begin(), target.lambda.end());
-    double min = *minmax.first;
-    double max = *minmax.second;
+    min = std::max(min, *minmax.first);
+    max = std::min(max, *minmax.second);
 
     for (int ii = 0; ii < basis_list.size(); ii++)
     {
@@ -662,7 +709,11 @@ void US_Spectrum::fit()
         return;
     }
 
-    le_fit_wavl->setText(tr("%1 - %2").arg(target.xvec.first()).arg(target.xvec.last()));
+    wavl_min = target.xvec.first();
+    wavl_max = target.xvec.last();
+    le_wavl_min->setText(tr("%1").arg(wavl_min));
+    le_wavl_max->setText(tr("%1").arg(wavl_max));
+
 
     int nwvl = target.xvec.size();
     int order = basis_list.size();
@@ -735,6 +786,36 @@ void US_Spectrum::fit()
 
     plot();
     find_angle();
+}
+
+void US_Spectrum::min_wavl_updated()
+{
+    bool ok;
+    double wavl = le_wavl_min->text().toDouble(&ok);
+    if (!ok || wavl <= 0)
+    {
+        le_wavl_min->clear();
+        if (wavl_min > 0)
+        {
+            le_wavl_min->setText(QString::number(wavl_min));
+        }
+    }
+    wavl_min = qRound(wavl);
+}
+
+void US_Spectrum::max_wavl_updated()
+{
+    bool ok;
+    double wavl = le_wavl_max->text().toDouble(&ok);
+    if (!ok || wavl <= 0)
+    {
+        le_wavl_max->clear();
+        if (wavl_max > 0)
+        {
+            le_wavl_max->setText(QString::number(wavl_max));
+        }
+    }
+    wavl_max = qRound(wavl);
 }
 
 void US_Spectrum::delete_basis(int row)
@@ -829,6 +910,8 @@ void US_Spectrum::save()
         }
     }
 
+    header << "RMSD";
+
     QString delimiter = ";";
     for (int ii = 0; ii < header.size(); ii++)
     {
@@ -864,6 +947,10 @@ void US_Spectrum::save()
             }
         }
     }
+
+    QVector<double> rmsd;
+    rmsd << le_rmsd->text().toDouble();
+    columns << rmsd;
 
     QFile file(csvfile);
     if (file.open(QIODevice::WriteOnly | QIODevice::Text))

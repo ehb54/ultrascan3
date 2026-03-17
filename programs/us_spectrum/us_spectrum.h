@@ -44,6 +44,8 @@ class US_Spectrum : public US_Widgets
         void clear_fit();
     };
 
+    double wavl_min;                       //!< Minimum wavelength to fit
+    double wavl_max;                       //!< Maximum wavelength to fit
     QString current_path;                  //!< Current path
     QList<DataProfile> basis_list;         //!< Basis spectra array
     DataProfile target;                    //!< Target profile
@@ -59,12 +61,16 @@ class US_Spectrum : public US_Widgets
     QLineEdit *le_tgt_fname;               //!< Target filename
     QLineEdit *le_tgt_header;              //!< Target header
     QLineEdit *le_tgt_wavl;                //!< Wavelength range of the target spectrum
-    QLineEdit *le_fit_wavl;                //!< Wavelength range of the fitted spectrum
+    QLineEdit *le_wavl_min;                //!< Input minimum wavelength to fit
+    QLineEdit *le_wavl_max;                //!< Input maximum wavelength to fit
     QLineEdit *le_angle;                   //!< Correlation angle value
     QLineEdit *le_rmsd;                    //!< RMSD value
              
     QComboBox *cb_basis_1;                 //!< The first Basis selector for correlation angle
     QComboBox *cb_basis_2;                 //!< The second Basis selector for correlation angle
+
+    QCheckBox *chkb_db_target;             //!< Checkbox to load the target from DB
+    QCheckBox *chkb_db_basis;              //!< Checkbox to load the basis from DB    
 
     /**
      * @brief Plot data.
@@ -102,14 +108,14 @@ class US_Spectrum : public US_Widgets
     void overlap();
 
     /**
-     * @brief Remove the basis from the list.
-     */
-    void delete_basis(int);
-
-    /**
      * @brief Check if the wavelenght is found the basis
      */
     bool find_lambda(const DataProfile &, const double, int &);
+
+    /**
+     * @brief Remove the basis from the list.
+     */
+    void delete_basis(int);
 
     /**
      * @brief Returns the indices to sort the given array.
@@ -135,6 +141,16 @@ class US_Spectrum : public US_Widgets
      * @brief Slot to load target data.
      */
     void load_target();
+
+    /**
+     * @brief Minimum wavelength updated.
+     */
+    void min_wavl_updated();
+
+    /**
+     * @brief Maximum wavelength updated.
+     */
+    void max_wavl_updated();
 
     /**
      * @brief Slot to fit the data.
