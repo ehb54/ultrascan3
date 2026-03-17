@@ -3567,7 +3567,7 @@ DbgLv(1) << "EGRn:inP:  #Wvl for cell: " << j << " is: " << Total_wvl[i];
 	 }
      }
 
-   //For abde only, chow buff_spectra cks
+   //For abde only, show buff_spectra cks
    if ( mainw->us_abde_mode )
      {
        qDebug() << "ABDE, adding cks " << mainw->us_abde_mode;
@@ -3642,6 +3642,7 @@ DbgLv(1) << "EGwS:svP: nrnchan" << nrnchan << "nranges" << rpRange->nranges;
       //abde
       rpRange->chrngs[ ii ].abde_buffer_spectrum   = abde_buff[ ii ];
       rpRange->chrngs[ ii ].abde_mwl_deconvolution = abde_mwl_deconv[ ii ];
+      rpRange->chrngs[ ii ].abde_chann_msg         = abde_ch_msg[ ii ];
 
       rpRange->chrngs[ ii ].wvlens.clear();
 
@@ -4099,6 +4100,17 @@ DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
 					 "Please modify the solution, or select a different one to satisfy these "
 					 "requirements."
 					 "\n\nSaving protocol or run submission to the Optima are not possible "
+					 "until this problem is resolved."));
+	     }
+	   else if (msg_to_user.join(",").contains(" Invalid Extinction Profile(s);"))
+	     {
+	       QMessageBox::critical( this,
+				      tr( "ATTENTION: Invalid Extinction Profile(s) (MWL-ABDE)" ),
+				      msg_to_user.join("\n") +
+				      tr("\n\nPlease upload valid extinction profiles for above specified analytes "
+					 "and/or buffers using following UltraScan's programs: \n\"Database:Manage Analytes\""
+					 "\n\"Database:Manage Buffer Data\"\n\n"
+					 "Saving protocol or run submission to the Optima are not possible "
 					 "until this problem is resolved."));
 	     }
 	   else
@@ -4626,6 +4638,7 @@ bool US_ExperGuiUpload::extinctionProfilesExist( QStringList& msg_to_user )
       int    nwavl      = all_wvls.count();
       bool   buff_req   = rpRange->chrngs[ ii ].abde_buffer_spectrum;
       bool   mwl_deconv = rpRange->chrngs[ ii ].abde_mwl_deconvolution;
+      QString chann_msg = rpRange->chrngs[ ii ].abde_chann_msg;
 
       if ( nwavl > 1 )
 	{
@@ -4637,7 +4650,14 @@ bool US_ExperGuiUpload::extinctionProfilesExist( QStringList& msg_to_user )
 	      ch_name_m = ch_name_m.simplified();
 	      ch_name_m.replace( " ", "" );
 	      qDebug() << "Ref_channs -- " << ref_channs
-		       << "ch_name_m -- " << ch_name_m;
+		       << "ch_name_m -- " << ch_name_m
+		       << "Chann_msg -- " << chann_msg;
+	      if ( !chann_msg.isEmpty() )
+		{
+		  msg_to_user << channel + ": Invalid Extinction Profile(s); " << chann_msg;
+		  return false;
+		}
+	      
 	      if ( !ref_channs.contains(ch_name_m) )
 		{
 		  msg_to_user << channel + ": Single Analyte Defined;";
