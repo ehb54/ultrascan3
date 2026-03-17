@@ -75,6 +75,10 @@ endif()
 if(UNIX AND NOT APPLE)
     target_link_libraries(us_program_common INTERFACE OpenSSL::Crypto)
 endif()
+# windows with MSVC needs openssl applink shim to work properly at runtime
+if(WIN32 AND MSVC AND TARGET OpenSSL::SSL AND TARGET OpenSSL::applink)
+    target_link_libraries(us_program_common INTERFACE OpenSSL::applink)
+endif()
 
 # --------------------------------------------------------------------------
 # 2) Utils: shared by default, static only if profile asked for it
@@ -136,6 +140,13 @@ endif()
 
 if(WIN32)
     target_compile_definitions(us_program_common INTERFACE QWT_DLL QT_DLL)
+    if(CMAKE_BUILD_TYPE STREQUAL "Release")
+        if(MINGW)
+            target_link_options(us_program_common INTERFACE "-mwindows")
+        elseif(MSVC)
+            target_link_options(us_program_common INTERFACE "/SUBSYSTEM:WINDOWS" "/ENTRY:mainCRTStartup")
+        endif()
+    endif()
 endif()
 
 # --------------------------------------------------------------------------

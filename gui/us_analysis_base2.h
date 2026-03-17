@@ -153,7 +153,7 @@ class US_GUI_EXTERN US_AnalysisBase2 : public US_Widgets
 
       //! Return html header string for reports including edited data
       QString      html_header  ( const QString&, const QString&,
-                                  US_DataIO::EditedData* )         const;
+                                  const US_DataIO::EditedData* )   const;
 
       //! Return run details in an html formatted string.
       QString      run_details  ( void )                           const;
@@ -198,7 +198,7 @@ class US_GUI_EXTERN US_AnalysisBase2 : public US_Widgets
       void         reportFilesToDB( QStringList& );
 
       //! Create a general dataset information report file
-      bool         write_dset_report( QString& );
+      bool         write_dset_report( const QString& );
 
       //! Exclude scans in the specified range
       virtual void exclude( void );
@@ -210,25 +210,32 @@ class US_GUI_EXTERN US_AnalysisBase2 : public US_Widgets
       void         smoothing( double );
 
       //! Update the list of report files
-      void         update_filelist( QStringList&, const QString );
+      void         update_filelist( QStringList&, const QString& );
 
       //! Flag if run has an intensity profile
-      bool         has_intensity_profile( const QString&, const bool );
+      bool         has_intensity_profile( const QString& run_id, const bool in_db );
 
+      virtual void exclude_from  ( double );
+      virtual void exclude_to    ( double );
+      virtual void boundary_pct  ( double );
+      virtual void boundary_pos  ( double );
    private:
-      double* x_weights;
-      double* y_weights;
+      QVector<double> x_weights;
+      QVector<double> y_weights;
 
       double smooth_point( int, int, int, int, int = 0 );
+      //! Reset the internal data structures/state
+      void reset_data( void );
+
+      //! Reset the GUI elements and layout
+      void reset_gui ( void );
+
+
 
    private slots:
       void details       ( void   );
-      void boundary_pct  ( double );
-      void boundary_pos  ( double );
-      void exclude_from  ( double );
-      void exclude_to    ( double );
       void update_disk_db( bool );
-      void set_progress  ( const QString );
+      void set_progress  ( const QString& );
       void load_noise    ( int  );
       void get_solution  ( void );
       void updateSolution( US_Solution );

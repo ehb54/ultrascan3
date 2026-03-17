@@ -1,12 +1,13 @@
 {
   "name": "ultrascan3",
   "version": "4.1.0",
-  "builtin-baseline": "69a6e3311f485ac1af362d63b2f62537c3c73134",
+  "builtin-baseline": "a44707152fabbedcf1c17fe80d7bfb7d9370d8d5",
   "dependencies": [
     "gtest",
     "libarchive",
     {
       "name": "libmariadb",
+      "default-features": false,
       "features": ["openssl"]
     },
     "libpng",

@@ -160,12 +160,14 @@ US_DDistr_Combine::US_DDistr_Combine( const QString auto_mode ) : US_Widgets()
    QGridLayout* lo_pltff0 = us_radiobutton( tr( "f/f0"  ), rb_pltff0,   false );
    QGridLayout* lo_pltvb  = us_radiobutton( tr( "vbar"  ), rb_pltvb,    false );
    QGridLayout* lo_pltMWl = us_radiobutton( tr( "MWlog" ), rb_pltMWl,   false );
+   QGridLayout* lo_pltRh  = us_radiobutton( tr( "Rh"    ), rb_pltRh,    false );
    sel_plt->addButton( rb_pltsw,  0 );
    sel_plt->addButton( rb_pltMW,  1 );
    sel_plt->addButton( rb_pltDw,  2 );
    sel_plt->addButton( rb_pltff0, 3 );
    sel_plt->addButton( rb_pltvb,  4 );
    sel_plt->addButton( rb_pltMWl, 5 );
+   sel_plt->addButton( rb_pltRh,  6 );
    QLayout* lo_mdltype  = us_checkbox(
          tr( "Use model descriptions for list and legend" ),
          ck_mdltype,  false );
@@ -252,8 +254,9 @@ US_DDistr_Combine::US_DDistr_Combine( const QString auto_mode ) : US_Widgets()
    leftLayout->addLayout( lo_pltMW,     row,   2, 1, 2 );
    leftLayout->addLayout( lo_pltDw,     row,   4, 1, 2 );
    leftLayout->addLayout( lo_pltff0,    row++, 6, 1, 2 );
-   leftLayout->addLayout( lo_pltvb,     row,   0, 1, 8 );
-   leftLayout->addLayout( lo_pltMWl,    row++, 2, 1, 8 );
+   leftLayout->addLayout( lo_pltvb,     row,   0, 1, 2 );
+   leftLayout->addLayout( lo_pltMWl,    row,   2, 1, 2 );
+   leftLayout->addLayout( lo_pltRh,     row++, 4, 1, 4 );
 
    leftLayout->addWidget( lb_sigma,     row,   0, 1, 5 );
    leftLayout->addWidget( ct_sigma,     row++, 5, 1, 3 );
@@ -378,6 +381,8 @@ US_DDistr_Combine::US_DDistr_Combine( const QString auto_mode ) : US_Widgets()
    connect( rb_pltvb,    SIGNAL( toggled     ( bool ) ),
             this,        SLOT(   changedPlotX( bool ) ) );
    connect( rb_pltMWl,   SIGNAL( toggled     ( bool ) ),
+            this,        SLOT(   changedPlotX( bool ) ) );
+   connect( rb_pltRh,    SIGNAL( toggled     ( bool ) ),
             this,        SLOT(   changedPlotX( bool ) ) );
 
    connect( ct_sigma,    SIGNAL( valueChanged( double ) ),
@@ -990,6 +995,11 @@ DbgLv(1) << "pDa:  titleY" << titleY;
       titleP = tr( "Discrete Log of Molecular Weight Distributions" );
       titleX = tr( "Molecular Weight (Log, Dalton)" );
    }
+   else if ( xtype == 6 )
+   {
+      titleP = tr( "Discrete Hydrodynamic Radius Distributions" );
+      titleX = tr( "Hydrodynamic Radius (nm)" );
+   }
 DbgLv(1) << "pDa:  titleP" << titleP;
 DbgLv(1) << "pDa:  titleX" << titleX;
 
@@ -1073,6 +1083,11 @@ DbgLv(1) << "pDa:  titleY" << titleY;
    {
       titleP = tr( "Discrete Log of Molecular Weight Distributions" );
       titleX = tr( "Molecular Weight (Log, Dalton)" );
+   }
+   else if ( rb_pltRh->isChecked() )
+   {
+      titleP = tr( "Discrete Hydrodynamic Radius Distributions" );
+      titleX = tr( "Hydrodynamic Radius (nm)" );
    }
 DbgLv(1) << "pDa:  titleP" << titleP;
 DbgLv(1) << "pDa:  titleX" << titleX;
@@ -1449,6 +1464,12 @@ void US_DDistr_Combine::save( void )
       sanode1       = "combo-distrib-mwl";
       sanode2       = "combo-vcdat-mwl";
       sanode3       = "combo-listincl-mwl";
+   }
+   else if ( xtype == 6 )
+   {
+      sanode1       = "combo-distrib-rh";
+      sanode2       = "combo-vcdat-rh";
+      sanode3       = "combo-listincl-rh";
    }
    QString fnamsvg  = annode + "." + trnode + "." + sanode1 + ".svgz"; 
    QString fnampng  = annode + "." + trnode + "." + sanode1 + ".png"; 
@@ -1979,6 +2000,7 @@ DbgLv(1) << "FID:  (3)ncomps" << ncomps;
       else if ( xtype == 3 )  xval = ddesc.model.components[ jj ].f_f0;
       else if ( xtype == 4 )  xval = ddesc.model.components[ jj ].vbar20;
       else if ( xtype == 5 )  xval = log( ddesc.model.components[ jj ].mw );
+      else if ( xtype == 6 )  xval = ddesc.model.components[ jj ].f / ( 6e-9 * M_PI * VISC_20W );
 
       mxvals << xval;
    }
@@ -2381,8 +2403,11 @@ void US_DDistr_Combine::update_distros()
 // Update Distributions list when a method check box is changed
 void US_DDistr_Combine::methodChanged( int state )
 {
-   if ( state == Qt::Unchecked )
+   if ( state == Qt::Unchecked ) {
+      // suppress the ck_dtall signal
+      const QSignalBlocker blocker( ck_dtall );
       ck_dtall->setChecked( false );
+   }
 
    list_distributions();
 }
@@ -2390,49 +2415,128 @@ void US_DDistr_Combine::methodChanged( int state )
 // Update Distributions list when the All method check box is changed
 void US_DDistr_Combine::allMethodChanged( int state )
 {
+   const QSignalBlocker b_2dsa    ( ck_2dsa      );
+   const QSignalBlocker b_2dsait  ( ck_2dsait    );
+   const QSignalBlocker b_2dsafm  ( ck_2dsafm    );
+   const QSignalBlocker b_2dsamc  ( ck_2dsamc    );
+   const QSignalBlocker b_2dsamw  ( ck_2dsamw    );
+   const QSignalBlocker b_2dsamcmw( ck_2dsamcmw  );
+   const QSignalBlocker b_2dsagl  ( ck_2dsagl    );
+   const QSignalBlocker b_2dsaglmc( ck_2dsaglmc  );
+   const QSignalBlocker b_2dsacg  ( ck_2dsacg    );
+   const QSignalBlocker b_2dsacgit( ck_2dsacgit  );
+   const QSignalBlocker b_2dsacgfm( ck_2dsacgfm  );
+   const QSignalBlocker b_2dsacgmc( ck_2dsacgmc  );
+   const QSignalBlocker b_ga      ( ck_ga        );
+   const QSignalBlocker b_gamc    ( ck_gamc      );
+   const QSignalBlocker b_gamw    ( ck_gamw      );
+   const QSignalBlocker b_gamcmw  ( ck_gamcmw    );
+   const QSignalBlocker b_gagl    ( ck_gagl      );
+   const QSignalBlocker b_gaglmc  ( ck_gaglmc    );
+   const QSignalBlocker b_pcsais  ( ck_pcsais    );
+   const QSignalBlocker b_pcsasl  ( ck_pcsasl    );
+   const QSignalBlocker b_pcsads  ( ck_pcsads    );
+   const QSignalBlocker b_pcsahl  ( ck_pcsahl    );
+   const QSignalBlocker b_pcsaismc( ck_pcsaismc  );
+   const QSignalBlocker b_pcsaslmc( ck_pcsaslmc  );
+   const QSignalBlocker b_pcsadsmc( ck_pcsadsmc  );
+   const QSignalBlocker b_pcsahlmc( ck_pcsahlmc  );
+   const QSignalBlocker b_pcsaistr( ck_pcsaistr  );
+   const QSignalBlocker b_pcsasltr( ck_pcsasltr  );
+   const QSignalBlocker b_pcsadstr( ck_pcsadstr  );
+   const QSignalBlocker b_pcsahltr( ck_pcsahltr  );
+   const QSignalBlocker b_pcsa2o  ( ck_pcsa2o    );
+   const QSignalBlocker b_pcsa2omc( ck_pcsa2omc  );
+   const QSignalBlocker b_pcsa2otr( ck_pcsa2otr  );
+   const QSignalBlocker b_dmga    ( ck_dmga      );
+   const QSignalBlocker b_dmgamc  ( ck_dmgamc    );
+   const QSignalBlocker b_dmgara  ( ck_dmgara    );
+   const QSignalBlocker b_dmgaramc( ck_dmgaramc  );
+   const QSignalBlocker b_dmgagl  ( ck_dmgagl    );
+   const QSignalBlocker b_dmgaglmc( ck_dmgaglmc  );
    if ( state == Qt::Checked )
    {
-      ck_2dsa    ->setChecked( ck_2dsa    ->isEnabled() );
-      ck_2dsait  ->setChecked( ck_2dsait  ->isEnabled() );
-      ck_2dsafm  ->setChecked( ck_2dsafm  ->isEnabled() );
-      ck_2dsamc  ->setChecked( ck_2dsamc  ->isEnabled() );
-      ck_2dsamw  ->setChecked( ck_2dsamw  ->isEnabled() );
-      ck_2dsamcmw->setChecked( ck_2dsamcmw->isEnabled() );
-      ck_2dsagl  ->setChecked( ck_2dsagl  ->isEnabled() );
-      ck_2dsaglmc->setChecked( ck_2dsaglmc->isEnabled() );
-      ck_2dsacg  ->setChecked( ck_2dsacg  ->isEnabled() );
-      ck_2dsacgit->setChecked( ck_2dsacgit->isEnabled() );
-      ck_2dsacgfm->setChecked( ck_2dsacgfm->isEnabled() );
-      ck_2dsacgmc->setChecked( ck_2dsacgmc->isEnabled() );
-      ck_ga      ->setChecked( ck_ga      ->isEnabled() );
-      ck_gamc    ->setChecked( ck_gamc    ->isEnabled() );
-      ck_gamw    ->setChecked( ck_gamw    ->isEnabled() );
-      ck_gamcmw  ->setChecked( ck_gamcmw  ->isEnabled() );
-      ck_gagl    ->setChecked( ck_gagl    ->isEnabled() );
-      ck_gaglmc  ->setChecked( ck_gaglmc  ->isEnabled() );
-      ck_pcsais  ->setChecked( ck_pcsais  ->isEnabled() );
-      ck_pcsasl  ->setChecked( ck_pcsasl  ->isEnabled() );
-      ck_pcsads  ->setChecked( ck_pcsads  ->isEnabled() );
-      ck_pcsahl  ->setChecked( ck_pcsahl  ->isEnabled() );
-      ck_pcsaismc->setChecked( ck_pcsaismc->isEnabled() );
-      ck_pcsaslmc->setChecked( ck_pcsaslmc->isEnabled() );
-      ck_pcsadsmc->setChecked( ck_pcsadsmc->isEnabled() );
-      ck_pcsahlmc->setChecked( ck_pcsahlmc->isEnabled() );
-      ck_pcsaistr->setChecked( ck_pcsaistr->isEnabled() );
-      ck_pcsasltr->setChecked( ck_pcsasltr->isEnabled() );
-      ck_pcsadstr->setChecked( ck_pcsadstr->isEnabled() );
-      ck_pcsahltr->setChecked( ck_pcsahltr->isEnabled() );
-      ck_pcsa2o  ->setChecked( ck_pcsa2o  ->isEnabled() );
-      ck_pcsa2omc->setChecked( ck_pcsa2omc->isEnabled() );
-      ck_pcsa2otr->setChecked( ck_pcsa2otr->isEnabled() );
-      ck_dmga    ->setChecked( ck_dmga    ->isEnabled() );
-      ck_dmgamc  ->setChecked( ck_dmgamc  ->isEnabled() );
-      ck_dmgara  ->setChecked( ck_dmgara  ->isEnabled() );
-      ck_dmgaramc->setChecked( ck_dmgaramc->isEnabled() );
-      ck_dmgagl  ->setChecked( ck_dmgagl  ->isEnabled() );
-      ck_dmgaglmc->setChecked( ck_dmgaglmc->isEnabled() );
+	  ck_2dsa    ->setChecked( ck_2dsa    ->isEnabled() );
+	  ck_2dsait  ->setChecked( ck_2dsait  ->isEnabled() );
+	  ck_2dsafm  ->setChecked( ck_2dsafm  ->isEnabled() );
+	  ck_2dsamc  ->setChecked( ck_2dsamc  ->isEnabled() );
+	  ck_2dsamw  ->setChecked( ck_2dsamw  ->isEnabled() );
+	  ck_2dsamcmw->setChecked( ck_2dsamcmw->isEnabled() );
+	  ck_2dsagl  ->setChecked( ck_2dsagl  ->isEnabled() );
+	  ck_2dsaglmc->setChecked( ck_2dsaglmc->isEnabled() );
+	  ck_2dsacg  ->setChecked( ck_2dsacg  ->isEnabled() );
+	  ck_2dsacgit->setChecked( ck_2dsacgit->isEnabled() );
+	  ck_2dsacgfm->setChecked( ck_2dsacgfm->isEnabled() );
+	  ck_2dsacgmc->setChecked( ck_2dsacgmc->isEnabled() );
+	  ck_ga      ->setChecked( ck_ga      ->isEnabled() );
+	  ck_gamc    ->setChecked( ck_gamc    ->isEnabled() );
+	  ck_gamw    ->setChecked( ck_gamw    ->isEnabled() );
+	  ck_gamcmw  ->setChecked( ck_gamcmw  ->isEnabled() );
+	  ck_gagl    ->setChecked( ck_gagl    ->isEnabled() );
+	  ck_gaglmc  ->setChecked( ck_gaglmc  ->isEnabled() );
+	  ck_pcsais  ->setChecked( ck_pcsais  ->isEnabled() );
+	  ck_pcsasl  ->setChecked( ck_pcsasl  ->isEnabled() );
+	  ck_pcsads  ->setChecked( ck_pcsads  ->isEnabled() );
+	  ck_pcsahl  ->setChecked( ck_pcsahl  ->isEnabled() );
+	  ck_pcsaismc->setChecked( ck_pcsaismc->isEnabled() );
+	  ck_pcsaslmc->setChecked( ck_pcsaslmc->isEnabled() );
+	  ck_pcsadsmc->setChecked( ck_pcsadsmc->isEnabled() );
+	  ck_pcsahlmc->setChecked( ck_pcsahlmc->isEnabled() );
+	  ck_pcsaistr->setChecked( ck_pcsaistr->isEnabled() );
+	  ck_pcsasltr->setChecked( ck_pcsasltr->isEnabled() );
+	  ck_pcsadstr->setChecked( ck_pcsadstr->isEnabled() );
+	  ck_pcsahltr->setChecked( ck_pcsahltr->isEnabled() );
+	  ck_pcsa2o  ->setChecked( ck_pcsa2o  ->isEnabled() );
+	  ck_pcsa2omc->setChecked( ck_pcsa2omc->isEnabled() );
+	  ck_pcsa2otr->setChecked( ck_pcsa2otr->isEnabled() );
+	  ck_dmga    ->setChecked( ck_dmga    ->isEnabled() );
+	  ck_dmgamc  ->setChecked( ck_dmgamc  ->isEnabled() );
+	  ck_dmgara  ->setChecked( ck_dmgara  ->isEnabled() );
+	  ck_dmgaramc->setChecked( ck_dmgaramc->isEnabled() );
+	  ck_dmgagl  ->setChecked( ck_dmgagl  ->isEnabled() );
+	  ck_dmgaglmc->setChecked( ck_dmgaglmc->isEnabled() );
    }
-
+   else {
+	  ck_2dsa    ->setChecked( false );
+	  ck_2dsait  ->setChecked( false );
+	  ck_2dsafm  ->setChecked( false );
+	  ck_2dsamc  ->setChecked( false );
+	  ck_2dsamw  ->setChecked( false );
+	  ck_2dsamcmw->setChecked( false );
+	  ck_2dsagl  ->setChecked( false );
+	  ck_2dsaglmc->setChecked( false );
+	  ck_2dsacg  ->setChecked( false );
+	  ck_2dsacgit->setChecked( false );
+	  ck_2dsacgfm->setChecked( false );
+	  ck_2dsacgmc->setChecked( false );
+	  ck_ga      ->setChecked( false );
+	  ck_gamc    ->setChecked( false );
+	  ck_gamw    ->setChecked( false );
+	  ck_gamcmw  ->setChecked( false );
+	  ck_gagl    ->setChecked( false );
+	  ck_gaglmc  ->setChecked( false );
+	  ck_pcsais  ->setChecked( false );
+	  ck_pcsasl  ->setChecked( false );
+	  ck_pcsads  ->setChecked( false );
+	  ck_pcsahl  ->setChecked( false );
+	  ck_pcsaismc->setChecked( false );
+	  ck_pcsaslmc->setChecked( false );
+	  ck_pcsadsmc->setChecked( false );
+	  ck_pcsahlmc->setChecked( false );
+	  ck_pcsaistr->setChecked( false );
+	  ck_pcsasltr->setChecked( false );
+	  ck_pcsadstr->setChecked( false );
+	  ck_pcsahltr->setChecked( false );
+	  ck_pcsa2o  ->setChecked( false );
+	  ck_pcsa2omc->setChecked( false );
+	  ck_pcsa2otr->setChecked( false );
+	  ck_dmga    ->setChecked( false );
+	  ck_dmgamc  ->setChecked( false );
+	  ck_dmgara  ->setChecked( false );
+	  ck_dmgaramc->setChecked( false );
+	  ck_dmgagl  ->setChecked( false );
+	  ck_dmgaglmc->setChecked( false );
+   }
    list_distributions();
 }
 
@@ -2454,6 +2558,7 @@ DbgLv(1) << "changedPlotX" << on_state;
    bool x_is_ff0   = rb_pltff0->isChecked();
    bool x_is_vb    = rb_pltvb ->isChecked();
    bool x_is_MWl   = rb_pltMWl->isChecked();
+   bool x_is_Rh    = rb_pltRh ->isChecked();
         xtype      = 0;
 
    if ( x_is_sw )
@@ -2490,6 +2595,12 @@ DbgLv(1) << "  PX=Vbar";
    {
 DbgLv(1) << "  PX=Molec.Wt.log";
       xtype           = 5;
+   }
+
+   else if ( x_is_Rh )
+   {
+DbgLv(1) << "  PX=Rh";
+      xtype           = 6;
    }
 
    int npdis    = pdistrs.size();

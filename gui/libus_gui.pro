@@ -21,8 +21,6 @@ greaterThan( QT_VERSION, 5.99 ) {
 QT          += openglwidgets
 }
 
-TRANSLATIONS = $${TARGET}_DE_de.ts
-
 HEADERS      = \
                us_abstractrotor_gui.h   \
                us_analysis_base2.h      \

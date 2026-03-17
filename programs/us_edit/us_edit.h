@@ -3,6 +3,7 @@
 
 #include <QApplication>
 #include <QDomDocument>
+#include <QTimer>
 
 #include "us_extern.h"
 #include "us_widgets.h"
@@ -79,6 +80,7 @@ class US_Edit : public US_Widgets
       bool               expIsOther;
       bool               all_edits;
       bool               men_1click;
+      bool               exclusion_click_mode;
 
       int                noise_order;
       int                triple_index;
@@ -202,6 +204,8 @@ class US_Edit : public US_Widgets
       QwtPlotMarker*     marker;
       US_PlotPicker*     pick;
       US_Plot*           plot;
+      QTimer*            hover_timer;
+      QPointF            last_hover_pos;
       
       QLabel*            lb_edtrsp;
       QLabel*            lb_gaps;
@@ -238,6 +242,7 @@ class US_Edit : public US_Widgets
       QPushButton*       pb_exclusion;
       QPushButton*       pb_include;
       QPushButton*       pb_edit1;
+      QPushButton*       pb_exclusion_click;
       QPushButton*       pb_removeAllbutLast;
       QPushButton*       pb_meniscus;
       QPushButton*       pb_airGap;
@@ -472,6 +477,11 @@ class US_Edit : public US_Widgets
       void edit_scan         ( void );
       void update_scan       ( QList< QPointF > );
       void include           ( void );
+      void toggle_exclusion_click_mode( void );
+      void exclude_scan_by_click( const QPointF& );
+      int  find_nearest_scan( double, double, QList<int>& );
+      void show_scan_tooltip ( const QPointF& );
+	  void hide_scan_tooltip ( void );
       void apply_prior       ( void );
       void prior_equil       ( void );
 

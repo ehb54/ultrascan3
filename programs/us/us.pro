@@ -4,7 +4,6 @@ include( $${SINGLEDIR}/qtsingleapplication.pri )
 }
 
 TARGET        = us
-TRANSLATIONS += $${TARGET}_de_DE.ts
 greaterThan( QT_VERSION, 4.99 ) {
 QT           += widgets
 QT           += network

@@ -83,6 +83,9 @@ class US_Dcdt : public US_AnalysisBase2
         {
             showHelp.show_help("manual/time_derivative.html");
         }
+
+        void reset_data();
+        void reset_gui();
 };
 
 #endif // US_SECOND_MOMENT_H

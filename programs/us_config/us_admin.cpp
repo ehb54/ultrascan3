@@ -130,12 +130,6 @@ void US_Admin::save( void )
     return;
   }
 
-  /// Use settings
-
-  QByteArray sha1string = 
-    QCryptographicHash::hash( newPW.toLatin1(), QCryptographicHash::Sha1 );
-
-  US_Settings::set_UltraScanPW( sha1string );
 
   // We need to reset any passwords in databases here
   // from le_oldPasswd->text()
@@ -146,41 +140,98 @@ void US_Admin::save( void )
   
   if ( le_oldPasswd != NULL ) oldPass = le_oldPasswd->text();
 
-  if ( defaultDB.size() > 0 )
+  // Helper lambdas: safely re-encrypt one record
+  auto reencryptRecord = [&](QStringList& rec) -> bool
   {
-    // Decrypt with old password
-    // 4 = cipher; 5 = initialization vector
-    QString db_password = US_Crypto::decrypt( defaultDB.at( 4 ), oldPass, 
-                                              defaultDB.at( 5 ) );
-   
-    // Encrypt with new password
-    QStringList cipherText = US_Crypto::encrypt( db_password, newPW );
-    
-    defaultDB.replace( 4, cipherText.at( 0 ) );
-    defaultDB.replace( 5, cipherText.at( 1 ) );
-    
-    US_Settings::set_defaultDB( defaultDB );
+    // Expect: 4=cipher, 5=iv/meta (db password), 7=cipher, 8=iv/meta (investigator password)
+    if ( rec.size() < 6 ) {
+      // nothing to do / malformed list handled elsewhere
+      return true;
+    }
+    // reencrypt database password
+    const QString cipherHex = rec.at( 4 );
+    const QString ivHex     = rec.at( 5 );
+    if ( cipherHex.isEmpty() ) {
+        return true;
+    }
+
+    const QString plain = US_Crypto::decrypt( cipherHex, oldPass, ivHex );
+
+    // If there was something encrypted, decryption must succeed; otherwise abort.
+    if ( !cipherHex.isEmpty() && plain.isEmpty() ) {
+      return false;
+    }
+
+    const QStringList newCt = US_Crypto::encrypt( plain, newPW );
+    if ( newCt.size() < 2 ) {
+      return false;
+    }
+
+    rec.replace(4, newCt.at(0));
+    rec.replace(5, newCt.at(1));
+
+    if ( rec.size() < 9 ) {
+      return true;
+    }
+
+    // reencrypt user password if needed
+    const QString cipherHex2 = rec.at( 7 );
+    const QString ivHex2     = rec.at( 8 );
+
+    const QString plain2 = US_Crypto::decrypt( cipherHex2, oldPass, ivHex2 );
+
+    // If there was something encrypted, decryption must succeed; otherwise abort.
+    if ( !cipherHex2.isEmpty() && plain2.isEmpty() ) {
+      return false;
+    }
+
+    const QStringList newCt2 = US_Crypto::encrypt( plain2, newPW );
+    if ( newCt2.size() < 2 ) {
+      return false;
+    }
+
+    rec.replace(7, newCt2.at(0));
+    rec.replace(8, newCt2.at(1));
+
+    return true;
+  };
+
+  if ( !defaultDB.empty() )
+  {
+    if ( !reencryptRecord( defaultDB ) ) {
+      QMessageBox::information(this, tr("Attention:"),
+    tr("Password change failed: could not decrypt an existing entry.\n"
+     "No entries were modified."));
+      return;
+    }
   }
 
   QList<QStringList> databases = US_Settings::databases();
 
-  for ( int i = 0; i < databases.size(); i++ )
+  for ( auto& database : databases )
   {
-    QStringList database = databases.at( i );
-    
-    QString db_password = US_Crypto::decrypt( database.at( 4 ), oldPass,
-                                              database.at( 5 ) );
-    
-    QStringList cipherText  = US_Crypto::encrypt( db_password, newPW );
-    
-    database.replace( 4, cipherText.at( 0 ) );
-    database.replace( 5, cipherText.at( 1 ) );
-    
-    databases.replace( i, database );
+    if ( !reencryptRecord( database ) ) {
+      QMessageBox::information(this, tr("Attention:"),
+    tr("Password change failed: could not decrypt an existing entry.\n"
+     "No entries were modified."));
+      return;
+    }
   }
 
-  if ( databases.size() > 0 )
+  /// commit updated settings
+
+  QByteArray sha1string =
+    QCryptographicHash::hash( newPW.toLatin1(), QCryptographicHash::Sha1 );
+
+  US_Settings::set_UltraScanPW( sha1string );
+
+  if ( !defaultDB.empty() ) {
+    US_Settings::set_defaultDB( defaultDB );
+  }
+
+  if ( !databases.empty() ) {
     US_Settings::set_databases( databases );
+  }
   
   g.setPasswd( newPW );
   close();

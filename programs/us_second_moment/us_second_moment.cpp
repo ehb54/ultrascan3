@@ -427,3 +427,26 @@ void US_SecondMoment::save( void )
    QMessageBox::warning( this, tr( "Success" ), wmsg );
 }
 
+void US_SecondMoment::reset() {
+   US_AnalysisBase2::reset();
+   reset_data();
+   reset_gui();
+}
+
+void US_SecondMoment::reset_data() {
+   if ( smPoints  != nullptr) delete [] smPoints;
+   if ( smSeconds != nullptr) delete [] smSeconds;
+
+   smPoints    = nullptr;
+   smSeconds   = nullptr;
+   average_2nd = 0.0;
+}
+
+void US_SecondMoment::reset_gui() {
+   if ( te_results != nullptr)
+   {
+      te_results->disconnect();
+      te_results->close();
+      te_results = nullptr;
+   }
+}
