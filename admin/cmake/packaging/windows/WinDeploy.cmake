@@ -96,26 +96,35 @@ foreach(exe ${extra_exes})
 endforeach()
 
 # =========================================================================
-# 3) Copy ONLY UltraScan DLLs from BIN_DIR into staged bin/
+# 3) Copy all non-Qt runtime DLLs from BIN_DIR into staged bin/
 #
-#    Do NOT copy every DLL from BIN_DIR. That can stage stale or mismatched
-#    Qt/runtime DLLs and break plugin loading in the final installer.
-#    Qt DLLs and plugins must come from windeployqt only.
+#    The build-tree bin/ is the known-good runtime image. Let windeployqt
+#    own Qt DLLs and plugins, but preserve all other runtime DLLs already
+#    present there (qwt, sqlite3, libmariadb, zlib, openssl, etc.).
 # =========================================================================
 if(BIN_DIR AND EXISTS "${BIN_DIR}")
-    file(GLOB _us_bin_dlls
-            "${BIN_DIR}/us*.dll"
-            "${BIN_DIR}/libus*.dll"
-    )
-    foreach(_dll ${_us_bin_dlls})
+    file(GLOB _bin_dlls "${BIN_DIR}/*.dll")
+    set(_copied_bin_runtime_dlls 0)
+
+    foreach(_dll ${_bin_dlls})
         get_filename_component(_dll_name "${_dll}" NAME)
-        message(STATUS "  Copying UltraScan DLL from build bin/: ${_dll_name}")
-        file(COPY "${_dll}" DESTINATION "${S_BIN}")
+
+        # Skip Qt DLLs; windeployqt must own those
+        if(_dll_name MATCHES "^Qt6.*\\.dll$"
+                OR _dll_name MATCHES "^Qt5.*\\.dll$")
+            continue()
+        endif()
+
+        if(NOT EXISTS "${S_BIN}/${_dll_name}")
+            message(STATUS "  Copying runtime DLL from build bin/: ${_dll_name}")
+            file(COPY "${_dll}" DESTINATION "${S_BIN}")
+            math(EXPR _copied_bin_runtime_dlls "${_copied_bin_runtime_dlls} + 1")
+        endif()
     endforeach()
-    list(LENGTH _us_bin_dlls _dll_count)
-    message(STATUS "[WinDeploy] Copied ${_dll_count} UltraScan DLL(s) from build bin/")
+
+    message(STATUS "[WinDeploy] Copied ${_copied_bin_runtime_dlls} non-Qt runtime DLL(s) from build bin/")
 else()
-    message(WARNING "[WinDeploy] BIN_DIR not set or missing -- no UltraScan DLLs staged from build tree")
+    message(WARNING "[WinDeploy] BIN_DIR not set or missing -- no runtime DLLs staged from build tree")
 endif()
 
 # =========================================================================
