@@ -22,16 +22,27 @@
 #include <QJsonValue>
 #include <QJsonArray>
 
+struct US_GUI_EXTERN CurveDistance {
+   QwtPlotCurve* curve = nullptr;
+   double distance = std::numeric_limits<double>::min();
+   int    closest_point_index = -1;
+};
 
-//! \brief A class to implement plot zooming
+//! \brief A class to implement plot zooming with double-click support
 
 class US_GUI_EXTERN US_Zoomer: public QwtPlotZoomer
 {
+   Q_OBJECT
+
    public:
       //! \param xAxis - The title of the x (bottom) axis
       //! \param yAxis - The title of the y (left) axis
       //! \param canvas - A pointer to the plot's canvas
       US_Zoomer( int xAxis, int yAxis, QwtPlotCanvas* canvas );
+      static void toggle_zoom_events( QwtPlotZoomer* zoomer, bool active_zoom_button);
+      virtual void begin() override;
+   private:
+      bool zoom_base_set {false};
 };
 
 //! \brief Customize plot widgets
@@ -46,40 +57,165 @@ class US_GUI_EXTERN US_PlotGridConfig;
 //! \brief A class to configure the appearance of a curve
 class US_GUI_EXTERN US_PlotCurveConfig;
 
-//! \brief A class that provides plot widgets
+class US_GUI_EXTERN US_DoubleClickEventFilter: public QObject
+{
+   Q_OBJECT
+   public:
+      explicit US_DoubleClickEventFilter( QwtPlot* plot, QObject* parent = nullptr, const double& threshold = 20.0 );
+   signals:
+      void curveDoubleClicked( QwtPlotCurve* curve );
+      void axisDoubleClicked( int axis );
+      void curvesDoubleClicked( QList< QwtPlotCurve* > );
+      void axesDoubleClicked( QList< int > );
+   protected:
+      //! \brief Event filter for canvas double-click detection
+      bool eventFilter( QObject* object, QEvent* event ) override;
+   private:
+      QwtPlot* plot;
+      double threshold;
+};
+
+//! \brief A class that provides plot widgets with modern Qt/Qwt API
 /*! \class US_Plot
-  Provides functions to allow configuration of plot widgets
+  Provides a comprehensive API for plot configuration and interaction.
+
+  Key features:
+  - Virtual methods for customizing zoom, pan, and picker behavior
+  - Signal-based architecture for easy extension
+  - Double-click support for curves and axes
+  - Default implementations that can be easily overridden
+
+  Usage example:
+  \code
+  US_Plot* plot = new US_Plot("Title", "X Axis", "Y Axis");
+  QwtPlot* qwtPlot = plot->qwtPlot();
+
+  // Connect to signals for custom behavior
+  connect(plot, &US_Plot::curveDoubleClicked, this, &MyClass::onCurveClicked);
+  connect(plot, &US_Plot::axisDoubleClicked, this, &MyClass::onAxisClicked);
+  \endcode
 */
 class US_GUI_EXTERN US_Plot : public QHBoxLayout
 {
    Q_OBJECT
 
    public:
-      //! \param plot   - The plot component created for the caller
       //! \param title   - The title of the plot
       //! \param x_axis  - The title of the x (bottom) axis
       //! \param y_axis  - The title of the y (left) axis
       //! \param cmEnab  - Flag to enable/show CMap button
       //! \param cmMatch - Curve title pattern to match for gradient curves
       //! \param cmName  - Color map name for default gradient (e.g., "rainbow")
-
       US_Plot( QwtPlot*& plot, const QString& title, const QString& x_axis, const QString& y_axis,
                bool cmEnab = false, const QString& cmMatch = QString(""),
                const QString& cmName = QString("") );
 
-      //! Make access to the zoom button public
-      QToolButton* btnZoom;
+      //! \brief Access to the underlying QwtPlot
+      QwtPlot* qwtPlot() const { return plot; }
 
       //! \brief Public method to return map colors list and count
       //! \param mcolors - Map colors reference for colors list return
-      //! returns        - Count of colors in color gradient list
+      //! \returns Count of colors in color gradient list
       int map_colors( QList< QColor >& mcolors ) const;
 
+      //! \brief Virtual factory methods for customization
+      //! Override these to provide custom zoomer, panner, or picker implementations
+      //! \returns Newly created zoomer instance (caller takes ownership)
+      virtual QwtPlotZoomer* createZoomer();
+
+      //! \returns Newly created panner instance (caller takes ownership)
+      virtual QwtPlotPanner* createPanner();
+
+      //! \returns Newly created picker instance (caller takes ownership)
+      virtual QwtPlotPicker* createPicker();
+
+      //! \brief Access to interaction components
+      //! \returns Current zoomer instance (may be nullptr if zoom not enabled)
+      QwtPlotZoomer* getZoomer() const { return zoomer; }
+
+      //! \returns Current panner instance (may be nullptr if zoom not enabled)
+      QwtPlotPanner* getPanner() const { return panner; }
+
+      //! \returns Current picker instance (may be nullptr)
+      QwtPlotPicker* getPicker() const { return picker; }
+
+      //! \brief Enable or disable zoom mode
+      //! \param enable - true to enable zoom, false to disable
+      virtual void setZoomEnabled( bool enable );
+
+      //! \brief Check if zoom mode is enabled
+      //! \returns true if zoom is currently enabled
+      bool isZoomEnabled() const { return zoomEnabled; }
+
+      //! \brief Public access to toolbar buttons for customization
+      QToolButton* btnZoom;
+
+   public slots:
+      //! \brief Toggle zoom mode
+      void zoom( bool on );
+
+      //! \brief Export and print functions
+      void print() const;
+      void svg() const;
+      void png() const;
+      void csv() const;
+
+      //! \brief Open configuration dialog
+      void config();
+
+      //! \brief Open color map dialog
+      void colorMap();
+
+      //! \brief Replot the graph
+      void replot();
+
+      //! \brief Open axis configuration for specific axis
+      //! \param axis - The axis to configure (QwtPlot::Axis enum)
+      void configureAxis( int axis );
+
+      //! \brief Open curve configuration for specific curve
+      //! \param curve - The curve to configure
+      void configureCurve( QwtPlotCurve* curve );
+
+      QList< CurveDistance > findCurvesAtPosition( const QPoint& pos,
+                                              const double& threshold = 20.0 ) const;
+      CurveDistance findCurveAtPosition( const QPoint& pos, const double& threshold = 20.0 ) const;
+
    signals:
-      //! \brief A signal that provides the bounding rectangle of a zoomed area
-      void zoomedCorners( QRectF        );
+      //! \brief Signal emitted when zoom rectangle is selected
+      //! \param rect - The bounding rectangle of the zoomed area
+      void zoomedCorners( const QRectF& rect );
+
+      //! \brief Signal emitted when a curve is double-clicked
+      //! \param curve - The curve that was double-clicked
+      void curveDoubleClicked( QwtPlotCurve* curve );
+
+      //! \brief Signal emitted when an axis is double-clicked
+      //! \param axis - The axis that was double-clicked
+      void axisDoubleClicked( int axis );
+
+      //! \brief Signal emitted when zoom mode is toggled
+      //! \param enabled - true if zoom is now enabled
+      void zoomModeChanged( bool enabled );
+
+   protected:
+      //! \brief Setup default zoom behavior
+      //! Override to customize zoom setup
+      virtual void setupZoom();
+
+      //! \brief Cleanup zoom components
+      //! Override to customize zoom cleanup
+      virtual void cleanupZoom();
 
    private:
+      void init( const QString& title, const QString& x_axis, const QString& y_axis,
+                 bool cmEnab, const QString& cmMatch, const QString& cmName );
+
+      void setupConnections();
+      void setupCanvas();
+
+      void configureCurves( const QList< QwtPlotCurve* >& curves );
+
       US_PlotConfig* configWidget;
       QwtPlot*       plot;
 
@@ -87,6 +223,7 @@ class US_GUI_EXTERN US_Plot : public QHBoxLayout
       QwtPlotPicker* picker;
       QwtPlotPanner* panner;
 
+      bool           zoomEnabled;
       bool           cmapEnab;
       QString        cmapMatch;
       QString        cmfpath;
@@ -95,14 +232,7 @@ class US_GUI_EXTERN US_Plot : public QHBoxLayout
       QVector<double> yRightRange;
 
    private slots:
-      void zoom    ( bool );
-      void print   ( void ) const;
-      void svg     ( void ) const;
-      void png     ( void ) const;
-      void csv     ( void ) const;
-      void config  ( void );
-      void colorMap( void );
-      void scale_yRight (const QRectF &) const;
+      void scale_yRight( const QRectF& rect ) const;
 };
 
 //! \brief A specialized push button class for US_Plot to automatically
@@ -363,6 +493,9 @@ class US_GUI_EXTERN US_PlotGridConfig : public US_WidgetsDialog
 
 /*! \brief Customize plot picker characteristics and mouse events
     \param plot The plot to attach to
+
+    This enhanced picker supports all standard mouse events plus double-click
+    detection for both canvas and plot items (curves, axes).
 */
 class US_GUI_EXTERN US_PlotPicker : public QwtPlotPicker
 {
@@ -378,22 +511,32 @@ class US_GUI_EXTERN US_PlotPicker : public QwtPlotPicker
       void cMouseDown   ( const QPointF& );
       //! \brief Signal mouse down (modified with control key, raw event)
       void cMouseDownRaw( QMouseEvent* );
+      //! \brief Signal mouse down raw
+      void mouseDownRaw( const QPointF&, QMouseEvent* );
+      //! \brief Signal mouse up raw
+      void mouseUpRaw  ( const QPointF&, QMouseEvent* );
       //! \brief Signal mouse up (unmodified)
       void mouseUp      ( const QPointF& );
       //! \brief Signal mouse up (modified with control key)
       void cMouseUp     ( const QPointF& );
       //! \brief Signal mouse drag (unmodified)
       void mouseDrag    ( const QPointF& );
+      void mouseMoving ();
       //! \brief Signal mouse drag (modified with control key)
       void cMouseDrag   ( const QPointF& );
+      //! \brief Signal emitted when canvas is double-clicked
+      //! \param pos - Position in widget coordinates
+      void canvasDoubleClicked( const QPoint& pos );
 
    protected:
       //! \brief Slot to handle mouse press event
-      void widgetMousePressEvent  ( QMouseEvent* ); 
+      void widgetMousePressEvent  ( QMouseEvent* );
       //! \brief Slot to handle mouse release event
-      void widgetMouseReleaseEvent( QMouseEvent* ); 
+      void widgetMouseReleaseEvent( QMouseEvent* );
       //! \brief Slot to handle mouse move event
-      void widgetMouseMoveEvent   ( QMouseEvent* ); 
+      void widgetMouseMoveEvent   ( QMouseEvent* );
+      //! \brief Slot to handle mouse double-click event
+      void widgetMouseDoubleClickEvent( QMouseEvent* );
 };
 #endif
 

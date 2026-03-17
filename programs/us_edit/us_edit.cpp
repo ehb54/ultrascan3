@@ -1,8 +1,13 @@
 //! \file us_edit.cpp
 
-//#include <QApplication>
+#include <QApplication>
 //#include <QDomDocument>
+#include <QToolTip>
+#include <QMessageBox>
+#include <QLineF>
 #include <qwt_scale_div.h>
+#include <qwt_scale_map.h>
+#include <qwt_picker_machine.h>
 #include "us_edit.h"
 #include "us_exclude_profile.h"
 #include "us_select_lambdas.h"
@@ -43,10 +48,14 @@ US_Edit::US_Edit( QString auto_mode ) : US_Widgets()
    invert       = 1.0;
    all_edits    = false;
    men_1click   = US_Settings::debug_match( "men2click" ) ? false : true;
+   exclusion_click_mode = false;
    total_speeds = 0;
    total_edits  = 0;
    v_line       = NULL;
    line_to_mouse = NULL;
+   hover_timer  = new QTimer( this );
+   hover_timer->setSingleShot( true );
+   hover_timer->setInterval( 500 );
    dbg_level    = US_Settings::us_debug();
    dbP          = NULL;
    chlamb       = QChar( 955 );
@@ -239,6 +248,8 @@ lambdas << "250" << "350" << "450" << "550" << "580" << "583" << "650";
    pb_excludeRange = us_pushbutton( tr( "Exclude Scan Range" ), false );
    pb_exclusion    = us_pushbutton( tr( "Exclusion Profile" ),  false );
    pb_edit1       = us_pushbutton( tr( "Edit Single Scan" ), false );
+   pb_exclusion_click = us_pushbutton( tr( "Click Exclusion Mode" ), false );
+   pb_exclusion_click->setCheckable( true );
    pb_include     = us_pushbutton( tr( "Include All" ), false );
 
    // Edit controls
@@ -350,6 +361,7 @@ pb_plateau->setVisible(false);
                              SLOT  ( new_triple_auto         ( int ) ) );
    connect( pb_exclusion,    SIGNAL( clicked() ), SLOT( exclusion()     ) );
    connect( pb_edit1,        SIGNAL( clicked() ), SLOT( edit_scan()     ) );
+   connect( pb_exclusion_click, SIGNAL( clicked() ), SLOT( toggle_exclusion_click_mode() ) );
    connect( pb_include,      SIGNAL( clicked() ), SLOT( include()       ) );
    connect( pb_meniscus,     SIGNAL( clicked() ), SLOT( set_meniscus()  ) );
    connect( pb_airGap,       SIGNAL( clicked() ), SLOT( set_airGap()    ) );
@@ -429,6 +441,7 @@ pb_plateau->setVisible(false);
    specs->addWidget( pb_exclusion,    s_row++, 3, 1, 3 );
    specs->addWidget( pb_edit1,        s_row,   0, 1, 3 );
    specs->addWidget( pb_include,      s_row++, 3, 1, 3 );
+   specs->addWidget( pb_exclusion_click, s_row++, 0, 1, 6 );
    specs->addWidget( lb_edit,         s_row++, 0, 1, 6 );
    specs->addWidget( lb_edtrsp,       s_row,   0, 1, 3 );
    specs->addWidget( le_edtrsp,       s_row++, 3, 1, 3 );
@@ -598,7 +611,7 @@ pb_plateau->setVisible(false);
          tr( "Absorbance Data" ),
          tr( "Radius (in cm)" ), tr( "Absorbance" ),
          true, "", "rainbow" );
-
+   plot->getPicker()->setEnabled(false);
    data_plot->setMinimumSize( 600, 400 );
 
    data_plot->enableAxis( QwtPlot::xBottom, true );
@@ -815,10 +828,14 @@ US_Edit::US_Edit( QVector< US_DataIO::RawData > allData, QStringList  triples,
    invert       = 1.0;
    all_edits    = false;
    men_1click   = US_Settings::debug_match( "men2click" ) ? false : true;
+   exclusion_click_mode = false;
    total_speeds = 0;
    total_edits  = 0;
    v_line       = NULL;
    line_to_mouse = NULL;
+   hover_timer  = new QTimer( this );
+   hover_timer->setSingleShot( true );
+   hover_timer->setInterval( 500 );
    dbg_level    = US_Settings::us_debug();
    dbP          = NULL;
    chlamb       = QChar( 955 );
@@ -988,6 +1005,8 @@ lambdas << "250" << "350" << "450" << "550" << "580" << "583" << "650";
    pb_excludeRange = us_pushbutton( tr( "Exclude Scan Range" ), false );
    pb_exclusion    = us_pushbutton( tr( "Exclusion Profile" ),  false );
    pb_edit1       = us_pushbutton( tr( "Edit Single Scan" ), false );
+   pb_exclusion_click = us_pushbutton( tr( "Click Exclusion Mode" ), false );
+   pb_exclusion_click->setCheckable( true );
    pb_removeAllbutLast = us_pushbutton( tr( "Remove All but Last" ), true );
    pb_include     = us_pushbutton( tr( "Include All" ), false );
 
@@ -1098,6 +1117,7 @@ pb_plateau->setVisible(false);
                              SLOT  ( new_triple         ( int ) ) );
    connect( pb_exclusion,    SIGNAL( clicked() ), SLOT( exclusion()     ) );
    connect( pb_edit1,        SIGNAL( clicked() ), SLOT( edit_scan()     ) );
+   connect( pb_exclusion_click, SIGNAL( clicked() ), SLOT( toggle_exclusion_click_mode() ) );
    connect( pb_removeAllbutLast,        SIGNAL( clicked() ), SLOT( exclude_all_but_last()     ) );
 
    connect( pb_include,      SIGNAL( clicked() ), SLOT( include()       ) );
@@ -1169,6 +1189,7 @@ pb_plateau->setVisible(false);
    specs->addWidget( pb_removeAllbutLast, s_row,   0, 1, 3 );
 
    specs->addWidget( pb_include,      s_row++, 3, 1, 3 );
+   specs->addWidget( pb_exclusion_click, s_row++, 0, 1, 6 );
    specs->addWidget( lb_edit,         s_row++, 0, 1, 6 );
    specs->addWidget( lb_edtrsp,       s_row,   0, 1, 3 );
    specs->addWidget( le_edtrsp,       s_row++, 3, 1, 3 );
@@ -1310,7 +1331,7 @@ pb_plateau->setVisible(false);
          tr( "Absorbance Data" ),
          tr( "Radius (in cm)" ), tr( "Absorbance" ),
          true, "", "rainbow" );
-
+   plot->getPicker()->setEnabled( false );
    data_plot->setMinimumSize( 600, 400 );
 
    data_plot->enableAxis( QwtPlot::xBottom, true );
@@ -1377,10 +1398,14 @@ US_Edit::US_Edit( QVector< US_DataIO::RawData > allData, QStringList  triples,
    invert       = 1.0;
    all_edits    = false;
    men_1click   = US_Settings::debug_match( "men2click" ) ? false : true;
+   exclusion_click_mode = false;
    total_speeds = 0;
    total_edits  = 0;
    v_line       = NULL;
    line_to_mouse = NULL;
+   hover_timer  = new QTimer( this );
+   hover_timer->setSingleShot( true );
+   hover_timer->setInterval( 500 );
    dbg_level    = US_Settings::us_debug();
    dbP          = NULL;
    chlamb       = QChar( 955 );
@@ -1550,6 +1575,8 @@ lambdas << "250" << "350" << "450" << "550" << "580" << "583" << "650";
    pb_excludeRange = us_pushbutton( tr( "Exclude Scan Range" ), false );
    pb_exclusion    = us_pushbutton( tr( "Exclusion Profile" ),  false );
    pb_edit1       = us_pushbutton( tr( "Edit Single Scan" ), false );
+   pb_exclusion_click = us_pushbutton( tr( "Click Exclusion Mode" ), false );
+   pb_exclusion_click->setCheckable( true );
    pb_removeAllbutLast = us_pushbutton( tr( "Remove All but Last" ), true );
    pb_include     = us_pushbutton( tr( "Include All" ), false );
 
@@ -1660,6 +1687,7 @@ pb_plateau->setVisible(false);
                              SLOT  ( new_triple         ( int ) ) );
    connect( pb_exclusion,    SIGNAL( clicked() ), SLOT( exclusion()     ) );
    connect( pb_edit1,        SIGNAL( clicked() ), SLOT( edit_scan()     ) );
+   connect( pb_exclusion_click, SIGNAL( clicked() ), SLOT( toggle_exclusion_click_mode() ) );
    connect( pb_removeAllbutLast,        SIGNAL( clicked() ), SLOT( exclude_all_but_last()     ) );
 
    connect( pb_include,      SIGNAL( clicked() ), SLOT( include()       ) );
@@ -1731,6 +1759,7 @@ pb_plateau->setVisible(false);
    specs->addWidget( pb_removeAllbutLast, s_row,   0, 1, 3 );
 
    specs->addWidget( pb_include,      s_row++, 3, 1, 3 );
+   specs->addWidget( pb_exclusion_click, s_row++, 0, 1, 6 );
    specs->addWidget( lb_edit,         s_row++, 0, 1, 6 );
    specs->addWidget( lb_edtrsp,       s_row,   0, 1, 3 );
    specs->addWidget( le_edtrsp,       s_row++, 3, 1, 3 );
@@ -1888,7 +1917,7 @@ pb_plateau->setVisible(false);
          tr( "Absorbance Data" ),
          tr( "Radius (in cm)" ), tr( "Absorbance" ),
          true, "", "rainbow" );
-
+   plot->getPicker()->setEnabled(false);
    data_plot->setMinimumSize( 600, 400 );
 
    data_plot->enableAxis( QwtPlot::xBottom, true );
@@ -1979,10 +2008,14 @@ US_Edit::US_Edit() : US_Widgets()
    invert       = 1.0;
    all_edits    = false;
    men_1click   = US_Settings::debug_match( "men2click" ) ? false : true;
+   exclusion_click_mode = false;
    total_speeds = 0;
    total_edits  = 0;
    v_line       = NULL;
    line_to_mouse = NULL;
+   hover_timer  = new QTimer( this );
+   hover_timer->setSingleShot( true );
+   hover_timer->setInterval( 500 );
    dbg_level    = US_Settings::us_debug();
    dbP          = NULL;
    chlamb       = QChar( 955 );
@@ -2152,6 +2185,8 @@ lambdas << "250" << "350" << "450" << "550" << "580" << "583" << "650";
    pb_excludeRange = us_pushbutton( tr( "Exclude Scan Range" ), false );
    pb_exclusion    = us_pushbutton( tr( "Exclusion Profile" ),  false );
    pb_edit1       = us_pushbutton( tr( "Edit Single Scan" ), false );
+   pb_exclusion_click = us_pushbutton( tr( "Click Exclusion Mode" ), false );
+   pb_exclusion_click->setCheckable( true );
    pb_include     = us_pushbutton( tr( "Include All" ), false );
 
    // Edit controls
@@ -2241,6 +2276,7 @@ pb_plateau->setVisible(false);
                              SLOT  ( new_triple         ( int ) ) );
    connect( pb_exclusion,    SIGNAL( clicked() ), SLOT( exclusion()     ) );
    connect( pb_edit1,        SIGNAL( clicked() ), SLOT( edit_scan()     ) );
+   connect( pb_exclusion_click, SIGNAL( clicked() ), SLOT( toggle_exclusion_click_mode() ) );
    connect( pb_include,      SIGNAL( clicked() ), SLOT( include()       ) );
    connect( pb_meniscus,     SIGNAL( clicked() ), SLOT( set_meniscus()  ) );
    connect( pb_airGap,       SIGNAL( clicked() ), SLOT( set_airGap()    ) );
@@ -2308,6 +2344,7 @@ pb_plateau->setVisible(false);
    specs->addWidget( pb_exclusion,    s_row++, 3, 1, 3 );
    specs->addWidget( pb_edit1,        s_row,   0, 1, 3 );
    specs->addWidget( pb_include,      s_row++, 3, 1, 3 );
+   specs->addWidget( pb_exclusion_click, s_row++, 0, 1, 6 );
    specs->addWidget( lb_edit,         s_row++, 0, 1, 6 );
    specs->addWidget( lb_edtrsp,       s_row,   0, 1, 3 );
    specs->addWidget( le_edtrsp,       s_row++, 3, 1, 3 );
@@ -2370,7 +2407,7 @@ pb_plateau->setVisible(false);
          tr( "Absorbance Data" ),
          tr( "Radius (in cm)" ), tr( "Absorbance" ),
          true, "", "rainbow" );
-
+   plot->getPicker()->setEnabled(false);
    data_plot->setMinimumSize( 600, 400 );
 
    data_plot->enableAxis( QwtPlot::xBottom, true );
@@ -2517,6 +2554,7 @@ void US_Edit::reset( void )
 
    pb_excludeRange->setEnabled( false );
    pb_exclusion   ->setEnabled( false );
+   pb_exclusion_click->setEnabled( false );
    pb_include     ->setEnabled( false );
    pb_edit1       ->setEnabled( false );
 
@@ -3257,6 +3295,23 @@ DbgLv(1) << " celchns    size" << celchns.size() << ncelchn;
       }
 
       pick     ->disconnect();
+      // Enable hover tooltips
+      pick->setStateMachine( new QwtPickerTrackerMachine() );
+      connect( pick, &US_PlotPicker::moved, this, &US_Edit::show_scan_tooltip );
+      connect( pick, &US_PlotPicker::mouseMoving, this, &US_Edit::hide_scan_tooltip );
+      connect( pick, &US_PlotPicker::mouseUpRaw,
+      this, [=](const QPointF& pos, QMouseEvent* e) {
+         if ( e != nullptr )
+         {
+            const bool left_click = ( e->button() == Qt::LeftButton ) ||
+                                    ( e->buttons() & Qt::LeftButton );
+            const bool alt_down = ( e->modifiers() & Qt::AltModifier ) ||
+                                  ( QApplication::keyboardModifiers() & Qt::AltModifier );
+
+            if ( left_click  &&  (alt_down || exclusion_click_mode ) )
+               exclude_scan_by_click( pos );
+         }
+      });
       connect( pick, SIGNAL( cMouseUp( const QPointF& ) ),
                      SLOT  ( mouse   ( const QPointF& ) ) );
 
@@ -3300,6 +3355,7 @@ DbgLv(1) << "LD():  triples size" << triples.size();
    pb_details   ->setEnabled( true );
    pb_include   ->setEnabled( true );
    pb_exclusion ->setEnabled( true );
+   pb_exclusion_click->setEnabled( true );
    pb_meniscus  ->setEnabled( true );
    pb_airGap    ->setEnabled( false );
 //   pb_dataRange ->setEnabled( false );
@@ -5204,6 +5260,23 @@ DbgLv(1) << " celchns    size" << celchns.size() << ncelchn;
       pick     ->disconnect();
       connect( pick, SIGNAL( cMouseUp( const QPointF& ) ),
                      SLOT  ( mouse   ( const QPointF& ) ) );
+      // Enable hover tooltips
+      pick->setStateMachine( new QwtPickerTrackerMachine() );
+      connect( pick, &US_PlotPicker::moved, this, &US_Edit::show_scan_tooltip );
+      connect( pick, &US_PlotPicker::mouseMoving, this, &US_Edit::hide_scan_tooltip );
+      connect( pick, &US_PlotPicker::mouseUpRaw,
+      this, [=](const QPointF& pos, QMouseEvent* e) {
+         if ( e != nullptr )
+         {
+            const bool left_click = ( e->button() == Qt::LeftButton ) ||
+                                    ( e->buttons() & Qt::LeftButton );
+            const bool alt_down = ( e->modifiers() & Qt::AltModifier ) ||
+                                  ( QApplication::keyboardModifiers() & Qt::AltModifier );
+
+            if ( left_click  &&  (alt_down || exclusion_click_mode ) )
+               exclude_scan_by_click( pos );
+         }
+      });
 
       pb_priorEdits->disconnect();
       connect( pb_priorEdits, SIGNAL( clicked() ), SLOT( prior_equil() ) );
@@ -5240,6 +5313,7 @@ DbgLv(1) << "LD():  triples size" << triples.size();
    pb_details   ->setEnabled( true );
    pb_include   ->setEnabled( true );
    pb_exclusion ->setEnabled( true );
+   pb_exclusion_click->setEnabled( true );
    pb_meniscus  ->setEnabled( true );
    pb_airGap    ->setEnabled( false );
 //   pb_dataRange ->setEnabled( false );
@@ -5817,8 +5891,24 @@ DbgLv(1) << " celchns    size" << celchns.size() << ncelchn;
       }
 
       pick     ->disconnect();
-      connect( pick, SIGNAL( cMouseUp( const QPointF& ) ),
-                     SLOT  ( mouse   ( const QPointF& ) ) );
+      connect( pick, &US_PlotPicker::cMouseUp, this, &US_Edit::mouse );
+      // Enable hover tooltips
+      pick->setStateMachine( new QwtPickerTrackerMachine() );
+      connect( pick, &US_PlotPicker::moved, this, &US_Edit::show_scan_tooltip );
+      connect( pick, &US_PlotPicker::mouseMoving, this, &US_Edit::hide_scan_tooltip );
+      connect( pick, &US_PlotPicker::mouseUpRaw,
+      this, [=](const QPointF& pos, QMouseEvent* e) {
+         if ( e != nullptr )
+         {
+            const bool left_click = ( e->button() == Qt::LeftButton ) ||
+                                    ( e->buttons() & Qt::LeftButton );
+            const bool alt_down = ( e->modifiers() & Qt::AltModifier ) ||
+                                  ( QApplication::keyboardModifiers() & Qt::AltModifier );
+
+            if ( left_click  &&  (alt_down || exclusion_click_mode ) )
+               exclude_scan_by_click( pos );
+         }
+      });
 
       pb_priorEdits->disconnect();
       connect( pb_priorEdits, SIGNAL( clicked() ), SLOT( prior_equil() ) );
@@ -5855,6 +5945,7 @@ DbgLv(1) << "LD():  triples size" << triples.size();
    pb_details   ->setEnabled( true );
    pb_include   ->setEnabled( true );
    pb_exclusion ->setEnabled( true );
+   pb_exclusion_click->setEnabled( true );
    pb_meniscus  ->setEnabled( true );
    pb_airGap    ->setEnabled( false );
 //   pb_dataRange ->setEnabled( false );
@@ -6308,6 +6399,23 @@ void US_Edit::plot_current( int index )
    pick   ->disconnect();
    connect( pick, SIGNAL( cMouseUp( const QPointF& ) ),
                   SLOT  ( mouse   ( const QPointF& ) ) );
+   // Enable hover tooltips
+   pick->setStateMachine( new QwtPickerTrackerMachine() );
+   connect( pick, &US_PlotPicker::moved, this, &US_Edit::show_scan_tooltip );
+   connect( pick, &US_PlotPicker::mouseMoving, this, &US_Edit::hide_scan_tooltip );
+   connect( pick, &US_PlotPicker::mouseUpRaw,
+   this, [=](const QPointF& pos, QMouseEvent* e) {
+      if ( e != nullptr )
+      {
+         const bool left_click = ( e->button() == Qt::LeftButton ) ||
+                                 ( e->buttons() & Qt::LeftButton );
+         const bool alt_down = ( e->modifiers() & Qt::AltModifier ) ||
+                               ( QApplication::keyboardModifiers() & Qt::AltModifier );
+
+         if ( left_click  &&  (alt_down || exclusion_click_mode ) )
+            exclude_scan_by_click( pos );
+      }
+   });
 }
 
 // Re-plot
@@ -7294,6 +7402,9 @@ DbgLv(2) << " PlAll:      i" << i << "pen_plot" << pen_plot;
    // Reset colors
    focus( (int)ct_from->value(), (int)ct_to->value() );
    data_plot->replot();
+   if ( auto* z = plot->getZoomer() ) {
+      z->setZoomBase();
+   }
 }
 
 // Plot curves with linear baseline corrections
@@ -7433,7 +7544,9 @@ DbgLv(2) << " PlRng:      i" << i << "pen_plot" << pen_plot;
    // Reset colors
    focus( (int)ct_from->value(), (int)ct_to->value() );
    data_plot->replot();
-
+   if ( auto* z = plot->getZoomer() ) {
+      z->setZoomBase();
+   }
 
 }
 
@@ -7574,6 +7687,9 @@ DbgLv(2) << " PlRng:      i" << i << "pen_plot" << pen_plot;
    // Reset colors
    focus( (int)ct_from->value(), (int)ct_to->value() );
    data_plot->replot();
+   if ( auto* z = plot->getZoomer() ) {
+      z->setZoomBase();
+   }
 }
 
 // Plot the last picked curve
@@ -7634,6 +7750,9 @@ void US_Edit::plot_last( void )
    // Reset colors
    focus( (int)ct_from->value(), (int)ct_to->value() );
    data_plot->replot();
+   if ( auto* z = plot->getZoomer() ) {
+      z->setZoomBase();
+   }
 }
 
 // Plot a single scan curve
@@ -7698,6 +7817,9 @@ void US_Edit::plot_scan( void )
    }
 
    data_plot->replot();
+   if ( auto* z = plot->getZoomer() ) {
+      z->setZoomBase();
+   }
 }
 
 // Plot MWL curves
@@ -7891,6 +8013,23 @@ DbgLv(1) << "PlMwl:     ii" << ii << "NOT INCLUDED";
       pick     ->disconnect();
       connect( pick, SIGNAL( cMouseUp( const QPointF& ) ),
                      SLOT  ( mouse   ( const QPointF& ) ) );
+      // Enable hover tooltips
+      pick->setStateMachine( new QwtPickerTrackerMachine() );
+      connect( pick, &US_PlotPicker::moved, this, &US_Edit::show_scan_tooltip );
+      connect( pick, &US_PlotPicker::mouseMoving, this, &US_Edit::hide_scan_tooltip );
+      connect( pick, &US_PlotPicker::mouseUpRaw,
+      this, [=](const QPointF& pos, QMouseEvent* e) {
+         if ( e != nullptr )
+         {
+            const bool left_click = ( e->button() == Qt::LeftButton ) ||
+                                    ( e->buttons() & Qt::LeftButton );
+            const bool alt_down = ( e->modifiers() & Qt::AltModifier ) ||
+                                  ( QApplication::keyboardModifiers() & Qt::AltModifier );
+
+            if ( left_click  &&  (alt_down || exclusion_click_mode ) )
+               exclude_scan_by_click( pos );
+         }
+      });
 DbgLv(1) << "PlMwl:      END xa_RAD  kodlim odlimit" << kodlim << odlimit;
    }
 
@@ -7940,6 +8079,9 @@ DbgLv(1) << "PlMwl:    START xa_WAV";
 
 DbgLv(1) << "PlMwl: call replot()";
    data_plot->replot();
+   if ( auto* z = plot->getZoomer() ) {
+      z->setZoomBase();
+   }
 DbgLv(1) << "PlMwl:  retn fr replot()";
 
    // Set the Scan spin boxes
@@ -7952,6 +8094,23 @@ DbgLv(1) << "PlMwl:  retn fr replot()";
    pick   ->disconnect();
    connect( pick, SIGNAL( cMouseUp( const QPointF& ) ),
                   SLOT  ( mouse   ( const QPointF& ) ) );
+   // Enable hover tooltips
+   pick->setStateMachine( new QwtPickerTrackerMachine() );
+   connect( pick, &US_PlotPicker::moved, this, &US_Edit::show_scan_tooltip );
+   connect( pick, &US_PlotPicker::mouseMoving, this, &US_Edit::hide_scan_tooltip );
+   connect( pick, &US_PlotPicker::mouseUpRaw,
+   this, [=](const QPointF& pos, QMouseEvent* e) {
+      if ( e != nullptr )
+      {
+         const bool left_click = ( e->button() == Qt::LeftButton ) ||
+                                 ( e->buttons() & Qt::LeftButton );
+         const bool alt_down = ( e->modifiers() & Qt::AltModifier ) ||
+                               ( QApplication::keyboardModifiers() & Qt::AltModifier );
+
+         if ( left_click  &&  (alt_down || exclusion_click_mode ) )
+            exclude_scan_by_click( pos );
+      }
+   });
 }
 
 // Set focus FROM scan value
@@ -8270,6 +8429,190 @@ void US_Edit::include( void )
 {
    init_includes();
    reset_excludes();
+}
+
+// Toggle exclusion click mode
+void US_Edit::toggle_exclusion_click_mode( void )
+{
+   exclusion_click_mode = pb_exclusion_click->isChecked();
+
+   if ( exclusion_click_mode )
+   {
+      pb_exclusion_click->setIcon( check );
+   }
+   else
+   {
+      pb_exclusion_click->setIcon( QIcon() );
+   }
+}
+
+// Exclude scan by clicking on it
+void US_Edit::exclude_scan_by_click( const QPointF& p )
+{
+   QList<int> near_scans;
+   double click_radius = p.x();
+   double click_value = p.y();
+
+   int nearest = find_nearest_scan( click_radius, click_value, near_scans );
+
+   if ( nearest < 0 )
+      return;
+
+   // If multiple scans are close, ask for confirmation
+   if ( near_scans.size() > 1 )
+   {
+      QString msg = tr( "Found %1 scans near click position:\n\n" )
+                    .arg( near_scans.size() );
+      for ( int i = 0; i < near_scans.size(); i++ )
+      {
+         int scan_num = near_scans[i];
+         double time = data.scanData[ scan_num ].seconds;
+         msg += tr( "Scan %1 at %2 seconds\n" )
+                .arg( scan_num + 1 )
+                .arg( time, 0, 'f', 1 );
+      }
+      msg += tr( "\nExclude all %1 scans?" ).arg( near_scans.size() );
+
+      int ret = QMessageBox::question( this,
+                                        tr( "Exclude Multiple Scans" ),
+                                        msg,
+                                        QMessageBox::Yes | QMessageBox::No,
+                                        QMessageBox::No );
+      if ( ret != QMessageBox::Yes )
+         return;
+
+      // Exclude all near scans
+      for ( int i = 0; i < near_scans.size(); i++ )
+      {
+         includes.removeAll( near_scans[i] );
+      }
+   }
+   else
+   {
+      // Exclude single scan
+      includes.removeAll( nearest );
+   }
+   // get zoom if currentl
+   // Update display
+   replot();
+   reset_excludes();
+}
+
+// Find nearest scan to click position
+int US_Edit::find_nearest_scan( double radius, double value, QList<int>& near_scans )
+{
+   near_scans.clear();
+
+   if ( includes.isEmpty() || data_plot == nullptr )
+      return -1;
+
+   QwtScaleMap xmap = data_plot->canvasMap( QwtPlot::xBottom );
+   QwtScaleMap ymap = data_plot->canvasMap( QwtPlot::yLeft   );
+
+   QPoint click_pos( qRound( xmap.transform( radius ) ),
+                     qRound( ymap.transform( value  ) ) );
+
+   QwtPlotItemList items = data_plot->itemList();
+   double min_distance = 1.0e99;
+   int nearest_scan = -1;
+   const double threshold_pixels = 20.0;
+
+   // Find closest scan(s) by curve distance in canvas pixels
+   for ( int i = 0; i < data.scanData.size(); i++ )
+   {
+      if ( !includes.contains( i ) ) continue;
+
+      QString       scan_tag = " #" + QString::number( i );
+      QwtPlotCurve* curve    = nullptr;
+
+      for ( int j = 0; j < items.size(); j++ )
+      {
+         if ( items[ j ]->rtti() == QwtPlotItem::Rtti_PlotCurve )
+         {
+            QwtPlotCurve* item_curve = dynamic_cast< QwtPlotCurve* >( items[ j ] );
+            if ( item_curve != nullptr &&
+                 item_curve->title().text().contains( scan_tag ) )
+            {
+               curve = item_curve;
+               break;
+            }
+         }
+      }
+
+      if ( curve == nullptr || !curve->isVisible() )
+         continue;
+
+      double qwt_distance = 0.0;
+      int nearest_point = curve->closestPoint( click_pos, &qwt_distance );
+
+      if ( nearest_point < 0 )
+         continue;
+
+      QPointF curve_point = curve->sample( nearest_point );
+      QPointF curve_canvas( xmap.transform( curve_point.x() ),
+                            ymap.transform( curve_point.y() ) );
+
+      double scan_min_dist = QLineF( QPointF( click_pos ), curve_canvas ).length();
+
+      if ( qwt_distance < 0.0 )
+         scan_min_dist = qAbs( qwt_distance );
+
+      if ( scan_min_dist <= threshold_pixels )
+      {
+         near_scans.append( i );
+
+         if ( scan_min_dist < min_distance )
+         {
+            min_distance = scan_min_dist;
+            nearest_scan = i;
+         }
+      }
+   }
+
+   return nearest_scan;
+}
+
+// Show tooltip with scan info on hover
+void US_Edit::show_scan_tooltip( const QPointF& p )
+{
+   QList<int> near_scans;
+   int nearest = find_nearest_scan( p.x(), p.y(), near_scans );
+
+   if ( nearest >= 0 && !near_scans.isEmpty() )
+   {
+      int scan_num = nearest;
+      double time = data.scanData[ scan_num ].seconds;
+      int minutes = (int)time / 60;
+      int seconds = (int)time % 60;
+      int current_scan_index = includes.indexOf( scan_num );
+
+      QString tooltip = tr( "Scan %1\nTime: %2:%3\nCurrent Index %4" )
+                        .arg( scan_num + 1 )
+                        .arg( minutes )
+                        .arg( seconds, 2, 10, QChar('0') )
+                        .arg( current_scan_index + 1 );
+
+      // If multiple scans are nearby, indicate this
+      if ( near_scans.size() > 1 )
+      {
+         tooltip += tr( "\n\n%1 scans nearby (ALT+Click to exclude)" )
+                    .arg( near_scans.size() );
+      }
+      else
+      {
+         tooltip += tr( "\n\nALT+Click to exclude this scan" );
+      }
+
+      QToolTip::showText( QCursor::pos(), tooltip, this );
+   }
+   else
+   {
+      QToolTip::hideText();
+   }
+}
+void US_Edit::hide_scan_tooltip(  )
+{
+   QToolTip::hideText();
 }
 
 // Reset pushbutton and plot with invert flag change
@@ -8854,6 +9197,7 @@ DbgLv(1) << "EDT:NewTr:   sw tri dx" << swavl << triple << idax << "dataType" <<
    pb_report   ->setEnabled( all_edits );
    pb_include  ->setEnabled( true );
    pb_exclusion->setEnabled( true );
+   pb_exclusion_click->setEnabled( true );
    pb_meniscus ->setEnabled( true );
    pb_airGap   ->setEnabled( true );
    pb_noise    ->setEnabled( true );
@@ -9306,6 +9650,7 @@ DbgLv(1) << "EDT:NewTr:   sw tri dx" << swavl << triple << idax << "dataType" <<
    pb_report   ->setEnabled( all_edits );
    pb_include  ->setEnabled( true );
    pb_exclusion->setEnabled( true );
+   pb_exclusion_click->setEnabled( true );
    pb_meniscus ->setEnabled( true );
    pb_airGap   ->setEnabled( false );
    pb_noise    ->setEnabled( false );
