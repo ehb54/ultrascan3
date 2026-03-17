@@ -300,7 +300,7 @@ QString US_Crypto::decrypt( const QString& ciphertext, const QString& pw,
    int finalLen = 0;
    if ( ok == 1 ) {
       unsigned char finalBuf[EVP_MAX_BLOCK_LENGTH];
-      ok &= EVP_EncryptFinal_ex( ctx.get(), finalBuf, &finalLen );
+      ok &= EVP_DecryptFinal_ex( ctx.get(), finalBuf, &finalLen );
       if ( ok == 1 && finalLen != 0 ) {
          ok = 0;
       }
