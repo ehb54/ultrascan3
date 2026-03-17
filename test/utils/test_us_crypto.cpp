@@ -382,3 +382,11 @@ EXPECT_TRUE(isValidHexString(result.at(1)))
 EXPECT_EQ(result.at(1).length(), 88)
 << "IV should be exactly 88 hex characters (44 bytes)";
 }
+
+TEST_F(TestUSCryptoUnit, EncryptDecryptTest) {
+    QString plainText = "This is a test message.";
+    QString password = "password123";
+    QStringList result = US_Crypto::encrypt(plainText, password);
+    QString decryptedText = US_Crypto::decrypt(result.at(0), password, result.at(1));
+    EXPECT_EQ(plainText, decryptedText) << "Encryption and decryption should be consistent.";
+}
