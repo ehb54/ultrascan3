@@ -254,6 +254,8 @@ PKGS_X11=(
   libxinerama-dev
   libxkbcommon-dev
   libxkbcommon-x11-dev
+  libsm-dev
+  libice-dev
 )
 
 # --- XCB development headers -------------------------------------------------
