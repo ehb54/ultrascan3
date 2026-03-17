@@ -390,3 +390,13 @@ TEST_F(TestUSCryptoUnit, EncryptDecryptTest) {
     QString decryptedText = US_Crypto::decrypt(result.at(0), password, result.at(1));
     EXPECT_EQ(plainText, decryptedText) << "Encryption and decryption should be consistent.";
 }
+
+TEST_F(TestUSCryptoUnit, EncryptDecryptDiffTest) {
+    QString plainText = "This is a test message.";
+    QString password = "password123";
+    QString password2 = "123";
+    QStringList result = US_Crypto::encrypt(plainText, password);
+    QString decryptedText = US_Crypto::decrypt(result.at(0), password2, result.at(1));
+    EXPECT_NE(plainText, decryptedText) << "Encryption and decryption with different passwords should be different.";
+    EXPECT_TRUE(decryptedText.isEmpty()) << "Wrong password or seed should result in empty decrypted text.";
+}
