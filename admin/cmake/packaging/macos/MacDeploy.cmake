@@ -411,6 +411,14 @@ if(ASSISTANT_APP AND EXISTS "${ASSISTANT_APP}")
     endif()
     file(COPY "${ASSISTANT_APP}" DESTINATION "${S_BIN}")
 
+    # Strip broken vcpkg build-tree rpath before macdeployqt
+    execute_process(
+            COMMAND install_name_tool
+            -delete_rpath "@loader_path/../../../../../../lib"
+            "${ASSISTANT_DEST}/Contents/MacOS/Assistant"
+            ERROR_QUIET
+    )
+
     # ---- Patch Assistant.app bundle id to avoid macOS Installer relocation ----
     set(_ASSIST_PLIST "${S_BIN}/Assistant.app/Contents/Info.plist")
 
@@ -457,6 +465,22 @@ if(ASSISTANT_APP AND EXISTS "${ASSISTANT_APP}")
         message(WARNING "macdeployqt on Assistant.app exited with code ${_r}")
         message(STATUS "  stdout: ${_o}")
         message(STATUS "  stderr: ${_e}")
+    endif()
+
+    # Ensure libqsqlite.dylib is in Assistant's own PlugIns/sqldrivers/
+    # Qt prefers the bundle-internal PlugIns/ over qt.conf-specified paths.
+    set(_asst_sql_dir "${ASSISTANT_DEST}/Contents/PlugIns/sqldrivers")
+    file(MAKE_DIRECTORY "${_asst_sql_dir}")
+    if(NOT EXISTS "${_asst_sql_dir}/libqsqlite.dylib")
+        foreach(_sql_candidate IN ITEMS
+                "${VCPKG_QT6_PLUGIN_DIR}/sqldrivers/libqsqlite.dylib"
+                "${S_PLUG}/sqldrivers/libqsqlite.dylib")
+            if(EXISTS "${_sql_candidate}")
+                file(COPY "${_sql_candidate}" DESTINATION "${_asst_sql_dir}")
+                message(STATUS "  Staged libqsqlite.dylib into Assistant.app/Contents/PlugIns/sqldrivers/")
+                break()
+            endif()
+        endforeach()
     endif()
 
     set(ASSIST_BIN "${ASSISTANT_DEST}/Contents/MacOS/Assistant")

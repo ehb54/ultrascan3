@@ -73,8 +73,8 @@ while [[ $# -gt 0 ]]; do
       echo "                         Linux   -> portable tar.gz archive"
       echo "                                    Output: build/<preset>/UltraScan3-<version>-Linux-<arch>.tar.gz"
       echo "  --qt6                Build with Qt6 + Qwt6.3.0 [default on macOS]"
-      echo "  --qt5-qwt616         Build with Qt5 + Qwt6.1.6 [default on Linux]"
-      echo "  --qt5-qwt630         Build with Qt5 + Qwt6.3.0"
+      echo "  --qt5-qwt616         Build with Qt5 + Qwt6.1.6 [Linux only]"
+      echo "  --qt5-qwt630         Build with Qt5 + Qwt6.3.0 [Linux only]"
       echo "  --arch x64           Target x64 architecture [default: auto-detect]"
       echo "  --arch arm64         Target ARM64 architecture"
       echo "  --vcpkg-root <path>  Path to vcpkg installation"
@@ -94,7 +94,7 @@ while [[ $# -gt 0 ]]; do
       echo "EXAMPLES:"
       echo "  $0                        # Build only"
       echo "  $0 TEST                   # Build with TEST profile"
-      echo "  $0 --qt5-qwt616           # Build Qt5+Qwt6.1.6"
+      echo "  $0 --qt5-qwt616           # Build Qt5+Qwt6.1.6 (Linux only)"
       echo "  $0 --rebuild              # Wipe build dir, rebuild UltraScan only"
       echo "  $0 --clean                # Full dep reinstall (after vcpkg.json changes)"
       echo "  $0 --clean --purge-cache  # Nuke everything, recompile deps from source"
@@ -200,6 +200,15 @@ echo "Platform               : $PLATFORM ($ARCH)"
 echo "Configure preset       : $CONFIGURE_PRESET"
 echo "Build preset           : $BUILD_PRESET"
 echo ""
+
+# Qt5 is not supported on macOS — the vcpkg qt5-base port does not install
+# headers correctly on macOS. Use --qt6 for macOS builds.
+if [ "$PLATFORM" = "macOS" ] && [[ "$QT_VARIANT" == qt5* ]]; then
+  echo "ERROR: Qt5 builds are not supported on macOS."
+  echo "  The vcpkg qt5-base port does not correctly install headers on macOS."
+  echo "  Use --qt6 instead:  $0 --qt6"
+  exit 1
+fi
 
 # =============================================================================
 # DETERMINE BUILD PARALLELISM
@@ -468,22 +477,31 @@ _remove_vcpkg_triplet() {
     rm -rf "$US3_VCPKG_ROOT/buildtrees"
   fi
 
-  # Always wipe the vcpkg bookkeeping directory (status file, .list files,
-  # pending updates) when doing a clean. This is safe: it only tracks what is
-  # in THIS installed/ tree and vcpkg regenerates it on the next install.
-  # Must be done unconditionally -- stale 'half-installed' status entries
-  # survive even when the triplet dir was removed by a prior clean, causing
-  # vcpkg to fail reading pkgconfig files that no longer exist on the next run.
+  # Remove only packages belonging to the selected Qt variant
+  # so Qt5 and Qt6 installs don't clobber each other in the shared triplet.
+  case "$QT_VARIANT" in
+    qt6)
+      local _qt_pattern="qt6|qtbase|qttools|qtsvg|qtmultimedia|qwt-6-3-0-qt6|qwtplot3d-qwt-6-3-0-qt6|litehtml"
+      ;;
+    qt5-qwt616)
+      local _qt_pattern="qt5|qwt-6-1-6|qwtplot3d-qwt-6-1-6"
+      ;;
+    qt5-qwt630)
+      local _qt_pattern="qt5|qwt-6-3-0-qt5|qwtplot3d-qwt-6-3-0-qt5"
+      ;;
+  esac
+
+  echo "Removing vcpkg packages matching Qt variant: $QT_VARIANT"
+  # Get list of installed packages for this triplet matching the Qt variant
+  "$US3_VCPKG_ROOT/vcpkg" list --triplet "$triplet" 2>/dev/null | \
+    grep -E "^(${_qt_pattern}):" | \
+    awk -F: '{print $1}' | \
+    xargs -I{} "$US3_VCPKG_ROOT/vcpkg" remove {}:"$triplet" --recurse 2>/dev/null || true
+
+  # Wipe vcpkg bookkeeping so status is consistent
   if [ -d "$US3_VCPKG_ROOT/installed/vcpkg" ]; then
     echo "Removing vcpkg installed/vcpkg bookkeeping (will be regenerated)..."
     rm -rf "$US3_VCPKG_ROOT/installed/vcpkg"
-  fi
-
-  if [ -d "$US3_VCPKG_ROOT/installed/$triplet" ]; then
-    echo "Removing vcpkg installed packages for triplet: $triplet"
-    rm -rf "$US3_VCPKG_ROOT/installed/$triplet"
-  else
-    echo "vcpkg installed/$triplet does not exist -- nothing to remove"
   fi
 }
 
@@ -663,6 +681,51 @@ if [ "$NON_INTERACTIVE" = false ]; then
   echo "Grab a coffee if this is your first build!"
 fi
 echo ""
+
+# =============================================================================
+# Qt6 macOS .prl/.pri X11R6 fixup
+# vcpkg's Qt6 port bakes /usr/X11R6/lib into .prl and .pri files on macOS.
+# This path does not exist and causes qwt link failures. Scrub it here so
+# the fix applies whether Qt6 was just installed (--clean) or pre-existing.
+# =============================================================================
+if [ "$PLATFORM" = "macOS" ] && [ "$QT_VARIANT" = "qt6" ]; then
+  _triplet=$(_derive_triplet)
+  _static_triplet="${_triplet%-dynamic}"
+  _needs_fix=false
+
+  while IFS= read -r -d '' _f; do
+    grep -q 'X11R6' "$_f" 2>/dev/null && _needs_fix=true && break
+  done < <(find \
+    "$US3_VCPKG_ROOT/installed/${_triplet}/lib" \
+    "$US3_VCPKG_ROOT/installed/${_static_triplet}/lib" \
+    -maxdepth 1 -name '*.prl' -print0 2>/dev/null)
+
+  if [ "$_needs_fix" = false ]; then
+    for _pri in \
+      "$US3_VCPKG_ROOT/installed/${_triplet}/share/Qt6/mkspecs/modules/qt_lib_gui_private.pri" \
+      "$US3_VCPKG_ROOT/installed/${_static_triplet}/share/Qt6/mkspecs/modules/qt_lib_gui_private.pri"
+    do
+      [ -f "$_pri" ] && grep -q 'X11R6' "$_pri" 2>/dev/null && _needs_fix=true && break
+    done
+  fi
+
+  if [ "$_needs_fix" = true ]; then
+    echo "Fixing Qt6 .prl/.pri files: removing invalid /usr/X11R6/lib path..."
+    while IFS= read -r -d '' _f; do
+      sed -i '' 's| /usr/X11R6/lib||g; s|;/usr/X11R6/lib||g' "$_f"
+    done < <(find \
+      "$US3_VCPKG_ROOT/installed/${_triplet}/lib" \
+      "$US3_VCPKG_ROOT/installed/${_static_triplet}/lib" \
+      -maxdepth 1 -name '*.prl' -print0 2>/dev/null)
+    for _pri in \
+      "$US3_VCPKG_ROOT/installed/${_triplet}/share/Qt6/mkspecs/modules/qt_lib_gui_private.pri" \
+      "$US3_VCPKG_ROOT/installed/${_static_triplet}/share/Qt6/mkspecs/modules/qt_lib_gui_private.pri"
+    do
+      [ -f "$_pri" ] && sed -i '' 's|QMAKE_LIBS_OPENGL = /usr/X11R6/lib|QMAKE_LIBS_OPENGL =|g' "$_pri"
+    done
+    echo "Qt6 X11R6 fixup complete."
+  fi
+fi
 
 # =============================================================================
 # CONFIGURE AND BUILD

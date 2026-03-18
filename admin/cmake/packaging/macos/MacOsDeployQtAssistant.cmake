@@ -140,6 +140,15 @@ if(DEFINED MACDEPLOYQT AND EXISTS "${MACDEPLOYQT}")
     file(REMOVE_RECURSE "${DEST_APP}/Contents/PlugIns")
     file(REMOVE_RECURSE "${DEST_APP}/Contents/Resources/qt.conf")
 
+    # Strip the broken vcpkg build-tree rpath (@loader_path/../../../../../../lib)
+    # before macdeployqt runs, so dyld doesn't try it first at runtime and fail.
+    execute_process(
+        COMMAND install_name_tool
+            -delete_rpath "@loader_path/../../../../../../lib"
+            "${DST_BIN}"
+        ERROR_QUIET
+    )
+
     execute_process(
             COMMAND "${MACDEPLOYQT}" "${DEST_APP}" -always-overwrite -verbose=1
             RESULT_VARIABLE _MDQ_RC
@@ -249,6 +258,22 @@ else()
     if(DEFINED QSQLITE_PLUGIN AND EXISTS "${QSQLITE_PLUGIN}")
         file(MAKE_DIRECTORY "${DEST_APP}/Contents/PlugIns/sqldrivers")
         file(COPY "${QSQLITE_PLUGIN}" DESTINATION "${DEST_APP}/Contents/PlugIns/sqldrivers")
+    endif()
+
+    # Copy platform plugin so Assistant can find libqcocoa at runtime
+    if(DEFINED QT_LIB_DIR AND QT_LIB_DIR)
+        foreach(_plat_dir IN ITEMS
+                "${QT_LIB_DIR}/../plugins/platforms"
+                "${QT_LIB_DIR}/../Qt5/plugins/platforms"
+                "${QT_LIB_DIR}/../Qt6/plugins/platforms")
+            if(EXISTS "${_plat_dir}/libqcocoa.dylib")
+                file(MAKE_DIRECTORY "${DEST_APP}/Contents/PlugIns/platforms")
+                file(COPY "${_plat_dir}/libqcocoa.dylib"
+                        DESTINATION "${DEST_APP}/Contents/PlugIns/platforms")
+                message(STATUS "StageAssistant: staged libqcocoa from ${_plat_dir}")
+                break()
+            endif()
+        endforeach()
     endif()
 endif()
 

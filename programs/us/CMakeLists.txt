@@ -123,3 +123,39 @@ if(WIN32 AND QHELPGENERATOR_EXECUTABLE AND WIN_ASSISTANT_SOURCE AND WINDEPLOYQT)
             VERBATIM
     )
 endif()
+
+# =============================================================================
+# macOS developer build: stage Assistant.app into bin/ with a qt.conf that
+# points at the vcpkg plugins directory so libqcocoa.dylib is found at runtime.
+# This is the dev-build equivalent of the --pkg MacDeploy staging path.
+# =============================================================================
+if(APPLE AND USE_QT6)
+    set(_VCPKG_ASSISTANT
+        "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/tools/qttools/bin/Assistant.app")
+
+    set(_VCPKG_QT6_PLUGINS
+        "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/Qt6/plugins")
+    if(NOT EXISTS "${_VCPKG_QT6_PLUGINS}")
+        set(_VCPKG_QT6_PLUGINS
+            "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/plugins")
+    endif()
+
+    set(_VCPKG_QT6_LIB "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/lib")
+
+    if(EXISTS "${_VCPKG_ASSISTANT}/Contents/MacOS/Assistant")
+        # TARGET_FILE_DIR:us = .../bin/us.app/Contents/MacOS
+        # ../../..           = .../bin/
+        add_custom_command(TARGET us POST_BUILD
+            COMMAND "${CMAKE_COMMAND}"
+                -DASSISTANT_SRC=${_VCPKG_ASSISTANT}
+                "-DBIN_DIR=$<TARGET_FILE_DIR:us>/../../.."
+                -DQT6_PLUGINS_DIR=${_VCPKG_QT6_PLUGINS}
+                -DQT6_LIB_DIR=${_VCPKG_QT6_LIB}
+                -P "${CMAKE_SOURCE_DIR}/admin/cmake/packaging/macos/StageAssistantDev.cmake"
+            COMMENT "Staging Qt Assistant.app for developer build"
+            VERBATIM
+        )
+    else()
+        message(STATUS "Qt Assistant.app not found at ${_VCPKG_ASSISTANT} -- Help will not work until qttools[assistant] is installed")
+    endif()
+endif()
