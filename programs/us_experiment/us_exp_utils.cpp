@@ -486,6 +486,7 @@ void US_ExperimentMain::set_tabs_buttons_readonly_dataDisk( bool readonly )
       {
 	allCBoxes[i]->setEnabled(!readonly);
       }
+      
       for ( int i = 0; i < allSBoxes.count(); i++ )
          allSBoxes[i]->setEnabled(!readonly);
       for ( int i = 0; i < allCounters.count(); i++ )
@@ -2208,6 +2209,27 @@ DbgLv(1) << "EGCe:inP: kused" << kused << "nused" << nused;
    // //TEST
    // if ( rpRotor->importData )
    //   init_cells_data_import();
+
+   //Set enabled used cells centerpieces if dataDisk, disallow empty
+   if( rpRotor->importData && !rpRotor->importDataDisk.isEmpty() )
+     {
+       QStringList ucells_onames;
+       for (int i=0; i<rpCells->nused; ++i )
+	 {
+	   QString obj_name_ucell = QString::number(i) + ": centerpiece";
+	   qDebug() << "Used Cells: oname, cell_n -- "  << obj_name_ucell << rpCells->used[i].cell;
+	   ucells_onames << obj_name_ucell;
+	 }
+       for (int i=0; i<cc_cenps.size(); ++i )
+	 {
+	   if ( ucells_onames.contains(cc_cenps[ i ]->objectName()) )
+	     {
+	       qDebug() << "Enabling ucell -- " << ucells_onames;
+	       cc_cenps[ i ]->setEnabled(true); 
+	     }
+	 }
+     }
+   
 }
 
 // void US_ExperGuiCells::init_cells_data_import()
