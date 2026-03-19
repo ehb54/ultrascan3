@@ -2213,18 +2213,19 @@ DbgLv(1) << "EGCe:inP: kused" << kused << "nused" << nused;
    //Set enabled used cells centerpieces if dataDisk, disallow empty
    if( rpRotor->importData && !rpRotor->importDataDisk.isEmpty() )
      {
-       QStringList ucells_onames;
+       QStringList ucells;
        for (int i=0; i<rpCells->nused; ++i )
 	 {
-	   QString obj_name_ucell = QString::number(i) + ": centerpiece";
-	   qDebug() << "Used Cells: oname, cell_n -- "  << obj_name_ucell << rpCells->used[i].cell;
-	   ucells_onames << obj_name_ucell;
+	   qDebug() << "Used Cells: oname, cell_n -- "  << rpCells->used[i].cell;
+	   ucells << QString::number(rpCells->used[i].cell);
 	 }
        for (int i=0; i<cc_cenps.size(); ++i )
 	 {
-	   if ( ucells_onames.contains(cc_cenps[ i ]->objectName()) )
+	   QString cent_oname      = cc_cenps[ i ]->objectName();
+	   QString cent_oname_cell = cent_oname.split(":")[0].trimmed();
+	   if ( ucells.contains( cent_oname_cell) )
 	     {
-	       qDebug() << "Enabling ucell -- " << ucells_onames;
+	       qDebug() << "Enabling ucell -- " << cent_oname;
 	       cc_cenps[ i ]->setEnabled(true); 
 	     }
 	 }
