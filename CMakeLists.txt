@@ -810,7 +810,8 @@ endif()
 # SUBDIRECTORIES
 # =============================================================================
 add_subdirectory(utils)
-if(NOT US3_PROFILE STREQUAL "HPC")
+
+if(BUILD_DOCUMENTATION AND NOT US3_PROFILE STREQUAL "HPC")
     add_subdirectory(doc/manual)
 endif()
 

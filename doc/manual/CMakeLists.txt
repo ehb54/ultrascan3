@@ -1,12 +1,6 @@
 # UltraScan III Documentation Build (Sphinx)
 cmake_minimum_required(VERSION 3.10)
 
-option(BUILD_DOCUMENTATION "Build Sphinx documentation" ON)
-if(NOT BUILD_DOCUMENTATION)
-    message(STATUS "Documentation build skipped (BUILD_DOCUMENTATION=OFF)")
-    return()
-endif()
-
 # ---------------------------------------------------------------------------
 # Find required tools
 # ---------------------------------------------------------------------------
