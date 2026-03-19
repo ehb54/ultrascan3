@@ -2223,7 +2223,8 @@ DbgLv(1) << "EGCe:inP: kused" << kused << "nused" << nused;
 	 {
 	   QString cent_oname      = cc_cenps[ i ]->objectName();
 	   QString cent_oname_cell = cent_oname.split(":")[0].trimmed();
-	   if ( ucells.contains( cent_oname_cell) )
+	   int cent_cell_n = cent_oname_cell.toInt() + 1;
+	   if ( ucells.contains( QString::number(cent_cell_n) ) )
 	     {
 	       qDebug() << "Enabling ucell -- " << cent_oname;
 	       cc_cenps[ i ]->setEnabled(true); 
