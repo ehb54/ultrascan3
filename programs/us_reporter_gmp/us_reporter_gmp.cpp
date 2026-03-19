@@ -8656,7 +8656,7 @@ QString US_ReporterGMP::calc_replicates_averages( void )
        
        -- Iterate over ReportItems in ref_report.reportItems; 
        -- For each unique ReportItem, identify type-method, ranges, int.value;
-       -- Retrive earlier processed (in ::distrib_info() ) integration results for subgroup triples && AVERAGE
+       -- Retrieve earlier processed (in ::distrib_info() ) integration results for subgroup triples && AVERAGE
 
        -- BEFORE: in ::distrib_info() STORE integration results into respective reportItem[ kk ]. { integration_val_sim; ...}
 
@@ -8766,15 +8766,33 @@ QString US_ReporterGMP::calc_replicates_averages( void )
 	      double frac_tot_m_av = replicate_g_results["tot_percent_av"];
 	      QString tot_av_frac_passed = ( frac_tot_m_av >= ( frac_tot_r * (1 - frac_tot_tol_r/100.0)  )
 					     && frac_tot_m_av <= ( frac_tot_r * (1 + frac_tot_tol_r/100.0)  ) ) ? "YES" : "NO";
+
+	      //descide if we show std deviations
+	      int num_triples_in_subgroup = replicate_subgroup_triples.split(",").size();
+	      qDebug() << "triples_list, num_triples_in_subgroup, replicate_g_results[\"int_st_dev\"], "
+	      	       << "replicate_g_results[\"tot_percent_st_dev\"] -- "
+	      	       << replicate_subgroup_triples << num_triples_in_subgroup << replicate_g_results["int_st_dev"]
+	      	       << replicate_g_results["tot_percent_st_dev"];
+	      
+	      QString int_std_dev     = "N/A";
+	      QString percent_std_dev = "N/A";
+	      if ( num_triples_in_subgroup > 1 )
+		{
+		  int_std_dev     = QString("%1").arg(replicate_g_results["int_st_dev"], 10, 'e', 2);
+		  percent_std_dev = QString("%1%").arg(replicate_g_results["tot_percent_st_dev"], 0, 'f', 2);
+		}
+	      qDebug() << "int_std_dev, percent_std_dev -- " << int_std_dev << percent_std_dev;
 	      
 	      html_str_replicate_av += table_row( type,
 						  method,
 						  range,
 						  QString::asprintf( "%10.4e",  replicate_g_results["int_av"] ) + " (" + int_val_r + ")",
-						  QString::asprintf( "%10.2e",  replicate_g_results["int_st_dev"] ),
+						  //QString::asprintf( "%10.2e",  int_std_dev ),
+						  int_std_dev,
 						  QString::asprintf( "%5.2f%%", replicate_g_results["tot_percent_av"] ) +
 						                                   " (" + QString::asprintf( "%5.2f%%", frac_tot_r ) + ")",
-						  QString::asprintf( "%5.2f%%",  replicate_g_results["tot_percent_st_dev"] ),
+						  //QString::asprintf( "%5.2f%%",  percent_std_dev ),
+						  percent_std_dev,
 						  QString::number( frac_tot_tol_r ),
 						  tot_av_frac_passed
 						  );

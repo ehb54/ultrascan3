@@ -2,31 +2,9 @@
 #ifndef US_SPECTRUM_H
 #define US_SPECTRUM_H
 
-#include "us_widgets.h"
 #include "us_plot.h"
-#include "us_math2.h"
-#include "us_help.h"
-#include <math.h>
-
-/**
- * @struct WavelengthProfile
- * @brief Structure to hold wavelength profile data.
- */
-struct WavelengthProfile
-{
-    QVector<double> extinction;   //!< Extinction coefficients
-    QVector<double> wvl;          //!< Wavelength values
-    QwtPlotCurve* matchingCurve;  //!< Matching plot curve
-    unsigned int lambda_scale;    //!< Lambda scale
-    unsigned int lambda_min;      //!< Minimum lambda
-    unsigned int lambda_max;      //!< Maximum lambda
-    float scale;                  //!< Scale factor
-    float amplitude;              //!< Amplitude
-    QString filename;             //!< Filename
-    QString header;               //!< Column header
-    float nnls_factor;            //!< NNLS factor
-    float nnls_percentage;        //!< NNLS percentage
-};
+#include "us_widgets.h"
+#include <QFileInfo>
 
 /**
  * @class US_Spectrum
@@ -36,138 +14,163 @@ class US_Spectrum : public US_Widgets
 {
     Q_OBJECT
 
-    public:
-        /**
-         * @brief Constructor for US_Spectrum.
-         */
-        US_Spectrum();
-        int basisIndex;               //!< Index of the basis
-        QString current_path;         //!< Current path
+  public:
+    /**
+     * @brief Constructor for US_Spectrum.
+     */
+    US_Spectrum();
 
-    private:
-        QVector <double> residuals;   //!< residual vector
-        US_Help showHelp;             //!< US_Help
-        QwtPlot* data_plot;           //!< Data plot
-        QwtPlot* residuals_plot;      //!< Residuals plot
-        US_Plot* plotLayout1;         //!< Plot layout 1
-        US_Plot* plotLayout2;         //!< Plot layout 2
-        WavelengthProfile w_target;   //!< Target wavelength profile
-        QVector<WavelengthProfile> v_basis; //!< Vector of basis wavelength profiles
-        QwtPlotCurve* solution_curve; //!< Solution curve
-        QwtPlotPicker* pick;          //!< Plot picker
-        WavelengthProfile w_solution; //!< Solution wavelength profile
-
-        QPushButton* pb_load_target;  //!< Load target button
-        QPushButton* pb_load_basis;   //!< Load basis button
-        QPushButton* pb_load_fit;     //!< Load fit button
-        QPushButton* pb_fit;          //!< Fit button
-        QPushButton* pb_find_angles;  //!< Find angles button
-        QPushButton* pb_help;         //!< Help button
-        QPushButton* pb_save;         //!< Save button
-        QPushButton* pb_overlap;      //!< Overlap button
-        QPushButton* pb_close;        //!< Close button
-        QPushButton* pb_reset_basis;  //!< Reset basis button
-        QPushButton* pb_delete;       //!< Delete button
-        QPushButton* pb_find_angle;   //!< Find angle button
-        QPushButton* pb_find_extinction; //!< Find extinction button
-
-        QListWidget* lw_target;       //!< Target list widget
-        QListWidget* lw_basis;        //!< Basis list widget
-        QLabel* lbl_wavelength;       //!< Wavelength label
-        QLabel* lbl_extinction;       //!< Extinction label
-        QLineEdit* le_angle;          //!< Angle line edit
-        QLineEdit* le_wavelength;     //!< Wavelength line edit
-        QLineEdit* le_extinction;     //!< Extinction line edit
-        QLineEdit* le_rmsd;           //!< RMSD line edit
-
-        QLabel* lbl_wvlinfo;          //!< Wavelength info label
-        QLabel* lbl_correlation;      //!< Correlation label
-        QLabel* lbl_fit;              //!< Fit label
-        QLabel* lbl_rmsd;             //!< RMSD label
-        QLabel* lbl_angle;            //!< Angle label
-        QLabel* lbl_load_save;        //!< Load/Save label
-
-        QComboBox* cb_angle_one;      //!< Angle one combo box
-        QComboBox* cb_angle_two;      //!< Angle two combo box
-        QComboBox* cb_spectrum_type;  //!< Spectrum type combo box
-
-    private slots:
-                /**
-                 * @brief Slot to load basis data.
-                 */
-                void load_basis();
+  private:
+    /**
+     * @class US_Spectrum::DataProfile
+     * @brief The DataProfile class provides a data structure for the basis and target spectra.
+     */
+    class DataProfile
+    {
+      public:
+        QFileInfo finfo;                   //!< Filename
+        QString header;                    //!< Column header
+        QVector<double> lambda;            //!< Wavelength values
+        QVector<double> od;                //!< Extinction coefficients
+        QVector<double> xvec;              //!< Trimmed lambda vector
+        QVector<double> yvec;              //!< Trimmed Extinction coefficients vector
+        float nnls_factor = -1;            //!< NNLS factor
+        float nnls_percent = -1;           //!< NNLS percentage
+        bool highlight = false;
 
         /**
-         * @brief Slot to plot basis data.
+         * @brief Clear fit data.
          */
-        void plot_basis();
+        void clear_fit();
+    };
 
-        /**
-         * @brief Slot to load target data.
-         */
-        void load_target();
+    double wavl_min;                       //!< Minimum wavelength to fit
+    double wavl_max;                       //!< Maximum wavelength to fit
+    QString current_path;                  //!< Current path
+    QList<DataProfile> basis_list;         //!< Basis spectra array
+    DataProfile target;                    //!< Target profile
+    QVector<double> solution;              //!< Fitted data
+    QVector<double> residual;              //!< Residual data
+    QVector<QwtPlotCurve *> basis_curves;  //!< Basis plot curves
 
-        /**
-         * @brief Slot to plot target data.
-         */
-        void plot_target();
+    QwtPlot *data_plot;                    //!< Data plot
+    QwtPlot *error_plot;                   //!< Residuals plot
+             
+    QTableWidget *tw_basis;                //!< Basis list widget
+             
+    QLineEdit *le_tgt_fname;               //!< Target filename
+    QLineEdit *le_tgt_header;              //!< Target header
+    QLineEdit *le_tgt_wavl;                //!< Wavelength range of the target spectrum
+    QLineEdit *le_wavl_min;                //!< Input minimum wavelength to fit
+    QLineEdit *le_wavl_max;                //!< Input maximum wavelength to fit
+    QLineEdit *le_angle;                   //!< Correlation angle value
+    QLineEdit *le_rmsd;                    //!< RMSD value
+             
+    QComboBox *cb_basis_1;                 //!< The first Basis selector for correlation angle
+    QComboBox *cb_basis_2;                 //!< The second Basis selector for correlation angle
 
-        /**
-         * @brief Slot to handle new values from plot picker.
-         * @param point The point picked
-         */
-        void new_value(const QPointF& point);
+    QCheckBox *chkb_db_target;             //!< Checkbox to load the target from DB
+    QCheckBox *chkb_db_basis;              //!< Checkbox to load the basis from DB    
 
-        /**
-         * @brief Slot to find extinction coefficients.
-         */
-        void findExtinction();
+    /**
+     * @brief Plot data.
+     */
+    void plot();
 
-        /**
-         * @brief Slot to fit the data.
-         */
-        void fit();
+    /**
+     * @brief Clear plot data.
+     */
+    void clear_plot();
 
-        /**
-         * @brief Slot to delete the current basis data.
-         */
-        void deleteCurrent();
+    /**
+     * @brief Clear fitted data.
+     */
+    void clear_fit();
 
-        /**
-         * @brief Delete the current basis curve.
-         * @return True if successful, false otherwise
-         */
-        bool deleteBasisCurve(void);
+    /**
+     * @brief Populate the list of the basis spectra.
+     */
+    void fill_table();
 
-        /**
-         * @brief Slot to reset the basis data.
-         */
-        void resetBasis();
+    /**
+     * @brief Populate the combo list for correlation angle of the basis spectra.
+     */
+    void fill_combo();
 
-        /**
-         * @brief Slot to find angles.
-         */
-        void findAngles();
+    /**
+     * @brief Hightlight the checked basis spectra.
+     */
+    void highlight();
 
-        /**
-         * @brief Slot to save the results.
-         */
-        void save();
+    /**
+     * @brief Find overlap region between the target and basis spectra.
+     */
+    void overlap();
 
-        /**
-         * @brief Slot to load saved results.
-         */
-        void load();
+    /**
+     * @brief Check if the wavelenght is found the basis
+     */
+    bool find_lambda(const DataProfile &, const double, int &);
 
-        /**
-         * @brief Slot to overlap the plots.
-         */
-        void overlap();
+    /**
+     * @brief Remove the basis from the list.
+     */
+    void delete_basis(int);
 
-        /**
-         * @brief Slot to open help.
-         */
-        void help();
+    /**
+     * @brief Returns the indices to sort the given array.
+     */
+    QVector<int> argsort(const QVector<double> &);
+
+    /**
+     * @brief Sort an array by given indices.
+     */
+    void sort(const QVector<int> &, QVector<double> &);
+
+  private slots:
+    /**
+     * @brief Slot to check the table item edited.
+     */
+    void basis_checked(QTableWidgetItem *);
+    /**
+     * @brief Slot to load basis data.
+     */
+    void load_basis();
+
+    /**
+     * @brief Slot to load target data.
+     */
+    void load_target();
+
+    /**
+     * @brief Minimum wavelength updated.
+     */
+    void min_wavl_updated();
+
+    /**
+     * @brief Maximum wavelength updated.
+     */
+    void max_wavl_updated();
+
+    /**
+     * @brief Slot to fit the data.
+     */
+    void fit();
+
+    /**
+     * @brief Slot to reset the basis data.
+     */
+    void reset();
+
+    /**
+     * @brief Slot to find angles.
+     */
+    void find_angle();
+
+    /**
+     * @brief Slot to save the results.
+     */
+    void save();
 };
 
 #endif
