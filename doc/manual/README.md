@@ -71,12 +71,10 @@ system default as of Ventura/Sonoma):
 export PATH="$HOME/Library/Python/3.9/bin:$PATH"
 ```
 
-Add that line to `~/.zshrc` to make it permanent:
+Add that line to `~/.bash_profile` to make it permanent:
 
-```bash
-echo 'export PATH="$HOME/Library/Python/3.9/bin:$PATH"' >> ~/.zshrc
-source ~/.zshrc
-```
+echo '...' >> ~/.bash_profile
+source ~/.bash_profile
 
 Verify it worked:
 

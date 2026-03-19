@@ -162,6 +162,7 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/admin/cmake")
 option(US3_NO_DB "Build without database support (for supercomputer backends)" OFF)
 option(US3_BUILD_PROGRAMS "Build application programs" ON)
 option(USE_QT6 "Use Qt6 instead of Qt5" OFF)
+option(BUILD_DOCUMENTATION "Build Sphinx documentation" ON)
 
 # High-level profile to make builds scriptable:
 #   APP  = desktop/user build (GUI + programs + DB)
@@ -180,20 +181,22 @@ if(US3_PROFILE STREQUAL "APP")
     set(US3_BUILD_PROGRAMS ON CACHE BOOL "" FORCE)
     set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
     set(US3_PREFER_STATIC OFF CACHE BOOL "" FORCE)
+    set(BUILD_DOCUMENTATION ON CACHE BOOL "" FORCE)
 
 elseif(US3_PROFILE STREQUAL "TEST")
     set(US3_NO_DB OFF CACHE BOOL "" FORCE)
     set(US3_BUILD_PROGRAMS OFF CACHE BOOL "" FORCE)
     set(BUILD_TESTING ON CACHE BOOL "" FORCE)
     set(US3_PREFER_STATIC ON CACHE BOOL "" FORCE)
+    set(BUILD_DOCUMENTATION OFF CACHE BOOL "" FORCE)
 
 elseif(US3_PROFILE STREQUAL "HPC")
     set(US3_NO_DB ON CACHE BOOL "" FORCE)
     set(US3_BUILD_PROGRAMS ON CACHE BOOL "" FORCE)  # us_mpi_analysis is built
     set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
     set(US3_PREFER_STATIC ON CACHE BOOL "" FORCE)
+    set(BUILD_DOCUMENTATION OFF CACHE BOOL "" FORCE)
 endif()
-
 
 # Configuration-based definitions
 if(US3_NO_DB)
@@ -876,8 +879,8 @@ if(APPLE AND US3_BUILD_PROGRAMS AND NOT US3_PROFILE STREQUAL "HPC")
         string(REPLACE "-dynamic" "" _STATIC_TRIPLET "${VCPKG_TARGET_TRIPLET}")
         set(_VCPKG_TOOLS_STA "${VCPKG_INSTALLED_DIR}/${_STATIC_TRIPLET}/tools/Qt6/bin")
         # Also check qt5 tools subdir for Qt5 builds
-        set(_VCPKG_TOOLS_DYN5 "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/tools/qttools/bin")
-        set(_VCPKG_TOOLS_STA5 "${VCPKG_INSTALLED_DIR}/${_STATIC_TRIPLET}/tools/qttools/bin")
+        set(_VCPKG_TOOLS_DYN5 "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/tools/qt5-tools/bin")
+        set(_VCPKG_TOOLS_STA5 "${VCPKG_INSTALLED_DIR}/${_STATIC_TRIPLET}/tools/qt5-tools/bin")
     else()
         set(_VCPKG_TOOLS_DYN "")
         set(_VCPKG_TOOLS_STA "")
@@ -1165,7 +1168,7 @@ if(WIN32 AND US3_BUILD_PROGRAMS)
     # -------------------------------------------------------------------------
     if(DEFINED VCPKG_INSTALLED_DIR AND DEFINED VCPKG_TARGET_TRIPLET)
         set(_WIN_VCPKG_TOOLS_DYN  "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/tools/Qt6/bin")
-        set(_WIN_VCPKG_TOOLS_STA5 "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/tools/qttools/bin")
+        set(_WIN_VCPKG_TOOLS_STA5 "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/tools/qt5-tools/bin")
         string(REPLACE "-dynamic" "" _WIN_STATIC_TRIPLET "${VCPKG_TARGET_TRIPLET}")
         set(_WIN_VCPKG_TOOLS_STA  "${VCPKG_INSTALLED_DIR}/${_WIN_STATIC_TRIPLET}/tools/Qt6/bin")
     else()

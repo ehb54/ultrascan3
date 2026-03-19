@@ -67,38 +67,16 @@ if(APPLE)
         )
 endif()
 
-if(WIN32)
-    find_program(WINDEPLOYQT windeployqt
-        HINTS
-            "${CMAKE_PREFIX_PATH}/bin"
-            "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/tools/qttools/bin"
-            "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/tools/Qt6/bin"
-    )
-endif()
-
-# qt6 needs a bit post build things for it to work properly
 if(WIN32 AND USE_QT6)
     file(TO_CMAKE_PATH "${VCPKG_INSTALLED_DIR}" CLEAN_VCPKG_INSTALLED_DIR)
     file(GENERATE
-        OUTPUT "$<TARGET_FILE_DIR:us>/qt.conf"
-        CONTENT "[Paths]\nPlugins=${CLEAN_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/debug/Qt6/plugins\n"
-        CONDITION "$<CONFIG:Debug>"
+            OUTPUT "$<TARGET_FILE_DIR:us>/qt.conf"
+            CONTENT "[Paths]\nPlugins=${CLEAN_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/debug/Qt6/plugins\n"
+            CONDITION "$<CONFIG:Debug>"
     )
-    if(TARGET Qt6::windeployqt)
-        set(WINDEPLOYQT_CMD "$<TARGET_FILE:Qt6::windeployqt>")
-    else()
-        find_program(WINDEPLOYQT windeployqt
-                HINTS
-                ${Qt6Core_DIR}/../../../bin
-                ${CMAKE_PREFIX_PATH}
-                "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/tools/Qt6/bin"
-                PATH_SUFFIXES bin
-        )
-        set(WINDEPLOYQT_CMD "${WINDEPLOYQT}")
-    endif()
-    if(WINDEPLOYQT_CMD)
+    if(WINDEPLOYQT_EXECUTABLE)
         add_custom_command(TARGET us POST_BUILD
-                COMMAND $<$<NOT:$<CONFIG:Debug>>:${WINDEPLOYQT_CMD}>
+                COMMAND $<$<NOT:$<CONFIG:Debug>>:${WINDEPLOYQT_EXECUTABLE}>
                 $<$<NOT:$<CONFIG:Debug>>:--no-translations>
                 $<$<NOT:$<CONFIG:Debug>>:--ignore-library-errors>
                 $<$<NOT:$<CONFIG:Debug>>:--release>
@@ -109,14 +87,14 @@ if(WIN32 AND USE_QT6)
     endif()
 endif()
 
-if(WIN32 AND QHELPGENERATOR_EXECUTABLE AND WIN_ASSISTANT_SOURCE AND WINDEPLOYQT)
+if(WIN32 AND QHELPGENERATOR_EXECUTABLE AND WIN_ASSISTANT_SOURCE AND WINDEPLOYQT_EXECUTABLE)
     add_custom_command(TARGET us POST_BUILD
             COMMAND "${CMAKE_COMMAND}"
             -DDOC_QCH_STAGE=${DOC_QCH_STAGE}
             -DDOC_QHC_STAGE=${DOC_QHC_STAGE}
             -DDOC_OUTPUT_DIR=${DOC_OUTPUT_DIR}
             -DASSISTANT_SOURCE=${WIN_ASSISTANT_SOURCE}
-            -DWINDEPLOYQT=${WINDEPLOYQT}
+            -DWINDEPLOYQT=${WINDEPLOYQT_EXECUTABLE}
             -DVCPKG_RUNTIME_BIN_DIR=${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin
             -P "${CMAKE_SOURCE_DIR}/admin/cmake/packaging/windows/WindowsDeployQtAssistant.cmake"
             COMMENT "Staging Qt Assistant and help files into bin/"
@@ -143,8 +121,6 @@ if(APPLE AND USE_QT6)
     set(_VCPKG_QT6_LIB "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/lib")
 
     if(EXISTS "${_VCPKG_ASSISTANT}/Contents/MacOS/Assistant")
-        # TARGET_FILE_DIR:us = .../bin/us.app/Contents/MacOS
-        # ../../..           = .../bin/
         add_custom_command(TARGET us POST_BUILD
             COMMAND "${CMAKE_COMMAND}"
                 -DASSISTANT_SRC=${_VCPKG_ASSISTANT}

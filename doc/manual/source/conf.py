@@ -47,9 +47,9 @@ def setup(app):
 
 project = 'UltraScan III'
 author = (
-    "Emre Brookes, Borries Demeler, Bruce Dubbs, "
-    "Haben Gabir, Gary Gorbet, Saeed Mortezazadeh, "
-    "Alexey Savelyev, and Dan Zollars"
+    "Borries Demeler, Emre Brookes, Lukas Dobler, "
+    "Alexey Savelyev, Saeed Mortezazadeh, Gary Gorbet, "
+    "and Haben Gabir"
 )
 
 copyright = f"{datetime.datetime.now().year}, AUC Solutions LLC"
@@ -116,7 +116,7 @@ html_static_path = ['_static']
 html_extra_path = ['images']
 
 html_css_files = [
-    'custom.css',
+    'css/custom.css',
 ]
 
 # ---------------------------------------------------------------------------

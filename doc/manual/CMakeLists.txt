@@ -11,7 +11,11 @@ endif()
 # Find required tools
 # ---------------------------------------------------------------------------
 find_program(SPHINX_EXECUTABLE NAMES sphinx-build
-        DOC "Sphinx documentation builder")
+    HINTS "${PROJECT_SOURCE_DIR}/venv/bin" # Check local virtual environment first
+    "${PROJECT_SOURCE_DIR}/venv/Scripts" # Windows virtual environment
+    "${PROJECT_SOURCE_DIR}/.venv/Scripts" # Alternative virtual environment location
+    "${PROJECT_SOURCE_DIR}/.venv/bin"
+    DOC "Sphinx documentation builder")
 
 # qhelpgenerator ships with Qt tools (qttools for Qt6, qt5-tools for Qt5).
 # Build a list of candidate hint paths that work regardless of where vcpkg
