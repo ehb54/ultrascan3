@@ -2226,12 +2226,18 @@ DbgLv(1) << "EGCe:inP: kused" << kused << "nused" << nused;
 	   int cent_cell_n = cent_oname_cell.toInt() + 1;
 	   if ( ucells.contains( QString::number(cent_cell_n) ) )
 	     {
+	       qDebug() << "Removing \"empty\" from list of ucell -- " << cent_oname;
+	       QString substring = "empty";
+	       int index;
+	       while ((index = cc_cenps[ i ]->findText(substring, Qt::MatchContains)) != -1)
+		 cc_cenps[ i ]->removeItem(index);
+	       
 	       qDebug() << "Enabling ucell -- " << cent_oname;
 	       cc_cenps[ i ]->setEnabled(true); 
 	     }
 	 }
+       
      }
-   
 }
 
 // void US_ExperGuiCells::init_cells_data_import()
