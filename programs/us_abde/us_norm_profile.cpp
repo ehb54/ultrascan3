@@ -1823,8 +1823,10 @@ void US_Norm_Profile::slt_mouse(const QPointF& point){
     } else if (picker_state == XNORM) {
         x_norm = point.x();
         enableWidgets(true);
-        pb_pick_norm->setStyleSheet(bkgc);
-        picker_state = XNONE;
+	if (!us_auto_mode )
+	  pb_pick_norm->setStyleSheet(bkgc);
+
+	picker_state = XNONE;
 	if ( us_auto_mode )
 	  {
 	    QString channame = cb_chann->currentText();
