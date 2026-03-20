@@ -179,8 +179,10 @@ class US_Edit : public US_Widgets
       QMap < QString, bool > isSet_ref_wvl;
 
       QMap < QString, bool > channels_to_analyse;
+      QMap < QString, bool > channels_abde_refs;
       QMap < QString, QString > triples_skip_analysis;
       QMap < QString, QString > triple_to_edit;
+      
 
       QVector < int > iwavl_edit_ref;
       QVector < int > iwavl_edit_ref_index;
@@ -431,6 +433,7 @@ class US_Edit : public US_Widgets
       void record_edit_status( QMap< QString, bool>, QString );
       
       bool isSet_to_analyse( QString, QString  );
+      bool isSet_abde_ref( QString );
       bool isSet_to_analyse_triple( QString, QString  );
       bool isSet_to_edit_triple( QString, QString );
       bool isSet_edit_info_for_channel( QString, QString );
