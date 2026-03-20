@@ -1,4 +1,5 @@
 // (this) us_hydrodyn.cpp contains class creation & gui connected functions
+#include <QRegularExpression>
 // us_hydrodyn_core.cpp contains the main computational routines
 // us_hydrodyn_bd_core.cpp contains the main computational routines for brownian dynamic browflex computations
 // us_hydrodyn_anaflex_core.cpp contains the main computational routines for brownian dynamic (anaflex) computations
@@ -590,21 +591,31 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
    grpy_captures     .clear();
 
    for ( int i = 0; i < (int) caps.size(); i += 3 ) {
-      QRegExp rx = QRegExp( caps[ i ] + "\\s*:\\s*(\\S+)" );
+      QRegularExpression rx( caps[ i ] + "\\s*:\\s*(\\S+)" );
       int pos = 0;
       bool found = false;
       int cappos = caps[ i + 1 ].toInt();
       int count  = 1;
-      while ( ( pos = rx.indexIn( grpy_stdout, pos ) ) != -1 ) {
+
+      while ( true ) {
+         QRegularExpressionMatch m = rx.match( grpy_stdout, pos );
+         if ( !m.hasMatch() ) {
+            break;
+         }
+
          if ( cappos == count ) {
-            grpy_captures[ caps[ i + 2 ] ].push_back( rx.cap( 1 ).toDouble() );
-            us_qdebug( QString( "%1 : '%2'\n" ).arg( caps[ i + 2 ] ).arg( grpy_captures[ caps[ i + 2 ] ].back() ) );
+            grpy_captures[ caps[ i + 2 ] ].push_back( m.captured( 1 ).toDouble() );
+            us_qdebug( QString( "%1 : '%2'\n" )
+                       .arg( caps[ i + 2 ] )
+                       .arg( grpy_captures[ caps[ i + 2 ] ].back() ) );
             found = true;
             break;
          }
-         pos += rx.matchedLength();
+
+         pos = m.capturedEnd();   // advance past this match (Qt6 replacement for matchedLength())
          ++count;
-      }         
+      }
+
       if ( !found ) {
          qDebug() << "grpy caps not found " << i << "'" << caps[ i ] << "'";
          editor_msg( "red", QString( us_tr( "Could not find '%1' in GRPY output" ) ).arg( caps[ i ].replace( "\\", "" ) ) );
@@ -638,7 +649,7 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
                grpy_success = false;
                break;
             }
-            QStringList qsld = qsl[ i ].split( QRegExp( "\\s+" ) );
+            QStringList qsld = qsl[ i ].split( QRegularExpression( QStringLiteral( "\\s+" ) ) );
             if ( qsld.size() <= j ) {
                grpy_success = false;
                break;
@@ -657,7 +668,7 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
 
    // save stdout
    if ( !batch_avg_hydro_active() && !grpy_mm ) {
-      QString grpy_out_name = grpy_last_processed.replace( QRegExp( ".grpy$" ), ".grpy_res" );
+      QString grpy_out_name = grpy_last_processed.replace( QRegularExpression( QStringLiteral( ".grpy$" ) ), ".grpy_res" );
       if ( !overwrite_hydro ) {
          grpy_out_name = fileNameCheck( grpy_out_name, 0, this );
       }
@@ -736,8 +747,8 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
       this_data.hydro                         = hydro;
       this_data.results.num_models            = 1;
       this_data.results.name                  =
-         // QString( "%1-%2" ).arg( QFileInfo( grpy_last_processed ).completeBaseName().replace( QRegExp( ".grpy$" ), "" ) ).arg( it->first + 1 )
-         QFileInfo( grpy_last_processed ).completeBaseName().replace( QRegExp( ".grpy$" ), "" )
+         // QString( "%1-%2" ).arg( QFileInfo( grpy_last_processed ).completeBaseName().replace( QRegularExpression( QStringLiteral( ".grpy$" ) ), "" ) ).arg( it->first + 1 )
+         QFileInfo( grpy_last_processed ).completeBaseName().replace( QRegularExpression( QStringLiteral( ".grpy$" ) ), "" )
          ;
       this_data.results.used_beads            = grpy_last_used_beads;
       this_data.results.total_beads           = total_beads_count( bead_models[ grpy_last_model_number ] );

@@ -18,6 +18,8 @@
 #include <QMouseEvent>
 #include <QCloseEvent>
 #include "../include/us_plot_zoom.h"
+#include <QRegularExpression>
+#include <QRegularExpressionMatch>
 
 // #define JAC_VERSION
 
@@ -1562,7 +1564,7 @@ void US_Hydrodyn_Dad::add_files( bool load_conc, bool from_dir ) {
          QDir dir( dirname );
          QStringList filters;
          filters << "*.dat"; 
-         filenames = dir.entryList( filters ).replaceInStrings( QRegExp( "^" ), dirname + "/" );
+         filenames = dir.entryList( filters ).replaceInStrings( QRegularExpression( QStringLiteral( "^" ) ), dirname + "/" );
       }
    } else {
       if ( load_conc )
@@ -1623,9 +1625,9 @@ void US_Hydrodyn_Dad::add_files( bool load_conc, bool from_dir ) {
    {
       bool reorder = true;
 
-      QRegExp rx_cap( "(\\d+)_(\\d+)(\\D|$)" );
-      QRegExp rx_clear_nonnumeric( "^(\\d*_?\\d+)([^0-9_]|_[a-zA-Z])" );
-      // rx_cap.setMinimal( true );
+      QRegularExpression rx_cap( "(\\d+)_(\\d+)(\\D|$)" );
+      QRegularExpression rx_clear_nonnumeric( "^(\\d*_?\\d+)([^0-9_]|_[a-zA-Z])" );
+      // rx_cap.setPatternOptions(QRegularExpression::InvertedGreedinessOption);
 
       list < dad_sortable_qstring > svals;
 
@@ -1635,10 +1637,11 @@ void US_Hydrodyn_Dad::add_files( bool load_conc, bool from_dir ) {
       bool do_prepend          = false;
       QString prepend_tmp = "";
       {
-         QRegExp rx_dp( "_q(\\d)_$" );
-         if ( rx_dp.indexIn( head ) != -1 )
+         QRegularExpression rx_dp( "_q(\\d)_$" );
+         QRegularExpressionMatch rx_dp_m = rx_dp.match( head );
+         if ( rx_dp_m.hasMatch() )
          {
-            prepend_tmp = rx_dp.cap( 1 ) + ".";
+            prepend_tmp = rx_dp_m.captured(1) + ".";
             do_prepend = true;
          }
       }
@@ -1656,19 +1659,21 @@ void US_Hydrodyn_Dad::add_files( bool load_conc, bool from_dir ) {
          QString tmp = filenames[ i ].mid( head.length() );
          tmp = tmp.mid( 0, tmp.length() - tail.length() );
 
-         if ( rx_clear_nonnumeric.indexIn( tmp ) != -1 )
+         QRegularExpressionMatch rx_clear_nonnumeric_m = rx_clear_nonnumeric.match( tmp );
+         if ( rx_clear_nonnumeric_m.hasMatch() )
          {
-            tmp = rx_clear_nonnumeric.cap( 1 );
+            tmp = rx_clear_nonnumeric_m.captured(1);
          }
 
          added_dp = false;
 
-         if ( rx_cap.indexIn( tmp ) != -1 )
+         QRegularExpressionMatch rx_cap_m = rx_cap.match( tmp );
+         if ( rx_cap_m.hasMatch() )
          {
 #ifdef DEBUG_LOAD_REORDER
             us_qdebug( QString( "rx_cap search tmp %1 found" ).arg( tmp ) );
 #endif
-            tmp = rx_cap.cap( 1 ) + "." + rx_cap.cap( 2 );
+            tmp = rx_cap_m.captured(1) + "." + rx_cap_m.captured( 2 );
             added_dp = true;
 #ifdef DEBUG_LOAD_REORDER
          } else {
@@ -1729,9 +1734,10 @@ void US_Hydrodyn_Dad::add_files( bool load_conc, bool from_dir ) {
       }
    } else {
       if ( filenames.size() ) {
-         QRegExp rx_time( "_t(\\d+)" );
-         if ( rx_time.indexIn( filenames[ 0 ] ) != -1 ) {
-            found_times[ filenames[ 0 ] ] = rx_time.cap( 1 ).toDouble();
+         QRegularExpression rx_time( "_t(\\d+)" );
+         QRegularExpressionMatch rx_time_m = rx_time.match( filenames[ 0 ] );
+         if ( rx_time_m.hasMatch() ) {
+            found_times[ filenames[ 0 ] ] = rx_time_m.captured(1).toDouble();
          }
       }
    }
@@ -2086,7 +2092,7 @@ bool US_Hydrodyn_Dad::load_file( QString filename, bool load_conc )
    
    QString ext = QFileInfo( filename ).suffix().toLower();
 
-   QRegExp rx_valid_ext (
+   QRegularExpression rx_valid_ext (
                          "^("
                          "dat|"
                          "int|"
@@ -2096,7 +2102,8 @@ bool US_Hydrodyn_Dad::load_file( QString filename, bool load_conc )
                          // "out|"
                          "ssaxs)$" );
 
-   if ( rx_valid_ext.indexIn( ext ) == -1 )
+   QRegularExpressionMatch rx_valid_ext_m = rx_valid_ext.match( ext );
+   if ( !rx_valid_ext_m.hasMatch() )
    {
       errormsg = QString("Error: %1 unsupported file extension %2").arg( filename ).arg( ext );
       return false;
@@ -2189,129 +2196,151 @@ bool US_Hydrodyn_Dad::load_file( QString filename, bool load_conc )
    if ( ext == "dat" ||
         ext == "sprr" )
    {
-      QRegExp rx_conc               ( "Conc:\\s*(\\S+)(\\s|$)" );
-      QRegExp rx_conc_units         ( "Conc:\\s*\\S+\\s+(\\[\\S+\\])(\\s|$)" );
-      QRegExp rx_psv                ( " PSV:\\s*(\\S+)(\\s|$)" );
-      QRegExp rx_I0se               ( " I0se:\\s*(\\S+)(\\s|$)" );
-      QRegExp rx_I0st               ( " I0st:\\s*(\\S+)(\\s|$)" );
-      QRegExp rx_time               ( " Time:\\s*(\\S+)(\\s|$)" );
-      QRegExp rx_unit               ( " Units:\\s*(\\S+)(\\s|$)" );
-      QRegExp rx_extc               ( " (?:ExtC_or_DRIinc|ExtC):\\s*(\\S+)(\\s|$)" );
-      QRegExp rx_g_dndc             ( " Global_dndc:\\s*(\\S+)(\\s|$)" );
-      QRegExp rx_dndc               ( " dndc:\\s*(\\S+)(\\s|$)" );
-      QRegExp rx_ref_index          ( " Solvent refractive index:\\s*(\\S+)(\\s|$)" );
-      QRegExp rx_diffusion_len      ( " Diffusion Length:\\s*(\\S+)(\\s|$)" );
-      QRegExp rx_e_nucleon_ratio    ( " Electron/nucleon ratio Z/A:\\s*(\\S+)(\\s|$)" );
-      QRegExp rx_nucleon_mass       ( " Nucleon mass:\\s*(\\S+)(\\s|$)" );
-      QRegExp rx_solvent_e_dens     ( " Solvent e density:\\s*(\\S+)(\\s|$)" );
-      QRegExp rx_ri_corr            ( " RI-Corr scatt\\. angle:\\s*(\\S+)(\\s|$)" );
-      QRegExp rx_ri_corrs           ( " RI-Corr scatt\\. angles:\\s*(\\S+)(\\s|$)" );
-      QRegExp rx_fit_curve          ( " Fit curve:\\s*(\\S+)(\\s|$)" );
-      QRegExp rx_fit_method         ( " Fit method:\\s*(\\S+)(\\s|$)" );
-      QRegExp rx_fit_q_ranges       ( " Fit ranges:\\s*(\\S+)(\\s|$)" );
-      QRegExp rx_fit_chi2           ( " Fit chi^2:\\s*(\\S+)(\\s|$)" );
-      QRegExp rx_fit_sd_scale       ( " Fit UV-Vis SD mult:\\s*(\\S+)(\\s|$)" );
+      QRegularExpression rx_conc               ( "Conc:\\s*(\\S+)(\\s|$)" );
+      QRegularExpression rx_conc_units         ( "Conc:\\s*\\S+\\s+(\\[\\S+\\])(\\s|$)" );
+      QRegularExpression rx_psv                ( " PSV:\\s*(\\S+)(\\s|$)" );
+      QRegularExpression rx_I0se               ( " I0se:\\s*(\\S+)(\\s|$)" );
+      QRegularExpression rx_I0st               ( " I0st:\\s*(\\S+)(\\s|$)" );
+      QRegularExpression rx_time               ( " Time:\\s*(\\S+)(\\s|$)" );
+      QRegularExpression rx_unit               ( " Units:\\s*(\\S+)(\\s|$)" );
+      QRegularExpression rx_extc               ( " (?:ExtC_or_DRIinc|ExtC):\\s*(\\S+)(\\s|$)" );
+      QRegularExpression rx_g_dndc             ( " Global_dndc:\\s*(\\S+)(\\s|$)" );
+      QRegularExpression rx_dndc               ( " dndc:\\s*(\\S+)(\\s|$)" );
+      QRegularExpression rx_ref_index          ( " Solvent refractive index:\\s*(\\S+)(\\s|$)" );
+      QRegularExpression rx_diffusion_len      ( " Diffusion Length:\\s*(\\S+)(\\s|$)" );
+      QRegularExpression rx_e_nucleon_ratio    ( " Electron/nucleon ratio Z/A:\\s*(\\S+)(\\s|$)" );
+      QRegularExpression rx_nucleon_mass       ( " Nucleon mass:\\s*(\\S+)(\\s|$)" );
+      QRegularExpression rx_solvent_e_dens     ( " Solvent e density:\\s*(\\S+)(\\s|$)" );
+      QRegularExpression rx_ri_corr            ( " RI-Corr scatt\\. angle:\\s*(\\S+)(\\s|$)" );
+      QRegularExpression rx_ri_corrs           ( " RI-Corr scatt\\. angles:\\s*(\\S+)(\\s|$)" );
+      QRegularExpression rx_fit_curve          ( " Fit curve:\\s*(\\S+)(\\s|$)" );
+      QRegularExpression rx_fit_method         ( " Fit method:\\s*(\\S+)(\\s|$)" );
+      QRegularExpression rx_fit_q_ranges       ( " Fit ranges:\\s*(\\S+)(\\s|$)" );
+      QRegularExpression rx_fit_chi2           ( " Fit chi^2:\\s*(\\S+)(\\s|$)" );
+      QRegularExpression rx_fit_sd_scale       ( " Fit UV-Vis SD mult:\\s*(\\S+)(\\s|$)" );
       
-      if ( rx_unit.indexIn( qv[ 0 ] ) != -1 ) {
-         QString unitstr = rx_unit.cap( 1 ).toLower();
+      QRegularExpressionMatch rx_unit_m = rx_unit.match( qv[ 0 ] );
+      if ( rx_unit_m.hasMatch() ) {
+         QString unitstr = rx_unit_m.captured(1).toLower();
          bool ok = false;
-         if ( !ok && unitstr.contains( QRegExp( "^(1/nm|nm^-1)$" ) ) ) {
+         if ( !ok && unitstr.contains( QRegularExpression( QStringLiteral( "^(1/nm|nm^-1)$" ) ) ) ) {
             use_units = 0.1;
             ok = true;
          }
-         if ( !ok && unitstr.contains( QRegExp( "^(1/a|a^-1)$" ) ) ) {
+         if ( !ok && unitstr.contains( QRegularExpression( QStringLiteral( "^(1/a|a^-1)$" ) ) ) ) {
             use_units = 1.0;
             ok = true;
          }
          if ( !ok ) {
-            editor_msg( "black", QString( us_tr( "%1 - unknown Units: %2 specified, must be 1/A or 1/NM, using specified default conversion of %3") ).arg( filename ).arg( rx_unit.cap( 1 ) ).arg( use_units ) );
+            editor_msg( "black", QString( us_tr( "%1 - unknown Units: %2 specified, must be 1/A or 1/NM, using specified default conversion of %3") ).arg( filename ).arg( rx_unit_m.captured( 1 ) ).arg( use_units ) );
          }
       }
-      if ( rx_conc.indexIn( qv[ 0 ] ) != -1 ) {
+      QRegularExpressionMatch rx_conc_m = rx_conc.match( qv[ 0 ] );
+      if ( rx_conc_m.hasMatch() ) {
          has_conc  = true;
-         this_conc = rx_conc.cap( 1 ).toDouble();
+         this_conc = rx_conc_m.captured(1).toDouble();
          // TSO << QString( "found conc %1\n" ).arg( this_conc );
       }
-      if ( rx_conc_units.indexIn( qv[ 0 ] ) != -1 ) {
+      QRegularExpressionMatch rx_conc_units_m = rx_conc_units.match( qv[ 0 ] );
+      if ( rx_conc_units_m.hasMatch() ) {
          has_conc_units  = true;
-         this_conc_units = rx_conc.cap( 1 );
+         this_conc_units = rx_conc_m.captured( 1 );
          // TSO << QString( "found conc %1\n" ).arg( this_conc );
       }
-      if ( rx_psv.indexIn( qv[ 0 ] ) != -1 ) {
+      QRegularExpressionMatch rx_psv_m = rx_psv.match( qv[ 0 ] );
+      if ( rx_psv_m.hasMatch() ) {
          has_psv  = true;
-         this_psv = rx_psv.cap( 1 ).toDouble();
+         this_psv = rx_psv_m.captured(1).toDouble();
       }
-      if ( rx_I0se.indexIn( qv[ 0 ] ) != -1 ) {
+      QRegularExpressionMatch rx_I0se_m = rx_I0se.match( qv[ 0 ] );
+      if ( rx_I0se_m.hasMatch() ) {
          has_I0se  = true;
-         this_I0se = rx_I0se.cap( 1 ).toDouble();
+         this_I0se = rx_I0se_m.captured(1).toDouble();
       }
-      if ( rx_I0st.indexIn( qv[ 0 ] ) != -1 ) {
+      QRegularExpressionMatch rx_I0st_m = rx_I0st.match( qv[ 0 ] );
+      if ( rx_I0st_m.hasMatch() ) {
          has_I0st  = true;
-         this_I0st = rx_I0st.cap( 1 ).toDouble();
+         this_I0st = rx_I0st_m.captured(1).toDouble();
       }
-      if ( rx_time.indexIn( qv[ 0 ] ) != -1 ) {
+      QRegularExpressionMatch rx_time_m = rx_time.match( qv[ 0 ] );
+      if ( rx_time_m.hasMatch() ) {
          has_time  = true;
-         this_time = rx_time.cap( 1 ).replace( "_", "." ).replace( QRegularExpression( "^0+" ), "0" ).toDouble();
+         this_time = rx_time_m.captured(1).replace( "_", "." ).replace( QRegularExpression( "^0+" ), "0" ).toDouble();
       }
-      if ( rx_extc.indexIn( qv[ 0 ] ) != -1 ) {
+      QRegularExpressionMatch rx_extc_m = rx_extc.match( qv[ 0 ] );
+      if ( rx_extc_m.hasMatch() ) {
          has_extc  = true;
-         this_extc = rx_extc.cap( 1 ).toDouble();
+         this_extc = rx_extc_m.captured(1).toDouble();
       }
-      if ( rx_g_dndc.indexIn( qv[ 0 ] ) != -1 ) {
+      QRegularExpressionMatch rx_g_dndc_m = rx_g_dndc.match( qv[ 0 ] );
+      if ( rx_g_dndc_m.hasMatch() ) {
          has_g_dndc  = true;
-         this_g_dndc = rx_g_dndc.cap( 1 ).toDouble();
+         this_g_dndc = rx_g_dndc_m.captured(1).toDouble();
       }
-      if ( rx_dndc.indexIn( qv[ 0 ] ) != -1 ) {
+      QRegularExpressionMatch rx_dndc_m = rx_dndc.match( qv[ 0 ] );
+      if ( rx_dndc_m.hasMatch() ) {
          has_dndc  = true;
-         this_dndc = rx_dndc.cap( 1 ).toDouble();
+         this_dndc = rx_dndc_m.captured(1).toDouble();
       }
-      if ( rx_fit_curve.indexIn( qv[ 0 ] ) != -1 ) {
+      QRegularExpressionMatch rx_fit_curve_m = rx_fit_curve.match( qv[ 0 ] );
+      if ( rx_fit_curve_m.hasMatch() ) {
          has_fit_curve  = true;
-         this_fit_curve = rx_fit_curve.cap( 1 );
+         this_fit_curve = rx_fit_curve_m.captured(1);
       }
-      if ( rx_fit_method.indexIn( qv[ 0 ] ) != -1 ) {
+      QRegularExpressionMatch rx_fit_method_m = rx_fit_method.match( qv[ 0 ] );
+      if ( rx_fit_method_m.hasMatch() ) {
          has_fit_method  = true;
-         this_fit_method = rx_fit_method.cap( 1 );
+         this_fit_method = rx_fit_method_m.captured(1);
       }
-      if ( rx_fit_q_ranges.indexIn( qv[ 0 ] ) != -1 ) {
+      QRegularExpressionMatch rx_fit_q_ranges_m = rx_fit_q_ranges.match( qv[ 0 ] );
+      if ( rx_fit_q_ranges_m.hasMatch() ) {
          has_fit_q_ranges  = true;
-         this_fit_q_ranges = rx_fit_q_ranges.cap( 1 );
+         this_fit_q_ranges = rx_fit_q_ranges_m.captured(1);
       }
-      if ( rx_fit_chi2.indexIn( qv[ 0 ] ) != -1 ) {
+      QRegularExpressionMatch rx_fit_chi2_m = rx_fit_chi2.match( qv[ 0 ] );
+      if ( rx_fit_chi2_m.hasMatch() ) {
          has_fit_chi2  = true;
-         this_fit_chi2 = rx_fit_chi2.cap( 1 ).toDouble();
+         this_fit_chi2 = rx_fit_chi2_m.captured(1).toDouble();
       }
-      if ( rx_fit_sd_scale.indexIn( qv[ 0 ] ) != -1 ) {
+      QRegularExpressionMatch rx_fit_sd_scale_m = rx_fit_sd_scale.match( qv[ 0 ] );
+      if ( rx_fit_sd_scale_m.hasMatch() ) {
          has_fit_sd_scale  = true;
-         this_fit_sd_scale = rx_fit_sd_scale.cap( 1 ).toDouble();
+         this_fit_sd_scale = rx_fit_sd_scale_m.captured(1).toDouble();
       }
-      if ( rx_diffusion_len.indexIn( qv[ 0 ] ) != -1 ) {
+      QRegularExpressionMatch rx_diffusion_len_m = rx_diffusion_len.match( qv[ 0 ] );
+      if ( rx_diffusion_len_m.hasMatch() ) {
          has_diffusion_len  = true;
-         this_diffusion_len = rx_diffusion_len.cap( 1 ).toDouble();
+         this_diffusion_len = rx_diffusion_len_m.captured(1).toDouble();
       }
-      if ( rx_e_nucleon_ratio.indexIn( qv[ 0 ] ) != -1 ) {
+      QRegularExpressionMatch rx_e_nucleon_ratio_m = rx_e_nucleon_ratio.match( qv[ 0 ] );
+      if ( rx_e_nucleon_ratio_m.hasMatch() ) {
          has_e_nucleon_ratio  = true;
-         this_e_nucleon_ratio = rx_e_nucleon_ratio.cap( 1 ).toDouble();
+         this_e_nucleon_ratio = rx_e_nucleon_ratio_m.captured(1).toDouble();
       }
-      if ( rx_nucleon_mass.indexIn( qv[ 0 ] ) != -1 ) {
+      QRegularExpressionMatch rx_nucleon_mass_m = rx_nucleon_mass.match( qv[ 0 ] );
+      if ( rx_nucleon_mass_m.hasMatch() ) {
          has_nucleon_mass  = true;
-         this_nucleon_mass = rx_nucleon_mass.cap( 1 ).toDouble();
+         this_nucleon_mass = rx_nucleon_mass_m.captured(1).toDouble();
       }
-      if ( rx_solvent_e_dens.indexIn( qv[ 0 ] ) != -1 ) {
+      QRegularExpressionMatch rx_solvent_e_dens_m = rx_solvent_e_dens.match( qv[ 0 ] );
+      if ( rx_solvent_e_dens_m.hasMatch() ) {
          has_solvent_e_dens  = true;
-         this_solvent_e_dens = rx_solvent_e_dens.cap( 1 ).toDouble();
+         this_solvent_e_dens = rx_solvent_e_dens_m.captured(1).toDouble();
       }
-      if ( rx_ref_index.indexIn( qv[ 0 ] ) != -1 ) {
+      QRegularExpressionMatch rx_ref_index_m = rx_ref_index.match( qv[ 0 ] );
+      if ( rx_ref_index_m.hasMatch() ) {
          has_ref_index  = true;
-         this_ref_index = rx_ref_index.cap( 1 ).toDouble();
+         this_ref_index = rx_ref_index_m.captured(1).toDouble();
       }
-      if ( rx_ri_corr.indexIn( qv[ 0 ] ) != -1 ) {
+      QRegularExpressionMatch rx_ri_corr_m = rx_ri_corr.match( qv[ 0 ] );
+      if ( rx_ri_corr_m.hasMatch() ) {
          has_ri_corr  = true;
-         this_ri_corr = rx_ri_corr.cap( 1 ).toDouble();
+         this_ri_corr = rx_ri_corr_m.captured(1).toDouble();
       }
-      if ( rx_ri_corrs.indexIn( qv[ 0 ] ) != -1 ) {
+      QRegularExpressionMatch rx_ri_corrs_m = rx_ri_corrs.match( qv[ 0 ] );
+      if ( rx_ri_corrs_m.hasMatch() ) {
          has_ri_corrs  = true;
-         this_ri_corrs = rx_ri_corrs.cap( 1 );
+         this_ri_corrs = rx_ri_corrs_m.captured(1);
       }
    }
 
@@ -2321,7 +2350,7 @@ bool US_Hydrodyn_Dad::load_file( QString filename, bool load_conc )
    int I_offset   = 1;
    int e_offset   = 2;
    int row_offset = 1;
-   if ( ( ext == "dat" || ext == "txt" ) && qv[ 0 ].toLower().contains( QRegExp( "frame\\s*data" ) ) )
+   if ( ( ext == "dat" || ext == "txt" ) && qv[ 0 ].toLower().contains( QRegularExpression( QStringLiteral( "frame\\s*data" ) ) ) )
    {
       is_time = true;
       use_units = 1.0;
@@ -2329,75 +2358,88 @@ bool US_Hydrodyn_Dad::load_file( QString filename, bool load_conc )
 
    if ( ext == "dat" && qv[ 0 ].contains( " UV-Vis parameter file" ) )
    {
-      QRegExp rx_dad_param_desc              ( "^# __uv_vis_param_desc: (.*)\\s*$" );
-      QRegExp rx_dad_param_lambda            ( "^# __uv_vis_param_lambda: (\\S+)\\s*$" );
-      QRegExp rx_dad_param_n                 ( "^# __uv_vis_param_n: (\\S+)\\s*$" );
-      QRegExp rx_dad_param_g_dndc            ( "^# __uv_vis_param_g_dndc: (\\S+)\\s*$" );
-      QRegExp rx_dad_param_g_extinction_coef ( "^# __uv_vis_param_g_extinction_coef: (\\S+)\\s*$" );
-      QRegExp rx_dad_param_g_conc            ( "^# __uv_vis_param_g_conc: (\\S+)\\s*$" );
-      QRegExp rx_dad_param_DLS_detector      ( "^# __uv_vis_param_DLS_detector: (\\S+)\\s*$" );
-      QRegExp rx_dad_param_dndc2_a           ( "^# __uv_vis_param_dndc2_a: (\\S+)\\s*$" );
-      QRegExp rx_dad_param_dndc2_b           ( "^# __uv_vis_param_dndc2_b: (\\S+)\\s*$" );
-      QRegExp rx_dad_param_dndc2_c           ( "^# __uv_vis_param_dndc2_c: (\\S+)\\s*$" );
-      QRegExp rx_dad_param_n2_a              ( "^# __uv_vis_param_n2_a: (\\S+)\\s*$" );
-      QRegExp rx_dad_param_n2_b              ( "^# __uv_vis_param_n2_b: (\\S+)\\s*$" );
-      QRegExp rx_dad_param_n2_c              ( "^# __uv_vis_param_n2_c: (\\S+)\\s*$" );
+      QRegularExpression rx_dad_param_desc              ( "^# __uv_vis_param_desc: (.*)\\s*$" );
+      QRegularExpression rx_dad_param_lambda            ( "^# __uv_vis_param_lambda: (\\S+)\\s*$" );
+      QRegularExpression rx_dad_param_n                 ( "^# __uv_vis_param_n: (\\S+)\\s*$" );
+      QRegularExpression rx_dad_param_g_dndc            ( "^# __uv_vis_param_g_dndc: (\\S+)\\s*$" );
+      QRegularExpression rx_dad_param_g_extinction_coef ( "^# __uv_vis_param_g_extinction_coef: (\\S+)\\s*$" );
+      QRegularExpression rx_dad_param_g_conc            ( "^# __uv_vis_param_g_conc: (\\S+)\\s*$" );
+      QRegularExpression rx_dad_param_DLS_detector      ( "^# __uv_vis_param_DLS_detector: (\\S+)\\s*$" );
+      QRegularExpression rx_dad_param_dndc2_a           ( "^# __uv_vis_param_dndc2_a: (\\S+)\\s*$" );
+      QRegularExpression rx_dad_param_dndc2_b           ( "^# __uv_vis_param_dndc2_b: (\\S+)\\s*$" );
+      QRegularExpression rx_dad_param_dndc2_c           ( "^# __uv_vis_param_dndc2_c: (\\S+)\\s*$" );
+      QRegularExpression rx_dad_param_n2_a              ( "^# __uv_vis_param_n2_a: (\\S+)\\s*$" );
+      QRegularExpression rx_dad_param_n2_b              ( "^# __uv_vis_param_n2_b: (\\S+)\\s*$" );
+      QRegularExpression rx_dad_param_n2_c              ( "^# __uv_vis_param_n2_c: (\\S+)\\s*$" );
 
       for ( int i = 1; i < (int) qv.size(); i++ ) {
 
-         if ( rx_dad_param_desc.indexIn( qv[ i ] ) != -1 ) {
-            dad_param_desc = rx_dad_param_desc.cap( 1 );
+         QRegularExpressionMatch rx_dad_param_desc_m = rx_dad_param_desc.match( qv[ i ] );
+         if ( rx_dad_param_desc_m.hasMatch() ) {
+            dad_param_desc = rx_dad_param_desc_m.captured(1);
             continue;
          }
 
-         if ( rx_dad_param_lambda.indexIn( qv[ i ] ) != -1 ) {
-            dad_param_lambda = rx_dad_param_lambda.cap( 1 ).toDouble();
+         QRegularExpressionMatch rx_dad_param_lambda_m = rx_dad_param_lambda.match( qv[ i ] );
+         if ( rx_dad_param_lambda_m.hasMatch() ) {
+            dad_param_lambda = rx_dad_param_lambda_m.captured(1).toDouble();
             continue;
          }
-         if ( rx_dad_param_n.indexIn( qv[ i ] ) != -1 ) {
-            dad_param_n = rx_dad_param_n.cap( 1 ).toDouble();
+         QRegularExpressionMatch rx_dad_param_n_m = rx_dad_param_n.match( qv[ i ] );
+         if ( rx_dad_param_n_m.hasMatch() ) {
+            dad_param_n = rx_dad_param_n_m.captured(1).toDouble();
             continue;
          }
-         if ( rx_dad_param_g_dndc.indexIn( qv[ i ] ) != -1 ) {
-            dad_param_g_dndc = rx_dad_param_g_dndc.cap( 1 ).toDouble();
+         QRegularExpressionMatch rx_dad_param_g_dndc_m = rx_dad_param_g_dndc.match( qv[ i ] );
+         if ( rx_dad_param_g_dndc_m.hasMatch() ) {
+            dad_param_g_dndc = rx_dad_param_g_dndc_m.captured(1).toDouble();
             continue;
          }
-         if ( rx_dad_param_g_extinction_coef.indexIn( qv[ i ] ) != -1 ) {
-            dad_param_g_extinction_coef = rx_dad_param_g_extinction_coef.cap( 1 ).toDouble();
+         QRegularExpressionMatch rx_dad_param_g_extinction_coef_m = rx_dad_param_g_extinction_coef.match( qv[ i ] );
+         if ( rx_dad_param_g_extinction_coef_m.hasMatch() ) {
+            dad_param_g_extinction_coef = rx_dad_param_g_extinction_coef_m.captured(1).toDouble();
             continue;
          }
-         if ( rx_dad_param_g_conc.indexIn( qv[ i ] ) != -1 ) {
-            dad_param_g_conc = rx_dad_param_g_conc.cap( 1 ).toDouble();
+         QRegularExpressionMatch rx_dad_param_g_conc_m = rx_dad_param_g_conc.match( qv[ i ] );
+         if ( rx_dad_param_g_conc_m.hasMatch() ) {
+            dad_param_g_conc = rx_dad_param_g_conc_m.captured(1).toDouble();
             continue;
          }
-         if ( rx_dad_param_DLS_detector.indexIn( qv[ i ] ) != -1 ) {
-            dad_param_DLS_detector = rx_dad_param_DLS_detector.cap( 1 ).toInt();
-            continue;
-         }
-
-         if ( rx_dad_param_dndc2_a.indexIn( qv[ i ] ) != -1 ) {
-            dad_param_dndc2_a = rx_dad_param_dndc2_a.cap( 1 ).toDouble();
-            continue;
-         }
-         if ( rx_dad_param_dndc2_b.indexIn( qv[ i ] ) != -1 ) {
-            dad_param_dndc2_b = rx_dad_param_dndc2_b.cap( 1 ).toDouble();
-            continue;
-         }
-         if ( rx_dad_param_dndc2_c.indexIn( qv[ i ] ) != -1 ) {
-            dad_param_dndc2_c = rx_dad_param_dndc2_c.cap( 1 ).toDouble();
+         QRegularExpressionMatch rx_dad_param_DLS_detector_m = rx_dad_param_DLS_detector.match( qv[ i ] );
+         if ( rx_dad_param_DLS_detector_m.hasMatch() ) {
+            dad_param_DLS_detector = rx_dad_param_DLS_detector_m.captured(1).toInt();
             continue;
          }
 
-         if ( rx_dad_param_n2_a.indexIn( qv[ i ] ) != -1 ) {
-            dad_param_n2_a = rx_dad_param_n2_a.cap( 1 ).toDouble();
+         QRegularExpressionMatch rx_dad_param_dndc2_a_m = rx_dad_param_dndc2_a.match( qv[ i ] );
+         if ( rx_dad_param_dndc2_a_m.hasMatch() ) {
+            dad_param_dndc2_a = rx_dad_param_dndc2_a_m.captured(1).toDouble();
             continue;
          }
-         if ( rx_dad_param_n2_b.indexIn( qv[ i ] ) != -1 ) {
-            dad_param_n2_b = rx_dad_param_n2_b.cap( 1 ).toDouble();
+         QRegularExpressionMatch rx_dad_param_dndc2_b_m = rx_dad_param_dndc2_b.match( qv[ i ] );
+         if ( rx_dad_param_dndc2_b_m.hasMatch() ) {
+            dad_param_dndc2_b = rx_dad_param_dndc2_b_m.captured(1).toDouble();
             continue;
          }
-         if ( rx_dad_param_n2_c.indexIn( qv[ i ] ) != -1 ) {
-            dad_param_n2_c = rx_dad_param_n2_c.cap( 1 ).toDouble();
+         QRegularExpressionMatch rx_dad_param_dndc2_c_m = rx_dad_param_dndc2_c.match( qv[ i ] );
+         if ( rx_dad_param_dndc2_c_m.hasMatch() ) {
+            dad_param_dndc2_c = rx_dad_param_dndc2_c_m.captured(1).toDouble();
+            continue;
+         }
+
+         QRegularExpressionMatch rx_dad_param_n2_a_m = rx_dad_param_n2_a.match( qv[ i ] );
+         if ( rx_dad_param_n2_a_m.hasMatch() ) {
+            dad_param_n2_a = rx_dad_param_n2_a_m.captured(1).toDouble();
+            continue;
+         }
+         QRegularExpressionMatch rx_dad_param_n2_b_m = rx_dad_param_n2_b.match( qv[ i ] );
+         if ( rx_dad_param_n2_b_m.hasMatch() ) {
+            dad_param_n2_b = rx_dad_param_n2_b_m.captured(1).toDouble();
+            continue;
+         }
+         QRegularExpressionMatch rx_dad_param_n2_c_m = rx_dad_param_n2_c.match( qv[ i ] );
+         if ( rx_dad_param_n2_c_m.hasMatch() ) {
+            dad_param_n2_c = rx_dad_param_n2_c_m.captured(1).toDouble();
             continue;
          }
 
@@ -2410,29 +2452,33 @@ bool US_Hydrodyn_Dad::load_file( QString filename, bool load_conc )
 
    if ( ext == "dat" && qv[ 0 ].contains( " Detector State file" ) )
    {
-      QRegExp rx_uv         ( "^# __detector_uv: (\\S+)\\s*$" );
-      QRegExp rx_ri         ( "^# __detector_ri: (\\S+)\\s*$" );
-      QRegExp rx_uv_set     ( "^# __detector_uv_set\\s*$" );
-      QRegExp rx_ri_set     ( "^# __detector_ri_set\\s*$" );
+      QRegularExpression rx_uv         ( "^# __detector_uv: (\\S+)\\s*$" );
+      QRegularExpression rx_ri         ( "^# __detector_ri: (\\S+)\\s*$" );
+      QRegularExpression rx_uv_set     ( "^# __detector_uv_set\\s*$" );
+      QRegularExpression rx_ri_set     ( "^# __detector_ri_set\\s*$" );
       for ( int i = 1; i < (int) qv.size(); i++ )
       {
-         if ( rx_uv.indexIn( qv[ i ] ) != -1 )
+         QRegularExpressionMatch rx_uv_m = rx_uv.match( qv[ i ] );
+         if ( rx_uv_m.hasMatch() )
          {
-            detector_uv_conv = rx_uv.cap( 1 ).toDouble();
+            detector_uv_conv = rx_uv_m.captured(1).toDouble();
             continue;
          }
-         if ( rx_ri.indexIn( qv[ i ] ) != -1 )
+         QRegularExpressionMatch rx_ri_m = rx_ri.match( qv[ i ] );
+         if ( rx_ri_m.hasMatch() )
          {
-            detector_ri_conv = rx_ri.cap( 1 ).toDouble();
+            detector_ri_conv = rx_ri_m.captured(1).toDouble();
             continue;
          }
-         if ( rx_uv_set.indexIn( qv[ i ] ) != -1 )
+         QRegularExpressionMatch rx_uv_set_m = rx_uv_set.match( qv[ i ] );
+         if ( rx_uv_set_m.hasMatch() )
          {
             detector_uv = true;
             detector_ri = false;
             continue;
          }
-         if ( rx_ri_set.indexIn( qv[ i ] ) != -1 )
+         QRegularExpressionMatch rx_ri_set_m = rx_ri_set.match( qv[ i ] );
+         if ( rx_ri_set_m.hasMatch() )
          {
             detector_ri = true;
             detector_uv = false;
@@ -2447,11 +2493,11 @@ bool US_Hydrodyn_Dad::load_file( QString filename, bool load_conc )
 
    if ( ext == "csv" && load_conc ) {
    // load csv columns as time curves with rescaling for concentration time
-      if ( !qv[0].contains( QRegExp( "^#\\s+Time" ) ) ) {
+      if ( !qv[0].contains( QRegularExpression( QStringLiteral( "^#\\s+Time" ) ) ) ) {
          errormsg = QString( us_tr( "Error: loading %1 unrecognied header format for concentration csv: %2" ) ).arg( filename ).arg( qv[ 0 ] );
          return false;
       }
-      QRegExp rx_spaces = QRegExp( "\\s+" ); 
+      QRegularExpression rx_spaces = QRegularExpression( QStringLiteral( "\\s+" ) ); 
       QStringList headers = (qv[ 0 ] ).split( rx_spaces , Qt::SkipEmptyParts );
       int hsize = (int) headers.size();
       map < QString, vector < double > > uvs;
@@ -2685,7 +2731,7 @@ bool US_Hydrodyn_Dad::load_file( QString filename, bool load_conc )
       editor_msg( "black", QString( us_tr( "%1" ) ).arg( filename ) );
 
       // first column is time
-      qv[ 0 ].replace( "(", "" ).replace( ")", "" ).replace( "/", "_per_" ).replace( QRegExp( "\\s+" ), "_" ).replace( ":", "_" ).replace( QRegExp( "\\_+" ), "_" ) ;
+      qv[ 0 ].replace( "(", "" ).replace( ")", "" ).replace( "/", "_per_" ).replace( QRegularExpression( QStringLiteral( "\\s+" ) ), "_" ).replace( ":", "_" ).replace( QRegularExpression( QStringLiteral( "\\_+" ) ), "_" ) ;
 
       QStringList headers = (qv[ 0 ] ).split( "," , Qt::SkipEmptyParts );
       
@@ -2770,21 +2816,21 @@ bool US_Hydrodyn_Dad::load_file( QString filename, bool load_conc )
       
    if ( ext == "dat" && qv[ 0 ].contains( " Global State file" ) )
    {
-      QRegExp rx_dir             ( "^# __dir: (\\S+)\\s*$" );
-      QRegExp rx_lock_dir        ( "^# __lock_dir\\s*$" );
-      QRegExp rx_created_dir     ( "^# __created_dir: (\\S+)\\s*$" );
-      QRegExp rx_files           ( "^# __files\\s*$" );
-      QRegExp rx_conc_files      ( "^# __conc_files\\s*$" );
-      QRegExp rx_end             ( "^# __end\\s*$" );
-      QRegExp rx_gaussians       ( "^# __gaussians\\s*$" );
-      QRegExp rx_f_gaussians     ( "^# __f_gaussians: (\\S+)\\s*$" );
-      QRegExp rx_push            ( "^# __push_stack\\s*$" );
-      QRegExp rx_gaussian_type   ( "^# __gaussian_type: (\\S+)\\s*$" );
+      QRegularExpression rx_dir             ( "^# __dir: (\\S+)\\s*$" );
+      QRegularExpression rx_lock_dir        ( "^# __lock_dir\\s*$" );
+      QRegularExpression rx_created_dir     ( "^# __created_dir: (\\S+)\\s*$" );
+      QRegularExpression rx_files           ( "^# __files\\s*$" );
+      QRegularExpression rx_conc_files      ( "^# __conc_files\\s*$" );
+      QRegularExpression rx_end             ( "^# __end\\s*$" );
+      QRegularExpression rx_gaussians       ( "^# __gaussians\\s*$" );
+      QRegularExpression rx_f_gaussians     ( "^# __f_gaussians: (\\S+)\\s*$" );
+      QRegularExpression rx_push            ( "^# __push_stack\\s*$" );
+      QRegularExpression rx_gaussian_type   ( "^# __gaussian_type: (\\S+)\\s*$" );
 
-      QRegExp rx_uv         ( "^# __detector_uv: (\\S+)\\s*$" );
-      QRegExp rx_ri         ( "^# __detector_ri: (\\S+)\\s*$" );
-      QRegExp rx_uv_set     ( "^# __detector_uv_set\\s*$" );
-      QRegExp rx_ri_set     ( "^# __detector_ri_set\\s*$" );
+      QRegularExpression rx_uv         ( "^# __detector_uv: (\\S+)\\s*$" );
+      QRegularExpression rx_ri         ( "^# __detector_ri: (\\S+)\\s*$" );
+      QRegularExpression rx_uv_set     ( "^# __detector_uv_set\\s*$" );
+      QRegularExpression rx_ri_set     ( "^# __detector_ri_set\\s*$" );
 
       clear_files( all_files() );
 
@@ -2794,22 +2840,23 @@ bool US_Hydrodyn_Dad::load_file( QString filename, bool load_conc )
       cb_lock_dir->setChecked( false );
       for ( int i = 1; i < (int) qv.size(); i++ )
       {
-         if ( rx_gaussian_type.indexIn( qv[ i ] ) != -1 )
+         QRegularExpressionMatch rx_gaussian_type_m = rx_gaussian_type.match( qv[ i ] );
+         if ( rx_gaussian_type_m.hasMatch() )
          {
             gaussian_types new_g = gaussian_type;
-            if ( rx_gaussian_type.cap( 1 ) == "Gauss" )
+            if ( rx_gaussian_type_m.captured(1) == "Gauss" )
             {
                new_g = GAUSS;
             }
-            if ( rx_gaussian_type.cap( 1 ) == "EMG" )
+            if ( rx_gaussian_type_m.captured( 1 ) == "EMG" )
             {
                new_g = EMG;
             }
-            if ( rx_gaussian_type.cap( 1 ) == "GMG" )
+            if ( rx_gaussian_type_m.captured( 1 ) == "GMG" )
             {
                new_g = GMG;
             }
-            if ( rx_gaussian_type.cap( 1 ) == "EMG+GMG" )
+            if ( rx_gaussian_type_m.captured( 1 ) == "EMG+GMG" )
             {
                new_g = EMGGMG;
             }
@@ -2824,9 +2871,11 @@ bool US_Hydrodyn_Dad::load_file( QString filename, bool load_conc )
             continue;
          }
 
+         QRegularExpressionMatch rx_gaussians_m = rx_gaussians.match( qv[ i ] );
+         QRegularExpressionMatch rx_f_gaussians_m = rx_f_gaussians.match( qv[ i ] );
          if ( !defined_gaussian_type &&
-              ( rx_gaussians.indexIn( qv[ i ] ) != -1 ||
-                rx_f_gaussians.indexIn( qv[ i ] ) != -1 ) )
+              ( rx_gaussians_m.hasMatch() ||
+                rx_f_gaussians_m.hasMatch() ) )
          {
             editor_msg( "dark red", us_tr( "Notice: this state file does not have a specific Gaussian type defined, defaulting to standard Gaussians" ) );
             gaussian_types new_g = default_gaussian_type;
@@ -2840,57 +2889,67 @@ bool US_Hydrodyn_Dad::load_file( QString filename, bool load_conc )
             defined_gaussian_type = true;
          }            
 
-         if ( rx_uv.indexIn( qv[ i ] ) != -1 )
+         QRegularExpressionMatch rx_uv_m = rx_uv.match( qv[ i ] );
+         if ( rx_uv_m.hasMatch() )
          {
-            detector_uv_conv = rx_uv.cap( 1 ).toDouble();
+            detector_uv_conv = rx_uv_m.captured(1).toDouble();
             continue;
          }
-         if ( rx_ri.indexIn( qv[ i ] ) != -1 )
+         QRegularExpressionMatch rx_ri_m = rx_ri.match( qv[ i ] );
+         if ( rx_ri_m.hasMatch() )
          {
-            detector_ri_conv = rx_ri.cap( 1 ).toDouble();
+            detector_ri_conv = rx_ri_m.captured(1).toDouble();
             continue;
          }
-         if ( rx_uv_set.indexIn( qv[ i ] ) != -1 )
+         QRegularExpressionMatch rx_uv_set_m = rx_uv_set.match( qv[ i ] );
+         if ( rx_uv_set_m.hasMatch() )
          {
             detector_uv = true;
             detector_ri = false;
             continue;
          }
-         if ( rx_ri_set.indexIn( qv[ i ] ) != -1 )
+         QRegularExpressionMatch rx_ri_set_m = rx_ri_set.match( qv[ i ] );
+         if ( rx_ri_set_m.hasMatch() )
          {
             detector_ri = true;
             detector_uv = false;
             continue;
          }
-         if ( rx_dir.indexIn( qv[ i ] ) != -1 )
+         QRegularExpressionMatch rx_dir_m = rx_dir.match( qv[ i ] );
+         if ( rx_dir_m.hasMatch() )
          {
-            le_dir->setText( rx_dir.cap( 1 ) );
+            le_dir->setText( rx_dir_m.captured(1) );
             continue;
          }
-         if ( rx_lock_dir.indexIn( qv[ i ] ) != -1 )
+         QRegularExpressionMatch rx_lock_dir_m = rx_lock_dir.match( qv[ i ] );
+         if ( rx_lock_dir_m.hasMatch() )
          {
             cb_lock_dir->setChecked( true );
             continue;
          }
-         if ( rx_created_dir.indexIn( qv[ i ] ) != -1 )
+         QRegularExpressionMatch rx_created_dir_m = rx_created_dir.match( qv[ i ] );
+         if ( rx_created_dir_m.hasMatch() )
          {
-            le_created_dir->setText( rx_created_dir.cap( 1 ) );
+            le_created_dir->setText( rx_created_dir_m.captured(1) );
             continue;
          }
-         if ( rx_files.indexIn( qv[ i ] ) != -1 )
+         QRegularExpressionMatch rx_files_m = rx_files.match( qv[ i ] );
+         if ( rx_files_m.hasMatch() )
          {
             i++;
             QStringList files;
             for ( ; i < ( int ) qv.size(); i++ )
             {
-               if ( rx_end.indexIn( qv[ i ] ) == -1 )
+               QRegularExpressionMatch rx_end_m = rx_end.match( qv[ i ] );
+               if ( !rx_end_m.hasMatch() )
                {
                   files << qv[ i ];
                } else {
                   break;
                }
             }
-            if ( i < ( int ) qv.size() && rx_end.indexIn( qv[ i ] ) != -1 )
+            QRegularExpressionMatch rx_end_m = rx_end.match( qv[ i ] );
+            if ( i < ( int ) qv.size() && rx_end_m.hasMatch() )
             {
                if ( files.size() )
                {
@@ -2902,20 +2961,23 @@ bool US_Hydrodyn_Dad::load_file( QString filename, bool load_conc )
             errormsg = QString( us_tr( "Error: loading %1 line %2 unterminated file list" ) ).arg( filename ).arg( i + 1 );
             return false;
          }
-         if ( rx_conc_files.indexIn( qv[ i ] ) != -1 )
+         QRegularExpressionMatch rx_conc_files_m = rx_conc_files.match( qv[ i ] );
+         if ( rx_conc_files_m.hasMatch() )
          {
             i++;
             QStringList files;
             for ( ; i < ( int ) qv.size(); i++ )
             {
-               if ( rx_end.indexIn( qv[ i ] ) == -1 )
+               QRegularExpressionMatch rx_end_m = rx_end.match( qv[ i ] );
+               if ( !rx_end_m.hasMatch() )
                {
                   conc_files.insert( qv[ i ] );
                } else {
                   break;
                }
             }
-            if ( i < ( int ) qv.size() && rx_end.indexIn( qv[ i ] ) != -1 )
+            QRegularExpressionMatch rx_end_m = rx_end.match( qv[ i ] );
+            if ( i < ( int ) qv.size() && rx_end_m.hasMatch() )
             {
                continue;
             }
@@ -2923,7 +2985,7 @@ bool US_Hydrodyn_Dad::load_file( QString filename, bool load_conc )
             return false;
          }
 
-         if ( rx_gaussians.indexIn( qv[ i ] ) != -1 )
+         if ( rx_gaussians_m.hasMatch() )
          {
             i++;
             if ( i >= ( int ) qv.size() )
@@ -2934,11 +2996,11 @@ bool US_Hydrodyn_Dad::load_file( QString filename, bool load_conc )
             
             gaussians.clear( );
 
-            // QStringList tokens = (qv[i].replace(QRegExp("^\\s+").split( QRegExp("\\s+") , Qt::SkipEmptyParts ),""));
+            // QStringList tokens = (qv[i].replace(QRegularExpression( QStringLiteral( "^\\s+" ) ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts ),""));
             QStringList tokens;
             {
-               QString qs = qv[i].replace(QRegExp("^\\s+"),"");
-               tokens = (qs ).split( QRegExp("\\s+") , Qt::SkipEmptyParts );
+               QString qs = qv[i].replace(QRegularExpression( QStringLiteral( "^\\s+" ) ),"");
+               tokens = (qs ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts );
             }
 
             if ( tokens.size() != 2 )
@@ -2964,12 +3026,13 @@ bool US_Hydrodyn_Dad::load_file( QString filename, bool load_conc )
 
             for ( ; i < ( int ) qv.size(); i++ )
             {
-               if ( rx_end.indexIn( qv[ i ] ) == -1 )
+               QRegularExpressionMatch rx_end_m = rx_end.match( qv[ i ] );
+               if ( !rx_end_m.hasMatch() )
                {
-                  // tokens = (qv[i].replace(QRegExp("^\\s+").split( QRegExp("\\s+") , Qt::SkipEmptyParts ),""));
+                  // tokens = (qv[i].replace(QRegularExpression( QStringLiteral( "^\\s+" ) ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts ),""));
                   {
-                     QString qs = qv[i].replace(QRegExp("^\\s+"),"");
-                     tokens = (qs ).split( QRegExp("\\s+") , Qt::SkipEmptyParts );
+                     QString qs = qv[i].replace(QRegularExpression( QStringLiteral( "^\\s+" ) ),"");
+                     tokens = (qs ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts );
                   }
 
                   if ( (int) tokens.size() != gaussian_type_size )
@@ -2986,7 +3049,8 @@ bool US_Hydrodyn_Dad::load_file( QString filename, bool load_conc )
                   break;
                }
             }
-            if ( i < ( int ) qv.size() && rx_end.indexIn( qv[ i ] ) != -1 )
+            QRegularExpressionMatch rx_end_m = rx_end.match( qv[ i ] );
+            if ( i < ( int ) qv.size() && rx_end_m.hasMatch() )
             {
                continue;
             }
@@ -2995,7 +3059,7 @@ bool US_Hydrodyn_Dad::load_file( QString filename, bool load_conc )
 
          }
 
-         if ( rx_f_gaussians.indexIn( qv[ i ] ) != -1 )
+         if ( rx_f_gaussians_m.hasMatch() )
          {
             i++;
             if ( i >= ( int ) qv.size() )
@@ -3008,13 +3072,14 @@ bool US_Hydrodyn_Dad::load_file( QString filename, bool load_conc )
 
             for ( ; i < ( int ) qv.size(); i++ )
             {
-               if ( rx_end.indexIn( qv[ i ] ) == -1 )
+               QRegularExpressionMatch rx_end_m = rx_end.match( qv[ i ] );
+               if ( !rx_end_m.hasMatch() )
                {
-                  // QStringList tokens = (qv[i].replace(QRegExp("^\\s+").split( QRegExp("\\s+") , Qt::SkipEmptyParts ),""));
+                  // QStringList tokens = (qv[i].replace(QRegularExpression( QStringLiteral( "^\\s+" ) ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts ),""));
                   QStringList tokens;
                   {
-                     QString qs = qv[i].replace(QRegExp("^\\s+"),"");
-                     tokens = (qs ).split( QRegExp("\\s+") , Qt::SkipEmptyParts );
+                     QString qs = qv[i].replace(QRegularExpression( QStringLiteral( "^\\s+" ) ),"");
+                     tokens = (qs ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts );
                   }
 
                   if ( (int) tokens.size() != gaussian_type_size )
@@ -3031,16 +3096,18 @@ bool US_Hydrodyn_Dad::load_file( QString filename, bool load_conc )
                   break;
                }
             }
-            if ( i < ( int ) qv.size() && rx_end.indexIn( qv[ i ] ) != -1 )
+            QRegularExpressionMatch rx_end_m = rx_end.match( qv[ i ] );
+            if ( i < ( int ) qv.size() && rx_end_m.hasMatch() )
             {
-               f_gaussians[ rx_f_gaussians.cap( 1 ) ] = tmp_g;
+               f_gaussians[ rx_f_gaussians_m.captured( 1 ) ] = tmp_g;
                continue;
             }
             errormsg = QString( us_tr( "Error: loading %1 line %2 unterminated file list" ) ).arg( filename ).arg( i + 1 );
             return false;
          }
 
-         if ( rx_push.indexIn( qv[ i ] ) != -1 )
+         QRegularExpressionMatch rx_push_m = rx_push.match( qv[ i ] );
+         if ( rx_push_m.hasMatch() )
          {
             stack_push_all();
             disable_all();
@@ -3056,7 +3123,7 @@ bool US_Hydrodyn_Dad::load_file( QString filename, bool load_conc )
       return false;
    }
 
-   if ( ext == "dat" && qv[ 0 ].contains( QRegExp( " (Gauss|EMG\\+GMG|EMG|GMG)" ) ) )
+   if ( ext == "dat" && qv[ 0 ].contains( QRegularExpression( QStringLiteral( " (Gauss|EMG\\+GMG|EMG|GMG)" ) ) ) )
    {
       gaussian_types new_g = gaussian_type;
       if ( qv[ 0 ].contains( " Gauss" ) )
@@ -3089,11 +3156,11 @@ bool US_Hydrodyn_Dad::load_file( QString filename, bool load_conc )
 
       gaussians.clear( );
       int i = 1;
-      // QStringList tokens = (qv[i].replace(QRegExp("^\\s+").split( QRegExp("\\s+") , Qt::SkipEmptyParts ),""));
+      // QStringList tokens = (qv[i].replace(QRegularExpression( QStringLiteral( "^\\s+" ) ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts ),""));
       QStringList tokens;
       {
-         QString qs = qv[i].replace(QRegExp("^\\s+"),"");
-         tokens = (qs ).split( QRegExp("\\s+") , Qt::SkipEmptyParts );
+         QString qs = qv[i].replace(QRegularExpression( QStringLiteral( "^\\s+" ) ),"");
+         tokens = (qs ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts );
       }
 
       if ( tokens.size() != 2 )
@@ -3116,12 +3183,12 @@ bool US_Hydrodyn_Dad::load_file( QString filename, bool load_conc )
       connect( le_gauss_fit_end, SIGNAL( focussed ( bool ) )             , SLOT( gauss_fit_end_focus( bool ) ) );
 
 
-      if ( qv[ 0 ].contains( QRegExp( "Multiple (Gauss|EMG\\+GMG|EMG|GMG)" ) ) )
+      if ( qv[ 0 ].contains( QRegularExpression( QStringLiteral( "Multiple (Gauss|EMG\\+GMG|EMG|GMG)" ) ) ) )
       {
          // TSO << "multiple gaussians\n";
 
          QString           this_gaussian;
-         QRegExp           rx_gname( "^(?:Gauss|EMG\\+GMG|EMG|GMG) (.*)$" ); 
+         QRegularExpression           rx_gname( "^(?:Gauss|EMG\\+GMG|EMG|GMG) (.*)$" ); 
          vector < double > g;
          unsigned int      loaded  = 0;
          unsigned int      skipped = 0;
@@ -3130,9 +3197,10 @@ bool US_Hydrodyn_Dad::load_file( QString filename, bool load_conc )
 
          for ( i = 2; i < (int) qv.size(); i++ )
          {
-            if ( rx_gname.indexIn( qv[ i ] ) != -1 )
+            QRegularExpressionMatch rx_gname_m = rx_gname.match( qv[ i ] );
+            if ( rx_gname_m.hasMatch() )
             {
-               // TSO << QString( "mg: found %1\n" ).arg( rx_gname.cap( 1 ) );
+               // TSO << QString( "mg: found %1\n" ).arg( rx_gname_m.captured( 1 ) );
                // new file specific gaussian
                if ( g.size() && !this_gaussian.isEmpty() )
                {
@@ -3156,7 +3224,7 @@ bool US_Hydrodyn_Dad::load_file( QString filename, bool load_conc )
                   loaded++;
                }
                g.clear( );
-               this_gaussian = rx_gname.cap( 1 );
+               this_gaussian = rx_gname_m.captured( 1 );
                if ( !f_qs.count( this_gaussian ) )
                {
                   skipped++;
@@ -3168,10 +3236,10 @@ bool US_Hydrodyn_Dad::load_file( QString filename, bool load_conc )
 
             if ( !this_gaussian.isEmpty() )
             {
-               // tokens = (qv[i].replace(QRegExp("^\\s+").split( QRegExp("\\s+") , Qt::SkipEmptyParts ),""));
+               // tokens = (qv[i].replace(QRegularExpression( QStringLiteral( "^\\s+" ) ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts ),""));
                {
-                  QString qs = qv[i].replace(QRegExp("^\\s+"),"");
-                  tokens = (qs ).split( QRegExp("\\s+") , Qt::SkipEmptyParts );
+                  QString qs = qv[i].replace(QRegularExpression( QStringLiteral( "^\\s+" ) ),"");
+                  tokens = (qs ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts );
                }
          
                if ( (int) tokens.size() != gaussian_type_size )
@@ -3217,10 +3285,10 @@ bool US_Hydrodyn_Dad::load_file( QString filename, bool load_conc )
       } else {
          for ( i = 2; i < (int) qv.size(); i++ )
          {
-            // tokens = (qv[i].replace(QRegExp("^\\s+").split( QRegExp("\\s+") , Qt::SkipEmptyParts ),""));
+            // tokens = (qv[i].replace(QRegularExpression( QStringLiteral( "^\\s+" ) ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts ),""));
             {
-               QString qs = qv[i].replace(QRegExp("^\\s+"),"");
-               tokens = (qs ).split( QRegExp("\\s+") , Qt::SkipEmptyParts );
+               QString qs = qv[i].replace(QRegularExpression( QStringLiteral( "^\\s+" ) ),"");
+               tokens = (qs ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts );
             }
          
             if ( (int) tokens.size() != gaussian_type_size )
@@ -3268,23 +3336,24 @@ bool US_Hydrodyn_Dad::load_file( QString filename, bool load_conc )
    vector < double >  I;
    vector < double >  e;
 
-   QRegExp rx_ok_line("^(\\s+(-|)|\\d+|\\.|\\d(E|e)(\\+|-|\\d))+$");
-   rx_ok_line.setMinimal( true );
+   QRegularExpression rx_ok_line("^(\\s+(-|)|\\d+|\\.|\\d(E|e)(\\+|-|\\d))+$");
+   rx_ok_line.setPatternOptions(QRegularExpression::InvertedGreedinessOption);
    for ( int i = row_offset; i < (int) qv.size(); i++ )
    {
-      if ( qv[i].contains(QRegExp("^#")) ||
-           rx_ok_line.indexIn( qv[i] ) == -1 )
+      QRegularExpressionMatch rx_ok_line_m = rx_ok_line.match( qv[i] );
+      if ( qv[i].contains(QRegularExpression( QStringLiteral( "^#" ) )) ||
+           !rx_ok_line_m.hasMatch() )
       {
          continue;
       }
       
       // TSO << "line: <" << qv[ i ] << ">" << endl;
 
-      // QStringList tokens = (qv[i].replace(QRegExp("^\\s+").split( QRegExp("\\s+") , Qt::SkipEmptyParts ),""));
+      // QStringList tokens = (qv[i].replace(QRegularExpression( QStringLiteral( "^\\s+" ) ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts ),""));
       QStringList tokens;
       {
-         QString qs = qv[i].replace(QRegExp("^\\s+"),"");
-         tokens = (qs ).split( QRegExp("\\s+") , Qt::SkipEmptyParts );
+         QString qs = qv[i].replace(QRegularExpression( QStringLiteral( "^\\s+" ) ),"");
+         tokens = (qs ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts );
       }
 
       if ( (int)tokens.size() > I_offset )
@@ -3574,7 +3643,7 @@ QString US_Hydrodyn_Dad::qstring_common_head( QStringList qsl, bool strip_digits
 
    if ( strip_digits )
    {
-      s.replace( QRegExp( "\\d+$" ), "" );
+      s.replace( QRegularExpression( QStringLiteral( "\\d+$" ) ), "" );
    }
    return s;
 }
@@ -3596,7 +3665,7 @@ QString US_Hydrodyn_Dad::qstring_common_tail( QStringList qsl, bool strip_digits
    }
    if ( strip_digits )
    {
-      s.replace( QRegExp( "^\\d+" ), "" );
+      s.replace( QRegularExpression( QStringLiteral( "^\\d+" ) ), "" );
    }
    return s;
 }
@@ -4588,9 +4657,9 @@ void US_Hydrodyn_Dad::create_i_of_t( QStringList files )
    map < double, bool > used_q;
    list < double >      ql;
 
-   QRegExp rx_cap( "(\\d+)_(\\d+)" );
-   QRegExp rx_clear_nonnumeric( "^(\\d*_?\\d+)([^0-9_]|_[a-zA-Z])" );
-   // rx_cap.setMinimal( true );
+   QRegularExpression rx_cap( "(\\d+)_(\\d+)" );
+   QRegularExpression rx_clear_nonnumeric( "^(\\d*_?\\d+)([^0-9_]|_[a-zA-Z])" );
+   // rx_cap.setPatternOptions(QRegularExpression::InvertedGreedinessOption);
 
 #ifdef USHC_TIMERS
    US_Timer           us_timers;
@@ -4614,14 +4683,16 @@ void US_Hydrodyn_Dad::create_i_of_t( QStringList files )
       } else {
          QString tmp = files[ i ].mid( head.length() );
          tmp = tmp.mid( 0, tmp.length() - tail.length() );
-         if ( rx_clear_nonnumeric.indexIn( tmp ) != -1 )
+         QRegularExpressionMatch rx_clear_nonnumeric_m = rx_clear_nonnumeric.match( tmp );
+         if ( rx_clear_nonnumeric_m.hasMatch() )
          {
-            tmp = rx_clear_nonnumeric.cap( 1 );
+            tmp = rx_clear_nonnumeric_m.captured(1);
          }
 
-         if ( rx_cap.indexIn( tmp ) != -1 )
+         QRegularExpressionMatch rx_cap_m = rx_cap.match( tmp );
+         if ( rx_cap_m.hasMatch() )
          {
-            tmp = rx_cap.cap( 1 ) + "." + rx_cap.cap( 2 );
+            tmp = rx_cap_m.captured(1) + "." + rx_cap_m.captured( 2 );
          }
          double timestamp = tmp.toDouble();
 #ifdef DEBUG_LOAD_REORDER
@@ -4674,14 +4745,16 @@ void US_Hydrodyn_Dad::create_i_of_t( QStringList files )
          } else {
             QString tmp = qs->mid( head.length() );
             tmp = tmp.mid( 0, tmp.length() - tail.length() );
-            if ( rx_clear_nonnumeric.indexIn( tmp ) != -1 )
+            QRegularExpressionMatch rx_clear_nonnumeric_m = rx_clear_nonnumeric.match( tmp );
+            if ( rx_clear_nonnumeric_m.hasMatch() )
             {
-               tmp = rx_clear_nonnumeric.cap( 1 );
+               tmp = rx_clear_nonnumeric_m.captured(1);
             }
 
-            if ( rx_cap.indexIn( tmp ) != -1 )
+            QRegularExpressionMatch rx_cap_m = rx_cap.match( tmp );
+            if ( rx_cap_m.hasMatch() )
             {
-               tmp = rx_cap.cap( 1 ) + "." + rx_cap.cap( 2 );
+               tmp = rx_cap_m.captured(1) + "." + rx_cap_m.captured( 2 );
             }
             double timestamp = tmp.toDouble();
 #ifdef DEBUG_LOAD_REORDER
@@ -6741,7 +6814,7 @@ void US_Hydrodyn_Dad::similar_files()
    QString similar = QFileInfo( f_name[ selected[ 0 ] ] ).fileName();
    QString dir     = QFileInfo( f_name[ selected[ 0 ] ] ).path();
    QString match   = similar;
-   match.replace( QRegExp( "\\d{2,}" ), "\\d+" );
+   match.replace( QRegularExpression( QStringLiteral( "\\d{2,}" ) ), "\\d+" );
 
    TSO << QString( "select to match <%1> in directory <%2> using regexp <%3>\n" )
       .arg( similar )
@@ -6757,7 +6830,7 @@ void US_Hydrodyn_Dad::similar_files()
       le_dir->setText( QDir::currentPath() );
    }
    QDir qd;
-   add_files( qd.entryList( QStringList() << "*" ).filter( QRegExp( match ) ) );
+   add_files( qd.entryList( QStringList() << "*" ).filter( QRegularExpression( match ) ) );
 }
 
 void US_Hydrodyn_Dad::regex_load()
@@ -6771,16 +6844,16 @@ void US_Hydrodyn_Dad::regex_load()
    QDir qd;
 
 
-   // QStringList regexs = (le_regex->text().split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts )      );
-   // QStringList args   = (le_regex_args->text().split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts ) );
+   // QStringList regexs = (le_regex->text().split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts )      );
+   // QStringList args   = (le_regex_args->text().split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts ) );
    QStringList regexs;
    QStringList args;
 
    {
       QString qs = le_regex->text();
-      regexs = (qs ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
+      regexs = (qs ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts );
       qs = le_regex_args->text();
-      args   = (qs ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
+      args   = (qs ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts );
    }
 
    for ( int i = 0; i < (int)args.size(); i++ )
@@ -6790,7 +6863,7 @@ void US_Hydrodyn_Dad::regex_load()
          QString match   = QString( regexs[ j ] ).arg( args[ i ] );
          editor_msg( "dark blue", 
                      QString( us_tr( "Load %1 using %2 " ) ).arg( args[ i ] ).arg( match ) );
-         add_files( qd.entryList( QStringList() << "*" ).filter( QRegExp( match ) ) );
+         add_files( qd.entryList( QStringList() << "*" ).filter( QRegularExpression( match ) ) );
       }
    }
 }
@@ -6823,7 +6896,7 @@ void US_Hydrodyn_Dad::rename_created( QListWidgetItem *lbi, const QPoint & )
                                    text, 
                                    &ok, 
                                    this );
-      text.replace( QRegExp( "\\s" ), "_" );
+      text.replace( QRegularExpression( QStringLiteral( "\\s" ) ), "_" );
       if ( ok && !text.isEmpty() )
       {
          // user entered something and pressed OK
@@ -7015,7 +7088,7 @@ void US_Hydrodyn_Dad::add_plot( QString           name,
                                       bool              is_time,
                                       bool              replot )
 {
-   name.replace( QRegExp( "(\\s+|\"|'|\\/|\\.)" ), "_" );
+   name.replace( QRegularExpression( "(\\s+|\"|'|\\/|\\.)" ), "_" );
    if ( q.size() != I.size() )
    {
       TSO << QString( "add_plot: size error %1 %2\n" ).arg( q.size() ).arg( I.size() );
@@ -9820,7 +9893,7 @@ void US_Hydrodyn_Dad::save_state()
       return;
    }
 
-   fn.replace( QRegExp( "(|-global-state)\\.(dat|DAT)$" ), "" );
+   fn.replace( QRegularExpression( QStringLiteral( "(|-global-state)\\.(dat|DAT)$" ) ), "" );
    fn += "-global-state.dat";
 
    if ( QFile::exists( fn ) )
