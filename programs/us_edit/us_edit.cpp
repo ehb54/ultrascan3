@@ -3690,16 +3690,19 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
 
    
    //if ABDE, check if channel is a reference
-   int chann_size = cb_triple->count();
-   QStandardItemModel* model_t = qobject_cast<QStandardItemModel*>(cb_triple->model());
-   for (int i=0; i<chann_size; i++)
+   if( autoflow_expType == "ABDE" )
      {
-       QString chann_item = cb_triple->itemText( i );
-       if ( isSet_abde_ref( chann_item ) )
+       int chann_size = cb_triple->count();
+       QStandardItemModel* model_t = qobject_cast<QStandardItemModel*>(cb_triple->model());
+       for (int i=0; i<chann_size; i++)
 	 {
-	   //exclude for list
-	   if ( model_t )
-	     model_t->item(i)->setEnabled(false);
+	   QString chann_item = cb_triple->itemText( i );
+	   if ( isSet_abde_ref( chann_item ) )
+	     {
+	       //exclude for list
+	       if ( model_t )
+		 model_t->item(i)->setEnabled(false);
+	     }
 	 }
      }
       
@@ -10674,6 +10677,13 @@ void US_Edit::write_auto( void )
 
 	for ( int trx = 0; trx < cb_triple->count(); trx++ )
 	  {
+	    if( autoflow_expType == "ABDE" )
+	      {
+		QString chann_item = cb_triple->itemText( trx );
+		if ( isSet_abde_ref( chann_item ) )
+		  continue;
+	      }
+	    
 	    qDebug() << "Writing MWL, channel: " << trx << ": " << cb_triple->itemText( trx );
 	    write_mwl_auto( trx );
 	  }
@@ -10688,6 +10698,13 @@ void US_Edit::write_auto( void )
 	//   {
 	    for ( int trx = 0; trx < cb_triple->count(); trx++ )
 	      {
+		if( autoflow_expType == "ABDE" )
+		  {
+		    QString chann_item = cb_triple->itemText( trx );
+		    if ( isSet_abde_ref( chann_item ) )
+		      continue;
+		  }
+		
 		qDebug() << "Writing non-MWL, channel: " << trx << ": " << cb_triple->itemText( trx );
 		write_triple_auto( trx );
 	      }
