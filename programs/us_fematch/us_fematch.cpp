@@ -383,9 +383,10 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    rbmapd     = 0;
    eplotcd    = 0;
    resplotd   = 0;
-   bmd_pos    = this->pos() + QPoint( 100, 100 );
-   epd_pos    = this->pos() + QPoint( 200, 200 );
-   rpd_pos    = this->pos() + QPoint( 300, 400 );
+   bmd_pos    = this->pos();
+   epd_pos    = this->pos();
+   rpd_pos    = this->pos();
+   report_pos = this->pos();
 
    ti_noise.count = 0;
    ri_noise.count = 0;
@@ -395,7 +396,7 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    adv_vals[ "parameter"  ] = "0";
    adv_vals[ "modelnbr"   ] = "0";
    adv_vals[ "meshtype"   ] = "ASTFEM";
-   adv_vals[ "gridtype"   ] = "Moving";
+   adv_vals[ "gridtype"   ] = "Moving Hat";
    adv_vals[ "modelsim"   ] = "mean";
 
    sdata          = &wsdata;
@@ -776,25 +777,31 @@ DbgLv(1) << "Fem:Upd: (0)svbar" << svbar;
    pb_plot3d   ->setEnabled( false );
    pb_plotres  ->setEnabled( false );
    pb_distrib  ->setText   ( tr( "s20,W Distribution" ) );
-   if ( eplotcd != 0 )
+   if ( eplotcd )
    {
       epd_pos  = eplotcd->pos();
       eplotcd->close();
-      eplotcd  = 0;
+      eplotcd.clear();
    }
 
-   if ( resplotd != 0 )
+   if ( resplotd )
    {
       rpd_pos  = resplotd->pos();
       resplotd->close();
-      resplotd = 0;
+      resplotd.clear();
    }
 
-   if ( rbmapd != 0 )
+   if ( rbmapd )
    {
       bmd_pos  = rbmapd->pos();
       rbmapd->close();
-      rbmapd   = 0;
+      rbmapd.clear();
+   }
+   if ( report_dialog )
+   {
+      report_pos  = report_dialog->pos();
+      report_dialog->close();
+      report_dialog.clear();
    }
 }
 
@@ -1253,16 +1260,21 @@ void US_FeMatch::view_report( )
 
    // generate the report file
    write_report( ts );
+   if ( report_dialog.isNull())
+   {
+      report_dialog = new US_Editor( US_Editor::DEFAULT, true, "HTML (*.html);;Text files (*.txt)", this );
+      report_dialog->setWindowTitle( tr( "Report:  FE Match Model Simulation" ) );
+      report_dialog->resize( 800, 700 );
+      report_dialog->e->setFont( QFont( US_GuiSettings::fontFamily(),
+                             US_GuiSettings::fontSize() ) );
+      report_dialog->move(report_pos);
+   }
 
    // display the report dialog
-   US_Editor* editd = new US_Editor( US_Editor::DEFAULT, true, "", this );
-   editd->setWindowTitle( tr( "Report:  FE Match Model Simulation" ) );
-   editd->move( this->pos() + QPoint( 100, 100 ) );
-   editd->resize( 800, 700 );
-   editd->e->setFont( QFont( US_GuiSettings::fontFamily(),
-                             US_GuiSettings::fontSize() ) );
-   editd->e->setHtml( mtext );
-   editd->show();
+   report_dialog->e->setHtml( mtext );
+   report_dialog->show();
+   report_dialog->activateWindow();
+   report_dialog->raise();
 }
 
 // Slot to handle a change in Exclude-From
@@ -2058,20 +2070,20 @@ void US_FeMatch::simulate_model( )
    double radhi   = edata->radius( nconc - 1 );
 
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
-int lc=model_used.components.size()-1;
-DbgLv(1) << "SimMdl: 0) s D c"
- << model_used.components[ 0].s << model_used.components[ 0].D
- << model_used.components[ 0].signal_concentration << "  n" << lc;
-DbgLv(1) << "SimMdl: n) s D c"
- << model_used.components[lc].s << model_used.components[lc].D
- << model_used.components[lc].signal_concentration;
-   adjust_model();
-DbgLv(1) << "SimMdl: 0) s D c"
- << model.components[ 0].s << model.components[ 0].D
- << model.components[ 0].signal_concentration;
-DbgLv(1) << "SimMdl: n) s D c"
- << model.components[lc].s << model.components[lc].D
- << model.components[lc].signal_concentration;
+   int lc=model_used.components.size()-1;
+   DbgLv(1) << "SimMdl: 0) s D c"
+    << model_used.components[ 0].s << model_used.components[ 0].D
+    << model_used.components[ 0].signal_concentration << "  n" << lc;
+   DbgLv(1) << "SimMdl: n) s D c"
+    << model_used.components[lc].s << model_used.components[lc].D
+    << model_used.components[lc].signal_concentration;
+      adjust_model();
+   DbgLv(1) << "SimMdl: 0) s D c"
+    << model.components[ 0].s << model.components[ 0].D
+    << model.components[ 0].signal_concentration;
+   DbgLv(1) << "SimMdl: n) s D c"
+    << model.components[lc].s << model.components[lc].D
+    << model.components[lc].signal_concentration;
 
    // Initialize simulation parameters using edited data information
    US_Passwd pw;
@@ -2100,27 +2112,27 @@ DbgLv(1) << "SimMdl: speed_steps:" << simparams.speed_step.size();
    QString gtyp = adv_vals[ "gridtype"   ];
    QString bvol = adv_vals[ "bandvolume" ];
 
-#if 0
+
    if ( mtyp.contains( "Claverie" ) )
+   {
       simparams.meshType = US_SimulationParameters::CLAVERIE;
+   }
    else if ( mtyp.contains( "Moving Hat" ) )
+   {
       simparams.meshType = US_SimulationParameters::MOVING_HAT;
+   }
    else if ( mtyp.contains( "File:"      ) )
+   {
       simparams.meshType = US_SimulationParameters::USER;
+   }
    else if ( mtyp.contains( "ASTFVM"     ) )
    {
       simparams.meshType = US_SimulationParameters::ASTFVM;
-      qDebug() << "meshtype= fvm";
    }
-#endif
    if ( gtyp.contains( "Constant" ) )
+   {
       simparams.gridType = US_SimulationParameters::FIXED;
-
-   if ( model.components[ 0 ].sigma == 0.0  &&
-        model.components[ 0 ].delta == 0.0)
-      simparams.meshType = US_SimulationParameters::ASTFEM;
-   else
-      simparams.meshType = US_SimulationParameters::ASTFVM;
+   }
 
    simparams.firstScanIsConcentration = false;
 
@@ -2133,7 +2145,9 @@ DbgLv(1) << "SimMdl: speed_steps:" << simparams.speed_step.size();
       //simparams.firstScanIsConcentration = true;
    }
    else
+   {
       simparams.band_volume = 0.0;
+   }
 
    // Make a simulation copy of the experimental data without actual readings
 
@@ -2245,24 +2259,21 @@ DbgLv(1) << "SimMdl: nthread" << nthread << "ncomp" << ncomp
    // Do simulation by several possible ways: 1-/Multi-thread, ASTFEM/ASTFVM
    if ( nthread < 2 )
    {
-      if ( model.components[ 0 ].sigma == 0.0  &&
-           model.components[ 0 ].delta == 0.0  &&
-           model.coSedSolute           <  0.0  &&
-           compress                    == 0.0 )
+      if ( simparams.meshType != US_SimulationParameters::ASTFVM )
       {
-DbgLv(1) << "SimMdl: (fematch:)Finite Element Solver is called";
-//*DEBUG*
-for(int ii=0; ii<model.components.size(); ii++ )
-{
-DbgLv(1) << "SimMdl:   comp" << ii << "s D v"
- << model.components[ii].s
- << model.components[ii].D
- << model.components[ii].vbar20 << "  c"
- << model.components[ii].signal_concentration;
-}
-DbgLv(1) << "SimMdl: (fematch:)Sim Pars--";
-simparams.debug();
-//*DEBUG*
+         DbgLv(1) << "SimMdl: (fematch:)Finite Element Solver is called";
+         //*DEBUG*
+         for(int ii=0; ii<model.components.size(); ii++ )
+         {
+            DbgLv(1) << "SimMdl:   comp" << ii << "s D v"
+             << model.components[ii].s
+             << model.components[ii].D
+             << model.components[ii].vbar20 << "  c"
+             << model.components[ii].signal_concentration;
+         }
+         DbgLv(1) << "SimMdl: (fematch:)Sim Pars--";
+         simparams.debug();
+         //*DEBUG*
          US_Astfem_RSA* astfem_rsa = new US_Astfem_RSA( model, simparams );
 
          connect( astfem_rsa, SIGNAL( current_component( int ) ),
@@ -2275,36 +2286,36 @@ simparams.debug();
          //astfem_rsa->set_buffer( solution_rec.buffer );
 
          astfem_rsa->calculate( *sdata );
-//*DEBUG*
-int kpts=0;
-double trmsd=0.0;
-double tnoi=0.0;
-double rnoi=0.0;
-bool ftin=ti_noise.count > 0;
-bool frin=ri_noise.count > 0;
-for(int ss=0; ss<sdata->scanCount(); ss++)
-{
- rnoi = frin ? ri_noise.values[ss] : 0.0;
- for (int rr=0; rr<sdata->pointCount(); rr++)
- {
-  tnoi = ftin ? ti_noise.values[rr] : 0.0;
-  double rval=edata->value(ss,rr) - sdata->value(ss,rr) - rnoi - tnoi;
-  trmsd += sq( rval );
-  kpts++;
- }
-}
-trmsd = sqrt( trmsd / (float)kpts );
-DbgLv(1) << "SimMdl: (1)trmsd" << trmsd;
-//*DEBUG*
+         //*DEBUG*
+         int kpts=0;
+         double trmsd=0.0;
+         double tnoi=0.0;
+         double rnoi=0.0;
+         bool ftin=ti_noise.count > 0;
+         bool frin=ri_noise.count > 0;
+         for(int ss=0; ss<sdata->scanCount(); ss++)
+         {
+            rnoi = frin ? ri_noise.values[ss] : 0.0;
+            for (int rr=0; rr<sdata->pointCount(); rr++)
+            {
+               tnoi = ftin ? ti_noise.values[rr] : 0.0;
+               double rval=edata->value(ss,rr) - sdata->value(ss,rr) - rnoi - tnoi;
+               trmsd += sq( rval );
+               kpts++;
+            }
+         }
+         trmsd = sqrt( trmsd / (float)kpts );
+         DbgLv(1) << "SimMdl: (1)trmsd" << trmsd;
+         //*DEBUG*
       }
       else
       {
-DbgLv(1) << "SimMdl: (fematch:)Finite Volume Solver is called";
+         DbgLv(1) << "SimMdl: (fematch:)Finite Volume Solver is called";
          US_LammAstfvm *astfvm     = new US_LammAstfvm( model, simparams );
-         //connect( astfvm,  SIGNAL( comp_progress( int ) ), this,  SLOT(   update_progress(   int ) ) );
+         connect( astfvm,  SIGNAL( comp_progress( int ) ), this,  SLOT(   update_progress(   int ) ) );
          //solution_rec.buffer.compressibility = compress;
          //solution_rec.buffer.manual          = manual;
-         //astfvm->set_buffer( solution_rec.buffer );
+         astfvm->set_buffer( solution_rec.buffer );
          astfvm->calculate(     *sdata );
       }
       //-----------------------
@@ -3031,12 +3042,40 @@ QString US_FeMatch::distrib_info()
                   + indent( 4 ) + "<table>\n";
 
    mstr += table_row( tr( "Model Analysis:" ), mdla + msim );
+   mstr += table_row( tr( "Solution:" ),
+                      QString( solution_rec.solutionDesc ) + " " + solution_rec.solutionGUID );
    mstr += table_row( tr( "Number of Components:" ),
                       QString::number( ncomp ) );
    mstr += table_row( tr( "Residual RMS Deviation:" ),
                       le_rmsd->text()  );
    mstr += table_row( tr( "Model-reported RMSD:"    ),
                       ( rmsd_m > 0.0 ) ? QString::number( rmsd_m ) : "(none)" );
+   mstr += table_row( tr( "s20w correction:" ),
+                      QString::number( solution.s20w_correction )  );
+   mstr += table_row( tr( "D20w correction:" ),
+                      QString::number( solution.D20w_correction )  );
+   QStringList meshType;
+   meshType <<"ASTFEM"<< "CLAVERIE"<< "MOVING_HAT"<< "USER"<< "ASTFVM";
+   mstr += table_row( tr( "Mesh Type:" ),
+                      meshType[simparams.meshType] );
+   QStringList gridType;
+   gridType << "FIXED" << "MOVING";
+   mstr += table_row( tr( "Grid Type:" ),
+                      gridType[simparams.gridType] );
+   mstr += table_row( tr( "Simulation points:" ),
+                      QString::number( simparams.simpoints )  );
+   mstr += table_row( tr( "Radial Resolution:" ),
+                      QString::number( simparams.radial_resolution )  );
+   mstr += table_row( tr( "Band forming:" ),
+                      QString( simparams.band_forming?(QString("Yes") + " "+ QString::number(simparams.band_volume) + " mL"):"No" ));
+   mstr += table_row( tr( "Channel angle:" ),
+                      QString::number( simparams.cp_angle )  );
+   mstr += table_row( tr( "Meniscus:" ),
+                      QString::number( simparams.meniscus )  + " cm");
+   mstr += table_row( tr( "Bottom:" ),
+                      QString::number( simparams.bottom )  );
+   mstr += table_row( tr( "Bottom Position" ),
+                      QString::number( simparams.bottom_position )  + " cm");
 
    double sum_mw  = 0.0;
    double sum_s   = 0.0;
