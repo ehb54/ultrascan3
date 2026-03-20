@@ -116,6 +116,8 @@ LATEXMK ?= $(shell command -v latexmk 2>/dev/null)
 
 .PHONY: help html qthelp qch all clean Makefile
 
+all: html qch
+
 help:
 	@$(SPHINXBUILD) -M help $(SOURCEDIR) $(BUILDDIR) $(SPHINXOPTS)
 
@@ -169,8 +171,6 @@ latexpdf:
 	@$(SPHINXBUILD) -b latex $(SOURCEDIR) $(BUILDDIR)/latex $(SPHINXOPTS)
 	@$(MAKE) -C $(BUILDDIR)/latex
 	@echo "PDF manual written to $(BUILDDIR)/latex"
-
-all: html qch
 
 clean:
 	@rm -rf $(BUILDDIR)
