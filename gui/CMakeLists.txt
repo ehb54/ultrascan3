@@ -159,7 +159,7 @@ function(configure_us_gui_target target_name is_static)
     elseif(APPLE)
         # macOS: GLU is in the system OpenGL.framework. No XQuartz needed.
         target_link_libraries(${target_name} PUBLIC "-framework OpenGL")
-    else()
+    elseif(UNIX)
         # Linux
         if(TARGET OpenGL::GLU)
             target_link_libraries(${target_name} PUBLIC OpenGL::GLU)

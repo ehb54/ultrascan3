@@ -41,9 +41,7 @@ debug("location="+location);
   if ( !QFile::exists( assisloc ) )
     assisloc = US_Settings::appBaseDir() + "/bin/assistant";
 #elif defined(Q_OS_WIN)
-  QString assisloc  = US_Settings::appBaseDir() + "/bin/assistant";
-  if ( !QFile::exists( assisloc ) )
-    assisloc = US_Settings::appBaseDir() + "/bin/assistant.exe";
+  QString assisloc  = US_Settings::appBaseDir() + "/bin/assistant.exe";
   if ( !QFile::exists( assisloc ) )
     assisloc = US_Settings::appBaseDir() + "/bin/Assistant.exe";
 #else
