@@ -457,55 +457,6 @@ if(APPLE AND QHELPGENERATOR_EXECUTABLE)
 endif()
 
 if(WIN32 AND QHELPGENERATOR_EXECUTABLE)
-    set(_ASSISTANT_CANDIDATES "")
-
-    foreach(_vcpkg_dir IN ITEMS "${VCPKG_INSTALLED_DIR}" "${_VCPKG_INSTALLED_DIR}")
-        if(_vcpkg_dir AND VCPKG_TARGET_TRIPLET)
-            string(REGEX REPLACE "-dynamic$" "" _vcpkg_host_triplet "${VCPKG_TARGET_TRIPLET}")
-            foreach(_triplet IN ITEMS "${VCPKG_TARGET_TRIPLET}" "${_vcpkg_host_triplet}")
-                list(APPEND _ASSISTANT_CANDIDATES
-                        "${_vcpkg_dir}/${_triplet}/tools/Qt6/bin/assistant.exe"
-                        "${_vcpkg_dir}/${_triplet}/tools/Qt6/bin/Assistant.exe"
-                        "${_vcpkg_dir}/${_triplet}/tools/qttools/bin/assistant.exe"
-                        "${_vcpkg_dir}/${_triplet}/tools/qttools/bin/Assistant.exe"
-                        "${_vcpkg_dir}/${_triplet}/tools/qt5-tools/bin/assistant.exe"
-                        "${_vcpkg_dir}/${_triplet}/tools/qt5-tools/bin/Assistant.exe"
-                        "${_vcpkg_dir}/${_triplet}/tools/qt5/bin/assistant.exe"
-                        "${_vcpkg_dir}/${_triplet}/tools/qt5/bin/Assistant.exe"
-                )
-            endforeach()
-        endif()
-    endforeach()
-
-    if(DEFINED ENV{QTDIR})
-        list(APPEND _ASSISTANT_CANDIDATES
-                "$ENV{QTDIR}/bin/assistant.exe"
-                "$ENV{QTDIR}/bin/Assistant.exe"
-        )
-    endif()
-
-    set(QT_ASSISTANT_OVERRIDE "" CACHE FILEPATH "Override path to Assistant.exe")
-
-    set(WIN_ASSISTANT_SOURCE "")
-    if(QT_ASSISTANT_OVERRIDE AND EXISTS "${QT_ASSISTANT_OVERRIDE}")
-        set(WIN_ASSISTANT_SOURCE "${QT_ASSISTANT_OVERRIDE}")
-        message(STATUS "Using overridden Qt Assistant: ${WIN_ASSISTANT_SOURCE}")
-    else()
-        foreach(candidate IN LISTS _ASSISTANT_CANDIDATES)
-            if(EXISTS "${candidate}")
-                set(WIN_ASSISTANT_SOURCE "${candidate}")
-                break()
-            endif()
-        endforeach()
-    endif()
-
-    if(WIN_ASSISTANT_SOURCE)
-        message(STATUS "Found Qt Assistant: ${WIN_ASSISTANT_SOURCE}")
-    else()
-        message(WARNING "Qt Assistant not found — help viewer will not be available in bin/")
-    endif()
-
-    set(WIN_ASSISTANT_SOURCE "${WIN_ASSISTANT_SOURCE}" PARENT_SCOPE)
     set(DOC_QCH_STAGE "${DOC_QCH_STAGE}" PARENT_SCOPE)
     set(DOC_QHC_STAGE "${DOC_QHC_STAGE}" PARENT_SCOPE)
     set(DOC_OUTPUT_DIR "${DOC_OUTPUT_DIR}" PARENT_SCOPE)

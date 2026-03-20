@@ -1208,17 +1208,15 @@ if(WIN32 AND US3_BUILD_PROGRAMS)
             "${Qt5_DIR}/../../../bin/assistant.exe"
             "$ENV{QTDIR}/bin/assistant.exe"
         )
-        set(ASSISTANT_EXE_PATH "" CACHE FILEPATH "Path to assistant.exe for Windows packaging")
-        if(NOT ASSISTANT_EXE_PATH)
-            foreach(_cand IN LISTS _win_assistant_candidates)
-                if(EXISTS "${_cand}")
-                    set(ASSISTANT_EXE_PATH "${_cand}")
-                    break()
-                endif()
-            endforeach()
+        if(NOT ASSISTANT_EXECUTABLE)
+            find_program(ASSISTANT_EXECUTABLE
+                    NAMES assistant.exe Assistant.exe
+                    HINTS ${_win_assistant_candidates}
+                    DOC "Path to assistant.exe for Windows packaging"
+            )
         endif()
-        if(ASSISTANT_EXE_PATH)
-            message(STATUS "assistant.exe for packaging: ${ASSISTANT_EXE_PATH}")
+        if(ASSISTANT_EXECUTABLE)
+            message(STATUS "assistant.exe for packaging: ${ASSISTANT_EXECUTABLE}")
         else()
             message(STATUS "assistant.exe not found - help will not work in packaged installer")
         endif()
@@ -1264,7 +1262,7 @@ if(WIN32 AND US3_BUILD_PROGRAMS)
             COMMAND ${CMAKE_COMMAND}
                 -DSTAGE_DIR=${US3_WIN_STAGE_DIR}
                 -DWINDEPLOYQT=${WINDEPLOYQT_EXECUTABLE}
-                -DASSISTANT_EXE=${ASSISTANT_EXE_PATH}
+                -DASSISTANT_EXE=${ASSISTANT_EXECUTABLE}
                 -DQCH_DIR=${CMAKE_BINARY_DIR}/bin
                 -DBIN_DIR=${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
                 -DLIB_DIR=${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
